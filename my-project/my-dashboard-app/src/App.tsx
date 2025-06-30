@@ -1,18 +1,47 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { BrowserRouter, Routes, Route, Link, Navigate } from 'react-router-dom';
-import { Layout, Menu } from 'antd';
-import { DashboardOutlined, TableOutlined } from '@ant-design/icons';
+import { Layout, Menu, Button } from 'antd';
+import {
+    DashboardOutlined,
+    TableOutlined,
+    MenuFoldOutlined,
+    MenuUnfoldOutlined,
+} from '@ant-design/icons';
 import ManagementDashboard from './pages/ManagementDashboard';
 import FactoryDashboard from './pages/FactoryDashboard';
 
 const { Sider, Content } = Layout;
 
 const App: React.FC = () => {
+    const [collapsed, setCollapsed] = useState(false);
+
     return (
         <BrowserRouter>
             <Layout style={{ minHeight: '100vh' }}>
-                {/* ✅ 開始タグ */}
-                <Sider theme="light" width={200}>
+                <Sider
+                    theme="light"
+                    width={250}
+                    collapsible
+                    collapsed={collapsed}
+                    trigger={null} // 自動トリガーを無効にする
+                >
+                    {/* トグルボタン */}
+                    <div style={{ padding: 16, textAlign: 'left' }}>
+                        <Button
+                            type="text"
+                            icon={
+                                collapsed ? (
+                                    <MenuUnfoldOutlined />
+                                ) : (
+                                    <MenuFoldOutlined />
+                                )
+                            }
+                            onClick={() => setCollapsed(!collapsed)}
+                            style={{ fontSize: 18 }}
+                        />
+                    </div>
+
+                    {/* メニュー */}
                     <Menu
                         mode="inline"
                         defaultSelectedKeys={['dashboard']}
@@ -26,8 +55,8 @@ const App: React.FC = () => {
                         </Menu.Item>
                     </Menu>
                 </Sider>
-                {/* ✅ 閉じタグはこのあとで良い */}
 
+                {/* コンテンツエリア */}
                 <Layout>
                     <Content style={{ padding: '24px' }}>
                         <Routes>
@@ -50,8 +79,6 @@ const App: React.FC = () => {
                         </Routes>
                     </Content>
                 </Layout>
-
-                {/* ✅ この位置で <Sider> の閉じタグは不要です（自動で閉じている） */}
             </Layout>
         </BrowserRouter>
     );

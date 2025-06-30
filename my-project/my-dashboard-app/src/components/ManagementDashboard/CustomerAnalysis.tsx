@@ -92,7 +92,7 @@ const renderPieChart = (data: any[]) => (
 
 const CustomerAnalysisPanel: React.FC = () => {
     return (
-        <Card title="👥 顧客分析" style={{ marginTop: 24 }}>
+        <Card title="👥 顧客分析" style={{ height: '100%' }}>
             <Row gutter={24}>
                 {/* 凡例 */}
                 <Col span={6}>
