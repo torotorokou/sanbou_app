@@ -19,7 +19,7 @@ const App: React.FC = () => {
                         style={{ height: '100%' }}
                     >
                         <Menu.Item key="dashboard" icon={<DashboardOutlined />}>
-                            <Link to="/dashboard">ダッシュボード</Link>
+                            <Link to="/dashboard">管理表ダッシュボード</Link>
                         </Menu.Item>
                         <Menu.Item key="factory" icon={<TableOutlined />}>
                             <Link to="/factory">工場管理ダッシュボード</Link>

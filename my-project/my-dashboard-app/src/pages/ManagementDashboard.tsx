@@ -36,10 +36,10 @@ const ManagementDashboard: React.FC = () => {
                         }}
                     >
                         <div style={{ flex: 1, overflow: 'hidden' }}>
-                            <BlockCountPanel />
+                            <ProcessVolumePanel />
                         </div>
                         <div style={{ flex: 1, overflow: 'hidden' }}>
-                            <ProcessVolumePanel />
+                            <BlockCountPanel />
                         </div>
                     </div>
                 </Col>
