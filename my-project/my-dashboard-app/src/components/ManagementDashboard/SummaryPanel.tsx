@@ -3,7 +3,7 @@ import { Card, Row, Col } from 'antd';
 import { CarOutlined, InboxOutlined } from '@ant-design/icons';
 import AnimatedStatistic from '../ui/AnimatedStatistic';
 import DiffIndicator from '../ui/DiffIndicator';
-import Sparkline from '../ui/Sparkline';
+import TrendChart from '../ui/TrendChart';
 
 const SummaryPanel: React.FC = () => {
     const driveData = [
@@ -14,6 +14,8 @@ const SummaryPanel: React.FC = () => {
             prefix: <CarOutlined />,
             diff: +52,
             trend: [1200, 1240, 1260, 1290, 1300, 1340, 1381],
+            minY: 1200,
+            maxY: 1450,
         },
         {
             title: '終了台数（当日）',
@@ -22,6 +24,8 @@ const SummaryPanel: React.FC = () => {
             prefix: <CarOutlined />,
             diff: -7,
             trend: [122, 128, 125, 130, 124, 127, 120],
+            minY: 100,
+            maxY: 140,
         },
     ];
 
@@ -40,7 +44,7 @@ const SummaryPanel: React.FC = () => {
             suffix: 'kg',
             prefix: <InboxOutlined />,
             diff: +3200,
-            trend: [98000, 99000, 99500, 100500, 101000, 102000, 102600],
+            trend: [98000, 99000, 99500, 100500, 78000, 98140, 102600],
         },
         {
             title: '当日搬出量',
@@ -53,7 +57,10 @@ const SummaryPanel: React.FC = () => {
     ];
 
     return (
-        <Card title="🚛 月間搬入サマリー" headStyle={{ fontWeight: 'bold' }}>
+        <Card
+            title="🚛 月間搬入サマリー"
+            styles={{ header: { fontWeight: 'bold' } }}
+        >
             <Row gutter={24}>
                 <Col span={12}>
                     <h4>🚚 搬入台数</h4>
@@ -62,13 +69,12 @@ const SummaryPanel: React.FC = () => {
                             key={index}
                             style={{
                                 display: 'flex',
-                                justifyContent: 'space-between',
                                 alignItems: 'center',
                                 marginBottom: 16,
+                                gap: 16,
                             }}
                         >
-                            {/* 数値・差分 */}
-                            <div style={{ flex: 1 }}>
+                            <div style={{ minWidth: 130 }}>
                                 <AnimatedStatistic
                                     title={item.title}
                                     value={item.value}
@@ -82,10 +88,13 @@ const SummaryPanel: React.FC = () => {
                                     />
                                 </div>
                             </div>
-
-                            {/* グラフ */}
-                            <div style={{ width: 100 }}>
-                                <Sparkline data={item.trend} />
+                            <div style={{ flex: 1 }}>
+                                <TrendChart
+                                    data={item.trend}
+                                    height={60}
+                                    minY={item.minY}
+                                    maxY={item.maxY}
+                                />
                             </div>
                         </div>
                     ))}
@@ -98,13 +107,12 @@ const SummaryPanel: React.FC = () => {
                             key={index}
                             style={{
                                 display: 'flex',
-                                justifyContent: 'space-between',
                                 alignItems: 'center',
                                 marginBottom: 16,
+                                gap: 16,
                             }}
                         >
-                            {/* 数値・差分 */}
-                            <div style={{ flex: 1 }}>
+                            <div style={{ minWidth: 130 }}>
                                 <AnimatedStatistic
                                     title={item.title}
                                     value={item.value}
@@ -118,10 +126,8 @@ const SummaryPanel: React.FC = () => {
                                     />
                                 </div>
                             </div>
-
-                            {/* グラフ */}
-                            <div style={{ width: 100 }}>
-                                <Sparkline data={item.trend} />
+                            <div style={{ flex: 1 }}>
+                                <TrendChart data={item.trend} height={60} />
                             </div>
                         </div>
                     ))}

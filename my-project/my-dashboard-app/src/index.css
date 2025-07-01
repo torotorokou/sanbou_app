@@ -1,10 +1,52 @@
-/* src/index.css */
+/* === ベース設定 === */
 body {
-    margin: 0;
+    background-color: var(--color-bg-base);
+    color: var(--color-text);
     font-family: 'Segoe UI', sans-serif;
-    background-color: #f5f5f5;
+    margin: 0;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
+/* === Ant Design カード設定 === */
 .ant-card {
     border-radius: 10px;
+    background-color: var(--color-bg-container);
+    border-color: var(--color-border-secondary);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.ant-card:hover {
+    transform: scale(1.01);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* === サイドメニューの選択状態・ホバー === */
+.custom-sider-menu .ant-menu-item-selected {
+    background-color: var(--color-primary) !important;
+    color: #fff !important;
+}
+
+.custom-sider-menu .ant-menu-item:hover {
+    background-color: var(--color-sider-hover) !important;
+    transition: background-color 0.3s ease;
+}
+
+/* === カード内のテキストにメリハリを出す === */
+.ant-card .ant-card-head {
+    font-weight: 600;
+    font-size: 1rem;
+    border-bottom: none;
+}
+
+.ant-card .ant-card-body {
+    padding: 16px;
+}
+
+/* === レスポンシブに備えて === */
+@media (max-width: 768px) {
+    .ant-card {
+        border-radius: 8px;
+    }
 }

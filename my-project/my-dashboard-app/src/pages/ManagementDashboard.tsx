@@ -9,8 +9,7 @@ import {
 } from '@/components/ManagementDashboard';
 
 const { Title } = Typography;
-
-const PANEL_HEIGHT = 420; // 統一高さ：今後変更しやすい
+const RIGHT_HEIGHT = '100%'; // 右側全体の高さを固定
 const ManagementDashboard: React.FC = () => {
     return (
         <div style={{ padding: 16 }}>
@@ -19,21 +18,36 @@ const ManagementDashboard: React.FC = () => {
             </Title>
 
             <Row gutter={[16, 16]}>
-                <Col xs={24} lg={12} style={{ height: PANEL_HEIGHT }}>
-                    <SummaryPanel />
+                {/* ✅ 左側 全体 */}
+                <Col xs={24} lg={12}>
+                    <Row gutter={[16, 16]}>
+                        {/* ✅ 左上 */}
+                        <Col span={24} style={{ height: '100%' }}>
+                            <SummaryPanel />
+                        </Col>
+
+                        {/* ✅ 左下 */}
+                        <Col span={24} style={{ height: '100%' }}>
+                            <RevenuePanel />
+                        </Col>
+                    </Row>
                 </Col>
-                <Col xs={24} lg={12} style={{ height: PANEL_HEIGHT }}>
-                    <CustomerAnalysis />
-                </Col>
-                <Col xs={24} lg={12} style={{ height: PANEL_HEIGHT }}>
-                    <RevenuePanel />
-                </Col>
-                <Col xs={24} lg={12} style={{ height: PANEL_HEIGHT }}>
+
+                {/* ✅ 右側 全体 */}
+                <Col xs={24} lg={12} style={{ height: RIGHT_HEIGHT }}>
                     <Row gutter={[16, 16]} style={{ height: '100%' }}>
-                        <Col span={24} style={{ height: '50%' }}>
+                        {/* ✅ 右上（1/3） */}
+                        <Col span={24} style={{ height: '33.33%' }}>
+                            <CustomerAnalysis />
+                        </Col>
+
+                        {/* ✅ 右中（1/3） */}
+                        <Col span={24} style={{ height: '33.33%' }}>
                             <ProcessVolumePanel />
                         </Col>
-                        <Col span={24} style={{ height: '50%' }}>
+
+                        {/* ✅ 右下（1/3） */}
+                        <Col span={24} style={{ height: '33.33%' }}>
                             <BlockCountPanel />
                         </Col>
                     </Row>
