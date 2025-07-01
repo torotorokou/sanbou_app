@@ -39,9 +39,10 @@ const App: React.FC = () => {
                     <div
                         style={{
                             display: 'flex',
-                            justifyContent: 'center',
+                            justifyContent: collapsed ? 'center' : 'flex-end', // ← 状態で切替
                             alignItems: 'center',
-                            height: 64, // ヘッダー相当の高さで調整
+                            height: 64,
+                            paddingRight: collapsed ? 0 : 16,
                         }}
                     >
                         <Button
