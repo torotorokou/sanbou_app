@@ -60,6 +60,7 @@ const Sidebar: React.FC<{
             <Menu
                 mode="inline"
                 theme="dark"
+                className="custom-sider-menu"
                 defaultSelectedKeys={['dashboard']}
                 defaultOpenKeys={['dashboardGroup', 'report', 'management']}
                 style={{

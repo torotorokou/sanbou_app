@@ -1,3 +1,12 @@
+/* === HTML・ルート高さ補完（重要）=== */
+html,
+body,
+#root {
+    height: 100%;
+    margin: 0;
+    overflow: hidden; /* ✅ 外側にスクロールバーを出さない */
+}
+
 /* === ベース設定 === */
 body {
     background-color: var(--color-bg-base);
@@ -22,15 +31,32 @@ body {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
-/* === サイドメニューの選択状態・ホバー === */
-.custom-sider-menu .ant-menu-item-selected {
-    background-color: var(--color-primary) !important;
-    color: #fff !important;
-}
-
+/* === サイドメニューのホバー時 === */
 .custom-sider-menu .ant-menu-item:hover {
     background-color: var(--color-sider-hover) !important;
-    transition: background-color 0.3s ease;
+    color: #ffffff !important;
+    cursor: pointer;
+    border-left: 4px solid var(--color-primary);
+    padding-left: calc(24px - 4px);
+    transition: background-color 0.3s ease, padding-left 0.3s ease,
+        border-left 0.3s ease, color 0.3s ease;
+}
+
+.custom-sider-menu .ant-menu-item:hover .anticon {
+    color: #ffffff !important;
+}
+
+/* === サイドメニューの選択中 === */
+.custom-sider-menu .ant-menu-item-selected {
+    background-color: var(--color-primary) !important;
+    color: #ffffff !important;
+    border-left: none !important; /* ホバーと差別化 */
+    padding-left: 24px; /* インジケータがない分補正 */
+    transition: background-color 0.3s ease, padding-left 0.3s ease;
+}
+
+.custom-sider-menu .ant-menu-item-selected .anticon {
+    color: #ffffff !important;
 }
 
 /* === カード内のテキストにメリハリを出す === */
