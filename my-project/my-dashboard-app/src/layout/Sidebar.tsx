@@ -12,7 +12,7 @@ import {
     ToolOutlined,
     BookOutlined,
 } from '@ant-design/icons';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { theme } from 'antd';
 
 const { Sider } = Layout;
@@ -22,6 +22,11 @@ const Sidebar: React.FC<{
     setCollapsed: (c: boolean) => void;
 }> = ({ collapsed, setCollapsed }) => {
     const { token } = theme.useToken();
+    const location = useLocation();
+
+    const currentPath = location.pathname;
+    const selectedKey = currentPath.split('/').slice(1).join('-');
+    const openKey = currentPath.split('/')[1];
 
     return (
         <Sider
@@ -44,7 +49,7 @@ const Sidebar: React.FC<{
                 }}
             >
                 <Button
-                    type="text"
+                    type='text'
                     icon={
                         collapsed ? (
                             <MenuUnfoldOutlined />
@@ -58,11 +63,11 @@ const Sidebar: React.FC<{
             </div>
 
             <Menu
-                mode="inline"
-                theme="dark"
-                className="custom-sider-menu"
-                defaultSelectedKeys={['dashboard']}
-                defaultOpenKeys={['dashboardGroup', 'report', 'management']}
+                mode='inline'
+                theme='dark'
+                className='custom-sider-menu'
+                selectedKeys={[selectedKey]}
+                openKeys={[openKey]}
                 style={{
                     height: '100%',
                     backgroundColor: 'transparent',
@@ -77,12 +82,12 @@ const Sidebar: React.FC<{
                             {
                                 key: 'dashboard',
                                 icon: <DashboardOutlined />,
-                                label: <Link to="/dashboard">管理表</Link>,
+                                label: <Link to='/dashboard'>管理表</Link>,
                             },
                             {
                                 key: 'factory',
                                 icon: <TableOutlined />,
-                                label: <Link to="/factory">工場管理</Link>,
+                                label: <Link to='/factory'>工場管理</Link>,
                             },
                         ],
                     },
@@ -94,13 +99,13 @@ const Sidebar: React.FC<{
                             {
                                 key: 'report-daily',
                                 icon: <FileTextOutlined />,
-                                label: <Link to="/report/daily">工場日報</Link>,
+                                label: <Link to='/report/daily'>工場日報</Link>,
                             },
                             {
                                 key: 'report-balance',
                                 icon: <FileTextOutlined />,
                                 label: (
-                                    <Link to="/report/balance">
+                                    <Link to='/report/balance'>
                                         工場搬出入収支表
                                     </Link>
                                 ),
@@ -109,7 +114,7 @@ const Sidebar: React.FC<{
                                 key: 'report-average',
                                 icon: <FileTextOutlined />,
                                 label: (
-                                    <Link to="/report/average">
+                                    <Link to='/report/average'>
                                         集計項目平均表
                                     </Link>
                                 ),
@@ -118,7 +123,7 @@ const Sidebar: React.FC<{
                                 key: 'report-price',
                                 icon: <FileTextOutlined />,
                                 label: (
-                                    <Link to="/report/price">
+                                    <Link to='/report/price'>
                                         ブロック単価表
                                     </Link>
                                 ),
@@ -127,7 +132,7 @@ const Sidebar: React.FC<{
                                 key: 'report-adminsheet',
                                 icon: <FileTextOutlined />,
                                 label: (
-                                    <Link to="/report/adminsheet">管理票</Link>
+                                    <Link to='/report/adminsheet'>管理票</Link>
                                 ),
                             },
                         ],
@@ -135,7 +140,7 @@ const Sidebar: React.FC<{
                     {
                         key: 'navi',
                         icon: <CompassOutlined />,
-                        label: <Link to="/navi">参謀NAVI</Link>,
+                        label: <Link to='/navi'>参謀NAVI</Link>,
                     },
                     {
                         key: 'management',
@@ -145,24 +150,24 @@ const Sidebar: React.FC<{
                             {
                                 key: 'settings',
                                 icon: <SettingOutlined />,
-                                label: <Link to="/settings">設定</Link>,
+                                label: <Link to='/settings'>設定</Link>,
                             },
                             {
                                 key: 'admin',
                                 icon: <ToolOutlined />,
-                                label: <Link to="/admin">管理者メニュー</Link>,
+                                label: <Link to='/admin'>管理者メニュー</Link>,
                             },
                         ],
                     },
                     {
                         key: 'upload',
                         icon: <UploadOutlined />,
-                        label: <Link to="/upload">データアップロード</Link>,
+                        label: <Link to='/upload'>データアップロード</Link>,
                     },
                     {
                         key: 'manual',
                         icon: <BookOutlined />,
-                        label: <Link to="/manual">マニュアル</Link>,
+                        label: <Link to='/manual'>マニュアル</Link>,
                     },
                 ]}
             />

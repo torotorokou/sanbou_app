@@ -6,7 +6,7 @@ type VerticalActionButtonProps = {
     text: string;
     onClick?: () => void;
     disabled?: boolean;
-    backgroundColor?: string;
+    backgroundColor?: string; // 有効時の色
 };
 
 const VerticalActionButton: React.FC<VerticalActionButtonProps> = ({
@@ -16,6 +16,22 @@ const VerticalActionButton: React.FC<VerticalActionButtonProps> = ({
     disabled = false,
     backgroundColor = '#10b981',
 }) => {
+    const baseStyle: React.CSSProperties = {
+        writingMode: 'vertical-rl',
+        textOrientation: 'mixed',
+        height: 160,
+        fontSize: '1.2rem',
+        fontWeight: 600,
+        borderRadius: '24px',
+        border: 'none',
+        transition: 'all 0.3s ease',
+        transform: 'scale(1)',
+        color: '#fff',
+        cursor: disabled ? 'not-allowed' : 'pointer',
+        backgroundColor: disabled ? '#ccc' : backgroundColor,
+        boxShadow: disabled ? 'none' : '0 4px 10px rgba(0, 0, 0, 0.1)',
+    };
+
     return (
         <Button
             icon={icon}
@@ -24,21 +40,7 @@ const VerticalActionButton: React.FC<VerticalActionButtonProps> = ({
             shape='round'
             onClick={onClick}
             disabled={disabled}
-            style={{
-                writingMode: 'vertical-rl',
-                textOrientation: 'mixed',
-                height: 160,
-                fontSize: '1.2rem',
-                fontWeight: 600,
-                backgroundColor,
-                color: '#fff',
-                border: 'none',
-                borderRadius: '24px',
-                boxShadow: '0 4px 10px rgba(0, 0, 0, 0.1)',
-                transition: 'all 0.3s ease',
-                transform: 'scale(1)',
-                cursor: disabled ? 'not-allowed' : 'pointer',
-            }}
+            style={baseStyle}
             onMouseEnter={(e) => {
                 if (!disabled) {
                     e.currentTarget.style.transform = 'scale(1.05)';

@@ -35,6 +35,8 @@ const ReportFactory: React.FC = () => {
     const [currentStep, setCurrentStep] = useState(0);
     const [loading, setLoading] = useState(false);
 
+    const readyToCreate = selectedDate !== null || shipFile !== null;
+
     const makeUploadProps = (
         label: string,
         setter: (file: File) => void
@@ -137,8 +139,8 @@ const ReportFactory: React.FC = () => {
                 ]}
                 makeUploadProps={makeUploadProps}
                 finalized={finalized}
+                readyToCreate={readyToCreate} // ✅ これを渡す
             >
-                {/* 帳票一式 */}
                 <div>
                     <Typography.Title level={5}>👷 出勤者一覧</Typography.Title>
                     <Table

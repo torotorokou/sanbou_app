@@ -25,7 +25,8 @@ type ReportPageLayoutProps = {
         setter: (file: File) => void
     ) => UploadProps;
     finalized: boolean;
-    children?: React.ReactNode; // ← 帳票一式（出勤・有価・出荷…）
+    readyToCreate: boolean; // ✅ 新たに追加
+    children?: React.ReactNode;
 };
 
 const ReportManagePageLayout: React.FC<ReportPageLayoutProps> = ({
@@ -36,11 +37,9 @@ const ReportManagePageLayout: React.FC<ReportPageLayoutProps> = ({
     uploadFiles,
     makeUploadProps,
     finalized,
+    readyToCreate,
     children,
 }) => {
-    const readyToCreate =
-        calendarDate || uploadFiles.some((f) => f.file !== null);
-
     return (
         <div style={{ padding: 24 }}>
             <Typography.Title level={3}>{title}</Typography.Title>
@@ -53,7 +52,7 @@ const ReportManagePageLayout: React.FC<ReportPageLayoutProps> = ({
                     marginTop: 16,
                 }}
             >
-                {/* 左パネル：カレンダー・CSV */}
+                {/* 左パネル */}
                 <div
                     style={{
                         display: 'flex',
@@ -85,11 +84,12 @@ const ReportManagePageLayout: React.FC<ReportPageLayoutProps> = ({
                     />
                 </div>
 
+                {/* 中央：ボタン */}
                 <div
                     style={{
                         display: 'flex',
                         justifyContent: 'center',
-                        alignItems: 'center', // ✅ 縦方向の中央寄せ
+                        alignItems: 'center',
                         width: 120,
                     }}
                 >
@@ -97,11 +97,11 @@ const ReportManagePageLayout: React.FC<ReportPageLayoutProps> = ({
                         icon={<PlayCircleOutlined />}
                         text='帳簿作成'
                         onClick={onGenerate}
-                        disabled={!readyToCreate}
+                        disabled={!readyToCreate} // ✅ 外部で制御
                     />
                 </div>
 
-                {/* 右側：帳簿の表示 */}
+                {/* 帳票表示 */}
                 <div style={{ flex: 1, overflowY: 'auto' }}>
                     <Typography.Title level={4}>
                         📄 {calendarDate?.format('YYYY年M月D日')} の帳簿
@@ -123,7 +123,7 @@ const ReportManagePageLayout: React.FC<ReportPageLayoutProps> = ({
                     )}
                 </div>
 
-                {/* 右端：ダウンロードボタン */}
+                {/* 右端：DL */}
                 <div
                     style={{
                         display: 'flex',
@@ -147,6 +147,21 @@ const ReportManagePageLayout: React.FC<ReportPageLayoutProps> = ({
                                     customTokens.colorDownloadButton,
                                 color: '#fff',
                                 border: 'none',
+                                borderRadius: '24px',
+                                boxShadow: '0 4px 10px rgba(0, 0, 0, 0.1)',
+                                transition: 'all 0.3s ease',
+                                transform: 'scale(1)',
+                                cursor: 'pointer',
+                            }}
+                            onMouseEnter={(e) => {
+                                e.currentTarget.style.transform = 'scale(1.05)';
+                                e.currentTarget.style.boxShadow =
+                                    '0 6px 16px rgba(0, 0, 0, 0.2)';
+                            }}
+                            onMouseLeave={(e) => {
+                                e.currentTarget.style.transform = 'scale(1)';
+                                e.currentTarget.style.boxShadow =
+                                    '0 4px 10px rgba(0, 0, 0, 0.1)';
                             }}
                         >
                             ダウンロード

@@ -10,6 +10,7 @@ import {
     LabelList,
     ResponsiveContainer,
 } from 'recharts';
+import { customTokens } from '@/theme/tokens';
 
 const revenueData = [
     { name: '売上', value: 5490175 },
@@ -18,70 +19,83 @@ const revenueData = [
 ];
 
 const unitPriceData = [
-    { name: '売上\n単価', value: 53.5 },
-    { name: '仕入\n単価', value: 16.91 },
-    { name: '粗利\n単価', value: 32.86 },
-    { name: '粗利\n（当日）', value: 36.6 },
-    { name: 'ブロック\n単価', value: 33.52 },
+    { name: '売上', value: 53.5 },
+    { name: '仕入', value: 16.91 },
+    { name: '粗利', value: 32.86 },
+    { name: '粗利（当日）', value: 36.6 },
+    { name: 'ブロック', value: 33.52 },
 ];
+
+const gradientMap: Record<string, string> = {
+    売上: customTokens.gradRevenueSales,
+    仕入: customTokens.gradRevenueCost,
+    粗利: customTokens.gradRevenueProfit,
+    '粗利（当日）': customTokens.gradRevenueProfit,
+    ブロック: customTokens.gradRevenueBlock,
+};
+
+const generateGradients = (data: any[], prefix: string) =>
+    data.map((item: any) => {
+        const gradId = `${prefix}${item.name}`;
+        const topColor = gradientMap[item.name] || '#999';
+        return (
+            <linearGradient id={gradId} x1='0' y1='0' x2='0' y2='1'>
+                <stop offset='0%' stopColor={topColor} stopOpacity={1} />
+                <stop
+                    offset='60%'
+                    stopColor={topColor}
+                    stopOpacity={0.9}
+                />{' '}
+                {/* ← 不透明をキープ */}
+                <stop
+                    offset='100%'
+                    stopColor='#ffffff'
+                    stopOpacity={0.8}
+                />{' '}
+                {/* ← 下端だけ透明化 */}
+            </linearGradient>
+        );
+    });
+
+const getGradientId = (prefix: string, name: string) =>
+    `url(#${prefix}${name})`;
 
 const RevenueChartPanel: React.FC = () => {
     return (
-        <Card title="📊 収益グラフ" style={{ marginTop: 24 }}>
+        <Card title='収益グラフ' style={{ marginTop: 24 }}>
             <Row gutter={24}>
-                {/* ✅ 左：売上・仕入・粗利（グラデーション付き） */}
+                {/* 売上・仕入・粗利 */}
                 <Col span={12}>
-                    <h4 style={{ marginBottom: 12 }}>💰 売上・仕入・粗利</h4>
-                    <ResponsiveContainer width="100%" height={300}>
+                    <h4 style={{ marginBottom: 12 }}>売上・仕入・粗利</h4>
+                    <ResponsiveContainer width='100%' height={300}>
                         <BarChart data={revenueData}>
                             <defs>
-                                {revenueData.map((_, index) => (
-                                    <linearGradient
-                                        key={index}
-                                        id={`gradRevenue${index}`}
-                                        x1="0"
-                                        y1="0"
-                                        x2="0"
-                                        y2="1"
-                                    >
-                                        <stop
-                                            offset="0%"
-                                            stopColor="#1890ff"
-                                            stopOpacity={1 - index * 0.1}
-                                        />
-                                        <stop
-                                            offset="100%"
-                                            stopColor="#91d5ff"
-                                            stopOpacity={0.6 + index * 0.1}
-                                        />
-                                    </linearGradient>
-                                ))}
+                                {generateGradients(revenueData, 'gradRev')}
                             </defs>
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis dataKey="name" />
+                            <CartesianGrid strokeDasharray='3 3' />
+                            <XAxis dataKey='name' />
                             <YAxis />
                             <Tooltip />
                             <Bar
-                                dataKey="value"
-                                shape={(props) => {
-                                    const { x, y, width, height, index } =
-                                        props;
-                                    return (
-                                        <rect
-                                            x={x}
-                                            y={y}
-                                            width={width}
-                                            height={height}
-                                            fill={`url(#gradRevenue${index})`}
-                                            rx={4}
-                                            ry={4}
-                                        />
-                                    );
-                                }}
+                                dataKey='value'
+                                shape={({ x, y, width, height, payload }) => (
+                                    <rect
+                                        x={x}
+                                        y={y}
+                                        width={width}
+                                        height={height}
+                                        fill={getGradientId(
+                                            'gradRev',
+                                            payload.name
+                                        )}
+                                        rx={4}
+                                        ry={4}
+                                    />
+                                )}
                             >
                                 <LabelList
-                                    dataKey="value"
-                                    position="top"
+                                    dataKey='value'
+                                    position='top'
                                     formatter={(v) =>
                                         `${v.toLocaleString()} 円`
                                     }
@@ -91,37 +105,17 @@ const RevenueChartPanel: React.FC = () => {
                     </ResponsiveContainer>
                 </Col>
 
-                {/* ✅ 右：単価（グラデーション付き） */}
+                {/* 単価 */}
                 <Col span={12}>
-                    <h4 style={{ marginBottom: 12 }}>📈 単価</h4>
-                    <ResponsiveContainer width="100%" height={300}>
+                    <h4 style={{ marginBottom: 12 }}>単価</h4>
+                    <ResponsiveContainer width='100%' height={300}>
                         <BarChart data={unitPriceData}>
                             <defs>
-                                {unitPriceData.map((_, index) => (
-                                    <linearGradient
-                                        key={index}
-                                        id={`gradUnit${index}`}
-                                        x1="0"
-                                        y1="0"
-                                        x2="0"
-                                        y2="1"
-                                    >
-                                        <stop
-                                            offset="0%"
-                                            stopColor="#faad14"
-                                            stopOpacity={1 - index * 0.1}
-                                        />
-                                        <stop
-                                            offset="100%"
-                                            stopColor="#fadb14"
-                                            stopOpacity={0.5 + index * 0.1}
-                                        />
-                                    </linearGradient>
-                                ))}
+                                {generateGradients(unitPriceData, 'gradUnit')}
                             </defs>
-                            <CartesianGrid strokeDasharray="3 3" />
+                            <CartesianGrid strokeDasharray='3 3' />
                             <XAxis
-                                dataKey="name"
+                                dataKey='name'
                                 interval={0}
                                 tick={{
                                     fontSize: 12,
@@ -132,26 +126,25 @@ const RevenueChartPanel: React.FC = () => {
                             <YAxis />
                             <Tooltip />
                             <Bar
-                                dataKey="value"
-                                shape={(props) => {
-                                    const { x, y, width, height, index } =
-                                        props;
-                                    return (
-                                        <rect
-                                            x={x}
-                                            y={y}
-                                            width={width}
-                                            height={height}
-                                            fill={`url(#gradUnit${index})`}
-                                            rx={4}
-                                            ry={4}
-                                        />
-                                    );
-                                }}
+                                dataKey='value'
+                                shape={({ x, y, width, height, payload }) => (
+                                    <rect
+                                        x={x}
+                                        y={y}
+                                        width={width}
+                                        height={height}
+                                        fill={getGradientId(
+                                            'gradUnit',
+                                            payload.name
+                                        )}
+                                        rx={4}
+                                        ry={4}
+                                    />
+                                )}
                             >
                                 <LabelList
-                                    dataKey="value"
-                                    position="top"
+                                    dataKey='value'
+                                    position='top'
                                     formatter={(v) =>
                                         `${v.toLocaleString()} 円`
                                     }
