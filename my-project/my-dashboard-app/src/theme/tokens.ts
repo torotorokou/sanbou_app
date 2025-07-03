@@ -8,6 +8,20 @@ export const customTokens = {
     colorWarning: '#f59e0b',
     colorInfo: '#3b82f6',
 
+    // 管理表ダッシュボード
+    // src/theme/tokens.ts
+
+    // 🚀 カテゴリ別の円グラフカラー
+    colorCategoryA: '#10b981', // A：ブランドグリーン
+    colorCategoryB: '#3b82f6', // B：ブルー
+    colorCategoryC: '#6366f1', // C：パープル
+    colorCategoryD: '#f59e0b', // D：オレンジ
+    colorCategoryE: '#f43f5e', // E：ピンクレッド
+    colorCategoryF: '#a3a3a3', // F：グレー
+
+    // ダウンロードボタン
+    colorDownloadButton: '#22c55e', // 💡 青系など任意の色
+
     // 背景色（ダッシュボード用に明るめ調整）
     colorBgBase: '#f9fefb',
     colorBgLayout: '#eef5f0',

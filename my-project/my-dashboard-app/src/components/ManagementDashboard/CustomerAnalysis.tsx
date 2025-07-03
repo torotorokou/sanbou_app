@@ -2,14 +2,15 @@
 import React from 'react';
 import { Card, Row, Col } from 'antd';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
+import { customTokens } from '@/theme/tokens';
 
 const COLORS = [
-    '#1890ff',
-    '#13c2c2',
-    '#52c41a',
-    '#faad14',
-    '#f5222d',
-    '#722ed1',
+    customTokens.colorCategoryA,
+    customTokens.colorCategoryB,
+    customTokens.colorCategoryC,
+    customTokens.colorCategoryD,
+    customTokens.colorCategoryE,
+    customTokens.colorCategoryF,
 ];
 
 const CATEGORIES = [
@@ -66,17 +67,17 @@ const renderLegend = () => (
 );
 
 const renderPieChart = (data: any[]) => (
-    <ResponsiveContainer width="100%" height={250}>
+    <ResponsiveContainer width='100%' height={250}>
         <PieChart>
             <Pie
                 startAngle={90}
                 endAngle={-270}
                 data={data}
-                cx="50%"
-                cy="50%"
+                cx='50%'
+                cy='50%'
                 outerRadius={80}
                 label
-                dataKey="value"
+                dataKey='value'
             >
                 {data.map((entry, index) => (
                     <Cell
@@ -92,7 +93,7 @@ const renderPieChart = (data: any[]) => (
 
 const CustomerAnalysisPanel: React.FC = () => {
     return (
-        <Card title="👥 顧客分析" style={{ height: '100%' }}>
+        <Card title='👥 顧客分析' style={{ height: '100%' }}>
             <Row gutter={24}>
                 {/* 凡例 */}
                 <Col span={6}>
