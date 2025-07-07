@@ -25,8 +25,7 @@ const Sidebar: React.FC<{
     const location = useLocation();
 
     const currentPath = location.pathname;
-    const selectedKey = currentPath.split('/').slice(1).join('-');
-    const openKey = currentPath.split('/')[1];
+    const selectedKey = currentPath.replace(/^\//, '').replace(/\//g, '-');
 
     return (
         <Sider
@@ -67,7 +66,7 @@ const Sidebar: React.FC<{
                 theme='dark'
                 className='custom-sider-menu'
                 selectedKeys={[selectedKey]}
-                openKeys={[openKey]}
+                defaultOpenKeys={['dashboardGroup', 'report', 'management']}
                 style={{
                     height: '100%',
                     backgroundColor: 'transparent',

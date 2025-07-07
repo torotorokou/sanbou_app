@@ -1,41 +1,32 @@
 import React, { useState } from 'react';
 import { ConfigProvider, Typography, Spin, Table } from 'antd';
 import jaJP from 'antd/locale/ja_JP';
-import dayjs, { Dayjs } from 'dayjs';
+import dayjs from 'dayjs';
 import 'dayjs/locale/ja';
 import ReportManagePageLayout from '@/components/Report/common/ReportManagePageLayout';
 import ReportStepperModal from '@/components/Report/common/ReportStepperModal';
+import ReportStepIndicator from '@/components/Report/common/ReportStepIndicator';
 import type { UploadProps } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 
 dayjs.locale('ja');
 
-type ReportRow = {
-    key: string;
-    工場: string;
-    搬入量: number;
-    搬出量: number;
-};
-
-const columns: ColumnsType<ReportRow> = [
-    { title: '工場', dataIndex: '工場', key: '工場' },
-    { title: '搬入量', dataIndex: '搬入量', key: '搬入量' },
-    { title: '搬出量', dataIndex: '搬出量', key: '搬出量' },
-];
-
 const ReportFactory: React.FC = () => {
-    const [selectedDate, setSelectedDate] = useState<Dayjs | null>(null);
     const [shipFile, setShipFile] = useState<File | null>(null);
     const [yardFile, setYardFile] = useState<File | null>(null);
     const [receiveFile, setReceiveFile] = useState<File | null>(null);
-    const [csvData, setCsvData] = useState<ReportRow[]>([]);
-    const [finalized, setFinalized] = useState(false);
 
+    const [workerData, setWorkerData] = useState<WorkerRow[]>([]);
+    const [valuableData, setValuableData] = useState<ValuableRow[]>([]);
+    const [shipmentData, setShipmentData] = useState<ShipmentRow[]>([]);
+
+    const [finalized, setFinalized] = useState(false);
     const [modalOpen, setModalOpen] = useState(false);
     const [currentStep, setCurrentStep] = useState(0);
     const [loading, setLoading] = useState(false);
+    const [pdfUrl, setPdfUrl] = useState<string | null>(null);
 
-    const readyToCreate = selectedDate !== null || shipFile !== null;
+    const readyToCreate = shipFile !== null;
 
     const makeUploadProps = (
         label: string,
@@ -49,44 +40,64 @@ const ReportFactory: React.FC = () => {
             reader.onload = (e) => {
                 const text = e.target?.result as string;
                 const rows = text.split('\n').map((row) => row.split(','));
-                const data: ReportRow[] = rows
-                    .slice(1)
-                    .filter((r) => r.length >= 3)
-                    .map((cols, i) => ({
+                const body = rows.slice(1);
+
+                if (label === '出荷CSV') {
+                    const parsed: ShipmentRow[] = body.map((cols, i) => ({
                         key: i.toString(),
-                        工場: cols[0],
-                        搬入量: parseFloat(cols[1]),
-                        搬出量: parseFloat(cols[2]),
+                        商品名: cols[0],
+                        出荷先: cols[1],
+                        数量: parseInt(cols[2]),
                     }));
-                setCsvData(data);
+                    setShipmentData(parsed);
+                } else if (label === 'ヤードCSV') {
+                    const parsed: WorkerRow[] = body.map((cols, i) => ({
+                        key: i.toString(),
+                        氏名: cols[0],
+                        所属: cols[1],
+                        出勤区分: cols[2],
+                    }));
+                    setWorkerData(parsed);
+                } else if (label === '受入CSV') {
+                    const parsed: ValuableRow[] = body.map((cols, i) => ({
+                        key: i.toString(),
+                        品目: cols[0],
+                        重量: parseFloat(cols[1]),
+                        単価: parseFloat(cols[2]),
+                    }));
+                    setValuableData(parsed);
+                }
             };
             reader.readAsText(file);
             return false;
         },
     });
 
-    const handleGenerate = () => {
+    const handleGenerate = async () => {
         setModalOpen(true);
         setCurrentStep(1);
         setLoading(true);
 
-        setTimeout(() => {
-            setLoading(false);
-            setFinalized(true);
-            setCurrentStep(2);
+        const dummyUrl = '/factory_report.pdf';
+        setPdfUrl(dummyUrl);
 
-            setTimeout(() => {
-                setModalOpen(false);
-                setCurrentStep(0);
-            }, 1000);
-        }, 2000);
+        setLoading(false);
+        setFinalized(true);
+        setCurrentStep(2);
+
+        setTimeout(() => {
+            setModalOpen(false);
+            setCurrentStep(0);
+        }, 1000);
     };
 
     return (
         <ConfigProvider locale={jaJP}>
+            <ReportStepIndicator currentStep={currentStep} />
+
             <ReportStepperModal
                 open={modalOpen}
-                steps={['データ選択', 'プレビュー確認', '完了']}
+                steps={['データ選択', 'PDF生成中', '完了']}
                 currentStep={currentStep}
                 onNext={() => {
                     if (currentStep === 2) {
@@ -97,33 +108,21 @@ const ReportFactory: React.FC = () => {
             >
                 {currentStep === 0 && (
                     <Typography.Text>
-                        帳簿を作成する準備が整いました。次へ進んでください。
+                        帳簿を作成する準備が整いました。
                     </Typography.Text>
                 )}
-                {currentStep === 1 &&
-                    (loading ? (
-                        <Spin tip='帳簿を作成中です...' />
-                    ) : (
-                        <Table
-                            columns={columns}
-                            dataSource={csvData}
-                            pagination={false}
-                            bordered
-                            size='small'
-                        />
-                    ))}
+                {currentStep === 1 && loading && (
+                    <Spin tip='帳簿をPDFに変換中です...' />
+                )}
                 {currentStep === 2 && (
                     <Typography.Text type='success'>
-                        ✅ 帳簿が作成されました。ダウンロードしてください。
+                        ✅ PDF帳簿が作成されました。
                     </Typography.Text>
                 )}
             </ReportStepperModal>
 
             <ReportManagePageLayout
-                title='📅 工場日報'
                 onGenerate={handleGenerate}
-                calendarDate={selectedDate}
-                onDateChange={setSelectedDate}
                 uploadFiles={[
                     { label: '出荷CSV', file: shipFile, onChange: setShipFile },
                     {
@@ -139,40 +138,25 @@ const ReportFactory: React.FC = () => {
                 ]}
                 makeUploadProps={makeUploadProps}
                 finalized={finalized}
-                readyToCreate={readyToCreate} // ✅ これを渡す
+                readyToCreate={readyToCreate}
+                pdfUrl={pdfUrl}
             >
-                <div>
-                    <Typography.Title level={5}>👷 出勤者一覧</Typography.Title>
-                    <Table
-                        columns={columns}
-                        dataSource={csvData}
-                        pagination={false}
-                        bordered
-                        size='small'
-                    />
-
-                    <Typography.Title level={5} style={{ marginTop: 24 }}>
-                        💰 有価物一覧
-                    </Typography.Title>
-                    <Table
-                        columns={columns}
-                        dataSource={csvData}
-                        pagination={false}
-                        bordered
-                        size='small'
-                    />
-
-                    <Typography.Title level={5} style={{ marginTop: 24 }}>
-                        📦 出荷情報
-                    </Typography.Title>
-                    <Table
-                        columns={columns}
-                        dataSource={csvData}
-                        pagination={false}
-                        bordered
-                        size='small'
-                    />
-                </div>
+                {pdfUrl ? (
+                    <div>
+                        <iframe
+                            src={pdfUrl}
+                            style={{
+                                width: '100%',
+                                height: '80vh',
+                                border: '1px solid #ccc',
+                            }}
+                        />
+                    </div>
+                ) : (
+                    <Typography.Text type='secondary'>
+                        帳簿を作成するとここにPDFが表示されます。
+                    </Typography.Text>
+                )}
             </ReportManagePageLayout>
         </ConfigProvider>
     );

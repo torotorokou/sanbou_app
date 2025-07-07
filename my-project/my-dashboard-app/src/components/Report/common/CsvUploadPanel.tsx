@@ -1,8 +1,6 @@
-// src/components/Reportcommon/CsvUploadPanel.tsx
-
-import React from 'react';
-import { Upload, Button, Typography, Card } from 'antd';
-import { UploadOutlined } from '@ant-design/icons';
+import React, { useState } from 'react';
+import { Upload, Typography, Card } from 'antd';
+import { InboxOutlined } from '@ant-design/icons';
 import type { UploadProps } from 'antd';
 import { customTokens } from '@/theme/tokens';
 
@@ -24,9 +22,11 @@ const CsvUploadPanel: React.FC<CsvUploadPanelProps> = ({
     files,
     makeUploadProps,
 }) => {
+    const [hoveringIndex, setHoveringIndex] = useState<number | null>(null);
+
     return (
         <Card
-            size="small"
+            size='small'
             title={
                 <Typography.Title level={5} style={{ margin: 0 }}>
                     📂 CSVアップロード
@@ -35,54 +35,91 @@ const CsvUploadPanel: React.FC<CsvUploadPanelProps> = ({
             style={{
                 borderRadius: 12,
                 backgroundColor: customTokens.colorBgBase,
+                width: '100%',
+                maxHeight: 850,
+                overflowY: 'auto',
             }}
         >
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                {files.map(({ label, file, onChange }) => (
-                    <div
-                        key={label}
-                        style={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: 4,
-                        }}
-                    >
-                        <div
-                            style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: 12,
-                            }}
-                        >
-                            <Typography.Text style={{ width: 80 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+                {files.map(({ label, file, onChange }, index) => {
+                    const isHovering = hoveringIndex === index;
+
+                    return (
+                        <div key={label}>
+                            <Typography.Text
+                                strong
+                                style={{ fontSize: 14, marginBottom: 4 }}
+                            >
                                 {label}
                             </Typography.Text>
-                            <Upload {...makeUploadProps(label, onChange)}>
-                                <Button
-                                    icon={<UploadOutlined />}
-                                    type="default"
-                                    size="middle"
+
+                            <Upload.Dragger
+                                {...makeUploadProps(label, onChange)}
+                                accept='.csv'
+                                maxCount={1}
+                                style={{
+                                    height: 160, // ✅ 高さはこのまま
+                                    padding: 12,
+                                    fontSize: 13,
+                                    lineHeight: 1.5,
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    justifyContent: 'center',
+                                    alignItems: 'center',
+                                    textAlign: 'center',
+                                    borderRadius: 8,
+                                    backgroundColor: isHovering
+                                        ? '#f0fdf4'
+                                        : '#fafafa',
+                                    borderColor: isHovering
+                                        ? '#22c55e'
+                                        : '#d9d9d9',
+                                    borderStyle: 'dashed',
+                                    borderWidth: 1,
+                                    boxShadow: isHovering
+                                        ? '0 2px 8px rgba(34, 197, 94, 0.15)'
+                                        : undefined,
+                                    transition: 'all 0.2s ease-in-out',
+                                }}
+                                onMouseEnter={() => setHoveringIndex(index)}
+                                onMouseLeave={() => setHoveringIndex(null)}
+                            >
+                                <div
+                                    style={{
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        alignItems: 'center',
+                                        gap: 4,
+                                    }}
                                 >
-                                    アップロード
-                                </Button>
-                            </Upload>
+                                    <InboxOutlined
+                                        style={{
+                                            fontSize: 22,
+                                            marginBottom: 4,
+                                        }}
+                                    />
+                                    <Typography.Text style={{ fontSize: 13 }}>
+                                        ファイルを選択またはドロップ
+                                    </Typography.Text>
+                                    <Typography.Text
+                                        type='secondary'
+                                        style={{ fontSize: 12 }}
+                                    >
+                                        {file?.name ? (
+                                            <strong
+                                                style={{ color: '#16734f' }}
+                                            >
+                                                {file.name}
+                                            </strong>
+                                        ) : (
+                                            'ファイルが未選択です'
+                                        )}
+                                    </Typography.Text>
+                                </div>
+                            </Upload.Dragger>
                         </div>
-                        <div
-                            style={{
-                                minHeight: 22,
-                                marginLeft: 92,
-                                background: file ? '#f0fdf4' : undefined,
-                                border: file ? '1px solid #86efac' : undefined,
-                                borderRadius: file ? 6 : undefined,
-                                padding: file ? '2px 8px' : undefined,
-                                fontSize: 12,
-                                color: '#166534',
-                            }}
-                        >
-                            {file?.name || '　'}
-                        </div>
-                    </div>
-                ))}
+                    );
+                })}
             </div>
         </Card>
     );

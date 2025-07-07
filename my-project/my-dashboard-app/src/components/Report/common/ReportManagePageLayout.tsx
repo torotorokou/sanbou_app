@@ -1,10 +1,8 @@
 import React from 'react';
 import { Typography, Button } from 'antd';
 import { PlayCircleOutlined, DownloadOutlined } from '@ant-design/icons';
-import CalendarSelector from '@/components/Report/common/CalendarSelector';
 import CsvUploadPanel from '@/components/Report/common/CsvUploadPanel';
 import { customTokens } from '@/theme/tokens';
-import type { Dayjs } from 'dayjs';
 import type { UploadProps } from 'antd';
 import VerticalActionButton from '@/components/ui/VerticalActionButton';
 
@@ -17,27 +15,25 @@ export type CsvFileType = {
 type ReportPageLayoutProps = {
     title: string;
     onGenerate: () => void;
-    calendarDate: Dayjs | null;
-    onDateChange: (date: Dayjs) => void;
     uploadFiles: CsvFileType[];
     makeUploadProps: (
         label: string,
         setter: (file: File) => void
     ) => UploadProps;
     finalized: boolean;
-    readyToCreate: boolean; // ✅ 新たに追加
+    readyToCreate: boolean;
+    pdfUrl?: string | null; // ✅ 追加
     children?: React.ReactNode;
 };
 
 const ReportManagePageLayout: React.FC<ReportPageLayoutProps> = ({
     title,
     onGenerate,
-    calendarDate,
-    onDateChange,
     uploadFiles,
     makeUploadProps,
     finalized,
     readyToCreate,
+    pdfUrl,
     children,
 }) => {
     return (
@@ -52,22 +48,18 @@ const ReportManagePageLayout: React.FC<ReportPageLayoutProps> = ({
                     marginTop: 16,
                 }}
             >
-                {/* 左パネル */}
+                {/* 左パネル：CSVアップロード領域拡大 */}
                 <div
                     style={{
                         display: 'flex',
                         flexDirection: 'column',
                         gap: 16,
-                        width: 320,
+                        width: 400,
                     }}
                 >
                     <Typography.Title level={5}>
                         📂 データセットの準備
                     </Typography.Title>
-                    <CalendarSelector
-                        selectedDate={calendarDate}
-                        onSelect={onDateChange}
-                    />
                     <Typography.Paragraph
                         style={{
                             margin: 0,
@@ -75,16 +67,14 @@ const ReportManagePageLayout: React.FC<ReportPageLayoutProps> = ({
                             fontSize: 12,
                             color: '#666',
                         }}
-                    >
-                        📅 カレンダーまたは 📂 CSV を選択してください
-                    </Typography.Paragraph>
+                    ></Typography.Paragraph>
                     <CsvUploadPanel
                         files={uploadFiles}
                         makeUploadProps={makeUploadProps}
                     />
                 </div>
 
-                {/* 中央：ボタン */}
+                {/* 中央：帳簿作成ボタン */}
                 <div
                     style={{
                         display: 'flex',
@@ -97,25 +87,27 @@ const ReportManagePageLayout: React.FC<ReportPageLayoutProps> = ({
                         icon={<PlayCircleOutlined />}
                         text='帳簿作成'
                         onClick={onGenerate}
-                        disabled={!readyToCreate} // ✅ 外部で制御
+                        disabled={!readyToCreate}
                     />
                 </div>
 
-                {/* 帳票表示 */}
-                <div style={{ flex: 1, overflowY: 'auto' }}>
+                {/* 帳票表示エリア */}
+                <div style={{ flex: 1 }}>
                     <Typography.Title level={4}>
-                        📄 {calendarDate?.format('YYYY年M月D日')} の帳簿
+                        📄 プレビュー画面
                     </Typography.Title>
+
                     {finalized ? (
-                        <div
+                        <iframe
+                            src={pdfUrl}
                             style={{
-                                display: 'flex',
-                                flexDirection: 'column',
-                                gap: 24,
+                                width: '100%',
+                                height: '80vh',
+                                border: '1px solid #ccc',
+                                borderRadius: 8,
+                                boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
                             }}
-                        >
-                            {children}
-                        </div>
+                        />
                     ) : (
                         <Typography.Text type='secondary'>
                             帳簿を作成するとここに表示されます。
@@ -123,7 +115,7 @@ const ReportManagePageLayout: React.FC<ReportPageLayoutProps> = ({
                     )}
                 </div>
 
-                {/* 右端：DL */}
+                {/* 右端：ダウンロードボタン */}
                 <div
                     style={{
                         display: 'flex',
@@ -132,12 +124,14 @@ const ReportManagePageLayout: React.FC<ReportPageLayoutProps> = ({
                         width: 120,
                     }}
                 >
-                    {finalized && (
+                    {finalized && pdfUrl && (
                         <Button
                             icon={<DownloadOutlined />}
                             type='primary'
                             size='large'
                             shape='round'
+                            href={pdfUrl}
+                            download
                             style={{
                                 writingMode: 'vertical-rl',
                                 textOrientation: 'mixed',
