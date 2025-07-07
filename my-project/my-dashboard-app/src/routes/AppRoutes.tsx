@@ -10,6 +10,8 @@ import ReportAverage from '../pages/report/ReportAverage';
 import ReportPrice from '../pages/report/ReportPrice';
 import ReportAdminSheet from '../pages/report/ReportAdminSheet';
 
+import PdfChatBot from '../pages/navi/PdfChatBot';
+
 // ✅ トークンページのインポート
 import TokenPreviewPage from '@/pages/TokenPreviewPage';
 
@@ -26,6 +28,8 @@ const AppRoutes: React.FC = () => (
         <Route path='/report/price' element={<ReportPrice />} />
         <Route path='/report/adminsheet' element={<ReportAdminSheet />} />
 
+        {/* ✅ チャットボットページ */}
+        <Route path='/navi' element={<PdfChatBot />} />
         {/* ✅ トークンプレビュー */}
         <Route path='/token-preview' element={<TokenPreviewPage />} />
         {/* ✅ 404 */}
