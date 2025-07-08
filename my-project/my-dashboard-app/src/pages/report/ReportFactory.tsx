@@ -8,6 +8,7 @@ import ReportStepperModal from '@/components/Report/common/ReportStepperModal';
 import ReportStepIndicator from '@/components/Report/common/ReportStepIndicator';
 import type { UploadProps } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
+import PDFViewer from '@/components/Report/viewer/PDFViewer';
 
 dayjs.locale('ja');
 
@@ -141,22 +142,8 @@ const ReportFactory: React.FC = () => {
                 readyToCreate={readyToCreate}
                 pdfUrl={pdfUrl}
             >
-                {pdfUrl ? (
-                    <div>
-                        <iframe
-                            src={pdfUrl}
-                            style={{
-                                width: '100%',
-                                height: '80vh',
-                                border: '1px solid #ccc',
-                            }}
-                        />
-                    </div>
-                ) : (
-                    <Typography.Text type='secondary'>
-                        帳簿を作成するとここにPDFが表示されます。
-                    </Typography.Text>
-                )}
+                {/* PDFの表示場所 */}
+                <PDFViewer pdfUrl={pdfUrl} />
             </ReportManagePageLayout>
         </ConfigProvider>
     );

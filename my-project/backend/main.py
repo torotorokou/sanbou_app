@@ -5,16 +5,26 @@ import requests
 import os
 from dotenv import load_dotenv
 
+# .envからAPIキーを読み込む
 load_dotenv()
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
+# FastAPIインスタンス作成
 app = FastAPI()
 
+
+# ==========================
+# 🔹 チャットリクエストモデル
+# ==========================
 class ChatRequest(BaseModel):
     query: str
     tags: List[str] = []
     pdf: str = ""
 
+
+# ==========================
+# 🔸 /api/chat : メイン質問応答
+# ==========================
 @app.post("/api/chat")
 def chat(req: ChatRequest):
     prompt = f"""
@@ -24,12 +34,14 @@ def chat(req: ChatRequest):
 関連タグ: {', '.join(req.tags)}
 関連PDF: {req.pdf or '指定なし'}
 
-質問に対して分かりやすく答えてください。
-    """
+質問に対してわかりやすく丁寧に答えてください。
+"""
 
     try:
-        # ✅ 最新版：無料対応の Flash モデル + generateContent 使用
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
+        url = (
+            f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
+            f"?key={GEMINI_API_KEY}"
+        )
 
         response = requests.post(
             url,
@@ -44,8 +56,6 @@ def chat(req: ChatRequest):
         )
         response.raise_for_status()
         data = response.json()
-
-        # ✅ Flash モデルの返答の取り出し
         answer = data["candidates"][0]["content"]["parts"][0]["text"]
 
         return {
@@ -66,3 +76,52 @@ def chat(req: ChatRequest):
             "answer": f"Gemini APIとの通信に失敗しました。\nエラー: {str(e)}",
             "sources": []
         }
+
+
+# ==========================
+# 🔹 /api/intro : 初回説明文取得
+# ==========================
+@app.get("/api/intro")
+def get_intro():
+    prompt = """
+    あなたは、産業廃棄物に関する業務知識をナビゲートする参謀くんです。
+    このアプリの初回説明として、以下の点を盛り込んで、自然な文章と改行で短く説明してください。
+
+    - 自分は、産業廃棄物のプロAIである
+    - 業務知識をサポートできる
+    - ユーザーにカテゴリを選択してもらう導線を促す
+    - フレンドリーかつ丁寧なトーン
+    - こんにちは！など最初の挨拶は飛ばす。
+
+    出力例：
+    「こんにちは！私はPDFに関するあなたの頼れるアシスタント、PDF参謀です！
+    業務に役立つ情報をナビゲートしますので、まずは下のカテゴリから選んでくださいね。」
+    """
+
+    try:
+        url = (
+            f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
+            f"?key={GEMINI_API_KEY}"
+        )
+
+        response = requests.post(
+            url,
+            headers={"Content-Type": "application/json"},
+            json={
+                "contents": [
+                    {
+                        "parts": [{"text": prompt}]
+                    }
+                ]
+            }
+        )
+        response.raise_for_status()
+        data = response.json()
+        message = data["candidates"][0]["content"]["parts"][0]["text"]
+
+        return {"text": message}
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return {"text": f"Gemini APIとの通信に失敗しました。エラー: {str(e)}"}

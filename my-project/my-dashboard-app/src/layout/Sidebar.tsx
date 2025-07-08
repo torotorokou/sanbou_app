@@ -166,7 +166,7 @@ const Sidebar: React.FC<{
                     {
                         key: 'manual',
                         icon: <BookOutlined />,
-                        label: <Link to='/manual'>マニュアル</Link>,
+                        label: <Link to='/manual'>マニュアル一覧</Link>,
                     },
                 ]}
             />
