@@ -35,12 +35,16 @@ const PdfChatBot: React.FC = () => {
         const userMessage: ChatMessage = { role: 'user', content: input };
         setMessages((prev) => [...prev, userMessage]);
 
+        const payload = {
+            query: input,
+            tags,
+            pdf,
+        };
+        console.log('📤 axios送信前 payload:', payload);
+
         try {
-            const res = await axios.post('/api/chat', {
-                query: input,
-                tags,
-                pdf,
-            });
+            const res = await axios.post('/api/chat', payload);
+            console.log('✅ axios応答:', res.data);
 
             if (res.data?.answer) {
                 const botMessage: ChatMessage = {
@@ -51,8 +55,9 @@ const PdfChatBot: React.FC = () => {
                 setMessages((prev) => [...prev, botMessage]);
             }
             setInput('');
-        } catch (err) {
-            console.error('チャット送信エラー', err);
+        } catch (err: any) {
+            console.error('❌ チャット送信エラー:', err.message);
+            console.error('📦 詳細:', err?.response?.data || err);
         } finally {
             setLoading(false);
         }
@@ -182,7 +187,13 @@ const PdfChatBot: React.FC = () => {
                 footer={null}
                 title='📖 PDFプレビュー'
                 width='80%'
-                styles={{ body: { height: '80vh' } }} // ✅ 推奨の書き方
+                styles={{
+                    body: {
+                        height: '80vh',
+                        padding: 0, // ✅ ← これが特に重要（iframeがつぶれるのを防ぐ）
+                        overflow: 'hidden', // ✅ ← iframeがはみ出さないように
+                    },
+                }}
             >
                 {pdfToShow ? (
                     <iframe
@@ -191,7 +202,10 @@ const PdfChatBot: React.FC = () => {
                         src={pdfToShow}
                         width='100%'
                         height='100%'
-                        style={{ border: 'none' }}
+                        style={{
+                            border: 'none',
+                            display: 'block', // ✅ Safari対応などでも有効
+                        }}
                     />
                 ) : (
                     <Empty description='PDFが読み込まれていません' />

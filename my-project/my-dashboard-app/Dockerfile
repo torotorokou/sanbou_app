@@ -1,0 +1,27 @@
+FROM node:20-bullseye
+
+# --- 必須：開発に必要なツールを追加 ---
+RUN apt-get update && apt-get install -y sudo bash git curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# --- ✅ nodeユーザーを作成（UID 1000で VSCode と一致） ---
+RUN id node 2>/dev/null || useradd -m -s /bin/bash -u 1000 node \
+    && echo 'node ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+
+# --- 作業ディレクトリの準備と権限設定 ---
+RUN mkdir -p /app && chown -R node:node /app
+
+# --- nodeユーザーに切り替え ---
+USER node
+WORKDIR /app
+
+# --- 依存関係インストール ---
+COPY --chown=node:node package.json package-lock.json* ./
+RUN npm install
+
+# --- アプリ全体をコピー ---
+COPY --chown=node:node . .
+
+EXPOSE 5173
+CMD ["npx", "vite", "--host", "0.0.0.0"]
+
