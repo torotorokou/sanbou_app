@@ -9,7 +9,9 @@ import ReportBalance from '../pages/report/ReportBalance';
 import ReportAverage from '../pages/report/ReportAverage';
 import ReportPrice from '../pages/report/ReportPrice';
 import ReportAdminSheet from '../pages/report/ReportAdminSheet';
+import ReportPage from '../pages/report/ReportPage'; // ← 追加
 
+// ✅ チャットボットページのインポート
 import PdfChatBot from '../pages/navi/PdfChatBot';
 
 // ✅ トークンページのインポート
@@ -22,11 +24,12 @@ const AppRoutes: React.FC = () => (
         <Route path='/factory' element={<FactoryDashboard />} />
 
         {/* ✅ 帳票ページ群 */}
-        <Route path='/report/daily' element={<ReportFactory />} />
+        <Route path='/report/manage' element={<ReportPage />} />
+        {/* <Route path='/report/daily' element={<ReportFactory />} />
         <Route path='/report/balance' element={<ReportBalance />} />
         <Route path='/report/average' element={<ReportAverage />} />
         <Route path='/report/price' element={<ReportPrice />} />
-        <Route path='/report/adminsheet' element={<ReportAdminSheet />} />
+        <Route path='/report/adminsheet' element={<ReportAdminSheet />} /> */}
 
         {/* ✅ チャットボットページ */}
         <Route path='/navi' element={<PdfChatBot />} />

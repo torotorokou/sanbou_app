@@ -6,7 +6,9 @@ type VerticalActionButtonProps = {
     text: string;
     onClick?: () => void;
     disabled?: boolean;
-    backgroundColor?: string; // 有効時の色
+    backgroundColor?: string;
+    href?: string; // ✅ ダウンロード用のリンク先（あれば <a> に変換）
+    download?: boolean; // ✅ <a download> 属性指定用
 };
 
 const VerticalActionButton: React.FC<VerticalActionButtonProps> = ({
@@ -15,6 +17,8 @@ const VerticalActionButton: React.FC<VerticalActionButtonProps> = ({
     onClick,
     disabled = false,
     backgroundColor = '#10b981',
+    href,
+    download = false,
 }) => {
     const baseStyle: React.CSSProperties = {
         writingMode: 'vertical-rl',
@@ -30,16 +34,20 @@ const VerticalActionButton: React.FC<VerticalActionButtonProps> = ({
         cursor: disabled ? 'not-allowed' : 'pointer',
         backgroundColor: disabled ? '#ccc' : backgroundColor,
         boxShadow: disabled ? 'none' : '0 4px 10px rgba(0, 0, 0, 0.1)',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        textDecoration: 'none',
     };
 
-    return (
+    const button = (
         <Button
             icon={icon}
             type='primary'
             size='large'
             shape='round'
-            onClick={onClick}
             disabled={disabled}
+            onClick={href ? undefined : onClick}
             style={baseStyle}
             onMouseEnter={(e) => {
                 if (!disabled) {
@@ -58,6 +66,14 @@ const VerticalActionButton: React.FC<VerticalActionButtonProps> = ({
         >
             {text}
         </Button>
+    );
+
+    return href ? (
+        <a href={href} download={download} style={{ textDecoration: 'none' }}>
+            {button}
+        </a>
+    ) : (
+        button
     );
 };
 

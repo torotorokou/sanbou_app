@@ -1,44 +1,39 @@
 import React from 'react';
-import { Typography, Button } from 'antd';
-import { PlayCircleOutlined, DownloadOutlined } from '@ant-design/icons';
+import { Typography } from 'antd';
 import CsvUploadPanel from '@/components/Report/common/CsvUploadPanel';
-import { customTokens } from '@/theme/tokens';
-import type { UploadProps } from 'antd';
 import VerticalActionButton from '@/components/ui/VerticalActionButton';
+import { PlayCircleOutlined, DownloadOutlined } from '@ant-design/icons';
+import type { UploadProps } from 'antd';
+import type { CsvFileType } from './types';
 
-export type CsvFileType = {
-    label: string;
-    file: File | null;
-    onChange: (file: File) => void;
-};
-
-type ReportPageLayoutProps = {
-    title: string;
-    onGenerate: () => void;
+export type ReportPageLayoutProps = {
     uploadFiles: CsvFileType[];
     makeUploadProps: (
         label: string,
         setter: (file: File) => void
     ) => UploadProps;
+    onGenerate: () => void;
     finalized: boolean;
     readyToCreate: boolean;
-    pdfUrl?: string | null; // ✅ 追加
-    children?: React.ReactNode;
+    pdfUrl?: string | null;
+    header?: React.ReactNode;
+    preview?: React.ReactNode;
 };
 
 const ReportManagePageLayout: React.FC<ReportPageLayoutProps> = ({
-    title,
-    onGenerate,
     uploadFiles,
     makeUploadProps,
+    onGenerate,
     finalized,
     readyToCreate,
     pdfUrl,
-    children,
+    header,
+    preview,
 }) => {
     return (
         <div style={{ padding: 24 }}>
-            <Typography.Title level={3}>{title}</Typography.Title>
+            {header && <div style={{ marginBottom: 8 }}>{header}</div>}
+
             <div
                 style={{
                     display: 'flex',
@@ -48,7 +43,7 @@ const ReportManagePageLayout: React.FC<ReportPageLayoutProps> = ({
                     marginTop: 16,
                 }}
             >
-                {/* 左パネル：CSVアップロード領域拡大 */}
+                {/* 左：CSVアップロード */}
                 <div
                     style={{
                         display: 'flex',
@@ -67,7 +62,7 @@ const ReportManagePageLayout: React.FC<ReportPageLayoutProps> = ({
                             fontSize: 12,
                             color: '#666',
                         }}
-                    ></Typography.Paragraph>
+                    />
                     <CsvUploadPanel
                         files={uploadFiles}
                         makeUploadProps={makeUploadProps}
@@ -91,76 +86,84 @@ const ReportManagePageLayout: React.FC<ReportPageLayoutProps> = ({
                     />
                 </div>
 
-                {/* 帳票表示エリア */}
-                <div style={{ flex: 1 }}>
-                    <Typography.Title level={4}>
+                {/* 右：プレビュー + ダウンロード */}
+                <div
+                    style={{
+                        flex: 1,
+                        height: '80vh', // ここを調整
+                        display: 'flex',
+                        flexDirection: 'column', // ← 縦並びにする
+                        gap: 16,
+                    }}
+                >
+                    {/* 📄 タイトル */}
+                    <Typography.Title level={4} style={{ marginBottom: 0 }}>
                         📄 プレビュー画面
                     </Typography.Title>
 
-                    {finalized ? (
-                        <iframe
-                            src={pdfUrl}
+                    {/* 📄 プレビューとDLボタンの横並びエリア */}
+                    <div
+                        style={{
+                            display: 'flex',
+                            flex: 1,
+                            gap: 16,
+                            alignItems: 'center',
+                        }}
+                    >
+                        {/* プレビュー領域 */}
+                        <div
                             style={{
-                                width: '100%',
-                                height: '80vh',
+                                flex: 1,
+                                height: '100%',
                                 border: '1px solid #ccc',
                                 borderRadius: 8,
                                 boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
-                            }}
-                        />
-                    ) : (
-                        <Typography.Text type='secondary'>
-                            帳簿を作成するとここに表示されます。
-                        </Typography.Text>
-                    )}
-                </div>
-
-                {/* 右端：ダウンロードボタン */}
-                <div
-                    style={{
-                        display: 'flex',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        width: 120,
-                    }}
-                >
-                    {finalized && pdfUrl && (
-                        <Button
-                            icon={<DownloadOutlined />}
-                            type='primary'
-                            size='large'
-                            shape='round'
-                            href={pdfUrl}
-                            download
-                            style={{
-                                writingMode: 'vertical-rl',
-                                textOrientation: 'mixed',
-                                height: 160,
-                                fontSize: '1.2rem',
-                                backgroundColor:
-                                    customTokens.colorDownloadButton,
-                                color: '#fff',
-                                border: 'none',
-                                borderRadius: '24px',
-                                boxShadow: '0 4px 10px rgba(0, 0, 0, 0.1)',
-                                transition: 'all 0.3s ease',
-                                transform: 'scale(1)',
-                                cursor: 'pointer',
-                            }}
-                            onMouseEnter={(e) => {
-                                e.currentTarget.style.transform = 'scale(1.05)';
-                                e.currentTarget.style.boxShadow =
-                                    '0 6px 16px rgba(0, 0, 0, 0.2)';
-                            }}
-                            onMouseLeave={(e) => {
-                                e.currentTarget.style.transform = 'scale(1)';
-                                e.currentTarget.style.boxShadow =
-                                    '0 4px 10px rgba(0, 0, 0, 0.1)';
+                                display: 'flex',
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                                background: '#fafafa',
+                                overflow: 'hidden',
                             }}
                         >
-                            ダウンロード
-                        </Button>
-                    )}
+                            {finalized && pdfUrl ? (
+                                <iframe
+                                    src={pdfUrl}
+                                    style={{
+                                        width: '100%',
+                                        height: '100%',
+                                        border: 'none',
+                                        borderRadius: 8,
+                                    }}
+                                />
+                            ) : preview ? (
+                                preview
+                            ) : (
+                                <Typography.Text type='secondary'>
+                                    帳簿を作成するとここに表示されます。
+                                </Typography.Text>
+                            )}
+                        </div>
+
+                        {/* ダウンロードボタン */}
+                        {finalized && pdfUrl && (
+                            <div
+                                style={{
+                                    display: 'flex',
+                                    justifyContent: 'center',
+                                    alignItems: 'center',
+                                    width: 120,
+                                }}
+                            >
+                                <VerticalActionButton
+                                    icon={<DownloadOutlined />}
+                                    text='ダウンロード'
+                                    href={pdfUrl}
+                                    download
+                                    backgroundColor='#00b894'
+                                />
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
         </div>

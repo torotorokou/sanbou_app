@@ -96,9 +96,11 @@ const Sidebar: React.FC<{
                         label: '帳票作成',
                         children: [
                             {
-                                key: 'report-daily',
+                                key: 'report',
                                 icon: <FileTextOutlined />,
-                                label: <Link to='/report/daily'>工場日報</Link>,
+                                label: (
+                                    <Link to='/report/manage'>管理業務</Link>
+                                ),
                             },
                             {
                                 key: 'report-balance',

@@ -1,7 +1,5 @@
 import React from 'react';
-import { Steps, Typography } from 'antd';
-
-const { Step } = Steps;
+import { Steps } from 'antd';
 
 type ReportStepIndicatorProps = {
     currentStep: number;
@@ -13,26 +11,15 @@ const ReportStepIndicator: React.FC<ReportStepIndicatorProps> = ({
     return (
         <div
             style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                padding: '16px 24px',
                 background: '#fff',
                 borderRadius: 32,
-                maxWidth: 1200,
-                margin: '0 auto 24px auto',
+                padding: '16px 24px',
+                boxShadow: '0 2px 6px rgba(0,0,0,0.04)',
             }}
         >
-            {/* 左：タイトル */}
-            <Typography.Title level={3} style={{ margin: 0 }}>
-                📘　工場日報
-            </Typography.Title>
-
-            {/* 右：ステップ */}
             <Steps
                 current={currentStep}
                 responsive={false}
-                style={{ flex: 1, marginLeft: 40 }}
                 items={[
                     {
                         title: 'データセットの準備',
