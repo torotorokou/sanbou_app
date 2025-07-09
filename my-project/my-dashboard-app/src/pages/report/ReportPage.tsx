@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import ReportBase from '@/components/Report/ReportBase';
 import ReportHeader from '@/components/Report/common/ReportHeader';
 import { factoryConfig, attendanceConfig } from './reportConfigs';
@@ -11,17 +11,13 @@ const configMap = {
 
 type ReportKey = keyof typeof configMap;
 
-// ★ CSVはラベルごとにグローバルで管理
+// CSVはラベルごとにグローバルで管理
 type CsvFiles = { [csvLabel: string]: File | null };
 
 const ReportPage: React.FC = () => {
     const [selected, setSelected] = useState<ReportKey>('factory');
     const [currentStep, setCurrentStep] = useState(0);
-
-    // ★ CSVアップロード管理（ラベルごとに保持、帳票関係なし）
     const [csvFiles, setCsvFiles] = useState<CsvFiles>({});
-
-    // 帳票進行・UI制御state
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [finalized, setFinalized] = useState(false);
     const [modalOpen, setModalOpen] = useState(false);
@@ -30,14 +26,14 @@ const ReportPage: React.FC = () => {
     // 帳票切り替え時はCSV以外リセット
     const handleReportChange = (val: string) => {
         setSelected(val as ReportKey);
-        setCurrentStep(0);
         setPreviewUrl(null);
         setFinalized(false);
         setModalOpen(false);
         setLoading(false);
+        // CSVは保持したまま
     };
 
-    // ★ CSVアップロード処理（ラベルのみで管理）
+    // CSVアップロード処理
     const handleCsvUpload = (label: string, file: File | null) => {
         setCsvFiles((prev) => ({
             ...prev,
@@ -45,12 +41,36 @@ const ReportPage: React.FC = () => {
         }));
     };
 
-    // ★ 現在の帳票で必要なラベルだけを抽出して渡す
+    // 現在の帳票で必要なラベルだけを抽出して渡す
     const selectedConfig = configMap[selected];
     const currentCsvFiles: CsvFiles = {};
     selectedConfig.csvConfigs.forEach((cfg) => {
         currentCsvFiles[cfg.label] = csvFiles[cfg.label] ?? null;
     });
+
+    // ★ 状態とcurrentStepを自動連動させる
+    useEffect(() => {
+        // すべてのCSVが揃っていなければ ステップ0（アップロード待ち）
+        const allFilesReady = selectedConfig.csvConfigs.every(
+            (cfg) => csvFiles[cfg.label]
+        );
+        if (!allFilesReady) {
+            setCurrentStep(0);
+            return;
+        }
+        // CSV揃い済み、まだ帳票未生成
+        if (allFilesReady && !finalized) {
+            setCurrentStep(1);
+            return;
+        }
+        // 帳票生成済み・プレビューあり
+        if (finalized && previewUrl) {
+            setCurrentStep(2);
+            return;
+        }
+        // その他は明示的に何もしない（念のため0）
+        setCurrentStep(0);
+    }, [selected, csvFiles, finalized, previewUrl, selectedConfig.csvConfigs]);
 
     return (
         <>
@@ -74,7 +94,6 @@ const ReportPage: React.FC = () => {
                 setModalOpen={setModalOpen}
                 loading={loading}
                 setLoading={setLoading}
-                // 必要なものがあればpropsを追加
             />
         </>
     );

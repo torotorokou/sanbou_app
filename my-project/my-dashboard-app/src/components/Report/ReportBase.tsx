@@ -49,7 +49,7 @@ const ReportBase: React.FC<ReportBaseProps> = ({
     // すべてのCSVが揃っていれば帳票作成可
     const readyToCreate = csvConfigs.every((cfg) => files[cfg.label]);
 
-    // ファイルアップロード時のUploadPropsを生成
+    // ファイルアップロード用props
     const makeUploadProps = (
         label: string,
         parser: (csvText: string) => void
@@ -71,21 +71,19 @@ const ReportBase: React.FC<ReportBaseProps> = ({
     // 帳票生成処理
     const handleGenerate = async () => {
         setModalOpen(true);
-        setCurrentStep(1);
         setLoading(true);
+
+        // 親useEffectでcurrentStep自動制御するため、ここでは明示的なsetCurrentStepを省略可
         try {
             const url = await generatePdf();
             setPreviewUrl(url);
             setFinalized(true);
-            setCurrentStep(2);
         } catch (err) {
             console.error('PDF生成エラー:', err);
-            setCurrentStep(0);
         } finally {
             setLoading(false);
             setTimeout(() => {
                 setModalOpen(false);
-                setCurrentStep(0);
             }, 1000);
         }
     };
