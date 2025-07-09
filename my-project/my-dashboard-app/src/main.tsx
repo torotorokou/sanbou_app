@@ -7,11 +7,15 @@ import { generateCssVars } from './theme/cssVars';
 import 'antd/dist/reset.css';
 import './index.css';
 
-// CSS変数を<head>に注入
+// ① customTokens（ブランドカラー等）からCSS変数を作る
+const cssVars = generateCssVars();
+
+// ② そのCSS変数を<head>にstyleタグで注入
 const styleTag = document.createElement('style');
-styleTag.innerHTML = generateCssVars();
+styleTag.innerHTML = cssVars;
 document.head.appendChild(styleTag);
 
+// ③ Ant DesignのConfigProviderにも customTokens を渡しておく（推奨）
 ReactDOM.createRoot(document.getElementById('root')!).render(
     <React.StrictMode>
         <ConfigProvider theme={{ token: customTokens }}>

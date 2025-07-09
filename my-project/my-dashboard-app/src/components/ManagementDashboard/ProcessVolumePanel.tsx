@@ -1,7 +1,6 @@
 import React from 'react';
 import { Card, Row, Col } from 'antd';
 import StatisticCard from '../ui/StatisticCard';
-import { InboxOutlined } from '@ant-design/icons';
 
 const ProcessVolumePanel: React.FC = () => {
     const items = [
@@ -13,15 +12,15 @@ const ProcessVolumePanel: React.FC = () => {
     ];
 
     return (
-        <Card title="⚙️ 工程別処理量" style={{ height: '100%', marginTop: 24 }}>
-            <Row gutter={0} justify="space-between">
+        <Card title='⚙️ 工程別処理量' style={{ height: '100%', marginTop: 24 }}>
+            <Row gutter={0} justify='space-between'>
                 {items.map((item, index) => (
                     <Col key={index} span={Math.floor(24 / items.length)}>
                         <StatisticCard
                             title={item.title}
                             value={item.value}
                             diff={item.diff}
-                            suffix="kg"
+                            suffix='kg'
                             // prefix={<InboxOutlined />}
                         />
                     </Col>

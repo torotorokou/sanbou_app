@@ -58,30 +58,39 @@ const SummaryPanel: React.FC = () => {
 
     return (
         <Card
-            title="🚛 月間搬入サマリー"
-            styles={{ header: { fontWeight: 'bold' } }}
+            title={
+                <span style={{ fontWeight: 'bold', fontSize: 16 }}>
+                    🚛 月間搬入サマリー
+                </span>
+            }
+            bodyStyle={{ padding: 12 }} // ← 余白を小さく
         >
-            <Row gutter={24}>
+            <Row gutter={16}>
                 <Col span={12}>
-                    <h4>🚚 搬入台数</h4>
+                    <h4 style={{ marginBottom: 8, fontSize: 14 }}>
+                        🚚 搬入台数
+                    </h4>
                     {driveData.map((item, index) => (
                         <div
                             key={index}
                             style={{
                                 display: 'flex',
                                 alignItems: 'center',
-                                marginBottom: 16,
-                                gap: 16,
+                                marginBottom: 8, // ← 間隔を詰める
+                                gap: 8, // ← gapも小さく
                             }}
                         >
-                            <div style={{ minWidth: 130 }}>
+                            <div style={{ minWidth: 100 }}>
+                                {' '}
+                                {/* ← 幅も小さく */}
                                 <AnimatedStatistic
                                     title={item.title}
                                     value={item.value}
                                     suffix={item.suffix}
                                     prefix={item.prefix}
+                                    fontSize={15} // ← ここも必要なら小さく
                                 />
-                                <div style={{ marginTop: 4 }}>
+                                <div style={{ marginTop: 2 }}>
                                     <DiffIndicator
                                         diff={item.diff}
                                         unit={item.suffix}
@@ -91,7 +100,7 @@ const SummaryPanel: React.FC = () => {
                             <div style={{ flex: 1 }}>
                                 <TrendChart
                                     data={item.trend}
-                                    height={60}
+                                    height={60} // ← グラフも小型化
                                     minY={item.minY}
                                     maxY={item.maxY}
                                 />
@@ -101,25 +110,28 @@ const SummaryPanel: React.FC = () => {
                 </Col>
 
                 <Col span={12}>
-                    <h4>⚖️ 搬入・搬出量</h4>
+                    <h4 style={{ marginBottom: 8, fontSize: 14 }}>
+                        ⚖️ 搬入・搬出量
+                    </h4>
                     {weightData.map((item, index) => (
                         <div
                             key={index}
                             style={{
                                 display: 'flex',
                                 alignItems: 'center',
-                                marginBottom: 16,
-                                gap: 16,
+                                marginBottom: 8,
+                                gap: 8,
                             }}
                         >
-                            <div style={{ minWidth: 130 }}>
+                            <div style={{ minWidth: 100 }}>
                                 <AnimatedStatistic
                                     title={item.title}
                                     value={item.value}
                                     suffix={item.suffix}
                                     prefix={item.prefix}
+                                    fontSize={15}
                                 />
-                                <div style={{ marginTop: 4 }}>
+                                <div style={{ marginTop: 2 }}>
                                     <DiffIndicator
                                         diff={item.diff}
                                         unit={item.suffix}

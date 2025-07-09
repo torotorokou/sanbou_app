@@ -1,0 +1,4 @@
+fastapi
+uvicorn
+requests
+python-dotenv  # .envから読み込むなら

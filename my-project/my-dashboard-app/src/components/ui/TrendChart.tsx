@@ -21,11 +21,9 @@ type Props = {
 const CustomTooltip = ({
     active,
     payload,
-    label,
 }: {
     active?: boolean;
     payload?: any;
-    label?: number;
 }) => {
     if (active && payload && payload.length > 0) {
         const index = payload[0]?.payload?.x;
@@ -67,23 +65,23 @@ const TrendChart: React.FC<Props> = ({
     }));
 
     return (
-        <ResponsiveContainer width="100%" height={height}>
+        <ResponsiveContainer width='100%' height={height}>
             <AreaChart data={chartData}>
                 <defs>
                     <linearGradient
-                        id="sparklineGradient"
-                        x1="0"
-                        y1="0"
-                        x2="0"
-                        y2="1"
+                        id='sparklineGradient'
+                        x1='0'
+                        y1='0'
+                        x2='0'
+                        y2='1'
                     >
                         <stop
-                            offset="0%"
+                            offset='0%'
                             stopColor={fillColor}
                             stopOpacity={0.3}
                         />
                         <stop
-                            offset="100%"
+                            offset='100%'
                             stopColor={fillColor}
                             stopOpacity={0}
                         />
@@ -96,7 +94,7 @@ const TrendChart: React.FC<Props> = ({
                 />
 
                 <XAxis
-                    dataKey="x"
+                    dataKey='x'
                     axisLine={false}
                     tickLine={false}
                     tick={{ fontSize: 10 }}
@@ -109,11 +107,11 @@ const TrendChart: React.FC<Props> = ({
                 <Tooltip content={<CustomTooltip />} />
 
                 <Area
-                    type="monotone"
-                    dataKey="y"
+                    type='monotone'
+                    dataKey='y'
                     stroke={strokeColor}
                     strokeWidth={2}
-                    fill="url(#sparklineGradient)"
+                    fill='url(#sparklineGradient)'
                     dot={false}
                 />
             </AreaChart>

@@ -13,8 +13,15 @@ const MainLayout: React.FC = () => {
     return (
         <Layout style={{ minHeight: '100vh' }}>
             <Sidebar collapsed={collapsed} setCollapsed={setCollapsed} />
-            <Layout>
-                <Content style={{ padding: '24px' }}>
+            <Layout style={{ height: '100%' }}>
+                <Content
+                    style={{
+                        height: '100vh', // ✅ 画面全体を埋める
+                        overflowY: 'auto', // ✅ Contentだけスクロール
+                        padding: '24px',
+                        backgroundColor: token.colorBgLayout,
+                    }}
+                >
                     <AppRoutes />
                 </Content>
             </Layout>

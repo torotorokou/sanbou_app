@@ -1,7 +1,6 @@
 import React from 'react';
 import { Card, Row, Col } from 'antd';
 import StatisticCard from '../ui/StatisticCard'; // ← 共通カード名に統一
-import { AppstoreOutlined } from '@ant-design/icons';
 
 const BlockCountPanel: React.FC = () => {
     const blockData = [
@@ -13,15 +12,15 @@ const BlockCountPanel: React.FC = () => {
     ];
 
     return (
-        <Card title="🧱 ブロック数" style={{ height: '100%', marginTop: 24 }}>
-            <Row gutter={0} justify="space-between">
+        <Card title='🧱 ブロック数' style={{ height: '100%', marginTop: 24 }}>
+            <Row gutter={0} justify='space-between'>
                 {blockData.map((item, index) => (
                     <Col key={index} span={Math.floor(24 / blockData.length)}>
                         <StatisticCard
                             title={item.title}
                             value={item.value}
                             diff={item.diff}
-                            suffix="個"
+                            suffix='個'
                             // prefix={<AppstoreOutlined />}
                         />
                     </Col>
