@@ -18,7 +18,7 @@ export type ReportPageLayoutProps = {
     readyToCreate: boolean;
     pdfUrl?: string | null;
     header?: React.ReactNode;
-    children?: React.ReactNode; // ✅ 追加
+    children?: React.ReactNode;
 };
 
 const ReportManagePageLayout: React.FC<ReportPageLayoutProps> = ({
@@ -29,7 +29,7 @@ const ReportManagePageLayout: React.FC<ReportPageLayoutProps> = ({
     readyToCreate,
     pdfUrl,
     header,
-    children, // ✅ 追加
+    children,
 }) => {
     return (
         <div style={{ padding: 24 }}>
@@ -116,26 +116,14 @@ const ReportManagePageLayout: React.FC<ReportPageLayoutProps> = ({
                                 border: '1px solid #ccc',
                                 borderRadius: 8,
                                 boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+                                background: '#fafafa',
+                                overflow: 'hidden',
                                 display: 'flex',
                                 justifyContent: 'center',
                                 alignItems: 'center',
-                                background: '#fafafa',
-                                overflow: 'hidden',
                             }}
                         >
-                            {finalized && pdfUrl ? (
-                                <div style={{ padding: 24, width: '100%' }}>
-                                    <iframe
-                                        src='/factory_report.pdf'
-                                        style={{
-                                            width: '100%',
-                                            height: '80vh',
-                                            border: '2px solid red',
-                                        }}
-                                        title='test-pdf'
-                                    />
-                                </div>
-                            ) : children ? (
+                            {children ? (
                                 children
                             ) : (
                                 <Typography.Text type='secondary'>

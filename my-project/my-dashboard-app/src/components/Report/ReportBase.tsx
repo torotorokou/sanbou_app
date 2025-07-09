@@ -104,8 +104,6 @@ const ReportBase: React.FC<ReportBaseProps> = ({
         }
     };
 
-    console.log('✅ previewUrl:', preview.previewUrl);
-    console.log('✅ finalized:', finalized.finalized);
     return (
         <>
             <ReportStepperModal

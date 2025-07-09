@@ -46,25 +46,6 @@ export const SIDEBAR_MENU = [
                 icon: <FileTextOutlined />,
                 label: <Link to={ROUTER_PATHS.REPORT_FACTORY}>工場帳簿</Link>,
             },
-            {
-                key: ROUTER_PATHS.REPORT_AVERAGE,
-                icon: <FileTextOutlined />,
-                label: (
-                    <Link to={ROUTER_PATHS.REPORT_AVERAGE}>集計項目平均表</Link>
-                ),
-            },
-            {
-                key: ROUTER_PATHS.REPORT_PRICE,
-                icon: <FileTextOutlined />,
-                label: (
-                    <Link to={ROUTER_PATHS.REPORT_PRICE}>ブロック単価表</Link>
-                ),
-            },
-            {
-                key: ROUTER_PATHS.REPORT_ADMIN_SHEET,
-                icon: <FileTextOutlined />,
-                label: <Link to={ROUTER_PATHS.REPORT_ADMIN_SHEET}>管理票</Link>,
-            },
         ],
     },
     {

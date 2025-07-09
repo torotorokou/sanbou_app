@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import ReportBase from '@/components/Report/ReportBase';
 import ReportHeader from '@/components/Report/common/ReportHeader';
-import { reportConfigMap } from '@/config/reportConfigs';
-import type { ReportKey } from '@/config/reportConfigs';
+import { reportConfigMap } from '@/config/reportManage';
+import type { ReportKey } from '@/config/reportManage';
 
 // CSVはラベルごとにグローバルで管理
 type CsvFiles = { [csvLabel: string]: File | null };

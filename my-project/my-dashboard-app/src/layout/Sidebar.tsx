@@ -15,10 +15,6 @@ const Sidebar: React.FC<{
     const { token } = theme.useToken();
     const location = useLocation();
 
-    // ここは変換せず、そのままURLパスをselectedKeysに使うのが重要
-    // const currentPath = location.pathname;
-    // const selectedKey = currentPath.replace(/^\//, '').replace(/\//g, '-');
-
     return (
         <Sider
             width={250}
@@ -56,7 +52,7 @@ const Sidebar: React.FC<{
                 mode='inline'
                 theme='dark'
                 className='custom-sider-menu'
-                selectedKeys={[location.pathname]} // ← ここがポイント
+                selectedKeys={[location.pathname]}
                 defaultOpenKeys={['dashboardGroup', 'report', 'management']}
                 style={{
                     height: '100%',
