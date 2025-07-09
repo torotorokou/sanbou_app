@@ -1,5 +1,23 @@
-# Logs
-logs
+# === OS固有 ===
+.DS_Store
+Thumbs.db
+
+# === エディタ・IDE ===
+.vscode/
+!.vscode/extensions.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# === Node.js / React ===
+node_modules/
+dist/
+dist-ssr/
+build/
+.cache/
 *.log
 npm-debug.log*
 yarn-debug.log*
@@ -7,23 +25,59 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules/
-dist
-dist-ssr
+# === TypeScript ===
+*.tsbuildinfo
+
+# === Python ===
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg
+*.egg-info/
+.eggs/
+env/
+venv/
+ENV/
+.venv/
+.Python
+pip-log.txt
+pip-delete-this-directory.txt
+
+# === Python tools ===
+.mypy_cache/
+.pytest_cache/
+.tox/
+.coverage
+htmlcov/
+.cache/
+.dmypy.json
+.pyre/
+
+# === FastAPI / Pydantic Artifacts ===
+*.db
+*.sqlite3
+
+# === 環境変数ファイル ===
+*.env
+*.env.*
+
+# === Docker ===
 *.local
+docker-compose.override.yml
+docker-compose.local.yml
 
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
-.DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
+# === テスト関連 ===
+coverage.xml
+pytest.ini
+test-results/
 
-# Ignore all PDF files
+# === PDFやドキュメント（必要に応じて解除）===
 *.pdf
 
-*.env
+# === その他 ===
+*.bak
+*.tmp
+*.log
+*.out
+*.pid
+*.pid.lock
