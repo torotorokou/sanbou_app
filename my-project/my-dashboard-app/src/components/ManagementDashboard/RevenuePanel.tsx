@@ -39,20 +39,17 @@ const generateGradients = (data: any[], prefix: string) =>
         const gradId = `${prefix}${item.name}`;
         const topColor = gradientMap[item.name] || '#999';
         return (
-            <linearGradient id={gradId} x1='0' y1='0' x2='0' y2='1'>
+            <linearGradient
+                key={gradId}
+                id={gradId}
+                x1='0'
+                y1='0'
+                x2='0'
+                y2='1'
+            >
                 <stop offset='0%' stopColor={topColor} stopOpacity={1} />
-                <stop
-                    offset='60%'
-                    stopColor={topColor}
-                    stopOpacity={0.9}
-                />{' '}
-                {/* ← 不透明をキープ */}
-                <stop
-                    offset='100%'
-                    stopColor='#ffffff'
-                    stopOpacity={0.8}
-                />{' '}
-                {/* ← 下端だけ透明化 */}
+                <stop offset='60%' stopColor={topColor} stopOpacity={0.9} />
+                <stop offset='100%' stopColor='#ffffff' stopOpacity={0.8} />
             </linearGradient>
         );
     });
@@ -62,7 +59,7 @@ const getGradientId = (prefix: string, name: string) =>
 
 const RevenueChartPanel: React.FC = () => {
     return (
-        <Card title='収益グラフ' style={{ marginTop: 24 }}>
+        <Card title='収益グラフ' style={{ marginTop: 24 }} variant='outlined'>
             <Row gutter={24}>
                 {/* 売上・仕入・粗利 */}
                 <Col span={12}>
