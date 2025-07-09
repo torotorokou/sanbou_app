@@ -1,16 +1,5 @@
 // src/constants/router.ts
 
-import {
-    DashboardOutlined,
-    TableOutlined,
-    FileTextOutlined,
-    CompassOutlined,
-    SettingOutlined,
-    UploadOutlined,
-    ToolOutlined,
-    BookOutlined,
-} from '@ant-design/icons';
-
 /**
  * アプリケーション内のページルート一覧
  * 各ルートが何のページなのかをコメントで明記しておくと保守性UP

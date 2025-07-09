@@ -66,8 +66,6 @@ const renderLegend = () => (
     </div>
 );
 const PIE_HEIGHT = 200; // グラフエリアを大きく
-const OUTER_RADIUS = 80;
-const INNER_RADIUS = 50;
 
 const renderPieChart = (data: any[]) => (
     <ResponsiveContainer width='100%' height={PIE_HEIGHT}>

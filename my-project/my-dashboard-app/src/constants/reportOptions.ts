@@ -8,3 +8,6 @@ export const REPORT_OPTIONS = [
     { value: 'management', label: '管理表' },
     // 他帳票追加可
 ];
+
+// valueだけ抽出した定数（configで利用するため）
+export const REPORT_KEYS = REPORT_OPTIONS.map((opt) => opt.value);

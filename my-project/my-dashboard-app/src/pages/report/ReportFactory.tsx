@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ConfigProvider, Typography, Spin, Table } from 'antd';
+import { ConfigProvider, Typography, Spin } from 'antd';
 import jaJP from 'antd/locale/ja_JP';
 import dayjs from 'dayjs';
 import 'dayjs/locale/ja';
@@ -7,8 +7,8 @@ import ReportManagePageLayout from '@/components/Report/common/ReportManagePageL
 import ReportStepperModal from '@/components/Report/common/ReportStepperModal';
 import ReportStepIndicator from '@/components/Report/common/ReportStepIndicator';
 import type { UploadProps } from 'antd';
-import type { ColumnsType } from 'antd/es/table';
 import PDFViewer from '@/components/Report/viewer/PDFViewer';
+import type { WorkerRow, ValuableRow, ShipmentRow } from '@/types/report';
 
 dayjs.locale('ja');
 

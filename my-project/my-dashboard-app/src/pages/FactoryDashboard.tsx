@@ -1,14 +1,11 @@
 import React from 'react';
-import { Card, Typography, Row, Col, Tag } from 'antd';
+import { Card, Typography, Row, Col } from 'antd';
 import {
     BarChart,
     Bar,
     XAxis,
     YAxis,
     Tooltip,
-    PieChart,
-    Pie,
-    Cell,
     Legend,
     ResponsiveContainer,
     AreaChart, // ✅ 追加

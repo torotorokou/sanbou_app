@@ -1,3 +1,4 @@
+// ReportManagePageLayout.tsx
 import React from 'react';
 import { Typography } from 'antd';
 import CsvUploadPanel from '@/components/Report/common/CsvUploadPanel';
@@ -17,7 +18,7 @@ export type ReportPageLayoutProps = {
     readyToCreate: boolean;
     pdfUrl?: string | null;
     header?: React.ReactNode;
-    preview?: React.ReactNode;
+    children?: React.ReactNode; // ✅ 追加
 };
 
 const ReportManagePageLayout: React.FC<ReportPageLayoutProps> = ({
@@ -28,7 +29,7 @@ const ReportManagePageLayout: React.FC<ReportPageLayoutProps> = ({
     readyToCreate,
     pdfUrl,
     header,
-    preview,
+    children, // ✅ 追加
 }) => {
     return (
         <div style={{ padding: 24 }}>
@@ -64,8 +65,7 @@ const ReportManagePageLayout: React.FC<ReportPageLayoutProps> = ({
                         }}
                     />
                     <CsvUploadPanel
-                        files={uploadFiles}
-                        makeUploadProps={makeUploadProps}
+                        upload={{ files: uploadFiles, makeUploadProps }}
                     />
                 </div>
 
@@ -90,18 +90,16 @@ const ReportManagePageLayout: React.FC<ReportPageLayoutProps> = ({
                 <div
                     style={{
                         flex: 1,
-                        height: '80vh', // ここを調整
+                        height: '80vh',
                         display: 'flex',
-                        flexDirection: 'column', // ← 縦並びにする
+                        flexDirection: 'column',
                         gap: 16,
                     }}
                 >
-                    {/* 📄 タイトル */}
                     <Typography.Title level={4} style={{ marginBottom: 0 }}>
                         📄 プレビュー画面
                     </Typography.Title>
 
-                    {/* 📄 プレビューとDLボタンの横並びエリア */}
                     <div
                         style={{
                             display: 'flex',
@@ -126,17 +124,19 @@ const ReportManagePageLayout: React.FC<ReportPageLayoutProps> = ({
                             }}
                         >
                             {finalized && pdfUrl ? (
-                                <iframe
-                                    src={pdfUrl}
-                                    style={{
-                                        width: '100%',
-                                        height: '100%',
-                                        border: 'none',
-                                        borderRadius: 8,
-                                    }}
-                                />
-                            ) : preview ? (
-                                preview
+                                <div style={{ padding: 24, width: '100%' }}>
+                                    <iframe
+                                        src='/factory_report.pdf'
+                                        style={{
+                                            width: '100%',
+                                            height: '80vh',
+                                            border: '2px solid red',
+                                        }}
+                                        title='test-pdf'
+                                    />
+                                </div>
+                            ) : children ? (
+                                children
                             ) : (
                                 <Typography.Text type='secondary'>
                                     帳簿を作成するとここに表示されます。

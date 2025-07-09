@@ -4,6 +4,7 @@ import { InboxOutlined } from '@ant-design/icons';
 import type { UploadProps } from 'antd';
 import { customTokens } from '@/theme/tokens';
 
+// 型定義をグループ化バージョンに
 type CsvFileType = {
     label: string;
     file: File | null;
@@ -11,17 +12,16 @@ type CsvFileType = {
 };
 
 type CsvUploadPanelProps = {
-    files: CsvFileType[];
-    makeUploadProps: (
-        label: string,
-        setter: (file: File) => void
-    ) => UploadProps;
+    upload: {
+        files: CsvFileType[];
+        makeUploadProps: (
+            label: string,
+            setter: (file: File) => void
+        ) => UploadProps;
+    };
 };
 
-const CsvUploadPanel: React.FC<CsvUploadPanelProps> = ({
-    files,
-    makeUploadProps,
-}) => {
+const CsvUploadPanel: React.FC<CsvUploadPanelProps> = ({ upload }) => {
     const [hoveringIndex, setHoveringIndex] = useState<number | null>(null);
 
     return (
@@ -41,7 +41,7 @@ const CsvUploadPanel: React.FC<CsvUploadPanelProps> = ({
             }}
         >
             <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-                {files.map(({ label, file, onChange }, index) => {
+                {upload.files.map(({ label, file, onChange }, index) => {
                     const isHovering = hoveringIndex === index;
 
                     return (
@@ -54,11 +54,11 @@ const CsvUploadPanel: React.FC<CsvUploadPanelProps> = ({
                             </Typography.Text>
 
                             <Upload.Dragger
-                                {...makeUploadProps(label, onChange)}
+                                {...upload.makeUploadProps(label, onChange)}
                                 accept='.csv'
                                 maxCount={1}
                                 style={{
-                                    height: 160, // ✅ 高さはこのまま
+                                    height: 160,
                                     padding: 12,
                                     fontSize: 13,
                                     lineHeight: 1.5,
