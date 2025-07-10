@@ -29,6 +29,11 @@ export const SIDEBAR_MENU = [
                 icon: <TableOutlined />,
                 label: <Link to={ROUTER_PATHS.FACTORY}>工場管理</Link>,
             },
+            {
+                key: ROUTER_PATHS.PRICING,
+                icon: <FileTextOutlined />,
+                label: <Link to={ROUTER_PATHS.PRICING}>単価表</Link>,
+            },
         ],
     },
     {

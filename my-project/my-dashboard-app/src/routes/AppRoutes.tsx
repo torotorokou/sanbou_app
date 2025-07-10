@@ -9,6 +9,7 @@ import { ROUTER_PATHS } from '@/constants/router';
 // ✅ 帳票ページのインポート追加
 import ReportFactory from '../pages/report/ReportFactory';
 import ReportPage from '../pages/report/ReportPage';
+import PricingDashboard from '../pages/PricingDashboard';
 
 // ✅ チャットボットページのインポート
 import PdfChatBot from '../pages/navi/PdfChatBot';

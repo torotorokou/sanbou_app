@@ -16,7 +16,7 @@ const MainLayout: React.FC = () => {
             <Layout style={{ height: '100%' }}>
                 <Content
                     style={{
-                        height: '100vh', // ✅ 画面全体を埋める
+                        height: '95vh', // ✅ 画面全体を埋める
                         overflowY: 'auto', // ✅ Contentだけスクロール
                         padding: '24px',
                         backgroundColor: token.colorBgLayout,
