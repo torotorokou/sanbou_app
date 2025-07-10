@@ -1,282 +1,136 @@
-import React, { useState, useEffect, useRef } from 'react';
-import {
-    Layout,
-    Input,
-    Button,
-    Typography,
-    Card,
-    Tag,
-    Modal,
-    Empty,
-    Select,
-    Space,
-} from 'antd';
+// SearchSplitView.tsx
+import React, { useState } from 'react';
+import { Steps, Typography, Spin } from 'antd';
 import axios from 'axios';
-import TypewriterText from '@/components/ui/TypewriterText';
-import type { ChatMessage } from '@/types/chat';
+import QuestionPanel from '@/components/chat/QuestionPanel';
+import PdfCardList from '@/components/chat/PdfCardList';
+import AnswerViewer from '@/components/chat/AnswerViewer';
+import PdfPreviewModal from '@/components/chat/PdfPreviewModal';
 
-const { Content, Footer } = Layout;
-const { TextArea } = Input;
-const { Option } = Select;
+const { Step } = Steps;
 
-const PdfChatBot: React.FC = () => {
-    const [messages, setMessages] = useState<ChatMessage[]>([]);
+const SearchSplitView: React.FC = () => {
     const [category, setCategory] = useState('');
-    const [input, setInput] = useState('');
-    const [pdf, setPdf] = useState<string>();
+    const [tag, setTag] = useState('');
+    const [template, setTemplate] = useState('自由入力');
+    const [question, setQuestion] = useState('');
+    const [answer, setAnswer] = useState('');
+    const [sources, setSources] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
-    const [pdfToShow, setPdfToShow] = useState('');
+    const [pdfToShow, setPdfToShow] = useState<string | null>(null);
     const [pdfModalVisible, setPdfModalVisible] = useState(false);
-    const [isDisplaying, setIsDisplaying] = useState(false);
-    const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+    const [currentStep, setCurrentStep] = useState(0);
 
-    const contentRef = useRef<HTMLDivElement>(null);
-    const messageQueue = useRef<ChatMessage[]>([]);
-    const didInit = useRef(false);
-
-    // ✅ メッセージキュー処理
-    const showNextMessage = () => {
-        if (messageQueue.current.length === 0) {
-            setIsDisplaying(false);
-            return;
-        }
-        const next = messageQueue.current.shift()!;
-        setMessages((prev) => [...prev, next]);
-        setTimeout(showNextMessage, 1200);
-    };
-
-    const enqueueMessages = (msgs: ChatMessage[]) => {
-        messageQueue.current.push(...msgs);
-        if (!isDisplaying) {
-            setIsDisplaying(true);
-            showNextMessage();
-        }
-    };
-
-    useEffect(() => {
-        if (!didInit.current) {
-            didInit.current = true;
-            enqueueMessages([
-                { role: 'bot', content: 'こんにちは！' },
-                {
-                    role: 'bot',
-                    content:
-                        '私は産業廃棄物の専門AIです。カテゴリを選んでください。',
-                },
-                { role: 'bot', content: '', type: 'category-buttons' },
-            ]);
-        }
-    }, []);
-
-    useEffect(() => {
-        const handleResize = () => setWindowWidth(window.innerWidth);
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-    }, []);
-
-    const handleCategorySelect = (cat: string) => {
-        setCategory(cat);
-        enqueueMessages([
-            {
-                role: 'bot',
-                content: `カテゴリ「${cat}」が選ばれました。質問をどうぞ。`,
-            },
-        ]);
-    };
-
-    const handleSend = async () => {
-        if (!input.trim()) return;
-        const userMessage: ChatMessage = { role: 'user', content: input };
-        setMessages((prev) => [...prev, userMessage]);
+    const handleSearch = async () => {
+        if (!question.trim()) return;
+        setCurrentStep(3);
         setLoading(true);
         try {
             const res = await axios.post('/api/chat', {
-                query: input,
-                tags: [category],
-                pdf,
+                query: question,
+                tags: [category, tag].filter(Boolean),
             });
-            const botMessage: ChatMessage = {
-                role: 'bot',
-                content: res.data.answer,
-                sources: res.data.sources || [],
-            };
-            enqueueMessages([botMessage]);
-            setInput('');
+            setAnswer(res.data.answer || '');
+            setSources(
+                res.data.sources?.filter(
+                    (src: any) =>
+                        typeof src.pdf === 'string' &&
+                        src.pdf.endsWith('.pdf') &&
+                        typeof src.section_title === 'string' &&
+                        src.section_title.length > 0
+                ) || []
+            );
         } catch (err) {
             console.error(err);
+            setAnswer('エラーが発生しました。');
         } finally {
             setLoading(false);
         }
     };
 
-    const openPdf = (pdfName?: string) => {
-        if (!pdfName) return;
-        setPdfToShow(`/pdf/${pdfName}`);
-        setPdfModalVisible(true);
-    };
-
-    const getCardStyle = (role: 'user' | 'bot') => {
-        let width = '100%';
-        if (windowWidth >= 1024) {
-            width = role === 'user' ? '40%' : '60%';
-        } else if (windowWidth >= 768) {
-            width = '70%';
-        }
-        return {
-            width,
-            alignSelf: role === 'user' ? 'flex-start' : 'flex-end',
-            background: role === 'user' ? '#f6ffed' : '#e6f7ff',
-        };
-    };
-
     return (
-        <Layout style={{ height: '100%', background: '#fff', padding: 24 }}>
-            <Content
-                ref={contentRef}
-                style={{
-                    overflowY: 'auto',
-                    maxHeight: '70vh',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 8,
-                    marginBottom: 16,
-                }}
-            >
-                {messages.map((msg, idx) => (
-                    <Card
-                        key={idx}
-                        size='small'
-                        title={msg.role === 'user' ? '👤 あなた' : '🤖 AI'}
-                        style={getCardStyle(msg.role)}
-                    >
-                        <Typography.Paragraph>
-                            {msg.role === 'bot' &&
-                            !msg.type &&
-                            idx === messages.length - 1 &&
-                            isDisplaying ? (
-                                <TypewriterText text={msg.content} />
-                            ) : (
-                                msg.content?.split('\n').map((line, i) => (
-                                    <React.Fragment key={i}>
-                                        {line}
-                                        <br />
-                                    </React.Fragment>
-                                ))
-                            )}
-                        </Typography.Paragraph>
+        <div
+            style={{
+                height: '100vh',
+                display: 'flex',
+                flexDirection: 'column',
+            }}
+        >
+            {loading && (
+                <Spin tip='AIが回答中です...' size='large' fullscreen />
+            )}
 
-                        {msg.type === 'category-buttons' && (
-                            <div>
-                                {['処理', '設備', '法令', '運搬', '分析'].map(
-                                    (cat) => (
-                                        <Button
-                                            key={cat}
-                                            onClick={() =>
-                                                handleCategorySelect(cat)
-                                            }
-                                            style={{
-                                                marginRight: 8,
-                                                marginBottom: 8,
-                                            }}
-                                        >
-                                            {cat}
-                                        </Button>
-                                    )
-                                )}
-                            </div>
-                        )}
+            <div style={{ padding: '12px 24px' }}>
+                <Steps current={currentStep} size='small'>
+                    <Step title='分類' />
+                    <Step title='質問作成' />
+                    <Step title='送信' />
+                    <Step title='結果' />
+                </Steps>
+            </div>
 
-                        {msg.sources?.map((src, i) => (
-                            <div key={i} style={{ marginTop: 8 }}>
-                                <Tag color='blue'>{src.pdf}</Tag>
-                                <Tag color='purple'>{src.section_title}</Tag>
-                                <Typography.Text type='secondary'>
-                                    {src.highlight}
-                                </Typography.Text>
-                                <br />
-                                <Button
-                                    type='link'
-                                    size='small'
-                                    onClick={() => openPdf(src.pdf)}
-                                >
-                                    📖 PDFを開く
-                                </Button>
-                            </div>
-                        ))}
-                    </Card>
-                ))}
-            </Content>
+            <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+                <div
+                    style={{
+                        width: 500,
+                        padding: 24,
+                        background: '#f0f2f5',
+                        overflowY: 'auto',
+                    }}
+                >
+                    <QuestionPanel
+                        category={category}
+                        setCategory={(val) => {
+                            setCategory(val);
+                            setCurrentStep(1);
+                        }}
+                        tag={tag}
+                        setTag={setTag}
+                        template={template}
+                        setTemplate={(val) => {
+                            setTemplate(val);
+                            if (val !== '自由入力') {
+                                setQuestion(val);
+                                setCurrentStep(2);
+                            }
+                        }}
+                        question={question}
+                        setQuestion={(val) => {
+                            setQuestion(val);
+                            if (val.trim()) setCurrentStep(2);
+                        }}
+                        onSubmit={handleSearch}
+                        loading={loading}
+                    />
 
-            <Footer style={{ padding: 0 }}>
-                <div style={{ marginBottom: 8 }}>
-                    <Select
-                        placeholder='📁 PDFファイルを選択'
-                        style={{ width: 200, marginRight: 16 }}
-                        value={pdf}
-                        onChange={setPdf}
-                        allowClear
-                    >
-                        <Option value='doc1.pdf'>doc1.pdf</Option>
-                        <Option value='doc2.pdf'>doc2.pdf</Option>
-                    </Select>
-                    <Typography.Text strong style={{ marginRight: 12 }}>
-                        カテゴリ: {category || '未選択'}
-                    </Typography.Text>
-                </div>
-                <Space.Compact style={{ width: '100%' }}>
-                    <TextArea
-                        rows={2}
-                        style={{ width: 'calc(100% - 100px)' }}
-                        value={input}
-                        onChange={(e) => setInput(e.target.value)}
-                        placeholder='質問を入力...'
-                        onPressEnter={(e) => {
-                            if (!e.shiftKey) {
-                                e.preventDefault();
-                                handleSend();
+                    <Typography.Title level={5}>📄 関連PDF</Typography.Title>
+                    <PdfCardList
+                        sources={sources}
+                        onOpen={(path) => {
+                            if (path && path.endsWith('.pdf')) {
+                                setPdfToShow(path);
+                                setPdfModalVisible(true);
                             }
                         }}
                     />
-                    <Button
-                        type='primary'
-                        loading={loading}
-                        onClick={handleSend}
-                        style={{ width: 100 }}
-                    >
-                        送信
-                    </Button>
-                </Space.Compact>
-            </Footer>
+                </div>
 
-            <Modal
-                open={pdfModalVisible}
-                onCancel={() => setPdfModalVisible(false)}
-                footer={null}
-                title='📖 PDFプレビュー'
-                width='80%'
-                styles={{
-                    body: {
-                        height: '80vh',
-                        padding: 0,
-                        overflow: 'hidden',
-                    },
+                <div style={{ flex: 1, padding: 24, overflowY: 'auto' }}>
+                    <Typography.Title level={4}>🤖 回答結果</Typography.Title>
+                    <AnswerViewer answer={answer} />
+                </div>
+            </div>
+
+            <PdfPreviewModal
+                visible={pdfModalVisible}
+                pdfUrl={pdfToShow}
+                onClose={() => {
+                    setPdfToShow(null);
+                    setPdfModalVisible(false);
                 }}
-            >
-                {pdfToShow ? (
-                    <iframe
-                        key={pdfToShow}
-                        title='PDF Preview'
-                        src={pdfToShow}
-                        width='100%'
-                        height='100%'
-                        style={{ border: 'none', display: 'block' }}
-                    />
-                ) : (
-                    <Empty description='PDFが読み込まれていません' />
-                )}
-            </Modal>
-        </Layout>
+            />
+        </div>
     );
 };
 
-export default PdfChatBot;
+export default SearchSplitView;

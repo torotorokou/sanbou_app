@@ -76,3 +76,10 @@ body {
         border-radius: 8px;
     }
 }
+
+
+/* 回答表示など、hover演出が不要なカード */
+.ant-card.no-hover:hover {
+    transform: none !important;
+    box-shadow: none !important;
+}

@@ -22,11 +22,13 @@ const AppRoutes: React.FC = () => (
             path='/'
             element={<Navigate to={ROUTER_PATHS.DASHBOARD} replace />}
         />
+        {/* ✅ ダッシュボード */}
         <Route
             path={ROUTER_PATHS.DASHBOARD}
             element={<ManagementDashboard />}
         />
         <Route path={ROUTER_PATHS.FACTORY} element={<FactoryDashboard />} />
+        <Route path={ROUTER_PATHS.PRICING} element={<PricingDashboard />} />
 
         {/* ✅ 帳票ページ群 */}
         <Route path={ROUTER_PATHS.REPORT_MANAGE} element={<ReportPage />} />
