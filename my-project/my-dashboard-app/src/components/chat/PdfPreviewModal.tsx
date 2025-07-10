@@ -11,6 +11,9 @@ const { Content, Footer } = Layout;
 const { Option } = Select;
 const { TextArea } = Input;
 
+// ✅ 遅延実行ユーティリティ
+const delay = (ms: number) => new Promise((res) => setTimeout(res, ms));
+
 const PdfChatBot: React.FC = () => {
     const [category, setCategory] = useState('');
     const [pdf, setPdf] = useState<string>();
@@ -32,17 +35,40 @@ const PdfChatBot: React.FC = () => {
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
+    // ✅ 段階的に会話を表示する
     const handleStart = async () => {
+        // ✅ まず最初の「こんにちは！」を追加
         setMessages([{ role: 'bot', content: 'こんにちは！' }]);
+        await delay(1000);
+
         try {
+            // ✅ intro取得してメッセージに追加
             const res = await axios.get('/api/intro');
+            const introText =
+                res.data?.text || 'イントロが取得できませんでした。';
+
             setMessages((prev) => [
                 ...prev,
-                { role: 'bot', content: res.data.text },
-                { role: 'bot', content: '', type: 'category-buttons' },
+                { role: 'bot', content: introText },
+            ]);
+
+            await delay(1200);
+
+            // ✅ 最後にカテゴリボタン表示（content: '' でもOK）
+            setMessages((prev) => [
+                ...prev,
+                {
+                    role: 'bot',
+                    content: 'カテゴリを選んでください。',
+                    type: 'category-buttons',
+                },
             ]);
         } catch (err) {
             console.error('❌ intro取得失敗:', err);
+            setMessages((prev) => [
+                ...prev,
+                { role: 'bot', content: '説明の取得に失敗しました。' },
+            ]);
         }
     };
 
