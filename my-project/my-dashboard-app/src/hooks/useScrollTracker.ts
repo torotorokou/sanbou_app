@@ -10,25 +10,32 @@ export function useScrollTracker(
     const handleScroll = () => {
         const el = ref.current;
         if (!el) return;
+
         const isBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 50;
         setIsAtBottom(isBottom);
-        if (isBottom) setHasNewMessage(false);
+        if (isBottom) {
+            setHasNewMessage(false);
+        }
     };
 
     useEffect(() => {
-        if (ref.current) {
-            ref.current.addEventListener('scroll', handleScroll);
-        }
+        const el = ref.current;
+        if (!el) return;
+
+        el.addEventListener('scroll', handleScroll);
         return () => {
-            ref.current?.removeEventListener('scroll', handleScroll);
+            el.removeEventListener('scroll', handleScroll);
         };
     }, [ref]);
 
     useEffect(() => {
-        if (isAtBottom && ref.current) {
-            ref.current.scrollTop = ref.current.scrollHeight;
+        const el = ref.current;
+        if (!el) return;
+
+        if (isAtBottom) {
+            el.scrollTop = el.scrollHeight;
             setHasNewMessage(false);
-        } else if (!isAtBottom) {
+        } else {
             setHasNewMessage(true);
         }
     }, deps);
