@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
     Layout,
-    Select,
     Input,
     Button,
     Typography,
@@ -9,6 +8,7 @@ import {
     Tag,
     Modal,
     Empty,
+    Select,
     Space,
 } from 'antd';
 import axios from 'axios';
@@ -16,25 +16,57 @@ import TypewriterText from '@/components/ui/TypewriterText';
 import type { ChatMessage } from '@/types/chat';
 
 const { Content, Footer } = Layout;
-const { Option } = Select;
 const { TextArea } = Input;
+const { Option } = Select;
 
 const PdfChatBot: React.FC = () => {
-    const [step, setStep] = useState(0);
-    const [category, setCategory] = useState('');
-    const [pdf, setPdf] = useState<string>();
     const [messages, setMessages] = useState<ChatMessage[]>([]);
+    const [category, setCategory] = useState('');
     const [input, setInput] = useState('');
+    const [pdf, setPdf] = useState<string>();
     const [loading, setLoading] = useState(false);
+    const [pdfToShow, setPdfToShow] = useState('');
     const [pdfModalVisible, setPdfModalVisible] = useState(false);
-    const [pdfToShow, setPdfToShow] = useState<string>('');
+    const [isDisplaying, setIsDisplaying] = useState(false);
     const [windowWidth, setWindowWidth] = useState(window.innerWidth);
-    const [isAtBottom, setIsAtBottom] = useState(true);
-    const [hasNewMessage, setHasNewMessage] = useState(false);
-    const [displaying, setDisplaying] = useState(false); // 👈 NEW
 
     const contentRef = useRef<HTMLDivElement>(null);
-    const messageQueue = useRef<ChatMessage[]>([]); // 👈 NEW
+    const messageQueue = useRef<ChatMessage[]>([]);
+    const didInit = useRef(false);
+
+    // ✅ メッセージキュー処理
+    const showNextMessage = () => {
+        if (messageQueue.current.length === 0) {
+            setIsDisplaying(false);
+            return;
+        }
+        const next = messageQueue.current.shift()!;
+        setMessages((prev) => [...prev, next]);
+        setTimeout(showNextMessage, 1200);
+    };
+
+    const enqueueMessages = (msgs: ChatMessage[]) => {
+        messageQueue.current.push(...msgs);
+        if (!isDisplaying) {
+            setIsDisplaying(true);
+            showNextMessage();
+        }
+    };
+
+    useEffect(() => {
+        if (!didInit.current) {
+            didInit.current = true;
+            enqueueMessages([
+                { role: 'bot', content: 'こんにちは！' },
+                {
+                    role: 'bot',
+                    content:
+                        '私は産業廃棄物の専門AIです。カテゴリを選んでください。',
+                },
+                { role: 'bot', content: '', type: 'category-buttons' },
+            ]);
+        }
+    }, []);
 
     useEffect(() => {
         const handleResize = () => setWindowWidth(window.innerWidth);
@@ -42,106 +74,39 @@ const PdfChatBot: React.FC = () => {
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
-    useEffect(() => {
-        if (isAtBottom && contentRef.current) {
-            contentRef.current.scrollTop = contentRef.current.scrollHeight;
-            setHasNewMessage(false);
-        } else if (!isAtBottom) {
-            setHasNewMessage(true);
-        }
-    }, [messages]);
-
-    const handleScroll = () => {
-        const el = contentRef.current;
-        if (!el) return;
-        const isBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 50;
-        setIsAtBottom(isBottom);
-    };
-
-    // 👇 NEW: メッセージを1つずつ表示する関数
-    const showNextMessage = () => {
-        if (messageQueue.current.length === 0) {
-            setDisplaying(false);
-            return;
-        }
-        const next = messageQueue.current.shift()!;
-        setMessages((prev) => [...prev, next]);
-
-        const delay = next.type === 'category-buttons' ? 0 : 1200;
-        setTimeout(showNextMessage, delay);
-    };
-
-    const enqueueMessages = (msgs: ChatMessage[]) => {
-        messageQueue.current.push(...msgs);
-        if (!displaying) {
-            setDisplaying(true);
-            showNextMessage();
-        }
-    };
-
-    const handleStart = async () => {
-        setStep(1);
-        enqueueMessages([{ role: 'bot', content: 'こんにちは！' }]);
-        try {
-            const res = await axios.get('/api/intro');
-            enqueueMessages([
-                { role: 'bot', content: res.data.text },
-                { role: 'bot', content: '', type: 'category-buttons' },
-            ]);
-            setStep(2);
-        } catch (err) {
-            console.error('❌ intro取得失敗:', err);
-        }
-    };
-
     const handleCategorySelect = (cat: string) => {
         setCategory(cat);
         enqueueMessages([
             {
                 role: 'bot',
-                content: `カテゴリ「${cat}」が選択されました。質問を入力してください。\nカテゴリを変更したい場合は、画面下の「カテゴリを変更」ボタンを押してください。`,
+                content: `カテゴリ「${cat}」が選ばれました。質問をどうぞ。`,
             },
         ]);
-        setStep(3);
     };
 
     const handleSend = async () => {
         if (!input.trim()) return;
-        setLoading(true);
         const userMessage: ChatMessage = { role: 'user', content: input };
         setMessages((prev) => [...prev, userMessage]);
-
+        setLoading(true);
         try {
             const res = await axios.post('/api/chat', {
                 query: input,
                 tags: [category],
                 pdf,
             });
-            if (res.data?.answer) {
-                const botMessage: ChatMessage = {
-                    role: 'bot',
-                    content: res.data.answer,
-                    sources: res.data.sources || [],
-                };
-                enqueueMessages([botMessage]);
-            }
+            const botMessage: ChatMessage = {
+                role: 'bot',
+                content: res.data.answer,
+                sources: res.data.sources || [],
+            };
+            enqueueMessages([botMessage]);
             setInput('');
-        } catch (err: any) {
-            console.error('❌ チャット送信エラー:', err.message);
+        } catch (err) {
+            console.error(err);
         } finally {
             setLoading(false);
         }
-    };
-
-    const handleCategoryChangeRequest = () => {
-        setStep(2);
-        enqueueMessages([
-            {
-                role: 'bot',
-                content: 'カテゴリを選び直してください。',
-                type: 'category-buttons',
-            },
-        ]);
     };
 
     const openPdf = (pdfName?: string) => {
@@ -165,38 +130,18 @@ const PdfChatBot: React.FC = () => {
     };
 
     return (
-        <Layout style={{ padding: 24, background: '#fff', height: '100%' }}>
+        <Layout style={{ height: '100%', background: '#fff', padding: 24 }}>
             <Content
                 ref={contentRef}
-                onScroll={handleScroll}
                 style={{
                     overflowY: 'auto',
                     maxHeight: '70vh',
-                    marginBottom: 16,
                     display: 'flex',
                     flexDirection: 'column',
                     gap: 8,
+                    marginBottom: 16,
                 }}
             >
-                {step === 0 && (
-                    <div
-                        style={{
-                            display: 'flex',
-                            justifyContent: 'center',
-                            alignItems: 'center',
-                            height: '60vh',
-                        }}
-                    >
-                        <Button
-                            type='primary'
-                            size='large'
-                            onClick={handleStart}
-                        >
-                            🚀 参謀NAVIに聞いてみる
-                        </Button>
-                    </div>
-                )}
-
                 {messages.map((msg, idx) => (
                     <Card
                         key={idx}
@@ -208,7 +153,7 @@ const PdfChatBot: React.FC = () => {
                             {msg.role === 'bot' &&
                             !msg.type &&
                             idx === messages.length - 1 &&
-                            displaying ? (
+                            isDisplaying ? (
                                 <TypewriterText text={msg.content} />
                             ) : (
                                 msg.content?.split('\n').map((line, i) => (
@@ -220,17 +165,8 @@ const PdfChatBot: React.FC = () => {
                             )}
                         </Typography.Paragraph>
 
-                        {msg.type === 'category-buttons' && step === 2 && (
-                            <div style={{ marginTop: 8 }}>
-                                <Typography.Text
-                                    strong
-                                    style={{
-                                        display: 'block',
-                                        marginBottom: 8,
-                                    }}
-                                >
-                                    📚 カテゴリ一覧
-                                </Typography.Text>
+                        {msg.type === 'category-buttons' && (
+                            <div>
                                 {['処理', '設備', '法令', '運搬', '分析'].map(
                                     (cat) => (
                                         <Button
@@ -271,81 +207,46 @@ const PdfChatBot: React.FC = () => {
                 ))}
             </Content>
 
-            {!isAtBottom && hasNewMessage && (
-                <div
-                    style={{
-                        position: 'fixed',
-                        bottom: 100,
-                        left: '50%',
-                        transform: 'translateX(-50%)',
-                        background: '#1890ff',
-                        color: 'white',
-                        padding: '6px 16px',
-                        borderRadius: 16,
-                        cursor: 'pointer',
-                        boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-                        zIndex: 1000,
-                    }}
-                    onClick={() => {
-                        contentRef.current?.scrollTo({
-                            top: contentRef.current.scrollHeight,
-                            behavior: 'smooth',
-                        });
-                        setHasNewMessage(false);
-                    }}
-                >
-                    ⬇ 新着メッセージ
+            <Footer style={{ padding: 0 }}>
+                <div style={{ marginBottom: 8 }}>
+                    <Select
+                        placeholder='📁 PDFファイルを選択'
+                        style={{ width: 200, marginRight: 16 }}
+                        value={pdf}
+                        onChange={setPdf}
+                        allowClear
+                    >
+                        <Option value='doc1.pdf'>doc1.pdf</Option>
+                        <Option value='doc2.pdf'>doc2.pdf</Option>
+                    </Select>
+                    <Typography.Text strong style={{ marginRight: 12 }}>
+                        カテゴリ: {category || '未選択'}
+                    </Typography.Text>
                 </div>
-            )}
-
-            {step >= 3 && (
-                <Footer style={{ padding: 0 }}>
-                    <div style={{ marginBottom: 8 }}>
-                        <Select
-                            placeholder='📁 PDFファイルを選択'
-                            style={{ width: 200, marginRight: 16 }}
-                            value={pdf}
-                            onChange={setPdf}
-                            allowClear
-                        >
-                            <Option value='doc1.pdf'>doc1.pdf</Option>
-                            <Option value='doc2.pdf'>doc2.pdf</Option>
-                        </Select>
-                        <Typography.Text strong style={{ marginRight: 12 }}>
-                            カテゴリ: {category}
-                        </Typography.Text>
-                        <Button
-                            size='small'
-                            onClick={handleCategoryChangeRequest}
-                        >
-                            カテゴリを変更
-                        </Button>
-                    </div>
-                    <Space.Compact style={{ width: '100%' }}>
-                        <TextArea
-                            rows={2}
-                            style={{ width: 'calc(100% - 100px)' }}
-                            value={input}
-                            onChange={(e) => setInput(e.target.value)}
-                            placeholder='質問を入力...'
-                            onPressEnter={(e) => {
-                                if (!e.shiftKey) {
-                                    e.preventDefault();
-                                    handleSend();
-                                }
-                            }}
-                        />
-                        <Button
-                            type='primary'
-                            loading={loading}
-                            onClick={handleSend}
-                            style={{ width: 100 }}
-                        >
-                            送信
-                        </Button>
-                    </Space.Compact>
-                </Footer>
-            )}
+                <Space.Compact style={{ width: '100%' }}>
+                    <TextArea
+                        rows={2}
+                        style={{ width: 'calc(100% - 100px)' }}
+                        value={input}
+                        onChange={(e) => setInput(e.target.value)}
+                        placeholder='質問を入力...'
+                        onPressEnter={(e) => {
+                            if (!e.shiftKey) {
+                                e.preventDefault();
+                                handleSend();
+                            }
+                        }}
+                    />
+                    <Button
+                        type='primary'
+                        loading={loading}
+                        onClick={handleSend}
+                        style={{ width: 100 }}
+                    >
+                        送信
+                    </Button>
+                </Space.Compact>
+            </Footer>
 
             <Modal
                 open={pdfModalVisible}
