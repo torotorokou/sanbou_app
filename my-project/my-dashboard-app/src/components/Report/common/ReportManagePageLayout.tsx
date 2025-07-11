@@ -1,4 +1,3 @@
-// ReportManagePageLayout.tsx
 import React from 'react';
 import { Typography } from 'antd';
 import CsvUploadPanel from '@/components/Report/common/CsvUploadPanel';
@@ -19,6 +18,9 @@ export type ReportPageLayoutProps = {
     pdfUrl?: string | null;
     header?: React.ReactNode;
     children?: React.ReactNode;
+
+    // ✅ 追加：帳票サンプル画像のURL
+    sampleImageUrl?: string;
 };
 
 const ReportManagePageLayout: React.FC<ReportPageLayoutProps> = ({
@@ -30,6 +32,7 @@ const ReportManagePageLayout: React.FC<ReportPageLayoutProps> = ({
     pdfUrl,
     header,
     children,
+    sampleImageUrl, // ✅ 追加
 }) => {
     return (
         <div style={{ padding: 24 }}>
@@ -53,17 +56,37 @@ const ReportManagePageLayout: React.FC<ReportPageLayoutProps> = ({
                         width: 400,
                     }}
                 >
+                    {/* ✅ 帳票サンプル画像の表示 */}
+                    <Typography.Title level={5}>
+                        📄 帳票サンプル
+                    </Typography.Title>
+                    {sampleImageUrl && (
+                        <div
+                            style={{
+                                width: '80%',
+                                height: '160px',
+                                overflowY: 'auto', // ✅ 表示領域の高さ
+                                overflowX: 'hidden', // ✅ はみ出た部分を隠す
+                                borderRadius: 4,
+                                background: '#f9f9f9',
+                            }}
+                        >
+                            <img
+                                src={sampleImageUrl}
+                                alt='帳票サンプル'
+                                style={{
+                                    width: '100%', // ✅ 横幅いっぱいに拡大
+                                    height: 'auto',
+                                    objectFit: 'cover', // ✅ 高さに合わせてトリミング
+                                    objectPosition: 'top', // ✅ 上部を優先的に表示
+                                }}
+                            />
+                        </div>
+                    )}
                     <Typography.Title level={5}>
                         📂 データセットの準備
                     </Typography.Title>
-                    <Typography.Paragraph
-                        style={{
-                            margin: 0,
-                            padding: '0 8px',
-                            fontSize: 12,
-                            color: '#666',
-                        }}
-                    />
+
                     <CsvUploadPanel
                         upload={{ files: uploadFiles, makeUploadProps }}
                     />

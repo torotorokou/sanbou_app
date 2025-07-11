@@ -147,6 +147,7 @@ const ReportBase: React.FC<ReportBaseProps> = ({
                 }}
                 finalized={finalized.finalized}
                 readyToCreate={readyToCreate}
+                sampleImageUrl={'/factory_report-1.png'} // ✅ この行を追加
                 pdfUrl={preview.previewUrl}
             >
                 <PDFViewer pdfUrl={preview.previewUrl} />
