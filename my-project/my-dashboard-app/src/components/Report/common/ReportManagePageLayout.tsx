@@ -2,6 +2,7 @@ import React from 'react';
 import { Typography } from 'antd';
 import CsvUploadPanel from '@/components/Report/common/CsvUploadPanel';
 import VerticalActionButton from '@/components/ui/VerticalActionButton';
+import ReportSampleThumbnail from '@/components/Report/viewer/ReportSampleThumbnail';
 import { PlayCircleOutlined, DownloadOutlined } from '@ant-design/icons';
 import type { UploadProps } from 'antd';
 import type { CsvFileType } from './types';
@@ -61,28 +62,14 @@ const ReportManagePageLayout: React.FC<ReportPageLayoutProps> = ({
                         📄 帳票サンプル
                     </Typography.Title>
                     {sampleImageUrl && (
-                        <div
-                            style={{
-                                width: '80%',
-                                height: '160px',
-                                overflowY: 'auto', // ✅ 表示領域の高さ
-                                overflowX: 'hidden', // ✅ はみ出た部分を隠す
-                                borderRadius: 4,
-                                background: '#f9f9f9',
-                            }}
-                        >
-                            <img
-                                src={sampleImageUrl}
-                                alt='帳票サンプル'
-                                style={{
-                                    width: '100%', // ✅ 横幅いっぱいに拡大
-                                    height: 'auto',
-                                    objectFit: 'cover', // ✅ 高さに合わせてトリミング
-                                    objectPosition: 'top', // ✅ 上部を優先的に表示
-                                }}
-                            />
-                        </div>
+                        <ReportSampleThumbnail
+                            url={sampleImageUrl} // ✅ 変更点
+                            type='pdf' // ✅ 明示的にPDFと指定
+                            width='80%'
+                            height='160px'
+                        />
                     )}
+                    {/* CSVアップロードパネル */}
                     <Typography.Title level={5}>
                         📂 データセットの準備
                     </Typography.Title>

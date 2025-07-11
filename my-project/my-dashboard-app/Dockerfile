@@ -22,6 +22,8 @@ RUN npm install
 # --- アプリ全体をコピー ---
 COPY --chown=node:node . .
 
+# ✅ pdf.worker.min.js を public にダウンロード（バージョン固定）
+RUN curl -o public/pdf.worker.min.js https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.worker.min.js
+
 EXPOSE 5173
 CMD ["npx", "vite", "--host", "0.0.0.0"]
-

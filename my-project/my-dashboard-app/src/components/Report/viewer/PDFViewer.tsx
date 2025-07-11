@@ -3,7 +3,7 @@ import { Typography } from 'antd';
 
 type PDFViewerProps = {
     pdfUrl?: string | null;
-    height?: string; // オプションで高さを調整できる
+    height?: string;
 };
 
 const PDFViewer: React.FC<PDFViewerProps> = ({ pdfUrl, height = '80vh' }) => {
@@ -17,6 +17,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ pdfUrl, height = '80vh' }) => {
 
     return (
         <iframe
+            title='PDFプレビュー'
             src={pdfUrl}
             style={{
                 width: '100%',
@@ -24,6 +25,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ pdfUrl, height = '80vh' }) => {
                 border: '1px solid #ccc',
                 borderRadius: 4,
             }}
+            allowFullScreen
         />
     );
 };
