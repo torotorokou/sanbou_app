@@ -80,7 +80,7 @@ const FactoryDashboard: React.FC = () => {
                 {/* 時間帯別搬入量 */}
                 <Col span={24}>
                     <Card title='⏰ 時間帯ごとの搬入量'>
-                        <ResponsiveContainer width='100%' height={250}>
+                        <ResponsiveContainer width='30%' height={250}>
                             <BarChart data={hourlyInData}>
                                 <XAxis dataKey='time' />
                                 <YAxis unit='t' />
@@ -94,7 +94,7 @@ const FactoryDashboard: React.FC = () => {
                 {/* 時間帯別 車種割合（100% stacked） */}
                 <Col span={24}>
                     <Card title='🚛 時間帯ごとの車種割合（100%積み上げ・面グラフ）'>
-                        <ResponsiveContainer width='100%' height={300}>
+                        <ResponsiveContainer width='30%' height={300}>
                             <AreaChart
                                 data={vehicleByHourData}
                                 stackOffset='expand'
@@ -153,7 +153,7 @@ const FactoryDashboard: React.FC = () => {
                 {/* 品目別 搬入量 */}
                 <Col span={24}>
                     <Card title='📦 品目別の搬入量（時間帯内訳）'>
-                        <ResponsiveContainer width='100%' height={280}>
+                        <ResponsiveContainer width='30%' height={280}>
                             <BarChart data={itemBreakdownData}>
                                 <XAxis dataKey='time' />
                                 <YAxis unit='t' />
