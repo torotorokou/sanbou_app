@@ -3,9 +3,15 @@
 import React, { useState } from 'react';
 import { Modal, Button, Space } from 'antd';
 import { Document, Page, pdfjs } from 'react-pdf';
-// import workerSrc from 'pdfjs-dist/build/pdf.worker.entry';
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
+
+type Props = {
+    url: string;
+    type: 'image' | 'pdf';
+    width?: string;
+    height?: string;
+};
 
 const ReportSampleThumbnail: React.FC<Props> = ({
     url,
@@ -14,7 +20,7 @@ const ReportSampleThumbnail: React.FC<Props> = ({
     height = '160px',
 }) => {
     const [visible, setVisible] = useState(false);
-    const [zoom, setZoom] = useState(1.0); // ズーム倍率
+    const [zoom, setZoom] = useState(1.0);
 
     const handleZoomIn = () => setZoom((z) => Math.min(3, z + 0.1));
     const handleZoomOut = () => setZoom((z) => Math.max(0.5, z - 0.1));
@@ -61,7 +67,7 @@ const ReportSampleThumbnail: React.FC<Props> = ({
                     resetZoom();
                 }}
                 footer={null}
-                width={false} // ✅ 中身に合わせる
+                width={640} // ✅ 固定幅に変更（これで横長にならない）
                 style={{ top: 40 }}
                 bodyStyle={{
                     padding: 0,
@@ -70,11 +76,12 @@ const ReportSampleThumbnail: React.FC<Props> = ({
                     justifyContent: 'center',
                     alignItems: 'center',
                     height: '80vh',
-                    overflow: 'hidden',
+                    overflow: 'auto', // ✅ 拡大時にスクロール可能に
                     position: 'relative',
+                    background: '#fff',
                 }}
             >
-                {/* ✅ ズームボタン */}
+                {/* ズームボタン */}
                 <div
                     style={{
                         position: 'absolute',
@@ -96,30 +103,40 @@ const ReportSampleThumbnail: React.FC<Props> = ({
                     </Space>
                 </div>
 
-                {/* ✅ 拡大表示本体 */}
-                {type === 'image' ? (
-                    <img
-                        src={url}
-                        alt='拡大帳票'
-                        style={{
-                            height: `${80 * zoom}vh`,
-                            width: 'auto',
-                            objectFit: 'contain',
-                        }}
-                    />
-                ) : (
-                    <Document
-                        file={url}
-                        onLoadError={(err) =>
-                            console.error('PDF読み込みエラー:', err.message)
-                        }
-                    >
-                        <Page
-                            pageNumber={1}
-                            height={window.innerHeight * 0.8 * zoom}
+                {/* 表示本体 */}
+                <div
+                    style={{
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        width: '100%',
+                        overflow: 'auto',
+                    }}
+                >
+                    {type === 'image' ? (
+                        <img
+                            src={url}
+                            alt='拡大帳票'
+                            style={{
+                                height: `${80 * zoom}vh`,
+                                width: 'auto',
+                                objectFit: 'contain',
+                            }}
                         />
-                    </Document>
-                )}
+                    ) : (
+                        <Document
+                            file={url}
+                            onLoadError={(err) =>
+                                console.error('PDF読み込みエラー:', err.message)
+                            }
+                        >
+                            <Page
+                                pageNumber={1}
+                                width={600 * zoom} // ✅ 幅を明示的に
+                            />
+                        </Document>
+                    )}
+                </div>
             </Modal>
         </>
     );
