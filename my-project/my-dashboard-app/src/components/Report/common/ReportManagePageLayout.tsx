@@ -68,7 +68,7 @@ const ReportManagePageLayout: React.FC<ReportPageLayoutProps> = ({
                             <ReportSampleThumbnail
                                 url={sampleImageUrl} // ✅ 変更点
                                 // type='image' // ✅ 明示的に画像と指定
-                                width='80%'
+                                width='100%'
                                 height='160px'
                             />
                         )}

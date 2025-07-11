@@ -1,5 +1,6 @@
 import React from 'react';
-import { Card, Typography, Button, Tag } from 'antd';
+import { Card, Typography, Button, Tag, Space } from 'antd';
+import { UserOutlined, RobotOutlined, BookOutlined } from '@ant-design/icons';
 import TypewriterText from '@/components/ui/TypewriterText';
 import type { ChatMessage } from '@/types/chat';
 
@@ -12,9 +13,29 @@ type Props = {
     onOpenPdf?: (pdfName: string) => void;
 };
 
+const roleMeta = {
+    user: {
+        title: (
+            <Space>
+                <UserOutlined style={{ color: '#52c41a', fontSize: 20 }} />
+                <span>あなた</span>
+            </Space>
+        ),
+        color: '#f6ffed',
+    },
+    bot: {
+        title: (
+            <Space>
+                <RobotOutlined style={{ color: '#1890ff', fontSize: 20 }} />
+                <span>AI</span>
+            </Space>
+        ),
+        color: '#e6f7ff',
+    },
+};
+
 const ChatMessageCard: React.FC<Props> = ({
     msg,
-    index,
     windowWidth,
     isLastBotMessage,
     onSelectCategory,
@@ -30,17 +51,23 @@ const ChatMessageCard: React.FC<Props> = ({
         return {
             width,
             alignSelf: msg.role === 'user' ? 'flex-start' : 'flex-end',
-            background: msg.role === 'user' ? '#f6ffed' : '#e6f7ff',
+            background: roleMeta[msg.role]?.color,
+            borderRadius: 16,
+            boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+            marginBottom: 16,
+            transition: 'background 0.3s, box-shadow 0.3s',
         };
     };
 
     return (
         <Card
             size='small'
-            title={msg.role === 'user' ? '👤 あなた' : '🤖 AI'}
+            title={roleMeta[msg.role]?.title}
             style={getCardStyle()}
+            bodyStyle={{ padding: 18 }}
+            hoverable
         >
-            <Typography.Paragraph>
+            <Typography.Paragraph style={{ fontSize: 15, marginBottom: 4 }}>
                 {msg.role === 'bot' && !msg.type && isLastBotMessage ? (
                     <TypewriterText text={msg.content} />
                 ) : (
@@ -53,43 +80,73 @@ const ChatMessageCard: React.FC<Props> = ({
                 )}
             </Typography.Paragraph>
 
+            {/* カテゴリボタン */}
             {msg.type === 'category-buttons' && (
-                <div style={{ marginTop: 8 }}>
+                <div style={{ marginTop: 12 }}>
                     <Typography.Text
                         strong
-                        style={{ display: 'block', marginBottom: 8 }}
+                        style={{ marginBottom: 8, display: 'block' }}
                     >
                         📚 カテゴリ一覧
                     </Typography.Text>
-                    {['処理', '設備', '法令', '運搬', '分析'].map((cat) => (
-                        <Button
-                            key={cat}
-                            onClick={() => onSelectCategory?.(cat)}
-                            style={{ marginRight: 8, marginBottom: 8 }}
-                        >
-                            {cat}
-                        </Button>
-                    ))}
+                    <Space wrap>
+                        {['処理', '設備', '法令', '運搬', '分析'].map((cat) => (
+                            <Button
+                                key={cat}
+                                type='default'
+                                size='small'
+                                onClick={() => onSelectCategory?.(cat)}
+                            >
+                                {cat}
+                            </Button>
+                        ))}
+                    </Space>
                 </div>
             )}
 
-            {msg.sources?.map((src, i) => (
-                <div key={i} style={{ marginTop: 8 }}>
-                    <Tag color='blue'>{src.pdf}</Tag>
-                    <Tag color='purple'>{src.section_title}</Tag>
-                    <Typography.Text type='secondary'>
-                        {src.highlight}
-                    </Typography.Text>
-                    <br />
-                    <Button
-                        type='link'
-                        size='small'
-                        onClick={() => onOpenPdf?.(src.pdf)}
+            {/* PDF・関連情報 */}
+            {msg.sources?.length ? (
+                <div style={{ marginTop: 16 }}>
+                    <Space
+                        direction='vertical'
+                        size={8}
+                        style={{ width: '100%' }}
                     >
-                        📖 PDFを開く
-                    </Button>
+                        {msg.sources.map((src, i) => (
+                            <Card
+                                key={i}
+                                type='inner'
+                                style={{
+                                    borderRadius: 8,
+                                    background: '#fafafa',
+                                }}
+                            >
+                                <Space>
+                                    <Tag color='blue'>{src.pdf}</Tag>
+                                    <Tag color='purple'>
+                                        {src.section_title}
+                                    </Tag>
+                                </Space>
+                                <Typography.Text
+                                    type='secondary'
+                                    style={{ display: 'block' }}
+                                >
+                                    {src.highlight}
+                                </Typography.Text>
+                                <Button
+                                    type='link'
+                                    size='small'
+                                    icon={<BookOutlined />}
+                                    onClick={() => onOpenPdf?.(src.pdf)}
+                                    style={{ padding: 0, marginTop: 2 }}
+                                >
+                                    PDFを開く
+                                </Button>
+                            </Card>
+                        ))}
+                    </Space>
                 </div>
-            ))}
+            ) : null}
         </Card>
     );
 };
