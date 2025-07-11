@@ -58,8 +58,8 @@ const CsvUploadPanel: React.FC<CsvUploadPanelProps> = ({ upload }) => {
                                 accept='.csv'
                                 maxCount={1}
                                 style={{
-                                    height: 160,
-                                    padding: 12,
+                                    height: 150,
+                                    padding: 8,
                                     fontSize: 13,
                                     lineHeight: 1.5,
                                     display: 'flex',

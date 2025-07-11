@@ -21,7 +21,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ pdfUrl, height = '80vh' }) => {
             src={pdfUrl}
             style={{
                 width: '100%',
-                height,
+                height: '100%',
                 border: '1px solid #ccc',
                 borderRadius: 4,
             }}

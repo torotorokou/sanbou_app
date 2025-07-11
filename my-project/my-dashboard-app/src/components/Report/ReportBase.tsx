@@ -1,9 +1,13 @@
+// src/components/Report/ReportBase.tsx
+
 import React from 'react';
 import { Typography, Spin } from 'antd';
 import type { UploadProps } from 'antd/es/upload';
 import ReportManagePageLayout from './common/ReportManagePageLayout';
 import ReportStepperModal from './common/ReportStepperModal';
 import PDFViewer from './viewer/PDFViewer';
+import { pdfPreviewMap } from '@/constants/reportManage';
+import type { ReportKey } from '@/constants/reportManage';
 
 // === 型定義グループ化 ===
 type CsvConfig = {
@@ -51,6 +55,7 @@ type ReportBaseProps = {
     finalized: FinalizedProps;
     loading: LoadingProps;
     generatePdf: () => Promise<string>;
+    reportKey: ReportKey; // ✅ 追加
 };
 
 // === コンポーネント本体 ===
@@ -62,11 +67,10 @@ const ReportBase: React.FC<ReportBaseProps> = ({
     finalized,
     loading,
     generatePdf,
+    reportKey, // ✅ 追加
 }) => {
-    // すべてのCSVが揃っていれば帳票作成可
     const readyToCreate = file.csvConfigs.every((cfg) => file.files[cfg.label]);
 
-    // ファイルアップロード用props
     const makeUploadProps = (
         label: string,
         parser: (csvText: string) => void
@@ -85,7 +89,6 @@ const ReportBase: React.FC<ReportBaseProps> = ({
         },
     });
 
-    // 帳票生成処理
     const handleGenerate = async () => {
         modal.setModalOpen(true);
         loading.setLoading(true);
@@ -147,7 +150,7 @@ const ReportBase: React.FC<ReportBaseProps> = ({
                 }}
                 finalized={finalized.finalized}
                 readyToCreate={readyToCreate}
-                sampleImageUrl={'/factory_report.pdf'} // ✅ この行を追加
+                sampleImageUrl={pdfPreviewMap[reportKey]} // ✅ プレビュー画像を帳票キーから取得
                 pdfUrl={preview.previewUrl}
             >
                 <PDFViewer pdfUrl={preview.previewUrl} />

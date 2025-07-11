@@ -1,8 +1,10 @@
+// src/pages/report/ReportPage.tsx
+
 import React, { useState, useEffect } from 'react';
 import ReportBase from '@/components/Report/ReportBase';
 import ReportHeader from '@/components/Report/common/ReportHeader';
-import { reportConfigMap } from '@/config/reportManage';
-import type { ReportKey } from '@/config/reportManage';
+import { reportConfigMap, pdfPreviewMap } from '@/constants/reportManage';
+import type { ReportKey } from '@/constants/reportManage';
 
 // CSVはラベルごとにグローバルで管理
 type CsvFiles = { [csvLabel: string]: File | null };
@@ -99,6 +101,7 @@ const ReportPage: React.FC = () => {
                 finalized={finalizedProps}
                 loading={loadingProps}
                 generatePdf={selectedConfig.generatePdf}
+                reportKey={selected} // ← これを追加！！
             />
         </>
     );
