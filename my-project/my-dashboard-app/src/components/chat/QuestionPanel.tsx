@@ -1,6 +1,5 @@
 import React from 'react';
-import { Card, Select, Input, Button, Typography } from 'antd';
-import { SendOutlined } from '@ant-design/icons';
+import { Card, Select, Input, Typography } from 'antd';
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -14,8 +13,7 @@ type Props = {
     setTemplate: (val: string) => void;
     question: string;
     setQuestion: (val: string) => void;
-    onSubmit: () => void;
-    loading: boolean;
+    // onSubmit, loadingは不要
 };
 
 const QuestionPanel: React.FC<Props> = ({
@@ -27,8 +25,6 @@ const QuestionPanel: React.FC<Props> = ({
     setTemplate,
     question,
     setQuestion,
-    onSubmit,
-    loading,
 }) => {
     return (
         <div style={{ marginBottom: 32 }}>
@@ -109,17 +105,7 @@ const QuestionPanel: React.FC<Props> = ({
                         style={{ marginTop: 8 }}
                     />
                 </div>
-
-                <Button
-                    type='primary'
-                    icon={<SendOutlined />}
-                    block
-                    loading={loading}
-                    onClick={onSubmit}
-                    style={{ marginTop: 'auto' }}
-                >
-                    質問を送信
-                </Button>
+                {/* 送信ボタンは完全削除 */}
             </Card>
         </div>
     );

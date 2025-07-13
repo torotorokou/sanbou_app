@@ -22,6 +22,7 @@ const roleMeta = {
             </Space>
         ),
         color: '#f6ffed',
+        alignSelf: 'flex-start' as const,
     },
     bot: {
         title: (
@@ -31,6 +32,7 @@ const roleMeta = {
             </Space>
         ),
         color: '#e6f7ff',
+        alignSelf: 'flex-end' as const,
     },
 };
 
@@ -41,113 +43,129 @@ const ChatMessageCard: React.FC<Props> = ({
     onSelectCategory,
     onOpenPdf,
 }) => {
+    // 右カラム内幅を基準に調整。レスポンシブ考慮。
     const getCardStyle = () => {
-        let width = '100%';
+        // デフォルトは右カラム内の「ほぼ最大幅」
+        let width = '96%';
         if (windowWidth >= 1024) {
-            width = msg.role === 'user' ? '40%' : '60%';
+            width = '85%'; // デスクトップ時に若干余白を持たせる
         } else if (windowWidth >= 768) {
-            width = '70%';
+            width = '92%'; // タブレット
+        } else {
+            width = '100%'; // スマホ
         }
         return {
             width,
-            alignSelf: msg.role === 'user' ? 'flex-start' : 'flex-end',
+            alignSelf: roleMeta[msg.role]?.alignSelf,
             background: roleMeta[msg.role]?.color,
             borderRadius: 16,
             boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
             marginBottom: 16,
             transition: 'background 0.3s, box-shadow 0.3s',
+            minWidth: 180,
+            maxWidth: '100%',
         };
     };
 
     return (
-        <Card
-            size='small'
-            title={roleMeta[msg.role]?.title}
-            style={getCardStyle()}
-            bodyStyle={{ padding: 18 }}
-            hoverable
+        <div
+            style={{
+                display: 'flex',
+                width: '100%',
+                justifyContent: msg.role === 'user' ? 'flex-start' : 'flex-end',
+            }}
         >
-            <Typography.Paragraph style={{ fontSize: 15, marginBottom: 4 }}>
-                {msg.role === 'bot' && !msg.type && isLastBotMessage ? (
-                    <TypewriterText text={msg.content} />
-                ) : (
-                    msg.content?.split('\n').map((line, i) => (
-                        <React.Fragment key={i}>
-                            {line}
-                            <br />
-                        </React.Fragment>
-                    ))
+            <Card
+                size='small'
+                title={roleMeta[msg.role]?.title}
+                style={getCardStyle()}
+                bodyStyle={{ padding: 18 }}
+                hoverable
+            >
+                <Typography.Paragraph style={{ fontSize: 15, marginBottom: 4 }}>
+                    {msg.role === 'bot' && !msg.type && isLastBotMessage ? (
+                        <TypewriterText text={msg.content} />
+                    ) : (
+                        msg.content?.split('\n').map((line, i) => (
+                            <React.Fragment key={i}>
+                                {line}
+                                <br />
+                            </React.Fragment>
+                        ))
+                    )}
+                </Typography.Paragraph>
+
+                {/* カテゴリボタン */}
+                {msg.type === 'category-buttons' && (
+                    <div style={{ marginTop: 12 }}>
+                        <Typography.Text
+                            strong
+                            style={{ marginBottom: 8, display: 'block' }}
+                        >
+                            📚 カテゴリ一覧
+                        </Typography.Text>
+                        <Space wrap>
+                            {['処理', '設備', '法令', '運搬', '分析'].map(
+                                (cat) => (
+                                    <Button
+                                        key={cat}
+                                        type='default'
+                                        size='small'
+                                        onClick={() => onSelectCategory?.(cat)}
+                                    >
+                                        {cat}
+                                    </Button>
+                                )
+                            )}
+                        </Space>
+                    </div>
                 )}
-            </Typography.Paragraph>
 
-            {/* カテゴリボタン */}
-            {msg.type === 'category-buttons' && (
-                <div style={{ marginTop: 12 }}>
-                    <Typography.Text
-                        strong
-                        style={{ marginBottom: 8, display: 'block' }}
-                    >
-                        📚 カテゴリ一覧
-                    </Typography.Text>
-                    <Space wrap>
-                        {['処理', '設備', '法令', '運搬', '分析'].map((cat) => (
-                            <Button
-                                key={cat}
-                                type='default'
-                                size='small'
-                                onClick={() => onSelectCategory?.(cat)}
-                            >
-                                {cat}
-                            </Button>
-                        ))}
-                    </Space>
-                </div>
-            )}
-
-            {/* PDF・関連情報 */}
-            {msg.sources?.length ? (
-                <div style={{ marginTop: 16 }}>
-                    <Space
-                        direction='vertical'
-                        size={8}
-                        style={{ width: '100%' }}
-                    >
-                        {msg.sources.map((src, i) => (
-                            <Card
-                                key={i}
-                                type='inner'
-                                style={{
-                                    borderRadius: 8,
-                                    background: '#fafafa',
-                                }}
-                            >
-                                <Space>
-                                    <Tag color='blue'>{src.pdf}</Tag>
-                                    <Tag color='purple'>
-                                        {src.section_title}
-                                    </Tag>
-                                </Space>
-                                <Typography.Text
-                                    type='secondary'
-                                    style={{ display: 'block' }}
+                {/* PDF・関連情報 */}
+                {msg.sources?.length ? (
+                    <div style={{ marginTop: 16 }}>
+                        <Space
+                            direction='vertical'
+                            size={8}
+                            style={{ width: '100%' }}
+                        >
+                            {msg.sources.map((src, i) => (
+                                <Card
+                                    key={i}
+                                    type='inner'
+                                    style={{
+                                        borderRadius: 8,
+                                        background: '#fafafa',
+                                    }}
                                 >
-                                    {src.highlight}
-                                </Typography.Text>
-                                <Button
-                                    type='link'
-                                    size='small'
-                                    icon={<BookOutlined />}
-                                    onClick={() => onOpenPdf?.(src.pdf)}
-                                    style={{ padding: 0, marginTop: 2 }}
-                                >
-                                    PDFを開く
-                                </Button>
-                            </Card>
-                        ))}
-                    </Space>
-                </div>
-            ) : null}
-        </Card>
+                                    <Space>
+                                        <Tag color='blue'>{src.pdf}</Tag>
+                                        <Tag color='purple'>
+                                            {src.section_title}
+                                        </Tag>
+                                    </Space>
+                                    <Typography.Text
+                                        type='secondary'
+                                        style={{ display: 'block' }}
+                                    >
+                                        {src.highlight}
+                                    </Typography.Text>
+                                    <Button
+                                        type='link'
+                                        size='small'
+                                        icon={<BookOutlined />}
+                                        onClick={() => onOpenPdf?.(src.pdf)}
+                                        style={{ padding: 0, marginTop: 2 }}
+                                    >
+                                        PDFを開く
+                                    </Button>
+                                </Card>
+                            ))}
+                        </Space>
+                    </div>
+                ) : null}
+            </Card>
+        </div>
     );
 };
 
