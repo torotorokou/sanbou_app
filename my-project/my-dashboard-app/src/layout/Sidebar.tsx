@@ -53,7 +53,12 @@ const Sidebar: React.FC<{
                 theme='dark'
                 className='custom-sider-menu'
                 selectedKeys={[location.pathname]}
-                defaultOpenKeys={['dashboardGroup', 'report', 'management']}
+                defaultOpenKeys={[
+                    'dashboardGroup',
+                    'report',
+                    'management',
+                    'analysis',
+                ]}
                 style={{
                     height: '100%',
                     backgroundColor: 'transparent',

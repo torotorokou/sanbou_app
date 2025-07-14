@@ -3,12 +3,18 @@ import React from 'react';
 import {
     DashboardOutlined,
     TableOutlined,
+    ApartmentOutlined,
     FileTextOutlined,
+    FileAddOutlined,
+    FileDoneOutlined,
+    BarChartOutlined,
+    TeamOutlined,
     CompassOutlined,
     SettingOutlined,
-    UploadOutlined,
-    ToolOutlined,
+    UserSwitchOutlined,
+    CloudUploadOutlined,
     BookOutlined,
+    SolutionOutlined,
 } from '@ant-design/icons';
 import { Link } from 'react-router-dom';
 import { ROUTER_PATHS } from './router';
@@ -20,13 +26,13 @@ export const SIDEBAR_MENU = [
         label: 'ダッシュボード',
         children: [
             {
-                key: ROUTER_PATHS.DASHBOARD, // ← パスそのもの
-                icon: <DashboardOutlined />,
+                key: ROUTER_PATHS.DASHBOARD,
+                icon: <TableOutlined />,
                 label: <Link to={ROUTER_PATHS.DASHBOARD}>管理表</Link>,
             },
             {
                 key: ROUTER_PATHS.FACTORY,
-                icon: <TableOutlined />,
+                icon: <ApartmentOutlined />,
                 label: <Link to={ROUTER_PATHS.FACTORY}>工場管理</Link>,
             },
             {
@@ -38,18 +44,34 @@ export const SIDEBAR_MENU = [
     },
     {
         key: 'report',
-        icon: <FileTextOutlined />,
+        icon: <FileAddOutlined />,
         label: '帳票作成',
         children: [
             {
                 key: ROUTER_PATHS.REPORT_MANAGE,
-                icon: <FileTextOutlined />,
+                icon: <SolutionOutlined />,
                 label: <Link to={ROUTER_PATHS.REPORT_MANAGE}>管理業務</Link>,
             },
             {
                 key: ROUTER_PATHS.REPORT_FACTORY,
-                icon: <FileTextOutlined />,
+                icon: <FileDoneOutlined />,
                 label: <Link to={ROUTER_PATHS.REPORT_FACTORY}>工場帳簿</Link>,
+            },
+        ],
+    },
+    {
+        key: 'analysis',
+        icon: <BarChartOutlined />,
+        label: 'データ分析',
+        children: [
+            {
+                key: ROUTER_PATHS.ANALYSIS_CUSTOMERLIST,
+                icon: <TeamOutlined />,
+                label: (
+                    <Link to={ROUTER_PATHS.ANALYSIS_CUSTOMERLIST}>
+                        搬入顧客リストチェック
+                    </Link>
+                ),
             },
         ],
     },
@@ -70,14 +92,14 @@ export const SIDEBAR_MENU = [
             },
             {
                 key: ROUTER_PATHS.ADMIN,
-                icon: <ToolOutlined />,
+                icon: <UserSwitchOutlined />,
                 label: <Link to={ROUTER_PATHS.ADMIN}>管理者メニュー</Link>,
             },
         ],
     },
     {
         key: ROUTER_PATHS.UPLOAD,
-        icon: <UploadOutlined />,
+        icon: <CloudUploadOutlined />,
         label: <Link to={ROUTER_PATHS.UPLOAD}>データアップロード</Link>,
     },
     {

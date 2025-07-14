@@ -11,6 +11,9 @@ import ReportFactory from '../pages/report/ReportFactory';
 import ReportPage from '../pages/report/ReportPage';
 import PricingDashboard from '../pages/PricingDashboard';
 
+// ✅ データ分析ページのインポート
+import CustomerListAnalysis from '../pages/analysis/CustomerListAnalysis';
+
 // ✅ チャットボットページのインポート
 import PdfChatBot from '../pages/navi/PdfChatBot';
 
@@ -37,6 +40,12 @@ const AppRoutes: React.FC = () => (
         {/* ✅ 帳票ページ群 */}
         <Route path={ROUTER_PATHS.REPORT_MANAGE} element={<ReportPage />} />
         <Route path={ROUTER_PATHS.REPORT_FACTORY} element={<ReportFactory />} />
+
+        {/* ✅ データ分析ページ */}
+        <Route
+            path={ROUTER_PATHS.ANALYSIS_CUSTOMERLIST}
+            element={<CustomerListAnalysis />}
+        />
 
         {/* ✅ チャットボットページ */}
         <Route path={ROUTER_PATHS.NAVI} element={<PdfChatBot />} />

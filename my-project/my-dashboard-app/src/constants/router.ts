@@ -14,6 +14,9 @@ export const ROUTER_PATHS = {
     REPORT_MANAGE: '/report/manage',
     REPORT_FACTORY: '/report/factory',
 
+    // データ分析系
+    ANALYSIS_CUSTOMERLIST: '/analysis/customer-list',
+
     // チャットボット系
     NAVI: '/navi',
 
