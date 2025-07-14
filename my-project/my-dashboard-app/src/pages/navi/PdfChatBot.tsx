@@ -1,23 +1,40 @@
-// src/pages/SearchSplitView.tsx
 import React, { useState } from 'react';
-import { Steps, Typography, Spin, Button, Card } from 'antd';
+import { Steps, Typography, Spin, Button, Card, Drawer, Space } from 'antd';
+import { FilePdfOutlined, MenuUnfoldOutlined } from '@ant-design/icons';
 import axios from 'axios';
+import { pdfjs } from 'react-pdf';
 import QuestionPanel from '@/components/chat/QuestionPanel';
 import PdfCardList from '@/components/chat/PdfCardList';
 import AnswerViewer from '@/components/chat/AnswerViewer';
 import PdfPreviewModal from '@/components/chat/PdfPreviewModal';
+
+// PDF.js workerSrc の指定
+pdfjs.GlobalWorkerOptions.workerSrc = '/pdfjs/pdf.worker.min.js';
 
 const { Step } = Steps;
 
 const cardStyle = {
     borderRadius: 16,
     boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
-    padding: 32,
+    padding: 10,
     marginBottom: 0,
-    background: '#fff', // AntDデフォルトカード色に統一
+    background: '#fff',
 };
 
-const SearchSplitView: React.FC = () => {
+const allPdfList = [
+    'doc1.pdf',
+    'manual2.pdf',
+    'specs2024.pdf',
+    '規程集.pdf',
+    '重要通知.pdf',
+    'report2022.pdf',
+    'guide.pdf',
+    'data.pdf',
+    'flow.pdf',
+    'notes.pdf',
+];
+
+const PdfChatBot: React.FC = () => {
     const [category, setCategory] = useState('');
     const [tag, setTag] = useState('');
     const [template, setTemplate] = useState('自由入力');
@@ -28,6 +45,9 @@ const SearchSplitView: React.FC = () => {
     const [pdfToShow, setPdfToShow] = useState<string | null>(null);
     const [pdfModalVisible, setPdfModalVisible] = useState(false);
     const [currentStep, setCurrentStep] = useState(0);
+
+    // Drawer用
+    const [drawerOpen, setDrawerOpen] = useState(false);
 
     const handleSearch = async () => {
         if (!question.trim()) return;
@@ -56,6 +76,13 @@ const SearchSplitView: React.FC = () => {
         }
     };
 
+    // 全PDF一覧から選択時
+    const handleSelectPdfFromAll = (pdf: string) => {
+        setPdfToShow(`/pdf/${pdf}`); // ← ここでフルパスにして渡す
+        setPdfModalVisible(true);
+        setDrawerOpen(false);
+    };
+
     return (
         <div
             style={{
@@ -77,7 +104,6 @@ const SearchSplitView: React.FC = () => {
                 </Steps>
             </div>
 
-            {/* 3カラム分割 */}
             <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
                 {/* 左カラム：質問フォーム＋関連PDF */}
                 <div
@@ -87,10 +113,9 @@ const SearchSplitView: React.FC = () => {
                         overflowY: 'auto',
                         display: 'flex',
                         flexDirection: 'column',
-                        gap: 32,
+                        gap: 12,
                     }}
                 >
-                    {/* 入力欄カード */}
                     <QuestionPanel
                         category={category}
                         setCategory={(val) => {
@@ -114,18 +139,14 @@ const SearchSplitView: React.FC = () => {
                         }}
                     />
 
-                    {/* 関連PDFカード（他とデザイン統一） */}
+                    <Typography.Title level={5} style={{ marginBottom: 5 }}>
+                        📄 関連PDF
+                    </Typography.Title>
                     <Card
-                        bordered={false}
+                        variant='borderless'
+                        styles={{ body: { padding: '4px 8px' } }}
                         style={cardStyle}
-                        bodyStyle={{ padding: '20px 24px 12px 24px' }}
                     >
-                        <Typography.Title
-                            level={5}
-                            style={{ marginBottom: 10 }}
-                        >
-                            📄 関連PDF
-                        </Typography.Title>
                         <PdfCardList
                             sources={sources}
                             onOpen={(path) => {
@@ -167,7 +188,130 @@ const SearchSplitView: React.FC = () => {
                 </div>
             </div>
 
-            {/* PDFプレビューモーダル */}
+            {/* ===== 下部 Drawerトリガー ===== */}
+            <div
+                style={{
+                    width: '100vw',
+                    position: 'fixed',
+                    left: 0,
+                    bottom: 0,
+                    zIndex: 200,
+                    display: 'flex',
+                    justifyContent: 'center',
+                    pointerEvents: 'none',
+                }}
+            >
+                <Button
+                    icon={
+                        <MenuUnfoldOutlined
+                            style={{ fontSize: 22, verticalAlign: -4 }}
+                        />
+                    }
+                    size='large'
+                    style={{
+                        margin: 8,
+                        borderRadius: 24,
+                        boxShadow: '0 4px 16px rgba(0,0,0,0.10)',
+                        background: '#fff',
+                        pointerEvents: 'auto',
+                        display: 'flex',
+                        alignItems: 'center',
+                        fontWeight: 600,
+                    }}
+                    onClick={() => setDrawerOpen(true)}
+                >
+                    すべてのPDFを見る
+                </Button>
+            </div>
+
+            {/* Drawer: 全PDFファイル一覧（クリックでモーダル表示） */}
+            <Drawer
+                title={
+                    <span>
+                        <FilePdfOutlined
+                            style={{ marginRight: 8, color: '#d32029' }}
+                        />
+                        全PDFファイル一覧
+                    </span>
+                }
+                placement='bottom'
+                open={drawerOpen}
+                onClose={() => setDrawerOpen(false)}
+                height={180}
+                closable={true}
+                styles={{
+                    body: {
+                        background: '#fafbfc',
+                        padding: '18px 20px 8px 20px',
+                        overflowX: 'auto',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                    },
+                }}
+            >
+                <div
+                    style={{
+                        display: 'flex',
+                        flexDirection: 'row',
+                        gap: 16,
+                        overflowX: 'auto',
+                        paddingBottom: 8,
+                    }}
+                >
+                    {allPdfList.map((pdf) => (
+                        <Card
+                            key={pdf}
+                            hoverable
+                            size='small'
+                            style={{
+                                width: 120,
+                                height: 72,
+                                minWidth: 100,
+                                textAlign: 'center',
+                                cursor: 'pointer',
+                                overflow: 'hidden',
+                                padding: 4,
+                                border: '1px solid #e5e5e5',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                background: '#fff',
+                            }}
+                            styles={{
+                                body: {
+                                    padding: 4,
+                                    minHeight: 12,
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                },
+                            }}
+                            onClick={() => handleSelectPdfFromAll(pdf)}
+                        >
+                            <div style={{ fontSize: 22, marginBottom: 2 }}>
+                                📄
+                            </div>
+                            <div
+                                style={{
+                                    fontSize: 12,
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    whiteSpace: 'nowrap',
+                                    width: 96,
+                                }}
+                                title={pdf}
+                            >
+                                {pdf}
+                            </div>
+                        </Card>
+                    ))}
+                </div>
+            </Drawer>
+
+            {/* モーダルPDFプレビュー */}
             <PdfPreviewModal
                 visible={pdfModalVisible}
                 pdfUrl={pdfToShow}
@@ -180,4 +324,4 @@ const SearchSplitView: React.FC = () => {
     );
 };
 
-export default SearchSplitView;
+export default PdfChatBot;
