@@ -17,11 +17,13 @@ export const ROUTER_PATHS = {
     // チャットボット系
     NAVI: '/navi',
 
+    // マニュアル検索
+    MANUAL_SEARCH: '/manual-search',
+
     // 設定系
     SETTINGS: '/settings',
     ADMIN: '/admin',
     UPLOAD: '/upload',
-    MANUAL: '/manual',
 
     // その他
     TOKEN_PREVIEW: '/token-preview',

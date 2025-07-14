@@ -1,6 +1,6 @@
 // src/components/chat/PdfCardList.tsx
 import React from 'react';
-import { Card, Typography, Empty } from 'antd';
+import { Typography, Empty } from 'antd';
 
 type PdfSource = {
     pdf: string;
@@ -21,9 +21,9 @@ const PdfCardList: React.FC<Props> = ({ sources, onOpen }) => {
         <div
             style={{
                 display: 'flex',
-                flexWrap: 'wrap',
-                gap: 12,
-                marginTop: 8,
+                flexDirection: 'column',
+                gap: 8,
+                marginTop: 0,
             }}
         >
             {sources.map((src, idx) => (
@@ -32,12 +32,16 @@ const PdfCardList: React.FC<Props> = ({ sources, onOpen }) => {
                     style={{
                         width: '100%',
                         cursor: 'pointer',
-                        padding: 12,
+                        padding: 4,
                         border: '1px solid #eee',
                         borderRadius: 8,
                         background: '#fff',
                         boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
                         transition: 'transform 0.2s, box-shadow 0.2s',
+
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 8,
                     }}
                     onClick={() => onOpen(`/pdf/${src.pdf}`)}
                     onMouseEnter={(e) => {
@@ -51,8 +55,10 @@ const PdfCardList: React.FC<Props> = ({ sources, onOpen }) => {
                         el.style.transform = 'none';
                     }}
                 >
-                    <div style={{ fontSize: 20, marginBottom: 6 }}>📄</div>
-                    <Typography.Link style={{ fontSize: 13 }}>
+                    <div style={{ fontSize: 18, marginBottom: 0 }}>📄</div>
+                    <Typography.Link
+                        style={{ fontSize: 12, whiteSpace: 'nowrap' }}
+                    >
                         PDFを開く
                     </Typography.Link>
                 </div>

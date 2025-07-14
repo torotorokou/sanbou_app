@@ -27,10 +27,7 @@ const QuestionPanel: React.FC<Props> = ({
 }) => {
     return (
         <div style={{ marginBottom: 8 /* ←狭く */ }}>
-            <Typography.Title
-                level={4}
-                style={{ marginBottom: 12 /* ←狭く */ }}
-            >
+            <Typography.Title level={4} style={{ marginBottom: 4 /* ←狭く */ }}>
                 質問を入力
             </Typography.Title>
             <Card

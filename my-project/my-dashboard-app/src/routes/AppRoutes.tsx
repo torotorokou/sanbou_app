@@ -14,6 +14,9 @@ import PricingDashboard from '../pages/PricingDashboard';
 // ✅ チャットボットページのインポート
 import PdfChatBot from '../pages/navi/PdfChatBot';
 
+// ✅ マニュアル検索ページのインポート
+import ManualSearch from '../pages/ManualSearch';
+
 // ✅ トークンページのインポート
 import TokenPreviewPage from '@/pages/TokenPreviewPage';
 
@@ -37,6 +40,9 @@ const AppRoutes: React.FC = () => (
 
         {/* ✅ チャットボットページ */}
         <Route path={ROUTER_PATHS.NAVI} element={<PdfChatBot />} />
+
+        {/* マニュアル検索 */}
+        <Route path={ROUTER_PATHS.MANUAL_SEARCH} element={<ManualSearch />} />
 
         {/* ✅ トークンプレビュー */}
         <Route

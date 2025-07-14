@@ -1,19 +1,15 @@
 import React, { useState } from 'react';
 import { Typography, Spin, Button, Card, Drawer } from 'antd';
-import {
-    FilePdfOutlined,
-    MenuUnfoldOutlined,
-    SendOutlined,
-} from '@ant-design/icons';
+import { FilePdfOutlined, MenuUnfoldOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import { pdfjs } from 'react-pdf';
-import QuestionPanel from '@/components/chat/QuestionPanel';
-import PdfCardList from '@/components/chat/PdfCardList';
-import AnswerViewer from '@/components/chat/AnswerViewer';
+import ChatQuestionSection from '@/components/chat/ChatQuestionSection';
+import ChatSendButtonSection from '@/components/chat/ChatSendButtonSection';
+import ChatAnswerSection from '@/components/chat/ChatAnswerSection';
 import PdfPreviewModal from '@/components/chat/PdfPreviewModal';
-import VerticalActionButton from '@/components/ui/VerticalActionButton';
 import type { StepItem } from '@/components/ui/ReportStepIndicator';
 import ReportStepIndicator from '@/components/ui/ReportStepIndicator';
+
 // PDF.js workerSrc の指定
 pdfjs.GlobalWorkerOptions.workerSrc = '/pdfjs/pdf.worker.min.js';
 
@@ -38,7 +34,6 @@ const allPdfList = [
     'notes.pdf',
 ];
 
-// ステップの内容を自由にカスタマイズ可能
 const stepItems: StepItem[] = [
     { title: '分類', description: 'カテゴリ選択' },
     { title: '質問作成', description: '質問入力' },
@@ -58,7 +53,6 @@ const PdfChatBot: React.FC = () => {
     const [pdfModalVisible, setPdfModalVisible] = useState(false);
     const [currentStep, setCurrentStep] = useState(0);
 
-    // Drawer用
     const [drawerOpen, setDrawerOpen] = useState(false);
 
     const handleSearch = async () => {
@@ -88,9 +82,8 @@ const PdfChatBot: React.FC = () => {
         }
     };
 
-    // 全PDF一覧から選択時
     const handleSelectPdfFromAll = (pdf: string) => {
-        setPdfToShow(`/pdf/${pdf}`); // ← ここでフルパスにして渡す
+        setPdfToShow(`/pdf/${pdf}`);
         setPdfModalVisible(true);
         setDrawerOpen(false);
     };
@@ -107,7 +100,6 @@ const PdfChatBot: React.FC = () => {
                 <Spin tip='AIが回答中です...' size='large' fullscreen />
             )}
 
-            {/* ステップインジケーターを共通UIで */}
             <div style={{ padding: '12px 24px' }}>
                 <ReportStepIndicator
                     currentStep={currentStep}
@@ -116,88 +108,49 @@ const PdfChatBot: React.FC = () => {
             </div>
 
             <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
-                {/* 左カラム：質問フォーム＋関連PDF */}
-                <div
-                    style={{
-                        width: 420,
-                        padding: 24,
-                        overflowY: 'auto',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: 12,
+                {/* 左カラム */}
+                <ChatQuestionSection
+                    category={category}
+                    setCategory={(val) => {
+                        setCategory(val);
+                        setCurrentStep(1);
                     }}
-                >
-                    <QuestionPanel
-                        category={category}
-                        setCategory={(val) => {
-                            setCategory(val);
-                            setCurrentStep(1);
-                        }}
-                        tag={tag}
-                        setTag={setTag}
-                        template={template}
-                        setTemplate={(val) => {
-                            setTemplate(val);
-                            if (val !== '自由入力') {
-                                setQuestion(val);
-                                setCurrentStep(2);
-                            }
-                        }}
-                        question={question}
-                        setQuestion={(val) => {
+                    tag={tag}
+                    setTag={setTag}
+                    template={template}
+                    setTemplate={(val) => {
+                        setTemplate(val);
+                        if (val !== '自由入力') {
                             setQuestion(val);
-                            if (val.trim()) setCurrentStep(2);
-                        }}
-                    />
-
-                    <Typography.Title level={5} style={{ marginBottom: 5 }}>
-                        📄 関連PDF
-                    </Typography.Title>
-                    <Card
-                        variant='borderless'
-                        styles={{ body: { padding: '4px 8px' } }}
-                        style={cardStyle}
-                    >
-                        <PdfCardList
-                            sources={sources}
-                            onOpen={(path) => {
-                                if (path && path.endsWith('.pdf')) {
-                                    setPdfToShow(path);
-                                    setPdfModalVisible(true);
-                                }
-                            }}
-                        />
-                    </Card>
-                </div>
-
-                {/* 中央カラム：送信ボタン（縦書き VerticalActionButton 使用） */}
-                <div
-                    style={{
-                        width: 70,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        background: 'transparent',
+                            setCurrentStep(2);
+                        }
                     }}
-                >
-                    <VerticalActionButton
-                        icon={<SendOutlined />}
-                        text='質問を送信'
-                        onClick={handleSearch}
-                        disabled={!question.trim() || loading}
-                        // backgroundColor='#1677ff'
-                        // writingMode='vertical-rl'
-                    />
-                </div>
+                    question={question}
+                    setQuestion={(val) => {
+                        setQuestion(val);
+                        if (val.trim()) setCurrentStep(2);
+                    }}
+                    sources={sources}
+                    onOpenPdf={(path) => {
+                        if (path && path.endsWith('.pdf')) {
+                            setPdfToShow(path);
+                            setPdfModalVisible(true);
+                        }
+                    }}
+                    cardStyle={cardStyle}
+                />
 
-                {/* 右カラム：回答 */}
-                <div style={{ flex: 1, padding: 24, overflowY: 'auto' }}>
-                    <Typography.Title level={4}>🤖 回答結果</Typography.Title>
-                    <AnswerViewer answer={answer} />
-                </div>
+                {/* 中央カラム */}
+                <ChatSendButtonSection
+                    onClick={handleSearch}
+                    disabled={!question.trim() || loading}
+                />
+
+                {/* 右カラム */}
+                <ChatAnswerSection answer={answer} />
             </div>
 
-            {/* ===== 下部 Drawerトリガー ===== */}
+            {/* ===== 下部の小さなPDF一覧表示ボタン（常時表示） ===== */}
             <div
                 style={{
                     width: '100vw',
@@ -207,29 +160,45 @@ const PdfChatBot: React.FC = () => {
                     zIndex: 200,
                     display: 'flex',
                     justifyContent: 'center',
-                    pointerEvents: 'none',
+                    pointerEvents: 'auto',
+                    paddingBottom: 8,
                 }}
             >
                 <Button
-                    icon={
-                        <MenuUnfoldOutlined
-                            style={{ fontSize: 22, verticalAlign: -4 }}
-                        />
-                    }
-                    size='large'
+                    size='small'
                     style={{
-                        margin: 8,
+                        width: 130,
+                        height: 32,
                         borderRadius: 24,
                         boxShadow: '0 4px 16px rgba(0,0,0,0.10)',
                         background: '#fff',
-                        pointerEvents: 'auto',
+                        fontWeight: 600,
+                        transition: 'all 0.3s ease',
+                        overflow: 'hidden',
+                        whiteSpace: 'nowrap',
                         display: 'flex',
                         alignItems: 'center',
-                        fontWeight: 600,
+                        justifyContent: 'center',
+                        gap: 6,
                     }}
                     onClick={() => setDrawerOpen(true)}
+                    onMouseEnter={(e) => {
+                        const btn = e.currentTarget;
+                        btn.style.width = '180px';
+                        btn.style.height = '48px';
+                        btn.style.fontSize = '16px';
+                        btn.style.padding = '0 24px';
+                    }}
+                    onMouseLeave={(e) => {
+                        const btn = e.currentTarget;
+                        btn.style.width = '130px';
+                        btn.style.height = '32px';
+                        btn.style.fontSize = '';
+                        btn.style.padding = '';
+                    }}
                 >
-                    すべてのPDFを見る
+                    <MenuUnfoldOutlined style={{ fontSize: 18 }} />
+                    PDF一覧を表示
                 </Button>
             </div>
 

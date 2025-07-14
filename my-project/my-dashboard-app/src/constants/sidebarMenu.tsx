@@ -81,8 +81,8 @@ export const SIDEBAR_MENU = [
         label: <Link to={ROUTER_PATHS.UPLOAD}>データアップロード</Link>,
     },
     {
-        key: ROUTER_PATHS.MANUAL,
+        key: ROUTER_PATHS.MANUAL_SEARCH,
         icon: <BookOutlined />,
-        label: <Link to={ROUTER_PATHS.MANUAL}>マニュアル一覧</Link>,
+        label: <Link to={ROUTER_PATHS.MANUAL_SEARCH}>マニュアル一覧</Link>,
     },
 ];
