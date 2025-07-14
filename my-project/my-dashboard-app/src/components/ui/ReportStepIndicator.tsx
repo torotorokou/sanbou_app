@@ -1,7 +1,10 @@
+// src/components/ui/ReportStepIndicator.tsx
+
 import React from 'react';
 import { Steps } from 'antd';
 
 export type StepItem = {
+    // ← ここでexportを明記
     title: string;
     description?: string;
 };

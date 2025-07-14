@@ -1,17 +1,21 @@
 import React, { useState } from 'react';
-import { Steps, Typography, Spin, Button, Card, Drawer, Space } from 'antd';
-import { FilePdfOutlined, MenuUnfoldOutlined } from '@ant-design/icons';
+import { Typography, Spin, Button, Card, Drawer } from 'antd';
+import {
+    FilePdfOutlined,
+    MenuUnfoldOutlined,
+    SendOutlined,
+} from '@ant-design/icons';
 import axios from 'axios';
 import { pdfjs } from 'react-pdf';
 import QuestionPanel from '@/components/chat/QuestionPanel';
 import PdfCardList from '@/components/chat/PdfCardList';
 import AnswerViewer from '@/components/chat/AnswerViewer';
 import PdfPreviewModal from '@/components/chat/PdfPreviewModal';
-
+import VerticalActionButton from '@/components/ui/VerticalActionButton';
+import type { StepItem } from '@/components/ui/ReportStepIndicator';
+import ReportStepIndicator from '@/components/ui/ReportStepIndicator';
 // PDF.js workerSrc の指定
 pdfjs.GlobalWorkerOptions.workerSrc = '/pdfjs/pdf.worker.min.js';
-
-const { Step } = Steps;
 
 const cardStyle = {
     borderRadius: 16,
@@ -32,6 +36,14 @@ const allPdfList = [
     'data.pdf',
     'flow.pdf',
     'notes.pdf',
+];
+
+// ステップの内容を自由にカスタマイズ可能
+const stepItems: StepItem[] = [
+    { title: '分類', description: 'カテゴリ選択' },
+    { title: '質問作成', description: '質問入力' },
+    { title: '送信', description: 'AIに質問' },
+    { title: '結果', description: '回答を確認' },
 ];
 
 const PdfChatBot: React.FC = () => {
@@ -95,13 +107,12 @@ const PdfChatBot: React.FC = () => {
                 <Spin tip='AIが回答中です...' size='large' fullscreen />
             )}
 
+            {/* ステップインジケーターを共通UIで */}
             <div style={{ padding: '12px 24px' }}>
-                <Steps current={currentStep} size='small'>
-                    <Step title='分類' />
-                    <Step title='質問作成' />
-                    <Step title='送信' />
-                    <Step title='結果' />
-                </Steps>
+                <ReportStepIndicator
+                    currentStep={currentStep}
+                    items={stepItems}
+                />
             </div>
 
             <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
@@ -159,26 +170,24 @@ const PdfChatBot: React.FC = () => {
                     </Card>
                 </div>
 
-                {/* 中央カラム：送信ボタン */}
+                {/* 中央カラム：送信ボタン（縦書き VerticalActionButton 使用） */}
                 <div
                     style={{
-                        width: 120,
+                        width: 70,
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         background: 'transparent',
                     }}
                 >
-                    <Button
-                        type='primary'
-                        size='large'
-                        block
-                        style={{ height: 60, fontSize: 18 }}
-                        disabled={!question.trim() || loading}
+                    <VerticalActionButton
+                        icon={<SendOutlined />}
+                        text='質問を送信'
                         onClick={handleSearch}
-                    >
-                        質問を送信
-                    </Button>
+                        disabled={!question.trim() || loading}
+                        // backgroundColor='#1677ff'
+                        // writingMode='vertical-rl'
+                    />
                 </div>
 
                 {/* 右カラム：回答 */}
