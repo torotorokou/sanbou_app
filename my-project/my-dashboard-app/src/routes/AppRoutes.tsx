@@ -12,7 +12,7 @@ import ReportPage from '../pages/report/ReportPage';
 import PricingDashboard from '../pages/PricingDashboard';
 
 // ✅ データ分析ページのインポート
-import CustomerListAnalysis from '../pages/analysis/CustomerListAnalysis';
+import CustomerListAnalysis from '../pages/analysis/CustomerListAnalysis.tsx';
 
 // ✅ チャットボットページのインポート
 import PdfChatBot from '../pages/navi/PdfChatBot';
