@@ -4,6 +4,7 @@ from typing import List
 import requests
 import os
 from dotenv import load_dotenv
+from fastapi.middleware.cors import CORSMiddleware
 
 # .envからAPIキーを読み込む
 load_dotenv()
@@ -11,6 +12,17 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
 # FastAPIインスタンス作成
 app = FastAPI()
+
+# ==========================
+# 🔹 CORS 許可設定（React からのアクセスを許可）
+# ==========================
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # 必要に応じて ["http://localhost:5173"] などに限定
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 # ==========================
@@ -23,16 +35,16 @@ class ChatRequest(BaseModel):
 
 
 # ==========================
-# 🔸 /api/chat : メイン質問応答
+# 🔸 /api/ai/chat : メイン質問応答
 # ==========================
-@app.post("/api/chat")
+@app.post("/api/ai/chat")
 def chat(req: ChatRequest):
     prompt = f"""
 以下はPDFに関連する質問です。
 
 質問: {req.query}
-関連タグ: {', '.join(req.tags)}
-関連PDF: {req.pdf or '指定なし'}
+関連タグ: {", ".join(req.tags)}
+関連PDF: {req.pdf or "指定なし"}
 
 質問に対してわかりやすく丁寧に答えてください。
 """
@@ -46,13 +58,7 @@ def chat(req: ChatRequest):
         response = requests.post(
             url,
             headers={"Content-Type": "application/json"},
-            json={
-                "contents": [
-                    {
-                        "parts": [{"text": prompt}]
-                    }
-                ]
-            }
+            json={"contents": [{"parts": [{"text": prompt}]}]},
         )
         response.raise_for_status()
         data = response.json()
@@ -64,24 +70,25 @@ def chat(req: ChatRequest):
                 {
                     "pdf": req.pdf or "doc1.pdf",
                     "section_title": "Gemini応答より",
-                    "highlight": req.query
+                    "highlight": req.query,
                 }
-            ]
+            ],
         }
 
     except Exception as e:
         import traceback
+
         traceback.print_exc()
         return {
             "answer": f"Gemini APIとの通信に失敗しました。\nエラー: {str(e)}",
-            "sources": []
+            "sources": [],
         }
 
 
 # ==========================
-# 🔹 /api/intro : 初回説明文取得
+# 🔸 /api/ai/intro : 初回説明文取得
 # ==========================
-@app.get("/api/intro")
+@app.get("/api/ai/intro")
 def get_intro():
     prompt = """
     あなたは、産業廃棄物に関する業務知識をナビゲートする参謀くんです。
@@ -92,10 +99,6 @@ def get_intro():
     - ユーザーにカテゴリを選択してもらう導線を促す
     - フレンドリーかつ丁寧なトーン
     - こんにちは！など最初の挨拶は飛ばす。
-
-    出力例：
-    「こんにちは！私はPDFに関するあなたの頼れるアシスタント、PDF参謀です！
-    業務に役立つ情報をナビゲートしますので、まずは下のカテゴリから選んでくださいね。」
     """
 
     try:
@@ -107,13 +110,7 @@ def get_intro():
         response = requests.post(
             url,
             headers={"Content-Type": "application/json"},
-            json={
-                "contents": [
-                    {
-                        "parts": [{"text": prompt}]
-                    }
-                ]
-            }
+            json={"contents": [{"parts": [{"text": prompt}]}]},
         )
         response.raise_for_status()
         data = response.json()
@@ -123,5 +120,14 @@ def get_intro():
 
     except Exception as e:
         import traceback
+
         traceback.print_exc()
         return {"text": f"Gemini APIとの通信に失敗しました。エラー: {str(e)}"}
+
+
+# ==========================
+# 🔹 /api/ai/ping : 疎通確認用
+# ==========================
+@app.get("/api/ai/ping")
+def ping():
+    return {"message": "pong from ai_api"}

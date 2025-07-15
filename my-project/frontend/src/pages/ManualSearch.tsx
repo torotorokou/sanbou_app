@@ -13,7 +13,11 @@ import {
 } from 'antd';
 import { Document, Page, pdfjs } from 'react-pdf';
 
-pdfjs.GlobalWorkerOptions.workerSrc = '/pdfjs/pdf.worker.min.js';
+// ✅ react-pdf@9.2.1 に対応した worker の指定方法
+pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+    'pdfjs-dist/build/pdf.worker.min.mjs',
+    import.meta.url
+).toString();
 
 const { Title, Text } = Typography;
 const { Sider, Content } = Layout;

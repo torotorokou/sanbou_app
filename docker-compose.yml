@@ -1,29 +1,55 @@
-version: '3.8'
-
 services:
     frontend:
-        build: ./my-project/my-dashboard-app
+        build: ./my-project/frontend
         container_name: react_app
         ports:
             - '5173:5173'
         volumes:
-            - ./my-project/my-dashboard-app:/app
-            - /app/node_modules
+            - ./my-project/frontend:/app
+            # - /app/node_modules
         working_dir: /app
         command: ['npm', 'run', 'dev', '--', '--host', '0.0.0.0']
         environment:
             - CHOKIDAR_USEPOLLING=true
 
-    backend:
-        build: ./my-project/backend
-        container_name: fastapi_app
+    ai_api:
+        build: ./my-project/backend/ai_api
+        container_name: ai_api
         ports:
-            - '8000:8000'
+            - '8001:8000'
         volumes:
-            - ./my-project/backend:/app
-        working_dir: /app
+            - ./my-project/backend/ai_api:/app
+            - ./my-project/backend/shared:/app/shared # ✅ shared追加
+            - ./my-project/config:/app/config
         env_file:
-            - ./my-project/backend/.env # backend専用の.envもOK
+            - ./my-project/backend/ai_api/.env
+        depends_on:
+            - db
+
+    ledger_api:
+        build: ./my-project/backend/ledger_api
+        container_name: ledger_api
+        ports:
+            - '8002:8000'
+        volumes:
+            - ./my-project/backend/ledger_api:/app
+            - ./my-project/backend/shared:/app/shared # ✅ shared追加
+            - ./my-project/config:/app/config
+        env_file:
+            - ./my-project/backend/ledger_api/.env
+        depends_on:
+            - db
+
+    sql_api:
+        build: ./my-project/backend/sql_api
+        container_name: sql_api
+        ports:
+            - '8003:8000'
+        volumes:
+            - ./my-project/backend/sql_api/app:/app/app
+            - ./my-project/backend/shared:/app/shared # ✅ shared追加
+        env_file:
+            - ./my-project/backend/sql_api/.env
         depends_on:
             - db
 
@@ -37,4 +63,4 @@ services:
         ports:
             - '5432:5432'
         volumes:
-            - ./dbdata:/var/lib/postgresql/data
+            - ./my-project/dbdata:/var/lib/postgresql/data

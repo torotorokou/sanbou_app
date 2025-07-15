@@ -10,8 +10,11 @@ import PdfPreviewModal from '@/components/chat/PdfPreviewModal';
 import type { StepItem } from '@/components/ui/ReportStepIndicator';
 import ReportStepIndicator from '@/components/ui/ReportStepIndicator';
 
-// PDF.js workerSrc の指定
-pdfjs.GlobalWorkerOptions.workerSrc = '/pdfjs/pdf.worker.min.js';
+// ✅ PDF.js workerSrc の指定（react-pdf 9.x 以降の書き方）
+pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+    'pdfjs-dist/build/pdf.worker.min.mjs',
+    import.meta.url
+).toString();
 
 const cardStyle = {
     borderRadius: 16,
@@ -60,7 +63,7 @@ const PdfChatBot: React.FC = () => {
         setCurrentStep(3);
         setLoading(true);
         try {
-            const res = await axios.post('/api/chat', {
+            const res = await axios.post('/api/ai/chat', {
                 query: question,
                 tags: [category, tag].filter(Boolean),
             });

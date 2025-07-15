@@ -1,0 +1,12 @@
+fastapi==0.111.0
+uvicorn[standard]==0.29.0
+
+pydantic==2.7.1
+pydantic-settings==2.2.1
+
+psycopg2-binary==2.9.9     # PostgreSQL用ドライバ
+sqlalchemy==2.0.30          # ORMを使う場合
+
+python-dotenv==1.0.1        # .env読み込み用（開発・設定分離）
+
+loguru==0.7.2               # 高機能ログ（任意）
