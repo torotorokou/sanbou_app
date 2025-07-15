@@ -1,0 +1,31 @@
+取引先一覧:
+  columns:
+    取引先CD: client_cd
+    取引先名1: client_name1
+    取引先名_全角: client_name_zenkaku
+    取引先郵便番号: client_postal_code
+    取引先住所: client_address
+    電話番号: phone_number
+    FAX番号: fax_number
+    メールアドレス: email_address
+    請求取引区分: billing_type
+    営業担当者CD: sales_rep_cd
+    集計項目CD: aggregate_item_cd
+    集計項目名: aggregate_item_name
+
+  
+業者一覧:
+  columns:
+    業者CD: vendor_cd
+    業者略称名: vendor_abbr_name
+    営業担当者名: sales_rep_name
+    業者担当者: vendor_contact_person
+    業者郵便番号: vendor_postal_code
+    業者都道府県名: vendor_prefecture
+    業者住所1: vendor_address1
+    電話番号: phone_number
+    FAX番号: fax_number
+    備考1: note1
+    備考2: note2
+    取引先CD: client_cd
+    取引先名1: client_name1
