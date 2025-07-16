@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Typography, Spin } from 'antd';
 import type { UploadProps } from 'antd/es/upload';
 import ReportManagePageLayout from './common/ReportManagePageLayout';
 import ReportStepperModal from './common/ReportStepperModal';
 import PDFViewer from './viewer/PDFViewer';
 import { pdfPreviewMap } from '@/constants/reportManage';
+import { identifyCsvType, isCsvMatch } from '@/utils/validators/csvValidator';
 import type { ReportKey } from '@/constants/reportManage';
 
 // === 型定義グループ化 ===
@@ -56,10 +57,9 @@ type ReportBaseProps = {
     finalized: FinalizedProps;
     loading: LoadingProps;
     generatePdf: () => Promise<string>;
-    reportKey: ReportKey; // ✅ 追加
+    reportKey: ReportKey;
 };
 
-// === コンポーネント本体 ===
 const ReportBase: React.FC<ReportBaseProps> = ({
     step,
     file,
@@ -68,11 +68,27 @@ const ReportBase: React.FC<ReportBaseProps> = ({
     finalized,
     loading,
     generatePdf,
-    reportKey, // ✅ 追加
+    reportKey,
 }) => {
+    const [validationResults, setValidationResults] = useState<{
+        [label: string]: 'valid' | 'invalid' | 'unknown';
+    }>({});
+
     const readyToCreate = file.csvConfigs
         .filter((entry) => entry.required)
-        .every((entry) => file.files[entry.config.label]);
+        .every(
+            (entry) =>
+                file.files[entry.config.label] &&
+                validationResults[entry.config.label] === 'valid'
+        );
+
+    const handleRemoveFile = (label: string) => {
+        file.onUploadFile(label, null);
+        setValidationResults((prev) => ({
+            ...prev,
+            [label]: 'unknown',
+        }));
+    };
 
     const makeUploadProps = (
         label: string,
@@ -82,10 +98,30 @@ const ReportBase: React.FC<ReportBaseProps> = ({
         showUploadList: false,
         beforeUpload: (fileObj) => {
             file.onUploadFile(label, fileObj);
+
+            if (!fileObj) {
+                setValidationResults((prev) => ({
+                    ...prev,
+                    [label]: 'unknown',
+                }));
+                return false;
+            }
+
             const reader = new FileReader();
             reader.onload = (e) => {
                 const text = e.target?.result as string;
-                parser(text);
+                const result = identifyCsvType(text);
+
+                const isCorrect = isCsvMatch(result, label);
+
+                setValidationResults((prev) => ({
+                    ...prev,
+                    [label]: isCorrect ? 'valid' : 'invalid',
+                }));
+
+                if (isCorrect) {
+                    parser(text);
+                }
             };
             reader.readAsText(fileObj);
             return false;
@@ -140,12 +176,25 @@ const ReportBase: React.FC<ReportBaseProps> = ({
 
             <ReportManagePageLayout
                 onGenerate={handleGenerate}
-                uploadFiles={file.csvConfigs.map((entry) => ({
-                    label: entry.config.label,
-                    file: file.files[entry.config.label] ?? null,
-                    onChange: (f) => file.onUploadFile(entry.config.label, f),
-                    required: entry.required, // ✅ これが重要！
-                }))}
+                uploadFiles={file.csvConfigs.map((entry) => {
+                    const label = entry.config.label;
+                    return {
+                        label,
+                        file: file.files[label] ?? null,
+                        onChange: (f) => {
+                            file.onUploadFile(label, f);
+                            if (f === null) {
+                                setValidationResults((prev) => ({
+                                    ...prev,
+                                    [label]: 'unknown',
+                                }));
+                            }
+                        },
+                        required: entry.required,
+                        validationResult: validationResults[label] ?? 'unknown',
+                        onRemove: () => handleRemoveFile(label),
+                    };
+                })}
                 makeUploadProps={(label) => {
                     const entry = file.csvConfigs.find(
                         (e) => e.config.label === label
@@ -156,7 +205,7 @@ const ReportBase: React.FC<ReportBaseProps> = ({
                 }}
                 finalized={finalized.finalized}
                 readyToCreate={readyToCreate}
-                sampleImageUrl={pdfPreviewMap[reportKey]} // ✅ プレビュー画像を帳票キーから取得
+                sampleImageUrl={pdfPreviewMap[reportKey]}
                 pdfUrl={preview.previewUrl}
             >
                 <PDFViewer pdfUrl={preview.previewUrl} />

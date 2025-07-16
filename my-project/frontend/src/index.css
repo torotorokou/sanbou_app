@@ -83,3 +83,17 @@ body {
     transform: none !important;
     box-shadow: none !important;
 }
+
+
+/* === 帳票サンプル画像のホバー演出 === */
+.sample-thumbnail {
+    cursor: pointer;
+    border-radius: 8px;
+    overflow: hidden;
+    transition: transform 0.1s, box-shadow 0.2s;
+}
+
+.sample-thumbnail:hover {
+    transform: scale(1.01);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
