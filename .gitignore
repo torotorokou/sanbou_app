@@ -79,6 +79,12 @@ junit.xml
 
 # === PDFやドキュメント（必要に応じて解除）===
 *.pdf
+*.csv
+*.xlsx
+*.docx
+*.pptx
+*.yaml
+
 
 # === その他 ===
 *.bak
