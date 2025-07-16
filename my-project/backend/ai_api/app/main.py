@@ -11,7 +11,13 @@ load_dotenv()
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
 # FastAPIインスタンス作成
-app = FastAPI()
+app = FastAPI(
+    title="AI 応答API",
+    description="PDF連動のAI応答や自然言語処理を提供するAPI群です。",
+    version="1.0.0",
+    root_path="/ai"
+)
+
 
 # ==========================
 # 🔹 CORS 許可設定（React からのアクセスを許可）
@@ -126,8 +132,8 @@ def get_intro():
 
 
 # ==========================
-# 🔹 /api/ai/ping : 疎通確認用
+# 🔹 /ai/ping : 疎通確認用
 # ==========================
-@app.get("/api/ai/ping")
+@app.get("/ping")
 def ping():
-    return {"message": "pong from ai_api"}
+    return {"status": "ai ok"}

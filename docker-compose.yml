@@ -11,6 +11,8 @@ services:
         command: ['npm', 'run', 'dev', '--', '--host', '0.0.0.0']
         environment:
             - CHOKIDAR_USEPOLLING=true
+        networks:
+            - backend
 
     ai_api:
         build: ./my-project/backend/ai_api
@@ -25,6 +27,8 @@ services:
             - ./my-project/backend/ai_api/.env.ai_api
         depends_on:
             - db
+        networks:
+            - backend
 
     ledger_api:
         build: ./my-project/backend/ledger_api
@@ -39,6 +43,8 @@ services:
             - ./my-project/backend/ledger_api/.env.ledger_api
         depends_on:
             - db
+        networks:
+            - backend
 
     sql_api:
         build: ./my-project/backend/sql_api
@@ -54,6 +60,8 @@ services:
             - ./my-project/backend/sql_api/.env.sql_api
         depends_on:
             - db
+        networks:
+            - backend
 
     db:
         image: postgres:16
@@ -66,21 +74,26 @@ services:
             - '5432:5432'
         volumes:
             - ./my-project/dbdata:/var/lib/postgresql/data
+        networks:
+            - backend
 
     nginx:
         image: nginx:latest
         container_name: nginx_proxy
-        volumes:
-            - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
-            - ./nginx/certs:/etc/nginx/certs
         ports:
             - '443:443'
             - '80:80'
+        volumes:
+            - ./my-project/nginx/conf.d:/etc/nginx/conf.d
+            - ./my-project/nginx/certs:/etc/nginx/certs
         depends_on:
             - ai_api
             - ledger_api
             - sql_api
             - frontend
-
         networks:
             - backend
+
+networks:
+    backend:
+        driver: bridge

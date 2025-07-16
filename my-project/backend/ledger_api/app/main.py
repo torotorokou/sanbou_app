@@ -5,9 +5,10 @@ from fastapi.middleware.cors import CORSMiddleware
 # from app.api import daily_report
 
 app = FastAPI(
-    title="Ledger API",
-    description="帳票・日報・集計などを処理するバックエンドAPI",
-    version="0.1.0",
+    title="帳票・日報API",
+    description="帳票生成、日報管理、PDF出力に関するAPI群です。",
+    version="1.0.0",
+    root_path="/ledger"
 )
 
 # CORS設定（必要に応じて調整）
