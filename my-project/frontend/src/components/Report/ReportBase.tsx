@@ -1,5 +1,3 @@
-// src/components/Report/ReportBase.tsx
-
 import React from 'react';
 import { Typography, Spin } from 'antd';
 import type { UploadProps } from 'antd/es/upload';
@@ -11,8 +9,11 @@ import type { ReportKey } from '@/constants/reportManage';
 
 // === 型定義グループ化 ===
 type CsvConfig = {
-    label: string;
-    onParse: (csvText: string) => void;
+    config: {
+        label: string;
+        onParse: (csvText: string) => void;
+    };
+    required: boolean;
 };
 
 type StepProps = {
@@ -69,7 +70,9 @@ const ReportBase: React.FC<ReportBaseProps> = ({
     generatePdf,
     reportKey, // ✅ 追加
 }) => {
-    const readyToCreate = file.csvConfigs.every((cfg) => file.files[cfg.label]);
+    const readyToCreate = file.csvConfigs
+        .filter((entry) => entry.required)
+        .every((entry) => file.files[entry.config.label]);
 
     const makeUploadProps = (
         label: string,
@@ -137,16 +140,19 @@ const ReportBase: React.FC<ReportBaseProps> = ({
 
             <ReportManagePageLayout
                 onGenerate={handleGenerate}
-                uploadFiles={file.csvConfigs.map((cfg) => ({
-                    label: cfg.label,
-                    file: file.files[cfg.label] ?? null,
-                    onChange: (f) => file.onUploadFile(cfg.label, f),
+                uploadFiles={file.csvConfigs.map((entry) => ({
+                    label: entry.config.label,
+                    file: file.files[entry.config.label] ?? null,
+                    onChange: (f) => file.onUploadFile(entry.config.label, f),
+                    required: entry.required, // ✅ これが重要！
                 }))}
                 makeUploadProps={(label) => {
-                    const config = file.csvConfigs.find(
-                        (cfg) => cfg.label === label
+                    const entry = file.csvConfigs.find(
+                        (e) => e.config.label === label
                     );
-                    return config ? makeUploadProps(label, config.onParse) : {};
+                    return entry
+                        ? makeUploadProps(label, entry.config.onParse)
+                        : {};
                 }}
                 finalized={finalized.finalized}
                 readyToCreate={readyToCreate}

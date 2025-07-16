@@ -4,8 +4,11 @@ import {
     parseYardCSV,
 } from '@/parsers/csvParsers';
 
+import type { CsvType, CsvDefinition } from './csvTypes';
+import { CSV_DEFINITIONS } from './csvTypes';
+
 // ==============================
-// 🧩 帳票定義（キー + ラベル）
+// 🤉 帳票定義（キー + ラベル）
 // ==============================
 
 export const REPORT_KEYS = {
@@ -23,27 +26,36 @@ export const REPORT_OPTIONS = Object.values(REPORT_KEYS);
 // 📄 CSVファイル構成（帳票別）
 // =================================
 
-type CsvConfig = {
-    label: string;
-    onParse: (text: string) => void;
+export type CsvConfig = CsvDefinition;
+
+export type CsvConfigEntry = {
+    config: CsvConfig;
+    required: boolean;
 };
 
-export const csvConfigMap: Record<ReportKey, CsvConfig[]> = {
+export type CsvConfigGroup = CsvConfigEntry[];
+
+export const csvConfigMap: Record<ReportKey, CsvConfigGroup> = {
+    // 工場日報
     factory: [
-        { label: '出荷CSV', onParse: parseShipmentCSV },
-        { label: 'ヤードCSV', onParse: parseYardCSV },
+        { config: CSV_DEFINITIONS.shipment, required: true },
+        { config: CSV_DEFINITIONS.yard, required: true },
     ],
+    // 搬出入収支表
     balance: [
-        { label: '受入CSV', onParse: parseReceiveCSV },
-        { label: '出荷CSV', onParse: parseShipmentCSV },
-        { label: 'ヤードCSV', onParse: parseYardCSV },
+        { config: CSV_DEFINITIONS.receive, required: false },
+        { config: CSV_DEFINITIONS.shipment, required: true },
+        { config: CSV_DEFINITIONS.yard, required: true },
     ],
-    abc: [{ label: '受入CSV', onParse: parseReceiveCSV }],
-    block: [{ label: '出荷CSV', onParse: parseShipmentCSV }],
+    // ABC集計表
+    abc: [{ config: CSV_DEFINITIONS.receive, required: true }],
+    // ブロック単価表
+    block: [{ config: CSV_DEFINITIONS.shipment, required: true }],
+    // 管理表
     management: [
-        { label: '受入CSV', onParse: parseReceiveCSV },
-        { label: '出荷CSV', onParse: parseShipmentCSV },
-        { label: 'ヤードCSV', onParse: parseYardCSV },
+        { config: CSV_DEFINITIONS.receive, required: true },
+        { config: CSV_DEFINITIONS.shipment, required: true },
+        { config: CSV_DEFINITIONS.yard, required: true },
     ],
 };
 
@@ -90,7 +102,7 @@ export const pdfPreviewMap: Record<ReportKey, string> = {
 export const reportConfigMap: Record<
     ReportKey,
     {
-        csvConfigs: CsvConfig[];
+        csvConfigs: CsvConfigGroup;
         steps: string[];
         generatePdf: () => Promise<string>;
         previewImage: string;
@@ -108,7 +120,7 @@ export const reportConfigMap: Record<
 ) as Record<
     ReportKey,
     {
-        csvConfigs: CsvConfig[];
+        csvConfigs: CsvConfigGroup;
         steps: string[];
         generatePdf: () => Promise<string>;
         previewImage: string;

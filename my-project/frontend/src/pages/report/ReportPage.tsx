@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import ReportBase from '@/components/Report/ReportBase';
 import ReportHeader from '@/components/Report/common/ReportHeader';
 import { reportConfigMap, pdfPreviewMap } from '@/constants/reportManage';
-import type { ReportKey } from '@/constants/reportManage';
+import type { ReportKey, CsvConfigEntry } from '@/constants/reportManage';
 
 // CSVはラベルごとにグローバルで管理
 type CsvFiles = { [csvLabel: string]: File | null };
@@ -35,19 +35,24 @@ const ReportPage: React.FC = () => {
 
     const selectedConfig = reportConfigMap[selected];
     const currentCsvFiles: CsvFiles = {};
-    selectedConfig.csvConfigs.forEach((cfg) => {
-        currentCsvFiles[cfg.label] = csvFiles[cfg.label] ?? null;
+    selectedConfig.csvConfigs.forEach((entry) => {
+        currentCsvFiles[entry.config.label] =
+            csvFiles[entry.config.label] ?? null;
     });
 
+    // ✅ 必須CSVがすべてアップロードされているかを判定
+    const areRequiredCSVsUploaded = (): boolean => {
+        return selectedConfig.csvConfigs
+            .filter((entry) => entry.required)
+            .every((entry) => csvFiles[entry.config.label]);
+    };
+
     useEffect(() => {
-        const allFilesReady = selectedConfig.csvConfigs.every(
-            (cfg) => csvFiles[cfg.label]
-        );
-        if (!allFilesReady) {
+        if (!areRequiredCSVsUploaded()) {
             setCurrentStep(0);
             return;
         }
-        if (allFilesReady && !finalized) {
+        if (!finalized) {
             setCurrentStep(1);
             return;
         }

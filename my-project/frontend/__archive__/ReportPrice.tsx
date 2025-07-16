@@ -70,14 +70,18 @@ const ReportFactory: React.FC = () => {
                 calendarDate={selectedDate}
                 onDateChange={setSelectedDate}
                 uploadFiles={[
-                    { label: '出荷CSV', file: shipFile, onChange: setShipFile },
                     {
-                        label: 'ヤードCSV',
+                        label: '出荷一覧',
+                        file: shipFile,
+                        onChange: setShipFile,
+                    },
+                    {
+                        label: 'ヤード一覧',
                         file: yardFile,
                         onChange: setYardFile,
                     },
                     {
-                        label: '受入CSV',
+                        label: '受入一覧',
                         file: receiveFile,
                         onChange: setReceiveFile,
                     },

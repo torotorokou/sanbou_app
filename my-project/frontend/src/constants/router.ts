@@ -28,6 +28,10 @@ export const ROUTER_PATHS = {
     ADMIN: '/admin',
     UPLOAD: '/upload',
 
+    // データベース系
+    RECORD_LIST: '/database/records',
+    UPLOAD_PAGE: '/database/upload',
+
     // その他
     TOKEN_PREVIEW: '/token-preview',
 };

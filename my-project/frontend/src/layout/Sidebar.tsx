@@ -58,6 +58,7 @@ const Sidebar: React.FC<{
                     'report',
                     'management',
                     'analysis',
+                    'database',
                 ]}
                 style={{
                     height: '100%',

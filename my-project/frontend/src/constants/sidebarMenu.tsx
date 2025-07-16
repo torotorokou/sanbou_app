@@ -1,25 +1,31 @@
-// src/constants/sidebarMenu.tsx
+// サイドバー用定数・アイコン・ルーティング
 import React from 'react';
+
+// アイコン（Ant Design）
 import {
-    DashboardOutlined,
-    TableOutlined,
-    ApartmentOutlined,
-    FileTextOutlined,
-    FileAddOutlined,
-    FileDoneOutlined,
-    BarChartOutlined,
-    TeamOutlined,
-    CompassOutlined,
-    SettingOutlined,
-    UserSwitchOutlined,
-    CloudUploadOutlined,
-    BookOutlined,
-    SolutionOutlined,
+    DashboardOutlined, // ダッシュボード
+    TableOutlined, // 管理表
+    ApartmentOutlined, // 工場管理
+    FileTextOutlined, // 単価表
+    FileAddOutlined, // 帳票作成
+    FileDoneOutlined, // 工場帳簿
+    BarChartOutlined, // データ分析
+    TeamOutlined, // 顧客リスト
+    CompassOutlined, // 参謀NAVI
+    SettingOutlined, // 設定
+    UserSwitchOutlined, // 管理者
+    CloudUploadOutlined, // アップロード/レコード
+    BookOutlined, // マニュアル
+    SolutionOutlined, // 管理業務
 } from '@ant-design/icons';
+
+// ルーティング
 import { Link } from 'react-router-dom';
 import { ROUTER_PATHS } from './router';
 
+// サイドバーのメニュー定義
 export const SIDEBAR_MENU = [
+    // ダッシュボード
     {
         key: 'dashboardGroup',
         icon: <DashboardOutlined />,
@@ -42,6 +48,7 @@ export const SIDEBAR_MENU = [
             },
         ],
     },
+    // 帳票作成
     {
         key: 'report',
         icon: <FileAddOutlined />,
@@ -59,6 +66,7 @@ export const SIDEBAR_MENU = [
             },
         ],
     },
+    // データ分析
     {
         key: 'analysis',
         icon: <BarChartOutlined />,
@@ -75,11 +83,33 @@ export const SIDEBAR_MENU = [
             },
         ],
     },
+    // 参謀NAVI
     {
         key: ROUTER_PATHS.NAVI,
         icon: <CompassOutlined />,
         label: <Link to={ROUTER_PATHS.NAVI}>参謀NAVI</Link>,
     },
+    // データベース
+    {
+        key: 'database',
+        icon: <CloudUploadOutlined />,
+        label: 'データベース',
+        children: [
+            {
+                key: ROUTER_PATHS.UPLOAD_PAGE,
+                icon: <CloudUploadOutlined />,
+                label: (
+                    <Link to={ROUTER_PATHS.UPLOAD_PAGE}>CSVアップロード</Link>
+                ),
+            },
+            {
+                key: ROUTER_PATHS.RECORD_LIST,
+                icon: <CloudUploadOutlined />,
+                label: <Link to={ROUTER_PATHS.RECORD_LIST}>レコード一覧</Link>,
+            },
+        ],
+    },
+    // 管理機能
     {
         key: 'management',
         icon: <SettingOutlined />,
@@ -97,11 +127,7 @@ export const SIDEBAR_MENU = [
             },
         ],
     },
-    {
-        key: ROUTER_PATHS.UPLOAD,
-        icon: <CloudUploadOutlined />,
-        label: <Link to={ROUTER_PATHS.UPLOAD}>データアップロード</Link>,
-    },
+    // マニュアル
     {
         key: ROUTER_PATHS.MANUAL_SEARCH,
         icon: <BookOutlined />,

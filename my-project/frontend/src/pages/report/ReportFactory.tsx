@@ -43,7 +43,7 @@ const ReportFactory: React.FC = () => {
                 const rows = text.split('\n').map((row) => row.split(','));
                 const body = rows.slice(1);
 
-                if (label === '出荷CSV') {
+                if (label === '出荷一覧') {
                     const parsed: ShipmentRow[] = body.map((cols, i) => ({
                         key: i.toString(),
                         商品名: cols[0],
@@ -51,7 +51,7 @@ const ReportFactory: React.FC = () => {
                         数量: parseInt(cols[2]),
                     }));
                     setShipmentData(parsed);
-                } else if (label === 'ヤードCSV') {
+                } else if (label === 'ヤード一覧') {
                     const parsed: WorkerRow[] = body.map((cols, i) => ({
                         key: i.toString(),
                         氏名: cols[0],
@@ -59,7 +59,7 @@ const ReportFactory: React.FC = () => {
                         出勤区分: cols[2],
                     }));
                     setWorkerData(parsed);
-                } else if (label === '受入CSV') {
+                } else if (label === '受入一覧') {
                     const parsed: ValuableRow[] = body.map((cols, i) => ({
                         key: i.toString(),
                         品目: cols[0],
@@ -125,14 +125,18 @@ const ReportFactory: React.FC = () => {
             <ReportManagePageLayout
                 onGenerate={handleGenerate}
                 uploadFiles={[
-                    { label: '出荷CSV', file: shipFile, onChange: setShipFile },
                     {
-                        label: 'ヤードCSV',
+                        label: '出荷一覧',
+                        file: shipFile,
+                        onChange: setShipFile,
+                    },
+                    {
+                        label: 'ヤード一覧',
                         file: yardFile,
                         onChange: setYardFile,
                     },
                     {
-                        label: '受入CSV',
+                        label: '受入一覧',
                         file: receiveFile,
                         onChange: setReceiveFile,
                     },
