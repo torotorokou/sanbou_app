@@ -1,11 +1,14 @@
-// src/config/reportManage.ts
+// src/config/managementReportConfig.ts
 
-import { REPORT_KEYS, type ReportKey } from '@/constants/reportManage';
+import {
+    REPORT_KEYS,
+    type ReportKey,
+} from '@/constants/reportConfig/managementReportConfig';
 import {
     csvConfigMap,
     stepConfigMap,
     pdfGeneratorMap,
-} from '@/constants/reportManage';
+} from '@/constants/reportConfig/managementReportConfig';
 
 type CsvConfig = {
     label: string;

@@ -4,9 +4,9 @@ import type { UploadProps } from 'antd/es/upload';
 import ReportManagePageLayout from './common/ReportManagePageLayout';
 import ReportStepperModal from './common/ReportStepperModal';
 import PDFViewer from './viewer/PDFViewer';
-import { pdfPreviewMap } from '@/constants/reportManage';
+import { pdfPreviewMap } from '@/constants/reportConfig/managementReportConfig';
 import { identifyCsvType, isCsvMatch } from '@/utils/validators/csvValidator';
-import type { ReportKey } from '@/constants/reportManage';
+import type { ReportKey } from '@/constants/reportConfig/managementReportConfig';
 
 // === 型定義グループ化 ===
 type CsvConfig = {

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import CsvUploadPanel from '@/components/common/csv-upload/CsvUploadPanel';
-import { CSV_DEFINITIONS, CsvType } from '@/constants/csvTypes';
+import { CSV_DEFINITIONS, CsvType } from '@/constants/CsvDefinition';
 import { isCsvMatch } from '@/utils/validators/csvValidator';
 
 const CSV_TYPES: CsvType[] = [

@@ -1,3 +1,5 @@
+// /app/src/data/analysis/customer-list-analysis/customer-dummy-data.ts
+
 export type CustomerData = {
     key: string;
     name: string;

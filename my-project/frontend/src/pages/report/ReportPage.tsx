@@ -3,8 +3,14 @@
 import React, { useState, useEffect } from 'react';
 import ReportBase from '@/components/Report/ReportBase';
 import ReportHeader from '@/components/Report/common/ReportHeader';
-import { reportConfigMap, pdfPreviewMap } from '@/constants/reportManage';
-import type { ReportKey, CsvConfigEntry } from '@/constants/reportManage';
+import {
+    reportConfigMap,
+    pdfPreviewMap,
+} from '@/constants/reportConfig/managementReportConfig';
+import type {
+    ReportKey,
+    CsvConfigEntry,
+} from '@/constants/reportConfig/managementReportConfig';
 
 // CSVはラベルごとにグローバルで管理
 type CsvFiles = { [csvLabel: string]: File | null };

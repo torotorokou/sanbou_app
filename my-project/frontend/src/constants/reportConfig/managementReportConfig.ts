@@ -1,11 +1,12 @@
+// /app/src/constants/reportConfig/managementReportConfig.ts
 import {
     parseReceiveCSV,
     parseShipmentCSV,
     parseYardCSV,
 } from '@/parsers/csvParsers';
 
-import type { CsvType, CsvDefinition } from './csvTypes';
-import { CSV_DEFINITIONS } from './csvTypes';
+import type { CsvType, CsvDefinition } from '../CsvDefinition';
+import { CSV_DEFINITIONS } from '../CsvDefinition';
 
 // ==============================
 // 🤉 帳票定義（キー + ラベル）
