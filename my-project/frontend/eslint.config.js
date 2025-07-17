@@ -2,11 +2,12 @@ import js from '@eslint/js';
 import globals from 'globals';
 import tsParser from '@typescript-eslint/parser';
 import pluginReact from 'eslint-plugin-react';
-import json from '@eslint/json';
 import { defineConfig } from 'eslint/config';
 import pluginTs from '@typescript-eslint/eslint-plugin';
+import json from '@eslint/json';
 
 export default defineConfig([
+    // JS/TS/JSX/TSX 共通
     {
         files: ['**/*.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
         languageOptions: {
@@ -20,18 +21,21 @@ export default defineConfig([
         },
         plugins: {
             '@typescript-eslint': pluginTs,
+            react: pluginReact,
         },
         rules: {
-            ...pluginTs.configs.recommended.rules, // recommendedルールを手動展開
+            ...pluginTs.configs.recommended.rules,
+            ...pluginReact.configs.recommended.rules,
             '@typescript-eslint/consistent-type-imports': 'warn',
         },
-        extends: [js.configs.recommended],
+        // extends: [js.configs.recommended], ← 明示的にextendsも不要
     },
-    pluginReact.configs.flat.recommended,
+
+    // JSONファイル用
     {
         files: ['**/*.json'],
-        plugins: { json },
-        language: 'json/json',
-        extends: [json.configs.recommended],
+        // parser: json.parsers['json'], ← これ不要・消す
+        // plugins: { json }, ← これも不要・消す
+        extends: [json.configs.recommended], // これだけでOK
     },
 ]);

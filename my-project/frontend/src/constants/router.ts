@@ -26,7 +26,7 @@ export const ROUTER_PATHS = {
     // 設定系
     SETTINGS: '/settings',
     ADMIN: '/admin',
-    UPLOAD: '/upload',
+    // UPLOAD: '/upload',
 
     // データベース系
     RECORD_LIST: '/database/records',

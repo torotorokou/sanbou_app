@@ -12,7 +12,7 @@ export type CsvUploadCardProps = {
     isHovering: boolean;
     onHover: (hover: boolean) => void;
     validationResult?: 'valid' | 'invalid' | 'unknown';
-    onRemove?: () => void; // ✅ 追加
+    onRemove?: () => void;
 };
 
 const CsvUploadCard: React.FC<CsvUploadCardProps> = ({
@@ -24,17 +24,18 @@ const CsvUploadCard: React.FC<CsvUploadCardProps> = ({
     isHovering,
     onHover,
     validationResult = 'unknown',
-    onRemove, // ✅ 追加
+    onRemove,
 }) => {
-    const getBackgroundColor = () => {
-        if (validationResult === 'invalid') return '#fff1f0'; // 薄赤
-        if (file) return '#e6ffed'; // アップロード済み（緑）
+    // ファイル未選択の時は常にunknown扱いにする
+    const effectiveValidationResult = file ? validationResult : 'unknown';
 
-        // ❌ fileが未選択のときは hoverしても色を変えない
+    const getBackgroundColor = () => {
+        if (effectiveValidationResult === 'invalid') return '#fff1f0'; // 薄赤
+        if (file) return '#e6ffed'; // アップロード済み（緑）
         return '#fafafa';
     };
     const getBorderColor = () => {
-        if (validationResult === 'invalid') return '#ff4d4f'; // 赤
+        if (effectiveValidationResult === 'invalid') return '#ff4d4f'; // 赤
         return isHovering ? '#22c55e' : '#d9d9d9'; // 緑 or 灰
     };
 
@@ -93,10 +94,12 @@ const CsvUploadCard: React.FC<CsvUploadCardProps> = ({
                     {file ? (
                         <Tag
                             color={
-                                validationResult === 'invalid' ? 'red' : 'green'
+                                effectiveValidationResult === 'invalid'
+                                    ? 'red'
+                                    : 'green'
                             }
                         >
-                            {validationResult === 'invalid'
+                            {effectiveValidationResult === 'invalid'
                                 ? '⚠ 不正なCSV'
                                 : `✅ ${file.name}`}
                         </Tag>
@@ -108,7 +111,7 @@ const CsvUploadCard: React.FC<CsvUploadCardProps> = ({
                             未選択
                         </Typography.Text>
                     )}
-                    {validationResult === 'invalid' && (
+                    {effectiveValidationResult === 'invalid' && (
                         <Typography.Text type='danger' style={{ fontSize: 12 }}>
                             想定されたCSV形式と異なります。
                         </Typography.Text>
@@ -120,7 +123,7 @@ const CsvUploadCard: React.FC<CsvUploadCardProps> = ({
                         onClick={(e) => {
                             e.stopPropagation();
                             if (onRemove) {
-                                onRemove(); // ✅ 追加: 状態のリセット
+                                onRemove();
                             } else {
                                 onChange(null);
                             }

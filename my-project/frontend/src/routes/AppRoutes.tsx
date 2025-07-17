@@ -24,7 +24,7 @@ import PdfChatBot from '../pages/navi/PdfChatBot';
 import ManualSearch from '../pages/ManualSearch';
 
 // データベース関連
-import UploadPage from '../pages/database/UploadPage';
+import UploadPage from '../pages/database/UploadDatabasePage';
 import RecordListPage from '../pages/database/RecordListPage';
 
 // トークンプレビュー
