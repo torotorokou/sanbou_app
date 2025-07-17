@@ -63,7 +63,7 @@ const PdfChatBot: React.FC = () => {
         setCurrentStep(3);
         setLoading(true);
         try {
-            const res = await axios.post('/api/ai/chat', {
+            const res = await axios.post('/ai_api/chat', {
                 query: question,
                 tags: [category, tag].filter(Boolean),
             });

@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, APIRouter
 from pydantic import BaseModel
 from typing import List
 import requests
@@ -10,40 +10,33 @@ from fastapi.middleware.cors import CORSMiddleware
 load_dotenv()
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
-# FastAPIインスタンス作成
 app = FastAPI(
     title="AI 応答API",
     description="PDF連動のAI応答や自然言語処理を提供するAPI群です。",
     version="1.0.0",
-    root_path="/ai"
+    root_path="/ai_api",  # ベースパスを統一
 )
 
-
-# ==========================
-# 🔹 CORS 許可設定（React からのアクセスを許可）
-# ==========================
+# CORS設定
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # 必要に応じて ["http://localhost:5173"] などに限定
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+# ===== エンドポイントをrouterで分離 =====
+router = APIRouter()
 
-# ==========================
-# 🔹 チャットリクエストモデル
-# ==========================
+
 class ChatRequest(BaseModel):
     query: str
     tags: List[str] = []
     pdf: str = ""
 
 
-# ==========================
-# 🔸 /api/ai/chat : メイン質問応答
-# ==========================
-@app.post("/api/ai/chat")
+@router.post("/chat")
 def chat(req: ChatRequest):
     prompt = f"""
 以下はPDFに関連する質問です。
@@ -54,13 +47,11 @@ def chat(req: ChatRequest):
 
 質問に対してわかりやすく丁寧に答えてください。
 """
-
     try:
         url = (
             f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
             f"?key={GEMINI_API_KEY}"
         )
-
         response = requests.post(
             url,
             headers={"Content-Type": "application/json"},
@@ -80,7 +71,6 @@ def chat(req: ChatRequest):
                 }
             ],
         }
-
     except Exception as e:
         import traceback
 
@@ -91,10 +81,7 @@ def chat(req: ChatRequest):
         }
 
 
-# ==========================
-# 🔸 /api/ai/intro : 初回説明文取得
-# ==========================
-@app.get("/api/ai/intro")
+@router.get("/intro")
 def get_intro():
     prompt = """
     あなたは、産業廃棄物に関する業務知識をナビゲートする参謀くんです。
@@ -106,13 +93,11 @@ def get_intro():
     - フレンドリーかつ丁寧なトーン
     - こんにちは！など最初の挨拶は飛ばす。
     """
-
     try:
         url = (
             f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
             f"?key={GEMINI_API_KEY}"
         )
-
         response = requests.post(
             url,
             headers={"Content-Type": "application/json"},
@@ -121,9 +106,7 @@ def get_intro():
         response.raise_for_status()
         data = response.json()
         message = data["candidates"][0]["content"]["parts"][0]["text"]
-
         return {"text": message}
-
     except Exception as e:
         import traceback
 
@@ -131,9 +114,11 @@ def get_intro():
         return {"text": f"Gemini APIとの通信に失敗しました。エラー: {str(e)}"}
 
 
-# ==========================
-# 🔹 /ai/ping : 疎通確認用
-# ==========================
-@app.get("/ping")
+# 疎通確認用
+@router.get("/ping")
 def ping():
     return {"status": "ai ok"}
+
+
+# ====== ルーターをパス指定で登録 ======
+app.include_router(router, prefix="")  # /ai_api直下に登録

@@ -33,34 +33,27 @@ const UploadDatabasePage: React.FC = () => {
         onRemove: () => removeCsvFile(type),
     }));
 
+    // files: Record<string, File | null> を仮定
+
     const handleUpload = async () => {
-        // 1. FormDataを生成
+        console.log(files);
         const formData = new FormData();
-        // ファイルがあるものだけ追加
         Object.entries(files).forEach(([type, file]) => {
-            if (file) {
-                formData.append(type, file); // typeをkeyに
-            }
+            if (file) formData.append(type, file);
         });
 
-        try {
-            // 2. fetchでAPIに送信
-            const res = await fetch('/api/upload_csv', {
-                method: 'POST',
-                body: formData,
-            });
+        const res = await fetch('/sql_api/upload/syogun_csv', {
+            // ← ここを修正
+            method: 'POST',
+            body: formData,
+        });
 
-            if (res.ok) {
-                // 3. 成功時の処理（例：アラート表示や画面リセットなど）
-                alert('アップロード成功');
-            } else {
-                // 4. 失敗時
-                const msg = await res.text();
-                alert('アップロード失敗: ' + msg);
-            }
-        } catch (err) {
-            alert('ネットワークエラー: ' + err);
+        if (!res.ok) {
+            alert('アップロード失敗: ' + (await res.text()));
+            return;
         }
+        const result = await res.json();
+        alert('アップロード成功: ' + JSON.stringify(result));
     };
 
     return (

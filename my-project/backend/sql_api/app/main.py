@@ -1,19 +1,22 @@
 from fastapi import FastAPI
-from app.api.api_router import api_router
+from app.api.endpoints.upload import router as upload_router
+# from app.api.data_api import data_router
 
 app = FastAPI(
     title="SQL帳簿API",
-    description="CSVからの帳簿変換、補完、保存、ダッシュボード連携などのSQL操作APIです。",
     version="1.0.0",
-    root_path="/sql",
+    root_path="/sql_api",  # API全体のベースパスを指定
     docs_url="/docs",
     openapi_url="/openapi.json",
-    redoc_url=None,
 )
 
-app.include_router(api_router, prefix="/api")  # 👈 ここが集約ポイント
+# アップロード関連のAPIを /upload 以下にまとめる
+app.include_router(upload_router, prefix="/upload")
+
+# データ取得関連のAPIを /data 以下にまとめる
+# app.include_router(data_router, prefix="/data")
 
 
 @app.get("/ping")
 def ping():
-    return {"status": "sql ok"}
+    return {"status": "sql_api ok"}
