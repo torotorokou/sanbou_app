@@ -21,7 +21,7 @@ services:
             - '8001:8000'
         volumes:
             - ./my-project/backend/ai_api:/app
-            - ./my-project/backend/shared:/app/shared
+            - ./my-project/backend/backend_shared:/app/backend_shared
             - ./my-project/config:/app/config
         env_file:
             - ./my-project/backend/ai_api/.env.ai_api
@@ -37,7 +37,7 @@ services:
             - '8002:8000'
         volumes:
             - ./my-project/backend/ledger_api:/app
-            - ./my-project/backend/shared:/app/shared
+            - ./my-project/backend/backend_shared:/app/backend_shared
             - ./my-project/config:/app/config
         env_file:
             - ./my-project/backend/ledger_api/.env.ledger_api
@@ -53,7 +53,7 @@ services:
             - '8003:8000'
         volumes:
             - ./my-project/backend/sql_api/:/app
-            - ./my-project/backend/shared:/app/shared
+            - ./my-project/backend/backend_shared:/app/backend_shared
             - ./my-project/config:/app/config
         env_file:
             - ./.env
@@ -62,6 +62,8 @@ services:
             - db
         networks:
             - backend
+
+
 
     db:
         image: postgres:16

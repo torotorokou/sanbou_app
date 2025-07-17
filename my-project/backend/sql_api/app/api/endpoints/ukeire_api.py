@@ -3,12 +3,12 @@ from datetime import datetime
 import os, shutil
 
 from app.utils.config_loader import load_csv_path_config
-from app.config.api_constants import UPLOAD_ROUTE  # ✅ 定数として読み込み
+from app.local_config.api_constants import UKEIRE_UPLOAD_ROUTE  # ✅ 定数として読み込み
 
 router = APIRouter()
 
 
-@router.post(UPLOAD_ROUTE, summary="受入CSVファイルをアップロード")
+@router.post(UKEIRE_UPLOAD_ROUTE, summary="受入CSVファイルをアップロード")
 async def upload_ukeire_csv(file: UploadFile = File(...)):
     """
     Reactから送信された受入CSVをサーバーに一時保存します。

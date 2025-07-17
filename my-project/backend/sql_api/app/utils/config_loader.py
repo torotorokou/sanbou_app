@@ -5,7 +5,7 @@ from fastapi import HTTPException
 
 
 def load_csv_path_config(
-    csv_type: str, yaml_path: str = "/app/config/csv_paths.yaml"
+    csv_type: str, yaml_path: str = "/app/app/local_config/csv_paths.yaml"
 ) -> dict:
     """
     CSV種別（ukeire, shukka など）に対応するパス設定をYAMLから読み込む。

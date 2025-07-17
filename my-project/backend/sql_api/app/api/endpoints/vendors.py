@@ -5,7 +5,7 @@ from sqlalchemy import text
 from app.db.database import get_engine
 from app.schemas.vendor import Vendor
 from typing import List
-from app.config.api_constants import VENDORS_PREFIX
+from app.local_config.api_constants import VENDORS_PREFIX
 
 router = APIRouter()
 
