@@ -42,9 +42,9 @@ export const SIDEBAR_MENU = [
                 label: <Link to={ROUTER_PATHS.FACTORY}>工場管理</Link>,
             },
             {
-                key: ROUTER_PATHS.PRICING,
+                key: ROUTER_PATHS.CUSTOMER_LIST,
                 icon: <FileTextOutlined />,
-                label: <Link to={ROUTER_PATHS.PRICING}>単価表</Link>,
+                label: <Link to={ROUTER_PATHS.CUSTOMER_LIST}>顧客リスト</Link>,
             },
         ],
     },

@@ -15,10 +15,12 @@
     "axios": "^1.10.0",
     "canvas": "^3.1.2",
     "dayjs": "^1.11.13",
+    "leaflet": "^1.9.4",
     "pdfjs-dist": "^5.3.93",
     "react": "^19.1.0",
     "react-countup": "^6.5.3",
     "react-dom": "^19.1.0",
+    "react-leaflet": "^5.0.0",
     "react-pdf": "^9.2.1",
     "react-router-dom": "^7.6.3",
     "recharts": "^3.0.2"
