@@ -6,6 +6,7 @@ services:
             - '5173:5173'
         volumes:
             - ./my-project/frontend:/app
+            - ./my-project/config:/app/src/config
             # - /app/node_modules
         working_dir: /app
         command: ['npm', 'run', 'dev', '--', '--host', '0.0.0.0']
@@ -20,9 +21,9 @@ services:
         ports:
             - '8001:8000'
         volumes:
-            - ./my-project/backend/ai_api:/app
-            - ./my-project/backend/backend_shared:/app/backend_shared
-            - ./my-project/config:/app/config
+            - ./my-project/backend/ai_api:/backend
+            - ./my-project/backend/backend_shared:/backend/backend_shared
+            - ./my-project/config:/backend/config
         env_file:
             - ./my-project/backend/ai_api/.env.ai_api
         depends_on:
@@ -36,9 +37,9 @@ services:
         ports:
             - '8002:8000'
         volumes:
-            - ./my-project/backend/ledger_api:/app
-            - ./my-project/backend/backend_shared:/app/backend_shared
-            - ./my-project/config:/app/config
+            - ./my-project/backend/ledger_api:/backend
+            - ./my-project/backend/backend_shared:/backend/backend_shared
+            - ./my-project/config:/backend/config
         env_file:
             - ./my-project/backend/ledger_api/.env.ledger_api
         depends_on:
@@ -52,9 +53,9 @@ services:
         ports:
             - '8003:8000'
         volumes:
-            - ./my-project/backend/sql_api/:/app
-            - ./my-project/backend/backend_shared:/app/backend_shared
-            - ./my-project/config:/app/config
+            - ./my-project/backend/sql_api/:/backend
+            - ./my-project/backend/backend_shared:/backend/backend_shared
+            - ./my-project/config:/backend/config
         env_file:
             - ./.env
             - ./my-project/backend/sql_api/.env.sql_api
@@ -62,8 +63,6 @@ services:
             - db
         networks:
             - backend
-
-
 
     db:
         image: postgres:16

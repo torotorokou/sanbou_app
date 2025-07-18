@@ -9,7 +9,6 @@ type Props = {
 };
 
 const PdfPreviewModal: React.FC<Props> = ({ visible, onClose, pdfUrl }) => {
-    console.log(pdfUrl); // 表示時に確認
     return (
         <Modal
             open={visible}

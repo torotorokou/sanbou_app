@@ -1,9 +1,13 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
+import yaml from '@rollup/plugin-yaml'; // ← 追加
 
 export default defineConfig({
-    plugins: [react()],
+    plugins: [
+        react(),
+        yaml(), // ← 追加
+    ],
     resolve: {
         alias: {
             '@': path.resolve(__dirname, 'src'),
@@ -25,7 +29,6 @@ export default defineConfig({
                 target: 'http://ledger_api:8000',
                 changeOrigin: true,
             },
-            // '/api/sql': は不要になるので削除してOK
         },
     },
 });
