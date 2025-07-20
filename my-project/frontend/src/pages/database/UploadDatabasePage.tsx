@@ -1,7 +1,5 @@
-// /app/crs / pages / database / UploadDatabasePage.tsx;
-
 import React from 'react';
-import { Row, Col, Button } from 'antd';
+import { Row, Col, Button, message } from 'antd';
 import CsvUploadPanel from '@/components/database/CsvUploadPanel';
 import { CsvPreviewCard } from '@/components/database/CsvPreviewCard';
 import {
@@ -33,29 +31,42 @@ const UploadDatabasePage: React.FC = () => {
         onRemove: () => removeCsvFile(type),
     }));
 
-    // files: Record<string, File | null> を仮定
-
+    // アップロード処理
     const handleUpload = async () => {
-        console.log(files);
         const formData = new FormData();
         Object.entries(files).forEach(([type, file]) => {
             if (file) formData.append(type, file);
         });
 
-        const res = await fetch('/sql_api/upload/syogun_csv', {
-            // ← ここを修正
-            method: 'POST',
-            body: formData,
-        });
+        let res: Response;
+        let result: any;
 
-        if (!res.ok) {
-            alert('アップロード失敗: ' + (await res.text()));
-            return;
+        try {
+            res = await fetch('/sql_api/upload/syogun_csv', {
+                method: 'POST',
+                body: formData,
+            });
+            // レスポンスの中身（ステータスとbody）を必ず一度出力
+            console.log("res.status", res.status);
+            const text = await res.text();
+            console.log("res.text", text);
+
+            try {
+                result = JSON.parse(text);
+            } catch {
+                message.error('サーバー応答がJSONではありません: ' + text);
+                return;
+            }
+
+            if (res.ok && result.status === "success") {
+                message.success(result.message ?? 'アップロード成功');
+            } else {
+                message.error(result?.message ?? 'アップロード失敗');
+            }
+        } catch (err) {
+            message.error('サーバーに接続できませんでした。');
         }
-        const result = await res.json();
-        alert('アップロード成功: ' + JSON.stringify(result));
     };
-
     return (
         <Row style={{ height: '100vh', minHeight: 600 }}>
             {/* 左: アップロード＋ボタン */}
