@@ -1,5 +1,6 @@
 from fastapi import APIRouter
-from app.api.endpoints import ukeire_api, vendors, upload_api
+from __archive__ import ukeire_api, vendors
+from app.api.endpoints import upload_api
 from app.local_config.api_constants import UPLOAD_PREFIX, VENDORS_PREFIX, UKEIRE_PREFIX
 
 api_router = APIRouter()
