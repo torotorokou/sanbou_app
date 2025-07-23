@@ -9,3 +9,4 @@ class QueryRequest(BaseModel):
 class QueryResponse(BaseModel):
     answer: str
     sources: List[Tuple[str, str]]
+    pages: List[str]

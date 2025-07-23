@@ -9,6 +9,7 @@ services:
     ports:
       - "8000:8000"
     volumes:
+      - ./app:/app
       - ./secret/gcs-key.json:/root/.config/gcloud/application_default_credentials.json
     environment:
       - GOOGLE_APPLICATION_CREDENTIALS=/root/.config/gcloud/application_default_credentials.json

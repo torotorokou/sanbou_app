@@ -1,7 +1,7 @@
 fastapi
 uvicorn
 python-dotenv
-openai
+PyMuPDF
 faiss-cpu
 PyYAML
 langchain-community
