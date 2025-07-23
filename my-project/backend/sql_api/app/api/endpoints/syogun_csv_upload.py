@@ -11,6 +11,7 @@ from app.local_config.config_loader import SyogunCsvConfigLoader
 
 from app.api.services.csv_upload.csv_upload_validator import CSVValidationResponder
 from app.api.services.csv_upload.storage import CSVUploadStorage
+from backend_shared.csv_formatter.csv_formatter_factory import CSVFormatterFactory
 
 # --- ルーター定義 ---
 router = APIRouter()
@@ -60,12 +61,14 @@ class CSVImportService:
         if res := self.validator.validate_denpyou_date_consistency(dfs):
             return res
 
-        # # CSVの整形処理
-        # formatted_dfs = {}
-        # for name, df in dfs.items():
-        #     formatter = CSVFormatter(name)  # name: "shipment" or "receive" or "yard"
-        #     formatted_df = formatter.format(df)
-        #     formatted_dfs[name] = formatted_df
+        # CSVの整形処理
+        formatted_dfs = {}
+        for name, df in dfs.items():
+            formatter = CSVFormatterFactory(
+                name
+            )  # name: "shipment" or "receive" or "yard"
+            formatted_df = formatter.format(df)
+            formatted_dfs[name] = formatted_df
 
         # ステップ6：保存処理
         self.storage.save_to_temp(dfs, file_inputs, self.processor)
