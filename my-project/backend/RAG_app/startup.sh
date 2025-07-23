@@ -1,0 +1,14 @@
+#!/bin/bash
+
+# サービスアカウントで認証
+gcloud auth activate-service-account --key-file="$GOOGLE_APPLICATION_CREDENTIALS"
+echo "✅ Authenticated with service account."
+
+# GCSから構造化データをローカルにコピー
+echo "🌀 [1/2] Downloading structured data from GCS..."
+gsutil -m cp -r gs://object_haikibutu/master /app/local_data/
+echo "✅ [1/2] GCS download complete."
+
+# FastAPI起動
+echo "🚀 [2/2] Starting FastAPI..."
+uvicorn scr.main:app --host 0.0.0.0 --port 8000

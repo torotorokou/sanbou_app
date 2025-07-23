@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  sanbo-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sanbo-api
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./secret/gcs-key.json:/root/.config/gcloud/application_default_credentials.json
+    environment:
+      - GOOGLE_APPLICATION_CREDENTIALS=/root/.config/gcloud/application_default_credentials.json
