@@ -13,11 +13,8 @@ RUN apt-get update && apt-get install -y \
 # 作業ディレクトリ
 WORKDIR /app
 
-# 必要ファイルコピー
 COPY . .
-
-# Pythonパッケージインストール
+# startup.shに実行権限を付与
+RUN chmod +x /app/startup.sh
 RUN pip install --no-cache-dir -r requirements.txt
-
-# スタートアップスクリプト実行
 CMD ["bash", "startup.sh"]
