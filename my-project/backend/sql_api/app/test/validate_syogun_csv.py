@@ -5,17 +5,17 @@ API_URL = "http://localhost:8001/upload/syogun_csv"
 files = {
     "shipment": (
         "出荷一覧.csv",
-        open("/backend/app/data/出荷一覧_20250604_180607.csv", "rb"),
+        open("/backend/app/data/出荷一覧_20240501.csv", "rb"),
         "text/csv",
     ),
     "receive": (
         "受入一覧.csv",
-        open("/backend/app/data/受入一覧_20250604_180559.csv", "rb"),
+        open("/backend/app/data/受入一覧_20250501.csv", "rb"),
         "text/csv",
     ),
     "yard": (
         "ヤード一覧.csv",
-        open("/backend/app/data/ヤード一覧_20250604_180615.csv", "rb"),
+        open("/backend/app/data/ヤード一覧_20240501.csv", "rb"),
         "text/csv",
     ),
 }

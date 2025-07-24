@@ -7,11 +7,14 @@ from app.local_config.api_constants import SYOGUN_CSV_ROUTE
 from app.local_config.paths import SAVE_DIR_TEMP
 from app.api.utils.response_utils import api_response
 from app.api.utils.csv_processor import CSVProcessor
-from app.local_config.config_loader import SyogunCsvConfigLoader
+from backend_shared.config.config_loader import SyogunCsvConfigLoader
 
 from app.api.services.csv_upload.csv_upload_validator import CSVValidationResponder
-from app.api.services.csv_upload.storage import CSVUploadStorage
-from backend_shared.csv_formatter.csv_formatter_factory import CSVFormatterFactory
+from app.api.services.csv_upload.storage import CSVUploadTempStorage
+from backend_shared.csv_formatter.formatter_factory import CSVFormatterFactory
+
+from backend_shared.csv_formatter.formatter_config import build_formatter_config
+from app.api.services.csv_upload.formatter_utils import format_and_rename_for_sql
 
 # --- ルーター定義 ---
 router = APIRouter()
@@ -31,7 +34,7 @@ class CSVImportService:
         }
 
         self.validator = CSVValidationResponder(self.required_columns)
-        self.storage = CSVUploadStorage()
+        self.storage = CSVUploadTempStorage()
 
     async def process_upload(self, file_inputs: dict[str, UploadFile]):
         # ステップ1：空ファイルチェック
@@ -61,16 +64,21 @@ class CSVImportService:
         if res := self.validator.validate_denpyou_date_consistency(dfs):
             return res
 
-        # CSVの整形処理
+        # ステップ6：CSVの整形処理（columns_defを渡す設計に修正）
         formatted_dfs = {}
         for name, df in dfs.items():
-            formatter = CSVFormatterFactory(
-                name
-            )  # name: "shipment" or "receive" or "yard"
-            formatted_df = formatter.format(df)
-            formatted_dfs[name] = formatted_df
+            config = build_formatter_config(self.config_loader, name)
+            formatter = CSVFormatterFactory.get_formatter(name, config)
 
-        # ステップ6：保存処理
+            df_formatted = formatter.format(df)
+            formatted_dfs[name] = df_formatted
+
+        # ステップ7：SQL保存用のヘッダ名の変更
+        rename_dfs = {}
+        for name, df in dfs.items():
+            rename_dfs[name] = format_and_rename_for_sql(name, df, self.config_loader)
+
+        # ステップ7：SQLに転送
         self.storage.save_to_temp(dfs, file_inputs, self.processor)
         return api_response(
             status_code=status.HTTP_200_OK,

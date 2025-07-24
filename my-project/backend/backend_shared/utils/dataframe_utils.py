@@ -8,53 +8,72 @@ from typing import Optional
 
 
 def combine_date_and_time(
-    df: pd.DataFrame,
-    date_col: str,
-    time_col: str,
-    new_col: Optional[str] = None,
-    format: Optional[str] = None,
+    df: pd.DataFrame, date_col: str, time_col: str
 ) -> pd.DataFrame:
     """
-    日付カラムと時間カラムを結合し、新しいカラムにdatetime64[ns]型で変換する。
-    例：'2025/06/01' + '14:30:00' → '2025/06/01 14:30:00'
-    :param df: 対象DataFrame
-    :param date_col: 日付カラム名
-    :param time_col: 時間カラム名
-    :param new_col: 新しいカラム名（省略時はtime_colを上書き）
-    :param format: 日時フォーマット（省略時は'%Y/%m/%d %H:%M:%S'）
-    :return: 変換後のDataFrame
+    date_col（datetime64）と time_col（時刻文字列）を結合し、
+    datetime64[ns] に変換して time_col に上書き。
     """
-    if new_col is None:
-        new_col = time_col
-    # 日付と時間の文字列を結合
-    combined = (
-        df[date_col].astype(str).str.strip()
-        + " "
-        + df[time_col].astype(str).str.strip()
+
+    def normalize_time_string(s: str) -> str:
+        parts = s.strip().split(":")
+        if len(parts) == 2:
+            return s.strip() + ":00"
+        return s.strip()
+
+    # 日付 → 文字列 YYYY/MM/DD
+    date_str = df[date_col].dt.strftime("%Y/%m/%d")
+
+    # 時刻 → "HH:MM:SS" 形式に補完
+    time_str = df[time_col].astype(str).map(normalize_time_string)
+
+    # 結合して datetime 変換
+    combined_str = date_str + " " + time_str
+    df[time_col] = pd.to_datetime(
+        combined_str, format="%Y/%m/%d %H:%M:%S", errors="coerce"
     )
-    default_format = "%Y/%m/%d %H:%M:%S"
-    if format is None:
-        format = default_format
-    # 結合した文字列をdatetime型に変換
-    df[new_col] = pd.to_datetime(combined, errors="coerce")
+
+    # デバッグ用
+    # print(df[[date_col, time_col]].head())
+
     return df
 
 
 def remove_weekday_parentheses(df: pd.DataFrame, column: str) -> pd.DataFrame:
     """
-    指定したカラムの値から曜日の括弧部分（例: '2025/06/01(日)'）を削除し、datetime64[ns]型に変換する。
+    指定カラムの値に曜日括弧が含まれる場合のみ、それを除去してdatetime64[ns]型に変換する。
+    例: '2025/06/01(日)' → '2025/06/01' → datetime64[ns]
+
     :param df: 対象DataFrame
     :param column: 変換対象のカラム名
-    :return: 変換後のDataFrame
+    :return: 加工済みDataFrame
     """
-    # 正規表現で括弧と中身を除去
-    df[column] = (
-        df[column].astype(str).str.replace(r"\([^)]+\)", "", regex=True).str.strip()
+    mask = df[column].astype(str).str.contains(r"\([^)]+\)", regex=True, na=False)
+
+    # 括弧がある行だけ除去処理
+    df.loc[mask, column] = (
+        df.loc[mask, column]
+        .astype(str)
+        .str.replace(r"\([^)]+\)", "", regex=True)
+        .str.strip()
     )
-    default_format = "%Y/%m/%d"
-    # 文字列をdatetime型に変換
-    df[column] = pd.to_datetime(df[column], format=default_format, errors="coerce")
+
+    # 全体をdatetimeに変換（括弧がない行も含め）
+    df[column] = pd.to_datetime(df[column], format="%Y/%m/%d", errors="coerce")
+
     return df
+
+
+def parse_str_column(df: pd.DataFrame, col: str) -> pd.DataFrame:
+    """
+    欠損値はそのまま、文字列は strip() して object 型にする
+    """
+    cleaned = df[col].copy()
+
+    # 非欠損値だけに str.strip() を適用（NaN は触らない）
+    cleaned = cleaned.where(cleaned.isna(), cleaned.astype(str).str.strip())
+
+    return df.assign(**{col: cleaned})
 
 
 def remove_commas_and_convert_numeric(df: pd.DataFrame, column: str) -> pd.DataFrame:
@@ -82,20 +101,29 @@ def has_denpyou_date_column(df: pd.DataFrame, column_name: str = "伝票日付")
 
 def common_cleaning(df: pd.DataFrame) -> pd.DataFrame:
     """
-    全てのカラム名・文字列データから、
-    ・前後および内部の半角スペース（" "）
-    ・前後および内部の全角スペース（"　"）
-    を全て除去する。
+    全カラム名と object 型の各値に対して、前後・内部のスペース（半角・全角）を除去。
+    欠損値（NaN）には str() をかけないように注意。
     """
     # カラム名の空白除去
     df.columns = [col.strip().replace(" ", "").replace("　", "") for col in df.columns]
 
-    # 各object型カラムの全スペース除去
+    # 各object型カラムのスペース除去（NaNを保ったまま）
     for col in df.select_dtypes(include=["object"]).columns:
-        df[col] = (
-            df[col]
-            .astype(str)
-            .str.replace(" ", "", regex=False)  # 半角スペース全削除
-            .str.replace("　", "", regex=False)  # 全角スペース全削除
+        cleaned = df[col].copy()
+
+        cleaned = cleaned.where(
+            cleaned.notna(),  # 非欠損値だけ変換を適用
+            cleaned,  # 欠損値はそのまま
         )
+
+        cleaned = cleaned.where(
+            cleaned.isna(),  # 欠損値はそのまま
+            cleaned.astype(str)
+            .str.replace(" ", "", regex=False)
+            .str.replace("　", "", regex=False)
+            .str.strip(),
+        )
+
+        df[col] = cleaned
+
     return df

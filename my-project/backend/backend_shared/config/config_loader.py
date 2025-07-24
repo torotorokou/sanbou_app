@@ -1,40 +1,5 @@
-"""
-CSV定義ファイルの読み込みを行うモジュール。
-初心者にも分かりやすいように日本語でコメント・ドックストリングを記載しています。
-"""
-
 import yaml
 from app.local_config.paths import CSV_DEF_PATH
-
-
-# class ConfigLoader:
-#     """
-#     CSV定義ファイル（YAML）を読み込むためのクラス。
-#     主に必須カラム情報の取得に利用します。
-#     """
-
-#     def __init__(self, config_path: str = CSV_DEF_PATH):
-#         """
-#         コンストラクタ。設定ファイルのパスを受け取ります。
-#         :param config_path: 設定ファイル（YAML）のパス
-#         """
-#         self.config_path = config_path
-
-#     def load_required_columns(self) -> dict:
-#         """
-#         設定ファイルから各CSV種別ごとの必須カラムリストを取得します。
-#         :return: {ファイル種別: [必須カラム名, ...]} の辞書
-#         """
-#         with open(self.config_path, "r", encoding="utf-8") as f:
-#             config = yaml.safe_load(f)
-#         # expected_headers キーの値を抽出して返す
-#         return {key: value.get("expected_headers", []) for key, value in config.items()}
-
-
-"""
-CSV定義ファイルの読み込みを行うモジュール（統合型YAML対応）。
-初心者にも分かりやすいように日本語でコメント・ドックストリングを記載しています。
-"""
 
 
 class SyogunCsvConfigLoader:
@@ -103,4 +68,24 @@ class SyogunCsvConfigLoader:
             jp: meta["type"]
             for jp, meta in self.get_columns(sheet_type).items()
             if "type" in meta
+        }
+
+    def get_unique_keys(self, sheet_type: str) -> list[list[str]]:
+        """
+        指定帳票の一意キー候補リストを取得します。
+        :param sheet_type: 'shipment', 'receive' など
+        :return: 一意キー候補のリスト（例: [['伝票日付', '品名', ...], ...]）
+        """
+        return self.config.get(sheet_type, {}).get("unique_keys", [])
+
+    def get_agg_map(self, sheet_type: str) -> dict:
+        """
+        指定帳票の「日本語カラム名→集約関数名（agg）」マッピングを取得します。
+        :param sheet_type: 'shipment', 'receive' など
+        :return: 例 {'金額': 'sum', '数量': 'sum', ...}
+        """
+        return {
+            jp: meta["agg"]
+            for jp, meta in self.get_columns(sheet_type).items()
+            if "agg" in meta
         }
