@@ -5,9 +5,14 @@ gcloud auth activate-service-account --key-file="$GOOGLE_APPLICATION_CREDENTIALS
 echo "✅ Authenticated with service account."
 
 # GCSから構造化データをローカルにコピー
-echo "🌀 [1/2] Downloading structured data from GCS..."
-gsutil -m cp -r gs://object_haikibutu/master /app/local_data/
-echo "✅ [1/2] GCS download complete."
+
+if [ -d /app/local_data/master ]; then
+  echo "⏩ [1/2] Local data already exists. Skipping GCS download."
+else
+  echo "🌀 [1/2] Downloading structured data from GCS..."
+  gsutil -m cp -r gs://object_haikibutu/master /app/local_data/
+  echo "✅ [1/2] GCS download complete."
+fi
 
 # FastAPI起動
 echo "🚀 [2/2] Starting FastAPI..."
