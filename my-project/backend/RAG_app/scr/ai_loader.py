@@ -8,7 +8,9 @@ def get_answer(query: str, category: str, tags: Optional[List[str]] = None):
     json_data = load_json_data(paths["JSON_PATH"])
     vectorstore = load_faiss_vectorstore(paths["FAISS_PATH"])
     result = generate_answer(query, category, json_data, vectorstore, tags)
-    answer = result["answer"]
-    sources = [src[0] for src in result["sources"]]
-    pages = [src[1] for src in result["sources"] if len(src) > 1]
-    return {"answer": answer, "sources": sources, "pages": pages}
+    # そのままanswer, sources, pagesを返す
+    return {
+        "answer": result["answer"],
+        "sources": result["sources"],
+        "pages": result["pages"]
+    }

@@ -18,4 +18,25 @@ def generate_answer(query: str, category: str, json_data: List[dict], vectorstor
         messages=[{"role": "user", "content": prompt}]
     )
     answer = response.choices[0].message.content.strip()
-    return {"answer": answer, "sources": retrieved}
+    # sources, pages情報を抽出
+    sources = []
+    pages = []
+    for r in retrieved:
+        # r[0]: source, r[2]: metadata (dict)
+        source = r[0]
+        meta = r[2] if len(r) > 2 else {}
+        # 大文字・小文字両対応
+        pdf_path = (
+            meta.get("pdf_path") or meta.get("PDF_PATH") or
+            meta.get("path") or meta.get("PATH") or
+            meta.get("file_path") or meta.get("FILE_PATH")
+        )
+        page_num = meta.get("page") or meta.get("PAGE")
+        sources.append(source)
+        if pdf_path is not None and page_num is not None:
+            try:
+                page_num_int = int(page_num)
+            except Exception:
+                page_num_int = page_num
+            pages.append({"pdf_path": str(pdf_path), "page_num": page_num_int})
+    return {"answer": answer, "sources": sources, "pages": pages}
