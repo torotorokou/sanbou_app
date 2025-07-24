@@ -80,12 +80,27 @@ junit.xml
 
 # === PDFやドキュメント（必要に応じて解除）===
 *.pdf
+*.Identifier
 *.csv
 *.xlsx
 *.docx
 *.pptx
 *.yaml
 
+# === PostgreSQL ===
+dbdata/
+*.pgsql
+*.psql
+*.dump
+*.backup
+pg_data/
+postgres_data/
+
+# === Nginx ===
+nginx/logs/
+nginx/cache/
+*.conf.bak
+*.conf.tmp
 
 # === その他 ===
 *.bak

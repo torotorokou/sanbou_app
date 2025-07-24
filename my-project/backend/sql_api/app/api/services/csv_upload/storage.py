@@ -1,18 +1,13 @@
-"""
-CSVファイルの保存処理を行うモジュール。
-初心者にも分かりやすいように日本語でコメント・ドックストリングを記載しています。
-"""
-
-# --- import ---
 import os
+import pandas as pd
+from sqlalchemy.engine import Engine
+import logging
 
 from app.local_config.paths import SAVE_DIR_TEMP
-# CSVProcessorは別の場所にあるようなので、必要に応じて適切なパスに修正
-# from app.utils.csv_processor import CSVProcessor
 
 
 # --- 保存処理 ---
-class CSVUploadStorage:
+class CSVUploadTempStorage:
     """
     CSVファイルの保存処理をまとめたクラス。
     一時保存ディレクトリへのファイル保存などを行います。
@@ -44,3 +39,21 @@ class CSVUploadStorage:
                 detail="アップロード成功",
             )
         return result
+
+
+class CSVUploadSQL:
+    def __init__(self, engine: Engine):
+        self.engine = engine
+
+    def save_to_sql(self, dfs: dict[str, pd.DataFrame]):
+        for name, df in dfs.items():
+            try:
+                table_name = f"csv_{name.lower()}"
+                df.to_sql(
+                    table_name,
+                    con=self.engine,
+                    if_exists="replace",
+                    index=False,
+                )
+            except Exception as e:
+                logging.exception(f"[SQL保存失敗] {name}: {e}")

@@ -21,6 +21,13 @@ import {
 } from '@/constants/uploadCsvConfig';
 import { useCsvUploadArea } from '@/hooks/database/useCsvUploadArea';
 
+const CSV_TYPE_COLORS: Record<string, string> = {
+    shipment: '#e6f7ff', // 出荷一覧
+    receive: '#fff1f0',  // 受入一覧
+    yard: '#f6ffed',     // ヤード一覧
+};
+
+
 const { Paragraph, Text } = Typography;
 
 const CARD_HEIGHT = 300;
@@ -241,6 +248,7 @@ const UploadDatabasePage: React.FC = () => {
                             validationResult={validationResults[type]}
                             cardHeight={CARD_HEIGHT}
                             tableBodyHeight={TABLE_BODY_HEIGHT}
+                            backgroundColor={CSV_TYPE_COLORS[type]}  // ← 追加
                         />
                     ))}
                 </Col>
