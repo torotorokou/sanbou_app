@@ -1,16 +1,14 @@
-import os
 import json
 import yaml
-from pathlib import Path
+from scr.paths import PDF_PATH, JSON_PATH, FAISS_PATH, ENV_PATH, YAML_PATH
 
 def get_resource_paths() -> dict:
-    base_path = Path("/app")  # Dockerコンテナ内のルート
     return {
-        "PDF_PATH": base_path / "local_data" / "master" / "SOLVEST.pdf",
-        "JSON_PATH": base_path / "local_data" / "master" / "structured_SOLVEST_output_with_tags.json",
-        "FAISS_PATH": base_path / "local_data" / "master" / "vectorstore" / "solvest_faiss_corrected",
-        "ENV_PATH": base_path / "config" / ".env",
-        "YAML_PATH": base_path / "local_data" / "master" / "category_question_templates_with_tags.yaml",
+        "PDF_PATH": PDF_PATH,
+        "JSON_PATH": JSON_PATH,
+        "FAISS_PATH": FAISS_PATH,
+        "ENV_PATH": ENV_PATH,
+        "YAML_PATH": YAML_PATH,
     }
 
 def load_json_data(json_path):

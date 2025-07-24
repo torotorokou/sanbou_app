@@ -59,6 +59,7 @@ def search_documents_with_category(
 
         if doc_category == category:
             if tags is None or any(tag in doc_tags for tag in tags):
-                filtered.append((meta.get("title", "Unknown"), doc.page_content))
+                # metadataをそのまま返す
+                filtered.append((meta.get("title", "Unknown"), doc.page_content, meta))
 
     return filtered

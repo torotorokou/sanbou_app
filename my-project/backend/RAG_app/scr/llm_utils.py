@@ -22,21 +22,26 @@ def generate_answer(query: str, category: str, json_data: List[dict], vectorstor
     sources = []
     pages = []
     for r in retrieved:
-        # r[0]: source, r[2]: metadata (dict)
-        source = r[0]
-        meta = r[2] if len(r) > 2 else {}
-        # 大文字・小文字両対応
-        pdf_path = (
-            meta.get("pdf_path") or meta.get("PDF_PATH") or
-            meta.get("path") or meta.get("PATH") or
-            meta.get("file_path") or meta.get("FILE_PATH")
-        )
-        page_num = meta.get("page") or meta.get("PAGE")
+        # rがdict型（metadata）の場合
+        if isinstance(r, dict):
+            source = r.get("source")
+            page_num = r.get("page") or r.get("PAGE")
+        # rが3要素タプル (source, content, metadata) の場合
+        elif len(r) > 2 and isinstance(r[2], dict):
+            source = r[0]
+            page_num = r[2].get("page") or r[2].get("PAGE")
+        # rが2要素タプル (source, metadata) の場合
+        elif len(r) == 2 and isinstance(r[1], dict):
+            source = r[0]
+            page_num = r[1].get("page") or r[1].get("PAGE")
+        else:
+            source = r[0]
+            page_num = None
         sources.append(source)
-        if pdf_path is not None and page_num is not None:
+        if page_num is not None and page_num != "":
             try:
                 page_num_int = int(page_num)
             except Exception:
                 page_num_int = page_num
-            pages.append({"pdf_path": str(pdf_path), "page_num": page_num_int})
+            pages.append(str(page_num_int))
     return {"answer": answer, "sources": sources, "pages": pages}

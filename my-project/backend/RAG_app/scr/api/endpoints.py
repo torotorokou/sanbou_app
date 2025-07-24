@@ -11,10 +11,32 @@ async def generate_answer(request: QueryRequest):
     result = ai_loader.get_answer(request.query, request.category, request.tags)
     return QueryResponse(answer=result["answer"], sources=result["sources"], pages=result["pages"])
 
+import io
+import zipfile
+from fastapi.responses import StreamingResponse
+
 @router.get("/pdf-page")
-def pdf_page(pdf_path: str, page_num: int):
-    image_bytes = get_pdf_page_image(pdf_path, page_num)
-    return StreamingResponse(image_bytes, media_type="image/png")
+def pdf_page(page_num: str):
+    # scr.pathsからPDF_PATHを取得
+    from scr.paths import PDF_PATH
+    pdf_path = str(PDF_PATH)
+
+    # ページ範囲対応（例: "177-190"）
+    if '-' in page_num:
+        start, end = page_num.split('-')
+        start = int(start)
+        end = int(end)
+        buf = io.BytesIO()
+        with zipfile.ZipFile(buf, 'w') as zipf:
+            for p in range(start, end + 1):
+                img_bytes = get_pdf_page_image(pdf_path, p)
+                zipf.writestr(f'page_{p}.png', img_bytes.getvalue())
+        buf.seek(0)
+        return StreamingResponse(buf, media_type="application/zip", headers={"Content-Disposition": "attachment; filename=pages.zip"})
+    else:
+        p = int(page_num)
+        image_bytes = get_pdf_page_image(pdf_path, p)
+        return StreamingResponse(image_bytes, media_type="image/png")
 
 @router.get("/question-options")
 def get_question_options():
