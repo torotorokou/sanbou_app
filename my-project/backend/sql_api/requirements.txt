@@ -8,3 +8,4 @@ python-dotenv==1.0.1        # .env読み込み用（開発・設定分離）
 loguru==0.7.2               # 高機能ログ（任意）
 pandas
 openpyxl==3.1.5
+
