@@ -9,6 +9,7 @@ import { ROUTER_PATHS } from '@/constants/router';
 import ManagementDashboard from '../pages/ManagementDashboard';
 import FactoryDashboard from '../pages/FactoryDashboard';
 import PricingDashboard from '../pages/PricingDashboard';
+import CustomerListDashboard from '../pages/CustomerListDashboard';
 
 // 帳票ページ
 import ReportFactory from '../pages/report/ReportFactory';
@@ -29,6 +30,7 @@ import RecordListPage from '../pages/database/RecordListPage';
 
 // トークンプレビュー
 import TokenPreviewPage from '@/pages/TokenPreviewPage';
+import { ImportOutlined } from '@ant-design/icons';
 
 const AppRoutes: React.FC = () => (
     <Routes>
@@ -45,6 +47,10 @@ const AppRoutes: React.FC = () => (
         />
         <Route path={ROUTER_PATHS.FACTORY} element={<FactoryDashboard />} />
         <Route path={ROUTER_PATHS.PRICING} element={<PricingDashboard />} />
+        <Route
+            path={ROUTER_PATHS.CUSTOMER_LIST}
+            element={<CustomerListDashboard />}
+        />
 
         {/* 帳票ページ */}
         <Route path={ROUTER_PATHS.REPORT_MANAGE} element={<ReportPage />} />

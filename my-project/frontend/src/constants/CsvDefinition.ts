@@ -1,5 +1,5 @@
 import type { CsvType, CsvDefinition } from './types'; // 型定義は共通
-import csvDefinitionsRaw from '@/config/csv_config/syogun_csv_definitions.yaml';
+import csvDefinitionsRaw from '@/config/csv_config/syogun_csv_masters.yaml';
 
 import {
     parseShipmentCSV,

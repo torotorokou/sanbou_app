@@ -1,25 +1,31 @@
-# === 基本コマンド ===
-.PHONY: up down build restart logs ps
+.PHONY: up down build restart logs ps prod-up prod-build prod-restart
 
-# 開発用：すべてのサービスを起動（フォアグラウンド）
+# --- 開発用 ---
 up:
 	docker compose up
 
-# 停止とボリューム・孤児削除（完全停止）
 down:
 	docker compose down -v --remove-orphans
 
-# キャッシュなしで全サービスを再ビルド
 build:
 	docker compose build --no-cache
 
-# フル再起動（最も安全）
 restart: down build up
 
-# ログをリアルタイムで確認
 logs:
 	docker compose logs -f
 
-# コンテナ状態一覧
 ps:
 	docker compose ps
+
+# --- 本番用（override無効） ---
+prod-up:
+	docker compose -f docker-compose.yml up
+
+prod-build:
+	docker compose -f docker-compose.yml build --no-cache
+
+prod-restart: prod-down prod-build prod-up
+
+prod-down:
+	docker compose -f docker-compose.yml down -v --remove-orphans

@@ -9,6 +9,7 @@ export const ROUTER_PATHS = {
     DASHBOARD: '/dashboard',
     FACTORY: '/factory',
     PRICING: '/pricing',
+    CUSTOMER_LIST: '/customer-list',
 
     // 帳票系
     REPORT_MANAGE: '/report/manage',
