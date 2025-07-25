@@ -2,7 +2,7 @@
 from fastapi import UploadFile, status
 from app.api.utils.response_utils import api_response
 from app.api.utils.dataframe import serialize_dates_info
-from backend_shared.utils.dataframe_validator import (
+from backend_shared.src.utils.dataframe_validator import (
     check_missing_file,
     check_required_columns,
     check_denpyou_date_exists,

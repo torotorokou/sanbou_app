@@ -11,9 +11,9 @@ from backend_shared.config.config_loader import SyogunCsvConfigLoader
 
 from app.api.services.csv_upload.csv_upload_validator import CSVValidationResponder
 from app.api.services.csv_upload.storage import CSVUploadTempStorage
-from backend_shared.csv_formatter.formatter_factory import CSVFormatterFactory
+from backend_shared.src.csv_formatter.formatter_factory import CSVFormatterFactory
 
-from backend_shared.csv_formatter.formatter_config import build_formatter_config
+from backend_shared.src.csv_formatter.formatter_config import build_formatter_config
 from app.api.services.csv_upload.formatter_utils import format_and_rename_for_sql
 
 # --- ルーター定義 ---
@@ -79,7 +79,9 @@ class CSVImportService:
             rename_dfs[name] = format_and_rename_for_sql(name, df, self.config_loader)
 
         # ステップ7：SQLに転送
-        self.storage.save_to_temp(dfs, file_inputs, self.processor)
+        self.storage.save_to_temp(
+            dfs=rename_dfs, file_inputs=file_inputs, processor=self.processor
+        )
         return api_response(
             status_code=status.HTTP_200_OK,
             status_str="success",

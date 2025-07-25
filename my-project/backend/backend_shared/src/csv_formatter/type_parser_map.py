@@ -1,7 +1,7 @@
 import pandas as pd
 
 # csv_type_parser_map.py
-from backend_shared.utils.dataframe_utils import (
+from backend_shared.src.utils.dataframe_utils import (
     remove_weekday_parentheses,
     remove_commas_and_convert_numeric,
     parse_str_column,

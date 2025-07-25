@@ -1,8 +1,3 @@
-"""
-DataFrameの操作・変換を行うユーティリティモジュール。
-初心者にも分かりやすいように日本語でコメント・ドックストリングを記載しています。
-"""
-
 import pandas as pd
 from typing import Optional
 

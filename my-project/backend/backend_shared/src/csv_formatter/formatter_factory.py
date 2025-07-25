@@ -5,7 +5,7 @@ from .formatter_impls import (
     YardFormatter,
     DefaultFormatter,
 )
-from backend_shared.csv_formatter.formatter_config import FormatterConfig
+from backend_shared.src.csv_formatter.formatter_config import FormatterConfig
 
 # =========================
 # ファクトリ

@@ -6,7 +6,7 @@ API用の汎用的なCSVバリデーション機能を提供するクラス。
 import pandas as pd
 from typing import Optional
 
-from backend_shared.utils.dataframe_validator import (
+from backend_shared.src.utils.dataframe_validator import (
     DataFrameValidator,
     check_missing_file,
     check_required_columns,
