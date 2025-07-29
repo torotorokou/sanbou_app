@@ -109,3 +109,5 @@ nginx/cache/
 *.out
 *.pid
 *.pid.lock
+*.zip
+*.json
