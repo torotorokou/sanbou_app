@@ -7,21 +7,34 @@ from backend_shared.src.csv_formatter.formatter_config import (
 )  # ← 追加
 
 
-def format_and_rename_for_sql(
+# def format_and_rename_for_sql(
+#     name: str, df: pd.DataFrame, config_loader: SyogunCsvConfigLoader
+# ) -> pd.DataFrame:
+#     config = build_formatter_config(config_loader, name)  # ← ここでConfigを作る
+#     formatter = CSVFormatterFactory.get_formatter(
+#         name, config
+#     )  # ← dictではなくConfigを渡す
+#     df_formatted = formatter.format(df)
+
+#     # 英語名リネームもConfigから取得した方が安全
+#     rename_map = {
+#         ja_col: props["en_name"]
+#         for ja_col, props in config.columns_def.items()  # ← configから取得
+#         if ja_col in df_formatted.columns
+#     }
+
+#     df_sql_ready = df_formatted.rename(columns=rename_map)
+#     return df_sql_ready
+
+
+def format_for_sql(
     name: str, df: pd.DataFrame, config_loader: SyogunCsvConfigLoader
 ) -> pd.DataFrame:
-    config = build_formatter_config(config_loader, name)  # ← ここでConfigを作る
-    formatter = CSVFormatterFactory.get_formatter(
-        name, config
-    )  # ← dictではなくConfigを渡す
-    df_formatted = formatter.format(df)
+    """
+    YAML定義に基づいて整形（型変換・集約など）を行う。
+    """
+    config = build_formatter_config(config_loader, name)
+    formatter = CSVFormatterFactory.get_formatter(name, config)
+    return formatter.format(df)
 
-    # 英語名リネームもConfigから取得した方が安全
-    rename_map = {
-        ja_col: props["en_name"]
-        for ja_col, props in config.columns_def.items()  # ← configから取得
-        if ja_col in df_formatted.columns
-    }
 
-    df_sql_ready = df_formatted.rename(columns=rename_map)
-    return df_sql_ready

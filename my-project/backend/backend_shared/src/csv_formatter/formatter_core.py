@@ -77,8 +77,6 @@ def dedupe_and_aggregate(
     # _dup_group_id が重複している行だけ抽出
     is_duplicated = df["_dup_group_id"].duplicated(keep=False)
     df_dup = df[is_duplicated]
-    print("=== 重複 group_id の行（df_dup） ===")
-    print(df_dup)
 
     # _dup_group_idで集約
     grouped = df.groupby("_dup_group_id", dropna=False)
@@ -86,5 +84,5 @@ def dedupe_and_aggregate(
     # 集約してリセット
     df_agg = grouped.agg(agg_map).reset_index(drop=True)
 
-    # groupbyキーでaggした値も含まれているので、_dup_group_idは不要
-    return df_agg
+    # _dup_group_id を削除して返す
+    return df_agg.drop(columns="_dup_group_id", errors="ignore")
