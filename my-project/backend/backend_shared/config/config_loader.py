@@ -78,6 +78,17 @@ class SyogunCsvConfigLoader:
         """
         return self.config.get(sheet_type, {}).get("unique_keys", [])
 
+    def get_unique_en_keys(self, sheet_type: str) -> list[str]:
+        """
+        指定帳票の一意キー（日本語）を英語カラム名に変換して返す。
+        :param sheet_type: 'shipment', 'receive' など
+        :return: 英語カラム名のリスト（例: ['slip_date', 'vendor_cd', ...]）
+        """
+        unique_keys_jp = self.config.get(sheet_type, {}).get("unique_keys", [])
+        en_map = self.get_en_name_map(sheet_type)
+
+        return [en_map[jp] for jp in unique_keys_jp if jp in en_map]
+
     def get_agg_map(self, sheet_type: str) -> dict:
         """
         指定帳票の「日本語カラム名→集約関数名（agg）」マッピングを取得します。
