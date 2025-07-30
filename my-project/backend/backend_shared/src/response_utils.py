@@ -1,4 +1,3 @@
-
 from fastapi.responses import JSONResponse
 
 
@@ -22,5 +21,3 @@ def api_response(
     if hint is not None:
         content["hint"] = hint
     return JSONResponse(status_code=status_code, content=content)
-
-

@@ -1,11 +1,11 @@
 {
-    "files": [],
-    "references": [
-        {
-            "path": "./tsconfig.app.json"
-        },
-        {
-            "path": "./tsconfig.node.json"
-        }
+    // "extends": "./tsconfig.json",
+    "compilerOptions": {
+        "jsx": "react-jsx", // ←これが絶対必要
+        "strict": true
+        // ...他の設定...
+    },
+    "include": [
+        "src" // ←src配下のtsx, ts, jsxファイルを含める
     ]
 }

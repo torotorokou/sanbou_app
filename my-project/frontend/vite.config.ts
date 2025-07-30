@@ -25,7 +25,7 @@ export default defineConfig({
                 target: 'http://ai_api:8000',
                 changeOrigin: true,
             },
-            '/api/ledger': {
+            '/ledger_api': {
                 target: 'http://ledger_api:8000',
                 changeOrigin: true,
             },

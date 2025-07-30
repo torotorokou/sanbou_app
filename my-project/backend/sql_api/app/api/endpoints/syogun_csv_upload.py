@@ -8,17 +8,19 @@ from fastapi import APIRouter, UploadFile, File, status
 
 # --- アプリ設定・定数 ---
 from app.local_config.api_constants import SYOGUN_CSV_ROUTE
-from app.local_config.paths import SAVE_DIR_TEMP
+from backend_shared.config.paths import SAVE_DIR_TEMP
 
 # --- ユーティリティ ---
-from app.api.utils.response_utils import api_response
+from backend_shared.src.response_utils import api_response
 from app.api.utils.csv_processor import CSVProcessor
 
 # --- 設定ローダー ---
 from backend_shared.config.config_loader import SyogunCsvConfigLoader
 
 # --- CSVアップロード関連サービス ---
-from app.api.services.csv_upload.csv_upload_validator import CSVValidationResponder
+from backend_shared.src.csv_validator.csv_upload_validator_api import (
+    CSVValidationResponder,
+)
 from app.api.services.csv_upload.storage import CSVUploadTempStorage, CSVUploadSQL
 from app.api.services.csv_upload.rename import rename_for_sql
 

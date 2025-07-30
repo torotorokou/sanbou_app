@@ -7,6 +7,7 @@ import { PlayCircleOutlined, DownloadOutlined } from '@ant-design/icons';
 import type { UploadProps } from 'antd';
 import type { CsvFileType } from './types';
 
+// === excelUrlを追加 ===
 export type ReportPageLayoutProps = {
     uploadFiles: CsvFileType[];
     makeUploadProps: (
@@ -14,25 +15,30 @@ export type ReportPageLayoutProps = {
         setter: (file: File) => void
     ) => UploadProps;
     onGenerate: () => void;
+    onDownloadExcel: () => void;
     finalized: boolean;
     readyToCreate: boolean;
     pdfUrl?: string | null;
+    excelUrl?: string | null; // ★追加
     header?: React.ReactNode;
     children?: React.ReactNode;
     sampleImageUrl?: string;
 };
 
-const ReportManagePageLayout: React.FC<ReportPageLayoutProps> = ({
-    uploadFiles,
-    makeUploadProps,
-    onGenerate,
-    finalized,
-    readyToCreate,
-    pdfUrl,
-    header,
-    children,
-    sampleImageUrl,
-}) => {
+const ReportManagePageLayout: React.FC<ReportPageLayoutProps> = (props: ReportPageLayoutProps) => {
+    const {
+        uploadFiles,
+        onDownloadExcel,
+        makeUploadProps,
+        onGenerate,
+        finalized,
+        readyToCreate,
+        pdfUrl,
+        excelUrl, // ★追加
+        header,
+        children,
+        sampleImageUrl,
+    } = props;
     return (
         <div style={{ padding: 24 }}>
             {header && <div style={{ marginBottom: 8 }}>{header}</div>}
@@ -143,8 +149,8 @@ const ReportManagePageLayout: React.FC<ReportPageLayoutProps> = ({
                             )}
                         </div>
 
-                        {/* ダウンロードボタン */}
-                        {finalized && pdfUrl && (
+                        {/* ダウンロードボタン（Excel） */}
+                        {finalized && (
                             <div
                                 style={{
                                     display: 'flex',
@@ -157,23 +163,27 @@ const ReportManagePageLayout: React.FC<ReportPageLayoutProps> = ({
                             >
                                 <VerticalActionButton
                                     icon={<DownloadOutlined />}
-                                    text='ダウンロード'
-                                    href={pdfUrl}
-                                    download
-                                    backgroundColor='#00b894'
+                                    text='エクセルDL'
+                                    onClick={onDownloadExcel}
+                                    disabled={!excelUrl}
+                                    backgroundColor='#fdcb6e'
                                 />
+                                {/* 印刷ボタンはpdfUrl必須 */}
                                 <VerticalActionButton
                                     icon={<PlayCircleOutlined />}
                                     text='印刷'
                                     onClick={() => {
-                                        const win = window.open(
-                                            pdfUrl,
-                                            '_blank'
-                                        );
-                                        win?.focus();
-                                        win?.print();
+                                        if (pdfUrl) {
+                                            const win = window.open(
+                                                pdfUrl,
+                                                '_blank'
+                                            );
+                                            win?.focus();
+                                            win?.print();
+                                        }
                                     }}
                                     backgroundColor='#0984e3'
+                                    disabled={!pdfUrl}
                                 />
                             </div>
                         )}
