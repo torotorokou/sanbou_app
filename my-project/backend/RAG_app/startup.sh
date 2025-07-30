@@ -1,3 +1,9 @@
+
+gcloud auth activate-service-account --key-file="$GOOGLE_APPLICATION_CREDENTIALS"
+echo "✅ Authenticated with service account."
+
+
+echo "🚀 [2/2] Starting FastAPI..."
 #!/bin/bash
 
 # サービスアカウントで認証
@@ -5,7 +11,6 @@ gcloud auth activate-service-account --key-file="$GOOGLE_APPLICATION_CREDENTIALS
 echo "✅ Authenticated with service account."
 
 # GCSから構造化データをローカルにコピー
-
 if [ -d /app/local_data/master ]; then
   echo "⏩ [1/2] Local data already exists. Skipping GCS download."
 else
