@@ -3,7 +3,7 @@ import pandas as pd
 from sqlalchemy.engine import Engine
 import logging
 
-from app.local_config.paths import SAVE_DIR_TEMP
+from backend_shared.config.paths import SAVE_DIR_TEMP
 
 
 # --- 保存処理 ---
