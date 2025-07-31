@@ -7,8 +7,6 @@ import PDFViewer from './viewer/PDFViewer';
 import { pdfPreviewMap } from '@/constants/reportConfig/managementReportConfig';
 import { identifyCsvType, isCsvMatch } from '@/utils/validators/csvValidator';
 import type { ReportKey } from '@/constants/reportConfig/managementReportConfig';
-import { downloadExcelFile } from './common/downloadExcel';
-// 必要なら import type { CsvFileType } from './types';
 
 type CsvConfig = {
     config: {
@@ -61,7 +59,6 @@ type ReportBaseProps = {
     reportKey: ReportKey;
 };
 
-// ここでUploadFileConfig型を定義（もしくは既存型CsvFileTypeをimportして使う）
 type UploadFileConfig = {
     label: string;
     file: File | null;
@@ -71,15 +68,15 @@ type UploadFileConfig = {
     onRemove: () => void;
 };
 
-
 const ReportBase: React.FC<ReportBaseProps> = ({
     step, file, preview, modal, finalized, loading, generatePdf, reportKey
 }) => {
-    const [excelUrl, setExcelUrl] = useState<string | null>(null); // ←ここでOK
+    const [excelUrl, setExcelUrl] = useState<string | null>(null);
+    const [excelFileName, setExcelFileName] = useState<string>('output.xlsx');
     const [validationResults, setValidationResults] = useState<{
         [label: string]: 'valid' | 'invalid' | 'unknown';
     }>({});
-    // アップロード済みかつバリデーションOKなファイルのみ帳簿生成可
+
     const readyToCreate = file.csvConfigs.every((entry) => {
         const label = entry.config.label;
         const fileObj = file.files[label];
@@ -102,14 +99,17 @@ const ReportBase: React.FC<ReportBaseProps> = ({
 
     const handleDownloadExcel = () => {
         if (excelUrl) {
-            window.open(excelUrl, '_blank');
+            const a = document.createElement('a');
+            a.href = excelUrl;
+            a.download = excelFileName; // サーバー指定のファイル名を使う
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
         } else {
-            // 必要に応じて警告
             alert('Excelファイルがありません。');
         }
     };
 
-    // CSVアップロードprops生成
     const makeUploadProps = (
         label: string,
         parser: (csvText: string) => void
@@ -147,9 +147,6 @@ const ReportBase: React.FC<ReportBaseProps> = ({
         },
     });
 
-    // 帳簿生成処理（PDFプレビュー）
-    // ...必要なimportは省略（あなたの既存ファイル構成に合わせて下さい）...
-
     const handleGenerate = async () => {
         modal.setModalOpen(true);
         loading.setLoading(true);
@@ -161,7 +158,14 @@ const ReportBase: React.FC<ReportBaseProps> = ({
             });
             formData.append('report_key', reportKey);
 
-            console.log('帳簿作成API呼び出し:', { report_key: reportKey, files: file.files });
+            // FormDataの中身を全部ログに出す
+            for (let [key, value] of formData.entries()) {
+                if (value instanceof File) {
+                    console.log(`FormData key: ${key}, file name: ${value.name}`);
+                } else {
+                    console.log(`FormData key: ${key}, value: ${value}`);
+                }
+            }
 
             const response = await fetch('/ledger_api/report/manage', {
                 method: 'POST',
@@ -169,12 +173,21 @@ const ReportBase: React.FC<ReportBaseProps> = ({
             });
             if (!response.ok) throw new Error('帳簿作成失敗');
 
-            const data = await response.json();
-            const pdfUrl = data.result?.pdf_url;
-            const excelUrl = data.result?.excel_url;
+            const blob = await response.blob();
 
-            preview.setPreviewUrl(pdfUrl);
-            setExcelUrl(excelUrl); // Excel用URLをセット
+            // ヘッダーからファイル名を取得
+            const disposition = response.headers.get('Content-Disposition');
+            let fileName = 'output.xlsx';
+            if (disposition && disposition.indexOf('filename=') !== -1) {
+                const matches = /filename="?([^"]+)"?/.exec(disposition);
+                if (matches && matches[1]) {
+                    fileName = decodeURIComponent(matches[1]);
+                }
+            }
+
+            const excelObjectUrl = window.URL.createObjectURL(blob);
+            setExcelUrl(excelObjectUrl);
+            setExcelFileName(fileName);
 
             finalized.setFinalized(true);
         } catch (err) {
@@ -186,8 +199,6 @@ const ReportBase: React.FC<ReportBaseProps> = ({
             }, 1000);
         }
     };
-
-
 
     return (
         <>
@@ -251,7 +262,7 @@ const ReportBase: React.FC<ReportBaseProps> = ({
                 readyToCreate={readyToCreate}
                 sampleImageUrl={pdfPreviewMap[reportKey]}
                 pdfUrl={preview.previewUrl}
-                excelUrl={excelUrl}  // ←ここを追加
+                excelUrl={excelUrl}
             >
                 <PDFViewer pdfUrl={preview.previewUrl} />
             </ReportManagePageLayout>

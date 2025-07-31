@@ -1,5 +1,5 @@
-from .formatter_base import BaseCSVFormatter
-from .formatter_impls import (
+from backend_shared.src.csv_formatter.formatter_base import BaseCSVFormatter
+from backend_shared.src.csv_formatter.formatter_impls import (
     ShipmentFormatter,
     ReceiveFormatter,
     YardFormatter,

@@ -12,6 +12,7 @@ from backend_shared.src.csv_validator.csv_upload_validator_api import (
     CSVValidationResponder,
 )
 
+from fastapi.responses import StreamingResponse
 from backend_shared.src.csv_formatter.formatter_factory import CSVFormatterFactory
 from backend_shared.src.csv_formatter.formatter_config import build_formatter_config
 
@@ -89,27 +90,23 @@ async def generate_pdf(
     generator.preprocess(report_key)  # Base（共通） or サブクラスのどちらか
 
     # 各帳票生成
-    generator.main_process()
+    df_result = generator.main_process(report_key)
 
-    # PDFとExcelの生成
-    excel_name = generator.generate_excel("file.xlsx")  # Base（共通）
-    pdf_name = generator.generate_pdf("file.pdf")  # Base（共通）
+    # レポート日付
+    report_date = generator.make_report_date(df_formatted)
 
-    # download_pdf_name = generator.get_download_pdf_name(report_name_jp, date_str)
-    # download_excel_name = generator.get_download_excel_name(report_name_jp, date_str)
+    # エクセル_pdf生成
+    excel_bytes_io = generator.generate_excel_bytes(df_result, report_date)
+    excel_bytes_io.seek(0)
+
+    # ファイル名を決める（必要に応じて動的に）
+    manage_config = ReportTemplateConfigLoader()
+    label_jp = manage_config.get_label(report_key)
+    file_name = f"{label_jp}_{report_date}.xlsx"
 
     # APIレスポンス
-    MANAGE_REPORT_URL_BASE
-    url_base = f"{MANAGE_REPORT_URL_BASE}/{report_key}"
-    return api_response(
-        status_code=200,
-        status_str="success",
-        code="REPORT_CREATED",
-        detail=f"{report_key}帳簿が作成されました。",
-        result={
-            "pdf_url": f"{url_base}/{pdf_name}",
-            "excel_url": f"{url_base}/{excel_name}",
-            "download_pdf_name": pdf_name,
-            "download_excel_name": excel_name,
-        },
+    return StreamingResponse(
+        excel_bytes_io,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f'attachment; filename="{file_name}"'},
     )
