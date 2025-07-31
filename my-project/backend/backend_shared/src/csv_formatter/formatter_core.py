@@ -1,5 +1,8 @@
 import pandas as pd
-from .type_parser_map import type_formatting_map, type_parser_map
+from backend_shared.src.csv_formatter.type_parser_map import (
+    type_formatting_map,
+    type_parser_map,
+)
 
 
 # CSVフォーマットの型変換を行うユーティリティ

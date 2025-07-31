@@ -1,0 +1,38 @@
+# streamlit requirements
+streamlit>=1.47.1
+altair>=5.5.0
+pyarrow>=21.0.0
+plotly>=6.2.0
+
+# machine learning
+scikit-learn>=1.7.1
+scipy>=1.15.3
+
+# database
+sqlalchemy>=2.0.42
+
+# openai and langchain
+openai>=1.98.0
+langchain>=0.3.27
+langchain-community>=0.3.27
+langchain-openai>=0.3.28
+
+# office documents
+python-pptx>=1.0.2
+
+# image processing
+pdf2image>=1.17.0
+
+# visualization
+matplotlib>=3.10.3
+
+# GUI
+# Note: pandasgui removed due to PyQt5 dependency issues
+# PyQt5 requires system libraries not available in container
+
+# Japanese holidays
+jpholiday>=1.0.2
+
+# Linux input handling - commented out due to kernel header requirements
+# evdev>=1.9.2  # requires linux-headers
+# pynput>=1.8.1  # requires evdev but installed with --no-deps

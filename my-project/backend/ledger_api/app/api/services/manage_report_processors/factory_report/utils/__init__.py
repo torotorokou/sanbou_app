@@ -1,1 +1,0 @@
-# Factory Report ユーティリティ

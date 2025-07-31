@@ -22,6 +22,8 @@ app.add_middleware(
 # --- ここがポイント ---
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 STATIC_DIR = os.path.join(BASE_DIR, "static")
+if not os.path.exists(STATIC_DIR):
+    raise FileNotFoundError(f"Static directory not found: {STATIC_DIR}")
 
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
