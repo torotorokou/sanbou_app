@@ -21,7 +21,7 @@ files = {
 }
 
 data = {
-    "report_key": "factory",  # "shipment"や"yard"など
+    "report_key": "factory_report",  # "shipment"や"yard"など
 }
 
 
