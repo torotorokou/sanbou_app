@@ -81,26 +81,22 @@ async def generate_pdf(
         df_formatted[csv_type] = formatter.format(df)
 
     # 個別処理
-
+    # dfは修正後のDataFrameにすること
     output_dir = os.path.join(MANAGE_REPORT_OUTPUT_DIR, report_key)
     generator = get_report_generator(report_key, output_dir, df_formatted)
 
     # 前処理：必要なファイルチェック
-    config_loader_report = ReportTemplateConfigLoader()
-    required_files = config_loader_report.get_required_files(report_key)
-    optional_files = config_loader_report.get_optional_files(report_key)
-
-    check_csv_files(files, required_files, optional_files)
-
-
-    
     generator.preprocess(report_key)  # Base（共通） or サブクラスのどちらか
 
-    pdf_name = generator.generate_pdf("file.pdf")  # Base（共通）
-    excel_name = generator.generate_excel("file.xlsx")  # Base（共通）
+    # 各帳票生成
+    generator.main_process()
 
-    download_pdf_name = generator.get_download_pdf_name(report_name_jp, date_str)
-    download_excel_name = generator.get_download_excel_name(report_name_jp, date_str)
+    # PDFとExcelの生成
+    excel_name = generator.generate_excel("file.xlsx")  # Base（共通）
+    pdf_name = generator.generate_pdf("file.pdf")  # Base（共通）
+
+    # download_pdf_name = generator.get_download_pdf_name(report_name_jp, date_str)
+    # download_excel_name = generator.get_download_excel_name(report_name_jp, date_str)
 
     # APIレスポンス
     MANAGE_REPORT_URL_BASE
