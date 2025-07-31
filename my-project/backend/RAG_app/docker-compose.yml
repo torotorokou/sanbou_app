@@ -1,4 +1,3 @@
-version: '3.8'
 
 services:
   sanbo-api:
@@ -10,6 +9,8 @@ services:
       - "8000:8000"
     volumes:
       - ./:/app
+      - ./config/.env:/app/config/.env
       - ./secret/gcs-key.json:/root/.config/gcloud/application_default_credentials.json
+      - ./local_data/master:/local_data/master
     environment:
       - GOOGLE_APPLICATION_CREDENTIALS=/root/.config/gcloud/application_default_credentials.json

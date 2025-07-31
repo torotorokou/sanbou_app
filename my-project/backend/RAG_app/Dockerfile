@@ -13,7 +13,10 @@ RUN apt-get update && apt-get install -y \
 # 作業ディレクトリ
 WORKDIR /app
 
+# まず全体をコピー
 COPY . .
+# config/.envのみを明示的に再コピー（念のため）
+COPY config/.env /app/config/.env
 # startup.shに実行権限を付与
 RUN chmod +x /app/startup.sh
 RUN pip install --no-cache-dir -r requirements.txt
