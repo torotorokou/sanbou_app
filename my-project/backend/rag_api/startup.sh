@@ -9,7 +9,7 @@ fi
 echo "✅ Authenticated with service account."
 
 # GCSから構造化データをローカルにコピー
-TARGET_DIR="/backend/local_data/master"
+TARGET_DIR="/backend/app/local_data/master"
 
 if [ "$(ls -A $TARGET_DIR 2>/dev/null)" ]; then
   echo "⏩ [1/2] Local data already exists. Skipping GCS download."
