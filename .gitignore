@@ -102,6 +102,9 @@ nginx/cache/
 *.conf.bak
 *.conf.tmp
 
+# secrets
+secrets/*
+
 # === その他 ===
 *.bak
 *.tmp
