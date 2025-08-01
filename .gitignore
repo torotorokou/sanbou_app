@@ -102,6 +102,12 @@ nginx/cache/
 *.conf.bak
 *.conf.tmp
 
+# secrets
+secrets/*
+
+# ディレクトリ関係
+local_data/
+
 # === その他 ===
 *.bak
 *.tmp
@@ -109,3 +115,5 @@ nginx/cache/
 *.out
 *.pid
 *.pid.lock
+*.zip
+*.json

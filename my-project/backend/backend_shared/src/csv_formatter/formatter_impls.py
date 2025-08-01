@@ -1,5 +1,5 @@
 import pandas as pd
-from .formatter_base import CommonCSVFormatter
+from backend_shared.src.csv_formatter.formatter_base import CommonCSVFormatter
 from backend_shared.src.utils.dataframe_utils import (
     combine_date_and_time,
     remove_weekday_parentheses,

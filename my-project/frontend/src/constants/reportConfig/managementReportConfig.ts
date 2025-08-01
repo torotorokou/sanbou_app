@@ -13,11 +13,11 @@ import { CSV_DEFINITIONS } from '../CsvDefinition';
 // ==============================
 
 export const REPORT_KEYS = {
-    factory: { value: 'factory', label: '工場日報' },
-    balance: { value: 'balance', label: '搬出入収支表' },
-    abc: { value: 'abc', label: 'ABC集計表' },
-    block: { value: 'block', label: 'ブロック単価表' },
-    management: { value: 'management', label: '管理表' },
+    factory_report: { value: 'factory_report', label: '工場日報' },
+    balance_sheet: { value: 'balance_sheet', label: '工場搬出入収支表' },
+    average_sheet: { value: 'average_sheet', label: '集計項目平均表' },
+    block_unit_price: { value: 'block_unit_price', label: 'ブロック単価表' },
+    management_sheet: { value: 'management_sheet', label: '管理票' },
 } as const;
 
 export type ReportKey = keyof typeof REPORT_KEYS;
@@ -38,22 +38,22 @@ export type CsvConfigGroup = CsvConfigEntry[];
 
 export const csvConfigMap: Record<ReportKey, CsvConfigGroup> = {
     // 工場日報
-    factory: [
+    factory_report: [
         { config: CSV_DEFINITIONS.shipment, required: true },
         { config: CSV_DEFINITIONS.yard, required: true },
     ],
     // 搬出入収支表
-    balance: [
+    balance_sheet: [
         { config: CSV_DEFINITIONS.receive, required: false },
         { config: CSV_DEFINITIONS.shipment, required: true },
         { config: CSV_DEFINITIONS.yard, required: true },
     ],
     // ABC集計表
-    abc: [{ config: CSV_DEFINITIONS.receive, required: true }],
+    average_sheet: [{ config: CSV_DEFINITIONS.receive, required: true }],
     // ブロック単価表
-    block: [{ config: CSV_DEFINITIONS.shipment, required: true }],
+    block_unit_price: [{ config: CSV_DEFINITIONS.shipment, required: true }],
     // 管理表
-    management: [
+    management_sheet: [
         { config: CSV_DEFINITIONS.receive, required: true },
         { config: CSV_DEFINITIONS.shipment, required: true },
         { config: CSV_DEFINITIONS.yard, required: true },
@@ -65,11 +65,11 @@ export const csvConfigMap: Record<ReportKey, CsvConfigGroup> = {
 // =====================================
 
 export const stepConfigMap: Record<ReportKey, string[]> = {
-    factory: ['CSV選択', 'PDF生成中', '完了'],
-    balance: ['CSV読み込み', '帳票生成', '完了'],
-    abc: ['準備中'],
-    block: ['準備中'],
-    management: ['準備中'],
+    factory_report: ['CSV選択', 'PDF生成中', '完了'],
+    balance_sheet: ['CSV読み込み', '帳票生成', '完了'],
+    average_sheet: ['準備中'],
+    block_unit_price: ['準備中'],
+    management_sheet: ['準備中'],
 };
 
 // ===================================
@@ -77,11 +77,11 @@ export const stepConfigMap: Record<ReportKey, string[]> = {
 // ===================================
 
 export const pdfGeneratorMap: Record<ReportKey, () => Promise<string>> = {
-    factory: async () => '/factory_report.pdf',
-    balance: async () => '/balance_report.pdf',
-    abc: async () => '/abc_report.pdf',
-    block: async () => '/block_report.pdf',
-    management: async () => '/management_report.pdf',
+    factory_report: async () => '/factory_report.pdf',
+    balance_sheet: async () => '/balance_sheet.pdf',
+    average_sheet: async () => '/average_sheet.pdf',
+    block_unit_price: async () => '/block_unit_price.pdf',
+    management_sheet: async () => '/management_sheet.pdf',
 };
 
 // ===================================
@@ -89,11 +89,11 @@ export const pdfGeneratorMap: Record<ReportKey, () => Promise<string>> = {
 // ===================================
 
 export const pdfPreviewMap: Record<ReportKey, string> = {
-    factory: '/images/sampleViews/manage/factoryReport.png',
-    balance: '/images/sampleViews/manage/balanceSheet.png',
-    abc: '/images/sampleViews/manage/averageSheet.png',
-    block: '/images/sampleViews/manage/blockunitPrice.png',
-    management: '/images/sampleViews/manage/managementSheet.png',
+    factory_report: '/images/sampleViews/manage/factoryReport.png',
+    balance_sheet: '/images/sampleViews/manage/balanceSheet.png',
+    average_sheet: '/images/sampleViews/manage/averageSheet.png',
+    block_unit_price: '/images/sampleViews/manage/blockunitPrice.png',
+    management_sheet: '/images/sampleViews/manage/managementSheet.png',
 };
 
 // ===================================

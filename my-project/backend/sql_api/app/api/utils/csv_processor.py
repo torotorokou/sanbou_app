@@ -24,12 +24,13 @@ class CSVProcessor:
         Returns:
             pd.DataFrame: 読み込んだデータフレーム
         """
-        # ファイル内容をバイト列で読み込む
         content = await file.read()
-        # バイト列をUTF-8で文字列にデコード
-        csv_text = content.decode("utf-8")
-        # 文字列をpandasでDataFrameに変換
-        return pd.read_csv(io.StringIO(csv_text))
+        # BOM付きUTF-8対応
+        csv_text = content.decode("utf-8-sig")
+        df = pd.read_csv(io.StringIO(csv_text), skip_blank_lines=True)
+        # 全列がNaNの行を削除（完全な空行）
+        df = df.dropna(how="all")
+        return df
 
     def create_result(
         self,
