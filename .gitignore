@@ -105,6 +105,9 @@ nginx/cache/
 # secrets
 secrets/*
 
+# ディレクトリ関係
+local_data/
+
 # === その他 ===
 *.bak
 *.tmp

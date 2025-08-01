@@ -18,7 +18,14 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.endpoints import query  # ← query.py に router を定義
 
-app = FastAPI()
+# FastAPIアプリケーションのインスタンスを作成
+app = FastAPI(
+    title="RAG_API",
+    version="1.0.0",
+    root_path="/rag_api",  # API全体のベースパスを指定
+    docs_url="/docs",
+    openapi_url="/openapi.json",
+)
 
 # --- CORS設定（Reactなどからの呼び出し用）
 origins = [
@@ -35,6 +42,7 @@ app.add_middleware(
 
 # --- APIルーター登録
 app.include_router(query.router, prefix="/api")
+
 
 # --- 動作確認用のルート
 @app.get("/")
