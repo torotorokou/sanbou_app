@@ -2,7 +2,7 @@
 
 # --- 開発用 ---
 up:
-	docker compose up
+	docker compose up -d --remove-orphans
 
 down:
 	docker compose down -v --remove-orphans
@@ -12,6 +12,11 @@ build:
 
 restart: down build up
 
+rebuild:
+	docker compose down -v --remove-orphans
+	docker compose build --no-cache
+	docker compose up -d --force-recreate --remove-orphans
+
 logs:
 	docker compose logs -f
 
@@ -20,7 +25,7 @@ ps:
 
 # --- 本番用（override無効） ---
 prod-up:
-	docker compose -f docker-compose.yml up
+	docker compose -f docker-compose.yml up -d --remove-orphans
 
 prod-build:
 	docker compose -f docker-compose.yml build --no-cache
