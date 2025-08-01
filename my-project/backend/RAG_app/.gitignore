@@ -1,0 +1,19 @@
+# Pythonキャッシュ
+__pycache__/
+*.pyc
+
+# エディタやOSのゴミファイル
+.DS_Store
+Thumbs.db
+
+# GCSキーやAPIキーなどの秘密ファイル
+secret/
+config/.env
+*.json
+
+# ローカルに一時生成されるデータ
+local_data/
+
+# ログファイル（任意）
+*.log
+
