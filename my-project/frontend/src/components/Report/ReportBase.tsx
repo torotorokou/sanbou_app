@@ -8,59 +8,48 @@ import { pdfPreviewMap } from '@/constants/reportConfig/managementReportConfig';
 import { identifyCsvType, isCsvMatch } from '@/utils/validators/csvValidator';
 import type { ReportKey } from '@/constants/reportConfig/managementReportConfig';
 
-// =============================
-// 帳簿PDF生成画面のベースコンポーネント
-// =============================
-
-// === 型定義グループ化 ===
-// CSVファイルの設定情報
 type CsvConfig = {
     config: {
-        label: string; // CSVのラベル名
-        onParse: (csvText: string) => void; // CSVパース時のコールバック
+        label: string;
+        onParse: (csvText: string) => void;
     };
-    required: boolean; // 必須かどうか
+    required: boolean;
 };
 
-// ステップバーの状態管理
+type CsvConfigEntry = CsvConfig;
+
 type StepProps = {
-    steps: string[]; // ステップ名一覧
-    currentStep: number; // 現在のステップ番号
-    setCurrentStep: (step: number) => void; // ステップ変更関数
+    steps: string[];
+    currentStep: number;
+    setCurrentStep: (step: number) => void;
 };
 
-// ファイルアップロード関連の状態管理
 type FileProps = {
-    csvConfigs: CsvConfig[]; // CSV設定一覧
-    files: { [csvLabel: string]: File | null }; // ラベルごとのファイル
-    onUploadFile: (label: string, file: File | null) => void; // ファイルアップロード時のコールバック
+    csvConfigs: CsvConfig[];
+    files: { [csvLabel: string]: File | null };
+    onUploadFile: (label: string, file: File | null) => void;
 };
 
-// PDFプレビュー関連の状態管理
 type PreviewProps = {
-    previewUrl: string | null; // プレビュー用PDFのURL
-    setPreviewUrl: (url: string | null) => void; // プレビューURL更新関数
+    previewUrl: string | null;
+    setPreviewUrl: (url: string | null) => void;
 };
 
-// モーダル表示状態管理
 type ModalProps = {
     modalOpen: boolean;
     setModalOpen: (b: boolean) => void;
 };
 
-// 帳簿生成完了状態管理
 type FinalizedProps = {
     finalized: boolean;
     setFinalized: (b: boolean) => void;
 };
 
-// ローディング状態管理
 type LoadingProps = {
     loading: boolean;
     setLoading: (b: boolean) => void;
 };
 
-// ReportBaseコンポーネントのprops型
 type ReportBaseProps = {
     step: StepProps;
     file: FileProps;
@@ -68,41 +57,40 @@ type ReportBaseProps = {
     modal: ModalProps;
     finalized: FinalizedProps;
     loading: LoadingProps;
-    generatePdf: () => Promise<string>; // PDF生成関数
-    reportKey: ReportKey; // 帳簿種別キー
+    generatePdf: () => Promise<string>;
+    reportKey: ReportKey;
+};
+
+type UploadFileConfig = {
+    label: string;
+    file: File | null;
+    onChange: (file: File | null) => void;
+    required: boolean;
+    validationResult: 'valid' | 'invalid' | 'unknown';
+    onRemove: () => void;
 };
 
 const ReportBase: React.FC<ReportBaseProps> = ({
-    step,
-    file,
-    preview,
-    modal,
-    finalized,
-    loading,
-    generatePdf,
-    reportKey,
+    step, file, preview, modal, finalized, loading, generatePdf, reportKey
 }) => {
-    // 各CSVファイルのバリデーション結果を管理
+    const [excelUrl, setExcelUrl] = useState<string | null>(null);
+    const [excelFileName, setExcelFileName] = useState<string>('output.xlsx');
     const [validationResults, setValidationResults] = useState<{
         [label: string]: 'valid' | 'invalid' | 'unknown';
     }>({});
 
-    // 帳簿生成ボタンの活性判定（全CSVが条件を満たしているか）
     const readyToCreate = file.csvConfigs.every((entry) => {
         const label = entry.config.label;
         const fileObj = file.files[label];
         const validation = validationResults[label];
 
         if (fileObj) {
-            // ファイルがアップロードされていればバリデーション必須
             return validation === 'valid';
         } else {
-            // 未アップロードなら、必須CSVのみNG
             return !entry.required;
         }
     });
 
-    // ファイル削除時の処理
     const handleRemoveFile = (label: string) => {
         file.onUploadFile(label, null);
         setValidationResults((prev) => ({
@@ -111,7 +99,19 @@ const ReportBase: React.FC<ReportBaseProps> = ({
         }));
     };
 
-    // アップロード用props生成（バリデーション・パース処理含む）
+    const handleDownloadExcel = () => {
+        if (excelUrl) {
+            const a = document.createElement('a');
+            a.href = excelUrl;
+            a.download = excelFileName; // サーバー指定のファイル名を使う
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        } else {
+            alert('Excelファイルがありません。');
+        }
+    };
+
     const makeUploadProps = (
         label: string,
         parser: (csvText: string) => void
@@ -119,11 +119,9 @@ const ReportBase: React.FC<ReportBaseProps> = ({
         accept: '.csv',
         showUploadList: false,
         beforeUpload: (fileObj) => {
-            // ファイル選択時の処理
             file.onUploadFile(label, fileObj);
 
             if (!fileObj) {
-                // ファイル未選択時はバリデーション結果をunknownに
                 setValidationResults((prev) => ({
                     ...prev,
                     [label]: 'unknown',
@@ -131,13 +129,11 @@ const ReportBase: React.FC<ReportBaseProps> = ({
                 return false;
             }
 
-            // CSV内容を読み込んでバリデーション
             const reader = new FileReader();
             reader.onload = (e) => {
                 const text = e.target?.result as string;
-                const result = identifyCsvType(text); // CSV種別判定
-
-                const isCorrect = isCsvMatch(result, label); // ラベルと一致するか
+                const result = identifyCsvType(text);
+                const isCorrect = isCsvMatch(result, label);
 
                 setValidationResults((prev) => ({
                     ...prev,
@@ -145,7 +141,6 @@ const ReportBase: React.FC<ReportBaseProps> = ({
                 }));
 
                 if (isCorrect) {
-                    // 正しいCSVならパース処理実行
                     parser(text);
                 }
             };
@@ -154,43 +149,85 @@ const ReportBase: React.FC<ReportBaseProps> = ({
         },
     });
 
-    // 帳簿PDF生成処理
     const handleGenerate = async () => {
-        modal.setModalOpen(true); // モーダル表示
-        loading.setLoading(true); // ローディング開始
+        modal.setModalOpen(true);
+        loading.setLoading(true);
 
         try {
-            const url = await generatePdf(); // PDF生成
-            preview.setPreviewUrl(url); // プレビューURLセット
-            finalized.setFinalized(true); // 完了状態セット
+            // 日本語ラベルを英語キーにマッピング
+            const labelToEnglishKey: Record<string, string> = {
+                '出荷一覧': 'shipment',
+                '受入一覧': 'receive',
+                'ヤード一覧': 'yard',
+            };
+
+            const formData = new FormData();
+            Object.keys(file.files).forEach((label) => {
+                const fileObj = file.files[label];
+                if (fileObj) {
+                    const englishKey = labelToEnglishKey[label] || label;
+                    formData.append(englishKey, fileObj);
+                }
+            });
+            formData.append('report_key', reportKey);
+
+            // FormDataの中身を全部ログに出す
+            console.log('FormData contents:');
+            Object.keys(file.files).forEach((label) => {
+                const fileObj = file.files[label];
+                if (fileObj) {
+                    const englishKey = labelToEnglishKey[label] || label;
+                    console.log(`FormData key: ${englishKey}, file name: ${fileObj.name}`);
+                }
+            });
+            console.log(`FormData key: report_key, value: ${reportKey}`);
+
+            const response = await fetch('/ledger_api/report/manage', {
+                method: 'POST',
+                body: formData,
+            });
+            if (!response.ok) throw new Error('帳簿作成失敗');
+
+            const blob = await response.blob();
+
+            // ヘッダーからファイル名を取得
+            const disposition = response.headers.get('Content-Disposition');
+            let fileName = 'output.xlsx';
+            if (disposition && disposition.indexOf('filename=') !== -1) {
+                const matches = /filename="?([^"]+)"?/.exec(disposition);
+                if (matches && matches[1]) {
+                    fileName = decodeURIComponent(matches[1]);
+                }
+            }
+
+            const excelObjectUrl = window.URL.createObjectURL(blob);
+            setExcelUrl(excelObjectUrl);
+            setExcelFileName(fileName);
+
+            finalized.setFinalized(true);
         } catch (err) {
-            // エラー時はコンソール出力
-            console.error('PDF生成エラー:', err);
+            console.error('帳簿作成失敗エラー:', err);
         } finally {
-            loading.setLoading(false); // ローディング終了
+            loading.setLoading(false);
             setTimeout(() => {
-                modal.setModalOpen(false); // モーダル自動クローズ
+                modal.setModalOpen(false);
             }, 1000);
         }
     };
 
-    // 画面描画
     return (
         <>
-            {/* ステップバー付きモーダル */}
             <ReportStepperModal
                 open={modal.modalOpen}
                 steps={step.steps}
                 currentStep={step.currentStep}
                 onNext={() => {
-                    // 最終ステップでモーダル閉じてステップ初期化
                     if (step.currentStep === step.steps.length - 1) {
                         modal.setModalOpen(false);
                         step.setCurrentStep(0);
                     }
                 }}
             >
-                {/* ステップごとの表示内容 */}
                 {step.currentStep === 0 && (
                     <Typography.Text>
                         帳簿を作成する準備が整いました。
@@ -206,15 +243,15 @@ const ReportBase: React.FC<ReportBaseProps> = ({
                 )}
             </ReportStepperModal>
 
-            {/* 帳簿管理ページレイアウト */}
             <ReportManagePageLayout
-                onGenerate={handleGenerate} // 帳簿生成ボタン
-                uploadFiles={file.csvConfigs.map((entry) => {
+                onGenerate={handleGenerate}
+                onDownloadExcel={handleDownloadExcel}
+                uploadFiles={file.csvConfigs.map((entry: CsvConfigEntry): UploadFileConfig => {
                     const label = entry.config.label;
                     return {
                         label,
                         file: file.files[label] ?? null,
-                        onChange: (f) => {
+                        onChange: (f: File | null) => {
                             file.onUploadFile(label, f);
                             if (f === null) {
                                 setValidationResults((prev) => ({
@@ -228,10 +265,9 @@ const ReportBase: React.FC<ReportBaseProps> = ({
                         onRemove: () => handleRemoveFile(label),
                     };
                 })}
-                makeUploadProps={(label) => {
-                    // ラベルに対応するUploadProps生成
+                makeUploadProps={(label: string): UploadProps => {
                     const entry = file.csvConfigs.find(
-                        (e) => e.config.label === label
+                        (e: CsvConfigEntry) => e.config.label === label
                     );
                     return entry
                         ? makeUploadProps(label, entry.config.onParse)
@@ -241,8 +277,8 @@ const ReportBase: React.FC<ReportBaseProps> = ({
                 readyToCreate={readyToCreate}
                 sampleImageUrl={pdfPreviewMap[reportKey]}
                 pdfUrl={preview.previewUrl}
+                excelUrl={excelUrl}
             >
-                {/* PDFプレビュー表示 */}
                 <PDFViewer pdfUrl={preview.previewUrl} />
             </ReportManagePageLayout>
         </>

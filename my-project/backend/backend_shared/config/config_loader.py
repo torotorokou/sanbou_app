@@ -1,5 +1,5 @@
 import yaml
-from app.local_config.paths import CSV_DEF_PATH
+from backend_shared.config.paths import SYOGUNCSV_DEF_PATH, MANAGER_CSV_DEF_PATH
 
 
 class SyogunCsvConfigLoader:
@@ -8,7 +8,7 @@ class SyogunCsvConfigLoader:
     必須カラム・カラム定義（英語名や型）も取得できます。
     """
 
-    def __init__(self, config_path: str = CSV_DEF_PATH):
+    def __init__(self, config_path: str = SYOGUNCSV_DEF_PATH):
         """
         コンストラクタ。設定ファイルのパスを受け取ります。
         :param config_path: 設定ファイル（YAML）のパス
@@ -78,6 +78,17 @@ class SyogunCsvConfigLoader:
         """
         return self.config.get(sheet_type, {}).get("unique_keys", [])
 
+    def get_unique_en_keys(self, sheet_type: str) -> list[str]:
+        """
+        指定帳票の一意キー（日本語）を英語カラム名に変換して返す。
+        :param sheet_type: 'shipment', 'receive' など
+        :return: 英語カラム名のリスト（例: ['slip_date', 'vendor_cd', ...]）
+        """
+        unique_keys_jp = self.config.get(sheet_type, {}).get("unique_keys", [])
+        en_map = self.get_en_name_map(sheet_type)
+
+        return [en_map[jp] for jp in unique_keys_jp if jp in en_map]
+
     def get_agg_map(self, sheet_type: str) -> dict:
         """
         指定帳票の「日本語カラム名→集約関数名（agg）」マッピングを取得します。
@@ -89,3 +100,25 @@ class SyogunCsvConfigLoader:
             for jp, meta in self.get_columns(sheet_type).items()
             if "agg" in meta
         }
+
+
+class ReportTemplateConfigLoader:
+    def __init__(self, path=MANAGER_CSV_DEF_PATH):
+        with open(path, "r", encoding="utf-8") as f:
+            self.config = yaml.safe_load(f)
+
+    def get_required_files(self, report_key: str) -> list[str]:
+        """帳票ごとの必須CSVファイルリストを返す"""
+        if report_key not in self.config:
+            raise KeyError(f"{report_key}はテンプレート定義に存在しません")
+        return self.config[report_key].get("required_files", [])
+
+    def get_optional_files(self, report_key: str) -> list[str]:
+        """帳票ごとの任意CSVファイルリストを返す（無い場合は空リスト）"""
+        return self.config[report_key].get("optional_files", [])
+
+    def get_label(self, report_key: str) -> str:
+        return self.config[report_key].get("label", "")
+
+    def get_template_excel_path(self, report_key: str) -> str:
+        return self.config[report_key].get("template_excel_path", "")

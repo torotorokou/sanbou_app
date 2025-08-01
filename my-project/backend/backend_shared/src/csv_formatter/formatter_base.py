@@ -2,7 +2,7 @@ import pandas as pd
 from abc import ABC, abstractmethod
 
 from backend_shared.src.utils.dataframe_utils import common_cleaning
-from .formatter_core import (
+from backend_shared.src.csv_formatter.formatter_core import (
     apply_column_formatting,
     apply_column_type_parsing,
     dedupe_and_aggregate,

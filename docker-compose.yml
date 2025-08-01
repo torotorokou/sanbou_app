@@ -1,4 +1,10 @@
+# サービス定義セクション
 services:
+    # =============================
+    # フロントエンド（Reactアプリ）
+    # Reactで作成したWebアプリの開発用サーバです。
+    # コードのホットリロードや設定ファイルのマウントも行います。
+    # =============================
     frontend:
         build: ./my-project/frontend
         container_name: react_app
@@ -15,6 +21,11 @@ services:
         networks:
             - backend
 
+    # =============================
+    # AI API（Python FastAPIなど想定）
+    # AI関連のAPIサーバ。Python（FastAPI等）で構築。
+    # backend_sharedやconfigもマウントし、DBに依存します。
+    # =============================
     ai_api:
         build: ./my-project/backend/ai_api
         container_name: ai_api
@@ -25,12 +36,17 @@ services:
             - ./my-project/backend/backend_shared:/backend/backend_shared
             - ./my-project/config:/backend/config
         env_file:
-            - ./my-project/backend/ai_api/.env.ai_api
+            - ./envs/.env.ai_api
         depends_on:
             - db
         networks:
             - backend
 
+    # =============================
+    # 会計API（Ledger API）
+    # 会計・台帳管理用のAPIサーバ。
+    # backend_sharedやconfigもマウントし、DBに依存します。
+    # =============================
     ledger_api:
         build: ./my-project/backend/ledger_api
         container_name: ledger_api
@@ -41,12 +57,17 @@ services:
             - ./my-project/backend/backend_shared:/backend/backend_shared
             - ./my-project/config:/backend/config
         env_file:
-            - ./my-project/backend/ledger_api/.env.ledger_api
+            - ./envs/.env.ledger_api
         depends_on:
             - db
         networks:
             - backend
 
+    # =============================
+    # SQL API（DBアクセス用API）
+    # データベースアクセス専用のAPIサーバ。
+    # backend_sharedやconfigもマウントし、DBに依存します。
+    # =============================
     sql_api:
         build: ./my-project/backend/sql_api
         container_name: sql_api
@@ -58,12 +79,17 @@ services:
             - ./my-project/config:/backend/config
         env_file:
             - ./.env
-            - ./my-project/backend/sql_api/.env.sql_api
+            - ./envs/.env.sql_api
         depends_on:
             - db
         networks:
             - backend
 
+    # =============================
+    # データベース（PostgreSQL）
+    # アプリ全体で利用するPostgreSQLデータベース。
+    # データ永続化のためホスト側にボリュームをマウントします。
+    # =============================
     db:
         image: postgres:16
         container_name: postgres_db
@@ -78,6 +104,39 @@ services:
         networks:
             - backend
 
+    # =============================
+    # RAG API（Retrieval-Augmented Generation用API）
+    # 外部データやクラウドストレージと連携し、生成AIや検索機能を提供するAPIサーバ。
+    # GCPの認証情報やローカルデータ、backend_sharedもマウント。
+    # .envやGCSキーなど、機密情報の取り扱いに注意。
+    # =============================
+    rag_api:
+        build:
+            context: ./my-project/backend/rag_api
+            dockerfile: Dockerfile
+        container_name: rag_api
+        ports:
+            - '8004:8000'
+        volumes:
+            - ./my-project/backend/rag_api:/backend
+            # - ./my-project/config/.env:/backend/config/.env env_fileにて処理
+            # 認証用のGCSキーをマウント
+            - ./secret/gcs-key.json:/root/.config/gcloud/application_default_credentials.json
+            # - ./my-project/local_data/master:/local_data/master
+
+            # 共有ライブラリや設定ファイルのマウント
+            - ./my-project/backend/backend_shared:/backend/backend_shared
+            - ./my-project/config:/backend/config
+        env_file: ./envs/.env.rag_api
+        depends_on:
+            - db
+        networks:
+            - backend
+
+    # =============================
+    # Webサーバ（Nginx）
+    # 外部公開用のWebサーバ。SSL証明書や各APIへのリバースプロキシ設定を担当。
+    # =============================
     nginx:
         image: nginx:latest
         container_name: nginx_proxy
@@ -92,9 +151,11 @@ services:
             - ledger_api
             - sql_api
             - frontend
+            - rag_api
         networks:
             - backend
 
+# ネットワーク定義セクション
 networks:
     backend:
-        driver: bridge
+        driver: bridge # ブリッジネットワーク（各サービス間通信用）

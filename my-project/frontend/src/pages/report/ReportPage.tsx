@@ -16,7 +16,7 @@ import type {
 type CsvFiles = { [csvLabel: string]: File | null };
 
 const ReportPage: React.FC = () => {
-    const [selected, setSelected] = useState<ReportKey>('factory');
+    const [selected, setSelected] = useState<ReportKey>('factory_report');
     const [currentStep, setCurrentStep] = useState(0);
     const [csvFiles, setCsvFiles] = useState<CsvFiles>({});
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
