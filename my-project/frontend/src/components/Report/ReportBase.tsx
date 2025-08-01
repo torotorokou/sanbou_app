@@ -16,6 +16,8 @@ type CsvConfig = {
     required: boolean;
 };
 
+type CsvConfigEntry = CsvConfig;
+
 type StepProps = {
     steps: string[];
     currentStep: number;
@@ -152,20 +154,33 @@ const ReportBase: React.FC<ReportBaseProps> = ({
         loading.setLoading(true);
 
         try {
+            // 日本語ラベルを英語キーにマッピング
+            const labelToEnglishKey: Record<string, string> = {
+                '出荷一覧': 'shipment',
+                '受入一覧': 'receive',
+                'ヤード一覧': 'yard',
+            };
+
             const formData = new FormData();
-            Object.entries(file.files).forEach(([label, fileObj]) => {
-                if (fileObj) formData.append(label, fileObj);
+            Object.keys(file.files).forEach((label) => {
+                const fileObj = file.files[label];
+                if (fileObj) {
+                    const englishKey = labelToEnglishKey[label] || label;
+                    formData.append(englishKey, fileObj);
+                }
             });
             formData.append('report_key', reportKey);
 
             // FormDataの中身を全部ログに出す
-            for (let [key, value] of formData.entries()) {
-                if (value instanceof File) {
-                    console.log(`FormData key: ${key}, file name: ${value.name}`);
-                } else {
-                    console.log(`FormData key: ${key}, value: ${value}`);
+            console.log('FormData contents:');
+            Object.keys(file.files).forEach((label) => {
+                const fileObj = file.files[label];
+                if (fileObj) {
+                    const englishKey = labelToEnglishKey[label] || label;
+                    console.log(`FormData key: ${englishKey}, file name: ${fileObj.name}`);
                 }
-            }
+            });
+            console.log(`FormData key: report_key, value: ${reportKey}`);
 
             const response = await fetch('/ledger_api/report/manage', {
                 method: 'POST',
@@ -231,7 +246,7 @@ const ReportBase: React.FC<ReportBaseProps> = ({
             <ReportManagePageLayout
                 onGenerate={handleGenerate}
                 onDownloadExcel={handleDownloadExcel}
-                uploadFiles={file.csvConfigs.map((entry): UploadFileConfig => {
+                uploadFiles={file.csvConfigs.map((entry: CsvConfigEntry): UploadFileConfig => {
                     const label = entry.config.label;
                     return {
                         label,
@@ -252,7 +267,7 @@ const ReportBase: React.FC<ReportBaseProps> = ({
                 })}
                 makeUploadProps={(label: string): UploadProps => {
                     const entry = file.csvConfigs.find(
-                        (e) => e.config.label === label
+                        (e: CsvConfigEntry) => e.config.label === label
                     );
                     return entry
                         ? makeUploadProps(label, entry.config.onParse)
