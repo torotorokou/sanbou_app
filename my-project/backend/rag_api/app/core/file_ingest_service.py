@@ -1,16 +1,21 @@
+
+
 # データファイルのロードやカテゴリ抽出など、ファイル入出力関連のサービス群。
 """
 データファイルのロードやカテゴリ抽出など、ファイル入出力関連のサービス群。
 """
 
+import os
 import json
 import yaml
+from typing import Dict, Tuple, List
 from app.utils.file_utils import PDF_PATH, JSON_PATH, FAISS_PATH, ENV_PATH, YAML_PATH
 
 
-def get_resource_paths() -> dict:
+def get_resource_paths() -> Dict[str, str]:
     """
     各種リソースファイルのパスをまとめて返す。
+    新しいリソース種別追加時はこの辞書に追記するだけで拡張可能。
 
     Returns:
         dict: 各種ファイルパス
@@ -21,12 +26,15 @@ def get_resource_paths() -> dict:
         "FAISS_PATH": FAISS_PATH,
         "ENV_PATH": ENV_PATH,
         "YAML_PATH": YAML_PATH,
+        # 追加リソースはここに追記
     }
 
 
-def load_json_data(json_path):
+
+def load_json_data(json_path: str) -> Dict:
     """
     JSONファイルを読み込んで辞書として返す。
+    ファイル存在チェック・例外処理付き。
 
     Args:
         json_path (str or Path): JSONファイルのパス
@@ -34,11 +42,16 @@ def load_json_data(json_path):
     Returns:
         dict: パース済みJSONデータ
     """
-    with open(json_path, encoding="utf-8") as f:
-        return json.load(f)
+    if not json_path or not os.path.exists(json_path):
+        raise FileNotFoundError(f"JSONファイルが見つかりません: {json_path}")
+    try:
+        with open(json_path, encoding="utf-8") as f:
+            return json.load(f)
+    except Exception as e:
+        raise RuntimeError(f"JSONファイルの読み込みに失敗: {json_path} ({e})")
 
 
-def load_question_templates():
+def load_question_templates() -> Dict:
     """
     質問テンプレート（YAML）を読み込む。
 
@@ -50,7 +63,7 @@ def load_question_templates():
         return yaml.safe_load(f)
 
 
-def extract_categories_and_titles(data):
+def extract_categories_and_titles(data: List[Dict]) -> Tuple[List[str], Dict[str, List[str]]]:
     """
     データからカテゴリとタイトルを抽出する。
 
@@ -74,7 +87,7 @@ def extract_categories_and_titles(data):
         subcategories[k] = sorted(subcategories[k])
     return categories, subcategories
 
-def group_templates_by_category_and_tags(data):
+def group_templates_by_category_and_tags(data: List[Dict]) -> Dict[str, Dict[Tuple[str, ...], List[str]]]:
     """
     テンプレートをカテゴリ・タグごとにグループ化する。
 
