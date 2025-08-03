@@ -27,11 +27,11 @@ const unitPriceData = [
 ];
 
 const gradientMap: Record<string, string> = {
-    売上: customTokens.gradRevenueSales,
-    仕入: customTokens.gradRevenueCost,
-    粗利: customTokens.gradRevenueProfit,
-    '粗利（当日）': customTokens.gradRevenueProfit,
-    ブロック: customTokens.gradRevenueBlock,
+    売上: customTokens.colorInfo,      // ブルー
+    仕入: customTokens.chartRed,       // レッド
+    粗利: customTokens.colorSuccess,   // グリーン
+    '粗利（当日）': customTokens.colorSuccess, // グリーン（統一）
+    ブロック: customTokens.colorWarning, // オレンジ
 };
 
 const generateGradients = (data: any[], prefix: string) =>

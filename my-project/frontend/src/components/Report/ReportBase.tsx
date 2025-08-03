@@ -4,7 +4,7 @@ import ReportManagePageLayout from './common/ReportManagePageLayout';
 import ReportStepperModal from './common/ReportStepperModal';
 import PDFViewer from './viewer/PDFViewer';
 import { pdfPreviewMap } from '../../constants/reportConfig/managementReportConfig';
-import { useReportBaseBusiness } from '../../hooks/useReportBaseBusiness';
+import { useReportBaseBusiness } from '../../hooks/report';
 import type { ReportBaseProps } from '../../types/reportBase';
 
 /**

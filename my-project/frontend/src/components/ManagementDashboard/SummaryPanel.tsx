@@ -88,7 +88,6 @@ const SummaryPanel: React.FC = () => {
                                     value={item.value}
                                     suffix={item.suffix}
                                     prefix={item.prefix}
-                                    fontSize={15} // ← ここも必要なら小さく
                                 />
                                 <div style={{ marginTop: 2 }}>
                                     <DiffIndicator
@@ -129,7 +128,6 @@ const SummaryPanel: React.FC = () => {
                                     value={item.value}
                                     suffix={item.suffix}
                                     prefix={item.prefix}
-                                    fontSize={15}
                                 />
                                 <div style={{ marginTop: 2 }}>
                                     <DiffIndicator

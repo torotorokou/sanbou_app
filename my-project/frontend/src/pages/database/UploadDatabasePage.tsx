@@ -1,22 +1,19 @@
-import React from 'react';
-import { Row, Col, Button, Modal, Spin, Typography } from 'antd';
-import CsvUploadPanel from '@/components/database/CsvUploadPanel';
-import { CsvPreviewCard } from '@/components/database/CsvPreviewCard';
-import { UPLOAD_CSV_TYPES, UPLOAD_CSV_DEFINITIONS } from '@/constants/uploadCsvConfig';
-import { useCsvUploadArea } from '@/hooks/database/useCsvUploadArea';
+import React, { useState } from 'react';
+import { Upload, message, Card, Typography, Divider, Col, Row, Button, Modal, Spin } from 'antd';
+import { InboxOutlined } from '@ant-design/icons';
+import CsvUploadPanel from '../../components/database/CsvUploadPanel';
+import CsvPreviewCard from '../../components/database/CsvPreviewCard';
+import type { UploadProps } from 'antd';
+import { csvTypeColors } from '../../theme';
 
 import { UploadInstructions } from '@/components/database/UploadInstructions';
 import { useCsvUploadHandler } from '@/hooks/database/useCsvUploadHandler';
+import { useCsvUploadArea } from '@/hooks/database/useCsvUploadArea';
+import { UPLOAD_CSV_TYPES, UPLOAD_CSV_DEFINITIONS } from '@/constants/uploadCsvConfig';
 
 const { Text } = Typography;
 const CARD_HEIGHT = 300;
 const TABLE_BODY_HEIGHT = 200;
-
-const CSV_TYPE_COLORS: Record<string, string> = {
-    shipment: '#e6f7ff',
-    receive: '#fff1f0',
-    yard: '#f6ffed',
-};
 
 const UploadDatabasePage: React.FC = () => {
     const {
@@ -96,7 +93,7 @@ const UploadDatabasePage: React.FC = () => {
                             validationResult={validationResults[type]}
                             cardHeight={CARD_HEIGHT}
                             tableBodyHeight={TABLE_BODY_HEIGHT}
-                            backgroundColor={CSV_TYPE_COLORS[type]}
+                            backgroundColor={csvTypeColors[type as keyof typeof csvTypeColors]}
                         />
                     ))}
                 </Col>

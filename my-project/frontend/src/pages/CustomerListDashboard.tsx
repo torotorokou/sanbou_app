@@ -3,6 +3,7 @@ import { MapContainer, TileLayer, Circle, Tooltip, Marker, Popup, GeoJSON } from
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { Card, Table, Statistic, Row, Col } from "antd";
+import { customerAnalysisColors } from '../theme';
 
 // 会社マーカー
 const companyIcon = new L.Icon({
@@ -15,12 +16,7 @@ const companyIcon = new L.Icon({
 });
 
 // カラースケール（色・閾値・ラベルを統一管理）
-const colorScale = [
-    { threshold: 300, color: "#d73027", label: "300万円以上" },   // 赤
-    { threshold: 200, color: "#fc8d59", label: "200万円以上" },   // オレンジ
-    { threshold: 100, color: "#fee08b", label: "100万円以上" },   // 黄
-    { threshold: 0, color: "#4575b4", label: "100万円未満" }   // 青
-];
+const colorScale = customerAnalysisColors;
 
 // バブルの色取得関数（colorScaleと完全連動）
 const getColor = (sales: number) => {
