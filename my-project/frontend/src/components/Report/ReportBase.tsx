@@ -8,6 +8,9 @@ import { pdfPreviewMap } from '@/constants/reportConfig/managementReportConfig';
 import { identifyCsvType, isCsvMatch } from '@/utils/validators/csvValidator';
 import type { ReportKey } from '@/constants/reportConfig/managementReportConfig';
 
+// 通知ユーティリティをインポート
+import { notifySuccess, notifyError, notifyInfo, notifyWarning } from '@/utils/notify';
+
 type CsvConfig = {
     config: {
         label: string;
@@ -103,12 +106,14 @@ const ReportBase: React.FC<ReportBaseProps> = ({
         if (excelUrl) {
             const a = document.createElement('a');
             a.href = excelUrl;
-            a.download = excelFileName; // サーバー指定のファイル名を使う
+            a.download = excelFileName;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
+            window.URL.revokeObjectURL(excelUrl);
+            setExcelUrl(null);
         } else {
-            alert('Excelファイルがありません。');
+            notifyInfo('ダウンロード不可', 'Excelファイルがありません。');
         }
     };
 
@@ -142,6 +147,11 @@ const ReportBase: React.FC<ReportBaseProps> = ({
 
                 if (isCorrect) {
                     parser(text);
+                } else {
+                    notifyWarning(
+                        'CSVファイル形式エラー',
+                        `「${label}」のファイル形式が正しくありません。`
+                    );
                 }
             };
             reader.readAsText(fileObj);
@@ -186,17 +196,35 @@ const ReportBase: React.FC<ReportBaseProps> = ({
                 method: 'POST',
                 body: formData,
             });
-            if (!response.ok) throw new Error('帳簿作成失敗');
+            if (!response.ok) {
+                // サーバーから422などが返ってきた場合、詳細を取得して通知
+                let errorMsg = '帳簿作成失敗';
+                try {
+                    const errorJson = await response.json();
+                    errorMsg = errorJson?.detail || errorMsg;
+                    if (errorJson?.hint) {
+                        notifyInfo('ヒント', errorJson.hint);
+                    }
+                } catch {
+                    // JSONでなければスルー
+                }
+                throw new Error(errorMsg);
+            }
 
             const blob = await response.blob();
 
             // ヘッダーからファイル名を取得
             const disposition = response.headers.get('Content-Disposition');
             let fileName = 'output.xlsx';
-            if (disposition && disposition.indexOf('filename=') !== -1) {
-                const matches = /filename="?([^"]+)"?/.exec(disposition);
-                if (matches && matches[1]) {
-                    fileName = decodeURIComponent(matches[1]);
+            if (disposition) {
+                const matchStar = disposition.match(/filename\*=UTF-8''([^;]+)/);
+                if (matchStar) {
+                    fileName = decodeURIComponent(matchStar[1]);
+                } else {
+                    const match = disposition.match(/filename="?([^"]+)"?/);
+                    if (match && match[1]) {
+                        fileName = decodeURIComponent(match[1]);
+                    }
                 }
             }
 
@@ -205,8 +233,12 @@ const ReportBase: React.FC<ReportBaseProps> = ({
             setExcelFileName(fileName);
 
             finalized.setFinalized(true);
+
+            // ★成功通知
+            notifySuccess('帳簿作成成功', `${fileName} をダウンロードできます。`);
         } catch (err) {
             console.error('帳簿作成失敗エラー:', err);
+            notifyError('帳簿作成失敗', err instanceof Error ? err.message : String(err));
         } finally {
             loading.setLoading(false);
             setTimeout(() => {

@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 
 from backend_shared.src.utils.dataframe_utils import common_cleaning
 from backend_shared.src.csv_formatter.formatter_core import (
-    apply_column_formatting,
+    apply_column_cleaning,
     apply_column_type_parsing,
     dedupe_and_aggregate,
 )
@@ -48,7 +48,7 @@ class CommonCSVFormatter(BaseCSVFormatter):
         # configからカラム定義を取得
         columns_def = self.config.columns_def if self.config else {}
         if columns_def:
-            df = apply_column_formatting(df, columns_def)
+            df = apply_column_cleaning(df, columns_def)
             df = apply_column_type_parsing(df, columns_def)
             # ここで集約
             print("resoliving duplicates by aggregation")

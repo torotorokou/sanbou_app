@@ -1,5 +1,4 @@
 import pandas as pd
-from typing import Optional
 
 
 def combine_date_and_time(
@@ -62,8 +61,12 @@ def remove_weekday_parentheses(df: pd.DataFrame, column: str) -> pd.DataFrame:
 def parse_str_column(df: pd.DataFrame, col: str) -> pd.DataFrame:
     """
     欠損値はそのまま、文字列は strip() して object 型にする
+    '<NA>' などの値も適切に処理する
     """
     cleaned = df[col].copy()
+
+    # '<NA>' などの特殊な値をNaNに変換
+    cleaned = cleaned.replace(["<NA>", "nan", "None", "NaN"], pd.NA)
 
     # 非欠損値だけに str.strip() を適用（NaN は触らない）
     cleaned = cleaned.where(cleaned.isna(), cleaned.astype(str).str.strip())
@@ -74,12 +77,16 @@ def parse_str_column(df: pd.DataFrame, col: str) -> pd.DataFrame:
 def remove_commas_and_convert_numeric(df: pd.DataFrame, column: str) -> pd.DataFrame:
     """
     カンマ付き数値文字列（例: '1,200'）を除去し、float型に変換する。
+    '<NA>' や変換できない値は NaN として扱う。
     :param df: 対象DataFrame
     :param column: 変換対象のカラム名
     :return: 変換後のDataFrame
     """
-    # カンマを除去してfloat型に変換
-    df[column] = df[column].astype(str).str.replace(",", "").astype(float)
+    # カンマを除去し、pd.to_numeric で安全に変換
+    cleaned = df[column].astype(str).str.replace(",", "")
+    # '<NA>' や 'nan' などの値を空文字に置換して安全性を向上
+    cleaned = cleaned.replace(["<NA>", "nan", "None", "NaN"], "")
+    df[column] = pd.to_numeric(cleaned, errors="coerce")
     return df
 
 
@@ -98,6 +105,7 @@ def common_cleaning(df: pd.DataFrame) -> pd.DataFrame:
     """
     全カラム名と object 型の各値に対して、前後・内部のスペース（半角・全角）を除去。
     欠損値（NaN）には str() をかけないように注意。
+    '<NA>' などの特殊な値も適切に処理する。
     """
     # カラム名の空白除去
     df.columns = [col.strip().replace(" ", "").replace("　", "") for col in df.columns]
@@ -105,6 +113,9 @@ def common_cleaning(df: pd.DataFrame) -> pd.DataFrame:
     # 各object型カラムのスペース除去（NaNを保ったまま）
     for col in df.select_dtypes(include=["object"]).columns:
         cleaned = df[col].copy()
+
+        # '<NA>' などの特殊な値をNaNに変換
+        cleaned = cleaned.replace(["<NA>", "nan", "None", "NaN"], pd.NA)
 
         cleaned = cleaned.where(
             cleaned.notna(),  # 非欠損値だけ変換を適用
