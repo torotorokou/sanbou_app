@@ -5,12 +5,12 @@ import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import { customTokens } from '@/theme/tokens';
 
 const COLORS = [
-    customTokens.colorCategoryA,
-    customTokens.colorCategoryB,
-    customTokens.colorCategoryC,
-    customTokens.colorCategoryD,
-    customTokens.colorCategoryE,
-    customTokens.colorCategoryF,
+    customTokens.chartGreen,
+    customTokens.chartBlue,
+    customTokens.chartPurple,
+    customTokens.chartOrange,
+    customTokens.chartRed,
+    customTokens.colorNeutral,
 ];
 
 const CATEGORIES = [
@@ -124,9 +124,9 @@ const renderPieChart = (data: any[]) => (
                                 textAnchor='middle'
                                 dominantBaseline='middle'
                                 fontSize={fontSize}
-                                // fontWeight='bold'
-                                // fontFamily="'Segoe UI', 'Noto Sans JP', 'Meiryo', sans-serif"
-                                // fill='#fff'
+                            // fontWeight='bold'
+                            // fontFamily="'Segoe UI', 'Noto Sans JP', 'Meiryo', sans-serif"
+                            // fill='#fff'
                             >
                                 {display}
                             </text>

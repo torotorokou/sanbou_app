@@ -30,10 +30,13 @@ import RecordListPage from '../pages/database/RecordListPage';
 
 // トークンプレビュー
 import TokenPreviewPage from '@/pages/TokenPreviewPage';
-import { ImportOutlined } from '@ant-design/icons';
+import TestPage from '@/pages/TestPage';
 
 const AppRoutes: React.FC = () => (
     <Routes>
+        {/* テスト用ルート */}
+        <Route path='/test' element={<TestPage />} />
+
         {/* ルートリダイレクト */}
         <Route
             path='/'
