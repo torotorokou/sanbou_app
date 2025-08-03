@@ -18,11 +18,28 @@ type_formatting_map = {
 
 # CSVの型変換マップ
 type_parser_map = {
+    # Int64型（pandasのnullable int型）を明示的に指定
     "int": lambda df, col: df.assign(
-        **{col: pd.to_numeric(df[col], errors="coerce", downcast="integer")}
+        **{
+            col: pd.to_numeric(
+                df[col]
+                .astype(str)
+                .str.replace(",", "")
+                .replace(["<NA>", "nan", "None", "NaN"], ""),
+                errors="coerce",
+            ).astype("Int64")
+        }
     ),
     "float": lambda df, col: df.assign(
-        **{col: pd.to_numeric(df[col], errors="coerce")}
+        **{
+            col: pd.to_numeric(
+                df[col]
+                .astype(str)
+                .str.replace(",", "")
+                .replace(["<NA>", "nan", "None", "NaN"], ""),
+                errors="coerce",
+            )
+        }
     ),
     "datetime": lambda df, col: df.assign(
         **{col: pd.to_datetime(df[col], errors="coerce")}
