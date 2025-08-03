@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Layout } from 'antd';
 import Sidebar from './Sidebar';
 import AppRoutes from '../routes/AppRoutes';
+import NotificationContainer from '../components/common/NotificationContainer';
 import { theme } from 'antd';
 
 const { Content } = Layout;
@@ -25,6 +26,8 @@ const MainLayout: React.FC = () => {
                     <AppRoutes />
                 </Content>
             </Layout>
+            {/* グローバル通知コンテナ */}
+            <NotificationContainer />
         </Layout>
     );
 };
