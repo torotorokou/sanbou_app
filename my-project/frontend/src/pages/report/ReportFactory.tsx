@@ -94,7 +94,14 @@ const ReportFactory: React.FC = () => {
 
     return (
         <ConfigProvider locale={jaJP}>
-            <ReportStepIndicator currentStep={currentStep} />
+            <ReportStepIndicator 
+                currentStep={currentStep} 
+                items={[
+                    { title: 'データ準備' },
+                    { title: 'PDF生成' },
+                    { title: '完了' }
+                ]}
+            />
 
             <ReportStepperModal
                 open={modalOpen}
@@ -124,27 +131,41 @@ const ReportFactory: React.FC = () => {
 
             <ReportManagePageLayout
                 onGenerate={handleGenerate}
+                onDownloadExcel={() => {
+                    // Excel download logic here
+                    console.log('Excel download requested');
+                }}
                 uploadFiles={[
                     {
                         label: '出荷一覧',
                         file: shipFile,
                         onChange: setShipFile,
+                        required: true,
+                        validationResult: 'unknown' as const,
+                        onRemove: () => setShipFile(null),
                     },
                     {
                         label: 'ヤード一覧',
                         file: yardFile,
                         onChange: setYardFile,
+                        required: false,
+                        validationResult: 'unknown' as const,
+                        onRemove: () => setYardFile(null),
                     },
                     {
                         label: '受入一覧',
                         file: receiveFile,
                         onChange: setReceiveFile,
+                        required: false,
+                        validationResult: 'unknown' as const,
+                        onRemove: () => setReceiveFile(null),
                     },
                 ]}
                 makeUploadProps={makeUploadProps}
                 finalized={finalized}
                 readyToCreate={readyToCreate}
                 pdfUrl={pdfUrl}
+                excelUrl={null}
             >
                 {/* PDFの表示場所 */}
                 <PDFViewer pdfUrl={pdfUrl} />
