@@ -6,12 +6,21 @@ type PDFViewerProps = {
     height?: string;
 };
 
-const PDFViewer: React.FC<PDFViewerProps> = ({ pdfUrl, height = '80vh' }) => {
+const PDFViewer: React.FC<PDFViewerProps> = ({ pdfUrl, height = '100%' }) => {
     if (!pdfUrl) {
         return (
-            <Typography.Text type='secondary'>
-                帳簿を作成するとここにPDFが表示されます。
-            </Typography.Text>
+            <div style={{
+                width: '100%',
+                height: '100%',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                minHeight: '400px'
+            }}>
+                <Typography.Text type='secondary'>
+                    帳簿を作成するとここにPDFが表示されます。
+                </Typography.Text>
+            </div>
         );
     }
 
@@ -22,7 +31,8 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ pdfUrl, height = '80vh' }) => {
             style={{
                 width: '100%',
                 height: '100%',
-                border: '1px solid #ccc',
+                minHeight: '500px',
+                border: 'none',
                 borderRadius: 4,
             }}
             allowFullScreen

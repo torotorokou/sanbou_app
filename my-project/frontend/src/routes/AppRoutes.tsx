@@ -9,7 +9,7 @@ import { ROUTER_PATHS } from '@/constants/router';
 import ManagementDashboard from '../pages/ManagementDashboard';
 import FactoryDashboard from '../pages/FactoryDashboard';
 import PricingDashboard from '../pages/PricingDashboard';
-import CustomerListDashboard from '../pages/CustomerListDashboard';
+import CustomerListDashboard from '../pages/CustomerListDashboard.tsx';
 
 // 帳票ページ
 import ReportFactory from '../pages/report/ReportFactory';
