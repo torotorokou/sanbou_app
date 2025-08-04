@@ -80,5 +80,31 @@ def get_question_options():
         dict: カテゴリ・タグごとにグループ化されたテンプレート
     """
     data = loader.load_question_templates()
+
+    # YAMLのカテゴリ:質問リスト形式をフラット化
+    def flatten_templates(data):
+        flat = []
+        for category, questions in data[0].items():
+            for q in questions:
+                q = dict(q)  # copy
+                q["category"] = category
+                # tag→tagsにリネーム（OCP/既存関数互換）
+                if "tag" in q:
+                    q["tags"] = q.pop("tag")
+                flat.append(q)
+        return flat
+
+    # データがカテゴリ:リスト形式ならフラット化
+    if isinstance(data, list) and len(data) > 0 and isinstance(data[0], dict):
+        if all(isinstance(v, list) for v in data[0].values()):
+            data = flatten_templates(data)
+
     grouped = loader.group_templates_by_category_and_tags(data)
-    return grouped
+    # tagsタプルを'|'区切りの文字列に変換
+    grouped_strkey = {}
+    for category, tags_dict in grouped.items():
+        grouped_strkey[category] = {}
+        for tags_tuple, titles in tags_dict.items():
+            tags_str = "|".join(tags_tuple)
+            grouped_strkey[category][tags_str] = titles
+    return grouped_strkey

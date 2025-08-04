@@ -51,16 +51,23 @@ def load_json_data(json_path: str) -> Dict:
         raise RuntimeError(f"JSONファイルの読み込みに失敗: {json_path} ({e})")
 
 
-def load_question_templates() -> Dict:
+from typing import List, Dict
+
+def load_question_templates() -> List[Dict]:
     """
-    質問テンプレート（YAML）を読み込む。
+    質問テンプレート（YAML）を読み込み、必ずList[Dict]で返す。
 
     Returns:
-        dict: テンプレートデータ
+        List[Dict]: テンプレートデータ
     """
     yaml_path = get_resource_paths().get("YAML_PATH")
     with open(yaml_path, encoding="utf-8") as f:
-        return yaml.safe_load(f)
+        data = yaml.safe_load(f)
+    if isinstance(data, dict):
+        return [data]
+    if isinstance(data, list):
+        return data
+    return []
 
 
 def extract_categories_and_titles(data: List[Dict]) -> Tuple[List[str], Dict[str, List[str]]]:
@@ -97,10 +104,25 @@ def group_templates_by_category_and_tags(data: List[Dict]) -> Dict[str, Dict[Tup
     Returns:
         dict: グループ化されたテンプレート
     """
+    def flatten_tags(tags) -> Tuple[str, ...]:
+        """
+        ネストしたリストやタプルを再帰的にフラットなタプルに変換
+        """
+        if isinstance(tags, (list, tuple)):
+            result = []
+            for t in tags:
+                result.extend(flatten_tags(t))
+            return tuple(result)
+        elif tags is None:
+            return tuple()
+        else:
+            return (str(tags),)
+
     grouped = {}
     for section in data:
         category = section.get("category")
-        tags = tuple(section.get("tags", []))
+        tags_raw = section.get("tags", [])
+        tags = flatten_tags(tags_raw)
         title = section.get("title")
         grouped.setdefault(category, {}).setdefault(tags, []).append(title)
     return grouped
