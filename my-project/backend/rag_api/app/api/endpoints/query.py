@@ -4,19 +4,38 @@ FastAPIのエンドポイント定義。
 AI回答生成やPDFページ画像取得、質問テンプレート取得APIを提供。
 """
 
-from fastapi import APIRouter
-
-from fastapi.responses import StreamingResponse
+from fastapi import APIRouter, Request
+from fastapi.responses import StreamingResponse, JSONResponse
+from fastapi.exceptions import RequestValidationError
+from pydantic import BaseModel
+from typing import List, Tuple
 from app.schemas.query_schema import QueryRequest, QueryResponse
 from app.infrastructure.llm import ai_loader
 from app.core import file_ingest_service as loader
 from app.infrastructure.pdf import pdf_loader
-
 import io
-
 import zipfile
 
 router = APIRouter()
+
+# --- Pydanticモデル ---
+class QuestionRequest(BaseModel):
+    query: str
+    category: str
+    tags: List[str]
+
+class AnswerResponse(BaseModel):
+    answer: str
+    sources: List[Tuple[str, int]]
+
+
+# --- 質問を受け取ってダミー回答を返すAPI ---
+@router.post("/api/answer", response_model=AnswerResponse)
+async def answer_api(req: QuestionRequest):
+    return {
+        "answer": f"ダミー回答: {req.query}（カテゴリ: {req.category}）",
+        "sources": [["dummy.pdf", 1], ["dummy.pdf", 2]]
+    }
 
 
 @router.post("/generate-answer", response_model=QueryResponse)
@@ -109,23 +128,3 @@ def get_question_options():
             tags_str = "|".join(tags_tuple)
             grouped_strkey[category][tags_str] = titles
     return grouped_strkey
-
-
-@router.get("/ping")
-def ping():
-    """
-    動作確認用のエンドポイント。
-    /ping にアクセスするとAPIの稼働状況を返します。
-    """
-    return {"status": "rag_api ok"}
-
-@router.get("/dummy-answer")
-def dummy_answer():
-    """
-    ダミーの回答を返すAPI。開発・テスト用。
-    """
-    return {
-        "answer": "これはダミーの回答です。",
-        "sources": ["dummy_source1.pdf", "dummy_source2.pdf"],
-        "pages": [1, 2]
-    }

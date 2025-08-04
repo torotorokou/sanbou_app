@@ -1,9 +1,12 @@
+# --- バリデーションエラー時のカスタムレスポンス ---
 
 import os
 import sys
-from dotenv import load_dotenv
 from pathlib import Path
-from fastapi import FastAPI
+from dotenv import load_dotenv
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from app.paths import CONFIG_ENV
 from app.api.endpoints import query  # ← query.py に router を定義
@@ -26,6 +29,17 @@ app = FastAPI(
     docs_url=os.getenv("API_DOCS_URL", "/docs"),
     openapi_url=os.getenv("API_OPENAPI_URL", "/openapi.json"),
 )
+
+# --- バリデーションエラー時のカスタムレスポンス ---
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    return JSONResponse(
+        status_code=422,
+        content={
+            "error": "リクエストの形式が正しくありません。",
+            "detail": exc.errors()
+        }
+    )
 
 # --- CORS設定（環境変数で上書き可）
 origins = os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",")
