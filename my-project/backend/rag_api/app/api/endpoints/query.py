@@ -30,7 +30,7 @@ class AnswerResponse(BaseModel):
 
 
 # --- 質問を受け取ってダミー回答を返すAPI ---
-@router.post("/api/answer", response_model=AnswerResponse)
+@router.post("/answer", response_model=AnswerResponse)
 async def answer_api(req: QuestionRequest):
     return {
         "answer": f"ダミー回答: {req.query}（カテゴリ: {req.category}）",
