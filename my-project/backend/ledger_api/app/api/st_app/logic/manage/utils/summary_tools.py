@@ -1,6 +1,7 @@
 import pandas as pd
 from app.api.st_app.utils.value_setter import set_value_fast, set_value_fast_safe
 from app.api.st_app.utils.logger import app_logger
+from app.api.st_app.utils.config_loader import clean_na_strings
 
 
 def write_sum_to_target_cell(
@@ -26,7 +27,9 @@ def write_sum_to_target_cell(
     Returns:
         pd.DataFrame : 合計が反映されたDataFrame
     """
-    total = pd.to_numeric(df[value_column], errors="coerce").sum()
+    # <NA>文字列をクリーンアップしてからto_numericを実行
+    cleaned_values = df[value_column].apply(clean_na_strings)
+    total = pd.to_numeric(cleaned_values, errors="coerce").sum()
 
     df = set_value_fast_safe(
         df, target_keys, target_values, total, value_col=value_column
@@ -53,6 +56,8 @@ def summarize_value_by_cell_with_label(
         df[cell_col] = df[cell_col].fillna("未設定")
 
     # 数値変換（NaNはそのまま）
+    # <NA>文字列をクリーンアップしてからto_numericを実行
+    df[value_col] = df[value_col].apply(clean_na_strings)
     df[value_col] = pd.to_numeric(df[value_col], errors="coerce")
 
     # セルごとに値を合計

@@ -1,6 +1,7 @@
 from pathlib import Path
 import pandas as pd
 import os
+from app.api.st_app.utils.config_loader import clean_na_strings
 
 
 def load_master_and_template(master_path: str | Path) -> pd.DataFrame:
@@ -56,4 +57,19 @@ def load_master_and_template(master_path: str | Path) -> pd.DataFrame:
         "値": "object",
     }
 
-    return pd.read_csv(full_path, encoding="utf-8-sig", dtype=dtype_spec)
+    # <NA>文字列をfloat変換エラーから守るため、na_valuesを指定
+    na_values = ["<NA>", "NaN", "nan", "None", "NULL", "null", "#N/A", "#NA", ""]
+
+    df = pd.read_csv(
+        full_path,
+        encoding="utf-8-sig",
+        dtype=dtype_spec,
+        na_values=na_values,
+        keep_default_na=True,
+    )
+
+    # 全カラムに対してNA文字列をクリーンアップ
+    for col in df.columns:
+        df[col] = df[col].apply(clean_na_strings)
+
+    return df

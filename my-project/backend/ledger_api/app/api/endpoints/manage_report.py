@@ -1,5 +1,6 @@
 import os
 import pandas as pd
+from backend_shared.src.utils.csv_reader import SafeCsvReader
 import urllib.parse
 from fastapi import APIRouter, UploadFile, Form, File
 from fastapi.responses import StreamingResponse, JSONResponse
@@ -57,17 +58,20 @@ async def generate_pdf(
                 hint="3つすべてのCSVをアップロードしてください。",
             )
 
-        # データフレーム化
+        # データフレーム化（SafeCsvReaderを利用）
         dfs = {}
+        csv_reader = SafeCsvReader()
         for k, f in files.items():
             try:
-                print(f"Reading CSV file for {k}")
+                print(f"[DEBUG] Reading CSV file for {k}")
                 f.file.seek(0)
-                dfs[k] = pd.read_csv(f.file)
+                dfs[k] = csv_reader.read(f.file)
                 f.file.seek(0)
-                print(f"Read CSV for {k}: shape={dfs[k].shape}")
+                print(f"[DEBUG] Read CSV for {k}: shape={dfs[k].shape}")
+                print(f"[DEBUG] {k} columns: {dfs[k].columns.tolist()}")
+                print(f"[DEBUG] {k} head:\n{dfs[k].head()}\n")
             except Exception as e:
-                print(f"Error reading CSV for {k}: {e}")
+                print(f"[ERROR] reading CSV for {k}: {e}")
                 return api_response(
                     status_code=422,
                     status_str="error",

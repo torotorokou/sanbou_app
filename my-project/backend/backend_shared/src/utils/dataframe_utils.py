@@ -82,10 +82,9 @@ def remove_commas_and_convert_numeric(df: pd.DataFrame, column: str) -> pd.DataF
     :param column: 変換対象のカラム名
     :return: 変換後のDataFrame
     """
-    # カンマを除去し、pd.to_numeric で安全に変換
+    # カンマを除去し、特殊値や空文字をNaNに変換してからfloat変換
     cleaned = df[column].astype(str).str.replace(",", "")
-    # '<NA>' や 'nan' などの値を空文字に置換して安全性を向上
-    cleaned = cleaned.replace(["<NA>", "nan", "None", "NaN"], "")
+    cleaned = cleaned.replace(["<NA>", "nan", "None", "NaN", ""], pd.NA)
     df[column] = pd.to_numeric(cleaned, errors="coerce")
     return df
 
