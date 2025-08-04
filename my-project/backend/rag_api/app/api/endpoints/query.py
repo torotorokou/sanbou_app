@@ -1,3 +1,4 @@
+
 """
 FastAPIのエンドポイント定義。
 AI回答生成やPDFページ画像取得、質問テンプレート取得APIを提供。
@@ -108,3 +109,23 @@ def get_question_options():
             tags_str = "|".join(tags_tuple)
             grouped_strkey[category][tags_str] = titles
     return grouped_strkey
+
+
+@router.get("/ping")
+def ping():
+    """
+    動作確認用のエンドポイント。
+    /ping にアクセスするとAPIの稼働状況を返します。
+    """
+    return {"status": "rag_api ok"}
+
+@router.get("/dummy-answer")
+def dummy_answer():
+    """
+    ダミーの回答を返すAPI。開発・テスト用。
+    """
+    return {
+        "answer": "これはダミーの回答です。",
+        "sources": ["dummy_source1.pdf", "dummy_source2.pdf"],
+        "pages": [1, 2]
+    }
