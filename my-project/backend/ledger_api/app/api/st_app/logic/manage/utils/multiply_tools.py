@@ -1,4 +1,5 @@
 import pandas as pd
+from app.api.st_app.utils.config_loader import clean_na_strings
 
 
 def multiply_columns(
@@ -25,6 +26,9 @@ def multiply_columns(
     """
     df = df.copy()
 
+    # <NA>文字列をクリーンアップしてからto_numericを実行
+    df[col1] = df[col1].apply(clean_na_strings)
+    df[col2] = df[col2].apply(clean_na_strings)
     df[col1] = pd.to_numeric(df[col1], errors="coerce")
     df[col2] = pd.to_numeric(df[col2], errors="coerce")
 
