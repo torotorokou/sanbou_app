@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import type { UploadProps } from 'antd/es/upload';
 import { useCsvValidation } from '../data/useCsvValidation';
-import { useExcelGeneration } from '../data/useExcelGeneration';
+import { useZipFileGeneration } from '../data/useZipFileGeneration';
 import type {
     CsvFiles,
     CsvConfigEntry,
@@ -25,7 +25,7 @@ export const useReportBaseBusiness = (
     reportKey: ReportKey
 ) => {
     const csvValidation = useCsvValidation();
-    const excelGeneration = useExcelGeneration();
+    const zipGeneration = useZipFileGeneration();
 
     /**
      * ファイル削除処理
@@ -116,15 +116,15 @@ export const useReportBaseBusiness = (
     }, [csvConfigs, makeUploadProps]);
 
     /**
-     * Excel生成処理
+     * レポート生成処理（ZIP形式）
      */
-    const handleGenerateExcel = useCallback(
+    const handleGenerateReport = useCallback(
         async (
             onStart: () => void,
             onComplete: () => void,
             onSuccess: () => void
         ) => {
-            const success = await excelGeneration.generateExcel(
+            const success = await zipGeneration.generateZipReport(
                 csvFiles,
                 reportKey,
                 onStart,
@@ -135,23 +135,42 @@ export const useReportBaseBusiness = (
                 onSuccess();
             }
         },
-        [excelGeneration, csvFiles, reportKey]
+        [zipGeneration, csvFiles, reportKey]
     );
 
     return {
         // 状態
         validationResults: csvValidation.validationResults,
-        excelUrl: excelGeneration.excelUrl,
-        excelFileName: excelGeneration.excelFileName,
+
+        // ZIP関連
+        zipUrl: zipGeneration.zipUrl,
+        zipFileName: zipGeneration.zipFileName,
+
+        // Excel関連
+        excelBlob: zipGeneration.excelBlob,
+        excelFileName: zipGeneration.excelFileName,
+        hasExcel: zipGeneration.hasExcel,
+
+        // PDF関連
+        pdfBlob: zipGeneration.pdfBlob,
+        pdfFileName: zipGeneration.pdfFileName,
+        hasPdf: zipGeneration.hasPdf,
+        pdfPreviewUrl: zipGeneration.pdfPreviewUrl,
 
         // 計算されたプロパティ
         isReadyToCreate: isReadyToCreate(),
         uploadFileConfigs: getUploadFileConfigs(),
         makeUploadPropsFn: createMakeUploadProps(),
+        isReportReady: zipGeneration.isReady,
 
         // アクション
         handleRemoveFile,
-        handleGenerateExcel,
-        downloadExcel: excelGeneration.downloadExcel,
+        handleGenerateReport,
+        downloadExcel: zipGeneration.downloadExcel,
+        downloadPdf: zipGeneration.downloadPdf,
+        printPdf: zipGeneration.printPdf,
+        getPdfPreviewUrl: zipGeneration.getPdfPreviewUrl,
+        downloadZip: zipGeneration.downloadZip,
+        cleanup: zipGeneration.cleanup,
     };
 };

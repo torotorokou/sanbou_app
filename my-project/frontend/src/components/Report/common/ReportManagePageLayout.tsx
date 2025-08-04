@@ -24,10 +24,13 @@ export type ReportPageLayoutProps = {
     makeUploadProps: (label: string, setter: (file: File) => void) => UploadProps;
     onGenerate: () => void;
     onDownloadExcel: () => void;
+    onPrintPdf?: () => void;
     finalized: boolean;
     readyToCreate: boolean;
     pdfUrl?: string | null;
     excelUrl?: string | null;
+    excelReady?: boolean;
+    pdfReady?: boolean;
     header?: React.ReactNode;
     children?: React.ReactNode;
     sampleImageUrl?: string;
@@ -37,12 +40,15 @@ const ReportManagePageLayout: React.FC<ReportPageLayoutProps> = (props) => {
     const {
         uploadFiles,
         onDownloadExcel,
+        onPrintPdf,
         makeUploadProps,
         onGenerate,
         finalized,
         readyToCreate,
         pdfUrl,
         excelUrl,
+        excelReady,
+        pdfReady,
         header,
         children,
         sampleImageUrl,
@@ -81,8 +87,11 @@ const ReportManagePageLayout: React.FC<ReportPageLayoutProps> = (props) => {
                         readyToCreate={readyToCreate}
                         finalized={finalized}
                         onDownloadExcel={onDownloadExcel}
+                        onPrintPdf={onPrintPdf}
                         excelUrl={excelUrl}
                         pdfUrl={pdfUrl}
+                        excelReady={excelReady}
+                        pdfReady={pdfReady}
                     />
                 </div>
 

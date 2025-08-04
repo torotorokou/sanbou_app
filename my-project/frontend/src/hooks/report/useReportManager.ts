@@ -161,7 +161,6 @@ export const useReportManager = (
                 loading: isLoading,
                 setLoading: setIsLoading,
             },
-            generatePdf: selectedConfig.generatePdf,
             reportKey: selectedReport,
         }),
     };

@@ -16,8 +16,11 @@ export interface ActionsSectionProps {
     readyToCreate: boolean;
     finalized: boolean;
     onDownloadExcel: () => void;
+    onPrintPdf?: () => void;
     excelUrl?: string | null;
     pdfUrl?: string | null;
+    excelReady?: boolean;
+    pdfReady?: boolean;
 }
 
 export interface SampleSectionProps {
