@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Typography, Spin } from 'antd';
 import ReportManagePageLayout from './common/ReportManagePageLayout';
 import ReportStepperModal from './common/ReportStepperModal';
@@ -25,7 +25,6 @@ const ReportBase: React.FC<ReportBaseProps> = ({
     modal,
     finalized,
     loading,
-    generatePdf,
     reportKey
 }) => {
     // ビジネスロジックをフックに委譲
@@ -36,12 +35,17 @@ const ReportBase: React.FC<ReportBaseProps> = ({
         reportKey
     );
 
-    // Excel生成処理
+    // PDFプレビューURLが生成されたら設定
+    useEffect(() => {
+        if (business.pdfPreviewUrl && business.pdfPreviewUrl !== preview.previewUrl) {
+            preview.setPreviewUrl(business.pdfPreviewUrl);
+        }
+    }, [business.pdfPreviewUrl, preview]);    // レポート生成処理
     const handleGenerate = () => {
         modal.setModalOpen(true);
         loading.setLoading(true);
 
-        business.handleGenerateExcel(
+        business.handleGenerateReport(
             () => { }, // onStart
             () => {   // onComplete
                 loading.setLoading(false);
@@ -70,15 +74,15 @@ const ReportBase: React.FC<ReportBaseProps> = ({
             >
                 {step.currentStep === 0 && (
                     <Typography.Text>
-                        帳簿を作成する準備が整いました。
+                        レポート生成の準備が整いました。
                     </Typography.Text>
                 )}
                 {step.currentStep === 1 && loading.loading && (
-                    <Spin tip='帳簿をPDFに変換中です...' />
+                    <Spin tip='ExcelとPDFを生成中です...' />
                 )}
                 {step.currentStep === 2 && (
                     <Typography.Text type='success'>
-                        ✅ 帳簿PDFが作成されました。
+                        ✅ ExcelとPDFが作成されました。
                     </Typography.Text>
                 )}
             </ReportStepperModal>
@@ -86,13 +90,15 @@ const ReportBase: React.FC<ReportBaseProps> = ({
             <ReportManagePageLayout
                 onGenerate={handleGenerate}
                 onDownloadExcel={business.downloadExcel}
+                onPrintPdf={business.printPdf}
                 uploadFiles={business.uploadFileConfigs}
                 makeUploadProps={business.makeUploadPropsFn}
                 finalized={finalized.finalized}
                 readyToCreate={business.isReadyToCreate}
                 sampleImageUrl={pdfPreviewMap[reportKey]}
                 pdfUrl={preview.previewUrl}
-                excelUrl={business.excelUrl}
+                excelReady={business.hasExcel}
+                pdfReady={business.hasPdf}
             >
                 <PDFViewer pdfUrl={preview.previewUrl} />
             </ReportManagePageLayout>

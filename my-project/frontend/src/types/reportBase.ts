@@ -59,7 +59,6 @@ export type ReportBaseProps = {
     modal: ModalProps;
     finalized: FinalizedProps;
     loading: LoadingProps;
-    generatePdf: () => Promise<string>;
     reportKey: ReportKey;
 };
 

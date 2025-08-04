@@ -1,7 +1,5 @@
-import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
 from app.api.endpoints import manage_report
 
 app = FastAPI(
@@ -19,13 +17,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# --- ここがポイント ---
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-STATIC_DIR = os.path.join(BASE_DIR, "static")
-if not os.path.exists(STATIC_DIR):
-    raise FileNotFoundError(f"Static directory not found: {STATIC_DIR}")
-
-app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 # ルーター登録
 app.include_router(manage_report.router)

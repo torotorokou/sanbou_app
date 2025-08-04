@@ -1,6 +1,6 @@
 import React from 'react';
 import VerticalActionButton from '../../ui/VerticalActionButton';
-import { PlayCircleOutlined, DownloadOutlined } from '@ant-design/icons';
+import { PlayCircleOutlined, DownloadOutlined, PrinterOutlined } from '@ant-design/icons';
 import { useReportActions } from '../../../hooks/report';
 import type { ActionsSectionProps } from './types';
 import { actionButtonColors } from '../../../theme';
@@ -14,8 +14,10 @@ const ActionsSection: React.FC<ActionsSectionProps> = ({
     readyToCreate,
     finalized,
     onDownloadExcel,
-    excelUrl,
+    onPrintPdf,
     pdfUrl,
+    excelReady,
+    pdfReady,
 }) => {
     const actions = useReportActions();
 
@@ -26,10 +28,10 @@ const ActionsSection: React.FC<ActionsSectionProps> = ({
             gap: 8,
             alignItems: 'center'
         }}>
-            {/* 帳簿作成ボタン */}
+            {/* レポート生成ボタン */}
             <VerticalActionButton
                 icon={<PlayCircleOutlined />}
-                text='帳簿作成'
+                text='レポート生成'
                 onClick={onGenerate}
                 disabled={!readyToCreate}
             />
@@ -41,15 +43,15 @@ const ActionsSection: React.FC<ActionsSectionProps> = ({
                         icon={<DownloadOutlined />}
                         text='エクセルDL'
                         onClick={onDownloadExcel}
-                        disabled={!excelUrl}
+                        disabled={!excelReady}
                         backgroundColor={actionButtonColors.generate}
                     />
                     <VerticalActionButton
-                        icon={<PlayCircleOutlined />}
+                        icon={<PrinterOutlined />}
                         text='印刷'
-                        onClick={() => actions.handlePrint(pdfUrl || null)}
+                        onClick={onPrintPdf || (() => actions.handlePrint(pdfUrl || null))}
                         backgroundColor={actionButtonColors.download}
-                        disabled={!pdfUrl}
+                        disabled={!pdfReady}
                     />
                 </>
             )}
