@@ -1,10 +1,12 @@
-// src/components/common/csv-upload/types.ts
+// src/components/database/types.ts
 
 export type CsvFileType = {
     label: string;
     file: File | null;
     onChange: (file: File | null) => void;
     required: boolean;
-    validationResult?: 'valid' | 'invalid' | 'unknown';
+    validationResult?: 'ok' | 'ng' | 'unknown';
     onRemove?: () => void;
 };
+
+export type CsvUploadCardEntry = CsvFileType;

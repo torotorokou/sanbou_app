@@ -16,6 +16,7 @@ type Props = {
     validationResult: 'valid' | 'invalid' | 'unknown';
     cardHeight?: number;
     tableBodyHeight?: number;
+    backgroundColor?: string;
 };
 
 export const CsvPreviewCard: React.FC<Props> = ({
@@ -24,8 +25,9 @@ export const CsvPreviewCard: React.FC<Props> = ({
     validationResult,
     cardHeight = 300,
     tableBodyHeight = 220,
+    backgroundColor: propBackgroundColor,
 }) => {
-    const backgroundColor = CSV_TYPE_COLORS[type] || '#ffffff';
+    const backgroundColor = propBackgroundColor || CSV_TYPE_COLORS[type] || '#ffffff';
 
     return (
         <Card

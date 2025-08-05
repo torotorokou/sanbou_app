@@ -75,26 +75,29 @@ const RevenueChartPanel: React.FC = () => {
                             <Tooltip />
                             <Bar
                                 dataKey='value'
-                                shape={({ x, y, width, height, payload }) => (
-                                    <rect
-                                        x={x}
-                                        y={y}
-                                        width={width}
-                                        height={height}
-                                        fill={getGradientId(
-                                            'gradRev',
-                                            payload.name
-                                        )}
-                                        rx={4}
-                                        ry={4}
-                                    />
-                                )}
+                                shape={(props: any) => {
+                                    const { x, y, width, height, payload } = props;
+                                    return (
+                                        <rect
+                                            x={x}
+                                            y={y}
+                                            width={width}
+                                            height={height}
+                                            fill={getGradientId(
+                                                'gradRev',
+                                                payload.name
+                                            )}
+                                            rx={4}
+                                            ry={4}
+                                        />
+                                    );
+                                }}
                             >
                                 <LabelList
                                     dataKey='value'
                                     position='top'
-                                    formatter={(v) =>
-                                        `${v.toLocaleString()} 円`
+                                    formatter={(v: any) =>
+                                        `${(v || 0).toLocaleString()} 円`
                                     }
                                 />
                             </Bar>
@@ -116,34 +119,35 @@ const RevenueChartPanel: React.FC = () => {
                                 interval={0}
                                 tick={{
                                     fontSize: 12,
-                                    whiteSpace: 'pre-line',
-                                    lineHeight: 1.2,
                                 }}
                             />
                             <YAxis />
                             <Tooltip />
                             <Bar
                                 dataKey='value'
-                                shape={({ x, y, width, height, payload }) => (
-                                    <rect
-                                        x={x}
-                                        y={y}
-                                        width={width}
-                                        height={height}
-                                        fill={getGradientId(
-                                            'gradUnit',
-                                            payload.name
-                                        )}
-                                        rx={4}
-                                        ry={4}
-                                    />
-                                )}
+                                shape={(props: any) => {
+                                    const { x, y, width, height, payload } = props;
+                                    return (
+                                        <rect
+                                            x={x}
+                                            y={y}
+                                            width={width}
+                                            height={height}
+                                            fill={getGradientId(
+                                                'gradUnit',
+                                                payload.name
+                                            )}
+                                            rx={4}
+                                            ry={4}
+                                        />
+                                    );
+                                }}
                             >
                                 <LabelList
                                     dataKey='value'
                                     position='top'
-                                    formatter={(v) =>
-                                        `${v.toLocaleString()} 円`
+                                    formatter={(v: any) =>
+                                        `${(v || 0).toLocaleString()} 円`
                                     }
                                 />
                             </Bar>

@@ -87,6 +87,8 @@ const renderPieChart = (data: any[]) => (
                     innerRadius,
                     outerRadius,
                 }) => {
+                    if (midAngle === undefined) return null;
+
                     const RADIAN = Math.PI / 180;
                     const radius =
                         innerRadius + (outerRadius - innerRadius) * 0.5;

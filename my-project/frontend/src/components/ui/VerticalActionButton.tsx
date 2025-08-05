@@ -1,5 +1,6 @@
 import React from 'react';
 import { Button } from 'antd';
+import { useDeviceType } from '../../hooks/ui/useResponsive';
 
 type VerticalActionButtonProps = {
     icon: React.ReactNode;
@@ -20,13 +21,17 @@ const VerticalActionButton: React.FC<VerticalActionButtonProps> = ({
     href,
     download = false,
 }) => {
+    const { isMobileOrTablet, isMobile } = useDeviceType();
+
     const baseStyle: React.CSSProperties = {
-        writingMode: 'vertical-rl',
-        textOrientation: 'mixed',
-        height: 160,
-        fontSize: '1.2rem',
+        writingMode: isMobileOrTablet ? 'horizontal-tb' : 'vertical-rl',
+        textOrientation: isMobileOrTablet ? 'mixed' : 'mixed',
+        height: isMobile ? 48 : isMobileOrTablet ? 56 : 160,
+        width: isMobileOrTablet ? '100%' : 'auto',
+        minWidth: isMobileOrTablet ? 120 : 'auto',
+        fontSize: isMobile ? '0.9rem' : isMobileOrTablet ? '1rem' : '1.2rem',
         fontWeight: 600,
-        borderRadius: '24px',
+        borderRadius: isMobileOrTablet ? '12px' : '24px',
         border: 'none',
         transition: 'all 0.3s ease',
         transform: 'scale(1)',
@@ -38,6 +43,8 @@ const VerticalActionButton: React.FC<VerticalActionButtonProps> = ({
         justifyContent: 'center',
         alignItems: 'center',
         textDecoration: 'none',
+        flexDirection: 'row',
+        gap: 8,
     };
 
     const button = (

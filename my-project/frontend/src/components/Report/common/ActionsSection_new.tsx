@@ -30,6 +30,7 @@ const ActionsSection: React.FC<ActionsSectionProps> = ({
         <div style={{
             display: 'flex',
             flexDirection: isMobileOrTablet ? 'row' : 'column',
+            gap: isMobileOrTablet ? 12 : 8,
             alignItems: 'center',
             justifyContent: isMobileOrTablet ? 'center' : 'center',
             width: '100%',
@@ -43,22 +44,9 @@ const ActionsSection: React.FC<ActionsSectionProps> = ({
                 disabled={!readyToCreate}
             />
 
-            {/* スペーサー - 帳簿作成ボタンと他のボタンを離すため */}
-            {finalized && (
-                <div style={{
-                    height: isMobileOrTablet ? 0 : 50,
-                    width: isMobileOrTablet ? 24 : 0
-                }} />
-            )}
-
             {/* ダウンロード・印刷ボタン */}
             {finalized && (
-                <div style={{
-                    display: 'flex',
-                    flexDirection: isMobileOrTablet ? 'row' : 'column',
-                    gap: isMobileOrTablet ? 12 : 8,
-                    alignItems: 'center',
-                }}>
+                <>
                     <VerticalActionButton
                         icon={<DownloadOutlined />}
                         text='エクセルDL'
@@ -73,7 +61,7 @@ const ActionsSection: React.FC<ActionsSectionProps> = ({
                         backgroundColor={actionButtonColors.download}
                         disabled={!pdfReady}
                     />
-                </div>
+                </>
             )}
         </div>
     );

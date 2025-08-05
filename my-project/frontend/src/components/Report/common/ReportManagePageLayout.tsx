@@ -1,5 +1,6 @@
 import React from 'react';
 import { useReportLayoutStyles } from '../../../hooks/report';
+import { useDeviceType } from '../../../hooks/ui/useResponsive';
 import SampleSection from './SampleSection';
 import CsvUploadSection from './CsvUploadSection';
 import ActionsSection from './ActionsSection';
@@ -54,6 +55,7 @@ const ReportManagePageLayout: React.FC<ReportPageLayoutProps> = (props) => {
         sampleImageUrl,
     } = props;
 
+    const { isMobileOrTablet } = useDeviceType();
     const styles = useReportLayoutStyles();
 
     // UploadFileConfigをCsvUploadPanelが期待する形式に変換
@@ -71,6 +73,23 @@ const ReportManagePageLayout: React.FC<ReportPageLayoutProps> = (props) => {
             {header && <div style={{ marginBottom: 8 }}>{header}</div>}
 
             <div style={styles.mainLayout}>
+                {/* モバイル・タブレット用アクションパネル */}
+                {isMobileOrTablet && (
+                    <div style={styles.mobileActionsPanel}>
+                        <ActionsSection
+                            onGenerate={onGenerate}
+                            readyToCreate={readyToCreate}
+                            finalized={finalized}
+                            onDownloadExcel={onDownloadExcel}
+                            onPrintPdf={onPrintPdf}
+                            excelUrl={excelUrl}
+                            pdfUrl={pdfUrl}
+                            excelReady={excelReady}
+                            pdfReady={pdfReady}
+                        />
+                    </div>
+                )}
+
                 {/* 左パネル：サンプル + CSVアップロード */}
                 <div style={styles.leftPanel}>
                     <SampleSection sampleImageUrl={sampleImageUrl} />
@@ -80,7 +99,7 @@ const ReportManagePageLayout: React.FC<ReportPageLayoutProps> = (props) => {
                     />
                 </div>
 
-                {/* 中央パネル：アクションボタン */}
+                {/* 中央パネル：アクションボタン（デスクトップのみ表示） */}
                 <div style={styles.centerPanel}>
                     <ActionsSection
                         onGenerate={onGenerate}
