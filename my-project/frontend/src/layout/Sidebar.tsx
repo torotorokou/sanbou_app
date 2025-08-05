@@ -5,6 +5,7 @@ import { MenuFoldOutlined, MenuUnfoldOutlined } from '@ant-design/icons';
 import { useLocation } from 'react-router-dom';
 import { SIDEBAR_MENU } from '@/constants/sidebarMenu';
 import { customTokens } from '@/theme/tokens';
+import { useSidebarResponsive, useSidebarAnimation } from '@/hooks/ui';
 
 const { Sider } = Layout;
 
@@ -13,11 +14,13 @@ const Sidebar: React.FC<{
     setCollapsed: (c: boolean) => void;
     isMobile?: boolean;
     isTablet?: boolean;
-}> = ({ collapsed, setCollapsed, isMobile = false, isTablet = false }) => {
+}> = ({ collapsed, setCollapsed }) => {
     const location = useLocation();
+    const sidebarConfig = useSidebarResponsive();
+    const animationStyles = useSidebarAnimation();
 
     // モバイルではDrawerを使用
-    if (isMobile) {
+    if (sidebarConfig.drawerMode) {
         return (
             <>
                 <Button
@@ -37,7 +40,7 @@ const Sidebar: React.FC<{
                     placement="left"
                     open={!collapsed}
                     onClose={() => setCollapsed(true)}
-                    width={280}
+                    width={sidebarConfig.width}
                     styles={{
                         body: { padding: 0 },
                     }}
@@ -58,16 +61,17 @@ const Sidebar: React.FC<{
 
     return (
         <Sider
-            width={isTablet ? 200 : 250}
+            width={sidebarConfig.width}
             collapsible
             collapsed={collapsed}
             trigger={null}
             style={{
                 backgroundColor: customTokens.colorSiderBg,
                 borderRight: `1px solid ${customTokens.colorBorderSecondary}`,
+                ...animationStyles,
             }}
-            breakpoint={isTablet ? "md" : "lg"}
-            collapsedWidth={isTablet ? 60 : 80}
+            breakpoint={sidebarConfig.breakpoint}
+            collapsedWidth={sidebarConfig.collapsedWidth}
         >
             <div
                 style={{
@@ -75,7 +79,8 @@ const Sidebar: React.FC<{
                     justifyContent: collapsed ? 'center' : 'flex-end',
                     alignItems: 'center',
                     height: 64,
-                    paddingRight: collapsed ? 0 : 16,
+                    paddingRight: collapsed ? 0 : (sidebarConfig.autoCollapse ? 12 : 16),
+                    ...animationStyles,
                 }}
             >
                 <Button
@@ -88,7 +93,10 @@ const Sidebar: React.FC<{
                         )
                     }
                     onClick={() => setCollapsed(!collapsed)}
-                    style={{ fontSize: 18, color: customTokens.colorSiderText }}
+                    style={{
+                        fontSize: sidebarConfig.autoCollapse ? 16 : 18,
+                        color: customTokens.colorSiderText
+                    }}
                 />
             </div>
 

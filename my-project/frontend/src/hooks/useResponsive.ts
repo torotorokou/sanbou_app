@@ -17,6 +17,10 @@ export const BREAKPOINTS = {
     // フルHD以上のPC (1600px以上)
     largeDesktop: '(min-width: 1600px)',
 
+    // サイドバー縮小用の追加ブレークポイント
+    autoCollapse: '(max-width: 1200px)', // 1200px以下でサイドバー自動縮小
+    forceCollapse: '(max-width: 900px)', // 900px以下でサイドバー強制縮小
+
     // 特定のサイズ
     mobileOnly: '(max-width: 767px)',
     tabletUp: '(min-width: 768px)',
@@ -47,6 +51,8 @@ export const useDeviceType = () => {
     const isSmallDesktop = useMediaQuery(BREAKPOINTS.smallDesktop);
     const isMediumDesktop = useMediaQuery(BREAKPOINTS.mediumDesktop);
     const isLargeDesktop = useMediaQuery(BREAKPOINTS.largeDesktop);
+    const shouldAutoCollapse = useMediaQuery(BREAKPOINTS.autoCollapse);
+    const shouldForceCollapse = useMediaQuery(BREAKPOINTS.forceCollapse);
 
     return {
         isMobile,
@@ -56,5 +62,7 @@ export const useDeviceType = () => {
         isLargeDesktop,
         isDesktop: isSmallDesktop || isMediumDesktop || isLargeDesktop,
         isMobileOrTablet: isMobile || isTablet,
+        shouldAutoCollapse, // 1200px以下でサイドバー自動縮小推奨
+        shouldForceCollapse, // 900px以下でサイドバー強制縮小
     };
 };

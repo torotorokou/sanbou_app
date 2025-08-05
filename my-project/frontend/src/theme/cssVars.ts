@@ -52,6 +52,16 @@ export function generateCssVars(): string {
       --status-valid: ${customTokens.statusValid};
       --status-invalid: ${customTokens.statusInvalid};
       --status-unknown: ${customTokens.statusUnknown};
+      
+      /* レスポンシブ対応 */
+      --sidebar-transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      --content-transition: padding 0.3s ease-in-out;
+      
+      /* ブレークポイント */
+      --breakpoint-mobile: 767px;
+      --breakpoint-tablet: 1023px;
+      --breakpoint-auto-collapse: 1200px;
+      --breakpoint-force-collapse: 900px;
     }
   `;
 }
