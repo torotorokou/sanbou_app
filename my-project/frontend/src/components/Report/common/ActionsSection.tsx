@@ -31,9 +31,11 @@ const ActionsSection: React.FC<ActionsSectionProps> = ({
             display: 'flex',
             flexDirection: isMobileOrTablet ? 'row' : 'column',
             alignItems: 'center',
-            justifyContent: isMobileOrTablet ? 'center' : 'center',
-            width: '100%',
+            justifyContent: 'center',
+            width: isMobileOrTablet ? '100%' : 'auto', // デスクトップでは自動サイズ
+            height: isMobileOrTablet ? 'auto' : 'auto', // 高さは内容に合わせる
             flexWrap: isMobileOrTablet ? 'wrap' : 'nowrap',
+            gap: isMobileOrTablet ? 12 : 24, // ボタン間のスペース
         }}>
             {/* レポート生成ボタン */}
             <VerticalActionButton

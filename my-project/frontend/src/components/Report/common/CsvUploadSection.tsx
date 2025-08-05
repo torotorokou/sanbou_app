@@ -19,11 +19,11 @@ const CsvUploadSection: React.FC<CsvUploadSectionProps> = ({
             <Typography.Title
                 level={isMobile ? 5 : 4}
                 style={{
-                    marginBottom: isMobile ? 8 : isTablet ? 12 : 16, // シンプルな3段階
+                    marginBottom: isMobile ? 6 : isTablet ? 8 : 10, // マージンを縮小してスペース効率化
                     fontSize: isMobile ? '14px' : isTablet ? '15px' : '16px'
                 }}
             >
-                📂 データセットの準備
+                📂 データセット（CSV）の準備
             </Typography.Title>
             <CsvUploadPanel
                 upload={{ files: uploadFiles, makeUploadProps }}

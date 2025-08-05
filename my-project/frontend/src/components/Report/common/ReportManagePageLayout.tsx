@@ -104,7 +104,7 @@ const ReportManagePageLayout: React.FC<ReportPageLayoutProps> = (props) => {
                 </div>
 
                 {/* 中央パネル：アクションボタン（デスクトップのみ表示） */}
-                <div style={styles.centerPanel}>
+                <div style={styles.centerPanel as React.CSSProperties}>
                     <ActionsSection
                         onGenerate={onGenerate}
                         readyToCreate={readyToCreate}

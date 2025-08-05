@@ -40,11 +40,17 @@ export const useReportLayoutStyles = () => {
             },
             centerPanel: {
                 display: isMobileOrTablet ? 'none' : 'flex',
+                flexDirection: 'column',
                 justifyContent: 'center',
                 alignItems: 'center',
-                width: isSmallDesktop ? 60 : 100,
+                width: isSmallDesktop ? '60px' : '100px',
+                minWidth: isSmallDesktop ? '60px' : '100px',
+                maxWidth: isSmallDesktop ? '60px' : '100px',
+                minHeight: '100%',
                 flexShrink: 0,
+                flexGrow: 0,
                 order: 2,
+                boxSizing: 'border-box',
             },
             rightPanel: {
                 flex: 1,
