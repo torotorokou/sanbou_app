@@ -1,6 +1,5 @@
-# --- バリデーションエラー時のカスタムレスポンス ---
-
 import os
+from fastapi.staticfiles import StaticFiles
 import sys
 from pathlib import Path
 from dotenv import load_dotenv
@@ -10,6 +9,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from app.paths import CONFIG_ENV
 from app.api.endpoints import query  # ← query.py に router を定義
+
 
 # --- .env読込
 load_dotenv(dotenv_path=CONFIG_ENV)
@@ -29,6 +29,12 @@ app = FastAPI(
     docs_url=os.getenv("API_DOCS_URL", "/docs"),
     openapi_url=os.getenv("API_OPENAPI_URL", "/openapi.json"),
 )
+
+# --- static/pdfs ディレクトリを公開
+static_pdfs_dir = "/backend/static/pdfs"
+os.makedirs(static_pdfs_dir, exist_ok=True)
+print(f"[DEBUG] FastAPI公開ディレクトリ: {static_pdfs_dir}")
+app.mount("/pdfs", StaticFiles(directory=static_pdfs_dir), name="pdfs")
 
 # --- バリデーションエラー時のカスタムレスポンス ---
 @app.exception_handler(RequestValidationError)
