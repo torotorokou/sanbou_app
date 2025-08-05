@@ -21,7 +21,8 @@ const PreviewSection: React.FC<PreviewSectionProps> = ({
     const previewAreaStyle = {
         flex: 1,
         height: '100%',
-        minHeight: isMobile ? '350px' : isTablet ? '450px' : '500px',
+        // シンプルな3段階のプレビュー画面サイズ
+        minHeight: isMobile ? 350 : isTablet ? 450 : 550,
         width: '100%',
         border: `1px solid ${customTokens.colorBorder}`,
         borderRadius: 8,

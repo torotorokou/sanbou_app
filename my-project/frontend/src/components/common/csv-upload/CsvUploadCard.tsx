@@ -65,7 +65,8 @@ const CsvUploadCard: React.FC<CsvUploadCardProps> = ({
                 onMouseEnter={() => onHover(true)}
                 onMouseLeave={() => onHover(false)}
                 style={{
-                    height: isMobile ? 120 : isMobileOrTablet ? 135 : 150,
+                    // レスポンシブ対応: シンプルな3段階の高さ調整
+                    height: isMobile ? 90 : isMobileOrTablet ? 100 : 120,
                     borderRadius: isMobile ? 6 : 8,
                 }}
             >
@@ -76,9 +77,9 @@ const CsvUploadCard: React.FC<CsvUploadCardProps> = ({
                     style={{
                         position: 'relative',
                         height: '100%',
-                        padding: isMobile ? 6 : 8,
-                        fontSize: isMobile ? 12 : 13,
-                        lineHeight: 1.5,
+                        padding: isMobile ? 4 : 6, // パディングをより小さく
+                        fontSize: isMobile ? 11 : 12, // フォントサイズも小さく
+                        lineHeight: 1.4,
                         display: 'flex',
                         flexDirection: 'column',
                         justifyContent: 'center',

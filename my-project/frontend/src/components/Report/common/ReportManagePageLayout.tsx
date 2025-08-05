@@ -58,6 +58,10 @@ const ReportManagePageLayout: React.FC<ReportPageLayoutProps> = (props) => {
     const { isMobileOrTablet } = useDeviceType();
     const styles = useReportLayoutStyles();
 
+    // デバッグ情報をコンソールに出力（一時的）
+    // console.log('ReportManagePageLayout - Device Info:', useDeviceType());
+    // console.log('ReportManagePageLayout - Left Panel Style:', styles.leftPanel);
+
     // UploadFileConfigをCsvUploadPanelが期待する形式に変換
     const mappedUploadFiles = uploadFiles.map(file => ({
         label: file.label,
