@@ -3,6 +3,7 @@
 import React from 'react';
 import ReportBase from '../../components/Report/ReportBase';
 import ReportHeader from '../../components/Report/common/ReportHeader';
+// import ResponsiveDebugInfo from '../../components/debug/ResponsiveDebugInfo';
 import { useReportManager } from '../../hooks/report';
 
 /**
@@ -19,12 +20,14 @@ import { useReportManager } from '../../hooks/report';
  * - UIの構造とレイアウトのみ
  * - ビジネスロジックはカスタムフック内で管理
  */
+
 const ReportManagePage: React.FC = () => {
     const reportManager = useReportManager('factory_report');
     const reportBaseProps = reportManager.getReportBaseProps();
 
     return (
         <>
+            {/* <ResponsiveDebugInfo /> */}
             <ReportHeader
                 reportKey={reportManager.selectedReport}
                 onChangeReportKey={reportManager.changeReport}
