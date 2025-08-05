@@ -8,9 +8,8 @@ from backend_shared.src.csv_validator_api.csv_upload_validator import (
 
 
 class ManageReportService:
-    def __init__(self, report_key: str, output_dir: str, files: dict):
+    def __init__(self, report_key: str, files: dict):
         self.report_key = report_key
-        self.output_dir = output_dir
         self.files = files
         self.dfs = {}  # ファイル名→DataFrame
 
@@ -28,13 +27,13 @@ class ManageReportService:
 
     def generate_pdf(self, pdf_name: str) -> str:
         # ダミー生成例
-        pdf_path = os.path.join(self.output_dir, pdf_name)
+        pdf_path = pdf_name
         with open(pdf_path, "wb") as f:
             f.write(b"%PDF-1.4\n%Dummy PDF\n")
         return pdf_path
 
     def generate_excel(self, excel_name: str) -> str:
-        excel_path = os.path.join(self.output_dir, excel_name)
+        excel_path = excel_name
         with pd.ExcelWriter(excel_path) as writer:
             for k, df in self.dfs.items():
                 df.to_excel(writer, sheet_name=k, index=False)
