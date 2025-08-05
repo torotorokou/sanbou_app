@@ -11,7 +11,7 @@ import { customTokens } from '../../theme';
  * - 保守性を向上させるためのシンプルなサイズ体系
  */
 export const useReportLayoutStyles = () => {
-    const { isMobile, isTablet, isDesktop, isMobileOrTablet } = useDeviceType();
+    const { isMobile, isTablet, isMobileOrTablet } = useDeviceType();
 
     // デバッグ情報（一時的）
     // console.log('useReportLayoutStyles - Device Info:', {
@@ -33,10 +33,10 @@ export const useReportLayoutStyles = () => {
                     | 'row'
                     | 'column',
                 gap: isMobile ? 12 : isTablet ? 16 : 24,
-                alignItems: isMobileOrTablet ? 'stretch' : 'flex-start',
+                alignItems: 'stretch', // 中央配置のために'stretch'に統一
                 flexGrow: 1,
                 marginTop: isMobile ? 8 : 16,
-                minHeight: isMobileOrTablet ? 'auto' : '80vh',
+                minHeight: isMobileOrTablet ? 'auto' : '70vh', // 十分な高さを確保
                 maxHeight: isMobileOrTablet ? 'none' : '80vh',
                 overflowY: (isMobileOrTablet ? 'visible' : 'auto') as
                     | 'auto'
@@ -47,11 +47,12 @@ export const useReportLayoutStyles = () => {
             leftPanel: {
                 display: 'flex',
                 flexDirection: 'column' as const,
-                gap: isMobile ? 12 : 16,
+                gap: isMobile ? 8 : 12, // gapも縮小してコンパクトに
                 // シンプルな3段階のサイズ設定
-                width: isMobileOrTablet ? '100%' : '300px', // デスクトップは統一して300px
+                width: isMobileOrTablet ? '100%' : '300px',
                 minWidth: isMobileOrTablet ? 'auto' : '300px',
                 maxWidth: isMobileOrTablet ? 'none' : '300px',
+                minHeight: isMobileOrTablet ? 'auto' : '520px', // CSVパネルの高さ増加に合わせて調整
                 flexShrink: isMobileOrTablet ? 1 : 0,
                 flexGrow: isMobileOrTablet ? 1 : 0,
                 order: isMobileOrTablet ? 3 : 1,
@@ -59,15 +60,20 @@ export const useReportLayoutStyles = () => {
             },
             centerPanel: {
                 display: isMobileOrTablet ? 'none' : 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                width: '60px', // 統一して60px
+                flexDirection: 'column', // 縦方向のflexコンテナ
+                justifyContent: 'center', // 垂直方向中央配置
+                alignItems: 'center', // 水平方向中央配置
+                width: '60px',
                 minWidth: '60px',
                 maxWidth: '60px',
+                minHeight: '400px', // 最小高さを設定して中央配置を確実に
                 flexShrink: 0,
                 flexGrow: 0,
                 order: 2,
                 boxSizing: 'border-box' as const,
+                // デバッグ用の背景色（一時的）
+                // backgroundColor: 'rgba(255, 0, 0, 0.1)',
+                // border: '1px solid red',
             },
             // モバイル・タブレット用のアクションセクション
             mobileActionsPanel: {

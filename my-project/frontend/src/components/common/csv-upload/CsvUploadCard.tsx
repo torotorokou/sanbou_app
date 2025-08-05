@@ -14,6 +14,7 @@ export type CsvUploadCardProps = {
     onHover: (hover: boolean) => void;
     validationResult?: 'valid' | 'invalid' | 'unknown';
     onRemove?: () => void;
+    cardHeight?: number; // 動的な高さ
 };
 
 const CsvUploadCard: React.FC<CsvUploadCardProps> = ({
@@ -26,6 +27,7 @@ const CsvUploadCard: React.FC<CsvUploadCardProps> = ({
     onHover,
     validationResult = 'unknown',
     onRemove,
+    cardHeight, // 動的な高さを受け取る
 }) => {
     const { isMobile, isMobileOrTablet } = useDeviceType();
 
@@ -45,16 +47,16 @@ const CsvUploadCard: React.FC<CsvUploadCardProps> = ({
     return (
         <div>
             <Typography.Text strong style={{
-                fontSize: isMobile ? 13 : 14,
-                marginBottom: 4,
+                fontSize: isMobile ? 12 : 13, // ラベルのフォントサイズを小さく
+                marginBottom: 2, // マージンを縮小
                 display: 'block'
             }}>
                 {label}
                 <Tag
                     color={required ? 'red' : 'blue'}
                     style={{
-                        marginLeft: isMobile ? 4 : 8,
-                        fontSize: isMobile ? '10px' : '12px'
+                        marginLeft: isMobile ? 3 : 6, // マージンを縮小
+                        fontSize: isMobile ? '9px' : '10px' // タグのフォントを小さく
                     }}
                 >
                     {required ? '必須' : '任意'}
@@ -65,8 +67,8 @@ const CsvUploadCard: React.FC<CsvUploadCardProps> = ({
                 onMouseEnter={() => onHover(true)}
                 onMouseLeave={() => onHover(false)}
                 style={{
-                    // レスポンシブ対応: シンプルな3段階の高さ調整
-                    height: isMobile ? 90 : isMobileOrTablet ? 100 : 120,
+                    // 動的な高さ（デフォルト値も設定）
+                    height: cardHeight || (isMobile ? 70 : isMobileOrTablet ? 80 : 90),
                     borderRadius: isMobile ? 6 : 8,
                 }}
             >
@@ -77,9 +79,9 @@ const CsvUploadCard: React.FC<CsvUploadCardProps> = ({
                     style={{
                         position: 'relative',
                         height: '100%',
-                        padding: isMobile ? 4 : 6, // パディングをより小さく
-                        fontSize: isMobile ? 11 : 12, // フォントサイズも小さく
-                        lineHeight: 1.4,
+                        padding: isMobile ? 3 : 4, // パディングをさらに小さく
+                        fontSize: isMobile ? 10 : 11, // フォントサイズを小さく
+                        lineHeight: 1.3, // 行間を縮小
                         display: 'flex',
                         flexDirection: 'column',
                         justifyContent: 'center',
