@@ -41,7 +41,7 @@ export const useReportLayoutStyles = () => {
                 gap: isMobile ? 12 : 16,
                 width: isMobileOrTablet ? '100%' : isSmallDesktop ? 320 : 380,
                 flexShrink: isMobileOrTablet ? 1 : 0,
-                order: isMobileOrTablet ? 2 : 1,
+                order: isMobileOrTablet ? 3 : 1,
             },
             centerPanel: {
                 display: isMobileOrTablet ? 'none' : 'flex',
@@ -50,6 +50,17 @@ export const useReportLayoutStyles = () => {
                 width: isSmallDesktop ? 60 : 100,
                 flexShrink: 0,
                 order: 2,
+            },
+            // モバイル・タブレット用のアクションセクション
+            mobileActionsPanel: {
+                display: isMobileOrTablet ? 'flex' : 'none',
+                width: '100%',
+                padding: isMobile ? 12 : 16,
+                backgroundColor: customTokens.colorBgCard,
+                borderRadius: 8,
+                marginBottom: isMobile ? 12 : 16,
+                boxShadow: `0 2px 8px ${customTokens.shadowLight}`,
+                order: 3,
             },
             rightPanel: {
                 flex: 1,

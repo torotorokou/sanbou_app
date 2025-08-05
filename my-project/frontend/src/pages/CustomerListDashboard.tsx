@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useState } from "react";
 import { MapContainer, TileLayer, Circle, Tooltip, Marker, Popup, GeoJSON } from "react-leaflet";
 import L from "leaflet";
@@ -158,7 +159,7 @@ const CustomerListDashboard: React.FC = () => {
                                     style={feature => ({
                                         color: "#222",
                                         weight: 1,
-                                        fillColor: getPrefColor(feature.properties.name),
+                                        fillColor: getPrefColor(feature?.properties?.name || ''),
                                         fillOpacity: 0.10,
                                     })}
                                 />

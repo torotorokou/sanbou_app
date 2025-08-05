@@ -32,7 +32,8 @@ const UploadDatabasePage: React.FC = () => {
         file: files[type],
         required: UPLOAD_CSV_DEFINITIONS[type].required,
         onChange: (f: File | null) => f && handleCsvFile(UPLOAD_CSV_DEFINITIONS[type].label, f),
-        validationResult: validationResults[type],
+        validationResult: (validationResults[type] === 'valid' ? 'ok' :
+            validationResults[type] === 'invalid' ? 'ng' : 'unknown') as 'ok' | 'ng' | 'unknown',
         onRemove: () => removeCsvFile(type),
     }));
 

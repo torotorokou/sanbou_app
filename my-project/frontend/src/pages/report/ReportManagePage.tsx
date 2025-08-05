@@ -19,7 +19,7 @@ import { useReportManager } from '../../hooks/report';
  * - UIの構造とレイアウトのみ
  * - ビジネスロジックはカスタムフック内で管理
  */
-const ReportPage: React.FC = () => {
+const ReportManagePage: React.FC = () => {
     const reportManager = useReportManager('factory_report');
     const reportBaseProps = reportManager.getReportBaseProps();
 
@@ -35,4 +35,4 @@ const ReportPage: React.FC = () => {
     );
 };
 
-export default ReportPage;
+export default ReportManagePage;

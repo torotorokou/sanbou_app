@@ -1,5 +1,6 @@
 import React from 'react';
 import { Card, Table } from 'antd';
+import type { ColumnsType } from 'antd/es/table';
 import type { CustomerData } from '@/data/analysis/customer-list-analysis/customer-dummy-data';
 
 type Props = {
@@ -10,20 +11,20 @@ type Props = {
     style?: React.CSSProperties;
 };
 
-const customerColumns = [
+const customerColumns: ColumnsType<CustomerData> = [
     { title: '顧客名', dataIndex: 'name', key: 'name', width: 120 },
     {
         title: '合計重量(kg)',
         dataIndex: 'weight',
         key: 'weight',
-        align: 'right',
+        align: 'right' as const,
         width: 120,
     },
     {
         title: '合計金額(円)',
         dataIndex: 'amount',
         key: 'amount',
-        align: 'right',
+        align: 'right' as const,
         width: 120,
         render: (value: number) => value.toLocaleString(),
     },
@@ -56,7 +57,7 @@ const CustomerComparisonResultCard: React.FC<Props> = ({
             rowKey='key'
             pagination={false}
             locale={{ emptyText: '該当なし' }}
-            scroll={{ y: true }}
+            scroll={{ y: 400 }}
             style={{ minHeight: 0 }}
         />
     </Card>
