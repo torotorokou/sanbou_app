@@ -30,11 +30,18 @@ app = FastAPI(
     openapi_url=os.getenv("API_OPENAPI_URL", "/openapi.json"),
 )
 
+
 # --- static/pdfs ディレクトリを公開
 static_pdfs_dir = "/backend/static/pdfs"
 os.makedirs(static_pdfs_dir, exist_ok=True)
 print(f"[DEBUG] FastAPI公開ディレクトリ: {static_pdfs_dir}")
 app.mount("/pdfs", StaticFiles(directory=static_pdfs_dir), name="pdfs")
+
+# --- static/test_pdfs ディレクトリも公開
+static_testpdfs_dir = "/backend/static/test_pdfs"
+os.makedirs(static_testpdfs_dir, exist_ok=True)
+print(f"[DEBUG] FastAPI公開ディレクトリ: {static_testpdfs_dir}")
+app.mount("/test_pdfs", StaticFiles(directory=static_testpdfs_dir), name="test_pdfs")
 
 # --- バリデーションエラー時のカスタムレスポンス ---
 @app.exception_handler(RequestValidationError)
