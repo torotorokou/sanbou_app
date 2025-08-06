@@ -9,6 +9,28 @@ from app.api.st_app.config.loader.main_path import MainPath
 from typing import Union
 
 
+def clean_na_strings(val):
+    """
+    <NA>等の文字列や空文字列をNoneに変換する共通関数
+    """
+    if isinstance(val, str) and (
+        val
+        in [
+            "<NA>",
+            "NaN",
+            "nan",
+            "None",
+            "NULL",
+            "null",
+            "#N/A",
+            "#NA",
+        ]
+        or val.strip() == ""
+    ):
+        return None
+    return val
+
+
 def get_path_from_yaml(
     key: Union[str, list[str]], section: Optional[str] = None
 ) -> str:
@@ -91,7 +113,18 @@ def get_unit_price_table_csv() -> pd.DataFrame:
     """
     mainpath = MainPath()
     csv_path = mainpath.get_path("unit_price_table", section="csv")
-    return pd.read_csv(csv_path, encoding="utf-8-sig")
+
+    # <NA>文字列をfloat変換エラーから守るため、na_valuesを指定
+    na_values = ["<NA>", "NaN", "nan", "None", "NULL", "null", "#N/A", "#NA"]
+    df = pd.read_csv(
+        csv_path, encoding="utf-8-sig", na_values=na_values, keep_default_na=False
+    )
+
+    # 全カラムに対してNA文字列をクリーンアップ
+    for col in df.columns:
+        df[col] = df[col].apply(clean_na_strings)
+
+    return df
 
 
 def receive_header_definition() -> pd.DataFrame:
@@ -100,7 +133,18 @@ def receive_header_definition() -> pd.DataFrame:
     """
     mainpath = MainPath()
     csv_path = mainpath.get_path("receive_header_definition", section="csv")
-    return pd.read_csv(csv_path, encoding="utf-8-sig")
+
+    # <NA>文字列をfloat変換エラーから守るため、na_valuesを指定
+    na_values = ["<NA>", "NaN", "nan", "None", "NULL", "null", "#N/A", "#NA"]
+    df = pd.read_csv(
+        csv_path, encoding="utf-8-sig", na_values=na_values, keep_default_na=False
+    )
+
+    # 全カラムに対してNA文字列をクリーンアップ
+    for col in df.columns:
+        df[col] = df[col].apply(clean_na_strings)
+
+    return df
 
 
 def get_page_dicts():

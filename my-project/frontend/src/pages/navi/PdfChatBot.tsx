@@ -293,14 +293,16 @@ const PdfChatBot: React.FC = () => {
             </Drawer>
 
             {/* モーダルPDFプレビュー */}
-            <PdfPreviewModal
-                visible={pdfModalVisible}
-                pdfUrl={pdfToShow}
-                onClose={() => {
-                    setPdfToShow(null);
-                    setPdfModalVisible(false);
-                }}
-            />
+            {pdfToShow && (
+                <PdfPreviewModal
+                    visible={pdfModalVisible}
+                    pdfUrl={pdfToShow}
+                    onClose={() => {
+                        setPdfToShow(null);
+                        setPdfModalVisible(false);
+                    }}
+                />
+            )}
         </div>
     );
 };

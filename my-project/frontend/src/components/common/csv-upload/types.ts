@@ -5,4 +5,6 @@ export type CsvFileType = {
     file: File | null;
     onChange: (file: File | null) => void;
     required: boolean;
+    validationResult?: 'valid' | 'invalid' | 'unknown';
+    onRemove?: () => void;
 };

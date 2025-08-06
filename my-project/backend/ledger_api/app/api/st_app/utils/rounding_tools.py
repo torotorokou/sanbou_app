@@ -1,4 +1,5 @@
 import pandas as pd
+from app.api.st_app.utils.config_loader import clean_na_strings
 
 
 def round_value_column_generic(
@@ -23,7 +24,9 @@ def round_value_column_generic(
         is_tanka |= df[col].astype(str).str.contains("単価", na=False)
 
     # --- 値を数値に変換（文字列・日付は除外） ---
-    numeric_vals = pd.to_numeric(df[value_column], errors="coerce")
+    # <NA>文字列をクリーンアップしてからto_numericを実行
+    cleaned_values = df[value_column].apply(clean_na_strings)
+    numeric_vals = pd.to_numeric(cleaned_values, errors="coerce")
     is_numeric = ~numeric_vals.isna()
 
     # --- 値の初期化 ---

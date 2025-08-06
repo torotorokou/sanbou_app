@@ -1,5 +1,5 @@
 import pandas as pd
-from app.api.st_app.utils.config_loader import get_template_config
+from app.api.st_app.utils.config_loader import get_template_config, clean_na_strings
 from app.api.st_app.logic.manage.utils.load_template import load_master_and_template
 from app.api.st_app.utils.date_tools import to_japanese_era, to_japanese_month_day
 from app.api.st_app.utils.value_setter import set_value_fast_safe
@@ -14,7 +14,17 @@ def generate_summary_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     df_sum = df.copy()
 
     # 2. 値列を数値に変換（NaN対応）
+    # <NA>文字列をクリーンアップしてからto_numericを実行
+    print(f"[DEBUG] df_sum['値'] before cleaning: {df_sum['値'].head(3).tolist()}")
+    print(f"[DEBUG] df_sum['値'] dtypes: {df_sum['値'].dtype}")
+
+    df_sum["値"] = df_sum["値"].apply(clean_na_strings)
+    print(
+        f"[DEBUG] df_sum['値'] after clean_na_strings: {df_sum['値'].head(3).tolist()}"
+    )
+
     df_sum["値"] = pd.to_numeric(df_sum["値"], errors="coerce")
+    print(f"[DEBUG] df_sum['値'] after to_numeric: {df_sum['値'].head(3).tolist()}")
 
     # 3. カテゴリ別の合計
     category_sum = df_sum.groupby("カテゴリ")["値"].sum()

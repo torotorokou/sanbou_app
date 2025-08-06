@@ -3,12 +3,12 @@
 import {
     REPORT_KEYS,
     type ReportKey,
-} from '@/constants/reportConfig/managementReportConfig';
+} from '@/constants/reportConfig/managementReportConfig.tsx';
 import {
     csvConfigMap,
     stepConfigMap,
     pdfGeneratorMap,
-} from '@/constants/reportConfig/managementReportConfig';
+} from '@/constants/reportConfig/managementReportConfig.tsx';
 
 type CsvConfig = {
     label: string;
@@ -27,10 +27,18 @@ export const reportConfigMap: Record<ReportKey, ReportConfig> = Object.keys(
     REPORT_KEYS
 ).reduce((acc, key) => {
     const reportKey = key as ReportKey;
+
+    // csvConfigMapから適切な形式に変換
+    const csvConfigEntries = csvConfigMap[reportKey] || [];
+    const csvConfigs: CsvConfig[] = csvConfigEntries.map((entry) => ({
+        label: entry.config.label,
+        onParse: entry.config.onParse,
+    }));
+
     acc[reportKey] = {
         reportKey,
         label: REPORT_KEYS[reportKey].label,
-        csvConfigs: csvConfigMap[reportKey],
+        csvConfigs,
         steps: stepConfigMap[reportKey],
         generatePdf: pdfGeneratorMap[reportKey],
     };

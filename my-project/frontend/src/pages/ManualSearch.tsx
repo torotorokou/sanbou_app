@@ -12,6 +12,7 @@ import {
     Modal,
 } from 'antd';
 import { Document, Page, pdfjs } from 'react-pdf';
+import { customTokens } from '../theme';
 
 // ✅ react-pdf@9.2.1 に対応した worker の指定方法
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
@@ -47,11 +48,9 @@ const mockData: Item[] = Array.from({ length: 20 }, (_, i) => ({
     pdf: pdfList[i % pdfList.length],
     title: `マニュアルタイトル ${i + 1}`,
     category: categories[i % categories.length],
-    content: `これはPDF「${
-        pdfList[i % pdfList.length]
-    }」に属するマニュアル本文テキストの例です。検索語「${
-        i % 3 === 0 ? '重要' : i % 3 === 1 ? '注意' : '操作'
-    }」が含まれています。`,
+    content: `これはPDF「${pdfList[i % pdfList.length]
+        }」に属するマニュアル本文テキストの例です。検索語「${i % 3 === 0 ? '重要' : i % 3 === 1 ? '注意' : '操作'
+        }」が含まれています。`,
     updatedAt: `2025-07-${(i % 30) + 1}`.padStart(10, '0'),
     relatedPages: [1 + (i % 5), 3 + (i % 3)],
 }));
@@ -67,7 +66,7 @@ const highlightText = (text: string, keyword: string) => {
         <>
             {parts.map((part, i) =>
                 regex.test(part) ? (
-                    <span key={i} style={{ backgroundColor: 'yellow' }}>
+                    <span key={i} style={{ backgroundColor: customTokens.highlightYellow }}>
                         {part}
                     </span>
                 ) : (
@@ -249,7 +248,7 @@ const ManualSearchWithSidebarAndFullPdf: React.FC = () => {
                                                         cursor: 'pointer',
                                                         textDecoration:
                                                             'underline',
-                                                        color: '#1890ff',
+                                                        color: customTokens.linkBlue,
                                                     }}
                                                     onClick={() =>
                                                         openFullPdfModal(
@@ -273,7 +272,7 @@ const ManualSearchWithSidebarAndFullPdf: React.FC = () => {
                                                 <div
                                                     style={{
                                                         marginTop: 8,
-                                                        color: '#888',
+                                                        color: customTokens.colorTextMuted,
                                                     }}
                                                 >
                                                     更新日: {item.updatedAt}

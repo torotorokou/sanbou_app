@@ -2,6 +2,7 @@ import pandas as pd
 from app.api.st_app.utils.value_setter import set_value_fast, set_value_fast_safe
 from app.api.st_app.utils.logger import app_logger
 from app.api.st_app.logic.manage.utils.summary_tools import safe_merge_by_keys
+from app.api.st_app.utils.config_loader import clean_na_strings
 
 
 def summary_add_column_if_notna(
@@ -11,6 +12,9 @@ def summary_add_column_if_notna(
         return df
 
     df = df.copy()
+    # <NA>文字列をクリーンアップしてからto_numericを実行
+    df[from_col] = df[from_col].apply(clean_na_strings)
+    df[to_col] = df[to_col].apply(clean_na_strings)
     df[from_col] = pd.to_numeric(df[from_col], errors="coerce").fillna(0)
     df[to_col] = pd.to_numeric(df[to_col], errors="coerce").fillna(0)
 
