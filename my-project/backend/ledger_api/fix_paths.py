@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """
 パス修正スクリプト
-/backend パスを /backend に一括修正します
+
+ハードコードされたパスを標準化し、プロジェクト全体の
+パス参照を統一するためのユーティリティスクリプトです。
 """
 
 import os
@@ -10,12 +12,17 @@ from pathlib import Path
 
 
 def fix_hardcoded_paths():
-    """ハードコードされた /backend パスを /backend に修正"""
+    """
+    ハードコードされたパスを修正
+
+    プロジェクト内の各種ファイルに含まれるハードコードされた
+    パス記述を検出し、標準化された形式に修正します。
+    """
 
     # 修正対象のファイル拡張子
     extensions = [".py", ".yaml", ".yml", ".json", ".txt", ".log"]
 
-    # 検索・置換パターン
+    # 検索・置換パターン（実際の修正パターンに応じて調整）
     patterns = [
         (r"/backend", "/backend"),
         (r'"/backend', '"/backend'),

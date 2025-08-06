@@ -1,9 +1,17 @@
-import os
+"""
+帳票・日報管理システムのメインアプリケーション
+
+このモジュールはFastAPIを使用した帳票生成、日報管理、PDF出力機能を提供するAPIサーバーです。
+"""
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
 from app.api.endpoints import manage_report
+from app.api.endpoints.block_unit_price_interactive import (
+    router as block_unit_price_router,
+)
 
+# FastAPIアプリケーションの初期化
 app = FastAPI(
     title="帳票・日報API",
     description="帳票生成、日報管理、PDF出力に関するAPI群です。",
@@ -11,26 +19,27 @@ app = FastAPI(
     root_path="/ledger_api",
 )
 
+# CORS設定 - すべてのオリジンからのアクセスを許可
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"],  # 本番環境では適切なオリジンを指定すること
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# --- ここがポイント ---
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-STATIC_DIR = os.path.join(BASE_DIR, "static")
-if not os.path.exists(STATIC_DIR):
-    raise FileNotFoundError(f"Static directory not found: {STATIC_DIR}")
 
-app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
-
-# ルーター登録
+# ルーター登録 - 各機能のエンドポイントを追加
 app.include_router(manage_report.router)
+app.include_router(block_unit_price_router, prefix="/block_unit_price_interactive")
 
 
 @app.get("/")
 def health_check():
+    """
+    アプリケーションのヘルスチェックエンドポイント
+
+    Returns:
+        dict: アプリケーションの稼働状況
+    """
     return {"status": "ledger_api is running"}

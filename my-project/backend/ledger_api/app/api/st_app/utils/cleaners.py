@@ -2,15 +2,17 @@ import pandas as pd
 import numpy as np
 from app.api.st_app.utils.logger import app_logger
 from app.api.st_app.components.ui_message import show_warning
+from app.api.st_app.utils.config_loader import clean_na_strings
 
 
 def clean_numeric_column(df, column_name):
     """
     指定された列を float に変換（カンマや空文字を考慮）
     """
+    # <NA>文字列をクリーンアップしてから数値変換
+    cleaned_series = df[column_name].apply(clean_na_strings)
     df[column_name] = (
-        df[column_name]
-        .astype(str)
+        cleaned_series.astype(str)
         .str.replace(",", "", regex=False)
         .str.strip()
         .replace("", pd.NA)
@@ -59,8 +61,10 @@ def convert_to_datetime(series: pd.Series) -> pd.Series:
 
 def convert_to_int(series: pd.Series) -> pd.Series:
     """カンマ除去・空白除去後に整数型へ変換（NaNは0）"""
+    # <NA>文字列をクリーンアップしてから数値変換
+    cleaned_series = series.apply(clean_na_strings)
     return (
-        series.astype(str)
+        cleaned_series.astype(str)
         .str.replace(",", "", regex=False)
         .str.strip()
         .replace("", pd.NA)
@@ -72,8 +76,10 @@ def convert_to_int(series: pd.Series) -> pd.Series:
 
 def convert_to_float(series: pd.Series) -> pd.Series:
     """カンマ除去・空白除去後に浮動小数点数へ変換"""
+    # <NA>文字列をクリーンアップしてから数値変換
+    cleaned_series = series.apply(clean_na_strings)
     return (
-        series.astype(str)
+        cleaned_series.astype(str)
         .str.replace(",", "", regex=False)
         .str.strip()
         .replace("", pd.NA)

@@ -1,35 +1,17 @@
 import React, { useState } from 'react';
-import {
-    Row,
-    Col,
-    Button,
-    message,
-    notification,
-    Collapse,
-    Typography,
-    Tag,
-    List,
-    Modal,
-    Spin,
-} from 'antd';
-import { InfoCircleOutlined } from '@ant-design/icons';
-import CsvUploadPanel from '@/components/database/CsvUploadPanel';
-import { CsvPreviewCard } from '@/components/database/CsvPreviewCard';
-import {
-    UPLOAD_CSV_TYPES,
-    UPLOAD_CSV_DEFINITIONS,
-} from '@/constants/uploadCsvConfig';
+import { Upload, message, Card, Typography, Divider, Col, Row, Button, Modal, Spin } from 'antd';
+import { InboxOutlined } from '@ant-design/icons';
+import CsvUploadPanel from '../../components/database/CsvUploadPanel';
+import CsvPreviewCard from '../../components/database/CsvPreviewCard';
+import type { UploadProps } from 'antd';
+import { csvTypeColors } from '../../theme';
+
+import { UploadInstructions } from '@/components/database/UploadInstructions';
+import { useCsvUploadHandler } from '@/hooks/database/useCsvUploadHandler';
 import { useCsvUploadArea } from '@/hooks/database/useCsvUploadArea';
+import { UPLOAD_CSV_TYPES, UPLOAD_CSV_DEFINITIONS } from '@/constants/uploadCsvConfig';
 
-const CSV_TYPE_COLORS: Record<string, string> = {
-    shipment: '#e6f7ff', // 出荷一覧
-    receive: '#fff1f0',  // 受入一覧
-    yard: '#f6ffed',     // ヤード一覧
-};
-
-
-const { Paragraph, Text } = Typography;
-
+const { Text } = Typography;
 const CARD_HEIGHT = 300;
 const TABLE_BODY_HEIGHT = 200;
 
@@ -43,104 +25,17 @@ const UploadDatabasePage: React.FC = () => {
         removeCsvFile,
     } = useCsvUploadArea();
 
-    const [uploading, setUploading] = useState(false);
+    const { uploading, handleUpload } = useCsvUploadHandler(files);
 
     const panelFiles = UPLOAD_CSV_TYPES.map((type) => ({
         label: UPLOAD_CSV_DEFINITIONS[type].label,
         file: files[type],
         required: UPLOAD_CSV_DEFINITIONS[type].required,
-        onChange: (f: File | null) =>
-            f && handleCsvFile(UPLOAD_CSV_DEFINITIONS[type].label, f),
-        validationResult: validationResults[type],
+        onChange: (f: File | null) => f && handleCsvFile(UPLOAD_CSV_DEFINITIONS[type].label, f),
+        validationResult: (validationResults[type] === 'valid' ? 'ok' :
+            validationResults[type] === 'invalid' ? 'ng' : 'unknown') as 'ok' | 'ng' | 'unknown',
         onRemove: () => removeCsvFile(type),
     }));
-
-    const handleUpload = async () => {
-        const formData = new FormData();
-        Object.entries(files).forEach(([type, file]) => {
-            if (file) formData.append(type, file);
-        });
-
-        const DISPLAY_AFTER_API_MS = 1000;
-        let notifyFn = () => { };
-
-        setUploading(true);
-
-        try {
-            const res = await fetch('/sql_api/upload/syogun_csv', {
-                method: 'POST',
-                body: formData,
-            });
-
-            const text = await res.text();
-            let result: any;
-            try {
-                result = JSON.parse(text);
-            } catch {
-                notifyFn = () => {
-                    notification.error({
-                        message: 'サーバーエラー',
-                        description: `サーバー応答がJSONではありません: ${text}`,
-                        duration: 6,
-                    });
-                };
-                return;
-            }
-
-            if (res.ok && result.status === "success") {
-                notifyFn = () => {
-                    notification.success({
-                        message: 'アップロード成功',
-                        description: result.detail ?? 'CSVファイルのアップロードが完了しました。',
-                        duration: 4,
-                    });
-                };
-            } else {
-                notifyFn = () => {
-                    notification.error({
-                        message: 'アップロード失敗',
-                        description: result?.detail ?? 'アップロード中にエラーが発生しました。',
-                        duration: 6,
-                    });
-
-                    if (result?.hint) {
-                        notification.info({
-                            message: 'ヒント',
-                            description: result.hint,
-                            duration: 6,
-                        });
-                    }
-
-                    if (result?.result) {
-                        Object.entries(result.result).forEach(([key, val]: [string, any]) => {
-                            if (val.status === "error") {
-                                notification.warning({
-                                    message: `[${val.filename ?? key}] のエラー`,
-                                    description: val.detail ?? '詳細不明のエラーが発生しました。',
-                                    duration: 5,
-                                });
-                            }
-                        });
-                    }
-                };
-            }
-
-            await new Promise((resolve) => setTimeout(resolve, DISPLAY_AFTER_API_MS));
-        } catch (err) {
-            notifyFn = () => {
-                notification.error({
-                    message: '接続エラー',
-                    description: 'サーバーに接続できませんでした。ネットワークを確認してください。',
-                    duration: 6,
-                });
-            };
-        } finally {
-            setUploading(false);
-            setTimeout(() => {
-                notifyFn();
-            }, 300);
-        }
-    };
 
     return (
         <>
@@ -154,57 +49,7 @@ const UploadDatabasePage: React.FC = () => {
                         flexDirection: 'column',
                     }}
                 >
-                    <Collapse
-                        defaultActiveKey={[]}
-                        style={{
-                            marginBottom: 16,
-                            backgroundColor: '#f6ffed',
-                            border: '1px solid #b7eb8f',
-                            borderRadius: 6,
-                        }}
-                        expandIconPosition="start"
-                    >
-                        <Collapse.Panel
-                            header={
-                                <span style={{ fontWeight: 'bold' }}>
-                                    <InfoCircleOutlined style={{ marginRight: 8, color: '#52c41a' }} />
-                                    アップロード手順・ルール
-                                </span>
-                            }
-                            key="1"
-                        >
-                            <Paragraph>
-                                以下の <Tag color="red">3つのCSVファイル</Tag> をアップロードしてください。
-                            </Paragraph>
-
-                            <List
-                                size="small"
-                                bordered={false}
-                                dataSource={[
-                                    { name: '受入一覧', required: true },
-                                    { name: '出荷一覧', required: true },
-                                    { name: 'ヤード一覧', required: true },
-                                ]}
-                                renderItem={(item) => (
-                                    <List.Item style={{ paddingLeft: 0 }}>
-                                        <Tag color="blue">{item.name}</Tag>
-                                        <Text type="secondary">（必須）</Text>
-                                    </List.Item>
-                                )}
-                                style={{ marginBottom: 12 }}
-                            />
-
-                            <Paragraph>
-                                <Text type="danger">⚠️ ファイルは「将軍ソフトからダウンロードしたままの状態」でアップロードしてください。</Text><br />
-                                自分で編集・加工・列の並び替え・名前変更をしたファイルは使用できません。
-                            </Paragraph>
-
-                            <Paragraph>
-                                <Text type="warning">📅 アップロードするすべてのファイルで「伝票日付」がそろっている必要があります。</Text><br />
-                                1日でもズレているとエラーになりますので、日付の範囲をご確認ください。
-                            </Paragraph>
-                        </Collapse.Panel>
-                    </Collapse>
+                    <UploadInstructions />
 
                     <CsvUploadPanel
                         upload={{
@@ -219,8 +64,9 @@ const UploadDatabasePage: React.FC = () => {
                             }),
                         }}
                     />
+
                     <Button
-                        type='primary'
+                        type="primary"
                         disabled={!canUpload}
                         onClick={handleUpload}
                         style={{ marginTop: 24, width: '100%' }}
@@ -248,7 +94,7 @@ const UploadDatabasePage: React.FC = () => {
                             validationResult={validationResults[type]}
                             cardHeight={CARD_HEIGHT}
                             tableBodyHeight={TABLE_BODY_HEIGHT}
-                            backgroundColor={CSV_TYPE_COLORS[type]}  // ← 追加
+                            backgroundColor={csvTypeColors[type as keyof typeof csvTypeColors]}
                         />
                     ))}
                 </Col>
