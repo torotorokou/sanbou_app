@@ -7,3 +7,4 @@ PyYAML
 langchain-community
 langchain-openai
 Pillow
+PyPDF2
