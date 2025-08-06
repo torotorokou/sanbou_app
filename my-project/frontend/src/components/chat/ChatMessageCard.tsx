@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, Typography, Button, Tag, Space } from 'antd';
 import { UserOutlined, RobotOutlined, BookOutlined } from '@ant-design/icons';
 import TypewriterText from '@/components/ui/TypewriterText';
-import type { ChatMessage } from '@/types/chat';
+import type { ChatMessage } from '../../types/chat';
 
 type Props = {
     msg: ChatMessage;
@@ -154,7 +154,7 @@ const ChatMessageCard: React.FC<Props> = ({
                                         type='link'
                                         size='small'
                                         icon={<BookOutlined />}
-                                        onClick={() => onOpenPdf?.(src.pdf)}
+                                        onClick={() => src.pdf && onOpenPdf?.(src.pdf)}
                                         style={{ padding: 0, marginTop: 2 }}
                                     >
                                         PDFを開く

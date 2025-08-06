@@ -1,6 +1,6 @@
 import pandas as pd
 from app.api.st_app.utils.logger import app_logger
-from app.api.st_app.utils.config_loader import get_template_config
+from app.api.st_app.utils.config_loader import get_template_config, clean_na_strings
 from app.api.st_app.logic.manage.utils.load_template import load_master_and_template
 from app.api.st_app.logic.manage.utils.excel_tools import add_label_rows_and_restore_sum
 from app.api.st_app.utils.data_cleaning import clean_cd_column
@@ -74,7 +74,22 @@ def apply_shobun_weight(
     aggregated.rename(columns={"業者CD": "業者CD", "品名": "品名"}, inplace=True)
 
     # master_csv, aggregated の型整理
+    # <NA>文字列をクリーンアップしてからto_numericを実行
+    print(
+        f"[DEBUG] master_csv['値'] before cleaning: {master_csv['値'].head(3).tolist()}"
+    )
+    print(f"[DEBUG] master_csv['値'] dtypes: {master_csv['値'].dtype}")
+
+    master_csv["値"] = master_csv["値"].apply(clean_na_strings)
+    print(
+        f"[DEBUG] master_csv['値'] after clean_na_strings: {master_csv['値'].head(3).tolist()}"
+    )
+
     master_csv["値"] = pd.to_numeric(master_csv["値"], errors="coerce").fillna(0)
+    print(
+        f"[DEBUG] master_csv['値'] after to_numeric: {master_csv['値'].head(3).tolist()}"
+    )
+
     master_csv = clean_cd_column(master_csv, col="業者CD")
     aggregated = clean_cd_column(aggregated, col="業者CD")
 

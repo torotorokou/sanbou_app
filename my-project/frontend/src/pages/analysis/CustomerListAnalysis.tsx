@@ -240,7 +240,7 @@ const CustomerListAnalysis: React.FC = () => {
                                 data={onlyCompare}
                                 cardStyle={{
                                     backgroundColor:
-                                        customTokens.colorBgElevated,
+                                        customTokens.colorBgContainer,
                                 }}
                                 headStyle={{
                                     background:

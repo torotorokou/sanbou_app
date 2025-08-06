@@ -1,5 +1,6 @@
 import pandas as pd
 from app.api.st_app.utils.value_setter import set_value_fast_safe
+from app.api.st_app.utils.config_loader import clean_na_strings
 
 
 def apply_summary_all_items(
@@ -51,6 +52,8 @@ def apply_division_result_to_master(
     オブジェクト型でも安全に数値変換して演算する。
     """
     # 対象列を数値型に変換
+    # <NA>文字列をクリーンアップしてからto_numericを実行
+    df[value_col] = df[value_col].apply(clean_na_strings)
     df[value_col] = pd.to_numeric(df[value_col], errors="coerce")
 
     numerator = df.loc[df[key_col] == numerator_item, value_col]
@@ -83,6 +86,8 @@ def apply_subtraction_result_to_master(
     オブジェクト型でも安全に数値変換して演算する。
     """
     # 対象列を数値型に変換
+    # <NA>文字列をクリーンアップしてからto_numericを実行
+    df[value_col] = df[value_col].apply(clean_na_strings)
     df[value_col] = pd.to_numeric(df[value_col], errors="coerce")
 
     minuend = df.loc[df[key_col] == minuend_item, value_col]

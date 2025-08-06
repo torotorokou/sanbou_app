@@ -1,5 +1,6 @@
 import pandas as pd
 from app.api.st_app.config.loader.main_path import MainPath
+from app.api.st_app.utils.config_loader import clean_na_strings
 
 
 class ReadTransportDiscount:
@@ -50,8 +51,10 @@ class TransportDiscountService:
         discount_rows["運搬業者"] = discount_rows["運搬業者"].astype(str) + "・合積"
 
         # 運搬費を割引
+        # <NA>文字列をクリーンアップしてからfloat変換
+        cleaned_cost = discount_rows["運搬費"].apply(clean_na_strings)
         discount_rows["運搬費"] = (
-            discount_rows["運搬費"].astype(float) * self.discount_rate
+            pd.to_numeric(cleaned_cost, errors="coerce").fillna(0) * self.discount_rate
         )
 
         # 合積フラグを 0 に（新しい行なので既に適用済）
