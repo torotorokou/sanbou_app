@@ -4,9 +4,16 @@ import React from 'react';
 import type { CsvDefinition } from '../CsvDefinition';
 import { CSV_DEFINITIONS } from '../CsvDefinition';
 
+import BlockUnitPriceInteractive from '../../components/Report/individual_process/BlockUnitPriceInteractive';
+
 // ==============================
 // 🤉 帳票定義（キー + ラベル）
 // ==============================
+
+// ==============================
+// APIエンドポイント定数（帳簿作成など）
+// ==============================
+export const LEDGER_API_URL = '/ledger_api/report/manage';
 
 export const REPORT_KEYS = {
     factory_report: { value: 'factory_report', label: '工場日報' },
@@ -76,7 +83,8 @@ export const modalStepsMap: Record<
         { label: '完了', content: <div>完了しました</div>, showNext: false, showClose: true },
     ],
     balance_sheet: [
-        { label: '帳簿作成中', content: <div>帳票を生成中です</div>, showNext: true, showClose: false },
+        { label: '帳簿作成中', content: <div>帳票を生成中です</div>, showNext: false, showClose: false },
+        { label: '運搬業者選択', content: <BlockUnitPriceInteractive />, showNext: true, showClose: false },
         { label: '完了', content: <div>完了しました</div>, showNext: false, showClose: true },
     ],
     average_sheet: [

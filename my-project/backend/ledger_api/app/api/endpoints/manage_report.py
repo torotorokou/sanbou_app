@@ -10,6 +10,8 @@ from backend_shared.src.csv_formatter.formatter_config import build_formatter_co
 from app.api.services.report.generator_factory import get_report_generator
 
 from app.api.utils.excel_pdf_zip_utils import create_excel_bytes, generate_excel_pdf_zip
+from api.services.csv_validator_facade import CsvValidatorService
+from app.api.services.csv_formatter_service import CsvFormatterService
 
 router = APIRouter()
 
@@ -23,6 +25,26 @@ router = APIRouter()
 # balance_management_table
 
 
+def read_csv_files(files: dict) -> tuple[dict, dict | None]:
+    csv_reader = SafeCsvReader()
+    dfs = {}
+    for k, f in files.items():
+        try:
+            f.file.seek(0)
+            dfs[k] = csv_reader.read(f.file)
+            f.file.seek(0)
+        except Exception as e:
+            print(f"[ERROR] reading CSV for {k}: {e}")
+            return None, {
+                "status_code": 422,
+                "status_str": "error",
+                "code": "csv_read_error",
+                "detail": f"{k} のCSV読み込みに失敗しました: {str(e)}",
+                "hint": f"{k}ファイルが正しいCSV形式か確認してください。",
+            }
+    return dfs, None
+
+
 @router.post("/report/manage")
 async def generate_pdf(
     report_key: str = Form(...),
@@ -30,7 +52,6 @@ async def generate_pdf(
     yard: UploadFile = File(None),
     receive: UploadFile = File(None),
 ):
-    # ここにtryは不要
     files = {
         k: v
         for k, v in {"shipment": shipment, "yard": yard, "receive": receive}.items()
@@ -48,97 +69,33 @@ async def generate_pdf(
             hint="3つすべてのCSVをアップロードしてください。",
         )
 
-    # データフレーム化（SafeCsvReaderを利用）
-    dfs = {}
-    csv_reader = SafeCsvReader()
-    for k, f in files.items():
-        try:
-            print(f"[DEBUG] Reading CSV file for {k}")
-            f.file.seek(0)
-            dfs[k] = csv_reader.read(f.file)
-            f.file.seek(0)
-            print(f"[DEBUG] Read CSV for {k}: shape={dfs[k].shape}")
-            print(f"[DEBUG] {k} columns: {dfs[k].columns.tolist()}")
-            print(f"[DEBUG] {k} head:\n{dfs[k].head()}\n")
-        except Exception as e:
-            print(f"[ERROR] reading CSV for {k}: {e}")
-            return api_response(
-                status_code=422,
-                status_str="error",
-                code="csv_read_error",
-                detail=f"{k} のCSV読み込みに失敗しました: {str(e)}",
-                hint=f"{k}ファイルが正しいCSV形式か確認してください。",
-            )
+    # 汎用CSV読込
+    dfs, error = read_csv_files(files)
+    if error:
+        return api_response(**error)
 
     # バリデーション
-    config_loader = SyogunCsvConfigLoader()
-    required_columns = {k: config_loader.get_expected_headers(k) for k in files.keys()}
-    validator = CSVValidationResponder(required_columns)
-
-    print("Validating columns...")
-    res = validator.validate_columns(dfs, files)
-    if res:
-        print(f"Column validation error: {res}")
-        return api_response(
-            status_code=422,
-            status_str="error",
-            code="column_validation_error",
-            detail=res.get("detail", "カラムバリデーションに失敗しました"),
-            result=res.get("result"),
-            hint=res.get("hint"),
-        )
-
-    print("Validating denpyou_date exists...")
-    res = validator.validate_denpyou_date_exists(dfs, files)
-    if res:
-        print(f"Denpyou_date missing error: {res}")
-        return api_response(
-            status_code=422,
-            status_str="error",
-            code="date_missing",
-            detail=res.get("detail", "伝票日付が見つかりませんでした"),
-            result=res.get("result"),
-            hint=res.get("hint"),
-        )
-
-    print("Validating denpyou_date consistency...")
-    res = validator.validate_denpyou_date_consistency(dfs)
-    if res:
-        print(f"Denpyou_date inconsistency error: {res}")
-        return api_response(
-            status_code=422,
-            status_str="error",
-            code="date_inconsistent",
-            detail=res.get("detail", "伝票日付に不一致があります"),
-            result=res.get("result"),
-            hint=res.get("hint"),
-        )
+    validator_service = CsvValidatorService()
+    validation_error = validator_service.validate(dfs, files)
+    if validation_error:
+        print(f"Validation error: {validation_error}")
+        return api_response(**validation_error)
 
     # フォーマット変換
     print("Formatting DataFrames...")
-    loader = SyogunCsvConfigLoader()
-    df_formatted = {}
-    for csv_type, df in dfs.items():
-        try:
-            config = build_formatter_config(loader, csv_type)
-            formatter = CSVFormatterFactory.get_formatter(csv_type, config)
-            df_formatted[csv_type] = formatter.format(df)
-            print(f"Formatted {csv_type}: shape={df_formatted[csv_type].shape}")
-        except Exception as e:
-            print(f"Error formatting {csv_type}: {e}")
-            raise
+    formatter_service = CsvFormatterService()
+    df_formatted = formatter_service.format(dfs)
+    for csv_type, df in df_formatted.items():
+        print(f"Formatted {csv_type}: shape={df.shape}")
 
     # 帳票生成
     try:
         print("Preparing report generator...")
         generator = get_report_generator(report_key, df_formatted)
-
         print("Running preprocess...")
         generator.preprocess(report_key)
-
         print("Running main_process...")
         df_result = generator.main_process()
-
         print("Making report date...")
         report_date = generator.make_report_date(df_formatted)
     except Exception as e:
