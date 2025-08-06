@@ -1,11 +1,7 @@
-// /app/src/constants/reportConfig/managementReportConfig.ts
-import {
-    parseReceiveCSV,
-    parseShipmentCSV,
-    parseYardCSV,
-} from '@/parsers/csvParsers';
+// /app/src/constants/reportConfig/managementReportConfig.tsx
+import React from 'react';
 
-import type { CsvType, CsvDefinition } from '../CsvDefinition';
+import type { CsvDefinition } from '../CsvDefinition';
 import { CSV_DEFINITIONS } from '../CsvDefinition';
 
 // ==============================
@@ -61,15 +57,41 @@ export const csvConfigMap: Record<ReportKey, CsvConfigGroup> = {
 };
 
 // =====================================
-// 🔁 ステップ構成（帳票ごとの進行表示）
+// 🔁 ステップ構成＋モーダル内容（帳票ごとに統一）
 // =====================================
 
-export const stepConfigMap: Record<ReportKey, string[]> = {
-    factory_report: ['CSV選択', 'PDF生成中', '完了'],
-    balance_sheet: ['CSV読み込み', '帳票生成', '完了'],
-    average_sheet: ['準備中'],
-    block_unit_price: ['準備中'],
-    management_sheet: ['準備中'],
+export type ModalStepConfig = {
+    label: string;
+    content: React.ReactNode;
+    showNext?: boolean;
+    showClose?: boolean;
+};
+
+export const modalStepsMap: Record<
+    ReportKey,
+    ModalStepConfig[]
+> = {
+    factory_report: [
+        { label: '帳簿作成中', content: <div>帳簿を作成中です。しばらくお待ちください。</div>, showNext: false, showClose: false },
+        { label: '完了', content: <div>完了しました</div>, showNext: false, showClose: true },
+    ],
+    balance_sheet: [
+        { label: '帳簿作成中', content: <div>帳票を生成中です</div>, showNext: true, showClose: false },
+        { label: '完了', content: <div>完了しました</div>, showNext: false, showClose: true },
+    ],
+    average_sheet: [
+        { label: '帳簿作成中', content: <div>帳票を生成中です</div>, showNext: true, showClose: false },
+        { label: '完了', content: <div>完了しました</div>, showNext: false, showClose: true },
+    ],
+    block_unit_price: [
+        { label: '帳簿作成中', content: <div>帳簿を作成中です。しばらくお待ちください。</div>, showNext: false, showClose: false },
+        { label: '帳簿作成中', content: <div>帳簿を作成中です。しばらくお待ちください。</div>, showNext: false, showClose: false },
+        { label: '完了', content: <div>完了しました</div>, showNext: false, showClose: true },
+    ],
+    management_sheet: [
+        { label: '帳簿作成中', content: <div>帳票を生成中です</div>, showNext: true, showClose: false },
+        { label: '完了', content: <div>完了しました</div>, showNext: false, showClose: true },
+    ],
 };
 
 // ===================================
@@ -113,7 +135,7 @@ export const reportConfigMap: Record<
         key,
         {
             csvConfigs: csvConfigMap[key as ReportKey],
-            steps: stepConfigMap[key as ReportKey],
+            steps: modalStepsMap[key as ReportKey].map((step) => step.label),
             generatePdf: pdfGeneratorMap[key as ReportKey],
             previewImage: pdfPreviewMap[key as ReportKey],
         },

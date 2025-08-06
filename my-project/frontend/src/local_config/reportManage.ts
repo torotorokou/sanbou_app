@@ -3,12 +3,12 @@
 import {
     REPORT_KEYS,
     type ReportKey,
-} from '@/constants/reportConfig/managementReportConfig';
+} from '@/constants/reportConfig/managementReportConfig.tsx';
 import {
     csvConfigMap,
     stepConfigMap,
     pdfGeneratorMap,
-} from '@/constants/reportConfig/managementReportConfig';
+} from '@/constants/reportConfig/managementReportConfig.tsx';
 
 type CsvConfig = {
     label: string;

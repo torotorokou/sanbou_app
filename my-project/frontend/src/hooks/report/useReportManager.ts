@@ -1,6 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
-import { reportConfigMap } from '../../constants/reportConfig/managementReportConfig';
-import type { ReportKey } from '../../constants/reportConfig/managementReportConfig';
+import {
+    reportConfigMap,
+    modalStepsMap,
+} from '../../constants/reportConfig/managementReportConfig.tsx';
+import type { ReportKey } from '../../constants/reportConfig/managementReportConfig.tsx';
 
 // CSVファイルの型定義
 type CsvFiles = { [csvLabel: string]: File | null };
@@ -86,29 +89,33 @@ export const useReportManager = (
      * ステップを自動的に更新する
      */
     useEffect(() => {
-        if (!areRequiredCsvsUploaded()) {
-            setCurrentStep(0);
-            return;
-        }
+        // CSV未アップロード時はcurrentStep制御不要（モーダル非表示）
+        if (!areRequiredCsvsUploaded()) return;
 
-        if (!isFinalized) {
-            setCurrentStep(1);
-            return;
-        }
-
+        // 帳簿作成完了（isFinalized && previewUrl）で完了ステップへ
         if (isFinalized && previewUrl) {
-            setCurrentStep(2);
-            return;
+            setCurrentStep(1); // 完了
+        } else {
+            setCurrentStep(0); // 帳簿作成中
         }
-
-        setCurrentStep(0);
     }, [
         selectedReport,
         csvFiles,
+        areRequiredCsvsUploaded,
         isFinalized,
         previewUrl,
-        areRequiredCsvsUploaded,
     ]);
+
+    // 完了ステップ到達時は2秒後に自動でモーダルを閉じる
+    useEffect(() => {
+        const stepCount = modalStepsMap[selectedReport].length;
+        if (currentStep === stepCount - 1 && isModalOpen) {
+            const timer = setTimeout(() => {
+                setIsModalOpen(false);
+            }, 2000);
+            return () => clearTimeout(timer);
+        }
+    }, [currentStep, selectedReport, isModalOpen]);
 
     return {
         // 状態
