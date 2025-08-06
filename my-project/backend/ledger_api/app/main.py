@@ -1,6 +1,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.endpoints import manage_report
+from app.api.endpoints.block_unit_price_interactive import (
+    router as block_unit_price_router,
+)
 
 app = FastAPI(
     title="帳票・日報API",
@@ -20,6 +23,7 @@ app.add_middleware(
 
 # ルーター登録
 app.include_router(manage_report.router)
+app.include_router(block_unit_price_router, prefix="/block_unit_price_interactive")
 
 
 @app.get("/")
