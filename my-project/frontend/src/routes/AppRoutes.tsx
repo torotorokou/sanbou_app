@@ -9,11 +9,11 @@ import { ROUTER_PATHS } from '@/constants/router';
 import ManagementDashboard from '../pages/ManagementDashboard';
 import FactoryDashboard from '../pages/FactoryDashboard';
 import PricingDashboard from '../pages/PricingDashboard';
-import CustomerListDashboard from '../pages/CustomerListDashboard';
+import CustomerListDashboard from '../pages/CustomerListDashboard.tsx';
 
 // 帳票ページ
 import ReportFactory from '../pages/report/ReportFactory';
-import ReportPage from '../pages/report/ReportPage';
+import ReportManagePage from '../pages/report/ReportManagePage.tsx';
 
 // データ分析
 import CustomerListAnalysis from '../pages/analysis/CustomerListAnalysis.tsx';
@@ -30,10 +30,13 @@ import RecordListPage from '../pages/database/RecordListPage';
 
 // トークンプレビュー
 import TokenPreviewPage from '@/pages/TokenPreviewPage';
-import { ImportOutlined } from '@ant-design/icons';
+import TestPage from '@/pages/TestPage';
 
 const AppRoutes: React.FC = () => (
     <Routes>
+        {/* テスト用ルート */}
+        <Route path='/test' element={<TestPage />} />
+
         {/* ルートリダイレクト */}
         <Route
             path='/'
@@ -53,7 +56,7 @@ const AppRoutes: React.FC = () => (
         />
 
         {/* 帳票ページ */}
-        <Route path={ROUTER_PATHS.REPORT_MANAGE} element={<ReportPage />} />
+        <Route path={ROUTER_PATHS.REPORT_MANAGE} element={<ReportManagePage />} />
         <Route path={ROUTER_PATHS.REPORT_FACTORY} element={<ReportFactory />} />
 
         {/* データ分析 */}
