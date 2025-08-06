@@ -3,7 +3,7 @@ import { Typography, Spin } from 'antd';
 import ReportManagePageLayout from './common/ReportManagePageLayout';
 import ReportStepperModal from './common/ReportStepperModal';
 import PDFViewer from './viewer/PDFViewer';
-import { pdfPreviewMap } from '../../constants/reportConfig/managementReportConfig';
+import { pdfPreviewMap, modalStepsMap } from '../../constants/reportConfig/managementReportConfig.tsx';
 import { useReportBaseBusiness } from '../../hooks/report';
 import type { ReportBaseProps } from '../../types/reportBase';
 
@@ -59,11 +59,15 @@ const ReportBase: React.FC<ReportBaseProps> = ({
         );
     };
 
+    const steps = modalStepsMap[reportKey].map(step => step.label);
+    const contents = modalStepsMap[reportKey].map(step => step.content);
+    const stepConfigs = modalStepsMap[reportKey];
+
     return (
         <>
             <ReportStepperModal
                 open={modal.modalOpen}
-                steps={step.steps}
+                steps={steps}
                 currentStep={step.currentStep}
                 onNext={() => {
                     if (step.currentStep === step.steps.length - 1) {
@@ -71,20 +75,9 @@ const ReportBase: React.FC<ReportBaseProps> = ({
                         step.setCurrentStep(0);
                     }
                 }}
+                stepConfigs={stepConfigs}
             >
-                {step.currentStep === 0 && (
-                    <Typography.Text>
-                        レポート生成の準備が整いました。
-                    </Typography.Text>
-                )}
-                {step.currentStep === 1 && loading.loading && (
-                    <Spin tip='ExcelとPDFを生成中です...' />
-                )}
-                {step.currentStep === 2 && (
-                    <Typography.Text type='success'>
-                        ✅ ExcelとPDFが作成されました。
-                    </Typography.Text>
-                )}
+                {contents[step.currentStep]}
             </ReportStepperModal>
 
             <ReportManagePageLayout
