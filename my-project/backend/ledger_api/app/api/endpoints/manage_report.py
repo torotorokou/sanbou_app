@@ -1,48 +1,24 @@
-from backend_shared.src.utils.csv_reader import SafeCsvReader
-from fastapi import APIRouter, UploadFile, Form, File
-from backend_shared.src.response_utils import api_response
-from backend_shared.config.config_loader import SyogunCsvConfigLoader
-from backend_shared.src.csv_validator.csv_upload_validator_api import (
-    CSVValidationResponder,
-)
-from backend_shared.src.csv_formatter.formatter_factory import CSVFormatterFactory
-from backend_shared.src.csv_formatter.formatter_config import build_formatter_config
-from app.api.services.report.generator_factory import get_report_generator
+"""
+帳票管理APIエンドポイント
 
+CSVファイルのアップロード、バリデーション、フォーマット変換、
+帳票生成、Excel・PDF出力、ZIP圧縮までの一連の処理を行うAPIエンドポイントです。
+"""
+
+from fastapi import APIRouter, UploadFile, Form, File
+from backend_shared.src.utils.csv_reader import read_csv_files
+from app.api.services.report.generator_factory import get_report_generator
 from app.api.utils.excel_pdf_zip_utils import create_excel_bytes, generate_excel_pdf_zip
 from api.services.csv_validator_facade import CsvValidatorService
 from app.api.services.csv_formatter_service import CsvFormatterService
 
+# 統一レスポンスクラス
+from src.api_response.response_error import (
+    NoFilesUploadedResponse,
+)
+
+# APIルーターの初期化
 router = APIRouter()
-
-
-# 管理帳票のreport_key
-# factory_report
-# balance_sheet
-# average_sheet
-# block_unit_price
-# management_sheet
-# balance_management_table
-
-
-def read_csv_files(files: dict) -> tuple[dict, dict | None]:
-    csv_reader = SafeCsvReader()
-    dfs = {}
-    for k, f in files.items():
-        try:
-            f.file.seek(0)
-            dfs[k] = csv_reader.read(f.file)
-            f.file.seek(0)
-        except Exception as e:
-            print(f"[ERROR] reading CSV for {k}: {e}")
-            return None, {
-                "status_code": 422,
-                "status_str": "error",
-                "code": "csv_read_error",
-                "detail": f"{k} のCSV読み込みに失敗しました: {str(e)}",
-                "hint": f"{k}ファイルが正しいCSV形式か確認してください。",
-            }
-    return dfs, None
 
 
 @router.post("/report/manage")
@@ -52,6 +28,22 @@ async def generate_pdf(
     yard: UploadFile = File(None),
     receive: UploadFile = File(None),
 ):
+    """
+    帳票生成APIエンドポイント
+
+    CSVファイル（出荷、ヤード、受入）をアップロードし、
+    指定された帳票タイプに基づいてExcel・PDFファイルを生成します。
+
+    Args:
+        report_key (str): 帳票タイプを識別するキー
+        shipment (UploadFile, optional): 出荷データCSVファイル
+        yard (UploadFile, optional): ヤードデータCSVファイル
+        receive (UploadFile, optional): 受入データCSVファイル
+
+    Returns:
+        StreamingResponse: Excel・PDFファイルが含まれたZIPファイル
+    """
+    # アップロードされたファイルの整理
     files = {
         k: v
         for k, v in {"shipment": shipment, "yard": yard, "receive": receive}.items()
@@ -59,55 +51,54 @@ async def generate_pdf(
     }
     print(f"Uploaded files: {list(files.keys())}")
 
+    # ✅ ファイル未アップロードチェック
     if not files:
         print("No files uploaded.")
-        return api_response(
-            status_code=422,
-            status_str="error",
-            code="no_files",
-            detail="ファイルが1つもアップロードされていません。",
-            hint="3つすべてのCSVをアップロードしてください。",
-        )
+        return NoFilesUploadedResponse().to_json_response()
 
-    # 汎用CSV読込
+    # ✅ CSV読込処理
     dfs, error = read_csv_files(files)
     if error:
-        return api_response(**error)
+        return error.to_json_response()
 
-    # バリデーション
+    # ✅ CSVデータのバリデーション処理
     validator_service = CsvValidatorService()
     validation_error = validator_service.validate(dfs, files)
     if validation_error:
         print(f"Validation error: {validation_error}")
-        return api_response(**validation_error)
+        return validation_error.to_json_response()
 
-    # フォーマット変換
+    # ✅ データフォーマット変換処理
     print("Formatting DataFrames...")
     formatter_service = CsvFormatterService()
     df_formatted = formatter_service.format(dfs)
     for csv_type, df in df_formatted.items():
         print(f"Formatted {csv_type}: shape={df.shape}")
 
-    # 帳票生成
+    # ✅ 帳票生成処理
     try:
         print("Preparing report generator...")
+        # 帳票生成器の取得
         generator = get_report_generator(report_key, df_formatted)
         print("Running preprocess...")
+        # 前処理の実行
         generator.preprocess(report_key)
         print("Running main_process...")
+        # メイン処理の実行
         df_result = generator.main_process()
         print("Making report date...")
+        # 帳票日付の生成
         report_date = generator.make_report_date(df_formatted)
     except Exception as e:
-        print(f"Error in report generation (preprocess/main_process): {e}")
-        raise
+        print(f"[ERROR] Report generation failed: {e}")
+        raise  # 必要に応じて InternalServerErrorResponse を作成してもよい
 
-    # エクセル出力
+    # ✅ Excel出力処理
     try:
         excel_bytes = create_excel_bytes(generator, df_result, report_date)
     except Exception as e:
-        print(f"Error in create_excel_bytes: {e}")
+        print(f"[ERROR] Excel export failed: {e}")
         raise
 
-    # PDF・ZIP作成・レスポンス返却
+    # ✅ ZIP作成＆レスポンス返却
     return generate_excel_pdf_zip(excel_bytes, report_key, report_date)
