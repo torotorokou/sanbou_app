@@ -1,18 +1,30 @@
 #!/usr/bin/env python3
 """
 自動インポート修正スクリプト
-相対インポートを絶対インポートに変更します
+
+相対インポートを絶対インポートに変更し、プロジェクト全体の
+インポート構造を統一するためのユーティリティスクリプトです。
 """
 
-import os
 import re
-import sys
 from pathlib import Path
 
 
 def fix_imports_in_file(file_path: Path, project_root: Path):
-    """単一ファイルのインポートを修正する"""
+    """
+    単一ファイルのインポート文を修正
+
+    指定されたファイル内の相対インポートを絶対インポートに変更します。
+
+    Args:
+        file_path (Path): 修正対象のファイルパス
+        project_root (Path): プロジェクトルートディレクトリのパス
+
+    Returns:
+        bool: ファイルが変更された場合True、変更されなかった場合False
+    """
     try:
+        # ファイル内容を読み込み
         with open(file_path, "r", encoding="utf-8") as f:
             content = f.read()
 
