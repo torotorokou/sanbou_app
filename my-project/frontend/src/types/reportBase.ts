@@ -1,5 +1,6 @@
 import type { UploadProps } from 'antd/es/upload';
-import type { ReportKey } from '../constants/reportConfig/managementReportConfig.tsx';
+import type { CsvConfigGroup } from '../constants/reportConfig';
+import type { ReportKey } from '../constants/reportConfig';
 
 /**
  * ReportBase関連の型定義を整理

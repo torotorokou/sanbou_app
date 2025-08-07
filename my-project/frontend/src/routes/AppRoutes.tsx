@@ -14,6 +14,7 @@ import CustomerListDashboard from '../pages/CustomerListDashboard.tsx';
 // 帳票ページ
 import ReportFactory from '../pages/report/ReportFactory';
 import ReportManagePage from '../pages/report/ReportManagePage.tsx';
+import LedgerBookPage from '../pages/LedgerBookPage';
 
 // データ分析
 import CustomerListAnalysis from '../pages/analysis/CustomerListAnalysis.tsx';
@@ -58,6 +59,7 @@ const AppRoutes: React.FC = () => (
         {/* 帳票ページ */}
         <Route path={ROUTER_PATHS.REPORT_MANAGE} element={<ReportManagePage />} />
         <Route path={ROUTER_PATHS.REPORT_FACTORY} element={<ReportFactory />} />
+        <Route path={ROUTER_PATHS.LEDGER_BOOK} element={<LedgerBookPage />} />
 
         {/* データ分析 */}
         <Route

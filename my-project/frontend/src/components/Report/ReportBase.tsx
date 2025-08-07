@@ -1,9 +1,8 @@
 import React, { useEffect } from 'react';
-import { Typography, Spin } from 'antd';
 import ReportManagePageLayout from './common/ReportManagePageLayout';
 import ReportStepperModal from './common/ReportStepperModal';
 import PDFViewer from './viewer/PDFViewer';
-import { pdfPreviewMap, modalStepsMap } from '../../constants/reportConfig/managementReportConfig.tsx';
+import { pdfPreviewMap, modalStepsMap } from '../../constants/reportConfig';
 import { useReportBaseBusiness } from '../../hooks/report';
 import type { ReportBaseProps } from '../../types/reportBase';
 
