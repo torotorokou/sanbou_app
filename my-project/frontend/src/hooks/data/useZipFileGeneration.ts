@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import * as JSZip from 'jszip';
 import { notifySuccess, notifyError, notifyInfo } from '../../utils/notify';
-import { LEDGER_API_URL } from '../../constants/reportConfig/managementReportConfig';
+import { reportApiUrlMap } from '../../constants/reportConfig/managementReportConfig';
 import type { ReportKey } from '../../constants/reportConfig/managementReportConfig.tsx';
 
 type CsvFiles = { [csvLabel: string]: File | null };
@@ -66,7 +66,7 @@ export const useZipFileGeneration = () => {
                 });
                 console.log(`FormData key: report_key, value: ${reportKey}`);
 
-                const response = await fetch(LEDGER_API_URL, {
+                const response = await fetch(reportApiUrlMap[reportKey], {
                     method: 'POST',
                     body: formData,
                 });

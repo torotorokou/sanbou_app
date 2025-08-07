@@ -1,0 +1,495 @@
+/* 統一されたワークフローステップのスタイリング */
+.block-unit-price-workflow {
+    padding: 0;
+    height: 100%;
+}
+
+.workflow-step {
+    padding: 20px 0;
+    min-height: 200px;
+}
+
+.step-header {
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.step-header h4 {
+    margin: 0 0 8px 0;
+    color: #333;
+    font-size: 1.3em;
+    font-weight: 600;
+}
+
+.step-header p {
+    margin: 0;
+    color: #666;
+    font-size: 14px;
+}
+
+/* 進行状況インジケーター */
+.selection-progress {
+    margin-bottom: 20px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border-left: 4px solid #007bff;
+}
+
+.progress-indicator {
+    font-weight: 600;
+    font-size: 16px;
+}
+
+.progress-indicator.complete {
+    color: #28a745;
+    border-left-color: #28a745;
+}
+
+.progress-indicator.incomplete {
+    color: #dc3545;
+    border-left-color: #dc3545;
+}
+
+.warning-text {
+    font-size: 14px;
+    color: #dc3545;
+    font-weight: normal;
+}
+
+/* テーブル行の状態表示 */
+.selection-table tbody tr.selected {
+    background-color: #e8f5e8;
+}
+
+.selection-table tbody tr.unselected {
+    background-color: #fff5f5;
+}
+
+.transporter-select {
+    width: 100%;
+    padding: 8px;
+    border: 2px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.transporter-select:focus {
+    border-color: #007bff;
+    outline: none;
+}
+
+/* 選択内容詳細表示 */
+.selections-detail {
+    margin: 20px 0;
+}
+
+.selection-item {
+    margin-bottom: 15px;
+    padding: 15px;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    background: #f8f9fa;
+}
+
+.item-info {
+    margin-bottom: 10px;
+}
+
+.item-info div {
+    margin-bottom: 5px;
+    font-size: 14px;
+}
+
+.selected-transporter {
+    padding-top: 10px;
+    border-top: 1px solid #dee2e6;
+    font-size: 15px;
+}
+
+.transporter-name {
+    color: #007bff;
+    font-weight: 600;
+}
+
+.selection-count {
+    margin-top: 20px;
+    padding: 12px;
+    background: #d4edda;
+    color: #155724;
+    border-radius: 6px;
+    text-align: center;
+    font-weight: 600;
+}
+
+/* ステップ0: データ処理中 */
+.step-ready {
+    text-align: center;
+    padding: 30px 20px;
+    background-color: #f0f9ff;
+    border-radius: 8px;
+    border: 1px solid #bfdbfe;
+}
+
+.step-ready .ready-icon {
+    font-size: 2.5em;
+    margin-bottom: 15px;
+}
+
+.step-ready p:first-of-type {
+    color: #059669;
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+.step-processing {
+    text-align: center;
+    padding: 40px 20px;
+}
+
+.processing-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    color: #6b7280;
+}
+
+.spinner {
+    font-size: 1.5em;
+    animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* ステップ1: 運搬業者選択テーブル */
+.transporter-selection-table {
+    margin: 0;
+    padding: 0;
+}
+
+.transporter-selection-table h4 {
+    margin-bottom: 15px;
+    color: #333;
+    font-size: 1.1em;
+    font-weight: 600;
+}
+
+.table-container {
+    max-height: 350px;
+    overflow-y: auto;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    background-color: white;
+}
+
+.selection-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.selection-table th,
+.selection-table td {
+    padding: 10px 8px;
+    text-align: left;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.selection-table th {
+    background-color: #f9fafb;
+    font-weight: 600;
+    color: #374151;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+.selection-table tbody tr:hover {
+    background-color: #f9fafb;
+}
+
+.transporter-select {
+    width: 100%;
+    padding: 6px 8px;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    font-size: 12px;
+    background-color: white;
+}
+
+.transporter-select:focus {
+    border-color: #3b82f6;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+.selection-summary {
+    margin-top: 12px;
+    padding: 12px;
+    background-color: #eff6ff;
+    border-radius: 6px;
+    border-left: 4px solid #3b82f6;
+}
+
+.selection-summary h5 {
+    margin: 0;
+    color: #1e40af;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+/* ステップ2: 計算実行中 */
+.confirmation-summary {
+    text-align: center;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.confirmation-summary h5 {
+    margin-bottom: 12px;
+    color: #374151;
+    font-size: 1.1em;
+}
+
+.selection-count {
+    color: #059669;
+    font-weight: 600;
+    padding: 8px 16px;
+    background-color: #d1fae5;
+    border-radius: 6px;
+    border: 1px solid #a7f3d0;
+}
+
+.selection-error {
+    color: #dc2626;
+    font-weight: 600;
+    padding: 8px 16px;
+    background-color: #fee2e2;
+    border-radius: 6px;
+    border: 1px solid #fca5a5;
+}
+
+.calculation-status {
+    text-align: center;
+    padding: 30px 20px;
+    background-color: #fef3c7;
+    border-radius: 8px;
+    border: 1px solid #fcd34d;
+}
+
+.status-icon {
+    font-size: 2em;
+    margin-bottom: 10px;
+}
+
+.calculation-status p {
+    color: #92400e;
+    font-weight: 500;
+}
+
+/* ステップ3: 完了 */
+.completion-message {
+    text-align: center;
+    padding: 40px 20px;
+    background-color: #f0fdf4;
+    border-radius: 8px;
+    border: 1px solid #bbf7d0;
+}
+
+.success-icon {
+    font-size: 3em;
+    margin-bottom: 15px;
+}
+
+.completion-message h5 {
+    color: #059669;
+    font-size: 1.2em;
+    margin-bottom: 10px;
+}
+
+.completion-message p {
+    color: #065f46;
+    margin: 5px 0;
+}
+
+/* 共通: ローディングとエラー */
+.workflow-loading,
+.workflow-error {
+    text-align: center;
+    padding: 40px 20px;
+}
+
+.workflow-loading {
+    background-color: #f8fafc;
+    border-radius: 8px;
+}
+
+.workflow-error {
+    background-color: #fef2f2;
+    border-radius: 8px;
+    border: 1px solid #fca5a5;
+}
+
+.loading-spinner {
+    font-size: 2.5em;
+    margin-bottom: 15px;
+}
+
+.error-icon {
+    font-size: 2.5em;
+    margin-bottom: 15px;
+}
+
+.workflow-loading h4,
+.workflow-error h4 {
+    margin: 10px 0;
+    font-size: 1.2em;
+}
+
+.workflow-loading h4 {
+    color: #374151;
+}
+
+.workflow-error h4 {
+    color: #dc2626;
+}
+
+.workflow-loading p,
+.workflow-error p {
+    color: #6b7280;
+    margin: 5px 0;
+}
+
+.btn-retry {
+    background-color: #dc2626;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-top: 15px;
+    font-size: 14px;
+}
+
+.btn-retry:hover {
+    background-color: #b91c1c;
+}
+
+/* ステップエラー */
+.step-error {
+    text-align: center;
+    padding: 40px 20px;
+    background-color: #fef2f2;
+    border-radius: 8px;
+    border: 1px solid #fca5a5;
+}
+
+.step-error h4 {
+    color: #dc2626;
+    margin-bottom: 10px;
+}
+
+.step-error p {
+    color: #991b1b;
+}
+
+/* 確認ステップ用のテーブルスタイル */
+.selections-confirmation-table {
+    margin: 20px 0;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.confirmation-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+}
+
+.confirmation-table thead th {
+    background: #f8f9fa;
+    color: #495057;
+    font-weight: 600;
+    padding: 12px 16px;
+    text-align: left;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.confirmation-table tbody tr {
+    border-bottom: 1px solid #dee2e6;
+    transition: background-color 0.2s ease;
+}
+
+.confirmation-table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+.confirmation-table tbody td {
+    padding: 12px 16px;
+    vertical-align: middle;
+}
+
+.confirmation-row.confirmed {
+    background-color: #f8fff8;
+}
+
+.selected-transporter-cell {
+    text-align: center;
+}
+
+.transporter-badge {
+    display: inline-block;
+    padding: 6px 12px;
+    background: #28a745;
+    color: white;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.confirmation-summary-stats {
+    margin-top: 20px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border-left: 4px solid #28a745;
+}
+
+.stats-item {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.stats-label {
+    font-weight: 500;
+    color: #495057;
+}
+
+.stats-value {
+    font-weight: 600;
+    color: #28a745;
+}
+
+.confirmation-actions-hint {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid #dee2e6;
+}
+
+.confirmation-actions-hint p {
+    margin: 5px 0;
+    font-size: 14px;
+    color: #6c757d;
+}

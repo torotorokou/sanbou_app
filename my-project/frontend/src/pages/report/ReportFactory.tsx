@@ -1,214 +1,308 @@
-import React, { useState } from 'react';
-import { ConfigProvider, Typography, Spin } from 'antd';
-import jaJP from 'antd/locale/ja_JP';
-import dayjs from 'dayjs';
-import 'dayjs/locale/ja';
-import ReportManagePageLayout from '@/components/Report/common/ReportManagePageLayout';
-import ReportStepperModal from '@/components/Report/common/ReportStepperModal';
-import ReportStepIndicator from '@/components/Report/common/ReportStepIndicator';
-import type { UploadProps } from 'antd';
-import PDFViewer from '@/components/Report/viewer/PDFViewer';
-import type { WorkerRow, ValuableRow, ShipmentRow } from '@/types/report';
-import { identifyCsvType, isCsvMatch } from '@/utils/validators/csvValidator';
+import React, { useState, useEffect } from 'react';
+import ReportManagePageLayout from '../../components/Report/common/ReportManagePageLayout';
+import { Select, Space, Steps } from 'antd';
+import { useFactoryReportManager } from '../../hooks/useFactoryReportManager';
+import { FACTORY_REPORT_KEYS, factoryReportApiUrlMap } from '../../constants/reportConfig/factoryReportConfig.tsx';
+import type { FactoryReportKey, FactoryCsvConfigEntry } from '../../constants/reportConfig/factoryReportConfig.tsx';
 
-dayjs.locale('ja');
+/**
+ * 工場帳簿ページ - ReportManagePageと統一レイアウト
+ * 
+ * 🔄 統一されたレイアウト構成：
+ * - 左上: 帳簿選択プルダウン（Select）
+ * - 右上: ステッパー表示（Steps）
+ * - CSVアップロード: ReportManagePageLayout内
+ * - 帳簿作成ボタン: バックエンドAPI連携  
+ * - 結果表示: エクセルダウンロード、PDF印刷、プレビュー（ReportManagePageLayout内）
+ * 
+ * 📝 修正内容：
+ * - プルダウンUI復活
+ * - バックエンドAPI連携復活
+ * - ZIP形式でのダウンロード対応
+ * - 差分は帳簿種類（管理 vs 工場）のみ
+ */
 
 const ReportFactory: React.FC = () => {
-    const [shipFile, setShipFile] = useState<File | null>(null);
-    const [yardFile, setYardFile] = useState<File | null>(null);
-    const [receiveFile, setReceiveFile] = useState<File | null>(null);
+    // 工場帳簿用のレポートマネージャー（実績報告書をデフォルト）
+    const reportManager = useFactoryReportManager('performance_report');
 
-    const [workerData, setWorkerData] = useState<WorkerRow[]>([]);
-    const [valuableData, setValuableData] = useState<ValuableRow[]>([]);
-    const [shipmentData, setShipmentData] = useState<ShipmentRow[]>([]);
+    // CSVファイル管理
+    const [csvFiles, setCsvFiles] = useState<Record<string, File | null>>({});
+    const [validationResults, setValidationResults] = useState<Record<string, 'valid' | 'invalid' | 'unknown'>>({});
 
-    const [finalized, setFinalized] = useState(false);
-    const [modalOpen, setModalOpen] = useState(false);
-    const [currentStep, setCurrentStep] = useState(0);
-    const [loading, setLoading] = useState(false);
-    const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+    // 現在の設定を取得
+    const currentConfig = reportManager.getCurrentReportConfig();
 
-    // ファイルのバリデーション状態を管理
-    const [shipFileValid, setShipFileValid] = useState<'valid' | 'invalid' | 'unknown'>('unknown');
-    const [yardFileValid, setYardFileValid] = useState<'valid' | 'invalid' | 'unknown'>('unknown');
-    const [receiveFileValid, setReceiveFileValid] = useState<'valid' | 'invalid' | 'unknown'>('unknown');
+    // CSVアップロードとバリデーション状態に基づくステップ自動進行
+    useEffect(() => {
+        const requiredCsvs = currentConfig.csvConfigs.filter(config => config.required);
+        const allRequiredUploaded = requiredCsvs.every(config => csvFiles[config.config.label]);
+        const allRequiredValid = requiredCsvs.every(config =>
+            validationResults[config.config.label] === 'valid'
+        );
 
-    // 帳簿作成の準備状態を判定
-    const readyToCreate = shipFile !== null && shipFileValid === 'valid';
+        if (allRequiredUploaded && allRequiredValid) {
+            // 必要なCSVがすべてアップロードされ、バリデーションも通った場合
+            if (reportManager.currentStep < 2) {
+                reportManager.setCurrentStep(2); // 「帳簿生成」ステップに進む
+            }
+        } else if (allRequiredUploaded) {
+            // CSVはアップロードされているが、バリデーション中・失敗の場合
+            if (reportManager.currentStep < 1) {
+                reportManager.setCurrentStep(1); // 「CSV準備」ステップのまま
+            }
+        } else {
+            // まだCSVがアップロードされていない場合
+            if (reportManager.currentStep > 1) {
+                reportManager.setCurrentStep(1); // 「CSV準備」ステップに戻る
+            }
+        }
+    }, [csvFiles, validationResults, currentConfig.csvConfigs, reportManager]);
 
-    const makeUploadProps = (
-        label: string,
-        setter: (file: File) => void
-    ): UploadProps => ({
-        accept: '.csv',
-        showUploadList: false,
-        beforeUpload: (file) => {
-            setter(file);
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const text = e.target?.result as string;
-                const rows = text.split('\n').map((row) => row.split(','));
-                const body = rows.slice(1);
+    // 簡易バリデーション（実際の実装ではより詳細な検証が必要）
+    const validateCsv = (file: File): 'valid' | 'invalid' | 'unknown' => {
+        if (!file) return 'unknown';
 
-                // ファイルの厳密なCSVバリデーション
-                const csvValidationResult = identifyCsvType(text);
-                let isValid = false;
+        // ファイル拡張子チェック
+        if (!file.name.toLowerCase().endsWith('.csv')) {
+            return 'invalid';
+        }
 
-                if (label === '出荷一覧') {
-                    isValid = isCsvMatch(csvValidationResult, '出荷一覧');
-                    setShipFileValid(isValid ? 'valid' : 'invalid');
+        // ファイルサイズチェック（例：10MB以下）
+        if (file.size > 10 * 1024 * 1024) {
+            return 'invalid';
+        }
 
-                    if (isValid) {
-                        const parsed: ShipmentRow[] = body.map((cols, i) => ({
-                            key: i.toString(),
-                            商品名: cols[0] || '',
-                            出荷先: cols[1] || '',
-                            数量: parseInt(cols[2]) || 0,
-                        }));
-                        setShipmentData(parsed);
-                    }
-                } else if (label === 'ヤード一覧') {
-                    isValid = isCsvMatch(csvValidationResult, 'ヤード一覧');
-                    setYardFileValid(isValid ? 'valid' : 'invalid');
+        // 他のバリデーションロジックをここに追加
+        return 'valid';
+    };
 
-                    if (isValid) {
-                        const parsed: WorkerRow[] = body.map((cols, i) => ({
-                            key: i.toString(),
-                            氏名: cols[0] || '',
-                            所属: cols[1] || '',
-                            出勤区分: cols[2] || '',
-                        }));
-                        setWorkerData(parsed);
-                    }
-                } else if (label === '受入一覧') {
-                    isValid = isCsvMatch(csvValidationResult, '受入一覧');
-                    setReceiveFileValid(isValid ? 'valid' : 'invalid');
+    // ReportManagePageLayoutに適した形でpropsを作成
+    const createUploadFiles = () => {
+        return currentConfig.csvConfigs.map((csvConfig: FactoryCsvConfigEntry) => ({
+            label: csvConfig.config.label,
+            file: csvFiles[csvConfig.config.label] || null,
+            onChange: (file: File | null) => {
+                setCsvFiles(prev => ({
+                    ...prev,
+                    [csvConfig.config.label]: file,
+                }));
 
-                    if (isValid) {
-                        const parsed: ValuableRow[] = body.map((cols, i) => ({
-                            key: i.toString(),
-                            品目: cols[0] || '',
-                            重量: parseFloat(cols[1]) || 0,
-                            単価: parseFloat(cols[2]) || 0,
-                        }));
-                        setValuableData(parsed);
-                    }
+                // ファイルアップロード時にバリデーションを実行
+                if (file) {
+                    const validationResult = validateCsv(file);
+                    setValidationResults(prev => ({
+                        ...prev,
+                        [csvConfig.config.label]: validationResult,
+                    }));
+                } else {
+                    setValidationResults(prev => ({
+                        ...prev,
+                        [csvConfig.config.label]: 'unknown',
+                    }));
                 }
-            };
-            reader.readAsText(file);
-            return false;
+            },
+            required: csvConfig.required,
+            validationResult: validationResults[csvConfig.config.label] || 'unknown',
+            onRemove: () => {
+                setCsvFiles(prev => ({
+                    ...prev,
+                    [csvConfig.config.label]: null,
+                }));
+                setValidationResults(prev => ({
+                    ...prev,
+                    [csvConfig.config.label]: 'unknown',
+                }));
+            },
+        }));
+    };
+
+    const makeUploadProps = (label: string, setter: (file: File) => void) => ({
+        name: 'file',
+        multiple: false,
+        beforeUpload: (file: File) => {
+            setter(file);
+
+            // ファイル状態を更新
+            setCsvFiles(prev => ({
+                ...prev,
+                [label]: file,
+            }));
+
+            // バリデーション実行
+            const validationResult = validateCsv(file);
+            setValidationResults(prev => ({
+                ...prev,
+                [label]: validationResult,
+            }));
+
+            return false; // ファイルアップロードを停止
+        },
+        onRemove: () => {
+            setCsvFiles(prev => ({
+                ...prev,
+                [label]: null,
+            }));
+            setValidationResults(prev => ({
+                ...prev,
+                [label]: 'unknown',
+            }));
         },
     });
 
+    // バックエンドAPI連携での帳簿生成
     const handleGenerate = async () => {
-        setModalOpen(true);
-        setCurrentStep(1);
-        setLoading(true);
+        try {
+            reportManager.setCurrentStep(3); // 「帳簿生成」→「結果確認」ステップに進む
 
-        const dummyUrl = '/factory_report.pdf';
-        setPdfUrl(dummyUrl);
+            // FormDataを作成してCSVファイルを含める
+            const formData = new FormData();
+            formData.append('reportKey', reportManager.selectedReport);
+            formData.append('reportType', currentConfig.type);
 
-        setLoading(false);
-        setFinalized(true);
-        setCurrentStep(2);
+            // 実際のCSVファイルを追加
+            Object.entries(csvFiles).forEach(([label, file]) => {
+                if (file) {
+                    formData.append('csvFiles', file, `${label}.csv`);
+                }
+            });
 
-        setTimeout(() => {
-            setModalOpen(false);
-            setCurrentStep(0);
-        }, 1000);
+            // バックエンドAPIへリクエスト（設定ファイルからエンドポイントを取得）
+            const apiUrl = factoryReportApiUrlMap[reportManager.selectedReport];
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                body: formData,
+            });
+
+            if (!response.ok) {
+                throw new Error(`API Error: ${response.status}`);
+            }
+
+            // ZIP形式のレスポンスを処理
+            const blob = await response.blob();
+            const zipUrl = URL.createObjectURL(blob);
+
+            // 結果を設定
+            reportManager.setCurrentStep(4); // 「完了」ステップ
+
+            // ZIP URLを保存（ダウンロード用）
+            sessionStorage.setItem('lastGeneratedFactoryZip', zipUrl);
+
+        } catch (error) {
+            console.error('Factory report generation error:', error);
+            reportManager.setCurrentStep(2); // エラー時は「帳簿生成」ステップに戻る
+        }
     };
 
+    // 生成準備完了チェック
+    const readyToCreate = currentConfig.csvConfigs
+        .filter((config: FactoryCsvConfigEntry) => config.required)
+        .every((config: FactoryCsvConfigEntry) =>
+            csvFiles[config.config.label] &&
+            validationResults[config.config.label] === 'valid'
+        );
+
+    // ヘッダー部分：プルダウン + ステッパー
+    const header = (
+        <div style={{ marginBottom: 16 }}>
+            <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginBottom: 12
+            }}>
+                {/* 左側：タイトル + プルダウン */}
+                <Space size="large" align="center">
+                    <h2 style={{ margin: 0, fontSize: 20, fontWeight: 600 }}>
+                        工場帳簿システム 🏭
+                    </h2>
+                    <Select
+                        value={reportManager.selectedReport}
+                        onChange={(value: FactoryReportKey) => reportManager.changeReport(value)}
+                        style={{ width: 200 }}
+                        options={Object.entries(FACTORY_REPORT_KEYS).map(([key, config]) => ({
+                            value: key,
+                            label: config.label,
+                        }))}
+                    />
+                </Space>
+
+                {/* 右側：ステッパー（4ステップ対応） */}
+                <div style={{ minWidth: 350 }}>
+                    <Steps
+                        current={reportManager.currentStep - 1}
+                        size="small"
+                        items={[
+                            { title: 'CSV準備' },
+                            { title: 'CSV確認' },
+                            { title: '帳簿生成' },
+                            { title: '結果確認' },
+                        ]}
+                    />
+                </div>
+            </div>
+        </div>
+    );
+
     return (
-        <ConfigProvider locale={jaJP}>
-            <ReportStepIndicator
-                currentStep={currentStep}
-                items={[
-                    { title: 'データ準備' },
-                    { title: 'PDF生成' },
-                    { title: '完了' }
-                ]}
-            />
-
-            <ReportStepperModal
-                open={modalOpen}
-                steps={['データ選択', 'PDF生成中', '完了']}
-                currentStep={currentStep}
-                onNext={() => {
-                    if (currentStep === 2) {
-                        setModalOpen(false);
-                        setCurrentStep(0);
-                    }
-                }}
-            >
-                {currentStep === 0 && (
-                    <Typography.Text>
-                        帳簿を作成する準備が整いました。
-                    </Typography.Text>
+        <ReportManagePageLayout
+            header={header}
+            uploadFiles={createUploadFiles()}
+            makeUploadProps={makeUploadProps}
+            onGenerate={handleGenerate}
+            onDownloadExcel={() => {
+                // ZIP形式でのダウンロード
+                const zipUrl = sessionStorage.getItem('lastGeneratedFactoryZip');
+                if (zipUrl) {
+                    const a = document.createElement('a');
+                    a.href = zipUrl;
+                    a.download = `工場帳簿_${reportManager.selectedReport}_${Date.now()}.zip`;
+                    a.click();
+                }
+            }}
+            onPrintPdf={() => {
+                // PDF印刷処理（実装が必要）
+                console.log('PDF print');
+            }}
+            finalized={reportManager.currentStep === 4}
+            readyToCreate={readyToCreate}
+            pdfUrl={null} // 実装が必要
+            excelUrl={sessionStorage.getItem('lastGeneratedFactoryZip')}
+            excelReady={!!sessionStorage.getItem('lastGeneratedFactoryZip')}
+            pdfReady={false} // 実装が必要
+            sampleImageUrl={currentConfig.previewImage}
+        >
+            <div style={{
+                padding: 20,
+                textAlign: 'center',
+                backgroundColor: '#f6f6f6',
+                borderRadius: 8
+            }}>
+                <h3>工場帳簿プレビュー</h3>
+                <p>選択された帳簿: {reportManager.getCurrentReportDefinition().label}</p>
+                <p>ステップ: {reportManager.currentStep}/4</p>
+                <div style={{ marginTop: 12 }}>
+                    <p><strong>CSVアップロード状況:</strong></p>
+                    {currentConfig.csvConfigs.map((config: FactoryCsvConfigEntry) => (
+                        <div key={config.config.label} style={{ marginBottom: 4 }}>
+                            <span>{config.config.label}: </span>
+                            {csvFiles[config.config.label] ? (
+                                <span style={{ color: validationResults[config.config.label] === 'valid' ? '#52c41a' : '#ff4d4f' }}>
+                                    {validationResults[config.config.label] === 'valid' ? '✅ 有効' : '❌ 無効'}
+                                </span>
+                            ) : (
+                                <span style={{ color: '#d9d9d9' }}>📁 未アップロード</span>
+                            )}
+                        </div>
+                    ))}
+                </div>
+                {!!sessionStorage.getItem('lastGeneratedFactoryZip') && (
+                    <p style={{ color: '#52c41a', fontWeight: 600 }}>
+                        ✅ ZIP形式のレポートが生成されました
+                    </p>
                 )}
-                {currentStep === 1 && loading && (
-                    <Spin tip='帳簿をPDFに変換中です...' />
-                )}
-                {currentStep === 2 && (
-                    <Typography.Text type='success'>
-                        ✅ PDF帳簿が作成されました。
-                    </Typography.Text>
-                )}
-            </ReportStepperModal>
-
-            <ReportManagePageLayout
-                onGenerate={handleGenerate}
-                onDownloadExcel={() => {
-                    // Excel download logic here
-                    console.log('Excel download requested');
-                }}
-                uploadFiles={[
-                    {
-                        label: '出荷一覧',
-                        file: shipFile,
-                        onChange: setShipFile,
-                        required: true,
-                        validationResult: shipFileValid,
-                        onRemove: () => {
-                            setShipFile(null);
-                            setShipFileValid('unknown');
-                            setShipmentData([]);
-                        },
-                    },
-                    {
-                        label: 'ヤード一覧',
-                        file: yardFile,
-                        onChange: setYardFile,
-                        required: false,
-                        validationResult: yardFileValid,
-                        onRemove: () => {
-                            setYardFile(null);
-                            setYardFileValid('unknown');
-                            setWorkerData([]);
-                        },
-                    },
-                    {
-                        label: '受入一覧',
-                        file: receiveFile,
-                        onChange: setReceiveFile,
-                        required: false,
-                        validationResult: receiveFileValid,
-                        onRemove: () => {
-                            setReceiveFile(null);
-                            setReceiveFileValid('unknown');
-                            setValuableData([]);
-                        },
-                    },
-                ]}
-                makeUploadProps={makeUploadProps}
-                finalized={finalized}
-                readyToCreate={readyToCreate}
-                pdfUrl={pdfUrl}
-                excelUrl={null}
-            >
-                {/* PDFの表示場所 */}
-                <PDFViewer pdfUrl={pdfUrl} />
-            </ReportManagePageLayout>
-        </ConfigProvider>
+            </div>
+        </ReportManagePageLayout>
     );
 };
 

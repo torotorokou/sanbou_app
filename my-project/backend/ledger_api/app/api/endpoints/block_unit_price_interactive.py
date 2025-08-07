@@ -7,13 +7,25 @@
 
 # backend/app/api/endpoints/block_unit_price_interactive.py
 
-from fastapi import APIRouter, HTTPException
-from typing import Dict, Any
-from pydantic import BaseModel
+from typing import Any, Dict
 
+from api.services.csv_validator_facade import CsvValidatorService
+from fastapi import APIRouter, File, Form, HTTPException, UploadFile
+from pydantic import BaseModel
+from src.api_response.response_base import ErrorApiResponse, SuccessApiResponse
+
+# 統一レスポンスクラス
+from src.api_response.response_error import (
+    NoFilesUploadedResponse,
+)
+
+from app.api.services.csv_formatter_service import CsvFormatterService
+from app.api.services.report.generator_factory import get_report_generator
 from app.api.st_app.logic.manage.block_unit_price_interactive import (
     BlockUnitPriceInteractive,
 )
+from app.api.utils.excel_pdf_zip_utils import create_excel_bytes, generate_excel_pdf_zip
+from backend_shared.src.utils.csv_reader import read_csv_files
 
 # APIルーターの初期化
 router = APIRouter()
@@ -56,29 +68,85 @@ class FinalizeRequest(BaseModel):
     confirmed: bool = True  # 確認フラグ
 
 
-@router.post("/start")
-async def start_block_unit_price_process(request: StartProcessRequest):
-    """
-    ブロック単価計算処理開始 (Step 0)
+# 統合API: CSVアップロード＋初期処理＋運搬業者選択肢返却
+from fastapi import File, UploadFile
 
-    初期処理を実行し、運搬業者選択肢を返します。
+
+class UploadAndStartResponse(BaseModel):
+    session_data: Dict[str, Any]
+    transport_options: Dict[str, Any]
+
+
+@router.post("/upload-and-start")
+async def upload_and_start(
+    shipment: UploadFile = File(None),
+    yard: UploadFile = File(None),
+    receive: UploadFile = File(None),
+):
+    """
+    CSVファイルアップロードと初期処理（運搬業者選択肢返却）
 
     Args:
-        request (StartProcessRequest): ファイルデータを含むリクエスト
+        shipment (UploadFile): 輸送データCSVファイル
+        yard (UploadFile): ヤードデータCSVファイル
+        receive (UploadFile): 受取データCSVファイル
 
     Returns:
-        Dict: 処理結果と運搬業者選択肢
+        Dict: セッションデータと運搬業者選択肢
 
     Raises:
         HTTPException: 処理中にエラーが発生した場合
     """
+    # アップロードされたファイルの整理
+    files = {
+        k: v
+        for k, v in {"shipment": shipment, "yard": yard, "receive": receive}.items()
+        if v is not None
+    }
+    print(f"Uploaded files: {list(files.keys())}")
+
+    # ファイル未アップロードチェック
+    if not files:
+        print("No files uploaded.")
+        return NoFilesUploadedResponse().to_json_response()
+
+    # CSV読込処理
+    dfs, error = read_csv_files(files)
+    if error:
+        return error.to_json_response()
+
+    # CSVデータのバリデーション処理
+    validator_service = CsvValidatorService()
+    validation_error = validator_service.validate(dfs, files)
+    if validation_error:
+        print(f"Validation error: {validation_error}")
+        return validation_error.to_json_response()
+
+    # データフォーマット変換処理
+    print("Formatting DataFrames...")
+    formatter_service = CsvFormatterService()
+    df_formatted = formatter_service.format(dfs)
+    for csv_type, df in df_formatted.items():
+        print(f"Formatted {csv_type}: shape={df.shape}")
+
+    # 初期処理（運搬業者選択肢の生成）
     try:
-        # ブロック単価計算プロセッサーの初期化と処理開始
         processor = BlockUnitPriceInteractive()
-        result = processor.start_process(request.files)
-        return result
+        result = processor.start_process(df_formatted)
+
+        # ここで「APIレスポンス」ラップ
+        if result.get("status") == "success":
+            return SuccessApiResponse(
+                code="STEP0_SUCCESS",
+                detail="初期処理完了",
+                result=result["data"],
+            ).to_json_response()
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"処理開始エラー: {str(e)}")
+        return ErrorApiResponse(
+            code="STEP0_ERROR",
+            detail=f"初期処理中にエラーが発生しました: {str(e)}",
+            status_code=500,
+        ).to_json_response()
 
 
 @router.post("/select-transport")
@@ -101,7 +169,18 @@ async def select_transport_vendors(request: TransportSelectionRequest):
         # 運搬業者選択の処理実行
         processor = BlockUnitPriceInteractive()
         result = processor.process_selection(request.session_data, request.selections)
-        return result
+
+        # フロントエンドが期待する形式に合わせてレスポンスを整形
+        if result.get("status") == "success":
+            return {
+                "status": "success",
+                "message": result["message"],
+                "session_data": result["data"]["session_data"],
+                "selection_summary": result["data"]["selection_summary"],
+            }
+        else:
+            return result
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"運搬業者選択エラー: {str(e)}")
 
@@ -126,7 +205,19 @@ async def finalize_calculation(request: FinalizeRequest):
         # 最終計算の実行
         processor = BlockUnitPriceInteractive()
         result = processor.finalize_calculation(request.session_data, request.confirmed)
-        return result
+
+        # フロントエンドが期待する形式に合わせてレスポンスを整形
+        if result.get("status") == "completed":
+            return {
+                "status": "completed",
+                "message": result["message"],
+                "data": result["data"],
+            }
+        elif result.get("status") == "cancelled":
+            return {"status": "cancelled", "message": result["message"]}
+        else:
+            return result
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"最終計算エラー: {str(e)}")
 
@@ -174,3 +265,60 @@ async def get_step_info(step: int):
         raise HTTPException(status_code=404, detail="無効なステップです")
 
     return step_info[step]
+
+
+@router.post("/upload")
+async def upload_csv(
+    shipment: UploadFile = File(...),
+    yard: UploadFile = File(...),
+    receive: UploadFile = File(...),
+):
+    """
+    CSVファイルアップロード処理
+
+    複数のCSVファイルをアップロードし、データの整形とバリデーションを行います。
+
+    Args:
+        shipment (UploadFile): 輸送データCSVファイル
+        yard (UploadFile): ヤードデータCSVファイル
+        receive (UploadFile): 受取データCSVファイル
+
+    Returns:
+        Dict: アップロードと処理結果
+
+    Raises:
+        HTTPException: 処理中にエラーが発生した場合
+    """
+    # アップロードされたファイルの整理
+    files = {
+        k: v
+        for k, v in {"shipment": shipment, "yard": yard, "receive": receive}.items()
+        if v is not None
+    }
+    print(f"Uploaded files: {list(files.keys())}")
+
+    # ファイル未アップロードチェック
+    if not files:
+        print("No files uploaded.")
+        return NoFilesUploadedResponse().to_json_response()
+
+    # CSV読込処理
+    dfs, error = read_csv_files(files)
+    if error:
+        return error.to_json_response()
+
+    # CSVデータのバリデーション処理
+    validator_service = CsvValidatorService()
+    validation_error = validator_service.validate(dfs, files)
+    if validation_error:
+        print(f"Validation error: {validation_error}")
+        return validation_error.to_json_response()
+
+    # データフォーマット変換処理
+    print("Formatting DataFrames...")
+    formatter_service = CsvFormatterService()
+    df_formatted = formatter_service.format(dfs)
+    for csv_type, df in df_formatted.items():
+        print(f"Formatted {csv_type}: shape={df.shape}")
+
+    # ...レスポンスを返す処理...

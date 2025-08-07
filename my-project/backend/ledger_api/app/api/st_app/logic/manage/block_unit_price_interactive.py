@@ -1,26 +1,30 @@
 # backend/app/api/st_app/logic/manage/block_unit_price_interactive.py
 
-import pandas as pd
-from typing import Dict, Any, List, Optional
 from dataclasses import dataclass
+from typing import Any, Dict, List, Optional
 
-from app.api.st_app.utils.logger import app_logger
-from app.api.st_app.utils.config_loader import get_template_config
-from app.api.st_app.logic.manage.utils.csv_loader import load_all_filtered_dataframes
-from app.api.st_app.logic.manage.utils.load_template import load_master_and_template
+import pandas as pd
+
 from app.api.st_app.config.loader.main_path import MainPath
-from app.api.st_app.logic.manage.readers.read_transport_discount import (
-    ReadTransportDiscount,
-)
-
 from app.api.st_app.logic.manage.processors.block_unit_price.process0 import (
-    make_df_shipment_after_use,
-    apply_unit_price_addition,
     apply_transport_fee_by1,
+    apply_unit_price_addition,
+    make_df_shipment_after_use,
 )
 from app.api.st_app.logic.manage.processors.block_unit_price.process2 import (
     apply_transport_fee_by_vendor,
     apply_weight_based_transport_fee,
+)
+from app.api.st_app.logic.manage.readers.read_transport_discount import (
+    ReadTransportDiscount,
+)
+from app.api.st_app.logic.manage.utils.csv_loader import load_all_filtered_dataframes
+from app.api.st_app.logic.manage.utils.load_template import load_master_and_template
+from app.api.st_app.utils.config_loader import get_template_config
+from app.api.st_app.utils.logger import app_logger
+from backend_shared.src.api_response.response_error import ErrorApiResponse
+from backend_shared.src.api_response.response_success import (
+    TransportersSuccessResponse,
 )
 
 
@@ -52,89 +56,81 @@ class BlockUnitPriceInteractive:
     def __init__(self):
         self.logger = app_logger()
 
-    def start_process(self, dfs: Dict[str, Any]) -> Dict[str, Any]:
+    def start_process(self, dfs: Dict[str, Any]) -> dict:
         """
         処理開始（Step 0）
 
         Returns:
             Dict: {
                 "status": "success",
-                "step": 0,
-                "message": "初期処理完了",
                 "data": {...}
             }
         """
         self.logger.info("▶️ ブロック単価計算処理開始（対話版 Step 0）")
 
-        try:
-            # --- 設定とマスターデータの読み込み ---
-            template_key = "block_unit_price"
-            template_config = get_template_config()[template_key]
-            template_name = template_config["key"]
-            csv_keys = template_config["required_files"]
+        # --- 設定とマスターデータの読み込み ---
+        template_key = "block_unit_price"
+        template_config = get_template_config()[template_key]
+        template_name = template_config["key"]
+        csv_keys = template_config["required_files"]
 
-            # マスターデータ
-            config = get_template_config()["block_unit_price"]
-            master_path = config["master_csv_path"]["vendor_code"]
-            master_csv = load_master_and_template(master_path)
+        # マスターデータ
+        config = get_template_config()["block_unit_price"]
+        master_path = config["master_csv_path"]["vendor_code"]
+        master_csv = load_master_and_template(master_path)
 
-            # 運搬費データ
-            mainpath = MainPath()
-            reader = ReadTransportDiscount(mainpath)
-            df_transport_cost = reader.load_discounted_df()
+        # 運搬費データ
+        mainpath = MainPath()
+        reader = ReadTransportDiscount(mainpath)
+        df_transport_cost = reader.load_discounted_df()
 
-            # 出荷データ
-            df_dict = load_all_filtered_dataframes(dfs, csv_keys, template_name)
-            df_shipment = df_dict.get("shipment")
+        # 出荷データ
+        df_dict = load_all_filtered_dataframes(dfs, csv_keys, template_name)
+        df_shipment = df_dict.get("shipment")
 
-            if df_shipment is None:
-                return {"status": "error", "message": "出荷データが見つかりません"}
+        if df_shipment is None:
+            return {"status": "error", "message": "出荷データが見つかりません"}
 
-            # 基本処理の実行
-            df_shipment = make_df_shipment_after_use(master_csv, df_shipment)
-            df_shipment = apply_unit_price_addition(master_csv, df_shipment)
-            df_shipment = apply_transport_fee_by1(df_shipment, df_transport_cost)
+        # 基本処理の実行
+        df_shipment = make_df_shipment_after_use(master_csv, df_shipment)
+        df_shipment = apply_unit_price_addition(master_csv, df_shipment)
+        df_shipment = apply_transport_fee_by1(df_shipment, df_transport_cost)
 
-            # 運搬業者選択肢を準備
-            transport_options = self._prepare_transport_options(
-                df_transport_cost, df_shipment
-            )
+        # 識別ナンバーの追加
+        df_shipment = df_shipment.reset_index(drop=True)
+        df_shipment["識別子"] = df_shipment.index.map(lambda x: f"id_{x}")
 
-            return {
-                "status": "success",
-                "step": 0,
-                "message": "初期処理完了。運搬業者を選択してください。",
-                "data": {
-                    "transport_options": [
-                        {
-                            "vendor_code": opt.vendor_code,
-                            "vendor_name": opt.vendor_name,
-                            "transport_fee": opt.transport_fee,
-                            "weight_unit_price": opt.weight_unit_price,
-                        }
-                        for opt in transport_options
-                    ],
-                    "shipment_summary": {
-                        "total_records": len(df_shipment),
-                        "vendors": df_shipment["業者名"].unique().tolist()
-                        if "業者名" in df_shipment.columns
-                        else [],
-                    },
-                    # 処理状態をセッション用に保存する情報
-                    "session_data": {
-                        "df_shipment_json": df_shipment.to_json(),
-                        "master_csv_json": master_csv.to_json(),
-                        "df_transport_cost_json": df_transport_cost.to_json(),
-                    },
-                },
-            }
+        # 運搬業者が1以外のものをピックアップ
+        target_rows = df_shipment[df_shipment["運搬社数"] != 1].copy()
+        target_rows = target_rows[
+            [
+                "識別子",
+                "業者CD",
+                "業者名",
+                "品名",
+                "明細備考",
+            ]
+        ]
 
-        except Exception as e:
-            self.logger.error(f"Step 0 処理中にエラー: {e}")
-            return {
-                "status": "error",
-                "message": f"初期処理中にエラーが発生しました: {str(e)}",
-            }
+        # 運搬業者の選択肢を追加
+        transporter_map = df_transport_cost.groupby("業者CD")["運搬業者"].apply(list)
+        target_rows["運搬業者リスト"] = target_rows["業者CD"].map(transporter_map)
+
+        # カラムを英語名に変換
+        col_map = {
+            "識別子": "id",
+            "業者CD": "vendor_code",
+            "業者名": "vendor_name",
+            "品名": "item_name",
+            "明細備考": "detail_note",
+            "運搬業者リスト": "transporters",
+        }
+        df_english = target_rows.rename(columns=col_map)
+
+        # Json形式に変換
+        json_data = df_english.to_dict(orient="records")
+
+        return {"status": "success", "data": json_data}
 
     def process_selection(
         self, session_data: Dict[str, Any], selections: Dict[str, str]

@@ -22,7 +22,8 @@ export const useReportBaseBusiness = (
     csvConfigs: CsvConfigEntry[],
     csvFiles: CsvFiles,
     onUploadFile: (label: string, file: File | null) => void,
-    reportKey: ReportKey
+    reportKey: ReportKey,
+    getValidationResult?: (label: string) => 'valid' | 'invalid' | 'unknown'
 ) => {
     const csvValidation = useCsvValidation();
     const zipGeneration = useZipFileGeneration();
@@ -33,9 +34,12 @@ export const useReportBaseBusiness = (
     const handleRemoveFile = useCallback(
         (label: string) => {
             onUploadFile(label, null);
-            csvValidation.resetValidation(label);
+            // グローバルバリデーション使用時はローカルリセット不要
+            if (!getValidationResult) {
+                csvValidation.resetValidation(label);
+            }
         },
-        [onUploadFile, csvValidation]
+        [onUploadFile, getValidationResult, csvValidation]
     );
 
     /**
@@ -67,7 +71,9 @@ export const useReportBaseBusiness = (
         return csvConfigs.every((entry) => {
             const label = entry.config.label;
             const fileObj = csvFiles[label];
-            const validation = csvValidation.getValidationResult(label);
+            const validation = getValidationResult
+                ? getValidationResult(label)
+                : csvValidation.getValidationResult(label);
 
             if (fileObj) {
                 return validation === 'valid';
@@ -75,7 +81,7 @@ export const useReportBaseBusiness = (
                 return !entry.required;
             }
         });
-    }, [csvConfigs, csvFiles, csvValidation]);
+    }, [csvConfigs, csvFiles, getValidationResult, csvValidation]);
 
     /**
      * アップロードファイル設定を生成
@@ -88,16 +94,25 @@ export const useReportBaseBusiness = (
                 file: csvFiles[label] ?? null,
                 onChange: (f: File | null) => {
                     onUploadFile(label, f);
-                    if (f === null) {
+                    if (f === null && !getValidationResult) {
                         csvValidation.resetValidation(label);
                     }
                 },
                 required: entry.required,
-                validationResult: csvValidation.getValidationResult(label),
+                validationResult: getValidationResult
+                    ? getValidationResult(label)
+                    : csvValidation.getValidationResult(label),
                 onRemove: () => handleRemoveFile(label),
             };
         });
-    }, [csvConfigs, csvFiles, onUploadFile, csvValidation, handleRemoveFile]);
+    }, [
+        csvConfigs,
+        csvFiles,
+        onUploadFile,
+        getValidationResult,
+        csvValidation,
+        handleRemoveFile,
+    ]);
 
     /**
      * MakeUploadProps関数を生成
@@ -117,6 +132,7 @@ export const useReportBaseBusiness = (
 
     /**
      * レポート生成処理（ZIP形式）
+     * block_unit_priceの場合は特別な処理フローを実行
      */
     const handleGenerateReport = useCallback(
         async (
@@ -124,6 +140,39 @@ export const useReportBaseBusiness = (
             onComplete: () => void,
             onSuccess: () => void
         ) => {
+            // block_unit_priceの場合は、まずCSVバリデーションと初期処理のみ実行
+            if (reportKey === 'block_unit_price') {
+                onStart();
+
+                try {
+                    // CSVファイルの存在チェック
+                    const hasRequiredFiles = csvConfigs.every((entry) => {
+                        const label = entry.config.label;
+                        const fileObj = csvFiles[label];
+                        const validation =
+                            csvValidation.getValidationResult(label);
+
+                        if (entry.required) {
+                            return fileObj && validation === 'valid';
+                        }
+                        return true;
+                    });
+
+                    if (!hasRequiredFiles) {
+                        throw new Error('必要なCSVファイルが不足しています');
+                    }
+
+                    // ファイル検証完了時点で成功とみなす（実際のAPI処理は呼び出し元で実行）
+                    onSuccess();
+                } catch (error) {
+                    console.error('Block unit price初期処理エラー:', error);
+                } finally {
+                    onComplete();
+                }
+                return;
+            }
+
+            // 通常のレポート生成処理
             const success = await zipGeneration.generateZipReport(
                 csvFiles,
                 reportKey,
@@ -135,7 +184,7 @@ export const useReportBaseBusiness = (
                 onSuccess();
             }
         },
-        [zipGeneration, csvFiles, reportKey]
+        [zipGeneration, csvFiles, reportKey, csvConfigs, csvValidation]
     );
 
     return {

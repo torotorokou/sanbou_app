@@ -1,0 +1,46 @@
+BaseReportComponent.tsx:141 [BaseReportComponent:block_unit_price] Modal closed
+678WorkflowContext.tsx:67  Warning: Maximum update depth exceeded. This can happen when a component calls setState inside useEffect, but useEffect either doesn't have a dependency array, or one of the dependencies changes on every render.
+    at InteractiveWorkflowWrapper (http://localhost:5173/src/components/Report/ReportFactory.tsx?t=1754535151846:26:11)
+    at WorkflowProvider (http://localhost:5173/src/components/Report/context/WorkflowContext.tsx?t=1754531633394:28:3)
+    at div
+    at div
+    at div
+    at http://localhost:5173/node_modules/.vite/deps/antd.js?v=9d8cfd39:17089:23
+    at div
+    at div
+    at http://localhost:5173/node_modules/.vite/deps/antd.js?v=9d8cfd39:17107:25
+    at DomWrapper4 (http://localhost:5173/node_modules/.vite/deps/antd.js?v=9d8cfd39:7675:5)
+    at http://localhost:5173/node_modules/.vite/deps/antd.js?v=9d8cfd39:8062:32
+    at http://localhost:5173/node_modules/.vite/deps/antd.js?v=9d8cfd39:17211:25
+    at div
+    at div
+    at Dialog2 (http://localhost:5173/node_modules/.vite/deps/antd.js?v=9d8cfd39:17270:32)
+    at http://localhost:5173/node_modules/.vite/deps/antd.js?v=9d8cfd39:16942:21
+    at DialogWrap2 (http://localhost:5173/node_modules/.vite/deps/antd.js?v=9d8cfd39:17402:23)
+    at NoFormStyle (http://localhost:5173/node_modules/.vite/deps/antd.js?v=9d8cfd39:20721:3)
+    at NoCompactStyle (http://localhost:5173/node_modules/.vite/deps/antd.js?v=9d8cfd39:12824:5)
+    at ContextIsolator (http://localhost:5173/node_modules/.vite/deps/antd.js?v=9d8cfd39:20747:5)
+    at Modal (http://localhost:5173/node_modules/.vite/deps/antd.js?v=9d8cfd39:22188:16)
+    at ReportStepperModal (http://localhost:5173/src/components/Report/common/ReportStepperModal.tsx?t=1754467470095:20:3)
+    at BaseReportComponent (http://localhost:5173/src/components/Report/BaseReportComponent.tsx?t=1754534213399:25:3)
+    at ReportFactory (http://localhost:5173/src/components/Report/ReportFactory.tsx?t=1754535151846:45:11)
+    at ReportManagePage (http://localhost:5173/src/pages/report/ReportManagePage.tsx?t=1754535151846:23:25)
+    at RenderedRoute (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=9d8cfd39:5506:26)
+    at Routes (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=9d8cfd39:6238:3)
+    at AppRoutes
+    at main
+    at http://localhost:5173/node_modules/.vite/deps/antd.js?v=9d8cfd39:69144:16
+    at Content
+    at div
+    at http://localhost:5173/node_modules/.vite/deps/antd.js?v=9d8cfd39:69163:16
+    at Layout
+    at div
+    at http://localhost:5173/node_modules/.vite/deps/antd.js?v=9d8cfd39:69163:16
+    at Layout
+    at MainLayout (http://localhost:5173/src/layout/MainLayout.tsx?t=1754535151846:28:37)
+    at Router (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=9d8cfd39:6181:13)
+    at BrowserRouter (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=9d8cfd39:9243:3)
+    at div
+    at App (http://localhost:5173/node_modules/.vite/deps/antd.js?v=9d8cfd39:23724:16)
+    at LocaleProvider (http://localhost:5173/node_modules/.vite/deps/antd.js?v=9d8cfd39:5129:13)
+    at MotionWrapper (

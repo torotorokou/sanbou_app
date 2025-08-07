@@ -150,98 +150,128 @@ def apply_transport_fee_by_vendor(
 def apply_weight_based_transport_fee(
     df_after: pd.DataFrame, df_transport: pd.DataFrame
 ) -> pd.DataFrame:
-    """重量ベースの運搬費を適用する関数
+    """重量に基づく運搬費を計算して適用する関数
 
     Args:
         df_after: 処理対象の出荷データフレーム
-        df_transport: 運搬費データフレーム
+        df_transport: 運搬費データフレーム（"数字*weight"形式の運搬費を含む）
 
     Returns:
-        pd.DataFrame: 重量ベースの運搬費が適用された出荷データフレーム
+        pd.DataFrame: 重量に基づく運搬費が適用された出荷データフレーム
     """
-    # 重量列の数値化とクリーンアップ
-    if "重量" in df_after.columns:
-        df_after["重量"] = df_after["重量"].apply(clean_na_strings)
-        df_after["重量"] = pd.to_numeric(df_after["重量"], errors="coerce").fillna(0)
+    # 重量ベースの運搬費行を抽出
+    transport_fee_col = (
+        df_transport["運搬費"].astype(str).str.replace(r"\s+", "", regex=True)
+    )
+    weight_based_mask = transport_fee_col.str.fullmatch(r"\d+\*weight", na=False)
+    weight_based_transport = df_transport[weight_based_mask].copy()
 
-    if "重量単価" in df_transport.columns:
-        df_transport["重量単価"] = df_transport["重量単価"].apply(clean_na_strings)
-        df_transport["重量単価"] = pd.to_numeric(
-            df_transport["重量単価"], errors="coerce"
-        ).fillna(0)
-
-    # 重量ベースの運搬費計算
-    result_df = df_after.merge(
-        df_transport[["運搬業者", "重量単価"]], on="運搬業者", how="left"
+    # 運搬費係数の抽出と変換
+    weight_based_transport["運搬費係数"] = (
+        weight_based_transport["運搬費"].str.extract(r"^(\d+)")[0].astype(float)
     )
 
-    # 運搬費 = 重量 × 重量単価
-    result_df["運搬費"] = result_df["重量"].fillna(0) * result_df["重量単価"].fillna(0)
+    # 必要な列の選択と重複除去
+    weight_based_transport = weight_based_transport.drop_duplicates(
+        subset=["業者CD", "運搬業者"]
+    )[["業者CD", "運搬業者", "運搬費係数"]]
 
-    # 不要な列を削除
-    if "重量単価" in result_df.columns:
-        result_df = result_df.drop(columns=["重量単価"])
+    # 運搬費係数の適用
+    df_result = df_after.merge(
+        weight_based_transport,
+        how="left",
+        on=["業者CD", "運搬業者"],
+        suffixes=("", "_formula"),
+    )
 
-    return result_df
+    # 重量ベースの運搬費計算
+    has_coefficient_mask = df_result["運搬費係数"].notna()
+    df_result.loc[has_coefficient_mask, "運搬費"] = (
+        df_result.loc[has_coefficient_mask, "運搬費係数"]
+        * df_result.loc[has_coefficient_mask, "正味重量"]
+    ).astype(float)
+
+    return df_result
 
 
-def process_transport_costs(df_after: pd.DataFrame) -> pd.DataFrame:
-    """運搬費の総合処理を行う関数
+def make_total_sum(df, master_csv):
+    """ブロック単価の計算を行う関数"""
 
-    Args:
-        df_after: 処理対象の出荷データフレーム
+    # 個々の金額計算と計算用重量の設定
+    def calculate_row(row):
+        if row["単位名"] == "kg":
+            row["金額"] = row["単価"] * row["正味重量"]
+        elif row["単位名"] == "台":
+            row["金額"] = row["単価"] * row["数量"]
+        return row
 
-    Returns:
-        pd.DataFrame: 運搬費が処理された出荷データフレーム
-    """
+    # 行ごとに計算を適用
+    df = df.apply(calculate_row, axis=1)
+
+    # 総額の計算
+    df["総額"] = df["金額"] + df["運搬費"]
+
+    # ブロック単価の計算（計算用重量を使用）
+    df["ブロック単価"] = (df["総額"] / df["正味重量"].replace(0, pd.NA)).round(2)
+
+    return df
+
+
+def df_cul_filtering(df):
+    """表示用データのフィルタリングを行う関数"""
+
+    # dfカラムのフィルタリング
+    df = df[["業者名", "明細備考", "正味重量", "総額", "ブロック単価"]]
+
+    return df
+
+
+def first_cell_in_template(df):
+    """テンプレートの最初のセルを作成する関数"""
+    start_row = 7
+    full_col_to_cell = {
+        "業者名": "B",
+        "明細備考": "C",
+        "正味重量": "D",
+        "総額": "E",
+        "ブロック単価": "F",
+    }
+
+    # セル情報を再構築
+    full_cell_info = []
+
+    for idx, row in df.iterrows():
+        for col, col_letter in full_col_to_cell.items():
+            cell = f"{col_letter}{start_row + idx}"
+            value = row[col]
+            full_cell_info.append({"大項目": col, "セル": cell, "値": value})
+
+    full_cell_df = pd.DataFrame(full_cell_info)
+
+    return full_cell_df
+
+
+def make_sum_date(df, df_shipping):
+    """日付集計を追加する関数"""
     try:
-        # 運搬費マスタの読み込み（モックデータ）
-        df_transport = pd.DataFrame(
-            {
-                "業者CD": ["001", "002", "003"],
-                "運搬業者": ["運搬A", "運搬B", "運搬C"],
-                "運搬費": [1000, 1500, 2000],
-                "重量単価": [100, 150, 200],
-            }
-        )
+        # 日付ユーティリティのインポートを試行
+        try:
+            from app.api.st_app.utils.date_tools import to_reiwa_format
+        except ImportError:
+            # インポートに失敗した場合のフォールバック
+            def to_reiwa_format(date_str):
+                return "令和6年8月6日"  # 仮の実装
 
-        if df_transport is None or df_transport.empty:
-            logger.warning("運搬費データが空です")
-            return df_after
+        # 日付を令和表記に変換（例: "令和6年5月16日"）
+        date = to_reiwa_format(df_shipping["伝票日付"].iloc[0])
 
-        # 運搬費の適用
-        if "運搬業者" in df_after.columns:
-            # 業者ベースの運搬費適用
-            df_after = apply_transport_fee_by_vendor(df_after, df_transport)
+        # 追加行を定義
+        new_row = pd.DataFrame([{"大項目": "日付", "セル": "E4", "値": date}])
 
-            # 重量ベースの運搬費適用（必要に応じて）
-            if "重量" in df_after.columns and "重量単価" in df_transport.columns:
-                df_after = apply_weight_based_transport_fee(df_after, df_transport)
+        # df に行を追加
+        df = pd.concat([df, new_row], ignore_index=True)
 
-        return df_after
-
+        return df
     except Exception as e:
-        logger.error(f"運搬費処理中にエラーが発生しました: {e}")
-        return df_after
-
-
-def main_process(df_after: pd.DataFrame) -> pd.DataFrame:
-    """メイン処理関数
-
-    Args:
-        df_after: 処理対象の出荷データフレーム
-
-    Returns:
-        pd.DataFrame: 処理済みの出荷データフレーム
-    """
-    try:
-        # 運搬費処理
-        df_after = process_transport_costs(df_after)
-
-        # その他の処理をここに追加
-
-        return df_after
-
-    except Exception as e:
-        logger.error(f"メイン処理中にエラーが発生しました: {e}")
-        return df_after
+        logger.error(f"日付集計中にエラーが発生しました: {e}")
+        return df
