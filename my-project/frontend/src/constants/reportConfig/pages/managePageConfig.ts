@@ -138,18 +138,6 @@ export const manageModalStepsMap: Record<ManageReportKey, ModalStepConfig[]> = {
     ],
 };
 
-// PDF生成設定
-export const managePdfGeneratorMap: Record<
-    ManageReportKey,
-    () => Promise<string>
-> = {
-    factory_report: async () => '/factory_report.pdf',
-    balance_sheet: async () => '/balance_sheet.pdf',
-    average_sheet: async () => '/average_sheet.pdf',
-    block_unit_price: async () => '/block_unit_price.pdf',
-    management_sheet: async () => '/management_sheet.pdf',
-};
-
 // PDFプレビュー設定
 export const managePdfPreviewMap: Record<ManageReportKey, string> = {
     factory_report: '/images/sampleViews/manage/factoryReport.png',
@@ -163,6 +151,5 @@ export const managePdfPreviewMap: Record<ManageReportKey, string> = {
 export const manageReportConfigMap = createReportConfig(
     manageCsvConfigMap,
     manageModalStepsMap,
-    managePdfGeneratorMap,
     managePdfPreviewMap
 );

@@ -46,14 +46,6 @@ export const ledgerModalStepsMap: Record<LedgerReportKey, ModalStepConfig[]> = {
     ],
 };
 
-// PDF生成設定
-export const ledgerPdfGeneratorMap: Record<
-    LedgerReportKey,
-    () => Promise<string>
-> = {
-    ledger_book: async () => '/ledger_book.pdf',
-};
-
 // PDFプレビュー設定
 export const ledgerPdfPreviewMap: Record<LedgerReportKey, string> = {
     ledger_book: '/images/sampleViews/manage/ledgerBook.png',
@@ -63,6 +55,5 @@ export const ledgerPdfPreviewMap: Record<LedgerReportKey, string> = {
 export const ledgerReportConfigMap = createReportConfig(
     ledgerCsvConfigMap,
     ledgerModalStepsMap,
-    ledgerPdfGeneratorMap,
     ledgerPdfPreviewMap
 );

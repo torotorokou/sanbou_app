@@ -16,7 +16,6 @@ export const LEDGER_API_URL = '/ledger_api/report/manage';
 export const createReportConfig = <T extends string>(
     csvConfigMap: Record<T, CsvConfigGroup>,
     modalStepsMap: Record<T, ModalStepConfig[]>,
-    pdfGeneratorMap: Record<T, () => Promise<string>>,
     pdfPreviewMap: Record<T, string>
 ): Record<T, ReportConfig> => {
     return Object.fromEntries(
@@ -27,7 +26,6 @@ export const createReportConfig = <T extends string>(
                 steps: modalStepsMap[key as T].map(
                     (step: ModalStepConfig) => step.label
                 ),
-                generatePdf: pdfGeneratorMap[key as T],
                 previewImage: pdfPreviewMap[key as T],
                 modalSteps: modalStepsMap[key as T],
             },

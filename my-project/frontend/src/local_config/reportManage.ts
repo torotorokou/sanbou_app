@@ -4,7 +4,6 @@ import {
     type ReportKey,
     csvConfigMap,
     modalStepsMap,
-    pdfGeneratorMap,
 } from '@/constants/reportConfig';
 
 type CsvConfig = {
@@ -17,7 +16,6 @@ type ReportConfig = {
     label: string;
     csvConfigs: CsvConfig[];
     steps: string[];
-    generatePdf: () => Promise<string>;
 };
 
 export const reportConfigMap: Record<ReportKey, ReportConfig> = Object.keys(
@@ -37,7 +35,6 @@ export const reportConfigMap: Record<ReportKey, ReportConfig> = Object.keys(
         label: REPORT_KEYS[reportKey].label,
         csvConfigs,
         steps: modalStepsMap[reportKey].map((step) => step.label),
-        generatePdf: pdfGeneratorMap[reportKey],
     };
     return acc;
 }, {} as Record<ReportKey, ReportConfig>);
