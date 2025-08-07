@@ -76,15 +76,6 @@ export const factoryModalStepsMap: Record<FactoryReportKey, ModalStepConfig[]> =
         ],
     };
 
-// PDF生成設定
-export const factoryPdfGeneratorMap: Record<
-    FactoryReportKey,
-    () => Promise<string>
-> = {
-    factory_report: async () => '/factory_report.pdf',
-    block_unit_price: async () => '/block_unit_price.pdf',
-};
-
 // PDFプレビュー設定
 export const factoryPdfPreviewMap: Record<FactoryReportKey, string> = {
     factory_report: '/images/sampleViews/manage/factoryReport.png',
@@ -95,6 +86,5 @@ export const factoryPdfPreviewMap: Record<FactoryReportKey, string> = {
 export const factoryReportConfigMap = createReportConfig(
     factoryCsvConfigMap,
     factoryModalStepsMap,
-    factoryPdfGeneratorMap,
     factoryPdfPreviewMap
 );

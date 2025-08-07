@@ -25,7 +25,6 @@ export type ModalStepConfig = {
 export type ReportConfig = {
     csvConfigs: CsvConfigGroup;
     steps: string[];
-    generatePdf: () => Promise<string>;
     previewImage: string;
     modalSteps: ModalStepConfig[];
 };

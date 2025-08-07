@@ -75,17 +75,14 @@ export const modalStepsMap = {
 // PDF関連の統合マップ
 import {
     managePdfPreviewMap,
-    managePdfGeneratorMap,
     manageCsvConfigMap,
 } from './pages/managePageConfig';
 import {
     factoryPdfPreviewMap,
-    factoryPdfGeneratorMap,
     factoryCsvConfigMap,
 } from './pages/factoryPageConfig';
 import {
     ledgerPdfPreviewMap,
-    ledgerPdfGeneratorMap,
     ledgerCsvConfigMap,
 } from './pages/ledgerPageConfig';
 
@@ -93,12 +90,6 @@ export const pdfPreviewMap = {
     ...managePdfPreviewMap,
     ...factoryPdfPreviewMap,
     ...ledgerPdfPreviewMap,
-};
-
-export const pdfGeneratorMap = {
-    ...managePdfGeneratorMap,
-    ...factoryPdfGeneratorMap,
-    ...ledgerPdfGeneratorMap,
 };
 
 export const csvConfigMap = {
