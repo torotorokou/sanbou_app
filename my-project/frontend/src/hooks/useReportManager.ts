@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { reportConfigMap } from '../constants/reportConfig/managementReportConfig.tsx';
-import type { ReportKey } from '../constants/reportConfig/managementReportConfig.tsx';
+import { reportConfigMap } from '../constants/reportConfig';
+import type { ReportKey } from '../constants/reportConfig';
 
 // CSVファイルの型定義
 type CsvFiles = { [csvLabel: string]: File | null };

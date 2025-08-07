@@ -32,6 +32,7 @@ const ReportManagePage: React.FC = () => {
                 reportKey={reportManager.selectedReport}
                 onChangeReportKey={reportManager.changeReport}
                 currentStep={reportManager.currentStep}
+                pageGroup="manage"
             />
             <ReportBase {...reportBaseProps} />
         </>
