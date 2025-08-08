@@ -93,12 +93,10 @@ def save_pdf_pages_and_get_urls(pdf_path, query_name, pages, save_dir, url_prefi
 @router.post("/test-answer")
 async def answer_api(req: QuestionRequest):
     """
-    ダミーAI回答・sources・pages・pdf_urls・merged_pdf_urlを返すダミーAPI。
+    ダミーAI回答・sources・pdf_urlを返すダミーAPI。
     - answer: ダミー回答
-    - sources: ダミー参照元（pdfs/の先頭5ファイル）
-    - pages: [3,4,5,6,7]（固定）
-    - pdf_urls: pdfs/の先頭5ファイルのURL
-    - merged_pdf_url: 5つのPDFを結合した1つのPDFのURL
+    - sources: ダミー参照元（pdfs/の先頭5ファイルとページ番号）
+    - pdf_url: 5つのPDFを結合した1つのPDFのURL
     """
     try:
         # PDF保存先（本番と同じディレクトリを参照）
@@ -116,8 +114,6 @@ async def answer_api(req: QuestionRequest):
             [selected_files[i] if i < len(selected_files) else "dummy.pdf", pages[i]]
             for i in range(len(pages))
         ]
-        # pdf_urls生成
-        pdf_urls = [f"/pdfs/{selected_files[i]}" for i in range(len(selected_files))]
 
         # 5つのPDFを結合して1つのPDFを生成
         merged_pdf_name = f"merged_{req.query}.pdf"
@@ -135,7 +131,7 @@ async def answer_api(req: QuestionRequest):
                 writer.add_blank_page(width=595, height=842)
         with open(merged_pdf_path, "wb") as out_f:
             writer.write(out_f)
-        merged_pdf_url = f"/pdfs/{merged_pdf_name}"
+        pdf_url = f"/pdfs/{merged_pdf_name}"
 
         # ダミー回答
         answer = f"ダミー回答: {req.query}（カテゴリ: {req.category}）"
@@ -143,9 +139,7 @@ async def answer_api(req: QuestionRequest):
         return {
             "answer": answer,
             "sources": sources,
-            "pdf_urls": pdf_urls,
-            "pages": pages,
-            "merged_pdf_url": merged_pdf_url,
+            "pdf_url": pdf_url,
         }
     except Exception as e:
         return api_response(
