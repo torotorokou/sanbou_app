@@ -20,12 +20,13 @@ from app.core import file_ingest_service as loader
 from app.infrastructure.llm import ai_loader
 from app.infrastructure.pdf import pdf_loader
 from app.schemas.query_schema import QueryRequest
-from backend_shared.src.response_utils import api_response
+from backend_shared.src.api_response.response_utils import api_response
 
 router = APIRouter()
 
 
 # --- Pydanticモデル ---
+
 
 class QuestionRequest(BaseModel):
     query: str
@@ -52,8 +53,10 @@ def save_pdf_pages_and_get_urls(pdf_path, query_name, pages, save_dir, url_prefi
     指定PDFからpagesの各ページを抽出し、save_dirにanswer_{query_name}_{p}.pdfで保存。
     既存ならスキップ。URLリストを返す。
     """
+
     def safe_filename(s):
-        return re.sub(r'[^A-Za-z0-9_-]', '', s)
+        return re.sub(r"[^A-Za-z0-9_-]", "", s)
+
     safe_name = safe_filename(query_name)
     os.makedirs(save_dir, exist_ok=True)
     pdf_urls = []
@@ -65,7 +68,7 @@ def save_pdf_pages_and_get_urls(pdf_path, query_name, pages, save_dir, url_prefi
                 if not os.path.exists(dummy_pdf_path):
                     writer = PyPDF2.PdfWriter()
                     if 1 <= p <= len(reader.pages):
-                        writer.add_page(reader.pages[p-1])
+                        writer.add_page(reader.pages[p - 1])
                     else:
                         writer.add_blank_page(width=595, height=842)
                     with open(dummy_pdf_path, "wb") as out_f:
@@ -83,7 +86,9 @@ def save_pdf_pages_and_get_urls(pdf_path, query_name, pages, save_dir, url_prefi
             pdf_urls.append(f"{url_prefix}/answer_{safe_name}_{p}.pdf")
     return pdf_urls
 
+
 # --- 質問を受け取ってダミー回答を返すAPI ---
+
 
 @router.post("/test-answer")
 async def answer_api(req: QuestionRequest):
@@ -97,15 +102,20 @@ async def answer_api(req: QuestionRequest):
     """
     try:
         # PDF保存先（本番と同じディレクトリを参照）
-        pdfs_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../static/pdfs"))
+        pdfs_dir = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), "../../../static/pdfs")
+        )
         os.makedirs(pdfs_dir, exist_ok=True)
         # pdfs/ディレクトリ内のPDFファイル一覧（先頭5つ取得）
         pdf_files = [f for f in os.listdir(pdfs_dir) if f.lower().endswith(".pdf")]
         pdf_files.sort()  # ファイル名順
         selected_files = pdf_files[:5]
         # ページ番号は3,4,5,6,7で固定（ファイル数が足りなければ補完）
-        pages = list(range(3, 8))[:len(selected_files)]
-        sources = [[selected_files[i] if i < len(selected_files) else "dummy.pdf", pages[i]] for i in range(len(pages))]
+        pages = list(range(3, 8))[: len(selected_files)]
+        sources = [
+            [selected_files[i] if i < len(selected_files) else "dummy.pdf", pages[i]]
+            for i in range(len(pages))
+        ]
         # pdf_urls生成
         pdf_urls = [f"/pdfs/{selected_files[i]}" for i in range(len(selected_files))]
 
@@ -135,7 +145,7 @@ async def answer_api(req: QuestionRequest):
             "sources": sources,
             "pdf_urls": pdf_urls,
             "pages": pages,
-            "merged_pdf_url": merged_pdf_url
+            "merged_pdf_url": merged_pdf_url,
         }
     except Exception as e:
         return api_response(
@@ -143,7 +153,7 @@ async def answer_api(req: QuestionRequest):
             status_str="error",
             code="E500",
             detail=f"Internal Server Error: {str(e)}",
-            hint="サーバー側で予期せぬエラーが発生しました。管理者に連絡してください。"
+            hint="サーバー側で予期せぬエラーが発生しました。管理者に連絡してください。",
         )
 
 
@@ -186,14 +196,15 @@ async def generate_answer(request: QueryRequest):
         os.makedirs(static_dir, exist_ok=True)
         print(f"[DEBUG] PDF保存先: {static_dir}")
         from app.utils.file_utils import PDF_PATH
+
         pdf_path = str(PDF_PATH)
 
         # ページリストを正規化
         page_list = []
         if pages:
             if isinstance(pages, str):
-                if '-' in pages:
-                    start, end = pages.split('-')
+                if "-" in pages:
+                    start, end = pages.split("-")
                     try:
                         start = int(start)
                         end = int(end)
@@ -204,9 +215,9 @@ async def generate_answer(request: QueryRequest):
                     page_list = [pages]
             elif isinstance(pages, list):
                 for p in pages:
-                    if isinstance(p, str) and '-' in p:
+                    if isinstance(p, str) and "-" in p:
                         try:
-                            start, end = p.split('-')
+                            start, end = p.split("-")
                             start = int(start)
                             end = int(end)
                             page_list.extend(range(start, end + 1))
@@ -221,7 +232,7 @@ async def generate_answer(request: QueryRequest):
             query_name=request.query,
             pages=page_list,
             save_dir=static_dir,
-            url_prefix="/pdfs"
+            url_prefix="/pdfs",
         )
 
         # 個別PDFを結合した1つのPDFも生成
@@ -249,20 +260,20 @@ async def generate_answer(request: QueryRequest):
                 "sources": sources,
                 "pdf_url": pdf_urls[0],
                 "pdf_urls": pdf_urls,
-                "merged_pdf_url": merged_pdf_url
+                "merged_pdf_url": merged_pdf_url,
             }
         elif len(pdf_urls) > 1:
             return {
                 "answer": answer,
                 "sources": sources,
                 "pdf_urls": pdf_urls,
-                "merged_pdf_url": merged_pdf_url
+                "merged_pdf_url": merged_pdf_url,
             }
         else:
             return {
                 "answer": answer,
                 "sources": sources,
-                "merged_pdf_url": merged_pdf_url
+                "merged_pdf_url": merged_pdf_url,
             }
     except Exception as e:
         return api_response(
@@ -270,11 +281,8 @@ async def generate_answer(request: QueryRequest):
             status_str="error",
             code="E500",
             detail=f"Internal Server Error: {str(e)}",
-            hint="サーバー側で予期せぬエラーが発生しました。管理者に連絡してください。"
+            hint="サーバー側で予期せぬエラーが発生しました。管理者に連絡してください。",
         )
-
-
-
 
 
 @router.post("/download-report")
@@ -285,6 +293,7 @@ async def download_report(request: Request, pages: list = Body(..., embed=True))
     """
     try:
         from app.utils.file_utils import PDF_PATH
+
         pdf_path = str(PDF_PATH)
         if not pages or not isinstance(pages, list):
             return api_response(
@@ -292,7 +301,7 @@ async def download_report(request: Request, pages: list = Body(..., embed=True))
                 status_str="error",
                 code="E422",
                 detail="pagesはリストで指定してください。",
-                hint="リクエストボディのpagesをリスト形式で指定してください。"
+                hint="リクエストボディのpagesをリスト形式で指定してください。",
             )
 
         # 単数ページの場合: PDFで返却
@@ -305,7 +314,7 @@ async def download_report(request: Request, pages: list = Body(..., embed=True))
                     status_str="error",
                     code="E400",
                     detail="ページ番号が不正です。",
-                    hint="pagesの値を確認してください。"
+                    hint="pagesの値を確認してください。",
                 )
             with open(pdf_path, "rb") as f:
                 reader = PyPDF2.PdfReader(f)
@@ -346,8 +355,9 @@ async def download_report(request: Request, pages: list = Body(..., embed=True))
             status_str="error",
             code="E500",
             detail=f"Internal Server Error: {str(e)}",
-            hint="サーバー側で予期せぬエラーが発生しました。管理者に連絡してください。"
+            hint="サーバー側で予期せぬエラーが発生しました。管理者に連絡してください。",
         )
+
 
 # --- PDFページ画像返却API ---
 @router.get("/pdf-page")
@@ -357,6 +367,7 @@ def pdf_page(page_num: str):
     1ページの場合はPNG画像、範囲指定（例: 1-3）の場合はZIPで複数ページを返す。
     """
     from app.utils.file_utils import PDF_PATH
+
     pdf_path = str(PDF_PATH)
     if "-" in page_num:
         start, end = page_num.split("-")
