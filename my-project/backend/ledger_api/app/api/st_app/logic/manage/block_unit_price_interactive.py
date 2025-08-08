@@ -95,23 +95,18 @@ class BlockUnitPriceInteractive:
             df_shipment = apply_unit_price_addition(master_csv, df_shipment)
             df_shipment = apply_transport_fee_by1(df_shipment, df_transport_cost)
 
-            df_shipment = 
-
             # 運搬業者選択肢を準備
             transport_options = self._prepare_transport_options(
                 df_transport_cost, df_shipment
             )
 
-            
-# interface InteractiveItem {
-#     id: string; // 対象ID
-#     processor_name: string; // 処理業者名
-#     product_name: string; // 商品名
-#     note?: string; // 備考
-#     transport_options: TransportVendor[]; // 選択肢
-# }
-
-
+        # interface InteractiveItem {
+        #     id: string; // 対象ID
+        #     processor_name: string; // 処理業者名
+        #     product_name: string; // 商品名
+        #     note?: string; // 備考
+        #     transport_options: TransportVendor[]; // 選択肢
+        # }
 
         except Exception as e:
             self.logger.error(f"Step 0 処理中にエラー: {e}")

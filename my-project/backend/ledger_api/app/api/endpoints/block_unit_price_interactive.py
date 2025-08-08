@@ -76,40 +76,19 @@ async def start_block_unit_price_process(request: StartProcessRequest):
 
     try:
         # manage_report.pyと同じcsv処理を行うためのインポート
-        from app.api.st_app.logic.manage.manage_report import (
-            CsvFormatterService,
-            CsvValidatorService,
-            NoFilesUploadedResponse,
-            read_csv_files,
-        )
+        from app.api.services.report_processing_service import ReportProcessingService
+
+        # 共通処理サービスのインスタンス作成
+        report_service = ReportProcessingService()
 
         # request.files からファイルを取得
         files = request.files
         print(f"Uploaded files: {list(files.keys())}")
 
-        # ✅ ファイル未アップロードチェック
-        if not files:
-            print("No files uploaded.")
-            return NoFilesUploadedResponse().to_json_response()
-
-        # ✅ CSV読込処理
-        dfs, error = read_csv_files(files)
+        # ✅ 共通処理サービスでファイル処理
+        df_formatted, error = report_service.process_uploaded_files(files)
         if error:
             return error.to_json_response()
-
-        # ✅ CSVデータのバリデーション処理
-        validator_service = CsvValidatorService()
-        validation_error = validator_service.validate(dfs, files)
-        if validation_error:
-            print(f"Validation error: {validation_error}")
-            return validation_error.to_json_response()
-
-        # ✅ データフォーマット変換処理
-        print("Formatting DataFrames...")
-        formatter_service = CsvFormatterService()
-        df_formatted = formatter_service.format(dfs)
-        for csv_type, df in df_formatted.items():
-            print(f"Formatted {csv_type}: shape={df.shape}")
 
         # ブロック単価計算プロセッサーの初期化と処理開始
         processor = BlockUnitPriceInteractive()
