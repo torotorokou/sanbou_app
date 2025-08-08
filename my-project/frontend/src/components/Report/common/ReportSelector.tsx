@@ -2,8 +2,8 @@
 import React from 'react';
 import { Select } from 'antd';
 
-import { REPORT_OPTIONS } from '@/constants/reportConfig/managementReportConfig';
-import type { ReportKey } from '@/constants/reportConfig/managementReportConfig';
+import { REPORT_OPTIONS } from '@/constants/reportConfig/managementReportConfig.tsx';
+import type { ReportKey } from '@/constants/reportConfig/managementReportConfig.tsx';
 
 type ReportSelectorProps = {
     reportKey: string;

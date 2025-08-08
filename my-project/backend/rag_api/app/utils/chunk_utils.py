@@ -1,13 +1,13 @@
 from langchain_community.vectorstores import FAISS
 from langchain_openai import OpenAIEmbeddings
-from typing import List, Optional
+from typing import List, Optional, Any
 import ast
 
-def load_faiss_vectorstore(faiss_path):
+def load_faiss_vectorstore(faiss_path: str) -> Any:
     embeddings = OpenAIEmbeddings()
     return FAISS.load_local(str(faiss_path), embeddings, allow_dangerous_deserialization=True)
 
-def safe_parse_tags(raw):
+def safe_parse_tags(raw: Any) -> List[Any]:
     if isinstance(raw, list):
         return raw
     elif isinstance(raw, str):
@@ -25,10 +25,10 @@ def search_documents_with_category(
     query: str,
     category: str,
     json_data: List[dict],
-    vectorstore,
+    vectorstore: Any,
     top_k: int = 4,
     tags: Optional[List[str]] = None
-):
+) -> List[tuple]:
     results = vectorstore.similarity_search_with_score(query, k=top_k)
     filtered = []
 

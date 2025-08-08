@@ -1,44 +1,58 @@
 // src/theme/tokens.ts
 
 export const customTokens = {
-    // ブランド基本色（グリーン系）
-    colorPrimary: '#10b981',
-    colorSuccess: '#22c55e',
-    colorError: '#ef4444',
-    colorWarning: '#f59e0b',
-    colorInfo: '#3b82f6',
+    // === 基本色パレット ===
+    colorPrimary: '#10b981', // ブランドグリーン
+    colorSuccess: '#22c55e', // 成功色
+    colorError: '#ef4444', // エラー色
+    colorWarning: '#f59e0b', // 警告色
+    colorInfo: '#3b82f6', // 情報色
+    colorNeutral: '#9ca3af', // 中性色
 
-    // 管理表ダッシュボード
-    // 🚀 カテゴリ別の円グラフカラー
-    colorCategoryA: '#10b981', // A：ブランドグリーン
-    colorCategoryB: '#3b82f6', // B：ブルー
-    colorCategoryC: '#6366f1', // C：パープル
-    colorCategoryD: '#f59e0b', // D：オレンジ
-    colorCategoryE: '#f43f5e', // E：ピンクレッド
-    colorCategoryF: '#a3a3a3', // F：グレー
+    // === 背景色 ===
+    colorBgBase: '#f9fefb', // ベース背景
+    colorBgLayout: '#eef5f0', // レイアウト背景
+    colorBgContainer: '#ffffff', // コンテナ背景
+    colorBgCard: '#fafafa', // カード背景
 
-    // 売上・仕入・粗利・ブロック
-    gradRevenueSales: '#3b82f6',
-    gradRevenueCost: '#ffabab',
-    gradRevenueProfit: '#10b981',
-    gradRevenueBlock: '#f59e0b',
+    // === テキスト色 ===
+    colorText: '#1e293b', // メインテキスト
+    colorTextSecondary: '#64748b', // セカンダリテキスト
+    colorTextMuted: '#888', // ミュートテキスト
 
-    // ダウンロードボタン
-    colorDownloadButton: '#3b82f6', // 💡 オレンジ系
+    // === サイドバー色 ===
+    colorSiderBg: '#0f2a29', // サイドバー背景
+    colorSiderText: '#ffffff', // サイドバーテキスト
+    colorSiderHover: '#134e4a', // サイドバーホバー
 
-    // 背景色（ダッシュボード用に明るめ調整）
-    colorBgBase: '#f9fefb',
-    colorBgLayout: '#eef5f0',
-    colorBgContainer: '#ffffff',
-    colorBgElevated: '#ffffff',
+    // === ボーダー・影 ===
+    colorBorder: '#ccc', // 基本ボーダー
+    colorBorderSecondary: '#d1fae5', // セカンダリボーダー
+    shadowLight: 'rgba(0,0,0,0.05)', // 薄い影
+    shadowMedium: 'rgba(0,0,0,0.10)', // 中程度の影
 
-    // ✅ サイドバー専用色（追加）
-    colorSiderBg: '#0f2a29', // 濃い背景色（ダークネイビーなど）
-    colorSiderText: '#ffffff', // 白文字
-    colorSiderHover: '#134e4a', // ホバー時（暗緑系）
+    // === チャート色（5色パレット） ===
+    chartGreen: '#10b981', // メイン（グリーン）
+    chartBlue: '#3b82f6', // ブルー
+    chartOrange: '#f59e0b', // オレンジ
+    chartRed: '#ef4444', // レッド
+    chartPurple: '#6366f1', // パープル
 
-    // テキスト・境界線
-    colorText: '#1e293b',
-    colorTextSecondary: '#64748b',
-    colorBorderSecondary: '#d1fae5',
+    // === CSV背景色 ===
+    csvShipmentBg: '#e6f7ff', // 出荷CSV背景（ブルー系）
+    csvReceiveBg: '#fff1f0', // 受入CSV背景（レッド系）
+    csvYardBg: '#f6ffed', // ヤードCSV背景（グリーン系）
+
+    // === 状態色 ===
+    statusValid: '#22c55e', // 有効状態（success色と統一）
+    statusInvalid: '#ef4444', // 無効状態（error色と統一）
+    statusUnknown: '#9ca3af', // 不明状態（neutral色と統一）
+
+    // === 特殊用途色 ===
+    highlightYellow: '#ffeb3b', // ハイライト色
+    linkBlue: '#1890ff', // リンク色
+
+    // === 透明度付きカラー ===
+    whiteAlpha80: 'rgba(255, 255, 255, 0.8)',
+    blackAlpha50: 'rgba(0, 0, 0, 0.5)',
 };

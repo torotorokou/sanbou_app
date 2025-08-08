@@ -2,6 +2,7 @@ import pandas as pd
 from app.api.st_app.utils.config_loader import (
     get_template_config,
     get_required_columns_definition,
+    clean_na_strings,
 )
 
 
@@ -67,7 +68,13 @@ def process(shipment_df: pd.DataFrame, master_csv: pd.DataFrame = None) -> pd.Da
         master_path = config["balance_management_table"]["master_csv_path"][
             "balance_management_table"
         ]
-        master_df = pd.read_csv(master_path)
+        # <NA>文字列をfloat変換エラーから守るため、na_valuesを指定
+        na_values = ["<NA>", "NaN", "nan", "None", "NULL", "null", "#N/A", "#NA"]
+        master_df = pd.read_csv(master_path, na_values=na_values, keep_default_na=False)
+
+        # 全カラムに対してNA文字列をクリーンアップ
+        for col in master_df.columns:
+            master_df[col] = master_df[col].apply(clean_na_strings)
     else:
         master_df = master_csv
 
