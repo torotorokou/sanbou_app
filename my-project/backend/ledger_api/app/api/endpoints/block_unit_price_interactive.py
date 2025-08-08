@@ -7,8 +7,9 @@
 
 # backend/app/api/endpoints/block_unit_price_interactive.py
 
+from typing import Any, Dict
+
 from fastapi import APIRouter, HTTPException
-from typing import Dict, Any
 from pydantic import BaseModel
 
 from app.api.st_app.logic.manage.block_unit_price_interactive import (
@@ -56,7 +57,7 @@ class FinalizeRequest(BaseModel):
     confirmed: bool = True  # 確認フラグ
 
 
-@router.post("/start")
+@router.post("/initial")
 async def start_block_unit_price_process(request: StartProcessRequest):
     """
     ブロック単価計算処理開始 (Step 0)
@@ -72,7 +73,23 @@ async def start_block_unit_price_process(request: StartProcessRequest):
     Raises:
         HTTPException: 処理中にエラーが発生した場合
     """
+
     try:
+        # manage_report.pyと同じcsv処理を行うためのインポート
+        from app.api.services.report_processing_service import ReportProcessingService
+
+        # 共通処理サービスのインスタンス作成
+        report_service = ReportProcessingService()
+
+        # request.files からファイルを取得
+        files = request.files
+        print(f"Uploaded files: {list(files.keys())}")
+
+        # ✅ 共通処理サービスでファイル処理
+        df_formatted, error = report_service.process_uploaded_files(files)
+        if error:
+            return error.to_json_response()
+
         # ブロック単価計算プロセッサーの初期化と処理開始
         processor = BlockUnitPriceInteractive()
         result = processor.start_process(request.files)
