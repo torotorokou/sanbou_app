@@ -11,6 +11,14 @@ export * from './shared/common';
 // 主要な型のre-export
 export type { ModalStepConfig, CsvConfigGroup } from './shared/types';
 
+// 新しい関数のre-export
+export {
+    getApiEndpoint,
+    isInteractiveReport,
+    REPORT_API_ENDPOINTS,
+    INTERACTIVE_REPORTS,
+} from './shared/common';
+
 // ページ別設定
 export * from './pages/managePageConfig';
 export * from './pages/factoryPageConfig';
