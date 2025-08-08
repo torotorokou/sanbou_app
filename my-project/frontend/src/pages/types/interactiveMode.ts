@@ -2,7 +2,7 @@
 
 /**
  * インタラクティブ帳簿生成モード専用の型定義
- * 
+ *
  * 🎯 目的：
  * - インタラクティブモードの複雑な状態管理を型安全に行う
  * - ステップベースの処理フローを明確に定義
@@ -19,14 +19,15 @@ import type React from 'react';
  * インタラクティブ処理の進行ステップ
  */
 export const INTERACTIVE_STEPS = {
-    INITIAL: -1,           // 未開始
-    PROCESSING: 0,         // データ処理中
-    USER_INPUT: 1,         // ユーザー入力待ち
-    CALCULATING: 2,        // 最終計算中
-    COMPLETED: 3,          // 完了
+    INITIAL: -1, // 未開始
+    PROCESSING: 0, // データ処理中
+    USER_INPUT: 1, // ユーザー入力待ち
+    CALCULATING: 2, // 最終計算中
+    COMPLETED: 3, // 完了
 } as const;
 
-export type InteractiveStep = typeof INTERACTIVE_STEPS[keyof typeof INTERACTIVE_STEPS];
+export type InteractiveStep =
+    (typeof INTERACTIVE_STEPS)[keyof typeof INTERACTIVE_STEPS];
 
 /**
  * セッションデータの型
@@ -59,6 +60,8 @@ export interface InteractiveProcessState {
     sessionData?: SessionData;
     userSelections?: UserSelections;
     processData?: ProcessData;
+    interactions?: unknown[]; // APIから受け取るインタラクション定義
+    data?: ProcessData; // APIから受け取る処理データ
 }
 
 // ==============================
@@ -97,14 +100,15 @@ export interface InteractiveComponentConfig {
  * インタラクションの種類
  */
 export const INTERACTION_TYPES = {
-    SELECT: 'select',           // 選択肢から選択
-    INPUT: 'input',             // テキスト入力
-    SLIDER: 'slider',           // スライダー操作
-    CHECKBOX: 'checkbox',       // チェックボックス
-    CUSTOM: 'custom',           // カスタムコンポーネント
+    SELECT: 'select', // 選択肢から選択
+    INPUT: 'input', // テキスト入力
+    SLIDER: 'slider', // スライダー操作
+    CHECKBOX: 'checkbox', // チェックボックス
+    CUSTOM: 'custom', // カスタムコンポーネント
 } as const;
 
-export type InteractionType = typeof INTERACTION_TYPES[keyof typeof INTERACTION_TYPES];
+export type InteractionType =
+    (typeof INTERACTION_TYPES)[keyof typeof INTERACTION_TYPES];
 
 /**
  * ユーザーインタラクション設定
@@ -137,7 +141,9 @@ export interface InteractiveStepConfig {
     component?: React.ComponentType<InteractiveComponentProps>;
     interactions?: InteractionConfig[];
     skipCondition?: (state: InteractiveProcessState) => boolean;
-    nextAction: (state: InteractiveProcessState) => Promise<Partial<InteractiveProcessState>>;
+    nextAction: (
+        state: InteractiveProcessState
+    ) => Promise<Partial<InteractiveProcessState>>;
 }
 
 // ==============================

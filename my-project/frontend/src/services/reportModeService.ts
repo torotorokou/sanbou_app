@@ -27,19 +27,19 @@
  * - Dependency Inversion: 抽象に依存し、具象に依存しない
  */
 
-import { 
-    getReportModeInfo, 
-    getApiEndpointByReportKey, 
+import {
+    getReportModeInfo,
+    getApiEndpointByReportKey,
     type ReportKey,
     type ReportModeInfo,
-    REPORT_GENERATION_MODES
+    REPORT_GENERATION_MODES,
 } from '../pages/types/reportMode';
 
-import type { 
+import type {
     InteractiveProcessState,
     InteractiveApiRequest,
     InteractiveApiResponse,
-    InteractiveResult 
+    InteractiveResult,
 } from '../pages/types/interactiveMode';
 
 // ==============================
@@ -138,11 +138,11 @@ export class AutoReportProcessor implements IReportProcessor {
                 downloadUrl,
                 fileName,
             };
-
         } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            const errorMessage =
+                error instanceof Error ? error.message : 'Unknown error';
             callbacks.onError(errorMessage);
-            
+
             return {
                 success: false,
                 mode: 'auto',
@@ -154,7 +154,8 @@ export class AutoReportProcessor implements IReportProcessor {
     private extractFileName(response: Response): string {
         const contentDisposition = response.headers.get('content-disposition');
         if (contentDisposition) {
-            const filenameMatch = contentDisposition.match(/filename="?([^"]+)"?/);
+            const filenameMatch =
+                contentDisposition.match(/filename="?([^"]+)"?/);
             if (filenameMatch) {
                 return filenameMatch[1];
             }
@@ -186,20 +187,24 @@ export class InteractiveReportProcessor implements IReportProcessor {
             callbacks.onStart();
 
             // インタラクティブ処理の開始
-            const result = await this.startInteractiveProcess(csvFiles, reportKey, callbacks);
-            
+            const result = await this.startInteractiveProcess(
+                csvFiles,
+                reportKey,
+                callbacks
+            );
+
             callbacks.onComplete();
-            
+
             return {
                 success: true,
                 mode: 'interactive',
                 ...result,
             };
-
         } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            const errorMessage =
+                error instanceof Error ? error.message : 'Unknown error';
             callbacks.onError(errorMessage);
-            
+
             return {
                 success: false,
                 mode: 'interactive',
@@ -233,7 +238,9 @@ export class InteractiveReportProcessor implements IReportProcessor {
         });
 
         if (!response.ok) {
-            throw new Error(`Interactive API request failed: ${response.statusText}`);
+            throw new Error(
+                `Interactive API request failed: ${response.statusText}`
+            );
         }
 
         const responseData: InteractiveApiResponse = await response.json();
@@ -245,11 +252,12 @@ export class InteractiveReportProcessor implements IReportProcessor {
         // ここではUIコンポーネント側でインタラクティブ処理を継続
         // この関数は初期処理のみを担当
         return {
-            previewUrl: typeof responseData.data === 'object' && 
-                       responseData.data && 
-                       'previewUrl' in responseData.data
-                       ? String(responseData.data.previewUrl) 
-                       : undefined,
+            previewUrl:
+                typeof responseData.data === 'object' &&
+                responseData.data &&
+                'previewUrl' in responseData.data
+                    ? String(responseData.data.previewUrl)
+                    : undefined,
         };
     }
 
@@ -260,7 +268,7 @@ export class InteractiveReportProcessor implements IReportProcessor {
         // インタラクティブ処理の継続ロジック
         // UIコンポーネントから呼び出される
         callbacks.onProgress?.(this.currentState.currentStep + 1);
-        
+
         // TODO: 実際のAPI呼び出しとステップ処理を実装
         return {
             success: true,
@@ -282,8 +290,14 @@ export class ReportProcessorFactory {
 
     static {
         // 静的初期化ブロックで登録
-        this.processors.set(REPORT_GENERATION_MODES.AUTO, () => new AutoReportProcessor());
-        this.processors.set(REPORT_GENERATION_MODES.INTERACTIVE, () => new InteractiveReportProcessor());
+        this.processors.set(
+            REPORT_GENERATION_MODES.AUTO,
+            () => new AutoReportProcessor()
+        );
+        this.processors.set(
+            REPORT_GENERATION_MODES.INTERACTIVE,
+            () => new InteractiveReportProcessor()
+        );
     }
 
     static createProcessor(reportKey: ReportKey): IReportProcessor {
@@ -300,7 +314,10 @@ export class ReportProcessorFactory {
     /**
      * 新しいプロセッサーを登録（拡張性のため）
      */
-    static registerProcessor(mode: string, creator: () => IReportProcessor): void {
+    static registerProcessor(
+        mode: string,
+        creator: () => IReportProcessor
+    ): void {
         this.processors.set(mode, creator);
     }
 }
@@ -343,11 +360,17 @@ export class ReportModeService {
     /**
      * インタラクティブプロセッサーを取得（型安全性を保証）
      */
-    static getInteractiveProcessor(reportKey: ReportKey): InteractiveReportProcessor {
+    static getInteractiveProcessor(
+        reportKey: ReportKey
+    ): InteractiveReportProcessor {
         if (!this.isInteractiveMode(reportKey)) {
-            throw new Error(`Report key ${reportKey} is not in interactive mode`);
+            throw new Error(
+                `Report key ${reportKey} is not in interactive mode`
+            );
         }
-        
-        return ReportProcessorFactory.createProcessor(reportKey) as InteractiveReportProcessor;
+
+        return ReportProcessorFactory.createProcessor(
+            reportKey
+        ) as InteractiveReportProcessor;
     }
 }

@@ -2,7 +2,7 @@
 
 /**
  * 帳簿生成モードの型定義
- * 
+ *
  * 🎯 目的：
  * - 自動帳簿生成とインタラクティブ帳簿生成の明確な区別
  * - モードごとの処理フロー分岐をtype-safeに実現
@@ -18,10 +18,11 @@
  */
 export const REPORT_GENERATION_MODES = {
     AUTO: 'auto',
-    INTERACTIVE: 'interactive'
+    INTERACTIVE: 'interactive',
 } as const;
 
-export type ReportGenerationMode = typeof REPORT_GENERATION_MODES[keyof typeof REPORT_GENERATION_MODES];
+export type ReportGenerationMode =
+    (typeof REPORT_GENERATION_MODES)[keyof typeof REPORT_GENERATION_MODES];
 
 // ==============================
 // 🏭 帳簿モード設定マップ
@@ -39,11 +40,11 @@ export const REPORT_MODE_CONFIG = {
     average_sheet: { mode: REPORT_GENERATION_MODES.AUTO },
     block_unit_price: { mode: REPORT_GENERATION_MODES.INTERACTIVE },
     management_sheet: { mode: REPORT_GENERATION_MODES.AUTO },
-    
+
     // 工場ページ
     // factory_report は管理業務と重複のため除外
-    
-    // 帳簿ページ  
+
+    // 帳簿ページ
     ledger_book: { mode: REPORT_GENERATION_MODES.AUTO },
 } as const;
 
@@ -68,7 +69,7 @@ export interface ReportModeInfo {
 export const getReportModeInfo = (reportKey: ReportKey): ReportModeInfo => {
     const config = REPORT_MODE_CONFIG[reportKey];
     const mode = config.mode;
-    
+
     return {
         mode,
         isInteractive: mode === REPORT_GENERATION_MODES.INTERACTIVE,
@@ -81,7 +82,9 @@ export const getReportModeInfo = (reportKey: ReportKey): ReportModeInfo => {
  */
 export const getInteractiveReportKeys = (): ReportKey[] => {
     return Object.keys(REPORT_MODE_CONFIG).filter(
-        key => REPORT_MODE_CONFIG[key as ReportKey].mode === REPORT_GENERATION_MODES.INTERACTIVE
+        (key) =>
+            REPORT_MODE_CONFIG[key as ReportKey].mode ===
+            REPORT_GENERATION_MODES.INTERACTIVE
     ) as ReportKey[];
 };
 
@@ -90,7 +93,9 @@ export const getInteractiveReportKeys = (): ReportKey[] => {
  */
 export const getAutoReportKeys = (): ReportKey[] => {
     return Object.keys(REPORT_MODE_CONFIG).filter(
-        key => REPORT_MODE_CONFIG[key as ReportKey].mode === REPORT_GENERATION_MODES.AUTO
+        (key) =>
+            REPORT_MODE_CONFIG[key as ReportKey].mode ===
+            REPORT_GENERATION_MODES.AUTO
     ) as ReportKey[];
 };
 

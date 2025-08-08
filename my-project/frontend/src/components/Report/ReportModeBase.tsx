@@ -30,9 +30,11 @@ interface ReportModeBaseProps extends ReportBaseProps {
     onContinueInteractive?: (userInput: Record<string, unknown>) => void;
     onResetInteractive?: () => void;
     interactiveState?: {
-        currentStep: number;
+        currentStep: InteractiveStep;
         isLoading: boolean;
         error?: string;
+        interactions?: unknown[];
+        data?: unknown;
     };
 }
 
@@ -89,7 +91,7 @@ const ReportModeBase: React.FC<ReportModeBaseProps> = ({
         } else {
             // 自動モードの場合、従来通りの処理
             business.handleGenerateReport(
-                () => {}, // onStart
+                () => { }, // onStart
                 () => {   // onComplete
                     loading.setLoading(false);
                     finalized.setFinalized(true);
@@ -182,7 +184,7 @@ const ReportModeBase: React.FC<ReportModeBaseProps> = ({
                     steps={(modalStepsMap[reportKey] || []).map(step => step.label)}
                     currentStep={step.currentStep}
                     stepConfigs={modalStepsMap[reportKey] || []}
-                    onNext={() => {}}
+                    onNext={() => { }}
                     onClose={() => modal.setModalOpen(false)}
                 >
                     <div>処理中...</div>
@@ -208,7 +210,7 @@ const getReportDisplayName = (reportKey: ReportKey): string => {
         management_sheet: '管理票',
         ledger_book: '帳簿',
     };
-    
+
     return displayNames[reportKey] || reportKey;
 };
 

@@ -73,7 +73,7 @@ const ReportModeDemo: React.FC = () => {
                     このページでは、自動帳簿生成とインタラクティブ帳簿生成の両方に対応した
                     新しいレポートシステムの動作を確認できます。
                 </Paragraph>
-                
+
                 <Row gutter={[16, 16]}>
                     <Col span={12}>
                         <Card size="small" title="🤖 自動モード対応帳票">
@@ -113,7 +113,7 @@ const ReportModeDemo: React.FC = () => {
                         <Text strong>現在のステップ:</Text> {reportManager.currentStep}
                     </Col>
                 </Row>
-                
+
                 {modeInfo.isInteractive && (
                     <Alert
                         style={{ marginTop: '16px' }}

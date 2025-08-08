@@ -2,7 +2,7 @@
 
 /**
  * pages/types モジュールのエクスポート
- * 
+ *
  * 🎯 目的：
  * - 型定義の一元的なエクスポート
  * - インポート文の簡潔化
@@ -34,10 +34,7 @@ export type {
 // 🎮 インタラクティブモード関連
 // ==============================
 
-export {
-    INTERACTIVE_STEPS,
-    INTERACTION_TYPES,
-} from './interactiveMode';
+export { INTERACTIVE_STEPS, INTERACTION_TYPES } from './interactiveMode';
 
 export type {
     InteractiveProcessState,

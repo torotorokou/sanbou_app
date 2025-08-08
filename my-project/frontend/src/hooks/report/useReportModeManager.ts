@@ -2,7 +2,7 @@
 
 /**
  * モード対応レポート管理フック
- * 
+ *
  * 🎯 目的：
  * - 既存のuseReportManagerを拡張し、モード分岐に対応
  * - 自動・インタラクティブモードの統合管理
@@ -10,22 +10,25 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
+import { notification } from 'antd';
 import { useReportManager } from './useReportManager';
 import { ReportModeService } from '../../services/reportModeService';
+import { getInteractiveApiService } from '../../services/interactiveApiService';
+import { INTERACTIVE_STEPS } from '../../pages/types/interactiveMode';
 import type { ReportKey } from '../../constants/reportConfig';
-import type { 
-    InteractiveProcessState, 
-    InteractiveResult,
+import type {
+    InteractiveProcessState,
     InteractiveStep,
-    UserSelections
+    UserSelections,
+    SessionData,
 } from '../../pages/types/interactiveMode';
-import type { 
+import type {
     ReportGenerationMode,
-    ReportModeInfo 
+    ReportModeInfo,
 } from '../../pages/types/reportMode';
-import type { 
+import type {
     ReportProcessResult,
-    ReportCallbacks 
+    ReportCallbacks,
 } from '../../services/reportModeService';
 
 // ==============================
@@ -65,7 +68,9 @@ interface ReportModeManagerReturn {
 
     // 新しいアクション
     generateReport: () => Promise<void>;
-    continueInteractiveProcess: (userInput: Record<string, unknown>) => Promise<void>;
+    continueInteractiveProcess: (
+        userInput: Record<string, unknown>
+    ) => Promise<void>;
     resetInteractiveState: () => void;
 
     // ヘルパー
@@ -90,10 +95,18 @@ export const useReportModeManager = (
     const baseManager = useReportManager(initialReportKey);
 
     // インタラクティブモード専用の状態
-    const [interactiveState, setInteractiveState] = useState<InteractiveProcessState>({
-        currentStep: -1, // INTERACTIVE_STEPS.INITIAL
-        isLoading: false,
-    });
+    const [interactiveState, setInteractiveState] =
+        useState<InteractiveProcessState>({
+            currentStep: INTERACTIVE_STEPS.INITIAL,
+            isLoading: false,
+        });
+
+    // インタラクティブAPIサービス
+    const interactiveApiService = getInteractiveApiService();
+
+    // セッション管理
+    const [sessionId, setSessionId] = useState<string | null>(null);
+    const [sessionData, setSessionData] = useState<SessionData>({});
 
     // 最新の処理結果（将来の拡張用）
     const [, setLastResult] = useState<ReportProcessResult | null>(null);
@@ -108,7 +121,9 @@ export const useReportModeManager = (
 
     // レポートタイプ変更時のモード切り替え
     useEffect(() => {
-        const newModeInfo = ReportModeService.getModeInfo(baseManager.selectedReport);
+        const newModeInfo = ReportModeService.getModeInfo(
+            baseManager.selectedReport
+        );
         onModeChange?.(newModeInfo.mode);
 
         // インタラクティブモードでない場合は状態をリセット
@@ -122,69 +137,25 @@ export const useReportModeManager = (
         if (isInteractiveMode) {
             onInteractiveStepChange?.(interactiveState.currentStep);
         }
-    }, [isInteractiveMode, interactiveState.currentStep, onInteractiveStepChange]);
+    }, [
+        isInteractiveMode,
+        interactiveState.currentStep,
+        onInteractiveStepChange,
+    ]);
 
     // ==============================
     // 🎯 アクション関数
     // ==============================
 
     /**
-     * レポート生成を実行（モードに応じて自動で分岐）
+     * レポート生成を実行（最適化されたAPI通信）
      */
     const generateReport = useCallback(async () => {
-        const callbacks: ReportCallbacks = {
-            onStart: () => {
-                baseManager.setIsLoading(true);
-                baseManager.setIsModalOpen(true);
-                baseManager.setCurrentStep(0);
-                
-                if (isInteractiveMode) {
-                    setInteractiveState(prev => ({
-                        ...prev,
-                        isLoading: true,
-                        currentStep: 0, // INTERACTIVE_STEPS.PROCESSING
-                    }));
-                }
-            },
-            onProgress: (step: number, message?: string) => {
-                if (isInteractiveMode) {
-                    setInteractiveState(prev => ({
-                        ...prev,
-                        currentStep: step as InteractiveStep,
-                        error: undefined,
-                    }));
-                } else {
-                    baseManager.setCurrentStep(step);
-                }
-                console.log(`Progress: Step ${step}, Message: ${message}`);
-            },
-            onComplete: () => {
-                baseManager.setIsLoading(false);
-                baseManager.setIsFinalized(true);
-                
-                if (isInteractiveMode) {
-                    setInteractiveState(prev => ({
-                        ...prev,
-                        isLoading: false,
-                    }));
-                }
-            },
-            onError: (error: string) => {
-                baseManager.setIsLoading(false);
-                baseManager.setIsModalOpen(false);
-                
-                if (isInteractiveMode) {
-                    setInteractiveState(prev => ({
-                        ...prev,
-                        isLoading: false,
-                        error,
-                    }));
-                }
-                console.error('Report generation error:', error);
-            },
-        };
-
         try {
+            baseManager.setIsLoading(true);
+            baseManager.setIsModalOpen(true);
+            baseManager.setCurrentStep(0);
+
             // nullファイルを除外してAPIに渡す
             const filteredCsvFiles: Record<string, File> = {};
             Object.entries(baseManager.csvFiles).forEach(([key, file]) => {
@@ -193,99 +164,210 @@ export const useReportModeManager = (
                 }
             });
 
-            const result = await ReportModeService.generateReport(
-                filteredCsvFiles,
-                baseManager.selectedReport,
-                callbacks
-            );
+            if (isInteractiveMode) {
+                // インタラクティブモード - 専用API使用
+                setInteractiveState((prev) => ({
+                    ...prev,
+                    isLoading: true,
+                    currentStep: INTERACTIVE_STEPS.PROCESSING,
+                }));
 
-            setLastResult(result);
+                const response =
+                    await interactiveApiService.startInteractiveProcess({
+                        reportKey: baseManager.selectedReport,
+                        csvFiles: filteredCsvFiles,
+                    });
 
-            if (result.success && result.previewUrl) {
-                baseManager.setPreviewUrl(result.previewUrl);
-            }
+                // セッション情報を保存
+                setSessionId(response.sessionInfo.sessionId);
+                setSessionData(response.sessionInfo.sessionData);
 
-        } catch (error) {
-            callbacks.onError(error instanceof Error ? error.message : 'Unknown error');
-        }
-    }, [baseManager, isInteractiveMode]);
-
-    /**
-     * インタラクティブ処理の継続
-     */
-    const continueInteractiveProcess = useCallback(async (
-        userInput: Record<string, unknown>
-    ) => {
-        if (!isInteractiveMode) {
-            throw new Error('Not in interactive mode');
-        }
-
-        // ユーザー入力を適切な型に変換
-        const convertedUserInput: Record<string, string | number | boolean | string[]> = {};
-        Object.entries(userInput).forEach(([key, value]) => {
-            if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
-                convertedUserInput[key] = value;
-            } else if (Array.isArray(value) && value.every(item => typeof item === 'string')) {
-                convertedUserInput[key] = value as string[];
+                // ユーザー入力が必要な場合
+                if (response.nextStep === INTERACTIVE_STEPS.USER_INPUT) {
+                    setInteractiveState((prev) => ({
+                        ...prev,
+                        isLoading: false,
+                        currentStep: response.nextStep as InteractiveStep,
+                        interactions: response.interactions,
+                        data: response.initialData,
+                    }));
+                } else {
+                    // 追加処理が必要な場合
+                    setInteractiveState((prev) => ({
+                        ...prev,
+                        currentStep: response.nextStep as InteractiveStep,
+                    }));
+                }
             } else {
-                convertedUserInput[key] = String(value);
-            }
-        });
-
-        setInteractiveState(prev => ({
-            ...prev,
-            isLoading: true,
-            userSelections: { ...prev.userSelections, ...convertedUserInput },
-        }));
-
-        try {
-            const processor = ReportModeService.getInteractiveProcessor(baseManager.selectedReport);
-            
-            const result: InteractiveResult = await processor.continueInteractiveProcess(
-                userInput,
-                {
+                // 自動モード - 既存のReportModeService使用
+                const callbacks: ReportCallbacks = {
                     onStart: () => {},
-                    onProgress: (step: number) => {
-                        setInteractiveState(prev => ({ ...prev, currentStep: step as InteractiveStep }));
+                    onProgress: (step: number, message?: string) => {
+                        baseManager.setCurrentStep(step);
+                        console.log(
+                            `Progress: Step ${step}, Message: ${message}`
+                        );
                     },
                     onComplete: () => {
-                        setInteractiveState(prev => ({ ...prev, isLoading: false }));
+                        baseManager.setIsLoading(false);
+                        baseManager.setIsFinalized(true);
                     },
                     onError: (error: string) => {
-                        setInteractiveState(prev => ({ 
-                            ...prev, 
-                            isLoading: false, 
-                            error 
-                        }));
+                        baseManager.setIsLoading(false);
+                        baseManager.setIsModalOpen(false);
+                        console.error('Report generation error:', error);
                     },
-                }
-            );
+                };
 
-            if (result.success) {
-                if (result.previewUrl) {
+                const result = await ReportModeService.generateReport(
+                    filteredCsvFiles,
+                    baseManager.selectedReport,
+                    callbacks
+                );
+
+                setLastResult(result);
+
+                if (result.success && result.previewUrl) {
                     baseManager.setPreviewUrl(result.previewUrl);
                 }
-                baseManager.setIsFinalized(true);
+            }
+        } catch (error) {
+            const errorMessage =
+                error instanceof Error ? error.message : 'Unknown error';
+            notification.error({
+                message: 'レポート生成エラー',
+                description: errorMessage,
+            });
+
+            baseManager.setIsLoading(false);
+            baseManager.setIsModalOpen(false);
+
+            if (isInteractiveMode) {
+                setInteractiveState((prev) => ({
+                    ...prev,
+                    isLoading: false,
+                    error: errorMessage,
+                }));
+            }
+        }
+    }, [baseManager, isInteractiveMode, interactiveApiService]);
+
+    /**
+     * インタラクティブ処理の継続（最適化されたAPI通信）
+     */
+    const continueInteractiveProcess = useCallback(
+        async (userInput: Record<string, unknown>) => {
+            if (!isInteractiveMode || !sessionId) {
+                throw new Error('Not in interactive mode or no active session');
             }
 
-        } catch (error) {
-            setInteractiveState(prev => ({
-                ...prev,
-                isLoading: false,
-                error: error instanceof Error ? error.message : 'Unknown error',
-            }));
-        }
-    }, [isInteractiveMode, baseManager]);
+            try {
+                // ユーザー入力を適切な型に変換
+                const convertedUserInput: UserSelections = {};
+                Object.entries(userInput).forEach(([key, value]) => {
+                    if (
+                        typeof value === 'string' ||
+                        typeof value === 'number' ||
+                        typeof value === 'boolean'
+                    ) {
+                        convertedUserInput[key] = value;
+                    } else if (
+                        Array.isArray(value) &&
+                        value.every((item) => typeof item === 'string')
+                    ) {
+                        convertedUserInput[key] = value as string[];
+                    } else {
+                        convertedUserInput[key] = String(value);
+                    }
+                });
+
+                setInteractiveState((prev) => ({
+                    ...prev,
+                    isLoading: true,
+                    userSelections: {
+                        ...prev.userSelections,
+                        ...convertedUserInput,
+                    },
+                }));
+
+                const response =
+                    await interactiveApiService.updateInteractiveProcess({
+                        sessionId,
+                        userInput: convertedUserInput,
+                        currentStep: interactiveState.currentStep,
+                    });
+
+                if (response.isComplete) {
+                    // 最終完了処理
+                    const finalResponse =
+                        await interactiveApiService.completeInteractiveProcess({
+                            sessionId,
+                        });
+
+                    setInteractiveState((prev) => ({
+                        ...prev,
+                        isLoading: false,
+                        currentStep: INTERACTIVE_STEPS.COMPLETED,
+                    }));
+
+                    if (finalResponse.downloadUrl) {
+                        baseManager.setPreviewUrl(finalResponse.downloadUrl);
+                    }
+                    baseManager.setIsFinalized(true);
+
+                    // セッションを清理
+                    setSessionId(null);
+                    setSessionData({});
+                } else {
+                    // 次のステップに進む
+                    setInteractiveState((prev) => ({
+                        ...prev,
+                        isLoading: false,
+                        currentStep: response.nextStep as InteractiveStep,
+                        interactions: response.interactions,
+                        data: response.data,
+                    }));
+                }
+            } catch (error) {
+                const errorMessage =
+                    error instanceof Error ? error.message : 'Unknown error';
+                notification.error({
+                    message: 'インタラクティブ処理エラー',
+                    description: errorMessage,
+                });
+
+                setInteractiveState((prev) => ({
+                    ...prev,
+                    isLoading: false,
+                    error: errorMessage,
+                }));
+            }
+        },
+        [
+            isInteractiveMode,
+            sessionId,
+            interactiveState.currentStep,
+            interactiveApiService,
+            baseManager,
+        ]
+    );
 
     /**
      * インタラクティブ状態のリセット
      */
     const resetInteractiveState = useCallback(() => {
         setInteractiveState({
-            currentStep: -1, // INTERACTIVE_STEPS.INITIAL
+            currentStep: INTERACTIVE_STEPS.INITIAL,
             isLoading: false,
         });
-    }, []);
+
+        // セッション情報もクリア
+        if (sessionId) {
+            interactiveApiService.clearSession(sessionId);
+            setSessionId(null);
+            setSessionData({});
+        }
+    }, [sessionId, interactiveApiService]);
 
     // ==============================
     // � ヘルパー関数
@@ -297,7 +379,10 @@ export const useReportModeManager = (
     const checkRequiredCsvsUploaded = useCallback((): boolean => {
         return baseManager.selectedConfig.csvConfigs
             .filter((entry: { required: boolean }) => entry.required)
-            .every((entry: { config: { label: string } }) => baseManager.csvFiles[entry.config.label]);
+            .every(
+                (entry: { config: { label: string } }) =>
+                    baseManager.csvFiles[entry.config.label]
+            );
     }, [baseManager.selectedConfig.csvConfigs, baseManager.csvFiles]);
 
     // ==============================
@@ -314,7 +399,7 @@ export const useReportModeManager = (
         isModalOpen: baseManager.isModalOpen,
         isLoading: baseManager.isLoading,
         selectedConfig: baseManager.selectedConfig,
-        
+
         // アクション関数
         changeReport: baseManager.changeReport,
         uploadCsvFile: baseManager.uploadCsvFile,
@@ -323,7 +408,7 @@ export const useReportModeManager = (
         setIsFinalized: baseManager.setIsFinalized,
         setIsModalOpen: baseManager.setIsModalOpen,
         setIsLoading: baseManager.setIsLoading,
-        
+
         // ヘルパー関数
         areRequiredCsvsUploaded: checkRequiredCsvsUploaded,
         getReportBaseProps: baseManager.getReportBaseProps,

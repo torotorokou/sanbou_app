@@ -9,11 +9,12 @@
  * - 既存のモーダルシステムとの統合
  */
 
-import React from 'react';
-import { Modal, Steps, Button, Spin, Alert } from 'antd';
-import type { 
+import React, { useState } from 'react';
+import { Modal, Steps, Button, Spin, Alert, Form, Input, Select, Checkbox } from 'antd';
+import type {
     InteractiveProcessState,
-    InteractiveStep
+    InteractiveStep,
+    ProcessData
 } from '../../../pages/types/interactiveMode';
 
 // ==============================
@@ -76,7 +77,10 @@ const InteractiveReportModal: React.FC<InteractiveReportModalProps> = ({
     onContinue,
     onReset,
 }) => {
-    
+
+    // ユーザー入力フォームの状態管理
+    const [userFormData, setUserFormData] = useState<Record<string, unknown>>({});
+
     // ==============================
     // 🎨 レンダリング関数
     // ==============================
@@ -162,27 +166,116 @@ const InteractiveReportModal: React.FC<InteractiveReportModalProps> = ({
     /**
      * ユーザー入力ステップの表示
      */
-    const renderUserInputStep = (): React.ReactNode => (
-        <div style={MODAL_STYLES.contentContainer}>
-            <h3>パラメータ設定</h3>
-            <p>以下の項目を設定してください：</p>
-            
-            {/* TODO: 実際のフォーム要素を追加 */}
-            <div style={{ margin: '20px 0' }}>
-                <p>⚠️ フォーム要素はreportKeyに応じて動的に生成</p>
-                <p>（BlockUnitPriceInteractiveコンポーネントなど）</p>
+    const renderUserInputStep = (): React.ReactNode => {
+        const { interactions, data } = state;
+
+        return (
+            <div style={MODAL_STYLES.contentContainer}>
+                <h3>パラメータ設定</h3>
+                <p>以下の項目を設定してください：</p>
+
+                {/* 動的フォーム生成 */}
+                <Form
+                    layout="vertical"
+                    onFinish={(values) => {
+                        onContinue?.(values);
+                    }}
+                    initialValues={userFormData}
+                    style={{ textAlign: 'left', maxWidth: '400px', margin: '0 auto' }}
+                >
+                    {renderInteractiveFormItems(interactions, data)}
+
+                    <div style={MODAL_STYLES.buttonContainer}>
+                        <Button style={{ marginRight: '8px' }} onClick={onReset}>
+                            キャンセル
+                        </Button>
+                        <Button type="primary" htmlType="submit">
+                            次へ
+                        </Button>
+                    </div>
+                </Form>
             </div>
-            
-            <div style={MODAL_STYLES.buttonContainer}>
-                <Button style={{ marginRight: '8px' }} onClick={onReset}>
-                    キャンセル
-                </Button>
-                <Button type="primary" onClick={() => onContinue?.({ example: 'value' })}>
-                    次へ
-                </Button>
-            </div>
-        </div>
-    );
+        );
+    };
+
+    /**
+     * 動的フォーム項目を生成
+     */
+    const renderInteractiveFormItems = (
+        interactions?: unknown[],
+        data?: ProcessData
+    ): React.ReactNode[] => {
+        if (!interactions || !Array.isArray(interactions)) {
+            // デフォルトのサンプル項目
+            return [
+                <Form.Item key="sample" name="sample" label="設定値">
+                    <Input placeholder="値を入力してください" />
+                </Form.Item>
+            ];
+        }
+
+        return interactions.map((interaction: any, index: number) => {
+            const key = interaction.id || interaction.name || `interaction_${index}`;
+
+            switch (interaction.type) {
+                case 'input':
+                    return (
+                        <Form.Item
+                            key={key}
+                            name={key}
+                            label={interaction.label || interaction.title}
+                            rules={interaction.required ? [{ required: true, message: '必須項目です' }] : []}
+                        >
+                            <Input
+                                placeholder={interaction.placeholder || '値を入力'}
+                                type={interaction.inputType || 'text'}
+                            />
+                        </Form.Item>
+                    );
+
+                case 'select':
+                    return (
+                        <Form.Item
+                            key={key}
+                            name={key}
+                            label={interaction.label || interaction.title}
+                            rules={interaction.required ? [{ required: true, message: '必須項目です' }] : []}
+                        >
+                            <Select placeholder={interaction.placeholder || '選択してください'}>
+                                {interaction.options?.map((option: any, optIndex: number) => (
+                                    <Select.Option
+                                        key={option.value || optIndex}
+                                        value={option.value}
+                                    >
+                                        {option.label || option.text || option.value}
+                                    </Select.Option>
+                                ))}
+                            </Select>
+                        </Form.Item>
+                    );
+
+                case 'checkbox':
+                    return (
+                        <Form.Item
+                            key={key}
+                            name={key}
+                            valuePropName="checked"
+                        >
+                            <Checkbox>
+                                {interaction.label || interaction.title}
+                            </Checkbox>
+                        </Form.Item>
+                    );
+
+                default:
+                    return (
+                        <Form.Item key={key} name={key} label={interaction.label || interaction.title}>
+                            <Input placeholder="値を入力してください" />
+                        </Form.Item>
+                    );
+            }
+        });
+    };
 
     /**
      * 計算実行中ステップの表示
