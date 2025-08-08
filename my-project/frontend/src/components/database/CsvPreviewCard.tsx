@@ -1,21 +1,22 @@
 import React from 'react';
 import { Card, Table, Empty } from 'antd';
-import type { CsvType } from '@/constants/CsvDefinition';
+import type { UploadCsvType } from '@/constants/uploadCsvConfig';
 import { UPLOAD_CSV_DEFINITIONS } from '@/constants/uploadCsvConfig';
 
 // 色マップを定義（CSVタイプごとに色を分ける）
-const CSV_TYPE_COLORS: Record<CsvType, string> = {
+const CSV_TYPE_COLORS: Record<UploadCsvType, string> = {
     receive: '#f0f7e8ff',  // 赤系（受入）
     shipment: '#ffffffff', // 青系（出荷）
     yard: '#ffffffff',     // 緑系（ヤード）
 };
 
 type Props = {
-    type: CsvType;
+    type: UploadCsvType;
     csvPreview: { columns: string[]; rows: string[][] } | null;
     validationResult: 'valid' | 'invalid' | 'unknown';
     cardHeight?: number;
     tableBodyHeight?: number;
+    backgroundColor?: string;
 };
 
 export const CsvPreviewCard: React.FC<Props> = ({
@@ -24,8 +25,9 @@ export const CsvPreviewCard: React.FC<Props> = ({
     validationResult,
     cardHeight = 300,
     tableBodyHeight = 220,
+    backgroundColor: propBackgroundColor,
 }) => {
-    const backgroundColor = CSV_TYPE_COLORS[type] || '#ffffff';
+    const backgroundColor = propBackgroundColor || CSV_TYPE_COLORS[type] || '#ffffff';
 
     return (
         <Card
@@ -84,14 +86,14 @@ export const CsvPreviewCard: React.FC<Props> = ({
                         width: 120,
                         ellipsis: true,
                     }))}
-                    dataSource={csvPreview.rows.map((row, ri) =>
+                    dataSource={csvPreview.rows.map((row) =>
                         Object.fromEntries(row.map((v, ci) => [ci, v]))
                     )}
                     pagination={false}
                     size='small'
                     scroll={{ y: tableBodyHeight, x: 'max-content' }}
                     bordered
-                    rowKey={(_, i) => i.toString()}
+                    rowKey={(_, i) => (i ?? 0).toString()}
                     style={{ flex: 1 }}
                 />
             ) : (
@@ -100,3 +102,5 @@ export const CsvPreviewCard: React.FC<Props> = ({
         </Card>
     );
 };
+
+export default CsvPreviewCard;

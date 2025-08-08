@@ -54,7 +54,11 @@ const CsvUploadPanel: React.FC<CsvUploadPanelProps> = ({ upload }) => {
                         uploadProps={upload.makeUploadProps(entry.label, entry.onChange)}
                         isHovering={hoveringIndex === index}
                         onHover={(hover: boolean) => setHoveringIndex(hover ? index : null)}
-                        validationResult={entry.validationResult ?? 'unknown'}
+                        validationResult={
+                            entry.validationResult === 'ok' ? 'valid' :
+                                entry.validationResult === 'ng' ? 'invalid' :
+                                    'unknown'
+                        }
                         onRemove={entry.onRemove}
                     />
                 ))}

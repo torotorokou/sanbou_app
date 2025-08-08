@@ -4,6 +4,8 @@ import type { ReactNode } from 'react';
 
 const { Step } = Steps;
 
+import type { ModalStepConfig } from '../../constants/reportConfig/managementReportConfig';
+
 export type ReportStepperModalProps = {
     open: boolean;
     steps: string[];
@@ -11,6 +13,7 @@ export type ReportStepperModalProps = {
     onNext: () => void;
     onClose?: () => void;
     children: ReactNode;
+    stepConfigs: ModalStepConfig[];
 };
 
 const ReportStepperModal: React.FC<ReportStepperModalProps> = ({
@@ -20,8 +23,13 @@ const ReportStepperModal: React.FC<ReportStepperModalProps> = ({
     onNext,
     onClose,
     children,
+    stepConfigs,
 }) => {
-    const isLast = currentStep === steps.length - 1;
+    // stepConfigsが未定義や空の場合、currentStepが範囲外の場合は何も表示しない
+    if (!stepConfigs || stepConfigs.length === 0 || currentStep < 0 || currentStep >= stepConfigs.length) {
+        return null;
+    }
+    const config = stepConfigs[currentStep] || {};
 
     return (
         <Modal
@@ -41,9 +49,16 @@ const ReportStepperModal: React.FC<ReportStepperModalProps> = ({
             <div style={{ minHeight: 240 }}>{children}</div>
 
             <div style={{ textAlign: 'right', marginTop: 24 }}>
-                <Button type="primary" onClick={onNext}>
-                    {isLast ? '閉じる' : '次へ'}
-                </Button>
+                {config.showNext && (
+                    <Button type="primary" onClick={onNext} style={{ marginRight: 8 }}>
+                        次へ
+                    </Button>
+                )}
+                {config.showClose && (
+                    <Button type="primary" onClick={onClose}>
+                        閉じる
+                    </Button>
+                )}
             </div>
         </Modal>
     );

@@ -7,6 +7,7 @@ from app.api.st_app.utils.rounding_tools import round_value_column_generic
 from app.api.st_app.utils.value_setter import set_value_fast, set_value_fast_safe
 from app.api.st_app.logic.manage.utils.csv_loader import load_all_filtered_dataframes
 from app.api.st_app.logic.manage.utils.load_template import load_master_and_template
+from app.api.st_app.utils.config_loader import clean_na_strings
 
 # from app.api.st_app.logic.manage.utils.csv_loader import load_filtered_dataframe
 from app.api.st_app.utils.config_loader import get_template_config
@@ -131,7 +132,9 @@ def aggregate_vehicle_data(
         filtered = df_receive[df_receive["集計項目CD"] == item_cd]
 
         # --- 安全な数値変換 ---
-        total_weight = pd.to_numeric(filtered["正味重量"], errors="coerce").sum()
+        # <NA>文字列をクリーンアップしてからto_numericを実行
+        cleaned_weight = filtered["正味重量"].apply(clean_na_strings)
+        total_weight = pd.to_numeric(cleaned_weight, errors="coerce").sum()
         total_car = filtered["受入番号"].nunique()
         unit_price = total_weight / total_car if total_car > 0 else 0
 
@@ -209,8 +212,11 @@ def calculate_item_summary(
             ]
 
             # 数値変換 & 集計
-            total_weight = pd.to_numeric(filtered["正味重量"], errors="coerce").sum()
-            total_sell = pd.to_numeric(filtered["金額"], errors="coerce").sum()
+            # <NA>文字列をクリーンアップしてからto_numericを実行
+            cleaned_weight = filtered["正味重量"].apply(clean_na_strings)
+            cleaned_sell = filtered["金額"].apply(clean_na_strings)
+            total_weight = pd.to_numeric(cleaned_weight, errors="coerce").sum()
+            total_sell = pd.to_numeric(cleaned_sell, errors="coerce").sum()
             ave_sell = total_sell / total_weight if total_weight > 0 else 0
 
             # master_csv に書き込み
@@ -398,8 +404,11 @@ def calculate_final_totals(
     filtered = df_receive[
         (df_receive["伝票区分名"] == "売上") & (df_receive["単位名"] == "kg")
     ]
-    total_weight_all = pd.to_numeric(filtered["正味重量"], errors="coerce").sum()
-    total_sell_all = pd.to_numeric(filtered["金額"], errors="coerce").sum()
+    # <NA>文字列をクリーンアップしてからto_numericを実行
+    cleaned_weight_all = filtered["正味重量"].apply(clean_na_strings)
+    cleaned_sell_all = filtered["金額"].apply(clean_na_strings)
+    total_weight_all = pd.to_numeric(cleaned_weight_all, errors="coerce").sum()
+    total_sell_all = pd.to_numeric(cleaned_sell_all, errors="coerce").sum()
     average_price_all = total_sell_all / total_weight_all if total_sell_all > 0 else 0
 
     master_csv = set_value_fast_safe(

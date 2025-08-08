@@ -10,6 +10,8 @@ RUN apt-get update && apt-get install -y \
     && apt-get update && apt-get install -y google-cloud-sdk \
     && apt-get clean
 
+RUN mkdir -p /root/.config/gcloud
+
 # 作業ディレクトリ
 WORKDIR /backend
 

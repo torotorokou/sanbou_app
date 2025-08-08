@@ -11,6 +11,7 @@ import {
     AreaChart, // ✅ 追加
     Area, // ✅ 追加
 } from 'recharts';
+import { factoryChartColors } from '../theme';
 
 const { Title, Paragraph } = Typography;
 
@@ -85,7 +86,7 @@ const FactoryDashboard: React.FC = () => {
                                 <XAxis dataKey='time' />
                                 <YAxis unit='t' />
                                 <Tooltip />
-                                <Bar dataKey='amount' fill='#34d399' />
+                                <Bar dataKey='amount' fill={factoryChartColors.revenue} />
                             </BarChart>
                         </ResponsiveContainer>
                     </Card>
@@ -107,13 +108,13 @@ const FactoryDashboard: React.FC = () => {
                             >
                                 <XAxis dataKey='time' />
                                 <YAxis
-                                    tickFormatter={(v) =>
-                                        `${(v * 100).toFixed(0)}%`
+                                    tickFormatter={(v: any) =>
+                                        `${(Number(v) * 100).toFixed(0)}%`
                                     }
                                 />
                                 <Tooltip
-                                    formatter={(v) =>
-                                        `${(v * 100).toFixed(1)}%`
+                                    formatter={(v: any) =>
+                                        `${(Number(v) * 100).toFixed(1)}%`
                                     }
                                 />
                                 <Legend />
@@ -121,29 +122,29 @@ const FactoryDashboard: React.FC = () => {
                                     type='monotone'
                                     dataKey='軽トラ'
                                     stackId='1'
-                                    stroke='#34d399'
-                                    fill='#34d399'
+                                    stroke={factoryChartColors.revenue}
+                                    fill={factoryChartColors.revenue}
                                 />
                                 <Area
                                     type='monotone'
                                     dataKey='2t車'
                                     stackId='1'
-                                    stroke='#60a5fa'
-                                    fill='#60a5fa'
+                                    stroke={factoryChartColors.info}
+                                    fill={factoryChartColors.info}
                                 />
                                 <Area
                                     type='monotone'
                                     dataKey='4t車'
                                     stackId='1'
-                                    stroke='#fbbf24'
-                                    fill='#fbbf24'
+                                    stroke={factoryChartColors.warning}
+                                    fill={factoryChartColors.warning}
                                 />
                                 <Area
                                     type='monotone'
                                     dataKey='大型車'
                                     stackId='1'
-                                    stroke='#f87171'
-                                    fill='#f87171'
+                                    stroke={factoryChartColors.error}
+                                    fill={factoryChartColors.error}
                                 />
                             </AreaChart>
                         </ResponsiveContainer>
@@ -162,17 +163,17 @@ const FactoryDashboard: React.FC = () => {
                                 <Bar
                                     dataKey='可燃ごみ'
                                     stackId='a'
-                                    fill='#f87171'
+                                    fill={factoryChartColors.error}
                                 />
                                 <Bar
                                     dataKey='木くず'
                                     stackId='a'
-                                    fill='#60a5fa'
+                                    fill={factoryChartColors.info}
                                 />
                                 <Bar
                                     dataKey='金属'
                                     stackId='a'
-                                    fill='#10b981'
+                                    fill={factoryChartColors.profit}
                                 />
                             </BarChart>
                         </ResponsiveContainer>
