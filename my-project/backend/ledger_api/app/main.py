@@ -6,10 +6,12 @@
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
 from app.api.endpoints import manage_report
 from app.api.endpoints.block_unit_price_interactive import (
     router as block_unit_price_router,
 )
+from app.api.endpoints.reports import reports_router
 
 # FastAPIアプリケーションの初期化
 app = FastAPI(
@@ -32,6 +34,7 @@ app.add_middleware(
 # ルーター登録 - 各機能のエンドポイントを追加
 app.include_router(manage_report.router)
 app.include_router(block_unit_price_router, prefix="/block_unit_price_interactive")
+app.include_router(reports_router, prefix="/reports")
 
 
 @app.get("/")
