@@ -3,7 +3,8 @@
 from fastapi import APIRouter, File, UploadFile
 from fastapi.responses import StreamingResponse
 
-from app.api.services.report_processing_service import ReportProcessingService
+from app.api.services.report.concrete_generators import BalanceSheetGenerator
+from api.services.report.report_processing_service import ReportProcessingService
 
 # APIルーターの初期化
 router = APIRouter()
@@ -38,5 +39,9 @@ async def generate_balance_sheet(
         if v is not None
     }
 
-    # 共通処理サービスで完全フローを実行
-    return report_service.process_complete_flow("balance_sheet", files)
+    # 対象Generatorを直接生成し、共通フローを実行
+    generator = BalanceSheetGenerator("balance_sheet", files)
+    result = report_service.run(generator, files)
+    if not isinstance(result, StreamingResponse):
+        raise TypeError("Expected StreamingResponse from report_service.run")
+    return result
