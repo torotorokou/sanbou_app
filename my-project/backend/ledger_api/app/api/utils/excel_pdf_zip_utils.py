@@ -5,15 +5,17 @@ Excel生成、PDF変換、ZIP圧縮、ファイルダウンロードレスポン
 一連の処理を行うユーティリティ関数群です。
 """
 
-import subprocess
-from tempfile import NamedTemporaryFile
 import io
-import zipfile
 import os
+import subprocess
 import urllib.parse
+import zipfile
+from tempfile import NamedTemporaryFile
+
 from fastapi.responses import StreamingResponse
-from backend_shared.config.config_loader import ReportTemplateConfigLoader
+
 from app.local_config.paths import DEBUG_MANAGE_REPORTDIR
+from backend_shared.config.config_loader import ReportTemplateConfigLoader
 
 
 def create_excel_bytes(generator, df_result, report_date):
@@ -31,8 +33,23 @@ def create_excel_bytes(generator, df_result, report_date):
     print("Generating Excel bytes...")
     # 生成器からExcelバイトストリームを取得
     excel_bytes_io = generator.generate_excel_bytes(df_result, report_date)
-    excel_bytes_io.seek(0)
-    return excel_bytes_io.read()
+    # 返却の統一: BytesIO で返ってきた場合は bytes に正規化
+    if isinstance(excel_bytes_io, io.BytesIO):
+        excel_bytes_io.seek(0)
+        data = excel_bytes_io.read()
+        print(
+            f"[DEBUG] create_excel_bytes received BytesIO, normalized to bytes, len={len(data)}"
+        )
+        return data
+    # 既に bytes の場合はそのまま返却
+    if isinstance(excel_bytes_io, (bytes, bytearray)):
+        data = bytes(excel_bytes_io)
+        print(f"[DEBUG] create_excel_bytes received bytes-like, len={len(data)}")
+        return data
+    # 想定外型: 文字列などは encode せず例外とする
+    raise TypeError(
+        f"Unsupported type from generator.generate_excel_bytes: {type(excel_bytes_io)}"
+    )
 
 
 def convert_excel_to_pdf(excel_bytes):
@@ -50,6 +67,23 @@ def convert_excel_to_pdf(excel_bytes):
     Raises:
         RuntimeError: PDF変換に失敗した場合
     """
+    # 入口正規化（冪等）
+    print(f"[DEBUG] convert_excel_to_pdf input type: {type(excel_bytes)}")
+    if isinstance(excel_bytes, io.BytesIO):
+        excel_bytes = excel_bytes.getvalue()
+        print(
+            f"[DEBUG] convert_excel_to_pdf normalized BytesIO to bytes, len={len(excel_bytes)}"
+        )
+    elif isinstance(excel_bytes, bytearray):
+        excel_bytes = bytes(excel_bytes)
+        print(
+            f"[DEBUG] convert_excel_to_pdf normalized bytearray to bytes, len={len(excel_bytes)}"
+        )
+    elif not isinstance(excel_bytes, (bytes,)):
+        raise TypeError(
+            f"excel_bytes must be bytes or BytesIO, got {type(excel_bytes)}"
+        )
+
     # Excel一時ファイル作成
     with NamedTemporaryFile(suffix=".xlsx", delete=False) as tmp_xlsx:
         tmp_xlsx.write(excel_bytes)
@@ -137,6 +171,23 @@ def generate_excel_pdf_zip(excel_bytes, report_key, report_date):
     Returns:
         StreamingResponse: ZIPファイルのダウンロードレスポンス
     """
+    # 入口正規化（冪等）
+    print(f"[DEBUG] generate_excel_pdf_zip input type: {type(excel_bytes)}")
+    if isinstance(excel_bytes, io.BytesIO):
+        excel_bytes = excel_bytes.getvalue()
+        print(
+            f"[DEBUG] generate_excel_pdf_zip normalized BytesIO to bytes, len={len(excel_bytes)}"
+        )
+    elif isinstance(excel_bytes, bytearray):
+        excel_bytes = bytes(excel_bytes)
+        print(
+            f"[DEBUG] generate_excel_pdf_zip normalized bytearray to bytes, len={len(excel_bytes)}"
+        )
+    elif not isinstance(excel_bytes, (bytes,)):
+        raise TypeError(
+            f"excel_bytes must be bytes or BytesIO, got {type(excel_bytes)}"
+        )
+
     # Excel→PDF変換
     pdf_bytes, _, _ = convert_excel_to_pdf(excel_bytes)
 

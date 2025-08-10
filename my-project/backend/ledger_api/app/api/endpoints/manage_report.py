@@ -10,7 +10,8 @@ CSVファイルのアップロード、バリデーション、フォーマッ�
 
 from fastapi import APIRouter, File, Form, UploadFile
 
-from app.api.services.report_processing_service import ReportProcessingService
+from app.api.services.report.generator_factory import get_generator
+from api.services.report.report_processing_service import ReportProcessingService
 
 # APIルーターの初期化
 router = APIRouter()
@@ -51,5 +52,7 @@ async def generate_pdf(
         if v is not None
     }
 
-    # 共通処理サービスで完全フローを実行
-    return report_service.process_complete_flow(report_key, files)
+    # レジストリからGeneratorクラスを取得し、直接実行
+    GeneratorCls = get_generator(report_key)
+    generator = GeneratorCls(report_key, files)
+    return report_service.run(generator, files)
