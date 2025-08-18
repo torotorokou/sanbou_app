@@ -3,7 +3,8 @@
 from fastapi import APIRouter, File, UploadFile
 from fastapi.responses import StreamingResponse
 
-from app.api.services.report_processing_service import ReportProcessingService
+from app.api.services.report.concrete_generators import BlockUnitPriceGenerator
+from api.services.report.report_processing_service import ReportProcessingService
 
 # APIルーターの初期化
 router = APIRouter()
@@ -38,5 +39,6 @@ async def generate_block_unit_price_report(
         if v is not None
     }
 
-    # 共通処理サービスで完全フローを実行
-    return report_service.process_complete_flow("block_unit_price", files)
+    # 対象Generatorを直接生成し、共通フローを実行
+    generator = BlockUnitPriceGenerator("block_unit_price", files)
+    return report_service.run(generator, files)

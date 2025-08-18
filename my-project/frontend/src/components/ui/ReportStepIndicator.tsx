@@ -1,7 +1,8 @@
 // src/components/ui/ReportStepIndicator.tsx
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Steps } from 'antd';
+import { useDeviceType } from '@/hooks/useResponsive';
 
 export type StepItem = {
     // ← ここでexportを明記
@@ -17,17 +18,37 @@ type ReportStepIndicatorProps = {
 const ReportStepIndicator: React.FC<ReportStepIndicatorProps> = ({
     currentStep,
     items,
-}) => (
-    <div
-        style={{
-            background: '#fff',
-            borderRadius: 32,
-            padding: '16px 24px',
-            boxShadow: '0 2px 6px rgba(0,0,0,0.04)',
-        }}
-    >
-        <Steps current={currentStep} responsive={false} items={items} />
-    </div>
-);
+}) => {
+    const { isMobileOrTablet } = useDeviceType();
+
+    // モバイル/タブレットでは説明を省いて縦・小サイズで表示
+    const compactItems = useMemo(
+        () =>
+            isMobileOrTablet
+                ? items.map((it) => ({ title: it.title }))
+                : items,
+        [isMobileOrTablet, items]
+    );
+
+    return (
+        <div
+            style={{
+                background: '#fff',
+                borderRadius: 32,
+                padding: isMobileOrTablet ? '8px 12px' : '16px 24px',
+                boxShadow: '0 2px 6px rgba(0,0,0,0.04)',
+            }}
+        >
+            <Steps
+                current={currentStep}
+                direction={isMobileOrTablet ? 'vertical' : 'horizontal'}
+                size={isMobileOrTablet ? 'small' : 'default'}
+                progressDot={isMobileOrTablet}
+                responsive
+                items={compactItems}
+            />
+        </div>
+    );
+};
 
 export default ReportStepIndicator;
