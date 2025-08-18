@@ -3,7 +3,8 @@
 from fastapi import APIRouter, File, UploadFile
 from fastapi.responses import StreamingResponse
 
-from app.api.services.report_processing_service import ReportProcessingService
+from app.api.services.report.concrete_generators import FactoryReportGenerator
+from api.services.report.report_processing_service import ReportProcessingService
 
 # APIルーターの初期化
 router = APIRouter()
@@ -38,5 +39,6 @@ async def generate_factory_report(
         if v is not None
     }
 
-    # 共通処理サービスで完全フローを実行
-    return report_service.process_complete_flow("factory_report", files)
+    # 対象Generatorを直接生成し、共通フローを実行
+    generator = FactoryReportGenerator("factory_report", files)
+    return report_service.run(generator, files)

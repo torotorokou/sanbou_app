@@ -76,7 +76,7 @@ async def start_block_unit_price_process(request: StartProcessRequest):
 
     try:
         # manage_report.pyと同じcsv処理を行うためのインポート
-        from app.api.services.report_processing_service import ReportProcessingService
+        from api.services.report.report_processing_service import ReportProcessingService
 
         # 共通処理サービスのインスタンス作成
         report_service = ReportProcessingService()

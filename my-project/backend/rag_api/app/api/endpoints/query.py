@@ -12,18 +12,17 @@ from typing import Any, List, Tuple
 
 import PyPDF2
 from fastapi import APIRouter, Body, Request
-from fastapi.exceptions import RequestValidationError
-from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import BaseModel
 
 from app.core import file_ingest_service as loader
 from app.infrastructure.llm import ai_loader
 from app.infrastructure.pdf import pdf_loader
 from app.schemas.query_schema import QueryRequest
+from app.paths import get_pdf_url_prefix
 from backend_shared.src.api_response.response_utils import api_response
 
 router = APIRouter()
-
 
 # --- Pydanticモデル ---
 
@@ -93,12 +92,10 @@ def save_pdf_pages_and_get_urls(pdf_path, query_name, pages, save_dir, url_prefi
 @router.post("/test-answer")
 async def answer_api(req: QuestionRequest):
     """
-    ダミーAI回答・sources・pages・pdf_urls・merged_pdf_urlを返すダミーAPI。
+    ダミーAI回答・sources・pdf_urlを返すダミーAPI。
     - answer: ダミー回答
-    - sources: ダミー参照元（pdfs/の先頭5ファイル）
-    - pages: [3,4,5,6,7]（固定）
-    - pdf_urls: pdfs/の先頭5ファイルのURL
-    - merged_pdf_url: 5つのPDFを結合した1つのPDFのURL
+    - sources: ダミー参照元（pdfs/の先頭5ファイルとページ番号）
+    - pdf_url: 5つのPDFを結合した1つのPDFのURL
     """
     try:
         # PDF保存先（本番と同じディレクトリを参照）
@@ -116,8 +113,6 @@ async def answer_api(req: QuestionRequest):
             [selected_files[i] if i < len(selected_files) else "dummy.pdf", pages[i]]
             for i in range(len(pages))
         ]
-        # pdf_urls生成
-        pdf_urls = [f"/pdfs/{selected_files[i]}" for i in range(len(selected_files))]
 
         # 5つのPDFを結合して1つのPDFを生成
         merged_pdf_name = f"merged_{req.query}.pdf"
@@ -135,18 +130,23 @@ async def answer_api(req: QuestionRequest):
                 writer.add_blank_page(width=595, height=842)
         with open(merged_pdf_path, "wb") as out_f:
             writer.write(out_f)
-        merged_pdf_url = f"/pdfs/{merged_pdf_name}"
+        pdf_url_prefix = get_pdf_url_prefix()
+        pdf_url = f"{pdf_url_prefix}/{merged_pdf_name}"
 
         # ダミー回答
         answer = f"ダミー回答: {req.query}（カテゴリ: {req.category}）"
 
-        return {
-            "answer": answer,
-            "sources": sources,
-            "pdf_urls": pdf_urls,
-            "pages": pages,
-            "merged_pdf_url": merged_pdf_url,
-        }
+        from backend_shared.src.api_response.response_base import SuccessApiResponse
+
+        return SuccessApiResponse(
+            code="S200",
+            detail="ダミーAI回答生成成功",
+            result={
+                "answer": answer,
+                "sources": sources,
+                "pdf_url": pdf_url,
+            },
+        ).to_json_response()
     except Exception as e:
         return api_response(
             status_code=500,
@@ -161,27 +161,10 @@ async def answer_api(req: QuestionRequest):
 @router.post("/generate-answer")
 async def generate_answer(request: QueryRequest):
     """
-    ユーザーからの質問に対してAIが回答を生成し、回答・参照元・PDFのURLを返すAPI。
-
-    【フロントエンジニア向け説明】
-    - レスポンスはJSON形式で、AI回答（answer）、参照元（sources）、およびPDFファイルのURL（pdf_url または pdf_urls）を返します。
-    - PDFはサーバーの static/pdfs ディレクトリに保存され、URLは `/rag_api/pdfs/ファイル名.pdf` 形式で直接アクセス可能です。
-    - ファイル名・URLには日本語や記号は含まれず、英数字・アンダースコア・ハイフンのみとなります。
-    - 複数ページの場合は "pdf_urls"（リスト）、単一ページの場合は "pdf_url"（文字列）で返却されます。
-    - 例：
-        {
-            "answer": "...AIの回答...",
-            "sources": [...],
-            "pdf_url": "/pdfs/answer_query_286.pdf"
-        }
-        または
-        {
-            "answer": "...AIの回答...",
-            "sources": [...],
-            "pdf_urls": ["/pdfs/answer_query_286.pdf", "/pdfs/answer_query_287.pdf"]
-        }
-    - 返却されたURLはそのままiframeやaタグ、window.open等でWeb表示・ダウンロードに利用できます。
-    - 注意：URLの先頭に `/rag_api` が付与されていることを確認してください（例：`http://localhost:8004/rag_api/pdfs/answer_query_286.pdf`）。
+    ユーザーからの質問に対してAIが回答を生成し、answer, sources, pdf_url の3つのみを返すAPI。
+    - answer: AIの回答
+    - sources: 参照元PDFファイル名とページ番号のリスト
+    - pdf_url: 複数ページPDFを結合した1つのPDFのURL
     """
     try:
         result = ai_loader.get_answer(request.query, request.category, request.tags)
@@ -190,11 +173,8 @@ async def generate_answer(request: QueryRequest):
         pages = result["pages"]
 
         # PDF保存先ディレクトリ
-        # FastAPIの公開ディレクトリと一致しているか確認用ログ
-        # main.pyの公開ディレクトリと必ず一致させる
         static_dir = os.environ.get("PDFS_DIR") or "/backend/static/pdfs"
         os.makedirs(static_dir, exist_ok=True)
-        print(f"[DEBUG] PDF保存先: {static_dir}")
         from app.utils.file_utils import PDF_PATH
 
         pdf_path = str(PDF_PATH)
@@ -232,11 +212,12 @@ async def generate_answer(request: QueryRequest):
             query_name=request.query,
             pages=page_list,
             save_dir=static_dir,
-            url_prefix="/pdfs",
+            url_prefix=get_pdf_url_prefix(),
         )
+        # pdf_urlsはデバッグ・内部保持用（レスポンスには含めない）
 
         # 個別PDFを結合した1つのPDFも生成
-        merged_pdf_name = f"merged_{request.query}.pdf"
+        merged_pdf_name = "merged_response.pdf"
         merged_pdf_path = os.path.join(static_dir, merged_pdf_name)
         writer = PyPDF2.PdfWriter()
         for url in pdf_urls:
@@ -251,30 +232,19 @@ async def generate_answer(request: QueryRequest):
                 writer.add_blank_page(width=595, height=842)
         with open(merged_pdf_path, "wb") as out_f:
             writer.write(out_f)
-        merged_pdf_url = f"/pdfs/{merged_pdf_name}"
+        pdf_url = f"{get_pdf_url_prefix()}/{merged_pdf_name}"
 
-        # 単数ページならpdf_url、複数ならpdf_urls
-        if len(pdf_urls) == 1:
-            return {
+        from backend_shared.src.api_response.response_base import SuccessApiResponse
+
+        return SuccessApiResponse(
+            code="S200",
+            detail="AI回答生成成功",
+            result={
                 "answer": answer,
                 "sources": sources,
-                "pdf_url": pdf_urls[0],
-                "pdf_urls": pdf_urls,
-                "merged_pdf_url": merged_pdf_url,
-            }
-        elif len(pdf_urls) > 1:
-            return {
-                "answer": answer,
-                "sources": sources,
-                "pdf_urls": pdf_urls,
-                "merged_pdf_url": merged_pdf_url,
-            }
-        else:
-            return {
-                "answer": answer,
-                "sources": sources,
-                "merged_pdf_url": merged_pdf_url,
-            }
+                "pdf_url": pdf_url,
+            },
+        ).to_json_response()
     except Exception as e:
         return api_response(
             status_code=500,

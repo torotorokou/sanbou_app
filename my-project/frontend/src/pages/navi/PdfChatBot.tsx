@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { Typography, Spin, Button, Card, Drawer } from 'antd';
-import { FilePdfOutlined, MenuUnfoldOutlined } from '@ant-design/icons';
+import React, { useMemo, useState } from 'react';
+import { Spin, Button, Card, Drawer } from 'antd';
+import { FilePdfOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import { pdfjs } from 'react-pdf';
 import ChatQuestionSection from '@/components/chat/ChatQuestionSection';
@@ -9,6 +9,11 @@ import ChatAnswerSection from '@/components/chat/ChatAnswerSection';
 import PdfPreviewModal from '@/components/chat/PdfPreviewModal';
 import type { StepItem } from '@/components/ui/ReportStepIndicator';
 import ReportStepIndicator from '@/components/ui/ReportStepIndicator';
+// YAMLを直接インポート（viteの@rollup/plugin-yamlでJSON化）
+import categoryYaml from '@/config/category_question_templates.yaml';
+
+// ✅ 追加: 通知ストア
+import { useNotificationStore } from '@/stores/notificationStore';
 
 // ✅ PDF.js workerSrc の指定（react-pdf 9.x 以降の書き方）
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
@@ -16,12 +21,19 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
     import.meta.url
 ).toString();
 
-const cardStyle = {
-    borderRadius: 16,
-    boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
-    padding: 10,
-    marginBottom: 0,
-    background: '#fff',
+// 共通APIレスポンス型（バックエンド契約に合わせる）
+type ApiResponse<T> = {
+    status: 'success' | 'error';
+    code: string;
+    detail: string;
+    result?: T | null;
+    hint?: string | null;
+};
+
+// 今回の業務ペイロード
+type ChatAnswerResult = {
+    answer: string;
+    pdf_url?: string | null;
 };
 
 const allPdfList = [
@@ -46,40 +58,125 @@ const stepItems: StepItem[] = [
 
 const PdfChatBot: React.FC = () => {
     const [category, setCategory] = useState('');
-    const [tag, setTag] = useState('');
+    const [tags, setTag] = useState<string[]>([]);
     const [template, setTemplate] = useState('自由入力');
     const [question, setQuestion] = useState('');
     const [answer, setAnswer] = useState('');
-    const [sources, setSources] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
+    const [pdfUrl, setPdfUrl] = useState<string | null>(null); // ★ APIが返すPDFのURL
     const [pdfToShow, setPdfToShow] = useState<string | null>(null);
     const [pdfModalVisible, setPdfModalVisible] = useState(false);
     const [currentStep, setCurrentStep] = useState(0);
 
     const [drawerOpen, setDrawerOpen] = useState(false);
 
-    const handleSearch = async () => {
+    // ✅ 追加: 通知のadd関数を取得
+    const addNotification = useNotificationStore((s) => s.addNotification);
+
+    // 選択テンプレートに紐づく推奨タグ（YAML）を取得（※送信には使用しない）
+    const templateTags = useMemo(() => {
+        if (!category || !template || template === '自由入力') return [] as string[];
+        const items =
+            (categoryYaml as Record<string, { title: string; tag: string[] }[]>)[category] || [];
+        const found = items.find((it) => it.title === template);
+        return found?.tag ?? [];
+    }, [category, template]);
+
+    // 送信用：ユーザー選択のみ（一意化＆空除去）
+    const tagsToSend = useMemo(() => Array.from(new Set(tags)).filter(Boolean), [tags]);
+
+    const handleSearch = async (): Promise<void> => {
         if (!question.trim()) return;
         setCurrentStep(3);
         setLoading(true);
+
+        // ★ 送信するのはユーザー選択のタグのみ（templateTagsは結合しない）
+        const payload = {
+            query: question,
+            category: category,
+            tags: tagsToSend,
+        };
+
+        console.log('[API][REQUEST] /rag_api/api/generate-answer payload:', payload);
+
         try {
-            const res = await axios.post('/ai_api/chat', {
-                query: question,
-                tags: [category, tag].filter(Boolean),
-            });
-            setAnswer(res.data.answer || '');
-            setSources(
-                res.data.sources?.filter(
-                    (src: any) =>
-                        typeof src.pdf === 'string' &&
-                        src.pdf.endsWith('.pdf') &&
-                        typeof src.section_title === 'string' &&
-                        src.section_title.length > 0
-                ) || []
+            const res = await axios.post<ApiResponse<ChatAnswerResult> | any>(
+                '/rag_api/api/generate-answer',
+                payload
             );
-        } catch (err) {
-            console.error(err);
+
+            // ★ 詳細ログ
+            console.log('[API][RESPONSE] status:', res.status, res.statusText);
+            console.log('[API][RESPONSE] headers:', res.headers);
+            console.log('[API][RESPONSE] data:', res.data);
+
+            // 正規化: 新契約(ApiResponse) or 旧スキーマ(トップレベルkeys)
+            let normalized: { answer: string; pdf_url?: string | null } | null = null;
+
+            if (res.data && typeof res.data === 'object' && 'status' in res.data) {
+                // 新契約
+                if (res.data.status !== 'success') {
+                    console.error('[API][ERROR] detail:', res.data?.detail, 'code:', res.data?.code);
+                    setAnswer(res.data?.detail ?? 'エラーが発生しました。');
+                    setPdfUrl(null);
+                    addNotification({
+                        type: 'error',
+                        title: '取得に失敗しました',
+                        message: res.data?.detail || 'サーバーからエラーが返されました。',
+                        duration: 4000,
+                    });
+                    return;
+                }
+                const result = res.data?.result ?? null;
+                normalized = {
+                    answer: result?.answer ?? '',
+                    pdf_url: result?.pdf_url ?? null,
+                };
+            } else {
+                // 旧スキーマ: answer, pdf_urls, pages, merged_pdf_url などが直下に来る
+                const legacy = res.data ?? {};
+                normalized = {
+                    answer: legacy.answer ?? '',
+                    // merged_pdf_url > pdf_url の優先で採用
+                    pdf_url: legacy.merged_pdf_url ?? legacy.pdf_url ?? null,
+                };
+            }
+
+            setAnswer(normalized?.answer ?? '');
+            setPdfUrl(normalized?.pdf_url ?? null);
+
+            // ✅ 成功通知（任意）
+            addNotification({
+                type: 'success',
+                title: 'AI応答を取得しました',
+                message: normalized?.pdf_url ? '回答とPDFリンクを受信しました。' : '回答を受信しました。',
+                duration: 2500,
+            });
+        } catch (err: unknown) {
+            // 失敗時もできる限り詳細を表示
+            if (axios.isAxiosError(err)) {
+                console.error('[API][ERROR] AxiosError message:', err.message);
+                console.error('[API][ERROR] request:', err.config);
+                if (err.response) {
+                    console.error('[API][ERROR] status:', err.response.status);
+                    console.error('[API][ERROR] headers:', err.response.headers);
+                    console.error('[API][ERROR] data:', err.response.data);
+                } else {
+                    console.error('[API][ERROR] no response (network?)');
+                }
+            } else {
+                console.error('[API][ERROR] Unknown error:', err);
+            }
             setAnswer('エラーが発生しました。');
+            setPdfUrl(null);
+
+            // ✅ 失敗通知
+            addNotification({
+                type: 'error',
+                title: '取得に失敗しました',
+                message: 'ネットワークまたはサーバーエラーです。',
+                duration: 4000,
+            });
         } finally {
             setLoading(false);
         }
@@ -99,15 +196,10 @@ const PdfChatBot: React.FC = () => {
                 flexDirection: 'column',
             }}
         >
-            {loading && (
-                <Spin tip='AIが回答中です...' size='large' fullscreen />
-            )}
+            {loading && <Spin tip="AIが回答中です..." size="large" fullscreen />}
 
             <div style={{ padding: '12px 24px' }}>
-                <ReportStepIndicator
-                    currentStep={currentStep}
-                    items={stepItems}
-                />
+                <ReportStepIndicator currentStep={currentStep} items={stepItems} />
             </div>
 
             <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
@@ -117,8 +209,11 @@ const PdfChatBot: React.FC = () => {
                     setCategory={(val) => {
                         setCategory(val);
                         setCurrentStep(1);
+                        // カテゴリ変更時に選択をリセット
+                        setTag([]);
+                        setTemplate('自由入力');
                     }}
-                    tag={tag}
+                    tags={tags}
                     setTag={setTag}
                     template={template}
                     setTemplate={(val) => {
@@ -133,27 +228,23 @@ const PdfChatBot: React.FC = () => {
                         setQuestion(val);
                         if (val.trim()) setCurrentStep(2);
                     }}
-                    sources={sources}
-                    onOpenPdf={(path) => {
-                        if (path && path.endsWith('.pdf')) {
-                            setPdfToShow(path);
-                            setPdfModalVisible(true);
-                        }
-                    }}
-                    cardStyle={cardStyle}
+                    categoryData={
+                        categoryYaml as Record<string, { title: string; tag: string[] }[]>
+                    }
                 />
 
                 {/* 中央カラム */}
                 <ChatSendButtonSection
                     onClick={handleSearch}
-                    disabled={!question.trim() || loading}
+                    // タグ必須の要件でなければ "|| tags.length === 0" は外す
+                    disabled={!question.trim() || tags.length === 0 || loading}
                 />
 
                 {/* 右カラム */}
                 <ChatAnswerSection answer={answer} />
             </div>
 
-            {/* ===== 下部の小さなPDF一覧表示ボタン（常時表示） ===== */}
+            {/* ===== 下部の参考PDFボタン（関連PDFを直接開く） ===== */}
             <div
                 style={{
                     width: '100vw',
@@ -168,7 +259,7 @@ const PdfChatBot: React.FC = () => {
                 }}
             >
                 <Button
-                    size='small'
+                    size="small"
                     style={{
                         width: 130,
                         height: 32,
@@ -184,8 +275,35 @@ const PdfChatBot: React.FC = () => {
                         justifyContent: 'center',
                         gap: 6,
                     }}
-                    onClick={() => setDrawerOpen(true)}
+                    disabled={!pdfUrl} // ★ pdfUrl が無いときは無効化
+                    onClick={() => {
+                        if (pdfUrl) {
+                            // /pdfs/... → /rag_api/pdfs/... に補正
+                            const normalizePdfUrl = (p: string): string => {
+                                if (!p) return p;
+
+                                // すでに rag_api/pdfs ならそのまま
+                                if (p.startsWith('/rag_api/pdfs/')) return p;
+
+                                // バックエンドが返す /pdfs/... を /rag_api/pdfs/... に置換
+                                if (p.startsWith('/pdfs/')) {
+                                    return p.replace('/pdfs/', '/rag_api/pdfs/');
+                                }
+
+                                // ファイル名だけなら /rag_api/pdfs に寄せる
+                                return `/rag_api/pdfs/${p.replace(/^\//, '')}`;
+                            };
+
+                            const url = normalizePdfUrl(pdfUrl);
+                            console.log('[参考PDF URL]', url);
+
+                            setPdfToShow(url);
+                            setPdfModalVisible(true);
+                        }
+                    }}
+
                     onMouseEnter={(e) => {
+                        if (!pdfUrl) return;
                         const btn = e.currentTarget;
                         btn.style.width = '180px';
                         btn.style.height = '48px';
@@ -200,8 +318,8 @@ const PdfChatBot: React.FC = () => {
                         btn.style.padding = '';
                     }}
                 >
-                    <MenuUnfoldOutlined style={{ fontSize: 18 }} />
-                    PDF一覧を表示
+                    <FilePdfOutlined style={{ fontSize: 18 }} />
+                    参考PDF
                 </Button>
             </div>
 
@@ -209,13 +327,11 @@ const PdfChatBot: React.FC = () => {
             <Drawer
                 title={
                     <span>
-                        <FilePdfOutlined
-                            style={{ marginRight: 8, color: '#d32029' }}
-                        />
+                        <FilePdfOutlined style={{ marginRight: 8, color: '#d32029' }} />
                         全PDFファイル一覧
                     </span>
                 }
-                placement='bottom'
+                placement="bottom"
                 open={drawerOpen}
                 onClose={() => setDrawerOpen(false)}
                 height={180}
@@ -244,7 +360,7 @@ const PdfChatBot: React.FC = () => {
                         <Card
                             key={pdf}
                             hoverable
-                            size='small'
+                            size="small"
                             style={{
                                 width: 120,
                                 height: 72,
@@ -272,9 +388,7 @@ const PdfChatBot: React.FC = () => {
                             }}
                             onClick={() => handleSelectPdfFromAll(pdf)}
                         >
-                            <div style={{ fontSize: 22, marginBottom: 2 }}>
-                                📄
-                            </div>
+                            <div style={{ fontSize: 22, marginBottom: 2 }}>📄</div>
                             <div
                                 style={{
                                     fontSize: 12,
