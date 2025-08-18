@@ -29,6 +29,10 @@ export default defineConfig({
                 target: 'http://ledger_api:8000',
                 changeOrigin: true,
             },
+            '/rag_api': {
+                target: 'http://rag_api:8000',
+                changeOrigin: true,
+            },
         },
     },
 });

@@ -1,27 +1,27 @@
 # backend/app/api/st_app/logic/manage/block_unit_price_interactive.py
 
-import pandas as pd
-from typing import Dict, Any, List, Optional
 from dataclasses import dataclass
+from typing import Any, Dict, List, Optional
 
-from app.api.st_app.utils.logger import app_logger
-from app.api.st_app.utils.config_loader import get_template_config
-from app.api.st_app.logic.manage.utils.csv_loader import load_all_filtered_dataframes
-from app.api.st_app.logic.manage.utils.load_template import load_master_and_template
+import pandas as pd
+
 from app.api.st_app.config.loader.main_path import MainPath
-from app.api.st_app.logic.manage.readers.read_transport_discount import (
-    ReadTransportDiscount,
-)
-
 from app.api.st_app.logic.manage.processors.block_unit_price.process0 import (
-    make_df_shipment_after_use,
-    apply_unit_price_addition,
     apply_transport_fee_by1,
+    apply_unit_price_addition,
+    make_df_shipment_after_use,
 )
 from app.api.st_app.logic.manage.processors.block_unit_price.process2 import (
     apply_transport_fee_by_vendor,
     apply_weight_based_transport_fee,
 )
+from app.api.st_app.logic.manage.readers.read_transport_discount import (
+    ReadTransportDiscount,
+)
+from app.api.st_app.logic.manage.utils.csv_loader import load_all_filtered_dataframes
+from app.api.st_app.logic.manage.utils.load_template import load_master_and_template
+from app.api.st_app.utils.config_loader import get_template_config
+from app.api.st_app.utils.logger import app_logger
 
 
 @dataclass
@@ -100,34 +100,13 @@ class BlockUnitPriceInteractive:
                 df_transport_cost, df_shipment
             )
 
-            return {
-                "status": "success",
-                "step": 0,
-                "message": "初期処理完了。運搬業者を選択してください。",
-                "data": {
-                    "transport_options": [
-                        {
-                            "vendor_code": opt.vendor_code,
-                            "vendor_name": opt.vendor_name,
-                            "transport_fee": opt.transport_fee,
-                            "weight_unit_price": opt.weight_unit_price,
-                        }
-                        for opt in transport_options
-                    ],
-                    "shipment_summary": {
-                        "total_records": len(df_shipment),
-                        "vendors": df_shipment["業者名"].unique().tolist()
-                        if "業者名" in df_shipment.columns
-                        else [],
-                    },
-                    # 処理状態をセッション用に保存する情報
-                    "session_data": {
-                        "df_shipment_json": df_shipment.to_json(),
-                        "master_csv_json": master_csv.to_json(),
-                        "df_transport_cost_json": df_transport_cost.to_json(),
-                    },
-                },
-            }
+        # interface InteractiveItem {
+        #     id: string; // 対象ID
+        #     processor_name: string; // 処理業者名
+        #     product_name: string; // 商品名
+        #     note?: string; // 備考
+        #     transport_options: TransportVendor[]; // 選択肢
+        # }
 
         except Exception as e:
             self.logger.error(f"Step 0 処理中にエラー: {e}")

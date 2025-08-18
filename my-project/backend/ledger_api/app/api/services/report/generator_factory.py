@@ -1,31 +1,30 @@
-# backend/app/api/services/generator_factory.py
+"""
+Factory撤廃方針。ただし互換用にレジストリを提供。
 
-from typing import Dict, Any
-from .concrete_generators import (
-    FactoryReportGenerator,
-    BalanceSheetGenerator,
-    AverageSheetGenerator,
-    BlockUnitPriceGenerator,
-    ManagementSheetGenerator,
-)
+利用しない構成が推奨だが、どうしてもFactoryが必要な箇所向けに
+編集不要の @register デコレータで登録し、get_generator で取得可能とする。
+"""
+
+from typing import Callable, Dict, Type
+
 from .base_report_generator import BaseReportGenerator
 
+_REGISTRY: Dict[str, Type[BaseReportGenerator]] = {}
 
-def get_report_generator(report_key: str, files: Dict[str, Any]) -> BaseReportGenerator:
-    """
-    帳簿種別に応じて適切なGeneratorを返す
-    """
-    generators = {
-        "factory_report": FactoryReportGenerator,
-        "balance_sheet": BalanceSheetGenerator,
-        "average_sheet": AverageSheetGenerator,
-        "block_unit_price": BlockUnitPriceGenerator,
-        "management_sheet": ManagementSheetGenerator,
-    }
-    if report_key not in generators:
-        available_keys = list(generators.keys())
-        raise ValueError(
-            f"Unsupported report type: {report_key}. Available types: {available_keys}"
+
+def register(
+    key: str,
+) -> Callable[[Type[BaseReportGenerator]], Type[BaseReportGenerator]]:
+    def _decorator(cls: Type[BaseReportGenerator]) -> Type[BaseReportGenerator]:
+        _REGISTRY[key] = cls
+        return cls
+
+    return _decorator
+
+
+def get_generator(key: str) -> Type[BaseReportGenerator]:
+    if key not in _REGISTRY:
+        raise KeyError(
+            f"Generator not registered for key: {key}. Available: {list(_REGISTRY)}"
         )
-    generator_class = generators[report_key]
-    return generator_class(report_key, files)
+    return _REGISTRY[key]

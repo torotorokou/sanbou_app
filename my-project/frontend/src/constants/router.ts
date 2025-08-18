@@ -14,6 +14,7 @@ export const ROUTER_PATHS = {
     // 帳票系
     REPORT_MANAGE: '/report/manage',
     REPORT_FACTORY: '/report/factory',
+    LEDGER_BOOK: '/ledger-book',
 
     // データ分析系
     ANALYSIS_CUSTOMERLIST: '/analysis/customer-list',
