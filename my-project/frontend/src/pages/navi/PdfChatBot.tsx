@@ -46,8 +46,8 @@ const PdfChatBot: React.FC = () => {
     const [template, setTemplate] = useState('自由入力');
     const [question, setQuestion] = useState('');
     const [answer, setAnswer] = useState('');
-    const [sources, setSources] = useState<{ pdf: string; section_title: string }[]>([]);
     const [loading, setLoading] = useState(false);
+    const [pdfUrl, setPdfUrl] = useState<string | null>(null); // ★ 追加：APIが返すPDFのURL
     const [pdfToShow, setPdfToShow] = useState<string | null>(null);
     const [pdfModalVisible, setPdfModalVisible] = useState(false);
     const [currentStep, setCurrentStep] = useState(0);
@@ -63,10 +63,7 @@ const PdfChatBot: React.FC = () => {
     }, [category, template]);
 
     // 送信用：ユーザー選択のみ（一意化＆空除去）
-    const tagsToSend = useMemo(
-        () => Array.from(new Set(tags)).filter(Boolean),
-        [tags]
-    );
+    const tagsToSend = useMemo(() => Array.from(new Set(tags)).filter(Boolean), [tags]);
 
     const handleSearch = async () => {
         if (!question.trim()) return;
@@ -80,28 +77,38 @@ const PdfChatBot: React.FC = () => {
             tags: tagsToSend,
         };
 
-        console.log('送信するデータ:', payload);
+        console.log('[API][REQUEST] /rag_api/api/test-answer payload:', payload);
 
         try {
-            const res = await axios.post('/ai_api/chat', payload);
-            setAnswer(res.data.answer || '');
-            setSources(
-                (res.data.sources || [])
-                    .filter(
-                        (src: { pdf?: unknown; section_title?: unknown }) =>
-                            typeof src.pdf === 'string' &&
-                            (src.pdf as string).endsWith('.pdf') &&
-                            typeof src.section_title === 'string' &&
-                            (src.section_title as string).length > 0
-                    )
-                    .map((src: { pdf: string; section_title: string }) => ({
-                        pdf: src.pdf,
-                        section_title: src.section_title,
-                    }))
-            );
-        } catch (err) {
-            console.error(err);
+            const res = await axios.post('/rag_api/api/test-answer', payload);
+
+            // ★ ここから詳細ログ
+            console.log('[API][RESPONSE] status:', res.status, res.statusText);
+            console.log('[API][RESPONSE] headers:', res.headers);
+            console.log('[API][RESPONSE] data:', res.data);
+
+            // ApiResponseを前提に result を参照
+            const result = (res.data?.result ?? {}) as { answer?: string; pdf_url?: string | null };
+
+            setAnswer(result.answer ?? '');
+            setPdfUrl(result.pdf_url ?? null); // ★ PDF URL を保持
+        } catch (err: unknown) {
+            // 失敗時もできる限り詳細を表示
+            if (axios.isAxiosError(err)) {
+                console.error('[API][ERROR] AxiosError message:', err.message);
+                console.error('[API][ERROR] request:', err.config);
+                if (err.response) {
+                    console.error('[API][ERROR] status:', err.response.status);
+                    console.error('[API][ERROR] headers:', err.response.headers);
+                    console.error('[API][ERROR] data:', err.response.data);
+                } else {
+                    console.error('[API][ERROR] no response (network?)');
+                }
+            } else {
+                console.error('[API][ERROR] Unknown error:', err);
+            }
             setAnswer('エラーが発生しました。');
+            setPdfUrl(null);
         } finally {
             setLoading(false);
         }
@@ -121,7 +128,7 @@ const PdfChatBot: React.FC = () => {
                 flexDirection: 'column',
             }}
         >
-            {loading && <Spin tip='AIが回答中です...' size='large' fullscreen />}
+            {loading && <Spin tip="AIが回答中です..." size="large" fullscreen />}
 
             <div style={{ padding: '12px 24px' }}>
                 <ReportStepIndicator currentStep={currentStep} items={stepItems} />
@@ -159,6 +166,7 @@ const PdfChatBot: React.FC = () => {
                 {/* 中央カラム */}
                 <ChatSendButtonSection
                     onClick={handleSearch}
+                    // タグ必須の要件でなければ "|| tags.length === 0" は外す
                     disabled={!question.trim() || tags.length === 0 || loading}
                 />
 
@@ -181,7 +189,7 @@ const PdfChatBot: React.FC = () => {
                 }}
             >
                 <Button
-                    size='small'
+                    size="small"
                     style={{
                         width: 130,
                         height: 32,
@@ -197,16 +205,18 @@ const PdfChatBot: React.FC = () => {
                         justifyContent: 'center',
                         gap: 6,
                     }}
-                    disabled={sources.length === 0}
+                    disabled={!pdfUrl} // ★ pdfUrl が無いときは無効化
                     onClick={() => {
-                        if (sources.length > 0) {
-                            const first = sources[0];
-                            setPdfToShow(`/pdf/${first.pdf}`);
+                        if (pdfUrl) {
+                            // 返ってくる値が '/pdf/xxx.pdf' ならそのまま
+                            // ファイル名だけなら `/pdf/${pdfUrl}` にする
+                            const url = pdfUrl.startsWith('/pdf/') ? pdfUrl : `/pdf/${pdfUrl}`;
+                            setPdfToShow(url);
                             setPdfModalVisible(true);
                         }
                     }}
                     onMouseEnter={(e) => {
-                        if (sources.length === 0) return;
+                        if (!pdfUrl) return;
                         const btn = e.currentTarget;
                         btn.style.width = '180px';
                         btn.style.height = '48px';
@@ -234,7 +244,7 @@ const PdfChatBot: React.FC = () => {
                         全PDFファイル一覧
                     </span>
                 }
-                placement='bottom'
+                placement="bottom"
                 open={drawerOpen}
                 onClose={() => setDrawerOpen(false)}
                 height={180}
@@ -263,7 +273,7 @@ const PdfChatBot: React.FC = () => {
                         <Card
                             key={pdf}
                             hoverable
-                            size='small'
+                            size="small"
                             style={{
                                 width: 120,
                                 height: 72,
