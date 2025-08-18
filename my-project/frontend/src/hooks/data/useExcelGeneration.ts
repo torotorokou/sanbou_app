@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { notifySuccess, notifyError, notifyInfo } from '../../utils/notify';
-import type { ReportKey } from '../../constants/reportConfig/managementReportConfig.tsx';
+import type { ReportKey } from '../../constants/reportConfig';
 
 type CsvFiles = { [csvLabel: string]: File | null };
 

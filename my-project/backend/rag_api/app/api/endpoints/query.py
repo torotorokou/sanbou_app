@@ -12,18 +12,17 @@ from typing import Any, List, Tuple
 
 import PyPDF2
 from fastapi import APIRouter, Body, Request
-from fastapi.exceptions import RequestValidationError
-from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import BaseModel
 
 from app.core import file_ingest_service as loader
 from app.infrastructure.llm import ai_loader
 from app.infrastructure.pdf import pdf_loader
 from app.schemas.query_schema import QueryRequest
+from app.paths import get_pdf_url_prefix
 from backend_shared.src.api_response.response_utils import api_response
 
 router = APIRouter()
-
 
 # --- Pydanticモデル ---
 
@@ -115,9 +114,6 @@ async def answer_api(req: QuestionRequest):
             for i in range(len(pages))
         ]
 
-        # pdf_urls: 先頭5ファイルのURLリスト（デバッグ・内部保持用、レスポンスには含めない）
-        pdf_urls = [f"/pdfs/{selected_files[i]}" for i in range(len(selected_files))]
-
         # 5つのPDFを結合して1つのPDFを生成
         merged_pdf_name = f"merged_{req.query}.pdf"
         merged_pdf_path = os.path.join(pdfs_dir, merged_pdf_name)
@@ -134,12 +130,14 @@ async def answer_api(req: QuestionRequest):
                 writer.add_blank_page(width=595, height=842)
         with open(merged_pdf_path, "wb") as out_f:
             writer.write(out_f)
-        pdf_url = f"/pdfs/{merged_pdf_name}"
+        pdf_url_prefix = get_pdf_url_prefix()
+        pdf_url = f"{pdf_url_prefix}/{merged_pdf_name}"
 
         # ダミー回答
         answer = f"ダミー回答: {req.query}（カテゴリ: {req.category}）"
 
         from backend_shared.src.api_response.response_base import SuccessApiResponse
+
         return SuccessApiResponse(
             code="S200",
             detail="ダミーAI回答生成成功",
@@ -178,6 +176,7 @@ async def generate_answer(request: QueryRequest):
         static_dir = os.environ.get("PDFS_DIR") or "/backend/static/pdfs"
         os.makedirs(static_dir, exist_ok=True)
         from app.utils.file_utils import PDF_PATH
+
         pdf_path = str(PDF_PATH)
 
         # ページリストを正規化
@@ -213,7 +212,7 @@ async def generate_answer(request: QueryRequest):
             query_name=request.query,
             pages=page_list,
             save_dir=static_dir,
-            url_prefix="/pdfs",
+            url_prefix=get_pdf_url_prefix(),
         )
         # pdf_urlsはデバッグ・内部保持用（レスポンスには含めない）
 
@@ -233,9 +232,10 @@ async def generate_answer(request: QueryRequest):
                 writer.add_blank_page(width=595, height=842)
         with open(merged_pdf_path, "wb") as out_f:
             writer.write(out_f)
-        pdf_url = f"/pdfs/{merged_pdf_name}"
+        pdf_url = f"{get_pdf_url_prefix()}/{merged_pdf_name}"
 
         from backend_shared.src.api_response.response_base import SuccessApiResponse
+
         return SuccessApiResponse(
             code="S200",
             detail="AI回答生成成功",

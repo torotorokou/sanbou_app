@@ -1,17 +1,21 @@
 import React from 'react';
 import { Steps } from 'antd';
 import ReportSelector from './ReportSelector';
+import type { PageGroupKey } from '@/constants/reportConfig';
 
 type ReportHeaderProps = {
     reportKey: string;
     onChangeReportKey: (val: string) => void;
     currentStep: number;
+    /** ページ別帳票グループ指定 */
+    pageGroup?: PageGroupKey;
 };
 
 const ReportHeader: React.FC<ReportHeaderProps> = ({
     reportKey,
     onChangeReportKey,
     currentStep,
+    pageGroup,
 }) => {
     return (
         <div
@@ -34,6 +38,7 @@ const ReportHeader: React.FC<ReportHeaderProps> = ({
                 <ReportSelector
                     reportKey={reportKey}
                     onChange={onChangeReportKey}
+                    pageGroup={pageGroup}
                 />
             </div>
 
