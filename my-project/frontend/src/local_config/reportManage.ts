@@ -1,14 +1,10 @@
 // src/config/managementReportConfig.ts
-
 import {
     REPORT_KEYS,
     type ReportKey,
-} from '@/constants/reportConfig/managementReportConfig.tsx';
-import {
     csvConfigMap,
-    stepConfigMap,
-    pdfGeneratorMap,
-} from '@/constants/reportConfig/managementReportConfig.tsx';
+    modalStepsMap,
+} from '@/constants/reportConfig';
 
 type CsvConfig = {
     label: string;
@@ -20,7 +16,6 @@ type ReportConfig = {
     label: string;
     csvConfigs: CsvConfig[];
     steps: string[];
-    generatePdf: () => Promise<string>;
 };
 
 export const reportConfigMap: Record<ReportKey, ReportConfig> = Object.keys(
@@ -39,8 +34,7 @@ export const reportConfigMap: Record<ReportKey, ReportConfig> = Object.keys(
         reportKey,
         label: REPORT_KEYS[reportKey].label,
         csvConfigs,
-        steps: stepConfigMap[reportKey],
-        generatePdf: pdfGeneratorMap[reportKey],
+        steps: modalStepsMap[reportKey].map((step) => step.label),
     };
     return acc;
 }, {} as Record<ReportKey, ReportConfig>);

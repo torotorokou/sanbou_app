@@ -64,6 +64,11 @@ export const SIDEBAR_MENU = [
                 icon: <FileDoneOutlined />,
                 label: <Link to={ROUTER_PATHS.REPORT_FACTORY}>工場帳簿</Link>,
             },
+            {
+                key: ROUTER_PATHS.LEDGER_BOOK,
+                icon: <BookOutlined />,
+                label: <Link to={ROUTER_PATHS.LEDGER_BOOK}>帳簿</Link>,
+            },
         ],
     },
     // データ分析

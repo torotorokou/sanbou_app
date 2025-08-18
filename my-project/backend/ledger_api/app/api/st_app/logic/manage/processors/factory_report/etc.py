@@ -1,6 +1,7 @@
 import pandas as pd
-from app.api.st_app.utils.config_loader import get_template_config, clean_na_strings
+
 from app.api.st_app.logic.manage.utils.load_template import load_master_and_template
+from app.api.st_app.utils.config_loader import clean_na_strings, get_template_config
 from app.api.st_app.utils.date_tools import to_japanese_era, to_japanese_month_day
 from app.api.st_app.utils.value_setter import set_value_fast_safe
 
@@ -23,8 +24,10 @@ def generate_summary_dataframe(df: pd.DataFrame) -> pd.DataFrame:
         f"[DEBUG] df_sum['値'] after clean_na_strings: {df_sum['値'].head(3).tolist()}"
     )
 
-    df_sum["値"] = pd.to_numeric(df_sum["値"], errors="coerce")
-    print(f"[DEBUG] df_sum['値'] after to_numeric: {df_sum['値'].head(3).tolist()}")
+    df_sum["値"] = pd.to_numeric(df_sum["値"], errors="coerce").fillna(0)
+    print(
+        f"[DEBUG] df_sum['値'] after to_numeric+fillna(0): {df_sum['値'].head(3).tolist()}"
+    )
 
     # 3. カテゴリ別の合計
     category_sum = df_sum.groupby("カテゴリ")["値"].sum()
@@ -51,7 +54,7 @@ def generate_summary_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     val_shobun = etc_csv.loc[etc_csv["大項目"] == "合計_処分", "値"].values
     val_yard = etc_csv.loc[etc_csv["大項目"] == "合計_ヤード", "値"].values
 
-    if val_shobun.size > 0 and val_yard.size > 0:
+    if len(val_shobun) > 0 and len(val_yard) > 0:
         etc_csv.loc[mask_shobun_yard, "値"] = val_shobun[0] + val_yard[0]
 
     # 7. 元dfとetcの結合（縦方向）
