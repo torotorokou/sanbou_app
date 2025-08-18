@@ -65,6 +65,8 @@ class ApiResponse(GenericModel, Generic[T]):
         return cls(status="error", code=code, detail=detail, result=result, hint=hint)
 
 
+
+# 下記からは廃止予定
 # --- Pydanticモデル -> dict の互換ヘルパ --------------------------------------
 def _model_to_dict(model: BaseModel) -> dict:
     """
