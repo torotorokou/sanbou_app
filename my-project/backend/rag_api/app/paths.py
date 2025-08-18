@@ -23,3 +23,20 @@ SOLVEST_FAISS = Path(os.environ.get("SOLVEST_FAISS", str(VECTORSTORE_DIR / "solv
 
 # structured_output_with_tags.json のパス
 STRUCTURED_OUTPUT_WITH_TAGS = Path(os.environ.get("STRUCTURED_OUTPUT_WITH_TAGS", str(LOCAL_DATA_DIR / "structured_output_with_tags.json")))
+
+# --- API ルートパス関連（環境変数を動的参照） -------------------------------
+def get_api_root_path() -> str:
+	"""
+	FastAPI の root_path に合わせるための接頭辞。
+	.env などの環境変数 API_ROOT_PATH を動的に参照（デフォルト: "/rag_api"）。
+	"""
+	return os.environ.get("API_ROOT_PATH", "/rag_api")
+
+
+def get_pdf_url_prefix() -> str:
+	"""
+	静的に公開している /pdfs のURL接頭辞（例: "/rag_api/pdfs"）。
+	ルートパスが空のときは "/pdfs" を返す。
+	"""
+	root = get_api_root_path().rstrip("/")
+	return f"{root}/pdfs" if root else "/pdfs"
