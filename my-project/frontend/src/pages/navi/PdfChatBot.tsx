@@ -97,11 +97,11 @@ const PdfChatBot: React.FC = () => {
             tags: tagsToSend,
         };
 
-        console.log('[API][REQUEST] /rag_api/api/test-answer payload:', payload);
+        console.log('[API][REQUEST] /rag_api/api/generate-answer payload:', payload);
 
         try {
-            const res = await axios.post<ApiResponse<ChatAnswerResult>>(
-                '/rag_api/api/test-answer',
+            const res = await axios.post<ApiResponse<ChatAnswerResult> | any>(
+                '/rag_api/api/generate-answer',
                 payload
             );
 
@@ -110,32 +110,46 @@ const PdfChatBot: React.FC = () => {
             console.log('[API][RESPONSE] headers:', res.headers);
             console.log('[API][RESPONSE] data:', res.data);
 
-            // 共通レスポンス契約に従って判定
-            if (res.data?.status !== 'success') {
-                console.error('[API][ERROR] detail:', res.data?.detail, 'code:', res.data?.code);
-                setAnswer(res.data?.detail ?? 'エラーが発生しました。');
-                setPdfUrl(null);
+            // 正規化: 新契約(ApiResponse) or 旧スキーマ(トップレベルkeys)
+            let normalized: { answer: string; pdf_url?: string | null } | null = null;
 
-                // ✅ 失敗通知（APIは200でも業務的エラーの場合）
-                addNotification({
-                    type: 'error',
-                    title: '取得に失敗しました',
-                    message: res.data?.detail || 'サーバーからエラーが返されました。',
-                    duration: 4000,
-                });
-                return;
+            if (res.data && typeof res.data === 'object' && 'status' in res.data) {
+                // 新契約
+                if (res.data.status !== 'success') {
+                    console.error('[API][ERROR] detail:', res.data?.detail, 'code:', res.data?.code);
+                    setAnswer(res.data?.detail ?? 'エラーが発生しました。');
+                    setPdfUrl(null);
+                    addNotification({
+                        type: 'error',
+                        title: '取得に失敗しました',
+                        message: res.data?.detail || 'サーバーからエラーが返されました。',
+                        duration: 4000,
+                    });
+                    return;
+                }
+                const result = res.data?.result ?? null;
+                normalized = {
+                    answer: result?.answer ?? '',
+                    pdf_url: result?.pdf_url ?? null,
+                };
+            } else {
+                // 旧スキーマ: answer, pdf_urls, pages, merged_pdf_url などが直下に来る
+                const legacy = res.data ?? {};
+                normalized = {
+                    answer: legacy.answer ?? '',
+                    // merged_pdf_url > pdf_url の優先で採用
+                    pdf_url: legacy.merged_pdf_url ?? legacy.pdf_url ?? null,
+                };
             }
 
-            const result = res.data?.result ?? null;
-
-            setAnswer(result?.answer ?? '');
-            setPdfUrl(result?.pdf_url ?? null); // ★ PDF URL を保持
+            setAnswer(normalized?.answer ?? '');
+            setPdfUrl(normalized?.pdf_url ?? null);
 
             // ✅ 成功通知（任意）
             addNotification({
                 type: 'success',
                 title: 'AI応答を取得しました',
-                message: result?.pdf_url ? '回答とPDFリンクを受信しました。' : '回答を受信しました。',
+                message: normalized?.pdf_url ? '回答とPDFリンクを受信しました。' : '回答を受信しました。',
                 duration: 2500,
             });
         } catch (err: unknown) {
@@ -264,13 +278,30 @@ const PdfChatBot: React.FC = () => {
                     disabled={!pdfUrl} // ★ pdfUrl が無いときは無効化
                     onClick={() => {
                         if (pdfUrl) {
-                            // 返ってくる値が '/pdf/xxx.pdf' ならそのまま
-                            // ファイル名だけなら `/pdf/${pdfUrl}` にする
-                            const url = pdfUrl.startsWith('/pdf/') ? pdfUrl : `/pdf/${pdfUrl}`;
+                            // /pdfs/... → /rag_api/pdfs/... に補正
+                            const normalizePdfUrl = (p: string): string => {
+                                if (!p) return p;
+
+                                // すでに rag_api/pdfs ならそのまま
+                                if (p.startsWith('/rag_api/pdfs/')) return p;
+
+                                // バックエンドが返す /pdfs/... を /rag_api/pdfs/... に置換
+                                if (p.startsWith('/pdfs/')) {
+                                    return p.replace('/pdfs/', '/rag_api/pdfs/');
+                                }
+
+                                // ファイル名だけなら /rag_api/pdfs に寄せる
+                                return `/rag_api/pdfs/${p.replace(/^\//, '')}`;
+                            };
+
+                            const url = normalizePdfUrl(pdfUrl);
+                            console.log('[参考PDF URL]', url);
+
                             setPdfToShow(url);
                             setPdfModalVisible(true);
                         }
                     }}
+
                     onMouseEnter={(e) => {
                         if (!pdfUrl) return;
                         const btn = e.currentTarget;
