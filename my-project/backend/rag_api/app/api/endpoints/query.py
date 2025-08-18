@@ -23,7 +23,7 @@ from app.schemas.query_schema import QueryRequest
 from backend_shared.src.api_response.response_utils import api_response
 
 router = APIRouter()
-
+root_path = "rag_api"
 
 # --- Pydanticモデル ---
 
@@ -134,12 +134,13 @@ async def answer_api(req: QuestionRequest):
                 writer.add_blank_page(width=595, height=842)
         with open(merged_pdf_path, "wb") as out_f:
             writer.write(out_f)
-        pdf_url = f"/pdfs/{merged_pdf_name}"
+        pdf_url = f"{root_path}/pdfs/{merged_pdf_name}"
 
         # ダミー回答
         answer = f"ダミー回答: {req.query}（カテゴリ: {req.category}）"
 
         from backend_shared.src.api_response.response_base import SuccessApiResponse
+
         return SuccessApiResponse(
             code="S200",
             detail="ダミーAI回答生成成功",
@@ -178,6 +179,7 @@ async def generate_answer(request: QueryRequest):
         static_dir = os.environ.get("PDFS_DIR") or "/backend/static/pdfs"
         os.makedirs(static_dir, exist_ok=True)
         from app.utils.file_utils import PDF_PATH
+
         pdf_path = str(PDF_PATH)
 
         # ページリストを正規化
@@ -236,6 +238,7 @@ async def generate_answer(request: QueryRequest):
         pdf_url = f"/pdfs/{merged_pdf_name}"
 
         from backend_shared.src.api_response.response_base import SuccessApiResponse
+
         return SuccessApiResponse(
             code="S200",
             detail="AI回答生成成功",
