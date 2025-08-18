@@ -12,13 +12,29 @@ import ReportStepIndicator from '@/components/ui/ReportStepIndicator';
 // YAMLを直接インポート（viteの@rollup/plugin-yamlでJSON化）
 import categoryYaml from '@/config/category_question_templates.yaml';
 
+// ✅ 追加: 通知ストア
+import { useNotificationStore } from '@/stores/notificationStore';
+
 // ✅ PDF.js workerSrc の指定（react-pdf 9.x 以降の書き方）
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
     'pdfjs-dist/build/pdf.worker.min.mjs',
     import.meta.url
 ).toString();
 
-// 関連PDFカード削除に伴いcardStyleは不要
+// 共通APIレスポンス型（バックエンド契約に合わせる）
+type ApiResponse<T> = {
+    status: 'success' | 'error';
+    code: string;
+    detail: string;
+    result?: T | null;
+    hint?: string | null;
+};
+
+// 今回の業務ペイロード
+type ChatAnswerResult = {
+    answer: string;
+    pdf_url?: string | null;
+};
 
 const allPdfList = [
     'doc1.pdf',
@@ -47,17 +63,21 @@ const PdfChatBot: React.FC = () => {
     const [question, setQuestion] = useState('');
     const [answer, setAnswer] = useState('');
     const [loading, setLoading] = useState(false);
-    const [pdfUrl, setPdfUrl] = useState<string | null>(null); // ★ 追加：APIが返すPDFのURL
+    const [pdfUrl, setPdfUrl] = useState<string | null>(null); // ★ APIが返すPDFのURL
     const [pdfToShow, setPdfToShow] = useState<string | null>(null);
     const [pdfModalVisible, setPdfModalVisible] = useState(false);
     const [currentStep, setCurrentStep] = useState(0);
 
     const [drawerOpen, setDrawerOpen] = useState(false);
 
+    // ✅ 追加: 通知のadd関数を取得
+    const addNotification = useNotificationStore((s) => s.addNotification);
+
     // 選択テンプレートに紐づく推奨タグ（YAML）を取得（※送信には使用しない）
     const templateTags = useMemo(() => {
         if (!category || !template || template === '自由入力') return [] as string[];
-        const items = (categoryYaml as Record<string, { title: string; tag: string[] }[]>)[category] || [];
+        const items =
+            (categoryYaml as Record<string, { title: string; tag: string[] }[]>)[category] || [];
         const found = items.find((it) => it.title === template);
         return found?.tag ?? [];
     }, [category, template]);
@@ -65,7 +85,7 @@ const PdfChatBot: React.FC = () => {
     // 送信用：ユーザー選択のみ（一意化＆空除去）
     const tagsToSend = useMemo(() => Array.from(new Set(tags)).filter(Boolean), [tags]);
 
-    const handleSearch = async () => {
+    const handleSearch = async (): Promise<void> => {
         if (!question.trim()) return;
         setCurrentStep(3);
         setLoading(true);
@@ -80,18 +100,44 @@ const PdfChatBot: React.FC = () => {
         console.log('[API][REQUEST] /rag_api/api/test-answer payload:', payload);
 
         try {
-            const res = await axios.post('/rag_api/api/test-answer', payload);
+            const res = await axios.post<ApiResponse<ChatAnswerResult>>(
+                '/rag_api/api/test-answer',
+                payload
+            );
 
-            // ★ ここから詳細ログ
+            // ★ 詳細ログ
             console.log('[API][RESPONSE] status:', res.status, res.statusText);
             console.log('[API][RESPONSE] headers:', res.headers);
             console.log('[API][RESPONSE] data:', res.data);
 
-            // ApiResponseを前提に result を参照
-            const result = (res.data?.result ?? {}) as { answer?: string; pdf_url?: string | null };
+            // 共通レスポンス契約に従って判定
+            if (res.data?.status !== 'success') {
+                console.error('[API][ERROR] detail:', res.data?.detail, 'code:', res.data?.code);
+                setAnswer(res.data?.detail ?? 'エラーが発生しました。');
+                setPdfUrl(null);
 
-            setAnswer(result.answer ?? '');
-            setPdfUrl(result.pdf_url ?? null); // ★ PDF URL を保持
+                // ✅ 失敗通知（APIは200でも業務的エラーの場合）
+                addNotification({
+                    type: 'error',
+                    title: '取得に失敗しました',
+                    message: res.data?.detail || 'サーバーからエラーが返されました。',
+                    duration: 4000,
+                });
+                return;
+            }
+
+            const result = res.data?.result ?? null;
+
+            setAnswer(result?.answer ?? '');
+            setPdfUrl(result?.pdf_url ?? null); // ★ PDF URL を保持
+
+            // ✅ 成功通知（任意）
+            addNotification({
+                type: 'success',
+                title: 'AI応答を取得しました',
+                message: result?.pdf_url ? '回答とPDFリンクを受信しました。' : '回答を受信しました。',
+                duration: 2500,
+            });
         } catch (err: unknown) {
             // 失敗時もできる限り詳細を表示
             if (axios.isAxiosError(err)) {
@@ -109,6 +155,14 @@ const PdfChatBot: React.FC = () => {
             }
             setAnswer('エラーが発生しました。');
             setPdfUrl(null);
+
+            // ✅ 失敗通知
+            addNotification({
+                type: 'error',
+                title: '取得に失敗しました',
+                message: 'ネットワークまたはサーバーエラーです。',
+                duration: 4000,
+            });
         } finally {
             setLoading(false);
         }
@@ -160,7 +214,9 @@ const PdfChatBot: React.FC = () => {
                         setQuestion(val);
                         if (val.trim()) setCurrentStep(2);
                     }}
-                    categoryData={categoryYaml as Record<string, { title: string; tag: string[] }[]>}
+                    categoryData={
+                        categoryYaml as Record<string, { title: string; tag: string[] }[]>
+                    }
                 />
 
                 {/* 中央カラム */}
