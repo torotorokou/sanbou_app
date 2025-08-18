@@ -1,3 +1,5 @@
+// /app/src/types/notification.ts
+
 /**
  * 通知の種類を定義
  * - success: 成功通知（緑色）

@@ -1,40 +1,51 @@
 """
-CSVバリデーターファサードサービス
+CSVバリデーターファサードサービス（改良版）
 
 CSVファイルのバリデーション処理を統合的に管理するファサードクラスです。
-複数のバリデーション処理を順次実行し、エラーがあればレスポンスを返します。
+責任分離の原則に基づき、純粋なバリデーションロジックとAPIレスポンス変換を分離しています。
+
+アーキテクチャ:
+- PureCSVValidator: 純粋なバリデーションロジック
+- ValidationResponseConverter: バリデーション結果のAPIレスポンス変換
+- CsvValidatorService: ファサードとして全体を統合
 """
 
 from backend_shared.config.config_loader import SyogunCsvConfigLoader
-from backend_shared.src.csv_validator.csv_upload_validator_api import (
-    CSVValidationResponder,
-)
 from backend_shared.src.api_response.response_base import ErrorApiResponse
+from backend_shared.src.csv_validator.pure_csv_validator import PureCSVValidator
+from backend_shared.src.csv_validator.response_converter import (
+    ValidationResponseConverter,
+)
 
 
 class CsvValidatorService:
     """
-    CSVバリデーションサービス
+    CSVバリデーションサービス（改良版）
 
-    CSVファイルの各種バリデーション処理を統合的に実行するサービスクラスです。
-    カラム存在チェック、伝票日付の存在・一致チェックなどを順次実行します。
+    責任分離された設計に基づく統合バリデーションサービス。
+    - バリデーションロジックはPureCSVValidatorに委譲
+    - APIレスポンス変換はValidationResponseConverterに委譲
+    - ファサードとして全体の流れを制御
     """
 
     def __init__(self):
         """
         サービスの初期化
 
-        設定ローダーを初期化し、バリデーション処理の準備を行います。
+        設定ローダーとコンバーターを初期化し、バリデーション処理の準備を行います。
         """
         # 昇軍CSV設定ローダーの初期化
         self.config_loader = SyogunCsvConfigLoader()
 
+        # レスポンス変換器の初期化
+        self.response_converter = ValidationResponseConverter()
+
     def validate(self, dfs, files) -> ErrorApiResponse | None:
         """
-        CSVファイルの包括的バリデーション
+        CSVファイルの包括的バリデーション（改良版）
 
-        複数のバリデーション処理を順次実行し、最初に検出されたエラーを返します。
-        すべてのバリデーションが成功した場合はNoneを返します。
+        純粋なバリデーションロジックを実行し、結果をAPIレスポンス形式に変換します。
+        責任分離により、バリデーションロジックとレスポンス形式が独立して管理できます。
 
         Args:
             dfs (Dict[str, DataFrame]): CSVタイプをキーとするDataFrameの辞書
@@ -48,23 +59,15 @@ class CsvValidatorService:
             k: self.config_loader.get_expected_headers(k) for k in files.keys()
         }
 
-        # バリデーター初期化
-        validator = CSVValidationResponder(required_columns)
+        # 純粋なバリデーター初期化
+        validator = PureCSVValidator(required_columns)
 
-        # 1. カラム存在バリデーション
-        error_response = validator.validate_columns(dfs, files)
-        if error_response:
-            return error_response
+        # バリデーション実行（純粋なロジック）
+        validation_result = validator.validate_all(dfs, files)
 
-        # 2. 伝票日付存在チェック
-        error_response = validator.validate_denpyou_date_exists(dfs, files)
-        if error_response:
-            return error_response
+        # バリデーション結果をAPIレスポンス形式に変換
+        api_response = self.response_converter.convert_to_api_response(
+            validation_result, files
+        )
 
-        # 3. 伝票日付一致チェック（複数ファイル間での整合性確認）
-        error_response = validator.validate_denpyou_date_consistency(dfs)
-        if error_response:
-            return error_response
-
-        # すべてのバリデーション成功
-        return None
+        return api_response
