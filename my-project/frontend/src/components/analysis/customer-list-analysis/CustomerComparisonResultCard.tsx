@@ -50,16 +50,17 @@ const CustomerComparisonResultCard: React.FC<Props> = ({
         headStyle={{ fontWeight: 600, ...headStyle }}
         bodyStyle={{ flex: 1, minHeight: 0, overflow: 'auto', padding: 0 }}
     >
-        <Table
-            dataSource={data}
-            columns={customerColumns}
-            size='small'
-            rowKey='key'
-            pagination={false}
-            locale={{ emptyText: '該当なし' }}
-            scroll={{ y: 400 }}
-            style={{ minHeight: 0 }}
-        />
+        <div className="table-wrap" style={{ minHeight: 0 }}>
+            <Table
+                dataSource={data}
+                columns={customerColumns}
+                size='small'
+                rowKey='key'
+                pagination={false}
+                locale={{ emptyText: '該当なし' }}
+                scroll={{ y: 400, x: 'max-content' }}
+            />
+        </div>
     </Card>
 );
 

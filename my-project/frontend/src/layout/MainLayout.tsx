@@ -62,12 +62,19 @@ const MainLayout: React.FC = () => {
                             padding: isMobile ? '12px' : isTablet ? '16px' : shouldAutoCollapse ? '20px' : '24px',
                             backgroundColor: customTokens.colorBgLayout,
                             minHeight: 'calc(100vh - 64px)',
-                            // 全画面以外ではスクロール可能にする
                             height: isMobile || isTablet ? 'auto' : 'calc(100vh - 64px)',
-                            transition: 'padding 0.3s ease-in-out', // パディングの変更をスムーズに
+                            transition: 'padding 0.3s ease-in-out',
+                            display: 'block',
                         }}
                     >
-                        <AppRoutes />
+                        {/*
+                          Grid/Flex骨子の方針：
+                          - ページ側では .container を最上位に置き、内部はFlex/Gridで組む
+                          - 固定幅禁止: .container は fluid + max width
+                        */}
+                        <div className="container">
+                            <AppRoutes />
+                        </div>
                     </Content>
                 </Layout>
                 {/* グローバル通知コンテナ */}

@@ -1,30 +1,21 @@
 import React from 'react';
+import { BREAKPOINTS as BP } from '@/shared/constants/breakpoints';
 
-// レスポンシブデザイン用のブレークポイント定義
+// 共通ブレークポイントからメディアクエリ文字列を構築（既存API互換を維持）
 export const BREAKPOINTS = {
-    // スマートフォン (320px - 767px)
-    mobile: '(max-width: 767px)',
+    mobile: `(max-width: ${BP.mobile}px)`,
+    tablet: `(min-width: ${BP.mobile + 1}px) and (max-width: ${BP.tablet}px)`,
+    smallDesktop: `(min-width: ${BP.tablet + 1}px) and (max-width: ${BP.smallPC - 1}px)`,
+    mediumDesktop: `(min-width: ${BP.smallPC}px) and (max-width: ${BP.fullHD - 1}px)`,
+    largeDesktop: `(min-width: ${BP.fullHD}px)`,
 
-    // タブレット (768px - 1023px)
-    tablet: '(min-width: 768px) and (max-width: 1023px)',
+    // サイドバー縮小用（しきい値は後方互換のため維持）
+    autoCollapse: '(max-width: 1200px)',
+    forceCollapse: '(max-width: 900px)',
 
-    // 小さなデスクトップ・ラップトップ (1024px - 1365px)
-    smallDesktop: '(min-width: 1024px) and (max-width: 1365px)',
-
-    // 古いタイプのPC・半画面のPC (1366px - 1599px)
-    mediumDesktop: '(min-width: 1366px) and (max-width: 1599px)',
-
-    // フルHD以上のPC (1600px以上)
-    largeDesktop: '(min-width: 1600px)',
-
-    // サイドバー縮小用の追加ブレークポイント
-    autoCollapse: '(max-width: 1200px)', // 1200px以下でサイドバー自動縮小
-    forceCollapse: '(max-width: 900px)', // 900px以下でサイドバー強制縮小
-
-    // 特定のサイズ
-    mobileOnly: '(max-width: 767px)',
-    tabletUp: '(min-width: 768px)',
-    desktopUp: '(min-width: 1024px)',
+    mobileOnly: `(max-width: ${BP.mobile}px)`,
+    tabletUp: `(min-width: ${BP.mobile + 1}px)`,
+    desktopUp: `(min-width: ${BP.tablet + 1}px)`,
 } as const;
 
 // メディアクエリフック用のヘルパー

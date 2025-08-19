@@ -78,24 +78,25 @@ export const CsvPreviewCard: React.FC<Props> = ({
             }}
         >
             {csvPreview && csvPreview.rows.length > 0 ? (
-                <Table
-                    columns={csvPreview.columns.map((col, i) => ({
-                        title: col,
-                        dataIndex: i,
-                        key: i,
-                        width: 120,
-                        ellipsis: true,
-                    }))}
-                    dataSource={csvPreview.rows.map((row) =>
-                        Object.fromEntries(row.map((v, ci) => [ci, v]))
-                    )}
-                    pagination={false}
-                    size='small'
-                    scroll={{ y: tableBodyHeight, x: 'max-content' }}
-                    bordered
-                    rowKey={(_, i) => (i ?? 0).toString()}
-                    style={{ flex: 1 }}
-                />
+                <div className="table-wrap" style={{ flex: 1 }}>
+                    <Table
+                        columns={csvPreview.columns.map((col, i) => ({
+                            title: col,
+                            dataIndex: i,
+                            key: i,
+                            width: 120,
+                            ellipsis: true,
+                        }))}
+                        dataSource={csvPreview.rows.map((row) =>
+                            Object.fromEntries(row.map((v, ci) => [ci, v]))
+                        )}
+                        pagination={false}
+                        size='small'
+                        scroll={{ y: tableBodyHeight, x: 'max-content' }}
+                        bordered
+                        rowKey={(_, i) => (i ?? 0).toString()}
+                    />
+                </div>
             ) : (
                 <Empty description='プレビューなし' />
             )}
