@@ -9,6 +9,7 @@
 
 from typing import Any, Dict, Optional, Tuple
 
+# pandas はこのモジュールでは未使用
 from fastapi import UploadFile
 from fastapi.responses import Response, StreamingResponse
 
@@ -16,6 +17,9 @@ from app.api.services.report.base_report_generator import BaseReportGenerator
 from app.api.utils.excel_pdf_zip_utils import generate_excel_pdf_zip
 from backend_shared.src.api_response.response_error import NoFilesUploadedResponse
 from backend_shared.src.utils.csv_reader import read_csv_files
+from backend_shared.src.utils.date_filter_utils import (
+    filter_by_period_from_min_date as shared_filter_by_period_from_min_date,
+)
 
 
 class ReportProcessingService:
@@ -58,6 +62,54 @@ class ReportProcessingService:
             print(f"Validation error: {validation_error}")
             return validation_error.to_json_response()
 
+        # Step 2.5: 帳簿ごとの期間指定があれば、最小伝票日付から日/週/月でフィルタ
+        period_type = getattr(generator, "period_type", None)
+        if period_type:
+            print(
+                "\n==================== CSV日付フィルタ デバッグ開始 ===================="
+            )
+            # デバッグ: フィルタ前の各DataFrameのshapeとカラム名を表示
+            print("[DEBUG] DataFrame shapes BEFORE filtering:")
+            for csv_type, df in dfs.items():
+                try:
+                    shape = getattr(df, "shape", None)
+                    print(f"[DEBUG] Original {csv_type}: shape={shape}")
+                    print(f"[DEBUG] Columns in {csv_type}: {list(df.columns)}")
+                    # 日付候補カラムの有無を表示
+                    candidates = ["伝票日付", "日付", "date", "Date"]
+                    found = [c for c in candidates if c in df.columns]
+                    print(
+                        f"[DEBUG] Candidate date columns found in {csv_type}: {found}"
+                    )
+                    # サンプル値表示
+                    for col in found:
+                        vals = df[col].head(3).tolist()
+                        print(f"[DEBUG] Sample values for {col} in {csv_type}: {vals}")
+                except Exception as ex:
+                    print(
+                        f"[DEBUG] Original {csv_type}: shape=Unknown (not a DataFrame), error={ex}"
+                    )
+
+            try:
+                # 共通ユーティリティへ委譲
+                dfs = shared_filter_by_period_from_min_date(dfs, period_type)
+                print(f"Applied date filtering by period: {period_type}")
+                # デバッグ: フィルタ後の各DataFrameのshapeを表示
+                print("[DEBUG] DataFrame shapes AFTER filtering:")
+                for csv_type, df in dfs.items():
+                    try:
+                        shape = getattr(df, "shape", None)
+                        print(f"[DEBUG] Filtered {csv_type}: shape={shape}")
+                    except Exception:
+                        print(
+                            f"[DEBUG] Filtered {csv_type}: shape=Unknown (not a DataFrame)"
+                        )
+            except Exception as e:
+                print(f"[WARN] Date filtering skipped due to error: {e}")
+            print(
+                "==================== CSV日付フィルタ デバッグ終了 ====================\n"
+            )
+
         # Step 3: 整形（ジェネレーター定義）
         print("Formatting DataFrames...")
         df_formatted = generator.format(dfs)
@@ -78,6 +130,11 @@ class ReportProcessingService:
 
         # Step 6: Excel/PDF/ZIP レスポンス
         return self.create_response(generator, df_result, report_date)
+
+    # ---------- 日付フィルタ関連（共通ユーティリティ） ----------
+    # 共通化: 旧ローカル実装は date_filter_utils に移動
+    # def filter_by_period_from_min_date(...): pass
+    # def _find_date_column(...): pass
 
     def create_response(
         self, generator: BaseReportGenerator, df_result: Any, report_date: str
