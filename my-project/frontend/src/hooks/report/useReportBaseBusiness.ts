@@ -135,7 +135,7 @@ export const useReportBaseBusiness = (
                 onSuccess();
             }
         },
-        [zipGeneration, csvFiles, reportKey]
+    [zipGeneration, csvFiles, reportKey]
     );
 
     return {
