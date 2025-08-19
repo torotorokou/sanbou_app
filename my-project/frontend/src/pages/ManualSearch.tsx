@@ -332,7 +332,7 @@ const ManualSearchWithSidebarAndFullPdf: React.FC = () => {
             >
                 <div
                     style={{
-                        height: '600px',
+                        minHeight: 360,
                         textAlign: 'center',
                         paddingTop: 40,
                         fontSize: 18,

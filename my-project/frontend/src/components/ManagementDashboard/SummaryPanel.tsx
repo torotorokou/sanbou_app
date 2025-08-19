@@ -80,7 +80,7 @@ const SummaryPanel: React.FC = () => {
                                 gap: 8, // ← gapも小さく
                             }}
                         >
-                            <div style={{ minWidth: 100 }}>
+                            <div className="fluid-child" style={{ minWidth: 0 }}>
                                 {' '}
                                 {/* ← 幅も小さく */}
                                 <AnimatedStatistic
@@ -122,7 +122,7 @@ const SummaryPanel: React.FC = () => {
                                 gap: 8,
                             }}
                         >
-                            <div style={{ minWidth: 100 }}>
+                            <div className="fluid-child" style={{ minWidth: 0 }}>
                                 <AnimatedStatistic
                                     title={item.title}
                                     value={item.value}

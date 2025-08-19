@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Card, Typography } from 'antd';
+import { Card } from 'antd';
 import CsvUploadCard from './CsvUploadCard';
 import type { CsvFileType } from './types';
 import type { UploadProps } from 'antd';
@@ -20,37 +20,13 @@ const CsvUploadPanel: React.FC<CsvUploadPanelProps> = ({ upload }) => {
     const [hoveringIndex, setHoveringIndex] = useState<number | null>(null);
     const { isMobile, isTablet } = useDeviceType();
 
-    // 最もシンプルな高さ計算：固定サイズ + 画面高さベースのスクロール制御
-    const calculateHeight = () => {
-        // 固定高さ（CSV数に関係なく）
-        const fixedHeight = isMobile ? 320 : isTablet ? 380 : 450;
+    // 画面サイズに応じたスクロール制御:
+    // - vhベースでmaxHeightを設定し、overflowYは常に'auto'（必要時のみスクロールバー表示）
+    // - これによりCSVの数に依存せず、画面が小さいほどスクロールが出やすくなる
+    const panelMaxHeight = isMobile ? '55vh' : isTablet ? '60vh' : '65vh';
 
-        // PC画面の高さによる動的スクロール制御
-        if (typeof window !== 'undefined' && !isMobile && !isTablet) {
-            const screenHeight = window.innerHeight;
-            // 画面が小さい場合（800px以下）はスクロール有効
-            const enableScroll = screenHeight <= 800;
-
-            return {
-                height: fixedHeight,
-                overflowY: enableScroll ? 'auto' as const : 'hidden' as const,
-            };
-        }
-
-        // モバイル・タブレットは常にスクロールなし
-        return {
-            height: fixedHeight,
-            overflowY: 'hidden' as const,
-        };
-    };
-
-    // カードの高さを統一（シンプルに）
-    const getCardHeight = () => {
-        // ファイル数に関係なく統一された高さ
-        return isMobile ? 80 : isTablet ? 90 : 100;
-    };
-
-    const { height, overflowY } = calculateHeight();
+    // カードの高さを統一（デバイス別に最小限の差分）
+    const getCardHeight = () => (isMobile ? 80 : isTablet ? 90 : 100);
 
     return (
         <Card
@@ -73,10 +49,9 @@ const CsvUploadPanel: React.FC<CsvUploadPanelProps> = ({ upload }) => {
                 borderRadius: isMobile ? 8 : 12,
                 backgroundColor: customTokens.colorBgBase,
                 width: '100%',
-                // シンプルな高さ設定
-                height: height,
-                maxHeight: height,
-                overflowY: overflowY,
+                // 画面サイズに応じたmaxHeight、必要時のみスクロール
+                maxHeight: panelMaxHeight,
+                overflowY: 'auto',
             }}
         >
             <div style={{

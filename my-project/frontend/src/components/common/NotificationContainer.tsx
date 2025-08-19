@@ -44,8 +44,8 @@ const NotificationContainer: React.FC = () => {
                 top: 20,
                 right: 20,
                 zIndex: 9999,
-                maxWidth: 400,
-                width: '100%',
+                maxWidth: 400, // 画面幅が狭い場合は下のwidth: 'calc(100% - 40px)'で縮む
+                width: 'calc(100% - 40px)',
             }}
         >
             <Space direction="vertical" size="small" style={{ width: '100%' }}>

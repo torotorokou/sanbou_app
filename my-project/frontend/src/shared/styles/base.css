@@ -58,6 +58,7 @@ body {
 }
 
 .table-wrap table {
+  width: 100%;
   min-width: 800px; /* keep readable columns on small screens */
   border-collapse: separate;
   border-spacing: 0;
@@ -80,6 +81,33 @@ body {
 
 .col {
   flex: 1 1 auto;
+}
+
+/* Flex親配下での子の詰まり防止（必要な場所で付与） */
+.fluid-child {
+  flex: 1 1 auto;
+  min-width: 0; /* 長文・表などがはみ出さない */
+  box-sizing: border-box;
+}
+
+/* 文字詰まり・はみ出し対策 */
+.ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.break-words {
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+/* 画像・メディアはコンテナ内に収める（トップレベル適用） */
+img,
+canvas,
+video,
+svg {
+  max-width: 100%;
+  height: auto;
 }
 
 /*
