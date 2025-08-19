@@ -1,45 +1,6 @@
 """
 FastAPIのエンドポイント定義。
 AI回答生成やPDFページ画像取得、質問テンプレート取得APIを提供。
-
-【フロントエンド開発者向けAPI説明】
-
-■ 主要エンドポイント：
-
-1. POST /test-answer (開発・テスト用)
-   - 用途: フロントエンド開発時のモックAPI
-   - レスポンス: ダミー回答 + 結合PDF URL
-   - 処理時間: 高速（AI処理なし）
-
-2. POST /generate-answer (本番用) 
-   - 用途: 実際のAI回答生成
-   - レスポンス: AI回答 + 結合PDF URL  
-   - 処理時間: 数秒（AI処理あり）
-
-■ 共通レスポンス形式：
-{
-  "status": "success",
-  "code": "S200", 
-  "detail": "処理成功メッセージ",
-  "result": {
-    "answer": "回答テキスト",
-    "sources": [["PDF名", ページ番号], ...],
-    "pdf_url": "結合PDFのダウンロードURL"
-  }
-}
-
-■ PDFファイル管理：
-- ユーザー用: /static/pdfs/merged_response_*.pdf
-- 開発者用: /static/pdfs/debug/ (個別ページ)
-- PDF URLは常に結合ファイルを指します
-
-■ エラーレスポンス：
-{
-  "status": "error",
-  "code": "E500",
-  "detail": "エラー詳細", 
-  "hint": "解決方法のヒント"
-}
 """
 
 import io
@@ -50,7 +11,7 @@ from typing import Any, List, Tuple
 
 import PyPDF2
 from fastapi import APIRouter, Body, Request, Depends
-from fastapi.responses import FileResponse, StreamingResponse
+from fastapi.responses import FileResponse, StreamingResponse, JSONResponse
 from pydantic import BaseModel
 
 from app.core import file_ingest_service as loader
@@ -85,8 +46,6 @@ class QueryResponse(BaseModel):
     pages: Any
 
 
-
-
 # --- 質問を受け取ってダミー回答を返すAPI ---
 
 
@@ -94,36 +53,18 @@ class QueryResponse(BaseModel):
 async def answer_api(
     req: QuestionRequest,
     dummy_service=Depends(get_dummy_response_service),
-) -> dict:
-    """
-    【フロントエンド開発用】ダミーAI回答API
-    
-    フロントエンド開発時のモックAPIとして使用。
-    AI処理を行わずに即座にダミーデータを返却するため、
-    UI開発やテスト時に高速で動作確認が可能。
-    
-    リクエスト例:
-    {
-      "query": "売上を教えて",
-      "category": "financial", 
-      "tags": ["sales", "report"]
-    }
-    
-    レスポンス:
-    - answer: ダミー回答テキスト
-    - sources: ダミー参照元（最大5つのPDFとページ番号）
-    - pdf_url: 結合されたPDFのダウンロードURL
-    
-    注意: 本番環境では /generate-answer を使用すること
-    """
+) -> JSONResponse:
     try:
+        print("[DEBUG][/test-answer] request:", req.dict())
         result = dummy_service.generate_dummy_response(req.query, req.category)
+        print("[DEBUG][/test-answer] result keys:", list(result.keys()))
         return SuccessApiResponse(
             code="S200",
             detail="ダミーAI回答生成成功",
             result=result,
         ).to_json_response()
     except Exception as e:
+        print("[DEBUG][/test-answer] ERROR:", repr(e))
         return api_response(
             status_code=500,
             status_str="error",
@@ -138,40 +79,31 @@ async def answer_api(
 async def generate_answer(
     request: QueryRequest,
     ai_service=Depends(get_ai_response_service),
-) -> dict:
-    """
-    【本番用】AI回答生成API
-    
-    ユーザーからの質問に対してOpenAI GPTが実際に回答を生成。
-    関連するPDFページを抽出・結合してダウンロード用URLを提供。
-    
-    リクエスト例:
-    {
-      "query": "今月の売上実績を教えて",
-      "category": "financial",
-      "tags": ["monthly", "sales"]
-    }
-    
-    レスポンス:
-    - answer: AIが生成した詳細回答
-    - sources: 参照元PDFファイル名とページ番号のリスト
-    - pdf_url: 関連ページを結合した1つのPDFのダウンロードURL
-    
-    処理時間: 通常2-5秒（AI処理とPDF生成を含む）
-    
-    フロントエンド実装時の注意:
-    - ローディング表示を推奨（処理時間あり）
-    - エラーハンドリングを実装すること
-    - pdf_urlは直接<a>タグやwindow.openで使用可能
-    """
+) -> JSONResponse:
     try:
-        result = ai_service.generate_ai_response(request.query, request.category, request.tags)
+        print(
+            "[DEBUG][/generate-answer] request:",
+            {
+                "query": request.query,
+                "category": request.category,
+                "tags": request.tags,
+            },
+        )
+        result = ai_service.generate_ai_response(
+            request.query, request.category, request.tags
+        )
+        print("[DEBUG][/generate-answer] result keys:", list(result.keys()))
+        print("[DEBUG][/generate-answer] pdf_url:", result.get("pdf_url"))
+        print(
+            "[DEBUG][/generate-answer] sources count:", len(result.get("sources", []))
+        )
         return SuccessApiResponse(
             code="S200",
             detail="AI回答生成成功",
             result=result,
         ).to_json_response()
     except Exception as e:
+        print("[DEBUG][/generate-answer] ERROR:", repr(e))
         return api_response(
             status_code=500,
             status_str="error",
@@ -191,6 +123,7 @@ async def download_report(request: Request, pages: list = Body(..., embed=True))
         from app.utils.file_utils import PDF_PATH
 
         pdf_path = str(PDF_PATH)
+        print("[DEBUG][/download-report] pages:", pages, "pdf_path:", pdf_path)
         if not pages or not isinstance(pages, list):
             return api_response(
                 status_code=422,
@@ -220,6 +153,7 @@ async def download_report(request: Request, pages: list = Body(..., embed=True))
                     writer.write(tmpf)
                     tmpf.flush()
                     filename = tmpf.name
+            print("[DEBUG][/download-report] single page generated:", filename)
             headers = {"Content-Disposition": f"inline; filename=page_{page_num}.pdf"}
             return FileResponse(filename, media_type="application/pdf", headers=headers)
 
@@ -243,9 +177,11 @@ async def download_report(request: Request, pages: list = Body(..., embed=True))
                     pdf_bytes.close()
                     os.unlink(pdf_bytes.name)
         buf.flush()
+        print("[DEBUG][/download-report] zip generated:", buf.name)
         headers = {"Content-Disposition": "attachment; filename=pages.zip"}
         return FileResponse(buf.name, media_type="application/zip", headers=headers)
     except Exception as e:
+        print("[DEBUG][/download-report] ERROR:", repr(e))
         return api_response(
             status_code=500,
             status_str="error",
@@ -265,6 +201,7 @@ def pdf_page(page_num: str):
     from app.utils.file_utils import PDF_PATH
 
     pdf_path = str(PDF_PATH)
+    print("[DEBUG][/pdf-page] page_num:", page_num, "pdf_path:", pdf_path)
     if "-" in page_num:
         start, end = page_num.split("-")
         start = int(start)

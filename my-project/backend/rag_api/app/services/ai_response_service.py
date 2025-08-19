@@ -13,7 +13,7 @@ generate-answerエンドポイント用のAI回答生成を担当するサービ
 レスポンス形式：
 {
   "status": "success",
-  "code": "S200", 
+  "code": "S200",
   "detail": "AI回答生成成功",
   "result": {
     "answer": "AIが生成した回答テキスト",
@@ -38,41 +38,49 @@ from .pdf_service_base import PDFServiceBase
 class AIResponseService:
     """
     AI回答生成サービス
-    
+
     AIによる回答生成とPDF処理を組み合わせたレスポンス作成を担当します。
     """
-    
+
     def __init__(self, pdf_service: PDFServiceBase):
         self.pdf_service = pdf_service
-    
-    def generate_ai_response(self, query: str, category: str, tags: List[str]) -> Dict[str, Any]:
+
+    def generate_ai_response(
+        self, query: str, category: str, tags: List[str]
+    ) -> Dict[str, Any]:
         """
         AI回答とPDFを生成
-        
+
         Args:
             query: ユーザーのクエリ
             category: カテゴリ
             tags: タグリスト
-            
+
         Returns:
             AIレスポンスデータ（answer, sources, pdf_url）
         """
         # AI回答生成
+        print(
+            "[DEBUG][AIResponseService] input:",
+            {"query": query, "category": category, "tags": tags},
+        )
         result = ai_loader.get_answer(query, category, tags)
         answer = result["answer"]
         sources = result["sources"]
         pages = result["pages"]
-        
+        print("[DEBUG][AIResponseService] ai_loader result pages:", pages)
+
         # PDF保存先ディレクトリ
         static_dir = os.environ.get("PDFS_DIR") or "/backend/static/pdfs"
         debug_dir = os.path.join(static_dir, "debug")
         os.makedirs(static_dir, exist_ok=True)
         os.makedirs(debug_dir, exist_ok=True)
         pdf_path = str(PDF_PATH)
-        
+
         # ページリスト正規化
         page_list = self._normalize_pages(pages)
-        
+        print("[DEBUG][AIResponseService] normalized pages:", page_list)
+
         # 個別PDF生成（デバッグ用ディレクトリに保存）
         pdf_urls = self.pdf_service.save_pdf_pages_and_get_urls(
             pdf_path=pdf_path,
@@ -81,48 +89,73 @@ class AIResponseService:
             save_dir=debug_dir,  # デバッグディレクトリに保存
             url_prefix=f"{get_pdf_url_prefix()}/debug",  # デバッグ用URL
         )
-        
+        print("[DEBUG][AIResponseService] per-page pdf URLs:", pdf_urls)
+
         # PDF結合（ユーザー向けは本体ディレクトリに保存）
-        jst = ZoneInfo('Asia/Tokyo')
+        jst = ZoneInfo("Asia/Tokyo")
         timestamp = datetime.now(jst).strftime("%Y%m%d_%H%M%S")
         merged_pdf_name = f"merged_response_{timestamp}.pdf"
         merged_pdf_path = os.path.join(static_dir, merged_pdf_name)
-        pdf_file_paths = [os.path.join(debug_dir, url.split("/")[-1]) for url in pdf_urls]
+        pdf_file_paths = [
+            os.path.join(debug_dir, url.split("/")[-1]) for url in pdf_urls
+        ]
         self.pdf_service.merge_pdfs(pdf_file_paths, merged_pdf_path)
-        
+        print("[DEBUG][AIResponseService] merged pdf:", merged_pdf_path)
+
         pdf_url = f"{get_pdf_url_prefix()}/{merged_pdf_name}"
-        
+
         return {
             "answer": answer,
             "sources": sources,
             "pdf_url": pdf_url,
         }
-    
+
     def _normalize_pages(self, pages) -> List[int]:
         """ページリストを正規化"""
-        page_list = []
-        if pages:
-            if isinstance(pages, str):
-                if "-" in pages:
-                    start, end = pages.split("-")
+        normalized: List[int] = []
+        if not pages:
+            return normalized
+
+        def to_int_safe(v) -> int | None:
+            try:
+                return int(str(v).strip())
+            except Exception:
+                return None
+
+        # 文字列単体 or 範囲
+        if isinstance(pages, str):
+            s = pages.strip()
+            if "-" in s:
+                try:
+                    start_s, end_s = s.split("-", 1)
+                    start, end = int(start_s.strip()), int(end_s.strip())
+                    if start <= end:
+                        normalized.extend(range(start, end + 1))
+                except Exception:
+                    n = to_int_safe(s)
+                    if n is not None:
+                        normalized.append(n)
+            else:
+                n = to_int_safe(s)
+                if n is not None:
+                    normalized.append(n)
+        # リスト
+        elif isinstance(pages, list):
+            for p in pages:
+                if isinstance(p, str) and "-" in p:
                     try:
-                        start = int(start)
-                        end = int(end)
-                        page_list = list(range(start, end + 1))
+                        start_s, end_s = p.split("-", 1)
+                        start, end = int(start_s.strip()), int(end_s.strip())
+                        if start <= end:
+                            normalized.extend(range(start, end + 1))
                     except Exception:
-                        page_list = [pages]
+                        n = to_int_safe(p)
+                        if n is not None:
+                            normalized.append(n)
                 else:
-                    page_list = [pages]
-            elif isinstance(pages, list):
-                for p in pages:
-                    if isinstance(p, str) and "-" in p:
-                        try:
-                            start, end = p.split("-")
-                            start = int(start)
-                            end = int(end)
-                            page_list.extend(range(start, end + 1))
-                        except Exception:
-                            page_list.append(p)
-                    else:
-                        page_list.append(p)
-        return page_list
+                    n = to_int_safe(p)
+                    if n is not None:
+                        normalized.append(n)
+
+        # 重複排除＋昇順ソート（任意だが安定）
+        return sorted(set(normalized))
