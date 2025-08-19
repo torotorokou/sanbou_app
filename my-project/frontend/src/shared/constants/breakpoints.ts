@@ -9,6 +9,8 @@ export type BreakpointKey = keyof typeof BREAKPOINTS;
 
 export const media = {
   mobile: `@media (max-width: ${BREAKPOINTS.mobile}px)`,
-  tablet: `@media (min-width: ${BREAKPOINTS.mobile + 1}px) and (max-width: ${BREAKPOINTS.tablet}px)`,
+  tablet: `@media (min-width: ${BREAKPOINTS.mobile + 1}px) and (max-width: ${
+    BREAKPOINTS.tablet
+  }px)`,
   desktop: `@media (min-width: ${BREAKPOINTS.tablet + 1}px)`,
 };
