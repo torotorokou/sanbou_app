@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   # =============================
   # フロントエンド（Reactアプリ）
@@ -15,11 +13,24 @@ services:
   # =============================
   ai_api:
     build: ./my-project/backend/ai_api
+    # サービス固有の値だけを env_file に残す（存在するファイルに限定）
     env_file: [./envs/.env.ai_api]
+    # ルート .env の値を使って実行時へ明示注入（組み立てが必要な値はここで）
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:${POSTGRES_PORT:-5432}/${POSTGRES_DB}
+      PYTHONPATH: ${PYTHONPATH:-/backend}
+    depends_on:
+      db:
+        condition: service_healthy
     networks: [backend]
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://localhost:8000/health"]
+      # Python標準ライブラリで /health を確認（curl/wget 不要）
+      test:
+        [
+          "CMD-SHELL",
+          "python - <<'PY'\nimport sys,urllib.request\ntry:\n  r=urllib.request.urlopen('http://localhost:8000/health', timeout=3)\n  sys.exit(0 if r.getcode()==200 else 1)\nexcept Exception:\n  sys.exit(1)\nPY",
+        ]
       interval: 20s
       timeout: 5s
       retries: 5
@@ -30,10 +41,20 @@ services:
   ledger_api:
     build: ./my-project/backend/ledger_api
     env_file: [./envs/.env.ledger_api]
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:${POSTGRES_PORT:-5432}/${POSTGRES_DB}
+      PYTHONPATH: ${PYTHONPATH:-/backend}
+    depends_on:
+      db:
+        condition: service_healthy
     networks: [backend]
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://localhost:8000/health"]
+      test:
+        [
+          "CMD-SHELL",
+          "python - <<'PY'\nimport sys,urllib.request\ntry:\n  r=urllib.request.urlopen('http://localhost:8000/health', timeout=3)\n  sys.exit(0 if r.getcode()==200 else 1)\nexcept Exception:\n  sys.exit(1)\nPY",
+        ]
       interval: 20s
       timeout: 5s
       retries: 5
@@ -43,11 +64,22 @@ services:
   # =============================
   sql_api:
     build: ./my-project/backend/sql_api
-    env_file: [./envs/.env, ./envs/.env.sql_api]
+    # ここがポイント：存在しない ./envs/.env を外し、実在する専用ファイルだけに
+    env_file: [./envs/.env.sql_api]
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:${POSTGRES_PORT:-5432}/${POSTGRES_DB}
+      PYTHONPATH: ${PYTHONPATH:-/backend}
+    depends_on:
+      db:
+        condition: service_healthy
     networks: [backend]
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://localhost:8000/health"]
+      test:
+        [
+          "CMD-SHELL",
+          "python - <<'PY'\nimport sys,urllib.request\ntry:\n  r=urllib.request.urlopen('http://localhost:8000/health', timeout=3)\n  sys.exit(0 if r.getcode()==200 else 1)\nexcept Exception:\n  sys.exit(1)\nPY",
+        ]
       interval: 20s
       timeout: 5s
       retries: 5
@@ -60,10 +92,20 @@ services:
       context: ./my-project/backend/rag_api
       dockerfile: Dockerfile
     env_file: [./envs/.env.rag_api]
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:${POSTGRES_PORT:-5432}/${POSTGRES_DB}
+      PYTHONPATH: ${PYTHONPATH:-/backend}
+    depends_on:
+      db:
+        condition: service_healthy
     networks: [backend]
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://localhost:8000/health"]
+      test:
+        [
+          "CMD-SHELL",
+          "python - <<'PY'\nimport sys,urllib.request\ntry:\n  r=urllib.request.urlopen('http://localhost:8000/health', timeout=3)\n  sys.exit(0 if r.getcode()==200 else 1)\nexcept Exception:\n  sys.exit(1)\nPY",
+        ]
       interval: 20s
       timeout: 5s
       retries: 5
