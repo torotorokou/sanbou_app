@@ -6,7 +6,7 @@ IFS=$'\n\t'
 # --- 設定値（環境変数で上書き可能） ---
 GCS_BUCKET_NAME="${GCS_BUCKET_NAME:-object_haikibutu}"
 GCS_DATA_PREFIX="${GCS_DATA_PREFIX:-master}"
-TARGET_DIR="${TARGET_DIR:-/app/local_data/master}"
+TARGET_DIR="${TARGET_DIR:-${APP_BASE_DIR:-/app}/local_data/master}"
 GOOGLE_APPLICATION_CREDENTIALS="${GOOGLE_APPLICATION_CREDENTIALS:-/root/.config/gcloud/application_default_credentials.json}"
 
 # --- 関数化：GCSからデータ取得 ---
@@ -42,5 +42,6 @@ else
 fi
 
 # --- FastAPI起動 ---
+echo "APP_BASE_DIR: ${APP_BASE_DIR:-未設定}"
 echo "🚀 [2/2] Starting FastAPI..."
 exec uvicorn app.main:app --host 0.0.0.0 --port 8000
