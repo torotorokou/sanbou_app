@@ -32,7 +32,8 @@
   --container-max: 1200px; /* DO NOT fix width; this is the upper bound for fluid container */
 }
 
-html, body {
+html,
+body {
   font-size: var(--font-base);
   line-height: var(--lh-base);
 }
