@@ -5,14 +5,14 @@
 // - リサイズ時にも上記ルールに追従する
 // - UI（Sidebar.tsx）からは、このフックが返す collapsed/setCollapsed を利用する
 
-import { useEffect, useState } from 'react';
-import { BREAKPOINTS } from '@/shared/constants/breakpoints';
+import { useEffect, useState } from "react";
+import { BREAKPOINTS } from "@/shared/constants/breakpoints";
 
 // 単一責任原則（SOLIDのS）: 判定ロジックをこのフックに集約し、UIから分離
 export const useSidebarDefault = () => {
   // 内部状態: サイドバーが畳まれているか（true=閉じている）
   const [collapsed, setCollapsed] = useState<boolean>(() => {
-    if (typeof window === 'undefined') return false; // SSR等では開いた状態にしておく
+    if (typeof window === "undefined") return false; // SSR等では開いた状態にしておく
     const w = window.innerWidth;
     return w <= BREAKPOINTS.smallPC; // smallPC以下は閉じる
   });
@@ -25,8 +25,8 @@ export const useSidebarDefault = () => {
       setCollapsed(shouldCollapse);
     };
 
-    window.addEventListener('resize', updateByRule);
-    return () => window.removeEventListener('resize', updateByRule);
+    window.addEventListener("resize", updateByRule);
+    return () => window.removeEventListener("resize", updateByRule);
   }, []);
 
   return { collapsed, setCollapsed };

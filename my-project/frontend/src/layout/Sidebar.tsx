@@ -59,7 +59,7 @@ const Sidebar: React.FC = () => {
     }
 
     return (
-    <Sider
+        <Sider
             width={sidebarConfig.width}
             collapsible
             collapsed={collapsed}
