@@ -1,25 +1,63 @@
 """
 FastAPIのエンドポイント定義。
 AI回答生成やPDFページ画像取得、質問テンプレート取得APIを提供。
+
+【フロントエンド開発者向けAPI説明】
+
+■ 主要エンドポイント：
+
+1. POST /test-answer (開発・テスト用)
+   - 用途: フロントエンド開発時のモックAPI
+   - レスポンス: ダミー回答 + 結合PDF URL
+   - 処理時間: 高速（AI処理なし）
+
+2. POST /generate-answer (本番用) 
+   - 用途: 実際のAI回答生成
+   - レスポンス: AI回答 + 結合PDF URL  
+   - 処理時間: 数秒（AI処理あり）
+
+■ 共通レスポンス形式：
+{
+  "status": "success",
+  "code": "S200", 
+  "detail": "処理成功メッセージ",
+  "result": {
+    "answer": "回答テキスト",
+    "sources": [["PDF名", ページ番号], ...],
+    "pdf_url": "結合PDFのダウンロードURL"
+  }
+}
+
+■ PDFファイル管理：
+- ユーザー用: /static/pdfs/merged_response_*.pdf
+- 開発者用: /static/pdfs/debug/ (個別ページ)
+- PDF URLは常に結合ファイルを指します
+
+■ エラーレスポンス：
+{
+  "status": "error",
+  "code": "E500",
+  "detail": "エラー詳細", 
+  "hint": "解決方法のヒント"
+}
 """
 
 import io
 import os
-import re
 import tempfile
 import zipfile
 from typing import Any, List, Tuple
 
 import PyPDF2
-from fastapi import APIRouter, Body, Request
+from fastapi import APIRouter, Body, Request, Depends
 from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import BaseModel
 
 from app.core import file_ingest_service as loader
-from app.infrastructure.llm import ai_loader
 from app.infrastructure.pdf import pdf_loader
 from app.schemas.query_schema import QueryRequest
-from app.paths import get_pdf_url_prefix
+from app.dependencies import get_dummy_response_service, get_ai_response_service
+from backend_shared.src.api_response.response_base import SuccessApiResponse
 from backend_shared.src.api_response.response_utils import api_response
 
 router = APIRouter()
@@ -47,105 +85,43 @@ class QueryResponse(BaseModel):
     pages: Any
 
 
-def save_pdf_pages_and_get_urls(pdf_path, query_name, pages, save_dir, url_prefix):
-    """
-    指定PDFからpagesの各ページを抽出し、save_dirにanswer_{query_name}_{p}.pdfで保存。
-    既存ならスキップ。URLリストを返す。
-    """
-
-    def safe_filename(s):
-        return re.sub(r"[^A-Za-z0-9_-]", "", s)
-
-    safe_name = safe_filename(query_name)
-    os.makedirs(save_dir, exist_ok=True)
-    pdf_urls = []
-    try:
-        with open(pdf_path, "rb") as f:
-            reader = PyPDF2.PdfReader(f)
-            for p in pages:
-                dummy_pdf_path = os.path.join(save_dir, f"answer_{safe_name}_{p}.pdf")
-                if not os.path.exists(dummy_pdf_path):
-                    writer = PyPDF2.PdfWriter()
-                    if 1 <= p <= len(reader.pages):
-                        writer.add_page(reader.pages[p - 1])
-                    else:
-                        writer.add_blank_page(width=595, height=842)
-                    with open(dummy_pdf_path, "wb") as out_f:
-                        writer.write(out_f)
-                pdf_urls.append(f"{url_prefix}/answer_{safe_name}_{p}.pdf")
-    except Exception:
-        # PDF読めない場合は空PDF
-        for p in pages:
-            dummy_pdf_path = os.path.join(save_dir, f"answer_{safe_name}_{p}.pdf")
-            if not os.path.exists(dummy_pdf_path):
-                writer = PyPDF2.PdfWriter()
-                writer.add_blank_page(width=595, height=842)
-                with open(dummy_pdf_path, "wb") as out_f:
-                    writer.write(out_f)
-            pdf_urls.append(f"{url_prefix}/answer_{safe_name}_{p}.pdf")
-    return pdf_urls
 
 
 # --- 質問を受け取ってダミー回答を返すAPI ---
 
 
-@router.post("/test-answer")
-async def answer_api(req: QuestionRequest):
+@router.post("/test-answer", tags=["dummy"])
+async def answer_api(
+    req: QuestionRequest,
+    dummy_service=Depends(get_dummy_response_service),
+) -> dict:
     """
-    ダミーAI回答・sources・pdf_urlを返すダミーAPI。
-    - answer: ダミー回答
-    - sources: ダミー参照元（pdfs/の先頭5ファイルとページ番号）
-    - pdf_url: 5つのPDFを結合した1つのPDFのURL
+    【フロントエンド開発用】ダミーAI回答API
+    
+    フロントエンド開発時のモックAPIとして使用。
+    AI処理を行わずに即座にダミーデータを返却するため、
+    UI開発やテスト時に高速で動作確認が可能。
+    
+    リクエスト例:
+    {
+      "query": "売上を教えて",
+      "category": "financial", 
+      "tags": ["sales", "report"]
+    }
+    
+    レスポンス:
+    - answer: ダミー回答テキスト
+    - sources: ダミー参照元（最大5つのPDFとページ番号）
+    - pdf_url: 結合されたPDFのダウンロードURL
+    
+    注意: 本番環境では /generate-answer を使用すること
     """
     try:
-        # PDF保存先（本番と同じディレクトリを参照）
-        pdfs_dir = os.path.abspath(
-            os.path.join(os.path.dirname(__file__), "../../../static/pdfs")
-        )
-        os.makedirs(pdfs_dir, exist_ok=True)
-        # pdfs/ディレクトリ内のPDFファイル一覧（先頭5つ取得）
-        pdf_files = [f for f in os.listdir(pdfs_dir) if f.lower().endswith(".pdf")]
-        pdf_files.sort()  # ファイル名順
-        selected_files = pdf_files[:5]
-        # ページ番号は3,4,5,6,7で固定（ファイル数が足りなければ補完）
-        pages = list(range(3, 8))[: len(selected_files)]
-        sources = [
-            [selected_files[i] if i < len(selected_files) else "dummy.pdf", pages[i]]
-            for i in range(len(pages))
-        ]
-
-        # 5つのPDFを結合して1つのPDFを生成
-        merged_pdf_name = f"merged_{req.query}.pdf"
-        merged_pdf_path = os.path.join(pdfs_dir, merged_pdf_name)
-        writer = PyPDF2.PdfWriter()
-        for fname in selected_files:
-            fpath = os.path.join(pdfs_dir, fname)
-            try:
-                with open(fpath, "rb") as f:
-                    reader = PyPDF2.PdfReader(f)
-                    for page in reader.pages:
-                        writer.add_page(page)
-            except Exception:
-                # ファイル読めない場合は空ページ
-                writer.add_blank_page(width=595, height=842)
-        with open(merged_pdf_path, "wb") as out_f:
-            writer.write(out_f)
-        pdf_url_prefix = get_pdf_url_prefix()
-        pdf_url = f"{pdf_url_prefix}/{merged_pdf_name}"
-
-        # ダミー回答
-        answer = f"ダミー回答: {req.query}（カテゴリ: {req.category}）"
-
-        from backend_shared.src.api_response.response_base import SuccessApiResponse
-
+        result = dummy_service.generate_dummy_response(req.query, req.category)
         return SuccessApiResponse(
             code="S200",
             detail="ダミーAI回答生成成功",
-            result={
-                "answer": answer,
-                "sources": sources,
-                "pdf_url": pdf_url,
-            },
+            result=result,
         ).to_json_response()
     except Exception as e:
         return api_response(
@@ -158,92 +134,42 @@ async def answer_api(req: QuestionRequest):
 
 
 # --- AI回答＋PDF URL返却API ---
-@router.post("/generate-answer")
-async def generate_answer(request: QueryRequest):
+@router.post("/generate-answer", tags=["ai"])
+async def generate_answer(
+    request: QueryRequest,
+    ai_service=Depends(get_ai_response_service),
+) -> dict:
     """
-    ユーザーからの質問に対してAIが回答を生成し、answer, sources, pdf_url の3つのみを返すAPI。
-    - answer: AIの回答
+    【本番用】AI回答生成API
+    
+    ユーザーからの質問に対してOpenAI GPTが実際に回答を生成。
+    関連するPDFページを抽出・結合してダウンロード用URLを提供。
+    
+    リクエスト例:
+    {
+      "query": "今月の売上実績を教えて",
+      "category": "financial",
+      "tags": ["monthly", "sales"]
+    }
+    
+    レスポンス:
+    - answer: AIが生成した詳細回答
     - sources: 参照元PDFファイル名とページ番号のリスト
-    - pdf_url: 複数ページPDFを結合した1つのPDFのURL
+    - pdf_url: 関連ページを結合した1つのPDFのダウンロードURL
+    
+    処理時間: 通常2-5秒（AI処理とPDF生成を含む）
+    
+    フロントエンド実装時の注意:
+    - ローディング表示を推奨（処理時間あり）
+    - エラーハンドリングを実装すること
+    - pdf_urlは直接<a>タグやwindow.openで使用可能
     """
     try:
-        result = ai_loader.get_answer(request.query, request.category, request.tags)
-        answer = result["answer"]
-        sources = result["sources"]
-        pages = result["pages"]
-
-        # PDF保存先ディレクトリ
-        static_dir = os.environ.get("PDFS_DIR") or "/backend/static/pdfs"
-        os.makedirs(static_dir, exist_ok=True)
-        from app.utils.file_utils import PDF_PATH
-
-        pdf_path = str(PDF_PATH)
-
-        # ページリストを正規化
-        page_list = []
-        if pages:
-            if isinstance(pages, str):
-                if "-" in pages:
-                    start, end = pages.split("-")
-                    try:
-                        start = int(start)
-                        end = int(end)
-                        page_list = list(range(start, end + 1))
-                    except Exception:
-                        page_list = [pages]
-                else:
-                    page_list = [pages]
-            elif isinstance(pages, list):
-                for p in pages:
-                    if isinstance(p, str) and "-" in p:
-                        try:
-                            start, end = p.split("-")
-                            start = int(start)
-                            end = int(end)
-                            page_list.extend(range(start, end + 1))
-                        except Exception:
-                            page_list.append(p)
-                    else:
-                        page_list.append(p)
-
-        # 共通関数でPDF保存＆URL生成
-        pdf_urls = save_pdf_pages_and_get_urls(
-            pdf_path=pdf_path,
-            query_name=request.query,
-            pages=page_list,
-            save_dir=static_dir,
-            url_prefix=get_pdf_url_prefix(),
-        )
-        # pdf_urlsはデバッグ・内部保持用（レスポンスには含めない）
-
-        # 個別PDFを結合した1つのPDFも生成
-        merged_pdf_name = "merged_response.pdf"
-        merged_pdf_path = os.path.join(static_dir, merged_pdf_name)
-        writer = PyPDF2.PdfWriter()
-        for url in pdf_urls:
-            fname = url.split("/")[-1]
-            fpath = os.path.join(static_dir, fname)
-            try:
-                with open(fpath, "rb") as f:
-                    reader = PyPDF2.PdfReader(f)
-                    for page in reader.pages:
-                        writer.add_page(page)
-            except Exception:
-                writer.add_blank_page(width=595, height=842)
-        with open(merged_pdf_path, "wb") as out_f:
-            writer.write(out_f)
-        pdf_url = f"{get_pdf_url_prefix()}/{merged_pdf_name}"
-
-        from backend_shared.src.api_response.response_base import SuccessApiResponse
-
+        result = ai_service.generate_ai_response(request.query, request.category, request.tags)
         return SuccessApiResponse(
             code="S200",
             detail="AI回答生成成功",
-            result={
-                "answer": answer,
-                "sources": sources,
-                "pdf_url": pdf_url,
-            },
+            result=result,
         ).to_json_response()
     except Exception as e:
         return api_response(
@@ -255,7 +181,7 @@ async def generate_answer(request: QueryRequest):
         )
 
 
-@router.post("/download-report")
+@router.post("/download-report", tags=["pdf"])
 async def download_report(request: Request, pages: list = Body(..., embed=True)):
     """
     指定されたページリストに基づき、単数ページならPDF、複数ページならZIPで返却。
@@ -330,7 +256,7 @@ async def download_report(request: Request, pages: list = Body(..., embed=True))
 
 
 # --- PDFページ画像返却API ---
-@router.get("/pdf-page")
+@router.get("/pdf-page", tags=["pdf"])
 def pdf_page(page_num: str):
     """
     指定されたPDFページ番号の画像を返すエンドポイント。
@@ -360,7 +286,7 @@ def pdf_page(page_num: str):
         return StreamingResponse(image_bytes, media_type="image/png")
 
 
-@router.get("/question-options")
+@router.get("/question-options", tags=["template"])
 def get_question_options():
     """
     質問テンプレートをカテゴリ・タグごとにグループ化して返すエンドポイント。
