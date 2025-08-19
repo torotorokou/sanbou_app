@@ -18,7 +18,7 @@ from app.core import file_ingest_service as loader
 from app.infrastructure.pdf import pdf_loader
 from app.schemas.query_schema import QueryRequest
 from app.dependencies import get_dummy_response_service, get_ai_response_service
-from backend_shared.src.api_response.response_base import SuccessApiResponse
+from backend_shared.src.api_response.response_base import SuccessApiResponse, ErrorApiResponse
 from backend_shared.src.api_response.response_utils import api_response
 
 router = APIRouter()
@@ -89,18 +89,46 @@ async def generate_answer(
                 "tags": request.tags,
             },
         )
-        result = ai_service.generate_ai_response(
-            request.query, request.category, request.tags
-        )
+        result = ai_service.generate_ai_response(request.query, request.category, request.tags)
         print("[DEBUG][/generate-answer] result keys:", list(result.keys()))
         print("[DEBUG][/generate-answer] pdf_url:", result.get("pdf_url"))
-        print(
-            "[DEBUG][/generate-answer] sources count:", len(result.get("sources", []))
-        )
-        return SuccessApiResponse(
-            code="S200",
-            detail="AI回答生成成功",
-            result=result,
+        print("[DEBUG][/generate-answer] sources count:", len(result.get("sources", [])))
+
+        answer_ok = bool(result.get("answer"))
+        pdf_ok = bool(result.get("pdf_url"))
+
+        if answer_ok and pdf_ok:
+            # 両方成功
+            return SuccessApiResponse(
+                code="S200",
+                detail="AI回答生成成功",
+                result=result,
+            ).to_json_response()
+        if answer_ok and not pdf_ok:
+            # 回答は成功、PDFは失敗
+            return SuccessApiResponse(
+                code="S200",
+                detail="AI回答生成（PDFなし）",
+                hint="関連するPDFが見つからなかった、または生成に失敗したため、PDFは参照できません。回答のみ返却します。",
+                result=result,
+            ).to_json_response()
+        # answer失敗（空/None）
+        return ErrorApiResponse(
+            code="E400",
+            detail="回答生成に失敗しました。",
+            hint="質問内容やタグを見直して再度お試しください。改善しない場合は管理者に連絡してください。",
+            result=None,
+            status_code=500,
+        ).to_json_response()
+    except ValueError as e:
+        # 予期したValueErrorはanswerが空のケースとして扱い、ErrorApiResponse
+        print("[DEBUG][/generate-answer] ValueError:", repr(e))
+        return ErrorApiResponse(
+            code="E400",
+            detail="回答生成に失敗しました。",
+            hint="質問内容やタグを見直して再度お試しください。改善しない場合は管理者に連絡してください。",
+            result=None,
+            status_code=500,
         ).to_json_response()
     except Exception as e:
         print("[DEBUG][/generate-answer] ERROR:", repr(e))

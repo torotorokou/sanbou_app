@@ -64,11 +64,18 @@ class AIResponseService:
             "[DEBUG][AIResponseService] input:",
             {"query": query, "category": category, "tags": tags},
         )
-        result = ai_loader.get_answer(query, category, tags)
-        answer = result["answer"]
-        sources = result["sources"]
-        pages = result["pages"]
-        print("[DEBUG][AIResponseService] ai_loader result pages:", pages)
+        answer = None
+        sources: list[Any] = []
+        pages = None
+        try:
+            result = ai_loader.get_answer(query, category, tags)
+            answer = result.get("answer")
+            sources = result.get("sources", [])
+            pages = result.get("pages")
+            print("[DEBUG][AIResponseService] ai_loader result pages:", pages)
+        except Exception as ae:
+            # 回答生成に失敗しても以降の処理は継続（pdf_urlはNone）
+            print("[DEBUG][AIResponseService] ai_loader failed:", repr(ae))
 
         # PDF保存先ディレクトリ
         static_dir = os.environ.get("PDFS_DIR") or "/backend/static/pdfs"
@@ -82,33 +89,42 @@ class AIResponseService:
         print("[DEBUG][AIResponseService] normalized pages:", page_list)
 
         # 個別PDF生成（デバッグ用ディレクトリに保存）
-        pdf_urls = self.pdf_service.save_pdf_pages_and_get_urls(
-            pdf_path=pdf_path,
-            query_name=query,
-            pages=page_list,
-            save_dir=debug_dir,  # デバッグディレクトリに保存
-            url_prefix=f"{get_pdf_url_prefix()}/debug",  # デバッグ用URL
-        )
-        print("[DEBUG][AIResponseService] per-page pdf URLs:", pdf_urls)
+        pdf_url: str | None = None
+        try:
+            pdf_urls = self.pdf_service.save_pdf_pages_and_get_urls(
+                pdf_path=pdf_path,
+                query_name=query,
+                pages=page_list,
+                save_dir=debug_dir,  # デバッグディレクトリに保存
+                url_prefix=f"{get_pdf_url_prefix()}/debug",  # デバッグ用URL
+            )
+            print("[DEBUG][AIResponseService] per-page pdf URLs:", pdf_urls)
 
-        # PDF結合（ユーザー向けは本体ディレクトリに保存）
-        jst = ZoneInfo("Asia/Tokyo")
-        timestamp = datetime.now(jst).strftime("%Y%m%d_%H%M%S")
-        merged_pdf_name = f"merged_response_{timestamp}.pdf"
-        merged_pdf_path = os.path.join(static_dir, merged_pdf_name)
-        pdf_file_paths = [
-            os.path.join(debug_dir, url.split("/")[-1]) for url in pdf_urls
-        ]
-        self.pdf_service.merge_pdfs(pdf_file_paths, merged_pdf_path)
-        print("[DEBUG][AIResponseService] merged pdf:", merged_pdf_path)
+            # ページが無い、または保存できたPDFが無い場合は結合をスキップ
+            if not pdf_urls:
+                pdf_url = None
+            else:
+                # PDF結合（ユーザー向けは本体ディレクトリに保存）
+                jst = ZoneInfo("Asia/Tokyo")
+                timestamp = datetime.now(jst).strftime("%Y%m%d_%H%M%S")
+                merged_pdf_name = f"merged_response_{timestamp}.pdf"
+                merged_pdf_path = os.path.join(static_dir, merged_pdf_name)
+                pdf_file_paths = [
+                    os.path.join(debug_dir, url.split("/")[-1]) for url in pdf_urls
+                ]
+                try:
+                    self.pdf_service.merge_pdfs(pdf_file_paths, merged_pdf_path)
+                    print("[DEBUG][AIResponseService] merged pdf:", merged_pdf_path)
+                    pdf_url = f"{get_pdf_url_prefix()}/{merged_pdf_name}"
+                except Exception as me:
+                    print("[DEBUG][AIResponseService] merge failed:", repr(me))
+                    pdf_url = None
+        except Exception as se:
+            # PDF保存段階での失敗もanswerは返す
+            print("[DEBUG][AIResponseService] save pages failed:", repr(se))
+            pdf_url = None
 
-        pdf_url = f"{get_pdf_url_prefix()}/{merged_pdf_name}"
-
-        return {
-            "answer": answer,
-            "sources": sources,
-            "pdf_url": pdf_url,
-        }
+        return {"answer": answer, "sources": sources, "pdf_url": pdf_url}
 
     def _normalize_pages(self, pages) -> List[int]:
         """ページリストを正規化"""
