@@ -1,0 +1,105 @@
+/*
+  Global responsive foundation and design tokens
+  - Avoid fixed widths. Use fluid + max width via .container
+  - Use CSS variables for spacing, font-size, line-height, radius, etc.
+  - Prefer Flex/Grid for layout; avoid absolute/float for structure
+  - Wrap all tables with .table-wrap to prevent layout breaks on small screens
+  - HiDPI images: prefer SVG; for bitmaps use srcset/image-set (see template below)
+*/
+
+:root {
+  /* Typography */
+  --font-base: clamp(14px, 1.2vw, 16px);
+  --lh-base: 1.5;
+
+  /* Spacing scale */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+
+  /* Radius */
+  --radius-sm: 4px;
+  --radius: 8px;
+  --radius-lg: 12px;
+
+  /* Container max width (can be customized per page via inline style or scoped CSS) */
+  --container-max: 1200px; /* DO NOT fix width; this is the upper bound for fluid container */
+}
+
+html, body {
+  font-size: var(--font-base);
+  line-height: var(--lh-base);
+}
+
+/* Fluid container: width is min(container-max, 92% of viewport) */
+.container {
+  width: min(var(--container-max), 92%);
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: var(--space-4);
+  padding-right: var(--space-4);
+}
+
+/*
+  Table wrapping: ensures horizontal scroll is available only for tables
+  Ant Design tables also benefit from this wrapper as a safety net.
+*/
+.table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.table-wrap table {
+  min-width: 800px; /* keep readable columns on small screens */
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+/* AntD specific safety: ensure inner table area won't overflow the page */
+.table-wrap .ant-table,
+.table-wrap .ant-table-container,
+.table-wrap .ant-table-content {
+  min-width: 800px;
+  width: 100%;
+}
+
+/* Grid/Flex helpers (optional minimal utilities) */
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+}
+
+.col {
+  flex: 1 1 auto;
+}
+
+/*
+  HiDPI images guidance (template):
+  - Prefer SVG when possible
+  - For bitmap images, use srcset (HTML) or image-set (CSS)
+
+  Example HTML:
+    <img
+      src="/images/sample@1x.png"
+      srcset="/images/sample@1x.png 1x, /images/sample@2x.png 2x, /images/sample@3x.png 3x"
+      alt="sample"
+      width="600" height="400"
+    />
+
+  Example CSS background:
+    .hero {
+      background-image: image-set(
+        url('/images/hero@1x.jpg') 1x,
+        url('/images/hero@2x.jpg') 2x
+      );
+      background-size: cover;
+    }
+*/

@@ -250,15 +250,16 @@ const CustomerListDashboard: React.FC = () => {
                     styles={{ body: { height: MAP_HEIGHT, display: "flex", flexDirection: "column", padding: 0 } }}
                 >
                     <h3 style={{ margin: "16px" }}>顧客ランキング</h3>
-                    <Table
-                        dataSource={sortedCustomers}
-                        columns={columns}
-                        size="small"
-                        rowKey="id"
-                        pagination={false}
-                        scroll={{ y: MAP_HEIGHT - 90 }}
-                        style={{ flex: 1, margin: "0 16px 16px 16px" }}
-                    />
+                    <div className="table-wrap" style={{ flex: 1, margin: "0 16px 16px 16px" }}>
+                        <Table
+                            dataSource={sortedCustomers}
+                            columns={columns}
+                            size="small"
+                            rowKey="id"
+                            pagination={false}
+                            scroll={{ y: MAP_HEIGHT - 90, x: 'max-content' }}
+                        />
+                    </div>
                 </Card>
             </div>
         </div>

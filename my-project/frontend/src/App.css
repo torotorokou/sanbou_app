@@ -1,6 +1,5 @@
-#root {
-  max-width: 1280px;
-  margin: 0 auto;
+/* NOTE: Avoid fixed max-width here. Use .container from shared/styles/base.css */
+.app-root {
   padding: 2rem;
   text-align: center;
 }

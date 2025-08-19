@@ -1,20 +1,16 @@
 import React from 'react';
+import { BREAKPOINTS as BP } from '@/shared/constants/breakpoints';
 
-// レスポンシブデザイン用のブレークポイント定義 - シンプル版
+// 共有ブレークポイントからメディアクエリを組み立てて公開（既存API互換のためのエイリアス）
 export const BREAKPOINTS = {
-    // モバイル (0px - 767px)
-    mobile: '(max-width: 767px)',
+    mobile: `(max-width: ${BP.mobile}px)`,
+    tablet: `(min-width: ${BP.mobile + 1}px) and (max-width: ${BP.tablet}px)`,
+    desktop: `(min-width: ${BP.tablet + 1}px)`,
 
-    // タブレット (768px - 1199px) - 範囲を拡大してシンプル化
-    tablet: '(min-width: 768px) and (max-width: 1199px)',
-
-    // デスクトップ (1200px以上) - 統合してシンプル化
-    desktop: '(min-width: 1200px)',
-
-    // 便利なヘルパー
-    mobileOnly: '(max-width: 767px)',
-    tabletUp: '(min-width: 768px)',
-    desktopUp: '(min-width: 1200px)', // 1200px以上をデスクトップとする
+    // helpers
+    mobileOnly: `(max-width: ${BP.mobile}px)`,
+    tabletUp: `(min-width: ${BP.mobile + 1}px)`,
+    desktopUp: `(min-width: ${BP.tablet + 1}px)`,
 } as const;
 
 // メディアクエリフック用のヘルパー
