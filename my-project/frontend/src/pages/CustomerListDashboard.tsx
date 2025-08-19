@@ -138,7 +138,7 @@ const CustomerListDashboard: React.FC = () => {
             <div style={{ flex: 1, display: "flex", flexDirection: "row", gap: 24, alignItems: "stretch", padding: 24, paddingTop: 0 }}>
                 {/* 地図（左・大きめ） */}
                 <Card
-                    style={{ flex: 2.5, minWidth: 480, height: MAP_HEIGHT, display: "flex", flexDirection: "column" }}
+                    style={{ flex: 2.5, minWidth: 320, height: 'auto', minHeight: 360, display: "flex", flexDirection: "column" }}
                     styles={{ body: { height: MAP_HEIGHT, display: "flex", flexDirection: "column", padding: 0 } }}
                 >
                     <h3 style={{ margin: "16px" }}>地図上の売上分布（関東一都三県）</h3>
@@ -246,7 +246,7 @@ const CustomerListDashboard: React.FC = () => {
                 </Card>
                 {/* 顧客ランキング（右） */}
                 <Card
-                    style={{ flex: 1, minWidth: 320, maxWidth: 400, height: MAP_HEIGHT, display: "flex", flexDirection: "column" }}
+                    style={{ flex: 1, minWidth: 260, maxWidth: 420, height: 'auto', minHeight: 360, display: "flex", flexDirection: "column" }}
                     styles={{ body: { height: MAP_HEIGHT, display: "flex", flexDirection: "column", padding: 0 } }}
                 >
                     <h3 style={{ margin: "16px" }}>顧客ランキング</h3>
