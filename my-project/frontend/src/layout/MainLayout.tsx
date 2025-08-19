@@ -1,58 +1,21 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Layout } from 'antd';
 import Sidebar from './Sidebar';
 import AppRoutes from '../routes/AppRoutes';
 import NotificationContainer from '../components/common/NotificationContainer';
-import { useDeviceType } from '../hooks/ui';
 import { customTokens } from '../theme/tokens';
+import { useDeviceType } from '../hooks/ui';
 
 const { Content } = Layout;
 
 const MainLayout: React.FC = () => {
-    const [collapsed, setCollapsed] = useState(false);
-    const [userToggled, setUserToggled] = useState(false); // ユーザーが手動で切り替えたかどうか
-    const {
-        isMobile,
-        isTablet,
-        shouldAutoCollapse,
-        shouldForceCollapse
-    } = useDeviceType();
-
-    // レスポンシブに応じたサイドバー制御
-    useEffect(() => {
-        if (shouldForceCollapse) {
-            // 900px以下では強制的に縮小
-            setCollapsed(true);
-            setUserToggled(false); // ユーザー操作をリセット
-        } else if (shouldAutoCollapse && !userToggled) {
-            // 1200px以下で、ユーザーが手動操作していない場合は自動縮小
-            setCollapsed(true);
-        } else if (!shouldAutoCollapse && !userToggled) {
-            // 1200px以上で、ユーザーが手動操作していない場合は自動展開
-            setCollapsed(false);
-        }
-    }, [shouldAutoCollapse, shouldForceCollapse, userToggled]);
-
-    // ユーザーがサイドバーを手動で切り替えた際の処理
-    const handleSidebarToggle = (newCollapsed: boolean) => {
-        if (!shouldForceCollapse) {
-            setCollapsed(newCollapsed);
-            setUserToggled(true);
-            // 一定時間後にユーザー操作フラグをリセット（画面サイズ変更時の自動制御を再開）
-            setTimeout(() => setUserToggled(false), 3000);
-        }
-    };
-
-    // モバイル・タブレットでは特別な制御
-    const shouldCollapse = shouldForceCollapse || (isMobile || isTablet ? true : collapsed);
+    // ページ全体のレイアウトは保持しつつ、サイドバー開閉はSidebar内部のフックに委譲
+    const { isMobile, isTablet, shouldAutoCollapse } = useDeviceType();
 
     try {
         return (
             <Layout style={{ minHeight: '100vh' }}>
-                <Sidebar
-                    collapsed={shouldCollapse}
-                    setCollapsed={handleSidebarToggle}
-                />
+                <Sidebar />
                 <Layout style={{ height: '100%' }}>
                     <Content
                         style={{
@@ -62,12 +25,19 @@ const MainLayout: React.FC = () => {
                             padding: isMobile ? '12px' : isTablet ? '16px' : shouldAutoCollapse ? '20px' : '24px',
                             backgroundColor: customTokens.colorBgLayout,
                             minHeight: 'calc(100vh - 64px)',
-                            // 全画面以外ではスクロール可能にする
                             height: isMobile || isTablet ? 'auto' : 'calc(100vh - 64px)',
-                            transition: 'padding 0.3s ease-in-out', // パディングの変更をスムーズに
+                            transition: 'padding 0.3s ease-in-out',
+                            display: 'block',
                         }}
                     >
-                        <AppRoutes />
+                        {/*
+                          Grid/Flex骨子の方針：
+                          - ページ側では .container を最上位に置き、内部はFlex/Gridで組む
+                          - 固定幅禁止: .container は fluid + max width
+                        */}
+                        <div className="container">
+                            <AppRoutes />
+                        </div>
                     </Content>
                 </Layout>
                 {/* グローバル通知コンテナ */}
