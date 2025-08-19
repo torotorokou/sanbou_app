@@ -9,13 +9,14 @@ import type { CsvConfigGroup, ModalStepConfig, ReportConfig } from './types';
  * APIエンドポイント定数
  */
 export const LEDGER_API_URL = '/ledger_api/report/manage';
-
+export const LEDGER_REPORT_URL = '/ledger_api/reports';
 /**
  * 帳簿タイプ別APIエンドポイント設定
  */
 export const REPORT_API_ENDPOINTS = {
     // 工場日報系
-    factory_report: LEDGER_API_URL,
+    factory_report: `${LEDGER_REPORT_URL}/factory_report/`,
+    // factory_report: `${LEDGER_API_URL}`,
 
     // 収支・管理表系
     balance_sheet: '/api/report/balance',
@@ -26,7 +27,7 @@ export const REPORT_API_ENDPOINTS = {
     block_unit_price: '/ledger_api/report/block_unit_price',
 
     // 台帳系（将来追加用）
-    ledger_book: '/api/report/ledger',
+    ledger_book: '/ledger_api/report/ledger',
 } as const;
 
 /**

@@ -6,18 +6,17 @@ import { useLocation } from 'react-router-dom';
 import { SIDEBAR_MENU } from '@/constants/sidebarMenu';
 import { customTokens } from '@/theme/tokens';
 import { useSidebarResponsive, useSidebarAnimation } from '@/hooks/ui';
+import { useSidebarDefault } from '@/hooks/ui/useSidebarDefault';
 
 const { Sider } = Layout;
 
-const Sidebar: React.FC<{
-    collapsed: boolean;
-    setCollapsed: (c: boolean) => void;
-    isMobile?: boolean;
-    isTablet?: boolean;
-}> = ({ collapsed, setCollapsed }) => {
+// UIは開閉ロジックを持たず、カスタムフックに委譲（MVCのV）
+const Sidebar: React.FC = () => {
     const location = useLocation();
     const sidebarConfig = useSidebarResponsive();
     const animationStyles = useSidebarAnimation();
+    // 画面幅に基づくデフォルト開閉制御（SOLID: 単一責任）
+    const { collapsed, setCollapsed } = useSidebarDefault();
 
     // モバイルではDrawerを使用
     if (sidebarConfig.drawerMode) {

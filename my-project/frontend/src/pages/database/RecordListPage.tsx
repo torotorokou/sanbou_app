@@ -263,16 +263,18 @@ const RecordListPage: React.FC = () => {
                     </span>
                 </Space>
             </div>
-            <Table
-                columns={antColumns}
-                dataSource={table.getRowModel().rows.map(row => row.original)}
-                rowKey={record => unique_keys.map(key => String(record[key])).join('_')}
-                scroll={{ x: 'max-content', y: 600 }}
-                pagination={false}
-                rowClassName={(_, idx) =>
-                    idx % 2 === 0 ? 'table-row-even' : 'table-row-odd'
-                }
-            />
+            <div className="table-wrap">
+                <Table
+                    columns={antColumns}
+                    dataSource={table.getRowModel().rows.map(row => row.original)}
+                    rowKey={record => unique_keys.map(key => String(record[key])).join('_')}
+                    scroll={{ x: 'max-content', y: 600 }}
+                    pagination={false}
+                    rowClassName={(_, idx) =>
+                        idx % 2 === 0 ? 'table-row-even' : 'table-row-odd'
+                    }
+                />
+            </div>
             <div style={{ textAlign: 'right', marginTop: 10 }}>
                 <Pagination
                     current={table.getState().pagination.pageIndex + 1}
