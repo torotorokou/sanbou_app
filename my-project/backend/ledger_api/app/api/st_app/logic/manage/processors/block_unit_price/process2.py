@@ -1,4 +1,3 @@
-import streamlit as st
 import pandas as pd
 import logging
 from app.api.st_app.utils.config_loader import clean_na_strings
@@ -20,6 +19,9 @@ def confirm_transport_selection(df_after: pd.DataFrame) -> None:
     Args:
         df_after (pd.DataFrame): 運搬業者が選択された出荷データ
     """
+    # Streamlit はインタラクティブUIでのみ必要。サーバー環境では未インストールのため遅延インポート。
+    import streamlit as st  # type: ignore
+
     # セッション状態の初期化
     if "transport_selection_confirmed" not in st.session_state:
         st.session_state.transport_selection_confirmed = False
@@ -245,3 +247,28 @@ def main_process(df_after: pd.DataFrame) -> pd.DataFrame:
     except Exception as e:
         logger.error(f"メイン処理中にエラーが発生しました: {e}")
         return df_after
+
+
+# --- 以下はAPIコンテナ起動時の依存解決用のダミー関数群 ---
+def make_total_sum(
+    df_after: pd.DataFrame, master_csv: pd.DataFrame
+) -> pd.DataFrame:  # pragma: no cover
+    """ダミー: 合計行を作る本実装が未配置のため、そのまま返す"""
+    return df_after
+
+
+def df_cul_filtering(df_after: pd.DataFrame) -> pd.DataFrame:  # pragma: no cover
+    """ダミー: 表示用のフィルタ処理のスタブ"""
+    return df_after
+
+
+def first_cell_in_template(df_after: pd.DataFrame) -> pd.DataFrame:  # pragma: no cover
+    """ダミー: テンプレートの先頭セルを付与する処理のスタブ"""
+    return df_after
+
+
+def make_sum_date(
+    master_csv: pd.DataFrame, df_shipment: pd.DataFrame
+) -> pd.DataFrame:  # pragma: no cover
+    """ダミー: 集計日付などを設定する処理のスタブ"""
+    return master_csv

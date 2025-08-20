@@ -4,6 +4,19 @@
 このモジュールはFastAPIを使用した帳票生成、日報管理、PDF出力機能を提供するAPIサーバーです。
 """
 
+# --- Optional: provide a lightweight stub for `streamlit` in server runtime ---
+try:  # pragma: no cover
+    import streamlit as _  # type: ignore  # noqa: F401
+except Exception:  # if not available, inject stub module
+    import importlib
+    import sys as _sys
+
+    try:
+        _sys.modules["streamlit"] = importlib.import_module("app.streamlit")
+    except Exception:
+        # If stub missing, ignore; only interactive pages require it
+        pass
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -46,3 +59,8 @@ def health_check():
         dict: アプリケーションの稼働状況
     """
     return {"status": "ledger_api is running"}
+
+
+@app.get("/health", include_in_schema=False)
+def health():
+    return {"status": "ok"}

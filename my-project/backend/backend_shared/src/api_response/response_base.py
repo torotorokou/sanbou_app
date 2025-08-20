@@ -1,35 +1,28 @@
 """
-API基底レスポンス（互換レイヤー対応）
+API基底レスポンス（Pydantic v2 対応）
 
 目的:
 - 既存の SuccessApiResponse / ErrorApiResponse の呼び出し互換を維持
 - 中身は Pydantic モデルに委譲し、/docs で正しいスキーマを公開
 - 新規エンドポイントは response_model=ApiResponse[...] を利用可能に
+
+# 変更メモ（リファクタリング対象）
+# - Pydantic v1 の `GenericModel` を廃止し、v2 推奨の `BaseModel` + `Generic[T]` に統一
+# - `from pydantic.generics import GenericModel` を除去
+# - v1/v2 互換のための分岐・フラグを削除してシンプル化
+# - dict 変換は v2 の `model_dump()` を使用
 """
 
 from typing import Any, Optional, Generic, TypeVar, Literal
 from fastapi.responses import JSONResponse
-
-
-# --- Pydantic v1/v2 互換インポート -------------------------------------------
-try:
-    from pydantic.generics import GenericModel  # Pydantic v1
-    from pydantic import BaseModel
-
-    _IS_PYDANTIC_V2 = False
-except ImportError:
-    # Pydantic v2
-    from pydantic import BaseModel
-
-    GenericModel = BaseModel  # v2では GenericModel を使わずとも動く簡易対応
-    _IS_PYDANTIC_V2 = True
+from pydantic import BaseModel  # Pydantic v2 を前提に統一
 
 
 # --- 共通レスポンス契約（/docs に出す唯一のスキーマ） -------------------------
 T = TypeVar("T")
 
 
-class ApiResponse(GenericModel, Generic[T]):
+class ApiResponse(BaseModel, Generic[T]):  # GenericModel -> BaseModel に置換
     """
     FastAPI に公開する共通レスポンスモデル（契約）。
     - /docs へ自動反映
@@ -65,16 +58,13 @@ class ApiResponse(GenericModel, Generic[T]):
         return cls(status="error", code=code, detail=detail, result=result, hint=hint)
 
 
-
 # 下記からは廃止予定
 # --- Pydanticモデル -> dict の互換ヘルパ --------------------------------------
 def _model_to_dict(model: BaseModel) -> dict:
     """
-    Pydantic v1/v2 の差異を吸収して dict へ変換。
+    Pydantic v2 で dict へ変換。
     """
-    if _IS_PYDANTIC_V2:
-        return model.model_dump()
-    return model.dict()
+    return model.model_dump()  # v2 標準
 
 
 # --- 互換レイヤー: 既存クラス（内部で ApiResponse に委譲） -------------------
