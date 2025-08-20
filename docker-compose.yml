@@ -1,120 +1,148 @@
 services:
-  # =============================
-  # フロントエンド（Reactアプリ）
-  # 本番ではビルド済み静的ファイルを nginx から配信する運用が望ましい。
-  # =============================
   frontend:
+    image: sanbou-frontend:${IMAGE_TAG:-latest}
     build: ./my-project/frontend
+    env_file:
+      - ${ENV_FILE}
     networks: [backend]
     restart: unless-stopped
 
-  # =============================
-  # AI API
-  # =============================
   ai_api:
-    build: ./my-project/backend/ai_api
-    # サービス固有の値だけを env_file に残す（存在するファイルに限定）
-    env_file: [./envs/.env.ai_api]
-    # ルート .env の値を使って実行時へ明示注入（組み立てが必要な値はここで）
-    environment:
-      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:${POSTGRES_PORT:-5432}/${POSTGRES_DB}
-      PYTHONPATH: ${PYTHONPATH:-/backend}
-    depends_on:
-      db:
-        condition: service_healthy
-    networks: [backend]
-    restart: unless-stopped
-    healthcheck:
-      # Python標準ライブラリで /health を確認（curl/wget 不要）
-      test:
-        [
-          "CMD-SHELL",
-          "python - <<'PY'\nimport sys,urllib.request\ntry:\n  r=urllib.request.urlopen('http://localhost:8000/health', timeout=3)\n  sys.exit(0 if r.getcode()==200 else 1)\nexcept Exception:\n  sys.exit(1)\nPY",
-        ]
-      interval: 20s
-      timeout: 5s
-      retries: 5
-
-  # =============================
-  # Ledger API
-  # =============================
-  ledger_api:
-    build: ./my-project/backend/ledger_api
-    env_file: [./envs/.env.ledger_api]
-    environment:
-      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:${POSTGRES_PORT:-5432}/${POSTGRES_DB}
-      PYTHONPATH: ${PYTHONPATH:-/backend}
-    depends_on:
-      db:
-        condition: service_healthy
-    networks: [backend]
-    restart: unless-stopped
-    healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "python - <<'PY'\nimport sys,urllib.request\ntry:\n  r=urllib.request.urlopen('http://localhost:8000/health', timeout=3)\n  sys.exit(0 if r.getcode()==200 else 1)\nexcept Exception:\n  sys.exit(1)\nPY",
-        ]
-      interval: 20s
-      timeout: 5s
-      retries: 5
-
-  # =============================
-  # SQL API
-  # =============================
-  sql_api:
-    build: ./my-project/backend/sql_api
-    # ここがポイント：存在しない ./envs/.env を外し、実在する専用ファイルだけに
-    env_file: [./envs/.env.sql_api]
-    environment:
-      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:${POSTGRES_PORT:-5432}/${POSTGRES_DB}
-      PYTHONPATH: ${PYTHONPATH:-/backend}
-    depends_on:
-      db:
-        condition: service_healthy
-    networks: [backend]
-    restart: unless-stopped
-    healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "python - <<'PY'\nimport sys,urllib.request\ntry:\n  r=urllib.request.urlopen('http://localhost:8000/health', timeout=3)\n  sys.exit(0 if r.getcode()==200 else 1)\nexcept Exception:\n  sys.exit(1)\nPY",
-        ]
-      interval: 20s
-      timeout: 5s
-      retries: 5
-
-  # =============================
-  # RAG API
-  # =============================
-  rag_api:
+    image: sanbou-ai-api:${IMAGE_TAG:-latest}
     build:
-      context: ./my-project/backend/rag_api
-      dockerfile: Dockerfile
-    env_file: [./envs/.env.rag_api]
+      context: ./my-project/backend
+      dockerfile: ai_api/Dockerfile
+    env_file:
+      - ${ENV_FILE}
     environment:
       DATABASE_URL: postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:${POSTGRES_PORT:-5432}/${POSTGRES_DB}
       PYTHONPATH: ${PYTHONPATH:-/backend}
     depends_on:
       db:
         condition: service_healthy
+    secrets:
+      - gcp_sa.json
     networks: [backend]
     restart: unless-stopped
     healthcheck:
       test:
-        [
-          "CMD-SHELL",
-          "python - <<'PY'\nimport sys,urllib.request\ntry:\n  r=urllib.request.urlopen('http://localhost:8000/health', timeout=3)\n  sys.exit(0 if r.getcode()==200 else 1)\nexcept Exception:\n  sys.exit(1)\nPY",
-        ]
+        - CMD-SHELL
+        - |
+          python3 - <<'PY'
+          import sys,urllib.request
+          try:
+            r=urllib.request.urlopen('http://localhost:8000/health', timeout=3)
+            sys.exit(0 if r.getcode()==200 else 1)
+          except Exception:
+            sys.exit(1)
+          PY
       interval: 20s
       timeout: 5s
       retries: 5
 
-  # =============================
-  # PostgreSQL DB
-  # =============================
+  ledger_api:
+    image: sanbou-ledger-api:${IMAGE_TAG:-latest}
+    build:
+      context: ./my-project/backend
+      dockerfile: ledger_api/Dockerfile
+    env_file:
+      - ${ENV_FILE}
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:${POSTGRES_PORT:-5432}/${POSTGRES_DB}
+      PYTHONPATH: ${PYTHONPATH:-/backend}
+    depends_on:
+      db:
+        condition: service_healthy
+    secrets:
+      - gcp_sa.json
+    networks: [backend]
+    restart: unless-stopped
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - |
+          python3 - <<'PY'
+          import sys,urllib.request
+          try:
+            r=urllib.request.urlopen('http://localhost:8000/health', timeout=3)
+            sys.exit(0 if r.getcode()==200 else 1)
+          except Exception:
+            sys.exit(1)
+          PY
+      interval: 20s
+      timeout: 5s
+      retries: 5
+
+  sql_api:
+    image: sanbou-sql-api:${IMAGE_TAG:-latest}
+    build:
+      context: ./my-project/backend
+      dockerfile: sql_api/Dockerfile
+    env_file:
+      - ${ENV_FILE}
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:${POSTGRES_PORT:-5432}/${POSTGRES_DB}
+      PYTHONPATH: ${PYTHONPATH:-/backend}
+    depends_on:
+      db:
+        condition: service_healthy
+    secrets:
+      - gcp_sa.json
+    networks: [backend]
+    restart: unless-stopped
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - |
+          python3 - <<'PY'
+          import sys,urllib.request
+          try:
+            r=urllib.request.urlopen('http://localhost:8000/health', timeout=3)
+            sys.exit(0 if r.getcode()==200 else 1)
+          except Exception:
+            sys.exit(1)
+          PY
+      interval: 20s
+      timeout: 5s
+      retries: 5
+
+  rag_api:
+    image: sanbou-rag-api:${IMAGE_TAG:-latest}
+    build:
+      context: ./my-project/backend
+      dockerfile: rag_api/Dockerfile
+    env_file:
+      - ${ENV_FILE}
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:${POSTGRES_PORT:-5432}/${POSTGRES_DB}
+      PYTHONPATH: ${PYTHONPATH:-/backend}
+    depends_on:
+      db:
+        condition: service_healthy
+    secrets:
+      - gcp_sa.json
+    networks: [backend]
+    restart: unless-stopped
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - |
+          python3 - <<'PY'
+          import sys,urllib.request
+          try:
+            r=urllib.request.urlopen('http://localhost:8000/health', timeout=3)
+            sys.exit(0 if r.getcode()==200 else 1)
+          except Exception:
+            sys.exit(1)
+          PY
+      interval: 20s
+      timeout: 5s
+      retries: 5
+
   db:
     image: postgres:16
+    env_file:
+      - ${ENV_FILE}
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -130,11 +158,11 @@ services:
       timeout: 5s
       retries: 6
 
-  # =============================
-  # Nginx（外部公開用）
-  # =============================
   nginx:
     image: nginx:1.27-alpine
+    profiles: [edge]
+    env_file:
+      - ${ENV_FILE}
     ports: ["80:80", "443:443"]
     volumes:
       - ./my-project/nginx/conf.d:/etc/nginx/conf.d:ro
@@ -157,3 +185,7 @@ networks:
 
 volumes:
   dbdata:
+
+secrets:
+  gcp_sa.json:
+    file: ./secrets/gcp-sa.json

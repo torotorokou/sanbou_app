@@ -1,3 +1,10 @@
+# Environment files (keep example only)
+env/.env.dev
+env/.env.stg
+env/.env.prod
+
+# Docker secrets
+secrets/
 # === OS固有 ===
 .DS_Store
 Thumbs.db

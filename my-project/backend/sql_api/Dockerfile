@@ -2,27 +2,28 @@ FROM python:3.10
 
 WORKDIR /backend
 
-# 依存パッケージファイルをコピー
-COPY requirements.txt .
-COPY requirements-dev.txt .
+# 依存パッケージファイルをコピー（サービス配下）
+COPY sql_api/requirements.txt ./requirements.txt
+COPY sql_api/requirements-dev.txt ./requirements-dev.txt
 
 # === 開発環境かどうかを判定するビルド引数（デフォルトはfalse） ===
 ARG INSTALL_DEV=false
 
 # === [開発環境のみ] システムパッケージ（例: lsof）をインストール ===
 RUN apt-get update \
-    # INSTALL_DEVがtrueの場合だけlsofをインストール
     && if [ "$INSTALL_DEV" = "true" ]; then apt-get install -y lsof; fi \
-    # キャッシュクリア
     && rm -rf /var/lib/apt/lists/*
 
 # === Pythonパッケージのインストール ===
 RUN pip install --no-cache-dir -r requirements.txt \
-    # INSTALL_DEVがtrueの場合だけdevパッケージもインストール
     && if [ "$INSTALL_DEV" = "true" ]; then pip install --no-cache-dir -r requirements-dev.txt; fi
 
-# アプリ本体をコピー
-COPY ./app /backend/app
+# 共有モジュールを同梱
+COPY backend_shared/ /backend/backend_shared
+
+# アプリ本体と設定をコピー（サービス配下）
+COPY sql_api/app /backend/app
+COPY sql_api/config /backend/config
 
 ENV PYTHONPATH=/backend
 
