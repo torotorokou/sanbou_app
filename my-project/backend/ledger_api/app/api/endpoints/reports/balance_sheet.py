@@ -2,7 +2,7 @@
 
 from typing import Optional
 
-from api.services.report.report_processing_service import ReportProcessingService
+from app.api.services.report.report_processing_service import ReportProcessingService
 from fastapi import APIRouter, File, Form, UploadFile
 from fastapi.responses import Response
 

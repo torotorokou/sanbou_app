@@ -122,3 +122,9 @@ def ping():
 
 # ====== ルーターをパス指定で登録 ======
 app.include_router(router, prefix="")  # /ai_api直下に登録
+
+
+# ヘルスチェック
+@app.get("/health", include_in_schema=False)
+def health():
+    return {"status": "ok"}

@@ -155,7 +155,7 @@ const QuestionPanel: React.FC<Props> = ({
                 </div>
 
                 <div style={{ marginBottom: 18 }}>
-                    <Typography.Text strong>テンプレート（質問文）</Typography.Text>
+                    <Typography.Text strong>質問テンプレート</Typography.Text>
                     <Select
                         value={template}
                         onChange={(val) => {

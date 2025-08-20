@@ -1,0 +1,434 @@
+ai_api-1  | INFO:     Will watch for changes in these directories: ['/backend']
+sql_api-1  | INFO:     Will watch for changes in these directories: ['/backend']
+sql_api-1  | INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+sql_api-1  | INFO:     Started reloader process [1] using WatchFiles
+sql_api-1  | Process SpawnProcess-1:
+sql_api-1  | Traceback (most recent call last):
+sql_api-1  |   File "/usr/local/lib/python3.10/multiprocessing/process.py", line 314, in _bootstrap
+sql_api-1  |     self.run()
+sql_api-1  |   File "/usr/local/lib/python3.10/multiprocessing/process.py", line 108, in run
+ledger_api-1  | INFO:     Will watch for changes in these directories: ['/backend']
+ledger_api-1  | INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+ledger_api-1  | INFO:     Started reloader process [1] using WatchFiles
+ledger_api-1  | /usr/local/lib/python3.11/dist-packages/pydantic/_migration.py:283: UserWarning: `pydantic.generics:GenericModel` has been moved to `pydantic.BaseModel`.
+ledger_api-1  |   warnings.warn(f'`{import_path}` has been moved to `{new_location}`.')
+ledger_api-1  | Process SpawnProcess-1:
+ledger_api-1  | Traceback (most recent call last):
+rag_api-1  | INFO:     Will watch for changes in these directories: ['/backend']
+rag_api-1     | INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+rag_api-1     | INFO:     Started reloader process [1] using StatReload
+rag_api-1     | APP_BASE_DIR: /backend
+rag_api-1     | [DEBUG] .env path: /backend/config/.env
+rag_api-1     | [DEBUG] OPENAI_API_KEY: ***_l4A
+rag_api-1     | /usr/local/lib/python3.10/site-packages/pydantic/_migration.py:283: UserWarning: `pydantic.generics:GenericModel` has been moved to `pydantic.BaseModel`.
+rag_api-1     |   warnings.warn(f'`{import_path}` has been moved to `{new_location}`.')
+rag_api-1     | [DEBUG] FastAPI公開ディレクトリ: /backend/static/pdfs
+ledger_api-1  |   File "/usr/lib/python3.11/multiprocessing/process.py", line 314, in _bootstrap
+ledger_api-1  |     self.run()
+ledger_api-1  |   File "/usr/lib/python3.11/multiprocessing/process.py", line 108, in run
+ledger_api-1  |     self._target(*self._args, **self._kwargs)
+ledger_api-1  |   File "/usr/local/lib/python3.11/dist-packages/uvicorn/_subprocess.py", line 80, in subprocess_started
+ledger_api-1  |     target(sockets=sockets)
+ledger_api-1  |   File "/usr/local/lib/python3.11/dist-packages/uvicorn/server.py", line 65, in run
+rag_api-1     | [DEBUG] FastAPI公開ディレクトリ: /backend/static/test_pdfs
+rag_api-1     | INFO:     Started server process [8]
+rag_api-1     | INFO:     Waiting for application startup.
+rag_api-1     | INFO:     Application startup complete.
+rag_api-1     | INFO:     127.0.0.1:58346 - "GET /health HTTP/1.1" 404 Not Found
+rag_api-1     | INFO:     127.0.0.1:43544 - "GET /health HTTP/1.1" 404 Not Found
+rag_api-1     | INFO:     127.0.0.1:44026 - "GET /health HTTP/1.1" 404 Not Found
+rag_api-1     | INFO:     127.0.0.1:60704 - "GET /health HTTP/1.1" 404 Not Found
+rag_api-1     | INFO:     127.0.0.1:60246 - "GET /health HTTP/1.1" 404 Not Found
+rag_api-1     | INFO:     127.0.0.1:46822 - "GET /health HTTP/1.1" 404 Not Found
+rag_api-1     | INFO:     127.0.0.1:52920 - "GET /health HTTP/1.1" 404 Not Found
+ledger_api-1  |     return asyncio.run(self.serve(sockets=sockets))
+ledger_api-1  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ledger_api-1  |   File "/usr/lib/python3.11/asyncio/runners.py", line 190, in run
+ledger_api-1  |     return runner.run(main)
+ledger_api-1  |            ^^^^^^^^^^^^^^^^
+ledger_api-1  |   File "/usr/lib/python3.11/asyncio/runners.py", line 118, in run
+ledger_api-1  |     return self._loop.run_until_complete(task)
+ledger_api-1  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ledger_api-1  |   File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+ledger_api-1  |   File "/usr/local/lib/python3.11/dist-packages/uvicorn/server.py", line 69, in serve
+ledger_api-1  |     await self._serve(sockets)
+ledger_api-1  |   File "/usr/local/lib/python3.11/dist-packages/uvicorn/server.py", line 76, in _serve
+ledger_api-1  |     config.load()
+ledger_api-1  |   File "/usr/local/lib/python3.11/dist-packages/uvicorn/config.py", line 434, in load
+ai_api-1   | INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+sql_api-1     |     self._target(*self._args, **self._kwargs)
+ai_api-1      | INFO:     Started reloader process [1] using StatReload
+ai_api-1      | INFO:     Started server process [8]
+ai_api-1      | INFO:     Waiting for application startup.
+ai_api-1      | INFO:     Application startup complete.
+ai_api-1      | INFO:     127.0.0.1:58332 - "GET /health HTTP/1.1" 404 Not Found
+rag_api-1     | INFO:     127.0.0.1:59238 - "GET /health HTTP/1.1" 404 Not Found
+rag_api-1     | INFO:     127.0.0.1:45918 - "GET /health HTTP/1.1" 404 Not Found
+rag_api-1     | INFO:     127.0.0.1:60414 - "GET /health HTTP/1.1" 404 Not Found
+rag_api-1     | INFO:     127.0.0.1:58432 - "GET /health HTTP/1.1" 404 Not Found
+rag_api-1     | INFO:     127.0.0.1:33524 - "GET /health HTTP/1.1" 404 Not Found
+rag_api-1     | INFO:     127.0.0.1:53256 - "GET /health HTTP/1.1" 404 Not Found
+rag_api-1     | INFO:     127.0.0.1:53022 - "GET /health HTTP/1.1" 404 Not Found
+rag_api-1     | INFO:     127.0.0.1:34290 - "GET /health HTTP/1.1" 404 Not Found
+rag_api-1     | INFO:     127.0.0.1:48540 - "GET /health HTTP/1.1" 404 Not Found
+rag_api-1     | INFO:     127.0.0.1:43246 - "GET /health HTTP/1.1" 404 Not Found
+rag_api-1     | INFO:     127.0.0.1:47512 - "GET /health HTTP/1.1" 404 Not Found
+rag_api-1     | INFO:     127.0.0.1:52632 - "GET /health HTTP/1.1" 404 Not Found
+rag_api-1     | INFO:     127.0.0.1:45992 - "GET /health HTTP/1.1" 404 Not Found
+rag_api-1     | INFO:     127.0.0.1:41826 - "GET /health HTTP/1.1" 404 Not Found
+ai_api-1      | INFO:     127.0.0.1:43530 - "GET /health HTTP/1.1" 404 Not Found
+ai_api-1      | INFO:     127.0.0.1:43998 - "GET /health HTTP/1.1" 404 Not Found
+ai_api-1      | INFO:     127.0.0.1:60698 - "GET /health HTTP/1.1" 404 Not Found
+sql_api-1     |   File "/usr/local/lib/python3.10/site-packages/uvicorn/_subprocess.py", line 78, in subprocess_started
+sql_api-1     |     target(sockets=sockets)
+sql_api-1     |   File "/usr/local/lib/python3.10/site-packages/uvicorn/server.py", line 65, in run
+sql_api-1     |     return asyncio.run(self.serve(sockets=sockets))
+sql_api-1     |   File "/usr/local/lib/python3.10/asyncio/runners.py", line 44, in run
+ai_api-1      | INFO:     127.0.0.1:60218 - "GET /health HTTP/1.1" 404 Not Found
+ai_api-1      | INFO:     127.0.0.1:46808 - "GET /health HTTP/1.1" 404 Not Found
+ai_api-1      | INFO:     127.0.0.1:52902 - "GET /health HTTP/1.1" 404 Not Found
+ai_api-1      | INFO:     127.0.0.1:59226 - "GET /health HTTP/1.1" 404 Not Found
+sql_api-1     |     return loop.run_until_complete(main)
+sql_api-1     |   File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+sql_api-1     |   File "/usr/local/lib/python3.10/site-packages/uvicorn/server.py", line 69, in serve
+ai_api-1      | INFO:     127.0.0.1:45906 - "GET /health HTTP/1.1" 404 Not Found
+ai_api-1      | INFO:     127.0.0.1:60412 - "GET /health HTTP/1.1" 404 Not Found
+ai_api-1      | INFO:     127.0.0.1:58422 - "GET /health HTTP/1.1" 404 Not Found
+ai_api-1      | INFO:     127.0.0.1:33510 - "GET /health HTTP/1.1" 404 Not Found
+ai_api-1      | INFO:     127.0.0.1:53248 - "GET /health HTTP/1.1" 404 Not Found
+ai_api-1      | INFO:     127.0.0.1:52998 - "GET /health HTTP/1.1" 404 Not Found
+ai_api-1      | INFO:     127.0.0.1:34284 - "GET /health HTTP/1.1" 404 Not Found
+ai_api-1      | INFO:     127.0.0.1:48510 - "GET /health HTTP/1.1" 404 Not Found
+ai_api-1      | INFO:     127.0.0.1:43232 - "GET /health HTTP/1.1" 404 Not Found
+ai_api-1      | INFO:     127.0.0.1:47482 - "GET /health HTTP/1.1" 404 Not Found
+ai_api-1      | INFO:     127.0.0.1:52616 - "GET /health HTTP/1.1" 404 Not Found
+sql_api-1     |     await self._serve(sockets)
+sql_api-1     |   File "/usr/local/lib/python3.10/site-packages/uvicorn/server.py", line 76, in _serve
+sql_api-1     |     config.load()
+sql_api-1     |   File "/usr/local/lib/python3.10/site-packages/uvicorn/config.py", line 433, in load
+sql_api-1     |     self.loaded_app = import_from_string(self.app)
+sql_api-1     |   File "/usr/local/lib/python3.10/site-packages/uvicorn/importer.py", line 22, in import_from_string
+sql_api-1     |     raise exc from None
+sql_api-1     |   File "/usr/local/lib/python3.10/site-packages/uvicorn/importer.py", line 19, in import_from_string
+sql_api-1     |     module = importlib.import_module(module_str)
+sql_api-1     |   File "/usr/local/lib/python3.10/importlib/__init__.py", line 126, in import_module
+sql_api-1     |     return _bootstrap._gcd_import(name[level:], package, level)
+sql_api-1     |   File "<frozen importlib._bootstrap>", line 1050, in _gcd_import
+ai_api-1      | INFO:     127.0.0.1:45978 - "GET /health HTTP/1.1" 404 Not Found
+ai_api-1      | INFO:     127.0.0.1:41822 - "GET /health HTTP/1.1" 404 Not Found
+ai_api-1      | INFO:     127.0.0.1:41204 - "GET /health HTTP/1.1" 404 Not Found
+ai_api-1      | INFO:     127.0.0.1:38850 - "GET /health HTTP/1.1" 404 Not Found
+ai_api-1      | INFO:     127.0.0.1:54852 - "GET /health HTTP/1.1" 404 Not Found
+ai_api-1      | INFO:     127.0.0.1:57634 - "GET /health HTTP/1.1" 404 Not Found
+rag_api-1     | INFO:     127.0.0.1:41218 - "GET /health HTTP/1.1" 404 Not Found
+rag_api-1     | INFO:     127.0.0.1:38868 - "GET /health HTTP/1.1" 404 Not Found
+rag_api-1     | INFO:     127.0.0.1:54862 - "GET /health HTTP/1.1" 404 Not Found
+rag_api-1     | INFO:     127.0.0.1:57650 - "GET /health HTTP/1.1" 404 Not Found
+rag_api-1     | INFO:     127.0.0.1:37204 - "GET /health HTTP/1.1" 404 Not Found
+rag_api-1     | INFO:     172.21.0.1:50888 - "GET /docs HTTP/1.1" 200 OK
+rag_api-1     | INFO:     172.21.0.1:50888 - "GET /rag_api/openapi.json HTTP/1.1" 200 OK
+rag_api-1     | INFO:     127.0.0.1:59188 - "GET /health HTTP/1.1" 404 Not Found
+rag_api-1     | INFO:     127.0.0.1:44522 - "GET /health HTTP/1.1" 404 Not Found
+rag_api-1     | INFO:     127.0.0.1:38234 - "GET /health HTTP/1.1" 404 Not Found
+rag_api-1     | INFO:     127.0.0.1:41378 - "GET /health HTTP/1.1" 404 Not Found
+rag_api-1     | INFO:     127.0.0.1:54826 - "GET /health HTTP/1.1" 404 Not Found
+rag_api-1     | INFO:     127.0.0.1:47118 - "GET /health HTTP/1.1" 404 Not Found
+rag_api-1     | INFO:     127.0.0.1:49348 - "GET /health HTTP/1.1" 404 Not Found
+sql_api-1     |   File "<frozen importlib._bootstrap>", line 1027, in _find_and_load
+sql_api-1     |   File "<frozen importlib._bootstrap>", line 1006, in _find_and_load_unlocked
+sql_api-1     |   File "<frozen importlib._bootstrap>", line 688, in _load_unlocked
+sql_api-1     |   File "<frozen importlib._bootstrap_external>", line 883, in exec_module
+sql_api-1     |   File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+sql_api-1     |   File "/backend/app/main.py", line 7, in <module>
+sql_api-1     |     from app.api.endpoints.syogun_csv_upload import router as upload_router
+sql_api-1     |   File "/backend/app/api/endpoints/syogun_csv_upload.py", line 14, in <module>
+sql_api-1     |     from backend_shared.src.response_utils import api_response
+ai_api-1      | INFO:     127.0.0.1:37196 - "GET /health HTTP/1.1" 404 Not Found
+ai_api-1      | INFO:     127.0.0.1:59186 - "GET /health HTTP/1.1" 404 Not Found
+ai_api-1      | INFO:     127.0.0.1:44506 - "GET /health HTTP/1.1" 404 Not Found
+ai_api-1      | INFO:     127.0.0.1:38216 - "GET /health HTTP/1.1" 404 Not Found
+ai_api-1      | INFO:     127.0.0.1:41362 - "GET /health HTTP/1.1" 404 Not Found
+ai_api-1      | INFO:     127.0.0.1:54818 - "GET /health HTTP/1.1" 404 Not Found
+ai_api-1      | INFO:     127.0.0.1:47090 - "GET /health HTTP/1.1" 404 Not Found
+sql_api-1     | ModuleNotFoundError: No module named 'backend_shared.src.response_utils'
+sql_api-1     | WARNING:  WatchFiles detected changes in 'backend_shared/src/csv_validator/__init__.py', 'backend_shared/__init__.py', 'backend_shared/src/__init__.py', 'backend_shared/src/api_response/__init__.py'. Reloading...
+sql_api-1     | Process SpawnProcess-2:
+sql_api-1     | Traceback (most recent call last):
+sql_api-1     |   File "/usr/local/lib/python3.10/multiprocessing/process.py", line 314, in _bootstrap
+sql_api-1     |     self.run()
+sql_api-1     |   File "/usr/local/lib/python3.10/multiprocessing/process.py", line 108, in run
+ai_api-1      | INFO:     127.0.0.1:49332 - "GET /health HTTP/1.1" 404 Not Found
+ai_api-1      | INFO:     127.0.0.1:36888 - "GET /health HTTP/1.1" 404 Not Found
+ai_api-1      | INFO:     127.0.0.1:38846 - "GET /health HTTP/1.1" 404 Not Found
+ai_api-1      | INFO:     127.0.0.1:37132 - "GET /health HTTP/1.1" 404 Not Found
+ai_api-1      | INFO:     127.0.0.1:47568 - "GET /health HTTP/1.1" 404 Not Found
+ai_api-1      | INFO:     127.0.0.1:60614 - "GET /health HTTP/1.1" 404 Not Found
+ai_api-1      | INFO:     127.0.0.1:37246 - "GET /health HTTP/1.1" 404 Not Found
+ai_api-1      | INFO:     127.0.0.1:57184 - "GET /health HTTP/1.1" 404 Not Found
+ai_api-1      | INFO:     127.0.0.1:43954 - "GET /health HTTP/1.1" 404 Not Found
+ai_api-1      | INFO:     127.0.0.1:39476 - "GET /health HTTP/1.1" 404 Not Found
+ai_api-1      | INFO:     127.0.0.1:56712 - "GET /health HTTP/1.1" 404 Not Found
+ai_api-1      | INFO:     127.0.0.1:51926 - "GET /health HTTP/1.1" 404 Not Found
+ai_api-1      | INFO:     127.0.0.1:50892 - "GET /health HTTP/1.1" 404 Not Found
+ai_api-1      | INFO:     127.0.0.1:49584 - "GET /health HTTP/1.1" 404 Not Found
+ledger_api-1  |     self.loaded_app = import_from_string(self.app)
+ledger_api-1  |                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ledger_api-1  |   File "/usr/local/lib/python3.11/dist-packages/uvicorn/importer.py", line 22, in import_from_string
+ledger_api-1  |     raise exc from None
+ledger_api-1  |   File "/usr/local/lib/python3.11/dist-packages/uvicorn/importer.py", line 19, in import_from_string
+ledger_api-1  |     module = importlib.import_module(module_str)
+ledger_api-1  |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ledger_api-1  |   File "/usr/lib/python3.11/importlib/__init__.py", line 126, in import_module
+ledger_api-1  |     return _bootstrap._gcd_import(name[level:], package, level)
+ledger_api-1  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ledger_api-1  |   File "<frozen importlib._bootstrap>", line 1206, in _gcd_import
+ledger_api-1  |   File "<frozen importlib._bootstrap>", line 1178, in _find_and_load
+ledger_api-1  |   File "<frozen importlib._bootstrap>", line 1149, in _find_and_load_unlocked
+ledger_api-1  |   File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+ledger_api-1  |   File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+ledger_api-1  |   File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+ledger_api-1  |   File "/backend/app/main.py", line 10, in <module>
+ledger_api-1  |     from app.api.endpoints import manage_report
+ledger_api-1  |   File "/backend/app/api/endpoints/manage_report.py", line 13, in <module>
+ledger_api-1  |     from app.api.services.report.generator_factory import get_generator
+ledger_api-1  |   File "/backend/app/api/services/report/generator_factory.py", line 10, in <module>
+sql_api-1     |     self._target(*self._args, **self._kwargs)
+sql_api-1     |   File "/usr/local/lib/python3.10/site-packages/uvicorn/_subprocess.py", line 78, in subprocess_started
+sql_api-1     |     target(sockets=sockets)
+sql_api-1     |   File "/usr/local/lib/python3.10/site-packages/uvicorn/server.py", line 65, in run
+sql_api-1     |     return asyncio.run(self.serve(sockets=sockets))
+sql_api-1     |   File "/usr/local/lib/python3.10/asyncio/runners.py", line 44, in run
+sql_api-1     |     return loop.run_until_complete(main)
+sql_api-1     |   File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+sql_api-1     |   File "/usr/local/lib/python3.10/site-packages/uvicorn/server.py", line 69, in serve
+sql_api-1     |     await self._serve(sockets)
+sql_api-1     |   File "/usr/local/lib/python3.10/site-packages/uvicorn/server.py", line 76, in _serve
+sql_api-1     |     config.load()
+ledger_api-1  |     from .base_report_generator import BaseReportGenerator
+ledger_api-1  |   File "/backend/app/api/services/report/base_report_generator.py", line 11, in <module>
+ledger_api-1  |     from app.api.services.csv_validator_facade import CsvValidatorService
+ledger_api-1  |   File "/backend/app/api/services/csv_validator_facade.py", line 16, in <module>
+ai_api-1      | INFO:     127.0.0.1:58040 - "GET /health HTTP/1.1" 404 Not Found
+ai_api-1      | INFO:     127.0.0.1:38332 - "GET /health HTTP/1.1" 404 Not Found
+ai_api-1      | INFO:     127.0.0.1:54932 - "GET /health HTTP/1.1" 404 Not Found
+ai_api-1      | INFO:     127.0.0.1:52948 - "GET /health HTTP/1.1" 404 Not Found
+ai_api-1      | INFO:     127.0.0.1:47328 - "GET /health HTTP/1.1" 404 Not Found
+ai_api-1      | INFO:     127.0.0.1:53830 - "GET /health HTTP/1.1" 404 Not Found
+ai_api-1      | WARNING:  StatReload detected changes in 'backend_shared/src/api_response/response_error.py'. Reloading...
+ai_api-1      | INFO:     Shutting down
+ai_api-1      | INFO:     Waiting for application shutdown.
+ai_api-1      | INFO:     Application shutdown complete.
+ai_api-1      | INFO:     Finished server process [8]
+ai_api-1      | INFO:     Started server process [374]
+ai_api-1      | INFO:     Waiting for application startup.
+ai_api-1      | INFO:     Application startup complete.
+ai_api-1      | INFO:     127.0.0.1:33318 - "GET /health HTTP/1.1" 404 Not Found
+ai_api-1      | INFO:     127.0.0.1:49606 - "GET /health HTTP/1.1" 404 Not Found
+ai_api-1      | INFO:     127.0.0.1:33662 - "GET /health HTTP/1.1" 404 Not Found
+rag_api-1     | INFO:     127.0.0.1:36896 - "GET /health HTTP/1.1" 404 Not Found
+rag_api-1     | INFO:     127.0.0.1:38858 - "GET /health HTTP/1.1" 404 Not Found
+rag_api-1     | INFO:     127.0.0.1:37138 - "GET /health HTTP/1.1" 404 Not Found
+rag_api-1     | INFO:     127.0.0.1:47584 - "GET /health HTTP/1.1" 404 Not Found
+rag_api-1     | INFO:     127.0.0.1:60620 - "GET /health HTTP/1.1" 404 Not Found
+rag_api-1     | INFO:     127.0.0.1:37260 - "GET /health HTTP/1.1" 404 Not Found
+rag_api-1     | INFO:     127.0.0.1:57198 - "GET /health HTTP/1.1" 404 Not Found
+rag_api-1     | INFO:     127.0.0.1:43966 - "GET /health HTTP/1.1" 404 Not Found
+rag_api-1     | INFO:     127.0.0.1:39484 - "GET /health HTTP/1.1" 404 Not Found
+rag_api-1     | INFO:     127.0.0.1:56724 - "GET /health HTTP/1.1" 404 Not Found
+rag_api-1     | INFO:     127.0.0.1:51936 - "GET /health HTTP/1.1" 404 Not Found
+rag_api-1     | INFO:     127.0.0.1:50908 - "GET /health HTTP/1.1" 404 Not Found
+rag_api-1     | INFO:     127.0.0.1:49612 - "GET /health HTTP/1.1" 404 Not Found
+rag_api-1     | INFO:     127.0.0.1:58062 - "GET /health HTTP/1.1" 404 Not Found
+rag_api-1     | INFO:     127.0.0.1:38342 - "GET /health HTTP/1.1" 404 Not Found
+rag_api-1     | INFO:     127.0.0.1:54948 - "GET /health HTTP/1.1" 404 Not Found
+rag_api-1     | INFO:     127.0.0.1:52970 - "GET /health HTTP/1.1" 404 Not Found
+rag_api-1     | INFO:     127.0.0.1:47340 - "GET /health HTTP/1.1" 404 Not Found
+rag_api-1     | INFO:     127.0.0.1:53844 - "GET /health HTTP/1.1" 404 Not Found
+rag_api-1     | WARNING:  StatReload detected changes in 'backend_shared/src/api_response/response_error.py'. Reloading...
+rag_api-1     | INFO:     Shutting down
+rag_api-1     | INFO:     Waiting for application shutdown.
+sql_api-1     |   File "/usr/local/lib/python3.10/site-packages/uvicorn/config.py", line 433, in load
+sql_api-1     |     self.loaded_app = import_from_string(self.app)
+sql_api-1     |   File "/usr/local/lib/python3.10/site-packages/uvicorn/importer.py", line 22, in import_from_string
+sql_api-1     |     raise exc from None
+sql_api-1     |   File "/usr/local/lib/python3.10/site-packages/uvicorn/importer.py", line 19, in import_from_string
+sql_api-1     |     module = importlib.import_module(module_str)
+sql_api-1     |   File "/usr/local/lib/python3.10/importlib/__init__.py", line 126, in import_module
+sql_api-1     |     return _bootstrap._gcd_import(name[level:], package, level)
+sql_api-1     |   File "<frozen importlib._bootstrap>", line 1050, in _gcd_import
+sql_api-1     |   File "<frozen importlib._bootstrap>", line 1027, in _find_and_load
+sql_api-1     |   File "<frozen importlib._bootstrap>", line 1006, in _find_and_load_unlocked
+sql_api-1     |   File "<frozen importlib._bootstrap>", line 688, in _load_unlocked
+sql_api-1     |   File "<frozen importlib._bootstrap_external>", line 883, in exec_module
+sql_api-1     |   File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+sql_api-1     |   File "/backend/app/main.py", line 7, in <module>
+sql_api-1     |     from app.api.endpoints.syogun_csv_upload import router as upload_router
+sql_api-1     |   File "/backend/app/api/endpoints/syogun_csv_upload.py", line 14, in <module>
+sql_api-1     |     from backend_shared.src.response_utils import api_response
+sql_api-1     | ModuleNotFoundError: No module named 'backend_shared.src.response_utils'
+sql_api-1     | WARNING:  WatchFiles detected changes in 'backend_shared/src/api_response/response_error.py'. Reloading...
+sql_api-1     | Process SpawnProcess-3:
+rag_api-1     | INFO:     Application shutdown complete.
+rag_api-1     | INFO:     Finished server process [8]
+rag_api-1     | APP_BASE_DIR: /backend
+rag_api-1     | [DEBUG] .env path: /backend/config/.env
+rag_api-1     | [DEBUG] OPENAI_API_KEY: ***_l4A
+rag_api-1     | /usr/local/lib/python3.10/site-packages/pydantic/_migration.py:283: UserWarning: `pydantic.generics:GenericModel` has been moved to `pydantic.BaseModel`.
+rag_api-1     |   warnings.warn(f'`{import_path}` has been moved to `{new_location}`.')
+rag_api-1     | [DEBUG] FastAPI公開ディレクトリ: /backend/static/pdfs
+rag_api-1     | [DEBUG] FastAPI公開ディレクトリ: /backend/static/test_pdfs
+rag_api-1     | INFO:     Started server process [389]
+rag_api-1     | INFO:     Waiting for application startup.
+rag_api-1     | INFO:     Application startup complete.
+rag_api-1     | INFO:     127.0.0.1:33330 - "GET /health HTTP/1.1" 404 Not Found
+rag_api-1     | INFO:     127.0.0.1:49620 - "GET /health HTTP/1.1" 404 Not Found
+rag_api-1     | INFO:     127.0.0.1:33668 - "GET /health HTTP/1.1" 404 Not Found
+rag_api-1     | INFO:     127.0.0.1:43272 - "GET /health HTTP/1.1" 404 Not Found
+rag_api-1     | INFO:     127.0.0.1:47424 - "GET /health HTTP/1.1" 404 Not Found
+ledger_api-1  |     from backend_shared.src.csv_validator.response_converter import (
+ledger_api-1  |   File "/backend/backend_shared/src/csv_validator/response_converter.py", line 14, in <module>
+ledger_api-1  |     from backend_shared.src.api_response.response_error import (
+ledger_api-1  |   File "/backend/backend_shared/src/api_response/response_error.py", line 1, in <module>
+ledger_api-1  |     from src.api_response.response_base import ErrorApiResponse
+ledger_api-1  | ModuleNotFoundError: No module named 'src'
+ledger_api-1  | WARNING:  WatchFiles detected changes in 'backend_shared/__init__.py', 'backend_shared/src/__init__.py', 'backend_shared/src/api_response/__init__.py', 'backend_shared/src/csv_validator/__init__.py'. Reloading...
+ledger_api-1  | /usr/local/lib/python3.11/dist-packages/pydantic/_migration.py:283: UserWarning: `pydantic.generics:GenericModel` has been moved to `pydantic.BaseModel`.
+ledger_api-1  |   warnings.warn(f'`{import_path}` has been moved to `{new_location}`.')
+ledger_api-1  | Process SpawnProcess-2:
+ai_api-1      | INFO:     127.0.0.1:43258 - "GET /health HTTP/1.1" 404 Not Found
+ai_api-1      | INFO:     127.0.0.1:47408 - "GET /health HTTP/1.1" 404 Not Found
+sql_api-1     | Traceback (most recent call last):
+sql_api-1     |   File "/usr/local/lib/python3.10/multiprocessing/process.py", line 314, in _bootstrap
+sql_api-1     |     self.run()
+sql_api-1     |   File "/usr/local/lib/python3.10/multiprocessing/process.py", line 108, in run
+sql_api-1     |     self._target(*self._args, **self._kwargs)
+sql_api-1     |   File "/usr/local/lib/python3.10/site-packages/uvicorn/_subprocess.py", line 78, in subprocess_started
+sql_api-1     |     target(sockets=sockets)
+sql_api-1     |   File "/usr/local/lib/python3.10/site-packages/uvicorn/server.py", line 65, in run
+sql_api-1     |     return asyncio.run(self.serve(sockets=sockets))
+sql_api-1     |   File "/usr/local/lib/python3.10/asyncio/runners.py", line 44, in run
+sql_api-1     |     return loop.run_until_complete(main)
+sql_api-1     |   File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+sql_api-1     |   File "/usr/local/lib/python3.10/site-packages/uvicorn/server.py", line 69, in serve
+sql_api-1     |     await self._serve(sockets)
+sql_api-1     |   File "/usr/local/lib/python3.10/site-packages/uvicorn/server.py", line 76, in _serve
+sql_api-1     |     config.load()
+sql_api-1     |   File "/usr/local/lib/python3.10/site-packages/uvicorn/config.py", line 433, in load
+sql_api-1     |     self.loaded_app = import_from_string(self.app)
+sql_api-1     |   File "/usr/local/lib/python3.10/site-packages/uvicorn/importer.py", line 22, in import_from_string
+sql_api-1     |     raise exc from None
+sql_api-1     |   File "/usr/local/lib/python3.10/site-packages/uvicorn/importer.py", line 19, in import_from_string
+sql_api-1     |     module = importlib.import_module(module_str)
+sql_api-1     |   File "/usr/local/lib/python3.10/importlib/__init__.py", line 126, in import_module
+sql_api-1     |     return _bootstrap._gcd_import(name[level:], package, level)
+sql_api-1     |   File "<frozen importlib._bootstrap>", line 1050, in _gcd_import
+sql_api-1     |   File "<frozen importlib._bootstrap>", line 1027, in _find_and_load
+sql_api-1     |   File "<frozen importlib._bootstrap>", line 1006, in _find_and_load_unlocked
+ledger_api-1  | Traceback (most recent call last):
+ledger_api-1  |   File "/usr/lib/python3.11/multiprocessing/process.py", line 314, in _bootstrap
+ledger_api-1  |     self.run()
+ledger_api-1  |   File "/usr/lib/python3.11/multiprocessing/process.py", line 108, in run
+ledger_api-1  |     self._target(*self._args, **self._kwargs)
+ledger_api-1  |   File "/usr/local/lib/python3.11/dist-packages/uvicorn/_subprocess.py", line 80, in subprocess_started
+ledger_api-1  |     target(sockets=sockets)
+ledger_api-1  |   File "/usr/local/lib/python3.11/dist-packages/uvicorn/server.py", line 65, in run
+ledger_api-1  |     return asyncio.run(self.serve(sockets=sockets))
+ledger_api-1  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ledger_api-1  |   File "/usr/lib/python3.11/asyncio/runners.py", line 190, in run
+ledger_api-1  |     return runner.run(main)
+ledger_api-1  |            ^^^^^^^^^^^^^^^^
+ledger_api-1  |   File "/usr/lib/python3.11/asyncio/runners.py", line 118, in run
+ledger_api-1  |     return self._loop.run_until_complete(task)
+sql_api-1     |   File "<frozen importlib._bootstrap>", line 688, in _load_unlocked
+sql_api-1     |   File "<frozen importlib._bootstrap_external>", line 883, in exec_module
+sql_api-1     |   File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+sql_api-1     |   File "/backend/app/main.py", line 7, in <module>
+sql_api-1     |     from app.api.endpoints.syogun_csv_upload import router as upload_router
+sql_api-1     |   File "/backend/app/api/endpoints/syogun_csv_upload.py", line 14, in <module>
+sql_api-1     |     from backend_shared.src.response_utils import api_response
+sql_api-1     | ModuleNotFoundError: No module named 'backend_shared.src.response_utils'
+ledger_api-1  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ledger_api-1  |   File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+ledger_api-1  |   File "/usr/local/lib/python3.11/dist-packages/uvicorn/server.py", line 69, in serve
+ledger_api-1  |     await self._serve(sockets)
+ledger_api-1  |   File "/usr/local/lib/python3.11/dist-packages/uvicorn/server.py", line 76, in _serve
+ledger_api-1  |     config.load()
+ledger_api-1  |   File "/usr/local/lib/python3.11/dist-packages/uvicorn/config.py", line 434, in load
+ledger_api-1  |     self.loaded_app = import_from_string(self.app)
+ledger_api-1  |                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ledger_api-1  |   File "/usr/local/lib/python3.11/dist-packages/uvicorn/importer.py", line 22, in import_from_string
+ledger_api-1  |     raise exc from None
+ledger_api-1  |   File "/usr/local/lib/python3.11/dist-packages/uvicorn/importer.py", line 19, in import_from_string
+ledger_api-1  |     module = importlib.import_module(module_str)
+ledger_api-1  |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ledger_api-1  |   File "/usr/lib/python3.11/importlib/__init__.py", line 126, in import_module
+ledger_api-1  |     return _bootstrap._gcd_import(name[level:], package, level)
+ledger_api-1  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ledger_api-1  |   File "<frozen importlib._bootstrap>", line 1206, in _gcd_import
+ledger_api-1  |   File "<frozen importlib._bootstrap>", line 1178, in _find_and_load
+ledger_api-1  |   File "<frozen importlib._bootstrap>", line 1149, in _find_and_load_unlocked
+ledger_api-1  |   File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+ledger_api-1  |   File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+ledger_api-1  |   File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+ledger_api-1  |   File "/backend/app/main.py", line 10, in <module>
+ledger_api-1  |     from app.api.endpoints import manage_report
+ledger_api-1  |   File "/backend/app/api/endpoints/manage_report.py", line 13, in <module>
+ledger_api-1  |     from app.api.services.report.generator_factory import get_generator
+ledger_api-1  |   File "/backend/app/api/services/report/generator_factory.py", line 10, in <module>
+ledger_api-1  |     from .base_report_generator import BaseReportGenerator
+ledger_api-1  |   File "/backend/app/api/services/report/base_report_generator.py", line 11, in <module>
+ledger_api-1  |     from app.api.services.csv_validator_facade import CsvValidatorService
+ledger_api-1  |   File "/backend/app/api/services/csv_validator_facade.py", line 16, in <module>
+ledger_api-1  |     from backend_shared.src.csv_validator.response_converter import (
+ledger_api-1  |   File "/backend/backend_shared/src/csv_validator/response_converter.py", line 14, in <module>
+ledger_api-1  |     from backend_shared.src.api_response.response_error import (
+ledger_api-1  |   File "/backend/backend_shared/src/api_response/response_error.py", line 1, in <module>
+ledger_api-1  |     from src.api_response.response_base import ErrorApiResponse
+ledger_api-1  | ModuleNotFoundError: No module named 'src'
+ledger_api-1  | WARNING:  WatchFiles detected changes in 'backend_shared/src/api_response/response_error.py'. Reloading...
+ledger_api-1  | /usr/local/lib/python3.11/dist-packages/pydantic/_migration.py:283: UserWarning: `pydantic.generics:GenericModel` has been moved to `pydantic.BaseModel`.
+ledger_api-1  |   warnings.warn(f'`{import_path}` has been moved to `{new_location}`.')
+ledger_api-1  | Process SpawnProcess-3:
+ledger_api-1  | Traceback (most recent call last):
+ledger_api-1  |   File "/usr/lib/python3.11/multiprocessing/process.py", line 314, in _bootstrap
+ledger_api-1  |     self.run()
+ledger_api-1  |   File "/usr/lib/python3.11/multiprocessing/process.py", line 108, in run
+ledger_api-1  |     self._target(*self._args, **self._kwargs)
+ledger_api-1  |   File "/usr/local/lib/python3.11/dist-packages/uvicorn/_subprocess.py", line 80, in subprocess_started
+ledger_api-1  |     target(sockets=sockets)
+ledger_api-1  |   File "/usr/local/lib/python3.11/dist-packages/uvicorn/server.py", line 65, in run
+ledger_api-1  |     return asyncio.run(self.serve(sockets=sockets))
+ledger_api-1  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ledger_api-1  |   File "/usr/lib/python3.11/asyncio/runners.py", line 190, in run
+ledger_api-1  |     return runner.run(main)
+ledger_api-1  |            ^^^^^^^^^^^^^^^^
+ledger_api-1  |   File "/usr/lib/python3.11/asyncio/runners.py", line 118, in run
+ledger_api-1  |     return self._loop.run_until_complete(task)
+ledger_api-1  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ledger_api-1  |   File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+ledger_api-1  |   File "/usr/local/lib/python3.11/dist-packages/uvicorn/server.py", line 69, in serve
+ledger_api-1  |     await self._serve(sockets)
+ledger_api-1  |   File "/usr/local/lib/python3.11/dist-packages/uvicorn/server.py", line 76, in _serve
+ledger_api-1  |     config.load()
+ledger_api-1  |   File "/usr/local/lib/python3.11/dist-packages/uvicorn/config.py", line 434, in load
+ledger_api-1  |     self.loaded_app = import_from_string(self.app)
+ledger_api-1  |                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ledger_api-1  |   File "/usr/local/lib/python3.11/dist-packages/uvicorn/importer.py", line 22, in import_from_string
+ledger_api-1  |     raise exc from None
+ledger_api-1  |   File "/usr/local/lib/python3.11/dist-packages/uvicorn/importer.py", line 19, in import_from_string
+ledger_api-1  |     module = importlib.import_module(module_str)
+ledger_api-1  |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ledger_api-1  |   File "/usr/lib/python3.11/importlib/__init__.py", line 126, in import_module
+ledger_api-1  |     return _bootstrap._gcd_import(name[level:], package, level)
+ledger_api-1  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ledger_api-1  |   File "<frozen importlib._bootstrap>", line 1206, in _gcd_import
+ledger_api-1  |   File "<frozen importlib._bootstrap>", line 1178, in _find_and_load
+ledger_api-1  |   File "<frozen importlib._bootstrap>", line 1149, in _find_and_load_unlocked
+ledger_api-1  |   File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+ledger_api-1  |   File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+ledger_api-1  |   File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+ledger_api-1  |   File "/backend/app/main.py", line 10, in <module>
+ledger_api-1  |     from app.api.endpoints import manage_report
+ledger_api-1  |   File "/backend/app/api/endpoints/manage_report.py", line 14, in <module>
+ledger_api-1  |     from api.services.report.report_processing_service import ReportProcessingService
+ledger_api-1  | ModuleNotFoundError: No module named 'api'

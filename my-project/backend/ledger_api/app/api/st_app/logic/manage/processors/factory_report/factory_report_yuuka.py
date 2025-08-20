@@ -1,5 +1,10 @@
 import pandas as pd
-import streamlit as st
+
+try:
+    import streamlit as st  # type: ignore
+except Exception:  # pragma: no cover
+    # Fallback to lightweight stub when running in API container
+    from app import streamlit as st  # type: ignore
 from app.api.st_app.utils.logger import app_logger
 from app.api.st_app.utils.config_loader import get_template_config
 from app.api.st_app.logic.manage.utils.load_template import load_master_and_template
