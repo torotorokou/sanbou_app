@@ -7,7 +7,7 @@ __pycache__/
 Thumbs.db
 
 # GCSキーやAPIキーなどの秘密ファイル
-secret/
+secrets/
 config/.env
 *.json
 
