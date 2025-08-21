@@ -11,7 +11,7 @@ CSVファイルのアップロード、バリデーション、フォーマッ�
 from fastapi import APIRouter, File, Form, UploadFile
 
 from app.api.services.report.generator_factory import get_generator
-from api.services.report.report_processing_service import ReportProcessingService
+from app.api.services.report.report_processing_service import ReportProcessingService
 
 # APIルーターの初期化
 router = APIRouter()

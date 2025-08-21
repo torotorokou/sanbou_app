@@ -75,24 +75,13 @@ async def start_block_unit_price_process(request: StartProcessRequest):
     """
 
     try:
-        # manage_report.pyと同じcsv処理を行うためのインポート
-        from api.services.report.report_processing_service import ReportProcessingService
-
-        # 共通処理サービスのインスタンス作成
-        report_service = ReportProcessingService()
-
         # request.files からファイルを取得
         files = request.files
         print(f"Uploaded files: {list(files.keys())}")
 
-        # ✅ 共通処理サービスでファイル処理
-        df_formatted, error = report_service.process_uploaded_files(files)
-        if error:
-            return error.to_json_response()
-
         # ブロック単価計算プロセッサーの初期化と処理開始
         processor = BlockUnitPriceInteractive()
-        result = processor.start_process(request.files)
+        result = processor.start_process(files)
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"処理開始エラー: {str(e)}")

@@ -7,6 +7,7 @@ from app.infrastructure.llm.openai_client import generate_answer
 from app.core.file_ingest_service import get_resource_paths, load_json_data
 from app.utils.chunk_utils import load_faiss_vectorstore
 from typing import List, Optional
+import os
 
 
 def get_answer(
@@ -37,9 +38,33 @@ def get_answer(
     """
     try:
         paths = resource_paths_func()
-        json_data = json_loader(paths["JSON_PATH"])
-        vectorstore = vectorstore_loader(paths["FAISS_PATH"])
+        json_path = str(paths.get("JSON_PATH"))
+        faiss_path = str(paths.get("FAISS_PATH"))
+        print(
+            "[DEBUG][ai_loader] resource paths:",
+            {"JSON_PATH": json_path, "FAISS_PATH": faiss_path},
+        )
+        print(
+            "[DEBUG][ai_loader] exists:",
+            {
+                "json_exists": os.path.exists(json_path),
+                "faiss_exists": os.path.exists(faiss_path),
+            },
+        )
+
+        json_data = json_loader(json_path)
+        vectorstore = vectorstore_loader(faiss_path)
         result = answer_func(query, category, json_data, vectorstore, tags)
+        # 重要キーの存在とサイズを軽く記録（型安全な集計）
+        if isinstance(result, dict):
+            pages = result.get("pages")
+            sources = result.get("sources")
+            sources_len = len(sources) if isinstance(sources, list) else 0
+            pages_len = len(pages) if isinstance(pages, list) else 0
+            print(
+                "[DEBUG][ai_loader] answer_func returned:",
+                {"has_answer": bool(result.get("answer")), "sources_len": sources_len, "pages_len": pages_len},
+            )
         return {
             "answer": result["answer"],
             "sources": result["sources"],
@@ -47,4 +72,5 @@ def get_answer(
         }
     except Exception as e:
         # ログ出力やエラー通知など拡張ポイント
+        print("[DEBUG][ai_loader] error:", repr(e))
         return {"error": str(e)}

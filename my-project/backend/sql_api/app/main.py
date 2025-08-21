@@ -33,3 +33,8 @@ def ping():
     /ping にアクセスするとAPIの稼働状況を返します。
     """
     return {"status": "sql_api ok"}
+
+
+@app.get("/health", include_in_schema=False)
+def health():
+    return {"status": "ok"}

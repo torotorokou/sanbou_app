@@ -12,18 +12,25 @@ RUN apt-get update && apt-get install -y \
 
 RUN mkdir -p /root/.config/gcloud
 
-# 作業ディレクトリ
 WORKDIR /backend
 
-# まず全体をコピー
-COPY . .
+# 依存関係（サービス配下）
+COPY rag_api/requirements.txt ./requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
-# backendをPYTHONPATHに追加
-# これにより、backendディレクトリ内のモジュールをインポート可能にする
+# 共有モジュールを同梱
+COPY backend_shared/ /backend/backend_shared
+
+# サービスのアプリ・設定・スクリプトを配置
+COPY rag_api/app /backend/app
+COPY rag_api/config /backend/config
+COPY rag_api/local_data /backend/local_data
+COPY rag_api/static /backend/static
+COPY rag_api/startup.sh /backend/startup.sh
+
 ENV PYTHONPATH=/backend
 
-# startup.shに実行権限を付与
+# startup.shに実行権限
 RUN chmod +x /backend/startup.sh
-RUN pip install --no-cache-dir -r requirements.txt
 
 CMD ["bash", "startup.sh"]

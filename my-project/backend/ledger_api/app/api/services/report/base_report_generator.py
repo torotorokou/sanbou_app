@@ -33,6 +33,8 @@ class BaseReportGenerator(ABC):
         self.report_key = report_key
         self.config_loader_report = ReportTemplateConfigLoader()
         self.result_df = None  # main_processの結果を保存
+        # 帳簿ごとの期間指定（"oneday" | "oneweek" | "onemonth" など）。未指定ならNone。
+        self.period_type: Optional[str] = None
         # デフォルトのバリデータ/フォーマッタ（必要に応じてサブクラスで置換）
         self._validator = CsvValidatorService()
         self._formatter = CsvFormatterService()

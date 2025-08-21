@@ -1,5 +1,4 @@
 import type { UploadProps } from 'antd/es/upload';
-import type { CsvConfigGroup } from '../constants/reportConfig';
 import type { ReportKey } from '../constants/reportConfig';
 
 /**
@@ -53,6 +52,7 @@ export type LoadingProps = {
     setLoading: (b: boolean) => void;
 };
 
+// 帳簿期間タイプ
 export type ReportBaseProps = {
     step: StepProps;
     file: FileProps;
