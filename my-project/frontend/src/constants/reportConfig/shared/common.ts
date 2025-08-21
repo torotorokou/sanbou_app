@@ -1,4 +1,5 @@
 // /app/src/constants/reportConfig/shared/common.ts
+import React from 'react';
 import type { CsvConfigGroup, ModalStepConfig, ReportConfig } from './types';
 
 // ==============================
@@ -16,18 +17,17 @@ export const LEDGER_REPORT_URL = '/ledger_api/reports';
 export const REPORT_API_ENDPOINTS = {
     // 工場日報系
     factory_report: `${LEDGER_REPORT_URL}/factory_report/`,
-    // factory_report: `${LEDGER_API_URL}`,
 
     // 収支・管理表系
-    balance_sheet: '/api/report/balance',
-    average_sheet: '/api/report/average',
-    management_sheet: '/api/report/management',
+    balance_sheet: `${LEDGER_REPORT_URL}/balance_sheet/`,
+    average_sheet: `${LEDGER_REPORT_URL}/average_sheet/`,
+    management_sheet: `${LEDGER_REPORT_URL}/management_sheet/`,
 
     // インタラクティブ帳簿系
-    block_unit_price: '/ledger_api/report/block_unit_price',
+    block_unit_price: `${LEDGER_REPORT_URL}/block_unit_price`,
 
     // 台帳系（将来追加用）
-    ledger_book: '/ledger_api/report/ledger',
+    ledger_book: `${LEDGER_REPORT_URL}/ledger`,
 } as const;
 
 /**
@@ -56,6 +56,26 @@ export const INTERACTIVE_REPORTS = {
         requiresUserInput: true,
     },
 } as const;
+
+// 共通のシンプルなモーダルステップ（作成中 -> 完了）
+export const SIMPLE_CREATE_AND_DONE_STEPS: ModalStepConfig[] = [
+    {
+        label: "帳簿作成中",
+        content: React.createElement(
+            "div",
+            {},
+            "帳簿を作成中です。しばらくお待ちください。"
+        ),
+        showNext: false,
+        showClose: false,
+    },
+    {
+        label: "完了",
+        content: React.createElement("div", {}, "完了しました"),
+        showNext: false,
+        showClose: true,
+    },
+];
 
 /**
  * 帳簿がインタラクティブタイプかチェック
