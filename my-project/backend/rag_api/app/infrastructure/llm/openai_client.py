@@ -41,6 +41,13 @@ def generate_answer(
     retrieved = search_documents_with_category(
         query, category, json_data, vectorstore, tags=tags
     )
+    try:
+        print(
+            "[DEBUG][openai_client] retrieved count:",
+            len(retrieved) if isinstance(retrieved, list) else "unknown",
+        )
+    except Exception:
+        pass
     context = "\n".join([r[1] for r in retrieved])
     prompt = build_prompt(query, context)
     response = client.chat.completions.create(
@@ -53,6 +60,8 @@ def generate_answer(
     )
     answer = (content or "").strip()
     sources = []
+    # pages は int もしくは文字列トークン（例: "201-218" や "1,5,201-220"）を混在で保持し、
+    # 下流の AIResponseService._normalize_pages で正規化・展開する。
     pages = []
     for r in retrieved:
         if isinstance(r, dict):
@@ -89,11 +98,23 @@ def generate_answer(
             continue
         sources.append(source)
         if page_num is not None and page_num != "":
-            try:
-                page_num_int = int(str(page_num).strip())
-            except Exception:
-                # ページが特定できない場合はスキップ（空白PDFの原因回避）
+            token = str(page_num).strip()
+            if not token:
                 continue
-            # 正規化: 下流は0/1両対応済み
-            pages.append(page_num_int)
+            # 単一数値は int に、それ以外（範囲や複合指定）は文字列トークンとして渡す
+            if token.isdigit():
+                try:
+                    pages.append(int(token))
+                except Exception:
+                    # 念のため、失敗時は文字列で渡す
+                    pages.append(token)
+            else:
+                pages.append(token)
+    try:
+        print(
+            "[DEBUG][openai_client] pages extracted (raw):",
+            pages[:10] if isinstance(pages, list) else pages,
+        )
+    except Exception:
+        pass
     return {"answer": answer, "sources": sources, "pages": pages}

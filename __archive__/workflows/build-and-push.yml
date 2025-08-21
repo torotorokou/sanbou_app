@@ -2,10 +2,10 @@ name: Build & Push images (main only)
 
 on:
   push:
-    branches: [ main ]   # ← main に push（=PRマージ）された時だけ実行
+    # branches: [ main ]   # ← main に push（=PRマージ）された時だけ実行
   # もし「Gitタグ v*.*.* を打った時だけ」にしたいなら上を消して↓を使う
   # push:
-  #   tags: [ "v*.*.*" ]
+    tags: [ "v*.*.*" ]
 
 env:
   REGION: asia-northeast1
