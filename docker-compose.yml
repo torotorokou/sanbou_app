@@ -21,7 +21,7 @@ services:
       db:
         condition: service_healthy
     secrets:
-      - gcp_sa.json
+      - gcs_key.json
     networks: [backend]
     restart: unless-stopped
     healthcheck:
@@ -54,7 +54,7 @@ services:
       db:
         condition: service_healthy
     secrets:
-      - gcp_sa.json
+      - gcs_key.json
     networks: [backend]
     restart: unless-stopped
     healthcheck:
@@ -87,7 +87,7 @@ services:
       db:
         condition: service_healthy
     secrets:
-      - gcp_sa.json
+      - gcs_key.json
     networks: [backend]
     restart: unless-stopped
     healthcheck:
@@ -120,7 +120,7 @@ services:
       db:
         condition: service_healthy
     secrets:
-      - gcp_sa.json
+      - gcs_key.json
     networks: [backend]
     restart: unless-stopped
     healthcheck:
@@ -187,5 +187,5 @@ volumes:
   dbdata:
 
 secrets:
-  gcp_sa.json:
-    file: ./secrets/gcp-sa.json
+  gcs_key.json:
+    file: ./secrets/gcs-key.json
