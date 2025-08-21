@@ -133,7 +133,7 @@ const QuestionPanel: React.FC<Props> = ({
 
                 {/* 絞り順: カテゴリ → タグ（必須） → テンプレート */}
                 <div style={{ marginBottom: 12 }}>
-                    <Typography.Text strong>タグ（複数選択可・必須）</Typography.Text>
+                    <Typography.Text strong>タグ（最大3つまで）</Typography.Text>
                     <Select
                         key={category || 'no-category'}
                         mode='multiple'
@@ -160,7 +160,11 @@ const QuestionPanel: React.FC<Props> = ({
                         value={template}
                         onChange={(val) => {
                             setTemplate(val);
-                            if (val !== '自由入力') setQuestion(val);
+                            if (val !== '自由入力') {
+                                // setTemplate と競合してテンプレートがリセットされるケースを避けるため
+                                // setQuestion は次のイベントループで実行する
+                                setTimeout(() => setQuestion(val), 0);
+                            }
                         }}
                         style={{ width: '100%', marginTop: 4 }}
                         disabled={!category || tags.length === 0}
