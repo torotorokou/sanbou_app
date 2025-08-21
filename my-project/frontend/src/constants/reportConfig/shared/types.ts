@@ -41,3 +41,6 @@ export interface PageReportConfig<T extends BaseReportKey> {
     pdfGeneratorMap: Record<T, () => Promise<string>>;
     pdfPreviewMap: Record<T, string>;
 }
+
+// 帳簿期間タイプ（共通定義）
+export type PeriodType = 'oneday' | 'oneweek' | 'onemonth';

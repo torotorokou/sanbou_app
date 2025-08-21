@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import * as JSZip from 'jszip';
 import { notifySuccess, notifyError, notifyInfo } from '../../utils/notify';
-import { getApiEndpoint } from '../../constants/reportConfig';
+import { getApiEndpoint, REPORT_KEYS } from '../../constants/reportConfig';
 import type { ReportKey } from '../../constants/reportConfig';
 
 type CsvFiles = { [csvLabel: string]: File | null };
@@ -52,19 +52,38 @@ export const useZipFileGeneration = () => {
                     }
                 });
                 formData.append('report_key', reportKey);
+                // コンフィグから periodType を解決
+                type KeysMap = typeof REPORT_KEYS;
+                type Entry = KeysMap[keyof KeysMap] & { periodType?: 'oneday' | 'oneweek' | 'onemonth' };
+                const entry = (REPORT_KEYS as KeysMap)[reportKey as keyof KeysMap] as Entry | undefined;
+                const periodTypeFromConfig = entry?.periodType;
+                if (periodTypeFromConfig) {
+                    formData.append('period_type', periodTypeFromConfig);
+                }
 
-                // デバッグログ
-                console.log('FormData for ZIP generation:');
-                Object.keys(csvFiles).forEach((label) => {
-                    const fileObj = csvFiles[label];
-                    if (fileObj) {
-                        const englishKey = labelToEnglishKey[label] || label;
-                        console.log(
-                            `FormData key: ${englishKey}, file name: ${fileObj.name}`
-                        );
-                    }
-                });
-                console.log(`FormData key: report_key, value: ${reportKey}`);
+                // デバッグログ（送信内容）
+                try {
+                    console.groupCollapsed('[Report] Request Payload');
+                    console.log('Endpoint:', getApiEndpoint(reportKey));
+                    console.log('Report Key:', reportKey);
+                    console.log('Derived period_type from config:', periodTypeFromConfig || '(none)');
+                    console.log('Files:');
+                    Object.keys(csvFiles).forEach((label) => {
+                        const fileObj = csvFiles[label];
+                        if (fileObj) {
+                            const englishKey = labelToEnglishKey[label] || label;
+                            console.log(` - ${englishKey}: name=${fileObj.name}, size=${fileObj.size}, type=${fileObj.type}`);
+                        }
+                    });
+                    // FormData 内容の確認
+                    const fdSummary: Record<string, string[]> = {};
+                    formData.forEach((value, key) => {
+                        const v = value instanceof File ? `${value.name} (${value.size} bytes)` : String(value);
+                        fdSummary[key] = [...(fdSummary[key] || []), v];
+                    });
+                    console.log('FormData Summary:', fdSummary);
+                    console.groupEnd();
+                } catch {}
 
                 // 帳簿タイプに応じてAPIエンドポイントを選択
                 const apiEndpoint = getApiEndpoint(reportKey);
@@ -75,6 +94,17 @@ export const useZipFileGeneration = () => {
                     body: formData,
                 });
 
+                // デバッグログ（レスポンス概要）
+                try {
+                    console.groupCollapsed('[Report] Response Meta');
+                    console.log('Status:', response.status, response.statusText);
+                    const interestingHeaders = ['content-type', 'content-length', 'content-disposition'];
+                    interestingHeaders.forEach((h) => {
+                        console.log(`${h}:`, response.headers.get(h) || '(missing)');
+                    });
+                    console.groupEnd();
+                } catch {}
+
                 if (!response.ok) {
                     await handleApiError(response);
                     return false;
@@ -82,6 +112,15 @@ export const useZipFileGeneration = () => {
 
                 const zipBlob = await response.blob();
                 const fileName = extractFileName(response);
+
+                // デバッグログ（受信Blob情報）
+                try {
+                    console.groupCollapsed('[Report] Received Blob');
+                    console.log('filename:', fileName);
+                    console.log('blob.type:', zipBlob.type || '(unknown)');
+                    console.log('blob.size:', zipBlob.size, 'bytes');
+                    console.groupEnd();
+                } catch {}
 
                 // ZIPファイルのオブジェクトURLを作成
                 const zipObjectUrl = window.URL.createObjectURL(zipBlob);
@@ -183,9 +222,11 @@ export const useZipFileGeneration = () => {
                 }
             }
 
-            console.log(
-                `Extracted from ZIP: Excel=${excelFile}, PDF=${pdfFile}`
-            );
+            console.groupCollapsed('[Report] ZIP Extract Summary');
+            console.log(`Excel File:`, excelFile || '(none)');
+            console.log(`PDF File:`, pdfFile || '(none)');
+            console.log('All ZIP entries:', Object.keys(zipContent.files));
+            console.groupEnd();
 
             // 状態確認ログ
             console.log('ZIP解凍完了 - 現在の状態:', {

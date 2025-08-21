@@ -1,4 +1,4 @@
-from src.api_response.response_base import ErrorApiResponse
+from .response_base import ErrorApiResponse
 from fastapi import UploadFile
 from typing import Any
 

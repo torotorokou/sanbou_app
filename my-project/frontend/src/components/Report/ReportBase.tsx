@@ -161,6 +161,7 @@ const ReportBase: React.FC<ReportBaseProps> = ({
                 pdfUrl={preview.previewUrl}
                 excelReady={zipProcessing.hasExcel || business.hasExcel}
                 pdfReady={zipProcessing.hasPdf || business.hasPdf}
+                header={undefined}
             >
                 <PDFViewer pdfUrl={preview.previewUrl} />
             </ReportManagePageLayout>

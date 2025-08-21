@@ -1,8 +1,10 @@
 import os
 from pathlib import Path
 
+print("APP_BASE_DIR:", os.environ.get("APP_BASE_DIR"))
+
 # プロジェクトのルートディレクトリ（Dockerコンテナ内の/appに固定 or 環境変数で上書き可）
-BASE_DIR = Path(os.environ.get("APP_BASE_DIR", "/app"))
+BASE_DIR = Path(os.environ.get("APP_BASE_DIR", "/backend"))
 
 # 各種パス（環境変数で上書き可）
 CONFIG_ENV = os.environ.get("CONFIG_ENV", str(BASE_DIR / "config/.env"))

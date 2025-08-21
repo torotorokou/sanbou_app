@@ -1,10 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import {
-    reportConfigMap,
-    modalStepsMap,
-    PAGE_REPORT_GROUPS,
-    type PageGroupKey,
-} from '../../constants/reportConfig';
+import { reportConfigMap, modalStepsMap } from '../../constants/reportConfig';
 import type { ReportKey } from '../../constants/reportConfig';
 
 // CSVファイルの型定義
@@ -54,7 +49,7 @@ export const useReportManager = (
         setPreviewUrl(null);
         setIsFinalized(false);
         setIsModalOpen(false);
-        setIsLoading(false);
+    setIsLoading(false);
     }, []);
 
     /**
@@ -137,7 +132,7 @@ export const useReportManager = (
         setPreviewUrl,
         setIsFinalized,
         setIsModalOpen,
-        setIsLoading,
+    setIsLoading,
 
         // 計算されたプロパティ
         areRequiredCsvsUploaded: areRequiredCsvsUploaded(),

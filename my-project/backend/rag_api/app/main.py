@@ -112,3 +112,9 @@ def get_pdf(name: str):
 @app.get("/")
 async def root():
     return {"message": "Welcome to the Sanbo Navi API"}
+
+
+# --- health (for docker compose) ---
+@app.get("/health", include_in_schema=False)
+def health():
+    return {"status": "ok"}
