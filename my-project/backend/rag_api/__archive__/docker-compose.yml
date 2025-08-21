@@ -10,7 +10,7 @@ services:
     volumes:
       - ./:/app
       - ./config/.env:/app/config/.env
-  - ./secrets/gcp-sa.json:/root/.config/gcloud/application_default_credentials.json
+  - ./secrets/gcs-key.json:/root/.config/gcloud/application_default_credentials.json
   - ./local_data/master:/local_data/master
     environment:
       - GOOGLE_APPLICATION_CREDENTIALS=/root/.config/gcloud/application_default_credentials.json

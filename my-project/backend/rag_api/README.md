@@ -23,7 +23,7 @@ rag_api/
 └── ...
 ```
 
-- GCSサービスアカウントキー: `secrets/gcp-sa.json`
+-- GCSサービスアカウントキー: `secrets/gcs-key.json`
 - OpenAI APIキー: `.env` または `envs/.env.rag_api` に `OPENAI_API_KEY=...`
 
 ---
@@ -53,7 +53,7 @@ docker compose up rag_api
 
 ```bash
 docker build -t rag_api .
-docker run --env-file ../envs/.env.rag_api -v $(pwd)/secrets/gcp-sa.json:/root/.config/gcloud/application_default_credentials.json rag_api
+docker run --env-file ../envs/.env.rag_api -v $(pwd)/secrets/gcs-key.json:/root/.config/gcloud/application_default_credentials.json rag_api
 ```
 
 ---

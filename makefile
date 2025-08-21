@@ -24,7 +24,7 @@ EDGE := edge                 # Nginx を起動する profile 名（stg/prod 用�
 
 ENV_FILE := env/.env.$(ENV)
 SECRETS_FILE := $(strip secrets/.env.$(ENV).secrets) # stg/prod の秘密保存先（git ignore想定）
-GCP_SA_FILE ?= secrets/gcp-sa.json # 必要なら存在チェック
+GCP_SA_FILE ?= secrets/gcs-key.json # 必要なら存在チェック
 GCP_SA_FILE := $(strip $(GCP_SA_FILE))
 
 # docker compose の変数展開で ${ENV_FILE} を参照させるため export
@@ -82,7 +82,7 @@ up:
 	  $(call LOG_ERROR_EXIT,$(ENV_FILE) がありません)
 	fi
 
-	# --- migrate legacy path: secret/gcs-key.json -> secrets/gcp-sa.json ---
+	# --- migrate legacy path: secret/gcs-key.json -> secrets/gcs-key.json ---
 	mkdir -p secrets
 	if [[ -f "secret/gcs-key.json" && ! -f "$(GCP_SA_FILE)" ]]; then
 	  mv -f secret/gcs-key.json "$(GCP_SA_FILE)"
@@ -104,10 +104,10 @@ up:
 	    mv -f "secrets/.env.$(ENV).secrets " "$(SECRETS_FILE)"
 	    $(call LOG_WARN,Renamed 'secrets/.env.$(ENV).secrets ' -> '$(SECRETS_FILE)')
 	  fi
-	  if [[ -f "secrets/gcp-sa.json " && ! -f "$(GCP_SA_FILE)" ]]; then
-	    mv -f "secrets/gcp-sa.json " "$(GCP_SA_FILE)"
-	    $(call LOG_WARN,Renamed 'secrets/gcp-sa.json ' -> '$(GCP_SA_FILE)')
-	  fi
+		if [[ -f "secrets/gcs-key.json " && ! -f "$(GCP_SA_FILE)" ]]; then
+			mv -f "secrets/gcs-key.json " "$(GCP_SA_FILE)"
+			$(call LOG_WARN,Renamed 'secrets/gcs-key.json ' -> '$(GCP_SA_FILE)')
+		fi
 
 	  # 既存の秘密を読み込み（あれば；未設定でもエラーにしない）
 	  set +e; set -a; . "$(SECRETS_FILE)" 2>/dev/null; set +a; set -e
@@ -158,7 +158,7 @@ rebuild:
 	  $(call LOG_ERROR_EXIT,$(ENV_FILE) がありません)
 	fi
 
-	# --- migrate legacy path: secret/gcs-key.json -> secrets/gcp-sa.json ---
+	# --- migrate legacy path: secret/gcs-key.json -> secrets/gcs-key.json ---
 	mkdir -p secrets
 	if [[ -f "secret/gcs-key.json" && ! -f "$(GCP_SA_FILE)" ]]; then
 	  mv -f secret/gcs-key.json "$(GCP_SA_FILE)"
@@ -172,10 +172,10 @@ rebuild:
 	    mv -f "secrets/.env.$(ENV).secrets " "$(SECRETS_FILE)"
 	    $(call LOG_WARN,Renamed 'secrets/.env.$(ENV).secrets ' -> '$(SECRETS_FILE)')
 	  fi
-	  if [[ -f "secrets/gcp-sa.json " && ! -f "$(GCP_SA_FILE)" ]]; then
-	    mv -f "secrets/gcp-sa.json " "$(GCP_SA_FILE)"
-	    $(call LOG_WARN,Renamed 'secrets/gcp-sa.json ' -> '$(GCP_SA_FILE)')
-	  fi
+		if [[ -f "secrets/gcs-key.json " && ! -f "$(GCP_SA_FILE)" ]]; then
+			mv -f "secrets/gcs-key.json " "$(GCP_SA_FILE)"
+			$(call LOG_WARN,Renamed 'secrets/gcs-key.json ' -> '$(GCP_SA_FILE)')
+		fi
 	  if [[ ! -f "$(SECRETS_FILE)" ]]; then
 	    $(call LOG_ERROR_EXIT,secrets 未設定。先に 'make up ENV=$(ENV)' で設定してください。)
 	  fi
