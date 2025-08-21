@@ -29,7 +29,6 @@ import os
 from datetime import datetime
 from zoneinfo import ZoneInfo
 from typing import List, Dict, Any
-from app.infrastructure.llm import ai_loader
 from app.utils.file_utils import PDF_PATH
 from app.paths import get_pdf_url_prefix
 from .pdf_service_base import PDFServiceBase
@@ -68,6 +67,8 @@ class AIResponseService:
         sources: list[Any] = []
         pages = None
         try:
+            # 遅延インポート：テストや軽量実行時に不要な依存を避ける
+            from app.infrastructure.llm import ai_loader  # type: ignore
             result = ai_loader.get_answer(query, category, tags)
             answer = result.get("answer")
             sources = result.get("sources", [])
@@ -127,51 +128,74 @@ class AIResponseService:
         return {"answer": answer, "sources": sources, "pdf_url": pdf_url}
 
     def _normalize_pages(self, pages) -> List[int]:
-        """ページリストを正規化"""
+        """ページリストを正規化
+
+        - カンマ区切りや範囲指定(1-3)を展開して、正の整数の昇順ユニークなリストを返す。
+        - 不正トークンは無視しつつデバッグログを出力する。
+        """
+        before_repr = repr(pages)
         normalized: List[int] = []
-        if not pages:
-            return normalized
 
-        def to_int_safe(v) -> int | None:
-            try:
-                return int(str(v).strip())
-            except Exception:
-                return None
+        def debug_skip(token: object, reason: str) -> None:
+            print(f"[DEBUG][normalize_pages] skip token={token!r} reason={reason}")
 
-        # 文字列単体 or 範囲
-        if isinstance(pages, str):
-            s = pages.strip()
-            if "-" in s:
+        def add_if_positive(n: int) -> None:
+            if isinstance(n, int) and n > 0:
+                normalized.append(n)
+            else:
+                debug_skip(n, "non_positive")
+
+        def handle_token(token: object) -> None:
+            t = str(token).strip()
+            if not t:
+                debug_skip(token, "empty")
+                return
+            if "-" in t:
                 try:
-                    start_s, end_s = s.split("-", 1)
+                    start_s, end_s = t.split("-", 1)
                     start, end = int(start_s.strip()), int(end_s.strip())
                     if start <= end:
-                        normalized.extend(range(start, end + 1))
+                        for x in range(start, end + 1):
+                            add_if_positive(x)
+                    else:
+                        debug_skip(t, "range_start_gt_end")
                 except Exception:
-                    n = to_int_safe(s)
-                    if n is not None:
-                        normalized.append(n)
+                    try:
+                        n = int(t)
+                        add_if_positive(n)
+                    except Exception:
+                        debug_skip(t, "not_int_or_range")
             else:
-                n = to_int_safe(s)
-                if n is not None:
-                    normalized.append(n)
-        # リスト
+                try:
+                    n = int(t)
+                    add_if_positive(n)
+                except Exception:
+                    debug_skip(t, "not_int")
+
+        # None → []
+        if pages is None:
+            print(f"[DEBUG][normalize_pages] before={before_repr}, after=[]")
+            return []
+
+        # 単一の整数
+        if isinstance(pages, int):
+            add_if_positive(pages)
+        # 文字列（カンマ分割 → 各トークン処理）
+        elif isinstance(pages, str):
+            for tok in pages.split(","):
+                handle_token(tok)
+        # リスト（要素内のカンマも処理）
         elif isinstance(pages, list):
             for p in pages:
-                if isinstance(p, str) and "-" in p:
-                    try:
-                        start_s, end_s = p.split("-", 1)
-                        start, end = int(start_s.strip()), int(end_s.strip())
-                        if start <= end:
-                            normalized.extend(range(start, end + 1))
-                    except Exception:
-                        n = to_int_safe(p)
-                        if n is not None:
-                            normalized.append(n)
+                if isinstance(p, str) and "," in p:
+                    for tok in p.split(","):
+                        handle_token(tok)
                 else:
-                    n = to_int_safe(p)
-                    if n is not None:
-                        normalized.append(n)
+                    handle_token(p)
+        else:
+            # 未知型は無視
+            debug_skip(type(pages).__name__, "unsupported_type")
 
-        # 重複排除＋昇順ソート（任意だが安定）
-        return sorted(set(normalized))
+        after = sorted(set(normalized))
+        print(f"[DEBUG][normalize_pages] before={before_repr}, after={after}")
+        return after
