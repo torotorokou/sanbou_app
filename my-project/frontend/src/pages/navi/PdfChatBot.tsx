@@ -85,6 +85,34 @@ const PdfChatBot: React.FC = () => {
     // 送信用：ユーザー選択のみ（一意化＆空除去）
     const tagsToSend = useMemo(() => Array.from(new Set(tags)).filter(Boolean), [tags]);
 
+    // タグは最大3件までに制限するハンドラ
+    const handleSetTag = (val: string[] | ((prev: string[]) => string[])) => {
+        // val が関数か配列か両方に対応
+        let nextTags: string[] = [];
+        if (typeof val === 'function') {
+            try {
+                nextTags = val(tags) || [];
+            } catch {
+                nextTags = tags;
+            }
+        } else {
+            nextTags = val || [];
+        }
+        // 一意化・空文字除去
+        nextTags = Array.from(new Set(nextTags)).filter(Boolean);
+        if (nextTags.length > 3) {
+            // 上限超過は切り詰めて通知
+            addNotification({
+                type: 'warning',
+                title: 'タグは3つまでです',
+                message: 'タグは最大3つまで選択できます。先に選択した3つが採用されます。',
+                duration: 3000,
+            });
+            nextTags = nextTags.slice(0, 3);
+        }
+        setTag(nextTags);
+    };
+
     const handleSearch = async (): Promise<void> => {
         if (!question.trim()) return;
         setCurrentStep(3);
@@ -100,7 +128,7 @@ const PdfChatBot: React.FC = () => {
         console.log('[API][REQUEST] /rag_api/api/generate-answer payload:', payload);
 
         try {
-            const res = await axios.post<ApiResponse<ChatAnswerResult> | any>(
+            const res = await axios.post<ApiResponse<ChatAnswerResult>>(
                 '/rag_api/api/generate-answer',
                 payload
             );
@@ -134,11 +162,12 @@ const PdfChatBot: React.FC = () => {
                 };
             } else {
                 // 旧スキーマ: answer, pdf_urls, pages, merged_pdf_url などが直下に来る
-                const legacy = res.data ?? {};
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const legacyAny: any = res.data ?? {};
                 normalized = {
-                    answer: legacy.answer ?? '',
+                    answer: legacyAny.answer ?? '',
                     // merged_pdf_url > pdf_url の優先で採用
-                    pdf_url: legacy.merged_pdf_url ?? legacy.pdf_url ?? null,
+                    pdf_url: legacyAny.merged_pdf_url ?? legacyAny.pdf_url ?? null,
                 };
             }
 
@@ -214,7 +243,8 @@ const PdfChatBot: React.FC = () => {
                         setTemplate('自由入力');
                     }}
                     tags={tags}
-                    setTag={setTag}
+                    // タグ更新はラッパー経由（最大3件制限）
+                    setTag={handleSetTag}
                     template={template}
                     setTemplate={(val) => {
                         setTemplate(val);
