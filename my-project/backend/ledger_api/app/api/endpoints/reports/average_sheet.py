@@ -13,7 +13,7 @@ router = APIRouter()
 report_service = ReportProcessingService()
 
 
-@router.post("/")
+@router.post("")
 async def generate_average_sheet(
     shipment: UploadFile = File(None),
     yard: UploadFile = File(None),

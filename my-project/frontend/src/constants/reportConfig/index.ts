@@ -57,7 +57,7 @@ export const REPORT_KEYS = {
 export type ReportKey = ManageReportKey | FactoryReportKey | LedgerReportKey;
 export const REPORT_OPTIONS = Object.values(REPORT_KEYS);
 
-// ページグループ設定（リファクタリング済み）
+// ページグループ設定
 export const PAGE_REPORT_GROUPS = {
     manage: Object.values(MANAGE_REPORT_KEYS),
     factory: Object.values(FACTORY_REPORT_KEYS),
