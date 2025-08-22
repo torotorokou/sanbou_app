@@ -97,20 +97,7 @@ export const manageModalStepsMap: Record<ManageReportKey, ModalStepConfig[]> = {
       showClose: true,
     },
   ],
-  management_sheet: [
-    {
-      label: "帳簿作成中",
-      content: React.createElement("div", {}, "帳票を生成中です"),
-      showNext: true,
-      showClose: false,
-    },
-    {
-      label: "完了",
-      content: React.createElement("div", {}, "完了しました"),
-      showNext: false,
-      showClose: true,
-    },
-  ],
+  management_sheet:[...SIMPLE_CREATE_AND_DONE_STEPS],
 };
 
 // PDFプレビュー設定

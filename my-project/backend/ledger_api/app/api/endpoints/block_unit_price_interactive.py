@@ -18,6 +18,7 @@ from app.api.st_app.logic.manage.block_unit_price_interactive import (
 
 # APIルーターの初期化
 router = APIRouter()
+tag_name = "Block Unit Price"
 
 
 class StartProcessRequest(BaseModel):
@@ -57,7 +58,7 @@ class FinalizeRequest(BaseModel):
     confirmed: bool = True  # 確認フラグ
 
 
-@router.post("/initial")
+@router.post("/initial", tags=[tag_name])
 async def start_block_unit_price_process(request: StartProcessRequest):
     """
     ブロック単価計算処理開始 (Step 0)
@@ -87,7 +88,7 @@ async def start_block_unit_price_process(request: StartProcessRequest):
         raise HTTPException(status_code=500, detail=f"処理開始エラー: {str(e)}")
 
 
-@router.post("/select-transport")
+@router.post("/select-transport", tags=[tag_name])
 async def select_transport_vendors(request: TransportSelectionRequest):
     """
     運搬業者選択処理 (Step 1)
@@ -112,7 +113,7 @@ async def select_transport_vendors(request: TransportSelectionRequest):
         raise HTTPException(status_code=500, detail=f"運搬業者選択エラー: {str(e)}")
 
 
-@router.post("/finalize")
+@router.post("/finalize", tags=[tag_name])
 async def finalize_calculation(request: FinalizeRequest):
     """
     最終計算処理 (Step 2)
@@ -137,7 +138,7 @@ async def finalize_calculation(request: FinalizeRequest):
         raise HTTPException(status_code=500, detail=f"最終計算エラー: {str(e)}")
 
 
-@router.get("/status/{step}")
+@router.get("/status/{step}", tags=[tag_name])
 async def get_step_info(step: int):
     """
     各ステップの説明情報を取得

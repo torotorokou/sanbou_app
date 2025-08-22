@@ -16,15 +16,15 @@ export const LEDGER_REPORT_URL = '/ledger_api/reports';
  */
 export const REPORT_API_ENDPOINTS = {
     // 工場日報系
-    factory_report: `${LEDGER_REPORT_URL}/factory_report/`,
+    factory_report: `${LEDGER_REPORT_URL}/factory_report`,
 
     // 収支・管理表系
-    balance_sheet: `${LEDGER_REPORT_URL}/balance_sheet/`,
-    average_sheet: `${LEDGER_REPORT_URL}/average_sheet/`,
-    management_sheet: `${LEDGER_REPORT_URL}/management_sheet/`,
+    balance_sheet: `${LEDGER_REPORT_URL}/balance_sheet`,
+    average_sheet: `${LEDGER_REPORT_URL}/average_sheet`,
+    management_sheet: `${LEDGER_REPORT_URL}/management_sheet`,
 
     // インタラクティブ帳簿系
-    block_unit_price: `${LEDGER_REPORT_URL}/block_unit_price`,
+    block_unit_price: `${LEDGER_REPORT_URL}/block_unit_price_interactive`,
 
     // 台帳系（将来追加用）
     ledger_book: `${LEDGER_REPORT_URL}/ledger`,
