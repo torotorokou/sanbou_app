@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { LEDGER_API_URL } from '../../../constants/reportConfig';
+import { LEDGER_API_URL } from '@/constants/reportConfig';
 
 interface TransportOption {
     vendor_code: string;

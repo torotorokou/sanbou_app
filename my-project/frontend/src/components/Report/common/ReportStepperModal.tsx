@@ -4,7 +4,7 @@ import type { ReactNode } from 'react';
 
 const { Step } = Steps;
 
-import type { ModalStepConfig } from '../../constants/reportConfig';
+import type { ModalStepConfig } from '@/constants/reportConfig';
 
 export type ReportStepperModalProps = {
     open: boolean;

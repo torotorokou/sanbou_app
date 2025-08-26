@@ -9,26 +9,24 @@
 
 from typing import Any, Dict
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, File, HTTPException, UploadFile
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
+from app.api.services.report.interactive_report_processing_service import (
+    InteractiveReportProcessingService,
+)
 from app.api.st_app.logic.manage.block_unit_price_interactive import (
     BlockUnitPriceInteractive,
 )
 
 # APIルーターの初期化
 router = APIRouter()
+tag_name = "Block Unit Price"
 
 
-class StartProcessRequest(BaseModel):
-    """
-    処理開始リクエストモデル
-
-    Attributes:
-        files (Dict[str, Any]): アップロードされたファイルデータ
-    """
-
-    files: Dict[str, Any]  # アップロードされたファイルデータ
+class StartProcessRequest(BaseModel):  # レガシー JSON 経由 (互換用)
+    files: Dict[str, Any]
 
 
 class TransportSelectionRequest(BaseModel):
@@ -45,20 +43,27 @@ class TransportSelectionRequest(BaseModel):
 
 
 class FinalizeRequest(BaseModel):
-    """
-    最終確認リクエストモデル
+    """最終確認リクエストモデル"""
 
-    Attributes:
-        session_data (Dict[str, Any]): 前のステップのセッションデータ
-        confirmed (bool): 確認フラグ
-    """
-
-    session_data: Dict[str, Any]  # 前のステップのセッションデータ
-    confirmed: bool = True  # 確認フラグ
+    session_data: Dict[str, Any]
+    confirmed: bool = True
 
 
-@router.post("/initial")
-async def start_block_unit_price_process(request: StartProcessRequest):
+class GenericApplyRequest(BaseModel):
+    """任意ステップ適用リクエスト"""
+
+    session_data: Dict[str, Any]
+    user_input: Dict[str, Any]
+
+
+@router.post("/initial", tags=[tag_name])
+async def start_block_unit_price_process(
+    request: StartProcessRequest | None = None,
+    # 推奨: multipart/form-data で UploadFile を受け取る
+    receive: UploadFile | None = File(None),
+    yard: UploadFile | None = File(None),
+    shipment: UploadFile | None = File(None),
+):
     """
     ブロック単価計算処理開始 (Step 0)
 
@@ -75,19 +80,31 @@ async def start_block_unit_price_process(request: StartProcessRequest):
     """
 
     try:
-        # request.files からファイルを取得
-        files = request.files
-        print(f"Uploaded files: {list(files.keys())}")
+        # 1) UploadFile 優先 (新方式)
+        upload_files: Dict[str, UploadFile] = {}
+        for key, f in {"shipment": shipment}.items():
+            if f is not None:
+                upload_files[key] = f
 
-        # ブロック単価計算プロセッサーの初期化と処理開始
-        processor = BlockUnitPriceInteractive()
-        result = processor.start_process(files)
+        # 2) 後方互換: JSON 経由 (Base64 等) は既存ロジックで使う: files=dict
+        if not upload_files and request is not None:
+            # 既存 BlockUnitPriceInteractive は DataFrame 受領想定なので
+
+            generator = BlockUnitPriceInteractive(files=request.files)
+            # interactive service initial は通常 UploadFile を想定するため、
+            # ここでは直接 initial_step を呼べるよう format 済み dict を前提とするケースを簡易対応
+            # → 実運用ではアップロード方式へ移行推奨
+            return {"status": "deprecated", "message": "Use multipart upload instead."}
+
+        service = InteractiveReportProcessingService()
+        generator = BlockUnitPriceInteractive(files={})
+        result = service.initial(generator, upload_files)
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"処理開始エラー: {str(e)}")
 
 
-@router.post("/select-transport")
+@router.post("/select-transport", tags=[tag_name])
 async def select_transport_vendors(request: TransportSelectionRequest):
     """
     運搬業者選択処理 (Step 1)
@@ -104,16 +121,19 @@ async def select_transport_vendors(request: TransportSelectionRequest):
         HTTPException: 処理中にエラーが発生した場合
     """
     try:
-        # 運搬業者選択の処理実行
-        processor = BlockUnitPriceInteractive()
-        result = processor.process_selection(request.session_data, request.selections)
+        service = InteractiveReportProcessingService()
+        generator = BlockUnitPriceInteractive()
+        # selections は user_input として渡す
+        result = service.apply(
+            generator, request.session_data, {"selections": request.selections}
+        )
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"運搬業者選択エラー: {str(e)}")
 
 
-@router.post("/finalize")
-async def finalize_calculation(request: FinalizeRequest):
+@router.post("/finalize", tags=[tag_name], response_class=StreamingResponse)
+async def finalize_calculation(request: FinalizeRequest) -> StreamingResponse:
     """
     最終計算処理 (Step 2)
 
@@ -129,15 +149,19 @@ async def finalize_calculation(request: FinalizeRequest):
         HTTPException: 処理中にエラーが発生した場合
     """
     try:
-        # 最終計算の実行
-        processor = BlockUnitPriceInteractive()
-        result = processor.finalize_calculation(request.session_data, request.confirmed)
-        return result
+        if not request.confirmed:
+            raise HTTPException(
+                status_code=400, detail="未確認のため finalize できません"
+            )
+        service = InteractiveReportProcessingService()
+        generator = BlockUnitPriceInteractive()
+        response = service.finalize(generator, request.session_data)
+        return response
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"最終計算エラー: {str(e)}")
 
 
-@router.get("/status/{step}")
+@router.get("/status/{step}", tags=[tag_name])
 async def get_step_info(step: int):
     """
     各ステップの説明情報を取得
@@ -180,3 +204,19 @@ async def get_step_info(step: int):
         raise HTTPException(status_code=404, detail="無効なステップです")
 
     return step_info[step]
+
+
+@router.post("/apply", tags=[tag_name])
+async def apply_generic_step(request: GenericApplyRequest):
+    """汎用ステップ適用エンドポイント
+
+    user_input.action もしくは user_input.step に対応するハンドラを呼び出し、
+    任意回数の対話ステップをサポートする。
+    """
+    try:
+        service = InteractiveReportProcessingService()
+        generator = BlockUnitPriceInteractive()
+        result = service.apply(generator, request.session_data, request.user_input)
+        return result
+    except Exception as e:  # noqa: BLE001
+        raise HTTPException(status_code=500, detail=f"汎用ステップ適用エラー: {e}")
