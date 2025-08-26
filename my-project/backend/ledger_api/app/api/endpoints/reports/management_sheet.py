@@ -1,12 +1,10 @@
-# backend/app/api/endpoints/reports/balance_sheet.py
-
 from typing import Optional
 
-from app.api.services.report.report_processing_service import ReportProcessingService
 from fastapi import APIRouter, File, Form, UploadFile
 from fastapi.responses import Response
 
-from app.api.services.report.concrete_generators import BalanceSheetGenerator
+from app.api.services.report.concrete_generators import ManagementSheetGenerator
+from app.api.services.report.report_processing_service import ReportProcessingService
 
 # APIルーターの初期化
 router = APIRouter()
@@ -16,7 +14,7 @@ report_service = ReportProcessingService()
 
 
 @router.post("")
-async def generate_balance_sheet(
+async def generate_management_sheet(
     shipment: UploadFile = File(None),
     yard: UploadFile = File(None),
     receive: UploadFile = File(None),
@@ -25,9 +23,9 @@ async def generate_balance_sheet(
     ),  # "oneday" | "oneweek" | "onemonth"（任意）
 ) -> Response:
     """
-    工場搬出入収支表生成APIエンドポイント
+    管理票（management sheet）生成APIエンドポイント
 
-    受入・ヤード・出荷一覧から収支表を自動集計します。
+    受入・ヤード・出荷データから管理票を生成します。
 
     Args:
         shipment (UploadFile, optional): 出荷データCSVファイル
@@ -45,7 +43,7 @@ async def generate_balance_sheet(
     }
 
     # 対象Generatorを直接生成し、共通フローを実行
-    generator = BalanceSheetGenerator("balance_sheet", files)
+    generator = ManagementSheetGenerator("management_sheet", files)
     if period_type:
         generator.period_type = period_type
     return report_service.run(generator, files)

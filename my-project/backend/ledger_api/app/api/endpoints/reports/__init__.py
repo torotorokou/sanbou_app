@@ -2,7 +2,13 @@
 
 from fastapi import APIRouter
 
-from . import balance_sheet, block_unit_price, factory_report
+from . import (
+    average_sheet,
+    balance_sheet,
+    block_unit_price,
+    factory_report,
+    management_sheet,
+)
 
 # 帳票系APIの統合ルーター
 reports_router = APIRouter()
@@ -17,7 +23,17 @@ reports_router.include_router(
 )
 
 reports_router.include_router(
+    average_sheet.router, prefix="/average_sheet", tags=["Average Sheet"]
+)
+
+
+reports_router.include_router(
     block_unit_price.router, prefix="/block_unit_price", tags=["Block Unit Price"]
+)
+
+
+reports_router.include_router(
+    management_sheet.router, prefix="/management_sheet", tags=["Management Sheet"]
 )
 
 # 必要に応じて他の帳票エンドポイントも追加

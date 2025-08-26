@@ -159,14 +159,17 @@ services:
       retries: 6
 
   nginx:
-    image: nginx:1.27-alpine
+    build:
+      context: ./my-project
+      dockerfile: nginx/Dockerfile
     profiles: [edge]
     env_file:
       - ${ENV_FILE}
     ports: ["80:80", "443:443"]
     volumes:
-      - ./my-project/nginx/conf.d:/etc/nginx/conf.d:ro
-      - ./my-project/nginx/certs:/etc/nginx/certs:ro
+      - ./my-project/nginx/conf.d:/etc/nginx/conf.d:ro   # 設定をホットリロードしたい場合
+      - ./my-project/nginx/certs:/etc/nginx/certs:ro     # TLS 証明書 (任意)
+      # dist はイメージ内に同梱済みのためマウント不要
     depends_on:
       ai_api:
         condition: service_healthy

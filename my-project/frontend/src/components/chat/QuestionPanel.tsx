@@ -82,7 +82,7 @@ const QuestionPanel: React.FC<Props> = ({
     }, [tagOptions]);
 
     return (
-        <div style={{ marginBottom: 8 /* ←狭く */ }}>
+        <div style={{ marginBottom: 16 /* ←狭く */ }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
                 <Typography.Title level={4} style={{ margin: 0 }}>
                     質問を入力

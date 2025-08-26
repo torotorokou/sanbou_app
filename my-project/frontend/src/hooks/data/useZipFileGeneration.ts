@@ -1,8 +1,8 @@
 import { useState, useCallback } from 'react';
 import * as JSZip from 'jszip';
 import { notifySuccess, notifyError, notifyInfo } from '../../utils/notify';
-import { getApiEndpoint, REPORT_KEYS } from '../../constants/reportConfig';
-import type { ReportKey } from '../../constants/reportConfig';
+import { getApiEndpoint, REPORT_KEYS } from '@/constants/reportConfig';
+import type { ReportKey } from '@/constants/reportConfig';
 
 type CsvFiles = { [csvLabel: string]: File | null };
 

@@ -3,7 +3,7 @@ import React from "react";
 import { CSV_DEFINITIONS } from "../../CsvDefinition";
 import BlockUnitPriceInteractive from "../../../components/Report/individual_process/BlockUnitPriceInteractive";
 import type { CsvConfigGroup, ModalStepConfig } from "../shared/types";
-import { createReportConfig } from "../shared/common";
+import { createReportConfig, SIMPLE_CREATE_AND_DONE_STEPS } from "../shared/common";
 import type { PeriodType } from "../shared/types";
 
 // ==============================
@@ -41,6 +41,8 @@ export const MANAGE_REPORT_KEYS = {
 export type ManageReportKey = keyof typeof MANAGE_REPORT_KEYS;
 export const MANAGE_REPORT_OPTIONS = Object.values(MANAGE_REPORT_KEYS);
 
+// ...common steps are imported from shared/common.ts
+
 // CSV設定
 export const manageCsvConfigMap: Record<ManageReportKey, CsvConfigGroup> = {
   factory_report: [
@@ -63,58 +65,10 @@ export const manageCsvConfigMap: Record<ManageReportKey, CsvConfigGroup> = {
 
 // モーダルステップ設定
 export const manageModalStepsMap: Record<ManageReportKey, ModalStepConfig[]> = {
-  factory_report: [
-    {
-      label: "帳簿作成中",
-      content: React.createElement(
-        "div",
-        {},
-        "帳簿を作成中です。しばらくお待ちください。"
-      ),
-      showNext: false,
-      showClose: false,
-    },
-    {
-      label: "完了",
-      content: React.createElement("div", {}, "完了しました"),
-      showNext: false,
-      showClose: true,
-    },
-  ],
-  balance_sheet: [
-    {
-      label: "帳簿作成中",
-      content: React.createElement("div", {}, "帳票を生成中です"),
-      showNext: false,
-      showClose: false,
-    },
-    {
-      label: "運搬業者選択",
-      content: React.createElement(BlockUnitPriceInteractive),
-      showNext: true,
-      showClose: false,
-    },
-    {
-      label: "完了",
-      content: React.createElement("div", {}, "完了しました"),
-      showNext: false,
-      showClose: true,
-    },
-  ],
-  average_sheet: [
-    {
-      label: "帳簿作成中",
-      content: React.createElement("div", {}, "帳票を生成中です"),
-      showNext: true,
-      showClose: false,
-    },
-    {
-      label: "完了",
-      content: React.createElement("div", {}, "完了しました"),
-      showNext: false,
-      showClose: true,
-    },
-  ],
+  // factory_report と balance_sheet は同じステップなので共通定義を使う
+  factory_report: [...SIMPLE_CREATE_AND_DONE_STEPS],
+  balance_sheet: [...SIMPLE_CREATE_AND_DONE_STEPS],
+  average_sheet: [...SIMPLE_CREATE_AND_DONE_STEPS],
   block_unit_price: [
     {
       label: "帳簿作成中",
@@ -143,20 +97,7 @@ export const manageModalStepsMap: Record<ManageReportKey, ModalStepConfig[]> = {
       showClose: true,
     },
   ],
-  management_sheet: [
-    {
-      label: "帳簿作成中",
-      content: React.createElement("div", {}, "帳票を生成中です"),
-      showNext: true,
-      showClose: false,
-    },
-    {
-      label: "完了",
-      content: React.createElement("div", {}, "完了しました"),
-      showNext: false,
-      showClose: true,
-    },
-  ],
+  management_sheet:[...SIMPLE_CREATE_AND_DONE_STEPS],
 };
 
 // PDFプレビュー設定
