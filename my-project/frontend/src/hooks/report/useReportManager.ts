@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { reportConfigMap, modalStepsMap } from '../../constants/reportConfig';
-import type { ReportKey } from '../../constants/reportConfig';
+import { reportConfigMap, modalStepsMap } from '@/constants/reportConfig';
+import type { ReportKey } from '@/constants/reportConfig';
 
 // CSVファイルの型定義
 type CsvFiles = { [csvLabel: string]: File | null };

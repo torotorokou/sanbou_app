@@ -1,10 +1,13 @@
 # backend/app/api/st_app/logic/manage/block_unit_price_interactive.py
 
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import pandas as pd
 
+from app.api.services.report.base_interactive_report_generator import (
+    BaseInteractiveReportGenerator,
+)
 from app.api.st_app.config.loader.main_path import MainPath
 from app.api.st_app.logic.manage.processors.block_unit_price.process0 import (
     apply_transport_fee_by1,
@@ -46,186 +49,157 @@ class InteractiveProcessState:
     df_transport_cost: Optional[pd.DataFrame] = None
 
 
-class BlockUnitPriceInteractive:
-    """ブロック単価計算の対話的処理クラス"""
+class BlockUnitPriceInteractive(BaseInteractiveReportGenerator):
+    """ブロック単価計算の対話的処理クラス (Interactive Generator)"""
 
-    def __init__(self):
+    def __init__(self, files: Optional[Dict[str, Any]] = None):
+        super().__init__(report_key="block_unit_price", files=files or {})
         self.logger = app_logger()
 
-    def start_process(self, dfs: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        処理開始（Step 0）
-
-        Returns:
-            Dict: {
-                "status": "success",
-                "step": 0,
-                "message": "初期処理完了",
-                "data": {...}
-            }
-        """
-        self.logger.info("▶️ ブロック単価計算処理開始（対話版 Step 0）")
-
+    # -------- Step 0 --------
+    def initial_step(self, df_formatted: Dict[str, Any]):  # type: ignore[override]
         try:
-            # --- 設定とマスターデータの読み込み ---
+            # Debug: inspect incoming formatted shipment
+            try:
+                _df_dbg = df_formatted.get("shipment")
+                if isinstance(_df_dbg, pd.DataFrame):
+                    print(
+                        "[DEBUG] initial_step shipment columns:", list(_df_dbg.columns)
+                    )
+                    print(
+                        "[DEBUG] initial_step shipment head:", _df_dbg.head(3).to_dict()
+                    )
+            except Exception as _e:  # noqa: BLE001
+                print("[DEBUG] failed to dump incoming shipment:", _e)
             template_key = "block_unit_price"
             template_config = get_template_config()[template_key]
             template_name = template_config["key"]
             csv_keys = template_config["required_files"]
 
-            # マスターデータ
+            # master
             config = get_template_config()["block_unit_price"]
             master_path = config["master_csv_path"]["vendor_code"]
             master_csv = load_master_and_template(master_path)
 
-            # 運搬費データ
+            df_dict = load_all_filtered_dataframes(
+                df_formatted, csv_keys, template_name
+            )
+            df_shipment = df_dict.get("shipment")
+            if df_shipment is None:
+                raise ValueError("出荷データが見つかりません")
+
             mainpath = MainPath()
             reader = ReadTransportDiscount(mainpath)
             df_transport_cost = reader.load_discounted_df()
 
-            # 出荷データ
-            df_dict = load_all_filtered_dataframes(dfs, csv_keys, template_name)
-            df_shipment = df_dict.get("shipment")
-
-            if df_shipment is None:
-                return {"status": "error", "message": "出荷データが見つかりません"}
-
-            # 基本処理の実行
             df_shipment = make_df_shipment_after_use(master_csv, df_shipment)
             df_shipment = apply_unit_price_addition(master_csv, df_shipment)
             df_shipment = apply_transport_fee_by1(df_shipment, df_transport_cost)
 
-            # 運搬業者選択肢を準備
             transport_options = self._prepare_transport_options(
                 df_transport_cost, df_shipment
             )
 
-        # interface InteractiveItem {
-        #     id: string; // 対象ID
-        #     processor_name: string; // 処理業者名
-        #     product_name: string; // 商品名
-        #     note?: string; // 備考
-        #     transport_options: TransportVendor[]; // 選択肢
-        # }
-
-        except Exception as e:
-            self.logger.error(f"Step 0 処理中にエラー: {e}")
-            return {
-                "status": "error",
-                "message": f"初期処理中にエラーが発生しました: {str(e)}",
+            state = {
+                "df_shipment": df_shipment,
+                "master_csv": master_csv,
+                "df_transport_cost": df_transport_cost,
             }
+            payload = {
+                "transport_options": [t.__dict__ for t in transport_options],
+                "step": 0,
+                "message": "初期処理完了",
+            }
+            return state, payload
+        except Exception as e:  # noqa: BLE001
+            self.logger.error(f"Step 0 error: {e}")
+            return {}, {"status": "error", "message": str(e), "step": 0}
 
-    def process_selection(
-        self, session_data: Dict[str, Any], selections: Dict[str, str]
-    ) -> Dict[str, Any]:
-        """
-        運搬業者選択処理（Step 1）
+    # -------- Generic Step Handlers --------
+    def get_step_handlers(
+        self,
+    ) -> Dict[
+        str,
+        Callable[
+            [Dict[str, Any], Dict[str, Any]], Tuple[Dict[str, Any], Dict[str, Any]]
+        ],
+    ]:  # type: ignore[override]
+        return {
+            "select_transport": self._handle_select_transport,
+            "1": self._handle_select_transport,  # 数値指定互換
+        }
 
-        Args:
-            session_data: 前のステップで保存されたセッションデータ
-            selections: {業者名: 選択された運搬業者コード}
+    def _handle_select_transport(
+        self, state: Dict[str, Any], user_input: Dict[str, Any]
+    ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+        selections: Dict[str, str] = user_input.get("selections", {})
+        df_shipment: pd.DataFrame = state["df_shipment"]
+        df_transport_cost: pd.DataFrame = state["df_transport_cost"]
+        df_shipment = self._apply_transport_selections(
+            df_shipment, df_transport_cost, selections
+        )
+        state["df_shipment"] = df_shipment
+        state["selections"] = selections
+        selection_summary = self._create_selection_summary(df_shipment, selections)
+        payload = {
+            "selection_summary": selection_summary,
+            "message": "運搬業者選択を適用しました",
+            "step": 1,
+            "action": "select_transport",
+        }
+        return state, payload
 
-        Returns:
-            Dict: 処理結果とStep 2への準備情報
-        """
-        self.logger.info("▶️ 運搬業者選択処理（対話版 Step 1）")
-
+    # -------- Finalize Step (Step 2) --------
+    def finalize_step(self, state: Dict[str, Any]):  # type: ignore[override]
         try:
-            # セッションデータから復元
-            df_shipment = pd.read_json(session_data["df_shipment_json"])
-            master_csv = pd.read_json(session_data["master_csv_json"])
-            df_transport_cost = pd.read_json(session_data["df_transport_cost_json"])
+            df_shipment: pd.DataFrame = state["df_shipment"]
+            df_transport_cost: pd.DataFrame = state["df_transport_cost"]
+            master_csv: pd.DataFrame = state["master_csv"]
 
-            # 選択結果を適用
-            df_shipment = self._apply_transport_selections(
-                df_shipment, df_transport_cost, selections
+            # Ensure consistent dtypes for merge/join operations
+            for col in ["運搬業者", "運搬業者名"]:
+                if col in df_shipment.columns:
+                    df_shipment[col] = df_shipment[col].astype(str)
+                if col in df_transport_cost.columns:
+                    df_transport_cost[col] = df_transport_cost[col].astype(str)
+
+            print(
+                "[DEBUG] finalize_step df_shipment columns:", list(df_shipment.columns)
             )
+            if "運搬費" not in df_shipment.columns:
+                print("[DEBUG] 運搬費列が無いため 0 で追加")
+                df_shipment["運搬費"] = 0
 
-            # 選択結果の確認データを準備
-            selection_summary = self._create_selection_summary(df_shipment, selections)
-
-            return {
-                "status": "success",
-                "step": 1,
-                "message": "運搬業者選択を適用しました。確認してください。",
-                "data": {
-                    "selection_summary": selection_summary,
-                    "session_data": {
-                        "df_shipment_json": df_shipment.to_json(),
-                        "master_csv_json": master_csv.to_json(),
-                        "df_transport_cost_json": df_transport_cost.to_json(),
-                        "selections": selections,
-                    },
-                },
-            }
-
-        except Exception as e:
-            self.logger.error(f"Step 1 処理中にエラー: {e}")
-            return {
-                "status": "error",
-                "message": f"運搬業者選択処理中にエラーが発生しました: {str(e)}",
-            }
-
-    def finalize_calculation(
-        self, session_data: Dict[str, Any], confirmed: bool = True
-    ) -> Dict[str, Any]:
-        """
-        最終計算処理（Step 2）
-
-        Args:
-            session_data: 前のステップで保存されたセッションデータ
-            confirmed: 選択内容の確認フラグ
-
-        Returns:
-            Dict: 最終的な計算結果
-        """
-        self.logger.info("▶️ 最終計算処理（対話版 Step 2）")
-
-        if not confirmed:
-            return {
-                "status": "cancelled",
-                "message": "処理がキャンセルされました。Step 1に戻ってください。",
-            }
-
-        try:
-            # セッションデータから復元
-            df_shipment = pd.read_json(session_data["df_shipment_json"])
-            master_csv = pd.read_json(session_data["master_csv_json"])
-            df_transport_cost = pd.read_json(session_data["df_transport_cost_json"])
-
-            # 最終的な運搬費計算
             df_shipment = apply_transport_fee_by_vendor(df_shipment, df_transport_cost)
             df_shipment = apply_weight_based_transport_fee(
                 df_shipment, df_transport_cost
             )
 
-            # 最終マスターCSV作成
             final_master_csv = self._create_final_master_csv(df_shipment, master_csv)
-
-            return {
-                "status": "completed",
+            summary = {
+                "total_amount": float(
+                    df_shipment["合計金額"].sum()
+                    if "合計金額" in df_shipment.columns
+                    else 0
+                ),
+                "total_transport_fee": float(
+                    df_shipment["運搬費"].sum()
+                    if "運搬費" in df_shipment.columns
+                    else 0
+                ),
+                "processed_records": int(len(df_shipment)),
+            }
+            payload = {
+                "summary": summary,
                 "step": 2,
-                "message": "ブロック単価計算が完了しました。",
-                "data": {
-                    "result_csv": final_master_csv.to_dict("records"),
-                    "summary": {
-                        "total_amount": df_shipment["合計金額"].sum()
-                        if "合計金額" in df_shipment.columns
-                        else 0,
-                        "total_transport_fee": df_shipment["運搬費"].sum()
-                        if "運搬費" in df_shipment.columns
-                        else 0,
-                        "processed_records": len(df_shipment),
-                    },
-                },
+                "message": "ブロック単価計算が完了しました",
             }
+            return final_master_csv, payload
+        except Exception as e:  # noqa: BLE001
+            self.logger.error(f"Step 2 error: {e}")
+            return pd.DataFrame(), {"status": "error", "message": str(e), "step": 2}
 
-        except Exception as e:
-            self.logger.error(f"Step 2 処理中にエラー: {e}")
-            return {
-                "status": "error",
-                "message": f"最終計算処理中にエラーが発生しました: {str(e)}",
-            }
+    # 旧 process_selection / finalize_calculation は BaseInteractiveReportGenerator 経由に移行
 
     def _prepare_transport_options(
         self, df_transport: pd.DataFrame, df_shipment: pd.DataFrame
@@ -249,16 +223,12 @@ class BlockUnitPriceInteractive:
     def _apply_transport_selections(
         self,
         df_shipment: pd.DataFrame,
-        df_transport: pd.DataFrame,
+        df_transport: pd.DataFrame,  # noqa: ARG002 - 参照保持で将来利用
         selections: Dict[str, str],
     ) -> pd.DataFrame:
-        """選択された運搬業者を適用"""
-
-        # 業者名ごとに運搬業者を設定
         for vendor_name, transport_vendor in selections.items():
             mask = df_shipment["業者名"] == vendor_name
             df_shipment.loc[mask, "運搬業者"] = transport_vendor
-
         return df_shipment
 
     def _create_selection_summary(

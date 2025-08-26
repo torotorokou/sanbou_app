@@ -3,7 +3,7 @@ import ReportManagePageLayout from './common/ReportManagePageLayout';
 import ReportStepperModal from './common/ReportStepperModal';
 import BlockUnitPriceInteractiveModal from './interactive/BlockUnitPriceInteractiveModal';
 import PDFViewer from './viewer/PDFViewer';
-import { pdfPreviewMap, modalStepsMap, isInteractiveReport } from '../../constants/reportConfig';
+import { pdfPreviewMap, modalStepsMap, isInteractiveReport } from '@/constants/reportConfig';
 import { useReportBaseBusiness } from '../../hooks/report';
 import { useZipProcessing } from '../../hooks/data/useZipProcessing';
 import type { ReportBaseProps } from '../../types/reportBase';

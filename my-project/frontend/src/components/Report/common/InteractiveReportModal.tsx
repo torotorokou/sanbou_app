@@ -1,9 +1,8 @@
 import React from 'react';
 import { Modal, Steps } from 'antd';
-import { modalStepsMap } from '../../../constants/reportConfig';
-import { isInteractiveReport } from '../../../constants/apiEndpoints';
+import { modalStepsMap, isInteractiveReport } from '@/constants/reportConfig';
 import BlockUnitPriceInteractive from '../individual_process/BlockUnitPriceInteractive';
-import type { ReportKey } from '../../../constants/reportConfig';
+import type { ReportKey } from '@/constants/reportConfig';
 
 /**
  * インタラクティブ帳簿専用モーダルコンポーネント
@@ -18,20 +17,14 @@ export interface InteractiveReportModalProps {
     open: boolean;
     onCancel: () => void;
     reportKey: ReportKey;
-    csvFiles: { [label: string]: File | null };
     currentStep: number;
-    onStepChange: (step: number) => void;
-    onComplete: (result: { previewUrl?: string; isFinalized?: boolean }) => void;
 }
 
 const InteractiveReportModal: React.FC<InteractiveReportModalProps> = ({
     open,
     onCancel,
     reportKey,
-    csvFiles,
     currentStep,
-    onStepChange,
-    onComplete,
 }) => {
     // インタラクティブ帳簿でない場合は何も表示しない
     if (!isInteractiveReport(reportKey)) {
