@@ -27,6 +27,8 @@ export type ReportConfig = {
     steps: string[];
     previewImage: string;
     modalSteps: ModalStepConfig[];
+    // 一部帳簿で PDF 生成関数がまだ無いケースに対応
+    generatePdf?: () => Promise<Blob | string>;
 };
 
 // 帳票キー型（各ページ設定で拡張）
