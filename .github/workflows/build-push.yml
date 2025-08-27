@@ -1,0 +1,36 @@
+name: Build & Push Docker Images
+
+on:
+  workflow_dispatch:   # 手動実行のみ（pushでは動かない）
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up gcloud
+        uses: google-github-actions/setup-gcloud@v1
+        with:
+          project_id: sanbou-app            # ← KouさんのプロジェクトIDに修正
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          export_default_credentials: true
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker asia-northeast1-docker.pkg.dev --quiet
+
+      - name: Set IMAGE_TAG
+        run: |
+          if [[ "${GITHUB_REF##*/}" == "main" ]]; then
+            echo "IMAGE_TAG=prod" >> $GITHUB_ENV
+          else
+            echo "IMAGE_TAG=stg" >> $GITHUB_ENV
+          fi
+
+      - name: Build and Push Frontend
+        run: |
+          REGISTRY=asia-northeast1-docker.pkg.dev/sanbou-app/sanbou-repo
+          docker build -t $REGISTRY/sanbou-frontend:${IMAGE_TAG} ./my-project/frontend
+          docker push $REGISTRY/sanbou-frontend:${IMAGE_TAG}
