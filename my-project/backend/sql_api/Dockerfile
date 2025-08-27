@@ -1,31 +1,40 @@
-FROM python:3.10
+## syntax=docker/dockerfile:1.6
+# =========================
+# sql_api multi-stage
+# =========================
 
-WORKDIR /backend
-
-# 依存パッケージファイルをコピー（サービス配下）
-COPY sql_api/requirements.txt ./requirements.txt
-COPY sql_api/requirements-dev.txt ./requirements-dev.txt
-
-# === 開発環境かどうかを判定するビルド引数（デフォルトはfalse） ===
+FROM python:3.11-slim AS builder
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
+WORKDIR /wheels
+COPY requirements.txt requirements-dev.txt ./
 ARG INSTALL_DEV=false
-
-# === [開発環境のみ] システムパッケージ（例: lsof）をインストール ===
-RUN apt-get update \
-    && if [ "$INSTALL_DEV" = "true" ]; then apt-get install -y lsof; fi \
+RUN apt-get update && apt-get install -y --no-install-recommends build-essential \
     && rm -rf /var/lib/apt/lists/*
+RUN --mount=type=cache,target=/root/.cache/pip \
+        pip wheel --no-deps -r requirements.txt -w /wheels \
+        && if [ "$INSTALL_DEV" = "true" ]; then pip wheel --no-deps -r requirements-dev.txt -w /wheels; fi
 
-# === Pythonパッケージのインストール ===
-RUN pip install --no-cache-dir -r requirements.txt \
+FROM python:3.11-slim AS runtime
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 PYTHONPATH=/backend PATH="/home/appuser/.local/bin:${PATH}"
+WORKDIR /backend
+RUN useradd -m appuser
+USER appuser
+
+COPY --from=builder /wheels /wheels
+COPY requirements.txt requirements-dev.txt ./
+ARG INSTALL_DEV=false
+USER root
+RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+USER appuser
+RUN pip install --no-cache-dir /wheels/*.whl \
     && if [ "$INSTALL_DEV" = "true" ]; then pip install --no-cache-dir -r requirements-dev.txt; fi
 
-# 共有モジュールを同梱
 COPY backend_shared/ /backend/backend_shared
+COPY app /backend/app
+COPY config /backend/config
 
-# アプリ本体と設定をコピー（サービス配下）
-COPY sql_api/app /backend/app
-COPY sql_api/config /backend/config
+EXPOSE 8000
+HEALTHCHECK --interval=30s --timeout=5s --retries=3 CMD curl -fsS http://localhost:8000/health >/dev/null || exit 1
 
-ENV PYTHONPATH=/backend
-
-# サーバ起動コマンド（開発・本番共通）
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

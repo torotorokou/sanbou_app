@@ -1,39 +1,58 @@
-FROM debian:bookworm-slim
+## syntax=docker/dockerfile:1.6
+# =========================
+# ledger_api (LibreOffice 直呼び版)
+# - unoconv / python3-uno は不要
+# - LibreOffice と日本語フォントのみインストール
+# =========================
 
+# ---- builder: wheel化で高速再ビルド ----
+FROM python:3.11-slim AS builder
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
+WORKDIR /build
+
+COPY requirements.txt requirements-dev.txt ./
+ARG INSTALL_DEV=false
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip wheel --no-deps -r requirements.txt -w /wheels \
+    && if [ "$INSTALL_DEV" = "true" ]; then \
+         pip wheel --no-deps -r requirements-dev.txt -w /wheels; \
+       fi
+
+# ---- runtime ----
+FROM python:3.11-slim AS runtime
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 PYTHONPATH=/backend
 WORKDIR /backend
 
-# パッケージリストファイルをコピー（サービス配下）
-COPY ledger_api/apt-packages.txt ./apt-packages.txt
-
-# 必須パッケージ・日本語フォントを一括インストール
-RUN apt-get update \
-    && grep -vE '^\s*#' apt-packages.txt | xargs apt-get install -y --no-install-recommends \
+# LibreOffice と日本語フォント、ヘルスチェック用 curl
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      libreoffice \
+      fonts-noto-cjk fonts-noto-cjk-extra \
+      fonts-ipafont-mincho fonts-ipafont-gothic \
+      curl ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# Python 依存関係（サービス配下）
-COPY ledger_api/requirements.txt ./requirements.txt
-COPY ledger_api/requirements-dev.txt ./requirements-dev.txt
+# 念のため libreoffice の実体パスを PATH に追加（多くの環境では不要）
+ENV PATH="/usr/lib/libreoffice/program:${PATH}"
 
-# 開発環境判定用ビルド引数（デフォルトfalse）
+# 非rootユーザー
+RUN useradd -m appuser
+
+# Python 依存関係
+COPY --from=builder /wheels /wheels
+COPY requirements.txt requirements-dev.txt ./
 ARG INSTALL_DEV=false
+RUN pip install --no-cache-dir /wheels/*.whl \
+    && if [ "$INSTALL_DEV" = "true" ]; then \
+         pip install --no-cache-dir -r requirements-dev.txt; \
+       fi
 
-# pip install時、PEP668突破用オプション付き
-RUN pip3 install --no-cache-dir --break-system-packages -r requirements.txt \
-    && if [ "$INSTALL_DEV" = "true" ]; then pip3 install --no-cache-dir --break-system-packages -r requirements-dev.txt; fi
-
-# 共有モジュールを同梱
+# アプリ本体
 COPY backend_shared/ /backend/backend_shared
+COPY app /backend/app
+COPY config /backend/config
 
-# アプリケーションコードと設定をコピー（サービス配下）
-COPY ledger_api/app /backend/app
-COPY ledger_api/config /backend/config
+USER appuser
+EXPOSE 8000
+HEALTHCHECK --interval=30s --timeout=5s --retries=3 CMD curl -fsS http://localhost:8000/health >/dev/null || exit 1
 
-# PYTHONPATHを設定
-ENV PYTHONPATH=/backend
-
-# uno動作確認・unoconv動作確認（ビルド時のエラー早期検知用）
-RUN python3 -c "import uno"
-RUN unoconv --version
-
-# FastAPIアプリ起動（ホットリロード付き）
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
