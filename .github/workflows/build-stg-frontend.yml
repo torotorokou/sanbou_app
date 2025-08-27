@@ -1,0 +1,42 @@
+name: Build & Push Frontend (stg)
+
+on:
+  workflow_dispatch:   # 手動実行のみ
+
+env:
+  PROJECT_ID: sanbou-app
+  REGION: asia-northeast1
+  REPO: sanbou-repo
+  REGISTRY: ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO }}
+  IMAGE_TAG: stg
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up gcloud
+        uses: google-github-actions/setup-gcloud@v1
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          export_default_credentials: true
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build & Push Frontend
+        uses: docker/build-push-action@v5
+        with:
+          context: my-project/frontend
+          file: my-project/frontend/Dockerfile
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/sanbou-frontend:${{ env.IMAGE_TAG }}
+            ${{ env.REGISTRY }}/sanbou-frontend:${{ env.IMAGE_TAG }}-${{ github.sha }}
