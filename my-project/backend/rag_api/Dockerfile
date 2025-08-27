@@ -40,7 +40,7 @@ RUN pip install --no-cache-dir /wheels/*.whl
 USER appuser
 COPY backend_shared/ /backend/backend_shared
 COPY app /backend/app
-COPY config /backend/config
+# COPY config /backend/config
 COPY startup.sh /backend/startup.sh
 USER root
 RUN chmod +x /backend/startup.sh && chown appuser:appuser /backend/startup.sh
