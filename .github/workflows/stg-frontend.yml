@@ -3,6 +3,10 @@ name: Build & Push Frontend (stg)
 on:
   workflow_dispatch: {}
 
+concurrency:
+  group: stg-frontend
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
