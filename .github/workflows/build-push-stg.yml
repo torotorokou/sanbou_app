@@ -71,12 +71,12 @@ jobs:
       - name: Setup Buildx
         uses: docker/setup-buildx-action@v3
 
-      # （任意）node の依存を先に落としてビルドキャッシュ最適化したい場合はここでやる
-      # - name: Frontend deps (optional)
-      #   if: matrix.name == 'frontend'
-      #   run: |
-      #     cd my-project/frontend
-      #     npm ci
+      # Debug: どの Dockerfile を参照しているか確認
+      - name: Show Dockerfile (debug)
+        run: |
+          echo "Context=${{ matrix.context }}"
+          echo "Dockerfile=${{ matrix.dockerfile }}"
+          head -n 30 ${{ matrix.dockerfile }} || true
 
       - name: Build & Push ${{ matrix.name }}
         uses: docker/build-push-action@v5
@@ -84,12 +84,7 @@ jobs:
           context: ${{ matrix.context }}
           file: ${{ matrix.dockerfile }}
           push: true
-          # 必要なら build-args を渡す
-          # build-args: |
-          #   NODE_ENV=production
+          no-cache: true   # ← キャッシュを完全無効化
           tags: |
             ${{ env.AR_HOST }}/${{ env.AR_PROJECT }}/${{ env.AR_REPO }}/${{ matrix.image }}:stg
             ${{ env.AR_HOST }}/${{ env.AR_PROJECT }}/${{ env.AR_REPO }}/${{ matrix.image }}:stg-${{ github.sha }}
-          # キャッシュ運用したい場合（任意）
-          # cache-from: type=registry,ref=${{ env.AR_HOST }}/${{ env.AR_PROJECT }}/${{ env.AR_REPO }}/${{ matrix.image }}:stg
-          # cache-to: type=inline
