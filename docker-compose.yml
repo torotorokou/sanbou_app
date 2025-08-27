@@ -1,8 +1,12 @@
-## version キーは最新 compose では非推奨のため削除
-
-# .env などで以下を定義してください（例）
-# REGISTRY=asia-northeast1-docker.pkg.dev/my-gcp-proj/sanbou
-# 例: REGISTRY=asia-northeast1-docker.pkg.dev/PROJECT/REPO
+## version キーは最新 compose では非推奨のため未指定
+##
+## 必要な事前設定（例）
+## .env などに:
+##   REGISTRY=asia-northeast1-docker.pkg.dev/sanbou-app/sanbou-repo
+##   POSTGRES_USER=...
+##   POSTGRES_PASSWORD=...
+##   POSTGRES_DB=...
+## 環境別 .env は ./env/.env.stg, ./env/.env.prod を利用
 
 services:
   # =========================
@@ -14,11 +18,11 @@ services:
     profiles: ["edge"]
     env_file:
       - ./env/.env.prod
-    # フロントはイメージ内で 80 番待受け想定
-    expose:
-      - "80"
+    # フロントはイメージ内で 80 番待受け想定（Nginx等）
+    expose: ["80"]
     networks: [backend]
     restart: unless-stopped
+    pull_policy: always
 
   prod-ai_api:
     image: "${REGISTRY:-local}/sanbou-ai-api:prod"
@@ -27,7 +31,6 @@ services:
     env_file:
       - ./env/.env.prod
     environment:
-      # 各 .env.prod 側で POSTGRES_USER / POSTGRES_PASSWORD / POSTGRES_DB を定義
       DATABASE_URL: "postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@prod-db:5432/${POSTGRES_DB}"
       PYTHONPATH: ${PYTHONPATH:-/backend}
     depends_on:
@@ -37,6 +40,7 @@ services:
       - gcs_key_prod.json
     networks: [backend]
     restart: unless-stopped
+    pull_policy: always
     healthcheck:
       test:
         - CMD-SHELL
@@ -69,6 +73,7 @@ services:
       - gcs_key_prod.json
     networks: [backend]
     restart: unless-stopped
+    pull_policy: always
     healthcheck:
       test:
         - CMD-SHELL
@@ -101,6 +106,7 @@ services:
       - gcs_key_prod.json
     networks: [backend]
     restart: unless-stopped
+    pull_policy: always
     healthcheck:
       test:
         - CMD-SHELL
@@ -133,6 +139,7 @@ services:
       - gcs_key_prod.json
     networks: [backend]
     restart: unless-stopped
+    pull_policy: always
     healthcheck:
       test:
         - CMD-SHELL
@@ -179,10 +186,10 @@ services:
     profiles: ["edge"]
     env_file:
       - ./env/.env.stg
-    expose:
-      - "80"
+    expose: ["80"]
     networks: [backend]
     restart: unless-stopped
+    pull_policy: always
 
   stg-ai_api:
     image: "${REGISTRY:-local}/sanbou-ai-api:stg"
@@ -200,6 +207,7 @@ services:
       - gcs_key_stg.json
     networks: [backend]
     restart: unless-stopped
+    pull_policy: always
     healthcheck:
       test:
         - CMD-SHELL
@@ -232,6 +240,7 @@ services:
       - gcs_key_stg.json
     networks: [backend]
     restart: unless-stopped
+    pull_policy: always
     healthcheck:
       test:
         - CMD-SHELL
@@ -264,6 +273,7 @@ services:
       - gcs_key_stg.json
     networks: [backend]
     restart: unless-stopped
+    pull_policy: always
     healthcheck:
       test:
         - CMD-SHELL
@@ -296,6 +306,7 @@ services:
       - gcs_key_stg.json
     networks: [backend]
     restart: unless-stopped
+    pull_policy: always
     healthcheck:
       test:
         - CMD-SHELL
@@ -341,29 +352,20 @@ services:
     container_name: edge-nginx
     profiles: ["edge"]
     ports: ["80:80", "443:443"]
-    # Nginx から各サービスへ名前解決で到達できるよう同一ネットワークに所属
     networks: [backend]
     restart: unless-stopped
     depends_on:
-      prod-ai_api:
-        condition: service_healthy
-      prod-ledger_api:
-        condition: service_healthy
-      prod-sql_api:
-        condition: service_healthy
-      prod-rag_api:
-        condition: service_healthy
-      stg-ai_api:
-        condition: service_healthy
-      stg-ledger_api:
-        condition: service_healthy
-      stg-sql_api:
-        condition: service_healthy
-      stg-rag_api:
-        condition: service_healthy
+      prod-ai_api:   { condition: service_healthy }
+      prod-ledger_api:{ condition: service_healthy }
+      prod-sql_api:  { condition: service_healthy }
+      prod-rag_api:  { condition: service_healthy }
+      stg-ai_api:    { condition: service_healthy }
+      stg-ledger_api:{ condition: service_healthy }
+      stg-sql_api:   { condition: service_healthy }
+      stg-rag_api:   { condition: service_healthy }
     volumes:
-      - ./my-project/nginx/conf.d:/etc/nginx/conf.d:ro   # ここに / と /stg/ の振分け設定を置く
-      - ./my-project/nginx/certs:/etc/nginx/certs:ro     # 必要ならTLS
+      - ./my-project/nginx/conf.d:/etc/nginx/conf.d:ro   # / と /stg/ の振分け設定を配置
+      - ./my-project/nginx/certs:/etc/nginx/certs:ro     # 任意: TLS
 
 networks:
   backend:
@@ -372,9 +374,6 @@ networks:
 volumes:
   dbdata_prod:
   dbdata_stg:
-
-
-
 
 secrets:
   gcs_key_prod.json:
