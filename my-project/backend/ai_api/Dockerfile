@@ -44,7 +44,7 @@ RUN pip install --no-cache-dir /wheels/*.whl
 # アプリコード / 共有コード
 COPY backend_shared/ /backend/backend_shared
 COPY app /backend/app
-COPY config /backend/config
+# COPY config /backend/config
 
 EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=5s --retries=3 CMD curl -fsS http://localhost:8000/health >/dev/null || exit 1

@@ -49,7 +49,7 @@ RUN pip install --no-cache-dir /wheels/*.whl \
 # アプリ本体
 COPY backend_shared/ /backend/backend_shared
 COPY app /backend/app
-COPY config /backend/config
+# COPY config /backend/config
 
 USER appuser
 EXPOSE 8000
