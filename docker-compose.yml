@@ -1,4 +1,4 @@
-version: "3.9"
+## version キーは最新 compose では非推奨のため削除
 
 # .env などで以下を定義してください（例）
 # REGISTRY=asia-northeast1-docker.pkg.dev/my-gcp-proj/sanbou
@@ -9,8 +9,9 @@ services:
   # PROD 系
   # =========================
   prod-frontend:
-    image: "${REGISTRY}/sanbou-frontend:prod"
+    image: "${REGISTRY:-local}/sanbou-frontend:prod"
     container_name: prod-frontend
+    profiles: ["edge"]
     env_file:
       - ./env/.env.prod
     # フロントはイメージ内で 80 番待受け想定
@@ -20,8 +21,9 @@ services:
     restart: unless-stopped
 
   prod-ai_api:
-    image: "${REGISTRY}/sanbou-ai-api:prod"
+    image: "${REGISTRY:-local}/sanbou-ai-api:prod"
     container_name: prod-ai_api
+    profiles: ["edge"]
     env_file:
       - ./env/.env.prod
     environment:
@@ -52,8 +54,9 @@ services:
       retries: 5
 
   prod-ledger_api:
-    image: "${REGISTRY}/sanbou-ledger-api:prod"
+    image: "${REGISTRY:-local}/sanbou-ledger-api:prod"
     container_name: prod-ledger_api
+    profiles: ["edge"]
     env_file:
       - ./env/.env.prod
     environment:
@@ -83,8 +86,9 @@ services:
       retries: 5
 
   prod-sql_api:
-    image: "${REGISTRY}/sanbou-sql-api:prod"
+    image: "${REGISTRY:-local}/sanbou-sql-api:prod"
     container_name: prod-sql_api
+    profiles: ["edge"]
     env_file:
       - ./env/.env.prod
     environment:
@@ -114,8 +118,9 @@ services:
       retries: 5
 
   prod-rag_api:
-    image: "${REGISTRY}/sanbou-rag-api:prod"
+    image: "${REGISTRY:-local}/sanbou-rag-api:prod"
     container_name: prod-rag_api
+    profiles: ["edge"]
     env_file:
       - ./env/.env.prod
     environment:
@@ -147,6 +152,7 @@ services:
   prod-db:
     image: postgres:16
     container_name: prod-db
+    profiles: ["edge"]
     env_file:
       - ./env/.env.prod
     environment:
@@ -168,8 +174,9 @@ services:
   # STG 系
   # =========================
   stg-frontend:
-    image: "${REGISTRY}/sanbou-frontend:stg"
+    image: "${REGISTRY:-local}/sanbou-frontend:stg"
     container_name: stg-frontend
+    profiles: ["edge"]
     env_file:
       - ./env/.env.stg
     expose:
@@ -178,8 +185,9 @@ services:
     restart: unless-stopped
 
   stg-ai_api:
-    image: "${REGISTRY}/sanbou-ai-api:stg"
+    image: "${REGISTRY:-local}/sanbou-ai-api:stg"
     container_name: stg-ai_api
+    profiles: ["edge"]
     env_file:
       - ./env/.env.stg
     environment:
@@ -209,8 +217,9 @@ services:
       retries: 5
 
   stg-ledger_api:
-    image: "${REGISTRY}/sanbou-ledger-api:stg"
+    image: "${REGISTRY:-local}/sanbou-ledger-api:stg"
     container_name: stg-ledger_api
+    profiles: ["edge"]
     env_file:
       - ./env/.env.stg
     environment:
@@ -240,8 +249,9 @@ services:
       retries: 5
 
   stg-sql_api:
-    image: "${REGISTRY}/sanbou-sql-api:stg"
+    image: "${REGISTRY:-local}/sanbou-sql-api:stg"
     container_name: stg-sql_api
+    profiles: ["edge"]
     env_file:
       - ./env/.env.stg
     environment:
@@ -271,8 +281,9 @@ services:
       retries: 5
 
   stg-rag_api:
-    image: "${REGISTRY}/sanbou-rag-api:stg"
+    image: "${REGISTRY:-local}/sanbou-rag-api:stg"
     container_name: stg-rag_api
+    profiles: ["edge"]
     env_file:
       - ./env/.env.stg
     environment:
@@ -304,6 +315,7 @@ services:
   stg-db:
     image: postgres:16
     container_name: stg-db
+    profiles: ["edge"]
     env_file:
       - ./env/.env.stg
     environment:
@@ -327,6 +339,7 @@ services:
   nginx:
     image: nginx:1.27
     container_name: edge-nginx
+    profiles: ["edge"]
     ports: ["80:80", "443:443"]
     # Nginx から各サービスへ名前解決で到達できるよう同一ネットワークに所属
     networks: [backend]

@@ -119,3 +119,82 @@ make up ENV=prod
 ## サポート
 
 不明点や要望があれば、プロジェクト管理者まで連絡してください。
+
+---
+
+## Docker 最適化 (2025-08)
+
+本リポジトリはコンテナイメージサイズ削減 / セキュリティ向上 / ビルド時間短縮を目的に以下の改善を実施しました。
+
+### 変更概要
+
+- ベースイメージ統一
+  - Frontend: `node:20-slim` (builder) + `nginx:alpine` (runtime)
+  - Backend (FastAPI 各種): `python:3.11-slim` multi-stage (builder: wheel 生成 / runtime: 非root)
+- Multi-stage build 導入
+  - `pip wheel` による依存レイヤーキャッシュ化
+  - runtime へは wheel インストール済み最小セットのみコピー
+  - frontend は dist のみ nginx へ配置
+- キャッシュ最適化
+  - BuildKit 対応 `--mount=type=cache` を pip / npm へ適用
+  - lockfile (`package-lock.json` / `requirements.txt`) ベースの再現性
+- .dockerignore 強化
+  - `node_modules`, `dist`, `tests`, `__pycache__`, `.env*`, logs などを除外し context 軽量化
+- セキュリティ
+  - 全 FastAPI サービス / frontend runtime を非 root 実行 (appuser / nginx)
+  - `--no-install-recommends` / apt キャッシュ削除の徹底
+  - Python 環境: `PYTHONDONTWRITEBYTECODE=1`, `PYTHONUNBUFFERED=1`
+- HEALTHCHECK 追加 (各 API / frontend)
+- Compose での image 命名方針: `${REGISTRY:-local}/sanbou-<service>:<tag>`
+
+### 期待効果 (目安)
+
+- Frontend runtime イメージ: 50–80MB 台 (nginx:alpine + dist のみ)
+- API runtime イメージ: 180–250MB 以内 (依存状況により変動 / LibreOffice を含む ledger_api は上限付近の可能性)
+- 2回目以降のビルドは wheel / npm ci キャッシュで高速化
+
+### ビルド方法
+
+例: (REGISTRY 未指定ローカルビルド)
+
+```bash
+docker build -t local/sanbou-frontend:dev -f my-project/frontend/Dockerfile my-project/frontend
+docker build -t local/sanbou-ai-api:dev -f my-project/backend/ai_api/Dockerfile my-project/backend/ai_api
+```
+
+複数サービス並列ビルド (GNU make + BuildKit 利用例):
+
+```bash
+DOCKER_BUILDKIT=1 docker compose build --parallel
+```
+
+### 実行 (開発)
+
+従来通り:
+
+```bash
+make up ENV=dev
+```
+
+### ロールバック手順
+
+1. Git でこの変更コミットを revert (`git revert <commit-hash>`) する
+2. 旧 Dockerfile / .dockerignore / README 状態へ戻る
+3. `docker compose build --no-cache` で再ビルドし挙動確認
+
+もしくは一時的に特定サービスだけ旧版を使いたい場合:
+
+```bash
+docker build -t local/sanbou-ai-api:rollback -f my-project/backend/ai_api/Dockerfile.prev my-project/backend/ai_api
+```
+(
+旧 Dockerfile を `Dockerfile.prev` として保管している想定。無い場合は Git 履歴から復元)
+
+### 今後の追加改善候補
+
+- Slim LibreOffice / unoconv 代替の検証 (ledger_api サイズさらなる削減)
+- `requirements.txt` を `pip-tools` で lock 化
+- マルチプラットフォーム (linux/amd64, arm64) ビルド対応
+- Trivy / Grype を用いた CI の脆弱性スキャン
+
+---

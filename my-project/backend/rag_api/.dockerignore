@@ -1,0 +1,27 @@
+## 共通除外
+.git
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+*.log
+.DS_Store
+
+.env*
+*.env
+*.sqlite
+dist/
+build/
+
+## 開発専用除外
+tests/
+test/
+coverage/
+local_data/
+
+## サービス固有の追加除外
+local_data/cache/
+local_data/*.tmp
+logs/
+*.md
