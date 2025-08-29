@@ -36,6 +36,11 @@ RUN pip install --no-cache-dir /wheels/*.whl \
 
 COPY backend_shared/ /backend/backend_shared
 COPY ${SERVICE_DIR}/app /backend/app
+# 必要な書き込み用ディレクトリ（エンドポイントで os.makedirs するパス）を事前作成し権限付与
+USER root
+RUN mkdir -p /backend/app/data/syogun_csv \
+    && chown -R appuser:appuser /backend/app/data
+USER appuser
 # COPY config /backend/config
 
 EXPOSE 8000

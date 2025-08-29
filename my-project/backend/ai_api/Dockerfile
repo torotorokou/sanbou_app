@@ -5,6 +5,7 @@
 # =========================
 
 FROM python:3.11-slim AS builder
+ARG SERVICE_DIR=ai_api
 ENV PYTHONDONTWRITEBYTECODE=1 \
 		PYTHONUNBUFFERED=1 \
 		PIP_NO_CACHE_DIR=1
@@ -14,7 +15,7 @@ WORKDIR /wheels
 RUN apt-get update && apt-get install -y --no-install-recommends build-essential \
 		&& rm -rf /var/lib/apt/lists/*
 
-COPY requirements.txt .
+COPY ${SERVICE_DIR}/requirements.txt requirements.txt
 # Wheel 化 (キャッシュ利用)
 RUN --mount=type=cache,target=/root/.cache/pip \
 		pip wheel --no-deps -r requirements.txt -w /wheels
@@ -22,6 +23,7 @@ RUN --mount=type=cache,target=/root/.cache/pip \
 # 共有モジュール / アプリ本体は runtime へ直接コピーするためここでは不要
 
 FROM python:3.11-slim AS runtime
+ARG SERVICE_DIR=ai_api
 ENV PYTHONDONTWRITEBYTECODE=1 \
 		PYTHONUNBUFFERED=1 \
 		PYTHONPATH=/backend \
@@ -34,7 +36,7 @@ USER appuser
 
 # 依存インストール
 COPY --from=builder /wheels /wheels
-COPY requirements.txt ./requirements.txt
+COPY ${SERVICE_DIR}/requirements.txt ./requirements.txt
 USER root
 RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates \
 	&& rm -rf /var/lib/apt/lists/*
@@ -43,7 +45,7 @@ RUN pip install --no-cache-dir /wheels/*.whl
 
 # アプリコード / 共有コード
 COPY backend_shared/ /backend/backend_shared
-COPY app /backend/app
+COPY ${SERVICE_DIR}/app /backend/app
 # COPY config /backend/config
 
 EXPOSE 8000

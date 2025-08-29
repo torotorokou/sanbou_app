@@ -21,8 +21,8 @@ services:
   prod-ai_api:
     image: "${LOCAL_REGISTRY:-local}/sanbou-ai-api:prod"
     build:
-      context: ./my-project/backend/ai_api
-      dockerfile: Dockerfile
+      context: ./my-project/backend
+      dockerfile: ai_api/Dockerfile
     container_name: prod-ai_api
     profiles: ["prod"]
     env_file:
@@ -162,8 +162,8 @@ services:
   stg-ai_api:
     image: "${LOCAL_REGISTRY:-local}/sanbou-ai-api:stg"
     build:
-      context: ./my-project/backend/ai_api
-      dockerfile: Dockerfile
+      context: ./my-project/backend
+      dockerfile: ai_api/Dockerfile
     container_name: stg-ai_api
     profiles: ["stg"]
     env_file:

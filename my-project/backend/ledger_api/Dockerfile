@@ -58,6 +58,11 @@ COPY ${SERVICE_DIR}/app /backend/app
 RUN mkdir -p /backend/app/api/st_app/logs \
   && chown -R appuser:appuser /backend
 
+# main_paths.yaml で参照される想定の data / logs ディレクトリを事前生成（必要なら上書き調整）
+RUN mkdir -p /backend/app/api/st_app/data/input /backend/app/api/st_app/data/output \
+  && mkdir -p /backend/app/api/st_app/logs \
+  && chown -R appuser:appuser /backend/app/api/st_app/data /backend/app/api/st_app/logs
+
 USER appuser
 EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=5s --retries=3 CMD curl -fsS http://localhost:8000/health >/dev/null || exit 1
