@@ -6,6 +6,7 @@
 
 FROM python:3.11-slim AS builder
 ARG SERVICE_DIR=ai_api
+ARG BASE_PATH=backend
 ENV PYTHONDONTWRITEBYTECODE=1 \
 		PYTHONUNBUFFERED=1 \
 		PIP_NO_CACHE_DIR=1
@@ -15,7 +16,7 @@ WORKDIR /wheels
 RUN apt-get update && apt-get install -y --no-install-recommends build-essential \
 		&& rm -rf /var/lib/apt/lists/*
 
-COPY ${SERVICE_DIR}/requirements.txt requirements.txt
+COPY ${BASE_PATH}/${SERVICE_DIR}/requirements.txt requirements.txt
 # Wheel 化 (キャッシュ利用)
 RUN --mount=type=cache,target=/root/.cache/pip \
 		pip wheel --no-deps -r requirements.txt -w /wheels
@@ -24,6 +25,7 @@ RUN --mount=type=cache,target=/root/.cache/pip \
 
 FROM python:3.11-slim AS runtime
 ARG SERVICE_DIR=ai_api
+ARG BASE_PATH=backend
 ENV PYTHONDONTWRITEBYTECODE=1 \
 		PYTHONUNBUFFERED=1 \
 		PYTHONPATH=/backend \
@@ -36,7 +38,7 @@ USER appuser
 
 # 依存インストール
 COPY --from=builder /wheels /wheels
-COPY ${SERVICE_DIR}/requirements.txt ./requirements.txt
+COPY ${BASE_PATH}/${SERVICE_DIR}/requirements.txt ./requirements.txt
 USER root
 RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates \
 	&& rm -rf /var/lib/apt/lists/*
@@ -44,8 +46,8 @@ USER appuser
 RUN pip install --no-cache-dir /wheels/*.whl
 
 # アプリコード / 共有コード
-COPY backend_shared/ /backend/backend_shared
-COPY ${SERVICE_DIR}/app /backend/app
+COPY ${BASE_PATH}/backend_shared/ /backend/backend_shared
+COPY ${BASE_PATH}/${SERVICE_DIR}/app /backend/app
 COPY config /backend/config
 
 EXPOSE 8000

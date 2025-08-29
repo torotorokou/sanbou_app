@@ -21,8 +21,8 @@ services:
   prod-ai_api:
     image: "${LOCAL_REGISTRY:-local}/sanbou-ai-api:prod"
     build:
-      context: ./my-project/backend
-      dockerfile: ai_api/Dockerfile
+      context: ./my-project
+      dockerfile: backend/ai_api/Dockerfile
     container_name: prod-ai_api
     profiles: ["prod"]
     env_file:
@@ -56,8 +56,8 @@ services:
   prod-ledger_api:
     image: "${LOCAL_REGISTRY:-local}/sanbou-ledger-api:prod"
     build:
-      context: ./my-project/backend
-      dockerfile: ledger_api/Dockerfile
+      context: ./my-project
+      dockerfile: backend/ledger_api/Dockerfile
       args:
         SERVICE_DIR: ledger_api
     container_name: prod-ledger_api
@@ -79,8 +79,8 @@ services:
   prod-sql_api:
     image: "${LOCAL_REGISTRY:-local}/sanbou-sql-api:prod"
     build:
-      context: ./my-project/backend
-      dockerfile: sql_api/Dockerfile
+      context: ./my-project
+      dockerfile: backend/sql_api/Dockerfile
       args:
         SERVICE_DIR: sql_api
     container_name: prod-sql_api
@@ -102,8 +102,8 @@ services:
   prod-rag_api:
     image: "${LOCAL_REGISTRY:-local}/sanbou-rag-api:prod"
     build:
-      context: ./my-project/backend
-      dockerfile: rag_api/Dockerfile
+      context: ./my-project
+      dockerfile: backend/rag_api/Dockerfile
       args:
         SERVICE_DIR: rag_api
     container_name: prod-rag_api
@@ -162,8 +162,8 @@ services:
   stg-ai_api:
     image: "${LOCAL_REGISTRY:-local}/sanbou-ai-api:stg"
     build:
-      context: ./my-project/backend
-      dockerfile: ai_api/Dockerfile
+      context: ./my-project
+      dockerfile: backend/ai_api/Dockerfile
     container_name: stg-ai_api
     profiles: ["stg"]
     env_file:
@@ -183,8 +183,8 @@ services:
   stg-ledger_api:
     image: "${LOCAL_REGISTRY:-local}/sanbou-ledger-api:stg"
     build:
-      context: ./my-project/backend
-      dockerfile: ledger_api/Dockerfile
+      context: ./my-project
+      dockerfile: backend/ledger_api/Dockerfile
       args:
         SERVICE_DIR: ledger_api
     container_name: stg-ledger_api
@@ -206,8 +206,8 @@ services:
   stg-sql_api:
     image: "${LOCAL_REGISTRY:-local}/sanbou-sql-api:stg"
     build:
-      context: ./my-project/backend
-      dockerfile: sql_api/Dockerfile
+      context: ./my-project
+      dockerfile: backend/sql_api/Dockerfile
       args:
         SERVICE_DIR: sql_api
     container_name: stg-sql_api
@@ -229,8 +229,8 @@ services:
   stg-rag_api:
     image: "${LOCAL_REGISTRY:-local}/sanbou-rag-api:stg"
     build:
-      context: ./my-project/backend
-      dockerfile: rag_api/Dockerfile
+      context: ./my-project
+      dockerfile: backend/rag_api/Dockerfile
       args:
         SERVICE_DIR: rag_api
     container_name: stg-rag_api
