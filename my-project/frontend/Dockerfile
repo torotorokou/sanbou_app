@@ -2,7 +2,7 @@
 # =========================
 # Frontend (React/Vite) Multi-stage
 # builder: node:20-slim で依存取得+ビルド
-# runtime: nginx:alpine に dist のみ配置
+# runtime: nginx:alpine に dist のみ配置 (Welcome ページ完全除去)
 # =========================
 
 FROM node:20-slim AS builder
@@ -30,30 +30,24 @@ FROM nginx:1.27-alpine AS runtime
 LABEL org.opencontainers.image.source="https://example.local/sanbou_app" \
             org.opencontainers.image.description="Sanbou frontend runtime (nginx)"
 
-# 非 root 実行 (nginx:alpine には 'nginx' ユーザーが存在)
-USER nginx
-WORKDIR /usr/share/nginx/html
-
-# ビルド成果物のみコピー
-COPY --from=builder /app/dist ./
-
-# Nginx デフォルト設定で SPA 404 -> index.html フォールバックするよう簡易設定
+# runtime は root のまま (公式 entrypoint が /var/cache/nginx/* を作成するため必要)
 USER root
-RUN printf 'try_files $uri /index.html;\n' > /tmp/rewrite.conf \
-    && sed -i 's|location / {|location / { try_files $uri $uri/ /index.html;|g' /etc/nginx/conf.d/default.conf || true \
-    && awk 'FNR==NR{a[NR]=$0;next}1;END{print "\n# inserted: spa fallback";for(i in a)print a[i]}' /tmp/rewrite.conf /etc/nginx/conf.d/default.conf >/tmp/new && mv /tmp/new /etc/nginx/conf.d/default.conf \
-    && chown -R nginx:nginx /usr/share/nginx/html
-USER nginx
+WORKDIR /usr/share/nginx/html
+RUN rm -rf ./*
+COPY --from=builder /app/dist ./
+# 所有権整備
+RUN chown -R nginx:nginx /usr/share/nginx/html
 
+# SPA フォールバック (default.conf を前提に書き換えず、別途 conf.d マウントで実現)
+# -> conf.d/app.conf 側で try_files を設定するためここで sed ハック不要
+
+# NOTE: セキュリティ上 root 常駐を避けたい場合は別途 /var/cache/nginx 等を事前作成 & chown 後に USER nginx へ変更する hardening を検討
 EXPOSE 80
 HEALTHCHECK --interval=30s --timeout=3s --retries=3 CMD wget -q -O /dev/null http://localhost/ || exit 1
-
 CMD ["nginx", "-g", "daemon off;"]
 
 # =========================
-# Dev stage (Node runtime with hot reload)
-# docker-compose.override.yml で target=dev を指定して利用
-# ソースをボリュームマウントした際 node_modules が無い場合は起動前に npm ci を実行
+# Dev stage (ホットリロード用)
 # =========================
 FROM node:20-slim AS dev
 WORKDIR /app
@@ -61,6 +55,5 @@ COPY package.json package-lock.json* ./
 RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 RUN npm ci || true
-# 開発時はホスト側を /app にマウントするため依存が消えるケースがあるので起動前チェック
 EXPOSE 5173
 CMD ["bash", "-c", "set -e; if [ ! -d node_modules ]; then echo '[dev] node_modules missing -> npm ci'; npm ci; fi; npm run dev -- --host 0.0.0.0"]

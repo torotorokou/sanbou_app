@@ -3,20 +3,6 @@
 
 services:
   # ------------ PROD ------------
-  prod-frontend:
-    image: "${LOCAL_REGISTRY:-local}/sanbou-frontend:prod"
-    build:
-      context: ./my-project/frontend
-      dockerfile: Dockerfile
-      target: runtime
-    container_name: prod-frontend
-    profiles: ["prod"]
-    env_file:
-      - ./env/.env.prod
-    expose: ["80"]
-    networks: [backend]
-    restart: unless-stopped
-    pull_policy: never
 
   prod-ai_api:
     image: "${LOCAL_REGISTRY:-local}/sanbou-ai-api:prod"
@@ -144,20 +130,6 @@ services:
       retries: 6
 
   # ------------ STG ------------
-  stg-frontend:
-    image: "${LOCAL_REGISTRY:-local}/sanbou-frontend:stg"
-    build:
-      context: ./my-project/frontend
-      dockerfile: Dockerfile
-      target: runtime
-    container_name: stg-frontend
-    profiles: ["stg"]
-    env_file:
-      - ./env/.env.stg
-    expose: ["80"]
-    networks: [backend]
-    restart: unless-stopped
-    pull_policy: never
 
   stg-ai_api:
     image: "${LOCAL_REGISTRY:-local}/sanbou-ai-api:stg"
@@ -273,7 +245,10 @@ services:
 
   # ------------ NGINX (分離) ------------
   prod-nginx:
-    image: nginx:1.27
+    build:
+      context: ./my-project/frontend
+      dockerfile: Dockerfile
+      target: runtime
     container_name: prod-nginx
     profiles: ["prod"]
     ports: ["8080:80"]
@@ -285,11 +260,14 @@ services:
       prod-sql_api: {condition: service_healthy}
       prod-rag_api: {condition: service_healthy}
     volumes:
-      - ./my-project/nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./my-project/nginx/conf.d.prod:/etc/nginx/conf.d:ro
       - ./my-project/nginx/certs:/etc/nginx/certs:ro
 
   stg-nginx:
-    image: nginx:1.27
+    build:
+      context: ./my-project/frontend
+      dockerfile: Dockerfile
+      target: runtime
     container_name: stg-nginx
     profiles: ["stg"]
     ports: ["8081:80"]
@@ -301,7 +279,7 @@ services:
       stg-sql_api: {condition: service_healthy}
       stg-rag_api: {condition: service_healthy}
     volumes:
-      - ./my-project/nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./my-project/nginx/conf.d.stg:/etc/nginx/conf.d:ro
       - ./my-project/nginx/certs:/etc/nginx/certs:ro
 
 networks:

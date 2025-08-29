@@ -25,6 +25,8 @@ FROM nginx:1.27-alpine AS runtime
 
 # Nginx のカスタム設定 (conf.d 全置換)
 COPY nginx/conf.d /etc/nginx/conf.d
+COPY nginx/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
 # React ビルド成果物を配置
 COPY --from=build /app/dist /usr/share/nginx/html
@@ -35,4 +37,4 @@ COPY --from=build /app/dist /usr/share/nginx/html
 HEALTHCHECK --interval=30s --timeout=3s --retries=3 CMD [ -f /usr/share/nginx/html/index.html ] || exit 1
 
 EXPOSE 80 443
-CMD ["nginx", "-g", "daemon off;"]
+ENTRYPOINT ["/entrypoint.sh"]
