@@ -5,8 +5,10 @@
 
 FROM python:3.11-slim AS builder
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
-WORKDIR /wheels
-COPY requirements.txt requirements-dev.txt ./
+WORKDIR /build
+ARG SERVICE_DIR=sql_api
+COPY ${SERVICE_DIR}/requirements.txt requirements.txt
+COPY ${SERVICE_DIR}/requirements-dev.txt requirements-dev.txt
 ARG INSTALL_DEV=false
 RUN apt-get update && apt-get install -y --no-install-recommends build-essential \
     && rm -rf /var/lib/apt/lists/*
@@ -17,11 +19,13 @@ RUN --mount=type=cache,target=/root/.cache/pip \
 FROM python:3.11-slim AS runtime
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 PYTHONPATH=/backend PATH="/home/appuser/.local/bin:${PATH}"
 WORKDIR /backend
+ARG SERVICE_DIR=sql_api
 RUN useradd -m appuser
 USER appuser
 
 COPY --from=builder /wheels /wheels
-COPY requirements.txt requirements-dev.txt ./
+COPY ${SERVICE_DIR}/requirements.txt requirements.txt
+COPY ${SERVICE_DIR}/requirements-dev.txt requirements-dev.txt
 ARG INSTALL_DEV=false
 USER root
 RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates \
@@ -31,7 +35,7 @@ RUN pip install --no-cache-dir /wheels/*.whl \
     && if [ "$INSTALL_DEV" = "true" ]; then pip install --no-cache-dir -r requirements-dev.txt; fi
 
 COPY backend_shared/ /backend/backend_shared
-COPY app /backend/app
+COPY ${SERVICE_DIR}/app /backend/app
 # COPY config /backend/config
 
 EXPOSE 8000
