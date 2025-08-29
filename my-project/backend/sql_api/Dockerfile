@@ -36,12 +36,12 @@ RUN pip install --no-cache-dir /wheels/*.whl \
 
 COPY backend_shared/ /backend/backend_shared
 COPY ${SERVICE_DIR}/app /backend/app
+COPY config /backend/config
 # 必要な書き込み用ディレクトリ（エンドポイントで os.makedirs するパス）を事前作成し権限付与
 USER root
 RUN mkdir -p /backend/app/data/syogun_csv \
     && chown -R appuser:appuser /backend/app/data
 USER appuser
-# COPY config /backend/config
 
 EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=5s --retries=3 CMD curl -fsS http://localhost:8000/health >/dev/null || exit 1
