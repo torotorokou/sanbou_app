@@ -1,33 +1,30 @@
-## version キーは最新 compose では非推奨のため未指定
-##
-## 必要な事前設定（例）
-## .env などに:
-##   REGISTRY=asia-northeast1-docker.pkg.dev/sanbou-app/sanbou-repo
-##   POSTGRES_USER=...
-##   POSTGRES_PASSWORD=...
-##   POSTGRES_DB=...
-## 環境別 .env は ./env/.env.stg, ./env/.env.prod を利用
+## version キー省略 (compose v2)
+## 環境変数は .env と env/.env.{stg,prod} を併用
 
 services:
-  # =========================
-  # PROD 系
-  # =========================
+  # ------------ PROD ------------
   prod-frontend:
-    image: "${REGISTRY:-local}/sanbou-frontend:prod"
+    image: "${LOCAL_REGISTRY:-local}/sanbou-frontend:prod"
+    build:
+      context: ./my-project/frontend
+      dockerfile: Dockerfile
+      target: runtime
     container_name: prod-frontend
-    profiles: ["edge"]
+    profiles: ["prod"]
     env_file:
       - ./env/.env.prod
-    # フロントはイメージ内で 80 番待受け想定（Nginx等）
     expose: ["80"]
     networks: [backend]
     restart: unless-stopped
-    pull_policy: always
+    pull_policy: never
 
   prod-ai_api:
-    image: "${REGISTRY:-local}/sanbou-ai-api:prod"
+    image: "${LOCAL_REGISTRY:-local}/sanbou-ai-api:prod"
+    build:
+      context: ./my-project/backend/ai_api
+      dockerfile: Dockerfile
     container_name: prod-ai_api
-    profiles: ["edge"]
+    profiles: ["prod"]
     env_file:
       - ./env/.env.prod
     environment:
@@ -36,12 +33,11 @@ services:
     depends_on:
       prod-db:
         condition: service_healthy
-    secrets:
-      - gcs_key_prod.json
+    secrets: [gcs_key_prod.json]
     networks: [backend]
     restart: unless-stopped
-    pull_policy: always
-    healthcheck:
+    pull_policy: never
+    healthcheck: &api_hc
       test:
         - CMD-SHELL
         - |
@@ -58,9 +54,14 @@ services:
       retries: 5
 
   prod-ledger_api:
-    image: "${REGISTRY:-local}/sanbou-ledger-api:prod"
+    image: "${LOCAL_REGISTRY:-local}/sanbou-ledger-api:prod"
+    build:
+      context: ./my-project/backend
+      dockerfile: ledger_api/Dockerfile
+      args:
+        SERVICE_DIR: ledger_api
     container_name: prod-ledger_api
-    profiles: ["edge"]
+    profiles: ["prod"]
     env_file:
       - ./env/.env.prod
     environment:
@@ -69,31 +70,21 @@ services:
     depends_on:
       prod-db:
         condition: service_healthy
-    secrets:
-      - gcs_key_prod.json
+    secrets: [gcs_key_prod.json]
     networks: [backend]
     restart: unless-stopped
-    pull_policy: always
-    healthcheck:
-      test:
-        - CMD-SHELL
-        - |
-          python3 - <<'PY'
-          import sys,urllib.request
-          try:
-            r=urllib.request.urlopen('http://localhost:8000/health', timeout=3)
-            sys.exit(0 if r.getcode()==200 else 1)
-          except Exception:
-            sys.exit(1)
-          PY
-      interval: 20s
-      timeout: 5s
-      retries: 5
+    pull_policy: never
+    healthcheck: *api_hc
 
   prod-sql_api:
-    image: "${REGISTRY:-local}/sanbou-sql-api:prod"
+    image: "${LOCAL_REGISTRY:-local}/sanbou-sql-api:prod"
+    build:
+      context: ./my-project/backend
+      dockerfile: sql_api/Dockerfile
+      args:
+        SERVICE_DIR: sql_api
     container_name: prod-sql_api
-    profiles: ["edge"]
+    profiles: ["prod"]
     env_file:
       - ./env/.env.prod
     environment:
@@ -102,66 +93,41 @@ services:
     depends_on:
       prod-db:
         condition: service_healthy
-    secrets:
-      - gcs_key_prod.json
+    secrets: [gcs_key_prod.json]
     networks: [backend]
     restart: unless-stopped
-    pull_policy: always
-    healthcheck:
-      test:
-        - CMD-SHELL
-        - |
-          python3 - <<'PY'
-          import sys,urllib.request
-          try:
-            r=urllib.request.urlopen('http://localhost:8000/health', timeout=3)
-            sys.exit(0 if r.getcode()==200 else 1)
-          except Exception:
-            sys.exit(1)
-          PY
-      interval: 20s
-      timeout: 5s
-      retries: 5
+    pull_policy: never
+    healthcheck: *api_hc
 
   prod-rag_api:
-    image: "${REGISTRY:-local}/sanbou-rag-api:prod"
+    image: "${LOCAL_REGISTRY:-local}/sanbou-rag-api:prod"
+    build:
+      context: ./my-project/backend
+      dockerfile: rag_api/Dockerfile
+      args:
+        SERVICE_DIR: rag_api
     container_name: prod-rag_api
-    profiles: ["edge"]
+    profiles: ["prod"]
     env_file:
       - ./env/.env.prod
     environment:
       DATABASE_URL: "postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@prod-db:5432/${POSTGRES_DB}"
       PYTHONPATH: ${PYTHONPATH:-/backend}
+      SKIP_GCS: ${SKIP_GCS:-1}  # ローカル検証時はデフォルトで GCS ダウンロードをスキップ
     depends_on:
       prod-db:
         condition: service_healthy
-    secrets:
-      - gcs_key_prod.json
+    secrets: [gcs_key_prod.json, gcs_key.json]
     networks: [backend]
     restart: unless-stopped
-    pull_policy: always
-    healthcheck:
-      test:
-        - CMD-SHELL
-        - |
-          python3 - <<'PY'
-          import sys,urllib.request
-          try:
-            r=urllib.request.urlopen('http://localhost:8000/health', timeout=3)
-            sys.exit(0 if r.getcode()==200 else 1)
-          except Exception:
-            sys.exit(1)
-          PY
-      interval: 20s
-      timeout: 5s
-      retries: 5
+    pull_policy: never
+    healthcheck: *api_hc
 
   prod-db:
     image: postgres:16
     container_name: prod-db
-    profiles: ["edge"]
-    env_file:
-      - ./env/.env.prod
+    profiles: ["prod"]
+    env_file: [./env/.env.prod]
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -177,24 +143,29 @@ services:
       timeout: 5s
       retries: 6
 
-  # =========================
-  # STG 系
-  # =========================
+  # ------------ STG ------------
   stg-frontend:
-    image: "${REGISTRY:-local}/sanbou-frontend:stg"
+    image: "${LOCAL_REGISTRY:-local}/sanbou-frontend:stg"
+    build:
+      context: ./my-project/frontend
+      dockerfile: Dockerfile
+      target: runtime
     container_name: stg-frontend
-    profiles: ["edge"]
+    profiles: ["stg"]
     env_file:
       - ./env/.env.stg
     expose: ["80"]
     networks: [backend]
     restart: unless-stopped
-    pull_policy: always
+    pull_policy: never
 
   stg-ai_api:
-    image: "${REGISTRY:-local}/sanbou-ai-api:stg"
+    image: "${LOCAL_REGISTRY:-local}/sanbou-ai-api:stg"
+    build:
+      context: ./my-project/backend/ai_api
+      dockerfile: Dockerfile
     container_name: stg-ai_api
-    profiles: ["edge"]
+    profiles: ["stg"]
     env_file:
       - ./env/.env.stg
     environment:
@@ -203,31 +174,21 @@ services:
     depends_on:
       stg-db:
         condition: service_healthy
-    secrets:
-      - gcs_key_stg.json
+    secrets: [gcs_key_stg.json]
     networks: [backend]
     restart: unless-stopped
-    pull_policy: always
-    healthcheck:
-      test:
-        - CMD-SHELL
-        - |
-          python3 - <<'PY'
-          import sys,urllib.request
-          try:
-            r=urllib.request.urlopen('http://localhost:8000/health', timeout=3)
-            sys.exit(0 if r.getcode()==200 else 1)
-          except Exception:
-            sys.exit(1)
-          PY
-      interval: 20s
-      timeout: 5s
-      retries: 5
+    pull_policy: never
+    healthcheck: *api_hc
 
   stg-ledger_api:
-    image: "${REGISTRY:-local}/sanbou-ledger-api:stg"
+    image: "${LOCAL_REGISTRY:-local}/sanbou-ledger-api:stg"
+    build:
+      context: ./my-project/backend
+      dockerfile: ledger_api/Dockerfile
+      args:
+        SERVICE_DIR: ledger_api
     container_name: stg-ledger_api
-    profiles: ["edge"]
+    profiles: ["stg"]
     env_file:
       - ./env/.env.stg
     environment:
@@ -236,31 +197,21 @@ services:
     depends_on:
       stg-db:
         condition: service_healthy
-    secrets:
-      - gcs_key_stg.json
+    secrets: [gcs_key_stg.json]
     networks: [backend]
     restart: unless-stopped
-    pull_policy: always
-    healthcheck:
-      test:
-        - CMD-SHELL
-        - |
-          python3 - <<'PY'
-          import sys,urllib.request
-          try:
-            r=urllib.request.urlopen('http://localhost:8000/health', timeout=3)
-            sys.exit(0 if r.getcode()==200 else 1)
-          except Exception:
-            sys.exit(1)
-          PY
-      interval: 20s
-      timeout: 5s
-      retries: 5
+    pull_policy: never
+    healthcheck: *api_hc
 
   stg-sql_api:
-    image: "${REGISTRY:-local}/sanbou-sql-api:stg"
+    image: "${LOCAL_REGISTRY:-local}/sanbou-sql-api:stg"
+    build:
+      context: ./my-project/backend
+      dockerfile: sql_api/Dockerfile
+      args:
+        SERVICE_DIR: sql_api
     container_name: stg-sql_api
-    profiles: ["edge"]
+    profiles: ["stg"]
     env_file:
       - ./env/.env.stg
     environment:
@@ -269,64 +220,40 @@ services:
     depends_on:
       stg-db:
         condition: service_healthy
-    secrets:
-      - gcs_key_stg.json
+    secrets: [gcs_key_stg.json]
     networks: [backend]
     restart: unless-stopped
-    pull_policy: always
-    healthcheck:
-      test:
-        - CMD-SHELL
-        - |
-          python3 - <<'PY'
-          import sys,urllib.request
-          try:
-            r=urllib.request.urlopen('http://localhost:8000/health', timeout=3)
-            sys.exit(0 if r.getcode()==200 else 1)
-          except Exception:
-            sys.exit(1)
-          PY
-      interval: 20s
-      timeout: 5s
-      retries: 5
+    pull_policy: never
+    healthcheck: *api_hc
 
   stg-rag_api:
-    image: "${REGISTRY:-local}/sanbou-rag-api:stg"
+    image: "${LOCAL_REGISTRY:-local}/sanbou-rag-api:stg"
+    build:
+      context: ./my-project/backend
+      dockerfile: rag_api/Dockerfile
+      args:
+        SERVICE_DIR: rag_api
     container_name: stg-rag_api
-    profiles: ["edge"]
+    profiles: ["stg"]
     env_file:
       - ./env/.env.stg
     environment:
       DATABASE_URL: "postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@stg-db:5432/${POSTGRES_DB}"
       PYTHONPATH: ${PYTHONPATH:-/backend}
+      SKIP_GCS: ${SKIP_GCS:-1}
     depends_on:
       stg-db:
         condition: service_healthy
-    secrets:
-      - gcs_key_stg.json
+    secrets: [gcs_key_stg.json, gcs_key.json]
     networks: [backend]
     restart: unless-stopped
-    pull_policy: always
-    healthcheck:
-      test:
-        - CMD-SHELL
-        - |
-          python3 - <<'PY'
-          import sys,urllib.request
-          try:
-            r=urllib.request.urlopen('http://localhost:8000/health', timeout=3)
-            sys.exit(0 if r.getcode()==200 else 1)
-          except Exception:
-            sys.exit(1)
-          PY
-      interval: 20s
-      timeout: 5s
-      retries: 5
+    pull_policy: never
+    healthcheck: *api_hc
 
   stg-db:
     image: postgres:16
     container_name: stg-db
-    profiles: ["edge"]
+    profiles: ["stg"]
     env_file:
       - ./env/.env.stg
     environment:
@@ -344,28 +271,38 @@ services:
       timeout: 5s
       retries: 6
 
-  # =========================
-  # NGINX (リバースプロキシ)
-  # =========================
-  nginx:
+  # ------------ NGINX (分離) ------------
+  prod-nginx:
     image: nginx:1.27
-    container_name: edge-nginx
-    profiles: ["edge"]
-    ports: ["80:80", "443:443"]
+    container_name: prod-nginx
+    profiles: ["prod"]
+    ports: ["8080:80"]
     networks: [backend]
     restart: unless-stopped
     depends_on:
-      prod-ai_api:   { condition: service_healthy }
-      prod-ledger_api:{ condition: service_healthy }
-      prod-sql_api:  { condition: service_healthy }
-      prod-rag_api:  { condition: service_healthy }
-      stg-ai_api:    { condition: service_healthy }
-      stg-ledger_api:{ condition: service_healthy }
-      stg-sql_api:   { condition: service_healthy }
-      stg-rag_api:   { condition: service_healthy }
+      prod-ai_api: {condition: service_healthy}
+      prod-ledger_api: {condition: service_healthy}
+      prod-sql_api: {condition: service_healthy}
+      prod-rag_api: {condition: service_healthy}
     volumes:
-      - ./my-project/nginx/conf.d:/etc/nginx/conf.d:ro   # / と /stg/ の振分け設定を配置
-      - ./my-project/nginx/certs:/etc/nginx/certs:ro     # 任意: TLS
+      - ./my-project/nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./my-project/nginx/certs:/etc/nginx/certs:ro
+
+  stg-nginx:
+    image: nginx:1.27
+    container_name: stg-nginx
+    profiles: ["stg"]
+    ports: ["8081:80"]
+    networks: [backend]
+    restart: unless-stopped
+    depends_on:
+      stg-ai_api: {condition: service_healthy}
+      stg-ledger_api: {condition: service_healthy}
+      stg-sql_api: {condition: service_healthy}
+      stg-rag_api: {condition: service_healthy}
+    volumes:
+      - ./my-project/nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./my-project/nginx/certs:/etc/nginx/certs:ro
 
 networks:
   backend:
@@ -376,6 +313,8 @@ volumes:
   dbdata_stg:
 
 secrets:
+  gcs_key.json:
+    file: ./secrets/gcs-key.stg.json
   gcs_key_prod.json:
     file: ./secrets/gcs-key.prod.json
   gcs_key_stg.json:

@@ -20,18 +20,24 @@ SHELL := /bin/bash
 # --------- 設定項目 ----------
 ENV ?= dev                   # デフォルトは dev（stg/prod の場合のみ ENV=xxx を明示）
 DEBUG ?= 0                   # 1で[debug]を表示
+REMOTE_PULL ?= 0             # 1=リモートレジストリからの pull を試行（認証設定済み時）。0=完全ローカルビルド
 # ↑ 行末に多数の空白があるため、その空白が値として取り込まれ [[ -f ]] で存在判定失敗していた。
 # GNU make では代入行で # の手前のスペースも値に含まれ得るケースがあるため明示的に strip。
 ENV := $(strip $(ENV))
 DEBUG := $(strip $(DEBUG))
+REMOTE_PULL := $(strip $(REMOTE_PULL))
 DC := docker compose
 BASE := docker-compose.yml
 OVERRIDE := docker-compose.override.yml
-EDGE := edge                 # Nginx を起動する profile 名（stg/prod 用）
+EDGE := edge                 # (legacy) 未使用
 
 ENV_FILE := $(strip env/.env.$(ENV))
 SECRETS_FILE := $(strip secrets/.env.$(ENV).secrets) # stg/prod の秘密保存先（git ignore想定）
-GCP_SA_FILE ?= secrets/gcs-key.json # 必要なら存在チェック
+GCP_SA_FILE ?= secrets/gcs-key.json # dev 用デフォルト
+# stg/prod は docker-compose.yml の secrets 記述と合わせた個別ファイル名に統一
+ifneq ($(ENV),dev)
+	GCP_SA_FILE := secrets/gcs-key.$(ENV).json
+endif
 GCP_SA_FILE := $(strip $(GCP_SA_FILE))
 
 # docker compose の変数展開で ${ENV_FILE} を参照させるため export
@@ -47,8 +53,12 @@ FILES := -f $(BASE)
 PROFILE :=
 ifeq ($(ENV),dev)
   FILES := -f $(BASE) -f $(OVERRIDE)
+else ifeq ($(ENV),stg)
+	PROFILE := --profile stg
+else ifeq ($(ENV),prod)
+	PROFILE := --profile prod
 else
-  PROFILE := --profile $(EDGE)
+	$(error ENV は dev / stg / prod のいずれか)
 endif
 
 # --------- ログマクロ ----------
@@ -96,6 +106,21 @@ up:
 	    $(call LOG_WARN,$(GCP_SA_FILE) が見つかりません（GCP を使わない場合は無視可）)
 	  fi
 	else
+	  # stg では prod-* コンテナも起動するため prod 用キーも確保
+	  if [[ "$(ENV)" == "stg" ]]; then
+	    if [[ -f secrets/gcs-key.json && ! -f secrets/gcs-key.prod.json ]]; then
+	      cp secrets/gcs-key.json secrets/gcs-key.prod.json
+	      $(call LOG_WARN,Created secrets/gcs-key.prod.json from generic secrets/gcs-key.json)
+	    elif [[ -f secrets/gcs-key.stg.json && ! -f secrets/gcs-key.prod.json ]]; then
+	      cp secrets/gcs-key.stg.json secrets/gcs-key.prod.json
+	      $(call LOG_WARN,Duplicated stg key -> secrets/gcs-key.prod.json)
+	    fi
+	  fi
+	  # 汎用 gcs-key.json だけ存在する場合は環境別ファイルへ複製
+	  if [[ -f secrets/gcs-key.json && ! -f "$(GCP_SA_FILE)" ]]; then
+	    cp secrets/gcs-key.json "$(GCP_SA_FILE)"
+	    $(call LOG_WARN,Created $(GCP_SA_FILE) from generic secrets/gcs-key.json )
+	  fi
 	  [[ -f "$(SECRETS_FILE)" ]] || { touch "$(SECRETS_FILE)"; chmod 600 "$(SECRETS_FILE)"; }
 
 	  if [[ -f "secrets/.env.$(ENV).secrets " && ! -f "$(SECRETS_FILE)" ]]; then
@@ -127,9 +152,15 @@ up:
 	  fi
 
 	  $(call RUN,compose pull,$(DC) --env-file "$(ENV_FILE)" -p $(ENV) $(PROFILE) $(FILES) pull || true)
+
+	  if [[ "$(REMOTE_PULL)" == "1" ]]; then
+	    $(call RUN,compose pull,$(DC) --env-file "$(ENV_FILE)" -p $(ENV) $(PROFILE) $(FILES) pull || true)
+	  else
+	    echo "[info] REMOTE_PULL=0: remote pull をスキップ (compose build でローカル生成)"
+	  fi
 	fi
 
-	$(call RUN,compose up,$(DC) --env-file "$(ENV_FILE)" -p $(ENV) $(PROFILE) $(FILES) up -d --remove-orphans)
+	$(DC) --env-file "$(ENV_FILE)" -p $(ENV) $(PROFILE) $(FILES) up -d --build --remove-orphans
 	$(call LOG_INFO,Finished 'up' successfully)
 
 down:
@@ -150,8 +181,12 @@ rebuild:
 	$(call LOG_DEBUG,FILES="$(FILES)" PROFILE="$(PROFILE)")
 
 	# 先に既存コンテナを停止 (ポート競合防止)
-	$(call LOG_INFO,Pre-clean existing project containers (down --remove-orphans))
+	$(call LOG_INFO,Pre-clean existing project containers: down --remove-orphans)
 	$(DC) -p $(ENV) down --remove-orphans || true
+	# (一時無効化) 明示的 container_name 競合対策ループ
+	# @containers="prod-frontend prod-ai_api prod-ledger_api prod-sql_api prod-rag_api prod-db stg-frontend stg-ai_api stg-ledger_api stg-sql_api stg-rag_api stg-db edge-nginx"; for c in $$containers; do if docker ps -a --format '{{.Names}}' | grep -q "^$$c$"; then echo "[info] Force removing stale container: $$c"; docker rm -f $$c >/dev/null 2>&1 || true; fi; done
+	# シンプル強制削除（存在しなくても無視）
+	@docker rm -f prod-frontend prod-ai_api prod-ledger_api prod-sql_api prod-rag_api prod-db stg-frontend stg-ai_api stg-ledger_api stg-sql_api stg-rag_api stg-db edge-nginx >/dev/null 2>&1 || true
 
 	# 過去に project name 未指定で生成された dev-* などのレガシー名称コンテナを掃除 (任意)
 	@if [[ "$(ENV)" == "dev" ]]; then \
@@ -181,6 +216,20 @@ rebuild:
 	    mv -f "secrets/gcs-key.json " "$(GCP_SA_FILE)"
 	    $(call LOG_WARN,Renamed 'secrets/gcs-key.json ' -> '$(GCP_SA_FILE)')
 	  fi
+	  if [[ "$(ENV)" == "stg" ]]; then
+	    if [[ -f secrets/gcs-key.json && ! -f secrets/gcs-key.prod.json ]]; then
+	      cp secrets/gcs-key.json secrets/gcs-key.prod.json
+	      $(call LOG_WARN,Created secrets/gcs-key.prod.json from generic secrets/gcs-key.json)
+	    elif [[ -f secrets/gcs-key.stg.json && ! -f secrets/gcs-key.prod.json ]]; then
+	      cp secrets/gcs-key.stg.json secrets/gcs-key.prod.json
+	      $(call LOG_WARN,Duplicated stg key -> secrets/gcs-key.prod.json)
+	    fi
+	  fi
+	  # 汎用 gcs-key.json しか無い場合の複製
+	  if [[ -f secrets/gcs-key.json && ! -f "$(GCP_SA_FILE)" ]]; then
+	    cp secrets/gcs-key.json "$(GCP_SA_FILE)"
+	    $(call LOG_WARN,Created $(GCP_SA_FILE) from generic secrets/gcs-key.json )
+	  fi
 	  if [[ ! -f "$(SECRETS_FILE)" ]]; then
 	    $(call LOG_ERROR_EXIT,secrets 未設定。先に 'make up ENV=$(ENV)' で設定してください。)
 	  fi
@@ -190,15 +239,19 @@ rebuild:
 	    $(call LOG_ERROR_EXIT,$(GCP_SA_FILE) not found)
 	  fi
 
-	  $(call RUN,compose pull,$(DC) --env-file "$(ENV_FILE)" -p $(ENV) $(PROFILE) $(FILES) pull || true)
+	  if [[ "$(REMOTE_PULL)" == "1" ]]; then
+	    $(call RUN,compose pull,$(DC) --env-file "$(ENV_FILE)" -p $(ENV) $(PROFILE) $(FILES) pull || true)
+	  else
+	    echo "[info] REMOTE_PULL=0: remote pull をスキップ (build のみ)"
+	  fi
 	else
 	  if [[ ! -f "$(GCP_SA_FILE)" ]]; then
 	    $(call LOG_WARN,$(GCP_SA_FILE) が見つかりません（GCP を使わない場合は無視可）)
 	  fi
 	fi
 
-	$(call RUN,compose build --no-cache,$(DC) --env-file "$(ENV_FILE)" -p $(ENV) $(PROFILE) $(FILES) build --no-cache)
-	$(call RUN,compose up -d --force-recreate,$(DC) --env-file "$(ENV_FILE)" -p $(ENV) $(PROFILE) $(FILES) up -d --force-recreate --remove-orphans)
+	$(DC) --env-file "$(ENV_FILE)" -p $(ENV) $(PROFILE) $(FILES) build --no-cache
+	$(DC) --env-file "$(ENV_FILE)" -p $(ENV) $(PROFILE) $(FILES) up -d --force-recreate --remove-orphans
 	$(call LOG_INFO,Finished 'rebuild' successfully)
 
 config:

@@ -9,8 +9,11 @@
 FROM python:3.11-slim AS builder
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
 WORKDIR /build
+ARG SERVICE_DIR=ledger_api
 
-COPY requirements.txt requirements-dev.txt ./
+# サービス個別の requirements をルート build context からコピー
+COPY ${SERVICE_DIR}/requirements.txt requirements.txt
+COPY ${SERVICE_DIR}/requirements-dev.txt requirements-dev.txt
 ARG INSTALL_DEV=false
 RUN --mount=type=cache,target=/root/.cache/pip \
     pip wheel --no-deps -r requirements.txt -w /wheels \
@@ -22,6 +25,7 @@ RUN --mount=type=cache,target=/root/.cache/pip \
 FROM python:3.11-slim AS runtime
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 PYTHONPATH=/backend
 WORKDIR /backend
+ARG SERVICE_DIR=ledger_api
 
 # LibreOffice と日本語フォント、ヘルスチェック用 curl
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -39,17 +43,20 @@ RUN useradd -m appuser
 
 # Python 依存関係
 COPY --from=builder /wheels /wheels
-COPY requirements.txt requirements-dev.txt ./
+COPY ${SERVICE_DIR}/requirements.txt requirements.txt
+COPY ${SERVICE_DIR}/requirements-dev.txt requirements-dev.txt
 ARG INSTALL_DEV=false
 RUN pip install --no-cache-dir /wheels/*.whl \
     && if [ "$INSTALL_DEV" = "true" ]; then \
          pip install --no-cache-dir -r requirements-dev.txt; \
        fi
 
-# アプリ本体
+# アプリ本体と共有コード
 COPY backend_shared/ /backend/backend_shared
-COPY app /backend/app
-# COPY config /backend/config
+COPY ${SERVICE_DIR}/app /backend/app
+# ログ出力用ディレクトリを作成し書き込み権限を付与
+RUN mkdir -p /backend/app/api/st_app/logs \
+  && chown -R appuser:appuser /backend
 
 USER appuser
 EXPOSE 8000
