@@ -161,11 +161,21 @@ nginx/cache/
 # ============================
 # 原則: 設定ファイルは tracking したいので config 以下は許可。
 # まず一括で拡張子除外 → config のみ許可 (例: my-project/config, backend/*/config 等)
-*.json
+# *.json
 *.yaml
-*.yml
+# *.yml
 # CSV は生成データ混在の可能性があるため必要ならここで一括除外し、config 配下は allow
 *.csv
+
+# --- allow Node.js package manifests & lock files (were excluded by *.json / *.yaml) ---
+!package.json
+!**/package.json
+!package-lock.json
+!**/package-lock.json
+!pnpm-lock.yaml
+!**/pnpm-lock.yaml
+!yarn.lock
+!**/yarn.lock
 
 # --- allow docker compose files (needed for environment provisioning) ---
 !docker/docker-compose.yml
@@ -200,5 +210,12 @@ cache_embeddings/
 # ============================
 # 追加で無視したいものがあればこの下に
 # ============================
+
+# 履歴保持不要な一時/退避ディレクトリ
+__archive__/
+
+# 誤って混入しやすい資格情報 (既に secrets/ は除外済だがコピー漏れ対策)
+**/gcp-sa.json
+**/gcs-key*.json
 
 # (EOF)
