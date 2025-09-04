@@ -1,0 +1,1 @@
+"""Factory manage view components."""
