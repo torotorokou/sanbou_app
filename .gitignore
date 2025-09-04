@@ -97,6 +97,7 @@ secrets/*
 *.local
 docker-compose.override.yml
 docker-compose.local.yml
+ 
 
 # ============================
 # データ / バックアップ
@@ -165,6 +166,12 @@ nginx/cache/
 *.yml
 # CSV は生成データ混在の可能性があるため必要ならここで一括除外し、config 配下は allow
 *.csv
+
+# --- allow docker compose files (needed for environment provisioning) ---
+!docker/docker-compose.yml
+!docker/docker-compose.dev.yml
+!docker/docker-compose.stg.yml
+!docker/docker-compose.prod.yml
 
 !config/**
 !**/config/**

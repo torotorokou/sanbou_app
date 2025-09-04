@@ -1,0 +1,58 @@
+## =============================================================
+## docker-compose.dev.yml (再構築: 開発用 Override)
+## =============================================================
+services:
+  frontend:
+    build:
+      target: dev
+    command: ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
+    ports:
+      - "5173:5173"
+    volumes:
+      - ../app/frontend:/app
+      - ../app/frontend/node_modules:/app/node_modules
+    environment:
+      CHOKIDAR_USEPOLLING: "true"
+
+  ai_api:
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+    ports:
+      - "8001:8000"
+    volumes:
+      - ../app/backend/ai_api/app:/backend/app
+      - ../app/backend/backend_shared:/backend/backend_shared
+      - ../app/config:/backend/config
+
+  ledger_api:
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+    ports:
+      - "8002:8000"
+    volumes:
+      - ../app/backend/ledger_api/app:/backend/app
+      - ../app/backend/backend_shared:/backend/backend_shared
+      - ../app/config:/backend/config
+
+  sql_api:
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+    ports:
+      - "8003:8000"
+    volumes:
+      - ../app/backend/sql_api/app:/backend/app
+      - ../app/backend/backend_shared:/backend/backend_shared
+      - ../app/config:/backend/config
+
+  rag_api:
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+    ports:
+      - "8004:8000"
+    volumes:
+      - ../app/backend/rag_api/app:/backend/app
+      - ../app/backend/backend_shared:/backend/backend_shared
+      - ../app/config:/backend/config
+
+  nginx:
+    ports:
+      - "${DEV_NGINX_PORT:-8080}:80"
+    volumes:
+      - ../app/nginx/conf.d:/etc/nginx/conf.d
+      - ../app/nginx/certs:/etc/nginx/certs
