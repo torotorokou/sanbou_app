@@ -57,6 +57,14 @@ RUN pip install --no-cache-dir /wheels/*.whl \
 COPY ${BASE_PATH}/backend_shared/ /backend/backend_shared
 COPY ${BASE_PATH}/${SERVICE_DIR}/app /backend/app
 COPY config /backend/config
+# --- build-time sanity checks (fail fast if sources missing) ---
+RUN test -d /backend/app/api/endpoints/reports \
+ && python - <<'PY'
+import importlib, sys
+sys.path.insert(0, '/backend')
+importlib.import_module('app.api.endpoints.reports')
+print('Verified import: app.api.endpoints.reports')
+PY
 # ログ出力用ディレクトリを作成し書き込み権限を付与
 RUN mkdir -p /backend/app/api/st_app/logs \
   && chown -R appuser:appuser /backend
