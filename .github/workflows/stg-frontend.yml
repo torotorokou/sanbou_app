@@ -27,8 +27,8 @@ jobs:
       - name: Build & Push Frontend
         uses: docker/build-push-action@v5
         with:
-          context: my-project/frontend
-          file: my-project/frontend/Dockerfile
+          context: app/frontend
+          file: app/frontend/Dockerfile
           push: true
           tags: |
             asia-northeast1-docker.pkg.dev/sanbou-app/sanbou-repo/sanbou-frontend:stg

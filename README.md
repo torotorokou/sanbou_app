@@ -79,8 +79,8 @@ make up ENV=prod
 
 - stg/prod は Nginx プロファイル（edge）で起動し、80/443 を公開
 - 証明書と設定を配置:
-  - `my-project/nginx/certs/*`（鍵/証明書）
-  - `my-project/nginx/conf.d/*.conf`（仮想ホスト設定）
+  - `app/nginx/certs/*`（鍵/証明書）
+  - `app/nginx/conf.d/*.conf`（仮想ホスト設定）
 
 ---
 
@@ -97,9 +97,9 @@ make up ENV=prod
 
 ## プロジェクト構成（簡略）
 
-- `my-project/frontend`: フロントエンド（Vite + React）
-- `my-project/backend/*_api`: 各FastAPIサービス（ai/ledger/sql/rag）
-- `my-project/nginx`: 逆プロキシ設定と証明書
+- `app/frontend`: フロントエンド（Vite + React）
+- `app/backend/*_api`: 各FastAPIサービス（ai/ledger/sql/rag）
+- `app/nginx`: 逆プロキシ設定と証明書
 - `config`: CSV/レポート等の設定群
 - `dbdata`: PostgreSQLデータ永続化用ボリューム
 - `docker-compose.yml`: 本番相当のベース設定
@@ -111,8 +111,63 @@ make up ENV=prod
 ## 補足（開発の進め方）
 
 - 日常操作は `make up|down|logs|rebuild ENV=dev` が基本
-- 各サービスの詳細は `my-project/backend/*/README.md` や `frontend/README.md`（存在する場合）を参照
+- 各サービスの詳細は `app/backend/*/README.md` や `frontend/README.md`（存在する場合）を参照
 - 機密情報（APIキー・鍵ファイル・DBデータ）は必ず git 管理外（`.gitignore` 済）
+
+---
+
+## 環境分割 (dev / stg / prod) の仕組み
+
+本リポジトリでは以下の方針で 3 環境を docker compose の override で切り替えます。
+
+### ファイル構成
+
+```
+docker-compose.yml            # 共通土台 (サービス定義)
+docker-compose.dev.yml        # dev 専用 (ホットリロード, ポート直接公開)
+docker-compose.stg.yml        # stg 専用 (prod と同等, ポート 8080/8443)
+docker-compose.prod.yml       # prod 専用 (nginx の 80/443 のみ公開)
+env/
+  ├─ .env.dev                 # 開発用環境変数 (ホットリロード前提)
+  ├─ .env.stg                 # ステージング用 (本番に近い値)
+  └─ .env.prod                # 本番用 (Secrets は別途 vault / 環境変数注入)
+frontend/                     # React(TypeScript) SPA (Vite)
+backend/                      # FastAPI (例: ai_api を backend として利用)
+nginx/                        # リバースプロキシ (設定 / 証明書)
+```
+
+### サービス概要
+
+| サービス | 役割 | dev | stg | prod |
+|----------|------|-----|-----|------|
+| frontend | React/Vite SPA | npm run dev (port 5173) | nginx runtime (内部) | nginx runtime (内部) |
+| backend  | FastAPI | uvicorn --reload (port 8000) | 標準 uvicorn (内部) | 標準 uvicorn (内部) |
+| nginx    | Reverse Proxy & Static | 8080:80 公開 (任意) | 8080/8443 公開 | 80/443 公開 |
+
+### 起動例
+
+```
+make up              # dev (ホットリロード)
+make up ENV=stg      # stg (nginx:8080)
+make up ENV=prod     # prod (nginx:80)
+make logs ENV=dev S=backend
+make rebuild ENV=prod
+```
+
+### なぜ override 方式か
+
+- 共有設定 (依存関係 / ネットワーク / ビルド) を `docker-compose.yml` に集約し重複を削減
+- 環境差分 (ポート公開 / コマンド / ボリュームマウント) のみ小さい override に記述
+- 将来サービス追加時は共通に 1 箇所追加 + dev 用マウント追記のみで済む
+
+### 初心者向けメモ
+
+1. dev 環境ではコードを編集すると即座に反映されます (Vite + uvicorn --reload)
+2. stg/prod ではコンテナ内にビルド成果物のみ含み、ホットリロードは無効です
+3. 本番では `frontend`/`backend` コンテナは外部ポートを持たず、`nginx` コンテナのみ公開されます
+4. 秘密情報(APIキー等)は `.env.prod` に直書きせず安全な仕組み(Secrets Manager, 環境変数注入)を利用してください
+
+---
 
 ---
 
@@ -158,8 +213,8 @@ make up ENV=prod
 例: (REGISTRY 未指定ローカルビルド)
 
 ```bash
-docker build -t local/sanbou-frontend:dev -f my-project/frontend/Dockerfile my-project/frontend
-docker build -t local/sanbou-ai-api:dev -f my-project/backend/ai_api/Dockerfile my-project/backend/ai_api
+docker build -t local/sanbou-frontend:dev -f app/frontend/Dockerfile app/frontend
+docker build -t local/sanbou-ai-api:dev -f app/backend/ai_api/Dockerfile app/backend/ai_api
 ```
 
 複数サービス並列ビルド (GNU make + BuildKit 利用例):
@@ -185,7 +240,7 @@ make up ENV=dev
 もしくは一時的に特定サービスだけ旧版を使いたい場合:
 
 ```bash
-docker build -t local/sanbou-ai-api:rollback -f my-project/backend/ai_api/Dockerfile.prev my-project/backend/ai_api
+docker build -t local/sanbou-ai-api:rollback -f app/backend/ai_api/Dockerfile.prev app/backend/ai_api
 ```
 (
 旧 Dockerfile を `Dockerfile.prev` として保管している想定。無い場合は Git 履歴から復元)
