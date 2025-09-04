@@ -4,6 +4,8 @@
 services:
   frontend:
     build:
+      context: ../app/frontend
+      dockerfile: Dockerfile
       target: dev
     command: ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
     ports:
