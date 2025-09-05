@@ -136,7 +136,7 @@ postgres_data/
 logs/
 **/logs/
 coverage/
-reports/
+# reports/
 *.report.*
 
 # ============================
