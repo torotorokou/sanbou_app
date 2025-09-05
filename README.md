@@ -90,6 +90,10 @@ make up ENV=prod
   - `env/.env.dev`（または `.env.stg`/`.env.prod`）を作成してから `make up ENV=<env>` を実行
 - ポート競合
   - `env/.env.<env>` の `FRONTEND_PORT`, `AI_API_PORT` などを空いている番号に変更
+  - (stg) Nginx で 8080/8443 衝突時は一時的に環境変数指定: `STG_NGINX_HTTP_PORT=18080 STG_NGINX_HTTPS_PORT=18443 make up ENV=stg`
+  - 恒久対応するなら `.env.stg` に `STG_NGINX_HTTP_PORT=18080` / `STG_NGINX_HTTPS_PORT=18443` を追記
+  - 8080 を占有しているプロセス調査: `ss -ltnp | grep :8080` または `lsof -iTCP:8080 -sTCP:LISTEN`
+  - 不要な systemd サービスなら: `sudo systemctl disable --now <service>` （停止前に影響調査）
 - `secrets/gcs-key.json not found`
   - GCP連携が必須の環境（stg/prod）ではファイルを配置。devでは警告のみ
 

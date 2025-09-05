@@ -45,6 +45,37 @@ COMPOSE_FILES := -f $(BASE) -f $(OVERRIDE)
 check:
 	@if [ ! -f "$(OVERRIDE)" ]; then echo "[error] $(OVERRIDE) not found"; exit 1; fi
 	@if [ ! -f "$(ENV_FILE)" ]; then echo "[error] $(ENV_FILE) not found"; exit 1; fi
+	# --- Port availability check (dev/stg) ---------------------------------
+	@if [ "$(ENV)" = "dev" ]; then
+	  PORTS="$${DEV_NGINX_PORT:-8080}"
+	elif [ "$(ENV)" = "stg" ]; then
+	  # 明示未設定でもデフォルトで 8080/8443 をチェック
+	  PORTS="$${STG_NGINX_HTTP_PORT:-8080} $${STG_NGINX_HTTPS_PORT:-8443}"
+	else
+	  PORTS=""
+	fi
+	PORTS="`echo $$PORTS | xargs`"
+	if [ -n "$$PORTS" ]; then
+	  # lsof が無ければ ss で代替
+	  if ! command -v lsof >/dev/null 2>&1 && ! command -v ss >/dev/null 2>&1; then
+	    echo "[warn] neither lsof nor ss command found; skipping port pre-check" >&2
+	  else
+	    for P in $$PORTS; do
+	      IN_USE=0
+	      if command -v lsof >/dev/null 2>&1; then
+	        lsof -iTCP:$$P -sTCP:LISTEN >/dev/null 2>&1 && IN_USE=1
+	      elif command -v ss >/dev/null 2>&1; then
+	        ss -ltn 2>/dev/null | awk '{print $4}' | grep -E ':(|'"$$P"')$$' >/dev/null 2>&1 && IN_USE=1
+	      fi
+	      if [ $$IN_USE -eq 1 ]; then
+	        echo "[error] port $$P already in use by host process."; \
+	        echo "        対処例: STG 環境なら 'STG_NGINX_HTTP_PORT=18080 make up ENV=stg' のように空きポートへ変更"; \
+	        echo "        使用中プロセス確認: (lsof -iTCP:$$P -sTCP:LISTEN) or (ss -ltn | grep :$$P)"; \
+	        exit 2; \
+	      fi
+	    done
+	  fi
+	fi
 
 up: check
 	@echo "[info] UP (ENV=$(ENV))"
