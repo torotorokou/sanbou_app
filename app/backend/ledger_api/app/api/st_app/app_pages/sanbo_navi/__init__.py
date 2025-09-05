@@ -1,0 +1,1 @@
+"""Sanbo navigation pages."""

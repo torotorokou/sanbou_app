@@ -1,0 +1,33 @@
+## =============================================================
+## docker-compose.stg.yml (ステージング環境 Override)
+## - 基本は本番 prod と同構成
+## - ポート衝突回避のため 8080/8443 を公開
+## - ソースはイメージ内 (マウントしない)
+## =============================================================
+services:
+  frontend:
+    env_file:
+      - ../env/.env.stg
+
+  ai_api:
+    env_file:
+      - ../env/.env.stg
+
+  ledger_api:
+    env_file:
+      - ../env/.env.stg
+
+  sql_api:
+    env_file:
+      - ../env/.env.stg
+
+  rag_api:
+    env_file:
+      - ../env/.env.stg
+
+  nginx:
+    ports:
+      - "${STG_NGINX_HTTP_PORT:-8080}:80"
+      - "${STG_NGINX_HTTPS_PORT:-8443}:443"
+    environment:
+      STAGE: stg

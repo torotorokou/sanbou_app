@@ -1,15 +1,8 @@
-# Environment files (keep example only)
-env/.env.dev
-env/.env.stg
-env/.env.prod
-
-# Docker secrets
-secrets/
-# === OS固有 ===
+# ============================
+# 基本ルール / OS / エディタ
+# ============================
 .DS_Store
 Thumbs.db
-
-# === エディタ・IDE ===
 .vscode/
 !.vscode/extensions.json
 .idea/
@@ -19,108 +12,210 @@ Thumbs.db
 *.sln
 *.sw?
 
-# === Node.js / React ===
+# JetBrains 等派生
+.fleet/
+
+# ============================
+# Node.js / Frontend Build
+# ============================
 node_modules/
 dist/
 dist-ssr/
 build/
 .cache/
+.vite/
 .next/
 out/
-.vite/
 *.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
-
-# === TypeScript ===
 *.tsbuildinfo
 
-# === Python ===
+# ============================
+# Python / パッケージ成果物
+# ============================
 __pycache__/
 *.py[cod]
 *.pyo
+*.pyd
 *.egg
 *.egg-info/
 .eggs/
-env/
-venv/
-ENV/
-.venv/
-.env/
-.Python
-pip-log.txt
-pip-delete-this-directory.txt
-
-# === Python tools ===
 .mypy_cache/
 .pytest_cache/
 .tox/
+.dmypy.json
+.pyre/
+.ruff_cache/
+.pytype/
 .coverage
 .coverage.*
 htmlcov/
-.cache/
-.dmypy.json
-.pyre/
+pip-log.txt
+pip-delete-this-directory.txt
+.Python
+.python-version
 
-# === FastAPI / Pydantic Artifacts ===
+# 仮想環境
+.env/
+.venv/
+env/
+venv/
+ENV/
+
+# ============================
+# アプリ / DB ランタイム
+# ============================
 *.db
 *.sqlite3
 
-# === 環境変数ファイル ===
+# ============================
+# 環境変数・Secrets
+# ============================
+# すべての .env 系は除外し例のみ許可
 *.env
 *.env.*
 !.env.example
+env/.env.*
+!env/.env.example
 
-# === Docker ===
+# secrets ディレクトリ: 実ファイル除外、テンプレ / example のみ許可
+secrets/*
+!secrets/*.template
+!secrets/*example*
+!secrets/*_example.*
+!secrets/README*
+
+# 既存個別（追跡不要）: .env.stg.secrets / .env.prod.secrets は上記で除外済
+
+# ============================
+# Docker / Compose
+# ============================
 *.local
 docker-compose.override.yml
 docker-compose.local.yml
+ 
 
-# === テスト関連 ===
-coverage.xml
-pytest.ini
-test-results/
-junit.xml
-
-# === PDFやドキュメント（必要に応じて解除）===
-*.pdf
-*.Identifier
-*.csv
-*.xlsx
-*.docx
-*.pptx
-*.yaml
-
-# === PostgreSQL ===
+# ============================
+# データ / バックアップ
+# data, local_data は原則除外。テンプレ / マスタ許可
+# ============================
 dbdata/
+pg_data/
+postgres_data/
 *.pgsql
 *.psql
 *.dump
 *.backup
-pg_data/
-postgres_data/
 
-# === Nginx ===
+**/local_data/
+# **/data/
+!**/data/templates/**
+!**/data/master/**
+
+# local_data/master 内でコード参照される設定 (yaml / json) は許可
+!**/local_data/master/**/*.yaml
+!**/local_data/master/**/*.yml
+!**/local_data/master/**/*.json
+# 必要に応じて PDF など大きなバイナリを追跡したい場合は以下のコメント解除
+# !**/local_data/master/**/*.pdf
+
+*.bak
+*.tmp
+*.out
+*.pid
+*.pid.lock
+*.zip
+
+# ============================
+# ログ / レポート / カバレッジ
+# ============================
+logs/
+**/logs/
+coverage/
+# reports/
+*.report.*
+
+# ============================
+# ドキュメント系バイナリ
+# ============================
+*.pdf
+*.docx
+*.pptx
+*.xlsx
+*.Identifier
+
+# ============================
+# Nginx
+# ============================
 nginx/logs/
 nginx/cache/
 *.conf.bak
 *.conf.tmp
 
-# secrets
-secrets/*
+# ============================
+# YAML / JSON / CSV 管理方針
+# ============================
+# 原則: 設定ファイルは tracking したいので config 以下は許可。
+# まず一括で拡張子除外 → config のみ許可 (例: my-project/config, backend/*/config 等)
+# *.json
+*.yaml
+# *.yml
+# CSV は生成データ混在の可能性があるため必要ならここで一括除外し、config 配下は allow
+*.csv
 
-# ディレクトリ関係
-local_data/
+# --- allow Node.js package manifests & lock files (were excluded by *.json / *.yaml) ---
+!package.json
+!**/package.json
+!package-lock.json
+!**/package-lock.json
+!pnpm-lock.yaml
+!**/pnpm-lock.yaml
+!yarn.lock
+!**/yarn.lock
 
-# === その他 ===
-*.bak
-*.tmp
-*.log
-*.out
-*.pid
-*.pid.lock
-*.zip
-*.json
+# --- allow docker compose files (needed for environment provisioning) ---
+!docker/docker-compose.yml
+!docker/docker-compose.dev.yml
+!docker/docker-compose.stg.yml
+!docker/docker-compose.prod.yml
+
+!config/**
+!**/config/**
+!**/config.example.json
+!**/config.example.yaml
+!**/config.example.yml
+
+# config 配下 CSV / JSON / YAML を明示許可 (二重許可だが将来の順序変更安全策)
+!config/**/*.json
+!config/**/*.yaml
+!config/**/*.yml
+!config/**/*.csv
+!**/config/**/*.json
+!**/config/**/*.yaml
+!**/config/**/*.yml
+!**/config/**/*.csv
+
+# ============================
+# RAG / ベクターストア（将来）
+# ============================
+*.faiss
+*.ann
+vector_store/
+cache_embeddings/
+
+# ============================
+# 追加で無視したいものがあればこの下に
+# ============================
+
+# 履歴保持不要な一時/退避ディレクトリ
+__archive__/
+
+# 誤って混入しやすい資格情報 (既に secrets/ は除外済だがコピー漏れ対策)
+**/gcp-sa.json
+**/gcs-key*.json
+
+# (EOF)
