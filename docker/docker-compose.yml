@@ -23,6 +23,10 @@ services:
       - ../env/.env.dev
     networks:
       - app-net
+    environment:
+      STAGE: dev
+    volumes:
+      - ../secrets:/backend/secrets:ro
 
   sql_api:
     build: { context: ../app, dockerfile: backend/sql_api/Dockerfile }
