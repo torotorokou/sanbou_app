@@ -4,10 +4,10 @@ from typing import Any, Dict
 
 import pandas as pd
 
-from app.api.st_app.logic.manage.average_sheet import process as process_average_sheet
-from app.api.st_app.logic.manage.balance_sheet import process as process_balance_sheet
-from app.api.st_app.logic.manage.factory_report import process as process_factory_report
-from app.api.st_app.logic.manage.management_sheet import (
+from app.st_app.logic.manage.average_sheet import process as process_average_sheet
+from app.st_app.logic.manage.balance_sheet import process as process_balance_sheet
+from app.st_app.logic.manage.factory_report import process as process_factory_report
+from app.st_app.logic.manage.management_sheet import (
     process as process_management_sheet,
 )
 
@@ -51,7 +51,7 @@ class BlockUnitPriceGenerator(BaseReportGenerator):
 
     def main_process(self, df_formatted: Dict[str, Any]) -> pd.DataFrame:
         # 対話型処理のみを実行
-        from app.api.st_app.logic.manage.block_unit_price_react import (
+        from app.st_app.logic.manage.block_unit_price_react import (
             process as process_block_unit_price,
         )
 

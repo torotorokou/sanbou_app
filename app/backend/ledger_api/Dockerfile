@@ -56,6 +56,9 @@ RUN pip install --no-cache-dir /wheels/*.whl \
 # アプリ本体と共有コード
 COPY ${BASE_PATH}/backend_shared/ /backend/backend_shared
 COPY ${BASE_PATH}/${SERVICE_DIR}/app /backend/app
+# --- マスタCSV / テンプレート類を含める (dev は volume で存在、stg/prod はイメージに同梱が必要) ---
+COPY ${BASE_PATH}/${SERVICE_DIR}/app/st_app/data/master /backend/app/st_app/data/master
+COPY ${BASE_PATH}/${SERVICE_DIR}/app/st_app/data/templates /backend/app/st_app/data/templates
 COPY config /backend/config
 # --- build-time sanity checks (fail fast if sources missing) ---
 RUN test -d /backend/app/api/endpoints/reports \
@@ -66,14 +69,15 @@ importlib.import_module('app.api.endpoints.reports')
 print('Verified import: app.api.endpoints.reports')
 PY
 # ログ出力用ディレクトリを作成し書き込み権限を付与
-RUN mkdir -p /backend/app/api/st_app/logs \
+RUN mkdir -p /backend/app/st_app/logs \
   && chown -R appuser:appuser /backend
 
 # main_paths.yaml で参照される想定の data / logs ディレクトリを事前生成（必要なら上書き調整）
-RUN mkdir -p /backend/app/api/st_app/data/input /backend/app/api/st_app/data/output \
-  && mkdir -p /backend/app/api/st_app/logs \
-  && chown -R appuser:appuser /backend/app/api/st_app/data /backend/app/api/st_app/logs
+RUN mkdir -p /backend/app/st_app/data/input /backend/app/st_app/data/output \
+  && mkdir -p /backend/app/st_app/logs \
+  && chown -R appuser:appuser /backend/app/st_app/data /backend/app/st_app/logs
 
+ENV BASE_ST_APP_DIR=/backend/app/st_app
 USER appuser
 EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=5s --retries=3 CMD curl -fsS http://localhost:8000/health >/dev/null || exit 1
