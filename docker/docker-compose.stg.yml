@@ -5,10 +5,7 @@
 ## - ソースはイメージ内 (マウントしない)
 ## =============================================================
 services:
-  frontend:
-    env_file:
-      - ../env/.env.stg
-
+  # frontend サービスは dev プロファイル限定 (base compose 参照)。stg では起動しない。
   ai_api:
     env_file:
       - ../env/.env.stg

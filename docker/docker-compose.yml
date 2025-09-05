@@ -2,31 +2,57 @@ version: "3.9"
 services:
   frontend:
     build: { context: ../app/frontend, dockerfile: Dockerfile }
-    env_file: [../env/.env.dev]
-    networks: [app-net]
+    env_file:
+      - ../env/.env.dev
+    networks:
+      - app-net
+    # dev のホットリロード/検証専用。stg/prod では nginx イメージ側に dist が含まれるため起動しない。
+    profiles:
+      - dev
+
   ai_api:
     build: { context: ../app, dockerfile: backend/ai_api/Dockerfile }
-    env_file: [../env/.env.dev]
-    networks: [app-net]
+    env_file:
+      - ../env/.env.dev
+    networks:
+      - app-net
+
   ledger_api:
     build: { context: ../app, dockerfile: backend/ledger_api/Dockerfile }
-    env_file: [../env/.env.dev]
-    networks: [app-net]
+    env_file:
+      - ../env/.env.dev
+    networks:
+      - app-net
+
   sql_api:
     build: { context: ../app, dockerfile: backend/sql_api/Dockerfile }
-    env_file: [../env/.env.dev]
-    networks: [app-net]
+    env_file:
+      - ../env/.env.dev
+    networks:
+      - app-net
+
   rag_api:
     build: { context: ../app, dockerfile: backend/rag_api/Dockerfile }
-    env_file: [../env/.env.dev]
-    networks: [app-net]
+    env_file:
+      - ../env/.env.dev
+    networks:
+      - app-net
+
   nginx:
     build: { context: ../app, dockerfile: nginx/Dockerfile }
-    depends_on: [frontend, ai_api, ledger_api, sql_api, rag_api]
-    networks: [app-net]
+    # frontend へ依存しない: dist はこの nginx イメージ内に含まれる
+    depends_on:
+      - ai_api
+      - ledger_api
+      - sql_api
+      - rag_api
+    networks:
+      - app-net
     volumes:
       - ../app/nginx/conf.d:/etc/nginx/conf.d
       - ../app/nginx/certs:/etc/nginx/certs
+
 networks:
-  app-net: { driver: bridge }
+  app-net:
+    driver: bridge
 
