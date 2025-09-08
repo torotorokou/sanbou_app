@@ -80,8 +80,7 @@ RUN mkdir -p /backend/app/st_app/data/input /backend/app/st_app/data/output \
 # startup エントリポイントスクリプトを root 権限で配置し実行権限付与
 COPY --chown=appuser:appuser --chmod=0755 ${BASE_PATH}/${SERVICE_DIR}/startup.sh /backend/startup.sh
 
-# 🔽 追加: preflight スクリプトをコピー
-COPY --chown=appuser:appuser ${BASE_PATH}/${SERVICE_DIR}/startup_preflight.py /backend/startup_preflight.py
+# (preflight 機能は app/startup.py に統合済みのため個別スクリプト不要)
 
 ENV BASE_ST_APP_DIR=/backend/app/st_app
 USER appuser

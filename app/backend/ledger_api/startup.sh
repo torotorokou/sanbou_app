@@ -15,13 +15,7 @@ fi
 
 echo "[INFO] GOOGLE_APPLICATION_CREDENTIALS=${GOOGLE_APPLICATION_CREDENTIALS:-<none>}"
 
-# ------------------------------------------------------------
-# STRICT_STARTUP=true の場合: Python preflight を実行
-# ------------------------------------------------------------
-if [ "${STRICT_STARTUP:-false}" = "true" ]; then
-    echo "[INFO] STRICT_STARTUP enabled: running GCS preflight"
-    python3 /backend/startup_preflight.py
-fi
+## preflight ロジックは startup.py に統合済み
 
 # ------------------------------------------------------------
 # Python startup 処理 (例: GCS からの同期など)

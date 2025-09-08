@@ -6,10 +6,12 @@ services:
   # frontend は dev のみ。stg では起動しない (base compose の profiles 参照)
   ai_api:
     env_file:
+      - ../env/.env.common
       - ../env/.env.stg
 
   ledger_api:
     env_file:
+      - ../env/.env.common
       - ../env/.env.stg
     environment:
       STAGE: stg
@@ -23,10 +25,12 @@ services:
 
   sql_api:
     env_file:
+      - ../env/.env.common
       - ../env/.env.stg
 
   rag_api:
     env_file:
+      - ../env/.env.common
       - ../env/.env.stg
     environment:
       STAGE: stg

@@ -8,10 +8,12 @@ services:
   # frontend サービスは dev プロファイル限定 (base compose 参照)。prod では起動しない。
   ai_api:
     env_file:
+      - ../env/.env.common
       - ../env/.env.prod
 
   ledger_api:
     env_file:
+      - ../env/.env.common
       - ../env/.env.prod
     environment:
       STAGE: prod
@@ -20,10 +22,12 @@ services:
 
   sql_api:
     env_file:
+      - ../env/.env.common
       - ../env/.env.prod
 
   rag_api:
     env_file:
+      - ../env/.env.common
       - ../env/.env.prod
 
   nginx:

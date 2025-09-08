@@ -6,8 +6,10 @@ IFS=$'\n\t'
 # --- 設定値（環境変数で上書き可能） ---
 GCS_BUCKET_NAME="${GCS_BUCKET_NAME:-object_haikibutu}"
 GCS_DATA_PREFIX="${GCS_DATA_PREFIX:-master}"
+# APP_ROOT_DIR (新) -> APP_BASE_DIR (旧) -> /backend の順で基底パス決定
+_BASE_DIR="${APP_ROOT_DIR:-${APP_BASE_DIR:-/backend}}"
 # /backend が書き込み不可な場合はホームへフォールバック
-TARGET_DIR_DEFAULT="${APP_BASE_DIR:-/backend}/local_data/master"
+TARGET_DIR_DEFAULT="${_BASE_DIR}/local_data/master"
 TARGET_DIR="${TARGET_DIR:-$TARGET_DIR_DEFAULT}"
 # root 権限で作成し所有権付与 (コンテナは appuser 実行)
 if mkdir -p "${TARGET_DIR%/master}" 2>/dev/null; then
@@ -83,6 +85,6 @@ else
 fi
 
 # --- FastAPI起動 ---
-echo "APP_BASE_DIR: ${APP_BASE_DIR:-未設定}"
+echo "APP_ROOT_DIR: ${APP_ROOT_DIR:-未設定} (fallback APP_BASE_DIR=${APP_BASE_DIR:-未設定})"
 echo "🚀 [2/2] Starting FastAPI..."
 exec uvicorn app.main:app --host 0.0.0.0 --port 8000

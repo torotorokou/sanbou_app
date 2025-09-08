@@ -2,6 +2,7 @@ services:
   frontend:
     build: { context: ../app/frontend, dockerfile: Dockerfile }
     env_file:
+      - ../env/.env.common
       - ../env/.env.dev
     networks:
       - app-net
@@ -12,6 +13,7 @@ services:
   ai_api:
     build: { context: ../app, dockerfile: backend/ai_api/Dockerfile }
     env_file:
+      - ../env/.env.common
       - ../env/.env.dev
     networks:
       - app-net
@@ -19,6 +21,7 @@ services:
   ledger_api:
     build: { context: ../app, dockerfile: backend/ledger_api/Dockerfile }
     env_file:
+      - ../env/.env.common
       - ../env/.env.dev
     networks:
       - app-net
@@ -30,6 +33,7 @@ services:
   sql_api:
     build: { context: ../app, dockerfile: backend/sql_api/Dockerfile }
     env_file:
+      - ../env/.env.common
       - ../env/.env.dev
     networks:
       - app-net
@@ -37,6 +41,7 @@ services:
   rag_api:
     build: { context: ../app, dockerfile: backend/rag_api/Dockerfile }
     env_file:
+      - ../env/.env.common
       - ../env/.env.dev
     networks:
       - app-net
