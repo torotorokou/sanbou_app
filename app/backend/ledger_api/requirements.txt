@@ -24,3 +24,6 @@ jaconv==0.3.4   # 半角全角変換など
 
 # 型ヒント補助（任意）
 typing-extensions==4.11.0
+
+# GCS からマスタ/テンプレート同期用
+google-cloud-storage==2.18.2

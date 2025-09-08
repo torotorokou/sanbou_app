@@ -5,10 +5,7 @@
 ## - ログやボリューム永続化は必要に応じて追記
 ## =============================================================
 services:
-  frontend:
-    env_file:
-      - ../env/.env.prod
-
+  # frontend サービスは dev プロファイル限定 (base compose 参照)。prod では起動しない。
   ai_api:
     env_file:
       - ../env/.env.prod
@@ -16,6 +13,10 @@ services:
   ledger_api:
     env_file:
       - ../env/.env.prod
+    environment:
+      STAGE: prod
+    volumes:
+      - ../secrets:/backend/secrets:ro
 
   sql_api:
     env_file:

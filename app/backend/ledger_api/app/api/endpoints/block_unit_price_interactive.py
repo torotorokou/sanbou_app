@@ -16,7 +16,7 @@ from pydantic import BaseModel
 from app.api.services.report.interactive_report_processing_service import (
     InteractiveReportProcessingService,
 )
-from app.api.st_app.logic.manage.block_unit_price_interactive import (
+from app.st_app.logic.manage.block_unit_price_interactive import (
     BlockUnitPriceInteractive,
 )
 
