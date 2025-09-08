@@ -57,9 +57,8 @@ RUN pip install --no-cache-dir /wheels/*.whl \
 COPY ${BASE_PATH}/backend_shared/ /backend/backend_shared
 COPY ${BASE_PATH}/${SERVICE_DIR}/app /backend/app
 # --- マスタCSV / テンプレート類を含める (dev は volume で存在、stg/prod はイメージに同梱が必要) ---
-# COPY ${BASE_PATH}/${SERVICE_DIR}/app/st_app/data/master /backend/app/st_app/data/master
-# COPY ${BASE_PATH}/${SERVICE_DIR}/app/st_app/data/templates /backend/app/st_app/data/templates
 COPY config /backend/config
+
 # --- build-time sanity checks (fail fast if sources missing) ---
 RUN test -d /backend/app/api/endpoints/reports \
  && python - <<'PY'
@@ -68,6 +67,7 @@ sys.path.insert(0, '/backend')
 importlib.import_module('app.api.endpoints.reports')
 print('Verified import: app.api.endpoints.reports')
 PY
+
 # ログ出力用ディレクトリを作成し書き込み権限を付与
 RUN mkdir -p /backend/app/st_app/logs \
   && chown -R appuser:appuser /backend
@@ -79,6 +79,9 @@ RUN mkdir -p /backend/app/st_app/data/input /backend/app/st_app/data/output \
 
 # startup エントリポイントスクリプトを root 権限で配置し実行権限付与
 COPY --chown=appuser:appuser --chmod=0755 ${BASE_PATH}/${SERVICE_DIR}/startup.sh /backend/startup.sh
+
+# 🔽 追加: preflight スクリプトをコピー
+COPY --chown=appuser:appuser ${BASE_PATH}/${SERVICE_DIR}/startup_preflight.py /backend/startup_preflight.py
 
 ENV BASE_ST_APP_DIR=/backend/app/st_app
 USER appuser
