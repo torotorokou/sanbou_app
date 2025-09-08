@@ -1,14 +1,9 @@
 ## =============================================================
 ## docker-compose.stg.yml (ステージング環境 Override)
-## - 基本は本番 prod と同構成
-## - ポート衝突回避のため 8080/8443 を公開
-## - ソースはイメージ内 (マウントしない)
+## - prod 相当構成 + ポート 8080/8443 公開
 ## =============================================================
 services:
-  frontend:
-    env_file:
-      - ../env/.env.stg
-
+  # frontend は dev のみ。stg では起動しない (base compose の profiles 参照)
   ai_api:
     env_file:
       - ../env/.env.stg
@@ -16,6 +11,15 @@ services:
   ledger_api:
     env_file:
       - ../env/.env.stg
+    environment:
+      STAGE: stg
+      # ledger_api は stg-key.json（旧設計）を利用する前提ならこちらを指定
+      GOOGLE_APPLICATION_CREDENTIALS: /run/secrets/ledger_gcs_key.json
+      # GCS アクセス権限欠如などスタートアップ時の異常でコンテナを Fail Fast させる
+      STRICT_STARTUP: "true"
+    volumes:
+      - ../secrets:/backend/secrets:ro
+      - ../secrets/stg-key.json:/run/secrets/ledger_gcs_key.json:ro
 
   sql_api:
     env_file:
@@ -24,6 +28,15 @@ services:
   rag_api:
     env_file:
       - ../env/.env.stg
+    environment:
+      STAGE: stg
+      # rag_api 用の gcs-key.json を利用
+      GOOGLE_APPLICATION_CREDENTIALS: /run/secrets/rag_gcs_key.json
+      GCS_BUCKET_NAME: object_haikibutu
+      GCS_DATA_PREFIX: master
+    volumes:
+      - ../secrets:/backend/secrets:ro
+      - ../secrets/gcs-key.json:/run/secrets/rag_gcs_key.json:ro
 
   nginx:
     ports:

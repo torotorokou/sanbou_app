@@ -40,7 +40,7 @@ OVERRIDE := docker/docker-compose.$(ENV).yml
 ENV_FILE := env/.env.$(ENV)
 COMPOSE_FILES := -f $(BASE) -f $(OVERRIDE)
 
-.PHONY: up down logs ps rebuild config
+.PHONY: up down logs ps rebuild config ledger_startup
 
 check:
 	@if [ ! -f "$(OVERRIDE)" ]; then echo "[error] $(OVERRIDE) not found"; exit 1; fi
@@ -102,3 +102,15 @@ rebuild: check
 
 config: check
 	$(DC) --env-file $(ENV_FILE) -p $(ENV) $(COMPOSE_FILES) config
+
+# -------------------------------------------------------------
+# ledger_startup: ledger_api コンテナ内で startup.py (再)実行
+# 例: make ledger_startup ENV=stg
+# -------------------------------------------------------------
+ledger_startup:
+	@echo "[info] RUN startup (ENV=$(ENV))"
+	# コンテナ名は compose project 名(=ENV) + '_' + service + '_1' 想定
+	CID=$$($(DC) -p $(ENV) ps -q ledger_api); \
+	if [ -z "$$CID" ]; then echo "[error] ledger_api container not running"; exit 2; fi; \
+	$(DC) -p $(ENV) exec -e STAGE=$(ENV) ledger_api python -m app.startup
+	@echo "[info] done"

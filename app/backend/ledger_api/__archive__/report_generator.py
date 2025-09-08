@@ -11,9 +11,9 @@ from backend_shared.src.report_checker.check_csv_files import check_csv_files
 
 # 先ほど作成したExcel出力機能をインポート
 
-from app.api.st_app.utils.write_excel import write_values_to_template
+from app.st_app.utils.write_excel import write_values_to_template
 
-from app.api.st_app.utils.config_loader import (
+from app.st_app.utils.config_loader import (
     get_template_config,
 )
 
@@ -37,8 +37,8 @@ except ImportError:
     REPORTLAB_AVAILABLE = False
 
 
-from app.api.st_app.logic.manage.factory_report import process as process_factory_report
-from app.api.st_app.logic.manage.factory_report import process as process_balance_sheet
+from app.st_app.logic.manage.factory_report import process as process_factory_report
+from app.st_app.logic.manage.factory_report import process as process_balance_sheet
 
 
 class BaseReportGenerator(ABC):

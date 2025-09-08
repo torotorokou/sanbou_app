@@ -20,7 +20,12 @@ fi
 if command -v chown >/dev/null 2>&1; then
   chown -R appuser:appuser "${TARGET_DIR%/master}" 2>/dev/null || true
 fi
-GOOGLE_APPLICATION_CREDENTIALS="${GOOGLE_APPLICATION_CREDENTIALS:-/root/.config/gcloud/application_default_credentials.json}"
+# 優先順位: /run/secrets/gcs_key.json -> 既存設定 or デフォルト
+if [ -f /run/secrets/gcs_key.json ]; then
+  export GOOGLE_APPLICATION_CREDENTIALS="/run/secrets/gcs_key.json"
+else
+  GOOGLE_APPLICATION_CREDENTIALS="${GOOGLE_APPLICATION_CREDENTIALS:-/root/.config/gcloud/application_default_credentials.json}"
+fi
 
 # --- 関数化：GCSからデータ取得 ---
 download_gcs_data() {
@@ -53,6 +58,9 @@ else
   if [[ "$SKIP_GCS" != "1" ]]; then
     if gcloud auth activate-service-account --key-file="$GOOGLE_APPLICATION_CREDENTIALS"; then
       echo "✅ Authenticated with service account."
+    # サービスアカウント確認
+    SA_EMAIL=$(grep -o '"client_email" *: *"[^"]\+"' "$GOOGLE_APPLICATION_CREDENTIALS" | cut -d'"' -f4 || true)
+    echo "Using service account: ${SA_EMAIL}"
     else
       echo "⚠️  サービスアカウント認証に失敗。GCS 処理をスキップします。" >&2
       SKIP_GCS=1
@@ -69,6 +77,7 @@ else
   else
     if ! download_gcs_data "$GCS_BUCKET_NAME" "$GCS_DATA_PREFIX" "$TARGET_DIR"; then
       echo "⚠️  ダウンロード失敗しましたが起動は継続します。" >&2
+      echo "ヒント: サービスアカウントに 'storage.objects.list' と 'storage.objects.get' 権限 (Storage Object Viewer など) が付与されているか確認してください。" >&2
     fi
   fi
 fi
