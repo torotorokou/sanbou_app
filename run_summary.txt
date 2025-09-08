@@ -1,5 +1,0 @@
-[S0] Project -> sanbou-app
-[S0] gcloud project set OK
-[S0] bucket exists
-[S0] IAM snippet:
-[S1] key file found
