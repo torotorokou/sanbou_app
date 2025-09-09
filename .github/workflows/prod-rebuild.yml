@@ -25,17 +25,22 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-    - name: Show compose config (${{ env.STAGE }})
+
+      - name: Show compose config (${{ env.STAGE }})
         run: |
-      make config ENV=${STAGE} | sed -n '1,160p'
-        # Do not dump secrets to logs. Keep output minimal.
-    - name: Build & Up (${{ env.STAGE }})
+          make config ENV=${STAGE} | sed -n '1,160p'
+          # Do not dump secrets to logs. Keep output minimal.
+
+      - name: Build & Up (${{ env.STAGE }})
         run: |
-      make rebuild ENV=${STAGE} || (echo "${STAGE} rebuild failed" && exit 1)
+          make rebuild ENV=${STAGE} || (echo "${STAGE} rebuild failed" && exit 1)
+
       - name: Show ps
         run: docker compose -p ${STAGE} ps
+
       - name: Down
         if: always()
         run: make down ENV=${STAGE}

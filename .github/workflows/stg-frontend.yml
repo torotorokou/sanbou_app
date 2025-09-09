@@ -19,13 +19,14 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    if: ${{ github.event_name != 'pull_request' && (github.event.pull_request.head.repo.fork == false || github.event.pull_request == null) }}
+    if: ${{ github.event_name != 'pull_request' || (github.event.pull_request != null && github.event.pull_request.head.repo.fork == false) }}
     steps:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
 
-  - uses: google-github-actions/setup-gcloud@v1
+      - name: Setup gcloud
+        uses: google-github-actions/setup-gcloud@v2
         with:
           project_id: sanbou-app
           service_account_key: ${{ secrets.GCP_SA_KEY }}
@@ -43,8 +44,8 @@ jobs:
           file: app/frontend/Dockerfile
           push: true
           tags: |
-            asia-northeast1-docker.pkg.dev/sanbou-app/sanbou-repo/sanbou-frontend:${{ env.STAGE || 'stg' }}
-            asia-northeast1-docker.pkg.dev/sanbou-app/sanbou-repo/sanbou-frontend:${{ env.STAGE || 'stg' }}-${{ github.sha }}
+            asia-northeast1-docker.pkg.dev/sanbou-app/sanbou-repo/sanbou-frontend:${{ env.STAGE }}
+            asia-northeast1-docker.pkg.dev/sanbou-app/sanbou-repo/sanbou-frontend:${{ env.STAGE }}-${{ github.sha }}
 
   # Best practices:
   # - Do not print or upload tokens. Store temporary .env under $RUNNER_TEMP and delete after use.

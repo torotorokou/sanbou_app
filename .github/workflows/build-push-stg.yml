@@ -23,46 +23,46 @@ env:
 
 jobs:
   build:
+    # This job requires secrets.GCP_SA_KEY; enforce non-fork context.
+    if: ${{ github.event_name != 'pull_request' || (github.event.pull_request != null && github.event.pull_request.head.repo.fork == false) }}
     runs-on: ubuntu-latest
-  # This job requires secrets.GCP_SA_KEY; enforce non-fork context.
-  if: ${{ github.event_name != 'pull_request' && (github.event.pull_request.head.repo.fork == false || github.event.pull_request == null) }}
 
     strategy:
       fail-fast: false
       matrix:
         include:
-          # フロント
+          # Frontend
           - name: frontend
             image: sanbou-frontend
-            context: my-project/frontend
-            dockerfile: my-project/frontend/Dockerfile
+            context: app/frontend
+            dockerfile: app/frontend/Dockerfile
 
-          # FastAPI 各種
+          # FastAPI services
           - name: ai_api
             image: sanbou-ai-api
-            context: my-project/backend
-            dockerfile: my-project/backend/ai_api/Dockerfile
+            context: app/backend/ai_api
+            dockerfile: app/backend/ai_api/Dockerfile
 
           - name: ledger_api
             image: sanbou-ledger-api
-            context: my-project/backend
-            dockerfile: my-project/backend/ledger_api/Dockerfile
+            context: app/backend/ledger_api
+            dockerfile: app/backend/ledger_api/Dockerfile
 
           - name: sql_api
             image: sanbou-sql-api
-            context: my-project/backend
-            dockerfile: my-project/backend/sql_api/Dockerfile
+            context: app/backend/sql_api
+            dockerfile: app/backend/sql_api/Dockerfile
 
           - name: rag_api
             image: sanbou-rag-api
-            context: my-project/backend
-            dockerfile: my-project/backend/rag_api/Dockerfile
+            context: app/backend/rag_api
+            dockerfile: app/backend/rag_api/Dockerfile
 
-          # Nginx（フロント配信＋各APIへのリバプロを想定）
+          # Nginx (frontend delivery + reverse proxy)
           - name: nginx
             image: sanbou-nginx
-            context: my-project
-            dockerfile: my-project/nginx/Dockerfile
+            context: nginx
+            dockerfile: nginx/Dockerfile
 
     steps:
       - name: Checkout
@@ -70,10 +70,9 @@ jobs:
         with:
           persist-credentials: false
 
-  # gcloud セットアップ（要: secrets.GCP_SA_KEY）
-  # NOTE: Do not run this in PRs from forks. See job-level `if:`.
+      # gcloud setup (requires: secrets.GCP_SA_KEY)
       - name: Setup gcloud
-        uses: google-github-actions/setup-gcloud@v1
+        uses: google-github-actions/setup-gcloud@v2
         with:
           project_id: ${{ env.AR_PROJECT }}
           service_account_key: ${{ secrets.GCP_SA_KEY }}
@@ -85,11 +84,11 @@ jobs:
       - name: Setup Buildx
         uses: docker/setup-buildx-action@v3
 
-      # （任意）node の依存を先に落としてビルドキャッシュ最適化したい場合はここでやる
+      # (optional) Pre-install deps to optimize cache
       # - name: Frontend deps (optional)
       #   if: matrix.name == 'frontend'
       #   run: |
-      #     cd my-project/frontend
+      #     cd app/frontend
       #     npm ci
 
       - name: Build & Push ${{ matrix.name }}
@@ -98,18 +97,10 @@ jobs:
           context: ${{ matrix.context }}
           file: ${{ matrix.dockerfile }}
           push: true
-          # 必要なら build-args を渡す
           # build-args: |
           #   NODE_ENV=production
           tags: |
-    ${{ env.AR_HOST }}/${{ env.AR_PROJECT }}/${{ env.AR_REPO }}/${{ matrix.image }}:${{ env.STAGE }}
-    ${{ env.AR_HOST }}/${{ env.AR_PROJECT }}/${{ env.AR_REPO }}/${{ matrix.image }}:${{ env.STAGE }}-${{ github.sha }}
-          # キャッシュ運用したい場合（任意）
+            ${{ env.AR_HOST }}/${{ env.AR_PROJECT }}/${{ env.AR_REPO }}/${{ matrix.image }}:${{ env.STAGE }}
+            ${{ env.AR_HOST }}/${{ env.AR_PROJECT }}/${{ env.AR_REPO }}/${{ matrix.image }}:${{ env.STAGE }}-${{ github.sha }}
           # cache-from: type=registry,ref=${{ env.AR_HOST }}/${{ env.AR_PROJECT }}/${{ env.AR_REPO }}/${{ matrix.image }}:stg
           # cache-to: type=inline
-
-  # Best practices (documentation):
-  # - Never print or upload service_account_key or any token. Do not include .env files in artifacts or cache.
-  # - If you must write .env for build, write to $RUNNER_TEMP and delete it: `trap 'rm -f "$RUNNER_TEMP/.env"' EXIT`.
-  # - Use repo/org Variables for non-secret config (AR_HOST, AR_PROJECT, AR_REPO, STAGE). Keep Secrets for credentials only.
-  # - Avoid `pull_request_target` and untrusted contexts for any step that can reach secrets or protected registries.
