@@ -10,7 +10,7 @@ set -euo pipefail
 # - No secrets are printed by default (safe logs); use --dry-run to preview
 #
 # Requirements
-# - gh (GitHub CLI) logged in with repo admin permissions
+# - gh (GitHub CLI) logged in with repo admin permissions (v2.0+ recommended)
 # - jq (for JSON import)
 #
 # Usage examples
@@ -135,11 +135,12 @@ ensure_environment() {
     return 0
   fi
   # Create or update environment via REST API
-  gh api \
+  printf '%s' '{"wait_timer":0}' | gh api \
     --method PUT \
     -H "Accept: application/vnd.github+json" \
+    -H "Content-Type: application/json" \
     "/repos/$OWNER/$REPO_NAME/environments/$env" \
-    -f wait_timer=0 \
+    --input - \
     >/dev/null
 }
 
@@ -165,6 +166,8 @@ parse_and_apply_env_file() {
   local env="$1" file="$2"
   ensure_environment "$env"
   note "Importing from $file into environment '$env' on $REPO"
+  # Secure summary of keys (names only; no values)
+  local -a summary_keys=()
   while IFS= read -r line || [[ -n "$line" ]]; do
     # Trim leading/trailing spaces
     line="${line%%$'\r'}"
@@ -192,40 +195,72 @@ parse_and_apply_env_file() {
     fi
     [[ -z "$key" ]] && continue
     set_secret "$env" "$key" "$value"
+    # collect key for summary (dedupe)
+    local seen=0 k
+    for k in "${summary_keys[@]}"; do [[ "$k" == "$key" ]] && seen=1 && break; done
+    [[ $seen -eq 0 ]] && summary_keys+=("$key")
   done < "$file"
+  if [[ ${#summary_keys[@]} -gt 0 ]]; then
+    note "Applied keys from $file (${#summary_keys[@]}):"
+    for k in "${summary_keys[@]}"; do
+      note "  - $k"
+    done
+  else
+    warn "No applicable keys found in $file"
+  fi
 }
 
 apply_from_json() {
   local json_path="$1"
   note "Importing from JSON: $json_path into $REPO"
+  local -a summary_pairs=()
   # Try schema: { "dev": {"KEY":"VAL"}, "stg": {...}, "prod": {...} }
   if jq -e 'type=="object" and (to_entries|length) > 0' "$json_path" >/dev/null 2>&1; then
     while IFS=, read -r env key value; do
       ensure_environment "$env"
       set_secret "$env" "$key" "$value"
+      summary_pairs+=("$env:$key")
     done < <(jq -r 'to_entries[] as $e | $e.value|to_entries[] | "",$e.key,",",.key,",",(.value|tostring),""' "$json_path" \
       | tr -d '\n' \
       | sed $'s/\u0001/\n/g' \
       | sed $'s/\u0002/\n/g' \
       | sed '/^$/d' \
       | sed '1d')
+    if [[ ${#summary_pairs[@]} -gt 0 ]]; then
+      note "Applied keys from JSON (${#summary_pairs[@]}):"
+      for p in "${summary_pairs[@]}"; do
+        note "  - $p"
+      done
+    else
+      warn "No applicable keys found in JSON"
+    fi
     return 0
   fi
   # Try schema: [ {"env":"dev","key":"K","value":"V"}, ... ]
   while IFS=, read -r env key value; do
     ensure_environment "$env"
     set_secret "$env" "$key" "$value"
+    summary_pairs+=("$env:$key")
   done < <(jq -r '.[] | "",.env,",",.key,",",(.value|tostring),""' "$json_path" \
     | tr -d '\n' \
     | sed $'s/\u0001/\n/g' \
     | sed $'s/\u0002/\n/g' \
     | sed '/^$/d')
+  if [[ ${#summary_pairs[@]} -gt 0 ]]; then
+    note "Applied keys from JSON (${#summary_pairs[@]}):"
+    for p in "${summary_pairs[@]}"; do
+      note "  - $p"
+    done
+  else
+    warn "No applicable keys found in JSON"
+  fi
 }
 
 apply_from_csv() {
   local csv_path="$1"
   note "Importing from CSV: $csv_path into $REPO"
   local header=1
+  local -a summary_pairs=()
   while IFS= read -r line || [[ -n "$line" ]]; do
     line="${line%%$'\r'}"
     [[ -z "$line" ]] && continue
@@ -246,7 +281,16 @@ apply_from_csv() {
     value="$(echo -n "$value" | sed -e 's/^\s*//' -e 's/\s*$//')"
     ensure_environment "$env"
     set_secret "$env" "$key" "$value"
+    summary_pairs+=("$env:$key")
   done < "$csv_path"
+  if [[ ${#summary_pairs[@]} -gt 0 ]]; then
+    note "Applied keys from CSV (${#summary_pairs[@]}):"
+    for p in "${summary_pairs[@]}"; do
+      note "  - $p"
+    done
+  else
+    warn "No applicable keys found in CSV"
+  fi
 }
 
 bold "GitHub Environments Secrets Sync"

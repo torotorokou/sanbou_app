@@ -130,39 +130,36 @@ ledger_startup:
 	$(DC) -p $(ENV) exec -e STAGE=$(ENV) ledger_api python -m app.startup
 	@echo "[info] done"
 
+
+	
+# デフォルトのリポジトリ
+REPO ?= torotorokou/sanbou_app
+
 # -------------------------------------------------------------
-# gh-secrets: GitHub Environments へ .env.common をロード
-# 例:
-#   make gh-secrets ENV=stg REPO=torotorokou/sanbou_app FILE=env/.env.common PREFIX=
-#   make gh-secrets JSON=scripts/examples/secrets.json
+# gh-secrets: GitHub Environments へ .env をロード
 # -------------------------------------------------------------
 gh-secrets:
 	@set +u; \
-	REPO_VAL=$${REPO:-}; JSON_VAL=$${JSON:-}; CSV_VAL=$${CSV:-}; PREFIX_VAL=$${PREFIX:-}; DRY_VAL=$${DRY:-}; \
+	JSON_VAL=$${JSON:-}; CSV_VAL=$${CSV:-}; PREFIX_VAL=$${PREFIX:-}; DRY_VAL=$${DRY:-}; \
 	FILE_VAL="$${FILE:-}"; \
 	DRY_FLAG=""; if [ "$$DRY_VAL" = "1" ]; then DRY_FLAG="--dry-run"; fi; \
-	# --- JSON/CSV モード（複数環境を一括投入） ------------------------------ \
 	if [ -n "$$JSON_VAL" ]; then \
 	  echo "[info] Apply from JSON ($$JSON_VAL)"; \
-	  ./scripts/gh_env_secrets_sync.sh --repo "$$REPO_VAL" --json "$$JSON_VAL" --prefix "$$PREFIX_VAL" $$DRY_FLAG; \
+	  ./scripts/gh_env_secrets_sync.sh --repo "$(REPO)" --json "$$JSON_VAL" --prefix "$$PREFIX_VAL" $$DRY_FLAG; \
 	elif [ -n "$$CSV_VAL" ]; then \
 	  echo "[info] Apply from CSV ($$CSV_VAL)"; \
-	  ./scripts/gh_env_secrets_sync.sh --repo "$$REPO_VAL" --csv "$$CSV_VAL" --prefix "$$PREFIX_VAL" $$DRY_FLAG; \
-	# --- 単一環境モード（.env.common + .env.<env> を順番に適用） ------------ \
+	  ./scripts/gh_env_secrets_sync.sh --repo "$(REPO)" --csv "$$CSV_VAL" --prefix "$$PREFIX_VAL" $$DRY_FLAG; \
 	else \
 	  COMMON_FILE="env/.env.common"; SPEC_FILE="env/.env.$(ENV)"; \
-	  # FILE が指定されていれば単一ファイル適用（上級者向け）。未指定なら 2 ファイル適用。 \
 	  if [ -n "$$FILE_VAL" ]; then \
 	    echo "[info] Apply single env ($(ENV)) from $$FILE_VAL"; \
-	    ./scripts/gh_env_secrets_sync.sh --repo "$$REPO_VAL" --env "$(ENV)" --file "$$FILE_VAL" --prefix "$$PREFIX_VAL" $$DRY_FLAG; \
+	    ./scripts/gh_env_secrets_sync.sh --repo "$(REPO)" --env "$(ENV)" --file "$$FILE_VAL" --prefix "$$PREFIX_VAL" $$DRY_FLAG; \
 	  else \
-	    # 1) 共通 .env を先に適用（後続で環境別が上書き） \
 	    if [ ! -f "$$COMMON_FILE" ]; then echo "[error] $$COMMON_FILE not found"; exit 2; fi; \
 	    echo "[info] Apply common: $$COMMON_FILE -> environment '$(ENV)'"; \
-	    ./scripts/gh_env_secrets_sync.sh --repo "$$REPO_VAL" --env "$(ENV)" --file "$$COMMON_FILE" --prefix "$$PREFIX_VAL" $$DRY_FLAG; \
-	    # 2) 環境別 .env を適用（同一キーがあれば上書き） \
+	    ./scripts/gh_env_secrets_sync.sh --repo "$(REPO)" --env "$(ENV)" --file "$$COMMON_FILE" --prefix "$$PREFIX_VAL" $$DRY_FLAG; \
 	    if [ ! -f "$$SPEC_FILE" ]; then echo "[error] $$SPEC_FILE not found"; exit 2; fi; \
 	    echo "[info] Apply specific: $$SPEC_FILE -> environment '$(ENV)'"; \
-	    ./scripts/gh_env_secrets_sync.sh --repo "$$REPO_VAL" --env "$(ENV)" --file "$$SPEC_FILE" --prefix "$$PREFIX_VAL" $$DRY_FLAG; \
+	    ./scripts/gh_env_secrets_sync.sh --repo "$(REPO)" --env "$(ENV)" --file "$$SPEC_FILE" --prefix "$$PREFIX_VAL" $$DRY_FLAG; \
 	  fi; \
 	fi
