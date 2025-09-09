@@ -15,4 +15,4 @@ DEBUG_MANAGE_REPORTDIR = (
 )
 
 # Streamlitアプリケーション関連のパス設定
-BASE_ST_APP_DIR = "/backend/app/api/st_app"  # Streamlitアプリケーション基底ディレクトリ
+BASE_ST_APP_DIR = "/backend/app/st_app"  # Streamlitアプリケーション基底ディレクトリ

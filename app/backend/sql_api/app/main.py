@@ -4,6 +4,7 @@ FastAPIアプリケーションのエントリポイント。
 """
 
 from fastapi import FastAPI
+from backend_shared.src.logging_utils import setup_uvicorn_access_filter
 from app.api.endpoints.syogun_csv_upload import router as upload_router
 # from app.api.data_api import data_router
 
@@ -20,6 +21,9 @@ app = FastAPI(
 
 # アップロード関連のAPIを /upload 以下にまとめる
 app.include_router(upload_router, prefix="/upload")
+
+# アクセスログ: /health のみ抑制
+setup_uvicorn_access_filter(excluded_paths=("/health",))
 
 
 # データ取得関連のAPIを /data 以下にまとめる

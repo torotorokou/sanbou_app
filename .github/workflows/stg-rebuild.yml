@@ -1,0 +1,25 @@
+name: Staging Compose Config & Rebuild
+on:
+  push:
+    branches: [ feat_stgenv ]
+  pull_request:
+    branches: [ feat_stgenv ]
+
+jobs:
+  compose-stg:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Show compose config (stg)
+        run: |
+          make config ENV=stg | sed -n '1,160p'
+      - name: Build & Up (stg)
+        run: |
+          make rebuild ENV=stg || (echo 'stg rebuild failed' && exit 1)
+      - name: Show ps
+        run: docker compose -p stg ps
+      - name: Down
+        if: always()
+        run: make down ENV=stg

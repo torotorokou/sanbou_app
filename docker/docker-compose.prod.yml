@@ -5,29 +5,92 @@
 ## - ログやボリューム永続化は必要に応じて追記
 ## =============================================================
 services:
-  frontend:
-    env_file:
-      - ../env/.env.prod
-
+  # backend APIs (env 注入 + build/depends)
   ai_api:
+    build: { context: ../app, dockerfile: backend/ai_api/Dockerfile }
+    networks: [app-net]
+    depends_on:
+      - db
     env_file:
+      - ../env/.env.common
       - ../env/.env.prod
 
   ledger_api:
+    build: { context: ../app, dockerfile: backend/ledger_api/Dockerfile }
+    networks: [app-net]
+    depends_on:
+      - db
     env_file:
+      - ../env/.env.common
       - ../env/.env.prod
+    environment:
+      STAGE: prod
+    volumes:
+      - ../secrets:/backend/secrets:ro
 
   sql_api:
+    build: { context: ../app, dockerfile: backend/sql_api/Dockerfile }
+    networks: [app-net]
+    depends_on:
+      - db
     env_file:
+      - ../env/.env.common
       - ../env/.env.prod
 
   rag_api:
+    build: { context: ../app, dockerfile: backend/rag_api/Dockerfile }
+    networks: [app-net]
+    depends_on:
+      - db
     env_file:
+      - ../env/.env.common
       - ../env/.env.prod
 
+  # =============================
+  # nginx (prod)
+  # - フロントエンド runtime stage イメージ
+  # - conf.d.prod をマウント (Basic 認証廃止)
+  # =============================
   nginx:
+    build:
+      context: ../app/frontend
+      dockerfile: Dockerfile
+      target: runtime
+    depends_on:
+      - ai_api
+      - ledger_api
+      - sql_api
+      - rag_api
+    networks:
+      - app-net
     ports:
       - "80:80"
       - "443:443"
     environment:
       STAGE: prod
+    volumes:
+      - ../app/nginx/conf.d.prod:/etc/nginx/conf.d
+      - ../app/nginx/certs:/etc/nginx/certs:ro
+
+  db:
+    image: postgres:15-alpine
+    networks: [app-net]
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+networks:
+  app-net:
+    driver: bridge
+
+volumes:
+  db_data:
+    driver: local
