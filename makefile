@@ -9,23 +9,6 @@
 ##   make ps        ENV=...           # 稼働中サービス一覧
 ##   make config    ENV=...           # 最終マージ後 compose 設定表示
 ## -------------------------------------------------------------
-## 変数:
-##   ENV (dev/stg/prod) 既定: dev
-##   S   logs 対象サービス名 (frontend / ai_api / ledger_api / sql_api / rag_api / nginx)
-##   DEV_NGINX_PORT (デフォルト 8080), STG_NGINX_HTTP_PORT (8080), STG_NGINX_HTTPS_PORT (8443)
-## -------------------------------------------------------------
-## 仕組み:
-##   環境別 compose のみ使用: docker-compose.<env>.yml
-##   dev  : ホットリロード (frontend dev target / backend --reload)
-##   stg  : prod 同等構成 (ポートだけ 8080/8443)
-##   prod : nginx 80/443 のみ公開
-## -------------------------------------------------------------
-## 例:
-##   make up
-##   make up ENV=stg
-##   make rebuild ENV=prod
-##   make logs ENV=dev S=backend
-## =============================================================
 
 SHELL := /bin/bash
 .ONESHELL:
@@ -42,7 +25,7 @@ COMPOSE_FILES := -f $(OVERRIDE)
 SECRETS_FILE := secrets/.env.$(ENV).secrets
 COMPOSE_ENV_ARGS := --env-file $(ENV_FILE_COMMON) --env-file $(ENV_FILE) --env-file $(SECRETS_FILE)
 
-.PHONY: up down logs ps rebuild config ledger_startup secrets
+.PHONY: up down logs ps rebuild config ledger_startup secrets gh-secrets
 
 check:
 	@if [ ! -f "$(OVERRIDE)" ]; then echo "[error] $(OVERRIDE) not found"; exit 1; fi
@@ -146,3 +129,40 @@ ledger_startup:
 	if [ -z "$$CID" ]; then echo "[error] ledger_api container not running"; exit 2; fi; \
 	$(DC) -p $(ENV) exec -e STAGE=$(ENV) ledger_api python -m app.startup
 	@echo "[info] done"
+
+# -------------------------------------------------------------
+# gh-secrets: GitHub Environments へ .env.common をロード
+# 例:
+#   make gh-secrets ENV=stg REPO=torotorokou/sanbou_app FILE=env/.env.common PREFIX=
+#   make gh-secrets JSON=scripts/examples/secrets.json
+# -------------------------------------------------------------
+gh-secrets:
+	@set +u; \
+	REPO_VAL=$${REPO:-}; JSON_VAL=$${JSON:-}; CSV_VAL=$${CSV:-}; PREFIX_VAL=$${PREFIX:-}; DRY_VAL=$${DRY:-}; \
+	FILE_VAL="$${FILE:-}"; \
+	DRY_FLAG=""; if [ "$$DRY_VAL" = "1" ]; then DRY_FLAG="--dry-run"; fi; \
+	# --- JSON/CSV モード（複数環境を一括投入） ------------------------------ \
+	if [ -n "$$JSON_VAL" ]; then \
+	  echo "[info] Apply from JSON ($$JSON_VAL)"; \
+	  ./scripts/gh_env_secrets_sync.sh --repo "$$REPO_VAL" --json "$$JSON_VAL" --prefix "$$PREFIX_VAL" $$DRY_FLAG; \
+	elif [ -n "$$CSV_VAL" ]; then \
+	  echo "[info] Apply from CSV ($$CSV_VAL)"; \
+	  ./scripts/gh_env_secrets_sync.sh --repo "$$REPO_VAL" --csv "$$CSV_VAL" --prefix "$$PREFIX_VAL" $$DRY_FLAG; \
+	# --- 単一環境モード（.env.common + .env.<env> を順番に適用） ------------ \
+	else \
+	  COMMON_FILE="env/.env.common"; SPEC_FILE="env/.env.$(ENV)"; \
+	  # FILE が指定されていれば単一ファイル適用（上級者向け）。未指定なら 2 ファイル適用。 \
+	  if [ -n "$$FILE_VAL" ]; then \
+	    echo "[info] Apply single env ($(ENV)) from $$FILE_VAL"; \
+	    ./scripts/gh_env_secrets_sync.sh --repo "$$REPO_VAL" --env "$(ENV)" --file "$$FILE_VAL" --prefix "$$PREFIX_VAL" $$DRY_FLAG; \
+	  else \
+	    # 1) 共通 .env を先に適用（後続で環境別が上書き） \
+	    if [ ! -f "$$COMMON_FILE" ]; then echo "[error] $$COMMON_FILE not found"; exit 2; fi; \
+	    echo "[info] Apply common: $$COMMON_FILE -> environment '$(ENV)'"; \
+	    ./scripts/gh_env_secrets_sync.sh --repo "$$REPO_VAL" --env "$(ENV)" --file "$$COMMON_FILE" --prefix "$$PREFIX_VAL" $$DRY_FLAG; \
+	    # 2) 環境別 .env を適用（同一キーがあれば上書き） \
+	    if [ ! -f "$$SPEC_FILE" ]; then echo "[error] $$SPEC_FILE not found"; exit 2; fi; \
+	    echo "[info] Apply specific: $$SPEC_FILE -> environment '$(ENV)'"; \
+	    ./scripts/gh_env_secrets_sync.sh --repo "$$REPO_VAL" --env "$(ENV)" --file "$$SPEC_FILE" --prefix "$$PREFIX_VAL" $$DRY_FLAG; \
+	  fi; \
+	fi

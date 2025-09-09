@@ -264,3 +264,54 @@ docker build -t local/sanbou-ai-api:rollback -f app/backend/ai_api/Dockerfile.pr
 - Trivy / Grype を用いた CI の脆弱性スキャン
 
 ---
+
+## GitHub Environments の Secrets を一括登録する
+
+`.env.common` をリポジトリに含めず、GitHub Environments の Secrets に分離して管理するためのツールを用意しています。
+
+前提
+- GitHub CLI `gh` がインストール・ログイン済み（dry-run は未インストールでも可）
+- JSON 形式の import の場合は `jq` が必要
+- リポジトリ管理者権限（環境作成・Secrets登録）
+
+スクリプト
+- `scripts/gh_env_secrets_sync.sh`
+  - .env / JSON / CSV から、dev / stg / prod などの環境に「同名キーで値だけ切替」を適用
+  - 無い Environment は自動作成
+  - `--dry-run` で差分確認のみ
+
+使い方（例）
+1) 単一環境に .env を取り込む（例: stg）
+```bash
+./scripts/gh_env_secrets_sync.sh \
+  --repo <owner>/<repo> \
+  --env stg \
+  --file env/.env.common
+```
+
+2) 複数環境を JSON で一括
+```bash
+./scripts/gh_env_secrets_sync.sh \
+  --repo <owner>/<repo> \
+  --json scripts/examples/secrets.json
+```
+
+3) 複数環境を CSV で一括
+```bash
+./scripts/gh_env_secrets_sync.sh \
+  --repo <owner>/<repo> \
+  --csv scripts/examples/secrets.csv
+```
+
+オプション
+- `--prefix APP_` ですべてのキーに接頭辞を付与
+- `--dry-run` で実際の登録を行わずプレビュー
+
+入力フォーマット
+- .env: `KEY=VALUE` 形式（コメント・空行可）
+- JSON（推奨）: `{ "dev": {"KEY":"VAL"}, "stg": {...}, "prod": {...} }`
+- CSV: `env,key,value`（カンマを含む値は JSON の使用を推奨）
+
+サンプル
+- `scripts/examples/secrets.json`
+- `scripts/examples/secrets.csv`
