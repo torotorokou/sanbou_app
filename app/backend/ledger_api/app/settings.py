@@ -10,6 +10,7 @@
   GCS_LEDGER_BUCKET=<gs://...> (全環境 override)
   GCS_LEDGER_BUCKET_STG=<gs://...>
   GCS_LEDGER_BUCKET_PROD=<gs://...>
+    GCS_LEDGER_BUCKET_DEV=<gs://...>
   BASE_ST_APP_DIR=/backend/app/st_app (data/logs 配下算出に利用)
   LEDGER_SYNC_SUBDIRS=master,templates (カンマ区切り)
 """
@@ -37,6 +38,7 @@ class Settings:
     startup_download_enable_raw: Optional[str]
     base_st_app_dir: Path
     gcs_ledger_bucket_override: Optional[str]
+    gcs_ledger_bucket_dev: Optional[str]
     gcs_ledger_bucket_stg: Optional[str]
     gcs_ledger_bucket_prod: Optional[str]
     ledger_sync_subdirs: List[str]
@@ -44,6 +46,8 @@ class Settings:
     def bucket_base(self) -> Optional[str]:
         if self.gcs_ledger_bucket_override:
             return self.gcs_ledger_bucket_override
+        if self.stage == "dev":
+            return self.gcs_ledger_bucket_dev
         if self.stage == "stg":
             return self.gcs_ledger_bucket_stg
         if self.stage == "prod":
@@ -93,6 +97,7 @@ def load_settings() -> Settings:
         return v
 
     gcs_ledger_bucket_override = _clean(os.getenv("GCS_LEDGER_BUCKET"))
+    gcs_ledger_bucket_dev = _clean(os.getenv("GCS_LEDGER_BUCKET_DEV"))
     gcs_ledger_bucket_stg = _clean(os.getenv("GCS_LEDGER_BUCKET_STG"))
     gcs_ledger_bucket_prod = _clean(os.getenv("GCS_LEDGER_BUCKET_PROD"))
     subdirs_raw = os.getenv("LEDGER_SYNC_SUBDIRS", "master,templates").strip()
@@ -103,6 +108,7 @@ def load_settings() -> Settings:
         startup_download_enable_raw=startup_download_enable_raw,
         base_st_app_dir=base_st_app_dir,
         gcs_ledger_bucket_override=gcs_ledger_bucket_override,
+    gcs_ledger_bucket_dev=gcs_ledger_bucket_dev,
         gcs_ledger_bucket_stg=gcs_ledger_bucket_stg,
         gcs_ledger_bucket_prod=gcs_ledger_bucket_prod,
         ledger_sync_subdirs=ledger_sync_subdirs,

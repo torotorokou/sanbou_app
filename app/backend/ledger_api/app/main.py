@@ -19,6 +19,7 @@ except Exception:  # if not available, inject stub module
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from backend_shared.src.logging_utils import setup_uvicorn_access_filter
 
 from app.api.endpoints import manage_report
 from app.api.endpoints.block_unit_price_interactive import (
@@ -42,6 +43,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# アクセスログ: /health だけ抑制（uvicorn.access にフィルター追加）
+setup_uvicorn_access_filter(excluded_paths=("/health",))
 
 
 # ルーター登録 - 各機能のエンドポイントを追加

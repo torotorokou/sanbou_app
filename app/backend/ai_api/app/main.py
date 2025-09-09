@@ -5,6 +5,7 @@ import requests
 import os
 from dotenv import load_dotenv
 from fastapi.middleware.cors import CORSMiddleware
+from backend_shared.src.logging_utils import setup_uvicorn_access_filter
 
 # .envからAPIキーを読み込む
 load_dotenv()
@@ -25,6 +26,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# ログ設定: /health のアクセスログのみ抑制（エラーは従来通り出力）
+setup_uvicorn_access_filter(excluded_paths=("/health",))
 
 # ===== エンドポイントをrouterで分離 =====
 router = APIRouter()

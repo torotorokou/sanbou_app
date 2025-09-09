@@ -16,6 +16,7 @@ report_service = ReportProcessingService()
 
 
 @router.post("")
+@router.post("/")
 async def generate_factory_report(
     shipment: UploadFile = File(None),
     yard: UploadFile = File(None),
