@@ -14,7 +14,6 @@ on:
     branches: [ feat_stgenv ]
 
 # Public, non-sensitive configuration goes into vars, not secrets.
-# You can define repo/org variables: Settings > Variables, then reference via `vars.*` below.
 env:
   STAGE: ${{ vars.STAGE || 'stg' }}
   REGION: ${{ vars.REGION || 'asia-northeast1' }}
@@ -22,7 +21,6 @@ env:
 jobs:
   compose-stg:
     # Only run on push events or on internal PRs (not forks).
-    # Rationale: docker compose may mount ./secrets or env files; avoid any chance of exfiltration via PR logs.
     if: ${{ github.event_name == 'pull_request' ? (github.event.pull_request.head.repo.fork == false) : true }}
     runs-on: ubuntu-latest
     steps:
@@ -30,18 +28,22 @@ jobs:
         with:
           # Do not persist a token into the local git config.
           persist-credentials: false
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-    - name: Show compose config (${{ env.STAGE }})
+
+      - name: Show compose config (${{ env.STAGE }})
         run: |
-      make config ENV=${STAGE} | sed -n '1,160p'
-        # NOTE: Avoid dumping full env/compose with secrets to logs.
-        # Keep output minimal and never echo secrets. Use ::add-mask:: if absolutely necessary.
-    - name: Build & Up (${{ env.STAGE }})
+          make config ENV=${STAGE} | sed -n '1,160p'
+          # NOTE: Avoid dumping full env/compose with secrets to logs.
+
+      - name: Build & Up (${{ env.STAGE }})
         run: |
-      make rebuild ENV=${STAGE} || (echo "${STAGE} rebuild failed" && exit 1)
+          make rebuild ENV=${STAGE} || (echo "${STAGE} rebuild failed" && exit 1)
+
       - name: Show ps
         run: docker compose -p ${STAGE} ps
+
       - name: Down
         if: always()
         run: make down ENV=${STAGE}
