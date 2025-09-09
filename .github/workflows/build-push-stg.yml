@@ -1,5 +1,12 @@
 name: Build & Push Services (stg)
 
+# Security hardening
+# - This workflow uses cloud credentials (secrets). It must NOT run for forked PRs.
+# - Trigger is workflow_dispatch only; keep it that way to avoid PR contexts.
+# - Keep token permissions minimal.
+permissions:
+  contents: read
+
 on:
   workflow_dispatch: {}
 
@@ -8,13 +15,17 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  AR_HOST: asia-northeast1-docker.pkg.dev
-  AR_PROJECT: sanbou-app
-  AR_REPO: sanbou-repo
+  # Public, non-sensitive defaults (can be overridden by repo/org Variables `vars`).
+  AR_HOST: ${{ vars.AR_HOST || 'asia-northeast1-docker.pkg.dev' }}
+  AR_PROJECT: ${{ vars.AR_PROJECT || 'sanbou-app' }}
+  AR_REPO: ${{ vars.AR_REPO || 'sanbou-repo' }}
+  STAGE: ${{ vars.STAGE || 'stg' }}
 
 jobs:
   build:
     runs-on: ubuntu-latest
+  # This job requires secrets.GCP_SA_KEY; enforce non-fork context.
+  if: ${{ github.event_name != 'pull_request' && (github.event.pull_request.head.repo.fork == false || github.event.pull_request == null) }}
 
     strategy:
       fail-fast: false
@@ -56,8 +67,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
-      # gcloud セットアップ（要: secrets.GCP_SA_KEY）
+  # gcloud セットアップ（要: secrets.GCP_SA_KEY）
+  # NOTE: Do not run this in PRs from forks. See job-level `if:`.
       - name: Setup gcloud
         uses: google-github-actions/setup-gcloud@v1
         with:
@@ -88,8 +102,14 @@ jobs:
           # build-args: |
           #   NODE_ENV=production
           tags: |
-            ${{ env.AR_HOST }}/${{ env.AR_PROJECT }}/${{ env.AR_REPO }}/${{ matrix.image }}:stg
-            ${{ env.AR_HOST }}/${{ env.AR_PROJECT }}/${{ env.AR_REPO }}/${{ matrix.image }}:stg-${{ github.sha }}
+    ${{ env.AR_HOST }}/${{ env.AR_PROJECT }}/${{ env.AR_REPO }}/${{ matrix.image }}:${{ env.STAGE }}
+    ${{ env.AR_HOST }}/${{ env.AR_PROJECT }}/${{ env.AR_REPO }}/${{ matrix.image }}:${{ env.STAGE }}-${{ github.sha }}
           # キャッシュ運用したい場合（任意）
           # cache-from: type=registry,ref=${{ env.AR_HOST }}/${{ env.AR_PROJECT }}/${{ env.AR_REPO }}/${{ matrix.image }}:stg
           # cache-to: type=inline
+
+  # Best practices (documentation):
+  # - Never print or upload service_account_key or any token. Do not include .env files in artifacts or cache.
+  # - If you must write .env for build, write to $RUNNER_TEMP and delete it: `trap 'rm -f "$RUNNER_TEMP/.env"' EXIT`.
+  # - Use repo/org Variables for non-secret config (AR_HOST, AR_PROJECT, AR_REPO, STAGE). Keep Secrets for credentials only.
+  # - Avoid `pull_request_target` and untrusted contexts for any step that can reach secrets or protected registries.
