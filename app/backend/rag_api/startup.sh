@@ -6,8 +6,10 @@ IFS=$'\n\t'
 # --- 設定値（環境変数で上書き可能） ---
 GCS_BUCKET_NAME="${GCS_BUCKET_NAME:-object_haikibutu}"
 GCS_DATA_PREFIX="${GCS_DATA_PREFIX:-master}"
+# APP_ROOT_DIR (新) -> APP_BASE_DIR (旧) -> /backend の順で基底パス決定
+_BASE_DIR="${APP_ROOT_DIR:-${APP_BASE_DIR:-/backend}}"
 # /backend が書き込み不可な場合はホームへフォールバック
-TARGET_DIR_DEFAULT="${APP_BASE_DIR:-/backend}/local_data/master"
+TARGET_DIR_DEFAULT="${_BASE_DIR}/local_data/master"
 TARGET_DIR="${TARGET_DIR:-$TARGET_DIR_DEFAULT}"
 # root 権限で作成し所有権付与 (コンテナは appuser 実行)
 if mkdir -p "${TARGET_DIR%/master}" 2>/dev/null; then
@@ -20,7 +22,12 @@ fi
 if command -v chown >/dev/null 2>&1; then
   chown -R appuser:appuser "${TARGET_DIR%/master}" 2>/dev/null || true
 fi
-GOOGLE_APPLICATION_CREDENTIALS="${GOOGLE_APPLICATION_CREDENTIALS:-/root/.config/gcloud/application_default_credentials.json}"
+# 優先順位: /run/secrets/gcs_key.json -> 既存設定 or デフォルト
+if [ -f /run/secrets/gcs_key.json ]; then
+  export GOOGLE_APPLICATION_CREDENTIALS="/run/secrets/gcs_key.json"
+else
+  GOOGLE_APPLICATION_CREDENTIALS="${GOOGLE_APPLICATION_CREDENTIALS:-/root/.config/gcloud/application_default_credentials.json}"
+fi
 
 # --- 関数化：GCSからデータ取得 ---
 download_gcs_data() {
@@ -53,6 +60,9 @@ else
   if [[ "$SKIP_GCS" != "1" ]]; then
     if gcloud auth activate-service-account --key-file="$GOOGLE_APPLICATION_CREDENTIALS"; then
       echo "✅ Authenticated with service account."
+    # サービスアカウント確認
+    SA_EMAIL=$(grep -o '"client_email" *: *"[^"]\+"' "$GOOGLE_APPLICATION_CREDENTIALS" | cut -d'"' -f4 || true)
+    echo "Using service account: ${SA_EMAIL}"
     else
       echo "⚠️  サービスアカウント認証に失敗。GCS 処理をスキップします。" >&2
       SKIP_GCS=1
@@ -69,11 +79,12 @@ else
   else
     if ! download_gcs_data "$GCS_BUCKET_NAME" "$GCS_DATA_PREFIX" "$TARGET_DIR"; then
       echo "⚠️  ダウンロード失敗しましたが起動は継続します。" >&2
+      echo "ヒント: サービスアカウントに 'storage.objects.list' と 'storage.objects.get' 権限 (Storage Object Viewer など) が付与されているか確認してください。" >&2
     fi
   fi
 fi
 
 # --- FastAPI起動 ---
-echo "APP_BASE_DIR: ${APP_BASE_DIR:-未設定}"
+echo "APP_ROOT_DIR: ${APP_ROOT_DIR:-未設定} (fallback APP_BASE_DIR=${APP_BASE_DIR:-未設定})"
 echo "🚀 [2/2] Starting FastAPI..."
 exec uvicorn app.main:app --host 0.0.0.0 --port 8000

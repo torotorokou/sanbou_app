@@ -33,26 +33,26 @@ def fix_imports_in_file(file_path: Path, project_root: Path):
         # backend_sharedのインポートを修正
         content = re.sub(r"from\s+backend_shared\.", "from backend_shared.", content)
 
-        # app/api/st_app内での相対インポートを修正
-        if "app/api/st_app" in str(file_path):
-            # from app_pages. -> from app.api.st_app.app_pages.
+        # app/st_app内での相対インポートを修正
+        if "app/st_app" in str(file_path):
+            # from app_pages. -> from app.st_app.app_pages.
             content = re.sub(
-                r"from\s+app_pages\.", "from app.api.st_app.app_pages.", content
+                r"from\s+app_pages\.", "from app.st_app.app_pages.", content
             )
 
-            # from components. -> from app.api.st_app.components.
+            # from components. -> from app.st_app.components.
             content = re.sub(
-                r"from\s+components\.", "from app.api.st_app.components.", content
+                r"from\s+components\.", "from app.st_app.components.", content
             )
 
-            # from utils. -> from app.api.st_app.utils.
-            content = re.sub(r"from\s+utils\.", "from app.api.st_app.utils.", content)
+            # from utils. -> from app.st_app.utils.
+            content = re.sub(r"from\s+utils\.", "from app.st_app.utils.", content)
 
-            # from config. -> from app.api.st_app.config.
-            content = re.sub(r"from\s+config\.", "from app.api.st_app.config.", content)
+            # from config. -> from app.st_app.config.
+            content = re.sub(r"from\s+config\.", "from app.st_app.config.", content)
 
-            # from logic. -> from app.api.st_app.logic.
-            content = re.sub(r"from\s+logic\.", "from app.api.st_app.logic.", content)
+            # from logic. -> from app.st_app.logic.
+            content = re.sub(r"from\s+logic\.", "from app.st_app.logic.", content)
 
         # app/api/services内での相対インポートを修正
         if "app/api/services" in str(file_path):

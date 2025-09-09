@@ -56,4 +56,5 @@ RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certifi
     && rm -rf /var/lib/apt/lists/*
 RUN npm ci || true
 EXPOSE 5173
-CMD ["bash", "-c", "set -e; if [ ! -d node_modules ]; then echo '[dev] node_modules missing -> npm ci'; npm ci; fi; npm run dev -- --host 0.0.0.0"]
+# Simplify dev CMD: rely on package.json passing host/port to vite to avoid shell argument parsing issues
+CMD ["bash", "-c", "set -e; if [ ! -x ./node_modules/.bin/vite ]; then echo '[dev] vite missing -> npm ci'; npm ci; fi; npm run dev -- --host 0.0.0.0 --port 5173"]
