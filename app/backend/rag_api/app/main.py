@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+from backend_shared.src.logging_utils import setup_uvicorn_access_filter
 from fastapi.responses import JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -69,6 +70,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# アクセスログ: /health のアクセスのみ抑制（uvicorn.access フィルター）
+setup_uvicorn_access_filter(excluded_paths=("/health",))
 
 # --- ルーター登録（mount より後に置かないと競合しない） -----------------------
 routers = [

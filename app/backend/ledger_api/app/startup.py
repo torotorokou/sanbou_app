@@ -55,6 +55,8 @@ def bucket_base() -> Optional[str]:
     base = settings.bucket_base()
     # 旧挙動と互換: デフォルト値を補完
     if base is None:
+        if settings.stage == "dev":
+            return "gs://sanbouapp-dev/ledger_api/st_app"
         if settings.stage == "stg":
             return "gs://sanbouapp-stg/ledger_api/st_app"
         if settings.stage == "prod":
