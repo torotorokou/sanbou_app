@@ -1,0 +1,101 @@
+# Workflow: Build (make rebuild) using Environment-scoped Secrets
+#
+# What this does
+# - ブランチ名に応じて GitHub Environment (dev / stg / prod) を自動選択
+# - 選択した Environment の Secrets から env/.env.common を自動生成
+# - その後 `make rebuild ENV=<env>` を実行
+#
+# Prerequisites (各 Environment で準備してください)
+# - GitHub → Settings → Environments → dev / stg / prod の3つの Environment を作成
+# - それぞれの Environment に以下の Secret を登録
+#   - ENV_COMMON   : .env.common の中身 (複数行OK)
+#   - ENV_SPECIFIC : .env.<env> の中身 (任意。ある場合は .env.common に追記します)
+#     例: dev 環境なら .env.dev の中身、stg なら .env.stg、prod なら .env.prod
+#
+# Important Notes
+# - Secrets はログに表示されません。このワークフローでは printf でファイルに安全に書き込みます。
+# - env/.env.common の「存在」が必要なため、ENV_SPECIFIC が未設定でも ENV_COMMON だけで動作します。
+
+name: Rebuild with env secrets
+
+on:
+  push:
+    branches: [dev, stg, prod]
+  # 手動実行でも動かせるように (任意)
+  workflow_dispatch:
+    inputs:
+      env:
+        description: "Environment to use (dev/stg/prod)"
+        required: true
+        type: choice
+        options: [dev, stg, prod]
+
+jobs:
+  rebuild:
+    # 例: dev ブランチで走ると dev Environment が選ばれ、dev Environment の Secrets にアクセスできます
+    environment: ${{ github.event_name == 'workflow_dispatch' && inputs.env || github.ref_name }}
+    runs-on: ubuntu-latest
+    name: rebuild (${{ github.event_name == 'workflow_dispatch' && inputs.env || github.ref_name }})
+
+    steps:
+      # 1) リポジトリのソースをチェックアウト
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2) 使う環境名(ENV_NAME)を決定
+      #    - push の場合は ブランチ名(dev/stg/prod)
+      #    - workflow_dispatch の場合は 入力で選んだ env
+      - name: Determine ENV_NAME
+        id: set-env
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            ENV_NAME="${{ inputs.env }}"
+          else
+            ENV_NAME="${{ github.ref_name }}"
+          fi
+          echo "ENV_NAME=${ENV_NAME}" >> "$GITHUB_ENV"
+          echo "Using ENV_NAME=${ENV_NAME}"  # ログに出しても安全な情報のみ
+
+      # 3) Environment Secrets から env/.env.common を生成
+      #    - ENV_COMMON を上書きで書き込み
+      #    - ENV_SPECIFIC があれば追記
+      - name: Create env/.env.common from Environment secrets
+        # Secrets を step ローカルの環境変数として受け取り、ログ出力を避けつつ安全にファイルへ書き込みます
+        env:
+          ENV_COMMON: ${{ secrets.ENV_COMMON }}
+          ENV_SPECIFIC: ${{ secrets.ENV_SPECIFIC }}
+        shell: bash
+        run: |
+          # env ディレクトリがなければ作成
+          mkdir -p env
+
+          # ENV_COMMON (.env.common の中身) をそのままファイルへ
+          # printf を使うことで複数行の内容を安全に書き込めます
+          printf "%s\n" "$ENV_COMMON" > env/.env.common
+
+          # ENV_SPECIFIC (.env.<env> の中身) があれば追記
+          if [ -n "${ENV_SPECIFIC:-}" ]; then
+            printf "\n%s\n" "$ENV_SPECIFIC" >> env/.env.common
+          fi
+
+          # 簡易チェック: ファイルが空でないこと
+          if [ ! -s env/.env.common ]; then
+            echo "env/.env.common was not created or is empty"
+            exit 1
+          fi
+
+      # 4) ファイルの存在確認のみ (中身は表示しません) – デバッグ用
+      - name: Verify env/.env.common exists (no contents shown)
+        shell: bash
+        run: |
+          ls -l env
+          echo "env/.env.common size (bytes): $(wc -c < env/.env.common)"
+
+      # 5) make rebuild を実行
+      #    - Makefile はリポジトリのルートにある想定
+      #    - ENV=<env> を渡すことで dev/stg/prod の切り替えに対応
+      - name: Run make rebuild
+        shell: bash
+        run: |
+          make rebuild ENV="$ENV_NAME"
