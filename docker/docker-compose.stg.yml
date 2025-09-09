@@ -3,32 +3,51 @@
 ## - prod 相当構成 + ポート 8080/8443 公開
 ## =============================================================
 services:
-  # frontend は dev のみ。stg では起動しない (base compose の profiles 参照)
+  # 共通ビルド/依存関係
   ai_api:
+    build: { context: ../app, dockerfile: backend/ai_api/Dockerfile }
+    networks: [app-net]
+    depends_on:
+      - db
+  # backend APIs (override で env 注入のみ)
     env_file:
       - ../env/.env.common
       - ../env/.env.stg
 
   ledger_api:
+    build: { context: ../app, dockerfile: backend/ledger_api/Dockerfile }
+    networks: [app-net]
+    depends_on:
+      - db
     env_file:
       - ../env/.env.common
       - ../env/.env.stg
     environment:
       STAGE: stg
-      # ledger_api は stg-key.json（旧設計）を利用する前提ならこちらを指定
+      # ledger_api 用 GCP SA Key
+      # 旧: stg-key.json -> 新: stg_key.json (2025-09 rename)
       GOOGLE_APPLICATION_CREDENTIALS: /run/secrets/ledger_gcs_key.json
       # GCS アクセス権限欠如などスタートアップ時の異常でコンテナを Fail Fast させる
       STRICT_STARTUP: "true"
     volumes:
       - ../secrets:/backend/secrets:ro
-      - ../secrets/stg-key.json:/run/secrets/ledger_gcs_key.json:ro
+      # リネーム後ファイルをマウント
+      - ../secrets/stg_key.json:/run/secrets/ledger_gcs_key.json:ro
 
   sql_api:
+    build: { context: ../app, dockerfile: backend/sql_api/Dockerfile }
+    networks: [app-net]
+    depends_on:
+      - db
     env_file:
       - ../env/.env.common
       - ../env/.env.stg
 
   rag_api:
+    build: { context: ../app, dockerfile: backend/rag_api/Dockerfile }
+    networks: [app-net]
+    depends_on:
+      - db
     env_file:
       - ../env/.env.common
       - ../env/.env.stg
@@ -42,9 +61,53 @@ services:
       - ../secrets:/backend/secrets:ro
       - ../secrets/gcs-key.json:/run/secrets/rag_gcs_key.json:ro
 
+  # =============================
+  # nginx (stg)
+  # - frontend Dockerfile の runtime stage を利用して dist を含む nginx イメージを構築
+  # - conf.d.stg をマウントし HTTPS 設定のみ (Basic 認証は廃止)
+  # =============================
   nginx:
+    build:
+      context: ../app/frontend
+      dockerfile: Dockerfile
+      target: runtime
+    depends_on:
+      - ai_api
+      - ledger_api
+      - sql_api
+      - rag_api
+    networks:
+      - app-net
     ports:
       - "${STG_NGINX_HTTP_PORT:-8080}:80"
       - "${STG_NGINX_HTTPS_PORT:-8443}:443"
     environment:
       STAGE: stg
+    # 環境固有の設定ディレクトリ (conf.d.stg) を利用
+    volumes:
+      # conf.d を rw でマウント (個別ファイル上書きができない read-only 衝突を避ける)
+      - ../app/nginx/conf.d.stg:/etc/nginx/conf.d
+      - ../app/nginx/certs:/etc/nginx/certs:ro
+
+  db:
+    image: postgres:15-alpine
+    networks: [app-net]
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+networks:
+  app-net:
+    driver: bridge
+
+volumes:
+  db_data:
+    driver: local

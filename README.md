@@ -3,6 +3,11 @@
 
 フロントエンド（Vite + React）と複数のFastAPIサービス、PostgreSQL、NginxをDocker Composeで統合したWebアプリです。
 
+2025-09 更新: 環境分離を明確化
+- dev: Vite dev サーバ + FastAPI (uvicorn --reload) を直接公開。Nginx コンテナは起動しない。
+- stg/prod: Nginx (edge プロファイル) が React ビルド成果物を配信し、FastAPI 群をリバースプロキシ。
+- DB(PostgreSQL) を共通サービス `db` として追加。
+
 ---
 
 ## すぐに起動する（Quick Start）
@@ -43,13 +48,14 @@
      make up ENV=dev
      ```
 
-3) アクセス
+3) アクセス (dev)
 
-   - Frontend: http://localhost:5173
-   - AI API: http://localhost:8001/docs
-   - Ledger API: http://localhost:8002/docs
-   - SQL API: http://localhost:8003/docs
-   - RAG API: http://localhost:8004/docs
+  - Frontend: http://localhost:5173
+  - AI API: http://localhost:8001/docs
+  - Ledger API: http://localhost:8002/docs
+  - SQL API: http://localhost:8003/docs
+  - RAG API: http://localhost:8004/docs
+  - Postgres: localhost:5432 (HOST 側からは `psql -h localhost -U myuser myapp`)
 
 4) 停止・ログ・再ビルド
 
@@ -67,12 +73,12 @@
 - 初回の `make up` 実行時、`OPENAI_API_KEY` と `GEMINI_API_KEY` を対話入力すると `secrets/.env.<ENV>.secrets` に安全に保存されます
 - GCP利用時は `secrets/gcs-key.json` を必ず配置
 
-2) 起動
+2) 起動 (Nginx を有効化する edge プロファイルを利用)
 
 ```bash
-make up ENV=stg
-# もしくは
-make up ENV=prod
+COMPOSE_PROFILES=edge make up ENV=stg
+# もしくは本番
+COMPOSE_PROFILES=edge make up ENV=prod
 ```
 
 3) Nginx（エッジ）
@@ -146,16 +152,16 @@ nginx/                        # リバースプロキシ (設定 / 証明書)
 |----------|------|-----|-----|------|
 | frontend | React/Vite SPA | npm run dev (port 5173) | nginx runtime (内部) | nginx runtime (内部) |
 | backend  | FastAPI | uvicorn --reload (port 8000) | 標準 uvicorn (内部) | 標準 uvicorn (内部) |
-| nginx    | Reverse Proxy & Static | 8080:80 公開 (任意) | 8080/8443 公開 | 80/443 公開 |
+| nginx    | Reverse Proxy & Static | (未起動) | 8080/8443 公開 (COMPOSE_PROFILES=edge) | 80/443 公開 (COMPOSE_PROFILES=edge) |
 
 ### 起動例
 
 ```
-make up              # dev (ホットリロード)
-make up ENV=stg      # stg (nginx:8080)
-make up ENV=prod     # prod (nginx:80)
-make logs ENV=dev S=backend
-make rebuild ENV=prod
+make up                    # dev (ホットリロード, nginx 無し)
+COMPOSE_PROFILES=edge make up ENV=stg   # stg (nginx 有効)
+COMPOSE_PROFILES=edge make up ENV=prod  # prod (nginx 有効)
+make logs ENV=dev S=ledger_api
+COMPOSE_PROFILES=edge make rebuild ENV=stg
 ```
 
 ### なぜ override 方式か
@@ -168,7 +174,8 @@ make rebuild ENV=prod
 
 1. dev 環境ではコードを編集すると即座に反映されます (Vite + uvicorn --reload)
 2. stg/prod ではコンテナ内にビルド成果物のみ含み、ホットリロードは無効です
-3. 本番では `frontend`/`backend` コンテナは外部ポートを持たず、`nginx` コンテナのみ公開されます
+3. stg/prod で nginx を動かすには `COMPOSE_PROFILES=edge` を付与 (付けない場合は内部検証用として API 群のみ起動)
+4. 本番では `frontend` ビルド成果物は nginx イメージ内に含まれ、`frontend` 開発用コンテナは起動しません
 4. 秘密情報(APIキー等)は `.env.prod` に直書きせず安全な仕組み(Secrets Manager, 環境変数注入)を利用してください
 
 ---
