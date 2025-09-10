@@ -21,6 +21,24 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # For local development, you can create .env files by copying the .example files.
+      # e.g., cp env/.env.common.example env/.env.common
+      - name: Generate env files from secrets
+        run: |
+          set -eu
+          mkdir -p env
+          echo "API_KEY=${{ secrets.API_KEY }}" > env/.env.common
+          echo "SECRET=${{ secrets.SECRET }}" >> env/.env.common
+          echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> env/.env.common
+          echo "GCP_SA_KEY=${{ secrets.GCP_SA_KEY }}" >> env/.env.common
+
+          # Create env files for each environment
+          echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" > env/.env.local_dev
+          echo "STG_DB_URL=${{ secrets.STG_DB_URL }}" > env/.env.local_stg
+          echo "VM_STG_DB_URL=${{ secrets.VM_STG_DB_URL }}" > env/.env.vm_stg
+          echo "VM_PROD_DB_URL=${{ secrets.VM_PROD_DB_URL }}" > env/.env.vm_prod
+
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
