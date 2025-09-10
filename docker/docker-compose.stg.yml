@@ -12,7 +12,7 @@ services:
   # backend APIs (override で env 注入のみ)
     env_file:
       - ../env/.env.common
-      - ../env/.env.stg
+      - ../env/.env.${STG_ENV_FILE}
 
   ledger_api:
     build: { context: ../app, dockerfile: backend/ledger_api/Dockerfile }
@@ -21,7 +21,7 @@ services:
       - db
     env_file:
       - ../env/.env.common
-      - ../env/.env.stg
+      - ../env/.env.${STG_ENV_FILE}
     environment:
       STAGE: stg
       # ledger_api 用 GCP SA Key
@@ -41,7 +41,7 @@ services:
       - db
     env_file:
       - ../env/.env.common
-      - ../env/.env.stg
+      - ../env/.env.${STG_ENV_FILE}
 
   rag_api:
     build: { context: ../app, dockerfile: backend/rag_api/Dockerfile }
@@ -50,7 +50,7 @@ services:
       - db
     env_file:
       - ../env/.env.common
-      - ../env/.env.stg
+      - ../env/.env.${STG_ENV_FILE}
     environment:
       STAGE: stg
       # rag_api 用の gcs-key.json を利用
@@ -85,7 +85,7 @@ services:
       STAGE: stg
     # 単一ファイル化した stg.conf を直接マウント (local_stg / vm_stg 両対応)
     volumes:
-      - ../app/nginx/conf.d/stg.conf:/etc/nginx/conf.d/app.conf:ro
+      - ../app/nginx/conf.d:/etc/nginx/conf.d:ro
       - ../app/nginx/certs:/etc/nginx/certs:ro
 
   db:
