@@ -263,27 +263,41 @@ REPO ?= torotorokou/sanbou_app
 # gh-secrets: GitHub Environments へ .env をロード
 # -------------------------------------------------------------
 gh-secrets:
-	@set +u; \
-	JSON_VAL=$${JSON:-}; CSV_VAL=$${CSV:-}; PREFIX_VAL=$${PREFIX:-}; DRY_VAL=$${DRY:-}; \
-	FILE_VAL="$${FILE:-}"; \
-	DRY_FLAG=""; if [ "$$DRY_VAL" = "1" ]; then DRY_FLAG="--dry-run"; fi; \
-	if [ -n "$$JSON_VAL" ]; then \
-	  echo "[info] Apply from JSON ($$JSON_VAL)"; \
-	  ./scripts/gh_env_secrets_sync.sh --repo "$(REPO)" --json "$$JSON_VAL" --prefix "$$PREFIX_VAL" $$DRY_FLAG; \
-	elif [ -n "$$CSV_VAL" ]; then \
-	  echo "[info] Apply from CSV ($$CSV_VAL)"; \
-	  ./scripts/gh_env_secrets_sync.sh --repo "$(REPO)" --csv "$$CSV_VAL" --prefix "$$PREFIX_VAL" $$DRY_FLAG; \
-	else \
-	  COMMON_FILE="env/.env.common"; SPEC_FILE="env/.env.$(ENV)"; \
-	  if [ -n "$$FILE_VAL" ]; then \
-	    echo "[info] Apply single env ($(ENV)) from $$FILE_VAL"; \
-	    ./scripts/gh_env_secrets_sync.sh --repo "$(REPO)" --env "$(ENV)" --file "$$FILE_VAL" --prefix "$$PREFIX_VAL" $$DRY_FLAG; \
-	  else \
-	    if [ ! -f "$$COMMON_FILE" ]; then echo "[error] $$COMMON_FILE not found"; exit 2; fi; \
-	    echo "[info] Apply common: $$COMMON_FILE -> environment '$(ENV)'"; \
-	    ./scripts/gh_env_secrets_sync.sh --repo "$(REPO)" --env "$(ENV)" --file "$$COMMON_FILE" --prefix "$$PREFIX_VAL" $$DRY_FLAG; \
-	    if [ ! -f "$$SPEC_FILE" ]; then echo "[error] $$SPEC_FILE not found"; exit 2; fi; \
-	    echo "[info] Apply specific: $$SPEC_FILE -> environment '$(ENV)'"; \
-	    ./scripts/gh_env_secrets_sync.sh --repo "$(REPO)" --env "$(ENV)" --file "$$SPEC_FILE" --prefix "$$PREFIX_VAL" $$DRY_FLAG; \
-	  fi; \
+	@# NOTE: .ONESHELL 有効のため行末バックスラッシュ不要 / 先頭は必ず TAB
+	@set +u
+	JSON_VAL="$${JSON:-}"; CSV_VAL="$${CSV:-}"; PREFIX_VAL="$${PREFIX:-}"; DRY_VAL="$${DRY:-}"; FILE_VAL="$${FILE:-}";
+	DRY_FLAG=""; if [ "$$DRY_VAL" = "1" ]; then DRY_FLAG="--dry-run"; fi
+	if [ ! -x ./scripts/gh_env_secrets_sync.sh ]; then echo "[error] scripts/gh_env_secrets_sync.sh が見つからないか実行不可"; exit 2; fi
+	if [ -n "$$JSON_VAL" ]; then
+	  echo "[info] Apply from JSON ($$JSON_VAL)"
+	  ./scripts/gh_env_secrets_sync.sh --repo "$(REPO)" --json "$$JSON_VAL" --prefix "$$PREFIX_VAL" $$DRY_FLAG
+	elif [ -n "$$CSV_VAL" ]; then
+	  echo "[info] Apply from CSV ($$CSV_VAL)"
+	  ./scripts/gh_env_secrets_sync.sh --repo "$(REPO)" --csv "$$CSV_VAL" --prefix "$$PREFIX_VAL" $$DRY_FLAG
+	else
+	  COMMON_FILE="env/.env.common"; SPEC_FILE="env/.env.$(ENV)"
+	  if [ -n "$$FILE_VAL" ]; then
+	    if [ ! -f "$$FILE_VAL" ]; then echo "[error] $$FILE_VAL not found"; exit 2; fi
+	    echo "[info] Apply single env ($(ENV)) from $$FILE_VAL"
+	    ./scripts/gh_env_secrets_sync.sh --repo "$(REPO)" --env "$(ENV)" --file "$$FILE_VAL" --prefix "$$PREFIX_VAL" $$DRY_FLAG
+	  else
+	    if [ ! -f "$$COMMON_FILE" ]; then echo "[error] $$COMMON_FILE not found"; exit 2; fi
+	    echo "[info] Apply common: $$COMMON_FILE -> environment '$(ENV)'"
+	    ./scripts/gh_env_secrets_sync.sh --repo "$(REPO)" --env "$(ENV)" --file "$$COMMON_FILE" --prefix "$$PREFIX_VAL" $$DRY_FLAG
+	    if [ ! -f "$$SPEC_FILE" ]; then echo "[error] $$SPEC_FILE not found"; exit 2; fi
+	    echo "[info] Apply specific: $$SPEC_FILE -> environment '$(ENV)'"
+	    ./scripts/gh_env_secrets_sync.sh --repo "$(REPO)" --env "$(ENV)" --file "$$SPEC_FILE" --prefix "$$PREFIX_VAL" $$DRY_FLAG
+	  fi
 	fi
+
+.PHONY: gh-secrets-all
+# gh-secrets-all: 全環境まとめ適用
+# 可変: DRY=1 (デフォルト 1) を外す/0 にすると実際に書き込み
+# 例: make gh-secrets-all DRY=1  /  make gh-secrets-all DRY=0
+gh-secrets-all:
+	: "DRY=$(DRY) (1=dry-run)"; \
+	DRY_VAL=$${DRY:-1}; \
+	$(MAKE) gh-secrets ENV=local_dev PREFIX=DEV_ DRY=$$DRY_VAL; \
+	$(MAKE) gh-secrets ENV=local_stg PREFIX=STG_ DRY=$$DRY_VAL; \
+	$(MAKE) gh-secrets ENV=vm_stg PREFIX=STG_ DRY=$$DRY_VAL; \
+	$(MAKE) gh-secrets ENV=vm_prod PREFIX=PROD_ DRY=$$DRY_VAL

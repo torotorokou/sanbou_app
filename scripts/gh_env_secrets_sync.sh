@@ -111,7 +111,16 @@ if [[ -n "$DOTENV_FILE" ]]; then
 fi
 
 if [[ -n "$JSON_FILE" ]]; then
-  need_cmd jq
+  HAVE_JQ=0
+  if command -v jq >/dev/null 2>&1; then
+    HAVE_JQ=1
+  else
+    if ! command -v python3 >/dev/null 2>&1; then
+      err "JSON import requires jq or python3, but neither is installed"
+      exit 1
+    fi
+    warn "jq が見つからないため python3 フォールバックで JSON を解析します"
+  fi
   [[ -f "$JSON_FILE" ]] || { err "JSON file not found: $JSON_FILE"; exit 1; }
 fi
 
@@ -214,38 +223,57 @@ apply_from_json() {
   local json_path="$1"
   note "Importing from JSON: $json_path into $REPO"
   local -a summary_pairs=()
-  # Try schema: { "dev": {"KEY":"VAL"}, "stg": {...}, "prod": {...} }
-  if jq -e 'type=="object" and (to_entries|length) > 0' "$json_path" >/dev/null 2>&1; then
+  if [[ $HAVE_JQ -eq 1 ]]; then
+    # jq path (original behavior)
+    if jq -e 'type=="object" and (to_entries|length) > 0' "$json_path" >/dev/null 2>&1; then
+      while IFS=, read -r env key value; do
+        ensure_environment "$env"
+        set_secret "$env" "$key" "$value"
+        summary_pairs+=("$env:$key")
+      done < <(jq -r 'to_entries[] as $e | $e.value|to_entries[] | "\u0001",$e.key,",",.key,",",(.value|tostring),"\u0002"' "$json_path" \
+        | tr -d '\n' \
+        | sed $'s/\u0001/\n/g' \
+        | sed $'s/\u0002/\n/g' \
+        | sed '/^$/d' \
+        | sed '1d')
+    else
+      while IFS=, read -r env key value; do
+        ensure_environment "$env"
+        set_secret "$env" "$key" "$value"
+        summary_pairs+=("$env:$key")
+      done < <(jq -r '.[] | "\u0001",.env,",",.key,",",(.value|tostring),"\u0002"' "$json_path" \
+        | tr -d '\n' \
+        | sed $'s/\u0001/\n/g' \
+        | sed $'s/\u0002/\n/g' \
+        | sed '/^$/d')
+    fi
+  else
+    # python3 fallback (supports object schema and array schema)
     while IFS=, read -r env key value; do
       ensure_environment "$env"
       set_secret "$env" "$key" "$value"
       summary_pairs+=("$env:$key")
-    done < <(jq -r 'to_entries[] as $e | $e.value|to_entries[] | "",$e.key,",",.key,",",(.value|tostring),""' "$json_path" \
-      | tr -d '\n' \
-      | sed $'s/\u0001/\n/g' \
-      | sed $'s/\u0002/\n/g' \
-      | sed '/^$/d' \
-      | sed '1d')
-    if [[ ${#summary_pairs[@]} -gt 0 ]]; then
-      note "Applied keys from JSON (${#summary_pairs[@]}):"
-      for p in "${summary_pairs[@]}"; do
-        note "  - $p"
-      done
-    else
-      warn "No applicable keys found in JSON"
-    fi
-    return 0
+    done < <(python3 - "$json_path" <<'PY'
+import json, sys
+path = sys.argv[1]
+with open(path,'r',encoding='utf-8') as f:
+    data = json.load(f)
+rows = []
+if isinstance(data, dict):
+    for env, kv in data.items():
+        if isinstance(kv, dict):
+            for k, v in kv.items():
+                rows.append((env, k, str(v)))
+elif isinstance(data, list):
+    for item in data:
+        if isinstance(item, dict) and {'env','key','value'} <= item.keys():
+            rows.append((str(item['env']), str(item['key']), str(item['value'])))
+for r in rows:
+    # emit env,key,value CSV-ish (no commas inside fields assumption)
+    print(f"{r[0]},{r[1]},{r[2]}")
+PY
+  )
   fi
-  # Try schema: [ {"env":"dev","key":"K","value":"V"}, ... ]
-  while IFS=, read -r env key value; do
-    ensure_environment "$env"
-    set_secret "$env" "$key" "$value"
-    summary_pairs+=("$env:$key")
-  done < <(jq -r '.[] | "",.env,",",.key,",",(.value|tostring),""' "$json_path" \
-    | tr -d '\n' \
-    | sed $'s/\u0001/\n/g' \
-    | sed $'s/\u0002/\n/g' \
-    | sed '/^$/d')
   if [[ ${#summary_pairs[@]} -gt 0 ]]; then
     note "Applied keys from JSON (${#summary_pairs[@]}):"
     for p in "${summary_pairs[@]}"; do
