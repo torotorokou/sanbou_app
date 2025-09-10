@@ -80,7 +80,7 @@ DC_ENV_PREFIX := $(if $(STG_ENV_FILE),STG_ENV_FILE=$(STG_ENV_FILE) ,)
 # 展開した compose ファイルリスト (存在チェック用)
 COMPOSE_FILE_LIST := $(strip $(subst -f ,,$(COMPOSE_FILES)))
 
-.PHONY: up down logs ps rebuild config ledger_startup secrets gh-secrets
+.PHONY: up down logs ps rebuild config ledger_startup secrets gh-secrets prune
 
 check:
 	@for f in $(COMPOSE_FILE_LIST); do \
@@ -171,6 +171,30 @@ secrets:
 	@head_gemini=$$(grep '^GEMINI_API_KEY=' $(SECRETS_FILE) | cut -d= -f2 | sed 's/\(......\).*/\1****/'); \
 	 head_openai=$$(grep '^OPENAI_API_KEY=' $(SECRETS_FILE) | cut -d= -f2 | sed 's/\(......\).*/\1****/'); \
 	 echo "[info] GEMINI_API_KEY=$$head_gemini OPENAI_API_KEY=$$head_openai"
+
+
+# -------------------------------------------------------------
+# prune: 未使用のビルドキャッシュ/イメージを削除する（安全確認あり）
+# 環境変数 PRUNE_CONFIRM=YES を与えると非対話モードで実行できます。
+# -------------------------------------------------------------
+prune:
+	@echo "[info] Docker prune: builder cache + unused images"
+	@if [ -t 0 ]; then \
+	  read -p "Proceed to delete unused builder cache and images? [y/N]: " yn; \
+	else \
+	  yn="$${PRUNE_CONFIRM:-n}"; \
+	fi; \
+	case "$$yn" in \
+	  [yY]|[yY][eE][sS]) \
+	    echo "[info] pruning builder cache..."; \
+	    docker builder prune -af || { echo '[error] docker builder prune failed'; exit 1; }; \
+	    echo "[info] pruning unused images..."; \
+	    docker image prune -a -f || { echo '[error] docker image prune failed'; exit 1; }; \
+	    echo "[info] prune complete"; \
+	    docker system df; \
+	    ;; \
+	  *) echo "[info] abort prune"; exit 0 ;; \
+	esac
 
 rebuild: check secrets
 	@echo "[info] REBUILD (ENV=$(ENV) -> canonical=$(ENV_CANON))"
