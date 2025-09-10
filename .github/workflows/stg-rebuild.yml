@@ -15,13 +15,13 @@ on:
 
 # Public, non-sensitive configuration goes into vars, not secrets.
 env:
-  STAGE: ${{ vars.STAGE || 'stg' }}
-  REGION: ${{ vars.REGION || 'asia-northeast1' }}
+  STAGE: stg
+  REGION: asia-northeast1
 
 jobs:
   compose-stg:
     # Only run on push events or on internal PRs (not forks).
-    if: ${{ github.event_name == 'pull_request' ? (github.event.pull_request.head.repo.fork == false) : true }}
+    if: ${{ github.event_name != 'pull_request' || (github.event.pull_request != null && github.event.pull_request.head.repo.fork == false) }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

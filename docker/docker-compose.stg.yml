@@ -83,10 +83,9 @@ services:
       - "${STG_NGINX_HTTPS_PORT:-8443}:443"
     environment:
       STAGE: stg
-    # 環境固有の設定ディレクトリ (conf.d.stg) を利用
+    # 単一ファイル化した stg.conf を直接マウント (local_stg / vm_stg 両対応)
     volumes:
-      # conf.d を rw でマウント (個別ファイル上書きができない read-only 衝突を避ける)
-      - ../app/nginx/conf.d.stg:/etc/nginx/conf.d
+      - ../app/nginx/conf.d/stg.conf:/etc/nginx/conf.d/app.conf:ro
       - ../app/nginx/certs:/etc/nginx/certs:ro
 
   db:

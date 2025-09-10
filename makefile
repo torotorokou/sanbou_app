@@ -17,25 +17,65 @@ SHELL := /bin/bash
 ENV ?= dev
 ENV := $(strip $(ENV))
 DC := docker compose
-OVERRIDE := docker/docker-compose.$(ENV).yml
+
+# ------------------------------------------------------------------
+# Environment mapping (4-tier)
+# dev        -> dev (hot reload)               (.env.dev)
+# local_stg  -> local STG parity (HTTP)        (.env.local_stg)
+# vm_stg     -> VM STG (HTTPS/TLS future)      (.env.stg)
+# prod       -> production                     (.env.prod)
+# Backward compat: ENV=stg は vm_stg と同義
+# ------------------------------------------------------------------
+ENV_CANON := $(ENV)
+ifeq ($(ENV),stg)
+	ENV_CANON := vm_stg
+endif
+
 ENV_FILE_COMMON := env/.env.common
 ENV_FILE := env/.env.$(ENV)
-COMPOSE_FILES := -f $(OVERRIDE)
-# 追加: Secrets 自動注入用ファイル (Git 管理外)
+
+# Compose file set & env file mapping
+ifeq ($(ENV_CANON),dev)
+	ENV_FILE := env/.env.dev
+	COMPOSE_FILES := -f docker/docker-compose.dev.yml
+	HEALTH_URL := http://localhost:8001/health
+else ifeq ($(ENV_CANON),local_stg)
+ 	ENV_FILE := env/.env.local_stg
+ 	COMPOSE_FILES := -f docker/docker-compose.stg.yml
+ 	HEALTH_URL := http://stg.local/health
+else ifeq ($(ENV_CANON),vm_stg)
+ 	ENV_FILE := env/.env.stg
+ 	COMPOSE_FILES := -f docker/docker-compose.stg.yml
+ 	HEALTH_URL := http://stg.sanbou-app.jp/health
+else ifeq ($(ENV_CANON),prod)
+ 	ENV_FILE := env/.env.prod
+ 	COMPOSE_FILES := -f docker/docker-compose.prod.yml
+ 	HEALTH_URL := https://sanbou-app.jp/health
+else
+	# fallback legacy
+	COMPOSE_FILES := -f docker/docker-compose.$(ENV).yml
+endif
+
+# Secrets file per original ENV name (not canonical) to keep them separate
 SECRETS_FILE := secrets/.env.$(ENV).secrets
 COMPOSE_ENV_ARGS := --env-file $(ENV_FILE_COMMON) --env-file $(ENV_FILE) --env-file $(SECRETS_FILE)
+
+# 展開した compose ファイルリスト (存在チェック用)
+COMPOSE_FILE_LIST := $(strip $(subst -f ,,$(COMPOSE_FILES)))
 
 .PHONY: up down logs ps rebuild config ledger_startup secrets gh-secrets
 
 check:
-	@if [ ! -f "$(OVERRIDE)" ]; then echo "[error] $(OVERRIDE) not found"; exit 1; fi
+	@for f in $(COMPOSE_FILE_LIST); do \
+	  if [ ! -f "$$f" ]; then echo "[error] compose file $$f not found"; exit 1; fi; \
+	done
 	@if [ ! -f "$(ENV_FILE_COMMON)" ]; then echo "[error] $(ENV_FILE_COMMON) not found"; exit 1; fi
 	@if [ ! -f "$(ENV_FILE)" ]; then echo "[error] $(ENV_FILE) not found"; exit 1; fi
 	# --- Port availability check (dev/stg) ---------------------------------
-	@if [ "$(ENV)" = "dev" ]; then
+	@if [ "$(ENV_CANON)" = "dev" ]; then
 	  # dev は nginx を公開しないため Vite と DB のポートのみチェック
 	  PORTS="$${DEV_VITE_PORT:-5173} $${DEV_DB_PORT:-5432}"
-	elif [ "$(ENV)" = "stg" ]; then
+	elif [ "$(ENV_CANON)" = "local_stg" ] || [ "$(ENV_CANON)" = "vm_stg" ]; then
 	  # 明示未設定でもデフォルトで 8080/8443 をチェック
 	  PORTS="$${STG_NGINX_HTTP_PORT:-8080} $${STG_NGINX_HTTPS_PORT:-8443}"
 	else
@@ -87,7 +127,7 @@ ps:
 # - 再生成条件: ファイル不存在 or 空行含む未設定 / 強制再生成は REGENERATE=1 make ...
 # -------------------------------------------------------------
 secrets:
-	@if [ "$(ENV)" != "dev" ] && [ "$(ENV)" != "stg" ] && [ "$(ENV)" != "prod" ]; then \
+	@if [ "$(ENV)" != "dev" ] && [ "$(ENV)" != "stg" ] && [ "$(ENV)" != "local_stg" ] && [ "$(ENV)" != "vm_stg" ] && [ "$(ENV)" != "prod" ]; then \
 	  echo "[error] unsupported ENV '$(ENV)'"; exit 2; fi
 	@mkdir -p secrets
 	@if [ "$(REGENERATE)" = "1" ] || [ ! -s "$(SECRETS_FILE)" ]; then \
@@ -110,10 +150,44 @@ secrets:
 	 echo "[info] GEMINI_API_KEY=$$head_gemini OPENAI_API_KEY=$$head_openai"
 
 rebuild: check secrets
-	@echo "[info] REBUILD (ENV=$(ENV))"
-	$(DC) $(COMPOSE_ENV_ARGS) -p $(ENV) $(COMPOSE_FILES) build --no-cache
+	@echo "[info] REBUILD (ENV=$(ENV) -> canonical=$(ENV_CANON))"
+	@echo "[step] compose config (merged)"
+	$(DC) $(COMPOSE_ENV_ARGS) -p $(ENV) $(COMPOSE_FILES) config >/dev/null || { echo '[error] compose config failed'; exit 2; }
+	@echo "[step] down --remove-orphans"
+	$(DC) -p $(ENV) down --remove-orphans || true
+	@echo "[step] build --pull --no-cache"
+	$(DC) $(COMPOSE_ENV_ARGS) -p $(ENV) $(COMPOSE_FILES) build --pull --no-cache
+	@echo "[step] up -d"
 	$(DC) $(COMPOSE_ENV_ARGS) -p $(ENV) $(COMPOSE_FILES) up -d --force-recreate --remove-orphans
-	@echo "[info] done"
+	@echo "[step] health check -> $(HEALTH_URL)"
+	@if [ -z "$(HEALTH_URL)" ]; then \
+	  echo '[warn] HEALTH_URL not set; skipping health check'; \
+	else \
+	  if command -v curl >/dev/null 2>&1; then \
+	    HTTP_STATUS=$$(curl -s -o /dev/null -w '%{http_code}' -I "$(HEALTH_URL)" || echo 000); \
+	    if [ -z "$$HTTP_STATUS" ] || [ "$$HTTP_STATUS" = "000" ]; then \
+	      echo '[warn] curl health failed (status $$HTTP_STATUS)'; exit 3; \
+	    else \
+	      echo "[ok] HTTP $$HTTP_STATUS"; \
+	    fi; \
+	  elif command -v wget >/dev/null 2>&1; then \
+	    wget --spider -S "$(HEALTH_URL)" 2>&1 | grep -E 'HTTP/' || echo '[warn] wget health check inconclusive'; \
+	  else \
+	    echo '[warn] neither curl nor wget installed; skip health check'; \
+	  fi; \
+	fi
+	@echo "[info] rebuild done"
+
+# Simple restart wrapper
+.PHONY: restart
+restart:
+	$(MAKE) down ENV=$(ENV)
+	$(MAKE) up ENV=$(ENV)
+
+.PHONY: health
+health:
+	@echo "[info] HEALTH CHECK $(HEALTH_URL)"
+	@if command -v curl >/dev/null 2>&1; then curl -I "$(HEALTH_URL)"; elif command -v wget >/dev/null 2>&1; then wget --spider -S "$(HEALTH_URL)" 2>&1 | sed -n '1,10p'; else echo 'no curl/wget'; fi
 
 config: check secrets
 	$(DC) $(COMPOSE_ENV_ARGS) -p $(ENV) $(COMPOSE_FILES) config
