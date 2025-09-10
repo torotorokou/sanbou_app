@@ -9,7 +9,7 @@ services:
       target: dev
     env_file:
       - ../env/.env.common
-      - ../env/.env.dev
+      - ../env/.env.local_dev
     command: ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
     ports:
       - "5173:5173"
@@ -25,7 +25,7 @@ services:
     build: { context: ../app, dockerfile: backend/ai_api/Dockerfile }
     env_file:
       - ../env/.env.common
-      - ../env/.env.dev
+      - ../env/.env.local_dev
     command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
     ports:
       - "8001:8000"
@@ -42,7 +42,7 @@ services:
     build: { context: ../app, dockerfile: backend/ledger_api/Dockerfile }
     env_file:
       - ../env/.env.common
-      - ../env/.env.dev
+      - ../env/.env.local_dev
     user: "0:0"
     command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
     ports:
@@ -66,7 +66,7 @@ services:
     build: { context: ../app, dockerfile: backend/sql_api/Dockerfile }
     env_file:
       - ../env/.env.common
-      - ../env/.env.dev
+      - ../env/.env.local_dev
     command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
     ports:
       - "8003:8000"
@@ -83,7 +83,7 @@ services:
     build: { context: ../app, dockerfile: backend/rag_api/Dockerfile }
     env_file:
       - ../env/.env.common
-      - ../env/.env.dev
+      - ../env/.env.local_dev
     command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
     ports:
       - "8004:8000"

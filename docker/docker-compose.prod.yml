@@ -69,8 +69,8 @@ services:
     environment:
       STAGE: prod
     volumes:
-  - ../app/nginx/conf.d:/etc/nginx/conf.d:ro
-  - ../app/nginx/certs:/etc/nginx/certs:ro
+      - ../app/nginx/conf.d:/etc/nginx/conf.d:ro
+      - ../app/nginx/certs:/etc/nginx/certs:ro
 
   db:
     image: postgres:15-alpine

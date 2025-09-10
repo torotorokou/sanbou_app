@@ -1,21 +1,23 @@
 
 # sanbou_app
 
-## 2025-09 環境拡張 (4 環境: dev / local_stg / vm_stg / prod)
+## 4 環境構成 (unified names)
 
 | ENV      | 目的 | .env ファイル        | Compose ファイル                | Health URL                         | 備考 |
 |----------|------|----------------------|---------------------------------|------------------------------------|------|
-| dev      | ローカル開発 (ホットリロード) | `env/.env.dev`                  | `docker/docker-compose.dev.yml`    | http://localhost:8001/health | Vite + uvicorn reload |
-| local_stg| STG 擬似 (nginx, HTTP)     | `env/.env.local_stg`            | `docker/docker-compose.stg.yml`    | http://stg.local/health      | `/etc/hosts` に `127.0.0.1 stg.local` |
-| vm_stg   | VM 上 STG (将来 TLS)        | `env/.env.stg`                 | `docker/docker-compose.stg.yml`    | http://stg.sanbou-app.jp/health | nginx + 将来 443 有効化 |
-| prod     | 本番                        | `env/.env.prod`                | `docker/docker-compose.prod.yml`   | https://sanbou-app.jp/health | 443 公開 |
+| ENV       | 用途 | .env | compose | Health | 備考 |
+|-----------|------|------|---------|--------|------|
+| local_dev | 開発 (ホットリロード) | .env.local_dev | docker-compose.dev.yml | http://localhost:8001/health | Vite+uvicorn reload / nginx 無し |
+| local_stg | ローカル STG 模擬 | .env.local_stg | docker-compose.stg.yml | http://stg.local/health | hosts に 127.0.0.1 stg.local |
+| vm_stg    | VM STG | .env.vm_stg | docker-compose.stg.yml | http://stg.sanbou-app.jp/health | 8080/8443 / 将来 TLS |
+| vm_prod   | 本番 | .env.vm_prod | docker-compose.prod.yml | https://sanbou-app.jp/health | 80/443 公開 |
 
 統一 Nginx 設定: `app/nginx/conf.d/stg.conf` を local_stg / vm_stg で共用し、`server_name` をコメント切替。TLS はコメントアウト済みセクションを有効化して利用。
 
-### make コマンド (ENV 指定対応)
+### 基本コマンド
 
 ```
-make rebuild ENV=dev|local_stg|vm_stg|prod   # config → down → build --pull --no-cache → up → health
+make rebuild ENV=local_dev|local_stg|vm_stg|vm_prod   # config → down → build --pull --no-cache → up → health
 make up ENV=local_stg                        # 起動 (build あり)
 make down ENV=vm_stg                         # 停止
 make logs ENV=prod S=nginx                   # ログ (サービス指定可)
@@ -31,7 +33,7 @@ sudo sh -c 'echo "127.0.0.1 stg.local" >> /etc/hosts'
 
 ### 典型的な検証手順
 
-1. 必要な `.env` 作成: `cp env/.env.example env/.env.local_stg` などで雛形作成し値調整
+1. 必要な `.env` 作成 (例): cp env/.env.example env/.env.local_stg し値調整（他: local_dev / vm_stg / vm_prod も同様）
 2. `make rebuild ENV=local_stg`
 3. `curl -I http://stg.local/health` (ない場合は `make logs ENV=local_stg S=nginx` で確認)
 4. ブラウザで http://stg.local/ を開く
@@ -41,10 +43,12 @@ sudo sh -c 'echo "127.0.0.1 stg.local" >> /etc/hosts'
 ### ロールバック手順 (今回拡張を取り消す場合)
 
 1. 追加ファイル削除:
-  - `env/.env.dev`
-  - `env/.env.local_stg`
-  - `env/.env.example`
-  - `app/nginx/conf.d/stg.conf`
+  - env/.env.local_dev
+  - env/.env.local_stg
+  - env/.env.vm_stg
+  - env/.env.vm_prod
+  - env/.env.example
+  - app/nginx/conf.d/stg.conf
 2. `docker/docker-compose.stg.yml` の `nginx` サービス volume を 元の `../app/nginx/conf.d.stg:/etc/nginx/conf.d` へ戻す
 3. Makefile を Git 履歴で前の版に戻す (`git checkout <old_commit> -- makefile` もしくは `git revert`)
 4. README の本節を削除
@@ -62,7 +66,7 @@ sudo sh -c 'echo "127.0.0.1 stg.local" >> /etc/hosts'
 
 ---
 
-## すぐに起動する（Quick Start）
+## Quick Start (local_dev)
 
 前提（ローカル開発・Linux想定）
 
@@ -73,7 +77,7 @@ sudo sh -c 'echo "127.0.0.1 stg.local" >> /etc/hosts'
 
 1) 環境変数ファイルを用意
 
-   - 必須: `env/.env.dev` を作成
+  - 必須: env/.env.local_dev を作成
    - 例（必要に応じて調整）:
 
      ```env
@@ -97,7 +101,7 @@ sudo sh -c 'echo "127.0.0.1 stg.local" >> /etc/hosts'
    - コマンド:
 
      ```bash
-     make up ENV=dev
+  make up ENV=local_dev
      ```
 
 3) アクセス (dev)
@@ -111,26 +115,26 @@ sudo sh -c 'echo "127.0.0.1 stg.local" >> /etc/hosts'
 
 4) 停止・ログ・再ビルド
 
-   - 停止: `make down ENV=dev`
-   - ログ: `make logs ENV=dev`（Ctrl+Cで離脱）
-   - 再ビルド: `make rebuild ENV=dev`
+  - 停止: make down ENV=local_dev
+  - ログ: make logs ENV=local_dev
+  - 再ビルド: make rebuild ENV=local_dev
 
 ---
 
-## ステージング/本番での起動（stg/prod）
+## STG / 本番 (vm_stg / vm_prod)
 
 1) 環境変数ファイルを用意
 
-- `env/.env.stg` または `env/.env.prod` を作成
+- env/.env.vm_stg または env/.env.vm_prod を作成
 - 初回の `make up` 実行時、`OPENAI_API_KEY` と `GEMINI_API_KEY` を対話入力すると `secrets/.env.<ENV>.secrets` に安全に保存されます
 - GCP利用時は `secrets/gcs-key.json` を必ず配置
 
 2) 起動 (Nginx を有効化する edge プロファイルを利用)
 
 ```bash
-COMPOSE_PROFILES=edge make up ENV=stg
-# もしくは本番
-COMPOSE_PROFILES=edge make up ENV=prod
+COMPOSE_PROFILES=edge make up ENV=vm_stg
+# 本番
+COMPOSE_PROFILES=edge make up ENV=vm_prod
 ```
 
 3) Nginx（エッジ）
@@ -158,7 +162,7 @@ COMPOSE_PROFILES=edge make up ENV=prod
 ---
 
 ## プロジェクト構成（簡略）
-
+****
 - `app/frontend`: フロントエンド（Vite + React）
 - `app/backend/*_api`: 各FastAPIサービス（ai/ledger/sql/rag）
 - `app/nginx`: 逆プロキシ設定と証明書

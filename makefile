@@ -2,7 +2,7 @@
 ## Makefile: dev / stg / prod 用 docker compose 起動ヘルパ
 ## -------------------------------------------------------------
 ## 主なターゲット:
-##   make up        ENV=dev|stg|prod  # コンテナ起動 (デフォルト dev)
+##   make up        ENV=local_dev|local_stg|vm_stg|vm_prod  # コンテナ起動 (デフォルト local_dev)
 ##   make down      ENV=...           # 停止
 ##   make rebuild   ENV=...           # 再ビルド (--no-cache)
 ##   make logs      ENV=... S=svc     # ログ (S 未指定=全体)
@@ -14,51 +14,68 @@ SHELL := /bin/bash
 .ONESHELL:
 .SHELLFLAGS := -eu -o pipefail -c
 
-ENV ?= dev
+ENV ?= local_dev
 ENV := $(strip $(ENV))
 DC := docker compose
 
 # ------------------------------------------------------------------
-# Environment mapping (4-tier)
-# dev        -> dev (hot reload)               (.env.dev)
-# local_stg  -> local STG parity (HTTP)        (.env.local_stg)
-# vm_stg     -> VM STG (HTTPS/TLS future)      (.env.stg)
-# prod       -> production                     (.env.prod)
-# Backward compat: ENV=stg は vm_stg と同義
+# Environment mapping (4-tier unified names)
+# local_dev  -> 開発 (Vite+reload)
+# local_stg  -> ローカル STG パリティ (nginx HTTP)
+# vm_stg     -> VM STG (8080/8443 / 未来 TLS)
+# vm_prod    -> 本番 (80/443)
+# Backward compatibility: 旧 ENV=dev|stg|prod を警告付きで新名称へマップ
 # ------------------------------------------------------------------
 ENV_CANON := $(ENV)
+
+ifeq ($(ENV),dev)
+	$(warning [compat] ENV=dev は非推奨。ENV=local_dev を使用してください)
+	ENV_CANON := local_dev
+endif
 ifeq ($(ENV),stg)
+	$(warning [compat] ENV=stg は非推奨。ENV=vm_stg を使用してください)
 	ENV_CANON := vm_stg
+endif
+ifeq ($(ENV),prod)
+	$(warning [compat] ENV=prod は非推奨。ENV=vm_prod を使用してください)
+	ENV_CANON := vm_prod
 endif
 
 ENV_FILE_COMMON := env/.env.common
 ENV_FILE := env/.env.$(ENV)
 
 # Compose file set & env file mapping
-ifeq ($(ENV_CANON),dev)
-	ENV_FILE := env/.env.dev
+ifeq ($(ENV_CANON),local_dev)
+	ENV_FILE := env/.env.local_dev
 	COMPOSE_FILES := -f docker/docker-compose.dev.yml
 	HEALTH_URL := http://localhost:8001/health
 else ifeq ($(ENV_CANON),local_stg)
- 	ENV_FILE := env/.env.local_stg
- 	COMPOSE_FILES := -f docker/docker-compose.stg.yml
- 	HEALTH_URL := http://stg.local/health
+	ENV_FILE := env/.env.local_stg
+	COMPOSE_FILES := -f docker/docker-compose.stg.yml
+	# local_stg では host 側任意ポートへバインドできるため health check を localhost:PORT に動的対応
+	# ユーザが `STG_NGINX_HTTP_PORT=18080 make rebuild ENV=local_stg` のように指定すると 18080 を使用
+	HEALTH_PORT := $(if $(STG_NGINX_HTTP_PORT),$(STG_NGINX_HTTP_PORT),8080)
+	HEALTH_URL := http://localhost:$(HEALTH_PORT)/health
+STG_ENV_FILE := local_stg
 else ifeq ($(ENV_CANON),vm_stg)
- 	ENV_FILE := env/.env.stg
- 	COMPOSE_FILES := -f docker/docker-compose.stg.yml
- 	HEALTH_URL := http://stg.sanbou-app.jp/health
-else ifeq ($(ENV_CANON),prod)
- 	ENV_FILE := env/.env.prod
- 	COMPOSE_FILES := -f docker/docker-compose.prod.yml
- 	HEALTH_URL := https://sanbou-app.jp/health
+	ENV_FILE := env/.env.vm_stg
+	COMPOSE_FILES := -f docker/docker-compose.stg.yml
+	HEALTH_URL := http://stg.sanbou-app.jp/health
+STG_ENV_FILE := vm_stg
+else ifeq ($(ENV_CANON),vm_prod)
+	ENV_FILE := env/.env.vm_prod
+	COMPOSE_FILES := -f docker/docker-compose.prod.yml
+	HEALTH_URL := https://sanbou-app.jp/health
 else
-	# fallback legacy
-	COMPOSE_FILES := -f docker/docker-compose.$(ENV).yml
+	$(error Unsupported ENV: $(ENV))
 endif
 
 # Secrets file per original ENV name (not canonical) to keep them separate
 SECRETS_FILE := secrets/.env.$(ENV).secrets
 COMPOSE_ENV_ARGS := --env-file $(ENV_FILE_COMMON) --env-file $(ENV_FILE) --env-file $(SECRETS_FILE)
+
+# docker compose コマンドに渡す追加環境変数 (stg 系で env_file 動的切り替え)
+DC_ENV_PREFIX := $(if $(STG_ENV_FILE),STG_ENV_FILE=$(STG_ENV_FILE) ,)
 
 # 展開した compose ファイルリスト (存在チェック用)
 COMPOSE_FILE_LIST := $(strip $(subst -f ,,$(COMPOSE_FILES)))
@@ -72,7 +89,7 @@ check:
 	@if [ ! -f "$(ENV_FILE_COMMON)" ]; then echo "[error] $(ENV_FILE_COMMON) not found"; exit 1; fi
 	@if [ ! -f "$(ENV_FILE)" ]; then echo "[error] $(ENV_FILE) not found"; exit 1; fi
 	# --- Port availability check (dev/stg) ---------------------------------
-	@if [ "$(ENV_CANON)" = "dev" ]; then
+	@if [ "$(ENV_CANON)" = "local_dev" ]; then
 	  # dev は nginx を公開しないため Vite と DB のポートのみチェック
 	  PORTS="$${DEV_VITE_PORT:-5173} $${DEV_DB_PORT:-5432}"
 	elif [ "$(ENV_CANON)" = "local_stg" ] || [ "$(ENV_CANON)" = "vm_stg" ]; then
@@ -96,7 +113,7 @@ check:
 	      fi
 	      if [ $$IN_USE -eq 1 ]; then
 	        echo "[error] port $$P already in use by host process."; \
-	        echo "        対処例: STG 環境なら 'STG_NGINX_HTTP_PORT=18080 make up ENV=stg' のように空きポートへ変更"; \
+	        echo "        対処例: STG 環境なら 'STG_NGINX_HTTP_PORT=18080 make up ENV=local_stg' のように空きポートへ変更"; \
 	        echo "        使用中プロセス確認: (lsof -iTCP:$$P -sTCP:LISTEN) or (ss -ltn | grep :$$P)"; \
 	        exit 2; \
 	      fi
@@ -106,12 +123,18 @@ check:
 
 up: check
 	@echo "[info] UP (ENV=$(ENV))"
-	$(DC) $(COMPOSE_ENV_ARGS) -p $(ENV) $(COMPOSE_FILES) up -d --build --remove-orphans
+	$(DC_ENV_PREFIX)$(DC) $(COMPOSE_ENV_ARGS) -p $(ENV) $(COMPOSE_FILES) up -d --build --remove-orphans
 	@echo "[info] done"
 
 down:
 	@echo "[info] DOWN (ENV=$(ENV))"
-	$(DC) -p $(ENV) down --remove-orphans
+	@CIDS="$$( $(DC) -p $(ENV) ps -q | wc -l )"; \
+	if [ "$$CIDS" -gt 0 ]; then \
+	  $(DC) -p $(ENV) down --remove-orphans; \
+	  echo "[info] stopped project $(ENV)"; \
+	else \
+	  echo "[info] no resources for project '$(ENV)'; skipping down"; \
+	fi
 	@echo "[info] done"
 
 logs:
@@ -127,7 +150,7 @@ ps:
 # - 再生成条件: ファイル不存在 or 空行含む未設定 / 強制再生成は REGENERATE=1 make ...
 # -------------------------------------------------------------
 secrets:
-	@if [ "$(ENV)" != "dev" ] && [ "$(ENV)" != "stg" ] && [ "$(ENV)" != "local_stg" ] && [ "$(ENV)" != "vm_stg" ] && [ "$(ENV)" != "prod" ]; then \
+	@if [ "$(ENV_CANON)" != "local_dev" ] && [ "$(ENV_CANON)" != "local_stg" ] && [ "$(ENV_CANON)" != "vm_stg" ] && [ "$(ENV_CANON)" != "vm_prod" ]; then \
 	  echo "[error] unsupported ENV '$(ENV)'"; exit 2; fi
 	@mkdir -p secrets
 	@if [ "$(REGENERATE)" = "1" ] || [ ! -s "$(SECRETS_FILE)" ]; then \
@@ -152,13 +175,13 @@ secrets:
 rebuild: check secrets
 	@echo "[info] REBUILD (ENV=$(ENV) -> canonical=$(ENV_CANON))"
 	@echo "[step] compose config (merged)"
-	$(DC) $(COMPOSE_ENV_ARGS) -p $(ENV) $(COMPOSE_FILES) config >/dev/null || { echo '[error] compose config failed'; exit 2; }
+	$(DC_ENV_PREFIX)$(DC) $(COMPOSE_ENV_ARGS) -p $(ENV) $(COMPOSE_FILES) config >/dev/null || { echo '[error] compose config failed'; exit 2; }
 	@echo "[step] down --remove-orphans"
-	$(DC) -p $(ENV) down --remove-orphans || true
+	$(MAKE) down ENV=$(ENV)
 	@echo "[step] build --pull --no-cache"
-	$(DC) $(COMPOSE_ENV_ARGS) -p $(ENV) $(COMPOSE_FILES) build --pull --no-cache
+	$(DC_ENV_PREFIX)$(DC) $(COMPOSE_ENV_ARGS) -p $(ENV) $(COMPOSE_FILES) build --pull --no-cache
 	@echo "[step] up -d"
-	$(DC) $(COMPOSE_ENV_ARGS) -p $(ENV) $(COMPOSE_FILES) up -d --force-recreate --remove-orphans
+	$(DC_ENV_PREFIX)$(DC) $(COMPOSE_ENV_ARGS) -p $(ENV) $(COMPOSE_FILES) up -d --force-recreate --remove-orphans
 	@echo "[step] health check -> $(HEALTH_URL)"
 	@if [ -z "$(HEALTH_URL)" ]; then \
 	  echo '[warn] HEALTH_URL not set; skipping health check'; \
@@ -190,7 +213,7 @@ health:
 	@if command -v curl >/dev/null 2>&1; then curl -I "$(HEALTH_URL)"; elif command -v wget >/dev/null 2>&1; then wget --spider -S "$(HEALTH_URL)" 2>&1 | sed -n '1,10p'; else echo 'no curl/wget'; fi
 
 config: check secrets
-	$(DC) $(COMPOSE_ENV_ARGS) -p $(ENV) $(COMPOSE_FILES) config
+	$(DC_ENV_PREFIX)$(DC) $(COMPOSE_ENV_ARGS) -p $(ENV) $(COMPOSE_FILES) config
 
 # -------------------------------------------------------------
 # ledger_startup: ledger_api コンテナ内で startup.py (再)実行

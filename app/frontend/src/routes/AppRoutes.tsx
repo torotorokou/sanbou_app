@@ -57,6 +57,8 @@ const AppRoutes: React.FC = () => (
         />
 
         {/* 帳票ページ */}
+    {/* /report 直アクセス時は管理ページへ */}
+    <Route path='/report' element={<Navigate to={ROUTER_PATHS.REPORT_MANAGE} replace />} />
         <Route path={ROUTER_PATHS.REPORT_MANAGE} element={<ReportManagePage />} />
         <Route path={ROUTER_PATHS.REPORT_FACTORY} element={<ReportFactory />} />
         <Route path={ROUTER_PATHS.LEDGER_BOOK} element={<LedgerBookPage />} />
