@@ -14,12 +14,13 @@ on:
     branches: [ feat_stgenv ]
 
 env:
-  STAGE: ${{ vars.STAGE || 'prod' }}
-  REGION: ${{ vars.REGION || 'asia-northeast1' }}
+  STAGE: prod
+  REGION: asia-northeast1
 
 jobs:
   compose-prod:
-    if: ${{ github.event_name == 'pull_request' ? (github.event.pull_request.head.repo.fork == false) : true }}
+    # Only run on push or on internal PRs (not forks)
+    if: ${{ github.event_name != 'pull_request' || (github.event.pull_request != null && github.event.pull_request.head.repo.fork == false) }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

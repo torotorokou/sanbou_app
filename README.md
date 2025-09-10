@@ -1,6 +1,58 @@
 
 # sanbou_app
 
+## 2025-09 環境拡張 (4 環境: dev / local_stg / vm_stg / prod)
+
+| ENV      | 目的 | .env ファイル        | Compose ファイル                | Health URL                         | 備考 |
+|----------|------|----------------------|---------------------------------|------------------------------------|------|
+| dev      | ローカル開発 (ホットリロード) | `env/.env.dev`                  | `docker/docker-compose.dev.yml`    | http://localhost:8001/health | Vite + uvicorn reload |
+| local_stg| STG 擬似 (nginx, HTTP)     | `env/.env.local_stg`            | `docker/docker-compose.stg.yml`    | http://stg.local/health      | `/etc/hosts` に `127.0.0.1 stg.local` |
+| vm_stg   | VM 上 STG (将来 TLS)        | `env/.env.stg`                 | `docker/docker-compose.stg.yml`    | http://stg.sanbou-app.jp/health | nginx + 将来 443 有効化 |
+| prod     | 本番                        | `env/.env.prod`                | `docker/docker-compose.prod.yml`   | https://sanbou-app.jp/health | 443 公開 |
+
+統一 Nginx 設定: `app/nginx/conf.d/stg.conf` を local_stg / vm_stg で共用し、`server_name` をコメント切替。TLS はコメントアウト済みセクションを有効化して利用。
+
+### make コマンド (ENV 指定対応)
+
+```
+make rebuild ENV=dev|local_stg|vm_stg|prod   # config → down → build --pull --no-cache → up → health
+make up ENV=local_stg                        # 起動 (build あり)
+make down ENV=vm_stg                         # 停止
+make logs ENV=prod S=nginx                   # ログ (サービス指定可)
+make restart ENV=dev                         # 再起動
+make health ENV=local_stg                    # ヘルスチェック (curl/wget)
+```
+
+### local_stg 利用時の hosts 設定
+
+```
+sudo sh -c 'echo "127.0.0.1 stg.local" >> /etc/hosts'
+```
+
+### 典型的な検証手順
+
+1. 必要な `.env` 作成: `cp env/.env.example env/.env.local_stg` などで雛形作成し値調整
+2. `make rebuild ENV=local_stg`
+3. `curl -I http://stg.local/health` (ない場合は `make logs ENV=local_stg S=nginx` で確認)
+4. ブラウザで http://stg.local/ を開く
+
+他環境も同様に `ENV=` を差し替え
+
+### ロールバック手順 (今回拡張を取り消す場合)
+
+1. 追加ファイル削除:
+  - `env/.env.dev`
+  - `env/.env.local_stg`
+  - `env/.env.example`
+  - `app/nginx/conf.d/stg.conf`
+2. `docker/docker-compose.stg.yml` の `nginx` サービス volume を 元の `../app/nginx/conf.d.stg:/etc/nginx/conf.d` へ戻す
+3. Makefile を Git 履歴で前の版に戻す (`git checkout <old_commit> -- makefile` もしくは `git revert`)
+4. README の本節を削除
+5. `make rebuild ENV=stg` / `make up ENV=dev` で従来フロー確認
+
+最小差分化のため既存サービス名・ポート・ボリュームは変更していません。`dev` 環境ヘルスチェックは実際の公開ポート (ai_api:8001) に合わせて `http://localhost:8001/health` としています (既存構成では 8000 未公開のため)。
+
+
 フロントエンド（Vite + React）と複数のFastAPIサービス、PostgreSQL、NginxをDocker Composeで統合したWebアプリです。
 
 2025-09 更新: 環境分離を明確化
