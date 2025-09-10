@@ -1,0 +1,64 @@
+name: docker-compose-matrix
+
+on:
+  push:
+    branches: [ "**" ]
+  pull_request:
+    branches: [ "**" ]
+
+permissions:
+  contents: read
+
+jobs:
+  compose-matrix:
+    name: Compose ${{ matrix.env }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        env: [local_dev, local_stg, vm_stg, vm_prod]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Show Docker version
+        run: |
+          docker version
+          docker compose version
+
+      - name: Make config (sanitized)
+        run: |
+          set -euo pipefail
+          echo ">>> make config ENV=${{ matrix.env }} (sanitized output)" || true
+          # 出力を一時ファイルへ
+          make config ENV=${{ matrix.env }} > raw.out 2>&1 || { echo '[error] make config failed'; cat raw.out; exit 1; }
+          # 代表 120 行まで, かつ API_KEY / SECRET / PASSWORD / KEY= などをマスク
+          sed -E 's/([A-Za-z0-9_]*(API_KEY|SECRET|PASSWORD|TOKEN)[A-Za-z0-9_]*)=[^ ]+/\1=****/g' raw.out | head -n 120
+
+      - name: Rebuild (compose up)
+        run: |
+          set -euo pipefail
+          make rebuild ENV=${{ matrix.env }}
+
+      - name: docker compose ps
+        run: |
+          set -euo pipefail
+          docker compose -p ${{ matrix.env }} ps
+
+      - name: Dump limited logs (optional)
+        if: always()
+        run: |
+          set -euo pipefail
+          for svc in $(docker compose -p ${{ matrix.env }} ps --services); do
+            echo "--- logs: $svc (last 40 lines)" || true
+            docker compose -p ${{ matrix.env }} logs --tail=40 $svc || true
+          done
+
+      - name: Tear down
+        if: always()
+        run: |
+          set -euo pipefail
+          make down ENV=${{ matrix.env }} || true
