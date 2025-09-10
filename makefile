@@ -56,11 +56,14 @@ else ifeq ($(ENV_CANON),local_stg)
 	# ユーザが `STG_NGINX_HTTP_PORT=18080 make rebuild ENV=local_stg` のように指定すると 18080 を使用
 	HEALTH_PORT := $(if $(STG_NGINX_HTTP_PORT),$(STG_NGINX_HTTP_PORT),8080)
 	HEALTH_URL := http://localhost:$(HEALTH_PORT)/health
+# NOTE: 左詰め必須: タブやスペースでインデントすると GNU make が recipe と誤認し
+# "recipe commences before first target" エラーになる可能性があるため列頭に置く
 STG_ENV_FILE := local_stg
 else ifeq ($(ENV_CANON),vm_stg)
 	ENV_FILE := env/.env.vm_stg
 	COMPOSE_FILES := -f docker/docker-compose.stg.yml
 	HEALTH_URL := http://stg.sanbou-app.jp/health
+# NOTE: 上記と同様に左詰めを保持
 STG_ENV_FILE := vm_stg
 else ifeq ($(ENV_CANON),vm_prod)
 	ENV_FILE := env/.env.vm_prod
