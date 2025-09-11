@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button } from 'antd';
-import { useDeviceType } from '../../hooks/ui/useResponsive';
+import { useWindowSize } from '../../hooks/ui';
 
 type VerticalActionButtonProps = {
     icon: React.ReactNode;
@@ -21,7 +21,8 @@ const VerticalActionButton: React.FC<VerticalActionButtonProps> = ({
     href,
     download = false,
 }) => {
-    const { isMobileOrTablet, isMobile } = useDeviceType();
+    const { isMobile, isTablet } = useWindowSize();
+    const isMobileOrTablet = isMobile || isTablet;
 
     const baseStyle: React.CSSProperties = {
         writingMode: isMobileOrTablet ? 'horizontal-tb' : 'vertical-rl',

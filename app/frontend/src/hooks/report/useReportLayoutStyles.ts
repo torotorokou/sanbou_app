@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { useDeviceType } from "../ui/useResponsive";
+import { useWindowSize } from "../ui/useWindowSize";
 import { customTokens } from "../../theme";
 
 /**
@@ -11,7 +11,8 @@ import { customTokens } from "../../theme";
  * - 保守性を向上させるためのシンプルなサイズ体系
  */
 export const useReportLayoutStyles = () => {
-  const { isMobile, isTablet, isMobileOrTablet } = useDeviceType();
+  const { isMobile, isTablet, width } = useWindowSize();
+  const isMobileOrTablet = isMobile || isTablet;
 
   // デバッグ情報（一時的）
   // console.log('useReportLayoutStyles - Device Info:', {
@@ -98,7 +99,9 @@ export const useReportLayoutStyles = () => {
             }
           : {
               flex: "1 1 auto", // 残りのスペースを全て使用
-              minWidth: isTablet ? 500 : 600, // シンプルに2段階
+              // デスクトップ幅でも半画面⇔全画面で少しダイナミックに
+              // 1200px 未満の狭いデスクトップではやや小さめ、広ければ拡張
+              minWidth: width < 1200 ? 520 : 600,
               height: "80vh",
               maxHeight: "80vh",
             }),
@@ -142,7 +145,7 @@ export const useReportLayoutStyles = () => {
         className: "sample-thumbnail",
       },
     }),
-    [isMobile, isTablet, isMobileOrTablet] // シンプルな依存配列
+  [isMobile, isTablet, isMobileOrTablet, width] // 幅変化でも再評価
   );
 
   return styles;

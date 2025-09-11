@@ -1,7 +1,7 @@
 import React from 'react';
 import { Upload, Typography, Tag } from 'antd';
 import { InboxOutlined, CloseOutlined } from '@ant-design/icons';
-import { useDeviceType } from '../../../hooks/ui/useResponsive';
+import { useWindowSize } from '../../../hooks/ui';
 import type { UploadProps } from 'antd';
 
 export type CsvUploadCardProps = {
@@ -29,7 +29,8 @@ const CsvUploadCard: React.FC<CsvUploadCardProps> = ({
     onRemove,
     cardHeight, // 動的な高さを受け取る
 }) => {
-    const { isMobile, isMobileOrTablet } = useDeviceType();
+    const { isMobile, isTablet } = useWindowSize();
+    const isMobileOrTablet = isMobile || isTablet;
 
     // ファイル未選択の時は常にunknown扱いにする
     const effectiveValidationResult = file ? validationResult : 'unknown';

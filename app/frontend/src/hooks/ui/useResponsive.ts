@@ -1,5 +1,6 @@
 import React from "react";
 import { BREAKPOINTS as BP } from "@/shared/constants/breakpoints";
+import { useWindowSize } from "./useWindowSize";
 
 // 共有ブレークポイントからメディアクエリを組み立てて公開（既存API互換のためのエイリアス）
 export const BREAKPOINTS = {
@@ -22,8 +23,21 @@ export const useMediaQuery = (query: string): boolean => {
 
   React.useEffect(() => {
     const handler = (event: MediaQueryListEvent) => setMatches(event.matches);
-    mediaQuery.addListener(handler);
-    return () => mediaQuery.removeListener(handler);
+    // modern API（後方互換のためのフォールバックも考慮）
+    if (typeof mediaQuery.addEventListener === 'function') {
+      mediaQuery.addEventListener('change', handler);
+      return () => mediaQuery.removeEventListener('change', handler);
+    }
+    if ('addListener' in mediaQuery && 'removeListener' in mediaQuery) {
+      // 古いブラウザ互換
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (mediaQuery as any).addListener(handler);
+      return () => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (mediaQuery as any).removeListener(handler);
+      };
+    }
+    return () => void 0;
   }, [mediaQuery]);
 
   return matches;
@@ -31,21 +45,21 @@ export const useMediaQuery = (query: string): boolean => {
 
 // デバイスタイプ判定フック - シンプル版
 export const useDeviceType = () => {
-  const isMobile = useMediaQuery(BREAKPOINTS.mobile);
-  const isTablet = useMediaQuery(BREAKPOINTS.tablet);
-  const isDesktop = useMediaQuery(BREAKPOINTS.desktop);
+  // 標準化: window 幅をソースオブトゥルースとし、即時追従
+  const { isMobile, isTablet, isDesktop, width } = useWindowSize();
 
   return {
     isMobile,
     isTablet,
     isDesktop,
     isMobileOrTablet: isMobile || isTablet,
-
-    // 後方互換性のために残す（廃止予定）
-    isSmallDesktop: isDesktop, // デスクトップに統合
-    isMediumDesktop: isDesktop, // デスクトップに統合
-    isLargeDesktop: isDesktop, // デスクトップに統合
-    shouldAutoCollapse: isMobile || isTablet, // モバイル・タブレットで自動縮小
-    shouldForceCollapse: isMobile, // モバイルで強制縮小
-  };
+    // 旧フラグの互換（段階的削除予定）
+    isSmallDesktop: isDesktop,
+    isMediumDesktop: isDesktop,
+    isLargeDesktop: isDesktop,
+    shouldAutoCollapse: isMobile || isTablet,
+    shouldForceCollapse: isMobile,
+    // 便利情報
+    width,
+  } as const;
 };

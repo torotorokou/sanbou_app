@@ -1,13 +1,13 @@
 import React from 'react';
 import { Card } from 'antd';
-import { useDeviceType } from '../../hooks/ui/useResponsive';
+import { useWindowSize } from '../../hooks/ui';
 
 /**
  * レスポンシブデバッグ情報表示コンポーネント
  * 開発時にブレークポイントの動作を確認するため
  */
 const ResponsiveDebugInfo: React.FC = () => {
-    const deviceInfo = useDeviceType();
+    const { width, isMobile, isTablet, isDesktop } = useWindowSize();
 
     return (
         <Card
@@ -23,13 +23,11 @@ const ResponsiveDebugInfo: React.FC = () => {
             }}
         >
             <div style={{ fontSize: '11px', lineHeight: 1.4 }}>
-                <div>画面幅: {window.innerWidth}px</div>
-                <div>isMobile: {deviceInfo.isMobile ? '✅' : '❌'}</div>
-                <div>isTablet: {deviceInfo.isTablet ? '✅' : '❌'}</div>
-                <div>isSmallDesktop: {deviceInfo.isSmallDesktop ? '✅' : '❌'}</div>
-                <div>isMediumDesktop: {deviceInfo.isMediumDesktop ? '✅' : '❌'}</div>
-                <div>isLargeDesktop: {deviceInfo.isLargeDesktop ? '✅' : '❌'}</div>
-                <div>isMobileOrTablet: {deviceInfo.isMobileOrTablet ? '✅' : '❌'}</div>
+                <div>画面幅: {width}px</div>
+                <div>isMobile: {isMobile ? '✅' : '❌'}</div>
+                <div>isTablet: {isTablet ? '✅' : '❌'}</div>
+                <div>isDesktop: {isDesktop ? '✅' : '❌'}</div>
+                <div>isMobileOrTablet: {isMobile || isTablet ? '✅' : '❌'}</div>
             </div>
         </Card>
     );

@@ -2,7 +2,7 @@
 // 固定サイズカード（320x260）。アイコン/タイトル/説明/ボタンを“縦横ど真ん中”に配置。
 
 import React from 'react';
-import { Card, Typography, Button, Popover } from 'antd';
+import { Card, Typography, Button, Popover, Grid } from 'antd';
 import {
   BookOutlined,
   RobotOutlined,
@@ -12,7 +12,7 @@ import {
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { ROUTER_PATHS } from '@/constants/router';
-import { useDeviceType } from '@/hooks/ui/useResponsive';
+import { useWindowSize } from '@/hooks/ui';
 
 const { Title, Paragraph, Text } = Typography;
 
@@ -146,9 +146,15 @@ const portalMenus: PortalCardProps[] = [
 ];
 
 export const PortalPage: React.FC = () => {
-  const { isMobile } = useDeviceType();
+  // 1) 明示的なリサイズ検知（本件の肝）
+  const { width, isMobile } = useWindowSize();
+  // 2) Ant Design のブレークポイント検知（補助的）
+  const screens = Grid.useBreakpoint();
 
-  const introText = isMobile
+  // width を使うことで、リサイズ時に再レンダーが必ず走り、判定が追従します。
+  const isCompact = isMobile || !screens.lg || width < 900;
+
+  const introText = isCompact
     ? '社内ポータルです。必要な機能を選択してください。'
     : '社内ポータルへようこそ。下記のメニューから業務に必要な機能を選択してください。';
 
@@ -160,13 +166,13 @@ export const PortalPage: React.FC = () => {
       </header>
 
       <main style={{ maxWidth: 1280, margin: '0 auto' }}>
-        <div
+    <div
           aria-label="ポータルメニュー一覧"
           style={{
             display: 'grid',
             gap: 24,
             // **カード幅は常に固定**。最終行も中央寄せ。
-            gridTemplateColumns: `repeat(auto-fit, ${CARD_WIDTH}px)`,
+      gridTemplateColumns: `repeat(auto-fit, ${CARD_WIDTH}px)`,
             justifyContent: 'center',
             alignItems: 'stretch',
           }}

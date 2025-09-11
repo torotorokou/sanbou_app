@@ -1,6 +1,6 @@
 import React from 'react';
 import { useReportLayoutStyles } from '../../../hooks/report';
-import { useDeviceType } from '../../../hooks/ui/useResponsive';
+import { useWindowSize } from '../../../hooks/ui';
 import SampleSection from './SampleSection';
 import CsvUploadSection from './CsvUploadSection';
 import ActionsSection from './ActionsSection';
@@ -55,11 +55,12 @@ const ReportManagePageLayout: React.FC<ReportPageLayoutProps> = (props) => {
         sampleImageUrl,
     } = props;
 
-    const { isMobileOrTablet } = useDeviceType();
+    const { isMobile, isTablet } = useWindowSize();
+    const isMobileOrTablet = isMobile || isTablet;
     const styles = useReportLayoutStyles();
 
     // デバッグ情報をコンソールに出力（一時的）
-    // console.log('ReportManagePageLayout - Device Info:', useDeviceType());
+    // console.log('ReportManagePageLayout - Device Info:', { isMobile, isTablet });
     // console.log('ReportManagePageLayout - Left Panel Style:', styles.leftPanel);
 
     // UploadFileConfigをCsvUploadPanelが期待する形式に変換

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Typography } from 'antd';
-import { useDeviceType } from '../../../hooks/ui';
+import { useWindowSize } from '../../../hooks/ui';
 import { customTokens } from '../../../theme';
 
 interface PreviewSectionProps {
@@ -16,7 +16,7 @@ const PreviewSection: React.FC<PreviewSectionProps> = ({
     title = '📄 プレビュー画面',
     children
 }) => {
-    const { isMobile, isTablet } = useDeviceType();
+    const { isMobile, isTablet } = useWindowSize();
 
     const previewAreaStyle = {
         flex: 1,

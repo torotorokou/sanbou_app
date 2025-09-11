@@ -2,7 +2,7 @@ import React from 'react';
 import VerticalActionButton from '../../ui/VerticalActionButton';
 import { PlayCircleOutlined, DownloadOutlined, PrinterOutlined } from '@ant-design/icons';
 import { useReportActions } from '../../../hooks/report';
-import { useDeviceType } from '../../../hooks/ui/useResponsive';
+import { useWindowSize } from '../../../hooks/ui';
 import type { ActionsSectionProps } from './types';
 import { actionButtonColors } from '../../../theme';
 
@@ -24,7 +24,8 @@ const ActionsSection: React.FC<ActionsSectionProps> = ({
     pdfReady,
 }) => {
     const actions = useReportActions();
-    const { isMobileOrTablet } = useDeviceType();
+    const { isMobile, isTablet } = useWindowSize();
+    const isMobileOrTablet = isMobile || isTablet;
 
     return (
         <div style={{

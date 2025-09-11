@@ -1,5 +1,5 @@
 import React from 'react';
-import { useDeviceType } from './useResponsive';
+import { useWindowSize } from './useWindowSize';
 
 export interface SidebarConfig {
     width: number;
@@ -11,8 +11,9 @@ export interface SidebarConfig {
 }
 
 export const useSidebarResponsive = (): SidebarConfig => {
-    const { isMobile, isTablet, shouldAutoCollapse, shouldForceCollapse } =
-        useDeviceType();
+    const { isMobile, isTablet, width } = useWindowSize();
+    const shouldForceCollapse = isMobile; // モバイルでは強制的にドロワー
+    const shouldAutoCollapse = isMobile || isTablet || width < 1200;
 
     return React.useMemo(() => {
         // モバイル設定

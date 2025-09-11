@@ -2,7 +2,7 @@
 
 import React, { useMemo } from 'react';
 import { Steps } from 'antd';
-import { useDeviceType } from '@/hooks/useResponsive';
+import { useWindowSize } from '@/hooks/ui';
 
 export type StepItem = {
     // ← ここでexportを明記
@@ -19,7 +19,8 @@ const ReportStepIndicator: React.FC<ReportStepIndicatorProps> = ({
     currentStep,
     items,
 }) => {
-    const { isMobileOrTablet } = useDeviceType();
+    const { isMobile, isTablet } = useWindowSize();
+    const isMobileOrTablet = isMobile || isTablet;
 
     // モバイル/タブレットでは説明を省いて縦・小サイズで表示
     const compactItems = useMemo(

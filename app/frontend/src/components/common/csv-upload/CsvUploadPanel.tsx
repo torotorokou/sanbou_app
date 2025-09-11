@@ -4,7 +4,7 @@ import CsvUploadCard from './CsvUploadCard';
 import type { CsvFileType } from './types';
 import type { UploadProps } from 'antd';
 import { customTokens } from '@/theme/tokens';
-import { useDeviceType } from '@/hooks/ui/useResponsive';
+import { useWindowSize } from '@/hooks/ui';
 
 type CsvUploadPanelProps = {
     upload: {
@@ -18,7 +18,7 @@ type CsvUploadPanelProps = {
 
 const CsvUploadPanel: React.FC<CsvUploadPanelProps> = ({ upload }) => {
     const [hoveringIndex, setHoveringIndex] = useState<number | null>(null);
-    const { isMobile, isTablet } = useDeviceType();
+    const { isMobile, isTablet } = useWindowSize();
 
     // 画面サイズに応じたスクロール制御:
     // - vhベースでmaxHeightを設定し、overflowYは常に'auto'（必要時のみスクロールバー表示）
