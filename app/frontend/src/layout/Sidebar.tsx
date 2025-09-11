@@ -10,6 +10,24 @@ import { useSidebarDefault } from '@/hooks/ui/useSidebarDefault';
 
 const { Sider } = Layout;
 
+// メニュー項目に `hidden: true` を付けるとその項目（再帰的に）を除外するユーティリティ
+function filterMenuItems(items: any[]): any[] {
+    return (items || [])
+        .filter((i: any) => !i.hidden)
+        .map((i: any) => {
+            const copy: any = { ...i };
+            if (Array.isArray(i.children)) {
+                const children = filterMenuItems(i.children);
+                if (children.length) {
+                    copy.children = children;
+                } else {
+                    delete copy.children;
+                }
+            }
+            return copy;
+        });
+}
+
 // UIは開閉ロジックを持たず、カスタムフックに委譲（MVCのV）
 const Sidebar: React.FC = () => {
     const location = useLocation();
@@ -20,11 +38,14 @@ const Sidebar: React.FC = () => {
     // openKeys を管理して、サイドバーが開いているときは子メニューを展開する
     const [openKeys, setOpenKeys] = React.useState<string[]>([]);
 
-    // SIDEBAR_MENU から子を持つ親キーを収集
+    // visibleMenu は hidden フラグを除外したメニュー（親キーの決定にも使う）
+    const visibleMenu = React.useMemo(() => filterMenuItems(SIDEBAR_MENU), [SIDEBAR_MENU]);
+
+    // visibleMenu から子を持つ親キーを収集
     const parentKeys = React.useMemo(() => {
-        return SIDEBAR_MENU.filter(item => Array.isArray((item as any).children) && (item as any).children.length > 0)
+        return visibleMenu.filter(item => Array.isArray((item as any).children) && (item as any).children.length > 0)
             .map(item => String(item.key));
-    }, []);
+    }, [visibleMenu]);
 
     React.useEffect(() => {
         // サイドバーが開いている（折りたたまれていない）ときに親メニューを展開する
@@ -64,7 +85,7 @@ const Sidebar: React.FC = () => {
                     <Menu
                         mode="inline"
                         selectedKeys={[location.pathname]}
-                        items={SIDEBAR_MENU}
+                        items={visibleMenu}
                         openKeys={openKeys}
                         onOpenChange={(keys: string[]) => setOpenKeys(keys)}
                         style={{
@@ -86,6 +107,11 @@ const Sidebar: React.FC = () => {
             style={{
                 backgroundColor: customTokens.colorSiderBg,
                 borderRight: `1px solid ${customTokens.colorBorderSecondary}`,
+                // 固定表示: 本文スクロール時にサイドバーが動かないようにする
+                position: 'sticky',
+                top: 0,
+                height: '100vh',
+                overflow: 'auto',
                 ...animationStyles,
             }}
             breakpoint={sidebarConfig.breakpoint}
@@ -122,11 +148,11 @@ const Sidebar: React.FC = () => {
                 theme='dark'
                 mode='inline'
                 selectedKeys={[location.pathname]}
-                items={SIDEBAR_MENU}
+                items={visibleMenu}
                 openKeys={openKeys}
                 onOpenChange={(keys: string[]) => setOpenKeys(keys)}
                 style={{
-                    height: 'calc(100% - 64px)',
+                    height: 'calc(100vh - 64px)',
                     borderRight: 0,
                     backgroundColor: 'transparent',
                 }}
