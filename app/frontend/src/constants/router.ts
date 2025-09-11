@@ -5,6 +5,8 @@
  * 各ルートが何のページなのかをコメントで明記しておくと保守性UP
  */
 export const ROUTER_PATHS = {
+    // ポータル(トップ)
+    PORTAL: '/',
     // ダッシュボード系
     DASHBOARD: '/dashboard',
     FACTORY: '/factory',
@@ -36,4 +38,6 @@ export const ROUTER_PATHS = {
 
     // その他
     TOKEN_PREVIEW: '/token-preview',
+    // お知らせ
+    NEWS: '/news',
 };

@@ -25,6 +25,12 @@ import { ROUTER_PATHS } from './router';
 
 // サイドバーのメニュー定義
 export const SIDEBAR_MENU = [
+    // ポータル
+    {
+        key: 'portal',
+        icon: <DashboardOutlined />,
+        label: <Link to={ROUTER_PATHS.PORTAL}>ポータル</Link>,
+    },
     // ダッシュボード
     {
         key: 'dashboardGroup',
