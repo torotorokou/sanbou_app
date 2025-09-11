@@ -29,13 +29,14 @@ export const SIDEBAR_MENU = [
     {
         key: 'portal',
         icon: <DashboardOutlined />,
-        label: <Link to={ROUTER_PATHS.PORTAL}>ポータル</Link>,
+        label: <Link to={ROUTER_PATHS.PORTAL}>ポータルページ</Link>,
     },
     // ダッシュボード
     {
         key: 'dashboardGroup',
         icon: <DashboardOutlined />,
         label: 'ダッシュボード',
+        hidden: true,
         children: [
             {
                 key: ROUTER_PATHS.DASHBOARD,
@@ -82,6 +83,7 @@ export const SIDEBAR_MENU = [
         key: 'analysis',
         icon: <BarChartOutlined />,
         label: 'データ分析',
+        hidden: true,
         children: [
             {
                 key: ROUTER_PATHS.ANALYSIS_CUSTOMERLIST,
@@ -107,6 +109,19 @@ export const SIDEBAR_MENU = [
             },
         ],
     },
+        // マニュアル（親メニュー化：子に既存のマニュアル一覧を置く）
+        {
+            key: 'manual',
+            icon: <BookOutlined />,
+            label: 'マニュアル',
+            children: [
+                {
+                    key: ROUTER_PATHS.MANUAL_SEARCH,
+                    icon: <BookOutlined />,
+                    label: <Link to={ROUTER_PATHS.MANUAL_SEARCH}>マニュアル一覧</Link>,
+                },
+            ],
+        },
     // データベース
     {
         key: 'database',
@@ -124,6 +139,7 @@ export const SIDEBAR_MENU = [
                 key: ROUTER_PATHS.RECORD_LIST,
                 icon: <CloudUploadOutlined />,
                 label: <Link to={ROUTER_PATHS.RECORD_LIST}>レコード一覧</Link>,
+                hidden: true,
             },
         ],
     },
@@ -145,10 +161,5 @@ export const SIDEBAR_MENU = [
             },
         ],
     },
-    // マニュアル
-    {
-        key: ROUTER_PATHS.MANUAL_SEARCH,
-        icon: <BookOutlined />,
-        label: <Link to={ROUTER_PATHS.MANUAL_SEARCH}>マニュアル一覧</Link>,
-    },
+
 ];
