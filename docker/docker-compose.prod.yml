@@ -13,7 +13,7 @@ services:
       - db
     env_file:
       - ../env/.env.common
-      - ../env/.env.prod
+      - ../env/.env.vm_prod
 
   ledger_api:
     build: { context: ../app, dockerfile: backend/ledger_api/Dockerfile }
@@ -22,7 +22,7 @@ services:
       - db
     env_file:
       - ../env/.env.common
-      - ../env/.env.prod
+      - ../env/.env.vm_prod
     environment:
       STAGE: prod
     volumes:
@@ -35,7 +35,7 @@ services:
       - db
     env_file:
       - ../env/.env.common
-      - ../env/.env.prod
+      - ../env/.env.vm_prod
 
   rag_api:
     build: { context: ../app, dockerfile: backend/rag_api/Dockerfile }
@@ -44,7 +44,7 @@ services:
       - db
     env_file:
       - ../env/.env.common
-      - ../env/.env.prod
+      - ../env/.env.vm_prod
 
   # =============================
   # nginx (prod)
@@ -69,7 +69,7 @@ services:
     environment:
       STAGE: prod
     volumes:
-      - ../app/nginx/conf.d.prod:/etc/nginx/conf.d
+      - ../app/nginx/conf.d:/etc/nginx/conf.d:ro
       - ../app/nginx/certs:/etc/nginx/certs:ro
 
   db:

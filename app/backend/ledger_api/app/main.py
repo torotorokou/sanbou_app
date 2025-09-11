@@ -28,11 +28,19 @@ from app.api.endpoints.block_unit_price_interactive import (
 from app.api.endpoints.reports import reports_router
 
 # FastAPIアプリケーションの初期化
+# NOTE:
+#   以前は FastAPI(root_path="/ledger_api") を使用していたが、
+#   Nginx 側でパスをそのまま透過させていたため実リクエストの path が
+#   "/ledger_api/..." となり Router 側のマッチ対象 ("/reports/..." 等) と不一致になり 404 発生。
+#   root_path は *プロキシ側で /ledger_api を取り除いた上で* X-Forwarded-Prefix 等を渡す場合に利用するのが正しい。
+#   本修正では root_path を廃止し、明示的に /ledger_api プレフィックスを各 include_router に付与 + ドキュメント URL を再設定する。
 app = FastAPI(
     title="帳票・日報API",
     description="帳票生成、日報管理、PDF出力に関するAPI群です。",
     version="1.0.0",
-    root_path="/ledger_api",
+    docs_url="/ledger_api/docs",
+    redoc_url="/ledger_api/redoc",
+    openapi_url="/ledger_api/openapi.json",
 )
 
 # CORS設定 - すべてのオリジンからのアクセスを許可
@@ -49,9 +57,11 @@ setup_uvicorn_access_filter(excluded_paths=("/health",))
 
 
 # ルーター登録 - 各機能のエンドポイントを追加
-app.include_router(manage_report.router)
-app.include_router(block_unit_price_router, prefix="/block_unit_price_interactive")
-app.include_router(reports_router, prefix="/reports")
+app.include_router(manage_report.router, prefix="/ledger_api")
+app.include_router(
+    block_unit_price_router, prefix="/ledger_api/block_unit_price_interactive"
+)
+app.include_router(reports_router, prefix="/ledger_api/reports")
 
 
 @app.get("/")
@@ -68,3 +78,9 @@ def health_check():
 @app.get("/health", include_in_schema=False)
 def health():
     return {"status": "ok"}
+
+# 互換性: 旧 root_path=/ledger_api 時代のルート ( /ledger_api/ ) にヘルスを返す
+@app.get("/ledger_api/", include_in_schema=False)
+def legacy_root_health():  # pragma: no cover - 簡易互換
+    return {"status": "ledger_api is running"}
+

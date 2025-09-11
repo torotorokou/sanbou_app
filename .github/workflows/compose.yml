@@ -1,0 +1,82 @@
+name: docker-compose-matrix
+
+on:
+  push:
+    branches: [ "**" ]
+  pull_request:
+    branches: [ "**" ]
+
+permissions:
+  contents: read
+
+jobs:
+  compose-matrix:
+    name: Compose ${{ matrix.env }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        env: [local_dev, local_stg, vm_stg, vm_prod]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # For local development, you can create .env files by copying the .example files.
+      # e.g., cp env/.env.common.example env/.env.common
+      - name: Generate env files from secrets
+        run: |
+          set -eu
+          mkdir -p env
+          echo "API_KEY=${{ secrets.API_KEY }}" > env/.env.common
+          echo "SECRET=${{ secrets.SECRET }}" >> env/.env.common
+          echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> env/.env.common
+          echo "GCP_SA_KEY=${{ secrets.GCP_SA_KEY }}" >> env/.env.common
+
+          # Create env files for each environment
+          echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" > env/.env.local_dev
+          echo "STG_DB_URL=${{ secrets.STG_DB_URL }}" > env/.env.local_stg
+          echo "VM_STG_DB_URL=${{ secrets.VM_STG_DB_URL }}" > env/.env.vm_stg
+          echo "VM_PROD_DB_URL=${{ secrets.VM_PROD_DB_URL }}" > env/.env.vm_prod
+
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Show Docker version
+        run: |
+          docker version
+          docker compose version
+
+      - name: Make config (sanitized)
+        run: |
+          set -euo pipefail
+          echo ">>> make config ENV=${{ matrix.env }} (sanitized output)" || true
+          # 出力を一時ファイルへ
+          make config ENV=${{ matrix.env }} > raw.out 2>&1 || { echo '[error] make config failed'; cat raw.out; exit 1; }
+          # 代表 120 行まで, かつ API_KEY / SECRET / PASSWORD / KEY= などをマスク
+          sed -E 's/([A-Za-z0-9_]*(API_KEY|SECRET|PASSWORD|TOKEN)[A-Za-z0-9_]*)=[^ ]+/\1=****/g' raw.out | head -n 120
+
+      - name: Rebuild (compose up)
+        run: |
+          set -euo pipefail
+          make rebuild ENV=${{ matrix.env }}
+
+      - name: docker compose ps
+        run: |
+          set -euo pipefail
+          docker compose -p ${{ matrix.env }} ps
+
+      - name: Dump limited logs (optional)
+        if: always()
+        run: |
+          set -euo pipefail
+          for svc in $(docker compose -p ${{ matrix.env }} ps --services); do
+            echo "--- logs: $svc (last 40 lines)" || true
+            docker compose -p ${{ matrix.env }} logs --tail=40 $svc || true
+          done
+
+      - name: Tear down
+        if: always()
+        run: |
+          set -euo pipefail
+          make down ENV=${{ matrix.env }} || true
