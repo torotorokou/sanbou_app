@@ -32,17 +32,16 @@ import RecordListPage from '../pages/database/RecordListPage';
 // トークンプレビュー
 import TokenPreviewPage from '@/pages/TokenPreviewPage';
 import TestPage from '@/pages/TestPage';
+import PortalPage from '@/pages/portal/PortalPage';
+import NewsPage from '@/pages/NewsPage';
 
 const AppRoutes: React.FC = () => (
     <Routes>
         {/* テスト用ルート */}
         <Route path='/test' element={<TestPage />} />
 
-        {/* ルートリダイレクト */}
-        <Route
-            path='/'
-            element={<Navigate to={ROUTER_PATHS.DASHBOARD} replace />}
-        />
+    {/* ポータル(トップ) */}
+    <Route path={ROUTER_PATHS.PORTAL} element={<PortalPage />} />
 
         {/* ダッシュボード */}
         <Route
@@ -85,6 +84,8 @@ const AppRoutes: React.FC = () => (
             element={<TokenPreviewPage />}
         />
 
+    {/* お知らせ */}
+    <Route path={ROUTER_PATHS.NEWS} element={<NewsPage />} />
         {/* その他/404 */}
         <Route path='*' element={<div>ページが見つかりません</div>} />
     </Routes>

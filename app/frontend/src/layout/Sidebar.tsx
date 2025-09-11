@@ -17,6 +17,23 @@ const Sidebar: React.FC = () => {
     const animationStyles = useSidebarAnimation();
     // 画面幅に基づくデフォルト開閉制御（SOLID: 単一責任）
     const { collapsed, setCollapsed } = useSidebarDefault();
+    // openKeys を管理して、サイドバーが開いているときは子メニューを展開する
+    const [openKeys, setOpenKeys] = React.useState<string[]>([]);
+
+    // SIDEBAR_MENU から子を持つ親キーを収集
+    const parentKeys = React.useMemo(() => {
+        return SIDEBAR_MENU.filter(item => Array.isArray((item as any).children) && (item as any).children.length > 0)
+            .map(item => String(item.key));
+    }, []);
+
+    React.useEffect(() => {
+        // サイドバーが開いている（折りたたまれていない）ときに親メニューを展開する
+        if (!collapsed) {
+            setOpenKeys(parentKeys);
+        } else {
+            setOpenKeys([]);
+        }
+    }, [collapsed, parentKeys]);
 
     // モバイルではDrawerを使用
     if (sidebarConfig.drawerMode) {
@@ -48,6 +65,8 @@ const Sidebar: React.FC = () => {
                         mode="inline"
                         selectedKeys={[location.pathname]}
                         items={SIDEBAR_MENU}
+                        openKeys={openKeys}
+                        onOpenChange={(keys: string[]) => setOpenKeys(keys)}
                         style={{
                             height: '100%',
                             borderRight: 0,
@@ -104,6 +123,8 @@ const Sidebar: React.FC = () => {
                 mode='inline'
                 selectedKeys={[location.pathname]}
                 items={SIDEBAR_MENU}
+                openKeys={openKeys}
+                onOpenChange={(keys: string[]) => setOpenKeys(keys)}
                 style={{
                     height: 'calc(100% - 64px)',
                     borderRight: 0,
