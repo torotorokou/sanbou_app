@@ -130,13 +130,13 @@ const ManualSearchWithSidebarAndFullPdf: React.FC = () => {
 
     const pageSize = 5;
 
-    const onPdfChange = (checkedValues: any) => {
-        setSelectedPdfs(checkedValues as string[]);
+    const onPdfChange = (checkedValues: Array<string | number>) => {
+        setSelectedPdfs(checkedValues.map(String));
         setCurrentPage(1);
     };
 
-    const onCategoryChange = (checkedValues: any) => {
-        setSelectedCategories(checkedValues as string[]);
+    const onCategoryChange = (checkedValues: Array<string | number>) => {
+        setSelectedCategories(checkedValues.map(String));
         setCurrentPage(1);
     };
 

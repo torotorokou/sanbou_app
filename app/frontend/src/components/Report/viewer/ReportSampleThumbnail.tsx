@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Modal } from 'antd';
 
 type Props = {
@@ -24,7 +24,6 @@ const ReportSampleThumbnail: React.FC<Props> = ({
     };
 
     // 画面サイズ
-    const MODAL_MARGIN = 48;
     const VIEWPORT_W = typeof window !== 'undefined' ? window.innerWidth : 1024;
     const VIEWPORT_H = typeof window !== 'undefined' ? window.innerHeight : 768;
 

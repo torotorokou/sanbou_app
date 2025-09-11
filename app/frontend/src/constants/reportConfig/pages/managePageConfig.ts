@@ -1,7 +1,6 @@
 // /app/src/constants/reportConfig/pages/managePageConfig.ts
 import React from "react";
 import { CSV_DEFINITIONS } from "../../CsvDefinition";
-import BlockUnitPriceInteractive from "../../../components/Report/individual_process/BlockUnitPriceInteractive";
 import type { CsvConfigGroup, ModalStepConfig } from "../shared/types";
 import { createReportConfig, SIMPLE_CREATE_AND_DONE_STEPS } from "../shared/common";
 import type { PeriodType } from "../shared/types";

@@ -34,8 +34,9 @@ const gradientMap: Record<string, string> = {
     ブロック: customTokens.colorWarning, // オレンジ
 };
 
-const generateGradients = (data: any[], prefix: string) =>
-    data.map((item: any) => {
+interface BarDatum { name: string; value: number }
+const generateGradients = (data: BarDatum[], prefix: string) =>
+    data.map((item: BarDatum) => {
         const gradId = `${prefix}${item.name}`;
         const topColor = gradientMap[item.name] || '#999';
         return (
@@ -75,8 +76,9 @@ const RevenueChartPanel: React.FC = () => {
                             <Tooltip />
                             <Bar
                                 dataKey='value'
-                                shape={(props: any) => {
-                                    const { x, y, width, height, payload } = props;
+                                shape={(props: unknown) => {
+                                    const p = props as { x?: number; y?: number; width?: number; height?: number; payload?: BarDatum };
+                                    const { x = 0, y = 0, width = 0, height = 0, payload } = p;
                                     return (
                                         <rect
                                             x={x}
@@ -85,7 +87,7 @@ const RevenueChartPanel: React.FC = () => {
                                             height={height}
                                             fill={getGradientId(
                                                 'gradRev',
-                                                payload.name
+                                                payload?.name ?? ''
                                             )}
                                             rx={4}
                                             ry={4}
@@ -96,9 +98,10 @@ const RevenueChartPanel: React.FC = () => {
                                 <LabelList
                                     dataKey='value'
                                     position='top'
-                                    formatter={(v: any) =>
-                                        `${(v || 0).toLocaleString()} 円`
-                                    }
+                                    formatter={(label: unknown) => {
+                                        const num = typeof label === 'number' ? label : Number(label) || 0;
+                                        return `${num.toLocaleString()} 円`;
+                                    }}
                                 />
                             </Bar>
                         </BarChart>
@@ -125,8 +128,9 @@ const RevenueChartPanel: React.FC = () => {
                             <Tooltip />
                             <Bar
                                 dataKey='value'
-                                shape={(props: any) => {
-                                    const { x, y, width, height, payload } = props;
+                                shape={(props: unknown) => {
+                                    const p = props as { x?: number; y?: number; width?: number; height?: number; payload?: BarDatum };
+                                    const { x = 0, y = 0, width = 0, height = 0, payload } = p;
                                     return (
                                         <rect
                                             x={x}
@@ -135,7 +139,7 @@ const RevenueChartPanel: React.FC = () => {
                                             height={height}
                                             fill={getGradientId(
                                                 'gradUnit',
-                                                payload.name
+                                                payload?.name ?? ''
                                             )}
                                             rx={4}
                                             ry={4}
@@ -146,9 +150,10 @@ const RevenueChartPanel: React.FC = () => {
                                 <LabelList
                                     dataKey='value'
                                     position='top'
-                                    formatter={(v: any) =>
-                                        `${(v || 0).toLocaleString()} 円`
-                                    }
+                                    formatter={(label: unknown) => {
+                                        const num = typeof label === 'number' ? label : Number(label) || 0;
+                                        return `${num.toLocaleString()} 円`;
+                                    }}
                                 />
                             </Bar>
                         </BarChart>
