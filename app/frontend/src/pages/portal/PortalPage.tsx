@@ -1,8 +1,8 @@
 // src/pages/portal/PortalPage.tsx
-// 社内ポータル（トップ "/")：カードの横幅・高さを揃え、タイトル・文言を中央配置
+// 固定サイズカード（320x260）。アイコン/タイトル/説明/ボタンを“縦横ど真ん中”に配置。
 
 import React from 'react';
-import { Card, Typography, Button, Grid } from 'antd';
+import { Card, Typography, Button, Popover } from 'antd';
 import {
   BookOutlined,
   RobotOutlined,
@@ -12,31 +12,26 @@ import {
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { ROUTER_PATHS } from '@/constants/router';
+import { useDeviceType } from '@/hooks/ui/useResponsive';
 
 const { Title, Paragraph, Text } = Typography;
-const { useBreakpoint } = Grid;
 
-// 固定サイズ（必要に応じて調整）
 const CARD_WIDTH = 320;
-const CARD_HEIGHT = 260;
+// 元の高さ 260 の 0.8 倍
+const CARD_HEIGHT = 208;
+const BUTTON_WIDTH = 160; // ボタンを中央に見せるため固定幅
 
 export interface PortalCardProps {
   title: string;
   description: string;
+  // ホバーで表示する詳しい説明（任意）。なければ `description` を表示
+  detail?: string;
   icon: React.ReactNode;
   link: string;
 }
 
-/**
- * 単一責任：1つの機能リンクを表示（OCP: props追加で拡張）
- * - テキスト中央揃え
- * - 固定幅／固定高
- * - キーボード操作対応
- */
-const PortalCard: React.FC<PortalCardProps> = ({ title, description, icon, link }) => {
+const PortalCard: React.FC<PortalCardProps> = ({ title, description, icon, link, detail }) => {
   const navigate = useNavigate();
-  const screens = useBreakpoint();
-  const isLgUp = !!screens.lg;
 
   const handleNavigate = () => navigate(link);
   const handleKeyDown: React.KeyboardEventHandler<HTMLDivElement> = (e) => {
@@ -47,134 +42,132 @@ const PortalCard: React.FC<PortalCardProps> = ({ title, description, icon, link 
   };
 
   return (
-    <Card
+    <Popover
+      content={detail ?? description}
+      trigger={['hover', 'focus']}
+      placement="top"
+      overlayStyle={{ maxWidth: 320, whiteSpace: 'normal' }}
+    >
+      <Card
       hoverable
       role="button"
       tabIndex={0}
+      aria-label={`${title} カード`}
       onKeyDown={handleKeyDown}
       onClick={handleNavigate}
-      aria-label={`${title} カード`}
       style={{
-        width: isLgUp ? CARD_WIDTH : '100%',
+        width: CARD_WIDTH,
         height: CARD_HEIGHT,
-        display: 'flex',
       }}
+      // 中身を“完全中央”にする：Flexbox で縦横センター
       bodyStyle={{
+        height: '100%',
+        padding: 24,
         display: 'flex',
         flexDirection: 'column',
-        alignItems: 'center',   // 中央寄せ（横）
-        justifyContent: 'flex-start',
-        gap: 12,
-        height: '100%',
-        textAlign: 'center',    // タイトル・文言を中央表示
+        alignItems: 'center',    // 横方向中央
+        justifyContent: 'space-between',// 上部にアイコン/タイトル、下部にボタン
+        gap: 8,
+        textAlign: 'center',
       }}
     >
-      <div
-        aria-hidden
-        style={{ fontSize: 36, lineHeight: 1, color: 'var(--ant-color-primary)' }}
-      >
-        {icon}
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+        <div aria-hidden style={{ fontSize: 36, lineHeight: 1, color: 'var(--ant-color-primary)' }}>
+          {icon}
+        </div>
+        <Title level={4} style={{ margin: 0 }}>{title}</Title>
       </div>
 
-      <Title level={4} style={{ margin: 0 }}>
-        {title}
-      </Title>
-
-      {/* 説明は2行で省略して高さ超過を防止 */}
       <Paragraph
         style={{
           margin: 0,
-          display: '-webkit-box',
-          WebkitLineClamp: 2,
-          WebkitBoxOrient: 'vertical' as any,
+          maxWidth: 260,                 // 中央視覚効果を高めるため幅をやや絞る
           overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',         // 1行に制限
         }}
         title={description}
       >
         {description}
       </Paragraph>
 
-      {/* ボタンは最下部に固定配置 */}
-      <div style={{ marginTop: 'auto', width: '100%' }}>
-        <Button
-          type="primary"
-          block
-          aria-label={`${title} へ移動`}
-          onClick={(e) => {
-            e.stopPropagation(); // Card onClickとの二重発火防止
-            handleNavigate();
-          }}
-        >
-          開く
-        </Button>
-      </div>
+      <Button
+        type="primary"
+        style={{ width: BUTTON_WIDTH }} // ボタンも中央・固定幅
+        onClick={(e) => {
+          e.stopPropagation();
+          handleNavigate();
+        }}
+        aria-label={`${title} へ移動`}
+      >
+        開く
+      </Button>
     </Card>
+  </Popover>
   );
 };
 
-// メニュー定義（追加・削除はここだけでOK）
 const portalMenus: PortalCardProps[] = [
   {
     title: '帳簿作成',
-    description: '各種帳簿の作成・参照を行います。',
+  description: '各種帳簿の作成・参照を行います。',
+  detail: '取引の記録、仕訳入力、補助科目管理、過去帳簿の検索とエクスポートが可能です。テンプレートを使って入力を簡単に行えます。',
     icon: <BookOutlined />,
     link: ROUTER_PATHS.LEDGER_BOOK,
   },
   {
     title: 'AI NAVI',
-    description: 'AI アシスタントで業務を効率化します。',
+  description: 'AI アシスタントで業務を効率化します。',
+  detail: '自然言語で質問すると、マニュアル検索、帳簿作成補助、データ要約、定型処理の自動化などを提案します。セキュリティ保護された内部データのみを利用します。',
     icon: <RobotOutlined />,
     link: ROUTER_PATHS.NAVI,
   },
   {
     title: 'KPIダッシュボード',
-    description: '主要指標を可視化して状況を素早く把握。',
+  description: '主要指標を可視化して状況を素早く把握。',
+  detail: '売上、コスト、在庫、進捗などカスタム可能なウィジェットで経営指標をリアルタイムに表示します。期間比較やドリルダウンが可能です。',
     icon: <DashboardOutlined />,
     link: ROUTER_PATHS.DASHBOARD,
   },
   {
     title: 'マニュアル',
-    description: '社内手順書・運用ガイドを参照できます。',
+  description: '社内手順書・運用ガイドを参照できます。',
+  detail: '部署別の手順書、FAQ、オンボーディング資料を検索できます。更新履歴と担当者情報も確認可能です。',
     icon: <FileTextOutlined />,
     link: ROUTER_PATHS.MANUAL_SEARCH,
   },
   {
     title: 'お知らせ',
-    description: '最新のお知らせ・更新情報を確認。',
+  description: '最新のお知らせ・更新情報を確認。',
+  detail: 'システムメンテナンス情報、リリースノート、社内イベント、法令改正などの重要なお知らせを掲載します。',
     icon: <NotificationOutlined />,
     link: ROUTER_PATHS.NEWS,
   },
 ];
 
 export const PortalPage: React.FC = () => {
-  const screens = useBreakpoint();
-  const isLgUp = !!screens.lg;
+  const { isMobile } = useDeviceType();
 
-  const introText = screens.xs
+  const introText = isMobile
     ? '社内ポータルです。必要な機能を選択してください。'
     : '社内ポータルへようこそ。下記のメニューから業務に必要な機能を選択してください。';
 
   return (
     <div style={{ padding: '32px 32px 48px' }}>
-      {/* ヘッダ */}
       <header style={{ maxWidth: 960, margin: '0 auto 32px', textAlign: 'center' }}>
-        <Title level={2} style={{ marginBottom: 8 }}>
-          社内ポータル
-        </Title>
+        <Title level={2} style={{ marginBottom: 8 }}>社内ポータル</Title>
         <Text type="secondary">{introText}</Text>
       </header>
 
-      {/* カード群（CSS Grid） */}
       <main style={{ maxWidth: 1280, margin: '0 auto' }}>
         <div
           aria-label="ポータルメニュー一覧"
           style={{
             display: 'grid',
             gap: 24,
-            gridTemplateColumns: isLgUp
-              ? `repeat(auto-fit, minmax(${CARD_WIDTH}px, ${CARD_WIDTH}px))`
-              : '1fr',
-            justifyContent: isLgUp ? 'center' : 'stretch', // 最終行も中央寄せ
+            // **カード幅は常に固定**。最終行も中央寄せ。
+            gridTemplateColumns: `repeat(auto-fit, ${CARD_WIDTH}px)`,
+            justifyContent: 'center',
             alignItems: 'stretch',
           }}
         >
@@ -188,8 +181,3 @@ export const PortalPage: React.FC = () => {
 };
 
 export default PortalPage;
-
-/**
- * ルーティング例:
- * <Route path="/" element={<PortalPage />} />
- */
