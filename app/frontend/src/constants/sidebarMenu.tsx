@@ -94,11 +94,18 @@ export const SIDEBAR_MENU = [
             },
         ],
     },
-    // 参謀NAVI
+    // 参謀NAVI（親はラベルのみ、子にリンクを持たせる）
     {
-        key: ROUTER_PATHS.NAVI,
+        key: 'navi',
         icon: <CompassOutlined />,
-        label: <Link to={ROUTER_PATHS.NAVI}>参謀NAVI</Link>,
+        label: '参謀NAVI',
+        children: [
+            {
+                key: ROUTER_PATHS.NAVI,
+                icon: <CompassOutlined />,
+                label: <Link to={ROUTER_PATHS.NAVI}>SOLVEST成田工場</Link>,
+            },
+        ],
     },
     // データベース
     {
