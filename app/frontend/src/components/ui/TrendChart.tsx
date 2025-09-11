@@ -18,18 +18,20 @@ type Props = {
 };
 
 // ✅ カスタムツールチップ
+interface TrendPoint { x: number; y: number; total: number }
+interface TooltipEntry { payload?: TrendPoint }
 const CustomTooltip = ({
     active,
     payload,
 }: {
     active?: boolean;
-    payload?: any;
+    payload?: TooltipEntry[];
 }) => {
     if (active && payload && payload.length > 0) {
-        const index = payload[0]?.payload?.x;
-        const value = payload[0]?.payload?.y;
-        const total = payload[0]?.payload?.total ?? 7;
-        const dayDiff = total - index - 1;
+    const index = payload[0]?.payload?.x ?? 0;
+    const value = payload[0]?.payload?.y ?? 0;
+    const total = payload[0]?.payload?.total ?? 0;
+    const dayDiff = total - index - 1;
         const labelText = dayDiff === 0 ? '今日' : `${dayDiff}日前`;
 
         return (

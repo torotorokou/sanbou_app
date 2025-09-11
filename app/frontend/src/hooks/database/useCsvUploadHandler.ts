@@ -26,7 +26,20 @@ export const useCsvUploadHandler = (files: Record<string, File | null>) => {
             });
 
             const text = await res.text();
-            let result: any;
+            // サーバー仕様に合わせたジェネリックなレスポンス型
+            interface UploadFileIssue {
+                filename?: string;
+                status?: string;
+                detail?: string;
+            }
+            interface UploadResponseShape {
+                status?: string;
+                detail?: string;
+                hint?: string;
+                result?: Record<string, UploadFileIssue>;
+            }
+
+            let result: UploadResponseShape;
             try {
                 result = JSON.parse(text);
             } catch {
@@ -52,21 +65,19 @@ export const useCsvUploadHandler = (files: Record<string, File | null>) => {
                     notifyInfo('ヒント', result.hint);
                 }
 
-                if (result?.result) {
-                    Object.entries(result.result).forEach(
-                        ([key, val]: [string, any]) => {
-                            if (val.status === 'error') {
-                                notifyWarning(
-                                    `[${val.filename ?? key}] のエラー`,
-                                    val.detail ??
-                                        '詳細不明のエラーが発生しました。'
-                                );
-                            }
+                const issues = result?.result;
+                if (issues) {
+                    Object.entries(issues).forEach(([key, val]) => {
+                        if (val?.status === 'error') {
+                            notifyWarning(
+                                `[${val.filename ?? key}] のエラー`,
+                                val.detail ?? '詳細不明のエラーが発生しました。'
+                            );
                         }
-                    );
+                    });
                 }
             }
-        } catch (err) {
+        } catch {
             notifyError(
                 '接続エラー',
                 'サーバーに接続できませんでした。ネットワークを確認してください。'

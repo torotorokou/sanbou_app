@@ -29,7 +29,7 @@ export const SIDEBAR_MENU = [
     {
         key: 'portal',
         icon: <DashboardOutlined />,
-        label: <Link to={ROUTER_PATHS.PORTAL}>ポータルページ</Link>,
+        label: <Link to={ROUTER_PATHS.PORTAL}>トップページ</Link>,
     },
     // ダッシュボード
     {
@@ -75,6 +75,7 @@ export const SIDEBAR_MENU = [
                 key: ROUTER_PATHS.LEDGER_BOOK,
                 icon: <BookOutlined />,
                 label: <Link to={ROUTER_PATHS.LEDGER_BOOK}>帳簿</Link>,
+                hidden: true,
             },
         ],
     },
@@ -158,6 +159,7 @@ export const SIDEBAR_MENU = [
                 key: ROUTER_PATHS.ADMIN,
                 icon: <UserSwitchOutlined />,
                 label: <Link to={ROUTER_PATHS.ADMIN}>管理者メニュー</Link>,
+                hidden: true,
             },
         ],
     },

@@ -1,6 +1,6 @@
 // /app/src/components/Report/individual_process/BlockUnitPriceInteractive.tsx
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import axios from 'axios';
 import { LEDGER_API_URL } from '@/constants/reportConfig';
 
@@ -18,9 +18,31 @@ interface SessionData {
     selections?: Record<string, string>;
 }
 
+interface ShipmentSummaryInfo {
+    vendors: string[];
+}
+
+
+interface SelectionSummaryInfo {
+    affected_records: Record<string, { transport_vendor: string; record_count: number }>;
+}
+
+interface ApiDataShape {
+    message?: string;
+    shipment_summary?: ShipmentSummaryInfo;
+    transport_options?: TransportOption[];
+    selection_summary?: SelectionSummaryInfo;
+    summary?: {
+        processed_records?: number;
+        total_amount?: number;
+        total_transport_fee?: number;
+    };
+    session_data?: SessionData;
+}
+
 interface ProcessState {
-    step: number;
-    data?: any;
+    step: number; // -1: 未開始 0: 運搬業者選択 1: 確認 2: 完了
+    data?: ApiDataShape;
     sessionData?: SessionData;
     loading: boolean;
     error?: string;
@@ -32,7 +54,7 @@ const BlockUnitPriceInteractive: React.FC = () => {
         loading: false
     });
 
-    const [files, setFiles] = useState<Record<string, any>>({});
+    const [files] = useState<Record<string, File>>({});
     const [transportSelections, setTransportSelections] = useState<Record<string, string>>({});
 
     // Step 0: 処理開始
@@ -63,7 +85,7 @@ const BlockUnitPriceInteractive: React.FC = () => {
             } else {
                 setState(prev => ({ ...prev, loading: false, error: response.data.message }));
             }
-        } catch (error) {
+    } catch {
             setState(prev => ({
                 ...prev,
                 loading: false,
@@ -95,7 +117,7 @@ const BlockUnitPriceInteractive: React.FC = () => {
             } else {
                 setState(prev => ({ ...prev, loading: false, error: response.data.message }));
             }
-        } catch (error) {
+    } catch {
             setState(prev => ({
                 ...prev,
                 loading: false,
@@ -129,7 +151,7 @@ const BlockUnitPriceInteractive: React.FC = () => {
             } else {
                 setState(prev => ({ ...prev, loading: false, error: response.data.message }));
             }
-        } catch (error) {
+    } catch {
             setState(prev => ({
                 ...prev,
                 loading: false,
@@ -173,14 +195,14 @@ const BlockUnitPriceInteractive: React.FC = () => {
 
                         <div className="transport-selection">
                             <h3>運搬業者を選択してください：</h3>
-                            {state.data?.shipment_summary.vendors.map((vendor: string) => (
+                            {state.data?.shipment_summary?.vendors?.map((vendor: string) => (
                                 <div key={vendor} className="vendor-selection">
                                     <label>{vendor}</label>
                                     <select
                                         value={transportSelections[vendor] || ''}
                                         onChange={(e) => handleTransportSelection(vendor, e.target.value)}
                                     >
-                                        {state.data?.transport_options.map((option: TransportOption) => (
+                                        {state.data?.transport_options?.map((option: TransportOption) => (
                                             <option key={option.vendor_code} value={option.vendor_code}>
                                                 {option.vendor_name} (運搬費: ¥{option.transport_fee.toLocaleString()})
                                             </option>
@@ -208,7 +230,7 @@ const BlockUnitPriceInteractive: React.FC = () => {
 
                         <div className="selection-summary">
                             <h3>選択内容：</h3>
-                            {Object.entries(state.data?.selection_summary.affected_records || {}).map(([vendor, info]: [string, any]) => (
+                            {Object.entries(state.data?.selection_summary?.affected_records || {}).map(([vendor, info]) => (
                                 <div key={vendor} className="summary-row">
                                     <span>{vendor}</span>
                                     <span>→ {info.transport_vendor}</span>
@@ -243,9 +265,9 @@ const BlockUnitPriceInteractive: React.FC = () => {
 
                         <div className="calculation-results">
                             <div className="result-summary">
-                                <p>処理済みレコード数: {state.data?.summary.processed_records}</p>
-                                <p>合計金額: ¥{state.data?.summary.total_amount?.toLocaleString()}</p>
-                                <p>運搬費合計: ¥{state.data?.summary.total_transport_fee?.toLocaleString()}</p>
+                                <p>処理済みレコード数: {state.data?.summary?.processed_records}</p>
+                                <p>合計金額: ¥{state.data?.summary?.total_amount?.toLocaleString()}</p>
+                                <p>運搬費合計: ¥{state.data?.summary?.total_transport_fee?.toLocaleString()}</p>
                             </div>
 
                             {/* 結果のテーブル表示やダウンロードボタンなど */}

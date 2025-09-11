@@ -67,7 +67,8 @@ const renderLegend = () => (
 );
 const PIE_HEIGHT = 200; // グラフエリアを大きく
 
-const renderPieChart = (data: any[]) => (
+interface PieDatum { name: string; value: number }
+const renderPieChart = (data: PieDatum[]) => (
     <ResponsiveContainer width='100%' height={PIE_HEIGHT}>
         <PieChart>
             <Pie
@@ -79,56 +80,50 @@ const renderPieChart = (data: any[]) => (
                 dataKey='value'
                 startAngle={90}
                 endAngle={-270}
-                label={({
-                    value,
-                    cx,
-                    cy,
-                    midAngle,
-                    innerRadius,
-                    outerRadius,
+                label={(rawProps: {
+                    value?: number | string;
+                    cx?: number | string;
+                    cy?: number | string;
+                    midAngle?: number;
+                    innerRadius?: number | string;
+                    outerRadius?: number | string;
                 }) => {
-                    if (midAngle === undefined) return null;
+                    // Recharts の型が厳密でないため安全に取り出して数値化
+                    const value = Number(rawProps?.value ?? 0);
+                    const cxNum = Number(rawProps?.cx ?? 0);
+                    const cyNum = Number(rawProps?.cy ?? 0);
+                    const midAngle = Number(rawProps?.midAngle ?? 0);
+                    const innerRadius = Number(rawProps?.innerRadius ?? 0);
+                    const outerRadius = Number(rawProps?.outerRadius ?? 0);
 
                     const RADIAN = Math.PI / 180;
-                    const radius =
-                        innerRadius + (outerRadius - innerRadius) * 0.5;
-                    const x = cx + radius * Math.cos(-midAngle * RADIAN);
-                    const y = cy + radius * Math.sin(-midAngle * RADIAN);
+                    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+                    const x = cxNum + radius * Math.cos(-midAngle * RADIAN);
+                    const y = cyNum + radius * Math.sin(-midAngle * RADIAN);
 
-                    // テキスト内容
-                    const display = Number(value).toLocaleString();
-                    // 背景サイズ
+                    const display = value.toLocaleString();
                     const paddingX = 8;
                     const paddingY = 4;
                     const fontSize = 14;
 
                     return (
                         <g>
-                            {/* 背景四角形 */}
                             <rect
                                 x={
-                                    x -
-                                    display.length * fontSize * 0.32 -
-                                    paddingX / 2
+                                    x - display.length * fontSize * 0.32 - paddingX / 2
                                 }
                                 y={y - fontSize / 2 - paddingY / 2}
-                                width={
-                                    display.length * fontSize * 0.64 + paddingX
-                                }
+                                width={display.length * fontSize * 0.64 + paddingX}
                                 height={fontSize + paddingY}
                                 rx={6}
-                                fill='rgba(255, 255, 255, 0.8)' // ← 半透明白背景
+                                fill='rgba(255, 255, 255, 0.8)'
                             />
-                            {/* ラベルテキスト */}
                             <text
                                 x={x}
                                 y={y}
                                 textAnchor='middle'
                                 dominantBaseline='middle'
                                 fontSize={fontSize}
-                            // fontWeight='bold'
-                            // fontFamily="'Segoe UI', 'Noto Sans JP', 'Meiryo', sans-serif"
-                            // fill='#fff'
                             >
                                 {display}
                             </text>

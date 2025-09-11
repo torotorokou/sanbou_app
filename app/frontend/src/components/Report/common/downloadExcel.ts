@@ -29,7 +29,8 @@ export const downloadExcelFile = async (
         link.click();
         link.remove();
         window.URL.revokeObjectURL(url);
-    } catch (e) {
+    } catch {
+        // TODO: ログ送信などを追加可能
         alert('Excelのダウンロードに失敗しました');
     }
 };

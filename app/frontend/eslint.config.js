@@ -7,9 +7,22 @@ import pluginTs from '@typescript-eslint/eslint-plugin';
 import json from '@eslint/json';
 
 export default defineConfig([
-    // JS/TS/JSX/TSX 共通
+    // 除外パターン（Flat Config は .eslintignore 非対応のためここで指定）
     {
-        files: ['**/*.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
+        ignores: [
+            'dist/**',
+            'public/**',
+            'node_modules/**',
+            '*.config.{js,ts}',
+            'vite.config.ts',
+            'tsconfig*.json',
+            'scripts/**',
+            '__archive__/**',
+        ],
+    },
+    // JS/TS/JSX/TSX 共通（アプリコードに限定）
+    {
+        files: ['src/**/*.{js,ts,jsx,tsx}'],
         languageOptions: {
             parser: tsParser,
             parserOptions: {
@@ -27,15 +40,13 @@ export default defineConfig([
             ...pluginTs.configs.recommended.rules,
             ...pluginReact.configs.recommended.rules,
             '@typescript-eslint/consistent-type-imports': 'warn',
+            // 暫定: any は段階的移行のため warn に緩和
+            '@typescript-eslint/no-explicit-any': 'warn',
         },
-        // extends: [js.configs.recommended], ← 明示的にextendsも不要
     },
-
     // JSONファイル用
     {
         files: ['**/*.json'],
-        // parser: json.parsers['json'], ← これ不要・消す
-        // plugins: { json }, ← これも不要・消す
-        extends: [json.configs.recommended], // これだけでOK
+        extends: [json.configs.recommended],
     },
 ]);

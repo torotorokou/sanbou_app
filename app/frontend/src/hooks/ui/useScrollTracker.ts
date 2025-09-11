@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 
 export function useScrollTracker(
     ref: React.RefObject<HTMLElement>,
-    deps: any[]
+    deps: unknown[]
 ) {
     const [isAtBottom, setIsAtBottom] = useState(true);
     const [hasNewMessage, setHasNewMessage] = useState(false);
