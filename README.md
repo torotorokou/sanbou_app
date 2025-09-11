@@ -1,6 +1,62 @@
 
 # sanbou_app
 
+## 4 環境構成 (unified names)
+
+| ENV      | 目的 | .env ファイル        | Compose ファイル                | Health URL                         | 備考 |
+|----------|------|----------------------|---------------------------------|------------------------------------|------|
+| ENV       | 用途 | .env | compose | Health | 備考 |
+|-----------|------|------|---------|--------|------|
+| local_dev | 開発 (ホットリロード) | .env.local_dev | docker-compose.dev.yml | http://localhost:8001/health | Vite+uvicorn reload / nginx 無し |
+| local_stg | ローカル STG 模擬 | .env.local_stg | docker-compose.stg.yml | http://stg.local/health | hosts に 127.0.0.1 stg.local |
+| vm_stg    | VM STG | .env.vm_stg | docker-compose.stg.yml | http://stg.sanbou-app.jp/health | 8080/8443 / 将来 TLS |
+| vm_prod   | 本番 | .env.vm_prod | docker-compose.prod.yml | https://sanbou-app.jp/health | 80/443 公開 |
+
+統一 Nginx 設定: `app/nginx/conf.d/stg.conf` を local_stg / vm_stg で共用し、`server_name` をコメント切替。TLS はコメントアウト済みセクションを有効化して利用。
+
+### 基本コマンド
+
+```
+make rebuild ENV=local_dev|local_stg|vm_stg|vm_prod   # config → down → build --pull --no-cache → up → health
+make up ENV=local_stg                        # 起動 (build あり)
+make down ENV=vm_stg                         # 停止
+make logs ENV=prod S=nginx                   # ログ (サービス指定可)
+make restart ENV=dev                         # 再起動
+make health ENV=local_stg                    # ヘルスチェック (curl/wget)
+```
+
+### local_stg 利用時の hosts 設定
+
+```
+sudo sh -c 'echo "127.0.0.1 stg.local" >> /etc/hosts'
+```
+
+### 典型的な検証手順
+
+1. 必要な `.env` 作成 (例): cp env/.env.example env/.env.local_stg し値調整（他: local_dev / vm_stg / vm_prod も同様）
+2. `make rebuild ENV=local_stg`
+3. `curl -I http://stg.local/health` (ない場合は `make logs ENV=local_stg S=nginx` で確認)
+4. ブラウザで http://stg.local/ を開く
+
+他環境も同様に `ENV=` を差し替え
+
+### ロールバック手順 (今回拡張を取り消す場合)
+
+1. 追加ファイル削除:
+  - env/.env.local_dev
+  - env/.env.local_stg
+  - env/.env.vm_stg
+  - env/.env.vm_prod
+  - env/.env.example
+  - app/nginx/conf.d/stg.conf
+2. `docker/docker-compose.stg.yml` の `nginx` サービス volume を 元の `../app/nginx/conf.d.stg:/etc/nginx/conf.d` へ戻す
+3. Makefile を Git 履歴で前の版に戻す (`git checkout <old_commit> -- makefile` もしくは `git revert`)
+4. README の本節を削除
+5. `make rebuild ENV=stg` / `make up ENV=dev` で従来フロー確認
+
+最小差分化のため既存サービス名・ポート・ボリュームは変更していません。`dev` 環境ヘルスチェックは実際の公開ポート (ai_api:8001) に合わせて `http://localhost:8001/health` としています (既存構成では 8000 未公開のため)。
+
+
 フロントエンド（Vite + React）と複数のFastAPIサービス、PostgreSQL、NginxをDocker Composeで統合したWebアプリです。
 
 2025-09 更新: 環境分離を明確化
@@ -10,7 +66,7 @@
 
 ---
 
-## すぐに起動する（Quick Start）
+## Quick Start (local_dev)
 
 前提（ローカル開発・Linux想定）
 
@@ -21,7 +77,7 @@
 
 1) 環境変数ファイルを用意
 
-   - 必須: `env/.env.dev` を作成
+  - 必須: env/.env.local_dev を作成
    - 例（必要に応じて調整）:
 
      ```env
@@ -45,7 +101,7 @@
    - コマンド:
 
      ```bash
-     make up ENV=dev
+  make up ENV=local_dev
      ```
 
 3) アクセス (dev)
@@ -59,26 +115,26 @@
 
 4) 停止・ログ・再ビルド
 
-   - 停止: `make down ENV=dev`
-   - ログ: `make logs ENV=dev`（Ctrl+Cで離脱）
-   - 再ビルド: `make rebuild ENV=dev`
+  - 停止: make down ENV=local_dev
+  - ログ: make logs ENV=local_dev
+  - 再ビルド: make rebuild ENV=local_dev
 
 ---
 
-## ステージング/本番での起動（stg/prod）
+## STG / 本番 (vm_stg / vm_prod)
 
 1) 環境変数ファイルを用意
 
-- `env/.env.stg` または `env/.env.prod` を作成
+- env/.env.vm_stg または env/.env.vm_prod を作成
 - 初回の `make up` 実行時、`OPENAI_API_KEY` と `GEMINI_API_KEY` を対話入力すると `secrets/.env.<ENV>.secrets` に安全に保存されます
 - GCP利用時は `secrets/gcs-key.json` を必ず配置
 
 2) 起動 (Nginx を有効化する edge プロファイルを利用)
 
 ```bash
-COMPOSE_PROFILES=edge make up ENV=stg
-# もしくは本番
-COMPOSE_PROFILES=edge make up ENV=prod
+COMPOSE_PROFILES=edge make up ENV=vm_stg
+# 本番
+COMPOSE_PROFILES=edge make up ENV=vm_prod
 ```
 
 3) Nginx（エッジ）
@@ -106,7 +162,7 @@ COMPOSE_PROFILES=edge make up ENV=prod
 ---
 
 ## プロジェクト構成（簡略）
-
+****
 - `app/frontend`: フロントエンド（Vite + React）
 - `app/backend/*_api`: 各FastAPIサービス（ai/ledger/sql/rag）
 - `app/nginx`: 逆プロキシ設定と証明書
@@ -264,3 +320,54 @@ docker build -t local/sanbou-ai-api:rollback -f app/backend/ai_api/Dockerfile.pr
 - Trivy / Grype を用いた CI の脆弱性スキャン
 
 ---
+
+## GitHub Environments の Secrets を一括登録する
+
+`.env.common` をリポジトリに含めず、GitHub Environments の Secrets に分離して管理するためのツールを用意しています。
+
+前提
+- GitHub CLI `gh` がインストール・ログイン済み（dry-run は未インストールでも可）
+- JSON 形式の import の場合は `jq` が必要
+- リポジトリ管理者権限（環境作成・Secrets登録）
+
+スクリプト
+- `scripts/gh_env_secrets_sync.sh`
+  - .env / JSON / CSV から、dev / stg / prod などの環境に「同名キーで値だけ切替」を適用
+  - 無い Environment は自動作成
+  - `--dry-run` で差分確認のみ
+
+使い方（例）
+1) 単一環境に .env を取り込む（例: stg）
+```bash
+./scripts/gh_env_secrets_sync.sh \
+  --repo <owner>/<repo> \
+  --env stg \
+  --file env/.env.common
+```
+
+2) 複数環境を JSON で一括
+```bash
+./scripts/gh_env_secrets_sync.sh \
+  --repo <owner>/<repo> \
+  --json scripts/examples/secrets.json
+```
+
+3) 複数環境を CSV で一括
+```bash
+./scripts/gh_env_secrets_sync.sh \
+  --repo <owner>/<repo> \
+  --csv scripts/examples/secrets.csv
+```
+
+オプション
+- `--prefix APP_` ですべてのキーに接頭辞を付与
+- `--dry-run` で実際の登録を行わずプレビュー
+
+入力フォーマット
+- .env: `KEY=VALUE` 形式（コメント・空行可）
+- JSON（推奨）: `{ "dev": {"KEY":"VAL"}, "stg": {...}, "prod": {...} }`
+- CSV: `env,key,value`（カンマを含む値は JSON の使用を推奨）
+
+サンプル
+- `scripts/examples/secrets.json`
+- `scripts/examples/secrets.csv`
