@@ -4,13 +4,14 @@ import Sidebar from './Sidebar';
 import AppRoutes from '../routes/AppRoutes';
 import NotificationContainer from '../components/common/NotificationContainer';
 import { customTokens } from '../theme/tokens';
-import { useDeviceType } from '../hooks/ui';
+import { useWindowSize } from '../hooks/ui';
 
 const { Content } = Layout;
 
 const MainLayout: React.FC = () => {
     // ページ全体のレイアウトは保持しつつ、サイドバー開閉はSidebar内部のフックに委譲
-    const { isMobile, isTablet, shouldAutoCollapse } = useDeviceType();
+    const { isMobile, isTablet } = useWindowSize();
+    const shouldAutoCollapse = isMobile || isTablet;
 
     try {
         return (

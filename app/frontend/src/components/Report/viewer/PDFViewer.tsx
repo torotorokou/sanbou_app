@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Typography, Alert } from 'antd';
-import { useDeviceType } from '../../../hooks/ui';
+import { useWindowSize } from '../../../hooks/ui';
 
 type PDFViewerProps = {
     pdfUrl?: string | null;
@@ -8,7 +8,7 @@ type PDFViewerProps = {
 };
 
 const PDFViewer: React.FC<PDFViewerProps> = ({ pdfUrl }) => {
-    const { isMobile, isTablet } = useDeviceType();
+    const { isMobile, isTablet } = useWindowSize();
     const [hasError, setHasError] = useState(false);
 
     if (!pdfUrl) {
