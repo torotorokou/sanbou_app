@@ -62,6 +62,7 @@ export const CsvPreviewCard: React.FC<Props> = ({
                 </span>
             }
             size='small'
+            headStyle={{ backgroundColor }}
             bodyStyle={{
                 padding: 8,
                 height: cardHeight - 48,
@@ -71,8 +72,6 @@ export const CsvPreviewCard: React.FC<Props> = ({
             }}
             style={{
                 height: cardHeight,
-                backgroundColor,
-                borderLeft: `6px solid ${backgroundColor}`,
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'flex-start',
