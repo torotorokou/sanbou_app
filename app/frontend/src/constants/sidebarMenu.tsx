@@ -17,6 +17,7 @@ import {
     CloudUploadOutlined, // アップロード/レコード
     BookOutlined, // マニュアル
     SolutionOutlined, // 管理業務
+    NotificationOutlined, // お知らせ
 } from '@ant-design/icons';
 
 // ルーティング
@@ -25,11 +26,18 @@ import { ROUTER_PATHS } from './router';
 
 // サイドバーのメニュー定義
 export const SIDEBAR_MENU = [
-    // ポータル
+    // ポータル（親メニュー）
     {
         key: 'portal',
         icon: <DashboardOutlined />,
-        label: <Link to={ROUTER_PATHS.PORTAL}>トップページ</Link>,
+        label: 'ポータル',
+        children: [
+            {
+                key: ROUTER_PATHS.PORTAL,
+                icon: <DashboardOutlined />,
+                label: <Link to={ROUTER_PATHS.PORTAL}>トップページ</Link>,
+            },
+        ],
     },
     // ダッシュボード
     {
@@ -144,6 +152,7 @@ export const SIDEBAR_MENU = [
             },
         ],
     },
+
     // 管理機能
     {
         key: 'management',
@@ -160,6 +169,19 @@ export const SIDEBAR_MENU = [
                 icon: <UserSwitchOutlined />,
                 label: <Link to={ROUTER_PATHS.ADMIN}>管理者メニュー</Link>,
                 hidden: true,
+            },
+        ],
+    },
+            // お知らせ（親メニュー）
+    {
+        key: 'news',
+        icon: <NotificationOutlined />,
+        label: 'お知らせ',
+        children: [
+            {
+                key: ROUTER_PATHS.NEWS,
+                icon: <NotificationOutlined />,
+                label: <Link to={ROUTER_PATHS.NEWS}>お知らせ一覧</Link>,
             },
         ],
     },
