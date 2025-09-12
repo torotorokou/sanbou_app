@@ -115,6 +115,7 @@ postgres_data/
 # **/data/
 !**/data/templates/**
 !**/data/master/**
+/app/frontend/src/data/
 
 # local_data/master 内でコード参照される設定 (yaml / json) は許可
 !**/local_data/master/**/*.yaml

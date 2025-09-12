@@ -21,7 +21,7 @@ import { useReportManager } from '../../hooks/report';
  */
 
 const ReportFactory: React.FC = () => {
-    const reportManager = useReportManager('factory_report');
+    const reportManager = useReportManager('factory_report2');
     const reportBaseProps = reportManager.getReportBaseProps();
 
     return (

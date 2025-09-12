@@ -18,7 +18,6 @@ import { useWindowSize } from '@/hooks/ui';
 const { Title, Paragraph, Text } = Typography;
 
 const CARD_WIDTH = 320;
-// 元の高さ 260 の 0.8 倍
 const CARD_HEIGHT = 208;
 const BUTTON_WIDTH = 160; // ボタンを中央に見せるため固定幅
 
