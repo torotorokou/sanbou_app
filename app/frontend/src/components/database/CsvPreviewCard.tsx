@@ -67,6 +67,7 @@ export const CsvPreviewCard: React.FC<Props> = ({
                 height: cardHeight - 48,
                 display: 'flex',
                 flexDirection: 'column',
+                overflow: 'hidden',
             }}
             style={{
                 height: cardHeight,
@@ -78,7 +79,15 @@ export const CsvPreviewCard: React.FC<Props> = ({
             }}
         >
             {csvPreview && csvPreview.rows.length > 0 ? (
-                <div className="table-wrap" style={{ flex: 1 }}>
+                <div
+                    className="table-wrap"
+                    style={{
+                        flex: 1,
+                        overflow: 'hidden',
+                        // enable horizontal scrolling when table is wider than container
+                        overflowX: 'auto',
+                    }}
+                >
                     <Table
                         columns={csvPreview.columns.map((col, i) => ({
                             title: col,
@@ -92,9 +101,11 @@ export const CsvPreviewCard: React.FC<Props> = ({
                         )}
                         pagination={false}
                         size='small'
-                        scroll={{ y: tableBodyHeight, x: 'max-content' }}
+                        // calculate horizontal scroll width from column count
+                        scroll={{ y: tableBodyHeight, x: Math.max(csvPreview.columns.length * 120, 800) }}
                         bordered
                         rowKey={(_, i) => (i ?? 0).toString()}
+                        style={{ minWidth: csvPreview.columns.length * 120 }}
                     />
                 </div>
             ) : (

@@ -1,9 +1,7 @@
-import React, { useState } from 'react';
-import { Upload, message, Card, Typography, Divider, Col, Row, Button, Modal, Spin } from 'antd';
-import { InboxOutlined } from '@ant-design/icons';
+import React from 'react';
+import { Typography, Col, Row, Button, Modal, Spin } from 'antd';
 import CsvUploadPanel from '../../components/database/CsvUploadPanel';
 import CsvPreviewCard from '../../components/database/CsvPreviewCard';
-import type { UploadProps } from 'antd';
 import { csvTypeColors } from '../../theme';
 
 import { UploadInstructions } from '@/components/database/UploadInstructions';
@@ -39,7 +37,7 @@ const UploadDatabasePage: React.FC = () => {
 
     return (
         <>
-            <Row style={{ height: '100vh', minHeight: 600 }}>
+            <Row style={{ minHeight: 600 }}>
                 <Col
                     span={8}
                     style={{
@@ -54,7 +52,7 @@ const UploadDatabasePage: React.FC = () => {
                     <CsvUploadPanel
                         upload={{
                             files: panelFiles,
-                            makeUploadProps: (label, onChange) => ({
+                            makeUploadProps: (label) => ({
                                 accept: '.csv',
                                 showUploadList: false,
                                 beforeUpload: (file: File) => {
@@ -79,11 +77,10 @@ const UploadDatabasePage: React.FC = () => {
                     span={16}
                     style={{
                         padding: 16,
-                        height: '100%',
-                        overflowY: 'auto',
                         display: 'flex',
                         flexDirection: 'column',
                         gap: 16,
+                        overflowX: 'hidden',
                     }}
                 >
                     {UPLOAD_CSV_TYPES.map((type) => (
