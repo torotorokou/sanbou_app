@@ -2,7 +2,7 @@
 // 固定サイズカード（320x260）。アイコン/タイトル/説明/ボタンを“縦横ど真ん中”に配置。
 
 import React from 'react';
-import { Card, Typography, Button, Popover, Grid } from 'antd';
+import { Card, Typography, Button, Popover, Grid, Alert, Modal, List } from 'antd';
 import {
   BookOutlined,
   RobotOutlined,
@@ -44,9 +44,10 @@ const PortalCard: React.FC<PortalCardProps> = ({ title, description, icon, link,
   return (
     <Popover
       content={detail ?? description}
-      trigger={["hover", "focus"]}
+      trigger={["hover"]}
       placement="top"
       overlayStyle={{ maxWidth: 320, whiteSpace: 'normal' }}
+      // keyboard での操作はカード自体で処理するため Popover の focus トリガーは外す
     >
       <Card
         hoverable
@@ -178,6 +179,40 @@ export const PortalPage: React.FC = () => {
     ? '社内ポータルです。必要な機能を選択してください。'
     : '社内ポータルへようこそ。下記のメニューから業務に必要な機能を選択してください。';
 
+  // --- 重要通知 (サンプルデータ) ---
+  const sampleNotices = [
+    {
+      id: 'n1',
+      title: 'システムメンテナンスのお知らせ',
+      summary: '9/20 02:00-04:00 にシステムメンテナンスを実施します。',
+      detail:
+        'サービス安定化のため、以下の時間帯でシステムメンテナンスを実施します。メンテナンス中は一部機能が利用できません。ご迷惑をおかけしますが、ご了承ください。',
+      date: '2025-09-10',
+    },
+  ];
+  type Notice = {
+    id: string;
+    title: string;
+    summary: string;
+    detail: string;
+    date: string;
+  };
+
+  const [notices] = React.useState<Notice[]>(sampleNotices as Notice[]);
+  const [noticeVisible, setNoticeVisible] = React.useState<boolean>(true);
+  const [modalOpen, setModalOpen] = React.useState<boolean>(false);
+  const [activeNotice, setActiveNotice] = React.useState<Notice | null>(null);
+
+  const openNoticeModal = (notice: Notice) => {
+    setActiveNotice(notice);
+    setModalOpen(true);
+  };
+
+  const closeNoticeModal = () => {
+    setModalOpen(false);
+    setActiveNotice(null);
+  };
+
   return (
     <div style={{ padding: '32px 32px 48px' }}>
       <header style={{ maxWidth: 960, margin: '0 auto 32px', textAlign: 'center' }}>
@@ -186,6 +221,31 @@ export const PortalPage: React.FC = () => {
       </header>
 
       <main style={{ maxWidth: 1280, margin: '0 auto' }}>
+        {/* 重要通知バナー */}
+        {noticeVisible && notices.length > 0 && (
+          <div style={{ maxWidth: 960, margin: '0 auto 24px' }}>
+            <Alert
+              type="warning"
+              showIcon
+              closable
+              onClose={() => setNoticeVisible(false)}
+              message={
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <strong>{notices[0].title}</strong>
+                    <div style={{ fontSize: 12, color: 'var(--ant-color-type-secondary)' }}>{notices[0].summary}</div>
+                  </div>
+                  <div>
+                    <Button type="link" onClick={() => openNoticeModal(notices[0])} aria-label="重要通知の詳細を開く">
+                      詳細
+                    </Button>
+                  </div>
+                </div>
+              }
+            />
+          </div>
+        )}
+
         <div
           aria-label="ポータルメニュー一覧"
           style={{
@@ -202,6 +262,25 @@ export const PortalPage: React.FC = () => {
           ))}
         </div>
       </main>
+
+      {/* 通知一覧 / 詳細モーダル */}
+      <Modal title={activeNotice?.title ?? '通知詳細'} open={modalOpen} onCancel={closeNoticeModal} footer={null}>
+        {activeNotice ? (
+          <div>
+            <div style={{ marginBottom: 8, color: 'rgba(0,0,0,0.45)' }}>{activeNotice.date}</div>
+            <div style={{ marginBottom: 12 }}>{activeNotice.detail}</div>
+          </div>
+        ) : (
+          <List
+            dataSource={notices}
+            renderItem={(item: Notice) => (
+              <List.Item onClick={() => openNoticeModal(item)} style={{ cursor: 'pointer' }}>
+                <List.Item.Meta title={item.title} description={item.summary} />
+              </List.Item>
+            )}
+          />
+        )}
+      </Modal>
     </div>
   );
 };
