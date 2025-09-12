@@ -115,7 +115,7 @@ const portalMenus: PortalCardProps[] = [
     detail:
       '工場日報や管理表などの帳簿作成とエクセル・PDFなどのエクスポートが可能です。テンプレートを使って入力を簡単に行えます。',
     icon: <BookOutlined />,
-    link: ROUTER_PATHS.LEDGER_BOOK,
+    link: ROUTER_PATHS.REPORT_MANAGE,
   },
   {
     title: '参謀 NAVI',
@@ -146,7 +146,7 @@ const portalMenus: PortalCardProps[] = [
     detail:
       'CSV のアップロード、保存データの検索・編集・エクスポートが可能です。データのインポート履歴やレコード管理を行えます。',
     icon: <CloudUploadOutlined />,
-    link: ROUTER_PATHS.RECORD_LIST,
+    link: ROUTER_PATHS.UPLOAD_PAGE,
   },
   {
     title: '管理機能',
