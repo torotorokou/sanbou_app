@@ -26,16 +26,21 @@ import { ROUTER_PATHS } from './router';
 
 // サイドバーのメニュー定義
 export const SIDEBAR_MENU = [
-    // ポータル（親メニュー）
+    // ホーム（ポータル + お知らせ を統合）
     {
-        key: 'portal',
+        key: 'home',
         icon: <DashboardOutlined />,
-        label: 'ポータル',
+        label: 'ホーム',
         children: [
             {
                 key: ROUTER_PATHS.PORTAL,
                 icon: <DashboardOutlined />,
                 label: <Link to={ROUTER_PATHS.PORTAL}>トップページ</Link>,
+            },
+            {
+                key: ROUTER_PATHS.NEWS,
+                icon: <NotificationOutlined />,
+                label: <Link to={ROUTER_PATHS.NEWS}>お知らせ一覧</Link>,
             },
         ],
     },
@@ -172,18 +177,6 @@ export const SIDEBAR_MENU = [
             },
         ],
     },
-            // お知らせ（親メニュー）
-    {
-        key: 'news',
-        icon: <NotificationOutlined />,
-        label: 'お知らせ',
-        children: [
-            {
-                key: ROUTER_PATHS.NEWS,
-                icon: <NotificationOutlined />,
-                label: <Link to={ROUTER_PATHS.NEWS}>お知らせ一覧</Link>,
-            },
-        ],
-    },
+
 
 ];
