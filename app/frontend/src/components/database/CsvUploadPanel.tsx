@@ -39,8 +39,6 @@ const CsvUploadPanel: React.FC<CsvUploadPanelProps> = ({ upload }) => {
                 borderRadius: 12,
                 backgroundColor: customTokens.colorBgBase,
                 width: '100%',
-                maxHeight: 850,
-                overflowY: 'auto',
             }}
         >
             <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
