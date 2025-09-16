@@ -59,7 +59,8 @@ services:
       GCS_DATA_PREFIX: master
     volumes:
       - ../secrets:/backend/secrets:ro
-      - ../secrets/gcs-key.json:/run/secrets/rag_gcs_key.json:ro
+      # 旧: gcs-key.json -> 新: stg_key.json に統一
+      - ../secrets/stg_key.json:/run/secrets/rag_gcs_key.json:ro
 
   # =============================
   # nginx (stg)

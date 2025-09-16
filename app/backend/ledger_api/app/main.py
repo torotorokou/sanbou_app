@@ -38,9 +38,9 @@ app = FastAPI(
     title="帳票・日報API",
     description="帳票生成、日報管理、PDF出力に関するAPI群です。",
     version="1.0.0",
-    docs_url="/ledger_api/docs",
-    redoc_url="/ledger_api/redoc",
-    openapi_url="/ledger_api/openapi.json",
+    docs_url="/docs",
+    redoc_url="/redoc",
+    openapi_url="/openapi.json",
 )
 
 # CORS設定 - すべてのオリジンからのアクセスを許可
