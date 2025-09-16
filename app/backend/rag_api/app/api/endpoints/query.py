@@ -251,40 +251,42 @@ def pdf_page(page_num: str):
         return StreamingResponse(image_bytes, media_type="image/png")
 
 
-@router.get("/question-options", tags=["template"])
+@router.get("/question-options", tags=["question"])
 def get_question_options():
     """
     質問テンプレートをカテゴリ・タグごとにグループ化して返すエンドポイント。
 
     Returns:
-        dict: カテゴリ・タグごとにグループ化されたテンプレート
+        dict: YAMLファイルと同じ、カテゴリ名 => [ { title, tag }, ... ] 構造
     """
     data = loader.load_question_templates()
+    # すでに YAML と同等の {カテゴリ: [ {title, tag}, ... ]} 構造で
+    # 読み込めている場合（load_question_templates は dict を [dict] で返す）
+    if isinstance(data, list) and data and isinstance(data[0], dict):
+        return data[0]
 
-    # YAMLのカテゴリ:質問リスト形式をフラット化
-    def flatten_templates(data):
-        flat = []
-        for category, questions in data[0].items():
-            for q in questions:
-                q = dict(q)  # copy
-                q["category"] = category
-                # tag→tagsにリネーム（OCP/既存関数互換）
-                if "tag" in q:
-                    q["tags"] = q.pop("tag")
-                flat.append(q)
-        return flat
+    # フラット（{category, title, tags|tag}）な形式から YAML と同じ構造を再構築
+    nested = {}
+    if isinstance(data, list):
+        for item in data:
+            if not isinstance(item, dict):
+                continue
+            category = item.get("category")
+            title = item.get("title")
+            tags = item.get("tag")
+            if tags is None:
+                tags = item.get("tags", [])
 
-    # データがカテゴリ:リスト形式ならフラット化
-    if isinstance(data, list) and len(data) > 0 and isinstance(data[0], dict):
-        if all(isinstance(v, list) for v in data[0].values()):
-            data = flatten_templates(data)
+            if not category or not title:
+                continue
 
-    grouped = loader.group_templates_by_category_and_tags(data)
-    # tagsタプルを'|'区切りの文字列に変換
-    grouped_strkey = {}
-    for category, tags_dict in grouped.items():
-        grouped_strkey[category] = {}
-        for tags_tuple, titles in tags_dict.items():
-            tags_str = "|".join(tags_tuple)
-            grouped_strkey[category][tags_str] = titles
-    return grouped_strkey
+            def _append(cat):
+                nested.setdefault(cat, []).append({"title": title, "tag": tags})
+
+            if isinstance(category, list):
+                for cat in category:
+                    _append(cat)
+            else:
+                _append(category)
+
+    return nested

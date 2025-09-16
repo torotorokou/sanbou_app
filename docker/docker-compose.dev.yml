@@ -91,6 +91,8 @@ services:
       - ../secrets:/backend/secrets:ro
     environment:
       GOOGLE_APPLICATION_CREDENTIALS: /backend/secrets/dev_key.json
+      # local_dev では GCS からの同期を行わないため、YAML を config 配下に固定
+      CATEGORY_QUESTION_TEMPLATES_WITH_TAGS: /backend/config/category_question_templates.yaml
     depends_on:
       - db
     networks:
