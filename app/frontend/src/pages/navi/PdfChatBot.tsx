@@ -10,7 +10,7 @@ import PdfPreviewModal from '@/components/chat/PdfPreviewModal';
 import type { StepItem } from '@/components/ui/ReportStepIndicator';
 import ReportStepIndicator from '@/components/ui/ReportStepIndicator';
 // YAMLを直接インポート（viteの@rollup/plugin-yamlでJSON化）
-import categoryYaml from '@/config/category_question_templates.yaml';
+// YAML直読みを廃止し、バックエンドAPIから取得する
 
 // ✅ 追加: 通知ストア
 import { useNotificationStore } from '@/stores/notificationStore';
@@ -73,19 +73,38 @@ const PdfChatBot: React.FC = () => {
     // ✅ 追加: 通知のadd関数を取得
     const addNotification = useNotificationStore((s) => s.addNotification);
 
-    // 選択テンプレートに紐づく推奨タグ（YAML）を取得（※送信には使用しない）
-    const _templateTags = useMemo(() => {
-        if (!category || !template || template === '自由入力') return [] as string[];
-        const items =
-            (categoryYaml as Record<string, { title: string; tag: string[] }[]>)[category] || [];
-        const found = items.find((it) => it.title === template);
-        return found?.tag ?? [];
-    }, [category, template]);
+    // バックエンドから取得するカテゴリ/テンプレート/タグの辞書
+    const [categoryData, setCategoryData] = useState<
+        Record<string, { title: string; tag: string[] }[]>
+    >({});
 
-    // dev no-op: avoid unused var warning
-    if (import.meta.env?.MODE === 'development' && Array.isArray(_templateTags) && _templateTags.length < 0) {
-        console.debug('noop', _templateTags);
-    }
+    // 初回マウント時に質問テンプレート一覧を取得
+    React.useEffect(() => {
+        const fetchOptions = async () => {
+            try {
+                const res = await axios.get('/rag_api/api/question-options');
+                // 期待フォーマット: { [category]: [{ title, tag: string[] }] }
+                if (res && res.data && typeof res.data === 'object') {
+                    setCategoryData(res.data as Record<string, { title: string; tag: string[] }[]>);
+                } else {
+                    console.warn('[API][question-options] Unexpected payload:', res?.data);
+                    setCategoryData({});
+                }
+            } catch (err) {
+                console.error('[API][ERROR] /question-options:', err);
+                setCategoryData({});
+                addNotification({
+                    type: 'error',
+                    title: '質問テンプレートの取得に失敗',
+                    message: 'カテゴリ・テンプレート候補を取得できませんでした。',
+                    duration: 4000,
+                });
+            }
+        };
+        fetchOptions();
+    }, []);
+
+    // YAML直参照を廃止したため、推奨タグの内部利用はなし
 
     // 送信用：ユーザー選択のみ（一意化＆空除去）
     const tagsToSend = useMemo(() => Array.from(new Set(tags)).filter(Boolean), [tags]);
@@ -263,9 +282,7 @@ const PdfChatBot: React.FC = () => {
                         setQuestion(val);
                         if (val.trim()) setCurrentStep(2);
                     }}
-                    categoryData={
-                        categoryYaml as Record<string, { title: string; tag: string[] }[]>
-                    }
+                    categoryData={categoryData}
                 />
 
                 {/* 中央カラム */}

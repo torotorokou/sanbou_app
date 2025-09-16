@@ -290,3 +290,21 @@ def get_question_options():
                 _append(category)
 
     return nested
+
+
+# --- 環境デバッグ（キー存在確認・マスク表示） ---
+@router.get("/debug-keys", tags=["debug"])
+def debug_keys() -> JSONResponse:
+    import os
+    k = os.environ.get("OPENAI_API_KEY")
+    masked = f"***{k[-4:]}" if k and len(k) > 8 else ("set" if k else "missing")
+    payload = {
+        "OPENAI_API_KEY": masked,
+        "SECRETS_LOADED_FROM": os.environ.get("SECRETS_LOADED_FROM"),
+        "STAGE": os.environ.get("STAGE"),
+    }
+    return SuccessApiResponse(
+        code="S200",
+        detail="env debug",
+        result=payload,
+    ).to_json_response()

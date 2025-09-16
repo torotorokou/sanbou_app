@@ -130,4 +130,8 @@ fi
 # --- FastAPI起動 ---
 echo "APP_ROOT_DIR: ${APP_ROOT_DIR:-未設定} (fallback APP_BASE_DIR=${APP_BASE_DIR:-未設定})"
 echo "🚀 [2/2] Starting FastAPI..."
-exec uvicorn app.main:app --host 0.0.0.0 --port 8000
+if [[ "${DEV_RELOAD:-0}" == "1" ]]; then
+  exec uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+else
+  exec uvicorn app.main:app --host 0.0.0.0 --port 8000
+fi

@@ -221,3 +221,8 @@ __archive__/
 
 # (EOF)
 app/nginx/certs/*
+
+# Exclude specific local config templates (tracked config allowed elsewhere)
+# These files contain local or sensitive content and should not be committed
+category_question_templates_with_tags.yaml
+category_question_templates.yaml

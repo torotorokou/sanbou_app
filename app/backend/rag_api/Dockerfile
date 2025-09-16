@@ -56,6 +56,12 @@ RUN mkdir -p /backend/static/pdfs /backend/static/test_pdfs \
     && chown -R appuser:appuser /backend/static
 USER appuser
 
+# Ensure /backend/local_data is writable to avoid fallback to /home
+USER root
+RUN mkdir -p /backend/local_data \
+    && chown -R appuser:appuser /backend/local_data
+USER appuser
+
 EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=5s --retries=3 CMD curl -fsS http://localhost:8000/health >/dev/null || exit 1
 
