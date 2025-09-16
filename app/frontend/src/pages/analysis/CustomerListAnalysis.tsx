@@ -3,7 +3,6 @@ import { Row, Col, Button, Card, message } from 'antd';
 import { ReloadOutlined } from '@ant-design/icons';
 import { customTokens } from '@/theme/tokens';
 import type { Dayjs } from 'dayjs';
-import dayjs from 'dayjs';
 import ComparisonConditionForm from '@/components/analysis/customer-list-analysis/ComparisonConditionForm';
 import CustomerComparisonResultCard from '@/components/analysis/customer-list-analysis/CustomerComparisonResultCard';
 import AnalysisProcessingModal from '@/components/analysis/customer-list-analysis/AnalysisProcessingModal';
@@ -84,7 +83,7 @@ const CustomerListAnalysis: React.FC = () => {
             link.parentNode?.removeChild(link);
             window.URL.revokeObjectURL(url);
             message.success('エクセルをダウンロードしました');
-        } catch (err) {
+        } catch {
             message.error('ダウンロードに失敗しました');
         }
         setDownloading(false);

@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Table, DatePicker, Select, Space, Button, Pagination } from 'antd';
-import dayjs, { Dayjs } from 'dayjs';
+import dayjs from 'dayjs';
+import type { Dayjs } from 'dayjs';
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
 import {
@@ -9,7 +10,9 @@ import {
     getFilteredRowModel,
     getPaginationRowModel,
     getSortedRowModel,
-    ColumnDef,
+    type ColumnDef,
+    type ColumnFiltersState,
+    type SortingState,
 } from '@tanstack/react-table';
 
 dayjs.extend(isSameOrAfter);
@@ -39,8 +42,8 @@ const visibleColumns = [
 const RecordListPage: React.FC = () => {
     const [month, setMonth] = useState<Dayjs>(dayjs('2025-07'));
     const [dateRange, setDateRange] = useState<[Dayjs | null, Dayjs | null]>([null, null]);
-    const [columnFilters, setColumnFilters] = useState<any[]>([]);
-    const [sorting, setSorting] = useState<any[]>([]);
+    const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+    const [sorting, setSorting] = useState<SortingState>([]);
     const [pageIndex, setPageIndex] = useState(0);
     const [pageSize, setPageSize] = useState(10);
 
@@ -51,8 +54,8 @@ const RecordListPage: React.FC = () => {
         visibleColumns.forEach(col => {
             if (col.type === 'string') {
                 const val = columnFilters.find(f => f.id === col.key)?.value;
-                if (val && val.length > 0) {
-                    strFilters[col.key] = val;
+                if (Array.isArray(val) && val.length > 0) {
+                    strFilters[col.key] = val as string[];
                 }
             }
         });
@@ -154,11 +157,11 @@ const RecordListPage: React.FC = () => {
                             placeholder="全て"
                             style={{ width: col.width - 8, fontSize: 12 }}
                             value={
-                                (columnFilters.find((f: any) => f.id === col.key)?.value as string[]) ?? []
+                                (columnFilters.find((f) => f.id === col.key)?.value as string[]) ?? []
                             }
                             onChange={v => {
                                 table.setPageIndex(0);
-                                setColumnFilters((old: any[]) =>
+                                setColumnFilters((old) =>
                                     v && v.length > 0
                                         ? [...old.filter(f => f.id !== col.key), { id: col.key, value: v }]
                                         : old.filter(f => f.id !== col.key)

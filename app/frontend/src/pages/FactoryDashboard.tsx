@@ -108,12 +108,12 @@ const FactoryDashboard: React.FC = () => {
                             >
                                 <XAxis dataKey='time' />
                                 <YAxis
-                                    tickFormatter={(v: any) =>
+                                    tickFormatter={(v: number) =>
                                         `${(Number(v) * 100).toFixed(0)}%`
                                     }
                                 />
                                 <Tooltip
-                                    formatter={(v: any) =>
+                                    formatter={(v: number) =>
                                         `${(Number(v) * 100).toFixed(1)}%`
                                     }
                                 />

@@ -25,12 +25,15 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { ROUTER_PATHS } from '@/constants/router';
 import { useWindowSize } from '@/hooks/ui';
+import './PortalPage.css';
 
 const { Title, Paragraph, Text } = Typography;
 
 const CARD_WIDTH = 320;
 const CARD_HEIGHT = 208; // きっちり固定。中身は縦横センター配置。
 const BUTTON_WIDTH = 160;
+const BUTTON_HEIGHT = 36; // 画面サイズに依存しない固定高さ
+const BUTTON_FONT_SIZE = 14; // 画面サイズに依存しない固定フォントサイズ
 
 export interface PortalCardProps {
   title: string;
@@ -41,6 +44,8 @@ export interface PortalCardProps {
   link: string;
   // 任意のアクセント色（例: '#52c41a'）
   color?: string;
+  // ボタン幅を外から制御（単位: px）。未指定時はデフォルトを使用。
+  buttonWidth?: number;
 }
 
 /** 単一責任：1メニューカードの表示と遷移のみ */
@@ -51,6 +56,7 @@ const PortalCard: React.FC<PortalCardProps> = ({
   link,
   detail,
   color,
+  buttonWidth,
 }) => {
   const navigate = useNavigate();
   const { token } = theme.useToken();
@@ -96,6 +102,7 @@ const PortalCard: React.FC<PortalCardProps> = ({
     }
   };
   const btnText = getReadableTextColor(accent);
+  const appliedButtonWidth = buttonWidth ?? BUTTON_WIDTH;
 
   const handleNavigate = () => navigate(link);
   const handleKeyDown: React.KeyboardEventHandler<HTMLDivElement> = (e) => {
@@ -198,8 +205,18 @@ const PortalCard: React.FC<PortalCardProps> = ({
 
         <Button
           type="primary"
+          size="middle"
           style={{
-            width: BUTTON_WIDTH,
+            width: appliedButtonWidth,
+            minWidth: appliedButtonWidth,
+            maxWidth: appliedButtonWidth,
+            height: BUTTON_HEIGHT,
+            lineHeight: `${BUTTON_HEIGHT}px`,
+            fontSize: BUTTON_FONT_SIZE,
+            padding: 0,
+            whiteSpace: 'nowrap',
+            flex: '0 0 auto',
+            alignSelf: 'center',
             background: accent,
             borderColor: 'transparent',
             color: btnText,
@@ -232,7 +249,7 @@ const PortalCard: React.FC<PortalCardProps> = ({
 // 元の3色をベースに、ライト/ダークを追加して6色に拡張します。
 // 各色は、UI上での用途（アイコンプレート / アクセントボタン等）を想定して選定しています。
 const PALETTE = {
-  BLUE: '#1874cfff', // ベースブルー
+  BLUE: '#226cb6ff', // ベースブルー
   BLUE_DARK: '#22a114', // ダークブルー
   ORANGE: '#eb4848ff', // ベースオレンジ
   ORANGE_DARK: '#ecf023ff', // ダークオレンジ
@@ -313,6 +330,9 @@ export const PortalPage: React.FC = () => {
 
   const isCompact = isMobile || !screens.lg || width < 900;
 
+  // レスポンシブに関係なく全カードで同じボタン幅に統一する
+  const unifiedButtonWidth = BUTTON_WIDTH;
+
   const introText = isCompact
     ? '社内ポータルです。必要な機能を選択してください。'
     : '社内ポータルへようこそ。下記メニューから業務に必要な機能を選択してください。';
@@ -343,27 +363,28 @@ export const PortalPage: React.FC = () => {
     setActiveNotice(null);
   };
 
+  type PortalHeroVars = React.CSSProperties & Record<
+    '--portal-accent' | '--portal-hero-bg' | '--portal-hero-plate' | '--portal-text-secondary' | '--portal-border' | '--portal-shadow',
+    string
+  >;
+
+  const heroVars: PortalHeroVars = {
+    '--portal-accent': token.colorPrimary,
+    '--portal-hero-bg': token.colorBgContainer,
+    '--portal-hero-plate': token.colorFillQuaternary,
+    '--portal-text-secondary': token.colorTextTertiary,
+    '--portal-border': token.colorBorderSecondary,
+    '--portal-shadow': token.boxShadowSecondary,
+  };
+
   return (
-    <div
-      style={{
-        // 控えめなグラデ背景 + ページ余白
-        padding: '32px 32px 48px',
-        // background: `linear-gradient(180deg, ${token.colorBgLayout} 0%, ${token.colorFillTertiary} 100%)`,
-        minHeight: '100dvh',
-      }}
-    >
-      <header
-        style={{
-          maxWidth: 960,
-          margin: '0 auto 32px',
-          textAlign: 'center',
-        }}
-      >
-        <Title level={2} style={{ marginBottom: 8 }}>
+    <div className="portal-page" style={{ minHeight: '100dvh' }}>
+      <section className="portal-hero" style={heroVars}>
+        <Title level={2} className="portal-title">
           社内ポータル
         </Title>
-        <Text type="secondary">{introText}</Text>
-      </header>
+        <Text className="portal-subtitle">{introText}</Text>
+      </section>
 
       <main style={{ maxWidth: 1280, margin: '0 auto' }}>
         {/* 重要通知バナー */}
@@ -420,7 +441,9 @@ export const PortalPage: React.FC = () => {
           aria-label="ポータルメニュー一覧"
           style={{
             display: 'grid',
-            gap: 24,
+            columnGap: 24,
+            rowGap: 24, // 画面サイズに関わらず縦の間隔を固定
+            gridAutoRows: `${CARD_HEIGHT}px`, // 各行の高さをカード固定高に合わせる
             // 利用可能幅に基づいて表示列数を調整します。
             // カード幅 + ギャップを考慮して列数を計算（最大 portalMenus.length）
             gridTemplateColumns: (() => {
@@ -446,7 +469,7 @@ export const PortalPage: React.FC = () => {
           }}
         >
           {portalMenus.map((menu) => (
-            <PortalCard key={menu.link} {...menu} />
+            <PortalCard key={menu.link} {...menu} buttonWidth={unifiedButtonWidth} />
           ))}
         </div>
       </main>

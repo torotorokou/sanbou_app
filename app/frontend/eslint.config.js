@@ -18,6 +18,8 @@ export default defineConfig([
             'tsconfig*.json',
             'scripts/**',
             '__archive__/**',
+            'package.json',
+            'package-lock.json',
         ],
     },
     // JS/TS/JSX/TSX 共通（アプリコードに限定）
@@ -35,6 +37,11 @@ export default defineConfig([
         plugins: {
             '@typescript-eslint': pluginTs,
             react: pluginReact,
+        },
+        settings: {
+            react: {
+                version: 'detect',
+            },
         },
         rules: {
             ...pluginTs.configs.recommended.rules,

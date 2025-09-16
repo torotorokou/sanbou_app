@@ -40,7 +40,7 @@ export const SIDEBAR_MENU = [
             {
                 key: ROUTER_PATHS.NEWS,
                 icon: <NotificationOutlined />,
-                label: <Link to={ROUTER_PATHS.NEWS}>お知らせ一覧</Link>,
+                label: <Link to={ROUTER_PATHS.NEWS}>お知らせ</Link>,
             },
         ],
     },
@@ -132,7 +132,7 @@ export const SIDEBAR_MENU = [
                 {
                     key: ROUTER_PATHS.MANUAL_SEARCH,
                     icon: <BookOutlined />,
-                    label: <Link to={ROUTER_PATHS.MANUAL_SEARCH}>マニュアル一覧</Link>,
+                    label: <Link to={ROUTER_PATHS.MANUAL_SEARCH}>環境将軍マニュアル</Link>,
                 },
             ],
         },
