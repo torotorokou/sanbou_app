@@ -29,16 +29,16 @@ DC := docker compose
 ENV_CANON := $(ENV)
 
 ifeq ($(ENV),dev)
-	$(warning [compat] ENV=dev は非推奨。ENV=local_dev を使用してください)
-	ENV_CANON := local_dev
+$(warning [compat] ENV=dev は非推奨。ENV=local_dev を使用してください)
+ENV_CANON := local_dev
 endif
 ifeq ($(ENV),stg)
-	$(warning [compat] ENV=stg は非推奨。ENV=vm_stg を使用してください)
-	ENV_CANON := vm_stg
+$(warning [compat] ENV=stg は非推奨。ENV=vm_stg を使用してください)
+ENV_CANON := vm_stg
 endif
 ifeq ($(ENV),prod)
-	$(warning [compat] ENV=prod は非推奨。ENV=vm_prod を使用してください)
-	ENV_CANON := vm_prod
+$(warning [compat] ENV=prod は非推奨。ENV=vm_prod を使用してください)
+ENV_CANON := vm_prod
 endif
 
 ENV_FILE_COMMON := env/.env.common
@@ -46,31 +46,31 @@ ENV_FILE := env/.env.$(ENV)
 
 # Compose file set & env file mapping
 ifeq ($(ENV_CANON),local_dev)
-	ENV_FILE := env/.env.local_dev
-	COMPOSE_FILES := -f docker/docker-compose.dev.yml
-	HEALTH_URL := http://localhost:8001/health
+ENV_FILE := env/.env.local_dev
+COMPOSE_FILES := -f docker/docker-compose.dev.yml
+HEALTH_URL := http://localhost:8001/health
 else ifeq ($(ENV_CANON),local_stg)
-	ENV_FILE := env/.env.local_stg
-	COMPOSE_FILES := -f docker/docker-compose.stg.yml
-	# local_stg では host 側任意ポートへバインドできるため health check を localhost:PORT に動的対応
-	# ユーザが `STG_NGINX_HTTP_PORT=18080 make rebuild ENV=local_stg` のように指定すると 18080 を使用
-	HEALTH_PORT := $(if $(STG_NGINX_HTTP_PORT),$(STG_NGINX_HTTP_PORT),8080)
-	HEALTH_URL := http://localhost:$(HEALTH_PORT)/health
+ENV_FILE := env/.env.local_stg
+COMPOSE_FILES := -f docker/docker-compose.stg.yml
+# local_stg では host 側任意ポートへバインドできるため health check を localhost:PORT に動的対応
+# ユーザが `STG_NGINX_HTTP_PORT=18080 make rebuild ENV=local_stg` のように指定すると 18080 を使用
+HEALTH_PORT := $(if $(STG_NGINX_HTTP_PORT),$(STG_NGINX_HTTP_PORT),8080)
+HEALTH_URL := http://localhost:$(HEALTH_PORT)/health
 # NOTE: 左詰め必須: タブやスペースでインデントすると GNU make が recipe と誤認し
 # "recipe commences before first target" エラーになる可能性があるため列頭に置く
 STG_ENV_FILE := local_stg
 else ifeq ($(ENV_CANON),vm_stg)
-	ENV_FILE := env/.env.vm_stg
-	COMPOSE_FILES := -f docker/docker-compose.stg.yml
-	HEALTH_URL := http://stg.sanbou-app.jp/health
+ENV_FILE := env/.env.vm_stg
+COMPOSE_FILES := -f docker/docker-compose.stg.yml
+HEALTH_URL := http://stg.sanbou-app.jp/health
 # NOTE: 上記と同様に左詰めを保持
 STG_ENV_FILE := vm_stg
 else ifeq ($(ENV_CANON),vm_prod)
-	ENV_FILE := env/.env.vm_prod
-	COMPOSE_FILES := -f docker/docker-compose.prod.yml
-	HEALTH_URL := https://sanbou-app.jp/health
+ENV_FILE := env/.env.vm_prod
+COMPOSE_FILES := -f docker/docker-compose.prod.yml
+HEALTH_URL := https://sanbou-app.jp/health
 else
-	$(error Unsupported ENV: $(ENV))
+$(error Unsupported ENV: $(ENV))
 endif
 
 # Secrets file per original ENV name (not canonical) to keep them separate

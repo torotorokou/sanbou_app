@@ -23,7 +23,7 @@ rag_api/
 └── ...
 ```
 
--- GCSサービスアカウントキー: `secrets/gcs-key.json`
+- GCSサービスアカウントキー: `secrets/<stage>_key.json` （例: `dev_key.json`, `stg_key.json`, `prod_key.json`）
 - OpenAI APIキー: `.env` または `envs/.env.rag_api` に `OPENAI_API_KEY=...`
 
 ---
@@ -32,7 +32,7 @@ rag_api/
 
 ```
 OPENAI_API_KEY=sk-...
-GOOGLE_APPLICATION_CREDENTIALS=/root/.config/gcloud/application_default_credentials.json
+GOOGLE_APPLICATION_CREDENTIALS=/run/secrets/rag_gcs_key.json  # stg/prod は /run/secrets にマウント
 ```
 
 ---
@@ -53,7 +53,7 @@ docker compose up rag_api
 
 ```bash
 docker build -t rag_api .
-docker run --env-file ../envs/.env.rag_api -v $(pwd)/secrets/gcs-key.json:/root/.config/gcloud/application_default_credentials.json rag_api
+docker run --env-file ../envs/.env.rag_api -v $(pwd)/secrets/stg_key.json:/run/secrets/rag_gcs_key.json rag_api
 ```
 
 ---

@@ -3,9 +3,8 @@
 set -euo pipefail
 IFS=$'\n\t'
 
-# --- 設定値（環境変数で上書き可能） ---
-GCS_BUCKET_NAME="${GCS_BUCKET_NAME:-object_haikibutu}"
-GCS_DATA_PREFIX="${GCS_DATA_PREFIX:-master}"
+# --- 環境・基底パス ---
+STAGE=${STAGE:-dev}
 # APP_ROOT_DIR (新) -> APP_BASE_DIR (旧) -> /backend の順で基底パス決定
 _BASE_DIR="${APP_ROOT_DIR:-${APP_BASE_DIR:-/backend}}"
 # /backend が書き込み不可な場合はホームへフォールバック
@@ -22,12 +21,49 @@ fi
 if command -v chown >/dev/null 2>&1; then
   chown -R appuser:appuser "${TARGET_DIR%/master}" 2>/dev/null || true
 fi
-# 優先順位: /run/secrets/gcs_key.json -> 既存設定 or デフォルト
-if [ -f /run/secrets/gcs_key.json ]; then
-  export GOOGLE_APPLICATION_CREDENTIALS="/run/secrets/gcs_key.json"
-else
-  GOOGLE_APPLICATION_CREDENTIALS="${GOOGLE_APPLICATION_CREDENTIALS:-/root/.config/gcloud/application_default_credentials.json}"
+# --- GCS 取得元（環境別ディレクトリ構成） ---
+# 既存の環境変数で明示されていれば尊重。未設定時は STAGE から自動決定。
+# 例: gs://sanbouapp-stg/ledger_api/rag_api/object_haikibutu/*
+if [ -z "${GCS_BUCKET_NAME:-}" ]; then
+  GCS_BUCKET_NAME="sanbouapp-${STAGE}"
 fi
+if [ -z "${GCS_DATA_PREFIX:-}" ]; then
+  GCS_DATA_PREFIX="ledger_api/rag_api/object_haikibutu"
+fi
+
+# --- GOOGLE_APPLICATION_CREDENTIALS 解決 (ledger_api と同様の方針) ---
+# 既に外部から与えられている場合は尊重。ただし読めない場合はフォールバック。
+if [ -z "${GOOGLE_APPLICATION_CREDENTIALS:-}" ]; then
+  if [ -f "/run/secrets/rag_gcs_key.json" ]; then
+    export GOOGLE_APPLICATION_CREDENTIALS="/run/secrets/rag_gcs_key.json"
+  elif [ -f "/backend/secrets/${STAGE}_key.json" ]; then
+    export GOOGLE_APPLICATION_CREDENTIALS="/backend/secrets/${STAGE}_key.json"
+  elif [ -f "/backend/secrets/${STAGE}-key.json" ]; then
+    export GOOGLE_APPLICATION_CREDENTIALS="/backend/secrets/${STAGE}-key.json"
+  elif [ -f "/backend/secrets/key.json" ]; then
+    export GOOGLE_APPLICATION_CREDENTIALS="/backend/secrets/key.json"
+  else
+    GOOGLE_APPLICATION_CREDENTIALS="/root/.config/gcloud/application_default_credentials.json"
+  fi
+else
+  if [ ! -r "${GOOGLE_APPLICATION_CREDENTIALS}" ]; then
+    echo "[WARN] GOOGLE_APPLICATION_CREDENTIALS is set but not readable: ${GOOGLE_APPLICATION_CREDENTIALS}" >&2
+    if [ -f "/run/secrets/rag_gcs_key.json" ]; then
+      export GOOGLE_APPLICATION_CREDENTIALS="/run/secrets/rag_gcs_key.json"
+      echo "[INFO] fallback GOOGLE_APPLICATIONS_CREDENTIALS -> ${GOOGLE_APPLICATION_CREDENTIALS}"
+    elif [ -f "/backend/secrets/${STAGE}_key.json" ]; then
+      export GOOGLE_APPLICATION_CREDENTIALS="/backend/secrets/${STAGE}_key.json"
+      echo "[INFO] fallback GOOGLE_APPLICATIONS_CREDENTIALS -> ${GOOGLE_APPLICATION_CREDENTIALS}"
+    elif [ -f "/backend/secrets/${STAGE}-key.json" ]; then
+      export GOOGLE_APPLICATION_CREDENTIALS="/backend/secrets/${STAGE}-key.json"
+      echo "[INFO] fallback GOOGLE_APPLICATIONS_CREDENTIALS -> ${GOOGLE_APPLICATION_CREDENTIALS}"
+    elif [ -f "/backend/secrets/key.json" ]; then
+      export GOOGLE_APPLICATION_CREDENTIALS="/backend/secrets/key.json"
+      echo "[INFO] fallback GOOGLE_APPLICATIONS_CREDENTIALS -> ${GOOGLE_APPLICATION_CREDENTIALS}"
+    fi
+  fi
+fi
+echo "[INFO] GOOGLE_APPLICATION_CREDENTIALS=${GOOGLE_APPLICATION_CREDENTIALS:-<none>}"
 
 # --- 関数化：GCSからデータ取得 ---
 download_gcs_data() {

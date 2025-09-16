@@ -5,7 +5,10 @@
 services:
   # 共通ビルド/依存関係
   ai_api:
-    build: { context: ../app, dockerfile: backend/ai_api/Dockerfile }
+    build:
+      context: ../app
+      dockerfile: backend/ai_api/Dockerfile
+      network: host
     networks: [app-net]
     depends_on:
       - db
@@ -15,7 +18,10 @@ services:
       - ../env/.env.${STG_ENV_FILE}
 
   ledger_api:
-    build: { context: ../app, dockerfile: backend/ledger_api/Dockerfile }
+    build:
+      context: ../app
+      dockerfile: backend/ledger_api/Dockerfile
+      network: host
     networks: [app-net]
     depends_on:
       - db
@@ -35,7 +41,10 @@ services:
       - ../secrets/stg_key.json:/run/secrets/ledger_gcs_key.json:ro
 
   sql_api:
-    build: { context: ../app, dockerfile: backend/sql_api/Dockerfile }
+    build:
+      context: ../app
+      dockerfile: backend/sql_api/Dockerfile
+      network: host
     networks: [app-net]
     depends_on:
       - db
@@ -44,7 +53,10 @@ services:
       - ../env/.env.${STG_ENV_FILE}
 
   rag_api:
-    build: { context: ../app, dockerfile: backend/rag_api/Dockerfile }
+    build:
+      context: ../app
+      dockerfile: backend/rag_api/Dockerfile
+      network: host
     networks: [app-net]
     depends_on:
       - db
@@ -53,13 +65,12 @@ services:
       - ../env/.env.${STG_ENV_FILE}
     environment:
       STAGE: stg
-      # rag_api 用の gcs-key.json を利用
+      # rag_api 用の STAGE 別 GCP SA Key
       GOOGLE_APPLICATION_CREDENTIALS: /run/secrets/rag_gcs_key.json
-      GCS_BUCKET_NAME: object_haikibutu
-      GCS_DATA_PREFIX: master
     volumes:
       - ../secrets:/backend/secrets:ro
-      - ../secrets/gcs-key.json:/run/secrets/rag_gcs_key.json:ro
+      # 旧: gcs-key.json -> 新: stg_key.json (2025-09 rename)
+      - ../secrets/stg_key.json:/run/secrets/rag_gcs_key.json:ro
 
   # =============================
   # nginx (stg)
@@ -71,6 +82,7 @@ services:
       context: ../app/frontend
       dockerfile: Dockerfile
       target: runtime
+      network: host
     depends_on:
       - ai_api
       - ledger_api

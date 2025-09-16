@@ -91,8 +91,12 @@ services:
       - ../app/backend/rag_api/app:/backend/app
       - ../app/backend/backend_shared:/backend/backend_shared
       - ../app/config:/backend/config
+      # secrets をマウント（base compose の定義を override で補完）
+      - ../secrets:/backend/secrets:ro
     environment:
       STAGE: dev
+      GOOGLE_APPLICATION_CREDENTIALS: /backend/secrets/dev_key.json
+      CATEGORY_QUESTION_TEMPLATES_WITH_TAGS: /backend/config/category_question_templates.yaml
     depends_on:
       - db
     networks:
