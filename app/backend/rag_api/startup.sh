@@ -22,12 +22,37 @@ fi
 if command -v chown >/dev/null 2>&1; then
   chown -R appuser:appuser "${TARGET_DIR%/master}" 2>/dev/null || true
 fi
-# 優先順位: /run/secrets/gcs_key.json -> 既存設定 or デフォルト
-if [ -f /run/secrets/gcs_key.json ]; then
-  export GOOGLE_APPLICATION_CREDENTIALS="/run/secrets/gcs_key.json"
-else
-  GOOGLE_APPLICATION_CREDENTIALS="${GOOGLE_APPLICATION_CREDENTIALS:-/root/.config/gcloud/application_default_credentials.json}"
+# --- GCP 認証ファイル探索（ledger_api と同等方針）---
+# 1) 明示指定 GOOGLE_APPLICATION_CREDENTIALS があれば尊重（読めない場合はフォールバック）
+# 2) /run/secrets/rag_gcs_key.json（compose で単一ファイルマウント）
+# 3) /backend/secrets/${STAGE}_key.json（新命名）
+# 4) /backend/secrets/${STAGE}-key.json（旧命名互換）
+# 5) /backend/secrets/key.json（共通）
+
+STAGE=${STAGE:-dev}
+
+pick_credential_path() {
+  local p
+  for p in \
+    "${GOOGLE_APPLICATION_CREDENTIALS:-}" \
+    "/run/secrets/rag_gcs_key.json" \
+    "/backend/secrets/${STAGE}_key.json" \
+    "/backend/secrets/${STAGE}-key.json" \
+    "/backend/secrets/key.json" \
+    "/root/.config/gcloud/application_default_credentials.json"; do
+    if [ -n "$p" ] && [ -r "$p" ]; then
+      echo "$p"
+      return 0
+    fi
+  done
+  echo "" # 見つからない
+}
+
+GOOGLE_APPLICATION_CREDENTIALS=$(pick_credential_path)
+if [ -n "$GOOGLE_APPLICATION_CREDENTIALS" ]; then
+  export GOOGLE_APPLICATION_CREDENTIALS
 fi
+echo "[INFO] STAGE=$STAGE GOOGLE_APPLICATION_CREDENTIALS=${GOOGLE_APPLICATION_CREDENTIALS:-<none>}"
 
 # --- 関数化：GCSからデータ取得 ---
 download_gcs_data() {

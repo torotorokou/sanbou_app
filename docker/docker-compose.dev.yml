@@ -91,8 +91,10 @@ services:
       - ../app/backend/rag_api/app:/backend/app
       - ../app/backend/backend_shared:/backend/backend_shared
       - ../app/config:/backend/config
+      - ../secrets:/backend/secrets:ro
     environment:
       STAGE: dev
+      GOOGLE_APPLICATION_CREDENTIALS: /backend/secrets/dev_key.json
     depends_on:
       - db
     networks:
