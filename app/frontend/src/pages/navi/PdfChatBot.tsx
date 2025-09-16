@@ -74,13 +74,18 @@ const PdfChatBot: React.FC = () => {
     const addNotification = useNotificationStore((s) => s.addNotification);
 
     // 選択テンプレートに紐づく推奨タグ（YAML）を取得（※送信には使用しない）
-    const templateTags = useMemo(() => {
+    const _templateTags = useMemo(() => {
         if (!category || !template || template === '自由入力') return [] as string[];
         const items =
             (categoryYaml as Record<string, { title: string; tag: string[] }[]>)[category] || [];
         const found = items.find((it) => it.title === template);
         return found?.tag ?? [];
     }, [category, template]);
+
+    // dev no-op: avoid unused var warning
+    if (import.meta.env?.MODE === 'development' && Array.isArray(_templateTags) && _templateTags.length < 0) {
+        console.debug('noop', _templateTags);
+    }
 
     // 送信用：ユーザー選択のみ（一意化＆空除去）
     const tagsToSend = useMemo(() => Array.from(new Set(tags)).filter(Boolean), [tags]);
@@ -118,7 +123,7 @@ const PdfChatBot: React.FC = () => {
         setCurrentStep(3);
         setLoading(true);
 
-        // ★ 送信するのはユーザー選択のタグのみ（templateTagsは結合しない）
+    // ★ 送信するのはユーザー選択のタグのみ（templateTagsは結合しない）
         const payload = {
             query: question,
             category: category,

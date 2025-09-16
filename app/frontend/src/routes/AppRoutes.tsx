@@ -23,7 +23,7 @@ import CustomerListAnalysis from '../pages/analysis/CustomerListAnalysis.tsx';
 import PdfChatBot from '../pages/navi/PdfChatBot';
 
 // マニュアル検索
-import ManualSearch from '../pages/ManualSearch';
+import ManualSearch from '../pages/manual/shogunManual';
 
 // データベース関連
 import UploadPage from '../pages/database/UploadDatabasePage';
