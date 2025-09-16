@@ -23,7 +23,6 @@ services:
       - ../env/.env.common
       - ../env/.env.${STG_ENV_FILE}
     environment:
-      STAGE: stg
       # ledger_api 用 GCP SA Key
       # 旧: stg-key.json -> 新: stg_key.json (2025-09 rename)
       GOOGLE_APPLICATION_CREDENTIALS: /run/secrets/ledger_gcs_key.json
@@ -52,9 +51,11 @@ services:
       - ../env/.env.common
       - ../env/.env.${STG_ENV_FILE}
     environment:
-      STAGE: stg
       # rag_api 用の gcs-key.json を利用
       GOOGLE_APPLICATION_CREDENTIALS: /run/secrets/rag_gcs_key.json
+      # 優先される完全URI（環境ごとに切り替え可）
+      RAG_GCS_URI: ${RAG_GCS_URI}
+      # 従来形式（後方互換）
       GCS_BUCKET_NAME: object_haikibutu
       GCS_DATA_PREFIX: master
     volumes:
@@ -82,9 +83,7 @@ services:
     ports:
       - "${STG_NGINX_HTTP_PORT:-8080}:80"
       - "${STG_NGINX_HTTPS_PORT:-8443}:443"
-    environment:
-      STAGE: stg
-    # 単一ファイル化した stg.conf を直接マウント (local_stg / vm_stg 両対応)
+  # 単一ファイル化した stg.conf を直接マウント (local_stg / vm_stg 両対応)
     volumes:
       - ../app/nginx/conf.d:/etc/nginx/conf.d:ro
       - ../app/nginx/certs:/etc/nginx/certs:ro
