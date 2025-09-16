@@ -4,6 +4,9 @@ set -euo pipefail
 IFS=$'\n\t'
 
 # --- 設定値（環境変数で上書き可能） ---
+# 優先: RAG_GCS_URI=gs://<bucket>/<prefix>/ 形式（末尾/は任意）
+# 互換: GCS_BUCKET_NAME + GCS_DATA_PREFIX
+RAG_GCS_URI="${RAG_GCS_URI:-}"
 GCS_BUCKET_NAME="${GCS_BUCKET_NAME:-object_haikibutu}"
 GCS_DATA_PREFIX="${GCS_DATA_PREFIX:-master}"
 # APP_ROOT_DIR (新) -> APP_BASE_DIR (旧) -> /backend の順で基底パス決定
@@ -59,14 +62,29 @@ download_gcs_data() {
   local bucket="$1"
   local prefix="$2"
   local target_dir="$3"
-  echo "🌀 [GCS] Downloading gs://$bucket/$prefix/* → $target_dir"
+  local uri="$4"  # オプション: 完全URI
   mkdir -p "$target_dir"
-  if gsutil -m cp -r "gs://$bucket/$prefix/*" "$target_dir/"; then
-    echo "✅ [GCS] Download complete."
-    return 0
+
+  if [ -n "$uri" ]; then
+    # 正規化: 末尾のスラッシュを除去
+    local norm_uri="${uri%/}"
+    echo "🌀 [GCS] Downloading ${norm_uri}/* → $target_dir"
+    if gsutil -m cp -r "${norm_uri}/*" "$target_dir/"; then
+      echo "✅ [GCS] Download complete."
+      return 0
+    else
+      echo "❌ [GCS] データ取得に失敗しました (${norm_uri}/*)" >&2
+      return 1
+    fi
   else
-    echo "❌ [GCS] データ取得に失敗しました (gs://$bucket/$prefix/*)" >&2
-    return 1
+    echo "🌀 [GCS] Downloading gs://$bucket/$prefix/* → $target_dir"
+    if gsutil -m cp -r "gs://$bucket/$prefix/*" "$target_dir/"; then
+      echo "✅ [GCS] Download complete."
+      return 0
+    else
+      echo "❌ [GCS] データ取得に失敗しました (gs://$bucket/$prefix/*)" >&2
+      return 1
+    fi
   fi
 }
 
@@ -102,7 +120,7 @@ else
   if [ -n "$(ls -A "$TARGET_DIR" 2>/dev/null || true)" ]; then
     echo "⏩ [1/2] Local data already exists. Skipping GCS download."
   else
-    if ! download_gcs_data "$GCS_BUCKET_NAME" "$GCS_DATA_PREFIX" "$TARGET_DIR"; then
+    if ! download_gcs_data "$GCS_BUCKET_NAME" "$GCS_DATA_PREFIX" "$TARGET_DIR" "$RAG_GCS_URI"; then
       echo "⚠️  ダウンロード失敗しましたが起動は継続します。" >&2
       echo "ヒント: サービスアカウントに 'storage.objects.list' と 'storage.objects.get' 権限 (Storage Object Viewer など) が付与されているか確認してください。" >&2
     fi

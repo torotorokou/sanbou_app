@@ -12,12 +12,10 @@ services:
       - ../env/.env.local_dev
     command: ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
     ports:
-      - "5173:5173"
+      - "${DEV_FRONTEND_PORT:-5173}:5173"
     volumes:
       - node_modules_dev:/app/node_modules
       - ../app/frontend:/app
-    environment:
-      CHOKIDAR_USEPOLLING: "true"
     networks:
       - app-net
 
@@ -28,7 +26,7 @@ services:
       - ../env/.env.local_dev
     command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
     ports:
-      - "8001:8000"
+      - "${DEV_AI_API_PORT:-8001}:8000"
     volumes:
       - ../app/backend/ai_api/app:/backend/app
       - ../app/backend/backend_shared:/backend/backend_shared
@@ -46,7 +44,7 @@ services:
     user: "0:0"
     command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
     ports:
-      - "8002:8000"
+      - "${DEV_LEDGER_API_PORT:-8002}:8000"
     volumes:
       - ../app/backend/ledger_api/app:/backend/app
       - ../app/backend/backend_shared:/backend/backend_shared
@@ -54,7 +52,6 @@ services:
       # base compose の secrets マウントが override で消えるため再指定
       - ../secrets:/backend/secrets:ro
     environment:
-      STAGE: dev
       # dev 環境ではコンテナ内の secrets を優先して使用
       GOOGLE_APPLICATION_CREDENTIALS: /backend/secrets/dev_key.json
     depends_on:
@@ -69,7 +66,7 @@ services:
       - ../env/.env.local_dev
     command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
     ports:
-      - "8003:8000"
+      - "${DEV_SQL_API_PORT:-8003}:8000"
     volumes:
       - ../app/backend/sql_api/app:/backend/app
       - ../app/backend/backend_shared:/backend/backend_shared
@@ -86,14 +83,13 @@ services:
       - ../env/.env.local_dev
     command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
     ports:
-      - "8004:8000"
+      - "${DEV_RAG_API_PORT:-8004}:8000"
     volumes:
       - ../app/backend/rag_api/app:/backend/app
       - ../app/backend/backend_shared:/backend/backend_shared
       - ../app/config:/backend/config
       - ../secrets:/backend/secrets:ro
     environment:
-      STAGE: dev
       GOOGLE_APPLICATION_CREDENTIALS: /backend/secrets/dev_key.json
     depends_on:
       - db

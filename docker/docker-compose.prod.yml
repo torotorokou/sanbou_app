@@ -23,8 +23,7 @@ services:
     env_file:
       - ../env/.env.common
       - ../env/.env.vm_prod
-    environment:
-      STAGE: prod
+  # environment removed; relies on env_file
     volumes:
       - ../secrets:/backend/secrets:ro
 
@@ -66,8 +65,7 @@ services:
     ports:
       - "80:80"
       - "443:443"
-    environment:
-      STAGE: prod
+  # environment removed; relies on env_file
     volumes:
       - ../app/nginx/conf.d:/etc/nginx/conf.d:ro
       - ../app/nginx/certs:/etc/nginx/certs:ro
