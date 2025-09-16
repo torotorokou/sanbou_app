@@ -77,6 +77,14 @@ class AIResponseService:
         except Exception as ae:
             # 回答生成に失敗しても以降の処理は継続（pdf_urlはNone）
             print("[DEBUG][AIResponseService] ai_loader failed:", repr(ae))
+            # フォールバック回答を生成（500回避＆UIを動かすため）
+            answer = (
+                "申し訳ありません。現在AI回答を生成できませんでした。"\
+                " 質問内容やタグを見直して再度お試しください。"\
+                " 続行する場合はPDFの生成はスキップされます。"
+            )
+            sources = []
+            pages = None
 
         # PDF保存先ディレクトリ
         static_dir = os.environ.get("PDFS_DIR") or "/backend/static/pdfs"
