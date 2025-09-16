@@ -83,7 +83,7 @@ DC_ENV_PREFIX := $(if $(STG_ENV_FILE),STG_ENV_FILE=$(STG_ENV_FILE) ,)
 # 展開した compose ファイルリスト (存在チェック用)
 COMPOSE_FILE_LIST := $(strip $(subst -f ,,$(COMPOSE_FILES)))
 
-.PHONY: up down logs ps rebuild config ledger_startup secrets gh-secrets prune
+.PHONY: up down logs ps rebuild config ledger_startup secrets gh-secrets prune check
 
 check:
 	@for f in $(COMPOSE_FILE_LIST); do \
@@ -93,26 +93,24 @@ check:
 	@if [ ! -f "$(ENV_FILE)" ]; then echo "[error] $(ENV_FILE) not found"; exit 1; fi
 	# --- Port availability check (dev/stg) ---------------------------------
 	@if [ "$(ENV_CANON)" = "local_dev" ]; then
-	  # dev は nginx を公開しないため Vite と DB のポートのみチェック
 	  PORTS="$${DEV_VITE_PORT:-5173} $${DEV_DB_PORT:-5432}"
 	elif [ "$(ENV_CANON)" = "local_stg" ] || [ "$(ENV_CANON)" = "vm_stg" ]; then
-	  # 明示未設定でもデフォルトで 8080/8443 をチェック
 	  PORTS="$${STG_NGINX_HTTP_PORT:-8080} $${STG_NGINX_HTTPS_PORT:-8443}"
 	else
 	  PORTS=""
 	fi
-	PORTS="`echo $$PORTS | xargs`"
+	PORTS="$$(echo $$PORTS | xargs)"
 	if [ -n "$$PORTS" ]; then
-	  # lsof が無ければ ss で代替
 	  if ! command -v lsof >/dev/null 2>&1 && ! command -v ss >/dev/null 2>&1; then
 	    echo "[warn] neither lsof nor ss command found; skipping port pre-check" >&2
 	  else
 	    for P in $$PORTS; do
 	      IN_USE=0
 	      if command -v lsof >/dev/null 2>&1; then
-	        lsof -iTCP:$$P -sTCP:LISTEN >/dev/null 2>&1 && IN_USE=1
-	      elif command -v ss >/dev/null 2>&1; then
-	        ss -ltn 2>/dev/null | awk '{print $4}' | grep -E ':(|'"$$P"')$$' >/dev/null 2>&1 && IN_USE=1
+	        if lsof -iTCP:$$P -sTCP:LISTEN >/dev/null 2>&1; then IN_USE=1; fi
+	      fi
+	      if [ $$IN_USE -eq 0 ] && command -v ss >/dev/null 2>&1; then
+	        if ss -ltn 2>/dev/null | awk '{print $$4}' | grep -qE ":($$P)$$"; then IN_USE=1; fi
 	      fi
 	      if [ $$IN_USE -eq 1 ]; then
 	        echo "[error] port $$P already in use by host process."; \
@@ -205,25 +203,41 @@ rebuild: check secrets
 	$(DC_ENV_PREFIX)$(DC) $(COMPOSE_ENV_ARGS) -p $(ENV) $(COMPOSE_FILES) config >/dev/null || { echo '[error] compose config failed'; exit 2; }
 	@echo "[step] down --remove-orphans"
 	$(MAKE) down ENV=$(ENV)
-	@echo "[step] build --pull --no-cache"
-	$(DC_ENV_PREFIX)$(DC) $(COMPOSE_ENV_ARGS) -p $(ENV) $(COMPOSE_FILES) build --pull --no-cache
+	@echo "[step] build $(if $(PULL),--pull,) $(if $(NO_CACHE),--no-cache,)"
+	$(DC_ENV_PREFIX)$(DC) $(COMPOSE_ENV_ARGS) -p $(ENV) $(COMPOSE_FILES) build $(if $(PULL),--pull,) $(if $(NO_CACHE),--no-cache,)
 	@echo "[step] up -d"
 	$(DC_ENV_PREFIX)$(DC) $(COMPOSE_ENV_ARGS) -p $(ENV) $(COMPOSE_FILES) up -d --force-recreate --remove-orphans
 	@echo "[step] health check -> $(HEALTH_URL)"
 	@if [ -z "$(HEALTH_URL)" ]; then \
 	  echo '[warn] HEALTH_URL not set; skipping health check'; \
 	else \
+	  RETRIES=10; SLEEP=2; SUCCESS=0; \
 	  if command -v curl >/dev/null 2>&1; then \
-	    HTTP_STATUS=$$(curl -s -o /dev/null -w '%{http_code}' -I "$(HEALTH_URL)" || echo 000); \
-	    if [ -z "$$HTTP_STATUS" ] || [ "$$HTTP_STATUS" = "000" ]; then \
-	      echo '[warn] curl health failed (status $$HTTP_STATUS)'; exit 3; \
-	    else \
-	      echo "[ok] HTTP $$HTTP_STATUS"; \
-	    fi; \
+	    for i in $$(seq 1 $$RETRIES); do \
+	      HTTP_STATUS=$$(curl -s -o /dev/null -w '%{http_code}' -I "$(HEALTH_URL)" || echo 000); \
+	      if [ "$$HTTP_STATUS" != "000" ] && echo "$$HTTP_STATUS" | grep -qE '^(200|204|301|302)$$'; then \
+	        echo "[ok] HTTP $$HTTP_STATUS (attempt $$i/$$RETRIES)"; SUCCESS=1; break; \
+	      else \
+	        echo "[wait] health not ready (status=$$HTTP_STATUS) retry $$i/$$RETRIES..."; sleep $$SLEEP; \
+	      fi; \
+	    done; \
 	  elif command -v wget >/dev/null 2>&1; then \
-	    wget --spider -S "$(HEALTH_URL)" 2>&1 | grep -E 'HTTP/' || echo '[warn] wget health check inconclusive'; \
+	    for i in $$(seq 1 $$RETRIES); do \
+	      if wget --spider -S "$(HEALTH_URL)" 2>&1 | grep -qE 'HTTP/.*\s(200|204|301|302)\s'; then \
+	        echo "[ok] health ready (attempt $$i/$$RETRIES)"; SUCCESS=1; break; \
+	      else \
+	        echo "[wait] health not ready (wget) retry $$i/$$RETRIES..."; sleep $$SLEEP; \
+	      fi; \
+	    done; \
 	  else \
-	    echo '[warn] neither curl nor wget installed; skip health check'; \
+	    echo '[warn] neither curl nor wget installed; skip health check'; SUCCESS=1; \
+	  fi; \
+	  if [ $$SUCCESS -ne 1 ]; then \
+	    if [ "$(ENV_CANON)" = "vm_prod" ]; then \
+	      echo '[error] health check failed in prod; aborting'; exit 3; \
+	    else \
+	      echo '[warn] health check failed after retries; continuing (non-prod)'; \
+	    fi; \
 	  fi; \
 	fi
 	@echo "[info] rebuild done"
