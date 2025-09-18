@@ -104,6 +104,22 @@ services:
     networks:
       - app-net
 
+  manual_api:
+    build: { context: ../app, dockerfile: backend/manual_api/Dockerfile }
+    env_file:
+      - ../env/.env.common
+      - ../env/.env.local_dev
+    command: ["bash", "startup.sh"]
+    ports:
+      - "${DEV_MANUAL_API_PORT:-8005}:8000"
+    volumes:
+      - ../app/backend/manual_api/app:/backend/app
+    environment:
+      # Frontend base URL for constructing RAG metadata URLs
+      MANUAL_FRONTEND_BASE_URL: ${MANUAL_FRONTEND_BASE_URL:-http://localhost:5173}
+    networks:
+      - app-net
+
   db:
     image: postgres:15-alpine
     ports:

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 
 // ルート定数
 import { ROUTER_PATHS } from '@/constants/router';
@@ -23,7 +23,10 @@ import CustomerListAnalysis from '../pages/analysis/CustomerListAnalysis.tsx';
 import PdfChatBot from '../pages/navi/PdfChatBot';
 
 // マニュアル検索
-import ManualSearch from '../pages/manual/shogunManual';
+import ManualModal from '@/pages/manuals/ManualModal';
+import ManualPage from '@/pages/manuals/ManualPage';
+import GlobalManualSearch from '@/pages/manual/GlobalManualSearch';
+import ShogunManualList from '@/pages/manual/ShogunManualList';
 
 // データベース関連
 import UploadPage from '../pages/database/UploadDatabasePage';
@@ -35,8 +38,13 @@ import TestPage from '@/pages/TestPage';
 import PortalPage from '@/pages/portal/PortalPage';
 import NewsPage from '@/pages/NewsPage';
 
-const AppRoutes: React.FC = () => (
-    <Routes>
+const AppRoutes: React.FC = () => {
+    const location = useLocation();
+    const state = location.state as { backgroundLocation?: Location } | undefined;
+
+    return (
+    <>
+    <Routes location={state?.backgroundLocation || location}>
         {/* テスト用ルート */}
         <Route path='/test' element={<TestPage />} />
 
@@ -71,8 +79,12 @@ const AppRoutes: React.FC = () => (
         {/* チャットボット */}
         <Route path={ROUTER_PATHS.NAVI} element={<PdfChatBot />} />
 
-        {/* マニュアル検索 */}
-        <Route path={ROUTER_PATHS.MANUAL_SEARCH} element={<ManualSearch />} />
+    {/* マニュアル（新） */}
+    <Route path='/manuals' element={<GlobalManualSearch />} />
+    <Route path='/manuals/syogun' element={<ShogunManualList />} />
+        {/* 単独ページ（正ルート） */}
+        <Route path='/manuals/syogun/:id' element={<ManualPage />} />
+
 
         {/* データベース関連 */}
         <Route path={ROUTER_PATHS.UPLOAD_PAGE} element={<UploadPage />} />
@@ -87,8 +99,16 @@ const AppRoutes: React.FC = () => (
     {/* お知らせ */}
     <Route path={ROUTER_PATHS.NEWS} element={<NewsPage />} />
         {/* その他/404 */}
-        <Route path='*' element={<div>ページが見つかりません</div>} />
-    </Routes>
-);
+                <Route path='*' element={<div>ページが見つかりません</div>} />
+        </Routes>
+
+        {/* 背景ロケーションがある場合のみ、モーダルルートをオーバーレイ表示 */}
+            {state?.backgroundLocation && (
+            <Routes>
+                <Route path='/manuals/syogun/:id' element={<ManualModal />} />
+            </Routes>
+        )}
+        </>
+)};
 
 export default AppRoutes;

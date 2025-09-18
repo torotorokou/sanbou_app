@@ -130,9 +130,14 @@ export const SIDEBAR_MENU = [
             label: 'マニュアル',
             children: [
                 {
-                    key: ROUTER_PATHS.MANUAL_SEARCH,
+                    key: `${ROUTER_PATHS.MANUALS}`,
                     icon: <BookOutlined />,
-                    label: <Link to={ROUTER_PATHS.MANUAL_SEARCH}>環境将軍マニュアル</Link>,
+                    label: <Link to={ROUTER_PATHS.MANUALS}>マニュアル全体検索</Link>,
+                },
+                {
+                    key: '/manuals/syogun',
+                    icon: <BookOutlined />,
+                    label: <Link to='/manuals/syogun'>将軍マニュアル一覧</Link>,
                 },
             ],
         },

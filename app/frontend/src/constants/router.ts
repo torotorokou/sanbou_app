@@ -24,8 +24,7 @@ export const ROUTER_PATHS = {
     // チャットボット系
     NAVI: '/navi',
 
-    // マニュアル検索
-    MANUAL_SEARCH: '/manual-search',
+    MANUALS: '/manuals',
 
     // 設定系
     SETTINGS: '/settings',
