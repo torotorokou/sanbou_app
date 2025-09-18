@@ -38,6 +38,10 @@ export default defineConfig({
                 target: 'http://rag_api:8000',
                 changeOrigin: true,
             },
+            '/manual_api': {
+                target: 'http://manual_api:8000',
+                changeOrigin: true,
+            },
         },
     },
 });

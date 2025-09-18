@@ -132,7 +132,7 @@ export const SIDEBAR_MENU = [
                 {
                     key: `${ROUTER_PATHS.MANUALS}`,
                     icon: <BookOutlined />,
-                    label: <Link to={ROUTER_PATHS.MANUALS}>マニュアル全体検索</Link>,
+                    label: <Link to={ROUTER_PATHS.MANUALS}>全体検索</Link>,
                 },
                 {
                     key: '/manuals/syogun',

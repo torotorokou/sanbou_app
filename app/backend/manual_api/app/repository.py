@@ -2,7 +2,17 @@ from __future__ import annotations
 
 import os
 from typing import Dict, List, Optional
-from .schemas import ManualDetail, ManualListResponse, ManualSectionChunk, ManualSummary, RagMetadata
+from .schemas import (
+    ManualDetail,
+    ManualListResponse,
+    ManualSectionChunk,
+    ManualSummary,
+    RagMetadata,
+    CatalogItem,
+    CatalogSection,
+    ManualCatalogResponse,
+)
+from .catalog_data import sections as CATALOG_SECTIONS
 
 
 class InMemoryManualRepository:
@@ -72,3 +82,29 @@ class InMemoryManualRepository:
     def get_sections(self, manual_id: str) -> List[ManualSectionChunk]:
         m = self._items.get(manual_id)
         return m.sections if m else []
+
+    def get_catalog(self, *, category: Optional[str] = "syogun") -> ManualCatalogResponse:
+        # Load from static dataset (migrated from frontend). Future: replace with SQL-backed repository.
+        sections: List[CatalogSection] = []
+        for sec in CATALOG_SECTIONS:
+            items = [
+                CatalogItem(
+                    id=it.get("id"),
+                    title=it.get("title"),
+                    description=it.get("description"),
+                    route=it.get("route"),
+                    tags=it.get("tags", []),
+                    flow_url=it.get("flow_url"),
+                    video_url=it.get("video_url"),
+                )
+                for it in sec.get("items", [])
+            ]
+            sections.append(
+                CatalogSection(
+                    id=sec.get("id"),
+                    title=sec.get("title"),
+                    icon=sec.get("icon"),
+                    items=items,
+                )
+            )
+        return ManualCatalogResponse(sections=sections)

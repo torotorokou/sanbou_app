@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Optional
 from .repository import InMemoryManualRepository
-from .schemas import ManualDetail, ManualListResponse
+from .schemas import ManualDetail, ManualListResponse, ManualCatalogResponse
 
 
 class ManualsService:
@@ -17,3 +17,6 @@ class ManualsService:
 
     def get_sections(self, manual_id: str):
         return self.repo.get_sections(manual_id)
+
+    def get_catalog(self, *, category: str | None = "syogun") -> ManualCatalogResponse:
+        return self.repo.get_catalog(category=category)
