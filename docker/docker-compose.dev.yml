@@ -92,7 +92,7 @@ services:
     environment:
       GOOGLE_APPLICATION_CREDENTIALS: /backend/secrets/dev_key.json
       # local_dev では GCS からの同期を行わないため、YAML を config 配下に固定
-  CATEGORY_QUESTION_TEMPLATES_WITH_TAGS: /backend/config/category_question_templates_with_tags.yaml
+      CATEGORY_QUESTION_TEMPLATES_WITH_TAGS: /backend/config/category_question_templates_with_tags.yaml
       # 開発時はホットリロード
       DEV_RELOAD: "1"
       # /backend/local_data/master を明示（paths.py の既定と一致）

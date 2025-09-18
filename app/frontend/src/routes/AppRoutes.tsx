@@ -23,8 +23,8 @@ import CustomerListAnalysis from '../pages/analysis/CustomerListAnalysis.tsx';
 import PdfChatBot from '../pages/navi/PdfChatBot';
 
 // マニュアル検索
-import ManualModal from '@/pages/manuals/ManualModal';
-import ManualPage from '@/pages/manuals/ManualPage';
+import ManualModal from '@/pages/manual/ManualModal';
+import ManualPage from '@/pages/manual/ManualPage';
 import GlobalManualSearch from '@/pages/manual/GlobalManualSearch';
 import ShogunManualList from '@/pages/manual/ShogunManualList';
 

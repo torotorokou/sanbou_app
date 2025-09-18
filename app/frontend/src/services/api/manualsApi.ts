@@ -17,6 +17,10 @@ export const manualsApi = {
     const res = await http.get(`/api/manuals/${id}/sections`);
     return res.data as ManualDetail['sections'];
   },
+  async catalog(params: { category?: string } = {}) {
+    const res = await http.get(`/api/manuals/catalog`, { params });
+    return res.data as { sections: Array<{ id: string; title: string; icon?: string; items: Array<{ id: string; title: string; description?: string; route?: string; tags: string[] }> }> };
+  },
 };
 
 export default manualsApi;

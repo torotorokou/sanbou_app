@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException, Query
 from .service import ManualsService
-from .schemas import ManualDetail, ManualListResponse
+from .schemas import ManualDetail, ManualListResponse, ManualCatalogResponse
 
 
 router = APIRouter(prefix="/manuals", tags=["manuals"])
@@ -18,6 +18,11 @@ def list_manuals(
     size: int = Query(default=20, ge=1, le=100),
 ):
     return service.list(query=query, tag=tag, category=category, page=page, size=size)
+
+
+@router.get("/catalog", response_model=ManualCatalogResponse)
+def get_manual_catalog(category: str | None = Query(default="syogun")):
+    return service.get_catalog(category=category)
 
 
 @router.get("/{manual_id}", response_model=ManualDetail)

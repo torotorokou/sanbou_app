@@ -3,7 +3,7 @@
 // このファイルは `ManualSearch.tsx` から移動されました。
 
 /* eslint-disable react/prop-types */
-import React, { memo, useMemo, useRef, useState } from "react";
+import React, { memo, useMemo, useRef, useState, useEffect } from "react";
 import {
   Anchor,
   Badge,
@@ -22,10 +22,36 @@ import {
   Tooltip,
   Typography,
 } from "antd";
-import { FileDoneOutlined } from "@ant-design/icons";
+import {
+  FileDoneOutlined,
+  FolderOpenOutlined,
+  FileProtectOutlined,
+  FileTextOutlined,
+  FileSearchOutlined,
+  CloudUploadOutlined,
+  DollarOutlined,
+} from "@ant-design/icons";
 import styles from "./shogunManual.module.css";
 import type { ManualItem, ManualSection } from "./types";
-import { manualSections } from "./data/manualSections";
+import manualsApi from '@/services/api/manualsApi';
+
+// Catalog DTO types from backend
+type CatalogItemDTO = {
+  id: string;
+  title: string;
+  description?: string;
+  route?: string;
+  tags: string[];
+  flow_url?: string;
+  video_url?: string;
+};
+
+type CatalogSectionDTO = {
+  id: string;
+  title: string;
+  icon?: string;
+  items: CatalogItemDTO[];
+};
 
 const { Title, Paragraph, Text } = Typography;
 const { Header, Sider, Content } = Layout;
@@ -36,11 +62,46 @@ function useManualController() {
   const [query, setQuery] = useState("");
   const [activeItem, setActiveItem] = useState<ManualItem | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [sections, setSections] = useState<ManualSection[]>([]);
+
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      const cat = await manualsApi.catalog({ category: 'syogun' });
+      if (!alive) return;
+      // map icon string -> ReactNode (Ant icons)
+      const iconMap: Record<string, React.ReactNode> = {
+        FolderOpenOutlined: React.createElement(FolderOpenOutlined),
+        FileProtectOutlined: React.createElement(FileProtectOutlined),
+        FileTextOutlined: React.createElement(FileTextOutlined),
+        FileDoneOutlined: React.createElement(FileDoneOutlined),
+        FileSearchOutlined: React.createElement(FileSearchOutlined),
+        CloudUploadOutlined: React.createElement(CloudUploadOutlined),
+        DollarOutlined: React.createElement(DollarOutlined),
+      };
+      const s: ManualSection[] = (cat.sections as CatalogSectionDTO[] | undefined || []).map((sec) => ({
+        id: sec.id,
+        title: sec.title,
+        icon: sec.icon ? iconMap[sec.icon] : undefined,
+        items: (sec.items as CatalogItemDTO[] | undefined || []).map((it) => ({
+          id: it.id,
+          title: it.title,
+          description: it.description,
+          route: it.route,
+          tags: it.tags || [],
+          flowUrl: it.flow_url,
+          videoUrl: it.video_url,
+        })),
+      }));
+      setSections(s);
+    })();
+    return () => { alive = false; };
+  }, []);
 
   const filtered = useMemo(() => {
-    if (!query.trim()) return manualSections;
+    if (!query.trim()) return sections;
     const q = query.trim().toLowerCase();
-    return manualSections
+    return sections
       .map((sec) => ({
         ...sec,
         items: sec.items.filter((it) => {
@@ -51,7 +112,7 @@ function useManualController() {
         }),
       }))
       .filter((sec) => sec.items.length > 0);
-  }, [query]);
+  }, [query, sections]);
 
   const handleOpen = (item: ManualItem) => {
     setActiveItem(item);
@@ -281,11 +342,11 @@ const ShogunManualHome: React.FC = () => {
                 ),
               }))}
             />
-            <div style={{ marginTop: 24 }}>
+            {/* <div style={{ marginTop: 24 }}>
               <Paragraph type="secondary" style={{ margin: 0 }}>
                 目次クリックで右の内容へスクロール。右のスクロールに合わせて目次が強調されます。
               </Paragraph>
-            </div>
+            </div> */}
           </Sider>
         )}
 
