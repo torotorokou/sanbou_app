@@ -282,7 +282,7 @@ const portalMenus: PortalCardProps[] = [
     detail:
       '部署別の手順書、FAQ、オンボーディング資料を検索。更新履歴や担当者情報も確認できます。',
     icon: <FileTextOutlined />,
-    link: ROUTER_PATHS.MANUAL_SEARCH,
+  link: ROUTER_PATHS.MANUALS,
     color: PALETTE.PURPLE,
   },
   {
