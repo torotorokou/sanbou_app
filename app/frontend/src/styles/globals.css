@@ -3,10 +3,32 @@
   --content-padding: 16px;
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --motion-duration-fast: 120ms;
+  --motion-duration-base: 200ms;
 }
+html,
+body,
+#root { height: 100%; }
 #root { overflow: hidden; }
 .flex-col { display:flex; flex-direction:column; }
+.flex-row { display:flex; flex-direction:row; }
 .min-h-0 { min-height:0; }
+.flex-1 { flex: 1 1 auto; }
+.h-100 { height: 100%; }
 .overflow-auto { overflow:auto; }
+.overflow-hidden { overflow: hidden; }
+.overflow-x-auto { overflow-x: auto; }
 .p-content { padding: var(--content-padding); }
 .h-100dvh { min-height: 100dvh; }
+
+/* Base body colors link to theme variables injected at runtime */
+body {
+  background-color: var(--color-bg-base);
+  color: var(--color-text);
+  font-family: 'Segoe UI', sans-serif;
+  margin: 0;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-overflow-scrolling: touch;
+}

@@ -11,7 +11,7 @@ import { UPLOAD_CSV_TYPES, UPLOAD_CSV_DEFINITIONS } from '@/constants/uploadCsvC
 
 const { Text } = Typography;
 const CARD_HEIGHT = 300;
-const TABLE_BODY_HEIGHT = 200;
+// AutoHeightTable を使用するためTABLE_BODY_HEIGHTは不要
 
 const UploadDatabasePage: React.FC = () => {
     const {
@@ -37,15 +37,10 @@ const UploadDatabasePage: React.FC = () => {
 
     return (
         <>
-            <Row style={{ minHeight: 600 }}>
+            <Row>
                 <Col
                     span={8}
-                    style={{
-                        padding: 16,
-                        height: '100%',
-                        display: 'flex',
-                        flexDirection: 'column',
-                    }}
+                    style={{ padding: 16 }}
                 >
                     <UploadInstructions />
 
@@ -73,16 +68,7 @@ const UploadDatabasePage: React.FC = () => {
                     </Button>
                 </Col>
 
-                <Col
-                    span={16}
-                    style={{
-                        padding: 16,
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: 16,
-                        overflowX: 'hidden',
-                    }}
-                >
+                <Col span={16} style={{ padding: 16 }}>
                     {UPLOAD_CSV_TYPES.map((type) => (
                         <CsvPreviewCard
                             key={type}
@@ -90,7 +76,6 @@ const UploadDatabasePage: React.FC = () => {
                             csvPreview={csvPreviews[type]}
                             validationResult={validationResults[type]}
                             cardHeight={CARD_HEIGHT}
-                            tableBodyHeight={TABLE_BODY_HEIGHT}
                             backgroundColor={csvTypeColors[type as keyof typeof csvTypeColors]}
                         />
                     ))}

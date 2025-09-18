@@ -1,24 +1,4 @@
-/* === HTML・ルート高さ補完（重要）=== */
-html,
-body,
-#root {
-    height: 100%;
-    margin: 0;
-    /* スクロールは各Page内でのみ許可するため root は非スクロール */
-    /* overflow は globals.css の #root { overflow: hidden } に委譲 */
-    -webkit-overflow-scrolling: touch; /* iOS の慣性スクロールを有効化 */
-}
-
-/* === ベース設定 === */
-body {
-    background-color: var(--color-bg-base);
-    color: var(--color-text);
-    font-family: 'Segoe UI', sans-serif;
-    margin: 0;
-    line-height: 1.6;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-}
+/* 基本ルールは reset.css / globals.css に統合済み */
 
 /* === Ant Design カード設定 === */
 .ant-card {
@@ -132,11 +112,6 @@ body {
         box-sizing: border-box;
     }
 
-    /* モバイルでは縦スクロール可能 */
-    .ant-layout-content {
-        height: auto !important;
-        min-height: 0;
-    }
 }
 
 /* タブレット (768px - 1023px) */
@@ -161,12 +136,6 @@ body {
         font-size: 13px;
     }
 
-    /* タブレットでは縦スクロール可能 */
-    .ant-layout-content {
-        height: auto !important;
-        min-height: 0;
-        overflow-y: visible;
-    }
 }
 
 /* 小さなデスクトップ・ラップトップ (1024px - 1365px) */

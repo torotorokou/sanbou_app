@@ -35,13 +35,9 @@ export const useReportLayoutStyles = () => {
           | "column",
         gap: isMobile ? 12 : isTablet ? 16 : 24,
         alignItems: "stretch", // 中央配置のために'stretch'に統一
-        flexGrow: 1,
+        flex: 1,
+        minHeight: 0,
         marginTop: isMobile ? 8 : 16,
-        minHeight: isMobileOrTablet ? "auto" : "70vh", // 十分な高さを確保
-        maxHeight: isMobileOrTablet ? "none" : "80vh",
-        overflowY: (isMobileOrTablet ? "visible" : "auto") as
-          | "auto"
-          | "visible",
         width: "100%",
         boxSizing: "border-box" as const,
       },
@@ -94,23 +90,18 @@ export const useReportLayoutStyles = () => {
           ? {
               width: "100%",
               flex: "1 1 auto",
-              height: "auto",
-              maxHeight: "none",
+              minHeight: 0,
             }
           : {
               flex: "1 1 auto", // 残りのスペースを全て使用
               // デスクトップ幅でも半画面⇔全画面で少しダイナミックに
               // 1200px 未満の狭いデスクトップではやや小さめ、広ければ拡張
               minWidth: width < 1200 ? 520 : 600,
-              height: "80vh",
-              maxHeight: "80vh",
+              minHeight: 0,
             }),
         display: "flex",
         flexDirection: "column" as const,
         order: isMobileOrTablet ? 1 : 3,
-        overflowY: (isMobileOrTablet ? "visible" : "auto") as
-          | "auto"
-          | "visible",
       },
       previewContainer: {
         display: "flex",

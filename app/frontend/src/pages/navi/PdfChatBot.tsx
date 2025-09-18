@@ -9,6 +9,7 @@ import ChatAnswerSection from '@/components/chat/ChatAnswerSection';
 import PdfPreviewModal from '@/components/chat/PdfPreviewModal';
 import type { StepItem } from '@/components/ui/ReportStepIndicator';
 import ReportStepIndicator from '@/components/ui/ReportStepIndicator';
+import './PdfChatBot.css';
 // YAMLを直接インポート（viteの@rollup/plugin-yamlでJSON化）
 // YAML直読みを廃止し、バックエンドAPIから取得する
 
@@ -242,20 +243,14 @@ const PdfChatBot: React.FC = () => {
     };
 
     return (
-        <div
-            style={{
-                height: '100vh',
-                display: 'flex',
-                flexDirection: 'column',
-            }}
-        >
+    <div className="flex-col h-100 min-h-0">
             {loading && <Spin tip="AIが回答中です..." size="large" fullscreen />}
 
             <div style={{ padding: '12px 24px' }}>
                 <ReportStepIndicator currentStep={currentStep} items={stepItems} />
             </div>
 
-            <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+            <div className="flex-row flex-1 min-h-0">
                 {/* 左カラム */}
                 <ChatQuestionSection
                     category={category}
@@ -297,36 +292,10 @@ const PdfChatBot: React.FC = () => {
             </div>
 
             {/* ===== 下部の参考PDFボタン（関連PDFを直接開く） ===== */}
-            <div
-                style={{
-                    width: '100vw',
-                    position: 'fixed',
-                    left: 0,
-                    bottom: 0,
-                    zIndex: 200,
-                    display: 'flex',
-                    justifyContent: 'center',
-                    pointerEvents: 'auto',
-                    paddingBottom: 8,
-                }}
-            >
+            <div className="floating-bar">
                 <Button
                     size="small"
-                    style={{
-                        width: 130,
-                        height: 32,
-                        borderRadius: 24,
-                        boxShadow: '0 4px 16px rgba(0,0,0,0.10)',
-                        background: '#fff',
-                        fontWeight: 600,
-                        transition: 'all 0.3s ease',
-                        overflow: 'hidden',
-                        whiteSpace: 'nowrap',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: 6,
-                    }}
+                    className="floating-pdf-btn"
                     disabled={!pdfUrl} // ★ pdfUrl が無いときは無効化
                     onClick={() => {
                         if (pdfUrl) {
@@ -392,42 +361,19 @@ const PdfChatBot: React.FC = () => {
                     body: {
                         background: '#fafbfc',
                         padding: '18px 20px 8px 20px',
-                        overflowX: 'auto',
                         display: 'flex',
                         flexDirection: 'column',
                         alignItems: 'center',
                     },
                 }}
             >
-                <div
-                    style={{
-                        display: 'flex',
-                        flexDirection: 'row',
-                        gap: 16,
-                        overflowX: 'auto',
-                        paddingBottom: 8,
-                    }}
-                >
+                <div className="pdf-list-row">
                     {allPdfList.map((pdf) => (
                         <Card
                             key={pdf}
                             hoverable
                             size="small"
-                            style={{
-                                width: 120,
-                                height: 72,
-                                minWidth: 100,
-                                textAlign: 'center',
-                                cursor: 'pointer',
-                                overflow: 'hidden',
-                                padding: 4,
-                                border: '1px solid #e5e5e5',
-                                display: 'flex',
-                                flexDirection: 'column',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                background: '#fff',
-                            }}
+                            className="pdf-item-card"
                             styles={{
                                 body: {
                                     padding: 4,
@@ -441,16 +387,7 @@ const PdfChatBot: React.FC = () => {
                             onClick={() => handleSelectPdfFromAll(pdf)}
                         >
                             <div style={{ fontSize: 22, marginBottom: 2 }}>📄</div>
-                            <div
-                                style={{
-                                    fontSize: 12,
-                                    overflow: 'hidden',
-                                    textOverflow: 'ellipsis',
-                                    whiteSpace: 'nowrap',
-                                    width: 96,
-                                }}
-                                title={pdf}
-                            >
+                            <div style={{ fontSize: 12, width: 96 }} className="ellipsis" title={pdf}>
                                 {pdf}
                             </div>
                         </Card>

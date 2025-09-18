@@ -1,5 +1,6 @@
 import React from 'react';
-import { Card, Table, Empty } from 'antd';
+import { Card, Empty } from 'antd';
+import AutoHeightTable from '@/components/table/AutoHeightTable';
 import type { UploadCsvType } from '@/constants/uploadCsvConfig';
 import { UPLOAD_CSV_DEFINITIONS } from '@/constants/uploadCsvConfig';
 
@@ -15,7 +16,6 @@ type Props = {
     csvPreview: { columns: string[]; rows: string[][] } | null;
     validationResult: 'valid' | 'invalid' | 'unknown';
     cardHeight?: number;
-    tableBodyHeight?: number;
     backgroundColor?: string;
 };
 
@@ -24,7 +24,6 @@ export const CsvPreviewCard: React.FC<Props> = ({
     csvPreview,
     validationResult,
     cardHeight = 300,
-    tableBodyHeight = 220,
     backgroundColor: propBackgroundColor,
 }) => {
     const backgroundColor = propBackgroundColor || CSV_TYPE_COLORS[type] || '#ffffff';
@@ -78,16 +77,8 @@ export const CsvPreviewCard: React.FC<Props> = ({
             }}
         >
             {csvPreview && csvPreview.rows.length > 0 ? (
-                <div
-                    className="table-wrap"
-                    style={{
-                        flex: 1,
-                        overflow: 'hidden',
-                        // enable horizontal scrolling when table is wider than container
-                        overflowX: 'auto',
-                    }}
-                >
-                    <Table
+                <div className="table-wrap" style={{ flex: 1 }}>
+                    <AutoHeightTable
                         columns={csvPreview.columns.map((col, i) => ({
                             title: col,
                             dataIndex: i,
@@ -100,8 +91,7 @@ export const CsvPreviewCard: React.FC<Props> = ({
                         )}
                         pagination={false}
                         size='small'
-                        // calculate horizontal scroll width from column count
-                        scroll={{ y: tableBodyHeight, x: Math.max(csvPreview.columns.length * 120, 800) }}
+                        scroll={{ x: Math.max(csvPreview.columns.length * 120, 800) }}
                         bordered
                         rowKey={(_, i) => (i ?? 0).toString()}
                         style={{ minWidth: csvPreview.columns.length * 120 }}

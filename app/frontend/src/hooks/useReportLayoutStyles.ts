@@ -23,12 +23,9 @@ export const useReportLayoutStyles = () => {
                 flexDirection: isMobileOrTablet ? 'column' : 'row',
                 gap: isMobile ? 12 : isTablet ? 16 : 24,
                 alignItems: isMobileOrTablet ? 'stretch' : 'stretch',
-                flexGrow: 1,
+                flex: 1,
+                minHeight: 0,
                 marginTop: isMobile ? 8 : 16,
-                minHeight: isMobileOrTablet ? 'auto' : '80vh',
-                // スクロール可能にする
-                maxHeight: isMobileOrTablet ? 'none' : '80vh',
-                overflowY: isMobileOrTablet ? 'visible' : 'auto',
             },
             leftPanel: {
                 display: 'flex',
@@ -61,12 +58,10 @@ export const useReportLayoutStyles = () => {
                     : isSmallDesktop
                     ? 500
                     : 600,
-                height: isMobileOrTablet ? 'auto' : '80vh',
-                maxHeight: isMobileOrTablet ? 'none' : '80vh',
+                minHeight: 0,
                 display: 'flex',
                 flexDirection: 'column' as const,
                 order: isMobileOrTablet ? 1 : 3,
-                overflowY: isMobileOrTablet ? 'visible' : 'auto',
             },
             previewContainer: {
                 display: 'flex',

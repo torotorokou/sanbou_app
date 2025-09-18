@@ -378,7 +378,7 @@ export const PortalPage: React.FC = () => {
   };
 
   return (
-    <div className="portal-page" style={{ minHeight: '100dvh' }}>
+    <div className="portal-page" style={{ minHeight: '100%' }}>
       <section className="portal-hero" style={heroVars}>
         <Title level={2} className="portal-title">
           社内ポータル

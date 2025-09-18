@@ -1,5 +1,6 @@
 import React from 'react';
-import { Card, Table } from 'antd';
+import { Card } from 'antd';
+import AutoHeightTable from '@/components/table/AutoHeightTable';
 import type { ColumnsType } from 'antd/es/table';
 import type { CustomerData } from '@/data/analysis/customer-list-analysis/customer-dummy-data';
 
@@ -50,15 +51,16 @@ const CustomerComparisonResultCard: React.FC<Props> = ({
         headStyle={{ fontWeight: 600, ...headStyle }}
         bodyStyle={{ flex: 1, minHeight: 0, overflow: 'auto', padding: 0 }}
     >
-        <div className="table-wrap" style={{ minHeight: 0 }}>
-            <Table
+        <div className="table-wrap" style={{ minHeight: 0, display: 'flex', flex: 1 }}>
+            {/* 副作用: 固定y(400)を撤廃し、外枠に追従します。カード高さ変更時も自動追従。*/}
+            <AutoHeightTable
                 dataSource={data}
                 columns={customerColumns}
                 size='small'
                 rowKey='key'
                 pagination={false}
                 locale={{ emptyText: '該当なし' }}
-                scroll={{ y: 400, x: 'max-content' }}
+                scroll={{ x: 'max-content' }}
             />
         </div>
     </Card>

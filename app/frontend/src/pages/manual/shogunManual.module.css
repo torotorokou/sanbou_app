@@ -43,7 +43,8 @@
   padding: 16px;
   position: sticky;
   top: var(--header-height);
-  height: calc(100vh - var(--header-height));
+  /* 副作用: 100vh依存を除去し、骨格からの高さ伝播に追従 */
+  height: calc(100% - var(--header-height));
   overflow: auto;
 }
 
@@ -52,7 +53,8 @@
 }
 
 .contentScroll {
-  height: calc(100vh - var(--header-height) - 48px);
+  /* 副作用: 100vh→%に変更。親のflex/高さに従い、1スクロールに統一 */
+  height: calc(100% - 48px);
   overflow: auto;
   padding-right: 8px;
 }

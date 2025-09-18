@@ -99,22 +99,14 @@ const CustomerListAnalysis: React.FC = () => {
         isAnalyzing;
 
     return (
-        <div style={{ height: '100vh', minHeight: 0 }}>
+        // 骨格に委譲: ページ枠内でflex:1を使い、vhは使わない
+        <div style={{ height: '100%', minHeight: 0, display: 'flex', flexDirection: 'column' }}>
             {/* 分析中モーダル */}
             <AnalysisProcessingModal open={isAnalyzing} />
 
-            <Row gutter={24} style={{ height: '100%', minHeight: 0 }}>
+            <Row gutter={24} style={{ height: '100%', minHeight: 0, flex: 1 }}>
                 {/* 左カラム */}
-                <Col
-                    span={7}
-                    style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        height: '100vh',
-                        padding: '40px 24px',
-                        background: '#f8fcfa',
-                    }}
-                >
+                <Col span={7} style={{ display: 'flex', flexDirection: 'column', height: '100%', padding: '40px 24px', background: '#f8fcfa' }}>
                     <div
                         style={{
                             display: 'flex',
@@ -200,15 +192,7 @@ const CustomerListAnalysis: React.FC = () => {
                 </Col>
 
                 {/* 右カラム */}
-                <Col
-                    span={17}
-                    style={{
-                        height: '95%',
-                        minHeight: 0,
-                        display: 'flex',
-                        flexDirection: 'column',
-                    }}
-                >
+                <Col span={17} style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
                     {!analysisStarted ? (
                         <div
                             style={{

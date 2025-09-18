@@ -3,7 +3,8 @@ import React, { useEffect, useState } from "react";
 import { MapContainer, TileLayer, Circle, Tooltip, Marker, Popup, GeoJSON } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { Card, Table, Statistic, Row, Col } from "antd";
+import { Card, Statistic, Row, Col } from "antd";
+import AutoHeightTable from '@/components/table/AutoHeightTable';
 import { customerAnalysisColors } from '../theme';
 
 // 会社マーカー
@@ -120,7 +121,7 @@ const CustomerListDashboard: React.FC = () => {
     }, []);
 
     return (
-        <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", background: "#f7f8fa" }}>
+        <div style={{ height: '100%', display: "flex", flexDirection: "column", background: "#f7f8fa" }}>
             <div style={{ padding: 24 }}>
                 <h1>一都三県 顧客売上バブルマップ</h1>
                 <Row gutter={16} style={{ marginBottom: 16 }}>
@@ -250,14 +251,14 @@ const CustomerListDashboard: React.FC = () => {
                     styles={{ body: { height: MAP_HEIGHT, display: "flex", flexDirection: "column", padding: 0 } }}
                 >
                     <h3 style={{ margin: "16px" }}>顧客ランキング</h3>
-                    <div className="table-wrap" style={{ flex: 1, margin: "0 16px 16px 16px" }}>
-                        <Table
+                    <div className="table-wrap" style={{ flex: 1, minHeight: 0, margin: "0 16px 16px 16px", display: 'flex' }}>
+                        <AutoHeightTable
                             dataSource={sortedCustomers}
                             columns={columns}
                             size="small"
                             rowKey="id"
                             pagination={false}
-                            scroll={{ y: MAP_HEIGHT - 90, x: 'max-content' }}
+                            scroll={{ x: 'max-content' }}
                         />
                     </div>
                 </Card>
