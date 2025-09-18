@@ -6,6 +6,7 @@
 """
 
 import os
+from pathlib import Path
 import json
 import yaml
 from typing import Dict, Tuple, List
@@ -21,11 +22,11 @@ def get_resource_paths() -> Dict[str, str]:
         dict: 各種ファイルパス
     """
     return {
-        "PDF_PATH": PDF_PATH,
-        "JSON_PATH": JSON_PATH,
-        "FAISS_PATH": FAISS_PATH,
-        "ENV_PATH": ENV_PATH,
-        "YAML_PATH": YAML_PATH,
+        "PDF_PATH": str(PDF_PATH),
+        "JSON_PATH": str(JSON_PATH),
+        "FAISS_PATH": str(FAISS_PATH),
+        "ENV_PATH": str(ENV_PATH),
+        "YAML_PATH": str(YAML_PATH),
         # 追加リソースはここに追記
     }
 
@@ -51,22 +52,68 @@ def load_json_data(json_path: str) -> Dict:
         raise RuntimeError(f"JSONファイルの読み込みに失敗: {json_path} ({e})")
 
 
-from typing import List, Dict
-
 def load_question_templates() -> List[Dict]:
     """
-    質問テンプレート（YAML）を読み込み、必ずList[Dict]で返す。
+    質問テンプレート（YAML）を読み込み、必ず List[Dict] で返す。
+
+    優先パス:
+      1. 環境変数・paths 由来の YAML_PATH
+      2. /backend/config/category_question_templates_with_tags.yaml
+      3. /backend/local_data/master/category_question_templates_with_tags.yaml
+
+    いずれも存在しない/読み込み不可の場合は空配列 [] を返却する。
 
     Returns:
         List[Dict]: テンプレートデータ
     """
-    yaml_path = get_resource_paths().get("YAML_PATH")
-    with open(yaml_path, encoding="utf-8") as f:
-        data = yaml.safe_load(f)
-    if isinstance(data, dict):
-        return [data]
-    if isinstance(data, list):
-        return data
+    # 候補パスを順に確認
+    primary = str(get_resource_paths().get("YAML_PATH")) if get_resource_paths().get("YAML_PATH") else None
+    fallbacks = [
+        "/backend/config/category_question_templates_with_tags.yaml",
+        "/backend/local_data/master/category_question_templates_with_tags.yaml",
+    ]
+
+    # 親ディレクトリを遡って repo 直下の config/ を探索（ローカル実行の救済）
+    try:
+        here = Path(__file__).resolve()
+        for parent in list(here.parents)[:6]:
+            for name in (
+                "category_question_templates_with_tags.yaml",
+                "category_question_templates.yaml",
+            ):
+                p = parent / ".." / ".." / ".." / ".." / ".."  # 安全のため更に遡る
+                # 上記は固定ではないので、実際には parent 直下から順に確認
+            # 正しくは parent 直下
+        for parent in list(here.parents)[:6]:
+            for rel in (
+                Path("config/category_question_templates_with_tags.yaml"),
+                Path("config/category_question_templates.yaml"),
+            ):
+                fp = (parent / rel).resolve()
+                if fp.exists():
+                    fallbacks.append(str(fp))
+    except Exception:
+        pass
+
+    candidates: List[str] = []
+    if primary:
+        candidates.append(primary)
+    candidates.extend(fallbacks)
+
+    for p in candidates:
+        try:
+            if p and os.path.exists(p):
+                with open(p, encoding="utf-8") as f:
+                    data = yaml.safe_load(f)
+                if isinstance(data, dict):
+                    return [data]
+                if isinstance(data, list):
+                    return data
+        except Exception:
+            # ログは上位でまとめて扱う方針のため握りつぶし、次候補へ
+            continue
+
+    # どれも見つからない/不正な場合は空で返す（500を避ける）
     return []
 
 
