@@ -4,7 +4,8 @@ body,
 #root {
     height: 100%;
     margin: 0;
-    overflow: auto; /* スクロールを許可する（以前は hidden で禁止されていた） */
+    /* スクロールは各Page内でのみ許可するため root は非スクロール */
+    /* overflow は globals.css の #root { overflow: hidden } に委譲 */
     -webkit-overflow-scrolling: touch; /* iOS の慣性スクロールを有効化 */
 }
 
@@ -134,7 +135,7 @@ body {
     /* モバイルでは縦スクロール可能 */
     .ant-layout-content {
         height: auto !important;
-        min-height: calc(100vh - 64px);
+        min-height: 0;
     }
 }
 
@@ -163,8 +164,8 @@ body {
     /* タブレットでは縦スクロール可能 */
     .ant-layout-content {
         height: auto !important;
-        min-height: calc(100vh - 64px);
-        overflow-y: auto;
+        min-height: 0;
+        overflow-y: visible;
     }
 }
 

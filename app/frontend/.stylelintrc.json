@@ -1,0 +1,15 @@
+{
+  "extends": ["stylelint-config-standard"],
+  "rules": {
+    "declaration-property-value-disallowed-list": [
+      {
+        "/^overflow$/": ["auto", "scroll", "hidden"],
+        "/^height$/": ["100vh"],
+        "/^min-height$/": ["100vh"]
+      },
+      {
+        "severity": "warning"
+      }
+    ]
+  }
+}

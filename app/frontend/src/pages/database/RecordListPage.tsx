@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
-import { Table, DatePicker, Select, Space, Button, Pagination } from 'antd';
+import { DatePicker, Select, Space, Button, Pagination } from 'antd';
+import { AutoHeightTable as Table } from '@/components/table/AutoHeightTable';
 import dayjs from 'dayjs';
 import type { Dayjs } from 'dayjs';
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
@@ -271,7 +272,7 @@ const RecordListPage: React.FC = () => {
                     columns={antColumns}
                     dataSource={table.getRowModel().rows.map(row => row.original)}
                     rowKey={record => unique_keys.map(key => String(record[key])).join('_')}
-                    scroll={{ x: 'max-content', y: 600 }}
+                    scroll={{ x: 'max-content' }}
                     pagination={false}
                     rowClassName={(_, idx) =>
                         idx % 2 === 0 ? 'table-row-even' : 'table-row-odd'

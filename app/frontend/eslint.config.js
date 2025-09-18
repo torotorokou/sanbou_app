@@ -51,6 +51,30 @@ export default defineConfig([
             '@typescript-eslint/no-explicit-any': 'warn',
         },
     },
+    // ページ配下のみ、インラインstyleの危険プロパティを警告
+    {
+        files: ['src/pages/**/*.{js,ts,jsx,tsx}'],
+        rules: {
+            'no-restricted-syntax': [
+                'warn',
+                {
+                    selector:
+                        "JSXAttribute[name.name='style'] Property[key.name=/^(height|minHeight|maxHeight)$/]",
+                    message: 'inline styleの高さ指定は禁止。Page/Layoutに集約してください。',
+                },
+                {
+                    selector:
+                        "JSXAttribute[name.name='style'] Property[key.name=/^(overflow|overflowY|overflowX)$/]",
+                    message: 'inline styleのoverflowは禁止。本文1か所のみに統一してください。',
+                },
+                {
+                    selector:
+                        "JSXAttribute[name.name='style'] Literal[value=/vh/]",
+                    message: 'inline styleでvh単位は使用禁止。必要時は骨格側の100dvhを使用。',
+                },
+            ],
+        },
+    },
     // JSONファイル用
     {
         files: ['**/*.json'],

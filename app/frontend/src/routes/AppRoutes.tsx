@@ -37,6 +37,7 @@ import TokenPreviewPage from '@/pages/TokenPreviewPage';
 import TestPage from '@/pages/TestPage';
 import PortalPage from '@/pages/portal/PortalPage';
 import NewsPage from '@/pages/NewsPage';
+import Page from '@/layouts/Page';
 
 const AppRoutes: React.FC = () => {
     const location = useLocation();
@@ -46,66 +47,66 @@ const AppRoutes: React.FC = () => {
     <>
     <Routes location={state?.backgroundLocation || location}>
         {/* テスト用ルート */}
-        <Route path='/test' element={<TestPage />} />
+        <Route path='/test' element={<Page><TestPage /></Page>} />
 
     {/* ポータル(トップ) */}
-    <Route path={ROUTER_PATHS.PORTAL} element={<PortalPage />} />
+    <Route path={ROUTER_PATHS.PORTAL} element={<Page><PortalPage /></Page>} />
 
         {/* ダッシュボード */}
         <Route
             path={ROUTER_PATHS.DASHBOARD}
-            element={<ManagementDashboard />}
+            element={<Page><ManagementDashboard /></Page>}
         />
-        <Route path={ROUTER_PATHS.FACTORY} element={<FactoryDashboard />} />
-        <Route path={ROUTER_PATHS.PRICING} element={<PricingDashboard />} />
+        <Route path={ROUTER_PATHS.FACTORY} element={<Page><FactoryDashboard /></Page>} />
+        <Route path={ROUTER_PATHS.PRICING} element={<Page><PricingDashboard /></Page>} />
         <Route
             path={ROUTER_PATHS.CUSTOMER_LIST}
-            element={<CustomerListDashboard />}
+            element={<Page><CustomerListDashboard /></Page>}
         />
 
         {/* 帳票ページ */}
     {/* /report 直アクセス時は管理ページへ */}
     <Route path='/report' element={<Navigate to={ROUTER_PATHS.REPORT_MANAGE} replace />} />
-        <Route path={ROUTER_PATHS.REPORT_MANAGE} element={<ReportManagePage />} />
-        <Route path={ROUTER_PATHS.REPORT_FACTORY} element={<ReportFactory />} />
-        <Route path={ROUTER_PATHS.LEDGER_BOOK} element={<LedgerBookPage />} />
+        <Route path={ROUTER_PATHS.REPORT_MANAGE} element={<Page><ReportManagePage /></Page>} />
+        <Route path={ROUTER_PATHS.REPORT_FACTORY} element={<Page><ReportFactory /></Page>} />
+        <Route path={ROUTER_PATHS.LEDGER_BOOK} element={<Page><LedgerBookPage /></Page>} />
 
         {/* データ分析 */}
         <Route
             path={ROUTER_PATHS.ANALYSIS_CUSTOMERLIST}
-            element={<CustomerListAnalysis />}
+            element={<Page><CustomerListAnalysis /></Page>}
         />
 
         {/* チャットボット */}
-        <Route path={ROUTER_PATHS.NAVI} element={<PdfChatBot />} />
+    <Route path={ROUTER_PATHS.NAVI} element={<Page><PdfChatBot /></Page>} />
 
     {/* マニュアル（新） */}
-    <Route path='/manuals' element={<GlobalManualSearch />} />
-    <Route path='/manuals/syogun' element={<ShogunManualList />} />
+    <Route path='/manuals' element={<Page><GlobalManualSearch /></Page>} />
+    <Route path='/manuals/syogun' element={<Page><ShogunManualList /></Page>} />
         {/* 単独ページ（正ルート） */}
-        <Route path='/manuals/syogun/:id' element={<ManualPage />} />
+        <Route path='/manuals/syogun/:id' element={<Page><ManualPage /></Page>} />
 
 
         {/* データベース関連 */}
-        <Route path={ROUTER_PATHS.UPLOAD_PAGE} element={<UploadPage />} />
-        <Route path={ROUTER_PATHS.RECORD_LIST} element={<RecordListPage />} />
+    <Route path={ROUTER_PATHS.UPLOAD_PAGE} element={<Page><UploadPage /></Page>} />
+    <Route path={ROUTER_PATHS.RECORD_LIST} element={<Page><RecordListPage /></Page>} />
 
         {/* トークンプレビュー */}
         <Route
             path={ROUTER_PATHS.TOKEN_PREVIEW}
-            element={<TokenPreviewPage />}
+            element={<Page><TokenPreviewPage /></Page>}
         />
 
     {/* お知らせ */}
-    <Route path={ROUTER_PATHS.NEWS} element={<NewsPage />} />
+    <Route path={ROUTER_PATHS.NEWS} element={<Page><NewsPage /></Page>} />
         {/* その他/404 */}
-                <Route path='*' element={<div>ページが見つかりません</div>} />
+                <Route path='*' element={<Page><div>ページが見つかりません</div></Page>} />
         </Routes>
 
         {/* 背景ロケーションがある場合のみ、モーダルルートをオーバーレイ表示 */}
             {state?.backgroundLocation && (
             <Routes>
-                <Route path='/manuals/syogun/:id' element={<ManualModal />} />
+                <Route path='/manuals/syogun/:id' element={<Page><ManualModal /></Page>} />
             </Routes>
         )}
         </>
