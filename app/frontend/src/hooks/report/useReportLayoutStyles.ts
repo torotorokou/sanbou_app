@@ -55,6 +55,8 @@ export const useReportLayoutStyles = () => {
         minWidth: isMobileOrTablet ? "auto" : "300px",
         maxWidth: isMobileOrTablet ? "none" : "300px",
         minHeight: isMobileOrTablet ? "auto" : "520px", // CSVパネルの高さ増加に合わせて調整
+        // デスクトップではサイドバー幅を固定（他ページと同様の挙動）
+        flex: (isMobileOrTablet ? "1 1 auto" : "0 0 300px") as "1 1 auto" | "0 0 300px",
         flexShrink: isMobileOrTablet ? 1 : 0,
         flexGrow: isMobileOrTablet ? 1 : 0,
         order: isMobileOrTablet ? 3 : 1,

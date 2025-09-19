@@ -1,6 +1,23 @@
 import type { ManualDetail, ManualListResponse } from '@/types/manuals';
 import { apiGet } from '@/lib/apiClient';
 
+export type ManualCatalogResponse = {
+  sections: Array<{
+    id: string;
+    title: string;
+    icon?: string;
+    items: Array<{
+      id: string;
+      title: string;
+      description?: string;
+      route?: string;
+      tags: string[];
+      flow_url?: string;
+      video_url?: string;
+    }>;
+  }>;
+};
+
 export const manualsApi = {
   async list(params: { query?: string; tag?: string; category?: string; page?: number; size?: number } = {}) {
     const res = await apiGet<ManualListResponse>(`/manual_api/api/manuals`, { params });
@@ -15,7 +32,7 @@ export const manualsApi = {
     return res;
   },
   async catalog(params: { category?: string } = {}) {
-    const res = await apiGet<{ sections: Array<{ id: string; title: string; icon?: string; items: Array<{ id: string; title: string; description?: string; route?: string; tags: string[] }> }> }>(`/manual_api/api/manuals/catalog`, { params });
+    const res = await apiGet<ManualCatalogResponse>(`/manual_api/api/manuals/catalog`, { params });
     return res;
   },
 };

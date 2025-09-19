@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Anchor, Breadcrumb, Button, Grid, Space, Spin, Typography } from 'antd';
+import { Anchor, Breadcrumb, Button, Grid, Layout, Space, Spin, Typography } from 'antd';
 import { useNavigate, useParams } from 'react-router-dom';
 import manualsApi from '@/services/api/manualsApi';
 import type { ManualDetail } from '@/types/manuals';
@@ -38,17 +38,20 @@ const ManualPage: React.FC = () => {
   }, [data]);
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: screens.lg ? '240px 1fr' : '1fr', gap: 16 }}>
+    <Layout style={{ height: '100%', background: 'transparent' }}>
       {screens.lg && (
-        <div>
-          <Anchor
-            targetOffset={16}
-            items={data?.sections.map((s) => ({ key: s.anchor, href: `#${s.anchor}`, title: s.title }))}
-          />
-        </div>
+        <Layout.Sider width={240} style={{ position: 'sticky', top: 0, alignSelf: 'flex-start', height: '100vh', overflow: 'auto', background: 'var(--ant-color-bg-container, #fff)', borderRight: '1px solid var(--ant-color-border-secondary, #f0f0f0)' }}>
+          <div style={{ padding: 16 }}>
+            <Anchor
+              targetOffset={16}
+              getContainer={() => document.querySelector('#manual-content-scroll') as HTMLElement || window}
+              items={data?.sections.map((s) => ({ key: s.anchor, href: `#${s.anchor}`, title: s.title }))}
+            />
+          </div>
+        </Layout.Sider>
       )}
 
-      <div>
+      <Layout.Content style={{ padding: 16 }}>
         <Space direction='vertical' size={12} style={{ width: '100%' }}>
           <Breadcrumb items={[{ title: 'マニュアル' }, { title: '将軍' }, { title: data?.title || '' }]} />
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -56,15 +59,15 @@ const ManualPage: React.FC = () => {
             <Button onClick={() => nav(`/manuals/syogun/${id}`, { state: { backgroundLocation: { pathname: '/manuals' } } })}>モーダルで開く</Button>
           </div>
           {loading ? <Spin /> : (
-            <div ref={ref}>
+            <div id="manual-content-scroll" ref={ref} style={{ maxHeight: 'calc(100vh - 160px)', overflowY: 'auto', paddingRight: 8 }}>
               {data?.sections.map((s) => (
-                <div key={s.anchor} dangerouslySetInnerHTML={{ __html: s.html || '' }} />
+                <div key={s.anchor} style={{ scrollMarginTop: 80 }} dangerouslySetInnerHTML={{ __html: s.html || '' }} />
               ))}
             </div>
           )}
         </Space>
-      </div>
-    </div>
+      </Layout.Content>
+    </Layout>
   );
 };
 

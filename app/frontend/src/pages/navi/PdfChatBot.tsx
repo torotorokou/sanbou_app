@@ -76,7 +76,8 @@ const PdfChatBot: React.FC = () => {
     React.useEffect(() => {
         const fetchOptions = async () => {
             try {
-                const res = await apiGet<Record<string, { title: string; tag: string[] }[]>>('/api/question-options');
+                // backend: rag_api -> /rag_api/api/question-options
+                const res = await apiGet<Record<string, { title: string; tag: string[] }[]>>('/rag_api/api/question-options');
                 // 期待フォーマット: { [category]: [{ title, tag: string[] }] }
                 if (res && typeof res === 'object') {
                     setCategoryData(res as Record<string, { title: string; tag: string[] }[]>);
@@ -143,11 +144,11 @@ const PdfChatBot: React.FC = () => {
             tags: tagsToSend,
         };
 
-        console.log('[API][REQUEST] /rag_api/api/generate-answer payload:', payload);
+    console.log('[API][REQUEST] /rag_api/api/generate-answer payload:', payload);
 
         try {
             const res = await apiPost<ChatAnswerResult>(
-                '/api/generate-answer',
+                '/rag_api/api/generate-answer',
                 payload
             );
 
