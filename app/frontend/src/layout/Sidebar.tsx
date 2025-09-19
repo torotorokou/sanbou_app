@@ -118,7 +118,8 @@ const Sidebar: React.FC = () => {
                 // 固定表示: 本文スクロール時にサイドバーが動かないようにする
                 position: 'sticky',
                 top: 0,
-                height: '100%',
+                // ビューポートの高さいっぱいに表示する
+                height: '100vh',
                 overflow: 'auto',
                 // 幅が他要因で縮まないように明示
                 minWidth: collapsed ? sidebarConfig.collapsedWidth : sidebarConfig.width,
@@ -163,7 +164,8 @@ const Sidebar: React.FC = () => {
                 openKeys={openKeys}
                 onOpenChange={(keys: string[]) => setOpenKeys(keys)}
                 style={{
-                    height: 'calc(100% - 64px)',
+                    // Sider を viewport 高さにしているため、ヘッダ分を差し引く
+                    height: 'calc(100vh - 64px)',
                     borderRight: 0,
                     backgroundColor: 'transparent',
                 }}

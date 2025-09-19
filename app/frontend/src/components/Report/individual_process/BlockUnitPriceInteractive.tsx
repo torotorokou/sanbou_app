@@ -1,7 +1,7 @@
 // /app/src/components/Report/individual_process/BlockUnitPriceInteractive.tsx
 
 import React, { useState } from 'react';
-import { apiPost } from '@/lib/apiClient';
+import { apiPost } from '@/services/httpClient';
 
 interface TransportOption {
     vendor_code: string;

@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Spin, Button, Card, Drawer } from 'antd';
 import { FilePdfOutlined } from '@ant-design/icons';
-import { apiGet, apiPost } from '@/lib/apiClient';
+import { apiGet, apiPost } from '@/services/httpClient';
 import { pdfjs } from 'react-pdf';
 import ChatQuestionSection from '@/components/chat/ChatQuestionSection';
 import ChatSendButtonSection from '@/components/chat/ChatSendButtonSection';

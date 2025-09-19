@@ -7,7 +7,7 @@ import ComparisonConditionForm from '@/components/analysis/customer-list-analysi
 import CustomerComparisonResultCard from '@/components/analysis/customer-list-analysis/CustomerComparisonResultCard';
 import AnalysisProcessingModal from '@/components/analysis/customer-list-analysis/AnalysisProcessingModal';
 import { useCustomerComparison } from '@/hooks/analysis/customer-list-analysis/useCustomerComparison';
-import { apiPostBlob } from '@/lib/apiClient';
+import { apiPostBlob } from '@/services/httpClient';
 
 function getMonthRange(start: Dayjs | null, end: Dayjs | null): string[] {
     if (!start || !end) return [];

@@ -1,5 +1,5 @@
 // src/services/chatService.ts
-import { apiPost } from '@/lib/apiClient';
+import { apiPost } from '@/services/httpClient';
 import type { ChatAnswerRequest, ChatAnswerResult } from '@/types/chat';
 
 export async function postChatAnswer(payload: ChatAnswerRequest) {
