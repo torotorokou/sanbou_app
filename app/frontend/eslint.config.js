@@ -5,6 +5,7 @@ import pluginReact from 'eslint-plugin-react';
 import { defineConfig } from 'eslint/config';
 import pluginTs from '@typescript-eslint/eslint-plugin';
 import json from '@eslint/json';
+import boundaries from 'eslint-plugin-boundaries';
 
 export default defineConfig([
     // 除外パターン（Flat Config は .eslintignore 非対応のためここで指定）
@@ -37,11 +38,19 @@ export default defineConfig([
         plugins: {
             '@typescript-eslint': pluginTs,
             react: pluginReact,
+            boundaries,
         },
         settings: {
             react: {
                 version: 'detect',
             },
+            'boundaries/elements': [
+                { type: 'shared', pattern: 'src/shared/**', mode: 'full' },
+                { type: 'domain', pattern: 'src/domain/**', mode: 'full' },
+                { type: 'infra', pattern: 'src/infra/**', mode: 'full' },
+                { type: 'controllers', pattern: 'src/controllers/**', mode: 'full' },
+                { type: 'features', pattern: 'src/features/**', mode: 'full' },
+            ],
         },
         rules: {
             ...pluginTs.configs.recommended.rules,
@@ -49,6 +58,19 @@ export default defineConfig([
             '@typescript-eslint/consistent-type-imports': 'warn',
             // 暫定: any は段階的移行のため warn に緩和
             '@typescript-eslint/no-explicit-any': 'warn',
+            'boundaries/element-types': [
+                'error',
+                {
+                    default: 'disallow',
+                    message: '依存の向きを守ってください。',
+                    rules: [
+                        { from: ['features'], allow: ['shared', 'controllers'] },
+                        { from: ['controllers'], allow: ['shared', 'domain'] },
+                        { from: ['domain'], allow: ['shared'] },
+                        { from: ['infra'], allow: ['shared', 'domain'] },
+                    ],
+                },
+            ],
         },
     },
     // JSONファイル用

@@ -17,7 +17,12 @@
         "noFallthroughCasesInSwitch": true,
         "baseUrl": ".",
         "paths": {
-            "@/*": ["./src/*"]
+            "@/*": ["./src/*"],
+            "@shared/*": ["./src/shared/*"],
+            "@domain/*": ["./src/domain/*"],
+            "@infra/*": ["./src/infra/*"],
+            "@controllers/*": ["./src/controllers/*"],
+            "@features/*": ["./src/features/*"]
         },
         "esModuleInterop": true,
         "allowSyntheticDefaultImports": true,
