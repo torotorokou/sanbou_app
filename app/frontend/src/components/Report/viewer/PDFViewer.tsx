@@ -8,7 +8,7 @@ type PDFViewerProps = {
 };
 
 const PDFViewer: React.FC<PDFViewerProps> = ({ pdfUrl }) => {
-    const { isMobile, isTablet } = useWindowSize();
+    const { isMobile, isTablet, width } = useWindowSize();
     const [hasError, setHasError] = useState(false);
 
     if (!pdfUrl) {
@@ -63,7 +63,13 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ pdfUrl }) => {
             style={{
                 width: '100%',
                 height: '100%',
-                minHeight: isMobile ? '400px' : isTablet ? '450px' : '500px',
+                minHeight: isMobile
+                    ? '380px'
+                    : isTablet
+                    ? '440px'
+                    : width < 1200
+                    ? '480px'
+                    : '520px',
                 border: 'none',
                 borderRadius: 4,
             }}
