@@ -43,6 +43,7 @@ export const useReportLayoutStyles = () => {
           | "auto"
           | "visible",
         width: "100%",
+        minWidth: 0, // フレックス内の子要素でのはみ出しを防ぐ
         boxSizing: "border-box" as const,
       },
       leftPanel: {
@@ -108,6 +109,7 @@ export const useReportLayoutStyles = () => {
         display: "flex",
         flexDirection: "column" as const,
         order: isMobileOrTablet ? 1 : 3,
+        minWidth: 0, // 右パネル自身も縮小可能に
         overflowY: (isMobileOrTablet ? "visible" : "auto") as
           | "auto"
           | "visible",

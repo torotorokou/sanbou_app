@@ -7,7 +7,7 @@ type Props = {
 
 const AnswerViewer: React.FC<Props> = ({ answer }) => {
     return (
-        <Card className='no-hover' style={{ height: '90%', overflowY: 'auto' }}>
+    <Card className='no-hover' style={{ overflowY: 'auto' }}>
             <Typography.Paragraph style={{ marginBottom: 0, color: '#333', fontSize: '1rem' }}>
                 {answer
                     ? answer.split('\n').map((line, i) => (

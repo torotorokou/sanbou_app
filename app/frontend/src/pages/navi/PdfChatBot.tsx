@@ -341,7 +341,7 @@ const PdfChatBot: React.FC = () => {
                     body: {
                         background: '#fafbfc',
                         padding: '18px 20px 8px 20px',
-                        overflowX: 'auto',
+                        /* horizontal overflow handled by wrapper if needed */
                         display: 'flex',
                         flexDirection: 'column',
                         alignItems: 'center',
@@ -349,11 +349,12 @@ const PdfChatBot: React.FC = () => {
                 }}
             >
                 <div
+                    className="responsive-x"
                     style={{
                         display: 'flex',
                         flexDirection: 'row',
                         gap: 16,
-                        overflowX: 'auto',
+                        /* horizontal overflow handled by wrapper */
                         paddingBottom: 8,
                     }}
                 >

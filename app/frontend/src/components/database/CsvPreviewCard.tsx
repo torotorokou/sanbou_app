@@ -79,7 +79,7 @@ export const CsvPreviewCard: React.FC<Props> = ({
         >
             {csvPreview && csvPreview.rows.length > 0 ? (
                 <div
-                    className="table-wrap"
+                        className="responsive-x"
                     style={{
                         flex: 1,
                         overflow: 'hidden',

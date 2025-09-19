@@ -1,0 +1,40 @@
+/* Unified responsive base: breakpoints sm/md/lg, clamp font size, height policy */
+html, body, #root { height: 100%; }
+
+body { line-height: 1.6; overflow-x: clip; }
+
+.ant-layout { min-height: 100vh; }
+@supports (min-height: 100dvh) {
+  .ant-layout { min-height: 100dvh; }
+}
+
+/* Media elements only */
+img, video, canvas, svg { max-width: 100%; height: auto; }
+
+/* Horizontal scroll utility for wide content (e.g., tables) */
+.responsive-x { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+/* sm: ≤ 767px */
+@media (max-width: 767px) {
+  .ant-card { margin: 8px 0; border-radius: 8px; }
+  .ant-layout-content { padding: 12px; }
+  .ant-table { font-size: 12px; }
+}
+
+/* md: 768–1279px */
+@media (min-width: 768px) and (max-width: 1279px) {
+  .ant-card { margin: 12px 0; border-radius: 10px; }
+  .ant-layout-content { padding: 16px; }
+  .ant-table { font-size: 13px; }
+}
+
+/* lg: ≥ 1280px */
+@media (min-width: 1280px) {
+  .ant-card { margin: 16px 0; border-radius: 12px; }
+  .ant-layout-content { padding: 24px; }
+}
+
+@media print {
+  .ant-layout-sider, .ant-drawer { display: none !important; }
+  .ant-layout-content { margin: 0 !important; padding: 0 !important; }
+}

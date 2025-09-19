@@ -1,11 +1,11 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App.tsx';
-import { ConfigProvider } from 'antd';
-import { customTokens } from './theme/tokens';
+import { AppThemeProvider } from './providers/AppThemeProvider';
 import { generateCssVars } from './theme/cssVars';
 import 'antd/dist/reset.css';
 import './index.css';
+import './styles/responsive.css';
 import './shared/styles/base.css';
 
 // ① customTokens（ブランドカラー等）からCSS変数を作る
@@ -19,8 +19,8 @@ document.head.appendChild(styleTag);
 // ③ Ant DesignのConfigProviderにも customTokens を渡しておく（推奨）
 ReactDOM.createRoot(document.getElementById('root')!).render(
     <React.StrictMode>
-        <ConfigProvider theme={{ token: customTokens }}>
+        <AppThemeProvider>
             <App />
-        </ConfigProvider>
+        </AppThemeProvider>
     </React.StrictMode>
 );

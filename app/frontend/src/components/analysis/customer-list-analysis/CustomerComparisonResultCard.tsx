@@ -50,7 +50,7 @@ const CustomerComparisonResultCard: React.FC<Props> = ({
         headStyle={{ fontWeight: 600, ...headStyle }}
         bodyStyle={{ flex: 1, minHeight: 0, overflow: 'auto', padding: 0 }}
     >
-        <div className="table-wrap" style={{ minHeight: 0 }}>
+    <div className="responsive-x" style={{ minHeight: 0 }}>
             <Table
                 dataSource={data}
                 columns={customerColumns}

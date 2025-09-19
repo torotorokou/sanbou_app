@@ -80,7 +80,7 @@ const UploadDatabasePage: React.FC = () => {
                         display: 'flex',
                         flexDirection: 'column',
                         gap: 16,
-                        overflowX: 'hidden',
+                        /* horizontal overflow is clipped globally; wrap specific content with .responsive-x if needed */
                     }}
                 >
                     {UPLOAD_CSV_TYPES.map((type) => (

@@ -266,7 +266,7 @@ const RecordListPage: React.FC = () => {
                     </span>
                 </Space>
             </div>
-            <div className="table-wrap">
+            <div className="responsive-x">
                 <Table
                     columns={antColumns}
                     dataSource={table.getRowModel().rows.map(row => row.original)}

@@ -9,7 +9,7 @@
 
 :root {
   /* Typography */
-  --font-base: clamp(14px, 1.2vw, 16px);
+  --font-base: clamp(14px, 1.4vw, 17px);
   --lh-base: 1.5;
 
   /* Spacing scale */
@@ -33,10 +33,7 @@
 }
 
 html,
-body {
-  font-size: var(--font-base);
-  line-height: var(--lh-base);
-}
+body { font-size: var(--font-base); line-height: var(--lh-base); }
 
 /* Fluid container: width is min(container-max, 92% of viewport) */
 .container {
@@ -47,29 +44,12 @@ body {
   padding-right: var(--space-4);
 }
 
-/*
-  Table wrapping: ensures horizontal scroll is available only for tables
-  Ant Design tables also benefit from this wrapper as a safety net.
-*/
-.table-wrap {
+/* Horizontal overflow utility (alias for backward compatibility) */
+.table-wrap,
+.responsive-x { /* prefer .responsive-x going forward */
   width: 100%;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
-}
-
-.table-wrap table {
-  width: 100%;
-  min-width: 800px; /* keep readable columns on small screens */
-  border-collapse: separate;
-  border-spacing: 0;
-}
-
-/* AntD specific safety: ensure inner table area won't overflow the page */
-.table-wrap .ant-table,
-.table-wrap .ant-table-container,
-.table-wrap .ant-table-content {
-  min-width: 800px;
-  width: 100%;
 }
 
 /* Grid/Flex helpers (optional minimal utilities) */
