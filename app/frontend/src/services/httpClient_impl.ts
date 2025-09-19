@@ -1,4 +1,4 @@
-// src/lib/apiClient.ts
+// src/services/httpClient_impl.ts
 import axios, { type AxiosRequestConfig } from 'axios';
 import type { ApiResponse } from '@/types/api';
 
@@ -26,7 +26,6 @@ export async function apiGet<T>(url: string, config?: AxiosRequestConfig): Promi
                 httpStatus: res.status,
             });
         }
-        // "result" が無い場合はそのまま返す（既存APIの生形状を許容）
         return d as unknown as T;
     }
     return d as unknown as T;
@@ -69,3 +68,4 @@ export async function apiPostBlob<B = unknown>(
     const res = await client.post(url, body, { ...config, responseType: 'blob' });
     return res.data as Blob;
 }
+

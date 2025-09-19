@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App.tsx';
-import { AppThemeProvider } from './providers/AppThemeProvider';
+import { ThemeProvider } from './theme/ThemeProvider';
 import { generateCssVars } from './theme/cssVars';
 import 'antd/dist/reset.css';
 import './index.css';
@@ -19,8 +19,8 @@ document.head.appendChild(styleTag);
 // ③ Ant DesignのConfigProviderにも customTokens を渡しておく（推奨）
 ReactDOM.createRoot(document.getElementById('root')!).render(
     <React.StrictMode>
-        <AppThemeProvider>
+        <ThemeProvider>
             <App />
-        </AppThemeProvider>
+        </ThemeProvider>
     </React.StrictMode>
 );
