@@ -14,7 +14,7 @@ import { BREAKPOINTS as BP } from '@/shared/constants/breakpoints';
 export const useReportLayoutStyles = () => {
   const { isMobile, isTablet, width } = useWindowSize();
   const isMobileOrTablet = isMobile || isTablet;
-  const isHalfScreen = !isMobile && !isTablet && (typeof width === 'number' ? width < BP.autoCollapse : false);
+  const isHalfScreen = !isMobile && !isTablet && (typeof width === 'number' ? width <= BP.mdMax : false);
 
   // デバッグ情報（一時的）
   // console.log('useReportLayoutStyles - Device Info:', {
@@ -35,12 +35,12 @@ export const useReportLayoutStyles = () => {
         flexDirection: (isMobileOrTablet ? "column" : "row") as
           | "row"
           | "column",
-  gap: isMobile ? 12 : isTablet ? 16 : width < BP.autoCollapse ? 16 : 24,
+  gap: isMobile ? 12 : isTablet ? 16 : width <= BP.mdMax ? 16 : 24,
         alignItems: "stretch", // 中央配置のために'stretch'に統一
         flexGrow: 1,
         marginTop: isMobile ? 8 : 12,
-  minHeight: isMobileOrTablet ? "auto" : width < BP.autoCollapse ? "60vh" : "70vh",
-  maxHeight: isMobileOrTablet ? "none" : width < BP.autoCollapse ? "72vh" : "80vh",
+  minHeight: isMobileOrTablet ? "auto" : width <= BP.mdMax ? "60vh" : "70vh",
+  maxHeight: isMobileOrTablet ? "none" : width <= BP.mdMax ? "72vh" : "80vh",
         overflowY: (isMobileOrTablet ? "visible" : "auto") as
           | "auto"
           | "visible",
@@ -53,9 +53,9 @@ export const useReportLayoutStyles = () => {
         flexDirection: "column" as const,
         gap: isMobile ? 8 : 12, // gapも縮小してコンパクトに
         // シンプルな3段階のサイズ設定
-  width: isMobileOrTablet ? "100%" : width < BP.autoCollapse ? "260px" : "300px",
-  minWidth: isMobileOrTablet ? "auto" : width < BP.autoCollapse ? "260px" : "300px",
-  maxWidth: isMobileOrTablet ? "none" : width < BP.autoCollapse ? "260px" : "300px",
+  width: isMobileOrTablet ? "100%" : width <= BP.mdMax ? "260px" : "300px",
+  minWidth: isMobileOrTablet ? "auto" : width <= BP.mdMax ? "260px" : "300px",
+  maxWidth: isMobileOrTablet ? "none" : width <= BP.mdMax ? "260px" : "300px",
         minHeight: isMobileOrTablet ? "auto" : "520px", // CSVパネルの高さ増加に合わせて調整
         // デスクトップではサイドバー幅を固定（他ページと同様の挙動）
         flex: (isMobileOrTablet ? "1 1 auto" : width < 1200 ? "0 0 260px" : "0 0 300px") as
@@ -73,10 +73,10 @@ export const useReportLayoutStyles = () => {
         justifyContent: "center", // 垂直方向中央配置
         alignItems: "center", // 水平方向中央配置
         // NOTE: ここはアイコン/矢印等のセンター用で幅固定だが、将来はclampで可変化検討
-  width: width < BP.autoCollapse ? "48px" : "60px",
-  minWidth: width < BP.autoCollapse ? "48px" : "60px",
-  maxWidth: width < BP.autoCollapse ? "48px" : "60px",
-  minHeight: width < BP.autoCollapse ? "320px" : "400px", // 最小高さを設定して中央配置を確実に
+  width: width <= BP.mdMax ? "48px" : "60px",
+  minWidth: width <= BP.mdMax ? "48px" : "60px",
+  maxWidth: width <= BP.mdMax ? "48px" : "60px",
+  minHeight: width <= BP.mdMax ? "320px" : "400px", // 最小高さを設定して中央配置を確実に
         flexShrink: 0,
         flexGrow: 0,
         order: 2,
@@ -109,9 +109,9 @@ export const useReportLayoutStyles = () => {
               flex: "1 1 auto", // 残りのスペースを全て使用
               // デスクトップ幅でも半画面⇔全画面で少しダイナミックに
               // autoCollapse を基準に調整
-              minWidth: width < BP.autoCollapse ? 480 : 600,
-              height: width < BP.autoCollapse ? "72vh" : "80vh",
-              maxHeight: width < BP.autoCollapse ? "72vh" : "80vh",
+              minWidth: width <= BP.mdMax ? 480 : 600,
+              height: width <= BP.mdMax ? "72vh" : "80vh",
+              maxHeight: width <= BP.mdMax ? "72vh" : "80vh",
             }),
         display: "flex",
         flexDirection: "column" as const,
@@ -125,13 +125,13 @@ export const useReportLayoutStyles = () => {
       previewContainer: {
         display: "flex",
         flex: 1,
-  gap: isMobile ? 8 : width < BP.autoCollapse ? 12 : 16,
+  gap: isMobile ? 8 : width <= BP.mdMax ? 12 : 16,
         alignItems: "center",
         flexDirection: (isMobile ? "column" : "row") as "row" | "column",
       },
       previewArea: {
         flex: 1,
-  height: isMobile ? "50vh" : width < BP.autoCollapse ? "68vh" : "100%",
+  height: isMobile ? "50vh" : width <= BP.mdMax ? "68vh" : "100%",
         width: isMobile ? "100%" : "auto",
         border: `1px solid ${customTokens.colorBorder}`,
         borderRadius: 8,
@@ -147,7 +147,7 @@ export const useReportLayoutStyles = () => {
         flexDirection: isMobile ? "row" : "column",
         justifyContent: "center",
         alignItems: "center",
-  width: isMobile ? "100%" : width < BP.autoCollapse ? 100 : 120,
+  width: isMobile ? "100%" : width <= BP.mdMax ? 100 : 120,
         gap: 8,
         marginTop: isMobile ? 12 : 0,
       },

@@ -9,6 +9,8 @@ import ChatAnswerSection from '@/components/chat/ChatAnswerSection';
 import PdfPreviewModal from '@/components/chat/PdfPreviewModal';
 import type { StepItem } from '@/components/ui/ReportStepIndicator';
 import ReportStepIndicator from '@/components/ui/ReportStepIndicator';
+import { useWindowSize } from '@/hooks/ui';
+import { BREAKPOINTS as BP } from '@/shared/constants/breakpoints';
 // YAMLを直接インポート（viteの@rollup/plugin-yamlでJSON化）
 // YAML直読みを廃止し、バックエンドAPIから取得する
 
@@ -197,17 +199,31 @@ const PdfChatBot: React.FC = () => {
         setDrawerOpen(false);
     };
 
+    const { width } = useWindowSize();
+    const isNarrow = typeof width === 'number' ? width <= BP.mdMax : false;
+    const isMd = typeof width === 'number' ? width >= BP.sm + 1 && width <= BP.mdMax : false;
+
     return (
-        <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
             {loading && <Spin tip="AIが回答中です..." size="large" fullscreen />}
 
             <div style={{ padding: '12px 24px' }}>
                 <ReportStepIndicator currentStep={currentStep} items={stepItems} />
             </div>
 
-            <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
-                {/* 左カラム */}
-                <ChatQuestionSection
+            <div style={{ display: 'flex', flex: 1, overflow: 'hidden', minHeight: 0 }}>
+                {/* 左 + 中央/右の組み替え: 狭い幅では質問フォーム下に送信ボタンを積む */}
+                {isNarrow ? (
+                    <>
+                        <div
+                            style={{
+                                display: 'flex',
+                                flex: isMd ? '1 1 50%' : '1 1 40%',
+                                flexDirection: 'column',
+                                minHeight: 0,
+                            }}
+                        >
+                            <ChatQuestionSection
                     category={category}
                     setCategory={(val) => {
                         setCategory(val);
@@ -235,29 +251,77 @@ const PdfChatBot: React.FC = () => {
                     categoryData={categoryData}
                 />
 
-                {/* 中央カラム */}
-                <ChatSendButtonSection
-                    onClick={handleSearch}
-                    // タグ必須の要件でなければ "|| tags.length === 0" は外す
-                    disabled={!question.trim() || tags.length === 0 || loading}
-                />
+                            <div style={{ padding: '4px 8px', display: 'flex', justifyContent: 'center' }}>
+                                <ChatSendButtonSection
+                                    onClick={handleSearch}
+                                    disabled={!question.trim() || tags.length === 0 || loading}
+                                />
+                            </div>
+                        </div>
 
-                {/* 右カラム */}
-                <ChatAnswerSection answer={answer} />
+                        {/* 右カラム（回答） */}
+                        <div style={{ flex: isMd ? '1 1 50%' : '1 1 60%', minHeight: 0 }}>
+                            <ChatAnswerSection answer={answer} />
+                        </div>
+                    </>
+                ) : (
+                    /* 通常の 3 列レイアウト */
+                    <>
+                        {/* 左カラム */}
+                        <ChatQuestionSection
+                            category={category}
+                            setCategory={(val) => {
+                                setCategory(val);
+                                setCurrentStep(1);
+                                // カテゴリ変更時に選択をリセット
+                                setTag([]);
+                                setTemplate('自由入力');
+                            }}
+                            tags={tags}
+                            // タグ更新はラッパー経由（最大3件制限）
+                            setTag={handleSetTag}
+                            template={template}
+                            setTemplate={(val) => {
+                                setTemplate(val);
+                                if (val !== '自由入力') {
+                                    setQuestion(val);
+                                    setCurrentStep(2);
+                                }
+                            }}
+                            question={question}
+                            setQuestion={(val) => {
+                                setQuestion(val);
+                                if (val.trim()) setCurrentStep(2);
+                            }}
+                            categoryData={categoryData}
+                        />
+
+                        {/* 中央カラム */}
+                        <ChatSendButtonSection
+                            onClick={handleSearch}
+                            // タグ必須の要件でなければ "|| tags.length === 0" は外す
+                            disabled={!question.trim() || tags.length === 0 || loading}
+                        />
+
+                        {/* 右カラム */}
+                        <ChatAnswerSection answer={answer} />
+                    </>
+                )}
             </div>
 
             {/* ===== 下部の参考PDFボタン（関連PDFを直接開く） ===== */}
             <div
+                className="container"
                 style={{
-                    width: '100vw',
+                    width: '100%',
                     position: 'fixed',
                     left: 0,
                     bottom: 0,
                     zIndex: 200,
                     display: 'flex',
                     justifyContent: 'center',
-                    pointerEvents: 'auto',
-                    paddingBottom: 8,
+                    pointerEvents: 'none',
+                    paddingBottom: 'max(8px, env(safe-area-inset-bottom))',
                 }}
             >
                 <Button
@@ -276,6 +340,7 @@ const PdfChatBot: React.FC = () => {
                         alignItems: 'center',
                         justifyContent: 'center',
                         gap: 6,
+                        pointerEvents: 'auto',
                     }}
                     disabled={!pdfUrl} // ★ pdfUrl が無いときは無効化
                     onClick={() => {

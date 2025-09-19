@@ -60,7 +60,7 @@ export function generateCssVars(): string {
   /* ブレークポイント (値は JS 側 'src/shared/constants/breakpoints.ts' を単一のソースにすること) */
   --breakpoint-mobile: 767px; /* BREAKPOINTS.sm */
   --breakpoint-tablet: 1023px; /* BREAKPOINTS.tabletMax (informational) */
-  --breakpoint-auto-collapse: 1200px; /* BREAKPOINTS.autoCollapse */
+  --breakpoint-auto-collapse: 1280px; /* BREAKPOINTS.autoCollapse */
   --breakpoint-force-collapse: 900px; /* BREAKPOINTS.forceCollapse */
     }
   `;

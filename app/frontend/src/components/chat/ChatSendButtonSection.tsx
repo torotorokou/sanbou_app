@@ -16,6 +16,7 @@ const ChatSendButtonSection: React.FC<Props> = ({ onClick, disabled }) => (
             alignItems: 'center',
             justifyContent: 'center',
             background: 'transparent',
+            minHeight: 0,
         }}
     >
         <VerticalActionButton
