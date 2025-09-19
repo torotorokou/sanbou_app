@@ -1,18 +1,9 @@
-/* === HTML・ルート高さ補完（重要）=== */
-html,
-body,
-#root {
-    height: 100%;
-    margin: 0;
-}
-
-/* === ベース設定 === */
+/* Base theme surfaces, uses responsive.css for layout/typography */
 body {
     background-color: var(--color-bg-base);
     color: var(--color-text);
     font-family: 'Segoe UI', sans-serif;
     margin: 0;
-    line-height: 1.6;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 }
@@ -69,13 +60,6 @@ body {
     padding: 16px;
 }
 
-/* === レスポンシブに備えて === */
-@media (max-width: 768px) {
-    .ant-card {
-        border-radius: 8px;
-    }
-}
-
 /* 回答表示など、hover演出が不要なカード */
 .ant-card.no-hover:hover {
     transform: none !important;
@@ -95,105 +79,7 @@ body {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-/* === レスポンシブデザイン === */
-
-/* スマートフォン (320px - 767px) */
-@media (max-width: 767px) {
-    body {
-        font-size: 14px;
-        overflow-x: hidden;
-    }
-
-    .ant-card {
-        margin: 8px 0;
-        border-radius: 6px;
-    }
-
-    .ant-btn {
-        font-size: 14px;
-        height: 36px;
-        padding: 4px 12px;
-    }
-
-    .ant-table {
-        font-size: 12px;
-    }
-
-    .ant-form-item-label {
-        font-size: 14px;
-    }
-
-    /* モバイルで横スクロールを防ぐ */
-    * {
-        max-width: 100%;
-        box-sizing: border-box;
-    }
-
-    .ant-layout-content { height: auto !important; }
-}
-
-/* タブレット (768px - 1023px) */
-@media (min-width: 768px) and (max-width: 1023px) {
-    body {
-        font-size: 15px;
-        overflow-x: auto;
-    }
-
-    .ant-card {
-        margin: 12px 0;
-        border-radius: 8px;
-    }
-
-    .ant-btn {
-        font-size: 15px;
-        height: 38px;
-        padding: 6px 14px;
-    }
-
-    .ant-table {
-        font-size: 13px;
-    }
-
-    .ant-layout-content { height: auto !important; }
-}
-
-/* 小さなデスクトップ・ラップトップ (1024px - 1365px) */
-@media (min-width: 1024px) and (max-width: 1365px) {
-    body {
-        font-size: 16px;
-    }
-
-    .ant-card {
-        margin: 16px 0;
-        border-radius: 10px;
-    }
-}
-
-/* 古いタイプのPC・半画面のPC (1366px - 1599px) */
-@media (min-width: 1366px) and (max-width: 1599px) {
-    body {
-        font-size: 16px;
-    }
-
-    .ant-layout-content {
-        padding: 20px;
-    }
-}
-
-/* フルHD以上のPC (1600px以上) */
-@media (min-width: 1600px) {
-    body {
-        font-size: 17px;
-    }
-
-    .ant-layout-content {
-        padding: 24px;
-    }
-
-    .ant-card {
-        border-radius: 12px;
-    }
-}
+/* Responsive details handled by styles/responsive.css */
 
 /* 印刷時の調整 */
 @media print {

@@ -28,9 +28,9 @@ const getWindowSize = (): WindowSize => {
 
   const width = window.innerWidth;
   const height = window.innerHeight;
-  const isMobile = width <= BP.mobile;
-  const isTablet = width > BP.mobile && width <= BP.tablet;
-  const isDesktop = width > BP.tablet;
+  const isMobile = width <= BP.sm;
+  const isTablet = width > BP.sm && width <= BP.mdMax;
+  const isDesktop = width > BP.mdMax;
 
   return { width, height, isMobile, isTablet, isDesktop };
 };

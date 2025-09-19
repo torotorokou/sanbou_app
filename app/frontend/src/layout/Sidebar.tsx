@@ -120,6 +120,9 @@ const Sidebar: React.FC = () => {
                 top: 0,
                 height: '100%',
                 overflow: 'auto',
+                // 幅が他要因で縮まないように明示
+                minWidth: collapsed ? sidebarConfig.collapsedWidth : sidebarConfig.width,
+                flex: '0 0 auto',
                 ...animationStyles,
             }}
             breakpoint={sidebarConfig.breakpoint}

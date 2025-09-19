@@ -7,8 +7,8 @@ export const useBreakpoint = (): View => {
   const getView = (): View => {
     if (typeof window === "undefined") return "desktop";
     const w = window.innerWidth;
-    if (w <= BREAKPOINTS.mobile) return "mobile";
-    if (w <= BREAKPOINTS.tablet) return "tablet";
+    if (w <= BREAKPOINTS.sm) return "mobile";
+    if (w <= BREAKPOINTS.mdMax) return "tablet";
     return "desktop";
   };
 

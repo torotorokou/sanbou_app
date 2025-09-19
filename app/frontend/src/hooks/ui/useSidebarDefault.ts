@@ -14,14 +14,14 @@ export const useSidebarDefault = () => {
   const [collapsed, setCollapsed] = useState<boolean>(() => {
     if (typeof window === "undefined") return false; // SSR等では開いた状態にしておく
     const w = window.innerWidth;
-    return w <= BREAKPOINTS.smallPC; // smallPC以下は閉じる
+  return w <= BREAKPOINTS.mdMax; // md以下は閉じる
   });
 
   useEffect(() => {
     // リサイズに応じてデフォルト状態を更新（ルールを常に優先）
     const updateByRule = () => {
       const w = window.innerWidth;
-      const shouldCollapse = w <= BREAKPOINTS.smallPC;
+  const shouldCollapse = w <= BREAKPOINTS.mdMax;
       setCollapsed(shouldCollapse);
     };
 

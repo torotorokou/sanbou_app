@@ -11,12 +11,10 @@ export interface SidebarConfig {
 }
 
 export const useSidebarResponsive = (): SidebarConfig => {
-    const { isMobile, isTablet, width } = useWindowSize();
-    const shouldForceCollapse = isMobile; // モバイルでは強制的にドロワー
-    const shouldAutoCollapse = isMobile || isTablet || width < 1200;
+    const { isMobile, isTablet } = useWindowSize();
 
     return React.useMemo(() => {
-        // モバイル設定
+        // モバイル: ドロワー
         if (isMobile) {
             return {
                 width: 280,
@@ -28,36 +26,12 @@ export const useSidebarResponsive = (): SidebarConfig => {
             };
         }
 
-        // タブレット設定
+        // タブレット: 自動縮小
         if (isTablet) {
             return {
                 width: 200,
                 collapsedWidth: 60,
                 breakpoint: 'sm' as const,
-                autoCollapse: true,
-                forceCollapse: false,
-                drawerMode: false,
-            };
-        }
-
-        // 強制縮小（900px以下）
-        if (shouldForceCollapse) {
-            return {
-                width: 220,
-                collapsedWidth: 50,
-                breakpoint: 'md' as const,
-                autoCollapse: false,
-                forceCollapse: true,
-                drawerMode: false,
-            };
-        }
-
-        // 自動縮小推奨（1200px以下）
-        if (shouldAutoCollapse) {
-            return {
-                width: 220,
-                collapsedWidth: 70,
-                breakpoint: 'lg' as const,
                 autoCollapse: true,
                 forceCollapse: false,
                 drawerMode: false,
@@ -73,7 +47,7 @@ export const useSidebarResponsive = (): SidebarConfig => {
             forceCollapse: false,
             drawerMode: false,
         };
-    }, [isMobile, isTablet, shouldAutoCollapse, shouldForceCollapse]);
+    }, [isMobile, isTablet]);
 };
 
 // サイドバー用のアニメーション設定
