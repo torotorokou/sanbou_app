@@ -8,8 +8,15 @@ from app.st_app.utils.value_setter import set_value_fast_safe
 
 def generate_summary_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     config = get_template_config()["factory_report"]
-    etc_path = config["master_csv_path"]["etc"]
-    etc_csv = load_master_and_template(etc_path)
+    etc_path = config["master_csv_path"].get("etc")
+    try:
+        etc_csv = load_master_and_template(etc_path)
+    except Exception as e:
+        # etc テンプレートが無い場合は加算行なしでそのまま返す
+        print(
+            f"[WARN] etcマスターCSVの読み込みに失敗: {etc_path} reason={e}. 合計行の追加をスキップします。"
+        )
+        return df.copy()
 
     # 1. コピーして元dfを保護
     df_sum = df.copy()
@@ -101,7 +108,13 @@ def upsert_summary_row(
 
 
 def date_format(master_csv, df_shipment):
-    today = pd.to_datetime(df_shipment["伝票日付"].dropna().iloc[0])
+    # df_shipment から日付が取れない場合は今日でフォールバック
+    try:
+        if df_shipment is None or df_shipment.empty or "伝票日付" not in df_shipment.columns:
+            raise ValueError("shipment日付が取得できません")
+        today = pd.to_datetime(df_shipment["伝票日付"].dropna().iloc[0])
+    except Exception:
+        today = pd.Timestamp.today().normalize()
 
     match_columns = ["大項目"]
     match_value = ["和暦"]

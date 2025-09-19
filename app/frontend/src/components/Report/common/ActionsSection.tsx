@@ -22,10 +22,56 @@ const ActionsSection: React.FC<ActionsSectionProps> = ({
     pdfUrl,
     excelReady,
     pdfReady,
+    compactMode = false,
 }) => {
     const actions = useReportActions();
     const { isMobile, isTablet } = useWindowSize();
     const isMobileOrTablet = isMobile || isTablet;
+
+    // compactMode: 半画面用の下部横並び表示にする
+    if (compactMode) {
+        return (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: '100%' }}>
+                {/* 生成ボタン：生成前のみ表示（生成後は再生成が表示されるため非表示） */}
+                {!finalized && (
+                    <div style={{ width: '100%' }}>
+                        <VerticalActionButton
+                            icon={<PlayCircleOutlined />}
+                            text='レポート生成'
+                            onClick={onGenerate}
+                            disabled={!readyToCreate}
+                        />
+                    </div>
+                )}
+
+                {/* 生成後は1行で表示：再生成・エクセルDL・印刷 */}
+                {finalized && (
+                    <div style={{ display: 'flex', gap: 12, width: '100%', justifyContent: 'center' }}>
+                        <VerticalActionButton
+                            icon={<PlayCircleOutlined />}
+                            text='再生成'
+                            onClick={onGenerate}
+                            disabled={!readyToCreate}
+                        />
+                        <VerticalActionButton
+                            icon={<DownloadOutlined />}
+                            text='エクセルDL'
+                            onClick={onDownloadExcel}
+                            disabled={!excelReady}
+                            backgroundColor={actionButtonColors.generate}
+                        />
+                        <VerticalActionButton
+                            icon={<PrinterOutlined />}
+                            text='印刷'
+                            onClick={onPrintPdf || (() => actions.handlePrint(pdfUrl || null))}
+                            backgroundColor={actionButtonColors.download}
+                            disabled={!pdfReady}
+                        />
+                    </div>
+                )}
+            </div>
+        );
+    }
 
     return (
         <div style={{
@@ -38,23 +84,17 @@ const ActionsSection: React.FC<ActionsSectionProps> = ({
             flexWrap: isMobileOrTablet ? 'wrap' : 'nowrap',
             gap: isMobileOrTablet ? 12 : 24, // ボタン間のスペース
         }}>
-            {/* レポート生成ボタン */}
-            <VerticalActionButton
-                icon={<PlayCircleOutlined />}
-                text='レポート生成'
-                onClick={onGenerate}
-                disabled={!readyToCreate}
-            />
-
-            {/* スペーサー - 帳簿作成ボタンと他のボタンを離すため */}
-            {finalized && (
-                <div style={{
-                    height: isMobileOrTablet ? 0 : 50,
-                    width: isMobileOrTablet ? 24 : 0
-                }} />
+            {/* 生成前: レポート生成ボタンを表示 */}
+            {!finalized && (
+                <VerticalActionButton
+                    icon={<PlayCircleOutlined />}
+                    text='レポート生成'
+                    onClick={onGenerate}
+                    disabled={!readyToCreate}
+                />
             )}
 
-            {/* ダウンロード・印刷ボタン */}
+            {/* 生成後: 再生成・エクセルDL・印刷の3つを表示 */}
             {finalized && (
                 <div style={{
                     display: 'flex',
@@ -62,6 +102,12 @@ const ActionsSection: React.FC<ActionsSectionProps> = ({
                     gap: isMobileOrTablet ? 12 : 8,
                     alignItems: 'center',
                 }}>
+                    <VerticalActionButton
+                        icon={<PlayCircleOutlined />}
+                        text='再生成'
+                        onClick={onGenerate}
+                        disabled={!readyToCreate}
+                    />
                     <VerticalActionButton
                         icon={<DownloadOutlined />}
                         text='エクセルDL'

@@ -15,6 +15,8 @@ type ReportSelectorProps = {
     pageGroup?: PageGroupKey;
     /** カスタムオプション指定（pageGroupより優先） */
     customOptions?: ReadonlyArray<{ readonly value: string; readonly label: string }>;
+    /** 親からスタイルを注入できる（ヘッダーの半画面でのタイトル風表示対応） */
+    style?: React.CSSProperties;
 };
 
 /**
@@ -30,6 +32,7 @@ const ReportSelector: React.FC<ReportSelectorProps> = ({
     onChange,
     pageGroup,
     customOptions,
+    style,
 }) => {
     // 表示オプションの決定ロジック
     const getDisplayOptions = () => {
@@ -49,18 +52,20 @@ const ReportSelector: React.FC<ReportSelectorProps> = ({
 
     const displayOptions = getDisplayOptions();
 
+    const baseStyle: React.CSSProperties = {
+        width: 240,
+        fontWeight: 500,
+        borderRadius: 12,
+        boxShadow: '0 2px 6px rgba(0,0,0,0.06)',
+    };
+
     return (
         <Select
             value={reportKey}
             onChange={onChange}
             options={[...displayOptions]}
             size='large'
-            style={{
-                width: 240,
-                fontWeight: 500,
-                borderRadius: 12,
-                boxShadow: '0 2px 6px rgba(0,0,0,0.06)',
-            }}
+            style={{ ...baseStyle, ...(style || {}) }}
         />
     );
 };

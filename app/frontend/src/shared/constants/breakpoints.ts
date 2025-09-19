@@ -1,6 +1,10 @@
 export const BREAKPOINTS = {
   sm: 767,
   mdMax: 1279,
+  // additional shared breakpoints for layout behaviors
+  autoCollapse: 1200,
+  forceCollapse: 900,
+  tabletMax: 1023,
 } as const;
 
 export type BreakpointKey = keyof typeof BREAKPOINTS;

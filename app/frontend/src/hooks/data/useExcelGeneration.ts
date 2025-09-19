@@ -124,17 +124,26 @@ export const useExcelGeneration = () => {
 /**
  * APIエラーを処理する
  */
-async function handleApiError(response: Response) {
+async function handleApiError(response: Response, rawBody?: string | null) {
     let errorMsg = '帳簿作成失敗';
     try {
-        const errorJson = await response.json();
-        errorMsg = errorJson?.detail || errorMsg;
-        if (errorJson?.hint) {
-            notifyInfo('ヒント', errorJson.hint);
+        const clonedText = rawBody ?? (await response.clone().text().catch(() => ''));
+        try {
+            const errorJson = JSON.parse(clonedText || '{}');
+            errorMsg = errorJson?.detail || errorMsg;
+            if (errorJson?.hint) {
+                notifyInfo('ヒント', errorJson.hint);
+            }
+        } catch {
+            if (clonedText && clonedText.trim()) {
+                errorMsg = `${errorMsg}: ${clonedText.substring(0, 200)}`;
+            }
         }
-    } catch {
-        // JSONでなければスルー
+    } catch (e) {
+        // best-effort only
     }
+
+    console.error('[Report] API error:', response.status, response.statusText, rawBody);
     throw new Error(errorMsg);
 }
 

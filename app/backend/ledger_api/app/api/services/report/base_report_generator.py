@@ -79,47 +79,58 @@ class BaseReportGenerator(ABC):
         """
         帳票日付の作成（整形後データを前提）
 
-        引数は整形後の DataFrame 群（df_formatted）に統一します。
-        代表となる1つ目のDFから列「伝票日付」の先頭値を取得して日付文字列(YYYY-MM-DD)に正規化します。
+        - 複数の候補列から最初に見つかった有効な日付を使用
+        - 見つからない/空のときは今日の日付にフォールバック
         """
         if not df_formatted:
-            raise ValueError("df_formatted が空です。帳票日付を決定できません。")
+            # 空のときは本日付でフォールバック
+            return datetime.now().date().isoformat()
 
-        first_value = next(iter(df_formatted.values()))
+        date_candidates = ["伝票日付", "日付", "date", "Date"]
 
-        # 値の取り出しをできるだけ柔軟に
-        report_date: Any
-        if isinstance(first_value, pd.DataFrame):
-            if "伝票日付" not in first_value.columns:
-                raise KeyError("整形後データに『伝票日付』列が見つかりません。")
-            if len(first_value) == 0:
-                raise ValueError("『伝票日付』列は存在しますが、行が空です。")
-            report_date = first_value["伝票日付"].iloc[0]
-        elif isinstance(first_value, dict):
-            # まれに dict(list) 形式を許容
-            if "伝票日付" not in first_value or len(first_value["伝票日付"]) == 0:
-                raise KeyError("整形後データ(dict)に『伝票日付』が見つかりません。")
-            report_date = first_value["伝票日付"][0]
-        else:
-            raise ValueError("整形後データの形式に対応していません。")
+        # DataFrame 優先で走査
+        for value in df_formatted.values():
+            if isinstance(value, pd.DataFrame) and not value.empty:
+                # 候補列を順にチェック
+                for col in date_candidates:
+                    if col in value.columns and not value[col].empty:
+                        first = value[col].iloc[0]
+                        # 正規化
+                        if isinstance(first, str):
+                            try:
+                                dt = datetime.fromisoformat(first[:19].replace("/", "-"))
+                                return dt.date().isoformat()
+                            except Exception:
+                                try:
+                                    dt = pd.to_datetime(first)
+                                    return dt.date().isoformat()
+                                except Exception:
+                                    continue
+                        elif isinstance(first, pd.Timestamp):
+                            return first.date().isoformat()
+                        else:
+                            try:
+                                dt = pd.to_datetime(first)
+                                return dt.date().isoformat()
+                            except Exception:
+                                continue
 
-        # 文字列 / pandas.Timestamp / その他を吸収
-        if isinstance(report_date, str):
-            # 'YYYY/MM/DD', 'YYYY-MM-DDTHH:MM:SS' 等を想定
-            try:
-                dt = datetime.fromisoformat(report_date[:19].replace("/", "-"))
-                return dt.date().isoformat()
-            except Exception:
-                # to_datetimeで再挑戦
-                try:
-                    dt = pd.to_datetime(report_date)
-                    return dt.date().isoformat()
-                except Exception:
-                    return str(report_date)[:10]
-        elif isinstance(report_date, pd.Timestamp):
-            return report_date.date().isoformat()
-        else:
-            return str(report_date)[:10]
+        # dict(list) 形式のフォールバック
+        for value in df_formatted.values():
+            if isinstance(value, dict):
+                for col in date_candidates:
+                    if col in value:
+                        seq = value.get(col) or []
+                        if len(seq) > 0:
+                            first = seq[0]
+                            try:
+                                dt = pd.to_datetime(first)
+                                return dt.date().isoformat()
+                            except Exception:
+                                continue
+
+        # 最後のフォールバック: 今日
+        return datetime.now().date().isoformat()
 
     @abstractmethod
     def main_process(self, df_formatted: Dict[str, Any]) -> pd.DataFrame:

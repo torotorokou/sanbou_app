@@ -37,7 +37,14 @@ def process_yuuka(df_yard: pd.DataFrame, df_shipment: pd.DataFrame) -> pd.DataFr
     # --- ① マスターCSVの読み込み ---
     config = get_template_config()["factory_report"]
     master_path = config["master_csv_path"]["yuuka"]
-    master_csv = load_master_and_template(master_path)
+    try:
+        master_csv = load_master_and_template(master_path)
+    except Exception as e:
+        logger.warning(
+            f"マスターCSVの読み込みに失敗しました（有価）。パス: {master_path}。理由: {e}。空データで継続します。"
+        )
+        # 後段の format_table で参照される列を用意
+        return pd.DataFrame(columns=["大項目", "セル", "値", "セルロック", "順番", "有価名"])  # 空
 
     # --- ② 有価の値集計処理（df_yard + df_shipmentを使用） ---
     updated_master_csv = apply_yuuka_summary(master_csv, df_yard, df_shipment)
