@@ -28,11 +28,10 @@ const getWindowSize = (): WindowSize => {
 
   const width = window.innerWidth;
   const height = window.innerHeight;
-  // Use autoCollapse as the tablet/desktop boundary so widths >= autoCollapse
-  // are treated as desktop (unify behavior around ~1200px+).
+  // Match responsive.css: sm<=767, md 768–1279, lg>=1280
   const isMobile = width <= BP.sm;
-  const isTablet = width > BP.sm && width < BP.autoCollapse;
-  const isDesktop = width >= BP.autoCollapse;
+  const isTablet = width >= BP.sm + 1 && width <= BP.mdMax;
+  const isDesktop = width >= BP.mdMax + 1;
 
   return { width, height, isMobile, isTablet, isDesktop };
 };

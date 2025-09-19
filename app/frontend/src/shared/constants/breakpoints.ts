@@ -2,7 +2,7 @@ export const BREAKPOINTS = {
   sm: 767,
   mdMax: 1279,
   // additional shared breakpoints for layout behaviors
-  autoCollapse: 1200,
+  autoCollapse: 1280,
   forceCollapse: 900,
   tabletMax: 1023,
 } as const;

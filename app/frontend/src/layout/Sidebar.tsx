@@ -5,7 +5,7 @@ import { MenuFoldOutlined, MenuUnfoldOutlined } from '@ant-design/icons';
 import { useLocation } from 'react-router-dom';
 import { SIDEBAR_MENU } from '@/constants/sidebarMenu';
 import { customTokens } from '@/theme/tokens';
-import { useSidebarResponsive, useSidebarAnimation } from '@/hooks/ui';
+import { useSidebarResponsive, useSidebarAnimation, useWindowSize } from '@/hooks/ui';
 import { useSidebarDefault } from '@/hooks/ui/useSidebarDefault';
 
 const { Sider } = Layout;
@@ -40,6 +40,7 @@ const Sidebar: React.FC = () => {
     const location = useLocation();
     const sidebarConfig = useSidebarResponsive();
     const animationStyles = useSidebarAnimation();
+    const { isTablet } = useWindowSize();
     // 画面幅に基づくデフォルト開閉制御（SOLID: 単一責任）
     const { collapsed, setCollapsed } = useSidebarDefault();
     // openKeys を管理して、サイドバーが開いているときは子メニューを展開する
@@ -118,8 +119,8 @@ const Sidebar: React.FC = () => {
                 // 固定表示: 本文スクロール時にサイドバーが動かないようにする
                 position: 'sticky',
                 top: 0,
-                // ビューポートの高さいっぱいに表示する
-                height: '100vh',
+                // ビューポートの高さいっぱいに表示する（100dvh でモバイルのアドレスバー揺れを回避）
+                            height: '100dvh',
                 overflow: 'auto',
                 // 幅が他要因で縮まないように明示
                 minWidth: collapsed ? sidebarConfig.collapsedWidth : sidebarConfig.width,
@@ -130,12 +131,12 @@ const Sidebar: React.FC = () => {
             collapsedWidth={sidebarConfig.collapsedWidth}
         >
             <div
-                style={{
+                    style={{
                     display: 'flex',
                     justifyContent: collapsed ? 'center' : 'flex-end',
                     alignItems: 'center',
                     height: 64,
-                    paddingRight: collapsed ? 0 : (sidebarConfig.autoCollapse ? 12 : 16),
+                    paddingRight: collapsed ? 0 : (isTablet ? 12 : 16),
                     ...animationStyles,
                 }}
             >
@@ -150,7 +151,7 @@ const Sidebar: React.FC = () => {
                     }
                     onClick={() => setCollapsed(!collapsed)}
                     style={{
-                        fontSize: sidebarConfig.autoCollapse ? 16 : 18,
+                        fontSize: isTablet ? 16 : 18,
                         color: customTokens.colorSiderText
                     }}
                 />
@@ -165,7 +166,7 @@ const Sidebar: React.FC = () => {
                 onOpenChange={(keys: string[]) => setOpenKeys(keys)}
                 style={{
                     // Sider を viewport 高さにしているため、ヘッダ分を差し引く
-                    height: 'calc(100vh - 64px)',
+                    height: 'calc(100dvh - 64px)',
                     borderRight: 0,
                     backgroundColor: 'transparent',
                 }}

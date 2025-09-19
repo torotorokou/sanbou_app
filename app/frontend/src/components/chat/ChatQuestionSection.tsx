@@ -1,5 +1,7 @@
 // ChatQuestionSection.tsx
 import React from 'react';
+import { useWindowSize } from '@/hooks/ui';
+import { BREAKPOINTS as BP } from '@/shared/constants/breakpoints';
 import QuestionPanel from '@/components/chat/QuestionPanel';
 
 type Props = {
@@ -28,31 +30,37 @@ const ChatQuestionSection: React.FC<Props> = ({
     question,
     setQuestion,
     categoryData,
-}) => (
-    <div
-        style={{
-            width: 420,
-            padding: 24,
-            paddingBottom: 96, // 画面下の固定ボタンに隠れないよう余白を確保
-            overflowY: 'auto',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 12,
-        }}
-    >
-        {/* QuestionPanelをそのまま使う */}
-        <QuestionPanel
-            category={category}
-            setCategory={setCategory}
-            tags={tags}
-            setTag={setTag}
-            template={template}
-            setTemplate={setTemplate}
-            question={question}
-            setQuestion={setQuestion}
-            categoryData={categoryData}
-        />
-    </div>
-);
+}) => {
+    const { width } = useWindowSize();
+    const isNarrow = typeof width === 'number' ? width <= BP.mdMax : false;
+
+    return (
+        <div
+            style={{
+                width: isNarrow ? '100%' : 420,
+                padding: 24,
+                paddingBottom: isNarrow ? 8 : 88,
+                overflowY: 'auto',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 12,
+                minHeight: 0,
+            }}
+        >
+            {/* QuestionPanelをそのまま使う */}
+            <QuestionPanel
+                category={category}
+                setCategory={setCategory}
+                tags={tags}
+                setTag={setTag}
+                template={template}
+                setTemplate={setTemplate}
+                question={question}
+                setQuestion={setQuestion}
+                categoryData={categoryData}
+            />
+        </div>
+    );
+};
 
 export default ChatQuestionSection;

@@ -45,7 +45,7 @@ const ReportManagePageLayout: React.FC<Props> = ({
     const styles = useReportLayoutStyles();
     const { width, isMobile, isTablet } = useWindowSize();
 
-    const isHalfOrBelow = width < BP.autoCollapse;
+    const isHalfOrBelow = typeof width === 'number' ? width <= BP.mdMax : false;
     const isMobileOrTablet = isMobile || isTablet;
 
     return (
