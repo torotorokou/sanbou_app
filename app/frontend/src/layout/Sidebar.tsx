@@ -118,7 +118,7 @@ const Sidebar: React.FC = () => {
                 // 固定表示: 本文スクロール時にサイドバーが動かないようにする
                 position: 'sticky',
                 top: 0,
-                height: '100vh',
+                height: '100%',
                 overflow: 'auto',
                 ...animationStyles,
             }}
@@ -160,7 +160,7 @@ const Sidebar: React.FC = () => {
                 openKeys={openKeys}
                 onOpenChange={(keys: string[]) => setOpenKeys(keys)}
                 style={{
-                    height: 'calc(100vh - 64px)',
+                    height: 'calc(100% - 64px)',
                     borderRight: 0,
                     backgroundColor: 'transparent',
                 }}

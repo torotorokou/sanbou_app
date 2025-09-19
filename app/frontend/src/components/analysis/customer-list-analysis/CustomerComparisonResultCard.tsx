@@ -58,7 +58,7 @@ const CustomerComparisonResultCard: React.FC<Props> = ({
                 rowKey='key'
                 pagination={false}
                 locale={{ emptyText: '該当なし' }}
-                scroll={{ y: 400, x: 'max-content' }}
+                scroll={{ x: 'max-content' }}
             />
         </div>
     </Card>

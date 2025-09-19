@@ -1,10 +1,3 @@
-import axios from 'axios';
-
-const baseURL = import.meta.env.VITE_RAG_API_BASE_URL || '/rag_api';
-
-export const http = axios.create({
-	baseURL,
-	withCredentials: false,
-});
-
+// Deprecated: Use lib/apiClient.ts (apiGet/apiPost/apiGetBlob/apiPostBlob)
+export const http = null as unknown as never;
 export default http;

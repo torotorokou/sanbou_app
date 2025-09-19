@@ -120,7 +120,7 @@ const CustomerListDashboard: React.FC = () => {
     }, []);
 
     return (
-        <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", background: "#f7f8fa" }}>
+        <div style={{ minHeight: "100%", display: "flex", flexDirection: "column", background: "#f7f8fa" }}>
             <div style={{ padding: 24 }}>
                 <h1>一都三県 顧客売上バブルマップ</h1>
                 <Row gutter={16} style={{ marginBottom: 16 }}>

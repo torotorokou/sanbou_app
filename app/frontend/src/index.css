@@ -4,8 +4,6 @@ body,
 #root {
     height: 100%;
     margin: 0;
-    overflow: auto; /* スクロールを許可する（以前は hidden で禁止されていた） */
-    -webkit-overflow-scrolling: touch; /* iOS の慣性スクロールを有効化 */
 }
 
 /* === ベース設定 === */
@@ -131,11 +129,7 @@ body {
         box-sizing: border-box;
     }
 
-    /* モバイルでは縦スクロール可能 */
-    .ant-layout-content {
-        height: auto !important;
-        min-height: calc(100vh - 64px);
-    }
+    .ant-layout-content { height: auto !important; }
 }
 
 /* タブレット (768px - 1023px) */
@@ -160,12 +154,7 @@ body {
         font-size: 13px;
     }
 
-    /* タブレットでは縦スクロール可能 */
-    .ant-layout-content {
-        height: auto !important;
-        min-height: calc(100vh - 64px);
-        overflow-y: auto;
-    }
+    .ant-layout-content { height: auto !important; }
 }
 
 /* 小さなデスクトップ・ラップトップ (1024px - 1365px) */

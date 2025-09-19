@@ -1,42 +1,36 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { Spin } from 'antd';
 
 // ルート定数
 import { ROUTER_PATHS } from '@/constants/router';
 
-// ページコンポーネント
-// ダッシュボード
-import ManagementDashboard from '../pages/ManagementDashboard';
-import FactoryDashboard from '../pages/FactoryDashboard';
-import PricingDashboard from '../pages/PricingDashboard';
-import CustomerListDashboard from '../pages/CustomerListDashboard.tsx';
+// 軽量/コアはそのまま、重いページを lazy 化
+const ManagementDashboard = lazy(() => import('../pages/ManagementDashboard'));
+const FactoryDashboard = lazy(() => import('../pages/FactoryDashboard'));
+const PricingDashboard = lazy(() => import('../pages/PricingDashboard'));
+const CustomerListDashboard = lazy(() => import('../pages/CustomerListDashboard'));
 
-// 帳票ページ
-import ReportFactory from '../pages/report/ReportFactory';
-import ReportManagePage from '../pages/report/ReportManagePage.tsx';
-import LedgerBookPage from '../pages/LedgerBookPage';
+const ReportFactory = lazy(() => import('../pages/report/ReportFactory'));
+const ReportManagePage = lazy(() => import('../pages/report/ReportManagePage'));
+const LedgerBookPage = lazy(() => import('../pages/LedgerBookPage'));
 
-// データ分析
-import CustomerListAnalysis from '../pages/analysis/CustomerListAnalysis.tsx';
+const CustomerListAnalysis = lazy(() => import('../pages/analysis/CustomerListAnalysis'));
 
-// チャットボット
-import PdfChatBot from '../pages/navi/PdfChatBot';
+const PdfChatBot = lazy(() => import('../pages/navi/PdfChatBot'));
 
-// マニュアル検索
-import ManualModal from '@/pages/manual/ManualModal';
-import ManualPage from '@/pages/manual/ManualPage';
-import GlobalManualSearch from '@/pages/manual/GlobalManualSearch';
-import ShogunManualList from '@/pages/manual/ShogunManualList';
+const ManualModal = lazy(() => import('@/pages/manual/ManualModal'));
+const ManualPage = lazy(() => import('@/pages/manual/ManualPage'));
+const GlobalManualSearch = lazy(() => import('@/pages/manual/GlobalManualSearch'));
+const ShogunManualList = lazy(() => import('@/pages/manual/ShogunManualList'));
 
-// データベース関連
-import UploadPage from '../pages/database/UploadDatabasePage';
-import RecordListPage from '../pages/database/RecordListPage';
+const UploadPage = lazy(() => import('../pages/database/UploadDatabasePage'));
+const RecordListPage = lazy(() => import('../pages/database/RecordListPage'));
 
-// トークンプレビュー
-import TokenPreviewPage from '@/pages/TokenPreviewPage';
-import TestPage from '@/pages/TestPage';
-import PortalPage from '@/pages/portal/PortalPage';
-import NewsPage from '@/pages/NewsPage';
+const TokenPreviewPage = lazy(() => import('@/pages/TokenPreviewPage'));
+const TestPage = lazy(() => import('@/pages/TestPage'));
+const PortalPage = lazy(() => import('@/pages/portal/PortalPage'));
+const NewsPage = lazy(() => import('@/pages/NewsPage'));
 
 const AppRoutes: React.FC = () => {
     const location = useLocation();
@@ -44,6 +38,7 @@ const AppRoutes: React.FC = () => {
 
     return (
     <>
+    <Suspense fallback={<div style={{padding:16}}><Spin /></div>}>
     <Routes location={state?.backgroundLocation || location}>
         {/* テスト用ルート */}
         <Route path='/test' element={<TestPage />} />
@@ -101,13 +96,16 @@ const AppRoutes: React.FC = () => {
         {/* その他/404 */}
                 <Route path='*' element={<div>ページが見つかりません</div>} />
         </Routes>
+    </Suspense>
 
         {/* 背景ロケーションがある場合のみ、モーダルルートをオーバーレイ表示 */}
             {state?.backgroundLocation && (
-            <Routes>
-                <Route path='/manuals/syogun/:id' element={<ManualModal />} />
-            </Routes>
-        )}
+                <Suspense fallback={null}>
+                    <Routes>
+                        <Route path='/manuals/syogun/:id' element={<ManualModal />} />
+                    </Routes>
+                </Suspense>
+            )}
         </>
 )};
 

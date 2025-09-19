@@ -15,7 +15,7 @@ const MainLayout: React.FC = () => {
 
     try {
         return (
-            <Layout style={{ minHeight: '100vh' }}>
+            <Layout style={{ minHeight: '100%', height: '100%' }}>
                 <Sidebar />
                 <Layout style={{ height: '100%' }}>
                     <Content
@@ -25,8 +25,8 @@ const MainLayout: React.FC = () => {
                             overflowX: 'hidden',
                             padding: isMobile ? '12px' : isTablet ? '16px' : shouldAutoCollapse ? '20px' : '24px',
                             backgroundColor: customTokens.colorBgLayout,
-                            minHeight: 'calc(100vh - 64px)',
-                            height: isMobile || isTablet ? 'auto' : 'calc(100vh - 64px)',
+                            minHeight: 0,
+                            height: 'auto',
                             transition: 'padding 0.3s ease-in-out',
                             display: 'block',
                         }}

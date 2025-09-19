@@ -43,7 +43,7 @@
   padding: 16px;
   position: sticky;
   top: var(--header-height);
-  height: calc(100vh - var(--header-height));
+  height: calc(100% - var(--header-height));
   overflow: auto;
 }
 
@@ -52,7 +52,7 @@
 }
 
 .contentScroll {
-  height: calc(100vh - var(--header-height) - 48px);
+  height: calc(100% - var(--header-height) - 48px);
   overflow: auto;
   padding-right: 8px;
 }
