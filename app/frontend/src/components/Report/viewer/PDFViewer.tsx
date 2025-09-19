@@ -7,7 +7,7 @@ type PDFViewerProps = {
     height?: string;
 };
 
-const PDFViewer: React.FC<PDFViewerProps> = ({ pdfUrl }) => {
+const PDFViewer: React.FC<PDFViewerProps> = ({ pdfUrl, height }) => {
     const { isMobile, isTablet, width } = useWindowSize();
     const [hasError, setHasError] = useState(false);
 
@@ -56,6 +56,17 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ pdfUrl }) => {
         );
     }
 
+    // フォールバックの最小高さ
+    const fallbackMinHeight = isMobile
+        ? '380px'
+        : isTablet
+        ? '440px'
+        : width < 1200
+        ? '480px'
+        : '520px';
+
+    const minHeightToUse = height ?? fallbackMinHeight;
+
     return (
         <iframe
             title='PDFプレビュー'
@@ -63,13 +74,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ pdfUrl }) => {
             style={{
                 width: '100%',
                 height: '100%',
-                minHeight: isMobile
-                    ? '380px'
-                    : isTablet
-                    ? '440px'
-                    : width < 1200
-                    ? '480px'
-                    : '520px',
+                minHeight: minHeightToUse,
                 border: 'none',
                 borderRadius: 4,
             }}

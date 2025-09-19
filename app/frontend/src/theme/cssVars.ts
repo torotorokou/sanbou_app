@@ -57,11 +57,11 @@ export function generateCssVars(): string {
       --sidebar-transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       --content-transition: padding 0.3s ease-in-out;
       
-      /* ブレークポイント */
-      --breakpoint-mobile: 767px;
-      --breakpoint-tablet: 1023px;
-      --breakpoint-auto-collapse: 1200px;
-      --breakpoint-force-collapse: 900px;
+  /* ブレークポイント (値は JS 側 'src/shared/constants/breakpoints.ts' を単一のソースにすること) */
+  --breakpoint-mobile: 767px; /* BREAKPOINTS.sm */
+  --breakpoint-tablet: 1023px; /* BREAKPOINTS.tabletMax (informational) */
+  --breakpoint-auto-collapse: 1200px; /* BREAKPOINTS.autoCollapse */
+  --breakpoint-force-collapse: 900px; /* BREAKPOINTS.forceCollapse */
     }
   `;
 }

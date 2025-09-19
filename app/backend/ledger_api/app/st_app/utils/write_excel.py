@@ -23,11 +23,28 @@ def safe_excel_value(value):
 
 
 def load_template_workbook(template_path: str | Path) -> Workbook:
+    """
+    テンプレートExcelを読み込む。
+    見つからない/読み込めない場合は空のWorkbookでフォールバックし、サーバーログに警告を出す。
+    """
+    logger = app_logger()
     # BASE_ST_APP_DIR環境変数を使用、未設定の場合はst_appディレクトリを基準とする
     current_file_dir = Path(__file__).parent.parent  # st_app/utils -> st_app
     base_dir = Path(os.getenv("BASE_ST_APP_DIR", str(current_file_dir)))
     full_path = base_dir / Path(template_path)
-    return load_workbook(full_path)
+
+    try:
+        if not full_path.exists():
+            logger.warning(
+                f"テンプレートExcelが見つかりませんでした。パス: {full_path}. 空のWorkbookで代替します。"
+            )
+            return Workbook()
+        return load_workbook(full_path)
+    except Exception as e:
+        logger.warning(
+            f"テンプレートExcelの読み込みに失敗しました。パス: {full_path}. 空のWorkbookで代替します。理由: {e}"
+        )
+        return Workbook()
 
 
 def write_dataframe_to_worksheet(df: pd.DataFrame, ws: Worksheet, logger=None):

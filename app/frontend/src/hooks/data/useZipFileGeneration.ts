@@ -87,8 +87,15 @@ export const useZipFileGeneration = () => {
 
                 // 帳簿タイプに応じてAPIエンドポイントを選択
                 const apiEndpoint = getApiEndpoint(reportKey);
-                console.log(`API endpoint for ${reportKey}: ${apiEndpoint}`);
+                try {
+                    const fullUrl = new URL(apiEndpoint, window.location.origin).toString();
+                    console.log(`API endpoint for ${reportKey}: ${apiEndpoint}`);
+                    console.log(`Full request URL: ${fullUrl}`);
+                } catch (e) {
+                    console.log(`API endpoint for ${reportKey}: ${apiEndpoint}`);
+                }
 
+                // Note: Do NOT set Content-Type header for FormData; browser will set boundary
                 const response = await fetch(apiEndpoint, {
                     method: 'POST',
                     body: formData,
@@ -106,7 +113,16 @@ export const useZipFileGeneration = () => {
                 } catch {}
 
                 if (!response.ok) {
-                    await handleApiError(response);
+                    // Attempt to read response text for better debugging (covers HTML 500 pages)
+                    let respText: string | null = null;
+                    try {
+                        respText = await response.text();
+                    } catch (e) {
+                        // ignore
+                    }
+
+                    console.error('[Report] API Error Response Body:', respText);
+                    await handleApiError(response, respText);
                     return false;
                 }
 
@@ -431,17 +447,28 @@ export const useZipFileGeneration = () => {
 /**
  * APIエラーを処理する
  */
-async function handleApiError(response: Response) {
+async function handleApiError(response: Response, rawBody?: string | null) {
     let errorMsg = 'レポート作成失敗';
     try {
-        const errorJson = await response.json();
-        errorMsg = errorJson?.detail || errorMsg;
-        if (errorJson?.hint) {
-            notifyInfo('ヒント', errorJson.hint);
+        const clonedText = rawBody ?? (await response.clone().text().catch(() => ''));
+        // Try parse JSON first
+        try {
+            const errorJson = JSON.parse(clonedText || '{}');
+            errorMsg = errorJson?.detail || errorMsg;
+            if (errorJson?.hint) {
+                notifyInfo('ヒント', errorJson.hint);
+            }
+        } catch {
+            // not JSON, fall back to using raw text
+            if (clonedText && clonedText.trim()) {
+                errorMsg = `${errorMsg}: ${clonedText.substring(0, 200)}`;
+            }
         }
-    } catch {
-        // JSONでなければスルー
+    } catch (e) {
+        // best-effort only
     }
+
+    console.error('[Report] API error:', response.status, response.statusText, rawBody);
     throw new Error(errorMsg);
 }
 

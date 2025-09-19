@@ -21,6 +21,8 @@ export interface ActionsSectionProps {
     pdfUrl?: string | null;
     excelReady?: boolean;
     pdfReady?: boolean;
+    /** 半画面以下のコンパクトモード（レイアウト: 左にサンプル+アップロード、右にプレビュー、ボタンは下部） */
+    compactMode?: boolean;
 }
 
 export interface SampleSectionProps {
