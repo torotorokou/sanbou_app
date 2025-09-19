@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Spin, Button, Card, Drawer } from 'antd';
 import { FilePdfOutlined } from '@ant-design/icons';
-import axios from 'axios';
+import { apiGet, apiPost } from '@/lib/apiClient';
 import { pdfjs } from 'react-pdf';
 import ChatQuestionSection from '@/components/chat/ChatQuestionSection';
 import ChatSendButtonSection from '@/components/chat/ChatSendButtonSection';
@@ -22,13 +22,7 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
 ).toString();
 
 // 共通APIレスポンス型（バックエンド契約に合わせる）
-type ApiResponse<T> = {
-    status: 'success' | 'error';
-    code: string;
-    detail: string;
-    result?: T | null;
-    hint?: string | null;
-};
+// 共通APIレスポンス: src/types/api.ts を参照
 
 // 今回の業務ペイロード
 type ChatAnswerResult = {
@@ -82,12 +76,12 @@ const PdfChatBot: React.FC = () => {
     React.useEffect(() => {
         const fetchOptions = async () => {
             try {
-                const res = await axios.get('/rag_api/api/question-options');
+                const res = await apiGet<Record<string, { title: string; tag: string[] }[]>>('/api/question-options');
                 // 期待フォーマット: { [category]: [{ title, tag: string[] }] }
-                if (res && res.data && typeof res.data === 'object') {
-                    setCategoryData(res.data as Record<string, { title: string; tag: string[] }[]>);
+                if (res && typeof res === 'object') {
+                    setCategoryData(res as Record<string, { title: string; tag: string[] }[]>);
                 } else {
-                    console.warn('[API][question-options] Unexpected payload:', res?.data);
+                    console.warn('[API][question-options] Unexpected payload:', res);
                     setCategoryData({});
                 }
             } catch (err) {
@@ -152,48 +146,22 @@ const PdfChatBot: React.FC = () => {
         console.log('[API][REQUEST] /rag_api/api/generate-answer payload:', payload);
 
         try {
-            const res = await axios.post<ApiResponse<ChatAnswerResult>>(
-                '/rag_api/api/generate-answer',
+            const res = await apiPost<ChatAnswerResult>(
+                '/api/generate-answer',
                 payload
             );
 
             // ★ 詳細ログ
-            console.log('[API][RESPONSE] status:', res.status, res.statusText);
-            console.log('[API][RESPONSE] headers:', res.headers);
-            console.log('[API][RESPONSE] data:', res.data);
+            console.log('[API][RESPONSE] data:', res);
 
             // 正規化: 新契約(ApiResponse) or 旧スキーマ(トップレベルkeys)
-            let normalized: { answer: string; pdf_url?: string | null } | null = null;
-
-            if (res.data && typeof res.data === 'object' && 'status' in res.data) {
-                // 新契約
-                if (res.data.status !== 'success') {
-                    console.error('[API][ERROR] detail:', res.data?.detail, 'code:', res.data?.code);
-                    setAnswer(res.data?.detail ?? 'エラーが発生しました。');
-                    setPdfUrl(null);
-                    addNotification({
-                        type: 'error',
-                        title: '取得に失敗しました',
-                        message: res.data?.detail || 'サーバーからエラーが返されました。',
-                        duration: 4000,
-                    });
-                    return;
-                }
-                const result = res.data?.result ?? null;
-                normalized = {
-                    answer: result?.answer ?? '',
-                    pdf_url: result?.pdf_url ?? null,
-                };
-            } else {
-                // 旧スキーマ: answer, pdf_urls, pages, merged_pdf_url などが直下に来る
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const legacyAny: any = res.data ?? {};
-                normalized = {
-                    answer: legacyAny.answer ?? '',
-                    // merged_pdf_url > pdf_url の優先で採用
-                    pdf_url: legacyAny.merged_pdf_url ?? legacyAny.pdf_url ?? null,
-                };
-            }
+            // apiClientは成功時 resultを返す前提。旧スキーマ互換も一応考慮
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const anyRes: any = res ?? {};
+            const normalized = {
+                answer: anyRes.answer ?? '',
+                pdf_url: anyRes.merged_pdf_url ?? anyRes.pdf_url ?? null,
+            };
 
             setAnswer(normalized?.answer ?? '');
             setPdfUrl(normalized?.pdf_url ?? null);
@@ -206,20 +174,7 @@ const PdfChatBot: React.FC = () => {
                 duration: 2500,
             });
         } catch (err: unknown) {
-            // 失敗時もできる限り詳細を表示
-            if (axios.isAxiosError(err)) {
-                console.error('[API][ERROR] AxiosError message:', err.message);
-                console.error('[API][ERROR] request:', err.config);
-                if (err.response) {
-                    console.error('[API][ERROR] status:', err.response.status);
-                    console.error('[API][ERROR] headers:', err.response.headers);
-                    console.error('[API][ERROR] data:', err.response.data);
-                } else {
-                    console.error('[API][ERROR] no response (network?)');
-                }
-            } else {
-                console.error('[API][ERROR] Unknown error:', err);
-            }
+            console.error('[API][ERROR]', err);
             setAnswer('エラーが発生しました。');
             setPdfUrl(null);
 
@@ -242,13 +197,7 @@ const PdfChatBot: React.FC = () => {
     };
 
     return (
-        <div
-            style={{
-                height: '100vh',
-                display: 'flex',
-                flexDirection: 'column',
-            }}
-        >
+        <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
             {loading && <Spin tip="AIが回答中です..." size="large" fullscreen />}
 
             <div style={{ padding: '12px 24px' }}>

@@ -7,7 +7,7 @@ import ComparisonConditionForm from '@/components/analysis/customer-list-analysi
 import CustomerComparisonResultCard from '@/components/analysis/customer-list-analysis/CustomerComparisonResultCard';
 import AnalysisProcessingModal from '@/components/analysis/customer-list-analysis/AnalysisProcessingModal';
 import { useCustomerComparison } from '@/hooks/analysis/customer-list-analysis/useCustomerComparison';
-import axios from 'axios';
+import { apiPostBlob } from '@/lib/apiClient';
 
 function getMonthRange(start: Dayjs | null, end: Dayjs | null): string[] {
     if (!start || !end) return [];
@@ -61,20 +61,17 @@ const CustomerListAnalysis: React.FC = () => {
         if (!analysisStarted) return;
         setDownloading(true);
         try {
-            const response = await axios.post(
+            const blob = await apiPostBlob<Record<string, string | undefined>>(
                 '/api/customer-comparison/excel',
                 {
                     targetStart: targetStart?.format('YYYY-MM'),
                     targetEnd: targetEnd?.format('YYYY-MM'),
                     compareStart: compareStart?.format('YYYY-MM'),
                     compareEnd: compareEnd?.format('YYYY-MM'),
-                },
-                {
-                    responseType: 'blob',
                 }
             );
 
-            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const url = window.URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = url;
             link.setAttribute('download', '顧客比較リスト.xlsx');
@@ -99,7 +96,7 @@ const CustomerListAnalysis: React.FC = () => {
         isAnalyzing;
 
     return (
-        <div style={{ height: '100vh', minHeight: 0 }}>
+        <div style={{ height: '100%', minHeight: 0 }}>
             {/* 分析中モーダル */}
             <AnalysisProcessingModal open={isAnalyzing} />
 
@@ -110,7 +107,7 @@ const CustomerListAnalysis: React.FC = () => {
                     style={{
                         display: 'flex',
                         flexDirection: 'column',
-                        height: '100vh',
+                        height: '100%',
                         padding: '40px 24px',
                         background: '#f8fcfa',
                     }}

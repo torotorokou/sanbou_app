@@ -1,8 +1,7 @@
 // /app/src/components/Report/individual_process/BlockUnitPriceInteractive.tsx
 
 import React, { useState } from 'react';
-import axios from 'axios';
-import { LEDGER_API_URL } from '@/constants/reportConfig';
+import { apiPost } from '@/lib/apiClient';
 
 interface TransportOption {
     vendor_code: string;
@@ -48,6 +47,19 @@ interface ProcessState {
     error?: string;
 }
 
+type StartResponse =
+    | { status: 'success'; data: ApiDataShape }
+    | { status: 'error'; detail?: string };
+
+type SelectResponse =
+    | { status: 'success'; data: ApiDataShape }
+    | { status: 'error'; detail?: string };
+
+type FinalizeResponse =
+    | { status: 'completed'; data: ApiDataShape }
+    | { status: 'cancelled'; data?: ApiDataShape }
+    | { status: 'error'; detail?: string };
+
 const BlockUnitPriceInteractive: React.FC = () => {
     const [state, setState] = useState<ProcessState>({
         step: -1, // 未開始
@@ -62,28 +74,29 @@ const BlockUnitPriceInteractive: React.FC = () => {
         setState(prev => ({ ...prev, loading: true, error: undefined }));
 
         try {
-            const response = await axios.post(`${LEDGER_API_URL}/block-unit-price/start`, {
-                files: files
-            });
+            const response = await apiPost<StartResponse, { files: Record<string, File> }>(
+                '/ledger_api/block-unit-price/start',
+                { files }
+            );
 
-            if (response.data.status === 'success') {
+            if (response.status === 'success') {
                 setState({
                     step: 0,
-                    data: response.data.data,
-                    sessionData: response.data.data.session_data,
+                    data: response.data,
+                    sessionData: response.data.session_data,
                     loading: false
                 });
 
                 // 初期選択値を設定（デフォルトで最初の運搬業者を選択）
                 const initialSelections: Record<string, string> = {};
-                response.data.data.shipment_summary.vendors.forEach((vendor: string) => {
-                    if (response.data.data.transport_options.length > 0) {
-                        initialSelections[vendor] = response.data.data.transport_options[0].vendor_code;
+                response.data.shipment_summary?.vendors?.forEach((vendor: string) => {
+                    if (response.data.transport_options && response.data.transport_options.length > 0) {
+                        initialSelections[vendor] = response.data.transport_options[0].vendor_code;
                     }
                 });
                 setTransportSelections(initialSelections);
             } else {
-                setState(prev => ({ ...prev, loading: false, error: response.data.message }));
+                setState(prev => ({ ...prev, loading: false, error: response.detail || 'エラー' }));
             }
     } catch {
             setState(prev => ({
@@ -101,21 +114,21 @@ const BlockUnitPriceInteractive: React.FC = () => {
         setState(prev => ({ ...prev, loading: true }));
 
         try {
-            const response = await axios.post(`${LEDGER_API_URL}/block-unit-price/select-transport`, {
-                session_data: state.sessionData,
-                selections: transportSelections
-            });
+            const response = await apiPost<SelectResponse, { session_data: SessionData; selections: Record<string, string> }>(
+                '/ledger_api/block-unit-price/select-transport',
+                { session_data: state.sessionData, selections: transportSelections }
+            );
 
-            if (response.data.status === 'success') {
+            if (response.status === 'success') {
                 setState(prev => ({
                     ...prev,
                     step: 1,
-                    data: response.data.data,
-                    sessionData: response.data.data.session_data,
+                    data: response.data,
+                    sessionData: response.data.session_data,
                     loading: false
                 }));
             } else {
-                setState(prev => ({ ...prev, loading: false, error: response.data.message }));
+                setState(prev => ({ ...prev, loading: false, error: response.detail || 'エラー' }));
             }
     } catch {
             setState(prev => ({
@@ -133,23 +146,23 @@ const BlockUnitPriceInteractive: React.FC = () => {
         setState(prev => ({ ...prev, loading: true }));
 
         try {
-            const response = await axios.post(`${LEDGER_API_URL}/block-unit-price/finalize`, {
-                session_data: state.sessionData,
-                confirmed: confirmed
-            });
+            const response = await apiPost<FinalizeResponse, { session_data: SessionData; confirmed: boolean }>(
+                '/ledger_api/block-unit-price/finalize',
+                { session_data: state.sessionData, confirmed }
+            );
 
-            if (response.data.status === 'completed') {
+            if (response.status === 'completed') {
                 setState(prev => ({
                     ...prev,
                     step: 2,
-                    data: response.data.data,
+                    data: response.data,
                     loading: false
                 }));
-            } else if (response.data.status === 'cancelled') {
+            } else if (response.status === 'cancelled') {
                 // Step 1に戻る
                 setState(prev => ({ ...prev, step: 0, loading: false }));
             } else {
-                setState(prev => ({ ...prev, loading: false, error: response.data.message }));
+                setState(prev => ({ ...prev, loading: false, error: response.detail || 'エラー' }));
             }
     } catch {
             setState(prev => ({
