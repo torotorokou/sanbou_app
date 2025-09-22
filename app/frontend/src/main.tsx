@@ -5,7 +5,7 @@ import { ThemeProvider } from './theme/ThemeProvider';
 import { generateCssVars } from './theme/cssVars';
 import 'antd/dist/reset.css';
 import './index.css';
-import './styles/responsive.css';
+import './theme/responsive.css';
 import './shared/styles/base.css';
 
 // ① customTokens（ブランドカラー等）からCSS変数を作る

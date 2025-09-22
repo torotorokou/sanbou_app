@@ -1,12 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Modal, Typography, Grid, Spin, Anchor, Row, Col } from 'antd';
+import { Modal, Typography, Spin, Anchor, Row, Col } from 'antd';
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import manualsApi from '@/services/api/manualsApi';
 import type { ManualSummary } from '@/types/manuals';
 import type { ManualDetail } from '@/types/manuals';
 import { ensureSectionAnchors, smoothScrollToAnchor } from '@/utils/anchors';
 
-const { useBreakpoint } = Grid;
 const { Title } = Typography;
 
 const ManualModal: React.FC = () => {
@@ -19,7 +18,6 @@ const ManualModal: React.FC = () => {
   const nav = useNavigate();
   const loc = useLocation();
   const [params] = useSearchParams();
-  useBreakpoint();
 
   const isMobile = (typeof window !== 'undefined') && window.innerWidth < 768;
   const forceFull = params.get('full') === '1';

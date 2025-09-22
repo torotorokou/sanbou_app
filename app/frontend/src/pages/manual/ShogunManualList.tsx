@@ -9,7 +9,6 @@ import {
   Col,
   Empty,
   Flex,
-  Grid,
   Input,
   Layout,
   Modal,
@@ -29,6 +28,8 @@ import {
   DollarOutlined,
   FileSyncOutlined,
 } from '@ant-design/icons';
+import { useWindowSize } from '@/hooks/ui';
+import { BREAKPOINTS as BP } from '@/shared/constants/breakpoints';
 import styles from './shogunManual.module.css';
 import type { ManualItem, ManualSection } from './types';
 import manualsApi from '@/services/api/manualsApi';
@@ -53,7 +54,6 @@ type CatalogSectionDTO = {
 
 const { Title, Paragraph, Text } = Typography;
 const { Header, Sider, Content } = Layout;
-const { useBreakpoint } = Grid;
 
 function useManualController() {
   const [query, setQuery] = useState('');
@@ -160,9 +160,6 @@ const SectionBlock: React.FC<{
   section: ManualSection;
   onOpen: (it: ManualItem) => void;
 }> = ({ section, onOpen }) => {
-  const screens = useBreakpoint();
-  const colSpan = screens.xl ? 8 : screens.lg ? 12 : 24;
-
   return (
     <div id={section.id} className={styles.sectionBlock}>
       <Space align="center" size="middle" className={styles.sectionHeader}>
@@ -173,7 +170,7 @@ const SectionBlock: React.FC<{
       </Space>
       <Row gutter={[16, 16]}>
         {section.items.map((item) => (
-          <Col span={colSpan} key={item.id}>
+          <Col xs={24} lg={12} xl={8} key={item.id}>
             <ItemCard item={item} onOpen={onOpen} />
           </Col>
         ))}
@@ -293,8 +290,8 @@ const ManualModal: React.FC<{
 
 const ShogunManualList: React.FC = () => {
   const ctrl = useManualController();
-  const screens = useBreakpoint();
-  const showSider = screens.lg;
+  const { width } = useWindowSize();
+  const showSider = typeof width === 'number' ? width >= (BP.sm + 1) : false; // md以上
   const contentScrollRef = useRef<HTMLDivElement | null>(null);
 
   return (
@@ -316,7 +313,7 @@ const ShogunManualList: React.FC = () => {
               <Input
                 allowClear
                 placeholder="キーワードで検索…（例：E票、見積、台帳）"
-                style={{ width: screens.md ? 360 : 240 }}
+                style={{ width: (typeof width === 'number' && width >= (BP.sm + 1) && width <= BP.mdMax) ? 360 : 240 }}
                 value={ctrl.query}
                 onChange={(e) => ctrl.setQuery(e.target.value)}
               />

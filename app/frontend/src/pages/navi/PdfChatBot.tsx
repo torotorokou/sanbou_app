@@ -202,6 +202,8 @@ const PdfChatBot: React.FC = () => {
     const { width } = useWindowSize();
     const isNarrow = typeof width === 'number' ? width <= BP.mdMax : false;
     const isMd = typeof width === 'number' ? width >= BP.sm + 1 && width <= BP.mdMax : false;
+    // サイドバー表示フラグ: md以上の幅では本文内にサイドバーを表示する
+    const showSider = typeof width === 'number' ? width >= BP.sm + 1 : false;
 
     return (
         <div style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
@@ -212,6 +214,39 @@ const PdfChatBot: React.FC = () => {
             </div>
 
             <div style={{ display: 'flex', flex: 1, overflow: 'hidden', minHeight: 0 }}>
+                {/* md以上では本文内のサイドバーを表示（狭い幅では非表示） */}
+                {showSider && (
+                    <aside
+                        style={{
+                            width: isMd ? 220 : 260,
+                            minWidth: 160,
+                            background: '#ffffff',
+                            borderRight: '1px solid #ebebeb',
+                            padding: 12,
+                            boxSizing: 'border-box',
+                            overflowY: 'auto',
+                        }}
+                    >
+                        <div style={{ fontWeight: 700, marginBottom: 8 }}>参考PDF</div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                            {allPdfList.slice(0, 6).map((pdf) => (
+                                <Button
+                                    key={pdf}
+                                    size="small"
+                                    style={{ textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                                    onClick={() => handleSelectPdfFromAll(pdf)}
+                                >
+                                    {pdf}
+                                </Button>
+                            ))}
+                        </div>
+                        <div style={{ marginTop: 10 }}>
+                            <Button size="small" onClick={() => setDrawerOpen(true)}>
+                                全て表示
+                            </Button>
+                        </div>
+                    </aside>
+                )}
                 {/* 左 + 中央/右の組み替え: 狭い幅では質問フォーム下に送信ボタンを積む */}
                 {isNarrow ? (
                     <>

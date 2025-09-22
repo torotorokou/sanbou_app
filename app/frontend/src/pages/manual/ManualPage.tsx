@@ -1,12 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Anchor, Breadcrumb, Button, Grid, Layout, Space, Spin, Typography } from 'antd';
+import { Anchor, Breadcrumb, Button, Layout, Space, Spin, Typography } from 'antd';
 import { useNavigate, useParams } from 'react-router-dom';
 import manualsApi from '@/services/api/manualsApi';
 import type { ManualDetail } from '@/types/manuals';
 import { ensureSectionAnchors, smoothScrollToAnchor } from '@/utils/anchors';
+import { useWindowSize } from '@/hooks/ui';
+import { BREAKPOINTS as BP } from '@/shared/constants/breakpoints';
 
 const { Title } = Typography;
-const { useBreakpoint } = Grid;
 
 const ManualPage: React.FC = () => {
   const { id } = useParams();
@@ -14,7 +15,8 @@ const ManualPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const ref = useRef<HTMLDivElement>(null);
   const nav = useNavigate();
-  const screens = useBreakpoint();
+  const { width } = useWindowSize();
+  const showSider = typeof width === 'number' ? width >= BP.sm + 1 : false; // md以上で表示
 
   useEffect(() => {
     let alive = true;
@@ -39,7 +41,7 @@ const ManualPage: React.FC = () => {
 
   return (
     <Layout style={{ height: '100%', background: 'transparent' }}>
-      {screens.lg && (
+      {showSider && (
         <Layout.Sider width={240} style={{ position: 'sticky', top: 0, alignSelf: 'flex-start', height: '100vh', overflow: 'auto', background: 'var(--ant-color-bg-container, #fff)', borderRight: '1px solid var(--ant-color-border-secondary, #f0f0f0)' }}>
           <div style={{ padding: 16 }}>
             <Anchor

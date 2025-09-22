@@ -1,4 +1,5 @@
 import { customTokens } from './tokens';
+import { BREAKPOINTS as BP } from '@/shared/constants/breakpoints';
 
 export function generateCssVars(): string {
     return `
@@ -57,11 +58,11 @@ export function generateCssVars(): string {
       --sidebar-transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       --content-transition: padding 0.3s ease-in-out;
       
-  /* ブレークポイント (値は JS 側 'src/shared/constants/breakpoints.ts' を単一のソースにすること) */
-  --breakpoint-mobile: 767px; /* BREAKPOINTS.sm */
-  --breakpoint-tablet: 1023px; /* BREAKPOINTS.tabletMax (informational) */
-  --breakpoint-auto-collapse: 1280px; /* BREAKPOINTS.autoCollapse */
-  --breakpoint-force-collapse: 900px; /* BREAKPOINTS.forceCollapse */
+  /* ブレークポイント（単一ソース: src/shared/constants/breakpoints.ts） */
+  --breakpoint-mobile: ${BP.sm}px; /* BREAKPOINTS.sm */
+  --breakpoint-tablet: ${BP.tabletMax}px; /* BREAKPOINTS.tabletMax (informational) */
+  --breakpoint-auto-collapse: ${BP.autoCollapse}px; /* BREAKPOINTS.autoCollapse */
+  --breakpoint-force-collapse: ${BP.forceCollapse}px; /* BREAKPOINTS.forceCollapse */
     }
   `;
 }

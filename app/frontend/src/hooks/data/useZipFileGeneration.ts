@@ -91,7 +91,7 @@ export const useZipFileGeneration = () => {
                     const fullUrl = new URL(apiEndpoint, window.location.origin).toString();
                     console.log(`API endpoint for ${reportKey}: ${apiEndpoint}`);
                     console.log(`Full request URL: ${fullUrl}`);
-                } catch (e) {
+                } catch {
                     console.log(`API endpoint for ${reportKey}: ${apiEndpoint}`);
                 }
 
@@ -117,7 +117,7 @@ export const useZipFileGeneration = () => {
                     let respText: string | null = null;
                     try {
                         respText = await response.text();
-                    } catch (e) {
+                    } catch {
                         // ignore
                     }
 
@@ -464,7 +464,7 @@ async function handleApiError(response: Response, rawBody?: string | null) {
                 errorMsg = `${errorMsg}: ${clonedText.substring(0, 200)}`;
             }
         }
-    } catch (e) {
+    } catch {
         // best-effort only
     }
 

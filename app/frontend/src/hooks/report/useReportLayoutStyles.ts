@@ -14,7 +14,6 @@ import { BREAKPOINTS as BP } from '@/shared/constants/breakpoints';
 export const useReportLayoutStyles = () => {
   const { isMobile, isTablet, width } = useWindowSize();
   const isMobileOrTablet = isMobile || isTablet;
-  const isHalfScreen = !isMobile && !isTablet && (typeof width === 'number' ? width <= BP.mdMax : false);
 
   // デバッグ情報（一時的）
   // console.log('useReportLayoutStyles - Device Info:', {

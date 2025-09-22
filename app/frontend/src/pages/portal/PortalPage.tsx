@@ -8,7 +8,6 @@ import {
   Typography,
   Button,
   Popover,
-  Grid,
   Alert,
   Modal,
   List,
@@ -325,10 +324,9 @@ type Notice = {
 
 export const PortalPage: React.FC = () => {
   const { width, isMobile } = useWindowSize(); // 明示的リサイズ検知（再レンダーで追従）
-  const screens = Grid.useBreakpoint(); // Ant Design ブレークポイント（補助）
   const { token } = theme.useToken();
 
-  const isCompact = isMobile || !screens.lg || width < 900;
+  const isCompact = isMobile || width < 900;
 
   // レスポンシブに関係なく全カードで同じボタン幅に統一する
   const unifiedButtonWidth = BUTTON_WIDTH;
