@@ -24,6 +24,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { ROUTER_PATHS } from '@/constants/router';
 import { useWindowSize } from '@/hooks/ui';
+import { ANT } from '@/shared/constants/breakpoints';
 import './PortalPage.css';
 
 const { Title, Paragraph, Text } = Typography;
@@ -45,6 +46,8 @@ export interface PortalCardProps {
   color?: string;
   // ボタン幅を外から制御（単位: px）。未指定時はデフォルトを使用。
   buttonWidth?: number;
+  // カード全体のスケール（1 = 100%）。PortalPage から渡す。
+  cardScale?: number;
 }
 
 /** 単一責任：1メニューカードの表示と遷移のみ */
@@ -56,6 +59,7 @@ const PortalCard: React.FC<PortalCardProps> = ({
   detail,
   color,
   buttonWidth,
+  cardScale,
 }) => {
   const navigate = useNavigate();
   const { token } = theme.useToken();
@@ -102,6 +106,14 @@ const PortalCard: React.FC<PortalCardProps> = ({
   };
   const btnText = getReadableTextColor(accent);
   const appliedButtonWidth = buttonWidth ?? BUTTON_WIDTH;
+  const scale = cardScale ?? 1;
+  const appliedCardWidth = Math.round(CARD_WIDTH * scale);
+  const appliedCardHeight = Math.round(CARD_HEIGHT * scale);
+  const appliedButtonHeight = Math.round(BUTTON_HEIGHT * scale);
+  const appliedButtonFontSize = Math.round(BUTTON_FONT_SIZE * scale);
+  const appliedButtonWidthScaled = Math.round(appliedButtonWidth * scale);
+  const appliedIconSize = Math.round(56 * scale);
+  const appliedIconFontSize = Math.round(28 * scale);
 
   const handleNavigate = () => navigate(link);
   const handleKeyDown: React.KeyboardEventHandler<HTMLDivElement> = (e) => {
@@ -126,8 +138,8 @@ const PortalCard: React.FC<PortalCardProps> = ({
         onKeyDown={handleKeyDown}
         onClick={handleNavigate}
         style={{
-          width: CARD_WIDTH,
-          height: CARD_HEIGHT,
+          width: appliedCardWidth,
+          height: appliedCardHeight,
           borderRadius: 16,
           // 上辺にアクセントライン（モダンで控えめ）
           boxShadow: `inset 0 2px 0 0 ${accent}`,
@@ -140,7 +152,7 @@ const PortalCard: React.FC<PortalCardProps> = ({
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center', // ← 縦方向も中央寄せ（“ど真ん中”）
-          gap: 12,
+          gap: 12 * scale,
           textAlign: 'center',
         }}
         onMouseEnter={(e) => {
@@ -166,15 +178,15 @@ const PortalCard: React.FC<PortalCardProps> = ({
         <div
           aria-hidden
           style={{
-            width: 56,
-            height: 56,
+            width: appliedIconSize,
+            height: appliedIconSize,
             borderRadius: '50%',
               background: accentPlate,
               color: accent,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: 28,
+            fontSize: appliedIconFontSize,
             lineHeight: 1,
           }}
         >
@@ -206,12 +218,12 @@ const PortalCard: React.FC<PortalCardProps> = ({
           type="primary"
           size="middle"
           style={{
-            width: appliedButtonWidth,
-            minWidth: appliedButtonWidth,
-            maxWidth: appliedButtonWidth,
-            height: BUTTON_HEIGHT,
-            lineHeight: `${BUTTON_HEIGHT}px`,
-            fontSize: BUTTON_FONT_SIZE,
+            width: appliedButtonWidthScaled,
+            minWidth: appliedButtonWidthScaled,
+            maxWidth: appliedButtonWidthScaled,
+            height: appliedButtonHeight,
+            lineHeight: `${appliedButtonHeight}px`,
+            fontSize: appliedButtonFontSize,
             padding: 0,
             whiteSpace: 'nowrap',
             flex: '0 0 auto',
@@ -331,6 +343,9 @@ export const PortalPage: React.FC = () => {
   // レスポンシブに関係なく全カードで同じボタン幅に統一する
   const unifiedButtonWidth = BUTTON_WIDTH;
 
+  // カードスケール: ANT.xxl 以下では 0.9 倍にする
+  const cardScale = width <= ANT.xxl ? 0.9 : 1;
+
   const introText = isCompact
     ? '社内ポータルです。必要な機能を選択してください。'
     : '社内ポータルへようこそ。下記メニューから業務に必要な機能を選択してください。';
@@ -441,7 +456,7 @@ export const PortalPage: React.FC = () => {
             display: 'grid',
             columnGap: 24,
             rowGap: 24, // 画面サイズに関わらず縦の間隔を固定
-            gridAutoRows: `${CARD_HEIGHT}px`, // 各行の高さをカード固定高に合わせる
+            gridAutoRows: `${Math.round(CARD_HEIGHT * cardScale)}px`, // 各行の高さをカード固定高に合わせる
             // 利用可能幅に基づいて表示列数を調整します。
             // カード幅 + ギャップを考慮して列数を計算（最大 portalMenus.length）
             gridTemplateColumns: (() => {
@@ -450,16 +465,16 @@ export const PortalPage: React.FC = () => {
                 const available = Math.max(0, width - containerPadding);
                 const gap = 24;
                 // 必要幅 per column
-                const per = CARD_WIDTH + gap;
+                const per = Math.round(CARD_WIDTH * cardScale) + gap;
                 let cols = Math.floor((available + gap) / per);
                 if (cols < 1) cols = 1;
                 // compact（半画面等）では2列表示を優先する（ただし最大はメニュー数）
                 if (isCompact) cols = Math.min(2, Math.max(1, cols));
                 // 保険: 列数が多すぎる場合は最大3列、さらにメニュー数で制限
                 cols = Math.min(cols, 3, portalMenus.length);
-                return `repeat(${cols}, ${CARD_WIDTH}px)`;
+                return `repeat(${cols}, ${Math.round(CARD_WIDTH * cardScale)}px)`;
               } catch {
-                return `repeat(auto-fit, ${CARD_WIDTH}px)`;
+                return `repeat(auto-fit, ${Math.round(CARD_WIDTH * cardScale)}px)`;
               }
             })(),
             // カードを画面中央に寄せる
@@ -468,7 +483,7 @@ export const PortalPage: React.FC = () => {
           }}
         >
           {portalMenus.map((menu) => (
-            <PortalCard key={menu.link} {...menu} buttonWidth={unifiedButtonWidth} />
+            <PortalCard key={menu.link} {...menu} buttonWidth={unifiedButtonWidth} cardScale={cardScale} />
           ))}
         </div>
       </main>

@@ -237,7 +237,7 @@ const SolvestNavi: React.FC = () => {
                     categoryData={categoryData}
                 />
 
-                            <div style={{ padding: '4px 8px', display: 'flex', justifyContent: 'flex-start' }}>
+                            <div style={{ padding: '8px 8px', display: 'flex', justifyContent: 'center', marginTop: 8 }}>
                                 <ChatSendButtonSection
                                     onClick={handleSearch}
                                     disabled={!question.trim() || tags.length === 0 || loading}

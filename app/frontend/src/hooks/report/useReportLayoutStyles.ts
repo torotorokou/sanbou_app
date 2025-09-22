@@ -117,18 +117,20 @@ export const useReportLayoutStyles = () => {
         overflow: 'hidden' as const,
         overflowX: ("hidden" as unknown) as "visible" | "hidden" | "clip" | "scroll" | "auto",
       },
-      previewContainer: {
-        display: "flex",
-        flex: 1,
+  previewContainer: {
+    display: "flex",
+    flex: 1,
   gap: isMobile ? 8 : (typeof width === 'number' && width < ANT.xl) ? 12 : 16,
-        alignItems: "center",
-        flexDirection: (isMobile ? "column" : "row") as "row" | "column",
-        minHeight: 0,
-      },
-      previewArea: {
-        flex: 1,
-  height: isMobile ? "50vh" : (typeof width === 'number' && width < ANT.xl) ? "68vh" : "100%",
-        width: isMobile ? "100%" : "auto",
+    // プレビューを縦方向に伸ばして下部の余白を埋める
+    alignItems: "stretch",
+    flexDirection: (isMobile ? "column" : "row") as "row" | "column",
+    minHeight: 0,
+  },
+  previewArea: {
+    flex: 1,
+  // flex レイアウトで縦に伸ばす。モバイルでは固定高さを残す。
+  height: isMobile ? "50vh" : "100%",
+    width: isMobile ? "100%" : "auto",
         border: `1px solid ${customTokens.colorBorder}`,
         borderRadius: 8,
         boxShadow: `0 2px 8px ${customTokens.shadowLight}`,
