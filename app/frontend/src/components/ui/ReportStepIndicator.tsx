@@ -21,19 +21,20 @@ const ReportStepIndicator: React.FC<ReportStepIndicatorProps> = ({
 }) => {
     const { isMobile, isTablet } = useWindowSize();
 
-    // ポリシー: responsive.css に合わせて
-    // - モバイル（<=767）: 縦・小・タイトルのみ
+    // ポリシー: responsive.css に合わせて（変更点）
+    // - モバイル（<=767）: 上位と同じ横・通常サイズ（縦に伸ばさない）
     // - タブレット（768–1279）: 横・小・タイトルのみ（コンパクト）
     // - デスクトップ（>=1280）: 横・通常・タイトル+説明
     const compactItems = useMemo(() => {
-        return isMobile || isTablet
-            ? items.map((it) => ({ title: it.title }))
-            : items;
-    }, [isMobile, isTablet, items]);
+        return isTablet ? items.map((it) => ({ title: it.title })) : items;
+    }, [isTablet, items]);
 
-    const isVertical = isMobile;
-    const stepSize = isMobile || isTablet ? 'small' : 'default';
-    const showProgressDot = isMobile;
+    // 縦表示はタブレット/モバイルともに無効化（常に横向きを維持）
+    const isVertical = false;
+    // サイズはタブレットのみ 'small'、それ以外は 'default'
+    const stepSize: 'small' | 'default' = isTablet ? 'small' : 'default';
+    // プログレスドットはモバイルでの省スペース表示を行わない（以前は isMobile）
+    const showProgressDot = false;
 
     return (
         <div
@@ -47,7 +48,7 @@ const ReportStepIndicator: React.FC<ReportStepIndicatorProps> = ({
             <Steps
                 current={currentStep}
                 direction={isVertical ? 'vertical' : 'horizontal'}
-                size={stepSize as any}
+                size={stepSize}
                 progressDot={showProgressDot}
                 responsive
                 items={compactItems}

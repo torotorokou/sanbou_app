@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Spin, Button, Card, Drawer } from 'antd';
+import { Spin, Button } from 'antd';
 import { FilePdfOutlined } from '@ant-design/icons';
 import { apiGet, apiPost } from '@/services/httpClient';
 import { pdfjs } from 'react-pdf';
@@ -32,18 +32,7 @@ type ChatAnswerResult = {
     pdf_url?: string | null;
 };
 
-const allPdfList = [
-    'doc1.pdf',
-    'manual2.pdf',
-    'specs2024.pdf',
-    '規程集.pdf',
-    '重要通知.pdf',
-    'report2022.pdf',
-    'guide.pdf',
-    'data.pdf',
-    'flow.pdf',
-    'notes.pdf',
-];
+// allPdfList と関連UIは削除（未使用）
 
 const stepItems: StepItem[] = [
     { title: '分類', description: 'カテゴリ選択' },
@@ -64,7 +53,7 @@ const PdfChatBot: React.FC = () => {
     const [pdfModalVisible, setPdfModalVisible] = useState(false);
     const [currentStep, setCurrentStep] = useState(0);
 
-    const [drawerOpen, setDrawerOpen] = useState(false);
+    // Drawerや左サイドのPDF一覧は廃止
 
     // ✅ 追加: 通知のadd関数を取得
     const addNotification = useNotificationStore((s) => s.addNotification);
@@ -193,17 +182,11 @@ const PdfChatBot: React.FC = () => {
         }
     };
 
-    const handleSelectPdfFromAll = (pdf: string) => {
-        setPdfToShow(`/pdf/${pdf}`);
-        setPdfModalVisible(true);
-        setDrawerOpen(false);
-    };
+    // 参考PDFの直接一覧表示機能は廃止
 
     const { width } = useWindowSize();
     const isNarrow = typeof width === 'number' ? width <= BP.mdMax : false;
     const isMd = typeof width === 'number' ? width >= BP.sm + 1 && width <= BP.mdMax : false;
-    // サイドバー表示フラグ: md以上の幅では本文内にサイドバーを表示する
-    const showSider = typeof width === 'number' ? width >= BP.sm + 1 : false;
 
     return (
         <div style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
@@ -214,39 +197,6 @@ const PdfChatBot: React.FC = () => {
             </div>
 
             <div style={{ display: 'flex', flex: 1, overflow: 'hidden', minHeight: 0 }}>
-                {/* md以上では本文内のサイドバーを表示（狭い幅では非表示） */}
-                {showSider && (
-                    <aside
-                        style={{
-                            width: isMd ? 220 : 260,
-                            minWidth: 160,
-                            background: '#ffffff',
-                            borderRight: '1px solid #ebebeb',
-                            padding: 12,
-                            boxSizing: 'border-box',
-                            overflowY: 'auto',
-                        }}
-                    >
-                        <div style={{ fontWeight: 700, marginBottom: 8 }}>参考PDF</div>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                            {allPdfList.slice(0, 6).map((pdf) => (
-                                <Button
-                                    key={pdf}
-                                    size="small"
-                                    style={{ textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
-                                    onClick={() => handleSelectPdfFromAll(pdf)}
-                                >
-                                    {pdf}
-                                </Button>
-                            ))}
-                        </div>
-                        <div style={{ marginTop: 10 }}>
-                            <Button size="small" onClick={() => setDrawerOpen(true)}>
-                                全て表示
-                            </Button>
-                        </div>
-                    </aside>
-                )}
                 {/* 左 + 中央/右の組み替え: 狭い幅では質問フォーム下に送信ボタンを積む */}
                 {isNarrow ? (
                     <>
@@ -425,89 +375,7 @@ const PdfChatBot: React.FC = () => {
                 </Button>
             </div>
 
-            {/* Drawer: 全PDFファイル一覧（クリックでモーダル表示） */}
-            <Drawer
-                title={
-                    <span>
-                        <FilePdfOutlined style={{ marginRight: 8, color: '#d32029' }} />
-                        全PDFファイル一覧
-                    </span>
-                }
-                placement="bottom"
-                open={drawerOpen}
-                onClose={() => setDrawerOpen(false)}
-                height={180}
-                closable={true}
-                styles={{
-                    body: {
-                        background: '#fafbfc',
-                        padding: '18px 20px 8px 20px',
-                        /* horizontal overflow handled by wrapper if needed */
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                    },
-                }}
-            >
-                <div
-                    className="responsive-x"
-                    style={{
-                        display: 'flex',
-                        flexDirection: 'row',
-                        gap: 16,
-                        /* horizontal overflow handled by wrapper */
-                        paddingBottom: 8,
-                    }}
-                >
-                    {allPdfList.map((pdf) => (
-                        <Card
-                            key={pdf}
-                            hoverable
-                            size="small"
-                            style={{
-                                width: 120,
-                                height: 72,
-                                minWidth: 100,
-                                textAlign: 'center',
-                                cursor: 'pointer',
-                                overflow: 'hidden',
-                                padding: 4,
-                                border: '1px solid #e5e5e5',
-                                display: 'flex',
-                                flexDirection: 'column',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                background: '#fff',
-                            }}
-                            styles={{
-                                body: {
-                                    padding: 4,
-                                    minHeight: 12,
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                },
-                            }}
-                            onClick={() => handleSelectPdfFromAll(pdf)}
-                        >
-                            <div style={{ fontSize: 22, marginBottom: 2 }}>📄</div>
-                            <div
-                                style={{
-                                    fontSize: 12,
-                                    overflow: 'hidden',
-                                    textOverflow: 'ellipsis',
-                                    whiteSpace: 'nowrap',
-                                    width: 96,
-                                }}
-                                title={pdf}
-                            >
-                                {pdf}
-                            </div>
-                        </Card>
-                    ))}
-                </div>
-            </Drawer>
+            {/* Drawer機能・全PDF一覧は廃止しました */}
 
             {/* モーダルPDFプレビュー */}
             {pdfToShow && (
