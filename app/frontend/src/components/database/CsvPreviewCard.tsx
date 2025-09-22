@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Card, Table, Empty } from 'antd';
 import type { UploadCsvType } from '@/constants/uploadCsvConfig';
 import { UPLOAD_CSV_DEFINITIONS } from '@/constants/uploadCsvConfig';
@@ -28,6 +28,25 @@ export const CsvPreviewCard: React.FC<Props> = ({
     backgroundColor: propBackgroundColor,
 }) => {
     const backgroundColor = propBackgroundColor || CSV_TYPE_COLORS[type] || '#ffffff';
+
+    const wrapperRef = useRef<HTMLDivElement | null>(null);
+    const [measuredTableHeight, setMeasuredTableHeight] = useState<number | null>(null);
+
+    useEffect(() => {
+        const el = wrapperRef.current;
+        if (!el) return;
+        const update = () => {
+            // measure available height for the table inside the card
+            const h = el.clientHeight;
+            setMeasuredTableHeight(h);
+        };
+        update();
+        const ro = new ResizeObserver(update);
+        ro.observe(el);
+        return () => ro.disconnect();
+    }, [cardHeight, tableBodyHeight]);
+
+    const usedTableHeight = tableBodyHeight ?? measuredTableHeight ?? Math.max(80, Math.floor(cardHeight * 0.6));
 
     return (
         <Card
@@ -65,10 +84,10 @@ export const CsvPreviewCard: React.FC<Props> = ({
             headStyle={{ backgroundColor }}
             bodyStyle={{
                 padding: 8,
-                height: cardHeight - 48,
                 display: 'flex',
                 flexDirection: 'column',
                 overflow: 'hidden',
+                boxSizing: 'border-box',
             }}
             style={{
                 height: cardHeight,
@@ -80,11 +99,17 @@ export const CsvPreviewCard: React.FC<Props> = ({
             {csvPreview && csvPreview.rows.length > 0 ? (
                 <div
                         className="responsive-x"
+                    ref={wrapperRef}
                     style={{
                         flex: 1,
+                        width: '100%',
                         overflow: 'hidden',
-                        // enable horizontal scrolling when table is wider than container
-                        overflowX: 'auto',
+                        // let the antd Table handle horizontal scrolling to avoid duplicate scrollbars
+                        overflowX: 'hidden',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        // constrain the visible table area to the provided/measured height so it matches the card
+                        maxHeight: usedTableHeight,
                     }}
                 >
                     <Table
@@ -101,10 +126,10 @@ export const CsvPreviewCard: React.FC<Props> = ({
                         pagination={false}
                         size='small'
                         // calculate horizontal scroll width from column count
-                        scroll={{ y: tableBodyHeight, x: Math.max(csvPreview.columns.length * 120, 800) }}
+                        scroll={{ y: usedTableHeight, x: Math.max(csvPreview.columns.length * 120, 800) }}
                         bordered
                         rowKey={(_, i) => (i ?? 0).toString()}
-                        style={{ minWidth: csvPreview.columns.length * 120 }}
+                        style={{ minWidth: csvPreview.columns.length * 120, flex: '0 0 auto' }}
                     />
                 </div>
             ) : (

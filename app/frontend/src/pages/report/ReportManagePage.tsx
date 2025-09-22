@@ -26,7 +26,16 @@ const ReportManagePage: React.FC = () => {
     const reportBaseProps = reportManager.getReportBaseProps();
 
     return (
-        <>
+        <div
+            style={{
+                height: 'calc(100dvh - (var(--page-padding, 0px) * 2))',
+                display: 'flex',
+                flexDirection: 'column',
+                overflow: 'hidden',
+                boxSizing: 'border-box',
+                scrollbarGutter: 'stable both-edges'
+            }}
+        >
             {/* <ResponsiveDebugInfo /> */}
             <ReportHeader
                 reportKey={reportManager.selectedReport}
@@ -34,8 +43,10 @@ const ReportManagePage: React.FC = () => {
                 currentStep={reportManager.currentStep}
                 pageGroup="manage"
             />
-            <ReportBase {...reportBaseProps} />
-        </>
+            <div style={{ flex: 1, minHeight: 0, overflow: 'auto' }}>
+                <ReportBase {...reportBaseProps} />
+            </div>
+        </div>
     );
 };
 
