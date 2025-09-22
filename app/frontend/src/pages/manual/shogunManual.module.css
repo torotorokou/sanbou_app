@@ -97,3 +97,32 @@
 .paneImg {
   object-fit: contain;
 }
+
+/* Header search input styling to match global bg on large screens */
+.headerSearchInput {
+  border-radius: 6px;
+  padding: 4px 8px;
+  border: 1px solid var(--ant-color-border, rgba(0,0,0,0.06));
+}
+
+@media (min-width: 1280px) {
+  .headerSearchInput {
+    background: var(--ant-color-bg-container, #f3fff5); /* default fallback slightly green */
+  }
+}
+
+/* Common search input enhancements for visibility */
+.searchInput {
+  border-radius: 6px;
+  padding: 6px 10px;
+  border: 1px solid var(--ant-color-border, rgba(0,0,0,0.08));
+  transition: box-shadow 0.16s ease, border-color 0.16s ease;
+  background: #fff;
+}
+
+.searchInput:focus,
+.searchInput:focus-visible {
+  outline: none;
+  border-color: var(--ant-color-primary, #52c41a);
+  box-shadow: 0 0 0 6px rgba(82,196,26,0.09);
+}

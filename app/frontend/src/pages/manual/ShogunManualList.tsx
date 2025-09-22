@@ -292,6 +292,7 @@ const ShogunManualList: React.FC = () => {
   const ctrl = useManualController();
   const { width } = useWindowSize();
   const showSider = typeof width === 'number' ? width >= (BP.sm + 1) : false; // md以上
+  const showHeaderSearch = typeof width === 'number' ? width > BP.mdMax : true; // mdMax より大きい（より広い画面）ときだけヘッダー内に置く
   const contentScrollRef = useRef<HTMLDivElement | null>(null);
 
   return (
@@ -308,17 +309,20 @@ const ShogunManualList: React.FC = () => {
             </Title>
           </div>
 
-          <Space>
-            <Tooltip title="全体検索（タイトル/説明/タグ）">
-              <Input
-                allowClear
-                placeholder="キーワードで検索…（例：E票、見積、台帳）"
-                style={{ width: (typeof width === 'number' && width >= (BP.sm + 1) && width <= BP.mdMax) ? 360 : 240 }}
-                value={ctrl.query}
-                onChange={(e) => ctrl.setQuery(e.target.value)}
-              />
-            </Tooltip>
-          </Space>
+          {showHeaderSearch && (
+            <div style={{ marginLeft: 'auto', display: 'flex', justifyContent: 'flex-end' }}>
+              <Tooltip title="全体検索（タイトル/説明/タグ）">
+                <Input
+                  allowClear
+                  placeholder="キーワードで検索…（例：E票、見積、台帳）"
+                  className={styles.headerSearchInput}
+                  style={{ width: (typeof width === 'number' && width >= (BP.sm + 1) && width <= BP.mdMax) ? 360 : 240 }}
+                  value={ctrl.query}
+                  onChange={(e) => ctrl.setQuery(e.target.value)}
+                />
+              </Tooltip>
+            </div>
+          )}
         </Flex>
       </Header>
 
@@ -344,6 +348,21 @@ const ShogunManualList: React.FC = () => {
         )}
 
         <Content className={styles.content}>
+          {/* LG 以下ではタイトルの下に検索窓を表示して被らないようにする */}
+          {(!showHeaderSearch) && (
+            <div style={{ padding: '12px 0', display: 'flex', justifyContent: 'flex-end' }}>
+              <Tooltip title="全体検索（タイトル/説明/タグ）">
+                <Input
+                  allowClear
+                  placeholder="キーワードで検索…（例：E票、見積、台帳）"
+                  className={styles.searchInput}
+                  value={ctrl.query}
+                  onChange={(e) => ctrl.setQuery(e.target.value)}
+                  style={{ width: '100%', maxWidth: 640 }}
+                />
+              </Tooltip>
+            </div>
+          )}
           <div ref={contentScrollRef} className={styles.contentScroll}>
             <div style={{ minHeight: 240 }}>
               <Space direction="vertical" size={24} style={{ display: 'block' }}>
