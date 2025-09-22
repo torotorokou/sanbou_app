@@ -139,7 +139,7 @@ async function handleApiError(response: Response, rawBody?: string | null) {
                 errorMsg = `${errorMsg}: ${clonedText.substring(0, 200)}`;
             }
         }
-    } catch (e) {
+    } catch {
         // best-effort only
     }
 

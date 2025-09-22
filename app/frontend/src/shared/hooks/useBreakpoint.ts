@@ -1,24 +1,15 @@
-import { useEffect, useState } from "react";
-import { BREAKPOINTS } from "../constants/breakpoints";
+// Single-source responsive hook wrapper
+// このフックは、window幅の判定・監視を自前で行わず、
+// `hooks/ui/useWindowSize` に集約されたロジックを利用します。
+// これにより、BREAKPOINTS の変更が全体に自動反映され、保守性が向上します。
+
+import { useWindowSize } from "@/hooks/ui/useWindowSize";
 
 export type View = "mobile" | "tablet" | "desktop";
 
 export const useBreakpoint = (): View => {
-  const getView = (): View => {
-    if (typeof window === "undefined") return "desktop";
-    const w = window.innerWidth;
-    if (w <= BREAKPOINTS.sm) return "mobile";
-    if (w <= BREAKPOINTS.mdMax) return "tablet";
-    return "desktop";
-  };
-
-  const [view, setView] = useState<View>(getView());
-
-  useEffect(() => {
-    const onResize = () => setView(getView());
-    window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
-  }, []);
-
-  return view;
+  const { isMobile, isTablet } = useWindowSize();
+  if (isMobile) return "mobile";
+  if (isTablet) return "tablet";
+  return "desktop";
 };

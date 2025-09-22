@@ -1,4 +1,6 @@
 /* Unified responsive base: breakpoints sm/md/lg, clamp font size, height policy */
+/* IMPORTANT: このCSSのメディアクエリ閾値は `src/shared/constants/breakpoints.ts` と同期させること。
+  sm: <= 767, md: 768–1279, lg: >= 1280 （2025-09 現在） */
 html, body, #root { height: 100%; }
 
 body { line-height: 1.6; overflow-x: clip; }
@@ -26,6 +28,17 @@ img, video, canvas, svg { max-width: 100%; height: auto; }
   .ant-card { margin: 12px 0; border-radius: 10px; }
   .ant-layout-content { padding: 16px; }
   .ant-table { font-size: 13px; }
+  /* mdでサイドバーを常時表示するための調整 */
+  .ant-layout-sider {
+    display: block !important;
+    min-width: 160px;
+    max-width: 260px;
+    width: 220px;
+  }
+  /* 本文側の余白を確保 */
+  .ant-layout-content {
+    margin-left: 12px;
+  }
 }
 
 /* lg: ≥ 1280px */
