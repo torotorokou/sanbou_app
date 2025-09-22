@@ -17,7 +17,7 @@ const LedgerBookPage = lazy(() => import('../pages/LedgerBookPage'));
 
 const CustomerListAnalysis = lazy(() => import('../pages/analysis/CustomerListAnalysis'));
 
-const PdfChatBot = lazy(() => import('../pages/navi/PdfChatBot'));
+const SolvestNavi = lazy(() => import('../pages/navi/SolvestNavi'));
 
 const ManualModal = lazy(() => import('@/pages/manual/ManualModal'));
 const ManualPage = lazy(() => import('@/pages/manual/ManualPage'));
@@ -71,8 +71,8 @@ const AppRoutes: React.FC = () => {
             element={<CustomerListAnalysis />}
         />
 
-        {/* チャットボット */}
-        <Route path={ROUTER_PATHS.NAVI} element={<PdfChatBot />} />
+    {/* チャットボット */}
+    <Route path={ROUTER_PATHS.NAVI} element={<SolvestNavi />} />
 
     {/* マニュアル（新） */}
     <Route path='/manuals' element={<GlobalManualSearch />} />
