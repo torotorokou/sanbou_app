@@ -3,10 +3,11 @@ html {
     box-sizing: border-box;
     height: 100%;
     /* 横方向の余白・はみ出しを抑止 */
-    overflow-x: hidden;
+    overflow-x: clip;
     width: 100%;
     /* スクロールバーの出現/非表示でのレイアウト揺れを抑制 */
-    scrollbar-gutter: stable both-edges;
+    /* both-edges は左右に等分の余白を作るため本件の直接原因になり得るため stable のみに */
+    scrollbar-gutter: stable;
 }
 *, *::before, *::after { box-sizing: inherit; }
 body {
@@ -15,12 +16,13 @@ body {
     font-family: 'Segoe UI', sans-serif;
     margin: 0;
     /* 横方向の余白・はみ出しを抑止 */
-    overflow-x: hidden;
+    overflow-x: clip;
     width: 100%;
     /* iOS等でも実高に追従できるよう100dvhを基準に */
     min-height: 100dvh;
     /* 微小スクロールバーの抑制（Windows等） */
-    scrollbar-gutter: stable both-edges;
+    /* both-edges だと左右に余白が発生するため stable のみに */
+    scrollbar-gutter: stable;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 }
@@ -126,3 +128,13 @@ body {
         padding: 0 !important;
     }
 }
+
+/* --- Global reset enhancements to prevent horizontal overflow --- */
+/* 目的: content-box による幅の膨張、長文ノーワープ、表の横溢れを抑止 */
+html, body { width: 100%; }
+*, *::before, *::after { box-sizing: border-box; }
+img, video, canvas, svg { max-width: 100%; height: auto; display: block; }
+pre, code { white-space: normal; overflow-wrap: anywhere; }
+#root, .ant-layout, .ant-layout-content { min-width: 0; }
+.ant-table-wrapper { overflow-x: auto; }
+.ant-table { width: 100%; min-width: 0; }
