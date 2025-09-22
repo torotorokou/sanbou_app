@@ -6,14 +6,14 @@ import { Spin } from 'antd';
 import { ROUTER_PATHS } from '@/constants/router';
 
 // 軽量/コアはそのまま、重いページを lazy 化
-const ManagementDashboard = lazy(() => import('../pages/ManagementDashboard'));
-const FactoryDashboard = lazy(() => import('../pages/FactoryDashboard'));
-const PricingDashboard = lazy(() => import('../pages/PricingDashboard'));
-const CustomerListDashboard = lazy(() => import('../pages/CustomerListDashboard'));
+const ManagementDashboard = lazy(() => import('../pages/dashboard/ManagementDashboard'));
+const FactoryDashboard = lazy(() => import('../pages/dashboard/FactoryDashboard'));
+const PricingDashboard = lazy(() => import('../pages/dashboard/PricingDashboard'));
+const CustomerListDashboard = lazy(() => import('../pages/dashboard/CustomerListDashboard'));
 
 const ReportFactory = lazy(() => import('../pages/report/ReportFactory'));
 const ReportManagePage = lazy(() => import('../pages/report/ReportManagePage'));
-const LedgerBookPage = lazy(() => import('../pages/LedgerBookPage'));
+const LedgerBookPage = lazy(() => import('../pages/report/LedgerBookPage'));
 
 const CustomerListAnalysis = lazy(() => import('../pages/analysis/CustomerListAnalysis'));
 
@@ -27,10 +27,10 @@ const ShogunManualList = lazy(() => import('@/pages/manual/ShogunManualList'));
 const UploadPage = lazy(() => import('../pages/database/UploadDatabasePage'));
 const RecordListPage = lazy(() => import('../pages/database/RecordListPage'));
 
-const TokenPreviewPage = lazy(() => import('@/pages/TokenPreviewPage'));
-const TestPage = lazy(() => import('@/pages/TestPage'));
-const PortalPage = lazy(() => import('@/pages/portal/PortalPage'));
-const NewsPage = lazy(() => import('@/pages/NewsPage'));
+const TokenPreviewPage = lazy(() => import('@/pages/utils/TokenPreviewPage'));
+const TestPage = lazy(() => import('@/pages/utils/TestPage'));
+const PortalPage = lazy(() => import('@/pages/home/PortalPage'));
+const NewsPage = lazy(() => import('@/pages/home/NewsPage'));
 
 const AppRoutes: React.FC = () => {
     const location = useLocation();
