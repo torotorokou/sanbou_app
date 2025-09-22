@@ -68,7 +68,7 @@ const ReportManagePageLayout: React.FC<Props> = ({
             <div style={styles.mainLayout}>
                 {isHalfOrBelow ? (
                     <>
-                        <div style={{ display: 'flex', gap: isMobile ? 8 : 16, width: '100%', minHeight: 0 }}>
+                        <div style={{ display: 'flex', gap: isMobile ? 8 : 16, width: '100%', minHeight: 0, flex: 1 }}>
                             <div style={{ flex: '1 1 40%', display: 'flex', flexDirection: 'column', gap: 12, minHeight: 0 }}>
                                                 <div style={{ display: 'none' }}>
                                                     <SampleSection sampleImageUrl={sampleImageUrl} />

@@ -31,7 +31,7 @@ const ActionsSection: React.FC<ActionsSectionProps> = ({
     // compactMode: 半画面用の下部横並び表示にする
     if (compactMode) {
         return (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: '100%' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: '100%', justifyContent: 'flex-end' }}>
                 {/* 生成ボタン：生成前のみ表示（生成後は再生成が表示されるため非表示） */}
                 {!finalized && (
                     <div style={{ width: '100%' }}>

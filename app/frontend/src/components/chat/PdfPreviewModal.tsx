@@ -1,6 +1,8 @@
 // src/components/chat/PdfPreviewModal.tsx
 import React from 'react';
 import { Modal, Empty } from 'antd';
+import { useWindowSize } from '@/hooks/ui';
+import { ANT } from '@/shared/constants/breakpoints';
 
 type Props = {
     visible: boolean;
@@ -9,6 +11,10 @@ type Props = {
 };
 
 const PdfPreviewModal: React.FC<Props> = ({ visible, onClose, pdfUrl }) => {
+    const { width } = useWindowSize();
+    // ANT.xl 未満では高さを大きめにして、下部の余白を埋める
+    const bodyHeight = width < ANT.xl ? '95vh' : '80vh';
+
     return (
         <Modal
             open={visible}
@@ -18,7 +24,7 @@ const PdfPreviewModal: React.FC<Props> = ({ visible, onClose, pdfUrl }) => {
             width='80%'
             styles={{
                 body: {
-                    height: '80vh',
+                    height: bodyHeight,
                     padding: 0,
                     overflow: 'hidden',
                 },

@@ -30,6 +30,9 @@ const VerticalActionButton: React.FC<VerticalActionButtonProps> = ({
         height: isMobile ? 48 : isMobileOrTablet ? 56 : 160,
         width: isMobileOrTablet ? '100%' : 'auto',
         minWidth: isMobileOrTablet ? 120 : 'auto',
+        // 小〜中画面（ANT.xl 未満）ではボタンの最大幅を制限して中央寄せにする
+        maxWidth: isMobileOrTablet ? 400 : undefined,
+        margin: isMobileOrTablet ? '0 auto' : undefined,
         fontSize: isMobile ? '0.9rem' : isMobileOrTablet ? '1rem' : '1.2rem',
         fontWeight: 600,
         borderRadius: isMobileOrTablet ? '12px' : '24px',
