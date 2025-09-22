@@ -14,7 +14,8 @@ type Props = {
     header?: ReactNode;
     sampleImageUrl?: string;
     uploadFiles?: UploadFileConfig[];
-    makeUploadProps?: (opts?: unknown) => UploadProps;
+    // MakeUploadPropsFn と同等: ラベルから UploadProps を生成
+    makeUploadProps?: (label: string) => UploadProps;
     onGenerate?: () => void;
     readyToCreate?: boolean;
     finalized?: boolean;
@@ -74,7 +75,11 @@ const ReportManagePageLayout: React.FC<Props> = ({
                                                 </div>
                                                 <CsvUploadSection
                                                     uploadFiles={mappedUploadFiles ?? []}
-                                                    makeUploadProps={makeUploadProps ?? (() => ({} as UploadProps))}
+                                                    // CsvUploadSection 側は (label, setter) を受けるため、
+                                                    // setter は未使用でラップして互換にする
+                                                    makeUploadProps={(label: string) =>
+                                                        (makeUploadProps ? makeUploadProps(label) : ({} as UploadProps))
+                                                    }
                                                 />
                             </div>
 
@@ -122,7 +127,9 @@ const ReportManagePageLayout: React.FC<Props> = ({
                             <SampleSection sampleImageUrl={sampleImageUrl} />
                             <CsvUploadSection
                                 uploadFiles={mappedUploadFiles ?? []}
-                                makeUploadProps={makeUploadProps ?? (() => ({} as UploadProps))}
+                                makeUploadProps={(label: string) =>
+                                    (makeUploadProps ? makeUploadProps(label) : ({} as UploadProps))
+                                }
                             />
                         </div>
 

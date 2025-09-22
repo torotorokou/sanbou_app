@@ -50,13 +50,13 @@ export const UploadInstructions: React.FC = () => (
                 <br />
                 自分で編集・加工・列の並び替え・名前変更をしたファイルは使用できません。
             </Paragraph>
-            <Paragraph>
+            {/* <Paragraph>
                 <Text type="warning">
                     📅 アップロードするすべてのファイルで「伝票日付」がそろっている必要があります。
                 </Text>
                 <br />
                 1日でもズレているとエラーになりますので、日付の範囲をご確認ください。
-            </Paragraph>
+            </Paragraph> */}
         </Collapse.Panel>
     </Collapse>
 );
