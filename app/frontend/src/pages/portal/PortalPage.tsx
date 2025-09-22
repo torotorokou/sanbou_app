@@ -462,7 +462,8 @@ export const PortalPage: React.FC = () => {
                 return `repeat(auto-fit, ${CARD_WIDTH}px)`;
               }
             })(),
-            justifyContent: 'center', // 最終行も中央寄せ
+            // 中央寄せは左右に等分の余白を作るため左寄せに変更
+            justifyContent: 'flex-start',
             alignItems: 'stretch',
           }}
         >
