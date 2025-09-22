@@ -15,17 +15,20 @@ const MainLayout: React.FC = () => {
 
     try {
         return (
-            <Layout>
+            <Layout style={{ minHeight: '100dvh', height: '100dvh', overflow: 'hidden' }}>
                 <Sidebar />
-                <Layout>
+                <Layout style={{ minHeight: '100dvh', overflow: 'hidden' }}>
                     {(() => {
                         const paddingPx = isMobile ? 12 : isTablet ? 16 : shouldAutoCollapse ? 20 : 24;
                         type ContentStyle = React.CSSProperties & { ['--page-padding']?: string };
                         const contentStyle: ContentStyle = {
-                            padding: `${paddingPx}px`,
+                            paddingInline: `${paddingPx}px`,
+                            paddingBlock: 0,
                             ['--page-padding']: `${paddingPx}px`,
                             backgroundColor: customTokens.colorBgLayout,
-                            transition: 'padding 0.3s ease-in-out'
+                            transition: 'padding 0.3s ease-in-out',
+                            height: '100%',
+                            overflow: 'hidden',
                         };
                         return (
                             <Content style={contentStyle}>
@@ -34,7 +37,7 @@ const MainLayout: React.FC = () => {
                                   - ページ側では .container を最上位に置き、内部はFlex/Gridで組む
                                   - 固定幅禁止: .container は fluid + max width
                                 */}
-                                <div style={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box' }}>
+                                <div style={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box', height: '100%', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
                                     <AppRoutes />
                                 </div>
                             </Content>
