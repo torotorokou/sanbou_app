@@ -18,22 +18,28 @@ const MainLayout: React.FC = () => {
             <Layout>
                 <Sidebar />
                 <Layout>
-                    <Content
-                        style={{
-                            padding: isMobile ? '12px' : isTablet ? '16px' : shouldAutoCollapse ? '20px' : '24px',
+                    {(() => {
+                        const paddingPx = isMobile ? 12 : isTablet ? 16 : shouldAutoCollapse ? 20 : 24;
+                        type ContentStyle = React.CSSProperties & { ['--page-padding']?: string };
+                        const contentStyle: ContentStyle = {
+                            padding: `${paddingPx}px`,
+                            ['--page-padding']: `${paddingPx}px`,
                             backgroundColor: customTokens.colorBgLayout,
                             transition: 'padding 0.3s ease-in-out'
-                        }}
-                    >
-                        {/*
-                          Grid/Flex骨子の方針：
-                          - ページ側では .container を最上位に置き、内部はFlex/Gridで組む
-                          - 固定幅禁止: .container は fluid + max width
-                        */}
-                        <div className="container">
-                            <AppRoutes />
-                        </div>
-                    </Content>
+                        };
+                        return (
+                            <Content style={contentStyle}>
+                                {/**
+                                  Grid/Flex骨子の方針：
+                                  - ページ側では .container を最上位に置き、内部はFlex/Gridで組む
+                                  - 固定幅禁止: .container は fluid + max width
+                                */}
+                                <div className="container">
+                                    <AppRoutes />
+                                </div>
+                            </Content>
+                        );
+                    })()}
                 </Layout>
                 {/* グローバル通知コンテナ */}
                 <NotificationContainer />

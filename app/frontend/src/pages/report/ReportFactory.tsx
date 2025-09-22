@@ -25,15 +25,26 @@ const ReportFactory: React.FC = () => {
     const reportBaseProps = reportManager.getReportBaseProps();
 
     return (
-        <>
+        <div
+            style={{
+                height: 'calc(100dvh - (var(--page-padding, 0px) * 2))',
+                display: 'flex',
+                flexDirection: 'column',
+                overflow: 'hidden',
+                boxSizing: 'border-box',
+                scrollbarGutter: 'stable both-edges'
+            }}
+        >
             <ReportHeader
                 reportKey={reportManager.selectedReport}
                 onChangeReportKey={reportManager.changeReport}
                 currentStep={reportManager.currentStep}
                 pageGroup="factory"
             />
-            <ReportBase {...reportBaseProps} />
-        </>
+            <div style={{ flex: 1, minHeight: 0, overflow: 'auto' }}>
+                <ReportBase {...reportBaseProps} />
+            </div>
+        </div>
     );
 };
 

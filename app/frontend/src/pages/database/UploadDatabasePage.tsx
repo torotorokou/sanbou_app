@@ -1,5 +1,5 @@
-import React from 'react';
-import { Typography, Col, Row, Button, Modal, Spin } from 'antd';
+import React, { useLayoutEffect, useRef, useState } from 'react';
+import { Typography, Col, Row, Button, Modal, Spin, Tabs } from 'antd';
 import CsvUploadPanel from '../../components/database/CsvUploadPanel';
 import CsvPreviewCard from '../../components/database/CsvPreviewCard';
 import { csvTypeColors } from '../../theme';
@@ -10,8 +10,13 @@ import { useCsvUploadArea } from '@/hooks/database/useCsvUploadArea';
 import { UPLOAD_CSV_TYPES, UPLOAD_CSV_DEFINITIONS } from '@/constants/uploadCsvConfig';
 
 const { Text } = Typography;
-const CARD_HEIGHT = 300;
-const TABLE_BODY_HEIGHT = 200;
+// Layout constants
+const CARD_GAP = 16; // matches the column gap
+const COLUMN_PADDING = 16; // matches the Col padding used below
+const CARD_HEADER_HEIGHT = 48; // approximate Card header height (title area)
+// Tabsバーの高さは実測に切替（初期値はフォールバック）
+const TAB_BAR_HEIGHT_FALLBACK = 40;
+const CARD_BODY_VERTICAL_PADDING = 8 * 2; // bodyStyle padding top+bottom
 
 const UploadDatabasePage: React.FC = () => {
     const {
@@ -35,9 +40,52 @@ const UploadDatabasePage: React.FC = () => {
         onRemove: () => removeCsvFile(type),
     }));
 
+    // dynamic sizing based on Row height
+    const rowRef = useRef<HTMLDivElement | null>(null);
+    const tabsRef = useRef<HTMLDivElement | null>(null);
+    const [cardHeight, setCardHeight] = useState<number>(300);
+    const [tableBodyHeight, setTableBodyHeight] = useState<number>(200);
+    const [tabBarHeight, setTabBarHeight] = useState<number>(TAB_BAR_HEIGHT_FALLBACK);
+
+    useLayoutEffect(() => {
+        const calc = () => {
+            const rowEl = rowRef.current;
+            if (!rowEl) return;
+            const rowH = rowEl.clientHeight || (window.innerHeight || document.documentElement.clientHeight || 910);
+            // Tabsバーの実高さを測定
+            const tabEl = tabsRef.current?.querySelector('.ant-tabs-nav') as HTMLElement | null;
+            const measuredTab = tabEl?.offsetHeight ?? TAB_BAR_HEIGHT_FALLBACK;
+            if (measuredTab !== tabBarHeight) setTabBarHeight(measuredTab);
+            // available space inside the column (subtract paddings)
+            const bottomSafeSpace = 16;
+            const avail = Math.max(400, Math.floor(rowH - (COLUMN_PADDING * 2) - bottomSafeSpace));
+            // tabs: only one card visible at a time, account for tab bar height
+            const ch = Math.max(160, Math.floor(avail - measuredTab));
+            setCardHeight(ch);
+            const tbh = Math.max(80, ch - CARD_HEADER_HEIGHT - CARD_BODY_VERTICAL_PADDING - 8);
+            setTableBodyHeight(tbh);
+        };
+        // initial calc and on resize
+        const raf = requestAnimationFrame(calc);
+        const onResize = () => calc();
+        window.addEventListener('resize', onResize);
+        return () => {
+            cancelAnimationFrame(raf);
+            window.removeEventListener('resize', onResize);
+        };
+    }, []);
+
     return (
         <>
-            <Row style={{ minHeight: 600 }}>
+            {/* Contentのpaddingを差し引いた固定高: calc(100dvh - 2*--page-padding) */}
+            <Row
+                ref={rowRef}
+                style={{
+                    height: 'calc(100dvh - (var(--page-padding, 0px) * 2))',
+                    minHeight: 600,
+                    overflow: 'hidden',
+                }}
+            >
                 <Col
                     span={8}
                     style={{
@@ -45,10 +93,13 @@ const UploadDatabasePage: React.FC = () => {
                         height: '100%',
                         display: 'flex',
                         flexDirection: 'column',
+                        overflow: 'hidden',
                     }}
                 >
                     <UploadInstructions />
 
+                    {/* 左カラムは内部だけスクロール許可 */}
+                    <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', paddingRight: 4 }}>
                     <CsvUploadPanel
                         upload={{
                             files: panelFiles,
@@ -62,6 +113,7 @@ const UploadDatabasePage: React.FC = () => {
                             }),
                         }}
                     />
+                    </div>
 
                     <Button
                         type="primary"
@@ -79,21 +131,38 @@ const UploadDatabasePage: React.FC = () => {
                         padding: 16,
                         display: 'flex',
                         flexDirection: 'column',
-                        gap: 16,
-                        /* horizontal overflow is clipped globally; wrap specific content with .responsive-x if needed */
+                        gap: CARD_GAP,
+                        height: '100%',
+                        // prevent outer vertical scrollbar; let inner table handle scrolling
+                        overflow: 'hidden',
                     }}
                 >
-                    {UPLOAD_CSV_TYPES.map((type) => (
-                        <CsvPreviewCard
-                            key={type}
-                            type={type}
-                            csvPreview={csvPreviews[type]}
-                            validationResult={validationResults[type]}
-                            cardHeight={CARD_HEIGHT}
-                            tableBodyHeight={TABLE_BODY_HEIGHT}
-                            backgroundColor={csvTypeColors[type as keyof typeof csvTypeColors]}
-                        />
-                    ))}
+                    <Tabs
+                        defaultActiveKey={UPLOAD_CSV_TYPES[0]}
+                        style={{ height: '100%' }}
+                        // refでラップしてタブバーの実高さを計測
+                        renderTabBar={(props, DefaultTabBar) => (
+                            <div ref={(el) => { tabsRef.current = el; }}>
+                                <DefaultTabBar {...props} />
+                            </div>
+                        )}
+                        items={UPLOAD_CSV_TYPES.map((type) => ({
+                            key: type,
+                            label: UPLOAD_CSV_DEFINITIONS[type].label,
+                            children: (
+                                <div style={{ height: cardHeight, overflow: 'hidden' }}>
+                                    <CsvPreviewCard
+                                        type={type}
+                                        csvPreview={csvPreviews[type]}
+                                        validationResult={validationResults[type]}
+                                        cardHeight={cardHeight}
+                                        tableBodyHeight={tableBodyHeight}
+                                        backgroundColor={csvTypeColors[type as keyof typeof csvTypeColors]}
+                                    />
+                                </div>
+                            ),
+                        }))}
+                    />
                 </Col>
             </Row>
 

@@ -1,9 +1,20 @@
 /* Base theme surfaces, uses responsive.css for layout/typography */
+html {
+    box-sizing: border-box;
+    height: 100%;
+    /* スクロールバーの出現/非表示でのレイアウト揺れを抑制 */
+    scrollbar-gutter: stable both-edges;
+}
+*, *::before, *::after { box-sizing: inherit; }
 body {
     background-color: var(--color-bg-base);
     color: var(--color-text);
     font-family: 'Segoe UI', sans-serif;
     margin: 0;
+    /* iOS等でも実高に追従できるよう100dvhを基準に */
+    min-height: 100dvh;
+    /* 微小スクロールバーの抑制（Windows等） */
+    scrollbar-gutter: stable both-edges;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 }
