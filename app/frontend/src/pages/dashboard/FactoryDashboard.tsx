@@ -11,7 +11,7 @@ import {
     AreaChart, // ✅ 追加
     Area, // ✅ 追加
 } from 'recharts';
-import { factoryChartColors } from '../theme';
+import { factoryChartColors } from '@/theme';
 
 const { Title, Paragraph } = Typography;
 
