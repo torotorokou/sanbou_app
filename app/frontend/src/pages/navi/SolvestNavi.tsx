@@ -10,7 +10,7 @@ import PdfPreviewModal from '@/components/chat/PdfPreviewModal';
 import type { StepItem } from '@/components/ui/ReportStepIndicator';
 import ReportStepIndicator from '@/components/ui/ReportStepIndicator';
 import { useWindowSize } from '@/hooks/ui';
-import { BREAKPOINTS as BP } from '@/shared/constants/breakpoints';
+import { ANT, isTabletOrHalf } from '@/shared/constants/breakpoints';
 // YAMLを直接インポート（viteの@rollup/plugin-yamlでJSON化）
 // YAML直読みを廃止し、バックエンドAPIから取得する
 
@@ -185,8 +185,8 @@ const SolvestNavi: React.FC = () => {
     // 参考PDFの直接一覧表示機能は廃止
 
     const { width } = useWindowSize();
-    const isNarrow = typeof width === 'number' ? width <= BP.mdMax : false;
-    const isMd = typeof width === 'number' ? width >= BP.sm + 1 && width <= BP.mdMax : false;
+    const isNarrow = typeof width === 'number' ? isTabletOrHalf(width) : false;
+    const isMd = typeof width === 'number' ? (width >= ANT.md && width < ANT.xl) : false;
 
     return (
     <div className="navi-page" style={{ height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative' }}>

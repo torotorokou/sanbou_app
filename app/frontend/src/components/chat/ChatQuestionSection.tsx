@@ -1,7 +1,7 @@
 // ChatQuestionSection.tsx
 import React from 'react';
 import { useWindowSize } from '@/hooks/ui';
-import { BREAKPOINTS as BP } from '@/shared/constants/breakpoints';
+import { isTabletOrHalf } from '@/shared/constants/breakpoints';
 import QuestionPanel from '@/components/chat/QuestionPanel';
 
 type Props = {
@@ -32,7 +32,7 @@ const ChatQuestionSection: React.FC<Props> = ({
     categoryData,
 }) => {
     const { width } = useWindowSize();
-    const isNarrow = typeof width === 'number' ? width <= BP.mdMax : false;
+    const isNarrow = typeof width === 'number' ? isTabletOrHalf(width) : false;
 
     return (
         <div

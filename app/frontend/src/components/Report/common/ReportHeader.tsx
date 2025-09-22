@@ -1,7 +1,7 @@
 import React from 'react';
 import { Steps } from 'antd';
 import { useWindowSize } from '../../../hooks/ui';
-import { BREAKPOINTS as BP } from '@/shared/constants/breakpoints';
+import { isTabletOrHalf, ANT } from '@/shared/constants/breakpoints';
 import ReportSelector from './ReportSelector';
 import type { PageGroupKey } from '@/constants/reportConfig';
 
@@ -22,7 +22,7 @@ const ReportHeader: React.FC<ReportHeaderProps> = ({
     const { isMobile, isTablet, width } = useWindowSize();
     const isMobileOrTablet = isMobile || isTablet;
     // 幅が autoCollapse 未満ならステップは最小表示にする
-        const minimizeSteps = typeof width === 'number' ? width <= BP.mdMax : false;
+    const minimizeSteps = typeof width === 'number' ? isTabletOrHalf(width) : false;
 
     const containerStyle: React.CSSProperties = {
         display: 'flex',
@@ -38,11 +38,11 @@ const ReportHeader: React.FC<ReportHeaderProps> = ({
         borderRadius: 12,
         boxShadow: '0 2px 6px rgba(0,0,0,0.06)',
         // デスクトップでは左側に固定幅で配置
-            width: isMobileOrTablet ? 'auto' : width <= BP.mdMax ? 260 : 300,
+            width: isMobileOrTablet ? 'auto' : (typeof width === 'number' && width < ANT.xl ? 260 : 300),
         flex: isMobileOrTablet ? undefined : '0 0 auto',
         // 半画面以下ではラッパーをフレックスにして中央寄せ
-            display: width <= BP.mdMax ? 'flex' : undefined,
-            justifyContent: width <= BP.mdMax ? 'center' : undefined,
+            display: (typeof width === 'number' && isTabletOrHalf(width)) ? 'flex' : undefined,
+            justifyContent: (typeof width === 'number' && isTabletOrHalf(width)) ? 'center' : undefined,
     };
 
     const stepsWrapperStyle: React.CSSProperties = {
@@ -63,7 +63,7 @@ const ReportHeader: React.FC<ReportHeaderProps> = ({
     ];
 
     // タイトル風スタイル（半画面以下）を selector に渡すための inline style
-        const selectorTitleStyle: React.CSSProperties | undefined = width <= BP.mdMax ? {
+    const selectorTitleStyle: React.CSSProperties | undefined = (typeof width === 'number' && width < ANT.xl) ? {
         fontSize: 18,
         fontWeight: 700,
         width: 'auto',
@@ -76,7 +76,7 @@ const ReportHeader: React.FC<ReportHeaderProps> = ({
             {/* 📘 セレクトボックスラッパー */}
             <div style={selectorWrapperStyle}>
                 {/* ReportSelector は内部で style を受け付けないため、ラッパーで直接見た目を調整 */}
-                    <div style={width <= BP.mdMax ? { display: 'flex', alignItems: 'center', justifyContent: 'center' } : undefined}>
+                    <div style={(typeof width === 'number' && isTabletOrHalf(width)) ? { display: 'flex', alignItems: 'center', justifyContent: 'center' } : undefined}>
                     <ReportSelector
                         reportKey={reportKey}
                         onChange={onChangeReportKey}

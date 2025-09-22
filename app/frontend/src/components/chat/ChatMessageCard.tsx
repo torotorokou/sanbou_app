@@ -1,3 +1,4 @@
+import { ANT } from '@/shared/constants/breakpoints';
 import React from 'react';
 import { Card, Typography, Button, Tag, Space } from 'antd';
 import { UserOutlined, RobotOutlined, BookOutlined } from '@ant-design/icons';
@@ -49,7 +50,7 @@ const ChatMessageCard: React.FC<Props> = ({
         let width = '96%';
         if (windowWidth >= 1024) {
             width = '85%'; // デスクトップ時に若干余白を持たせる
-        } else if (windowWidth >= 768) {
+        } else if (windowWidth >= ANT.md) {
             width = '92%'; // タブレット
         } else {
             width = '100%'; // スマホ

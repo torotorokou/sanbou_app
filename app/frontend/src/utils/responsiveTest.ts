@@ -1,3 +1,4 @@
+import { isMobile, isTabletOrHalf, isDesktop } from '@/shared/constants/breakpoints';
 /**
  * レスポンシブデザインの動作確認用ユーティリティ
  *
@@ -33,7 +34,7 @@ export const RESPONSIVE_TEST_SIZES = {
  *   - フォントサイズが14pxになる
  *   - プレビューエリアの高さが350pxになる
  *
- * 📱 タブレット (768px - 1023px):
+ * 📱 タブレット (768px - 1199px):
  *   - サイドバー幅が200pxになる
  *   - フォントサイズが15pxになる
  *   - プレビューエリアの高さが450pxになる
@@ -75,13 +76,9 @@ if (typeof window !== 'undefined') {
     window.showCurrentBreakpoint = () => {
         const width = window.innerWidth;
         let breakpoint = '';
-
-        if (width <= 767) breakpoint = '📱 Mobile';
-        else if (width <= 1023) breakpoint = '📱 Tablet';
-        else if (width <= 1365) breakpoint = '💻 Small Desktop';
-        else if (width <= 1599) breakpoint = '💻 Medium Desktop';
-        else breakpoint = '🖥️ Large Desktop';
-
+        if (isMobile(width)) breakpoint = '📱 Mobile';
+        else if (isTabletOrHalf(width)) breakpoint = '📱 Tablet';
+        else if (isDesktop(width)) breakpoint = '🖥️ Desktop';
         console.log(`Current viewport: ${width}px - ${breakpoint}`);
     };
 }

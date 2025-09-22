@@ -215,11 +215,11 @@ const BlockUnitPriceInteractiveModal: React.FC<BlockUnitPriceInteractiveModalPro
             // 成功コールバック実行
             onSuccess(zipUrl, fileName);
 
-            // 2秒後に完了ステップへ
-            // 完了画面は短時間表示してクローズ（親がZIP共通処理へ）
+            // 1.2秒後に完了ステップへ（UXチューニング値）
+            const TIMEOUT_MS = 1200;
             setTimeout(() => {
                 onClose();
-            }, 1200);
+            }, TIMEOUT_MS);
 
         } catch (error) {
             console.error('Final API call failed:', error);
