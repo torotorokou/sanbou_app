@@ -1,3 +1,4 @@
+import { isMobile as isMobileWidth } from '@/shared/constants/breakpoints';
 import React, { useEffect, useRef, useState } from 'react';
 import { Modal, Typography, Spin, Anchor, Row, Col } from 'antd';
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
@@ -19,7 +20,7 @@ const ManualModal: React.FC = () => {
   const loc = useLocation();
   const [params] = useSearchParams();
 
-  const isMobile = (typeof window !== 'undefined') && window.innerWidth < 768;
+  const isMobile = (typeof window !== 'undefined') && isMobileWidth(window.innerWidth);
   const forceFull = params.get('full') === '1';
 
   useEffect(() => {

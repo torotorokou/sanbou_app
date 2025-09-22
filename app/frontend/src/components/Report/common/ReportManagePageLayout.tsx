@@ -2,7 +2,7 @@ import React from 'react';
 import type { ReactNode } from 'react';
 import { useReportLayoutStyles } from '../../../hooks/report';
 import { useWindowSize } from '../../../hooks/ui';
-import { BREAKPOINTS as BP } from '@/shared/constants/breakpoints';
+import { isTabletOrHalf } from '@/shared/constants/breakpoints';
 import SampleSection from './SampleSection';
 import CsvUploadSection from './CsvUploadSection';
 import ActionsSection from './ActionsSection';
@@ -47,7 +47,7 @@ const ReportManagePageLayout: React.FC<Props> = ({
     const styles = useReportLayoutStyles();
     const { width, isMobile, isTablet } = useWindowSize();
 
-    const isHalfOrBelow = typeof width === 'number' ? width <= BP.mdMax : false;
+    const isHalfOrBelow = typeof width === 'number' ? isTabletOrHalf(width) : false;
     const isMobileOrTablet = isMobile || isTablet;
 
     return (

@@ -5,7 +5,7 @@ import manualsApi from '@/services/api/manualsApi';
 import type { ManualDetail } from '@/types/manuals';
 import { ensureSectionAnchors, smoothScrollToAnchor } from '@/utils/anchors';
 import { useWindowSize } from '@/hooks/ui';
-import { BREAKPOINTS as BP } from '@/shared/constants/breakpoints';
+import { ANT } from '@/shared/constants/breakpoints';
 
 const { Title } = Typography;
 
@@ -16,7 +16,7 @@ const ManualPage: React.FC = () => {
   const ref = useRef<HTMLDivElement>(null);
   const nav = useNavigate();
   const { width } = useWindowSize();
-  const showSider = typeof width === 'number' ? width >= BP.sm + 1 : false; // md以上で表示
+  const showSider = typeof width === 'number' ? width >= ANT.md : false; // md以上で表示
 
   useEffect(() => {
     let alive = true;

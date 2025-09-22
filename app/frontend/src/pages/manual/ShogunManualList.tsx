@@ -29,7 +29,7 @@ import {
   FileSyncOutlined,
 } from '@ant-design/icons';
 import { useWindowSize } from '@/hooks/ui';
-import { BREAKPOINTS as BP } from '@/shared/constants/breakpoints';
+import { ANT, isTabletOrHalf } from '@/shared/constants/breakpoints';
 import styles from './shogunManual.module.css';
 import type { ManualItem, ManualSection } from './types';
 import manualsApi from '@/services/api/manualsApi';
@@ -291,8 +291,8 @@ const ManualModal: React.FC<{
 const ShogunManualList: React.FC = () => {
   const ctrl = useManualController();
   const { width } = useWindowSize();
-  const showSider = typeof width === 'number' ? width >= (BP.sm + 1) : false; // md以上
-  const showHeaderSearch = typeof width === 'number' ? width > BP.mdMax : true; // mdMax より大きい（より広い画面）ときだけヘッダー内に置く
+  const showSider = typeof width === 'number' ? width >= ANT.md : false; // md以上
+  const showHeaderSearch = typeof width === 'number' ? !(isTabletOrHalf(width)) : true; // タブレット帯ではヘッダーに置かない
   const contentScrollRef = useRef<HTMLDivElement | null>(null);
 
   return (
@@ -316,7 +316,7 @@ const ShogunManualList: React.FC = () => {
                   allowClear
                   placeholder="キーワードで検索…（例：E票、見積、台帳）"
                   className={styles.headerSearchInput}
-                  style={{ width: (typeof width === 'number' && width >= (BP.sm + 1) && width <= BP.mdMax) ? 360 : 240 }}
+                  style={{ width: (typeof width === 'number' && isTabletOrHalf(width)) ? 360 : 240 }}
                   value={ctrl.query}
                   onChange={(e) => ctrl.setQuery(e.target.value)}
                 />

@@ -1,23 +1,17 @@
-/**
- * Breakpoints — single source of truth
- *
- * この定義をアプリ全体（JS/TS フック、CSS 変数、レイアウトロジック）で参照してください。
- * Ant Design の Grid/useBreakpoint は内部に独自ブレークポイント（lg=992px 等）を持ちます。
- * それらを使う場合は、本定義との違いに注意し、可能なら本定義に寄せたロジックを利用してください。
- */
-export const BREAKPOINTS = {
-  sm: 767,
-  mdMax: 1279,
-  // additional shared breakpoints for layout behaviors
-  autoCollapse: 1280,
-  forceCollapse: 900,
-  tabletMax: 1023,
+export const ANT = {
+  xs: 480,
+  sm: 576,
+  md: 768,
+  lg: 992,
+  xl: 1200,
+  xxl: 1600,
 } as const;
 
-export type BreakpointKey = keyof typeof BREAKPOINTS;
+export type ViewportTier = 'mobile' | 'tabletHalf' | 'desktop';
 
-export const media = {
-  sm: `@media (max-width: ${BREAKPOINTS.sm}px)`,
-  md: `@media (min-width: ${BREAKPOINTS.sm + 1}px) and (max-width: ${BREAKPOINTS.mdMax}px)`,
-  lg: `@media (min-width: ${BREAKPOINTS.mdMax + 1}px)`,
-};
+export const tierOf = (w: number): ViewportTier =>
+  w < ANT.md ? 'mobile' : w < ANT.xl ? 'tabletHalf' : 'desktop';
+
+export const isMobile = (w: number) => w < ANT.md; // ～767
+export const isTabletOrHalf = (w: number) => w >= ANT.md && w < ANT.xl; // 768–1199
+export const isDesktop = (w: number) => w >= ANT.xl; // 1200+

@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { useWindowSize } from "../ui/useWindowSize";
 import { customTokens } from "../../theme";
-import { BREAKPOINTS as BP } from '@/shared/constants/breakpoints';
+import { isTabletOrHalf, ANT } from '@/shared/constants/breakpoints';
 
 /**
  * レイアウトとスタイリングのロジックを管理するフック - シンプル版
@@ -39,7 +39,7 @@ export const useReportLayoutStyles = () => {
         flexDirection: (isMobileOrTablet ? "column" : "row") as
           | "row"
           | "column",
-  gap: isMobile ? 12 : isTablet ? 16 : width <= BP.mdMax ? 16 : 24,
+  gap: isMobile ? 12 : isTablet ? 16 : (typeof width === 'number' && width < ANT.xl ? 16 : 24),
         alignItems: "stretch", // 中央配置のために'stretch'に統一
         flex: 1,
         marginTop: isMobile ? 8 : 12,
@@ -54,12 +54,12 @@ export const useReportLayoutStyles = () => {
         flexDirection: "column" as const,
         gap: isMobile ? 8 : 12, // gapも縮小してコンパクトに
         // シンプルな3段階のサイズ設定
-  width: isMobileOrTablet ? "100%" : width <= BP.mdMax ? "260px" : "300px",
-  minWidth: isMobileOrTablet ? "auto" : width <= BP.mdMax ? "260px" : "300px",
-  maxWidth: isMobileOrTablet ? "100%" : width <= BP.mdMax ? "260px" : "300px",
+  width: isMobileOrTablet ? "100%" : (typeof width === 'number' && width < ANT.xl ? "260px" : "300px"),
+  minWidth: isMobileOrTablet ? "auto" : (typeof width === 'number' && width < ANT.xl ? "260px" : "300px"),
+  maxWidth: isMobileOrTablet ? "100%" : (typeof width === 'number' && width < ANT.xl ? "260px" : "300px"),
         minHeight: 0,
         // デスクトップではサイドバー幅を固定（他ページと同様の挙動）
-        flex: (isMobileOrTablet ? "1 1 auto" : width < 1200 ? "0 0 260px" : "0 0 300px") as
+        flex: (isMobileOrTablet ? "1 1 auto" : (typeof width === 'number' && width < ANT.xl ? "0 0 260px" : "0 0 300px")) as
           | "1 1 auto"
           | "0 0 260px"
           | "0 0 300px",
@@ -74,10 +74,10 @@ export const useReportLayoutStyles = () => {
         justifyContent: "center", // 垂直方向中央配置
         alignItems: "center", // 水平方向中央配置
         // NOTE: ここはアイコン/矢印等のセンター用で幅固定だが、将来はclampで可変化検討
-  width: width <= BP.mdMax ? "48px" : "60px",
-  minWidth: width <= BP.mdMax ? "48px" : "60px",
-  maxWidth: width <= BP.mdMax ? "48px" : "60px",
-  minHeight: width <= BP.mdMax ? "320px" : "400px", // 最小高さを設定して中央配置を確実に
+  width: (typeof width === 'number' && isTabletOrHalf(width)) ? "48px" : "60px",
+  minWidth: (typeof width === 'number' && isTabletOrHalf(width)) ? "48px" : "60px",
+  maxWidth: (typeof width === 'number' && isTabletOrHalf(width)) ? "48px" : "60px",
+  minHeight: (typeof width === 'number' && isTabletOrHalf(width)) ? "320px" : "400px", // 最小高さを設定して中央配置を確実に
         flexShrink: 0,
         flexGrow: 0,
         order: 2,
@@ -107,7 +107,7 @@ export const useReportLayoutStyles = () => {
             }
           : {
               flex: "1 1 auto",
-              minWidth: width <= BP.mdMax ? 480 : 600,
+              minWidth: (typeof width === 'number' && width < ANT.xl) ? 480 : 600,
             }),
         display: "flex",
         flexDirection: "column" as const,
@@ -120,14 +120,14 @@ export const useReportLayoutStyles = () => {
       previewContainer: {
         display: "flex",
         flex: 1,
-  gap: isMobile ? 8 : width <= BP.mdMax ? 12 : 16,
+  gap: isMobile ? 8 : (typeof width === 'number' && width < ANT.xl) ? 12 : 16,
         alignItems: "center",
         flexDirection: (isMobile ? "column" : "row") as "row" | "column",
         minHeight: 0,
       },
       previewArea: {
         flex: 1,
-  height: isMobile ? "50vh" : width <= BP.mdMax ? "68vh" : "100%",
+  height: isMobile ? "50vh" : (typeof width === 'number' && width < ANT.xl) ? "68vh" : "100%",
         width: isMobile ? "100%" : "auto",
         border: `1px solid ${customTokens.colorBorder}`,
         borderRadius: 8,
@@ -143,7 +143,7 @@ export const useReportLayoutStyles = () => {
         flexDirection: isMobile ? "row" : "column",
         justifyContent: "center",
         alignItems: "center",
-  width: isMobile ? "100%" : width <= BP.mdMax ? 100 : 120,
+  width: isMobile ? "100%" : (typeof width === 'number' && width < ANT.xl) ? 100 : 120,
         gap: 8,
         marginTop: isMobile ? 12 : 0,
       },

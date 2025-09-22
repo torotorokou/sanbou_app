@@ -1,22 +1,7 @@
 import React from "react";
-import { BREAKPOINTS as BP } from "@/shared/constants/breakpoints";
 import { useWindowSize } from "./useWindowSize";
 
-// 共有ブレークポイントからメディアクエリを組み立てて公開（既存API互換のためのエイリアス）
-export const BREAKPOINTS = {
-  // new scheme
-  sm: `(max-width: ${BP.sm}px)`,
-  md: `(min-width: ${BP.sm + 1}px) and (max-width: ${BP.mdMax}px)`,
-  lg: `(min-width: ${BP.mdMax + 1}px)`,
-  // legacy aliases for gradual migration
-  mobile: `(max-width: ${BP.sm}px)`,
-  tablet: `(min-width: ${BP.sm + 1}px) and (max-width: ${BP.mdMax}px)`,
-  desktop: `(min-width: ${BP.mdMax + 1}px)`,
-  // helpers
-  mobileOnly: `(max-width: ${BP.sm}px)`,
-  tabletUp: `(min-width: ${BP.sm + 1}px)`,
-  desktopUp: `(min-width: ${BP.mdMax + 1}px)`,
-} as const;
+// メディアクエリは都度 `(min|max)-width: ${ANT.*}` で記述してください
 
 // メディアクエリフック用のヘルパー
 export const useMediaQuery = (query: string): boolean => {

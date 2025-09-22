@@ -58,6 +58,35 @@ export default defineConfig([
             '@typescript-eslint/consistent-type-imports': 'warn',
             // 暫定: any は段階的移行のため warn に緩和
             '@typescript-eslint/no-explicit-any': 'warn',
+            // ブレークポイントのマジックナンバー混入防止（比較演算子の文脈に限定）
+            // NOTE: setTimeout等の無関係なリテラルやサンプルデータは誤検知しない
+            'no-restricted-syntax': [
+                'error',
+                {
+                    selector:
+                        "BinaryExpression:matches([operator='<'],[operator='<='],[operator='>'],[operator='>=']):has(Literal[value=767])",
+                    message:
+                        '767 を比較に直書きせず、ANT.md - 1 または述語関数を使用してください。',
+                },
+                {
+                    selector:
+                        "BinaryExpression:matches([operator='<'],[operator='<='],[operator='>'],[operator='>=']):has(Literal[value=768])",
+                    message:
+                        '768 を比較に直書きせず、ANT.md または述語関数を使用してください。',
+                },
+                {
+                    selector:
+                        "BinaryExpression:matches([operator='<'],[operator='<='],[operator='>'],[operator='>=']):has(Literal[value=1199])",
+                    message:
+                        '1199 を比較に直書きせず、ANT.xl - 1 または述語関数を使用してください。',
+                },
+                {
+                    selector:
+                        "BinaryExpression:matches([operator='<'],[operator='<='],[operator='>'],[operator='>=']):has(Literal[value=1200])",
+                    message:
+                        '1200 を比較に直書きせず、ANT.xl または述語関数を使用してください。',
+                },
+            ],
             'boundaries/element-types': [
                 'error',
                 {
@@ -77,5 +106,17 @@ export default defineConfig([
     {
         files: ['**/*.json'],
         extends: [json.configs.recommended],
+    },
+    // 例外許容: ブレークポイントの定義/ドキュメント/テスト
+    {
+        files: [
+            'src/shared/constants/breakpoints.ts',
+            'src/theme/cssVars.ts',
+            'src/theme/responsive.css',
+            'src/shared/constants/tests/**',
+        ],
+        rules: {
+            'no-restricted-syntax': 'off',
+        },
     },
 ]);

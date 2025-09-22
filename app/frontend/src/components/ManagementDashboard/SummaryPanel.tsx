@@ -1,3 +1,4 @@
+import { ANT } from '@/shared/constants/breakpoints';
 import React from 'react';
 import { Card, Row, Col } from 'antd';
 import { CarOutlined, InboxOutlined } from '@ant-design/icons';
@@ -13,8 +14,8 @@ const SummaryPanel: React.FC = () => {
             suffix: '台',
             prefix: <CarOutlined />,
             diff: +52,
-            trend: [1200, 1240, 1260, 1290, 1300, 1340, 1381],
-            minY: 1200,
+            trend: [ANT.xl, 1240, 1260, 1290, 1300, 1340, 1381],
+            minY: ANT.xl,
             maxY: 1450,
         },
         {
