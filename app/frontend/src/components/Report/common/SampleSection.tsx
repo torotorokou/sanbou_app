@@ -13,18 +13,18 @@ const SampleSection: React.FC<SampleSectionProps> = ({
     if (!sampleImageUrl) return null;
 
     return (
-        <>
-            <Typography.Title level={5}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <Typography.Title level={5} style={{ margin: 0 }}>
                 📄 サンプル帳票
             </Typography.Title>
             <div className='sample-thumbnail'>
                 <ReportSampleThumbnail
                     url={sampleImageUrl}
                     width='100%'
-                    height='160px'
+                    height='140px'
                 />
             </div>
-        </>
+        </div>
     );
 };
 

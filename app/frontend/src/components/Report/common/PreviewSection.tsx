@@ -20,16 +20,14 @@ const PreviewSection: React.FC<PreviewSectionProps> = ({
     const { isMobile, isTablet } = useWindowSize();
     const [modalOpen, setModalOpen] = useState(false);
 
-    // プレビュー領域の高さをデバイス別に決定し、モーダルはそれより大きめに表示する
-    const PREVIEW_MIN_HEIGHT = isMobile ? 350 : isTablet ? 450 : 550;
-    const MODAL_HEIGHT_SCALE = 1.3; // モーダルはプレビュー高さの1.3倍
-    const modalMinHeight = Math.round(PREVIEW_MIN_HEIGHT * MODAL_HEIGHT_SCALE);
+    // 親の高さいっぱいにフィットさせる（モーダルのみやや拡大）
+    const BASE_HEIGHT = isMobile ? 320 : isTablet ? 420 : 520;
+    const MODAL_HEIGHT_SCALE = 1.3;
+    const modalMinHeight = Math.round(BASE_HEIGHT * MODAL_HEIGHT_SCALE);
 
     const previewAreaStyle = {
         flex: 1,
         height: '100%',
-        // シンプルな3段階のプレビュー画面サイズ
-        minHeight: PREVIEW_MIN_HEIGHT,
         width: '100%',
         border: `1px solid ${customTokens.colorBorder}`,
         borderRadius: 8,
@@ -47,6 +45,7 @@ const PreviewSection: React.FC<PreviewSectionProps> = ({
             flexDirection: 'column',
             height: '100%',
             width: '100%',
+            minHeight: 0,
             gap: 8
         }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -65,7 +64,7 @@ const PreviewSection: React.FC<PreviewSectionProps> = ({
 
             <div style={previewAreaStyle} onClick={() => setModalOpen(true)}>
                 {React.isValidElement(children) ? (
-                    React.cloneElement(children, { height: `${PREVIEW_MIN_HEIGHT}px` })
+                    React.cloneElement(children, { height: '100%' })
                 ) : (
                     children || (
                         <Typography.Text type='secondary'>

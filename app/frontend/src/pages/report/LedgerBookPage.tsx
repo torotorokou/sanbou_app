@@ -42,7 +42,7 @@ const LedgerBookPage: React.FC = () => {
                 currentStep={reportManager.currentStep}
                 pageGroup="ledger"
             />
-            <div style={{ flex: 1, minHeight: 0, overflow: 'auto' }}>
+            <div style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
                 <ReportBase {...reportBaseProps} />
             </div>
         </div>

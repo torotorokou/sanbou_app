@@ -8,7 +8,7 @@ type PDFViewerProps = {
 };
 
 const PDFViewer: React.FC<PDFViewerProps> = ({ pdfUrl, height }) => {
-    const { isMobile, isTablet, width } = useWindowSize();
+    const { isMobile } = useWindowSize();
     const [hasError, setHasError] = useState(false);
 
     if (!pdfUrl) {
@@ -56,28 +56,13 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ pdfUrl, height }) => {
         );
     }
 
-    // フォールバックの最小高さ
-    const fallbackMinHeight = isMobile
-        ? '380px'
-        : isTablet
-        ? '440px'
-        : width < 1200
-        ? '480px'
-        : '520px';
-
-    const minHeightToUse = height ?? fallbackMinHeight;
+    const minHeightToUse = height ?? '0px';
 
     return (
         <iframe
             title='PDFプレビュー'
             src={`${pdfUrl}#toolbar=1&navpanes=0&scrollbar=1`}
-            style={{
-                width: '100%',
-                height: '100%',
-                minHeight: minHeightToUse,
-                border: 'none',
-                borderRadius: 4,
-            }}
+            style={{ width: '100%', height: '100%', minHeight: minHeightToUse, border: 'none', borderRadius: 4 }}
             allowFullScreen
             onError={() => setHasError(true)}
         />

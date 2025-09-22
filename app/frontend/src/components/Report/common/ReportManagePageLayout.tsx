@@ -1,4 +1,5 @@
-import React, { ReactNode } from 'react';
+import React from 'react';
+import type { ReactNode } from 'react';
 import { useReportLayoutStyles } from '../../../hooks/report';
 import { useWindowSize } from '../../../hooks/ui';
 import { BREAKPOINTS as BP } from '@/shared/constants/breakpoints';
@@ -13,7 +14,7 @@ type Props = {
     header?: ReactNode;
     sampleImageUrl?: string;
     uploadFiles?: UploadFileConfig[];
-    makeUploadProps?: (opts?: any) => UploadProps;
+    makeUploadProps?: (opts?: unknown) => UploadProps;
     onGenerate?: () => void;
     readyToCreate?: boolean;
     finalized?: boolean;
@@ -66,8 +67,8 @@ const ReportManagePageLayout: React.FC<Props> = ({
             <div style={styles.mainLayout}>
                 {isHalfOrBelow ? (
                     <>
-                        <div style={{ display: 'flex', gap: isMobile ? 8 : 16, width: '100%' }}>
-                            <div style={{ flex: '1 1 40%', display: 'flex', flexDirection: 'column', gap: 12 }}>
+                        <div style={{ display: 'flex', gap: isMobile ? 8 : 16, width: '100%', minHeight: 0 }}>
+                            <div style={{ flex: '1 1 40%', display: 'flex', flexDirection: 'column', gap: 12, minHeight: 0 }}>
                                                 <div style={{ display: 'none' }}>
                                                     <SampleSection sampleImageUrl={sampleImageUrl} />
                                                 </div>
@@ -77,7 +78,7 @@ const ReportManagePageLayout: React.FC<Props> = ({
                                                 />
                             </div>
 
-                            <div style={{ flex: '1 1 60%' }}>
+                            <div style={{ flex: '1 1 60%', display: 'flex', minHeight: 0 }}>
                                 <div style={styles.previewContainer}>
                                     <PreviewSection>{children}</PreviewSection>
                                 </div>
