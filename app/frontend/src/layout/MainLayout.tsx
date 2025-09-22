@@ -28,7 +28,10 @@ const MainLayout: React.FC = () => {
                             backgroundColor: customTokens.colorBgLayout,
                             transition: 'padding 0.3s ease-in-out',
                             height: '100%',
-                            overflow: 'hidden',
+                            overflowY: 'auto',
+                            overscrollBehavior: 'contain',
+                            WebkitOverflowScrolling: 'touch',
+                            scrollbarGutter: 'stable',
                         };
                         return (
                             <Content style={contentStyle}>
