@@ -46,7 +46,7 @@ const ActionsSection: React.FC<ActionsSectionProps> = ({
 
                 {/* 生成後は1行で表示：再生成・エクセルDL・印刷 */}
                 {finalized && (
-                    <div style={{ display: 'flex', gap: 12, width: '100%', justifyContent: 'center' }}>
+                    <div style={{ display: 'flex', gap: 12, width: '100%', justifyContent: 'flex-start' }}>
                         <VerticalActionButton
                             icon={<PlayCircleOutlined />}
                             text='再生成'

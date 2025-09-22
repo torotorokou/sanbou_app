@@ -34,7 +34,7 @@ const MainLayout: React.FC = () => {
                                   - ページ側では .container を最上位に置き、内部はFlex/Gridで組む
                                   - 固定幅禁止: .container は fluid + max width
                                 */}
-                                <div className="container">
+                                <div style={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box' }}>
                                     <AppRoutes />
                                 </div>
                             </Content>

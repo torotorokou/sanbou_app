@@ -15,20 +15,23 @@ const CsvUploadSection: React.FC<CsvUploadSectionProps> = ({
     const { isMobile, isTablet } = useWindowSize();
 
     return (
-        <>
+        <div style={{ display: 'flex', flexDirection: 'column', minHeight: 0 }}>
             <Typography.Title
                 level={isMobile ? 5 : 4}
                 style={{
-                    marginBottom: isMobile ? 6 : isTablet ? 8 : 10, // マージンを縮小してスペース効率化
+                    margin: 0,
+                    marginBottom: isMobile ? 4 : isTablet ? 6 : 8,
                     fontSize: isMobile ? '14px' : isTablet ? '15px' : '16px'
                 }}
             >
                 📂 データセット（CSV）の準備
             </Typography.Title>
-            <CsvUploadPanel
-                upload={{ files: uploadFiles, makeUploadProps }}
-            />
-        </>
+            <div style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
+                <CsvUploadPanel
+                    upload={{ files: uploadFiles, makeUploadProps }}
+                />
+            </div>
+        </div>
     );
 };
 

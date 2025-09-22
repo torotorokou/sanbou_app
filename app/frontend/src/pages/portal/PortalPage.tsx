@@ -384,10 +384,10 @@ export const PortalPage: React.FC = () => {
         <Text className="portal-subtitle">{introText}</Text>
       </section>
 
-      <main style={{ maxWidth: 1280, margin: '0 auto' }}>
+  <main style={{ width: '100%', maxWidth: 'none', margin: 0 }}>
         {/* 重要通知バナー */}
         {noticeVisible && notices.length > 0 && (
-          <div style={{ maxWidth: 960, margin: '0 auto 24px' }}>
+          <div style={{ width: '100%', margin: '0 0 24px 0' }}>
             <Alert
               type="warning"
               banner

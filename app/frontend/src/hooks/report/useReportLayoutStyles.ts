@@ -28,6 +28,11 @@ export const useReportLayoutStyles = () => {
     () => ({
       container: {
         padding: isMobile ? 12 : isTablet ? 16 : 20,
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column' as const,
+        minHeight: 0,
+        boxSizing: 'border-box' as const,
       },
       mainLayout: {
         display: "flex",
@@ -36,13 +41,10 @@ export const useReportLayoutStyles = () => {
           | "column",
   gap: isMobile ? 12 : isTablet ? 16 : width <= BP.mdMax ? 16 : 24,
         alignItems: "stretch", // 中央配置のために'stretch'に統一
-        flexGrow: 1,
+        flex: 1,
         marginTop: isMobile ? 8 : 12,
-  minHeight: isMobileOrTablet ? "auto" : width <= BP.mdMax ? "60vh" : "70vh",
-  maxHeight: isMobileOrTablet ? "none" : width <= BP.mdMax ? "72vh" : "80vh",
-        overflowY: (isMobileOrTablet ? "visible" : "auto") as
-          | "auto"
-          | "visible",
+        minHeight: 0,
+        overflow: 'hidden' as const,
         width: "100%",
         minWidth: 0, // フレックス内の子要素でのはみ出しを防ぐ
         boxSizing: "border-box" as const,
@@ -54,8 +56,8 @@ export const useReportLayoutStyles = () => {
         // シンプルな3段階のサイズ設定
   width: isMobileOrTablet ? "100%" : width <= BP.mdMax ? "260px" : "300px",
   minWidth: isMobileOrTablet ? "auto" : width <= BP.mdMax ? "260px" : "300px",
-  maxWidth: isMobileOrTablet ? "none" : width <= BP.mdMax ? "260px" : "300px",
-        minHeight: isMobileOrTablet ? "auto" : "520px", // CSVパネルの高さ増加に合わせて調整
+  maxWidth: isMobileOrTablet ? "100%" : width <= BP.mdMax ? "260px" : "300px",
+        minHeight: 0,
         // デスクトップではサイドバー幅を固定（他ページと同様の挙動）
         flex: (isMobileOrTablet ? "1 1 auto" : width < 1200 ? "0 0 260px" : "0 0 300px") as
           | "1 1 auto"
@@ -100,25 +102,19 @@ export const useReportLayoutStyles = () => {
         ...(isMobileOrTablet
           ? {
               width: "100%",
+              maxWidth: "100%",
               flex: "1 1 auto",
-              height: "auto",
-              maxHeight: "none",
             }
           : {
-              flex: "1 1 auto", // 残りのスペースを全て使用
-              // デスクトップ幅でも半画面⇔全画面で少しダイナミックに
-              // autoCollapse を基準に調整
+              flex: "1 1 auto",
               minWidth: width <= BP.mdMax ? 480 : 600,
-              height: width <= BP.mdMax ? "72vh" : "80vh",
-              maxHeight: width <= BP.mdMax ? "72vh" : "80vh",
             }),
         display: "flex",
         flexDirection: "column" as const,
         order: isMobileOrTablet ? 1 : 3,
         minWidth: 0, // 右パネル自身も縮小可能に
-        overflowY: (isMobileOrTablet ? "visible" : "hidden") as
-          | "auto"
-          | "visible",
+        minHeight: 0,
+        overflow: 'hidden' as const,
         overflowX: ("hidden" as unknown) as "visible" | "hidden" | "clip" | "scroll" | "auto",
       },
       previewContainer: {
@@ -127,6 +123,7 @@ export const useReportLayoutStyles = () => {
   gap: isMobile ? 8 : width <= BP.mdMax ? 12 : 16,
         alignItems: "center",
         flexDirection: (isMobile ? "column" : "row") as "row" | "column",
+        minHeight: 0,
       },
       previewArea: {
         flex: 1,

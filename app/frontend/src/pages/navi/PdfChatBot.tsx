@@ -236,7 +236,7 @@ const PdfChatBot: React.FC = () => {
                     categoryData={categoryData}
                 />
 
-                            <div style={{ padding: '4px 8px', display: 'flex', justifyContent: 'center' }}>
+                            <div style={{ padding: '4px 8px', display: 'flex', justifyContent: 'flex-start' }}>
                                 <ChatSendButtonSection
                                     onClick={handleSearch}
                                     disabled={!question.trim() || tags.length === 0 || loading}
@@ -296,9 +296,9 @@ const PdfChatBot: React.FC = () => {
 
             {/* ===== 下部の参考PDFボタン（関連PDFを直接開く） ===== */}
             <div
-                className="container"
                 style={{
                     width: '100%',
+                    maxWidth: '100%',
                     position: 'fixed',
                     left: 0,
                     bottom: 0,
@@ -307,6 +307,7 @@ const PdfChatBot: React.FC = () => {
                     justifyContent: 'center',
                     pointerEvents: 'none',
                     paddingBottom: 'max(8px, env(safe-area-inset-bottom))',
+                    boxSizing: 'border-box',
                 }}
             >
                 <Button
