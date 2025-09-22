@@ -25,6 +25,22 @@ body {
     -moz-osx-font-smoothing: grayscale;
 }
 
+/* Naviページ用の補助クラス（不要な縦スクロールを防止） */
+.navi-page {
+    /* 親Layoutが100dvhを確保するため、子は100%で追従 */
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+}
+
+/* 内部でのみスクロールを許可する領域 */
+.navi-scroll-area {
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    /* Windowsでスクロールバー常時確保（ゆれ防止） */
+    scrollbar-gutter: stable;
+}
+
 /* === Ant Design カード設定 === */
 .ant-card {
     border-radius: 10px;

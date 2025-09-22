@@ -189,14 +189,14 @@ const PdfChatBot: React.FC = () => {
     const isMd = typeof width === 'number' ? width >= BP.sm + 1 && width <= BP.mdMax : false;
 
     return (
-        <div style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+    <div className="navi-page" style={{ height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative' }}>
             {loading && <Spin tip="AIが回答中です..." size="large" fullscreen />}
 
             <div style={{ padding: '12px 24px' }}>
                 <ReportStepIndicator currentStep={currentStep} items={stepItems} />
             </div>
 
-            <div style={{ display: 'flex', flex: 1, overflow: 'hidden', minHeight: 0 }}>
+            <div style={{ display: 'flex', flex: 1, overflow: 'hidden', minHeight: 0, height: '100%' }}>
                 {/* 左 + 中央/右の組み替え: 狭い幅では質問フォーム下に送信ボタンを積む */}
                 {isNarrow ? (
                     <>
@@ -206,6 +206,7 @@ const PdfChatBot: React.FC = () => {
                                 flex: isMd ? '1 1 50%' : '1 1 40%',
                                 flexDirection: 'column',
                                 minHeight: 0,
+                                overflow: 'hidden',
                             }}
                         >
                             <ChatQuestionSection
@@ -245,41 +246,45 @@ const PdfChatBot: React.FC = () => {
                         </div>
 
                         {/* 右カラム（回答） */}
-                        <div style={{ flex: isMd ? '1 1 50%' : '1 1 60%', minHeight: 0 }}>
-                            <ChatAnswerSection answer={answer} />
+                        <div style={{ flex: isMd ? '1 1 50%' : '1 1 60%', minHeight: 0, height: '100%', overflow: 'hidden' }}>
+                            <div className="navi-scroll-area" style={{ height: '100%', minHeight: 0, overflowY: 'auto', WebkitOverflowScrolling: 'touch' as unknown as undefined }}>
+                                <ChatAnswerSection answer={answer} />
+                            </div>
                         </div>
                     </>
                 ) : (
                     /* 通常の 3 列レイアウト */
                     <>
                         {/* 左カラム */}
-                        <ChatQuestionSection
-                            category={category}
-                            setCategory={(val) => {
-                                setCategory(val);
-                                setCurrentStep(1);
-                                // カテゴリ変更時に選択をリセット
-                                setTag([]);
-                                setTemplate('自由入力');
-                            }}
-                            tags={tags}
-                            // タグ更新はラッパー経由（最大3件制限）
-                            setTag={handleSetTag}
-                            template={template}
-                            setTemplate={(val) => {
-                                setTemplate(val);
-                                if (val !== '自由入力') {
+                        <div style={{ display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden', flex: '0 1 auto' }}>
+                            <ChatQuestionSection
+                                category={category}
+                                setCategory={(val) => {
+                                    setCategory(val);
+                                    setCurrentStep(1);
+                                    // カテゴリ変更時に選択をリセット
+                                    setTag([]);
+                                    setTemplate('自由入力');
+                                }}
+                                tags={tags}
+                                // タグ更新はラッパー経由（最大3件制限）
+                                setTag={handleSetTag}
+                                template={template}
+                                setTemplate={(val) => {
+                                    setTemplate(val);
+                                    if (val !== '自由入力') {
+                                        setQuestion(val);
+                                        setCurrentStep(2);
+                                    }
+                                }}
+                                question={question}
+                                setQuestion={(val) => {
                                     setQuestion(val);
-                                    setCurrentStep(2);
-                                }
-                            }}
-                            question={question}
-                            setQuestion={(val) => {
-                                setQuestion(val);
-                                if (val.trim()) setCurrentStep(2);
-                            }}
-                            categoryData={categoryData}
-                        />
+                                    if (val.trim()) setCurrentStep(2);
+                                }}
+                                categoryData={categoryData}
+                            />
+                        </div>
 
                         {/* 中央カラム */}
                         <ChatSendButtonSection
@@ -289,7 +294,11 @@ const PdfChatBot: React.FC = () => {
                         />
 
                         {/* 右カラム */}
-                        <ChatAnswerSection answer={answer} />
+                        <div style={{ minHeight: 0, height: '100%', flex: '1 1 auto', overflow: 'hidden' }}>
+                            <div className="navi-scroll-area" style={{ height: '100%', minHeight: 0, overflowY: 'auto', WebkitOverflowScrolling: 'touch' as unknown as undefined }}>
+                                <ChatAnswerSection answer={answer} />
+                            </div>
+                        </div>
                     </>
                 )}
             </div>
