@@ -6,6 +6,7 @@ import { useLocation } from 'react-router-dom';
 import { SIDEBAR_MENU } from '@/constants/sidebarMenu';
 import { customTokens } from '@/theme/tokens';
 import { useSidebarResponsive, useSidebarAnimation, useWindowSize } from '@/hooks/ui';
+import { ANT } from '@/shared/constants/breakpoints';
 import { useSidebarDefault } from '@/hooks/ui/useSidebarDefault';
 
 const { Sider } = Layout;
@@ -40,7 +41,15 @@ const Sidebar: React.FC = () => {
     const location = useLocation();
     const sidebarConfig = useSidebarResponsive();
     const animationStyles = useSidebarAnimation();
-    const { isTablet } = useWindowSize();
+    const { isTablet, width: windowWidth } = useWindowSize();
+
+    // 'xl以下' のときは幅を 0.9 倍にする（ANT.xl を閾値として使用）
+    const effectiveWidth = React.useMemo(() => {
+        if (typeof windowWidth === 'number' && windowWidth < ANT.xxl) {
+            return Math.round(sidebarConfig.width * 0.9);
+        }
+        return sidebarConfig.width;
+    }, [windowWidth, sidebarConfig.width]);
     // 画面幅に基づくデフォルト開閉制御（SOLID: 単一責任）
     const { collapsed, setCollapsed } = useSidebarDefault();
     // openKeys を管理して、サイドバーが開いているときは子メニューを展開する
@@ -86,7 +95,7 @@ const Sidebar: React.FC = () => {
                     placement="left"
                     open={!collapsed}
                     onClose={() => setCollapsed(true)}
-                    width={sidebarConfig.width}
+                        width={effectiveWidth}
                     styles={{
                         body: { padding: 0 },
                     }}
@@ -109,7 +118,7 @@ const Sidebar: React.FC = () => {
 
     return (
         <Sider
-            width={sidebarConfig.width}
+            width={effectiveWidth}
             collapsible
             collapsed={collapsed}
             trigger={null}
@@ -123,7 +132,7 @@ const Sidebar: React.FC = () => {
                             height: '100dvh',
                 overflow: 'auto',
                 // 幅が他要因で縮まないように明示
-                minWidth: collapsed ? sidebarConfig.collapsedWidth : sidebarConfig.width,
+                minWidth: collapsed ? sidebarConfig.collapsedWidth : effectiveWidth,
                 flex: '0 0 auto',
                 ...animationStyles,
             }}
