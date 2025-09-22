@@ -75,6 +75,21 @@ const UploadDatabasePage: React.FC = () => {
         };
     }, []);
 
+    // helper: choose readable text color (black/white) based on background
+    const readableTextColor = (bg: string) => {
+        try {
+            const c = bg.replace('#', '');
+            const r = parseInt(c.substring(0, 2), 16);
+            const g = parseInt(c.substring(2, 4), 16);
+            const b = parseInt(c.substring(4, 6), 16);
+            // relative luminance approximate
+            const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+            return luminance > 0.6 ? '#111827' : '#ffffff';
+        } catch {
+            return '#ffffff';
+        }
+    };
+
     return (
         <>
             {/* Contentのpaddingを差し引いた固定高: calc(100dvh - 2*--page-padding) */}
@@ -146,22 +161,40 @@ const UploadDatabasePage: React.FC = () => {
                                 <DefaultTabBar {...props} />
                             </div>
                         )}
-                        items={UPLOAD_CSV_TYPES.map((type) => ({
-                            key: type,
-                            label: UPLOAD_CSV_DEFINITIONS[type].label,
-                            children: (
-                                <div style={{ height: cardHeight, overflow: 'hidden' }}>
-                                    <CsvPreviewCard
-                                        type={type}
-                                        csvPreview={csvPreviews[type]}
-                                        validationResult={validationResults[type]}
-                                        cardHeight={cardHeight}
-                                        tableBodyHeight={tableBodyHeight}
-                                        backgroundColor={csvTypeColors[type as keyof typeof csvTypeColors]}
-                                    />
-                                </div>
-                            ),
-                        }))}
+                        items={UPLOAD_CSV_TYPES.map((type) => {
+                            const bg = csvTypeColors[type as keyof typeof csvTypeColors] || '#777';
+                            const fg = readableTextColor(bg);
+                            return ({
+                                key: type,
+                                label: (
+                                    <div
+                                        style={{
+                                            display: 'inline-block',
+                                            padding: '4px 10px',
+                                            borderRadius: 9999,
+                                            background: bg,
+                                            color: fg,
+                                            fontWeight: 600,
+                                            fontSize: 14,
+                                        }}
+                                    >
+                                        {UPLOAD_CSV_DEFINITIONS[type].label}
+                                    </div>
+                                ),
+                                children: (
+                                    <div style={{ height: cardHeight, overflow: 'hidden' }}>
+                                        <CsvPreviewCard
+                                            type={type}
+                                            csvPreview={csvPreviews[type]}
+                                            validationResult={validationResults[type]}
+                                            cardHeight={cardHeight}
+                                            tableBodyHeight={tableBodyHeight}
+                                            backgroundColor={bg}
+                                        />
+                                    </div>
+                                ),
+                            });
+                        })}
                     />
                 </Col>
             </Row>
