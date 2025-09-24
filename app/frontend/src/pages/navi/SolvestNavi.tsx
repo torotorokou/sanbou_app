@@ -2,7 +2,6 @@ import React, { useMemo, useState } from 'react';
 import { Spin, Button } from 'antd';
 import { FilePdfOutlined } from '@ant-design/icons';
 import { apiGet, apiPost } from '@/services/httpClient';
-import { pdfjs } from 'react-pdf';
 import ChatQuestionSection from '@/components/chat/ChatQuestionSection';
 import ChatSendButtonSection from '@/components/chat/ChatSendButtonSection';
 import ChatAnswerSection from '@/components/chat/ChatAnswerSection';
@@ -17,11 +16,7 @@ import { ANT, isTabletOrHalf } from '@/shared/constants/breakpoints';
 // ✅ 追加: 通知ストア
 import { useNotificationStore } from '@/stores/notificationStore';
 
-// ✅ PDF.js workerSrc の指定（react-pdf 9.x 以降の書き方）
-pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-    'pdfjs-dist/build/pdf.worker.min.mjs',
-    import.meta.url
-).toString();
+// PDF.js のワーカーは初期ロードから外し、必要時に動的 import します。
 
 // 共通APIレスポンス型（バックエンド契約に合わせる）
 // 共通APIレスポンス: src/types/api.ts を参照
