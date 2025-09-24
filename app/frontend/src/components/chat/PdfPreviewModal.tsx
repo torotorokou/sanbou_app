@@ -1,5 +1,6 @@
 // src/components/chat/PdfPreviewModal.tsx
 import React from 'react';
+import { ensurePdfJsWorkerLoaded } from '@/utils/pdfWorkerLoader';
 import { Modal, Empty } from 'antd';
 import { useWindowSize } from '@/hooks/ui';
 import { ANT } from '@/shared/constants/breakpoints';
@@ -14,6 +15,14 @@ const PdfPreviewModal: React.FC<Props> = ({ visible, onClose, pdfUrl }) => {
     const { width } = useWindowSize();
     // ANT.xl 未満では高さを大きめにして、下部の余白を埋める
     const bodyHeight = width < ANT.xl ? '95vh' : '80vh';
+
+    React.useEffect(() => {
+        if (!visible) return;
+        // 遅延でpdf.jsワーカーを読み込む（必要なときだけ）
+        ensurePdfJsWorkerLoaded().catch(() => {
+            // 失敗しても iframe 表示には影響しないため握りつぶす
+        });
+    }, [visible]);
 
     return (
         <Modal

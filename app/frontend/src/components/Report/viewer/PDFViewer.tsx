@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Typography, Alert } from 'antd';
 import { useWindowSize } from '../../../hooks/ui';
+import { ensurePdfJsWorkerLoaded } from '@/utils/pdfWorkerLoader';
 
 type PDFViewerProps = {
     pdfUrl?: string | null;
@@ -10,6 +11,11 @@ type PDFViewerProps = {
 const PDFViewer: React.FC<PDFViewerProps> = ({ pdfUrl, height }) => {
     const { isMobile } = useWindowSize();
     const [hasError, setHasError] = useState(false);
+
+    useEffect(() => {
+        if (!pdfUrl) return;
+        ensurePdfJsWorkerLoaded().catch(() => void 0);
+    }, [pdfUrl]);
 
     if (!pdfUrl) {
         return (

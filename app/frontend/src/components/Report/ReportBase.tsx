@@ -1,8 +1,8 @@
-import React, { useEffect } from 'react';
+import React, { Suspense, useEffect } from 'react';
 import ReportManagePageLayout from './common/ReportManagePageLayout';
 import ReportStepperModal from './common/ReportStepperModal';
 import BlockUnitPriceInteractiveModal from './interactive/BlockUnitPriceInteractiveModal';
-import PDFViewer from './viewer/PDFViewer';
+const PDFViewer = React.lazy(() => import('./viewer/PDFViewer'));
 import { pdfPreviewMap, modalStepsMap, isInteractiveReport } from '@/constants/reportConfig';
 import { useReportBaseBusiness } from '../../hooks/report';
 import { useZipProcessing } from '../../hooks/data/useZipProcessing';
@@ -163,7 +163,9 @@ const ReportBase: React.FC<ReportBaseProps> = ({
                 pdfReady={zipProcessing.hasPdf || business.hasPdf}
                 header={undefined}
             >
-                <PDFViewer pdfUrl={preview.previewUrl} />
+                <Suspense fallback={null}>
+                    <PDFViewer pdfUrl={preview.previewUrl} />
+                </Suspense>
             </ReportManagePageLayout>
         </>
     );
