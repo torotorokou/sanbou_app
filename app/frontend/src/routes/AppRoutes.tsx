@@ -10,6 +10,7 @@ const ManagementDashboard = lazy(() => import('../pages/dashboard/ManagementDash
 const FactoryDashboard = lazy(() => import('../pages/dashboard/FactoryDashboard'));
 const PricingDashboard = lazy(() => import('../pages/dashboard/PricingDashboard'));
 const CustomerListDashboard = lazy(() => import('../pages/dashboard/CustomerListDashboard'));
+const SalesTreePage = lazy(() => import('../pages/dashboard/SalesTreePage'));
 
 const ReportFactory = lazy(() => import('../pages/report/ReportFactory'));
 const ReportManagePage = lazy(() => import('../pages/report/ReportManagePage'));
@@ -53,6 +54,7 @@ const AppRoutes: React.FC = () => {
         />
         <Route path={ROUTER_PATHS.FACTORY} element={<FactoryDashboard />} />
         <Route path={ROUTER_PATHS.PRICING} element={<PricingDashboard />} />
+        <Route path={ROUTER_PATHS.SALES_TREE} element={<SalesTreePage />} />
         <Route
             path={ROUTER_PATHS.CUSTOMER_LIST}
             element={<CustomerListDashboard />}
