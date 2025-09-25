@@ -701,15 +701,26 @@ const SalesPivotBoardPlusWithCharts: FC = () => {
           text-align: center;
           font-weight: 700;
           letter-spacing: 0.02em;
+          font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+          margin: 0;
         }
         .app-title-accent {
+          display: inline-flex;
+          align-items: center;
+          gap: 10px;
+          padding-left: 8px;
+          color: #000;
+          font-weight: 700;
+          line-height: 1.2;
+          font-size: 1.05em;
+        }
+        .app-title-accent::before {
+          content: "";
           display: inline-block;
-          padding: 0 0 0 10px;
-          border-left: 6px solid #237804;
-          border-radius: 2px;
-          background: transparent;
-          color: #155724;
-          line-height: 1.4;
+          width: 6px;
+          height: 22px;
+          background: #237804;
+          border-radius: 3px;
         }
         .app-header-actions {
           position: absolute;
