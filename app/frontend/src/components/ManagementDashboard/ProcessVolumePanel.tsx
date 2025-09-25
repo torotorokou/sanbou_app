@@ -12,7 +12,7 @@ const ProcessVolumePanel: React.FC = () => {
     ];
 
     return (
-        <Card title='⚙️ 工程別処理量' style={{ height: '100%', marginTop: 24 }}>
+        <Card title='⚙️ 工程別処理量' className='dashboard-card'>
             <Row gutter={0} justify='space-between'>
                 {items.map((item, index) => (
                     <Col key={index} span={Math.floor(24 / items.length)}>
