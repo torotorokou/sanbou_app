@@ -72,7 +72,14 @@ const RevenueChartPanel: React.FC = () => {
                             </defs>
                             <CartesianGrid strokeDasharray='3 3' />
                             <XAxis dataKey='name' />
-                            <YAxis />
+                            <YAxis
+                                tick={{ fontSize: 14 }}
+                                tickFormatter={(value: number) => {
+                                    const num = typeof value === 'number' ? value : Number(value) || 0;
+                                    return (num / 1_000_000).toFixed(2);
+                                }}
+                                label={{ value: '単位：百万円', angle: -90, position: 'insideLeft', offset: -10, style: { fontSize: 12 } }}
+                            />
                             <Tooltip />
                             <Bar
                                 dataKey='value'
@@ -98,9 +105,11 @@ const RevenueChartPanel: React.FC = () => {
                                 <LabelList
                                     dataKey='value'
                                     position='top'
+                                    style={{ fontSize: 16, fontWeight: 600, fill: '#111' }}
                                     formatter={(label: unknown) => {
                                         const num = typeof label === 'number' ? label : Number(label) || 0;
-                                        return `${num.toLocaleString()} 円`;
+                                        // 表示を百万単位（百万円）にして小数点2桁
+                                        return `${(num / 1_000_000).toFixed(2)} 百万円`;
                                     }}
                                 />
                             </Bar>
@@ -120,11 +129,32 @@ const RevenueChartPanel: React.FC = () => {
                             <XAxis
                                 dataKey='name'
                                 interval={0}
-                                tick={{
-                                    fontSize: 12,
+                                tick={(tickProps: { x?: number; y?: number; payload?: { value?: string; payload?: { name?: string } } }) => {
+                                    const { x, y, payload } = tickProps || {};
+                                    const label = payload?.value ?? payload?.payload?.name ?? '';
+                                    // '粗利（当日）' を '粗利' と '（当日）' に分割して2行表示
+                                    const xx = x ?? 0;
+                                    const yy = y ?? 0;
+                                    if (typeof label === 'string' && label.includes('（')) {
+                                        const parts = label.split(/(?=（)/);
+                                        return (
+                                            <g>
+                                                <text x={xx} y={yy + 6} textAnchor='middle' fill='#000' fontSize={12}>
+                                                    <tspan x={xx} dy={0}>{parts[0]}</tspan>
+                                                    <tspan x={xx} dy={14}>{parts[1]}</tspan>
+                                                </text>
+                                            </g>
+                                        );
+                                    }
+
+                                    return (
+                                        <text x={xx} y={yy + 6} textAnchor='middle' fill='#000' fontSize={12}>
+                                            {label}
+                                        </text>
+                                    );
                                 }}
                             />
-                            <YAxis />
+                            <YAxis tick={{ fontSize: 13 }} />
                             <Tooltip />
                             <Bar
                                 dataKey='value'
@@ -150,6 +180,7 @@ const RevenueChartPanel: React.FC = () => {
                                 <LabelList
                                     dataKey='value'
                                     position='top'
+                                    style={{ fontSize: 14, fontWeight: 600, fill: '#111' }}
                                     formatter={(label: unknown) => {
                                         const num = typeof label === 'number' ? label : Number(label) || 0;
                                         return `${num.toLocaleString()} 円`;
