@@ -578,14 +578,15 @@ const SalesPivotBoardPlusWithCharts: FC = () => {
     } finally { setPivotLoading(false); }
   }, [drawer, pivotCursor]);
 
+  const isDrawerOpen = (d: DrawerState): d is Extract<DrawerState, { open: true }> => d.open;
   useEffect(() => {
-    if (!drawer.open) return;
+    if (!isDrawerOpen(drawer)) return;
     loadPivot(drawer.activeAxis, true);
-  }, [drawer.open, drawer.activeAxis, drawer.sortBy, drawer.order, drawer.topN]); // eslint-disable-line
+  }, [drawer.open, isDrawerOpen(drawer) ? drawer.activeAxis : null, isDrawerOpen(drawer) ? drawer.sortBy : null, isDrawerOpen(drawer) ? drawer.order : null, isDrawerOpen(drawer) ? drawer.topN : null]);
 
   const onPivotTableChange: TableProps<MetricEntry>['onChange'] = (_p, _f, sorter) => {
     const s = Array.isArray(sorter) ? sorter[0] : sorter;
-    if (s && 'field' in s && s.field) {
+    if (s && 'field' in s && s.field && drawer.open) {
       const f = String(s.field);
       let nextKey: SortKey = drawer.sortBy;
       if (f === 'name') nextKey = (drawer.activeAxis === 'date') ? 'date' : 'name';
@@ -614,7 +615,8 @@ const SalesPivotBoardPlusWithCharts: FC = () => {
     let cursor: string | null = null;
     do {
       const page = await fetchPivot({
-        month: (drawer as any).month, monthRange: (drawer as any).monthRange,
+        month: isDrawerOpen(drawer) ? drawer.month : undefined,
+        monthRange: isDrawerOpen(drawer) ? drawer.monthRange : undefined,
         baseAxis: drawer.baseAxis, baseId: drawer.baseId, repIds: drawer.repIds,
         targetAxis: axis, sortBy: drawer.sortBy, order: drawer.order, topN: 'all', cursor
       });
@@ -638,32 +640,7 @@ const SalesPivotBoardPlusWithCharts: FC = () => {
     ];
   }, [mode]);
 
-  // Drawer tabs extra
-  const drawerTabBarExtra = (
-    <Space wrap>
-      <Segmented options={[10, 20, 50, { label: 'All', value: 'all' }]} value={(drawer.open ? drawer.topN : 10) as any}
-        onChange={(v) => drawer.open && onDrawerTopNChange(v as any)} />
-                  <Segmented
-                    options={[
-                      { label: drawer.open && drawer.activeAxis === 'date' ? '日付' : '名称', value: drawer.open && drawer.activeAxis === 'date' ? 'date' : 'name' },
-                      { label: '売上', value: 'amount' },
-                      { label: '数量', value: 'qty' },
-                      { label: '売単価', value: 'unit_price' }
-                    ]}
-                    value={drawer.open ? drawer.sortBy : 'amount'}
-                    onChange={(v) => drawer.open && onDrawerSortKeyChange(v as SortKey)}
-                  />
-      <Segmented options={[{ label: '降順', value: 'desc' }, { label: '昇順', value: 'asc' }]}
-        value={drawer.open ? drawer.order : 'desc'}
-        onChange={(v) => drawer.open && onDrawerOrderChange(v as SortOrder)} />
-      <Button size="small" icon={<DownloadOutlined />} onClick={() => exportPivotCsv(false)}>詳細をCSV</Button>
-      {drawer.open && drawer.topN === 'all' && (
-        <Button size="small" icon={<DownloadOutlined />} onClick={() => exportPivotCsv(true)}>
-          すべて取得してCSV
-        </Button>
-      )}
-    </Space>
-  );
+  // (drawerTabBarExtra は未使用のため削除)
 
   // Drawer handlers
   const onDrawerTopNChange = (v: string | number) => {

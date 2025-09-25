@@ -1,20 +1,23 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import dayjs, { Dayjs } from 'dayjs';
+import dayjs from 'dayjs';
+import type { Dayjs } from 'dayjs';
 import type { FC } from 'react';
 import {
   Card, Row, Col, Typography, DatePicker, Space, Button, Progress, Tag,
-  Tooltip as AntTooltip, Skeleton, Tabs,
+  Tooltip as AntTooltip, Skeleton, Tabs, Table
 } from 'antd';
+import type { TableColumnsType } from 'antd';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
-  CartesianGrid, ReferenceLine, Legend,
+  CartesianGrid, Legend, Line
 } from 'recharts';
+import { InfoCircleOutlined } from '@ant-design/icons';
 
 /* =========================================================
  * 運用ダッシュボード（1ページ完結／未来フォーカス）
  * - ページ＝月。KPIは月基準固定。グラフのみ週タブで切替。
  * - 月ナビ：当月〜来月のみ（過去へは遡らない）。
- * - 左列：実績（確定）ドメイン ／ 右列：予測（見込み）ドメイン
+ * - 左：確定値（実績）／ 右：見込み値（予測）
  * - この1ファイルに domain/util/usecase/view を内包
  * ========================================================= */
 
@@ -37,7 +40,7 @@ const DENSE = {
   headPad: '6px 10px',
   kpiLg: 32,
   kpiMd: 26,
-  chartH: 220,
+  chartH: 240,
 } as const;
 
 /* =========================
@@ -52,7 +55,7 @@ type DailyPoint = {
   actual?: number;
   target?: number;
   capacity?: number;
-  isBusinessDay?: boolean;
+  isBusinessDay?: boolean; // true=営業日, false=休業日（日祝など）
 };
 
 type Week = {
@@ -62,6 +65,19 @@ type Week = {
   end: Date;              // 土曜
   days: Date[];           // [Mon..Sat]
   label: string;          // "1週目（9/1–9/6）"
+};
+
+type WeeklySummaryRow = {
+  key: string;
+  label: string;            // "W1 (MM/DD–MM/DD)"
+  targetSum: number;        // 週目標合計
+  actualCum: number;        // 週確定累計（今日まで）
+  landing: number;          // 週着地（確定+残日予測）
+  rateConfirmed: number | null; // 実績/目標
+  rateProjected: number | null; // 着地/目標
+  diffProjected: number | null; // (着地-目標)/目標
+  remainBizDays: number;    // 週の残営業日数
+  remainHolidays: number;   // 週の残休業日数
 };
 
 /* =========================
@@ -221,6 +237,7 @@ function computeRunRateMonth(all: DailyPoint[], today: YYYYMMDD) {
   const remainingGoal = Math.max(0, goal - actualCum);
 
   const remainingBizDays = inFuture.filter(d => d.isBusinessDay !== false).length;
+  const remainingHolidays = inFuture.length - remainingBizDays;
   const requiredPerDay = remainingBizDays ? remainingGoal / remainingBizDays : null;
 
   const recent = inPast.filter(d => d.isBusinessDay !== false).slice(-7);
@@ -232,7 +249,7 @@ function computeRunRateMonth(all: DailyPoint[], today: YYYYMMDD) {
     ? (requiredPerDay / currentPace) - 1
     : null;
 
-  return { requiredPerDay, currentPace, upliftPct, remainingBizDays, remainingGoal };
+  return { requiredPerDay, currentPace, upliftPct, remainingBizDays, remainingHolidays, remainingGoal };
 }
 
 /* 実績KPI用：累計（<= 今日で集計） */
@@ -271,7 +288,7 @@ const SectionCard: FC<{ title: string; tooltip?: string; extra?: React.ReactNode
         {extra}
         {tooltip && (
           <AntTooltip title={tooltip}>
-            <span style={{ color: '#8c8c8c' }}>?</span>
+            <InfoCircleOutlined style={{ color: '#8c8c8c' }} />
           </AntTooltip>
         )}
       </Space>
@@ -285,11 +302,89 @@ const KPI: FC<{ label: string; value: React.ReactNode; hint?: string }> = ({ lab
   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
     <TinyLabel>
       {label}
-      {hint ? <AntTooltip title={hint}><span style={{ marginLeft: 4, color: '#8c8c8c' }}>?</span></AntTooltip> : null}
+      {hint ? (
+        <AntTooltip title={hint}>
+          <InfoCircleOutlined style={{ marginLeft: 4, color: '#8c8c8c' }} />
+        </AntTooltip>
+      ) : null}
     </TinyLabel>
     <div style={{ fontSize: DENSE.kpiMd, fontFeatureSettings: "'tnum' 1", fontVariantNumeric: 'tabular-nums' }}>{value}</div>
   </div>
 );
+
+/* 週別サマリー表 */
+const WeeklySummaryTable: FC<{ rows: WeeklySummaryRow[] }> = ({ rows }) => {
+  const cols: TableColumnsType<WeeklySummaryRow> = [
+    { title: '週', dataIndex: 'label', key: 'label', width: 140 },
+    {
+      title: '目標合計(t)',
+      dataIndex: 'targetSum',
+      key: 'targetSum',
+      align: 'right',
+      render: (v: number) => v.toLocaleString(),
+      width: 120,
+    },
+    {
+      title: '確定累計(t)',
+      dataIndex: 'actualCum',
+      key: 'actualCum',
+      align: 'right',
+      render: (v: number) => v.toLocaleString(),
+      width: 120,
+    },
+    {
+      title: '着地見込み(t)',
+      dataIndex: 'landing',
+      key: 'landing',
+      align: 'right',
+      render: (v: number) => v.toLocaleString(),
+      width: 140,
+    },
+    {
+      title: '達成率(確定)',
+      dataIndex: 'rateConfirmed',
+      key: 'rateConfirmed',
+      align: 'right',
+      render: (v: number | null) => formatPct(v, 0),
+      width: 120,
+    },
+    {
+      title: '達成率(見込み)',
+      dataIndex: 'rateProjected',
+      key: 'rateProjected',
+      align: 'right',
+      render: (v: number | null) => formatPct(v, 0),
+      width: 130,
+    },
+    {
+      title: '乖離(見込み)',
+      dataIndex: 'diffProjected',
+      key: 'diffProjected',
+      align: 'right',
+      render: (v: number | null) => <SoftBadge value={v} />,
+      width: 130,
+    },
+    {
+      title: '残営業/休業',
+      key: 'remain',
+      align: 'center',
+      render: (_, r) => (
+        <span>{r.remainBizDays} / {r.remainHolidays}</span>
+      ),
+      width: 120,
+    },
+  ];
+  return (
+    <Table
+      size="small"
+      bordered
+      pagination={false}
+      dataSource={rows}
+      columns={cols}
+      scroll={{ x: 920 }}
+    />
+  );
+};
 
 /* =========================
  * メイン
@@ -344,12 +439,12 @@ const ExecutiveForecastDashboard: FC = () => {
   /* ===== KPI計算 ===== */
   const monthTargetTotal = useMemo(() => daily ? sum(daily.map(d => d.target ?? 0)) : 0, [daily]);
 
-  // 予測量（今日・週着地・月着地）
+  // 見込み（今日・週着地・月着地）
   const todayForecast = useMemo(() => todayRow?.predicted ?? null, [todayRow]);
   const weekLanding_current = useMemo(() => computeLandingForWeek(weekRows_current, todayStr), [weekRows_current, todayStr]);
   const monthLanding = useMemo(() => (daily ? computeLandingForMonth(daily, todayStr) : 0), [daily, todayStr]);
 
-  // 実績KPI（今日/週累計/月累計）
+  // 確定（今日/週累計/月累計）
   const todayActual = useMemo(() => todayRow?.actual ?? null, [todayRow]);
   const weekActualCum = useMemo(() => actualSumWeek(weekRows_current, todayStr), [weekRows_current, todayStr]);
   const monthActualCum = useMemo(() => (daily ? actualSumMonth(daily, todayStr) : 0), [daily, todayStr]);
@@ -361,7 +456,7 @@ const ExecutiveForecastDashboard: FC = () => {
   // 必要ペース（今月）
   const runRate = useMemo(
     () => (daily ? computeRunRateMonth(daily, todayStr) : {
-      requiredPerDay: null, currentPace: null, upliftPct: null, remainingBizDays: 0, remainingGoal: 0,
+      requiredPerDay: null, currentPace: null, upliftPct: null, remainingBizDays: 0, remainingHolidays: 0, remainingGoal: 0,
     }),
     [daily, todayStr]
   );
@@ -387,6 +482,45 @@ const ExecutiveForecastDashboard: FC = () => {
     }));
   }, [weekRowsForTabs, activeWeekKey]);
 
+  /* ===== 週別サマリー行生成 ===== */
+  const weeklySummaryRows: WeeklySummaryRow[] = useMemo(() => {
+    if (!daily) return [];
+    const rows: WeeklySummaryRow[] = [];
+    weeks.forEach(w => {
+      const keys = w.days.map(ymd);
+      const weekRows = keys.map(k => daily.find(d => d.date === k)).filter(Boolean) as DailyPoint[];
+      const targetSum = sum(weekRows.map(r => r.target ?? 0));
+
+      const pastRows = weekRows.filter(r => r.date <= todayStr);
+      const futureRows = weekRows.filter(r => r.date > todayStr);
+
+      const actualCum = sum(pastRows.map(r => r.actual ?? 0));
+      const futurePred = sum(futureRows.map(r => r.predicted ?? 0));
+      const landing = actualCum + futurePred;
+
+      const rateConfirmed = targetSum ? (sum(pastRows.map(r => r.actual ?? 0)) / targetSum) : null;
+      const rateProjected = targetSum ? (landing / targetSum) : null;
+      const diffProjected = targetSum ? ((landing - targetSum) / targetSum) : null;
+
+      const remainBizDays = futureRows.filter(r => r.isBusinessDay !== false).length;
+      const remainHolidays = futureRows.length - remainBizDays;
+
+      rows.push({
+        key: w.key,
+        label: `${w.key}（${w.label.split('（')[1] ?? ''}`, // "W1（MM/DD–MM/DD）"
+        targetSum,
+        actualCum,
+        landing,
+        rateConfirmed,
+        rateProjected,
+        diffProjected,
+        remainBizDays,
+        remainHolidays,
+      });
+    });
+    return rows;
+  }, [daily, weeks, todayStr]);
+
   /* ===== 月ナビ制御 ===== */
   const canPrev = month > thisMonth;
   const canNext = month < nextMonthAllowed;
@@ -397,14 +531,14 @@ const ExecutiveForecastDashboard: FC = () => {
   };
 
   /* ===== 乖離（予測-目標）/目標 の% ===== */
-  const todayTarget = todayRow?.target ?? null;
-  const weekTarget_current = useMemo(() => sum(weekRows_current.map(r => r.target ?? 0)), [weekRows_current]);
   const monthTarget = monthTargetTotal;
+  const weekTarget_current = useMemo(() => sum(weekRows_current.map(r => r.target ?? 0)), [weekRows_current]);
 
   const diffPctToday = useMemo(() => {
+    const todayTarget = todayRow?.target ?? null;
     if (todayTarget == null || todayTarget === 0 || todayForecast == null) return null;
     return (todayForecast - todayTarget) / todayTarget;
-  }, [todayTarget, todayForecast]);
+  }, [todayRow, todayForecast]);
 
   const diffPctWeek = useMemo(() => {
     if (!weekTarget_current) return null;
@@ -415,6 +549,17 @@ const ExecutiveForecastDashboard: FC = () => {
     if (!monthTarget) return null;
     return (monthLanding - monthTarget) / monthTarget;
   }, [monthLanding, monthTarget]);
+
+  /* ===== 営業日内訳（今月） ===== */
+  const monthBizHoliday = useMemo(() => {
+    if (!daily) return { allBiz: 0, allHoli: 0, remainBiz: 0, remainHoli: 0 };
+    const allBiz = daily.filter(d => d.isBusinessDay !== false).length;
+    const allHoli = daily.length - allBiz;
+    const remain = daily.filter(d => d.date >= todayStr);
+    const remainBiz = remain.filter(d => d.isBusinessDay !== false).length;
+    const remainHoli = remain.length - remainBiz;
+    return { allBiz, allHoli, remainBiz, remainHoli };
+  }, [daily, todayStr]);
 
   /* ===== 表示用：月（日本語） ===== */
   const monthJP = useMemo(() => formatMonthJP(month), [month]);
@@ -431,7 +576,7 @@ const ExecutiveForecastDashboard: FC = () => {
             <TinyLabel>現在週：</TinyLabel>
             {currentWeek ? <Tag color="blue">{currentWeek.key}</Tag> : <Tag>—</Tag>}
             <AntTooltip title="週は月曜〜土曜。KPIは月基準のまま、グラフのみ週切替。">
-              <span style={{ color: '#8c8c8c', marginLeft: 6 }}>?</span>
+              <InfoCircleOutlined style={{ color: '#8c8c8c', marginLeft: 6 }} />
             </AntTooltip>
           </div>
         </Col>
@@ -456,61 +601,81 @@ const ExecutiveForecastDashboard: FC = () => {
       </Row>
 
       {/* 上段：サマリー帯（6指標以内） */}
-      <SectionCard title={`サマリー（${monthJP}）`} tooltip="一目で状況判断：目標/達成率/着地/乖離/必要ペース/現行ペース">
+      <SectionCard
+        title={`サマリー（${monthJP}）`}
+        tooltip="定義：確定=今日までの実績、見込み=今日以降は予測で補完した着地。達成率=値/目標。"
+        extra={
+          <TinyLabel>
+            営業日：{monthBizHoliday.allBiz}（残{monthBizHoliday.remainBiz}）／休業：{monthBizHoliday.allHoli}（残{monthBizHoliday.remainHoli}）
+          </TinyLabel>
+        }
+      >
         <Row gutter={[DENSE.gutter, DENSE.gutter]}>
           <Col xs={12} md={8} lg={4}>
             <KPI label="月目標" value={<>{monthTarget.toLocaleString()} <span style={{fontSize:14}}>t</span></>} />
           </Col>
           <Col xs={12} md={8} lg={4}>
-            <KPI label="MTD達成率" value={formatPct(monthRates.mtdRate, 0)} />
+            <KPI label="MTD達成率（確定）" value={formatPct(monthRates.mtdRate, 0)} />
           </Col>
           <Col xs={12} md={8} lg={4}>
-            <KPI label="月着地" value={<>{monthLanding.toLocaleString()} <span style={{fontSize:14}}>t</span></>} />
+            <KPI label="月着地（見込み）" value={<>{monthLanding.toLocaleString()} <span style={{fontSize:14}}>t</span></>} />
           </Col>
           <Col xs={12} md={8} lg={4}>
-            <KPI label="月乖離" value={<SoftBadge value={diffPctMonth} />} hint="(着地−目標)/目標" />
+            <KPI label="月乖離（見込み）" value={<SoftBadge value={diffPctMonth} />} hint="(着地−目標)/目標" />
           </Col>
           <Col xs={12} md={8} lg={4}>
-            <KPI label="必要平均" value={runRate.requiredPerDay != null ? `${runRate.requiredPerDay.toFixed(1)} t/日` : '—'} />
+            <KPI label="必要平均（残営業日）" value={runRate.requiredPerDay != null ? `${runRate.requiredPerDay.toFixed(1)} t/日` : '—'} />
           </Col>
           <Col xs={12} md={8} lg={4}>
-            <KPI label="現行ペース" value={runRate.currentPace != null ? `${runRate.currentPace.toFixed(1)} t/日` : '—'} />
+            <KPI label="現行ペース（直近営業日）" value={runRate.currentPace != null ? `${runRate.currentPace.toFixed(1)} t/日` : '—'} />
+          </Col>
+          <Col span={24}>
+            <div style={{ marginTop: 4 }}>
+              <Progress percent={Math.round((monthRates.mtdRate ?? 0) * 100)} showInfo={false} strokeWidth={6} />
+            </div>
           </Col>
         </Row>
       </SectionCard>
 
-      {/* 中段：左右2カード（実績／予測） */}
+      {/* 追加：週別サマリー表 */}
+      <SectionCard
+        title="週別の状況（確認テーブル）"
+        tooltip="各週の目標・確定累計・着地見込み・達成率・乖離と、残りの営業/休業日を表示。"
+      >
+        {daily ? (
+          <WeeklySummaryTable rows={weeklySummaryRows} />
+        ) : (
+          <Skeleton active paragraph={{ rows: 3 }} title={false} />
+        )}
+      </SectionCard>
+
+      {/* 中段：左右2カード（確定／見込み） */}
       <Row gutter={[DENSE.gutter, DENSE.gutter]}>
-        {/* 実績（確定） */}
+        {/* 確定（実績） */}
         <Col xs={24} md={12}>
-          <SectionCard title="実績ドメイン（確定）">
+          <SectionCard title="確定値（実績）">
             {daily ? (
               <Row gutter={[DENSE.gutter, 8]}>
                 <Col xs={12}><KPI label="今日実績" value={<>{todayActual ?? '—'} <span style={{fontSize:14}}>t</span></>} /></Col>
                 <Col xs={12}><KPI label="週累計" value={<>{weekActualCum} <span style={{fontSize:14}}>t</span></>} /></Col>
                 <Col xs={12}><KPI label="MTD累計" value={<>{monthActualCum} <span style={{fontSize:14}}>t</span></>} /></Col>
-                <Col xs={12}><KPI label="WTD達成率" value={formatPct(weekRates_current.weekRateConfirmed, 0)} /></Col>
-                <Col xs={12}><KPI label="MTD達成率" value={formatPct(monthRates.mtdRate, 0)} /></Col>
-                <Col xs={24}>
-                  <div style={{ marginTop: 4 }}>
-                    <Progress percent={Math.round((monthRates.mtdRate ?? 0) * 100)} showInfo={false} strokeWidth={6} />
-                  </div>
-                </Col>
+                <Col xs={12}><KPI label="WTD達成率（確定）" value={formatPct(weekRates_current.weekRateConfirmed, 0)} /></Col>
+                <Col xs={12}><KPI label="MTD達成率（確定）" value={formatPct(monthRates.mtdRate, 0)} /></Col>
               </Row>
             ) : <Skeleton active paragraph={{rows:2}} title={false} />}
           </SectionCard>
         </Col>
 
-        {/* 予測（見込み） */}
+        {/* 見込み（予測） */}
         <Col xs={24} md={12}>
-          <SectionCard title="予測ドメイン（見込み）">
+          <SectionCard title="見込み値（予測）">
             {daily ? (
               <Row gutter={[DENSE.gutter, 8]}>
                 <Col xs={12}><KPI label="今日予測" value={<>{todayForecast ?? 0} <span style={{fontSize:14}}>t</span></>} /></Col>
-                <Col xs={12}><KPI label="週着地" value={<>{weekLanding_current} <span style={{fontSize:14}}>t</span></>} /></Col>
-                <Col xs={12}><KPI label="月着地" value={<>{monthLanding} <span style={{fontSize:14}}>t</span></>} /></Col>
-                <Col xs={12}><KPI label="WTD見込み" value={formatPct(weekRates_current.weekRateProjected, 0)} /></Col>
-                <Col xs={12}><KPI label="月見込み" value={formatPct(monthRates.monthRateProj, 0)} /></Col>
+                <Col xs={12}><KPI label="週着地（見込み）" value={<>{weekLanding_current} <span style={{fontSize:14}}>t</span></>} /></Col>
+                <Col xs={12}><KPI label="月着地（見込み）" value={<>{monthLanding} <span style={{fontSize:14}}>t</span></>} /></Col>
+                <Col xs={12}><KPI label="WTD達成率（見込み）" value={formatPct(weekRates_current.weekRateProjected, 0)} /></Col>
+                <Col xs={12}><KPI label="MTD達成率（見込み）" value={formatPct(monthRates.monthRateProj, 0)} /></Col>
                 <Col xs={12}>
                   <div style={{ display:'flex', justifyContent:'flex-end', marginTop: 4 }}>
                     <SoftBadge value={diffPctWeek} />
@@ -529,8 +694,8 @@ const ExecutiveForecastDashboard: FC = () => {
 
       {/* 下段：週タブ付きグラフ（高さを抑える） */}
       <SectionCard
-        title="実績 vs 予測（日別）"
-        tooltip="グラフのみ週タブで切替。色：実績=緑／予測=青／目標=橙。"
+        title="実績 vs 見込み（日別）"
+        tooltip="グラフのみ週タブで切替。色：実績=緑／見込み=青／目標=橙（折れ線）。"
         extra={<Tag color="geekblue">{monthJP}</Tag>}
       >
         <Tabs
@@ -549,12 +714,8 @@ const ExecutiveForecastDashboard: FC = () => {
                 <YAxis unit="t" />
                 <Tooltip formatter={(v: number, name) => [v + 't', name]} />
                 <Legend />
-                <ReferenceLine
-                  y={weekChartData.length ? (weekChartData[0]?.目標 ?? undefined) : undefined}
-                  stroke={Colors.target}
-                  strokeDasharray="4 4"
-                  ifOverflow="extendDomain"
-                />
+                {/* 目標は可変の折れ線で表示 */}
+                <Line type="monotone" dataKey="目標" stroke={Colors.target} dot={false} strokeWidth={2} />
                 <Bar dataKey="予測" fill={Colors.forecast} />
                 <Bar dataKey="実績" fill={Colors.actual} />
               </BarChart>
