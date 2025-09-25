@@ -10,6 +10,7 @@ export const ROUTER_PATHS = {
     // ダッシュボード系
     DASHBOARD: '/dashboard',
     FACTORY: '/factory',
+    SALES_TREE: '/sales-tree',
     PRICING: '/pricing',
     CUSTOMER_LIST: '/customer-list',
 
