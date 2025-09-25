@@ -60,7 +60,7 @@ const renderLegend = () => (
                         borderRadius: '50%',
                     }}
                 />
-                <span style={{ fontSize: 14 }}>{name}</span>
+                <span style={{ fontSize: 12 }}>{name}</span>
             </div>
         ))}
     </div>
@@ -150,19 +150,19 @@ const CustomerAnalysisPanel: React.FC = () => {
         <Card title='👥 顧客分析' style={{ height: '100%' }}>
             <Row gutter={24}>
                 {/* 凡例 */}
-                <Col span={6}>
+                <Col span={8}>
                     <h4 style={{ marginBottom: 12 }}>凡例</h4>
                     {renderLegend()}
                 </Col>
 
                 {/* 搬入量（円グラフ） */}
-                <Col span={9}>
+                <Col span={8}>
                     <h4 style={{ marginBottom: 12 }}>搬入量（kg）</h4>
                     {renderPieChart(weightData)}
                 </Col>
 
                 {/* 搬入台数（円グラフ） */}
-                <Col span={9}>
+                <Col span={8}>
                     <h4 style={{ marginBottom: 12 }}>搬入台数（台）</h4>
                     {renderPieChart(countData)}
                 </Col>
