@@ -147,7 +147,7 @@ const renderPieChart = (data: PieDatum[]) => (
 
 const CustomerAnalysisPanel: React.FC = () => {
     return (
-        <Card title='👥 顧客分析' style={{ height: '100%' }}>
+        <Card title='👥 顧客分析' className='dashboard-card'>
             <Row gutter={24}>
                 {/* 凡例 */}
                 <Col span={8}>

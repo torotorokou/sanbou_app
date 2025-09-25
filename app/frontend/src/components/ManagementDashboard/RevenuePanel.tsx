@@ -60,7 +60,7 @@ const getGradientId = (prefix: string, name: string) =>
 
 const RevenueChartPanel: React.FC = () => {
     return (
-        <Card title='収益グラフ' style={{ marginTop: 24 }} variant='outlined'>
+        <Card title='収益グラフ' className='dashboard-card' variant='outlined'>
             <Row gutter={24}>
                 {/* 売上・仕入・粗利 */}
                 <Col span={12}>

@@ -64,6 +64,7 @@ const SummaryPanel: React.FC = () => {
                     🚛 月間搬入サマリー
                 </span>
             }
+            className='dashboard-card'
             bodyStyle={{ padding: 12 }} // ← 余白を小さく
         >
             <Row gutter={16}>

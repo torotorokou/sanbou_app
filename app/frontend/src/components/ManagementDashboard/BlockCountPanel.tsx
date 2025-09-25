@@ -12,7 +12,7 @@ const BlockCountPanel: React.FC = () => {
     ];
 
     return (
-        <Card title='🧱 ブロック数' style={{ height: '100%', marginTop: 24 }}>
+        <Card title='🧱 ブロック数' className='dashboard-card'>
             <Row gutter={0} justify='space-between'>
                 {blockData.map((item, index) => (
                     <Col key={index} span={Math.floor(24 / blockData.length)}>

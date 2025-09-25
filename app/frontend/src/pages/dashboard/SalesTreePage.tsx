@@ -7,21 +7,16 @@ import {
 } from 'antd';
 import type { TableColumnsType, TableProps } from 'antd';
 import {
-  ArrowDownOutlined, ArrowUpOutlined, InfoCircleOutlined, SwapOutlined, ReloadOutlined
+  ArrowDownOutlined, ArrowUpOutlined, InfoCircleOutlined, SwapOutlined, ReloadOutlined, DownloadOutlined
 } from '@ant-design/icons';
 import dayjs, { Dayjs } from 'dayjs';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RTooltip, ResponsiveContainer, LineChart, Line
 } from 'recharts';
 
-/* =========================================================================
- * Sales Pivot Board Plus + Charts (v3)
- * 変更点：
- *  - 顧客/品名/日付列のヘッダクリックで並び替え（name / date）
- *  - 売単価にもセル内ミニバーを追加
- *  - 詳細ドロワー内の表でもミニバー表示＆ヘッダ並び替え
- * ========================================================================= */
-
+/* =========================
+ * Domain Types
+ * ========================= */
 type YYYYMM = string;
 type YYYYMMDD = string;
 
@@ -44,14 +39,16 @@ interface MetricEntry {
 interface SummaryRow { repId: ID; repName: string; topN: MetricEntry[]; }
 
 interface SummaryQuery {
-  month: YYYYMM; mode: Mode; repIds: ID[]; filterIds: ID[];
+  month?: YYYYMM;                // 単月
+  monthRange?: { from: YYYYMM; to: YYYYMM }; // 期間
+  mode: Mode; repIds: ID[]; filterIds: ID[];
   sortBy: SortKey; order: SortOrder; topN: 10 | 20 | 50 | 'all';
 }
 
 type CursorPage<T> = { rows: T[]; next_cursor: string | null };
 
 /* =========================
- * Mock Data / Repository
+ * Mock Masters
  * ========================= */
 const REPS: SalesRep[] = [
   { id: 'rep_a', name: '営業A' },
@@ -80,6 +77,9 @@ const ITEMS: Array<{ id: ID; name: string }> = [
   { id: 'i_j', name: '商品J' }, { id: 'i_k', name: '商品K' },
 ];
 
+/* =========================
+ * Utils
+ * ========================= */
 const delay = (ms = 180) => new Promise((r) => setTimeout(r, ms));
 const rndInt = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min;
 
@@ -102,6 +102,20 @@ const monthDays = (m: YYYYMM) => {
   }
   return list;
 };
+
+const monthsBetween = (from: YYYYMM, to: YYYYMM): YYYYMM[] => {
+  const res: YYYYMM[] = [];
+  let cur = dayjs(from + '-01');
+  const end = dayjs(to + '-01');
+  while (cur.isSame(end) || cur.isBefore(end)) {
+    res.push(cur.format('YYYY-MM'));
+    cur = cur.add(1, 'month');
+  }
+  return res;
+};
+
+const allDaysInRange = (range: { from: YYYYMM; to: YYYYMM }) =>
+  monthsBetween(range.from, range.to).flatMap(m => monthDays(m));
 
 const sortMetrics = (arr: MetricEntry[], sortBy: SortKey, order: SortOrder) => {
   const dir = order === 'asc' ? 1 : -1;
@@ -134,18 +148,34 @@ const sortMetrics = (arr: MetricEntry[], sortBy: SortKey, order: SortOrder) => {
 };
 
 /* =========================
- * APIs (mock)
+ * Mock APIs
  * ========================= */
 async function fetchSummary(q: SummaryQuery): Promise<SummaryRow[]> {
   const reps = q.repIds.length ? REPS.filter(r => q.repIds.includes(r.id)) : REPS;
-  const universe = q.mode === 'customer' ? CUSTOMERS : q.mode === 'item' ? ITEMS : monthDays(q.month);
+
+  const months = q.monthRange ? monthsBetween(q.monthRange.from, q.monthRange.to) : [q.month!];
+
+  // Universe
+  const universe =
+    q.mode === 'customer' ? CUSTOMERS :
+    q.mode === 'item' ? ITEMS :
+    q.monthRange ? allDaysInRange(q.monthRange) : monthDays(q.month!);
+
   const filtered = q.filterIds.length ? (universe as any[]).filter(u => q.filterIds.includes(u.id)) : universe;
 
   const rows: SummaryRow[] = reps.map(rep => {
     const weight = 1 + (rep.id.charCodeAt(rep.id.length - 1) % 3) * 0.2;
     const pool: MetricEntry[] = (filtered as any[]).map((t: any) => {
       const m = makeMetric(weight);
-      return { id: t.id, name: t.name, amount: m.amount, qty: m.qty, unit_price: m.unit_price, dateKey: t.dateKey };
+      // 期間合計（簡易に月数でスケール）
+      const mult = q.mode === 'date' ? 1 : months.length;
+      const amount = Math.round(m.amount * mult);
+      const qty = Math.round(m.qty * mult);
+      return {
+        id: t.id, name: t.name, amount, qty,
+        unit_price: qty > 0 ? Math.round((amount / qty) * 100) / 100 : null,
+        dateKey: t.dateKey
+      };
     });
     sortMetrics(pool, q.sortBy, q.order);
     const top = q.topN === 'all' ? pool : pool.slice(0, q.topN);
@@ -163,10 +193,15 @@ function paginateWithCursor<T>(sorted: T[], cursor: string | null | undefined, p
 }
 
 async function fetchPivot(params: {
-  month: YYYYMM; baseAxis: Mode; baseId: ID; repIds: ID[];
+  month?: YYYYMM; monthRange?: { from: YYYYMM; to: YYYYMM };
+  baseAxis: Mode; baseId: ID; repIds: ID[];
   targetAxis: Mode; sortBy: SortKey; order: SortOrder; topN: 10 | 20 | 50 | 'all'; cursor?: string | null;
 }): Promise<CursorPage<MetricEntry>> {
-  const universe = params.targetAxis === 'customer' ? CUSTOMERS : params.targetAxis === 'item' ? ITEMS : monthDays(params.month);
+  const months = params.monthRange ? monthsBetween(params.monthRange.from, params.monthRange.to) : [params.month!];
+  const universe =
+    params.targetAxis === 'customer' ? CUSTOMERS :
+    params.targetAxis === 'item' ? ITEMS :
+    params.monthRange ? allDaysInRange(params.monthRange) : monthDays(params.month!);
 
   const rows: MetricEntry[] = (universe as any[]).map((t: any) => {
     const repWeight =
@@ -174,7 +209,10 @@ async function fetchPivot(params: {
         .reduce((acc, id) => acc + (1 + (id.charCodeAt(id.length - 1) % 3) * 0.1), 0) / Math.max(1, (params.repIds.length || REPS.length));
     const baseWeight = 1 + (params.baseId.charCodeAt(params.baseId.length - 1) % 5) * 0.08;
     const m = makeMetric(0.9 * repWeight * baseWeight);
-    return { id: t.id, name: t.name, amount: m.amount, qty: m.qty, unit_price: m.unit_price, dateKey: t.dateKey };
+    const mult = params.targetAxis === 'date' ? 1 : months.length;
+    const amount = Math.round(m.amount * mult);
+    const qty = Math.round(m.qty * mult);
+    return { id: t.id, name: t.name, amount, qty, unit_price: qty > 0 ? Math.round((amount / qty) * 100) / 100 : null, dateKey: t.dateKey };
   });
 
   sortMetrics(rows, params.sortBy, params.order);
@@ -190,9 +228,10 @@ async function fetchPivot(params: {
 }
 
 async function fetchDailySeries(params: {
-  month: YYYYMM; repId?: ID; customerId?: ID; itemId?: ID;
+  month?: YYYYMM; monthRange?: { from: YYYYMM; to: YYYYMM };
+  repId?: ID; customerId?: ID; itemId?: ID;
 }): Promise<Array<{ date: YYYYMMDD; amount: number; qty: number; unit_price: number | null }>> {
-  const days = monthDays(params.month);
+  const days = params.monthRange ? allDaysInRange(params.monthRange) : monthDays(params.month!);
   const series = days.map(d => {
     const m = makeMetric(1);
     return { date: d.name, amount: m.amount, qty: m.qty, unit_price: m.qty > 0 ? Math.round((m.amount / m.qty) * 100) / 100 : null };
@@ -209,33 +248,64 @@ const fmtNumber = (n: number) => n.toLocaleString('ja-JP');
 const fmtUnitPrice = (v: number | null) => (v == null ? '—' : `¥${v.toLocaleString('ja-JP', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`);
 
 const SortBadge: FC<{ label: string; keyName: SortKey; order: SortOrder }> = ({ label, keyName, order }) => (
-  <Badge count={order === 'desc' ? <ArrowDownOutlined /> : <ArrowUpOutlined />} style={{ backgroundColor: '#1677ff' }}>
+  <Badge count={order === 'desc' ? <ArrowDownOutlined /> : <ArrowUpOutlined />} style={{ backgroundColor: '#237804' }}>
     <Tag style={{ marginRight: 8 }}>{label}: {keyName}</Tag>
   </Badge>
 );
 
 /* =========================
+ * CSV Builder
+ * ========================= */
+function toCsv(rows: Array<Record<string, any>>, bomUtf8 = true): Blob {
+  const headers = Object.keys(rows[0] ?? {});
+  const escape = (v: any) => {
+    if (v == null) return '';
+    const s = String(v).replace(/"/g, '""');
+    if (/[",\r\n]/.test(s)) return `"${s}"`;
+    return s;
+  };
+  const csv = [headers.join(','), ...rows.map(r => headers.map(h => escape(r[h])).join(','))].join('\r\n');
+  const blob = new Blob([bomUtf8 ? '\uFEFF' : '', csv], { type: 'text/csv;charset=utf-8;' });
+  return blob;
+}
+function downloadBlob(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
+}
+
+/* =========================
  * Component
  * ========================= */
 const SalesPivotBoardPlusWithCharts: FC = () => {
-  App.useApp?.(); // (optional)
+  App.useApp?.();
+
+  // Period
+  const [periodMode, setPeriodMode] = useState<'single' | 'range'>('single');
   const [month, setMonth] = useState<Dayjs>(dayjs().startOf('month'));
+  const [range, setRange] = useState<[Dayjs, Dayjs] | null>(null);
+
+  // Controls
   const [mode, setMode] = useState<Mode>('customer');
-  const [topN, setTopN] = useState<10 | 20 | 50 | 'all'>(10);
+  const [topN, setTopN] = useState<10 | 20 | 50 | 'all'>('all');
   const [sortBy, setSortBy] = useState<SortKey>('amount');
   const [order, setOrder] = useState<SortOrder>('desc');
   const [repIds, setRepIds] = useState<ID[]>([]);
   const [filterIds, setFilterIds] = useState<ID[]>([]);
 
+  // Data
   const [summary, setSummary] = useState<SummaryRow[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
 
+  // Drawer (pivot)
   type DrawerState =
     | { open: false }
     | {
         open: true;
         baseAxis: Mode; baseId: ID; baseName: string;
-        month: YYYYMM; repIds: ID[];
+        month?: YYYYMM; monthRange?: { from: YYYYMM; to: YYYYMM };
+        repIds: ID[];
         targets: { axis: Mode; label: string }[]; activeAxis: Mode;
         sortBy: SortKey; order: SortOrder; topN: 10 | 20 | 50 | 'all';
       };
@@ -247,12 +317,15 @@ const SalesPivotBoardPlusWithCharts: FC = () => {
 
   const [repSeriesCache, setRepSeriesCache] = useState<Record<ID, Array<{ date: YYYYMMDD; amount: number; qty: number; unit_price: number | null }>>>({});
 
-  const monthStr: YYYYMM = useMemo(() => month.format('YYYY-MM'), [month]);
+  // Query materialize
+  const query: SummaryQuery = useMemo(() => {
+    const base = { mode, repIds, filterIds, sortBy, order, topN };
+    if (periodMode === 'single') return { ...base, month: month.format('YYYY-MM') };
+    if (range) return { ...base, monthRange: { from: range[0].format('YYYY-MM'), to: range[1].format('YYYY-MM') } };
+    return { ...base, month: month.format('YYYY-MM') };
+  }, [periodMode, month, range, mode, repIds, filterIds, sortBy, order, topN]);
 
-  const query: SummaryQuery = useMemo(() => ({
-    month: monthStr, mode, repIds, filterIds, sortBy, order, topN
-  }), [monthStr, mode, repIds, filterIds, sortBy, order, topN]);
-
+  // Load
   const reload = useCallback(async () => {
     setLoading(true);
     try {
@@ -265,12 +338,14 @@ const SalesPivotBoardPlusWithCharts: FC = () => {
 
   useEffect(() => { reload(); }, [reload]);
 
+  // Select options
   const repOptions = useMemo(() => REPS.map(r => ({ label: r.name, value: r.id })), []);
   const filterOptions = useMemo(() => {
     if (mode === 'customer') return CUSTOMERS.map(c => ({ label: c.name, value: c.id }));
     if (mode === 'item') return ITEMS.map(i => ({ label: i.name, value: i.id }));
-    return monthDays(monthStr).map(d => ({ label: d.name, value: d.id }));
-  }, [mode, monthStr]);
+    if (query.monthRange) return allDaysInRange(query.monthRange).map(d => ({ label: d.name, value: d.id }));
+    return monthDays(query.month!).map(d => ({ label: d.name, value: d.id }));
+  }, [mode, query]);
 
   // Header totals
   const headerTotals = useMemo(() => {
@@ -281,6 +356,28 @@ const SalesPivotBoardPlusWithCharts: FC = () => {
     return { amount, qty, unit };
   }, [summary]);
 
+  // CSV (summary)
+  const exportSummaryCsv = () => {
+    const axisLabel = mode === 'customer' ? '顧客' : mode === 'item' ? '品名' : '日付';
+    const rows = summary.flatMap(r =>
+      r.topN.map(t => ({
+        営業: r.repName,
+        軸: axisLabel,
+        名称_日付: t.name,
+        売上: t.amount,
+        '数量（kg）': t.qty,
+        売単価: t.unit_price ?? ''
+      }))
+    );
+    if (rows.length === 0) return;
+    const blob = toCsv(rows);
+    const title = periodMode === 'single'
+      ? `summary_${axisLabel}_${month.format('YYYYMM')}.csv`
+      : `summary_${axisLabel}_${(range?.[0] ?? dayjs()).format('YYYYMM')}-${(range?.[1] ?? dayjs()).format('YYYYMM')}.csv`;
+    downloadBlob(blob, title);
+  };
+
+  // Table (parent)
   const parentCols: TableColumnsType<SummaryRow> = useMemo(() => ([
     { title: '営業', dataIndex: 'repName', key: 'repName', width: 160, fixed: 'left' },
     {
@@ -291,10 +388,10 @@ const SalesPivotBoardPlusWithCharts: FC = () => {
         const totalQty = row.topN.reduce((s, x) => s + x.qty, 0);
         const unit = totalQty > 0 ? Math.round((totalAmount / totalQty) * 100) / 100 : null;
         return (
-          <Space wrap size="small">
-            <Tag color="processing">合計 売上 {fmtCurrency(totalAmount)}</Tag>
-            <Tag>数量 {fmtNumber(totalQty)}</Tag>
-            <Tag>単価 {fmtUnitPrice(unit)}</Tag>
+          <Space wrap size="small" className="summary-tags">
+            <Tag color="#237804">合計 売上 {fmtCurrency(totalAmount)}</Tag>
+            <Tag color="green">数量 {fmtNumber(totalQty)} kg</Tag>
+            <Tag color="gold">単価 {fmtUnitPrice(unit)}</Tag>
           </Space>
         );
       }
@@ -308,32 +405,28 @@ const SalesPivotBoardPlusWithCharts: FC = () => {
     const maxQty = Math.max(1, ...data.map(x => x.qty));
     const unitCandidates = data.map(x => x.unit_price ?? 0);
     const maxUnit = Math.max(1, ...unitCandidates);
-
     const nameTitle = mode === 'customer' ? '顧客' : mode === 'item' ? '品名' : '日付';
 
     const childCols: TableColumnsType<MetricEntry> = [
-      {
-        title: nameTitle, dataIndex: 'name', key: 'name', width: 220,
-        sorter: true, // ヘッダクリック対応（name or date）
-      },
+      { title: nameTitle, dataIndex: 'name', key: 'name', width: 220, sorter: true },
       {
         title: '売上', dataIndex: 'amount', key: 'amount', align: 'right', width: 180, sorter: true,
         render: (v: number) => (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <span style={{ minWidth: 80, textAlign: 'right' }}>{fmtCurrency(v)}</span>
-            <div style={{ flex: 1, height: 6, background: '#f0f2f5', borderRadius: 4, overflow: 'hidden' }}>
-              <div style={{ width: `${Math.round((v / maxAmount) * 100)}%`, height: '100%', background: '#1677ff' }} />
+            <div className="mini-bar-bg">
+              <div className="mini-bar mini-bar-blue" style={{ width: `${Math.round((v / maxAmount) * 100)}%` }} />
             </div>
           </div>
         )
       },
       {
-        title: '数量', dataIndex: 'qty', key: 'qty', align: 'right', width: 160, sorter: true,
+        title: '数量（kg）', dataIndex: 'qty', key: 'qty', align: 'right', width: 160, sorter: true,
         render: (v: number) => (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <span style={{ minWidth: 64, textAlign: 'right' }}>{fmtNumber(v)}</span>
-            <div style={{ flex: 1, height: 6, background: '#f0f2f5', borderRadius: 4, overflow: 'hidden' }}>
-              <div style={{ width: `${Math.round((v / maxQty) * 100)}%`, height: '100%', background: '#52c41a' }} />
+            <div className="mini-bar-bg">
+              <div className="mini-bar mini-bar-green" style={{ width: `${Math.round((v / maxQty) * 100)}%` }} />
             </div>
           </div>
         )
@@ -344,14 +437,16 @@ const SalesPivotBoardPlusWithCharts: FC = () => {
         render: (v: number | null) => (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'flex-end' }}>
             <span style={{ minWidth: 64, textAlign: 'right' }}>{fmtUnitPrice(v)}</span>
-            <div style={{ width: 90, height: 6, background: '#f0f2f5', borderRadius: 4, overflow: 'hidden' }}>
-              <div style={{ width: `${v ? Math.round((v / maxUnit) * 100) : 0}%`, height: '100%', background: '#faad14' }} />
+            <div className="mini-bar-bg">
+              <div className="mini-bar mini-bar-gold" style={{ width: `${v ? Math.round((v / maxUnit) * 100) : 0}%` }} />
             </div>
           </div>
         )
       },
-      { title: '操作', key: 'ops', fixed: 'right', width: 110,
-        render: (_, rec) => (<Button size="small" icon={<SwapOutlined />} onClick={() => openPivot(rec)}>詳細</Button>) }
+      {
+        title: '操作', key: 'ops', fixed: 'right', width: 120,
+        render: (_, rec) => (<Button size="small" icon={<SwapOutlined />} onClick={() => openPivot(rec)}>詳細</Button>)
+      }
     ];
 
     const onChildChange: TableProps<MetricEntry>['onChange'] = (_p, _f, sorter) => {
@@ -367,17 +462,17 @@ const SalesPivotBoardPlusWithCharts: FC = () => {
     };
 
     // グラフ用
-    const chartBarData = data.map(d => ({ name: d.name, 売上: d.amount, 数量: d.qty, 売単価: d.unit_price ?? 0 }));
+  const chartBarData = data.map(d => ({ name: d.name, 売上: d.amount, 数量: d.qty, 売単価: d.unit_price ?? 0 }));
     const repId = row.repId;
     const series = repSeriesCache[repId];
     const handleLoadSeries = async () => {
       if (repSeriesCache[repId]) return;
-      const s = await fetchDailySeries({ month: monthStr, repId });
+      const s = await fetchDailySeries(query.month ? { month: query.month, repId } : { monthRange: query.monthRange!, repId });
       setRepSeriesCache(prev => ({ ...prev, [repId]: s }));
     };
 
     return (
-      <Card size="small" style={{ marginTop: 8 }}>
+      <Card className="accent-card accent-secondary" size="small" style={{ marginTop: 8 }}>
         <Tabs
           tabBarExtraContent={
             <Space wrap>
@@ -390,8 +485,14 @@ const SalesPivotBoardPlusWithCharts: FC = () => {
               key: 'table', label: '表',
               children: (
                 <Table<MetricEntry>
-                  rowKey="id" size="small" columns={childCols} dataSource={data}
-                  pagination={false} onChange={onChildChange} scroll={{ x: 980 }}
+                  rowKey="id"
+                  size="small"
+                  columns={childCols}
+                  dataSource={data}
+                  pagination={false}
+                  onChange={onChildChange}
+                  scroll={{ x: 1000 }}
+                  rowClassName={(_, idx) => (idx % 2 === 0 ? 'zebra-even' : 'zebra-odd')}
                 />
               )
             },
@@ -399,9 +500,9 @@ const SalesPivotBoardPlusWithCharts: FC = () => {
               key: 'chart', label: 'グラフ',
               children: (
                 <Row gutter={[16, 16]}>
-                  <Col xs={24} md={12}>
-                    <Typography.Text type="secondary">TopN（売上・数量・売単価）</Typography.Text>
-                    <div style={{ width: '100%', height: 280 }}>
+                  <Col xs={24} md={14}>
+                    <div className="card-subtitle">TopN（売上・数量・売単価）</div>
+                    <div style={{ width: '100%', height: 300 }}>
                       <ResponsiveContainer>
                         <BarChart data={chartBarData} margin={{ top: 8, right: 8, left: 8, bottom: 24 }}>
                           <CartesianGrid strokeDasharray="3 3" />
@@ -415,12 +516,14 @@ const SalesPivotBoardPlusWithCharts: FC = () => {
                       </ResponsiveContainer>
                     </div>
                   </Col>
-                  <Col xs={24} md={12}>
+                  <Col xs={24} md={10}>
                     <Space align="baseline" style={{ justifyContent: 'space-between', width: '100%' }}>
-                      <Typography.Text type="secondary">当月日次推移（営業：{row.repName}）</Typography.Text>
+                      <div className="card-subtitle">
+                        {query.month ? `${query.month} 日次推移` : `${query.monthRange!.from}〜${query.monthRange!.to} 日次推移`}（営業：{row.repName}）
+                      </div>
                       {!series && (<Button size="small" onClick={handleLoadSeries} icon={<ReloadOutlined />}>日次を取得</Button>)}
                     </Space>
-                    <div style={{ width: '100%', height: 280 }}>
+                    <div style={{ width: '100%', height: 300 }}>
                       <ResponsiveContainer>
                         <LineChart data={series ?? []} margin={{ top: 8, right: 8, left: 8, bottom: 8 }}>
                           <CartesianGrid strokeDasharray="3 3" />
@@ -445,10 +548,14 @@ const SalesPivotBoardPlusWithCharts: FC = () => {
   const openPivot = (rec: MetricEntry) => {
     const others = (['customer', 'item', 'date'] as Mode[]).filter(ax => ax !== mode);
     const targets = others.map(ax => ({ axis: ax, label: ax === 'customer' ? '顧客' : ax === 'item' ? '品名' : '日付' })) as { axis: Mode; label: string }[];
-    setDrawer({
-      open: true, baseAxis: mode, baseId: rec.id, baseName: rec.name, month: monthStr, repIds,
-      targets, activeAxis: targets[0].axis, sortBy, order, topN
-    });
+
+    const base = {
+      open: true, baseAxis: mode, baseId: rec.id, baseName: rec.name,
+      repIds, targets, activeAxis: targets[0].axis, sortBy, order, topN
+    } as any;
+
+    if (query.monthRange) setDrawer({ ...base, monthRange: query.monthRange });
+    else setDrawer({ ...base, month: query.month });
     setPivotData({ customer: [], item: [], date: [] });
     setPivotCursor({ customer: null, item: null, date: null });
   };
@@ -460,7 +567,9 @@ const SalesPivotBoardPlusWithCharts: FC = () => {
     setPivotLoading(true);
     try {
       const page = await fetchPivot({
-        month: drawer.month, baseAxis: drawer.baseAxis, baseId: drawer.baseId, repIds: drawer.repIds,
+        month: (drawer as any).month,
+        monthRange: (drawer as any).monthRange,
+        baseAxis: drawer.baseAxis, baseId: drawer.baseId, repIds: drawer.repIds,
         targetAxis: targetAxis as Mode, sortBy: drawer.sortBy, order: drawer.order, topN: drawer.topN,
         cursor: reset ? null : pivotCursor[targetAxis]
       });
@@ -474,7 +583,6 @@ const SalesPivotBoardPlusWithCharts: FC = () => {
     loadPivot(drawer.activeAxis, true);
   }, [drawer.open, drawer.activeAxis, drawer.sortBy, drawer.order, drawer.topN]); // eslint-disable-line
 
-  // Drawer テーブルの列ヘッダソート → ドロワー状態に反映
   const onPivotTableChange: TableProps<MetricEntry>['onChange'] = (_p, _f, sorter) => {
     const s = Array.isArray(sorter) ? sorter[0] : sorter;
     if (s && 'field' in s && s.field) {
@@ -487,47 +595,81 @@ const SalesPivotBoardPlusWithCharts: FC = () => {
     }
   };
 
-  // 上部コントロール
+  // Drawer CSV
+  const exportPivotCsv = async (all = false) => {
+    if (!drawer.open) return;
+    const axis = drawer.activeAxis;
+    if (!all) {
+      const rows = pivotData[axis].map(r => ({
+        軸: axis === 'customer' ? '顧客' : axis === 'item' ? '品名' : '日付',
+        名称_日付: r.name, 売上: r.amount, '数量（kg）': r.qty, 売単価: r.unit_price ?? ''
+      }));
+      if (rows.length === 0) return;
+      const blob = toCsv(rows);
+      downloadBlob(blob, `pivot_${axis}.csv`);
+      return;
+    }
+    // 全件
+    let acc: MetricEntry[] = [];
+    let cursor: string | null = null;
+    do {
+      const page = await fetchPivot({
+        month: (drawer as any).month, monthRange: (drawer as any).monthRange,
+        baseAxis: drawer.baseAxis, baseId: drawer.baseId, repIds: drawer.repIds,
+        targetAxis: axis, sortBy: drawer.sortBy, order: drawer.order, topN: 'all', cursor
+      });
+      acc = acc.concat(page.rows);
+      cursor = page.next_cursor;
+    } while (cursor);
+    const rows = acc.map(r => ({
+      軸: axis === 'customer' ? '顧客' : axis === 'item' ? '品名' : '日付',
+      名称_日付: r.name, 売上: r.amount, '数量（kg）': r.qty, 売単価: r.unit_price ?? ''
+    }));
+    if (rows.length) downloadBlob(toCsv(rows), `pivot_${axis}_all.csv`);
+  };
+
+  // Sort options
   const sortKeyOptions = useMemo(() => {
-    const base = [
+    return [
+      { label: mode === 'date' ? '日付' : '名称', value: mode === 'date' ? 'date' : 'name' },
       { label: '売上', value: 'amount' },
       { label: '数量', value: 'qty' },
       { label: '売単価', value: 'unit_price' },
     ];
-    // 顧客・品名のときは「名称」、日付モードでは「日付」
-    base.push({ label: mode === 'date' ? '日付' : '名称', value: mode === 'date' ? 'date' : 'name' });
-    return base;
   }, [mode]);
 
+  // Drawer tabs extra
   const drawerTabBarExtra = (
     <Space wrap>
-      <Segmented
-        options={[10, 20, 50, { label: 'All', value: 'all' }]}
-        value={drawer.open ? drawer.topN : 10}
-        onChange={(v) => drawer.open && onDrawerTopNChange(v as any)}
-      />
-      <Segmented
-        options={[
-          { label: '売上', value: 'amount' },
-          { label: '数量', value: 'qty' },
-          { label: '売単価', value: 'unit_price' },
-          { label: drawer.open && drawer.activeAxis === 'date' ? '日付' : '名称', value: drawer.open && drawer.activeAxis === 'date' ? 'date' : 'name' }
-        ]}
-        value={drawer.open ? drawer.sortBy : 'amount'}
-        onChange={(v) => drawer.open && onDrawerSortKeyChange(v as SortKey)}
-      />
-      <Segmented
-        options={[{ label: '降順', value: 'desc' }, { label: '昇順', value: 'asc' }]}
+      <Segmented options={[10, 20, 50, { label: 'All', value: 'all' }]} value={(drawer.open ? drawer.topN : 10) as any}
+        onChange={(v) => drawer.open && onDrawerTopNChange(v as any)} />
+                  <Segmented
+                    options={[
+                      { label: drawer.open && drawer.activeAxis === 'date' ? '日付' : '名称', value: drawer.open && drawer.activeAxis === 'date' ? 'date' : 'name' },
+                      { label: '売上', value: 'amount' },
+                      { label: '数量', value: 'qty' },
+                      { label: '売単価', value: 'unit_price' }
+                    ]}
+                    value={drawer.open ? drawer.sortBy : 'amount'}
+                    onChange={(v) => drawer.open && onDrawerSortKeyChange(v as SortKey)}
+                  />
+      <Segmented options={[{ label: '降順', value: 'desc' }, { label: '昇順', value: 'asc' }]}
         value={drawer.open ? drawer.order : 'desc'}
-        onChange={(v) => drawer.open && onDrawerOrderChange(v as SortOrder)}
-      />
+        onChange={(v) => drawer.open && onDrawerOrderChange(v as SortOrder)} />
+      <Button size="small" icon={<DownloadOutlined />} onClick={() => exportPivotCsv(false)}>詳細をCSV</Button>
+      {drawer.open && drawer.topN === 'all' && (
+        <Button size="small" icon={<DownloadOutlined />} onClick={() => exportPivotCsv(true)}>
+          すべて取得してCSV
+        </Button>
+      )}
     </Space>
   );
 
-  // Drawer controls handlers
-  const onDrawerTopNChange = (v: 10 | 20 | 50 | 'all') => {
+  // Drawer handlers
+  const onDrawerTopNChange = (v: string | number) => {
+    const next = (v === 'all' ? 'all' : Number(v)) as 10 | 20 | 50 | 'all';
     if (!drawer.open) return;
-    setDrawer({ ...drawer, topN: v });
+    setDrawer({ ...drawer, topN: next });
     setPivotData({ customer: [], item: [], date: [] });
     setPivotCursor({ customer: null, item: null, date: null });
   };
@@ -544,29 +686,115 @@ const SalesPivotBoardPlusWithCharts: FC = () => {
     setPivotCursor({ customer: null, item: null, date: null });
   };
 
+  // Mode switch
   const switchMode = (m: Mode) => { setMode(m); setFilterIds([]); };
 
   return (
     <Space direction="vertical" size="large" style={{ display: 'block' }}>
-      <Typography.Title level={3} style={{ marginBottom: 0 }}>
-        売上ツリー（顧客 / 品名 / 日付）
-        <Typography.Text type="secondary" style={{ marginLeft: 8, fontSize: 14 }}>Sales Pivot Board Plus + Charts</Typography.Text>
-      </Typography.Title>
-      <Typography.Paragraph type="secondary">
-        月を選び、<b>顧客</b> / <b>品名</b> / <b>日付</b> モードで「営業ごとのTopN」を確認。行を展開して「表｜グラフ」を切替、［詳細］でベース以外の2軸にピボットできます。
-        単価は <b>Σ金額 / Σ数量</b>（数量=0は「—」）。TopNは 10 / 20 / 50 / All（Allはページング）。
-      </Typography.Paragraph>
+      {/* シンプル＆モダンなアクセント用スタイル */}
+      <style>{`
+        .app-header {
+          position: relative;
+          padding: 12px 0 4px;
+        }
+        .app-title {
+          text-align: center;
+          font-weight: 700;
+          letter-spacing: 0.02em;
+        }
+        .app-title-accent {
+          display: inline-block;
+          padding: 0 0 0 10px;
+          border-left: 6px solid #237804;
+          border-radius: 2px;
+          background: transparent;
+          color: #155724;
+          line-height: 1.4;
+        }
+        .app-header-actions {
+          position: absolute;
+          right: 0;
+          top: 8px;
+        }
+        .accent-card {
+          border-left: 4px solid #23780410;
+          overflow: hidden;
+        }
+        .accent-primary { border-left-color: #237804; }
+        .accent-secondary { border-left-color: #52c41a; }
+        .accent-gold { border-left-color: #faad14; }
+        .card-section-header {
+          font-weight: 600;
+          padding: 6px 10px;
+          margin-bottom: 12px;
+          border-radius: 6px;
+          background: #f3fff4;
+          border: 1px solid #e6f7e6;
+        }
+        .card-subtitle {
+          color: rgba(0,0,0,0.55);
+          margin-bottom: 6px;
+          font-size: 12px;
+        }
+        .mini-bar-bg {
+          flex: 1; height: 6px; background: #f6f7fb; border-radius: 4px; overflow: hidden;
+        }
+        .mini-bar { height: 100%; }
+  .mini-bar-blue { background: #237804; }
+        .mini-bar-green { background: #52c41a; }
+        .mini-bar-gold { background: #faad14; }
+        .zebra-even { background: #ffffff; }
+        .zebra-odd { background: #fbfcfe; }
+  .ant-table-tbody > tr:hover > td { background: #f6fff4 !important; }
+        .ant-table-header { box-shadow: inset 0 -1px 0 #f0f0f0; }
+      `}</style>
 
-      <Card>
+      <style>{`
+        .summary-tags { font-size: 14px; }
+        .summary-tags .ant-tag { font-size: 14px; padding: 0 10px; }
+      `}</style>
+
+      {/* ヘッダ：中央タイトル／右上CSV */}
+      <div className="app-header">
+        <Typography.Title level={3} className="app-title">
+          <span className="app-title-accent">売上ツリー</span>
+        </Typography.Title>
+        <div className="app-header-actions">
+          <Button icon={<DownloadOutlined />} type="default" onClick={exportSummaryCsv}>
+            表示中リストをCSV
+          </Button>
+        </div>
+      </div>
+
+      {/* フィルタ＆コントロール */}
+      <Card className="accent-card accent-primary" title={<div className="card-section-header">条件</div>}>
         <Row gutter={[16, 16]} align="middle">
-          <Col xs={24} lg={8}>
-            <Space direction="vertical" size={2}>
-              <Typography.Text type="secondary">対象月</Typography.Text>
-              <DatePicker picker="month" value={month} onChange={(d) => d && setMonth(d.startOf('month'))} allowClear={false} />
+          <Col xs={24} lg={10}>
+            <Space direction="vertical" size={2} style={{ width: '100%' }}>
+              <Typography.Text type="secondary">対象（単月 / 期間）</Typography.Text>
+              <Space wrap>
+                <Segmented
+                  options={[{ label: '単月', value: 'single' }, { label: '期間', value: 'range' }]}
+                  value={periodMode}
+                  onChange={(v: string | number) => setPeriodMode(v as 'single' | 'range')}
+                />
+                {periodMode === 'single' ? (
+                  <DatePicker picker="month" value={month} onChange={(d) => d && setMonth(d.startOf('month'))} allowClear={false} />
+                ) : (
+                  <DatePicker.RangePicker
+                    picker="month"
+                    value={range ?? [dayjs().startOf('month'), dayjs().startOf('month')]}
+                    onChange={(vals) => {
+                      if (vals && vals[0] && vals[1]) setRange([vals[0].startOf('month'), vals[1].startOf('month')]);
+                    }}
+                    allowEmpty={[false, false]}
+                  />
+                )}
+              </Space>
             </Space>
           </Col>
 
-          <Col xs={24} lg={16}>
+          <Col xs={24} lg={14}>
             <Row gutter={[16, 16]}>
               <Col xs={24} md={8}>
                 <Space direction="vertical" size={2}>
@@ -575,13 +803,12 @@ const SalesPivotBoardPlusWithCharts: FC = () => {
                     value={mode} onChange={(v) => switchMode(v as Mode)} />
                 </Space>
               </Col>
-
-              {/* TopN / Sort をwrapで横並び。狭幅時は自動改行 */}
               <Col xs={24} md={16}>
                 <Space direction="vertical" size={2} style={{ width: '100%' }}>
                   <Typography.Text type="secondary">Top & 並び替え</Typography.Text>
                   <Space wrap>
-                    <Segmented options={[10, 20, 50, { label: 'All', value: 'all' }]} value={topN} onChange={(v) => setTopN(v as any)} />
+                    <Segmented options={[{ label: '10', value: '10' }, { label: '20', value: '20' }, { label: '50', value: '50' }, { label: 'All', value: 'all' }]} value={String(topN)}
+                      onChange={(v: string | number) => setTopN(v === 'all' ? 'all' : (Number(v) as 10 | 20 | 50))} />
                     <Segmented options={sortKeyOptions} value={sortBy} onChange={(v) => setSortBy(v as SortKey)} />
                     <Segmented options={[{ label: '降順', value: 'desc' }, { label: '昇順', value: 'asc' }]} value={order} onChange={(v) => setOrder(v as SortOrder)} />
                   </Space>
@@ -609,59 +836,89 @@ const SalesPivotBoardPlusWithCharts: FC = () => {
             </Space>
           </Col>
         </Row>
+      </Card>
 
-        <Divider />
-
+      {/* KPI */}
+      <Card className="accent-card accent-gold" title={<div className="card-section-header">KPI</div>}>
         <Row gutter={[16, 16]}>
           <Col xs={24} md={8}><Statistic title="（表示対象）合計 売上" value={headerTotals.amount} formatter={(v) => fmtCurrency(Number(v))} /></Col>
-          <Col xs={24} md={8}><Statistic title="（表示対象）合計 数量" value={headerTotals.qty} formatter={(v) => fmtNumber(Number(v))} /></Col>
+          <Col xs={24} md={8}><Statistic title="（表示対象）合計 数量" value={headerTotals.qty} formatter={(v) => `${fmtNumber(Number(v))} kg`} /></Col>
           <Col xs={24} md={8}><Statistic title="（表示対象）加重平均 単価" valueRender={() => <span>{fmtUnitPrice(headerTotals.unit)}</span>} /></Col>
         </Row>
+      </Card>
 
+      {/* メインテーブル */}
+      <Card className="accent-card accent-primary" title={<div className="card-section-header">一覧</div>}>
         <Table<SummaryRow>
-          rowKey={(r) => r.repId} columns={parentCols} dataSource={summary}
-          loading={loading} pagination={false}
+          rowKey={(r) => r.repId}
+          columns={parentCols}
+          dataSource={summary}
+          loading={loading}
+          pagination={false}
           expandable={{ expandedRowRender: (record) => renderChildTable(record), rowExpandable: () => true }}
-          scroll={{ x: 1000 }} style={{ marginTop: 16 }}
+          scroll={{ x: 1024 }}
+          rowClassName={(_, idx) => (idx % 2 === 0 ? 'zebra-even' : 'zebra-odd')}
         />
       </Card>
 
       {/* Drawer: Pivot */}
       <Drawer
-        title={drawer.open ? `詳細：${drawer.baseAxis === 'customer' ? '顧客' : drawer.baseAxis === 'item' ? '品名' : '日付'}「${drawer.baseName}」` : ''}
-        open={drawer.open} onClose={() => setDrawer({ open: false })} width={980}
+        title={
+          drawer.open
+            ? `詳細：${drawer.baseAxis === 'customer' ? '顧客' : drawer.baseAxis === 'item' ? '品名' : '日付'}「${drawer.baseName}」`
+            : ''
+        }
+        open={drawer.open}
+        onClose={() => setDrawer({ open: false })}
+        width={1000}
       >
         {drawer.open ? (
-          <Card>
-            <Row gutter={[16, 16]} align="middle">
+          <Card className="accent-card accent-secondary" title={<div className="card-section-header">ピボット</div>}>
+            <Row gutter={[16, 16]} align="middle" style={{ marginBottom: 8 }}>
               <Col flex="auto">
                 <Space wrap>
-                  <Tag color="blue">ベース：{drawer.baseAxis === 'customer' ? '顧客' : drawer.baseAxis === 'item' ? '品名' : '日付'}</Tag>
+                  <Tag color="#237804">ベース：{drawer.baseAxis === 'customer' ? '顧客' : drawer.baseAxis === 'item' ? '品名' : '日付'}</Tag>
                   <Tag>{drawer.baseName}</Tag>
-                </Space>
-              </Col>
-              <Col>
-                <Space wrap>
                   <SortBadge label="並び替え" keyName={drawer.sortBy} order={drawer.order} />
                   <Tag>Top{drawer.topN === 'all' ? 'All' : drawer.topN}</Tag>
                 </Space>
               </Col>
             </Row>
 
-            <Divider />
-
-            {/* Tabs の右側に操作を集約：被り解消 */}
             <Tabs
               activeKey={drawer.activeAxis}
               onChange={(active) => setDrawer(prev => prev.open ? { ...prev, activeAxis: active as Mode } : prev)}
-              tabBarExtraContent={drawerTabBarExtra}
+              tabBarExtraContent={
+                <Space wrap>
+                  <Segmented options={[{ label: '10', value: '10' }, { label: '20', value: '20' }, { label: '50', value: '50' }, { label: 'All', value: 'all' }]} value={String(drawer.open ? drawer.topN : 10)}
+                    onChange={(v: string | number) => drawer.open && onDrawerTopNChange(v)} />
+                  <Segmented
+                    options={[
+                      { label: '売上', value: 'amount' },
+                      { label: '数量', value: 'qty' },
+                      { label: '売単価', value: 'unit_price' },
+                      { label: drawer.open && drawer.activeAxis === 'date' ? '日付' : '名称', value: drawer.open && drawer.activeAxis === 'date' ? 'date' : 'name' }
+                    ]}
+                    value={drawer.open ? drawer.sortBy : 'amount'}
+                    onChange={(v) => drawer.open && onDrawerSortKeyChange(v as SortKey)}
+                  />
+                  <Segmented options={[{ label: '降順', value: 'desc' }, { label: '昇順', value: 'asc' }]}
+                    value={drawer.open ? drawer.order : 'desc'}
+                    onChange={(v) => drawer.open && onDrawerOrderChange(v as SortOrder)} />
+                  <Button size="small" icon={<DownloadOutlined />} onClick={() => exportPivotCsv(false)}>詳細をCSV</Button>
+                  {drawer.open && drawer.topN === 'all' && (
+                    <Button size="small" icon={<DownloadOutlined />} onClick={() => exportPivotCsv(true)}>
+                      すべて取得してCSV
+                    </Button>
+                  )}
+                </Space>
+              }
               items={drawer.targets.map(t => {
                 const rows = pivotData[t.axis];
                 const maxA = Math.max(1, ...rows.map(x => x.amount));
                 const maxQ = Math.max(1, ...rows.map(x => x.qty));
                 const maxU = Math.max(1, ...rows.map(x => x.unit_price ?? 0));
 
-                // 各タブ（axis）ごとに列を生成：ミニバー＆ヘッダソート
                 const cols: TableColumnsType<MetricEntry> = [
                   { title: t.axis === 'customer' ? '顧客' : t.axis === 'item' ? '品名' : '日付',
                     dataIndex: 'name', key: 'name', width: 220, sorter: true },
@@ -669,18 +926,14 @@ const SalesPivotBoardPlusWithCharts: FC = () => {
                     render: (v: number) => (
                       <div style={{ display:'flex', alignItems:'center', gap:8, justifyContent:'flex-end' }}>
                         <span style={{ minWidth: 72, textAlign:'right' }}>{fmtCurrency(v)}</span>
-                        <div style={{ width:90, height:6, background:'#f0f2f5', borderRadius:4, overflow:'hidden' }}>
-                          <div style={{ width:`${Math.round((v / maxA) * 100)}%`, height:'100%', background:'#1677ff' }} />
-                        </div>
+                        <div className="mini-bar-bg"><div className="mini-bar mini-bar-blue" style={{ width:`${Math.round((v / maxA) * 100)}%` }} /></div>
                       </div>
                     ) },
                   { title: '数量', dataIndex: 'qty', key: 'qty', align: 'right', width: 150, sorter: true,
                     render: (v: number) => (
                       <div style={{ display:'flex', alignItems:'center', gap:8, justifyContent:'flex-end' }}>
                         <span style={{ minWidth: 60, textAlign:'right' }}>{fmtNumber(v)}</span>
-                        <div style={{ width:90, height:6, background:'#f0f2f5', borderRadius:4, overflow:'hidden' }}>
-                          <div style={{ width:`${Math.round((v / maxQ) * 100)}%`, height:'100%', background:'#52c41a' }} />
-                        </div>
+                        <div className="mini-bar-bg"><div className="mini-bar mini-bar-green" style={{ width:`${Math.round((v / maxQ) * 100)}%` }} /></div>
                       </div>
                     ) },
                   { title: (<Space><span>売単価</span><Tooltip title="単価＝Σ金額 / Σ数量（数量=0は未定義）"><InfoCircleOutlined /></Tooltip></Space>),
@@ -688,9 +941,7 @@ const SalesPivotBoardPlusWithCharts: FC = () => {
                     render: (v: number | null) => (
                       <div style={{ display:'flex', alignItems:'center', gap:8, justifyContent:'flex-end' }}>
                         <span style={{ minWidth: 64, textAlign:'right' }}>{fmtUnitPrice(v)}</span>
-                        <div style={{ width:90, height:6, background:'#f0f2f5', borderRadius:4, overflow:'hidden' }}>
-                          <div style={{ width:`${v ? Math.round((v / maxU) * 100) : 0}%`, height:'100%', background:'#faad14' }} />
-                        </div>
+                        <div className="mini-bar-bg"><div className="mini-bar mini-bar-gold" style={{ width:`${v ? Math.round((v / maxU) * 100) : 0}%` }} /></div>
                       </div>
                     ) },
                 ];
@@ -701,10 +952,16 @@ const SalesPivotBoardPlusWithCharts: FC = () => {
                   children: (
                     <>
                       <Table<MetricEntry>
-                        rowKey="id" size="small" columns={cols} dataSource={rows}
-                        loading={pivotLoading} pagination={false} onChange={onPivotTableChange}
+                        rowKey="id"
+                        size="small"
+                        columns={cols}
+                        dataSource={rows}
+                        loading={pivotLoading}
+                        pagination={false}
+                        onChange={onPivotTableChange}
                         locale={{ emptyText: pivotLoading ? '読込中...' : <Empty description="該当なし" /> }}
                         scroll={{ x: 900 }}
+                        rowClassName={(_, idx) => (idx % 2 === 0 ? 'zebra-even' : 'zebra-odd')}
                       />
                       <Space style={{ marginTop: 8 }}>
                         <Button icon={<ReloadOutlined />} onClick={() => loadPivot(t.axis, true)}>再読込</Button>
