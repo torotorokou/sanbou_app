@@ -15,6 +15,7 @@ import {
 } from 'antd';
 import {
   BookOutlined,
+  DashboardOutlined,
   RobotOutlined,
   FileTextOutlined,
   CloudUploadOutlined,
@@ -269,6 +270,15 @@ const PALETTE = {
 };
 
 const portalMenus: PortalCardProps[] = [
+  {
+    title: 'ダッシュボード',
+    description: '複数のダッシュボードをまとめて表示します。',
+    detail:
+      '工場別・顧客別・価格表などの管理ダッシュボードへアクセスできます。表示中のダッシュボードを切り替えて詳細を確認してください。',
+    icon: <DashboardOutlined />,
+    link: ROUTER_PATHS.DASHBOARD,
+    color: PALETTE.BLUE_DARK,
+  },
   {
     title: '帳簿作成',
     description: '各種帳簿の作成を行います。',

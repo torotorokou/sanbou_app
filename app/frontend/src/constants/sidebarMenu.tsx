@@ -55,7 +55,7 @@ export const SIDEBAR_MENU = [
                 key: ROUTER_PATHS.DASHBOARD,
                 icon: <TableOutlined />,
                 label: <Link to={ROUTER_PATHS.DASHBOARD}>管理表</Link>,
-                hidden: false,
+                hidden: true,
             },
             {
                 key: ROUTER_PATHS.FACTORY,
@@ -71,7 +71,7 @@ export const SIDEBAR_MENU = [
                 key: ROUTER_PATHS.CUSTOMER_LIST,
                 icon: <FileTextOutlined />,
                 label: <Link to={ROUTER_PATHS.CUSTOMER_LIST}>顧客リスト</Link>,
-                hidden: false,
+                hidden: true,
             },
         ],
     },
