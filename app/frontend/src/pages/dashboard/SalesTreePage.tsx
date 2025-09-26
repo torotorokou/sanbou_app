@@ -3,11 +3,11 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import type { FC } from 'react';
 import {
   App, Badge, Button, Card, Col, DatePicker, Divider, Drawer, Empty, Row,
-  Segmented, Select, Space, Statistic, Table, Tag, Tabs, Tooltip, Typography
+  Segmented, Select, Space, Statistic, Table, Tag, Tabs, Tooltip, Typography, Dropdown, Switch
 } from 'antd';
-import type { TableColumnsType, TableProps } from 'antd';
+import type { TableColumnsType, TableProps, MenuProps } from 'antd';
 import {
-  ArrowDownOutlined, ArrowUpOutlined, InfoCircleOutlined, SwapOutlined, ReloadOutlined, DownloadOutlined
+  ArrowDownOutlined, ArrowUpOutlined, InfoCircleOutlined, SwapOutlined, ReloadOutlined, DownloadOutlined, DownOutlined
 } from '@ant-design/icons';
 import dayjs, { Dayjs } from 'dayjs';
 import {
@@ -21,7 +21,7 @@ type YYYYMM = string;
 type YYYYMMDD = string;
 
 type Mode = 'customer' | 'item' | 'date';
-type SortKey = 'amount' | 'qty' | 'unit_price' | 'date' | 'name';
+type SortKey = 'amount' | 'qty' | 'count' | 'unit_price' | 'date' | 'name';
 type SortOrder = 'asc' | 'desc';
 type ID = string;
 
@@ -30,9 +30,10 @@ interface SalesRep { id: ID; name: string; }
 interface MetricEntry {
   id: ID;
   name: string;        // 顧客名 | 品名 | 日付(YYYY-MM-DD)
-  amount: number;
-  qty: number;
-  unit_price: number | null;
+  amount: number;      // 売上
+  qty: number;         // 数量(kg)
+  count: number;       // 台数
+  unit_price: number | null; // 売単価 = 金額/数量（数量=0はnull）
   dateKey?: YYYYMMDD;  // dateモードのソート用
 }
 
@@ -46,6 +47,25 @@ interface SummaryQuery {
 }
 
 type CursorPage<T> = { rows: T[]; next_cursor: string | null };
+
+/* =========================
+ * Export options (simple)
+ * ========================= */
+type SplitBy = 'none' | 'rep';
+
+type ExportOptions = {
+  excludeZero: boolean;  // 0実績を除外（Excel負荷対策）
+  splitBy: SplitBy;      // 分割出力
+  addAxisB: boolean;     // 残りモード1（実名）を列に追加
+  addAxisC: boolean;     // 残りモード2（実名）を列に追加
+};
+
+const DEFAULT_EXPORT_OPTIONS: ExportOptions = {
+  excludeZero: true,     // 既定ON（Excel負荷対策）
+  splitBy: 'none',
+  addAxisB: false,
+  addAxisC: false,
+};
 
 /* =========================
  * Mock Masters
@@ -83,13 +103,16 @@ const ITEMS: Array<{ id: ID; name: string }> = [
 const delay = (ms = 180) => new Promise((r) => setTimeout(r, ms));
 const rndInt = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min;
 
-const makeMetric = (weight = 1): Pick<MetricEntry, 'amount' | 'qty' | 'unit_price'> => {
+// 乱数でメトリクスを生成（矛盾を極力避ける）
+const makeMetric = (weight = 1): Pick<MetricEntry, 'amount' | 'qty' | 'count' | 'unit_price'> => {
   const has = Math.random() < 0.83; // 17%は0実績
   const qty = has ? Math.max(0, Math.round((Math.random() * 140) * weight)) : 0;
+  // 台数はqtyにゆるく相関（qty>0なら最低1台）
+  const count = qty > 0 ? Math.max(1, Math.round(qty / rndInt(300, 500))) : 0;
   const price = has ? rndInt(120, 520) : 0;
   const amount = has ? Math.round(qty * price * (0.7 + Math.random() * 0.6)) : 0;
   const unit_price = qty > 0 ? Math.round((amount / qty) * 100) / 100 : null;
-  return { amount, qty, unit_price };
+  return { amount, qty, count, unit_price };
 };
 
 const monthDays = (m: YYYYMM) => {
@@ -155,7 +178,6 @@ async function fetchSummary(q: SummaryQuery): Promise<SummaryRow[]> {
 
   const months = q.monthRange ? monthsBetween(q.monthRange.from, q.monthRange.to) : [q.month!];
 
-  // Universe
   const universe =
     q.mode === 'customer' ? CUSTOMERS :
     q.mode === 'item' ? ITEMS :
@@ -167,12 +189,12 @@ async function fetchSummary(q: SummaryQuery): Promise<SummaryRow[]> {
     const weight = 1 + (rep.id.charCodeAt(rep.id.length - 1) % 3) * 0.2;
     const pool: MetricEntry[] = (filtered as any[]).map((t: any) => {
       const m = makeMetric(weight);
-      // 期間合計（簡易に月数でスケール）
       const mult = q.mode === 'date' ? 1 : months.length;
       const amount = Math.round(m.amount * mult);
       const qty = Math.round(m.qty * mult);
+      const count = Math.round(m.count * mult);
       return {
-        id: t.id, name: t.name, amount, qty,
+        id: t.id, name: t.name, amount, qty, count,
         unit_price: qty > 0 ? Math.round((amount / qty) * 100) / 100 : null,
         dateKey: t.dateKey
       };
@@ -212,7 +234,11 @@ async function fetchPivot(params: {
     const mult = params.targetAxis === 'date' ? 1 : months.length;
     const amount = Math.round(m.amount * mult);
     const qty = Math.round(m.qty * mult);
-    return { id: t.id, name: t.name, amount, qty, unit_price: qty > 0 ? Math.round((amount / qty) * 100) / 100 : null, dateKey: t.dateKey };
+    const count = Math.round(m.count * mult);
+    return {
+      id: t.id, name: t.name, amount, qty, count,
+      unit_price: qty > 0 ? Math.round((amount / qty) * 100) / 100 : null, dateKey: t.dateKey
+    };
   });
 
   sortMetrics(rows, params.sortBy, params.order);
@@ -230,11 +256,14 @@ async function fetchPivot(params: {
 async function fetchDailySeries(params: {
   month?: YYYYMM; monthRange?: { from: YYYYMM; to: YYYYMM };
   repId?: ID; customerId?: ID; itemId?: ID;
-}): Promise<Array<{ date: YYYYMMDD; amount: number; qty: number; unit_price: number | null }>> {
+}): Promise<Array<{ date: YYYYMMDD; amount: number; qty: number; count: number; unit_price: number | null }>> {
   const days = params.monthRange ? allDaysInRange(params.monthRange) : monthDays(params.month!);
   const series = days.map(d => {
     const m = makeMetric(1);
-    return { date: d.name, amount: m.amount, qty: m.qty, unit_price: m.qty > 0 ? Math.round((m.amount / m.qty) * 100) / 100 : null };
+    return {
+      date: d.name, amount: m.amount, qty: m.qty, count: m.count,
+      unit_price: m.qty > 0 ? Math.round((m.amount / m.qty) * 100) / 100 : null
+    };
   });
   await delay(120);
   return series;
@@ -260,7 +289,9 @@ function toCsv(rows: Array<Record<string, any>>, bomUtf8 = true): Blob {
   const headers = Object.keys(rows[0] ?? {});
   const escape = (v: any) => {
     if (v == null) return '';
-    const s = String(v).replace(/"/g, '""');
+    let s = String(v).replace(/"/g, '""');
+    // Excelの数式インジェクション最低限対策
+    if (/^[=+\-@]/.test(s)) s = "'" + s;
     if (/[",\r\n]/.test(s)) return `"${s}"`;
     return s;
   };
@@ -276,10 +307,30 @@ function downloadBlob(blob: Blob, filename: string) {
 }
 
 /* =========================
+ * CSV Export helpers
+ * ========================= */
+type Axis = Mode;
+
+const axisLabel = (ax: Axis) => ax === 'customer' ? '顧客' : ax === 'item' ? '品名' : '日付';
+
+const universeOf = (ax: Axis, q: SummaryQuery) => {
+  if (ax === 'customer') return CUSTOMERS.map(c => ({ id: c.id, name: c.name }));
+  if (ax === 'item')     return ITEMS.map(i => ({ id: i.id, name: i.name }));
+  const days = q.monthRange ? allDaysInRange(q.monthRange) : monthDays(q.month!);
+  return days.map(d => ({ id: d.id, name: d.name, dateKey: d.dateKey }));
+};
+
+const axesFromMode = (m: Mode): [Axis, Axis, Axis] => {
+  if (m === 'customer') return ['customer', 'item', 'date'];
+  if (m === 'item')     return ['item', 'customer', 'date'];
+  return ['date', 'customer', 'item'];
+};
+
+/* =========================
  * Component
  * ========================= */
 const SalesPivotBoardPlusWithCharts: FC = () => {
-  App.useApp?.();
+  const { message } = App.useApp?.() ?? { message: { success: () => {}, warning: () => {}, error: () => {} } as any };
 
   // Period
   const [periodMode, setPeriodMode] = useState<'single' | 'range'>('single');
@@ -293,6 +344,21 @@ const SalesPivotBoardPlusWithCharts: FC = () => {
   const [order, setOrder] = useState<SortOrder>('desc');
   const [repIds, setRepIds] = useState<ID[]>([]);
   const [filterIds, setFilterIds] = useState<ID[]>([]);
+
+  // Export options (persist)
+  const [exportOptions, setExportOptions] = useState<ExportOptions>(() => {
+    try {
+      const raw = localStorage.getItem('exportOptions_v1');
+      return raw ? JSON.parse(raw) as ExportOptions : DEFAULT_EXPORT_OPTIONS;
+    } catch {
+      return DEFAULT_EXPORT_OPTIONS;
+    }
+  });
+  useEffect(() => {
+    localStorage.setItem('exportOptions_v1', JSON.stringify(exportOptions));
+  }, [exportOptions]);
+
+  // （残り2軸の個別選択は今回の方針で廃止）
 
   // Data
   const [summary, setSummary] = useState<SummaryRow[]>([]);
@@ -315,7 +381,7 @@ const SalesPivotBoardPlusWithCharts: FC = () => {
   const [pivotCursor, setPivotCursor] = useState<Record<Mode, string | null>>({ customer: null, item: null, date: null });
   const [pivotLoading, setPivotLoading] = useState<boolean>(false);
 
-  const [repSeriesCache, setRepSeriesCache] = useState<Record<ID, Array<{ date: YYYYMMDD; amount: number; qty: number; unit_price: number | null }>>>({});
+  const [repSeriesCache, setRepSeriesCache] = useState<Record<ID, Array<{ date: YYYYMMDD; amount: number; qty: number; count: number; unit_price: number | null }>>>({});
 
   // Query materialize
   const query: SummaryQuery = useMemo(() => {
@@ -347,34 +413,144 @@ const SalesPivotBoardPlusWithCharts: FC = () => {
     return monthDays(query.month!).map(d => ({ label: d.name, value: d.id }));
   }, [mode, query]);
 
+  // ====== 残り2軸の候補リスト ======
+  const [baseAx, axB, axC] = useMemo(() => axesFromMode(mode), [mode]);
+
+  // axisB/axisC option lists are not used for export selection in this simplified approach
+
   // Header totals
   const headerTotals = useMemo(() => {
     const flat = summary.flatMap(r => r.topN);
     const amount = flat.reduce((s, x) => s + x.amount, 0);
     const qty = flat.reduce((s, x) => s + x.qty, 0);
+    const count = flat.reduce((s, x) => s + x.count, 0);
     const unit = qty > 0 ? Math.round((amount / qty) * 100) / 100 : null;
-    return { amount, qty, unit };
+    return { amount, qty, count, unit };
   }, [summary]);
 
-  // CSV (summary)
-  const exportSummaryCsv = () => {
-    const axisLabel = mode === 'customer' ? '顧客' : mode === 'item' ? '品名' : '日付';
-    const rows = summary.flatMap(r =>
-      r.topN.map(t => ({
-        営業: r.repName,
-        軸: axisLabel,
-        名称_日付: t.name,
-        売上: t.amount,
-        '数量（kg）': t.qty,
-        売単価: t.unit_price ?? ''
-      }))
-    );
-    if (rows.length === 0) return;
-    const blob = toCsv(rows);
-    const title = periodMode === 'single'
-      ? `summary_${axisLabel}_${month.format('YYYYMM')}.csv`
-      : `summary_${axisLabel}_${(range?.[0] ?? dayjs()).format('YYYYMM')}-${(range?.[1] ?? dayjs()).format('YYYYMM')}.csv`;
-    downloadBlob(blob, title);
+  // 選択営業名（KPIタイトル表示用）
+  const selectedRepLabel = useMemo(() => {
+    if (repIds.length === 0) return '未選択';
+    const names = REPS.filter(r => repIds.includes(r.id)).map(r => r.name);
+    return names.length <= 3 ? names.join('・') : `${names.slice(0, 3).join('・')} ほか${names.length - 3}名`;
+  }, [repIds]);
+
+  // ============ CSV Export ============
+  const periodLabel = useMemo(() => {
+    return periodMode === 'single'
+      ? month.format('YYYYMM')
+      : `${(range?.[0] ?? dayjs()).format('YYYYMM')}-${(range?.[1] ?? dayjs()).format('YYYYMM')}`;
+  }, [periodMode, month, range]);
+
+  // exportModeCube: 新方針に合わせた集約ロジック
+  const exportModeCube = async (options: ExportOptions, targetRepIds: ID[]) => {
+    const q = query;
+
+    // ベース軸：画面のフィルタを尊重
+    const baseUniverseFull = universeOf(baseAx, q);
+    const baseUniverse =
+      filterIds.length ? baseUniverseFull.filter(x => filterIds.includes(x.id)) : baseUniverseFull;
+
+    // 残り2軸の全件（今回の方針では値選択なし）
+    const bUniverse = universeOf(axB, q);
+    const cUniverse = universeOf(axC, q);
+
+    // 動的ヘッダ
+    const headers = [
+      '営業',
+      axisLabel(baseAx),
+      ...(options.addAxisB ? [axisLabel(axB)] : []),
+      ...(options.addAxisC ? [axisLabel(axC)] : []),
+      '売上', '数量（kg）', '台数（台）', '売単価'
+    ];
+
+    const fileStem = `csv_${axisLabel(baseAx)}${options.addAxisB ? `_${axisLabel(axB)}` : ''}${options.addAxisC ? `_${axisLabel(axC)}` : ''}_${periodLabel}`;
+
+    const buildRowsFor = async (repId: ID) => {
+      const repName = REPS.find(r => r.id === repId)?.name ?? repId;
+      const rows: Array<Record<string, any>> = [];
+
+      const pushRow = (baseName: string, bName?: string, cName?: string, amount = 0, qty = 0, count = 0) => {
+        const unit = qty > 0 ? Math.round((amount / qty) * 100) / 100 : null;
+        if (options.excludeZero && amount === 0 && qty === 0 && count === 0) return;
+
+        const row: Record<string, any> = { 営業: repName, [axisLabel(baseAx)]: baseName };
+        if (options.addAxisB) row[axisLabel(axB)] = bName ?? '';
+        if (options.addAxisC) row[axisLabel(axC)] = cName ?? '';
+        row['売上'] = amount;
+        row['数量（kg）'] = qty;
+        row['台数（台）'] = count;
+        row['売単価'] = unit ?? '';
+        rows.push(row);
+      };
+
+      // 集約ヘルパ（ダミー集計：実運用ではAPIに置換）
+      const addMetric = (acc: { a: number; q: number; c: number }, w = 1) => {
+        const m = makeMetric(w);
+        acc.a += m.amount;
+        acc.q += m.qty;
+        acc.c += m.count;
+      };
+
+      for (const base of baseUniverse) {
+        if (options.addAxisB && options.addAxisC) {
+          // ベース × B × C（明細）
+          for (const b of bUniverse) {
+            for (const c of cUniverse) {
+              const acc = { a: 0, q: 0, c: 0 };
+              addMetric(acc, 1); // ※ここは本来は（repId, base.id, b.id, c.id, 期間）で集計
+              pushRow(base.name, b.name, c.name, acc.a, acc.q, acc.c);
+            }
+          }
+        } else if (options.addAxisB && !options.addAxisC) {
+          // ベース × B（Cを合算）
+          for (const b of bUniverse) {
+            const acc = { a: 0, q: 0, c: 0 };
+            for (const _c of cUniverse) addMetric(acc, 1);
+            pushRow(base.name, b.name, undefined, acc.a, acc.q, acc.c);
+          }
+        } else if (!options.addAxisB && options.addAxisC) {
+          // ベース × C（Bを合算）
+          for (const c of cUniverse) {
+            const acc = { a: 0, q: 0, c: 0 };
+            for (const _b of bUniverse) addMetric(acc, 1);
+            pushRow(base.name, undefined, c.name, acc.a, acc.q, acc.c);
+          }
+        } else {
+          // ベースのみ（BとCを合算）
+          const acc = { a: 0, q: 0, c: 0 };
+          for (const _b of bUniverse) for (const _c of cUniverse) addMetric(acc, 1);
+          pushRow(base.name, undefined, undefined, acc.a, acc.q, acc.c);
+        }
+      }
+
+      return rows;
+    };
+
+    if (options.splitBy === 'rep') {
+      for (const repId of targetRepIds) {
+        const rows = await buildRowsFor(repId);
+        if (rows.length) downloadBlob(toCsv(rows), `${fileStem}_${repId}.csv`);
+      }
+    } else {
+      let all: Record<string, any>[] = [];
+      for (const repId of targetRepIds) all = all.concat(await buildRowsFor(repId));
+      if (all.length) downloadBlob(toCsv(all), `${fileStem}.csv`);
+    }
+  };
+
+  // exportCustomerItem は今回の方針で不要のため削除
+
+  // handleExport: modeCube のみ呼び出す
+  const handleExport = async () => {
+    if (repIds.length === 0) return;
+    try {
+      await exportModeCube(exportOptions, repIds);
+      message?.success?.('CSVを出力しました。');
+    } catch (e) {
+      console.error(e);
+      message?.error?.('CSV出力でエラーが発生しました。');
+    }
   };
 
   // Table (parent)
@@ -386,11 +562,13 @@ const SalesPivotBoardPlusWithCharts: FC = () => {
       render: (_, row) => {
         const totalAmount = row.topN.reduce((s, x) => s + x.amount, 0);
         const totalQty = row.topN.reduce((s, x) => s + x.qty, 0);
+        const totalCount = row.topN.reduce((s, x) => s + x.count, 0);
         const unit = totalQty > 0 ? Math.round((totalAmount / totalQty) * 100) / 100 : null;
         return (
           <Space wrap size="small" className="summary-tags">
             <Tag color="#237804">合計 売上 {fmtCurrency(totalAmount)}</Tag>
             <Tag color="green">数量 {fmtNumber(totalQty)} kg</Tag>
+            <Tag color="blue">台数 {fmtNumber(totalCount)} 台</Tag>
             <Tag color="gold">単価 {fmtUnitPrice(unit)}</Tag>
           </Space>
         );
@@ -403,6 +581,7 @@ const SalesPivotBoardPlusWithCharts: FC = () => {
     const data = row.topN;
     const maxAmount = Math.max(1, ...data.map(x => x.amount));
     const maxQty = Math.max(1, ...data.map(x => x.qty));
+    const maxCount = Math.max(1, ...data.map(x => x.count));
     const unitCandidates = data.map(x => x.unit_price ?? 0);
     const maxUnit = Math.max(1, ...unitCandidates);
     const nameTitle = mode === 'customer' ? '顧客' : mode === 'item' ? '品名' : '日付';
@@ -432,6 +611,17 @@ const SalesPivotBoardPlusWithCharts: FC = () => {
         )
       },
       {
+        title: '台数（台）', dataIndex: 'count', key: 'count', align: 'right', width: 120, sorter: true,
+        render: (v: number) => (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ minWidth: 48, textAlign: 'right' }}>{fmtNumber(v)} 台</span>
+            <div className="mini-bar-bg">
+              <div className="mini-bar mini-bar-blue" style={{ width: `${Math.round((v / maxCount) * 100)}%` }} />
+            </div>
+          </div>
+        )
+      },
+      {
         title: (<Space><span>売単価</span><Tooltip title="単価＝Σ金額 / Σ数量（数量=0は未定義）"><InfoCircleOutlined /></Tooltip></Space>),
         dataIndex: 'unit_price', key: 'unit_price', align: 'right', width: 170, sorter: true,
         render: (v: number | null) => (
@@ -455,14 +645,16 @@ const SalesPivotBoardPlusWithCharts: FC = () => {
         const f = String(s.field);
         let key: SortKey = sortBy;
         if (f === 'name') key = (mode === 'date') ? 'date' : 'name';
-        else if ((['amount','qty','unit_price'] as string[]).includes(f)) key = f as SortKey;
+        else if ((['amount','qty','count','unit_price'] as string[]).includes(f)) key = f as SortKey;
         const ord: SortOrder = s.order === 'ascend' ? 'asc' : 'desc';
         setSortBy(key); setOrder(ord);
       }
     };
 
-    // グラフ用
-  const chartBarData = data.map(d => ({ name: d.name, 売上: d.amount, 数量: d.qty, 売単価: d.unit_price ?? 0 }));
+    // グラフ用（TopN棒）
+    const chartBarData = data.map(d => ({
+      name: d.name, 売上: d.amount, 数量: d.qty, 台数: d.count, 売単価: d.unit_price ?? 0
+    }));
     const repId = row.repId;
     const series = repSeriesCache[repId];
     const handleLoadSeries = async () => {
@@ -491,7 +683,7 @@ const SalesPivotBoardPlusWithCharts: FC = () => {
                   dataSource={data}
                   pagination={false}
                   onChange={onChildChange}
-                  scroll={{ x: 1000 }}
+                  scroll={{ x: 1200 }}
                   rowClassName={(_, idx) => (idx % 2 === 0 ? 'zebra-even' : 'zebra-odd')}
                 />
               )
@@ -501,8 +693,8 @@ const SalesPivotBoardPlusWithCharts: FC = () => {
               children: (
                 <Row gutter={[16, 16]}>
                   <Col xs={24} md={14}>
-                    <div className="card-subtitle">TopN（売上・数量・売単価）</div>
-                    <div style={{ width: '100%', height: 300 }}>
+                    <div className="card-subtitle">TopN（売上・数量・台数・売単価）</div>
+                    <div style={{ width: '100%', height: 320 }}>
                       <ResponsiveContainer>
                         <BarChart data={chartBarData} margin={{ top: 8, right: 8, left: 8, bottom: 24 }}>
                           <CartesianGrid strokeDasharray="3 3" />
@@ -511,6 +703,7 @@ const SalesPivotBoardPlusWithCharts: FC = () => {
                           <RTooltip />
                           <Bar dataKey="売上" />
                           <Bar dataKey="数量" />
+                          <Bar dataKey="台数" />
                           <Bar dataKey="売単価" />
                         </BarChart>
                       </ResponsiveContainer>
@@ -523,14 +716,23 @@ const SalesPivotBoardPlusWithCharts: FC = () => {
                       </div>
                       {!series && (<Button size="small" onClick={handleLoadSeries} icon={<ReloadOutlined />}>日次を取得</Button>)}
                     </Space>
-                    <div style={{ width: '100%', height: 300 }}>
+                    <div style={{ width: '100%', height: 320 }}>
                       <ResponsiveContainer>
                         <LineChart data={series ?? []} margin={{ top: 8, right: 8, left: 8, bottom: 8 }}>
                           <CartesianGrid strokeDasharray="3 3" />
                           <XAxis dataKey="date" hide />
                           <YAxis />
-                          <RTooltip formatter={(v: any, n: any) => n === 'amount' ? fmtCurrency(Number(v)) : fmtNumber(Number(v))} labelFormatter={(l) => l} />
-                          <Line type="monotone" dataKey="amount" />
+                          <RTooltip
+                            formatter={(v: number | string, name: string) =>
+                              name === 'amount' ? fmtCurrency(Number(v))
+                              : name === 'qty' ? `${fmtNumber(Number(v))} kg`
+                              : name === 'count' ? `${fmtNumber(Number(v))} 台`
+                              : fmtUnitPrice(Number(v))}
+                            labelFormatter={(l) => l}
+                          />
+                          <Line type="monotone" dataKey="amount" name="売上" />
+                          <Line type="monotone" dataKey="qty" name="数量" />
+                          <Line type="monotone" dataKey="count" name="台数" />
                         </LineChart>
                       </ResponsiveContainer>
                     </div>
@@ -590,44 +792,10 @@ const SalesPivotBoardPlusWithCharts: FC = () => {
       const f = String(s.field);
       let nextKey: SortKey = drawer.sortBy;
       if (f === 'name') nextKey = (drawer.activeAxis === 'date') ? 'date' : 'name';
-      else if ((['amount','qty','unit_price'] as string[]).includes(f)) nextKey = f as SortKey;
+      else if ((['amount','qty','count','unit_price'] as string[]).includes(f)) nextKey = f as SortKey;
       const nextOrder: SortOrder = s.order === 'ascend' ? 'asc' : 'desc';
       setDrawer(prev => prev.open ? { ...prev, sortBy: nextKey, order: nextOrder } : prev);
     }
-  };
-
-  // Drawer CSV
-  const exportPivotCsv = async (all = false) => {
-    if (!drawer.open) return;
-    const axis = drawer.activeAxis;
-    if (!all) {
-      const rows = pivotData[axis].map(r => ({
-        軸: axis === 'customer' ? '顧客' : axis === 'item' ? '品名' : '日付',
-        名称_日付: r.name, 売上: r.amount, '数量（kg）': r.qty, 売単価: r.unit_price ?? ''
-      }));
-      if (rows.length === 0) return;
-      const blob = toCsv(rows);
-      downloadBlob(blob, `pivot_${axis}.csv`);
-      return;
-    }
-    // 全件
-    let acc: MetricEntry[] = [];
-    let cursor: string | null = null;
-    do {
-      const page = await fetchPivot({
-        month: isDrawerOpen(drawer) ? drawer.month : undefined,
-        monthRange: isDrawerOpen(drawer) ? drawer.monthRange : undefined,
-        baseAxis: drawer.baseAxis, baseId: drawer.baseId, repIds: drawer.repIds,
-        targetAxis: axis, sortBy: drawer.sortBy, order: drawer.order, topN: 'all', cursor
-      });
-      acc = acc.concat(page.rows);
-      cursor = page.next_cursor;
-    } while (cursor);
-    const rows = acc.map(r => ({
-      軸: axis === 'customer' ? '顧客' : axis === 'item' ? '品名' : '日付',
-      名称_日付: r.name, 売上: r.amount, '数量（kg）': r.qty, 売単価: r.unit_price ?? ''
-    }));
-    if (rows.length) downloadBlob(toCsv(rows), `pivot_${axis}_all.csv`);
   };
 
   // Sort options
@@ -636,104 +804,116 @@ const SalesPivotBoardPlusWithCharts: FC = () => {
       { label: mode === 'date' ? '日付' : '名称', value: mode === 'date' ? 'date' : 'name' },
       { label: '売上', value: 'amount' },
       { label: '数量', value: 'qty' },
+      { label: '台数', value: 'count' },
       { label: '売単価', value: 'unit_price' },
     ];
   }, [mode]);
 
-  // (drawerTabBarExtra は未使用のため削除)
-
-  // Drawer handlers
-  const onDrawerTopNChange = (v: string | number) => {
-    const next = (v === 'all' ? 'all' : Number(v)) as 10 | 20 | 50 | 'all';
-    if (!drawer.open) return;
-    setDrawer({ ...drawer, topN: next });
-    setPivotData({ customer: [], item: [], date: [] });
-    setPivotCursor({ customer: null, item: null, date: null });
-  };
-  const onDrawerSortKeyChange = (v: SortKey) => {
-    if (!drawer.open) return;
-    setDrawer({ ...drawer, sortBy: v });
-    setPivotData({ customer: [], item: [], date: [] });
-    setPivotCursor({ customer: null, item: null, date: null });
-  };
-  const onDrawerOrderChange = (v: SortOrder) => {
-    if (!drawer.open) return;
-    setDrawer({ ...drawer, order: v });
-    setPivotData({ customer: [], item: [], date: [] });
-    setPivotCursor({ customer: null, item: null, date: null });
-  };
-
-  // Mode switch
+  // Mode switch（残り軸の選択は廃止のためフィルタだけリセット）
   const switchMode = (m: Mode) => { setMode(m); setFilterIds([]); };
+
+  /* =========================
+   * Export Dropdown (UI)
+   * ========================= */
+  const exportMenu: MenuProps['items'] = [
+    { key: 'title', label: <b>出力条件</b> },
+    { type: 'divider' as const },
+
+    // 追加カラム：残りモード1（実名）
+    {
+      key: 'addB',
+      label: (
+        <div onClick={e => e.stopPropagation()}>
+          <Space>
+            <Switch
+              size="small"
+              checked={exportOptions.addAxisB}
+              onChange={(v) => setExportOptions(prev => ({ ...prev, addAxisB: v }))}
+            />
+            <span>追加カラム：{axisLabel(axB)}</span>
+          </Space>
+        </div>
+      ),
+    },
+
+    // 追加カラム：残りモード2（実名）
+    {
+      key: 'addC',
+      label: (
+        <div onClick={e => e.stopPropagation()}>
+          <Space>
+            <Switch
+              size="small"
+              checked={exportOptions.addAxisC}
+              onChange={(v) => setExportOptions(prev => ({ ...prev, addAxisC: v }))}
+            />
+            <span>追加カラム：{axisLabel(axC)}</span>
+          </Space>
+        </div>
+      ),
+    },
+
+    { type: 'divider' as const },
+
+    // 0実績除外（Excel負荷対策）
+    {
+      key: 'opt-zero',
+      label: (
+        <Space onClick={e => e.stopPropagation()}>
+          <Switch
+            size="small"
+            checked={exportOptions.excludeZero}
+            onChange={(checked) => setExportOptions(prev => ({ ...prev, excludeZero: checked }))}
+          />
+          <span>0実績を除外する（Excel負荷対策）</span>
+        </Space>
+      ),
+    },
+
+    // 分割出力（任意・既存そのまま継続）
+    {
+      key: 'opt-split',
+      label: (
+        <Space onClick={e => e.stopPropagation()}>
+          <Select
+            size="small"
+            value={exportOptions.splitBy}
+            onChange={(v: SplitBy) => setExportOptions(prev => ({ ...prev, splitBy: v }))}
+            options={[
+              { label: '分割しない', value: 'none' },
+              { label: '営業ごとに分割', value: 'rep' },
+            ]}
+            style={{ width: 180 }}
+          />
+          <span>（Excel負荷対策）</span>
+        </Space>
+      ),
+    },
+  ];
 
   return (
     <Space direction="vertical" size="large" style={{ display: 'block' }}>
-      {/* シンプル＆モダンなアクセント用スタイル */}
+      {/* スタイル */}
       <style>{`
-        .app-header {
-          position: relative;
-          padding: 12px 0 4px;
-        }
-        .app-title {
-          text-align: center;
-          font-weight: 700;
-          letter-spacing: 0.02em;
-          font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-          margin: 0;
-        }
-        .app-title-accent {
-          display: inline-flex;
-          align-items: center;
-          gap: 10px;
-          padding-left: 8px;
-          color: #000;
-          font-weight: 700;
-          line-height: 1.2;
-          font-size: 1.05em;
-        }
-        .app-title-accent::before {
-          content: "";
-          display: inline-block;
-          width: 6px;
-          height: 22px;
-          background: #237804;
-          border-radius: 3px;
-        }
-        .app-header-actions {
-          position: absolute;
-          right: 0;
-          top: 8px;
-        }
-        .accent-card {
-          border-left: 4px solid #23780410;
-          overflow: hidden;
-        }
+        .app-header { position: relative; padding: 12px 0 4px; }
+        .app-title { text-align: center; font-weight: 700; letter-spacing: 0.02em; margin: 0; }
+        .app-title-accent { display: inline-flex; align-items: center; gap: 10px; padding-left: 8px; color: #000; font-weight: 700; line-height: 1.2; font-size: 1.05em; }
+        .app-title-accent::before { content: ""; display: inline-block; width: 6px; height: 22px; background: #237804; border-radius: 3px; }
+        .app-header-actions { position: absolute; right: 0; top: 8px; display: flex; gap: 8px; }
+        .accent-card { border-left: 4px solid #23780410; overflow: hidden; }
         .accent-primary { border-left-color: #237804; }
         .accent-secondary { border-left-color: #52c41a; }
         .accent-gold { border-left-color: #faad14; }
-        .card-section-header {
-          font-weight: 600;
-          padding: 6px 10px;
-          margin-bottom: 12px;
-          border-radius: 6px;
-          background: #f3fff4;
-          border: 1px solid #e6f7e6;
-        }
-        .card-subtitle {
-          color: rgba(0,0,0,0.55);
-          margin-bottom: 6px;
-          font-size: 12px;
-        }
-        .mini-bar-bg {
-          flex: 1; height: 6px; background: #f6f7fb; border-radius: 4px; overflow: hidden;
-        }
+        .card-section-header { font-weight: 600; padding: 6px 10px; margin-bottom: 12px; border-radius: 6px; background: #f3fff4; border: 1px solid #e6f7e6; }
+        .card-subtitle { color: rgba(0,0,0,0.55); margin-bottom: 6px; font-size: 12px; }
+        .mini-bar-bg { flex: 1; height: 6px; background: #f6f7fb; border-radius: 4px; overflow: hidden; }
         .mini-bar { height: 100%; }
-  .mini-bar-blue { background: #237804; }
+        .mini-bar-blue { background: #237804; }
         .mini-bar-green { background: #52c41a; }
         .mini-bar-gold { background: #faad14; }
         .zebra-even { background: #ffffff; }
         .zebra-odd { background: #fbfcfe; }
-  .ant-table-tbody > tr:hover > td { background: #f6fff4 !important; }
+        .ant-table-tbody > tr:hover > td { background: #f6fff4 !important; }
         .ant-table-header { box-shadow: inset 0 -1px 0 #f0f0f0; }
       `}</style>
 
@@ -742,15 +922,43 @@ const SalesPivotBoardPlusWithCharts: FC = () => {
         .summary-tags .ant-tag { font-size: 14px; padding: 0 10px; }
       `}</style>
 
-      {/* ヘッダ：中央タイトル／右上CSV */}
+      {/* ヘッダ（CSV：Dropdown.Buttonでワンクリック＋実名選択） */}
       <div className="app-header">
         <Typography.Title level={3} className="app-title">
           <span className="app-title-accent">売上ツリー</span>
         </Typography.Title>
         <div className="app-header-actions">
-          <Button icon={<DownloadOutlined />} type="default" onClick={exportSummaryCsv}>
-            表示中リストをCSV
-          </Button>
+          {repIds.length === 0 ? (
+            <Tooltip title="営業が未選択のためCSV出力できません">
+              <Button icon={<DownloadOutlined />} type="default" disabled>
+                CSV出力
+              </Button>
+            </Tooltip>
+          ) : (
+            <Tooltip
+              title={`出力：選択営業 × ${axisLabel(baseAx)}${exportOptions.addAxisB ? ` × ${axisLabel(axB)}` : ''}${exportOptions.addAxisC ? ` × ${axisLabel(axC)}` : ''}（期間：${
+                periodMode === 'single'
+                  ? month.format('YYYY-MM')
+                  : `${(range?.[0] ?? dayjs()).format('YYYY-MM')}〜${(range?.[1] ?? dayjs()).format('YYYY-MM')}`
+              }、0実績は${exportOptions.excludeZero ? '除外' : '含む'}、${exportOptions.splitBy === 'rep' ? '営業別分割' : '単一ファイル'}）`}
+            >
+              <Dropdown.Button
+                type="default"
+                icon={<DownloadOutlined />}
+                overlayStyle={{ width: 380 }}
+                menu={{ items: exportMenu }}
+                onClick={handleExport}
+                placement="bottomRight"
+                trigger={['click']}
+                buttonsRender={([left, right]) => [
+                  left,
+                  React.cloneElement(right as any, { icon: <DownOutlined /> })
+                ]}
+              >
+                CSV出力
+              </Dropdown.Button>
+            </Tooltip>
+          )}
         </div>
       </div>
 
@@ -812,8 +1020,14 @@ const SalesPivotBoardPlusWithCharts: FC = () => {
           <Col xs={24} md={12}>
             <Space direction="vertical" size={2} style={{ width: '100%' }}>
               <Typography.Text type="secondary">営業</Typography.Text>
-              <Select mode="multiple" allowClear placeholder="（未選択＝全営業）"
-                options={repOptions} value={repIds} onChange={setRepIds} style={{ width: '100%' }} />
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <Select mode="multiple" allowClear placeholder="（未選択）"
+                  options={repOptions} value={repIds} onChange={setRepIds} style={{ flex: 1 }} />
+                <Space>
+                  <Button size="small" onClick={() => setRepIds(REPS.map(r => r.id))} disabled={repIds.length === REPS.length}>全営業を表示</Button>
+                  <Button size="small" onClick={() => setRepIds([])} disabled={repIds.length === 0}>クリア</Button>
+                </Space>
+              </div>
             </Space>
           </Col>
           <Col xs={24} md={12}>
@@ -826,30 +1040,64 @@ const SalesPivotBoardPlusWithCharts: FC = () => {
         </Row>
       </Card>
 
-      {/* KPI */}
-      <Card className="accent-card accent-gold" title={<div className="card-section-header">KPI</div>}>
-        <Row gutter={[16, 16]}>
-          <Col xs={24} md={8}><Statistic title="（表示対象）合計 売上" value={headerTotals.amount} formatter={(v) => fmtCurrency(Number(v))} /></Col>
-          <Col xs={24} md={8}><Statistic title="（表示対象）合計 数量" value={headerTotals.qty} formatter={(v) => `${fmtNumber(Number(v))} kg`} /></Col>
-          <Col xs={24} md={8}><Statistic title="（表示対象）加重平均 単価" valueRender={() => <span>{fmtUnitPrice(headerTotals.unit)}</span>} /></Col>
-        </Row>
-      </Card>
+      {/* KPI（営業名をタイトルに反映） */}
+      {repIds.length > 0 ? (
+        <Card
+          className="accent-card accent-gold"
+          title={
+            <div className="card-section-header">
+              KPI（営業：
+              <Tooltip
+                title={
+                  repIds.length
+                    ? REPS.filter(r => repIds.includes(r.id)).map(r => r.name).join('・')
+                    : '未選択'
+                }
+              >
+                <span>{selectedRepLabel}</span>
+              </Tooltip>
+              ）
+            </div>
+          }
+        >
+          <Row gutter={[16, 16]}>
+            <Col xs={24} md={6}><Statistic title="（表示対象）合計 売上" value={headerTotals.amount} formatter={(v) => fmtCurrency(Number(v))} /></Col>
+            <Col xs={24} md={6}><Statistic title="（表示対象）合計 数量" value={headerTotals.qty} formatter={(v) => `${fmtNumber(Number(v))} kg`} /></Col>
+            <Col xs={24} md={6}><Statistic title="（表示対象）合計 台数" value={headerTotals.count} formatter={(v) => `${fmtNumber(Number(v))} 台`} /></Col>
+            <Col xs={24} md={6}><Statistic title="（表示対象）加重平均 単価" valueRender={() => <span>{fmtUnitPrice(headerTotals.unit)}</span>} /></Col>
+          </Row>
+        </Card>
+      ) : (
+        <Card className="accent-card accent-gold">
+          <div style={{ padding: 12 }}>
+            <Typography.Text type="secondary">営業が未選択のため、KPIは表示されません。左上の「営業」から選択してください。</Typography.Text>
+          </div>
+        </Card>
+      )}
 
       {/* メインテーブル */}
-      <Card className="accent-card accent-primary" title={<div className="card-section-header">一覧</div>}>
-        <Table<SummaryRow>
-          rowKey={(r) => r.repId}
-          columns={parentCols}
-          dataSource={summary}
-          loading={loading}
-          pagination={false}
-          expandable={{ expandedRowRender: (record) => renderChildTable(record), rowExpandable: () => true }}
-          scroll={{ x: 1024 }}
-          rowClassName={(_, idx) => (idx % 2 === 0 ? 'zebra-even' : 'zebra-odd')}
-        />
-      </Card>
+      {repIds.length > 0 ? (
+        <Card className="accent-card accent-primary" title={<div className="card-section-header">一覧</div>}>
+          <Table<SummaryRow>
+            rowKey={(r) => r.repId}
+            columns={parentCols}
+            dataSource={summary}
+            loading={loading}
+            pagination={false}
+            expandable={{ expandedRowRender: (record) => renderChildTable(record), rowExpandable: () => true }}
+            scroll={{ x: 1220 }}
+            rowClassName={(_, idx) => (idx % 2 === 0 ? 'zebra-even' : 'zebra-odd')}
+          />
+        </Card>
+      ) : (
+        <Card className="accent-card accent-primary">
+          <div style={{ padding: 12 }}>
+            <Typography.Text type="secondary">営業が未選択のため、一覧は表示されません。左上の「営業」から選択してください。</Typography.Text>
+          </div>
+        </Card>
+      )}
 
-      {/* Drawer: Pivot */}
+      {/* Drawer: Pivot（CSVボタンなし） */}
       <Drawer
         title={
           drawer.open
@@ -879,32 +1127,28 @@ const SalesPivotBoardPlusWithCharts: FC = () => {
               tabBarExtraContent={
                 <Space wrap>
                   <Segmented options={[{ label: '10', value: '10' }, { label: '20', value: '20' }, { label: '50', value: '50' }, { label: 'All', value: 'all' }]} value={String(drawer.open ? drawer.topN : 10)}
-                    onChange={(v: string | number) => drawer.open && onDrawerTopNChange(v)} />
+                    onChange={(v: string | number) => drawer.open && setDrawer(prev => prev.open ? { ...prev, topN: (v === 'all' ? 'all' : (Number(v) as 10 | 20 | 50)) } : prev)} />
                   <Segmented
                     options={[
                       { label: '売上', value: 'amount' },
                       { label: '数量', value: 'qty' },
+                      { label: '台数', value: 'count' },
                       { label: '売単価', value: 'unit_price' },
                       { label: drawer.open && drawer.activeAxis === 'date' ? '日付' : '名称', value: drawer.open && drawer.activeAxis === 'date' ? 'date' : 'name' }
                     ]}
                     value={drawer.open ? drawer.sortBy : 'amount'}
-                    onChange={(v) => drawer.open && onDrawerSortKeyChange(v as SortKey)}
+                    onChange={(v) => drawer.open && setDrawer(prev => prev.open ? { ...prev, sortBy: v as SortKey } : prev)}
                   />
                   <Segmented options={[{ label: '降順', value: 'desc' }, { label: '昇順', value: 'asc' }]}
                     value={drawer.open ? drawer.order : 'desc'}
-                    onChange={(v) => drawer.open && onDrawerOrderChange(v as SortOrder)} />
-                  <Button size="small" icon={<DownloadOutlined />} onClick={() => exportPivotCsv(false)}>詳細をCSV</Button>
-                  {drawer.open && drawer.topN === 'all' && (
-                    <Button size="small" icon={<DownloadOutlined />} onClick={() => exportPivotCsv(true)}>
-                      すべて取得してCSV
-                    </Button>
-                  )}
+                    onChange={(v) => drawer.open && setDrawer(prev => prev.open ? { ...prev, order: v as SortOrder } : prev)} />
                 </Space>
               }
               items={drawer.targets.map(t => {
                 const rows = pivotData[t.axis];
                 const maxA = Math.max(1, ...rows.map(x => x.amount));
                 const maxQ = Math.max(1, ...rows.map(x => x.qty));
+                const maxC = Math.max(1, ...rows.map(x => x.count));
                 const maxU = Math.max(1, ...rows.map(x => x.unit_price ?? 0));
 
                 const cols: TableColumnsType<MetricEntry> = [
@@ -922,6 +1166,13 @@ const SalesPivotBoardPlusWithCharts: FC = () => {
                       <div style={{ display:'flex', alignItems:'center', gap:8, justifyContent:'flex-end' }}>
                         <span style={{ minWidth: 60, textAlign:'right' }}>{fmtNumber(v)}</span>
                         <div className="mini-bar-bg"><div className="mini-bar mini-bar-green" style={{ width:`${Math.round((v / maxQ) * 100)}%` }} /></div>
+                      </div>
+                    ) },
+                  { title: '台数（台）', dataIndex: 'count', key: 'count', align: 'right', width: 120, sorter: true,
+                    render: (v: number) => (
+                      <div style={{ display:'flex', alignItems:'center', gap:8, justifyContent:'flex-end' }}>
+                        <span style={{ minWidth: 48, textAlign:'right' }}>{fmtNumber(v)} 台</span>
+                        <div className="mini-bar-bg"><div className="mini-bar mini-bar-blue" style={{ width:`${Math.round((v / maxC) * 100)}%` }} /></div>
                       </div>
                     ) },
                   { title: (<Space><span>売単価</span><Tooltip title="単価＝Σ金額 / Σ数量（数量=0は未定義）"><InfoCircleOutlined /></Tooltip></Space>),
@@ -948,7 +1199,7 @@ const SalesPivotBoardPlusWithCharts: FC = () => {
                         pagination={false}
                         onChange={onPivotTableChange}
                         locale={{ emptyText: pivotLoading ? '読込中...' : <Empty description="該当なし" /> }}
-                        scroll={{ x: 900 }}
+                        scroll={{ x: 980 }}
                         rowClassName={(_, idx) => (idx % 2 === 0 ? 'zebra-even' : 'zebra-odd')}
                       />
                       <Space style={{ marginTop: 8 }}>
