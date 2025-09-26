@@ -1,3 +1,6 @@
+from .utils import build_manual_asset_url
+
+
 sections = [
     {
         "id": "master",
@@ -5,7 +8,15 @@ sections = [
         "icon": "FolderOpenOutlined",
         "items": [
             {"id": "customer", "title": "取引先", "route": "/manual/master/customer", "description": "取引先の登録・更新・検索"},
-            {"id": "vendor", "title": "業者", "route": "/manual/master/vendor", "description": "運搬業者・処分業者の管理"},
+            {
+                "id": "vendor",
+                "title": "業者",
+                "route": "/manual/master/vendor",
+                "description": "運搬業者・処分業者の管理",
+                "flow_url": build_manual_asset_url("master/vender/vender_fllowchart.png"),
+                "video_url": build_manual_asset_url("master/vender/vender_movie.mp4"),
+                "tags": ["業者", "マスター"],
+            },
             {"id": "site", "title": "現場", "route": "/manual/master/site"},
             {"id": "unitprice", "title": "単価", "route": "/manual/master/unit-price"},
             {"id": "item", "title": "品名", "route": "/manual/master/item"},

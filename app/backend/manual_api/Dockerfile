@@ -37,6 +37,7 @@ RUN pip install --no-cache-dir /wheels/*.whl
 
 # app
 COPY ${BASE_PATH}/${SERVICE_DIR}/app /backend/app
+COPY ${BASE_PATH}/${SERVICE_DIR}/data /backend/data
 COPY ${BASE_PATH}/${SERVICE_DIR}/startup.sh /backend/startup.sh
 USER root
 RUN chmod +x /backend/startup.sh && chown appuser:appuser /backend/startup.sh

@@ -60,12 +60,12 @@ export const SIDEBAR_MENU = [
             {
                 key: ROUTER_PATHS.FACTORY,
                 icon: <ApartmentOutlined />,
-                label: <Link to={ROUTER_PATHS.FACTORY}>工場管理</Link>,
+                label: <Link to={ROUTER_PATHS.FACTORY}>搬入量管理</Link>,
             },
             {
                 key: ROUTER_PATHS.SALES_TREE,
                 icon: <BarChartOutlined />,
-                label: <Link to={ROUTER_PATHS.SALES_TREE}>売上ツリー</Link>,
+                label: <Link to={ROUTER_PATHS.SALES_TREE}>営業・売上ツリー</Link>,
             },
             {
                 key: ROUTER_PATHS.CUSTOMER_LIST,
