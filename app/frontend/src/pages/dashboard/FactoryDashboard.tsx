@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import dayjs, { Dayjs } from 'dayjs';
+import dayjs from 'dayjs';
+import type { Dayjs } from 'dayjs';
 import type { FC } from 'react';
 import {
   Card, Row, Col, Typography, DatePicker, Space, Button, Progress, Tag,
@@ -13,11 +14,11 @@ import {
 import { InfoCircleOutlined } from '@ant-design/icons';
 
 /* =========================================================
- * 搬入量ダッシュボード（上段=2カラム：左2枚 / 右1枚）
- * - 右の「月見通し」は左列に「今日 / 今週 / 今月」の行ラベルを設置
- * - 月の着地（現行/AI）に細い達成率バーを追加
- * - 週別テーブルに「平日数 / 日・祝日数 / 休業日数」を追加
- * - コンパクト化＆余白対策を維持
+ * 搬入量ダッシュボード（上段=2×2：統一高さ / 下段=根拠）
+ * - 比較トグル：今月 / 先月 / 前年同月（営業日補正で比較）
+ * - カード責務の整理：HeroKPI（月目標&MTD）/ ActionPace（必要ペース）/
+ *   今日・今週見込み（現行vsAI）/ 月着地（現行vsAI）
+ * - 週別（確定のみ）/ 日別（週タブ）は据え置き＋比較系列の点線
  * ========================================================= */
 
 const Colors = {
@@ -28,6 +29,7 @@ const Colors = {
   bad:     '#cf1322',
   warn:    '#fa8c16',
   good:    '#389e0d',
+  baseline: '#9e9e9e', // 比較系列（先月/前年）
 } as const;
 
 const DENSE = {
@@ -37,6 +39,7 @@ const DENSE = {
   kpiMd: 22,
   kpiLg: 26,
   chartH: 240,
+  cellMinH: 160,
 } as const;
 
 /* =========================
@@ -59,24 +62,48 @@ type WeeklyConfirmedRow = {
   bizDays: number; sunHoliDays: number; offDays: number;
 };
 type AdoptedKind = 'AI' | '現行';
+type CompareBasis = 'now' | 'prevMonth' | 'prevYear';
+
+type SeriesBundle = {
+  base: DailyPoint[];
+  prevMonth?: DailyPoint[];
+  prevYear?: DailyPoint[];
+}
 
 /* =========================
  * Repository（Mock）
  * ========================= */
-interface ForecastRepository { fetchDailySeries: (month: YYYYMM) => Promise<DailyPoint[]>; }
+interface ForecastRepository {
+  fetchSeriesBundle: (month: YYYYMM) => Promise<SeriesBundle>;
+}
+
+const mkMonthSeries = (month: YYYYMM, opts?: { noise?: number; shift?: number }) => {
+  const days = Array.from({ length: 31 }, (_, i) => i + 1);
+  return days.map((d) => {
+    const date = `${month}-${String(d).padStart(2, '0')}`;
+    const base = 100 + Math.sin((d / 31) * Math.PI * 2) * 20 + (opts?.shift ?? 0);
+    const predicted = Math.max(40, Math.round(base + (Math.random() * (opts?.noise ?? 10) - (opts?.noise ?? 10)/2)));
+    const todayDate = new Date();
+    const currentYM = `${todayDate.getFullYear()}-${String(todayDate.getMonth() + 1).padStart(2, '0')}`;
+    const isCurrentMonth = month === currentYM;
+    // デモ：カレント月のみ20日を“今日”とみなす
+    const actual = isCurrentMonth ? (d < 20 ? Math.max(35, Math.round(predicted * (0.9 + Math.random() * 0.2))) : undefined)
+                                  : Math.max(35, Math.round(predicted * (0.9 + Math.random() * 0.2)));
+    const target = 110 + (opts?.shift ?? 0) * 0.1;
+    const dow = new Date(date + 'T00:00:00').getDay();
+    const isBusinessDay = dow !== 0; // 日曜休み
+    return { date, predicted, actual, target, isBusinessDay };
+  });
+};
+
 const mockRepo: ForecastRepository = {
-  async fetchDailySeries(month) {
-    const days = Array.from({ length: 31 }, (_, i) => i + 1);
-    return days.map((d) => {
-      const date = `${month}-${String(d).padStart(2, '0')}`;
-      const base = 100 + Math.sin((d / 31) * Math.PI * 2) * 20;
-      const predicted = Math.max(40, Math.round(base + (Math.random() * 10 - 5)));
-      const actual = d < 20 ? Math.max(35, Math.round(predicted * (0.9 + Math.random() * 0.2))) : undefined; // デモ：20日が“今日”
-      const target = 110;
-      const dow = new Date(date + 'T00:00:00').getDay();
-      const isBusinessDay = dow !== 0; // 日曜休み
-      return { date, predicted, actual, target, isBusinessDay };
-    });
+  async fetchSeriesBundle(month) {
+    const base = mkMonthSeries(month, { noise: 10, shift: 0 });
+    const prevM = prevMonthStr(month);
+    const prevY = `${Number(month.slice(0, 4)) - 1}-${month.slice(5, 7)}`;
+    const prevMonth = mkMonthSeries(prevM, { noise: 12, shift: -5 });
+    const prevYear = mkMonthSeries(prevY, { noise: 12, shift: -8 });
+    return { base, prevMonth, prevYear };
   },
 };
 
@@ -124,6 +151,8 @@ function buildWeeks(month: YYYYMM): Week[] {
  * ========================= */
 const monthTargetSum = (all: DailyPoint[]) => sum(all.map(r => r.target ?? 0));
 const actualSumMonth = (all: DailyPoint[], today: YYYYMMDD) => sum(all.filter(r => r.date <= today).map(r => r.actual ?? 0));
+const bizDayCountTo = (all: DailyPoint[], today: YYYYMMDD) => all.filter(d => d.date <= today && d.isBusinessDay !== false).length;
+const monthBizDays = (all: DailyPoint[]) => all.filter(d => d.isBusinessDay !== false).length;
 
 function computeMonthRates(all: DailyPoint[], today: YYYYMMDD) {
   const mActual = actualSumMonth(all, today);
@@ -161,7 +190,6 @@ function buildWeeklyConfirmed(rows: DailyPoint[], weeks: Week[], today: YYYYMMDD
     const actualSum = sum(ds.filter(r => r.date <= today).map(r => r.actual ?? 0));
     const rateConfirmed = targetSum ? actualSum / targetSum : null;
 
-    // 週内の各日種別カウント
     const bizDays      = ds.filter(r => r.isBusinessDay !== false).length;
     const sunHoliDays  = ds.filter(r => {
       const dow = new Date(r.date + 'T00:00:00').getDay();
@@ -186,6 +214,27 @@ function buildShortAI(all: DailyPoint[], curWeek: Week | undefined, today: YYYYM
     weekTarget = sum(ds.map(r => r.target ?? 0));
   }
   return { todayAI, weekAI, weekTarget };
+}
+
+/** 営業日補正を伴う比較（MoM/YoY）。
+ *  normalized = (実績/営業日数) 比で評価。戻り値は {deltaPct, baselineValue} */
+function normalizedDelta(
+  baseSeries: DailyPoint[],
+  baselineSeries: DailyPoint[] | undefined,
+  today: YYYYMMDD,
+  valueCurrent: number | null
+): { deltaPct: number | null, baselineValue: number | null } {
+  if (!baselineSeries || valueCurrent == null) return { deltaPct: null, baselineValue: null };
+  const curDays = bizDayCountTo(baseSeries, today) || 1;
+  const baseDay = ymd(addDays(toDate(today), - (curDays - 1)));
+  // baseline 側は「同数の営業日」を目安に同月内の先頭から該当営業日数分を集計
+  const bsBiz = baselineSeries.filter(d => d.isBusinessDay !== false);
+  const cutoff = bsBiz.slice(0, curDays).map(d => d.date);
+  const baselineActual = sum(baselineSeries.filter(d => cutoff.includes(d.date)).map(d => d.actual ?? d.predicted ?? 0));
+  const normCur = valueCurrent / curDays;
+  const normBase = baselineActual / curDays;
+  if (!normBase) return { deltaPct: null, baselineValue: baselineActual };
+  return { deltaPct: (normCur - normBase) / normBase, baselineValue: baselineActual };
 }
 
 /* =========================
@@ -216,14 +265,12 @@ const SectionCard: FC<{
   dense?: boolean;
   className?: string;
   style?: React.CSSProperties;
-}> = ({ title, tooltip, extra, children, dense, className, style }) => {
+  minBodyHeight?: number;
+}> = ({ title, tooltip, extra, children, dense, className, style, minBodyHeight }) => {
   const headPad = dense ? '4px 8px' : DENSE.headPad;
   const bodyPad = dense ? 8 : DENSE.cardPad;
   return (
-    <Card
-      className={`no-overlap-card ${className ?? ''}`}
-      style={{ marginBottom: DENSE.gutter, height: '100%', display: 'flex', flexDirection: 'column', ...style }}
-    >
+    <Card className={`no-overlap-card ${className ?? ''}`} style={{ marginBottom: DENSE.gutter, height: '100%', display: 'flex', flexDirection: 'column', ...style }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: headPad }}>
         <Typography.Title level={5} style={{ margin: 0 }}>{title}</Typography.Title>
         <Space size={8}>
@@ -235,7 +282,7 @@ const SectionCard: FC<{
           )}
         </Space>
       </div>
-      <div className="section-body" style={{ padding: bodyPad, flex: 1, display: 'flex', flexDirection: 'column' }}>
+      <div className="section-body" style={{ padding: bodyPad, flex: 1, display: 'flex', flexDirection: 'column', minHeight: minBodyHeight ?? DENSE.cellMinH }}>
         {children}
       </div>
     </Card>
@@ -255,6 +302,32 @@ const MiniRateBar: FC<{ rate: number | null }> = ({ rate }) => {
     </div>
   );
 };
+
+// 小さめの数値タイル
+const StatTile: FC<{ label: string; value: number | null | undefined; unit?: string; color?: string; sub?: string; }> = ({ label, value, unit = 't', color, sub }) => (
+  <Card className="no-overlap-card" bordered size="small" bodyStyle={{ padding: 8 }}>
+    <TinyLabel>{label}{sub ? `（${sub}）` : ''}</TinyLabel>
+    <div style={{ fontSize: 20, color: color ?? 'inherit', fontFeatureSettings: "'tnum' 1", fontVariantNumeric: 'tabular-nums' }}>
+      {value != null ? `${Math.round(value).toLocaleString()} ${unit}` : '—'}
+    </div>
+  </Card>
+);
+
+// ヘッダー用ピル
+const StatPill: FC<{ label: string; value: number; unit?: string; aria?: string; }> = ({ label, value, unit = '日', aria }) => (
+  <span
+    aria-label={aria ?? `${label} ${value}${unit}`}
+    style={{
+      display: 'inline-flex', alignItems: 'baseline', gap: 6,
+      padding: '2px 8px', borderRadius: 999, background: '#f5f5f5', border: '1px solid #e8e8e8'
+    }}
+  >
+    <span style={{ color: '#8c8c8c', fontSize: 12 }}>{label}</span>
+    <span style={{ fontSize: 14, fontFeatureSettings: "'tnum' 1", fontVariantNumeric: 'tabular-nums' }}>
+      {value.toLocaleString()}<span style={{ fontSize: 11, marginLeft: 2 }}>{unit}</span>
+    </span>
+  </span>
+);
 
 // ==== 比較セル（現行/AI 共通） ====
 const CompareCell: FC<{
@@ -296,13 +369,15 @@ const MonthLandingCard: FC<{
   tone: 'pace' | 'ai';
   value: number;
   rate: number | null;  // value / mTarget
-}> = ({ label, sub, tone, value, rate }) => {
+  deltaPct?: number | null;
+}> = ({ label, sub, tone, value, rate, deltaPct }) => {
   const color = tone === 'pace' ? Colors.pace : Colors.forecast;
   return (
     <Card className="no-overlap-card" size="small" bordered bodyStyle={{ padding: 6 }}>
       <Space size={6} align="baseline" style={{ marginBottom: 1 }}>
         <Tag color={tone === 'pace' ? 'default' : 'blue'}>{label}</Tag>
         <TinyLabel>{sub}</TinyLabel>
+        {deltaPct != null && <SoftBadge value={deltaPct} />}
       </Space>
       <div style={{ fontSize: 18, color, fontFeatureSettings: "'tnum' 1", fontVariantNumeric: 'tabular-nums' }}>
         {`${Math.round(value).toLocaleString()} t`}
@@ -335,19 +410,14 @@ const WeeklyConfirmedTable: FC<{ rows: WeeklyConfirmedRow[]; currentWeekKey?: st
   );
 };
 
-const HeroKPICard: FC<{ monthTarget: number; mtdActual: number; mtdRate: number | null; paceBiz: number | null; }>
-= ({ monthTarget, mtdActual, mtdRate, paceBiz }) => {
+const HeroKPICard: FC<{ monthTarget: number; mtdActual: number; mtdRate: number | null; }>
+= ({ monthTarget, mtdActual, mtdRate }) => {
   const ringPercent = clamp(Math.round((mtdRate ?? 0) * 100), 0, 120);
   const ringColor = (mtdRate ?? 0) >= 1 ? Colors.good : (mtdRate ?? 0) >= 0.8 ? Colors.warn : Colors.bad;
 
   return (
-    <Card className="no-overlap-card" style={{ marginBottom: DENSE.gutter }}>
-      <div style={{ padding: DENSE.headPad, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Typography.Title level={5} style={{ margin: 0 }}>月目標〜平均ペース</Typography.Title>
-        <TinyLabel>確定のみ・数字はタブラー体</TinyLabel>
-      </div>
-
-      <div className="kpi-grid" style={{ padding: DENSE.cardPad }}>
+    <SectionCard dense title="月目標 vs MTD実績" tooltip="月目標＝当月目標合計、MTD＝本日までの確定合計。" minBodyHeight={DENSE.cellMinH}>
+      <div className="kpi-grid" style={{ padding: 0 }}>
         <div className="kpi-cell">
           <span className="kpi-label">月目標</span>
           <span className="kpi-value kpi-num" style={{ color: Colors.target }}>
@@ -360,51 +430,135 @@ const HeroKPICard: FC<{ monthTarget: number; mtdActual: number; mtdRate: number 
             {Math.round(mtdActual).toLocaleString()} <span className="unit">t</span>
           </span>
         </div>
-        <div className="kpi-cell">
+        <div className="kpi-cell ring">
           <span className="kpi-label">達成率（確定）</span>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Progress type="dashboard" percent={ringPercent} size={96} strokeColor={ringColor} format={() => `${ringPercent}%`} />
           </div>
         </div>
-        <div className="kpi-cell">
-          <span className="kpi-label">平日ペース（直近）</span>
-          <span className="kpi-value kpi-num small" style={{ color: Colors.pace }}>
-            {paceBiz != null ? `${Math.round(paceBiz)} t/日` : '—'}
-          </span>
-        </div>
       </div>
-    </Card>
+    </SectionCard>
   );
 };
 
-/* 目標達成ペース：0.9xのコンパクト */
+/* === 今日/今週 見込み（現行 vs AI） === */
+const TodayWeekCompareCard: FC<{
+  todayCurrent: number | null;
+  todayAI: number | null;
+  dayTargetPlan: number | null;
+  weekCurrent: number | null;
+  weekAI: number | null;
+  weekTarget: number;
+  dayDeltaPct?: number | null;
+  weekDeltaPct?: number | null;
+}> = ({ todayCurrent, todayAI, dayTargetPlan, weekCurrent, weekAI, weekTarget, dayDeltaPct, weekDeltaPct }) => {
+  const dayRateAI = useMemo(() => (dayTargetPlan ? (todayAI ?? 0) / dayTargetPlan : null), [todayAI, dayTargetPlan]);
+  const dayRateCurrent = useMemo(() => (dayTargetPlan ? (todayCurrent ?? 0) / dayTargetPlan : null), [todayCurrent, dayTargetPlan]);
+  const weekRateAI = useMemo(() => (weekTarget ? (weekAI ?? 0) / weekTarget : null), [weekAI, weekTarget]);
+  const weekRateCurrent = useMemo(() => (weekTarget ? (weekCurrent ?? 0) / weekTarget : null), [weekCurrent, weekTarget]);
+
+  return (
+    <SectionCard dense title="今日・今週の見込み（現行 vs AI）" tooltip="現行＝直近平日ペースに基づく見込み、AI＝モデル予測の積上げ。">
+      <div className="matrix-two">
+        <div className="m-label">今日</div>
+        <div className="m-row">
+          <CompareCell compact title="現行" value={todayCurrent} rate={dayRateCurrent} tone="pace" />
+          <CompareCell compact title="AI" value={todayAI ?? null} rate={dayRateAI} tone="ai" showDelta deltaPct={dayDeltaPct} />
+        </div>
+
+        <div className="m-label">今週</div>
+        <div className="m-row">
+          <CompareCell compact title="現行" value={weekCurrent} rate={weekRateCurrent} tone="pace" />
+          <CompareCell compact title="AI" value={weekAI ?? null} rate={weekRateAI} tone="ai" showDelta deltaPct={weekDeltaPct} />
+        </div>
+      </div>
+    </SectionCard>
+  );
+};
+
+/* === 実績カード（月/週/日） === */
+const ActualsCard: FC<{
+  monthActualMTD: number;
+  weekActualToDate: number;
+  dayActual: number | null;
+  mtdRate: number | null;
+}> = ({ monthActualMTD, weekActualToDate, dayActual, mtdRate }) => {
+  const ringPercent = clamp(Math.round((mtdRate ?? 0) * 100), 0, 120);
+  const ringColor = (mtdRate ?? 0) >= 1 ? Colors.good : (mtdRate ?? 0) >= 0.8 ? Colors.warn : Colors.bad;
+
+  return (
+    <SectionCard
+      dense
+      title="実績（確定）"
+      tooltip="月＝MTD、週＝当週の本日まで、日＝本日確定。"
+      extra={<TinyLabel>MTD達成率</TinyLabel>}
+    >
+      <div className="actuals-grid">
+        <Card className="no-overlap-card" bordered size="small" bodyStyle={{ padding: 8 }}>
+          <TinyLabel>月実績（MTD）</TinyLabel>
+          <div style={{ fontSize: 20, color: Colors.actual, fontFeatureSettings: "'tnum' 1", fontVariantNumeric: 'tabular-nums' }}>
+            {monthActualMTD.toLocaleString()} t
+          </div>
+          <div style={{ marginTop: 6 }}>
+            <Progress type="line" percent={ringPercent} strokeColor={ringColor} showInfo />
+          </div>
+        </Card>
+        <StatTile label="週実績" value={weekActualToDate} color={Colors.actual} sub="今日まで" />
+        <StatTile label="日実績" value={dayActual ?? null} color={Colors.actual} sub="本日" />
+      </div>
+    </SectionCard>
+  );
+};
+
+/* === 目標達成ペース：必要ペース/残り目標 === */
 const ActionPaceCard: FC<{
   loading: boolean;
-  remainingBizDays: number; remainingSunAndHoli: number; remainingHoliDays: number;
   remainingGoal: number; requiredPerBizDay: number | null;
-}> = ({ loading, remainingBizDays, remainingSunAndHoli, remainingHoliDays, remainingGoal, requiredPerBizDay }) => {
+  paceBiz: number | null;
+}> = ({ loading, remainingGoal, requiredPerBizDay, paceBiz }) => {
   return (
-    <SectionCard dense className="action-compact" title="目標達成ペース" tooltip="必要平均＝(月目標−MTD実績)/残営業日。">
+    <SectionCard dense className="action-compact" title="目標達成ペース" tooltip="必要平均＝(月目標−MTD実績)/残営業日。" minBodyHeight={DENSE.cellMinH}>
       {!loading ? (
-        <div className="action-grid">
+        <div className="action-grid two-cols">
           <Card className="no-overlap-card action-tile" bordered bodyStyle={{ padding: 8 }}>
-            <TinyLabel>必要ペース（残平日数）</TinyLabel>
+            <TinyLabel>必要ペース（残平日）</TinyLabel>
             <div className="action-val">{requiredPerBizDay != null ? `${requiredPerBizDay.toFixed(1)} t/日` : '—'}</div>
+            <TinyLabel style={{ marginTop: 4 }}>直近平日ペース：{paceBiz != null ? `${Math.round(paceBiz)} t/日` : '—'}</TinyLabel>
           </Card>
           <Card className="no-overlap-card action-tile" bordered bodyStyle={{ padding: 8 }}>
             <TinyLabel>残り目標数</TinyLabel><div className="action-val">{remainingGoal.toLocaleString()} t</div>
           </Card>
-          <Card className="no-overlap-card action-tile" bordered bodyStyle={{ padding: 8 }}>
-            <TinyLabel>残平日数</TinyLabel><div className="action-val">{remainingBizDays} 日</div>
-          </Card>
-          <Card className="no-overlap-card action-tile" bordered bodyStyle={{ padding: 8 }}>
-            <TinyLabel>残日・祝日数</TinyLabel><div className="action-val">{remainingSunAndHoli} 日</div>
-          </Card>
-          <Card className="no-overlap-card action-tile" bordered bodyStyle={{ padding: 8 }}>
-            <TinyLabel>残休業日数</TinyLabel><div className="action-val">{remainingHoliDays} 日</div>
-          </Card>
         </div>
       ) : <Skeleton active paragraph={{ rows: 2 }} title={false} />}
+    </SectionCard>
+  );
+};
+
+/* === 月着地（現行 vs AI） === */
+const MonthLandingCompareCard: FC<{
+  landingPace: number; landingAI: number; mTarget: number;
+  subLeft: string; compareDeltaPace?: number | null; compareDeltaAI?: number | null;
+}> = ({ landingPace, landingAI, mTarget, subLeft, compareDeltaPace, compareDeltaAI }) => {
+  return (
+    <SectionCard dense title="月着地（現行ペース vs AI）" tooltip="現行＝直近平日ペース×残営業日で積上げ、AI＝日次予測の積上げ。">
+      <div className="m-row">
+        <MonthLandingCard
+          label="現行ペース着地"
+          sub={subLeft}
+          tone="pace"
+          value={landingPace}
+          rate={mTarget ? landingPace / mTarget : null}
+          deltaPct={compareDeltaPace}
+        />
+        <MonthLandingCard
+          label="AI着地"
+          sub="日次予測積上げ"
+          tone="ai"
+          value={landingAI}
+          rate={mTarget ? landingAI / mTarget : null}
+          deltaPct={compareDeltaAI}
+        />
+      </div>
     </SectionCard>
   );
 };
@@ -414,7 +568,8 @@ const ActionPaceCard: FC<{
  * ========================= */
 const ExecutiveForecastDashboard: FC = () => {
   const [month, setMonth] = useState<YYYYMM>(currentMonth());
-  const [daily, setDaily] = useState<DailyPoint[] | null>(null);
+  const [series, setSeries] = useState<SeriesBundle | null>(null);
+  const [compareBasis, setCompareBasis] = useState<CompareBasis>('now');
 
   const thisMonth = useMemo(() => currentMonth(), []);
   const nextMonthAllowed = useMemo(() => nextMonthStr(thisMonth), [thisMonth]);
@@ -424,8 +579,11 @@ const ExecutiveForecastDashboard: FC = () => {
 
   useEffect(() => {
     let mounted = true;
-    setDaily(null);
-    (async () => { const d = await mockRepo.fetchDailySeries(month); if (mounted) setDaily(d); })();
+    setSeries(null);
+    (async () => {
+      const d = await mockRepo.fetchSeriesBundle(month);
+      if (mounted) setSeries(d);
+    })();
     return () => { mounted = false; };
   }, [month]);
 
@@ -438,91 +596,171 @@ const ExecutiveForecastDashboard: FC = () => {
   useEffect(() => { setActiveWeekKey(currentWeek?.key ?? weeks[0]?.key ?? 'W1'); }, [currentWeek, weeks]);
 
   const monthJP = useMemo(() => formatMonthJP(month), [month]);
+
+  const base = series?.base ?? [];
+  const baselineSeries = useMemo(() => {
+    if (!series) return undefined;
+    if (compareBasis === 'prevMonth') return series.prevMonth;
+    if (compareBasis === 'prevYear') return series.prevYear;
+    return undefined;
+  }, [series, compareBasis]);
+
   const { mActual, mTarget, landingAI, mtdRate } = useMemo(
-    () => (daily ? computeMonthRates(daily, todayStr) : { mActual: 0, mTarget: 0, landingAI: 0, mtdRate: null }),
-    [daily, todayStr]
+    () => (base.length ? computeMonthRates(base, todayStr) : { mActual: 0, mTarget: 0, landingAI: 0, mtdRate: null }),
+    [base, todayStr]
   );
 
-  const paceBiz = useMemo(() => (daily ? currentBusinessPace(daily, todayStr, 7) : null), [daily, todayStr]);
+  const paceBiz = useMemo(() => (base.length ? currentBusinessPace(base, todayStr, 7) : null), [base, todayStr]);
   const { landingPace, futureBiz, futureHoli } = useMemo(
-    () => (daily ? landingByCurrentPace(daily, todayStr, paceBiz, 0) : { landingPace: 0, futureBiz: 0, futureHoli: 0 }),
-    [daily, todayStr, paceBiz]
+    () => (base.length ? landingByCurrentPace(base, todayStr, paceBiz, 0) : { landingPace: 0, futureBiz: 0, futureHoli: 0 }),
+    [base, todayStr, paceBiz]
   );
 
-  const remainingBizDays = useMemo(() => (daily ? daily.filter(d => d.date > todayStr && d.isBusinessDay !== false).length : 0), [daily, todayStr]);
-  const remainingHoliDays = useMemo(() => (daily ? daily.filter(d => d.date > todayStr && d.isBusinessDay === false).length : 0), [daily, todayStr]);
-  const remainingSunAndHoli = useMemo(() => (daily ? daily.filter(d => d.date > todayStr && (new Date(d.date + 'T00:00:00').getDay() === 0 || d.isBusinessDay === false)).length : 0), [daily, todayStr]);
+  const remainingBizDays = useMemo(() => (base.length ? base.filter(d => d.date > todayStr && d.isBusinessDay !== false).length : 0), [base, todayStr]);
+  const remainingHoliDays = useMemo(() => (base.length ? base.filter(d => d.date > todayStr && d.isBusinessDay === false).length : 0), [base, todayStr]);
+  const remainingSunAndHoli = useMemo(() => (base.length ? base.filter(d => d.date > todayStr && (new Date(d.date + 'T00:00:00').getDay() === 0 || d.isBusinessDay === false)).length : 0), [base, todayStr]);
   const remainingGoal = useMemo(() => Math.max(0, mTarget - mActual), [mTarget, mActual]);
   const requiredPerBizDay = useMemo(() => (remainingBizDays ? remainingGoal / remainingBizDays : null), [remainingGoal, remainingBizDays]);
 
   const { todayAI, weekAI, weekTarget } = useMemo(
-    () => (daily ? buildShortAI(daily, currentWeek, todayStr) : { todayAI: null, weekAI: null, weekTarget: 0 }),
-    [daily, currentWeek, todayStr]
+    () => (base.length ? buildShortAI(base, currentWeek, todayStr) : { todayAI: null, weekAI: null, weekTarget: 0 }),
+    [base, currentWeek, todayStr]
   );
 
-  const dayTarget = useMemo(() => { if (!daily) return 0; const r = daily.find(d => d.date === todayStr); return r?.target ?? 0; }, [daily, todayStr]);
+  // === 目標・実績 ===
+  const monthTarget = useMemo(() => (base.length ? monthTargetSum(base) : 0), [base]);
+  const weekTargetPlan = useMemo(() => {
+    if (!base.length || !currentWeek) return 0;
+    const keys = currentWeek.days.map(ymd);
+    const ds = keys.map(k => base.find(r => r.date === k)).filter(Boolean) as DailyPoint[];
+    return sum(ds.map(r => r.target ?? 0));
+  }, [base, currentWeek]);
+  const dayTargetPlan = useMemo(() => {
+    if (!base.length) return null;
+    const r = base.find(d => d.date === todayStr);
+    if (!r) return null;
+    return r.isBusinessDay === false ? null : (r.target ?? null);
+  }, [base, todayStr]);
+
+  const monthActualMTD = useMemo(() => (base.length ? actualSumMonth(base, todayStr) : 0), [base, todayStr]);
+  const weekActualToDate = useMemo(() => {
+    if (!base.length || !currentWeek) return 0;
+    const keys = currentWeek.days.map(ymd);
+    const ds = keys.map(k => base.find(r => r.date === k)).filter(Boolean) as DailyPoint[];
+    return sum(ds.filter(r => r.date <= todayStr).map(r => r.actual ?? 0));
+  }, [base, currentWeek, todayStr]);
+  const dayActual = useMemo(() => {
+    if (!base.length) return null;
+    const r = base.find(d => d.date === todayStr);
+    return r?.actual ?? null;
+  }, [base, todayStr]);
+
   const todayCurrent = useMemo(() => {
-    if (!daily) return null;
-    const r = daily.find(d => d.date === todayStr);
+    if (!base.length) return null;
+    const r = base.find(d => d.date === todayStr);
     if (!r) return null;
     const isBiz = r.isBusinessDay !== false;
     if (!isBiz) return 0;
     return paceBiz ?? null;
-  }, [daily, todayStr, paceBiz]);
+  }, [base, todayStr, paceBiz]);
 
   const weekCurrent = useMemo(() => {
-    if (!daily || !currentWeek) return null;
+    if (!base.length || !currentWeek) return null;
     const keys = currentWeek.days.map(ymd);
-    const ds = keys.map(k => daily.find(r => r.date === k)).filter(Boolean) as DailyPoint[];
+    const ds = keys.map(k => base.find(r => r.date === k)).filter(Boolean) as DailyPoint[];
     const past = ds.filter(r => r.date <= todayStr);
     const future = ds.filter(r => r.date > todayStr);
     const futureBizCount = future.filter(r => r.isBusinessDay !== false).length;
     const add = (paceBiz ?? 0) * futureBizCount;
     const cur = sum(past.map(r => r.actual ?? 0)) + (paceBiz == null ? 0 : add);
     return paceBiz == null ? null : cur;
-  }, [daily, currentWeek, todayStr, paceBiz]);
+  }, [base, currentWeek, todayStr, paceBiz]);
 
-  const dayRateAI = useMemo(() => (dayTarget ? (todayAI ?? 0) / dayTarget : null), [todayAI, dayTarget]);
-  const dayRateCurrent = useMemo(() => (dayTarget ? (todayCurrent ?? 0) / dayTarget : null), [todayCurrent, dayTarget]);
-  const dayDeltaPct = useMemo(() => (dayTarget ? ((todayAI ?? 0) - (todayCurrent ?? 0)) / dayTarget : null), [todayAI, todayCurrent, dayTarget]);
+  // === 比較デルタ（営業日補正） ===
+  const compareForDay = useMemo(() => normalizedDelta(base, baselineSeries, todayStr, (todayAI ?? null) ?? null), [base, baselineSeries, todayStr, todayAI]);
+  const compareForWeek = useMemo(() => normalizedDelta(base, baselineSeries, todayStr, (weekAI ?? null) ?? null), [base, baselineSeries, todayStr, weekAI]);
 
-  const weekRateAI = useMemo(() => (weekTarget ? (weekAI ?? 0) / weekTarget : null), [weekAI, weekTarget]);
-  const weekRateCurrent = useMemo(() => (weekTarget ? (weekCurrent ?? 0) / weekTarget : null), [weekCurrent, weekTarget]);
-  const weekDeltaPct = useMemo(() => (weekTarget ? ((weekAI ?? 0) - (weekCurrent ?? 0)) / weekTarget : null), [weekAI, weekCurrent, weekTarget]);
+  const compareForLandingPace = useMemo(() => {
+    if (!baselineSeries) return { deltaPct: null };
+    const curDays = monthBizDays(base) || 1;
+    const baseBiz = baselineSeries.filter(d => d.isBusinessDay !== false).slice(0, curDays);
+    const baseLanding = sum(baseBiz.map(d => d.actual ?? d.predicted ?? 0));
+    if (!baseLanding) return { deltaPct: null };
+    return { deltaPct: (landingPace - baseLanding) / baseLanding };
+  }, [baselineSeries, base, landingPace]);
 
-  const weeklyAIMap = useMemo(() => {
-    if (!daily) return {} as Record<string, { landing: number; target: number }>;
+  const compareForLandingAI = useMemo(() => {
+    if (!baselineSeries) return { deltaPct: null };
+    const curDays = monthBizDays(base) || 1;
+    const baseBiz = baselineSeries.filter(d => d.isBusinessDay !== false).slice(0, curDays);
+    const baseLanding = sum(baseBiz.map(d => d.actual ?? d.predicted ?? 0));
+    if (!baseLanding) return { deltaPct: null };
+    return { deltaPct: (landingAI - baseLanding) / baseLanding };
+  }, [baselineSeries, base, landingAI]);
+
+  // === 週別テーブル/チャート ===
+  const weeklyConfirmedRows = useMemo(() => (base.length ? buildWeeklyConfirmed(base, weeks, todayStr) : []), [base, weeks, todayStr]);
+
+  const weekRowsForTabs = useMemo(() => {
+    if (!base.length) return {} as Record<string, DailyPoint[]>;
+    const map: Record<string, DailyPoint[]> = {};
+    weeks.forEach(w => {
+      const keys = w.days.map(ymd);
+      map[w.key] = keys.map(k => base.find(d => d.date === k)).filter(Boolean) as DailyPoint[];
+    });
+    return map;
+  }, [base, weeks]);
+
+  const baselineWeekRowsForTabs = useMemo(() => {
+    if (!baselineSeries) return {} as Record<string, DailyPoint[]>;
+    const map: Record<string, DailyPoint[]> = {};
+    weeks.forEach(w => {
+      const keys = w.days.map(ymd);
+      map[w.key] = keys.map(k => baselineSeries.find(d => d.date.endsWith(k.slice(5)))).filter(Boolean) as DailyPoint[];
+    });
+    return map;
+  }, [baselineSeries, weeks]);
+
+  const weekChartData = useMemo(() => {
+    const rows = weekRowsForTabs[activeWeekKey] ?? [];
+    const bRows = baselineWeekRowsForTabs[activeWeekKey] ?? [];
+    return rows.map((r, i) => {
+      const b = bRows[i];
+      return {
+        日付: r.date.slice(5),
+        実績: r.actual ?? null,
+        AI予測: r.predicted,
+        目標: r.target ?? null,
+        比較基準: b ? (b.actual ?? b.predicted ?? null) : null,
+        isBiz: r.isBusinessDay !== false,
+        yyyyMMdd: r.date
+      };
+    });
+  }, [weekRowsForTabs, baselineWeekRowsForTabs, activeWeekKey]);
+
+  const tabItems = useMemo(() => {
+    if (!base.length) return [];
     const map: Record<string, { landing: number; target: number }> = {};
     weeks.forEach(w => {
       const keys = w.days.map(ymd);
-      const ds = keys.map(k => daily.find(r => r.date === k)).filter(Boolean) as DailyPoint[];
+      const ds = keys.map(k => base.find(r => r.date === k)).filter(Boolean) as DailyPoint[];
       const past = ds.filter(r => r.date <= todayStr);
       const future = ds.filter(r => r.date > todayStr);
       const landing = sum(past.map(r => r.actual ?? 0)) + sum(future.map(r => r.predicted ?? 0));
       const target = sum(ds.map(r => r.target ?? 0));
       map[w.key] = { landing, target };
     });
-    return map;
-  }, [daily, weeks, todayStr]);
-
-  const [adopted, setAdopted] = useState<AdoptedKind>('AI');
-
-  const weeklyConfirmedRows = useMemo(() => (daily ? buildWeeklyConfirmed(daily, weeks, todayStr) : []), [daily, weeks, todayStr]);
-
-  const weekRowsForTabs = useMemo(() => {
-    if (!daily) return {} as Record<string, DailyPoint[]>;
-    const map: Record<string, DailyPoint[]> = {};
-    weeks.forEach(w => {
-      const keys = w.days.map(ymd);
-      map[w.key] = keys.map(k => daily.find(d => d.date === k)).filter(Boolean) as DailyPoint[];
+    return weeks.map(w => {
+      const ai = map[w.key];
+      const label = (
+        <Space size={6}>
+          <span>{w.key}</span>
+          {ai && <Badge count={`${Math.round(ai.landing).toLocaleString()}t`} style={{ backgroundColor: '#1677ff' }} />}
+        </Space>
+      );
+      return { key: w.key, label };
     });
-    return map;
-  }, [daily, weeks]);
-
-  const weekChartData = useMemo(() => {
-    const rows = weekRowsForTabs[activeWeekKey] ?? [];
-    return rows.map(r => ({ 日付: r.date.slice(5), 実績: r.actual ?? null, AI予測: r.predicted, 目標: r.target ?? null, isBiz: r.isBusinessDay !== false, yyyyMMdd: r.date }));
-  }, [weekRowsForTabs, activeWeekKey]);
+  }, [weeks, base, todayStr]);
 
   const todayXLabel = useMemo(() => {
     const idx = weekChartData.findIndex(d => d.yyyyMMdd === todayStr);
@@ -535,18 +773,7 @@ const ExecutiveForecastDashboard: FC = () => {
   const canPrev = month > thisMonth;
   const canNext = month < nextMonthAllowed;
 
-  const tabItems = useMemo(() => weeks.map(w => {
-    const ai = weeklyAIMap[w.key];
-    const label = (
-      <Space size={6}>
-        <span>{w.key}</span>
-        {ai && <Badge count={`${Math.round(ai.landing).toLocaleString()}t`} style={{ backgroundColor: '#1677ff' }} />}
-      </Space>
-    );
-    return { key: w.key, label };
-  }), [weeks, weeklyAIMap]);
-
-  const loading = daily == null;
+  const loading = series == null;
 
   return (
     <div style={{ padding: 16 }}>
@@ -556,10 +783,19 @@ const ExecutiveForecastDashboard: FC = () => {
           <Typography.Title level={4} style={{ margin: 0 }}>
             搬入量ダッシュボード — {monthJP}
           </Typography.Title>
-          <TinyLabel>左＝確定/行動指標　右＝見通し（現行 vs AI）　下＝根拠（週表・日別）</TinyLabel>
+          <TinyLabel>上段＝意思決定（2×2） / 下段＝根拠（週・日別）。比較：営業日補正MoM/YoY。</TinyLabel>
         </Col>
         <Col>
-          <Space size={8}>
+          <Space size={8} wrap>
+            <Segmented<CompareBasis>
+              value={compareBasis}
+              onChange={(v) => setCompareBasis(v as CompareBasis)}
+              options={[
+                { label: '今月', value: 'now' },
+                { label: '先月比', value: 'prevMonth' },
+                { label: '前年同月比', value: 'prevYear' },
+              ]}
+            />
             <Button size="small" disabled={!canPrev} onClick={() => safeSetMonth(prevMonthStr(month))}>← 前月</Button>
             <Space size={4}>
               <TinyLabel>対象月</TinyLabel>
@@ -578,95 +814,79 @@ const ExecutiveForecastDashboard: FC = () => {
         </Col>
       </Row>
 
-      {/* ====== 上段：CSS Grid（左2枚 / 右1枚） ====== */}
-      <div className="top-grid">
-        <div className="left-stack">
-          <HeroKPICard monthTarget={mTarget} mtdActual={mActual} mtdRate={mtdRate} paceBiz={paceBiz} />
-          <ActionPaceCard
-            loading={loading}
-            remainingBizDays={remainingBizDays}
-            remainingSunAndHoli={remainingSunAndHoli}
-            remainingHoliDays={remainingHoliDays}
-            remainingGoal={remainingGoal}
-            requiredPerBizDay={requiredPerBizDay}
+      {/* ====== 上段：2×2 グリッド ====== */}
+      <div className="top-grid-2x2">
+        <div className="cell">
+          <HeroKPICard monthTarget={mTarget} mtdActual={mActual} mtdRate={mtdRate} />
+        </div>
+
+        <div className="cell">
+          <TodayWeekCompareCard
+            todayCurrent={todayCurrent}
+            todayAI={todayAI}
+            dayTargetPlan={dayTargetPlan}
+            weekCurrent={weekCurrent}
+            weekAI={weekAI}
+            weekTarget={weekTarget}
+            dayDeltaPct={compareBasis === 'now' ? null : compareForDay.deltaPct}
+            weekDeltaPct={compareBasis === 'now' ? null : compareForWeek.deltaPct}
           />
         </div>
 
-        {/* 右列：月見通し（左列ラベル付きの行マトリクス） */}
-        <SectionCard
-          dense
-          className="forecast-card forecast-compact"
-          style={{ height: 'auto' }}  // ← 見通しカードだけ高さを自動に
-          title="月見通し"
-          tooltip="左列に 今日/今週/今月。右列で「現行 vs AI」を比較。今月には達成率バー。"
-          extra={(
-            <Space size={8}>
-              <TinyLabel>採用値</TinyLabel>
-              <Segmented<AdoptedKind>
-                size="small"
-                value={adopted}
-                onChange={(v) => setAdopted(v as AdoptedKind)}
-                options={[{ label: 'AI', value: 'AI' }, { label: '現行', value: '現行' }]}
-              />
-            </Space>
-          )}
-        >
-          <div className="forecast-matrix">
-            {/* 今日 */}
-            <div className="fm-label">今日</div>
-            <div className="fm-content">
-              <div className="fm-row">
-                <CompareCell compact title="現行" value={todayCurrent} rate={dayRateCurrent} tone="pace" />
-                <CompareCell compact title="AI" value={todayAI ?? null} rate={dayRateAI} tone="ai" showDelta deltaPct={dayDeltaPct} />
-              </div>
-            </div>
+        <div className="cell">
+          <ActionPaceCard
+            loading={loading}
+            remainingGoal={remainingGoal}
+            requiredPerBizDay={requiredPerBizDay}
+            paceBiz={paceBiz}
+          />
+        </div>
 
-            {/* 今週 */}
-            <div className="fm-label">今週</div>
-            <div className="fm-content">
-              <div className="fm-row">
-                <CompareCell compact title="現行" value={weekCurrent} rate={weekRateCurrent} tone="pace" />
-                <CompareCell compact title="AI" value={weekAI ?? null} rate={weekRateAI} tone="ai" showDelta deltaPct={weekDeltaPct} />
-              </div>
-            </div>
-
-            {/* 今月 */}
-            <div className="fm-label">今月</div>
-            <div className="fm-content">
-              <div className="fm-row">
-                <MonthLandingCard
-                  label="現行ペース着地"
-                  sub={`残：営業${futureBiz} / 休業${futureHoli}`}
-                  tone="pace"
-                  value={landingPace}
-                  rate={mTarget ? landingPace / mTarget : null}
-                />
-                <MonthLandingCard
-                  label="AI着地"
-                  sub="日次予測積上げ"
-                  tone="ai"
-                  value={landingAI}
-                  rate={mTarget ? landingAI / mTarget : null}
-                />
-              </div>
-            </div>
-          </div>
-        </SectionCard>
+        <div className="cell">
+          <MonthLandingCompareCard
+            landingPace={landingPace}
+            landingAI={landingAI}
+            mTarget={mTarget}
+            subLeft={`残：営業${futureBiz} / 休業${futureHoli}`}
+            compareDeltaPace={compareBasis === 'now' ? null : compareForLandingPace.deltaPct}
+            compareDeltaAI={compareBasis === 'now' ? null : compareForLandingAI.deltaPct}
+          />
+        </div>
       </div>
+
+      {/* ===== 残日ピル ===== */}
+      <Row style={{ marginBottom: 8 }}>
+        <Col span={24}>
+          <SectionCard
+            dense
+            title="カレンダー残日サマリー"
+            tooltip="当月の本日以降の残日内訳（自動算出）。"
+            extra={
+              <div className="card-header-stats">
+                <StatPill label="残平日数" value={remainingBizDays} />
+                <StatPill label="残日・祝日数" value={remainingSunAndHoli} />
+                <StatPill label="残休業日数" value={remainingHoliDays} />
+              </div>
+            }
+          >
+            <TinyLabel>※ ヘッダー右のピルに内訳を表示しています。</TinyLabel>
+          </SectionCard>
+        </Col>
+      </Row>
 
       {/* ===== 週別＋日別 ===== */}
       <Row gutter={[12, 12]}>
         <Col xs={24}>
           <SectionCard title="週別の状況（確定のみ）" tooltip="週ごとの目標合計・確定合計・達成率と、日種別カウントを表示。未来の見込みは表示しません。">
-            {daily ? <WeeklyConfirmedTable rows={weeklyConfirmedRows} currentWeekKey={currentWeek?.key} />
-                   : <Skeleton active paragraph={{ rows: 3 }} title={false} />}
+            {base.length ? <WeeklyConfirmedTable rows={weeklyConfirmedRows} currentWeekKey={currentWeek?.key} />
+                         : <Skeleton active paragraph={{ rows: 3 }} title={false} />}
           </SectionCard>
         </Col>
 
         <Col xs={24}>
           <SectionCard
             title="実績 vs 見込み（日別）"
-            tooltip="凡例：実績=緑 / AI予測=青 / 目標=橙（折れ線）。縦帯=本日。タブ右のバッジは週AI着地。"
+            tooltip="凡例：実績=緑 / AI予測=青 / 目標=橙（折れ線） / 比較（先月/前年）=灰（点線）。縦帯=本日。"
             extra={<Tag color="geekblue">{monthJP}</Tag>}
           >
             <Tabs activeKey={activeWeekKey} onChange={setActiveWeekKey} items={tabItems} size="small" style={{ marginBottom: 8 }} />
@@ -683,6 +903,9 @@ const ExecutiveForecastDashboard: FC = () => {
                       <ReferenceArea x1={todayXLabel} x2={todayXLabel} strokeOpacity={0} fill="#e6f4ff" fillOpacity={0.6} />
                     )}
                     <Line type="monotone" dataKey="目標" stroke={Colors.target} dot={false} strokeWidth={2} />
+                    {compareBasis !== 'now' && (
+                      <Line type="monotone" dataKey="比較基準" stroke={Colors.baseline} dot={false} strokeDasharray="4 4" />
+                    )}
                     <Bar dataKey="AI予測" fill={Colors.forecast} />
                     <Bar dataKey="実績" fill={Colors.actual} />
                   </BarChart>
@@ -696,42 +919,32 @@ const ExecutiveForecastDashboard: FC = () => {
       {/* スタイル */}
       <style>
         {`
-          /* ===== 上段：左右の高さを揃える ===== */
-          .top-grid {
+          /* ===== 上段：2×2 固定グリッド ===== */
+          .top-grid-2x2 {
             display: grid;
-            grid-template-columns: 0.42fr 0.58fr;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            grid-auto-rows: 1fr;
             gap: ${DENSE.gutter}px;
             align-items: stretch;
           }
+          .top-grid-2x2 .cell { min-width: 0; }
           @media (max-width: 991px) {
-            .top-grid { grid-template-columns: 1fr; }
-          }
-          .left-stack {
-            display: flex;
-            flex-direction: column;
-            gap: ${DENSE.gutter}px;
-            min-width: 0;
-          }
-          .forecast-card {
-            min-width: 0;
-            align-self: start; /* ← 右カードだけ行高のストレッチを無効化して内容高さに合わせる */
+            .top-grid-2x2 { grid-template-columns: 1fr; }
           }
 
-          /* 重なり防止 */
+          /* 共通 */
           .no-overlap-card { position: relative; z-index: 1; overflow: visible; }
           .row-current-week td { background: #f0f5ff !important; }
+          .section-body { min-height: ${DENSE.cellMinH}px; }
 
-          /* KPIカード：はみ出し防止 */
+          /* KPIカード：コンパクト */
           .kpi-grid {
             display: grid;
             gap: ${DENSE.gutter}px;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-          }
-          @media (min-width: 768px) {
-            .kpi-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+            grid-template-columns: repeat(3, minmax(0, 1fr));
           }
           .kpi-cell {
-            height: 108px;
+            min-height: 108px;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
@@ -740,6 +953,7 @@ const ExecutiveForecastDashboard: FC = () => {
             border-radius: 8px;
             background: #fff;
           }
+          .kpi-cell.ring { align-items: center; }
           .kpi-label { color: #8c8c8c; font-size: 13px; }
           .kpi-value.kpi-num {
             font-size: ${DENSE.kpiLg}px;
@@ -750,67 +964,58 @@ const ExecutiveForecastDashboard: FC = () => {
             overflow: hidden;
             text-overflow: ellipsis;
           }
-          .kpi-value.kpi-num.small { font-size: ${DENSE.kpiMd}px; }
           .kpi-value .unit { font-size: 13px; }
 
-          /* 目標達成ペース：2行グリッド（PCは3列×2行） + コンパクト */
-          .action-grid {
-            display: grid;
-            grid-template-columns: repeat(1, minmax(0, 1fr));
-            gap: ${DENSE.gutter}px;
-          }
-          @media (min-width: 576px) { .action-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-          @media (min-width: 992px) { .action-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } } /* 5枚→上3/下2 */
-
-          .action-compact .action-grid { gap: ${Math.round(DENSE.gutter * 0.75)}px; }
-          .action-compact .action-tile .action-val {
-            font-size: 18px;   /* 20px -> 18px */
-            font-feature-settings: 'tnum' 1;
-            font-variant-numeric: tabular-nums;
-          }
-          .action-compact .ant-typography { line-height: 1.2; }
-          .action-compact .ant-card-head { min-height: 0; }
-
-          /* 見通しカード：行ラベル付きマトリクス（bodyはblockでOK） */
-          .forecast-card .ant-card-body { display: block; }
-          /* 見通しカードでは SectionCard の body 伸張を無効化（flex:1 を 0 に） */
-          .forecast-card .section-body {
-            flex: 0 0 auto;
-          }
-          /* 念のためカード自体の高さも自動に */
-          .forecast-card { height: auto !important; }
-          .forecast-matrix {
+          /* 2列行マトリクス */
+          .matrix-two {
             display: grid;
             grid-template-columns: 84px 1fr;
             column-gap: 8px;
             row-gap: 6px;
-            /* 余白伸張をやめ、内容高さのみ */
-            flex: 0 0 auto;
-            min-height: auto;
           }
-          .fm-label {
-            color: #8c8c8c;
-            font-size: 12px;
-            line-height: 28px;
-            align-self: center;
-            white-space: nowrap;
-          }
-          .fm-content { min-width: 0; }
-          .fm-row {
+          .m-label { color: #8c8c8c; font-size: 12px; line-height: 28px; align-self: center; white-space: nowrap; }
+          .m-row {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 6px;
           }
           @media (max-width: 575px) {
-            .forecast-matrix { grid-template-columns: 1fr; }
-            .fm-row { grid-template-columns: 1fr; }
+            .matrix-two { grid-template-columns: 1fr; }
+            .m-row { grid-template-columns: 1fr; }
           }
 
-          /* 見通しカードをさらに 0.9 倍程度に圧縮 */
-          .forecast-compact .ant-tag { transform: scale(0.95); transform-origin: left center; }
-          .forecast-compact .ant-badge { transform: scale(0.95); transform-origin: left center; }
-          .forecast-compact .ant-card-small > .ant-card-body { padding: 6px; }
-          .forecast-compact .ant-progress-line { margin-bottom: 4px; }
+          /* 実績カードの内部グリッド */
+          .actuals-grid {
+            display: grid;
+            gap: ${DENSE.gutter}px;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+          }
+          @media (max-width: 575px) { .actuals-grid { grid-template-columns: 1fr; } }
+
+          /* 目標達成ペース：2タイル */
+          .action-grid.two-cols {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: ${DENSE.gutter}px;
+          }
+          @media (max-width: 575px) { .action-grid.two-cols { grid-template-columns: 1fr; } }
+          .action-compact .action-grid { gap: ${Math.round(DENSE.gutter * 0.75)}px; }
+          .action-compact .action-tile .action-val {
+            font-size: 18px;
+            font-feature-settings: 'tnum' 1;
+            font-variant-numeric: tabular-nums;
+          }
+
+          /* ヘッダー内ピル */
+          .card-header-stats {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            justify-content: flex-end;
+          }
+          @media (max-width: 575px) {
+            .card-header-stats { justify-content: flex-start; }
+          }
         `}
       </style>
     </div>
