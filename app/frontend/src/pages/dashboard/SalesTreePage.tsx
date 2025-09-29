@@ -285,9 +285,12 @@ const SortBadge: FC<{ label: string; keyName: SortKey; order: SortOrder }> = ({ 
 /* =========================
  * CSV Builder
  * ========================= */
-function toCsv(rows: Array<Record<string, any>>, bomUtf8 = true): Blob {
-  const headers = Object.keys(rows[0] ?? {});
-  const escape = (v: any) => {
+type CsvCell = string | number | null;
+type CsvRow = Record<string, CsvCell>;
+
+function toCsv(rows: CsvRow[], bomUtf8 = true, orderedHeaders?: string[]): Blob {
+  const headers = orderedHeaders ?? Object.keys(rows[0] ?? {});
+  const escape = (v: CsvCell) => {
     if (v == null) return '';
     let s = String(v).replace(/"/g, '""');
     // Excelの数式インジェクション最低限対策
@@ -295,7 +298,7 @@ function toCsv(rows: Array<Record<string, any>>, bomUtf8 = true): Blob {
     if (/[",\r\n]/.test(s)) return `"${s}"`;
     return s;
   };
-  const csv = [headers.join(','), ...rows.map(r => headers.map(h => escape(r[h])).join(','))].join('\r\n');
+  const csv = [headers.join(','), ...rows.map(r => headers.map(h => escape(r[h] ?? null)).join(','))].join('\r\n');
   const blob = new Blob([bomUtf8 ? '\uFEFF' : '', csv], { type: 'text/csv;charset=utf-8;' });
   return blob;
 }
@@ -330,7 +333,8 @@ const axesFromMode = (m: Mode): [Axis, Axis, Axis] => {
  * Component
  * ========================= */
 const SalesPivotBoardPlusWithCharts: FC = () => {
-  const { message } = App.useApp?.() ?? { message: { success: () => {}, warning: () => {}, error: () => {} } as any };
+  const appContext = App.useApp?.();
+  const message = appContext?.message;
 
   // Period
   const [periodMode, setPeriodMode] = useState<'single' | 'range'>('single');
@@ -468,13 +472,13 @@ const SalesPivotBoardPlusWithCharts: FC = () => {
 
     const buildRowsFor = async (repId: ID) => {
       const repName = REPS.find(r => r.id === repId)?.name ?? repId;
-      const rows: Array<Record<string, any>> = [];
+      const rows: CsvRow[] = [];
 
       const pushRow = (baseName: string, bName?: string, cName?: string, amount = 0, qty = 0, count = 0) => {
         const unit = qty > 0 ? Math.round((amount / qty) * 100) / 100 : null;
         if (options.excludeZero && amount === 0 && qty === 0 && count === 0) return;
 
-        const row: Record<string, any> = { 営業: repName, [axisLabel(baseAx)]: baseName };
+        const row: CsvRow = { 営業: repName, [axisLabel(baseAx)]: baseName };
         if (options.addAxisB) row[axisLabel(axB)] = bName ?? '';
         if (options.addAxisC) row[axisLabel(axC)] = cName ?? '';
         row['売上'] = amount;
@@ -506,20 +510,22 @@ const SalesPivotBoardPlusWithCharts: FC = () => {
           // ベース × B（Cを合算）
           for (const b of bUniverse) {
             const acc = { a: 0, q: 0, c: 0 };
-            for (const _c of cUniverse) addMetric(acc, 1);
+            for (let i = 0; i < cUniverse.length; i += 1) addMetric(acc, 1);
             pushRow(base.name, b.name, undefined, acc.a, acc.q, acc.c);
           }
         } else if (!options.addAxisB && options.addAxisC) {
           // ベース × C（Bを合算）
           for (const c of cUniverse) {
             const acc = { a: 0, q: 0, c: 0 };
-            for (const _b of bUniverse) addMetric(acc, 1);
+            for (let i = 0; i < bUniverse.length; i += 1) addMetric(acc, 1);
             pushRow(base.name, undefined, c.name, acc.a, acc.q, acc.c);
           }
         } else {
           // ベースのみ（BとCを合算）
           const acc = { a: 0, q: 0, c: 0 };
-          for (const _b of bUniverse) for (const _c of cUniverse) addMetric(acc, 1);
+          for (let i = 0; i < bUniverse.length; i += 1) {
+            for (let j = 0; j < cUniverse.length; j += 1) addMetric(acc, 1);
+          }
           pushRow(base.name, undefined, undefined, acc.a, acc.q, acc.c);
         }
       }
@@ -530,12 +536,14 @@ const SalesPivotBoardPlusWithCharts: FC = () => {
     if (options.splitBy === 'rep') {
       for (const repId of targetRepIds) {
         const rows = await buildRowsFor(repId);
-        if (rows.length) downloadBlob(toCsv(rows), `${fileStem}_${repId}.csv`);
+        if (rows.length) downloadBlob(toCsv(rows, true, headers), `${fileStem}_${repId}.csv`);
       }
     } else {
-      let all: Record<string, any>[] = [];
-      for (const repId of targetRepIds) all = all.concat(await buildRowsFor(repId));
-      if (all.length) downloadBlob(toCsv(all), `${fileStem}.csv`);
+      const allRows: CsvRow[] = [];
+      for (const repId of targetRepIds) {
+        allRows.push(...await buildRowsFor(repId));
+      }
+      if (allRows.length) downloadBlob(toCsv(allRows, true, headers), `${fileStem}.csv`);
     }
   };
 
@@ -749,30 +757,45 @@ const SalesPivotBoardPlusWithCharts: FC = () => {
   /* ========== Drawer (Pivot) ========== */
   const openPivot = (rec: MetricEntry) => {
     const others = (['customer', 'item', 'date'] as Mode[]).filter(ax => ax !== mode);
-    const targets = others.map(ax => ({ axis: ax, label: ax === 'customer' ? '顧客' : ax === 'item' ? '品名' : '日付' })) as { axis: Mode; label: string }[];
+    const targets: { axis: Mode; label: string }[] = others.map(ax => ({ axis: ax, label: ax === 'customer' ? '顧客' : ax === 'item' ? '品名' : '日付' }));
+    const firstTarget = targets[0];
 
-    const base = {
-      open: true, baseAxis: mode, baseId: rec.id, baseName: rec.name,
-      repIds, targets, activeAxis: targets[0].axis, sortBy, order, topN
-    } as any;
+    const drawerState: Extract<DrawerState, { open: true }> = {
+      open: true,
+      baseAxis: mode,
+      baseId: rec.id,
+      baseName: rec.name,
+      repIds,
+      targets,
+      activeAxis: firstTarget?.axis ?? mode,
+      sortBy,
+      order,
+      topN,
+      ...(query.monthRange ? { monthRange: query.monthRange } : { month: query.month }),
+    };
 
-    if (query.monthRange) setDrawer({ ...base, monthRange: query.monthRange });
-    else setDrawer({ ...base, month: query.month });
+    setDrawer(drawerState);
     setPivotData({ customer: [], item: [], date: [] });
     setPivotCursor({ customer: null, item: null, date: null });
   };
 
   const loadPivot = useCallback(async (axis: Mode, reset = false) => {
     if (!drawer.open) return;
+    const { baseAxis, baseId, repIds: drawerRepIds, sortBy: drawerSortBy, order: drawerOrder, topN: drawerTopN, month, monthRange } = drawer;
     const targetAxis = axis;
-    if (targetAxis === drawer.baseAxis) return;
+    if (targetAxis === baseAxis) return;
     setPivotLoading(true);
     try {
+      const periodParams = monthRange ? { monthRange } : { month };
       const page = await fetchPivot({
-        month: (drawer as any).month,
-        monthRange: (drawer as any).monthRange,
-        baseAxis: drawer.baseAxis, baseId: drawer.baseId, repIds: drawer.repIds,
-        targetAxis: targetAxis as Mode, sortBy: drawer.sortBy, order: drawer.order, topN: drawer.topN,
+        ...periodParams,
+        baseAxis,
+        baseId,
+        repIds: drawerRepIds,
+        targetAxis,
+        sortBy: drawerSortBy,
+        order: drawerOrder,
+        topN: drawerTopN,
         cursor: reset ? null : pivotCursor[targetAxis]
       });
       setPivotData(prev => ({ ...prev, [targetAxis]: reset ? page.rows : prev[targetAxis].concat(page.rows) }));
@@ -952,7 +975,7 @@ const SalesPivotBoardPlusWithCharts: FC = () => {
                 trigger={['click']}
                 buttonsRender={([left, right]) => [
                   left,
-                  React.cloneElement(right as any, { icon: <DownOutlined /> })
+                  React.isValidElement(right) ? React.cloneElement(right, { icon: <DownOutlined /> }) : right
                 ]}
               >
                 CSV出力
