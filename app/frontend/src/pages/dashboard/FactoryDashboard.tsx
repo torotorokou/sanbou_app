@@ -61,7 +61,6 @@ type WeeklyConfirmedRow = {
   targetSum: number; actualSum: number; rateConfirmed: number | null;
   bizDays: number; sunHoliDays: number; offDays: number;
 };
-type AdoptedKind = 'AI' | '現行';
 type CompareBasis = 'now' | 'prevMonth' | 'prevYear';
 
 type SeriesBundle = {
@@ -226,7 +225,6 @@ function normalizedDelta(
 ): { deltaPct: number | null, baselineValue: number | null } {
   if (!baselineSeries || valueCurrent == null) return { deltaPct: null, baselineValue: null };
   const curDays = bizDayCountTo(baseSeries, today) || 1;
-  const baseDay = ymd(addDays(toDate(today), - (curDays - 1)));
   // baseline 側は「同数の営業日」を目安に同月内の先頭から該当営業日数分を集計
   const bsBiz = baselineSeries.filter(d => d.isBusinessDay !== false);
   const cutoff = bsBiz.slice(0, curDays).map(d => d.date);
@@ -240,8 +238,8 @@ function normalizedDelta(
 /* =========================
  * ビジュアル部品
  * ========================= */
-const TinyLabel: FC<{ children: React.ReactNode }> = ({ children }) => (
-  <span style={{ color: '#8c8c8c', fontSize: 13 }}>{children}</span>
+const TinyLabel: FC<{ children: React.ReactNode; style?: React.CSSProperties; }> = ({ children, style }) => (
+  <span style={{ color: '#8c8c8c', fontSize: 13, ...style }}>{children}</span>
 );
 
 const SoftBadge: FC<{ value: number | null | undefined }> = ({ value }) => {
@@ -302,16 +300,6 @@ const MiniRateBar: FC<{ rate: number | null }> = ({ rate }) => {
     </div>
   );
 };
-
-// 小さめの数値タイル
-const StatTile: FC<{ label: string; value: number | null | undefined; unit?: string; color?: string; sub?: string; }> = ({ label, value, unit = 't', color, sub }) => (
-  <Card className="no-overlap-card" bordered size="small" bodyStyle={{ padding: 8 }}>
-    <TinyLabel>{label}{sub ? `（${sub}）` : ''}</TinyLabel>
-    <div style={{ fontSize: 20, color: color ?? 'inherit', fontFeatureSettings: "'tnum' 1", fontVariantNumeric: 'tabular-nums' }}>
-      {value != null ? `${Math.round(value).toLocaleString()} ${unit}` : '—'}
-    </div>
-  </Card>
-);
 
 // ヘッダー用ピル
 const StatPill: FC<{ label: string; value: number; unit?: string; aria?: string; }> = ({ label, value, unit = '日', aria }) => (
@@ -476,40 +464,6 @@ const TodayWeekCompareCard: FC<{
   );
 };
 
-/* === 実績カード（月/週/日） === */
-const ActualsCard: FC<{
-  monthActualMTD: number;
-  weekActualToDate: number;
-  dayActual: number | null;
-  mtdRate: number | null;
-}> = ({ monthActualMTD, weekActualToDate, dayActual, mtdRate }) => {
-  const ringPercent = clamp(Math.round((mtdRate ?? 0) * 100), 0, 120);
-  const ringColor = (mtdRate ?? 0) >= 1 ? Colors.good : (mtdRate ?? 0) >= 0.8 ? Colors.warn : Colors.bad;
-
-  return (
-    <SectionCard
-      dense
-      title="実績（確定）"
-      tooltip="月＝MTD、週＝当週の本日まで、日＝本日確定。"
-      extra={<TinyLabel>MTD達成率</TinyLabel>}
-    >
-      <div className="actuals-grid">
-        <Card className="no-overlap-card" bordered size="small" bodyStyle={{ padding: 8 }}>
-          <TinyLabel>月実績（MTD）</TinyLabel>
-          <div style={{ fontSize: 20, color: Colors.actual, fontFeatureSettings: "'tnum' 1", fontVariantNumeric: 'tabular-nums' }}>
-            {monthActualMTD.toLocaleString()} t
-          </div>
-          <div style={{ marginTop: 6 }}>
-            <Progress type="line" percent={ringPercent} strokeColor={ringColor} showInfo />
-          </div>
-        </Card>
-        <StatTile label="週実績" value={weekActualToDate} color={Colors.actual} sub="今日まで" />
-        <StatTile label="日実績" value={dayActual ?? null} color={Colors.actual} sub="本日" />
-      </div>
-    </SectionCard>
-  );
-};
-
 /* === 目標達成ペース：必要ペース/残り目標 === */
 const ActionPaceCard: FC<{
   loading: boolean;
@@ -628,31 +582,11 @@ const ExecutiveForecastDashboard: FC = () => {
   );
 
   // === 目標・実績 ===
-  const monthTarget = useMemo(() => (base.length ? monthTargetSum(base) : 0), [base]);
-  const weekTargetPlan = useMemo(() => {
-    if (!base.length || !currentWeek) return 0;
-    const keys = currentWeek.days.map(ymd);
-    const ds = keys.map(k => base.find(r => r.date === k)).filter(Boolean) as DailyPoint[];
-    return sum(ds.map(r => r.target ?? 0));
-  }, [base, currentWeek]);
   const dayTargetPlan = useMemo(() => {
     if (!base.length) return null;
     const r = base.find(d => d.date === todayStr);
     if (!r) return null;
     return r.isBusinessDay === false ? null : (r.target ?? null);
-  }, [base, todayStr]);
-
-  const monthActualMTD = useMemo(() => (base.length ? actualSumMonth(base, todayStr) : 0), [base, todayStr]);
-  const weekActualToDate = useMemo(() => {
-    if (!base.length || !currentWeek) return 0;
-    const keys = currentWeek.days.map(ymd);
-    const ds = keys.map(k => base.find(r => r.date === k)).filter(Boolean) as DailyPoint[];
-    return sum(ds.filter(r => r.date <= todayStr).map(r => r.actual ?? 0));
-  }, [base, currentWeek, todayStr]);
-  const dayActual = useMemo(() => {
-    if (!base.length) return null;
-    const r = base.find(d => d.date === todayStr);
-    return r?.actual ?? null;
   }, [base, todayStr]);
 
   const todayCurrent = useMemo(() => {

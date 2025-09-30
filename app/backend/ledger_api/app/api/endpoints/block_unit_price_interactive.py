@@ -7,16 +7,20 @@
 
 # backend/app/api/endpoints/block_unit_price_interactive.py
 
-from typing import Any, Dict
+from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, File, HTTPException, UploadFile
-from fastapi.responses import StreamingResponse
+# StreamingResponse not required here; finalize may return JSON or StreamingResponse dynamically
 from pydantic import BaseModel
 
 from app.api.services.report.interactive_report_processing_service import (
     InteractiveReportProcessingService,
 )
-from app.st_app.logic.manage.block_unit_price_interactive import (
+from app.api.dto.block_unit_price import (
+    TransportCandidateResponseDTO,
+    TransportCandidateRowDTO,
+)
+from app.st_app.logic.manage.block_unit_price_interactive_main import (
     BlockUnitPriceInteractive,
 )
 
@@ -34,25 +38,27 @@ class TransportSelectionRequest(BaseModel):
     運搬業者選択リクエストモデル
 
     Attributes:
-        session_data (Dict[str, Any]): 前のステップのセッションデータ
+        session_id (str): 前のステップのセッションID
         selections (Dict[str, str]): 業者名と選択された運搬業者コードのマッピング
     """
 
-    session_data: Dict[str, Any]  # 前のステップのセッションデータ
+    session_id: str
     selections: Dict[str, str]  # {業者名: 選択された運搬業者コード}
 
 
 class FinalizeRequest(BaseModel):
     """最終確認リクエストモデル"""
 
-    session_data: Dict[str, Any]
+    session_id: Optional[str] = None
+    session_data: Optional[Dict[str, Any]] = None
     confirmed: bool = True
 
 
 class GenericApplyRequest(BaseModel):
     """任意ステップ適用リクエスト"""
 
-    session_data: Dict[str, Any]
+    session_id: Optional[str] = None
+    session_data: Optional[Dict[str, Any]] = None
     user_input: Dict[str, Any]
 
 
@@ -98,42 +104,49 @@ async def start_block_unit_price_process(
 
         service = InteractiveReportProcessingService()
         generator = BlockUnitPriceInteractive(files={})
-        result = service.initial(generator, upload_files)
-        return result
+        raw_result = service.initial(generator, upload_files)
+
+        if not isinstance(raw_result, dict):
+            return raw_result
+
+        if raw_result.get("status") != "success":
+            print("[DEBUG] initial result (error):", raw_result)
+            return raw_result
+
+        data_payload = raw_result.get("data")
+        rows_payload: List[TransportCandidateRowDTO] = []
+        if isinstance(data_payload, dict):
+            rows_source = data_payload.get("rows", [])
+            if isinstance(rows_source, list):
+                for item in rows_source:
+                    if isinstance(item, TransportCandidateRowDTO):
+                        rows_payload.append(item)
+                    elif isinstance(item, dict):
+                        try:
+                            rows_payload.append(TransportCandidateRowDTO(**item))
+                        except Exception as dto_err:  # noqa: BLE001
+                            print("[WARN] failed to parse transport row DTO:", dto_err, item)
+
+        session_id_value = raw_result.get("session_id")
+        if session_id_value is None and isinstance(data_payload, dict):
+            session_id_value = data_payload.get("session_id")
+        if session_id_value is None:
+            raise HTTPException(status_code=500, detail="session_id を取得できませんでした")
+
+        response_dto = TransportCandidateResponseDTO(
+            session_id=str(session_id_value),
+            rows=rows_payload,
+        )
+
+        return response_dto.dict()
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"処理開始エラー: {str(e)}")
 
 
-@router.post("/select-transport", tags=[tag_name])
-async def select_transport_vendors(request: TransportSelectionRequest):
-    """
-    運搬業者選択処理 (Step 1)
-
-    選択された運搬業者を適用し、確認用データを返します。
-
-    Args:
-        request (TransportSelectionRequest): セッションデータと選択情報を含むリクエスト
-
-    Returns:
-        Dict: 運搬業者選択適用後の処理結果
-
-    Raises:
-        HTTPException: 処理中にエラーが発生した場合
-    """
-    try:
-        service = InteractiveReportProcessingService()
-        generator = BlockUnitPriceInteractive()
-        # selections は user_input として渡す
-        result = service.apply(
-            generator, request.session_data, {"selections": request.selections}
-        )
-        return result
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"運搬業者選択エラー: {str(e)}")
 
 
-@router.post("/finalize", tags=[tag_name], response_class=StreamingResponse)
-async def finalize_calculation(request: FinalizeRequest) -> StreamingResponse:
+@router.post("/finalize", tags=[tag_name])
+async def finalize_calculation(request: FinalizeRequest) -> Any:
     """
     最終計算処理 (Step 2)
 
@@ -155,7 +168,10 @@ async def finalize_calculation(request: FinalizeRequest) -> StreamingResponse:
             )
         service = InteractiveReportProcessingService()
         generator = BlockUnitPriceInteractive()
-        response = service.finalize(generator, request.session_data)
+        session_payload: Any = request.session_id or request.session_data
+        if session_payload is None:
+            raise HTTPException(status_code=400, detail="session_id が指定されていません")
+        response = service.finalize(generator, session_payload)
         return response
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"最終計算エラー: {str(e)}")
@@ -216,7 +232,10 @@ async def apply_generic_step(request: GenericApplyRequest):
     try:
         service = InteractiveReportProcessingService()
         generator = BlockUnitPriceInteractive()
-        result = service.apply(generator, request.session_data, request.user_input)
+        session_payload: Any = request.session_id or request.session_data
+        if session_payload is None:
+            raise HTTPException(status_code=400, detail="session_id が指定されていません")
+        result = service.apply(generator, session_payload, request.user_input)
         return result
     except Exception as e:  # noqa: BLE001
         raise HTTPException(status_code=500, detail=f"汎用ステップ適用エラー: {e}")

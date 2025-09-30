@@ -9,7 +9,8 @@ import type { TableColumnsType, TableProps, MenuProps } from 'antd';
 import {
   ArrowDownOutlined, ArrowUpOutlined, InfoCircleOutlined, SwapOutlined, ReloadOutlined, DownloadOutlined, DownOutlined
 } from '@ant-design/icons';
-import dayjs, { Dayjs } from 'dayjs';
+import dayjs from 'dayjs';
+import type { Dayjs } from 'dayjs';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RTooltip, ResponsiveContainer, LineChart, Line
 } from 'recharts';
@@ -24,6 +25,8 @@ type Mode = 'customer' | 'item' | 'date';
 type SortKey = 'amount' | 'qty' | 'count' | 'unit_price' | 'date' | 'name';
 type SortOrder = 'asc' | 'desc';
 type ID = string;
+
+type UniverseEntry = { id: ID; name: string; dateKey?: YYYYMMDD };
 
 interface SalesRep { id: ID; name: string; }
 
@@ -77,7 +80,7 @@ const REPS: SalesRep[] = [
   { id: 'rep_d', name: '営業D' },
 ];
 
-const CUSTOMERS: Array<{ id: ID; name: string }> = [
+const CUSTOMERS: UniverseEntry[] = [
   { id: 'c_alpha', name: '顧客アルファ' },
   { id: 'c_bravo', name: '顧客ブラボー' },
   { id: 'c_charlie', name: '顧客チャーリー' },
@@ -90,7 +93,7 @@ const CUSTOMERS: Array<{ id: ID; name: string }> = [
   { id: 'c_juliet', name: '顧客ジュリエット' },
 ];
 
-const ITEMS: Array<{ id: ID; name: string }> = [
+const ITEMS: UniverseEntry[] = [
   { id: 'i_a', name: '商品A' }, { id: 'i_b', name: '商品B' }, { id: 'i_c', name: '商品C' },
   { id: 'i_d', name: '商品D' }, { id: 'i_e', name: '商品E' }, { id: 'i_f', name: '商品F' },
   { id: 'i_g', name: '商品G' }, { id: 'i_h', name: '商品H' }, { id: 'i_i', name: '商品I' },
@@ -115,10 +118,10 @@ const makeMetric = (weight = 1): Pick<MetricEntry, 'amount' | 'qty' | 'count' | 
   return { amount, qty, count, unit_price };
 };
 
-const monthDays = (m: YYYYMM) => {
+const monthDays = (m: YYYYMM): UniverseEntry[] => {
   const start = dayjs(m + '-01');
   const days = start.daysInMonth();
-  const list: { id: ID; name: string; dateKey: YYYYMMDD }[] = [];
+  const list: UniverseEntry[] = [];
   for (let d = 1; d <= days; d++) {
     const s = start.date(d).format('YYYY-MM-DD');
     list.push({ id: `d_${s}`, name: s, dateKey: s });
@@ -137,8 +140,25 @@ const monthsBetween = (from: YYYYMM, to: YYYYMM): YYYYMM[] => {
   return res;
 };
 
-const allDaysInRange = (range: { from: YYYYMM; to: YYYYMM }) =>
+const allDaysInRange = (range: { from: YYYYMM; to: YYYYMM }): UniverseEntry[] =>
   monthsBetween(range.from, range.to).flatMap(m => monthDays(m));
+
+type NumericSortKey = Exclude<SortKey, 'date' | 'name'>;
+
+const metricValue = (entry: MetricEntry, key: NumericSortKey): number | null => {
+  switch (key) {
+    case 'amount':
+      return entry.amount;
+    case 'qty':
+      return entry.qty;
+    case 'count':
+      return entry.count;
+    case 'unit_price':
+      return entry.unit_price;
+    default:
+      return null;
+  }
+};
 
 const sortMetrics = (arr: MetricEntry[], sortBy: SortKey, order: SortOrder) => {
   const dir = order === 'asc' ? 1 : -1;
@@ -158,7 +178,8 @@ const sortMetrics = (arr: MetricEntry[], sortBy: SortKey, order: SortOrder) => {
       if (a.qty !== b.qty) return (a.qty - b.qty) * dir;
       return 0;
     }
-    const av = (a as any)[sortBy]; const bv = (b as any)[sortBy];
+    const av = metricValue(a, sortBy);
+    const bv = metricValue(b, sortBy);
     if (av == null && bv == null) return a.name.localeCompare(b.name, 'ja');
     if (av == null) return 1;
     if (bv == null) return -1;
@@ -178,16 +199,16 @@ async function fetchSummary(q: SummaryQuery): Promise<SummaryRow[]> {
 
   const months = q.monthRange ? monthsBetween(q.monthRange.from, q.monthRange.to) : [q.month!];
 
-  const universe =
+  const universe: UniverseEntry[] =
     q.mode === 'customer' ? CUSTOMERS :
     q.mode === 'item' ? ITEMS :
     q.monthRange ? allDaysInRange(q.monthRange) : monthDays(q.month!);
 
-  const filtered = q.filterIds.length ? (universe as any[]).filter(u => q.filterIds.includes(u.id)) : universe;
+  const filtered = q.filterIds.length ? universe.filter(u => q.filterIds.includes(u.id)) : universe;
 
   const rows: SummaryRow[] = reps.map(rep => {
     const weight = 1 + (rep.id.charCodeAt(rep.id.length - 1) % 3) * 0.2;
-    const pool: MetricEntry[] = (filtered as any[]).map((t: any) => {
+    const pool: MetricEntry[] = filtered.map((t) => {
       const m = makeMetric(weight);
       const mult = q.mode === 'date' ? 1 : months.length;
       const amount = Math.round(m.amount * mult);
@@ -220,12 +241,12 @@ async function fetchPivot(params: {
   targetAxis: Mode; sortBy: SortKey; order: SortOrder; topN: 10 | 20 | 50 | 'all'; cursor?: string | null;
 }): Promise<CursorPage<MetricEntry>> {
   const months = params.monthRange ? monthsBetween(params.monthRange.from, params.monthRange.to) : [params.month!];
-  const universe =
+  const universe: UniverseEntry[] =
     params.targetAxis === 'customer' ? CUSTOMERS :
     params.targetAxis === 'item' ? ITEMS :
     params.monthRange ? allDaysInRange(params.monthRange) : monthDays(params.month!);
 
-  const rows: MetricEntry[] = (universe as any[]).map((t: any) => {
+  const rows: MetricEntry[] = universe.map((t) => {
     const repWeight =
       (params.repIds.length ? params.repIds : REPS.map(r => r.id))
         .reduce((acc, id) => acc + (1 + (id.charCodeAt(id.length - 1) % 3) * 0.1), 0) / Math.max(1, (params.repIds.length || REPS.length));

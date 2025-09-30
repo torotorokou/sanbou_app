@@ -1,35 +1,107 @@
 import React, { useState, useCallback } from 'react';
-import { Modal, Button, Steps, Spin, message, Space, Card, Select } from 'antd';
+import { Modal, Button, Steps, Spin, message, Card, Select } from 'antd';
 import { CheckCircleOutlined } from '@ant-design/icons';
 import { getApiEndpoint } from '@/constants/reportConfig';
 import type { ReportKey } from '@/constants/reportConfig';
 
 // 型定義（要件に合わせて整備）
-interface TransportVendor {
-    code: string;
-    name: string;
-    fee?: number;
-    unit_price?: number;
+export interface TransportCandidateRow {
+    entry_id: string; // unified identifier from backend (previously row_index)
+    vendor_code: number | string;
+    vendor_name: string;
+    item_name: string;
+    detail?: string | null;
+    options: string[];
+    initial_index: number;
 }
 
-interface InteractiveItem {
-    id: string; // 対象ID
+export interface TransportVendor {
+    code: string;
+    name: string;
+}
+
+export interface InteractiveItem {
+    id: string; // 対象ID (row_index を文字列化)
+    vendor_code: string;
     processor_name: string; // 処理業者名
     product_name: string; // 商品名
     note?: string; // 備考
     transport_options: TransportVendor[]; // 選択肢
+    initial_selection_index: number;
+    rawRow: TransportCandidateRow;
 }
 
-interface InitialApiResponse {
-    status: string;
-    data: {
-        session_id: string;
-        items: InteractiveItem[];
-    };
+export interface InitialApiResponse {
+    session_id: string;
+    rows: TransportCandidateRow[];
+}
+
+// サーバーから往復するセッションデータ（最低限 session_id を保持）
+export type SessionData = { session_id: string } & Record<string, unknown>;
+
+// 選択適用のプレビュー応答（最低限 selection_summary と session_data を許容）
+interface SelectionPreviewResponse {
+    session_data?: SessionData;
+    selection_summary?: Record<string, unknown>;
+    // その他のフィールドを拡張可能に
+    [key: string]: unknown;
 }
 
 // id => 選択された運搬業者
 type SelectionMap = Record<string, TransportVendor>;
+
+const clampIndex = (value: number, length: number): number => {
+    if (length <= 0) return 0;
+    if (!Number.isFinite(value)) return 0;
+    const normalized = Math.trunc(value);
+    if (normalized < 0) return 0;
+    if (normalized >= length) return length - 1;
+    return normalized;
+};
+
+const createInteractiveItemFromRow = (row: TransportCandidateRow): InteractiveItem => {
+    const optionLabels = Array.isArray(row.options)
+        ? row.options
+            .map((opt) => (typeof opt === 'string' ? opt.trim() : String(opt ?? '')).trim())
+            .filter((label) => label.length > 0)
+        : [];
+    const transport_options: TransportVendor[] = optionLabels.map((label) => ({ code: label, name: label }));
+
+    const rawInitialIsZero =
+        (typeof row.initial_index === 'number' && Math.trunc(row.initial_index) === 0) ||
+        (typeof row.initial_index === 'string' && Number.parseInt(row.initial_index, 10) === 0);
+
+    let initialSelectionIndex = clampIndex(
+        typeof row.initial_index === 'number' && Number.isFinite(row.initial_index)
+            ? row.initial_index
+            : typeof row.initial_index === 'string'
+                ? Number.parseInt(row.initial_index, 10)
+                : Number(row.initial_index ?? 0),
+        transport_options.length,
+    );
+
+    if (rawInitialIsZero && initialSelectionIndex === 0 && transport_options.length > 0) {
+        const honestIndex = transport_options.findIndex((option) => option.name === 'オネスト');
+        if (honestIndex >= 0) {
+            initialSelectionIndex = honestIndex;
+        }
+    }
+
+    return {
+        id: String(row.entry_id ?? ''),
+        vendor_code: String(row.vendor_code ?? ''),
+        processor_name: row.vendor_name,
+        product_name: row.item_name,
+        note: row.detail ?? undefined,
+        transport_options,
+        initial_selection_index: initialSelectionIndex,
+        rawRow: {
+            ...row,
+            options: optionLabels,
+            initial_index: initialSelectionIndex,
+        },
+    } satisfies InteractiveItem;
+};
 
 interface BlockUnitPriceInteractiveModalProps {
     open: boolean;
@@ -37,6 +109,9 @@ interface BlockUnitPriceInteractiveModalProps {
     csvFiles: { [label: string]: File | null };
     reportKey: ReportKey;
     onSuccess: (zipUrl: string, fileName: string) => void;
+    // 親コンポーネントが既に initial API の応答を持っている場合、それを直接渡せるようにする
+    initialApiResponse?: InitialApiResponse;
+    initialSessionData?: SessionData;
 }
 
 /**
@@ -44,24 +119,24 @@ interface BlockUnitPriceInteractiveModalProps {
  */
 const TransportSelectionList: React.FC<{
     items: InteractiveItem[];
-    selections: SelectionMap;
+    selections: SelectionMap;   
     onChange: (id: string, vendor: TransportVendor) => void;
 }> = ({ items, selections, onChange }) => {
     return (
         <div>
             {items.map((item) => (
-                <Card key={item.id} style={{ marginBottom: 12 }}>
+                <Card key={item.id} size="small" style={{ marginBottom: 8, padding: 8 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <div>
-                            <div><strong>ID:</strong> {item.id}</div>
-                            <div><strong>処理業者:</strong> {item.processor_name}</div>
-                            <div><strong>商品名:</strong> {item.product_name}</div>
-                            {item.note && <div><strong>備考:</strong> {item.note}</div>}
+                        <div style={{ lineHeight: 1.25 }}>
+                            {/* ID は表示しない（内部で保持） */}
+                            <div style={{ fontSize: 13 }}><strong>処理業者：</strong> {item.processor_name}</div>
+                            <div style={{ fontSize: 13 }}><strong>商品名：</strong> {item.product_name}</div>
+                            <div style={{ fontSize: 12, color: '#666' }}><strong>備考：</strong> {item.note ?? '（なし）'}</div>
                         </div>
-                        <div style={{ minWidth: 260 }}>
-                            <div style={{ marginBottom: 6 }}>運搬業者を選択</div>
+                        <div style={{ minWidth: 220 }}>
+                            <div style={{ marginBottom: 4, fontSize: 13 }}>運搬業者を選択</div>
                             <Select
-                                style={{ width: 240 }}
+                                style={{ width: 220 }}
                                 placeholder="選択してください"
                                 value={selections[item.id]?.code}
                                 onChange={(code) => {
@@ -95,110 +170,104 @@ const TransportSelectionList: React.FC<{
 const BlockUnitPriceInteractiveModal: React.FC<BlockUnitPriceInteractiveModalProps> = ({
     open,
     onClose,
-    csvFiles,
     reportKey,
     onSuccess,
+    initialApiResponse,
+    initialSessionData,
 }) => {
+    // start at selection step (index 0)
     const [currentStep, setCurrentStep] = useState(0);
     const [processing, setProcessing] = useState(false);
     const [initialData, setInitialData] = useState<InitialApiResponse | null>(null);
+    const [items, setItems] = useState<InteractiveItem[]>([]);
     const [selections, setSelections] = useState<SelectionMap>({});
+    const [sessionData, setSessionData] = useState<SessionData | null>(null);
+    const [selectionPreview, setSelectionPreview] = useState<SelectionPreviewResponse | null>(null);
 
     // ステップ定義
+    // removed explicit "準備" step; modal now starts at 選択
     const steps = [
-        { title: '準備', description: '初期データを取得中' },
         { title: '選択', description: '処理業者ごとに運搬業者を選択' },
         { title: '確認', description: '選択内容を確認' },
         { title: '生成', description: '帳簿を生成中' },
         { title: '完了', description: '処理が完了しました' },
     ];
 
+    // 初期データは親コンポーネントから渡される想定なので、モーダル内で自動取得は行わない
+
     /**
-     * Step 1: 初期API呼び出し
+     * ローカルで選択のプレビューを作成（バックエンド呼び出しを行わないモード）
      */
-    const handleInitialApiCall = useCallback(async () => {
-        setProcessing(true);
+    const buildLocalSelectionPreview = useCallback((): SelectionPreviewResponse => {
+        const selection_summary: Record<string, {
+            id?: string;
+            entry_id?: string;
+            processor_name?: string;
+            vendor_code?: string;
+            transport_vendor?: string;
+        }> = {};
         try {
-            const formData = new FormData();
-
-            // CSVファイルを追加
-            const labelToEnglishKey: Record<string, string> = {
-                出荷一覧: 'shipment',
-                受入一覧: 'receive',
-                ヤード一覧: 'yard',
-            };
-
-            Object.keys(csvFiles).forEach((label) => {
-                const fileObj = csvFiles[label];
-                if (fileObj) {
-                    const englishKey = labelToEnglishKey[label] || label;
-                    formData.append(englishKey, fileObj);
+            items.forEach((it) => {
+                const sel = selections[it.id];
+                if (sel) {
+                    const key = it.processor_name || it.id;
+                    selection_summary[key] = {
+                        id: it.id,
+                        entry_id: it.id,
+                        processor_name: it.processor_name,
+                        vendor_code: sel.code,
+                        transport_vendor: sel.name,
+                    };
                 }
             });
-
-            formData.append('report_key', reportKey);
-            formData.append('step', 'initial');
-
-            const apiEndpoint = getApiEndpoint(reportKey);
-            const response = await fetch(`${apiEndpoint}/initial`, {
-                method: 'POST',
-                body: formData,
-            });
-
-            if (!response.ok) {
-                throw new Error('初期処理でエラーが発生しました');
-            }
-
-            const data: InitialApiResponse = await response.json();
-            setInitialData(data);
-            // すべて未選択で初期化
-            setSelections({});
-            setCurrentStep(1);
-            message.success('初期処理が完了しました');
-        } catch (error) {
-            console.error('Initial API call failed:', error);
-            message.error('初期処理に失敗しました');
-        } finally {
-            setProcessing(false);
+        } catch {
+            // ignore
         }
-    }, [csvFiles, reportKey]);
+        return { session_data: sessionData ?? undefined, selection_summary };
+    }, [items, selections, sessionData]);
+
+    /**
+     * 確認画面で表示する、バックエンドに送る最終ペイロードを生成（表示専用）
+     */
+    const buildFinalizePayload = useCallback(() => {
+        const selectionsById = Object.entries(selections).map(([id, vendor]) => {
+            const item = items.find((it) => it.id === id);
+            return {
+                id,
+                entry_id: item?.id,
+                processor_name: item?.processor_name,
+                vendor_code: vendor.code,
+            };
+        });
+
+        // legacy selections map removed: we send id-based selections_by_id only
+
+        return {
+            ...(sessionData ?? {}),
+            // 明示的IDベースの配列（堅牢化）
+            selections_by_id: selectionsById,
+        } as Record<string, unknown>;
+    }, [selections, sessionData, items]);
 
     /**
      * Step 3: 最終API呼び出し（ZIP生成）
      */
-    const handleFinalApiCall = useCallback(async () => {
+    const handleFinalApiCall = useCallback(async (sessionOverride?: SessionData | null) => {
         setProcessing(true);
         try {
-            const formData = new FormData();
-
-            // CSVファイルを追加
-            const labelToEnglishKey: Record<string, string> = {
-                出荷一覧: 'shipment',
-                受入一覧: 'receive',
-                ヤード一覧: 'yard',
-            };
-
-            Object.keys(csvFiles).forEach((label) => {
-                const fileObj = csvFiles[label];
-                if (fileObj) {
-                    const englishKey = labelToEnglishKey[label] || label;
-                    formData.append(englishKey, fileObj);
-                }
-            });
-
-            formData.append('report_key', reportKey);
-            formData.append('step', 'final');
-            // 送信する形：[{ id, vendor_code }...]
-            const selectionPayload = Object.keys(selections).map((id) => ({
-                id,
-                vendor_code: selections[id].code,
-            }));
-            formData.append('user_selections', JSON.stringify(selectionPayload));
-
             const apiEndpoint = getApiEndpoint(reportKey);
-            const response = await fetch(`${apiEndpoint}/final`, {
+            const baseEndpoint = apiEndpoint.replace(/\/initial$/, '') || apiEndpoint.replace(/\/initial/, '');
+            console.log('[BlockUnitPrice] finalize endpoint:', `${baseEndpoint}/finalize`);
+            const payloadSession = sessionOverride ?? sessionData;
+            console.log('[BlockUnitPrice] finalize payload:', { session_data: payloadSession, confirmed: true });
+            // finalize は JSON で session_data + confirmed を送る
+            const response = await fetch(`${baseEndpoint}/finalize`, {
                 method: 'POST',
-                body: formData,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    session_data: payloadSession,
+                    confirmed: true,
+                }),
             });
 
             if (!response.ok) {
@@ -206,10 +275,12 @@ const BlockUnitPriceInteractiveModal: React.FC<BlockUnitPriceInteractiveModalPro
             }
 
             const zipBlob = await response.blob();
+            console.log('[BlockUnitPrice] finalize response: blob received, headers:', Array.from(response.headers.entries()));
             const zipUrl = window.URL.createObjectURL(zipBlob);
             const fileName = response.headers.get('Content-Disposition')?.split('filename=')[1] || 'report.zip';
 
-            setCurrentStep(4);
+            // move to 完了 step (index 3)
+            setCurrentStep(3);
             message.success('帳簿生成が完了しました');
 
             // 成功コールバック実行
@@ -227,7 +298,7 @@ const BlockUnitPriceInteractiveModal: React.FC<BlockUnitPriceInteractiveModalPro
         } finally {
             setProcessing(false);
         }
-    }, [csvFiles, reportKey, selections, onSuccess, onClose]);
+    }, [reportKey, sessionData, onSuccess, onClose]);
 
     /**
      * ユーザー選択の更新
@@ -241,16 +312,34 @@ const BlockUnitPriceInteractiveModal: React.FC<BlockUnitPriceInteractiveModalPro
      */
     const handleNext = useCallback(() => {
         if (currentStep === 0) {
-            handleInitialApiCall();
+            // 選択 -> ローカルで確認プレビューを作成して確認ステップへ
+            const preview = buildLocalSelectionPreview();
+            setSelectionPreview(preview);
+            setCurrentStep(1);
         } else if (currentStep === 1) {
-            // 選択 -> 確認へ
-            setCurrentStep(2);
-        } else if (currentStep === 2) {
             // 確認 -> 生成へ
-            setCurrentStep(3);
-            handleFinalApiCall();
+            // selections を sessionData にマージして finalize に送る
+            // 互換性を保ちつつ、明示的な id ベースの選択配列も含める
+            const selectionsById = Object.entries(selections).map(([id, vendor]) => {
+                const item = items.find((it) => it.id === id);
+                return {
+                    id,
+                    entry_id: item?.id,
+                    processor_name: item?.processor_name,
+                    vendor_code: vendor.code,
+                };
+            });
+
+            const mergedSession = {
+                ...(sessionData ?? {}),
+                // 最小化されたセッション: id ベースの選択のみ
+                selections_by_id: selectionsById,
+            } as SessionData;
+
+            setCurrentStep(2);
+            handleFinalApiCall(mergedSession);
         }
-    }, [currentStep, handleInitialApiCall, handleFinalApiCall]);
+    }, [currentStep, buildLocalSelectionPreview, handleFinalApiCall, items, selections, sessionData]);
 
     /**
      * モーダルクローズ時のリセット
@@ -258,21 +347,66 @@ const BlockUnitPriceInteractiveModal: React.FC<BlockUnitPriceInteractiveModalPro
     const handleClose = useCallback(() => {
         setCurrentStep(0);
         setInitialData(null);
+        setItems([]);
         setSelections({});
+        setSelectionPreview(null);
+        setSessionData(null);
         setProcessing(false);
         onClose();
     }, [onClose]);
 
-    // モーダルが開いた時に自動的に初期処理開始
+    // モーダルが開いた時、親から initialApiResponse/initialSessionData が渡されていれば
+    // それを読み込んで選択UIを直接表示する（CSVのアップロードは親で行われる想定）。
     React.useEffect(() => {
-        if (open && currentStep === 0) {
-            // 少し遅延して開始（UIが安定してから）
-            const timer = setTimeout(() => {
-                handleInitialApiCall();
-            }, 500);
-            return () => clearTimeout(timer);
+        if (!open || !initialApiResponse) {
+            return;
         }
-    }, [open, currentStep, handleInitialApiCall]);
+
+        setInitialData(initialApiResponse);
+
+        if (initialSessionData) {
+            setSessionData(initialSessionData);
+        } else if (initialApiResponse.session_id) {
+            setSessionData({ session_id: initialApiResponse.session_id });
+        }
+
+        try {
+            const normalizedItems = initialApiResponse.rows.map(createInteractiveItemFromRow);
+            setItems(normalizedItems);
+
+            const defaults: SelectionMap = {};
+            normalizedItems.forEach((item) => {
+                const vendor = item.transport_options[item.initial_selection_index];
+                if (vendor) {
+                    defaults[item.id] = vendor;
+                }
+            });
+            setSelections(defaults);
+            setSelectionPreview(null);
+        } catch (error) {
+            console.error('Failed to normalize initial interactive rows:', error);
+        }
+        // 出力はモーダル内ではなくコンソールへ（開発用）
+        try {
+            console.log('[BlockUnitPrice] initialApiResponse:', initialApiResponse);
+            console.log('[BlockUnitPrice] initialSessionData:', initialSessionData ?? (initialApiResponse?.session_id ? { session_id: initialApiResponse.session_id } : null));
+        } catch {
+            // noop
+        }
+    }, [open, initialApiResponse, initialSessionData]);
+
+    React.useEffect(() => {
+        if (currentStep !== 1) {
+            return;
+        }
+        try {
+            const previewData = selectionPreview ?? buildLocalSelectionPreview();
+            console.log('[BlockUnitPrice] selection preview (confirm step):', previewData);
+            console.log('[BlockUnitPrice] finalize payload (confirm step):', buildFinalizePayload());
+        } catch (error) {
+            console.error('Failed to build confirmation debug data:', error);
+        }
+    }, [currentStep, selectionPreview, buildLocalSelectionPreview, buildFinalizePayload]);
 
     return (
         <Modal
@@ -281,53 +415,64 @@ const BlockUnitPriceInteractiveModal: React.FC<BlockUnitPriceInteractiveModalPro
             onCancel={handleClose}
             width={800}
             footer={null}
+            bodyStyle={{ maxHeight: '70vh', padding: '20px 24px 24px', display: 'flex', flexDirection: 'column' }}
         >
-            <div style={{ padding: '20px 0' }}>
-                <Steps current={currentStep} style={{ marginBottom: 24 }}>
-                    {steps.map((step) => (
-                        <Steps.Step key={step.title} title={step.title} description={step.description} />
-                    ))}
-                </Steps>
+            <Steps current={currentStep} style={{ marginBottom: 24 }}>
+                {steps.map((step) => (
+                    <Steps.Step key={step.title} title={step.title} description={step.description} />
+                ))}
+            </Steps>
 
-                <div style={{ minHeight: 240 }}>
-                    {(currentStep === 0 || (processing && currentStep !== 4)) && (
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minHeight: 0 }}>
+                    {(processing && currentStep !== 3) && (
                         <div style={{ textAlign: 'center', padding: 40 }}>
                             <Spin size="large" />
-                            <p style={{ marginTop: 16 }}>
-                                {currentStep === 0 ? '初期データを取得しています...' :
-                                    currentStep === 3 ? '帳簿を生成しています...' : '処理中です...'}
-                            </p>
+                            {/* デバッグ情報はモーダル上に表示せずコンソールへ出力します */}
+                        </div>
+                    )}
+                    {currentStep === 0 && !processing && initialData && items.length === 0 && (
+                        <div style={{ textAlign: 'center', padding: 20 }}>
+                            <p>運搬業者の選択が必要な行はありません。</p>
                         </div>
                     )}
 
-                    {currentStep === 1 && !processing && initialData?.data?.items && (
-                        <div>
-                            <h4>処理業者ごとに運搬業者を選択してください</h4>
-                            <TransportSelectionList
-                                items={initialData.data.items}
-                                selections={selections}
-                                onChange={handleSelectionChange}
-                            />
+                    {currentStep === 0 && !processing && items.length > 0 && (
+                        <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
+                            <h4 style={{ marginBottom: 12 }}>処理業者ごとに運搬業者を選択してください</h4>
+                            <div style={{ flex: 1, overflowY: 'auto', padding: '0 8px 12px 0' }}>
+                                <TransportSelectionList
+                                    items={items}
+                                    selections={selections}
+                                    onChange={handleSelectionChange}
+                                />
+                            </div>
                         </div>
                     )}
 
-                    {currentStep === 2 && !processing && initialData?.data?.items && (
-                        <div>
-                            <h4>選択内容の確認</h4>
-                            {initialData.data.items.map((item) => (
-                                <Card key={item.id} size="small" style={{ marginBottom: 8 }}>
-                                    <Space>
-                                        <span><strong>ID:</strong> {item.id}</span>
-                                        <span><strong>処理業者:</strong> {item.processor_name}</span>
-                                        <span><strong>商品名:</strong> {item.product_name}</span>
-                                        <span><strong>選択:</strong> {selections[item.id]?.name || '未選択'}</span>
-                                    </Space>
-                                </Card>
-                            ))}
+                    {currentStep === 1 && !processing && items.length > 0 && (
+                        <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
+                            <h4 style={{ marginBottom: 12 }}>選択内容の確認</h4>
+                            <div style={{ flex: 1, overflowY: 'auto', padding: '0 8px 12px 0' }}>
+                                {items.map((item) => (
+                                    <Card key={item.id} size="small" style={{ marginBottom: 8 }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16 }}>
+                                            <div style={{ flex: 1, lineHeight: 1.4 }}>
+                                                <div><strong>処分業者：</strong> {item.processor_name}</div>
+                                                <div><strong>商品名：</strong> {item.product_name}</div>
+                                                <div><strong>備考：</strong> {item.note ?? '（なし）'}</div>
+                                            </div>
+                                            <div style={{ flex: 1, lineHeight: 1.4 }}>
+                                                <div><strong>選択運搬業者：</strong> {selections[item.id]?.name || '未選択'}</div>
+                                            </div>
+                                        </div>
+                                    </Card>
+                                ))}
+                            </div>
+                            <p style={{ marginTop: 12, color: '#666' }}>詳細なサマリーと送信内容はコンソールで確認できます。</p>
                         </div>
                     )}
 
-                    {currentStep === 4 && (
+                    {currentStep === 3 && (
                         <div style={{ textAlign: 'center', padding: 40 }}>
                             <CheckCircleOutlined style={{ fontSize: 48, color: '#52c41a' }} />
                             <h3 style={{ marginTop: 16 }}>完了しました！</h3>
@@ -336,31 +481,38 @@ const BlockUnitPriceInteractiveModal: React.FC<BlockUnitPriceInteractiveModalPro
                     )}
                 </div>
 
-                <div style={{ textAlign: 'right', marginTop: 24 }}>
-                    <Space>
+                <div style={{ display: 'flex', alignItems: 'center', marginTop: 24 }}>
+                    {/* 左: 戻る */}
+                    <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-start' }}>
+                        {currentStep === 1 && !processing && (
+                            <Button onClick={() => setCurrentStep(0)}>戻る</Button>
+                        )}
+                    </div>
+
+                    {/* 中央: キャンセル/閉じる */}
+                    <div style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
                         <Button onClick={handleClose}>
                             {currentStep >= 3 ? '閉じる' : 'キャンセル'}
                         </Button>
+                    </div>
 
-                        {currentStep === 1 && !processing && initialData?.data?.items && (
+                    {/* 右: 実行系 */}
+                    <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+                        {currentStep === 0 && !processing && items.length > 0 && (
                             <Button
                                 type="primary"
                                 onClick={handleNext}
-                                disabled={initialData.data.items.some(item => !selections[item.id])}
+                                disabled={items.some(item => !selections[item.id])}
                             >
                                 確認へ
                             </Button>
                         )}
 
-                        {currentStep === 2 && !processing && (
-                            <>
-                                <Button onClick={() => setCurrentStep(1)}>戻る</Button>
-                                <Button type="primary" onClick={handleNext}>進む</Button>
-                            </>
+                        {currentStep === 1 && !processing && (
+                            <Button type="primary" onClick={handleNext}>進む</Button>
                         )}
-                    </Space>
+                    </div>
                 </div>
-            </div>
         </Modal>
     );
 };

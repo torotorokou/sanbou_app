@@ -24,7 +24,8 @@ export const REPORT_API_ENDPOINTS = {
     management_sheet: `${LEDGER_REPORT_URL}/management_sheet`,
 
     // インタラクティブ帳簿系
-    block_unit_price: `${LEDGER_REPORT_URL}/block_unit_price_interactive`,
+    // バックエンドの実装: app.include_router(block_unit_price_router, prefix="/ledger_api/block_unit_price_interactive")
+    block_unit_price: `/ledger_api/block_unit_price_interactive/initial`,
 
     // 台帳系（将来追加用）
     ledger_book: `${LEDGER_REPORT_URL}/ledger`,

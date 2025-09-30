@@ -11,7 +11,8 @@ ReportProcessingService のインタラクティブ版。
 
 from __future__ import annotations
 
-from typing import Any, Dict
+import os
+from typing import Any, Dict, Optional, Tuple, Union
 
 from fastapi import UploadFile
 from fastapi.responses import JSONResponse, StreamingResponse
@@ -20,6 +21,10 @@ from app.api.services.report.base_interactive_report_generator import (
     BaseInteractiveReportGenerator,
 )
 from app.api.services.report.report_processing_service import ReportProcessingService
+from app.api.services.report.session_store import (
+    default_session_ttl,
+    session_store,
+)
 
 # (NoFilesUploadedResponse, read_csv_files は base クラス経由で利用しないため削除)
 from backend_shared.src.utils.date_filter_utils import (
@@ -75,33 +80,92 @@ class InteractiveReportProcessingService(ReportProcessingService):
         state, payload = generator.initial_step(df_formatted)
         # state に元 df_formatted が必要なら利用側で含める方針 (明示性)
         session_data = generator.serialize_state(state)
+        session_id = session_store.save(session_data)
 
-        return {
+        response_payload: Dict[str, Any] = {
             "status": "success",
             "step": 0,
             "message": "initial completed",
             "data": payload,
-            "session_data": session_data,
+            "session_id": session_id,
+            "session_expires_in": default_session_ttl,
         }
+
+        # Optional backward compatibility for environments that still expect raw session_data
+        if os.getenv("INTERACTIVE_SESSION_INCLUDE_STATE") == "1":
+            response_payload["session_data"] = session_data
+
+        return response_payload
 
     # -------- Apply (中間) --------
     def apply(
         self,
         generator: BaseInteractiveReportGenerator,
-        session_data: Dict[str, Any],
+        session_data: Union[Dict[str, Any], str],
         user_input: Dict[str, Any],
-    ) -> Dict[str, Any]:
+    ) -> Dict[str, Any] | StreamingResponse | JSONResponse:
         try:
-            state = generator.deserialize_state(session_data)
+            state_payload, session_id = self._resolve_session(session_data)
+            if state_payload is None:
+                return {
+                    "status": "error",
+                    "code": "SESSION_NOT_FOUND",
+                    "detail": "session data could not be resolved",
+                }
+
+            state = generator.deserialize_state(state_payload)
             state, payload = generator.apply_step(state, user_input)
             session_data_updated = generator.serialize_state(state)
-            return {
+            if session_id:
+                session_store.save(session_data_updated, session_id=session_id)
+            # If frontend requested automatic finalize, run finalize here and
+            # return the final StreamingResponse (file) directly.
+            if isinstance(user_input, dict) and user_input.get("auto_finalize"):
+                try:
+                    final_df, finalize_payload = generator.finalize_step(state)
+                    try:
+                        report_date = finalize_payload.get(
+                            "report_date", generator.make_report_date({"result": final_df})
+                        )
+                    except Exception:  # noqa: BLE001
+                        from datetime import datetime
+
+                        report_date = datetime.now().date().isoformat()
+                    response = self.create_response(generator, final_df, report_date)
+                    summary = finalize_payload.get("summary")
+                    if isinstance(summary, dict):
+                        for k, v in summary.items():
+                            try:
+                                response.headers[f"X-Summary-{k}"] = str(v)
+                            except Exception:  # noqa: BLE001
+                                pass
+                    if session_id:
+                        session_store.delete(session_id)
+                    return response
+                except Exception as e:  # noqa: BLE001
+                    return JSONResponse(
+                        status_code=500,
+                        content={
+                            "status": "error",
+                            "code": "AUTO_FINALIZE_FAILED",
+                            "detail": str(e),
+                        },
+                    )
+
+            result: Dict[str, Any] = {
                 "status": "success",
                 "step": payload.get("step", 1),
                 "message": payload.get("message", "applied"),
                 "data": payload,
-                "session_data": session_data_updated,
             }
+
+            if session_id:
+                result["session_id"] = session_id
+                result["session_expires_in"] = default_session_ttl
+            else:
+                result["session_data"] = session_data_updated
+
+            return result
         except Exception as e:  # noqa: BLE001
             return {
                 "status": "error",
@@ -113,10 +177,21 @@ class InteractiveReportProcessingService(ReportProcessingService):
     def finalize(
         self,
         generator: BaseInteractiveReportGenerator,
-        session_data: Dict[str, Any],
+        session_data: Union[Dict[str, Any], str],
     ) -> StreamingResponse | JSONResponse:
         try:
-            state = generator.deserialize_state(session_data)
+            state_payload, session_id = self._resolve_session(session_data)
+            if state_payload is None:
+                return JSONResponse(
+                    status_code=400,
+                    content={
+                        "status": "error",
+                        "code": "SESSION_NOT_FOUND",
+                        "detail": "session data could not be resolved",
+                    },
+                )
+
+            state = generator.deserialize_state(state_payload)
             final_df, payload = generator.finalize_step(state)
             try:
                 report_date = payload.get(
@@ -136,11 +211,11 @@ class InteractiveReportProcessingService(ReportProcessingService):
                         response.headers[f"X-Summary-{k}"] = str(v)
                     except Exception:  # noqa: BLE001
                         pass
+            if session_id:
+                session_store.delete(session_id)
             return response
         except Exception as e:  # noqa: BLE001
             # finalize は StreamingResponse 指定のため簡易 JSON を返す
-            from fastapi.responses import JSONResponse
-
             return JSONResponse(
                 status_code=500,
                 content={
@@ -149,3 +224,29 @@ class InteractiveReportProcessingService(ReportProcessingService):
                     "detail": str(e),
                 },
             )
+
+    # -------- Helpers --------
+    def _resolve_session(
+        self, session_payload: Union[Dict[str, Any], str]
+    ) -> Tuple[Optional[Dict[str, Any]], Optional[str]]:
+        """Resolve the stored session data from various payload formats.
+
+        Supports three patterns for backward compatibility:
+            1. Raw serialized state dict (legacy behaviour)
+            2. ``{"session_id": "..."}``
+            3. Plain session id string
+        """
+
+        if isinstance(session_payload, dict):
+            if "session_id" in session_payload and isinstance(session_payload["session_id"], str):
+                session_id = session_payload["session_id"]
+                stored = session_store.load(session_id)
+                return stored, session_id
+            # Legacy mode: the dict itself is the serialized state
+            return session_payload, None
+
+        if isinstance(session_payload, str):
+            stored = session_store.load(session_payload)
+            return stored, session_payload
+
+        return None, None
