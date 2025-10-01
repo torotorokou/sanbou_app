@@ -21,6 +21,10 @@ from app.st_app.logic.manage.processors.block_unit_price.process0 import (
 from app.st_app.logic.manage.processors.block_unit_price.process2 import (
     apply_transport_fee_by_vendor,
     apply_weight_based_transport_fee,
+    make_total_sum,
+    df_cul_filtering,
+    first_cell_in_template,
+    make_sum_date,
 )
 from app.st_app.logic.manage.readers.read_transport_discount import (
     ReadTransportDiscount,
@@ -53,12 +57,14 @@ class InteractiveProcessState:
     df_transport_cost: Optional[pd.DataFrame] = None
     session_id: Optional[str] = None
     entry_index_map: Optional[Dict[str, Union[int, str]]] = None  # entry_id -> df.index
+    entry_options_map: Optional[Dict[str, List[str]]] = None      # entry_id -> options snapshot
 
 
 class BlockUnitPriceInteractive(BaseInteractiveReportGenerator):
     """ブロック単価計算の対話的処理クラス (Interactive Generator)
     - Step0: フロントに渡す運搬候補行（options + initial_index）を生成
     - 識別は entry_id に統一（row_index は返さない）
+    - finalize 一本化: finalize に selections を含めて送れば、選択適用→最終計算まで一括実行
     """
 
     # ビジネス順のための簡易定数（必要に応じて調整）
@@ -136,6 +142,94 @@ class BlockUnitPriceInteractive(BaseInteractiveReportGenerator):
         h = hashlib.sha1(base.encode("utf-8")).hexdigest()[:10]
         return f"bup_{h}"
 
+    # 小さなヘルパー群: initial_step の per-row 処理を分離
+    def _normalize_df_index(self, idx: Any) -> Union[int, str]:
+        """DataFrameの内部indexを公開可能な形に正規化する（intかstr）"""
+        if isinstance(idx, (int,)):
+            return int(idx)
+        if isinstance(idx, float) and float(idx).is_integer():
+            return int(idx)
+        return str(idx)
+
+    def _compute_options_and_initial(self, row: pd.Series, df_transport_cost: pd.DataFrame) -> Tuple[List[str], int, str, str, Any]:
+        """与えられた行と運賃マスターから候補ラベル配列と初期インデックスを返す。
+
+        戻り値: (normalized_options, initial_index, gyousha_cd_str, gyousha_name, gyousha_cd_raw)
+        """
+        gyousha_cd_raw = row.get("業者CD", "")
+        gyousha_cd_str = str(gyousha_cd_raw)
+        gyousha_name = self._clean_vendor_name(row.get("業者名", gyousha_cd_raw))
+
+        opts_df = df_transport_cost
+        if "業者CD" in opts_df.columns:
+            opts_df = opts_df.assign(業者CD=opts_df["業者CD"].astype(str))
+        options_series = opts_df[opts_df.get("業者CD") == gyousha_cd_str]
+        options = (
+            options_series.get("運搬業者", pd.Series(dtype=object))
+            .astype(str)
+            .tolist()
+        )
+        normalized_options = self._canonical_sort_labels(options)
+
+        if not normalized_options:
+            self.logger.warning(
+                "運搬業者候補が取得できませんでした",
+                extra={"vendor_code": gyousha_cd_raw, "vendor_name": gyousha_name},
+            )
+
+        initial_label_candidate = str(row.get("運搬業者", "")).strip()
+        if not initial_label_candidate and normalized_options:
+            initial_label_candidate = normalized_options[0]
+
+        if normalized_options and initial_label_candidate in normalized_options:
+            initial_index = normalized_options.index(initial_label_candidate)
+        else:
+            initial_index = 0
+            if initial_label_candidate:
+                self.logger.warning(
+                    "初期選択肢が候補に存在しないため先頭へフォールバックしました",
+                    extra={"vendor_code": gyousha_cd_raw, "vendor_name": gyousha_name, "initial": initial_label_candidate},
+                )
+
+        return normalized_options, initial_index, gyousha_cd_str, gyousha_name, gyousha_cd_raw
+
+    def _build_row_payload(self, row: pd.Series, df_idx: Any, normalized_options: List[str], initial_index: int, entry_id: str) -> Tuple[Dict[str, Any], Any]:
+        """1行分の rows_payload エントリを構築し、vendor_code の値（int or raw）を返す"""
+        # vendor code を数値化できれば int に変換
+        gyousha_cd_raw = row.get("業者CD", "")
+        try:
+            vendor_code_value: Any = int(gyousha_cd_raw)
+        except Exception:
+            vendor_code_value = gyousha_cd_raw
+
+        hinmei = str(row.get("品名", "")).strip()
+        meisai_raw = str(row.get("明細備考", "")).strip()
+        meisai = meisai_raw if meisai_raw else None
+        gyousha_name = self._clean_vendor_name(row.get("業者名", gyousha_cd_raw))
+
+        payload_entry = {
+            "entry_id": entry_id,
+            "vendor_code": vendor_code_value,
+            "vendor_name": gyousha_name,
+            "item_name": hinmei,
+            "detail": meisai,
+            "options": normalized_options,
+            "initial_index": initial_index,
+        }
+        return payload_entry, df_idx
+
+    @staticmethod
+    def _error_payload(code: str, detail: str, step: int, extra: Optional[Dict[str, Any]] = None) -> Tuple[pd.DataFrame, Dict[str, Any]]:
+        """フロントへ明示的に通知するエラーペイロード"""
+        payload: Dict[str, Any] = {"status": "error", "code": code, "detail": detail, "step": step}
+        if extra:
+            payload.update(extra)
+        return pd.DataFrame(), payload
+
+    @staticmethod
+    def _missing_cols(df: pd.DataFrame, required: List[str]) -> List[str]:
+        return [c for c in required if c not in df.columns]
+
     # -------- Step 0 --------
     def initial_step(self, df_formatted: Dict[str, Any]):  # type: ignore[override]
         try:
@@ -163,99 +257,46 @@ class BlockUnitPriceInteractive(BaseInteractiveReportGenerator):
             df_dict = load_all_filtered_dataframes(df_formatted, csv_keys, template_name)
             df_shipment = df_dict.get("shipment")
             if df_shipment is None:
-                raise ValueError("出荷データが見つかりません")
+                return self._error_payload("NO_SHIPMENT", "出荷データが見つかりません", step=0)
 
             mainpath = MainPath()
             reader = ReadTransportDiscount(mainpath)
-            df_transport_cost = reader.load_discounted_df()
+            df_transport_cost = reader.load_discounted_df()  # ★ 保存前に dtype を変えない
 
             # 前処理
+            # マスターに基づいて出荷データをフィルタ・不要行除去・運搬関連カラムを追加する
             df_shipment = make_df_shipment_after_use(master_csv, df_shipment)
+            # マスターの手数料を出荷データの単価に加算して単価を補正する
             df_shipment = apply_unit_price_addition(master_csv, df_shipment)
+            # 運搬社数が1の業者に対して、運搬費を運搬マスターから適用する
             df_shipment = apply_transport_fee_by1(df_shipment, df_transport_cost)
 
             # 選択が必要な行: 運搬社数 != 1 （NaNは0とみなして抽出）
             carriers = df_shipment.get("運搬社数")
-            if carriers is None:
-                target_rows = df_shipment
-            else:
-                target_rows = df_shipment[carriers.fillna(0) != 1]
+            target_rows = df_shipment if carriers is None else df_shipment[carriers.fillna(0) != 1]
 
             rows_payload: List[Dict[str, Any]] = []
             entry_index_map: Dict[str, Union[int, str]] = {}
-
-            # 比較時の型ブレを避けるため、業者CDは文字列で比較
-            df_transport_cost = df_transport_cost.copy()
-            if "業者CD" in df_transport_cost.columns:
-                df_transport_cost["業者CD"] = df_transport_cost["業者CD"].astype(str)
+            entry_options_map: Dict[str, List[str]] = {}
 
             for idx, row in target_rows.iterrows():
-                # DataFrameの内部index（非公開・識別不可）
-                if isinstance(idx, (int,)):
-                    df_idx: Union[int, str] = int(idx)
-                elif isinstance(idx, float) and float(idx).is_integer():
-                    df_idx = int(idx)
-                else:
-                    df_idx = str(idx)
+                df_idx = self._normalize_df_index(idx)
 
-                gyousha_cd_raw = row.get("業者CD", "")
-                gyousha_cd_str = str(gyousha_cd_raw)
-                gyousha_name = self._clean_vendor_name(row.get("業者名", gyousha_cd_raw))
-                hinmei = str(row.get("品名", "")).strip()
-                meisai_raw = str(row.get("明細備考", "")).strip()
-                meisai = meisai_raw if meisai_raw else None
+                # options と初期選択を算出
+                normalized_options, initial_index, gyousha_cd_str, gyousha_name, gyousha_cd_raw = self._compute_options_and_initial(
+                    row, df_transport_cost
+                )
 
                 # entry_id を先に採番（ログにも使う）
                 entry_id = self._stable_entry_id(row, fallback_key=f"{gyousha_cd_str}:{df_idx}")
 
-                # options: list of 運搬業者 from df_transport_cost matching 業者CD
-                options_series = df_transport_cost[df_transport_cost.get("業者CD") == gyousha_cd_str]
-                options = (
-                    options_series.get("運搬業者", pd.Series(dtype=object))
-                    .astype(str)
-                    .tolist()
+                payload_entry, df_idx_ret = self._build_row_payload(
+                    row, df_idx, normalized_options, initial_index, entry_id
                 )
-                normalized_options = self._canonical_sort_labels(options)
 
-                if not normalized_options:
-                    self.logger.warning(
-                        "運搬業者候補が取得できませんでした",
-                        extra={"vendor_code": gyousha_cd_raw, "vendor_name": gyousha_name, "entry_id": entry_id},
-                    )
-
-                initial_label_candidate = str(row.get("運搬業者", "")).strip()
-                if not initial_label_candidate and normalized_options:
-                    initial_label_candidate = normalized_options[0]
-
-                if normalized_options and initial_label_candidate in normalized_options:
-                    initial_index = normalized_options.index(initial_label_candidate)
-                else:
-                    initial_index = 0
-                    if initial_label_candidate:
-                        self.logger.warning(
-                            "初期選択肢が候補に存在しないため先頭へフォールバックしました",
-                            extra={"vendor_code": gyousha_cd_raw, "vendor_name": gyousha_name, "entry_id": entry_id,
-                                   "initial": initial_label_candidate},
-                        )
-
-                vendor_code_value: Any
-                try:
-                    vendor_code_value = int(gyousha_cd_raw)
-                except Exception:
-                    vendor_code_value = gyousha_cd_raw
-
-                rows_payload.append(
-                    {
-                        "entry_id": entry_id,           # ★ 識別はこれのみ
-                        "vendor_code": vendor_code_value,
-                        "vendor_name": gyousha_name,
-                        "item_name": hinmei,
-                        "detail": meisai,
-                        "options": normalized_options,  # ラベル配列（ビジネス順で安定）
-                        "initial_index": initial_index, # 初期選択のインデックス
-                    }
-                )
-                entry_index_map[entry_id] = df_idx
+                rows_payload.append(payload_entry)
+                entry_index_map[entry_id] = df_idx_ret
+                entry_options_map[entry_id] = normalized_options  # ★ スナップショット保存
 
             state = {
                 "df_shipment": df_shipment,
@@ -263,6 +304,7 @@ class BlockUnitPriceInteractive(BaseInteractiveReportGenerator):
                 "df_transport_cost": df_transport_cost,
                 "session_id": session_id,
                 "entry_index_map": entry_index_map,
+                "entry_options_map": entry_options_map,  # ★ 追加
             }
 
             payload = {
@@ -273,7 +315,7 @@ class BlockUnitPriceInteractive(BaseInteractiveReportGenerator):
             return state, payload
         except Exception as e:  # noqa: BLE001
             self.logger.error(f"Step 0 error: {e}")
-            return {}, {"status": "error", "message": str(e), "step": 0}
+            return self._error_payload("STEP0_EXCEPTION", str(e), step=0)
 
     # -------- Generic Step Handlers --------
     def get_step_handlers(
@@ -289,16 +331,83 @@ class BlockUnitPriceInteractive(BaseInteractiveReportGenerator):
             "1": self._handle_select_transport,  # 数値指定互換（エンドポイント都合）
         }
 
+    # --- selections を解決して df_shipment に適用するヘルパ ---
+    def _resolve_and_apply_selections(
+        self,
+        state: Dict[str, Any],
+        selections: Dict[str, Union[int, str]],
+    ) -> Dict[str, str]:
+        """entry_id -> (index|label) を ラベルに正規化して df_shipment に適用。戻り値は entry_id->label"""
+        if not selections:
+            return {}
+
+        df_shipment: pd.DataFrame = state["df_shipment"]
+        df_transport_cost: pd.DataFrame = state["df_transport_cost"]
+        entry_index_map: Dict[str, Union[int, str]] = state.get("entry_index_map", {}) or {}
+        entry_options_map: Dict[str, List[str]] = state.get("entry_options_map", {}) or {}
+
+        # 比較時だけ文字列化したローカルコピー
+        opts_df = df_transport_cost
+        if "業者CD" in opts_df.columns:
+            opts_df = opts_df.assign(業者CD=opts_df["業者CD"].astype(str))
+
+        resolved_entry_map: Dict[str, str] = {}
+
+        for entry_id, value in selections.items():
+            df_idx = entry_index_map.get(entry_id)
+            if df_idx is None:
+                continue
+
+            try:
+                row = df_shipment.loc[df_idx]
+            except Exception:
+                continue
+
+            # 1) スナップショット優先
+            normalized_options = entry_options_map.get(entry_id)
+
+            # 2) 無ければ従来通り再構築
+            if not normalized_options:
+                gyousha_cd_str = str(row.get("業者CD", ""))
+                options = (
+                    opts_df[opts_df.get("業者CD") == gyousha_cd_str]
+                    .get("運搬業者", pd.Series(dtype=object))
+                    .astype(str)
+                    .tolist()
+                )
+                normalized_options = self._canonical_sort_labels(options)
+
+            if not normalized_options:
+                continue
+
+            # index or label を解決
+            if isinstance(value, int):
+                idx = value if 0 <= value < len(normalized_options) else 0
+                label = normalized_options[idx]
+            else:
+                label = str(value)
+                if label not in normalized_options:
+                    self.logger.warning(
+                        "指定ラベルが候補に無いため先頭にフォールバック",
+                        extra={"entry_id": entry_id, "label": label},
+                    )
+                    label = normalized_options[0]
+
+            try:
+                df_shipment.loc[df_idx, "運搬業者"] = label
+            except Exception:
+                pass
+
+            resolved_entry_map[entry_id] = label
+
+        state["df_shipment"] = df_shipment
+        state["selections"] = resolved_entry_map
+        return resolved_entry_map
+
     def _handle_select_transport(
         self, state: Dict[str, Any], user_input: Dict[str, Any]
     ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
-        """フロントからの選択適用（entry_id に統一）
-        user_input 例:
-        {
-          "session_id": "...",  # 任意（あれば照合）
-          "selections": { "bup_ab12cd34ef": 6, "bup_deadbeef01": "エコライン（コンテナ）・合積" }
-        }
-        """
+        """フロントからの選択適用（entry_id に統一）"""
         selections: Dict[str, Union[int, str]] = user_input.get("selections", {}) or {}
         session_id_in = user_input.get("session_id")
         if session_id_in and state.get("session_id") and session_id_in != state["session_id"]:
@@ -307,70 +416,7 @@ class BlockUnitPriceInteractive(BaseInteractiveReportGenerator):
                 extra={"expected": state.get("session_id"), "got": session_id_in},
             )
 
-        df_shipment: pd.DataFrame = state["df_shipment"]
-        df_transport_cost: pd.DataFrame = state["df_transport_cost"]
-        entry_index_map: Dict[str, Union[int, str]] = state.get("entry_index_map", {}) or {}
-
-        # 比較時の型ブレを避けるため、業者CDは文字列で比較
-        df_transport_cost = df_transport_cost.copy()
-        if "業者CD" in df_transport_cost.columns:
-            df_transport_cost["業者CD"] = df_transport_cost["業者CD"].astype(str)
-
-        # entry_id -> label へ正規化
-        resolved_entry_map: Dict[str, str] = {}
-
-        for entry_id, value in selections.items():
-            if entry_id not in entry_index_map:
-                # 無効な entry_id はスキップ
-                continue
-            df_idx = entry_index_map[entry_id]
-
-            try:
-                row = df_shipment.loc[df_idx]
-            except Exception:
-                continue
-
-            gyousha_cd_str = str(row.get("業者CD", ""))
-            # 候補を initial_step と同じルールで復元
-            df_opts = df_transport_cost[df_transport_cost.get("業者CD") == gyousha_cd_str]
-            options = (
-                df_opts.get("運搬業者", pd.Series(dtype=object))
-                .astype(str)
-                .tolist()
-            )
-            normalized_options = self._canonical_sort_labels(options)
-            if not normalized_options:
-                continue
-
-            if isinstance(value, int):
-                selected_index = value
-                if selected_index < 0 or selected_index >= len(normalized_options):
-                    selected_index = 0
-                label = normalized_options[selected_index]
-            else:
-                label = str(value)
-                # ラベルが候補に無い場合は先頭へ
-                if label not in normalized_options:
-                    self.logger.warning(
-                        "指定ラベルが候補に存在しないため先頭へフォールバックしました",
-                        extra={"entry_id": entry_id, "label": label},
-                    )
-                    label = normalized_options[0]
-
-            resolved_entry_map[entry_id] = label
-
-        # 実適用（df.index へ変換）
-        for entry_id, label in resolved_entry_map.items():
-            df_idx = entry_index_map.get(entry_id)
-            if df_idx is None:
-                continue
-            try:
-                df_shipment.loc[df_idx, "運搬業者"] = label
-            except Exception:
-                pass
-
-        state["df_shipment"] = df_shipment
-        state["selections"] = selections
+        resolved_entry_map = self._resolve_and_apply_selections(state, selections)
 
         selection_summary = self._create_selection_summary(resolved_entry_map)
         payload = {
@@ -382,6 +428,33 @@ class BlockUnitPriceInteractive(BaseInteractiveReportGenerator):
         }
         return state, payload
 
+    # --- finalize を selections 付きで実行する公開メソッド（一本化用） ---
+    def finalize_with_optional_selections(
+        self,
+        state: Dict[str, Any],
+        user_input: Dict[str, Any],
+    ):
+        """payload に selections が含まれていれば先に適用してから finalize"""
+        try:
+            # セッション照合（任意）
+            session_id_in = user_input.get("session_id")
+            if session_id_in and state.get("session_id") and session_id_in != state["session_id"]:
+                self.logger.warning(
+                    "session_id 不一致: finalizeは続行するが結果が期待と異なる可能性あり",
+                    extra={"expected": state.get("session_id"), "got": session_id_in},
+                )
+
+            selections = user_input.get("selections") or {}
+            if isinstance(selections, dict) and selections:
+                self._resolve_and_apply_selections(state, selections)
+                self.logger.info("finalize直前に selections を適用", extra={"count": len(selections)})
+
+            return self.finalize_step(state)
+
+        except Exception as e:  # noqa: BLE001
+            self.logger.error(f"finalize_with_optional_selections error: {e}")
+            return self._error_payload("STEP2_EXCEPTION", str(e), step=2)
+
     # -------- Finalize Step (Step 2) --------
     def finalize_step(self, state: Dict[str, Any]):  # type: ignore[override]
         try:
@@ -389,37 +462,114 @@ class BlockUnitPriceInteractive(BaseInteractiveReportGenerator):
             df_transport_cost: pd.DataFrame = state["df_transport_cost"]
             master_csv: pd.DataFrame = state["master_csv"]
 
-            # Ensure consistent dtypes for merge/join operations
-            for col in ["運搬業者", "運搬業者名"]:
+            # 必須列チェック
+            missing_tc = self._missing_cols(df_transport_cost, ["業者CD", "運搬業者"])
+            has_transport_fee = "運搬費" in df_transport_cost.columns
+            has_weight_unit = "重量単価" in df_transport_cost.columns
+            if missing_tc or (not has_transport_fee and not has_weight_unit):
+                detail = "運賃マスターに必要な列が不足しています"
+                extra = {
+                    "where": "df_transport_cost",
+                    "missing": missing_tc + ([] if (has_transport_fee or has_weight_unit) else ["運搬費 or 重量単価"]),
+                }
+                return self._error_payload("MISSING_COLUMNS", detail, step=2, extra=extra)
+
+            # 出荷データの必須列チェック
+            missing_ship = self._missing_cols(df_shipment, ["業者CD", "運搬業者"])
+            if missing_ship:
+                detail = "出荷データに必要な列が不足しています"
+                extra = {"where": "df_shipment", "missing": missing_ship}
+                return self._error_payload("MISSING_COLUMNS", detail, step=2, extra=extra)
+
+            for col in ["業者CD", "運搬業者", "運搬業者名"]:
                 if col in df_shipment.columns:
                     df_shipment[col] = df_shipment[col].astype(str)
                 if col in df_transport_cost.columns:
                     df_transport_cost[col] = df_transport_cost[col].astype(str)
 
-            print("[DEBUG] finalize_step df_shipment columns:", list(df_shipment.columns))
             if "運搬費" not in df_shipment.columns:
-                print("[DEBUG] 運搬費列が無いため 0 で追加")
                 df_shipment["運搬費"] = 0
 
-            df_shipment = apply_transport_fee_by_vendor(df_shipment, df_transport_cost)
-            df_shipment = apply_weight_based_transport_fee(df_shipment, df_transport_cost)
+            # 選択した運搬業者をフロントエンドからの情報で反映
+            df_selected = self._merge_selected_transport_vendors(df_shipment, state)
+            state["df_shipment"] = df_selected
 
-            final_master_csv = self._create_final_master_csv(df_shipment, master_csv)
+            # ブロック単価計算パイプラインを実行
+            df_after = self._run_block_unit_price_pipeline(df_selected, df_transport_cost, master_csv)
+
             summary = {
-                "total_amount": float(df_shipment["合計金額"].sum() if "合計金額" in df_shipment.columns else 0),
-                "total_transport_fee": float(df_shipment["運搬費"].sum() if "運搬費" in df_shipment.columns else 0),
-                "processed_records": int(len(df_shipment)),
+                "total_amount": float(df_after.get("合計金額", pd.Series(dtype=float)).sum() or 0),
+                "total_transport_fee": float(df_after.get("運搬費", pd.Series(dtype=float)).sum() or 0),
+                "processed_records": int(len(df_after)),
             }
             payload = {
+                "status": "success",
                 "summary": summary,
                 "step": 2,
                 "message": "ブロック単価計算が完了しました",
                 "session_id": state.get("session_id"),
+                "resolvedSelections": state.get("selections", {}),
             }
+            final_master_csv = first_cell_in_template(df_after)
+            final_master_csv = make_sum_date(final_master_csv, df_selected)
             return final_master_csv, payload
         except Exception as e:  # noqa: BLE001
             self.logger.error(f"Step 2 error: {e}")
-            return pd.DataFrame(), {"status": "error", "message": str(e), "step": 2}
+            return self._error_payload("STEP2_EXCEPTION", str(e), step=2)
+
+    def _merge_selected_transport_vendors(
+        self, df_shipment: pd.DataFrame, state: Dict[str, Any]
+    ) -> pd.DataFrame:
+        selections = state.get("selections") or {}
+        if not selections:
+            return df_shipment.copy()
+
+        entry_index_map: Dict[str, Union[int, str]] = state.get("entry_index_map", {}) or {}
+        selected_map: Dict[Any, str] = {}
+
+        for entry_id, vendor_label in selections.items():
+            df_idx = entry_index_map.get(entry_id)
+            if df_idx is None:
+                continue
+            selected_map[df_idx] = str(vendor_label)
+
+        if not selected_map:
+            return df_shipment.copy()
+
+        selected_series = pd.Series(selected_map, name="運搬業者_selected")
+        df_after = df_shipment.copy()
+        selected_df = selected_series.to_frame()
+        merged = df_after.merge(
+            selected_df,
+            how="left",
+            left_index=True,
+            right_index=True,
+        )
+
+        if "運搬業者_selected" in merged.columns:
+            existing_series = (
+                merged["運搬業者"]
+                if "運搬業者" in merged.columns
+                else pd.Series(index=merged.index, dtype=object)
+            )
+            merged["運搬業者"] = merged["運搬業者_selected"].combine_first(existing_series)
+            merged = merged.drop(columns=["運搬業者_selected"])
+
+        return merged
+
+    def _run_block_unit_price_pipeline(
+        self,
+        df_shipment: pd.DataFrame,
+        df_transport_cost: pd.DataFrame,
+        master_csv: pd.DataFrame,
+    ) -> pd.DataFrame:
+        df_after = df_shipment.copy()
+        df_after = apply_transport_fee_by_vendor(df_after, df_transport_cost)
+        if "重量単価" in df_transport_cost.columns:
+            df_after = apply_weight_based_transport_fee(df_after, df_transport_cost)
+        df_after = make_total_sum(df_after, master_csv)
+        df_after = df_cul_filtering(df_after)
+        return df_after
 
     # 旧 process_selection / finalize_calculation は BaseInteractiveReportGenerator 経由に移行
 
@@ -460,17 +610,14 @@ class BlockUnitPriceInteractive(BaseInteractiveReportGenerator):
         try:
             # 基本的な合計計算
             if "単価" in df_shipment.columns and "数量" in df_shipment.columns:
-                df_shipment["合計金額"] = pd.to_numeric(
-                    df_shipment["単価"], errors="coerce"
-                ).fillna(0) * pd.to_numeric(
-                    df_shipment["数量"], errors="coerce"
-                ).fillna(0)
+                unit_series = pd.Series(pd.to_numeric(df_shipment["単価"], errors="coerce"))
+                qty_series = pd.Series(pd.to_numeric(df_shipment["数量"], errors="coerce"))
+                df_shipment["合計金額"] = unit_series.fillna(0) * qty_series.fillna(0)
 
             # 運搬費を含む総合計算
             if "運搬費" in df_shipment.columns:
-                df_shipment["総合計"] = df_shipment.get("合計金額", 0) + pd.to_numeric(
-                    df_shipment["運搬費"], errors="coerce"
-                ).fillna(0)
+                transport_series = pd.Series(pd.to_numeric(df_shipment["運搬費"], errors="coerce"))
+                df_shipment["総合計"] = df_shipment.get("合計金額", 0) + transport_series.fillna(0)
 
             # マスターCSVが空の場合は出荷データを返す
             if master_csv.empty:

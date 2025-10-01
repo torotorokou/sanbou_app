@@ -12,7 +12,7 @@ import type { ReportBaseProps } from '../../types/reportBase';
 const isRecord = (value: unknown): value is Record<string, unknown> =>
     typeof value === 'object' && value !== null;
 
-const normalizeRow = (value: unknown, fallbackIndex: number): TransportCandidateRow | null => {
+const normalizeRow = (value: unknown): TransportCandidateRow | null => {
     if (!isRecord(value)) return null;
 
     const rawOptions = Array.isArray(value['options']) ? value['options'] : [];
@@ -40,15 +40,17 @@ const normalizeRow = (value: unknown, fallbackIndex: number): TransportCandidate
         detail = String(detailValue);
     }
 
-    const entryIdCandidate = value['entry_id'] ?? value['row_index'] ?? value['id'] ?? fallbackIndex;
+    const entryIdCandidate = value['entry_id'];
     const vendorCodeCandidate = value['vendor_code'] ?? value['vendorId'];
     const vendorNameCandidate = value['vendor_name'] ?? value['processor_name'];
     const itemNameCandidate = value['item_name'] ?? value['product_name'];
 
+    if (typeof entryIdCandidate !== 'string') {
+        return null;
+    }
+
     return {
-        entry_id: typeof entryIdCandidate === 'string' || typeof entryIdCandidate === 'number'
-            ? String(entryIdCandidate)
-            : String(fallbackIndex),
+        entry_id: entryIdCandidate,
         vendor_code: typeof vendorCodeCandidate === 'number' || typeof vendorCodeCandidate === 'string'
             ? vendorCodeCandidate
             : '',
@@ -218,29 +220,17 @@ const ReportBase: React.FC<ReportBaseProps> = ({
                 throw new Error('初期レスポンス形式が不正です。');
             }
 
-            if ('status' in data && typeof data.status === 'string' && data.status !== 'success') {
-                const detail = typeof data.detail === 'string'
-                    ? data.detail
-                    : typeof data.message === 'string'
-                        ? data.message
-                        : '初期処理でエラーが発生しました。';
-                throw new Error(detail);
-            }
-
-            const sessionIdRaw = data.session_id;
-            const session_id = typeof sessionIdRaw === 'string'
-                ? sessionIdRaw
-                : sessionIdRaw != null
-                    ? String(sessionIdRaw)
-                    : '';
+            const sessionIdRaw = data['session_id'];
+            const session_id = typeof sessionIdRaw === 'string' ? sessionIdRaw : '';
 
             if (!session_id) {
                 throw new Error('セッションIDが取得できませんでした。');
             }
 
-            const rowsSource = Array.isArray(data.rows) ? data.rows : [];
-            const normalizedRows: TransportCandidateRow[] = rowsSource.reduce<TransportCandidateRow[]>((acc, row, index) => {
-                const normalizedRow = normalizeRow(row, index);
+            const rowsSourceRaw = data['rows'];
+            const rowsSource = Array.isArray(rowsSourceRaw) ? rowsSourceRaw : [];
+            const normalizedRows: TransportCandidateRow[] = rowsSource.reduce<TransportCandidateRow[]>((acc, row) => {
+                const normalizedRow = normalizeRow(row);
                 if (normalizedRow) {
                     acc.push(normalizedRow);
                 } else {
@@ -257,13 +247,15 @@ const ReportBase: React.FC<ReportBaseProps> = ({
             }
             console.groupEnd();
 
+            const sessionData: SessionData = { session_id };
+
             const normalized: InitialApiResponse = {
                 session_id,
                 rows: normalizedRows,
             };
 
             setInteractiveInitialResponse(normalized);
-            setInteractiveSessionData({ session_id } as SessionData);
+            setInteractiveSessionData(sessionData);
 
             modal.setModalOpen(true);
             message.success('初期データを取得しました。');

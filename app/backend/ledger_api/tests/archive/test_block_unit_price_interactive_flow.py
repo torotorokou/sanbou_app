@@ -30,33 +30,31 @@ def test_interactive_flow_minimal():
         )
     assert res.status_code == 200
     body = res.json()
-    assert body.get("status") == "success"
-    session_data = body.get("session_data")
-    assert session_data
+    session_id = body.get("session_id")
+    assert isinstance(session_id, str) and session_id
 
-    # apply (skip if no options)
-    transport_options = body.get("data", {}).get("transport_options", [])
-    selections = {}
-    for opt in transport_options[:1]:
-        vendor_name = opt.get("vendor_name") or opt.get("vendor_code")
-        if vendor_name:
-            selections[vendor_name] = opt.get("vendor_code", "")
-    res2 = client.post(
-        "/block_unit_price_interactive/apply",
-        json={
-            "session_data": session_data,
-            "user_input": {"action": "select_transport", "selections": selections},
-        },
-    )
-    assert res2.status_code == 200
-    body2 = res2.json()
-    assert body2.get("status") == "success"
-    session_data2 = body2.get("session_data") or session_data
+    rows = body.get("rows", [])
+    selections_payload = {}
+    for row in rows[:1]:
+        entry_id = row.get("entry_id")
+        if isinstance(entry_id, str):
+            selections_payload[entry_id] = 0
 
-    # finalize
+    if selections_payload:
+        res2 = client.post(
+            "/block_unit_price_interactive/apply",
+            json={
+                "session_id": session_id,
+                "selections": selections_payload,
+            },
+        )
+        assert res2.status_code == 200
+        body2 = res2.json()
+        assert body2.get("session_id") == session_id
+
     res3 = client.post(
         "/block_unit_price_interactive/finalize",
-        json={"session_data": session_data2, "confirmed": True},
+        json={"session_id": session_id},
     )
     assert res3.status_code == 200
     # content-type should be zip
