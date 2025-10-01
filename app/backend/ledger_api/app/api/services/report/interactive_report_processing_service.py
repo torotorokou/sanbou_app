@@ -11,7 +11,6 @@ ReportProcessingService のインタラクティブ版。
 
 from __future__ import annotations
 
-import os
 from typing import Any, Dict, Optional, Tuple, Union
 
 from fastapi import UploadFile
@@ -21,10 +20,7 @@ from app.api.services.report.base_interactive_report_generator import (
     BaseInteractiveReportGenerator,
 )
 from app.api.services.report.report_processing_service import ReportProcessingService
-from app.api.services.report.session_store import (
-    default_session_ttl,
-    session_store,
-)
+from app.api.services.report.session_store import session_store
 
 # (NoFilesUploadedResponse, read_csv_files は base クラス経由で利用しないため削除)
 from backend_shared.src.utils.date_filter_utils import (
@@ -79,21 +75,41 @@ class InteractiveReportProcessingService(ReportProcessingService):
 
         state, payload = generator.initial_step(df_formatted)
         # state に元 df_formatted が必要なら利用側で含める方針 (明示性)
+
+        preferred_session_id: Optional[str] = None
+        state_session_id = state.get("session_id") if isinstance(state, dict) else None
+        if isinstance(state_session_id, str) and state_session_id:
+            preferred_session_id = state_session_id
+        else:
+            payload_session_id = (
+                payload.get("session_id")
+                if isinstance(payload, dict)
+                else None
+            )
+            if isinstance(payload_session_id, str) and payload_session_id:
+                preferred_session_id = payload_session_id
+
         session_data = generator.serialize_state(state)
-        session_id = session_store.save(session_data)
+        session_id = session_store.save(session_data, session_id=preferred_session_id)
+
+        if session_id != preferred_session_id:
+            # generator 側で採番した session_id と実際に保存された ID を揃える
+            if isinstance(state, dict):
+                state["session_id"] = session_id
+            session_data = generator.serialize_state(state)
+            session_store.save(session_data, session_id=session_id)
+
+        payload = self._to_serializable(payload)
+        if isinstance(payload, dict):
+            payload["session_id"] = session_id
+
+        if isinstance(payload, dict) and payload.get("status") == "error":
+            return payload
 
         response_payload: Dict[str, Any] = {
-            "status": "success",
-            "step": 0,
-            "message": "initial completed",
-            "data": payload,
             "session_id": session_id,
-            "session_expires_in": default_session_ttl,
+            "rows": payload.get("rows", []) if isinstance(payload, dict) else [],
         }
-
-        # Optional backward compatibility for environments that still expect raw session_data
-        if os.getenv("INTERACTIVE_SESSION_INCLUDE_STATE") == "1":
-            response_payload["session_data"] = session_data
 
         return response_payload
 
@@ -153,17 +169,11 @@ class InteractiveReportProcessingService(ReportProcessingService):
                     )
 
             result: Dict[str, Any] = {
-                "status": "success",
-                "step": payload.get("step", 1),
+                "session_id": session_id or user_input.get("session_id"),
+                "selection_summary": payload.get("selection_summary"),
                 "message": payload.get("message", "applied"),
-                "data": payload,
+                "step": payload.get("step", 1),
             }
-
-            if session_id:
-                result["session_id"] = session_id
-                result["session_expires_in"] = default_session_ttl
-            else:
-                result["session_data"] = session_data_updated
 
             return result
         except Exception as e:  # noqa: BLE001
@@ -178,6 +188,7 @@ class InteractiveReportProcessingService(ReportProcessingService):
         self,
         generator: BaseInteractiveReportGenerator,
         session_data: Union[Dict[str, Any], str],
+        user_input: Optional[Dict[str, Any]] = None,
     ) -> StreamingResponse | JSONResponse:
         try:
             state_payload, session_id = self._resolve_session(session_data)
@@ -192,7 +203,21 @@ class InteractiveReportProcessingService(ReportProcessingService):
                 )
 
             state = generator.deserialize_state(state_payload)
-            final_df, payload = generator.finalize_step(state)
+            # ユーザー入力（selections 等）が渡された場合は finalize 前に適用
+            if user_input and hasattr(generator, "finalize_with_optional_selections"):
+                try:
+                    final_df, payload = generator.finalize_with_optional_selections(state, user_input)  # type: ignore[attr-defined]
+                except Exception as e:  # noqa: BLE001
+                    return JSONResponse(
+                        status_code=500,
+                        content={
+                            "status": "error",
+                            "code": "FINALIZE_WITH_INPUT_FAILED",
+                            "detail": str(e),
+                        },
+                    )
+            else:
+                final_df, payload = generator.finalize_step(state)
             try:
                 report_date = payload.get(
                     "report_date", generator.make_report_date({"result": final_df})
@@ -226,6 +251,29 @@ class InteractiveReportProcessingService(ReportProcessingService):
             )
 
     # -------- Helpers --------
+    @classmethod
+    def _to_serializable(cls, value: Any) -> Any:
+        """Pydantic BaseModel やその配列を dict/list へ変換して返す"""
+
+        if hasattr(value, "dict") and callable(value.dict):  # pydantic BaseModel 等
+            try:
+                return value.dict()
+            except Exception:  # noqa: BLE001
+                pass
+
+        if isinstance(value, dict):
+            return {k: cls._to_serializable(v) for k, v in value.items()}
+
+        if isinstance(value, (list, tuple, set)):
+            converted = [cls._to_serializable(v) for v in value]
+            if isinstance(value, tuple):
+                return tuple(converted)
+            if isinstance(value, set):
+                return converted
+            return converted
+
+        return value
+
     def _resolve_session(
         self, session_payload: Union[Dict[str, Any], str]
     ) -> Tuple[Optional[Dict[str, Any]], Optional[str]]:

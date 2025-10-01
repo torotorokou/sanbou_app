@@ -31,6 +31,7 @@
 from __future__ import annotations
 
 from abc import abstractmethod
+from io import StringIO
 from typing import Any, Callable, Dict, Tuple
 
 import pandas as pd
@@ -114,7 +115,13 @@ class BaseInteractiveReportGenerator(BaseReportGenerator):
         state: Dict[str, Any] = {}
         for k, v in serialized.items():
             if isinstance(v, dict) and v.get("__df__") and "value" in v:
-                state[k] = pd.read_json(v["value"])
+                value = v["value"]
+                if not isinstance(value, str):
+                    raise TypeError(
+                        "DataFrame シリアライズ値は str である必要がありますが、"
+                        f"{type(value)!r} が渡されました"
+                    )
+                state[k] = pd.read_json(StringIO(value))
             else:
                 state[k] = v
         return state

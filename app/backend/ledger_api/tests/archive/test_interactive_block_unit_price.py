@@ -34,17 +34,17 @@ def call_initial():
     return r
 
 
-def call_apply(session_data, selections):
+def call_apply(session_id, selections):
     payload = {
-        "session_data": session_data,
-        "user_input": {"action": "select_transport", "selections": selections},
+        "session_id": session_id,
+        "selections": selections,
     }
     r = requests.post(f"{API_BASE}/apply", json=payload, timeout=30)
     return r
 
 
-def call_finalize(session_data):
-    payload = {"session_data": session_data, "confirmed": True}
+def call_finalize(session_id):
+    payload = {"session_id": session_id}
     r = requests.post(f"{API_BASE}/finalize", json=payload, timeout=60)
     if r.status_code == 200 and r.headers.get("content-type", "").startswith(
         "application/zip"
@@ -65,23 +65,27 @@ def main():
         print("Invalid JSON; abort")
         return
     log("INITIAL JSON", j0)
-    if j0.get("status") != "success":
-        print("Initial failed; stop.")
+    session_id = j0.get("session_id")
+    if not session_id:
+        print("session_id missing; stop.")
         return
-    session = j0["session_data"]
-    # Build selections from first two options
-    opts = j0.get("data", {}).get("transport_options", [])
+    rows = j0.get("rows", [])
     selections = {}
-    for o in opts[:2]:
-        vendor_name = o.get("vendor_name") or o.get("vendor_code")
-        if vendor_name:
-            selections[vendor_name] = o.get("vendor_code", "")
-    r1 = call_apply(session, selections)
-    log("APPLY RAW", r1.text)
-    j1 = r1.json()
-    log("APPLY JSON", j1)
-    session = j1.get("session_data", session)
-    r2 = call_finalize(session)
+    for row in rows[:2]:
+        entry_id = row.get("entry_id")
+        if isinstance(entry_id, str):
+            selections[entry_id] = 0
+
+    if selections:
+        r1 = call_apply(session_id, selections)
+        log("APPLY RAW", r1.text)
+        try:
+            j1 = r1.json()
+        except Exception:
+            j1 = {}
+        log("APPLY JSON", j1)
+
+    r2 = call_finalize(session_id)
     print("FINAL status", r2.status_code)
     if r2.headers.get("content-type", "").startswith("application/zip"):
         print("Finalize returned ZIP.")

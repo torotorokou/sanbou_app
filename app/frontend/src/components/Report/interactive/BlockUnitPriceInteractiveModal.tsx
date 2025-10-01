@@ -36,19 +36,24 @@ export interface InitialApiResponse {
     rows: TransportCandidateRow[];
 }
 
-// サーバーから往復するセッションデータ（最低限 session_id を保持）
-export type SessionData = { session_id: string } & Record<string, unknown>;
+// サーバーから往復するセッションデータ（session_id のみ保持）
+export interface SessionData {
+    session_id: string;
+}
 
-// 選択適用のプレビュー応答（最低限 selection_summary と session_data を許容）
+// 選択適用のプレビュー応答（最低限 selection_summary を保持）
 interface SelectionPreviewResponse {
-    session_data?: SessionData;
     selection_summary?: Record<string, unknown>;
-    // その他のフィールドを拡張可能に
     [key: string]: unknown;
 }
 
-// id => 選択された運搬業者
-type SelectionMap = Record<string, TransportVendor>;
+interface SelectionState {
+    index: number;
+    label: string;
+}
+
+// id => 選択された運搬業者情報
+type SelectionMap = Record<string, SelectionState>;
 
 const clampIndex = (value: number, length: number): number => {
     if (length <= 0) return 0;
@@ -119,8 +124,8 @@ interface BlockUnitPriceInteractiveModalProps {
  */
 const TransportSelectionList: React.FC<{
     items: InteractiveItem[];
-    selections: SelectionMap;   
-    onChange: (id: string, vendor: TransportVendor) => void;
+    selections: SelectionMap;
+    onChange: (id: string, selection: SelectionState) => void;
 }> = ({ items, selections, onChange }) => {
     return (
         <div>
@@ -138,12 +143,14 @@ const TransportSelectionList: React.FC<{
                             <Select
                                 style={{ width: 220 }}
                                 placeholder="選択してください"
-                                value={selections[item.id]?.code}
-                                onChange={(code) => {
-                                    const vendor = item.transport_options.find(v => v.code === code);
-                                    if (vendor) onChange(item.id, vendor);
+                                value={selections[item.id]?.index}
+                                onChange={(selected) => {
+                                    const idx = typeof selected === 'number' ? selected : Number(selected);
+                                    const clamped = Number.isFinite(idx) ? Math.max(0, Math.min(idx, item.transport_options.length - 1)) : 0;
+                                    const label = item.transport_options[clamped]?.name ?? '';
+                                    onChange(item.id, { index: clamped, label });
                                 }}
-                                options={item.transport_options.map(v => ({ value: v.code, label: v.name }))}
+                                options={item.transport_options.map((v, optionIndex) => ({ value: optionIndex, label: v.name }))}
                             />
                         </div>
                     </div>
@@ -205,45 +212,49 @@ const BlockUnitPriceInteractiveModal: React.FC<BlockUnitPriceInteractiveModalPro
             processor_name?: string;
             vendor_code?: string;
             transport_vendor?: string;
+            selected_index?: number;
         }> = {};
         try {
             items.forEach((it) => {
                 const sel = selections[it.id];
                 if (sel) {
                     const key = it.processor_name || it.id;
+                    const optionLabel = it.transport_options[sel.index]?.name ?? sel.label;
                     selection_summary[key] = {
                         id: it.id,
                         entry_id: it.id,
                         processor_name: it.processor_name,
-                        vendor_code: sel.code,
-                        transport_vendor: sel.name,
+                        vendor_code: it.vendor_code,
+                        transport_vendor: optionLabel,
+                        selected_index: sel.index,
                     };
                 }
             });
         } catch {
             // ignore
         }
-        return { session_data: sessionData ?? undefined, selection_summary };
-    }, [items, selections, sessionData]);
+        return { selection_summary };
+    }, [items, selections]);
 
     /**
      * 確認画面で表示する、バックエンドに送る最終ペイロードを生成（表示専用）
      */
     const buildFinalizePayload = useCallback(() => {
-        const selectionsById = Object.entries(selections).map(([id, vendor]) => {
+        const selectionsById = Object.entries(selections).map(([id, selection]) => {
             const item = items.find((it) => it.id === id);
             return {
                 id,
                 entry_id: item?.id,
                 processor_name: item?.processor_name,
-                vendor_code: vendor.code,
+                selected_index: selection.index,
+                transport_vendor: item?.transport_options[selection.index]?.name ?? selection.label,
             };
         });
 
         // legacy selections map removed: we send id-based selections_by_id only
 
         return {
-            ...(sessionData ?? {}),
+            session_id: sessionData?.session_id ?? '',
             // 明示的IDベースの配列（堅牢化）
             selections_by_id: selectionsById,
         } as Record<string, unknown>;
@@ -252,59 +263,95 @@ const BlockUnitPriceInteractiveModal: React.FC<BlockUnitPriceInteractiveModalPro
     /**
      * Step 3: 最終API呼び出し（ZIP生成）
      */
-    const handleFinalApiCall = useCallback(async (sessionOverride?: SessionData | null) => {
+    const buildSelectionRequestPayload = useCallback(() => {
+        const payload: Record<string, number | string> = {};
+        items.forEach((item) => {
+            const selection = selections[item.id];
+            if (selection) {
+                payload[item.id] = selection.index;
+            }
+        });
+        return payload;
+    }, [items, selections]);
+
+    const handleApplySelectionsAndFinalize = useCallback(async () => {
+        const sessionId = sessionData?.session_id;
+        if (!sessionId) {
+            message.error('セッション情報が見つかりません。');
+            return;
+        }
+
+        const selectionPayload = buildSelectionRequestPayload();
+        if (Object.keys(selectionPayload).length === 0) {
+            message.error('選択内容がありません。');
+            setCurrentStep(1);
+            return;
+        }
+
+        setCurrentStep(2);
         setProcessing(true);
         try {
             const apiEndpoint = getApiEndpoint(reportKey);
             const baseEndpoint = apiEndpoint.replace(/\/initial$/, '') || apiEndpoint.replace(/\/initial/, '');
-            console.log('[BlockUnitPrice] finalize endpoint:', `${baseEndpoint}/finalize`);
-            const payloadSession = sessionOverride ?? sessionData;
-            console.log('[BlockUnitPrice] finalize payload:', { session_data: payloadSession, confirmed: true });
-            // finalize は JSON で session_data + confirmed を送る
-            const response = await fetch(`${baseEndpoint}/finalize`, {
+
+            console.log('[BlockUnitPrice] apply payload:', { session_id: sessionId, selections: selectionPayload });
+            const applyResponse = await fetch(`${baseEndpoint}/apply`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    session_data: payloadSession,
-                    confirmed: true,
+                    session_id: sessionId,
+                    selections: selectionPayload,
                 }),
             });
 
-            if (!response.ok) {
+            if (!applyResponse.ok) {
+                throw new Error('選択内容の適用に失敗しました');
+            }
+
+            const applyJson = (await applyResponse.json()) as Record<string, unknown>;
+            if (applyJson && typeof applyJson === 'object' && 'selection_summary' in applyJson) {
+                setSelectionPreview({ selection_summary: applyJson.selection_summary as Record<string, unknown> });
+            }
+
+            console.log('[BlockUnitPrice] finalize payload (session_id only):', { session_id: sessionId });
+            const finalizeResponse = await fetch(`${baseEndpoint}/finalize`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    session_id: sessionId,
+                }),
+            });
+
+            if (!finalizeResponse.ok) {
                 throw new Error('最終処理でエラーが発生しました');
             }
 
-            const zipBlob = await response.blob();
-            console.log('[BlockUnitPrice] finalize response: blob received, headers:', Array.from(response.headers.entries()));
+            const zipBlob = await finalizeResponse.blob();
+            console.log('[BlockUnitPrice] finalize response: blob received, headers:', Array.from(finalizeResponse.headers.entries()));
             const zipUrl = window.URL.createObjectURL(zipBlob);
-            const fileName = response.headers.get('Content-Disposition')?.split('filename=')[1] || 'report.zip';
+            const fileName = finalizeResponse.headers.get('Content-Disposition')?.split('filename=')[1] || 'report.zip';
 
-            // move to 完了 step (index 3)
             setCurrentStep(3);
             message.success('帳簿生成が完了しました');
-
-            // 成功コールバック実行
             onSuccess(zipUrl, fileName);
 
-            // 1.2秒後に完了ステップへ（UXチューニング値）
-            const TIMEOUT_MS = 1200;
             setTimeout(() => {
                 onClose();
-            }, TIMEOUT_MS);
-
+            }, 1200);
         } catch (error) {
-            console.error('Final API call failed:', error);
+            console.error('Finalize flow failed:', error);
             message.error('帳簿生成に失敗しました');
+            setCurrentStep(1);
         } finally {
             setProcessing(false);
         }
-    }, [reportKey, sessionData, onSuccess, onClose]);
+    }, [sessionData, buildSelectionRequestPayload, onSuccess, onClose, reportKey]);
 
     /**
      * ユーザー選択の更新
      */
-    const handleSelectionChange = useCallback((id: string, vendor: TransportVendor) => {
-        setSelections((prev) => ({ ...prev, [id]: vendor }));
+    const handleSelectionChange = useCallback((id: string, selection: SelectionState) => {
+        setSelections((prev) => ({ ...prev, [id]: selection }));
     }, []);
 
     /**
@@ -317,29 +364,9 @@ const BlockUnitPriceInteractiveModal: React.FC<BlockUnitPriceInteractiveModalPro
             setSelectionPreview(preview);
             setCurrentStep(1);
         } else if (currentStep === 1) {
-            // 確認 -> 生成へ
-            // selections を sessionData にマージして finalize に送る
-            // 互換性を保ちつつ、明示的な id ベースの選択配列も含める
-            const selectionsById = Object.entries(selections).map(([id, vendor]) => {
-                const item = items.find((it) => it.id === id);
-                return {
-                    id,
-                    entry_id: item?.id,
-                    processor_name: item?.processor_name,
-                    vendor_code: vendor.code,
-                };
-            });
-
-            const mergedSession = {
-                ...(sessionData ?? {}),
-                // 最小化されたセッション: id ベースの選択のみ
-                selections_by_id: selectionsById,
-            } as SessionData;
-
-            setCurrentStep(2);
-            handleFinalApiCall(mergedSession);
+            handleApplySelectionsAndFinalize();
         }
-    }, [currentStep, buildLocalSelectionPreview, handleFinalApiCall, items, selections, sessionData]);
+    }, [currentStep, buildLocalSelectionPreview, handleApplySelectionsAndFinalize]);
 
     /**
      * モーダルクローズ時のリセット
@@ -378,7 +405,10 @@ const BlockUnitPriceInteractiveModal: React.FC<BlockUnitPriceInteractiveModalPro
             normalizedItems.forEach((item) => {
                 const vendor = item.transport_options[item.initial_selection_index];
                 if (vendor) {
-                    defaults[item.id] = vendor;
+                    defaults[item.id] = {
+                        index: item.initial_selection_index,
+                        label: vendor.name,
+                    };
                 }
             });
             setSelections(defaults);
@@ -415,7 +445,7 @@ const BlockUnitPriceInteractiveModal: React.FC<BlockUnitPriceInteractiveModalPro
             onCancel={handleClose}
             width={800}
             footer={null}
-            bodyStyle={{ maxHeight: '70vh', padding: '20px 24px 24px', display: 'flex', flexDirection: 'column' }}
+            styles={{ body: { maxHeight: '70vh', padding: '20px 24px 24px', display: 'flex', flexDirection: 'column' } }}
         >
             <Steps current={currentStep} style={{ marginBottom: 24 }}>
                 {steps.map((step) => (
@@ -462,7 +492,7 @@ const BlockUnitPriceInteractiveModal: React.FC<BlockUnitPriceInteractiveModalPro
                                                 <div><strong>備考：</strong> {item.note ?? '（なし）'}</div>
                                             </div>
                                             <div style={{ flex: 1, lineHeight: 1.4 }}>
-                                                <div><strong>選択運搬業者：</strong> {selections[item.id]?.name || '未選択'}</div>
+                                                <div><strong>選択運搬業者：</strong> {selections[item.id]?.label || '未選択'}</div>
                                             </div>
                                         </div>
                                     </Card>
