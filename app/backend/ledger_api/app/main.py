@@ -21,7 +21,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from backend_shared.src.logging_utils import setup_uvicorn_access_filter
 
-from app.api.endpoints.block_unit_price_interactive import (
+from app.api.endpoints.reports.block_unit_price_interactive import (
     router as block_unit_price_router,
 )
 from app.api.endpoints.report_artifacts import router as report_artifact_router

@@ -7,8 +7,8 @@ from typing import Any, Dict, Optional
 
 import pandas as pd
 
-from app.api.services.csv_formatter_service import CsvFormatterService
-from app.api.services.csv_validator_facade import CsvValidatorService
+# CSV処理サービス（新しいインポートパス）
+from app.api.services.csv import CsvFormatterService, CsvValidatorService
 from app.api.services.report.ledger.utils.config import get_template_config
 from app.api.services.report.ledger.utils.write_excel import write_values_to_template
 from backend_shared.config.config_loader import ReportTemplateConfigLoader
