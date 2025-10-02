@@ -21,7 +21,6 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from backend_shared.src.logging_utils import setup_uvicorn_access_filter
 
-from app.api.endpoints import manage_report
 from app.api.endpoints.block_unit_price_interactive import (
     router as block_unit_price_router,
 )
@@ -58,12 +57,12 @@ app.add_middleware(
 setup_uvicorn_access_filter(excluded_paths=("/health",))
 
 
-# ルーター登録 - 各機能のエンドポイントを追加
-app.include_router(manage_report.router, prefix="/ledger_api")
+# ルーター登録 - 各機能のエンドポイントを追加（フロントは /ledger_api/reports/* に統一）
 app.include_router(
     block_unit_price_router, prefix="/ledger_api/block_unit_price_interactive"
 )
 app.include_router(reports_router, prefix="/ledger_api/reports")
+
 
 artifact_prefix = settings.report_artifact_url_prefix.rstrip("/") or "/ledger_api/reports/artifacts"
 if not artifact_prefix.startswith("/"):

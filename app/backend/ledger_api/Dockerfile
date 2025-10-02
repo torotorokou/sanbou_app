@@ -69,20 +69,20 @@ print('Verified import: app.api.endpoints.reports')
 PY
 
 # ログ出力用ディレクトリを作成し書き込み権限を付与
-RUN mkdir -p /backend/app/st_app/logs \
+RUN mkdir -p /backend/app/api/logs \
   && chown -R appuser:appuser /backend
 
 # main_paths.yaml で参照される想定の data / logs ディレクトリを事前生成（必要なら上書き調整）
-RUN mkdir -p /backend/app/st_app/data/input /backend/app/st_app/data/output \
-  && mkdir -p /backend/app/st_app/logs \
-  && chown -R appuser:appuser /backend/app/st_app/data /backend/app/st_app/logs
+RUN mkdir -p /backend/app/api/data/input /backend/app/api/data/output \
+  && mkdir -p /backend/app/api/logs \
+  && chown -R appuser:appuser /backend/app/api/data /backend/app/api/logs
 
 # startup エントリポイントスクリプトを root 権限で配置し実行権限付与
 COPY --chown=appuser:appuser --chmod=0755 ${BASE_PATH}/${SERVICE_DIR}/startup.sh /backend/startup.sh
 
 # (preflight 機能は app/startup.py に統合済みのため個別スクリプト不要)
 
-ENV BASE_ST_APP_DIR=/backend/app/st_app
+ENV BASE_API_DIR=/backend/app/api
 USER appuser
 EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=5s --retries=3 CMD curl -fsS http://localhost:8000/health >/dev/null || exit 1

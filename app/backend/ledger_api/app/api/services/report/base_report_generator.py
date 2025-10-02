@@ -9,8 +9,8 @@ import pandas as pd
 
 from app.api.services.csv_formatter_service import CsvFormatterService
 from app.api.services.csv_validator_facade import CsvValidatorService
-from app.st_app.utils.config_loader import get_template_config
-from app.st_app.utils.write_excel import write_values_to_template
+from app.api.services.report.ledger.utils.config import get_template_config
+from app.api.services.report.ledger.utils.write_excel import write_values_to_template
 from backend_shared.config.config_loader import ReportTemplateConfigLoader
 from backend_shared.src.report_checker.check_csv_files import check_csv_files
 

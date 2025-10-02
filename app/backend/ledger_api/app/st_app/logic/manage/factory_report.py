@@ -1,5 +1,18 @@
+"""
+工場日報（factory_report）メイン処理
+
+本モジュールは、出荷・ヤード関連のCSVを読み込み、
+処分・有価・ヤードの個別処理を適用して、工場日報の出力データフレームを生成します。
+
+主な処理フロー:
+    1) 必要CSVを読み込み、存在チェック
+    2) 個別処理（処分・有価・ヤード）を適用
+    3) 各処理結果を結合し、セル番号やラベルを付与
+    4) 合計行の生成や日付挿入を行い、セル行順に整列して返却
+"""
+
 import pandas as pd
-from app.st_app.utils.logger import app_logger, debug_logger
+from app.st_app.utils.logger import app_logger
 from app.st_app.utils.config_loader import get_template_config
 from app.st_app.logic.manage.utils.csv_loader import load_all_filtered_dataframes
 from app.st_app.logic.manage.processors.factory_report.factory_report_shobun import (
@@ -18,7 +31,6 @@ from app.st_app.logic.manage.processors.factory_report.make_label import make_la
 from app.st_app.logic.manage.utils.excel_tools import sort_by_cell_row
 from app.st_app.logic.manage.processors.factory_report.etc import (
     generate_summary_dataframe,
-    upsert_summary_row,
     date_format,
 )
 
@@ -26,20 +38,14 @@ from app.st_app.logic.manage.processors.factory_report.etc import (
 def process(dfs: dict) -> pd.DataFrame:
     """
     工場日報テンプレート用のメイン処理関数。
-    各種CSVデータを読み込み、処分・有価・ヤード等の処理を適用し、
-    最終的な工場日報データフレームを返します。
-    Parameters
-    ----------
-    dfs : dict
-        各CSVのデータフレーム辞書
-    Returns
-    -------
-    pd.DataFrame
-        統合・加工済みの工場日報データ
+
+    - 入力: dfs（キー: ファイル識別子, 値: pandas.DataFrame）
+    - 出力: 工場日報の最終DataFrame
+    - 備考: CSVが欠落している場合は該当処理をスキップします。
     """
 
     logger = app_logger()
-    deb_logger = debug_logger()
+    # deb_logger = debug_logger()  # 詳細デバッグが必要な場合に活用
 
     # --- テンプレート設定の取得 ---
     template_key = "factory_report"

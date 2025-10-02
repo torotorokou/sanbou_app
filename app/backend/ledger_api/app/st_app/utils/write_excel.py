@@ -11,6 +11,7 @@ from pathlib import Path
 import os
 import unicodedata
 from typing import Any, cast
+import re
 
 
 def safe_excel_value(value):
@@ -141,12 +142,18 @@ def write_dataframe_to_worksheet(df: pd.DataFrame, ws: Worksheet, logger=None):
         cell_ref = row.get("セル")
         value = safe_excel_value(row.get("値"))
 
-        if pd.isna(cell_ref) or str(cell_ref).strip() in ["", "未設定"]:
+        # セル参照の基本的なバリデーション（A1形式）
+        cell_ref_str = str(cell_ref).strip() if not pd.isna(cell_ref) else ""
+        if (
+            pd.isna(cell_ref)
+            or cell_ref_str in ["", "未設定"]
+            or not re.match(r"^[A-Za-z]+[0-9]+$", cell_ref_str)
+        ):
             logger.info(f"空欄または未設定のセルはスキップされました。行 {idx}")
             continue
 
         try:
-            cell = cast(Cell, ws[cell_ref])
+            cell = cast(Cell, ws[cell_ref_str])
 
             if isinstance(cell, MergedCell):
                 logger.warning(f"セル {cell_ref} は結合セルで書き込み不可。値: {value}")

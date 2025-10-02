@@ -6,14 +6,14 @@ stg / prod いずれの環境でも利用できるよう、以下を行う:
      - 対象バケット存在確認 & list_blobs 疎通
 2. 環境変数 STAGE (dev|stg|prod) を参照 (なければ dev 扱い)
 3. GCS バケット (環境別) から ledger_api 用の master / templates ディレクトリを同期
-4. 取得したファイルは /backend/app/st_app/data 配下へ配置
+4. 取得したファイルは /backend/app/api/data 配下へ配置
 5. エラーはロギングして継続 (STRICT_STARTUP=true 指定で例外化)
 
 期待する環境変数:
     STAGE=stg|prod
-    GCS_LEDGER_BUCKET_STG=gs://sanbouapp-stg/ledger_api/st_app
-    GCS_LEDGER_BUCKET_PROD=gs://sanbouapp-prod/ledger_api/st_app
-    (任意) GCS_LEDGER_BUCKET=gs://<override>/ledger_api/st_app
+    GCS_LEDGER_BUCKET_STG=gs://sanbouapp-stg/ledger_api/api
+    GCS_LEDGER_BUCKET_PROD=gs://sanbouapp-prod/ledger_api/api
+    (任意) GCS_LEDGER_BUCKET=gs://<override>/ledger_api/api
     GOOGLE_APPLICATION_CREDENTIALS=/backend/secrets/<key>.json
 任意:
     STARTUP_DOWNLOAD_ENABLE=true (明示的に true の場合のみ実行。未設定なら stg/prod は実行、dev はスキップ)
@@ -56,11 +56,11 @@ def bucket_base() -> Optional[str]:
     # 旧挙動と互換: デフォルト値を補完
     if base is None:
         if settings.stage == "dev":
-            return "gs://sanbouapp-dev/ledger_api/st_app"
+            return "gs://sanbouapp-dev/ledger_api/api"
         if settings.stage == "stg":
-            return "gs://sanbouapp-stg/ledger_api/st_app"
+            return "gs://sanbouapp-stg/ledger_api/api"
         if settings.stage == "prod":
-            return "gs://sanbouapp-prod/ledger_api/st_app"
+            return "gs://sanbouapp-prod/ledger_api/api"
     return base
 
 
@@ -107,8 +107,8 @@ def download() -> None:
         return
 
     for sub in TARGET_SUBDIRS:
-        # 🔽 修正: st_app 配下を探す
-        prefix = f"{prefix_root}/data/{sub}" if prefix_root else f"st_app/data/{sub}"
+        # api 配下を探す
+        prefix = f"{prefix_root}/data/{sub}" if prefix_root else f"api/data/{sub}"
         local_dir = DATA_DIR / sub
         local_dir.mkdir(parents=True, exist_ok=True)
         log(f"sync: gs://{bucket_name}/{prefix} -> {local_dir}")

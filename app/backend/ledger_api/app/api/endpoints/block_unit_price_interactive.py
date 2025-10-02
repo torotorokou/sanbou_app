@@ -14,8 +14,8 @@ from pydantic import BaseModel
 from app.api.services.report.interactive_report_processing_service import (
     InteractiveReportProcessingService,
 )
-# 実際に利用している実装ファイルに合わせて import を調整してください
-from app.st_app.logic.manage.block_unit_price_interactive_main import (
+# 移行済みの実装ファイルからインポート
+from app.api.services.report.ledger.interactive import (
     BlockUnitPriceInteractive,
 )
 

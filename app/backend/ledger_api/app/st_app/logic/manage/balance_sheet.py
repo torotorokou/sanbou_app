@@ -1,30 +1,38 @@
+"""
+搬出入（balance_sheet）集計モジュール
+
+複数の入力CSV（receive/shipment/yard）を読み込み、
+搬出量・処分費・有価物・搬入台数/量・オネスト・有価買取などを
+テンプレートに対応する形で集計し、最終DataFrameを返します。
+"""
+
 import pandas as pd
 from app.st_app.utils.logger import app_logger
 from app.st_app.logic.manage.utils.csv_loader import load_all_filtered_dataframes
 from app.st_app.logic.manage.utils.load_template import load_master_and_template
 from app.st_app.utils.config_loader import get_template_config
-from app.st_app.logic.manage.processors.balance_sheet.balance_sheet_fact import (
+from app.api.services.report.ledger.processors.balance_sheet.balance_sheet_fact import (
     process_factory_report,
 )
-from app.st_app.logic.manage.processors.balance_sheet.balance_sheet_syobun import (
+from app.api.services.report.ledger.processors.balance_sheet.balance_sheet_syobun import (
     calculate_total_disposal_cost,
 )
-from app.st_app.logic.manage.processors.balance_sheet.balance_sheet_yuukabutu import (
+from app.api.services.report.ledger.processors.balance_sheet.balance_sheet_yuukabutu import (
     calculate_total_valuable_material_cost,
 )
-from app.st_app.logic.manage.processors.balance_sheet.balance_sheet_inbound_truck_count import (
+from app.api.services.report.ledger.processors.balance_sheet.balance_sheet_inbound_truck_count import (
     inbound_truck_count,
 )
-from app.st_app.logic.manage.processors.balance_sheet.balacne_sheet_inbound_weight import (
+from app.api.services.report.ledger.processors.balance_sheet.balacne_sheet_inbound_weight import (
     inbound_weight,
 )
-from app.st_app.logic.manage.processors.balance_sheet.balance_sheet_honest import (
+from app.api.services.report.ledger.processors.balance_sheet.balance_sheet_honest import (
     calculate_honest_sales_by_unit,
 )
-from app.st_app.logic.manage.processors.balance_sheet.balance_sheet_yuka_kaitori import (
+from app.api.services.report.ledger.processors.balance_sheet.balance_sheet_yuka_kaitori import (
     calculate_purchase_value_of_valuable_items,
 )
-from app.st_app.logic.manage.processors.balance_sheet.balance_sheet_etc import (
+from app.api.services.report.ledger.processors.balance_sheet.balance_sheet_etc import (
     calculate_misc_summary_rows,
 )
 
@@ -70,7 +78,13 @@ def process(dfs: dict) -> pd.DataFrame:
     df_shipment = df_dict.get("shipment")
     df_yard = df_dict.get("yard")
 
-    target_day = pd.to_datetime(df_shipment["伝票日付"].values[0]).date()
+    # 安全な対象日付の決定（shipment が無い場合は receive → 今日 の順でフォールバック）
+    if df_shipment is not None and not df_shipment.empty and "伝票日付" in df_shipment.columns:
+        target_day = pd.to_datetime(df_shipment["伝票日付"].dropna().iloc[0])
+    elif df_receive is not None and not df_receive.empty and "伝票日付" in df_receive.columns:
+        target_day = pd.to_datetime(df_receive["伝票日付"].dropna().iloc[0])
+    else:
+        target_day = pd.Timestamp.today()
 
     # --- ③ 各処理の適用 ---
 
@@ -79,14 +93,16 @@ def process(dfs: dict) -> pd.DataFrame:
     master_csv = process_factory_report(dfs, master_csv)
 
     logger.info("▶️ 処分費データ処理開始")
-    master_csv.loc[master_csv["大項目"] == "処分費", "値"] = (
-        calculate_total_disposal_cost(df_yard, df_shipment)
-    )
+    if df_yard is not None and df_shipment is not None:
+        master_csv.loc[master_csv["大項目"] == "処分費", "値"] = (
+            calculate_total_disposal_cost(df_yard, df_shipment)
+        )
 
     logger.info("▶️ 有価物データ処理開始")
-    master_csv.loc[master_csv["大項目"] == "有価物", "値"] = (
-        calculate_total_valuable_material_cost(df_yard, df_shipment)
-    )
+    if df_yard is not None and df_shipment is not None:
+        master_csv.loc[master_csv["大項目"] == "有価物", "値"] = (
+            calculate_total_valuable_material_cost(df_yard, df_shipment)
+        )
 
     # 売上ページ:receiveが空なら処理を飛ばす
     if df_receive is not None:
@@ -112,6 +128,8 @@ def process(dfs: dict) -> pd.DataFrame:
 
     # 最終処理
     logger.info("▶️ 売上・仕入・損益まとめ処理開始")
-    master_csv = calculate_misc_summary_rows(master_csv, target_day)
+    # pandas.Timestamp へ正規化
+    target_ts = pd.Timestamp(target_day)
+    master_csv = calculate_misc_summary_rows(master_csv, target_ts)
 
     return master_csv

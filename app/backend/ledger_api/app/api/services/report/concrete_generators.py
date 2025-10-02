@@ -4,10 +4,10 @@ from typing import Any, Dict
 
 import pandas as pd
 
-from app.st_app.logic.manage.average_sheet import process as process_average_sheet
-from app.st_app.logic.manage.balance_sheet import process as process_balance_sheet
-from app.st_app.logic.manage.factory_report import process as process_factory_report
-from app.st_app.logic.manage.management_sheet import (
+from app.api.services.report.ledger.average_sheet import process as process_average_sheet
+from app.api.services.report.ledger.balance_sheet import process as process_balance_sheet
+from app.api.services.report.ledger.factory_report import process as process_factory_report
+from app.api.services.report.ledger.management_sheet import (
     process as process_management_sheet,
 )
 
@@ -51,11 +51,19 @@ class BlockUnitPriceGenerator(BaseReportGenerator):
 
     def main_process(self, df_formatted: Dict[str, Any]) -> pd.DataFrame:
         # 対話型処理のみを実行
-        from app.st_app.logic.manage.block_unit_price_react import (
-            process as process_block_unit_price,
+        # 対話型は専用の Interactive クラスを使用
+        from app.api.services.report.ledger.interactive import (
+            BlockUnitPriceInteractive,
+        )
+        from .interactive_report_processing_service import (
+            InteractiveReportProcessingService,
         )
 
-        return process_block_unit_price(df_formatted)
+        service = InteractiveReportProcessingService()
+        generator = BlockUnitPriceInteractive(files=df_formatted)
+        # 対話型の初期ステップを実行して、選択肢ペイロードを返す（レガシー互換）
+        result = service.initial(generator, df_formatted)
+        return result  # type: ignore[return-value]
 
 
 @register("management_sheet")
