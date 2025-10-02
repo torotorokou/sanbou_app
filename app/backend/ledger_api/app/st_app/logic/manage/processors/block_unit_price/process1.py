@@ -1,4 +1,5 @@
-import streamlit as st
+# NOTE: このモジュールは Streamlit UI 用のヘルパで、API 実行時は利用しません。
+import streamlit as st  # type: ignore
 import pandas as pd
 import re
 

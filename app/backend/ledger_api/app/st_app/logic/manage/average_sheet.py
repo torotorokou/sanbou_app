@@ -4,7 +4,7 @@ import pandas as pd
 from app.st_app.utils.logger import app_logger
 from app.st_app.utils.date_tools import get_weekday_japanese
 from app.st_app.utils.rounding_tools import round_value_column_generic
-from app.st_app.utils.value_setter import set_value_fast, set_value_fast_safe
+from app.st_app.utils.value_setter import set_value_fast_safe
 from app.st_app.logic.manage.utils.csv_loader import load_all_filtered_dataframes
 from app.st_app.logic.manage.utils.load_template import load_master_and_template
 from app.st_app.utils.config_loader import clean_na_strings
@@ -54,6 +54,9 @@ def process(dfs: dict) -> pd.DataFrame:
     master_csv = load_master_and_template(master_path)
 
     # 集計処理ステップ
+    if df_receive is None or df_receive.empty:
+        logger.warning("average_sheet: receive データが空のため処理をスキップします")
+        return master_csv
     master_csv = process_average_sheet(df_receive, master_csv)
 
     # カラム名の置換

@@ -1,5 +1,4 @@
-from app.st_app.utils.value_setter import set_value_fast_safe
-from app.st_app.logic.manage.factory_report import process as process_fact
+from app.api.services.report.ledger.factory_report import process as process_fact
 from app.st_app.logic.manage.utils.dataframe_tools import apply_summary_all_items
 
 

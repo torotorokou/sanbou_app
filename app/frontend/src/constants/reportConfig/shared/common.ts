@@ -8,8 +8,9 @@ import type { CsvConfigGroup, ModalStepConfig, ReportConfig } from './types';
 
 /**
  * APIエンドポイント定数
+ * 旧 /ledger_api/report/manage は廃止し、/ledger_api/reports 配下に統一
  */
-export const LEDGER_API_URL = '/ledger_api/report/manage';
+export const LEDGER_API_URL = '/ledger_api/reports';
 export const LEDGER_REPORT_URL = '/ledger_api/reports';
 /**
  * 帳簿タイプ別APIエンドポイント設定
@@ -17,6 +18,8 @@ export const LEDGER_REPORT_URL = '/ledger_api/reports';
 export const REPORT_API_ENDPOINTS = {
     // 工場日報系
     factory_report: `${LEDGER_REPORT_URL}/factory_report`,
+    // 互換キー（工場実績報告書）→ 同じエンドポイントを使用
+    factory_report2: `${LEDGER_REPORT_URL}/factory_report`,
 
     // 収支・管理表系
     balance_sheet: `${LEDGER_REPORT_URL}/balance_sheet`,

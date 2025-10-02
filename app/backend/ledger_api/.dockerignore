@@ -20,3 +20,6 @@ tests/
 test/
 coverage/
 local_data/
+
+## st_app 全体を除外（削除予定のため）
+app/st_app/

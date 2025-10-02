@@ -1,5 +1,4 @@
-from app.st_app.utils.value_setter import set_value_fast_safe
-from app.st_app.logic.manage.balance_sheet import process as process_bal
+from app.api.services.report.ledger.balance_sheet import process as process_bal
 from app.st_app.logic.manage.utils.dataframe_tools import (
     apply_summary_all_items,
     apply_division_result_to_master,

@@ -1,6 +1,8 @@
 import { useState, useCallback } from 'react';
 import { notifySuccess, notifyError, notifyInfo } from '../utils/notify';
 import type { ReportKey } from '../constants/reportConfig';
+import { getApiEndpoint } from '../constants/reportConfig';
+import type { ReportArtifactResponse } from './data/useReportArtifact';
 
 type CsvFiles = { [csvLabel: string]: File | null };
 
@@ -59,7 +61,9 @@ export const useExcelGeneration = () => {
                 });
                 console.log(`FormData key: report_key, value: ${reportKey}`);
 
-                const response = await fetch('/ledger_api/report/manage', {
+                let apiEndpoint = getApiEndpoint(reportKey);
+                if (!apiEndpoint.endsWith('/')) apiEndpoint = `${apiEndpoint}/`;
+                const response = await fetch(apiEndpoint, {
                     method: 'POST',
                     body: formData,
                 });
@@ -69,17 +73,20 @@ export const useExcelGeneration = () => {
                     return false;
                 }
 
-                const blob = await response.blob();
-                const fileName = extractFileName(response);
+                // 新APIは JSON で署名付きURLを返す
+                const json = (await response.json().catch(() => null)) as ReportArtifactResponse | null;
+                const excelUrl = json?.artifact?.excel_download_url ?? null;
+                const reportKeyResp: string | null = typeof json?.report_key === 'string' ? json.report_key : null;
+                const reportDate: string | null = typeof json?.report_date === 'string' ? json.report_date : null;
+                const fileName = reportKeyResp && reportDate ? `${reportKeyResp}_${reportDate}.xlsx` : 'output.xlsx';
 
-                const excelObjectUrl = window.URL.createObjectURL(blob);
-                setExcelUrl(excelObjectUrl);
-                setExcelFileName(fileName);
-
-                notifySuccess(
-                    '帳簿作成成功',
-                    `${fileName} をダウンロードできます。`
-                );
+                if (typeof excelUrl === 'string' && excelUrl) {
+                    setExcelUrl(excelUrl);
+                    setExcelFileName(fileName);
+                    notifySuccess('帳簿作成成功', `${fileName} をダウンロードできます。`);
+                } else {
+                    notifyInfo('帳簿作成', 'Excel ダウンロードURLが取得できませんでした。');
+                }
                 return true;
             } catch (err) {
                 console.error('帳簿作成失敗エラー:', err);
@@ -100,14 +107,8 @@ export const useExcelGeneration = () => {
      */
     const downloadExcel = useCallback(() => {
         if (excelUrl) {
-            const a = document.createElement('a');
-            a.href = excelUrl;
-            a.download = excelFileName;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            window.URL.revokeObjectURL(excelUrl);
-            setExcelUrl(null);
+            // 署名付きURLを新しいタブで開く
+            window.open(excelUrl, '_blank', 'noopener');
         } else {
             notifyInfo('ダウンロード不可', 'Excelファイルがありません。');
         }
@@ -138,24 +139,4 @@ async function handleApiError(response: Response) {
     throw new Error(errorMsg);
 }
 
-/**
- * レスポンスヘッダーからファイル名を抽出
- */
-function extractFileName(response: Response): string {
-    const disposition = response.headers.get('Content-Disposition');
-    let fileName = 'output.xlsx';
-
-    if (disposition) {
-        const matchStar = disposition.match(/filename\*=UTF-8''([^;]+)/);
-        if (matchStar) {
-            fileName = decodeURIComponent(matchStar[1]);
-        } else {
-            const match = disposition.match(/filename="?([^"]+)"?/);
-            if (match && match[1]) {
-                fileName = decodeURIComponent(match[1]);
-            }
-        }
-    }
-
-    return fileName;
-}
+// 署名付きURL運用のため、レスポンスヘッダーからのファイル名抽出は不要

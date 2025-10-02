@@ -327,9 +327,40 @@ def execute_finalize_step(state: Dict[str, Any]) -> tuple[pd.DataFrame, Dict[str
 
         # 最終マスターCSVの作成
         final_master_csv = first_cell_in_template(df_after)
-        df_for_date = ensure_datetime_col(df_shipment_initial.copy(), "伝票日付")
+        df_for_date_any = ensure_datetime_col(df_shipment_initial.copy(), "伝票日付")
+        assert isinstance(df_for_date_any, pd.DataFrame)
+        df_for_date = cast(pd.DataFrame, df_for_date_any)
         final_master_csv = make_sum_date(final_master_csv, df_for_date)
-        
+        # --- report_date: prefer 伝票日付 from the original shipment ---
+        report_date = None
+        try:
+            if isinstance(df_shipment_initial, pd.DataFrame) and "伝票日付" in df_shipment_initial.columns:
+                ser = pd.to_datetime(df_shipment_initial["伝票日付"], errors="coerce")
+                nonnull = ser.dropna()
+                if not nonnull.empty:
+                    report_date = nonnull.iloc[0].date().isoformat()
+        except Exception:
+            report_date = None
+
+        # Fallback to df_after if shipment didn't provide a usable date
+        if not report_date:
+            try:
+                if isinstance(df_after, pd.DataFrame) and "伝票日付" in df_after.columns:
+                    ser = pd.to_datetime(df_after["伝票日付"], errors="coerce")
+                    nonnull = ser.dropna()
+                    if not nonnull.empty:
+                        report_date = nonnull.iloc[0].date().isoformat()
+            except Exception:
+                report_date = None
+
+        # Last fallback: today
+        if not report_date:
+            from datetime import datetime
+
+            report_date = datetime.now().date().isoformat()
+
+        payload["report_date"] = report_date
+
         return final_master_csv, payload
 
     except Exception as e:

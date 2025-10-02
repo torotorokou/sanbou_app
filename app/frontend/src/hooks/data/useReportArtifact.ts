@@ -134,7 +134,8 @@ export const useReportArtifact = () => {
                     formData.append('period_type', entry.periodType);
                 }
 
-                const apiEndpoint = getApiEndpoint(reportKey);
+                let apiEndpoint = getApiEndpoint(reportKey);
+                if (!apiEndpoint.endsWith('/')) apiEndpoint = `${apiEndpoint}/`;
                 const response = await fetch(apiEndpoint, { method: 'POST', body: formData });
                 if (!response.ok) {
                     let errorMessage = `API Error: ${response.status}`;

@@ -1,79 +1,10 @@
-import streamlit as st
 import pandas as pd
-
-
-def confirm_transport_selection(df_after: pd.DataFrame) -> None:
-    """運搬業者の選択内容を確認するダイアログを表示する
-
-    処理の流れ:
-        1. 選択された運搬業者の一覧を表示
-        2. 確認用のYes/Noボタンを表示
-        3. ユーザーの選択に応じて処理を分岐
-            - Yes: 次のステップへ進む（process_mini_step = 2）
-            - No: Step1（選択画面）に戻る（process_mini_step = 1）
-
-    Args:
-        df_after (pd.DataFrame): 運搬業者が選択された出荷データ
-    """
-    # セッション状態の初期化
-    if "transport_selection_confirmed" not in st.session_state:
-        st.session_state.transport_selection_confirmed = False
-
-    def _create_confirmation_view(df: pd.DataFrame) -> pd.DataFrame:
-        """確認用の表示データを作成"""
-        filtered_df = df[df["運搬業者"].notna()]
-        return filtered_df[["業者名", "品名", "明細備考", "運搬業者"]]
-
-    def _show_confirmation_buttons() -> tuple[bool, bool]:
-        """確認用のYes/Noボタンを表示"""
-        st.write("この運搬業者選択で確定しますか？")
-        col1, col2 = st.columns([1, 1])
-
-        with col1:
-            yes_clicked = st.button("✅ はい（この内容で確定）", key="yes_button")
-        with col2:
-            no_clicked = st.button("🔁 いいえ（やり直す）", key="no_button")
-
-        return yes_clicked, no_clicked
-
-    def _handle_user_selection(yes_clicked: bool, no_clicked: bool) -> None:
-        """ユーザーの選択結果を処理"""
-        if yes_clicked:
-            st.success("✅ 確定されました。次に進みます。")
-            st.session_state.transport_selection_confirmed = True
-            st.session_state.process_mini_step = 2
-            st.rerun()
-
-        if no_clicked:
-            st.warning("🔁 選択をやり直します（Step1に戻ります）")
-            st.session_state.transport_selection_confirmed = False
-            st.session_state.process_mini_step = 1
-            st.rerun()
-
-    # すでに確認済みの場合はスキップ
-    if st.session_state.transport_selection_confirmed:
-        return
-
-    # メイン処理の実行
-    st.title("運搬業者の確認")
-
-    # 1. 確認用データの表示
-    df_view = _create_confirmation_view(df_after)
-    st.dataframe(df_view)
-
-    # 2. 確認ボタンの表示と選択結果の取得
-    yes_clicked, no_clicked = _show_confirmation_buttons()
-
-    # 3. 選択結果の処理
-    _handle_user_selection(yes_clicked, no_clicked)
-
-    # 4. ユーザーの操作待ち
-    st.stop()
+from pandas import DataFrame
 
 
 def apply_transport_fee_by_vendor(
-    df_after: pd.DataFrame, df_transport: pd.DataFrame
-) -> pd.DataFrame:
+    df_after: DataFrame, df_transport: DataFrame
+) -> DataFrame:
     """運搬業者ごとの運搬費を適用する関数
 
     Args:
@@ -107,8 +38,8 @@ def apply_transport_fee_by_vendor(
 
 
 def apply_weight_based_transport_fee(
-    df_after: pd.DataFrame, df_transport: pd.DataFrame
-) -> pd.DataFrame:
+    df_after: DataFrame, df_transport: DataFrame
+) -> DataFrame:
     """運搬費係数を用いて重量ベースの運搬費を再計算する"""
 
     out = df_after.copy()
@@ -139,7 +70,7 @@ def apply_weight_based_transport_fee(
     return out
 
 
-def make_total_sum(df, master_csv):
+def make_total_sum(df: DataFrame, master_csv: DataFrame) -> DataFrame:
     # 個々の金額計算と計算用重量の設定
     def calculate_row(row):
         if row["単位名"] == "kg":
@@ -149,7 +80,8 @@ def make_total_sum(df, master_csv):
         return row
 
     # 行ごとに計算を適用
-    df = df.apply(calculate_row, axis=1)
+    # apply returns a Series per row; assign back to DataFrame to satisfy typing
+    df = df.apply(calculate_row, axis=1)  # type: ignore[assignment]
 
     # 総額の計算
     df["総額"] = df["金額"] + df["運搬費"]
@@ -160,11 +92,7 @@ def make_total_sum(df, master_csv):
     return df
 
 
-def df_cul_filtering(df):
-    import pandas as pd
-    from openpyxl import load_workbook
-    from openpyxl.styles import Alignment, Font, Border, Side, PatternFill
-    from openpyxl.utils import get_column_letter
+def df_cul_filtering(df: DataFrame) -> DataFrame:
 
     # dfカラムのフィルタリング
     df = df[["業者名", "明細備考", "正味重量", "総額", "ブロック単価"]]
@@ -180,7 +108,7 @@ def df_cul_filtering(df):
     return df
 
 
-def first_cell_in_template(df):
+def first_cell_in_template(df: DataFrame) -> DataFrame:
 
     start_row = 7
     full_col_to_cell = {
@@ -194,9 +122,9 @@ def first_cell_in_template(df):
     # セル情報を再構築
     full_cell_info = []
 
-    for idx, row in df.iterrows():
+    for i, (_, row) in enumerate(df.iterrows()):
         for col, col_letter in full_col_to_cell.items():
-            cell = f"{col_letter}{start_row + idx}"
+            cell = f"{col_letter}{start_row + i}"
             value = row[col]
             full_cell_info.append({"大項目": col, "セル": cell, "値": value})
 
@@ -205,7 +133,7 @@ def first_cell_in_template(df):
     return full_cell_df
 
 
-def make_sum_date(df, df_shipping):
+def make_sum_date(df: DataFrame, df_shipping: DataFrame) -> DataFrame:
     from app.st_app.utils.date_tools import to_reiwa_format
 
     # 日付を令和表記に変換（例: "令和6年5月16日"）
@@ -220,7 +148,7 @@ def make_sum_date(df, df_shipping):
     return df
 
 
-def calculate_block_unit_price(df: pd.DataFrame) -> pd.DataFrame:
+def calculate_block_unit_price(df: DataFrame) -> DataFrame:
     """ブロック単価を計算する関数
 
     Args:
@@ -237,7 +165,7 @@ def calculate_block_unit_price(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def filter_display_columns(df: pd.DataFrame) -> pd.DataFrame:
+def filter_display_columns(df: DataFrame) -> DataFrame:
     """表示用の列を選択する関数
 
     Args:
@@ -250,7 +178,7 @@ def filter_display_columns(df: pd.DataFrame) -> pd.DataFrame:
     return df[display_columns]
 
 
-def create_cell_mapping(df: pd.DataFrame) -> pd.DataFrame:
+def create_cell_mapping(df: DataFrame) -> DataFrame:
     """データフレームの値をExcelセルにマッピングする関数
 
     Args:
@@ -270,9 +198,9 @@ def create_cell_mapping(df: pd.DataFrame) -> pd.DataFrame:
 
     # セルマッピング情報の作成
     cell_mappings = []
-    for idx, row in df.iterrows():
+    for i, (_, row) in enumerate(df.iterrows()):
         for column, cell_letter in column_to_cell.items():
-            cell_position = f"{cell_letter}{start_row + idx}"
+            cell_position = f"{cell_letter}{start_row + i}"
             cell_mappings.append(
                 {"大項目": column, "セル": cell_position, "値": row[column]}
             )
@@ -280,7 +208,7 @@ def create_cell_mapping(df: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(cell_mappings)
 
 
-def add_date_information(df: pd.DataFrame, df_shipping: pd.DataFrame) -> pd.DataFrame:
+def add_date_information(df: DataFrame, df_shipping: DataFrame) -> DataFrame:
     """日付情報を追加する関数
 
     Args:

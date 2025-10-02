@@ -1,4 +1,3 @@
-from app.st_app.utils.logger import app_logger
 from app.st_app.utils.value_setter import set_value_fast_safe
 
 
@@ -14,8 +13,8 @@ def reflect_total_from_factory(master_csv, df_factory):
 
 
 def process_factory_report(dfs, master_csv):
-    logger = app_logger()
-    from app.st_app.logic.manage.factory_report import process
+    # services.report 側のエントリポイントに移行
+    from app.api.services.report.ledger.factory_report import process
 
     # 工場日報からdfを読込
     df_factory = process(dfs)
