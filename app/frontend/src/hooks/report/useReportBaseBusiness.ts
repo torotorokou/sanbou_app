@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import type { UploadProps } from 'antd/es/upload';
 import { useCsvValidation } from '../data/useCsvValidation';
-import { useZipFileGeneration } from '../data/useZipFileGeneration';
+import { useReportArtifact } from '../data/useReportArtifact';
 import type {
     CsvFiles,
     CsvConfigEntry,
@@ -25,7 +25,7 @@ export const useReportBaseBusiness = (
     reportKey: ReportKey
 ) => {
     const csvValidation = useCsvValidation();
-    const zipGeneration = useZipFileGeneration();
+    const artifact = useReportArtifact();
 
     /**
      * ファイル削除処理
@@ -124,7 +124,7 @@ export const useReportBaseBusiness = (
             onComplete: () => void,
             onSuccess: () => void
         ) => {
-            const success = await zipGeneration.generateZipReport(
+            const success = await artifact.generateReport(
                 csvFiles,
                 reportKey,
                 onStart,
@@ -135,7 +135,7 @@ export const useReportBaseBusiness = (
                 onSuccess();
             }
         },
-    [zipGeneration, csvFiles, reportKey]
+        [artifact, csvFiles, reportKey]
     );
 
     return {
@@ -143,34 +143,33 @@ export const useReportBaseBusiness = (
         validationResults: csvValidation.validationResults,
 
         // ZIP関連
-        zipUrl: zipGeneration.zipUrl,
-        zipFileName: zipGeneration.zipFileName,
-
-        // Excel関連
-        excelBlob: zipGeneration.excelBlob,
-        excelFileName: zipGeneration.excelFileName,
-        hasExcel: zipGeneration.hasExcel,
-
-        // PDF関連
-        pdfBlob: zipGeneration.pdfBlob,
-        pdfFileName: zipGeneration.pdfFileName,
-        hasPdf: zipGeneration.hasPdf,
-        pdfPreviewUrl: zipGeneration.pdfPreviewUrl,
+        excelUrl: artifact.excelUrl,
+        pdfUrl: artifact.pdfUrl,
+        excelFileName: artifact.excelFileName,
+        pdfFileName: artifact.pdfFileName,
+        hasExcel: Boolean(artifact.excelUrl),
+    hasPdf: Boolean(artifact.pdfUrl),
+    pdfPreviewUrl: artifact.pdfUrl,
+        reportToken: artifact.reportToken,
+        reportDate: artifact.reportDate,
+        reportKey: artifact.reportKey,
+        summary: artifact.summary,
+        metadata: artifact.metadata,
+        lastResponse: artifact.lastResponse,
 
         // 計算されたプロパティ
         isReadyToCreate: isReadyToCreate(),
         uploadFileConfigs: getUploadFileConfigs(),
         makeUploadPropsFn: createMakeUploadProps(),
-        isReportReady: zipGeneration.isReady,
+        isReportReady: artifact.isReady,
 
         // アクション
         handleRemoveFile,
         handleGenerateReport,
-        downloadExcel: zipGeneration.downloadExcel,
-        downloadPdf: zipGeneration.downloadPdf,
-        printPdf: zipGeneration.printPdf,
-        getPdfPreviewUrl: zipGeneration.getPdfPreviewUrl,
-        downloadZip: zipGeneration.downloadZip,
-        cleanup: zipGeneration.cleanup,
+        downloadExcel: artifact.downloadExcel,
+        printPdf: artifact.printPdf,
+        getPdfPreviewUrl: artifact.getPdfPreviewUrl,
+        cleanup: artifact.cleanup,
+        applyArtifactResponse: artifact.applyArtifactResponse,
     };
 };

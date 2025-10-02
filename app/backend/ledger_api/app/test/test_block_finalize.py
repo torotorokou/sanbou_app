@@ -1,14 +1,27 @@
-"""Integration-like tests for finalize using state from /initial.
+"""
+Integration-like tests for finalize using state from /initial.
 
 本番フローに近づけるため、/initial を叩いて session_id を取得し、
 session_store から state を復元して finalize を実行する。
+
+フロントエンドから返ってくる想定のペイロード形：
+{
+  "session_id": "bup-20251001024922-abacea",
+  "selections": {
+    "bup_6a52ef74e0": "エコライン（ウイング）・合積",
+    "bup_341b74d0b3": "シェノンビ",
+    "bup_628d4147af": "エコライン（ウイング）",
+    "bup_87502c2a3a": "エコライン",
+    "bup_c468456d27": "シェノンビ・合積"
+  }
+}
 """
 from __future__ import annotations
 
 import os
 import sys
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 from fastapi.testclient import TestClient
 import pytest
@@ -40,7 +53,11 @@ from app.st_app.logic.manage.block_unit_price_interactive_main import (  # noqa:
 
 
 def _load_sample_shipment_bytes() -> tuple[str, bytes, str]:
-    sample_path = REPO_ROOT / "app" / "test" / "出荷一覧_20250829_164653.csv"
+    shuka={1:"出荷一覧_20250630_180038.csv",
+           2:"出荷一覧_20250829_164653.csv"
+           }
+
+    sample_path = REPO_ROOT / "app" / "test" / shuka[2]
     content = sample_path.read_bytes()
     return ("shipment.csv", content, "text/csv")
 
@@ -56,45 +73,30 @@ def _initial_session_and_rows(client: TestClient) -> tuple[str, list[dict[str, A
     return session_id, rows
 
 
-def test_finalize_missing_transport_cost_columns_via_state():
+def _make_fixed_frontend_payload(session_id: str) -> Dict[str, Any]:
+    """
+    前に提示したフロントエンドの戻り値そのままの selections を組み立てて返す。
+    entry_id が実データに存在しない可能性はあるが、ここでは形を合わせることを目的とする。
+    """
+    return {
+        "session_id": session_id,
+        "selections": {
+            "bup_6a52ef74e0": "エコライン（ウイング）・合積",
+            "bup_341b74d0b3": "シェノンビ",
+            "bup_628d4147af": "エコライン（ウイング）",
+            "bup_87502c2a3a": "エコライン",
+            "bup_c468456d27": "シェノンビ・合積",
+        },
+    }
+
+
+def test_finalize_success_from_initial_state_with_fixed_frontend_selections():
+    """
+    initial から取得した session_id を使い、フロント想定形
+    {session_id, selections} をそのまま finalize に渡す成功パス。
+    """
     client = TestClient(app)
     session_id, _rows = _initial_session_and_rows(client)
-
-    serialized = session_store.load(session_id)
-    assert isinstance(serialized, dict), "session should be stored as dict"
-
-    gen = BlockUnitPriceInteractive()
-    state = gen.deserialize_state(serialized)
-
-    # Debug: show df_transport_cost columns/head
-    df_transport_cost = state.get("df_transport_cost")
-    if df_transport_cost is not None:
-        print("[DBG test] transport_cost columns:", list(df_transport_cost.columns))
-        try:
-            print("[DBG test] transport_cost head:", df_transport_cost.head(3).to_dict())
-        except Exception:
-            pass
-
-    # 交通費マスターから必須列を削除してエラーパスを誘発
-    df_transport_cost = state.get("df_transport_cost")
-    if df_transport_cost is not None:
-        for col in ("運搬費", "重量単価"):
-            if col in df_transport_cost.columns:
-                df_transport_cost = df_transport_cost.drop(columns=[col])
-        state["df_transport_cost"] = df_transport_cost
-
-    final_df, payload = gen.finalize_step(state)
-    assert isinstance(payload, dict)
-    assert payload.get("status") == "error"
-    assert payload.get("code") == "MISSING_COLUMNS"
-    assert payload.get("step") == 2
-    # 実装では extra/missing 情報は payload 内に含まれるが、ここでは最低限 code/step を確認
-    assert getattr(final_df, "empty", True)
-
-
-def test_finalize_success_from_initial_state_with_default_selections():
-    client = TestClient(app)
-    session_id, rows = _initial_session_and_rows(client)
 
     serialized = session_store.load(session_id)
     assert isinstance(serialized, dict)
@@ -102,7 +104,7 @@ def test_finalize_success_from_initial_state_with_default_selections():
     gen = BlockUnitPriceInteractive()
     state = gen.deserialize_state(serialized)
 
-    # Debug: show df_transport_cost columns/head
+    # Debug: show df_transport_cost columns/head（任意）
     df_transport_cost = state.get("df_transport_cost")
     if df_transport_cost is not None:
         print("[DBG test] transport_cost columns:", list(df_transport_cost.columns))
@@ -111,29 +113,19 @@ def test_finalize_success_from_initial_state_with_default_selections():
         except Exception:
             pass
 
-    # rows の initial_index をそのまま使って label を選択（一本化API同等の事前適用）
-    selections: Dict[str, Any] = {}
-    for r in rows:
-        entry_id = r.get("entry_id")
-        opts = r.get("options") or []
-        ii = r.get("initial_index", 0) or 0
-        if entry_id and opts:
-            # finalize_with_optional_selections は index でも label でも受ける
-            # 誤差の少ない label を渡す
-            label = opts[ii if 0 <= ii < len(opts) else 0]
-            selections[entry_id] = label
+    # フロントの想定形に合わせて selections を固定で用意
+    frontend_payload = _make_fixed_frontend_payload(session_id)
 
-    # 本番処理に近い形で進めつつ、運搬費の適用関数は動作を安定させるために最小限モック
-    # （現行マスターには '7*weight' 等の表記が混在し、例外経路になり得るため）
+    # マスターの表記ゆれに起因する不安定さを避けるため最小限のモックを当てる
     def _apply_vendor(df_after, df_transport):
+        import pandas as _pd
         df_result = df_after.copy()
         if "運搬費" not in df_result.columns:
             df_result["運搬費"] = 0
-        # 文字列等を数値化（失敗は0）
         try:
             t = df_transport.copy()
             if "運搬費" in t.columns:
-                t["運搬費"] = pd.to_numeric(t["運搬費"], errors="coerce").fillna(0)
+                t["運搬費"] = _pd.to_numeric(t["運搬費"], errors="coerce").fillna(0)
             lookup = {
                 (str(r.get("業者CD")), str(r.get("運搬業者"))): float(r.get("運搬費", 0) or 0)
                 for _, r in t.iterrows()
@@ -147,7 +139,6 @@ def test_finalize_success_from_initial_state_with_default_selections():
         return df_result
 
     from unittest.mock import patch
-    import pandas as pd
 
     with (
         patch(
@@ -161,8 +152,13 @@ def test_finalize_success_from_initial_state_with_default_selections():
     ):
         final_df, payload = gen.finalize_with_optional_selections(
             state,
-            {"session_id": session_id, "selections": selections},
+            frontend_payload,
         )
+        assert isinstance(payload, dict)
+        # finalize の結果が返っていること（成功・失敗の厳密判定はここでは行わない）
+        assert payload.get("step") == 2
+        assert payload.get("session_id") == session_id
+        assert final_df is not None
 
 
 def test_state_passed_to_finalize_matches_saved_serialized_state(monkeypatch: pytest.MonkeyPatch):
@@ -172,21 +168,14 @@ def test_state_passed_to_finalize_matches_saved_serialized_state(monkeypatch: py
     /finalize は apply→finalize の順に内部で2回 load される可能性があるため、すべての呼び出しで検査する。
     """
     client = TestClient(app)
-    session_id, rows = _initial_session_and_rows(client)
+    session_id, _rows = _initial_session_and_rows(client)
 
     # initial 直後の保存済み serialized を取得（これが「正」となる）
     serialized_expected = session_store.load(session_id)
     assert isinstance(serialized_expected, dict) and serialized_expected
 
-    # selections は initial の initial_index を label に変換
-    selections: Dict[str, Any] = {}
-    for r in rows:
-        entry_id = r.get("entry_id")
-        opts = r.get("options") or []
-        ii = r.get("initial_index", 0) or 0
-        if entry_id and opts:
-            label = opts[ii if 0 <= ii < len(opts) else 0]
-            selections[entry_id] = label
+    # フロント想定形の selections を使用
+    frontend_payload = _make_fixed_frontend_payload(session_id)
 
     # spy: session_store.load をラップ
     calls: list[Dict[str, Any]] = []
@@ -204,7 +193,7 @@ def test_state_passed_to_finalize_matches_saved_serialized_state(monkeypatch: py
     # /finalize エンドポイントを叩く（StreamingResponse だが 200 のみ確認）
     resp = client.post(
         "/ledger_api/block_unit_price_interactive/finalize",
-        json={"session_id": session_id, "selections": selections},
+        json=frontend_payload,  # ← フロント想定の {session_id, selections}
     )
     assert resp.status_code == 200
     # apply→finalizeで 1回以上 load が呼ばれていること

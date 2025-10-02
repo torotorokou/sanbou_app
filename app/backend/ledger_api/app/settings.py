@@ -42,6 +42,10 @@ class Settings:
     gcs_ledger_bucket_stg: Optional[str]
     gcs_ledger_bucket_prod: Optional[str]
     ledger_sync_subdirs: List[str]
+    report_artifact_root_dir: Path
+    report_artifact_url_prefix: str
+    report_artifact_url_ttl: int
+    report_artifact_secret: str
 
     def bucket_base(self) -> Optional[str]:
         if self.gcs_ledger_bucket_override:
@@ -102,16 +106,29 @@ def load_settings() -> Settings:
     gcs_ledger_bucket_prod = _clean(os.getenv("GCS_LEDGER_BUCKET_PROD"))
     subdirs_raw = os.getenv("LEDGER_SYNC_SUBDIRS", "master,templates").strip()
     ledger_sync_subdirs = [s.strip() for s in subdirs_raw.split(",") if s.strip()]
+    artifact_root_default = base_st_app_dir / "report_artifacts"
+    report_artifact_root_dir = Path(os.getenv("REPORT_ARTIFACT_ROOT_DIR", str(artifact_root_default))).resolve()
+    report_artifact_url_prefix = os.getenv("REPORT_ARTIFACT_URL_PREFIX", "/ledger_api/reports/artifacts").strip() or "/ledger_api/reports/artifacts"
+    report_artifact_url_ttl_raw = os.getenv("REPORT_ARTIFACT_URL_TTL", "900")
+    try:
+        report_artifact_url_ttl = int(report_artifact_url_ttl_raw)
+    except ValueError:
+        report_artifact_url_ttl = 900
+    report_artifact_secret = os.getenv("REPORT_ARTIFACT_SECRET", "change-me-in-production")
     return Settings(
         stage=stage,
         strict_startup=strict_startup,
         startup_download_enable_raw=startup_download_enable_raw,
         base_st_app_dir=base_st_app_dir,
         gcs_ledger_bucket_override=gcs_ledger_bucket_override,
-    gcs_ledger_bucket_dev=gcs_ledger_bucket_dev,
+        gcs_ledger_bucket_dev=gcs_ledger_bucket_dev,
         gcs_ledger_bucket_stg=gcs_ledger_bucket_stg,
         gcs_ledger_bucket_prod=gcs_ledger_bucket_prod,
         ledger_sync_subdirs=ledger_sync_subdirs,
+        report_artifact_root_dir=report_artifact_root_dir,
+        report_artifact_url_prefix=report_artifact_url_prefix,
+        report_artifact_url_ttl=report_artifact_url_ttl,
+        report_artifact_secret=report_artifact_secret,
     )
 
 
