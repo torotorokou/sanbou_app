@@ -3,6 +3,7 @@ import { Modal, Button, Steps, Spin, message, Card, Select } from 'antd';
 import { CheckCircleOutlined } from '@ant-design/icons';
 import { getApiEndpoint } from '@/constants/reportConfig';
 import type { ReportKey } from '@/constants/reportConfig';
+import type { ReportArtifactResponse } from '@/hooks/data/useReportArtifact';
 
 // 型定義（要件に合わせて整備）
 export interface TransportCandidateRow {
@@ -113,7 +114,7 @@ interface BlockUnitPriceInteractiveModalProps {
     onClose: () => void;
     csvFiles: { [label: string]: File | null };
     reportKey: ReportKey;
-    onSuccess: (zipUrl: string, fileName: string) => void;
+    onSuccess: (response: ReportArtifactResponse) => void;
     // 親コンポーネントが既に initial API の応答を持っている場合、それを直接渡せるようにする
     initialApiResponse?: InitialApiResponse;
     initialSessionData?: SessionData;
@@ -261,16 +262,20 @@ const BlockUnitPriceInteractiveModal: React.FC<BlockUnitPriceInteractiveModalPro
     }, [selections, sessionData, items]);
 
     /**
-     * Step 3: 最終API呼び出し（ZIP生成）
+     * Step 3: 最終API呼び出し（アーティファクト生成）
      */
     const buildSelectionRequestPayload = useCallback(() => {
-        const payload: Record<string, number | string> = {};
-        items.forEach((item) => {
-            const selection = selections[item.id];
-            if (selection) {
-                payload[item.id] = selection.index;
-            }
-        });
+        // 送信フォーマットを縮小：entry_id と transport_vendor の配列にする
+        const payload: Array<{ entry_id: string; transport_vendor: string }> = items
+            .map((item) => {
+                const selection = selections[item.id];
+                if (!selection) return null;
+                const transport_vendor = item.transport_options[selection.index]?.name ?? selection.label ?? '';
+                const entry_id = String(item.rawRow?.entry_id ?? item.id ?? '');
+                return { entry_id, transport_vendor };
+            })
+            .filter((v): v is { entry_id: string; transport_vendor: string } => v !== null && v.entry_id.length > 0);
+
         return payload;
     }, [items, selections]);
 
@@ -282,7 +287,7 @@ const BlockUnitPriceInteractiveModal: React.FC<BlockUnitPriceInteractiveModalPro
         }
 
         const selectionPayload = buildSelectionRequestPayload();
-        if (Object.keys(selectionPayload).length === 0) {
+        if (selectionPayload.length === 0) {
             message.error('選択内容がありません。');
             setCurrentStep(1);
             return;
@@ -294,13 +299,24 @@ const BlockUnitPriceInteractiveModal: React.FC<BlockUnitPriceInteractiveModalPro
             const apiEndpoint = getApiEndpoint(reportKey);
             const baseEndpoint = apiEndpoint.replace(/\/initial$/, '') || apiEndpoint.replace(/\/initial/, '');
 
-            console.log('[BlockUnitPrice] apply payload:', { session_id: sessionId, selections: selectionPayload });
+            // 配列 -> { entry_id: transport_vendor } の map に変換して送信（backend が map を期待するため）
+            const selectionPayloadMap: Record<string, string | number> = selectionPayload.reduce(
+                (acc, cur) => {
+                    if (cur && cur.entry_id) {
+                        acc[cur.entry_id] = cur.transport_vendor;
+                    }
+                    return acc;
+                },
+                {} as Record<string, string | number>,
+            );
+
+            console.log('[BlockUnitPrice] apply payload (map):', { session_id: sessionId, selections: selectionPayloadMap });
             const applyResponse = await fetch(`${baseEndpoint}/apply`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     session_id: sessionId,
-                    selections: selectionPayload,
+                    selections: selectionPayloadMap,
                 }),
             });
 
@@ -326,14 +342,12 @@ const BlockUnitPriceInteractiveModal: React.FC<BlockUnitPriceInteractiveModalPro
                 throw new Error('最終処理でエラーが発生しました');
             }
 
-            const zipBlob = await finalizeResponse.blob();
-            console.log('[BlockUnitPrice] finalize response: blob received, headers:', Array.from(finalizeResponse.headers.entries()));
-            const zipUrl = window.URL.createObjectURL(zipBlob);
-            const fileName = finalizeResponse.headers.get('Content-Disposition')?.split('filename=')[1] || 'report.zip';
+            const finalizeJson = (await finalizeResponse.json()) as ReportArtifactResponse;
+            console.log('[BlockUnitPrice] finalize response (artifact):', finalizeJson);
 
             setCurrentStep(3);
             message.success('帳簿生成が完了しました');
-            onSuccess(zipUrl, fileName);
+            onSuccess(finalizeJson);
 
             setTimeout(() => {
                 onClose();

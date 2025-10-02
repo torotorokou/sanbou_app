@@ -1,193 +1,228 @@
-"""
-Excel・PDF・ZIP処理ユーティリティ
+"""Excel→PDF→ZIP レスポンス生成ユーティリティ（診断ログ付き）。"""
 
-Excel生成、PDF変換、ZIP圧縮、ファイルダウンロードレスポンス生成までの
-一連の処理を行うユーティリティ関数群です。
-"""
+from __future__ import annotations
 
 import io
-import os
+import json
+import pathlib
+import re
 import subprocess
-import urllib.parse
+import tempfile
 import zipfile
-from tempfile import NamedTemporaryFile
+from datetime import datetime, timezone
+from typing import Any, Dict, Optional, Tuple
 
 from fastapi.responses import StreamingResponse
 
-from app.local_config.paths import DEBUG_MANAGE_REPORTDIR
-from backend_shared.config.config_loader import ReportTemplateConfigLoader
+# LibreOffice filter options crafted to embed CJK fonts and keep fidelity.
+# See https://wiki.documentfoundation.org/Development/Filter/List_of_FilterOptions
+_PDF_FILTER_OPTIONS = (
+	"EmbedStandardFonts=true;SubsetFonts=true;"
+	"ExportNotes=false;ExportBookmarks=false;UseTaggedPDF=false;SelectPdfVersion=1"
+)
 
 
-def create_excel_bytes(generator, df_result, report_date):
-    """
-    帳票生成器からExcelバイトデータを生成
+def _build_convert_target(with_filter: bool = True) -> str:
 
-    Args:
-        generator: 帳票生成器インスタンス
-        df_result: 処理済みDataFrame
-        report_date: 帳票日付
+	if not with_filter:
+		return "pdf:calc_pdf_Export"
 
-    Returns:
-        bytes: Excelファイルのバイトデータ
-    """
-    print("Generating Excel bytes...")
-    # 生成器からExcelバイトストリームを取得
-    excel_bytes_io = generator.generate_excel_bytes(df_result, report_date)
-    # 返却の統一: BytesIO で返ってきた場合は bytes に正規化
-    if isinstance(excel_bytes_io, io.BytesIO):
-        excel_bytes_io.seek(0)
-        data = excel_bytes_io.read()
-        print(
-            f"[DEBUG] create_excel_bytes received BytesIO, normalized to bytes, len={len(data)}"
-        )
-        return data
-    # 既に bytes の場合はそのまま返却
-    if isinstance(excel_bytes_io, (bytes, bytearray)):
-        data = bytes(excel_bytes_io)
-        print(f"[DEBUG] create_excel_bytes received bytes-like, len={len(data)}")
-        return data
-    # 想定外型: 文字列などは encode せず例外とする
-    raise TypeError(
-        f"Unsupported type from generator.generate_excel_bytes: {type(excel_bytes_io)}"
-    )
+	return f"pdf:calc_pdf_Export:{_PDF_FILTER_OPTIONS}"
+
+_LOG_PREFIX = "[REPORT_PIPELINE]"
 
 
+def _log(message: str) -> None:
+	print(f"{_LOG_PREFIX} {message}")
 
-# /backend/app/api/utils/excel_pdf_zip_utils.py
 
-import io
-import pathlib
-import subprocess
-import tempfile
-from typing import Optional, Tuple
+def _ensure_bytes(data: Any, label: str) -> bytes:
+	if isinstance(data, io.BytesIO):
+		data.seek(0)
+		value = data.read()
+		_log(f"{label}: normalised from BytesIO, len={len(value)}")
+		return value
+	if isinstance(data, bytearray):
+		value = bytes(data)
+		_log(f"{label}: normalised from bytearray, len={len(value)}")
+		return value
+	if isinstance(data, memoryview):
+		value = data.tobytes()
+		_log(f"{label}: normalised from memoryview, len={len(value)}")
+		return value
+	if isinstance(data, bytes):
+		return data
+	raise TypeError(f"{label} must be bytes-like, got {type(data)}")
+
+
+def create_excel_bytes(generator: Any, df_result: Any, report_date: str) -> bytes:
+	excel_payload = generator.generate_excel_bytes(df_result, report_date)
+	excel_bytes = _ensure_bytes(excel_payload, "excel_bytes from generator")
+	_log(f"create_excel_bytes: type={type(excel_payload)} len={len(excel_bytes)}")
+	return excel_bytes
+
 
 def convert_excel_to_pdf(excel_bytes: bytes) -> Tuple[Optional[bytes], str, Optional[str]]:
-    """
-    ExcelバイトデータをPDFに変換（LibreOffice CLI 使用）
-    失敗時は例外を投げず、(None, xlsx_path, None) を返す。
+	excel_bytes = _ensure_bytes(excel_bytes, "excel_bytes for convert_excel_to_pdf")
 
-    Returns:
-        (pdf_bytes or None, temp_xlsx_path, temp_pdf_path or None)
-    """
-    # 入力正規化
-    if isinstance(excel_bytes, io.BytesIO):
-        excel_bytes = excel_bytes.getvalue()
-    elif isinstance(excel_bytes, bytearray):
-        excel_bytes = bytes(excel_bytes)
-    elif not isinstance(excel_bytes, (bytes,)):
-        raise TypeError(f"excel_bytes must be bytes or BytesIO, got {type(excel_bytes)}")
+	with tempfile.TemporaryDirectory() as td:
+		td_path = pathlib.Path(td)
+		xlsx_path = td_path / "report.xlsx"
+		pdf_path = td_path / "report.pdf"
+		xlsx_path.write_bytes(excel_bytes)
 
-    with tempfile.TemporaryDirectory() as td:
-        td_path = pathlib.Path(td)
-        xlsx_path = td_path / "report.xlsx"
-        pdf_path  = td_path / "report.pdf"
-        xlsx_path.write_bytes(excel_bytes)
+		lo_profile = td_path / "lo_profile"
+		lo_profile.mkdir(parents=True, exist_ok=True)
 
-        # LibreOfficeプロファイル分離（並列時のロック回避）
-        lo_profile = td_path / "lo_profile"
-        lo_profile.mkdir(parents=True, exist_ok=True)
+		last_error: Optional[str] = None
+		for attempt, target in enumerate((_build_convert_target(True), _build_convert_target(False)), start=1):
+			cmd = [
+				"soffice",
+				"--headless",
+				"--nologo",
+				"--nodefault",
+				"--norestore",
+				"--nolockcheck",
+				"--convert-to",
+				target,
+				f"-env:UserInstallation=file://{lo_profile.as_posix()}",
+				"--outdir",
+				str(td_path),
+				str(xlsx_path),
+			]
+			_log(
+				"convert_excel_to_pdf: running command="
+				f"{' '.join(cmd)} (attempt={attempt}, filter={'on' if attempt == 1 else 'fallback'})"
+			)
+			try:
+				result = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
+			except FileNotFoundError:
+				_log("[ERROR] soffice not found. Ensure LibreOffice is installed in the container.")
+				return None, str(xlsx_path), None
+			except Exception as exc:  # noqa: BLE001
+				_log(f"[ERROR] soffice execution raised {type(exc).__name__}: {exc}")
+				return None, str(xlsx_path), None
 
-        cmd = [
-            "soffice",
-            "--headless", "--nologo", "--nodefault", "--norestore", "--nolockcheck",
-            f"-env:UserInstallation=file://{lo_profile.as_posix()}",
-            "--convert-to", "pdf:calc_pdf_Export",
-            "--outdir", str(td_path),
-            str(xlsx_path),
-        ]
-        try:
-            r = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
-            if r.returncode != 0 or not pdf_path.exists():
-                print(f"[ERROR] PDF変換失敗: {r.stderr or r.stdout}")
-                return None, str(xlsx_path), None
-        except FileNotFoundError as e:
-            # soffice 未インストール
-            print("[ERROR] LibreOffice(soffice) が見つかりません。コンテナに libreoffice をインストールしてください。")
-            return None, str(xlsx_path), None
-        except Exception as e:
-            print(f"[ERROR] LibreOffice 実行時例外: {e}")
-            return None, str(xlsx_path), None
+			if result.returncode == 0 and pdf_path.exists():
+				break
+			last_error = (
+				"returncode="
+				f"{result.returncode} | stderr={result.stderr!r} | stdout={result.stdout!r}"
+			)
+			_log(
+				"[WARN] PDF conversion attempt failed | "
+				f"target={target} | {last_error}"
+			)
+		else:
+			_log(
+				"[ERROR] PDF conversion failed after all attempts"
+				+ (f" | {last_error}" if last_error else "")
+			)
+			return None, str(xlsx_path), None
 
-        pdf_bytes = pdf_path.read_bytes()
-        return pdf_bytes, str(xlsx_path), str(pdf_path)
+		pdf_bytes = pdf_path.read_bytes()
+		header_ok = pdf_bytes.startswith(b"%PDF-")
+		_log(
+			"convert_excel_to_pdf: success | pdf_len="
+			f"{len(pdf_bytes)} | header_ok={header_ok}"
+		)
+		if not header_ok:
+			_log("[WARN] PDF header mismatch – expected prefix '%PDF-'")
+		return pdf_bytes, str(xlsx_path), str(pdf_path)
 
-import io, json, zipfile, re
-from datetime import datetime, timezone
 
-def _sanitize_filename(s: str) -> str:
-    # ヘッダやWindows互換を壊さない程度に簡易サニタイズ
-    s = s.strip()
-    s = re.sub(r"[\\/:*?\"<>|]+", "_", s)
-    s = s.replace(" ", "_")
-    return s or "report"
+def _sanitize_filename(value: str) -> str:
+	value = value.strip()
+	value = re.sub(r"[\\/:*?\"<>|]+", "_", value)
+	return value.replace(" ", "_") or "report"
 
-def create_zip_with_excel_and_pdf(excel_bytes: bytes,
-                                  pdf_bytes: bytes | None,
-                                  report_key: str,
-                                  report_date: str):
-    """
-    Excelは必ず格納、PDFはあれば格納。manifest.json にPDF有無を記録。
-    Returns: (BytesIO(zipdata), Content-Disposition header value)
-    """
-    base = f"{_sanitize_filename(report_key)}_{_sanitize_filename(report_date)}"
 
-    buf = io.BytesIO()
-    with zipfile.ZipFile(buf, "w", compression=zipfile.ZIP_DEFLATED) as z:
-        # Excel は常に
-        z.writestr(f"{base}.xlsx", excel_bytes)
+def create_zip_with_excel_and_pdf(
+	excel_bytes: bytes,
+	pdf_bytes: Optional[bytes],
+	report_key: str,
+	report_date: str,
+) -> Tuple[io.BytesIO, str, Dict[str, Any]]:
+	excel_bytes = _ensure_bytes(excel_bytes, "excel_bytes for ZIP")
+	pdf_payload: Optional[bytes] = None
+	if pdf_bytes is not None:
+		pdf_payload = _ensure_bytes(pdf_bytes, "pdf_bytes for ZIP")
 
-        manifest = {
-            "report_key": report_key,
-            "report_date": report_date,
-            "pdf_generated": bool(pdf_bytes),
-            "engine": "libreoffice-cli",
-            "generated_at": datetime.now(timezone.utc).isoformat(),
-        }
+	base = f"{_sanitize_filename(report_key)}_{_sanitize_filename(report_date)}"
+	zip_buffer = io.BytesIO()
+	with zipfile.ZipFile(zip_buffer, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+		_log(
+			"create_zip_with_excel_and_pdf: writing Excel | "
+			f"name={base}.xlsx | len={len(excel_bytes)}"
+		)
+		archive.writestr(f"{base}.xlsx", excel_bytes)
 
-        if pdf_bytes:
-            z.writestr(f"{base}.pdf", pdf_bytes)
-        else:
-            # なぜ無いかの汎用的メモ（詳細はサーバーログで確認）
-            manifest["reason"] = "conversion_failed_or_soffice_not_found"
+		manifest: Dict[str, Any] = {
+			"report_key": report_key,
+			"report_date": report_date,
+			"pdf_generated": bool(pdf_payload),
+			"engine": "libreoffice-cli",
+			"generated_at": datetime.now(timezone.utc).isoformat(),
+		}
 
-        z.writestr("manifest.json", json.dumps(manifest, ensure_ascii=False, indent=2))
+		if pdf_payload is not None:
+			header_ok = pdf_payload.startswith(b"%PDF-")
+			_log(
+				"create_zip_with_excel_and_pdf: writing PDF | "
+				f"name={base}.pdf | len={len(pdf_payload)} | header_ok={header_ok}"
+			)
+			if not header_ok:
+				_log("[WARN] PDF payload missing '%PDF-' prefix at ZIP stage")
+			archive.writestr(f"{base}.pdf", pdf_payload)
+		else:
+			manifest["reason"] = "conversion_failed_or_soffice_not_found"
+			_log("create_zip_with_excel_and_pdf: PDF missing – recorded reason in manifest")
 
-    buf.seek(0)
-    # Content-Disposition（シンプル版）
-    content_disposition = f'attachment; filename="{base}.zip"'
-    return buf, content_disposition
+		archive.writestr("manifest.json", json.dumps(manifest, ensure_ascii=False, indent=2))
 
-from starlette.responses import StreamingResponse
-import io
+	zip_buffer.seek(0)
+	_log("create_zip_with_excel_and_pdf: zip_buffer.seek(0) executed")
+	return zip_buffer, f'attachment; filename="{base}.zip"', manifest
 
-def generate_excel_pdf_zip(excel_bytes, report_key, report_date):
-    """
-    Excel→PDF(任意)→ZIP→StreamingResponse
-    - PDF変換に失敗しても Excel は必ず返す
-    - レスポンスヘッダ X-Report-Pdf-Generated で有無を伝える
-    """
-    # 入力正規化
-    if isinstance(excel_bytes, io.BytesIO):
-        excel_bytes = excel_bytes.getvalue()
-    elif isinstance(excel_bytes, bytearray):
-        excel_bytes = bytes(excel_bytes)
-    elif not isinstance(excel_bytes, (bytes,)):
-        raise TypeError(f"excel_bytes must be bytes or BytesIO, got {type(excel_bytes)}")
 
-    # Excel→PDF（失敗しても例外は投げない: (None, _, None)）
-    pdf_bytes, _, _ = convert_excel_to_pdf(excel_bytes)
-    pdf_generated = pdf_bytes is not None
+def generate_excel_pdf_zip(excel_bytes: Any, report_key: str, report_date: str) -> StreamingResponse:
+	excel_bytes_bytes = _ensure_bytes(excel_bytes, "excel_bytes input to generate_excel_pdf_zip")
+	_log(
+		"generate_excel_pdf_zip: input normalised | "
+		f"type={type(excel_bytes)} | len={len(excel_bytes_bytes)}"
+	)
 
-    # ZIP組み立て（Excelは常に、PDFはあれば）
-    zip_buffer, content_disposition = create_zip_with_excel_and_pdf(
-        excel_bytes=excel_bytes,
-        pdf_bytes=pdf_bytes,               # None 可
-        report_key=report_key,
-        report_date=report_date,
-    )
+	pdf_bytes, xlsx_path, pdf_path = convert_excel_to_pdf(excel_bytes_bytes)
+	pdf_generated = pdf_bytes is not None
+	_log(
+		"generate_excel_pdf_zip: convert result | "
+		f"generated={pdf_generated} | xlsx_path={xlsx_path} | pdf_path={pdf_path}"
+	)
 
-    headers = {
-        "Content-Disposition": content_disposition,
-        "X-Report-Pdf-Generated": "true" if pdf_generated else "false",
-    }
-    return StreamingResponse(zip_buffer, media_type="application/zip", headers=headers)
+	if pdf_bytes is not None and not pdf_bytes.startswith(b"%PDF-"):
+		_log("[WARN] PDF bytes returned without '%PDF-' prefix; investigate fonts/rendering")
+
+	zip_buffer, content_disposition, manifest = create_zip_with_excel_and_pdf(
+		excel_bytes=excel_bytes_bytes,
+		pdf_bytes=pdf_bytes,
+		report_key=report_key,
+		report_date=report_date,
+	)
+
+	zip_size = zip_buffer.getbuffer().nbytes
+	_log(
+		"generate_excel_pdf_zip: ZIP ready | "
+		f"size={zip_size} | headers.Content-Disposition={content_disposition}"
+	)
+
+	headers = {
+		"Content-Disposition": content_disposition,
+		"X-Report-Pdf-Generated": "true" if pdf_generated else "false",
+	}
+
+	response = StreamingResponse(zip_buffer, media_type="application/zip", headers=headers)
+	filename = content_disposition.split("filename=", 1)[-1].strip('"') if "filename=" in content_disposition else "unknown.zip"
+	response.headers["X-Zip-Size"] = str(zip_size)
+	response.headers["X-Manifest-Pdf"] = str(manifest.get("pdf_generated", False)).lower()
+	_log(f"generate_excel_pdf_zip: StreamingResponse prepared | filename={filename}")
+	return response

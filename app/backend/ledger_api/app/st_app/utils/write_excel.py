@@ -2,13 +2,15 @@ from openpyxl import load_workbook
 from io import BytesIO
 import pandas as pd
 import numpy as np
-from openpyxl.cell.cell import MergedCell
+from openpyxl.cell.cell import Cell, MergedCell
 from app.st_app.utils.logger import app_logger
 from openpyxl.workbook.workbook import Workbook
 from openpyxl.worksheet.worksheet import Worksheet
 from copy import copy  # ← 追加
 from pathlib import Path
 import os
+import unicodedata
+from typing import Any, cast
 
 
 def safe_excel_value(value):
@@ -47,6 +49,90 @@ def load_template_workbook(template_path: str | Path) -> Workbook:
         return Workbook()
 
 
+def _resolve_fallback_font_name(font_name: str | None) -> str | None:
+    if not font_name:
+        return None
+
+    normalized = unicodedata.normalize("NFKC", font_name).strip()
+    compact = normalized.replace(" ", "")
+
+    fallback_map = {
+        "MSPゴシック": "Noto Sans CJK JP",
+        "MSPGothic": "Noto Sans CJK JP",
+        "MSGothic": "Noto Sans CJK JP",
+        "MSゴシック": "Noto Sans CJK JP",
+        "MS明朝": "Noto Sans CJK JP",
+        "游ゴシック": "Noto Sans CJK JP",
+        "YuGothic": "Noto Sans CJK JP",
+        "YuGothicUI": "Noto Sans CJK JP",
+    }
+
+    return fallback_map.get(compact)
+
+
+def _maybe_replace_font(font: Any, tracker: set[tuple[str, str]]) -> Any:
+    name = getattr(font, "name", None)
+    target = _resolve_fallback_font_name(name)
+    if target and target != name:
+        tracker.add(((name or ""), target))
+        try:
+            cloned = copy(font)
+            if hasattr(cloned, "name"):
+                object.__setattr__(cloned, "name", target)
+            return cloned
+        except Exception:
+            if hasattr(font, "copy") and callable(getattr(font, "copy")):
+                return font.copy(name=target)  # type: ignore[attr-defined]
+    return font
+
+
+def normalize_workbook_fonts(wb: Workbook, logger=None) -> None:
+    tracker: set[tuple[str, str]] = set()
+
+    for ws in wb.worksheets:
+        for row in ws.iter_rows():
+            for cell in row:
+                font = getattr(cell, "font", None)
+                if font is None:
+                    continue
+                new_font = _maybe_replace_font(font, tracker)
+                if new_font is not font:
+                    try:
+                        cell.font = new_font
+                    except Exception:
+                        continue
+
+    fonts_container = getattr(wb, "_fonts", None)
+    if fonts_container:
+        for idx, font in enumerate(list(fonts_container)):
+            if font is None:
+                continue
+            new_font = _maybe_replace_font(font, tracker)
+            if new_font is not font:
+                try:
+                    fonts_container[idx] = new_font
+                except Exception:
+                    continue
+
+    named_styles = getattr(wb, "_named_styles", None)
+    if named_styles:
+        for style in named_styles:
+            font = getattr(style, "font", None)
+            if font is None:
+                continue
+            new_font = _maybe_replace_font(font, tracker)
+            if new_font is not font:
+                try:
+                    style.font = new_font
+                except Exception:
+                    continue
+
+    if tracker:
+        logger = logger or app_logger()
+        replacements = ", ".join(f"{src}→{dst}" for src, dst in sorted(tracker))
+        logger.info(f"Excelテンプレートのフォントを標準フォントに置換しました: {replacements}")
+
+
 def write_dataframe_to_worksheet(df: pd.DataFrame, ws: Worksheet, logger=None):
     if logger is None:
         logger = app_logger()
@@ -60,7 +146,7 @@ def write_dataframe_to_worksheet(df: pd.DataFrame, ws: Worksheet, logger=None):
             continue
 
         try:
-            cell = ws[cell_ref]
+            cell = cast(Cell, ws[cell_ref])
 
             if isinstance(cell, MergedCell):
                 logger.warning(f"セル {cell_ref} は結合セルで書き込み不可。値: {value}")
@@ -76,9 +162,9 @@ def write_dataframe_to_worksheet(df: pd.DataFrame, ws: Worksheet, logger=None):
             cell.value = value
 
             # --- 書式の復元 ---
-            cell.font = original_font
-            cell.fill = original_fill
-            cell.border = original_border
+            cell.font = original_font  # type: ignore[assignment]
+            cell.fill = original_fill  # type: ignore[assignment]
+            cell.border = original_border  # type: ignore[assignment]
             cell.number_format = original_format
 
         except Exception as e:
@@ -97,7 +183,7 @@ def rename_sheet(wb: Workbook, new_title: str):
         sanitized_title = sanitized_title[:31]
 
     ws = wb.active
-    ws.title = sanitized_title
+    ws.title = sanitized_title  # type: ignore[attr-defined]
 
 
 def save_workbook_to_bytesio(wb: Workbook) -> BytesIO:
@@ -119,7 +205,10 @@ def write_values_to_template(
     """
     logger = app_logger()
     wb = load_template_workbook(template_path)
+    normalize_workbook_fonts(wb, logger=logger)
     ws = wb.active
+    if not isinstance(ws, Worksheet):
+        raise TypeError("Workbook のアクティブシートが Worksheet ではありません")
 
     write_dataframe_to_worksheet(df, ws, logger=logger)
     rename_sheet(wb, extracted_date)

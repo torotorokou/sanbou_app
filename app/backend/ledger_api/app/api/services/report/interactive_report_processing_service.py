@@ -6,7 +6,7 @@ ReportProcessingService のインタラクティブ版。
  - 初回: CSV 読込 / validate / (期間フィルタ) / format まで共通処理
  - generator.initial_step を呼び state/payload と session_data を返す
  - apply: 受け取った session_data を復元し generator.apply_step を呼ぶ
- - finalize: 復元 -> generator.finalize_step -> Excel/PDF/ZIP StreamingResponse
+ - finalize: 復元 -> generator.finalize_step -> Excel/PDF 保存 & URL 返却
 """
 
 from __future__ import annotations
@@ -14,7 +14,7 @@ from __future__ import annotations
 from typing import Any, Dict, Optional, Tuple, Union
 
 from fastapi import UploadFile
-from fastapi.responses import JSONResponse, StreamingResponse
+from fastapi.responses import JSONResponse
 
 from app.api.services.report.base_interactive_report_generator import (
     BaseInteractiveReportGenerator,
@@ -119,7 +119,7 @@ class InteractiveReportProcessingService(ReportProcessingService):
         generator: BaseInteractiveReportGenerator,
         session_data: Union[Dict[str, Any], str],
         user_input: Dict[str, Any],
-    ) -> Dict[str, Any] | StreamingResponse | JSONResponse:
+    ) -> Dict[str, Any] | JSONResponse:
         try:
             state_payload, session_id = self._resolve_session(session_data)
             if state_payload is None:
@@ -135,7 +135,7 @@ class InteractiveReportProcessingService(ReportProcessingService):
             if session_id:
                 session_store.save(session_data_updated, session_id=session_id)
             # If frontend requested automatic finalize, run finalize here and
-            # return the final StreamingResponse (file) directly.
+            # return the final JSON response (artifact URLs) directly.
             if isinstance(user_input, dict) and user_input.get("auto_finalize"):
                 try:
                     final_df, finalize_payload = generator.finalize_step(state)
@@ -147,7 +147,13 @@ class InteractiveReportProcessingService(ReportProcessingService):
                         from datetime import datetime
 
                         report_date = datetime.now().date().isoformat()
-                    response = self.create_response(generator, final_df, report_date)
+                    extra_payload = self._to_serializable(finalize_payload)
+                    response = self.create_response(
+                        generator,
+                        final_df,
+                        report_date,
+                        extra_payload=extra_payload if isinstance(extra_payload, dict) else None,
+                    )
                     summary = finalize_payload.get("summary")
                     if isinstance(summary, dict):
                         for k, v in summary.items():
@@ -189,7 +195,7 @@ class InteractiveReportProcessingService(ReportProcessingService):
         generator: BaseInteractiveReportGenerator,
         session_data: Union[Dict[str, Any], str],
         user_input: Optional[Dict[str, Any]] = None,
-    ) -> StreamingResponse | JSONResponse:
+    ) -> JSONResponse:
         try:
             state_payload, session_id = self._resolve_session(session_data)
             if state_payload is None:
@@ -228,7 +234,14 @@ class InteractiveReportProcessingService(ReportProcessingService):
 
                 print(f"[WARN] report_date fallback due to: {e}")
                 report_date = datetime.now().date().isoformat()
-            response = self.create_response(generator, final_df, report_date)
+
+            extra_payload = self._to_serializable(payload)
+            response = self.create_response(
+                generator,
+                final_df,
+                report_date,
+                extra_payload=extra_payload if isinstance(extra_payload, dict) else None,
+            )
             summary = payload.get("summary")
             if isinstance(summary, dict):
                 for k, v in summary.items():
@@ -240,7 +253,7 @@ class InteractiveReportProcessingService(ReportProcessingService):
                 session_store.delete(session_id)
             return response
         except Exception as e:  # noqa: BLE001
-            # finalize は StreamingResponse 指定のため簡易 JSON を返す
+            # finalize は JSON 返却のためエラーレスポンスを明示的に返す
             return JSONResponse(
                 status_code=500,
                 content={

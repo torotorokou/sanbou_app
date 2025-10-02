@@ -6,8 +6,8 @@ import { message } from 'antd';
 const PDFViewer = React.lazy(() => import('./viewer/PDFViewer'));
 import { pdfPreviewMap, modalStepsMap, isInteractiveReport, getApiEndpoint } from '@/constants/reportConfig';
 import { useReportBaseBusiness } from '../../hooks/report';
-import { useZipProcessing } from '../../hooks/data/useZipProcessing';
 import type { ReportBaseProps } from '../../types/reportBase';
+import type { ReportArtifactResponse } from '../../hooks/data/useReportArtifact';
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
     typeof value === 'object' && value !== null;
@@ -45,12 +45,15 @@ const normalizeRow = (value: unknown): TransportCandidateRow | null => {
     const vendorNameCandidate = value['vendor_name'] ?? value['processor_name'];
     const itemNameCandidate = value['item_name'] ?? value['product_name'];
 
-    if (typeof entryIdCandidate !== 'string') {
+    // 変更: entry_id が number の場合も許容して文字列化する
+    if (typeof entryIdCandidate !== 'string' && typeof entryIdCandidate !== 'number') {
+        console.warn('normalizeRow: invalid entry_id type, skipping row:', typeof entryIdCandidate, entryIdCandidate);
         return null;
     }
+    const entry_id = String(entryIdCandidate);
 
     return {
-        entry_id: entryIdCandidate,
+        entry_id,
         vendor_code: typeof vendorCodeCandidate === 'number' || typeof vendorCodeCandidate === 'string'
             ? vendorCodeCandidate
             : '',
@@ -92,7 +95,6 @@ const ReportBase: React.FC<ReportBaseProps> = ({
         file.onUploadFile,
         reportKey
     );
-    const zipProcessing = useZipProcessing();
     const [interactiveInitialResponse, setInteractiveInitialResponse] = useState<InitialApiResponse | null>(null);
     const [interactiveSessionData, setInteractiveSessionData] = useState<SessionData | null>(null);
 
@@ -110,13 +112,6 @@ const ReportBase: React.FC<ReportBaseProps> = ({
             preview.setPreviewUrl(business.pdfPreviewUrl);
         }
     }, [business.pdfPreviewUrl, preview]);
-
-    // ZIPプレビューURLが生成されたら設定（共通処理）
-    useEffect(() => {
-        if (zipProcessing.pdfPreviewUrl && zipProcessing.pdfPreviewUrl !== preview.previewUrl) {
-            preview.setPreviewUrl(zipProcessing.pdfPreviewUrl);
-        }
-    }, [zipProcessing.pdfPreviewUrl, preview]);
 
     /**
      * 通常帳簿のレポート生成処理
@@ -229,12 +224,16 @@ const ReportBase: React.FC<ReportBaseProps> = ({
 
             const rowsSourceRaw = data['rows'];
             const rowsSource = Array.isArray(rowsSourceRaw) ? rowsSourceRaw : [];
-            const normalizedRows: TransportCandidateRow[] = rowsSource.reduce<TransportCandidateRow[]>((acc, row) => {
+            const normalizedRows: TransportCandidateRow[] = rowsSource.reduce<TransportCandidateRow[]>((acc, row, idx) => {
                 const normalizedRow = normalizeRow(row);
                 if (normalizedRow) {
                     acc.push(normalizedRow);
                 } else {
-                    console.warn('Skipped invalid transport row:', row);
+                    try {
+                        console.warn(`Skipped invalid transport row at index ${idx}:`, row, 'serialized:', JSON.stringify(row));
+                    } catch {
+                        console.warn(`Skipped invalid transport row at index ${idx}: (unserializable)`, row);
+                    }
                 }
                 return acc;
             }, []);
@@ -275,22 +274,21 @@ const ReportBase: React.FC<ReportBaseProps> = ({
     /**
      * インタラクティブモーダルのZIP成功時処理（共通化）
      */
-    const handleInteractiveSuccess = async (zipUrl: string, fileName: string) => {
+    const handleInteractiveSuccess = (response: ReportArtifactResponse) => {
         try {
-            // ZIPファイルをBlob として取得
-            const response = await fetch(zipUrl);
-            const zipBlob = await response.blob();
+            business.applyArtifactResponse(response);
+            if (response?.artifact?.pdf_preview_url) {
+                preview.setPreviewUrl(response.artifact.pdf_preview_url);
+            }
 
-            // 共通ZIP処理フックで処理
-            const success = await zipProcessing.processZipFile(zipBlob, fileName);
-
-            if (success) {
+            if (response?.status === 'success') {
                 finalized.setFinalized(true);
-                // 少し遅延してモーダルを閉じる
                 setTimeout(() => {
                     modal.setModalOpen(false);
                     resetInteractiveState();
                 }, 1500);
+            } else {
+                message.info('帳簿レスポンスを確認してください。');
             }
         } catch (error) {
             console.error('Interactive success handling failed:', error);
@@ -345,16 +343,17 @@ const ReportBase: React.FC<ReportBaseProps> = ({
             {/* メインレイアウト */}
             <ReportManagePageLayout
                 onGenerate={handleGenerate}
-                onDownloadExcel={zipProcessing.hasExcel ? zipProcessing.downloadExcel : business.downloadExcel}
-                onPrintPdf={zipProcessing.hasPdf ? zipProcessing.printPdf : business.printPdf}
+                onDownloadExcel={business.downloadExcel}
+                onPrintPdf={business.printPdf}
                 uploadFiles={business.uploadFileConfigs}
                 makeUploadProps={business.makeUploadPropsFn}
                 finalized={finalized.finalized}
                 readyToCreate={business.isReadyToCreate}
                 sampleImageUrl={pdfPreviewMap[reportKey]}
                 pdfUrl={preview.previewUrl}
-                excelReady={zipProcessing.hasExcel || business.hasExcel}
-                pdfReady={zipProcessing.hasPdf || business.hasPdf}
+                excelUrl={business.excelUrl}
+                excelReady={business.hasExcel}
+                pdfReady={business.hasPdf}
                 header={undefined}
             >
                 <Suspense fallback={null}>

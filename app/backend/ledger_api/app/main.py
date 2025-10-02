@@ -25,7 +25,9 @@ from app.api.endpoints import manage_report
 from app.api.endpoints.block_unit_price_interactive import (
     router as block_unit_price_router,
 )
+from app.api.endpoints.report_artifacts import router as report_artifact_router
 from app.api.endpoints.reports import reports_router
+from app.settings import settings
 
 # FastAPIアプリケーションの初期化
 # NOTE:
@@ -62,6 +64,15 @@ app.include_router(
     block_unit_price_router, prefix="/ledger_api/block_unit_price_interactive"
 )
 app.include_router(reports_router, prefix="/ledger_api/reports")
+
+artifact_prefix = settings.report_artifact_url_prefix.rstrip("/") or "/ledger_api/reports/artifacts"
+if not artifact_prefix.startswith("/"):
+    artifact_prefix = f"/{artifact_prefix}"
+app.include_router(
+    report_artifact_router,
+    prefix=artifact_prefix,
+    tags=["Report Artifacts"],
+)
 
 
 @app.get("/")

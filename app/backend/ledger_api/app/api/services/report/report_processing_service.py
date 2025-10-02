@@ -1,25 +1,48 @@
-"""
-帳票処理の共通サービス
+"""帳票処理の共通サービス。
 
 責務:
-- CSV読込
+- CSV 読込
 - ジェネレーターの validate/format/main_process 呼び出し
-- ZIP の生成とレスポンス返却（Excel生成はジェネレーター側）
+- Excel/PDF をファイルとして保存し、署名付き URL を返却
 """
 
+from datetime import datetime, timezone
 from typing import Any, Dict, Optional, Tuple
 
 # pandas はこのモジュールでは未使用
 from fastapi import UploadFile
-from fastapi.responses import Response, StreamingResponse
+from fastapi.responses import JSONResponse, Response
 
 from app.api.services.report.base_report_generator import BaseReportGenerator
-from app.api.utils.excel_pdf_zip_utils import generate_excel_pdf_zip
+from app.api.services.report.artifact_service import get_report_artifact_storage
+from app.api.utils.pdf_conversion import PdfConversionError, convert_excel_to_pdf
 from backend_shared.src.api_response.response_error import NoFilesUploadedResponse
 from backend_shared.src.utils.csv_reader import read_csv_files
 from backend_shared.src.utils.date_filter_utils import (
     filter_by_period_from_min_date as shared_filter_by_period_from_min_date,
 )
+
+
+def _ensure_bytes(value: Any, *, label: str) -> bytes:
+    """Ensure the provided value is bytes.
+
+    👶 Pydantic や BytesIO など様々な型が返る可能性があるため、ここで統一しておきます。
+    """
+
+    if isinstance(value, bytes):
+        return value
+    if isinstance(value, bytearray):
+        return bytes(value)
+    try:
+        # BytesIO やファイルライクオブジェクトをサポート
+        if hasattr(value, "getvalue"):
+            return bytes(value.getvalue())  # type: ignore[call-overload]
+        if hasattr(value, "read"):
+            data = value.read()
+            return bytes(data)
+    except Exception as exc:  # noqa: BLE001
+        raise TypeError(f"{label}: could not normalise to bytes") from exc
+    raise TypeError(f"{label}: unsupported type {type(value)!r}")
 
 
 class ReportProcessingService:
@@ -128,7 +151,7 @@ class ReportProcessingService:
         print("Making report date...")
         report_date = generator.make_report_date(df_formatted)
 
-        # Step 6: Excel/PDF/ZIP レスポンス
+        # Step 6: Excel/PDF を保存し JSON で URL を返す
         return self.create_response(generator, df_result, report_date)
 
     # ---------- 日付フィルタ関連（共通ユーティリティ） ----------
@@ -137,30 +160,60 @@ class ReportProcessingService:
     # def _find_date_column(...): pass
 
     def create_response(
-        self, generator: BaseReportGenerator, df_result: Any, report_date: str
-    ) -> StreamingResponse:
-        """
-        Excel・PDF・ZIP レスポンスの生成
-
-        Args:
-            generator: 帳票ジェネレーター
-            df_result: 処理結果DataFrame
-            report_date: 帳票日付
-
-        Returns:
-            StreamingResponse: ZIP圧縮されたファイルレスポンス
-        """
+        self,
+        generator: BaseReportGenerator,
+        df_result: Any,
+        report_date: str,
+        *,
+        extra_payload: Optional[Dict[str, Any]] = None,
+    ) -> JSONResponse:
+        """Excel/PDF を保存し、署名付き URL を含む JSON を返却する。"""
         try:
-            # Excel出力処理はジェネレーターに統一
-            excel_bytes = generator.generate_excel_bytes(df_result, report_date)
+            excel_bytes_raw = generator.generate_excel_bytes(df_result, report_date)
+            excel_bytes = _ensure_bytes(excel_bytes_raw, label="excel_bytes")
+            storage = get_report_artifact_storage()
+            location = storage.allocate(generator.report_key, report_date)
 
-            # ZIP作成＆レスポンス返却
-            return generate_excel_pdf_zip(
-                excel_bytes, generator.report_key, report_date
-            )
+            excel_path = storage.save_excel(location, excel_bytes)
+
+            pdf_exists = True
+            pdf_error: Optional[str] = None
+            try:
+                pdf_bytes = convert_excel_to_pdf(
+                    excel_path,
+                    output_dir=location.directory,
+                    profile_dir=location.directory / "lo_profile",
+                )
+                storage.save_pdf(location, pdf_bytes)
+            except PdfConversionError as exc:
+                pdf_exists = False
+                pdf_error = str(exc)
+
+            artifact_payload = storage.build_payload(location, excel_exists=True, pdf_exists=pdf_exists)
+            metadata: Dict[str, Any] = {
+                "generated_at": datetime.now(timezone.utc).isoformat(),
+                "pdf_status": "available" if pdf_exists else "unavailable",
+            }
+            if pdf_error:
+                metadata["pdf_error"] = pdf_error
+
+            response_body: Dict[str, Any] = {
+                "status": "success",
+                "report_key": generator.report_key,
+                "report_date": report_date,
+                "artifact": artifact_payload,
+                "metadata": metadata,
+            }
+
+            if extra_payload:
+                extra = extra_payload.copy()
+                extra.pop("status", None)
+                response_body.update(extra)
+
+            return JSONResponse(status_code=200, content=response_body)
 
         except Exception as e:
-            print(f"[ERROR] Excel/PDF/ZIP generation failed: {e}")
+            print(f"[ERROR] Excel/PDF artifact generation failed: {e}")
             raise
 
     # 旧APIは撤廃（Factory廃止に伴い使用不可）
