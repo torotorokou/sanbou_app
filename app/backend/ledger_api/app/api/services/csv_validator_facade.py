@@ -1,73 +1,16 @@
 """
-CSVバリデーターファサードサービス（改良版）
+CSVバリデーターファサードサービス（後方互換性レイヤー）
 
-CSVファイルのバリデーション処理を統合的に管理するファサードクラスです。
-責任分離の原則に基づき、純粋なバリデーションロジックとAPIレスポンス変換を分離しています。
+このファイルは後方互換性のために残されています。
+新しいコードでは app.api.services.csv.validator_service を直接インポートしてください。
 
-アーキテクチャ:
-- PureCSVValidator: 純粋なバリデーションロジック
-- ValidationResponseConverter: バリデーション結果のAPIレスポンス変換
-- CsvValidatorService: ファサードとして全体を統合
+移行方法:
+    旧: from app.api.services.csv_validator_facade import CsvValidatorService
+    新: from app.api.services.csv.validator_service import CsvValidatorService
+    または: from app.api.services.csv import CsvValidatorService
 """
 
-from backend_shared.config.config_loader import SyogunCsvConfigLoader
-from backend_shared.src.api_response.response_base import ErrorApiResponse
-from backend_shared.src.csv_validator.pure_csv_validator import PureCSVValidator
-from backend_shared.src.csv_validator.response_converter import (
-    ValidationResponseConverter,
-)
+# 後方互換性のための再エクスポート
+from app.api.services.csv.validator_service import CsvValidatorService
 
-
-class CsvValidatorService:
-    """
-    CSVバリデーションサービス（改良版）
-
-    責任分離された設計に基づく統合バリデーションサービス。
-    - バリデーションロジックはPureCSVValidatorに委譲
-    - APIレスポンス変換はValidationResponseConverterに委譲
-    - ファサードとして全体の流れを制御
-    """
-
-    def __init__(self):
-        """
-        サービスの初期化
-
-        設定ローダーとコンバーターを初期化し、バリデーション処理の準備を行います。
-        """
-        # 昇軍CSV設定ローダーの初期化
-        self.config_loader = SyogunCsvConfigLoader()
-
-        # レスポンス変換器の初期化
-        self.response_converter = ValidationResponseConverter()
-
-    def validate(self, dfs, files) -> ErrorApiResponse | None:
-        """
-        CSVファイルの包括的バリデーション（改良版）
-
-        純粋なバリデーションロジックを実行し、結果をAPIレスポンス形式に変換します。
-        責任分離により、バリデーションロジックとレスポンス形式が独立して管理できます。
-
-        Args:
-            dfs (Dict[str, DataFrame]): CSVタイプをキーとするDataFrameの辞書
-            files (Dict[str, UploadFile]): アップロードされたファイルの辞書
-
-        Returns:
-            ErrorApiResponse | None: エラーがある場合はエラーレスポンス、正常時はNone
-        """
-        # 期待されるヘッダー情報を各CSVタイプから取得
-        required_columns = {
-            k: self.config_loader.get_expected_headers(k) for k in files.keys()
-        }
-
-        # 純粋なバリデーター初期化
-        validator = PureCSVValidator(required_columns)
-
-        # バリデーション実行（純粋なロジック）
-        validation_result = validator.validate_all(dfs, files)
-
-        # バリデーション結果をAPIレスポンス形式に変換
-        api_response = self.response_converter.convert_to_api_response(
-            validation_result, files
-        )
-
-        return api_response
+__all__ = ["CsvValidatorService"]
