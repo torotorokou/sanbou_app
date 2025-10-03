@@ -41,6 +41,8 @@ const LedgerBookPage: React.FC = () => {
                 reportKey={reportManager.selectedReport}
                 onChangeReportKey={reportManager.changeReport}
                 currentStep={reportManager.currentStep}
+                areRequiredCsvsUploaded={reportManager.areRequiredCsvsUploaded}
+                isFinalized={reportManager.isFinalized}
                 pageGroup="ledger"
             />
             <div style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>

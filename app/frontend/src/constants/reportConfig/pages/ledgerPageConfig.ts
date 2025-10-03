@@ -1,5 +1,6 @@
 // /app/src/constants/reportConfig/pages/ledgerPageConfig.ts
 import React from "react";
+import { Spin } from 'antd';
 import { CSV_DEFINITIONS } from "../../CsvDefinition";
 import type {
   CsvConfigGroup,
@@ -34,13 +35,13 @@ export const ledgerCsvConfigMap: Record<LedgerReportKey, CsvConfigGroup> = {
 
 // モーダルステップ設定
 export const ledgerModalStepsMap: Record<LedgerReportKey, ModalStepConfig[]> = {
-  ledger_book: [
+    ledger_book: [
     {
       label: "帳簿作成中",
       content: React.createElement(
         "div",
-        {},
-        "帳簿を作成中です。しばらくお待ちください。"
+        { style: { textAlign: 'center', padding: 24 } },
+        React.createElement(Spin, { size: 'large' })
       ),
       showNext: false,
       showClose: false,
