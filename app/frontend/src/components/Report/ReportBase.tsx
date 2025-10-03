@@ -6,7 +6,7 @@ import type { TransportCandidateRow } from './interactive/types';
 import { normalizeRow, isRecord } from './interactive/transportNormalization';
 import { message } from 'antd';
 const PDFViewer = React.lazy(() => import('./viewer/PDFViewer'));
-import { pdfPreviewMap, modalStepsMap, isInteractiveReport, getApiEndpoint } from '@/constants/reportConfig';
+import { pdfPreviewMap, modalStepsMap, isInteractiveReport, getApiEndpoint } from '@features/report';
 import { useReportBaseBusiness } from '../../hooks/report';
 import type { ReportBaseProps } from '../../types/reportBase';
 import type { ReportArtifactResponse } from '../../hooks/data/useReportArtifact';

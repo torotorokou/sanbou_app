@@ -1,8 +1,8 @@
 import React, { useState, useCallback } from 'react';
 import { Modal, Button, Steps, Spin, message, Card, Select } from 'antd';
 import { CheckCircleOutlined } from '@ant-design/icons';
-import { getApiEndpoint } from '@/constants/reportConfig';
-import type { ReportKey } from '@/constants/reportConfig';
+import { getApiEndpoint } from '@features/report';
+import type { ReportKey } from '@features/report';
 import type { ReportArtifactResponse } from '@/hooks/data/useReportArtifact';
 
 // 型定義（要件に合わせて整備）

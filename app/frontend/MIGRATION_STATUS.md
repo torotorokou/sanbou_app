@@ -172,20 +172,56 @@ src/
 
 ---
 
-## Phase 4: Feature完全移行 (計画中) ⏳
+## Phase 4: Feature完全移行 (進行中) 🔄
 
 ### 方針
 **段階的移行**: 新規開発・大規模修正時に該当featureを移行
 
 ### 優先順位
 
-#### 高優先度
-1. **Report機能** (レポート生成ロジック改修時)
-   - [ ] components/Report/ → features/report/ui/
-   - [ ] hooks/report/ → features/report/hooks/
-   - [ ] constants/reportConfig.ts → features/report/config/
-   - [ ] types/reportBase.ts → features/report/model/
+#### 高優先度 - Report機能 (進行中)
 
+##### Step 3-1: Report設定の移行 ✅ (完了 - 2025/10/03)
+- [x] `src/constants/reportConfig/` → `features/report/config/reportConfig/`
+- [x] `src/constants/CsvDefinition.ts` → `features/report/config/CsvDefinition.ts`
+- [x] `src/types/reportBase.ts` → `features/report/model/report.types.ts`
+- [x] `src/types/report.ts` → `features/report/model/report-api.types.ts`
+- [x] 公開API作成: `features/report/index.ts`
+- [x] インポートパス更新 (affected files: 16)
+- [x] ビルド成功確認
+
+**成果**:
+- Report設定が完全にFSD構造に移行
+- 16ファイルのインポートパスを `@features/report` に更新
+- ビルド時間: 8.47秒 (エラーなし)
+
+---
+
+##### Step 3-2: Report Hooks の移行 (次のステップ) ⏳
+- [ ] `src/hooks/report/useReportManager.ts` → `features/report/hooks/useReportManager.ts`
+- [ ] `src/hooks/report/useReportGeneration.ts` → `features/report/hooks/useReportGeneration.ts`
+- [ ] `src/hooks/report/useReportPreview.ts` → `features/report/hooks/useReportPreview.ts`
+- [ ] `src/hooks/report/useReportBaseBusiness.ts` → `features/report/hooks/useReportBaseBusiness.ts`
+- [ ] インポートパス更新
+- [ ] 公開API更新
+
+**推定工数**: 3-4時間  
+**リスク**: 中 (ビジネスロジック含む、テストが必要)
+
+---
+
+##### Step 3-3: Report共通UIの移行 📋 (未着手)
+- [ ] `src/components/Report/common/` → `features/report/ui/common/`
+
+##### Step 3-4: Report個別UIの移行 📋 (未着手)
+- [ ] `src/components/Report/ReportBase.tsx` → `features/report/ui/ReportBase.tsx`
+
+##### Step 3-5: Interactive Report の移行 📋 (未着手)
+- [ ] `src/components/Report/interactive/` → `features/report/ui/interactive/`
+
+---
+
+#### 高優先度 - Database機能 (Step 3完了後)
 2. **Database機能** (CSV処理改善時)
    - [ ] components/database/ → features/database/ui/
    - [ ] hooks/database/ → features/database/hooks/
