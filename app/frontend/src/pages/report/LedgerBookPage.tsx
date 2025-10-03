@@ -2,7 +2,7 @@
 
 import React from 'react';
 import ReportBase from '../../components/Report/ReportBase';
-import ReportHeader from '../../components/Report/common/ReportHeader';
+import { ReportHeader } from '@features/report';
 import { useReportManager } from '@features/report';
 
 /**
