@@ -1,6 +1,4 @@
-// shared/hooks/ui/index.ts
-// UIフックの公開API
-
+// UI関連のhooks
 export { useMediaQuery, useDeviceType } from './useResponsive';
 export { useWindowSize } from './useWindowSize';
 export { useContainerSize } from './useContainerSize';

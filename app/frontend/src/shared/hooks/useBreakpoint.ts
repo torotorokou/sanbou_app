@@ -1,9 +1,9 @@
 // Single-source responsive hook wrapper
 // このフックは、window幅の判定・監視を自前で行わず、
-// `hooks/ui/useWindowSize` に集約されたロジックを利用します。
+// `shared/hooks/ui/useWindowSize` に集約されたロジックを利用します。
 // これにより、BREAKPOINTS の変更が全体に自動反映され、保守性が向上します。
 
-import { useWindowSize } from "@/hooks/ui/useWindowSize";
+import { useWindowSize } from "@shared/hooks/ui";
 
 export type View = "mobile" | "tablet" | "desktop";
 
