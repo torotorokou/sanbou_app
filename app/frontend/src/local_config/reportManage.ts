@@ -4,7 +4,7 @@ import {
     type ReportKey,
     csvConfigMap,
     modalStepsMap,
-} from '@/constants/reportConfig';
+} from '@features/report';
 
 type CsvConfig = {
     label: string;
