@@ -1,5 +1,5 @@
 import type { UploadProps } from 'antd';
-import type { CsvFileType as CsvUploadFileType } from '@/components/common/csv-upload/types';
+import type { CsvFileType as CsvUploadFileType } from '@features/database/ui';
 
 // UploadFileConfigと互換性のある型定義
 export interface CsvFileType {

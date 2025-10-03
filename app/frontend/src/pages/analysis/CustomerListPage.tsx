@@ -3,9 +3,11 @@ import { Row, Col, Button, Card, message } from 'antd';
 import { ReloadOutlined } from '@ant-design/icons';
 import { customTokens } from '@/theme/tokens';
 import type { Dayjs } from 'dayjs';
-import ComparisonConditionForm from '@/components/analysis/customer-list-analysis/ComparisonConditionForm';
-import CustomerComparisonResultCard from '@/components/analysis/customer-list-analysis/CustomerComparisonResultCard';
-import AnalysisProcessingModal from '@/components/analysis/customer-list-analysis/AnalysisProcessingModal';
+import {
+  ComparisonConditionForm,
+  CustomerComparisonResultCard,
+  AnalysisProcessingModal,
+} from '@features/analysis';
 import { useCustomerComparison } from '@/hooks/analysis/customer-list-analysis/useCustomerComparison';
 import { apiPostBlob } from '@shared/infrastructure/http';
 
