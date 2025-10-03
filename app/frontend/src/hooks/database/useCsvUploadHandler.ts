@@ -4,7 +4,7 @@ import {
     notifyError,
     notifyInfo,
     notifyWarning,
-} from '@/features/notification/notify';
+} from '@features/notification';
 
 export const useCsvUploadHandler = (files: Record<string, File | null>) => {
     const [uploading, setUploading] = useState(false);

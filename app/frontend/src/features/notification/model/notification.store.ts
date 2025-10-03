@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { Notification, CreateNotificationData } from './types';
+import type { Notification, CreateNotificationData } from './notification.types';
 
 const DEFAULT_DURATION_MS = 3000;
 const MAX_COUNT = 5;

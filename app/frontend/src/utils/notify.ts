@@ -1,4 +1,5 @@
 // src/utils/notify.ts
+// 互換性のため、features/notification から re-export
 export {
     notifySuccess,
     notifyError,
@@ -6,4 +7,4 @@ export {
     notifyWarning,
     notifyPersistent,
     notifyApiError,
-} from '@/features/notification/notify';
+} from '@features/notification';

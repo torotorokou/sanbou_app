@@ -2,7 +2,7 @@ import React from 'react';
 import { Layout } from 'antd';
 import Sidebar from './Sidebar';
 import AppRoutes from '../routes/AppRoutes';
-import NotificationCenterAntd from '@/features/notification/NotificationCenterAntd';
+import { NotificationCenterAntd } from '@features/notification';
 import { customTokens } from '../theme/tokens';
 import { useWindowSize } from '../hooks/ui';
 

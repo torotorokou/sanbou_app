@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { notifySuccess, notifyError, notifyInfo } from '@/features/notification/notify';
+import { notifySuccess, notifyError, notifyInfo } from '@features/notification';
 import type { ReportKey } from '../constants/reportConfig';
 import { getApiEndpoint } from '../constants/reportConfig';
 import type { ReportArtifactResponse } from './data/useReportArtifact';
