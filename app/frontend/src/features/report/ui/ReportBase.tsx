@@ -1,10 +1,10 @@
 import React, { Suspense, useEffect, useState } from 'react';
 import { ReportManagePageLayout, ReportStepperModal } from '@features/report';
-import BlockUnitPriceInteractiveModal, { type InitialApiResponse, type SessionData } from '@/components/Report/interactive/BlockUnitPriceInteractiveModal';
-import type { TransportCandidateRow } from '@/components/Report/interactive/types';
-import { normalizeRow, isRecord } from '@/components/Report/interactive/transportNormalization';
+import BlockUnitPriceInteractiveModal, { type InitialApiResponse, type SessionData } from './interactive/BlockUnitPriceInteractiveModal';
+import type { TransportCandidateRow } from './interactive/types';
+import { normalizeRow, isRecord } from './interactive/transportNormalization';
 import { message } from 'antd';
-const PDFViewer = React.lazy(() => import('@/components/Report/viewer/PDFViewer'));
+const PDFViewer = React.lazy(() => import('./viewer/PDFViewer'));
 import { pdfPreviewMap, modalStepsMap, isInteractiveReport, getApiEndpoint } from '@features/report';
 import { useReportBaseBusiness } from '@features/report';
 import type { ReportBaseProps } from '@features/report';
