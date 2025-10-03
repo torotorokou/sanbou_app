@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Row, Col, Button, Card, message } from 'antd';
 import { ReloadOutlined } from '@ant-design/icons';
-import { customTokens } from '@/theme/tokens';
+import { customTokens } from '@shared/theme/tokens';
 import type { Dayjs } from 'dayjs';
 import {
   ComparisonConditionForm,

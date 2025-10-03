@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card, Typography, Row, Col } from 'antd';
-import { customTokens } from '@/theme/tokens';
+import { customTokens } from '@shared/theme/tokens';
 
 // トークンの説明を付与（手動マッピング）
 const tokenDescriptions: Record<string, string> = {

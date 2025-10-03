@@ -6,11 +6,11 @@ import { Spin } from 'antd';
 import { ROUTER_PATHS } from '@shared/constants/router';
 
 // Dashboard pages (not yet refactored)
-const ManagementDashboard = lazy(() => import('../pages/dashboard/ManagementDashboard'));
-const FactoryDashboard = lazy(() => import('../pages/dashboard/FactoryDashboard'));
-const PricingDashboard = lazy(() => import('../pages/dashboard/PricingDashboard'));
-const CustomerListDashboard = lazy(() => import('../pages/dashboard/CustomerListDashboard'));
-const SalesTreePage = lazy(() => import('../pages/dashboard/SalesTreePage'));
+const ManagementDashboard = lazy(() => import('../../pages/dashboard/ManagementDashboard'));
+const FactoryDashboard = lazy(() => import('../../pages/dashboard/FactoryDashboard'));
+const PricingDashboard = lazy(() => import('../../pages/dashboard/PricingDashboard'));
+const CustomerListDashboard = lazy(() => import('../../pages/dashboard/CustomerListDashboard'));
+const SalesTreePage = lazy(() => import('../../pages/dashboard/SalesTreePage'));
 
 // Report pages - using public API
 const ReportManagePage = lazy(() => import('@/pages/report').then(m => ({ default: m.ReportManagePage })));

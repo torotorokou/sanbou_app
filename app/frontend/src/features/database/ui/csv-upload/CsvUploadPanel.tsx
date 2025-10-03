@@ -3,7 +3,7 @@ import { Card } from 'antd';
 import CsvUploadCard from './CsvUploadCard';
 import type { CsvFileType } from './types';
 import type { UploadProps } from 'antd';
-import { customTokens } from '@/theme/tokens';
+import { customTokens } from '@shared/theme/tokens';
 import { useWindowSize } from '@shared/hooks/ui';
 
 type CsvUploadPanelProps = {

@@ -1,6 +1,6 @@
 import React, { useLayoutEffect, useRef, useState } from 'react';
 import { Typography, Col, Row, Button, Modal, Spin, Tabs } from 'antd';
-import { csvTypeColors } from '../../theme';
+import { csvTypeColors } from '@shared/theme';
 
 import {
     CsvUploadPanel,

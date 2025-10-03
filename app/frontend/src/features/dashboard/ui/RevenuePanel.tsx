@@ -10,7 +10,7 @@ import {
     LabelList,
     ResponsiveContainer,
 } from 'recharts';
-import { customTokens } from '@/theme/tokens';
+import { customTokens } from '@shared/theme/tokens';
 
 const revenueData = [
     { name: '売上', value: 5490175 },
