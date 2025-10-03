@@ -8,7 +8,7 @@ import {
   CustomerComparisonResultCard,
   AnalysisProcessingModal,
 } from '@features/analysis';
-import { useCustomerComparison } from '@/hooks/analysis/customer-list-analysis/useCustomerComparison';
+import { useCustomerComparison } from '@features/analysis/model';
 import { apiPostBlob } from '@shared/infrastructure/http';
 
 function getMonthRange(start: Dayjs | null, end: Dayjs | null): string[] {

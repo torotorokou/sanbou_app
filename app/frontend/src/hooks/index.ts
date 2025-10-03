@@ -10,6 +10,3 @@ export * from './data';
 
 // データベース関連
 export * from './database';
-
-// 分析関連
-export * from './analysis';

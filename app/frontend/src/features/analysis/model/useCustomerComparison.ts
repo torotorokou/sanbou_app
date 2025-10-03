@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
-import type { CustomerData } from '@/data/analysis/customer-list-analysis/customer-dummy-data';
-import { allCustomerData } from '@/data/analysis/customer-list-analysis/customer-dummy-data';
+import type { CustomerData } from './customer-dummy-data';
+import { allCustomerData } from './customer-dummy-data';
 
 export function useCustomerComparison(
     targetMonths: string[],
