@@ -1,7 +1,7 @@
 import React from 'react';
 import type { ReactNode } from 'react';
 import { useReportLayoutStyles } from '../../../hooks/report';
-import { useWindowSize } from '../../../hooks/ui';
+import { useWindowSize } from '@shared/hooks/ui';
 import { isTabletOrHalf } from '@/shared/constants/breakpoints';
 import SampleSection from './SampleSection';
 import CsvUploadSection from './CsvUploadSection';

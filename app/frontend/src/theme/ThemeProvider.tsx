@@ -2,7 +2,7 @@ import React from "react";
 import { ConfigProvider } from "antd";
 import jaJP from 'antd/locale/ja_JP';
 import { customTokens } from './tokens';
-import { useWindowSize } from '@/hooks/ui';
+import { useWindowSize } from '@shared/hooks/ui';
 import { isTabletOrHalf, isDesktop } from '@/shared/constants/breakpoints';
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {

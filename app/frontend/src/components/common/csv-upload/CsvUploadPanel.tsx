@@ -4,7 +4,7 @@ import CsvUploadCard from './CsvUploadCard';
 import type { CsvFileType } from './types';
 import type { UploadProps } from 'antd';
 import { customTokens } from '@/theme/tokens';
-import { useWindowSize } from '@/hooks/ui';
+import { useWindowSize } from '@shared/hooks/ui';
 
 type CsvUploadPanelProps = {
     upload: {

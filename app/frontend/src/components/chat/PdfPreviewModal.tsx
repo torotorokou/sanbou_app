@@ -1,8 +1,8 @@
 // src/components/chat/PdfPreviewModal.tsx
 import React from 'react';
-import { ensurePdfJsWorkerLoaded } from '@/utils/pdfWorkerLoader';
+import { ensurePdfJsWorkerLoaded } from '@shared/utils/pdfWorkerLoader';
 import { Modal, Empty } from 'antd';
-import { useWindowSize } from '@/hooks/ui';
+import { useWindowSize } from '@shared/hooks/ui';
 import { ANT } from '@/shared/constants/breakpoints';
 
 type Props = {

@@ -1,6 +1,7 @@
 // ChatQuestionSection.tsx
 import React from 'react';
-import { useWindowSize } from '@/hooks/ui';
+import { Card, Typography, Space } from 'antd';
+import { useWindowSize } from '@shared/hooks/ui';
 import { isTabletOrHalf } from '@/shared/constants/breakpoints';
 import QuestionPanel from '@/components/chat/QuestionPanel';
 

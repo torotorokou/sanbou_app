@@ -28,7 +28,7 @@ import {
   DollarOutlined,
   FileSyncOutlined,
 } from '@ant-design/icons';
-import { useWindowSize } from '@/hooks/ui';
+import { useWindowSize } from '@shared/hooks/ui';
 import { ANT, isTabletOrHalf } from '@/shared/constants/breakpoints';
 import styles from './shogunManual.module.css';
 import type { ManualItem, ManualSection } from './types';

@@ -19,7 +19,6 @@ export default defineConfig([
             'vite.config.ts',
             'tsconfig*.json',
             'scripts/**',
-            '__archive__/**',
             'package.json',
             'package-lock.json',
         ],

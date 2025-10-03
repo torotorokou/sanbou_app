@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Typography, Modal, Button } from 'antd';
-import { useWindowSize } from '../../../hooks/ui';
+import { useWindowSize } from '@shared/hooks/ui';
 import { customTokens } from '../../../theme';
 import { ExpandOutlined } from '@ant-design/icons';
 

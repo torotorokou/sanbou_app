@@ -4,8 +4,8 @@ import {
     UPLOAD_CSV_DEFINITIONS,
 } from '@/constants/uploadCsvConfig';
 import type { CsvType } from '@/constants/CsvDefinition';
-import { identifyCsvType, isCsvMatch } from '@/utils/validators/csvValidator';
-import { parseCsvPreview } from '@/utils/csvPreview'; // 行数制限プレビュー用
+import { identifyCsvType, isCsvMatch } from '@shared/utils/validators/csvValidator';
+import { parseCsvPreview } from '@shared/utils/csv/csvPreview'; // 行数制限プレビュー用
 
 export function useCsvUploadArea() {
     const [files, setFiles] = useState<Record<CsvType, File | null>>(

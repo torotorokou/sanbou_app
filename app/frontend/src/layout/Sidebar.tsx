@@ -5,9 +5,9 @@ import { MenuFoldOutlined, MenuUnfoldOutlined } from '@ant-design/icons';
 import { useLocation } from 'react-router-dom';
 import { SIDEBAR_MENU } from '@/constants/sidebarMenu';
 import { customTokens } from '@/theme/tokens';
-import { useSidebarResponsive, useSidebarAnimation, useWindowSize } from '@/hooks/ui';
+import { useSidebarResponsive, useSidebarAnimation, useWindowSize } from '@shared/hooks/ui';
 import { ANT } from '@/shared/constants/breakpoints';
-import { useSidebarDefault } from '@/hooks/ui/useSidebarDefault';
+import { useSidebarDefault } from '@shared/hooks/ui/useSidebarDefault';
 
 const { Sider } = Layout;
 

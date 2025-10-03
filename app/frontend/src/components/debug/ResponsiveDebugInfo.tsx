@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card } from 'antd';
-import { useWindowSize } from '../../hooks/ui';
+import { useWindowSize } from '@shared/hooks/ui';
 
 /**
  * レスポンシブデバッグ情報表示コンポーネント

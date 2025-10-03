@@ -1,7 +1,7 @@
 import React from 'react';
 import { Upload, Typography, Tag } from 'antd';
 import { InboxOutlined, CloseOutlined } from '@ant-design/icons';
-import { useWindowSize } from '../../../hooks/ui';
+import { useWindowSize } from '@shared/hooks/ui';
 import type { UploadProps } from 'antd';
 
 export type CsvUploadCardProps = {

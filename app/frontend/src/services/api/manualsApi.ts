@@ -1,5 +1,5 @@
 import type { ManualDetail, ManualListResponse } from '@/types/manuals';
-import { apiGet } from '@/services/httpClient';
+import { apiGet } from '@shared/infrastructure/http';
 
 export type ManualCatalogResponse = {
   sections: Array<{

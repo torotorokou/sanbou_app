@@ -5,7 +5,7 @@ import { useLocation, useNavigate, useParams, useSearchParams } from 'react-rout
 import manualsApi from '@/services/api/manualsApi';
 import type { ManualSummary } from '@/types/manuals';
 import type { ManualDetail } from '@/types/manuals';
-import { ensureSectionAnchors, smoothScrollToAnchor } from '@/utils/anchors';
+import { ensureSectionAnchors, smoothScrollToAnchor } from '@shared/utils/anchors';
 
 const { Title } = Typography;
 
