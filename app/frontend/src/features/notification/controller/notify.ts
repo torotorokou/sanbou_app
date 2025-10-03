@@ -1,5 +1,5 @@
-import { useNotificationStore } from '../model/notification.store';
-import { NOTIFY_DEFAULTS } from '../config';
+import { useNotificationStore } from '@features/notification/model/notification.store';
+import { NOTIFY_DEFAULTS } from '@features/notification/config';
 
 // 既存プロジェクトに ApiError / ProblemDetails がある場合は import に置き換え
 type ProblemDetails = {

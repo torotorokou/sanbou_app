@@ -1,13 +1,13 @@
 import { useCallback, useEffect } from 'react';
 import type { UploadProps } from 'antd/es/upload';
 import { useCsvValidation } from '@features/database/model';
-import { useReportArtifact } from '../model/useReportArtifact';
+import { useReportArtifact } from '@features/report/model/useReportArtifact';
 import type {
     CsvFiles,
     CsvConfigEntry,
     UploadFileConfig,
     MakeUploadPropsFn,
-} from '../model/report.types';
+} from '@features/report/model/report.types';
 import type { ReportKey } from '@features/report';
 
 /**

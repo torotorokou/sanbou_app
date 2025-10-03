@@ -1,5 +1,5 @@
 import type { UploadProps } from 'antd/es/upload';
-import type { ReportKey } from '../config/reportConfig';
+import type { ReportKey } from '@features/report/config/reportConfig';
 
 /**
  * ReportBase関連の型定義を整理
