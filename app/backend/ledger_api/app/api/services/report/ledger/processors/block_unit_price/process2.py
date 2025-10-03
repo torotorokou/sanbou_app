@@ -14,7 +14,7 @@ def apply_transport_fee_by_vendor(
     Returns:
         pd.DataFrame: 運搬費が適用された出荷データフレーム
     """
-    from app.api.services.report.ledger.utils.column_utils import apply_column_addition_by_keys
+    from app.api.services.report.utils.dataframe import apply_column_addition_by_keys
 
     # 運搬業者が設定されている行を抽出
     target_rows = df_after[df_after["運搬業者"].notna()].copy()
@@ -134,7 +134,7 @@ def first_cell_in_template(df: DataFrame) -> DataFrame:
 
 
 def make_sum_date(df: DataFrame, df_shipping: DataFrame) -> DataFrame:
-    from app.api.services.report.ledger.utils.date_tools import to_reiwa_format
+    from app.api.services.report.utils.formatters import to_reiwa_format
 
     # 日付を令和表記に変換（例: "令和6年5月16日"）
     date = to_reiwa_format(df_shipping["伝票日付"].iloc[0])
@@ -218,7 +218,7 @@ def add_date_information(df: DataFrame, df_shipping: DataFrame) -> DataFrame:
     Returns:
         pd.DataFrame: 日付情報が追加されたデータフレーム
     """
-    from app.api.services.report.ledger.utils.date_tools import to_reiwa_format
+    from app.api.services.report.utils.formatters import to_reiwa_format
 
     # 伝票日付を令和形式に変換
     reiwa_date = to_reiwa_format(df_shipping["伝票日付"].iloc[0])

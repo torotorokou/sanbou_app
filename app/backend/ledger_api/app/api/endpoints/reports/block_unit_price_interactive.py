@@ -11,7 +11,7 @@ from typing import Any, Dict, Optional, Union
 from fastapi import APIRouter, File, HTTPException, UploadFile
 from pydantic import BaseModel
 
-from app.api.services.report.interactive_report_processing_service import (
+from app.api.services.report.core.processors.interactive_report_processing_service import (
     InteractiveReportProcessingService,
 )
 # 移行済みの実装ファイルからインポート

@@ -2,11 +2,9 @@
 
 from typing import Optional
 
-from app.api.services.report.report_processing_service import ReportProcessingService
+from app.api.services.report import ReportProcessingService, FactoryReportGenerator
 from fastapi import APIRouter, File, Form, UploadFile
 from fastapi.responses import Response
-
-from app.api.services.report.concrete_generators import FactoryReportGenerator
 
 # APIルーターの初期化
 router = APIRouter()

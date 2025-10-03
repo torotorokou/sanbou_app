@@ -5,8 +5,9 @@ import yaml
 import os
 from typing import Optional, Union
 
-MAIN_PATHS = "/backend/app/st_app/config/main_paths.yaml"
-BASE_DIR_PATH = "/backend/app/st_app"
+# st_app 依存を排し、api 配下をデフォルトにする
+MAIN_PATHS = "/backend/app/api/config/main_paths.yaml"
+BASE_DIR_PATH = "/backend/app/api"
 
 
 class MainPath:
