@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { notifySuccess, notifyError, notifyInfo } from '../../utils/notify';
+import { notifySuccess, notifyError, notifyInfo } from '@/features/notification/notify';
 import { getApiEndpoint, REPORT_KEYS } from '@/constants/reportConfig';
 import type { ReportKey } from '@/constants/reportConfig';
 import type { CsvFiles } from '../../types/reportBase';
