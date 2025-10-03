@@ -5,33 +5,41 @@ import { Spin } from 'antd';
 // ルート定数
 import { ROUTER_PATHS } from '@/constants/router';
 
-// 軽量/コアはそのまま、重いページを lazy 化
+// Dashboard pages (not yet refactored)
 const ManagementDashboard = lazy(() => import('../pages/dashboard/ManagementDashboard'));
 const FactoryDashboard = lazy(() => import('../pages/dashboard/FactoryDashboard'));
 const PricingDashboard = lazy(() => import('../pages/dashboard/PricingDashboard'));
 const CustomerListDashboard = lazy(() => import('../pages/dashboard/CustomerListDashboard'));
 const SalesTreePage = lazy(() => import('../pages/dashboard/SalesTreePage'));
 
+// Report pages - using public API
 const ReportManagePage = lazy(() => import('@/pages/report').then(m => ({ default: m.ReportManagePage })));
 const ReportFactoryPage = lazy(() => import('@/pages/report').then(m => ({ default: m.ReportFactoryPage })));
 const LedgerBookPage = lazy(() => import('@/pages/report').then(m => ({ default: m.LedgerBookPage })));
 
-const CustomerListAnalysis = lazy(() => import('../pages/analysis/CustomerListAnalysis'));
+// Database pages - using public API
+const UploadDatabasePage = lazy(() => import('@/pages/database').then(m => ({ default: m.UploadDatabasePage })));
+const RecordListPage = lazy(() => import('@/pages/database').then(m => ({ default: m.RecordListPage })));
 
-const SolvestNavi = lazy(() => import('../pages/navi/SolvestNavi'));
+// Manual pages - using public API
+const GlobalManualSearchPage = lazy(() => import('@/pages/manual').then(m => ({ default: m.GlobalManualSearchPage })));
+const ShogunManualListPage = lazy(() => import('@/pages/manual').then(m => ({ default: m.ShogunManualListPage })));
+const ManualDetailPage = lazy(() => import('@/pages/manual').then(m => ({ default: m.ManualDetailPage })));
+const ManualDetailModal = lazy(() => import('@/pages/manual').then(m => ({ default: m.ManualDetailModal })));
 
-const ManualModal = lazy(() => import('@/pages/manual/ManualModal'));
-const ManualPage = lazy(() => import('@/pages/manual/ManualPage'));
-const GlobalManualSearch = lazy(() => import('@/pages/manual/GlobalManualSearch'));
-const ShogunManualList = lazy(() => import('@/pages/manual/ShogunManualList'));
+// Analysis pages - using public API
+const CustomerListAnalysisPage = lazy(() => import('@/pages/analysis').then(m => ({ default: m.CustomerListAnalysisPage })));
 
-const UploadPage = lazy(() => import('../pages/database/UploadDatabasePage'));
-const RecordListPage = lazy(() => import('../pages/database/RecordListPage'));
+// Chat pages - using public API
+const SolvestNaviPage = lazy(() => import('@/pages/navi').then(m => ({ default: m.SolvestNaviPage })));
 
-const TokenPreviewPage = lazy(() => import('@/pages/utils/TokenPreviewPage'));
-const TestPage = lazy(() => import('@/pages/utils/TestPage'));
-const PortalPage = lazy(() => import('@/pages/home/PortalPage'));
-const NewsPage = lazy(() => import('@/pages/home/NewsPage'));
+// Home pages - using public API
+const PortalPage = lazy(() => import('@/pages/home').then(m => ({ default: m.PortalPage })));
+const NewsPage = lazy(() => import('@/pages/home').then(m => ({ default: m.NewsPage })));
+
+// Utility pages - using public API
+const TokenPreviewPage = lazy(() => import('@/pages/utils').then(m => ({ default: m.TokenPreviewPage })));
+const TestPage = lazy(() => import('@/pages/utils').then(m => ({ default: m.TestPage })));
 
 const AppRoutes: React.FC = () => {
     const location = useLocation();
@@ -70,21 +78,21 @@ const AppRoutes: React.FC = () => {
         {/* データ分析 */}
         <Route
             path={ROUTER_PATHS.ANALYSIS_CUSTOMERLIST}
-            element={<CustomerListAnalysis />}
+            element={<CustomerListAnalysisPage />}
         />
 
     {/* チャットボット */}
-    <Route path={ROUTER_PATHS.NAVI} element={<SolvestNavi />} />
+    <Route path={ROUTER_PATHS.NAVI} element={<SolvestNaviPage />} />
 
     {/* マニュアル（新） */}
-    <Route path='/manuals' element={<GlobalManualSearch />} />
-    <Route path='/manuals/syogun' element={<ShogunManualList />} />
+    <Route path='/manuals' element={<GlobalManualSearchPage />} />
+    <Route path='/manuals/syogun' element={<ShogunManualListPage />} />
         {/* 単独ページ（正ルート） */}
-        <Route path='/manuals/syogun/:id' element={<ManualPage />} />
+        <Route path='/manuals/syogun/:id' element={<ManualDetailPage />} />
 
 
         {/* データベース関連 */}
-        <Route path={ROUTER_PATHS.UPLOAD_PAGE} element={<UploadPage />} />
+        <Route path={ROUTER_PATHS.UPLOAD_PAGE} element={<UploadDatabasePage />} />
         <Route path={ROUTER_PATHS.RECORD_LIST} element={<RecordListPage />} />
 
         {/* トークンプレビュー */}
@@ -104,7 +112,7 @@ const AppRoutes: React.FC = () => {
             {state?.backgroundLocation && (
                 <Suspense fallback={null}>
                     <Routes>
-                        <Route path='/manuals/syogun/:id' element={<ManualModal />} />
+                        <Route path='/manuals/syogun/:id' element={<ManualDetailModal />} />
                     </Routes>
                 </Suspense>
             )}
