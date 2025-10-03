@@ -1,1 +1,0 @@
-"""Factory manage logic components."""
