@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card, Row, Col } from 'antd';
-import StatisticCard from '../ui/StatisticCard';
+import { StatisticCard } from '@shared/ui';
 
 const ProcessVolumePanel: React.FC = () => {
     const items = [

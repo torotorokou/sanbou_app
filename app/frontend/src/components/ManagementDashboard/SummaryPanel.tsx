@@ -2,9 +2,7 @@ import { ANT } from '@/shared/constants/breakpoints';
 import React from 'react';
 import { Card, Row, Col } from 'antd';
 import { CarOutlined, InboxOutlined } from '@ant-design/icons';
-import AnimatedStatistic from '../ui/AnimatedStatistic';
-import DiffIndicator from '../ui/DiffIndicator';
-import TrendChart from '../ui/TrendChart';
+import { AnimatedStatistic, DiffIndicator, TrendChart } from '@shared/ui';
 
 const SummaryPanel: React.FC = () => {
     const driveData = [

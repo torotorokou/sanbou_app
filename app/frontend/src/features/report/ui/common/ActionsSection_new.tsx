@@ -1,5 +1,5 @@
 import React from 'react';
-import VerticalActionButton from '@/components/ui/VerticalActionButton';
+import { VerticalActionButton } from '@shared/ui';
 import { PlayCircleOutlined, DownloadOutlined, PrinterOutlined } from '@ant-design/icons';
 import { useReportActions } from '@features/report';
 import { Card, Typography, Space } from 'antd';

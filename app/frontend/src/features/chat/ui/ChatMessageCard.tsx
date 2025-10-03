@@ -2,7 +2,7 @@ import { ANT } from '@/shared/constants/breakpoints';
 import React from 'react';
 import { Card, Typography, Button, Tag, Space } from 'antd';
 import { UserOutlined, RobotOutlined, BookOutlined } from '@ant-design/icons';
-import TypewriterText from '@/components/ui/TypewriterText';
+import { TypewriterText } from '@shared/ui';
 import type { ChatMessage } from '../model/chat.types';
 
 type Props = {

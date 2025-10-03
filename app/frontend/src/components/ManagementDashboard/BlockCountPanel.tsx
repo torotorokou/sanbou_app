@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card, Row, Col } from 'antd';
-import StatisticCard from '../ui/StatisticCard'; // ← 共通カード名に統一
+import { StatisticCard } from '@shared/ui';
 
 const BlockCountPanel: React.FC = () => {
     const blockData = [
