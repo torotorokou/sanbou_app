@@ -2,7 +2,7 @@ import React from 'react';
 import { Layout } from 'antd';
 import Sidebar from './Sidebar';
 import AppRoutes from '../routes/AppRoutes';
-import NotificationContainer from '../components/common/NotificationContainer';
+import NotificationCenterAntd from '@/features/notification/NotificationCenterAntd';
 import { customTokens } from '../theme/tokens';
 import { useWindowSize } from '../hooks/ui';
 
@@ -47,8 +47,8 @@ const MainLayout: React.FC = () => {
                         );
                     })()}
                 </Layout>
-                {/* グローバル通知コンテナ */}
-                <NotificationContainer />
+                {/* グローバル通知（AntD版、従来の見た目） */}
+                <NotificationCenterAntd />
             </Layout>
         );
     } catch (error) {

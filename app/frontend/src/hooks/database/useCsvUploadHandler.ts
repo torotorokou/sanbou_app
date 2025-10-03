@@ -4,7 +4,7 @@ import {
     notifyError,
     notifyInfo,
     notifyWarning,
-} from '@/utils/notify';
+} from '@/features/notification/notify';
 
 export const useCsvUploadHandler = (files: Record<string, File | null>) => {
     const [uploading, setUploading] = useState(false);
@@ -51,10 +51,10 @@ export const useCsvUploadHandler = (files: Record<string, File | null>) => {
             }
 
             if (res.ok && result.status === 'success') {
-                notifySuccess(
-                    'アップロード成功',
-                    result.detail ?? 'CSVファイルのアップロードが完了しました。'
-                );
+                notifySuccess('アップロード成功', result.detail ?? 'CSVを受け付けました。');
+                if (result.hint) {
+                    notifyInfo('ヒント', result.hint);
+                }
             } else {
                 notifyError(
                     'アップロード失敗',

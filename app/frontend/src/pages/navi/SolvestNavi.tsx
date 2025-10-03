@@ -14,7 +14,7 @@ import { ANT, isTabletOrHalf } from '@/shared/constants/breakpoints';
 // YAML直読みを廃止し、バックエンドAPIから取得する
 
 // ✅ 追加: 通知ストア
-import { useNotificationStore } from '@/stores/notificationStore';
+import { useNotificationStore } from '@/features/notification/store';
 
 // PDF.js のワーカーは初期ロードから外し、必要時に動的 import します。
 

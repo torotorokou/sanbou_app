@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { identifyCsvType, isCsvMatch } from '../utils/validators/csvValidator';
-import { notifySuccess, notifyError, notifyWarning } from '../utils/notify';
+import { notifySuccess, notifyError, notifyWarning } from '@/features/notification/notify';
 
 /**
  * CSV検証とファイル管理を担当するフック
