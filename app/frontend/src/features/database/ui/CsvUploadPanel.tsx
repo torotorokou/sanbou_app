@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Card, Typography } from 'antd';
-import CsvUploadCard from '@/components/common/csv-upload/CsvUploadCard';
+import CsvUploadCard from './csv-upload/CsvUploadCard';
 import type { CsvFileType } from '@features/database';
 import type { UploadProps } from 'antd';
 import { customTokens } from '@/theme/tokens'; // tsconfigのalias設定が必要

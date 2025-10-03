@@ -12,5 +12,8 @@ export { default as VerticalActionButton } from './VerticalActionButton';
 // DownloadButton_ は名前が微妙なので後で整理
 export { default as DownloadButton } from './DownloadButton_';
 
+// Debug components
+export { default as ResponsiveDebugInfo } from './debug/ResponsiveDebugInfo';
+
 // Type exports
 export type { StepItem } from './ReportStepIndicator';

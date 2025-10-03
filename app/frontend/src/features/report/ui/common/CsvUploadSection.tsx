@@ -1,6 +1,6 @@
 import React from 'react';
 import { Typography } from 'antd';
-import CsvUploadPanel from '@/components/common/csv-upload/CsvUploadPanel';
+import { CsvUploadPanelComponent as CsvUploadPanel } from '@features/database/ui';
 import { useWindowSize } from '@shared/hooks/ui';
 import type { CsvUploadSectionProps } from './types';
 

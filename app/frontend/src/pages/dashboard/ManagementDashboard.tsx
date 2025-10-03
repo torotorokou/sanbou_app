@@ -7,7 +7,7 @@ import {
     RevenuePanel,
     BlockCountPanel,
     ProcessVolumePanel,
-} from '@/components/ManagementDashboard';
+} from '@features/dashboard';
 
 const { Title } = Typography;
 const ManagementDashboard: React.FC = () => {
