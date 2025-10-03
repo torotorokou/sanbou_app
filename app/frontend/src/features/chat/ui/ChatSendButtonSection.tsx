@@ -1,6 +1,6 @@
 // src/components/chat/ChatSendButtonSection.tsx
 import React from 'react';
-import VerticalActionButton from '@/components/ui/VerticalActionButton';
+import { VerticalActionButton } from '@shared/ui';
 import { SendOutlined } from '@ant-design/icons';
 
 type Props = {

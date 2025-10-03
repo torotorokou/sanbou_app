@@ -8,8 +8,7 @@ import {
   ChatAnswerSection,
   PdfPreviewModal,
 } from '@features/chat';
-import type { StepItem } from '@/components/ui/ReportStepIndicator';
-import ReportStepIndicator from '@/components/ui/ReportStepIndicator';
+import { ReportStepIndicator, type StepItem } from '@shared/ui';
 // import ManualSearchForm from '@/components/manual/ManualSearchForm';
 import { useWindowSize } from '@shared/hooks/ui';
 // import { useWaitForCompletion } from '@/hooks/ai/useWaitForCompletion';
