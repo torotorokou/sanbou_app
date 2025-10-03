@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 import type { UploadProps } from 'antd/es/upload';
 import { useCsvValidation } from '../data/useCsvValidation';
 import { useReportArtifact } from '../data/useReportArtifact';
@@ -26,6 +26,10 @@ export const useReportBaseBusiness = (
 ) => {
     const csvValidation = useCsvValidation();
     const artifact = useReportArtifact();
+
+    useEffect(() => {
+        artifact.cleanup();
+    }, [artifact.cleanup, reportKey]);
 
     /**
      * ファイル削除処理

@@ -1,7 +1,9 @@
 import React, { Suspense, useEffect, useState } from 'react';
 import ReportManagePageLayout from './common/ReportManagePageLayout';
 import ReportStepperModal from './common/ReportStepperModal';
-import BlockUnitPriceInteractiveModal, { type InitialApiResponse, type SessionData, type TransportCandidateRow } from './interactive/BlockUnitPriceInteractiveModal';
+import BlockUnitPriceInteractiveModal, { type InitialApiResponse, type SessionData } from './interactive/BlockUnitPriceInteractiveModal';
+import type { TransportCandidateRow } from './interactive/types';
+import { normalizeRow, isRecord } from './interactive/transportNormalization';
 import { message } from 'antd';
 const PDFViewer = React.lazy(() => import('./viewer/PDFViewer'));
 import { pdfPreviewMap, modalStepsMap, isInteractiveReport, getApiEndpoint } from '@/constants/reportConfig';
@@ -9,61 +11,7 @@ import { useReportBaseBusiness } from '../../hooks/report';
 import type { ReportBaseProps } from '../../types/reportBase';
 import type { ReportArtifactResponse } from '../../hooks/data/useReportArtifact';
 
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-    typeof value === 'object' && value !== null;
-
-const normalizeRow = (value: unknown): TransportCandidateRow | null => {
-    if (!isRecord(value)) return null;
-
-    const rawOptions = Array.isArray(value['options']) ? value['options'] : [];
-    const options = rawOptions
-        .map((opt) => (typeof opt === 'string' ? opt.trim() : String(opt ?? '')).trim())
-        .filter((label) => label.length > 0);
-
-    const initialIndexRaw = value['initial_index'];
-    let initial_index = 0;
-    if (typeof initialIndexRaw === 'number' && Number.isFinite(initialIndexRaw)) {
-        initial_index = initialIndexRaw;
-    } else if (typeof initialIndexRaw === 'string') {
-        const parsed = Number.parseInt(initialIndexRaw, 10);
-        if (Number.isFinite(parsed)) {
-            initial_index = parsed;
-        }
-    }
-    initial_index = Math.max(0, Math.trunc(initial_index));
-
-    const detailValue = value['detail'];
-    let detail: string | undefined;
-    if (typeof detailValue === 'string') {
-        detail = detailValue;
-    } else if (detailValue != null) {
-        detail = String(detailValue);
-    }
-
-    const entryIdCandidate = value['entry_id'];
-    const vendorCodeCandidate = value['vendor_code'] ?? value['vendorId'];
-    const vendorNameCandidate = value['vendor_name'] ?? value['processor_name'];
-    const itemNameCandidate = value['item_name'] ?? value['product_name'];
-
-    // 変更: entry_id が number の場合も許容して文字列化する
-    if (typeof entryIdCandidate !== 'string' && typeof entryIdCandidate !== 'number') {
-        console.warn('normalizeRow: invalid entry_id type, skipping row:', typeof entryIdCandidate, entryIdCandidate);
-        return null;
-    }
-    const entry_id = String(entryIdCandidate);
-
-    return {
-        entry_id,
-        vendor_code: typeof vendorCodeCandidate === 'number' || typeof vendorCodeCandidate === 'string'
-            ? vendorCodeCandidate
-            : '',
-        vendor_name: typeof vendorNameCandidate === 'string' ? vendorNameCandidate : String(vendorNameCandidate ?? ''),
-        item_name: typeof itemNameCandidate === 'string' ? itemNameCandidate : String(itemNameCandidate ?? ''),
-        detail,
-        options,
-        initial_index,
-    } satisfies TransportCandidateRow;
-};
+// normalizeRow is now provided by ./interactive/transportNormalization
 
 /**
  * レポートベースコンポーネント - インタラクティブモーダル対応版
@@ -97,6 +45,11 @@ const ReportBase: React.FC<ReportBaseProps> = ({
     );
     const [interactiveInitialResponse, setInteractiveInitialResponse] = useState<InitialApiResponse | null>(null);
     const [interactiveSessionData, setInteractiveSessionData] = useState<SessionData | null>(null);
+    const { cleanup, pdfPreviewUrl } = business;
+    const { previewUrl, setPreviewUrl } = preview;
+    const { setFinalized } = finalized;
+    const { setModalOpen } = modal;
+    const { setLoading } = loading;
 
     // インタラクティブ帳簿かどうか判定
     const isInteractive = isInteractiveReport(reportKey);
@@ -108,10 +61,21 @@ const ReportBase: React.FC<ReportBaseProps> = ({
 
     // PDFプレビューURLが生成されたら設定
     useEffect(() => {
-        if (business.pdfPreviewUrl && business.pdfPreviewUrl !== preview.previewUrl) {
-            preview.setPreviewUrl(business.pdfPreviewUrl);
+        if (pdfPreviewUrl && pdfPreviewUrl !== previewUrl) {
+            setPreviewUrl(pdfPreviewUrl);
         }
-    }, [business.pdfPreviewUrl, preview]);
+    }, [pdfPreviewUrl, previewUrl, setPreviewUrl]);
+
+    // 帳簿切り替え時にプレビューや内部状態をリセット
+    useEffect(() => {
+        cleanup();
+        setPreviewUrl(null);
+        setInteractiveInitialResponse(null);
+        setInteractiveSessionData(null);
+        setFinalized(false);
+        setModalOpen(false);
+        setLoading(false);
+    }, [cleanup, reportKey, setFinalized, setLoading, setModalOpen, setPreviewUrl]);
 
     /**
      * 通常帳簿のレポート生成処理
@@ -278,7 +242,7 @@ const ReportBase: React.FC<ReportBaseProps> = ({
         try {
             business.applyArtifactResponse(response);
             if (response?.artifact?.pdf_preview_url) {
-                preview.setPreviewUrl(response.artifact.pdf_preview_url);
+                setPreviewUrl(response.artifact.pdf_preview_url);
             }
 
             if (response?.status === 'success') {
@@ -350,14 +314,14 @@ const ReportBase: React.FC<ReportBaseProps> = ({
                 finalized={finalized.finalized}
                 readyToCreate={business.isReadyToCreate}
                 sampleImageUrl={pdfPreviewMap[reportKey]}
-                pdfUrl={preview.previewUrl}
+                pdfUrl={previewUrl}
                 excelUrl={business.excelUrl}
                 excelReady={business.hasExcel}
                 pdfReady={business.hasPdf}
                 header={undefined}
             >
                 <Suspense fallback={null}>
-                    <PDFViewer pdfUrl={preview.previewUrl} />
+            <PDFViewer pdfUrl={previewUrl} />
                 </Suspense>
             </ReportManagePageLayout>
         </>

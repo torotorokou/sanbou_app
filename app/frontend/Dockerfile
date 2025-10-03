@@ -19,9 +19,6 @@ RUN --mount=type=cache,target=/root/.npm \
 
 # ソースコピー（テスト等は .dockerignore で除外）
 COPY . .
-# 外部取得アセット（サイズ小）
-RUN mkdir -p public \
- && curl -sSL -o public/pdf.worker.min.js https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.worker.min.js
 
 # Vite ビルド（環境変数は compose 側で注入想定）
 RUN npm run build
