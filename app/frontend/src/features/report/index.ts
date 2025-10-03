@@ -70,10 +70,11 @@ export type {
 // 将来の公開API (Phase 4 Step 3-2以降)
 // ========================================
 
-// Hooks (Step 3-2で追加予定)
-// export { useReportManager } from './hooks/useReportManager';
-// export { useReportGeneration } from './hooks/useReportGeneration';
-// export { useReportPreview } from './hooks/useReportPreview';
+// Hooks (Step 3-2で追加) ✅
+export { useReportManager } from './hooks/useReportManager';
+export { useReportBaseBusiness } from './hooks/useReportBaseBusiness';
+export { useReportActions } from './hooks/useReportActions';
+export { useReportLayoutStyles } from './hooks/useReportLayoutStyles';
 
 // UI Components (Step 3-3以降で追加予定)
 // export { ReportBase } from './ui/ReportBase';

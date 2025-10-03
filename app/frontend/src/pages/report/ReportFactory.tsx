@@ -3,7 +3,7 @@
 import React from 'react';
 import ReportBase from '../../components/Report/ReportBase';
 import ReportHeader from '../../components/Report/common/ReportHeader';
-import { useReportManager } from '../../hooks/report';
+import { useReportManager } from '@features/report';
 
 /**
  * 工場帳簿ページ - 新しい分割アーキテクチャ対応
