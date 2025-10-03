@@ -110,14 +110,20 @@ export { downloadExcelFile } from './ui/common/downloadExcel';
 export { default as ReportBase } from './ui/ReportBase';
 
 // ========================================
-// 将来の公開API (Step 3-5以降)
+// UI Components - Interactive (Step 3-5で追加) ✅
 // ========================================
 
-// Interactive Components (Step 3-5で追加予定)
-// export { BlockUnitPriceInteractive } from './ui/interactive/BlockUnitPriceInteractive';
+export { default as BlockUnitPriceInteractive } from './ui/interactive/BlockUnitPriceInteractive';
+export { default as BlockUnitPriceInteractiveModal } from './ui/interactive/BlockUnitPriceInteractiveModal';
+export type { InitialApiResponse, SessionData } from './ui/interactive/BlockUnitPriceInteractiveModal';
+export type { TransportCandidateRow } from './ui/interactive/types';
+export { normalizeRow, isRecord } from './ui/interactive/transportNormalization';
 
-// Viewer Components (Step 3-6で追加予定)
-// export { PDFViewer } from './ui/viewer/PDFViewer';
-// export { ReportSampleThumbnail } from './ui/viewer/ReportSampleThumbnail';
+// ========================================
+// UI Components - Viewer (Step 3-6で追加) ✅
+// ========================================
+
+export { default as PDFViewer } from './ui/viewer/PDFViewer';
+export { default as ReportSampleThumbnail } from './ui/viewer/ReportSampleThumbnail';
 
 
