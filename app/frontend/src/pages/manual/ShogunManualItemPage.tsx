@@ -1,5 +1,5 @@
 import React from 'react';
-import ManualPage from '@/pages/manual/ManualPage';
+import ManualPage from './DetailPage';
 
 // 将軍マニュアル個別ページ（/manuals/syogun/:id）
 const ShogunManualItemPage: React.FC = () => {
