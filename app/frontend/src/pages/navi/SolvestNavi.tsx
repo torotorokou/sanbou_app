@@ -2,10 +2,12 @@ import React, { useMemo, useState } from 'react';
 import { Spin, Button } from 'antd';
 import { FilePdfOutlined } from '@ant-design/icons';
 import { apiGet, apiPost } from '@shared/infrastructure/http';
-import ChatQuestionSection from '@/components/chat/ChatQuestionSection';
-import ChatSendButtonSection from '@/components/chat/ChatSendButtonSection';
-import ChatAnswerSection from '@/components/chat/ChatAnswerSection';
-import PdfPreviewModal from '@/components/chat/PdfPreviewModal';
+import {
+  ChatQuestionSection,
+  ChatSendButtonSection,
+  ChatAnswerSection,
+  PdfPreviewModal,
+} from '@features/chat';
 import type { StepItem } from '@/components/ui/ReportStepIndicator';
 import ReportStepIndicator from '@/components/ui/ReportStepIndicator';
 // import ManualSearchForm from '@/components/manual/ManualSearchForm';
