@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 import { notifySuccess, notifyError, notifyInfo } from '@features/notification';
 import { getApiEndpoint, REPORT_KEYS } from '@features/report';
 import type { ReportKey } from '@features/report';
-import type { CsvFiles } from '../../types/reportBase';
+import type { CsvFiles } from './report.types';
 
 export type ReportArtifactResponse = {
     status?: string;

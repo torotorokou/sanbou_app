@@ -3,7 +3,7 @@ import { Modal, Button, Steps, Spin, message, Card, Select } from 'antd';
 import { CheckCircleOutlined } from '@ant-design/icons';
 import { getApiEndpoint } from '@features/report';
 import type { ReportKey } from '@features/report';
-import type { ReportArtifactResponse } from '@/hooks/data/useReportArtifact';
+import type { ReportArtifactResponse } from '../../model/useReportArtifact';
 
 // 型定義（要件に合わせて整備）
 export interface TransportCandidateRow {

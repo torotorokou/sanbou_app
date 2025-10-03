@@ -1,7 +1,7 @@
 import { useCallback, useEffect } from 'react';
 import type { UploadProps } from 'antd/es/upload';
-import { useCsvValidation } from '@/hooks/data/useCsvValidation';
-import { useReportArtifact } from '@/hooks/data/useReportArtifact';
+import { useCsvValidation } from '@features/database/model';
+import { useReportArtifact } from '../model/useReportArtifact';
 import type {
     CsvFiles,
     CsvConfigEntry,

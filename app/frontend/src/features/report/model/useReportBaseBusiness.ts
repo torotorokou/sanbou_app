@@ -1,14 +1,14 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 import type { UploadProps } from 'antd/es/upload';
-import { useCsvValidation } from './useCsvValidation';
-import { useExcelGeneration } from './useExcelGeneration';
+import { useCsvValidation } from '@features/database/model';
+import { useReportArtifact } from './useReportArtifact';
 import type {
     CsvFiles,
     CsvConfigEntry,
     UploadFileConfig,
     MakeUploadPropsFn,
-} from '../types/reportBase';
-import type { ReportKey } from '../constants/reportConfig';
+} from './report.types';
+import type { ReportKey } from '@features/report';
 
 /**
  * ReportBaseのビジネスロジックを統合管理するフック
@@ -25,7 +25,11 @@ export const useReportBaseBusiness = (
     reportKey: ReportKey
 ) => {
     const csvValidation = useCsvValidation();
-    const excelGeneration = useExcelGeneration();
+    const artifact = useReportArtifact();
+
+    useEffect(() => {
+        artifact.cleanup();
+    }, [artifact.cleanup, reportKey]);
 
     /**
      * ファイル削除処理
@@ -116,15 +120,15 @@ export const useReportBaseBusiness = (
     }, [csvConfigs, makeUploadProps]);
 
     /**
-     * Excel生成処理
+     * レポート生成処理（ZIP形式）
      */
-    const handleGenerateExcel = useCallback(
+    const handleGenerateReport = useCallback(
         async (
             onStart: () => void,
             onComplete: () => void,
             onSuccess: () => void
         ) => {
-            const success = await excelGeneration.generateExcel(
+            const success = await artifact.generateReport(
                 csvFiles,
                 reportKey,
                 onStart,
@@ -135,23 +139,41 @@ export const useReportBaseBusiness = (
                 onSuccess();
             }
         },
-        [excelGeneration, csvFiles, reportKey]
+        [artifact, csvFiles, reportKey]
     );
 
     return {
         // 状態
         validationResults: csvValidation.validationResults,
-        excelUrl: excelGeneration.excelUrl,
-        excelFileName: excelGeneration.excelFileName,
+
+        // ZIP関連
+        excelUrl: artifact.excelUrl,
+        pdfUrl: artifact.pdfUrl,
+        excelFileName: artifact.excelFileName,
+        pdfFileName: artifact.pdfFileName,
+        hasExcel: Boolean(artifact.excelUrl),
+    hasPdf: Boolean(artifact.pdfUrl),
+    pdfPreviewUrl: artifact.pdfUrl,
+        reportToken: artifact.reportToken,
+        reportDate: artifact.reportDate,
+        reportKey: artifact.reportKey,
+        summary: artifact.summary,
+        metadata: artifact.metadata,
+        lastResponse: artifact.lastResponse,
 
         // 計算されたプロパティ
         isReadyToCreate: isReadyToCreate(),
         uploadFileConfigs: getUploadFileConfigs(),
         makeUploadPropsFn: createMakeUploadProps(),
+        isReportReady: artifact.isReady,
 
         // アクション
         handleRemoveFile,
-        handleGenerateExcel,
-        downloadExcel: excelGeneration.downloadExcel,
+        handleGenerateReport,
+        downloadExcel: artifact.downloadExcel,
+        printPdf: artifact.printPdf,
+        getPdfPreviewUrl: artifact.getPdfPreviewUrl,
+        cleanup: artifact.cleanup,
+        applyArtifactResponse: artifact.applyArtifactResponse,
     };
 };
