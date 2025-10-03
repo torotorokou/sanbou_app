@@ -83,7 +83,7 @@ def test_class_instantiation():
     failed_tests = []
     
     try:
-        from app.api.services.report.concrete_generators import (
+        from app.api.services.report.core.concrete_generators import (
             AverageSheetGenerator,
             BalanceSheetGenerator,
             FactoryReportGenerator,
@@ -108,7 +108,7 @@ def test_class_instantiation():
         print(f"⚠️  BlockUnitPriceInteractive のインポートに失敗: {e}")
     
     try:
-        from app.api.services.report.report_processing_service import ReportProcessingService
+        from app.api.services.report.core.processors import ReportProcessingService
         test_cases.append(
             (lambda: ReportProcessingService(), "ReportProcessingService")
         )
@@ -116,7 +116,7 @@ def test_class_instantiation():
         print(f"⚠️  ReportProcessingService のインポートに失敗: {e}")
     
     try:
-        from app.api.services.report.interactive_report_processing_service import InteractiveReportProcessingService
+        from app.api.services.report.core.processors import InteractiveReportProcessingService
         test_cases.append(
             (lambda: InteractiveReportProcessingService(), "InteractiveReportProcessingService")
         )
@@ -212,7 +212,7 @@ def test_utility_functions():
     
     # logger のテスト
     try:
-        from app.api.services.report.ledger.utils.logger import app_logger
+        from app.api.services.report.utils.logging import app_logger
         logger = app_logger()
         logger.info("Test log message")
         print("✅ logger                                                  OK")
@@ -223,7 +223,7 @@ def test_utility_functions():
     
     # config のテスト
     try:
-        from app.api.services.report.ledger.utils.config import get_template_config
+        from app.api.services.report.utils.config import get_template_config
         config = get_template_config()
         assert isinstance(config, dict), "config は辞書である必要があります"
         print("✅ get_template_config                                    OK")
@@ -234,7 +234,7 @@ def test_utility_functions():
     
     # MainPath のテスト
     try:
-        from app.api.services.report.ledger.utils.main_path import MainPath
+        from app.api.services.report.utils.paths import MainPath
         _ = MainPath()  # インスタンス化のみ確認
         print("✅ MainPath                                               OK")
         success_count += 1
@@ -244,7 +244,7 @@ def test_utility_functions():
     
     # date_tools のテスト
     try:
-        from app.api.services.report.ledger.utils.date_tools import get_weekday_japanese
+        from app.api.services.report.utils.formatters import get_weekday_japanese
         from datetime import date
         weekday = get_weekday_japanese(date(2024, 1, 1))
         assert isinstance(weekday, str), "曜日は文字列である必要があります"

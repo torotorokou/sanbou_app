@@ -1,4 +1,4 @@
-from app.api.services.report.ledger.utils.value_setter import set_value_fast_safe
+from app.api.services.report.utils.formatters import set_value_fast_safe
 
 
 def reflect_total_from_factory(master_csv, df_factory):

@@ -1,4 +1,4 @@
-from app.st_app.config.settings.base import *
+from app.api.config.settings.base import *
 
 # --- 本番環境用設定 ---
 

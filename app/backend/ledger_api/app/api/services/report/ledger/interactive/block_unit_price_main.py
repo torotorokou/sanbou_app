@@ -8,10 +8,10 @@ Block Unit Price Interactive - Main Entry Point
 from typing import Any, Callable, Dict, Optional, Tuple, Union
 import pandas as pd
 
-from app.api.services.report.base_interactive_report_generator import (
+from app.api.services.report.core.base_generators import (
     BaseInteractiveReportGenerator,
 )
-from app.api.services.report.ledger.utils.logger import app_logger
+from app.api.services.report.utils.logging import app_logger
 
 # 分離したモジュールをインポート
 from .block_unit_price_initial import execute_initial_step

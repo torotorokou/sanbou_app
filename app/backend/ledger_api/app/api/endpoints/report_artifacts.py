@@ -11,10 +11,12 @@ from typing import Optional
 from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import FileResponse
 
-from app.api.services.report.artifact_service import (
+from app.api.services.report.artifacts import (
     ReportArtifactStorage,
-    UrlSigner,
     get_report_artifact_storage,
+)
+from app.api.services.report.artifacts.artifact_service import (
+    UrlSigner,
     get_url_signer,
 )
 
