@@ -1,5 +1,22 @@
-import type { ManualDetail, ManualListResponse, ManualCatalogResponse } from '@features/manual';
+import type { ManualDetail, ManualListResponse } from '@shared/types';
 import { apiGet } from '@shared/infrastructure/http';
+
+export type ManualCatalogResponse = {
+  sections: Array<{
+    id: string;
+    title: string;
+    icon?: string;
+    items: Array<{
+      id: string;
+      title: string;
+      description?: string;
+      route?: string;
+      tags: string[];
+      flow_url?: string;
+      video_url?: string;
+    }>;
+  }>;
+};
 
 export const manualsApi = {
   async list(params: { query?: string; tag?: string; category?: string; page?: number; size?: number } = {}) {
