@@ -1,5 +1,6 @@
 export { useManualsStore } from './manualsStore';
-export { useNotificationStore } from './notificationStore';
+// Notification store は features/notification に移動しました
+export { useNotificationStore } from '@features/notification';
 
 // ここでまとめてエクスポートしておくと、インポート側で
 // `import { useNotificationStore } from 'src/stores'` のように

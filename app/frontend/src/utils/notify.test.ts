@@ -1,6 +1,5 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { notifySuccess, notifyError, notifyPersistent, notifyApiError } from '@/features/notification/notify';
-import { useNotificationStore } from '@/features/notification/store';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { notifySuccess, notifyError, notifyPersistent, notifyApiError, useNotificationStore } from '@features/notification';
 
 function resetStore() {
   useNotificationStore.setState({ notifications: [] });
