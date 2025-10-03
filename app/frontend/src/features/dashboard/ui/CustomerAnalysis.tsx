@@ -2,7 +2,7 @@
 import React from 'react';
 import { Card, Row, Col } from 'antd';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
-import { customTokens } from '@/theme/tokens';
+import { customTokens } from '@shared/theme/tokens';
 
 const COLORS = [
     customTokens.chartGreen,

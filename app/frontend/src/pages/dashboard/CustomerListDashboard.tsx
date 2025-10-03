@@ -4,7 +4,7 @@ import { MapContainer, TileLayer, Circle, Tooltip, Marker, Popup, GeoJSON } from
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { Card, Table, Statistic, Row, Col } from "antd";
-import { customerAnalysisColors } from '../../theme';
+import { customerAnalysisColors } from '@shared/theme';
 
 // 会社マーカー
 const companyIcon = new L.Icon({

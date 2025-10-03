@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Typography, Modal, Button } from 'antd';
 import { useWindowSize } from '@shared/hooks/ui';
-import { customTokens } from '@/theme';
+import { customTokens } from '@shared/theme';
 import { ExpandOutlined } from '@ant-design/icons';
 
 interface PreviewSectionProps {

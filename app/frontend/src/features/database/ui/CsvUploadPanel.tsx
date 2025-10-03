@@ -3,7 +3,7 @@ import { Card, Typography } from 'antd';
 import CsvUploadCard from './csv-upload/CsvUploadCard';
 import type { CsvFileType } from '@features/database';
 import type { UploadProps } from 'antd';
-import { customTokens } from '@/theme/tokens'; // tsconfigのalias設定が必要
+import { customTokens } from '@shared/theme/tokens'; // tsconfigのalias設定が必要
 
 interface CsvUploadCardEntry extends CsvFileType {
     onRemove: () => void;

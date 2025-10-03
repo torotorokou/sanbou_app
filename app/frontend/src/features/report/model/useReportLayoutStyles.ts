@@ -1,7 +1,7 @@
 import { useMemo } from "react";
-import { useWindowSize } from "@shared/hooks/ui";
-import { customTokens } from "@/theme";
-import { isTabletOrHalf, ANT } from '@/shared/constants/breakpoints';
+import { useWindowSize } from "@shared/hooks/ui/useWindowSize";
+import { customTokens } from "@shared/theme";
+import { isTabletOrHalf, ANT } from '@shared/constants/breakpoints';
 
 /**
  * レイアウトとスタイリングのロジックを管理するフック - シンプル版

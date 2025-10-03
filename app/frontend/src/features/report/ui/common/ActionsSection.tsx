@@ -5,7 +5,7 @@ import { useReportActions } from '@features/report';
 import { Card, Typography, Space } from 'antd';
 import { useWindowSize } from '@shared/hooks/ui';
 import type { ActionsSectionProps } from './types';
-import { actionButtonColors } from '@/theme';
+import { actionButtonColors } from '@shared/theme';
 
 /**
  * レスポンシブル対応レポート関連のアクションボタンセクション

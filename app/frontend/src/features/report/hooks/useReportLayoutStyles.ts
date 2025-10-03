@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { useWindowSize } from "@shared/hooks/ui/useWindowSize";
-import { customTokens } from "@/theme";
+import { customTokens } from "@shared/theme";
 import { isTabletOrHalf, ANT } from '@shared/constants/breakpoints';
 
 /**
