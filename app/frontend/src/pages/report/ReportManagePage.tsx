@@ -1,8 +1,7 @@
 // src/pages/report/ReportPage.tsx
 
 import React from 'react';
-import ReportBase from '../../components/Report/ReportBase';
-import { ReportHeader } from '@features/report';
+import { ReportBase, ReportHeader } from '@features/report';
 // import ResponsiveDebugInfo from '../../components/debug/ResponsiveDebugInfo';
 import { useReportManager } from '@features/report';
 
