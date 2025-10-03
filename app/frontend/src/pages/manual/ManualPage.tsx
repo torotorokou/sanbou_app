@@ -1,8 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Anchor, Breadcrumb, Button, Layout, Space, Spin, Typography } from 'antd';
 import { useNavigate, useParams } from 'react-router-dom';
-import manualsApi from '@/services/api/manualsApi';
-import type { ManualDetail } from '@/types/manuals';
+import { manualsApiDefault as manualsApi, type ManualDetail } from '@features/manual';
 import { ensureSectionAnchors, smoothScrollToAnchor } from '@shared/utils/anchors';
 import { useWindowSize } from '@shared/hooks/ui';
 import { ANT } from '@/shared/constants/breakpoints';

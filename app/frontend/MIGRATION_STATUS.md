@@ -7,7 +7,7 @@
 | Phase 1 | ✅ 完了 | 2025-09-XX | ディレクトリ構造作成・Path Alias設定 |
 | Phase 2 | ✅ 完了 | 2025-10-03 | Shared層インポートパス置換 (40ファイル) |
 | Phase 3 | ✅ 完了 | 2025-10-03 | Features層ドキュメント整備 |
-| Phase 4 | 🔄 進行中 | TBD | Feature完全移行 (Report✅, Database✅, Manual/Chat未着手) |
+| Phase 4 | 🔄 進行中 | TBD | Feature完全移行 (Report✅ Database✅ Manual✅ Chat未着手) |
 | Phase 5 | 📋 未着手 | TBD | Pages層整理 |
 | Phase 6 | 📋 未着手 | TBD | 完全なFSD達成 |
 
@@ -335,12 +335,47 @@ src/features/database/
 
 ---
 
-#### 中優先度 - Manual機能 (次回実施予定)
-3. **Manual機能** (マニュアル検索機能追加時)
-   - [ ] components/manual/ → features/manual/ui/
-   - [ ] services/api/manualsApi.ts → features/manual/api/
-   - [ ] types/manuals.ts → features/manual/model/
+#### 中優先度 - Manual機能 ✅ (完了 - 2025/01/05)
 
+**全体統計**:
+- ✅ 2ファイル移行完了
+- ✅ ~100行のコード
+- ✅ 8の公開API
+- ✅ 所要時間: 約20分
+
+##### Step 5-1: 型定義の移行 ✅
+- [x] `types/manuals.ts` → `features/manual/model/manual.types.ts`
+- [x] ManualCatalogResponse型を追加
+- [x] 公開API作成 (6型)
+
+##### Step 5-2: APIサービスの移行 ✅
+- [x] `services/api/manualsApi.ts` → `features/manual/api/manualsApi.ts`
+- [x] インポートパス修正
+- [x] 型定義の再配置
+- [x] 公開API更新 (named + default exports)
+
+##### Step 5-3: Consumer更新 ✅
+- [x] 4つのページコンポーネント更新
+  - `pages/manual/ShogunManualList.tsx`
+  - `pages/manual/ManualPage.tsx`
+  - `pages/manual/GlobalManualSearch.tsx`
+  - `pages/manual/ManualModal.tsx`
+
+**最終的な構造**:
+```
+src/features/manual/
+├── model/           # 型定義 (Step 5-1)
+├── api/             # APIサービス (Step 5-2)
+└── index.ts         # 公開API (8エクスポート)
+```
+
+**詳細レポート**: 
+- [PHASE4_STEP5_KICKOFF.md](../../docs/phase4/PHASE4_STEP5_KICKOFF.md) - 計画書
+- [PHASE4_STEP5_COMPLETION.md](../../docs/phase4/PHASE4_STEP5_COMPLETION.md) - 完了レポート
+
+---
+
+#### 中優先度 - Chat機能 (次回実施予定)
 4. **Chat機能** (AI応答改善時)
    - [ ] components/chat/ → features/chat/ui/
    - [ ] services/chatService.ts → features/chat/api/
