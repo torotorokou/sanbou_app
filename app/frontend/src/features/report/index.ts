@@ -76,10 +76,32 @@ export { useReportBaseBusiness } from './hooks/useReportBaseBusiness';
 export { useReportActions } from './hooks/useReportActions';
 export { useReportLayoutStyles } from './hooks/useReportLayoutStyles';
 
-// UI Components (Step 3-3以降で追加予定)
+// ========================================
+// UI Components (Step 3-3で追加) ✅
+// ========================================
+
+// Common UI Components
+export { default as ReportHeader } from './ui/common/ReportHeader';
+export { default as ReportSelector } from './ui/common/ReportSelector';
+export { default as ReportStepIndicator } from './ui/common/ReportStepIndicator';
+export { default as ReportStepperModal } from './ui/common/ReportStepperModal';
+export { default as ReportManagePageLayout } from './ui/common/ReportManagePageLayout';
+export { default as CsvUploadSection } from './ui/common/CsvUploadSection';
+export { default as PreviewSection } from './ui/common/PreviewSection';
+export { default as ActionsSection } from './ui/common/ActionsSection';
+export { default as SampleSection } from './ui/common/SampleSection';
+export { default as InteractiveReportModal } from './ui/common/InteractiveReportModal';
+
+// Common UI Types
+export type {
+    CsvFileType,
+    SampleSectionProps,
+    CsvUploadSectionProps,
+    ActionsSectionProps,
+} from './ui/common/types';
+
+// Common UI Utilities
+export { downloadExcelFile } from './ui/common/downloadExcel';
+
+// UI Components (Step 3-4以降で追加予定)
 // export { ReportBase } from './ui/ReportBase';
-// export { ReportHeader } from './ui/common/ReportHeader';
-// export { ReportSelector } from './ui/common/ReportSelector';
-// export { CsvUploadSection } from './ui/common/CsvUploadSection';
-// export { PreviewSection } from './ui/common/PreviewSection';
-// export { ActionsSection } from './ui/common/ActionsSection';
