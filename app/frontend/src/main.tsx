@@ -1,12 +1,12 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import App from './App.tsx';
-import { ThemeProvider } from './shared/theme/ThemeProvider';
-import { generateCssVars } from './shared/theme/cssVars';
+import App from '@/App';
+import { ThemeProvider } from '@shared/theme/ThemeProvider';
+import { generateCssVars } from '@shared/theme/cssVars';
 import 'antd/dist/reset.css';
-import './index.css';
-import './shared/theme/responsive.css';
-import './shared/styles/base.css';
+import '@/index.css';
+import '@shared/theme/responsive.css';
+import '@shared/styles/base.css';
 
 // ① customTokens（ブランドカラー等）からCSS変数を作る
 const cssVars = generateCssVars();

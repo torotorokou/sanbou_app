@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNotificationStore } from '../model/notification.store';
+import { useNotificationStore } from '@features/notification/model/notification.store';
 
 export const NotificationCenter: React.FC = () => {
   const { notifications, removeNotification } = useNotificationStore();

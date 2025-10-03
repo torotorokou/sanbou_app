@@ -3,7 +3,7 @@ import React from 'react';
 import { Card, Typography, Button, Tag, Space } from 'antd';
 import { UserOutlined, RobotOutlined, BookOutlined } from '@ant-design/icons';
 import { TypewriterText } from '@shared/ui';
-import type { ChatMessage } from '../model/chat.types';
+import type { ChatMessage } from '@features/chat/model/chat.types';
 
 type Props = {
     msg: ChatMessage;

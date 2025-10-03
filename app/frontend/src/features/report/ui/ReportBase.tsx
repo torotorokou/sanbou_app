@@ -8,7 +8,7 @@ const PDFViewer = React.lazy(() => import('./viewer/PDFViewer'));
 import { pdfPreviewMap, modalStepsMap, isInteractiveReport, getApiEndpoint } from '@features/report';
 import { useReportBaseBusiness } from '@features/report';
 import type { ReportBaseProps } from '@features/report';
-import type { ReportArtifactResponse } from '../model/useReportArtifact';
+import type { ReportArtifactResponse } from '@features/report/model/useReportArtifact';
 
 // normalizeRow is now provided by ./interactive/transportNormalization
 

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Layout } from 'antd';
 import Sidebar from './Sidebar';
-import AppRoutes from '../routes/AppRoutes';
+import AppRoutes from '@app/routes/AppRoutes';
 import { NotificationCenterAntd } from '@features/notification';
 import { customTokens } from '@shared/theme/tokens';
 import { useWindowSize } from '@shared/hooks/ui';

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Alert, Space } from 'antd';
-import { useNotificationStore } from '../model/notification.store';
-import type { NotificationType, Notification } from '../model/notification.types';
+import { useNotificationStore } from '@features/notification/model/notification.store';
+import type { NotificationType, Notification } from '@features/notification/model/notification.types';
 
 // 通知の種類をAnt DesignのAlert typeにマッピング
 const getAlertType = (type: NotificationType): 'success' | 'info' | 'warning' | 'error' => {
