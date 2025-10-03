@@ -29,6 +29,7 @@ const ReportManagePage: React.FC = () => {
         <div
             style={{
                 height: 'calc(100dvh - (var(--page-padding, 0px) * 2))',
+                padding: 'var(--page-padding, 16px)',
                 display: 'flex',
                 flexDirection: 'column',
                 overflow: 'hidden',

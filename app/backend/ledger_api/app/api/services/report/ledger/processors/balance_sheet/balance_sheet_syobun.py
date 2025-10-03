@@ -17,6 +17,9 @@ def calculate_total_disposal_cost(
 
 
 def calculate_disposal_costs(df_shipment: pd.DataFrame) -> pd.DataFrame:
+    # NOTE: df_shipment が呼び出し元でスライスされたビューの可能性があるため、
+    # ここで明示的にコピーしてから列を書き換えることで SettingWithCopyWarning を回避する。
+    df_shipment = df_shipment.copy()
     config = get_template_config()["balance_sheet"]
     master_path = config["master_csv_path"]["shobun_cost"]
     master_csv_cost = load_master_and_template(master_path)

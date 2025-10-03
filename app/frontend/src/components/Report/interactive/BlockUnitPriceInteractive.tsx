@@ -1,5 +1,4 @@
-// /app/src/components/Report/individual_process/BlockUnitPriceInteractive.tsx
-
+// moved from ../individual_process/BlockUnitPriceInteractive.tsx
 import React, { useState } from 'react';
 import { apiPost } from '@/services/httpClient';
 
