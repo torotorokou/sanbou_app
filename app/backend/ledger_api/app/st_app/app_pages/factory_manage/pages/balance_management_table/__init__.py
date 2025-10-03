@@ -1,1 +1,0 @@
-"""Balance management table page."""
