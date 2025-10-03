@@ -3,7 +3,7 @@
 import React from 'react';
 import ReportBase from '../../components/Report/ReportBase';
 import ReportHeader from '../../components/Report/common/ReportHeader';
-import { useReportManager } from '../../hooks/report';
+import { useReportManager } from '@features/report';
 
 /**
  * 帳簿専用ページ - 完全な再利用設計

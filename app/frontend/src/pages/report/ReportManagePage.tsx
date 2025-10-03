@@ -4,7 +4,7 @@ import React from 'react';
 import ReportBase from '../../components/Report/ReportBase';
 import ReportHeader from '../../components/Report/common/ReportHeader';
 // import ResponsiveDebugInfo from '../../components/debug/ResponsiveDebugInfo';
-import { useReportManager } from '../../hooks/report';
+import { useReportManager } from '@features/report';
 
 /**
  * レポートページ - シンプルで保守しやすい設計
