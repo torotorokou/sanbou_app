@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Typography, Alert } from 'antd';
-import { useWindowSize } from '../../../hooks/ui';
-import { ensurePdfJsWorkerLoaded } from '@/utils/pdfWorkerLoader';
+import { useWindowSize } from '@shared/hooks/ui';
+import { ensurePdfJsWorkerLoaded } from '@shared/utils/pdfWorkerLoader';
 
 type PDFViewerProps = {
     pdfUrl?: string | null;

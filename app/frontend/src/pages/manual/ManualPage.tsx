@@ -3,8 +3,8 @@ import { Anchor, Breadcrumb, Button, Layout, Space, Spin, Typography } from 'ant
 import { useNavigate, useParams } from 'react-router-dom';
 import manualsApi from '@/services/api/manualsApi';
 import type { ManualDetail } from '@/types/manuals';
-import { ensureSectionAnchors, smoothScrollToAnchor } from '@/utils/anchors';
-import { useWindowSize } from '@/hooks/ui';
+import { ensureSectionAnchors, smoothScrollToAnchor } from '@shared/utils/anchors';
+import { useWindowSize } from '@shared/hooks/ui';
 import { ANT } from '@/shared/constants/breakpoints';
 
 const { Title } = Typography;

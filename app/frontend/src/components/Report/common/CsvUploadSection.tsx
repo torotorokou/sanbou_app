@@ -1,7 +1,7 @@
 import React from 'react';
 import { Typography } from 'antd';
 import CsvUploadPanel from '../../common/csv-upload/CsvUploadPanel';
-import { useWindowSize } from '../../../hooks/ui';
+import { useWindowSize } from '@shared/hooks/ui';
 import type { CsvUploadSectionProps } from './types';
 
 /**

@@ -15,8 +15,8 @@ import {
 } from '@features/notification';
 
 // ✅ 互換性: 既存のパスも動作（内部で @features/notification に転送）
-import { notifySuccess as notifySuccess2 } from '@/utils/notify';
-import { useNotificationStore as useNotificationStore2 } from '@stores';
+// import { notifySuccess as notifySuccess2 } from '@/utils/notify';
+// import { useNotificationStore as useNotificationStore2 } from '@stores/index';
 
 // 基本的な使用
 export function ExampleUsage() {

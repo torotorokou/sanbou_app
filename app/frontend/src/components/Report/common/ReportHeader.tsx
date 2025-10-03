@@ -1,6 +1,6 @@
 import React from 'react';
 import { Steps } from 'antd';
-import { useWindowSize } from '../../../hooks/ui';
+import { useWindowSize } from '@shared/hooks/ui';
 import { isTabletOrHalf, ANT } from '@/shared/constants/breakpoints';
 import ReportSelector from './ReportSelector';
 import type { PageGroupKey } from '@/constants/reportConfig';

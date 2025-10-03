@@ -1,21 +1,23 @@
 import React, { useMemo, useState } from 'react';
 import { Spin, Button } from 'antd';
 import { FilePdfOutlined } from '@ant-design/icons';
-import { apiGet, apiPost } from '@/services/httpClient';
+import { apiGet, apiPost } from '@shared/infrastructure/http';
 import ChatQuestionSection from '@/components/chat/ChatQuestionSection';
 import ChatSendButtonSection from '@/components/chat/ChatSendButtonSection';
 import ChatAnswerSection from '@/components/chat/ChatAnswerSection';
 import PdfPreviewModal from '@/components/chat/PdfPreviewModal';
 import type { StepItem } from '@/components/ui/ReportStepIndicator';
 import ReportStepIndicator from '@/components/ui/ReportStepIndicator';
-import { useWindowSize } from '@/hooks/ui';
+// import ManualSearchForm from '@/components/manual/ManualSearchForm';
+import { useWindowSize } from '@shared/hooks/ui';
+// import { useWaitForCompletion } from '@/hooks/ai/useWaitForCompletion';
 import { ANT, isTabletOrHalf } from '@/shared/constants/breakpoints';
-// YAMLを直接インポート（viteの@rollup/plugin-yamlでJSON化）
+// YAMLを直接インポート(viteの@rollup/plugin-yamlでJSON化)
 // YAML直読みを廃止し、バックエンドAPIから取得する
 
 // ✅ 追加: 通知ストア
-import { ConfigProvider, message } from 'antd';
-import jaJP from 'antd/locale/ja_JP';
+// import { ConfigProvider, message } from 'antd';
+// import jaJP from 'antd/locale/ja_JP';
 import { useNotificationStore } from '@features/notification';
 
 // PDF.js のワーカーは初期ロードから外し、必要時に動的 import します。

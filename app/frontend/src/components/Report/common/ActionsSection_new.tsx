@@ -2,7 +2,8 @@ import React from 'react';
 import VerticalActionButton from '../../ui/VerticalActionButton';
 import { PlayCircleOutlined, DownloadOutlined, PrinterOutlined } from '@ant-design/icons';
 import { useReportActions } from '../../../hooks/report';
-import { useWindowSize } from '../../../hooks/ui';
+import { Card, Typography, Space } from 'antd';
+import { useWindowSize } from '@shared/hooks/ui';
 import type { ActionsSectionProps } from './types';
 import { actionButtonColors } from '../../../theme';
 

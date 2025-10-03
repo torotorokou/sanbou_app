@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { Steps } from 'antd';
-import { useWindowSize } from '@/hooks/ui';
+import { useWindowSize } from '@shared/hooks/ui';
 
 export type StepItem = {
     title: string;

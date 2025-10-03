@@ -4,7 +4,7 @@ import Sidebar from './Sidebar';
 import AppRoutes from '../routes/AppRoutes';
 import { NotificationCenterAntd } from '@features/notification';
 import { customTokens } from '../theme/tokens';
-import { useWindowSize } from '../hooks/ui';
+import { useWindowSize } from '@shared/hooks/ui';
 
 const { Content } = Layout;
 

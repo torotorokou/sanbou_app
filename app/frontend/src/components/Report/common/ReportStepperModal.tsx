@@ -1,7 +1,7 @@
 import React from 'react';
 import { Modal, Steps, Button } from 'antd';
 import type { ReactNode } from 'react';
-import { useWindowSize } from '@/hooks/ui';
+import { useWindowSize } from '@shared/hooks/ui';
 
 const { Step } = Steps;
 
