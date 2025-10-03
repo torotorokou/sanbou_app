@@ -12,9 +12,9 @@ const PricingDashboard = lazy(() => import('../pages/dashboard/PricingDashboard'
 const CustomerListDashboard = lazy(() => import('../pages/dashboard/CustomerListDashboard'));
 const SalesTreePage = lazy(() => import('../pages/dashboard/SalesTreePage'));
 
-const ReportFactory = lazy(() => import('../pages/report/ReportFactory'));
-const ReportManagePage = lazy(() => import('../pages/report/ReportManagePage'));
-const LedgerBookPage = lazy(() => import('../pages/report/LedgerBookPage'));
+const ReportManagePage = lazy(() => import('@/pages/report').then(m => ({ default: m.ReportManagePage })));
+const ReportFactoryPage = lazy(() => import('@/pages/report').then(m => ({ default: m.ReportFactoryPage })));
+const LedgerBookPage = lazy(() => import('@/pages/report').then(m => ({ default: m.LedgerBookPage })));
 
 const CustomerListAnalysis = lazy(() => import('../pages/analysis/CustomerListAnalysis'));
 
@@ -64,7 +64,7 @@ const AppRoutes: React.FC = () => {
     {/* /report 直アクセス時は管理ページへ */}
     <Route path='/report' element={<Navigate to={ROUTER_PATHS.REPORT_MANAGE} replace />} />
         <Route path={ROUTER_PATHS.REPORT_MANAGE} element={<ReportManagePage />} />
-        <Route path={ROUTER_PATHS.REPORT_FACTORY} element={<ReportFactory />} />
+        <Route path={ROUTER_PATHS.REPORT_FACTORY} element={<ReportFactoryPage />} />
         <Route path={ROUTER_PATHS.LEDGER_BOOK} element={<LedgerBookPage />} />
 
         {/* データ分析 */}
