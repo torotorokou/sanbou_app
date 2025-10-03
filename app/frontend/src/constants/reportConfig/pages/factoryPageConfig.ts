@@ -1,5 +1,6 @@
 // /app/src/constants/reportConfig/pages/factoryPageConfig.ts
 import React from "react";
+import { Spin } from 'antd';
 import { CSV_DEFINITIONS } from "../../CsvDefinition";
 import type {
   CsvConfigGroup,
@@ -40,8 +41,8 @@ export const factoryModalStepsMap: Record<FactoryReportKey, ModalStepConfig[]> =
         label: "帳簿作成中",
         content: React.createElement(
           "div",
-          {},
-          "帳簿を作成中です。しばらくお待ちください。"
+          { style: { textAlign: 'center', padding: 24 } },
+          React.createElement(Spin, { size: 'large' })
         ),
         showNext: false,
         showClose: false,

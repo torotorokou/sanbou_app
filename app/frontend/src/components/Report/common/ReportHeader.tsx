@@ -9,6 +9,9 @@ type ReportHeaderProps = {
     reportKey: string;
     onChangeReportKey: (val: string) => void;
     currentStep: number;
+    // New flags used to derive header step index
+    areRequiredCsvsUploaded?: boolean;
+    isFinalized?: boolean;
     /** ページ別帳票グループ指定 */
     pageGroup?: PageGroupKey;
 };
@@ -17,6 +20,8 @@ const ReportHeader: React.FC<ReportHeaderProps> = ({
     reportKey,
     onChangeReportKey,
     currentStep,
+    areRequiredCsvsUploaded,
+    isFinalized,
     pageGroup,
 }) => {
     const { isMobile, isTablet, width } = useWindowSize();
@@ -58,9 +63,19 @@ const ReportHeader: React.FC<ReportHeaderProps> = ({
     const stepItems = [
         { title: 'データセットの準備', description: minimizeSteps ? undefined : isMobile ? undefined : 'CSVアップロード' },
         { title: '帳簿作成', description: minimizeSteps ? undefined : isMobile ? undefined : 'ボタンをクリック' },
-        { title: 'プレビュー確認', description: minimizeSteps ? undefined : isMobile ? undefined : '帳票を確認' },
         { title: 'ダウンロード', description: minimizeSteps ? undefined : isMobile ? undefined : '保存できます' },
     ];
+
+    // Derive header index from upload/finish flags when available. Falls back to passed currentStep.
+    const deriveHeaderIndex = () => {
+        if (typeof areRequiredCsvsUploaded === 'boolean' && typeof isFinalized === 'boolean') {
+            if (!areRequiredCsvsUploaded) return 0; // データセットの準備
+            if (areRequiredCsvsUploaded && !isFinalized) return 1; // 帳簿作成
+            if (isFinalized) return 2; // ダウンロード
+        }
+        return Math.min(Math.max(currentStep, 0), stepItems.length - 1);
+    };
+    const headerIndex = deriveHeaderIndex();
 
     // タイトル風スタイル（半画面以下）を selector に渡すための inline style
     const selectorTitleStyle: React.CSSProperties | undefined = (typeof width === 'number' && width < ANT.xl) ? {
@@ -90,7 +105,7 @@ const ReportHeader: React.FC<ReportHeaderProps> = ({
             {/* ✅ ステップ表示ラッパー */}
             <div style={stepsWrapperStyle}>
                 <Steps
-                    current={currentStep}
+                    current={headerIndex}
                     responsive={true}
                     size={minimizeSteps ? 'small' : isMobile ? 'small' : undefined}
                     items={stepItems}

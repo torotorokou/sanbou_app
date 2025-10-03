@@ -130,33 +130,49 @@ const TransportSelectionList: React.FC<{
 }> = ({ items, selections, onChange }) => {
     return (
         <div>
-            {items.map((item) => (
-                <Card key={item.id} size="small" style={{ marginBottom: 8, padding: 8 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <div style={{ lineHeight: 1.25 }}>
-                            {/* ID は表示しない（内部で保持） */}
-                            <div style={{ fontSize: 13 }}><strong>処理業者：</strong> {item.processor_name}</div>
-                            <div style={{ fontSize: 13 }}><strong>商品名：</strong> {item.product_name}</div>
-                            <div style={{ fontSize: 12, color: '#666' }}><strong>備考：</strong> {item.note ?? '（なし）'}</div>
+            {items.map((item, idx) => {
+                // full-card zebra background with a subtle border for clear separation
+                const bgColor = idx % 2 === 0 ? '#f5fbff' : '#fffaf0';
+                const borderColor = idx % 2 === 0 ? '#e6f7ff' : '#fff2cc';
+                return (
+                    <Card
+                        key={item.id}
+                        size="small"
+                        style={{
+                            marginBottom: 10,
+                            padding: 12,
+                            background: bgColor,
+                            border: `1px solid ${borderColor}`,
+                            borderRadius: 8,
+                            boxShadow: '0 1px 0 rgba(0,0,0,0.02)'
+                        }}
+                    >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div style={{ lineHeight: 1.3 }}>
+                                {/* ID は表示しない（内部で保持） */}
+                                <div style={{ fontSize: 17 }}><strong>処分業者：</strong> {item.processor_name}</div>
+                                <div style={{ fontSize: 16, marginTop: 6 }}><strong>商品名：</strong> {item.product_name}</div>
+                                <div style={{ fontSize: 15, color: '#444', marginTop: 8 }}><strong>備考：</strong> {item.note ?? '（なし）'}</div>
+                            </div>
+                            <div style={{ minWidth: 240 }}>
+                                <div style={{ marginBottom: 6, fontSize: 15 }}><strong>運搬業者：</strong> 選択してください</div>
+                                <Select
+                                    style={{ width: 240 }}
+                                    placeholder="選択してください"
+                                    value={selections[item.id]?.index}
+                                    onChange={(selected) => {
+                                        const idx = typeof selected === 'number' ? selected : Number(selected);
+                                        const clamped = Number.isFinite(idx) ? Math.max(0, Math.min(idx, item.transport_options.length - 1)) : 0;
+                                        const label = item.transport_options[clamped]?.name ?? '';
+                                        onChange(item.id, { index: clamped, label });
+                                    }}
+                                    options={item.transport_options.map((v, optionIndex) => ({ value: optionIndex, label: v.name }))}
+                                />
+                            </div>
                         </div>
-                        <div style={{ minWidth: 220 }}>
-                            <div style={{ marginBottom: 4, fontSize: 13 }}>運搬業者を選択</div>
-                            <Select
-                                style={{ width: 220 }}
-                                placeholder="選択してください"
-                                value={selections[item.id]?.index}
-                                onChange={(selected) => {
-                                    const idx = typeof selected === 'number' ? selected : Number(selected);
-                                    const clamped = Number.isFinite(idx) ? Math.max(0, Math.min(idx, item.transport_options.length - 1)) : 0;
-                                    const label = item.transport_options[clamped]?.name ?? '';
-                                    onChange(item.id, { index: clamped, label });
-                                }}
-                                options={item.transport_options.map((v, optionIndex) => ({ value: optionIndex, label: v.name }))}
-                            />
-                        </div>
-                    </div>
-                </Card>
-            ))}
+                    </Card>
+                );
+            })}
         </div>
     );
 };
@@ -482,7 +498,7 @@ const BlockUnitPriceInteractiveModal: React.FC<BlockUnitPriceInteractiveModalPro
 
                     {currentStep === 0 && !processing && items.length > 0 && (
                         <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
-                            <h4 style={{ marginBottom: 12 }}>処理業者ごとに運搬業者を選択してください</h4>
+                            <h4 style={{ marginBottom: 12 }}>処分業者ごとに運搬業者を選択してください</h4>
                             <div style={{ flex: 1, overflowY: 'auto', padding: '0 8px 12px 0' }}>
                                 <TransportSelectionList
                                     items={items}
@@ -497,20 +513,30 @@ const BlockUnitPriceInteractiveModal: React.FC<BlockUnitPriceInteractiveModalPro
                         <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
                             <h4 style={{ marginBottom: 12 }}>選択内容の確認</h4>
                             <div style={{ flex: 1, overflowY: 'auto', padding: '0 8px 12px 0' }}>
-                                {items.map((item) => (
-                                    <Card key={item.id} size="small" style={{ marginBottom: 8 }}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16 }}>
-                                            <div style={{ flex: 1, lineHeight: 1.4 }}>
-                                                <div><strong>処分業者：</strong> {item.processor_name}</div>
-                                                <div><strong>商品名：</strong> {item.product_name}</div>
-                                                <div><strong>備考：</strong> {item.note ?? '（なし）'}</div>
-                                            </div>
-                                            <div style={{ flex: 1, lineHeight: 1.4 }}>
-                                                <div><strong>選択運搬業者：</strong> {selections[item.id]?.label || '未選択'}</div>
-                                            </div>
-                                        </div>
-                                    </Card>
-                                ))}
+                                <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '0 8px' }}>
+                                    <thead>
+                                        <tr style={{ background: '#fafafa' }}>
+                                            <th style={{ textAlign: 'left', padding: '10px 12px', fontSize: 14, borderBottom: '1px solid #eee' }}>処分業者</th>
+                                            <th style={{ textAlign: 'left', padding: '10px 12px', fontSize: 14, borderBottom: '1px solid #eee' }}>商品名</th>
+                                            <th style={{ textAlign: 'left', padding: '10px 12px', fontSize: 14, borderBottom: '1px solid #eee' }}>備考</th>
+                                            <th style={{ textAlign: 'left', padding: '10px 12px', fontSize: 14, borderBottom: '1px solid #eee' }}>運搬業者</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {items.map((item, idx) => {
+                                            const bgColor = idx % 2 === 0 ? '#f5fbff' : '#fffaf0';
+                                            const borderColor = idx % 2 === 0 ? '#e6f7ff' : '#fff2cc';
+                                            return (
+                                                <tr key={item.id} style={{ background: bgColor }}>
+                                                    <td style={{ padding: '12px', border: `1px solid ${borderColor}`, borderRadius: 6, verticalAlign: 'top', fontSize: 17 }}>{item.processor_name}</td>
+                                                    <td style={{ padding: '12px', border: `1px solid ${borderColor}`, borderRadius: 6, verticalAlign: 'top', fontSize: 16 }}>{item.product_name}</td>
+                                                    <td style={{ padding: '12px', border: `1px solid ${borderColor}`, borderRadius: 6, verticalAlign: 'top', fontSize: 15, color: '#444' }}>{item.note ?? '（なし）'}</td>
+                                                    <td style={{ padding: '12px', border: `1px solid ${borderColor}`, borderRadius: 6, verticalAlign: 'top', fontSize: 17 }}>{selections[item.id]?.label || '未選択'}</td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
                             </div>
                             <p style={{ marginTop: 12, color: '#666' }}>詳細なサマリーと送信内容はコンソールで確認できます。</p>
                         </div>

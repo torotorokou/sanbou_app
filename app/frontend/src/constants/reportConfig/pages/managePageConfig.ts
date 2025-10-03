@@ -1,5 +1,6 @@
 // /app/src/constants/reportConfig/pages/managePageConfig.ts
 import React from "react";
+import { Spin } from 'antd';
 import { CSV_DEFINITIONS } from "../../CsvDefinition";
 import type { CsvConfigGroup, ModalStepConfig } from "../shared/types";
 import { createReportConfig, SIMPLE_CREATE_AND_DONE_STEPS } from "../shared/common";
@@ -73,8 +74,8 @@ export const manageModalStepsMap: Record<ManageReportKey, ModalStepConfig[]> = {
       label: "帳簿作成中",
       content: React.createElement(
         "div",
-        {},
-        "帳簿を作成中です。しばらくお待ちください。"
+        { style: { textAlign: 'center', padding: 24 } },
+        React.createElement(Spin, { size: 'large' })
       ),
       showNext: false,
       showClose: false,
@@ -83,8 +84,8 @@ export const manageModalStepsMap: Record<ManageReportKey, ModalStepConfig[]> = {
       label: "帳簿作成中",
       content: React.createElement(
         "div",
-        {},
-        "帳簿を作成中です。しばらくお待ちください。"
+        { style: { textAlign: 'center', padding: 24 } },
+        React.createElement(Spin, { size: 'large' })
       ),
       showNext: false,
       showClose: false,

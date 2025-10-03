@@ -81,6 +81,15 @@ const ReportBase: React.FC<ReportBaseProps> = ({
      * 通常帳簿のレポート生成処理
      */
     const handleNormalGenerate = () => {
+        // リジェネレーション時でもモーダルが「帳簿作成中」から始まるように
+        // finalized フラグをリセットし、モーダル内部の currentStep を 0 に戻す
+        setFinalized(false);
+        try {
+            step.setCurrentStep(0);
+        } catch {
+            // step が未定義なケースを保険的に無視
+        }
+
         modal.setModalOpen(true);
         loading.setLoading(true);
 
@@ -108,6 +117,14 @@ const ReportBase: React.FC<ReportBaseProps> = ({
         }
 
         resetInteractiveState();
+        // 再生成時にヘッダ／モーダルが完了ステップにならないようリセット
+        setFinalized(false);
+        try {
+            step.setCurrentStep(0);
+        } catch {
+            // noop
+        }
+
         loading.setLoading(true);
 
         try {

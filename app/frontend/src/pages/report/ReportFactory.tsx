@@ -40,6 +40,8 @@ const ReportFactory: React.FC = () => {
                 reportKey={reportManager.selectedReport}
                 onChangeReportKey={reportManager.changeReport}
                 currentStep={reportManager.currentStep}
+                areRequiredCsvsUploaded={reportManager.areRequiredCsvsUploaded}
+                isFinalized={reportManager.isFinalized}
                 pageGroup="factory"
             />
             <div style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>

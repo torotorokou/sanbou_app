@@ -14,6 +14,7 @@ export default defineConfig([
             'dist/**',
             'public/**',
             'node_modules/**',
+                'src/theme/**',
             '*.config.{js,ts}',
             'vite.config.ts',
             'tsconfig*.json',
