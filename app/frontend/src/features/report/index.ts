@@ -103,5 +103,21 @@ export type {
 // Common UI Utilities
 export { downloadExcelFile } from './ui/common/downloadExcel';
 
-// UI Components (Step 3-4以降で追加予定)
-// export { ReportBase } from './ui/ReportBase';
+// ========================================
+// UI Components - Main (Step 3-4で追加) ✅
+// ========================================
+
+export { default as ReportBase } from './ui/ReportBase';
+
+// ========================================
+// 将来の公開API (Step 3-5以降)
+// ========================================
+
+// Interactive Components (Step 3-5で追加予定)
+// export { BlockUnitPriceInteractive } from './ui/interactive/BlockUnitPriceInteractive';
+
+// Viewer Components (Step 3-6で追加予定)
+// export { PDFViewer } from './ui/viewer/PDFViewer';
+// export { ReportSampleThumbnail } from './ui/viewer/ReportSampleThumbnail';
+
+
