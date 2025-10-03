@@ -7,7 +7,7 @@
 | Phase 1 | ✅ 完了 | 2025-09-XX | ディレクトリ構造作成・Path Alias設定 |
 | Phase 2 | ✅ 完了 | 2025-10-03 | Shared層インポートパス置換 (40ファイル) |
 | Phase 3 | ✅ 完了 | 2025-10-03 | Features層ドキュメント整備 |
-| Phase 4 | 🔄 進行中 | TBD | Feature完全移行 (Report✅, Database/Manual/Chat未着手) |
+| Phase 4 | 🔄 進行中 | TBD | Feature完全移行 (Report✅, Database✅, Manual/Chat未着手) |
 | Phase 5 | 📋 未着手 | TBD | Pages層整理 |
 | Phase 6 | 📋 未着手 | TBD | 完全なFSD達成 |
 
@@ -292,12 +292,50 @@ src/features/report/
 
 ---
 
-#### 高優先度 - Database機能 (次回実施予定)
-2. **Database機能** (CSV処理改善時)
-   - [ ] components/database/ → features/database/ui/
-   - [ ] hooks/database/ → features/database/hooks/
+#### 高優先度 - Database機能 ✅ (完了 - 2025/01/05)
 
-#### 中優先度
+**全体統計**:
+- ✅ 7ファイル移行完了
+- ✅ ~600行のコード
+- ✅ 7の公開API
+- ✅ 全ビルド成功
+- ✅ 所要時間: 約30分
+
+##### Step 4-1: 型定義の移行 ✅
+- [x] `components/database/types.ts` → `features/database/model/database.types.ts`
+- [x] 公開API作成
+
+##### Step 4-2: Hooksの移行 ✅
+- [x] `hooks/database/` → `features/database/hooks/` (3ファイル)
+- [x] 公開API更新 (2フック)
+- [x] ビルド時間: 7.76秒
+
+##### Step 4-3: UIコンポーネントの移行 ✅
+- [x] `components/database/` → `features/database/ui/` (3ファイル)
+- [x] インポートパス修正 (1ファイル)
+- [x] 公開API更新 (3コンポーネント)
+- [x] ビルド時間: 7.98秒
+
+##### Step 4-4: Consumer更新 ✅
+- [x] `pages/database/UploadDatabasePage.tsx` インポート統合
+- [x] ビルド時間: 8.42秒
+
+**最終的な構造**:
+```
+src/features/database/
+├── model/           # 型定義 (Step 4-1)
+├── hooks/           # ビジネスロジック (Step 4-2)
+├── ui/              # UIコンポーネント (Step 4-3)
+└── index.ts         # 公開API (7エクスポート)
+```
+
+**詳細レポート**: 
+- [PHASE4_STEP4_KICKOFF.md](../../docs/phase4/PHASE4_STEP4_KICKOFF.md) - 計画書
+- [PHASE4_STEP4_COMPLETION.md](../../docs/phase4/PHASE4_STEP4_COMPLETION.md) - 完了レポート
+
+---
+
+#### 中優先度 - Manual機能 (次回実施予定)
 3. **Manual機能** (マニュアル検索機能追加時)
    - [ ] components/manual/ → features/manual/ui/
    - [ ] services/api/manualsApi.ts → features/manual/api/
