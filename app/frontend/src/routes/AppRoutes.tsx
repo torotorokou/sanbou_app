@@ -3,7 +3,7 @@ import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Spin } from 'antd';
 
 // ルート定数
-import { ROUTER_PATHS } from '@/constants/router';
+import { ROUTER_PATHS } from '@shared/constants/router';
 
 // Dashboard pages (not yet refactored)
 const ManagementDashboard = lazy(() => import('../pages/dashboard/ManagementDashboard'));

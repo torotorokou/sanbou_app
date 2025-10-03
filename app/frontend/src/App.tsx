@@ -1,7 +1,7 @@
 import React from 'react';
 import { BrowserRouter } from 'react-router-dom';
 import { App as AntdApp } from 'antd';
-import MainLayout from './layout/MainLayout';
+import MainLayout from './app/layout/MainLayout';
 
 const App: React.FC = () => (
     <AntdApp>

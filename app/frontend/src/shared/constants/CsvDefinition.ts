@@ -16,7 +16,7 @@ import {
     parseYardCSV,
     // parsePayableCSV,
     // parseSalesSummaryCSV,
-} from '@/parsers/csvParsers';
+} from '@shared/lib/parsers/csvParsers';
 
 // 直接定義で簡素化（正しいヘッダーを設定）
 export const CSV_DEFINITIONS: Record<CsvType, CsvDefinition> = {

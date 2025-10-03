@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 import {
     identifyCsvType,
     isCsvMatch,
-} from '@/utils/validators/csvValidator';
+} from '@shared/utils/validators/csvValidator';
 import { notifySuccess, notifyError, notifyWarning } from '@features/notification';
 
 /**

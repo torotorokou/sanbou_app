@@ -9,7 +9,7 @@ import {
     useCsvUploadHandler,
     useCsvUploadArea,
 } from '@features/database';
-import { UPLOAD_CSV_TYPES, UPLOAD_CSV_DEFINITIONS } from '@/constants/uploadCsvConfig';
+import { UPLOAD_CSV_TYPES, UPLOAD_CSV_DEFINITIONS } from '@shared/constants/uploadCsvConfig';
 
 const { Text } = Typography;
 // Layout constants

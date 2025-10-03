@@ -21,7 +21,7 @@ dayjs.extend(isSameOrBefore);
 const { MonthPicker, RangePicker } = DatePicker;
 
 type RecordType = { [key: string]: string | number | null };
-import dummyData from '../../data/受入一覧_20250501_clean.json';
+import dummyData from './受入一覧_20250501_clean.json';
 
 // ユニークキーに使用するカラム
 const unique_keys = ['伝票日付', '業者名', '品名', '受入番号', '正味重量'];

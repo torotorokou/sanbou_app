@@ -3,7 +3,7 @@ import React from 'react';
 import { Layout, Menu, Button, Drawer } from 'antd';
 import { MenuFoldOutlined, MenuUnfoldOutlined } from '@ant-design/icons';
 import { useLocation } from 'react-router-dom';
-import { SIDEBAR_MENU } from '@/constants/sidebarMenu';
+import { SIDEBAR_MENU } from '@shared/constants/sidebarMenu';
 import { customTokens } from '@/theme/tokens';
 import { useSidebarResponsive, useSidebarAnimation, useWindowSize } from '@shared/hooks/ui';
 import { ANT } from '@/shared/constants/breakpoints';
