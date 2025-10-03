@@ -1,12 +1,14 @@
 import React, { useLayoutEffect, useRef, useState } from 'react';
 import { Typography, Col, Row, Button, Modal, Spin, Tabs } from 'antd';
-import CsvUploadPanel from '../../components/database/CsvUploadPanel';
-import CsvPreviewCard from '../../components/database/CsvPreviewCard';
 import { csvTypeColors } from '../../theme';
 
-import { UploadInstructions } from '@/components/database/UploadInstructions';
-import { useCsvUploadHandler } from '@/hooks/database/useCsvUploadHandler';
-import { useCsvUploadArea } from '@/hooks/database/useCsvUploadArea';
+import {
+    CsvUploadPanel,
+    CsvPreviewCard,
+    UploadInstructions,
+    useCsvUploadHandler,
+    useCsvUploadArea,
+} from '@features/database';
 import { UPLOAD_CSV_TYPES, UPLOAD_CSV_DEFINITIONS } from '@/constants/uploadCsvConfig';
 
 const { Text } = Typography;
