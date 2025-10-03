@@ -32,7 +32,7 @@ import { useWindowSize } from '@shared/hooks/ui';
 import { ANT, isTabletOrHalf } from '@/shared/constants/breakpoints';
 import styles from './shogunManual.module.css';
 import type { ManualItem, ManualSection } from './types';
-import manualsApi from '@/services/api/manualsApi';
+import { manualsApiDefault as manualsApi } from '@features/manual';
 
 // Catalog DTO types from backend
 type CatalogItemDTO = {

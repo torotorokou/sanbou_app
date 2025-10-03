@@ -2,9 +2,7 @@ import { isMobile as isMobileWidth } from '@/shared/constants/breakpoints';
 import React, { useEffect, useRef, useState } from 'react';
 import { Modal, Typography, Spin, Anchor, Row, Col } from 'antd';
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import manualsApi from '@/services/api/manualsApi';
-import type { ManualSummary } from '@/types/manuals';
-import type { ManualDetail } from '@/types/manuals';
+import { manualsApiDefault as manualsApi, type ManualSummary, type ManualDetail } from '@features/manual';
 import { ensureSectionAnchors, smoothScrollToAnchor } from '@shared/utils/anchors';
 
 const { Title } = Typography;
