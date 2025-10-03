@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Input, List, Space, Tag, Typography } from 'antd';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import manualsApi from '@/services/api/manualsApi';
-import type { ManualSummary } from '@/types/manuals';
+import { manualsApiDefault as manualsApi, type ManualSummary } from '@features/manual';
 
 const { Title, Paragraph } = Typography;
 
