@@ -197,16 +197,23 @@ src/
 
 ---
 
-##### Step 3-2: Report Hooks の移行 (次のステップ) ⏳
-- [ ] `src/hooks/report/useReportManager.ts` → `features/report/hooks/useReportManager.ts`
-- [ ] `src/hooks/report/useReportGeneration.ts` → `features/report/hooks/useReportGeneration.ts`
-- [ ] `src/hooks/report/useReportPreview.ts` → `features/report/hooks/useReportPreview.ts`
-- [ ] `src/hooks/report/useReportBaseBusiness.ts` → `features/report/hooks/useReportBaseBusiness.ts`
-- [ ] インポートパス更新
-- [ ] 公開API更新
+##### Step 3-2: Report Hooks の移行 ✅ (完了 - 2025/01/05)
+- [x] `src/hooks/report/useReportManager.ts` → `features/report/hooks/useReportManager.ts`
+- [x] `src/hooks/report/useReportBaseBusiness.ts` → `features/report/hooks/useReportBaseBusiness.ts`
+- [x] `src/hooks/report/useReportActions.ts` → `features/report/hooks/useReportActions.ts`
+- [x] `src/hooks/report/useReportLayoutStyles.ts` → `features/report/hooks/useReportLayoutStyles.ts`
+- [x] インポートパス修正 (2ファイル)
+- [x] 公開API更新 (4つのhookをエクスポート)
+- [x] コンシューマー更新 (3ファイル)
+- [x] ビルド成功確認
 
-**推定工数**: 3-4時間  
-**リスク**: 中 (ビジネスロジック含む、テストが必要)
+**成果**:
+- Reportビジネスロジックフックが完全にFSD構造に移行
+- 3つのページコンポーネントのインポートパスを `@features/report` に更新
+- クロスフィーチャー依存を絶対パスで管理 (`@/hooks/data/`)
+- ビルド時間: 10.43秒 (エラーなし、Rollup警告は予想通り)
+
+**詳細レポート**: [PHASE4_STEP3-2_COMPLETION.md](../../docs/phase4/PHASE4_STEP3-2_COMPLETION.md)
 
 ---
 
