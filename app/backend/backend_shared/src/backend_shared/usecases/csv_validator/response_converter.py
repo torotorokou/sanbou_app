@@ -10,14 +10,14 @@ from typing import Optional
 
 from fastapi import UploadFile
 
-from backend_shared.api_response.response_base import ErrorApiResponse
-from backend_shared.api_response.response_error import (
+from backend_shared.adapters.presentation.response_base import ErrorApiResponse
+from backend_shared.adapters.presentation.response_error import (
     DateMismatchResponse,
     MissingColumnsResponse,
     MissingDateFieldResponse,
 )
-from backend_shared.csv_formatter.dataframe import serialize_dates_info
-from backend_shared.csv_validator.validation_result import (
+from backend_shared.usecases.csv_formatter.dataframe import serialize_dates_info
+from backend_shared.usecases.csv_validator.validation_result import (
     ValidationError,
     ValidationErrorType,
     ValidationResult,

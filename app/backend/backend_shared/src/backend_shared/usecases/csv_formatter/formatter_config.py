@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
-from backend_shared.config.config_loader import SyogunCsvConfigLoader
+from backend_shared.infrastructure.config.config_loader import SyogunCsvConfigLoader
 
 
 @dataclass

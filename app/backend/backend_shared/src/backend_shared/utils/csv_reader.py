@@ -7,8 +7,8 @@ CSVファイルを安全に読み込むためのユーティリティクラス�
 
 import pandas as pd
 
-from backend_shared.api_response.response_error import CSVReadErrorResponse
-from backend_shared.api_response.response_base import ErrorApiResponse
+from backend_shared.adapters.presentation.response_error import CSVReadErrorResponse
+from backend_shared.adapters.presentation.response_base import ErrorApiResponse
 
 
 class SafeCsvReader:
