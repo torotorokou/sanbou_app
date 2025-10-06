@@ -23,7 +23,7 @@ import {
   NotificationOutlined,
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
-import { ROUTER_PATHS } from '@shared/constants/router';
+import { ROUTER_PATHS } from '@app/router/routes';
 import { useWindowSize } from '@shared/hooks/ui';
 import { ANT } from '@/shared/constants/breakpoints';
 import './PortalPage.css';

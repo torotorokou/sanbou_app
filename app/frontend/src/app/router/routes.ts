@@ -1,4 +1,4 @@
-// src/constants/router.ts
+// src/app/router/routes.ts
 
 /**
  * アプリケーション内のページルート一覧

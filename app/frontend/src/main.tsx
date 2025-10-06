@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from '@/App';
-import { ThemeProvider } from '@shared/theme/ThemeProvider';
+import { ThemeProvider } from '@app/providers/ThemeProvider';
 import { generateCssVars } from '@shared/theme/cssVars';
 import 'antd/dist/reset.css';
 import '@/index.css';
