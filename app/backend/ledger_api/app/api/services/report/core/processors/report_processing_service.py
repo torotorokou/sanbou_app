@@ -1,9 +1,4 @@
-"""帳票処理の共通サーfrom fastapi import UploadFile
-from fastapi.responses import JSONResponse, Response
-
-from app.api.services.report.core.base_generators.base_report_generator import BaseReportGenerator
-from app.api.services.report.artifacts.artifact_builder import ArtifactResponseBuilder
-from backend_shared.src.api_response.response_error import NoFilesUploadedResponse務:
+"""帳票処理の共通サービス:
 - CSV 読込
 - ジェネレーターの validate/format/main_process 呼び出し
 - Excel/PDF をファイルとして保存し、署名付き URL を返却
@@ -19,6 +14,7 @@ from fastapi.responses import JSONResponse, Response
 from app.api.services.report.core.base_generators import BaseReportGenerator
 from app.api.services.report.artifacts import ArtifactResponseBuilder
 from backend_shared.src.api_response.response_error import NoFilesUploadedResponse
+from backend_shared.src.api.error_handlers import DomainError
 from backend_shared.src.utils.csv_reader import read_csv_files
 from backend_shared.src.utils.date_filter_utils import (
     filter_by_period_from_min_date as shared_filter_by_period_from_min_date,
@@ -133,7 +129,20 @@ class ReportProcessingService:
 
             # Step 3: 整形（ジェネレーター定義）
             print("Formatting DataFrames...")
-            df_formatted = generator.format(dfs)
+            try:
+                df_formatted = generator.format(dfs)
+            except DomainError:
+                # 既にDomainErrorの場合はそのまま再raise
+                raise
+            except Exception as ex:
+                print(f"[ERROR] format() failed: {ex}")
+                raise DomainError(
+                    code="REPORT_FORMAT_ERROR",
+                    status=500,
+                    user_message=f"帳票データの整形中にエラーが発生しました: {str(ex)}",
+                    title="データ整形エラー"
+                ) from ex
+            
             for csv_type, df in df_formatted.items():
                 try:
                     shape = getattr(df, "shape", None)
@@ -145,13 +154,21 @@ class ReportProcessingService:
             print("Running main_process...")
             try:
                 df_result = generator.main_process(df_formatted)
+            except DomainError:
+                # 既にDomainErrorの場合はそのまま再raise
+                raise
             except Exception as ex:
                 print("[DEBUG] main_process raised an exception:")
                 print(f"[DEBUG] Exception type: {type(ex).__name__}, message: {ex}")
                 tb = traceback.format_exc()
                 print("[DEBUG] Traceback:\n" + tb)
-                # そのまま上位のハンドラへ
-                raise
+                # DomainErrorに変換して詳細なエラーメッセージを提供
+                raise DomainError(
+                    code="REPORT_PROCESSING_ERROR",
+                    status=500,
+                    user_message=f"帳票の計算処理中にエラーが発生しました: {str(ex)}",
+                    title="帳票処理エラー"
+                ) from ex
 
             # Step 5: 帳票日付作成（共通: 整形後データから）
             print("Making report date...")
@@ -160,21 +177,23 @@ class ReportProcessingService:
             # Step 6: Excel/PDF を保存し JSON で URL を返す
             return self.create_response(generator, df_result, report_date)
 
-        except Exception as e:  # 予期せぬ例外を JSON エラーで返却
+        except DomainError:
+            # DomainErrorはそのまま再raiseしてFastAPIのエラーハンドラに任せる
+            raise
+        except Exception as e:  # 予期せぬ例外をDomainErrorに変換
             print(f"[ERROR] report processing failed: {e}")
             try:
                 print("[ERROR] Traceback (most recent call last):\n" + traceback.format_exc())
             except Exception:
                 pass
-            return JSONResponse(
-                status_code=500,
-                content={
-                    "status": "error",
-                    "message": "Internal Server Error during report processing.",
-                    "detail": str(e),
-                    "report_key": getattr(generator, "report_key", None),
-                },
-            )
+            
+            # DomainErrorとして再raiseし、エラーハンドラでProblemDetails化
+            raise DomainError(
+                code="REPORT_GENERATION_ERROR",
+                status=500,
+                user_message=f"帳票の生成中にエラーが発生しました: {str(e)}",
+                title="帳票生成エラー"
+            ) from e
 
     # ---------- 日付フィルタ関連（共通ユーティリティ） ----------
     # 共通化: 旧ローカル実装は date_filter_utils に移動

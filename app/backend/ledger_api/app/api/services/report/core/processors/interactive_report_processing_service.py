@@ -16,6 +16,7 @@ from typing import Any, Dict, Optional, Tuple, Union
 from fastapi import UploadFile
 from fastapi.responses import JSONResponse
 
+from backend_shared.src.api.error_handlers import DomainError
 from app.api.services.report.core.base_generators import (
     BaseInteractiveReportGenerator,
 )
@@ -123,11 +124,12 @@ class InteractiveReportProcessingService(ReportProcessingService):
         try:
             state_payload, session_id = self._resolve_session(session_data)
             if state_payload is None:
-                return {
-                    "status": "error",
-                    "code": "SESSION_NOT_FOUND",
-                    "detail": "session data could not be resolved",
-                }
+                raise DomainError(
+                    code="SESSION_NOT_FOUND",
+                    status=400,
+                    user_message="セッションデータが見つかりませんでした",
+                    title="セッションエラー"
+                )
 
             state = generator.deserialize_state(state_payload)
             state, payload = generator.apply_step(state, user_input)
@@ -164,15 +166,15 @@ class InteractiveReportProcessingService(ReportProcessingService):
                     if session_id:
                         session_store.delete(session_id)
                     return response
+                except DomainError:
+                    raise
                 except Exception as e:  # noqa: BLE001
-                    return JSONResponse(
-                        status_code=500,
-                        content={
-                            "status": "error",
-                            "code": "AUTO_FINALIZE_FAILED",
-                            "detail": str(e),
-                        },
-                    )
+                    raise DomainError(
+                        code="AUTO_FINALIZE_FAILED",
+                        status=500,
+                        user_message=f"自動最終計算中にエラーが発生しました: {str(e)}",
+                        title="自動計算エラー"
+                    ) from e
 
             result: Dict[str, Any] = {
                 "session_id": session_id or user_input.get("session_id"),
@@ -182,12 +184,17 @@ class InteractiveReportProcessingService(ReportProcessingService):
             }
 
             return result
+        except DomainError:
+            # DomainErrorはそのまま再raise
+            raise
         except Exception as e:  # noqa: BLE001
-            return {
-                "status": "error",
-                "code": "APPLY_FAILED",
-                "detail": str(e),
-            }
+            # 予期しないエラーをDomainErrorに変換
+            raise DomainError(
+                code="INTERACTIVE_APPLY_FAILED",
+                status=500,
+                user_message=f"運搬業者選択の適用中にエラーが発生しました: {str(e)}",
+                title="処理エラー"
+            ) from e
 
     # -------- Finalize --------
     def finalize(
@@ -196,72 +203,70 @@ class InteractiveReportProcessingService(ReportProcessingService):
         session_data: Union[Dict[str, Any], str],
         user_input: Optional[Dict[str, Any]] = None,
     ) -> JSONResponse:
-        try:
-            state_payload, session_id = self._resolve_session(session_data)
-            if state_payload is None:
-                return JSONResponse(
-                    status_code=400,
-                    content={
-                        "status": "error",
-                        "code": "SESSION_NOT_FOUND",
-                        "detail": "session data could not be resolved",
-                    },
-                )
+        state_payload, session_id = self._resolve_session(session_data)
+        if state_payload is None:
+            raise DomainError(
+                code="SESSION_NOT_FOUND",
+                status=400,
+                user_message="セッションデータが見つかりませんでした",
+                title="セッションエラー"
+            )
 
-            state = generator.deserialize_state(state_payload)
-            # ユーザー入力（selections 等）が渡された場合は finalize 前に適用
-            if user_input and hasattr(generator, "finalize_with_optional_selections"):
-                try:
-                    final_df, payload = generator.finalize_with_optional_selections(state, user_input)  # type: ignore[attr-defined]
-                except Exception as e:  # noqa: BLE001
-                    return JSONResponse(
-                        status_code=500,
-                        content={
-                            "status": "error",
-                            "code": "FINALIZE_WITH_INPUT_FAILED",
-                            "detail": str(e),
-                        },
-                    )
-            else:
-                final_df, payload = generator.finalize_step(state)
+        state = generator.deserialize_state(state_payload)
+        # ユーザー入力（selections 等）が渡された場合は finalize 前に適用
+        if user_input and hasattr(generator, "finalize_with_optional_selections"):
             try:
-                report_date = payload.get(
-                    "report_date", generator.make_report_date({"result": final_df})
-                )
+                final_df, payload = generator.finalize_with_optional_selections(state, user_input)  # type: ignore[attr-defined]
+            except DomainError:
+                raise
             except Exception as e:  # noqa: BLE001
-                # Fallback to today if date extraction fails
-                from datetime import datetime
-
-                print(f"[WARN] report_date fallback due to: {e}")
-                report_date = datetime.now().date().isoformat()
-
-            extra_payload = self._to_serializable(payload)
-            response = self.create_response(
-                generator,
-                final_df,
-                report_date,
-                extra_payload=extra_payload if isinstance(extra_payload, dict) else None,
+                raise DomainError(
+                    code="INTERACTIVE_FINALIZE_ERROR",
+                    status=500,
+                    user_message=f"ユーザー入力を適用した最終計算中にエラーが発生しました: {str(e)}",
+                    title="最終計算エラー"
+                ) from e
+        else:
+            try:
+                final_df, payload = generator.finalize_step(state)
+            except DomainError:
+                raise
+            except Exception as e:
+                raise DomainError(
+                    code="INTERACTIVE_FINALIZE_ERROR",
+                    status=500,
+                    user_message=f"最終計算中にエラーが発生しました: {str(e)}",
+                    title="最終計算エラー"
+                ) from e
+        
+        try:
+            report_date = payload.get(
+                "report_date", generator.make_report_date({"result": final_df})
             )
-            summary = payload.get("summary")
-            if isinstance(summary, dict):
-                for k, v in summary.items():
-                    try:
-                        response.headers[f"X-Summary-{k}"] = str(v)
-                    except Exception:  # noqa: BLE001
-                        pass
-            if session_id:
-                session_store.delete(session_id)
-            return response
         except Exception as e:  # noqa: BLE001
-            # finalize は JSON 返却のためエラーレスポンスを明示的に返す
-            return JSONResponse(
-                status_code=500,
-                content={
-                    "status": "error",
-                    "code": "FINALIZE_FAILED",
-                    "detail": str(e),
-                },
-            )
+            # Fallback to today if date extraction fails
+            from datetime import datetime
+
+            print(f"[WARN] report_date fallback due to: {e}")
+            report_date = datetime.now().date().isoformat()
+
+        extra_payload = self._to_serializable(payload)
+        response = self.create_response(
+            generator,
+            final_df,
+            report_date,
+            extra_payload=extra_payload if isinstance(extra_payload, dict) else None,
+        )
+        summary = payload.get("summary")
+        if isinstance(summary, dict):
+            for k, v in summary.items():
+                try:
+                    response.headers[f"X-Summary-{k}"] = str(v)
+                except Exception:  # noqa: BLE001
+                    pass
+        if session_id:
+            session_store.delete(session_id)
+        return response
 
     # -------- Helpers --------
     @classmethod
