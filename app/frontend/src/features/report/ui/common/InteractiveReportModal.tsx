@@ -1,8 +1,8 @@
 import React from 'react';
 import { Modal, Steps } from 'antd';
-import { modalStepsMap, isInteractiveReport } from '@features/report';
-import BlockUnitPriceInteractive from '@features/report/ui/interactive/BlockUnitPriceInteractive';
-import type { ReportKey } from '@features/report';
+import { modalStepsMap, isInteractiveReport } from '../../config/reportConfig';
+import BlockUnitPriceInteractive from '../interactive/BlockUnitPriceInteractive';
+import type { ReportKey } from '../../config/reportConfig';
 
 /**
  * インタラクティブ帳簿専用モーダルコンポーネント

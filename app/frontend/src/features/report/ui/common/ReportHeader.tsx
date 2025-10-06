@@ -3,7 +3,7 @@ import { Steps } from 'antd';
 import { useWindowSize } from '@shared/hooks/ui';
 import { isTabletOrHalf, ANT } from '@/shared/constants/breakpoints';
 import ReportSelector from './ReportSelector';
-import type { PageGroupKey } from '@features/report';
+import type { PageGroupKey } from '../../config/reportConfig';
 
 type ReportHeaderProps = {
     reportKey: string;

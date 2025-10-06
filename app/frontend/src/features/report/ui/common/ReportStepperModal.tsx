@@ -5,7 +5,7 @@ import { useWindowSize } from '@shared/hooks/ui';
 
 const { Step } = Steps;
 
-import type { ModalStepConfig } from '@features/report';
+import type { ModalStepConfig } from '../../config/reportConfig/shared/types';
 
 export type ReportStepperModalProps = {
     open: boolean;
