@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Card, Table, Empty } from 'antd';
-import type { UploadCsvType } from '@shared/constants/uploadCsvConfig';
-import { UPLOAD_CSV_DEFINITIONS } from '@shared/constants/uploadCsvConfig';
+import type { UploadCsvType } from '../model/uploadCsvConfig';
+import { UPLOAD_CSV_DEFINITIONS } from '../model/uploadCsvConfig';
 
 // 色マップを定義（CSVタイプごとに色を分ける）
 const CSV_TYPE_COLORS: Record<UploadCsvType, string> = {

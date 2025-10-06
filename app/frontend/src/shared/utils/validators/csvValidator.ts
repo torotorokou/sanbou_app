@@ -5,7 +5,7 @@
 // CSV_DEFINITIONS から expectedHeaders を取得して
 // text（CSVの中身）の1行目と比較することで、どのCSVテンプレートに当てはまるか判定する
 
-import { CSV_DEFINITIONS } from '@shared/constants/CsvDefinition';
+import { CSV_DEFINITIONS } from '@features/database/model';
 
 /**
  * CSVの先頭行（ヘッダー）を抽出
