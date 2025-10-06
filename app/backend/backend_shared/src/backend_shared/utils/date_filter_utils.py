@@ -11,7 +11,7 @@ import pandas as pd
 
 try:
     # 既存ユーティリティ（曜日括弧除去）
-    from backend_shared.src.utils.dataframe_utils import remove_weekday_parentheses
+    from backend_shared.utils.dataframe_utils import remove_weekday_parentheses
 except Exception:  # フォールバック
 
     def remove_weekday_parentheses(df, column):  # type: ignore

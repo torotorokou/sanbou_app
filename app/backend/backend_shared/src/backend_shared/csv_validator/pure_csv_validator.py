@@ -10,12 +10,12 @@ from typing import Dict, List, Optional, Union
 import pandas as pd
 from fastapi import UploadFile
 
-from backend_shared.src.csv_validator.validation_result import (
+from backend_shared.csv_validator.validation_result import (
     ValidationError,
     ValidationErrorType,
     ValidationResult,
 )
-from backend_shared.src.utils.dataframe_validator import (
+from backend_shared.utils.dataframe_validator import (
     check_denpyou_date_consistency,
     check_denpyou_date_exists,
     check_missing_file,

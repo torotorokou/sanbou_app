@@ -41,8 +41,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certifi
 USER appuser
 RUN pip install --no-cache-dir /wheels/*.whl
 
+# backend_shared を editable install（dev 環境で即反映）
+COPY ${BASE_PATH}/backend_shared/ /opt/backend_shared
+RUN pip install --no-cache-dir -e /opt/backend_shared
+
 USER appuser
-COPY ${BASE_PATH}/backend_shared/ /backend/backend_shared
 COPY ${BASE_PATH}/${SERVICE_DIR}/app /backend/app
 COPY ${BASE_PATH}/${SERVICE_DIR}/startup.sh /backend/startup.sh
 COPY config /backend/config

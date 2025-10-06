@@ -53,8 +53,11 @@ RUN pip install --no-cache-dir /wheels/*.whl \
          pip install --no-cache-dir -r requirements-dev.txt; \
        fi
 
-# アプリ本体と共有コード
-COPY ${BASE_PATH}/backend_shared/ /backend/backend_shared
+# backend_shared を editable install（dev 環境で即反映）
+COPY ${BASE_PATH}/backend_shared/ /opt/backend_shared
+RUN pip install --no-cache-dir -e /opt/backend_shared
+
+# アプリ本体
 COPY ${BASE_PATH}/${SERVICE_DIR}/app /backend/app
 # --- マスタCSV / テンプレート類を含める (dev は volume で存在、stg/prod はイメージに同梱が必要) ---
 COPY config /backend/config

@@ -36,7 +36,10 @@ USER appuser
 RUN pip install --no-cache-dir /wheels/*.whl \
     && if [ "$INSTALL_DEV" = "true" ]; then pip install --no-cache-dir -r requirements-dev.txt; fi
 
-COPY ${BASE_PATH}/backend_shared/ /backend/backend_shared
+# backend_shared を editable install（dev 環境で即反映）
+COPY ${BASE_PATH}/backend_shared/ /opt/backend_shared
+RUN pip install --no-cache-dir -e /opt/backend_shared
+
 COPY ${BASE_PATH}/${SERVICE_DIR}/app /backend/app
 COPY config /backend/config
 # 必要な書き込み用ディレクトリ（エンドポイントで os.makedirs するパス）を事前作成し権限付与

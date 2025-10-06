@@ -4,14 +4,14 @@ CSVフォーマッターファクトリ
 CSV種別に応じた適切なフォーマッターインスタンスを生成するファクトリクラスです。
 """
 
-from backend_shared.src.csv_formatter.formatter_base import BaseCSVFormatter
-from backend_shared.src.csv_formatter.formatter_impls import (
+from backend_shared.csv_formatter.formatter_base import BaseCSVFormatter
+from backend_shared.csv_formatter.formatter_impls import (
     ShipmentFormatter,
     ReceiveFormatter,
     YardFormatter,
     DefaultFormatter,
 )
-from backend_shared.src.csv_formatter.formatter_config import FormatterConfig
+from backend_shared.csv_formatter.formatter_config import FormatterConfig
 
 # =========================
 # フォーマッターファクトリ

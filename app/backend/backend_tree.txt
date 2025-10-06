@@ -1,0 +1,127 @@
+app/backend
+├── README.md
+├── ai_api
+│   ├── .dockerignore
+│   ├── Dockerfile
+│   ├── requirements.txt
+│   └── app
+│       ├── __init__.py
+│       └── main.py
+├── backend_shared
+│   ├── __init__.py
+│   ├── ERROR_HANDLING_GUIDE.md
+│   ├── pyproject.toml
+│   ├── README
+│   ├── __pycache__
+│   │   └── __init__.cpython-312.pyc
+│   ├── config
+│   │   ├── __init__.py
+│   │   ├── config_loader.py
+│   │   └── paths.py
+│   └── src
+│       ├── __init__.py
+│       ├── __pycache__
+│       ├── api
+│       ├── api_response
+│       ├── backend_shared
+│       ├── csv_formatter
+│       ├── csv_validator
+│       ├── domain
+│       ├── logging_utils
+│       ├── middleware
+│       ├── report_checker
+│       ├── utils
+│       └── tests
+│           ├── integration
+│           └── unit
+├── ledger_api
+│   ├── .dockerignore
+│   ├── apt-packages.txt
+│   ├── Dockerfile
+│   ├── requirements-dev.txt
+│   ├── requirements.txt
+│   ├── startup.sh
+│   ├── app
+│   │   ├── __init__.py
+│   │   ├── main.py
+│   │   ├── settings.py
+│   │   ├── startup.py
+│   │   ├── streamlit.py
+│   │   ├── __pycache__
+│   │   ├── api
+│   │   └── local_config
+│   ├── docs
+│   │   ├── API_REFACTORING_GUIDE.md
+│   │   ├── ARCHITECTURE_IMPROVEMENT_PROPOSAL.md
+│   │   ├── COMPLETE_MIGRATION_SUMMARY.md
+│   │   ├── DOCKERFILE_MIGRATION_REPORT.md
+│   │   ├── FINAL_MIGRATION_REPORT.md
+│   │   ├── LEDGER_MIGRATION_NOTES.md
+│   │   ├── REFACTORING_FINAL.md
+│   │   ├── REFACTORING_SERVICES.md
+│   │   ├── REFACTORING_SUMMARY.md
+│   │   ├── ST_APP_DELETION_CHECKLIST.md
+│   │   ├── ST_APP_MIGRATION_REPORT.md
+│   │   └── REFACTORING_SERVICES.md
+│   └── test
+│       ├── test_api_readiness.py
+│       ├── test_block_finalize.py
+│       ├── test_block_initial.py
+│       ├── test_process2.py
+│       ├── test_services_entrypoints.py
+│       ├── validate_syogun_csv.py
+│       ├── verify_st_app_migration.py
+│       ├── 出荷一覧_20250630_180038.csv
+│       └── 出荷一覧_20250829_164653.csv
+├── manual_api
+│   ├── Dockerfile
+│   ├── requirements.txt
+│   ├── startup.sh
+│   ├── app
+│   │   ├── catalog_data.py
+│   │   ├── main.py
+│   │   ├── repository.py
+│   │   ├── routers.py
+│   │   ├── schemas.py
+│   │   ├── service.py
+│   │   ├── utils.py
+│   │   └── __pycache__
+│   └── data
+│       └── master
+├── rag_api
+│   ├── .docketignore
+│   ├── Dockerfile
+│   ├── FRONTEND_API_GUIDE.md
+│   ├── README.md
+│   ├── requirements.txt
+│   ├── startup.sh
+│   ├── app
+│   │   ├── __init__.py
+│   │   ├── ai_loader.py
+│   │   ├── dependencies.py
+│   │   ├── main.py
+│   │   ├── paths.py
+│   │   ├── api
+│   │   ├── core
+│   │   ├── infrastructure
+│   │   ├── local_config
+│   │   ├── schemas
+│   │   └── services
+│   └── tests
+│       ├── test_ai_response_service_pages.py
+│       └── test_chunk_utils_tags.py
+└── sql_api
+    ├── .dockerignore
+    ├── Dockerfile
+    ├── requirements-dev.txt
+    ├── requirements.txt
+    ├── app
+    │   ├── __init__.py
+    │   ├── main.py
+    │   ├── api
+    │   ├── data
+    │   ├── db
+    │   ├── local_config
+    │   ├── schemas
+    │   └── test
+    └── utils
