@@ -5,9 +5,9 @@ CSVデータのフォーマット変換を行うサービスクラスです。
 設定ファイルに基づいて、CSVタイプごとに適切なフォーマッターを適用します。
 """
 
-from backend_shared.config.config_loader import SyogunCsvConfigLoader
-from backend_shared.csv_formatter.formatter_factory import CSVFormatterFactory
-from backend_shared.csv_formatter.formatter_config import build_formatter_config
+from backend_shared.infrastructure.config.config_loader import SyogunCsvConfigLoader
+from backend_shared.usecases.csv_formatter.formatter_factory import CSVFormatterFactory
+from backend_shared.usecases.csv_formatter.formatter_config import build_formatter_config
 
 
 class CsvFormatterService:

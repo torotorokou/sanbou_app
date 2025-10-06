@@ -10,10 +10,10 @@ CSVファイルのバリデーション処理を統合的に管理するファ�
 - CsvValidatorService: ファサードとして全体を統合
 """
 
-from backend_shared.config.config_loader import SyogunCsvConfigLoader
-from backend_shared.api_response.response_base import ErrorApiResponse
-from backend_shared.csv_validator.pure_csv_validator import PureCSVValidator
-from backend_shared.csv_validator.response_converter import (
+from backend_shared.infrastructure.config.config_loader import SyogunCsvConfigLoader
+from backend_shared.adapters.presentation.response_base import ErrorApiResponse
+from backend_shared.usecases.csv_validator.pure_csv_validator import PureCSVValidator
+from backend_shared.usecases.csv_validator.response_converter import (
     ValidationResponseConverter,
 )
 

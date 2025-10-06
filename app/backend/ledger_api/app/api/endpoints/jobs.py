@@ -16,7 +16,7 @@ import uuid
 from datetime import datetime
 
 from backend_shared.domain import JobStatus, JobCreate, ProblemDetails
-from backend_shared.api import DomainError
+from backend_shared.adapters.fastapi import DomainError
 
 router = APIRouter(prefix="/api/jobs", tags=["Jobs"])
 

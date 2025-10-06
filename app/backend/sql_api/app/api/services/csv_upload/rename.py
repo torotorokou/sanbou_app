@@ -1,7 +1,7 @@
 import pandas as pd
 
-from backend_shared.csv_formatter.formatter_config import build_formatter_config
-from backend_shared.config.config_loader import SyogunCsvConfigLoader
+from backend_shared.usecases.csv_formatter.formatter_config import build_formatter_config
+from backend_shared.infrastructure.config.config_loader import SyogunCsvConfigLoader
 
 
 def rename_for_sql(
