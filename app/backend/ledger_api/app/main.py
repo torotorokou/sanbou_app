@@ -19,9 +19,9 @@ except Exception:  # if not available, inject stub module
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from backend_shared.logging_utils import setup_uvicorn_access_filter
-from backend_shared.middleware import RequestIdMiddleware
-from backend_shared.api import register_error_handlers
+from backend_shared.infrastructure.logging_utils import setup_uvicorn_access_filter
+from backend_shared.adapters.middleware import RequestIdMiddleware
+from backend_shared.adapters.fastapi import register_error_handlers
 
 from app.api.endpoints.reports.block_unit_price_interactive import (
     router as block_unit_price_router,

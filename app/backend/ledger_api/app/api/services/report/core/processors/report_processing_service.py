@@ -13,8 +13,8 @@ from fastapi.responses import JSONResponse, Response
 
 from app.api.services.report.core.base_generators import BaseReportGenerator
 from app.api.services.report.artifacts import ArtifactResponseBuilder
-from backend_shared.api_response.response_error import NoFilesUploadedResponse
-from backend_shared.api.error_handlers import DomainError
+from backend_shared.adapters.presentation.response_error import NoFilesUploadedResponse
+from backend_shared.adapters.fastapi.error_handlers import DomainError
 from backend_shared.utils.csv_reader import read_csv_files
 from backend_shared.utils.date_filter_utils import (
     filter_by_period_from_min_date as shared_filter_by_period_from_min_date,

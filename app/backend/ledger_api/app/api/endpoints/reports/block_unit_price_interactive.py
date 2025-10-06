@@ -11,7 +11,7 @@ from typing import Any, Dict, Optional, Union
 from fastapi import APIRouter, File, UploadFile
 from pydantic import BaseModel
 
-from backend_shared.api.error_handlers import DomainError
+from backend_shared.adapters.fastapi.error_handlers import DomainError
 from app.api.services.report.core.processors.interactive_report_processing_service import (
     InteractiveReportProcessingService,
 )

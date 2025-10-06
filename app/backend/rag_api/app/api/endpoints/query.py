@@ -18,8 +18,8 @@ from app.core import file_ingest_service as loader
 from app.infrastructure.pdf import pdf_loader
 from app.schemas.query_schema import QueryRequest
 from app.dependencies import get_dummy_response_service, get_ai_response_service
-from backend_shared.api_response.response_base import SuccessApiResponse, ErrorApiResponse
-from backend_shared.api_response.response_utils import api_response
+from backend_shared.adapters.presentation.response_base import SuccessApiResponse, ErrorApiResponse
+from backend_shared.adapters.presentation.response_utils import api_response
 
 router = APIRouter()
 
