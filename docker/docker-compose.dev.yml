@@ -68,27 +68,53 @@ services:
     networks:
       - app-net
 
-  sql_api:
-    build: { context: ../app, dockerfile: backend/sql_api/Dockerfile }
+  core_api:
+    build: { context: ../app, dockerfile: backend/core_api/Dockerfile }
     env_file:
       - ../env/.env.common
       - ../env/.env.local_dev
     command: >
-      uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+      uvicorn app.app:app --host 0.0.0.0 --port 8000 --reload
       --reload-dir /backend/app
       --reload-dir /opt/backend_shared/src
     ports:
-      - "${DEV_SQL_API_PORT:-8003}:8000"
+      - "${DEV_CORE_API_PORT:-8003}:8000"
     volumes:
-      - ../app/backend/sql_api/app:/backend/app:rw
+      - ../app/backend/core_api/app:/backend/app:rw
+      - ../app/backend/core_api/migrations:/backend/migrations:rw
       - ../app/backend/backend_shared:/opt/backend_shared:rw
       - ../app/config:/backend/config
     environment:
       - WATCHFILES_FORCE_POLLING=1
+      - PYTHONPATH=${CORE_API_PYTHONPATH}
+      - DATABASE_URL=${DATABASE_URL}
+      - RAG_API_BASE=${RAG_API_BASE}
+      - LEDGER_API_BASE=${LEDGER_API_BASE}
+      - MANUAL_API_BASE=${MANUAL_API_BASE}
+      - AI_API_BASE=${AI_API_BASE}
     depends_on:
       - db
     networks:
       - app-net
+
+  forecast_worker:
+    build: { context: ../app/backend/forecast_worker, dockerfile: Dockerfile }
+    env_file:
+      - ../env/.env.common
+      - ../env/.env.local_dev
+    environment:
+      - PYTHONPATH=${FORECAST_WORKER_PYTHONPATH}
+      - DATABASE_URL=${DATABASE_URL}
+      - POLL_INTERVAL=${POLL_INTERVAL}
+    volumes:
+      - ../app/backend/forecast_worker/app:/worker/app:rw
+      - ../app/backend/forecast_worker/infra:/worker/infra:rw
+      - ../app/backend/forecast_worker/domain:/worker/domain:rw
+    depends_on:
+      - db
+    networks:
+      - app-net
+    restart: unless-stopped
 
   rag_api:
     build: { context: ../app, dockerfile: backend/rag_api/Dockerfile }
