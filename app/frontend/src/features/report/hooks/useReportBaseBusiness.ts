@@ -1,14 +1,14 @@
 import { useCallback, useEffect } from 'react';
 import type { UploadProps } from 'antd/es/upload';
 import { useCsvValidation } from '@features/database/model';
-import { useReportArtifact } from '@features/report/model/useReportArtifact';
+import { useReportArtifact } from '../model/useReportArtifact';
 import type {
     CsvFiles,
     CsvConfigEntry,
     UploadFileConfig,
     MakeUploadPropsFn,
-} from '@features/report/model/report.types';
-import type { ReportKey } from '@features/report';
+} from '../model/report.types';
+import type { ReportKey } from '../config/reportConfig';
 
 /**
  * ReportBaseのビジネスロジックを統合管理するフック
