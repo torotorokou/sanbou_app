@@ -6,5 +6,5 @@ export { useCsvValidation } from './useCsvValidation';
 // CSV設定とバリデーション
 export { UPLOAD_CSV_TYPES, UPLOAD_CSV_DEFINITIONS } from './uploadCsvConfig';
 export type { UploadCsvType, UploadCsvDefinition } from './uploadCsvConfig';
-export { CSV_DEFINITIONS } from './CsvDefinition';
-export type { CsvType, CsvDefinition } from './CsvDefinition';
+export { CSV_DEFINITIONS } from '@features/csv/config/CsvDefinition';
+export type { CsvType, CsvDefinition } from '@features/csv/config/CsvDefinition';

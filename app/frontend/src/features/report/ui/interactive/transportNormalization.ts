@@ -46,7 +46,8 @@ export const normalizeRow = (value: unknown): TransportCandidateRow | null => {
     const itemNameCandidate = value['item_name'] ?? value['product_name'];
 
     if (typeof entryIdCandidate !== 'string' && typeof entryIdCandidate !== 'number') {
-        console.warn('normalizeRow: invalid entry_id type, skipping row:', typeof entryIdCandidate, entryIdCandidate);
+    // logger may not be available in some contexts; fallback to console
+    console.warn('normalizeRow: invalid entry_id type, skipping row:', typeof entryIdCandidate, entryIdCandidate);
         return null;
     }
     const entry_id = String(entryIdCandidate);

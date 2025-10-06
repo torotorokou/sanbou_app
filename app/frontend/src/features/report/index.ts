@@ -51,30 +51,30 @@ export {
     MANAGE_REPORT_KEYS,
     FACTORY_REPORT_KEYS,
     LEDGER_REPORT_KEYS,
-} from './config/reportConfig';
+} from './model/config';
 
 export type {
-    // reportConfig/shared/types.ts から
+    // model/config/shared/types.ts から
     ReportConfig,
     ModalStepConfig,
     CsvConfigGroup,
-} from './config/reportConfig/shared/types';
+} from './model/config/shared/types';
 
 export type {
-    // reportConfig/index.ts から
+    // model/config/index.ts から
     ReportKey,
     PageGroupKey,
-} from './config/reportConfig';
+} from './model/config';
 
 // ========================================
 // 将来の公開API (Phase 4 Step 3-2以降)
 // ========================================
 
 // Hooks (Step 3-2で追加) ✅
-export { useReportManager } from './hooks/useReportManager';
-export { useReportBaseBusiness } from './hooks/useReportBaseBusiness';
-export { useReportActions } from './hooks/useReportActions';
-export { useReportLayoutStyles } from './hooks/useReportLayoutStyles';
+export { useReportManager } from './model/useReportManager';
+export { useReportBaseBusiness } from './model/useReportBaseBusiness';
+export { useReportActions } from './model/useReportActions';
+export { useReportLayoutStyles } from './model/useReportLayoutStyles';
 
 // ========================================
 // UI Components (Step 3-3で追加) ✅

@@ -1,9 +1,9 @@
 import React, { useState, useCallback } from 'react';
 import { Modal, Button, Steps, Spin, message, Card, Select } from 'antd';
 import { CheckCircleOutlined } from '@ant-design/icons';
-import { getApiEndpoint } from '../../config/reportConfig';
-import type { ReportKey } from '../../config/reportConfig';
-import type { ReportArtifactResponse } from '../../model/useReportArtifact';
+import { getApiEndpoint } from '@features/report/model/config';
+import type { ReportKey } from '@features/report/model/config';
+import type { ReportArtifactResponse } from '@features/report/model/useReportArtifact';
 
 // 型定義（要件に合わせて整備）
 export interface TransportCandidateRow {

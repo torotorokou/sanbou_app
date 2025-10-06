@@ -1,3 +1,4 @@
+// shared/utils/pdf/workerLoader.ts
 // Lazily load pdf.js worker using Vite ?worker dynamic import
 // This ensures the ~1MB worker is not included in initial bundle.
 

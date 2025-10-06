@@ -7,33 +7,9 @@ import { SIDEBAR_MENU } from '@app/navigation/sidebarMenu';
 import { customTokens } from '@shared/theme/tokens';
 import { useSidebarResponsive, useSidebarAnimation, useWindowSize, useSidebarDefault } from '@shared/hooks/ui';
 import { ANT } from '@/shared/constants/breakpoints';
+import { type MenuItem, filterMenuItems } from '@features/navi';
 
 const { Sider } = Layout;
-
-// メニュー項目に `hidden: true` を付けるとその項目（再帰的に）を除外するユーティリティ
-interface RawMenuItem {
-    key: string;
-    label: React.ReactNode;
-    icon?: React.ReactNode;
-    hidden?: boolean;
-    children?: RawMenuItem[];
-    path?: string;
-    [extra: string]: unknown;
-}
-
-function filterMenuItems(items: RawMenuItem[] = []): RawMenuItem[] {
-    return items
-        .filter(i => !i.hidden)
-        .map(i => {
-            const copy: RawMenuItem = { ...i };
-            if (Array.isArray(i.children)) {
-                const children = filterMenuItems(i.children);
-                if (children.length) copy.children = children;
-                else delete copy.children;
-            }
-            return copy;
-        });
-}
 
 // UIは開閉ロジックを持たず、カスタムフックに委譲（MVCのV）
 const Sidebar: React.FC = () => {
@@ -55,7 +31,7 @@ const Sidebar: React.FC = () => {
     const [openKeys, setOpenKeys] = React.useState<string[]>([]);
 
     // visibleMenu は hidden フラグを除外したメニュー（親キーの決定にも使う）
-    const visibleMenu = React.useMemo<RawMenuItem[]>(() => filterMenuItems(SIDEBAR_MENU as RawMenuItem[]), []);
+    const visibleMenu = React.useMemo<MenuItem[]>(() => filterMenuItems(SIDEBAR_MENU as MenuItem[]), []);
 
     // visibleMenu から子を持つ親キーを収集
     const parentKeys = React.useMemo(() => {

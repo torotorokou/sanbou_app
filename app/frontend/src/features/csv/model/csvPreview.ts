@@ -1,4 +1,4 @@
-// src/utils/csvPreview.ts
+// features/csv/model/csvPreview.ts
 
 export function parseCsvPreview(
     text: string,

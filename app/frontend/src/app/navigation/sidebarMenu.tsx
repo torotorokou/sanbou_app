@@ -23,7 +23,7 @@ import {
 
 // ルーティング
 import { Link } from 'react-router-dom';
-import { ROUTER_PATHS } from '@app/router/routes';
+import { ROUTER_PATHS } from '@app/routes/routes';
 
 // サイドバーのメニュー定義
 export const SIDEBAR_MENU = [

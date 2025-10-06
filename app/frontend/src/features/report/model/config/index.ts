@@ -1,4 +1,5 @@
-// /app/src/constants/reportConfig/index.ts
+// features/report/model/config/index.ts
+// レポート設定の統合エクスポート
 
 // ==============================
 // 🎯 統合エクスポート・設定管理

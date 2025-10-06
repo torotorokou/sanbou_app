@@ -8,7 +8,7 @@ import type {
     UploadFileConfig,
     MakeUploadPropsFn,
 } from './report.types';
-import type { ReportKey } from '../config/reportConfig';
+import type { ReportKey } from './config';
 
 /**
  * ReportBaseのビジネスロジックを統合管理するフック

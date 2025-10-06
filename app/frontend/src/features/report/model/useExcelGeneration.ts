@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { notifySuccess, notifyError, notifyInfo } from '@features/notification';
-import type { ReportKey } from '../config/reportConfig';
-import { getApiEndpoint } from '../config/reportConfig';
+import type { ReportKey } from './config';
+import { getApiEndpoint } from './config';
 import type { ReportArtifactResponse } from './useReportArtifact';
 
 type CsvFiles = { [csvLabel: string]: File | null };
