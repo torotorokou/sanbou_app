@@ -1,13 +1,72 @@
-// Central service http client implementation entry.
-// Implementation lives in `httpClient_impl.ts` to keep this file
-// small and clear; exported names are the public API.
-export { apiGet, apiPost, apiGetBlob, apiPostBlob } from './httpClient_impl';
+// shared/infrastructure/http/httpClient.ts
+// Central HTTP client implementation with axios
 
-// Backwards-compat: also export as default (some code may import default)
-const _default = {
-	apiGet: (undefined as unknown) as unknown,
-	apiPost: (undefined as unknown) as unknown,
-	apiGetBlob: (undefined as unknown) as unknown,
-	apiPostBlob: (undefined as unknown) as unknown,
-};
-export default _default;
+import axios, { type AxiosRequestConfig } from 'axios';
+import type { ApiResponse } from '@shared/types';
+
+function isObject(value: unknown): value is Record<string, unknown> {
+    return typeof value === 'object' && value !== null;
+}
+
+function isApiEnvelope<T = unknown>(value: unknown): value is ApiResponse<T> {
+    return isObject(value) && 'status' in value;
+}
+
+const client = axios.create({ withCredentials: true });
+
+// GET
+export async function apiGet<T>(url: string, config?: AxiosRequestConfig): Promise<T> {
+    const res = await client.get(url, config);
+    const d = res.data as unknown;
+    if (isApiEnvelope<T>(d)) {
+        const r = d as ApiResponse<T>;
+        if ('result' in r) {
+            if (r.status === 'success') return (r.result ?? null) as T;
+            throw Object.assign(new Error(r?.detail ?? 'Unknown error'), {
+                code: r?.code ?? 'UNKNOWN',
+                hint: r?.hint ?? null,
+                httpStatus: res.status,
+            });
+        }
+        return d as unknown as T;
+    }
+    return d as unknown as T;
+}
+
+// POST
+export async function apiPost<T, B = unknown>(
+    url: string,
+    body?: B,
+    config?: AxiosRequestConfig
+): Promise<T> {
+    const res = await client.post(url, body, config);
+    const d = res.data as unknown;
+    if (isApiEnvelope<T>(d)) {
+        const r = d as ApiResponse<T>;
+        if ('result' in r) {
+            if (r.status === 'success') return (r.result ?? null) as T;
+            throw Object.assign(new Error(r?.detail ?? 'Unknown error'), {
+                code: r?.code ?? 'UNKNOWN',
+                hint: r?.hint ?? null,
+                httpStatus: res.status,
+            });
+        }
+        return d as unknown as T;
+    }
+    return d as unknown as T;
+}
+
+// Blob系（ファイルダウンロードなど）
+export async function apiGetBlob(url: string, config?: AxiosRequestConfig): Promise<Blob> {
+    const res = await client.get(url, { ...config, responseType: 'blob' });
+    return res.data as Blob;
+}
+
+export async function apiPostBlob<B = unknown>(
+    url: string,
+    body?: B,
+    config?: AxiosRequestConfig
+): Promise<Blob> {
+    const res = await client.post(url, body, { ...config, responseType: 'blob' });
+    return res.data as Blob;
+}
