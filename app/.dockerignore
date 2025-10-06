@@ -34,6 +34,9 @@
 **/*.md
 **/README.md
 
+## backend_shared のメタデータは含める（pyproject.toml で必要）
+!backend/backend_shared/README.md
+
 ## 配布・ビルド成果物
 **/dist/
 **/build/
