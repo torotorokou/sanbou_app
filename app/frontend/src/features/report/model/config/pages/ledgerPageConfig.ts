@@ -1,13 +1,13 @@
-// /app/src/constants/reportConfig/pages/ledgerPageConfig.ts
+// features/report/model/config/pages/ledgerPageConfig.ts
 import React from "react";
 import { Spin } from 'antd';
-import { CSV_DEFINITIONS } from "../../CsvDefinition";
+import { CSV_DEFINITIONS } from "@features/csv/config/CsvDefinition";
 import type {
   CsvConfigGroup,
   ModalStepConfig,
   PeriodType,
-} from "../shared/types";
-import { createReportConfig } from "../shared/common";
+} from "@features/report/model/config/shared/types";
+import { createReportConfig } from "@features/report/model/config/shared/common";
 
 // ==============================
 // 📖 帳簿ページ専用設定

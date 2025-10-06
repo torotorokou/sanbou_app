@@ -1,10 +1,9 @@
-// /app/src/constants/reportConfig/pages/managePageConfig.ts
+// features/report/model/config/pages/managePageConfig.ts
 import React from "react";
 import { Spin } from 'antd';
-import { CSV_DEFINITIONS } from "../../CsvDefinition";
-import type { CsvConfigGroup, ModalStepConfig } from "../shared/types";
-import { createReportConfig, SIMPLE_CREATE_AND_DONE_STEPS } from "../shared/common";
-import type { PeriodType } from "../shared/types";
+import { CSV_DEFINITIONS } from "@features/csv/config/CsvDefinition";
+import type { CsvConfigGroup, ModalStepConfig, PeriodType } from "@features/report/model/config/shared/types";
+import { createReportConfig, SIMPLE_CREATE_AND_DONE_STEPS } from "@features/report/model/config/shared/common";
 
 // ==============================
 // 📄 管理業務ページ専用設定

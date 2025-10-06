@@ -6,7 +6,7 @@ import {
     REPORT_OPTIONS,
     PAGE_REPORT_GROUPS,
     type PageGroupKey
-} from '../../config/reportConfig';
+} from '@features/report/model/config';
 
 type ReportSelectorProps = {
     reportKey: string;

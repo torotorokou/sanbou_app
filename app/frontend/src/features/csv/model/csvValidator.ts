@@ -1,11 +1,11 @@
-// /app/src/utils/validators/csvValidator.ts
+// features/csv/model/csvValidator.ts
 
 // CSVのヘッダを見て、正しいCSVかどうか判定するための関数
 
 // CSV_DEFINITIONS から expectedHeaders を取得して
 // text（CSVの中身）の1行目と比較することで、どのCSVテンプレートに当てはまるか判定する
 
-import { CSV_DEFINITIONS } from '@features/database/model/CsvDefinition';
+import { CSV_DEFINITIONS } from '@features/csv/config/CsvDefinition';
 
 /**
  * CSVの先頭行（ヘッダー）を抽出

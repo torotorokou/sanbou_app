@@ -20,3 +20,4 @@ export type {
 
 export { manualsApi } from './api/manualsApi';
 export { default as manualsApiDefault } from './api/manualsApi';
+export { useManualsStore } from './model/manuals.store';

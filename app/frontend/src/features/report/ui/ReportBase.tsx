@@ -6,10 +6,10 @@ import type { TransportCandidateRow } from './interactive/types';
 import { normalizeRow, isRecord } from './interactive/transportNormalization';
 import { message } from 'antd';
 const PDFViewer = React.lazy(() => import('./viewer/PDFViewer'));
-import { pdfPreviewMap, modalStepsMap, isInteractiveReport, getApiEndpoint } from '../config/reportConfig';
-import { useReportBaseBusiness } from '../hooks/useReportBaseBusiness';
-import type { ReportBaseProps } from '../model/report.types';
-import type { ReportArtifactResponse } from '../model/useReportArtifact';
+import { pdfPreviewMap, modalStepsMap, isInteractiveReport, getApiEndpoint } from '@features/report/model/config';
+import { useReportBaseBusiness } from '@features/report/model/useReportBaseBusiness';
+import type { ReportBaseProps } from '@features/report/model/report.types';
+import type { ReportArtifactResponse } from '@features/report/model/useReportArtifact';
 
 // normalizeRow is now provided by ./interactive/transportNormalization
 

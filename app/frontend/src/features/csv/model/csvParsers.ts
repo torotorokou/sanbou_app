@@ -1,4 +1,4 @@
-// src/parsers/csvParsers.ts
+// features/csv/model/csvParsers.ts
 export const parseReceiveCSV = (text: string) => {
     void text;
 };

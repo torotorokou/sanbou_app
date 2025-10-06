@@ -1,7 +1,5 @@
-// 型定義を直接定義
+// features/csv/config/CsvDefinition.ts
 export type CsvType = 'shipment' | 'receive' | 'yard';
-// | 'payable'
-// | 'sales_summary';
 
 export interface CsvDefinition {
     type: CsvType;
@@ -14,11 +12,8 @@ import {
     parseShipmentCSV,
     parseReceiveCSV,
     parseYardCSV,
-    // parsePayableCSV,
-    // parseSalesSummaryCSV,
 } from '@features/csv/model/csvParsers';
 
-// 直接定義で簡素化（正しいヘッダーを設定）
 export const CSV_DEFINITIONS: Record<CsvType, CsvDefinition> = {
     shipment: {
         type: 'shipment',
@@ -50,16 +45,4 @@ export const CSV_DEFINITIONS: Record<CsvType, CsvDefinition> = {
         expectedHeaders: ['伝票日付', '取引先名', '品名', '正味重量', '数量'],
         onParse: parseYardCSV,
     },
-    // payable: {
-    //     type: 'payable',
-    //     label: '支払一覧',
-    //     expectedHeaders: ['支払先', '金額', '期日'],
-    //     onParse: () => {}, // placeholder
-    // },
-    // sales_summary: {
-    //     type: 'sales_summary',
-    //     label: '売上サマリー',
-    //     expectedHeaders: ['項目', '金額'],
-    //     onParse: () => {}, // placeholder
-    // },
 };

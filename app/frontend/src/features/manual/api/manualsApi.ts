@@ -1,4 +1,4 @@
-import type { ManualDetail, ManualListResponse } from '../model/manual.types';
+import type { ManualDetail, ManualListResponse } from '@features/manual/model/manual.types';
 import { apiGet } from '@shared/infrastructure/http';
 
 export type ManualCatalogResponse = {

@@ -2,10 +2,10 @@ import { useState, useMemo } from 'react';
 import {
     UPLOAD_CSV_TYPES,
     UPLOAD_CSV_DEFINITIONS,
-} from '../model/uploadCsvConfig';
-import type { CsvType } from '../model/CsvDefinition';
-import { identifyCsvType, isCsvMatch } from '@shared/utils/validators/csvValidator';
-import { parseCsvPreview } from '@shared/utils/csv/csvPreview'; // 行数制限プレビュー用
+} from '@features/database/model/uploadCsvConfig';
+import type { CsvType } from '@features/csv/config/CsvDefinition';
+import { identifyCsvType, isCsvMatch } from '@features/csv/model/csvValidator';
+import { parseCsvPreview } from '@features/csv/model/csvPreview';
 
 export function useCsvUploadArea() {
     const [files, setFiles] = useState<Record<CsvType, File | null>>(
