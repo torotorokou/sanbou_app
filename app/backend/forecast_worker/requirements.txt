@@ -1,0 +1,5 @@
+# Forecast Worker dependencies (minimal)
+sqlalchemy==2.0.35
+psycopg[binary]==3.2.1
+python-dotenv==1.0.1
+python-json-logger==2.0.7

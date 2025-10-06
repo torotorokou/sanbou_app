@@ -50,7 +50,9 @@ export default defineConfig(({ mode }) => {
             host: '0.0.0.0',
             port: 5173,
             proxy: {
-                '/sql_api': { target: targetFor('sql_api', 8003), changeOrigin: true },
+                // Core API handles all /api/** requests (BFF pattern)
+                '/api': { target: targetFor('core_api', 8003), changeOrigin: true },
+                // Legacy endpoints (can be removed after migration)
                 '/ai_api': { target: targetFor('ai_api', 8001), changeOrigin: true },
                 '/ledger_api': { target: targetFor('ledger_api', 8002), changeOrigin: true },
                 '/rag_api': { target: targetFor('rag_api', 8004), changeOrigin: true },

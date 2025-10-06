@@ -2,9 +2,59 @@
 ## docker-compose.prod.yml (本番環境 Override)
 ## - 外部公開は nginx のみ (80/443)
 ## - frontend/backend は内部ネットワークのみ
+## - 3層ネットワーク分離: edge-net / app-net / data-net
 ## - ログやボリューム永続化は必要に応じて追記
 ## =============================================================
 services:
+  # ===========================================================================
+  # Core API (BFF) - All frontend requests go through this
+  # ===========================================================================
+  core_api:
+    build: { context: ../app, dockerfile: backend/core_api/Dockerfile }
+    networks: [app-net, data-net]
+    depends_on:
+      - db
+    env_file:
+      - ../env/.env.common
+      - ../env/.env.vm_prod
+    environment:
+      - TZ=Asia/Tokyo
+      - RAG_API_BASE=http://rag_api:8000
+      - LEDGER_API_BASE=http://ledger_api:8000
+      - MANUAL_API_BASE=http://manual_api:8000
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ===========================================================================
+  # Forecast Worker - Background job execution
+  # ===========================================================================
+  forecast_worker:
+    build: { context: ../app/backend/forecast_worker, dockerfile: Dockerfile }
+    networks: [data-net]
+    depends_on:
+      - db
+    env_file:
+      - ../env/.env.common
+      - ../env/.env.vm_prod
+    environment:
+      - TZ=Asia/Tokyo
+      - POLL_INTERVAL=3
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
   # backend APIs (env 注入 + build/depends)
   ai_api:
     build: { context: ../app, dockerfile: backend/ai_api/Dockerfile }
@@ -14,41 +64,92 @@ services:
     env_file:
       - ../env/.env.common
       - ../env/.env.vm_prod
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   ledger_api:
     build: { context: ../app, dockerfile: backend/ledger_api/Dockerfile }
-    networks: [app-net]
+    networks: [app-net, data-net]
     depends_on:
       - db
     env_file:
       - ../env/.env.common
       - ../env/.env.vm_prod
-  # environment removed; relies on env_file
+    environment:
+      - TZ=Asia/Tokyo
+      - STRICT_STARTUP=true
     volumes:
       - ../secrets:/backend/secrets:ro
-
-  sql_api:
-    build: { context: ../app, dockerfile: backend/sql_api/Dockerfile }
-    networks: [app-net]
-    depends_on:
-      - db
-    env_file:
-      - ../env/.env.common
-      - ../env/.env.vm_prod
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   rag_api:
     build: { context: ../app, dockerfile: backend/rag_api/Dockerfile }
-    networks: [app-net]
+    networks: [app-net, data-net]
     depends_on:
       - db
     env_file:
       - ../env/.env.common
       - ../env/.env.vm_prod
+    environment:
+      - TZ=Asia/Tokyo
+    volumes:
+      - ../secrets:/backend/secrets:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  manual_api:
+    build: { context: ../app, dockerfile: backend/manual_api/Dockerfile }
+    networks: [app-net]
+    env_file:
+      - ../env/.env.common
+      - ../env/.env.vm_prod
+    environment:
+      - TZ=Asia/Tokyo
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   # =============================
   # nginx (prod)
   # - フロントエンド runtime stage イメージ
   # - conf.d.prod をマウント (Basic 認証廃止)
+  # - edge-net と app-net に接続 (3層ネットワーク)
   # =============================
   nginx:
     build:
@@ -56,38 +157,71 @@ services:
       dockerfile: Dockerfile
       target: runtime
     depends_on:
+      - core_api
       - ai_api
       - ledger_api
-      - sql_api
       - rag_api
+      - manual_api
     networks:
+      - edge-net
       - app-net
     ports:
       - "80:80"
       - "443:443"
-  # environment removed; relies on env_file
+    environment:
+      - TZ=Asia/Tokyo
     volumes:
       - ../app/nginx/conf.d:/etc/nginx/conf.d:ro
       - ../app/nginx/certs:/etc/nginx/certs:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   db:
     image: postgres:15-alpine
-    networks: [app-net]
+    networks: [data-net]
     environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
+      - TZ=Asia/Tokyo
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
     volumes:
       - db_data:/var/lib/postgresql/data
+    restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 10s
       timeout: 5s
       retries: 5
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
+# =============================================================================
+# Networks (3-tier isolation)
+# =============================================================================
 networks:
+  edge-net:
+    driver: bridge
+    name: sanbou_edge
   app-net:
     driver: bridge
+    name: sanbou_app
+    internal: false  # APIs can access external services
+  data-net:
+    driver: bridge
+    name: sanbou_data
+    internal: true   # Isolated data layer (no internet access)
 
 volumes:
   db_data:
