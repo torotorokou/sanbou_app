@@ -2,8 +2,8 @@ import { useState, useMemo } from 'react';
 import {
     UPLOAD_CSV_TYPES,
     UPLOAD_CSV_DEFINITIONS,
-} from '@shared/constants/uploadCsvConfig';
-import type { CsvType } from '@shared/constants/CsvDefinition';
+} from '../model/uploadCsvConfig';
+import type { CsvType } from '../model/CsvDefinition';
 import { identifyCsvType, isCsvMatch } from '@shared/utils/validators/csvValidator';
 import { parseCsvPreview } from '@shared/utils/csv/csvPreview'; // 行数制限プレビュー用
 
