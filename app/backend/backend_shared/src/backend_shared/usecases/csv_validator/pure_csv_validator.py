@@ -10,7 +10,7 @@ from typing import Dict, List, Optional, Union
 import pandas as pd
 from fastapi import UploadFile
 
-from backend_shared.csv_validator.validation_result import (
+from backend_shared.usecases.csv_validator.validation_result import (
     ValidationError,
     ValidationErrorType,
     ValidationResult,

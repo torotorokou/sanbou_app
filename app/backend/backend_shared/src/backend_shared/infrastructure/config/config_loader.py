@@ -6,7 +6,7 @@ YAML形式の設定ファイルを読み込み、CSV処理や帳票生成に必�
 """
 
 import yaml
-from backend_shared.config.paths import SYOGUNCSV_DEF_PATH, MANAGER_CSV_DEF_PATH
+from backend_shared.infrastructure.config.paths import SYOGUNCSV_DEF_PATH, MANAGER_CSV_DEF_PATH
 
 
 class SyogunCsvConfigLoader:

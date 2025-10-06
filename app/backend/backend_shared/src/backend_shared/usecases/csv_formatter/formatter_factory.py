@@ -4,14 +4,14 @@ CSVフォーマッターファクトリ
 CSV種別に応じた適切なフォーマッターインスタンスを生成するファクトリクラスです。
 """
 
-from backend_shared.csv_formatter.formatter_base import BaseCSVFormatter
-from backend_shared.csv_formatter.formatter_impls import (
+from backend_shared.usecases.csv_formatter.formatter_base import BaseCSVFormatter
+from backend_shared.usecases.csv_formatter.formatter_impls import (
     ShipmentFormatter,
     ReceiveFormatter,
     YardFormatter,
     DefaultFormatter,
 )
-from backend_shared.csv_formatter.formatter_config import FormatterConfig
+from backend_shared.usecases.csv_formatter.formatter_config import FormatterConfig
 
 # =========================
 # フォーマッターファクトリ
@@ -60,7 +60,7 @@ class CSVFormatterFactory:
 
 if __name__ == "__main__":
     # テスト用のサンプルコード（コメントアウト）
-    # from backend_shared.config.config_loader import SyogunCsvConfigLoader
+    # from backend_shared.infrastructure.config.config_loader import SyogunCsvConfigLoader
     # config_loader = SyogunCsvConfigLoader()
     # columns_def = config_loader.get_columns("shipment")
     # df = pd.read_csv("shipment.csv")
