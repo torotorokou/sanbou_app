@@ -4,6 +4,7 @@ from .response_base import (
     BaseApiResponse,
     SuccessApiResponse,
     ErrorApiResponse,
+    ProblemDetails,
 )
 from .response_error import (
     NoFilesUploadedResponse,
@@ -21,6 +22,7 @@ __all__ = [
     "BaseApiResponse",
     "SuccessApiResponse",
     "ErrorApiResponse",
+    "ProblemDetails",
     "NoFilesUploadedResponse",
     "CSVReadErrorResponse",
     "ValidationFailedResponse",

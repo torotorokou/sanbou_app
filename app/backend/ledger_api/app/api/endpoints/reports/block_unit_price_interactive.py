@@ -8,9 +8,10 @@
 
 from typing import Any, Dict, Optional, Union
 
-from fastapi import APIRouter, File, HTTPException, UploadFile
+from fastapi import APIRouter, File, UploadFile
 from pydantic import BaseModel
 
+from backend_shared.src.api.error_handlers import DomainError
 from app.api.services.report.core.processors.interactive_report_processing_service import (
     InteractiveReportProcessingService,
 )
@@ -40,14 +41,16 @@ class FinalizeRequest(BaseModel):
 
 def _raise_if_error_payload(result: Any) -> None:
     """
-    サービスから返ってきた結果が {status: "error"} なら HTTP 422 を投げる。
+    サービスから返ってきた結果が {status: "error"} なら DomainError を投げる。
     """
     if isinstance(result, dict) and result.get("status") == "error":
         code = result.get("code", "PROCESSING_ERROR")
         detail = result.get("detail") or result.get("message") or "処理に失敗しました"
-        raise HTTPException(
-            status_code=422,
-            detail={"code": code, "detail": detail, "payload": result},
+        raise DomainError(
+            code=code,
+            status=422,
+            user_message=detail,
+            title="処理エラー"
         )
 
 
@@ -61,27 +64,22 @@ async def start_block_unit_price_process(
     ブロック単価計算処理開始 (Step 0)
     初期処理を実行し、運搬業者選択肢を返します。
     """
-    try:
-        # 1) UploadFile 優先 (新方式)
-        upload_files: Dict[str, UploadFile] = {}
-        if shipment is not None:
-            upload_files["shipment"] = shipment
+    # 1) UploadFile 優先 (新方式)
+    upload_files: Dict[str, UploadFile] = {}
+    if shipment is not None:
+        upload_files["shipment"] = shipment
 
-        # 2) 後方互換: JSON 経由 (Base64 等)
-        if not upload_files and request is not None:
-            _ = BlockUnitPriceInteractive(files=request.files)
-            return {"status": "deprecated", "message": "Use multipart upload instead."}
+    # 2) 後方互換: JSON 経由 (Base64 等)
+    if not upload_files and request is not None:
+        _ = BlockUnitPriceInteractive(files=request.files)
+        return {"status": "deprecated", "message": "Use multipart upload instead."}
 
-        service = InteractiveReportProcessingService()
-        generator = BlockUnitPriceInteractive(files=upload_files)
-        raw_result = service.initial(generator, upload_files)
+    service = InteractiveReportProcessingService()
+    generator = BlockUnitPriceInteractive(files=upload_files)
+    raw_result = service.initial(generator, upload_files)
 
-        _raise_if_error_payload(raw_result)
-        return raw_result
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"処理開始エラー: {str(e)}")
+    _raise_if_error_payload(raw_result)
+    return raw_result
 
 
 @router.post("/apply", tags=[tag_name])
@@ -89,26 +87,26 @@ async def apply_transport_selection(request: TransportSelectionRequest):
     """
     運搬業者選択適用エンドポイント（2段階方式を使う場合）
     """
-    try:
-        if not request.session_id:
-            raise HTTPException(status_code=400, detail="session_id が指定されていません")
+    if not request.session_id:
+        raise DomainError(
+            code="INPUT_INVALID",
+            status=400,
+            user_message="session_id が指定されていません",
+            title="入力エラー"
+        )
 
-        service = InteractiveReportProcessingService()
-        generator = BlockUnitPriceInteractive()
+    service = InteractiveReportProcessingService()
+    generator = BlockUnitPriceInteractive()
 
-        user_input = {
-            "action": "select_transport",
-            "session_id": request.session_id,
-            "selections": request.selections,
-        }
-        result = service.apply(generator, request.session_id, user_input)
+    user_input = {
+        "action": "select_transport",
+        "session_id": request.session_id,
+        "selections": request.selections,
+    }
+    result = service.apply(generator, request.session_id, user_input)
 
-        _raise_if_error_payload(result)
-        return result
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"運搬業者選択適用エラー: {e}")
+    _raise_if_error_payload(result)
+    return result
 
 
 @router.post("/finalize", tags=[tag_name])
@@ -118,26 +116,25 @@ async def finalize_calculation(request: FinalizeRequest) -> Any:
     - 一本化運用：{session_id, selections} を同送 → 選択適用→最終計算を一括実行
     - 互換運用   ：selections 無し → 既存の選択状態で最終計算のみ実行
     """
-    try:
-        if not request.session_id:
-            raise HTTPException(status_code=400, detail="session_id が指定されていません")
+    if not request.session_id:
+        raise DomainError(
+            code="INPUT_INVALID",
+            status=400,
+            user_message="session_id が指定されていません",
+            title="入力エラー"
+        )
 
-        service = InteractiveReportProcessingService()
-        generator = BlockUnitPriceInteractive()
+    service = InteractiveReportProcessingService()
+    generator = BlockUnitPriceInteractive()
 
-        user_input = {
-            "session_id": request.session_id,
-            "selections": request.selections or {},
-        }
+    user_input = {
+        "session_id": request.session_id,
+        "selections": request.selections or {},
+    }
 
-        # selections があれば finalize 内で適用し、そのまま共通の ZIP レスポンスを返す
-        response = service.finalize(generator, request.session_id, user_input)  # type: ignore[arg-type]
-        return response
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"最終計算エラー: {str(e)}")
+    # selections があれば finalize 内で適用し、そのまま共通の ZIP レスポンスを返す
+    response = service.finalize(generator, request.session_id, user_input)  # type: ignore[arg-type]
+    return response
 
 
 @router.get("/status/{step}", tags=[tag_name])
@@ -167,5 +164,10 @@ async def get_step_info(step: int):
     }
 
     if step not in step_info:
-        raise HTTPException(status_code=404, detail="無効なステップです")
+        raise DomainError(
+            code="INPUT_INVALID",
+            status=404,
+            user_message="無効なステップです",
+            title="入力エラー"
+        )
     return step_info[step]

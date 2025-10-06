@@ -20,12 +20,16 @@ except Exception:  # if not available, inject stub module
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from backend_shared.src.logging_utils import setup_uvicorn_access_filter
+from backend_shared.src.middleware import RequestIdMiddleware
+from backend_shared.src.api import register_error_handlers
 
 from app.api.endpoints.reports.block_unit_price_interactive import (
     router as block_unit_price_router,
 )
 from app.api.endpoints.report_artifacts import router as report_artifact_router
 from app.api.endpoints.reports import reports_router
+from app.api.endpoints.jobs import router as jobs_router
+from app.api.endpoints.notifications import router as notifications_router
 from app.settings import settings
 
 # FastAPIアプリケーションの初期化
@@ -44,6 +48,9 @@ app = FastAPI(
     openapi_url="/openapi.json",
 )
 
+# ミドルウェア: Request ID（traceId）の付与
+app.add_middleware(RequestIdMiddleware)
+
 # CORS設定 - すべてのオリジンからのアクセスを許可
 app.add_middleware(
     CORSMiddleware,
@@ -51,7 +58,11 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["X-Request-ID"],  # X-Request-ID をフロントエンドに公開
 )
+
+# エラーハンドラの登録（ProblemDetails統一）
+register_error_handlers(app)
 
 # アクセスログ: /health だけ抑制（uvicorn.access にフィルター追加）
 setup_uvicorn_access_filter(excluded_paths=("/health",))
@@ -62,6 +73,8 @@ app.include_router(
     block_unit_price_router, prefix="/ledger_api/block_unit_price_interactive"
 )
 app.include_router(reports_router, prefix="/ledger_api/reports")
+app.include_router(jobs_router, prefix="/ledger_api")  # /ledger_api/api/jobs
+app.include_router(notifications_router, prefix="/ledger_api")  # /ledger_api/notifications
 
 
 artifact_prefix = settings.report_artifact_url_prefix.rstrip("/") or "/ledger_api/reports/artifacts"
