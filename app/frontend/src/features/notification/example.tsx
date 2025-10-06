@@ -1,17 +1,15 @@
 // features/notification の使用例
 
+import React from 'react';
+
 // ✅ 推奨: features/notification から直接インポート
 import {
     notifySuccess,
     notifyError,
-    notifyInfo,
-    notifyWarning,
     notifyPersistent,
     notifyApiError,
     useNotificationStore,
-    NotificationCenter,
     NotificationCenterAntd,
-    NOTIFY_DEFAULTS,
 } from '@features/notification';
 
 // ✅ 互換性: 既存のパスも動作（内部で @features/notification に転送）
