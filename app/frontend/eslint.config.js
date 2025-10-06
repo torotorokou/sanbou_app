@@ -45,11 +45,12 @@ export default defineConfig([
                 version: 'detect',
             },
             'boundaries/elements': [
-                { type: 'shared', pattern: 'src/shared/**', mode: 'full' },
-                { type: 'domain', pattern: 'src/domain/**', mode: 'full' },
-                { type: 'infra', pattern: 'src/infra/**', mode: 'full' },
-                { type: 'controllers', pattern: 'src/controllers/**', mode: 'full' },
-                { type: 'features', pattern: 'src/features/**', mode: 'full' },
+                { type: 'app', pattern: ['src/app/**', 'app/**', '@app/**'] },
+                { type: 'pages', pattern: ['src/pages/**', 'pages/**', '@pages/**'] },
+                { type: 'widgets', pattern: ['src/widgets/**', 'widgets/**', '@widgets/**'] },
+                { type: 'features', pattern: ['src/features/**', 'features/**', '@features/**'] },
+                { type: 'entities', pattern: ['src/entities/**', 'entities/**', '@entities/**'] },
+                { type: 'shared', pattern: ['src/shared/**', 'shared/**', '@shared/**'] },
             ],
         },
         rules: {
@@ -91,15 +92,44 @@ export default defineConfig([
                 'error',
                 {
                     default: 'disallow',
-                    message: '依存の向きを守ってください。',
+                    message:
+                        '❌ FSD依存ルール違反: app→pages→widgets→features→entities→shared の順でしか依存できません',
                     rules: [
-                        { from: ['features'], allow: ['shared', 'controllers'] },
-                        { from: ['controllers'], allow: ['shared', 'domain'] },
-                        { from: ['domain'], allow: ['shared'] },
-                        { from: ['infra'], allow: ['shared', 'domain'] },
+                        // app は全てのレイヤーに依存可能
+                        {
+                            from: ['app'],
+                            allow: ['pages', 'widgets', 'features', 'entities', 'shared'],
+                        },
+                        // pages は widgets/features/entities/shared に依存可能
+                        {
+                            from: ['pages'],
+                            allow: ['widgets', 'features', 'entities', 'shared'],
+                        },
+                        // widgets は features/entities/shared に依存可能
+                        {
+                            from: ['widgets'],
+                            allow: ['features', 'entities', 'shared'],
+                        },
+                        // features は entities/shared に依存可能
+                        {
+                            from: ['features'],
+                            allow: ['entities', 'shared'],
+                        },
+                        // entities は shared にのみ依存可能
+                        {
+                            from: ['entities'],
+                            allow: ['shared'],
+                        },
+                        // shared はどこにも依存不可（外部ライブラリのみ）
+                        {
+                            from: ['shared'],
+                            allow: [],
+                        },
                     ],
                 },
             ],
+            // 同じディレクトリ内の相対インポート（./）は許可
+            'boundaries/no-private': 'off',
         },
     },
     // JSONファイル用
