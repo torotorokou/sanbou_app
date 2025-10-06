@@ -16,7 +16,7 @@ OpenAPI仕様に準拠した共通契約モデルを提供します。
 RFC 7807 Problem Details 準拠のエラー情報モデル。
 
 ```python
-from backend_shared.src.domain import ProblemDetails
+from backend_shared.domain import ProblemDetails
 
 problem = ProblemDetails(
     status=422,
@@ -39,7 +39,7 @@ problem = ProblemDetails(
 通知イベントモデル。WebSocket/SSE経由でフロントエンドに送信されます。
 
 ```python
-from backend_shared.src.domain import NotificationEvent, Severity
+from backend_shared.domain import NotificationEvent, Severity
 from datetime import datetime
 import uuid
 
@@ -74,7 +74,7 @@ notification = NotificationEvent(
 ### API応答での利用
 
 ```python
-from backend_shared.src.api_response import ApiResponse, ProblemDetails
+from backend_shared.api_response import ApiResponse, ProblemDetails
 
 @app.get("/api/data", response_model=ApiResponse[dict])
 async def get_data():
@@ -99,7 +99,7 @@ async def upload_file():
 ### ProblemDetails変換
 
 ```python
-from backend_shared.src.api_response import ApiResponse
+from backend_shared.api_response import ApiResponse
 
 error_response = ApiResponse.error(
     code="INVALID_INPUT",

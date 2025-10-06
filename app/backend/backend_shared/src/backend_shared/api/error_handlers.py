@@ -12,7 +12,7 @@
 
 from fastapi import Request
 from fastapi.responses import JSONResponse
-from backend_shared.src.domain.contract import ProblemDetails
+from backend_shared.domain.contract import ProblemDetails
 
 
 class DomainError(Exception):
@@ -100,7 +100,7 @@ def register_error_handlers(app):
     エラーハンドラを登録
     
     使用例:
-        from backend_shared.src.api.error_handlers import register_error_handlers
+        from backend_shared.api.error_handlers import register_error_handlers
         
         app = FastAPI()
         register_error_handlers(app)

@@ -5,7 +5,7 @@ import requests
 import os
 from dotenv import load_dotenv
 from fastapi.middleware.cors import CORSMiddleware
-from backend_shared.src.logging_utils import setup_uvicorn_access_filter
+from backend_shared.logging_utils import setup_uvicorn_access_filter
 
 # .envからAPIキーを読み込む
 load_dotenv()
@@ -122,6 +122,26 @@ def get_intro():
 @router.get("/ping")
 def ping():
     return {"status": "ai ok"}
+
+
+# 最小動作確認用: backend_shared のインポートテスト
+@router.post("/validate")
+def validate(rows: List[dict]):
+    """
+    backend_shared パッケージの動作確認用エンドポイント。
+    簡易的なバリデーションを実行して ok を返します。
+    """
+    # 簡易チェック: rows が空でないか
+    if not rows:
+        return {"ok": False, "errors": ["No rows provided"]}
+    
+    # backend_shared からのインポートテスト
+    try:
+        from backend_shared.domain import JobStatus
+        # 正常にインポートできれば成功
+        return {"ok": True, "errors": [], "imported": "backend_shared.domain.JobStatus"}
+    except ImportError as e:
+        return {"ok": False, "errors": [f"Import failed: {str(e)}"]}
 
 
 # ====== ルーターをパス指定で登録 ======
