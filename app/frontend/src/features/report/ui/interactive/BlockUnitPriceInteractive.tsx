@@ -1,6 +1,5 @@
 // moved from ../individual_process/BlockUnitPriceInteractive.tsx
-import React, { useState, useCallback } from 'react';
-import { Button, InputNumber, Space, Typography, Card, Divider, message } from 'antd';
+import React, { useState } from 'react';
 import { apiPost } from '@shared/infrastructure/http';
 
 interface TransportOption {
