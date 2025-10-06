@@ -15,8 +15,8 @@ from typing import Dict
 import uuid
 from datetime import datetime
 
-from backend_shared.src.domain import JobStatus, JobCreate, ProblemDetails
-from backend_shared.src.api import DomainError
+from backend_shared.domain import JobStatus, JobCreate, ProblemDetails
+from backend_shared.api import DomainError
 
 router = APIRouter(prefix="/api/jobs", tags=["Jobs"])
 

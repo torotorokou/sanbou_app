@@ -16,7 +16,7 @@ from typing import Any, Dict, Optional, Tuple, Union
 from fastapi import UploadFile
 from fastapi.responses import JSONResponse
 
-from backend_shared.src.api.error_handlers import DomainError
+from backend_shared.api.error_handlers import DomainError
 from app.api.services.report.core.base_generators import (
     BaseInteractiveReportGenerator,
 )
@@ -24,7 +24,7 @@ from app.api.services.report.core.processors.report_processing_service import Re
 from app.api.services.report.session import session_store
 
 # (NoFilesUploadedResponse, read_csv_files は base クラス経由で利用しないため削除)
-from backend_shared.src.utils.date_filter_utils import (
+from backend_shared.utils.date_filter_utils import (
     filter_by_period_from_min_date as shared_filter_by_period_from_min_date,
 )
 
@@ -55,7 +55,7 @@ class InteractiveReportProcessingService(ReportProcessingService):
             # ErrorApiResponse 系なら内部 payload を dict 化して返す
             if hasattr(validation_error, "payload"):
                 try:
-                    from backend_shared.src.api_response.response_base import (
+                    from backend_shared.api_response.response_base import (
                         _model_to_dict,
                     )
 

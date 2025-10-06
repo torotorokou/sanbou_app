@@ -11,22 +11,22 @@ from app.local_config.api_constants import SYOGUN_CSV_ROUTE
 from backend_shared.config.paths import SAVE_DIR_TEMP
 
 # --- ユーティリティ ---
-from backend_shared.src.api_response.response_utils import api_response
+from backend_shared.api_response.response_utils import api_response
 from app.api.utils.csv_processor import CSVProcessor
 
 # --- 設定ローダー ---
 from backend_shared.config.config_loader import SyogunCsvConfigLoader
 
 # --- CSVアップロード関連サービス ---
-from backend_shared.src.csv_validator.csv_upload_validator_api import (
+from backend_shared.csv_validator.csv_upload_validator_api import (
     CSVValidationResponder,
 )
 from app.api.services.csv_upload.storage import CSVUploadTempStorage, CSVUploadSQL
 from app.api.services.csv_upload.rename import rename_for_sql
 
 # --- CSVフォーマット関連 ---
-from backend_shared.src.csv_formatter.formatter_factory import CSVFormatterFactory
-from backend_shared.src.csv_formatter.formatter_config import build_formatter_config
+from backend_shared.csv_formatter.formatter_factory import CSVFormatterFactory
+from backend_shared.csv_formatter.formatter_config import build_formatter_config
 
 # --- データベース関連 ---
 from app.api.services.deduplicator import Deduplicator
