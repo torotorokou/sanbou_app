@@ -8,7 +8,7 @@
 
 from fastapi import APIRouter, Request
 from fastapi.responses import StreamingResponse
-from backend_shared.src.domain import NotificationEvent
+from backend_shared.domain import NotificationEvent
 import asyncio
 import json
 from datetime import datetime

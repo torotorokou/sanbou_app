@@ -4,7 +4,7 @@ FastAPIアプリケーションのエントリポイント。
 """
 
 from fastapi import FastAPI
-from backend_shared.src.logging_utils import setup_uvicorn_access_filter
+from backend_shared.logging_utils import setup_uvicorn_access_filter
 from app.api.endpoints.syogun_csv_upload import router as upload_router
 # from app.api.data_api import data_router
 

@@ -1,6 +1,6 @@
 import pandas as pd
 
-from backend_shared.src.csv_formatter.formatter_config import build_formatter_config
+from backend_shared.csv_formatter.formatter_config import build_formatter_config
 from backend_shared.config.config_loader import SyogunCsvConfigLoader
 
 
