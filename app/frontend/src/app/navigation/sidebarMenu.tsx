@@ -1,3 +1,4 @@
+// src/app/navigation/sidebarMenu.tsx
 // サイドバー用定数・アイコン・ルーティング
 import React from 'react';
 
@@ -22,7 +23,7 @@ import {
 
 // ルーティング
 import { Link } from 'react-router-dom';
-import { ROUTER_PATHS } from './router';
+import { ROUTER_PATHS } from '@app/router/routes';
 
 // サイドバーのメニュー定義
 export const SIDEBAR_MENU = [

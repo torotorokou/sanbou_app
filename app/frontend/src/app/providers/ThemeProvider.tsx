@@ -1,7 +1,7 @@
 import React from "react";
 import { ConfigProvider } from "antd";
 import jaJP from 'antd/locale/ja_JP';
-import { customTokens } from './tokens';
+import { customTokens } from '@shared/theme/tokens';
 import { useWindowSize } from '@shared/hooks/ui';
 import { isTabletOrHalf, isDesktop } from '@/shared/constants/breakpoints';
 
