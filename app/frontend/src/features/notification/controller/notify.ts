@@ -7,7 +7,7 @@
 import { useNotificationStore } from '@features/notification/model/notification.store';
 import { NOTIFY_DEFAULTS, getNotificationConfig } from '@features/notification/config';
 import type { ProblemDetails } from '@features/notification/model/contract';
-import { ApiError } from '@shared/infrastructure/http';
+import { ApiError } from '@shared/types';
 
 type NotificationType = 'success' | 'error' | 'warning' | 'info';
 

@@ -55,8 +55,8 @@ const CustomTooltip = ({
 const TrendChart: React.FC<Props> = ({
     data,
     height = 80,
-    strokeColor = '#722ED1',
-    fillColor = '#722ED1',
+    strokeColor = '#40a9ff',
+    fillColor = '#40a9ff',
     minY,
     maxY,
 }) => {

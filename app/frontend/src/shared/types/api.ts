@@ -1,4 +1,3 @@
-// src/types/api.ts
 export type ApiResponse<T> = {
     status: 'success' | 'error';
     code: string;
@@ -10,17 +9,24 @@ export type ApiResponse<T> = {
 export class ApiError extends Error {
     code: string;
     httpStatus: number;
-    hint?: string | null;
+    userMessage: string;
+    title?: string;
+    traceId?: string;
 
+    // constructor aligned with http client usage: (code, httpStatus, userMessage, title?, traceId?)
     constructor(
-        message: string,
         code: string,
         httpStatus: number,
-        hint?: string | null
+        userMessage: string,
+        title?: string,
+        traceId?: string
     ) {
-        super(message);
+        super(userMessage);
+        this.name = 'ApiError';
         this.code = code;
         this.httpStatus = httpStatus;
-        this.hint = hint;
+        this.userMessage = userMessage;
+        this.title = title;
+        this.traceId = traceId;
     }
 }
