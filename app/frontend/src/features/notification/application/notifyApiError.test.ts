@@ -4,7 +4,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { notifyApiError } from '../controller/notify';
-import { ApiError } from '@shared/infrastructure/http';
+import { ApiError } from '@shared/types';
 import * as notifyModule from '../controller/notify';
 
 // モック

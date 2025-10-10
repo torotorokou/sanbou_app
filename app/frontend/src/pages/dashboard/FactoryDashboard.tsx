@@ -1,959 +1,1389 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import dayjs from 'dayjs';
-import type { Dayjs } from 'dayjs';
-import type { FC } from 'react';
+import React, { useEffect, useMemo, useState } from "react";
+import dayjs, { Dayjs } from "dayjs";
 import {
-  Card, Row, Col, Typography, DatePicker, Space, Button, Progress, Tag,
-  Tooltip as AntTooltip, Skeleton, Tabs, Table, Segmented, Badge
-} from 'antd';
-import type { TableColumnsType } from 'antd';
+  Card,
+  Row,
+  Col,
+  Typography,
+  DatePicker,
+  Calendar,
+  Space,
+  Tag,
+  Progress,
+  Tabs,
+  Table,
+  Skeleton,
+  Empty,
+  Badge,
+  Tooltip,
+  Statistic,
+  Alert,
+  Switch,
+} from "antd";
+import type { TableColumnsType } from "antd";
 import {
-  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
-  CartesianGrid, Legend, Line, ReferenceArea
-} from 'recharts';
-import { InfoCircleOutlined } from '@ant-design/icons';
+  BarChart,
+  ComposedChart,
+  Bar,
+  Scatter,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip as RTooltip,
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  AreaChart,
+  Area,
+  Legend,
+  ReferenceArea,
+  ReferenceLine,
+  Cell,
+  // AreaChart/Area removed (not used after calendar change)
+} from "recharts";
+import { InfoCircleOutlined, WarningOutlined } from "@ant-design/icons";
 
-/* =========================================================
- * 搬入量ダッシュボード（上段=2×2：統一高さ / 下段=根拠）
- * - 比較トグル：今月 / 先月 / 前年同月（営業日補正で比較）
- * - カード責務の整理：HeroKPI（月目標&MTD）/ ActionPace（必要ペース）/
- *   今日・今週見込み（現行vsAI）/ 月着地（現行vsAI）
- * - 週別（確定のみ）/ 日別（週タブ）は据え置き＋比較系列の点線
- * ========================================================= */
-
-const Colors = {
-  actual: '#52c41a',
-  forecast: '#1677ff',
-  pace:    '#6c757d',
-  target:  '#faad14',
-  bad:     '#cf1322',
-  warn:    '#fa8c16',
-  good:    '#389e0d',
-  baseline: '#9e9e9e', // 比較系列（先月/前年）
-} as const;
-
-const DENSE = {
-  gutter: 12,
-  cardPad: 10,
-  headPad: '6px 10px',
-  kpiMd: 22,
-  kpiLg: 26,
-  chartH: 240,
-  cellMinH: 160,
-} as const;
+/* ===================================================================
+ * 搬入量予測ダッシュボード（単一ファイル・自己完結モック）
+ * 目的：アイデアを具体のUIに落とし込んだフルコード
+ *
+ * 依存：React / TypeScript / Ant Design v5 / Recharts / dayjs
+ *
+ * カード一覧
+ *  1) 目標カード（「月」「週（第n営業週）」「日（平日/土/日祝）」）
+ *  2) 目標VS現状実績カード（MTD・残必要量/必要ペース）
+ *  3) 搬入量予測カード（当日/週/当月のP50とP帯）
+ *  4) 営業カレンダーカード（営業/日祝/非営業のカウント）
+ *
+ * ※サーバAPI未確定のため、データはモックで生成。
+ *   数式・処理はコメントに明記。わからない所はプレースホルダ。
+ * =================================================================== */
 
 /* =========================
  * 型
  * ========================= */
-type YYYYMM = string;
-type YYYYMMDD = string;
+type IsoMonth = string; // "YYYY-MM"
+type IsoDate = string;  // "YYYY-MM-DD"
 
-type DailyPoint = {
-  date: YYYYMMDD;
-  predicted: number;
-  actual?: number;
-  target?: number;
-  isBusinessDay?: boolean;
+type CalendarDay = {
+  date: IsoDate;
+  is_business_day: 0 | 1;
+  is_holiday: 0 | 1;
+  week_id: IsoDate; // 週の月曜
 };
-type Week = { key: string; index: number; start: Date; end: Date; days: Date[]; label: string; };
-type WeeklyConfirmedRow = {
-  key: string; label: string;
-  targetSum: number; actualSum: number; rateConfirmed: number | null;
-  bizDays: number; sunHoliDays: number; offDays: number;
-};
-type CompareBasis = 'now' | 'prevMonth' | 'prevYear';
 
-type SeriesBundle = {
-  base: DailyPoint[];
-  prevMonth?: DailyPoint[];
-  prevYear?: DailyPoint[];
-}
+type HeaderDTO = {
+  month: IsoMonth;
+  business_days: { total: number; mon_sat: number; sun_holiday: number; non_business: number };
+  rules: { week_def: string; week_to_month: string; alignment: string };
+};
+
+type TargetsDTO = {
+  month: number;
+  weeks: { bw_idx: number; week_target: number }[];
+  day_weights: { weekday: number; sat: number; sun_hol: number };
+};
+
+type ProgressDTO = {
+  mtd_actual: number;
+  remaining_business_days: number;
+};
+
+type ForecastDTO = {
+  today: { p50: number; p10: number; p90: number };
+  week: { p50: number; p10: number; p90: number; target: number };
+  month_landing: { p50: number; p10: number; p90: number };
+};
+
+type DailyCurveDTO = {
+  date: IsoDate;
+  from_7wk: number;         // 直近7週の同曜日平均×補正（A系）
+  from_month_share: number; // 月トータル按分（B系）
+  bookings: number;         // 予約台数（棒に重ねても良い）
+  actual?: number;          // 実際の搬入量（モックで追加）
+};
+
+type WeekRowDTO = {
+  week_id: IsoDate;
+  week_start: IsoDate;
+  week_end: IsoDate;
+  business_week_index_in_month: number;
+  ton_in_month: number;                 // 部分週＝当月に属する営業日の合計
+  in_month_business_days: number;
+  portion_in_month: number;             // 週営業日中、当月に属した割合
+  targets: { week: number };
+  comparisons: {
+    vs_prev_week: { delta_ton: number | null; delta_pct: number | null; align_note: string };
+    vs_prev_month_same_idx: { delta_ton: number | null; delta_pct: number | null; align_note: string };
+    vs_prev_year_same_idx: { delta_ton: number | null; delta_pct: number | null; align_note: string };
+  };
+};
+
+type HistoryDTO = {
+  m_vs_prev_month: { delta_ton: number; delta_pct: number; align_note: string };
+  m_vs_prev_year: { delta_ton: number; delta_pct: number };
+  m_vs_3yr_avg: { delta_ton: number; delta_pct: number };
+};
+
+type MonthPayloadDTO = {
+  header: HeaderDTO;
+  targets: TargetsDTO;
+  calendar: { days: CalendarDay[] };
+  progress: ProgressDTO;
+  forecast: ForecastDTO;
+  daily_curve: DailyCurveDTO[];
+  weeks: WeekRowDTO[];
+  history: HistoryDTO;
+  prev_month_daily?: Record<IsoDate, number>;
+  prev_year_daily?: Record<IsoDate, number>;
+};
 
 /* =========================
- * Repository（Mock）
+ * 色・定数
  * ========================= */
-interface ForecastRepository {
-  fetchSeriesBundle: (month: YYYYMM) => Promise<SeriesBundle>;
-}
-
-const mkMonthSeries = (month: YYYYMM, opts?: { noise?: number; shift?: number }) => {
-  const days = Array.from({ length: 31 }, (_, i) => i + 1);
-  return days.map((d) => {
-    const date = `${month}-${String(d).padStart(2, '0')}`;
-    const base = 100 + Math.sin((d / 31) * Math.PI * 2) * 20 + (opts?.shift ?? 0);
-    const predicted = Math.max(40, Math.round(base + (Math.random() * (opts?.noise ?? 10) - (opts?.noise ?? 10)/2)));
-    const todayDate = new Date();
-    const currentYM = `${todayDate.getFullYear()}-${String(todayDate.getMonth() + 1).padStart(2, '0')}`;
-    const isCurrentMonth = month === currentYM;
-    // デモ：カレント月のみ20日を“今日”とみなす
-    const actual = isCurrentMonth ? (d < 20 ? Math.max(35, Math.round(predicted * (0.9 + Math.random() * 0.2))) : undefined)
-                                  : Math.max(35, Math.round(predicted * (0.9 + Math.random() * 0.2)));
-    const target = 110 + (opts?.shift ?? 0) * 0.1;
-    const dow = new Date(date + 'T00:00:00').getDay();
-    const isBusinessDay = dow !== 0; // 日曜休み
-    return { date, predicted, actual, target, isBusinessDay };
-  });
-};
-
-const mockRepo: ForecastRepository = {
-  async fetchSeriesBundle(month) {
-    const base = mkMonthSeries(month, { noise: 10, shift: 0 });
-    const prevM = prevMonthStr(month);
-    const prevY = `${Number(month.slice(0, 4)) - 1}-${month.slice(5, 7)}`;
-    const prevMonth = mkMonthSeries(prevM, { noise: 12, shift: -5 });
-    const prevYear = mkMonthSeries(prevY, { noise: 12, shift: -8 });
-    return { base, prevMonth, prevYear };
-  },
+const C = {
+  primary: "#1677ff",
+  actual: "#52c41a",
+  target: "#faad14",
+  baseline: "#9e9e9e",
+  danger: "#cf1322",
+  warn: "#fa8c16",
+  ok: "#389e0d",
 };
 
 /* =========================
- * Util
+ * ユーティリティ
  * ========================= */
-const sum = (arr: number[]) => arr.reduce((a, b) => a + b, 0);
-const avg = (arr: number[]) => (arr.length ? sum(arr) / arr.length : 0);
-const toDate = (d: string) => new Date(d + 'T00:00:00');
-const pctStr = (v: number | null | undefined, digits = 0) => (v == null ? '—' : `${(v * 100).toFixed(digits)}%`);
+const toDate = (s: string) => new Date(s + "T00:00:00");
+const ymd = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
+    d.getDate()
+  ).padStart(2, "0")}`;
+const mondayOf = (d: Date) => {
+  const day = d.getDay(); // 0 Sun..6 Sat
+  const diff = day === 0 ? -6 : 1 - day;
+  const m = new Date(d);
+  m.setDate(d.getDate() + diff);
+  m.setHours(0, 0, 0, 0);
+  return m;
+};
+const addDays = (d: Date, n: number) => {
+  const x = new Date(d);
+  x.setDate(d.getDate() + n);
+  return x;
+};
+const sum = (a: number[]) => a.reduce((p, c) => p + c, 0);
 const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
-function ymd(d: Date): YYYYMMDD { const y = d.getFullYear(); const m = String(d.getMonth() + 1).padStart(2, '0'); const day = String(d.getDate()).padStart(2, '0'); return `${y}-${m}-${day}`; }
-function formatMonthJP(month: YYYYMM) { const [y, m] = month.split('-').map(Number); return `${y}年${m}月`; }
-function formatRangeJP(a: Date, b: Date) { return `${a.getMonth() + 1}/${a.getDate()}–${b.getMonth() + 1}/${b.getDate()}`; }
-function currentMonth(): YYYYMM { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`; }
-function nextMonthStr(month: YYYYMM): YYYYMM { const [y, m] = month.split('-').map(Number); const d = new Date(y, m - 1, 1); d.setMonth(d.getMonth() + 1); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`; }
-function prevMonthStr(month: YYYYMM): YYYYMM { const [y, m] = month.split('-').map(Number); const d = new Date(y, m - 1, 1); d.setMonth(d.getMonth() - 1); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`; }
-function yyyymmddTodayFromMonth(month: YYYYMM): YYYYMMDD { const now = new Date(); const currentYM = currentMonth(); if (month === currentYM) return `${month}-${String(now.getDate()).padStart(2, '0')}`; return `${month}-20`; }
-function getIsoMonday(d: Date) { const day = d.getDay(); const diff = (day === 0 ? -6 : 1 - day); const monday = new Date(d); monday.setDate(d.getDate() + diff); monday.setHours(0, 0, 0, 0); return monday; }
-function addDays(date: Date, n: number) { const dd = new Date(date); dd.setDate(date.getDate() + n); return dd; }
-function buildWeeks(month: YYYYMM): Week[] {
-  const [y, m] = month.split('-').map(Number);
-  const first = new Date(y, m - 1, 1);
-  const last = new Date(y, m, 0);
-  const firstMonday = getIsoMonday(first);
-  const weeks: Week[] = [];
-  let start = new Date(firstMonday);
-  let i = 1;
-  while (start <= last) {
-    const days = Array.from({ length: 6 }, (_, k) => addDays(start, k)); // Mon..Sat
-    const end = days[5];
-    const inMonth = days.some(d => d.getMonth() === (m - 1));
-    if (inMonth) {
-      const label = `${i}週目（${formatRangeJP(days[0], days[5])}）`;
-      weeks.push({ key: `W${i}`, index: i - 1, start, end, days, label });
-      i++;
+const pctStr = (v: number | null, d = 1) => (v == null || Number.isNaN(v) ? "—" : `${(v * 100).toFixed(d)}%`);
+const monthNameJP = (m: IsoMonth) => {
+  const [y, mm] = m.split("-").map(Number);
+  return `${y}年${mm}月`;
+};
+const curMonth = (): IsoMonth => dayjs().format("YYYY-MM");
+const prevMonth = (m: IsoMonth): IsoMonth => dayjs(m + "-01").subtract(1, "month").format("YYYY-MM");
+const nextMonth = (m: IsoMonth): IsoMonth => dayjs(m + "-01").add(1, "month").format("YYYY-MM");
+
+/* =========================
+ * モック生成（サーバAPI未確定のため）
+ * - 日曜は非営業（祝日は未実装）※本番では is_holiday で上書き可
+ * - 月目標=営業日重み×110t
+ * - 週目標=当月営業日配分で按分
+ * - P帯=±（残差）で簡易生成（本番はモデル残差から）
+ * ========================= */
+async function fetchMonthPayloadMock(month: IsoMonth): Promise<MonthPayloadDTO> {
+  const first = dayjs(month + "-01");
+  const last = first.endOf("month");
+  const days: CalendarDay[] = [];
+  let d = first;
+  while (d.isBefore(last) || d.isSame(last, "day")) {
+    const date = d.format("YYYY-MM-DD");
+    const dow = d.day();
+    const is_business_day = dow === 0 ? 0 : 1; // Sun休
+    const is_holiday = dow === 0 ? 1 : 0;      // デモ：日曜=祝日扱い
+    days.push({ date, is_business_day, is_holiday, week_id: ymd(mondayOf(d.toDate())) });
+    d = d.add(1, "day");
+  }
+
+  // 重み（平日=1.0, 土=1.1, 日祝=0.6）— 実績から最適化予定、今は固定
+  const wWeekday = 1.0, wSat = 1.1, wSunHol = 0.6;
+  const weightOf = (date: string) => {
+    const dow = toDate(date).getDay();
+    if (dow === 6) return wSat;
+    if (dow === 0) return 0; // 非営業日は0（ここでは日曜非営業）
+    return wWeekday;
+  };
+  const dayWeightForBShare = (date: string) => {
+    const dow = toDate(date).getDay();
+    if (dow === 6) return wSat;
+    if (dow === 0) return wSunHol; // 営業としないが「日目標」記載用の重みは残す時に使用可
+    return wWeekday;
+  };
+
+  // 月目標（営業日重み合計 × 110t）
+  const bizWeights = days.map((x) => (x.is_business_day ? weightOf(x.date) : 0));
+  const monthTarget = Math.round(sum(bizWeights) * 110);
+
+  // 週（部分週＝当月の営業日のみ合算）
+  const weekMap = new Map<
+    string,
+    { start: IsoDate; end: IsoDate; tonInMonth: number; inMonthBiz: number; fullBiz: number }
+  >();
+  let calStart = mondayOf(first.toDate());
+  while (calStart <= last.toDate()) {
+    const wEnd = addDays(calStart, 6);
+    const wid = ymd(calStart);
+    let fullBiz = 0;
+    for (let k = 0; k < 7; k++) {
+      const dd = addDays(calStart, k);
+      if (dd.getDay() !== 0) fullBiz++;
     }
-    start = addDays(start, 7);
+    weekMap.set(wid, { start: ymd(calStart), end: ymd(wEnd), tonInMonth: 0, inMonthBiz: 0, fullBiz });
+    calStart = addDays(calStart, 7);
   }
-  return weeks;
-}
 
-/* =========================
- * UseCase
- * ========================= */
-const monthTargetSum = (all: DailyPoint[]) => sum(all.map(r => r.target ?? 0));
-const actualSumMonth = (all: DailyPoint[], today: YYYYMMDD) => sum(all.filter(r => r.date <= today).map(r => r.actual ?? 0));
-const bizDayCountTo = (all: DailyPoint[], today: YYYYMMDD) => all.filter(d => d.date <= today && d.isBusinessDay !== false).length;
-const monthBizDays = (all: DailyPoint[]) => all.filter(d => d.isBusinessDay !== false).length;
-
-function computeMonthRates(all: DailyPoint[], today: YYYYMMDD) {
-  const mActual = actualSumMonth(all, today);
-  const mDenMTD = sum(all.filter(r => r.date <= today).map(r => r.target ?? 0));
-  const mtdRate = mDenMTD ? mActual / mDenMTD : null;
-  const futurePred = sum(all.filter(r => r.date > today).map(r => r.predicted ?? 0));
-  const landingAI = mActual + futurePred;
-  const mTarget = monthTargetSum(all);
-  const monthRateProj = mTarget ? landingAI / mTarget : null;
-  return { mActual, mTarget, landingAI, mtdRate, monthRateProj };
-}
-
-function currentBusinessPace(all: DailyPoint[], today: YYYYMMDD, n = 7) {
-  const rows = all.filter(d => d.date < today && d.isBusinessDay !== false);
-  const recent = rows.slice(-n);
-  const vals = recent.map(d => d.actual ?? 0).filter(v => v != null);
-  if (!vals.length) return null;
-  return avg(vals);
-}
-
-function landingByCurrentPace(all: DailyPoint[], today: YYYYMMDD, paceBiz: number | null, paceHoliday = 0) {
-  const mActual = actualSumMonth(all, today);
-  const future = all.filter(d => d.date > today);
-  const biz = future.filter(d => d.isBusinessDay !== false).length;
-  const holi = future.length - biz;
-  const add = (paceBiz ?? 0) * biz + paceHoliday * holi;
-  return { landingPace: mActual + add, futureBiz: biz, futureHoli: holi };
-}
-
-function buildWeeklyConfirmed(rows: DailyPoint[], weeks: Week[], today: YYYYMMDD): WeeklyConfirmedRow[] {
-  return weeks.map((w) => {
-    const keys = w.days.map(ymd);
-    const ds = keys.map(k => rows.find(r => r.date === k)).filter(Boolean) as DailyPoint[];
-    const targetSum = sum(ds.map(r => r.target ?? 0));
-    const actualSum = sum(ds.filter(r => r.date <= today).map(r => r.actual ?? 0));
-    const rateConfirmed = targetSum ? actualSum / targetSum : null;
-
-    const bizDays      = ds.filter(r => r.isBusinessDay !== false).length;
-    const sunHoliDays  = ds.filter(r => {
-      const dow = new Date(r.date + 'T00:00:00').getDay();
-      return dow === 0 || r.isBusinessDay === false;
-    }).length;
-    const offDays      = ds.filter(r => r.isBusinessDay === false).length;
-
-    return { key: w.key, label: `${w.key}（${formatRangeJP(w.start, w.end)}）`, targetSum, actualSum, rateConfirmed, bizDays, sunHoliDays, offDays };
+  // 日量（モック）：営業日は 100±(sin)±ノイズ、土や季節で微調整
+  const lastDay = last.date();
+  const syntheticDailyTon: Record<IsoDate, number> = {};
+  days.forEach((x, i) => {
+    const base = 100 + Math.sin(((i + 1) / lastDay) * Math.PI * 2) * 20;
+    const dow = toDate(x.date).getDay();
+    const adj = dow === 6 ? 10 : 0;
+    const noise = (Math.random() - 0.5) * 12;
+    const ton = x.is_business_day ? Math.max(35, Math.round(base + adj + noise)) : 0;
+    syntheticDailyTon[x.date] = ton;
   });
-}
 
-function buildShortAI(all: DailyPoint[], curWeek: Week | undefined, today: YYYYMMDD) {
-  const todayAI = all.find(r => r.date === today)?.predicted ?? null;
-  let weekAI: number | null = null;
-  let weekTarget = 0;
-  if (curWeek) {
-    const keys = curWeek.days.map(ymd);
-    const ds = keys.map(k => all.find(r => r.date === k)).filter(Boolean) as DailyPoint[];
-    const past = ds.filter(r => r.date <= today);
-    const future = ds.filter(r => r.date > today);
-    weekAI = sum(past.map(r => r.actual ?? 0)) + sum(future.map(r => r.predicted ?? 0));
-    weekTarget = sum(ds.map(r => r.target ?? 0));
+  // 週へ集計（当月営業日のみ）
+  for (const c of days) {
+    const w = weekMap.get(c.week_id);
+    if (!w) continue;
+    if (c.is_business_day) {
+      w.tonInMonth += syntheticDailyTon[c.date];
+      w.inMonthBiz += 1;
+    }
   }
-  return { todayAI, weekAI, weekTarget };
-}
 
-/** 営業日補正を伴う比較（MoM/YoY）。
- *  normalized = (実績/営業日数) 比で評価。戻り値は {deltaPct, baselineValue} */
-function normalizedDelta(
-  baseSeries: DailyPoint[],
-  baselineSeries: DailyPoint[] | undefined,
-  today: YYYYMMDD,
-  valueCurrent: number | null
-): { deltaPct: number | null, baselineValue: number | null } {
-  if (!baselineSeries || valueCurrent == null) return { deltaPct: null, baselineValue: null };
-  const curDays = bizDayCountTo(baseSeries, today) || 1;
-  // baseline 側は「同数の営業日」を目安に同月内の先頭から該当営業日数分を集計
-  const bsBiz = baselineSeries.filter(d => d.isBusinessDay !== false);
-  const cutoff = bsBiz.slice(0, curDays).map(d => d.date);
-  const baselineActual = sum(baselineSeries.filter(d => cutoff.includes(d.date)).map(d => d.actual ?? d.predicted ?? 0));
-  const normCur = valueCurrent / curDays;
-  const normBase = baselineActual / curDays;
-  if (!normBase) return { deltaPct: null, baselineValue: baselineActual };
-  return { deltaPct: (normCur - normBase) / normBase, baselineValue: baselineActual };
+  // 第n営業週（当月営業日>0の週のみ）
+  const weekEntries = [...weekMap.entries()].sort((a, b) => (a[0] < b[0] ? -1 : 1));
+  let idx = 0;
+  const weekRows: WeekRowDTO[] = [];
+  for (const [wid, v] of weekEntries) {
+    if (v.inMonthBiz > 0) {
+      idx += 1;
+      weekRows.push({
+        week_id: wid,
+        week_start: v.start,
+        week_end: v.end,
+        business_week_index_in_month: idx,
+        ton_in_month: Math.round(v.tonInMonth),
+        in_month_business_days: v.inMonthBiz,
+        portion_in_month: v.fullBiz ? v.inMonthBiz / v.fullBiz : 0,
+        targets: { week: 0 }, // 下で按分
+        comparisons: {
+          vs_prev_week: { delta_ton: null, delta_pct: null, align_note: "prev business week" },
+          vs_prev_month_same_idx: { delta_ton: null, delta_pct: null, align_note: "same idx" },
+          vs_prev_year_same_idx: { delta_ton: null, delta_pct: null, align_note: "same idx" },
+        },
+      });
+    }
+  }
+
+  // 週目標按分：月目標 ×（当月週の営業日重み/当月全営業日重み）
+  const totalBizDays = sum(weekRows.map((w) => w.in_month_business_days));
+  weekRows.forEach((w) => {
+    w.targets.week = totalBizDays ? Math.round(monthTarget * (w.in_month_business_days / totalBizDays)) : 0;
+  });
+
+  // 現月内 前営業週比較
+  const mapCur: Record<number, number> = {};
+  weekRows.forEach((w) => (mapCur[w.business_week_index_in_month] = w.ton_in_month));
+  weekRows.forEach((w) => {
+    const prevIdx = w.business_week_index_in_month - 1;
+    if (prevIdx >= 1 && mapCur[prevIdx] != null) {
+      const base = mapCur[prevIdx];
+      const dton = w.ton_in_month - base;
+      w.comparisons.vs_prev_week.delta_ton = dton;
+      w.comparisons.vs_prev_week.delta_pct = base ? dton / base : null;
+    }
+  });
+
+  // 先月/前年/3年平均（簡易モック：±ランダム）
+  const randNear = (a: number, r: number) => Math.round(a * (1 + (Math.random() - 0.5) * r));
+  const monthActual = sum(days.map((d) => syntheticDailyTon[d.date]));
+  const prevMonthVal = randNear(monthActual, 0.15);
+  const prevYearVal = randNear(monthActual, 0.25);
+  const avg3yVal = Math.round((monthActual + randNear(monthActual, 0.3) + randNear(monthActual, 0.3)) / 3);
+
+  const history: HistoryDTO = {
+    m_vs_prev_month: {
+      delta_ton: monthActual - prevMonthVal,
+      delta_pct: prevMonthVal ? (monthActual - prevMonthVal) / prevMonthVal : 0,
+      align_note: "business-day aligned (mock)",
+    },
+    m_vs_prev_year: {
+      delta_ton: monthActual - prevYearVal,
+      delta_pct: prevYearVal ? (monthActual - prevYearVal) / prevYearVal : 0,
+    },
+    m_vs_3yr_avg: {
+      delta_ton: monthActual - avg3yVal,
+      delta_pct: avg3yVal ? (monthActual - avg3yVal) / avg3yVal : 0,
+    },
+  };
+
+  // 目標vs現状
+  const today = todayInMonth(month);
+  const mtdActual = sum(days.filter((x) => x.date <= today).map((x) => syntheticDailyTon[x.date]));
+  const remainingBiz = days.filter((x) => x.date > today && x.is_business_day).length;
+
+  // 予測（P帯簡易）
+  const futureTon = sum(days.filter((x) => x.date > today).map((x) => syntheticDailyTon[x.date]));
+  const monthP50 = mtdActual + futureTon;
+  const pBand = Math.max(80, Math.round(monthP50 * 0.06)); // ±6%帯（デモ）
+  const forecast: ForecastDTO = {
+    today: { p50: syntheticDailyTon[today] ?? 0, p10: Math.max(0, (syntheticDailyTon[today] ?? 0) - 15), p90: (syntheticDailyTon[today] ?? 0) + 15 },
+    week: {
+      p50: Math.round(sum(days.filter((x) => toDate(x.date) >= mondayOf(toDate(today)) && toDate(x.date) <= addDays(mondayOf(toDate(today)), 6)).map((x) => syntheticDailyTon[x.date]))),
+      p10: 0, p90: 0, target: 0, // 週のP帯は省略（本番で追加）
+    },
+    month_landing: { p50: monthP50, p10: Math.max(0, monthP50 - pBand), p90: monthP50 + pBand },
+  };
+
+  // 1日予測A/B
+  const daily_curve: DailyCurveDTO[] = days.map((x, i) => {
+    const dow = toDate(x.date).getDay();
+    // A: 直近7週（同曜日）平均 — モックでは「近傍日の平均」で近似
+    const backIdx = Math.max(0, i - 7);
+    const near = days.slice(backIdx, i).filter((d) => toDate(d.date).getDay() === dow);
+    const avg = near.length ? Math.round(sum(near.map((d) => syntheticDailyTon[d.date])) / near.length) : syntheticDailyTon[x.date];
+    // B: 月トータル按分
+    const wAll = sum(days.map((d) => (toDate(d.date).getDay() === 0 ? 0 : dayWeightForBShare(d.date))));
+    const wMe = toDate(x.date).getDay() === 0 ? 0 : dayWeightForBShare(x.date);
+    const fromMonthShare = wAll ? Math.round((monthTarget * (wMe / wAll))) : 0; // 日目標のイメージ
+    const bookings = Math.max(0, Math.round((Math.random() * 6) - (toDate(x.date).getDay() === 0 ? 6 : 0))); // 非営業日は0に寄せる
+    return { date: x.date, from_7wk: avg, from_month_share: fromMonthShare, bookings, actual: syntheticDailyTon[x.date] };
+  });
+
+  // 先月・前年のダミーデータ（単純に現在のデータにスケールやランダム差を加える）
+  const prevMonthDays: Record<IsoDate, number> = {};
+  const prevYearDays: Record<IsoDate, number> = {};
+  // 先月の日付リストを作る
+  const pmFirst = dayjs(month + "-01").subtract(1, "month");
+  const pmLast = pmFirst.endOf("month");
+  let pd = pmFirst;
+  while (pd.isBefore(pmLast) || pd.isSame(pmLast, "day")) {
+    const k = pd.format("YYYY-MM-DD");
+    const corresponding = dayjs(k).add(1, "month").format("YYYY-MM-DD");
+    const base = syntheticDailyTon[corresponding] ?? 80;
+    prevMonthDays[k] = Math.max(0, Math.round(base * (0.9 + Math.random() * 0.2)));
+    pd = pd.add(1, "day");
+  }
+  // 前年同月
+  const pyFirst = dayjs(month + "-01").subtract(1, "year");
+  const pyLast = pyFirst.endOf("month");
+  let yd = pyFirst;
+  while (yd.isBefore(pyLast) || yd.isSame(pyLast, "day")) {
+    const k = yd.format("YYYY-MM-DD");
+    const corresponding = dayjs(k).add(1, "year").format("YYYY-MM-DD");
+    const base = syntheticDailyTon[corresponding] ?? 80;
+    prevYearDays[k] = Math.max(0, Math.round(base * (0.85 + Math.random() * 0.3)));
+    yd = yd.add(1, "day");
+  }
+
+  // 週目標をtargetsに反映
+  const targets: TargetsDTO = {
+    month: monthTarget,
+    weeks: weekRows.map((w) => ({ bw_idx: w.business_week_index_in_month, week_target: w.targets.week })),
+    day_weights: { weekday: wWeekday, sat: wSat, sun_hol: wSunHol },
+  };
+
+  const header: HeaderDTO = {
+    month,
+    business_days: {
+      total: days.filter((x) => x.is_business_day).length,
+      mon_sat: days.filter((x) => x.is_business_day && toDate(x.date).getDay() <= 6 && toDate(x.date).getDay() !== 0).length,
+      sun_holiday: days.filter((x) => x.is_business_day && toDate(x.date).getDay() === 0).length, // デモ：0
+      non_business: days.filter((x) => !x.is_business_day).length,
+    },
+    rules: {
+      week_def: "ISO Monday-based",
+      week_to_month: "partial-weeks included by day",
+      alignment: "business-day",
+    },
+  };
+
+  const progress: ProgressDTO = {
+    mtd_actual: mtdActual,
+    remaining_business_days: remainingBiz,
+  };
+
+  return {
+    header,
+    targets,
+    calendar: { days },
+    progress,
+    forecast,
+    daily_curve,
+    weeks: weekRows,
+    history: history,
+    prev_month_daily: prevMonthDays,
+    prev_year_daily: prevYearDays,
+  };
 }
 
 /* =========================
- * ビジュアル部品
+ * 表示補助
  * ========================= */
-const TinyLabel: FC<{ children: React.ReactNode; style?: React.CSSProperties; }> = ({ children, style }) => (
-  <span style={{ color: '#8c8c8c', fontSize: 13, ...style }}>{children}</span>
-);
+const todayInMonth = (m: IsoMonth): IsoDate => {
+  const nowM = curMonth();
+  if (m === nowM) return dayjs().format("YYYY-MM-DD");
+  const last = dayjs(m + "-01").endOf("month").date();
+  const d = Math.min(20, last);
+  return `${m}-${String(d).padStart(2, "0")}`;
+};
 
-const SoftBadge: FC<{ value: number | null | undefined }> = ({ value }) => {
-  if (value == null) return <span style={{ color: '#8c8c8c' }}>—</span>;
-  const tone = value >= 0 ? '#0958d9' : Colors.bad;
-  const bg = value >= 0 ? '#f0f5ff' : '#fff1f0';
-  const arrow = value >= 0 ? '▲' : '▼';
+const PctBadge: React.FC<{ v: number | null }> = ({ v }) => {
+  if (v == null || Number.isNaN(v)) return <span style={{ color: "#8c8c8c" }}>—</span>;
+  const up = v >= 0;
+  const bg = up ? "#f0f5ff" : "#fff1f0";
+  const fg = up ? "#0958d9" : C.danger;
+  const arrow = up ? "▲" : "▼";
   return (
-    <span style={{ display: 'inline-block', padding: '0 8px', lineHeight: '22px', borderRadius: 6, background: bg, color: tone }}>
-      {arrow} {pctStr(Math.abs(value), 1)}
+    <span style={{ background: bg, color: fg, padding: "0 8px", lineHeight: "22px", borderRadius: 6 }}>
+      {arrow} {(Math.abs(v) * 100).toFixed(1)}%
     </span>
   );
 };
 
-/** 共通セクションカード（dense: 余白圧縮） */
-const SectionCard: FC<{
-  title: string;
-  tooltip?: string;
-  extra?: React.ReactNode;
-  children: React.ReactNode;
-  dense?: boolean;
-  className?: string;
-  style?: React.CSSProperties;
-  minBodyHeight?: number;
-}> = ({ title, tooltip, extra, children, dense, className, style, minBodyHeight }) => {
-  const headPad = dense ? '4px 8px' : DENSE.headPad;
-  const bodyPad = dense ? 8 : DENSE.cardPad;
-  return (
-    <Card className={`no-overlap-card ${className ?? ''}`} style={{ marginBottom: DENSE.gutter, height: '100%', display: 'flex', flexDirection: 'column', ...style }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: headPad }}>
-        <Typography.Title level={5} style={{ margin: 0 }}>{title}</Typography.Title>
-        <Space size={8}>
-          {extra}
-          {tooltip && (
-            <AntTooltip title={tooltip}>
-              <InfoCircleOutlined style={{ color: '#8c8c8c' }} />
-            </AntTooltip>
-          )}
-        </Space>
-      </div>
-      <div className="section-body" style={{ padding: bodyPad, flex: 1, display: 'flex', flexDirection: 'column', minHeight: minBodyHeight ?? DENSE.cellMinH }}>
-        {children}
-      </div>
-    </Card>
-  );
-};
-
-const MiniRateBar: FC<{ rate: number | null }> = ({ rate }) => {
-  if (rate == null) return <>—</>;
-  const p = clamp(Math.round(rate * 100), 0, 200);
-  const color = p >= 100 ? Colors.good : p >= 80 ? Colors.warn : Colors.bad;
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-      <div style={{ flex: 1, height: 8, background: '#f0f0f0', borderRadius: 4, overflow: 'hidden' }}>
-        <div style={{ width: `${Math.min(p, 100)}%`, height: '100%', background: color }} />
-      </div>
-      <span style={{ width: 48, textAlign: 'right' }}>{p}%</span>
-    </div>
-  );
-};
-
-// ヘッダー用ピル
-const StatPill: FC<{ label: string; value: number; unit?: string; aria?: string; }> = ({ label, value, unit = '日', aria }) => (
-  <span
-    aria-label={aria ?? `${label} ${value}${unit}`}
-    style={{
-      display: 'inline-flex', alignItems: 'baseline', gap: 6,
-      padding: '2px 8px', borderRadius: 999, background: '#f5f5f5', border: '1px solid #e8e8e8'
-    }}
-  >
-    <span style={{ color: '#8c8c8c', fontSize: 12 }}>{label}</span>
-    <span style={{ fontSize: 14, fontFeatureSettings: "'tnum' 1", fontVariantNumeric: 'tabular-nums' }}>
-      {value.toLocaleString()}<span style={{ fontSize: 11, marginLeft: 2 }}>{unit}</span>
+const Pill: React.FC<{ label: string; value: string | number; unit?: string }> = ({ label, value, unit }) => (
+  <span style={{ display: "inline-flex", gap: 6, padding: "2px 8px", borderRadius: 999, background: "#f5f5f5", border: "1px solid #e8e8e8" }}>
+    <span style={{ color: "#8c8c8c", fontSize: 12 }}>{label}</span>
+    <span style={{ fontVariantNumeric: "tabular-nums" }}>
+      {typeof value === "number" ? value.toLocaleString() : value}{unit ? <span style={{ fontSize: 11, marginLeft: 2 }}>{unit}</span> : null}
     </span>
   </span>
 );
 
-// ==== 比較セル（現行/AI 共通） ====
-const CompareCell: FC<{
-  title: string;
-  value: number | null;
-  rate: number | null;
-  tone: 'pace' | 'ai';
-  showDelta?: boolean;
-  deltaPct?: number | null;
-  compact?: boolean;
-}> = ({ title, value, rate, tone, showDelta, deltaPct, compact }) => {
-  const color = tone === 'pace' ? Colors.pace : Colors.forecast;
-  const rateP = rate == null ? '—' : pctStr(rate, 0);
-  const fz = compact ? 18 : 22;
-  const stroke = compact ? 4 : 6;
+/* =========================
+ * カード1：目標カード
+ * ========================= */
+const TargetCard: React.FC<{ targets: TargetsDTO; calendarDays: CalendarDay[]; progress?: ProgressDTO; daily_curve?: DailyCurveDTO[] }> = ({ targets, calendarDays, progress, daily_curve }) => {
+  // 日目標のサンプル（営業日（平日+土曜）/日祝 の重み）
+  const dayWeight = targets.day_weights;
+  const weekdayCount = calendarDays.filter((d) => d.is_business_day && toDate(d.date).getDay() >= 1 && toDate(d.date).getDay() <= 5).length;
+  const satCount = calendarDays.filter((d) => d.is_business_day && toDate(d.date).getDay() === 6).length;
+  const sunHolCount = calendarDays.filter((d) => d.is_business_day && toDate(d.date).getDay() === 0).length; // デモでは0
+
+  // 営業日として平日と土曜をまとめる
+  const businessDayCount = weekdayCount + satCount;
+  const businessWeight = dayWeight.weekday + dayWeight.sat;
+
+  const totalW = businessDayCount * businessWeight + sunHolCount * dayWeight.sun_hol || 1;
+  const oneBusinessDay = Math.round((targets.month * (businessWeight / totalW)) || 0);
+  const oneSunHol = Math.round((targets.month * (dayWeight.sun_hol / totalW)) || 0);
+
+  // weekData removed: week chart replaced by per-week cards
+
   return (
-    <Card className="no-overlap-card" size="small" bordered bodyStyle={{ padding: compact ? 5 : 8 }}>
-      <Space size={6} align="baseline" style={{ marginBottom: compact ? 1 : 4 }}>
-        <Tag color={tone === 'pace' ? 'default' : 'blue'}>{title}</Tag>
+  <Card bordered bodyStyle={{ padding: 8 }}>
+      <Space align="baseline" style={{ justifyContent: "space-between", width: "100%" }}>
+        <Typography.Title level={5} style={{ margin: 0 }}>目標カード</Typography.Title>
+        <Tooltip title="週目標は当月の営業日配分で按分。日目標は平日/土/日祝の重みで配分。">
+          <InfoCircleOutlined style={{ color: "#8c8c8c" }} />
+        </Tooltip>
       </Space>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: compact ? 1 : 4 }}>
-        <div style={{ fontSize: fz, color, fontFeatureSettings: "'tnum' 1", fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>
-          {value != null ? `${Math.round(value).toLocaleString()} t` : '—'}
-        </div>
-        <TinyLabel>達成：{rateP}</TinyLabel>
-        {showDelta && <SoftBadge value={deltaPct} />}
-      </div>
-      {rate != null && (
-        <Progress percent={clamp(Math.round(rate * 100), 0, 200)} showInfo={false} strokeWidth={stroke} style={{ marginTop: 0 }} />
-      )}
+      <Row gutter={[12, 12]} style={{ marginTop: 8 }}>
+        <Col xs={24} lg={24}>
+          {/* 3x3 grid: columns = 目標 / 実績 / 達成率バー、 rows = 1ヶ月 / 1週間 / 1日 */}
+          {(() => {
+            const todayStr = dayjs().format('YYYY-MM-DD');
+            const dayEntry = calendarDays.find((d) => d.date === todayStr) || calendarDays[0];
+            const todayWeekId = dayEntry.week_id;
+            const weekIds = Array.from(new Set(calendarDays.map((d) => d.week_id))).sort();
+            let idx = 0;
+            let currentIdx = 1;
+            for (const wid of weekIds) {
+              const inMonthBiz = calendarDays.filter((d) => d.week_id === wid && d.is_business_day).length;
+              if (inMonthBiz > 0) {
+                idx += 1;
+              }
+              if (wid === todayWeekId) {
+                currentIdx = idx;
+                break;
+              }
+            }
+            const curWeek = targets.weeks.find((w) => w.bw_idx === currentIdx) ?? targets.weeks[targets.weeks.length - 1];
+            const weekTarget = curWeek ? curWeek.week_target : 0;
+            const thisWeekActual = daily_curve ? sum(daily_curve.filter((d) => {
+              const wstart = mondayOf(toDate(todayStr));
+              return toDate(d.date) >= wstart && toDate(d.date) <= addDays(wstart, 6);
+            }).map((d) => d.actual ?? 0)) : 0;
+
+            const todayActual = daily_curve ? (daily_curve.find((d) => d.date === todayStr)?.actual ?? 0) : 0;
+
+            const rowsData = [
+              { key: 'month', label: '1ヶ月', target: targets.month, actual: progress ? progress.mtd_actual : 0 },
+              { key: 'week', label: '今週', target: weekTarget, actual: thisWeekActual },
+              { key: 'day', label: '1日', target: oneBusinessDay, actual: todayActual },
+            ];
+
+            return (
+              <div style={{ padding: 8, border: '1px solid #f0f0f0', borderRadius: 8, background: '#fff' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 2fr', columnGap: 14, rowGap: 8, alignItems: 'center' }}>
+                  {/* header row */}
+                  <div style={{ color: '#8c8c8c', fontSize: 14 }} />
+                  <div style={{ color: '#8c8c8c', fontSize: 14, fontWeight: 700 }}>目標</div>
+                  <div style={{ color: '#8c8c8c', fontSize: 14, fontWeight: 700 }}>実績</div>
+                  <div style={{ color: '#8c8c8c', fontSize: 14, fontWeight: 700 }}>達成率</div>
+
+                  {rowsData.map((r) => {
+                    const ratioRaw = r.target ? r.actual / r.target : 0;
+                    const pct = r.target ? Math.round(ratioRaw * 100) : 0; // can be >100
+                    const barPct = clamp(pct, 0, 100);
+                    const pctColor = ratioRaw >= 1 ? C.ok : ratioRaw >= 0.9 ? C.warn : C.danger;
+
+                    return (
+                      <React.Fragment key={r.key}>
+                        {/* row label */}
+                        <div style={{ color: '#595959', fontSize: 14, fontWeight: 800 }}>{r.label}</div>
+                        {/* target */}
+                        <div>
+                          <Statistic value={typeof r.target === 'number' ? r.target : 0} suffix="t" valueStyle={{ color: C.primary, fontSize: 22, fontWeight: 800 }} />
+                        </div>
+                        {/* actual */}
+                        <div>
+                          <Statistic value={typeof r.actual === 'number' ? r.actual : 0} suffix="t" valueStyle={{ color: '#222', fontSize: 22, fontWeight: 800 }} />
+                        </div>
+                        {/* progress (percent + horizontal bar) */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                          <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'baseline' }}>
+                            <Statistic value={pct} suffix="%" valueStyle={{ color: pctColor, fontSize: 16, fontWeight: 700 }} />
+                          </div>
+                          <Progress percent={barPct} showInfo={false} strokeColor={pctColor} strokeWidth={8} />
+                        </div>
+                      </React.Fragment>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })()}
+        </Col>
+      </Row>
     </Card>
-  );
-};
-
-/** 今月着地カード（達成率バー付き） */
-const MonthLandingCard: FC<{
-  label: string;
-  sub: string;
-  tone: 'pace' | 'ai';
-  value: number;
-  rate: number | null;  // value / mTarget
-  deltaPct?: number | null;
-}> = ({ label, sub, tone, value, rate, deltaPct }) => {
-  const color = tone === 'pace' ? Colors.pace : Colors.forecast;
-  return (
-    <Card className="no-overlap-card" size="small" bordered bodyStyle={{ padding: 6 }}>
-      <Space size={6} align="baseline" style={{ marginBottom: 1 }}>
-        <Tag color={tone === 'pace' ? 'default' : 'blue'}>{label}</Tag>
-        <TinyLabel>{sub}</TinyLabel>
-        {deltaPct != null && <SoftBadge value={deltaPct} />}
-      </Space>
-      <div style={{ fontSize: 18, color, fontFeatureSettings: "'tnum' 1", fontVariantNumeric: 'tabular-nums' }}>
-        {`${Math.round(value).toLocaleString()} t`}
-      </div>
-      <div style={{ marginTop: 4 }}>
-        <Progress
-          percent={rate == null ? 0 : clamp(Math.round(rate * 100), 0, 200)}
-          showInfo={false}
-          strokeWidth={5}
-        />
-      </div>
-    </Card>
-  );
-};
-
-const WeeklyConfirmedTable: FC<{ rows: WeeklyConfirmedRow[]; currentWeekKey?: string; }> = ({ rows, currentWeekKey }) => {
-  const cols: TableColumnsType<WeeklyConfirmedRow> = [
-    { title: '週', dataIndex: 'label', key: 'label', width: 180,
-      render: (v: string, r) => (<span>{r.key === currentWeekKey && <Tag color="blue" style={{ marginRight: 6 }}>今</Tag>}{v}</span>) },
-    { title: '平日数', dataIndex: 'bizDays', key: 'bizDays', align: 'right', width: 90 },
-    { title: '日・祝日数', dataIndex: 'sunHoliDays', key: 'sunHoliDays', align: 'right', width: 110 },
-    { title: '休業日数', dataIndex: 'offDays', key: 'offDays', align: 'right', width: 100 },
-    { title: '目標合計(t)', dataIndex: 'targetSum', key: 'targetSum', align: 'right', render: (v: number) => v.toLocaleString(), width: 120 },
-    { title: '確定合計(t)', dataIndex: 'actualSum', key: 'actualSum', align: 'right', render: (v: number) => v.toLocaleString(), width: 120 },
-    { title: '達成率', dataIndex: 'rateConfirmed', key: 'rateConfirmed', align: 'right', render: (v: number | null) => <MiniRateBar rate={v} />, width: 160 },
-  ];
-  return (
-    <Table size="small" bordered pagination={false} dataSource={rows} columns={cols}
-      rowClassName={(rec) => rec.key === currentWeekKey ? 'row-current-week' : ''} scroll={{ x: 920 }} style={{ width: '100%' }} />
-  );
-};
-
-const HeroKPICard: FC<{ monthTarget: number; mtdActual: number; mtdRate: number | null; }>
-= ({ monthTarget, mtdActual, mtdRate }) => {
-  const ringPercent = clamp(Math.round((mtdRate ?? 0) * 100), 0, 120);
-  const ringColor = (mtdRate ?? 0) >= 1 ? Colors.good : (mtdRate ?? 0) >= 0.8 ? Colors.warn : Colors.bad;
-
-  return (
-    <SectionCard dense title="月目標 vs MTD実績" tooltip="月目標＝当月目標合計、MTD＝本日までの確定合計。" minBodyHeight={DENSE.cellMinH}>
-      <div className="kpi-grid" style={{ padding: 0 }}>
-        <div className="kpi-cell">
-          <span className="kpi-label">月目標</span>
-          <span className="kpi-value kpi-num" style={{ color: Colors.target }}>
-            {Math.round(monthTarget).toLocaleString()} <span className="unit">t</span>
-          </span>
-        </div>
-        <div className="kpi-cell">
-          <span className="kpi-label">MTD実績</span>
-          <span className="kpi-value kpi-num" style={{ color: Colors.actual }}>
-            {Math.round(mtdActual).toLocaleString()} <span className="unit">t</span>
-          </span>
-        </div>
-        <div className="kpi-cell ring">
-          <span className="kpi-label">達成率（確定）</span>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Progress type="dashboard" percent={ringPercent} size={96} strokeColor={ringColor} format={() => `${ringPercent}%`} />
-          </div>
-        </div>
-      </div>
-    </SectionCard>
-  );
-};
-
-/* === 今日/今週 見込み（現行 vs AI） === */
-const TodayWeekCompareCard: FC<{
-  todayCurrent: number | null;
-  todayAI: number | null;
-  dayTargetPlan: number | null;
-  weekCurrent: number | null;
-  weekAI: number | null;
-  weekTarget: number;
-  dayDeltaPct?: number | null;
-  weekDeltaPct?: number | null;
-}> = ({ todayCurrent, todayAI, dayTargetPlan, weekCurrent, weekAI, weekTarget, dayDeltaPct, weekDeltaPct }) => {
-  const dayRateAI = useMemo(() => (dayTargetPlan ? (todayAI ?? 0) / dayTargetPlan : null), [todayAI, dayTargetPlan]);
-  const dayRateCurrent = useMemo(() => (dayTargetPlan ? (todayCurrent ?? 0) / dayTargetPlan : null), [todayCurrent, dayTargetPlan]);
-  const weekRateAI = useMemo(() => (weekTarget ? (weekAI ?? 0) / weekTarget : null), [weekAI, weekTarget]);
-  const weekRateCurrent = useMemo(() => (weekTarget ? (weekCurrent ?? 0) / weekTarget : null), [weekCurrent, weekTarget]);
-
-  return (
-    <SectionCard dense title="今日・今週の見込み（現行 vs AI）" tooltip="現行＝直近平日ペースに基づく見込み、AI＝モデル予測の積上げ。">
-      <div className="matrix-two">
-        <div className="m-label">今日</div>
-        <div className="m-row">
-          <CompareCell compact title="現行" value={todayCurrent} rate={dayRateCurrent} tone="pace" />
-          <CompareCell compact title="AI" value={todayAI ?? null} rate={dayRateAI} tone="ai" showDelta deltaPct={dayDeltaPct} />
-        </div>
-
-        <div className="m-label">今週</div>
-        <div className="m-row">
-          <CompareCell compact title="現行" value={weekCurrent} rate={weekRateCurrent} tone="pace" />
-          <CompareCell compact title="AI" value={weekAI ?? null} rate={weekRateAI} tone="ai" showDelta deltaPct={weekDeltaPct} />
-        </div>
-      </div>
-    </SectionCard>
-  );
-};
-
-/* === 目標達成ペース：必要ペース/残り目標 === */
-const ActionPaceCard: FC<{
-  loading: boolean;
-  remainingGoal: number; requiredPerBizDay: number | null;
-  paceBiz: number | null;
-}> = ({ loading, remainingGoal, requiredPerBizDay, paceBiz }) => {
-  return (
-    <SectionCard dense className="action-compact" title="目標達成ペース" tooltip="必要平均＝(月目標−MTD実績)/残営業日。" minBodyHeight={DENSE.cellMinH}>
-      {!loading ? (
-        <div className="action-grid two-cols">
-          <Card className="no-overlap-card action-tile" bordered bodyStyle={{ padding: 8 }}>
-            <TinyLabel>必要ペース（残平日）</TinyLabel>
-            <div className="action-val">{requiredPerBizDay != null ? `${requiredPerBizDay.toFixed(1)} t/日` : '—'}</div>
-            <TinyLabel style={{ marginTop: 4 }}>直近平日ペース：{paceBiz != null ? `${Math.round(paceBiz)} t/日` : '—'}</TinyLabel>
-          </Card>
-          <Card className="no-overlap-card action-tile" bordered bodyStyle={{ padding: 8 }}>
-            <TinyLabel>残り目標数</TinyLabel><div className="action-val">{remainingGoal.toLocaleString()} t</div>
-          </Card>
-        </div>
-      ) : <Skeleton active paragraph={{ rows: 2 }} title={false} />}
-    </SectionCard>
-  );
-};
-
-/* === 月着地（現行 vs AI） === */
-const MonthLandingCompareCard: FC<{
-  landingPace: number; landingAI: number; mTarget: number;
-  subLeft: string; compareDeltaPace?: number | null; compareDeltaAI?: number | null;
-}> = ({ landingPace, landingAI, mTarget, subLeft, compareDeltaPace, compareDeltaAI }) => {
-  return (
-    <SectionCard dense title="月着地（現行ペース vs AI）" tooltip="現行＝直近平日ペース×残営業日で積上げ、AI＝日次予測の積上げ。">
-      <div className="m-row">
-        <MonthLandingCard
-          label="現行ペース着地"
-          sub={subLeft}
-          tone="pace"
-          value={landingPace}
-          rate={mTarget ? landingPace / mTarget : null}
-          deltaPct={compareDeltaPace}
-        />
-        <MonthLandingCard
-          label="AI着地"
-          sub="日次予測積上げ"
-          tone="ai"
-          value={landingAI}
-          rate={mTarget ? landingAI / mTarget : null}
-          deltaPct={compareDeltaAI}
-        />
-      </div>
-    </SectionCard>
   );
 };
 
 /* =========================
- * メイン
+ * カード：日次累積搬入量（トップレベルコンポーネント）
  * ========================= */
-const ExecutiveForecastDashboard: FC = () => {
-  const [month, setMonth] = useState<YYYYMM>(currentMonth());
-  const [series, setSeries] = useState<SeriesBundle | null>(null);
-  const [compareBasis, setCompareBasis] = useState<CompareBasis>('now');
+const DailyCumulativeCard: React.FC<{ rows: DailyCurveDTO[]; prevMonthDaily?: Record<IsoDate, number>; prevYearDaily?: Record<IsoDate, number> }> = ({ rows, prevMonthDaily, prevYearDaily }) => {
+  const [showPrevMonth, setShowPrevMonth] = useState(false);
+  const [showPrevYear, setShowPrevYear] = useState(false);
 
-  const thisMonth = useMemo(() => currentMonth(), []);
-  const nextMonthAllowed = useMemo(() => nextMonthStr(thisMonth), [thisMonth]);
+  // 当月実績の累積を作成しつつ、先月・前年の累積値を埋め込む
+  let running = 0;
+  let accPM = 0;
+  let accPY = 0;
+  const cumData = rows.map((r) => {
+    running += r.actual ?? 0;
+    const yyyy = r.date;
+    const pmKey = dayjs(yyyy).subtract(1, 'month').format('YYYY-MM-DD');
+    const pyKey = dayjs(yyyy).subtract(1, 'year').format('YYYY-MM-DD');
+    const pmVal = prevMonthDaily ? (prevMonthDaily[pmKey] ?? 0) : 0;
+    const pyVal = prevYearDaily ? (prevYearDaily[pyKey] ?? 0) : 0;
+    accPM += pmVal;
+    accPY += pyVal;
+    return {
+      label: dayjs(r.date).format('DD'),
+      yyyyMMdd: r.date,
+      actualCumulative: running,
+      prevMonthCumulative: accPM,
+      prevYearCumulative: accPY,
+    } as { label: string; yyyyMMdd: string; actualCumulative: number; prevMonthCumulative: number; prevYearCumulative: number };
+  });
 
-  const clampMonth = (m: YYYYMM): YYYYMM => { if (m < thisMonth) return thisMonth; if (m > nextMonthAllowed) return nextMonthAllowed; return m; };
-  const safeSetMonth = (m: YYYYMM) => setMonth(clampMonth(m));
+  const tooltipFormatter = (...args: unknown[]) => {
+    const [v, name, payloadItem] = (args as unknown) as [unknown, unknown, { payload?: Record<string, unknown> }?];
+  const map: Record<string, string> = { actualCumulative: '累積実績', prevMonthCumulative: '先月累積', prevYearCumulative: '前年累積' };
+    const key = name == null ? '' : String(name);
+    const label = key ? (map[key] || key) : '';
+
+    const payload = payloadItem && payloadItem.payload ? payloadItem.payload : null;
+    let actualCum: number | null = null;
+    if (payload && typeof payload === 'object' && 'actualCumulative' in payload) {
+      const a = (payload as Record<string, unknown>)['actualCumulative'];
+      if (typeof a === 'number') actualCum = a;
+      else if (typeof a === 'string' && !Number.isNaN(Number(a))) actualCum = Number(a);
+    }
+
+    if (v == null || v === "" || Number.isNaN(Number(v))) return ['—', label];
+    const valNum = Number(v as unknown as number);
+
+    if ((key === 'prevMonthCumulative' || key === 'prevYearCumulative') && actualCum != null && actualCum !== 0) {
+      const diffPct = ((valNum - actualCum) / actualCum) * 100;
+      const sign = diffPct >= 0 ? '+' : '-';
+      const absPct = Math.abs(diffPct).toFixed(1);
+      return [`${valNum}t (${sign}${absPct}%)`, label];
+    }
+    return [`${valNum}t`, label];
+  };
+
+  return (
+    <Card bordered>
+      <Space align="baseline" style={{ justifyContent: 'space-between', width: '100%' }}>
+        <Typography.Title level={5} style={{ margin: 0 }}>日次累積搬入量（累積）</Typography.Title>
+        <Space size="small">
+          <span style={{ color: '#8c8c8c' }}>先月累積</span>
+          <Switch size="small" checked={showPrevMonth} onChange={setShowPrevMonth} />
+          <span style={{ color: '#8c8c8c' }}>前年累積</span>
+          <Switch size="small" checked={showPrevYear} onChange={setShowPrevYear} />
+        </Space>
+      </Space>
+  <div style={{ height: 180, marginTop: 4 }}>
+        <ResponsiveContainer width="100%" height="100%">
+          <AreaChart data={cumData}>
+            <CartesianGrid strokeDasharray="3 3" />
+            {/* x軸は奇数日のみ表示 */}
+            <XAxis dataKey="label" interval={0} tickFormatter={(v) => {
+              // v は '01','02' のような文字列
+              const n = Number(String(v));
+              if (Number.isNaN(n)) return String(v);
+              return n % 2 === 1 ? String(v) : '';
+            }} />
+            <YAxis unit="t" domain={[0, 'auto']} />
+            <RTooltip formatter={tooltipFormatter} />
+            <Area type="monotone" dataKey="actualCumulative" stroke={C.actual} fill={C.actual} fillOpacity={0.24} />
+            {showPrevMonth && <Line type="monotone" dataKey="prevMonthCumulative" name="prevMonthCumulative" stroke="#40a9ff" dot={false} strokeWidth={3} />}
+            {showPrevYear && <Line type="monotone" dataKey="prevYearCumulative" name="prevYearCumulative" stroke="#fa8c16" dot={false} strokeWidth={3} />}
+          </AreaChart>
+        </ResponsiveContainer>
+      </div>
+      <div style={{ marginTop: 8, display: 'flex', gap: 16, justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <div style={{ width: 36, height: 6, background: C.actual, borderRadius: 3 }} />
+          <div style={{ color: '#595959' }}>累積実績</div>
+        </div>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <div style={{ width: 36, height: 6, background: '#40a9ff', borderRadius: 3 }} />
+          <div style={{ color: '#595959' }}>先月累積</div>
+        </div>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <div style={{ width: 36, height: 6, background: '#fa8c16', borderRadius: 3 }} />
+          <div style={{ color: '#595959' }}>前年累積</div>
+        </div>
+      </div>
+    </Card>
+  );
+};
+
+/* =========================
+ * CombinedDailyCard
+ * - Segmented で '日次' / '累積' を切り替え
+ * - 内部で既存の DailyActualsCard / DailyCumulativeCard のロジックを利用
+ * ========================= */
+const CombinedDailyCard: React.FC<{ rows: DailyCurveDTO[]; prevMonthDaily?: Record<IsoDate, number>; prevYearDaily?: Record<IsoDate, number> }> = ({ rows, prevMonthDaily, prevYearDaily }) => {
+  const items = [
+    { key: 'daily', label: '日次', children: <DailyActualsCard rows={rows} prevMonthDaily={prevMonthDaily} prevYearDaily={prevYearDaily} /> },
+    { key: 'cumulative', label: '累積', children: <DailyCumulativeCard rows={rows} prevMonthDaily={prevMonthDaily} prevYearDaily={prevYearDaily} /> },
+  ];
+
+  return (
+    <Card bordered size="small" bodyStyle={{ padding: 8 }}>
+      {/* Make the tab header more compact (vertical size ~0.6x): use small size and custom tabBarStyle */}
+      <Tabs
+        items={items}
+        size="small"
+        tabBarStyle={{ padding: '4px 8px', minHeight: 26, height: 26, fontSize: 13 }}
+      />
+    </Card>
+  );
+};
+
+/* GoalVsActualCard removed per request */
+
+/* =========================
+ * カード：日次搬入量（実績）
+ * ========================= */
+const DailyActualsCard: React.FC<{ rows: DailyCurveDTO[]; prevMonthDaily?: Record<IsoDate, number>; prevYearDaily?: Record<IsoDate, number> }> = ({ rows, prevMonthDaily, prevYearDaily }) => {
+  const [showPrevMonth, setShowPrevMonth] = useState(false);
+  const [showPrevYear, setShowPrevYear] = useState(false);
+  const chartData = rows.map((r) => {
+    const prevMonthKey = dayjs(r.date).subtract(1, 'month').format('YYYY-MM-DD');
+    const prevYearKey = dayjs(r.date).subtract(1, 'year').format('YYYY-MM-DD');
+    return {
+      label: dayjs(r.date).format('DD'),
+      actual: r.actual ?? 0,
+      dateFull: r.date,
+      prevMonth: prevMonthDaily ? prevMonthDaily[prevMonthKey] ?? null : null,
+      prevYear: prevYearDaily ? prevYearDaily[prevYearKey] ?? null : null,
+    };
+  });
+  const colorForDate = (dateStr: string) => {
+    const d = dayjs(dateStr);
+    const dow = d.day();
+    // detect second Sunday in month
+    const isSecondSunday = (() => {
+      if (dow !== 0) return false;
+      let count = 0;
+      let cur = d.startOf('month');
+      while (cur.isBefore(d) || cur.isSame(d, 'day')) {
+        if (cur.day() === 0) count += 1;
+        cur = cur.add(1, 'day');
+      }
+      return count === 2;
+    })();
+    if (isSecondSunday) return C.danger; // non-business
+    if (dow === 0) return '#ff85c0'; // sunday/holiday
+    return C.ok; // business day
+  };
+  return (
+    <Card bordered size="small" bodyStyle={{ padding: 8 }}>
+      <Space align="baseline" size="small" style={{ justifyContent: 'space-between', width: '100%', gap: 8 }}>
+        <Typography.Title level={5} style={{ margin: 0, fontSize: 14 }}>日次搬入量（実績）</Typography.Title>
+        <Tooltip title="実際に搬入された日次トン数（モック）。">
+          <InfoCircleOutlined style={{ color: '#8c8c8c' }} />
+        </Tooltip>
+        <Space size="small">
+          <span style={{ color: '#8c8c8c' }}>先月</span>
+          <Switch size="small" checked={showPrevMonth} onChange={setShowPrevMonth} />
+          <span style={{ color: '#8c8c8c' }}>前年</span>
+          <Switch size="small" checked={showPrevYear} onChange={setShowPrevYear} />
+        </Space>
+      </Space>
+      <div style={{ height: 150, marginTop: 4 }}>
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={chartData}>
+            <CartesianGrid strokeDasharray="3 3" />
+              {/* x軸は奇数日のみ表示 */}
+              <XAxis dataKey="label" interval={0} tickFormatter={(v) => {
+                const n = Number(String(v));
+                if (Number.isNaN(n)) return String(v);
+                return n % 2 === 1 ? String(v) : '';
+              }} />
+            <YAxis unit="t" />
+            <RTooltip formatter={(...args) => {
+              // args may contain more items; cast via unknown first to satisfy strict typing
+              const [v, name, payloadItem] = (args as unknown) as [unknown, unknown, { payload?: Record<string, unknown> }?];
+              const map: Record<string, string> = { actual: '実績', prevMonth: '先月', prevYear: '前年' };
+              const key = name == null ? '' : String(name);
+              const label = key ? (map[key] || key) : '';
+
+              const payload = payloadItem && payloadItem.payload ? payloadItem.payload : null;
+              let actualVal: number | null = null;
+              if (payload && typeof payload === 'object' && 'actual' in payload) {
+                const a = (payload as Record<string, unknown>)['actual'];
+                if (typeof a === 'number') actualVal = a;
+                else if (typeof a === 'string' && !Number.isNaN(Number(a))) actualVal = Number(a);
+              }
+
+              if (v == null || v === "" || Number.isNaN(Number(v))) {
+                return ['—', label];
+              }
+
+              const valNum = Number(v as unknown as number);
+
+              if ((key === 'prevMonth' || key === 'prevYear') && actualVal != null && actualVal !== 0) {
+                const diffPct = ((valNum - actualVal) / actualVal) * 100;
+                const sign = diffPct >= 0 ? '+' : '-';
+                const absPct = Math.abs(diffPct).toFixed(1);
+                return [`${valNum}t (${sign}${absPct}%)`, label];
+              }
+
+              return [`${valNum}t`, label];
+            }} />
+                <Bar dataKey="actual">
+                  {chartData.map((entry, idx) => (
+                    <Cell key={`cell-${idx}`} fill={colorForDate(entry.dateFull)} />
+                  ))}
+                </Bar>
+                {showPrevMonth && <Line type="monotone" dataKey="prevMonth" stroke="#40a9ff" dot={false} strokeWidth={3} />}
+                {showPrevYear && <Line type="monotone" dataKey="prevYear" stroke="#fa8c16" dot={false} strokeWidth={3} />}
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+  {/* 凡例 */}
+  <div style={{ marginTop: 6, display: 'flex', gap: 12, justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <div style={{ width: 14, height: 14, borderRadius: 3, background: C.ok }} />
+          <div style={{ color: '#595959' }}>営業</div>
+        </div>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <div style={{ width: 14, height: 14, borderRadius: 3, background: '#ff85c0' }} />
+          <div style={{ color: '#595959' }}>予約</div>
+        </div>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <div style={{ width: 14, height: 14, borderRadius: 3, background: C.danger }} />
+          <div style={{ color: '#595959' }}>休業</div>
+        </div>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <div style={{ width: 36, height: 6, background: '#40a9ff', borderRadius: 3 }} />
+          <div style={{ color: '#595959' }}>先月日</div>
+        </div>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <div style={{ width: 36, height: 6, background: '#fa8c16', borderRadius: 3 }} />
+          <div style={{ color: '#595959' }}>前年比</div>
+        </div>
+      </div>
+    </Card>
+  );
+};
+
+/* =========================
+ * カード3：搬入量予測カード（当日/週/当月）
+ * ========================= */
+const ForecastCard: React.FC<{ forecast: ForecastDTO; monthTarget: number; rows?: DailyCurveDTO[] }> = ({ forecast, monthTarget, rows }) => {
+  // Use provided rows (daily_curve) when available so actual values are unified
+  const rowsData = rows && rows.length ? rows : [];
+  const month = rowsData.length ? dayjs(rowsData[0].date).format('YYYY-MM') : curMonth();
+  const daysInMonth = rowsData.length ? rowsData.length : dayjs(month + '-01').daysInMonth();
+  const base = monthTarget && daysInMonth ? monthTarget / daysInMonth : 0;
+  const chartData = [] as { label: string; daily: number; cumulative: number; dailyForward?: number; actual?: number }[];
+  let running = 0;
+  // determine forward window start (today if same month else month start)
+  const todayDate = dayjs();
+  const monthStart = dayjs(month + '-01');
+  let forwardStartDay = 1;
+  if (todayDate.format('YYYY-MM') === month) forwardStartDay = todayDate.date();
+  // else keep as 1 (start of month)
+  const forwardEndDay = Math.min(daysInMonth, forwardStartDay + 6);
+
+  if (rowsData.length) {
+    // build chartData from rowsData, using generated daily for reverse prediction
+    for (let idx = 0; idx < rowsData.length; idx++) {
+      const r = rowsData[idx];
+      const i = idx + 1;
+      const factor = 0.9 + 0.2 * (0.5 + Math.sin((i / daysInMonth) * Math.PI * 2) / 2);
+      const daily = Math.round(base * factor);
+      running += daily;
+      const dailyForward = i >= forwardStartDay && i <= forwardEndDay ? Math.round(base * (0.9 + 0.2 * (0.5 + Math.sin((i / daysInMonth) * Math.PI * 2) / 2))) : 0;
+      const actualDay = r.actual ?? 0;
+      chartData.push({ label: String(i).padStart(2, '0'), daily, cumulative: running, dailyForward, actual: actualDay });
+    }
+  } else {
+    for (let i = 1; i <= daysInMonth; i++) {
+      const factor = 0.9 + 0.2 * (0.5 + Math.sin((i / daysInMonth) * Math.PI * 2) / 2);
+      const daily = Math.round(base * factor);
+      running += daily;
+      const dailyForward = i >= forwardStartDay && i <= forwardEndDay ? Math.round(base * (0.9 + 0.2 * (0.5 + Math.sin((i / daysInMonth) * Math.PI * 2) / 2))) : 0;
+      const actualDay = i < forwardStartDay ? Math.round(Math.round(base * (0.9 + 0.2 * (0.5 + Math.sin((i / daysInMonth) * Math.PI * 2) / 2))) * (0.95 + Math.random() * 0.1)) : 0;
+      chartData.push({ label: String(i).padStart(2, '0'), daily, cumulative: running, dailyForward, actual: actualDay });
+    }
+  }  // approximate targets for day/week (simple split)
+  const dayTarget = monthTarget && daysInMonth ? Math.round(monthTarget / daysInMonth) : 0;
+  const weekTarget = dayTarget * 7;
+  const [showActual, setShowActual] = useState(true);
+  const [showForward, setShowForward] = useState(true);
+  const [showReverse, setShowReverse] = useState(true);
+  const [showCumReverse, setShowCumReverse] = useState(true);
+  const [showCumActual, setShowCumActual] = useState(true);
+
+  // Build cumulative series based on the 'daily' (逆行) series and 'actual' explicitly
+  const cumDailyData = (() => {
+    let runReverse = 0;
+    let runActual = 0;
+    return chartData.map((d) => {
+      runReverse += Number(d.daily || 0);
+      runActual += Number(d.actual || 0);
+      return { ...d, cumDaily: runReverse, cumActual: runActual };
+    });
+  })();
+
+  // Compute week end cumulative forecasts (simple: divide monthTarget by weeks and cumulate)
+  const weeksInMonth = Math.ceil(daysInMonth / 7);
+  const weekTargetAvg = monthTarget / weeksInMonth;
+  const weekEndForecasts = [] as { day: number; cumTarget: number }[];
+  for (let w = 1; w <= weeksInMonth; w++) {
+    const endDay = Math.min(w * 7, daysInMonth);
+    weekEndForecasts.push({ day: endDay, cumTarget: Math.round(weekTargetAvg * w) });
+  }
+  // Month end forecast from forecast.month_landing.p50
+  const monthEndForecast = forecast.month_landing.p50;
+
+  return (
+    <Card bordered>
+      <Space align="baseline" style={{ justifyContent: "space-between", width: "100%" }}>
+        <Typography.Title level={5} style={{ margin: 0 }}>搬入量予測（P50 / P10–P90）</Typography.Title>
+        <Tooltip title="P帯はモデル残差から推定（本番）。ここではデモ値。">
+          <InfoCircleOutlined style={{ color: "#8c8c8c" }} />
+        </Tooltip>
+      </Space>
+
+      <div style={{ marginTop: 8 }}>
+        <Row gutter={[12, 12]}>
+          {/* Left: stacked 3 rows */}
+          <Col xs={24} lg={8}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {/* 当日 */}
+              {(() => {
+                const ratio = dayTarget ? forecast.today.p50 / dayTarget : null;
+                const pct = ratio != null ? Math.round(ratio * 100) : null;
+                const pctColor = ratio == null ? '#8c8c8c' : ratio >= 1 ? C.ok : ratio >= 0.9 ? C.warn : C.danger;
+                return (
+                  <Card size="small">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <div style={{ flex: 1 }}>
+                        <Tag color="blue">当日</Tag>
+                        <div style={{ color: '#8c8c8c', fontSize: 12 }}>レンジ: {forecast.today.p10}–{forecast.today.p90}</div>
+                      </div>
+                      <div style={{ width: 120, textAlign: 'right' }}>
+                        <div style={{ color: C.primary, fontSize: 20, fontWeight: 800 }}>{forecast.today.p50.toLocaleString()}<span style={{ fontSize: 12 }}>t</span></div>
+                      </div>
+                      <div style={{ width: 110 }}>
+                        {pct != null ? (
+                          <div>
+                            <Progress percent={clamp(pct, 0, 200)} showInfo={false} strokeColor={pctColor} strokeWidth={8} />
+                            <div style={{ textAlign: 'center', marginTop: 4, color: pctColor, fontWeight: 700 }}>{pct}%</div>
+                          </div>
+                        ) : (
+                          <div style={{ color: '#8c8c8c', textAlign: 'center' }}>目標不明</div>
+                        )}
+                      </div>
+                    </div>
+                  </Card>
+                );
+              })()}
+
+              {/* 今週合計 */}
+              {(() => {
+                const ratio = weekTarget ? forecast.week.p50 / weekTarget : null;
+                const pct = ratio != null ? Math.round(ratio * 100) : null;
+                const pctColor = ratio == null ? '#8c8c8c' : ratio >= 1 ? C.ok : ratio >= 0.9 ? C.warn : C.danger;
+                return (
+                  <Card size="small">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <div style={{ flex: 1 }}>
+                        <Tag color="blue">今週合計</Tag>
+                        <div style={{ color: '#8c8c8c', fontSize: 12 }}>(週のP帯は簡易表示)</div>
+                      </div>
+                      <div style={{ width: 120, textAlign: 'right' }}>
+                        <div style={{ color: C.primary, fontSize: 20, fontWeight: 800 }}>{forecast.week.p50.toLocaleString()}<span style={{ fontSize: 12 }}>t</span></div>
+                      </div>
+                      <div style={{ width: 110 }}>
+                        {pct != null ? (
+                          <div>
+                            <Progress percent={clamp(pct, 0, 200)} showInfo={false} strokeColor={pctColor} strokeWidth={8} />
+                            <div style={{ textAlign: 'center', marginTop: 4, color: pctColor, fontWeight: 700 }}>{pct}%</div>
+                          </div>
+                        ) : (
+                          <div style={{ color: '#8c8c8c', textAlign: 'center' }}>目標不明</div>
+                        )}
+                      </div>
+                    </div>
+                  </Card>
+                );
+              })()}
+
+              {/* 今月末 */}
+              {(() => {
+                const ratio = monthTarget ? forecast.month_landing.p50 / monthTarget : null;
+                const pct = ratio != null ? Math.round(ratio * 100) : null;
+                const pctColor = ratio == null ? '#8c8c8c' : ratio >= 1 ? C.ok : ratio >= 0.9 ? C.warn : C.danger;
+                return (
+                  <Card size="small">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <div style={{ flex: 1 }}>
+                        <Tag color="blue">今月末</Tag>
+                        <div style={{ color: '#8c8c8c', fontSize: 12 }}>目標: {monthTarget.toLocaleString()} t</div>
+                      </div>
+                      <div style={{ width: 120, textAlign: 'right' }}>
+                        <div style={{ color: C.primary, fontSize: 20, fontWeight: 800 }}>{forecast.month_landing.p50.toLocaleString()}<span style={{ fontSize: 12 }}>t</span></div>
+                      </div>
+                      <div style={{ width: 110 }}>
+                        {pct != null ? (
+                          <div>
+                            <Progress percent={clamp(pct, 0, 200)} showInfo={false} strokeColor={pctColor} strokeWidth={8} />
+                            <div style={{ textAlign: 'center', marginTop: 4, color: pctColor, fontWeight: 700 }}>{pct}%</div>
+                          </div>
+                        ) : (
+                          <div style={{ color: '#8c8c8c', textAlign: 'center' }}>目標不明</div>
+                        )}
+                      </div>
+                    </div>
+                  </Card>
+                );
+              })()}
+            </div>
+          </Col>
+
+          {/* Right: tabbed charts (daily / cumulative) */}
+          <Col xs={24} lg={16}>
+            <Tabs
+              size="small"
+              tabBarStyle={{ padding: '4px 8px', minHeight: 28, height: 28, fontSize: 13 }}
+              items={[
+                {
+                  key: 'reverse',
+                  label: '日次',
+                  children: (
+                    <div style={{ height: 200 }}>
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginBottom: 8 }}>
+                        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                          <Switch size="small" checked={showActual} onChange={(checked) => setShowActual(checked)} />
+                          <span style={{ fontSize: 12 }}>実績</span>
+                        </div>
+                        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                          <Switch size="small" checked={showForward} onChange={(checked) => setShowForward(checked)} />
+                          <span style={{ fontSize: 12 }}>順行（7日）</span>
+                        </div>
+                        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                          <Switch size="small" checked={showReverse} onChange={(checked) => setShowReverse(checked)} />
+                          <span style={{ fontSize: 12 }}>逆行（今月）</span>
+                        </div>
+                      </div>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <ComposedChart data={chartData}>
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis dataKey="label" interval={Math.max(0, Math.floor(daysInMonth / 10))} />
+                          <YAxis yAxisId="left" unit="t" />
+                          <RTooltip formatter={(v: any, name: any) => {
+                            // Map common dataKey/names to friendly Japanese labels and avoid showing 'label' or 'undefined'
+                            const key = name == null ? '' : String(name);
+                            const map: Record<string, string> = {
+                              actual: '実績',
+                              dailyForward: '順行(P50)',
+                              daily: '逆行(P50)',
+                              cumulative: '累積',
+                            };
+                            const display = map[key] ?? (key === 'label' || key === 'undefined' || key === '' ? '' : key);
+                            // If display is empty, only show the value without a trailing label
+                            return display ? [`${v}t`, display] : [`${v}t`, ''];
+                          }} />
+                          {showActual && <Bar dataKey="actual" name="実績" yAxisId="left" fill={C.ok} barSize={8} />}
+                          {showForward && <Bar dataKey="dailyForward" name="順行(P50)" yAxisId="left" fill={'#40a9ff'} barSize={8} />}
+                          {showReverse && (
+                            <Area
+                              type="monotone"
+                              dataKey="daily"
+                              name="逆行(P50)"
+                              yAxisId="left"
+                              stroke={'#fa8c16'}
+                              fill={'#fa8c16'}
+                              fillOpacity={0.12}
+                              dot={{ r: 3 }}
+                            />
+                          )}
+                          {/* 'daily' series removed per request: only actual and forward remain */}
+                          <Legend verticalAlign="top" height={24} formatter={(value: any) => {
+                            if (value == null) return '';
+                            const s = String(value);
+                            if (s === 'label' || s === 'undefined') return '';
+                            return s;
+                          }} />
+                        </ComposedChart>
+                      </ResponsiveContainer>
+                    </div>
+                  ),
+                },
+                {
+                  key: 'cumulative',
+                  label: '累積',
+                  children: (
+                    <div style={{ height: 200 }}>
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginBottom: 8 }}>
+                        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                          <Switch size="small" checked={showCumReverse} onChange={(checked) => setShowCumReverse(checked)} />
+                          <span style={{ fontSize: 12 }}>逆行累積</span>
+                        </div>
+                        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                          <Switch size="small" checked={showCumActual} onChange={(checked) => setShowCumActual(checked)} />
+                          <span style={{ fontSize: 12 }}>実績累積</span>
+                        </div>
+                      </div>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={cumDailyData}>
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis dataKey="label" interval={Math.max(0, Math.floor(daysInMonth / 10))} />
+                          <YAxis unit="t" domain={[0, 'auto']} />
+                          <RTooltip formatter={(v: any, name: any) => {
+                            const key = name == null ? '' : String(name);
+                            const map: Record<string, string> = {
+                              cumDaily: '逆行累積',
+                              cumActual: '実績累積',
+                            };
+                            const display = map[key] ?? key;
+                            return [`${v}t`, display];
+                          }} />
+                          {showCumReverse && <Area type="monotone" dataKey="cumDaily" name="逆行累積" stroke={'#fa8c16'} fill={'#fa8c16'} fillOpacity={0.2} />}
+                          {showCumActual && <Area type="monotone" dataKey="cumActual" name="実績累積" stroke={C.ok} fill={C.ok} fillOpacity={0.2} />}
+                          {/* Week end forecast lines */}
+                          {weekEndForecasts.map((wf, idx) => (
+                            <ReferenceLine
+                              key={`week-${idx}`}
+                              x={String(wf.day).padStart(2, '0')}
+                              stroke={C.target}
+                              strokeDasharray="5 5"
+                              strokeWidth={2}
+                              label={{ value: `週末予測: ${wf.cumTarget}t`, position: 'top', fill: C.target, fontSize: 10 }}
+                            />
+                          ))}
+                          {/* Month end forecast line */}
+                          <ReferenceLine
+                            y={monthEndForecast}
+                            stroke={C.primary}
+                            strokeDasharray="3 3"
+                            strokeWidth={2}
+                            label={{ value: `月末予測: ${monthEndForecast}t`, position: 'right', fill: C.primary, fontSize: 11 }}
+                          />
+                          <Legend verticalAlign="top" height={24} formatter={(value: any) => {
+                            if (value == null) return '';
+                            const s = String(value);
+                            if (s === 'label' || s === 'undefined') return '';
+                            return s;
+                          }} />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    </div>
+                  ),
+                },
+              ]}
+            />
+          </Col>
+        </Row>
+      </div>
+    </Card>
+  );
+};
+
+/* =========================
+ * カード6：営業カレンダー（カウント）
+ * ========================= */
+const CalendarCard: React.FC<{ days: CalendarDay[]; month?: IsoMonth }> = ({ days, month = curMonth() }) => {
+  // 処理用に Map を構築
+  const dayMap = useMemo(() => {
+    const m = new Map<string, CalendarDay>();
+    days.forEach((d) => m.set(d.date, d));
+    return m;
+  }, [days]);
+
+  // 各種日数を集計：平日(Mon–Sat)、通常日曜、非営業（第2日曜）
+  const dayCounts = useMemo(() => {
+    let weekday = 0;
+    let sunday = 0;
+    let secondSunday = 0;
+    let weekdayRem = 0;
+    let sundayRem = 0;
+    let secondSundayRem = 0;
+    const todayStr = dayjs().format('YYYY-MM-DD');
+    days.forEach((d) => {
+      const dt = dayjs(d.date);
+      const dow = dt.day();
+      // 第2日曜の判定
+      const isSecond = (() => {
+        if (dow !== 0) return false;
+        let count = 0;
+        let cur = dt.startOf('month');
+        while (cur.isBefore(dt) || cur.isSame(dt, 'day')) {
+          if (cur.day() === 0) count += 1;
+          cur = cur.add(1, 'day');
+        }
+        return count === 2;
+      })();
+
+      if (isSecond) {
+        secondSunday += 1;
+        if (d.date >= todayStr) secondSundayRem += 1;
+      } else if (dow === 0) {
+        sunday += 1;
+        if (d.date >= todayStr) sundayRem += 1;
+      } else {
+        weekday += 1; // Mon–Sat (excluding Sundays)
+        if (d.date >= todayStr) weekdayRem += 1;
+      }
+    });
+    return { weekday, sunday, secondSunday, weekdayRem, sundayRem, secondSundayRem };
+  }, [days]);
+
+  const dateCellRender = (value: Dayjs): React.ReactNode => {
+    const key = value.format('YYYY-MM-DD');
+    const info = dayMap.get(key);
+    if (!info) return null;
+
+    const dow = value.day(); // 0 Sun .. 6 Sat
+  const isHoliday = info.is_holiday === 1;
+
+    // 判定：当月の第2日曜日を検出
+    const isSecondSunday = (() => {
+      if (dow !== 0) return false;
+      let count = 0;
+      let d = value.startOf('month');
+      while (d.isBefore(value) || d.isSame(value, 'day')) {
+        if (d.day() === 0) count += 1;
+        d = d.add(1, 'day');
+      }
+      return count === 2;
+    })();
+
+    // カラー選定：第2日曜のみを非営業（濃赤）、通常の日曜/祝日はピンク、それ以外は緑
+    let color = C.ok; // default green
+    if (isSecondSunday) {
+      color = C.danger; // 濃い赤 for second Sunday (non-business)
+    } else if (dow === 0 || isHoliday) {
+      color = '#ff85c0'; // pink for ordinary Sunday/holiday
+    } else {
+      color = C.ok; // green for Mon-Sat
+    }
+
+    // 当日を強調表示（黄色）
+    const todayKey = dayjs().format('YYYY-MM-DD');
+    const isToday = key === todayKey;
+    let textColor = '#fff';
+    if (isToday) {
+      color = '#fadb14'; // Ant Design yellow-4
+      textColor = '#000';
+    }
+
+    // Compact badge with day number
+  const inMonth = value.format('YYYY-MM') === month;
+    const dayNum = value.date();
+    if (!inMonth) {
+      // render muted small number for other-month dates
+      return (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', paddingTop: 6 }}>
+          <div style={{ width: 20, height: 20, borderRadius: 4, color: '#bfbfbf', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11 }}>{dayNum}</div>
+        </div>
+      );
+    }
+
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', paddingTop: 6 }}>
+        <div style={{ width: 22, height: 22, borderRadius: 6, background: color, display: 'flex', alignItems: 'center', justifyContent: 'center', color: textColor, fontSize: 12, fontWeight: 600 }}>{dayNum}</div>
+      </div>
+    );
+  };
+
+  const header = (
+    <div style={{ display: 'flex', flexDirection: 'column', width: '100%', gap: 6, alignItems: 'center' }}>
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'center' }}>
+          <Typography.Title level={5} style={{ margin: 0, fontSize: 20 }}>営業カレンダー</Typography.Title>
+          <Tooltip title="最終判定は is_business_day。祝日や独自休業はサーバで上書き。">
+            <InfoCircleOutlined style={{ color: '#8c8c8c' }} />
+          </Tooltip>
+        </div>
+      </div>
+      {/* 2行目：日数と残り日数のみ表示（文言は非表示） */}
+      <div style={{ display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'center' }}>
+        <div style={{ display: 'flex', gap: 6, alignItems: 'center', fontSize: 12 }}>
+          <div style={{ width: 12, height: 12, borderRadius: 3, background: C.ok }} />
+          <div style={{ color: '#595959', fontWeight: 700, fontSize: 12 }}>{dayCounts.weekday}<span style={{ color: '#8c8c8c', fontWeight: 400, fontSize: 11, marginLeft: 6 }}>({dayCounts.weekdayRem})</span></div>
+        </div>
+        <div style={{ display: 'flex', gap: 6, alignItems: 'center', fontSize: 12 }}>
+          <div style={{ width: 12, height: 12, borderRadius: 3, background: '#ff85c0' }} />
+          <div style={{ color: '#595959', fontWeight: 700, fontSize: 12 }}>{dayCounts.sunday}<span style={{ color: '#8c8c8c', fontWeight: 400, fontSize: 11, marginLeft: 6 }}>({dayCounts.sundayRem})</span></div>
+        </div>
+        <div style={{ display: 'flex', gap: 6, alignItems: 'center', fontSize: 12 }}>
+          <div style={{ width: 12, height: 12, borderRadius: 3, background: C.danger }} />
+          <div style={{ color: '#595959', fontWeight: 700, fontSize: 12 }}>{dayCounts.secondSunday}<span style={{ color: '#8c8c8c', fontWeight: 400, fontSize: 11, marginLeft: 6 }}>({dayCounts.secondSundayRem})</span></div>
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <Card bordered size="small">
+      {header}
+      <div style={{ marginTop: 8 }}>
+        {/* カレンダーは表示中の月に固定 */}
+          <Calendar
+            fullscreen={false}
+            // dateFullCellRender を使い、既定の数字表示を完全に置換して重複を防ぐ
+            dateFullCellRender={dateCellRender}
+            value={dayjs(month + '-01')}
+            // 年月表示は不要なため空表示にする
+            headerRender={() => null}
+            onPanelChange={() => { /* 固定のため無効 */ }}
+            onSelect={() => { /* 選択での移動は無効 */ }}
+          />
+      </div>
+    </Card>
+  );
+};
+
+/* =========================
+ * ページ本体
+ * ========================= */
+const InboundForecastDashboardFull: React.FC = () => {
+  const [month, setMonth] = useState<IsoMonth>(curMonth());
+  const [data, setData] = useState<MonthPayloadDTO | null>(null);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    let mounted = true;
-    setSeries(null);
-    (async () => {
-      const d = await mockRepo.fetchSeriesBundle(month);
-      if (mounted) setSeries(d);
-    })();
-    return () => { mounted = false; };
+    let alive = true;
+    setLoading(true);
+    fetchMonthPayloadMock(month).then((p) => {
+      if (alive) setData(p);
+    }).finally(() => alive && setLoading(false));
+    return () => { alive = false; };
   }, [month]);
 
-  const weeks = useMemo(() => buildWeeks(month), [month]);
-  const todayStr = useMemo(() => yyyymmddTodayFromMonth(month), [month]);
-  const todayDate = useMemo(() => toDate(todayStr), [todayStr]);
-  const currentWeek = useMemo(() => weeks.find(w => w.start <= todayDate && todayDate <= w.end) ?? weeks[0], [weeks, todayDate]);
+  const disabledMonth = (d: Dayjs) => {
+    if (!d) return false;
+    const ym = d.format("YYYY-MM");
+    const min = curMonth();
+    const max = nextMonth(curMonth()); // 当月〜翌月まで
+    return ym < min || ym > max;
+  };
 
-  const [activeWeekKey, setActiveWeekKey] = useState<string>('');
-  useEffect(() => { setActiveWeekKey(currentWeek?.key ?? weeks[0]?.key ?? 'W1'); }, [currentWeek, weeks]);
+  if (loading || !data) {
+    return (
+      <div style={{ padding: 16 }}>
+        <Row gutter={[12, 12]}>
+          <Col span={24}><Skeleton active paragraph={{ rows: 6 }} /></Col>
+          <Col span={24}><Skeleton active paragraph={{ rows: 6 }} /></Col>
+          <Col span={24}><Skeleton active paragraph={{ rows: 6 }} /></Col>
+        </Row>
+      </div>
+    );
+  }
 
-  const monthJP = useMemo(() => formatMonthJP(month), [month]);
-
-  const base = series?.base ?? [];
-  const baselineSeries = useMemo(() => {
-    if (!series) return undefined;
-    if (compareBasis === 'prevMonth') return series.prevMonth;
-    if (compareBasis === 'prevYear') return series.prevYear;
-    return undefined;
-  }, [series, compareBasis]);
-
-  const { mActual, mTarget, landingAI, mtdRate } = useMemo(
-    () => (base.length ? computeMonthRates(base, todayStr) : { mActual: 0, mTarget: 0, landingAI: 0, mtdRate: null }),
-    [base, todayStr]
-  );
-
-  const paceBiz = useMemo(() => (base.length ? currentBusinessPace(base, todayStr, 7) : null), [base, todayStr]);
-  const { landingPace, futureBiz, futureHoli } = useMemo(
-    () => (base.length ? landingByCurrentPace(base, todayStr, paceBiz, 0) : { landingPace: 0, futureBiz: 0, futureHoli: 0 }),
-    [base, todayStr, paceBiz]
-  );
-
-  const remainingBizDays = useMemo(() => (base.length ? base.filter(d => d.date > todayStr && d.isBusinessDay !== false).length : 0), [base, todayStr]);
-  const remainingHoliDays = useMemo(() => (base.length ? base.filter(d => d.date > todayStr && d.isBusinessDay === false).length : 0), [base, todayStr]);
-  const remainingSunAndHoli = useMemo(() => (base.length ? base.filter(d => d.date > todayStr && (new Date(d.date + 'T00:00:00').getDay() === 0 || d.isBusinessDay === false)).length : 0), [base, todayStr]);
-  const remainingGoal = useMemo(() => Math.max(0, mTarget - mActual), [mTarget, mActual]);
-  const requiredPerBizDay = useMemo(() => (remainingBizDays ? remainingGoal / remainingBizDays : null), [remainingGoal, remainingBizDays]);
-
-  const { todayAI, weekAI, weekTarget } = useMemo(
-    () => (base.length ? buildShortAI(base, currentWeek, todayStr) : { todayAI: null, weekAI: null, weekTarget: 0 }),
-    [base, currentWeek, todayStr]
-  );
-
-  // === 目標・実績 ===
-  const dayTargetPlan = useMemo(() => {
-    if (!base.length) return null;
-    const r = base.find(d => d.date === todayStr);
-    if (!r) return null;
-    return r.isBusinessDay === false ? null : (r.target ?? null);
-  }, [base, todayStr]);
-
-  const todayCurrent = useMemo(() => {
-    if (!base.length) return null;
-    const r = base.find(d => d.date === todayStr);
-    if (!r) return null;
-    const isBiz = r.isBusinessDay !== false;
-    if (!isBiz) return 0;
-    return paceBiz ?? null;
-  }, [base, todayStr, paceBiz]);
-
-  const weekCurrent = useMemo(() => {
-    if (!base.length || !currentWeek) return null;
-    const keys = currentWeek.days.map(ymd);
-    const ds = keys.map(k => base.find(r => r.date === k)).filter(Boolean) as DailyPoint[];
-    const past = ds.filter(r => r.date <= todayStr);
-    const future = ds.filter(r => r.date > todayStr);
-    const futureBizCount = future.filter(r => r.isBusinessDay !== false).length;
-    const add = (paceBiz ?? 0) * futureBizCount;
-    const cur = sum(past.map(r => r.actual ?? 0)) + (paceBiz == null ? 0 : add);
-    return paceBiz == null ? null : cur;
-  }, [base, currentWeek, todayStr, paceBiz]);
-
-  // === 比較デルタ（営業日補正） ===
-  const compareForDay = useMemo(() => normalizedDelta(base, baselineSeries, todayStr, (todayAI ?? null) ?? null), [base, baselineSeries, todayStr, todayAI]);
-  const compareForWeek = useMemo(() => normalizedDelta(base, baselineSeries, todayStr, (weekAI ?? null) ?? null), [base, baselineSeries, todayStr, weekAI]);
-
-  const compareForLandingPace = useMemo(() => {
-    if (!baselineSeries) return { deltaPct: null };
-    const curDays = monthBizDays(base) || 1;
-    const baseBiz = baselineSeries.filter(d => d.isBusinessDay !== false).slice(0, curDays);
-    const baseLanding = sum(baseBiz.map(d => d.actual ?? d.predicted ?? 0));
-    if (!baseLanding) return { deltaPct: null };
-    return { deltaPct: (landingPace - baseLanding) / baseLanding };
-  }, [baselineSeries, base, landingPace]);
-
-  const compareForLandingAI = useMemo(() => {
-    if (!baselineSeries) return { deltaPct: null };
-    const curDays = monthBizDays(base) || 1;
-    const baseBiz = baselineSeries.filter(d => d.isBusinessDay !== false).slice(0, curDays);
-    const baseLanding = sum(baseBiz.map(d => d.actual ?? d.predicted ?? 0));
-    if (!baseLanding) return { deltaPct: null };
-    return { deltaPct: (landingAI - baseLanding) / baseLanding };
-  }, [baselineSeries, base, landingAI]);
-
-  // === 週別テーブル/チャート ===
-  const weeklyConfirmedRows = useMemo(() => (base.length ? buildWeeklyConfirmed(base, weeks, todayStr) : []), [base, weeks, todayStr]);
-
-  const weekRowsForTabs = useMemo(() => {
-    if (!base.length) return {} as Record<string, DailyPoint[]>;
-    const map: Record<string, DailyPoint[]> = {};
-    weeks.forEach(w => {
-      const keys = w.days.map(ymd);
-      map[w.key] = keys.map(k => base.find(d => d.date === k)).filter(Boolean) as DailyPoint[];
-    });
-    return map;
-  }, [base, weeks]);
-
-  const baselineWeekRowsForTabs = useMemo(() => {
-    if (!baselineSeries) return {} as Record<string, DailyPoint[]>;
-    const map: Record<string, DailyPoint[]> = {};
-    weeks.forEach(w => {
-      const keys = w.days.map(ymd);
-      map[w.key] = keys.map(k => baselineSeries.find(d => d.date.endsWith(k.slice(5)))).filter(Boolean) as DailyPoint[];
-    });
-    return map;
-  }, [baselineSeries, weeks]);
-
-  const weekChartData = useMemo(() => {
-    const rows = weekRowsForTabs[activeWeekKey] ?? [];
-    const bRows = baselineWeekRowsForTabs[activeWeekKey] ?? [];
-    return rows.map((r, i) => {
-      const b = bRows[i];
-      return {
-        日付: r.date.slice(5),
-        実績: r.actual ?? null,
-        AI予測: r.predicted,
-        目標: r.target ?? null,
-        比較基準: b ? (b.actual ?? b.predicted ?? null) : null,
-        isBiz: r.isBusinessDay !== false,
-        yyyyMMdd: r.date
-      };
-    });
-  }, [weekRowsForTabs, baselineWeekRowsForTabs, activeWeekKey]);
-
-  const tabItems = useMemo(() => {
-    if (!base.length) return [];
-    const map: Record<string, { landing: number; target: number }> = {};
-    weeks.forEach(w => {
-      const keys = w.days.map(ymd);
-      const ds = keys.map(k => base.find(r => r.date === k)).filter(Boolean) as DailyPoint[];
-      const past = ds.filter(r => r.date <= todayStr);
-      const future = ds.filter(r => r.date > todayStr);
-      const landing = sum(past.map(r => r.actual ?? 0)) + sum(future.map(r => r.predicted ?? 0));
-      const target = sum(ds.map(r => r.target ?? 0));
-      map[w.key] = { landing, target };
-    });
-    return weeks.map(w => {
-      const ai = map[w.key];
-      const label = (
-        <Space size={6}>
-          <span>{w.key}</span>
-          {ai && <Badge count={`${Math.round(ai.landing).toLocaleString()}t`} style={{ backgroundColor: '#1677ff' }} />}
-        </Space>
-      );
-      return { key: w.key, label };
-    });
-  }, [weeks, base, todayStr]);
-
-  const todayXLabel = useMemo(() => {
-    const idx = weekChartData.findIndex(d => d.yyyyMMdd === todayStr);
-    if (idx < 0) return undefined;
-    const rec = weekChartData[idx] as Record<string, unknown>;
-    return rec['日付'] as string | undefined;
-  }, [weekChartData, todayStr]);
-
-  const disabledMonthDate = (cur: Dayjs) => { if (!cur) return false; const ym = cur.format('YYYY-MM'); return ym < thisMonth || ym > nextMonthAllowed; };
-  const canPrev = month > thisMonth;
-  const canNext = month < nextMonthAllowed;
-
-  const loading = series == null;
+  const monthJP = monthNameJP(month);
 
   return (
     <div style={{ padding: 16 }}>
       {/* ヘッダー */}
       <Row justify="space-between" align="middle" style={{ marginBottom: 8 }}>
-        <Col aria-live="polite">
+        <Col>
           <Typography.Title level={4} style={{ margin: 0 }}>
             搬入量ダッシュボード — {monthJP}
           </Typography.Title>
-          <TinyLabel>上段＝意思決定（2×2） / 下段＝根拠（週・日別）。比較：営業日補正MoM/YoY。</TinyLabel>
+          <div style={{ color: "#8c8c8c" }}>月ページ固定 / 週は部分週（日で帰属） / 営業日アライメントで比較</div>
         </Col>
         <Col>
           <Space size={8} wrap>
-            <Segmented<CompareBasis>
-              value={compareBasis}
-              onChange={(v) => setCompareBasis(v as CompareBasis)}
-              options={[
-                { label: '今月', value: 'now' },
-                { label: '先月比', value: 'prevMonth' },
-                { label: '前年同月比', value: 'prevYear' },
-              ]}
+            <DatePicker
+              picker="month"
+              value={dayjs(month, "YYYY-MM")}
+              onChange={(_, s) => typeof s === "string" && setMonth(s)}
+              disabledDate={disabledMonth}
+              style={{ width: 140 }}
+              size="small"
             />
-            <Button size="small" disabled={!canPrev} onClick={() => safeSetMonth(prevMonthStr(month))}>← 前月</Button>
-            <Space size={4}>
-              <TinyLabel>対象月</TinyLabel>
-              <DatePicker
-                picker="month"
-                value={dayjs(month, 'YYYY-MM')}
-                onChange={(_, s) => typeof s === 'string' && setMonth(clampMonth(s as YYYYMM))}
-                disabledDate={disabledMonthDate}
-                style={{ width: 140 }}
-                aria-label="対象月を選択"
-                size="small"
-              />
-            </Space>
-            <Button size="small" disabled={!canNext} onClick={() => safeSetMonth(nextMonthStr(month))}>次月 →</Button>
+            <Badge count={todayInMonth(month)} style={{ backgroundColor: C.primary }} />
           </Space>
         </Col>
       </Row>
 
-      {/* ====== 上段：2×2 グリッド ====== */}
-      <div className="top-grid-2x2">
-        <div className="cell">
-          <HeroKPICard monthTarget={mTarget} mtdActual={mActual} mtdRate={mtdRate} />
-        </div>
-
-        <div className="cell">
-          <TodayWeekCompareCard
-            todayCurrent={todayCurrent}
-            todayAI={todayAI}
-            dayTargetPlan={dayTargetPlan}
-            weekCurrent={weekCurrent}
-            weekAI={weekAI}
-            weekTarget={weekTarget}
-            dayDeltaPct={compareBasis === 'now' ? null : compareForDay.deltaPct}
-            weekDeltaPct={compareBasis === 'now' ? null : compareForWeek.deltaPct}
-          />
-        </div>
-
-        <div className="cell">
-          <ActionPaceCard
-            loading={loading}
-            remainingGoal={remainingGoal}
-            requiredPerBizDay={requiredPerBizDay}
-            paceBiz={paceBiz}
-          />
-        </div>
-
-        <div className="cell">
-          <MonthLandingCompareCard
-            landingPace={landingPace}
-            landingAI={landingAI}
-            mTarget={mTarget}
-            subLeft={`残：営業${futureBiz} / 休業${futureHoli}`}
-            compareDeltaPace={compareBasis === 'now' ? null : compareForLandingPace.deltaPct}
-            compareDeltaAI={compareBasis === 'now' ? null : compareForLandingAI.deltaPct}
-          />
-        </div>
-      </div>
-
-      {/* ===== 残日ピル ===== */}
-      <Row style={{ marginBottom: 8 }}>
-        <Col span={24}>
-          <SectionCard
-            dense
-            title="カレンダー残日サマリー"
-            tooltip="当月の本日以降の残日内訳（自動算出）。"
-            extra={
-              <div className="card-header-stats">
-                <StatPill label="残平日数" value={remainingBizDays} />
-                <StatPill label="残日・祝日数" value={remainingSunAndHoli} />
-                <StatPill label="残休業日数" value={remainingHoliDays} />
-              </div>
-            }
-          >
-            <TinyLabel>※ ヘッダー右のピルに内訳を表示しています。</TinyLabel>
-          </SectionCard>
-        </Col>
-      </Row>
-
-      {/* ===== 週別＋日別 ===== */}
+      {/* 1段目：目標カード、日次・累積カード、営業カレンダーを1行に並べる */}
       <Row gutter={[12, 12]}>
-        <Col xs={24}>
-          <SectionCard title="週別の状況（確定のみ）" tooltip="週ごとの目標合計・確定合計・達成率と、日種別カウントを表示。未来の見込みは表示しません。">
-            {base.length ? <WeeklyConfirmedTable rows={weeklyConfirmedRows} currentWeekKey={currentWeek?.key} />
-                         : <Skeleton active paragraph={{ rows: 3 }} title={false} />}
-          </SectionCard>
+        <Col xs={24} lg={7}>
+          <TargetCard targets={data.targets} calendarDays={data.calendar.days} progress={data.progress} daily_curve={data.daily_curve} />
         </Col>
-
-        <Col xs={24}>
-          <SectionCard
-            title="実績 vs 見込み（日別）"
-            tooltip="凡例：実績=緑 / AI予測=青 / 目標=橙（折れ線） / 比較（先月/前年）=灰（点線）。縦帯=本日。"
-            extra={<Tag color="geekblue">{monthJP}</Tag>}
-          >
-            <Tabs activeKey={activeWeekKey} onChange={setActiveWeekKey} items={tabItems} size="small" style={{ marginBottom: 8 }} />
-            <Card className="no-overlap-card" bordered bodyStyle={{ padding: DENSE.cardPad }}>
-              <div style={{ height: DENSE.chartH }}>
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={weekChartData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="日付" />
-                    <YAxis unit="t" />
-                    <Tooltip formatter={(v: number, name) => [v + 't', name]} />
-                    <Legend />
-                    {todayXLabel !== undefined && (
-                      <ReferenceArea x1={todayXLabel} x2={todayXLabel} strokeOpacity={0} fill="#e6f4ff" fillOpacity={0.6} />
-                    )}
-                    <Line type="monotone" dataKey="目標" stroke={Colors.target} dot={false} strokeWidth={2} />
-                    {compareBasis !== 'now' && (
-                      <Line type="monotone" dataKey="比較基準" stroke={Colors.baseline} dot={false} strokeDasharray="4 4" />
-                    )}
-                    <Bar dataKey="AI予測" fill={Colors.forecast} />
-                    <Bar dataKey="実績" fill={Colors.actual} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </Card>
-          </SectionCard>
+        <Col xs={24} lg={12}>
+          <CombinedDailyCard rows={data.daily_curve} prevMonthDaily={data.prev_month_daily} prevYearDaily={data.prev_year_daily} />
+        </Col>
+        <Col xs={24} lg={5}>
+          <CalendarCard days={data.calendar.days} month={month} />
         </Col>
       </Row>
 
-      {/* スタイル */}
-      <style>
-        {`
-          /* ===== 上段：2×2 固定グリッド ===== */
-          .top-grid-2x2 {
-            display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            grid-auto-rows: 1fr;
-            gap: ${DENSE.gutter}px;
-            align-items: stretch;
-          }
-          .top-grid-2x2 .cell { min-width: 0; }
-          @media (max-width: 991px) {
-            .top-grid-2x2 { grid-template-columns: 1fr; }
-          }
-
-          /* 共通 */
-          .no-overlap-card { position: relative; z-index: 1; overflow: visible; }
-          .row-current-week td { background: #f0f5ff !important; }
-          .section-body { min-height: ${DENSE.cellMinH}px; }
-
-          /* KPIカード：コンパクト */
-          .kpi-grid {
-            display: grid;
-            gap: ${DENSE.gutter}px;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-          }
-          .kpi-cell {
-            min-height: 108px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            padding: 10px;
-            border: 1px solid #f0f0f0;
-            border-radius: 8px;
-            background: #fff;
-          }
-          .kpi-cell.ring { align-items: center; }
-          .kpi-label { color: #8c8c8c; font-size: 13px; }
-          .kpi-value.kpi-num {
-            font-size: ${DENSE.kpiLg}px;
-            font-feature-settings: 'tnum' 1;
-            font-variant-numeric: tabular-nums;
-            line-height: 1.15;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-          }
-          .kpi-value .unit { font-size: 13px; }
-
-          /* 2列行マトリクス */
-          .matrix-two {
-            display: grid;
-            grid-template-columns: 84px 1fr;
-            column-gap: 8px;
-            row-gap: 6px;
-          }
-          .m-label { color: #8c8c8c; font-size: 12px; line-height: 28px; align-self: center; white-space: nowrap; }
-          .m-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 6px;
-          }
-          @media (max-width: 575px) {
-            .matrix-two { grid-template-columns: 1fr; }
-            .m-row { grid-template-columns: 1fr; }
-          }
-
-          /* 実績カードの内部グリッド */
-          .actuals-grid {
-            display: grid;
-            gap: ${DENSE.gutter}px;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-          }
-          @media (max-width: 575px) { .actuals-grid { grid-template-columns: 1fr; } }
-
-          /* 目標達成ペース：2タイル */
-          .action-grid.two-cols {
-            display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: ${DENSE.gutter}px;
-          }
-          @media (max-width: 575px) { .action-grid.two-cols { grid-template-columns: 1fr; } }
-          .action-compact .action-grid { gap: ${Math.round(DENSE.gutter * 0.75)}px; }
-          .action-compact .action-tile .action-val {
-            font-size: 18px;
-            font-feature-settings: 'tnum' 1;
-            font-variant-numeric: tabular-nums;
-          }
-
-          /* ヘッダー内ピル */
-          .card-header-stats {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
-            justify-content: flex-end;
-          }
-          @media (max-width: 575px) {
-            .card-header-stats { justify-content: flex-start; }
-          }
-        `}
-      </style>
+      <Row gutter={[12, 12]} style={{ marginTop: 8 }}>
+        <Col xs={24}>
+          <ForecastCard forecast={data.forecast} monthTarget={data.targets.month} rows={data.daily_curve} />
+        </Col>
+      </Row>
     </div>
   );
 };
 
-export default ExecutiveForecastDashboard;
+export default InboundForecastDashboardFull;
+
