@@ -1148,6 +1148,9 @@ const ForecastCard: React.FC<{ forecast: ForecastDTO; monthTarget: number; rows?
  * カード6：営業カレンダー（カウント）
  * ========================= */
 const CalendarCard: React.FC<{ days: CalendarDay[]; month?: IsoMonth }> = ({ days, month = curMonth() }) => {
+  // CalendarCard コンポーネントの先頭あたりに追加
+  const fixedValue = useMemo(() => dayjs(month + '-01'), [month]);
+
   // 処理用に Map を構築
   const dayMap = useMemo(() => {
     const m = new Map<string, CalendarDay>();
@@ -1285,14 +1288,26 @@ const CalendarCard: React.FC<{ days: CalendarDay[]; month?: IsoMonth }> = ({ day
       <div style={{ marginTop: 8 }}>
         {/* カレンダーは表示中の月に固定 */}
           <Calendar
+            key={month}                              // 月が変わった時だけ内部状態をリセット
             fullscreen={false}
-            // dateFullCellRender を使い、既定の数字表示を完全に置換して重複を防ぐ
-            dateFullCellRender={dateCellRender}
-            value={dayjs(month + '-01')}
-            // 年月表示は不要なため空表示にする
-            headerRender={() => null}
-            onPanelChange={() => { /* 固定のため無効 */ }}
-            onSelect={() => { /* 選択での移動は無効 */ }}
+            mode="month"                             // 常に月表示
+            value={fixedValue}                       // 表示月を固定
+            validRange={[fixedValue.startOf('month'), fixedValue.endOf('month')]} // 範囲外の移動を禁止
+            disabledDate={(cur) => !!cur && cur.format('YYYY-MM') !== month}      // 当月以外は選択不可（見た目も無効）
+            headerRender={() => null}                // ヘッダー操作を無効化
+            onPanelChange={() => { /* 移動させない */ }}
+            onChange={() => { /* 変更させない */ }}
+            onSelect={() => { /* クリック選択も無視 */ }}
+            // セル内クリックによるデフォルト動作を完全に抑止
+            dateFullCellRender={(value) => (
+              <div
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                style={{ cursor: 'default' }}
+              >
+                {dateCellRender(value)}
+              </div>
+            )}
           />
       </div>
     </Card>
