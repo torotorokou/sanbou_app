@@ -1,0 +1,76 @@
+:root{
+  --day-font-size:12px;
+}
+.monthCard{
+  border-radius:6px;
+}
+.weekHeader{
+  display:flex;
+  border-bottom:1px solid #f0f0f0;
+}
+.weekdayCell{
+  flex:1 1 0;
+  text-align:center;
+  color:#8c8c8c;
+  font-size:12px;
+  padding:6px 4px;
+}
+.grid{
+  display:flex;
+  flex-direction:column;
+}
+.weekRow{
+  display:flex;
+}
+.dayCell{
+  flex:1 1 0;
+  border-right:1px solid #f5f5f5;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  position:relative;
+  padding:4px;
+  cursor:default;
+}
+.dayCell:last-child{
+  border-right:none;
+}
+.outside{
+  color:#bfbfbf;
+  background:#fafafa;
+}
+.dayTop{
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+.dayNumber{
+  font-size:var(--day-font-size);
+  font-weight:600;
+  width:22px;
+  height:22px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:6px;
+}
+.dayNumber[data-today="true"]{
+  background:#fadb14;
+  color:#000;
+}
+.colorDot{
+  width:8px;
+  height:8px;
+  border-radius:50%;
+  display:inline-block;
+}
+.badgeWrap{
+  position:absolute;
+  right:6px;
+  bottom:6px;
+}
+.badge{
+  width:8px;
+  height:8px;
+  border-radius:2px;
+}
