@@ -7,7 +7,7 @@ import { ROUTER_PATHS } from './routes';
 
 // Dashboard pages (not yet refactored)
 const ManagementDashboard = lazy(() => import('../../pages/dashboard/ManagementDashboard'));
-const FactoryDashboard = lazy(() => import('../../pages/dashboard/FactoryDashboard'));
+const FactoryDashboard = lazy(() => import('../../pages/dashboard/ukeire/FactoryDashboard'));
 const PricingDashboard = lazy(() => import('../../pages/dashboard/PricingDashboard'));
 const CustomerListDashboard = lazy(() => import('../../pages/dashboard/CustomerListDashboard'));
 const SalesTreePage = lazy(() => import('../../pages/dashboard/SalesTreePage'));
