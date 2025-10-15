@@ -7,6 +7,8 @@ export const ANT = {
   xxl: 1600,
 } as const;
 
+export type AntKey = keyof typeof ANT;
+
 export type ViewportTier = 'mobile' | 'tabletHalf' | 'desktop';
 
 export const tierOf = (w: number): ViewportTier =>

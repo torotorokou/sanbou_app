@@ -1,6 +1,8 @@
 /* Unified responsive base: breakpoints sm/md/lg, clamp font size, height policy */
 /* IMPORTANT: このCSSのメディアクエリ閾値は `src/shared/constants/breakpoints.ts` と同期させること。
   sm: <= 767, md: 768–1199, lg: >= 1200 （2025-09 現在） */
+@import "@/styles/custom-media.css";
+
 html, body, #root { height: 100%; }
 
 body { line-height: 1.6; overflow-x: clip; }
@@ -16,15 +18,15 @@ img, video, canvas, svg { max-width: 100%; height: auto; }
 /* Horizontal scroll utility for wide content (e.g., tables) */
 .responsive-x { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 
-/* sm: ≤ 767px */
-@media (max-width: 767px) {
+/* sm: ≤ 767px (md未満) */
+@media (--lt-md) {
   .ant-card { margin: 8px 0; border-radius: 8px; }
   .ant-layout-content { padding: 12px; }
   .ant-table { font-size: 12px; }
 }
 
 /* md: 768–1199px */
-@media (min-width: 768px) and (max-width: 1199px) {
+@media (--md-only) {
   .ant-card { margin: 12px 0; border-radius: 10px; }
   .ant-layout-content { padding: 16px; }
   .ant-table { font-size: 13px; }
@@ -42,9 +44,31 @@ img, video, canvas, svg { max-width: 100%; height: auto; }
 }
 
 /* lg: ≥ 1200px */
-@media (min-width: 1200px) {
+@media (--ge-xl) {
   .ant-card { margin: 16px 0; border-radius: 12px; }
   .ant-layout-content { padding: 24px; }
+}
+
+/* Dashboard specific adjustments */
+.inbound-forecast-grid {
+  display: grid;
+  grid-template-rows: auto 1fr 1.2fr; /* default (desktop-first) */
+  row-gap: 8px;
+}
+
+/* Month picker width: let CSS control width per breakpoint instead of inline style */
+.dashboard-month-picker {
+  width: 140px;
+}
+
+@media (--lt-md) {
+  .inbound-forecast-grid { grid-template-rows: auto auto auto; }
+  .dashboard-month-picker { width: 100px; }
+}
+
+@media (--md-only) {
+  .inbound-forecast-grid { grid-template-rows: auto 1fr 1fr; }
+  .dashboard-month-picker { width: 120px; }
 }
 
 @media print {

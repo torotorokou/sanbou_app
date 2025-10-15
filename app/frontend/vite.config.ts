@@ -4,6 +4,7 @@ import path from 'path';
 import yaml from '@rollup/plugin-yaml'; // ← 追加
 import { fileURLToPath } from 'url';
 import fs from 'fs';
+import customMediaPlugin from './src/plugins/vite-plugin-custom-media';
 
 // ESM 環境では __dirname が無いので定義
 const __filename = fileURLToPath(import.meta.url);
@@ -21,7 +22,7 @@ export default defineConfig(({ mode }) => {
         useLocal ? `http://localhost:${localPort}` : `http://${service}:8000`;
 
     return {
-        plugins: [react(), yaml()],
+        plugins: [react(), yaml(), customMediaPlugin()],
         resolve: {
             alias: {
                 '@': path.resolve(__dirname, 'src'),

@@ -1,0 +1,4 @@
+/* AUTO-GENERATED from src/shared/constants/breakpoints.ts. Do not edit. */
+@custom-media --lt-md (max-width: 767px);   /* ≤767 */
+@custom-media --md-only (min-width: 768px) and (max-width: 1199px); /* 768–1199 */
+@custom-media --ge-xl (min-width: 1200px);      /* ≥1200 */

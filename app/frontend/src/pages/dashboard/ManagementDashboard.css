@@ -1,4 +1,6 @@
 /* Responsive dashboard layout for ManagementDashboard */
+@import "@/styles/custom-media.css";
+
 .dashboard-root {
   padding: 16px;
   height: calc(100vh - 32px);
@@ -16,8 +18,8 @@
   gap: 16px;
 }
 
-/* Two-column layout on large screens */
-@media (min-width: 992px) {
+/* Two-column layout on desktop (xl: 1200px+) */
+@media (--ge-xl) {
   .dashboard-main {
     grid-template-columns: 1fr 1fr;
   }
@@ -52,8 +54,8 @@
   min-height: 0;
 }
 
-/* Mobile / portrait tweaks: stack nicely, allow content-driven heights */
-@media (max-width: 991px) {
+/* Mobile / tablet tweaks: stack nicely, allow content-driven heights (< 1200px) */
+@media (--lt-md) {
   .dashboard-root {
     padding: 12px;
     height: auto; /* let page flow naturally on mobile */
@@ -86,8 +88,35 @@
   }
 }
 
+@media (--md-only) {
+  .dashboard-root {
+    padding: 16px;
+    height: auto;
+  }
+
+  .dashboard-main {
+    grid-template-columns: 1fr;
+    gap: 14px;
+    height: auto;
+  }
+
+  .left-column,
+  .right-column {
+    display: block;
+  }
+
+  .left-column > .panel,
+  .right-column > .panel-top,
+  .right-column > .panel-mid,
+  .right-column > .panel-bottom {
+    flex: none;
+    min-height: 280px;
+    height: auto;
+  }
+}
+
 /* xl: 1200px 以上では全カードをビューポート内に収める（動的計算） */
-@media (min-width: 1200px) {
+@media (--ge-xl) {
   .dashboard-root {
     /* 固定ビューポート高さを採用（パディング分は既に差し引かれている想定） */
     height: calc(100vh - 32px);
