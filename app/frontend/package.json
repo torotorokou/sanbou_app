@@ -15,7 +15,8 @@
     "dep:circular": "madge --ts-config ./tsconfig.json --extensions ts,tsx --circular src",
     "dep:image": "madge --ts-config ./tsconfig.json --extensions ts,tsx --image dependency-graph.svg src",
     "preview": "vite preview",
-    "test": "vitest run"
+    "test": "vitest run",
+    "guard:bp": "bash -c \"grep -rn --include='*.css' --include='*.ts' --include='*.tsx' -E '(min|max)-width:\\s*(576|575)px|--bp-sm|breakpoint=.*sm|sm=\\{' src && (echo '❌ sm/576 detected'; exit 1) || (echo '✅ No sm/576 usage'; exit 0)\""
   },
   "dependencies": {
     "@ant-design/icons": "^6.0.0",
