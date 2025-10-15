@@ -29,7 +29,7 @@ const TokenPreview: React.FC = () => {
             </Typography.Title>
             <Row gutter={[16, 16]}>
                 {Object.entries(customTokens).map(([key, value]) => (
-                    <Col xs={24} sm={12} md={8} lg={6} key={key}>
+                    <Col xs={24} md={8} xl={6} key={key}>
                         <Card
                             bordered
                             styles={{ body: { padding: 16 } }}
