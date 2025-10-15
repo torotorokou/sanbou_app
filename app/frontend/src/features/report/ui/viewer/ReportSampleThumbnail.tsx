@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Modal } from 'antd';
+import { ANT } from '@/shared/constants/breakpoints';
 
 type Props = {
     url: string;
@@ -24,8 +25,8 @@ const ReportSampleThumbnail: React.FC<Props> = ({
     };
 
     // 画面サイズ
-    const VIEWPORT_W = typeof window !== 'undefined' ? window.innerWidth : 1024;
-    const VIEWPORT_H = typeof window !== 'undefined' ? window.innerHeight : 768;
+    const VIEWPORT_W = typeof window !== 'undefined' ? window.innerWidth : 1024; // 1024 は一般的なタブレット横幅
+    const VIEWPORT_H = typeof window !== 'undefined' ? window.innerHeight : ANT.md;
 
     // モーダルの最大サイズ
     const MAX_MODAL_HEIGHT = Math.floor(VIEWPORT_H * 0.9);

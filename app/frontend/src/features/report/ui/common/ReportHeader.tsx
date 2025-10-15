@@ -57,7 +57,7 @@ const ReportHeader: React.FC<ReportHeaderProps> = ({
         borderRadius: 12,
         boxShadow: '0 2px 6px rgba(0,0,0,0.04)',
         overflowX: 'auto',
-        minWidth: isMobile ? 0 : 480,
+        minWidth: isMobile ? 0 : ANT.xs,
     };
 
     const stepItems = [
