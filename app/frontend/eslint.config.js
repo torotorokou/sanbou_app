@@ -63,29 +63,45 @@ export default defineConfig([
             // NOTE: setTimeout等の無関係なリテラルやサンプルデータは誤検知しない
             'no-restricted-syntax': [
                 'error',
+                // 576/sm 禁止（3構成統一のため）
+                {
+                    selector: "Literal[value='sm']",
+                    message: '❌ AntD の sm (576px) は使用禁止です。xs/md/xl の3段階を使用してください。',
+                },
+                {
+                    selector:
+                        "BinaryExpression:matches([operator='<'],[operator='<='],[operator='>'],[operator='>=']):has(Literal[value=576])",
+                    message: '❌ 576 (sm) は使用禁止です。BP.tabletMin (768) を使用してください。',
+                },
+                {
+                    selector:
+                        "BinaryExpression:matches([operator='<'],[operator='<='],[operator='>'],[operator='>=']):has(Literal[value=575])",
+                    message: '❌ 575 (sm-1) は使用禁止です。BP.mobileMax (767) を使用してください。',
+                },
+                // 正規ブレークポイント（767/768/1199/1200）
                 {
                     selector:
                         "BinaryExpression:matches([operator='<'],[operator='<='],[operator='>'],[operator='>=']):has(Literal[value=767])",
                     message:
-                        '767 を比較に直書きせず、ANT.md - 1 または述語関数を使用してください。',
+                        '767 を比較に直書きせず、BP.mobileMax または述語関数を使用してください。',
                 },
                 {
                     selector:
                         "BinaryExpression:matches([operator='<'],[operator='<='],[operator='>'],[operator='>=']):has(Literal[value=768])",
                     message:
-                        '768 を比較に直書きせず、ANT.md または述語関数を使用してください。',
+                        '768 を比較に直書きせず、BP.tabletMin または述語関数を使用してください。',
                 },
                 {
                     selector:
                         "BinaryExpression:matches([operator='<'],[operator='<='],[operator='>'],[operator='>=']):has(Literal[value=1199])",
                     message:
-                        '1199 を比較に直書きせず、ANT.xl - 1 または述語関数を使用してください。',
+                        '1199 を比較に直書きせず、BP.desktopMin - 1 または述語関数を使用してください。',
                 },
                 {
                     selector:
                         "BinaryExpression:matches([operator='<'],[operator='<='],[operator='>'],[operator='>=']):has(Literal[value=1200])",
                     message:
-                        '1200 を比較に直書きせず、ANT.xl または述語関数を使用してください。',
+                        '1200 を比較に直書きせず、BP.desktopMin または述語関数を使用してください。',
                 },
             ],
             'boundaries/element-types': [
