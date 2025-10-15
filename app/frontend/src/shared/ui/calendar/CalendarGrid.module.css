@@ -12,6 +12,8 @@
   display: grid;
   grid-template-columns: 36px repeat(7, minmax(0, 1fr));
   align-items: center;
+  /* allow header row to size using --row-h */
+  height: var(--row-h, 28px);
 }
 
 .weekHeader {
@@ -44,6 +46,8 @@
   background: #fff;
   overflow: hidden;
   box-sizing: border-box;
+  /* allow gridWrapper to expand to the full height of the container */
+  height: 100%;
 }
 
 .grid {
@@ -51,6 +55,9 @@
   grid-template-columns: repeat(7, minmax(0, 1fr));
   grid-auto-rows: var(--row-h);
   box-sizing: border-box;
+  /* make grid fill remaining vertical space inside gridWrapper */
+  height: calc(100% - var(--row-h, 28px));
+  overflow: hidden;
 }
 
 .weekCol {
@@ -62,6 +69,7 @@
   background: #fff;
   box-sizing: border-box;
   grid-column: 1;
+  height: calc(100% - var(--row-h, 28px));
 }
 
 .weekCell {

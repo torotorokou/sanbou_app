@@ -8,7 +8,8 @@ export const ROUTER_PATHS = {
     // ポータル(トップ)
     PORTAL: '/',
     // ダッシュボード系
-    DASHBOARD: '/dashboard',
+    // DASHBOARD: '/dashboard',
+    DASHBOARD_UKEIRE: '/dashboard/ukeire',
     FACTORY: '/factory',
     SALES_TREE: '/sales-tree',
     PRICING: '/pricing',

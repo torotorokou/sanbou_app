@@ -1,8 +1,7 @@
 // src/components/chat/PdfPreviewModal.tsx
-import React, { useEffect, useState } from 'react';
-import { Modal, Spin, Button, Empty } from 'antd';
+import React from 'react';
+import { Modal, Empty } from 'antd';
 import { ensurePdfJsWorkerLoaded } from '@shared/utils/pdf/workerLoader';
-import { Document, Page } from 'react-pdf';
 import { useWindowSize } from '@shared/hooks/ui';
 import { ANT } from '@/shared/constants/breakpoints';
 

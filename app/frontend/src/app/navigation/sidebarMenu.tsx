@@ -58,10 +58,15 @@ export const SIDEBAR_MENU = [
                 label: <Link to={ROUTER_PATHS.DASHBOARD}>管理表</Link>,
                 hidden: true,
             },
+            // {
+            //     key: ROUTER_PATHS.FACTORY,
+            //     icon: <ApartmentOutlined />,
+            //     // label: <Link to={ROUTER_PATHS.FACTORY}>搬入量管理</Link>,
+            // },
             {
-                key: ROUTER_PATHS.FACTORY,
-                icon: <ApartmentOutlined />,
-                label: <Link to={ROUTER_PATHS.FACTORY}>搬入量管理</Link>,
+                key: ROUTER_PATHS.DASHBOARD_UKEIRE,
+                icon: <BarChartOutlined />,
+                label: <Link to={ROUTER_PATHS.DASHBOARD_UKEIRE}>受入管理</Link>,
             },
             {
                 key: ROUTER_PATHS.SALES_TREE,
