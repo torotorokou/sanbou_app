@@ -4,7 +4,7 @@ import { useWindowSize } from './useWindowSize';
 export interface SidebarConfig {
     width: number;
     collapsedWidth: number;
-    breakpoint: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'xxl';
+    breakpoint: 'xs' | 'md' | 'xl';  // 3-tier only: xs(≤767) / md(768-1199) / xl(≥1200)
     autoCollapse: boolean;
     forceCollapse: boolean;
     drawerMode: boolean;
@@ -31,7 +31,7 @@ export const useSidebarResponsive = (): SidebarConfig => {
             return {
                 width: 200,
                 collapsedWidth: 60,
-                breakpoint: 'sm' as const,
+                breakpoint: 'md' as const,  // 768px = BP.tabletMin
                 autoCollapse: true,
                 forceCollapse: false,
                 drawerMode: false,
