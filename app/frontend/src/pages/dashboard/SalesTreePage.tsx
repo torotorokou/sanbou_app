@@ -14,6 +14,7 @@ import type { Dayjs } from 'dayjs';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RTooltip, ResponsiveContainer, LineChart, Line
 } from 'recharts';
+import { ANT } from '@/shared/constants/breakpoints';
 
 /* =========================
  * Domain Types
@@ -712,7 +713,7 @@ const SalesPivotBoardPlusWithCharts: FC = () => {
                   dataSource={data}
                   pagination={false}
                   onChange={onChildChange}
-                  scroll={{ x: 1200 }}
+                  scroll={{ x: ANT.xl }}
                   rowClassName={(_, idx) => (idx % 2 === 0 ? 'zebra-even' : 'zebra-odd')}
                 />
               )

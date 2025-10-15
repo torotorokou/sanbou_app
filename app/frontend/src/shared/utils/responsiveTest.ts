@@ -1,4 +1,4 @@
-import { isMobile, isTabletOrHalf, isDesktop } from '@/shared/constants/breakpoints';
+import { isMobile, isTabletOrHalf, isDesktop, ANT } from '@/shared/constants/breakpoints';
 /**
  * レスポンシブデザインの動作確認用ユーティリティ
  *
@@ -15,13 +15,13 @@ export const RESPONSIVE_TEST_SIZES = {
     AndroidSmall: { width: 360, height: 640 },
 
     // タブレット
-    iPad: { width: 768, height: 1024 },
+    iPad: { width: ANT.md, height: 1024 },
     iPadPro: { width: 1024, height: 1366 },
     AndroidTablet: { width: 800, height: 1280 },
 
     // デスクトップ
-    SmallLaptop: { width: 1024, height: 768 },
-    MediumDesktop: { width: 1366, height: 768 },
+    SmallLaptop: { width: 1024, height: ANT.md },
+    MediumDesktop: { width: 1366, height: ANT.md },
     FullHD: { width: 1920, height: 1080 },
     LargeScreen: { width: 2560, height: 1440 },
 };

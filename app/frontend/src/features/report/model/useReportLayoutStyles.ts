@@ -107,7 +107,7 @@ export const useReportLayoutStyles = () => {
             }
           : {
               flex: "1 1 auto",
-              minWidth: (typeof width === 'number' && width < ANT.xl) ? 480 : 600,
+              minWidth: (typeof width === 'number' && width < ANT.xl) ? ANT.xs : 600,
             }),
         display: "flex",
         flexDirection: "column" as const,
