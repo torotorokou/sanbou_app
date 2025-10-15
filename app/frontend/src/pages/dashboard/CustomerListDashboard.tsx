@@ -124,13 +124,13 @@ const CustomerListDashboard: React.FC = () => {
             <div style={{ padding: 24 }}>
                 <h1>一都三県 顧客売上バブルマップ</h1>
                 <Row gutter={16} style={{ marginBottom: 16 }}>
-                    <Col xs={24} sm={12} md={8}>
+                    <Col xs={24} md={8}>
                         <Statistic title="顧客数" value={customers.length} />
                     </Col>
-                    <Col xs={24} sm={12} md={8}>
+                    <Col xs={24} md={8}>
                         <Statistic title="売上合計" value={totalSales} suffix="万円" />
                     </Col>
-                    <Col xs={24} sm={12} md={8}>
+                    <Col xs={24} md={8}>
                         <Statistic title="最高売上" value={Math.max(...customers.map(c => c.sales))} suffix="万円" />
                     </Col>
                 </Row>
