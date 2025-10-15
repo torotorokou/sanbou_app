@@ -70,14 +70,12 @@ const InboundForecastDashboardPage: React.FC = () => {
       }}
     >
       <div
+        className="inbound-forecast-grid"
         style={{
           padding: 12,
           boxSizing: "border-box",
           flex: 1,
           minHeight: 0,
-          display: "grid",
-          gridTemplateRows: "auto 1fr 1.2fr",
-          rowGap: 8,
           overflowY: "auto",
           scrollbarGutter: "stable",
         }}
@@ -103,7 +101,7 @@ const InboundForecastDashboardPage: React.FC = () => {
                     const max = nextMonth(curMonth());
                     return ym < min || ym > max;
                   }}
-                  style={{ width: 140 }}
+                  className="dashboard-month-picker"
                   size="small"
                 />
                 <Badge count={vm.headerProps?.todayBadge ?? ""} style={{ backgroundColor: "#1677ff" }} />
