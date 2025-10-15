@@ -30,14 +30,14 @@ function readANT(projectRoot: string): AntMap {
 }
 
 function generateCSS(ANT: AntMap): string {
-  const md = ANT.md;
-  const xl = ANT.xl;
+  const md = ANT.md;   // 768
+  const xl = ANT.xl;   // 1200
   const mdMax = md - 1; // 767
-  const xlMax = xl - 1; // 1199
 
+  // 3本構成: --lt-md / --ge-md / --ge-xl
   return `/* AUTO-GENERATED from src/shared/constants/breakpoints.ts. Do not edit. */
 @custom-media --lt-md (max-width: ${mdMax}px);   /* ≤${mdMax} */
-@custom-media --md-only (min-width: ${md}px) and (max-width: ${xlMax}px); /* ${md}–${xlMax} */
+@custom-media --ge-md (min-width: ${md}px);      /* ≥${md} */
 @custom-media --ge-xl (min-width: ${xl}px);      /* ≥${xl} */
 `;
 }

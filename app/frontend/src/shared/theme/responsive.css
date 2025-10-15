@@ -25,8 +25,8 @@ img, video, canvas, svg { max-width: 100%; height: auto; }
   .ant-table { font-size: 12px; }
 }
 
-/* md: 768–1199px */
-@media (--md-only) {
+/* md+: ≥768px (タブレット・デスクトップ) */
+@media (--ge-md) {
   .ant-card { margin: 12px 0; border-radius: 10px; }
   .ant-layout-content { padding: 16px; }
   .ant-table { font-size: 13px; }
@@ -66,7 +66,8 @@ img, video, canvas, svg { max-width: 100%; height: auto; }
   .dashboard-month-picker { width: 100px; }
 }
 
-@media (--md-only) {
+/* md+: タブレット・デスクトップでの調整 */
+@media (--ge-md) {
   .inbound-forecast-grid { grid-template-rows: auto 1fr 1fr; }
   .dashboard-month-picker { width: 120px; }
 }
