@@ -174,10 +174,17 @@ export async function getKPIOverview(): Promise<KPIOverview> {
   return response.json();
 }
 
+interface ManualItem {
+  id?: string;
+  name?: string;
+  path?: string;
+  [key: string]: unknown;
+}
+
 /**
  * Manual: List all manuals
  */
-export async function listManuals(): Promise<any[]> {
+export async function listManuals(): Promise<ManualItem[]> {
   const response = await fetch(`${API_BASE}/external/manual/list`);
 
   if (!response.ok) {

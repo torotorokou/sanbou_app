@@ -1,5 +1,5 @@
 import React from "react";
-import dayjs, { Dayjs } from "dayjs";
+import dayjs, { type Dayjs } from "dayjs";
 import styles from "./CalendarGrid.module.css";
 
 interface CalendarGridProps {
@@ -7,6 +7,7 @@ interface CalendarGridProps {
   rowHeight?: number; // px
   renderCell: (date: Dayjs, inMonth: boolean) => React.ReactNode;
   className?: string;
+  style?: React.CSSProperties;
 }
 
 const DOW = ["日", "月", "火", "水", "木", "金", "土"];
@@ -16,6 +17,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
   rowHeight = 28,
   renderCell,
   className,
+  style,
 }) => {
   const first = dayjs(month + "-01");
   const startDow = first.day();
@@ -27,7 +29,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
   for (let i = 0; i < total; i++) dates.push(first.add(i - startDow, "day"));
 
   return (
-    <div className={className}>
+    <div className={className} style={style}>
       {/* Header row: render 8 header cells (W + 7 weekdays) so columns align with grid */}
       <div
         className={styles.headerRow}

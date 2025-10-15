@@ -7,7 +7,8 @@ import { ROUTER_PATHS } from './routes';
 
 // Dashboard pages (not yet refactored)
 const ManagementDashboard = lazy(() => import('../../pages/dashboard/ManagementDashboard'));
-const FactoryDashboard = lazy(() => import('../../pages/dashboard/ukeire/FactoryDashboard'));
+// const FactoryDashboard = lazy(() => import('../../pages/dashboard/ukeire/FactoryDashboard'));
+const InboundForecastDashboardPage = lazy(() => import('../../pages/dashboard/ukeire/InboundForecastDashboardPage'));
 const PricingDashboard = lazy(() => import('../../pages/dashboard/PricingDashboard'));
 const CustomerListDashboard = lazy(() => import('../../pages/dashboard/CustomerListDashboard'));
 const SalesTreePage = lazy(() => import('../../pages/dashboard/SalesTreePage'));
@@ -60,7 +61,8 @@ const AppRoutes: React.FC = () => {
             path={ROUTER_PATHS.DASHBOARD}
             element={<ManagementDashboard />}
         />
-        <Route path={ROUTER_PATHS.FACTORY} element={<FactoryDashboard />} />
+        {/* <Route path={ROUTER_PATHS.FACTORY} element={<FactoryDashboard />} /> */}
+        <Route path={ROUTER_PATHS.DASHBOARD_UKEIRE} element={<InboundForecastDashboardPage />} />
         <Route path={ROUTER_PATHS.PRICING} element={<PricingDashboard />} />
         <Route path={ROUTER_PATHS.SALES_TREE} element={<SalesTreePage />} />
         <Route
