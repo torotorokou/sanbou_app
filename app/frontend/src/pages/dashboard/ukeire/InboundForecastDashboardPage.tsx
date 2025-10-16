@@ -11,7 +11,7 @@ import { useUkeireForecastVM } from "@/features/dashboard/ukeire/application/use
 import { MockInboundForecastRepository } from "@/features/dashboard/ukeire/application/adapters/mock.repository";
 import { TargetCard } from "@/features/dashboard/ukeire/ui/cards/TargetCard";
 import { CombinedDailyCard } from "@/features/dashboard/ukeire/ui/cards/CombinedDailyCard";
-import { CalendarCard } from "@/features/dashboard/ukeire/ui/cards/CalendarCard";
+import CalendarCardUkeire from "@/features/dashboard/ukeire/ui/cards/CalendarCard.Ukeire";
 import { ForecastCard } from "@/features/dashboard/ukeire/ui/cards/ForecastCard";
 // (removed curMonth / nextMonth imports since month selection is no longer restricted)
 
@@ -123,7 +123,10 @@ const InboundForecastDashboardPage: React.FC = () => {
               {vm.combinedDailyProps && <CombinedDailyCard {...vm.combinedDailyProps} />}
             </Col>
             <Col xs={24} lg={5} style={{ height: "100%" }}>
-              <CalendarCard month={vm.month} />
+              {(() => {
+                const [year, month] = vm.month.split('-').map(Number);
+                return <CalendarCardUkeire year={year} month={month} />;
+              })()}
             </Col>
           </Row>
         </div>

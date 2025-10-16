@@ -11,7 +11,42 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 export default defineConfig(({ mode }) => {
-    const env = loadEnv(mode, process.cwd(), '');
+    // プロジェクトルートの env ディレクトリから環境変数を読み込む
+    const projectRoot = path.resolve(__dirname, '../..');
+    const envDir = path.join(projectRoot, 'env');
+    
+    // mode を短縮形にマッピング（development -> dev, production -> prod）
+    const modeShort = mode === 'development' ? 'dev' : mode === 'production' ? 'prod' : mode;
+    
+    // 開発環境では .env.local_dev を優先的に読み込む
+    const envFiles = [
+        path.join(envDir, '.env.common'),
+        path.join(envDir, `.env.local_${modeShort}`), // .env.local_dev, .env.local_stg, .env.local_prod
+    ];
+    
+    // 環境変数をマージ
+    const mergedEnv: Record<string, string> = {};
+    for (const file of envFiles) {
+        if (fs.existsSync(file)) {
+            const content = fs.readFileSync(file, 'utf-8');
+            content.split('\n').forEach(line => {
+                const trimmed = line.trim();
+                if (!trimmed || trimmed.startsWith('#')) return;
+                const match = trimmed.match(/^([^=]+)=(.*)$/);
+                if (match) {
+                    const [, key, value] = match;
+                    // VITE_ で始まる変数のみを取得
+                    if (key.trim().startsWith('VITE_')) {
+                        mergedEnv[key.trim()] = value.trim();
+                    }
+                }
+            });
+        }
+    }
+    
+    // process.cwd() からも読み込む（互換性のため）
+    const env = { ...loadEnv(mode, process.cwd(), ''), ...mergedEnv };
+    
     // コンテナ内判定: /.dockerenv が存在するか、明示的な環境変数で指定されている場合
     const runningInContainer = fs.existsSync('/.dockerenv') || env.RUNNING_IN_CONTAINER === '1';
     // ローカルのバックエンドを使うフラグ。ただし フロントエンドがコンテナ内で動作している場合は
@@ -23,6 +58,10 @@ export default defineConfig(({ mode }) => {
 
     return {
         plugins: [react(), yaml(), customMediaPlugin()],
+        // VITE_ プレフィックスの環境変数をクライアント側で利用可能にする
+        define: {
+            'import.meta.env.VITE_API_BASE_URL': JSON.stringify(env.VITE_API_BASE_URL || 'http://localhost:8003/api'),
+        },
         resolve: {
             alias: {
                 '@': path.resolve(__dirname, 'src'),

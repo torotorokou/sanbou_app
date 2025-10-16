@@ -18,7 +18,7 @@ export * from "./application/adapters/http.repository";
 
 // UI Components
 export * from "./ui/cards/TargetCard";
-export * from "./ui/cards/CalendarCard";
+export { default as CalendarCardUkeire } from "./ui/cards/CalendarCard.Ukeire";
 export * from "./ui/cards/DailyActualsCard";
 export * from "./ui/cards/DailyCumulativeCard";
 export * from "./ui/cards/CombinedDailyCard";

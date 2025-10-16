@@ -8,7 +8,7 @@ from pythonjsonlogger import jsonlogger
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.routers import ingest, forecast, kpi, external
+from app.routers import ingest, forecast, kpi, external, calendar
 
 # Setup structured JSON logging
 logger = logging.getLogger()
@@ -41,6 +41,7 @@ app.include_router(ingest.router)
 app.include_router(forecast.router)
 app.include_router(kpi.router)
 app.include_router(external.router)
+app.include_router(calendar.router)
 
 
 @app.get("/healthz", include_in_schema=False, tags=["health"])

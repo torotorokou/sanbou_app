@@ -1,0 +1,130 @@
+/**
+ * CalendarCard Component (DI対応共通版)
+ * 営業カレンダーを表示するカード - Repository を Props で受け取る汎用カード
+ */
+
+import React, { useMemo } from "react";
+import { Card, Typography, Tooltip, Skeleton } from "antd";
+import { InfoCircleOutlined } from "@ant-design/icons";
+import BusinessCalendar from "@/features/dashboard/ukeire/ui/components/BusinessCalendar";
+import { useCalendarVM } from "@/features/calendar/controller/useCalendarVM";
+import type { ICalendarRepository } from "@/features/calendar/model/repository";
+import type { CalendarPayload, DayDecor } from "@/shared/ui/calendar/types";
+import type { CalendarDayDTO } from "@/features/calendar/model/types";
+
+export type CalendarCardProps = {
+  year: number;
+  month: number;
+  repository: ICalendarRepository;
+  style?: React.CSSProperties;
+};
+
+/**
+ * CalendarDayDTO から CalendarPayload への変換
+ */
+function convertToPayload(year: number, month: number, days: CalendarDayDTO[]): CalendarPayload {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const monthStr = `${year}-${pad(month)}`;
+  
+  const dayDecors: DayDecor[] = days.map((d): DayDecor => {
+    let status: "business" | "holiday" | "closed" = "business";
+    if (d.is_company_closed) {
+      status = "closed";
+    } else if (d.is_holiday || !d.is_business) {
+      status = "holiday";
+    }
+    
+    return {
+      date: d.ddate,
+      status,
+      label: d.is_holiday ? "祝日" : d.is_company_closed ? "休業日" : undefined,
+      color: undefined,
+    };
+  });
+  
+  return {
+    month: monthStr,
+    days: dayDecors,
+    legend: [
+      { key: "business", label: "営業日", color: "#52c41a" },
+      { key: "holiday", label: "祝日", color: "#ff85c0" },
+      { key: "closed", label: "休業日", color: "#cf1322" },
+    ],
+  };
+}
+
+export const CalendarCard: React.FC<CalendarCardProps> = ({ year, month, repository, style }) => {
+  const vm = useCalendarVM({ repository, year, month });
+  
+  const payload = useMemo(() => {
+    if (vm.grid.length === 0) {
+      return {
+        month: `${year}-${String(month).padStart(2, '0')}`,
+        days: [],
+        legend: [],
+      };
+    }
+    // grid から実際の月内データを抽出
+    const monthDays = vm.grid.flat().filter(d => d.inMonth).map(d => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { inMonth, ...rest } = d;
+      return rest;
+    });
+    return convertToPayload(year, month, monthDays);
+  }, [vm.grid, year, month]);
+
+  if (vm.loading) {
+    return (
+      <Card
+        bordered
+        size="small"
+        style={{ height: "100%", display: "flex", flexDirection: "column", ...(style || {}) }}
+        bodyStyle={{ display: "flex", flexDirection: "column", padding: 12, gap: 8, flex: 1, minHeight: 0 }}
+      >
+        <Skeleton active paragraph={{ rows: 6 }} />
+      </Card>
+    );
+  }
+
+  if (vm.error) {
+    return (
+      <Card
+        bordered
+        size="small"
+        style={{ height: "100%", display: "flex", flexDirection: "column", ...(style || {}) }}
+        bodyStyle={{ display: "flex", flexDirection: "column", padding: 12, gap: 8, flex: 1, minHeight: 0 }}
+      >
+        <Typography.Text type="danger">{vm.error}</Typography.Text>
+      </Card>
+    );
+  }
+
+  return (
+    <Card
+      bordered
+      size="small"
+      style={{ height: "100%", display: "flex", flexDirection: "column", ...(style || {}) }}
+      bodyStyle={{ display: "flex", flexDirection: "column", padding: 12, gap: 8, flex: 1, minHeight: 0 }}
+    >
+      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", position: "relative" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <Typography.Title level={5} style={{ margin: 0, fontSize: 16 }}>
+            営業カレンダー
+          </Typography.Title>
+          <Tooltip title="SQL起点のカレンダーデータ。祝日・休業日はサーバ側で管理。">
+            <InfoCircleOutlined style={{ color: "#8c8c8c" }} />
+          </Tooltip>
+        </div>
+
+        {/* right placeholder kept for symmetry if needed */}
+        <div style={{ position: "absolute", right: 12 }} />
+      </div>
+
+      <div style={{ flex: 1, minHeight: 0, overflow: "hidden", height: "100%" }}>
+        <BusinessCalendar data={payload} />
+      </div>
+    </Card>
+  );
+};
+
+export default CalendarCard;
