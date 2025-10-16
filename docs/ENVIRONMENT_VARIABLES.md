@@ -39,11 +39,11 @@ POSTGRES_PORT=5432
 ### 各環境での設定 (`.env.{環境名}`)
 
 ```bash
-POSTGRES_DB=myapp                    # local_dev
-POSTGRES_DB=myapp_stg                # local_stg, vm_stg
-POSTGRES_DB=prod_db                  # vm_prod
+POSTGRES_DB=sanbou_dev               # local_dev
+POSTGRES_DB=sanbou_stg               # local_stg, vm_stg
+POSTGRES_DB=sanbou_prod              # vm_prod
 
-DATABASE_URL=postgresql://myuser:mypassword@db:5432/myapp
+DATABASE_URL=postgresql://myuser:mypassword@db:5432/<DB_NAME>
 ```
 
 ### Pythonパス (`.env.common`)
