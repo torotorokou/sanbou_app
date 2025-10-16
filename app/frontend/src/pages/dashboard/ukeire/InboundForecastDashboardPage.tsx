@@ -6,13 +6,14 @@
 import React, { useMemo } from "react";
 import { Row, Col, Typography, DatePicker, Space, Badge, Skeleton } from "antd";
 import dayjs from "dayjs";
+import type { Dayjs } from "dayjs";
 import { useUkeireForecastVM } from "@/features/dashboard/ukeire/application/useUkeireForecastVM";
 import { MockInboundForecastRepository } from "@/features/dashboard/ukeire/application/adapters/mock.repository";
 import { TargetCard } from "@/features/dashboard/ukeire/ui/cards/TargetCard";
 import { CombinedDailyCard } from "@/features/dashboard/ukeire/ui/cards/CombinedDailyCard";
 import { CalendarCard } from "@/features/dashboard/ukeire/ui/cards/CalendarCard";
 import { ForecastCard } from "@/features/dashboard/ukeire/ui/cards/ForecastCard";
-import { curMonth, nextMonth } from "@/features/dashboard/ukeire/domain/valueObjects";
+// (removed curMonth / nextMonth imports since month selection is no longer restricted)
 
 const InboundForecastDashboardPage: React.FC = () => {
   const repository = useMemo(() => new MockInboundForecastRepository(), []);
@@ -82,24 +83,26 @@ const InboundForecastDashboardPage: React.FC = () => {
       >
         {/* ヘッダー */}
         <div>
-          <Row justify="space-between" align="middle">
-            <Col>
+          {/* 3カラム構成: 左（空）/ 中央（タイトル）/ 右（アクション） */}
+          <Row align="middle">
+            <Col flex="1" />
+            <Col flex="none" style={{ textAlign: "center" }}>
               <Typography.Title level={4} style={{ margin: 0 }}>
                 搬入量ダッシュボード — {vm.monthJP}
               </Typography.Title>
             </Col>
-            <Col>
+            <Col flex="1" style={{ display: "flex", justifyContent: "flex-end" }}>
               <Space size={8} wrap>
                 <DatePicker
                   picker="month"
-                  value={dayjs(vm.month, "YYYY-MM")}
-                  onChange={(_, s) => typeof s === "string" && vm.setMonth(s)}
-                  disabledDate={(d) => {
-                    if (!d) return false;
-                    const ym = d.format("YYYY-MM");
-                    const min = curMonth();
-                    const max = nextMonth(curMonth());
-                    return ym < min || ym > max;
+                  // vm.month が falsy の時は null を渡して DatePicker をクリア表示にする
+                  value={vm.month ? dayjs(vm.month, "YYYY-MM") : null}
+                  onChange={(d: Dayjs | null, s: string | string[]) => {
+                    // d: Dayjs | null, s: string | string[]
+                    // 空や無効な日付は無視する（クリア操作で来る空文字や配列を防ぐ）
+                    if (d && d.isValid && d.isValid() && typeof s === "string" && s) {
+                      vm.setMonth(s);
+                    }
                   }}
                   className="dashboard-month-picker"
                   size="small"
