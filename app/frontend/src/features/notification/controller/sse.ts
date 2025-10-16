@@ -9,8 +9,8 @@
 import type { NotificationEvent } from '@features/notification/model/contract';
 import { notifySuccess, notifyError, notifyWarning, notifyInfo } from '@features/notification';
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || '/ledger_api';
-const SSE_URL = `${API_BASE}/notifications/stream`;
+// 相対パスを使用（dev: Vite proxy、stg/prod: Nginx reverse proxy）
+const SSE_URL = '/ledger_api/notifications/stream';
 
 let eventSource: EventSource | null = null;
 let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
