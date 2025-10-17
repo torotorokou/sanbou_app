@@ -1,3 +1,8 @@
+/**
+ * Manual API Types
+ * BFF経由で取得するマニュアルデータの型定義
+ */
+
 export type ManualSectionChunk = {
   title: string;
   anchor: string; // s-<n>
