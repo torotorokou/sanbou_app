@@ -102,22 +102,11 @@ export async function initializeBlockUnitPrice(
 
 /**
  * 汎用レポート生成（FormData使用）
- * FormDataを使用する既存のfetch呼び出し用
+ * FormDataを使用するレポート生成用
  */
-export async function generateReportWithFiles(
+export async function generateReportWithFiles<T = ReportArtifactResponse>(
     endpoint: string,
     formData: FormData
-): Promise<Response> {
-    // FormDataの場合はfetchを直接使用（Content-Typeを自動設定させる）
-    const response = await fetch(endpoint, {
-        method: 'POST',
-        body: formData,
-    });
-    
-    if (!response.ok) {
-        const text = await response.text().catch(() => '');
-        throw new Error(`HTTP ${response.status} ${response.statusText} - ${text}`);
-    }
-    
-    return response;
+): Promise<T> {
+    return coreApi.uploadForm<T>(endpoint, formData, { timeout: 60000 });
 }
