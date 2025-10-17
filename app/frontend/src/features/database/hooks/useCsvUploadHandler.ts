@@ -5,6 +5,8 @@ import {
     notifyInfo,
     notifyWarning,
 } from '@features/notification';
+import { coreApi } from '@shared/infrastructure/http/coreApi';
+import { ApiError } from '@shared/infrastructure/http/httpClient';
 
 export const useCsvUploadHandler = (files: Record<string, File | null>) => {
     const [uploading, setUploading] = useState(false);
@@ -20,13 +22,6 @@ export const useCsvUploadHandler = (files: Record<string, File | null>) => {
         setUploading(true);
 
         try {
-            // TODO: core_apiにsql_api用のフォワードエンドポイントを追加する必要があります
-            const res = await fetch('/core_api/database/upload/syogun_csv', {
-                method: 'POST',
-                body: formData,
-            });
-
-            const text = await res.text();
             // サーバー仕様に合わせたジェネリックなレスポンス型
             interface UploadFileIssue {
                 filename?: string;
@@ -40,18 +35,13 @@ export const useCsvUploadHandler = (files: Record<string, File | null>) => {
                 result?: Record<string, UploadFileIssue>;
             }
 
-            let result: UploadResponseShape;
-            try {
-                result = JSON.parse(text);
-            } catch {
-                notifyError(
-                    'サーバーエラー',
-                    `サーバー応答がJSONではありません: ${text}`
-                );
-                return;
-            }
+            const result = await coreApi.uploadForm<UploadResponseShape>(
+                '/core_api/database/upload/syogun_csv',
+                formData,
+                { timeout: 60000 }
+            );
 
-            if (res.ok && result.status === 'success') {
+            if (result.status === 'success') {
                 notifySuccess('アップロード成功', result.detail ?? 'CSVを受け付けました。');
                 if (result.hint) {
                     notifyInfo('ヒント', result.hint);
@@ -78,11 +68,15 @@ export const useCsvUploadHandler = (files: Record<string, File | null>) => {
                     });
                 }
             }
-        } catch {
-            notifyError(
-                '接続エラー',
-                'サーバーに接続できませんでした。ネットワークを確認してください。'
-            );
+        } catch (error) {
+            if (error instanceof ApiError) {
+                notifyError('アップロードエラー', error.userMessage);
+            } else {
+                notifyError(
+                    '接続エラー',
+                    'サーバーに接続できませんでした。ネットワークを確認してください。'
+                );
+            }
         } finally {
             setUploading(false);
         }

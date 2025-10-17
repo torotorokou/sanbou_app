@@ -44,4 +44,32 @@ export const coreApi = {
     const res = await client.delete<T>(normalize(path), config);
     return res.data as T;
   },
+
+  /**
+   * FormData アップロード専用メソッド
+   * Content-Type は boundary 自動付与のため指定しない
+   * 
+   * @param path - API パス（/core_api/... で開始）
+   * @param form - アップロードする FormData
+   * @param config - axios 設定 + onProgress コールバック
+   * @returns レスポンスデータ
+   */
+  async uploadForm<T>(
+    path: string,
+    form: FormData,
+    config?: AxiosRequestConfig & { onProgress?: (pct?: number) => void }
+  ): Promise<T> {
+    const res = await client.post<T>(normalize(path), form, {
+      ...config,
+      // Content-Type は boundary 自動付与のため指定しない
+      headers: { ...(config?.headers ?? {}) },
+      onUploadProgress: (e) => {
+        if (config?.onProgress) {
+          const pct = e.total ? Math.round((e.loaded * 100) / e.total) : undefined;
+          config.onProgress(pct);
+        }
+      },
+    });
+    return res.data as T;
+  },
 };

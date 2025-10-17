@@ -10,6 +10,7 @@ import { pdfPreviewMap, modalStepsMap, isInteractiveReport, getApiEndpoint } fro
 import { useReportBaseBusiness } from '@features/report/model/useReportBaseBusiness';
 import type { ReportBaseProps } from '@features/report/model/report.types';
 import type { ReportArtifactResponse } from '@features/report/model/useReportArtifact';
+import { coreApi } from '@shared/infrastructure/http/coreApi';
 
 // normalizeRow is now provided by ./interactive/transportNormalization
 
@@ -161,32 +162,7 @@ const ReportBase: React.FC<ReportBaseProps> = ({
             }
 
             const apiEndpoint = getApiEndpoint(reportKey);
-            const response = await fetch(apiEndpoint, {
-                method: 'POST',
-                body: formData,
-            });
-
-            if (!response.ok) {
-                let errorMessage = '初期データの取得に失敗しました。';
-                try {
-                    const errorBody = await response.json();
-                    if (errorBody?.detail) {
-                        errorMessage = String(errorBody.detail);
-                    }
-                } catch {
-                    try {
-                        const text = await response.text();
-                        if (text) {
-                            errorMessage = text;
-                        }
-                    } catch {
-                        // ignore parsing errors
-                    }
-                }
-                throw new Error(errorMessage);
-            }
-
-            const data = (await response.json()) as unknown;
+            const data = await coreApi.uploadForm<unknown>(apiEndpoint, formData, { timeout: 60000 });
             // 生データをまず全部出す（インスペクト用）
             console.groupCollapsed('[BlockUnitPrice] initial response - raw');
             console.log(data);

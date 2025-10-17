@@ -1,3 +1,5 @@
+import { client } from '@shared/infrastructure/http/httpClient';
+
 export const downloadExcelFile = async (
     reportKey: string,
     files: { [label: string]: File | null }
@@ -8,15 +10,16 @@ export const downloadExcelFile = async (
             if (fileObj) formData.append(label, fileObj);
         });
         formData.append('report_key', reportKey);
-        const response = await fetch('/core_api/reports/excel', {
-            method: 'POST',
-            body: formData,
+        
+        // Blob レスポンスのため直接 client を使用
+        const response = await client.post('/core_api/reports/excel', formData, {
+            responseType: 'blob',
+            timeout: 60000,
         });
-        if (!response.ok) throw new Error('Excel出力失敗');
-        const blob = await response.blob();
 
+        const blob = response.data as Blob;
         let filename = 'report.xlsx';
-        const disposition = response.headers.get('Content-Disposition');
+        const disposition = response.headers['content-disposition'];
         if (disposition) {
             const match = disposition.match(/filename="?([^"]+)"?/);
             if (match) filename = match[1];

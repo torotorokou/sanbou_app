@@ -3,6 +3,7 @@ import { notifySuccess, notifyError, notifyInfo } from '@features/notification';
 import { getApiEndpoint, REPORT_KEYS } from './config';
 import type { ReportKey } from './config';
 import type { CsvFiles } from './report.types';
+import { coreApi } from '@shared/infrastructure/http/coreApi';
 
 export type ReportArtifactResponse = {
     status?: string;
@@ -136,29 +137,12 @@ export const useReportArtifact = () => {
 
                 let apiEndpoint = getApiEndpoint(reportKey);
                 if (!apiEndpoint.endsWith('/')) apiEndpoint = `${apiEndpoint}/`;
-                const response = await fetch(apiEndpoint, { method: 'POST', body: formData });
-                if (!response.ok) {
-                    let errorMessage = `API Error: ${response.status}`;
-                    try {
-                        const errorJson = await response.json();
-                        if (typeof errorJson?.detail === 'string') {
-                            errorMessage = errorJson.detail;
-                        }
-                    } catch {
-                        try {
-                            const text = await response.text();
-                            if (text) {
-                                errorMessage = text;
-                            }
-                        } catch {
-                            // ignore
-                        }
-                    }
-                    notifyError('レポート作成失敗', errorMessage);
-                    return false;
-                }
-
-                const json = (await response.json()) as ReportArtifactResponse;
+                
+                const json = await coreApi.uploadForm<ReportArtifactResponse>(
+                    apiEndpoint, 
+                    formData, 
+                    { timeout: 60000 }
+                );
                 applyArtifactResponse(json);
                 // 開発者向けログ: API レスポンス確認
                 try {
