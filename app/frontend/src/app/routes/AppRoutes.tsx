@@ -26,7 +26,7 @@ const RecordListPage = lazy(() => import('@/pages/database').then(m => ({ defaul
 const GlobalManualSearchPage = lazy(() => import('@/pages/manual').then(m => ({ default: m.GlobalManualSearchPage })));
 const ShogunManualListPage = lazy(() => import('@/pages/manual').then(m => ({ default: m.ShogunManualListPage })));
 const ManualDetailPage = lazy(() => import('@/pages/manual').then(m => ({ default: m.ManualDetailPage })));
-const ManualDetailModal = lazy(() => import('@/features/manual').then(m => ({ default: m.DetailModal })));
+const ManualDetailRouteComponent = lazy(() => import('@/features/manual').then(m => ({ default: m.ManualDetailRoute })));
 
 // Analysis pages - using public API
 const CustomerListAnalysisPage = lazy(() => import('@/pages/analysis').then(m => ({ default: m.CustomerListAnalysisPage })));
@@ -88,7 +88,7 @@ const AppRoutes: React.FC = () => {
         <Route path='/manuals/syogun/:id' element={<ManualDetailPage />} />
 
 
-        {/* データベース関連 */}
+    {/* データベース関連 */}
         <Route path={ROUTER_PATHS.UPLOAD_PAGE} element={<UploadDatabasePage />} />
         <Route path={ROUTER_PATHS.RECORD_LIST} element={<RecordListPage />} />
 
@@ -109,7 +109,7 @@ const AppRoutes: React.FC = () => {
             {state?.backgroundLocation && (
                 <Suspense fallback={null}>
                     <Routes>
-                        <Route path='/manuals/syogun/:id' element={<ManualDetailModal />} />
+                        <Route path='/manuals/syogun/:id' element={<ManualDetailRouteComponent />} />
                     </Routes>
                 </Suspense>
             )}

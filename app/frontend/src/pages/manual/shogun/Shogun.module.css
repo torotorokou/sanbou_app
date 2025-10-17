@@ -4,6 +4,7 @@
   --header-height: 72px;
 }
 
+/* -------------------- List page styles (kept original names) -------------------- */
 .layoutRoot {
   height: 100vh;
   overflow: hidden;
@@ -100,7 +101,6 @@
   object-fit: contain;
 }
 
-/* Header search input styling to match global bg on large screens */
 .headerSearchInput {
   border-radius: 6px;
   padding: 4px 8px;
@@ -110,11 +110,10 @@
 /* xl: 1200px+ */
 @media (--ge-xl) {
   .headerSearchInput {
-    background: var(--ant-color-bg-container, #f3fff5); /* default fallback slightly green */
+    background: var(--ant-color-bg-container, #f3fff5);
   }
 }
 
-/* Common search input enhancements for visibility */
 .searchInput {
   border-radius: 6px;
   padding: 6px 10px;
@@ -128,4 +127,84 @@
   outline: none;
   border-color: var(--ant-color-primary, #52c41a);
   box-shadow: 0 0 0 6px rgba(82,196,26,0.09);
+}
+
+/* -------------------- Detail page styles (prefixed to avoid collisions) -------------------- */
+.detailPageContainer {
+  min-height: 100vh;
+  background-color: #fff;
+}
+
+.detailLayout {
+  height: 100%;
+  background: transparent;
+}
+
+.detailSider {
+  position: sticky;
+  top: 0;
+  align-self: flex-start;
+  height: 100vh;
+  overflow: auto;
+  background: var(--ant-color-bg-container, #fff);
+  border-right: 1px solid var(--ant-color-border-secondary, #f0f0f0);
+}
+
+.detailSiderContent {
+  padding: 16px;
+}
+
+.detailContent {
+  padding: 16px;
+}
+
+.detailTitleBar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.detailTitle {
+  margin: 0 !important;
+}
+
+.detailScrollContainer {
+  margin-top: 16px;
+  padding: 16px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.detailLoadingContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+}
+
+.detailLoading {
+  color: #888;
+  text-align: center;
+  padding: 2rem;
+}
+
+.detailError {
+  color: #c00;
+  background: #fff1f0;
+  border: 1px solid #ffccc7;
+  border-radius: 4px;
+  padding: 1rem;
+  margin: 1rem 0;
+}
+
+.detailLink {
+  color: #007acc;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.detailLink:hover {
+  color: #005a9e;
+  text-decoration: underline;
 }
