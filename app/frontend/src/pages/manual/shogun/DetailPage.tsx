@@ -1,21 +1,26 @@
+/**
+ * 将軍マニュアル詳細ページ
+ * FSD: ページ層は組み立てのみ
+ */
 import React, { useEffect, useRef, useState } from 'react';
 import { Anchor, Breadcrumb, Button, Layout, Space, Spin, Typography } from 'antd';
 import { useNavigate, useParams } from 'react-router-dom';
-import { manualsApiDefault as manualsApi, type ManualDetail } from '@features/manual';
+import { manualsApiDefault as manualsApi, type ManualDetail, type ManualSectionChunk } from '@features/manual';
 import { ensureSectionAnchors, smoothScrollToAnchor } from '@shared/utils/anchors';
 import { useWindowSize } from '@shared/hooks/ui';
 import { ANT } from '@/shared/constants/breakpoints';
+import styles from './ShogunPage.module.css';
 
 const { Title } = Typography;
 
-const ManualPage: React.FC = () => {
+const ShogunManualDetailPage: React.FC = () => {
   const { id } = useParams();
   const [data, setData] = useState<ManualDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const ref = useRef<HTMLDivElement>(null);
   const nav = useNavigate();
   const { width } = useWindowSize();
-  const showSider = typeof width === 'number' ? width >= ANT.md : false; // md以上で表示
+  const showSider = typeof width === 'number' ? width >= ANT.md : false;
 
   useEffect(() => {
     let alive = true;
@@ -39,37 +44,46 @@ const ManualPage: React.FC = () => {
   }, [data]);
 
   return (
-    <Layout style={{ height: '100%', background: 'transparent' }}>
+    <Layout className={styles.detailLayout}>
       {showSider && (
-        <Layout.Sider width={240} style={{ position: 'sticky', top: 0, alignSelf: 'flex-start', height: '100vh', overflow: 'auto', background: 'var(--ant-color-bg-container, #fff)', borderRight: '1px solid var(--ant-color-border-secondary, #f0f0f0)' }}>
-          <div style={{ padding: 16 }}>
+        <Layout.Sider width={240} className={styles.sider}>
+          <div className={styles.siderContent}>
             <Anchor
               targetOffset={16}
               getContainer={() => document.querySelector('#manual-content-scroll') as HTMLElement || window}
-              items={data?.sections.map((s) => ({ key: s.anchor, href: `#${s.anchor}`, title: s.title }))}
+              items={data?.sections.map((s: ManualSectionChunk) => ({ key: s.anchor, href: `#${s.anchor}`, title: s.title }))}
             />
           </div>
         </Layout.Sider>
       )}
 
-      <Layout.Content style={{ padding: 16 }}>
+      <Layout.Content className={styles.content}>
         <Space direction='vertical' size={12} style={{ width: '100%' }}>
           <Breadcrumb items={[{ title: 'マニュアル' }, { title: '将軍' }, { title: data?.title || '' }]} />
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Title level={3} style={{ margin: 0 }}>{data?.title}</Title>
-            <Button onClick={() => nav(`/manuals/syogun/${id}`, { state: { backgroundLocation: { pathname: '/manuals' } } })}>モーダルで開く</Button>
+          <div className={styles.titleBar}>
+            <Title level={3} className={styles.title}>{data?.title}</Title>
+            <Button onClick={() => nav(`/manuals/syogun/${id}`, { state: { backgroundLocation: { pathname: '/manuals' } } })}>
+              モーダルで開く
+            </Button>
           </div>
-          {loading ? <Spin /> : (
-            <div id="manual-content-scroll" ref={ref} style={{ maxHeight: 'calc(100vh - 160px)', overflowY: 'auto', paddingRight: 8 }}>
-              {data?.sections.map((s) => (
-                <div key={s.anchor} style={{ scrollMarginTop: 80 }} dangerouslySetInnerHTML={{ __html: s.html || '' }} />
+        </Space>
+        <div id='manual-content-scroll' className={styles.scrollContainer}>
+          {loading ? (
+            <div className={styles.loadingContainer}><Spin size='large' /></div>
+          ) : (
+            <div ref={ref}>
+              {data?.sections.map((section: ManualSectionChunk) => (
+                <section key={section.anchor} id={section.anchor}>
+                  <h2>{section.title}</h2>
+                  <div dangerouslySetInnerHTML={{ __html: section.html || '' }} />
+                </section>
               ))}
             </div>
           )}
-        </Space>
+        </div>
       </Layout.Content>
     </Layout>
   );
 };
 
-export default ManualPage;
+export default ShogunManualDetailPage;

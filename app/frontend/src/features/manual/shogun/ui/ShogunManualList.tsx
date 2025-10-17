@@ -28,11 +28,11 @@ import {
   DollarOutlined,
   FileSyncOutlined,
 } from '@ant-design/icons';
-import { useWindowSize } from '@shared/hooks/ui';
+import { useWindowSize } from '@/shared/hooks/ui';
 import { ANT, isTabletOrHalf } from '@/shared/constants/breakpoints';
-import styles from './shogunManual.module.css';
-import type { ManualItem, ManualSection } from './types';
-import { manualsApiDefault as manualsApi } from '@features/manual';
+import styles from '../styles/shogunManual.module.css';
+import type { ManualItem, ManualSection } from '../model/types';
+import { manualsApiDefault as manualsApi } from '@/features/manual';
 
 // Catalog DTO types from backend
 type CatalogItemDTO = {
@@ -103,10 +103,10 @@ function useManualController() {
     return sections
       .map((sec) => ({
         ...sec,
-        items: sec.items.filter((it) => {
+        items: sec.items.filter((it: ManualItem) => {
           const inTitle = it.title.toLowerCase().includes(q);
           const inDesc = (it.description ?? '').toLowerCase().includes(q);
-          const inTags = (it.tags ?? []).some((t) => t.toLowerCase().includes(q));
+          const inTags = (it.tags ?? []).some((t: string) => t.toLowerCase().includes(q));
           return inTitle || inDesc || inTags;
         }),
       }))
@@ -147,7 +147,7 @@ const ItemCard: React.FC<{ item: ManualItem; onOpen: (it: ManualItem) => void }>
         {item.description ?? '説明は未設定です。'}
       </Paragraph>
       <Space size={[4, 4]} wrap>
-        {(item.tags ?? []).map((t) => (
+        {(item.tags ?? []).map((t: string) => (
           <Tag key={t}>{t}</Tag>
         ))}
       </Space>
@@ -169,7 +169,7 @@ const SectionBlock: React.FC<{
         <Badge count={section.items.length} />
       </Space>
       <Row gutter={[16, 16]}>
-        {section.items.map((item) => (
+        {section.items.map((item: ManualItem) => (
           <Col xs={24} lg={12} xl={8} key={item.id}>
             <ItemCard item={item} onOpen={onOpen} />
           </Col>

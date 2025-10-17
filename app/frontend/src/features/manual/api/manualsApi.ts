@@ -1,38 +1,21 @@
-import type { ManualDetail, ManualListResponse } from '@features/manual/model/manual.types';
+import type { ManualDetail, ManualListResponse, ManualCatalogResponse } from '@features/manual/model/manual.types';
 import { apiGet } from '@shared/infrastructure/http';
-
-export type ManualCatalogResponse = {
-  sections: Array<{
-    id: string;
-    title: string;
-    icon?: string;
-    items: Array<{
-      id: string;
-      title: string;
-      description?: string;
-      route?: string;
-      tags: string[];
-      flow_url?: string;
-      video_url?: string;
-    }>;
-  }>;
-};
 
 export const manualsApi = {
   async list(params: { query?: string; tag?: string; category?: string; page?: number; size?: number } = {}) {
-    const res = await apiGet<ManualListResponse>(`/manual_api/api/manuals`, { params });
+    const res = await apiGet<ManualListResponse>(`/core_api/manual/manuals`, { params });
     return res;
   },
   async get(id: string) {
-    const res = await apiGet<ManualDetail>(`/manual_api/api/manuals/${id}`);
+    const res = await apiGet<ManualDetail>(`/core_api/manual/manuals/${id}`);
     return res;
   },
   async sections(id: string) {
-    const res = await apiGet<ManualDetail['sections']>(`/manual_api/api/manuals/${id}/sections`);
+    const res = await apiGet<ManualDetail['sections']>(`/core_api/manual/manuals/${id}/sections`);
     return res;
   },
   async catalog(params: { category?: string } = {}) {
-    const res = await apiGet<ManualCatalogResponse>(`/manual_api/api/manuals/catalog`, { params });
+    const res = await apiGet<ManualCatalogResponse>(`/core_api/manual/manuals/catalog`, { params });
     return res;
   },
 };

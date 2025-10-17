@@ -26,7 +26,7 @@ const RecordListPage = lazy(() => import('@/pages/database').then(m => ({ defaul
 const GlobalManualSearchPage = lazy(() => import('@/pages/manual').then(m => ({ default: m.GlobalManualSearchPage })));
 const ShogunManualListPage = lazy(() => import('@/pages/manual').then(m => ({ default: m.ShogunManualListPage })));
 const ManualDetailPage = lazy(() => import('@/pages/manual').then(m => ({ default: m.ManualDetailPage })));
-const ManualDetailModal = lazy(() => import('@/pages/manual').then(m => ({ default: m.ManualDetailModal })));
+const ManualDetailModal = lazy(() => import('@/features/manual').then(m => ({ default: m.DetailModal })));
 
 // Analysis pages - using public API
 const CustomerListAnalysisPage = lazy(() => import('@/pages/analysis').then(m => ({ default: m.CustomerListAnalysisPage })));
