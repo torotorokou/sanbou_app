@@ -1,21 +1,16 @@
-// shared/infrastructure/http/index.ts
-// HTTPクライアントの公開API
+// src/shared/infrastructure/http/index.ts
+// HTTP通信のエクスポート
 
+// 🆕 推奨: coreApi統一クライアント（すべての通信は /core_api/... 経由）
+export { coreApi } from './coreApi';
+
+// axios ベース（互換性のため残す）
 export { 
     apiGet, 
     apiPost, 
     apiGetBlob, 
     apiPostBlob,
     fetchWithTimeout,
-    coreApi, // 唯一のHTTPクライアント（BFF統一）
-    // ApiError is intentionally NOT re-exported here to avoid duplicate
-    // symbol conflicts with shared/types where ApiError is also exported.
+    ApiError,
+    client,
 } from './httpClient';
-
-// Re-export ApiError under an alias to avoid duplicate-export ambiguity
-// while preserving compatibility for existing consumers importing from
-// '@shared/infrastructure/http'. Prefer using '@shared/types' for the
-// canonical ApiError type.
-export { ApiError as ApiHttpError } from './httpClient';
-
-export type { Method, HttpOptions } from './httpClient';

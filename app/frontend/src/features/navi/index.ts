@@ -1,8 +1,13 @@
 // features/navi/index.ts
-// Navigation機能の公開API
+// Navi機能のエクスポート
 
-// ========================================
-// Types
-// ========================================
-export type { MenuItem } from './model/types';
+export { useNaviChat } from './hooks/useNaviChat';
+export { NaviLayout, PdfReferenceButton } from './ui';
+export type {
+  CategoryDataMap,
+  ChatState,
+  StepItem,
+  MenuItem,
+} from './model/types';
 export { filterMenuItems } from './model/types';
+

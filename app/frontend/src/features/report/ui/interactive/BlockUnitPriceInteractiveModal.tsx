@@ -4,6 +4,7 @@ import { CheckCircleOutlined } from '@ant-design/icons';
 import { getApiEndpoint } from '@features/report/model/config';
 import type { ReportKey } from '@features/report/model/config';
 import type { ReportArtifactResponse } from '@features/report/model/useReportArtifact';
+import { coreApi } from '@shared/infrastructure/http';
 
 // 型定義（要件に合わせて整備）
 export interface TransportCandidateRow {
@@ -327,38 +328,19 @@ const BlockUnitPriceInteractiveModal: React.FC<BlockUnitPriceInteractiveModalPro
             );
 
             console.log('[BlockUnitPrice] apply payload (map):', { session_id: sessionId, selections: selectionPayloadMap });
-            const applyResponse = await fetch(`${baseEndpoint}/apply`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    session_id: sessionId,
-                    selections: selectionPayloadMap,
-                }),
+            const applyJson = await coreApi.post<Record<string, unknown>>(`${baseEndpoint}/apply`, {
+                session_id: sessionId,
+                selections: selectionPayloadMap,
             });
 
-            if (!applyResponse.ok) {
-                throw new Error('選択内容の適用に失敗しました');
-            }
-
-            const applyJson = (await applyResponse.json()) as Record<string, unknown>;
             if (applyJson && typeof applyJson === 'object' && 'selection_summary' in applyJson) {
                 setSelectionPreview({ selection_summary: applyJson.selection_summary as Record<string, unknown> });
             }
 
             console.log('[BlockUnitPrice] finalize payload (session_id only):', { session_id: sessionId });
-            const finalizeResponse = await fetch(`${baseEndpoint}/finalize`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    session_id: sessionId,
-                }),
+            const finalizeJson = await coreApi.post<ReportArtifactResponse>(`${baseEndpoint}/finalize`, {
+                session_id: sessionId,
             });
-
-            if (!finalizeResponse.ok) {
-                throw new Error('最終処理でエラーが発生しました');
-            }
-
-            const finalizeJson = (await finalizeResponse.json()) as ReportArtifactResponse;
             console.log('[BlockUnitPrice] finalize response (artifact):', finalizeJson);
 
             setCurrentStep(3);

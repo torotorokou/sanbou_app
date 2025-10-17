@@ -7,8 +7,17 @@ export * from './constants';
 // Theme
 export * from './theme';
 
-// Infrastructure
-export * from './infrastructure/http';
+// Infrastructure - HTTP
+export { 
+  coreApi,
+  apiGet, 
+  apiPost, 
+  apiGetBlob, 
+  apiPostBlob,
+  fetchWithTimeout,
+  ApiError,
+  client,
+} from './infrastructure/http';
 
 // Utils
 export * from './utils';
