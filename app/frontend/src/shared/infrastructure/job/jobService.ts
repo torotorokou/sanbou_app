@@ -48,7 +48,7 @@ export async function pollJob<T = unknown>(
 
   while (attempts < maxAttempts) {
     try {
-      const job = await apiGet<JobStatus>(`/ledger_api/api/jobs/${jobId}`);
+      const job = await apiGet<JobStatus>(`/core_api/jobs/${jobId}`);
 
       // 進捗コールバック
       if (onProgress) {

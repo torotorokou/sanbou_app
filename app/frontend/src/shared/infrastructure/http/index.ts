@@ -7,6 +7,7 @@ export {
     apiGetBlob, 
     apiPostBlob,
     fetchWithTimeout,
+    coreApi, // 唯一のHTTPクライアント（BFF統一）
     // ApiError is intentionally NOT re-exported here to avoid duplicate
     // symbol conflicts with shared/types where ApiError is also exported.
 } from './httpClient';
@@ -16,3 +17,5 @@ export {
 // '@shared/infrastructure/http'. Prefer using '@shared/types' for the
 // canonical ApiError type.
 export { ApiError as ApiHttpError } from './httpClient';
+
+export type { Method, HttpOptions } from './httpClient';

@@ -1,2 +1,7 @@
-// Report Feature API Layer
-// Currently no API hooks (useFactoryReport.ts is empty)
+/**
+ * Report API Layer
+ * MVC: API層のエクスポート
+ */
+
+export * from './reportApi';
+export type { ReportArtifactResponse, ReportGenerateRequest } from './reportApi';

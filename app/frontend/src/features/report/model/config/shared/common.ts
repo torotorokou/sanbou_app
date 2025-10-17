@@ -9,12 +9,14 @@ import type { CsvConfigGroup, ModalStepConfig, ReportConfig } from './types';
 
 /**
  * APIエンドポイント定数
- * 旧 /ledger_api/report/manage は廃止し、/ledger_api/reports 配下に統一
+ * BFF統一: すべて /core_api 経由でアクセス
  */
-export const LEDGER_API_URL = '/ledger_api/reports';
-export const LEDGER_REPORT_URL = '/ledger_api/reports';
+export const CORE_API_URL = '/core_api/reports';
+export const LEDGER_REPORT_URL = '/core_api/reports';
+
 /**
  * 帳簿タイプ別APIエンドポイント設定
+ * すべて core_api(BFF) 経由でアクセス
  */
 export const REPORT_API_ENDPOINTS = {
     // 工場日報系
@@ -28,8 +30,8 @@ export const REPORT_API_ENDPOINTS = {
     management_sheet: `${LEDGER_REPORT_URL}/management_sheet`,
 
     // インタラクティブ帳簿系
-    // バックエンドの実装: app.include_router(block_unit_price_router, prefix="/ledger_api/block_unit_price_interactive")
-    block_unit_price: `/ledger_api/block_unit_price_interactive/initial`,
+    // BFF経由: /core_api/block_unit_price_interactive/initial
+    block_unit_price: `/core_api/block_unit_price_interactive/initial`,
 
     // 台帳系（将来追加用）
     ledger_book: `${LEDGER_REPORT_URL}/ledger`,
@@ -41,7 +43,7 @@ export const REPORT_API_ENDPOINTS = {
 export const getApiEndpoint = (reportKey: string): string => {
     return (
         REPORT_API_ENDPOINTS[reportKey as keyof typeof REPORT_API_ENDPOINTS] ||
-        LEDGER_API_URL
+        CORE_API_URL
     );
 };
 

@@ -16,6 +16,8 @@ services:
     volumes:
       - node_modules_dev:/app/node_modules
       - ../app/frontend:/app
+    environment:
+      - DOCKER=true
     networks:
       - app-net
 
@@ -63,6 +65,9 @@ services:
       # dev 環境ではコンテナ内の secrets を優先して使用
       GOOGLE_APPLICATION_CREDENTIALS: /backend/secrets/dev_key.json
       WATCHFILES_FORCE_POLLING: "1"
+      # 内部論理パス（DIP: ledger_apiは外向きプレフィックスを知らない）
+      # BFF(core_api)が /core_api を担保する
+      REPORT_ARTIFACT_URL_PREFIX: "/reports/artifacts"
     depends_on:
       - db
     networks:

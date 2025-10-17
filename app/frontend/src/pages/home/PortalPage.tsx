@@ -276,7 +276,7 @@ const portalMenus: PortalCardProps[] = [
     detail:
       '工場別・顧客別・価格表などの管理ダッシュボードへアクセスできます。表示中のダッシュボードを切り替えて詳細を確認してください。',
     icon: <DashboardOutlined />,
-    link: ROUTER_PATHS.DASHBOARD,
+    link: ROUTER_PATHS.DASHBOARD_UKEIRE,
     color: PALETTE.BLUE_DARK,
   },
   {
@@ -517,6 +517,7 @@ export const PortalPage: React.FC = () => {
             dataSource={notices}
             renderItem={(item: Notice) => (
               <List.Item
+                key={item.title + item.date}
                 onClick={() => openNoticeModal(item)}
                 style={{ cursor: 'pointer' }}
               >

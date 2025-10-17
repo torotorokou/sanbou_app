@@ -1,11 +1,16 @@
 // features/report/index.ts
-// Report機能の公開API
+// Report機能の公開API (MVC構造)
 
 // ========================================
-// Model (型定義)
+// API Layer (HTTP通信)
+// ========================================
+export * from './api';
+
+// ========================================
+// Model Layer (型定義・データ構造)
 // ========================================
 export type {
-    // reportBase.ts から
+    // report.types.ts から
     CsvConfig,
     CsvConfigEntry,
     CsvFiles,
@@ -22,17 +27,16 @@ export type {
 } from './model/report.types';
 
 export type {
-    // report.ts から
+    // report-api.types.ts から
     WorkerRow,
     ValuableRow,
     ShipmentRow,
 } from './model/report-api.types';
 
 // ========================================
-// Config (設定)
+// Config (設定・定数)
 // ========================================
 export {
-    // reportConfig から
     reportConfigMap,
     manageReportConfigMap,
     factoryReportConfigMap,
@@ -54,30 +58,27 @@ export {
 } from './model/config';
 
 export type {
-    // model/config/shared/types.ts から
     ReportConfig,
     ModalStepConfig,
     CsvConfigGroup,
 } from './model/config/shared/types';
 
 export type {
-    // model/config/index.ts から
     ReportKey,
     PageGroupKey,
 } from './model/config';
 
 // ========================================
-// 将来の公開API (Phase 4 Step 3-2以降)
+// Controller Layer (Hooks - UIロジック・状態管理)
 // ========================================
-
-// Hooks (Step 3-2で追加) ✅
 export { useReportManager } from './model/useReportManager';
 export { useReportBaseBusiness } from './model/useReportBaseBusiness';
 export { useReportActions } from './model/useReportActions';
 export { useReportLayoutStyles } from './model/useReportLayoutStyles';
+export { useReportArtifact } from './model/useReportArtifact';
 
 // ========================================
-// UI Components (Step 3-3で追加) ✅
+// View Layer (UIコンポーネント)
 // ========================================
 
 // Common UI Components
@@ -103,26 +104,17 @@ export type {
 // Common UI Utilities
 export { downloadExcelFile } from './ui/common/downloadExcel';
 
-// ========================================
-// UI Components - Main (Step 3-4で追加) ✅
-// ========================================
-
+// Main Component
 export { default as ReportBase } from './ui/ReportBase';
 
-// ========================================
-// UI Components - Interactive (Step 3-5で追加) ✅
-// ========================================
-
+// Interactive Components
 export { default as BlockUnitPriceInteractive } from './ui/interactive/BlockUnitPriceInteractive';
 export { default as BlockUnitPriceInteractiveModal } from './ui/interactive/BlockUnitPriceInteractiveModal';
 export type { InitialApiResponse, SessionData } from './ui/interactive/BlockUnitPriceInteractiveModal';
 export type { TransportCandidateRow } from './ui/interactive/types';
 export { normalizeRow, isRecord } from './ui/interactive/transportNormalization';
 
-// ========================================
-// UI Components - Viewer (Step 3-6で追加) ✅
-// ========================================
-
+// Viewer Components
 export { default as PDFViewer } from './ui/viewer/PDFViewer';
 export { default as ReportSampleThumbnail } from './ui/viewer/ReportSampleThumbnail';
 

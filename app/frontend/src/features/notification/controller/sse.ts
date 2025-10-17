@@ -10,7 +10,8 @@ import type { NotificationEvent } from '@features/notification/model/contract';
 import { notifySuccess, notifyError, notifyWarning, notifyInfo } from '@features/notification';
 
 // 相対パスを使用（dev: Vite proxy、stg/prod: Nginx reverse proxy）
-const SSE_URL = '/ledger_api/notifications/stream';
+// BFF統一: core_api経由でアクセス
+const SSE_URL = '/core_api/notifications/stream';
 
 let eventSource: EventSource | null = null;
 let reconnectTimer: ReturnType<typeof setTimeout> | null = null;

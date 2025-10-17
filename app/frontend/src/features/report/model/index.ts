@@ -1,25 +1,17 @@
 // features/report/model/index.ts
-// Model層の公開API
+// Model層の公開API (Controller Hooks + Types)
 
 // ========================================
-// Hooks
+// Controller Hooks (UIロジック・状態管理)
 // ========================================
 export { useReportActions } from './useReportActions';
 export { useReportBaseBusiness } from './useReportBaseBusiness';
 export { useReportLayoutStyles } from './useReportLayoutStyles';
 export { useReportManager } from './useReportManager';
-export { useExcelGeneration } from './useExcelGeneration';
 export { useReportArtifact } from './useReportArtifact';
 
 // ========================================
-// Deprecated (非推奨)
-// ========================================
-// 以下は後方互換性のために保持されていますが、使用しないでください
-export { useZipFileGeneration } from './useZipFileGeneration';
-export { useZipProcessing } from './useZipProcessing';
-
-// ========================================
-// Types
+// Types (データ型定義)
 // ========================================
 export type * from './report.types';
 export type * from './report-api.types';
