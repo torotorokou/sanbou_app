@@ -4,21 +4,22 @@ import React from 'react';
 
 // アイコン（Ant Design）
 import {
+    HomeOutlined, // ポータル
     DashboardOutlined, // ダッシュボード
-    TableOutlined, // 管理表
-    ApartmentOutlined, // 工場管理
-    FileTextOutlined, // 単価表
-    FileAddOutlined, // 帳票作成
-    FileDoneOutlined, // 工場帳簿
-    BarChartOutlined, // データ分析
-    TeamOutlined, // 顧客リスト
-    CompassOutlined, // 参謀NAVI
+    BarChartOutlined, // 売上分析
+    BookOutlined, // 帳簿
+    RobotOutlined, // AI
+    FileTextOutlined, // マニュアル
+    CloudUploadOutlined, // データベース
     SettingOutlined, // 設定
-    UserSwitchOutlined, // 管理者
-    CloudUploadOutlined, // アップロード/レコード
-    BookOutlined, // マニュアル
-    SolutionOutlined, // 管理業務
-    NotificationOutlined, // お知らせ
+    FileSearchOutlined,
+    NotificationOutlined,
+    FileAddOutlined,
+    SolutionOutlined,
+    FileDoneOutlined,
+    TeamOutlined,
+    CompassOutlined,
+    UserSwitchOutlined,
 } from '@ant-design/icons';
 
 // ルーティング
@@ -52,17 +53,6 @@ export const SIDEBAR_MENU = [
         label: 'ダッシュボード',
         hidden: false,
         children: [
-            {
-                key: ROUTER_PATHS.DASHBOARD,
-                icon: <TableOutlined />,
-                label: <Link to={ROUTER_PATHS.DASHBOARD}>管理表</Link>,
-                hidden: true,
-            },
-            // {
-            //     key: ROUTER_PATHS.FACTORY,
-            //     icon: <ApartmentOutlined />,
-            //     // label: <Link to={ROUTER_PATHS.FACTORY}>搬入量管理</Link>,
-            // },
             {
                 key: ROUTER_PATHS.DASHBOARD_UKEIRE,
                 icon: <BarChartOutlined />,

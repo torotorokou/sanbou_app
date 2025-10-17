@@ -57,11 +57,6 @@ const AppRoutes: React.FC = () => {
     <Route path={ROUTER_PATHS.PORTAL} element={<PortalPage />} />
 
         {/* ダッシュボード */}
-        <Route
-            path={ROUTER_PATHS.DASHBOARD}
-            element={<ManagementDashboard />}
-        />
-        {/* <Route path={ROUTER_PATHS.FACTORY} element={<FactoryDashboard />} /> */}
         <Route path={ROUTER_PATHS.DASHBOARD_UKEIRE} element={<InboundForecastDashboardPage />} />
         <Route path={ROUTER_PATHS.PRICING} element={<PricingDashboard />} />
         <Route path={ROUTER_PATHS.SALES_TREE} element={<SalesTreePage />} />

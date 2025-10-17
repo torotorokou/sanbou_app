@@ -64,7 +64,7 @@ const CustomerListAnalysis: React.FC = () => {
         setDownloading(true);
         try {
             const blob = await apiPostBlob<Record<string, string | undefined>>(
-                '/api/customer-comparison/excel',
+                '/core_api/customer-comparison/excel',
                 {
                     targetStart: targetStart?.format('YYYY-MM'),
                     targetEnd: targetEnd?.format('YYYY-MM'),

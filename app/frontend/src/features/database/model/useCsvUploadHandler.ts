@@ -20,7 +20,8 @@ export const useCsvUploadHandler = (files: Record<string, File | null>) => {
         setUploading(true);
 
         try {
-            const res = await fetch('/sql_api/upload/syogun_csv', {
+            // TODO: core_apiにsql_api用のフォワードエンドポイントを追加する必要があります
+            const res = await fetch('/core_api/database/upload/syogun_csv', {
                 method: 'POST',
                 body: formData,
             });

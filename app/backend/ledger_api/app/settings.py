@@ -108,7 +108,15 @@ def load_settings() -> Settings:
     ledger_sync_subdirs = [s.strip() for s in subdirs_raw.split(",") if s.strip()]
     artifact_root_default = base_api_dir / "report_artifacts"
     report_artifact_root_dir = Path(os.getenv("REPORT_ARTIFACT_ROOT_DIR", str(artifact_root_default))).resolve()
-    report_artifact_url_prefix = os.getenv("REPORT_ARTIFACT_URL_PREFIX", "/ledger_api/reports/artifacts").strip() or "/ledger_api/reports/artifacts"
+    
+    # アーティファクトURL生成用の内部論理パス
+    # BFF(core_api)が外向きプレフィックス(/core_api)を担保するため、
+    # ledger_apiは内部論理パス(/reports/artifacts)のみを知る（DIP: 依存関係逆転）
+    report_artifact_url_prefix = os.getenv(
+        "REPORT_ARTIFACT_URL_PREFIX", 
+        "/reports/artifacts"  # デフォルトは内部論理パス
+    ).strip() or "/reports/artifacts"
+    
     report_artifact_url_ttl_raw = os.getenv("REPORT_ARTIFACT_URL_TTL", "900")
     try:
         report_artifact_url_ttl = int(report_artifact_url_ttl_raw)

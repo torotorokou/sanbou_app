@@ -8,7 +8,7 @@ export const downloadExcelFile = async (
             if (fileObj) formData.append(label, fileObj);
         });
         formData.append('report_key', reportKey);
-        const response = await fetch('/api/report/excel', {
+        const response = await fetch('/core_api/reports/excel', {
             method: 'POST',
             body: formData,
         });

@@ -74,7 +74,7 @@ const BlockUnitPriceInteractive: React.FC = () => {
 
         try {
             const response = await apiPost<StartResponse, { files: Record<string, File> }>(
-                '/ledger_api/block-unit-price/start',
+                '/core_api/block_unit_price_interactive/start',
                 { files }
             );
 
@@ -114,7 +114,7 @@ const BlockUnitPriceInteractive: React.FC = () => {
 
         try {
             const response = await apiPost<SelectResponse, { session_data: SessionData; selections: Record<string, string> }>(
-                '/ledger_api/block-unit-price/select-transport',
+                '/core_api/block_unit_price_interactive/select-transport',
                 { session_data: state.sessionData, selections: transportSelections }
             );
 
@@ -146,7 +146,7 @@ const BlockUnitPriceInteractive: React.FC = () => {
 
         try {
             const response = await apiPost<FinalizeResponse, { session_data: SessionData; confirmed: boolean }>(
-                '/ledger_api/block-unit-price/finalize',
+                '/core_api/block_unit_price_interactive/finalize',
                 { session_data: state.sessionData, confirmed }
             );
 
