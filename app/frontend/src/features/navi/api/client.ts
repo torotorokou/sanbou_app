@@ -1,7 +1,7 @@
 // features/navi/api/client.ts
-// HTTP通信のみを担当（apiGet/apiPostのラッパー）
+// HTTP通信のみを担当（coreApi経由で /core_api/... に統一）
 
-import { apiGet, apiPost } from '@shared/infrastructure/http';
+import { coreApi } from '@shared/infrastructure/http';
 import type {
   ChatAnswerResponseDto,
   ChatQuestionRequestDto,
@@ -10,25 +10,28 @@ import type {
 
 /**
  * Navi機能のAPIクライアント
+ * すべての通信は /core_api/... 経由
  */
 export const NaviApiClient = {
   /**
    * 質問テンプレート一覧を取得
+   * core_api経由でrag_apiにフォワード
    */
   async getQuestionOptions(): Promise<QuestionOptionsResponseDto> {
-    return await apiGet<QuestionOptionsResponseDto>(
-      '/rag_api/api/question-options'
+    return await coreApi.get<QuestionOptionsResponseDto>(
+      '/core_api/rag/question-options'
     );
   },
 
   /**
    * AI回答を生成（質問を送信）
+   * core_api経由でrag_apiにフォワード
    */
   async generateAnswer(
     payload: ChatQuestionRequestDto
   ): Promise<ChatAnswerResponseDto> {
-    return await apiPost<ChatAnswerResponseDto>(
-      '/rag_api/api/generate-answer',
+    return await coreApi.post<ChatAnswerResponseDto>(
+      '/core_api/rag/generate-answer',
       payload
     );
   },

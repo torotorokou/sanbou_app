@@ -74,7 +74,7 @@ function isApiEnvelope<T = unknown>(value: unknown): value is ApiResponse<T> {
     return isObject(value) && 'status' in value;
 }
 
-const client = axios.create({ 
+export const client = axios.create({ 
     withCredentials: true,
     timeout: 60000, // 60秒タイムアウト
 });
@@ -213,76 +213,3 @@ export async function apiPostBlob<B = unknown>(
     const res = await client.post(url, body, { ...config, responseType: 'blob' });
     return res.data as Blob;
 }
-
-// ========================================
-// coreApi: 唯一のHTTPクライアント（BFF統一）
-// ========================================
-
-export type Method = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
-
-export interface HttpOptions {
-    method?: Method;
-    body?: unknown;
-    headers?: Record<string, string>;
-    signal?: AbortSignal;
-    timeoutMs?: number;
-}
-
-async function coreRequest<T>(path: string, opts: HttpOptions = {}): Promise<T> {
-    const controller = new AbortController();
-    const timeoutMs = opts.timeoutMs ?? 15000;
-    const timer = setTimeout(() => controller.abort(), timeoutMs);
-
-    try {
-        // パスの正規化: 必ず先頭/付きにする
-        const normalizedPath = path.startsWith("/") ? path : `/${path}`;
-        
-        const headers: Record<string, string> = {
-            "Content-Type": "application/json",
-            ...(opts.headers ?? {}),
-        };
-        
-        const res = await fetch(normalizedPath, {
-            method: opts.method ?? "GET",
-            headers,
-            body: opts.body ? JSON.stringify(opts.body) : undefined,
-            signal: opts.signal ?? controller.signal,
-            redirect: "manual", // 認証リダイレクト等の誤受信検出
-        });
-
-        // Content-Type チェック（HTML受信を早期検出）
-        const contentType = res.headers.get("content-type") ?? "";
-        if (!contentType.includes("application/json")) {
-            const text = await res.text().catch(() => "");
-            throw new Error(
-                `Unexpected payload (content-type=${contentType}): ${text.slice(0, 200)}`
-            );
-        }
-
-        if (!res.ok) {
-            const text = await res.text().catch(() => "");
-            throw new Error(`HTTP ${res.status} ${res.statusText}: ${text}`);
-        }
-
-        return (await res.json()) as T;
-    } finally {
-        clearTimeout(timer);
-    }
-}
-
-/**
- * coreApi: フロントエンドの唯一のHTTPクライアント
- * すべてのAPI呼び出しは /core_api/... で始まる相対パスを使用
- */
-export const coreApi = {
-    get: <T>(p: string, o?: Omit<HttpOptions, "method" | "body">) =>
-        coreRequest<T>(p, { ...o, method: "GET" }),
-    post: <T>(p: string, body?: unknown, o?: Omit<HttpOptions, "method">) =>
-        coreRequest<T>(p, { ...o, method: "POST", body }),
-    put: <T>(p: string, body?: unknown, o?: Omit<HttpOptions, "method">) =>
-        coreRequest<T>(p, { ...o, method: "PUT", body }),
-    patch: <T>(p: string, body?: unknown, o?: Omit<HttpOptions, "method">) =>
-        coreRequest<T>(p, { ...o, method: "PATCH", body }),
-    delete: <T>(p: string, o?: Omit<HttpOptions, "method" | "body">) =>
-        coreRequest<T>(p, { ...o, method: "DELETE" }),
-};
