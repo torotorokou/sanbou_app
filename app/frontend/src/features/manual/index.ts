@@ -4,23 +4,7 @@
  */
 
 // ============================================================================
-// Legacy Exports (to be migrated)
-// ============================================================================
-
-export type {
-  ManualSectionChunk,
-  RagMetadata,
-  ManualSummary,
-  ManualDetail,
-  ManualListResponse,
-  ManualCatalogResponse,
-} from './model/manual.types';
-
-export { manualsApi } from './api/manualsApi';
-export { default as manualsApiDefault } from './api/manualsApi';
-
-// ============================================================================
-// Search Feature (新しいBFF + FSD構造)
+// Search Feature (BFF + FSD構造)
 // ============================================================================
 
 // Search Types
@@ -46,12 +30,36 @@ export { ManualResultList } from './search/ui/ManualResultList';
 // ============================================================================
 
 // Shogun Types
-export type { ManualItem, ManualSection } from './shogun/model/types';
+export type {
+  ManualItem,
+  ManualSection,
+  ManualSectionChunk,
+  RagMetadata,
+  ManualSummary,
+  ManualDetail,
+  ManualListResponse,
+  ManualCatalogResponse,
+} from './shogun/model/types';
+
+// Shogun API
+export { ShogunClient } from './shogun/api/client';
+export { default as ShogunClientDefault } from './shogun/api/client';
+
+// Shogun Hooks (ViewModel)
+export { useShogunDetail } from './shogun/hooks/useShogunDetail';
+export { useShogunCatalog } from './shogun/hooks/useShogunCatalog';
 
 // Shogun UI Components
-export { default as ShogunManualList } from './shogun/ui/ShogunManualList';
-export { default as ManualModal } from './shogun/ui/ManualModal';
-export { default as DetailModal } from './shogun/ui/DetailModal';
+export { ItemCard } from './shogun/ui/ItemCard';
+export { SectionBlock } from './shogun/ui/SectionBlock';
+export { FlowPane } from './shogun/ui/FlowPane';
+export { VideoPane } from './shogun/ui/VideoPane';
+// Export UI-controlled modal as `ManualModal` for page usage
+export { ManualModal } from './shogun/ui/ShogunModal';
+// Export routing-backed detail page component as `ManualDetailPage`
+// Export routing-backed detail page component under a route-specific name to avoid collision with pages' ManualDetailPage
+export { default as ManualDetailRoute } from './shogun/ui/ManualDetailPage';
+export { DetailContent } from './shogun/ui/DetailContent';
 
 // ============================================================================
 // Shared Utilities

@@ -15,4 +15,6 @@ export { default as GlobalManualSearchPage } from './search';
 export { default as ManualDetailPage } from './shogun/DetailPage';
 
 // モーダルはfeatures/manual/shogun/uiから直接エクスポート
-export { ManualModal, DetailModal } from '@/features/manual';
+export { ManualModal } from '@/features/manual';
+// routing-backed detail component (used as overlay when backgroundLocation exists)
+export { ManualDetailRoute } from '@/features/manual';

@@ -2,85 +2,90 @@
  * 将軍マニュアル詳細ページ
  * FSD: ページ層は組み立てのみ
  */
-import React, { useEffect, useRef, useState } from 'react';
-import { Anchor, Breadcrumb, Button, Layout, Space, Spin, Typography } from 'antd';
+import React from 'react';
+import { Breadcrumb, Button, Col, Layout, Row, Space, Spin, Typography } from 'antd';
 import { useNavigate, useParams } from 'react-router-dom';
-import { manualsApiDefault as manualsApi, type ManualDetail, type ManualSectionChunk } from '@features/manual';
-import { ensureSectionAnchors, smoothScrollToAnchor } from '@shared/utils/anchors';
-import { useWindowSize } from '@shared/hooks/ui';
-import { ANT } from '@/shared/constants/breakpoints';
-import styles from './ShogunPage.module.css';
+import { useShogunCatalog } from '@/features/manual/shogun/hooks/useShogunCatalog';
+import { FlowPane } from '@/features/manual/shogun/ui/FlowPane';
+import { VideoPane } from '@/features/manual/shogun/ui/VideoPane';
+import styles from './Shogun.module.css';
 
-const { Title } = Typography;
+const { Title, Paragraph } = Typography;
 
 const ShogunManualDetailPage: React.FC = () => {
   const { id } = useParams();
-  const [data, setData] = useState<ManualDetail | null>(null);
-  const [loading, setLoading] = useState(true);
-  const ref = useRef<HTMLDivElement>(null);
   const nav = useNavigate();
-  const { width } = useWindowSize();
-  const showSider = typeof width === 'number' ? width >= ANT.md : false;
-
-  useEffect(() => {
-    let alive = true;
-    (async () => {
-      try {
-        const d = await manualsApi.get(id!);
-        if (!alive) return;
-        setData(d);
-      } finally {
-        if (alive) setLoading(false);
-      }
-    })();
-    return () => { alive = false; };
-  }, [id]);
-
-  useEffect(() => {
-    const container = ref.current;
-    if (!container) return;
-    ensureSectionAnchors(container);
-    if (window.location.hash) smoothScrollToAnchor(container, window.location.hash);
-  }, [data]);
+  
+  // カタログから該当アイテムを取得
+  const { sections, loading } = useShogunCatalog();
+  const item = React.useMemo(() => {
+    for (const section of sections) {
+      const found = section.items.find((it) => it.id === id);
+      if (found) return found;
+    }
+    return null;
+  }, [sections, id]);
 
   return (
     <Layout className={styles.detailLayout}>
-      {showSider && (
-        <Layout.Sider width={240} className={styles.sider}>
-          <div className={styles.siderContent}>
-            <Anchor
-              targetOffset={16}
-              getContainer={() => document.querySelector('#manual-content-scroll') as HTMLElement || window}
-              items={data?.sections.map((s: ManualSectionChunk) => ({ key: s.anchor, href: `#${s.anchor}`, title: s.title }))}
-            />
-          </div>
-        </Layout.Sider>
-      )}
-
-      <Layout.Content className={styles.content}>
-        <Space direction='vertical' size={12} style={{ width: '100%' }}>
-          <Breadcrumb items={[{ title: 'マニュアル' }, { title: '将軍' }, { title: data?.title || '' }]} />
-          <div className={styles.titleBar}>
-            <Title level={3} className={styles.title}>{data?.title}</Title>
-            <Button onClick={() => nav(`/manuals/syogun/${id}`, { state: { backgroundLocation: { pathname: '/manuals' } } })}>
-              モーダルで開く
+      <Layout.Content className={styles.detailContent}>
+        <Space direction='vertical' size={12} style={{ width: '100%', marginBottom: 16 }}>
+          <Breadcrumb items={[{ title: 'マニュアル' }, { title: '将軍' }, { title: item?.title || '' }]} />
+          <div className={styles.detailTitleBar}>
+            <Title level={3} className={styles.detailTitle}>{item?.title || '読み込み中...'}</Title>
+            <Button onClick={() => nav('/manuals/syogun')}>
+              一覧に戻る
             </Button>
           </div>
         </Space>
-        <div id='manual-content-scroll' className={styles.scrollContainer}>
-          {loading ? (
-            <div className={styles.loadingContainer}><Spin size='large' /></div>
-          ) : (
-            <div ref={ref}>
-              {data?.sections.map((section: ManualSectionChunk) => (
-                <section key={section.anchor} id={section.anchor}>
-                  <h2>{section.title}</h2>
-                  <div dangerouslySetInnerHTML={{ __html: section.html || '' }} />
-                </section>
-              ))}
+
+        {loading ? (
+          <div className={styles.detailLoadingContainer}><Spin size='large' /></div>
+        ) : !item ? (
+          <div style={{ padding: 24, textAlign: 'center' }}>
+            <Typography.Text type="secondary">マニュアルが見つかりません</Typography.Text>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16, padding: 16 }}>
+            {/* 概要 */}
+            <div style={{ maxHeight: '20vh', overflow: 'auto', padding: 16, background: '#fafafa', borderRadius: 8 }}>
+              <Paragraph type="secondary" style={{ marginBottom: 0 }}>
+                {item.description ?? '説明は未設定です。'}
+              </Paragraph>
             </div>
-          )}
-        </div>
+
+            {/* フロー・動画 */}
+            <Row gutter={[16, 16]}>
+              <Col xs={24} md={7}>
+                <Title level={5} style={{ marginTop: 0 }}>
+                  フローチャート
+                </Title>
+                <div className={styles.flowPane}>
+                  <FlowPane
+                    src={item.flowUrl}
+                    title={item.title ?? 'flow'}
+                    frameClassName={styles.paneFrame}
+                    imgClassName={styles.paneImg}
+                  />
+                </div>
+              </Col>
+
+              <Col xs={24} md={17}>
+                <Title level={5} style={{ marginTop: 0 }}>
+                  動画
+                </Title>
+                <div className={styles.videoPane}>
+                  <VideoPane
+                    src={item.videoUrl}
+                    title={item.title ?? 'video'}
+                    frameClassName={styles.paneFrame}
+                    videoClassName={styles.paneVideo}
+                  />
+                </div>
+              </Col>
+            </Row>
+          </div>
+        )}
       </Layout.Content>
     </Layout>
   );

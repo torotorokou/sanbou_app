@@ -2,12 +2,12 @@ import { isMobile as isMobileWidth } from '@/shared/constants/breakpoints';
 import React, { useEffect, useRef, useState } from 'react';
 import { Modal, Typography, Spin, Anchor, Row, Col } from 'antd';
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { manualsApiDefault as manualsApi, type ManualSummary, type ManualDetail } from '@features/manual';
+import { ShogunClientDefault as ShogunClient, type ManualSummary, type ManualDetail } from '@features/manual';
 import { ensureSectionAnchors, smoothScrollToAnchor } from '@shared/utils/anchors';
 
 const { Title } = Typography;
 
-const ManualModal: React.FC = () => {
+const ManualDetailPage: React.FC = () => {
   const { id } = useParams();
   const [data, setData] = useState<ManualDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -26,8 +26,8 @@ const ManualModal: React.FC = () => {
     (async () => {
       try {
         const [d, l] = await Promise.all([
-          manualsApi.get(id!),
-          manualsApi.list({ category: 'syogun' }),
+          ShogunClient.get(id!),
+          ShogunClient.list({ category: 'syogun' }),
         ]);
         if (!alive) return;
         setData(d);
@@ -115,4 +115,4 @@ const ManualModal: React.FC = () => {
   );
 };
 
-export default ManualModal;
+export default ManualDetailPage;
