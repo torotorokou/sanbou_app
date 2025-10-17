@@ -1,35 +1,50 @@
 // features/navi/model/types.ts
-// ナビゲーション・メニュー関連の型定義
-
-import type { ReactNode } from 'react';
+// ナビ機能のDomain型定義
 
 /**
- * サイドバーメニュー項目の型定義
+ * カテゴリとテンプレートのマッピング構造
  */
-export interface MenuItem {
-    key: string;
-    label: ReactNode;
-    icon?: ReactNode;
-    hidden?: boolean;
-    children?: MenuItem[];
-    path?: string;
-    [extra: string]: unknown;
+export interface CategoryTemplate {
+  title: string;
+  tag: string[];
+}
+
+export type CategoryDataMap = Record<string, CategoryTemplate[]>;
+
+/**
+ * チャットの状態
+ */
+export interface ChatState {
+  category: string;
+  tags: string[];
+  template: string;
+  question: string;
+  answer: string;
+  loading: boolean;
+  pdfUrl: string | null;
+  currentStep: number;
 }
 
 /**
- * メニュー項目のフィルタリング用ユーティリティ型
- * hidden: true のアイテムを再帰的に除外
+ * PDF表示の状態
  */
-export function filterMenuItems(items: MenuItem[] = []): MenuItem[] {
-    return items
-        .filter(i => !i.hidden)
-        .map(i => {
-            const copy: MenuItem = { ...i };
-            if (Array.isArray(i.children)) {
-                const children = filterMenuItems(i.children);
-                if (children.length) copy.children = children;
-                else delete copy.children;
-            }
-            return copy;
-        });
+export interface PdfPreviewState {
+  pdfToShow: string | null;
+  pdfModalVisible: boolean;
+}
+
+/**
+ * チャット回答結果（Domain Model）
+ */
+export interface ChatAnswer {
+  answer: string;
+  pdfUrl?: string | null;
+}
+
+/**
+ * ステップインジケーター用のアイテム
+ */
+export interface StepItem {
+  title: string;
+  description: string;
 }

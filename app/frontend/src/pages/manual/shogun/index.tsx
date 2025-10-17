@@ -21,7 +21,7 @@ import { useShogunCatalog } from '@/features/manual/shogun/hooks/useShogunCatalo
 import { SectionBlock } from '@/features/manual/shogun/ui/SectionBlock';
 import { ManualModal } from '@/features/manual/shogun/ui/ShogunModal';
 import type { ManualItem } from '@/features/manual/shogun/model/types';
-import styles from './Shogun.module.css';
+import styles from './ShogunList.module.css';
 
 const { Title } = Typography;
 const { Header, Sider, Content } = Layout;

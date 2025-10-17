@@ -8,7 +8,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useShogunCatalog } from '@/features/manual/shogun/hooks/useShogunCatalog';
 import { FlowPane } from '@/features/manual/shogun/ui/FlowPane';
 import { VideoPane } from '@/features/manual/shogun/ui/VideoPane';
-import styles from './Shogun.module.css';
+import styles from './ShogunDetail.module.css';
 
 const { Title, Paragraph } = Typography;
 
@@ -30,12 +30,13 @@ const ShogunManualDetailPage: React.FC = () => {
     <Layout className={styles.detailLayout}>
       <Layout.Content className={styles.detailContent}>
         <Space direction='vertical' size={12} style={{ width: '100%', marginBottom: 16 }}>
-          <Breadcrumb items={[{ title: 'マニュアル' }, { title: '将軍' }, { title: item?.title || '' }]} />
+          <Breadcrumb items={[
+            { title: <a onClick={() => nav('/manuals')} className={styles.detailLink}>マニュアル</a> },
+            { title: <a onClick={() => nav('/manuals/syogun')} className={styles.detailLink}>将軍</a> },
+            { title: item?.title || '' }
+          ]} />
           <div className={styles.detailTitleBar}>
             <Title level={3} className={styles.detailTitle}>{item?.title || '読み込み中...'}</Title>
-            <Button onClick={() => nav('/manuals/syogun')}>
-              一覧に戻る
-            </Button>
           </div>
         </Space>
 
@@ -84,6 +85,13 @@ const ShogunManualDetailPage: React.FC = () => {
                 </div>
               </Col>
             </Row>
+
+            {/* 下中央に配置する戻るボタン */}
+            <div className={styles.detailFooter}>
+              <Button onClick={() => nav('/manuals/syogun')}>
+                一覧に戻る
+              </Button>
+            </div>
           </div>
         )}
       </Layout.Content>
