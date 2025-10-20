@@ -5,7 +5,23 @@
 
 import { coreApi } from "@/shared/infrastructure/http";
 import type { ICalendarRepository } from "../../domain/repository";
-import type { MonthISO, CalendarPayload } from "@/shared/ui/calendar/types";
+
+type MonthISO = string;
+
+interface CalendarPayload {
+  month: MonthISO;
+  days: Array<{
+    date: string;
+    status?: string;
+    label?: string | null;
+    color?: string | null;
+  }>;
+  legend?: Array<{
+    key: string;
+    label: string;
+    color?: string | null;
+  }>;
+}
 
 export class HttpCalendarRepository implements ICalendarRepository {
   async fetchMonthCalendar(month: MonthISO): Promise<CalendarPayload> {

@@ -4,8 +4,24 @@
  */
 
 import type { ICalendarRepository } from "../../domain/repository";
-import type { MonthISO, CalendarPayload } from "@/shared/ui/calendar/types";
 import dayjs from "dayjs";
+
+type MonthISO = string;
+
+interface CalendarPayload {
+  month: MonthISO;
+  days: Array<{
+    date: string;
+    status?: string;
+    label?: string | null;
+    color?: string | null;
+  }>;
+  legend?: Array<{
+    key: string;
+    label: string;
+    color?: string | null;
+  }>;
+}
 
 export class MockCalendarRepository implements ICalendarRepository {
   async fetchMonthCalendar(month: MonthISO): Promise<CalendarPayload> {
@@ -66,7 +82,6 @@ export class MockCalendarRepository implements ICalendarRepository {
         { key: "holiday", label: "日祝", color: "#ff85c0" },
         { key: "closed", label: "休業日", color: "#cf1322" },
       ],
-      version: 1,
     };
   }
 }

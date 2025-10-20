@@ -7,7 +7,7 @@ import React, { useMemo } from "react";
 import { Card, Typography, Tooltip, Skeleton } from "antd";
 import { InfoCircleOutlined } from "@ant-design/icons";
 // dayjs not needed in this card now
-import BusinessCalendar from "../components/BusinessCalendar";
+import UkeireCalendar from "../components/UkeireCalendar";
 import { useUkeireCalendarVM } from "../../application/useUkeireCalendarVM";
 import { MockCalendarRepository } from "../../application/adapters/mockCalendar.repository";
 // import { HttpCalendarRepository } from "../../application/adapters/httpCalendar.repository";
@@ -74,7 +74,11 @@ export const CalendarCard: React.FC<CalendarCardProps> = ({ month, style }) => {
       </div>
 
       <div style={{ flex: 1, minHeight: 0, overflow: "hidden", height: "100%" }}>
-        <BusinessCalendar data={vm.payload} />
+        <UkeireCalendar
+          month={vm.payload.month}
+          days={vm.payload.days}
+          legend={vm.payload.legend}
+        />
       </div>
 
     </Card>
