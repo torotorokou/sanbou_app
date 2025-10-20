@@ -27,8 +27,9 @@
   background: #fff;
   overflow: hidden;
   box-sizing: border-box;
-  /* allow gridWrapper to expand to the full height of the container */
-  height: 100%;
+  /* use flex: 1 to fill available space without forcing height: 100% */
+  flex: 1;
+  min-height: 0;
 }
 
 .grid {
@@ -37,7 +38,6 @@
   grid-auto-rows: var(--row-h);
   box-sizing: border-box;
   /* make grid fill remaining vertical space inside gridWrapper */
-  height: calc(100% - var(--row-h, 28px));
   overflow: hidden;
   grid-column: 2 / -1;
 }
@@ -51,7 +51,6 @@
   background: #fff;
   box-sizing: border-box;
   grid-column: 1;
-  height: calc(100% - var(--row-h, 28px));
 }
 
 .weekCell {

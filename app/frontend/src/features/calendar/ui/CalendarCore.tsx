@@ -56,7 +56,16 @@ export function CalendarCore<T extends CalendarCell = CalendarCell>({
   const weeks = Math.ceil((startDow + daysInMonth) / 7);
 
   return (
-    <div className={className} style={style}>
+    <div 
+      className={className} 
+      style={{ 
+        display: "flex", 
+        flexDirection: "column", 
+        height: "100%", 
+        minHeight: 0,
+        ...style 
+      }}
+    >
       {/* Header row: W + 7 weekdays */}
       <div
         className={styles.headerRow}

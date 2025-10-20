@@ -6,6 +6,7 @@ from fastapi import APIRouter, Query, HTTPException, Depends
 from typing import List, Dict, Any
 import logging
 from sqlalchemy.orm import Session
+from sqlalchemy import text
 from app.deps import get_db
 
 logger = logging.getLogger(__name__)
@@ -30,14 +31,14 @@ def get_calendar_month(
     Returns:
         カレンダーデータのリスト
     """
-    sql = """
+    sql = text("""
     SELECT ddate, y, m, iso_year, iso_week, iso_dow,
            is_holiday, is_second_sunday, is_company_closed,
            day_type, is_business
     FROM ref.v_calendar_classified
-    WHERE y = %s AND m = %s
+    WHERE y = :year AND m = :month
     ORDER BY ddate
-    """
+    """)
     
     try:
         result = db.execute(sql, {"year": year, "month": month})

@@ -22,6 +22,7 @@ import {
   SettingOutlined,
   NotificationOutlined,
 } from '@ant-design/icons';
+import { CalendarCard } from '@/features/calendar/ui/CalendarCard';
 import { useNavigate } from 'react-router-dom';
 import { ROUTER_PATHS } from '@app/routes/routes';
 import { useWindowSize } from '@shared/hooks/ui';
@@ -400,6 +401,19 @@ export const PortalPage: React.FC = () => {
     '--portal-shadow': token.boxShadowSecondary,
   };
 
+  // (weather sample removed)
+
+  // 表示用年月（ウィジェット共通で利用可能）
+  const widgetYear = new Date().getFullYear();
+  const widgetMonth = new Date().getMonth() + 1;
+
+  // KPI サンプルデータ（UI プレビュー用）
+  const sampleKpis = [
+    { key: 'sales', label: '売上', value: '¥12.3M', delta: 4.5 },
+    { key: 'inbound', label: '搬入量', value: '1,400t', delta: 1.8 },
+    { key: 'unitPrice', label: '売単', value: '¥64.22', delta: -0.8 },
+  ] as const;
+
   return (
     <div className="portal-page" style={{ minHeight: '100%' }}>
       <section className="portal-hero" style={heroVars}>
@@ -409,7 +423,8 @@ export const PortalPage: React.FC = () => {
         <Text className="portal-subtitle">{introText}</Text>
       </section>
 
-  <main style={{ width: '100%', maxWidth: 'none', margin: 0 }}>
+      {/* 2カラムレイアウト: 左=カード群, 右=ウィジェット群 */}
+      <main style={{ width: '100%', maxWidth: 'none', margin: 0 }}>
         {/* 重要通知バナー */}
         {noticeVisible && notices.length > 0 && (
           <div style={{ width: '100%', margin: '0 0 24px 0' }}>
@@ -455,46 +470,120 @@ export const PortalPage: React.FC = () => {
           </div>
         )}
 
-        {/* メニュー：固定幅カードを中央寄せで折り返し
+        {/* メニュー：固定幅カードを左カラムに表示（中央寄せ）
             レスポンシブ：利用可能幅に基づき列数を計算します。
             - 通常：利用可能幅に応じて列数を算出
             - 半画面（isCompact が真）では最大2列に制限する
         */}
-        <div
-          aria-label="ポータルメニュー一覧"
-          style={{
-            display: 'grid',
-            columnGap: 24,
-            rowGap: 24, // 画面サイズに関わらず縦の間隔を固定
-            gridAutoRows: `${Math.round(CARD_HEIGHT * cardScale)}px`, // 各行の高さをカード固定高に合わせる
-            // 利用可能幅に基づいて表示列数を調整します。
-            // カード幅 + ギャップを考慮して列数を計算（最大 portalMenus.length）
-            gridTemplateColumns: (() => {
-              try {
-                const containerPadding = 64; // 親左右パディング合計（32px 左右）
-                const available = Math.max(0, width - containerPadding);
-                const gap = 24;
-                // 必要幅 per column
-                const per = Math.round(CARD_WIDTH * cardScale) + gap;
-                let cols = Math.floor((available + gap) / per);
-                if (cols < 1) cols = 1;
-                // compact（半画面等）では2列表示を優先する（ただし最大はメニュー数）
-                if (isCompact) cols = Math.min(2, Math.max(1, cols));
-                // 保険: 列数が多すぎる場合は最大3列、さらにメニュー数で制限
-                cols = Math.min(cols, 3, portalMenus.length);
-                return `repeat(${cols}, ${Math.round(CARD_WIDTH * cardScale)}px)`;
-              } catch {
-                return `repeat(auto-fit, ${Math.round(CARD_WIDTH * cardScale)}px)`;
-              }
-            })(),
-            // カードを画面中央に寄せる
-            justifyContent: 'center',
-            alignItems: 'stretch',
-          }}
-        >
-          {portalMenus.map((menu) => (
-            <PortalCard key={menu.link} {...menu} buttonWidth={unifiedButtonWidth} cardScale={cardScale} />
-          ))}
+        <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start' }}>
+          {/* Left column: header + portal cards (keeps previous grid behavior) */}
+          <div style={{ flex: '1 1 0', display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div style={{ width: '100%' }}>
+              <div style={{
+                width: '100%',
+                background: '#ffffff',
+                color: token.colorText,
+                padding: '8px',
+                borderRadius: 8,
+                fontSize: 15,
+                fontWeight: 800,
+                boxShadow: token.boxShadowSecondary,
+                border: `1px solid ${token.colorBorderSecondary}`,
+                boxSizing: 'border-box',
+                textAlign: 'center',
+              }}>
+                各カード
+              </div>
+            </div>
+            <div
+              aria-label="ポータルメニュー一覧"
+              style={{
+                display: 'grid',
+                columnGap: 24,
+                rowGap: 24,
+                gridAutoRows: `${Math.round(CARD_HEIGHT * cardScale)}px`,
+                gridTemplateColumns: (() => {
+                try {
+                  const containerPadding = 64;
+                  const available = Math.max(0, width - containerPadding - 280); // reserve right column space (shrank)
+                  const gap = 24;
+                  const per = Math.round(CARD_WIDTH * cardScale) + gap;
+                  let cols = Math.floor((available + gap) / per);
+                  if (cols < 1) cols = 1;
+                  if (isCompact) cols = Math.min(2, Math.max(1, cols));
+                  cols = Math.min(cols, 3, portalMenus.length);
+                  return `repeat(${cols}, ${Math.round(CARD_WIDTH * cardScale)}px)`;
+                } catch {
+                  return `repeat(auto-fit, ${Math.round(CARD_WIDTH * cardScale)}px)`;
+                }
+              })(),
+              justifyContent: 'center',
+              alignItems: 'stretch',
+            }}
+          >
+            {portalMenus.map((menu) => (
+              <PortalCard key={menu.link} {...menu} buttonWidth={unifiedButtonWidth} cardScale={cardScale} />
+            ))}
+            </div>
+            </div>
+
+          {/* Right column: widget container (fixed width) */}
+          <aside style={{ width: 256, flex: '0 0 256px', display: 'flex', flexDirection: 'column', gap: 4 }}>
+            {/* Calendar widget: show month header + calendar card (repository DI possible) */}
+            <div style={{ marginBottom: 6, width: '100%' }}>
+              <div style={{
+                width: '100%',
+                background: '#ffffff',
+                color: token.colorText,
+                padding: '8px',
+                borderRadius: 8,
+                fontSize: 13,
+                fontWeight: 700,
+                boxShadow: token.boxShadowSecondary,
+                border: `1px solid ${token.colorBorderSecondary}`,
+                boxSizing: 'border-box',
+                textAlign: 'center',
+              }}>
+                {`${widgetYear}年${widgetMonth}月`}
+              </div>
+            </div>
+            <CalendarCard
+              year={new Date().getFullYear()}
+              month={new Date().getMonth() + 1}
+              repository={{
+                // minimal stub implementing ICalendarRepository; in production inject a real implementation
+                fetchMonth: async ({ year, month }) => {
+                  // reference params to avoid unused-variable lint warnings
+                  void year;
+                  void month;
+                  // return empty days to let CalendarCard show loading results gracefully
+                  return [];
+                },
+              }}
+              style={{ height: '300px', margin: 0, padding: 8 }}
+            />
+
+            <Card size="small" style={{ height: 156, padding: 8, margin: 0 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ fontWeight: 700, fontSize: 16 }}>KPI速報</div>
+                <div style={{ color: token.colorTextTertiary, fontSize: 12 }}>更新: 今朝</div>
+              </div>
+
+              <div style={{ display: 'flex', gap: 8, marginTop: 10, alignItems: 'center', height: '100%' }}>
+                {sampleKpis.map((k) => (
+                  <div key={k.key} style={{ flex: '1 1 0', minWidth: 0, textAlign: 'center' }}>
+                    <div style={{ fontSize: 18, fontWeight: 700 }}>{k.value}</div>
+                    <div style={{ marginTop: 6, color: token.colorTextTertiary }}>{k.label}</div>
+                    <div style={{ marginTop: 6, color: k.delta >= 0 ? '#3f8600' : '#cf1322', fontWeight: 600 }}>
+                      {k.delta >= 0 ? '▲' : '▼'} {Math.abs(k.delta)}%
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+
+            {/* Weather card removed as requested */}
+          </aside>
         </div>
       </main>
 
