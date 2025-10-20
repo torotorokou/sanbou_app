@@ -1,10 +1,10 @@
 /**
- * 受入ダッシュボード - Mock Repository
+ * 受入量予測 - Mock Repository
  * モックデータ生成によるRepository実装
  */
 
 import dayjs from "dayjs";
-import type { IInboundForecastRepository } from "../../domain/repository";
+import type { UkeireForecastRepository } from "../UkeireForecastRepository";
 import type {
   IsoMonth,
   IsoDate,
@@ -16,10 +16,11 @@ import type {
   ForecastDTO,
   DailyCurveDTO,
   WeekRowDTO,
-} from "../../domain/types";
-import { toDate, ymd, mondayOf, addDays, sum, todayInMonth } from "../../domain/valueObjects";
+} from "../../../model/types";
+import { ymd, mondayOf, addDays, sum, todayInMonth } from "../../../services/seriesService";
+import { toDate } from "../../../services/calendarService";
 
-export class MockInboundForecastRepository implements IInboundForecastRepository {
+export class MockUkeireForecastRepository implements UkeireForecastRepository {
   async fetchMonthPayload(month: IsoMonth): Promise<MonthPayloadDTO> {
     // モック遅延
     await new Promise((resolve) => setTimeout(resolve, 300));

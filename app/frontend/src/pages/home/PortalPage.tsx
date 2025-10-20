@@ -276,7 +276,7 @@ const portalMenus: PortalCardProps[] = [
     detail:
       '工場別・顧客別・価格表などの管理ダッシュボードへアクセスできます。表示中のダッシュボードを切り替えて詳細を確認してください。',
     icon: <DashboardOutlined />,
-    link: ROUTER_PATHS.DASHBOARD_UKEIRE,
+    link: ROUTER_PATHS.UKEIRE,
     color: PALETTE.BLUE_DARK,
   },
   {

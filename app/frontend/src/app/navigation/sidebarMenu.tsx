@@ -54,9 +54,9 @@ export const SIDEBAR_MENU = [
         hidden: false,
         children: [
             {
-                key: ROUTER_PATHS.DASHBOARD_UKEIRE,
+                key: ROUTER_PATHS.UKEIRE,
                 icon: <BarChartOutlined />,
-                label: <Link to={ROUTER_PATHS.DASHBOARD_UKEIRE}>受入管理</Link>,
+                label: <Link to={ROUTER_PATHS.UKEIRE}>受入管理</Link>,
             },
             {
                 key: ROUTER_PATHS.SALES_TREE,
