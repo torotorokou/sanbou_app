@@ -1,42 +1,30 @@
-// src/pages/report/ReportPage.tsx
-
 import React from 'react';
 import { ReportBase, ReportHeader } from '@features/report';
-// import ResponsiveDebugInfo from '../../components/debug/ResponsiveDebugInfo';
 import { useReportManager } from '@features/report';
+import styles from './ReportPage.module.css';
 
 /**
- * レポートページ - シンプルで保守しやすい設計
+ * レポート管理ページ - シンプルで保守しやすい設計
  * 
  * 🔄 リファクタリング内容：
  * - 複雑な状態管理をuseReportManagerフックに分離
  * - propsの手動構築を自動化（getReportBaseProps）
  * - 可読性とメンテナンス性を大幅に向上
+ * - インラインスタイルをCSS Modulesに移行
  * 
- * 📝 従来のコード行数：~100行 → 現在：~25行（75%削減）
+ * 📝 従来のコード行数：~100行 → 現在：~28行（72%削減）
  * 
  * 🎯 責任：
  * - UIの構造とレイアウトのみ
  * - ビジネスロジックはカスタムフック内で管理
  */
 
-const ReportManagePage: React.FC = () => {
+const ManagePage: React.FC = () => {
     const reportManager = useReportManager('factory_report');
     const reportBaseProps = reportManager.getReportBaseProps();
 
     return (
-        <div
-            style={{
-                height: 'calc(100dvh - (var(--page-padding, 0px) * 2))',
-                padding: 'var(--page-padding, 16px)',
-                display: 'flex',
-                flexDirection: 'column',
-                overflow: 'hidden',
-                boxSizing: 'border-box',
-                scrollbarGutter: 'stable both-edges'
-            }}
-        >
-            {/* <ResponsiveDebugInfo /> */}
+        <div className={styles.pageContainer}>
             <ReportHeader
                 reportKey={reportManager.selectedReport}
                 onChangeReportKey={reportManager.changeReport}
@@ -45,11 +33,11 @@ const ReportManagePage: React.FC = () => {
                 isFinalized={reportManager.isFinalized}
                 pageGroup="manage"
             />
-            <div style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
+            <div className={styles.contentArea}>
                 <ReportBase {...reportBaseProps} />
             </div>
         </div>
     );
 };
 
-export default ReportManagePage;
+export default ManagePage;
