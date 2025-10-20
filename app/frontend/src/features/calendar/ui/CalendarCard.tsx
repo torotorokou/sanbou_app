@@ -1,8 +1,13 @@
+/**
+ * CalendarCard Component (DI対応共通版)
+ * 営業カレンダーを表示するカード - Repository を Props で受け取る汎用カード
+ */
+
 import React, { useMemo } from "react";
-import { Card, Skeleton, Typography } from "antd";
+import { Card, Typography, Tooltip, Skeleton } from "antd";
+import { InfoCircleOutlined } from "@ant-design/icons";
 import UkeireCalendar from "@/features/dashboard/ukeire/ui/components/UkeireCalendar";
-import { useUkeireCalendarVM } from "@/features/dashboard/ukeire/application/useUkeireCalendarVM";
-import { CalendarRepositoryForUkeire } from "@/features/dashboard/ukeire/application/adapters/calendar.http.repository";
+import { useCalendarVM } from "@/features/calendar/controller/useCalendarVM";
 import type { ICalendarRepository } from "@/features/calendar/model/repository";
 import type { CalendarDayDTO } from "@/features/calendar/model/types";
 
@@ -19,11 +24,10 @@ type CalendarPayload = {
   legend?: Array<{ key: string; label: string; color?: string | null }>;
 };
 
-type Props = {
+export type CalendarCardProps = {
   year: number;
   month: number;
-  repository?: ICalendarRepository;
-  title?: string;
+  repository: ICalendarRepository;
   style?: React.CSSProperties;
 };
 
@@ -72,29 +76,34 @@ function convertToPayload(year: number, month: number, days: CalendarDayDTO[]): 
   };
 }
 
-export default function CalendarCard({ year, month, repository, title = "営業カレンダー", style }: Props) {
-  const repo = useMemo(() => repository ?? new CalendarRepositoryForUkeire(), [repository]);
-  const vm = useUkeireCalendarVM({ year, month, repository: repo });
-
-  const pad = (n: number) => String(n).padStart(2, "0");
-  const monthStr = `${year}-${pad(month)}`;
-
+export const CalendarCard: React.FC<CalendarCardProps> = ({ year, month, repository, style }) => {
+  const vm = useCalendarVM({ repository, year, month });
+  
   const payload = useMemo(() => {
     if (vm.grid.length === 0) {
       return {
-        month: monthStr,
+        month: `${year}-${String(month).padStart(2, '0')}`,
         days: [],
         legend: [],
       };
     }
     // grid から実際の月内データを抽出
-    const monthDays = vm.grid.flat().filter((d: CalendarDayDTO & { inMonth: boolean }) => d.inMonth);
+    const monthDays = vm.grid.flat().filter(d => d.inMonth).map(d => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { inMonth, ...rest } = d;
+      return rest;
+    });
     return convertToPayload(year, month, monthDays);
-  }, [vm.grid, year, month, monthStr]);
+  }, [vm.grid, year, month]);
 
   if (vm.loading) {
     return (
-      <Card title={title} style={style}>
+      <Card
+        bordered
+        size="small"
+        style={{ height: "100%", display: "flex", flexDirection: "column", ...(style || {}) }}
+        bodyStyle={{ display: "flex", flexDirection: "column", padding: 12, gap: 8, flex: 1, minHeight: 0 }}
+      >
         <Skeleton active paragraph={{ rows: 6 }} />
       </Card>
     );
@@ -102,31 +111,39 @@ export default function CalendarCard({ year, month, repository, title = "営業�
 
   if (vm.error) {
     return (
-      <Card title={title} style={style}>
+      <Card
+        bordered
+        size="small"
+        style={{ height: "100%", display: "flex", flexDirection: "column", ...(style || {}) }}
+        bodyStyle={{ display: "flex", flexDirection: "column", padding: 12, gap: 8, flex: 1, minHeight: 0 }}
+      >
         <Typography.Text type="danger">{vm.error}</Typography.Text>
       </Card>
     );
   }
 
   return (
-    <Card 
-      title={title} 
-      style={{ 
-        height: "100%", 
-        display: "flex", 
-        flexDirection: "column",
-        ...style 
-      }}
-      bodyStyle={{
-        flex: 1,
-        minHeight: 0,
-        overflow: "hidden",
-        padding: 12,
-        display: "flex",
-        flexDirection: "column",
-      }}
+    <Card
+      bordered
+      size="small"
+      style={{ height: "100%", display: "flex", flexDirection: "column", ...(style || {}) }}
+      bodyStyle={{ display: "flex", flexDirection: "column", padding: 12, gap: 8, flex: 1, minHeight: 0 }}
     >
-      <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
+      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", position: "relative" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <Typography.Title level={5} style={{ margin: 0, fontSize: 16 }}>
+            営業カレンダー
+          </Typography.Title>
+          <Tooltip title="SQL起点のカレンダーデータ。祝日・休業日はサーバ側で管理。">
+            <InfoCircleOutlined style={{ color: "#8c8c8c" }} />
+          </Tooltip>
+        </div>
+
+        {/* right placeholder kept for symmetry if needed */}
+        <div style={{ position: "absolute", right: 12 }} />
+      </div>
+
+      <div style={{ flex: 1, minHeight: 0, overflow: "hidden", height: "100%" }}>
         <UkeireCalendar
           month={payload.month}
           days={payload.days}
@@ -135,5 +152,6 @@ export default function CalendarCard({ year, month, repository, title = "営業�
       </div>
     </Card>
   );
-}
+};
 
+export default CalendarCard;

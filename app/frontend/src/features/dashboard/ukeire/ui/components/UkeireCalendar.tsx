@@ -121,7 +121,17 @@ export const UkeireCalendar: React.FC<UkeireCalendarProps> = ({
   }, [month, valuesByDate, dayMap]);
 
   return (
-    <div ref={rootRef} className={className} style={{ height: "100%", ...style }}>
+    <div 
+      ref={rootRef} 
+      className={className} 
+      style={{ 
+        display: "flex", 
+        flexDirection: "column", 
+        height: "100%", 
+        minHeight: 0,
+        ...style 
+      }}
+    >
       {/* 凡例表示 */}
       {legend.length > 0 && (
         <div
@@ -132,6 +142,7 @@ export const UkeireCalendar: React.FC<UkeireCalendarProps> = ({
             justifyContent: "center",
             marginBottom: 8,
             flexWrap: "wrap",
+            flexShrink: 0,
           }}
         >
           {(() => {
@@ -169,43 +180,44 @@ export const UkeireCalendar: React.FC<UkeireCalendarProps> = ({
         </div>
       )}
 
-      <CalendarCore
-        month={month}
-        rowHeight={computedRowHeight}
-        cells={cells}
-        renderCell={(cell: UkeireCell) => {
-          const d = dayjs(cell.date);
-          const isToday = cell.date === dayjs().format("YYYY-MM-DD");
-          const bg = isToday
-            ? "#fadb14"
-            : cell.color ?? defaultColorByStatus(cell.status);
-          const fg = isToday ? "#000" : bg ? "#fff" : "#333";
-          const dayNum = d.date();
+      <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
+        <CalendarCore
+          month={month}
+          rowHeight={computedRowHeight ?? 28}
+          cells={cells}
+          renderCell={(cell: UkeireCell) => {
+            const d = dayjs(cell.date);
+            const isToday = cell.date === dayjs().format("YYYY-MM-DD");
+            const bg = isToday
+              ? "#fadb14"
+              : cell.color ?? defaultColorByStatus(cell.status);
+            const fg = isToday ? "#000" : bg ? "#fff" : "#333";
+            const dayNum = d.date();
 
-          return (
-            <div
-              title={cell.label ?? undefined}
-              style={{
-                width: 22,
-                height: 22,
-                borderRadius: 6,
-                background: bg ?? "transparent",
-                color: fg,
-                fontSize: 12,
-                fontWeight: 700,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                opacity: cell.inMonth ? 1 : 0.35,
-              }}
-            >
-              {dayNum}
-            </div>
-          );
-        }}
-        onCellClick={onSelect ? (cell) => onSelect(cell.date) : undefined}
-        style={{ height: "100%" }}
-      />
+            return (
+              <div
+                title={cell.label ?? undefined}
+                style={{
+                  width: 22,
+                  height: 22,
+                  borderRadius: 6,
+                  background: bg ?? "transparent",
+                  color: fg,
+                  fontSize: 12,
+                  fontWeight: 700,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  opacity: cell.inMonth ? 1 : 0.35,
+                }}
+              >
+                {dayNum}
+              </div>
+            );
+          }}
+          onCellClick={onSelect ? (cell) => onSelect(cell.date) : undefined}
+        />
+      </div>
     </div>
   );
 };

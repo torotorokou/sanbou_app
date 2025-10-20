@@ -26,6 +26,18 @@ export class CalendarRepositoryForUkeire implements ICalendarRepository {
 
 function mapBackendDayToCalendarDTO(d: BackendCalendarDay): CalendarDayDTO {
   return {
+    ddate: d.ddate,
+    y: d.y,
+    m: d.m,
+    iso_year: d.iso_year,
+    iso_week: d.iso_week,
+    iso_dow: d.iso_dow,
+    is_holiday: d.is_holiday,
+    is_second_sunday: d.is_second_sunday,
+    is_company_closed: d.is_company_closed,
+    day_type: d.day_type,
+    is_business: d.is_business,
+    // 後方互換性のためのエイリアス
     date: d.ddate,
     isHoliday: d.is_holiday || !d.is_business,
   };

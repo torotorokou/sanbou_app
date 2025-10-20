@@ -20,10 +20,22 @@ export function decorateCalendarCells(
       let label: string | undefined;
       let color: string | undefined;
 
-      if (cell.isHoliday) {
+      // day_type に基づいて正しく判定
+      // NORMAL: 営業日（緑）
+      // RESERVATION: 日曜・祝日（ピンク）
+      // CLOSED: 休業日（赤）
+      if (cell.day_type === "CLOSED" || cell.is_company_closed) {
+        status = "closed";
+        label = "休業日";
+        color = "#cf1322";
+      } else if (cell.day_type === "RESERVATION" || cell.is_holiday) {
         status = "holiday";
-        label = "祝日";
+        label = cell.is_holiday ? "祝日" : "日曜";
         color = "#ff85c0";
+      } else {
+        status = "business";
+        label = undefined;
+        color = "#52c41a";
       }
 
       return {
