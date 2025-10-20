@@ -6,11 +6,23 @@
 import React, { useMemo } from "react";
 import { Card, Typography, Tooltip, Skeleton } from "antd";
 import { InfoCircleOutlined } from "@ant-design/icons";
-import BusinessCalendar from "@/features/dashboard/ukeire/ui/components/BusinessCalendar";
+import UkeireCalendar from "@/features/dashboard/ukeire/ui/components/UkeireCalendar";
 import { useCalendarVM } from "@/features/calendar/controller/useCalendarVM";
 import type { ICalendarRepository } from "@/features/calendar/model/repository";
-import type { CalendarPayload, DayDecor } from "@/shared/ui/calendar/types";
 import type { CalendarDayDTO } from "@/features/calendar/model/types";
+
+type DayDecor = {
+  date: string;
+  status?: string;
+  label?: string | null;
+  color?: string | null;
+};
+
+type CalendarPayload = {
+  month: string;
+  days: DayDecor[];
+  legend?: Array<{ key: string; label: string; color?: string | null }>;
+};
 
 export type CalendarCardProps = {
   year: number;
@@ -121,7 +133,11 @@ export const CalendarCard: React.FC<CalendarCardProps> = ({ year, month, reposit
       </div>
 
       <div style={{ flex: 1, minHeight: 0, overflow: "hidden", height: "100%" }}>
-        <BusinessCalendar data={payload} />
+        <UkeireCalendar
+          month={payload.month}
+          days={payload.days}
+          legend={payload.legend}
+        />
       </div>
     </Card>
   );

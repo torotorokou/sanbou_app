@@ -4,7 +4,23 @@
  */
 
 import type { IsoMonth, MonthPayloadDTO } from "./types";
-import type { MonthISO, CalendarPayload } from "@/shared/ui/calendar/types";
+
+type MonthISO = string; // "YYYY-MM"
+
+interface CalendarPayload {
+  month: MonthISO;
+  days: Array<{
+    date: string;
+    status?: string;
+    label?: string | null;
+    color?: string | null;
+  }>;
+  legend?: Array<{
+    key: string;
+    label: string;
+    color?: string | null;
+  }>;
+}
 
 export interface IInboundForecastRepository {
   /**

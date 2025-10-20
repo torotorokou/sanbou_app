@@ -4,9 +4,25 @@
  */
 
 import { useEffect, useState } from "react";
-import type { MonthISO, CalendarPayload } from "@/shared/ui/calendar/types";
 import type { ICalendarRepository } from "../domain/repository";
 import dayjs from "dayjs";
+
+type MonthISO = string; // "YYYY-MM"
+
+interface CalendarPayload {
+  month: MonthISO;
+  days: Array<{
+    date: string;
+    status?: string;
+    label?: string | null;
+    color?: string | null;
+  }>;
+  legend?: Array<{
+    key: string;
+    label: string;
+    color?: string | null;
+  }>;
+}
 
 export type UkeireCalendarVM = {
   month: MonthISO;
