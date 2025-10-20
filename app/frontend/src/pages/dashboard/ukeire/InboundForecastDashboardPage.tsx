@@ -1,22 +1,21 @@
 /**
  * 受入ダッシュボード - Page Component
- * MVC構成の薄いPageレイヤー
+ * MVVM構成の薄いPageレイヤー
  */
 
 import React, { useMemo } from "react";
 import { Row, Col, Typography, DatePicker, Space, Badge, Skeleton } from "antd";
 import dayjs from "dayjs";
 import type { Dayjs } from "dayjs";
-import { useUkeireForecastVM } from "@/features/dashboard/ukeire/application/useUkeireForecastVM";
-import { MockInboundForecastRepository } from "@/features/dashboard/ukeire/application/adapters/mock.repository";
-import { TargetCard } from "@/features/dashboard/ukeire/ui/cards/TargetCard";
-import { CombinedDailyCard } from "@/features/dashboard/ukeire/ui/cards/CombinedDailyCard";
-import CalendarCardUkeire from "@/features/dashboard/ukeire/ui/cards/CalendarCard.Ukeire";
-import { ForecastCard } from "@/features/dashboard/ukeire/ui/cards/ForecastCard";
-// (removed curMonth / nextMonth imports since month selection is no longer restricted)
+import { useUkeireForecastVM } from "@/features/ukeireVolume/forecast/hooks/useUkeireForecastVM";
+import { MockUkeireForecastRepository } from "@/features/ukeireVolume/forecast/repository/MockUkeireForecastRepository";
+import { TargetCard } from "@/features/kpiTarget/ui/TargetCard";
+import { CombinedDailyCard } from "@/features/ukeireVolume/history/ui/CombinedDailyCard";
+import CalendarCardUkeire from "@/features/ukeireVolume/actuals/ui/CalendarCard.Ukeire";
+import { ForecastCard } from "@/features/ukeireVolume/forecast/ui/ForecastCard";
 
 const InboundForecastDashboardPage: React.FC = () => {
-  const repository = useMemo(() => new MockInboundForecastRepository(), []);
+  const repository = useMemo(() => new MockUkeireForecastRepository(), []);
   const vm = useUkeireForecastVM(repository);
 
   if (vm.loading || !vm.payload) {
