@@ -2,24 +2,31 @@ import type { ICalendarRepository } from "@/features/calendar/model/repository";
 import type { CalendarDayDTO } from "@/features/calendar/model/types";
 import { coreApi } from "@/shared/infrastructure/http";
 
-type UkeireDayDTO = {
-  date: string;
-  isHoliday?: boolean;
-  [key: string]: unknown;
+type BackendCalendarDay = {
+  ddate: string;
+  y: number;
+  m: number;
+  iso_year: number;
+  iso_week: number;
+  iso_dow: number;
+  is_holiday: boolean;
+  is_second_sunday: boolean;
+  is_company_closed: boolean;
+  day_type: string;
+  is_business: boolean;
 };
 
 export class CalendarRepositoryForUkeire implements ICalendarRepository {
   async fetchMonth({ year, month }: { year: number; month: number }): Promise<CalendarDayDTO[]> {
-    const data = await coreApi.get<{ days: UkeireDayDTO[] }>("/core_api/calendar/month", {
-      params: { year, month },
-    });
-    return (data?.days ?? []).map(mapUkeireDayToCalendarDTO);
+    // バックエンドAPIは /core_api/calendar/month?year=YYYY&month=MM の形式で配列を直接返す
+    const data = await coreApi.get<BackendCalendarDay[]>(`/core_api/calendar/month?year=${year}&month=${month}`);
+    return (data ?? []).map(mapBackendDayToCalendarDTO);
   }
 }
 
-function mapUkeireDayToCalendarDTO(d: UkeireDayDTO): CalendarDayDTO {
+function mapBackendDayToCalendarDTO(d: BackendCalendarDay): CalendarDayDTO {
   return {
-    date: d.date,
-    isHoliday: !!d.isHoliday,
+    date: d.ddate,
+    isHoliday: d.is_holiday || !d.is_business,
   };
 }
