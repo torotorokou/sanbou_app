@@ -1,23 +1,21 @@
 /**
  * CalendarCard.Ukeire Component
- * 受入ダッシュボード用の薄いラッパー - HttpCalendarRepository を注入
- * TODO: 本番環境では HttpCalendarRepository に切り替え
+ * 受入ダッシュボード用の薄いラッパー - CalendarRepositoryForUkeire を注入
  */
 
 import React from 'react';
-import CalendarCard from '@/features/calendar/ui/CalendarCard';
-// import { HttpCalendarRepository } from '@/features/calendar/repository';
-import { MockCalendarRepository } from '@/features/calendar/repository';
+import CalendarCard from './CalendarCard';
+import { CalendarRepositoryForUkeire } from '../../application/adapters/calendar.http.repository';
+import { MockCalendarRepositoryForUkeire } from '../../application/adapters/calendar.mock.repository';
 
 export type CalendarCardUkeireProps = {
   year: number;
   month: number;
   style?: React.CSSProperties;
+  useMock?: boolean;
 };
 
-export default function CalendarCardUkeire({ year, month, style }: CalendarCardUkeireProps) {
-  // 開発中はモックを使用
-  return <CalendarCard year={year} month={month} repository={new MockCalendarRepository()} style={style} />;
-  // 本番環境では以下に切り替え
-  // return <CalendarCard year={year} month={month} repository={new HttpCalendarRepository()} style={style} />;
+export default function CalendarCardUkeire({ year, month, style, useMock = false }: CalendarCardUkeireProps) {
+  const repository = useMock ? new MockCalendarRepositoryForUkeire() : new CalendarRepositoryForUkeire();
+  return <CalendarCard year={year} month={month} repository={repository} style={style} />;
 }

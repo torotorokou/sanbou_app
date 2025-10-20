@@ -1,6 +1,2 @@
-export * from "./http.calendar.repository";
-export * from "./mock.calendar.repository";
-export { default as CalendarCore } from "../ui/CalendarCore";
-export type { CalendarCoreProps } from "../ui/CalendarCore";
-export type { CalendarCell } from "../model/types";
-export { useContainerSize } from "../hooks/useContainerSize";
+// repository/index.ts は使用されていません
+// export は features/calendar/index.ts から行います

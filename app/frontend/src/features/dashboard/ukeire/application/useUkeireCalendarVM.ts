@@ -1,85 +1,12 @@
-/**
- * Ukeire Calendar ViewModel Hook
- * API駆動のカレンダーデータ取得とUI Props生成
- */
+import { useMemo } from "react";
+import { useCalendarVM } from "@/features/calendar/controller/useCalendarVM";
+import { decorateCalendarCells } from "./decorateCalendarCells";
+import type { ICalendarRepository } from "@/features/calendar/model/repository";
 
-import { useEffect, useState } from "react";
-import type { ICalendarRepository } from "../domain/repository";
-import dayjs from "dayjs";
+type Params = { year: number; month: number; repository: ICalendarRepository };
 
-type MonthISO = string; // "YYYY-MM"
-
-interface CalendarPayload {
-  month: MonthISO;
-  days: Array<{
-    date: string;
-    status?: string;
-    label?: string | null;
-    color?: string | null;
-  }>;
-  legend?: Array<{
-    key: string;
-    label: string;
-    color?: string | null;
-  }>;
-}
-
-export type UkeireCalendarVM = {
-  month: MonthISO;
-  setMonth: (m: MonthISO) => void;
-  loading: boolean;
-  error: string | null;
-  payload: CalendarPayload;
-  onDayClick?: (iso: string) => void;
-};
-
-export function useUkeireCalendarVM(
-  repo: ICalendarRepository,
-  initialMonth?: MonthISO
-): UkeireCalendarVM {
-  const [month, setMonth] = useState<MonthISO>(
-    initialMonth ?? dayjs().format("YYYY-MM")
-  );
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [payload, setPayload] = useState<CalendarPayload>({
-    month,
-    days: [],
-  });
-
-  useEffect(() => {
-    let alive = true;
-    setLoading(true);
-    setError(null);
-
-    repo
-      .fetchMonthCalendar(month)
-      .then((p) => {
-        if (alive) {
-          setPayload(p);
-        }
-      })
-      .catch((e) => {
-        if (alive) {
-          setError(e?.message ?? "Failed to load calendar");
-        }
-      })
-      .finally(() => {
-        if (alive) {
-          setLoading(false);
-        }
-      });
-
-    return () => {
-      alive = false;
-    };
-  }, [repo, month]);
-
-  return {
-    month,
-    setMonth,
-    loading,
-    error,
-    payload,
-  };
+export function useUkeireCalendarVM({ year, month, repository }: Params) {
+  const base = useCalendarVM({ year, month, repository });
+  const decorated = useMemo(() => decorateCalendarCells(base.grid), [base.grid]);
+  return { ...base, grid: decorated };
 }
