@@ -13,6 +13,9 @@ const PricingDashboard = lazy(() => import('../../pages/dashboard/PricingDashboa
 const CustomerListDashboard = lazy(() => import('../../pages/dashboard/CustomerListDashboard'));
 const SalesTreePage = lazy(() => import('../../pages/dashboard/SalesTreePage'));
 
+// Refactored pages
+const UkeirePage = lazy(() => import('@/pages/ukeire'));
+
 // Report pages - using public API
 const ReportManagePage = lazy(() => import('@/pages/report').then(m => ({ default: m.ReportManagePage })));
 const ReportFactoryPage = lazy(() => import('@/pages/report').then(m => ({ default: m.ReportFactoryPage })));
@@ -57,6 +60,7 @@ const AppRoutes: React.FC = () => {
     <Route path={ROUTER_PATHS.PORTAL} element={<PortalPage />} />
 
         {/* ダッシュボード */}
+        <Route path={ROUTER_PATHS.UKEIRE} element={<UkeirePage />} />
         <Route path={ROUTER_PATHS.DASHBOARD_UKEIRE} element={<InboundForecastDashboardPage />} />
         <Route path={ROUTER_PATHS.PRICING} element={<PricingDashboard />} />
         <Route path={ROUTER_PATHS.SALES_TREE} element={<SalesTreePage />} />
