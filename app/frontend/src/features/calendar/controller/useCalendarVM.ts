@@ -15,7 +15,7 @@ export function useCalendarVM({ repository, year, month }: Params) {
       try {
         setLoading(true);
         setError(undefined);
-        const { days } = await repository.fetchMonthCalendar(year, month);
+        const days = await repository.fetchMonth({ year, month });
         if (!cancel) setData(days);
       } catch (e: unknown) {
         if (!cancel) setError(e instanceof Error ? e.message : 'unknown error');
@@ -32,33 +32,24 @@ export function useCalendarVM({ repository, year, month }: Params) {
 }
 
 function buildGrid(year: number, month: number, days: CalendarDayDTO[]) {
-  const map = new Map(days.map(d => [d.ddate, d]));
+  const map = new Map(days.map(d => [d.date, d]));
   const first = new Date(year, month - 1, 1);
   const last = new Date(year, month, 0);
   const start = startOfIsoWeek(first);
   const cells: Array<CalendarDayDTO & { inMonth: boolean }> = [];
   for (let i = 0; i < 42; i++) {
-  const cur = new Date(start);
-  cur.setDate(start.getDate() + i);
-  // Use local date components to build YYYY-MM-DD key.
-  // toISOString() uses UTC and can produce the previous day when the
-  // runtime is in a positive offset timezone (e.g. Asia/Tokyo), which
-  // causes a 1-day shift when matching server-provided date strings.
-  const pad = (n: number) => String(n).padStart(2, '0');
-  const key = `${cur.getFullYear()}-${pad(cur.getMonth() + 1)}-${pad(cur.getDate())}`;
+    const cur = new Date(start);
+    cur.setDate(start.getDate() + i);
+    // Use local date components to build YYYY-MM-DD key.
+    // toISOString() uses UTC and can produce the previous day when the
+    // runtime is in a positive offset timezone (e.g. Asia/Tokyo), which
+    // causes a 1-day shift when matching server-provided date strings.
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const key = `${cur.getFullYear()}-${pad(cur.getMonth() + 1)}-${pad(cur.getDate())}`;
     const inMonth = cur >= first && cur <= last;
     const base = map.get(key) ?? {
-      ddate: key,
-      y: cur.getFullYear(),
-      m: cur.getMonth() + 1,
-      iso_year: cur.getFullYear(),
-      iso_week: 0,
-      iso_dow: isoDay(cur),
-      is_holiday: false,
-      is_second_sunday: false,
-      is_company_closed: false,
-      day_type: 'NORMAL' as const,
-      is_business: true,
+      date: key,
+      isHoliday: false,
     };
     cells.push({ ...base, inMonth });
   }

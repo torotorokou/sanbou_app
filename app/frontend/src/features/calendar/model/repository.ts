@@ -1,5 +1,5 @@
-import type { MonthCalendarDTO } from './types';
+import type { CalendarDayDTO } from "./types";
 
 export interface ICalendarRepository {
-  fetchMonthCalendar(year: number, month: number): Promise<MonthCalendarDTO>;
+  fetchMonth(params: { year: number; month: number }): Promise<CalendarDayDTO[]>;
 }
