@@ -22,7 +22,9 @@ services:
       - app-net
 
   ai_api:
-    build: { context: ../app, dockerfile: backend/ai_api/Dockerfile }
+    build:
+      context: ../app/backend
+      dockerfile: ai_api/Dockerfile
     env_file:
       - ../env/.env.common
       - ../env/.env.local_dev
@@ -44,7 +46,9 @@ services:
       - app-net
 
   ledger_api:
-    build: { context: ../app, dockerfile: backend/ledger_api/Dockerfile }
+    build:
+      context: ../app/backend
+      dockerfile: ledger_api/Dockerfile
     env_file:
       - ../env/.env.common
       - ../env/.env.local_dev
@@ -62,11 +66,8 @@ services:
       # base compose の secrets マウントが override で消えるため再指定
       - ../secrets:/backend/secrets:ro
     environment:
-      # dev 環境ではコンテナ内の secrets を優先して使用
       GOOGLE_APPLICATION_CREDENTIALS: /backend/secrets/dev_key.json
       WATCHFILES_FORCE_POLLING: "1"
-      # 内部論理パス（DIP: ledger_apiは外向きプレフィックスを知らない）
-      # BFF(core_api)が /core_api を担保する
       REPORT_ARTIFACT_URL_PREFIX: "/reports/artifacts"
     depends_on:
       - db
@@ -74,7 +75,9 @@ services:
       - app-net
 
   core_api:
-    build: { context: ../app, dockerfile: backend/core_api/Dockerfile }
+    build:
+      context: ../app/backend/core_api
+      dockerfile: Dockerfile
     env_file:
       - ../env/.env.common
       - ../env/.env.local_dev
@@ -91,26 +94,18 @@ services:
       - ../app/config:/backend/config
     environment:
       - WATCHFILES_FORCE_POLLING=1
-      - PYTHONPATH=${CORE_API_PYTHONPATH}
-      - DATABASE_URL=${DATABASE_URL}
-      - RAG_API_BASE=${RAG_API_BASE}
-      - LEDGER_API_BASE=${LEDGER_API_BASE}
-      - MANUAL_API_BASE=${MANUAL_API_BASE}
-      - AI_API_BASE=${AI_API_BASE}
     depends_on:
       - db
     networks:
       - app-net
 
   forecast_worker:
-    build: { context: ../app/backend/forecast_worker, dockerfile: Dockerfile }
+    build:
+      context: ../app/backend/forecast_worker
+      dockerfile: Dockerfile
     env_file:
       - ../env/.env.common
       - ../env/.env.local_dev
-    environment:
-      - PYTHONPATH=${FORECAST_WORKER_PYTHONPATH}
-      - DATABASE_URL=${DATABASE_URL}
-      - POLL_INTERVAL=${POLL_INTERVAL}
     volumes:
       - ../app/backend/forecast_worker/app:/worker/app:rw
       - ../app/backend/forecast_worker/infra:/worker/infra:rw
@@ -122,7 +117,9 @@ services:
     restart: unless-stopped
 
   rag_api:
-    build: { context: ../app, dockerfile: backend/rag_api/Dockerfile }
+    build:
+      context: ../app/backend
+      dockerfile: rag_api/Dockerfile
     env_file:
       - ../env/.env.common
       - ../env/.env.local_dev
@@ -139,13 +136,9 @@ services:
       - ../secrets:/backend/secrets:ro
     environment:
       GOOGLE_APPLICATION_CREDENTIALS: /backend/secrets/dev_key.json
-      # local_dev では GCS からの同期を行わないため、YAML を config 配下に固定
       CATEGORY_QUESTION_TEMPLATES_WITH_TAGS: /backend/config/category_question_templates_with_tags.yaml
-      # 開発時はホットリロード
       DEV_RELOAD: "1"
-      # /backend/local_data/master を明示（paths.py の既定と一致）
       LOCAL_DATA_DIR: /backend/local_data/master
-      # 正しい GCS プレフィックス（dev環境用）
       RAG_GCS_URI: gs://sanbouapp-dev/rag_api/object_haikibutu/master/
       WATCHFILES_FORCE_POLLING: "1"
     depends_on:
@@ -154,7 +147,9 @@ services:
       - app-net
 
   manual_api:
-    build: { context: ../app, dockerfile: backend/manual_api/Dockerfile }
+    build:
+      context: ../app/backend/manual_api
+      dockerfile: Dockerfile
     env_file:
       - ../env/.env.common
       - ../env/.env.local_dev
@@ -164,24 +159,21 @@ services:
     volumes:
       - ../app/backend/manual_api/app:/backend/app
     environment:
-      # Frontend base URL for constructing RAG metadata URLs
       MANUAL_FRONTEND_BASE_URL: ${MANUAL_FRONTEND_BASE_URL:-http://localhost:5173}
     networks:
       - app-net
 
   db:
     image: postgres:15-alpine
+    env_file:
+      - ../env/.env.common
+      - ../env/.env.local_dev
     ports:
       - "${DEV_DB_PORT:-5432}:5432"
-    # dev 用データ永続化 (ベース compose の named volume を利用)
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
     volumes:
       - db_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      test: ["CMD-SHELL", "pg_isready -U myuser -d sanbou_dev"]
       interval: 10s
       timeout: 5s
       retries: 5

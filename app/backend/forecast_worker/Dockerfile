@@ -11,6 +11,8 @@ COPY requirements.txt .
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     build-essential \
+    libpq-dev \
+    libpq5 \
     && rm -rf /var/lib/apt/lists/* \
     && pip install --no-cache-dir -r requirements.txt
 
@@ -23,4 +25,5 @@ COPY domain /worker/domain
 RUN useradd -m workeruser
 USER workeruser
 
-CMD ["python", "app/worker.py"]
+WORKDIR /worker
+CMD ["python", "-m", "app.worker"]

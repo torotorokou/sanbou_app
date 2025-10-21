@@ -1,0 +1,32 @@
+# 共通除外
+.git
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+**/*.pyd
+**/.venv/
+**/*.log
+**/.DS_Store
+
+**/.env*
+**/*.env
+**/*.sqlite
+**/dist/
+**/build/
+**/*.md
+
+# 開発専用除外
+**/tests/
+**/test/
+**/coverage/
+**/local_data/
+
+# 実行時生成ファイル（ビルドに含めない）
+ledger_api/app/api/report_artifacts/
+ledger_api/app/api/logs/
+ledger_api/app/st_app/logs/
+ledger_api/app/st_app/report_artifacts/
+
+# 各APIの不要ファイル
+**/node_modules/
+**/.pytest_cache/

@@ -31,5 +31,6 @@ if data_dir.exists():
 app.include_router(manuals_router, prefix="/manual")
 
 @app.get("/__health")
+@app.get("/health")
 def health():
-    return {"ok": True}
+    return {"ok": True, "service": "manual_api"}

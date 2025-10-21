@@ -20,3 +20,9 @@ tests/
 test/
 coverage/
 local_data/
+
+## 大容量メディアファイル
+artifacts/
+**/*.mp4
+**/*.mov
+**/*.avi

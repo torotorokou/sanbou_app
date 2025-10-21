@@ -29,3 +29,10 @@ app/st_app/report_artifacts/
 
 ## st_app 全体を除外（削除予定のため）
 app/st_app/
+
+## 大容量メディアファイル
+artifacts/
+**/*.mp4
+**/*.mov
+**/*.avi
+app/st_app/

@@ -1,4 +1,3 @@
-## syntax=docker/dockerfile:1.6
 # =========================
 # Frontend (React/Vite) Multi-stage
 # builder: node:20-slim で依存取得+ビルド
@@ -14,8 +13,7 @@ COPY package.json package-lock.json* ./
 # curl が slim に含まれないため追加
 RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates \
     && rm -rf /var/lib/apt/lists/*
-RUN --mount=type=cache,target=/root/.npm \
-    npm ci
+RUN npm ci
 
 # ソースコピー（テスト等は .dockerignore で除外）
 COPY . .

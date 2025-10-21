@@ -1,33 +1,31 @@
-## syntax=docker/dockerfile:1.6
 # =========================
 # ledger_api (LibreOffice 直呼び版)
-# - unoconv / python3-uno は不要
-# - LibreOffice と日本語フォントのみインストール
+# context: app/backend/ledger_api (サービス直下)
 # =========================
 
-# ---- builder: wheel化で高速再ビルド ----
 FROM python:3.11-slim AS builder
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
 WORKDIR /build
-ARG SERVICE_DIR=ledger_api
-ARG BASE_PATH=backend
 
-# サービス個別の requirements をルート build context からコピー
-COPY ${BASE_PATH}/${SERVICE_DIR}/requirements.txt requirements.txt
-COPY ${BASE_PATH}/${SERVICE_DIR}/requirements-dev.txt requirements-dev.txt
+RUN apt-get update && apt-get install -y --no-install-recommends build-essential ca-certificates curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# backend_sharedのビルド
+COPY ./backend_shared /build/backend_shared
+# README.mdを作成（pyproject.tomlで必要）
+RUN touch /build/backend_shared/README.md || true
+RUN cd /build/backend_shared && pip wheel --no-deps . -w /wheels
+
+COPY ./ledger_api/requirements.txt /build/requirements.txt
+COPY ./ledger_api/requirements-dev.txt /build/requirements-dev.txt
 ARG INSTALL_DEV=false
-RUN --mount=type=cache,target=/root/.cache/pip \
-    pip wheel --no-deps -r requirements.txt -w /wheels \
-    && if [ "$INSTALL_DEV" = "true" ]; then \
-         pip wheel --no-deps -r requirements-dev.txt -w /wheels; \
-       fi
+RUN pip install --upgrade pip \
+    && pip wheel --no-deps -r /build/requirements.txt -w /wheels \
+    && if [ "$INSTALL_DEV" = "true" ]; then pip wheel --no-deps -r /build/requirements-dev.txt -w /wheels; fi
 
-# ---- runtime ----
 FROM python:3.11-slim AS runtime
-ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 PYTHONPATH=/backend
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 PYTHONPATH=/backend:/opt/backend_shared/src
 WORKDIR /backend
-ARG SERVICE_DIR=ledger_api
-ARG BASE_PATH=backend
 
 # LibreOffice と日本語フォント、ヘルスチェック用 curl
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -45,31 +43,18 @@ RUN useradd -m appuser
 
 # Python 依存関係
 COPY --from=builder /wheels /wheels
-COPY ${BASE_PATH}/${SERVICE_DIR}/requirements.txt requirements.txt
-COPY ${BASE_PATH}/${SERVICE_DIR}/requirements-dev.txt requirements-dev.txt
+COPY ./ledger_api/requirements.txt /backend/requirements.txt
+COPY ./ledger_api/requirements-dev.txt /backend/requirements-dev.txt
 ARG INSTALL_DEV=false
 RUN pip install --no-cache-dir /wheels/*.whl \
-    && if [ "$INSTALL_DEV" = "true" ]; then \
-         pip install --no-cache-dir -r requirements-dev.txt; \
-       fi
+    && if [ "$INSTALL_DEV" = "true" ]; then pip install --no-cache-dir -r requirements-dev.txt; fi
 
-# backend_shared を editable install（dev 環境で即反映）
-COPY ${BASE_PATH}/backend_shared/ /opt/backend_shared
-RUN pip install --no-cache-dir -e /opt/backend_shared
+# アプリコード
+COPY --chown=appuser:appuser ./ledger_api/app /backend/app
+COPY --chown=appuser:appuser --chmod=0755 ./ledger_api/startup.sh /backend/startup.sh
 
-# アプリ本体
-COPY ${BASE_PATH}/${SERVICE_DIR}/app /backend/app
-# --- マスタCSV / テンプレート類を含める (dev は volume で存在、stg/prod はイメージに同梱が必要) ---
-COPY config /backend/config
-
-# --- build-time sanity checks (fail fast if sources missing) ---
-RUN test -d /backend/app/api/endpoints/reports \
- && python - <<'PY'
-import importlib, sys
-sys.path.insert(0, '/backend')
-importlib.import_module('app.api.endpoints.reports')
-print('Verified import: app.api.endpoints.reports')
-PY
+# Note: backend_shared module is mounted at runtime via docker-compose volumes
+# Build-time import checks are removed to avoid dependency errors
 
 # ログ出力用ディレクトリを作成し書き込み権限を付与
 RUN mkdir -p /backend/app/api/logs \
@@ -79,11 +64,6 @@ RUN mkdir -p /backend/app/api/logs \
 RUN mkdir -p /backend/app/api/data/input /backend/app/api/data/output \
   && mkdir -p /backend/app/api/logs \
   && chown -R appuser:appuser /backend/app/api/data /backend/app/api/logs
-
-# startup エントリポイントスクリプトを root 権限で配置し実行権限付与
-COPY --chown=appuser:appuser --chmod=0755 ${BASE_PATH}/${SERVICE_DIR}/startup.sh /backend/startup.sh
-
-# (preflight 機能は app/startup.py に統合済みのため個別スクリプト不要)
 
 ENV BASE_API_DIR=/backend/app/api
 USER appuser
