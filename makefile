@@ -8,6 +8,8 @@
 ##   make logs      ENV=... S=svc     # ログ (S 未指定=全体)
 ##   make ps        ENV=...           # 稼働中サービス一覧
 ##   make config    ENV=...           # 最終マージ後 compose 設定表示
+##   make prune                          # ビルドキャッシュ整理
+##   make health                         # HEALTH_URL に HEAD 叩く
 ## -------------------------------------------------------------
 
 SHELL := /bin/bash
@@ -17,6 +19,14 @@ SHELL := /bin/bash
 ENV ?= local_dev
 ENV := $(strip $(ENV))
 DC := docker compose
+
+# BuildKit/Progress は切り替え可能に（必要に応じて make BUILDKIT=0 など）
+BUILDKIT ?= 1
+PROGRESS ?= plain
+
+# Compose/buildx の既定 builder（docker ドライバ）名
+# デフォルトbuilderを使用（空文字列）
+BUILDER_DEFAULT ?=
 
 # ------------------------------------------------------------------
 # Environment mapping (4-tier unified names)
@@ -56,14 +66,13 @@ else ifeq ($(ENV_CANON),local_stg)
 	# ユーザが `STG_NGINX_HTTP_PORT=18080 make rebuild ENV=local_stg` のように指定すると 18080 を使用
 	HEALTH_PORT := $(if $(STG_NGINX_HTTP_PORT),$(STG_NGINX_HTTP_PORT),8080)
 	HEALTH_URL := http://localhost:$(HEALTH_PORT)/health
-# NOTE: 左詰め必須: タブやスペースでインデントすると GNU make が recipe と誤認し
-# "recipe commences before first target" エラーになる可能性があるため列頭に置く
+# NOTE: 左詰め必須（Make が recipe と誤認しないように）
 STG_ENV_FILE := local_stg
 else ifeq ($(ENV_CANON),vm_stg)
 	ENV_FILE := env/.env.vm_stg
 	COMPOSE_FILES := -f docker/docker-compose.stg.yml
 	HEALTH_URL := http://stg.sanbou-app.jp/health
-# NOTE: 上記と同様に左詰めを保持
+# NOTE: 左詰め必須
 STG_ENV_FILE := vm_stg
 else ifeq ($(ENV_CANON),vm_prod)
 	ENV_FILE := env/.env.vm_prod
@@ -83,7 +92,7 @@ DC_ENV_PREFIX := $(if $(STG_ENV_FILE),STG_ENV_FILE=$(STG_ENV_FILE) ,)
 # 展開した compose ファイルリスト (存在チェック用)
 COMPOSE_FILE_LIST := $(strip $(subst -f ,,$(COMPOSE_FILES)))
 
-.PHONY: up down logs ps rebuild config ledger_startup secrets gh-secrets prune
+.PHONY: up down logs ps rebuild config ledger_startup secrets gh-secrets prune doctor
 
 check:
 	@for f in $(COMPOSE_FILE_LIST); do \
@@ -92,40 +101,40 @@ check:
 	@if [ ! -f "$(ENV_FILE_COMMON)" ]; then echo "[error] $(ENV_FILE_COMMON) not found"; exit 1; fi
 	@if [ ! -f "$(ENV_FILE)" ]; then echo "[error] $(ENV_FILE) not found"; exit 1; fi
 	# --- Port availability check (dev/stg) ---------------------------------
-	@if [ "$(ENV_CANON)" = "local_dev" ]; then
-	  # dev は nginx を公開しないため Vite と DB のポートのみチェック
-	  PORTS="$${DEV_VITE_PORT:-5173} $${DEV_DB_PORT:-5432}"
-	elif [ "$(ENV_CANON)" = "local_stg" ] || [ "$(ENV_CANON)" = "vm_stg" ]; then
+	@if [ "$(ENV_CANON)" = "local_dev" ]; then \
+	  # dev は nginx を公開しないため Vite(=frontend) と DB のポートのみチェック
+	  PORTS="$${DEV_FRONTEND_PORT:-5173} $${DEV_DB_PORT:-5432}"; \
+	elif [ "$(ENV_CANON)" = "local_stg" ] || [ "$(ENV_CANON)" = "vm_stg" ]; then \
 	  # 明示未設定でもデフォルトで 8080/8443 をチェック
-	  PORTS="$${STG_NGINX_HTTP_PORT:-8080} $${STG_NGINX_HTTPS_PORT:-8443}"
-	else
-	  PORTS=""
-	fi
-	PORTS="`echo $$PORTS | xargs`"
-	if [ -n "$$PORTS" ]; then
-	  # lsof が無ければ ss で代替
-	  if ! command -v lsof >/dev/null 2>&1 && ! command -v ss >/dev/null 2>&1; then
-	    echo "[warn] neither lsof nor ss command found; skipping port pre-check" >&2
-	  else
-	    for P in $$PORTS; do
-	      IN_USE=0
-	      if command -v lsof >/dev/null 2>&1; then
-	        lsof -iTCP:$$P -sTCP:LISTEN >/dev/null 2>&1 && IN_USE=1
-	      elif command -v ss >/dev/null 2>&1; then
-	        ss -ltn 2>/dev/null | awk '{print $4}' | grep -E ':(|'"$$P"')$$' >/dev/null 2>&1 && IN_USE=1
-	      fi
-	      if [ $$IN_USE -eq 1 ]; then
+	  PORTS="$${STG_NGINX_HTTP_PORT:-8080} $${STG_NGINX_HTTPS_PORT:-8443}"; \
+	else \
+	  PORTS=""; \
+	fi; \
+	PORTS="`echo $$PORTS | xargs`"; \
+	if [ -n "$$PORTS" ]; then \
+	  if ! command -v lsof >/dev/null 2>&1 && ! command -v ss >/dev/null 2>&1; then \
+	    echo "[warn] neither lsof nor ss command found; skipping port pre-check" >&2; \
+	  else \
+	    for P in $$PORTS; do \
+	      IN_USE=0; \
+	      if command -v lsof >/dev/null 2>&1; then \
+	        lsof -iTCP:$$P -sTCP:LISTEN >/dev/null 2>&1 && IN_USE=1; \
+	      elif command -v ss >/dev/null 2>&1; then \
+	        ss -ltn 2>/dev/null | awk '{print $$4}' | grep -E ':(|'"$$P"')$$' >/dev/null 2>&1 && IN_USE=1; \
+	      fi; \
+	      if [ $$IN_USE -eq 1 ]; then \
 	        echo "[error] port $$P already in use by host process."; \
 	        echo "        対処例: STG 環境なら 'STG_NGINX_HTTP_PORT=18080 make up ENV=local_stg' のように空きポートへ変更"; \
 	        echo "        使用中プロセス確認: (lsof -iTCP:$$P -sTCP:LISTEN) or (ss -ltn | grep :$$P)"; \
 	        exit 2; \
-	      fi
-	    done
-	  fi
+	      fi; \
+	    done; \
+	  fi; \
 	fi
 
 up: check
 	@echo "[info] UP (ENV=$(ENV))"
+	DOCKER_BUILDKIT=$(BUILDKIT) BUILDKIT_PROGRESS=$(PROGRESS) BUILDX_BUILDER=$${BUILDER:-$(BUILDER_DEFAULT)} \
 	$(DC_ENV_PREFIX)$(DC) $(COMPOSE_ENV_ARGS) -p $(ENV) $(COMPOSE_FILES) up -d --build --remove-orphans
 	@echo "[info] done"
 
@@ -147,7 +156,6 @@ logs:
 ps:
 	$(DC) -p $(ENV) ps
 
-
 # -------------------------------------------------------------
 # secrets: GCP Secret Manager から OPENAI / GEMINI を取得し secrets/.env.<env>.secrets 生成
 # - 再生成条件: ファイル不存在 or 空行含む未設定 / 強制再生成は REGENERATE=1 make ...
@@ -162,7 +170,7 @@ secrets:
 	      echo "[info] generating $(SECRETS_FILE) from Secret Manager"; \
 	      GEMINI=$$(gcloud secrets versions access latest --secret=gemini-api-key 2>/dev/null | tr -d '\n'); STATUS1=$$?; \
 	      OPENAI=$$(gcloud secrets versions access latest --secret=openai-api-key 2>/dev/null | tr -d '\n'); STATUS2=$$?; \
-	      if [ $$STATUS1 -ne 0 ] || [ $$STATUS2 -ne 0 ]; then echo "[warn] secret access failed (statuses $$STATUS1 $$STATUS2) -> using empty placeholders"; GEMINI=""; OPENAI=""; fi; \
+	      if [ $$STATUS1 -ne 0 ] || [ $$STATUS2 -ne 0 ] && [ ! -s "$(SECRETS_FILE)" ]; then echo "[warn] secret access failed (statuses $$STATUS1 $$STATUS2) -> using empty placeholders"; GEMINI=""; OPENAI=""; fi; \
 	    else \
 	      echo "[warn] gcloud not found; creating empty $(SECRETS_FILE)"; GEMINI=""; OPENAI=""; \
 	    fi; \
@@ -174,7 +182,6 @@ secrets:
 	@head_gemini=$$(grep '^GEMINI_API_KEY=' $(SECRETS_FILE) | cut -d= -f2 | sed 's/\(......\).*/\1****/'); \
 	 head_openai=$$(grep '^OPENAI_API_KEY=' $(SECRETS_FILE) | cut -d= -f2 | sed 's/\(......\).*/\1****/'); \
 	 echo "[info] GEMINI_API_KEY=$$head_gemini OPENAI_API_KEY=$$head_openai"
-
 
 # -------------------------------------------------------------
 # prune: 未使用のビルドキャッシュ/イメージを削除する（安全確認あり）
@@ -199,15 +206,23 @@ prune:
 	  *) echo "[info] abort prune"; exit 0 ;; \
 	esac
 
+# -------------------------------------------------------------
+# ビルド時の pull を条件化（デフォルトは照会しない）
+# -------------------------------------------------------------
+PULL ?= 0    # 0=off, 1=on
+BUILD_PULL_FLAG := $(if $(filter 1,$(PULL)),--pull,)
+
 rebuild: check secrets
 	@echo "[info] REBUILD (ENV=$(ENV) -> canonical=$(ENV_CANON))"
 	@echo "[step] compose config (merged)"
 	$(DC_ENV_PREFIX)$(DC) $(COMPOSE_ENV_ARGS) -p $(ENV) $(COMPOSE_FILES) config >/dev/null || { echo '[error] compose config failed'; exit 2; }
 	@echo "[step] down --remove-orphans"
 	$(MAKE) down ENV=$(ENV)
-	@echo "[step] build --pull --no-cache"
-	$(DC_ENV_PREFIX)$(DC) $(COMPOSE_ENV_ARGS) -p $(ENV) $(COMPOSE_FILES) build --pull --no-cache
+	@echo "[step] build $(BUILD_PULL_FLAG) --no-cache"
+	DOCKER_BUILDKIT=$(BUILDKIT) BUILDKIT_PROGRESS=$(PROGRESS) BUILDX_BUILDER=$${BUILDER:-$(BUILDER_DEFAULT)} \
+	$(DC_ENV_PREFIX)$(DC) $(COMPOSE_ENV_ARGS) -p $(ENV) $(COMPOSE_FILES) build $(BUILD_PULL_FLAG) --no-cache
 	@echo "[step] up -d"
+	DOCKER_BUILDKIT=$(BUILDKIT) BUILDKIT_PROGRESS=$(PROGRESS) BUILDX_BUILDER=$${BUILDER:-$(BUILDER_DEFAULT)} \
 	$(DC_ENV_PREFIX)$(DC) $(COMPOSE_ENV_ARGS) -p $(ENV) $(COMPOSE_FILES) up -d --force-recreate --remove-orphans
 	@echo "[step] health check -> $(HEALTH_URL)"
 	@if [ -z "$(HEALTH_URL)" ]; then \
@@ -254,8 +269,6 @@ ledger_startup:
 	$(DC) -p $(ENV) exec -e STAGE=$(ENV) ledger_api python -m app.startup
 	@echo "[info] done"
 
-
-	
 # デフォルトのリポジトリ
 REPO ?= torotorokou/sanbou_app
 
@@ -281,7 +294,7 @@ gh-secrets:
 	    echo "[info] Apply single env ($(ENV)) from $$FILE_VAL"
 	    ./scripts/gh_env_secrets_sync.sh --repo "$(REPO)" --env "$(ENV)" --file "$$FILE_VAL" --prefix "$$PREFIX_VAL" $$DRY_FLAG
 	  else
-	    if [ ! -f "$$COMMON_FILE" ]; then echo "[error] $$COMMON_FILE not found"; exit 2; fi
+	    if [ ! -f "$$COMMON_FILE" ]; then echo "[error] $(ENV_FILE_COMMON) not found"; exit 2; fi
 	    echo "[info] Apply common: $$COMMON_FILE -> environment '$(ENV)'"
 	    ./scripts/gh_env_secrets_sync.sh --repo "$(REPO)" --env "$(ENV)" --file "$$COMMON_FILE" --prefix "$$PREFIX_VAL" $$DRY_FLAG
 	    if [ ! -f "$$SPEC_FILE" ]; then echo "[error] $$SPEC_FILE not found"; exit 2; fi

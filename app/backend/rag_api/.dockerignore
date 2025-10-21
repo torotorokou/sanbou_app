@@ -25,3 +25,9 @@ local_data/cache/
 local_data/*.tmp
 logs/
 *.md
+
+## 大容量メディアファイル
+artifacts/
+**/*.mp4
+**/*.mov
+**/*.avi

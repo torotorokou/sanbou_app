@@ -51,6 +51,7 @@ app.include_router(database.router)  # BFF: sql_api database proxy (TODO: 未実
 
 
 @app.get("/healthz", include_in_schema=False, tags=["health"])
+@app.get("/health", include_in_schema=False, tags=["health"])
 def healthz():
     """
     Health check endpoint.
