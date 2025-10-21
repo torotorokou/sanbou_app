@@ -1,45 +1,95 @@
 # =========================
-# manual_api multi-stage
-# context: app/backend/manual_api (サービス直下)
+# manual_api Dockerfile (multi-stage: dev/prod)
+# Context: app/backend
 # =========================
 
-FROM python:3.11-slim AS builder
+# ──────────────────────────────────────────────────────────────
+# Stage: base
+# ──────────────────────────────────────────────────────────────
+FROM python:3.11-slim AS base
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1
 WORKDIR /build
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+      build-essential \
+      ca-certificates \
+      curl && \
+    rm -rf /var/lib/apt/lists/*
 
-RUN apt-get update && apt-get install -y --no-install-recommends build-essential ca-certificates curl \
-    && rm -rf /var/lib/apt/lists/*
+# ──────────────────────────────────────────────────────────────
+# Stage: wheelbuilder
+# ──────────────────────────────────────────────────────────────
+FROM base AS wheelbuilder
+COPY ./backend_shared /build/backend_shared
+RUN pip install --upgrade pip setuptools wheel && \
+    cd /build/backend_shared && \
+    pip wheel --no-deps . -w /wheels
 
-COPY ./requirements.txt /build/requirements.txt
-RUN pip install --upgrade pip \
-    && pip wheel --no-deps -r /build/requirements.txt -w /wheels
+COPY ./manual_api/requirements.txt /build/requirements.txt
+RUN pip wheel --no-deps -r /build/requirements.txt -w /wheels
 
-FROM python:3.11-slim AS runtime
+# ──────────────────────────────────────────────────────────────
+# Stage: dev (ホットリロード対応)
+# ──────────────────────────────────────────────────────────────
+FROM python:3.11-slim AS dev
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    PYTHONPATH=/backend \
-    PATH="/home/appuser/.local/bin:${PATH}"
+    PYTHONPATH=/backend:/opt/backend_shared/src
+
 WORKDIR /backend
 
-RUN useradd -m appuser
-USER appuser
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends curl ca-certificates && \
+    rm -rf /var/lib/apt/lists/* && \
+    useradd -m appuser
 
-COPY --from=builder /wheels /wheels
-COPY ./requirements.txt /backend/requirements.txt
-USER root
-RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates \
-    && rm -rf /var/lib/apt/lists/*
-USER appuser
-RUN pip install --no-cache-dir /wheels/*.whl
+COPY ./manual_api/requirements.txt /backend/requirements.txt
+RUN pip install --no-cache-dir -r /backend/requirements.txt
 
-# アプリコード
-COPY --chown=appuser:appuser ./app /backend/app
-COPY --chown=appuser:appuser ./data /backend/data
-COPY --chown=appuser:appuser --chmod=0755 ./startup.sh /backend/startup.sh
+# backend_shared を editable モードでインストール
+RUN mkdir -p /opt/backend_shared
+COPY ./backend_shared /opt/backend_shared
+RUN pip install -e /opt/backend_shared
+
+USER appuser
+COPY --chown=appuser:appuser ./manual_api/app /backend/app
+COPY --chown=appuser:appuser ./manual_api/data /backend/data
+COPY --chown=appuser:appuser --chmod=0755 ./manual_api/startup.sh /backend/startup.sh
 
 EXPOSE 8000
-HEALTHCHECK --interval=30s --timeout=5s --retries=3 CMD curl -fsS http://localhost:8000/health >/dev/null || exit 1
+HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
+  CMD curl -fsS http://localhost:8000/health || exit 1
+
+CMD ["bash", "startup.sh"]
+
+# ──────────────────────────────────────────────────────────────
+# Stage: prod (wheel からインストール、イミュータブル)
+# ──────────────────────────────────────────────────────────────
+FROM python:3.11-slim AS prod
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONPATH=/backend
+
+WORKDIR /backend
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends curl ca-certificates && \
+    rm -rf /var/lib/apt/lists/* && \
+    useradd -m appuser
+
+COPY --from=wheelbuilder /wheels /wheels
+RUN pip install --no-cache-dir /wheels/*.whl && \
+    rm -rf /wheels
+
+USER appuser
+COPY --chown=appuser:appuser ./manual_api/app /backend/app
+COPY --chown=appuser:appuser ./manual_api/data /backend/data
+COPY --chown=appuser:appuser --chmod=0755 ./manual_api/startup.sh /backend/startup.sh
+
+EXPOSE 8000
+HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
+  CMD curl -fsS http://localhost:8000/health || exit 1
 
 CMD ["bash", "startup.sh"]

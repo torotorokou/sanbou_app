@@ -10,7 +10,10 @@ services:
   # Core API (BFF) - All frontend requests go through this
   # ===========================================================================
   core_api:
-    build: { context: ../app, dockerfile: backend/core_api/Dockerfile }
+    build:
+      context: ../app/backend
+      dockerfile: core_api/Dockerfile
+      target: prod
     networks: [app-net, data-net]
     depends_on:
       - db
@@ -38,7 +41,10 @@ services:
   # Forecast Worker - Background job execution
   # ===========================================================================
   forecast_worker:
-    build: { context: ../app/backend/forecast_worker, dockerfile: Dockerfile }
+    build:
+      context: ../app/backend
+      dockerfile: forecast_worker/Dockerfile
+      target: prod
     networks: [data-net]
     depends_on:
       - db
@@ -57,7 +63,10 @@ services:
 
   # backend APIs (env 注入 + build/depends)
   ai_api:
-    build: { context: ../app, dockerfile: backend/ai_api/Dockerfile }
+    build:
+      context: ../app/backend
+      dockerfile: ai_api/Dockerfile
+      target: prod
     networks: [app-net]
     depends_on:
       - db
@@ -77,7 +86,10 @@ services:
         max-file: "3"
 
   ledger_api:
-    build: { context: ../app, dockerfile: backend/ledger_api/Dockerfile }
+    build:
+      context: ../app/backend
+      dockerfile: ledger_api/Dockerfile
+      target: prod
     networks: [app-net, data-net]
     depends_on:
       - db
@@ -102,7 +114,10 @@ services:
         max-file: "3"
 
   rag_api:
-    build: { context: ../app, dockerfile: backend/rag_api/Dockerfile }
+    build:
+      context: ../app/backend
+      dockerfile: rag_api/Dockerfile
+      target: prod
     networks: [app-net, data-net]
     depends_on:
       - db
@@ -126,7 +141,10 @@ services:
         max-file: "3"
 
   manual_api:
-    build: { context: ../app, dockerfile: backend/manual_api/Dockerfile }
+    build:
+      context: ../app/backend
+      dockerfile: manual_api/Dockerfile
+      target: prod
     networks: [app-net]
     env_file:
       - ../env/.env.common

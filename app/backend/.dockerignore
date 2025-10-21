@@ -15,6 +15,9 @@
 **/build/
 **/*.md
 
+# backend_shared の README.md は pyproject.toml で必要なので含める
+!backend_shared/README.md
+
 # 開発専用除外
 **/tests/
 **/test/

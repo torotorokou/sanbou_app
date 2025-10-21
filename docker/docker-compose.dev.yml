@@ -25,6 +25,7 @@ services:
     build:
       context: ../app/backend
       dockerfile: ai_api/Dockerfile
+      target: dev
     env_file:
       - ../env/.env.common
       - ../env/.env.local_dev
@@ -49,6 +50,7 @@ services:
     build:
       context: ../app/backend
       dockerfile: ledger_api/Dockerfile
+      target: dev
     env_file:
       - ../env/.env.common
       - ../env/.env.local_dev
@@ -76,8 +78,9 @@ services:
 
   core_api:
     build:
-      context: ../app/backend/core_api
-      dockerfile: Dockerfile
+      context: ../app/backend
+      dockerfile: core_api/Dockerfile
+      target: dev
     env_file:
       - ../env/.env.common
       - ../env/.env.local_dev
@@ -101,8 +104,9 @@ services:
 
   forecast_worker:
     build:
-      context: ../app/backend/forecast_worker
-      dockerfile: Dockerfile
+      context: ../app/backend
+      dockerfile: forecast_worker/Dockerfile
+      target: dev
     env_file:
       - ../env/.env.common
       - ../env/.env.local_dev
@@ -110,6 +114,7 @@ services:
       - ../app/backend/forecast_worker/app:/worker/app:rw
       - ../app/backend/forecast_worker/infra:/worker/infra:rw
       - ../app/backend/forecast_worker/domain:/worker/domain:rw
+      - ../app/backend/backend_shared:/opt/backend_shared:rw
     depends_on:
       - db
     networks:
@@ -120,6 +125,7 @@ services:
     build:
       context: ../app/backend
       dockerfile: rag_api/Dockerfile
+      target: dev
     env_file:
       - ../env/.env.common
       - ../env/.env.local_dev
@@ -148,8 +154,9 @@ services:
 
   manual_api:
     build:
-      context: ../app/backend/manual_api
-      dockerfile: Dockerfile
+      context: ../app/backend
+      dockerfile: manual_api/Dockerfile
+      target: dev
     env_file:
       - ../env/.env.common
       - ../env/.env.local_dev
@@ -157,7 +164,8 @@ services:
     ports:
       - "${DEV_MANUAL_API_PORT:-8005}:8000"
     volumes:
-      - ../app/backend/manual_api/app:/backend/app
+      - ../app/backend/manual_api/app:/backend/app:rw
+      - ../app/backend/backend_shared:/opt/backend_shared:rw
     environment:
       MANUAL_FRONTEND_BASE_URL: ${MANUAL_FRONTEND_BASE_URL:-http://localhost:5173}
     networks:
@@ -170,8 +178,11 @@ services:
       - ../env/.env.local_dev
     ports:
       - "${DEV_DB_PORT:-5432}:5432"
-    volumes:
-      - db_data:/var/lib/postgresql/data
+    volumes:  
+      # - db_data:/var/lib/postgresql/data
+      # 👇 Postgresデータをホスト側に保存
+      - ../data/postgres:/var/lib/postgresql/data
+
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U myuser -d sanbou_dev"]
       interval: 10s
@@ -183,8 +194,7 @@ services:
 volumes:
   node_modules_dev:
     driver: local
-  db_data:
-    driver: local
+  # db_data named volume removed; using host path ../data/postgres instead
 
 networks:
   app-net:
