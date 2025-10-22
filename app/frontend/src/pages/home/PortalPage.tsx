@@ -3,16 +3,7 @@
 // React + TypeScript / Ant Design v5 前提。
 
 import React from 'react';
-import {
-  Card,
-  Typography,
-  Button,
-  Popover,
-  Alert,
-  Modal,
-  List,
-  theme,
-} from 'antd';
+import { Card, Typography, Button, Popover, Alert, Modal, List, theme } from 'antd';
 import {
   BookOutlined,
   DashboardOutlined,
@@ -22,7 +13,7 @@ import {
   SettingOutlined,
   NotificationOutlined,
 } from '@ant-design/icons';
-import { CalendarCard } from '@/features/calendar/ui/CalendarCard';
+// CalendarCard removed: right column widgets trimmed
 import { useNavigate } from 'react-router-dom';
 import { ROUTER_PATHS } from '@app/routes/routes';
 import { useWindowSize } from '@shared/hooks/ui';
@@ -403,16 +394,7 @@ export const PortalPage: React.FC = () => {
 
   // (weather sample removed)
 
-  // 表示用年月（ウィジェット共通で利用可能）
-  const widgetYear = new Date().getFullYear();
-  const widgetMonth = new Date().getMonth() + 1;
-
-  // KPI サンプルデータ（UI プレビュー用）
-  const sampleKpis = [
-    { key: 'sales', label: '売上', value: '¥12.3M', delta: 4.5 },
-    { key: 'inbound', label: '搬入量', value: '1,400t', delta: 1.8 },
-    { key: 'unitPrice', label: '売単', value: '¥64.22', delta: -0.8 },
-  ] as const;
+  // Right column widgets removed. Keep page minimal.
 
   return (
     <div className="portal-page" style={{ minHeight: '100%' }}>
@@ -478,23 +460,6 @@ export const PortalPage: React.FC = () => {
         <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start' }}>
           {/* Left column: header + portal cards (keeps previous grid behavior) */}
           <div style={{ flex: '1 1 0', display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <div style={{ width: '100%' }}>
-              <div style={{
-                width: '100%',
-                background: '#ffffff',
-                color: token.colorText,
-                padding: '8px',
-                borderRadius: 8,
-                fontSize: 15,
-                fontWeight: 800,
-                boxShadow: token.boxShadowSecondary,
-                border: `1px solid ${token.colorBorderSecondary}`,
-                boxSizing: 'border-box',
-                textAlign: 'center',
-              }}>
-                各カード
-              </div>
-            </div>
             <div
               aria-label="ポータルメニュー一覧"
               style={{
@@ -505,7 +470,7 @@ export const PortalPage: React.FC = () => {
                 gridTemplateColumns: (() => {
                 try {
                   const containerPadding = 64;
-                  const available = Math.max(0, width - containerPadding - 280); // reserve right column space (shrank)
+                  const available = Math.max(0, width - containerPadding); // no reserved right column
                   const gap = 24;
                   const per = Math.round(CARD_WIDTH * cardScale) + gap;
                   let cols = Math.floor((available + gap) / per);
@@ -527,63 +492,7 @@ export const PortalPage: React.FC = () => {
             </div>
             </div>
 
-          {/* Right column: widget container (fixed width) */}
-          <aside style={{ width: 256, flex: '0 0 256px', display: 'flex', flexDirection: 'column', gap: 4 }}>
-            {/* Calendar widget: show month header + calendar card (repository DI possible) */}
-            <div style={{ marginBottom: 6, width: '100%' }}>
-              <div style={{
-                width: '100%',
-                background: '#ffffff',
-                color: token.colorText,
-                padding: '8px',
-                borderRadius: 8,
-                fontSize: 13,
-                fontWeight: 700,
-                boxShadow: token.boxShadowSecondary,
-                border: `1px solid ${token.colorBorderSecondary}`,
-                boxSizing: 'border-box',
-                textAlign: 'center',
-              }}>
-                {`${widgetYear}年${widgetMonth}月`}
-              </div>
-            </div>
-            <CalendarCard
-              year={new Date().getFullYear()}
-              month={new Date().getMonth() + 1}
-              repository={{
-                // minimal stub implementing ICalendarRepository; in production inject a real implementation
-                fetchMonth: async ({ year, month }) => {
-                  // reference params to avoid unused-variable lint warnings
-                  void year;
-                  void month;
-                  // return empty days to let CalendarCard show loading results gracefully
-                  return [];
-                },
-              }}
-              style={{ height: '300px', margin: 0, padding: 8 }}
-            />
-
-            <Card size="small" style={{ height: 156, padding: 8, margin: 0 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div style={{ fontWeight: 700, fontSize: 16 }}>KPI速報</div>
-                <div style={{ color: token.colorTextTertiary, fontSize: 12 }}>更新: 今朝</div>
-              </div>
-
-              <div style={{ display: 'flex', gap: 8, marginTop: 10, alignItems: 'center', height: '100%' }}>
-                {sampleKpis.map((k) => (
-                  <div key={k.key} style={{ flex: '1 1 0', minWidth: 0, textAlign: 'center' }}>
-                    <div style={{ fontSize: 18, fontWeight: 700 }}>{k.value}</div>
-                    <div style={{ marginTop: 6, color: token.colorTextTertiary }}>{k.label}</div>
-                    <div style={{ marginTop: 6, color: k.delta >= 0 ? '#3f8600' : '#cf1322', fontWeight: 600 }}>
-                      {k.delta >= 0 ? '▲' : '▼'} {Math.abs(k.delta)}%
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </Card>
-
-            {/* Weather card removed as requested */}
-          </aside>
+          {/* Right column removed: single-column layout for portal cards */}
         </div>
       </main>
 
