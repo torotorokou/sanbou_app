@@ -174,7 +174,7 @@ export default defineConfig([
         files: [
             'src/shared/constants/breakpoints.ts',
             'src/theme/cssVars.ts',
-            'src/theme/responsive.css',
+            'src/shared/styles/custom-media.css',
             'src/shared/constants/tests/**',
         ],
         rules: {
