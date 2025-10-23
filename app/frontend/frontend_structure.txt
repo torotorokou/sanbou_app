@@ -45,7 +45,6 @@
 │   │   └── pdf.worker.min.js
 │   ├── prefectures.geojson
 │   └── vite.svg
-├── report_dirs_files.txt
 ├── scripts
 │   ├── analyze-breakpoints.mjs
 │   └── reports
@@ -574,4 +573,4 @@
 ├── tsconfig.tsbuildinfo
 └── vite.config.ts
 
-206 directories, 369 files
+206 directories, 368 files

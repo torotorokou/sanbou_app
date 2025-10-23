@@ -8,18 +8,18 @@ import { Row, Col, Typography, DatePicker, Space, Badge, Skeleton } from "antd";
 import dayjs from "dayjs";
 import type { Dayjs } from "dayjs";
 import { 
-  useUkeireForecastVM,
+  useInboundForecastVM,
   MockInboundForecastRepository,
   TargetCard,
   CombinedDailyCard,
-  CalendarCardUkeire,
+  UkeireCalendarCard,
   ForecastCard
 } from "@/features/dashboard/ukeire";
 // (removed curMonth / nextMonth imports since month selection is no longer restricted)
 
 const InboundForecastDashboardPage: React.FC = () => {
   const repository = useMemo(() => new MockInboundForecastRepository(), []);
-  const vm = useUkeireForecastVM(repository);
+  const vm = useInboundForecastVM(repository);
 
   if (vm.loading || !vm.payload) {
     return (
@@ -127,7 +127,7 @@ const InboundForecastDashboardPage: React.FC = () => {
             <Col xs={24} lg={5} style={{ height: "100%" }}>
               {(() => {
                 const [year, month] = vm.month.split('-').map(Number);
-                return <CalendarCardUkeire year={year} month={month} />;
+                return <UkeireCalendarCard year={year} month={month} />;
               })()}
             </Col>
           </Row>

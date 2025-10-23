@@ -14,6 +14,3 @@ export function useBusinessCalendarVM({ year, month, repository }: Params) {
   const decorated = useMemo(() => decorateCalendarCells(base.grid), [base.grid]);
   return { ...base, grid: decorated };
 }
-
-// 後方互換: 旧名も export (TODO: 使用箇所を置換後に削除)
-export { useBusinessCalendarVM as useUkeireCalendarVM };

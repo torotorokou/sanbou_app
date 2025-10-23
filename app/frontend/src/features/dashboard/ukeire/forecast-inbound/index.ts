@@ -13,9 +13,7 @@ export { MockInboundForecastRepository } from "./infrastructure/inboundForecast.
 // Application
 export {
   useInboundForecastVM,
-  useUkeireForecastVM,
   type InboundForecastViewModel,
-  type UkeireForecastViewModel,
 } from "./application/useInboundForecastVM";
 
 // UI

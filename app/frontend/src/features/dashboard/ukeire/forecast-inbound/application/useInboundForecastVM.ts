@@ -206,7 +206,3 @@ export const useInboundForecastVM = (
     setMonth,
   };
 };
-
-// 後方互換 (TODO: 使用箇所を置換後に削除)
-export { useInboundForecastVM as useUkeireForecastVM };
-export type { InboundForecastViewModel as UkeireForecastViewModel };
