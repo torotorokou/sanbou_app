@@ -15,9 +15,8 @@ report_service = ReportProcessingService()
 @router.post("")
 @router.post("/")
 async def generate_average_sheet(
-    shipment: UploadFile = File(None),
-    yard: UploadFile = File(None),
     receive: UploadFile = File(None),
+    report_key: Optional[str] = Form(None),
     period_type: Optional[str] = Form(
         None
     ),  # "oneday" | "oneweek" | "onemonth"（任意）
@@ -25,15 +24,15 @@ async def generate_average_sheet(
     """
     工場平均表生成APIエンドポイント
 
-    受入・ヤード・出荷一覧から平均表を自動集計します。
+    受入一覧から平均表を自動集計します。
 
     Args:
-            shipment (UploadFile, optional): 出荷データCSVファイル
-            yard (UploadFile, optional): ヤードデータCSVファイル
-            receive (UploadFile, optional): 受入データCSVファイル
+        receive (UploadFile, optional): 受入データCSVファイル
+        report_key (str, optional): レポートキー（フロントエンドとの互換性のため）
+        period_type (str, optional): 期間タイプ ("oneday" | "oneweek" | "onemonth")
 
     Returns:
-            StreamingResponse: Excel・PDFファイルが含まれたZIPファイル
+        StreamingResponse: Excel・PDFファイルが含まれたZIPファイル
     """
     # アップロードされたファイルの整理
     files = {k: v for k, v in {"receive": receive}.items() if v is not None}

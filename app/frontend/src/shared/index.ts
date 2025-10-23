@@ -1,13 +1,32 @@
 // shared/index.ts
-// shared 層の公開API
+// shared 層の公開API - Single Source of Truth
 
-// Constants
-export * from './constants';
+// ===================================================
+// Constants - ブレークポイント・定数
+// ===================================================
+export { 
+  bp, 
+  mq, 
+  match, 
+  ANT,  // @deprecated bp を使用してください
+  BP, 
+  tierOf, 
+  isMobile, 
+  isTabletOrHalf, 
+  isDesktop,
+  type BpKey,
+  type AntKey,  // @deprecated
+  type ViewportTier,
+} from './constants/breakpoints';
 
-// Theme
+// ===================================================
+// Theme - トークン・カラーマップ
+// ===================================================
 export * from './theme';
 
-// Infrastructure - HTTP
+// ===================================================
+// Infrastructure - HTTP/Job
+// ===================================================
 export { 
   coreApi,
   apiGet, 
@@ -19,16 +38,40 @@ export {
   client,
 } from './infrastructure/http';
 
-// Utils
+export * from './infrastructure/job';
+
+// ===================================================
+// Utils - ユーティリティ
+// ===================================================
 export * from './utils';
 
-// Types
+// ===================================================
+// Types - 型定義
+// ===================================================
 export * from './types';
 
-// Hooks
-export * from './hooks';
+// ===================================================
+// Hooks - 公開Hook（推奨）
+// ===================================================
+export { 
+  // レスポンシブ（推奨）
+  useResponsive,
+  // 内部実装（必要な場合のみ）
+  useWindowSize,
+  useContainerSize,
+  useScrollTracker,
+  useSidebarResponsive,
+  useSidebarAnimation,
+  useSidebarDefault,
+} from './hooks/ui';
 
-// UI Components
+// ===================================================
+// UI Components - 再利用可能なコンポーネント
+// ===================================================
 export * from './ui';
 
+// ===================================================
+// Styles - グローバルCSS（直接importで使用）
+// ===================================================
 // Note: styles/ はグローバルインポートで使用されるため、ここではエクスポートしない
+// main.tsx等で直接 import '@shared/styles/base.css' してください

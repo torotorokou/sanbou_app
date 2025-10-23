@@ -1,5 +1,4 @@
 /* 将軍マニュアル一覧ページ専用スタイル */
-@import "@/styles/custom-media.css";
 
 :root {
   --header-height: 72px;

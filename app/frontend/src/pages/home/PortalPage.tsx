@@ -345,8 +345,8 @@ export const PortalPage: React.FC = () => {
   // レスポンシブに関係なく全カードで同じボタン幅に統一する
   const unifiedButtonWidth = BUTTON_WIDTH;
 
-  // カードスケール: ANT.xxl 以下では 0.9 倍にする
-  const cardScale = width <= ANT.xxl ? 0.9 : 1;
+  // カードスケール: ANT.xl (1200px) 未満では 0.9 倍にする
+  const cardScale = width < ANT.xl ? 0.9 : 1;
 
   const introText = isCompact
     ? '社内ポータルです。必要な機能を選択してください。'

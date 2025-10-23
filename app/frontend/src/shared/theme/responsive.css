@@ -1,7 +1,13 @@
 /* Unified responsive base: breakpoints sm/md/lg, clamp font size, height policy */
 /* IMPORTANT: このCSSのメディアクエリ閾値は `src/shared/constants/breakpoints.ts` と同期させること。
   sm: <= 767, md: 768–1199, lg: >= 1200 （2025-09 現在） */
-@import "@/styles/custom-media.css";
+
+/* === AUTO-GENERATED CUSTOM MEDIA (DO NOT EDIT) === */
+/* AUTO-GENERATED from src/shared/constants/breakpoints.ts. Do not edit. */
+@custom-media --lt-md (max-width: 767px);   /* ≤767 */
+@custom-media --ge-md (min-width: 768px);      /* ≥768 */
+@custom-media --ge-xl (min-width: 1200px);      /* ≥1200 */
+/* === END AUTO-GENERATED === */
 
 html, body, #root { height: 100%; }
 

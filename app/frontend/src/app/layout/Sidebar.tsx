@@ -18,9 +18,9 @@ const Sidebar: React.FC = () => {
     const animationStyles = useSidebarAnimation();
     const { isTablet, width: windowWidth } = useWindowSize();
 
-    // 'xl以下' のときは幅を 0.9 倍にする（ANT.xl を閾値として使用）
+    // 'xl以下' のときは幅を 0.9 倍にする（ANT.xl (1200px) を閾値として使用）
     const effectiveWidth = React.useMemo(() => {
-        if (typeof windowWidth === 'number' && windowWidth < ANT.xxl) {
+        if (typeof windowWidth === 'number' && windowWidth < ANT.xl) {
             return Math.round(sidebarConfig.width * 0.9);
         }
         return sidebarConfig.width;

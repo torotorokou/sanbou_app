@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo } from 'react';
 import { Card, Select, Input, Typography, Button } from 'antd';
 import { ReloadOutlined } from '@ant-design/icons';
-import '../../styles/QuestionPanel.css';
+import './QuestionPanel.css';
 
 const { Option } = Select;
 const { TextArea } = Input;

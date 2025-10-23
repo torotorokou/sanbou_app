@@ -9,10 +9,10 @@ function readANT(projectRoot: string): AntMap {
   if (!fs.existsSync(target)) {
     throw new Error(`[vite-plugin-custom-media] Not found: ${target}`);
   }
-  // 雑にパース: export const ANT = { ... } as const; を読み取る
+  // 雑にパース: export const bp = { ... } as const; を読み取る
   const src = fs.readFileSync(target, "utf8");
-  const m = src.match(/export const ANT\s*=\s*\{([\s\S]*?)\}\s*as const/);
-  if (!m) throw new Error("[vite-plugin-custom-media] ANT object not found.");
+  const m = src.match(/export const bp\s*=\s*\{([\s\S]*?)\}\s*as const/);
+  if (!m) throw new Error("[vite-plugin-custom-media] bp object not found.");
   const body = m[1];
   const map: AntMap = {};
   // 行ごとに key: value を抽出
@@ -24,7 +24,7 @@ function readANT(projectRoot: string): AntMap {
     }
   }
   if (!("md" in map) || !("xl" in map)) {
-    throw new Error("[vite-plugin-custom-media] ANT must include at least md and xl.");
+    throw new Error("[vite-plugin-custom-media] bp must include at least md and xl.");
   }
   return map;
 }
@@ -43,9 +43,35 @@ function generateCSS(ANT: AntMap): string {
 }
 
 function writeOut(projectRoot: string, css: string): string {
-  const outPath = path.resolve(projectRoot, "src/styles/custom-media.css");
-  fs.mkdirSync(path.dirname(outPath), { recursive: true });
-  fs.writeFileSync(outPath, css, "utf8");
+  const outPath = path.resolve(projectRoot, "src/shared/theme/responsive.css");
+  
+  // 既存ファイルを読み取ってカスタムメディア部分のみを置換
+  let existingContent = "";
+  if (fs.existsSync(outPath)) {
+    existingContent = fs.readFileSync(outPath, "utf8");
+  }
+  
+  // カスタムメディア定義のマーカー
+  const startMarker = "/* === AUTO-GENERATED CUSTOM MEDIA (DO NOT EDIT) === */";
+  const endMarker = "/* === END AUTO-GENERATED === */";
+  
+  // 既存のカスタムメディアセクションを置換
+  const startIdx = existingContent.indexOf(startMarker);
+  const endIdx = existingContent.indexOf(endMarker);
+  
+  let newContent: string;
+  if (startIdx !== -1 && endIdx !== -1) {
+    // マーカーが見つかった場合は該当部分を置換
+    newContent = 
+      existingContent.substring(0, startIdx) +
+      startMarker + "\n" + css +
+      existingContent.substring(endIdx);
+  } else {
+    // マーカーがない場合はファイル先頭に追加
+    newContent = startMarker + "\n" + css + endMarker + "\n\n" + existingContent;
+  }
+  
+  fs.writeFileSync(outPath, newContent, "utf8");
   return outPath;
 }
 
