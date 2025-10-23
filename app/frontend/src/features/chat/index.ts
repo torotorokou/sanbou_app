@@ -1,34 +1,43 @@
-// src/features/chat/index.ts
-// Public API for Chat Feature
+/**
+ * Chat Feature - Public API
+ * MVVM+SOLID アーキテクチャに準拠した barrel export
+ */
 
 // ============================================================================
-// Model (Types)
+// Domain (Types)
 // ============================================================================
 
 export type {
   ChatMessage,
   ChatAnswerResult,
   ChatAnswerRequest,
-} from './model/chat.types';
+} from './domain/types';
 
 // ============================================================================
-// API
+// Ports
 // ============================================================================
 
-export { postChatAnswer } from './api/chatService';
+export type { IChatRepository } from './ports/repository';
+
+// ============================================================================
+// Application (ViewModel / API)
+// ============================================================================
+
+export { postChatAnswer, ChatRepository } from './application/useChatVM';
 
 // ============================================================================
 // UI Components
 // ============================================================================
 
-// Main components (exported for external use)
-export { default as ChatAnswerSection } from './ui/ChatAnswerSection';
-export { default as ChatQuestionSection } from './ui/ChatQuestionSection';
-export { default as ChatSendButtonSection } from './ui/ChatSendButtonSection';
-export { default as PdfPreviewModal } from './ui/PdfPreviewModal';
+// Cards
+export { default as ChatAnswerSection } from './ui/cards/ChatAnswerSection';
+export { default as ChatQuestionSection } from './ui/cards/ChatQuestionSection';
+export { default as ChatSendButtonSection } from './ui/cards/ChatSendButtonSection';
 
-// Supporting components (can be exported if needed)
-export { default as AnswerViewer } from './ui/AnswerViewer';
-export { default as ChatMessageCard } from './ui/ChatMessageCard';
-export { default as PdfCardList } from './ui/PdfCardList';
-export { default as QuestionPanel } from './ui/QuestionPanel';
+// Components
+export { default as AnswerViewer } from './ui/components/AnswerViewer';
+export { default as ChatMessageCard } from './ui/components/ChatMessageCard';
+export { default as PdfCardList } from './ui/components/PdfCardList';
+export { default as PdfPreviewModal } from './ui/components/PdfPreviewModal';
+export { default as QuestionPanel } from './ui/components/QuestionPanel';
+export { default as References } from './ui/components/References';

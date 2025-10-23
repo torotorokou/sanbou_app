@@ -2,10 +2,10 @@ import { useState, useMemo } from 'react';
 import {
     UPLOAD_CSV_TYPES,
     UPLOAD_CSV_DEFINITIONS,
-} from './uploadCsvConfig';
-import type { CsvType } from './CsvDefinition';
-import { identifyCsvType, isCsvMatch } from '@features/csv/model/csvValidator';
-import { parseCsvPreview } from '@features/csv/model/csvPreview';
+} from '../domain/config/uploadCsvConfig';
+import type { CsvType } from '../domain/config/CsvDefinition';
+import { identifyCsvType, isCsvMatch } from '@features/csv/domain/services/csvValidatorService';
+import { parseCsvPreview } from '@features/csv/domain/services/csvPreviewService';
 
 export function useCsvUploadArea() {
     const [files, setFiles] = useState<Record<CsvType, File | null>>(

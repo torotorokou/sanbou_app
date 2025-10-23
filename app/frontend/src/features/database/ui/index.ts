@@ -1,5 +1,6 @@
 // Database Feature UI Components
-export { default as CsvUploadPanel } from './CsvUploadPanel';
-export { default as CsvUploadCard } from './csv-upload/CsvUploadCard';
-export { default as CsvUploadPanelComponent } from './csv-upload/CsvUploadPanel';
-export type { CsvFileType } from './csv-upload/types';
+export { default as CsvUploadPanel } from './cards/CsvUploadPanel';
+export { default as CsvUploadCard } from './components/csv-upload/CsvUploadCard';
+export { default as CsvUploadPanelComponent } from './components/csv-upload/CsvUploadPanel';
+// Re-export CsvFileType from domain to avoid duplication
+export type { CsvFileType } from '../domain/types';

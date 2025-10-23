@@ -4,17 +4,17 @@
 // ========================================
 // Controller Hooks (UIロジック・状態管理)
 // ========================================
-export { useReportActions } from './useReportActions';
-export { useReportBaseBusiness } from './useReportBaseBusiness';
-export { useReportLayoutStyles } from './useReportLayoutStyles';
-export { useReportManager } from './useReportManager';
-export { useReportArtifact } from './useReportArtifact';
+export { useReportActions } from '../application/useReportActions';
+export { useReportBaseBusiness } from '../application/useReportBaseBusiness';
+export { useReportLayoutStyles } from '../application/useReportLayoutStyles';
+export { useReportManager } from '../application/useReportManager';
+export { useReportArtifact } from '../application/useReportArtifact';
 
 // ========================================
 // Types (データ型定義)
 // ========================================
-export type * from './report.types';
-export type * from './report-api.types';
+export type * from '../domain/types/report.types';
+export type * from '../domain/types/report-api.types';
 
 // ========================================
 // Config

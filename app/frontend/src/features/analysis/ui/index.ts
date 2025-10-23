@@ -1,4 +1,10 @@
-// Analysis Feature UI Components
-export { default as ComparisonConditionForm } from './ComparisonConditionForm';
-export { default as CustomerComparisonResultCard } from './CustomerComparisonResultCard';
-export { default as AnalysisProcessingModal } from './AnalysisProcessingModal';
+/**
+ * Analysis Feature - UI Components
+ */
+
+// Cards
+export { default as CustomerComparisonResultCard } from './cards/CustomerComparisonResultCard';
+
+// Components
+export { default as ComparisonConditionForm } from './components/ComparisonConditionForm';
+export { default as AnalysisProcessingModal } from './components/AnalysisProcessingModal';

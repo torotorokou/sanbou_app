@@ -1,7 +1,0 @@
-// src/features/chat/api/chatService.ts
-import { apiPost } from '@shared/infrastructure/http';
-import type { ChatAnswerRequest, ChatAnswerResult } from '@features/chat/model/chat.types';
-
-export async function postChatAnswer(payload: ChatAnswerRequest) {
-    return apiPost<ChatAnswerResult>('/core_api/chat/test-answer', payload);
-}

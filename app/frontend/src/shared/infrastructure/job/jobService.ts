@@ -8,7 +8,7 @@
 
 import { notifyApiError, notifySuccess } from '@features/notification';
 import { apiGet } from '@shared/infrastructure/http';
-import type { ProblemDetails } from '@features/notification/model/contract';
+import type { ProblemDetails } from '@features/notification/domain/types/contract';
 
 /**
  * ジョブステータス型

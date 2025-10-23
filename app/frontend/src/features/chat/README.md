@@ -1,53 +1,74 @@
 # Chat Feature
 
 ## 概要
-AI質問応答機能 (Solvest Navi) を提供
+AI質問応答機能 (Solvest Navi) を提供します。
 
-## 責務
-- ユーザー質問の入力
-- AI応答の表示
-- PDFプレビュー
-- 質問テンプレート管理
-- チャット履歴 (将来)
+## ディレクトリ構造
 
-## 構造
-
-### 現在の配置
 ```
-src/
-├── components/chat/           # Chat UI Components
-│   ├── ChatQuestionSection.tsx
-│   ├── ChatSendButtonSection.tsx
-│   ├── ChatAnswerSection.tsx
-│   ├── PdfPreviewModal.tsx
-│   └── QuestionPanel.tsx
-├── services/                  # API Client
-│   └── chatService.ts
-└── pages/navi/                # ページコンポーネント
-    └── SolvestNavi.tsx
+chat/
+├── domain/
+│   └── types.ts                    # 型定義 (ChatMessage, ChatAnswerRequest, ChatAnswerResult)
+├── ports/
+│   └── repository.ts               # IChatRepository インターフェース
+├── application/
+│   └── useChatVM.ts                # ViewModel（将来実装）/ postChatAnswer 再エクスポート
+├── infrastructure/
+│   └── chat.repository.ts          # ChatRepository 実装
+├── ui/
+│   ├── cards/
+│   │   ├── ChatAnswerSection.tsx
+│   │   ├── ChatQuestionSection.tsx
+│   │   └── ChatSendButtonSection.tsx
+│   └── components/
+│       ├── AnswerViewer.tsx
+│       ├── ChatMessageCard.tsx
+│       ├── PdfCardList.tsx
+│       ├── PdfPreviewModal.tsx
+│       ├── QuestionPanel.tsx
+│       └── References.tsx
+├── styles/
+│   └── QuestionPanel.css
+├── index.ts                        # Public API
+└── README.md
 ```
 
-## 主要コンポーネント
+## 主要なエクスポート
+
+### Domain
+- `ChatMessage`: チャットメッセージ型
+- `ChatAnswerRequest`: チャット質問リクエスト型
+- `ChatAnswerResult`: チャット回答レスポンス型
+
+### Application
+- `postChatAnswer`: チャット質問API関数
+- `ChatRepository`: リポジトリクラス
 
 ### UI Components
 
-#### ChatQuestionSection
-- **役割**: 質問入力エリア
-- **パス**: `@/components/chat/ChatQuestionSection.tsx`
-- **機能**:
-  - テキスト入力
-  - 質問テンプレート表示
-  - カテゴリ選択
+#### Cards
+- `ChatAnswerSection`: AI応答表示エリア
+- `ChatQuestionSection`: 質問入力エリア
+- `ChatSendButtonSection`: 送信ボタンセクション
 
-#### ChatAnswerSection
-- **役割**: AI応答表示エリア
-- **パス**: `@/components/chat/ChatAnswerSection.tsx`
-- **機能**:
-  - マークダウン形式の応答表示
-  - コードハイライト
-  - リンク展開
+#### Components
+- `AnswerViewer`: マークダウン形式の応答表示
+- `ChatMessageCard`: チャットメッセージカード
+- `PdfCardList`: PDF参照リスト
+- `PdfPreviewModal`: PDFプレビューモーダル
+- `QuestionPanel`: 質問パネル (カテゴリ/テンプレート選択)
+- `References`: 参照リスト
 
-#### ChatSendButtonSection
+## 使用例
+
+```typescript
+import { postChatAnswer, ChatAnswerSection, ChatQuestionSection } from '@features/chat';
+
+const result = await postChatAnswer({
+  question: 'AIへの質問',
+  category: 'general',
+});
+```
 - **役割**: 送信ボタン
 - **パス**: `@/components/chat/ChatSendButtonSection.tsx`
 - **機能**:

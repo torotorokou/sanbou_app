@@ -3,5 +3,5 @@
  * MVC: API層のエクスポート
  */
 
-export * from './reportApi';
-export type { ReportArtifactResponse, ReportGenerateRequest } from './reportApi';
+export * from '../infrastructure/report.repository';
+export type { ReportArtifactResponse, ReportGenerateRequest } from '../infrastructure/report.repository';

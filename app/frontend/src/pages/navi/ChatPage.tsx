@@ -1,9 +1,9 @@
 import React from 'react';
-import { useNaviChat } from '@features/navi/hooks/useNaviChat';
+import { useNaviChat } from '@features/navi';
 import { NaviLayout } from '@features/navi/ui';
 import { PdfReferenceButton } from '@features/navi/ui';
-import { normalizePdfUrl } from '@features/navi/utils/pdfUrlNormalizer';
-import type { StepItem } from '@features/navi/model/types';
+import { normalizePdfUrl } from '@features/navi';
+import type { StepItem } from '@features/navi';
 import styles from './ChatPage.module.css';
 
 const stepItems: StepItem[] = [

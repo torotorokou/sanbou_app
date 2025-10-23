@@ -4,12 +4,12 @@
  */
 import React, { useCallback, useState } from "react";
 import styles from "./SearchPage.module.css";
-import { useManualSearch } from "@/features/manual/search/hooks/useManualSearch";
-import { ManualSearchBox } from "@/features/manual/search/ui/ManualSearchBox";
-import { ManualResultList } from "@/features/manual/search/ui/ManualResultList";
-import { ManualViewer } from "@/features/manual/search/ui/ManualViewer";
-import { useManualDoc } from "@/features/manual/shared/useManualDoc";
-import type { ManualDoc } from "@/features/manual/shared/model/types";
+import { useManualSearch } from "@features/manual";
+import { ManualSearchBox } from "@features/manual";
+import { ManualResultList } from "@features/manual";
+import { ManualViewer } from "@features/manual";
+import { useManualDoc } from "@features/manual";
+import type { ManualDoc } from "@features/manual";
 
 const ManualSearchPage: React.FC = () => {
   const { setQuery, data, loading, error } = useManualSearch({ q: "" });
