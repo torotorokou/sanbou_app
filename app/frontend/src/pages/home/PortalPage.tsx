@@ -3,7 +3,7 @@
 // React + TypeScript / Ant Design v5 前提。
 
 import React from 'react';
-import { Card, Typography, Button, Popover, Alert, Modal, List, theme } from 'antd';
+import { Card, Typography, Button, Popover, Modal, List, theme } from 'antd';
 import {
   BookOutlined,
   DashboardOutlined,
@@ -17,6 +17,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { ROUTER_PATHS } from '@app/routes/routes';
 import { useWindowSize, bp } from '@/shared';
+import ResponsiveNotice from '@/features/notice/ui/ResponsiveNotice';
 import './PortalPage.css';
 
 const { Title, Paragraph, Text } = Typography;
@@ -478,44 +479,20 @@ export const PortalPage: React.FC = () => {
         {/* 重要通知バナー */}
         {noticeVisible && notices.length > 0 && (
           <div style={{ width: '100%', margin: '0 0 24px 0' }}>
-            <Alert
-              type="warning"
-              banner
-              showIcon
-              closable
-              onClose={() => setNoticeVisible(false)}
-              message={
-                <div
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    gap: 12,
-                  }}
-                >
-                  <div>
-                    <strong>{notices[0].title}</strong>
-                    <div
-                      style={{
-                        fontSize: 12,
-                        color: token.colorTextTertiary,
-                      }}
-                    >
-                      {notices[0].summary}
-                    </div>
+            <ResponsiveNotice
+              title={notices[0].title}
+              description={notices[0].summary}
+              detailContent={
+                <div>
+                  <div style={{ marginBottom: 8, color: token.colorTextTertiary }}>
+                    {notices[0].date}
                   </div>
-                  <div>
-                    <Button
-                      size="small"
-                      type="link"
-                      onClick={() => openNoticeModal(notices[0])}
-                      aria-label="重要通知の詳細を開く"
-                    >
-                      詳細
-                    </Button>
-                  </div>
+                  <div style={{ marginBottom: 12 }}>{notices[0].detail}</div>
                 </div>
               }
+              onClose={() => setNoticeVisible(false)}
+              type="warning"
+              closable
             />
           </div>
         )}
