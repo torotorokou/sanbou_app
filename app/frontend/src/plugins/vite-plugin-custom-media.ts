@@ -51,7 +51,7 @@ function generateCSS(ANT: AntMap): string {
 }
 
 function writeOut(projectRoot: string, css: string): string {
-  const outPath = path.resolve(projectRoot, "src/shared/theme/responsive.css");
+  const outPath = path.resolve(projectRoot, "src/shared/styles/custom-media.css");
   
   // 既存ファイルを読み取ってカスタムメディア部分のみを置換
   let existingContent = "";

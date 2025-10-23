@@ -5,7 +5,7 @@ import { ThemeProvider } from '@app/providers/ThemeProvider';
 import { generateCssVars } from '@shared/theme/cssVars';
 import 'antd/dist/reset.css';
 import '@/index.css';
-import '@shared/theme/responsive.css';
+import '@shared/styles/custom-media.css';
 import '@shared/styles/base.css';
 
 // ① customTokens（ブランドカラー等）からCSS変数を作る

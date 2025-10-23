@@ -21,7 +21,7 @@ const ReportStepIndicator: React.FC<ReportStepIndicatorProps> = ({
 }) => {
     const { isMobile, isTablet } = useWindowSize();
 
-    // ポリシー: responsive.css に合わせて（変更点）
+    // ポリシー: custom-media.css に合わせて（Lean-3 ブレークポイント）
     // - モバイル（<=767）: 上位と同じ横・通常サイズ（縦に伸ばさない）
     // - タブレット（768–1199）: 横・小・タイトルのみ（コンパクト）
     // - デスクトップ（>=1200）: 横・通常・タイトル+説明

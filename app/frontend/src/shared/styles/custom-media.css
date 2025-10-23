@@ -1,18 +1,98 @@
-/* ===================================================
- * AUTO-GENERATED CUSTOM MEDIA (DO NOT EDIT MANUALLY)
- * ===================================================
- * Generated from: src/shared/constants/breakpoints.ts
+/* === AUTO-GENERATED CUSTOM MEDIA (DO NOT EDIT) === */
+/* AUTO-GENERATED from src/shared/constants/breakpoints.ts. Do not edit. */
+@custom-media --lt-md (max-width: 767px);   /* ≤767 (mobile) */
+@custom-media --ge-md (min-width: 768px);      /* ≥768 (tablet+) */
+@custom-media --ge-lg (min-width: 1024px);      /* ≥1024 (desktop-sm+) */
+@custom-media --ge-xl (min-width: 1280px);      /* ≥1280 (desktop-xl) */
+@custom-media --md-only (min-width: 768px) and (max-width: 1023px); /* tablet only */
+@custom-media --lg-only (min-width: 1024px) and (max-width: 1279px); /* desktop-sm only */
+/* === END AUTO-GENERATED === */
+
+/* === AUTO-GENERATED CUSTOM MEDIA (DO NOT EDIT MANUALLY) ===
+ * Source of truth: src/shared/constants/breakpoints.ts
+ * Lean-3: mobile ≤767, tablet 768–1199, desktop ≥1200
  * Last sync: 2025-10-23
- * 
- * Lean-3 Breakpoints:
- * - Mobile:  ≤767px  (--lt-md)
- * - Tablet:  768-1199px (--ge-md and not --ge-xl)
- * - Desktop: ≥1200px (--ge-xl)
  */
+@custom-media --lt-md (max-width: 767px);                                 /* ≤767 (mobile) */
+@custom-media --ge-md (min-width: 768px);                                 /* ≥768 (tablet+) */
+@custom-media --ge-xl (min-width: 1200px);                                /* ≥1200 (desktop) */
+@custom-media --md-only (min-width: 768px) and (max-width: 1199px);       /* tablet only */
+/* === END AUTO-GENERATED === */
 
-@custom-media --lt-md (max-width: 767px);      /* Mobile: ≤767px */
-@custom-media --ge-md (min-width: 768px);      /* Tablet+: ≥768px */
-@custom-media --ge-xl (min-width: 1200px);     /* Desktop: ≥1200px */
+/* Unified responsive base: breakpoints md/xl, clamp font size, height policy */
+/* IMPORTANT: このCSSのメディアクエリ閾値は `src/shared/constants/breakpoints.ts` と同期させること。
+  Lean-3: mobile ≤767, tablet 768–1199, desktop ≥1200 */
 
-/* Specific ranges (optional, for fine control) */
-@custom-media --md-only (min-width: 768px) and (max-width: 1199px); /* Tablet only */
+html, body, #root { height: 100%; }
+
+body { line-height: 1.6; overflow-x: clip; }
+
+.ant-layout { min-height: 100vh; }
+@supports (min-height: 100dvh) {
+  .ant-layout { min-height: 100dvh; }
+}
+
+/* Media elements only */
+img, video, canvas, svg { max-width: 100%; height: auto; }
+
+/* Horizontal scroll utility for wide content (e.g., tables) */
+.responsive-x { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+/* mobile: ≤ 767px (md未満) */
+@media (--lt-md) {
+  .ant-card { margin: 8px 0; border-radius: 8px; }
+  .ant-layout-content { padding: 12px; }
+  .ant-table { font-size: 12px; }
+}
+
+/* tablet+: ≥768px (タブレット以上) */
+@media (--ge-md) {
+  .ant-card { margin: 12px 0; border-radius: 10px; }
+  .ant-layout-content { padding: 16px; }
+  .ant-table { font-size: 13px; }
+  /* mdでサイドバーを常時表示するための調整 */
+  .ant-layout-sider {
+    display: block !important;
+    min-width: 160px;
+    max-width: 260px;
+    width: 220px;
+  }
+  /* 本文側の余白を確保 */
+  .ant-layout-content {
+    margin-left: 12px;
+  }
+}
+
+/* desktop: ≥ 1200px */
+@media (--ge-xl) {
+  .ant-card { margin: 16px 0; border-radius: 12px; }
+  .ant-layout-content { padding: 24px; }
+}
+
+/* Dashboard specific adjustments */
+.inbound-forecast-grid {
+  display: grid;
+  grid-template-rows: auto 1fr 1.2fr; /* default (desktop-first) */
+  row-gap: 8px;
+}
+
+/* Month picker width: let CSS control width per breakpoint instead of inline style */
+.dashboard-month-picker {
+  width: 140px;
+}
+
+@media (--lt-md) {
+  .inbound-forecast-grid { grid-template-rows: auto auto auto; }
+  .dashboard-month-picker { width: 100px; }
+}
+
+/* md+: タブレット・デスクトップでの調整 */
+@media (--ge-md) {
+  .inbound-forecast-grid { grid-template-rows: auto 1fr 1fr; }
+  .dashboard-month-picker { width: 120px; }
+}
+
+@media print {
+  .ant-layout-sider, .ant-drawer { display: none !important; }
+  .ant-layout-content { margin: 0 !important; padding: 0 !important; }
+}
