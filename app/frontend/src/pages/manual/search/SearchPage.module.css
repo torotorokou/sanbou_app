@@ -1,3 +1,6 @@
+/* Import custom media queries */
+@import "@/shared/styles/custom-media.css";
+
 .pageContainer {
   display: flex;
   flex-direction: column;
@@ -172,8 +175,8 @@
   color: #888;
 }
 
-/* レスポンシブ対応 */
-@media (width < 1280px) {
+/* レスポンシブ対応: デスクトップ未満（<1200px）で縦積み */
+@media (max-width: 1199px) {
   .gridContainer {
     grid-template-columns: 1fr;
     grid-template-rows: auto 1fr;

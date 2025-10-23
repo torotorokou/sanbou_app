@@ -1,149 +1,24 @@
-/* Base theme surfaces, uses responsive.css for layout/typography */
-html {
-    box-sizing: border-box;
-    height: 100%;
-    /* 横方向の余白・はみ出しを抑止 */
-    overflow-x: clip;
-    width: 100%;
-    /* スクロールバーの出現/非表示でのレイアウト揺れを抑制 */
-    /* both-edges は左右に等分の余白を作るため本件の直接原因になり得るため stable のみに */
-    scrollbar-gutter: stable;
-}
-*, *::before, *::after { box-sizing: inherit; }
+/* ===================================================
+ * Main Entry Point - Import Order Matters!
+ * ===================================================
+ * 1. Custom Media Queries (must be first)
+ * 2. Design Tokens (CSS variables)
+ * 3. Global Base Styles
+ * 4. Ant Design Overrides
+ * 5. Utility Classes
+ */
+
+@import "@/shared/styles/custom-media.css";
+@import "@/shared/styles/tokens.css";
+@import "@/styles/globals.css";
+@import "@/styles/antd-overrides.css";
+@import "@/styles/utilities.css";
+
+/* ===================================================
+ * Theme-specific Variables (App Colors)
+ * ===================================================
+ */
 body {
     background-color: var(--color-bg-base);
     color: var(--color-text);
-    font-family: 'Segoe UI', sans-serif;
-    margin: 0;
-    /* 横方向の余白・はみ出しを抑止 */
-    overflow-x: clip;
-    width: 100%;
-    /* iOS等でも実高に追従できるよう100dvhを基準に */
-    min-height: 100dvh;
-    /* 微小スクロールバーの抑制（Windows等） */
-    /* both-edges だと左右に余白が発生するため stable のみに */
-    scrollbar-gutter: stable;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-}
-
-/* Naviページ用の補助クラス（不要な縦スクロールを防止） */
-.navi-page {
-    /* 親Layoutが100dvhを確保するため、子は100%で追従 */
-    height: 100%;
-    min-height: 0;
-    overflow: hidden;
-}
-
-/* 内部でのみスクロールを許可する領域 */
-.navi-scroll-area {
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    /* Windowsでスクロールバー常時確保（ゆれ防止） */
-    scrollbar-gutter: stable;
-}
-
-/* === Ant Design カード設定 === */
-.ant-card {
-    border-radius: 10px;
-    background-color: var(--color-bg-container);
-    border-color: var(--color-border-secondary);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.ant-card:hover {
-    transform: scale(1.01);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-}
-
-/* === サイドメニューのホバー時 === */
-.custom-sider-menu .ant-menu-item:hover {
-    background-color: var(--color-sider-hover) !important;
-    color: #ffffff !important;
-    cursor: pointer;
-    border-left: 4px solid var(--color-primary);
-    padding-left: calc(24px - 4px);
-    transition: background-color 0.3s ease, padding-left 0.3s ease,
-        border-left 0.3s ease, color 0.3s ease;
-}
-
-.custom-sider-menu .ant-menu-item:hover .anticon {
-    color: #ffffff !important;
-}
-
-/* === サイドメニューの選択中 === */
-.custom-sider-menu .ant-menu-item-selected {
-    background-color: var(--color-primary) !important;
-    color: #ffffff !important;
-    border-left: none !important; /* ホバーと差別化 */
-    padding-left: 24px; /* インジケータがない分補正 */
-    transition: background-color 0.3s ease, padding-left 0.3s ease;
-}
-
-.custom-sider-menu .ant-menu-item-selected .anticon {
-    color: #ffffff !important;
-}
-
-/* === カード内のテキストにメリハリを出す === */
-.ant-card .ant-card-head {
-    font-weight: 600;
-    font-size: 1rem;
-    border-bottom: none;
-}
-
-.ant-card .ant-card-body {
-    padding: 16px;
-}
-
-/* 回答表示など、hover演出が不要なカード */
-.ant-card.no-hover:hover {
-    transform: none !important;
-    box-shadow: none !important;
-}
-
-/* === 帳票サンプル画像のホバー演出 === */
-.sample-thumbnail {
-    cursor: pointer;
-    border-radius: 8px;
-    overflow: hidden;
-    transition: transform 0.1s, box-shadow 0.2s;
-}
-
-.sample-thumbnail:hover {
-    transform: scale(1.01);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-/* Responsive details handled by styles/responsive.css */
-
-/* 印刷時の調整 */
-@media print {
-    .ant-layout-sider,
-    .ant-drawer {
-        display: none !important;
-    }
-
-    .ant-layout-content {
-        margin: 0 !important;
-        padding: 0 !important;
-    }
-}
-
-/* --- Global reset enhancements to prevent horizontal overflow --- */
-/* 目的: content-box による幅の膨張、長文ノーワープ、表の横溢れを抑止 */
-html, body { width: 100%; }
-*, *::before, *::after { box-sizing: border-box; }
-img, video, canvas, svg { max-width: 100%; height: auto; display: block; }
-pre, code { white-space: normal; overflow-wrap: anywhere; }
-#root, .ant-layout, .ant-layout-content { min-width: 0; }
-.ant-table-wrapper { overflow-x: auto; }
-.ant-table { width: 100%; min-width: 0; }
-
-/* Ensure answer viewer cards never expand horizontally beyond their container */
-.answer-viewer-card {
-    max-width: 100%;
-    width: 100%;
-    box-sizing: border-box;
-    word-break: break-word;
-    overflow-wrap: anywhere;
 }

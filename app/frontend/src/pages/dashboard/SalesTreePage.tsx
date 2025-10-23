@@ -14,7 +14,6 @@ import type { Dayjs } from 'dayjs';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RTooltip, ResponsiveContainer, LineChart, Line
 } from 'recharts';
-import { ANT } from '@/shared/constants/breakpoints';
 
 /* =========================
  * Domain Types
@@ -713,7 +712,7 @@ const SalesPivotBoardPlusWithCharts: FC = () => {
                   dataSource={data}
                   pagination={false}
                   onChange={onChildChange}
-                  scroll={{ x: ANT.xl }}
+                  scroll={{ x: 1280 }}
                   rowClassName={(_, idx) => (idx % 2 === 0 ? 'zebra-even' : 'zebra-odd')}
                 />
               )
@@ -722,7 +721,8 @@ const SalesPivotBoardPlusWithCharts: FC = () => {
               key: 'chart', label: 'グラフ',
               children: (
                 <Row gutter={[16, 16]}>
-                  <Col xs={24} md={14}>
+                  {/* モバイル（全幅）、デスクトップ（14/24列） */}
+                  <Col xs={24} xl={14}>
                     <div className="card-subtitle">TopN（売上・数量・台数・売単価）</div>
                     <div style={{ width: '100%', height: 320 }}>
                       <ResponsiveContainer>
@@ -739,7 +739,8 @@ const SalesPivotBoardPlusWithCharts: FC = () => {
                       </ResponsiveContainer>
                     </div>
                   </Col>
-                  <Col xs={24} md={10}>
+                  {/* モバイル（全幅）、デスクトップ（10/24列） */}
+                  <Col xs={24} xl={10}>
                     <Space align="baseline" style={{ justifyContent: 'space-between', width: '100%' }}>
                       <div className="card-subtitle">
                         {query.month ? `${query.month} 日次推移` : `${query.monthRange!.from}〜${query.monthRange!.to} 日次推移`}（営業：{row.repName}）

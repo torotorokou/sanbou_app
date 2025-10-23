@@ -1,7 +1,10 @@
 /* 将軍マニュアル一覧ページ専用スタイル */
 
+/* ShogunList styles - Lean-3 responsive */
+@import "@/shared/styles/custom-media.css";
+
 :root {
-  --header-height: 72px;
+  --header-height: 56px;
 }
 
 .layoutRoot {

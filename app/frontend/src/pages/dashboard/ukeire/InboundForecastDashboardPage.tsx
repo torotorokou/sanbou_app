@@ -1,6 +1,15 @@
 /**
  * 受入ダッシュボード - Page Component
  * MVC構成の薄いPageレイヤー
+ * 
+ * レスポンシブデザイン:
+ * - xs/sm/md (0-1199px): 全カード縦積み（span=24）
+ * - xl+ (1200px以上): 3列レイアウト（7-12-5列配分）
+ * 
+ * 注意: Ant Designのブレークポイントを使用
+ * - lg (Ant): 992px ≠ bp.lg (1024px)  
+ * - xl (Ant): 1200px = bp.xl (1280px)に近い
+ * ※ プロジェクトの bp.xl (1280px) に近い xl を採用
  */
 
 import React, { useMemo } from "react";
@@ -115,16 +124,19 @@ const InboundForecastDashboardPage: React.FC = () => {
           </Row>
         </div>
 
-        {/* 上段：3カード */}
+        {/* 上段：3カード（xl以上[1200px+]で3列、未満で縦積み） */}
         <div style={{ minHeight: 0 }}>
           <Row gutter={[12, 12]} style={{ height: "100%", alignItems: "stretch" }}>
-            <Col xs={24} lg={7} style={{ height: "100%" }}>
+            {/* Target Card: xl以上で7/24列、未満で全幅 */}
+            <Col xs={24} xl={7} style={{ height: "100%" }}>
               {vm.targetCardProps && <TargetCard {...vm.targetCardProps} />}
             </Col>
-            <Col xs={24} lg={12} style={{ height: "100%" }}>
+            {/* Combined Daily Card: xl以上で12/24列、未満で全幅 */}
+            <Col xs={24} xl={12} style={{ height: "100%" }}>
               {vm.combinedDailyProps && <CombinedDailyCard {...vm.combinedDailyProps} />}
             </Col>
-            <Col xs={24} lg={5} style={{ height: "100%" }}>
+            {/* Calendar Card: xl以上で5/24列、未満で全幅 */}
+            <Col xs={24} xl={5} style={{ height: "100%" }}>
               {(() => {
                 const [year, month] = vm.month.split('-').map(Number);
                 return <UkeireCalendarCard year={year} month={month} />;

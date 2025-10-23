@@ -105,7 +105,8 @@ export const ForecastCard: React.FC<ForecastCardProps> = ({ kpis, chartData, cum
 
       <div style={{ flex: 1, minHeight: 0 }}>
         <Row gutter={[8, 8]} style={{ height: "100%" }}>
-          <Col xs={24} lg={8} style={{ height: "100%" }}>
+          {/* KPI Blocks: モバイル（全幅）、デスクトップ（8/24列） */}
+          <Col xs={24} xl={8} style={{ height: "100%" }}>
             <div style={{ height: "100%", display: "grid", gridTemplateRows: "1fr 1fr 1fr", gap: 6 }}>
               {kpis.map((kpi, i) => (
                 <KPIBlock key={i} {...kpi} />
@@ -113,7 +114,8 @@ export const ForecastCard: React.FC<ForecastCardProps> = ({ kpis, chartData, cum
             </div>
           </Col>
 
-          <Col xs={24} lg={16} style={{ height: "100%", display: "flex", flexDirection: "column", minHeight: 0 }}>
+          {/* Chart Tabs: モバイル（全幅）、デスクトップ（16/24列） */}
+          <Col xs={24} xl={16} style={{ height: "100%", display: "flex", flexDirection: "column", minHeight: 0 }}>
             <Tabs
               size="small"
               className={tabsClass}

@@ -56,6 +56,7 @@ export * from './types';
 export { 
   // レスポンシブ（推奨）
   useResponsive,
+  useScreen, // Lean-3 正規化Hook（最推奨）
   // 内部実装（必要な場合のみ）
   useWindowSize,
   useContainerSize,
