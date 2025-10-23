@@ -3,65 +3,107 @@
 ## 概要
 
 MVC + SOLID原則に基づいて実装された受入予測ダッシュボード機能モジュール。
+機能ごとにディレクトリを分割し、保守性とスケーラビリティを向上させています。
 
-## アーキテクチャ
+## アーキテクチャ（2025-10-23更新）
 
 ```
 features/dashboard/ukeire/
-├── domain/              # ドメイン層（ビジネスロジック）
-│   ├── types.ts         # DTO型定義
-│   ├── valueObjects.ts  # 値オブジェクト（日付操作など）
-│   ├── constants.ts     # 定数（色、フォント）
-│   ├── repository.ts    # Repository抽象インターフェース
-│   └── services/        # ドメインサービス（純粋関数）
+├── domain/                    # ドメイン層（ビジネスロジック）
+│   ├── types.ts               # DTO型定義
+│   ├── valueObjects.ts        # 値オブジェクト（日付操作など）
+│   ├── constants.ts           # 定数（色、フォント）
+│   ├── repository.ts          # Repository抽象インターフェース
+│   └── services/              # ドメインサービス（純粋関数）
 │       ├── calendarService.ts
 │       └── targetService.ts
-├── application/         # アプリケーション層（ユースケース）
-│   ├── useUkeireForecastVM.ts  # ViewModel Hook
-│   └── adapters/        # Repository実装
-│       ├── mock.repository.ts
-│       └── http.repository.ts
-├── ui/                  # UI層（純粋コンポーネント）
-│   ├── cards/           # カードコンポーネント
-│   │   ├── TargetCard.tsx
-│   │   ├── CalendarCard.tsx
-│   │   ├── DailyActualsCard.tsx
-│   │   ├── DailyCumulativeCard.tsx
-│   │   ├── CombinedDailyCard.tsx
-│   │   └── ForecastCard.tsx
-│   ├── components/      # 共通コンポーネント
+│
+├── shared/                    # 共通UI・スタイル（ukeire内共通）
+│   ├── ui/
 │   │   ├── ChartFrame.tsx
 │   │   └── SingleLineLegend.tsx
-│   └── styles/          # スタイル定義
-│       ├── tabsFill.css.ts
-│       └── useInstallTabsFillCSS.ts
-└── index.ts             # Public API
+│   ├── styles/
+│   │   ├── tabsFill.css.ts
+│   │   └── useInstallTabsFillCSS.ts
+│   └── tokens.ts              # デザイントークン
+│
+├── business-calendar/         # カレンダー機能
+│   ├── application/
+│   │   ├── useUkeireCalendarVM.ts
+│   │   └── decorateCalendarCells.ts
+│   ├── infrastructure/
+│   │   ├── calendar.http.repository.ts
+│   │   └── calendar.mock.repository.ts
+│   └── ui/
+│       ├── CalendarCard.tsx
+│       ├── CalendarCard.Ukeire.tsx
+│       └── UkeireCalendar.tsx
+│
+├── kpi-targets/               # 目標管理機能
+│   ├── application/
+│   │   └── useTargetsVM.ts
+│   ├── domain/services/       # (将来targetServiceを移動予定)
+│   └── ui/
+│       └── TargetCard.tsx
+│
+├── forecast-inbound/          # 予測機能
+│   ├── application/
+│   │   └── useUkeireForecastVM.ts
+│   ├── infrastructure/
+│   │   ├── http.repository.ts
+│   │   └── mock.repository.ts
+│   └── ui/
+│       └── ForecastCard.tsx
+│
+├── inbound-monthly/           # 月次実績機能
+│   ├── application/
+│   │   └── useInboundMonthlyVM.ts
+│   └── ui/
+│       ├── DailyActualsCard.tsx
+│       ├── DailyCumulativeCard.tsx
+│       └── CombinedDailyCard.tsx
+│
+└── index.ts                   # Public API（後方互換性維持）
 ```
 
 ## 設計原則
 
-### 1. MVC パターン
+### 1. 機能別分割
+- **shared/**: ukeire内で共通のUI・スタイル
+- **business-calendar/**: カレンダー表示・装飾
+- **kpi-targets/**: 目標達成率表示
+- **forecast-inbound/**: 予測データ表示
+- **inbound-monthly/**: 月次実績データ表示
+
+### 2. MVC パターン（各機能内）
 - **Model (Domain)**: ビジネスロジック、型定義、ドメインサービス
 - **View (UI)**: 純粋コンポーネント、propsのみ受け取り副作用なし
 - **Controller (Application)**: ViewModel Hookでデータ取得・整形
 
-### 2. SOLID 原則
+### 3. SOLID 原則
 - **単一責任**: 各層・各ファイルが明確な責務
 - **依存性逆転**: Repository抽象に依存、具象は注入
 - **インターフェース分離**: UI propsは最小限、必要な情報のみ
+- **開放閉鎖**: 新機能追加時は新ディレクトリを追加
 
-### 3. 純粋性
+### 4. 純粋性
 - Domain層: 副作用なし、テスト容易
 - UI層: props駆動、useEffect/fetch不使用
 - Application層: データ取得と整形に集約
 
 ## 使用方法
 
-### Page での利用
+### Page での利用（barrel経由）
 
 ```tsx
-import { useUkeireForecastVM } from '@/features/dashboard/ukeire';
-import { MockInboundForecastRepository } from '@/features/dashboard/ukeire';
+import { 
+  useUkeireForecastVM,
+  MockInboundForecastRepository,
+  TargetCard,
+  CombinedDailyCard,
+  CalendarCardUkeire,
+  ForecastCard
+} from '@/features/dashboard/ukeire';
 
 const Page = () => {
   const repository = useMemo(() => new MockInboundForecastRepository(), []);
@@ -73,7 +115,7 @@ const Page = () => {
     <>
       <TargetCard {...vm.targetCardProps} />
       <CombinedDailyCard {...vm.combinedDailyProps} />
-      <CalendarCard {...vm.calendarCardProps} />
+      <CalendarCardUkeire year={2025} month={10} />
       <ForecastCard {...vm.forecastCardProps} />
     </>
   );
@@ -84,11 +126,23 @@ const Page = () => {
 
 ```tsx
 // 開発環境: Mock
+import { MockInboundForecastRepository } from '@/features/dashboard/ukeire';
 const repository = new MockInboundForecastRepository();
 
 // 本番環境: HTTP
+import { HttpInboundForecastRepository } from '@/features/dashboard/ukeire';
 const repository = new HttpInboundForecastRepository(API_BASE_URL);
 ```
+
+## リファクタリング履歴
+
+### 2025-10-23: 機能別ディレクトリ構造への再編成
+- **変更**: application/ui層を機能別に分割
+- **追加ディレクトリ**: shared/, business-calendar/, kpi-targets/, forecast-inbound/, inbound-monthly/
+- **削除**: 旧application/, ui/構造、未使用mockCalendar.repository.ts
+- **後方互換性**: index.tsで全エクスポート維持
+- **型チェック**: エラー0件
+- **詳細**: `/UKEIRE_REFACTOR_REPORT.md` 参照
 
 ## 実装完了項目
 
@@ -99,6 +153,8 @@ const repository = new HttpInboundForecastRepository(API_BASE_URL);
 - ✅ ルーティング: `/dashboard/ukeire`
 - ✅ メニュー: サイドバーに追加
 - ✅ 型安全性: TypeScriptエラー 0
+- ✅ 機能別分割: 5機能ディレクトリに整理
+- ✅ 後方互換性: 既存importパス維持
 
 ## Follow-up TODO
 
