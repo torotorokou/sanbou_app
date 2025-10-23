@@ -1,23 +1,23 @@
 // ===================================================
 // Single Source of Truth: Breakpoints
 // ===================================================
-// ANT互換の実運用3段階（mobile ≤767, tablet 768-1199, desktop ≥1200）
-// 将来的な4軸（sm:640, md:768, lg:1024, xl:1280）への移行は別PRで検討
+// Tailwind CSS準拠の4段階体系に移行完了
+// mobile ≤767, tablet 768-1023, desktop-sm 1024-1279, desktop-xl ≥1280
 
 /**
- * 統一ブレークポイント定義（ANT互換）
+ * 統一ブレークポイント定義（Tailwind CSS準拠）
  * - xs: 0px（最小）
- * - sm: 576px（ANT互換・非推奨）
+ * - sm: 640px（小型デバイス）
  * - md: 768px（タブレット開始）
- * - lg: 992px（ANT互換・非推奨）
- * - xl: 1200px（デスクトップ開始）
+ * - lg: 1024px（大型タブレット/小型ノートPC）
+ * - xl: 1280px（デスクトップ開始）
  */
 export const bp = {
   xs: 0,
-  sm: 576,  // @deprecated ANT互換。実運用では md を使用
-  md: 768,
-  lg: 992,  // @deprecated ANT互換。実運用では xl を使用
-  xl: 1200,
+  sm: 640,  // 小型デバイス（Tailwind準拠）
+  md: 768,  // タブレット開始
+  lg: 1024, // 大型タブレット/小型ノートPC（実運用値）
+  xl: 1280, // デスクトップ（広い画面）
 } as const;
 
 export type BpKey = keyof typeof bp;

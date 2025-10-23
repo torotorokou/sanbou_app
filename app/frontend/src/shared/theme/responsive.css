@@ -1,12 +1,15 @@
-/* Unified responsive base: breakpoints sm/md/lg, clamp font size, height policy */
+/* Unified responsive base: breakpoints sm/md/lg/xl, clamp font size, height policy */
 /* IMPORTANT: このCSSのメディアクエリ閾値は `src/shared/constants/breakpoints.ts` と同期させること。
-  sm: <= 767, md: 768–1199, lg: >= 1200 （2025-09 現在） */
+  sm: 640+, md: 768–1023, lg: 1024–1279, xl: >= 1280 （2025-10 更新） */
 
 /* === AUTO-GENERATED CUSTOM MEDIA (DO NOT EDIT) === */
 /* AUTO-GENERATED from src/shared/constants/breakpoints.ts. Do not edit. */
-@custom-media --lt-md (max-width: 767px);   /* ≤767 */
-@custom-media --ge-md (min-width: 768px);      /* ≥768 */
-@custom-media --ge-xl (min-width: 1200px);      /* ≥1200 */
+@custom-media --lt-md (max-width: 767px);   /* ≤767 (mobile) */
+@custom-media --ge-md (min-width: 768px);      /* ≥768 (tablet+) */
+@custom-media --ge-lg (min-width: 1024px);      /* ≥1024 (desktop-sm+) */
+@custom-media --ge-xl (min-width: 1280px);      /* ≥1280 (desktop-xl) */
+@custom-media --md-only (min-width: 768px) and (max-width: 1023px); /* tablet only */
+@custom-media --lg-only (min-width: 1024px) and (max-width: 1279px); /* desktop-sm only */
 /* === END AUTO-GENERATED === */
 
 html, body, #root { height: 100%; }
@@ -24,14 +27,14 @@ img, video, canvas, svg { max-width: 100%; height: auto; }
 /* Horizontal scroll utility for wide content (e.g., tables) */
 .responsive-x { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 
-/* sm: ≤ 767px (md未満) */
+/* mobile: ≤ 767px (md未満) */
 @media (--lt-md) {
   .ant-card { margin: 8px 0; border-radius: 8px; }
   .ant-layout-content { padding: 12px; }
   .ant-table { font-size: 12px; }
 }
 
-/* md+: ≥768px (タブレット・デスクトップ) */
+/* tablet+: ≥768px (タブレット以上) */
 @media (--ge-md) {
   .ant-card { margin: 12px 0; border-radius: 10px; }
   .ant-layout-content { padding: 16px; }
@@ -49,7 +52,13 @@ img, video, canvas, svg { max-width: 100%; height: auto; }
   }
 }
 
-/* lg: ≥ 1200px */
+/* desktop-sm+: ≥ 1024px */
+@media (--ge-lg) {
+  .ant-card { margin: 14px 0; border-radius: 11px; }
+  .ant-layout-content { padding: 20px; }
+}
+
+/* desktop-xl: ≥ 1280px */
 @media (--ge-xl) {
   .ant-card { margin: 16px 0; border-radius: 12px; }
   .ant-layout-content { padding: 24px; }
