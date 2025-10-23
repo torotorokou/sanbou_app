@@ -1,11 +1,11 @@
 /**
- * 受入ダッシュボード - ViewModel Hook
- * Repository経由でデータを取得し、UI用のpropsに整形
+ * Inbound Forecast ViewModel
+ * 受入予測データを取得して UI props に整形
  */
 
 import { useEffect, useState } from "react";
 import dayjs from "dayjs";
-import type { IInboundForecastRepository } from "../../domain/repository";
+import type { IInboundForecastRepository } from "../ports/repository";
 import type { IsoMonth, MonthPayloadDTO, DailyCurveDTO } from "../../domain/types";
 import { sum, getActualCutoffIso, curMonth, monthNameJP } from "../../domain/valueObjects";
 import {
@@ -17,7 +17,7 @@ import type { TargetCardProps } from "../../kpi-targets/ui/cards/TargetCard";
 import type { CombinedDailyCardProps } from "../../inbound-monthly/ui/cards/CombinedDailyCard";
 import type { ForecastCardProps } from "../ui/cards/ForecastCard";
 
-export type UkeireForecastViewModel = {
+export type InboundForecastViewModel = {
   month: IsoMonth;
   monthJP: string;
   loading: boolean;
@@ -30,10 +30,10 @@ export type UkeireForecastViewModel = {
   } | null;
 };
 
-export const useUkeireForecastVM = (
+export const useInboundForecastVM = (
   repository: IInboundForecastRepository,
   initialMonth: IsoMonth = curMonth()
-): UkeireForecastViewModel & { setMonth: (m: IsoMonth) => void } => {
+): InboundForecastViewModel & { setMonth: (m: IsoMonth) => void } => {
   const [month, setMonth] = useState<IsoMonth>(initialMonth);
   const [loading, setLoading] = useState(false);
   const [payload, setPayload] = useState<MonthPayloadDTO | null>(null);
@@ -52,7 +52,6 @@ export const useUkeireForecastVM = (
     };
   }, [month, repository]);
 
-  // 実績カットオフ（昨日まで）
   const actualCutoff = getActualCutoffIso(month);
   const maskedRows: DailyCurveDTO[] = payload
     ? payload.daily_curve.map((r) => ({ ...r, actual: r.date <= actualCutoff ? r.actual : undefined }))
@@ -60,7 +59,6 @@ export const useUkeireForecastVM = (
 
   const mtdMasked = sum(maskedRows.map((r) => r.actual ?? 0));
 
-  // TargetCard
   const targetCardProps: TargetCardProps | null = payload
     ? {
         rows: [
@@ -81,7 +79,6 @@ export const useUkeireForecastVM = (
       }
     : null;
 
-  // CombinedDailyCard
   const combinedDailyProps: CombinedDailyCardProps | null = payload
     ? {
         dailyProps: {
@@ -123,7 +120,6 @@ export const useUkeireForecastVM = (
       }
     : null;
 
-  // ForecastCard
   const forecastCardProps: ForecastCardProps | null = payload
     ? (() => {
         const daysInMonth = maskedRows.length;
@@ -192,7 +188,6 @@ export const useUkeireForecastVM = (
       })()
     : null;
 
-  // Header
   const headerProps = payload
     ? {
         todayBadge: dayjs().format("DD"),
@@ -211,3 +206,7 @@ export const useUkeireForecastVM = (
     setMonth,
   };
 };
+
+// 後方互換 (TODO: 使用箇所を置換後に削除)
+export { useInboundForecastVM as useUkeireForecastVM };
+export type { InboundForecastViewModel as UkeireForecastViewModel };

@@ -3,17 +3,18 @@
  * 外部から利用可能な最小限のAPI（汎用のみ）
  */
 
-// Types
-export type { CalendarDayDTO, CalendarCell } from "./model/types";
+// Domain Types
+export type { CalendarDayDTO, CalendarCell } from "./domain/types";
 
-// Repository
-export type { ICalendarRepository } from "./model/repository";
+// Ports
+export type { ICalendarRepository } from "./ports/repository";
 
-// Controller
-export { useCalendarVM } from "./controller/useCalendarVM";
+// Application
+export { useCalendarVM } from "./application/useCalendarVM";
 
 // UI
-export { default as CalendarCore } from "./ui/CalendarCore";
+export { default as CalendarCard } from "./ui/cards/CalendarCard";
+export { default as CalendarCore } from "./ui/components/CalendarCore";
 
-// Hooks
+// Hooks (汎用)
 export { useContainerSize } from "./hooks/useContainerSize";

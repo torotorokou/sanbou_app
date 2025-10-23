@@ -5,8 +5,8 @@
 
 import React from 'react';
 import CalendarCard from './CalendarCard';
-import { CalendarRepositoryForUkeire } from '../infrastructure/calendar.http.repository';
-import { MockCalendarRepositoryForUkeire } from '../infrastructure/calendar.mock.repository';
+import { CalendarRepositoryForUkeire } from '../../infrastructure/calendar.repository';
+import { MockCalendarRepositoryForUkeire } from '../../infrastructure/calendar.mock.repository';
 
 export type CalendarCardUkeireProps = {
   year: number;

@@ -5,8 +5,8 @@
 
 import React from "react";
 import dayjs from "dayjs";
-import styles from "../styles/calendar.module.css";
-import type { CalendarCell } from "../model/types";
+import styles from "../../styles/calendar.module.css";
+import type { CalendarCell } from "../../domain/types";
 
 export interface CalendarCoreProps<T extends CalendarCell = CalendarCell> {
   month: string; // "YYYY-MM"

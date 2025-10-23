@@ -6,8 +6,8 @@
 import React from "react";
 import { Card, Space, Typography, Tooltip, Statistic, Progress } from "antd";
 import { InfoCircleOutlined } from "@ant-design/icons";
-import { COLORS } from "../../domain/constants";
-import { clamp } from "../../domain/valueObjects";
+import { COLORS } from "@/features/dashboard/ukeire/domain/constants";
+import { clamp } from "@/features/dashboard/ukeire/domain/valueObjects";
 
 export type TargetCardRowData = {
   key: string;

@@ -7,7 +7,7 @@
 import React from "react";
 import dayjs from "dayjs";
 import { CalendarCore, useContainerSize } from "@/features/calendar";
-import type { CalendarCell } from "@/features/calendar/model/types";
+import type { CalendarCell } from "@/features/calendar/domain/types";
 
 interface UkeireCell extends CalendarCell {
   value?: number;

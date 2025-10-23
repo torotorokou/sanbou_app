@@ -139,9 +139,6 @@
 │   │   │   │   └── index.ts
 │   │   │   └── ukeire
 │   │   │       ├── README.md
-│   │   │       ├── application
-│   │   │       │   └── adapters
-│   │   │       │       └── mockCalendar.repository.ts
 │   │   │       ├── business-calendar
 │   │   │       │   ├── application
 │   │   │       │   │   ├── decorateCalendarCells.ts
@@ -155,7 +152,6 @@
 │   │   │       │       └── UkeireCalendar.tsx
 │   │   │       ├── domain
 │   │   │       │   ├── constants.ts
-│   │   │       │   ├── repositories
 │   │   │       │   ├── repository.ts
 │   │   │       │   ├── services
 │   │   │       │   │   ├── calendarService.ts
@@ -178,7 +174,6 @@
 │   │   │       │       ├── DailyActualsCard.tsx
 │   │   │       │       └── DailyCumulativeCard.tsx
 │   │   │       ├── index.ts
-│   │   │       ├── infrastructure
 │   │   │       ├── kpi-targets
 │   │   │       │   ├── application
 │   │   │       │   │   └── useTargetsVM.ts
@@ -186,20 +181,14 @@
 │   │   │       │   │   └── services
 │   │   │       │   └── ui
 │   │   │       │       └── TargetCard.tsx
-│   │   │       ├── presentation
-│   │   │       │   └── tokens
-│   │   │       ├── shared
-│   │   │       │   ├── styles
-│   │   │       │   │   ├── tabsFill.css.ts
-│   │   │       │   │   └── useInstallTabsFillCSS.ts
-│   │   │       │   ├── tokens.ts
-│   │   │       │   └── ui
-│   │   │       │       ├── ChartFrame.tsx
-│   │   │       │       └── SingleLineLegend.tsx
-│   │   │       └── ui
-│   │   │           ├── cards
-│   │   │           ├── components
-│   │   │           └── styles
+│   │   │       └── shared
+│   │   │           ├── styles
+│   │   │           │   ├── tabsFill.css.ts
+│   │   │           │   └── useInstallTabsFillCSS.ts
+│   │   │           ├── tokens.ts
+│   │   │           └── ui
+│   │   │               ├── ChartFrame.tsx
+│   │   │               └── SingleLineLegend.tsx
 │   │   ├── database
 │   │   │   ├── README.md
 │   │   │   ├── hooks
@@ -485,4 +474,4 @@
 ├── tsconfig.tsbuildinfo
 └── vite.config.ts
 
-142 directories, 344 files
+132 directories, 343 files

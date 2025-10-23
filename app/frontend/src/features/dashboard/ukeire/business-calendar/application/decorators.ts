@@ -1,4 +1,4 @@
-import type { CalendarDayDTO } from "@/features/calendar/model/types";
+import type { CalendarDayDTO } from "@/features/calendar/domain/types";
 
 type DecoratedCell = CalendarDayDTO & {
   inMonth: boolean;

@@ -7,11 +7,11 @@ import React, { useState } from "react";
 import { Card, Space, Typography, Tooltip, Row, Col, Tabs, Progress, Switch } from "antd";
 import { InfoCircleOutlined } from "@ant-design/icons";
 import { ComposedChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RTooltip, Legend, Area, AreaChart, ReferenceLine } from "recharts";
-import { COLORS, FONT } from "../../domain/constants";
-import { ChartFrame } from "../../shared/ui/ChartFrame";
-import { SingleLineLegend } from "../../shared/ui/SingleLineLegend";
-import { clamp } from "../../domain/valueObjects";
-import { useInstallTabsFillCSS } from "../../shared/styles/useInstallTabsFillCSS";
+import { COLORS, FONT } from "@/features/dashboard/ukeire/domain/constants";
+import { ChartFrame } from "@/features/dashboard/ukeire/shared/ui/ChartFrame";
+import { SingleLineLegend } from "@/features/dashboard/ukeire/shared/ui/SingleLineLegend";
+import { clamp } from "@/features/dashboard/ukeire/domain/valueObjects";
+import { useInstallTabsFillCSS } from "@/features/dashboard/ukeire/shared/styles/useInstallTabsFillCSS";
 
 export type KPIBlockProps = {
   title: string;

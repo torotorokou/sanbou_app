@@ -1,10 +1,10 @@
 import React, { useMemo } from "react";
 import { Card, Skeleton, Typography } from "antd";
-import UkeireCalendar from "./UkeireCalendar";
-import { useUkeireCalendarVM } from "../application/useUkeireCalendarVM";
-import { CalendarRepositoryForUkeire } from "../infrastructure/calendar.http.repository";
-import type { ICalendarRepository } from "@/features/calendar/model/repository";
-import type { CalendarDayDTO } from "@/features/calendar/model/types";
+import UkeireCalendar from "../components/UkeireCalendar";
+import { useBusinessCalendarVM } from "../../application/useBusinessCalendarVM";
+import { CalendarRepositoryForUkeire } from "../../infrastructure/calendar.repository";
+import type { ICalendarRepository } from "@/features/calendar/ports/repository";
+import type { CalendarDayDTO } from "@/features/calendar/domain/types";
 
 type DayDecor = {
   date: string;
@@ -74,7 +74,7 @@ function convertToPayload(year: number, month: number, days: CalendarDayDTO[]): 
 
 export default function CalendarCard({ year, month, repository, title = "営業カレンダー", style }: Props) {
   const repo = useMemo(() => repository ?? new CalendarRepositoryForUkeire(), [repository]);
-  const vm = useUkeireCalendarVM({ year, month, repository: repo });
+  const vm = useBusinessCalendarVM({ year, month, repository: repo });
 
   const pad = (n: number) => String(n).padStart(2, "0");
   const monthStr = `${year}-${pad(month)}`;
