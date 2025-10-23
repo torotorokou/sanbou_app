@@ -8,7 +8,7 @@ import { Card, Tabs } from "antd";
 import { DailyActualsCard, type DailyActualsCardProps } from "./DailyActualsCard";
 import { DailyCumulativeCard, type DailyCumulativeCardProps } from "./DailyCumulativeCard";
 import { useInstallTabsFillCSS } from "@/features/dashboard/ukeire/shared/styles/useInstallTabsFillCSS";
-import tabsTight from "@/styles/tabsTight.module.css";
+import tabsTight from "@/shared/styles/tabsTight.module.css";
 
 export type CombinedDailyCardProps = {
   dailyProps: DailyActualsCardProps;

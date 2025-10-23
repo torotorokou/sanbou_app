@@ -53,7 +53,7 @@ receive:
     単位CD:   { en_name: unit_cd,  type: Int64, agg: first }
     単位名:   { en_name: unit_name,type: str,   agg: first }
     # 単価は平均ではなく加重平均（数量 or 正味重量）を推奨
-    単価:     { en_name: unit_price, type: float, agg: wavg(quantity) }
+    単価:     { en_name: unit_price, type: float, agg: mean }
     金額:     { en_name: amount, type: float, agg: sum }
     受入番号: { en_name: receive_no, type: Int64, agg: first }  # 先頭ゼロを保持したければ type: str に変更
     集計項目CD:   { en_name: aggregate_item_cd,   type: Int64, agg: first }

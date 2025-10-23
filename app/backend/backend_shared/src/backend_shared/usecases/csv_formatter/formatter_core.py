@@ -114,12 +114,29 @@ def dedupe_and_aggregate(
         集計方法の辞書（{カラム名: 'sum'|'mean'|'first' など}）
 
     【戻り値】
-    pd.DataFrame : 重複解消＆集計後のDataFrame
+    pd.DataFrame : 重複解消�&集計後のDataFrame
     """
     if not unique_keys or not agg_map:
         return df
 
     df = df.copy()
+    
+    # agg_map から不正な集計関数を除外（例: 'wavg(quantity)' など）
+    valid_agg_funcs = {'sum', 'mean', 'median', 'min', 'max', 'first', 'last', 'count', 'std', 'var'}
+    cleaned_agg_map = {}
+    for col, func in agg_map.items():
+        if func in valid_agg_funcs:
+            cleaned_agg_map[col] = func
+        else:
+            # 不正な関数の場合は 'first' をデフォルトとして使用
+            print(f"[WARN] Invalid aggregation function '{func}' for column '{col}'. Using 'first' instead.")
+            cleaned_agg_map[col] = 'first'
+    
+    if not cleaned_agg_map:
+        # すべての集計関数が不正だった場合は、重複解消をスキップ
+        print("[WARN] No valid aggregation functions found. Skipping deduplication.")
+        return df
+    
     # グループIDを全行に付与
     df["_dup_group_id"] = pd.factorize(
         df[unique_keys].astype(str).agg("-".join, axis=1)
@@ -129,7 +146,7 @@ def dedupe_and_aggregate(
     grouped = df.groupby("_dup_group_id", dropna=False)
 
     # 集約してリセット
-    df_agg = grouped.agg(agg_map).reset_index(drop=True)
+    df_agg = grouped.agg(cleaned_agg_map).reset_index(drop=True)
 
     # _dup_group_id を削除して返す
     return df_agg.drop(columns="_dup_group_id", errors="ignore")

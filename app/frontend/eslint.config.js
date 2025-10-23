@@ -104,6 +104,22 @@ export default defineConfig([
                         '1200 を比較に直書きせず、BP.desktopMin または述語関数を使用してください。',
                 },
             ],
+            // shared層からの深いimport禁止（バレル公開強制）
+            'no-restricted-imports': [
+                'error',
+                {
+                    patterns: [
+                        {
+                            group: ['@/shared/*/*/*', '@shared/*/*/*', 'shared/*/*/*'],
+                            message: '❌ @/shared の深いimportは禁止です。@/shared からのみimportしてください（バレル公開）。',
+                        },
+                        {
+                            group: ['@/shared/*/*', '@shared/*/*', 'shared/*/*'],
+                            message: '❌ @/shared の深いimportは禁止です。@/shared からのみimportしてください（バレル公開）。',
+                        },
+                    ],
+                },
+            ],
             'boundaries/element-types': [
                 'error',
                 {

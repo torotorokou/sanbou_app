@@ -5,7 +5,7 @@
 
 import React from "react";
 import dayjs from "dayjs";
-import styles from "../../styles/calendar.module.css";
+import styles from "./calendar.module.css";
 import type { CalendarCell } from "../../domain/types";
 
 export interface CalendarCoreProps<T extends CalendarCell = CalendarCell> {
