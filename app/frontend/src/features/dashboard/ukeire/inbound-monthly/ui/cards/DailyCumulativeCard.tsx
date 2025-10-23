@@ -6,9 +6,9 @@
 import React, { useState } from "react";
 import { Card, Typography, Space, Switch } from "antd";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RTooltip, Legend, Line } from "recharts";
-import { COLORS, FONT } from "../../domain/constants";
-import { ChartFrame } from "../../shared/ui/ChartFrame";
-import { SingleLineLegend } from "../../shared/ui/SingleLineLegend";
+import { COLORS, FONT } from "@/features/dashboard/ukeire/domain/constants";
+import { ChartFrame } from "@/features/dashboard/ukeire/shared/ui/ChartFrame";
+import { SingleLineLegend } from "@/features/dashboard/ukeire/shared/ui/SingleLineLegend";
 
 export type DailyCumulativeCardProps = {
   cumData: {

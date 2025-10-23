@@ -5,8 +5,8 @@
  */
 
 import { useMemo } from "react";
-import type { DailyActualsCardProps } from "../ui/DailyActualsCard";
-import type { DailyCumulativeCardProps } from "../ui/DailyCumulativeCard";
+import type { DailyActualsCardProps } from "../ui/cards/DailyActualsCard";
+import type { DailyCumulativeCardProps } from "../ui/cards/DailyCumulativeCard";
 
 export type UseInboundMonthlyVMParams = {
   // TODO: 必要なパラメータを定義（例：日次データ配列、累積データ配列など）

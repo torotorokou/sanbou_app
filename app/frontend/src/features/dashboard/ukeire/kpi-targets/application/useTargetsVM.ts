@@ -5,7 +5,7 @@
  */
 
 import { useMemo } from "react";
-import type { TargetCardRowData } from "../ui/TargetCard";
+import type { TargetCardRowData } from "../ui/cards/TargetCard";
 
 export type UseTargetsVMParams = {
   monthTarget: number;

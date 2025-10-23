@@ -8,11 +8,11 @@ import { Card, Typography, Tooltip, Switch, Space } from "antd";
 import { InfoCircleOutlined } from "@ant-design/icons";
 import dayjs from "dayjs";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RTooltip, Legend, Line, Cell } from "recharts";
-import type { IsoDate } from "../../domain/types";
-import { COLORS, FONT } from "../../domain/constants";
-import { ChartFrame } from "../../shared/ui/ChartFrame";
-import { SingleLineLegend } from "../../shared/ui/SingleLineLegend";
-import { isSecondSunday } from "../../domain/services/calendarService";
+import type { IsoDate } from "@/features/dashboard/ukeire/domain/types";
+import { COLORS, FONT } from "@/features/dashboard/ukeire/domain/constants";
+import { ChartFrame } from "@/features/dashboard/ukeire/shared/ui/ChartFrame";
+import { SingleLineLegend } from "@/features/dashboard/ukeire/shared/ui/SingleLineLegend";
+import { isSecondSunday } from "@/features/dashboard/ukeire/domain/services/calendarService";
 
 export type DailyActualsCardProps = {
   chartData: {

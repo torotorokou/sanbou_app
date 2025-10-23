@@ -1,5 +1,5 @@
-import type { ICalendarRepository } from "@/features/calendar/model/repository";
-import type { CalendarDayDTO } from "@/features/calendar/model/types";
+import type { ICalendarRepository } from "@/features/calendar/ports/repository";
+import type { CalendarDayDTO } from "@/features/calendar/domain/types";
 
 export class MockCalendarRepositoryForUkeire implements ICalendarRepository {
   async fetchMonth({ year, month }: { year: number; month: number }): Promise<CalendarDayDTO[]> {

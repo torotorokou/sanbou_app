@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import type { ICalendarRepository } from '@/features/calendar/model/repository';
-import type { CalendarDayDTO } from '@/features/calendar/model/types';
+import type { ICalendarRepository } from '@/features/calendar/ports/repository';
+import type { CalendarDayDTO } from '@/features/calendar/domain/types';
 
 type Params = { repository: ICalendarRepository; year: number; month: number };
 
@@ -47,7 +47,18 @@ function buildGrid(year: number, month: number, days: CalendarDayDTO[]) {
     const pad = (n: number) => String(n).padStart(2, '0');
     const key = `${cur.getFullYear()}-${pad(cur.getMonth() + 1)}-${pad(cur.getDate())}`;
     const inMonth = cur >= first && cur <= last;
-    const base = map.get(key) ?? {
+    const base: CalendarDayDTO = map.get(key) ?? {
+      ddate: key,
+      y: cur.getFullYear(),
+      m: cur.getMonth() + 1,
+      iso_year: cur.getFullYear(),
+      iso_week: 1,
+      iso_dow: ((cur.getDay() + 6) % 7) + 1,
+      is_holiday: false,
+      is_second_sunday: false,
+      is_company_closed: false,
+      day_type: "NORMAL",
+      is_business: true,
       date: key,
       isHoliday: false,
     };
