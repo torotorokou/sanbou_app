@@ -56,10 +56,10 @@ export const TargetCard: React.FC<TargetCardProps> = ({ rows, style }) => {
         }}
       >
         {/* ヘッダ行 */}
-        <div style={{ color: "#8c8c8c", fontSize: 14 }} />
-        <div style={{ color: "#8c8c8c", fontSize: 16, fontWeight: 700 }}>目標</div>
-        <div style={{ color: "#8c8c8c", fontSize: 16, fontWeight: 700 }}>実績</div>
-        <div style={{ color: "#8c8c8c", fontSize: 16, fontWeight: 700 }}>達成率</div>
+  <div style={{ color: "#8c8c8c", fontSize: 14 }} />
+  <div style={{ color: "#8c8c8c", fontSize: 16, fontWeight: 700, textAlign: "center", justifySelf: "center" }}>目標</div>
+  <div style={{ color: "#8c8c8c", fontSize: 16, fontWeight: 700, textAlign: "center", justifySelf: "center" }}>実績</div>
+  <div style={{ color: "#8c8c8c", fontSize: 16, fontWeight: 700, textAlign: "center", justifySelf: "center" }}>達成率</div>
 
         {/* データ行 */}
         {rows.map((r) => {
