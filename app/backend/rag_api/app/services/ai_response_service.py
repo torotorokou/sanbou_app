@@ -70,10 +70,24 @@ class AIResponseService:
             # 遅延インポート：テストや軽量実行時に不要な依存を避ける
             from app.infrastructure.llm import ai_loader  # type: ignore
             result = ai_loader.get_answer(query, category, tags)
-            answer = result.get("answer")
-            sources = result.get("sources", [])
-            pages = result.get("pages")
-            print("[DEBUG][AIResponseService] ai_loader result pages:", pages)
+            
+            # エラーレスポンスのチェック
+            if "error" in result:
+                print("[DEBUG][AIResponseService] ai_loader returned error:", result.get("error"))
+                # フォールバック回答を生成
+                answer = (
+                    "申し訳ありません。現在AI回答を生成できませんでした。"\
+                    f" 理由: {result.get('error')}。"\
+                    " 必要なデータファイルが準備されていない可能性があります。"\
+                    " 管理者にお問い合わせください。"
+                )
+                sources = []
+                pages = None
+            else:
+                answer = result.get("answer")
+                sources = result.get("sources", [])
+                pages = result.get("pages")
+                print("[DEBUG][AIResponseService] ai_loader result pages:", pages)
         except Exception as ae:
             # 回答生成に失敗しても以降の処理は継続（pdf_urlはNone）
             print("[DEBUG][AIResponseService] ai_loader failed:", repr(ae))

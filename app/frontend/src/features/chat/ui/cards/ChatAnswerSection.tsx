@@ -7,7 +7,7 @@ type Props = {
 };
 
 const ChatAnswerSection: React.FC<Props> = ({ answer }) => (
-    <div style={{ flex: 1, padding: 24, overflowY: 'auto', minHeight: 0 }}>
+    <div style={{ flex: 1, padding: 24, overflowY: 'auto', minHeight: 0, maxWidth: '100%', boxSizing: 'border-box' }}>
         <Typography.Title level={4}>🤖 回答結果</Typography.Title>
         <AnswerViewer answer={answer} />
     </div>

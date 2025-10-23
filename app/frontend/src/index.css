@@ -138,3 +138,12 @@ pre, code { white-space: normal; overflow-wrap: anywhere; }
 #root, .ant-layout, .ant-layout-content { min-width: 0; }
 .ant-table-wrapper { overflow-x: auto; }
 .ant-table { width: 100%; min-width: 0; }
+
+/* Ensure answer viewer cards never expand horizontally beyond their container */
+.answer-viewer-card {
+    max-width: 100%;
+    width: 100%;
+    box-sizing: border-box;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+}

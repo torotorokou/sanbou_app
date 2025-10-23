@@ -102,6 +102,11 @@ export function useNaviChat() {
 
       console.log('[API][RESPONSE] data:', result);
 
+      // 回答が空またはundefinedの場合はエラーとして扱う
+      if (!result.answer || result.answer.trim() === '') {
+        throw new Error('回答が空です。質問内容やタグを見直してください。');
+      }
+
       setAnswer(result.answer);
       setPdfUrl(result.pdfUrl ?? null);
 
@@ -115,13 +120,19 @@ export function useNaviChat() {
       });
     } catch (err: unknown) {
       console.error('[API][ERROR]', err);
-      setAnswer('エラーが発生しました。');
+      
+      // エラーメッセージの取得
+      const errorMessage = err instanceof Error 
+        ? err.message 
+        : 'ネットワークまたはサーバーエラーです。';
+      
+      setAnswer(`エラー: ${errorMessage}`);
       setPdfUrl(null);
 
       addNotification({
         type: 'error',
         title: '取得に失敗しました',
-        message: 'ネットワークまたはサーバーエラーです。',
+        message: errorMessage,
         duration: 4000,
       });
     } finally {

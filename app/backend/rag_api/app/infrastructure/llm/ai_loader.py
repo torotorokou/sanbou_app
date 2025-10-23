@@ -35,6 +35,8 @@ def get_answer(
 
     Returns:
         dict: 回答、参照元、ページ情報を含む辞書
+            成功時: {"answer": str, "sources": list, "pages": any}
+            失敗時: {"error": str, "answer": None, "sources": [], "pages": None}
     """
     try:
         paths = resource_paths_func()
@@ -44,13 +46,33 @@ def get_answer(
             "[DEBUG][ai_loader] resource paths:",
             {"JSON_PATH": json_path, "FAISS_PATH": faiss_path},
         )
+        
+        # ファイル存在チェック
+        json_exists = os.path.exists(json_path)
+        faiss_exists = os.path.exists(faiss_path)
         print(
             "[DEBUG][ai_loader] exists:",
             {
-                "json_exists": os.path.exists(json_path),
-                "faiss_exists": os.path.exists(faiss_path),
+                "json_exists": json_exists,
+                "faiss_exists": faiss_exists,
             },
         )
+        
+        # どちらかのファイルが存在しない場合は早期リターン
+        if not json_exists or not faiss_exists:
+            missing = []
+            if not json_exists:
+                missing.append("JSONファイル")
+            if not faiss_exists:
+                missing.append("FAISSベクトルストア")
+            error_msg = f"必要なデータファイルが見つかりません: {', '.join(missing)}"
+            print(f"[DEBUG][ai_loader] {error_msg}")
+            return {
+                "error": error_msg,
+                "answer": None,
+                "sources": [],
+                "pages": None
+            }
 
         json_data = json_loader(json_path)
         vectorstore = vectorstore_loader(faiss_path)
@@ -73,4 +95,9 @@ def get_answer(
     except Exception as e:
         # ログ出力やエラー通知など拡張ポイント
         print("[DEBUG][ai_loader] error:", repr(e))
-        return {"error": str(e)}
+        return {
+            "error": str(e),
+            "answer": None,
+            "sources": [],
+            "pages": None
+        }
