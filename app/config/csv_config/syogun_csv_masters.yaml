@@ -27,53 +27,57 @@ shipment:
         明細備考: { en_name: detail_note, type: str, agg: first }
 
 receive:
-    label: 受入一覧
-    expected_headers:
-        - 伝票日付
-        - 売上日付
-        - 支払日付
-        - 業者CD
-        - 業者名
-    unique_keys: ['伝票日付', '業者名', '品名', '受入番号', '正味重量']
-    unique_keys_en: ['slip_date', 'vendor_en_name', 'item_name', 'receive_no', 'net_weight']
-    columns:
-        伝票日付: { en_name: slip_date, type: datetime, agg: first }
-        売上日付: { en_name: sales_date, type: datetime, agg: first }
-        支払日付: { en_name: payment_date, type: datetime, agg: first }
-        業者CD: { en_name: vendor_cd, type: int, agg: first }
-        業者名: { en_name: vendor_en_name, type: str, agg: first }
-        伝票区分CD: { en_name: slip_type_cd, type: int, agg: first }
-        伝票区分名: { en_name: slip_type_name, type: str, agg: first }
-        品名CD: { en_name: item_cd, type: int, agg: first }
-        品名: { en_name: item_name, type: str, agg: first }
-        正味重量: { en_name: net_weight, type: float, agg: sum }
-        数量: { en_name: quantity, type: float, agg: sum }
-        単位CD: { en_name: unit_cd, type: int, agg: first }
-        単位名: { en_name: unit_name, type: str, agg: first }
-        単価: { en_name: unit_price, type: float, agg: mean }
-        金額: { en_name: amount, type: float, agg: sum }
-        受入番号: { en_name: receive_no, type: str, agg: first }
-        集計項目CD: { en_name: aggregate_item_cd, type: int, agg: first }
-        集計項目: { en_name: aggregate_item_name, type: str, agg: first }
-        種類CD: { en_name: category_cd, type: int, agg: first }
-        種類名: { en_name: category_en_name, type: str, agg: first }
-        計量時間（総重量）: { en_name: weighing_time_gross, type: datetime, agg: first }
-        計量時間（空車重量）: { en_name: weighing_time_empty, type: datetime, agg: first }
-        現場CD: { en_name: site_cd, type: int, agg: first }
-        現場名: { en_name: site_en_name, type: str, agg: first }
-        荷降業者CD: { en_name: unload_vendor_cd, type: int, agg: first }
-        荷降業者名: { en_name: unload_vendor_en_name, type: str, agg: first }
-        荷降現場CD: { en_name: unload_site_cd, type: int, agg: first }
-        荷降現場名: { en_name: unload_site_en_name, type: str, agg: first }
-        運搬業者CD: { en_name: transport_vendor_cd, type: int, agg: first }
-        運搬業者名: { en_name: transport_vendor_en_name, type: str, agg: first }
-        取引先CD: { en_name: client_cd, type: str, agg: first }
-        取引先名: { en_name: client_en_name, type: str, agg: first }
-        マニ種類CD: { en_name: manifest_type_cd, type: int, agg: first }
-        マニ種類名: { en_name: manifest_type_en_name, type: str, agg: first }
-        マニフェスト番号: { en_name: manifest_no, type: str, agg: first }
-        営業担当者CD: { en_name: sales_staff_cd, type: int, agg: first }
-        営業担当者名: { en_name: sales_staff_en_name, type: str, agg: first }
+  label: 受入一覧
+  # 最低限そろっていないと読み込みを拒否する列（例）
+  expected_headers:
+    - 伝票日付
+    - 業者CD
+    - 品名CD
+    - 受入番号
+    - 正味重量
+  # 主キー候補（名称ではなくコード中心に）
+  unique_keys: ['伝票日付', '業者CD', '品名CD', '受入番号', '正味重量']
+  unique_keys_en: ['slip_date', 'vendor_cd', 'item_cd', 'receive_no', 'net_weight']
+  columns:
+    伝票日付: { en_name: slip_date, type: datetime, agg: first }
+    売上日付: { en_name: sales_date, type: datetime, agg: first }
+    支払日付: { en_name: payment_date, type: datetime, agg: first }
+    業者CD:   { en_name: vendor_cd, type: Int64, agg: first }
+    業者名:   { en_name: vendor_name, type: str,   agg: first }
+    伝票区分CD:   { en_name: slip_type_cd,  type: Int64, agg: first }
+    伝票区分名:   { en_name: slip_type_name,type: str,   agg: first }
+    品名CD:   { en_name: item_cd, type: Int64, agg: first }
+    品名:     { en_name: item_name, type: str, agg: first }
+    正味重量: { en_name: net_weight, type: float, agg: sum }
+    数量:     { en_name: quantity,   type: float, agg: sum }
+    単位CD:   { en_name: unit_cd,  type: Int64, agg: first }
+    単位名:   { en_name: unit_name,type: str,   agg: first }
+    # 単価は平均ではなく加重平均（数量 or 正味重量）を推奨
+    単価:     { en_name: unit_price, type: float, agg: wavg(quantity) }
+    金額:     { en_name: amount, type: float, agg: sum }
+    受入番号: { en_name: receive_no, type: Int64, agg: first }  # 先頭ゼロを保持したければ type: str に変更
+    集計項目CD:   { en_name: aggregate_item_cd,   type: Int64, agg: first }
+    集計項目:     { en_name: aggregate_item_name, type: str,   agg: first }
+    種類CD:   { en_name: category_cd,   type: Int64, agg: first }
+    種類名:   { en_name: category_name, type: str,   agg: first }
+    計量時間（総重量）:  { en_name: weighing_time_gross,  type: str, agg: first }
+    計量時間（空車重量）: { en_name: weighing_time_empty,  type: str, agg: first }
+    # ※必要に応じて slip_date と合成して datetime を別カラムに生成
+    現場CD:   { en_name: site_cd,   type: Int64, agg: first }
+    現場名:   { en_name: site_name, type: str,   agg: first }
+    荷降業者CD: { en_name: unload_vendor_cd,   type: Int64, agg: first }
+    荷降業者名: { en_name: unload_vendor_name, type: str,   agg: first }
+    荷降現場CD: { en_name: unload_site_cd,   type: Int64, agg: first }
+    荷降現場名: { en_name: unload_site_name, type: str,   agg: first }
+    運搬業者CD: { en_name: transport_vendor_cd,   type: Int64, agg: first }
+    運搬業者名: { en_name: transport_vendor_name, type: str,   agg: first }
+    取引先CD:   { en_name: client_cd,   type: str, agg: first }   # 先頭ゼロ保持
+    取引先名:   { en_name: client_name, type: str, agg: first }
+    マニ種類CD: { en_name: manifest_type_cd,   type: Int64, agg: first }
+    マニ種類名: { en_name: manifest_type_name, type: str,   agg: first }
+    マニフェスト番号: { en_name: manifest_no, type: str, agg: first }
+    営業担当者CD: { en_name: sales_staff_cd,  type: Int64, agg: first }
+    営業担当者名: { en_name: sales_staff_name,type: str,   agg: first }
 
 yard:
     label: ヤード一覧
