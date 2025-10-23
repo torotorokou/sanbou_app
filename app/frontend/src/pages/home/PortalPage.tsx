@@ -16,8 +16,7 @@ import {
 // CalendarCard removed: right column widgets trimmed
 import { useNavigate } from 'react-router-dom';
 import { ROUTER_PATHS } from '@app/routes/routes';
-import { useWindowSize } from '@shared/hooks/ui';
-import { ANT } from '@/shared/constants/breakpoints';
+import { useWindowSize, bp } from '@/shared';
 import './PortalPage.css';
 
 const { Title, Paragraph, Text } = Typography;
@@ -41,6 +40,12 @@ export interface PortalCardProps {
   buttonWidth?: number;
   // カード全体のスケール（1 = 100%）。PortalPage から渡す。
   cardScale?: number;
+  // 狭い画面向けのコンパクトレイアウト（説明非表示、アイコン左寄せ、height 縮小）
+  compactLayout?: boolean;
+  // sm 未満でボタンを非表示にする指示
+  hideButton?: boolean;
+  // sm 未満で小さなボタンを表示する（ボタンを非表示にする代わりに小さいものを右側に表示）
+  smallButton?: boolean;
 }
 
 /** 単一責任：1メニューカードの表示と遷移のみ */
@@ -53,6 +58,9 @@ const PortalCard: React.FC<PortalCardProps> = ({
   color,
   buttonWidth,
   cardScale,
+  compactLayout,
+  hideButton,
+  smallButton,
 }) => {
   const navigate = useNavigate();
   const { token } = theme.useToken();
@@ -100,13 +108,25 @@ const PortalCard: React.FC<PortalCardProps> = ({
   const btnText = getReadableTextColor(accent);
   const appliedButtonWidth = buttonWidth ?? BUTTON_WIDTH;
   const scale = cardScale ?? 1;
-  const appliedCardWidth = Math.round(CARD_WIDTH * scale);
-  const appliedCardHeight = Math.round(CARD_HEIGHT * scale);
+  // compactLayout の場合は高さを縮める
+  const COMPACT_CARD_HEIGHT = 120; // compact 時のベース高さ
+  const appliedCardHeight = Math.round((compactLayout ? COMPACT_CARD_HEIGHT : CARD_HEIGHT) * scale);
   const appliedButtonHeight = Math.round(BUTTON_HEIGHT * scale);
   const appliedButtonFontSize = Math.round(BUTTON_FONT_SIZE * scale);
   const appliedButtonWidthScaled = Math.round(appliedButtonWidth * scale);
-  const appliedIconSize = Math.round(56 * scale);
-  const appliedIconFontSize = Math.round(28 * scale);
+  const appliedIconSize = Math.round((compactLayout ? 40 : 56) * scale);
+  const appliedIconFontSize = Math.round((compactLayout ? 20 : 28) * scale);
+
+  // smallButton: show a compact button on the right for very small screens
+  const isSmallButton = !!smallButton;
+  // If button is hidden (hideButton true and not smallButton), use the aggressive compact scale.
+  // If smallButton is true, use a mild compact scale so contents still fit.
+  const SMALL_SCREEN_SCALE = hideButton && !isSmallButton ? 0.7 : (isSmallButton ? 0.82 : 1);
+  const finalCardHeight = Math.round(appliedCardHeight * SMALL_SCREEN_SCALE);
+  const finalIconSize = Math.round(appliedIconSize * SMALL_SCREEN_SCALE);
+  const finalIconFontSize = Math.round(appliedIconFontSize * SMALL_SCREEN_SCALE);
+  const finalButtonHeight = Math.round(appliedButtonHeight * SMALL_SCREEN_SCALE);
+  const finalButtonWidth = Math.round(appliedButtonWidthScaled * SMALL_SCREEN_SCALE);
 
   const handleNavigate = () => navigate(link);
   const handleKeyDown: React.KeyboardEventHandler<HTMLDivElement> = (e) => {
@@ -115,6 +135,18 @@ const PortalCard: React.FC<PortalCardProps> = ({
       handleNavigate();
     }
   };
+
+  const isButtonHidden = !!hideButton && !isSmallButton;
+
+  // Precompute title font-size to avoid complex inline ternaries that broke JSX parsing
+  // For small screens, prefer a smooth clamp so the title scales down gracefully.
+  const titleFontSize = isSmallButton
+    ? `clamp(14px, 3.6vw, 18px)`
+    : (hideButton
+      ? '18px'
+      : (compactLayout
+        ? `clamp(${Math.max(12, Math.round(appliedButtonFontSize * SMALL_SCREEN_SCALE))}px, 3.2vw, ${Math.round(appliedButtonFontSize * SMALL_SCREEN_SCALE) + 6}px)`
+        : `clamp(${Math.max(12, Math.round((appliedButtonFontSize + 2) * SMALL_SCREEN_SCALE))}px, 2.4vw, ${Math.round((appliedButtonFontSize + 6) * SMALL_SCREEN_SCALE)}px)`));
 
   return (
     <Popover
@@ -131,92 +163,120 @@ const PortalCard: React.FC<PortalCardProps> = ({
         onKeyDown={handleKeyDown}
         onClick={handleNavigate}
         style={{
-          width: appliedCardWidth,
-          height: appliedCardHeight,
+          width: '100%', // follow grid cell width
+          height: finalCardHeight,
           borderRadius: 16,
-          // 上辺にアクセントライン（モダンで控えめ）
-          boxShadow: `inset 0 2px 0 0 ${accent}`,
+          // 上辺にアクセントライン（sm未満では太く表示）
+          boxShadow: hideButton ? `inset 0 4px 0 0 ${accent}` : `inset 0 2px 0 0 ${accent}`,
           transition: 'transform 200ms ease, box-shadow 200ms ease',
         }}
         bodyStyle={{
           height: '100%',
-          padding: 20,
+          padding: compactLayout ? '12px 12px' : 20,
           display: 'flex',
-          flexDirection: 'column',
+          // For small-screen cases (either smallButton or button-hidden), use horizontal layout
+          flexDirection: (isButtonHidden || isSmallButton) ? 'row' : (compactLayout ? 'row' : 'column'),
+          // center items vertically in row layout
           alignItems: 'center',
-          justifyContent: 'center', // ← 縦方向も中央寄せ（“ど真ん中”）
-          gap: 12 * scale,
-          textAlign: 'center',
+          // when we have a small button on the right, space-between ensures it sits to the far right
+          justifyContent: isSmallButton ? 'space-between' : (isButtonHidden ? 'flex-start' : (compactLayout ? 'space-between' : 'center')),
+          gap: compactLayout ? 12 * scale : 12 * scale,
+          // text should be left-aligned when it's to the right of the icon
+          textAlign: isButtonHidden ? 'left' : (compactLayout ? 'left' : 'center'),
         }}
         onMouseEnter={(e) => {
           (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-2px)';
           (e.currentTarget as HTMLDivElement).style.boxShadow =
-            `inset 0 2px 0 0 ${accent}, ${token.boxShadowSecondary}`;
+            hideButton
+              ? `inset 0 4px 0 0 ${accent}, ${token.boxShadowSecondary}`
+              : `inset 0 2px 0 0 ${accent}, ${token.boxShadowSecondary}`;
         }}
         onMouseLeave={(e) => {
           (e.currentTarget as HTMLDivElement).style.transform = 'translateY(0)';
           (e.currentTarget as HTMLDivElement).style.boxShadow =
-            `inset 0 2px 0 0 ${accent}`;
+            hideButton ? `inset 0 4px 0 0 ${accent}` : `inset 0 2px 0 0 ${accent}`;
         }}
         onFocus={(e) => {
           (e.currentTarget as HTMLDivElement).style.boxShadow =
-            `inset 0 2px 0 0 ${accent}, 0 0 0 3px ${token.colorPrimaryBorder}`;
+            hideButton
+              ? `inset 0 4px 0 0 ${accent}, 0 0 0 3px ${token.colorPrimaryBorder}`
+              : `inset 0 2px 0 0 ${accent}, 0 0 0 3px ${token.colorPrimaryBorder}`;
         }}
         onBlur={(e) => {
           (e.currentTarget as HTMLDivElement).style.boxShadow =
-            `inset 0 2px 0 0 ${accent}`;
+            hideButton ? `inset 0 4px 0 0 ${accent}` : `inset 0 2px 0 0 ${accent}`;
         }}
-      >
-        {/* アイコン：円形の淡色プレートに収める */}
+        >
+        {/* アイコン */}
         <div
           aria-hidden
-          style={{
-            width: appliedIconSize,
-            height: appliedIconSize,
-            borderRadius: '50%',
-              background: accentPlate,
-              color: accent,
+            style={{
+            width: finalIconSize,
+            height: finalIconSize,
+            borderRadius: compactLayout ? 8 : '50%',
+            background: accentPlate,
+            color: accent,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: appliedIconFontSize,
+            // fixed icon font size so it doesn't shrink unexpectedly on small screens
+            fontSize: `${finalIconFontSize}px`,
             lineHeight: 1,
+            flex: '0 0 auto',
+            // add right margin when icon is left of text (compact or button-hidden)
+            marginRight: (compactLayout || isButtonHidden) ? 12 : 0,
           }}
         >
           {icon}
         </div>
 
-        <Title level={4} style={{ margin: 0, lineHeight: 1.2 }}>
-          {title}
-        </Title>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: (isButtonHidden || isSmallButton) ? 'flex-start' : (compactLayout ? 'flex-start' : 'center'), flex: (isButtonHidden || isSmallButton) ? '1 1 auto' : (hideButton ? 1.4 : 1) }}>
+            <div style={{ maxWidth: isSmallButton ? 180 : 260 }}>
+              <Title level={4} style={{
+                margin: 0,
+                lineHeight: 1.2,
+                textAlign: isButtonHidden ? 'left' : undefined,
+                fontSize: titleFontSize,
+                fontWeight: (isButtonHidden || isSmallButton) ? 600 : undefined,
+              }}>
+                {title}
+              </Title>
+            </div>
+          {/* sm未満では説明を非表示（タイトルを大きめに表示） */}
+          {!isButtonHidden && !isSmallButton && (
+            <Paragraph style={{
+              margin: 0,
+              maxWidth: isButtonHidden ? '100%' : 260,
+              display: '-webkit-box',
+              WebkitLineClamp: compactLayout ? 1 : 2,
+              WebkitBoxOrient: 'vertical',
+              overflow: 'hidden',
+              minHeight: compactLayout ? '1.4em' : '2.8em',
+              color: token.colorTextSecondary,
+              textAlign: isButtonHidden ? 'left' : undefined,
+              // description also scales smoothly; enlarge on very small screens for readability
+              fontSize: hideButton ? `clamp(12px, 2.6vw, 14px)` : `clamp(${Math.max(10, Math.round(12 * SMALL_SCREEN_SCALE))}px, 2.2vw, ${Math.round(14 * SMALL_SCREEN_SCALE)}px)`,
+            }}
+              title={description}
+            >
+              {description}
+            </Paragraph>
+          )}
+        </div>
 
-        {/* 説明文：2行でクランプ、中央寄せ */}
-        <Paragraph
-          style={{
-            margin: 0,
-            maxWidth: 260,
-            display: '-webkit-box',
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: 'vertical',
-            overflow: 'hidden',
-            minHeight: '2.8em', // 2行相当で高さ安定
-            color: token.colorTextSecondary,
-          }}
-          title={description}
-        >
-          {description}
-        </Paragraph>
-
-        <Button
+        {/* Render a button when not explicitly hidden. If isSmallButton is true, render a compact variant */}
+        {!isButtonHidden && (
+          <Button
           type="primary"
           size="middle"
           style={{
-            width: appliedButtonWidthScaled,
-            minWidth: appliedButtonWidthScaled,
-            maxWidth: appliedButtonWidthScaled,
-            height: appliedButtonHeight,
-            lineHeight: `${appliedButtonHeight}px`,
-            fontSize: appliedButtonFontSize,
+            width: isSmallButton ? Math.round((buttonWidth ?? BUTTON_WIDTH) * 0.5) : finalButtonWidth,
+            minWidth: isSmallButton ? Math.round((buttonWidth ?? BUTTON_WIDTH) * 0.5) : finalButtonWidth,
+            maxWidth: isSmallButton ? Math.round((buttonWidth ?? BUTTON_WIDTH) * 0.5) : finalButtonWidth,
+            height: isSmallButton ? Math.round(BUTTON_HEIGHT * 0.78) : finalButtonHeight,
+            lineHeight: `${isSmallButton ? Math.round(BUTTON_HEIGHT * 0.78) : finalButtonHeight}px`,
+            // compact button uses a smaller fixed font
+            fontSize: isSmallButton ? '12px' : `clamp(${Math.max(10, Math.round((appliedButtonFontSize - 2) * SMALL_SCREEN_SCALE))}px, 1.6vw, ${Math.round(appliedButtonFontSize * SMALL_SCREEN_SCALE)}px)`,
             padding: 0,
             whiteSpace: 'nowrap',
             flex: '0 0 auto',
@@ -243,6 +303,7 @@ const PortalCard: React.FC<PortalCardProps> = ({
         >
           開く
         </Button>
+        )}
       </Card>
     </Popover>
   );
@@ -337,16 +398,23 @@ type Notice = {
 };
 
 export const PortalPage: React.FC = () => {
-  const { width, isMobile } = useWindowSize(); // 明示的リサイズ検知（再レンダーで追従）
+  const { width } = useWindowSize(); // 明示的リサイズ検知（再レンダーで追従）
   const { token } = theme.useToken();
 
-  const isCompact = isMobile || width < 900;
+  // isCompact: use nearest project breakpoint (bp.lg = 1024)
+  const isCompact = width < bp.lg;
+
+  // narrow 判定はプロジェクトBPに合わせる（bp.md = 768）
+  const isNarrow = width < bp.md;
+
+  // sm 未満（小型デバイス）ではボタンを非表示にしてテキスト領域を広げる
+  const isXs = width < bp.sm;
 
   // レスポンシブに関係なく全カードで同じボタン幅に統一する
   const unifiedButtonWidth = BUTTON_WIDTH;
 
-  // カードスケール: ANT.xl (1200px) 未満では 0.9 倍にする
-  const cardScale = width < ANT.xl ? 0.9 : 1;
+  // カードスケール: bp.xl (1280px) 未満では 0.9 倍にする
+  const cardScale = width < bp.xl ? 0.9 : 1;
 
   const introText = isCompact
     ? '社内ポータルです。必要な機能を選択してください。'
@@ -402,7 +470,7 @@ export const PortalPage: React.FC = () => {
         <Title level={2} className="portal-title">
           社内ポータル
         </Title>
-        <Text className="portal-subtitle">{introText}</Text>
+  {!isXs && <Text className="portal-subtitle">{introText}</Text>}
       </section>
 
       {/* 2カラムレイアウト: 左=カード群, 右=ウィジェット群 */}
@@ -457,37 +525,42 @@ export const PortalPage: React.FC = () => {
             - 通常：利用可能幅に応じて列数を算出
             - 半画面（isCompact が真）では最大2列に制限する
         */}
-        <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start' }}>
+  <div style={{ display: 'flex', gap: isXs ? 12 : 24, alignItems: 'flex-start' }}>
           {/* Left column: header + portal cards (keeps previous grid behavior) */}
           <div style={{ flex: '1 1 0', display: 'flex', flexDirection: 'column', gap: 8 }}>
             <div
               aria-label="ポータルメニュー一覧"
               style={{
                 display: 'grid',
-                columnGap: 24,
-                rowGap: 24,
-                gridAutoRows: `${Math.round(CARD_HEIGHT * cardScale)}px`,
+                columnGap: isXs ? 12 : 24,
+                rowGap: isXs ? 12 : 24,
+                // 狭い画面では行高を縮小。sm未満はさらに詰める
+                gridAutoRows: `${Math.round((isXs ? 90 : (isNarrow ? 120 : CARD_HEIGHT)) * cardScale)}px`,
+                // use auto-fit / minmax so cards stretch/shrink responsively
+                // but force 1 column for screens narrower than bp.md (mobile)
                 gridTemplateColumns: (() => {
-                try {
-                  const containerPadding = 64;
-                  const available = Math.max(0, width - containerPadding); // no reserved right column
-                  const gap = 24;
-                  const per = Math.round(CARD_WIDTH * cardScale) + gap;
-                  let cols = Math.floor((available + gap) / per);
-                  if (cols < 1) cols = 1;
-                  if (isCompact) cols = Math.min(2, Math.max(1, cols));
-                  cols = Math.min(cols, 3, portalMenus.length);
-                  return `repeat(${cols}, ${Math.round(CARD_WIDTH * cardScale)}px)`;
-                } catch {
-                  return `repeat(auto-fit, ${Math.round(CARD_WIDTH * cardScale)}px)`;
-                }
-              })(),
+                  try {
+                    if (width < bp.md) return `repeat(1, 1fr)`; // mobile: single column
+                    const min = Math.round(CARD_WIDTH * cardScale);
+                    return `repeat(auto-fit, minmax(${min}px, 1fr))`;
+                  } catch {
+                    return `repeat(auto-fit, minmax(${Math.round(CARD_WIDTH * cardScale)}px, 1fr))`;
+                  }
+                })(),
               justifyContent: 'center',
               alignItems: 'stretch',
             }}
           >
             {portalMenus.map((menu) => (
-              <PortalCard key={menu.link} {...menu} buttonWidth={unifiedButtonWidth} cardScale={cardScale} />
+              <PortalCard
+                key={menu.link}
+                {...menu}
+                buttonWidth={unifiedButtonWidth}
+                cardScale={cardScale}
+                compactLayout={isNarrow}
+                hideButton={false}
+                smallButton={isXs}
+              />
             ))}
             </div>
             </div>
