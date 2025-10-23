@@ -15,30 +15,38 @@ function readANT(projectRoot: string): AntMap {
   if (!m) throw new Error("[vite-plugin-custom-media] bp object not found.");
   const body = m[1];
   const map: AntMap = {};
-  // 行ごとに key: value を抽出
+  // 行ごとに key: value を抽出（コメント行はスキップ）
   for (const line of body.split("\n")) {
-    const mm = line.trim().match(/^([a-zA-Z0-9_]+)\s*:\s*([0-9]+)\s*,?\s*$/);
+    // コメント行をスキップ
+    if (line.trim().startsWith("//")) continue;
+    const mm = line.trim().match(/^([a-zA-Z0-9_]+)\s*:\s*([0-9]+)\s*,?\s*(\/\/.*)?$/);
     if (mm) {
       const [, k, v] = mm;
       map[k] = Number(v);
     }
   }
-  if (!("md" in map) || !("xl" in map)) {
-    throw new Error("[vite-plugin-custom-media] bp must include at least md and xl.");
+  if (!("md" in map) || !("lg" in map) || !("xl" in map)) {
+    throw new Error("[vite-plugin-custom-media] bp must include at least md, lg, and xl.");
   }
   return map;
 }
 
 function generateCSS(ANT: AntMap): string {
   const md = ANT.md;   // 768
-  const xl = ANT.xl;   // 1200
+  const lg = ANT.lg;   // 1024
+  const xl = ANT.xl;   // 1280
   const mdMax = md - 1; // 767
+  const lgMax = lg - 1; // 1023
+  const xlMax = xl - 1; // 1279
 
-  // 3本構成: --lt-md / --ge-md / --ge-xl
+  // 4本構成（実運用）: --lt-md / --ge-md / --ge-lg / --ge-xl
   return `/* AUTO-GENERATED from src/shared/constants/breakpoints.ts. Do not edit. */
-@custom-media --lt-md (max-width: ${mdMax}px);   /* ≤${mdMax} */
-@custom-media --ge-md (min-width: ${md}px);      /* ≥${md} */
-@custom-media --ge-xl (min-width: ${xl}px);      /* ≥${xl} */
+@custom-media --lt-md (max-width: ${mdMax}px);   /* ≤${mdMax} (mobile) */
+@custom-media --ge-md (min-width: ${md}px);      /* ≥${md} (tablet+) */
+@custom-media --ge-lg (min-width: ${lg}px);      /* ≥${lg} (desktop-sm+) */
+@custom-media --ge-xl (min-width: ${xl}px);      /* ≥${xl} (desktop-xl) */
+@custom-media --md-only (min-width: ${md}px) and (max-width: ${lgMax}px); /* tablet only */
+@custom-media --lg-only (min-width: ${lg}px) and (max-width: ${xlMax}px); /* desktop-sm only */
 `;
 }
 
