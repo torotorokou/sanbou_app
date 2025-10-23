@@ -1,8 +1,8 @@
 import React, { useMemo } from "react";
 import { Card, Skeleton, Typography } from "antd";
-import UkeireCalendar from "@/features/dashboard/ukeire/ui/components/UkeireCalendar";
-import { useUkeireCalendarVM } from "@/features/dashboard/ukeire/application/useUkeireCalendarVM";
-import { CalendarRepositoryForUkeire } from "@/features/dashboard/ukeire/application/adapters/calendar.http.repository";
+import UkeireCalendar from "./UkeireCalendar";
+import { useUkeireCalendarVM } from "../application/useUkeireCalendarVM";
+import { CalendarRepositoryForUkeire } from "../infrastructure/calendar.http.repository";
 import type { ICalendarRepository } from "@/features/calendar/model/repository";
 import type { CalendarDayDTO } from "@/features/calendar/model/types";
 

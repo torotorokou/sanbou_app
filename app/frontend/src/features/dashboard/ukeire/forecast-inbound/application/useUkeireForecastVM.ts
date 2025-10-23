@@ -5,17 +5,17 @@
 
 import { useEffect, useState } from "react";
 import dayjs from "dayjs";
-import type { IInboundForecastRepository } from "../domain/repository";
-import type { IsoMonth, MonthPayloadDTO, DailyCurveDTO } from "../domain/types";
-import { sum, getActualCutoffIso, curMonth, monthNameJP } from "../domain/valueObjects";
+import type { IInboundForecastRepository } from "../../domain/repository";
+import type { IsoMonth, MonthPayloadDTO, DailyCurveDTO } from "../../domain/types";
+import { sum, getActualCutoffIso, curMonth, monthNameJP } from "../../domain/valueObjects";
 import {
   calculateOneBusinessDayTarget,
   calculateWeekStats,
   getTodayActual,
-} from "../domain/services/targetService";
-import type { TargetCardProps } from "../ui/cards/TargetCard";
-import type { CombinedDailyCardProps } from "../ui/cards/CombinedDailyCard";
-import type { ForecastCardProps } from "../ui/cards/ForecastCard";
+} from "../../domain/services/targetService";
+import type { TargetCardProps } from "../../kpi-targets/ui/TargetCard";
+import type { CombinedDailyCardProps } from "../../inbound-monthly/ui/CombinedDailyCard";
+import type { ForecastCardProps } from "../ui/ForecastCard";
 
 export type UkeireForecastViewModel = {
   month: IsoMonth;

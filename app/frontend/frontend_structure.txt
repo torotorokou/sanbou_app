@@ -1,0 +1,488 @@
+.
+├── Audit.md
+├── Dockerfile
+├── README.md
+├── RESPONSIVE_REFACTOR_REPORT.md
+├── docs
+│   ├── ARCHITECTURE.md
+│   ├── CIRCULAR_DEPENDENCY_RESULTS.md
+│   ├── FSD_DEPENDENCY_RULES_SUMMARY.md
+│   ├── IMPORT_REPLACEMENT_PLAN.md
+│   ├── MIGRATION_PLAN.md
+│   ├── MIGRATION_STATUS.md
+│   ├── PHASE2_COMPLETION_REPORT.md
+│   ├── PHASE3_COMPLETION_REPORT.md
+│   ├── PHASE3_EXECUTION_PLAN.md
+│   ├── PHASE3_SIMPLIFIED.md
+│   ├── PHASE4_KICKOFF.md
+│   ├── PHASE4_STEP3-1_COMPLETION.md
+│   ├── RESPONSIVE_GUIDE.md
+│   ├── api-best-practices.md
+│   ├── circular-dependency-check.md
+│   ├── frontend-architecture.md
+│   ├── fsd-linting-rules.md
+│   ├── notifications-old.md
+│   └── notifications.md
+├── eslint.config.js
+├── frontend_structure.txt
+├── index.html
+├── package-lock.json
+├── package.json
+├── postcss.config.js
+├── public
+│   ├── images
+│   │   └── sampleViews
+│   │       └── manage
+│   │           ├── averageSheet.png
+│   │           ├── balanceSheet.png
+│   │           ├── blockunitPrice.png
+│   │           ├── factoryReport.png
+│   │           ├── factoryReport2.png
+│   │           └── managementSheet.png
+│   ├── marker-icon-red.png
+│   ├── pdfjs
+│   │   └── pdf.worker.min.js
+│   ├── prefectures.geojson
+│   └── vite.svg
+├── report_dirs_files.txt
+├── scripts
+│   ├── analyze-breakpoints.mjs
+│   └── reports
+├── src
+│   ├── App.tsx
+│   ├── Breakpoints-Usage-Report.md
+│   ├── app
+│   │   ├── README.md
+│   │   ├── layout
+│   │   │   ├── MainLayout.tsx
+│   │   │   └── Sidebar.tsx
+│   │   ├── navigation
+│   │   │   ├── README.md
+│   │   │   └── sidebarMenu.tsx
+│   │   ├── providers
+│   │   │   ├── README.md
+│   │   │   └── ThemeProvider.tsx
+│   │   └── routes
+│   │       ├── AppRoutes.tsx
+│   │       └── routes.ts
+│   ├── features
+│   │   ├── README.md
+│   │   ├── SHARED_SEPARATION_SUMMARY.md
+│   │   ├── analysis
+│   │   │   ├── index.ts
+│   │   │   ├── model
+│   │   │   │   ├── customer-dummy-data.ts
+│   │   │   │   ├── index.ts
+│   │   │   │   └── useCustomerComparison.ts
+│   │   │   └── ui
+│   │   │       ├── AnalysisProcessingModal.tsx
+│   │   │       ├── ComparisonConditionForm.tsx
+│   │   │       ├── CustomerComparisonResultCard.tsx
+│   │   │       └── index.ts
+│   │   ├── calendar
+│   │   │   ├── controller
+│   │   │   │   └── useCalendarVM.ts
+│   │   │   ├── hooks
+│   │   │   │   └── useContainerSize.ts
+│   │   │   ├── index.ts
+│   │   │   ├── model
+│   │   │   │   ├── repository.ts
+│   │   │   │   └── types.ts
+│   │   │   ├── repository
+│   │   │   │   └── index.ts
+│   │   │   ├── structure.txt
+│   │   │   ├── styles
+│   │   │   │   └── calendar.module.css
+│   │   │   ├── ui
+│   │   │   │   ├── CalendarCard.tsx
+│   │   │   │   └── CalendarCore.tsx
+│   │   │   └── utils
+│   │   │       └── buildCalendarCells.ts
+│   │   ├── chat
+│   │   │   ├── README.md
+│   │   │   ├── api
+│   │   │   │   └── chatService.ts
+│   │   │   ├── index.ts
+│   │   │   ├── model
+│   │   │   │   └── chat.types.ts
+│   │   │   └── ui
+│   │   │       ├── AnswerViewer.tsx
+│   │   │       ├── ChatAnswerSection.tsx
+│   │   │       ├── ChatMessageCard.tsx
+│   │   │       ├── ChatQuestionSection.tsx
+│   │   │       ├── ChatSendButtonSection.tsx
+│   │   │       ├── PdfCardList.tsx
+│   │   │       ├── PdfPreviewModal.tsx
+│   │   │       ├── QuestionPanel.css
+│   │   │       ├── QuestionPanel.tsx
+│   │   │       └── References.tsx
+│   │   ├── csv
+│   │   │   ├── config
+│   │   │   │   └── CsvDefinition.ts
+│   │   │   ├── controller
+│   │   │   │   └── README.md
+│   │   │   ├── model
+│   │   │   │   ├── README.md
+│   │   │   │   ├── csvParsers.ts
+│   │   │   │   ├── csvPreview.ts
+│   │   │   │   └── csvValidator.ts
+│   │   │   └── view
+│   │   │       └── README.md
+│   │   ├── dashboard
+│   │   │   ├── index.ts
+│   │   │   ├── ui
+│   │   │   │   ├── BlockCountPanel.tsx
+│   │   │   │   ├── CustomerAnalysis.tsx
+│   │   │   │   ├── ProcessVolumePanel.tsx
+│   │   │   │   ├── RevenuePanel.tsx
+│   │   │   │   ├── SummaryPanel.tsx
+│   │   │   │   └── index.ts
+│   │   │   └── ukeire
+│   │   │       ├── README.md
+│   │   │       ├── application
+│   │   │       │   └── adapters
+│   │   │       │       └── mockCalendar.repository.ts
+│   │   │       ├── business-calendar
+│   │   │       │   ├── application
+│   │   │       │   │   ├── decorateCalendarCells.ts
+│   │   │       │   │   └── useUkeireCalendarVM.ts
+│   │   │       │   ├── infrastructure
+│   │   │       │   │   ├── calendar.http.repository.ts
+│   │   │       │   │   └── calendar.mock.repository.ts
+│   │   │       │   └── ui
+│   │   │       │       ├── CalendarCard.Ukeire.tsx
+│   │   │       │       ├── CalendarCard.tsx
+│   │   │       │       └── UkeireCalendar.tsx
+│   │   │       ├── domain
+│   │   │       │   ├── constants.ts
+│   │   │       │   ├── repositories
+│   │   │       │   ├── repository.ts
+│   │   │       │   ├── services
+│   │   │       │   │   ├── calendarService.ts
+│   │   │       │   │   └── targetService.ts
+│   │   │       │   ├── types.ts
+│   │   │       │   └── valueObjects.ts
+│   │   │       ├── forecast-inbound
+│   │   │       │   ├── application
+│   │   │       │   │   └── useUkeireForecastVM.ts
+│   │   │       │   ├── infrastructure
+│   │   │       │   │   ├── http.repository.ts
+│   │   │       │   │   └── mock.repository.ts
+│   │   │       │   └── ui
+│   │   │       │       └── ForecastCard.tsx
+│   │   │       ├── inbound-monthly
+│   │   │       │   ├── application
+│   │   │       │   │   └── useInboundMonthlyVM.ts
+│   │   │       │   └── ui
+│   │   │       │       ├── CombinedDailyCard.tsx
+│   │   │       │       ├── DailyActualsCard.tsx
+│   │   │       │       └── DailyCumulativeCard.tsx
+│   │   │       ├── index.ts
+│   │   │       ├── infrastructure
+│   │   │       ├── kpi-targets
+│   │   │       │   ├── application
+│   │   │       │   │   └── useTargetsVM.ts
+│   │   │       │   ├── domain
+│   │   │       │   │   └── services
+│   │   │       │   └── ui
+│   │   │       │       └── TargetCard.tsx
+│   │   │       ├── presentation
+│   │   │       │   └── tokens
+│   │   │       ├── shared
+│   │   │       │   ├── styles
+│   │   │       │   │   ├── tabsFill.css.ts
+│   │   │       │   │   └── useInstallTabsFillCSS.ts
+│   │   │       │   ├── tokens.ts
+│   │   │       │   └── ui
+│   │   │       │       ├── ChartFrame.tsx
+│   │   │       │       └── SingleLineLegend.tsx
+│   │   │       └── ui
+│   │   │           ├── cards
+│   │   │           ├── components
+│   │   │           └── styles
+│   │   ├── database
+│   │   │   ├── README.md
+│   │   │   ├── hooks
+│   │   │   │   ├── index.ts
+│   │   │   │   ├── useCsvUploadArea.ts
+│   │   │   │   └── useCsvUploadHandler.ts
+│   │   │   ├── index.ts
+│   │   │   ├── model
+│   │   │   │   ├── CsvDefinition.ts
+│   │   │   │   ├── database.types.ts
+│   │   │   │   ├── index.ts
+│   │   │   │   ├── uploadCsvConfig.ts
+│   │   │   │   ├── useCsvUploadArea.ts
+│   │   │   │   ├── useCsvUploadHandler.ts
+│   │   │   │   └── useCsvValidation.ts
+│   │   │   └── ui
+│   │   │       ├── CsvPreviewCard.tsx
+│   │   │       ├── CsvUploadPanel.tsx
+│   │   │       ├── UploadInstructions.tsx
+│   │   │       ├── csv-upload
+│   │   │       │   ├── CsvUploadCard.tsx
+│   │   │       │   ├── CsvUploadPanel.tsx
+│   │   │       │   └── types.ts
+│   │   │       └── index.ts
+│   │   ├── manual
+│   │   │   ├── README.md
+│   │   │   ├── api
+│   │   │   │   └── manualClient.ts
+│   │   │   ├── index.ts
+│   │   │   ├── search
+│   │   │   │   ├── hooks
+│   │   │   │   │   └── useManualSearch.ts
+│   │   │   │   ├── repository
+│   │   │   │   │   ├── ManualRepository.ts
+│   │   │   │   │   └── ManualRepositoryImpl.ts
+│   │   │   │   └── ui
+│   │   │   │       ├── ManualResultList.tsx
+│   │   │   │       ├── ManualSearchBox.tsx
+│   │   │   │       └── ManualViewer.tsx
+│   │   │   ├── shared
+│   │   │   │   ├── manualClient.ts
+│   │   │   │   ├── model
+│   │   │   │   │   └── types.ts
+│   │   │   │   ├── useManualCategories.ts
+│   │   │   │   ├── useManualDoc.ts
+│   │   │   │   └── useManualToc.ts
+│   │   │   └── shogun
+│   │   │       ├── api
+│   │   │       │   └── client.ts
+│   │   │       ├── hooks
+│   │   │       │   ├── useShogunCatalog.tsx
+│   │   │       │   ├── useShogunDetail.ts
+│   │   │       │   └── useShogunFilter.ts
+│   │   │       ├── model
+│   │   │       │   └── types.ts
+│   │   │       └── ui
+│   │   │           ├── DetailContent.tsx
+│   │   │           ├── FlowPane.tsx
+│   │   │           ├── ItemCard.tsx
+│   │   │           ├── ManualDetailPage.tsx
+│   │   │           ├── SectionBlock.tsx
+│   │   │           ├── ShogunModal.tsx
+│   │   │           └── VideoPane.tsx
+│   │   ├── navi
+│   │   │   ├── REFACTORING_REPORT.md
+│   │   │   ├── api
+│   │   │   │   └── client.ts
+│   │   │   ├── hooks
+│   │   │   │   └── useNaviChat.ts
+│   │   │   ├── index.ts
+│   │   │   ├── model
+│   │   │   │   ├── README.md
+│   │   │   │   ├── dto.ts
+│   │   │   │   └── types.ts
+│   │   │   ├── repository
+│   │   │   │   ├── NaviRepository.ts
+│   │   │   │   └── NaviRepositoryImpl.ts
+│   │   │   ├── ui
+│   │   │   │   ├── NaviLayout.tsx
+│   │   │   │   ├── PdfReferenceButton.tsx
+│   │   │   │   └── index.ts
+│   │   │   └── utils
+│   │   │       └── pdfUrlNormalizer.ts
+│   │   ├── notification
+│   │   │   ├── README.md
+│   │   │   ├── application
+│   │   │   │   └── notifyApiError.test.ts
+│   │   │   ├── config.ts
+│   │   │   ├── controller
+│   │   │   │   ├── notify.ts
+│   │   │   │   └── sse.ts
+│   │   │   ├── example.tsx
+│   │   │   ├── index.ts
+│   │   │   ├── model
+│   │   │   │   ├── contract.ts
+│   │   │   │   ├── notification.store.ts
+│   │   │   │   └── notification.types.ts
+│   │   │   └── view
+│   │   │       ├── NotificationCenter.tsx
+│   │   │       └── NotificationCenterAntd.tsx
+│   │   └── report
+│   │       ├── ARCHITECTURE.md
+│   │       ├── MVC_GUIDE.md
+│   │       ├── README.md
+│   │       ├── REFACTORING_COMPLETE_REPORT.md
+│   │       ├── REFACTORING_PLAN.md
+│   │       ├── REFACTORING_SUMMARY.md
+│   │       ├── api
+│   │       │   ├── index.ts
+│   │       │   └── reportApi.ts
+│   │       ├── config
+│   │       │   └── CsvDefinition.ts
+│   │       ├── index.ts
+│   │       ├── model
+│   │       │   ├── config
+│   │       │   │   ├── README.md
+│   │       │   │   ├── index.ts
+│   │       │   │   ├── pages
+│   │       │   │   │   ├── factoryPageConfig.ts
+│   │       │   │   │   ├── ledgerPageConfig.ts
+│   │       │   │   │   └── managePageConfig.ts
+│   │       │   │   └── shared
+│   │       │   │       ├── common.ts
+│   │       │   │       └── types.ts
+│   │       │   ├── index.ts
+│   │       │   ├── report-api.types.ts
+│   │       │   ├── report.types.ts
+│   │       │   ├── useReportActions.ts
+│   │       │   ├── useReportArtifact.ts
+│   │       │   ├── useReportBaseBusiness.ts
+│   │       │   ├── useReportLayoutStyles.ts
+│   │       │   └── useReportManager.ts
+│   │       └── ui
+│   │           ├── ReportBase.tsx
+│   │           ├── common
+│   │           │   ├── ActionsSection.tsx
+│   │           │   ├── CsvUploadSection.tsx
+│   │           │   ├── InteractiveReportModal.tsx
+│   │           │   ├── PreviewSection.tsx
+│   │           │   ├── ReportHeader.tsx
+│   │           │   ├── ReportManagePageLayout.tsx
+│   │           │   ├── ReportSelector.tsx
+│   │           │   ├── ReportStepIndicator.tsx
+│   │           │   ├── ReportStepperModal.tsx
+│   │           │   ├── SampleSection.tsx
+│   │           │   ├── downloadExcel.ts
+│   │           │   └── types.ts
+│   │           ├── interactive
+│   │           │   ├── BlockUnitPriceInteractive.tsx
+│   │           │   ├── BlockUnitPriceInteractiveModal.css
+│   │           │   ├── BlockUnitPriceInteractiveModal.tsx
+│   │           │   ├── transportNormalization.ts
+│   │           │   └── types.ts
+│   │           └── viewer
+│   │               ├── PDFViewer.tsx
+│   │               └── ReportSampleThumbnail.tsx
+│   ├── index.css
+│   ├── main.tsx
+│   ├── pages
+│   │   ├── README.md
+│   │   ├── analysis
+│   │   │   ├── CustomerListPage.tsx
+│   │   │   └── index.ts
+│   │   ├── dashboard
+│   │   │   ├── CustomerListDashboard.tsx
+│   │   │   ├── ManagementDashboard.css
+│   │   │   ├── ManagementDashboard.tsx
+│   │   │   ├── PlanningDashboard.tsx
+│   │   │   ├── PricingDashboard.tsx
+│   │   │   ├── SalesTreePage.tsx
+│   │   │   ├── monthGrid.module.css
+│   │   │   └── ukeire
+│   │   │       └── InboundForecastDashboardPage.tsx
+│   │   ├── database
+│   │   │   ├── RecordListPage.tsx
+│   │   │   ├── UploadPage.tsx
+│   │   │   ├── index.ts
+│   │   │   └── 受入一覧_20250501_clean.json
+│   │   ├── home
+│   │   │   ├── NewsPage.tsx
+│   │   │   ├── PortalPage.css
+│   │   │   ├── PortalPage.tsx
+│   │   │   ├── PortalPage.tsx.bak
+│   │   │   └── index.ts
+│   │   ├── manual
+│   │   │   ├── index.ts
+│   │   │   ├── search
+│   │   │   │   ├── SearchPage.module.css
+│   │   │   │   └── index.tsx
+│   │   │   └── shogun
+│   │   │       ├── DetailPage.tsx
+│   │   │       ├── ShogunDetail.module.css
+│   │   │       ├── ShogunList.module.css
+│   │   │       └── index.tsx
+│   │   ├── navi
+│   │   │   ├── ChatPage.module.css
+│   │   │   ├── ChatPage.tsx
+│   │   │   └── index.ts
+│   │   ├── report
+│   │   │   ├── FactoryPage.tsx
+│   │   │   ├── LedgerBookPage.tsx
+│   │   │   ├── ManagePage.tsx
+│   │   │   ├── ReportPage.module.css
+│   │   │   └── index.ts
+│   │   ├── test
+│   │   │   └── EnvTestPage.tsx
+│   │   └── utils
+│   │       ├── TestPage.tsx
+│   │       ├── TokenPreviewPage.tsx
+│   │       ├── components
+│   │       │   └── TokenPreview.tsx
+│   │       └── index.ts
+│   ├── plugins
+│   │   └── vite-plugin-custom-media.ts
+│   ├── shared
+│   │   ├── README.md
+│   │   ├── constants
+│   │   │   ├── breakpoints.ts
+│   │   │   ├── index.ts
+│   │   │   └── tests
+│   │   │       └── breakpoints.spec.ts
+│   │   ├── file_tree.txt
+│   │   ├── hooks
+│   │   │   ├── index.ts
+│   │   │   ├── ui
+│   │   │   │   ├── index.ts
+│   │   │   │   ├── useContainerSize.ts
+│   │   │   │   ├── useResponsive.ts
+│   │   │   │   ├── useScrollTracker.ts
+│   │   │   │   ├── useSidebarDefault.ts
+│   │   │   │   ├── useSidebarResponsive.ts
+│   │   │   │   └── useWindowSize.ts
+│   │   │   └── useBreakpoint.ts
+│   │   ├── index.ts
+│   │   ├── infrastructure
+│   │   │   ├── http
+│   │   │   │   ├── coreApi.ts
+│   │   │   │   ├── coreApiClient.ts
+│   │   │   │   ├── httpClient.ts
+│   │   │   │   └── index.ts
+│   │   │   └── job
+│   │   │       ├── index.ts
+│   │   │       └── jobService.ts
+│   │   ├── styles
+│   │   │   └── base.css
+│   │   ├── theme
+│   │   │   ├── colorMaps.ts
+│   │   │   ├── cssVars.ts
+│   │   │   ├── index.ts
+│   │   │   ├── responsive.css
+│   │   │   └── tokens.ts
+│   │   ├── types
+│   │   │   ├── api.ts
+│   │   │   ├── index.ts
+│   │   │   └── yaml.d.ts
+│   │   ├── ui
+│   │   │   ├── AnimatedStatistic.tsx
+│   │   │   ├── DiffIndicator.tsx
+│   │   │   ├── DownloadButton.tsx
+│   │   │   ├── ReportStepIndicator.tsx
+│   │   │   ├── StatisticCard.tsx
+│   │   │   ├── TrendChart.tsx
+│   │   │   ├── TypewriterText.tsx
+│   │   │   ├── VerticalActionButton.tsx
+│   │   │   ├── debug
+│   │   │   │   └── ResponsiveDebugInfo.tsx
+│   │   │   └── index.ts
+│   │   └── utils
+│   │       ├── anchors.ts
+│   │       ├── index.ts
+│   │       ├── logger.ts
+│   │       ├── pdf
+│   │       │   ├── README.md
+│   │       │   └── workerLoader.ts
+│   │       └── responsiveTest.ts
+│   ├── src_tree.txt
+│   ├── styles
+│   │   ├── custom-media.css
+│   │   └── tabsTight.module.css
+│   └── vite-env.d.ts
+├── tsconfig.json
+├── tsconfig.node.json
+├── tsconfig.tsbuildinfo
+└── vite.config.ts
+
+142 directories, 344 files

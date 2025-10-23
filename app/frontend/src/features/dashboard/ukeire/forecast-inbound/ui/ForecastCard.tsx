@@ -8,10 +8,10 @@ import { Card, Space, Typography, Tooltip, Row, Col, Tabs, Progress, Switch } fr
 import { InfoCircleOutlined } from "@ant-design/icons";
 import { ComposedChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RTooltip, Legend, Area, AreaChart, ReferenceLine } from "recharts";
 import { COLORS, FONT } from "../../domain/constants";
-import { ChartFrame } from "../components/ChartFrame";
-import { SingleLineLegend } from "../components/SingleLineLegend";
+import { ChartFrame } from "../../shared/ui/ChartFrame";
+import { SingleLineLegend } from "../../shared/ui/SingleLineLegend";
 import { clamp } from "../../domain/valueObjects";
-import { useInstallTabsFillCSS } from "../styles/useInstallTabsFillCSS";
+import { useInstallTabsFillCSS } from "../../shared/styles/useInstallTabsFillCSS";
 
 export type KPIBlockProps = {
   title: string;

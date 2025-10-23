@@ -7,12 +7,14 @@ import React, { useMemo } from "react";
 import { Row, Col, Typography, DatePicker, Space, Badge, Skeleton } from "antd";
 import dayjs from "dayjs";
 import type { Dayjs } from "dayjs";
-import { useUkeireForecastVM } from "@/features/dashboard/ukeire/application/useUkeireForecastVM";
-import { MockInboundForecastRepository } from "@/features/dashboard/ukeire/application/adapters/mock.repository";
-import { TargetCard } from "@/features/dashboard/ukeire/ui/cards/TargetCard";
-import { CombinedDailyCard } from "@/features/dashboard/ukeire/ui/cards/CombinedDailyCard";
-import CalendarCardUkeire from "@/features/dashboard/ukeire/ui/cards/CalendarCard.Ukeire";
-import { ForecastCard } from "@/features/dashboard/ukeire/ui/cards/ForecastCard";
+import { 
+  useUkeireForecastVM,
+  MockInboundForecastRepository,
+  TargetCard,
+  CombinedDailyCard,
+  CalendarCardUkeire,
+  ForecastCard
+} from "@/features/dashboard/ukeire";
 // (removed curMonth / nextMonth imports since month selection is no longer restricted)
 
 const InboundForecastDashboardPage: React.FC = () => {
