@@ -25,9 +25,11 @@ export class NaviRepositoryImpl implements NaviRepository {
   async generateAnswer(request: ChatQuestionRequestDto): Promise<ChatAnswer> {
     const dto = await NaviApiClient.generateAnswer(request);
 
+    console.log('[NaviRepository] Raw DTO from API:', dto);
+
     // DTOからDomainモデルへの変換
     return {
-      answer: dto.answer ?? '',
+      answer: dto.answer || '',
       pdfUrl: dto.merged_pdf_url ?? dto.pdf_url ?? null,
     };
   }

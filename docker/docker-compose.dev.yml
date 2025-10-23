@@ -129,10 +129,7 @@ services:
     env_file:
       - ../env/.env.common
       - ../env/.env.local_dev
-    command: >
-      uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-      --reload-dir /backend/app
-      --reload-dir /opt/backend_shared/src
+    command: ["bash", "startup.sh"]
     ports:
       - "${DEV_RAG_API_PORT:-8004}:8000"
     volumes:
