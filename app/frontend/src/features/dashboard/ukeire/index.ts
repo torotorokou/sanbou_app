@@ -21,11 +21,10 @@ export * from "./shared/tokens";
 
 // ========== Business Calendar ==========
 export { decorateCalendarCells } from "./business-calendar/application/decorators";
-export { useBusinessCalendarVM, useUkeireCalendarVM } from "./business-calendar/application/useBusinessCalendarVM";
+export { useBusinessCalendarVM } from "./business-calendar/application/useBusinessCalendarVM";
 export { CalendarRepositoryForUkeire } from "./business-calendar/infrastructure/calendar.repository";
 export { MockCalendarRepositoryForUkeire } from "./business-calendar/infrastructure/calendar.mock.repository";
 export { default as UkeireCalendarCard } from "./business-calendar/ui/cards/CalendarCard";
-export { default as CalendarCardUkeire } from "./business-calendar/ui/cards/CalendarCard.Ukeire";
 export { default as UkeireCalendar, UkeireCalendar as UkeireCalendarNamed } from "./business-calendar/ui/components/UkeireCalendar";
 
 // ========== KPI Targets ==========
@@ -36,7 +35,7 @@ export { useTargetsVM } from "./kpi-targets/application/useTargetsVM";
 export type { IInboundForecastRepository } from "./forecast-inbound/ports/repository";
 export { HttpInboundForecastRepository } from "./forecast-inbound/infrastructure/inboundForecast.repository";
 export { MockInboundForecastRepository } from "./forecast-inbound/infrastructure/inboundForecast.mock.repository";
-export { useInboundForecastVM, useUkeireForecastVM, type InboundForecastViewModel, type UkeireForecastViewModel } from "./forecast-inbound/application/useInboundForecastVM";
+export { useInboundForecastVM, type InboundForecastViewModel } from "./forecast-inbound/application/useInboundForecastVM";
 export { ForecastCard, type ForecastCardProps, type KPIBlockProps } from "./forecast-inbound/ui/cards/ForecastCard";
 
 // ========== Inbound Monthly ==========
