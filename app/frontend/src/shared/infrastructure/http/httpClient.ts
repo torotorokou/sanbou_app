@@ -3,7 +3,7 @@
 
 import axios, { type AxiosRequestConfig, type AxiosError } from 'axios';
 import type { ApiResponse } from '@shared/types';
-import type { ProblemDetails } from '@features/notification/model/contract';
+import type { ProblemDetails } from '@features/notification/domain/types/contract';
 
 /**
  * ApiError クラス（RFC 7807 ProblemDetails 準拠）

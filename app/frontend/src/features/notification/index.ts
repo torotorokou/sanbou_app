@@ -1,30 +1,19 @@
-// features/notification/index.ts
-// Public API for notification feature
+/**
+ * Notification Feature - Public API
+ * MVVM+SOLID アーキテクチャに準拠した barrel export
+ */
 
-// Types
-export * from './model/notification.types';
-export type { ProblemDetails, NotificationEvent, Severity } from './model/contract';
+// Domain Types
+export * from './domain/types/notification.types';
+export * from './domain/types/contract';
+export * from './domain/config';
 
-// Store
-export { useNotificationStore } from './model/notification.store';
-export type { NotificationState } from './model/notification.store';
+// Ports
+export type { INotificationRepository } from './ports/repository';
 
-// Controller (notification functions)
-export {
-    notifySuccess,
-    notifyError,
-    notifyInfo,
-    notifyWarning,
-    notifyPersistent,
-    notifyApiError,
-} from './controller/notify';
+// Application
+export * from './application/useNotificationVM';
 
-// SSE Controller
-export { startSSE, stopSSE, getSSEState } from './controller/sse';
-
-// View components
-export { NotificationCenter } from './view/NotificationCenter';
-export { default as NotificationCenterAntd } from './view/NotificationCenterAntd';
-
-// Config
-export { NOTIFY_DEFAULTS, codeCatalog, getNotificationConfig } from './config';
+// UI Components
+export { default as NotificationCenter } from './ui/components/NotificationCenter';
+export { default as NotificationCenterAntd } from './ui/components/NotificationCenterAntd';

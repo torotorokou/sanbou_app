@@ -17,10 +17,10 @@ import {
 import { FileDoneOutlined } from '@ant-design/icons';
 import { useWindowSize } from '@/shared/hooks/ui';
 import { ANT, isTabletOrHalf } from '@/shared/constants/breakpoints';
-import { useShogunCatalog } from '@/features/manual/shogun/hooks/useShogunCatalog';
-import { SectionBlock } from '@/features/manual/shogun/ui/SectionBlock';
-import { ManualModal } from '@/features/manual/shogun/ui/ShogunModal';
-import type { ManualItem } from '@/features/manual/shogun/model/types';
+import { useShogunCatalog } from '@features/manual';
+import { SectionBlock } from '@features/manual/ui/components/SectionBlock';
+import { ManualModal } from '@features/manual/ui/components/ShogunModal';
+import type { ManualItem } from '@features/manual';
 import styles from './ShogunList.module.css';
 
 const { Title } = Typography;

@@ -1,23 +1,20 @@
-// src/features/database/index.ts
-// Public API for Database Feature
+/**
+ * Database Feature - Public API
+ * MVVM+SOLID アーキテクチャに準拠した barrel export
+ */
 
-// ============================================================================
-// Model (Types)
-// ============================================================================
+// Domain
+export type { CsvFileType, CsvUploadCardEntry } from './domain/types';
+export * from './domain/config/CsvDefinition';
+export * from './domain/config/uploadCsvConfig';
 
-export type { CsvFileType, CsvUploadCardEntry } from './model/database.types';
+// Ports
+export type { IDatabaseRepository } from './ports/repository';
 
-// ============================================================================
-// Hooks
-// ============================================================================
+// Application
+export * from './application/useDatabaseVM';
 
-export { useCsvUploadArea } from './hooks/useCsvUploadArea';
-export { useCsvUploadHandler } from './hooks/useCsvUploadHandler';
-
-// ============================================================================
 // UI Components
-// ============================================================================
-
-export { default as CsvPreviewCard } from './ui/CsvPreviewCard';
-export { default as CsvUploadPanel } from './ui/CsvUploadPanel';
-export { UploadInstructions } from './ui/UploadInstructions';
+export { default as CsvPreviewCard } from './ui/cards/CsvPreviewCard';
+export { default as CsvUploadPanel } from './ui/cards/CsvUploadPanel';
+export { UploadInstructions } from './ui/components/UploadInstructions';

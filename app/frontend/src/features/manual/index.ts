@@ -1,71 +1,34 @@
 /**
- * Manual Feature Public API
- * FSD: Feature層の公開インターフェース
+ * Manual Feature - Public API
+ * MVVM+SOLID アーキテクチャに準拠した barrel export
  */
 
-// ============================================================================
-// Search Feature (BFF + FSD構造)
-// ============================================================================
+// Domain Types
+export * from './domain/types/manual.types';
+export * from './domain/types/shogun.types';
 
-// Search Types
-export type {
-  ManualDoc,
-  ManualSearchQuery,
-  ManualSearchResult,
-  ManualTocItem,
-  ManualCategory,
-  ManualSearchParams
-} from './shared/model/types';
+// Ports
+export * from './ports/repository';
 
-// Search Hooks (ViewModel)
-export { useManualSearch } from './search/hooks/useManualSearch';
+// Application (ViewModels)
+export { useManualSearch } from './application/useManualSearchVM';
+export { useManualCategories } from './application/useManualCategoriesVM';
+export { useManualDoc } from './application/useManualDocVM';
+export { useManualToc } from './application/useManualTocVM';
+export { useShogunDetail } from './application/useShogunDetailVM';
+export { useShogunCatalog } from './application/useShogunCatalogVM';
 
-// Search UI Components
-export { ManualViewer } from './search/ui/ManualViewer';
-export { ManualSearchBox } from './search/ui/ManualSearchBox';
-export { ManualResultList } from './search/ui/ManualResultList';
+// Infrastructure
+export { ManualRepositoryImpl } from './infrastructure/manual.repository';
+export { ShogunClient } from './infrastructure/shogun.client';
+export { ShogunClient as ShogunClientDefault } from './infrastructure/shogun.client'; // Legacy alias
+export { ManualClient } from './infrastructure/manual.client';
 
-// ============================================================================
-// Shogun Feature (将軍マニュアル)
-// ============================================================================
-
-// Shogun Types
-export type {
-  ManualItem,
-  ManualSection,
-  ManualSectionChunk,
-  RagMetadata,
-  ManualSummary,
-  ManualDetail,
-  ManualListResponse,
-  ManualCatalogResponse,
-} from './shogun/model/types';
-
-// Shogun API
-export { ShogunClient } from './shogun/api/client';
-export { default as ShogunClientDefault } from './shogun/api/client';
-
-// Shogun Hooks (ViewModel)
-export { useShogunDetail } from './shogun/hooks/useShogunDetail';
-export { useShogunCatalog } from './shogun/hooks/useShogunCatalog';
-
-// Shogun UI Components
-export { ItemCard } from './shogun/ui/ItemCard';
-export { SectionBlock } from './shogun/ui/SectionBlock';
-export { FlowPane } from './shogun/ui/FlowPane';
-export { VideoPane } from './shogun/ui/VideoPane';
-// Export UI-controlled modal as `ManualModal` for page usage
-export { ManualModal } from './shogun/ui/ShogunModal';
-// Export routing-backed detail page component as `ManualDetailPage`
-// Export routing-backed detail page component under a route-specific name to avoid collision with pages' ManualDetailPage
-export { default as ManualDetailRoute } from './shogun/ui/ManualDetailPage';
-export { DetailContent } from './shogun/ui/DetailContent';
-
-// ============================================================================
-// Shared Utilities
-// ============================================================================
-
-// Shared Hooks
-export { useManualDoc } from './shared/useManualDoc';
-export { useManualToc } from './shared/useManualToc';
-export { useManualCategories } from './shared/useManualCategories';
+// UI Components (re-export with original names)
+export { ManualResultList } from './ui/components/ManualResultList';
+export { ManualViewer } from './ui/components/ManualViewer';
+export { ManualSearchBox } from './ui/components/ManualSearchBox';
+export { default as ManualDetailPage } from './ui/components/ManualDetailPage';
+export { default as ManualDetailRoute } from './ui/components/ManualDetailPage'; // Alias for routing
+export { ManualModal } from './ui/components/ShogunModal';  // ManualModal is the named export
+export { DetailContent } from './ui/components/DetailContent';

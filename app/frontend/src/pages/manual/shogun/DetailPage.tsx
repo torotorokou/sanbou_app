@@ -5,9 +5,9 @@
 import React from 'react';
 import { Breadcrumb, Button, Col, Layout, Row, Space, Spin, Typography } from 'antd';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useShogunCatalog } from '@/features/manual/shogun/hooks/useShogunCatalog';
-import { FlowPane } from '@/features/manual/shogun/ui/FlowPane';
-import { VideoPane } from '@/features/manual/shogun/ui/VideoPane';
+import { useShogunCatalog } from '@features/manual';
+import { FlowPane } from '@features/manual/ui/components/FlowPane';
+import { VideoPane } from '@features/manual/ui/components/VideoPane';
 import styles from './ShogunDetail.module.css';
 
 const { Title, Paragraph } = Typography;
