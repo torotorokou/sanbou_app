@@ -10,8 +10,8 @@ import dayjs from "dayjs";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RTooltip, Legend, Line, Cell } from "recharts";
 import type { IsoDate } from "../../domain/types";
 import { COLORS, FONT } from "../../domain/constants";
-import { ChartFrame } from "../components/ChartFrame";
-import { SingleLineLegend } from "../components/SingleLineLegend";
+import { ChartFrame } from "../../shared/ui/ChartFrame";
+import { SingleLineLegend } from "../../shared/ui/SingleLineLegend";
 import { isSecondSunday } from "../../domain/services/calendarService";
 
 export type DailyActualsCardProps = {
