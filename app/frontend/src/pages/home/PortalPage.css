@@ -1,4 +1,5 @@
 /* PortalPage styles - uses shared responsive breakpoints */
+@import "@/shared/styles/custom-media.css";
 
 .portal-page {
   padding: 32px 32px 48px;

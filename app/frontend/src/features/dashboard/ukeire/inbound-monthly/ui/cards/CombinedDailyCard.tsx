@@ -8,7 +8,6 @@ import { Card, Tabs } from "antd";
 import { DailyActualsCard, type DailyActualsCardProps } from "./DailyActualsCard";
 import { DailyCumulativeCard, type DailyCumulativeCardProps } from "./DailyCumulativeCard";
 import { useInstallTabsFillCSS } from "@/features/dashboard/ukeire/shared/styles/useInstallTabsFillCSS";
-import tabsTight from "@/shared/styles/tabsTight.module.css";
 
 export type CombinedDailyCardProps = {
   dailyProps: DailyActualsCardProps;
@@ -28,7 +27,7 @@ export const CombinedDailyCard: React.FC<CombinedDailyCardProps> = ({ dailyProps
     >
       <Tabs
         size="small"
-        className={`${tabsClass} ${tabsTight.root}`}
+        className={tabsClass}
         tabBarStyle={{ padding: "4px 8px", minHeight: 26, height: 26, fontSize: 13, marginBottom: 0 }}
         style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}
         items={[

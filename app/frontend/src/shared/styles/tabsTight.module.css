@@ -1,7 +1,0 @@
-/* AntD Tabs の下マージンとコンテンツ上パディングを削る */
-.root :global(.ant-tabs-nav) {
-  margin-bottom: 0 !important;
-}
-.root :global(.ant-tabs-content-holder) {
-  padding-top: 0 !important;
-}

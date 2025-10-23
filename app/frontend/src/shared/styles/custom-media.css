@@ -1,0 +1,18 @@
+/* ===================================================
+ * AUTO-GENERATED CUSTOM MEDIA (DO NOT EDIT MANUALLY)
+ * ===================================================
+ * Generated from: src/shared/constants/breakpoints.ts
+ * Last sync: 2025-10-23
+ * 
+ * Lean-3 Breakpoints:
+ * - Mobile:  ≤767px  (--lt-md)
+ * - Tablet:  768-1199px (--ge-md and not --ge-xl)
+ * - Desktop: ≥1200px (--ge-xl)
+ */
+
+@custom-media --lt-md (max-width: 767px);      /* Mobile: ≤767px */
+@custom-media --ge-md (min-width: 768px);      /* Tablet+: ≥768px */
+@custom-media --ge-xl (min-width: 1200px);     /* Desktop: ≥1200px */
+
+/* Specific ranges (optional, for fine control) */
+@custom-media --md-only (min-width: 768px) and (max-width: 1199px); /* Tablet only */

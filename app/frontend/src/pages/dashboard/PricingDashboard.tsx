@@ -14,9 +14,10 @@ const PricingDashboard: React.FC = () => {
     return (
         <div style={{ padding: 24 }}>
             <Title level={3}>単価分析ダッシュボード</Title>
+            {/* モバイル（1列）、タブレット（2列）、デスクトップ（3列） */}
             <Row gutter={[16, 16]}>
                 {/* ✅ 全体平均単価 */}
-                <Col xs={24} md={12} lg={8}>
+                <Col xs={24} md={12} xl={8}>
                     <Card
                         title='全体平均単価'
                         extra={<DollarCircleOutlined />}
@@ -31,7 +32,7 @@ const PricingDashboard: React.FC = () => {
                 </Col>
 
                 {/* ✅ 商品別単価 */}
-                <Col xs={24} md={12} lg={8}>
+                <Col xs={24} md={12} xl={8}>
                     <Card
                         title='商品別単価'
                         extra={<ShoppingCartOutlined />}
@@ -46,7 +47,7 @@ const PricingDashboard: React.FC = () => {
                 </Col>
 
                 {/* ✅ 営業者別単価 */}
-                <Col xs={24} md={12} lg={8}>
+                <Col xs={24} md={12} xl={8}>
                     <Card
                         title='営業者別単価'
                         extra={<TeamOutlined />}
@@ -61,7 +62,7 @@ const PricingDashboard: React.FC = () => {
                 </Col>
 
                 {/* ✅ 顧客別単価 */}
-                <Col xs={24} md={12} lg={8}>
+                <Col xs={24} md={12} xl={8}>
                     <Card title='顧客別単価' extra={<UserOutlined />} hoverable>
                         <Text>値引きが過剰な顧客を把握し戦略調整</Text>
                         <br />
@@ -70,7 +71,7 @@ const PricingDashboard: React.FC = () => {
                 </Col>
 
                 {/* ✅ 商品 × 営業別単価 */}
-                <Col xs={24} md={12} lg={8}>
+                <Col xs={24} md={12} xl={8}>
                     <Card
                         title='商品×営業別単価'
                         extra={<BarChartOutlined />}

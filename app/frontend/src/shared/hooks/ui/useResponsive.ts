@@ -14,7 +14,7 @@
  * ```
  */
 import { useEffect, useState } from "react";
-import { bp } from "@/shared/constants/breakpoints";
+import { bp } from "@/shared/constants";
 
 export function useResponsive() {
   const [w, setW] = useState<number>(() => 
