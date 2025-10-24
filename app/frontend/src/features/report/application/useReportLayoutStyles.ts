@@ -1,31 +1,66 @@
 import { useMemo } from "react";
-import { useResponsive, customTokens, isTabletOrHalf, ANT } from "@/shared";
+import { useResponsive, customTokens, bp } from "@/shared";
 
 /**
- * レイアウトとスタイリングのロジックを管理するフック - シンプル版
+ * レイアウトとスタイリングのロジックを管理するフック - useResponsive(flags)統合版
  *
  * 🎯 目的：
- * - 複雑なブレークポイントを3つに統合（Mobile, Tablet, Desktop）
+ * - window.innerWidth、isTabletOrHalf、ANT直参照を全廃
+ * - useResponsive(flags)のpickByDevice方式に統一
+ * - 4段階レスポンシブ（Mobile/Tablet/Laptop/Desktop）
+ * - 値の決定はフック先頭で一元管理
+ *
+ * 🔄 リファクタリング内容：
+ * - 複雑なブレークポイントを4段階に統一
  * - レスポンシブデザインの一元管理をより簡潔に
  * - 保守性を向上させるためのシンプルなサイズ体系
  */
 export const useReportLayoutStyles = () => {
-  const { isMobile, isTablet, width } = useResponsive();
-  const isMobileOrTablet = isMobile || isTablet;
+  // responsive: flagsベースの段階スイッチ
+  const { flags } = useResponsive();
 
-  // デバッグ情報（一時的）
-  // console.log('useReportLayoutStyles - Device Info:', {
-  //     isMobile,
-  //     isTablet,
-  //     isDesktop,
-  //     isMobileOrTablet,
-  //     windowWidth: typeof window !== 'undefined' ? window.innerWidth : 'undefined'
-  // });
+  // responsive: 段階的な値決定（Mobile→Tablet→Laptop→Desktop）
+  const pickByDevice = <T,>(mobile: T, tablet: T, laptop: T, desktop: T): T => {
+    if (flags.isMobile) return mobile;
+    if (flags.isTablet) return tablet;
+    if (flags.isLaptop) return laptop;
+    return desktop; // isDesktop
+  };
+
+  // responsive: 各種スタイル値を4段階で定義
+  const padding = pickByDevice(12, 16, 18, 20);
+  const gap = pickByDevice(12, 16, 20, 24);
+  const gapSmall = pickByDevice(8, 10, 12, 12);
+  const leftPanelWidth = pickByDevice<string | number>('100%', '100%', 260, 300);
+  const leftPanelMinWidth = pickByDevice<string | number>('auto', 'auto', 260, 300);
+  const leftPanelMaxWidth = pickByDevice<string | number>('100%', '100%', 260, 300);
+  const leftPanelFlex = pickByDevice<'1 1 auto' | '0 0 260px' | '0 0 300px'>('1 1 auto', '1 1 auto', '0 0 260px', '0 0 300px');
+  const leftPanelOrder = pickByDevice(3, 3, 1, 1);
+  
+  const centerPanelDisplay = pickByDevice<'none' | 'flex'>('none', 'none', 'flex', 'flex');
+  const centerPanelWidth = pickByDevice(48, 48, 48, 60);
+  const centerPanelMinHeight = pickByDevice(320, 320, 320, 400);
+  
+  const rightPanelOrder = pickByDevice(1, 1, 3, 3);
+  const rightPanelMinWidth = pickByDevice(0, 0, bp.xs, 600);
+  const rightPanelFlex = pickByDevice<'1 1 auto'>('1 1 auto', '1 1 auto', '1 1 auto', '1 1 auto');
+  
+  const previewGap = pickByDevice(8, 10, 12, 16);
+  const previewHeight = pickByDevice('50vh', '55vh', '100%', '100%');
+  const previewWidth = pickByDevice('100%', '100%', 'auto', 'auto');
+  
+  const downloadWidth = pickByDevice<string | number>('100%', '100%', 100, 120);
+  const downloadMarginTop = pickByDevice(12, 12, 0, 0);
+
+  // responsive: レイアウト方向（Mobile/Tablet=縦、Laptop/Desktop=横）
+  const mainLayoutDirection = pickByDevice<'column' | 'row'>('column', 'column', 'row', 'row');
+  const previewDirection = pickByDevice<'column' | 'row'>('column', 'column', 'row', 'row');
+  const downloadDirection = pickByDevice<'row' | 'column'>('row', 'row', 'column', 'column');
 
   const styles = useMemo(
     () => ({
       container: {
-        padding: isMobile ? 12 : isTablet ? 16 : 20,
+        padding,
         height: '100%',
         display: 'flex',
         flexDirection: 'column' as const,
@@ -34,101 +69,79 @@ export const useReportLayoutStyles = () => {
       },
       mainLayout: {
         display: "flex",
-        flexDirection: (isMobileOrTablet ? "column" : "row") as
-          | "row"
-          | "column",
-  gap: isMobile ? 12 : isTablet ? 16 : (typeof width === 'number' && width < ANT.xl ? 16 : 24),
-        alignItems: "stretch", // 中央配置のために'stretch'に統一
+        flexDirection: mainLayoutDirection,
+        gap,
+        alignItems: "stretch",
         flex: 1,
-        marginTop: isMobile ? 8 : 12,
+        marginTop: pickByDevice(8, 10, 12, 12),
         minHeight: 0,
         overflow: 'hidden' as const,
         width: "100%",
-        minWidth: 0, // フレックス内の子要素でのはみ出しを防ぐ
+        minWidth: 0,
         boxSizing: "border-box" as const,
       },
       leftPanel: {
         display: "flex",
         flexDirection: "column" as const,
-        gap: isMobile ? 8 : 12, // gapも縮小してコンパクトに
-        // シンプルな3段階のサイズ設定
-  width: isMobileOrTablet ? "100%" : (typeof width === 'number' && width < ANT.xl ? "260px" : "300px"),
-  minWidth: isMobileOrTablet ? "auto" : (typeof width === 'number' && width < ANT.xl ? "260px" : "300px"),
-  maxWidth: isMobileOrTablet ? "100%" : (typeof width === 'number' && width < ANT.xl ? "260px" : "300px"),
+        gap: gapSmall,
+        width: leftPanelWidth,
+        minWidth: leftPanelMinWidth,
+        maxWidth: leftPanelMaxWidth,
         minHeight: 0,
-        // デスクトップではサイドバー幅を固定（他ページと同様の挙動）
-        flex: (isMobileOrTablet ? "1 1 auto" : (typeof width === 'number' && width < ANT.xl ? "0 0 260px" : "0 0 300px")) as
-          | "1 1 auto"
-          | "0 0 260px"
-          | "0 0 300px",
-        flexShrink: isMobileOrTablet ? 1 : 0,
-        flexGrow: isMobileOrTablet ? 1 : 0,
-        order: isMobileOrTablet ? 3 : 1,
+        flex: leftPanelFlex,
+        flexShrink: flags.isMobile || flags.isTablet ? 1 : 0,
+        flexGrow: flags.isMobile || flags.isTablet ? 1 : 0,
+        order: leftPanelOrder,
         boxSizing: "border-box" as const,
       },
       centerPanel: {
-        display: isMobileOrTablet ? "none" : "flex",
-        flexDirection: "column", // 縦方向のflexコンテナ
-        justifyContent: "center", // 垂直方向中央配置
-        alignItems: "center", // 水平方向中央配置
-        // NOTE: ここはアイコン/矢印等のセンター用で幅固定だが、将来はclampで可変化検討
-  width: (typeof width === 'number' && isTabletOrHalf(width)) ? "48px" : "60px",
-  minWidth: (typeof width === 'number' && isTabletOrHalf(width)) ? "48px" : "60px",
-  maxWidth: (typeof width === 'number' && isTabletOrHalf(width)) ? "48px" : "60px",
-  minHeight: (typeof width === 'number' && isTabletOrHalf(width)) ? "320px" : "400px", // 最小高さを設定して中央配置を確実に
+        display: centerPanelDisplay,
+        flexDirection: "column",
+        justifyContent: "center",
+        alignItems: "center",
+        width: centerPanelWidth,
+        minWidth: centerPanelWidth,
+        maxWidth: centerPanelWidth,
+        minHeight: centerPanelMinHeight,
         flexShrink: 0,
         flexGrow: 0,
         order: 2,
         boxSizing: "border-box" as const,
-        // デバッグ用の背景色（一時的）
-        // backgroundColor: 'rgba(255, 0, 0, 0.1)',
-        // border: '1px solid red',
       },
       // モバイル・タブレット用のアクションセクション
       mobileActionsPanel: {
-        display: isMobileOrTablet ? "flex" : "none",
+        display: flags.isMobile || flags.isTablet ? "flex" : "none",
         width: "100%",
-        padding: isMobile ? 12 : 16,
+        padding: pickByDevice(12, 14, 16, 16),
         backgroundColor: customTokens.colorBgCard,
         borderRadius: 8,
-        marginBottom: isMobile ? 12 : 16,
+        marginBottom: pickByDevice(12, 14, 16, 16),
         boxShadow: `0 2px 8px ${customTokens.shadowLight}`,
         order: 3,
       },
       rightPanel: {
-        // プレビューパネル - シンプルな3段階設定
-        ...(isMobileOrTablet
-          ? {
-              width: "100%",
-              maxWidth: "100%",
-              flex: "1 1 auto",
-            }
-          : {
-              flex: "1 1 auto",
-              minWidth: (typeof width === 'number' && width < ANT.xl) ? ANT.xs : 600,
-            }),
+        width: flags.isMobile || flags.isTablet ? '100%' : undefined,
+        maxWidth: flags.isMobile || flags.isTablet ? '100%' : undefined,
+        flex: rightPanelFlex,
+        minWidth: rightPanelMinWidth,
         display: "flex",
         flexDirection: "column" as const,
-        order: isMobileOrTablet ? 1 : 3,
-        minWidth: 0, // 右パネル自身も縮小可能に
-        minHeight: 0,
+        order: rightPanelOrder,
         overflow: 'hidden' as const,
         overflowX: ("hidden" as unknown) as "visible" | "hidden" | "clip" | "scroll" | "auto",
       },
-  previewContainer: {
-    display: "flex",
-    flex: 1,
-  gap: isMobile ? 8 : (typeof width === 'number' && width < ANT.xl) ? 12 : 16,
-    // プレビューを縦方向に伸ばして下部の余白を埋める
-    alignItems: "stretch",
-    flexDirection: (isMobile ? "column" : "row") as "row" | "column",
-    minHeight: 0,
-  },
-  previewArea: {
-    flex: 1,
-  // flex レイアウトで縦に伸ばす。モバイルでは固定高さを残す。
-  height: isMobile ? "50vh" : "100%",
-    width: isMobile ? "100%" : "auto",
+      previewContainer: {
+        display: "flex",
+        flex: 1,
+        gap: previewGap,
+        alignItems: "stretch",
+        flexDirection: previewDirection,
+        minHeight: 0,
+      },
+      previewArea: {
+        flex: 1,
+        height: previewHeight,
+        width: previewWidth,
         border: `1px solid ${customTokens.colorBorder}`,
         borderRadius: 8,
         boxShadow: `0 2px 8px ${customTokens.shadowLight}`,
@@ -140,18 +153,45 @@ export const useReportLayoutStyles = () => {
       },
       downloadSection: {
         display: "flex",
-        flexDirection: isMobile ? "row" : "column",
+        flexDirection: downloadDirection,
         justifyContent: "center",
         alignItems: "center",
-  width: isMobile ? "100%" : (typeof width === 'number' && width < ANT.xl) ? 100 : 120,
+        width: downloadWidth,
         gap: 8,
-        marginTop: isMobile ? 12 : 0,
+        marginTop: downloadMarginTop,
       },
       sampleThumbnail: {
         className: "sample-thumbnail",
       },
     }),
-  [isMobile, isTablet, isMobileOrTablet, width] // 幅変化でも再評価
+    [
+      flags.isMobile,
+      flags.isTablet,
+      flags.isLaptop,
+      flags.isDesktop,
+      padding,
+      gap,
+      gapSmall,
+      leftPanelWidth,
+      leftPanelMinWidth,
+      leftPanelMaxWidth,
+      leftPanelFlex,
+      leftPanelOrder,
+      centerPanelDisplay,
+      centerPanelWidth,
+      centerPanelMinHeight,
+      rightPanelOrder,
+      rightPanelMinWidth,
+      rightPanelFlex,
+      previewGap,
+      previewHeight,
+      previewWidth,
+      downloadWidth,
+      downloadMarginTop,
+      mainLayoutDirection,
+      previewDirection,
+      downloadDirection,
+    ]
   );
 
   return styles;

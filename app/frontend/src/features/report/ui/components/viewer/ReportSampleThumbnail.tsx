@@ -1,12 +1,21 @@
 import React, { useState } from 'react';
 import { Modal } from 'antd';
-import { ANT } from '@/shared/constants/breakpoints';
+import { useResponsive } from '@/shared';
 
 type Props = {
     url: string;
     width?: string;
     height?: string;
 };
+
+/**
+ * レポートサンプルサムネイルコンポーネント - useResponsive(flags)統合版
+ * 
+ * 🔄 リファクタリング内容：
+ * - window.innerWidth/innerHeight直参照を全廃
+ * - useResponsive(width, height, flags)で画面サイズを取得
+ * - モーダルサイズを段階的に決定（4段階レスポンシブ）
+ */
 
 const ReportSampleThumbnail: React.FC<Props> = ({
     url,
@@ -16,6 +25,9 @@ const ReportSampleThumbnail: React.FC<Props> = ({
     const [visible, setVisible] = useState(false);
     const [imgSize, setImgSize] = useState({ width: 0, height: 0 });
 
+    // responsive: flagsベースの段階スイッチ
+    const { width: viewportWidth, height: viewportHeight, flags } = useResponsive();
+
     // 実画像サイズ取得
     const handleImageLoad = (
         e: React.SyntheticEvent<HTMLImageElement, Event>
@@ -24,13 +36,21 @@ const ReportSampleThumbnail: React.FC<Props> = ({
         setImgSize({ width: naturalWidth, height: naturalHeight });
     };
 
-    // 画面サイズ
-    const VIEWPORT_W = typeof window !== 'undefined' ? window.innerWidth : 1024; // 1024 は一般的なタブレット横幅
-    const VIEWPORT_H = typeof window !== 'undefined' ? window.innerHeight : ANT.md;
+    // responsive: 段階的な値決定（Mobile→Tablet→Laptop→Desktop）
+    const pickByDevice = <T,>(mobile: T, tablet: T, laptop: T, desktop: T): T => {
+        if (flags.isMobile) return mobile;
+        if (flags.isTablet) return tablet;
+        if (flags.isLaptop) return laptop;
+        return desktop; // isDesktop
+    };
+
+    // responsive: モーダルの最大サイズ率（画面比）
+    const modalHeightRatio = pickByDevice(0.85, 0.88, 0.90, 0.90);
+    const modalWidthRatio = pickByDevice(0.90, 0.92, 0.95, 0.95);
 
     // モーダルの最大サイズ
-    const MAX_MODAL_HEIGHT = Math.floor(VIEWPORT_H * 0.9);
-    const MAX_MODAL_WIDTH = Math.floor(VIEWPORT_W * 0.95);
+    const MAX_MODAL_HEIGHT = Math.floor(viewportHeight * modalHeightRatio);
+    const MAX_MODAL_WIDTH = Math.floor(viewportWidth * modalWidthRatio);
 
     // 画像サイズ（画面内最大になるよう調整）
     let displayWidth = imgSize.width;

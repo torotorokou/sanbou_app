@@ -1,7 +1,7 @@
 import React from 'react';
 import type { ReactNode } from 'react';
 import { useReportLayoutStyles } from '@features/report/application/useReportLayoutStyles';
-import { useResponsive, isTabletOrHalf } from '@/shared';
+import { useResponsive } from '@/shared';
 import SampleSection from './SampleSection';
 import CsvUploadSection from './CsvUploadSection';
 import ActionsSection from './ActionsSection';
@@ -9,6 +9,15 @@ import PreviewSection from './PreviewSection';
 import type { UploadProps } from 'antd';
 import type { UploadFileConfig } from '@features/report/domain/types/report.types';
 import type { CsvFileType } from '@features/database';
+
+/**
+ * レポート管理ページレイアウト - useResponsive(flags)統合版
+ * 
+ * 🔄 リファクタリング内容：
+ * - isTabletOrHalf、window.innerWidth直参照を全廃
+ * - useResponsive(flags)のpickByDevice方式に統一
+ * - 4段階レスポンシブ（Mobile/Tablet/Laptop/Desktop）
+ */
 
 // Convert UploadFileConfig validation result to CsvFileType format
 const mapValidationResult = (result?: 'valid' | 'invalid' | 'unknown'): 'ok' | 'ng' | 'unknown' | undefined => {
@@ -21,7 +30,7 @@ const mapValidationResult = (result?: 'valid' | 'invalid' | 'unknown'): 'ok' | '
 const convertToCsvFileType = (files: UploadFileConfig[]): CsvFileType[] => {
     return files.map(f => ({
         ...f,
-        validationResult: mapValidationResult(f.validationResult as any)
+        validationResult: mapValidationResult(f.validationResult as 'valid' | 'invalid' | 'unknown' | undefined)
     }));
 };
 
@@ -60,10 +69,26 @@ const ReportManagePageLayout: React.FC<Props> = ({
     children,
 }) => {
     const styles = useReportLayoutStyles();
-    const { width, isMobile, isTablet } = useResponsive();
+    
+    // responsive: flagsベースの段階スイッチ
+    const { flags } = useResponsive();
 
-    const isHalfOrBelow = typeof width === 'number' ? isTabletOrHalf(width) : false;
-    const isMobileOrTablet = isMobile || isTablet;
+    // responsive: 段階的な値決定（Mobile→Tablet→Laptop→Desktop）
+    const pickByDevice = <T,>(mobile: T, tablet: T, laptop: T, desktop: T): T => {
+        if (flags.isMobile) return mobile;
+        if (flags.isTablet) return tablet;
+        if (flags.isLaptop) return laptop;
+        return desktop; // isDesktop
+    };
+
+    // responsive: レイアウト切り替え
+    // - isXs: 1列（データセット上、プレビュー下）
+    // - isSm/isTablet: 2列簡易レイアウト
+    // - Laptop以上: フルレイアウト
+    const isExtraSmallLayout = flags.isXs; // < 640px: 1列縦並び
+    const isCompactLayout = flags.isSm || flags.isTablet; // 640-1023px: 2列横並び
+    const gap = pickByDevice(8, 12, 16, 16);
+    const headerJustify = pickByDevice<'center' | 'flex-start'>('center', 'center', 'flex-start', 'flex-start');
 
     return (
         <div style={styles.container}>
@@ -72,7 +97,7 @@ const ReportManagePageLayout: React.FC<Props> = ({
                     style={{
                         marginBottom: 8,
                         display: 'flex',
-                        justifyContent: isHalfOrBelow ? 'center' : 'flex-start',
+                        justifyContent: headerJustify,
                         width: '100%'
                     }}
                 >
@@ -81,21 +106,58 @@ const ReportManagePageLayout: React.FC<Props> = ({
             )}
 
             <div style={styles.mainLayout}>
-                {isHalfOrBelow ? (
+                {/* responsive: isXs (< 640px) - 1列縦並びレイアウト */}
+                {isExtraSmallLayout ? (
                     <>
-                        <div style={{ display: 'flex', gap: isMobile ? 8 : 16, width: '100%', minHeight: 0, flex: 1 }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, width: '100%', minHeight: 0, flex: 1 }}>
+                            {/* データセット（上） */}
+                            <div style={{ flex: '0 0 auto', minHeight: 200 }}>
+                                <CsvUploadSection
+                                    uploadFiles={convertToCsvFileType(mappedUploadFiles ?? [])}
+                                    makeUploadProps={(label: string) =>
+                                        (makeUploadProps ? makeUploadProps(label) : ({} as UploadProps))
+                                    }
+                                />
+                            </div>
+
+                            {/* プレビュー（下） */}
+                            <div style={{ flex: '1 1 auto', minHeight: 300 }}>
+                                <div style={styles.previewContainer}>
+                                    <PreviewSection>{children}</PreviewSection>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* アクションボタン（最下部） */}
+                        <div style={{ width: '100%', marginTop: 12 }}>
+                            <ActionsSection
+                                onGenerate={onGenerate ?? (() => {})}
+                                readyToCreate={!!readyToCreate}
+                                finalized={!!finalized}
+                                onDownloadExcel={onDownloadExcel ?? (() => {})}
+                                onPrintPdf={onPrintPdf}
+                                excelUrl={excelUrl ?? null}
+                                pdfUrl={pdfUrl ?? null}
+                                excelReady={!!excelReady}
+                                pdfReady={!!pdfReady}
+                                compactMode={true}
+                            />
+                        </div>
+                    </>
+                ) : isCompactLayout ? (
+                    <>
+                        {/* isSm/Tablet (640-1023px) - 2列横並びレイアウト */}
+                        <div style={{ display: 'flex', gap, width: '100%', minHeight: 0, flex: 1 }}>
                             <div style={{ flex: '1 1 40%', display: 'flex', flexDirection: 'column', gap: 12, minHeight: 0 }}>
-                                                <div style={{ display: 'none' }}>
-                                                    <SampleSection sampleImageUrl={sampleImageUrl} />
-                                                </div>
-                                                <CsvUploadSection
-                                                    uploadFiles={convertToCsvFileType(mappedUploadFiles ?? [])}
-                                                    // CsvUploadSection 側は (label, setter) を受けるため、
-                                                    // setter は未使用でラップして互換にする
-                                                    makeUploadProps={(label: string) =>
-                                                        (makeUploadProps ? makeUploadProps(label) : ({} as UploadProps))
-                                                    }
-                                                />
+                                <div style={{ display: 'none' }}>
+                                    <SampleSection sampleImageUrl={sampleImageUrl} />
+                                </div>
+                                <CsvUploadSection
+                                    uploadFiles={convertToCsvFileType(mappedUploadFiles ?? [])}
+                                    makeUploadProps={(label: string) =>
+                                        (makeUploadProps ? makeUploadProps(label) : ({} as UploadProps))
+                                    }
+                                />
                             </div>
 
                             <div style={{ flex: '1 1 60%', display: 'flex', minHeight: 0 }}>
@@ -106,38 +168,23 @@ const ReportManagePageLayout: React.FC<Props> = ({
                         </div>
 
                         <div style={{ width: '100%', marginTop: 12 }}>
-                                            <ActionsSection
-                                                onGenerate={onGenerate ?? (() => {})}
-                                                readyToCreate={!!readyToCreate}
-                                                finalized={!!finalized}
-                                                onDownloadExcel={onDownloadExcel ?? (() => {})}
-                                                onPrintPdf={onPrintPdf}
-                                                excelUrl={excelUrl ?? null}
-                                                pdfUrl={pdfUrl ?? null}
-                                                excelReady={!!excelReady}
-                                                pdfReady={!!pdfReady}
-                                                compactMode={true}
-                                            />
+                            <ActionsSection
+                                onGenerate={onGenerate ?? (() => {})}
+                                readyToCreate={!!readyToCreate}
+                                finalized={!!finalized}
+                                onDownloadExcel={onDownloadExcel ?? (() => {})}
+                                onPrintPdf={onPrintPdf}
+                                excelUrl={excelUrl ?? null}
+                                pdfUrl={pdfUrl ?? null}
+                                excelReady={!!excelReady}
+                                pdfReady={!!pdfReady}
+                                compactMode={true}
+                            />
                         </div>
                     </>
                 ) : (
                     <>
-                        {isMobileOrTablet && (
-                            <div style={styles.mobileActionsPanel}>
-                                                <ActionsSection
-                                                    onGenerate={onGenerate ?? (() => {})}
-                                                    readyToCreate={!!readyToCreate}
-                                                    finalized={!!finalized}
-                                                    onDownloadExcel={onDownloadExcel ?? (() => {})}
-                                                    onPrintPdf={onPrintPdf}
-                                                    excelUrl={excelUrl ?? null}
-                                                    pdfUrl={pdfUrl ?? null}
-                                                    excelReady={!!excelReady}
-                                                    pdfReady={!!pdfReady}
-                                                />
-                            </div>
-                        )}
-
+                        {/* Laptop/Desktop (≥1024px) - フルレイアウト */}
                         <div style={styles.leftPanel}>
                             <SampleSection sampleImageUrl={sampleImageUrl} />
                             <CsvUploadSection
@@ -149,17 +196,17 @@ const ReportManagePageLayout: React.FC<Props> = ({
                         </div>
 
                         <div style={styles.centerPanel as React.CSSProperties}>
-                                            <ActionsSection
-                                                onGenerate={onGenerate ?? (() => {})}
-                                                readyToCreate={!!readyToCreate}
-                                                finalized={!!finalized}
-                                                onDownloadExcel={onDownloadExcel ?? (() => {})}
-                                                onPrintPdf={onPrintPdf}
-                                                excelUrl={excelUrl ?? null}
-                                                pdfUrl={pdfUrl ?? null}
-                                                excelReady={!!excelReady}
-                                                pdfReady={!!pdfReady}
-                                            />
+                            <ActionsSection
+                                onGenerate={onGenerate ?? (() => {})}
+                                readyToCreate={!!readyToCreate}
+                                finalized={!!finalized}
+                                onDownloadExcel={onDownloadExcel ?? (() => {})}
+                                onPrintPdf={onPrintPdf}
+                                excelUrl={excelUrl ?? null}
+                                pdfUrl={pdfUrl ?? null}
+                                excelReady={!!excelReady}
+                                pdfReady={!!pdfReady}
+                            />
                         </div>
 
                         <div style={styles.rightPanel}>
