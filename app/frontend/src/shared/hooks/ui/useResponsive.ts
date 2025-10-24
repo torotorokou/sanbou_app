@@ -16,26 +16,25 @@
  * ```
  */
 import { useEffect, useRef, useState } from "react";
-import {
-  bp,
-  isMobile as isMobileWidth,
-  isTabletOrHalf as isTabletWidth,
-  isDesktop as isDesktopWidth,
-  type ViewportTier,
-} from "@/shared/constants";
+import { bp } from "@/shared/constants";
+
+// eslint-disable-next-line no-restricted-syntax
+export type Tier = "xs" | "sm" | "md" | "lg" | "xl";
 
 export type ResponsiveFlags = {
-  // Lean-3
-  isMobile: boolean;   // ≤767
-  isTablet: boolean;   // 768–1279
-  isDesktop: boolean;  // ≥1280
-  // 補助
+  // 5段階詳細（Tailwind準拠）
+  isXs: boolean;  // < 640
+  isSm: boolean;  // 640–767
+  isMd: boolean;  // 768–1023
+  isLg: boolean;  // 1024–1279
+  isXl: boolean;  // ≥1280
+  tier: Tier;
+  // グルーピング（Lean-3互換）
+  isMobile: boolean;   // xs or sm (≤767)
+  isTablet: boolean;   // md (768–1023)
+  isLaptop: boolean;   // lg (1024–1279)
+  isDesktop: boolean;  // xl (≥1280)
   isNarrow: boolean;   // <1280
-  isSm: boolean;       // 640–767
-  isMd: boolean;       // 768–1023
-  isLg: boolean;       // 1024–1279
-  isXl: boolean;       // ≥1280
-  tier: ViewportTier;  // 'mobile' | 'tabletHalf' | 'desktop'
 };
 
 export type ResponsiveState = {
@@ -51,23 +50,24 @@ export type ResponsiveState = {
   isMd: boolean;
   isLg: boolean;
   isXl: boolean;
-  tier: ViewportTier;
+  tier: Tier;
 };
 
-function makeFlags(w: number): ResponsiveFlags {
-  const mobile  = isMobileWidth(w);
-  const tablet  = isTabletWidth(w);
-  const desktop = isDesktopWidth(w);
+export function makeFlags(w: number): ResponsiveFlags {
+  const isXs = w < bp.sm;
+  const isSm = w >= bp.sm && w < bp.md;
+  const isMd = w >= bp.md && w < bp.lg;
+  const isLg = w >= bp.lg && w < bp.xl;
+  const isXl = w >= bp.xl;
+  // eslint-disable-next-line no-restricted-syntax
+  const tier: Tier = isXs ? "xs" : isSm ? "sm" : isMd ? "md" : isLg ? "lg" : "xl";
   return {
-    isMobile: mobile,
-    isTablet: tablet,
-    isDesktop: desktop,
+    isXs, isSm, isMd, isLg, isXl, tier,
+    isMobile: isXs || isSm,
+    isTablet: isMd,
+    isLaptop: isLg,
+    isDesktop: isXl,
     isNarrow: w < bp.xl,
-    isSm: w >= bp.sm && w < bp.md,
-    isMd: w >= bp.md && w < bp.lg,
-    isLg: w >= bp.lg && w < bp.xl,
-    isXl: w >= bp.xl,
-    tier: mobile ? "mobile" : tablet ? "tabletHalf" : "desktop",
   };
 }
 
