@@ -1,6 +1,7 @@
 import React from 'react';
 import { ReportBase, ReportHeader } from '@features/report';
 import { useReportManager } from '@features/report';
+import { useResponsive } from '@/shared';
 import styles from './ReportPage.module.css';
 
 /**
@@ -11,20 +12,45 @@ import styles from './ReportPage.module.css';
  * - propsの手動構築を自動化（getReportBaseProps）
  * - 可読性とメンテナンス性を大幅に向上
  * - インラインスタイルをCSS Modulesに移行
+ * - useResponsive統合による段階的レスポンシブ対応（Mobile/Tablet/Laptop/Desktop）
  * 
- * 📝 従来のコード行数：~100行 → 現在：~28行（72%削減）
+ * 📝 従来のコード行数：~100行 → 現在：~45行（55%削減）
  * 
  * 🎯 責任：
  * - UIの構造とレイアウトのみ
  * - ビジネスロジックはカスタムフック内で管理
+ * - レスポンシブ値の決定は先頭で一元管理
  */
 
 const ManagePage: React.FC = () => {
+    // responsive: flagsベースの段階スイッチ
+    const { flags } = useResponsive();
     const reportManager = useReportManager('factory_report');
     const reportBaseProps = reportManager.getReportBaseProps();
 
+    // responsive: 段階的な値決定（Mobile→Tablet→Laptop→Desktop）
+    const pickByDevice = <T,>(mobile: T, tablet: T, laptop: T, desktop: T): T => {
+        if (flags.isMobile) return mobile;
+        if (flags.isTablet) return tablet;
+        if (flags.isLaptop) return laptop;
+        return desktop; // isDesktop
+    };
+
+    // responsive: ページ全体のパディング（Mobile: 8px → Tablet: 12px → Laptop: 16px → Desktop: 20px）
+    const pagePadding = pickByDevice(8, 12, 16, 20);
+
+    // responsive: コンテンツエリアの余白調整
+    const contentGap = pickByDevice(8, 10, 12, 16);
+
     return (
-        <div className={styles.pageContainer}>
+        <div 
+            className={styles.pageContainer}
+            style={{
+                // responsive: CSS変数でパディングを段階的に制御
+                ['--page-padding' as string]: `${pagePadding}px`,
+                gap: `${contentGap}px`,
+            }}
+        >
             <ReportHeader
                 reportKey={reportManager.selectedReport}
                 onChangeReportKey={reportManager.changeReport}
