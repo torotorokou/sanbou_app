@@ -119,8 +119,4 @@ export function useResponsive(): ResponsiveState {
   return state;
 }
 
-// 互換エイリアス（段階的移行用・将来削除予定）
-export const useScreen = useResponsive;
-export const useWindowSize = useResponsive;
-
 export default useResponsive;
