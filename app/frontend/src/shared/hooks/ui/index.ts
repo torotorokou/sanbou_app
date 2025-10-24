@@ -1,7 +1,6 @@
 // UI関連のhooks
 export { useResponsive } from './useResponsive';
-export { useScreen } from './useScreen';
-export { useWindowSize } from './useWindowSize';
+export { useScreen, useWindowSize } from './useResponsive'; // 互換エイリアス
 export { useContainerSize } from './useContainerSize';
 export { useScrollTracker } from './useScrollTracker';
 export {

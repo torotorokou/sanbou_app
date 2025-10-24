@@ -16,7 +16,7 @@ import {
 // CalendarCard removed: right column widgets trimmed
 import { useNavigate } from 'react-router-dom';
 import { ROUTER_PATHS } from '@app/routes/routes';
-import { useWindowSize, bp } from '@/shared';
+import { useResponsive, bp } from '@/shared';
 import ResponsiveNotice from '@/features/notice/ui/ResponsiveNotice';
 import './PortalPage.css';
 
@@ -404,7 +404,7 @@ type Notice = {
 };
 
 export const PortalPage: React.FC = () => {
-  const { width } = useWindowSize(); // 明示的リサイズ検知（再レンダーで追従）
+  const { width } = useResponsive(); // 明示的リサイズ検知（再レンダーで追従）
   const { token } = theme.useToken();
 
   // isCompact: use nearest project breakpoint (bp.lg = 1024)

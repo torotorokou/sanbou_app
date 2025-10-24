@@ -1,7 +1,7 @@
 import React from 'react';
 import { Modal, Steps, Button } from 'antd';
 import type { ReactNode } from 'react';
-import { useWindowSize } from '@shared/hooks/ui';
+import { useResponsive } from '@/shared';
 
 const { Step } = Steps;
 
@@ -26,7 +26,7 @@ const ReportStepperModal: React.FC<ReportStepperModalProps> = ({
     children,
     stepConfigs,
 }) => {
-    const { isMobile, isTablet } = useWindowSize();
+    const { isMobile, isTablet } = useResponsive();
     const modalWidth = isMobile ? '95vw' : isTablet ? 640 : 720;
     // stepConfigsが未定義や空の場合、currentStepが範囲外の場合は何も表示しない
     if (!stepConfigs || stepConfigs.length === 0 || currentStep < 0 || currentStep >= stepConfigs.length) {

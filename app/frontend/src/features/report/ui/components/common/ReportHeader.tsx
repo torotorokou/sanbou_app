@@ -1,7 +1,6 @@
 import React from 'react';
 import { Steps } from 'antd';
-import { useWindowSize } from '@shared/hooks/ui';
-import { isTabletOrHalf, ANT } from '@/shared/constants/breakpoints';
+import { useResponsive, isTabletOrHalf, ANT } from '@/shared';
 import ReportSelector from './ReportSelector';
 import type { PageGroupKey } from '@features/report/model/config';
 
@@ -24,7 +23,7 @@ const ReportHeader: React.FC<ReportHeaderProps> = ({
     isFinalized,
     pageGroup,
 }) => {
-    const { isMobile, isTablet, width } = useWindowSize();
+    const { isMobile, isTablet, width } = useResponsive();
     const isMobileOrTablet = isMobile || isTablet;
     // 幅が autoCollapse 未満ならステップは最小表示にする
     const minimizeSteps = typeof width === 'number' ? isTabletOrHalf(width) : false;

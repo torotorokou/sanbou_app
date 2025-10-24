@@ -1,13 +1,13 @@
 import React from 'react';
 import { Card } from 'antd';
-import { useWindowSize } from '@shared/hooks/ui';
+import { useResponsive } from '@/shared';
 
 /**
  * レスポンシブデバッグ情報表示コンポーネント
  * 開発時にブレークポイントの動作を確認するため
  */
 const ResponsiveDebugInfo: React.FC = () => {
-    const { width, isMobile, isTablet, isDesktop } = useWindowSize();
+    const { width, isMobile, isTablet, isDesktop } = useResponsive();
 
     return (
         <Card

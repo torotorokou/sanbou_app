@@ -10,8 +10,7 @@ import {
   ChatAnswerSection,
   PdfPreviewModal,
 } from '@features/chat';
-import { useWindowSize } from '@shared/hooks/ui';
-import { ANT, isTabletOrHalf } from '@/shared/constants/breakpoints';
+import { useResponsive, ANT, isTabletOrHalf } from '@/shared';
 import type { CategoryDataMap, StepItem } from '../../domain/types/types';
 
 interface NaviLayoutProps {
@@ -64,7 +63,7 @@ export const NaviLayout: React.FC<NaviLayoutProps> = ({
   handleSearch,
   stepItems,
 }) => {
-  const { width } = useWindowSize();
+  const { width } = useResponsive();
   const isNarrow = typeof width === 'number' ? isTabletOrHalf(width) : false;
   const isMd =
     typeof width === 'number' ? width >= ANT.md && width < ANT.xl : false;

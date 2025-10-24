@@ -12,6 +12,7 @@ import { ChartFrame } from "@/features/dashboard/ukeire/shared/ui/ChartFrame";
 import { SingleLineLegend } from "@/features/dashboard/ukeire/shared/ui/SingleLineLegend";
 import { clamp } from "@/features/dashboard/ukeire/domain/valueObjects";
 import { useInstallTabsFillCSS } from "@/features/dashboard/ukeire/shared/styles/useInstallTabsFillCSS";
+// レスポンシブ判定は Page 側へ移譲したため、ここではフックを使わない
 
 export type KPIBlockProps = {
   title: string;
@@ -38,6 +39,12 @@ export type ForecastCardProps = {
   daysInMonth: number;
   oddDayTicks: string[];
   forecastP50: number;
+  /**
+   * レイアウト判定は Page 側で行う（責務の分離）。
+   * true = width >= 768px（デスクトップ/タブレットの広い表示）
+   * undefined の場合は既存のデスクトップ挙動を維持する（保守性目的）。
+   */
+  isGeMd?: boolean;
 };
 
 const KPIBlock: React.FC<KPIBlockProps> = ({ title, p50, p10, p90, target }) => {
@@ -80,7 +87,7 @@ const KPIBlock: React.FC<KPIBlockProps> = ({ title, p50, p10, p90, target }) => 
   );
 };
 
-export const ForecastCard: React.FC<ForecastCardProps> = ({ kpis, chartData, cumData, monthTarget, daysInMonth, oddDayTicks, forecastP50 }) => {
+export const ForecastCard: React.FC<ForecastCardProps> = ({ kpis, chartData, cumData, monthTarget, daysInMonth, oddDayTicks, forecastP50, isGeMd }) => {
   const tabsClass = useInstallTabsFillCSS();
   const [showActual, setShowActual] = useState(true);
   const [showForward, setShowForward] = useState(true);
@@ -105,8 +112,8 @@ export const ForecastCard: React.FC<ForecastCardProps> = ({ kpis, chartData, cum
 
       <div style={{ flex: 1, minHeight: 0 }}>
         <Row gutter={[8, 8]} style={{ height: "100%" }}>
-          {/* KPI Blocks: モバイル（全幅）、デスクトップ（8/24列） */}
-          <Col xs={24} xl={8} style={{ height: "100%" }}>
+          {/* KPI Blocks: モバイル（全幅）、>=768px（8/24列） */}
+          <Col span={isGeMd ? 8 : 24} style={{ height: "100%" }}>
             <div style={{ height: "100%", display: "grid", gridTemplateRows: "1fr 1fr 1fr", gap: 6 }}>
               {kpis.map((kpi, i) => (
                 <KPIBlock key={i} {...kpi} />
@@ -114,8 +121,8 @@ export const ForecastCard: React.FC<ForecastCardProps> = ({ kpis, chartData, cum
             </div>
           </Col>
 
-          {/* Chart Tabs: モバイル（全幅）、デスクトップ（16/24列） */}
-          <Col xs={24} xl={16} style={{ height: "100%", display: "flex", flexDirection: "column", minHeight: 0 }}>
+          {/* Chart Tabs: モバイル（全幅）、>=768px（16/24列） */}
+          <Col span={isGeMd ? 16 : 24} style={{ height: "100%", display: "flex", flexDirection: "column", minHeight: 0 }}>
             <Tabs
               size="small"
               className={tabsClass}

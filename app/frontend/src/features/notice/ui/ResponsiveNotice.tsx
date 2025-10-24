@@ -4,7 +4,7 @@
 import React, { useState } from 'react';
 import { Alert, Button, Drawer, Space, Typography } from 'antd';
 import { InfoCircleOutlined } from '@ant-design/icons';
-import { BP, tierOf, useWindowSize } from '@/shared';
+import { BP, tierOf, useResponsive } from '@/shared';
 
 export interface ResponsiveNoticeProps {
   title: string;
@@ -22,7 +22,7 @@ export const ResponsiveNotice: React.FC<ResponsiveNoticeProps> = ({
   type = 'warning',
 }) => {
   const [open, setOpen] = useState(false);
-  const { width } = useWindowSize();
+  const { width } = useResponsive();
   const tier = tierOf(width);
   const isMobile = width <= BP.mobileMax;
 

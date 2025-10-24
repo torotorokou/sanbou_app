@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button } from 'antd';
-import { useWindowSize } from '@shared/hooks/ui';
+import { useResponsive } from '@/shared';
 
 type VerticalActionButtonProps = {
     icon: React.ReactNode;
@@ -21,7 +21,7 @@ const VerticalActionButton: React.FC<VerticalActionButtonProps> = ({
     href,
     download = false,
 }) => {
-    const { isMobile, isTablet } = useWindowSize();
+    const { isMobile, isTablet } = useResponsive();
     const isMobileOrTablet = isMobile || isTablet;
 
     const baseStyle: React.CSSProperties = {

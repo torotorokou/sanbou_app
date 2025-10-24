@@ -1,12 +1,10 @@
 import React from "react";
 import { ConfigProvider } from "antd";
 import jaJP from 'antd/locale/ja_JP';
-import { customTokens } from '@shared/theme/tokens';
-import { useWindowSize } from '@shared/hooks/ui';
-import { isTabletOrHalf, isDesktop } from '@/shared/constants/breakpoints';
+import { customTokens, useResponsive, isTabletOrHalf, isDesktop } from '@/shared';
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { width } = useWindowSize();
+  const { width } = useResponsive();
   const isMd = typeof width === 'number' ? isTabletOrHalf(width) : false;
   const isXlUp = typeof width === 'number' ? isDesktop(width) : false; // 新xl相当
   const componentSize = isXlUp ? "large" : isMd ? "middle" : "small";

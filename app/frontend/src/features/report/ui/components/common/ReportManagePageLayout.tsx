@@ -1,8 +1,7 @@
 import React from 'react';
 import type { ReactNode } from 'react';
 import { useReportLayoutStyles } from '@features/report/application/useReportLayoutStyles';
-import { useWindowSize } from '@shared/hooks/ui';
-import { isTabletOrHalf } from '@/shared/constants/breakpoints';
+import { useResponsive, isTabletOrHalf } from '@/shared';
 import SampleSection from './SampleSection';
 import CsvUploadSection from './CsvUploadSection';
 import ActionsSection from './ActionsSection';
@@ -61,7 +60,7 @@ const ReportManagePageLayout: React.FC<Props> = ({
     children,
 }) => {
     const styles = useReportLayoutStyles();
-    const { width, isMobile, isTablet } = useWindowSize();
+    const { width, isMobile, isTablet } = useResponsive();
 
     const isHalfOrBelow = typeof width === 'number' ? isTabletOrHalf(width) : false;
     const isMobileOrTablet = isMobile || isTablet;
