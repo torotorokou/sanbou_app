@@ -12,7 +12,6 @@ export interface ResponsiveNoticeProps {
   detailContent?: React.ReactNode;
   onClose?: () => void;
   type?: 'info' | 'warning' | 'success' | 'error';
-  closable?: boolean;
 }
 
 export const ResponsiveNotice: React.FC<ResponsiveNoticeProps> = ({
@@ -21,7 +20,6 @@ export const ResponsiveNotice: React.FC<ResponsiveNoticeProps> = ({
   detailContent,
   onClose,
   type = 'warning',
-  closable = true,
 }) => {
   const [open, setOpen] = useState(false);
   const { width } = useWindowSize();
@@ -45,17 +43,35 @@ export const ResponsiveNotice: React.FC<ResponsiveNoticeProps> = ({
 
   // Action button: remove the small arrow icon to avoid proximity to the close mark.
   // Make the whole button tappable (text area) to open the drawer. Use small size on mobile.
+  // Combine '詳細' and a small '閉じる' text link in the Alert action area.
   const actionButton = (
-    <Button
-      type="link"
-      size={isMobile ? 'small' : 'middle'}
-      onClick={() => setOpen(true)}
-      style={{ paddingInline: isMobile ? 8 : 8 }}
-      aria-label="詳細を開く"
-    >
-      {/* Always show label so the tappable area is clear; small size on mobile */}
-      詳細
-    </Button>
+    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+      <Button
+        type="link"
+        size={isMobile ? 'small' : 'middle'}
+        onClick={(e) => {
+          e.stopPropagation();
+          setOpen(true);
+        }}
+        style={{ paddingInline: isMobile ? 8 : 8 }}
+        aria-label="詳細を開く"
+      >
+        詳細
+      </Button>
+      <Button
+        type="link"
+        size={isMobile ? 'small' : 'middle'}
+        onClick={(e) => {
+          e.stopPropagation();
+          // Inform the parent to hide the banner if handler provided
+          if (onClose) onClose();
+        }}
+        style={{ paddingInline: isMobile ? 8 : 8, color: 'inherit' }}
+        aria-label="通知を閉じる"
+      >
+        閉じる
+      </Button>
+    </div>
   );
 
   return (
