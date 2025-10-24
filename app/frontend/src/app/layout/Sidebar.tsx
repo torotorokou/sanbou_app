@@ -4,7 +4,7 @@ import { Layout, Menu, Button, Drawer } from 'antd';
 import { MenuFoldOutlined, MenuUnfoldOutlined } from '@ant-design/icons';
 import { useLocation } from 'react-router-dom';
 import { SIDEBAR_MENU } from '@app/navigation/sidebarMenu';
-import { customTokens, useSidebarResponsive, useSidebarAnimation, useResponsive, useSidebarDefault, ANT } from '@/shared';
+import { customTokens, useSidebar, useResponsive, ANT } from '@/shared';
 import { type MenuItem, filterMenuItems } from '@features/navi';
 
 const { Sider } = Layout;
@@ -12,8 +12,7 @@ const { Sider } = Layout;
 // UIは開閉ロジックを持たず、カスタムフックに委譲（MVCのV）
 const Sidebar: React.FC = () => {
     const location = useLocation();
-    const sidebarConfig = useSidebarResponsive();
-    const animationStyles = useSidebarAnimation();
+    const { collapsed, setCollapsed, config: sidebarConfig, style: animationStyles } = useSidebar();
     const { isTablet, width: windowWidth } = useResponsive();
 
     // 'xl以下' のときは幅を 0.9 倍にする（ANT.xl (1200px) を閾値として使用）
@@ -23,8 +22,6 @@ const Sidebar: React.FC = () => {
         }
         return sidebarConfig.width;
     }, [windowWidth, sidebarConfig.width]);
-    // 画面幅に基づくデフォルト開閉制御（SOLID: 単一責任）
-    const { collapsed, setCollapsed } = useSidebarDefault();
     // openKeys を管理して、サイドバーが開いているときは子メニューを展開する
     const [openKeys, setOpenKeys] = React.useState<string[]>([]);
 
