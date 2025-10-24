@@ -1,5 +1,5 @@
 import React from 'react';
-import { useWindowSize } from './useWindowSize';
+import { useResponsive } from './useResponsive';
 
 export interface SidebarConfig {
     width: number;
@@ -11,7 +11,7 @@ export interface SidebarConfig {
 }
 
 export const useSidebarResponsive = (): SidebarConfig => {
-    const { isMobile, isTablet } = useWindowSize();
+    const { isMobile, isTablet } = useResponsive();
 
     return React.useMemo(() => {
         // モバイル: ドロワー
@@ -29,7 +29,7 @@ export const useSidebarResponsive = (): SidebarConfig => {
         // タブレット: 自動縮小
         if (isTablet) {
             return {
-                width: 200,
+                width: 230,
                 collapsedWidth: 60,
                 breakpoint: 'md' as const,  // 768px = BP.tabletMin
                 autoCollapse: true,

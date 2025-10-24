@@ -2,8 +2,7 @@
 import React from 'react';
 import { Modal, Empty } from 'antd';
 import { ensurePdfJsWorkerLoaded } from '@shared/utils/pdf/workerLoader';
-import { useWindowSize } from '@shared/hooks/ui';
-import { ANT } from '@/shared/constants/breakpoints';
+import { useResponsive, ANT } from '@/shared';
 
 type Props = {
     visible: boolean;
@@ -12,7 +11,7 @@ type Props = {
 };
 
 const PdfPreviewModal: React.FC<Props> = ({ visible, onClose, pdfUrl }) => {
-    const { width } = useWindowSize();
+    const { width } = useResponsive();
     // ANT.xl 未満では高さを大きめにして、下部の余白を埋める
     const bodyHeight = width < ANT.xl ? '95vh' : '80vh';
 

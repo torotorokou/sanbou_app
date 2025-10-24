@@ -1,7 +1,6 @@
 // ChatQuestionSection.tsx
 import React from 'react';
-import { useWindowSize } from '@shared/hooks/ui';
-import { isTabletOrHalf } from '@/shared/constants/breakpoints';
+import { useResponsive, isTabletOrHalf } from '@/shared';
 import QuestionPanel from '../components/QuestionPanel';
 
 type Props = {
@@ -31,7 +30,7 @@ const ChatQuestionSection: React.FC<Props> = ({
     setQuestion,
     categoryData,
 }) => {
-    const { width } = useWindowSize();
+    const { width } = useResponsive();
     const isNarrow = typeof width === 'number' ? isTabletOrHalf(width) : false;
 
     return (

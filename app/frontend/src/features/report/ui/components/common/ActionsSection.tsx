@@ -1,10 +1,9 @@
 import React from 'react';
-import { VerticalActionButton } from '@shared/ui';
+import { VerticalActionButton, actionButtonColors } from '@/shared';
 import { PlayCircleOutlined, DownloadOutlined, PrinterOutlined } from '@ant-design/icons';
 import { useReportActions } from '@features/report/application/useReportActions';
-import { useWindowSize } from '@shared/hooks/ui';
+import { useResponsive } from '@/shared';
 import type { ActionsSectionProps } from './types';
-import { actionButtonColors } from '@shared/theme';
 
 /**
  * レスポンシブル対応レポート関連のアクションボタンセクション
@@ -25,7 +24,7 @@ const ActionsSection: React.FC<ActionsSectionProps> = ({
     compactMode = false,
 }) => {
     const actions = useReportActions();
-    const { isMobile, isTablet } = useWindowSize();
+    const { isMobile, isTablet } = useResponsive();
     const isMobileOrTablet = isMobile || isTablet;
 
     // compactMode: 半画面用の下部横並び表示にする

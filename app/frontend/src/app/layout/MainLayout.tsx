@@ -3,14 +3,13 @@ import { Layout } from 'antd';
 import Sidebar from './Sidebar';
 import AppRoutes from '@app/routes/AppRoutes';
 import { NotificationCenterAntd } from '@features/notification';
-import { customTokens } from '@shared/theme/tokens';
-import { useWindowSize } from '@shared/hooks/ui';
+import { customTokens, useResponsive } from '@/shared';
 
 const { Content } = Layout;
 
 const MainLayout: React.FC = () => {
     // ページ全体のレイアウトは保持しつつ、サイドバー開閉はSidebar内部のフックに委譲
-    const { isMobile, isTablet } = useWindowSize();
+    const { isMobile, isTablet } = useResponsive();
     const shouldAutoCollapse = isMobile || isTablet;
 
     try {

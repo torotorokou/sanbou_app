@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Typography, Alert } from 'antd';
-import { useWindowSize } from '@shared/hooks/ui';
+import { useResponsive } from '@/shared';
 import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
 import 'react-pdf/dist/esm/Page/TextLayer.css';
 import { ensurePdfJsWorkerLoaded } from '@shared/utils/pdf/workerLoader';
@@ -11,7 +11,7 @@ type PDFViewerProps = {
 };
 
 const PDFViewer: React.FC<PDFViewerProps> = ({ pdfUrl, height }) => {
-    const { isMobile } = useWindowSize();
+    const { isMobile } = useResponsive();
     const [hasError, setHasError] = useState(false);
 
     useEffect(() => {

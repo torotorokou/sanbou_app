@@ -1,7 +1,7 @@
 import React from 'react';
 import { Typography } from 'antd';
 import { CsvUploadPanelComponent as CsvUploadPanel } from '@features/database/ui';
-import { useWindowSize } from '@shared/hooks/ui';
+import { useResponsive } from '@/shared';
 import type { CsvUploadSectionProps } from './types';
 
 /**
@@ -12,7 +12,7 @@ const CsvUploadSection: React.FC<CsvUploadSectionProps> = ({
     uploadFiles,
     makeUploadProps
 }) => {
-    const { isMobile, isTablet } = useWindowSize();
+    const { isMobile, isTablet } = useResponsive();
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', minHeight: 0 }}>

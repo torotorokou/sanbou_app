@@ -1,7 +1,5 @@
 import { useMemo } from "react";
-import { useWindowSize } from "@shared/hooks/ui";
-import { customTokens } from "@shared/theme";
-import { isTabletOrHalf, ANT } from '@shared/constants/breakpoints';
+import { useResponsive, customTokens, isTabletOrHalf, ANT } from "@/shared";
 
 /**
  * レイアウトとスタイリングのロジックを管理するフック - シンプル版
@@ -12,7 +10,7 @@ import { isTabletOrHalf, ANT } from '@shared/constants/breakpoints';
  * - 保守性を向上させるためのシンプルなサイズ体系
  */
 export const useReportLayoutStyles = () => {
-  const { isMobile, isTablet, width } = useWindowSize();
+  const { isMobile, isTablet, width } = useResponsive();
   const isMobileOrTablet = isMobile || isTablet;
 
   // デバッグ情報（一時的）

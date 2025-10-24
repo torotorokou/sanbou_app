@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Typography, Modal, Button } from 'antd';
-import { useWindowSize } from '@shared/hooks/ui';
-import { customTokens } from '@shared/theme';
+import { useResponsive, customTokens } from '@/shared';
 import { ExpandOutlined } from '@ant-design/icons';
 
 interface PreviewSectionProps {
@@ -17,7 +16,7 @@ const PreviewSection: React.FC<PreviewSectionProps> = ({
     title = '📄 プレビュー画面',
     children
 }) => {
-    const { isMobile, isTablet } = useWindowSize();
+    const { isMobile, isTablet } = useResponsive();
     const [modalOpen, setModalOpen] = useState(false);
 
     // 親の高さいっぱいにフィットさせる（モーダルのみやや拡大）

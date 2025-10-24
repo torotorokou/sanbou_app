@@ -4,9 +4,7 @@ import { Layout, Menu, Button, Drawer } from 'antd';
 import { MenuFoldOutlined, MenuUnfoldOutlined } from '@ant-design/icons';
 import { useLocation } from 'react-router-dom';
 import { SIDEBAR_MENU } from '@app/navigation/sidebarMenu';
-import { customTokens } from '@shared/theme/tokens';
-import { useSidebarResponsive, useSidebarAnimation, useWindowSize, useSidebarDefault } from '@shared/hooks/ui';
-import { ANT } from '@/shared/constants/breakpoints';
+import { customTokens, useSidebarResponsive, useSidebarAnimation, useResponsive, useSidebarDefault, ANT } from '@/shared';
 import { type MenuItem, filterMenuItems } from '@features/navi';
 
 const { Sider } = Layout;
@@ -16,7 +14,7 @@ const Sidebar: React.FC = () => {
     const location = useLocation();
     const sidebarConfig = useSidebarResponsive();
     const animationStyles = useSidebarAnimation();
-    const { isTablet, width: windowWidth } = useWindowSize();
+    const { isTablet, width: windowWidth } = useResponsive();
 
     // 'xl以下' のときは幅を 0.9 倍にする（ANT.xl (1200px) を閾値として使用）
     const effectiveWidth = React.useMemo(() => {

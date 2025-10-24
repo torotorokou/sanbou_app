@@ -2,7 +2,7 @@
 
 import React, { useMemo } from 'react';
 import { Steps } from 'antd';
-import { useWindowSize } from '@/shared';
+import { useResponsive } from '@/shared';
 
 export type StepItem = {
     // ← ここでexportを明記
@@ -19,7 +19,7 @@ const ReportStepIndicator: React.FC<ReportStepIndicatorProps> = ({
     currentStep,
     items,
 }) => {
-    const { isMobile, isTablet } = useWindowSize();
+    const { isMobile, isTablet } = useResponsive();
 
     // ポリシー: custom-media.css に合わせて（Lean-3 ブレークポイント）
     // - モバイル（≤767）: 上位と同じ横・通常サイズ（縦に伸ばさない）

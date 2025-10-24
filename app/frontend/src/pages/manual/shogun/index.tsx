@@ -15,8 +15,7 @@ import {
   Typography,
 } from 'antd';
 import { FileDoneOutlined } from '@ant-design/icons';
-import { useWindowSize } from '@/shared/hooks/ui';
-import { ANT, isTabletOrHalf } from '@/shared/constants/breakpoints';
+import { useResponsive, ANT, isTabletOrHalf } from '@/shared';
 import { useShogunCatalog } from '@features/manual';
 import { SectionBlock } from '@features/manual/ui/components/SectionBlock';
 import { ManualModal } from '@features/manual/ui/components/ShogunModal';
@@ -33,7 +32,7 @@ const ShogunManualListPage: React.FC = () => {
   const contentScrollRef = useRef<HTMLDivElement | null>(null);
   
   const { sections, loading } = useShogunCatalog();
-  const { width } = useWindowSize();
+  const { width } = useResponsive();
   const showSider = typeof width === 'number' ? width >= ANT.md : false;
   const showHeaderSearch = typeof width === 'number' ? !isTabletOrHalf(width) : true;
 
