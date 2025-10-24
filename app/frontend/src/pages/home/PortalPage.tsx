@@ -47,6 +47,8 @@ export interface PortalCardProps {
   hideButton?: boolean;
   // sm 未満で小さなボタンを表示する（ボタンを非表示にする代わりに小さいものを右側に表示）
   smallButton?: boolean;
+  // 高さのみをスケールする（例: sm 未満で 0.9 を渡す）
+  heightScale?: number;
 }
 
 /** 単一責任：1メニューカードの表示と遷移のみ */
@@ -62,6 +64,7 @@ const PortalCard: React.FC<PortalCardProps> = ({
   compactLayout,
   hideButton,
   smallButton,
+  heightScale,
 }) => {
   const navigate = useNavigate();
   const { token } = theme.useToken();
@@ -123,7 +126,8 @@ const PortalCard: React.FC<PortalCardProps> = ({
   // If button is hidden (hideButton true and not smallButton), use the aggressive compact scale.
   // If smallButton is true, use a mild compact scale so contents still fit.
   const SMALL_SCREEN_SCALE = hideButton && !isSmallButton ? 0.7 : (isSmallButton ? 0.82 : 1);
-  const finalCardHeight = Math.round(appliedCardHeight * SMALL_SCREEN_SCALE);
+  const hs = heightScale ?? 1;
+  const finalCardHeight = Math.round(appliedCardHeight * SMALL_SCREEN_SCALE * hs);
   const finalIconSize = Math.round(appliedIconSize * SMALL_SCREEN_SCALE);
   const finalIconFontSize = Math.round(appliedIconFontSize * SMALL_SCREEN_SCALE);
   const finalButtonHeight = Math.round(appliedButtonHeight * SMALL_SCREEN_SCALE);
@@ -173,7 +177,8 @@ const PortalCard: React.FC<PortalCardProps> = ({
         }}
         bodyStyle={{
           height: '100%',
-          padding: compactLayout ? '12px 12px' : 20,
+          // Keep internal card padding unchanged per request
+          padding: compactLayout ? '2px 2px' : 20,
           display: 'flex',
           // For small-screen cases (either smallButton or button-hidden), use horizontal layout
           flexDirection: (isButtonHidden || isSmallButton) ? 'row' : (compactLayout ? 'row' : 'column'),
@@ -492,7 +497,6 @@ export const PortalPage: React.FC = () => {
               }
               onClose={() => setNoticeVisible(false)}
               type="warning"
-              closable
             />
           </div>
         )}
@@ -502,17 +506,17 @@ export const PortalPage: React.FC = () => {
             - 通常：利用可能幅に応じて列数を算出
             - 半画面（isCompact が真）では最大2列に制限する
         */}
-  <div style={{ display: 'flex', gap: isXs ? 12 : 24, alignItems: 'flex-start' }}>
+  <div style={{ display: 'flex', gap: isXs ? 5 : 22, alignItems: 'flex-start' }}>
           {/* Left column: header + portal cards (keeps previous grid behavior) */}
-          <div style={{ flex: '1 1 0', display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div style={{ flex: '1 1 0', display: 'flex', flexDirection: 'column', gap: 7 }}>
             <div
               aria-label="ポータルメニュー一覧"
               style={{
                 display: 'grid',
-                columnGap: isXs ? 12 : 24,
-                rowGap: isXs ? 12 : 24,
+                columnGap: isXs ? 5 : 22,
+                rowGap: isXs ? 1 : 22,
                 // 狭い画面では行高を縮小。sm未満はさらに詰める
-                gridAutoRows: `${Math.round((isXs ? 90 : (isNarrow ? 120 : CARD_HEIGHT)) * cardScale)}px`,
+                gridAutoRows: `${Math.round((isXs ? 75 : (isNarrow ? 120 : CARD_HEIGHT)) * cardScale)}px`,
                 // use auto-fit / minmax so cards stretch/shrink responsively
                 // but force 1 column for screens narrower than bp.md (mobile)
                 gridTemplateColumns: (() => {
@@ -537,6 +541,7 @@ export const PortalPage: React.FC = () => {
                 compactLayout={isNarrow}
                 hideButton={false}
                 smallButton={isXs}
+                heightScale={isXs ? 0.7 : 1}
               />
             ))}
             </div>
