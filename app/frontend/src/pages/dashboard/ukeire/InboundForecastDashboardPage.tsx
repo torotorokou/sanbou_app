@@ -27,10 +27,10 @@ import { useResponsive } from "@/shared";
 const InboundForecastDashboardPage: React.FC = () => {
   const repository = useMemo(() => new MockInboundForecastRepository(), []);
   const vm = useInboundForecastVM(repository);
-  const { isMd, isLg, isXl } = useResponsive();
+  const { flags } = useResponsive();
   // 要件変更: 以前は isXl (>=1280) でデスクトップ挙動だったが、
   // これを ">=768px" に切り替える。isGeMd は 768px 以上を示す。
-  const isGeMd = Boolean(isMd || isLg || isXl);
+  const isGeMd = Boolean(flags.isMd || flags.isLg || flags.isXl);
 
   // ≥768px: 3列レイアウト（7-12-5）、未満: 縦積み（24-24-24）
   const spans = isGeMd

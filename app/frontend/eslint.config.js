@@ -61,23 +61,9 @@ export default defineConfig([
             '@typescript-eslint/no-explicit-any': 'warn',
             // ブレークポイントのマジックナンバー混入防止（比較演算子の文脈に限定）
             // NOTE: setTimeout等の無関係なリテラルやサンプルデータは誤検知しない
+            // 5段階システム（xs/sm/md/lg/xl）を採用: 640/768/1024/1280
             'no-restricted-syntax': [
                 'error',
-                // 576/sm 禁止（3構成統一のため）
-                {
-                    selector: "Literal[value='sm']",
-                    message: '❌ AntD の sm (576px) は使用禁止です。xs/md/xl の3段階を使用してください。',
-                },
-                {
-                    selector:
-                        "BinaryExpression:matches([operator='<'],[operator='<='],[operator='>'],[operator='>=']):has(Literal[value=576])",
-                    message: '❌ 576 (sm) は使用禁止です。BP.tabletMin (768) を使用してください。',
-                },
-                {
-                    selector:
-                        "BinaryExpression:matches([operator='<'],[operator='<='],[operator='>'],[operator='>=']):has(Literal[value=575])",
-                    message: '❌ 575 (sm-1) は使用禁止です。BP.mobileMax (767) を使用してください。',
-                },
                 // 正規ブレークポイント（767/768/1199/1200）
                 {
                     selector:
