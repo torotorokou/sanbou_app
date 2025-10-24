@@ -4,7 +4,7 @@ import { useWindowSize } from './useWindowSize';
 export interface SidebarConfig {
     width: number;
     collapsedWidth: number;
-    breakpoint: 'xs' | 'md' | 'xl';  // 3-tier only: xs(≤767) / md(768-1199) / xl(≥1200)
+    breakpoint: 'xs' | 'md' | 'xl';  // 3-tier only: xs(≤767) / md(768-1279) / xl(≥1280)
     autoCollapse: boolean;
     forceCollapse: boolean;
     drawerMode: boolean;

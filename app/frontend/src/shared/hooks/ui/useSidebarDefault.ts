@@ -6,7 +6,7 @@
 // - UI（Sidebar.tsx）からは、このフックが返す collapsed/setCollapsed を利用する
 
 import { useEffect, useState } from "react";
-import { isDesktop, ANT } from "@/shared/constants/breakpoints";
+import { isDesktop, ANT } from "@/shared";
 
 // 単一責任原則（SOLIDのS）: 判定ロジックをこのフックに集約し、UIから分離
 export const useSidebarDefault = () => {
@@ -14,7 +14,7 @@ export const useSidebarDefault = () => {
   const [collapsed, setCollapsed] = useState<boolean>(() => {
     if (typeof window === "undefined") return false; // SSR等では開いた状態にしておく
     const w = window.innerWidth;
-    return !isDesktop(w); // 1200 未満は閉じる
+    return !isDesktop(w); // 1280 未満は閉じる
   });
 
   useEffect(() => {

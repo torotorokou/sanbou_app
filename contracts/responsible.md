@@ -4,7 +4,7 @@
 
 ## 🎯 目的
 Ant Design の `lg=992px` とプロジェクト独自の `bp.lg=1024px` のズレを解消。  
-**`md(768px)` と `xl(1200px)` の2段構成** に統一して、レスポンシブをシンプル化。
+**`md(768px)` と `xl(1280px)` の2段構成** に統一して、レスポンシブをシンプル化。
 
 ---
 
@@ -19,7 +19,8 @@ Ant Design の `lg=992px` とプロジェクト独自の `bp.lg=1024px` のズ�
 | `lg={16}` | `md={24} xl={16}` | 1列→2列 |
 
 ✅ すべての `lg=` を削除し、`md` と `xl` のみ使用。  
-768〜1199px帯は安定した2列レイアウトに統一。
+768〜1279px帯（tablet）は安定した2列レイアウトに統一。  
+（最新SSOT: bp.xl = 1280）
 
 ---
 
@@ -30,4 +31,4 @@ Ant Design の `lg=992px` とプロジェクト独自の `bp.lg=1024px` のズ�
 ```css
 @custom-media --lt-md (width < 768px);
 @custom-media --ge-md (width >= 768px);
-@custom-media --ge-xl (width >= 1200px);
+@custom-media --ge-xl (width >= 1280px);

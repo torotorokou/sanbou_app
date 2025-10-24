@@ -137,7 +137,7 @@
   }
 }
 
-/* === Desktop: ≥1200px === */
+/* === Desktop: ≥1280px === */
 @media (--ge-xl) {
   .ant-card {
     margin: 16px 0;

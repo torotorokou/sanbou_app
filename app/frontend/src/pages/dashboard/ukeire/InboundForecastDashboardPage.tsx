@@ -2,14 +2,11 @@
  * 受入ダッシュボード - Page Component
  * MVC構成の薄いPageレイヤー
  * 
- * レスポンシブデザイン:
- * - xs/sm/md (0-1199px): 全カード縦積み（span=24）
- * - xl+ (1200px以上): 3列レイアウト（7-12-5列配分）
+ * レスポンシブデザイン（bp.xl = 1280 を基準）:
+ * - mobile/tablet (< 1280px): 全カード縦積み（span=24）
+ * - desktop (≥ 1280px): 3列レイアウト（7-12-5列配分）
  * 
- * 注意: Ant Designのブレークポイントを使用
- * - lg (Ant): 992px ≠ bp.lg (1024px)  
- * - xl (Ant): 1200px = bp.xl (1280px)に近い
- * ※ プロジェクトの bp.xl (1280px) に近い xl を採用
+ * 実装: useResponsive() で bp.xl (1280px) を判定し、span を動的計算
  */
 
 import React, { useMemo } from "react";
@@ -24,11 +21,18 @@ import {
   UkeireCalendarCard,
   ForecastCard
 } from "@/features/dashboard/ukeire";
+import { useResponsive } from "@/shared";
 // (removed curMonth / nextMonth imports since month selection is no longer restricted)
 
 const InboundForecastDashboardPage: React.FC = () => {
   const repository = useMemo(() => new MockInboundForecastRepository(), []);
   const vm = useInboundForecastVM(repository);
+  const { isXl } = useResponsive();
+
+  // ≥1280px: 3列レイアウト（7-12-5）、未満: 縦積み（24-24-24）
+  const spans = isXl 
+    ? { target: 7, daily: 12, cal: 5 } 
+    : { target: 24, daily: 24, cal: 24 };
 
   if (vm.loading || !vm.payload) {
     return (
@@ -124,19 +128,19 @@ const InboundForecastDashboardPage: React.FC = () => {
           </Row>
         </div>
 
-        {/* 上段：3カード（xl以上[1200px+]で3列、未満で縦積み） */}
+        {/* 上段：3カード（≥1280px で3列、未満で縦積み） */}
         <div style={{ minHeight: 0 }}>
           <Row gutter={[12, 12]} style={{ height: "100%", alignItems: "stretch" }}>
-            {/* Target Card: xl以上で7/24列、未満で全幅 */}
-            <Col xs={24} xl={7} style={{ height: "100%" }}>
+            {/* Target Card: desktop で7/24列、未満で全幅 */}
+            <Col span={spans.target} style={{ height: "100%" }}>
               {vm.targetCardProps && <TargetCard {...vm.targetCardProps} />}
             </Col>
-            {/* Combined Daily Card: xl以上で12/24列、未満で全幅 */}
-            <Col xs={24} xl={12} style={{ height: "100%" }}>
+            {/* Combined Daily Card: desktop で12/24列、未満で全幅 */}
+            <Col span={spans.daily} style={{ height: "100%" }}>
               {vm.combinedDailyProps && <CombinedDailyCard {...vm.combinedDailyProps} />}
             </Col>
-            {/* Calendar Card: xl以上で5/24列、未満で全幅 */}
-            <Col xs={24} xl={5} style={{ height: "100%" }}>
+            {/* Calendar Card: desktop で5/24列、未満で全幅 */}
+            <Col span={spans.cal} style={{ height: "100%" }}>
               {(() => {
                 const [year, month] = vm.month.split('-').map(Number);
                 return <UkeireCalendarCard year={year} month={month} />;
@@ -145,10 +149,10 @@ const InboundForecastDashboardPage: React.FC = () => {
           </Row>
         </div>
 
-        {/* 下段：予測 */}
+        {/* 下段：予測（常に全幅） */}
         <div style={{ minHeight: 0 }}>
           <Row gutter={[8, 8]} style={{ height: "100%" }}>
-            <Col xs={24} style={{ height: "100%" }}>
+            <Col span={24} style={{ height: "100%" }}>
               {vm.forecastCardProps && <ForecastCard {...vm.forecastCardProps} />}
             </Col>
           </Row>

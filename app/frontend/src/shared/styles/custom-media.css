@@ -8,20 +8,9 @@
 @custom-media --lg-only (min-width: 1024px) and (max-width: 1279px); /* desktop-sm only */
 /* === END AUTO-GENERATED === */
 
-/* === AUTO-GENERATED CUSTOM MEDIA (DO NOT EDIT MANUALLY) ===
- * Source of truth: src/shared/constants/breakpoints.ts
- * Lean-3: mobile ≤767, tablet 768–1199, desktop ≥1200
- * Last sync: 2025-10-23
- */
-@custom-media --lt-md (max-width: 767px);                                 /* ≤767 (mobile) */
-@custom-media --ge-md (min-width: 768px);                                 /* ≥768 (tablet+) */
-@custom-media --ge-xl (min-width: 1200px);                                /* ≥1200 (desktop) */
-@custom-media --md-only (min-width: 768px) and (max-width: 1199px);       /* tablet only */
-/* === END AUTO-GENERATED === */
-
-/* Unified responsive base: breakpoints md/xl, clamp font size, height policy */
+/* Unified responsive base: breakpoints md/lg/xl, clamp font size, height policy */
 /* IMPORTANT: このCSSのメディアクエリ閾値は `src/shared/constants/breakpoints.ts` と同期させること。
-  Lean-3: mobile ≤767, tablet 768–1199, desktop ≥1200 */
+  Lean-3: mobile ≤767, tablet 768–1279, desktop ≥1280 */
 
 html, body, #root { height: 100%; }
 
@@ -63,7 +52,7 @@ img, video, canvas, svg { max-width: 100%; height: auto; }
   }
 }
 
-/* desktop: ≥ 1200px */
+/* desktop: ≥ 1280px */
 @media (--ge-xl) {
   .ant-card { margin: 16px 0; border-radius: 12px; }
   .ant-layout-content { padding: 24px; }

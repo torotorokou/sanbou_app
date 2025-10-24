@@ -109,7 +109,7 @@
   border: 1px solid var(--ant-color-border, rgba(0,0,0,0.06));
 }
 
-/* xl: 1200px+ */
+/* xl: 1280px+ */
 @media (--ge-xl) {
   .headerSearchInput {
     background: var(--ant-color-bg-container, #f3fff5);
