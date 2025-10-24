@@ -29,7 +29,7 @@
   --radius-lg: 12px;
 
   /* Container max width (can be customized per page via inline style or scoped CSS) */
-  --container-max: 1200px; /* DO NOT fix width; this is the upper bound for fluid container */
+  --container-max: 1280px; /* DO NOT fix width; this is the upper bound for fluid container */
 }
 
 html,

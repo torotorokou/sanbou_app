@@ -3,7 +3,7 @@
 // 実装ポイント: requestAnimationFrame で軽量に追従、SSR安全
 
 import { useEffect, useRef, useState } from 'react';
-import { isMobile as isMobileWidth, isTabletOrHalf as isTabletWidth, isDesktop as isDesktopWidth } from '@/shared/constants/breakpoints';
+import { isMobile as isMobileWidth, isTabletOrHalf as isTabletWidth, isDesktop as isDesktopWidth } from '@/shared';
 
 export type WindowSize = {
   width: number;
@@ -28,7 +28,7 @@ const getWindowSize = (): WindowSize => {
 
   const width = window.innerWidth;
   const height = window.innerHeight;
-  // 標準化レンジ: mobile<=767, tablet=768–1199, desktop>=1200（述語で判定）
+  // 標準化レンジ: mobile≤767, tablet=768–1279, desktop≥1280（述語で判定）
   const isMobile = isMobileWidth(width);
   const isTablet = isTabletWidth(width);
   const isDesktop = isDesktopWidth(width);

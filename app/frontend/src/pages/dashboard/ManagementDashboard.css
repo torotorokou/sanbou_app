@@ -18,7 +18,7 @@
   gap: 16px;
 }
 
-/* Two-column layout on desktop (xl: 1200px+) */
+/* Two-column layout on desktop (xl: 1280px+) */
 @media (--ge-xl) {
   .dashboard-main {
     grid-template-columns: 1fr 1fr;
@@ -54,7 +54,7 @@
   min-height: 0;
 }
 
-/* Mobile / tablet tweaks: stack nicely, allow content-driven heights (< 1200px) */
+/* Mobile / tablet tweaks: stack nicely, allow content-driven heights (< 1280px) */
 @media (--lt-md) {
   .dashboard-root {
     padding: 12px;
@@ -116,7 +116,7 @@
   }
 }
 
-/* xl: 1200px 以上では全カードをビューポート内に収める（動的計算） */
+/* xl: 1280px 以上では全カードをビューポート内に収める（動的計算） */
 @media (--ge-xl) {
   .dashboard-root {
     /* 固定ビューポート高さを採用（パディング分は既に差し引かれている想定） */

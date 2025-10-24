@@ -1,5 +1,5 @@
 import { customTokens } from './tokens';
-import { ANT } from '@/shared/constants/breakpoints';
+import { ANT } from '@/shared';
 
 export function generateCssVars(): string {
     return `
@@ -59,9 +59,9 @@ export function generateCssVars(): string {
       --content-transition: padding 0.3s ease-in-out;
       
   /* ブレークポイント（単一ソース: src/shared/constants/breakpoints.ts） */
-  --breakpoint-mobile: ${ANT.md - 1}px; /* <=767 */
-  --breakpoint-tablet: ${ANT.xl - 1}px; /* 768–1199 の max */
-  --breakpoint-auto-collapse: ${ANT.xl}px; /* 1200 */
+  --breakpoint-mobile: ${ANT.md - 1}px; /* ≤767 */
+  --breakpoint-tablet: ${ANT.xl - 1}px; /* 768–1279 の max */
+  --breakpoint-auto-collapse: ${ANT.xl}px; /* 1280 */
     }
   `;
 }

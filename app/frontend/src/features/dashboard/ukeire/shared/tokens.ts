@@ -5,12 +5,16 @@
  */
 
 // 今後、共通のデザイントークンをここに配置
+/**
+ * ⚠️ 非推奨: このローカルBREAKPOINTSは使用しないでください。
+ * SSOT: src/shared/constants/breakpoints.ts (md:768, lg:1024, xl:1280)
+ */
 export const BREAKPOINTS = {
   xs: 480,
-  sm: 576,
+  sm: 640,   // Tailwind準拠
   md: 768,
-  lg: 992,
-  xl: 1200,
+  lg: 1024,  // Tailwind準拠
+  xl: 1280,  // Tailwind準拠
   xxl: 1600,
 };
 
