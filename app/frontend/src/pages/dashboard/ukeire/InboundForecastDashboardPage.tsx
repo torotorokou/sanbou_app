@@ -240,7 +240,7 @@ const InboundForecastDashboardPage: React.FC = () => {
         <div>
           <Row gutter={[gutter, gutter]}>
             <Col span={24}>
-              <div style={{ height: 420 }}>
+              <div style={{ height: layoutMode === "mobile" ? 640 : 420 }}>
                 {vm.forecastCardProps && <ForecastCard {...vm.forecastCardProps} isGeMd={layoutMode !== "mobile"} />}
               </div>
             </Col>
