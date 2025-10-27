@@ -94,24 +94,24 @@ const MobileKPIBlock: React.FC<KPIBlockProps> = ({ title, p50, p10, p90, target 
   const pctColor = ratio == null ? "#8c8c8c" : ratio >= 1 ? COLORS.ok : ratio >= 0.9 ? COLORS.warn : COLORS.danger;
 
   return (
-    <Card size="small" bodyStyle={{ padding: "8px 12px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
-      <div style={{ fontSize: 12, fontWeight: 700, color: "#2b2b2b", whiteSpace: "nowrap" }}>{title}</div>
-      <div style={{ display: "flex", alignItems: "center", gap: 8, flex: 1, justifyContent: "center" }}>
-        <div style={{ fontSize: 16, fontWeight: 900, color: COLORS.primary }}>
+    <Card size="small" bodyStyle={{ padding: "6px 10px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6 }}>
+      <div style={{ fontSize: 11, fontWeight: 700, color: "#2b2b2b", whiteSpace: "nowrap" }}>{title}</div>
+      <div style={{ display: "flex", alignItems: "center", gap: 6, flex: 1, justifyContent: "center" }}>
+        <div style={{ fontSize: 15, fontWeight: 900, color: COLORS.primary }}>
           {p50.toLocaleString()}
-          <span style={{ fontSize: 11, fontWeight: 700 }}>t</span>
+          <span style={{ fontSize: 10, fontWeight: 700 }}>t</span>
         </div>
-        <div style={{ fontSize: 10, color: "#8c8c8c", whiteSpace: "nowrap" }}>
+        <div style={{ fontSize: 9, color: "#8c8c8c", whiteSpace: "nowrap" }}>
           ({p10}–{p90}t)
         </div>
       </div>
-      <div style={{ minWidth: 60, display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
+      <div style={{ minWidth: 50, display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
         {pct != null ? (
-          <div style={{ textAlign: "center", color: pctColor, fontWeight: 700, fontSize: 12 }}>
+          <div style={{ textAlign: "center", color: pctColor, fontWeight: 700, fontSize: 11 }}>
             {pct}%
           </div>
         ) : (
-          <div style={{ color: "#8c8c8c", fontSize: 10 }}>―</div>
+          <div style={{ color: "#8c8c8c", fontSize: 9 }}>―</div>
         )}
       </div>
     </Card>
@@ -126,11 +126,15 @@ export const ForecastCard: React.FC<ForecastCardProps> = ({ kpis, chartData, cum
   const [showCumReverse, setShowCumReverse] = useState(true);
   const [showCumActual, setShowCumActual] = useState(true);
 
+  // Mobile モードでは padding を小さく
+  const cardPadding = isGeMd ? 12 : 8;
+  const cardGap = isGeMd ? 8 : 6;
+
   return (
     <Card
       bordered
       style={{ height: "100%", display: "flex", flexDirection: "column" }}
-      bodyStyle={{ padding: 12, display: "flex", flexDirection: "column", gap: 8, flex: 1, minHeight: 0 }}
+      bodyStyle={{ padding: cardPadding, display: "flex", flexDirection: "column", gap: cardGap, flex: 1, minHeight: 0 }}
     >
       <Space align="baseline" style={{ justifyContent: "space-between", width: "100%" }}>
         <Typography.Title level={5} style={{ margin: 0 }}>
@@ -327,10 +331,10 @@ export const ForecastCard: React.FC<ForecastCardProps> = ({ kpis, chartData, cum
             </Col>
           </Row>
         ) : (
-          // Mobile: KPI上段3行、グラフ下段全幅（大きく表示）
-          <div style={{ display: "flex", flexDirection: "column", height: "100%", gap: 6 }}>
+          // Mobile: KPI上段3行、グラフ下段全幅（コンパクト表示）
+          <div style={{ display: "flex", flexDirection: "column", height: "100%", gap: 4 }}>
             {/* KPI: 縦積み3行（横長ブロック） */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
               {kpis.map((kpi, i) => (
                 <MobileKPIBlock key={i} {...kpi} />
               ))}
