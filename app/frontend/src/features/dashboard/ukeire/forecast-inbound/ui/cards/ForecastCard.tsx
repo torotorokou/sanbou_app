@@ -20,6 +20,8 @@ export type KPIBlockProps = {
   p10: number;
   p90: number;
   target: number | null;
+  // 実測値（任意）: 表示を "予測/実測" にする場合に使用
+  actual?: number | null;
 };
 
 export type ForecastCardProps = {
@@ -47,8 +49,9 @@ export type ForecastCardProps = {
   isGeMd?: boolean;
 };
 
-const KPIBlock: React.FC<KPIBlockProps> = ({ title, p50, p10, p90, target }) => {
-  const ratio = target ? p50 / target : null;
+const KPIBlock: React.FC<KPIBlockProps> = ({ title, p50, p10, p90, target, actual }) => {
+  // 新仕様: 可能であれば予測(p50)/実測(actual)を達成率として表示する
+  const ratio = typeof actual === "number" && actual > 0 ? p50 / actual : (target ? p50 / target : null);
   const pct = ratio != null ? Math.round(ratio * 100) : null;
   const pctColor = ratio == null ? "#8c8c8c" : ratio >= 1 ? COLORS.ok : ratio >= 0.9 ? COLORS.warn : COLORS.danger;
 
@@ -88,10 +91,13 @@ const KPIBlock: React.FC<KPIBlockProps> = ({ title, p50, p10, p90, target }) => 
 };
 
 // Mobile専用の横長KPIブロック（1行で全情報を表示）
-const MobileKPIBlock: React.FC<KPIBlockProps> = ({ title, p50, p10, p90, target }) => {
+type MobileKPIBlockProps = KPIBlockProps & { achievementPct?: number };
+const MobileKPIBlock: React.FC<MobileKPIBlockProps> = ({ title, p50, p10, p90, target, achievementPct }) => {
   const ratio = target ? p50 / target : null;
-  const pct = ratio != null ? Math.round(ratio * 100) : null;
-  const pctColor = ratio == null ? "#8c8c8c" : ratio >= 1 ? COLORS.ok : ratio >= 0.9 ? COLORS.warn : COLORS.danger;
+  const pctByTarget = ratio != null ? Math.round(ratio * 100) : null;
+  // achievementPct が渡されたら優先して表示（モバイル用）。なければ目标ベースのpctを表示
+  const displayPct = typeof achievementPct === "number" ? achievementPct : pctByTarget;
+  const pctColor = displayPct == null ? "#8c8c8c" : displayPct >= 100 ? COLORS.ok : displayPct >= 90 ? COLORS.warn : COLORS.danger;
 
   return (
     <Card size="small" bodyStyle={{ padding: "6px 10px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6 }}>
@@ -105,11 +111,14 @@ const MobileKPIBlock: React.FC<KPIBlockProps> = ({ title, p50, p10, p90, target 
           ({p10}–{p90}t)
         </div>
       </div>
-      <div style={{ minWidth: 50, display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
-        {pct != null ? (
-          <div style={{ textAlign: "center", color: pctColor, fontWeight: 700, fontSize: 11 }}>
-            {pct}%
-          </div>
+      <div style={{ minWidth: 112, display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
+        {displayPct != null ? (
+          <>
+            <div style={{ textAlign: "center", color: pctColor, fontWeight: 700, fontSize: 11 }}>{displayPct}%</div>
+            <div style={{ width: 96, marginTop: 6 }}>
+              <Progress percent={clamp(displayPct, 0, 200)} showInfo={false} strokeWidth={8} strokeColor={pctColor} />
+            </div>
+          </>
         ) : (
           <div style={{ color: "#8c8c8c", fontSize: 9 }}>―</div>
         )}
@@ -129,6 +138,22 @@ export const ForecastCard: React.FC<ForecastCardProps> = ({ kpis, chartData, cum
   // Mobile モードでは padding を小さく
   const cardPadding = isGeMd ? 12 : 8;
   const cardGap = isGeMd ? 8 : 6;
+
+  // --- Mobile 向け: 当日/今週合計/今月末 の達成率を算出 ---
+  // 前提（仮定）:
+  // - 日目標は `monthTarget / daysInMonth` として推定
+  // - 当日は chartData の最終要素の actual を優先、なければ dailyForward/ daily を使用
+  // - 今週合計は chartData の末尾7要素の合計を使用
+  // 実測値ベースでの達成率（予測 / 実測）を各カードに渡すための準備
+  const latestPoint = chartData && chartData.length ? chartData[chartData.length - 1] : null;
+  const todayActual = latestPoint
+    ? (typeof latestPoint.actual === "number"
+        ? latestPoint.actual
+        : (typeof latestPoint.dailyForward === "number" ? latestPoint.dailyForward : (typeof latestPoint.daily === "number" ? latestPoint.daily : null)))
+    : null;
+  const weekSum = chartData && chartData.length ? chartData.slice(-7).reduce((s, d) => s + (typeof d.actual === "number" ? d.actual : (typeof d.daily === "number" ? d.daily : (typeof d.dailyForward === "number" ? d.dailyForward : 0))), 0) : 0;
+  const cumActualLast = cumData && cumData.length ? cumData[cumData.length - 1].cumActual : null;
+  const actualsForKpis: Array<number | null> = [todayActual, weekSum || null, cumActualLast];
 
   return (
     <Card
@@ -151,9 +176,10 @@ export const ForecastCard: React.FC<ForecastCardProps> = ({ kpis, chartData, cum
           <Row gutter={[8, 8]} style={{ height: "100%" }}>
             <Col span={8} style={{ height: "100%" }}>
               <div style={{ height: "100%", display: "grid", gridTemplateRows: "1fr 1fr 1fr", gap: 6 }}>
-                {kpis.map((kpi, i) => (
-                  <KPIBlock key={i} {...kpi} />
-                ))}
+                {kpis.map((kpi, i) => {
+                  const actual = actualsForKpis[i] ?? undefined;
+                  return <KPIBlock key={i} {...kpi} actual={actual} />;
+                })}
               </div>
             </Col>
             <Col span={16} style={{ height: "100%", display: "flex", flexDirection: "column", minHeight: 0 }}>
@@ -332,15 +358,23 @@ export const ForecastCard: React.FC<ForecastCardProps> = ({ kpis, chartData, cum
           </Row>
         ) : (
           // Mobile: KPI上段3行、グラフ下段全幅（コンパクト表示）
+          // KPI を小さく詰めてグラフにより多く縦スペースを割り当てる（カード内に収める）
           <div style={{ display: "flex", flexDirection: "column", height: "100%", gap: 4 }}>
-            {/* KPI: 縦積み3行（横長ブロック） */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
-              {kpis.map((kpi, i) => (
-                <MobileKPIBlock key={i} {...kpi} />
-              ))}
+            {/* KPI: 縦積み3行（横長ブロック） - 各KPIは固定高さで詰める */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 3, flex: "0 0 auto" }}>
+              {kpis.map((kpi, i) => {
+                const actual = actualsForKpis[i] ?? undefined;
+                const achievementPct = typeof actual === "number" && actual > 0 ? Math.round((kpi.p50 / actual) * 100) : undefined;
+                // 各KPIブロックを固定高さのラッパーで包んで縦を小さく保つ
+                return (
+                  <div key={i} style={{ height: 56, minHeight: 56, maxHeight: 56, overflow: "hidden" }}>
+                    <MobileKPIBlock {...kpi} actual={actual} achievementPct={achievementPct} />
+                  </div>
+                );
+              })}
             </div>
-            {/* グラフ: 残りスペース（flexで自動拡張） */}
-            <div style={{ flex: 1, minHeight: 0 }}>
+            {/* グラフ: KPIより大きめの縦幅を確保（カード内で収まるようflexで割り当て） */}
+            <div style={{ flex: 2, minHeight: 0 }}>
               <Tabs
                 size="small"
                 className={tabsClass}

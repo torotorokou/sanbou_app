@@ -133,7 +133,7 @@ const InboundForecastDashboardPage: React.FC = () => {
             <Col flex="1" />
             <Col flex="none" style={{ textAlign: "center" }}>
               <Typography.Title level={4} style={{ margin: 0 }}>
-                搬入量ダッシュボード — {vm.monthJP}
+                搬入量ダッシュボード{layoutMode === "mobile" ? null : ` — ${vm.monthJP}`}
               </Typography.Title>
             </Col>
             <Col flex="1" style={{ display: "flex", justifyContent: "flex-end" }}>
