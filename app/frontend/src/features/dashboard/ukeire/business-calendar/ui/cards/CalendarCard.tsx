@@ -2,7 +2,7 @@ import React, { useMemo } from "react";
 import { Card, Skeleton, Typography } from "antd";
 import UkeireCalendar from "../components/UkeireCalendar";
 import { useBusinessCalendarVM } from "../../application/useBusinessCalendarVM";
-import { CalendarRepositoryForUkeire } from "../../infrastructure/calendar.repository";
+import { MockCalendarRepositoryForUkeire } from "../../infrastructure/calendar.mock.repository";
 import type { ICalendarRepository } from "@/features/calendar/ports/repository";
 import type { CalendarDayDTO } from "@/features/calendar/domain/types";
 
@@ -73,7 +73,7 @@ function convertToPayload(year: number, month: number, days: CalendarDayDTO[]): 
 }
 
 export default function CalendarCard({ year, month, repository, title = "営業カレンダー", style }: Props) {
-  const repo = useMemo(() => repository ?? new CalendarRepositoryForUkeire(), [repository]);
+  const repo = useMemo(() => repository ?? new MockCalendarRepositoryForUkeire(), [repository]);
   const vm = useBusinessCalendarVM({ year, month, repository: repo });
 
   const pad = (n: number) => String(n).padStart(2, "0");

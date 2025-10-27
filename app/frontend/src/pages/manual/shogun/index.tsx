@@ -15,7 +15,7 @@ import {
   Typography,
 } from 'antd';
 import { FileDoneOutlined } from '@ant-design/icons';
-import { useResponsive, ANT, isTabletOrHalf } from '@/shared';
+import { useResponsive } from '@/shared'; // responsive: flags
 import { useShogunCatalog } from '@features/manual';
 import { SectionBlock } from '@features/manual/ui/components/SectionBlock';
 import { ManualModal } from '@features/manual/ui/components/ShogunModal';
@@ -32,9 +32,21 @@ const ShogunManualListPage: React.FC = () => {
   const contentScrollRef = useRef<HTMLDivElement | null>(null);
   
   const { sections, loading } = useShogunCatalog();
-  const { width } = useResponsive();
-  const showSider = typeof width === 'number' ? width >= ANT.md : false;
-  const showHeaderSearch = typeof width === 'number' ? !isTabletOrHalf(width) : true;
+  // responsive: useResponsive(flags)
+  const { flags } = useResponsive();
+
+  // responsive: pickByDevice helper
+  const pickByDevice = <T,>(mobile: T, tablet: T, laptop: T, desktop: T): T => {
+    if (flags.isMobile) return mobile;
+    if (flags.isTablet) return tablet;
+    if (flags.isLaptop) return laptop;
+    return desktop;
+  };
+
+  // responsive: showSider logic (Tablet以上)
+  const showSider = flags.isTablet || flags.isLaptop || flags.isDesktop;
+  // responsive: showHeaderSearch logic (Tablet以上)
+  const showHeaderSearch = flags.isTablet || flags.isLaptop || flags.isDesktop;
 
   // フィルタリング
   const filtered = useMemo(() => {
@@ -85,7 +97,8 @@ const ShogunManualListPage: React.FC = () => {
                   allowClear
                   placeholder="キーワードで検索…（例：E票、見積、台帳）"
                   className={styles.headerSearchInput}
-                  style={{ width: typeof width === 'number' && isTabletOrHalf(width) ? 360 : 240 }}
+                  // responsive: width
+                  style={{ width: pickByDevice(240, 360, 360, 360) }}
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                 />
