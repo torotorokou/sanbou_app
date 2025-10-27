@@ -105,12 +105,12 @@ const InboundForecastDashboardPage: React.FC = () => {
     <div
       style={{
         minHeight: "100dvh",
+        height: "100dvh",
         overflow: "hidden",
         display: "flex",
         flexDirection: "column",
         padding: 0,
         boxSizing: "border-box",
-        scrollbarGutter: "stable",
       }}
     >
       <div
@@ -120,8 +120,10 @@ const InboundForecastDashboardPage: React.FC = () => {
           boxSizing: "border-box",
           flex: 1,
           minHeight: 0,
-          overflowY: "auto",
+          overflowY: layoutMode === "desktop" ? "hidden" : "auto",
           scrollbarGutter: "stable",
+          display: "flex",
+          flexDirection: "column",
         }}
       >
         {/* ヘッダー */}
@@ -157,30 +159,16 @@ const InboundForecastDashboardPage: React.FC = () => {
         </div>
 
         {/* 上段：responsive: flagsベースレイアウト分岐 */}
-        <div style={{ marginBottom: gutter }}>
-          <Row gutter={[gutter, gutter]}>
+        <div style={{ marginBottom: gutter, flex: layoutMode === "desktop" ? "1" : "0 0 auto", minHeight: 0 }}>
+          <Row gutter={[gutter, gutter]} style={{ height: layoutMode === "desktop" ? "100%" : "auto" }}>
             {layoutMode === "mobile" ? (
               // responsive: flagsベースレイアウト修正 - Mobile: 全て1列（縦積み）
-              // 順序: 目標 → カレンダー → 日次グラフ
+              // 順序: 目標 → 予測 → 日次グラフ（カレンダーは非表示）
+              // 高さを調整して3つの目標が全て表示されるように
               <>
                 <Col span={spans.target}>
-                  <div style={{ height: 280 }}>
-                    {vm.targetCardProps && <TargetCard {...vm.targetCardProps} />}
-                  </div>
-                </Col>
-                <Col span={spans.cal}>
-                  <div style={{ height: 320 }}>
-                    {(() => {
-                      if (!vm.month) return null;
-                      const [year, month] = vm.month.split("-").map(Number);
-                      if (!year || !month || Number.isNaN(year) || Number.isNaN(month)) return null;
-                      return <UkeireCalendarCard year={year} month={month} />;
-                    })()}
-                  </div>
-                </Col>
-                <Col span={spans.daily}>
-                  <div style={{ height: 380 }}>
-                    {vm.combinedDailyProps && <CombinedDailyCard {...vm.combinedDailyProps} />}
+                  <div style={{ height: 220 }}>
+                    {vm.targetCardProps && <TargetCard {...vm.targetCardProps} isMobile={true} />}
                   </div>
                 </Col>
               </>
@@ -211,18 +199,18 @@ const InboundForecastDashboardPage: React.FC = () => {
             ) : (
               // responsive: flagsベースレイアウト修正 - Desktop: 上段3列（目標/日次/カレンダー）
               <>
-                <Col span={spans.target}>
-                  <div style={{ height: 360 }}>
+                <Col span={spans.target} style={{ height: layoutMode === "desktop" ? "100%" : "auto" }}>
+                  <div style={{ height: layoutMode === "desktop" ? "100%" : 360 }}>
                     {vm.targetCardProps && <TargetCard {...vm.targetCardProps} />}
                   </div>
                 </Col>
-                <Col span={spans.daily}>
-                  <div style={{ height: 360 }}>
+                <Col span={spans.daily} style={{ height: layoutMode === "desktop" ? "100%" : "auto" }}>
+                  <div style={{ height: layoutMode === "desktop" ? "100%" : 360 }}>
                     {vm.combinedDailyProps && <CombinedDailyCard {...vm.combinedDailyProps} />}
                   </div>
                 </Col>
-                <Col span={spans.cal}>
-                  <div style={{ height: 360 }}>
+                <Col span={spans.cal} style={{ height: layoutMode === "desktop" ? "100%" : "auto" }}>
+                  <div style={{ height: layoutMode === "desktop" ? "100%" : 360 }}>
                     {(() => {
                       if (!vm.month) return null;
                       const [year, month] = vm.month.split("-").map(Number);
@@ -237,13 +225,30 @@ const InboundForecastDashboardPage: React.FC = () => {
         </div>
 
         {/* 下段：予測（常に全幅） */}
-        <div>
-          <Row gutter={[gutter, gutter]}>
-            <Col span={24}>
-              <div style={{ height: layoutMode === "mobile" ? 640 : 420 }}>
-                {vm.forecastCardProps && <ForecastCard {...vm.forecastCardProps} isGeMd={layoutMode !== "mobile"} />}
-              </div>
-            </Col>
+        <div style={{ flex: layoutMode === "desktop" ? "1" : "0 0 auto", minHeight: 0 }}>
+          <Row gutter={[gutter, gutter]} style={{ height: layoutMode === "desktop" ? "100%" : "auto" }}>
+            {layoutMode === "mobile" ? (
+              // Mobile: 予測 → 日次の順
+              <>
+                <Col span={24}>
+                  <div style={{ height: 480 }}>
+                    {vm.forecastCardProps && <ForecastCard {...vm.forecastCardProps} isGeMd={false} />}
+                  </div>
+                </Col>
+                <Col span={24}>
+                  <div style={{ height: 280 }}>
+                    {vm.combinedDailyProps && <CombinedDailyCard {...vm.combinedDailyProps} />}
+                  </div>
+                </Col>
+              </>
+            ) : (
+              // Desktop/LaptopOrBelow: 予測のみ
+              <Col span={24} style={{ height: layoutMode === "desktop" ? "100%" : "auto" }}>
+                <div style={{ height: layoutMode === "desktop" ? "100%" : 420 }}>
+                  {vm.forecastCardProps && <ForecastCard {...vm.forecastCardProps} isGeMd={true} />}
+                </div>
+              </Col>
+            )}
           </Row>
         </div>
       </div>
