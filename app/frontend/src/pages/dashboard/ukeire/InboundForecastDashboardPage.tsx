@@ -1,12 +1,16 @@
 /**
- * 受入ダッシュボード - Page Component
+ * 受入ダッシュボード - Page Component (useResponsive統合版)
  * MVC構成の薄いPageレイヤー
  * 
- * レスポンシブデザイン（bp.xl = 1280 を基準）:
- * - mobile/tablet (< 1280px): 全カード縦積み（span=24）
- * - desktop (≥ 1280px): 3列レイアウト（7-12-5列配分）
+ * 🔄 リファクタリング内容：
+ * - useResponsive(flags)のflagsベース段階レイアウト
+ * - 3パターンレスポンシブ（Mobile/LaptopOrBelow/Desktop）
+ * - 値の決定はコンポーネント先頭で一元管理
  * 
- * 実装: useResponsive() で bp.xl (1280px) を判定し、span を動的計算
+ * レスポンシブデザイン:
+ * - Mobile (≤767px): 全て1列（縦積み）
+ * - LaptopOrBelow (768-1279px): 上段2列（目標/カレンダー）、中段1列（日次）、下段1列（予測）
+ * - Desktop (≥1280px): 上段3列（目標/日次/カレンダー）、下段1列（予測）
  */
 
 import React, { useMemo } from "react";
@@ -22,20 +26,41 @@ import {
   ForecastCard
 } from "@/features/dashboard/ukeire";
 import { useResponsive } from "@/shared";
-// (removed curMonth / nextMonth imports since month selection is no longer restricted)
 
 const InboundForecastDashboardPage: React.FC = () => {
   const repository = useMemo(() => new MockInboundForecastRepository(), []);
   const vm = useInboundForecastVM(repository);
+  
+  // responsive: flagsベースレイアウト
   const { flags } = useResponsive();
-  // 要件変更: 以前は isXl (>=1280) でデスクトップ挙動だったが、
-  // これを ">=768px" に切り替える。isGeMd は 768px 以上を示す。
-  const isGeMd = Boolean(flags.isMd || flags.isLg || flags.isXl);
 
-  // ≥768px: 3列レイアウト（7-12-5）、未満: 縦積み（24-24-24）
-  const spans = isGeMd
-    ? { target: 7, daily: 12, cal: 5 }
-    : { target: 24, daily: 24, cal: 24 };
+  // responsive: レイアウトモード判定
+  type LayoutMode = "mobile" | "laptopOrBelow" | "desktop";
+  const layoutMode: LayoutMode = flags.isMobile 
+    ? "mobile" 
+    : (flags.isTablet || flags.isLaptop) 
+      ? "laptopOrBelow" 
+      : "desktop";
+
+  // responsive: ガッター・余白（段階的）
+  const gutter = flags.isMobile ? 8 : flags.isTablet ? 12 : flags.isLaptop ? 16 : 20;
+  const padding = flags.isMobile ? 8 : flags.isTablet ? 12 : flags.isLaptop ? 16 : 16;
+
+  // responsive: カラムspan定義
+  const spans = {
+    mobile: { target: 24, daily: 24, cal: 24 },           // 全て1列
+    laptopOrBelow: { target: 12, daily: 24, cal: 12 },    // 上段2列、中段1列
+    desktop: { target: 7, daily: 12, cal: 5 }             // 上段3列
+  }[layoutMode];
+
+  // responsive: flagsベースレイアウト修正 - fix: chart visibility
+  // レイアウトモード変更時にresizeイベントを発火し、Rechartsの再描画を促す
+  React.useEffect(() => {
+    const id = setTimeout(() => {
+      window.dispatchEvent(new Event("resize"));
+    }, 0);
+    return () => clearTimeout(id);
+  }, [layoutMode]);
 
   if (vm.loading || !vm.payload) {
     return (
@@ -52,7 +77,7 @@ const InboundForecastDashboardPage: React.FC = () => {
       >
         <div
           style={{
-            padding: 12,
+            padding,
             boxSizing: "border-box",
             flex: 1,
             minHeight: 0,
@@ -60,7 +85,7 @@ const InboundForecastDashboardPage: React.FC = () => {
             scrollbarGutter: "stable",
           }}
         >
-          <Row gutter={[12, 12]} style={{ height: "100%", alignItems: "stretch" }}>
+          <Row gutter={[gutter, gutter]} style={{ height: "100%", alignItems: "stretch" }}>
             <Col span={24}>
               <Skeleton active paragraph={{ rows: 6 }} />
             </Col>
@@ -91,7 +116,7 @@ const InboundForecastDashboardPage: React.FC = () => {
       <div
         className="inbound-forecast-grid"
         style={{
-          padding: 12,
+          padding,
           boxSizing: "border-box",
           flex: 1,
           minHeight: 0,
@@ -100,7 +125,7 @@ const InboundForecastDashboardPage: React.FC = () => {
         }}
       >
         {/* ヘッダー */}
-        <div>
+        <div style={{ marginBottom: gutter }}>
           {/* 3カラム構成: 左（空）/ 中央（タイトル）/ 右（アクション） */}
           <Row align="middle">
             <Col flex="1" />
@@ -131,63 +156,93 @@ const InboundForecastDashboardPage: React.FC = () => {
           </Row>
         </div>
 
-        {/* 上段：>=768px は 3列レイアウト、<768px は 2カラム（目標カード左、営業カレンダー右）+ 別行で日次グラフ */}
-        <div style={{ minHeight: 0 }}>
-          {isGeMd ? (
-            <Row gutter={[12, 12]} style={{ height: "100%", alignItems: "stretch" }}>
-              {/* Target Card: desktop で7/24列 */}
-              <Col span={spans.target} style={{ height: "100%" }}>
-                {vm.targetCardProps && <TargetCard {...vm.targetCardProps} />}
-              </Col>
-              {/* Combined Daily Card: desktop で12/24列 */}
-              <Col span={spans.daily} style={{ height: "100%" }}>
-                {vm.combinedDailyProps && <CombinedDailyCard {...vm.combinedDailyProps} />}
-              </Col>
-              {/* Calendar Card: desktop で5/24列 */}
-              <Col span={spans.cal} style={{ height: "100%" }}>
-                {(() => {
-                  const [year, month] = vm.month.split("-").map(Number);
-                  return <UkeireCalendarCard year={year} month={month} />;
-                })()}
-              </Col>
-            </Row>
-          ) : (
-            // <1280px: 1行目に Target (left) / Calendar (right)、2行目に CombinedDaily (full width)
-            <>
-              <Row gutter={[12, 12]} style={{ height: "100%", alignItems: "stretch" }}>
-                {/* Target (left) */}
-                <Col span={16} style={{ height: "100%" }}>
-                  {vm.targetCardProps && <TargetCard {...vm.targetCardProps} />}
+        {/* 上段：responsive: flagsベースレイアウト分岐 */}
+        <div style={{ marginBottom: gutter }}>
+          <Row gutter={[gutter, gutter]}>
+            {layoutMode === "mobile" ? (
+              // responsive: flagsベースレイアウト修正 - Mobile: 全て1列（縦積み）
+              // 順序: 目標 → カレンダー → 日次グラフ
+              <>
+                <Col span={spans.target}>
+                  <div style={{ height: 280 }}>
+                    {vm.targetCardProps && <TargetCard {...vm.targetCardProps} />}
+                  </div>
                 </Col>
-                {/* Calendar (right) */}
-                <Col span={8} style={{ height: "100%" }}>
-                  {(() => {
-                    // vm.month は存在している想定（ロード終わりの分岐内）
-                    const safeMonth = vm.month ?? "0000-00";
-                    const parts = safeMonth.split("-").map(Number);
-                    const year = Number.isNaN(parts[0]) ? undefined : parts[0];
-                    const month = Number.isNaN(parts[1]) ? undefined : parts[1];
-                    return year && month ? (
-                      <UkeireCalendarCard year={year} month={month} />
-                    ) : null;
-                  })()}
+                <Col span={spans.cal}>
+                  <div style={{ height: 320 }}>
+                    {(() => {
+                      if (!vm.month) return null;
+                      const [year, month] = vm.month.split("-").map(Number);
+                      if (!year || !month || Number.isNaN(year) || Number.isNaN(month)) return null;
+                      return <UkeireCalendarCard year={year} month={month} />;
+                    })()}
+                  </div>
                 </Col>
-              </Row>
-
-              <Row gutter={[12, 12]} style={{ height: "100%", marginTop: 8 }}>
-                <Col span={24} style={{ height: "100%" }}>
-                  {vm.combinedDailyProps && <CombinedDailyCard {...vm.combinedDailyProps} />}
+                <Col span={spans.daily}>
+                  <div style={{ height: 380 }}>
+                    {vm.combinedDailyProps && <CombinedDailyCard {...vm.combinedDailyProps} />}
+                  </div>
                 </Col>
-              </Row>
-            </>
-          )}
+              </>
+            ) : layoutMode === "laptopOrBelow" ? (
+              // responsive: flagsベースレイアウト修正 - LaptopOrBelow: 上段2列（目標/カレンダー）、中段1列（日次）
+              <>
+                <Col span={spans.target}>
+                  <div style={{ height: 320 }}>
+                    {vm.targetCardProps && <TargetCard {...vm.targetCardProps} />}
+                  </div>
+                </Col>
+                <Col span={spans.cal}>
+                  <div style={{ height: 320 }}>
+                    {(() => {
+                      if (!vm.month) return null;
+                      const [year, month] = vm.month.split("-").map(Number);
+                      if (!year || !month || Number.isNaN(year) || Number.isNaN(month)) return null;
+                      return <UkeireCalendarCard year={year} month={month} />;
+                    })()}
+                  </div>
+                </Col>
+                <Col span={spans.daily}>
+                  <div style={{ height: 400 }}>
+                    {vm.combinedDailyProps && <CombinedDailyCard {...vm.combinedDailyProps} />}
+                  </div>
+                </Col>
+              </>
+            ) : (
+              // responsive: flagsベースレイアウト修正 - Desktop: 上段3列（目標/日次/カレンダー）
+              <>
+                <Col span={spans.target}>
+                  <div style={{ height: 360 }}>
+                    {vm.targetCardProps && <TargetCard {...vm.targetCardProps} />}
+                  </div>
+                </Col>
+                <Col span={spans.daily}>
+                  <div style={{ height: 360 }}>
+                    {vm.combinedDailyProps && <CombinedDailyCard {...vm.combinedDailyProps} />}
+                  </div>
+                </Col>
+                <Col span={spans.cal}>
+                  <div style={{ height: 360 }}>
+                    {(() => {
+                      if (!vm.month) return null;
+                      const [year, month] = vm.month.split("-").map(Number);
+                      if (!year || !month || Number.isNaN(year) || Number.isNaN(month)) return null;
+                      return <UkeireCalendarCard year={year} month={month} />;
+                    })()}
+                  </div>
+                </Col>
+              </>
+            )}
+          </Row>
         </div>
 
         {/* 下段：予測（常に全幅） */}
-        <div style={{ minHeight: 0 }}>
-          <Row gutter={[8, 8]} style={{ height: "100%" }}>
-            <Col span={24} style={{ height: "100%" }}>
-              {vm.forecastCardProps && <ForecastCard {...vm.forecastCardProps} isGeMd={isGeMd} />}
+        <div>
+          <Row gutter={[gutter, gutter]}>
+            <Col span={24}>
+              <div style={{ height: 420 }}>
+                {vm.forecastCardProps && <ForecastCard {...vm.forecastCardProps} isGeMd={layoutMode !== "mobile"} />}
+              </div>
             </Col>
           </Row>
         </div>

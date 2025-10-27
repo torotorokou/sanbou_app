@@ -16,7 +16,7 @@ import {
 // CalendarCard removed: right column widgets trimmed
 import { useNavigate } from 'react-router-dom';
 import { ROUTER_PATHS } from '@app/routes/routes';
-import { useResponsive, bp } from '@/shared';
+import { useResponsive } from '@/shared'; // responsive: flags
 import ResponsiveNotice from '@/features/notice/ui/ResponsiveNotice';
 import './PortalPage.css';
 
@@ -404,23 +404,32 @@ type Notice = {
 };
 
 export const PortalPage: React.FC = () => {
-  const { width } = useResponsive(); // 明示的リサイズ検知（再レンダーで追従）
+  // responsive: useResponsive(flags)
+  const { flags } = useResponsive();
   const { token } = theme.useToken();
 
-  // isCompact: use nearest project breakpoint (bp.lg = 1024)
-  const isCompact = width < bp.lg;
+  // responsive: pickByDevice helper
+  const pickByDevice = <T,>(mobile: T, tablet: T, laptop: T, desktop: T): T => {
+    if (flags.isMobile) return mobile;
+    if (flags.isTablet) return tablet;
+    if (flags.isLaptop) return laptop;
+    return desktop;
+  };
 
-  // narrow 判定はプロジェクトBPに合わせる（bp.md = 768）
-  const isNarrow = width < bp.md;
+  // responsive: isCompact logic (Mobile | Tablet)
+  const isCompact = flags.isMobile || flags.isTablet;
 
-  // sm 未満（小型デバイス）ではボタンを非表示にしてテキスト領域を広げる
-  const isXs = width < bp.sm;
+  // responsive: narrow判定 (Mobile only)
+  const isNarrow = flags.isMobile;
+
+  // responsive: isXs (width < 640px)
+  const isXs = flags.isXs;
+
+  // responsive: カードスケール
+  const cardScale = pickByDevice(0.9, 0.9, 0.9, 1);
 
   // レスポンシブに関係なく全カードで同じボタン幅に統一する
   const unifiedButtonWidth = BUTTON_WIDTH;
-
-  // カードスケール: bp.xl (1280px) 未満では 0.9 倍にする
-  const cardScale = width < bp.xl ? 0.9 : 1;
 
   const introText = isCompact
     ? '社内ポータルです。必要な機能を選択してください。'
@@ -513,21 +522,15 @@ export const PortalPage: React.FC = () => {
               aria-label="ポータルメニュー一覧"
               style={{
                 display: 'grid',
-                columnGap: isXs ? 5 : 22,
-                rowGap: isXs ? 1 : 22,
-                // 狭い画面では行高を縮小。sm未満はさらに詰める
-                gridAutoRows: `${Math.round((isXs ? 75 : (isNarrow ? 120 : CARD_HEIGHT)) * cardScale)}px`,
-                // use auto-fit / minmax so cards stretch/shrink responsively
-                // but force 1 column for screens narrower than bp.md (mobile)
-                gridTemplateColumns: (() => {
-                  try {
-                    if (width < bp.md) return `repeat(1, 1fr)`; // mobile: single column
-                    const min = Math.round(CARD_WIDTH * cardScale);
-                    return `repeat(auto-fit, minmax(${min}px, 1fr))`;
-                  } catch {
-                    return `repeat(auto-fit, minmax(${Math.round(CARD_WIDTH * cardScale)}px, 1fr))`;
-                  }
-                })(),
+                // responsive: columnGap/rowGap
+                columnGap: pickByDevice(5, 22, 22, 22),
+                rowGap: pickByDevice(1, 22, 22, 22),
+                // responsive: gridAutoRows
+                gridAutoRows: `${Math.round(pickByDevice(75, 120, CARD_HEIGHT, CARD_HEIGHT) * cardScale)}px`,
+                // responsive: gridTemplateColumns (Mobile: 1col, Tablet+: auto-fit)
+                gridTemplateColumns: flags.isMobile
+                  ? 'repeat(1, 1fr)'
+                  : `repeat(auto-fit, minmax(${Math.round(CARD_WIDTH * cardScale)}px, 1fr))`,
               justifyContent: 'center',
               alignItems: 'stretch',
             }}

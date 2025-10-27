@@ -1,6 +1,7 @@
 import React, { useLayoutEffect, useRef, useState } from 'react';
 import { Typography, Col, Row, Button, Modal, Spin, Tabs } from 'antd';
 import { csvTypeColors } from '@shared/theme';
+import { useResponsive } from '@/shared'; // responsive: height
 
 import {
     CsvUploadPanel,
@@ -9,7 +10,7 @@ import {
     useCsvUploadHandler,
     useCsvUploadArea,
 } from '@features/database';
-import { UPLOAD_CSV_TYPES, UPLOAD_CSV_DEFINITIONS } from '@features/database/model';
+import { UPLOAD_CSV_DEFINITIONS, UPLOAD_CSV_TYPES } from '@features/database/model';
 
 const { Text } = Typography;
 // Layout constants
@@ -21,6 +22,9 @@ const TAB_BAR_HEIGHT_FALLBACK = 40;
 const CARD_BODY_VERTICAL_PADDING = 8 * 2; // bodyStyle padding top+bottom
 
 const UploadDatabasePage: React.FC = () => {
+    // responsive: useResponsive(height)
+    const { height } = useResponsive();
+
     const {
         files,
         validationResults,
@@ -53,7 +57,8 @@ const UploadDatabasePage: React.FC = () => {
         const calc = () => {
             const rowEl = rowRef.current;
             if (!rowEl) return;
-            const rowH = rowEl.clientHeight || (window.innerHeight || document.documentElement.clientHeight || 910);
+            // responsive: height
+            const rowH = rowEl.clientHeight || height || 910;
             // Tabsバーの実高さを測定
             const tabEl = tabsRef.current?.querySelector('.ant-tabs-nav') as HTMLElement | null;
             const measuredTab = tabEl?.offsetHeight ?? TAB_BAR_HEIGHT_FALLBACK;
@@ -75,7 +80,7 @@ const UploadDatabasePage: React.FC = () => {
             cancelAnimationFrame(raf);
             window.removeEventListener('resize', onResize);
         };
-    }, []);
+    }, [height, tabBarHeight]);
 
     // helper: choose readable text color (black/white) based on background
     const readableTextColor = (bg: string) => {
