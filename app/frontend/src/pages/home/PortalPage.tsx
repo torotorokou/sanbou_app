@@ -113,7 +113,7 @@ const PortalCard: React.FC<PortalCardProps> = ({
   const appliedButtonWidth = buttonWidth ?? BUTTON_WIDTH;
   const scale = cardScale ?? 1;
   // compactLayout の場合は高さを縮める
-  const COMPACT_CARD_HEIGHT = 120; // compact 時のベース高さ
+  const COMPACT_CARD_HEIGHT = 100; // compact 時のベース高さ（モバイル向けに縮小して縦詰め）
   const appliedCardHeight = Math.round((compactLayout ? COMPACT_CARD_HEIGHT : CARD_HEIGHT) * scale);
   const appliedButtonHeight = Math.round(BUTTON_HEIGHT * scale);
   const appliedButtonFontSize = Math.round(BUTTON_FONT_SIZE * scale);
@@ -192,6 +192,8 @@ const PortalCard: React.FC<PortalCardProps> = ({
         }}
         onMouseEnter={(e) => {
           (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-2px)';
+          // lift above neighbors while hovered to avoid visual clipping
+          (e.currentTarget as HTMLDivElement).style.zIndex = '2';
           (e.currentTarget as HTMLDivElement).style.boxShadow =
             hideButton
               ? `inset 0 4px 0 0 ${accent}, ${token.boxShadowSecondary}`
@@ -199,16 +201,20 @@ const PortalCard: React.FC<PortalCardProps> = ({
         }}
         onMouseLeave={(e) => {
           (e.currentTarget as HTMLDivElement).style.transform = 'translateY(0)';
+          (e.currentTarget as HTMLDivElement).style.zIndex = '0';
           (e.currentTarget as HTMLDivElement).style.boxShadow =
             hideButton ? `inset 0 4px 0 0 ${accent}` : `inset 0 2px 0 0 ${accent}`;
         }}
         onFocus={(e) => {
+          // make sure focused card is visually on top for keyboard users
+          (e.currentTarget as HTMLDivElement).style.zIndex = '2';
           (e.currentTarget as HTMLDivElement).style.boxShadow =
             hideButton
               ? `inset 0 4px 0 0 ${accent}, 0 0 0 3px ${token.colorPrimaryBorder}`
               : `inset 0 2px 0 0 ${accent}, 0 0 0 3px ${token.colorPrimaryBorder}`;
         }}
         onBlur={(e) => {
+          (e.currentTarget as HTMLDivElement).style.zIndex = '0';
           (e.currentTarget as HTMLDivElement).style.boxShadow =
             hideButton ? `inset 0 4px 0 0 ${accent}` : `inset 0 2px 0 0 ${accent}`;
         }}
@@ -523,10 +529,17 @@ export const PortalPage: React.FC = () => {
               style={{
                 display: 'grid',
                 // responsive: columnGap/rowGap
-                columnGap: pickByDevice(5, 22, 22, 22),
-                rowGap: pickByDevice(1, 22, 22, 22),
+                // Ensure a minimal spacing on very small screens to avoid visual overlap.
+                // Previously mobile rowGap was 1px which could allow cards to visually touch/overlap
+                // when hover/transform or content growth occurs. Use a safer minimum (8px).
+                // reduce mobile gaps to a few pixels for a very dense layout on small screens
+                // (mobile: 2px, tablet+: 22px)
+                columnGap: pickByDevice(4, 22, 22, 22),
+                rowGap: pickByDevice(2, 22, 22, 22),
                 // responsive: gridAutoRows
-                gridAutoRows: `${Math.round(pickByDevice(75, 120, CARD_HEIGHT, CARD_HEIGHT) * cardScale)}px`,
+                // Use minmax(..., auto) so rows can grow if a card becomes taller (prevents overlap)
+                // Lower the mobile minimum so cards sit closer vertically.
+                gridAutoRows: `minmax(${Math.round(pickByDevice(64, 120, CARD_HEIGHT, CARD_HEIGHT) * cardScale)}px, auto)`,
                 // responsive: gridTemplateColumns (Mobile: 1col, Tablet+: auto-fit)
                 gridTemplateColumns: flags.isMobile
                   ? 'repeat(1, 1fr)'
