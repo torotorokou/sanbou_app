@@ -1,6 +1,8 @@
 """
 SQLAlchemy ORM models for database tables.
-Schemas: core, jobs, forecast
+Schemas: core, jobs, forecast, raw
+
+raw スキーマのモデルは syogun_csv_masters.yaml から動的に生成されます。
 """
 from datetime import datetime, date as date_type
 from sqlalchemy import Column, Integer, String, Date, Numeric, Text, TIMESTAMP, JSON, func
@@ -77,3 +79,30 @@ class InboundReservation(Base):
     trucks = Column(Integer, nullable=False)
     created_at = Column(TIMESTAMP, nullable=False, default=func.now())
     updated_at = Column(TIMESTAMP, nullable=False, default=func.now(), onupdate=func.now())
+
+
+# ========================================
+# raw schema (shogun CSV data)
+# YAMLから動的に生成されるモデル
+# ========================================
+
+# 動的モデルをインポート
+from app.repositories.dynamic_models import (
+    get_shogun_model_class,
+    ReceiveShogunFlash,
+    YardShogunFlash,
+    ShipmentShogunFlash,
+)
+
+# 後方互換性のため、ここでも公開
+__all__ = [
+    'Base',
+    'ForecastJob',
+    'PredictionDaily',
+    'InboundActual',
+    'InboundReservation',
+    'ReceiveShogunFlash',
+    'YardShogunFlash',
+    'ShipmentShogunFlash',
+    'get_shogun_model_class',
+]

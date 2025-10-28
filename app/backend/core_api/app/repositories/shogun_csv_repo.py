@@ -1,0 +1,143 @@
+"""
+Shogun CSV Repository
+
+将軍CSVデータをDBに保存するリポジトリ。
+backend_sharedのCSVバリデーター・フォーマッターを活用します。
+YAMLファイル(syogun_csv_masters.yaml)から動的にカラムマッピングを取得します。
+"""
+
+import logging
+from typing import Optional, Dict, Any
+import pandas as pd
+from sqlalchemy.orm import Session
+from sqlalchemy import text
+
+from app.repositories.dynamic_models import get_shogun_model_class
+from app.config.settings import get_settings
+from app.config.table_definition import get_table_definition_generator
+
+logger = logging.getLogger(__name__)
+
+
+class ShogunCsvRepository:
+    """将軍CSV保存リポジトリ（YAMLベース）"""
+    
+    def __init__(self, db: Session):
+        self.db = db
+        self.settings = get_settings()
+        self.table_gen = get_table_definition_generator()
+    
+    def save_csv_by_type(self, csv_type: str, df: pd.DataFrame) -> int:
+        """
+        CSV種別に応じて適切なテーブルに保存
+        
+        Args:
+            csv_type: CSV種別 ('receive', 'yard', 'shipment')
+            df: 保存するDataFrame（英語カラム名）
+            
+        Returns:
+            int: 保存した行数
+        """
+        if df.empty:
+            logger.warning(f"Empty DataFrame for {csv_type}, skipping save")
+            return 0
+        
+        # 動的にORMモデルクラスを取得
+        model_class = get_shogun_model_class(csv_type)
+        
+        # YAMLからカラム定義を取得
+        columns_def = self.table_gen.get_columns_definition(csv_type)
+        valid_columns = {col['en_name'] for col in columns_def}
+        
+        # DataFrameのカラムを検証
+        df_columns = set(df.columns)
+        missing_in_yaml = df_columns - valid_columns
+        if missing_in_yaml:
+            logger.warning(f"Columns in DataFrame but not in YAML for {csv_type}: {missing_in_yaml}")
+        
+        # DataFrameを辞書のリストに変換
+        records = df.to_dict('records')
+        
+        # ORMオブジェクトのリストを作成
+        orm_objects = []
+        for record in records:
+            # YAMLで定義されたカラムのみ抽出
+            filtered_record = {k: v for k, v in record.items() if k in valid_columns}
+            
+            # raw_data_jsonに元データを保存
+            obj_data = {
+                **filtered_record,
+                'raw_data_json': record.copy(),  # 元データをJSONで保存
+            }
+            orm_objects.append(model_class(**obj_data))
+        
+        try:
+            # バルクインサート
+            self.db.bulk_save_objects(orm_objects)
+            self.db.commit()
+            
+            logger.info(f"Saved {len(orm_objects)} rows to {csv_type} table")
+            return len(orm_objects)
+            
+        except Exception as e:
+            self.db.rollback()
+            logger.error(f"Failed to save {csv_type} data: {e}")
+            raise
+    
+    def save_receive_csv(self, df: pd.DataFrame) -> int:
+        """受入一覧CSVを保存"""
+        return self.save_csv_by_type('receive', df)
+    
+    def save_yard_csv(self, df: pd.DataFrame) -> int:
+        """ヤード一覧CSVを保存"""
+        return self.save_csv_by_type('yard', df)
+    
+    def save_shipment_csv(self, df: pd.DataFrame) -> int:
+        """出荷一覧CSVを保存"""
+        return self.save_csv_by_type('shipment', df)
+    
+    def truncate_table(self, csv_type: str) -> None:
+        """
+        指定したCSV種別のテーブルを全削除（開発・テスト用）
+        
+        Args:
+            csv_type: CSV種別 ('receive', 'yard', 'shipment')
+        """
+        table_name = self.settings.get_table_name(csv_type)
+        if not table_name:
+            raise ValueError(f"Unknown csv_type: {csv_type}")
+        
+        try:
+            # TRUNCATE実行
+            self.db.execute(text(f"TRUNCATE TABLE {table_name} RESTART IDENTITY CASCADE"))
+            self.db.commit()
+            logger.info(f"Truncated table: {table_name}")
+        except Exception as e:
+            self.db.rollback()
+            logger.error(f"Failed to truncate {table_name}: {e}")
+            raise
+    
+    def get_record_count(self, csv_type: str) -> int:
+        """
+        指定したCSV種別のテーブルのレコード数を取得
+        
+        Args:
+            csv_type: CSV種別 ('receive', 'yard', 'shipment')
+            
+        Returns:
+            int: レコード数
+        """
+        model_class = get_shogun_model_class(csv_type)
+        return self.db.query(model_class).count()
+    
+    def get_column_mapping(self, csv_type: str) -> Dict[str, str]:
+        """
+        YAMLから日本語→英語のカラムマッピングを取得
+        
+        Args:
+            csv_type: CSV種別
+            
+        Returns:
+            {'伝票日付': 'slip_date', ...}
+        """
+        return self.table_gen.get_column_mapping(csv_type)

@@ -11,7 +11,7 @@ from backend_shared.infrastructure.config.paths import SYOGUNCSV_DEF_PATH, MANAG
 
 class SyogunCsvConfigLoader:
     """
-    昇軍CSV定義ファイルローダー
+    将軍CSV定義ファイルローダー
 
     統合型CSV定義ファイル（YAML）を読み込み、CSV処理に必要な
     カラム定義、型情報、一意キーなどの設定情報を提供します。
