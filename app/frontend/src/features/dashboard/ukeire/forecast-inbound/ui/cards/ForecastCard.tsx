@@ -6,12 +6,14 @@
 import React, { useState } from "react";
 import { Card, Space, Typography, Tooltip, Row, Col, Tabs, Progress, Switch } from "antd";
 import { InfoCircleOutlined } from "@ant-design/icons";
-import { ComposedChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RTooltip, Legend, Area, AreaChart, ReferenceLine } from "recharts";
+import { ComposedChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RTooltip, Legend, Area, AreaChart } from "recharts";
 import { COLORS, FONT } from "@/features/dashboard/ukeire/domain/constants";
 import { ChartFrame } from "@/features/dashboard/ukeire/shared/ui/ChartFrame";
 import { SingleLineLegend } from "@/features/dashboard/ukeire/shared/ui/SingleLineLegend";
 import { clamp } from "@/features/dashboard/ukeire/domain/valueObjects";
 import { useInstallTabsFillCSS } from "@/features/dashboard/ukeire/shared/styles/useInstallTabsFillCSS";
+import dayjs from "dayjs";
+import isoWeekPlugin from "dayjs/plugin/isoWeek";
 // レスポンシブ判定は Page 側へ移譲したため、ここではフックを使わない
 
 export type KPIBlockProps = {
@@ -22,6 +24,8 @@ export type KPIBlockProps = {
   target: number | null;
   // 実測値（任意）: 表示を "予測/実測" にする場合に使用
   actual?: number | null;
+  // 将来的にはバックグラウンドから渡す想定。なければコンポーネント内で計算する
+  isoWeek?: number;
 };
 
 export type ForecastCardProps = {
@@ -37,19 +41,18 @@ export type ForecastCardProps = {
     cumDaily: number;
     cumActual: number;
   }[];
-  monthTarget: number;
-  daysInMonth: number;
   oddDayTicks: string[];
-  forecastP50: number;
   /**
    * レイアウト判定は Page 側で行う（責務の分離）。
    * true = width >= 768px（デスクトップ/タブレットの広い表示）
    * undefined の場合は既存のデスクトップ挙動を維持する（保守性目的）。
    */
   isGeMd?: boolean;
+  // 将来的にはバックグラウンドから取得する想定
+  isoWeek?: number;
 };
 
-const KPIBlock: React.FC<KPIBlockProps> = ({ title, p50, p10, p90, target, actual }) => {
+const KPIBlock: React.FC<KPIBlockProps> = ({ title, p50, p10, p90, target, actual, isoWeek }) => {
   // 新仕様: 可能であれば予測(p50)/実測(actual)を達成率として表示する
   const ratio = typeof actual === "number" && actual > 0 ? p50 / actual : (target ? p50 / target : null);
   const pct = ratio != null ? Math.round(ratio * 100) : null;
@@ -59,7 +62,16 @@ const KPIBlock: React.FC<KPIBlockProps> = ({ title, p50, p10, p90, target, actua
     <Card size="small" bodyStyle={{ padding: 12, height: "100%", display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
       <div style={{ height: "100%", display: "grid", gridTemplateColumns: "auto 1fr auto", alignItems: "center", gap: 8 }}>
         <div style={{ textAlign: "left", paddingLeft: 4 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: "#2b2b2b" }}>{title}</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: "#2b2b2b" }}>
+            {(() => {
+              const isThisWeek = title != null && String(title).startsWith("今週");
+              if (isThisWeek && typeof isoWeek === "number") {
+                const w = String(isoWeek).padStart(2, "0");
+                return <>{title} <span style={{ color: "#8c8c8c", fontWeight: 700 }}>(W{w})</span></>;
+              }
+              return <>{title}</>;
+            })()}
+          </div>
         </div>
         <div style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
           <div style={{ textAlign: "center" }}>
@@ -92,7 +104,7 @@ const KPIBlock: React.FC<KPIBlockProps> = ({ title, p50, p10, p90, target, actua
 
 // Mobile専用の横長KPIブロック（1行で全情報を表示）
 type MobileKPIBlockProps = KPIBlockProps & { achievementPct?: number };
-const MobileKPIBlock: React.FC<MobileKPIBlockProps> = ({ title, p50, p10, p90, target, achievementPct }) => {
+const MobileKPIBlock: React.FC<MobileKPIBlockProps> = ({ title, p50, p10, p90, target, achievementPct, isoWeek }) => {
   const ratio = target ? p50 / target : null;
   const pctByTarget = ratio != null ? Math.round(ratio * 100) : null;
   // achievementPct が渡されたら優先して表示（モバイル用）。なければ目标ベースのpctを表示
@@ -101,7 +113,16 @@ const MobileKPIBlock: React.FC<MobileKPIBlockProps> = ({ title, p50, p10, p90, t
 
   return (
     <Card size="small" bodyStyle={{ padding: "6px 10px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6 }}>
-      <div style={{ fontSize: 11, fontWeight: 700, color: "#2b2b2b", whiteSpace: "nowrap" }}>{title}</div>
+      <div style={{ fontSize: 11, fontWeight: 700, color: "#2b2b2b", whiteSpace: "nowrap" }}>
+        {(() => {
+          const isThisWeek = title != null && String(title).startsWith("今週");
+          if (isThisWeek && typeof isoWeek === "number") {
+            const w = String(isoWeek).padStart(2, "0");
+            return <>{title} <span style={{ color: "#8c8c8c", fontWeight: 700 }}>(W{w})</span></>;
+          }
+          return <>{title}</>;
+        })()}
+      </div>
       <div style={{ display: "flex", alignItems: "center", gap: 6, flex: 1, justifyContent: "center" }}>
         <div style={{ fontSize: 15, fontWeight: 900, color: COLORS.primary }}>
           {p50.toLocaleString()}
@@ -127,7 +148,52 @@ const MobileKPIBlock: React.FC<MobileKPIBlockProps> = ({ title, p50, p10, p90, t
   );
 };
 
-export const ForecastCard: React.FC<ForecastCardProps> = ({ kpis, chartData, cumData, monthTarget, daysInMonth, oddDayTicks, forecastP50, isGeMd }) => {
+// カスタムツールチップ: 累積グラフ用に実績と予測の差分（%）を表示する
+const CumTooltip: React.FC<{ active?: boolean; payload?: unknown; label?: string }> = ({ active, payload, label }) => {
+  if (!active) return null;
+  if (!payload || !Array.isArray(payload)) return null;
+  const arr = payload as Array<Record<string, unknown>>;
+  const findByKey = (k: string) => arr.find((p) => p && typeof p === "object" && (p as Record<string, unknown>)["dataKey"] === k) as Record<string, unknown> | undefined;
+  const cumDailyObj = findByKey("cumDaily");
+  const cumActualObj = findByKey("cumActual");
+  const parseVal = (o?: Record<string, unknown>) => {
+    if (!o) return null as number | null;
+    const v = o["value"];
+    if (typeof v === "number") return v;
+    if (typeof v === "string" && v.trim() !== "") {
+      const n = Number(v);
+      return Number.isFinite(n) ? n : null;
+    }
+    return null;
+  };
+  const cumDaily = parseVal(cumDailyObj);
+  const cumActual = parseVal(cumActualObj);
+
+  // 新仕様: ((予測 - 実績) / 実績) * 100 を表示。実績が 0 または null の場合は表示しない。
+  const diffPct = cumActual != null && cumActual !== 0 && cumDaily != null ? Math.round(((cumDaily - cumActual) / cumActual) * 100) : null;
+
+  return (
+    <div style={{ background: "rgba(255,255,255,0.98)", padding: 8, borderRadius: 6, boxShadow: "0 1px 4px rgba(0,0,0,0.12)", fontSize: 12 }}>
+      <div style={{ color: "#8c8c8c", marginBottom: 6 }}>{label}</div>
+      <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
+        <div style={{ color: "#fa8c16" }}>予測累積</div>
+        <div style={{ fontWeight: 700 }}>{cumDaily != null ? `${cumDaily}t` : "―"}</div>
+      </div>
+      <div style={{ display: "flex", justifyContent: "space-between", gap: 12, marginTop: 6 }}>
+        <div style={{ color: COLORS.ok }}>実績累積</div>
+        <div style={{ fontWeight: 700 }}>{cumActual != null ? `${cumActual}t` : "―"}</div>
+      </div>
+      <div style={{ display: "flex", justifyContent: "space-between", gap: 12, marginTop: 6 }}>
+        <div style={{ color: "#595959" }}>誤差</div>
+        <div style={{ fontWeight: 700, color: diffPct == null ? "#8c8c8c" : diffPct >= 0 ? COLORS.danger : COLORS.ok }}>
+          {diffPct == null ? "―" : `${diffPct > 0 ? "+" : ""}${diffPct}%`}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export const ForecastCard: React.FC<ForecastCardProps> = ({ kpis, chartData, cumData, oddDayTicks, isGeMd, isoWeek }) => {
   const tabsClass = useInstallTabsFillCSS();
   const [showActual, setShowActual] = useState(true);
   const [showForward, setShowForward] = useState(true);
@@ -138,6 +204,10 @@ export const ForecastCard: React.FC<ForecastCardProps> = ({ kpis, chartData, cum
   // Mobile モードでは padding を小さく
   const cardPadding = isGeMd ? 12 : 8;
   const cardGap = isGeMd ? 8 : 6;
+
+  // isoWeek: propsがあれば優先、なければ今日から計算（将来的にはバックエンドから渡す想定）
+  dayjs.extend(isoWeekPlugin);
+  const isoWeekToShow: number = typeof isoWeek === "number" ? isoWeek : dayjs().isoWeek();
 
   // --- Mobile 向け: 当日/今週合計/今月末 の達成率を算出 ---
   // 前提（仮定）:
@@ -178,7 +248,7 @@ export const ForecastCard: React.FC<ForecastCardProps> = ({ kpis, chartData, cum
               <div style={{ height: "100%", display: "grid", gridTemplateRows: "1fr 1fr 1fr", gap: 6 }}>
                 {kpis.map((kpi, i) => {
                   const actual = actualsForKpis[i] ?? undefined;
-                  return <KPIBlock key={i} {...kpi} actual={actual} />;
+                  return <KPIBlock key={i} {...kpi} actual={actual} isoWeek={isoWeekToShow} />;
                 })}
               </div>
             </Col>
@@ -260,15 +330,7 @@ export const ForecastCard: React.FC<ForecastCardProps> = ({ kpis, chartData, cum
                             <CartesianGrid strokeDasharray="3 3" />
                             <XAxis dataKey="label" ticks={oddDayTicks} fontSize={FONT.size} />
                             <YAxis unit="t" domain={[0, "auto"]} fontSize={FONT.size} />
-                            <RTooltip
-                              contentStyle={{ fontSize: FONT.size }}
-                              formatter={(v: unknown, name: unknown) => {
-                                const map: Record<string, string> = { cumDaily: "バック予測累積", cumActual: "実績累積" };
-                                const key = name == null ? "" : String(name);
-                                const vs = String(v ?? "");
-                                return [`${vs}t`, map[key] ?? key];
-                              }}
-                            />
+                            <RTooltip content={<CumTooltip />} />
                             {showCumReverse && (
                               <Area
                                 type="monotone"
@@ -292,60 +354,7 @@ export const ForecastCard: React.FC<ForecastCardProps> = ({ kpis, chartData, cum
                               />
                             )}
                             <Legend verticalAlign="bottom" height={16} />
-                            {Array.from({ length: Math.ceil(daysInMonth / 7) }, (_, i) => {
-                              const end = Math.min((i + 1) * 7, daysInMonth);
-                              const cumTarget = Math.round((monthTarget / Math.ceil(daysInMonth / 7)) * (i + 1));
-                              return (
-                                <ReferenceLine
-                                  key={`week-${i}`}
-                                  x={String(end).padStart(2, "0")}
-                                  stroke={COLORS.target}
-                                  strokeDasharray="5 5"
-                                  strokeWidth={2}
-                                  label={({ viewBox }) => {
-                                    const vb = viewBox as { x?: number; y?: number; width?: number } | null | undefined;
-                                    const vx = vb && vb.x != null ? vb.x + (vb.width ?? 0) / 2 : undefined;
-                                    const vy = vb && vb.y != null ? vb.y + 16 : undefined;
-                                    return (
-                                      <g>
-                                        <rect
-                                          x={(vx ?? 0) - 40}
-                                          y={(vy ?? 0) - 18}
-                                          width={80}
-                                          height={18}
-                                          rx={6}
-                                          ry={6}
-                                          fill="rgba(255,255,255,0.85)"
-                                          stroke="rgba(0,0,0,0.06)"
-                                        />
-                                        <text
-                                          x={vx}
-                                          y={vy}
-                                          textAnchor="middle"
-                                          fill={COLORS.target}
-                                          fontSize={12}
-                                          fontWeight={700}
-                                        >
-                                          {`W${i + 1}: ${cumTarget}t`}
-                                        </text>
-                                      </g>
-                                    );
-                                  }}
-                                />
-                              );
-                            })}
-                            <ReferenceLine
-                              y={forecastP50}
-                              stroke={COLORS.primary}
-                              strokeDasharray="3 3"
-                              strokeWidth={2}
-                              label={{
-                                value: `月末予測: ${forecastP50}t`,
-                                position: "right",
-                                fill: COLORS.primary,
-                                fontSize: 12,
-                              }}
-                            />
+                            {/* 週ごとの参考線と月末予測の水平ラインは非表示に変更 */}
                           </AreaChart>
                         </ChartFrame>
                       </div>
@@ -368,7 +377,7 @@ export const ForecastCard: React.FC<ForecastCardProps> = ({ kpis, chartData, cum
                 // 各KPIブロックを固定高さのラッパーで包んで縦を小さく保つ
                 return (
                   <div key={i} style={{ height: 56, minHeight: 56, maxHeight: 56, overflow: "hidden" }}>
-                    <MobileKPIBlock {...kpi} actual={actual} achievementPct={achievementPct} />
+                    <MobileKPIBlock {...kpi} actual={actual} achievementPct={achievementPct} isoWeek={isoWeekToShow} />
                   </div>
                 );
               })}
@@ -452,15 +461,7 @@ export const ForecastCard: React.FC<ForecastCardProps> = ({ kpis, chartData, cum
                               <CartesianGrid strokeDasharray="3 3" />
                               <XAxis dataKey="label" ticks={oddDayTicks} fontSize={FONT.size} />
                               <YAxis unit="t" domain={[0, "auto"]} fontSize={FONT.size} />
-                              <RTooltip
-                                contentStyle={{ fontSize: FONT.size }}
-                                formatter={(v: unknown, name: unknown) => {
-                                  const map: Record<string, string> = { cumDaily: "バック予測累積", cumActual: "実績累積" };
-                                  const key = name == null ? "" : String(name);
-                                  const vs = String(v ?? "");
-                                  return [`${vs}t`, map[key] ?? key];
-                                }}
-                              />
+                              <RTooltip content={<CumTooltip />} />
                               {showCumReverse && (
                                 <Area
                                   type="monotone"
@@ -484,60 +485,7 @@ export const ForecastCard: React.FC<ForecastCardProps> = ({ kpis, chartData, cum
                                 />
                               )}
                               <Legend verticalAlign="bottom" height={16} />
-                              {Array.from({ length: Math.ceil(daysInMonth / 7) }, (_, i) => {
-                                const end = Math.min((i + 1) * 7, daysInMonth);
-                                const cumTarget = Math.round((monthTarget / Math.ceil(daysInMonth / 7)) * (i + 1));
-                                return (
-                                  <ReferenceLine
-                                    key={`week-${i}`}
-                                    x={String(end).padStart(2, "0")}
-                                    stroke={COLORS.target}
-                                    strokeDasharray="5 5"
-                                    strokeWidth={2}
-                                    label={({ viewBox }) => {
-                                      const vb = viewBox as { x?: number; y?: number; width?: number } | null | undefined;
-                                      const vx = vb && vb.x != null ? vb.x + (vb.width ?? 0) / 2 : undefined;
-                                      const vy = vb && vb.y != null ? vb.y + 16 : undefined;
-                                      return (
-                                        <g>
-                                          <rect
-                                            x={(vx ?? 0) - 40}
-                                            y={(vy ?? 0) - 18}
-                                            width={80}
-                                            height={18}
-                                            rx={6}
-                                            ry={6}
-                                            fill="rgba(255,255,255,0.85)"
-                                            stroke="rgba(0,0,0,0.06)"
-                                          />
-                                          <text
-                                            x={vx}
-                                            y={vy}
-                                            textAnchor="middle"
-                                            fill={COLORS.target}
-                                            fontSize={12}
-                                            fontWeight={700}
-                                          >
-                                            {`W${i + 1}: ${cumTarget}t`}
-                                          </text>
-                                        </g>
-                                      );
-                                    }}
-                                  />
-                                );
-                              })}
-                              <ReferenceLine
-                                y={forecastP50}
-                                stroke={COLORS.primary}
-                                strokeDasharray="3 3"
-                                strokeWidth={2}
-                                label={{
-                                  value: `月末予測: ${forecastP50}t`,
-                                  position: "right",
-                                  fill: COLORS.primary,
-                                  fontSize: 12,
-                                }}
-                              />
+                              {/* 週ごとの参考線と月末予測の水平ラインは非表示に変更 */}
                             </AreaChart>
                           </ChartFrame>
                         </div>

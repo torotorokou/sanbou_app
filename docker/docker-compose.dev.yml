@@ -102,19 +102,17 @@ services:
     networks:
       - app-net
 
-  forecast_worker:
+  plan_worker:
     build:
       context: ../app/backend
-      dockerfile: forecast_worker/Dockerfile
-      target: dev
+      dockerfile: plan_worker/Dockerfile
     env_file:
       - ../env/.env.common
       - ../env/.env.local_dev
     volumes:
-      - ../app/backend/forecast_worker/app:/worker/app:rw
-      - ../app/backend/forecast_worker/infra:/worker/infra:rw
-      - ../app/backend/forecast_worker/domain:/worker/domain:rw
-      - ../app/backend/backend_shared:/opt/backend_shared:rw
+      - ../app/backend/plan_worker/app:/worker/app:rw
+      - ../app/backend/plan_worker/infra:/worker/infra:rw
+      - ../app/backend/plan_worker/domain:/worker/domain:rw
     depends_on:
       - db
     networks:
