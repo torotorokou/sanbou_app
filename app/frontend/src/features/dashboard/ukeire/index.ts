@@ -16,8 +16,10 @@ export * from "./domain/services/targetService";
 // ========== Shared ==========
 export * from "./shared/ui/ChartFrame";
 export * from "./shared/ui/SingleLineLegend";
+export { MonthNavigator, type MonthNavigatorProps } from "./shared/ui/MonthNavigator";
 export * from "./shared/styles/useInstallTabsFillCSS";
 export * from "./shared/tokens";
+export { useResponsiveLayout, type ResponsiveLayoutConfig, type LayoutMode } from "./shared/hooks/useResponsiveLayout";
 
 // ========== Business Calendar ==========
 export { decorateCalendarCells } from "./business-calendar/application/decorators";

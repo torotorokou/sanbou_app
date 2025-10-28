@@ -18,7 +18,7 @@
 import { useEffect, useRef, useState } from "react";
 import { bp } from "@/shared/constants";
 
-// eslint-disable-next-line no-restricted-syntax
+ 
 export type Tier = "xs" | "sm" | "md" | "lg" | "xl";
 
 export type ResponsiveFlags = {
@@ -59,7 +59,7 @@ export function makeFlags(w: number): ResponsiveFlags {
   const isMd = w >= bp.md && w < bp.lg;
   const isLg = w >= bp.lg && w < bp.xl;
   const isXl = w >= bp.xl;
-  // eslint-disable-next-line no-restricted-syntax
+   
   const tier: Tier = isXs ? "xs" : isSm ? "sm" : isMd ? "md" : isLg ? "lg" : "xl";
   return {
     isXs, isSm, isMd, isLg, isXl, tier,
