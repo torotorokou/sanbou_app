@@ -38,13 +38,12 @@ services:
         max-file: "3"
 
   # ===========================================================================
-  # Forecast Worker - Background job execution
+  # Plan Worker - Background job execution
   # ===========================================================================
-  forecast_worker:
+  plan_worker:
     build:
       context: ../app/backend
-      dockerfile: forecast_worker/Dockerfile
-      target: prod
+      dockerfile: plan_worker/Dockerfile
     networks: [data-net]
     depends_on:
       - db
@@ -53,7 +52,7 @@ services:
       - ../env/.env.vm_prod
     environment:
       - TZ=Asia/Tokyo
-      - POLL_INTERVAL=3
+      - POLL_INTERVAL=10
     restart: unless-stopped
     logging:
       driver: json-file

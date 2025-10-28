@@ -5,6 +5,8 @@
 
 import React from "react";
 import { Card, Space, Typography, Tooltip, Statistic, Progress } from "antd";
+import dayjs from "dayjs";
+import isoWeekPlugin from "dayjs/plugin/isoWeek";
 import { InfoCircleOutlined } from "@ant-design/icons";
 import { COLORS } from "@/features/dashboard/ukeire/domain/constants";
 import { clamp } from "@/features/dashboard/ukeire/domain/valueObjects";
@@ -20,9 +22,13 @@ export type TargetCardProps = {
   rows: TargetCardRowData[];
   style?: React.CSSProperties;
   isMobile?: boolean; // Mobile モードでフォントサイズを動的に調整
+  // 将来的にはバックグラウンドから取得する想定。指定があればそれを優先して表示する
+  isoWeek?: number;
 };
 
-export const TargetCard: React.FC<TargetCardProps> = ({ rows, style, isMobile = false }) => {
+export const TargetCard: React.FC<TargetCardProps> = ({ rows, style, isMobile = false, isoWeek }) => {
+  // isoWeek プラグインを拡張
+  dayjs.extend(isoWeekPlugin);
   // Mobile モードでは clamp を使って動的にフォントサイズを調整
   const headerFontSize = isMobile ? "clamp(12px, 3.5vw, 16px)" : "16px";
   const labelFontSize = isMobile ? "clamp(10px, 2.5vw, 12px)" : "12px";
@@ -79,11 +85,34 @@ export const TargetCard: React.FC<TargetCardProps> = ({ rows, style, isMobile = 
           const pct = r.target ? Math.round(ratioRaw * 100) : 0;
           const barPct = clamp(pct, 0, 100);
           const pctColor = ratioRaw >= 1 ? COLORS.ok : ratioRaw >= 0.9 ? COLORS.warn : COLORS.danger;
+          // determine iso week to show: prefer prop on the component; fallback to computing from today
+          let isoWeekToShow: number | undefined = typeof isoWeek === "number" ? isoWeek : undefined;
+          if (isoWeekToShow === undefined) {
+            isoWeekToShow = dayjs().isoWeek();
+          }
 
           return (
             <React.Fragment key={r.key}>
               <div style={{ color: "#595959", fontSize: labelFontSize, fontWeight: 800, lineHeight: 1 }}>
-                {r.label}
+                {/* 今週のラベルには (W##) を表示。Mobile では同一行、Desktop では改行して2行で表示 */}
+                {(() => {
+                  const label = r.label ?? "";
+                  const isThisWeekLabel = label.startsWith("今週");
+                  if (isThisWeekLabel && typeof isoWeekToShow === "number") {
+                    const w = String(isoWeekToShow).padStart(2, "0");
+                    if (isMobile) {
+                      return <span>{label} <span style={{ color: "#8c8c8c", fontWeight: 600 }}>(W{w})</span></span>;
+                    }
+                    // Desktop: 改行して2行表示
+                    return (
+                      <div style={{ display: "flex", flexDirection: "column", lineHeight: 1 }}>
+                        <span>{label}</span>
+                        <span style={{ color: "#8c8c8c", fontWeight: 600 }}>{`(W${w})`}</span>
+                      </div>
+                    );
+                  }
+                  return <>{label}</>;
+                })()}
               </div>
               <div>
                 <Statistic

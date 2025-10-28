@@ -164,7 +164,7 @@ export const useInboundForecastVM = (
               target: daysInMonth ? Math.round(payload.targets.month / daysInMonth) : null,
             },
             {
-              title: "今週合計",
+              title: "今週",
               p50: payload.forecast.week.p50,
               p10: payload.forecast.week.p10,
               p90: payload.forecast.week.p90,
@@ -180,10 +180,7 @@ export const useInboundForecastVM = (
           ],
           chartData,
           cumData,
-          monthTarget: payload.targets.month,
-          daysInMonth,
           oddDayTicks,
-          forecastP50: payload.forecast.month_landing.p50,
         };
       })()
     : null;

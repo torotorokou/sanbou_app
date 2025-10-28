@@ -1,0 +1,3 @@
+# Plan Worker dependencies (minimal)
+# TODO: Add dependencies as needed
+
