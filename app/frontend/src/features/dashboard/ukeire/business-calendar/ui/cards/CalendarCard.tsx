@@ -2,7 +2,7 @@ import React, { useMemo } from "react";
 import { Card, Skeleton, Typography } from "antd";
 import UkeireCalendar from "../components/UkeireCalendar";
 import { useBusinessCalendarVM } from "../../application/useBusinessCalendarVM";
-import { MockCalendarRepositoryForUkeire } from "../../infrastructure/calendar.mock.repository";
+import { CalendarRepositoryForUkeire } from "../../infrastructure/calendar.repository";
 import type { ICalendarRepository } from "@/features/calendar/ports/repository";
 import type { CalendarDayDTO } from "@/features/calendar/domain/types";
 
@@ -11,6 +11,8 @@ type DayDecor = {
   status?: string;
   label?: string | null;
   color?: string | null;
+  iso_week?: number;
+  iso_year?: number;
 };
 
 type CalendarPayload = {
@@ -22,6 +24,17 @@ type CalendarPayload = {
 type Props = {
   year: number;
   month: number;
+  /**
+   * カレンダーデータのリポジトリ
+   * 
+   * @default CalendarRepositoryForUkeire（バックエンドAPIから取得）
+   * 
+   * 開発・テスト時にMockを使用する場合:
+   * ```ts
+   * import { MockCalendarRepositoryForUkeire } from "@/features/dashboard/ukeire";
+   * <CalendarCard year={2025} month={1} repository={new MockCalendarRepositoryForUkeire()} />
+   * ```
+   */
   repository?: ICalendarRepository;
   title?: string;
   style?: React.CSSProperties;
@@ -29,35 +42,47 @@ type Props = {
 
 /**
  * CalendarDayDTO から CalendarPayload への変換
+ * day_typeに基づいて正確にステータスを判定
  */
 function convertToPayload(year: number, month: number, days: CalendarDayDTO[]): CalendarPayload {
   const pad = (n: number) => String(n).padStart(2, '0');
   const monthStr = `${year}-${pad(month)}`;
   
   const dayDecors: DayDecor[] = days.map((d): DayDecor => {
-    // day_type に基づいてステータスを判定
-    // NORMAL: 営業日（緑）
-    // RESERVATION: 日曜・祝日（ピンク）
+    // day_type に基づいて正確にステータスを判定
+    // NORMAL: 通常営業日（緑）
+    // RESERVATION: 予約営業日（ピンク）
     // CLOSED: 休業日（赤）
-    let status: "business" | "holiday" | "closed" = "business";
-    let label: string | undefined = undefined;
+    let status: "business" | "holiday" | "closed";
+    let label: string | undefined;
+    let color: string;
     
-    if (d.day_type === "CLOSED" || d.is_company_closed) {
-      status = "closed";
-      label = "休業日";
-    } else if (d.day_type === "RESERVATION" || d.is_holiday) {
-      status = "holiday";
-      label = d.is_holiday ? "祝日" : "日曜";
-    } else {
-      status = "business";
-      label = undefined;
+    switch (d.day_type) {
+      case "CLOSED":
+        status = "closed";
+        label = "休業日";
+        color = "#cf1322"; // 赤
+        break;
+      case "RESERVATION":
+        status = "holiday";
+        label = d.is_holiday ? "祝日" : "予約営業日";
+        color = "#ff85c0"; // ピンク
+        break;
+      case "NORMAL":
+      default:
+        status = "business";
+        label = undefined;
+        color = "#52c41a"; // 緑
+        break;
     }
     
     return {
       date: d.ddate,
       status,
       label,
-      color: undefined,
+      color,
+      iso_week: d.iso_week,
+      iso_year: d.iso_year,
     };
   });
   
@@ -65,15 +90,15 @@ function convertToPayload(year: number, month: number, days: CalendarDayDTO[]): 
     month: monthStr,
     days: dayDecors,
     legend: [
-      { key: "business", label: "営業日", color: "#52c41a" },
-      { key: "holiday", label: "日曜・祝日", color: "#ff85c0" },
+      { key: "business", label: "通常営業日", color: "#52c41a" },
+      { key: "holiday", label: "予約営業日", color: "#ff85c0" },
       { key: "closed", label: "休業日", color: "#cf1322" },
     ],
   };
 }
 
 export default function CalendarCard({ year, month, repository, title = "営業カレンダー", style }: Props) {
-  const repo = useMemo(() => repository ?? new MockCalendarRepositoryForUkeire(), [repository]);
+  const repo = useMemo(() => repository ?? new CalendarRepositoryForUkeire(), [repository]);
   const vm = useBusinessCalendarVM({ year, month, repository: repo });
 
   const pad = (n: number) => String(n).padStart(2, "0");
