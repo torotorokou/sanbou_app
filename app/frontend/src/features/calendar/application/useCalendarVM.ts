@@ -47,12 +47,16 @@ function buildGrid(year: number, month: number, days: CalendarDayDTO[]) {
     const pad = (n: number) => String(n).padStart(2, '0');
     const key = `${cur.getFullYear()}-${pad(cur.getMonth() + 1)}-${pad(cur.getDate())}`;
     const inMonth = cur >= first && cur <= last;
-    const base: CalendarDayDTO = map.get(key) ?? {
+    const existing = map.get(key);
+    
+    // バックエンドからデータがあればそれを優先使用
+    // バックエンドにはiso_year, iso_week, iso_dowなど全て含まれている
+    const base: CalendarDayDTO = existing ?? {
       ddate: key,
       y: cur.getFullYear(),
       m: cur.getMonth() + 1,
-      iso_year: cur.getFullYear(),
-      iso_week: 1,
+      iso_year: cur.getFullYear(), // フォールバック用の簡易値
+      iso_week: 1, // フォールバック用の簡易値
       iso_dow: ((cur.getDay() + 6) % 7) + 1,
       is_holiday: false,
       is_second_sunday: false,

@@ -14,6 +14,8 @@ interface UkeireCell extends CalendarCell {
   status?: string;
   label?: string | null;
   color?: string | null;
+  iso_week?: number;
+  iso_year?: number;
 }
 
 export interface UkeireCalendarProps {
@@ -30,6 +32,8 @@ export interface UkeireCalendarProps {
     status?: string;
     label?: string | null;
     color?: string | null;
+    iso_week?: number;
+    iso_year?: number;
   }>;
   /**
    * 凡例データ（表示用）
@@ -79,9 +83,9 @@ export const UkeireCalendar: React.FC<UkeireCalendarProps> = ({
     ) as HTMLElement | null;
     const legendH = legendEl ? legendEl.offsetHeight : 0;
 
-    // 週数計算
+    // 週数計算（月曜始まり）
     const first = dayjs(month + "-01");
-    const startDow = first.day();
+    const startDow = (first.day() + 6) % 7; // 月曜始まりに変換
     const daysInMonth = first.daysInMonth();
     const weeks = Math.ceil((startDow + daysInMonth) / 7);
 
@@ -93,10 +97,15 @@ export const UkeireCalendar: React.FC<UkeireCalendarProps> = ({
     setComputedRowHeight(r);
   }, [fixedRowHeight, size, month, rootRef]);
 
-  // セルデータ生成
+  /**
+   * セルデータ生成（月曜始まり）
+   * バックエンドから取得した days データを date でマップし、
+   * グリッドに配置するだけのシンプルなロジック
+   */
   const cells = React.useMemo(() => {
     const first = dayjs(month + "-01");
-    const startDow = first.day();
+    // 月曜始まりに変換: (day + 6) % 7
+    const startDow = (first.day() + 6) % 7;
     const daysInMonth = first.daysInMonth();
     const weeks = Math.ceil((startDow + daysInMonth) / 7);
     const total = weeks * 7;
@@ -115,6 +124,8 @@ export const UkeireCalendar: React.FC<UkeireCalendarProps> = ({
         status: dayInfo?.status ?? undefined,
         label: dayInfo?.label ?? undefined,
         color: dayInfo?.color ?? undefined,
+        iso_week: dayInfo?.iso_week,
+        iso_year: dayInfo?.iso_year,
       });
     }
     return result;

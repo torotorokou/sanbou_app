@@ -1,6 +1,10 @@
 /**
  * CalendarCore Component
  * カレンダーグリッドの汎用コア実装（features/calendar に統一）
+ * 
+ * ISO 8601標準に準拠:
+ * - 週は月曜日始まり
+ * - ISO週番号はバックエンドから取得したデータをそのまま表示
  */
 
 import React from "react";
@@ -18,11 +22,19 @@ export interface CalendarCoreProps<T extends CalendarCell = CalendarCell> {
   className?: string;
 }
 
-const DOW = ["日", "月", "火", "水", "木", "金", "土"];
+// ISO 8601標準: 月曜日始まり
+const DOW = ["月", "火", "水", "木", "金", "土", "日"];
 
+/**
+ * 月曜日始まりのカレンダーグリッド用セル生成
+ * @param month "YYYY-MM" 形式
+ * @returns グリッド配置用のセル配列（月曜日始まり）
+ */
 function buildCells<T extends CalendarCell>(month: string): T[] {
   const first = dayjs(month + "-01");
-  const startDow = first.day();
+  // dayjs.day(): 0=日曜, 1=月曜, ..., 6=土曜
+  // 月曜始まりに変換: (day + 6) % 7 => 0=月曜, 1=火曜, ..., 6=日曜
+  const startDow = (first.day() + 6) % 7;
   const daysInMonth = first.daysInMonth();
   const weeks = Math.ceil((startDow + daysInMonth) / 7);
   const total = weeks * 7;
@@ -51,9 +63,50 @@ export function CalendarCore<T extends CalendarCell = CalendarCell>({
   const cells = externalCells ?? buildCells<T>(month);
 
   const first = dayjs(month + "-01");
-  const startDow = first.day();
+  // 月曜始まりに変換
+  const startDow = (first.day() + 6) % 7;
   const daysInMonth = first.daysInMonth();
   const weeks = Math.ceil((startDow + daysInMonth) / 7);
+
+  /**
+   * ISO週番号の取得（バックエンドデータ優先）
+   * 
+   * 月曜始まりのグリッドなので:
+   * - インデックス0 = 月曜日（ISO週の基準日）
+   * - 各週の最初のセル（月曜日）のiso_weekを直接使用
+   * 
+   * フォールバックは最小限に抑え、バックエンドデータを信頼
+   */
+  const weekNumbers = React.useMemo(() => {
+    const numbers: string[] = [];
+    
+    for (let w = 0; w < weeks; w++) {
+      const weekStartIndex = w * 7;
+      
+      // 週の最初のセル = 月曜日のiso_weekを取得
+      const mondayCell = cells[weekStartIndex] as T & { iso_week?: number; inMonth?: boolean };
+      
+      if (mondayCell?.iso_week) {
+        // バックエンドから取得したISO週番号をそのまま表示
+        numbers.push(String(mondayCell.iso_week));
+      } else if (mondayCell?.inMonth === false) {
+        // 月曜日が月外の場合、週内の月内セルから取得
+        let weekNum: string | undefined;
+        for (let d = 1; d < 7; d++) {
+          const cell = cells[weekStartIndex + d] as T & { iso_week?: number; inMonth?: boolean };
+          if (cell?.inMonth && cell?.iso_week) {
+            weekNum = String(cell.iso_week);
+            break;
+          }
+        }
+        numbers.push(weekNum ?? String(w + 1));
+      } else {
+        // バックエンドデータがない場合のフォールバック（通常発生しない）
+        numbers.push(String(w + 1));
+      }
+    }
+    return numbers;
+  }, [cells, weeks]);
 
   return (
     <div 
@@ -86,9 +139,9 @@ export function CalendarCore<T extends CalendarCell = CalendarCell>({
         }}
       >
         <div className={styles.weekCol}>
-          {Array.from({ length: weeks }).map((_, w) => (
+          {weekNumbers.map((weekNum, w) => (
             <div key={w} className={styles.weekCell}>
-              {`W${w + 1}`}
+              {weekNum}
             </div>
           ))}
         </div>
