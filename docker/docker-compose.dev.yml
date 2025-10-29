@@ -106,13 +106,16 @@ services:
     build:
       context: ../app/backend
       dockerfile: plan_worker/Dockerfile
+      target: dev
     env_file:
       - ../env/.env.common
       - ../env/.env.local_dev
+    command: ["python", "-m", "app.worker"]
     volumes:
-      - ../app/backend/plan_worker/app:/worker/app:rw
-      - ../app/backend/plan_worker/infra:/worker/infra:rw
-      - ../app/backend/plan_worker/domain:/worker/domain:rw
+      - ../app/backend/plan_worker/app:/backend/app:rw
+      - ../app/backend/backend_shared:/opt/backend_shared:rw
+    environment:
+      - WATCHFILES_FORCE_POLLING=1
     depends_on:
       - db
     networks:
