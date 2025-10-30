@@ -1,12 +1,7 @@
 ## =============================================================
-## docker-compose.dev.yml (開発環境)
-## - Makefile が env_file を渡す前提
-## - backend サービスは標準化された Dockerfile (wheelbuilder/dev/prod) を利用
+## docker-compose.dev.yml (再構築: 開発用 Override)
 ## =============================================================
 services:
-  # ===========================================================================
-  # Frontend
-  # ===========================================================================
   frontend:
     build:
       context: ../app/frontend
@@ -26,9 +21,6 @@ services:
     networks:
       - app-net
 
-  # ===========================================================================
-  # AI API
-  # ===========================================================================
   ai_api:
     build:
       context: ../app/backend
@@ -54,9 +46,6 @@ services:
     networks:
       - app-net
 
-  # ===========================================================================
-  # Ledger API
-  # ===========================================================================
   ledger_api:
     build:
       context: ../app/backend
@@ -76,6 +65,7 @@ services:
       - ../app/backend/ledger_api/app:/backend/app:rw
       - ../app/backend/backend_shared:/opt/backend_shared:rw
       - ../app/config:/backend/config
+      # base compose の secrets マウントが override で消えるため再指定
       - ../secrets:/backend/secrets:ro
     environment:
       GOOGLE_APPLICATION_CREDENTIALS: /backend/secrets/dev_key.json
@@ -86,9 +76,6 @@ services:
     networks:
       - app-net
 
-  # ===========================================================================
-  # Core API (BFF)
-  # ===========================================================================
   core_api:
     build:
       context: ../app/backend
@@ -115,9 +102,6 @@ services:
     networks:
       - app-net
 
-  # ===========================================================================
-  # Plan Worker
-  # ===========================================================================
   plan_worker:
     build:
       context: ../app/backend
@@ -138,9 +122,6 @@ services:
       - app-net
     restart: unless-stopped
 
-  # ===========================================================================
-  # RAG API
-  # ===========================================================================
   rag_api:
     build:
       context: ../app/backend
@@ -169,9 +150,6 @@ services:
     networks:
       - app-net
 
-  # ===========================================================================
-  # Manual API
-  # ===========================================================================
   manual_api:
     build:
       context: ../app/backend
@@ -191,18 +169,18 @@ services:
     networks:
       - app-net
 
-  # ===========================================================================
-  # PostgreSQL Database
-  # ===========================================================================
   db:
-    image: postgres:16-alpine
+    image: postgres:15-alpine
     env_file:
       - ../env/.env.common
       - ../env/.env.local_dev
     ports:
       - "${DEV_DB_PORT:-5432}:5432"
-    volumes:
+    volumes:  
+      # - db_data:/var/lib/postgresql/data
+      # 👇 Postgresデータをホスト側に保存
       - ../data/postgres:/var/lib/postgresql/data
+
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U myuser -d sanbou_dev"]
       interval: 10s
@@ -214,6 +192,7 @@ services:
 volumes:
   node_modules_dev:
     driver: local
+  # db_data named volume removed; using host path ../data/postgres instead
 
 networks:
   app-net:

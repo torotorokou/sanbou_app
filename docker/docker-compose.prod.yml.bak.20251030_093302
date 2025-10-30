@@ -1,10 +1,9 @@
 ## =============================================================
-## docker-compose.prod.yml (本番環境)
+## docker-compose.prod.yml (本番環境 Override)
 ## - 外部公開は nginx のみ (80/443)
 ## - frontend/backend は内部ネットワークのみ
 ## - 3層ネットワーク分離: edge-net / app-net / data-net
-## - backend サービスは標準化された Dockerfile (wheelbuilder/dev/prod) を利用
-## - target: prod を明示
+## - ログやボリューム永続化は必要に応じて追記
 ## =============================================================
 services:
   # ===========================================================================
@@ -45,7 +44,6 @@ services:
     build:
       context: ../app/backend
       dockerfile: plan_worker/Dockerfile
-      target: prod
     networks: [data-net]
     depends_on:
       - db
@@ -62,9 +60,7 @@ services:
         max-size: "10m"
         max-file: "3"
 
-  # ===========================================================================
-  # AI API
-  # ===========================================================================
+  # backend APIs (env 注入 + build/depends)
   ai_api:
     build:
       context: ../app/backend
@@ -88,9 +84,6 @@ services:
         max-size: "10m"
         max-file: "3"
 
-  # ===========================================================================
-  # Ledger API
-  # ===========================================================================
   ledger_api:
     build:
       context: ../app/backend
@@ -119,9 +112,6 @@ services:
         max-size: "10m"
         max-file: "3"
 
-  # ===========================================================================
-  # RAG API
-  # ===========================================================================
   rag_api:
     build:
       context: ../app/backend
@@ -149,9 +139,6 @@ services:
         max-size: "10m"
         max-file: "3"
 
-  # ===========================================================================
-  # Manual API
-  # ===========================================================================
   manual_api:
     build:
       context: ../app/backend
@@ -175,9 +162,12 @@ services:
         max-size: "10m"
         max-file: "3"
 
-  # ===========================================================================
+  # =============================
   # nginx (prod)
-  # ===========================================================================
+  # - フロントエンド runtime stage イメージ
+  # - conf.d.prod をマウント (Basic 認証廃止)
+  # - edge-net と app-net に接続 (3層ネットワーク)
+  # =============================
   nginx:
     build:
       context: ../app/frontend
@@ -212,11 +202,8 @@ services:
         max-size: "10m"
         max-file: "3"
 
-  # ===========================================================================
-  # PostgreSQL Database
-  # ===========================================================================
   db:
-    image: postgres:16-alpine
+    image: postgres:15-alpine
     networks: [data-net]
     environment:
       - TZ=Asia/Tokyo
@@ -247,11 +234,11 @@ networks:
   app-net:
     driver: bridge
     name: sanbou_app
-    internal: false
+    internal: false  # APIs can access external services
   data-net:
     driver: bridge
     name: sanbou_data
-    internal: true
+    internal: true   # Isolated data layer (no internet access)
 
 volumes:
   db_data:

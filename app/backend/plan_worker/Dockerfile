@@ -1,5 +1,5 @@
 # =========================
-# plan_worker Dockerfile (multi-stage: dev/prod)
+# plan_worker Dockerfile (multi-stage: wheelbuilder/dev/prod)
 # Context: app/backend
 # =========================
 
@@ -12,6 +12,13 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=1
 
 WORKDIR /build
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+      build-essential \
+      ca-certificates \
+      curl && \
+    rm -rf /var/lib/apt/lists/*
 
 COPY ./backend_shared /build/backend_shared
 RUN pip install --upgrade pip setuptools wheel && \
@@ -32,25 +39,34 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 WORKDIR /backend
 
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends curl ca-certificates && \
+    apt-get install -y --no-install-recommends \
+      curl \
+      ca-certificates \
+      build-essential \
+      git && \
     rm -rf /var/lib/apt/lists/* && \
-    useradd -m appuser
+    useradd -m -u 1000 -s /bin/bash appuser
 
 COPY ./plan_worker/requirements.txt /backend/requirements.txt
-RUN pip install --no-cache-dir -r /backend/requirements.txt
+RUN pip install --no-cache-dir -r /backend/requirements.txt watchfiles
 
 # backend_shared を editable モードでインストール
 RUN mkdir -p /opt/backend_shared
 COPY ./backend_shared /opt/backend_shared
 RUN pip install -e /opt/backend_shared
 
+# USER 切替前に必要ディレクトリを作成・chown
+RUN mkdir -p /backend/app /backend/test && \
+    chown -R appuser:appuser /backend /opt/backend_shared
+
 USER appuser
 COPY --chown=appuser:appuser ./plan_worker/app /backend/app
 
+EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
   CMD curl -fsS http://localhost:8000/health || exit 1
 
-CMD ["python", "-m", "app.worker"]
+CMD ["watchfiles", "python -m app.worker", "/backend/app", "/opt/backend_shared/src"]
 
 # ──────────────────────────────────────────────────────────────
 # Stage: prod (wheel からインストール、イミュータブル)
@@ -63,19 +79,25 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 WORKDIR /backend
 
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends curl ca-certificates && \
+    apt-get install -y --no-install-recommends \
+      curl \
+      ca-certificates && \
     rm -rf /var/lib/apt/lists/* && \
-    useradd -m appuser
+    useradd -m -u 1000 -s /bin/bash appuser
 
 COPY --from=wheelbuilder /wheels /wheels
 RUN pip install --no-cache-dir /wheels/*.whl && \
     rm -rf /wheels
 
+# USER 切替前に必要ディレクトリを作成・chown
+RUN mkdir -p /backend/app /backend/test && \
+    chown -R appuser:appuser /backend
+
 USER appuser
 COPY --chown=appuser:appuser ./plan_worker/app /backend/app
 
+EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
   CMD curl -fsS http://localhost:8000/health || exit 1
 
 CMD ["python", "-m", "app.worker"]
-
