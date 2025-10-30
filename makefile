@@ -229,3 +229,87 @@ backup_code:
 	@if [ -d sql ]; then \
 	  tar czf "$(BACKUP_DIR)/code_snapshot_$(DATE)/sql_extra_$(DATE).tgz" sql 2>/dev/null || true; fi
 	@echo "[ok] code snapshot done"
+
+## =============================================================
+## PostgreSQL Safe Upgrade (16 -> 17)
+## =============================================================
+PG_OLD_VOLUME ?= pgdata
+PG_NEW_VOLUME ?= pgdata_v17
+PG_HOST ?= localhost
+PG_PORT ?= 5432
+
+.PHONY: pg.version pg.archive pg.dumpall pg.compose17 pg.up17 pg.restore pg.extensions pg.verify
+
+pg.version:
+	@echo "[info] Checking PostgreSQL version in volume: $(PG_OLD_VOLUME)"
+	@bash scripts/pg/print_pg_version_in_volume.sh "$(PG_OLD_VOLUME)"
+
+pg.archive:
+	@echo "[info] Archiving volume: $(PG_OLD_VOLUME)"
+	@bash scripts/pg/archive_volume_tar.sh "$(PG_OLD_VOLUME)"
+
+pg.dumpall:
+	@echo "[info] Running pg_dumpall from volume: $(PG_OLD_VOLUME)"
+	@bash scripts/pg/dumpall_from_v16.sh "$(PG_OLD_VOLUME)"
+
+pg.compose17:
+	@echo ">>> Creating compose override for Postgres 17"
+	@echo "# =============================================================" > docker-compose.pg17.yml
+	@echo "# docker-compose.pg17.yml" >> docker-compose.pg17.yml
+	@echo "# PostgreSQL 17 Upgrade Override" >> docker-compose.pg17.yml
+	@echo "# WARNING: DO NOT RUN 'docker compose down -v'" >> docker-compose.pg17.yml
+	@echo "#          This will DELETE your old volume!" >> docker-compose.pg17.yml
+	@echo "# =============================================================" >> docker-compose.pg17.yml
+	@echo "" >> docker-compose.pg17.yml
+	@echo "services:" >> docker-compose.pg17.yml
+	@echo "  db:" >> docker-compose.pg17.yml
+	@echo "    image: postgres:17-alpine" >> docker-compose.pg17.yml
+	@echo "    volumes:" >> docker-compose.pg17.yml
+	@echo "      - $(PG_NEW_VOLUME):/var/lib/postgresql/data" >> docker-compose.pg17.yml
+	@echo "" >> docker-compose.pg17.yml
+	@echo "volumes:" >> docker-compose.pg17.yml
+	@echo "  $(PG_NEW_VOLUME):" >> docker-compose.pg17.yml
+	@echo "    driver: local" >> docker-compose.pg17.yml
+	@echo ""
+	@echo "[ok] Created docker-compose.pg17.yml"
+	@echo "[info] Review the file before running 'make pg.up17'"
+	@echo ""
+	@echo "# If using PostGIS, change image to:"
+	@echo "#   image: postgis/postgis:17-3.5"
+
+pg.up17:
+	@echo "[info] Starting PostgreSQL 17 with new volume"
+	@echo "[warn] Make sure you have reviewed docker-compose.pg17.yml"
+	@sleep 2
+	DOCKER_BUILDKIT=$(BUILDKIT) $(DC_ENV_PREFIX)$(DC) $(COMPOSE_ENV_ARGS) -p $(ENV) $(COMPOSE_FILES) -f docker-compose.pg17.yml up -d db
+
+pg.restore:
+	@if [ -z "$(SQL)" ]; then \
+	  echo "[error] SQL parameter is required. Usage: make pg.restore SQL=backups/pg/pg_dumpall_YYYYMMDD_HHMMSS.sql"; \
+	  exit 1; \
+	fi
+	@echo "[info] Restoring SQL: $(SQL)"
+	@bash scripts/pg/restore_to_v17.sh "$(SQL)"
+
+pg.extensions:
+	@echo "[info] Re-enabling extensions"
+	@if [ -z "$(PGPASSWORD)" ]; then \
+	  echo "[warn] PGPASSWORD not set. You may be prompted for password."; \
+	fi
+	@PGHOST=$(PG_HOST) PGPORT=$(PG_PORT) psql -U $${PGUSER:-postgres} -d $${PGDATABASE:-postgres} -f sql/extensions_after_restore.sql
+
+pg.verify:
+	@echo "========================================="
+	@echo "PostgreSQL Version:"
+	@echo "========================================="
+	@PGHOST=$(PG_HOST) PGPORT=$(PG_PORT) psql -U $${PGUSER:-postgres} -c "SELECT version();" || true
+	@echo ""
+	@echo "========================================="
+	@echo "Databases:"
+	@echo "========================================="
+	@PGHOST=$(PG_HOST) PGPORT=$(PG_PORT) psql -U $${PGUSER:-postgres} -c "\\l" || true
+	@echo ""
+	@echo "========================================="
+	@echo "Extensions:"
+	@echo "========================================="
+	@PGHOST=$(PG_HOST) PGPORT=$(PG_PORT) psql -U $${PGUSER:-postgres} -d $${PGDATABASE:-postgres} -c "\\dx" || true
