@@ -1,16 +1,18 @@
 # =========================
-# rag_api Dockerfile (multi-stage: dev/prod)
+# rag_api Dockerfile (multi-stage: wheelbuilder/dev/prod)
 # Context: app/backend
 # =========================
 
 # ──────────────────────────────────────────────────────────────
 # Stage: base (gcloud SDK インストール)
 # ──────────────────────────────────────────────────────────────
-FROM python:3.11-slim AS base
+FROM python:3.12-slim AS base
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1
+
 WORKDIR /build
+
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
       curl gnupg lsb-release ca-certificates build-essential && \
@@ -35,7 +37,7 @@ RUN pip wheel --no-deps -r /build/requirements.txt -w /wheels
 # ──────────────────────────────────────────────────────────────
 # Stage: dev (ホットリロード対応)
 # ──────────────────────────────────────────────────────────────
-FROM python:3.11-slim AS dev
+FROM python:3.12-slim AS dev
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PYTHONPATH=/backend:/opt/backend_shared/src
@@ -43,25 +45,30 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 WORKDIR /backend
 
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends curl ca-certificates && \
+    apt-get install -y --no-install-recommends \
+      curl \
+      ca-certificates \
+      build-essential \
+      git && \
     rm -rf /var/lib/apt/lists/* && \
-    useradd -m appuser
+    useradd -m -u 1000 -s /bin/bash appuser
 
 # gcloud SDK コピー
 COPY --from=base /usr/lib/google-cloud-sdk /usr/lib/google-cloud-sdk
 ENV PATH="/usr/lib/google-cloud-sdk/bin:${PATH}"
-RUN mkdir -p /home/appuser/.config/gcloud && chown -R appuser:appuser /home/appuser/.config
 
 COPY ./rag_api/requirements.txt /backend/requirements.txt
-RUN pip install --no-cache-dir -r /backend/requirements.txt
+RUN pip install --no-cache-dir -r /backend/requirements.txt watchfiles
 
 # backend_shared を editable モードでインストール
 RUN mkdir -p /opt/backend_shared
 COPY ./backend_shared /opt/backend_shared
 RUN pip install -e /opt/backend_shared
 
-RUN mkdir -p /backend/static/pdfs /backend/static/test_pdfs /backend/local_data && \
-    chown -R appuser:appuser /backend/static /backend/local_data
+# USER 切替前に必要ディレクトリを作成・chown
+RUN mkdir -p /backend/app /backend/test /backend/static/pdfs /backend/static/test_pdfs \
+             /backend/local_data /home/appuser/.config/gcloud && \
+    chown -R appuser:appuser /backend /opt/backend_shared /home/appuser/.config
 
 USER appuser
 COPY --chown=appuser:appuser ./rag_api/app /backend/app
@@ -76,7 +83,7 @@ CMD ["bash", "startup.sh"]
 # ──────────────────────────────────────────────────────────────
 # Stage: prod (wheel からインストール、イミュータブル)
 # ──────────────────────────────────────────────────────────────
-FROM python:3.11-slim AS prod
+FROM python:3.12-slim AS prod
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PYTHONPATH=/backend
@@ -84,21 +91,24 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 WORKDIR /backend
 
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends curl ca-certificates && \
+    apt-get install -y --no-install-recommends \
+      curl \
+      ca-certificates && \
     rm -rf /var/lib/apt/lists/* && \
-    useradd -m appuser
+    useradd -m -u 1000 -s /bin/bash appuser
 
 # gcloud SDK コピー
 COPY --from=base /usr/lib/google-cloud-sdk /usr/lib/google-cloud-sdk
 ENV PATH="/usr/lib/google-cloud-sdk/bin:${PATH}"
-RUN mkdir -p /home/appuser/.config/gcloud && chown -R appuser:appuser /home/appuser/.config
 
 COPY --from=wheelbuilder /wheels /wheels
 RUN pip install --no-cache-dir /wheels/*.whl && \
     rm -rf /wheels
 
-RUN mkdir -p /backend/static/pdfs /backend/static/test_pdfs /backend/local_data && \
-    chown -R appuser:appuser /backend/static /backend/local_data
+# USER 切替前に必要ディレクトリを作成・chown
+RUN mkdir -p /backend/app /backend/test /backend/static/pdfs /backend/static/test_pdfs \
+             /backend/local_data /home/appuser/.config/gcloud && \
+    chown -R appuser:appuser /backend /home/appuser/.config
 
 USER appuser
 COPY --chown=appuser:appuser ./rag_api/app /backend/app
