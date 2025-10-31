@@ -176,3 +176,34 @@ async def upload_syogun_csv(
             status=500,
             user_message=f"予期しないエラーが発生しました: {str(e)}",
         )
+
+
+@router.post("/cache/clear", summary="Clear target card cache")
+def clear_target_card_cache(db: Session = Depends(get_db)):
+    """
+    Clear the target card TTL cache.
+    
+    Useful after CSV uploads or data refreshes to ensure users see the latest data.
+    This endpoint clears the in-memory cache that optimizes repeated target card requests.
+    """
+    try:
+        from app.repositories.dashboard_target_repo import DashboardTargetRepository
+        from app.services.target_card_service import TargetCardService
+        
+        repo = DashboardTargetRepository(db)
+        service = TargetCardService(repo)
+        service.clear_cache()
+        
+        logger.info("Target card cache cleared successfully")
+        return {
+            "status": "success",
+            "message": "Target card cache has been cleared",
+            "hint": "New requests will fetch fresh data from database"
+        }
+    except Exception as e:
+        logger.error(f"Error clearing target card cache: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to clear cache: {str(e)}"
+        )
+

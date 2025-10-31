@@ -5,6 +5,7 @@
 
 // Application
 export { useTargetsVM } from "./application/useTargetsVM";
+export { useTargetMetrics } from "./application/useTargetMetrics";
 
 // UI
 export { TargetCard, type TargetCardProps } from "./ui/cards/TargetCard";

@@ -107,3 +107,24 @@ class RAGAskResponse(BaseModel):
 class ManualListResponse(BaseModel):
     """Response from Manual API /list endpoint."""
     manuals: list[dict]  # TODO: define proper schema when manual_api contract is clarified
+
+
+# ========================================
+# Dashboard Target DTOs
+# ========================================
+
+class TargetMetricsResponse(BaseModel):
+    """Response for dashboard target metrics with actuals."""
+    ddate: Optional[date_type] = Field(default=None, description="Data date")
+    month_target_ton: Optional[float] = Field(default=None, description="Monthly target in tons")
+    week_target_ton: Optional[float] = Field(default=None, description="Weekly target in tons")
+    day_target_ton: Optional[float] = Field(default=None, description="Daily target in tons")
+    month_actual_ton: Optional[float] = Field(default=None, description="Monthly actual in tons")
+    week_actual_ton: Optional[float] = Field(default=None, description="Weekly actual in tons")
+    day_actual_ton_prev: Optional[float] = Field(default=None, description="Previous day actual in tons")
+    iso_year: Optional[int] = Field(default=None, description="ISO year")
+    iso_week: Optional[int] = Field(default=None, description="ISO week number")
+    iso_dow: Optional[int] = Field(default=None, description="ISO day of week (1=Monday, 7=Sunday)")
+    day_type: Optional[str] = Field(default=None, description="Day type (weekday/sat/sun_hol)")
+    is_business: Optional[bool] = Field(default=None, description="Is business day")
+

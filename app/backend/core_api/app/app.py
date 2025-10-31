@@ -8,7 +8,20 @@ from pythonjsonlogger import jsonlogger
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.routers import ingest, forecast, kpi, external, calendar, reports, chat, analysis, database, block_unit_price, manual
+from app.routers import (
+    ingest,
+    forecast,
+    kpi,
+    external,
+    calendar,
+    reports,
+    chat,
+    analysis,
+    database,
+    block_unit_price,
+    manual,
+    dashboard,
+)
 
 # Setup structured JSON logging
 logger = logging.getLogger()
@@ -48,6 +61,7 @@ app.include_router(manual.router)    # BFF: manual_api proxy
 app.include_router(chat.router)      # BFF: rag_api chat proxy
 app.include_router(analysis.router)  # BFF: ledger_api analysis proxy (TODO: 未実装)
 app.include_router(database.router)  # BFF: sql_api database proxy (TODO: 未実装)
+app.include_router(dashboard.router) # Dashboard: target metrics
 
 
 @app.get("/healthz", include_in_schema=False, tags=["health"])
