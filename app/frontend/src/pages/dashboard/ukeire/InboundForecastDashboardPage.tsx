@@ -10,7 +10,7 @@
  */
 
 import React, { useMemo } from "react";
-import { Row, Col, Skeleton } from "antd";
+import { Row, Col, Skeleton, Alert } from "antd";
 import dayjs from "dayjs";
 import { 
   useInboundForecastVM,
@@ -20,7 +20,8 @@ import {
   UkeireCalendarCard,
   ForecastCard,
   MonthNavigator,
-  useResponsiveLayout
+  useResponsiveLayout,
+  useTargetMetrics,
 } from "@/features/dashboard/ukeire";
 import styles from "./InboundForecastDashboardPage.module.css";
 
@@ -28,6 +29,16 @@ const InboundForecastDashboardPage: React.FC = () => {
   const repository = useMemo(() => new MockInboundForecastRepository(), []);
   const vm = useInboundForecastVM(repository);
   const layout = useResponsiveLayout();
+
+  // 選択中の月から対象日付を計算（月の初日を使用してAPIに渡す）
+  // ※Backend側で該当月の適切な日付（当月=today, 過去=月末, 未来=月初営業日）を自動解決
+  const targetDate = useMemo(() => {
+    if (!vm.month) return dayjs().format("YYYY-MM-DD");
+    return dayjs(vm.month, "YYYY-MM").startOf("month").format("YYYY-MM-DD");
+  }, [vm.month]);
+  
+  // DBから目標値と実績値を取得（選択月に応じて動的に変更、mode=monthlyで過去/未来は日週マスク）
+  const { data: targetMetrics, error: targetError } = useTargetMetrics(targetDate, "monthly");
 
   // 月ナビゲーション用のハンドラ
   const handlePrevMonth = () => {
@@ -41,6 +52,40 @@ const InboundForecastDashboardPage: React.FC = () => {
     const next = current.add(1, "month").format("YYYY-MM");
     vm.setMonth(next);
   };
+
+  // DB取得値でTargetCardPropsを生成（シンプル化）
+  const targetCardProps = useMemo(() => {
+    // データ取得前またはエラー時はnull（ローディング/エラー表示）
+    if (targetError || !targetMetrics) {
+      return null;
+    }
+    
+    // DBから取得した目標値と実績値を使用（NULL値はそのまま渡す→UIで"—"表示）
+    return {
+      rows: [
+        { 
+          key: "month", 
+          label: "1ヶ月", 
+          target: targetMetrics.month_target_ton, 
+          actual: targetMetrics.month_actual_ton 
+        },
+        { 
+          key: "week", 
+          label: "今週", 
+          target: targetMetrics.week_target_ton, 
+          actual: targetMetrics.week_actual_ton 
+        },
+        { 
+          key: "day", 
+          label: "1日", 
+          target: targetMetrics.day_target_ton, 
+          actual: targetMetrics.day_actual_ton_prev 
+        },
+      ],
+      // DBから取得したISO週番号を使用（NULLの場合は現在の週番号）
+      isoWeek: targetMetrics.iso_week ?? dayjs().isoWeek(),
+    };
+  }, [targetMetrics, targetError]);
 
   if (vm.loading || !vm.payload) {
     return (
@@ -86,7 +131,23 @@ const InboundForecastDashboardPage: React.FC = () => {
               // Mobile: 目標カードのみ（予測と日次は下段へ）
               <Col span={layout.spans.target}>
                 <div style={{ height: layout.heights.target.mobile }}>
-                  {vm.targetCardProps && <TargetCard {...vm.targetCardProps} isMobile={true} />}
+                  {targetCardProps ? (
+                    <TargetCard {...targetCardProps} isMobile={true} />
+                  ) : targetError ? (
+                    <Alert
+                      message="目標データ取得エラー"
+                      description={targetError.message}
+                      type="error"
+                      showIcon
+                    />
+                  ) : (
+                    <Alert
+                      message="データ読み込み中"
+                      description="目標データを読み込んでいます..."
+                      type="info"
+                      showIcon
+                    />
+                  )}
                 </div>
               </Col>
             ) : layout.mode === "laptopOrBelow" ? (
@@ -94,7 +155,23 @@ const InboundForecastDashboardPage: React.FC = () => {
               <>
                 <Col span={layout.spans.target}>
                   <div style={{ height: layout.heights.target.laptopOrBelow }}>
-                    {vm.targetCardProps && <TargetCard {...vm.targetCardProps} />}
+                    {targetCardProps ? (
+                      <TargetCard {...targetCardProps} />
+                    ) : targetError ? (
+                      <Alert
+                        message="目標データ取得エラー"
+                        description={targetError.message}
+                        type="error"
+                        showIcon
+                      />
+                    ) : (
+                      <Alert
+                        message="データ読み込み中"
+                        description="目標データを読み込んでいます..."
+                        type="info"
+                        showIcon
+                      />
+                    )}
                   </div>
                 </Col>
                 <Col span={layout.spans.cal}>
@@ -118,7 +195,23 @@ const InboundForecastDashboardPage: React.FC = () => {
               <>
                 <Col span={layout.spans.target} style={{ height: "100%" }}>
                   <div style={{ height: layout.heights.target.desktop }}>
-                    {vm.targetCardProps && <TargetCard {...vm.targetCardProps} />}
+                    {targetCardProps ? (
+                      <TargetCard {...targetCardProps} />
+                    ) : targetError ? (
+                      <Alert
+                        message="目標データ取得エラー"
+                        description={targetError.message}
+                        type="error"
+                        showIcon
+                      />
+                    ) : (
+                      <Alert
+                        message="データ読み込み中"
+                        description="目標データを読み込んでいます..."
+                        type="info"
+                        showIcon
+                      />
+                    )}
                   </div>
                 </Col>
                 <Col span={layout.spans.daily} style={{ height: "100%" }}>

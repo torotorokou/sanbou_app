@@ -14,8 +14,8 @@ import { clamp } from "@/features/dashboard/ukeire/domain/valueObjects";
 export type TargetCardRowData = {
   key: string;
   label: string;
-  target: number;
-  actual: number;
+  target: number | null;
+  actual: number | null;
 };
 
 export type TargetCardProps = {
@@ -81,10 +81,19 @@ export const TargetCard: React.FC<TargetCardProps> = ({ rows, style, isMobile = 
 
         {/* データ行 */}
         {rows.map((r) => {
-          const ratioRaw = r.target ? r.actual / r.target : 0;
-          const pct = r.target ? Math.round(ratioRaw * 100) : 0;
+          // NULL値をチェックして達成率を計算
+          const ratioRaw = (r.target !== null && r.actual !== null && r.target > 0) 
+            ? r.actual / r.target 
+            : 0;
+          const pct = (r.target !== null && r.actual !== null && r.target > 0) 
+            ? Math.round(ratioRaw * 100) 
+            : 0;
           const barPct = clamp(pct, 0, 100);
           const pctColor = ratioRaw >= 1 ? COLORS.ok : ratioRaw >= 0.9 ? COLORS.warn : COLORS.danger;
+          
+          // NULL値の場合は達成率を非表示にするかどうか
+          const hasValidData = r.target !== null && r.actual !== null;
+          
           // determine iso week to show: prefer prop on the component; fallback to computing from today
           let isoWeekToShow: number | undefined = typeof isoWeek === "number" ? isoWeek : undefined;
           if (isoWeekToShow === undefined) {
@@ -115,37 +124,57 @@ export const TargetCard: React.FC<TargetCardProps> = ({ rows, style, isMobile = 
                 })()}
               </div>
               <div>
-                <Statistic
-                  value={typeof r.target === "number" ? r.target : 0}
-                  suffix="t"
-                  valueStyle={{ color: COLORS.primary, fontSize: valueFontSize, fontWeight: 800, lineHeight: 1 }}
-                  style={{ lineHeight: 1 }}
-                />
-              </div>
-              <div>
-                <Statistic
-                  value={typeof r.actual === "number" ? r.actual : 0}
-                  suffix="t"
-                  valueStyle={{ color: "#222", fontSize: valueFontSize, fontWeight: 800, lineHeight: 1 }}
-                  style={{ lineHeight: 1 }}
-                />
-              </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 4, minHeight: 0, overflow: "hidden" }}>
-                <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "baseline" }}>
+                {r.target !== null ? (
                   <Statistic
-                    value={pct}
-                    suffix="%"
-                    valueStyle={{ color: pctColor, fontSize: pctFontSize, fontWeight: 700, lineHeight: 1 }}
+                    value={Math.round(r.target)}
+                    suffix="t"
+                    valueStyle={{ color: COLORS.primary, fontSize: valueFontSize, fontWeight: 800, lineHeight: 1 }}
                     style={{ lineHeight: 1 }}
                   />
-                </div>
-                <Progress
-                  percent={barPct}
-                  showInfo={false}
-                  strokeColor={pctColor}
-                  strokeWidth={8}
-                  style={{ margin: 0 }}
-                />
+                ) : (
+                  <div style={{ color: "#8c8c8c", fontSize: valueFontSize, fontWeight: 800, lineHeight: 1, textAlign: "center" }}>
+                    —
+                  </div>
+                )}
+              </div>
+              <div>
+                {r.actual !== null ? (
+                  <Statistic
+                    value={Math.round(r.actual)}
+                    suffix="t"
+                    valueStyle={{ color: "#222", fontSize: valueFontSize, fontWeight: 800, lineHeight: 1 }}
+                    style={{ lineHeight: 1 }}
+                  />
+                ) : (
+                  <div style={{ color: "#8c8c8c", fontSize: valueFontSize, fontWeight: 800, lineHeight: 1, textAlign: "center" }}>
+                    —
+                  </div>
+                )}
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 4, minHeight: 0, overflow: "hidden" }}>
+                {hasValidData ? (
+                  <>
+                    <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "baseline" }}>
+                      <Statistic
+                        value={pct}
+                        suffix="%"
+                        valueStyle={{ color: pctColor, fontSize: pctFontSize, fontWeight: 700, lineHeight: 1 }}
+                        style={{ lineHeight: 1 }}
+                      />
+                    </div>
+                    <Progress
+                      percent={barPct}
+                      showInfo={false}
+                      strokeColor={pctColor}
+                      strokeWidth={8}
+                      style={{ margin: 0 }}
+                    />
+                  </>
+                ) : (
+                  <div style={{ color: "#8c8c8c", fontSize: pctFontSize, fontWeight: 700, lineHeight: 1, textAlign: "right" }}>
+                    —
+                  </div>
+                )}
               </div>
             </React.Fragment>
           );

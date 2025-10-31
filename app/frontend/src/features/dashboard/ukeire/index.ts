@@ -32,6 +32,7 @@ export { default as UkeireCalendar, UkeireCalendar as UkeireCalendarNamed } from
 // ========== KPI Targets ==========
 export { TargetCard, type TargetCardProps } from "./kpi-targets/ui/cards/TargetCard";
 export { useTargetsVM } from "./kpi-targets/application/useTargetsVM";
+export { useTargetMetrics } from "./kpi-targets/application/useTargetMetrics";
 
 // ========== Forecast Inbound ==========
 export type { IInboundForecastRepository } from "./forecast-inbound/ports/repository";
