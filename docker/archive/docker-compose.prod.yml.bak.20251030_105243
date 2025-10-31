@@ -53,8 +53,8 @@ services:
       - ../env/.env.common
       - ../env/.env.vm_prod
     environment:
-      TZ: "Asia/Tokyo"
-      POLL_INTERVAL: "10"
+      - TZ=Asia/Tokyo
+      - POLL_INTERVAL=10
     restart: unless-stopped
     logging:
       driver: json-file
@@ -213,10 +213,10 @@ services:
         max-file: "3"
 
   # ===========================================================================
-  # PostgreSQL Database (Internal only, accessible from data-net)
+  # PostgreSQL Database
   # ===========================================================================
   db:
-    image: postgres:17-alpine
+    image: postgres:16-alpine
     networks: [data-net]
     environment:
       - TZ=Asia/Tokyo

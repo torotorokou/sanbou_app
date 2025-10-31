@@ -63,8 +63,8 @@ USER appuser
 COPY --chown=appuser:appuser ./plan_worker/app /backend/app
 
 EXPOSE 8000
-HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
-  CMD curl -fsS http://localhost:8000/health || exit 1
+HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
+  CMD python -m app.scripts.db_healthcheck
 
 CMD ["watchfiles", "python -m app.worker", "/backend/app", "/opt/backend_shared/src"]
 
@@ -97,7 +97,7 @@ USER appuser
 COPY --chown=appuser:appuser ./plan_worker/app /backend/app
 
 EXPOSE 8000
-HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
-  CMD curl -fsS http://localhost:8000/health || exit 1
+HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
+  CMD python -m app.scripts.db_healthcheck
 
 CMD ["python", "-m", "app.worker"]

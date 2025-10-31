@@ -129,10 +129,9 @@ services:
     command: ["python", "-m", "app.worker"]
     volumes:
       - ../app/backend/plan_worker/app:/backend/app:rw
-      - ../app/backend/plan_worker/test:/backend/test:rw
       - ../app/backend/backend_shared:/opt/backend_shared:rw
     environment:
-      WATCHFILES_FORCE_POLLING: "1"
+      - WATCHFILES_FORCE_POLLING=1
     depends_on:
       - db
     networks:
@@ -196,14 +195,14 @@ services:
   # PostgreSQL Database
   # ===========================================================================
   db:
-    image: postgres:17-alpine
+    image: postgres:16-alpine
     env_file:
       - ../env/.env.common
       - ../env/.env.local_dev
     ports:
       - "${DEV_DB_PORT:-5432}:5432"
     volumes:
-      - ../data/postgres_v17:/var/lib/postgresql/data
+      - ../data/postgres:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U myuser -d sanbou_dev"]
       interval: 10s
