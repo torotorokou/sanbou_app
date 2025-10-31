@@ -65,7 +65,6 @@ RUN mkdir -p /backend/app /backend/app/data /backend/test /backend/migrations &&
 USER appuser
 COPY --chown=appuser:appuser ./core_api/app /backend/app
 COPY --chown=appuser:appuser ./core_api/migrations /backend/migrations
-COPY --chown=appuser:appuser ./core_api/alembic.ini /backend/alembic.ini
 
 EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
@@ -103,7 +102,6 @@ RUN mkdir -p /backend/app /backend/app/data /backend/test /backend/migrations &&
 USER appuser
 COPY --chown=appuser:appuser ./core_api/app /backend/app
 COPY --chown=appuser:appuser ./core_api/migrations /backend/migrations
-COPY --chown=appuser:appuser ./core_api/alembic.ini /backend/alembic.ini
 
 EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
