@@ -46,8 +46,8 @@ services:
       - ../env/.env.common
       - ../env/.env.${STG_ENV_FILE}
     environment:
-      - TZ=Asia/Tokyo
-      - POLL_INTERVAL=10
+      TZ: "Asia/Tokyo"
+      POLL_INTERVAL: "10"
     restart: unless-stopped
 
   # ===========================================================================
@@ -176,7 +176,7 @@ services:
   # PostgreSQL Database
   # ===========================================================================
   db:
-    image: postgres:16-alpine
+    image: postgres:17-alpine
     networks: [app-net]
     environment:
       POSTGRES_USER: ${POSTGRES_USER}

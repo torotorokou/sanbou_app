@@ -1,26 +1,24 @@
 ## =============================================================
-## docker-compose.prod.yml (本番環境)
-## - 外部公開は nginx のみ (80/443)
-## - frontend/backend は内部ネットワークのみ
-## - 3層ネットワーク分離: edge-net / app-net / data-net
+## docker-compose.stg.yml (ステージング環境)
+## - Makefile が STG_ENV_FILE 変数経由で env_file を解決
 ## - backend サービスは標準化された Dockerfile (wheelbuilder/dev/prod) を利用
 ## - target: prod を明示
 ## =============================================================
 services:
   # ===========================================================================
-  # Core API (BFF) - All frontend requests go through this
+  # Core API (BFF)
   # ===========================================================================
   core_api:
     build:
       context: ../app/backend
       dockerfile: core_api/Dockerfile
       target: prod
-    networks: [app-net, data-net]
+    networks: [app-net]
     depends_on:
       - db
     env_file:
       - ../env/.env.common
-      - ../env/.env.vm_prod
+      - ../env/.env.${STG_ENV_FILE}
     environment:
       - TZ=Asia/Tokyo
       - RAG_API_BASE=http://rag_api:8000
@@ -28,39 +26,29 @@ services:
       - MANUAL_API_BASE=http://manual_api:8000
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/api/healthz"]
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
       timeout: 5s
       retries: 3
-    logging:
-      driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "3"
 
   # ===========================================================================
-  # Plan Worker - Background job execution
+  # Plan Worker
   # ===========================================================================
   plan_worker:
     build:
       context: ../app/backend
       dockerfile: plan_worker/Dockerfile
       target: prod
-    networks: [data-net]
+    networks: [app-net]
     depends_on:
       - db
     env_file:
       - ../env/.env.common
-      - ../env/.env.vm_prod
+      - ../env/.env.${STG_ENV_FILE}
     environment:
-      TZ: "Asia/Tokyo"
-      POLL_INTERVAL: "10"
+      - TZ=Asia/Tokyo
+      - POLL_INTERVAL=10
     restart: unless-stopped
-    logging:
-      driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "3"
 
   # ===========================================================================
   # AI API
@@ -75,18 +63,13 @@ services:
       - db
     env_file:
       - ../env/.env.common
-      - ../env/.env.vm_prod
+      - ../env/.env.${STG_ENV_FILE}
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
       timeout: 5s
       retries: 3
-    logging:
-      driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "3"
 
   # ===========================================================================
   # Ledger API
@@ -96,28 +79,24 @@ services:
       context: ../app/backend
       dockerfile: ledger_api/Dockerfile
       target: prod
-    networks: [app-net, data-net]
+    networks: [app-net]
     depends_on:
       - db
     env_file:
       - ../env/.env.common
-      - ../env/.env.vm_prod
+      - ../env/.env.${STG_ENV_FILE}
     environment:
-      - TZ=Asia/Tokyo
-      - STRICT_STARTUP=true
+      GOOGLE_APPLICATION_CREDENTIALS: /run/secrets/ledger_gcs_key.json
+      STRICT_STARTUP: "true"
     volumes:
       - ../secrets:/backend/secrets:ro
+      - ../secrets/stg_key.json:/run/secrets/ledger_gcs_key.json:ro
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
       timeout: 5s
       retries: 3
-    logging:
-      driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "3"
 
   # ===========================================================================
   # RAG API
@@ -127,27 +106,26 @@ services:
       context: ../app/backend
       dockerfile: rag_api/Dockerfile
       target: prod
-    networks: [app-net, data-net]
+    networks: [app-net]
     depends_on:
       - db
     env_file:
       - ../env/.env.common
-      - ../env/.env.vm_prod
+      - ../env/.env.${STG_ENV_FILE}
     environment:
-      - TZ=Asia/Tokyo
+      GOOGLE_APPLICATION_CREDENTIALS: /run/secrets/rag_gcs_key.json
+      RAG_GCS_URI: ${RAG_GCS_URI}
+      GCS_BUCKET_NAME: object_haikibutu
+      GCS_DATA_PREFIX: master
     volumes:
       - ../secrets:/backend/secrets:ro
+      - ../secrets/stg_key.json:/run/secrets/rag_gcs_key.json:ro
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
       timeout: 5s
       retries: 3
-    logging:
-      driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "3"
 
   # ===========================================================================
   # Manual API
@@ -160,7 +138,7 @@ services:
     networks: [app-net]
     env_file:
       - ../env/.env.common
-      - ../env/.env.vm_prod
+      - ../env/.env.${STG_ENV_FILE}
     environment:
       - TZ=Asia/Tokyo
     restart: unless-stopped
@@ -169,14 +147,9 @@ services:
       interval: 30s
       timeout: 5s
       retries: 3
-    logging:
-      driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "3"
 
   # ===========================================================================
-  # nginx (prod)
+  # nginx (stg)
   # ===========================================================================
   nginx:
     build:
@@ -190,68 +163,37 @@ services:
       - rag_api
       - manual_api
     networks:
-      - edge-net
       - app-net
     ports:
-      - "80:80"
-      - "443:443"
-    environment:
-      - TZ=Asia/Tokyo
+      - "${STG_NGINX_HTTP_PORT:-8080}:80"
+      - "${STG_NGINX_HTTPS_PORT:-8443}:443"
     volumes:
       - ../app/nginx/conf.d:/etc/nginx/conf.d:ro
       - ../app/nginx/certs:/etc/nginx/certs:ro
     restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
-    logging:
-      driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "3"
 
   # ===========================================================================
-  # PostgreSQL Database (Internal only, accessible from data-net)
+  # PostgreSQL Database
   # ===========================================================================
   db:
-    image: postgres:17-alpine
-    networks: [data-net]
+    image: postgres:16-alpine
+    networks: [app-net]
     environment:
-      - TZ=Asia/Tokyo
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_DB=${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     volumes:
       - db_data:/var/lib/postgresql/data
-    restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 10s
       timeout: 5s
       retries: 5
-    logging:
-      driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "3"
+    restart: unless-stopped
 
-# =============================================================================
-# Networks (3-tier isolation)
-# =============================================================================
 networks:
-  edge-net:
-    driver: bridge
-    name: sanbou_edge
   app-net:
     driver: bridge
-    name: sanbou_app
-    internal: false
-  data-net:
-    driver: bridge
-    name: sanbou_data
-    internal: true
 
 volumes:
   db_data:
