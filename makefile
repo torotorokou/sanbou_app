@@ -313,3 +313,33 @@ pg.verify:
 	@echo "Extensions:"
 	@echo "========================================="
 	@PGHOST=$(PG_HOST) PGPORT=$(PG_PORT) psql -U $${PGUSER:-postgres} -d $${PGDATABASE:-postgres} -c "\\dx" || true
+
+
+.PHONY: al-rev al-rev-auto al-up al-down al-cur al-hist al-heads
+
+DC = docker compose -f docker/docker-compose.dev.yml -p local_dev
+ALEMBIC = $(DC) exec core_api alembic -c /backend/migrations/alembic.ini
+
+# 使い方: make al-rev MSG="manage view: mart.v_xxx"
+MSG ?= update schema
+
+al-rev:
+	$(ALEMBIC) revision -m "$(MSG)"
+
+al-rev-auto:
+	$(ALEMBIC) revision --autogenerate -m "$(MSG)"
+
+al-up:
+	$(ALEMBIC) upgrade head
+
+al-down:
+	$(ALEMBIC) downgrade -1
+
+al-cur:
+	$(ALEMBIC) current
+
+al-hist:
+	$(ALEMBIC) history
+
+al-heads:
+	$(ALEMBIC) heads
