@@ -1,0 +1,128 @@
+.
+├── Dockerfile
+├── README.md
+├── app
+│   ├── __init__.py
+│   ├── __pycache__
+│   │   ├── __init__.cpython-312.pyc
+│   │   ├── app.cpython-312.pyc
+│   │   └── deps.cpython-312.pyc
+│   ├── app.py
+│   ├── config
+│   │   ├── __init__.py
+│   │   ├── settings.py
+│   │   └── table_definition.py
+│   ├── deps.py
+│   ├── domain
+│   │   ├── __init__.py
+│   │   ├── __pycache__
+│   │   │   ├── __init__.cpython-312.pyc
+│   │   │   └── models.cpython-312.pyc
+│   │   ├── inbound.py
+│   │   ├── models.py
+│   │   └── rules.py
+│   ├── infra
+│   │   ├── __init__.py
+│   │   ├── __pycache__
+│   │   │   ├── __init__.cpython-312.pyc
+│   │   │   └── db.cpython-312.pyc
+│   │   ├── clients
+│   │   │   ├── __init__.py
+│   │   │   ├── __pycache__
+│   │   │   │   ├── __init__.cpython-312.pyc
+│   │   │   │   ├── ai_client.cpython-312.pyc
+│   │   │   │   ├── ledger_client.cpython-312.pyc
+│   │   │   │   ├── manual_client.cpython-312.pyc
+│   │   │   │   └── rag_client.cpython-312.pyc
+│   │   │   ├── ai_client.py
+│   │   │   ├── ledger_client.py
+│   │   │   ├── manual_client.py
+│   │   │   └── rag_client.py
+│   │   ├── db.py
+│   │   └── http.py
+│   ├── ports
+│   │   ├── __init__.py
+│   │   └── inbound_repository.py
+│   ├── repositories
+│   │   ├── __init__.py
+│   │   ├── __pycache__
+│   │   │   ├── __init__.cpython-312.pyc
+│   │   │   ├── core_repo.cpython-312.pyc
+│   │   │   ├── forecast_query_repo.cpython-312.pyc
+│   │   │   ├── job_repo.cpython-312.pyc
+│   │   │   └── orm_models.cpython-312.pyc
+│   │   ├── core_repo.py
+│   │   ├── dashboard_target_repo.py
+│   │   ├── dynamic_models.py
+│   │   ├── forecast_query_repo.py
+│   │   ├── inbound_pg_repo.py
+│   │   ├── job_repo.py
+│   │   ├── orm_models.py
+│   │   └── shogun_csv_repo.py
+│   ├── routers
+│   │   ├── __init__.py
+│   │   ├── __pycache__
+│   │   │   ├── __init__.cpython-312.pyc
+│   │   │   ├── analysis.cpython-312.pyc
+│   │   │   ├── block_unit_price.cpython-312.pyc
+│   │   │   ├── calendar.cpython-312.pyc
+│   │   │   ├── chat.cpython-312.pyc
+│   │   │   ├── database.cpython-312.pyc
+│   │   │   ├── external.cpython-312.pyc
+│   │   │   ├── forecast.cpython-312.pyc
+│   │   │   ├── ingest.cpython-312.pyc
+│   │   │   ├── kpi.cpython-312.pyc
+│   │   │   ├── manual.cpython-312.pyc
+│   │   │   └── reports.cpython-312.pyc
+│   │   ├── analysis.py
+│   │   ├── block_unit_price.py
+│   │   ├── calendar.py
+│   │   ├── chat.py
+│   │   ├── dashboard.py
+│   │   ├── database.py
+│   │   ├── external.py
+│   │   ├── forecast.py
+│   │   ├── inbound.py
+│   │   ├── ingest.py
+│   │   ├── kpi.py
+│   │   ├── manual.py
+│   │   └── reports.py
+│   └── services
+│       ├── __init__.py
+│       ├── __pycache__
+│       │   ├── __init__.cpython-312.pyc
+│       │   ├── external_service.cpython-312.pyc
+│       │   ├── forecast_service.cpython-312.pyc
+│       │   ├── ingest_service.cpython-312.pyc
+│       │   └── kpi_service.cpython-312.pyc
+│       ├── external_service.py
+│       ├── forecast_service.py
+│       ├── ingest_service.py
+│       ├── kpi_service.py
+│       └── target_card_service.py
+├── docs
+│   ├── CSV_UPLOAD_IMPLEMENTATION.md
+│   ├── Dockerfile.bak.20251030_093302
+│   ├── IMPLEMENTATION_COMPLETE.md
+│   └── YAML_FIRST_ARCHITECTURE.md
+├── migrations
+│   ├── alembic
+│   │   ├── env.py
+│   │   ├── script.py.mako
+│   │   └── versions
+│   │       ├── 9a092c4a1fcf_baseline_no_op.py
+│   │       └── _attic_2025-11-04
+│   │           ├── 001_initial_schema.py
+│   │           ├── 002_add_raw_shogun_tables.py
+│   │           ├── 4befa8148602_msg.py
+│   │           └── f59be045f166_baseline_no_op.py
+│   ├── alembic.ini
+│   └── env_legacy.py
+├── pyproject.toml
+├── requirements-dev.txt
+├── requirements.txt
+├── tests
+│   └── test_inbound_daily.py
+└── tree.txt
+
+23 directories, 103 files
