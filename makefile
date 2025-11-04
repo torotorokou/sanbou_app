@@ -315,19 +315,24 @@ pg.verify:
 	@PGHOST=$(PG_HOST) PGPORT=$(PG_PORT) psql -U $${PGUSER:-postgres} -d $${PGDATABASE:-postgres} -c "\\dx" || true
 
 
-.PHONY: al-rev al-rev-auto al-up al-down al-cur al-hist al-heads
+.PHONY: al-rev al-rev-auto al-up al-down al-cur al-hist al-heads al-stamp
 
 DC = docker compose -f docker/docker-compose.dev.yml -p local_dev
 ALEMBIC = $(DC) exec core_api alembic -c /backend/migrations/alembic.ini
 
-# 使い方: make al-rev MSG="manage view: mart.v_xxx"
+# 使い方:
+#   make al-rev MSG="manage view: mart.v_xxx"           # REV_IDは自動生成
+#   make al-rev MSG="..." REV_ID=20251104_153045123     # 固定REV_IDを明示
 MSG ?= update schema
+REV_ID ?= $(shell date +%Y%m%d_%H%M%S%3N)  # 例: 20251104_153045123
 
 al-rev:
-	$(ALEMBIC) revision -m "$(MSG)"
+	@echo "[al-rev] REV_ID=$(REV_ID) MSG=$(MSG)"
+	$(ALEMBIC) revision -m "$(MSG)" --rev-id $(REV_ID)
 
 al-rev-auto:
-	$(ALEMBIC) revision --autogenerate -m "$(MSG)"
+	@echo "[al-rev-auto] REV_ID=$(REV_ID) MSG=$(MSG)"
+	$(ALEMBIC) revision --autogenerate -m "$(MSG)" --rev-id $(REV_ID)
 
 al-up:
 	$(ALEMBIC) upgrade head
@@ -343,3 +348,8 @@ al-hist:
 
 al-heads:
 	$(ALEMBIC) heads
+
+# 既存DBに「適用済み印」を付ける
+# 使い方: make al-stamp REV=20251104_153045123
+al-stamp:
+	$(ALEMBIC) stamp $(REV)
