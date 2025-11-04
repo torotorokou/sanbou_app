@@ -1,11 +1,16 @@
-"""Add raw schema for shogun CSV tables (generated from YAML)
+"""Add raw schema for shogun CSV tables (generated from YAML) - ARCHIVED
+
+【アーカイブ理由】
+DBにベースライン未刻印のため未適用。
+新運用では単一ベースライン(9a092c4a1fcf)から再構築するため、このリビジョンは使用しません。
+参照・検証目的でのみ保全しています。
 
 Revision ID: 002
 Revises: 001
 Create Date: 2025-10-27 00:00:00
 
 このマイグレーションは syogun_csv_masters.yaml から動的に生成されます。
-YAMLファイルが唯一の真（Single Source of Truth）です。
+YAMLファイルが唯一の真(Single Source of Truth)です。
 """
 from alembic import op
 import sqlalchemy as sa

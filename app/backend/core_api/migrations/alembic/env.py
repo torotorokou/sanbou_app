@@ -59,12 +59,14 @@ def _get_url() -> str:
 
 def _configure_context_offline(url: str) -> None:
     """
-    オフラインモード（接続せずにSQL生成）設定
+    オフラインモード(接続せずにSQL生成)設定
     """
     context.configure(
         url=url,
         target_metadata=target_metadata,
         literal_binds=True,
+        version_table="alembic_version",
+        version_table_schema="public",
         include_schemas=True,          # 複数スキーマの差分を含める
         compare_type=True,             # 型の差分検出
         compare_server_default=True,   # サーバデフォルトの差分検出
@@ -73,7 +75,7 @@ def _configure_context_offline(url: str) -> None:
 
 def _configure_context_online(url: str):
     """
-    オンラインモード（実DBに接続して実行）設定
+    オンラインモード(実DBに接続して実行)設定
     """
     connectable = engine_from_config(
         {"sqlalchemy.url": url},
@@ -85,6 +87,8 @@ def _configure_context_online(url: str):
     context.configure(
         connection=connection,
         target_metadata=target_metadata,
+        version_table="alembic_version",
+        version_table_schema="public",
         include_schemas=True,          # 複数スキーマの差分を含める
         compare_type=True,             # 型の差分検出
         compare_server_default=True,   # サーバデフォルトの差分検出
@@ -111,3 +115,12 @@ def run_migrations_online() -> None:
         # 明示的にクローズ
         connection.close()
         connectable.dispose()
+
+
+# ------------------------------------------------------------
+# メインディスパッチ: offline / online の分岐
+# ------------------------------------------------------------
+if context.is_offline_mode():
+    run_migrations_offline()
+else:
+    run_migrations_online()

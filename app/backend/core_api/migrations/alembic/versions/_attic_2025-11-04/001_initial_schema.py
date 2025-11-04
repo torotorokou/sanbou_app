@@ -1,4 +1,9 @@
-"""Initial schema: jobs, forecast, core
+"""Initial schema: jobs, forecast, core - ARCHIVED
+
+【アーカイブ理由】
+DBにベースライン未刻印のため未適用。
+新運用では単一ベースライン(9a092c4a1fcf)から再構築するため、このリビジョンは使用しません。
+参照・検証目的でのみ保全しています。
 
 Revision ID: 001
 Revises: 
