@@ -22,6 +22,8 @@ import {
   MonthNavigator,
   useResponsiveLayout,
   useTargetMetrics,
+  useInboundMonthlyVM,
+  HttpInboundDailyRepository,
 } from "@/features/dashboard/ukeire";
 import styles from "./InboundForecastDashboardPage.module.css";
 
@@ -29,6 +31,13 @@ const InboundForecastDashboardPage: React.FC = () => {
   const repository = useMemo(() => new MockInboundForecastRepository(), []);
   const vm = useInboundForecastVM(repository);
   const layout = useResponsiveLayout();
+
+  // 日次搬入量データ用のリポジトリとVM
+  const dailyRepository = useMemo(() => new HttpInboundDailyRepository(), []);
+  const dailyVM = useInboundMonthlyVM({
+    repository: dailyRepository,
+    month: vm.month,
+  });
 
   // 選択中の月から対象日付を計算（月の初日を使用してAPIに渡す）
   // ※Backend側で該当月の適切な日付（当月=today, 過去=月末, 未来=月初営業日）を自動解決
@@ -186,7 +195,22 @@ const InboundForecastDashboardPage: React.FC = () => {
                 </Col>
                 <Col span={layout.spans.daily}>
                   <div style={{ height: layout.heights.daily.laptopOrBelow }}>
-                    {vm.combinedDailyProps && <CombinedDailyCard {...vm.combinedDailyProps} />}
+                    {dailyVM.loading ? (
+                      <Skeleton active paragraph={{ rows: 4 }} />
+                    ) : dailyVM.error ? (
+                      <Alert
+                        message="日次データ取得エラー"
+                        description={dailyVM.error.message}
+                        type="error"
+                        showIcon
+                        style={{ height: "100%" }}
+                      />
+                    ) : dailyVM.dailyProps && dailyVM.cumulativeProps ? (
+                      <CombinedDailyCard 
+                        dailyProps={dailyVM.dailyProps} 
+                        cumulativeProps={dailyVM.cumulativeProps} 
+                      />
+                    ) : null}
                   </div>
                 </Col>
               </>
@@ -216,7 +240,22 @@ const InboundForecastDashboardPage: React.FC = () => {
                 </Col>
                 <Col span={layout.spans.daily} style={{ height: "100%" }}>
                   <div style={{ height: layout.heights.daily.desktop }}>
-                    {vm.combinedDailyProps && <CombinedDailyCard {...vm.combinedDailyProps} />}
+                    {dailyVM.loading ? (
+                      <Skeleton active paragraph={{ rows: 4 }} />
+                    ) : dailyVM.error ? (
+                      <Alert
+                        message="日次データ取得エラー"
+                        description={dailyVM.error.message}
+                        type="error"
+                        showIcon
+                        style={{ height: "100%" }}
+                      />
+                    ) : dailyVM.dailyProps && dailyVM.cumulativeProps ? (
+                      <CombinedDailyCard 
+                        dailyProps={dailyVM.dailyProps} 
+                        cumulativeProps={dailyVM.cumulativeProps} 
+                      />
+                    ) : null}
                   </div>
                 </Col>
                 <Col span={layout.spans.cal} style={{ height: "100%" }}>
@@ -247,7 +286,22 @@ const InboundForecastDashboardPage: React.FC = () => {
                 </Col>
                 <Col span={24}>
                   <div style={{ height: layout.heights.daily.mobile }}>
-                    {vm.combinedDailyProps && <CombinedDailyCard {...vm.combinedDailyProps} />}
+                    {dailyVM.loading ? (
+                      <Skeleton active paragraph={{ rows: 4 }} />
+                    ) : dailyVM.error ? (
+                      <Alert
+                        message="日次データ取得エラー"
+                        description={dailyVM.error.message}
+                        type="error"
+                        showIcon
+                        style={{ height: "100%" }}
+                      />
+                    ) : dailyVM.dailyProps && dailyVM.cumulativeProps ? (
+                      <CombinedDailyCard 
+                        dailyProps={dailyVM.dailyProps} 
+                        cumulativeProps={dailyVM.cumulativeProps} 
+                      />
+                    ) : null}
                   </div>
                 </Col>
               </>

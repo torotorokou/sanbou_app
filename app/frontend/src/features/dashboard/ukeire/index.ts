@@ -45,4 +45,6 @@ export { ForecastCard, type ForecastCardProps, type KPIBlockProps } from "./fore
 export { DailyActualsCard } from "./inbound-monthly/ui/cards/DailyActualsCard";
 export { DailyCumulativeCard } from "./inbound-monthly/ui/cards/DailyCumulativeCard";
 export { CombinedDailyCard, type CombinedDailyCardProps } from "./inbound-monthly/ui/cards/CombinedDailyCard";
-export { useInboundMonthlyVM } from "./inbound-monthly/application/useInboundMonthlyVM";
+export { useInboundMonthlyVM, type UseInboundMonthlyVMParams, type UseInboundMonthlyVMResult } from "./inbound-monthly/application/useInboundMonthlyVM";
+export { HttpInboundDailyRepository } from "./inbound-monthly/infrastructure/HttpInboundDailyRepository";
+export type { InboundDailyRepository, InboundDailyRow, FetchDailyParams, CumScope } from "./inbound-monthly/ports/InboundDailyRepository";
