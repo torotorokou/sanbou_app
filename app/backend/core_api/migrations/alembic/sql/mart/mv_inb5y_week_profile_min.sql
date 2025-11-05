@@ -49,7 +49,6 @@ COMMENT ON MATERIALIZED VIEW mart.mv_inb5y_week_profile_min IS '5y weekly profil
 
 
 
-CREATE UNIQUE INDEX mv_inb5y_week_profile_min_pk ON mart.mv_inb5y_week_profile_min USING btree (iso_week);
 
 
 
