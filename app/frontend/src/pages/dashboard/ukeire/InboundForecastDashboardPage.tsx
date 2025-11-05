@@ -24,6 +24,7 @@ import {
   useTargetMetrics,
   useInboundMonthlyVM,
   HttpInboundDailyRepository,
+  CalendarRepositoryForUkeire,
 } from "@/features/dashboard/ukeire";
 import styles from "./InboundForecastDashboardPage.module.css";
 
@@ -32,10 +33,12 @@ const InboundForecastDashboardPage: React.FC = () => {
   const vm = useInboundForecastVM(repository);
   const layout = useResponsiveLayout();
 
-  // 日次搬入量データ用のリポジトリとVM
+  // 日次搬入量データ用のリポジトリとVM（営業カレンダーリポジトリを追加）
   const dailyRepository = useMemo(() => new HttpInboundDailyRepository(), []);
+  const calendarRepository = useMemo(() => new CalendarRepositoryForUkeire(), []);
   const dailyVM = useInboundMonthlyVM({
     repository: dailyRepository,
+    calendarRepository,
     month: vm.month,
   });
 
