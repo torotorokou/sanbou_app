@@ -56,7 +56,6 @@ CREATE MATERIALIZED VIEW mart.mv_inb_avg5y_day_scope AS
 
 
 
-CREATE UNIQUE INDEX ux_mv_inb_avg5y_day_scope ON mart.mv_inb_avg5y_day_scope USING btree (scope, iso_week, iso_dow);
 
 
 

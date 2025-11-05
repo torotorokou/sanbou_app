@@ -48,7 +48,6 @@ COMMENT ON MATERIALIZED VIEW mart.mv_inb_avg5y_weeksum_biz IS '5y weekly sum (bu
 
 
 
-CREATE UNIQUE INDEX mv_inb_avg5y_weeksum_biz_pk ON mart.mv_inb_avg5y_weeksum_biz USING btree (iso_week);
 
 
 

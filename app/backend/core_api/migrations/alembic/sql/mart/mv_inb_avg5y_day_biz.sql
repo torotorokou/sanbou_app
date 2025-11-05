@@ -42,7 +42,6 @@ COMMENT ON MATERIALIZED VIEW mart.mv_inb_avg5y_day_biz IS '5y avg inbound/day (b
 
 
 
-CREATE UNIQUE INDEX mv_inb_avg5y_day_biz_pk ON mart.mv_inb_avg5y_day_biz USING btree (iso_week, iso_dow);
 
 
 
