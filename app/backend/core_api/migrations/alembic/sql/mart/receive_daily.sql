@@ -3,7 +3,7 @@
 
 
 
-CREATE OR REPLACE VIEW mart.receive_daily AS
+CREATE OR REPLACE VIEW mart.v_receive_daily AS
  WITH r_shogun_final AS (
          SELECT s.slip_date AS ddate,
             (sum(s.net_weight) / 1000.0) AS receive_ton,

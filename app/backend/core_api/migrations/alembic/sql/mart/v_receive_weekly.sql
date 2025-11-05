@@ -12,7 +12,7 @@ CREATE OR REPLACE VIEW mart.v_receive_weekly AS
             (sum(d.receive_net_ton))::numeric(18,3) AS receive_net_ton,
             sum(d.receive_vehicle_count) AS receive_vehicle_count,
             (sum(d.sales_yen))::numeric(18,0) AS sales_yen
-           FROM mart.receive_daily d
+           FROM mart.v_receive_daily d
           GROUP BY d.iso_year, d.iso_week
         )
  SELECT iso_year,
