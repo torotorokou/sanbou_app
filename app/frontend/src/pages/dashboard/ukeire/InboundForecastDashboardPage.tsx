@@ -132,10 +132,12 @@ const InboundForecastDashboardPage: React.FC = () => {
           style={{ 
             marginBottom: layout.gutter, 
             flex: layout.mode === "desktop" ? "1" : "0 0 auto", 
-            minHeight: 0 
+            minHeight: 0,
+            display: "flex",
+            flexDirection: "column"
           }}
         >
-          <Row gutter={[layout.gutter, layout.gutter]} style={{ height: layout.mode === "desktop" ? "100%" : "auto" }}>
+          <Row gutter={[layout.gutter, layout.gutter]} style={{ height: layout.mode === "desktop" ? "100%" : "auto", flex: layout.mode === "desktop" ? 1 : "none" }}>
             {layout.mode === "mobile" ? (
               // Mobile: 目標カードのみ（予測と日次は下段へ）
               <Col span={layout.spans.target}>
@@ -274,8 +276,8 @@ const InboundForecastDashboardPage: React.FC = () => {
         </div>
 
         {/* 下段：予測カード（全幅） */}
-        <div style={{ flex: layout.mode === "desktop" ? "1" : "0 0 auto", minHeight: 0 }}>
-          <Row gutter={[layout.gutter, layout.gutter]} style={{ height: layout.mode === "desktop" ? "100%" : "auto" }}>
+        <div style={{ flex: layout.mode === "desktop" ? "1" : "0 0 auto", minHeight: 0, display: "flex", flexDirection: "column" }}>
+          <Row gutter={[layout.gutter, layout.gutter]} style={{ height: layout.mode === "desktop" ? "100%" : "auto", flex: layout.mode === "desktop" ? 1 : "none" }}>
             {layout.mode === "mobile" ? (
               // Mobile: 予測 → 日次の順
               <>
