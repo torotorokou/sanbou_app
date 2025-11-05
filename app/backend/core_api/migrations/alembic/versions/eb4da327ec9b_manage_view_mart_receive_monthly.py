@@ -1,65 +1,82 @@
-"""manage view: mart.receive_monthly
+"""mart: grant select on v_receive_* to app_readonly
 
-Revision ID: eb4da327ec9b
-Revises: 454f7f0472db
-Create Date: 2025-11-04 05:54:49.403029
+Revision ID: 20251105_101233931
+Revises: 20251105_101107506
+Create Date: 2025-11-05 01:12:34.713146
 """
-from alembic import op
+from alembic import op, context
 import sqlalchemy as sa
-from textwrap import dedent
 
 # revision identifiers, used by Alembic.
-revision = "eb4da327ec9b"
-down_revision = "454f7f0472db"
+revision = "20251105_101233931"
+down_revision = "20251105_101107506"
 branch_labels = None
 depends_on = None
 
 
-def upgrade() -> None:
-    op.execute(
-        dedent(
-            """
-            CREATE OR REPLACE VIEW mart.receive_monthly AS
-            WITH d AS (
-                SELECT
-                    r.ddate,
-                    r.y,
-                    r.m,
-                    r.receive_net_ton,
-                    r.receive_vehicle_count,
-                    r.sales_yen
-                FROM mart.receive_daily AS r
-            )
-            SELECT
-                make_date(y, m, 1)                                               AS month_date,
-                to_char(make_date(y, m, 1)::timestamptz, 'YYYY-MM')              AS month,
-                y,
-                m,
-                SUM(receive_net_ton)::numeric(18,3)                               AS receive_net_ton,
-                SUM(receive_vehicle_count)                                        AS receive_vehicle_count,
-                SUM(sales_yen)::numeric(18,0)                                     AS sales_yen,
-                (
-                    CASE
-                        WHEN SUM(receive_vehicle_count) > 0
-                        THEN (SUM(receive_net_ton) * 1000.0) / SUM(receive_vehicle_count)::numeric
-                        ELSE NULL::numeric
-                    END
-                )::numeric(18,3)                                                  AS avg_weight_kg_per_vehicle,
-                (
-                    CASE
-                        WHEN (SUM(receive_net_ton) * 1000.0) > 0::numeric
-                        THEN SUM(sales_yen) / (SUM(receive_net_ton) * 1000.0)
-                        ELSE NULL::numeric
-                    END
-                )::numeric(18,3)                                                  AS unit_price_yen_per_kg
-            FROM d
-            GROUP BY y, m
-            ORDER BY y, m;
-            """
+def _get_read_role() -> str:
+    """-x READ_ROLE=... があればそれを使い、無ければ既定 app_readonly。"""
+    try:
+        x = context.get_x_argument(as_dictionary=True)
+        if isinstance(x, dict) and x.get("READ_ROLE"):
+            return x["READ_ROLE"]
+    except Exception:
+        pass
+    return "app_readonly"
+
+
+def _qi(ident: str) -> str:
+    """Postgres識別子を安全に二重引用。"""
+    return '"' + ident.replace('"', '""') + '"'
+
+
+def _role_exists(bind, name: str) -> bool:
+    row = bind.execute(
+        sa.text("SELECT 1 FROM pg_roles WHERE rolname = :n"),
+        {"n": name},
+    ).fetchone()
+    return bool(row)
+
+
+def upgrade():
+    role = _get_read_role()
+
+    # オフライン(--sql)はコメントだけ出力
+    if context.is_offline_mode():
+        op.execute(f"-- NOTICE: skipping GRANTs in offline mode (target role: {role})")
+        return
+
+    bind = op.get_bind()
+    if _role_exists(bind, role):
+        qrole = _qi(role)
+
+        # schema usage（view参照に必要）
+        op.execute(f"GRANT USAGE ON SCHEMA mart TO {qrole};")
+
+        # 明示ビューに付与
+        for v in ("mart.v_receive_daily", "mart.v_receive_weekly", "mart.v_receive_monthly"):
+            op.execute(f"GRANT SELECT ON {v} TO {qrole};")
+
+        # 以後 mart スキーマで作成されるテーブル/ビューにも自動付与
+        op.execute(f"ALTER DEFAULT PRIVILEGES IN SCHEMA mart GRANT SELECT ON TABLES TO {qrole};")
+    else:
+        # 役割が無い環境ではNOTICEだけ出して安全にスキップ
+        role_lit = role.replace("'", "''")
+        op.execute(
+            f"DO $$ BEGIN RAISE NOTICE 'Role % does not exist; skipping grants', '{role_lit}'; END $$;"
         )
-    )
 
 
-def downgrade() -> None:
-    # 可逆にするなら直前版の CREATE OR REPLACE VIEW 定義を貼る。
-    op.execute("DROP VIEW IF EXISTS mart.receive_monthly;")
+def downgrade():
+    # ベストエフォートで取り消し（役割が無ければ何もしない）
+    if context.is_offline_mode():
+        op.execute("-- NOTICE: skipping REVOKE in offline mode")
+        return
+
+    role = _get_read_role()
+    bind = op.get_bind()
+    if _role_exists(bind, role):
+        qrole = _qi(role)
+        for v in ("mart.v_receive_daily", "mart.v_receive_weekly", "mart.v_receive_monthly"):
+            op.execute(f"REVOKE SELECT ON {v} FROM {qrole};")
+        op.execute(f"ALTER DEFAULT PRIVILEGES IN SCHEMA mart REVOKE SELECT ON TABLES FROM {qrole};")
