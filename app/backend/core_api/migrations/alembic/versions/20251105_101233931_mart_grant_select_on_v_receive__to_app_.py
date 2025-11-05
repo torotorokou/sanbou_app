@@ -14,32 +14,40 @@ revision = '20251105_101233931'
 down_revision = '20251105_101107506'
 branch_labels = None
 depends_on = None
-READ_ROLE = context.get_x_argument(as_dictionary=True).get("READ_ROLE", "app_readonly")
 
-def _role_exists(name: str) -> bool:
-    # オフラインでは存在確認できない
-    if context.is_offline_mode():
-        return False
-    conn = op.get_bind()
+
+def _get_read_role() -> str:
+    """Get READ_ROLE from config, safe to call at runtime (not at module import)."""
+    return context.get_x_argument(as_dictionary=True).get("READ_ROLE", "app_readonly")
+
+
+def _role_exists(conn, name: str) -> bool:
+    """Check if a PostgreSQL role exists."""
     return bool(conn.scalar(sa.text("SELECT 1 FROM pg_roles WHERE rolname=:n"), {"n": name}))
 
+
 def upgrade():
-    safe_role = READ_ROLE.replace("'", "''")
+    read_role = _get_read_role()
+    # シングルクォート・ダブルクォートをエスケープ（PostgreSQL識別子は""でクォート、SQL文字列は''でエスケープ）
+    safe_role_ident = read_role.replace('"', '""')  # 識別子用
+    safe_role_str = read_role.replace("'", "''")    # 文字列用
 
     # オフライン(--sql)はコメントだけ出して終了（GRANTはオンライン環境で実行）
     if context.is_offline_mode():
-        op.execute(f"-- NOTICE: Skipping grants in offline mode (target role: {safe_role})")
+        op.execute(f"-- NOTICE: Skipping grants in offline mode (target role: {safe_role_str})")
         return
 
-    if _role_exists(READ_ROLE):
-        op.execute(f'GRANT USAGE ON SCHEMA mart TO "{safe_role}";')
+    conn = op.get_bind()
+    if _role_exists(conn, read_role):
+        op.execute(f'GRANT USAGE ON SCHEMA mart TO "{safe_role_ident}";')
         for v in ("v_receive_daily", "v_receive_weekly", "v_receive_monthly"):
-            op.execute(f'GRANT SELECT ON mart.{v} TO "{safe_role}";')
+            op.execute(f'GRANT SELECT ON mart.{v} TO "{safe_role_ident}";')
         # 以降に作成されるビュー/テーブルにも自動付与（所有者=実行ユーザ前提）
-        op.execute(f'ALTER DEFAULT PRIVILEGES IN SCHEMA mart GRANT SELECT ON TABLES TO "{safe_role}";')
+        op.execute(f'ALTER DEFAULT PRIVILEGES IN SCHEMA mart GRANT SELECT ON TABLES TO "{safe_role_ident}";')
     else:
-        # ★ここが今回の修正点：第二引数のparamsを渡さず、文字列だけでNOTICEを出す
-        op.execute(f"DO $$ BEGIN RAISE NOTICE 'Role {safe_role} does not exist; skipping grants'; END $$;")
+        # ロールが存在しない場合はNOTICEを出力
+        op.execute(f"DO $$ BEGIN RAISE NOTICE 'Role {safe_role_str} does not exist; skipping grants'; END $$;")
+
 
 def downgrade():
     # 非破壊ポリシーに沿って何もしない

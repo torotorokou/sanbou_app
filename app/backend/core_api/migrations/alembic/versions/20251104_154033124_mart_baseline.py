@@ -1,7 +1,7 @@
 """mart_baseline
 
 Revision ID: 20251104_154033124
-Revises: b3925aec6dda
+Revises: 
 Create Date: 2025-11-04 06:40:33.866612
 """
 from alembic import op
@@ -10,7 +10,7 @@ from sqlalchemy.dialects import postgresql as psql
 
 # revision identifiers, used by Alembic.
 revision = "20251104_154033124"
-down_revision = "b3925aec6dda"
+down_revision = None
 branch_labels = None
 depends_on = None
 

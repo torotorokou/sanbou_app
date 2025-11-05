@@ -29,12 +29,12 @@ CREATE OR REPLACE VIEW mart.v_target_card_per_day AS
          SELECT r.iso_year,
             r.iso_week,
             sum(COALESCE(r.receive_net_ton, (0)::numeric)) AS week_actual_ton
-           FROM mart.receive_daily r
+           FROM mart.v_receive_daily r
           GROUP BY r.iso_year, r.iso_week
         ), month_actual AS (
          SELECT (date_trunc('month'::text, (r.ddate)::timestamp with time zone))::date AS month_key,
             sum(COALESCE(r.receive_net_ton, (0)::numeric)) AS month_actual_ton
-           FROM mart.receive_daily r
+           FROM mart.v_receive_daily r
           GROUP BY ((date_trunc('month'::text, (r.ddate)::timestamp with time zone))::date)
         )
  SELECT b.ddate,
@@ -54,7 +54,7 @@ CREATE OR REPLACE VIEW mart.v_target_card_per_day AS
      LEFT JOIN month_target mt ON ((mt.month_key = (date_trunc('month'::text, (b.ddate)::timestamp with time zone))::date)))
      LEFT JOIN week_actual wa ON (((wa.iso_year = b.iso_year) AND (wa.iso_week = b.iso_week))))
      LEFT JOIN month_actual ma ON ((ma.month_key = (date_trunc('month'::text, (b.ddate)::timestamp with time zone))::date)))
-     LEFT JOIN mart.receive_daily rprev ON ((rprev.ddate = (b.ddate - '1 day'::interval))))
+     LEFT JOIN mart.v_receive_daily rprev ON ((rprev.ddate = (b.ddate - '1 day'::interval))))
   ORDER BY b.ddate;
 
 

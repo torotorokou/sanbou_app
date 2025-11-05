@@ -10,13 +10,13 @@ CREATE MATERIALIZED VIEW mart.mv_inb5y_week_profile_min AS
          SELECT receive_daily.iso_week,
             avg(receive_daily.receive_net_ton) AS normal_day_mean,
             count(*) AS n_normal
-           FROM mart.receive_daily
+           FROM mart.v_receive_daily AS receive_daily
           WHERE ((receive_daily.ddate >= (CURRENT_DATE - '5 years'::interval)) AND (receive_daily.is_business = true) AND (receive_daily.day_type = 'NORMAL'::text) AND (receive_daily.receive_net_ton IS NOT NULL))
           GROUP BY receive_daily.iso_week
         ), resv_samples AS (
          SELECT d.iso_week,
             (d.receive_net_ton / NULLIF(n_1.normal_day_mean, (0)::numeric)) AS r
-           FROM (mart.receive_daily d
+           FROM (mart.v_receive_daily d
              JOIN normal n_1 USING (iso_week))
           WHERE ((d.ddate >= (CURRENT_DATE - '5 years'::interval)) AND (d.is_business = true) AND (d.day_type = 'RESERVATION'::text) AND (d.receive_net_ton IS NOT NULL))
         ), agg AS (
