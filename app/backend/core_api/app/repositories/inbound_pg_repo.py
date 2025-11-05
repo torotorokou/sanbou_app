@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Inbound repository implementation with PostgreSQL.
 日次搬入量データの取得（CTE + ウィンドウ関数で累積計算）
@@ -12,8 +13,12 @@ from sqlalchemy.orm import Session
 from app.ports.inbound_repository import InboundRepository
 from app.domain.inbound import InboundDailyRow, CumScope
 
+# 👇 SQL識別子は1か所で管理（定数化）
+from app.repositories.sql_names import V_RECEIVE_DAILY, V_CALENDAR
 
 logger = logging.getLogger(__name__)
+
+ALLOWED_CUM_SCOPES = {"none", "range", "month", "week"}
 
 
 class InboundPgRepository(InboundRepository):
@@ -34,33 +39,43 @@ class InboundPgRepository(InboundRepository):
     ) -> List[InboundDailyRow]:
         """
         Fetch daily inbound data with calendar continuity and optional cumulative calculation.
-        
+
         Logic:
-        1. CTE 'd': LEFT JOIN calendar with mart.receive_daily to ensure all dates present
-        2. CTE 'cum': Apply window function based on cum_scope
-        3. Return zero-filled continuous daily data with optional cumulative values
-        
+        1. CTE 'd': カレンダー({V_CALENDAR})と入荷ビュー({V_RECEIVE_DAILY})をLEFT JOINし、欠損日を0埋め
+        2. 本体: cum_scopeに応じてウィンドウ関数で累積値を付与
+        3. 連続日・0埋め済みの日次データを返却
+
         Args:
-            start: 開始日
-            end: 終了日
-            segment: セグメントフィルタ（None=全体）
+            start: 開始日（含む）
+            end:   終了日（含む）
+            segment: セグメントフィルタ（現状このビューには列が無いため未使用）
             cum_scope: 累積スコープ（"range"=全期間, "month"=月ごと, "week"=週ごと, "none"=累積なし）
-        
+
         Returns:
-            連続日・0埋め済み日次搬入量データのリスト
-        
+            List[InboundDailyRow]
+
         Raises:
-            ValueError: start > end, または範囲が365日を超える場合
+            ValueError: start > end、または範囲が366日を超える、またはcum_scopeが不正
         """
-        # Validation
+        # --- Validation ---
         if start > end:
             raise ValueError(f"start ({start}) must be <= end ({end})")
         delta_days = (end - start).days + 1
         if delta_days > 366:
             raise ValueError(f"Date range exceeds 366 days: {delta_days} days")
+        if cum_scope not in ALLOWED_CUM_SCOPES:
+            raise ValueError(
+                f"Invalid cum_scope: {cum_scope}. Must be one of {sorted(ALLOWED_CUM_SCOPES)}"
+            )
 
-        # SQL with CTE + window function (segment機能なし版)
-        sql = text("""
+        # 現時点のv_receive_dailyにはsegment列がないため、受け取っても無視（将来対応用）
+        if segment is not None:
+            logger.warning("segment filter is not supported on %s; ignoring segment=%r",
+                           V_RECEIVE_DAILY, segment)
+
+        # --- SQL with CTE + window function ---
+        # 識別子（ビュー名など）は f-string で差し込み、値はバインドパラメータで渡す
+        sql = text(f"""
 WITH d AS (
   SELECT
     c.ddate,
@@ -69,8 +84,8 @@ WITH d AS (
     c.iso_dow,
     c.is_business,
     COALESCE(r.receive_net_ton, 0)::numeric AS ton
-  FROM ref.v_calendar_classified c
-  LEFT JOIN mart.receive_daily r
+  FROM {V_CALENDAR} AS c
+  LEFT JOIN {V_RECEIVE_DAILY} AS r
     ON r.ddate = c.ddate
   WHERE c.ddate BETWEEN :start AND :end
 )
@@ -80,7 +95,7 @@ SELECT
   d.iso_week,
   d.iso_dow,
   d.is_business,
-  NULL::text AS segment,
+  NULL::text AS segment,  -- 互換のため形だけ返す（将来segment対応時に置換）
   d.ton,
   CASE
     WHEN :cum_scope = 'range' THEN
@@ -116,31 +131,42 @@ ORDER BY d.ddate
                 },
             )
             rows = result.fetchall()
-            
-            data = [
-                InboundDailyRow(
-                    ddate=r[0],
-                    iso_year=r[1],
-                    iso_week=r[2],
-                    iso_dow=r[3],
-                    is_business=r[4],
-                    segment=r[5],
-                    ton=float(r[6]),
-                    cum_ton=float(r[7]) if r[7] is not None else None,
+
+            data: List[InboundDailyRow] = []
+            for r in rows:
+                # rのポジションはSELECT順に対応
+                ddate = r[0]
+                iso_year = r[1]
+                iso_week = r[2]
+                iso_dow = r[3]
+                is_business = r[4]
+                seg = r[5]  # 現状はNone相当の文字列NULL::text
+                ton = float(r[6]) if r[6] is not None else 0.0
+                cum = float(r[7]) if r[7] is not None else None
+
+                data.append(
+                    InboundDailyRow(
+                        ddate=ddate,
+                        iso_year=iso_year,
+                        iso_week=iso_week,
+                        iso_dow=iso_dow,
+                        is_business=is_business,
+                        segment=seg,
+                        ton=ton,
+                        cum_ton=cum,
+                    )
                 )
-                for r in rows
-            ]
-            
+
             logger.info(
-                f"Fetched {len(data)} daily rows: {start} to {end}, "
-                f"segment={segment}, cum_scope={cum_scope}"
+                "Fetched %d daily rows: %s to %s, segment=%s, cum_scope=%s",
+                len(data), start, end, segment, cum_scope
             )
             return data
 
         except Exception as e:
             logger.error(
-                f"Failed to fetch daily inbound: {start} to {end}, "
-                f"segment={segment}, cum_scope={cum_scope}, error={e}",
+                "Failed to fetch daily inbound: %s to %s, segment=%s, cum_scope=%s, error=%s",
+                start, end, segment, cum_scope, e,
                 exc_info=True,
             )
             raise
