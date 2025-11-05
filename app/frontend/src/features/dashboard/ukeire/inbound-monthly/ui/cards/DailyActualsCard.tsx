@@ -21,6 +21,8 @@ export type DailyActualsCardProps = {
     dateFull: IsoDate;
     prevMonth: number | null;
     prevYear: number | null;
+    /** 営業カレンダーから取得した日付ステータス（business: 営業日, holiday: 日祝・予約営業日, closed: 休業日） */
+    status?: "business" | "holiday" | "closed";
   }[];
   variant?: "standalone" | "embed";
 };
@@ -29,7 +31,17 @@ export const DailyActualsCard: React.FC<DailyActualsCardProps> = ({ chartData, v
   const [showPrevMonth, setShowPrevMonth] = useState(false);
   const [showPrevYear, setShowPrevYear] = useState(false);
 
-  const colorForDate = (dateStr: string) => {
+  /**
+   * 営業カレンダーのステータスから色を取得
+   * フォールバック: ステータスがない場合は第2日曜・日曜で判定（後方互換性）
+   */
+  const colorForDate = (dateStr: string, status?: "business" | "holiday" | "closed") => {
+    // 営業カレンダーのステータスがある場合は優先的に使用
+    if (status === "business") return COLORS.business;
+    if (status === "holiday") return COLORS.holiday;
+    if (status === "closed") return COLORS.closed;
+    
+    // フォールバック: 旧ロジック（後方互換性のため残す）
     if (isSecondSunday(dateStr)) return COLORS.danger;
     const d = dayjs(dateStr);
     if (d.day() === 0) return COLORS.sunday;
@@ -97,7 +109,7 @@ export const DailyActualsCard: React.FC<DailyActualsCardProps> = ({ chartData, v
             />
             <Bar dataKey="actual">
               {chartData.map((entry, idx) => (
-                <Cell key={`cell-${idx}`} fill={colorForDate(entry.dateFull)} />
+                <Cell key={`cell-${idx}`} fill={colorForDate(entry.dateFull, entry.status)} />
               ))}
             </Bar>
             {showPrevMonth && <Line type="monotone" dataKey="prevMonth" stroke="#40a9ff" dot={false} strokeWidth={2} />}
@@ -108,9 +120,9 @@ export const DailyActualsCard: React.FC<DailyActualsCardProps> = ({ chartData, v
                 <SingleLineLegend
                   {...(props as Parameters<typeof SingleLineLegend>[0])}
                   extraStatic={[
-                    { label: "営業", color: COLORS.ok },
-                    { label: "日祝", color: COLORS.sunday },
-                    { label: "休業", color: COLORS.danger },
+                    { label: "通常営業日", color: COLORS.business },
+                    { label: "予約営業日", color: COLORS.holiday },
+                    { label: "休業日", color: COLORS.closed },
                   ]}
                 />
               )}

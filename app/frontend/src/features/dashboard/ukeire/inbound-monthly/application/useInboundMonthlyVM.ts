@@ -6,6 +6,7 @@
  * - API経由でデータ取得
  * - 日次実績チャート用データ整形
  * - 累積チャート用データ整形
+ * - 営業カレンダーデータの統合
  */
 
 import { useMemo, useState, useCallback, useEffect } from "react";
@@ -13,9 +14,13 @@ import dayjs from "dayjs";
 import type { DailyActualsCardProps } from "../ui/cards/DailyActualsCard";
 import type { DailyCumulativeCardProps } from "../ui/cards/DailyCumulativeCard";
 import type { InboundDailyRepository } from "../ports/InboundDailyRepository";
+import type { ICalendarRepository } from "@/features/calendar/ports/repository";
+import type { CalendarDayDTO } from "@/features/calendar/domain/types";
 
 export type UseInboundMonthlyVMParams = {
   repository: InboundDailyRepository;
+  /** 営業カレンダーのリポジトリ */
+  calendarRepository?: ICalendarRepository;
   /** 選択中の年月（YYYY-MM形式） */
   month: string;
 };
@@ -29,14 +34,30 @@ export type UseInboundMonthlyVMResult = {
 };
 
 /**
+ * day_type から status を判定（営業カレンダーと統一）
+ */
+function mapDayTypeToStatus(dayType: string): "business" | "holiday" | "closed" {
+  switch (dayType) {
+    case "CLOSED":
+      return "closed";
+    case "RESERVATION":
+      return "holiday";
+    case "NORMAL":
+    default:
+      return "business";
+  }
+}
+
+/**
  * 日次搬入量データのフェッチと整形
  * 
  * - month変更時に自動でデータ再取得
  * - cum_scope="month"で累積計算
  * - データ整形してDailyActualsCard/DailyCumulativeCardに渡す
+ * - 営業カレンダーのステータスを統合
  */
 export function useInboundMonthlyVM(params: UseInboundMonthlyVMParams): UseInboundMonthlyVMResult {
-  const { repository, month } = params;
+  const { repository, calendarRepository, month } = params;
 
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
@@ -44,12 +65,14 @@ export function useInboundMonthlyVM(params: UseInboundMonthlyVMParams): UseInbou
   const [cumulativeProps, setCumulativeProps] = useState<DailyCumulativeCardProps | null>(null);
 
   // 月の範囲計算（start=月初、end=月末）
-  const { start, end } = useMemo(() => {
+  const { start, end, year, monthNum } = useMemo(() => {
     const monthStart = dayjs(month, "YYYY-MM").startOf("month");
     const monthEnd = monthStart.endOf("month");
     return {
       start: monthStart.format("YYYY-MM-DD"),
       end: monthEnd.format("YYYY-MM-DD"),
+      year: monthStart.year(),
+      monthNum: monthStart.month() + 1,
     };
   }, [month]);
 
@@ -57,6 +80,17 @@ export function useInboundMonthlyVM(params: UseInboundMonthlyVMParams): UseInbou
     setLoading(true);
     setError(null);
     try {
+      // 営業カレンダーデータを取得（calendarRepositoryがある場合のみ）
+      let calendarMap: Map<string, CalendarDayDTO> | null = null;
+      if (calendarRepository) {
+        try {
+          const calendarData = await calendarRepository.fetchMonth({ year, month: monthNum });
+          calendarMap = new Map(calendarData.map((d) => [d.ddate, d]));
+        } catch (calErr) {
+          console.warn("営業カレンダーデータの取得に失敗しました（フォールバックロジックを使用）:", calErr);
+        }
+      }
+
       // cum_scope="month"で月内累積を取得
       const data = await repository.fetchDaily({
         start,
@@ -65,14 +99,20 @@ export function useInboundMonthlyVM(params: UseInboundMonthlyVMParams): UseInbou
         cum_scope: "month",
       });
 
-      // 日次実績データ整形
-      const dailyChartData = data.map((row) => ({
-        label: dayjs(row.ddate).format("DD"),
-        actual: row.ton,
-        dateFull: row.ddate,
-        prevMonth: null, // TODO: 前月・前年データは別途取得が必要
-        prevYear: null,
-      }));
+      // 日次実績データ整形（営業カレンダーのステータスを統合）
+      const dailyChartData = data.map((row) => {
+        const calendarDay = calendarMap?.get(row.ddate);
+        const status = calendarDay ? mapDayTypeToStatus(calendarDay.day_type) : undefined;
+        
+        return {
+          label: dayjs(row.ddate).format("DD"),
+          actual: row.ton,
+          dateFull: row.ddate,
+          prevMonth: null, // TODO: 前月・前年データは別途取得が必要
+          prevYear: null,
+          status, // 営業カレンダーのステータスを追加
+        };
+      });
 
       // 累積データ整形
       const cumulativeChartData = data.map((row) => ({
@@ -90,7 +130,7 @@ export function useInboundMonthlyVM(params: UseInboundMonthlyVMParams): UseInbou
     } finally {
       setLoading(false);
     }
-  }, [repository, start, end]);
+  }, [repository, calendarRepository, start, end, year, monthNum]);
 
   // month変更時に自動再取得
   useEffect(() => {
