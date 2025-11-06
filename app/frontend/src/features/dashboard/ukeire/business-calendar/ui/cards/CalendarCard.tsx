@@ -1,5 +1,6 @@
 import React, { useMemo } from "react";
-import { Card, Skeleton, Typography } from "antd";
+import { Card, Skeleton, Typography, Tooltip } from "antd";
+import { InfoCircleOutlined } from "@ant-design/icons";
 import UkeireCalendar from "../components/UkeireCalendar";
 import { useBusinessCalendarVM } from "../../application/useBusinessCalendarVM";
 import { CalendarRepositoryForUkeire } from "../../infrastructure/calendar.repository";
@@ -119,7 +120,14 @@ export default function CalendarCard({ year, month, repository, title = "営業�
 
   if (vm.loading) {
     return (
-      <Card title={title} style={style}>
+      <Card title={(
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <Typography.Title level={5} style={{ margin: 0, fontSize: 16 }}>{title}</Typography.Title>
+          <Tooltip title={"営業日・日祝・非営業日（括弧内は残り日数）"}>
+            <InfoCircleOutlined style={{ color: "#8c8c8c" }} />
+          </Tooltip>
+        </div>
+      )} style={style}>
         <Skeleton active paragraph={{ rows: 6 }} />
       </Card>
     );
@@ -127,7 +135,14 @@ export default function CalendarCard({ year, month, repository, title = "営業�
 
   if (vm.error) {
     return (
-      <Card title={title} style={style}>
+      <Card title={(
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <Typography.Title level={5} style={{ margin: 0, fontSize: 16 }}>{title}</Typography.Title>
+          <Tooltip title={"営業日・日祝・非営業日（括弧内は残り日数）"}>
+            <InfoCircleOutlined style={{ color: "#8c8c8c" }} />
+          </Tooltip>
+        </div>
+      )} style={style}>
         <Typography.Text type="danger">{vm.error}</Typography.Text>
       </Card>
     );
@@ -135,7 +150,14 @@ export default function CalendarCard({ year, month, repository, title = "営業�
 
   return (
     <Card 
-      title={title} 
+      title={(
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <Typography.Title level={5} style={{ margin: 0, fontSize: 16 }}>{title}</Typography.Title>
+          <Tooltip title={"営業日・日祝・非営業日（括弧内は残り日数）"}>
+            <InfoCircleOutlined style={{ color: "#8c8c8c" }} />
+          </Tooltip>
+        </div>
+      )} 
       style={{ 
         height: "100%", 
         display: "flex", 
