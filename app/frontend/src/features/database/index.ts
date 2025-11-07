@@ -1,32 +1,44 @@
 /**
  * Database Feature - Public API
- * MVVM+SOLID アーキテクチャに準拠した barrel export
+ * リファクタリング後の新構造
  */
 
-// Domain
-export type { CsvFileType, CsvUploadCardEntry } from './domain/types';
-export * from './domain/config/CsvDefinition';
-export * from './domain/config/uploadCsvConfig';
+// Shared
+export * from './shared';
 
-// Ports
-export type { IDatabaseRepository } from './ports/repository';
+// Dataset Import
+export * from './dataset-import';
 
-// Application
-export * from './application/useDatabaseVM';
+// Dataset Validate
+export * from './dataset-validate';
 
-// UI Components
-export { default as CsvPreviewCard } from './ui/cards/CsvPreviewCard';
+// Dataset Submit
+export * from './dataset-submit';
+
+// Dataset Preview
+export * from './dataset-preview';
+
+// 旧互換性エクスポート（非推奨 - 段階的に削除予定）
+export { useDatasetImportVM as useDatabaseVM } from './dataset-import';
+export { useDatasetImportVM as useDatabaseUploadVM } from './dataset-import';
+export { CsvPreviewCard } from './dataset-preview';
+export { SimpleUploadPanel } from './dataset-import';
+export { UploadInstructions } from './dataset-import';
+export { ValidationBadge } from './dataset-import';
+export { UPLOAD_CSV_DEFINITIONS, UPLOAD_CSV_TYPES, csvTypeColors } from './dataset-import/model/constants';
+
+// 旧UIコンポーネント（report等で使用中 - 非推奨）
 export { default as CsvUploadPanel } from './ui/cards/CsvUploadPanel';
-export { UploadInstructions } from './ui/components/UploadInstructions';
-export { ValidationBadge } from './ui/ValidationBadge';
-export { SimpleUploadPanel } from './ui/SimpleUploadPanel';
 
-// Hooks
-export { useDatabaseUploadVM } from './hooks/useDatabaseUploadVM';
-export type { UseDatabaseUploadVMOptions } from './hooks/useDatabaseUploadVM';
+// 旧model hooks（非推奨）
+export { useCsvUploadArea } from './model/useCsvUploadArea';
+export { useCsvUploadHandler } from './model/useCsvUploadHandler';
 
-// Model (型とConstants)
-export type { PanelFileItem, ValidationStatus, CsvPreview, UploadResponseShape } from './model/types';
-export * from './model/constants';
-export * from './model/dataset';
-// sampleCsvModelは直接import推奨（名前衝突のため）
+// 旧型定義の互換性
+export type { PanelFileItem, DatasetImportVMOptions as UseDatabaseUploadVMOptions } from './dataset-import/model/types';
+export type { ValidationStatus, CsvDefinition, UploadResponseShape } from './shared/types/common';
+export type { CsvPreviewData as CsvPreview } from './dataset-preview/model/types';
+export type { DatasetKey } from './shared/dataset/dataset';
+
+// 旧domain types（report機能等で使用中 - 非推奨）
+export type { CsvFileType, CsvUploadCardEntry } from './domain/types';

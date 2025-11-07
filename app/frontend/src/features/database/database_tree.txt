@@ -1,10 +1,54 @@
 .
 ├── README.md
+├── REFACTORING_REPORT.md
 ├── api
 │   └── client.ts
 ├── application
 │   └── useDatabaseVM.ts
 ├── database_tree.txt
+├── dataset-import
+│   ├── api
+│   │   └── client.ts
+│   ├── hooks
+│   │   └── useDatasetImportVM.ts
+│   ├── index.ts
+│   ├── model
+│   │   ├── constants.ts
+│   │   └── types.ts
+│   ├── repository
+│   │   ├── DatasetImportRepository.ts
+│   │   └── DatasetImportRepositoryImpl.ts
+│   └── ui
+│       ├── SimpleUploadPanel.tsx
+│       ├── UploadInstructions.tsx
+│       ├── ValidationBadge.tsx
+│       └── index.ts
+├── dataset-preview
+│   ├── index.ts
+│   ├── model
+│   │   └── types.ts
+│   └── ui
+│       └── CsvPreviewCard.tsx
+├── dataset-submit
+│   ├── hooks
+│   │   └── useSubmitVM.ts
+│   ├── index.ts
+│   └── model
+│       └── types.ts
+├── dataset-validate
+│   ├── adapters
+│   │   ├── manifest.validator.ts
+│   │   ├── shogun-final.validator.ts
+│   │   └── shogun-flash.validator.ts
+│   ├── core
+│   │   ├── csvHeaderValidator.ts
+│   │   └── csvRowValidator.ts
+│   ├── hooks
+│   │   └── useValidateOnPick.ts
+│   ├── index.ts
+│   └── model
+│       ├── rules.ts
+│       └── types.ts
 ├── domain
 │   ├── config
 │   │   ├── CsvDefinition.ts
@@ -31,6 +75,20 @@
 ├── repository
 │   ├── DatabaseUploadRepository.ts
 │   └── DatabaseUploadRepositoryImpl.ts
+├── shared
+│   ├── constants.ts
+│   ├── csv
+│   │   ├── detectEncoding.ts
+│   │   └── parseCsv.ts
+│   ├── dataset
+│   │   └── dataset.ts
+│   ├── index.ts
+│   ├── types
+│   │   └── common.ts
+│   ├── ui
+│   │   └── colors.ts
+│   └── upload
+│       └── buildFormData.ts
 └── ui
     ├── SimpleUploadPanel.tsx
     ├── ValidationBadge.tsx
@@ -47,4 +105,4 @@
     │   └── useCsvUploadHandler.ts
     └── index.ts
 
-17 directories, 31 files
+40 directories, 66 files
