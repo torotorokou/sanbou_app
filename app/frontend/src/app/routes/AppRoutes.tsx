@@ -21,6 +21,8 @@ const LedgerBookPage = lazy(() => import('@/pages/report').then(m => ({ default:
 // Database pages - using public API
 const UploadDatabasePage = lazy(() => import('@/pages/database').then(m => ({ default: m.UploadDatabasePage })));
 const RecordListPage = lazy(() => import('@/pages/database').then(m => ({ default: m.RecordListPage })));
+const DatasetImportPage = lazy(() => import('@/pages/database').then(m => ({ default: m.DatasetImportPage })));
+const RecordManagerPage = lazy(() => import('@/pages/database').then(m => ({ default: m.RecordManagerPage })));
 
 // Manual pages - using public API
 const GlobalManualSearchPage = lazy(() => import('@/pages/manual').then(m => ({ default: m.GlobalManualSearchPage })));
@@ -91,6 +93,8 @@ const AppRoutes: React.FC = () => {
     {/* データベース関連 */}
         <Route path={ROUTER_PATHS.UPLOAD_PAGE} element={<UploadDatabasePage />} />
         <Route path={ROUTER_PATHS.RECORD_LIST} element={<RecordListPage />} />
+        <Route path={ROUTER_PATHS.DATASET_IMPORT} element={<DatasetImportPage />} />
+        <Route path={ROUTER_PATHS.RECORD_MANAGER} element={<RecordManagerPage />} />
 
         {/* トークンプレビュー */}
         <Route
