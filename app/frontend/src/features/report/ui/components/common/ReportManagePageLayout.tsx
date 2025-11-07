@@ -8,7 +8,7 @@ import ActionsSection from './ActionsSection';
 import PreviewSection from './PreviewSection';
 import type { UploadProps } from 'antd';
 import type { UploadFileConfig } from '@features/report/domain/types/report.types';
-import type { CsvFileType } from '@features/database';
+import type { CsvUploadFileType as CsvFileType } from './types';
 
 /**
  * レポート管理ページレイアウト - useResponsive(flags)統合版

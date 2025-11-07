@@ -1,10 +1,6 @@
 .
 ├── README.md
 ├── REFACTORING_REPORT.md
-├── api
-│   └── client.ts
-├── application
-│   └── useDatabaseVM.ts
 ├── database_tree.txt
 ├── dataset-import
 │   ├── api
@@ -49,60 +45,20 @@
 │   └── model
 │       ├── rules.ts
 │       └── types.ts
-├── domain
-│   ├── config
-│   │   ├── CsvDefinition.ts
-│   │   └── uploadCsvConfig.ts
-│   ├── services
-│   │   └── csvValidationService.ts
-│   ├── types
-│   └── types.ts
-├── hooks
-│   ├── index.ts
-│   └── useDatabaseUploadVM.ts
 ├── index.ts
-├── infrastructure
-├── model
-│   ├── constants.ts
-│   ├── dataset.ts
-│   ├── index.ts
-│   ├── sampleCsvModel.ts
-│   ├── types.ts
-│   ├── useCsvUploadArea.ts
-│   └── useCsvUploadHandler.ts
-├── ports
-│   └── repository.ts
-├── repository
-│   ├── DatabaseUploadRepository.ts
-│   └── DatabaseUploadRepositoryImpl.ts
-├── shared
-│   ├── constants.ts
-│   ├── csv
-│   │   ├── detectEncoding.ts
-│   │   └── parseCsv.ts
-│   ├── dataset
-│   │   └── dataset.ts
-│   ├── index.ts
-│   ├── types
-│   │   └── common.ts
-│   ├── ui
-│   │   └── colors.ts
-│   └── upload
-│       └── buildFormData.ts
-└── ui
-    ├── SimpleUploadPanel.tsx
-    ├── ValidationBadge.tsx
-    ├── cards
-    │   ├── CsvPreviewCard.tsx
-    │   └── CsvUploadPanel.tsx
-    ├── components
-    │   ├── UploadInstructions.tsx
-    │   └── csv-upload
-    │       ├── CsvUploadCard.tsx
-    │       └── CsvUploadPanel.tsx
-    ├── hooks
-    │   ├── useCsvUploadArea.ts
-    │   └── useCsvUploadHandler.ts
-    └── index.ts
+└── shared
+    ├── constants.ts
+    ├── csv
+    │   ├── detectEncoding.ts
+    │   └── parseCsv.ts
+    ├── dataset
+    │   └── dataset.ts
+    ├── index.ts
+    ├── types
+    │   └── common.ts
+    ├── ui
+    │   └── colors.ts
+    └── upload
+        └── buildFormData.ts
 
-40 directories, 66 files
+24 directories, 38 files

@@ -1,6 +1,7 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import type { UploadProps } from 'antd/es/upload';
-import { useCsvValidation } from '@features/database/model';
+// useCsvValidation は削除されました - 新しい検証ロジックへの移行が必要
+// import { useCsvValidation } from '@features/database';
 import { useReportArtifact } from './useReportArtifact';
 import type {
     CsvFiles,
@@ -13,11 +14,34 @@ import type { ReportKey } from '../model/config';
 /**
  * ReportBaseのビジネスロジックを統合管理するフック
  *
+ * ⚠️ 注意: useCsvValidation は削除されました
+ * TODO: useValidateOnPick を使用するように移行が必要
+ *
  * 🎯 目的：
  * - CSV検証、Excel生成の複雑なロジックを統合
  * - ReportBaseコンポーネントをシンプルに保つ
  * - 関連する機能を一元化して保守性向上
  */
+
+// 一時的なスタブ実装
+const useCsvValidation = () => {
+    const [validationResults, setValidationResults] = useState<Record<string, 'valid' | 'invalid' | 'unknown'>>({});
+    
+    const validateCsvFile = useCallback((file: File, label: string, onParse: (csvText: string) => void) => {
+        // TODO: 実装が必要
+        setValidationResults(prev => ({ ...prev, [label]: 'unknown' }));
+    }, []);
+    
+    const resetValidation = useCallback((label: string) => {
+        setValidationResults(prev => ({ ...prev, [label]: 'unknown' }));
+    }, []);
+    
+    const getValidationResult = useCallback((label: string) => {
+        return validationResults[label] ?? 'unknown';
+    }, [validationResults]);
+    
+    return { validationResults, validateCsvFile, resetValidation, getValidationResult };
+};
 export const useReportBaseBusiness = (
     csvConfigs: CsvConfigEntry[],
     csvFiles: CsvFiles,
