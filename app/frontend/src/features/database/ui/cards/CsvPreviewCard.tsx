@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Card, Table, Empty } from 'antd';
-import type { UploadCsvType } from '../../domain/config/uploadCsvConfig';
+import type { UploadCsvType, UploadCsvDefinition } from '../../domain/config/uploadCsvConfig';
 import { UPLOAD_CSV_DEFINITIONS } from '../../domain/config/uploadCsvConfig';
 
 // 色マップを定義（CSVタイプごとに色を分ける）
@@ -50,36 +50,46 @@ export const CsvPreviewCard: React.FC<Props> = ({
 
     return (
         <Card
-            title={
-                <span>
-                    {UPLOAD_CSV_DEFINITIONS[type].label}
-                    {!UPLOAD_CSV_DEFINITIONS[type].required && (
-                        <span
-                            style={{
-                                color: '#1890ff',
-                                marginLeft: 8,
-                                fontSize: 13,
-                            }}
-                        >
-                            任意
+                    title={
+                        <span>
+                            {/* defensive: definitions may be missing in dev/demo setups */}
+                            {(() => {
+                                const def = (UPLOAD_CSV_DEFINITIONS as Record<string, UploadCsvDefinition>)[type] as UploadCsvDefinition | undefined;
+                                const label = def?.label ?? String(type);
+                                const isOptional = def?.required === false;
+                                return (
+                                    <>
+                                        {label}
+                                        {isOptional && (
+                                            <span
+                                                style={{
+                                                    color: '#1890ff',
+                                                    marginLeft: 8,
+                                                    fontSize: 13,
+                                                }}
+                                            >
+                                                任意
+                                            </span>
+                                        )}
+                                    </>
+                                );
+                            })()}
+                            プレビュー
+                            {validationResult === 'valid' ? (
+                                <span style={{ color: 'green', marginLeft: 12 }}>
+                                    ✅ 有効
+                                </span>
+                            ) : validationResult === 'invalid' ? (
+                                <span style={{ color: 'red', marginLeft: 12 }}>
+                                    ❌ 無効
+                                </span>
+                            ) : (
+                                <span style={{ color: 'gray', marginLeft: 12 }}>
+                                    未判定
+                                </span>
+                            )}
                         </span>
-                    )}
-                    プレビュー
-                    {validationResult === 'valid' ? (
-                        <span style={{ color: 'green', marginLeft: 12 }}>
-                            ✅ 有効
-                        </span>
-                    ) : validationResult === 'invalid' ? (
-                        <span style={{ color: 'red', marginLeft: 12 }}>
-                            ❌ 無効
-                        </span>
-                    ) : (
-                        <span style={{ color: 'gray', marginLeft: 12 }}>
-                            未判定
-                        </span>
-                    )}
-                </span>
-            }
+                    }
             size='small'
             headStyle={{ backgroundColor }}
             bodyStyle={{

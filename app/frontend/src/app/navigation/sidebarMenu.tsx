@@ -159,6 +159,13 @@ export const SIDEBAR_MENU = [
                 ),
             },
             {
+                key: ROUTER_PATHS.DATASET_IMPORT,
+                icon: <CloudUploadOutlined />,
+                label: (
+                    <Link to={ROUTER_PATHS.DATASET_IMPORT}>データセットインポート</Link>
+                ),
+            },
+            {
                 key: ROUTER_PATHS.RECORD_LIST,
                 icon: <CloudUploadOutlined />,
                 label: <Link to={ROUTER_PATHS.RECORD_LIST}>レコード一覧</Link>,
