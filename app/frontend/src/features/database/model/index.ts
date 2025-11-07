@@ -1,4 +1,10 @@
-// データベース関連のhooks
+// データベース関連のModel（新MVVM構造）
+export * from './types';
+export * from './constants';
+export * from './sampleCsvModel';
+export * from './dataset';
+
+// 旧Hooks（互換性のため残す - UploadPage.tsx が使用中）
 export { useCsvUploadArea } from './useCsvUploadArea';
 export { useCsvUploadHandler } from './useCsvUploadHandler';
 export { useCsvValidation } from '../domain/services/csvValidationService';
