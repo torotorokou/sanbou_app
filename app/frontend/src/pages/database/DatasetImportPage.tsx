@@ -13,11 +13,11 @@ import styles from './DatasetImportPage.module.css';
 import {
   UploadInstructions,
   SimpleUploadPanel,
-} from '@features/database/ui';
-import { useDatabaseUploadVM } from '@features/database/hooks/useDatabaseUploadVM';
-import { csvTypeColors } from '@features/database/model/sampleCsvModel';
-import { readableTextColor } from '@features/database/model/constants';
-import { DATASETS, type DatasetKey } from '@features/database/model/dataset';
+  useDatasetImportVM,
+  csvTypeColors,
+} from '@features/database/dataset-import';
+import { readableTextColor } from '@features/database/shared/ui/colors';
+import { DATASETS, type DatasetKey, collectTypesForDataset } from '@features/database/shared/dataset/dataset';
 
 const { Text } = Typography;
 
@@ -32,6 +32,7 @@ const DatasetImportPage: React.FC = () => {
   const [datasetKey, setDatasetKey] = useState<DatasetKey>('shogun_flash');
   
   // ===== ViewModel（状態管理・ロジック） =====
+  const activeTypes = collectTypesForDataset(datasetKey);
   const {
     panelFiles,
     canUpload,
@@ -39,7 +40,7 @@ const DatasetImportPage: React.FC = () => {
     onPickFile,
     onRemoveFile,
     doUpload,
-  } = useDatabaseUploadVM({ datasetKey });
+  } = useDatasetImportVM({ activeTypes });
 
   // ===== 右プレビューの高さ算出（レイアウト責務） =====
   const rowRef = useRef<HTMLDivElement | null>(null);

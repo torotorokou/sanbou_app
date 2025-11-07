@@ -9,8 +9,9 @@ import {
     UploadInstructions,
     useCsvUploadHandler,
     useCsvUploadArea,
+    UPLOAD_CSV_DEFINITIONS,
+    UPLOAD_CSV_TYPES,
 } from '@features/database';
-import { UPLOAD_CSV_DEFINITIONS, UPLOAD_CSV_TYPES } from '@features/database/model';
 
 const { Text } = Typography;
 // Layout constants
