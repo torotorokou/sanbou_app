@@ -1,0 +1,38 @@
+.pageContainer {
+  height: calc(100dvh - (var(--page-padding, 0px) * 2));
+  min-height: 600px;
+  overflow: hidden;
+}
+
+.leftCol,
+.rightCol {
+  padding: 16px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.leftCol {
+  gap: 12px;
+}
+
+.rightCol {
+  gap: 16px;
+}
+
+.uploadSection {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.uploadButton {
+  margin-top: 24px;
+  width: 100%;
+}
+
+.hint {
+  margin-top: 8px;
+}
