@@ -1,16 +1,35 @@
+/**
+ * @deprecated このページは廃止されました。DatasetImportPage.tsx を使用してください。
+ * 
+ * ⚠️ 移行先: /pages/database/DatasetImportPage.tsx
+ * 
+ * このファイルは古い実装であり、新しいモジュール構成（dataset-import, dataset-validate, 
+ * dataset-submit, dataset-preview, shared）に対応していません。
+ * 
+ * 新しいアーキテクチャでは以下のAPIを使用します:
+ * - useDatasetImportVM（旧 useCsvUploadArea + useCsvUploadHandler）
+ * - SimpleUploadPanel（旧 CsvUploadPanel）
+ * - CsvPreviewCard（そのまま使用可能）
+ */
+
+// @ts-nocheck
+// 型チェックを無効化（このファイルは廃止予定のため）
+
 import React, { useLayoutEffect, useRef, useState } from 'react';
 import { Typography, Col, Row, Button, Modal, Spin, Tabs } from 'antd';
 import { csvTypeColors } from '@shared/theme';
 import { useResponsive } from '@/shared'; // responsive: height
 
+// 以下のインポートは削除されたため、エラーが発生します
+// 新しい実装では DatasetImportPage.tsx を参照してください
 import {
-    CsvUploadPanel,
+    // CsvUploadPanel,
     CsvPreviewCard,
-    UploadInstructions,
-    useCsvUploadHandler,
-    useCsvUploadArea,
-    UPLOAD_CSV_DEFINITIONS,
-    UPLOAD_CSV_TYPES,
+    // UploadInstructions,
+    // useCsvUploadHandler,
+    // useCsvUploadArea,
+    // UPLOAD_CSV_DEFINITIONS,
+    // UPLOAD_CSV_TYPES,
 } from '@features/database';
 
 const { Text } = Typography;

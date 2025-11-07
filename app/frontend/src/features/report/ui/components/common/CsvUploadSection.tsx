@@ -1,11 +1,13 @@
 import React from 'react';
-import { Typography } from 'antd';
-import { CsvUploadPanelComponent as CsvUploadPanel } from '@features/database/ui';
+import { Typography, Alert } from 'antd';
 import { useResponsive } from '@/shared';
 import type { CsvUploadSectionProps } from './types';
 
 /**
  * CSVアップロードセクション - useResponsive(flags)統合版
+ * 
+ * ⚠️ 注意: CsvUploadPanelComponent は削除されました
+ * TODO: 新しい SimpleUploadPanel を使用するように移行が必要
  * 
  * 🔄 リファクタリング内容：
  * - useResponsive(flags)のpickByDevice方式に統一
@@ -45,9 +47,19 @@ const CsvUploadSection: React.FC<CsvUploadSectionProps> = ({
                 📂 データセット（CSV）の準備
             </Typography.Title>
             <div style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
-                <CsvUploadPanel
-                    upload={{ files: uploadFiles, makeUploadProps }}
+                <Alert
+                    message="移行が必要です"
+                    description="CsvUploadPanelComponent は削除されました。SimpleUploadPanel と useDatasetImportVM を使用するように移行してください。"
+                    type="warning"
+                    showIcon
                 />
+                {/* TODO: SimpleUploadPanel を使用するように実装
+                <SimpleUploadPanel
+                    items={panelFiles}
+                    onPickFile={onPickFile}
+                    onRemoveFile={onRemoveFile}
+                />
+                */}
             </div>
         </div>
     );

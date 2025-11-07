@@ -1,5 +1,15 @@
 import type { UploadProps } from 'antd';
-import type { CsvFileType as CsvUploadFileType } from '@features/database/ui';
+
+// CsvFileType 型定義（旧 features/database から移行）
+// Note: features/database からこの型は削除されました
+export interface CsvUploadFileType {
+  label: string;
+  file: File | null;
+  onChange: (file: File | null) => void;
+  validationResult?: 'ok' | 'ng' | 'unknown';
+  required: boolean;
+  onRemove?: () => void;
+}
 
 // UploadFileConfigと互換性のある型定義
 export interface CsvFileType {
