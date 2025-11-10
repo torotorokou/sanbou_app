@@ -41,7 +41,8 @@ export { UPLOAD_CSV_DEFINITIONS, UPLOAD_CSV_TYPES, csvTypeColors } from './datas
 
 // 以下の旧実装は削除されました - 新しい実装を使用してください
 // export { default as CsvUploadPanel } from './ui/cards/CsvUploadPanel'; // → SimpleUploadPanel を使用
-// export { default as CsvUploadPanelComponent } from './ui/components/csv-upload/CsvUploadPanel'; // → SimpleUploadPanel を使用
+// 互換アダプタを提供（段階的移行用）
+export { CsvUploadPanelComponent } from '@/features/csv-uploader';
 // export { useCsvUploadArea } from './model/useCsvUploadArea'; // → useDatasetImportVM を使用
 // export { useCsvUploadHandler } from './model/useCsvUploadHandler'; // → useDatasetImportVM または useSubmitVM を使用
 // export { useCsvValidation } from './domain/services/csvValidationService'; // → useValidateOnPick を使用
