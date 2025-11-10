@@ -5,11 +5,12 @@
  * Alert で未完了・エラーを強調
  */
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Collapse, List, Tag, Typography } from 'antd';
 import { InfoCircleOutlined } from '@ant-design/icons';
 import type { FileState } from '../model/types';
 import { DATASET_RULES } from '@/features/database/dataset-validate/model/rules';
+import { notifyError } from '@features/notification';
 
 const { Text } = Typography;
 
@@ -31,6 +32,15 @@ export const UploadGuide: React.FC<UploadGuideProps> = ({ datasetKey, files }) =
   const missing = files.filter((f) => f.required && f.status !== 'valid');
   // エラー（invalid）
   const invalid = files.filter((f) => f.status === 'invalid');
+
+  // 検証エラーがある場合、右上に通知を表示
+  useEffect(() => {
+    if (invalid.length > 0) {
+      const errorFiles = invalid.map((f) => f.label).join('、');
+      // プロジェクト共通の通知機構に差し替え
+      notifyError('検証エラー', `${errorFiles} に問題があります`);
+    }
+  }, [invalid.length]); // invalid.length が変わった場合のみ再実行
 
   return (
     <div style={{ marginBottom: 16 }}>
@@ -80,30 +90,7 @@ export const UploadGuide: React.FC<UploadGuideProps> = ({ datasetKey, files }) =
           }}
           expandIconPosition="start"
         >
-          <Collapse.Panel
-            header={
-              <span style={{ fontWeight: 'bold', color: '#ff4d4f' }}>
-                ❌ 検証エラーがあります
-              </span>
-            }
-            key="errors"
-          >
-            <List
-              size="small"
-              dataSource={invalid}
-              renderItem={(it) => (
-                <List.Item style={{ paddingLeft: 0 }}>
-                  <Tag color="red">{it.label}</Tag>
-                  {it.missingHeaders && it.missingHeaders.length > 0 && (
-                    <>
-                      <Text type="secondary"> / 欠落ヘッダ: </Text>
-                      <code style={{ fontSize: 12 }}>{it.missingHeaders.join(', ')}</code>
-                    </>
-                  )}
-                </List.Item>
-              )}
-            />
-          </Collapse.Panel>
+
         </Collapse>
       )}
 

@@ -32,7 +32,6 @@ export { useDatasetImportVM as useDatabaseVM } from './dataset-import';
 export { useDatasetImportVM as useDatabaseUploadVM } from './dataset-import';
 export { CsvPreviewCard } from './dataset-preview';
 export { SimpleUploadPanel } from './dataset-import';
-export { UploadInstructions } from './dataset-import';
 export { ValidationBadge } from './dataset-import';
 /**
  * @deprecated config レジストリに移行済み。config/datasets.ts を使用してください。

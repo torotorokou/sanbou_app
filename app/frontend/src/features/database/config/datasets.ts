@@ -33,7 +33,7 @@ export const DATASETS: Readonly<Record<string, DatasetConfig>> = {
         parse: { encoding: 'sjis', delimiter: ',' },
         preview: { columnWidth: 120, stickyHeader: true },
         validate: {
-          requiredHeaders: ['伝票日付', '荷主', '品名'],
+          requiredHeaders: ['伝票日付', '売上日付', '支払日付', '業者CD', '業者名'],
           rowSchemaName: 'row_shogun_receive_v1',
         },
       },
@@ -47,7 +47,7 @@ export const DATASETS: Readonly<Record<string, DatasetConfig>> = {
         parse: { encoding: 'sjis', delimiter: ',' },
         preview: { columnWidth: 120, stickyHeader: true },
         validate: {
-          requiredHeaders: ['伝票日付', '荷主', '品名'],
+          requiredHeaders: ['伝票日付', '出荷番号', '取引先名', '業者CD', '業者名'],
           rowSchemaName: 'row_shogun_shipment_v1',
         },
       },
@@ -61,7 +61,7 @@ export const DATASETS: Readonly<Record<string, DatasetConfig>> = {
         parse: { encoding: 'sjis', delimiter: ',' },
         preview: { columnWidth: 120, stickyHeader: true },
         validate: {
-          requiredHeaders: ['伝票日付', '荷主', '品名'],
+          requiredHeaders: ['伝票日付', '取引先名', '品名', '正味重量', '数量'],
           rowSchemaName: 'row_shogun_yard_v1',
         },
       },
@@ -91,7 +91,7 @@ export const DATASETS: Readonly<Record<string, DatasetConfig>> = {
         parse: { encoding: 'sjis', delimiter: ',' },
         preview: { columnWidth: 120, stickyHeader: true },
         validate: {
-          requiredHeaders: ['伝票日付', '荷主', '品名'],
+          requiredHeaders: ['伝票日付', '売上日付', '支払日付', '業者CD', '業者名'],
           rowSchemaName: 'row_shogun_receive_v1',
         },
       },
@@ -105,7 +105,7 @@ export const DATASETS: Readonly<Record<string, DatasetConfig>> = {
         parse: { encoding: 'sjis', delimiter: ',' },
         preview: { columnWidth: 120, stickyHeader: true },
         validate: {
-          requiredHeaders: ['伝票日付', '荷主', '品名'],
+          requiredHeaders: ['伝票日付', '出荷番号', '取引先名', '業者CD', '業者名'],
           rowSchemaName: 'row_shogun_shipment_v1',
         },
       },
@@ -119,7 +119,7 @@ export const DATASETS: Readonly<Record<string, DatasetConfig>> = {
         parse: { encoding: 'sjis', delimiter: ',' },
         preview: { columnWidth: 120, stickyHeader: true },
         validate: {
-          requiredHeaders: ['伝票日付', '荷主', '品名'],
+          requiredHeaders: ['伝票日付', '取引先名', '品名', '正味重量', '数量'],
           rowSchemaName: 'row_shogun_yard_v1',
         },
       },
@@ -149,7 +149,7 @@ export const DATASETS: Readonly<Record<string, DatasetConfig>> = {
         parse: { encoding: 'sjis', delimiter: ',' },
         preview: { columnWidth: 120, stickyHeader: true },
         validate: {
-          requiredHeaders: ['交付日', '排出事業者', '廃棄物種類'],
+          requiredHeaders: ['マニフェスト番号', '処分方法'],
           rowSchemaName: 'row_manifest_primary_v1',
         },
       },
@@ -163,10 +163,24 @@ export const DATASETS: Readonly<Record<string, DatasetConfig>> = {
         parse: { encoding: 'sjis', delimiter: ',' },
         preview: { columnWidth: 120, stickyHeader: true },
         validate: {
-          requiredHeaders: ['交付日', '排出事業者', '廃棄物種類'],
+          requiredHeaders: ['マニフェスト番号', '処分方法'],
           rowSchemaName: 'row_manifest_secondary_v1',
         },
       },
     ],
   },
 } as const;
+
+/**
+ * typeKey から必須ヘッダーを取得するヘルパー関数
+ * adapters などから使用して、ヘッダー定義を一元化する
+ */
+export function getRequiredHeaders(typeKey: string): string[] | undefined {
+  for (const dataset of Object.values(DATASETS)) {
+    const csv = dataset.csv.find((c) => c.typeKey === typeKey);
+    if (csv) {
+      return csv.validate.requiredHeaders;
+    }
+  }
+  return undefined;
+}

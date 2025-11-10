@@ -13,7 +13,10 @@ export interface ValidationBadgeProps {
 }
 
 export const ValidationBadge: React.FC<ValidationBadgeProps> = ({ status, size = 'default' }) => {
-  const style = size === 'small' ? { fontSize: 11, padding: '0 4px', lineHeight: '18px' } : undefined;
+  // バッジを見やすくするためにサイズ別のスタイルを明示的に指定
+  const smallStyle = { fontSize: 13, padding: '0 6px', lineHeight: '20px' };
+  const defaultStyle = { fontSize: 14, padding: '0 8px', lineHeight: '22px' };
+  const style = size === 'small' ? smallStyle : defaultStyle;
 
   if (status === 'valid') {
     return <Tag color="green" style={style}>OK</Tag>;
