@@ -63,7 +63,6 @@ const CsvUploadSection: React.FC<CsvUploadSectionProps> = ({
             </Typography.Title>
             <div style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
                 <CsvUploadPanelComponent
-                    datasetKey="report-csv"
                     activeTypes={activeTypes}
                     accept=".csv"
                     maxSizeMB={20}
