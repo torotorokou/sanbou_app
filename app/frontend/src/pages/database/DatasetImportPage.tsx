@@ -17,13 +17,16 @@ import {
 import { UploadGuide, toFileStates } from '@features/database/dataset-uploadguide';
 import { DatasetPreviewScreen } from '@features/database/dataset-preview';
 import type { PreviewSource, CsvPreviewData } from '@features/database/dataset-preview';
-import { DATASETS, type DatasetKey, collectTypesForDataset } from '@features/database/shared/dataset/dataset';
+import { getAllDatasets, collectTypesForDataset, type DatasetKey } from '@features/database/config';
 
 const { Text } = Typography;
 
 const DatasetImportPage: React.FC = () => {
   // ===== データセット選択 =====
   const [datasetKey, setDatasetKey] = useState<DatasetKey>('shogun_flash');
+  
+  // データセット一覧
+  const datasets = getAllDatasets();
   
   // ===== ViewModel（状態管理・ロジック） =====
   const activeTypes = collectTypesForDataset(datasetKey);
@@ -73,7 +76,7 @@ const DatasetImportPage: React.FC = () => {
               <Select<DatasetKey>
                 value={datasetKey}
                 onChange={setDatasetKey}
-                options={DATASETS.map(d => ({ value: d.key, label: d.label }))}
+                options={datasets.map(d => ({ value: d.key, label: d.label }))}
                 style={{ minWidth: 260 }}
               />
               <Badge
