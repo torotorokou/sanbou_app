@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import type { UploadProps } from 'antd/es/upload';
 // useCsvValidation は削除されました - 新しい検証ロジックへの移行が必要
 // import { useCsvValidation } from '@features/database';
-import { useReportArtifact } from '@features/report-preview/model/useReportArtifact';
+import { useReportArtifact } from '@features/report/report-preview/model/useReportArtifact';
 import type {
     CsvFiles,
     CsvConfigEntry,

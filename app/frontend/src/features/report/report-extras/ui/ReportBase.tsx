@@ -1,15 +1,15 @@
 import React, { Suspense, useEffect, useState } from 'react';
-import ReportManagePageLayout from '@features/report-manage/ui/ReportManagePageLayout';
-import ReportStepperModal from '@features/report-select/ui/ReportStepperModal';
+import ReportManagePageLayout from '@features/report/report-manage/ui/ReportManagePageLayout';
+import ReportStepperModal from '@features/report/report-select/ui/ReportStepperModal';
 import BlockUnitPriceInteractiveModal, { type InitialApiResponse, type SessionData } from './BlockUnitPriceInteractiveModal';
 import type { TransportCandidateRow } from '../types/interactive.types';
 import { normalizeRow, isRecord } from '../lib/transportNormalization';
 import { message } from 'antd';
-const PDFViewer = React.lazy(() => import('@features/report-viewer/ui/PDFViewer'));
+const PDFViewer = React.lazy(() => import('@features/report/report-viewer/ui/PDFViewer'));
 import { pdfPreviewMap, modalStepsMap, isInteractiveReport, getApiEndpoint } from '@features/report/model/config';
 import { useReportBaseBusiness } from '../model/useReportBaseBusiness';
 import type { ReportBaseProps } from '../types/report.types';
-import type { ReportArtifactResponse } from '@features/report-preview/model/useReportArtifact';
+import type { ReportArtifactResponse } from '@features/report/report-preview/model/useReportArtifact';
 import { coreApi } from '@shared/infrastructure/http/coreApi';
 
 // normalizeRow is now provided by ./interactive/transportNormalization
