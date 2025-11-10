@@ -78,21 +78,6 @@ export const UploadGuide: React.FC<UploadGuideProps> = ({ datasetKey, files }) =
         </Collapse>
       )}
 
-      {/* 検証エラー - 折り畳み式 */}
-      {invalid.length > 0 && (
-        <Collapse
-          defaultActiveKey={[]}
-          style={{
-            marginBottom: 8,
-            backgroundColor: '#fff2f0',
-            border: '1px solid #ffccc7',
-            borderRadius: 6,
-          }}
-          expandIconPosition="start"
-        >
-
-        </Collapse>
-      )}
 
       {/* 手順・必要ファイル・注意事項（Collapse） */}
       <Collapse

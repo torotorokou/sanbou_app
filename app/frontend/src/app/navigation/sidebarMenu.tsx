@@ -155,7 +155,7 @@ export const SIDEBAR_MENU = [
                 key: ROUTER_PATHS.DATASET_IMPORT,
                 icon: <CloudUploadOutlined />,
                 label: (
-                    <Link to={ROUTER_PATHS.DATASET_IMPORT}>データセットインポート</Link>
+                    <Link to={ROUTER_PATHS.DATASET_IMPORT}>CSVインポート</Link>
                 ),
             },
             {
