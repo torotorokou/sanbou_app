@@ -3,6 +3,7 @@
  */
 
 import type { ValidationStatus, TypeKey } from '../../shared/types/common';
+import type { CsvPreviewData } from '../../dataset-preview/model/types';
 
 /**
  * 左パネルに表示するファイルアイテム
@@ -13,6 +14,7 @@ export interface PanelFileItem {
   required: boolean;
   file: File | null;
   status: ValidationStatus;
+  preview: CsvPreviewData | null;
 }
 
 /**
