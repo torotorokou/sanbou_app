@@ -24,17 +24,41 @@ export function useDatasetImportVM(opts?: DatasetImportVMOptions) {
   const [previews, setPreviews] = useState<Record<string, CsvPreviewData | null>>({});
 
   useEffect(() => {
-    const initF: Record<string, File | null> = {};
-    const initS: Record<string, ValidationStatus> = {};
-    const initP: Record<string, CsvPreviewData | null> = {};
-    activeTypes.forEach(t => {
-      initF[t] = null;
-      initS[t] = 'unknown';
-      initP[t] = null;
+    setFiles(prev => {
+      const newFiles = { ...prev };
+      let changed = false;
+      activeTypes.forEach(t => {
+        if (!(t in newFiles)) {
+          newFiles[t] = null;
+          changed = true;
+        }
+      });
+      return changed ? newFiles : prev;
     });
-    setFiles(prev => ({ ...initF, ...prev }));
-    setStatus(prev => ({ ...initS, ...prev }));
-    setPreviews(prev => ({ ...initP, ...prev }));
+    
+    setStatus(prev => {
+      const newStatus = { ...prev };
+      let changed = false;
+      activeTypes.forEach(t => {
+        if (!(t in newStatus)) {
+          newStatus[t] = 'unknown';
+          changed = true;
+        }
+      });
+      return changed ? newStatus : prev;
+    });
+    
+    setPreviews(prev => {
+      const newPreviews = { ...prev };
+      let changed = false;
+      activeTypes.forEach(t => {
+        if (!(t in newPreviews)) {
+          newPreviews[t] = null;
+          changed = true;
+        }
+      });
+      return changed ? newPreviews : prev;
+    });
   }, [activeTypes]);
 
   // dataset を opts から取得（既存のアプリでは datasetKey を渡す必要がある）
