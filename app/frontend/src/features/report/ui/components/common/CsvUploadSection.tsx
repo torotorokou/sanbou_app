@@ -1,22 +1,23 @@
 import React from 'react';
-import { Typography, Alert } from 'antd';
+import { Typography, message } from 'antd';
 import { useResponsive } from '@/shared';
+import { CsvUploadPanelComponent } from '@/features/csv-uploader';
 import type { CsvUploadSectionProps } from './types';
 
 /**
- * CSVアップロードセクション - useResponsive(flags)統合版
- * 
- * ⚠️ 注意: CsvUploadPanelComponent は削除されました
- * TODO: 新しい SimpleUploadPanel を使用するように移行が必要
+ * CSVアップロードセクション - 互換アダプタ統合版
  * 
  * 🔄 リファクタリング内容：
+ * - CsvUploadPanelComponent（互換アダプタ）を使用
  * - useResponsive(flags)のpickByDevice方式に統一
  * - 4段階レスポンシブ（Mobile/Tablet/Laptop/Desktop）
  * - データ準備に関する機能を集約
+ * 
+ * 📝 TODO: 将来的に SimpleUploadPanel + useDatasetImportVM への直接呼び出しに移行
  */
 const CsvUploadSection: React.FC<CsvUploadSectionProps> = ({
     uploadFiles,
-    makeUploadProps
+    // makeUploadProps は現在未使用（互換アダプタが内部で処理）
 }) => {
     // responsive: flagsベースの段階スイッチ
     const { flags } = useResponsive();
@@ -34,6 +35,20 @@ const CsvUploadSection: React.FC<CsvUploadSectionProps> = ({
     const marginBottom = pickByDevice(4, 6, 8, 8);
     const fontSize = pickByDevice('14px', '15px', '16px', '16px');
 
+    // 成功/失敗ハンドラ
+    const handleSuccess = (payload: unknown) => {
+        console.log('CSV upload success:', payload);
+        message.success('CSVファイルのアップロードに成功しました');
+    };
+
+    const handleError = (error: unknown) => {
+        console.error('CSV upload error:', error);
+        message.error('CSVファイルのアップロードに失敗しました');
+    };
+
+    // activeTypes を uploadFiles から抽出
+    const activeTypes = uploadFiles.map(f => f.label);
+
     return (
         <div style={{ display: 'flex', flexDirection: 'column', minHeight: 0 }}>
             <Typography.Title
@@ -47,19 +62,14 @@ const CsvUploadSection: React.FC<CsvUploadSectionProps> = ({
                 📂 データセット（CSV）の準備
             </Typography.Title>
             <div style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
-                <Alert
-                    message="移行が必要です"
-                    description="CsvUploadPanelComponent は削除されました。SimpleUploadPanel と useDatasetImportVM を使用するように移行してください。"
-                    type="warning"
-                    showIcon
+                <CsvUploadPanelComponent
+                    datasetKey="report-csv"
+                    activeTypes={activeTypes}
+                    accept=".csv"
+                    maxSizeMB={20}
+                    onSuccess={handleSuccess}
+                    onError={handleError}
                 />
-                {/* TODO: SimpleUploadPanel を使用するように実装
-                <SimpleUploadPanel
-                    items={panelFiles}
-                    onPickFile={onPickFile}
-                    onRemoveFile={onRemoveFile}
-                />
-                */}
             </div>
         </div>
     );
