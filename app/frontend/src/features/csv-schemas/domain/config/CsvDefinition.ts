@@ -12,7 +12,7 @@ import {
     parseShipmentCSV,
     parseReceiveCSV,
     parseYardCSV,
-} from '@features/csv/domain/services/csvParserService';
+} from '@/features/csv-schemas/domain/services/csvParserService';
 
 export const CSV_DEFINITIONS: Record<CsvType, CsvDefinition> = {
     shipment: {

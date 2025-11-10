@@ -1,15 +1,13 @@
 /**
- * DragDropCsv - ドラッグ&ドロップ対応CSVファイル選択コンポーネント
+ * FileSelectButton - ファイル選択ボタンCSVファイル選択コンポーネント
  * 
- * Upload.Dragger を使用し、beforeUpload で既存の onPickFile に合流させる。
- * 自動アップロードは無効化（return false + customRequest 空実装）。
+ * Upload ボタンを使用し、beforeUpload で既存の onPickFile に合流させる。
+ * 自動アップロードは無効化（return false）。
  */
 
 import React from 'react';
-import { Upload, Typography } from 'antd';
-import { InboxOutlined } from '@ant-design/icons';
-
-const { Dragger } = Upload;
+import { Upload, Button } from 'antd';
+import { UploadOutlined } from '@ant-design/icons';
 
 export interface DragDropCsvProps {
   typeKey: string;
@@ -26,35 +24,29 @@ export const DragDropCsv: React.FC<DragDropCsvProps> = ({
   compact = false,
 }) => {
   return (
-    <Dragger
-      disabled={disabled}
-      accept=".csv"
-      multiple={false}
-      showUploadList={false}
-      beforeUpload={(file) => {
-        onPickFile(typeKey, file as File);
-        return false; // AntDの自動アップロードを無効化
-      }}
-      customRequest={() => {
-        /* no-op: 実際のアップロードは行わない */
-      }}
-      onDrop={(e) => {
-        e.preventDefault();
-        e.stopPropagation();
-      }}
-      style={{
-        borderRadius: compact ? 4 : 8,
-        padding: compact ? '8px 8px' : '16px 12px',
-        background: '#fafafa',
-        border: '1px dashed #d9d9d9',
-      }}
-    >
-      <p className="ant-upload-drag-icon" style={{ marginBottom: compact ? 4 : 8 }}>
-        <InboxOutlined style={{ fontSize: compact ? 24 : 32, color: '#1890ff' }} />
-      </p>
-      <Typography.Text type="secondary" style={{ fontSize: compact ? 11 : 13 }}>
-        ここに <strong>CSV</strong> をドラッグ&ドロップ / クリックして選択
-      </Typography.Text>
-    </Dragger>
+    <div style={{ display: 'flex', justifyContent: 'center', padding: compact ? '8px 0' : '12px 0' }}>
+      <Upload
+        disabled={disabled}
+        accept=".csv"
+        multiple={false}
+        showUploadList={false}
+        beforeUpload={(file) => {
+          onPickFile(typeKey, file as File);
+          return false; // AntDの自動アップロードを無効化
+        }}
+      >
+        <Button
+          icon={<UploadOutlined />}
+          disabled={disabled}
+          size={compact ? 'small' : 'middle'}
+          style={{
+            height: compact ? 32 : 40,
+            minWidth: compact ? 150 : 180,
+          }}
+        >
+          CSVファイルを選択
+        </Button>
+      </Upload>
+    </div>
   );
 };
