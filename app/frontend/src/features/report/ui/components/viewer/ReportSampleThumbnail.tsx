@@ -102,17 +102,19 @@ const ReportSampleThumbnail: React.FC<Props> = ({
                 centered
                 width={displayWidth}
                 style={{ top: 32, padding: 0 }}
-                bodyStyle={{
-                    padding: 0,
-                    margin: 0,
-                    background: '#fff',
-                    height: displayHeight,
-                    overflow: 'hidden',
-                    position: 'relative',
-                    boxShadow: '0 4px 24px rgba(0,0,0,0.10)',
+                styles={{
+                    body: {
+                        padding: 0,
+                        margin: 0,
+                        background: '#fff',
+                        height: displayHeight,
+                        overflow: 'hidden',
+                        position: 'relative',
+                        boxShadow: '0 4px 24px rgba(0,0,0,0.10)',
+                    }
                 }}
                 maskClosable
-                destroyOnClose
+                destroyOnHidden
             >
                 <div
                     style={{
