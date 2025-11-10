@@ -1,7 +1,7 @@
 // features/report/model/config/pages/factoryPageConfig.ts
 import React from "react";
 import { Spin } from 'antd';
-import { CSV_DEFINITIONS } from "@features/csv/domain/config/CsvDefinition";
+import { CSV_DEFINITIONS } from "@features/csv-schemas/domain/config/CsvDefinition";
 import type {
   CsvConfigGroup,
   ModalStepConfig,

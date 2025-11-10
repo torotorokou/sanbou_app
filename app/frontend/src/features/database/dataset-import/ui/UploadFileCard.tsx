@@ -59,7 +59,7 @@ export const UploadFileCard: React.FC<UploadFileCardProps> = ({
         <ValidationBadge status={item.status} size={isCompact ? 'small' : 'default'} />
       </div>
 
-      {/* ドラッグ&ドロップエリア */}
+      {/* ファイル選択ボタン */}
       <DragDropCsv
         typeKey={item.typeKey}
         onPickFile={onPickFile}

@@ -1,7 +1,7 @@
 // features/report/model/config/pages/managePageConfig.ts
 import React from "react";
 import { Spin } from 'antd';
-import { CSV_DEFINITIONS } from "@features/csv/domain/config/CsvDefinition";
+import { CSV_DEFINITIONS } from "@features/csv-schemas/domain/config/CsvDefinition";
 import type { CsvConfigGroup, ModalStepConfig, PeriodType } from "@features/report/model/config/shared/types";
 import { createReportConfig, SIMPLE_CREATE_AND_DONE_STEPS } from "@features/report/model/config/shared/common";
 
