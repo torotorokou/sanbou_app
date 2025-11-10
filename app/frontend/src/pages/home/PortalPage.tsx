@@ -373,11 +373,11 @@ const portalMenus: PortalCardProps[] = [
   },
   {
     title: 'データベース',
-    description: 'CSV アップロードや保存データの閲覧・管理。',
+    description: 'データセットのインポートや保存データの閲覧・管理。',
     detail:
-      'CSVインポート、レコード検索・編集・エクスポート、インポート履歴のトラッキングを行えます。',
+      'データセットインポート、レコード検索・編集・エクスポート、インポート履歴のトラッキングを行えます。',
     icon: <CloudUploadOutlined />,
-    link: ROUTER_PATHS.UPLOAD_PAGE,
+    link: ROUTER_PATHS.DATASET_IMPORT,
     // 同一系統でも差し色としてダーク変種を交互に使用
     color: PALETTE.BLUE_DARK,
   },
