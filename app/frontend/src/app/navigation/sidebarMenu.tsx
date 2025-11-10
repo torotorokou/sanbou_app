@@ -152,13 +152,6 @@ export const SIDEBAR_MENU = [
         label: 'データベース',
         children: [
             {
-                key: ROUTER_PATHS.UPLOAD_PAGE,
-                icon: <CloudUploadOutlined />,
-                label: (
-                    <Link to={ROUTER_PATHS.UPLOAD_PAGE}>CSVアップロード</Link>
-                ),
-            },
-            {
                 key: ROUTER_PATHS.DATASET_IMPORT,
                 icon: <CloudUploadOutlined />,
                 label: (

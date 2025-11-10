@@ -34,7 +34,6 @@ export const ROUTER_PATHS = {
 
     // データベース系
     RECORD_LIST: '/database/records',
-    UPLOAD_PAGE: '/database/upload',
     DATASET_IMPORT: '/database/dataset-import',
     RECORD_MANAGER: '/database/record-manager',
 
