@@ -28,13 +28,22 @@ export const UploadFileCard: React.FC<UploadFileCardProps> = ({
 }) => {
   const isCompact = size === 'compact';
 
+  // ステータスに応じたカードの背景色・ボーダー色
+  const statusStyles = {
+    valid: { background: '#f6ffed', border: '1px solid #b7eb8f' },
+    invalid: { background: '#fff2f0', border: '1px solid #ffccc7' },
+    unknown: { background: '#fafafa', border: '1px solid #f0f0f0' },
+  } as const;
+  const currentStatus = item.status === 'valid' ? 'valid' : item.status === 'invalid' ? 'invalid' : 'unknown';
+  const cardStyle = statusStyles[currentStatus];
+
   return (
     <div
       style={{
         padding: isCompact ? 6 : 12,
-        border: '1px solid #f0f0f0',
         borderRadius: 6,
-        background: '#fafafa',
+        background: cardStyle.background,
+        border: cardStyle.border,
       }}
     >
       {/* ヘッダー: ラベル + バッジ */}
@@ -46,12 +55,12 @@ export const UploadFileCard: React.FC<UploadFileCardProps> = ({
           marginBottom: isCompact ? 6 : 8,
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-          <Text strong style={{ fontSize: isCompact ? 12 : 13 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <Text strong style={{ fontSize: isCompact ? 14 : 16 }}>
             {item.label}
           </Text>
           {item.required && (
-            <Text type="danger" style={{ fontSize: isCompact ? 11 : 12 }}>
+            <Text type="danger" style={{ fontSize: isCompact ? 13 : 14 }}>
               *
             </Text>
           )}
@@ -59,13 +68,15 @@ export const UploadFileCard: React.FC<UploadFileCardProps> = ({
         <ValidationBadge status={item.status} size={isCompact ? 'small' : 'default'} />
       </div>
 
-      {/* ファイル選択ボタン */}
-      <DragDropCsv
-        typeKey={item.typeKey}
-        onPickFile={onPickFile}
-        disabled={false}
-        compact={isCompact}
-      />
+      {/* ファイル選択ボタン（ファイルがアップロードされていない場合のみ表示） */}
+      {!item.file && (
+        <DragDropCsv
+          typeKey={item.typeKey}
+          onPickFile={onPickFile}
+          disabled={false}
+          compact={isCompact}
+        />
+      )}
 
       {/* ファイル情報 + 削除ボタン */}
       {item.file && (
