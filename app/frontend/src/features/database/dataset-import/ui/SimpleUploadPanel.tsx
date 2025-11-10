@@ -2,88 +2,63 @@
  * SimpleUploadPanel - シンプルなCSVアップロードパネル
  * 
  * PanelFileItemを受け取り、ファイル選択UIを提供する純UI部品
+ * 保守性向上のため UploadFileCard にカードロジックを分離
  */
 
 import React from 'react';
-import { Card, Typography, Upload, Button } from 'antd';
-import { UploadOutlined, DeleteOutlined } from '@ant-design/icons';
+import { Card } from 'antd';
 import type { PanelFileItem } from '../model/types';
-import { ValidationBadge } from './ValidationBadge';
+import { UploadFileCard } from './UploadFileCard';
 
 export interface SimpleUploadPanelProps {
   items: PanelFileItem[];
   onPickFile: (typeKey: string, file: File) => void;
   onRemoveFile: (typeKey: string) => void;
+  /** カードサイズ: 'compact' | 'normal'。既定は 'compact' */
+  size?: 'compact' | 'normal';
+  /** タイトルを表示するか（既定: false） */
+  showTitle?: boolean;
 }
 
 export const SimpleUploadPanel: React.FC<SimpleUploadPanelProps> = ({
   items,
   onPickFile,
   onRemoveFile,
+  size = 'compact',
+  showTitle = false,
 }) => {
+  const isCompact = size === 'compact';
+
   return (
     <Card
       size="small"
-      title={
-        <Typography.Title level={5} style={{ margin: 0 }}>
-          📂 CSVアップロード
-        </Typography.Title>
+      title={showTitle ? '📂 CSVアップロード' : undefined}
+      headStyle={
+        showTitle
+          ? {
+              padding: isCompact ? '4px 8px' : '8px 12px',
+              minHeight: isCompact ? 32 : 40,
+              fontSize: isCompact ? 13 : 14,
+            }
+          : undefined
       }
-      style={{ borderRadius: 12, width: '100%' }}
+      bodyStyle={{
+        padding: isCompact ? 8 : 12,
+      }}
+      style={{
+        borderRadius: isCompact ? 8 : 12,
+        width: '100%',
+      }}
     >
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: isCompact ? 6 : 12 }}>
         {items.map((item) => (
-          <div
+          <UploadFileCard
             key={item.typeKey}
-            style={{
-              display: 'grid',
-              gridTemplateColumns: '1fr auto auto auto',
-              alignItems: 'center',
-              gap: 8,
-              padding: '8px 0',
-              borderBottom: '1px solid #f0f0f0',
-            }}
-          >
-            <div>
-              <Typography.Text strong>{item.label}</Typography.Text>
-              {item.required && (
-                <Typography.Text type="danger" style={{ marginLeft: 4 }}>
-                  *
-                </Typography.Text>
-              )}
-              {item.file && (
-                <div style={{ fontSize: 12, color: '#888' }}>
-                  {item.file.name}
-                </div>
-              )}
-            </div>
-
-            <ValidationBadge status={item.status} />
-
-            <Upload
-              accept=".csv"
-              showUploadList={false}
-              beforeUpload={(file) => {
-                onPickFile(item.typeKey, file);
-                return false;
-              }}
-            >
-              <Button icon={<UploadOutlined />} size="small">
-                選択
-              </Button>
-            </Upload>
-
-            {item.file && (
-              <Button
-                icon={<DeleteOutlined />}
-                size="small"
-                danger
-                onClick={() => onRemoveFile(item.typeKey)}
-              >
-                削除
-              </Button>
-            )}
-          </div>
+            item={item}
+            onPickFile={onPickFile}
+            onRemoveFile={onRemoveFile}
+            size={size}
+          />
         ))}
       </div>
     </Card>

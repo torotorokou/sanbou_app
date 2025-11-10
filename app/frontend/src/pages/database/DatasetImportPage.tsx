@@ -3,31 +3,25 @@
  * 
  * 責務: レイアウト・配置のみ
  * ロジック: useDatabaseUploadVM に委譲
+ * プレビュー: DatasetPreviewScreen に委譲
  */
 
-import React, { useLayoutEffect, useRef, useState } from 'react';
-import { Typography, Col, Row, Button, Modal, Spin, Tabs, Empty, Select, Space, Badge } from 'antd';
-import { useResponsive } from '@/shared';
+import React, { useState } from 'react';
+import { Typography, Col, Row, Button, Modal, Spin, Empty, Select, Space, Badge } from 'antd';
 import styles from './DatasetImportPage.module.css';
 
 import {
-  UploadInstructions,
   SimpleUploadPanel,
   useDatasetImportVM,
-  csvTypeColors,
 } from '@features/database/dataset-import';
-import { readableTextColor } from '@features/database/shared/ui/colors';
+import { UploadGuide, toFileStates } from '@features/database/dataset-uploadguide';
+import { DatasetPreviewScreen } from '@features/database/dataset-preview';
+import type { PreviewSource, CsvPreviewData } from '@features/database/dataset-preview';
 import { DATASETS, type DatasetKey, collectTypesForDataset } from '@features/database/shared/dataset/dataset';
 
 const { Text } = Typography;
 
-// ===== Layout constants =====
-const COLUMN_PADDING = 16;
-const TAB_BAR_HEIGHT_FALLBACK = 40;
-
 const DatasetImportPage: React.FC = () => {
-  const { height } = useResponsive();
-  
   // ===== データセット選択 =====
   const [datasetKey, setDatasetKey] = useState<DatasetKey>('shogun_flash');
   
@@ -42,42 +36,35 @@ const DatasetImportPage: React.FC = () => {
     doUpload,
   } = useDatasetImportVM({ activeTypes });
 
-  // ===== 右プレビューの高さ算出（レイアウト責務） =====
-  const rowRef = useRef<HTMLDivElement | null>(null);
-  const tabsRef = useRef<HTMLDivElement | null>(null);
-  const [cardHeight, setCardHeight] = useState<number>(300);
-  const [tabBarHeight, setTabBarHeight] = useState<number>(TAB_BAR_HEIGHT_FALLBACK);
-
-  useLayoutEffect(() => {
-    const calc = () => {
-      const rowEl = rowRef.current;
-      if (!rowEl) return;
-      const rowH = rowEl.clientHeight || height || 910;
-      const tabEl = tabsRef.current?.querySelector('.ant-tabs-nav') as HTMLElement | null;
-      const measuredTab = tabEl?.offsetHeight ?? TAB_BAR_HEIGHT_FALLBACK;
-      if (measuredTab !== tabBarHeight) setTabBarHeight(measuredTab);
-      const bottomSafeSpace = 16;
-      const avail = Math.max(400, Math.floor(rowH - (COLUMN_PADDING * 2) - bottomSafeSpace));
-      const ch = Math.max(160, Math.floor(avail - measuredTab));
-      setCardHeight(ch);
-    };
-    const raf = requestAnimationFrame(calc);
-    const onResize = () => calc();
-    window.addEventListener('resize', onResize);
-    return () => {
-      cancelAnimationFrame(raf);
-      window.removeEventListener('resize', onResize);
-    };
-  }, [height, tabBarHeight]);
+  // PreviewSource を panelFiles から構築
+  const previewSource: PreviewSource = panelFiles.length > 0
+    ? {
+        kind: 'previews',
+        datasetKey,
+        data: panelFiles.reduce((acc, item) => {
+          if (item.preview) {
+            acc[item.typeKey] = item.preview;
+          }
+          return acc;
+        }, {} as Record<string, CsvPreviewData>),
+      }
+    : {
+        kind: 'fallback',
+        datasetKey,
+        mode: 'schema', // または 'empty', 'sample'
+      };
 
   // 進捗表示用
   const requiredFiles = panelFiles.filter(p => p.required);
   const validCount = requiredFiles.filter(p => p.status === 'valid' && p.file).length;
 
+  // UploadGuide 用の FileState に変換
+  const fileStates = toFileStates(panelFiles);
+
   return (
     <>
       {/* Contentのpaddingを差し引いた固定高 */}
-      <Row ref={rowRef} className={styles.pageContainer}>
+      <Row className={styles.pageContainer}>
         {/* 左カラム：アップロード面 */}
         <Col span={8} className={styles.leftCol}>
           {/* データセット切替 + 進捗 */}
@@ -96,7 +83,12 @@ const DatasetImportPage: React.FC = () => {
             </Space>
           </div>
 
-          <UploadInstructions />
+          <UploadGuide datasetKey={datasetKey} files={fileStates} />
+
+          {/* CSVアップロードタイトル（固定） */}
+          <Typography.Title level={5} style={{ margin: '12px 0 8px 0', fontSize: 13 }}>
+            📂 CSVアップロード
+          </Typography.Title>
 
           {/* 左カラム内部スクロール */}
           <div className={styles.uploadSection}>
@@ -107,6 +99,7 @@ const DatasetImportPage: React.FC = () => {
                 items={panelFiles}
                 onPickFile={onPickFile}
                 onRemoveFile={onRemoveFile}
+                showTitle={false}
               />
             )}
           </div>
@@ -131,52 +124,7 @@ const DatasetImportPage: React.FC = () => {
 
         {/* 右カラム：プレビュー */}
         <Col span={16} className={styles.rightCol}>
-          {panelFiles.length === 0 ? (
-            <div style={{ flex: 1, display: 'grid', placeItems: 'center' }}>
-              <Empty description="プレビュー対象のCSVがありません" />
-            </div>
-          ) : (
-            <Tabs
-              key={datasetKey} // 切替時にリセット
-              defaultActiveKey={panelFiles[0]?.typeKey}
-              style={{ height: '100%' }}
-              renderTabBar={(props, DefaultTabBar) => (
-                <div ref={(el) => { tabsRef.current = el; }}>
-                  <DefaultTabBar {...props} />
-                </div>
-              )}
-              items={panelFiles.map((item) => {
-                const bg = csvTypeColors[item.typeKey] || '#777';
-                const fg = readableTextColor(bg);
-                return {
-                  key: item.typeKey,
-                  label: (
-                    <div
-                      style={{
-                        display: 'inline-block',
-                        padding: '4px 10px',
-                        borderRadius: 9999,
-                        background: bg,
-                        color: fg,
-                        fontWeight: 600,
-                        fontSize: 14,
-                      }}
-                    >
-                      {item.label}
-                    </div>
-                  ),
-                  children: (
-                    <div style={{ height: cardHeight, overflow: 'hidden' }}>
-                      {/* TODO: CsvPreviewCardを統合 */}
-                      <div style={{ padding: 16 }}>
-                        <Text>プレビュー: {item.file?.name ?? '未選択'}</Text>
-                      </div>
-                    </div>
-                  ),
-                };
-              })}
-            />
-          )}
+          <DatasetPreviewScreen source={previewSource} />
         </Col>
       </Row>
 

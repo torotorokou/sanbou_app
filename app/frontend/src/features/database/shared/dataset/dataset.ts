@@ -79,7 +79,7 @@ export function requiredTypesForDataset(dataset: DatasetKey, activeTypes: string
  * カテゴリ順での並べ替え（オプショナル）
  */
 export const CATEGORY_ORDER_BY_DATASET: Record<DatasetKey, string[]> = {
-  shogun_flash: ['出荷', '受入', 'ヤード'],
-  shogun_final: ['出荷', '受入', 'ヤード'],
+  shogun_flash: ['受入','出荷' , 'ヤード'],
+  shogun_final: ['受入', '出荷', 'ヤード'],
   manifest: ['1次', '2次'],
 };

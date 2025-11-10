@@ -1,0 +1,60 @@
+/* Dense style for SimpleUploadPanel: reduce padding, font-size, control heights
+   Uses :global to target Ant Design internal classes within the card.
+*/
+
+.cardDense :global(.ant-card-head) {
+  padding: 6px 10px;
+  min-height: 34px;
+}
+
+.cardDense :global(.ant-card-head-title) {
+  font-size: 13px;
+  line-height: 18px;
+}
+
+.cardDense :global(.ant-card-body) {
+  padding: 10px !important;
+}
+
+/* Dragger: reduce padding and min-height but keep good hit area */
+.cardDense :global(.ant-upload-drag) {
+  padding: 10px 8px !important;
+  min-height: 56px !important;
+}
+
+.cardDense :global(.ant-upload-drag .ant-upload-drag-icon) {
+  margin-bottom: 6px;
+}
+
+.cardDense :global(.ant-btn) {
+  height: 28px !important;
+  padding: 0 10px !important;
+  font-size: 12px !important;
+}
+
+.cardDense :global(.ant-typography),
+.cardDense :global(.ant-form-item-label > label) {
+  font-size: 12px !important;
+  line-height: 18px !important;
+}
+
+.cardDense :global(.ant-table-thead > tr > th) {
+  padding: 6px 8px !important;
+  font-size: 12px !important;
+  line-height: 18px !important;
+}
+
+.cardDense :global(.ant-table-tbody > tr > td) {
+  padding: 6px 8px !important;
+  font-size: 12px !important;
+  line-height: 18px !important;
+}
+
+/* Tweak badges / small controls */
+.cardDense :global(.ant-badge) {
+  transform: none !important;
+}
+
+.cardDense :global(.anticon) {
+  vertical-align: -2px;
+}

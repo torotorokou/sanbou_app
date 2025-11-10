@@ -9,6 +9,8 @@ import { useSubmitVM } from '../../dataset-submit/hooks/useSubmitVM';
 import { UPLOAD_CSV_DEFINITIONS, UPLOAD_CSV_TYPES } from '../model/constants';
 import type { PanelFileItem, DatasetImportVMOptions } from '../model/types';
 import type { ValidationStatus } from '../../shared/types/common';
+import type { CsvPreviewData } from '../../dataset-preview/model/types';
+import { parseCsvPreview } from '../../shared/csv/parseCsv';
 
 export function useDatasetImportVM(opts?: DatasetImportVMOptions) {
   const activeTypes = useMemo(
@@ -18,16 +20,20 @@ export function useDatasetImportVM(opts?: DatasetImportVMOptions) {
 
   const [files, setFiles] = useState<Record<string, File | null>>({});
   const [status, setStatus] = useState<Record<string, ValidationStatus>>({});
+  const [previews, setPreviews] = useState<Record<string, CsvPreviewData | null>>({});
 
   useEffect(() => {
     const initF: Record<string, File | null> = {};
     const initS: Record<string, ValidationStatus> = {};
+    const initP: Record<string, CsvPreviewData | null> = {};
     activeTypes.forEach(t => {
       initF[t] = null;
       initS[t] = 'unknown';
+      initP[t] = null;
     });
     setFiles(prev => ({ ...initF, ...prev }));
     setStatus(prev => ({ ...initS, ...prev }));
+    setPreviews(prev => ({ ...initP, ...prev }));
   }, [activeTypes]);
 
   const getRequired = (typeKey: string) => UPLOAD_CSV_DEFINITIONS[typeKey]?.requiredHeaders;
@@ -36,6 +42,17 @@ export function useDatasetImportVM(opts?: DatasetImportVMOptions) {
 
   const onPickFile = async (typeKey: string, file: File) => {
     setFiles(prev => ({ ...prev, [typeKey]: file }));
+    
+    // CSVファイルを読み込んでプレビューを生成
+    try {
+      const text = await file.text();
+      const preview = parseCsvPreview(text, 100);
+      setPreviews(prev => ({ ...prev, [typeKey]: preview }));
+    } catch (error) {
+      console.error('CSVプレビュー生成エラー:', error);
+      setPreviews(prev => ({ ...prev, [typeKey]: null }));
+    }
+    
     const s = await validateOnPick(typeKey, file);
     setStatus(prev => ({ ...prev, [typeKey]: s }));
   };
@@ -43,6 +60,7 @@ export function useDatasetImportVM(opts?: DatasetImportVMOptions) {
   const onRemoveFile = (typeKey: string) => {
     setFiles(prev => ({ ...prev, [typeKey]: null }));
     setStatus(prev => ({ ...prev, [typeKey]: 'unknown' }));
+    setPreviews(prev => ({ ...prev, [typeKey]: null }));
   };
 
   const panelFiles: PanelFileItem[] = useMemo(
@@ -53,8 +71,9 @@ export function useDatasetImportVM(opts?: DatasetImportVMOptions) {
         required: !!UPLOAD_CSV_DEFINITIONS[typeKey].required,
         file: files[typeKey] ?? null,
         status: status[typeKey] ?? 'unknown',
+        preview: previews[typeKey] ?? null,
       })),
-    [files, status, activeTypes]
+    [files, status, previews, activeTypes]
   );
 
   const canUpload = useMemo(() => {
