@@ -1,15 +1,15 @@
 import React, { Suspense, useEffect, useState } from 'react';
-import ReportManagePageLayout from '../components/common/ReportManagePageLayout';
-import ReportStepperModal from '../components/common/ReportStepperModal';
-import BlockUnitPriceInteractiveModal, { type InitialApiResponse, type SessionData } from '../components/interactive/BlockUnitPriceInteractiveModal';
-import type { TransportCandidateRow } from '../components/interactive/types';
-import { normalizeRow, isRecord } from '../components/interactive/transportNormalization';
+import ReportManagePageLayout from '@features/report-manage/ui/ReportManagePageLayout';
+import ReportStepperModal from '@features/report-select/ui/ReportStepperModal';
+import BlockUnitPriceInteractiveModal, { type InitialApiResponse, type SessionData } from './BlockUnitPriceInteractiveModal';
+import type { TransportCandidateRow } from '../types/interactive.types';
+import { normalizeRow, isRecord } from '../lib/transportNormalization';
 import { message } from 'antd';
-const PDFViewer = React.lazy(() => import('../components/viewer/PDFViewer'));
+const PDFViewer = React.lazy(() => import('@features/report-viewer/ui/PDFViewer'));
 import { pdfPreviewMap, modalStepsMap, isInteractiveReport, getApiEndpoint } from '@features/report/model/config';
-import { useReportBaseBusiness } from '@features/report/application/useReportBaseBusiness';
-import type { ReportBaseProps } from '@features/report/domain/types/report.types';
-import type { ReportArtifactResponse } from '@features/report/application/useReportArtifact';
+import { useReportBaseBusiness } from '../model/useReportBaseBusiness';
+import type { ReportBaseProps } from '../types/report.types';
+import type { ReportArtifactResponse } from '@features/report-preview/model/useReportArtifact';
 import { coreApi } from '@shared/infrastructure/http/coreApi';
 
 // normalizeRow is now provided by ./interactive/transportNormalization
@@ -308,7 +308,6 @@ const ReportBase: React.FC<ReportBaseProps> = ({
                 readyToCreate={business.isReadyToCreate}
                 sampleImageUrl={pdfPreviewMap[reportKey]}
                 pdfUrl={previewUrl}
-                excelUrl={business.excelUrl}
                 excelReady={business.hasExcel}
                 pdfReady={business.hasPdf}
                 header={undefined}

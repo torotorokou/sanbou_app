@@ -1,7 +1,7 @@
 import React from 'react';
 import { VerticalActionButton, actionButtonColors } from '@/shared';
 import { PlayCircleOutlined, DownloadOutlined, PrinterOutlined } from '@ant-design/icons';
-import { useReportActions } from '@features/report/application/useReportActions';
+import { useReportActions } from '../model/useReportActions';
 import { useResponsive } from '@/shared';
 import type { ActionsSectionProps } from './types';
 

@@ -2,14 +2,14 @@ import { useCallback, useEffect, useState } from 'react';
 import type { UploadProps } from 'antd/es/upload';
 // useCsvValidation は削除されました - 新しい検証ロジックへの移行が必要
 // import { useCsvValidation } from '@features/database';
-import { useReportArtifact } from './useReportArtifact';
+import { useReportArtifact } from '@features/report-preview/model/useReportArtifact';
 import type {
     CsvFiles,
     CsvConfigEntry,
     UploadFileConfig,
     MakeUploadPropsFn,
-} from '../domain/types/report.types';
-import type { ReportKey } from '../model/config';
+} from '../types/report.types';
+import type { ReportKey } from '@features/report/model/config';
 
 /**
  * ReportBaseのビジネスロジックを統合管理するフック

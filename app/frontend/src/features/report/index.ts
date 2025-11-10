@@ -4,25 +4,25 @@
  */
 
 // Domain Types
-export * from './domain/types/report.types';
-export * from './domain/types/report-api.types';
+export * from '@features/report-extras/types/report.types';
+export * from '@features/report-extras/types/report-api.types';
 
 // Domain Config (still in model/config for now - skip to avoid duplicates)
 // export * from './model/config';  // CsvConfig, CsvConfigEntry already exported from report.types
 
 // Ports
-export type { IReportRepository } from './ports/repository';
+export type { IReportRepository } from '@features/report-upload/ports/repository';
 
 // Application (ViewModels)
-export * from './application/useReportManager';
-export * from './application/useReportActions';
-export { useReportArtifact } from './application/useReportArtifact';  // Named export only, avoid type conflict
-export * from './application/useReportBaseBusiness';
-export * from './application/useReportLayoutStyles';
+export * from '@features/report-select/model/useReportManager';
+export * from '@features/report-actions/model/useReportActions';
+export { useReportArtifact } from '@features/report-preview/model/useReportArtifact';  // Named export only, avoid type conflict
+export * from '@features/report-extras/model/useReportBaseBusiness';
+export * from '@features/report-select/model/useReportLayoutStyles';
 
 // Infrastructure
-export * from './infrastructure/report.repository';
+export * from '@features/report-upload/api/report.repository';
 
 // UI
-export { default as ReportBase } from './ui/cards/ReportBase';
-export { default as ReportHeader } from './ui/components/common/ReportHeader';
+export { default as ReportBase } from '@features/report-extras/ui/ReportBase';
+export { default as ReportHeader } from '@features/report-extras/ui/ReportHeader';

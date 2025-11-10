@@ -1,8 +1,8 @@
 import { useState, useCallback } from 'react';
 import { notifySuccess, notifyError, notifyInfo } from '@features/notification';
-import { getApiEndpoint, REPORT_KEYS } from '../model/config';
-import type { ReportKey } from '../model/config';
-import type { CsvFiles } from '../domain/types/report.types';
+import { getApiEndpoint, REPORT_KEYS } from '@features/report/model/config';
+import type { ReportKey } from '@features/report/model/config';
+import type { CsvFiles } from '@features/report-extras/types/report.types';
 import { coreApi } from '@shared/infrastructure/http/coreApi';
 
 export type ReportArtifactResponse = {
