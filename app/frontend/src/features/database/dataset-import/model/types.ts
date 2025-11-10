@@ -22,4 +22,5 @@ export interface PanelFileItem {
  */
 export interface DatasetImportVMOptions {
   activeTypes?: string[];
+  datasetKey?: string;
 }

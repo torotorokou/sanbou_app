@@ -34,7 +34,7 @@ const DatasetImportPage: React.FC = () => {
     onPickFile,
     onRemoveFile,
     doUpload,
-  } = useDatasetImportVM({ activeTypes });
+  } = useDatasetImportVM({ activeTypes, datasetKey });
 
   // PreviewSource を panelFiles から構築
   const previewSource: PreviewSource = panelFiles.length > 0

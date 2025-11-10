@@ -2,7 +2,9 @@
  * dataset-preview 型定義
  */
 
-export type DatasetKey = 'shogun_flash' | 'shogun_final' | 'manifest';
+import type { DatasetKey } from '../../config';
+
+export type { DatasetKey };
 
 export interface CsvPreviewData {
   columns: string[];

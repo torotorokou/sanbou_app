@@ -1,20 +1,27 @@
 /**
  * UIカラー定数とユーティリティ
+ * 
+ * @deprecated 色定義は config/datasets.ts に移行済みです。
+ * 新規コードでは config/selectors.getCsvColor() を使用してください。
  */
+
+import { DATASETS } from '../../config';
 
 /**
  * UIカラー（CSV種別ごと）
+ * @deprecated config/selectors.getCsvColor() を使用してください
  */
-export const CSV_TYPE_COLORS: Record<string, string> = {
-  shogun_flash_ship: '#3B82F6',
-  shogun_flash_receive: '#0EA5E9',
-  shogun_flash_yard: '#06B6D4',
-  shogun_final_ship: '#10B981',
-  shogun_final_receive: '#059669',
-  shogun_final_yard: '#34D399',
-  manifest_primary: '#F59E0B',
-  manifest_secondary: '#F97316',
-};
+export const CSV_TYPE_COLORS: Record<string, string> = (() => {
+  const result: Record<string, string> = {};
+  for (const dataset of Object.values(DATASETS)) {
+    for (const csv of dataset.csv) {
+      if (csv.color) {
+        result[csv.typeKey] = csv.color;
+      }
+    }
+  }
+  return result;
+})();
 
 /**
  * デフォルトのカラー
