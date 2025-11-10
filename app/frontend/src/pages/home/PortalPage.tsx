@@ -431,6 +431,9 @@ export const PortalPage: React.FC = () => {
   // responsive: isXs (width < 640px)
   const isXs = flags.isXs;
 
+  // responsive: isLg (width >= 1024px)
+  const isLg = flags.isLaptop || flags.isDesktop;
+
   // responsive: カードスケール
   const cardScale = pickByDevice(0.9, 0.9, 0.9, 1);
 
@@ -541,8 +544,11 @@ export const PortalPage: React.FC = () => {
                 // Lower the mobile minimum so cards sit closer vertically.
                 gridAutoRows: `minmax(${Math.round(pickByDevice(64, 120, CARD_HEIGHT, CARD_HEIGHT) * cardScale)}px, auto)`,
                 // responsive: gridTemplateColumns (Mobile: 1col, Tablet+: auto-fit)
+                // lg以上では最大3列に制限して画面内に収める
                 gridTemplateColumns: flags.isMobile
                   ? 'repeat(1, 1fr)'
+                  : isLg
+                  ? `repeat(auto-fit, minmax(${Math.round(CARD_WIDTH * cardScale)}px, calc(100% / 3 - ${pickByDevice(4, 22, 22, 22)}px)))`
                   : `repeat(auto-fit, minmax(${Math.round(CARD_WIDTH * cardScale)}px, 1fr))`,
               justifyContent: 'center',
               alignItems: 'stretch',
