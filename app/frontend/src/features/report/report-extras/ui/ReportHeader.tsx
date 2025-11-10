@@ -1,7 +1,7 @@
 import React from 'react';
 import { Steps } from 'antd';
 import { useResponsive, bp } from '@/shared';
-import ReportSelector from '@features/report-select/ui/ReportSelector';
+import ReportSelector from '@features/report/report-select/ui/ReportSelector';
 import type { PageGroupKey } from '@features/report/model/config';
 
 type ReportHeaderProps = {

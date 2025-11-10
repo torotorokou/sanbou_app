@@ -1,6 +1,6 @@
 // /app/src/constants/reportConfig/shared/types.ts
 import type React from 'react';
-import type { CsvDefinition } from '@features/report-extras/types/CsvDefinition';
+import type { CsvDefinition } from '@features/report/report-extras/types/CsvDefinition';
 
 // ==============================
 // 🎯 共通型定義
