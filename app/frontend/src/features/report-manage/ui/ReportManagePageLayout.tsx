@@ -1,13 +1,13 @@
 import React from 'react';
 import type { ReactNode } from 'react';
-import { useReportLayoutStyles } from '@features/report/application/useReportLayoutStyles';
+import { useReportLayoutStyles } from '@features/report-select/model/useReportLayoutStyles';
 import { useResponsive } from '@/shared';
-import SampleSection from './SampleSection';
-import CsvUploadSection from './CsvUploadSection';
-import ActionsSection from './ActionsSection';
-import PreviewSection from './PreviewSection';
+import SampleSection from '@features/report-extras/ui/SampleSection';
+import CsvUploadSection from '@features/report-upload/ui/CsvUploadSection';
+import ActionsSection from '@features/report-actions/ui/ActionsSection';
+import PreviewSection from '@features/report-preview/ui/PreviewSection';
 import type { UploadProps } from 'antd';
-import type { UploadFileConfig } from '@features/report/domain/types/report.types';
+import type { UploadFileConfig } from '@features/report-extras/types/report.types';
 import type { CsvUploadFileType as CsvFileType } from './types';
 
 /**
@@ -45,7 +45,6 @@ type Props = {
     finalized?: boolean;
     onDownloadExcel?: () => void;
     onPrintPdf?: () => void;
-    excelUrl?: string | null;
     pdfUrl?: string | null;
     excelReady?: boolean;
     pdfReady?: boolean;
@@ -62,7 +61,6 @@ const ReportManagePageLayout: React.FC<Props> = ({
     finalized,
     onDownloadExcel,
     onPrintPdf,
-    excelUrl,
     pdfUrl,
     excelReady,
     pdfReady,
@@ -136,7 +134,6 @@ const ReportManagePageLayout: React.FC<Props> = ({
                                 finalized={!!finalized}
                                 onDownloadExcel={onDownloadExcel ?? (() => {})}
                                 onPrintPdf={onPrintPdf}
-                                excelUrl={excelUrl ?? null}
                                 pdfUrl={pdfUrl ?? null}
                                 excelReady={!!excelReady}
                                 pdfReady={!!pdfReady}
@@ -174,7 +171,6 @@ const ReportManagePageLayout: React.FC<Props> = ({
                                 finalized={!!finalized}
                                 onDownloadExcel={onDownloadExcel ?? (() => {})}
                                 onPrintPdf={onPrintPdf}
-                                excelUrl={excelUrl ?? null}
                                 pdfUrl={pdfUrl ?? null}
                                 excelReady={!!excelReady}
                                 pdfReady={!!pdfReady}
@@ -202,7 +198,6 @@ const ReportManagePageLayout: React.FC<Props> = ({
                                 finalized={!!finalized}
                                 onDownloadExcel={onDownloadExcel ?? (() => {})}
                                 onPrintPdf={onPrintPdf}
-                                excelUrl={excelUrl ?? null}
                                 pdfUrl={pdfUrl ?? null}
                                 excelReady={!!excelReady}
                                 pdfReady={!!pdfReady}

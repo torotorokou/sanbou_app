@@ -1,7 +1,7 @@
 import React from 'react';
 import { Typography } from 'antd';
-import type { SampleSectionProps } from './types';
-import ReportSampleThumbnail from '@features/report/ui/components/viewer/ReportSampleThumbnail';
+import type { SampleSectionProps } from '../types/report.types';
+import ReportSampleThumbnail from '@features/report-viewer/ui/ReportSampleThumbnail';
 
 /**
  * サンプルファイル表示セクション

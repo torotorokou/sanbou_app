@@ -1,5 +1,5 @@
 import type { UploadProps } from 'antd/es/upload';
-import type { ReportKey } from '../../model/config';
+import type { ReportKey } from '@features/report/model/config';
 
 /**
  * ReportBase関連の型定義を整理
@@ -73,3 +73,7 @@ export type UploadFileConfig = {
 };
 
 export type MakeUploadPropsFn = (label: string) => UploadProps;
+
+export interface SampleSectionProps {
+    sampleImageUrl?: string;
+}

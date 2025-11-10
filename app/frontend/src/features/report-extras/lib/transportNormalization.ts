@@ -1,4 +1,4 @@
-import type { TransportCandidateRow, TransportVendor, InteractiveItem } from './types';
+import type { TransportCandidateRow, TransportVendor, InteractiveItem } from '../types/interactive.types';
 
 const clampIndex = (value: number, length: number): number => {
     if (length <= 0) return 0;

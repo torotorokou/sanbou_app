@@ -1,7 +1,7 @@
 import React from 'react';
 import { Modal, Steps } from 'antd';
 import { modalStepsMap, isInteractiveReport } from '@features/report/model/config';
-import BlockUnitPriceInteractive from '@features/report/ui/components/interactive/BlockUnitPriceInteractive';
+import BlockUnitPriceInteractive from './BlockUnitPriceInteractive';
 import type { ReportKey } from '@features/report/model/config';
 
 /**
