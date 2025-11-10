@@ -2,12 +2,12 @@ import React from 'react';
 import type { ReactNode } from 'react';
 import { useReportLayoutStyles } from '@features/report/report-select/model/useReportLayoutStyles';
 import { useResponsive } from '@/shared';
-import SampleSection from '@features/report/report-extras/ui/SampleSection';
+import SampleSection from '@features/report/report-base/ui/SampleSection';
 import CsvUploadSection from '@features/report/report-upload/ui/CsvUploadSection';
 import ActionsSection from '@features/report/report-actions/ui/ActionsSection';
 import PreviewSection from '@features/report/report-preview/ui/PreviewSection';
 import type { UploadProps } from 'antd';
-import type { UploadFileConfig } from '@features/report/report-extras/types/report.types';
+import type { UploadFileConfig } from '@features/report/types/report.types';
 import type { CsvUploadFileType as CsvFileType } from './types';
 
 /**

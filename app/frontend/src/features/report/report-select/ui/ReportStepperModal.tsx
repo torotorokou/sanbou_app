@@ -5,7 +5,7 @@ import { useResponsive } from '@/shared';
 
 const { Step } = Steps;
 
-import type { ModalStepConfig } from '@features/report/model/config/shared/types';
+import type { ModalStepConfig } from '@features/report/config/shared/types';
 
 export type ReportStepperModalProps = {
     open: boolean;
