@@ -6,15 +6,16 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useValidateOnPick } from '../../dataset-validate/hooks/useValidateOnPick';
 import { useSubmitVM } from '../../dataset-submit/hooks/useSubmitVM';
-import { UPLOAD_CSV_DEFINITIONS, UPLOAD_CSV_TYPES } from '../model/constants';
+import { findCsv } from '../../config';
 import type { PanelFileItem, DatasetImportVMOptions } from '../model/types';
 import type { ValidationStatus } from '../../shared/types/common';
 import type { CsvPreviewData } from '../../dataset-preview/model/types';
 import { parseCsvPreview } from '../../shared/csv/parseCsv';
+import type { DatasetKey, CsvTypeKey } from '../../config';
 
 export function useDatasetImportVM(opts?: DatasetImportVMOptions) {
   const activeTypes = useMemo(
-    () => opts?.activeTypes ?? (UPLOAD_CSV_TYPES as string[]),
+    () => opts?.activeTypes ?? [],
     [opts?.activeTypes]
   );
 
@@ -36,7 +37,15 @@ export function useDatasetImportVM(opts?: DatasetImportVMOptions) {
     setPreviews(prev => ({ ...initP, ...prev }));
   }, [activeTypes]);
 
-  const getRequired = (typeKey: string) => UPLOAD_CSV_DEFINITIONS[typeKey]?.requiredHeaders;
+  // dataset を opts から取得（既存のアプリでは datasetKey を渡す必要がある）
+  const datasetKey = opts?.datasetKey;
+  
+  const getRequired = (typeKey: string) => {
+    if (!datasetKey) return undefined;
+    const csv = findCsv(datasetKey as DatasetKey, typeKey as CsvTypeKey);
+    return csv?.validate.requiredHeaders;
+  };
+  
   const validateOnPick = useValidateOnPick(getRequired);
   const { uploading, doUpload } = useSubmitVM();
 
@@ -65,24 +74,29 @@ export function useDatasetImportVM(opts?: DatasetImportVMOptions) {
 
   const panelFiles: PanelFileItem[] = useMemo(
     () =>
-      activeTypes.map(typeKey => ({
-        typeKey,
-        label: UPLOAD_CSV_DEFINITIONS[typeKey].label,
-        required: !!UPLOAD_CSV_DEFINITIONS[typeKey].required,
-        file: files[typeKey] ?? null,
-        status: status[typeKey] ?? 'unknown',
-        preview: previews[typeKey] ?? null,
-      })),
-    [files, status, previews, activeTypes]
+      activeTypes.map(typeKey => {
+        const csv = datasetKey ? findCsv(datasetKey as DatasetKey, typeKey as CsvTypeKey) : undefined;
+        return {
+          typeKey,
+          label: csv?.label ?? typeKey,
+          required: csv?.required ?? false,
+          file: files[typeKey] ?? null,
+          status: status[typeKey] ?? 'unknown',
+          preview: previews[typeKey] ?? null,
+        };
+      }),
+    [files, status, previews, activeTypes, datasetKey]
   );
 
   const canUpload = useMemo(() => {
-    const requiredKeys = activeTypes.filter(
-      t => UPLOAD_CSV_DEFINITIONS[t].required !== false
-    );
+    const requiredKeys = activeTypes.filter(t => {
+      if (!datasetKey) return false;
+      const csv = findCsv(datasetKey as DatasetKey, t as CsvTypeKey);
+      return csv?.required !== false;
+    });
     if (!requiredKeys.length) return false;
     return requiredKeys.every(t => !!files[t] && status[t] === 'valid');
-  }, [files, status, activeTypes]);
+  }, [files, status, activeTypes, datasetKey]);
 
   const filesForUpload = useMemo(() => {
     const out: Record<string, File> = {};

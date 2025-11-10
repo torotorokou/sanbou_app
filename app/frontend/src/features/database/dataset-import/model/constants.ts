@@ -1,24 +1,36 @@
 /**
  * dataset-import モジュールの定数
- * 既存の sampleCsvModel.ts から移設
+ * 
+ * @deprecated このファイルは config レジストリに移行済みです。
+ * 新規コードでは @features/database/config を直接使用してください。
  */
 
 import type { CsvDefinition } from '../../shared/types/common';
+import { DATASETS } from '../../config';
 
-export const UPLOAD_CSV_DEFINITIONS: Record<string, CsvDefinition> = {
-  shogun_flash_ship:   { label: '将軍_速報版:出荷一覧',  group: 'shogun_flash', required: true },
-  shogun_flash_receive:{ label: '将軍_速報版:受入一覧',  group: 'shogun_flash', required: true },
-  shogun_flash_yard:   { label: '将軍_速報版:ヤード一覧', group: 'shogun_flash', required: true },
+/**
+ * @deprecated config/datasets.ts を使用してください
+ */
+export const UPLOAD_CSV_DEFINITIONS: Record<string, CsvDefinition> = (() => {
+  const result: Record<string, CsvDefinition> = {};
+  for (const dataset of Object.values(DATASETS)) {
+    for (const csv of dataset.csv) {
+      result[csv.typeKey] = {
+        label: csv.label,
+        group: dataset.key,
+        required: csv.required,
+      };
+    }
+  }
+  return result;
+})();
 
-  shogun_final_ship:   { label: '将軍_最終版:出荷一覧',  group: 'shogun_final', required: true },
-  shogun_final_receive:{ label: '将軍_最終版:受入一覧',  group: 'shogun_final', required: true },
-  shogun_final_yard:   { label: '将軍_最終版:ヤード一覧', group: 'shogun_final', required: true },
-
-  manifest_primary:    { label: 'マニフェスト:1次マニ', group: 'manifest', required: true },
-  manifest_secondary:  { label: 'マニフェスト:2次マニ', group: 'manifest', required: true },
-};
-
+/**
+ * @deprecated config/selectors.getCsvTypeKeys() を使用してください
+ */
 export const UPLOAD_CSV_TYPES: string[] = Object.keys(UPLOAD_CSV_DEFINITIONS);
 
-// 互換性のため、色定義も再エクスポート
+/**
+ * @deprecated config/selectors.getCsvColor() を使用してください
+ */
 export { CSV_TYPE_COLORS as csvTypeColors } from '../../shared/ui/colors';
