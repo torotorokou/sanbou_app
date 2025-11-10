@@ -1,0 +1,68 @@
+.
+├── ARCHITECTURE.md
+├── MVC_GUIDE.md
+├── README.md
+├── REFACTORING_COMPLETE_REPORT.md
+├── REFACTORING_PLAN.md
+├── REFACTORING_SUMMARY.md
+├── api
+│   └── index.ts
+├── application
+│   ├── useReportActions.ts
+│   ├── useReportArtifact.ts
+│   ├── useReportBaseBusiness.ts
+│   ├── useReportLayoutStyles.ts
+│   └── useReportManager.ts
+├── domain
+│   ├── config
+│   │   └── CsvDefinition.ts
+│   ├── services
+│   └── types
+│       ├── report-api.types.ts
+│       └── report.types.ts
+├── index.ts
+├── infrastructure
+│   └── report.repository.ts
+├── model
+│   ├── config
+│   │   ├── README.md
+│   │   ├── index.ts
+│   │   ├── pages
+│   │   │   ├── factoryPageConfig.ts
+│   │   │   ├── ledgerPageConfig.ts
+│   │   │   └── managePageConfig.ts
+│   │   └── shared
+│   │       ├── common.ts
+│   │       └── types.ts
+│   └── index.ts
+├── ports
+│   └── repository.ts
+├── tree.txt
+└── ui
+    ├── cards
+    │   └── ReportBase.tsx
+    └── components
+        ├── common
+        │   ├── ActionsSection.tsx
+        │   ├── CsvUploadSection.tsx
+        │   ├── InteractiveReportModal.tsx
+        │   ├── PreviewSection.tsx
+        │   ├── ReportHeader.tsx
+        │   ├── ReportManagePageLayout.tsx
+        │   ├── ReportSelector.tsx
+        │   ├── ReportStepIndicator.tsx
+        │   ├── ReportStepperModal.tsx
+        │   ├── SampleSection.tsx
+        │   ├── downloadExcel.ts
+        │   └── types.ts
+        ├── interactive
+        │   ├── BlockUnitPriceInteractive.tsx
+        │   ├── BlockUnitPriceInteractiveModal.css
+        │   ├── BlockUnitPriceInteractiveModal.tsx
+        │   ├── transportNormalization.ts
+        │   └── types.ts
+        └── viewer
+            ├── PDFViewer.tsx
+            └── ReportSampleThumbnail.tsx
+
+19 directories, 47 files
