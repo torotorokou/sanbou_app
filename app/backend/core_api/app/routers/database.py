@@ -76,8 +76,8 @@ async def upload_syogun_csv(
     if not uploaded_files:
         return ErrorApiResponse(
             code="NO_FILES",
-            status=400,
-            user_message="少なくとも1つのCSVファイルをアップロードしてください",
+            detail="少なくとも1つのCSVファイルをアップロードしてください",
+            status_code=400,
         )
     
     try:
@@ -93,8 +93,8 @@ async def upload_syogun_csv(
                 logger.error(f"Failed to parse {csv_type} CSV: {e}")
                 return ErrorApiResponse(
                     code="CSV_PARSE_ERROR",
-                    status=400,
-                    user_message=f"{csv_type}のCSVファイルを読み込めませんでした: {str(e)}",
+                    detail=f"{csv_type}のCSVファイルを読み込めませんでした: {str(e)}",
+                    status_code=400,
                 )
         
         # 2. バリデーション（必須カラムチェック）
@@ -126,8 +126,8 @@ async def upload_syogun_csv(
                 logger.error(f"Failed to format {csv_type}: {e}")
                 return ErrorApiResponse(
                     code="FORMAT_ERROR",
-                    status=400,
-                    user_message=f"{csv_type}のフォーマット処理に失敗しました: {str(e)}",
+                    detail=f"{csv_type}のフォーマット処理に失敗しました: {str(e)}",
+                    status_code=400,
                 )
         
         # 6. DBに保存
@@ -157,24 +157,116 @@ async def upload_syogun_csv(
         if all_success:
             total_rows = sum(r["rows_saved"] for r in result.values())
             return SuccessApiResponse(
-                result=result,
+                code="UPLOAD_SUCCESS",
                 detail=f"アップロード成功: 合計 {total_rows} 行を保存しました",
+                result=result,
                 hint="データベースに保存されました",
             )
         else:
             return ErrorApiResponse(
                 code="PARTIAL_SAVE_ERROR",
-                status=500,
-                user_message="一部のファイル保存に失敗しました",
+                detail="一部のファイル保存に失敗しました",
                 result=result,
+                status_code=500,
             )
     
     except Exception as e:
         logger.exception(f"Unexpected error during CSV upload: {e}")
         return ErrorApiResponse(
             code="INTERNAL_ERROR",
-            status=500,
-            user_message=f"予期しないエラーが発生しました: {str(e)}",
+            detail=f"予期しないエラーが発生しました: {str(e)}",
+            status_code=500,
+        )
+
+
+@router.post("/upload/shogun_flash", summary="Upload Shogun Flash CSV with validation")
+async def upload_shogun_flash(
+    receive: Optional[UploadFile] = File(None),
+    yard: Optional[UploadFile] = File(None),
+    shipment: Optional[UploadFile] = File(None),
+    db: Session = Depends(get_db),
+):
+    """
+    将軍速報版CSVアップロード（デバッグ用）
+    
+    UTF-8エンコーディングのCSVを受け取り、Pydanticで行単位バリデーションを行い、
+    debug スキーマのテーブルに保存します。
+    
+    Args:
+        receive: 受入一覧CSV（速報版）
+        yard: ヤード一覧CSV（速報版）
+        shipment: 出荷一覧CSV（速報版）
+        db: DBセッション
+        
+    Returns:
+        成功時: SuccessApiResponse with validation details
+        エラー時: ErrorApiResponse
+    """
+    from app.repositories.shogun_flash_debug_repo import ShogunFlashDebugRepository
+    from app.services.shogun_flash_debug_service import ShogunFlashDebugService
+    
+    logger.info("Starting shogun_flash CSV upload (debug mode)")
+    
+    # ファイル入力をまとめる
+    file_inputs = {
+        "receive": receive,
+        "yard": yard,
+        "shipment": shipment,
+    }
+    
+    # 少なくとも1つのファイルが必要
+    uploaded_files = {k: v for k, v in file_inputs.items() if v is not None}
+    if not uploaded_files:
+        return ErrorApiResponse(
+            code="NO_FILES",
+            detail="少なくとも1つのCSVファイルをアップロードしてください",
+            status_code=400,
+        )
+    
+    try:
+        # Repository と Service を初期化
+        repo = ShogunFlashDebugRepository(db)
+        service = ShogunFlashDebugService(repo)
+        
+        # 各ファイルを処理
+        results = {}
+        for csv_type, file in uploaded_files.items():
+            result = await service.process_upload(csv_type, file)
+            results[csv_type] = result
+        
+        # 全体の成功/失敗を判定
+        all_success = all(r['status'] == 'success' for r in results.values())
+        has_partial = any(r['status'] == 'partial' for r in results.values())
+        
+        if all_success:
+            total_valid = sum(r.get('validation', {}).get('valid_rows', 0) for r in results.values())
+            return SuccessApiResponse(
+                code="UPLOAD_SUCCESS",
+                detail=f"アップロード成功: 合計 {total_valid} 行を検証・保存しました",
+                result=results,
+                hint="debug スキーマのテーブルに保存されました",
+            )
+        elif has_partial:
+            return SuccessApiResponse(
+                code="PARTIAL_SUCCESS",
+                detail="一部の行に検証エラーがありますが、保存されました",
+                result=results,
+                hint="debug テーブルで validation_errors カラムを確認してください",
+            )
+        else:
+            return ErrorApiResponse(
+                code="UPLOAD_ERROR",
+                detail="CSVのアップロードに失敗しました",
+                result=results,
+                status_code=500,
+            )
+    
+    except Exception as e:
+        logger.exception(f"Unexpected error during shogun_flash CSV upload: {e}")
+        return ErrorApiResponse(
+            code="INTERNAL_ERROR",
+            detail=f"予期しないエラーが発生しました: {str(e)}",
+            status_code=500,
         )
 
 
