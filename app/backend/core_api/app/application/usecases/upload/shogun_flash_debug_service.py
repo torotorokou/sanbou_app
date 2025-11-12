@@ -11,7 +11,7 @@ import io
 import pandas as pd
 from fastapi import UploadFile
 
-from app.repositories.shogun_flash_debug_repo import ShogunFlashDebugRepository
+from app.repositories.upload.shogun_flash_debug_repo import ShogunFlashDebugRepository
 
 logger = logging.getLogger(__name__)
 

@@ -18,7 +18,7 @@ import pandas as pd
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 
-from app.repositories.dynamic_models import get_shogun_model_class, create_shogun_model_class
+from app.repositories.core.dynamic_models import get_shogun_model_class, create_shogun_model_class
 from app.config.settings import get_settings
 from app.config.table_definition import get_table_definition_generator
 

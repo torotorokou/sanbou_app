@@ -19,7 +19,7 @@ from fastapi import APIRouter, HTTPException, UploadFile, File, Depends, status
 from sqlalchemy.orm import Session
 
 from app.deps import get_db
-from app.repositories.shogun_flash_debug_repo import ShogunFlashDebugRepository
+from app.repositories.upload.shogun_flash_debug_repo import ShogunFlashDebugRepository
 from app.config.settings import get_settings
 from backend_shared.adapters.presentation import SuccessApiResponse, ErrorApiResponse
 
