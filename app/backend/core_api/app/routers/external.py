@@ -2,11 +2,24 @@
 External router: proxies to internal microservices (rag_api, ledger_api, manual_api, ai_api).
 For short synchronous calls only. Heavy jobs should be queued.
 """
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 import httpx
 import logging
 
-from app.services.external_service import ExternalService
+from app.config.di_providers import (
+    get_ask_rag_uc,
+    get_list_manuals_uc,
+    get_get_manual_uc,
+    get_generate_report_uc,
+    get_classify_text_uc,
+)
+from app.application.usecases.external.external_api_uc import (
+    AskRAGUseCase,
+    ListManualsUseCase,
+    GetManualUseCase,
+    GenerateReportUseCase,
+    ClassifyTextUseCase,
+)
 from app.domain.models import RAGAskRequest, RAGAskResponse, ManualListResponse
 
 router = APIRouter(prefix="/external", tags=["external"])
@@ -14,16 +27,18 @@ logger = logging.getLogger(__name__)
 
 
 @router.post("/rag/ask", response_model=RAGAskResponse, summary="RAGに質問する")
-async def ask_rag(req: RAGAskRequest):
+async def ask_rag(
+    req: RAGAskRequest,
+    uc: AskRAGUseCase = Depends(get_ask_rag_uc),
+):
     """
     RAG APIに質問を投げて回答を取得します。
     タイムアウト: 5秒（接続1秒、読み取り5秒）
     
     重い処理の場合はジョブキューに登録することを推奨します。
     """
-    service = ExternalService()
     try:
-        result = await service.ask_rag(req.query)
+        result = await uc.execute(req.query)
         return RAGAskResponse(
             answer=result.get("answer", ""),
             sources=result.get("sources"),
@@ -49,15 +64,16 @@ async def ask_rag(req: RAGAskRequest):
 
 
 @router.get("/manual/list", response_model=ManualListResponse, summary="マニュアル一覧を取得")
-async def list_manuals():
+async def list_manuals(
+    uc: ListManualsUseCase = Depends(get_list_manuals_uc),
+):
     """
     Manual APIからマニュアル一覧を取得します。
     
     重い処理の場合はジョブキューに登録することを推奨します。
     """
-    service = ExternalService()
     try:
-        manuals = await service.list_manuals()
+        manuals = await uc.execute()
         return ManualListResponse(manuals=manuals)
     except httpx.TimeoutException:
         logger.error("Manual API タイムアウト")
@@ -80,11 +96,13 @@ async def list_manuals():
 
 
 @router.get("/manual/{manual_id}", summary="特定のマニュアルを取得")
-async def get_manual(manual_id: str):
+async def get_manual(
+    manual_id: str,
+    uc: GetManualUseCase = Depends(get_get_manual_uc),
+):
     """特定のマニュアルを ID で取得します。"""
-    service = ExternalService()
     try:
-        result = await service.get_manual(manual_id)
+        result = await uc.execute(manual_id)
         return result
     except httpx.HTTPStatusError as e:
         if e.response.status_code == 404:
@@ -99,15 +117,18 @@ async def get_manual(manual_id: str):
 
 
 @router.post("/ledger/reports/{report_type}", summary="帳票生成リクエスト")
-async def generate_report(report_type: str, params: dict):
+async def generate_report(
+    report_type: str,
+    params: dict,
+    uc: GenerateReportUseCase = Depends(get_generate_report_uc),
+):
     """
     Ledger APIに帳票生成をリクエストします。
     
     重い処理の場合はジョブキューに登録することを推奨します（TODO）。
     """
-    service = ExternalService()
     try:
-        result = await service.generate_report(report_type, params)
+        result = await uc.execute(report_type, params)
         return result
     except httpx.TimeoutException:
         logger.error("Ledger API タイムアウト", extra={"report_type": report_type})
@@ -127,11 +148,13 @@ async def generate_report(report_type: str, params: dict):
 
 
 @router.post("/ai/classify", summary="テキスト分類")
-async def classify_text(text: str):
+async def classify_text(
+    text: str,
+    uc: ClassifyTextUseCase = Depends(get_classify_text_uc),
+):
     """AI APIを使ってテキストを分類します。"""
-    service = ExternalService()
     try:
-        result = await service.classify_text(text)
+        result = await uc.execute(text)
         return result
     except httpx.TimeoutException:
         logger.error("AI API タイムアウト")

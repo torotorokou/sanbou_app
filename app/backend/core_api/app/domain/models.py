@@ -1,6 +1,12 @@
 """
 Domain models and DTOs (Pydantic v2).
 Framework-agnostic: no FastAPI dependencies.
+
+設計方針:
+  - 現在は主にDTO（Data Transfer Object）を定義
+  - 将来的にエンティティは domain/entities/ へ移動予定
+  - 将来的に値オブジェクトは domain/value_objects/ へ移動予定
+  - ビジネスロジックは外部依存ゼロで記述
 """
 from datetime import date as date_type, datetime
 from typing import Optional

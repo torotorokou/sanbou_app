@@ -119,7 +119,7 @@ const DatasetImportPage: React.FC = () => {
           {!canUpload && panelFiles.length > 0 && (
             <div className={styles.hint}>
               <Text type="secondary">
-                ※ 必須CSVをすべて選択＆検証OKにするとアップロード可能です。
+                ※ 必須CSVをすべて選択＆検証OKにするとアップロード可能
               </Text>
             </div>
           )}

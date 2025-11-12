@@ -1,24 +1,36 @@
+# refactor-plan: minimal-diff first, then clean separation (usecase + di_providers)
 """
 Database Router - CSV upload and database operations
 フロントエンドからのCSVアップロードを受け、DBに保存
+
+設計方針:
+  - Router層は HTTP I/O と DI の入口のみ
+  - ビジネスロジックは UseCase に委譲
+  - DI は config/di_providers.py に集約
+
+動作確認:
+  - 4本のエンドポイントが正常に動作することを確認
+  - 各エンドポイントは DI 経由で UseCase を取得
+  - schema/table 切替は search_path + table_map で実現
 """
 import logging
-import io
-from typing import Dict, Optional
-from fastapi import APIRouter, HTTPException, UploadFile, File, Depends
+from typing import Optional
+from fastapi import APIRouter, HTTPException, UploadFile, File, Depends, status
 from sqlalchemy.orm import Session
-import pandas as pd
 
 from app.deps import get_db
-from app.repositories.shogun_csv_repo import ShogunCsvRepository
+from app.repositories.shogun_flash_debug_repo import ShogunFlashDebugRepository
 from app.config.settings import get_settings
-
-# backend_sharedのバリデーター・フォーマッターを使用
-from backend_shared.infrastructure.config.config_loader import SyogunCsvConfigLoader
-from backend_shared.usecases.csv_validator.csv_upload_validator_api import CSVValidationResponder
-from backend_shared.usecases.csv_formatter.formatter_factory import CSVFormatterFactory
-from backend_shared.usecases.csv_formatter.formatter_config import build_formatter_config
 from backend_shared.adapters.presentation import SuccessApiResponse, ErrorApiResponse
+
+# DI Providers から UseCase / Repository を取得
+from app.config.di_providers import (
+    get_uc_default,
+    get_uc_target,
+    get_uc_debug_flash,
+    get_uc_debug_final,
+)
+from app.application.usecases.upload.upload_syogun_csv_uc import UploadSyogunCsvUseCase
 
 logger = logging.getLogger(__name__)
 
@@ -26,28 +38,20 @@ router = APIRouter(prefix="/database", tags=["database"])
 
 settings = get_settings()
 
-# CSV設定ローダーとバリデーターの初期化
-csv_config = SyogunCsvConfigLoader()
 
-# 必須カラム定義（backend_sharedから取得）
-REQUIRED_COLUMNS = {
-    "receive": csv_config.get_expected_headers("receive"),
-    "yard": csv_config.get_expected_headers("yard"),
-    "shipment": csv_config.get_expected_headers("shipment"),
-}
-
-validator = CSVValidationResponder(required_columns=REQUIRED_COLUMNS)
-
+# ========================================================================
+# CSV Upload Endpoints (UseCase経由に薄化)
+# ========================================================================
 
 @router.post("/upload/syogun_csv")
 async def upload_syogun_csv(
     receive: Optional[UploadFile] = File(None),
     yard: Optional[UploadFile] = File(None),
     shipment: Optional[UploadFile] = File(None),
-    db: Session = Depends(get_db),
+    uc: UploadSyogunCsvUseCase = Depends(get_uc_default),
 ):
     """
-    将軍CSVアップロード
+    将軍CSVアップロード（raw schema）
     
     3種類のCSV（受入一覧・ヤード一覧・出荷一覧）を受け取り、
     バリデーション後にDBに保存します。
@@ -56,120 +60,14 @@ async def upload_syogun_csv(
         receive: 受入一覧CSV
         yard: ヤード一覧CSV  
         shipment: 出荷一覧CSV
-        db: DBセッション
+        uc: UploadSyogunCsvUseCase (DI)
         
     Returns:
         成功時: SuccessApiResponse
         エラー時: ErrorApiResponse
     """
-    logger.info("Starting syogun CSV upload")
-    
-    # ファイル入力をまとめる
-    file_inputs = {
-        "receive": receive,
-        "yard": yard,
-        "shipment": shipment,
-    }
-    
-    # 少なくとも1つのファイルが必要
-    uploaded_files = {k: v for k, v in file_inputs.items() if v is not None}
-    if not uploaded_files:
-        return ErrorApiResponse(
-            code="NO_FILES",
-            detail="少なくとも1つのCSVファイルをアップロードしてください",
-            status_code=400,
-        )
-    
     try:
-        # 1. CSVファイルをDataFrameに読み込み
-        dfs: Dict[str, pd.DataFrame] = {}
-        for csv_type, file in uploaded_files.items():
-            content = await file.read()
-            try:
-                df = pd.read_csv(io.BytesIO(content), encoding="utf-8")
-                dfs[csv_type] = df
-                logger.info(f"Loaded {csv_type} CSV: {len(df)} rows, {len(df.columns)} columns")
-            except Exception as e:
-                logger.error(f"Failed to parse {csv_type} CSV: {e}")
-                return ErrorApiResponse(
-                    code="CSV_PARSE_ERROR",
-                    detail=f"{csv_type}のCSVファイルを読み込めませんでした: {str(e)}",
-                    status_code=400,
-                )
-        
-        # 2. バリデーション（必須カラムチェック）
-        validation_error = validator.validate_columns(dfs, uploaded_files)
-        if validation_error:
-            return validation_error
-        
-        # 3. 伝票日付の存在チェック
-        date_exists_error = validator.validate_denpyou_date_exists(dfs, uploaded_files)
-        if date_exists_error:
-            return date_exists_error
-        
-        # 4. 伝票日付の整合性チェック（複数ファイルの場合）
-        if len(dfs) > 1:
-            date_consistency_error = validator.validate_denpyou_date_consistency(dfs)
-            if date_consistency_error:
-                return date_consistency_error
-        
-        # 5. フォーマット（日本語カラム名→英語カラム名、型変換）
-        formatted_dfs: Dict[str, pd.DataFrame] = {}
-        for csv_type, df in dfs.items():
-            try:
-                config = build_formatter_config(csv_config, csv_type)
-                formatter = CSVFormatterFactory.get_formatter(csv_type, config)
-                formatted_df = formatter.format(df)
-                formatted_dfs[csv_type] = formatted_df
-                logger.info(f"Formatted {csv_type}: {len(formatted_df)} rows")
-            except Exception as e:
-                logger.error(f"Failed to format {csv_type}: {e}")
-                return ErrorApiResponse(
-                    code="FORMAT_ERROR",
-                    detail=f"{csv_type}のフォーマット処理に失敗しました: {str(e)}",
-                    status_code=400,
-                )
-        
-        # 6. DBに保存
-        repo = ShogunCsvRepository(db)
-        result = {}
-        
-        for csv_type, df in formatted_dfs.items():
-            try:
-                saved_count = repo.save_csv_by_type(csv_type, df)
-                result[csv_type] = {
-                    "filename": uploaded_files[csv_type].filename,
-                    "status": "success",
-                    "rows_saved": saved_count,
-                }
-                logger.info(f"Saved {csv_type}: {saved_count} rows")
-            except Exception as e:
-                logger.error(f"Failed to save {csv_type} to DB: {e}")
-                result[csv_type] = {
-                    "filename": uploaded_files[csv_type].filename,
-                    "status": "error",
-                    "detail": str(e),
-                }
-        
-        # 7. レスポンス生成
-        all_success = all(r["status"] == "success" for r in result.values())
-        
-        if all_success:
-            total_rows = sum(r["rows_saved"] for r in result.values())
-            return SuccessApiResponse(
-                code="UPLOAD_SUCCESS",
-                detail=f"アップロード成功: 合計 {total_rows} 行を保存しました",
-                result=result,
-                hint="データベースに保存されました",
-            )
-        else:
-            return ErrorApiResponse(
-                code="PARTIAL_SAVE_ERROR",
-                detail="一部のファイル保存に失敗しました",
-                result=result,
-                status_code=500,
-            )
-    
+        return await uc.execute(receive=receive, yard=yard, shipment=shipment)
     except Exception as e:
         logger.exception(f"Unexpected error during CSV upload: {e}")
         return ErrorApiResponse(
@@ -179,96 +77,123 @@ async def upload_syogun_csv(
         )
 
 
-@router.post("/upload/shogun_flash", summary="Upload Shogun Flash CSV with validation")
-async def upload_shogun_flash(
+@router.post("/upload/syogun_csv_target")
+async def upload_syogun_csv_target(
     receive: Optional[UploadFile] = File(None),
     yard: Optional[UploadFile] = File(None),
     shipment: Optional[UploadFile] = File(None),
-    db: Session = Depends(get_db),
+    uc: UploadSyogunCsvUseCase = Depends(get_uc_target),
 ):
     """
-    将軍速報版CSVアップロード（デバッグ用）
+    将軍CSVアップロード（debug schema版）
     
-    UTF-8エンコーディングのCSVを受け取り、Pydanticで行単位バリデーションを行い、
-    debug スキーマのテーブルに保存します。
+    /upload/syogun_csv と同じ処理だが、debug スキーマに保存。
+    
+    3種類のCSV（受入一覧・ヤード一覧・出荷一覧）を受け取り、
+    バリデーション後にDBに保存します。
     
     Args:
-        receive: 受入一覧CSV（速報版）
-        yard: ヤード一覧CSV（速報版）
-        shipment: 出荷一覧CSV（速報版）
-        db: DBセッション
+        receive: 受入一覧CSV
+        yard: ヤード一覧CSV  
+        shipment: 出荷一覧CSV
+        uc: UploadSyogunCsvUseCase (DI with debug schema)
         
     Returns:
-        成功時: SuccessApiResponse with validation details
+        成功時: SuccessApiResponse
         エラー時: ErrorApiResponse
     """
-    from app.repositories.shogun_flash_debug_repo import ShogunFlashDebugRepository
-    from app.services.shogun_flash_debug_service import ShogunFlashDebugService
-    
-    logger.info("Starting shogun_flash CSV upload (debug mode)")
-    
-    # ファイル入力をまとめる
-    file_inputs = {
-        "receive": receive,
-        "yard": yard,
-        "shipment": shipment,
-    }
-    
-    # 少なくとも1つのファイルが必要
-    uploaded_files = {k: v for k, v in file_inputs.items() if v is not None}
-    if not uploaded_files:
-        return ErrorApiResponse(
-            code="NO_FILES",
-            detail="少なくとも1つのCSVファイルをアップロードしてください",
-            status_code=400,
-        )
-    
     try:
-        # Repository と Service を初期化
-        repo = ShogunFlashDebugRepository(db)
-        service = ShogunFlashDebugService(repo)
-        
-        # 各ファイルを処理
-        results = {}
-        for csv_type, file in uploaded_files.items():
-            result = await service.process_upload(csv_type, file)
-            results[csv_type] = result
-        
-        # 全体の成功/失敗を判定
-        all_success = all(r['status'] == 'success' for r in results.values())
-        has_partial = any(r['status'] == 'partial' for r in results.values())
-        
-        if all_success:
-            total_valid = sum(r.get('validation', {}).get('valid_rows', 0) for r in results.values())
-            return SuccessApiResponse(
-                code="UPLOAD_SUCCESS",
-                detail=f"アップロード成功: 合計 {total_valid} 行を検証・保存しました",
-                result=results,
-                hint="debug スキーマのテーブルに保存されました",
-            )
-        elif has_partial:
-            return SuccessApiResponse(
-                code="PARTIAL_SUCCESS",
-                detail="一部の行に検証エラーがありますが、保存されました",
-                result=results,
-                hint="debug テーブルで validation_errors カラムを確認してください",
-            )
-        else:
-            return ErrorApiResponse(
-                code="UPLOAD_ERROR",
-                detail="CSVのアップロードに失敗しました",
-                result=results,
-                status_code=500,
-            )
-    
+        return await uc.execute(receive=receive, yard=yard, shipment=shipment)
     except Exception as e:
-        logger.exception(f"Unexpected error during shogun_flash CSV upload: {e}")
+        logger.exception(f"Unexpected error during CSV upload (target): {e}")
         return ErrorApiResponse(
             code="INTERNAL_ERROR",
             detail=f"予期しないエラーが発生しました: {str(e)}",
             status_code=500,
         )
 
+
+@router.post("/upload/shogun_flash", summary="Upload Shogun CSV (debug schema, *_flash tables)")
+async def upload_shogun_flash_new(
+    receive: Optional[UploadFile] = File(None),
+    yard: Optional[UploadFile] = File(None),
+    shipment: Optional[UploadFile] = File(None),
+    uc: UploadSyogunCsvUseCase = Depends(get_uc_debug_flash),
+):
+    """
+    将軍CSVアップロード（速報版：debug.*_flash テーブル）
+    
+    /upload/syogun_csv と同じ処理だが、debug スキーマの *_flash テーブルに保存。
+    - debug.receive_flash
+    - debug.yard_flash
+    - debug.shipment_flash
+    
+    3種類のCSV（受入一覧・ヤード一覧・出荷一覧）を受け取り、
+    バリデーション後にDBに保存します。
+    
+    Args:
+        receive: 受入一覧CSV
+        yard: ヤード一覧CSV  
+        shipment: 出荷一覧CSV
+        uc: UploadSyogunCsvUseCase (DI with debug flash tables)
+        
+    Returns:
+        成功時: SuccessApiResponse
+        エラー時: ErrorApiResponse
+    """
+    try:
+        return await uc.execute(receive=receive, yard=yard, shipment=shipment)
+    except Exception as e:
+        logger.exception(f"Unexpected error during CSV upload (shogun_flash): {e}")
+        return ErrorApiResponse(
+            code="INTERNAL_ERROR",
+            detail=f"予期しないエラーが発生しました: {str(e)}",
+            status_code=500,
+        )
+
+
+@router.post("/upload/shogun_final", summary="Upload Shogun CSV (debug schema, *_final tables)")
+async def upload_shogun_final(
+    receive: Optional[UploadFile] = File(None),
+    yard: Optional[UploadFile] = File(None),
+    shipment: Optional[UploadFile] = File(None),
+    uc: UploadSyogunCsvUseCase = Depends(get_uc_debug_final),
+):
+    """
+    将軍CSVアップロード（確定版：debug.*_final テーブル）
+    
+    /upload/syogun_csv と同じ処理だが、debug スキーマの *_final テーブルに保存。
+    - debug.receive_final
+    - debug.yard_final
+    - debug.shipment_final
+    
+    3種類のCSV（受入一覧・ヤード一覧・出荷一覧）を受け取り、
+    バリデーション後にDBに保存します。
+    
+    Args:
+        receive: 受入一覧CSV
+        yard: ヤード一覧CSV  
+        shipment: 出荷一覧CSV
+        uc: UploadSyogunCsvUseCase (DI with debug final tables)
+        
+    Returns:
+        成功時: SuccessApiResponse
+        エラー時: ErrorApiResponse
+    """
+    try:
+        return await uc.execute(receive=receive, yard=yard, shipment=shipment)
+    except Exception as e:
+        logger.exception(f"Unexpected error during CSV upload (shogun_final): {e}")
+        return ErrorApiResponse(
+            code="INTERNAL_ERROR",
+            detail=f"予期しないエラーが発生しました: {str(e)}",
+            status_code=500,
+        )
+
+
+# ========================================================================
+# Cache Management
+# ========================================================================
 
 @router.post("/cache/clear", summary="Clear target card cache")
 def clear_target_card_cache(db: Session = Depends(get_db)):
@@ -277,10 +202,13 @@ def clear_target_card_cache(db: Session = Depends(get_db)):
     
     Useful after CSV uploads or data refreshes to ensure users see the latest data.
     This endpoint clears the in-memory cache that optimizes repeated target card requests.
+    
+    DEPRECATED: このエンドポイントは target_card_service のキャッシュクリア用でしたが、
+    UseCase移行により不要になりました。互換性のため残していますが、将来削除予定です。
     """
     try:
         from app.repositories.dashboard_target_repo import DashboardTargetRepository
-        from app.services.target_card_service import TargetCardService
+        from app.application.usecases.dashboard.target_card_service import TargetCardService
         
         repo = DashboardTargetRepository(db)
         service = TargetCardService(repo)
@@ -289,8 +217,9 @@ def clear_target_card_cache(db: Session = Depends(get_db)):
         logger.info("Target card cache cleared successfully")
         return {
             "status": "success",
-            "message": "Target card cache has been cleared",
-            "hint": "New requests will fetch fresh data from database"
+            "message": "Target card cache has been cleared (DEPRECATED endpoint)",
+            "hint": "New requests will fetch fresh data from database",
+            "deprecation_notice": "This endpoint will be removed in future versions as UseCase pattern doesn't use TTL cache"
         }
     except Exception as e:
         logger.error(f"Error clearing target card cache: {str(e)}", exc_info=True)
@@ -298,4 +227,3 @@ def clear_target_card_cache(db: Session = Depends(get_db)):
             status_code=500,
             detail=f"Failed to clear cache: {str(e)}"
         )
-
