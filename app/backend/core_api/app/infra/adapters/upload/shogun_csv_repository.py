@@ -13,9 +13,9 @@ import pandas as pd
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 
-from app.repositories.core.dynamic_models import get_shogun_model_class
+from app.infra.db.dynamic_models import get_shogun_model_class
 from app.config.settings import get_settings
-from app.config.table_definition import get_table_definition_generator
+from app.infra.db.table_definition import get_table_definition_generator
 
 logger = logging.getLogger(__name__)
 
@@ -117,7 +117,7 @@ class ShogunCsvRepository:
         Returns:
             int: 保存した行数
         """
-        from app.repositories.core.dynamic_models import create_shogun_model_class
+        from app.infra.db.dynamic_models import create_shogun_model_class
         
         # カスタムテーブル用の動的モデル生成
         model_class = create_shogun_model_class(csv_type, table_name=table_name, schema=self._schema or "debug")

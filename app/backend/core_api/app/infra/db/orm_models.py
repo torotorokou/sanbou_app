@@ -87,7 +87,7 @@ class InboundReservation(Base):
 # ========================================
 
 # 動的モデルをインポート
-from app.repositories.core.dynamic_models import (
+from app.infra.db.dynamic_models import (
     get_shogun_model_class,
     ReceiveShogunFlash,
     YardShogunFlash,

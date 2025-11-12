@@ -11,7 +11,7 @@ import pandas as pd
 import io
 
 from app.deps import get_db
-from app.application.usecases.ingest.ingest_service import IngestService
+from app.application.usecases.ingest.ingest_uc import IngestService
 from app.domain.models import ReservationCreate, ReservationResponse
 
 router = APIRouter(prefix="/ingest", tags=["ingest"])

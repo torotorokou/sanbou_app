@@ -8,7 +8,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 import logging
 
-from app.infra.db import get_engine
+from app.infra.db.db import get_engine
 
 logger = logging.getLogger(__name__)
 
