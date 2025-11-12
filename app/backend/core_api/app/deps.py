@@ -1,22 +1,9 @@
 """
 Dependency injection and utilities for FastAPI.
+
+This module re-exports get_db from app.infra.db for backwards compatibility
+and to serve as a centralized place for all FastAPI dependencies.
 """
-from typing import Generator
-from sqlalchemy.orm import Session
-from app.infra.db import SessionLocal
+from app.infra.db import get_db  # noqa: F401
 
-
-def get_db() -> Generator[Session, None, None]:
-    """
-    FastAPI dependency for database session.
-    Automatically commits on success, rolls back on error.
-    """
-    db = SessionLocal()
-    try:
-        yield db
-        db.commit()
-    except Exception:
-        db.rollback()
-        raise
-    finally:
-        db.close()
+__all__ = ["get_db"]

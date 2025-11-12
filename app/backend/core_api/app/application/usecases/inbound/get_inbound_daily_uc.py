@@ -8,7 +8,7 @@ from datetime import date as date_type
 from typing import List, Optional
 
 from app.domain.inbound import InboundDailyRow, CumScope
-from app.domain.ports.inbound_repository_port import IInboundQuery
+from app.domain.ports.inbound_repository_port import InboundRepository
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +20,7 @@ class GetInboundDailyUseCase:
     Port経由でデータを取得し、ビジネスロジックを適用
     """
     
-    def __init__(self, query: IInboundQuery):
+    def __init__(self, query: InboundRepository):
         self._query = query
     
     def execute(

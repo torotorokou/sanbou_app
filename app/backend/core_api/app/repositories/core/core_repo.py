@@ -6,7 +6,7 @@ from datetime import date as date_type, datetime
 from sqlalchemy.orm import Session
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 
-from app.infra.db.orm_models import InboundActual, InboundReservation
+from app.infra.db_models.orm_models import InboundActual, InboundReservation
 
 
 class CoreRepository:

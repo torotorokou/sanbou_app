@@ -2,10 +2,10 @@
  * PreviewClient - HTTP クライアント
  */
 
+import { coreApi } from '@/shared';
+
 export const PreviewClient = {
-  async get(path: string, signal?: AbortSignal): Promise<unknown> {
-    const res = await fetch(path, { signal });
-    if (!res.ok) throw new Error(`${path} failed: ${res.status}`);
-    return res.json();
+  async get<T = unknown>(path: string, signal?: AbortSignal): Promise<T> {
+    return await coreApi.get<T>(path, { signal });
   },
 };
