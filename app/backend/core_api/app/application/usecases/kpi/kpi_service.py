@@ -9,7 +9,7 @@ from datetime import datetime
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 
-from app.repositories.orm_models import ForecastJob, PredictionDaily
+from app.repositories.core.orm_models import ForecastJob, PredictionDaily
 from app.domain.models import KPIOverview
 
 

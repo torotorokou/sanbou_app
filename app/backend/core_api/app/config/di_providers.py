@@ -17,10 +17,10 @@ from sqlalchemy.orm import Session
 
 from app.deps import get_db
 from app.infra.adapters.shogun_csv_repository import ShogunCsvRepository
-from app.repositories.shogun_flash_debug_repo import ShogunFlashDebugRepository
-from app.repositories.dashboard_target_repo import DashboardTargetRepository
-from app.repositories.job_repo import JobRepository
-from app.repositories.forecast_query_repo import ForecastQueryRepository
+from app.repositories.upload.shogun_flash_debug_repo import ShogunFlashDebugRepository
+from app.repositories.dashboard.dashboard_target_repo import DashboardTargetRepository
+from app.repositories.forecast.job_repo import JobRepository
+from app.repositories.forecast.forecast_query_repo import ForecastQueryRepository
 from app.infra.clients.rag_client import RAGClient
 from app.infra.clients.ledger_client import LedgerClient
 from app.infra.clients.manual_client import ManualClient

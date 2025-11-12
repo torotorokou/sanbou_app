@@ -1,4 +1,5 @@
 .
+├── CLEAN_ARCHITECTURE_MIGRATION.md
 ├── Dockerfile
 ├── README.md
 ├── app
@@ -8,8 +9,35 @@
 │   │   ├── app.cpython-312.pyc
 │   │   └── deps.cpython-312.pyc
 │   ├── app.py
+│   ├── application
+│   │   ├── __init__.py
+│   │   └── usecases
+│   │       ├── __init__.py
+│   │       ├── dashboard
+│   │       │   ├── __init__.py
+│   │       │   ├── build_target_card_uc.py
+│   │       │   └── target_card_service.py
+│   │       ├── external
+│   │       │   ├── __init__.py
+│   │       │   ├── external_api_uc.py
+│   │       │   └── external_service.py
+│   │       ├── forecast
+│   │       │   ├── __init__.py
+│   │       │   ├── forecast_job_uc.py
+│   │       │   └── forecast_service.py
+│   │       ├── ingest
+│   │       │   ├── __init__.py
+│   │       │   └── ingest_service.py
+│   │       ├── kpi
+│   │       │   ├── __init__.py
+│   │       │   └── kpi_service.py
+│   │       └── upload
+│   │           ├── __init__.py
+│   │           ├── shogun_flash_debug_service.py
+│   │           └── upload_syogun_csv_uc.py
 │   ├── config
 │   │   ├── __init__.py
+│   │   ├── di_providers.py
 │   │   ├── settings.py
 │   │   └── table_definition.py
 │   ├── deps.py
@@ -17,15 +45,31 @@
 │   │   ├── __init__.py
 │   │   ├── __pycache__
 │   │   │   ├── __init__.cpython-312.pyc
-│   │   │   └── models.cpython-312.pyc
+│   │   │   ├── models.cpython-312.pyc
+│   │   │   └── shogun_flash_schemas.cpython-312.pyc
+│   │   ├── entities
+│   │   │   └── __init__.py
 │   │   ├── inbound.py
 │   │   ├── models.py
-│   │   └── rules.py
+│   │   ├── ports
+│   │   │   ├── __init__.py
+│   │   │   ├── csv_writer_port.py
+│   │   │   ├── dashboard_query_port.py
+│   │   │   ├── external_api_port.py
+│   │   │   ├── forecast_port.py
+│   │   │   └── inbound_repository_port.py
+│   │   ├── rules.py
+│   │   ├── shogun_flash_schemas.py
+│   │   └── value_objects
+│   │       └── __init__.py
 │   ├── infra
 │   │   ├── __init__.py
 │   │   ├── __pycache__
 │   │   │   ├── __init__.cpython-312.pyc
 │   │   │   └── db.cpython-312.pyc
+│   │   ├── adapters
+│   │   │   ├── __init__.py
+│   │   │   └── shogun_csv_repository.py
 │   │   ├── clients
 │   │   │   ├── __init__.py
 │   │   │   ├── __pycache__
@@ -40,9 +84,6 @@
 │   │   │   └── rag_client.py
 │   │   ├── db.py
 │   │   └── http.py
-│   ├── ports
-│   │   ├── __init__.py
-│   │   └── inbound_repository.py
 │   ├── repositories
 │   │   ├── __init__.py
 │   │   ├── __pycache__
@@ -51,78 +92,189 @@
 │   │   │   ├── forecast_query_repo.cpython-312.pyc
 │   │   │   ├── job_repo.cpython-312.pyc
 │   │   │   └── orm_models.cpython-312.pyc
-│   │   ├── core_repo.py
-│   │   ├── dashboard_target_repo.py
-│   │   ├── dynamic_models.py
-│   │   ├── forecast_query_repo.py
-│   │   ├── inbound_pg_repo.py
-│   │   ├── job_repo.py
-│   │   ├── orm_models.py
-│   │   └── shogun_csv_repo.py
-│   ├── routers
-│   │   ├── __init__.py
-│   │   ├── __pycache__
-│   │   │   ├── __init__.cpython-312.pyc
-│   │   │   ├── analysis.cpython-312.pyc
-│   │   │   ├── block_unit_price.cpython-312.pyc
-│   │   │   ├── calendar.cpython-312.pyc
-│   │   │   ├── chat.cpython-312.pyc
-│   │   │   ├── database.cpython-312.pyc
-│   │   │   ├── external.cpython-312.pyc
-│   │   │   ├── forecast.cpython-312.pyc
-│   │   │   ├── ingest.cpython-312.pyc
-│   │   │   ├── kpi.cpython-312.pyc
-│   │   │   ├── manual.cpython-312.pyc
-│   │   │   └── reports.cpython-312.pyc
-│   │   ├── analysis.py
-│   │   ├── block_unit_price.py
-│   │   ├── calendar.py
-│   │   ├── chat.py
-│   │   ├── dashboard.py
-│   │   ├── database.py
-│   │   ├── external.py
-│   │   ├── forecast.py
-│   │   ├── inbound.py
-│   │   ├── ingest.py
-│   │   ├── kpi.py
-│   │   ├── manual.py
-│   │   └── reports.py
-│   └── services
+│   │   ├── core
+│   │   │   ├── __init__.py
+│   │   │   ├── core_repo.py
+│   │   │   ├── dynamic_models.py
+│   │   │   ├── orm_models.py
+│   │   │   └── sql_names.py
+│   │   ├── dashboard
+│   │   │   ├── __init__.py
+│   │   │   └── dashboard_target_repo.py
+│   │   ├── forecast
+│   │   │   ├── __init__.py
+│   │   │   ├── forecast_query_repo.py
+│   │   │   └── job_repo.py
+│   │   ├── inbound
+│   │   │   ├── __init__.py
+│   │   │   └── inbound_pg_repo.py
+│   │   └── upload
+│   │       ├── __init__.py
+│   │       ├── shogun_csv_repo.py
+│   │       └── shogun_flash_debug_repo.py
+│   └── routers
 │       ├── __init__.py
 │       ├── __pycache__
 │       │   ├── __init__.cpython-312.pyc
-│       │   ├── external_service.cpython-312.pyc
-│       │   ├── forecast_service.cpython-312.pyc
-│       │   ├── ingest_service.cpython-312.pyc
-│       │   └── kpi_service.cpython-312.pyc
-│       ├── external_service.py
-│       ├── forecast_service.py
-│       ├── ingest_service.py
-│       ├── kpi_service.py
-│       └── target_card_service.py
+│       │   ├── analysis.cpython-312.pyc
+│       │   ├── block_unit_price.cpython-312.pyc
+│       │   ├── calendar.cpython-312.pyc
+│       │   ├── chat.cpython-312.pyc
+│       │   ├── database.cpython-312.pyc
+│       │   ├── external.cpython-312.pyc
+│       │   ├── forecast.cpython-312.pyc
+│       │   ├── ingest.cpython-312.pyc
+│       │   ├── kpi.cpython-312.pyc
+│       │   ├── manual.cpython-312.pyc
+│       │   └── reports.cpython-312.pyc
+│       ├── analysis
+│       │   ├── __init__.py
+│       │   └── router.py
+│       ├── block_unit_price
+│       │   ├── __init__.py
+│       │   └── router.py
+│       ├── calendar
+│       │   ├── __init__.py
+│       │   └── router.py
+│       ├── chat
+│       │   ├── __init__.py
+│       │   └── router.py
+│       ├── dashboard
+│       │   ├── __init__.py
+│       │   └── router.py
+│       ├── database
+│       │   ├── __init__.py
+│       │   └── router.py
+│       ├── external
+│       │   ├── __init__.py
+│       │   └── router.py
+│       ├── forecast
+│       │   ├── __init__.py
+│       │   └── router.py
+│       ├── inbound
+│       │   ├── __init__.py
+│       │   └── router.py
+│       ├── ingest
+│       │   ├── __init__.py
+│       │   └── router.py
+│       ├── kpi
+│       │   ├── __init__.py
+│       │   └── router.py
+│       ├── manual
+│       │   ├── __init__.py
+│       │   └── router.py
+│       └── reports
+│           ├── __init__.py
+│           └── router.py
 ├── docs
 │   ├── CSV_UPLOAD_IMPLEMENTATION.md
 │   ├── Dockerfile.bak.20251030_093302
 │   ├── IMPLEMENTATION_COMPLETE.md
 │   └── YAML_FIRST_ARCHITECTURE.md
 ├── migrations
+│   ├── _snapshots
+│   │   ├── 2025-11-04
+│   │   │   ├── mart
+│   │   │   │   ├── mart.daily_target_plan.sql
+│   │   │   │   ├── mart.inb_profile_smooth_test.sql
+│   │   │   │   ├── mart.receive_daily.sql
+│   │   │   │   ├── mart.receive_monthly.sql
+│   │   │   │   ├── mart.receive_weekly.sql
+│   │   │   │   ├── mart.v_daily_target_with_calendar.sql
+│   │   │   │   └── mart.v_target_card_per_day.sql
+│   │   │   └── ref
+│   │   │       ├── calendar_day.sql
+│   │   │       ├── calendar_exception.sql
+│   │   │       ├── calendar_month.sql
+│   │   │       ├── closure_membership.sql
+│   │   │       ├── closure_periods.sql
+│   │   │       └── holiday_jp.sql
+│   │   └── 2025-11-05
+│   │       └── raw
+│   │           ├── receive_king_final.sql
+│   │           ├── receive_shogun_final.sql
+│   │           └── receive_shogun_flash.sql
 │   ├── alembic
+│   │   ├── _attic_2025-11-04
+│   │   │   └── ref_tables
+│   │   │       ├── calendar_day.sql
+│   │   │       ├── calendar_exception.sql
+│   │   │       ├── calendar_month.sql
+│   │   │       ├── closure_membership.sql
+│   │   │       ├── closure_periods.sql
+│   │   │       └── holiday_jp.sql
 │   │   ├── env.py
 │   │   ├── script.py.mako
+│   │   ├── sql
+│   │   │   ├── kpi
+│   │   │   ├── mart
+│   │   │   │   ├── mv_inb5y_week_profile_min.sql
+│   │   │   │   ├── mv_inb_avg5y_day_biz.sql
+│   │   │   │   ├── mv_inb_avg5y_day_scope.sql
+│   │   │   │   ├── mv_inb_avg5y_weeksum_biz.sql
+│   │   │   │   ├── receive_daily.sql
+│   │   │   │   ├── receive_monthly.sql
+│   │   │   │   ├── receive_weekly.sql
+│   │   │   │   ├── v_daily_target_with_calendar.sql
+│   │   │   │   ├── v_receive_daily.sql
+│   │   │   │   ├── v_receive_monthly.sql
+│   │   │   │   ├── v_receive_weekly.sql
+│   │   │   │   └── v_target_card_per_day.sql
+│   │   │   └── ref
+│   │   │       ├── tables
+│   │   │       ├── v_calendar_classified.sql
+│   │   │       └── v_closure_days.sql
 │   │   └── versions
-│   │       ├── 9a092c4a1fcf_baseline_no_op.py
+│   │       ├── 20251104_154033124_mart_baseline.py
+│   │       ├── 20251104_160703155_manage_views_mart.py
+│   │       ├── 20251104_162109457_manage_materialized_views_mart.py
+│   │       ├── 20251104_163649629_manage_views_ref.py
+│   │       ├── 20251104_164629413_ref_baseline_tables.py
+│   │       ├── 20251104_174818076_kpi_tables_monthly_targets_baseline_safe.py
+│   │       ├── 20251104_210000000_ref_tables_py_baseline_safe.py
+│   │       ├── 20251105_091848960_raw_tables_py_baseline_safe.py
+│   │       ├── 20251105_091950593_raw_add_receive_king_final_py_safe.py
+│   │       ├── 20251105_100819527_mart_canonicalize_receive__into_v_.py
+│   │       ├── 20251105_101107506_mart_mark_receive__wrappers_as_.py
+│   │       ├── 20251105_101233931_mart_grant_select_on_v_receive__to_app_.py
+│   │       ├── 20251105_115452784_mart_repoint_mv_view_definitions_to_v_.py
+│   │       ├── 20251105_152407663_mart_drop_legacy_wrapper_views_receive__.py
+│   │       ├── 20251105_153337731_mart_hard_drop_legacy_receive__wrappers_.py
+│   │       ├── 20251105_160031021_optimize_v_target_card_per_day.py
+│   │       ├── 20251105_160859083_index_receive_king_final_for_v_target_.py
+│   │       ├── 20251105_164859366_create_stg_schema.py
+│   │       ├── 20251105_165006509_create_stg_v_king_receive_clean.py
+│   │       ├── 20251105_165932182_change_stg_v_king_receive_clean.py
+│   │       ├── 20251105_170334790_patch_v_receive_daily_to_use_stg_v_king_.py
+│   │       ├── 20251105_171336072_push_down_date_filters_in_v_target_card_.py
+│   │       ├── 20251105_172835295_fix_stg_v_king_receive_clean_columns.py
+│   │       ├── 20251105_174016896_drop_stg_v_king_receive_daily.py
+│   │       ├── 20251105_174329122_park_legacy_clean_recreate_minimal_clean.py
+│   │       ├── 20251105_174420334_retarget_mart_v_receive_daily_to_stg_v_.py
+│   │       ├── 20251105_174522163_drop_stg_v_king_receive_clean_min_and_.py
+│   │       ├── 20251105_174743743_drop_stg_v_king_receive_clean_legacy.py
+│   │       ├── 20251106_113719410_covering_index_for_king_invoice_d_.py
 │   │       └── _attic_2025-11-04
 │   │           ├── 001_initial_schema.py
 │   │           ├── 002_add_raw_shogun_tables.py
+│   │           ├── 454f7f0472db_manage_view_mart_receive_weekly.py
 │   │           ├── 4befa8148602_msg.py
+│   │           ├── 83f7cf7d956e_manage_view_mart_v_daily_target_with_.py
+│   │           ├── 9a092c4a1fcf_baseline_no_op.py
+│   │           ├── README.md
+│   │           ├── b3925aec6dda_manage_view_mart_receive_daily.py
+│   │           ├── d64c705dde4a_manage_view_mart_v_target_card_per_day.py
+│   │           ├── eb4da327ec9b_manage_view_mart_receive_monthly.py
+│   │           ├── env_legacy.py
 │   │           └── f59be045f166_baseline_no_op.py
-│   ├── alembic.ini
-│   └── env_legacy.py
+│   └── alembic.ini
 ├── pyproject.toml
 ├── requirements-dev.txt
 ├── requirements.txt
 ├── tests
-│   └── test_inbound_daily.py
-└── tree.txt
+│   ├── test_inbound_daily.py
+│   └── test_shogun_flash_schemas.py
+├── tree.txt
+└── tree_txt.txt
 
-23 directories, 103 files
+63 directories, 215 files

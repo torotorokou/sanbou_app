@@ -8,21 +8,19 @@ from pythonjsonlogger import jsonlogger
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.routers import (
-    ingest,
-    forecast,
-    kpi,
-    external,
-    calendar,
-    reports,
-    chat,
-    analysis,
-    database,
-    block_unit_price,
-    manual,
-    dashboard,
-    inbound,
-)
+from app.routers.ingest.router import router as ingest_router
+from app.routers.forecast.router import router as forecast_router
+from app.routers.kpi.router import router as kpi_router
+from app.routers.external.router import router as external_router
+from app.routers.calendar.router import router as calendar_router
+from app.routers.reports.router import router as reports_router
+from app.routers.chat.router import router as chat_router
+from app.routers.analysis.router import router as analysis_router
+from app.routers.database.router import router as database_router
+from app.routers.block_unit_price.router import router as block_unit_price_router
+from app.routers.manual.router import router as manual_router
+from app.routers.dashboard.router import router as dashboard_router
+from app.routers.inbound.router import router as inbound_router
 
 # Setup structured JSON logging
 logger = logging.getLogger()
@@ -51,19 +49,19 @@ if os.getenv("ENABLE_CORS", "false").lower() == "true":
     )
 
 # Register routers
-app.include_router(ingest.router)
-app.include_router(forecast.router)
-app.include_router(kpi.router)
-app.include_router(external.router)
-app.include_router(calendar.router)
-app.include_router(reports.router)   # BFF: ledger_api reports proxy
-app.include_router(block_unit_price.router)  # BFF: ledger_api block_unit_price_interactive proxy (separate from reports)
-app.include_router(manual.router)    # BFF: manual_api proxy
-app.include_router(chat.router)      # BFF: rag_api chat proxy
-app.include_router(analysis.router)  # BFF: ledger_api analysis proxy (TODO: 未実装)
-app.include_router(database.router)  # BFF: sql_api database proxy (TODO: 未実装)
-app.include_router(dashboard.router) # Dashboard: target metrics
-app.include_router(inbound.router)   # Inbound: daily data with cumulative
+app.include_router(ingest_router)
+app.include_router(forecast_router)
+app.include_router(kpi_router)
+app.include_router(external_router)
+app.include_router(calendar_router)
+app.include_router(reports_router)   # BFF: ledger_api reports proxy
+app.include_router(block_unit_price_router)  # BFF: ledger_api block_unit_price_interactive proxy (separate from reports)
+app.include_router(manual_router)    # BFF: manual_api proxy
+app.include_router(chat_router)      # BFF: rag_api chat proxy
+app.include_router(analysis_router)  # BFF: ledger_api analysis proxy (TODO: 未実装)
+app.include_router(database_router)  # BFF: sql_api database proxy (TODO: 未実装)
+app.include_router(dashboard_router) # Dashboard: target metrics
+app.include_router(inbound_router)   # Inbound: daily data with cumulative
 
 
 @app.get("/healthz", include_in_schema=False, tags=["health"])
