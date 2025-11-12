@@ -1,5 +1,9 @@
 """
 Ingest router: CSV upload and reservation endpoints.
+
+TODO: UseCase移行待ち
+  - 現在はService層を直接呼び出し
+  - 将来的に UploadIngestCsvUseCase, CreateReservationUseCase へ移行予定
 """
 from fastapi import APIRouter, Depends, UploadFile, File, HTTPException
 from sqlalchemy.orm import Session
@@ -7,7 +11,7 @@ import pandas as pd
 import io
 
 from app.infra.db import get_db
-from app.services.ingest_service import IngestService
+from app.application.usecases.ingest.ingest_service import IngestService
 from app.domain.models import ReservationCreate, ReservationResponse
 
 router = APIRouter(prefix="/ingest", tags=["ingest"])
@@ -22,6 +26,7 @@ async def upload_csv(
     Upload CSV file with inbound actuals.
     TODO: Define CSV column spec.
     Expected columns: date, trucks, weight, vendor, etc.
+    TODO: Migrate to UseCase pattern (UploadIngestCsvUseCase)
     """
     if not file.filename.endswith(".csv"):
         raise HTTPException(status_code=400, detail="Only CSV files are supported")
@@ -48,6 +53,7 @@ def create_reservation(
 ):
     """
     Create or update a truck reservation for a specific date.
+    TODO: Migrate to UseCase pattern (CreateReservationUseCase)
     """
     service = IngestService(db)
     return service.create_reservation(req)

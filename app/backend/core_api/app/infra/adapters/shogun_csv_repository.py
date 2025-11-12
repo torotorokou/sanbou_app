@@ -1,10 +1,15 @@
-# refactor-plan: minimal-diff first, then clean separation (usecase + di_providers)
+# implements Port: IShogunCsvWriter (app/ports/csv_writer.py)
 """
-Shogun CSV Repository
+Adapter: ShogunCsvRepository
 
-将軍CSVデータをDBに保存するリポジトリ。
-backend_sharedのCSVバリデーター・フォーマッターを活用します。
-YAMLファイル(syogun_csv_masters.yaml)から動的にカラムマッピングを取得します。
+将軍CSVデータをDBに保存するアダプター。
+IShogunCsvWriter ポートを実装し、具体的なDB操作（SQLAlchemy ORM）を担当。
+
+設計方針:
+  - Port (IShogunCsvWriter) を実装
+  - schema/table_map による切替を吸収
+  - YAMLベースのカラムマッピングを活用
+  - ORM操作の具体を隠蔽
 """
 
 import logging
@@ -13,7 +18,7 @@ import pandas as pd
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 
-from app.repositories.dynamic_models import get_shogun_model_class
+from app.repositories.dynamic_models import get_shogun_model_class, create_shogun_model_class
 from app.config.settings import get_settings
 from app.config.table_definition import get_table_definition_generator
 
@@ -21,7 +26,7 @@ logger = logging.getLogger(__name__)
 
 
 class ShogunCsvRepository:
-    """将軍CSV保存リポジトリ（YAMLベース）"""
+    """将軍CSV保存リポジトリ（IShogunCsvWriter実装）"""
     
     def __init__(
         self,
@@ -117,8 +122,6 @@ class ShogunCsvRepository:
         Returns:
             int: 保存した行数
         """
-        from app.repositories.dynamic_models import create_shogun_model_class
-        
         # カスタムテーブル用の動的モデル生成
         model_class = create_shogun_model_class(csv_type, table_name=table_name, schema=self._schema or "debug")
         
@@ -217,4 +220,3 @@ class ShogunCsvRepository:
             {'伝票日付': 'slip_date', ...}
         """
         return self.table_gen.get_column_mapping(csv_type)
-

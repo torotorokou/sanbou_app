@@ -1,5 +1,10 @@
 """
 Dashboard router: target metrics and dashboard data.
+
+設計方針:
+  - Router は HTTP I/O のみ
+  - ビジネスロジックは UseCase に委譲
+  - DI 経由で UseCase を取得
 """
 from fastapi import APIRouter, Depends, Query, HTTPException
 from sqlalchemy.orm import Session
@@ -8,8 +13,8 @@ from typing import Literal
 import logging
 
 from app.infra.db import get_db
-from app.repositories.dashboard_target_repo import DashboardTargetRepository
-from app.services.target_card_service import TargetCardService
+from app.config.di_providers import get_build_target_card_uc
+from app.application.usecases.dashboard.build_target_card_uc import BuildTargetCardUseCase
 from app.domain.models import TargetMetricsResponse
 
 logger = logging.getLogger(__name__)
@@ -20,7 +25,7 @@ router = APIRouter(prefix="/dashboard", tags=["dashboard"])
 def get_target_metrics(
     date: date_type = Query(..., description="Target date (YYYY-MM-DD). For monthly view, use first day of month."),
     mode: Literal["daily", "monthly"] = Query("monthly", description="Fetch mode: 'daily' for specific date, 'monthly' for month-level view with day/week masking"),
-    db: Session = Depends(get_db),
+    uc: BuildTargetCardUseCase = Depends(get_build_target_card_uc),
 ):
     """
     Retrieve monthly, weekly, and daily target metrics with actuals for the specified date.
@@ -43,10 +48,7 @@ def get_target_metrics(
     try:
         logger.info(f"GET /dashboard/target called with date={date}, mode={mode}")
         
-        repo = DashboardTargetRepository(db)
-        service = TargetCardService(repo)
-        
-        data = service.get_by_date(date, mode=mode)  # type: ignore[arg-type]
+        data = uc.execute(date, mode=mode)  # type: ignore[arg-type]
         
         if not data:
             logger.warning(f"No target card data found for date={date}, mode={mode}")

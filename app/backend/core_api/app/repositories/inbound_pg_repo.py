@@ -10,7 +10,7 @@ import logging
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from app.ports.inbound_repository import InboundRepository
+from app.domain.ports.inbound_repository_port import InboundRepository
 from app.domain.inbound import InboundDailyRow, CumScope
 
 # 👇 SQL識別子は1か所で管理（定数化）

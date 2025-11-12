@@ -13,24 +13,26 @@ from app.config.table_definition import get_table_definition_generator
 Base = declarative_base()
 
 
-def create_shogun_model_class(csv_type: str) -> Type:
+def create_shogun_model_class(csv_type: str, table_name: str | None = None, schema: str = "raw") -> Type:
     """
     CSV種別からORMモデルクラスを動的に生成
     
     Args:
         csv_type: CSV種別（'receive', 'yard', 'shipment'）
+        table_name: テーブル名（省略時は '{csv_type}_shogun_flash'）
+        schema: スキーマ名（デフォルト: 'raw'）
         
     Returns:
         動的に生成されたORMモデルクラス
     """
     generator = get_table_definition_generator()
-    table_name = f"{csv_type}_shogun_flash"
+    actual_table_name = table_name or f"{csv_type}_shogun_flash"
     columns_def = generator.get_columns_definition(csv_type)
     
     # クラス属性を準備
     attrs: Dict[str, Any] = {
-        '__tablename__': table_name,
-        '__table_args__': {'schema': 'raw'},
+        '__tablename__': actual_table_name,
+        '__table_args__': {'schema': schema},
         'id': Column(Integer, primary_key=True, autoincrement=True),
     }
     
