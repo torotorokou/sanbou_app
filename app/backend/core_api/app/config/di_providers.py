@@ -17,10 +17,10 @@ from sqlalchemy.orm import Session
 
 from app.deps import get_db
 from app.infra.adapters.shogun_csv_repository import ShogunCsvRepository
-from app.repositories.upload.shogun_flash_debug_repo import ShogunFlashDebugRepository
-from app.repositories.dashboard.dashboard_target_repo import DashboardTargetRepository
-from app.repositories.forecast.job_repo import JobRepository
-from app.repositories.forecast.forecast_query_repo import ForecastQueryRepository
+from app.infra.adapters.misc.shogun_flash_debug_repo import ShogunFlashDebugRepository
+from app.infra.adapters.dashboard.dashboard_target_repo import DashboardTargetRepository
+from app.infra.adapters.forecast.job_repo import JobRepository
+from app.infra.adapters.forecast.forecast_query_repo import ForecastQueryRepository
 from app.infra.clients.rag_client import RAGClient
 from app.infra.clients.ledger_client import LedgerClient
 from app.infra.clients.manual_client import ManualClient
@@ -277,3 +277,23 @@ def get_generate_report_uc(
 def get_classify_text_uc(client: AIClient = Depends(get_ai_client)) -> ClassifyTextUseCase:
     """ClassifyTextUseCase提供"""
     return ClassifyTextUseCase(ai_client=client)
+
+
+# ========================================================================
+# Inbound UseCase Providers
+# ========================================================================
+from app.application.usecases.inbound.get_inbound_daily_uc import GetInboundDailyUseCase
+from app.infra.adapters.inbound.inbound_pg_repository import InboundPgRepository
+
+
+def get_inbound_repo(db: Session = Depends(get_db)) -> InboundPgRepository:
+    """InboundPgRepository提供"""
+    return InboundPgRepository(db)
+
+
+def get_inbound_daily_uc(
+    repo: InboundPgRepository = Depends(get_inbound_repo)
+) -> GetInboundDailyUseCase:
+    """GetInboundDailyUseCase提供"""
+    return GetInboundDailyUseCase(query=repo)
+
