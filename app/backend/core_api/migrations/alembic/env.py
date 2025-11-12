@@ -34,7 +34,7 @@ if str(BACKEND_ROOT) not in sys.path:
     sys.path.append(str(BACKEND_ROOT))
 
 # あなたの SQLAlchemy Base を import
-from app.repositories.core.orm_models import Base  # noqa: E402
+from app.infra.db.orm_models import Base  # noqa: E402
 
 # Alembic が参照するメタデータ（オートジェネレートの基準）
 target_metadata = Base.metadata

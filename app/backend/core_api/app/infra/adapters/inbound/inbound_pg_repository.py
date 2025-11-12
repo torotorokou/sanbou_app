@@ -14,7 +14,7 @@ from app.domain.ports.inbound_repository_port import InboundRepository
 from app.domain.inbound import InboundDailyRow, CumScope
 
 # 👇 SQL識別子は1か所で管理（定数化）
-from app.repositories.sql_names import V_RECEIVE_DAILY, V_CALENDAR
+from app.infra.db.sql_names import V_RECEIVE_DAILY, V_CALENDAR
 
 logger = logging.getLogger(__name__)
 

@@ -5,7 +5,7 @@ from typing import List
 from datetime import date as date_type
 from sqlalchemy.orm import Session
 
-from app.repositories.core.orm_models import PredictionDaily
+from app.infra.db.orm_models import PredictionDaily
 from app.domain.models import PredictionDTO
 
 

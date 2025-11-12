@@ -8,19 +8,19 @@ from pythonjsonlogger import jsonlogger
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.routers.ingest.router import router as ingest_router
-from app.routers.forecast.router import router as forecast_router
-from app.routers.kpi.router import router as kpi_router
-from app.routers.external.router import router as external_router
-from app.routers.calendar.router import router as calendar_router
-from app.routers.reports.router import router as reports_router
-from app.routers.chat.router import router as chat_router
-from app.routers.analysis.router import router as analysis_router
-from app.routers.database.router import router as database_router
-from app.routers.block_unit_price.router import router as block_unit_price_router
-from app.routers.manual.router import router as manual_router
-from app.routers.dashboard.router import router as dashboard_router
-from app.routers.inbound.router import router as inbound_router
+from app.presentation.routers.ingest.router import router as ingest_router
+from app.presentation.routers.forecast.router import router as forecast_router
+from app.presentation.routers.kpi.router import router as kpi_router
+from app.presentation.routers.external.router import router as external_router
+from app.presentation.routers.calendar.router import router as calendar_router
+from app.presentation.routers.reports.router import router as reports_router
+from app.presentation.routers.chat.router import router as chat_router
+from app.presentation.routers.analysis.router import router as analysis_router
+from app.presentation.routers.database.router import router as database_router
+from app.presentation.routers.block_unit_price.router import router as block_unit_price_router
+from app.presentation.routers.manual.router import router as manual_router
+from app.presentation.routers.dashboard.router import router as dashboard_router
+from app.presentation.routers.inbound.router import router as inbound_router
 
 # Setup structured JSON logging
 logger = logging.getLogger()

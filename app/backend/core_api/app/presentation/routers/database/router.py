@@ -19,7 +19,6 @@ from fastapi import APIRouter, HTTPException, UploadFile, File, Depends, status
 from sqlalchemy.orm import Session
 
 from app.deps import get_db
-from app.repositories.upload.shogun_flash_debug_repo import ShogunFlashDebugRepository
 from app.config.settings import get_settings
 from backend_shared.adapters.presentation import SuccessApiResponse, ErrorApiResponse
 
@@ -207,12 +206,9 @@ def clear_target_card_cache(db: Session = Depends(get_db)):
     UseCase移行により不要になりました。互換性のため残していますが、将来削除予定です。
     """
     try:
-        from app.repositories.dashboard_target_repo import DashboardTargetRepository
-        from app.application.usecases.dashboard.target_card_service import TargetCardService
+        from app.application.usecases.dashboard.build_target_card_uc import BuildTargetCardUseCase
         
-        repo = DashboardTargetRepository(db)
-        service = TargetCardService(repo)
-        service.clear_cache()
+        BuildTargetCardUseCase.clear_cache()
         
         logger.info("Target card cache cleared successfully")
         return {

@@ -1,0 +1,38 @@
+[importlinter]
+root_package = app
+
+[importlinter:contract:1]
+name = Clean Architecture Layers
+type = layers
+layers =
+    app.presentation
+    app.application
+    app.domain
+
+[importlinter:contract:2]
+name = No Infrastructure in Domain/Application
+type = forbidden
+source_modules =
+    app.domain
+    app.application
+forbidden_modules =
+    app.infra
+
+[importlinter:contract:3]
+name = No Presentation in Application/Domain
+type = forbidden
+source_modules =
+    app.application
+    app.domain
+forbidden_modules =
+    app.presentation
+
+[importlinter:contract:4]
+name = Domain is Pure
+type = forbidden
+source_modules =
+    app.domain
+forbidden_modules =
+    app.infra
+    app.presentation
+    app.application
