@@ -3,24 +3,21 @@ KPI API Router
 KPI overview and metrics endpoints
 """
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
 import logging
 
-from app.domain.models import KPIOverview
-from app.application.usecases.kpi.kpi_uc import KPIService
-from app.deps import get_db
+from app.presentation.schemas import KPIOverview
+from app.application.usecases.kpi.kpi_uc import KPIUseCase
+from app.config.di_providers import get_kpi_uc
 
 router = APIRouter(prefix="/kpi", tags=["kpi"])
 
 
 @router.get("/overview", response_model=KPIOverview, summary="Get KPI overview")
 def get_overview(
-    db: Session = Depends(get_db),
+    uc: KPIUseCase = Depends(get_kpi_uc),
 ):
     """
     Get aggregated KPIs for the dashboard.
-    TODO: Add more detailed breakdowns and filters.
-    TODO: Migrate to UseCase pattern (GetKPIOverviewUseCase)
+    Follows Clean Architecture with Port&Adapter pattern.
     """
-    service = KPIService(db)
-    return service.get_overview()
+    return uc.get_overview()

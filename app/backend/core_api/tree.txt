@@ -27,18 +27,17 @@
 │   │       │   └── get_inbound_daily_uc.py
 │   │       ├── ingest
 │   │       │   ├── __init__.py
-│   │       │   └── ingest_service.py
+│   │       │   └── ingest_uc.py
 │   │       ├── kpi
 │   │       │   ├── __init__.py
-│   │       │   └── kpi_service.py
+│   │       │   └── kpi_uc.py
 │   │       └── upload
 │   │           ├── __init__.py
 │   │           └── upload_syogun_csv_uc.py
 │   ├── config
 │   │   ├── __init__.py
 │   │   ├── di_providers.py
-│   │   ├── settings.py
-│   │   └── table_definition.py
+│   │   └── settings.py
 │   ├── deps.py
 │   ├── domain
 │   │   ├── __init__.py
@@ -91,8 +90,8 @@
 │   │   │   │   └── ingest_adapter.py
 │   │   │   ├── misc
 │   │   │   │   ├── __init__.py
+│   │   │   │   ├── core_repo.py
 │   │   │   │   └── shogun_flash_debug_repo.py
-│   │   │   ├── shogun_csv_repository.py
 │   │   │   └── upload
 │   │   │       ├── __init__.py
 │   │   │       └── shogun_csv_repository.py
@@ -108,81 +107,78 @@
 │   │   │   ├── ledger_client.py
 │   │   │   ├── manual_client.py
 │   │   │   └── rag_client.py
-│   │   ├── db.py
-│   │   ├── db_models
+│   │   ├── db
 │   │   │   ├── __init__.py
+│   │   │   ├── db.py
+│   │   │   ├── dynamic_models.py
 │   │   │   ├── orm_models.py
-│   │   │   └── sql_names.py
+│   │   │   ├── sql_names.py
+│   │   │   └── table_definition.py
 │   │   └── http.py
 │   ├── presentation
 │   │   ├── __init__.py
-│   │   └── routers
-│   │       ├── __init__.py
-│   │       ├── __pycache__
-│   │       │   ├── __init__.cpython-312.pyc
-│   │       │   ├── analysis.cpython-312.pyc
-│   │       │   ├── block_unit_price.cpython-312.pyc
-│   │       │   ├── calendar.cpython-312.pyc
-│   │       │   ├── chat.cpython-312.pyc
-│   │       │   ├── database.cpython-312.pyc
-│   │       │   ├── external.cpython-312.pyc
-│   │       │   ├── forecast.cpython-312.pyc
-│   │       │   ├── ingest.cpython-312.pyc
-│   │       │   ├── kpi.cpython-312.pyc
-│   │       │   ├── manual.cpython-312.pyc
-│   │       │   └── reports.cpython-312.pyc
-│   │       ├── analysis
-│   │       │   ├── __init__.py
-│   │       │   └── router.py
-│   │       ├── block_unit_price
-│   │       │   ├── __init__.py
-│   │       │   └── router.py
-│   │       ├── calendar
-│   │       │   ├── __init__.py
-│   │       │   └── router.py
-│   │       ├── chat
-│   │       │   ├── __init__.py
-│   │       │   └── router.py
-│   │       ├── dashboard
-│   │       │   ├── __init__.py
-│   │       │   └── router.py
-│   │       ├── database
-│   │       │   ├── __init__.py
-│   │       │   └── router.py
-│   │       ├── external
-│   │       │   ├── __init__.py
-│   │       │   └── router.py
-│   │       ├── forecast
-│   │       │   ├── __init__.py
-│   │       │   └── router.py
-│   │       ├── inbound
-│   │       │   ├── __init__.py
-│   │       │   └── router.py
-│   │       ├── ingest
-│   │       │   ├── __init__.py
-│   │       │   └── router.py
-│   │       ├── kpi
-│   │       │   ├── __init__.py
-│   │       │   └── router.py
-│   │       ├── manual
-│   │       │   ├── __init__.py
-│   │       │   └── router.py
-│   │       └── reports
-│   │           ├── __init__.py
-│   │           └── router.py
+│   │   ├── routers
+│   │   │   ├── __init__.py
+│   │   │   ├── __pycache__
+│   │   │   │   ├── __init__.cpython-312.pyc
+│   │   │   │   ├── analysis.cpython-312.pyc
+│   │   │   │   ├── block_unit_price.cpython-312.pyc
+│   │   │   │   ├── calendar.cpython-312.pyc
+│   │   │   │   ├── chat.cpython-312.pyc
+│   │   │   │   ├── database.cpython-312.pyc
+│   │   │   │   ├── external.cpython-312.pyc
+│   │   │   │   ├── forecast.cpython-312.pyc
+│   │   │   │   ├── ingest.cpython-312.pyc
+│   │   │   │   ├── kpi.cpython-312.pyc
+│   │   │   │   ├── manual.cpython-312.pyc
+│   │   │   │   └── reports.cpython-312.pyc
+│   │   │   ├── analysis
+│   │   │   │   ├── __init__.py
+│   │   │   │   └── router.py
+│   │   │   ├── block_unit_price
+│   │   │   │   ├── __init__.py
+│   │   │   │   └── router.py
+│   │   │   ├── calendar
+│   │   │   │   ├── __init__.py
+│   │   │   │   └── router.py
+│   │   │   ├── chat
+│   │   │   │   ├── __init__.py
+│   │   │   │   └── router.py
+│   │   │   ├── dashboard
+│   │   │   │   ├── __init__.py
+│   │   │   │   └── router.py
+│   │   │   ├── database
+│   │   │   │   ├── __init__.py
+│   │   │   │   └── router.py
+│   │   │   ├── external
+│   │   │   │   ├── __init__.py
+│   │   │   │   └── router.py
+│   │   │   ├── forecast
+│   │   │   │   ├── __init__.py
+│   │   │   │   └── router.py
+│   │   │   ├── inbound
+│   │   │   │   ├── __init__.py
+│   │   │   │   └── router.py
+│   │   │   ├── ingest
+│   │   │   │   ├── __init__.py
+│   │   │   │   └── router.py
+│   │   │   ├── kpi
+│   │   │   │   ├── __init__.py
+│   │   │   │   └── router.py
+│   │   │   ├── manual
+│   │   │   │   ├── __init__.py
+│   │   │   │   └── router.py
+│   │   │   └── reports
+│   │   │       ├── __init__.py
+│   │   │       └── router.py
+│   │   └── schemas
 │   └── repositories
-│       ├── __init__.py
-│       ├── __pycache__
-│       │   ├── __init__.cpython-312.pyc
-│       │   ├── core_repo.cpython-312.pyc
-│       │   ├── forecast_query_repo.cpython-312.pyc
-│       │   ├── job_repo.cpython-312.pyc
-│       │   └── orm_models.cpython-312.pyc
-│       ├── core
-│       │   ├── __init__.py
-│       │   ├── core_repo.py
-│       │   └── dynamic_models.py
-│       └── core_repo.py
+│       └── __pycache__
+│           ├── __init__.cpython-312.pyc
+│           ├── core_repo.cpython-312.pyc
+│           ├── forecast_query_repo.cpython-312.pyc
+│           ├── job_repo.cpython-312.pyc
+│           └── orm_models.cpython-312.pyc
 ├── docs
 │   ├── CSV_UPLOAD_IMPLEMENTATION.md
 │   ├── Dockerfile.bak.20251030_093302
@@ -299,4 +295,4 @@
 ├── tree.txt
 └── tree_txt.txt
 
-73 directories, 227 files
+73 directories, 223 files

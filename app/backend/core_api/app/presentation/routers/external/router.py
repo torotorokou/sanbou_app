@@ -20,7 +20,7 @@ from app.application.usecases.external.external_api_uc import (
     GenerateReportUseCase,
     ClassifyTextUseCase,
 )
-from app.domain.models import RAGAskRequest, RAGAskResponse, ManualListResponse
+from app.presentation.schemas import RAGAskRequest, RAGAskResponse, ManualListResponse
 
 router = APIRouter(prefix="/external", tags=["external"])
 logger = logging.getLogger(__name__)

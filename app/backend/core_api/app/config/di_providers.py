@@ -288,3 +288,22 @@ def get_inbound_daily_uc(
     """GetInboundDailyUseCase提供"""
     return GetInboundDailyUseCase(query=repo)
 
+
+# ========================================================================
+# KPI UseCase Providers
+# ========================================================================
+from app.application.usecases.kpi.kpi_uc import KPIUseCase
+from app.infra.adapters.kpi.kpi_query_adapter import KPIQueryAdapter
+
+
+def get_kpi_query_adapter(db: Session = Depends(get_db)) -> KPIQueryAdapter:
+    """KPIQueryAdapter提供"""
+    return KPIQueryAdapter(db)
+
+
+def get_kpi_uc(
+    kpi_query: KPIQueryAdapter = Depends(get_kpi_query_adapter)
+) -> KPIUseCase:
+    """KPIUseCase提供"""
+    return KPIUseCase(kpi_query=kpi_query)
+

@@ -14,7 +14,7 @@ from app.application.usecases.forecast.forecast_job_uc import (
     GetForecastJobStatusUseCase,
     GetPredictionsUseCase,
 )
-from app.domain.models import ForecastJobCreate, ForecastJobResponse, PredictionDTO
+from app.presentation.schemas import ForecastJobCreate, ForecastJobResponse, PredictionDTO
 
 router = APIRouter(prefix="/forecast", tags=["forecast"])
 
