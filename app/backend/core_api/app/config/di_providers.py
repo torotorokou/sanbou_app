@@ -16,7 +16,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from app.deps import get_db
-from app.infra.adapters.shogun_csv_repository import ShogunCsvRepository
+from app.infra.adapters.upload.shogun_csv_repository import ShogunCsvRepository
 from app.infra.adapters.misc.shogun_flash_debug_repo import ShogunFlashDebugRepository
 from app.infra.adapters.dashboard.dashboard_target_repo import DashboardTargetRepository
 from app.infra.adapters.forecast.job_repo import JobRepository
