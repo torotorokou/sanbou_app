@@ -12,7 +12,7 @@ from datetime import date as date_type
 from typing import Literal
 import logging
 
-from app.infra.db import get_db
+from app.deps import get_db
 from app.config.di_providers import get_build_target_card_uc
 from app.application.usecases.dashboard.build_target_card_uc import BuildTargetCardUseCase
 from app.domain.models import TargetMetricsResponse

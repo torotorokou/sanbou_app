@@ -35,7 +35,7 @@ app = FastAPI(
     title="Core API",
     description="BFF/Facade API for frontend - handles sync calls and job queuing",
     version="1.0.0",
-    root_path=os.getenv("ROOT_PATH", "/api"),
+    root_path="/core_api",
 )
 
 # CORS (for dev mode, if needed)

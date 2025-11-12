@@ -49,17 +49,17 @@ export default defineConfig(({ mode }) => {
             host: '0.0.0.0',
             port: DEV_PORT,
             proxy: {
-                // Core API handles all /api/** requests (BFF pattern)
-                '/api': { 
-                    target: coreApiTarget, 
-                    changeOrigin: true 
-                },
-                // BFF統一: すべての /core_api リクエストを core_api サービスに転送
-                // core_apiのROOT_PATHは /api なので、/core_api -> /api に書き換え
+                // BFF統一: /core_api リクエストを core_api サービスに転送
+                // core_apiのROOT_PATHは /core_api なので、パスはそのまま転送
                 '/core_api': {
                     target: coreApiTarget,
                     changeOrigin: true,
-                    rewrite: (p) => p.replace(/^\/core_api/, '/api'),
+                },
+                // Legacy support: /api/* も core_api に転送（互換性のため）
+                '/api': { 
+                    target: coreApiTarget, 
+                    changeOrigin: true,
+                    rewrite: (p) => p.replace(/^\/api/, '/core_api'),
                 },
             },
         },

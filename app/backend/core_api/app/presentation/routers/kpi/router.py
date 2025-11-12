@@ -1,16 +1,14 @@
 """
-KPI router: dashboard and overview queries.
-
-TODO: UseCase移行待ち
-  - 現在はService層を直接呼び出し
-  - 将来的に GetKPIOverviewUseCase へ移行予定
+KPI API Router
+KPI overview and metrics endpoints
 """
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+import logging
 
-from app.infra.db import get_db
-from app.application.usecases.kpi.kpi_service import KPIService
 from app.domain.models import KPIOverview
+from app.application.usecases.kpi.kpi_service import KPIService
+from app.deps import get_db
 
 router = APIRouter(prefix="/kpi", tags=["kpi"])
 

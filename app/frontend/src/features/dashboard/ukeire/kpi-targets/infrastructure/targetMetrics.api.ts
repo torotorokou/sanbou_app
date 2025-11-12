@@ -4,6 +4,8 @@
  * Optimized with client-side caching to prevent duplicate requests
  */
 
+import { coreApi } from '@/shared';
+
 export type FetchMode = "daily" | "monthly";
 
 export interface TargetMetricsDTO {
@@ -64,28 +66,19 @@ export async function fetchTargetMetrics(
   // Create new request and track it
   const requestPromise = (async () => {
     try {
-      const response = await fetch(`/api/dashboard/target?date=${date}&mode=${mode}`);
-      
-      if (!response.ok) {
-        // エラーレスポンスの詳細を取得
-        let errorDetail = response.statusText;
-        try {
-          const errorBody = await response.json();
-          errorDetail = errorBody.detail || errorDetail;
-        } catch {
-          // JSONパースに失敗した場合はstatusTextを使用
-        }
-        console.error(`[fetchTargetMetrics] Error ${response.status}:`, errorDetail);
-        throw new Error(`Failed to fetch target metrics: ${errorDetail}`);
-      }
-      
-      const data = await response.json();
+      // Use coreApi instead of fetch
+      const data = await coreApi.get<TargetMetricsDTO>(
+        `/core_api/dashboard/target?date=${date}&mode=${mode}`
+      );
       
       // Store in cache
       cache.set(cacheKey, { data, timestamp: Date.now() });
       console.log(`[fetchTargetMetrics] Fetched and cached ${cacheKey}`);
       
       return data;
+    } catch (error) {
+      console.error(`[fetchTargetMetrics] Error fetching ${cacheKey}:`, error);
+      throw error;
     } finally {
       // Clean up in-flight request tracker
       inflightRequests.delete(cacheKey);

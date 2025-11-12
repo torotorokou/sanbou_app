@@ -25,7 +25,6 @@ from app.infra.clients.rag_client import RAGClient
 from app.infra.clients.ledger_client import LedgerClient
 from app.infra.clients.manual_client import ManualClient
 from app.infra.clients.ai_client import AIClient
-from app.application.usecases.upload.shogun_flash_debug_service import ShogunFlashDebugService
 
 logger = logging.getLogger(__name__)
 
@@ -86,14 +85,6 @@ def get_repo_debug_final(db: Session = Depends(get_db)) -> ShogunCsvRepository:
             "shipment": "shipment_final",
         },
     )
-
-
-def get_shogun_flash_service(db: Session = Depends(get_db)) -> ShogunFlashDebugService:
-    """
-    既存Repository/Serviceをそのまま使い、routerからnewを排除する最小のDI。
-    """
-    repo = ShogunFlashDebugRepository(db)
-    return ShogunFlashDebugService(repo)
 
 
 # ========================================================================
