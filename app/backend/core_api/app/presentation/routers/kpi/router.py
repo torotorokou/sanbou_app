@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 import logging
 
 from app.domain.models import KPIOverview
-from app.application.usecases.kpi.kpi_service import KPIService
+from app.application.usecases.kpi.kpi_uc import KPIService
 from app.deps import get_db
 
 router = APIRouter(prefix="/kpi", tags=["kpi"])

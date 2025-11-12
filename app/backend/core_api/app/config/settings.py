@@ -90,7 +90,7 @@ class Settings(BaseSettings):
         Returns:
             動的に生成されたORMモデルクラス
         """
-        from app.repositories.core.dynamic_models import get_shogun_model_class
+        from app.infra.db.dynamic_models import get_shogun_model_class
         return get_shogun_model_class(csv_type)
 
 

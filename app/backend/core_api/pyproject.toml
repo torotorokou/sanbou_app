@@ -92,3 +92,21 @@ python_version = "3.11"
 strict = true
 warn_return_any = true
 warn_unused_configs = true
+
+[tool.importlinter]
+root_package = "app"
+
+[[tool.importlinter.contracts]]
+name = "Layered architecture"
+type = "layers"
+layers = [
+  "app.presentation",
+  "app.application",
+  "app.domain"
+]
+
+[[tool.importlinter.contracts]]
+name = "No infra import from inner layers"
+type = "forbidden"
+source_modules = ["app.presentation", "app.application", "app.domain"]
+forbidden_modules = ["app.infra"]

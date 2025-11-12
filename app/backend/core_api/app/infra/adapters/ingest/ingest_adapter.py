@@ -5,7 +5,7 @@ from typing import List
 from datetime import date as date_type
 from sqlalchemy.orm import Session
 
-from app.repositories.core_repo import CoreRepository
+from app.infra.adapters.misc.core_repo import CoreRepository
 
 
 class IngestAdapter:

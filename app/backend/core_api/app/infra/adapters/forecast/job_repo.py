@@ -7,7 +7,7 @@ from datetime import date as date_type, datetime
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 
-from app.infra.db_models.orm_models import ForecastJob
+from app.infra.db.orm_models import ForecastJob
 
 
 class JobRepository:
