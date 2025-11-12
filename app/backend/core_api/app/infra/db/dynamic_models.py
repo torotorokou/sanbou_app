@@ -8,7 +8,7 @@ from sqlalchemy import Column, Integer, String, Date, Numeric, Text, TIMESTAMP, 
 from sqlalchemy.orm import declarative_base
 from typing import Type, Dict, Any
 
-from app.config.table_definition import get_table_definition_generator
+from app.infra.db.table_definition import get_table_definition_generator
 
 Base = declarative_base()
 
