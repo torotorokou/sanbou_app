@@ -1,9 +1,9 @@
 """
-Ingest Service: Handles CSV upload and truck reservations.
+Ingest UseCase: Handles CSV upload and truck reservations.
 
-TODO: 将来的にUseCaseへ移行予定
-  - 現在はService層で簡易実装
-  - 今後、UploadIngestCsvUseCase, CreateReservationUseCase へ移行
+TODO: 将来的にPort&Adapter化予定
+  - 現在はSession直接利用
+  - 今後、UploadIngestCsvUseCase, CreateReservationUseCase に分割
 """
 from sqlalchemy.orm import Session
 from typing import List, Dict, Any
@@ -12,8 +12,8 @@ from datetime import datetime
 from app.domain.models import ReservationCreate, ReservationResponse
 
 
-class IngestService:
-    """Service for data ingestion operations."""
+class IngestUseCase:
+    """UseCase for data ingestion operations."""
 
     def __init__(self, db: Session):
         self.db = db

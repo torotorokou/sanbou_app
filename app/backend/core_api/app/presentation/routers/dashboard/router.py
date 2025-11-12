@@ -15,7 +15,7 @@ import logging
 from app.deps import get_db
 from app.config.di_providers import get_build_target_card_uc
 from app.application.usecases.dashboard.build_target_card_uc import BuildTargetCardUseCase
-from app.domain.models import TargetMetricsResponse
+from app.presentation.schemas import TargetMetricsResponse
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/dashboard", tags=["dashboard"])
