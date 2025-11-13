@@ -1,4 +1,3 @@
-# refactor-plan: minimal-diff first, then clean separation (usecase + di_providers)
 """
 Shogun CSV Repository
 
@@ -16,6 +15,8 @@ from sqlalchemy import text
 from app.infra.db.dynamic_models import get_shogun_model_class
 from app.config.settings import get_settings
 from app.infra.db.table_definition import get_table_definition_generator
+from app.shared.utils.df_normalizer import to_sql_ready_df, filter_defined_columns
+from app.shared.utils.json_sanitizer import deep_jsonable
 
 logger = logging.getLogger(__name__)
 
@@ -64,33 +65,32 @@ class ShogunCsvRepository:
             return self._save_to_table(csv_type, df, override_table)
         
         # デフォルトルート: 従来の保存処理
-        model_class = get_shogun_model_class(csv_type)
+        schema = self._schema or "raw"
+        model_class = get_shogun_model_class(csv_type, schema=schema)
         
-        # YAMLからカラム定義を取得
+        # YAMLから日本語→英語のカラムマッピングを取得
+        column_mapping = self.table_gen.get_column_mapping(csv_type)
+        
+        # DataFrame のカラム名を日本語→英語に変換
+        df = df.rename(columns=column_mapping)
+        
+        # YAMLからカラム定義を取得（英語カラム名）
         columns_def = self.table_gen.get_columns_definition(csv_type)
-        valid_columns = {col['en_name'] for col in columns_def}
+        valid_columns = [col['en_name'] for col in columns_def]
         
-        # DataFrameのカラムを検証
-        df_columns = set(df.columns)
-        missing_in_yaml = df_columns - valid_columns
-        if missing_in_yaml:
-            logger.warning(f"Columns in DataFrame but not in YAML for {csv_type}: {missing_in_yaml}")
+        # YAML で定義されたカラムのみを抽出（未定義カラムは WARNING ログで記録）
+        df = filter_defined_columns(df, valid_columns, log_dropped=True)
         
-        # DataFrameを辞書のリストに変換
+        # SQL 保存可能な型に正規化（pandas特有の型をPython標準型に変換）
+        df = to_sql_ready_df(df)
+        
+        # DataFrameを辞書のリストに変換してORMオブジェクトを作成
         records = df.to_dict('records')
-        
-        # ORMオブジェクトのリストを作成
         orm_objects = []
         for record in records:
-            # YAMLで定義されたカラムのみ抽出
-            filtered_record = {k: v for k, v in record.items() if k in valid_columns}
-            
-            # raw_data_jsonに元データを保存
-            obj_data = {
-                **filtered_record,
-                'raw_data_json': record.copy(),  # 元データをJSONで保存
-            }
-            orm_objects.append(model_class(**obj_data))
+            # Pandas特有の型をJSON互換型に変換（np.int64 → int, np.float64 → float等）
+            payload = deep_jsonable(record)
+            orm_objects.append(model_class(**payload))
         
         try:
             # バルクインサート
@@ -119,45 +119,55 @@ class ShogunCsvRepository:
         """
         from app.infra.db.dynamic_models import create_shogun_model_class
         
-        # カスタムテーブル用の動的モデル生成
-        model_class = create_shogun_model_class(csv_type, table_name=table_name, schema=self._schema or "debug")
+        # スキーマ名を取得（指定がなければ "debug"）
+        schema = self._schema or "debug"
         
-        # YAMLからカラム定義を取得
+        # CSV種別とスキーマに応じたSQLAlchemy ORMモデルクラスを動的生成
+        model_class = create_shogun_model_class(csv_type, table_name=table_name, schema=schema)
+        
+        # 1. カラム名を英語に統一（日本語カラム名 → 英語カラム名）
+        column_mapping = self.table_gen.get_column_mapping(csv_type)
+        df = df.rename(columns=column_mapping)
+        
+        # 2. YAML定義に存在するカラムのみを抽出（未定義カラムは除外）
         columns_def = self.table_gen.get_columns_definition(csv_type)
-        valid_columns = {col['en_name'] for col in columns_def}
+        valid_columns = [col['en_name'] for col in columns_def]
+        df = filter_defined_columns(df, valid_columns, log_dropped=True)
         
-        # DataFrameのカラムを検証
-        df_columns = set(df.columns)
-        missing_in_yaml = df_columns - valid_columns
-        if missing_in_yaml:
-            logger.warning(f"Columns in DataFrame but not in YAML for {csv_type}: {missing_in_yaml}")
+        # 3. SQL保存可能な型に正規化（pandas特有の型 → Python標準型）
+        #    - pd.NaT / np.nan → None
+        #    - np.int64 → int
+        #    - np.float64 → float
+        #    - pd.Timestamp → datetime.date / datetime.time
+        df = to_sql_ready_df(df)
         
-        # DataFrameを辞書のリストに変換
-        records = df.to_dict('records')
+        # 4. 空行を除去（slip_dateがNULLの行はデータ不正として除外）
+        if 'slip_date' in df.columns:
+            original_len = len(df)
+            df = df[df['slip_date'].notna()]
+            if len(df) < original_len:
+                logger.info(f"Empty rows removed: {original_len - len(df)} rows")
         
-        # ORMオブジェクトのリストを作成
+        # 5. DataFrameをORMオブジェクトのリストに変換
+        records = df.to_dict('records')  # [{col1: val1, col2: val2, ...}, ...]
         orm_objects = []
         for record in records:
-            # YAMLで定義されたカラムのみ抽出
-            filtered_record = {k: v for k, v in record.items() if k in valid_columns}
-            
-            # raw_data_jsonに元データを保存
-            obj_data = {
-                **filtered_record,
-                'raw_data_json': record.copy(),
-            }
-            orm_objects.append(model_class(**obj_data))
+            # Pandas特有の型をJSON互換型に変換（np.int64 → int等）
+            payload = deep_jsonable(record)
+            # ORMモデルインスタンスを生成（**payloadで辞書をキーワード引数展開）
+            orm_objects.append(model_class(**payload))
         
         try:
-            # バルクインサート
-            self.db.bulk_save_objects(orm_objects)
+            # 6. データベースにコミット（add_all → commit）
+            self.db.add_all(orm_objects)
             self.db.commit()
-            logger.info(f"Saved {len(orm_objects)} rows to custom table: {table_name}")
+            logger.info(f"Successfully saved {len(orm_objects)} rows to {schema}.{table_name}")
             return len(orm_objects)
             
         except Exception as e:
+            # エラー時はロールバックして例外を再送出
             self.db.rollback()
-            logger.error(f"Failed to save to custom table {table_name}: {e}")
+            logger.error(f"Failed to save to {schema}.{table_name}: {e}")
             raise
     
     def save_receive_csv(self, df: pd.DataFrame) -> int:
