@@ -60,9 +60,9 @@ def get_repo_debug_flash(db: Session = Depends(get_db)) -> ShogunCsvRepository:
     /upload/shogun_flash 用 (debug schema + テーブル名変更)
     table_map: receive/yard/shipment → receive_flash/yard_flash/shipment_flash
     """
-    db.execute(text("SET LOCAL search_path TO debug, public"))
     return ShogunCsvRepository(
         db,
+        schema="debug",
         table_map={
             "receive": "receive_flash",
             "yard": "yard_flash",
@@ -76,9 +76,9 @@ def get_repo_debug_final(db: Session = Depends(get_db)) -> ShogunCsvRepository:
     /upload/shogun_final 用 (debug schema + テーブル名変更)
     table_map: receive/yard/shipment → receive_final/yard_final/shipment_final
     """
-    db.execute(text("SET LOCAL search_path TO debug, public"))
     return ShogunCsvRepository(
         db,
+        schema="debug",
         table_map={
             "receive": "receive_final",
             "yard": "yard_final",
