@@ -53,7 +53,7 @@ class PredictionDTO(BaseModel):
     model_version: Optional[str] = Field(default=None, description="Model version used")
     generated_at: Optional[datetime] = Field(default=None, description="When prediction was generated")
 
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(from_attributes=True, protected_namespaces=())
 
 
 # ========================================
