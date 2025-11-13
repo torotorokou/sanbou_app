@@ -1,5 +1,25 @@
 """
-AI API Client - Internal HTTP client for AI service.
+AI API Client - AIサービス内部HTTPクライアント
+
+AIサービスと通信し、テキスト分類、感情分析、
+エンティティ抽出などのAI機能を利用。
+
+機能:
+  - テキスト分類(カテゴリ判定)
+  - 感情分析(ポジティブ/ネガティブ)
+  - キーワード抽出
+  - エンティティ認識(NER)
+
+タイムアウト設定:
+  - connect: 1.0s
+  - read: 5.0s (AI処理は時間がかかる場合がある)
+  - write: 5.0s
+  - pool: 1.0s
+
+使用例:
+    client = AIClient()
+    result = await client.classify("この製品は素晴らしいです")
+    print(result['category'])  # 例: 'positive'
 """
 import os
 import httpx

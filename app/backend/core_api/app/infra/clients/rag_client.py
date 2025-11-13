@@ -1,5 +1,25 @@
 """
-RAG API Client - Internal HTTP client for RAG service.
+RAG API Client - RAGサービス内部HTTPクライアント
+
+RAG(Retrieval-Augmented Generation)サービスと通信し、
+ドキュメント検索と生成AIを組み合わせた質問応答を実現。
+
+機能:
+  - ユーザーの質問にAIが回答
+  - 関連ドキュメントの検索と参照
+  - 回答の根拠となるソース情報を付与
+
+タイムアウト設定:
+  - connect: 1.0s (接続確立)
+  - read: 5.0s (レスポンス読み取り)
+  - write: 5.0s (リクエスト送信)
+  - pool: 1.0s (コネクションプール)
+
+使用例:
+    client = RAGClient()
+    result = await client.ask("搬入手順を教えてください")
+    print(result['answer'])
+    print(result['sources'])  # 参照ドキュメント
 """
 import os
 import httpx

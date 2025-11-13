@@ -1,6 +1,17 @@
 """
-Inbound API Router
-日次搬入量データの取得エンドポイント
+Inbound Router - 搬入データ取得エンドポイント
+
+日次搬入量データの取得を提供。
+主な特徴:
+  - カレンダー連続データ(欠損日を0埋め)
+  - 累積計算対応(全期間/月別/週別)
+  - 営業日フラグ付き
+  - ISO週番号対応
+
+使用例:
+  - グラフ表示用の日次データ取得
+  - 月別/週別集計の基礎データ
+  - トレンド分析用の累積データ
 """
 from fastapi import APIRouter, Query, HTTPException, Depends
 from typing import List, Optional
