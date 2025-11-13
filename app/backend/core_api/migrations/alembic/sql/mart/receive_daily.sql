@@ -9,7 +9,7 @@ CREATE OR REPLACE VIEW mart.v_receive_daily AS
             (sum(s.net_weight) / 1000.0) AS receive_ton,
             count(DISTINCT s.receive_no) AS vehicle_count,
             sum(s.amount) AS sales_yen
-           FROM raw.receive_shogun_final s
+           FROM stg.receive_shogun_final s
           WHERE (s.slip_date IS NOT NULL)
           GROUP BY s.slip_date
         ), r_shogun_flash AS (
@@ -17,7 +17,7 @@ CREATE OR REPLACE VIEW mart.v_receive_daily AS
             (sum(f.net_weight) / 1000.0) AS receive_ton,
             count(DISTINCT f.receive_no) AS vehicle_count,
             sum(f.amount) AS sales_yen
-           FROM raw.receive_shogun_flash f
+           FROM stg.receive_shogun_flash f
           WHERE (f.slip_date IS NOT NULL)
           GROUP BY f.slip_date
         ), r_king AS (
@@ -25,7 +25,7 @@ CREATE OR REPLACE VIEW mart.v_receive_daily AS
             ((sum(k.net_weight_detail))::numeric / 1000.0) AS receive_ton,
             count(DISTINCT k.invoice_no) AS vehicle_count,
             (sum(k.amount))::numeric AS sales_yen
-           FROM raw.receive_king_final k
+           FROM stg.receive_king_final k
           WHERE ((k.vehicle_type_code = 1) AND (k.net_weight_detail <> 0))
           GROUP BY (k.invoice_date)::date
         ), r_pick AS (
