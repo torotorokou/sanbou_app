@@ -17,6 +17,7 @@ from sqlalchemy.orm import Session
 
 from app.deps import get_db
 from app.infra.adapters.upload.shogun_csv_repository import ShogunCsvRepository
+from app.infra.adapters.upload.raw_data_repository import RawDataRepository
 from app.infra.adapters.misc.shogun_flash_debug_repo import ShogunFlashDebugRepository
 from app.infra.adapters.dashboard.dashboard_target_repo import DashboardTargetRepository
 from app.infra.adapters.forecast.job_repo import JobRepository
@@ -104,37 +105,58 @@ _required_columns = {
 _validator = CSVValidationResponder(required_columns=_required_columns)
 
 
-def get_uc_default(repo: ShogunCsvRepository = Depends(get_repo_default)) -> UploadSyogunCsvUseCase:
+def get_raw_data_repo(db: Session = Depends(get_db)) -> RawDataRepository:
+    """RawDataRepository提供 (raw schema専用)"""
+    return RawDataRepository(db)
+
+
+def get_uc_default(
+    repo: ShogunCsvRepository = Depends(get_repo_default),
+    raw_data_repo: RawDataRepository = Depends(get_raw_data_repo)
+) -> UploadSyogunCsvUseCase:
     """デフォルトスキーマ用のUploadSyogunCsvUseCase"""
     return UploadSyogunCsvUseCase(
         csv_writer=repo,
+        raw_data_repo=raw_data_repo,
         csv_config=_csv_config,
         validator=_validator,
     )
 
 
-def get_uc_target(repo: ShogunCsvRepository = Depends(get_shogun_csv_repo_target)) -> UploadSyogunCsvUseCase:
+def get_uc_target(
+    repo: ShogunCsvRepository = Depends(get_shogun_csv_repo_target),
+    raw_data_repo: RawDataRepository = Depends(get_raw_data_repo)
+) -> UploadSyogunCsvUseCase:
     """Targetスキーマ用のUploadSyogunCsvUseCase"""
     return UploadSyogunCsvUseCase(
         csv_writer=repo,
+        raw_data_repo=raw_data_repo,
         csv_config=_csv_config,
         validator=_validator,
     )
 
 
-def get_uc_debug_flash(repo: ShogunCsvRepository = Depends(get_repo_debug_flash)) -> UploadSyogunCsvUseCase:
+def get_uc_debug_flash(
+    repo: ShogunCsvRepository = Depends(get_repo_debug_flash),
+    raw_data_repo: RawDataRepository = Depends(get_raw_data_repo)
+) -> UploadSyogunCsvUseCase:
     """Debug Flash用のUploadSyogunCsvUseCase"""
     return UploadSyogunCsvUseCase(
         csv_writer=repo,
+        raw_data_repo=raw_data_repo,
         csv_config=_csv_config,
         validator=_validator,
     )
 
 
-def get_uc_debug_final(repo: ShogunCsvRepository = Depends(get_repo_debug_final)) -> UploadSyogunCsvUseCase:
+def get_uc_debug_final(
+    repo: ShogunCsvRepository = Depends(get_repo_debug_final),
+    raw_data_repo: RawDataRepository = Depends(get_raw_data_repo)
+) -> UploadSyogunCsvUseCase:
     """Debug Final用のUploadSyogunCsvUseCase"""
     return UploadSyogunCsvUseCase(
         csv_writer=repo,
+        raw_data_repo=raw_data_repo,
         csv_config=_csv_config,
         validator=_validator,
     )

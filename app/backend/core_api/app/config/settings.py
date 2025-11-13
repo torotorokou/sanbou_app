@@ -32,13 +32,13 @@ class Settings(BaseSettings):
     # Shogun CSV Table Mapping (CSVタイプ → DBテーブル名)
     # フロントエンドから送られてくるキー名 → DBスキーマ.テーブル名
     CSV_TABLE_MAPPING: dict[str, str] = {
-        "receive": "raw.receive_shogun_flash",    # 受入一覧
-        "yard": "raw.yard_shogun_flash",          # ヤード一覧
-        "shipment": "raw.shipment_shogun_flash",  # 出荷一覧
+        "receive": "stg.receive_shogun_flash",    # 受入一覧
+        "yard": "stg.yard_shogun_flash",          # ヤード一覧
+        "shipment": "stg.shipment_shogun_flash",  # 出荷一覧
     }
     
     # Shogun CSV Schema Name
-    SHOGUN_CSV_SCHEMA: str = os.getenv("SHOGUN_CSV_SCHEMA", "raw")
+    SHOGUN_CSV_SCHEMA: str = os.getenv("SHOGUN_CSV_SCHEMA", "stg")
     
     # Shogun CSV Table Names (変更しやすいように個別に定義)
     RECEIVE_TABLE_NAME: str = os.getenv("RECEIVE_TABLE_NAME", "receive_shogun_flash")

@@ -23,14 +23,14 @@ mapper_registry = registry()
 _dynamic_model_registry: Dict[str, Type] = {}
 
 
-def create_shogun_model_class(csv_type: str, table_name: str | None = None, schema: str = "raw") -> Type:
+def create_shogun_model_class(csv_type: str, table_name: str | None = None, schema: str = "stg") -> Type:
     """
     CSV種別からORMモデルクラスを動的に生成
     
     Args:
-        csv_type: CSV種別（'receive', 'yard', 'shipment'）
-        table_name: テーブル名（省略時は '{csv_type}_shogun_flash'）
-        schema: スキーマ名（デフォルト: 'raw'）
+        csv_type: CSV種別('receive', 'yard', 'shipment')
+        table_name: テーブル名(省略時は '{csv_type}_shogun_flash')
+        schema: スキーマ名(デフォルト: 'stg')
         
     Returns:
         動的に生成されたORMモデルクラス
