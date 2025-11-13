@@ -12,10 +12,10 @@ SQL識別子定数
 使用例:
     from app.infra.db.sql_names import V_RECEIVE_DAILY, V_CALENDAR
     
-    sql = f"""
-        SELECT * FROM {V_RECEIVE_DAILY}
-        WHERE ddate >= :start
-    """
+    sql = f'''
+    SELECT * FROM {V_RECEIVE_DAILY}
+    WHERE ddate >= :start
+    '''
 
 注意:
   - 値はバインドパラメータではなく、SQL識別子として使用する
