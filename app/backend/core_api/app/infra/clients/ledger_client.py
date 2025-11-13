@@ -1,5 +1,26 @@
 """
-Ledger API Client - Internal HTTP client for ledger service.
+Ledger API Client - 元帳サービス内部HTTPクライアント
+
+元帳サービスと通信し、各種レポート生成、財務計算、
+ブロック単価計算などの機能を利用。
+
+機能:
+  - 各種レポート生成(財務表、工場レポート等)
+  - ブロック単価計算
+  - 分析データ取得
+
+タイムアウト設定:
+  - connect: 1.0s
+  - read: 5.0s (レポート生成は時間がかかる場合がある)
+  - write: 5.0s
+  - pool: 1.0s
+
+使用例:
+    client = LedgerClient()
+    report = await client.generate_report(
+        "balance_sheet", 
+        {"start_date": "2025-01-01", "end_date": "2025-01-31"}
+    )
 """
 import os
 import httpx

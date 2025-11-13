@@ -1,10 +1,18 @@
 """
-Dashboard router: target metrics and dashboard data.
+Dashboard Router - ダッシュボード用エンドポイント
+
+ダッシュボード画面で表示するターゲットと実績データを提供。
+
+機能:
+  - 月次/週次/日次ターゲットの取得
+  - 実績データとの比較
+  - 過去/現在/未来月のアンカー日付自動解決
+  - 月次表示時の日/週データのNULLマスキング
 
 設計方針:
-  - Router は HTTP I/O のみ
-  - ビジネスロジックは UseCase に委譲
-  - DI 経由で UseCase を取得
+  - RouterはHTTP I/Oのみを担当(ビジネスロジックはUseCaseに委譲)
+  - DI経由でUseCaseを取得(テスタビリティ向上)
+  - エラーハンドリングを一元化(ロギング + HTTPステータスコード)
 """
 from fastapi import APIRouter, Depends, Query, HTTPException
 from sqlalchemy.orm import Session

@@ -1,5 +1,23 @@
 """
-Forecast router: job creation, status, and prediction results.
+Forecast Router - 予測機能エンドポイント
+
+予測ジョブの作成、ステータス確認、結果取得を提供。
+
+機能:
+  - POST /forecast/jobs: 予測ジョブをキューに登録(非同期実行)
+  - GET /forecast/jobs/{job_id}: ジョブのステータスを確認
+  - GET /forecast/predictions: 予測結果を取得
+
+処理フロー:
+  1. フロントエンドがジョブ作成リクエストを送信
+  2. Core APIがジョブをDBに登録(status='queued')
+  3. forecast_workerがジョブをクレームして実行
+  4. 実行後、statusを'done'または'failed'に更新
+  5. フロントエンドがステータスをポーリングまたは結果を取得
+
+注意:
+  - ジョブ作成は同期処理だが、実行は非同期(バックグラウンド)
+  - 長時間実行ジョブのため、ポーリングまたはWebhookで結果を取得
 """
 from fastapi import APIRouter, Depends, HTTPException, Query
 from datetime import date as date_type

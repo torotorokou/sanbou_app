@@ -19,22 +19,33 @@ class KPIQueryAdapter:
 
     def get_forecast_job_counts(self) -> dict[str, int]:
         """
-        予測ジョブの件数を取得
+        予測ジョブの件数をステータス別に集計
+        
+        ダッシュボードにKPIとして表示するための集計データ。
         
         Returns:
-            dict: {
-                "total": 全件数,
-                "completed": 完了件数,
-                "failed": 失敗件数
+            dict[str, int]: {
+                "total": 全ジョブ数(全ステータス含む),
+                "completed": 完了ジョブ数(status='done'),
+                "failed": 失敗ジョブ数(status='failed')
             }
+            
+        Note:
+            - totalはcompleted + failed + queued + running の合計
+            - データベースにジョブがない場合はすべて0
         """
+        # 全ジョブ数をカウント
         total = self.db.query(func.count(ForecastJob.id)).scalar() or 0
+        
+        # 完了ジョブ数をカウント(status='done')
         completed = (
             self.db.query(func.count(ForecastJob.id))
             .filter(ForecastJob.status == "done")
             .scalar()
             or 0
         )
+        
+        # 失敗ジョブ数をカウント(status='failed')
         failed = (
             self.db.query(func.count(ForecastJob.id))
             .filter(ForecastJob.status == "failed")
@@ -50,9 +61,16 @@ class KPIQueryAdapter:
 
     def get_latest_prediction_date(self) -> Optional[date_type]:
         """
-        最新の予測日付を取得
+        最新の予測結果の日付を取得
+        
+        forecast.predictions_dailyテーブルの中で最も未来の日付を返す。
+        ダッシュボードで「最終予測日」を表示するために使用。
         
         Returns:
-            date | None: 最新の予測日付（データがない場合はNone）
+            Optional[date_type]: 最新の予測日付、または予測データがない場合はNone
+            
+        Note:
+            - 予測データが存在しない場合、Noneが返される
+            - ダッシュボードでは "--" などの代替表示をすることを推奨
         """
         return self.db.query(func.max(PredictionDaily.date)).scalar()

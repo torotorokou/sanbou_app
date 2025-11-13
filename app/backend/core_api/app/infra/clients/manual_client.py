@@ -1,5 +1,25 @@
 """
-Manual API Client - Internal HTTP client for manual/documentation service.
+Manual API Client - マニュアル/ドキュメントサービス内部HTTPクライアント
+
+マニュアルサービスと通信し、マニュアル一覧取得、
+特定マニュアルの詳細情報取得を実現。
+
+機能:
+  - 利用可能なマニュアル一覧の取得
+  - 特定マニュアルIDで詳細情報取得
+  - マニュアルのメタデータ(タイトル、カテゴリ等)取得
+
+タイムアウト設定:
+  - connect: 1.0s
+  - read: 5.0s
+  - write: 5.0s
+  - pool: 1.0s
+
+使用例:
+    client = ManualClient()
+    manuals = await client.list_manuals()
+    for manual in manuals:
+        print(f"{manual['id']}: {manual['title']}")
 """
 import os
 import httpx
