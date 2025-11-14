@@ -69,8 +69,13 @@ def create_shogun_model_class(csv_type: str, table_name: str | None = None, sche
         col_type_str = col['type']
         col_name = col['en_name']
         
-        # カラム名に "time" が含まれる場合は Time 型を使用（weighing_time 等）
-        if "time" in col_name.lower() and "date" not in col_name.lower():
+        # raw層は全カラムをTEXT型として扱う（生データ保存用）
+        if schema == "raw":
+            col_instance = Text()
+            logger.debug(f"[{schema}] {col_name}: TEXT (raw layer)")
+        # stg層以降はYAMLの型定義を使用（型付きデータ保存用）
+        elif "time" in col_name.lower() and "date" not in col_name.lower():
+            # カラム名に "time" が含まれる場合は Time 型を使用（weighing_time 等）
             col_instance = Time()
         else:
             # YAML定義の型をSQLAlchemy型に変換

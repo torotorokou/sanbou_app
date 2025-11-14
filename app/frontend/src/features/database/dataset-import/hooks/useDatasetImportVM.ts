@@ -6,7 +6,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useValidateOnPick } from '../../dataset-validate/hooks/useValidateOnPick';
 import { useSubmitVM } from '../../dataset-submit/hooks/useSubmitVM';
-import { findCsv } from '../../config';
+import { findCsv, getDatasetConfig } from '../../config';
 import type { PanelFileItem, DatasetImportVMOptions } from '../model/types';
 import type { ValidationStatus } from '../../shared/types/common';
 import type { CsvPreviewData } from '../../dataset-preview/model/types';
@@ -18,10 +18,13 @@ export function useDatasetImportVM(opts?: DatasetImportVMOptions) {
     () => opts?.activeTypes ?? [],
     [opts?.activeTypes]
   );
+  
+  const datasetKey = opts?.datasetKey;
 
   const [files, setFiles] = useState<Record<string, File | null>>({});
   const [status, setStatus] = useState<Record<string, ValidationStatus>>({});
   const [previews, setPreviews] = useState<Record<string, CsvPreviewData | null>>({});
+  const [skipped, setSkipped] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     setFiles(prev => {
@@ -59,11 +62,20 @@ export function useDatasetImportVM(opts?: DatasetImportVMOptions) {
       });
       return changed ? newPreviews : prev;
     });
+    
+    setSkipped(prev => {
+      const newSkipped = { ...prev };
+      let changed = false;
+      activeTypes.forEach(t => {
+        if (!(t in newSkipped)) {
+          newSkipped[t] = false;
+          changed = true;
+        }
+      });
+      return changed ? newSkipped : prev;
+    });
   }, [activeTypes]);
 
-  // dataset を opts から取得（既存のアプリでは datasetKey を渡す必要がある）
-  const datasetKey = opts?.datasetKey;
-  
   const getRequired = (typeKey: string) => {
     if (!datasetKey) return undefined;
     const csv = findCsv(datasetKey as DatasetKey, typeKey as CsvTypeKey);
@@ -94,6 +106,11 @@ export function useDatasetImportVM(opts?: DatasetImportVMOptions) {
     setFiles(prev => ({ ...prev, [typeKey]: null }));
     setStatus(prev => ({ ...prev, [typeKey]: 'unknown' }));
     setPreviews(prev => ({ ...prev, [typeKey]: null }));
+    setSkipped(prev => ({ ...prev, [typeKey]: false }));
+  };
+
+  const onToggleSkip = (typeKey: string) => {
+    setSkipped(prev => ({ ...prev, [typeKey]: !prev[typeKey] }));
   };
 
   const panelFiles: PanelFileItem[] = useMemo(
@@ -107,9 +124,10 @@ export function useDatasetImportVM(opts?: DatasetImportVMOptions) {
           file: files[typeKey] ?? null,
           status: status[typeKey] ?? 'unknown',
           preview: previews[typeKey] ?? null,
+          skipped: skipped[typeKey] ?? false,
         };
       }),
-    [files, status, previews, activeTypes, datasetKey]
+    [files, status, previews, skipped, activeTypes, datasetKey]
   );
 
   const canUpload = useMemo(() => {
@@ -119,19 +137,41 @@ export function useDatasetImportVM(opts?: DatasetImportVMOptions) {
       return csv?.required !== false;
     });
     if (!requiredKeys.length) return false;
-    return requiredKeys.every(t => !!files[t] && status[t] === 'valid');
-  }, [files, status, activeTypes, datasetKey]);
+
+    // 必須ファイルは「スキップされている」または「ファイルが選択されていてvalid」である必要がある
+    const requiredOkay = requiredKeys.every(t => skipped[t] || (!!files[t] && status[t] === 'valid'));
+
+    // さらに、実際にアップロードするファイルが1つ以上あること（全てスキップは不可）
+    const hasUploadTargets = activeTypes.some(t => !skipped[t] && !!files[t] && status[t] === 'valid');
+
+    return requiredOkay && hasUploadTargets;
+  }, [files, status, skipped, activeTypes, datasetKey]);
 
   const filesForUpload = useMemo(() => {
     const out: Record<string, File> = {};
     for (const t of activeTypes) {
-      const f = files[t];
-      if (f) out[t] = f;
+      // スキップされていないファイルのみを含める
+      if (!skipped[t]) {
+        const f = files[t];
+        if (f) out[t] = f;
+      }
     }
     return out;
-  }, [files, activeTypes]);
+  }, [files, skipped, activeTypes]);
 
-  const doUploadActive = () => doUpload(filesForUpload);
+  const doUploadActive = () => {
+    // datasetKey からアップロード先のパスを取得
+    if (!datasetKey) {
+      console.error('datasetKey が指定されていません');
+      return;
+    }
+    const dataset = getDatasetConfig(datasetKey as DatasetKey);
+    if (!dataset) {
+      console.error(`Dataset not found: ${datasetKey}`);
+      return;
+    }
+    doUpload(filesForUpload, dataset.upload.path);
+  };
 
   return {
     panelFiles,
@@ -139,6 +179,7 @@ export function useDatasetImportVM(opts?: DatasetImportVMOptions) {
     uploading,
     onPickFile,
     onRemoveFile,
+    onToggleSkip,
     doUpload: doUploadActive,
   };
 }

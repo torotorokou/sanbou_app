@@ -182,7 +182,9 @@ def upgrade() -> None:
             site_en_name TEXT,
             slip_type_en_name TEXT,
             shipment_no TEXT,
-            detail_note TEXT
+            detail_note TEXT,
+            id TEXT,
+            created_at TEXT
         );
     """)
     
@@ -204,7 +206,9 @@ def upgrade() -> None:
             site_en_name TEXT,
             slip_type_en_name TEXT,
             shipment_no TEXT,
-            detail_note TEXT
+            detail_note TEXT,
+            id TEXT,
+            created_at TEXT
         );
     """)
 

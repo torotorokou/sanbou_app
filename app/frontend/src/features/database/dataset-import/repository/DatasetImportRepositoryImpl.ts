@@ -15,12 +15,12 @@ import {
 } from '@features/notification';
 
 export class DatasetImportRepositoryImpl implements DatasetImportRepository {
-  async upload(filesByType: Record<string, File>, signal?: AbortSignal): Promise<void> {
+  async upload(filesByType: Record<string, File>, uploadPath: string, signal?: AbortSignal): Promise<void> {
     const form = buildFormData(filesByType);
 
     try {
       const result: UploadResponseShape = await DatasetImportClient.post(
-        '/core_api/database/upload/syogun_csv',
+        uploadPath,
         form,
         { timeout: DEFAULT_UPLOAD_TIMEOUT, signal }
       );

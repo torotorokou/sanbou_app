@@ -11,10 +11,9 @@ import { InfoCircleOutlined } from '@ant-design/icons';
 import type { FileState } from '../model/types';
 import { DATASET_RULES } from '@/features/database/dataset-validate/model/rules';
 import { notifyError } from '@features/notification';
+import type { DatasetKey } from '@features/database/config';
 
 const { Text } = Typography;
-
-type DatasetKey = 'shogun_flash' | 'shogun_final' | 'manifest';
 
 export interface UploadGuideProps {
   /** 現在選択されているデータセット */

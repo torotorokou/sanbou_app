@@ -134,16 +134,17 @@ class UploadSyogunCsvUseCase:
             self._mark_all_as_failed(upload_file_ids, "CSV validation failed")
             return validation_error
         
-        # 4. フォーマット
+        # 4. raw層への保存（生データ = 空行削除のみ、日本語カラム名のまま）
+        raw_cleaned_dfs = await self._clean_empty_rows(dfs)
+        raw_result = await self._save_data(self.raw_writer, raw_cleaned_dfs, uploaded_files, "raw")
+        
+        # 5. フォーマット（stg層用）
         formatted_dfs, format_error = await self._format_csv_data(dfs)
         if format_error:
             self._mark_all_as_failed(upload_file_ids, "CSV format error")
             return format_error
         
-        # 5. raw層への保存（フォーマット済みデータを raw.*_shogun_flash/final に保存）
-        raw_result = await self._save_data(self.raw_writer, formatted_dfs, uploaded_files, "raw")
-        
-        # 6. stg層への保存（フォーマット済みデータ保存）
+        # 6. stg層への保存（フォーマット済みデータ = 英語カラム名、型変換済み）
         stg_result = await self._save_data(self.stg_writer, formatted_dfs, uploaded_files, "stg")
         
         # 7. log.upload_file のステータスを更新
@@ -218,10 +219,36 @@ class UploadSyogunCsvUseCase:
         
         return None
     
+    async def _clean_empty_rows(
+        self, dfs: Dict[str, pd.DataFrame]
+    ) -> Dict[str, pd.DataFrame]:
+        """
+        空行除去のみ（raw層保存用）
+        日本語カラム名のまま、型変換なし
+        """
+        cleaned_dfs: Dict[str, pd.DataFrame] = {}
+        
+        for csv_type, df in dfs.items():
+            original_row_count = len(df)
+            df_cleaned = df.dropna(how='all')
+            empty_rows_removed = original_row_count - len(df_cleaned)
+            
+            if empty_rows_removed > 0:
+                logger.info(f"[raw] Removed {empty_rows_removed} empty rows from {csv_type} CSV")
+            
+            cleaned_dfs[csv_type] = df_cleaned
+        
+        return cleaned_dfs
+    
     async def _format_csv_data(
         self, dfs: Dict[str, pd.DataFrame]
     ) -> tuple[Dict[str, pd.DataFrame], Optional[ErrorApiResponse]]:
-        """CSVデータのフォーマット（型変換、正規化）"""
+        """
+        CSVデータのフォーマット（stg層保存用）
+        - 空行除去
+        - カラム名を英語に変換
+        - 型変換、正規化
+        """
         formatted_dfs: Dict[str, pd.DataFrame] = {}
         
         for csv_type, df in dfs.items():
@@ -232,14 +259,14 @@ class UploadSyogunCsvUseCase:
                 empty_rows_removed = original_row_count - len(df_cleaned)
                 
                 if empty_rows_removed > 0:
-                    logger.info(f"Removed {empty_rows_removed} empty rows from {csv_type} CSV")
+                    logger.info(f"[stg] Removed {empty_rows_removed} empty rows from {csv_type} CSV")
                 
                 config = build_formatter_config(self.csv_config, csv_type)
                 formatter = CSVFormatterFactory.get_formatter(csv_type, config)
                 # CPU-bound operation: 別スレッドで実行
                 formatted_df = await run_in_threadpool(formatter.format, df_cleaned)
                 formatted_dfs[csv_type] = formatted_df
-                logger.info(f"Formatted {csv_type}: {len(formatted_df)} rows (removed {empty_rows_removed} empty rows)")
+                logger.info(f"[stg] Formatted {csv_type}: {len(formatted_df)} rows")
             except Exception as e:
                 logger.error(f"Failed to format {csv_type}: {e}", exc_info=True)
                 return {}, ErrorApiResponse(
