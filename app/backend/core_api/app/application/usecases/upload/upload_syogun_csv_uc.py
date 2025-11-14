@@ -29,6 +29,7 @@ from backend_shared.usecases.csv_formatter.formatter_config import build_formatt
 from backend_shared.adapters.presentation import SuccessApiResponse, ErrorApiResponse
 
 from app.domain.ports.csv_writer_port import IShogunCsvWriter
+from app.infra.adapters.upload.raw_data_repository import RawDataRepository
 
 logger = logging.getLogger(__name__)
 
@@ -42,6 +43,7 @@ class UploadSyogunCsvUseCase:
         stg_writer: IShogunCsvWriter,
         csv_config: SyogunCsvConfigLoader,
         validator: CSVValidationResponder,
+        raw_data_repo: Optional[RawDataRepository] = None,
     ):
         """
         Args:
@@ -49,17 +51,21 @@ class UploadSyogunCsvUseCase:
             stg_writer: stg層へのCSV保存Port実装
             csv_config: CSV設定ローダー
             validator: CSVバリデーター
+            raw_data_repo: log.upload_file へのアップロードログ保存用リポジトリ
         """
         self.raw_writer = raw_writer
         self.stg_writer = stg_writer
         self.csv_config = csv_config
         self.validator = validator
+        self.raw_data_repo = raw_data_repo
     
     async def execute(
         self,
         receive: Optional[UploadFile],
         yard: Optional[UploadFile],
         shipment: Optional[UploadFile],
+        file_type: str = "FLASH",  # 'FLASH' or 'FINAL'
+        uploaded_by: Optional[str] = None,
     ) -> SuccessApiResponse | ErrorApiResponse:
         """
         将軍CSVアップロード処理を実行
@@ -68,6 +74,8 @@ class UploadSyogunCsvUseCase:
             receive: 受入一覧CSV
             yard: ヤード一覧CSV
             shipment: 出荷一覧CSV
+            file_type: 'FLASH' または 'FINAL'
+            uploaded_by: アップロードユーザー名
         
         Returns:
             SuccessApiResponse または ErrorApiResponse
@@ -85,33 +93,63 @@ class UploadSyogunCsvUseCase:
                 status_code=400
             )
         
+        # log.upload_file にアップロードログを作成（csv_type 単位）
+        upload_file_ids: Dict[str, int] = {}
+        if self.raw_data_repo:
+            for csv_type, uf in uploaded_files.items():
+                try:
+                    content = await uf.read()
+                    file_hash = self.raw_data_repo.calculate_file_hash(content)
+                    uf.file.seek(0)  # read後はシークを戻す
+                    
+                    file_id = self.raw_data_repo.create_upload_file(
+                        csv_type=csv_type,
+                        file_name=uf.filename or f"{csv_type}.csv",
+                        file_hash=file_hash,
+                        file_type=file_type,
+                        file_size_bytes=len(content),
+                        uploaded_by=uploaded_by,
+                    )
+                    upload_file_ids[csv_type] = file_id
+                    logger.info(f"Created log.upload_file entry for {csv_type}: id={file_id}")
+                except Exception as e:
+                    logger.error(f"Failed to create upload log for {csv_type}: {e}")
+                    # ログ作成失敗でも処理は継続（ログは補助的なもの）
+        
         # 1. ファイルタイプ検証（セキュリティ）
         validation_error = self._validate_file_types(uploaded_files)
         if validation_error:
+            self._mark_all_as_failed(upload_file_ids, "File type validation failed")
             return validation_error
         
         # 2. CSV読込
         dfs, read_error = await self._read_csv_files(uploaded_files)
         if read_error:
+            self._mark_all_as_failed(upload_file_ids, "CSV parse error")
             return read_error
         
         # 3. バリデーション
         validation_error = self._validate_csv_data(dfs, uploaded_files)
         if validation_error:
+            self._mark_all_as_failed(upload_file_ids, "CSV validation failed")
             return validation_error
         
         # 4. フォーマット
         formatted_dfs, format_error = await self._format_csv_data(dfs)
         if format_error:
+            self._mark_all_as_failed(upload_file_ids, "CSV format error")
             return format_error
         
-        # 5. raw層への保存（フォーマット済みデータをraw層にも保存）
+        # 5. raw層への保存（フォーマット済みデータを raw.*_shogun_flash/final に保存）
         raw_result = await self._save_data(self.raw_writer, formatted_dfs, uploaded_files, "raw")
         
         # 6. stg層への保存（フォーマット済みデータ保存）
         stg_result = await self._save_data(self.stg_writer, formatted_dfs, uploaded_files, "stg")
         
-        # 7. レスポンス生成（raw + stg両方の結果を統合）
+        # 7. log.upload_file のステータスを更新
+        self._update_upload_logs(upload_file_ids, formatted_dfs, stg_result)
+        
+        # 8. レスポンス生成（raw + stg 両方の結果を統合）
         return self._generate_response(raw_result, stg_result)
     
     def _validate_file_types(self, uploaded_files: Dict[str, UploadFile]) -> Optional[ErrorApiResponse]:
@@ -188,12 +226,20 @@ class UploadSyogunCsvUseCase:
         
         for csv_type, df in dfs.items():
             try:
+                # 空行除去（全カラムがNULLの行を削除）
+                original_row_count = len(df)
+                df_cleaned = df.dropna(how='all')
+                empty_rows_removed = original_row_count - len(df_cleaned)
+                
+                if empty_rows_removed > 0:
+                    logger.info(f"Removed {empty_rows_removed} empty rows from {csv_type} CSV")
+                
                 config = build_formatter_config(self.csv_config, csv_type)
                 formatter = CSVFormatterFactory.get_formatter(csv_type, config)
                 # CPU-bound operation: 別スレッドで実行
-                formatted_df = await run_in_threadpool(formatter.format, df)
+                formatted_df = await run_in_threadpool(formatter.format, df_cleaned)
                 formatted_dfs[csv_type] = formatted_df
-                logger.info(f"Formatted {csv_type}: {len(formatted_df)} rows")
+                logger.info(f"Formatted {csv_type}: {len(formatted_df)} rows (removed {empty_rows_removed} empty rows)")
             except Exception as e:
                 logger.error(f"Failed to format {csv_type}: {e}", exc_info=True)
                 return {}, ErrorApiResponse(
@@ -245,6 +291,63 @@ class UploadSyogunCsvUseCase:
         
         return result
     
+    def _mark_all_as_failed(self, upload_file_ids: Dict[str, int], error_msg: str) -> None:
+        """全アップロードログを失敗としてマーク"""
+        if not self.raw_data_repo:
+            return
+        for csv_type, file_id in upload_file_ids.items():
+            try:
+                self.raw_data_repo.update_upload_status(
+                    file_id=file_id,
+                    status="failed",
+                    error_message=error_msg,
+                )
+            except Exception as e:
+                logger.error(f"Failed to update upload log for {csv_type}: {e}")
+    
+    def _update_upload_logs(
+        self,
+        upload_file_ids: Dict[str, int],
+        formatted_dfs: Dict[str, pd.DataFrame],
+        stg_result: Dict[str, dict],
+    ) -> None:
+        """
+        log.upload_file のステータスを更新
+        
+        Args:
+            upload_file_ids: csv_type -> upload_file.id のマッピング
+            formatted_dfs: csv_type -> DataFrame のマッピング
+            stg_result: stg層への保存結果
+        """
+        if not self.raw_data_repo:
+            return
+        
+        for csv_type, file_id in upload_file_ids.items():
+            try:
+                result_info = stg_result.get(csv_type, {})
+                is_success = result_info.get("status") == "success"
+                
+                if is_success:
+                    # 成功: row_count を実際の行数で更新
+                    row_count = result_info.get("rows_saved", len(formatted_dfs.get(csv_type, [])))
+                    self.raw_data_repo.update_upload_status(
+                        file_id=file_id,
+                        status="success",
+                        row_count=row_count,
+                    )
+                    logger.info(f"Marked {csv_type} upload as success: {row_count} rows")
+                else:
+                    # 失敗: エラーメッセージを記録
+                    error_detail = result_info.get("detail", "Unknown error")
+                    self.raw_data_repo.update_upload_status(
+                        file_id=file_id,
+                        status="failed",
+                        error_message=error_detail,
+                    )
+                    logger.warning(f"Marked {csv_type} upload as failed: {error_detail}")
+            except Exception as e:
+                logger.error(f"Failed to update upload log for {csv_type}: {e}")
+    
     def _generate_response(
         self, raw_result: Dict[str, dict], stg_result: Dict[str, dict]
     ) -> SuccessApiResponse | ErrorApiResponse:
@@ -284,3 +387,4 @@ class UploadSyogunCsvUseCase:
                 result=combined_result,
                 status_code=500,
             )
+
