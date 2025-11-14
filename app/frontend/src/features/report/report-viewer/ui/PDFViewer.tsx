@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Typography, Alert } from 'antd';
-import { useResponsive } from '@/shared';
+import { useResponsive, ensurePdfJsWorkerLoaded } from '@/shared';
 import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
 import 'react-pdf/dist/esm/Page/TextLayer.css';
-import { ensurePdfJsWorkerLoaded } from '@shared/utils/pdf/workerLoader';
 
 type PDFViewerProps = {
     pdfUrl?: string | null;

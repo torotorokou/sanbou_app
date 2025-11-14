@@ -3,7 +3,10 @@
  * 将来的な拡張用（現在は基本的にUTF-8を想定）
  */
 
-export async function detectEncoding(_file: File): Promise<string> {
+export async function detectEncoding(
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _file: File
+): Promise<string> {
   // 基本実装: UTF-8を返す
   // 必要に応じてencoding-japanese等のライブラリを導入
   return 'utf-8';

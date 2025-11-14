@@ -5,7 +5,7 @@
  * すべてのレポート関連のAPI呼び出しをここに集約
  */
 
-import { coreApi } from '@/shared/infrastructure/http';
+import { coreApi } from '@/shared';
 
 /**
  * レポート生成のレスポンス型

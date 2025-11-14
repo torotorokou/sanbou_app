@@ -2,10 +2,12 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from '@/App';
 import { ThemeProvider } from '@app/providers/ThemeProvider';
-import { generateCssVars } from '@shared/theme/cssVars';
+import { generateCssVars } from '@/shared';
 import 'antd/dist/reset.css';
 import '@/index.css';
+// eslint-disable-next-line no-restricted-imports
 import '@shared/styles/custom-media.css';
+// eslint-disable-next-line no-restricted-imports
 import '@shared/styles/base.css';
 
 // ① customTokens（ブランドカラー等）からCSS変数を作る

@@ -7,7 +7,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { ShogunClient } from '../infrastructure/shogun.client';
 import type { ManualDetail } from '../domain/types/shogun.types';
-import { ensureSectionAnchors, smoothScrollToAnchor, type TocItem } from '@/shared/utils/anchors';
+import { ensureSectionAnchors, smoothScrollToAnchor, type TocItem } from '@/shared';
 
 export interface UseShogunDetailResult {
   data: ManualDetail | null;

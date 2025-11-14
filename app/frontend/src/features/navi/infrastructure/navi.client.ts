@@ -1,7 +1,7 @@
 // features/navi/api/client.ts
 // HTTP通信のみを担当（coreApi経由で /core_api/... に統一）
 
-import { coreApi } from '@shared/infrastructure/http';
+import { coreApi } from '@/shared';
 import type {
   ChatAnswerResponseDto,
   ChatQuestionRequestDto,

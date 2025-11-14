@@ -27,7 +27,7 @@ import type { ReportKey } from '@features/report/config';
 const useCsvValidation = () => {
     const [validationResults, setValidationResults] = useState<Record<string, 'valid' | 'invalid' | 'unknown'>>({});
     
-    const validateCsvFile = useCallback((file: File, label: string, onParse: (csvText: string) => void) => {
+    const validateCsvFile = useCallback((file: File, label: string) => {
         // TODO: 実装が必要
         setValidationResults(prev => ({ ...prev, [label]: 'unknown' }));
     }, []);

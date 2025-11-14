@@ -104,7 +104,7 @@ const QuestionPanel: React.FC<Props> = ({
                 </Button>
             </div>
             <Card
-                bordered={false}
+                variant="borderless"
                 className='no-hover'
                 style={{
                     borderRadius: 16,

@@ -35,17 +35,17 @@ export const SimpleUploadPanel: React.FC<SimpleUploadPanelProps> = ({
     <Card
       size="small"
       title={showTitle ? '📂 CSVアップロード' : undefined}
-      headStyle={
-        showTitle
+      styles={{
+        header: showTitle
           ? {
               padding: isCompact ? '4px 8px' : '8px 12px',
               minHeight: isCompact ? 32 : 40,
               fontSize: isCompact ? 13 : 14,
             }
-          : undefined
-      }
-      bodyStyle={{
-        padding: isCompact ? 8 : 12,
+          : undefined,
+        body: {
+          padding: isCompact ? 8 : 12,
+        },
       }}
       style={{
         borderRadius: isCompact ? 8 : 12,

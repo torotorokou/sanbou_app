@@ -1,4 +1,4 @@
-import { coreApi } from '@shared/infrastructure/http';
+import { coreApi } from '@/shared';
 
 /**
  * Manual API Client

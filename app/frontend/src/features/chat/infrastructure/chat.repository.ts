@@ -3,7 +3,7 @@
  * HTTP Repository Implementation (IChatRepository)
  */
 
-import { apiPost } from '@shared/infrastructure/http';
+import { apiPost } from '@/shared';
 import type { ChatAnswerRequest, ChatAnswerResult } from '../domain/types';
 
 export class ChatRepository {

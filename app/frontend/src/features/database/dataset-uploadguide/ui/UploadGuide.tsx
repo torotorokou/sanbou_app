@@ -54,27 +54,29 @@ export const UploadGuide: React.FC<UploadGuideProps> = ({ datasetKey, files }) =
             borderRadius: 6,
           }}
           expandIconPosition="start"
-        >
-          <Collapse.Panel
-            header={
-              <span style={{ fontWeight: 'bold', color: '#faad14' }}>
-                ⚠️ 未完了: 必須 {missing.length}/{reqTotal}
-              </span>
-            }
-            key="missing"
-          >
-            <List
-              size="small"
-              dataSource={missing}
-              renderItem={(it) => (
-                <List.Item style={{ paddingLeft: 0 }}>
-                  <Tag color="red">{it.label}</Tag>
-                  <Text type="secondary">を選択/検証OKにしてください</Text>
-                </List.Item>
-              )}
-            />
-          </Collapse.Panel>
-        </Collapse>
+          items={[
+            {
+              key: 'missing',
+              label: (
+                <span style={{ fontWeight: 'bold', color: '#faad14' }}>
+                  ⚠️ 未完了: 必須 {missing.length}/{reqTotal}
+                </span>
+              ),
+              children: (
+                <List
+                  size="small"
+                  dataSource={missing}
+                  renderItem={(it) => (
+                    <List.Item style={{ paddingLeft: 0 }}>
+                      <Tag color="red">{it.label}</Tag>
+                      <Text type="secondary">を選択/検証OKにしてください</Text>
+                    </List.Item>
+                  )}
+                />
+              ),
+            },
+          ]}
+        />
       )}
 
 
@@ -87,88 +89,89 @@ export const UploadGuide: React.FC<UploadGuideProps> = ({ datasetKey, files }) =
           borderRadius: 6,
         }}
         expandIconPosition="start"
-      >
-        {/* 手順 */}
-        <Collapse.Panel
-          header={
-            <span style={{ fontWeight: 'bold' }}>
-              <InfoCircleOutlined style={{ marginRight: 8, color: '#52c41a' }} />
-              アップロード手順
-            </span>
-          }
-          key="howto"
-        >
-          <ol style={{ margin: 0, paddingLeft: 20, lineHeight: 1.8 }}>
-            <li>
-              データセットを選択（現在：<strong>{datasetKey}</strong>）
-            </li>
-            <li>各カードに CSV をドラッグ＆ドロップ（またはクリック）</li>
-            <li>自動検証（ヘッダ/型）を待つ</li>
-            <li>プレビューで内容を確認</li>
-            <li>「アップロードする」を押下</li>
-          </ol>
-        </Collapse.Panel>
-
-        {/* 必要ファイル */}
-        <Collapse.Panel
-          header={
-            <span style={{ fontWeight: 'bold' }}>
-              <InfoCircleOutlined style={{ marginRight: 8, color: '#52c41a' }} />
-              必要ファイル
-            </span>
-          }
-          key="req"
-        >
-          <List
-            size="small"
-            dataSource={reqList}
-            renderItem={(r) => (
-              <List.Item style={{ paddingLeft: 0 }}>
-                <Tag color="blue">{r.label}</Tag>
-                <Text type="secondary">（必須）</Text>
-                {Array.isArray(r.filenameHints) && r.filenameHints.length > 0 && (
-                  <span style={{ marginLeft: 8, fontSize: 12, color: '#888' }}>
-                    受入ファイル名例: {r.filenameHints.join(' / ')}
-                  </span>
-                )}
-                {r.sampleUrl && (
-                  <a
-                    style={{ marginLeft: 8, fontSize: 12 }}
-                    href={r.sampleUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    サンプル
-                  </a>
-                )}
-              </List.Item>
-            )}
-          />
-        </Collapse.Panel>
-
-        {/* 注意事項 */}
-        {Array.isArray(rule?.globalNotes) && rule.globalNotes.length > 0 && (
-          <Collapse.Panel
-            header={
+        items={[
+          {
+            key: 'howto',
+            label: (
               <span style={{ fontWeight: 'bold' }}>
                 <InfoCircleOutlined style={{ marginRight: 8, color: '#52c41a' }} />
-                注意事項
+                アップロード手順
               </span>
-            }
-            key="notes"
-          >
-            <List
-              size="small"
-              dataSource={rule.globalNotes}
-              renderItem={(note) => (
-                <List.Item style={{ paddingLeft: 0 }}>
-                  <Text>{note}</Text>
-                </List.Item>
-              )}
-            />
-          </Collapse.Panel>
-        )}
-      </Collapse>
+            ),
+            children: (
+              <ol style={{ margin: 0, paddingLeft: 20, lineHeight: 1.8 }}>
+                <li>
+                  データセットを選択（現在：<strong>{datasetKey}</strong>）
+                </li>
+                <li>各カードに CSV をドラッグ＆ドロップ（またはクリック）</li>
+                <li>自動検証（ヘッダ/型）を待つ</li>
+                <li>プレビューで内容を確認</li>
+                <li>「アップロードする」を押下</li>
+              </ol>
+            ),
+          },
+          {
+            key: 'req',
+            label: (
+              <span style={{ fontWeight: 'bold' }}>
+                <InfoCircleOutlined style={{ marginRight: 8, color: '#52c41a' }} />
+                必要ファイル
+              </span>
+            ),
+            children: (
+              <List
+                size="small"
+                dataSource={reqList}
+                renderItem={(r) => (
+                  <List.Item style={{ paddingLeft: 0 }}>
+                    <Tag color="blue">{r.label}</Tag>
+                    <Text type="secondary">（必須）</Text>
+                    {Array.isArray(r.filenameHints) && r.filenameHints.length > 0 && (
+                      <span style={{ marginLeft: 8, fontSize: 12, color: '#888' }}>
+                        受入ファイル名例: {r.filenameHints.join(' / ')}
+                      </span>
+                    )}
+                    {r.sampleUrl && (
+                      <a
+                        style={{ marginLeft: 8, fontSize: 12 }}
+                        href={r.sampleUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        サンプル
+                      </a>
+                    )}
+                  </List.Item>
+                )}
+              />
+            ),
+          },
+          ...(Array.isArray(rule?.globalNotes) && rule.globalNotes.length > 0
+            ? [
+                {
+                  key: 'notes',
+                  label: (
+                    <span style={{ fontWeight: 'bold' }}>
+                      <InfoCircleOutlined style={{ marginRight: 8, color: '#52c41a' }} />
+                      注意事項
+                    </span>
+                  ),
+                  children: (
+                    <List
+                      size="small"
+                      dataSource={rule.globalNotes}
+                      renderItem={(note) => (
+                        <List.Item style={{ paddingLeft: 0 }}>
+                          <Text>{note}</Text>
+                        </List.Item>
+                      )}
+                    />
+                  ),
+                },
+              ]
+            : []),
+        ]}
+      />
     </div>
   );
 };

@@ -12,8 +12,10 @@
  * - CsvPreviewCard（そのまま使用可能）
  */
 
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 // @ts-nocheck
 // 型チェックを無効化（このファイルは廃止予定のため）
+/* eslint-disable react/jsx-no-undef */
 
 import React, { useLayoutEffect, useRef, useState } from 'react';
 import { Typography, Col, Row, Button, Modal, Spin, Tabs } from 'antd';

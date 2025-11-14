@@ -13,7 +13,7 @@ const AnalysisProcessingModal: React.FC<Props> = ({ open }) => (
         maskClosable={false}
         centered
         zIndex={3000}
-        bodyStyle={{ textAlign: 'center', padding: '48px 24px' }}
+        styles={{ body: { textAlign: 'center', padding: '48px 24px' } }}
     >
         <Spin size='large' style={{ marginBottom: 16 }} />
         <div style={{ fontWeight: 600, fontSize: 18, marginTop: 12 }}>

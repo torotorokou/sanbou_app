@@ -79,7 +79,7 @@ const PreviewSection: React.FC<PreviewSectionProps> = ({
                 footer={null}
                 width={isMobile ? '95%' : '80%'}
                 centered
-                bodyStyle={{ padding: 12, minHeight: modalMinHeight }}
+                styles={{ body: { padding: 12, minHeight: modalMinHeight } }}
             >
                 <div style={{ width: '100%', height: '100%', minHeight: modalMinHeight }}>
                     {React.isValidElement(children) ? (

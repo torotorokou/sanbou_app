@@ -1,4 +1,4 @@
-import { ANT } from '@/shared/constants/breakpoints';
+import { ANT } from '@/shared';
 import React from 'react';
 import { Card, Typography, Button, Tag, Space } from 'antd';
 import { UserOutlined, RobotOutlined, BookOutlined } from '@ant-design/icons';
@@ -80,7 +80,7 @@ const ChatMessageCard: React.FC<Props> = ({
                 size='small'
                 title={roleMeta[msg.role]?.title}
                 style={getCardStyle()}
-                bodyStyle={{ padding: 18 }}
+                styles={{ body: { padding: 18 } }}
                 hoverable
             >
                 <Typography.Paragraph style={{ fontSize: 15, marginBottom: 4 }}>
