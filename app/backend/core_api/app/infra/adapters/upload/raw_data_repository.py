@@ -57,46 +57,103 @@ class RawDataRepository:
             Column('id', BigInteger, primary_key=True, autoincrement=True),
             Column('file_id', Integer, ForeignKey('raw.upload_file.id'), nullable=False),
             Column('row_number', Integer, nullable=False),
-            # 受入CSV の各カラム（TEXT 型）
-            Column('伝票日付', Text, nullable=True),
-            Column('売上日付', Text, nullable=True),
-            Column('支払日付', Text, nullable=True),
-            Column('業者CD', Text, nullable=True),
-            Column('業者名', Text, nullable=True),
-            Column('伝票区分CD', Text, nullable=True),
-            Column('伝票区分名', Text, nullable=True),
-            Column('品名CD', Text, nullable=True),
-            Column('品名', Text, nullable=True),
-            Column('正味重量', Text, nullable=True),
-            Column('数量', Text, nullable=True),
-            Column('単位CD', Text, nullable=True),
-            Column('単位名', Text, nullable=True),
-            Column('単価', Text, nullable=True),
-            Column('金額', Text, nullable=True),
-            Column('受入番号', Text, nullable=True),
-            Column('集計項目CD', Text, nullable=True),
-            Column('集計項目', Text, nullable=True),
-            Column('種類CD', Text, nullable=True),
-            Column('種類名', Text, nullable=True),
-            Column('計量時間（総重量）', Text, nullable=True),
-            Column('計量時間（空車重量）', Text, nullable=True),
-            Column('現場CD', Text, nullable=True),
-            Column('現場名', Text, nullable=True),
-            Column('荷降業者CD', Text, nullable=True),
-            Column('荷降業者名', Text, nullable=True),
-            Column('荷降現場CD', Text, nullable=True),
-            Column('荷降現場名', Text, nullable=True),
-            Column('運搬業者CD', Text, nullable=True),
-            Column('運搬業者名', Text, nullable=True),
-            Column('取引先CD', Text, nullable=True),
-            Column('取引先名', Text, nullable=True),
-            Column('マニ種類CD', Text, nullable=True),
-            Column('マニ種類名', Text, nullable=True),
-            Column('マニフェスト番号', Text, nullable=True),
-            Column('営業担当者CD', Text, nullable=True),
-            Column('営業担当者名', Text, nullable=True),
+            # 受入CSV の各カラム（TEXT 型、英語カラム名）
+            Column('slip_date_text', Text, nullable=True),
+            Column('sales_date_text', Text, nullable=True),
+            Column('payment_date_text', Text, nullable=True),
+            Column('vendor_cd_text', Text, nullable=True),
+            Column('vendor_name_text', Text, nullable=True),
+            Column('slip_type_cd_text', Text, nullable=True),
+            Column('slip_type_name_text', Text, nullable=True),
+            Column('item_cd_text', Text, nullable=True),
+            Column('item_name_text', Text, nullable=True),
+            Column('net_weight_text', Text, nullable=True),
+            Column('quantity_text', Text, nullable=True),
+            Column('unit_cd_text', Text, nullable=True),
+            Column('unit_name_text', Text, nullable=True),
+            Column('unit_price_text', Text, nullable=True),
+            Column('amount_text', Text, nullable=True),
+            Column('receive_no_text', Text, nullable=True),
+            Column('aggregate_item_cd_text', Text, nullable=True),
+            Column('aggregate_item_name_text', Text, nullable=True),
+            Column('category_cd_text', Text, nullable=True),
+            Column('category_name_text', Text, nullable=True),
+            Column('weighing_time_gross_text', Text, nullable=True),
+            Column('weighing_time_empty_text', Text, nullable=True),
+            Column('site_cd_text', Text, nullable=True),
+            Column('site_name_text', Text, nullable=True),
+            Column('unload_vendor_cd_text', Text, nullable=True),
+            Column('unload_vendor_name_text', Text, nullable=True),
+            Column('unload_site_cd_text', Text, nullable=True),
+            Column('unload_site_name_text', Text, nullable=True),
+            Column('transport_vendor_cd_text', Text, nullable=True),
+            Column('transport_vendor_name_text', Text, nullable=True),
+            Column('client_cd_text', Text, nullable=True),
+            Column('client_name_text', Text, nullable=True),
+            Column('manifest_type_cd_text', Text, nullable=True),
+            Column('manifest_type_name_text', Text, nullable=True),
+            Column('manifest_no_text', Text, nullable=True),
+            Column('sales_staff_cd_text', Text, nullable=True),
+            Column('sales_staff_name_text', Text, nullable=True),
             Column('column38', Text, nullable=True),
             Column('column39', Text, nullable=True),
+            Column('loaded_at', DateTime(timezone=True), server_default=text('CURRENT_TIMESTAMP')),
+            schema='raw'
+        )
+        
+        # yard_raw テーブル定義
+        self.yard_raw_table = Table(
+            'yard_raw',
+            self.metadata,
+            Column('id', BigInteger, primary_key=True, autoincrement=True),
+            Column('file_id', Integer, ForeignKey('raw.upload_file.id'), nullable=False),
+            Column('row_number', Integer, nullable=False),
+            # ヤードCSV の各カラム（TEXT 型、英語カラム名）
+            Column('slip_date_text', Text, nullable=True),
+            Column('client_name_text', Text, nullable=True),
+            Column('item_name_text', Text, nullable=True),
+            Column('net_weight_text', Text, nullable=True),
+            Column('quantity_text', Text, nullable=True),
+            Column('unit_name_text', Text, nullable=True),
+            Column('unit_price_text', Text, nullable=True),
+            Column('amount_text', Text, nullable=True),
+            Column('sales_staff_name_text', Text, nullable=True),
+            Column('vendor_cd_text', Text, nullable=True),
+            Column('vendor_name_text', Text, nullable=True),
+            Column('category_cd_text', Text, nullable=True),
+            Column('category_name_text', Text, nullable=True),
+            Column('item_cd_text', Text, nullable=True),
+            Column('slip_no_text', Text, nullable=True),
+            Column('loaded_at', DateTime(timezone=True), server_default=text('CURRENT_TIMESTAMP')),
+            schema='raw'
+        )
+        
+        # shipment_raw テーブル定義
+        self.shipment_raw_table = Table(
+            'shipment_raw',
+            self.metadata,
+            Column('id', BigInteger, primary_key=True, autoincrement=True),
+            Column('file_id', Integer, ForeignKey('raw.upload_file.id'), nullable=False),
+            Column('row_number', Integer, nullable=False),
+            # 出荷CSV の各カラム（TEXT 型、英語カラム名）
+            Column('slip_date_text', Text, nullable=True),
+            Column('shipment_no_text', Text, nullable=True),
+            Column('client_name_text', Text, nullable=True),
+            Column('vendor_cd_text', Text, nullable=True),
+            Column('vendor_name_text', Text, nullable=True),
+            Column('site_cd_text', Text, nullable=True),
+            Column('site_name_text', Text, nullable=True),
+            Column('item_name_text', Text, nullable=True),
+            Column('net_weight_text', Text, nullable=True),
+            Column('quantity_text', Text, nullable=True),
+            Column('unit_name_text', Text, nullable=True),
+            Column('unit_price_text', Text, nullable=True),
+            Column('amount_text', Text, nullable=True),
+            Column('transport_vendor_name_text', Text, nullable=True),
+            Column('slip_type_name_text', Text, nullable=True),
+            Column('detail_note_text', Text, nullable=True),
+            Column('category_cd_text', Text, nullable=True),
+            Column('category_name_text', Text, nullable=True),
             Column('loaded_at', DateTime(timezone=True), server_default=text('CURRENT_TIMESTAMP')),
             schema='raw'
         )
@@ -264,4 +321,139 @@ class RawDataRepository:
         except Exception as e:
             self.db.rollback()
             logger.error(f"Failed to save raw data: {e}")
+            raise
+    
+    def save_yard_raw(
+        self,
+        file_id: int,
+        df: pd.DataFrame,
+    ) -> int:
+        """
+        ヤードCSV の生データを raw.yard_raw に保存
+        
+        Args:
+            file_id: upload_file.id
+            df: 日本語カラム名のままの DataFrame（変換前）
+            
+        Returns:
+            int: 保存した行数
+        """
+        if df.empty:
+            logger.warning("Empty DataFrame, skipping raw save")
+            return 0
+        
+        try:
+            # カラム名マッピング（日本語 → 英語）
+            column_map = {
+                '伝票日付': 'slip_date_text',
+                '取引先名': 'client_name_text',
+                '品名': 'item_name_text',
+                '正味重量': 'net_weight_text',
+                '数量': 'quantity_text',
+                '単位名': 'unit_name_text',
+                '単価': 'unit_price_text',
+                '金額': 'amount_text',
+                '営業担当者名': 'sales_staff_name_text',
+                '業者CD': 'vendor_cd_text',
+                '業者名': 'vendor_name_text',
+                '種類CD': 'category_cd_text',
+                '種類名': 'category_name_text',
+                '品名CD': 'item_cd_text',
+                '伝票番号': 'slip_no_text',
+            }
+            
+            # 行番号を付与してレコード作成
+            records = []
+            for row_idx, (idx, row) in enumerate(df.iterrows(), start=1):
+                record: Dict[str, Any] = {
+                    'file_id': file_id,
+                    'row_number': row_idx,
+                }
+                # DataFrame の各カラムを TEXT として保存（英語カラム名に変換）
+                for jp_col, en_col in column_map.items():
+                    if jp_col in df.columns:
+                        value = row[jp_col]
+                        record[en_col] = None if pd.isna(value) else str(value)
+                
+                records.append(record)
+            
+            # バルクインサート
+            self.db.execute(self.yard_raw_table.insert(), records)
+            self.db.commit()
+            
+            logger.info(f"Saved {len(records)} rows to raw.yard_raw (file_id={file_id})")
+            return len(records)
+            
+        except Exception as e:
+            self.db.rollback()
+            logger.error(f"Failed to save yard raw data: {e}")
+            raise
+    
+    def save_shipment_raw(
+        self,
+        file_id: int,
+        df: pd.DataFrame,
+    ) -> int:
+        """
+        出荷CSV の生データを raw.shipment_raw に保存
+        
+        Args:
+            file_id: upload_file.id
+            df: 日本語カラム名のままの DataFrame（変換前）
+            
+        Returns:
+            int: 保存した行数
+        """
+        if df.empty:
+            logger.warning("Empty DataFrame, skipping raw save")
+            return 0
+        
+        try:
+            # カラム名マッピング（日本語 → 英語）
+            column_map = {
+                '伝票日付': 'slip_date_text',
+                '出荷番号': 'shipment_no_text',
+                '取引先名': 'client_name_text',
+                '業者CD': 'vendor_cd_text',
+                '業者名': 'vendor_name_text',
+                '現場CD': 'site_cd_text',
+                '現場名': 'site_name_text',
+                '品名': 'item_name_text',
+                '正味重量': 'net_weight_text',
+                '数量': 'quantity_text',
+                '単位名': 'unit_name_text',
+                '単価': 'unit_price_text',
+                '金額': 'amount_text',
+                '運搬業者名': 'transport_vendor_name_text',
+                '伝票区分名': 'slip_type_name_text',
+                '明細備考': 'detail_note_text',
+                '種類CD': 'category_cd_text',
+                '種類名': 'category_name_text',
+            }
+            
+            # 行番号を付与してレコード作成
+            records = []
+            for row_idx, (idx, row) in enumerate(df.iterrows(), start=1):
+                record: Dict[str, Any] = {
+                    'file_id': file_id,
+                    'row_number': row_idx,
+                }
+                # DataFrame の各カラムを TEXT として保存（英語カラム名に変換）
+                for jp_col, en_col in column_map.items():
+                    if jp_col in df.columns:
+                        value = row[jp_col]
+                        record[en_col] = None if pd.isna(value) else str(value)
+                
+                records.append(record)
+            
+            # バルクインサート
+            self.db.execute(self.shipment_raw_table.insert(), records)
+            self.db.commit()
+            
+            logger.info(f"Saved {len(records)} rows to raw.shipment_raw (file_id={file_id})")
+            return len(records)
+            
+        except Exception as e:
+            self.db.rollback()
+            logger.error(f"Failed to save shipment raw data: {e}")
             raise

@@ -12,7 +12,7 @@ import pandas as pd
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 
-from app.infra.db.dynamic_models import get_shogun_model_class
+from app.infra.db.dynamic_models import get_shogun_model_class, create_shogun_model_class
 from app.config.settings import get_settings
 from app.infra.db.table_definition import get_table_definition_generator
 from app.shared.utils.df_normalizer import to_sql_ready_df, filter_defined_columns
@@ -65,8 +65,10 @@ class ShogunCsvRepository:
             return self._save_to_table(csv_type, df, override_table)
         
         # デフォルトルート: 従来の保存処理
-        schema = self._schema or "raw"
-        model_class = get_shogun_model_class(csv_type, schema=schema)
+        schema = self._schema or "stg"
+        # テーブル名は {csv_type}_shogun_flash (receive_shogun_flash, yard_shogun_flash, shipment_shogun_flash)
+        table_name = f"{csv_type}_shogun_flash"
+        model_class = create_shogun_model_class(csv_type, table_name=table_name, schema=schema)
         
         # YAMLから日本語→英語のカラムマッピングを取得
         column_mapping = self.table_gen.get_column_mapping(csv_type)

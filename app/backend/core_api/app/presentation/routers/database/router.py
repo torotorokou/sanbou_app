@@ -26,6 +26,7 @@ from backend_shared.adapters.presentation import SuccessApiResponse, ErrorApiRes
 from app.config.di_providers import (
     get_uc_default,
     get_uc_target,
+    get_uc_stg_final,
     get_uc_debug_flash,
     get_uc_debug_final,
 )
@@ -50,10 +51,14 @@ async def upload_syogun_csv(
     uc: UploadSyogunCsvUseCase = Depends(get_uc_default),
 ):
     """
-    将軍CSVアップロード（raw schema）
+    将軍CSVアップロード（stg schema, *_shogun_flash tables）
     
     3種類のCSV（受入一覧・ヤード一覧・出荷一覧）を受け取り、
     バリデーション後にDBに保存します。
+    
+    保存先:
+    - raw層: raw.receive_raw / raw.yard_raw / raw.shipment_raw
+    - stg層: stg.receive_shogun_flash / stg.yard_shogun_flash / stg.shipment_shogun_flash
     
     Args:
         receive: 受入一覧CSV
@@ -69,6 +74,44 @@ async def upload_syogun_csv(
         return await uc.execute(receive=receive, yard=yard, shipment=shipment)
     except Exception as e:
         logger.exception(f"Unexpected error during CSV upload: {e}")
+        return ErrorApiResponse(
+            code="INTERNAL_ERROR",
+            detail=f"予期しないエラーが発生しました: {str(e)}",
+            status_code=500,
+        )
+
+
+@router.post("/upload/syogun_csv_final")
+async def upload_syogun_csv_final(
+    receive: Optional[UploadFile] = File(None),
+    yard: Optional[UploadFile] = File(None),
+    shipment: Optional[UploadFile] = File(None),
+    uc: UploadSyogunCsvUseCase = Depends(get_uc_stg_final),
+):
+    """
+    将軍CSVアップロード（stg schema, *_shogun_final tables）
+    
+    3種類のCSV（受入一覧・ヤード一覧・出荷一覧）を受け取り、
+    バリデーション後にDBに保存します。
+    
+    保存先:
+    - raw層: raw.receive_raw / raw.yard_raw / raw.shipment_raw
+    - stg層: stg.receive_shogun_final / stg.yard_shogun_final / stg.shipment_shogun_final
+    
+    Args:
+        receive: 受入一覧CSV
+        yard: ヤード一覧CSV  
+        shipment: 出荷一覧CSV
+        uc: UploadSyogunCsvUseCase (DI with stg final schema)
+        
+    Returns:
+        成功時: SuccessApiResponse
+        エラー時: ErrorApiResponse
+    """
+    try:
+        return await uc.execute(receive=receive, yard=yard, shipment=shipment)
+    except Exception as e:
+        logger.exception(f"Unexpected error during CSV upload (stg_final): {e}")
         return ErrorApiResponse(
             code="INTERNAL_ERROR",
             detail=f"予期しないエラーが発生しました: {str(e)}",
@@ -112,7 +155,7 @@ async def upload_syogun_csv_target(
         )
 
 
-@router.post("/upload/shogun_flash", summary="Upload Shogun CSV (debug schema, *_flash tables)")
+@router.post("/upload/shogun_flash", summary="Upload Shogun CSV (sandbox schema, *_flash tables)")
 async def upload_shogun_flash_new(
     receive: Optional[UploadFile] = File(None),
     yard: Optional[UploadFile] = File(None),
@@ -120,12 +163,12 @@ async def upload_shogun_flash_new(
     uc: UploadSyogunCsvUseCase = Depends(get_uc_debug_flash),
 ):
     """
-    将軍CSVアップロード（速報版：debug.*_flash テーブル）
+    将軍CSVアップロード（速報版：sandbox.*_flash テーブル）
     
-    /upload/syogun_csv と同じ処理だが、debug スキーマの *_flash テーブルに保存。
-    - debug.receive_flash
-    - debug.yard_flash
-    - debug.shipment_flash
+    /upload/syogun_csv と同じ処理だが、sandbox スキーマの *_flash テーブルに保存。
+    - sandbox.receive_flash
+    - sandbox.yard_flash
+    - sandbox.shipment_flash
     
     3種類のCSV（受入一覧・ヤード一覧・出荷一覧）を受け取り、
     バリデーション後にDBに保存します。
