@@ -138,7 +138,8 @@ def get_raw_data_repo(db: Session = Depends(get_db)) -> RawDataRepository:
 
 def get_uc_default(
     raw_repo: ShogunCsvRepository = Depends(get_repo_raw_flash),
-    stg_repo: ShogunCsvRepository = Depends(get_repo_stg_flash)
+    stg_repo: ShogunCsvRepository = Depends(get_repo_stg_flash),
+    raw_data_repo: RawDataRepository = Depends(get_raw_data_repo)
 ) -> UploadSyogunCsvUseCase:
     """デフォルト用のUploadSyogunCsvUseCase (raw + stg両方に保存)"""
     return UploadSyogunCsvUseCase(
@@ -146,12 +147,14 @@ def get_uc_default(
         stg_writer=stg_repo,
         csv_config=_csv_config,
         validator=_validator,
+        raw_data_repo=raw_data_repo,
     )
 
 
 def get_uc_stg_final(
     raw_repo: ShogunCsvRepository = Depends(get_repo_raw_final),
-    stg_repo: ShogunCsvRepository = Depends(get_repo_stg_final)
+    stg_repo: ShogunCsvRepository = Depends(get_repo_stg_final),
+    raw_data_repo: RawDataRepository = Depends(get_raw_data_repo)
 ) -> UploadSyogunCsvUseCase:
     """Final用のUploadSyogunCsvUseCase (raw + stg両方に保存)"""
     return UploadSyogunCsvUseCase(
@@ -159,12 +162,14 @@ def get_uc_stg_final(
         stg_writer=stg_repo,
         csv_config=_csv_config,
         validator=_validator,
+        raw_data_repo=raw_data_repo,
     )
 
 
 def get_uc_target(
     raw_repo: ShogunCsvRepository = Depends(get_repo_raw_flash),
-    stg_repo: ShogunCsvRepository = Depends(get_repo_stg_flash)
+    stg_repo: ShogunCsvRepository = Depends(get_repo_stg_flash),
+    raw_data_repo: RawDataRepository = Depends(get_raw_data_repo)
 ) -> UploadSyogunCsvUseCase:
     """Target用のUploadSyogunCsvUseCase（互換性のため残す）"""
     return UploadSyogunCsvUseCase(
@@ -172,6 +177,7 @@ def get_uc_target(
         stg_writer=stg_repo,
         csv_config=_csv_config,
         validator=_validator,
+        raw_data_repo=raw_data_repo,
     )
 
 

@@ -2,20 +2,23 @@
 Raw Data Repository
 
 CSV の生データ（変換前）を raw スキーマに保存するリポジトリ。
-- raw.upload_file: ファイルメタ情報
+- log.upload_file: 全 CSV アップロードの共通ログ（シンプル版）
 - raw.receive_raw: 受入CSV の生データ（TEXT 型）
+- raw.yard_raw: ヤードCSV の生データ（TEXT 型）
+- raw.shipment_raw: 出荷CSV の生データ（TEXT 型）
 
-将来的に yard_raw, shipment_raw も追加可能。
+log.upload_file はすべての CSV アップロード（将軍、マニフェスト、予約表など）で
+共通のログテーブルとして使用します。
 """
 
 import logging
+import os
 import hashlib
 from typing import Optional, Dict, Any
 from datetime import datetime
 import pandas as pd
 from sqlalchemy.orm import Session
 from sqlalchemy import text, Table, MetaData, Column, Integer, BigInteger, Text, String, DateTime, ForeignKey
-from sqlalchemy.dialects.postgresql import JSONB
 
 logger = logging.getLogger(__name__)
 
@@ -31,31 +34,32 @@ class RawDataRepository:
         self.db = db
         self.metadata = MetaData()
         
-        # upload_file テーブル定義
+        # upload_file テーブル定義（共通アップロードログ、log スキーマ）
+        # シンプル構成：必要最小限のカラムのみ定義
         self.upload_file_table = Table(
             'upload_file',
             self.metadata,
             Column('id', Integer, primary_key=True, autoincrement=True),
+            Column('csv_type', String(32), nullable=False),  # 'receive', 'yard', 'shipment', etc.
             Column('file_name', Text, nullable=False),
             Column('file_hash', String(64), nullable=False),
-            Column('file_type', String(20), nullable=False),
-            Column('csv_type', String(20), nullable=False),
+            Column('file_type', String(20), nullable=False),  # 'FLASH' / 'FINAL'
             Column('file_size_bytes', BigInteger, nullable=True),
             Column('row_count', Integer, nullable=True),
-            Column('uploaded_at', DateTime(timezone=True), server_default=text('CURRENT_TIMESTAMP')),
+            Column('uploaded_at', DateTime(timezone=True), server_default=text('CURRENT_TIMESTAMP'), nullable=False),
             Column('uploaded_by', String(100), nullable=True),
-            Column('processing_status', String(20), server_default='pending'),
+            Column('processing_status', String(20), server_default='pending', nullable=False),
             Column('error_message', Text, nullable=True),
-            Column('metadata', JSONB, nullable=True),
-            schema='raw'
+            Column('env', Text, server_default='local_dev', nullable=False),
+            schema='log'
         )
         
-        # receive_raw テーブル定義
+        # receive_raw テーブル定義（生データは raw スキーマに保持）
         self.receive_raw_table = Table(
             'receive_raw',
             self.metadata,
             Column('id', BigInteger, primary_key=True, autoincrement=True),
-            Column('file_id', Integer, ForeignKey('raw.upload_file.id'), nullable=False),
+            Column('file_id', Integer, ForeignKey('log.upload_file.id'), nullable=False),
             Column('row_number', Integer, nullable=False),
             # 受入CSV の各カラム（TEXT 型、英語カラム名）
             Column('slip_date_text', Text, nullable=True),
@@ -101,12 +105,12 @@ class RawDataRepository:
             schema='raw'
         )
         
-        # yard_raw テーブル定義
+        # yard_raw テーブル定義（生データは raw スキーマに保持）
         self.yard_raw_table = Table(
             'yard_raw',
             self.metadata,
             Column('id', BigInteger, primary_key=True, autoincrement=True),
-            Column('file_id', Integer, ForeignKey('raw.upload_file.id'), nullable=False),
+            Column('file_id', Integer, ForeignKey('log.upload_file.id'), nullable=False),
             Column('row_number', Integer, nullable=False),
             # ヤードCSV の各カラム（TEXT 型、英語カラム名）
             Column('slip_date_text', Text, nullable=True),
@@ -128,12 +132,12 @@ class RawDataRepository:
             schema='raw'
         )
         
-        # shipment_raw テーブル定義
+        # shipment_raw テーブル定義（生データは raw スキーマに保持）
         self.shipment_raw_table = Table(
             'shipment_raw',
             self.metadata,
             Column('id', BigInteger, primary_key=True, autoincrement=True),
-            Column('file_id', Integer, ForeignKey('raw.upload_file.id'), nullable=False),
+            Column('file_id', Integer, ForeignKey('log.upload_file.id'), nullable=False),
             Column('row_number', Integer, nullable=False),
             # 出荷CSV の各カラム（TEXT 型、英語カラム名）
             Column('slip_date_text', Text, nullable=True),
@@ -172,62 +176,65 @@ class RawDataRepository:
     
     def create_upload_file(
         self,
+        csv_type: str,
         file_name: str,
         file_hash: str,
         file_type: str,
-        csv_type: str,
         file_size_bytes: Optional[int] = None,
         row_count: Optional[int] = None,
         uploaded_by: Optional[str] = None,
-        metadata: Optional[Dict[str, Any]] = None,
+        env: Optional[str] = None,
     ) -> int:
         """
-        アップロードファイルのメタ情報を登録
+        アップロードファイルのメタ情報を log.upload_file に登録
         
         Args:
+            csv_type: CSV種別 ('receive', 'yard', 'shipment', 'payable', 'sales_summary' など)
             file_name: ファイル名
             file_hash: SHA-256 ハッシュ
             file_type: FLASH / FINAL
-            csv_type: receive / yard / shipment
             file_size_bytes: ファイルサイズ
             row_count: データ行数
             uploaded_by: アップロードユーザー
-            metadata: その他のメタ情報
+            env: 環境名 (デフォルト: 'local_dev')
             
         Returns:
             int: 登録された upload_file.id
         """
         try:
+            # env が指定されていない場合は環境変数または 'local_dev' をデフォルト
+            if env is None:
+                env = os.getenv("APP_ENV", "local_dev")
+            
             result = self.db.execute(
                 self.upload_file_table.insert().values(
+                    csv_type=csv_type,
                     file_name=file_name,
                     file_hash=file_hash,
                     file_type=file_type,
-                    csv_type=csv_type,
                     file_size_bytes=file_size_bytes,
                     row_count=row_count,
                     uploaded_by=uploaded_by,
                     processing_status='pending',
-                    metadata=metadata,
+                    env=env,
                 ).returning(self.upload_file_table.c.id)
             )
             file_id = result.scalar_one()
             self.db.commit()
-            logger.info(f"Created upload_file record: id={file_id}, hash={file_hash[:8]}...")
+            logger.info(f"Created upload_file record: id={file_id}, csv_type={csv_type}, hash={file_hash[:8]}...")
             return file_id
         except Exception as e:
             self.db.rollback()
             logger.error(f"Failed to create upload_file: {e}")
             raise
     
-    def check_file_exists(self, file_hash: str, file_type: str, csv_type: str) -> Optional[int]:
+    def check_file_exists(self, file_hash: str, csv_type: str) -> Optional[int]:
         """
         同一ファイルがすでに登録されているかチェック
         
         Args:
             file_hash: SHA-256 ハッシュ
-            file_type: FLASH / FINAL
-            csv_type: receive / yard / shipment
+            csv_type: CSV種別 ('receive', 'yard', 'shipment', etc.)
             
         Returns:
             Optional[int]: 既存の upload_file.id、存在しない場合は None
@@ -235,7 +242,6 @@ class RawDataRepository:
         result = self.db.execute(
             self.upload_file_table.select().where(
                 self.upload_file_table.c.file_hash == file_hash,
-                self.upload_file_table.c.file_type == file_type,
                 self.upload_file_table.c.csv_type == csv_type,
             )
         ).fetchone()
@@ -247,23 +253,29 @@ class RawDataRepository:
         file_id: int,
         status: str,
         error_message: Optional[str] = None,
+        row_count: Optional[int] = None,
     ) -> None:
         """
         アップロードファイルの処理ステータスを更新
         
         Args:
             file_id: upload_file.id
-            status: pending / processing / completed / failed
+            status: 'pending' / 'success' / 'failed'
             error_message: エラーメッセージ
+            row_count: 実際に処理された行数（成功時に更新）
         """
         try:
+            values: Dict[str, Any] = {
+                "processing_status": status,
+                "error_message": error_message,
+            }
+            if row_count is not None:
+                values["row_count"] = row_count
+
             self.db.execute(
                 self.upload_file_table.update()
                 .where(self.upload_file_table.c.id == file_id)
-                .values(
-                    processing_status=status,
-                    error_message=error_message,
-                )
+                .values(**values)
             )
             self.db.commit()
             logger.info(f"Updated upload_file {file_id} status to {status}")
