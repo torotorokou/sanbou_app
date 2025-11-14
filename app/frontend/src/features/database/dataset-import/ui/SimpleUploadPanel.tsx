@@ -14,6 +14,7 @@ export interface SimpleUploadPanelProps {
   items: PanelFileItem[];
   onPickFile: (typeKey: string, file: File) => void;
   onRemoveFile: (typeKey: string) => void;
+  onToggleSkip?: (typeKey: string) => void;
   /** カードサイズ: 'compact' | 'normal'。既定は 'compact' */
   size?: 'compact' | 'normal';
   /** タイトルを表示するか（既定: false） */
@@ -24,6 +25,7 @@ export const SimpleUploadPanel: React.FC<SimpleUploadPanelProps> = ({
   items,
   onPickFile,
   onRemoveFile,
+  onToggleSkip,
   size = 'compact',
   showTitle = false,
 }) => {
@@ -57,6 +59,7 @@ export const SimpleUploadPanel: React.FC<SimpleUploadPanelProps> = ({
             item={item}
             onPickFile={onPickFile}
             onRemoveFile={onRemoveFile}
+            onToggleSkip={onToggleSkip}
             size={size}
           />
         ))}

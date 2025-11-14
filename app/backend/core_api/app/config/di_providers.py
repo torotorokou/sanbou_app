@@ -42,28 +42,25 @@ logger = logging.getLogger(__name__)
 #  - この方式により、コード差分ゼロでスキーマ切替が可能
 
 
-def get_repo_raw_flash(db: Session = Depends(get_db)) -> ShogunCsvRepository:
-    """raw層リポジトリ(raw schema, *_shogun_flash tables)を返す"""
+def get_repo_raw_default(db: Session = Depends(get_db)) -> ShogunCsvRepository:
+    """raw層リポジトリ(raw schema, *_shogun_flash tables - デフォルト)"""
     return ShogunCsvRepository(db, schema="raw")
 
 
 def get_repo_stg_flash(db: Session = Depends(get_db)) -> ShogunCsvRepository:
-    """stg層リポジトリ(stg schema, *_shogun_flash tables)を返す"""
+    """stg層リポジトリ(stg schema, *_shogun_flash tables)"""
     return ShogunCsvRepository(db, schema="stg")
 
 
-def get_repo_raw_final(db: Session = Depends(get_db)) -> ShogunCsvRepository:
+def get_repo_raw_flash(db: Session = Depends(get_db)) -> ShogunCsvRepository:
     """
-    raw層final用 (raw schema, *_shogun_final tables)
+    raw層flash用 (raw schema, *_shogun_flash tables)
+    デフォルトのテーブル名（*_shogun_flash）を使用
     """
     return ShogunCsvRepository(
         db,
         schema="raw",
-        table_map={
-            "receive": "receive_shogun_final",
-            "yard": "yard_shogun_final",
-            "shipment": "shipment_shogun_final",
-        },
+        # table_map なし = デフォルトの *_shogun_flash を使用
     )
 
 
@@ -82,34 +79,17 @@ def get_repo_stg_final(db: Session = Depends(get_db)) -> ShogunCsvRepository:
     )
 
 
-def get_repo_debug_flash(db: Session = Depends(get_db)) -> ShogunCsvRepository:
+def get_repo_raw_final(db: Session = Depends(get_db)) -> ShogunCsvRepository:
     """
-    /upload/shogun_flash 用 (sandbox schema + テーブル名変更)
-    table_map: receive/yard/shipment → receive_flash/yard_flash/shipment_flash
-    """
-    return ShogunCsvRepository(
-        db,
-        schema="sandbox",
-        table_map={
-            "receive": "receive_flash",
-            "yard": "yard_flash",
-            "shipment": "shipment_flash",
-        },
-    )
-
-
-def get_repo_debug_final(db: Session = Depends(get_db)) -> ShogunCsvRepository:
-    """
-    /upload/shogun_final 用 (sandbox schema + テーブル名変更)
-    table_map: receive/yard/shipment → receive_final/yard_final/shipment_final
+    raw層final用 (raw schema, *_shogun_final tables)
     """
     return ShogunCsvRepository(
         db,
-        schema="sandbox",
+        schema="raw",
         table_map={
-            "receive": "receive_final",
-            "yard": "yard_final",
-            "shipment": "shipment_final",
+            "receive": "receive_shogun_final",
+            "yard": "yard_shogun_final",
+            "shipment": "shipment_shogun_final",
         },
     )
 
@@ -137,11 +117,26 @@ def get_raw_data_repo(db: Session = Depends(get_db)) -> RawDataRepository:
 
 
 def get_uc_default(
+    raw_repo: ShogunCsvRepository = Depends(get_repo_raw_default),
+    stg_repo: ShogunCsvRepository = Depends(get_repo_stg_flash),
+    raw_data_repo: RawDataRepository = Depends(get_raw_data_repo)
+) -> UploadSyogunCsvUseCase:
+    """デフォルト用のUploadSyogunCsvUseCase (raw.receive_shogun_flash + stg.receive_shogun_flash)"""
+    return UploadSyogunCsvUseCase(
+        raw_writer=raw_repo,
+        stg_writer=stg_repo,
+        csv_config=_csv_config,
+        validator=_validator,
+        raw_data_repo=raw_data_repo,
+    )
+
+
+def get_uc_flash(
     raw_repo: ShogunCsvRepository = Depends(get_repo_raw_flash),
     stg_repo: ShogunCsvRepository = Depends(get_repo_stg_flash),
     raw_data_repo: RawDataRepository = Depends(get_raw_data_repo)
 ) -> UploadSyogunCsvUseCase:
-    """デフォルト用のUploadSyogunCsvUseCase (raw + stg両方に保存)"""
+    """Flash用のUploadSyogunCsvUseCase (raw.receive_shogun_flash + stg.receive_shogun_flash)"""
     return UploadSyogunCsvUseCase(
         raw_writer=raw_repo,
         stg_writer=stg_repo,
@@ -156,54 +151,13 @@ def get_uc_stg_final(
     stg_repo: ShogunCsvRepository = Depends(get_repo_stg_final),
     raw_data_repo: RawDataRepository = Depends(get_raw_data_repo)
 ) -> UploadSyogunCsvUseCase:
-    """Final用のUploadSyogunCsvUseCase (raw + stg両方に保存)"""
+    """Final用のUploadSyogunCsvUseCase (raw.*_shogun_final + stg.*_shogun_final)"""
     return UploadSyogunCsvUseCase(
         raw_writer=raw_repo,
         stg_writer=stg_repo,
         csv_config=_csv_config,
         validator=_validator,
         raw_data_repo=raw_data_repo,
-    )
-
-
-def get_uc_target(
-    raw_repo: ShogunCsvRepository = Depends(get_repo_raw_flash),
-    stg_repo: ShogunCsvRepository = Depends(get_repo_stg_flash),
-    raw_data_repo: RawDataRepository = Depends(get_raw_data_repo)
-) -> UploadSyogunCsvUseCase:
-    """Target用のUploadSyogunCsvUseCase（互換性のため残す）"""
-    return UploadSyogunCsvUseCase(
-        raw_writer=raw_repo,
-        stg_writer=stg_repo,
-        csv_config=_csv_config,
-        validator=_validator,
-        raw_data_repo=raw_data_repo,
-    )
-
-
-def get_uc_debug_flash(
-    repo: ShogunCsvRepository = Depends(get_repo_debug_flash),
-    raw_data_repo: RawDataRepository = Depends(get_raw_data_repo)
-) -> UploadSyogunCsvUseCase:
-    """Debug Flash用のUploadSyogunCsvUseCase"""
-    return UploadSyogunCsvUseCase(
-        csv_writer=repo,
-        raw_data_repo=raw_data_repo,
-        csv_config=_csv_config,
-        validator=_validator,
-    )
-
-
-def get_uc_debug_final(
-    repo: ShogunCsvRepository = Depends(get_repo_debug_final),
-    raw_data_repo: RawDataRepository = Depends(get_raw_data_repo)
-) -> UploadSyogunCsvUseCase:
-    """Debug Final用のUploadSyogunCsvUseCase"""
-    return UploadSyogunCsvUseCase(
-        csv_writer=repo,
-        raw_data_repo=raw_data_repo,
-        csv_config=_csv_config,
-        validator=_validator,
     )
 
 

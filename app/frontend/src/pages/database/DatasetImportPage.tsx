@@ -36,6 +36,7 @@ const DatasetImportPage: React.FC = () => {
     uploading,
     onPickFile,
     onRemoveFile,
+    onToggleSkip,
     doUpload,
   } = useDatasetImportVM({ activeTypes, datasetKey });
 
@@ -102,6 +103,7 @@ const DatasetImportPage: React.FC = () => {
                 items={panelFiles}
                 onPickFile={onPickFile}
                 onRemoveFile={onRemoveFile}
+                onToggleSkip={onToggleSkip}
                 showTitle={false}
               />
             )}
@@ -138,10 +140,10 @@ const DatasetImportPage: React.FC = () => {
         closable={false}
         centered
         maskClosable={false}
-        maskStyle={{ backdropFilter: 'blur(2px)' }}
+        styles={{ mask: { backdropFilter: 'blur(2px)' } }}
       >
         <div style={{ textAlign: 'center', padding: '2rem' }}>
-          <Spin size="large" tip="アップロード中です…" />
+          <Spin size="large" />
           <div style={{ marginTop: 16 }}>
             <Text type="secondary">CSVをアップロード中です。しばらくお待ちください。</Text>
           </div>

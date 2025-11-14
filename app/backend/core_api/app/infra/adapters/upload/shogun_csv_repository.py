@@ -49,7 +49,9 @@ class ShogunCsvRepository:
         
         Args:
             csv_type: CSV種別 ('receive', 'yard', 'shipment')
-            df: 保存するDataFrame（英語カラム名）
+            df: 保存するDataFrame
+                - raw層: 日本語カラム名（元のCSVそのまま）→ 英語に変換のみ、全カラム保持
+                - stg層: 日本語カラム名（元のCSV）→ 英語に変換+YAML定義カラムのみ抽出
             
         Returns:
             int: 保存した行数
@@ -58,36 +60,46 @@ class ShogunCsvRepository:
             logger.warning(f"Empty DataFrame for {csv_type}, skipping save")
             return 0
         
+        # スキーマとテーブル名の決定
+        schema = self._schema or "stg"
+        
         # テーブル名の上書きチェック
         override_table = self._table_map.get(csv_type)
         if override_table:
-            # table_map が指定された場合のみ _save_to_table を呼ぶ
-            return self._save_to_table(csv_type, df, override_table)
-        
-        # デフォルトルート: 従来の保存処理
-        schema = self._schema or "stg"
-        # テーブル名は {csv_type}_shogun_flash (receive_shogun_flash, yard_shogun_flash, shipment_shogun_flash)
-        table_name = f"{csv_type}_shogun_flash"
-        model_class = create_shogun_model_class(csv_type, table_name=table_name, schema=schema)
+            # table_map が指定された場合: カスタムテーブル名を使用
+            table_name = override_table
+        else:
+            # table_map が未指定の場合: デフォルトは *_shogun_flash
+            # raw.receive_shogun_flash, stg.receive_shogun_flash など
+            table_name = f"{csv_type}_shogun_flash"
         
         # YAMLから日本語→英語のカラムマッピングを取得
         column_mapping = self.table_gen.get_column_mapping(csv_type)
         
         # DataFrame のカラム名を日本語→英語に変換
-        df = df.rename(columns=column_mapping)
+        df_renamed = df.rename(columns=column_mapping)
         
-        # YAMLからカラム定義を取得（英語カラム名）
-        columns_def = self.table_gen.get_columns_definition(csv_type)
-        valid_columns = [col['en_name'] for col in columns_def]
+        # raw層とstg層で異なる処理
+        if schema == "raw":
+            # raw層: 全カラムを保持（YAML定義外のカラムも含む）
+            # TEXT型として保存（生データの完全性を保持）
+            df_to_save = df_renamed.astype(str)  # 全カラムを文字列化
+            df_to_save = df_to_save.replace(['nan', 'NaT', '<NA>'], '')  # pandas特有の文字列を空文字列に変換
+            logger.debug(f"[raw] Saving {csv_type} with ALL columns ({len(df_to_save.columns)} cols): {list(df_to_save.columns)[:5]}...")
+        else:
+            # stg層: YAMLで定義されたカラムのみを抽出
+            columns_def = self.table_gen.get_columns_definition(csv_type)
+            valid_columns = [col['en_name'] for col in columns_def]
+            df_to_save = filter_defined_columns(df_renamed, valid_columns, log_dropped=True)
+            
+            # SQL 保存可能な型に正規化（pandas特有の型をPython標準型に変換）
+            df_to_save = to_sql_ready_df(df_to_save)
+            logger.debug(f"[stg] Saving {csv_type} with YAML-defined columns ({len(df_to_save.columns)} cols): {list(df_to_save.columns)[:5]}...")
         
-        # YAML で定義されたカラムのみを抽出（未定義カラムは WARNING ログで記録）
-        df = filter_defined_columns(df, valid_columns, log_dropped=True)
-        
-        # SQL 保存可能な型に正規化（pandas特有の型をPython標準型に変換）
-        df = to_sql_ready_df(df)
+        model_class = create_shogun_model_class(csv_type, table_name=table_name, schema=schema)
         
         # DataFrameを辞書のリストに変換してORMオブジェクトを作成
-        records = df.to_dict('records')
+        records = df_to_save.to_dict('records')
         orm_objects = []
         for record in records:
             # Pandas特有の型をJSON互換型に変換（np.int64 → int, np.float64 → float等）
@@ -99,77 +111,12 @@ class ShogunCsvRepository:
             self.db.bulk_save_objects(orm_objects)
             self.db.commit()
             
-            logger.info(f"Saved {len(orm_objects)} rows to {csv_type} table")
+            logger.info(f"Saved {len(orm_objects)} rows to {schema}.{table_name} (csv_type={csv_type})")
             return len(orm_objects)
             
         except Exception as e:
             self.db.rollback()
-            logger.error(f"Failed to save {csv_type} data: {e}")
-            raise
-    
-    def _save_to_table(self, csv_type: str, df: pd.DataFrame, table_name: str) -> int:
-        """
-        カスタムテーブル名に保存（table_map 使用時）
-        
-        Args:
-            csv_type: CSV種別（YAMLキー用）
-            df: DataFrame
-            table_name: 実際のテーブル名（例: "receive_flash"）
-        
-        Returns:
-            int: 保存した行数
-        """
-        from app.infra.db.dynamic_models import create_shogun_model_class
-        
-        # スキーマ名を取得（指定がなければ "debug"）
-        schema = self._schema or "debug"
-        
-        # CSV種別とスキーマに応じたSQLAlchemy ORMモデルクラスを動的生成
-        model_class = create_shogun_model_class(csv_type, table_name=table_name, schema=schema)
-        
-        # 1. カラム名を英語に統一（日本語カラム名 → 英語カラム名）
-        column_mapping = self.table_gen.get_column_mapping(csv_type)
-        df = df.rename(columns=column_mapping)
-        
-        # 2. YAML定義に存在するカラムのみを抽出（未定義カラムは除外）
-        columns_def = self.table_gen.get_columns_definition(csv_type)
-        valid_columns = [col['en_name'] for col in columns_def]
-        df = filter_defined_columns(df, valid_columns, log_dropped=True)
-        
-        # 3. SQL保存可能な型に正規化（pandas特有の型 → Python標準型）
-        #    - pd.NaT / np.nan → None
-        #    - np.int64 → int
-        #    - np.float64 → float
-        #    - pd.Timestamp → datetime.date / datetime.time
-        df = to_sql_ready_df(df)
-        
-        # 4. 空行を除去（slip_dateがNULLの行はデータ不正として除外）
-        if 'slip_date' in df.columns:
-            original_len = len(df)
-            df = df[df['slip_date'].notna()]
-            if len(df) < original_len:
-                logger.info(f"Empty rows removed: {original_len - len(df)} rows")
-        
-        # 5. DataFrameをORMオブジェクトのリストに変換
-        records = df.to_dict('records')  # [{col1: val1, col2: val2, ...}, ...]
-        orm_objects = []
-        for record in records:
-            # Pandas特有の型をJSON互換型に変換（np.int64 → int等）
-            payload = deep_jsonable(record)
-            # ORMモデルインスタンスを生成（**payloadで辞書をキーワード引数展開）
-            orm_objects.append(model_class(**payload))
-        
-        try:
-            # 6. データベースにコミット（add_all → commit）
-            self.db.add_all(orm_objects)
-            self.db.commit()
-            logger.info(f"Successfully saved {len(orm_objects)} rows to {schema}.{table_name}")
-            return len(orm_objects)
-            
-        except Exception as e:
-            # エラー時はロールバックして例外を再送出
-            self.db.rollback()
-            logger.error(f"Failed to save to {schema}.{table_name}: {e}")
+            logger.error(f"Failed to save {csv_type} data to {schema}.{table_name}: {e}")
             raise
     
     def save_receive_csv(self, df: pd.DataFrame) -> int:

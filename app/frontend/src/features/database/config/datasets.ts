@@ -77,12 +77,12 @@ export const DATASETS: Readonly<Record<string, DatasetConfig>> = {
       '自分で編集・加工・列の並び替え・名前変更をしたファイルは使用できません。',
     ],
     upload: {
-      path: '/core_api/database/upload/syogun_csv',
+      path: '/core_api/database/upload/syogun_csv_flash',
       payloadShape: 'formData',
     },
     csv: [
       {
-        typeKey: 'shogun_flash_receive',
+        typeKey: 'receive',
         label: '将軍_速報版:受入一覧',
         required: true,
         order: 1,
@@ -96,7 +96,7 @@ export const DATASETS: Readonly<Record<string, DatasetConfig>> = {
         },
       },
       {
-        typeKey: 'shogun_flash_ship',
+        typeKey: 'shipment',
         label: '将軍_速報版:出荷一覧',
         required: true,
         order: 2,
@@ -110,7 +110,7 @@ export const DATASETS: Readonly<Record<string, DatasetConfig>> = {
         },
       },
       {
-        typeKey: 'shogun_flash_yard',
+        typeKey: 'yard',
         label: '将軍_速報版:ヤード一覧',
         required: true,
         order: 3,
@@ -135,12 +135,12 @@ export const DATASETS: Readonly<Record<string, DatasetConfig>> = {
       '速報版と混在させないこと。',
     ],
     upload: {
-      path: '/core_api/database/upload/syogun_csv',
+      path: '/core_api/database/upload/syogun_csv_final',
       payloadShape: 'formData',
     },
     csv: [
       {
-        typeKey: 'shogun_final_receive',
+        typeKey: 'receive',
         label: '将軍_最終版:受入一覧',
         required: true,
         order: 1,
@@ -154,7 +154,7 @@ export const DATASETS: Readonly<Record<string, DatasetConfig>> = {
         },
       },
       {
-        typeKey: 'shogun_final_ship',
+        typeKey: 'shipment',
         label: '将軍_最終版:出荷一覧',
         required: true,
         order: 2,
@@ -168,7 +168,7 @@ export const DATASETS: Readonly<Record<string, DatasetConfig>> = {
         },
       },
       {
-        typeKey: 'shogun_final_yard',
+        typeKey: 'yard',
         label: '将軍_最終版:ヤード一覧',
         required: true,
         order: 3,

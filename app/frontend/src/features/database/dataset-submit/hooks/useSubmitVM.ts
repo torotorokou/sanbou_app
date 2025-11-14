@@ -10,11 +10,11 @@ export function useSubmitVM() {
   const repo = useMemo(() => new DatasetImportRepositoryImpl(), []);
   const [uploading, setUploading] = useState(false);
 
-  const doUpload = async (filesByType: Record<string, File>) => {
+  const doUpload = async (filesByType: Record<string, File>, uploadPath: string) => {
     if (!Object.keys(filesByType).length) return;
     setUploading(true);
     try {
-      await repo.upload(filesByType);
+      await repo.upload(filesByType, uploadPath);
     } finally {
       setUploading(false);
     }

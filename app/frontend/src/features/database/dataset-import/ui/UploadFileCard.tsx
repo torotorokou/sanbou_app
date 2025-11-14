@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { Typography, Button } from 'antd';
+import { Typography, Button, Checkbox } from 'antd';
 import { DeleteOutlined } from '@ant-design/icons';
 import type { PanelFileItem } from '../model/types';
 import { ValidationBadge } from './ValidationBadge';
@@ -16,6 +16,7 @@ export interface UploadFileCardProps {
   item: PanelFileItem;
   onPickFile: (typeKey: string, file: File) => void;
   onRemoveFile: (typeKey: string) => void;
+  onToggleSkip?: (typeKey: string) => void;
   /** カードの高さモード: 'compact' | 'normal' */
   size?: 'compact' | 'normal';
 }
@@ -24,6 +25,7 @@ export const UploadFileCard: React.FC<UploadFileCardProps> = ({
   item,
   onPickFile,
   onRemoveFile,
+  onToggleSkip,
   size = 'compact',
 }) => {
   const isCompact = size === 'compact';
@@ -46,7 +48,7 @@ export const UploadFileCard: React.FC<UploadFileCardProps> = ({
         border: cardStyle.border,
       }}
     >
-      {/* ヘッダー: ラベル + バッジ */}
+      {/* ヘッダー: チェックボックス + ラベル + バッジ */}
       <div
         style={{
           display: 'flex',
@@ -55,8 +57,17 @@ export const UploadFileCard: React.FC<UploadFileCardProps> = ({
           marginBottom: isCompact ? 6 : 8,
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <Text strong style={{ fontSize: isCompact ? 14 : 16 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {onToggleSkip && (
+            <Checkbox
+              checked={item.skipped}
+              onChange={() => onToggleSkip(item.typeKey)}
+              style={{ marginTop: 2 }}
+            >
+              スキップ
+            </Checkbox>
+          )}
+          <Text strong style={{ fontSize: isCompact ? 14 : 16, textDecoration: item.skipped ? 'line-through' : 'none', opacity: item.skipped ? 0.5 : 1 }}>
             {item.label}
           </Text>
           {item.required && (
@@ -68,14 +79,21 @@ export const UploadFileCard: React.FC<UploadFileCardProps> = ({
         <ValidationBadge status={item.status} size={isCompact ? 'small' : 'default'} />
       </div>
 
-      {/* ファイル選択ボタン（ファイルがアップロードされていない場合のみ表示） */}
-      {!item.file && (
+      {/* ファイル選択ボタン（ファイルがアップロードされていない場合かつスキップされていない場合のみ表示） */}
+      {!item.file && !item.skipped && (
         <DragDropCsv
           typeKey={item.typeKey}
           onPickFile={onPickFile}
           disabled={false}
           compact={isCompact}
         />
+      )}
+      
+      {/* スキップ中の表示 */}
+      {item.skipped && !item.file && (
+        <div style={{ padding: '8px 12px', textAlign: 'center', color: '#999', fontSize: isCompact ? 12 : 13 }}>
+          ⏭️ このCSVはアップロードしません
+        </div>
       )}
 
       {/* ファイル情報 + 削除ボタン */}

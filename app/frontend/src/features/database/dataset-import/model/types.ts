@@ -15,6 +15,8 @@ export interface PanelFileItem {
   file: File | null;
   status: ValidationStatus;
   preview: CsvPreviewData | null;
+  /** アップロードをスキップするか（チェックマークでスキップ指定） */
+  skipped: boolean;
 }
 
 /**
