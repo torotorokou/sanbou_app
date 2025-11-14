@@ -228,8 +228,8 @@ app/
 3. **CSV Upload機能テスト**
    - `/upload/syogun_csv` - raw schemaへの保存
    - `/upload/syogun_csv_target` - debug schemaへの保存
-   - `/upload/shogun_flash` - debug.*_flash tablesへの保存
-   - `/upload/shogun_final` - debug.*_final tablesへの保存
+   - `/upload/shogun_flash` - sandbox.*_flash tablesへの保存
+   - `/upload/shogun_final` - sandbox.*_final tablesへの保存
 
 4. **Dashboard機能テスト**
    - `/dashboard/target?date=2025-01-01&mode=monthly` - 月次メトリクス取得

@@ -35,9 +35,9 @@ class ShogunFlashDebugRepository:
     
     # CSV種別とテーブル名のマッピング
     TABLE_NAMES = {
-        'receive': 'debug.receive_flash',
-        'shipment': 'debug.shipment_flash',
-        'yard': 'debug.yard_flash',
+        'receive': 'sandbox.receive_flash',
+        'shipment': 'sandbox.shipment_flash',
+        'yard': 'sandbox.yard_flash',
     }
     
     def __init__(self, db: Session):
@@ -46,11 +46,11 @@ class ShogunFlashDebugRepository:
         self._ensure_debug_tables()
     
     def _ensure_debug_schema(self) -> None:
-        """debugスキーマを作成（存在しない場合）"""
+        """sandboxスキーマを作成（存在しない場合）"""
         try:
-            self.db.execute(text("CREATE SCHEMA IF NOT EXISTS debug"))
+            self.db.execute(text("CREATE SCHEMA IF NOT EXISTS sandbox"))
             self.db.commit()
-            logger.info("Debug schema ensured")
+            logger.info("Sandbox schema ensured")
         except Exception as e:
             self.db.rollback()
             logger.warning(f"Failed to create debug schema (may already exist): {e}")
@@ -60,7 +60,7 @@ class ShogunFlashDebugRepository:
         
         # receive_flash テーブル
         receive_ddl = """
-        CREATE TABLE IF NOT EXISTS debug.receive_flash (
+        CREATE TABLE IF NOT EXISTS sandbox.receive_flash (
             id SERIAL PRIMARY KEY,
             slip_date TIMESTAMP NOT NULL,
             sales_date TIMESTAMP,
@@ -108,7 +108,7 @@ class ShogunFlashDebugRepository:
         
         # shipment_flash テーブル
         shipment_ddl = """
-        CREATE TABLE IF NOT EXISTS debug.shipment_flash (
+        CREATE TABLE IF NOT EXISTS sandbox.shipment_flash (
             id SERIAL PRIMARY KEY,
             slip_date TIMESTAMP NOT NULL,
             shipment_no TEXT NOT NULL,
@@ -135,7 +135,7 @@ class ShogunFlashDebugRepository:
         
         # yard_flash テーブル
         yard_ddl = """
-        CREATE TABLE IF NOT EXISTS debug.yard_flash (
+        CREATE TABLE IF NOT EXISTS sandbox.yard_flash (
             id SERIAL PRIMARY KEY,
             slip_date TIMESTAMP NOT NULL,
             client_en_name TEXT NOT NULL,

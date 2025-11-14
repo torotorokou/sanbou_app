@@ -29,7 +29,6 @@ from backend_shared.usecases.csv_formatter.formatter_config import build_formatt
 from backend_shared.adapters.presentation import SuccessApiResponse, ErrorApiResponse
 
 from app.domain.ports.csv_writer_port import IShogunCsvWriter
-from app.infra.adapters.upload.raw_data_repository import RawDataRepository
 
 logger = logging.getLogger(__name__)
 
@@ -39,20 +38,20 @@ class UploadSyogunCsvUseCase:
     
     def __init__(
         self,
-        csv_writer: IShogunCsvWriter,
-        raw_data_repo: RawDataRepository,
+        raw_writer: IShogunCsvWriter,
+        stg_writer: IShogunCsvWriter,
         csv_config: SyogunCsvConfigLoader,
         validator: CSVValidationResponder,
     ):
         """
         Args:
-            csv_writer: CSV保存のPort実装（Adapter）- stg層への保存
-            raw_data_repo: raw層へのデータ保存リポジトリ
+            raw_writer: raw層へのCSV保存Port実装
+            stg_writer: stg層へのCSV保存Port実装
             csv_config: CSV設定ローダー
             validator: CSVバリデーター
         """
-        self.csv_writer = csv_writer
-        self.raw_data_repo = raw_data_repo
+        self.raw_writer = raw_writer
+        self.stg_writer = stg_writer
         self.csv_config = csv_config
         self.validator = validator
     
@@ -106,11 +105,11 @@ class UploadSyogunCsvUseCase:
         if format_error:
             return format_error
         
-        # 5. raw層への保存（生データ保存）
-        raw_result = await self._save_raw_data(dfs, uploaded_files)
+        # 5. raw層への保存（フォーマット済みデータをraw層にも保存）
+        raw_result = await self._save_data(self.raw_writer, formatted_dfs, uploaded_files, "raw")
         
         # 6. stg層への保存（フォーマット済みデータ保存）
-        stg_result = await self._save_stg_data(formatted_dfs, uploaded_files)
+        stg_result = await self._save_data(self.stg_writer, formatted_dfs, uploaded_files, "stg")
         
         # 7. レスポンス生成（raw + stg両方の結果を統合）
         return self._generate_response(raw_result, stg_result)
@@ -206,101 +205,38 @@ class UploadSyogunCsvUseCase:
         
         return formatted_dfs, None
     
-    async def _save_raw_data(
-        self, raw_dfs: Dict[str, pd.DataFrame], uploaded_files: Dict[str, UploadFile]
+    async def _save_data(
+        self, 
+        writer: IShogunCsvWriter,
+        formatted_dfs: Dict[str, pd.DataFrame], 
+        uploaded_files: Dict[str, UploadFile],
+        layer_name: str
     ) -> Dict[str, dict]:
         """
-        raw層へ生データを保存
+        フォーマット済みCSVデータをDBに保存（raw層 or stg層）
         
         Args:
-            raw_dfs: 生のDataFrame（バリデーション済み、未フォーマット）
+            writer: CSV保存用のwriter (raw_writer or stg_writer)
+            formatted_dfs: フォーマット済みDataFrame
             uploaded_files: アップロードファイル情報
-            
+            layer_name: レイヤー名 ("raw" or "stg")
+        
         Returns:
             保存結果の辞書
         """
         result: Dict[str, dict] = {}
         
-        for csv_type, df in raw_dfs.items():
-            try:
-                # receiveの場合のみraw.receive_rawに保存
-                if csv_type != "receive":
-                    result[csv_type] = {"status": "skipped", "detail": "raw層への保存対象外"}
-                    continue
-                
-                # ファイルハッシュ計算
-                uf = uploaded_files[csv_type]
-                uf.file.seek(0)
-                content = await uf.read()
-                file_hash = self.raw_data_repo.calculate_file_hash(content)
-                
-                # 重複チェック
-                existing_id = self.raw_data_repo.check_file_exists(
-                    file_hash=file_hash,
-                    file_type="shogun",
-                    csv_type=csv_type
-                )
-                
-                if existing_id:
-                    logger.info(f"Duplicate file detected: {csv_type}, upload_file_id={existing_id}")
-                    result[csv_type] = {
-                        "status": "duplicate",
-                        "upload_file_id": existing_id,
-                        "detail": "同一ファイルが既に存在します"
-                    }
-                    continue
-                
-                # upload_fileレコード作成
-                upload_file_id = self.raw_data_repo.create_upload_file(
-                    file_name=uf.filename or "unknown.csv",
-                    file_hash=file_hash,
-                    file_type="FLASH",  # 将軍は全てFLASH扱い
-                    csv_type=csv_type,
-                    file_size_bytes=len(content),
-                    row_count=len(df),
-                    uploaded_by=None,
-                    metadata={"columns": list(df.columns)}
-                )
-                
-                # 生データ保存（DataFrameをそのまま渡す）
-                saved_count = self.raw_data_repo.save_receive_raw(
-                    file_id=upload_file_id,
-                    df=df
-                )
-                
-                result[csv_type] = {
-                    "status": "success",
-                    "upload_file_id": upload_file_id,
-                    "rows_saved": saved_count
-                }
-                logger.info(f"Saved {csv_type} to raw layer: {saved_count} rows")
-            
-            except Exception as e:
-                logger.error(f"Failed to save {csv_type} to raw layer: {e}", exc_info=True)
-                result[csv_type] = {
-                    "status": "error",
-                    "detail": str(e)
-                }
-        
-        return result
-    
-    async def _save_stg_data(
-        self, formatted_dfs: Dict[str, pd.DataFrame], uploaded_files: Dict[str, UploadFile]
-    ) -> Dict[str, dict]:
-        """フォーマット済みCSVデータをDBに保存"""
-        result: Dict[str, dict] = {}
-        
         for csv_type, df in formatted_dfs.items():
             try:
-                saved_count = await run_in_threadpool(self.csv_writer.save_csv_by_type, csv_type, df)
+                saved_count = await run_in_threadpool(writer.save_csv_by_type, csv_type, df)
                 result[csv_type] = {
                     "filename": uploaded_files[csv_type].filename,
                     "status": "success",
                     "rows_saved": saved_count,
                 }
-                logger.info(f"Saved {csv_type}: {saved_count} rows")
+                logger.info(f"Saved {csv_type} to {layer_name} layer: {saved_count} rows")
             except Exception as e:
-                logger.error(f"Failed to save {csv_type} to DB: {e}", exc_info=True)
+                logger.error(f"Failed to save {csv_type} to {layer_name} layer: {e}", exc_info=True)
                 result[csv_type] = {
                     "filename": uploaded_files[csv_type].filename,
                     "status": "error",
