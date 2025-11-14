@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Row, Col, Button, Card, message } from 'antd';
 import { ReloadOutlined } from '@ant-design/icons';
-import { customTokens } from '@shared/theme/tokens';
+import { customTokens, apiPostBlob } from '@/shared';
 import type { Dayjs } from 'dayjs';
 import {
   ComparisonConditionForm,
@@ -9,7 +9,6 @@ import {
   AnalysisProcessingModal,
   useCustomerComparison,
 } from '@features/analysis';
-import { apiPostBlob } from '@shared/infrastructure/http';
 
 function getMonthRange(start: Dayjs | null, end: Dayjs | null): string[] {
     if (!start || !end) return [];
@@ -125,21 +124,23 @@ const CustomerListAnalysis: React.FC = () => {
                         }}
                     >
                         <Card
-                            title='比較条件の選択'
-                            bordered={false}
+                            title='条件指定'
+                            variant="borderless"
                             style={{
                                 boxShadow: '0 4px 24px rgba(0,0,0,0.08)',
                                 marginBottom: 24,
                                 borderRadius: 16,
                             }}
-                            headStyle={{
-                                background: '#f0f5ff',
-                                fontWeight: 600,
-                                borderTopLeftRadius: 16,
-                                borderTopRightRadius: 16,
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                alignItems: 'center',
+                            styles={{
+                                header: {
+                                    background: '#f0f5ff',
+                                    fontWeight: 600,
+                                    borderTopLeftRadius: 16,
+                                    borderTopRightRadius: 16,
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center',
+                                },
                             }}
                             extra={
                                 <Button
@@ -240,7 +241,7 @@ const CustomerListAnalysis: React.FC = () => {
                                     backgroundColor:
                                         customTokens.colorBgContainer,
                                 }}
-                                headStyle={{
+                                headerStyle={{
                                     background:
                                         'linear-gradient(90deg, rgba(244,63,94,0.4), rgba(244,63,94,0.05))',
                                     color: '#333',
@@ -260,7 +261,7 @@ const CustomerListAnalysis: React.FC = () => {
                                     backgroundColor:
                                         customTokens.colorBgContainer,
                                 }}
-                                headStyle={{
+                                headerStyle={{
                                     background:
                                         'linear-gradient(90deg, rgba(16,185,129,0.4), rgba(16,185,129,0.05))',
                                     color: '#333',
@@ -279,7 +280,7 @@ const CustomerListAnalysis: React.FC = () => {
                                 cardStyle={{
                                     backgroundColor: customTokens.colorBgBase,
                                 }}
-                                headStyle={{
+                                headerStyle={{
                                     background:
                                         'linear-gradient(90deg, rgba(245,158,11,0.4), rgba(245,158,11,0.05))',
                                     color: '#333',

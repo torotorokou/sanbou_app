@@ -20,10 +20,10 @@ export const CombinedDailyCard: React.FC<CombinedDailyCardProps> = ({ dailyProps
 
   return (
     <Card
-      bordered
+      variant="outlined"
       size="small"
       style={{ height: "100%", display: "flex", flexDirection: "column", ...(style || {}) }}
-      bodyStyle={{ padding: 12, flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}
+      styles={{ body: { padding: 12, flex: 1, display: "flex", flexDirection: "column", minHeight: 0 } }}
     >
       <Tabs
         size="small"

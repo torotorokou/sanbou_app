@@ -4,15 +4,12 @@ import React from 'react';
 
 // アイコン（Ant Design）
 import {
-    HomeOutlined, // ポータル
     DashboardOutlined, // ダッシュボード
     BarChartOutlined, // 売上分析
     BookOutlined, // 帳簿
-    RobotOutlined, // AI
     FileTextOutlined, // マニュアル
     CloudUploadOutlined, // データベース
     SettingOutlined, // 設定
-    FileSearchOutlined,
     NotificationOutlined,
     FileAddOutlined,
     SolutionOutlined,

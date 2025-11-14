@@ -1,9 +1,8 @@
-import { isMobile as isMobileWidth } from '@/shared/constants/breakpoints';
+import { isMobile as isMobileWidth, ensureSectionAnchors, smoothScrollToAnchor } from '@/shared';
 import React, { useEffect, useRef, useState } from 'react';
 import { Modal, Typography, Spin, Anchor, Row, Col } from 'antd';
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { ShogunClientDefault as ShogunClient, type ManualSummary, type ManualDetail } from '@features/manual';
-import { ensureSectionAnchors, smoothScrollToAnchor } from '@shared/utils/anchors';
 
 const { Title } = Typography;
 

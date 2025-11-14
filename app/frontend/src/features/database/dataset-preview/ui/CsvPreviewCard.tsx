@@ -96,20 +96,22 @@ export const CsvPreviewCard: React.FC<Props> = ({
           </div>
         )
       }
-      headStyle={hideHead ? { display: 'none' } : { backgroundColor }}
       style={{
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',
       }}
-      bodyStyle={{
-        display: 'flex',
-        flexDirection: 'column',
-        padding: 8,
-        flex: 1,
-        minHeight: 0,
-        overflow: 'hidden',
+      styles={{
+        header: hideHead ? { display: 'none' } : { backgroundColor },
+        body: {
+          display: 'flex',
+          flexDirection: 'column',
+          padding: 8,
+          flex: 1,
+          minHeight: 0,
+          overflow: 'hidden',
+        },
       }}
     >
       {(() => {
@@ -140,7 +142,7 @@ export const CsvPreviewCard: React.FC<Props> = ({
                 pagination={false}
                 size="small"
                 scroll={{ x: 'max-content', y: scrollY }}
-                bordered
+                variant="outlined"
                 rowKey={(_, i) => (i ?? 0).toString()}
               />
             </div>
@@ -172,7 +174,7 @@ export const CsvPreviewCard: React.FC<Props> = ({
                 pagination={false}
                 size="small"
                 scroll={{ x: 'max-content', y: scrollY }}
-                bordered
+                variant="outlined"
                 locale={{ emptyText: 'CSV未アップロード（ヘッダー定義）' }}
               />
             </div>
@@ -198,7 +200,7 @@ export const CsvPreviewCard: React.FC<Props> = ({
                 pagination={false}
                 size="small"
                 scroll={{ x: 'max-content', y: scrollY }}
-                bordered
+                variant="outlined"
                 locale={{ emptyText: 'CSV未アップロード' }}
               />
             </div>

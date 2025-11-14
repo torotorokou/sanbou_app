@@ -175,20 +175,22 @@ const PortalCard: React.FC<PortalCardProps> = ({
           boxShadow: hideButton ? `inset 0 4px 0 0 ${accent}` : `inset 0 2px 0 0 ${accent}`,
           transition: 'transform 200ms ease, box-shadow 200ms ease',
         }}
-        bodyStyle={{
-          height: '100%',
-          // Keep internal card padding unchanged per request
-          padding: compactLayout ? '2px 2px' : 20,
-          display: 'flex',
-          // For small-screen cases (either smallButton or button-hidden), use horizontal layout
-          flexDirection: (isButtonHidden || isSmallButton) ? 'row' : (compactLayout ? 'row' : 'column'),
-          // center items vertically in row layout
-          alignItems: 'center',
-          // when we have a small button on the right, space-between ensures it sits to the far right
-          justifyContent: isSmallButton ? 'space-between' : (isButtonHidden ? 'flex-start' : (compactLayout ? 'space-between' : 'center')),
-          gap: compactLayout ? 12 * scale : 12 * scale,
-          // text should be left-aligned when it's to the right of the icon
-          textAlign: isButtonHidden ? 'left' : (compactLayout ? 'left' : 'center'),
+        styles={{
+          body: {
+            height: '100%',
+            // Keep internal card padding unchanged per request
+            padding: compactLayout ? '2px 2px' : 20,
+            display: 'flex',
+            // For small-screen cases (either smallButton or button-hidden), use horizontal layout
+            flexDirection: (isButtonHidden || isSmallButton) ? 'row' : (compactLayout ? 'row' : 'column'),
+            // center items vertically in row layout
+            alignItems: 'center',
+            // when we have a small button on the right, space-between ensures it sits to the far right
+            justifyContent: isSmallButton ? 'space-between' : (isButtonHidden ? 'flex-start' : (compactLayout ? 'space-between' : 'center')),
+            gap: compactLayout ? 12 * scale : 12 * scale,
+            // text should be left-aligned when it's to the right of the icon
+            textAlign: isButtonHidden ? 'left' : (compactLayout ? 'left' : 'center'),
+          },
         }}
         onMouseEnter={(e) => {
           (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-2px)';

@@ -1,8 +1,7 @@
 // src/components/chat/PdfPreviewModal.tsx
 import React from 'react';
 import { Modal, Empty } from 'antd';
-import { ensurePdfJsWorkerLoaded } from '@shared/utils/pdf/workerLoader';
-import { useResponsive, ANT } from '@/shared';
+import { ensurePdfJsWorkerLoaded, useResponsive, ANT } from '@/shared';
 
 type Props = {
     visible: boolean;

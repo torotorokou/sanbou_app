@@ -5,7 +5,9 @@
 import type { ValidationStatus } from '../../shared/types/common';
 
 export async function validateRows(
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _file: File,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _rules?: unknown
 ): Promise<ValidationStatus> {
   // 将来的な実装: 行ごとのバリデーション

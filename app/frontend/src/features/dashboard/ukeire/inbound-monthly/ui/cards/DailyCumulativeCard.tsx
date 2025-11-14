@@ -98,7 +98,7 @@ export const DailyCumulativeCard: React.FC<DailyCumulativeCardProps> = ({ cumDat
 
   if (variant === "embed") return <Inner />;
   return (
-    <Card bordered bodyStyle={{ padding: 12, height: "100%", display: "flex", flexDirection: "column", minHeight: 0 }}>
+    <Card variant="outlined" styles={{ body: { padding: 12, height: "100%", display: "flex", flexDirection: "column", minHeight: 0 } }}>
       <Inner />
     </Card>
   );

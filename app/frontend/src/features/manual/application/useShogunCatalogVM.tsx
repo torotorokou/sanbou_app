@@ -42,10 +42,12 @@ export function useShogunCatalog() {
         // Debug: Log raw catalog response to verify item.id presence
         console.log('[useShogunCatalog] Raw catalog response:', data);
         
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const mapped = data.sections.map((sec: any) => ({
           id: sec.id,
           title: sec.title,
           icon: sec.icon ? iconMap[sec.icon] || <FileDoneOutlined /> : <FileDoneOutlined />,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           items: sec.items.map((item: any) => ({
             id: item.id,
             title: item.title,
@@ -61,6 +63,7 @@ export function useShogunCatalog() {
         console.log('[useShogunCatalog] Mapped sections with item ids:', 
           mapped.map(s => ({ 
             section: s.title, 
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             items: s.items.map((i: any) => ({ id: i.id, title: i.title })) 
           }))
         );

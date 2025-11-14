@@ -135,7 +135,7 @@ export const DailyActualsCard: React.FC<DailyActualsCardProps> = ({ chartData, v
 
   if (variant === "embed") return <Inner />;
   return (
-    <Card bordered size="small" bodyStyle={{ padding: 12, height: "100%", display: "flex", flexDirection: "column", minHeight: 0 }}>
+    <Card variant="outlined" size="small" styles={{ body: { padding: 12, height: "100%", display: "flex", flexDirection: "column", minHeight: 0 } }}>
       <Inner />
     </Card>
   );

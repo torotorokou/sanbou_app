@@ -102,7 +102,7 @@ export const CalendarCard: React.FC<CalendarCardProps> = ({ year, month, reposit
         bordered
         size="small"
         style={{ height: "100%", display: "flex", flexDirection: "column", ...(style || {}) }}
-        bodyStyle={{ display: "flex", flexDirection: "column", padding: 12, gap: 8, flex: 1, minHeight: 0 }}
+        styles={{ body: { display: "flex", flexDirection: "column", padding: 12, gap: 8, flex: 1, minHeight: 0 } }}
       >
         <Skeleton active paragraph={{ rows: 6 }} />
       </Card>
@@ -115,7 +115,7 @@ export const CalendarCard: React.FC<CalendarCardProps> = ({ year, month, reposit
         bordered
         size="small"
         style={{ height: "100%", display: "flex", flexDirection: "column", ...(style || {}) }}
-        bodyStyle={{ display: "flex", flexDirection: "column", padding: 12, gap: 8, flex: 1, minHeight: 0 }}
+        styles={{ body: { display: "flex", flexDirection: "column", padding: 12, gap: 8, flex: 1, minHeight: 0 } }}
       >
         <Typography.Text type="danger">{vm.error}</Typography.Text>
       </Card>
@@ -124,7 +124,7 @@ export const CalendarCard: React.FC<CalendarCardProps> = ({ year, month, reposit
 
   return (
     <Card
-      bordered
+      variant="outlined"
       size="small"
       style={{ height: "100%", display: "flex", flexDirection: "column", ...(style || {}) }}
       bodyStyle={{ display: "flex", flexDirection: "column", padding: 12, gap: 8, flex: 1, minHeight: 0 }}

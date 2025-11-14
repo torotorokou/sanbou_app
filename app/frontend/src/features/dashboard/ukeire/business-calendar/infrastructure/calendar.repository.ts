@@ -1,6 +1,6 @@
 import type { ICalendarRepository } from "@/features/calendar/ports/repository";
 import type { CalendarDayDTO } from "@/features/calendar/domain/types";
-import { coreApi } from "@/shared/infrastructure/http";
+import { coreApi } from '@/shared';
 
 type BackendCalendarDay = {
   ddate: string;

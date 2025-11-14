@@ -1,4 +1,4 @@
-import { ANT } from '@/shared/constants/breakpoints';
+import { ANT } from '@/shared';
 import React from 'react';
 import { Card, Row, Col } from 'antd';
 import { CarOutlined, InboxOutlined } from '@ant-design/icons';
@@ -63,7 +63,7 @@ const SummaryPanel: React.FC = () => {
                 </span>
             }
             className='dashboard-card'
-            bodyStyle={{ padding: 12 }} // ← 余白を小さく
+            styles={{ body: { padding: 12 } }}
         >
             <Row gutter={16}>
                 <Col span={12}>

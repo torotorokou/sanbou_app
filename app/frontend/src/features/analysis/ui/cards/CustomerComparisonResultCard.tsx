@@ -7,7 +7,7 @@ type Props = {
     title: string;
     data: CustomerData[];
     cardStyle?: React.CSSProperties;
-    headStyle?: React.CSSProperties;
+    headerStyle?: React.CSSProperties;
     style?: React.CSSProperties;
 };
 
@@ -34,7 +34,7 @@ const CustomerComparisonResultCard: React.FC<Props> = ({
     title,
     data,
     cardStyle,
-    headStyle,
+    headerStyle,
     style,
 }) => (
     <Card
@@ -47,8 +47,10 @@ const CustomerComparisonResultCard: React.FC<Props> = ({
             ...style,
             ...cardStyle,
         }}
-        headStyle={{ fontWeight: 600, ...headStyle }}
-        bodyStyle={{ flex: 1, minHeight: 0, overflow: 'auto', padding: 0 }}
+        styles={{
+            header: { fontWeight: 600, ...headerStyle },
+            body: { flex: 1, minHeight: 0, overflow: 'auto', padding: 0 },
+        }}
     >
     <div className="responsive-x" style={{ minHeight: 0 }}>
             <Table

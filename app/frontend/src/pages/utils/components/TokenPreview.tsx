@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card, Typography, Row, Col } from 'antd';
-import { customTokens } from '@shared/theme/tokens';
+import { customTokens } from '@/shared';
 
 // トークンの説明を付与（手動マッピング）
 const tokenDescriptions: Record<string, string> = {
@@ -31,7 +31,6 @@ const TokenPreview: React.FC = () => {
                 {Object.entries(customTokens).map(([key, value]) => (
                     <Col xs={24} md={8} xl={6} key={key}>
                         <Card
-                            bordered
                             styles={{ body: { padding: 16 } }}
                             variant='outlined'
                             style={{

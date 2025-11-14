@@ -59,7 +59,7 @@ const KPIBlock: React.FC<KPIBlockProps> = ({ title, p50, p10, p90, target, actua
   const pctColor = ratio == null ? "#8c8c8c" : ratio >= 1 ? COLORS.ok : ratio >= 0.9 ? COLORS.warn : COLORS.danger;
 
   return (
-    <Card size="small" bodyStyle={{ padding: 12, height: "100%", display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
+    <Card size="small" styles={{ body: { padding: 12, height: "100%", display: "flex", flexDirection: "column", flex: 1, minHeight: 0 } }}>
       <div style={{ height: "100%", display: "grid", gridTemplateColumns: "auto 1fr auto", alignItems: "center", gap: 8 }}>
         <div style={{ textAlign: "left", paddingLeft: 4 }}>
           <div style={{ fontSize: 13, fontWeight: 700, color: "#2b2b2b" }}>
@@ -88,7 +88,7 @@ const KPIBlock: React.FC<KPIBlockProps> = ({ title, p50, p10, p90, target, actua
         <div style={{ width: 92, display: "flex", flexDirection: "column", alignItems: "center" }}>
           {pct != null ? (
             <>
-              <Progress percent={clamp(pct, 0, 200)} showInfo={false} strokeColor={pctColor} strokeWidth={8} />
+              <Progress percent={clamp(pct, 0, 200)} showInfo={false} strokeColor={pctColor} size={8} />
               <div style={{ textAlign: "center", marginTop: 4, color: pctColor, fontWeight: 700, fontSize: 12 }}>
                 {pct}%
               </div>
@@ -112,7 +112,7 @@ const MobileKPIBlock: React.FC<MobileKPIBlockProps> = ({ title, p50, p10, p90, t
   const pctColor = displayPct == null ? "#8c8c8c" : displayPct >= 100 ? COLORS.ok : displayPct >= 90 ? COLORS.warn : COLORS.danger;
 
   return (
-    <Card size="small" bodyStyle={{ padding: "6px 10px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6 }}>
+    <Card size="small" styles={{ body: { padding: "6px 10px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6 } }}>
       <div style={{ fontSize: 11, fontWeight: 700, color: "#2b2b2b", whiteSpace: "nowrap" }}>
         {(() => {
           const isThisWeek = title != null && String(title).startsWith("今週");
@@ -137,7 +137,7 @@ const MobileKPIBlock: React.FC<MobileKPIBlockProps> = ({ title, p50, p10, p90, t
           <>
             <div style={{ textAlign: "center", color: pctColor, fontWeight: 700, fontSize: 11 }}>{displayPct}%</div>
             <div style={{ width: 96, marginTop: 6 }}>
-              <Progress percent={clamp(displayPct, 0, 200)} showInfo={false} strokeWidth={8} strokeColor={pctColor} />
+              <Progress percent={clamp(displayPct, 0, 200)} showInfo={false} size={8} strokeColor={pctColor} />
             </div>
           </>
         ) : (
@@ -227,9 +227,9 @@ export const ForecastCard: React.FC<ForecastCardProps> = ({ kpis, chartData, cum
 
   return (
     <Card
-      bordered
+      variant="outlined"
       style={{ height: "100%", display: "flex", flexDirection: "column" }}
-      bodyStyle={{ padding: cardPadding, display: "flex", flexDirection: "column", gap: cardGap, flex: 1, minHeight: 0 }}
+      styles={{ body: { padding: cardPadding, display: "flex", flexDirection: "column", gap: cardGap, flex: 1, minHeight: 0 } }}
     >
       <Space align="baseline" style={{ justifyContent: "space-between", width: "100%" }}>
         <Typography.Title level={5} style={{ margin: 0 }}>

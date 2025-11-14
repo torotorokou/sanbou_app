@@ -2,7 +2,7 @@
  * Shogun Manual API Client
  * 将軍マニュアルのAPI クライアント
  */
-import { apiGet } from '@/shared/infrastructure/http';
+import { apiGet } from '@/shared';
 import type {
   ManualDetail,
   ManualListResponse,

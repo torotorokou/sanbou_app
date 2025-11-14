@@ -1,4 +1,4 @@
-import { isMobile, isTabletOrHalf, isDesktop, ANT } from '@/shared/constants/breakpoints';
+import { isMobile, isTabletOrHalf, isDesktop, ANT } from '@/shared';
 /**
  * レスポンシブデザインの動作確認用ユーティリティ
  *

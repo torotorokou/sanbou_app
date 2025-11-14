@@ -14,10 +14,7 @@ import type { CsvUploadSectionProps } from './types';
  * - 4段階レスポンシブ（Mobile/Tablet/Laptop/Desktop）
  * - データ準備に関する機能を集約
  */
-const CsvUploadSection: React.FC<CsvUploadSectionProps> = ({
-    uploadFiles,
-    makeUploadProps
-}) => {
+const CsvUploadSection: React.FC<CsvUploadSectionProps> = () => {
     // responsive: flagsベースの段階スイッチ
     const { flags } = useResponsive();
 

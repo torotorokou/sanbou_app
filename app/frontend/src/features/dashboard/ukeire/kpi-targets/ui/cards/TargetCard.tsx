@@ -42,9 +42,9 @@ export const TargetCard: React.FC<TargetCardProps> = ({ rows, style, isMobile = 
 
   return (
     <Card
-      bordered
+      variant="outlined"
       style={{ height: "100%", display: "flex", flexDirection: "column", ...style }}
-      bodyStyle={{ padding: 12, display: "flex", flexDirection: "column", gap: 8, flex: 1, minHeight: 0 }}
+      styles={{ body: { padding: 12, display: "flex", flexDirection: "column", gap: 8, flex: 1, minHeight: 0 } }}
     >
       <Space align="baseline" style={{ justifyContent: "space-between", width: "100%" }}>
         <Typography.Title level={5} style={{ margin: 0 }}>

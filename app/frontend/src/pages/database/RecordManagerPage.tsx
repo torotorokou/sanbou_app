@@ -676,7 +676,7 @@ ${selectedRow.date},${selectedRow.slip_no || '-'},${selectedRow.customer || '-'}
               </Space>
             }
             style={{ flex: 1, display: 'flex', flexDirection: 'column' }}
-            bodyStyle={{ padding: 0, flex: 1, overflow: 'hidden' }}
+            styles={{ body: { padding: 0, flex: 1, overflow: 'hidden' } }}
           >
             <div style={{ padding: 12, height: '100%', overflow: 'auto' }}>
               <Table<RecordRow>

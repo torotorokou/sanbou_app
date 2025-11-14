@@ -164,13 +164,15 @@ export default function CalendarCard({ year, month, repository, title = "営業�
         flexDirection: "column",
         ...style 
       }}
-      bodyStyle={{
-        flex: 1,
-        minHeight: 0,
-        overflow: "hidden",
-        padding: 12,
-        display: "flex",
-        flexDirection: "column",
+      styles={{
+        body: {
+          flex: 1,
+          minHeight: 0,
+          overflow: "hidden",
+          padding: 12,
+          display: "flex",
+          flexDirection: "column",
+        },
       }}
     >
       <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>

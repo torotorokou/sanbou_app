@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { isMobile, isTabletOrHalf, isDesktop, ANT, tierOf } from '@shared/constants/breakpoints';
+import { isMobile, isTabletOrHalf, isDesktop, ANT, tierOf } from '@/shared';
 
 describe('breakpoints predicates', () => {
   it('mobile boundary', () => {
