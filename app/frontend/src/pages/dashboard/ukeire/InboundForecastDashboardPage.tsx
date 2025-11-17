@@ -35,8 +35,11 @@ import styles from "./InboundForecastDashboardPage.module.css";
 dayjs.extend(isoWeek);
 
 const InboundForecastDashboardPage: React.FC = () => {
+  // 初期月を先に確定
+  const initialMonth = useMemo(() => dayjs().format("YYYY-MM"), []);
+  
   const repository = useMemo(() => new MockInboundForecastRepository(), []);
-  const vm = useInboundForecastVM(repository);
+  const vm = useInboundForecastVM(repository, initialMonth);
   const layout = useResponsiveLayout();
 
   // 選択中の月が当月かどうかを判定
@@ -52,6 +55,15 @@ const InboundForecastDashboardPage: React.FC = () => {
   const [achievementMode, setAchievementMode] = useState<AchievementMode>("toDate");
   const effectiveMode: AchievementMode = isCurrentMonth ? achievementMode : "toEnd";
 
+  // 選択中の月から対象日付を計算（月の初日を使用してAPIに渡す）
+  // ※Backend側で該当月の適切な日付（当月=today, 過去=月末, 未来=月初営業日）を自動解決
+  const targetDate = useMemo(() => {
+    return dayjs(vm.month, "YYYY-MM").startOf("month").format("YYYY-MM-DD");
+  }, [vm.month]);
+  
+  // DBから目標値と実績値を取得（選択月に応じて動的に変更、mode=monthlyで過去/未来は日週マスク）
+  const { data: targetMetrics, error: targetError } = useTargetMetrics(targetDate, "monthly");
+
   // 日次搬入量データ用のリポジトリとVM（営業カレンダーリポジトリを追加）
   const dailyRepository = useMemo(() => new HttpInboundDailyRepository(), []);
   const calendarRepository = useMemo(() => new CalendarRepositoryForUkeire(), []);
@@ -60,16 +72,6 @@ const InboundForecastDashboardPage: React.FC = () => {
     calendarRepository,
     month: vm.month,
   });
-
-  // 選択中の月から対象日付を計算（月の初日を使用してAPIに渡す）
-  // ※Backend側で該当月の適切な日付（当月=today, 過去=月末, 未来=月初営業日）を自動解決
-  const targetDate = useMemo(() => {
-    if (!vm.month) return dayjs().format("YYYY-MM-DD");
-    return dayjs(vm.month, "YYYY-MM").startOf("month").format("YYYY-MM-DD");
-  }, [vm.month]);
-  
-  // DBから目標値と実績値を取得（選択月に応じて動的に変更、mode=monthlyで過去/未来は日週マスク）
-  const { data: targetMetrics, error: targetError } = useTargetMetrics(targetDate, "monthly");
 
   // 月ナビゲーション用のハンドラ
   const handlePrevMonth = () => {
