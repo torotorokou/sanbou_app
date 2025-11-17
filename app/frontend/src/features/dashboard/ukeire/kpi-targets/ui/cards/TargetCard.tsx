@@ -137,26 +137,48 @@ export const TargetCard: React.FC<TargetCardProps> = ({
                 {/* 今週のラベルにはW##を表示 */}
                 {(() => {
                   const label = r.label ?? "";
+                  // allow labels to include explicit newline markers ("\n") and render them stacked
+                  const lines = String(label).split("\n");
                   const isThisWeekLabel = label.startsWith("今週");
+
                   if (isThisWeekLabel && typeof isoWeekToShow === "number") {
                     const w = String(isoWeekToShow).padStart(2, "0");
                     if (isMobile) {
-                      // Mobile: 1行で表示（ラベルを短縮してW##を強調）
+                      // Mobile: 1行で表示（ラベルを短縮してW##を強調）。もし改行があれば先頭のみ表示。
                       return (
-                        <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                          <span>今週</span>
-                          <span style={{ color: "#1890ff", fontWeight: 700, fontSize: "0.9em" }}>{`W${w}`}</span>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                          <div style={{ display: "flex", flexDirection: "column", lineHeight: 1 }}>
+                            <span>{lines[0]}</span>
+                            {lines[1] ? <span style={{ fontSize: "0.75em", color: "#8c8c8c" }}>{lines[1]}</span> : null}
+                          </div>
+                          <span style={{ color: "#1890ff", fontWeight: 700, fontSize: "0.95em" }}>{`W${w}`}</span>
                         </div>
                       );
                     }
-                    // Desktop: 2行で表示（ラベルとW##を分ける）
+                    // Desktop: ラベル（複数行可）を表示し、下段に W## を表示
                     return (
                       <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                        <span>{label.replace("今週", "今週")}</span>
+                        <div style={{ display: "flex", flexDirection: "column" }}>
+                          {lines.map((ln, idx) => (
+                            <span key={idx}>{ln}</span>
+                          ))}
+                        </div>
                         <span style={{ color: "#1890ff", fontWeight: 700, fontSize: "0.85em" }}>{`W${w}`}</span>
                       </div>
                     );
                   }
+
+                  // 非週次ラベル：改行があれば縦に並べて表示
+                  if (lines.length > 1) {
+                    return (
+                      <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                        {lines.map((ln, idx) => (
+                          <span key={idx}>{ln}</span>
+                        ))}
+                      </div>
+                    );
+                  }
+
                   return <>{label}</>;
                 })()}
               </div>

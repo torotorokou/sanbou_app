@@ -60,13 +60,15 @@ export function useTargetsVM(params: UseTargetsVMParams): UseTargetsVMResult {
     () => [
       {
         key: "month",
-        label: mode === "toDate" ? "当月（昨日）" : "当月",
+        // 改行を入れて UI 側で縦に並べて表示できるようにする
+        label: mode === "toDate" ? "当月\n（昨日）" : "当月",
         target: monthTarget,
         actual: monthActual,
       },
       {
         key: "week",
-        label: mode === "toDate" ? "今週（昨日）" : "今週",
+        // 今週ラベルも改行対応（必要に応じて表示が整うように）
+        label: mode === "toDate" ? "今週\n（昨日）" : "今週",
         target: weekTarget,
         actual: weekActual,
       },
