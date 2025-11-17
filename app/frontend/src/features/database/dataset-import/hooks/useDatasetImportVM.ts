@@ -83,9 +83,13 @@ export function useDatasetImportVM(opts?: DatasetImportVMOptions) {
   };
   
   const validateOnPick = useValidateOnPick(getRequired);
-  const { uploading, doUpload } = useSubmitVM();
+  const { uploading, uploadSuccess, doUpload, resetUploadState } = useSubmitVM();
 
   const onPickFile = async (typeKey: string, file: File) => {
+    // 新しいファイルを選択したら成功状態をリセット
+    if (uploadSuccess) {
+      resetUploadState();
+    }
     setFiles(prev => ({ ...prev, [typeKey]: file }));
     
     // CSVファイルを読み込んでプレビューを生成
@@ -103,6 +107,10 @@ export function useDatasetImportVM(opts?: DatasetImportVMOptions) {
   };
 
   const onRemoveFile = (typeKey: string) => {
+    // ファイル削除時に成功状態をリセット（再アップロードを可能に）
+    if (uploadSuccess) {
+      resetUploadState();
+    }
     setFiles(prev => ({ ...prev, [typeKey]: null }));
     setStatus(prev => ({ ...prev, [typeKey]: 'unknown' }));
     setPreviews(prev => ({ ...prev, [typeKey]: null }));
@@ -110,6 +118,10 @@ export function useDatasetImportVM(opts?: DatasetImportVMOptions) {
   };
 
   const onToggleSkip = (typeKey: string) => {
+    // スキップ切り替え時に成功状態をリセット（アップロード対象が変わるため）
+    if (uploadSuccess) {
+      resetUploadState();
+    }
     setSkipped(prev => ({ ...prev, [typeKey]: !prev[typeKey] }));
   };
 
@@ -159,7 +171,17 @@ export function useDatasetImportVM(opts?: DatasetImportVMOptions) {
     return out;
   }, [files, skipped, activeTypes]);
 
-  const doUploadActive = () => {
+  const doUploadActive = async () => {
+    // アップロード中は実行しない（二重送信防止）
+    if (uploading) {
+      console.warn('Already uploading. Ignoring duplicate upload request.');
+      return;
+    }
+    // 既に成功済みの場合は実行しない
+    if (uploadSuccess) {
+      console.warn('Upload already succeeded.');
+      return;
+    }
     // datasetKey からアップロード先のパスを取得
     if (!datasetKey) {
       console.error('datasetKey が指定されていません');
@@ -170,13 +192,26 @@ export function useDatasetImportVM(opts?: DatasetImportVMOptions) {
       console.error(`Dataset not found: ${datasetKey}`);
       return;
     }
-    doUpload(filesForUpload, dataset.upload.path);
+    try {
+      await doUpload(filesForUpload, dataset.upload.path);
+      // 成功したら全ファイルをクリア
+      setFiles({});
+      setStatus({});
+      setPreviews({});
+      setSkipped({});
+    } catch (error) {
+      // エラー時は状態を確実にリセット（再アップロードを可能に）
+      resetUploadState();
+      console.error('Upload failed:', error);
+      // ファイルは保持（ユーザーが削除できる）
+    }
   };
 
   return {
     panelFiles,
     canUpload,
     uploading,
+    uploadSuccess,
     onPickFile,
     onRemoveFile,
     onToggleSkip,

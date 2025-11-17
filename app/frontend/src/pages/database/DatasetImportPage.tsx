@@ -34,6 +34,7 @@ const DatasetImportPage: React.FC = () => {
     panelFiles,
     canUpload,
     uploading,
+    uploadSuccess,
     onPickFile,
     onRemoveFile,
     onToggleSkip,
@@ -111,11 +112,11 @@ const DatasetImportPage: React.FC = () => {
 
           <Button
             type="primary"
-            disabled={!canUpload || panelFiles.length === 0}
+            disabled={!canUpload || panelFiles.length === 0 || uploading || uploadSuccess}
             onClick={doUpload}
             className={styles.uploadButton}
           >
-            アップロードする
+            {uploadSuccess ? 'アップロード完了' : 'アップロードする'}
           </Button>
           
           {!canUpload && panelFiles.length > 0 && (
@@ -137,9 +138,13 @@ const DatasetImportPage: React.FC = () => {
       <Modal
         open={uploading}
         footer={null}
-        closable={false}
+        closable={true}
         centered
-        maskClosable={false}
+        maskClosable={true}
+        onCancel={() => {
+          // エラー時など、強制的にモーダルを閉じられるようにする
+          console.log('Modal closed by user');
+        }}
         styles={{ mask: { backdropFilter: 'blur(2px)' } }}
       >
         <div style={{ textAlign: 'center', padding: '2rem' }}>

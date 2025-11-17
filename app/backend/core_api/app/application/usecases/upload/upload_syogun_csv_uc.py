@@ -93,6 +93,54 @@ class UploadSyogunCsvUseCase:
                 status_code=400
             )
         
+        # log.upload_file への登録前に重複チェック
+        duplicate_files: Dict[str, Dict[str, Any]] = {}
+        if self.raw_data_repo:
+            for csv_type, uf in uploaded_files.items():
+                try:
+                    content = await uf.read()
+                    file_hash = self.raw_data_repo.calculate_file_hash(content)
+                    uf.file.seek(0)  # read後はシークを戻す
+                    
+                    # 重複チェック（成功済みファイルのみ）
+                    duplicate_info = self.raw_data_repo.check_duplicate_upload(
+                        csv_type=csv_type,
+                        file_hash=file_hash,
+                        file_type=file_type,
+                        file_name=uf.filename,
+                        file_size_bytes=len(content),
+                        # row_count は CSV読込後に判明するため、ここでは None
+                    )
+                    
+                    if duplicate_info:
+                        duplicate_files[csv_type] = duplicate_info
+                        logger.warning(
+                            f"Duplicate file detected: {csv_type} - "
+                            f"existing_id={duplicate_info['id']}, "
+                            f"match_type={duplicate_info['match_type']}"
+                        )
+                except Exception as e:
+                    logger.error(f"Failed to check duplicate for {csv_type}: {e}")
+        
+        # 重複ファイルが検出された場合、409 Conflict を返す
+        if duplicate_files:
+            duplicate_details = []
+            for csv_type, info in duplicate_files.items():
+                duplicate_details.append({
+                    "csv_type": csv_type,
+                    "file_name": info["file_name"],
+                    "uploaded_at": info["uploaded_at"].isoformat() if info.get("uploaded_at") else None,
+                    "uploaded_by": info.get("uploaded_by"),
+                    "match_type": info["match_type"],
+                })
+            
+            return ErrorApiResponse(
+                code="DUPLICATE_FILE",
+                detail=f"同じファイルが既にアップロード済みです: {', '.join(duplicate_files.keys())}",
+                status_code=409,
+                result={"duplicates": duplicate_details}
+            )
+        
         # log.upload_file にアップロードログを作成（csv_type 単位）
         upload_file_ids: Dict[str, int] = {}
         if self.raw_data_repo:
@@ -134,18 +182,27 @@ class UploadSyogunCsvUseCase:
             self._mark_all_as_failed(upload_file_ids, "CSV validation failed")
             return validation_error
         
-        # 4. raw層への保存（生データ = 空行削除のみ、日本語カラム名のまま）
-        raw_cleaned_dfs = await self._clean_empty_rows(dfs)
-        raw_result = await self._save_data(self.raw_writer, raw_cleaned_dfs, uploaded_files, "raw")
+        # 4. source_row_no の採番(1-indexed)
+        dfs_with_row_no = self._add_source_row_numbers(dfs)
+        logger.info(f"[TRACE] dfs_with_row_no has {len(dfs_with_row_no)} items: {list(dfs_with_row_no.keys())}")
         
-        # 5. フォーマット（stg層用）
-        formatted_dfs, format_error = await self._format_csv_data(dfs)
+        # 5. raw層への保存(生データ = 空行削除のみ、日本語カラム名のまま)
+        raw_cleaned_dfs = await self._clean_empty_rows(dfs_with_row_no)
+        logger.info(f"[TRACE] raw_cleaned_dfs has {len(raw_cleaned_dfs)} items: {list(raw_cleaned_dfs.keys())}")
+        raw_result = await self._save_data(
+            self.raw_writer, raw_cleaned_dfs, uploaded_files, "raw", upload_file_ids
+        )
+        
+        # 6. フォーマット（stg層用）
+        formatted_dfs, format_error = await self._format_csv_data(dfs_with_row_no)
         if format_error:
             self._mark_all_as_failed(upload_file_ids, "CSV format error")
             return format_error
         
-        # 6. stg層への保存（フォーマット済みデータ = 英語カラム名、型変換済み）
-        stg_result = await self._save_data(self.stg_writer, formatted_dfs, uploaded_files, "stg")
+        # 7. stg層への保存（フォーマット済みデータ = 英語カラム名、型変換済み）
+        stg_result = await self._save_data(
+            self.stg_writer, formatted_dfs, uploaded_files, "stg", upload_file_ids
+        )
         
         # 7. log.upload_file のステータスを更新
         self._update_upload_logs(upload_file_ids, formatted_dfs, stg_result)
@@ -196,6 +253,26 @@ class UploadSyogunCsvUseCase:
                 )
         
         return dfs, None
+    
+    def _add_source_row_numbers(self, dfs: Dict[str, pd.DataFrame]) -> Dict[str, pd.DataFrame]:
+        """
+        各DataFrameに source_row_no カラムを追加（1-indexed）
+        
+        Args:
+            dfs: csv_type -> DataFrame のマッピング
+            
+        Returns:
+            source_row_no カラムが追加された DataFrame のマッピング
+        """
+        result_dfs = {}
+        for csv_type, df in dfs.items():
+            df_copy = df.copy()
+            # 1-indexed で行番号を付与（CSVのヘッダー行の次が1行目）
+            df_copy['source_row_no'] = range(1, len(df_copy) + 1)
+            result_dfs[csv_type] = df_copy
+            logger.debug(f"Added source_row_no to {csv_type}: 1 to {len(df_copy)}")
+        
+        return result_dfs
     
     def _validate_csv_data(
         self, dfs: Dict[str, pd.DataFrame], uploaded_files: Dict[str, UploadFile]
@@ -248,25 +325,62 @@ class UploadSyogunCsvUseCase:
         - 空行除去
         - カラム名を英語に変換
         - 型変換、正規化
+        - tracking columns (upload_file_id, source_row_no) を保持
         """
         formatted_dfs: Dict[str, pd.DataFrame] = {}
         
+        # tracking columns のカラム名定義（保守性向上のため定数化）
+        TRACKING_COLUMNS = ['upload_file_id', 'source_row_no']
+        
         for csv_type, df in dfs.items():
             try:
-                # 空行除去（全カラムがNULLの行を削除）
+                logger.info(f"[DEBUG] Starting format for {csv_type}: {len(df)} rows, columns={list(df.columns)[:10]}...")
+                
+                # 1. tracking columns を一時保存（存在する場合のみ）
+                tracking_data = {}
+                for col in TRACKING_COLUMNS:
+                    if col in df.columns:
+                        tracking_data[col] = df[col].copy()
+                        logger.info(f"[DEBUG] Preserved tracking column '{col}' for {csv_type}: sample values={df[col].head(3).tolist()}")
+                
+                # 2. 空行除去（全カラムがNULLの行を削除）
                 original_row_count = len(df)
                 df_cleaned = df.dropna(how='all')
                 empty_rows_removed = original_row_count - len(df_cleaned)
                 
                 if empty_rows_removed > 0:
                     logger.info(f"[stg] Removed {empty_rows_removed} empty rows from {csv_type} CSV")
+                    
+                    # 空行削除後、tracking columns のインデックスも調整
+                    for col, data in tracking_data.items():
+                        tracking_data[col] = data.loc[df_cleaned.index]
                 
+                # 3. フォーマット処理（業務カラムの変換）
                 config = build_formatter_config(self.csv_config, csv_type)
                 formatter = CSVFormatterFactory.get_formatter(csv_type, config)
+                logger.info(f"[DEBUG] Before formatter for {csv_type}: {len(df_cleaned)} rows, columns={list(df_cleaned.columns)[:10]}...")
                 # CPU-bound operation: 別スレッドで実行
                 formatted_df = await run_in_threadpool(formatter.format, df_cleaned)
+                logger.info(f"[DEBUG] After formatter for {csv_type}: {len(formatted_df)} rows, columns={list(formatted_df.columns)[:10]}...")
+                
+                # 4. tracking columns を復元（フォーマット後のDataFrameに再結合）
+                for col, data in tracking_data.items():
+                    if len(formatted_df) == len(data):
+                        # 行数が一致する場合はそのまま代入
+                        formatted_df[col] = data.values
+                        logger.info(f"[DEBUG] Restored tracking column '{col}' to formatted {csv_type}: sample values={formatted_df[col].head(3).tolist()}")
+                    else:
+                        # 行数が不一致の場合は警告（通常は発生しないはず）
+                        logger.error(
+                            f"[DEBUG] Row count mismatch for {csv_type}: "
+                            f"formatted={len(formatted_df)}, tracking={len(data)}. "
+                            f"Skipping restoration of '{col}'"
+                        )
+                
                 formatted_dfs[csv_type] = formatted_df
                 logger.info(f"[stg] Formatted {csv_type}: {len(formatted_df)} rows")
+                logger.info(f"[DEBUG] Final columns for {csv_type}: {list(formatted_df.columns)}")
+                logger.info(f"[DEBUG] Has upload_file_id: {'upload_file_id' in formatted_df.columns}, Has source_row_no: {'source_row_no' in formatted_df.columns}")
             except Exception as e:
                 logger.error(f"Failed to format {csv_type}: {e}", exc_info=True)
                 return {}, ErrorApiResponse(
@@ -283,7 +397,8 @@ class UploadSyogunCsvUseCase:
         writer: IShogunCsvWriter,
         formatted_dfs: Dict[str, pd.DataFrame], 
         uploaded_files: Dict[str, UploadFile],
-        layer_name: str
+        layer_name: str,
+        upload_file_ids: Optional[Dict[str, int]] = None,
     ) -> Dict[str, dict]:
         """
         フォーマット済みCSVデータをDBに保存（raw層 or stg層）
@@ -293,6 +408,7 @@ class UploadSyogunCsvUseCase:
             formatted_dfs: フォーマット済みDataFrame
             uploaded_files: アップロードファイル情報
             layer_name: レイヤー名 ("raw" or "stg")
+            upload_file_ids: log.upload_file.id のマッピング（csv_type -> file_id）
         
         Returns:
             保存結果の辞書
@@ -301,7 +417,19 @@ class UploadSyogunCsvUseCase:
         
         for csv_type, df in formatted_dfs.items():
             try:
-                saved_count = await run_in_threadpool(writer.save_csv_by_type, csv_type, df)
+                logger.info(f"[DEBUG] Saving {csv_type} to {layer_name}: {len(df)} rows, columns={list(df.columns)[:15]}")
+                
+                # upload_file_id を DataFrame に追加
+                df_to_save = df.copy()
+                if upload_file_ids and csv_type in upload_file_ids:
+                    file_id = upload_file_ids[csv_type]
+                    df_to_save['upload_file_id'] = file_id
+                    logger.info(f"[DEBUG] Added upload_file_id={file_id} to {csv_type} ({layer_name}), now columns={list(df_to_save.columns)[:15]}")
+                
+                logger.info(f"[DEBUG] Before save {layer_name}: upload_file_id={'upload_file_id' in df_to_save.columns}, source_row_no={'source_row_no' in df_to_save.columns}")
+                logger.info(f"[DEBUG] Sample row for {csv_type}: {df_to_save.head(1).to_dict('records')}")
+                
+                saved_count = await run_in_threadpool(writer.save_csv_by_type, csv_type, df_to_save)
                 result[csv_type] = {
                     "filename": uploaded_files[csv_type].filename,
                     "status": "success",

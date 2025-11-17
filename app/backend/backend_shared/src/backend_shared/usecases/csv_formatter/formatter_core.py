@@ -119,6 +119,15 @@ def dedupe_and_aggregate(
     if not unique_keys or not agg_map:
         return df
 
+    
+    # tracking columns の保護（システムカラムは常に 'first' で集約）
+    TRACKING_COLUMNS = ['upload_file_id', 'source_row_no']
+    tracking_agg_map = {}
+    for col in TRACKING_COLUMNS:
+        if col in df.columns and col not in agg_map:
+            tracking_agg_map[col] = 'first'
+            print(f"[INFO] Preserving tracking column '{col}' with 'first' aggregation")
+    
     df = df.copy()
     
     # agg_map から不正な集計関数を除外（例: 'wavg(quantity)' など）
@@ -145,6 +154,9 @@ def dedupe_and_aggregate(
     # _dup_group_idで集約
     grouped = df.groupby("_dup_group_id", dropna=False)
 
+    # tracking columns を集約マップに追加
+    cleaned_agg_map.update(tracking_agg_map)
+    
     # 集約してリセット
     df_agg = grouped.agg(cleaned_agg_map).reset_index(drop=True)
 
