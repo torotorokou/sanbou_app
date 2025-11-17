@@ -19,6 +19,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import text
 
 from app.infra.db.orm_models import ForecastJob
+from app.infra.db.sql_loader import load_sql
 
 
 class JobRepository:
@@ -26,6 +27,8 @@ class JobRepository:
 
     def __init__(self, db: Session):
         self.db = db
+        # Pre-load SQL for claim_job
+        self._claim_job_sql = text(load_sql("forecast/job_repo__claim_job.sql"))
 
     def queue_forecast_job(
         self,
@@ -89,23 +92,7 @@ class JobRepository:
         Note:
             このメソッドは自動的にcommitするため、呼び出し側でのコミットは不要。
         """
-        sql = text("""
-            WITH picked AS (
-                SELECT id FROM jobs.forecast_jobs
-                WHERE status = 'queued'
-                  AND (scheduled_for IS NULL OR scheduled_for <= NOW())
-                ORDER BY id
-                FOR UPDATE SKIP LOCKED  -- ロック取得済みの行はスキップ(他ワーカーとの競合回避)
-                LIMIT 1
-            )
-            UPDATE jobs.forecast_jobs
-            SET status = 'running',          -- 実行中に変更
-                attempts = attempts + 1,     -- 実行回数をインクリメント
-                updated_at = NOW()           -- 更新時刻を記録
-            WHERE id IN (SELECT id FROM picked)
-            RETURNING id
-        """)
-        result = self.db.execute(sql).fetchone()
+        result = self.db.execute(self._claim_job_sql).fetchone()
         self.db.commit()  # トランザクションを即座にコミット(他ワーカーに可視化)
         return result[0] if result else None
 

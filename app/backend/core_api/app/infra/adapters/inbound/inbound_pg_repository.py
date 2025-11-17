@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 
 from app.domain.ports.inbound_repository_port import InboundRepository
 from app.domain.inbound import InboundDailyRow, CumScope
+from app.infra.db.sql_loader import load_sql
 
 # 👇 SQL識別子は1か所で管理（定数化）
 from app.infra.db.sql_names import V_RECEIVE_DAILY, V_CALENDAR
@@ -29,6 +30,11 @@ class InboundPgRepository(InboundRepository):
 
     def __init__(self, db: Session):
         self.db = db
+        # Pre-load SQL for get_daily_with_cumulative
+        # We'll use string formatting to inject table names dynamically
+        self._daily_cumulative_sql_template = load_sql(
+            "inbound/inbound_pg_repository__get_daily_with_cumulative.sql"
+        )
 
     def fetch_daily(
         self,
@@ -73,53 +79,14 @@ class InboundPgRepository(InboundRepository):
             logger.warning("segment filter is not supported on %s; ignoring segment=%r",
                            V_RECEIVE_DAILY, segment)
 
-        # --- SQL with CTE + window function ---
-        # 識別子（ビュー名など）は f-string で差し込み、値はバインドパラメータで渡す
-        sql = text(f"""
-WITH d AS (
-  SELECT
-    c.ddate,
-    c.iso_year,
-    c.iso_week,
-    c.iso_dow,
-    c.is_business,
-    COALESCE(r.receive_net_ton, 0)::numeric AS ton
-  FROM {V_CALENDAR} AS c
-  LEFT JOIN {V_RECEIVE_DAILY} AS r
-    ON r.ddate = c.ddate
-  WHERE c.ddate BETWEEN :start AND :end
-)
-SELECT
-  d.ddate,
-  d.iso_year,
-  d.iso_week,
-  d.iso_dow,
-  d.is_business,
-  NULL::text AS segment,  -- 互換のため形だけ返す（将来segment対応時に置換）
-  d.ton,
-  CASE
-    WHEN :cum_scope = 'range' THEN
-      SUM(d.ton) OVER (
-        ORDER BY d.ddate
-        ROWS UNBOUNDED PRECEDING
-      )
-    WHEN :cum_scope = 'month' THEN
-      SUM(d.ton) OVER (
-        PARTITION BY DATE_TRUNC('month', d.ddate)
-        ORDER BY d.ddate
-        ROWS UNBOUNDED PRECEDING
-      )
-    WHEN :cum_scope = 'week' THEN
-      SUM(d.ton) OVER (
-        PARTITION BY d.iso_year, d.iso_week
-        ORDER BY d.ddate
-        ROWS UNBOUNDED PRECEDING
-      )
-    ELSE NULL
-  END AS cum_ton
-FROM d
-ORDER BY d.ddate
-        """)
+        # --- SQL with CTE + window function (loaded from external file) ---
+        # テーブル名は動的に差し込む必要があるため、f-stringで置換
+        sql_str = self._daily_cumulative_sql_template.replace(
+            "mart.v_calendar", V_CALENDAR
+        ).replace(
+            "mart.v_receive_daily", V_RECEIVE_DAILY
+        )
+        sql = text(sql_str)
 
         try:
             result = self.db.execute(
