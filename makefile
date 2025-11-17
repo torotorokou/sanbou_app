@@ -353,3 +353,24 @@ al-heads:
 # 使い方: make al-stamp REV=20251104_153045123
 al-stamp:
 	$(ALEMBIC) stamp $(REV)
+
+# =============================================================
+# Materialized View Refresh (daily ETL batch)
+# =============================================================
+.PHONY: refresh-mv refresh-mv-target-card
+
+# 全てのマテリアライズドビューをリフレッシュ（ETL完了後に実行）
+refresh-mv:
+	@echo "[refresh-mv] Refreshing all materialized views..."
+	$(DC) exec -T db psql -U myuser -d sanbou_dev -c "REFRESH MATERIALIZED VIEW CONCURRENTLY mart.mv_target_card_per_day;"
+	$(DC) exec -T db psql -U myuser -d sanbou_dev -c "REFRESH MATERIALIZED VIEW CONCURRENTLY mart.mv_inb5y_week_profile_min;"
+	$(DC) exec -T db psql -U myuser -d sanbou_dev -c "REFRESH MATERIALIZED VIEW CONCURRENTLY mart.mv_inb_avg5y_day_biz;"
+	$(DC) exec -T db psql -U myuser -d sanbou_dev -c "REFRESH MATERIALIZED VIEW CONCURRENTLY mart.mv_inb_avg5y_weeksum_biz;"
+	$(DC) exec -T db psql -U myuser -d sanbou_dev -c "REFRESH MATERIALIZED VIEW CONCURRENTLY mart.mv_inb_avg5y_day_scope;"
+	@echo "[ok] All materialized views refreshed"
+
+# 目標カードMVのみリフレッシュ（個別実行用）
+refresh-mv-target-card:
+	@echo "[refresh-mv-target-card] Refreshing mart.mv_target_card_per_day..."
+	$(DC) exec -T db psql -U myuser -d sanbou_dev -c "REFRESH MATERIALIZED VIEW CONCURRENTLY mart.mv_target_card_per_day;"
+	@echo "[ok] mv_target_card_per_day refreshed"

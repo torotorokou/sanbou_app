@@ -62,7 +62,7 @@ def get_target_metrics(
             logger.warning(f"No target card data found for date={date}, mode={mode}")
             raise HTTPException(
                 status_code=404,
-                detail=f"No target card data found for {date}. Please check if mart.v_target_card_per_day has data for this period."
+                detail=f"No target card data found for {date}. Please check if mart.mv_target_card_per_day (Materialized View) has data for this period."
             )
         
         logger.info(f"Successfully retrieved target metrics for date={date}, mode={mode}")

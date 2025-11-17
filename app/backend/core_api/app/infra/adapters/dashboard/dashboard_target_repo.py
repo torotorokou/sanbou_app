@@ -14,7 +14,13 @@ logger = logging.getLogger(__name__)
 
 
 class DashboardTargetRepository:
-    """Repository for retrieving target and actual metrics from mart.v_target_card_per_day."""
+    """Repository for retrieving target and actual metrics from mart.mv_target_card_per_day (Materialized View).
+    
+    Performance Note:
+    - Switched from VIEW to MATERIALIZED VIEW for faster response times
+    - MV is refreshed daily via `make refresh-mv` (see Makefile)
+    - Rollback: Change all queries back to mart.v_target_card_per_day if needed
+    """
 
     def __init__(self, db: Session):
         self.db = db
@@ -49,6 +55,9 @@ class DashboardTargetRepository:
             Dict with all target/actual fields including cumulative and total targets, or None if no data found
         """
         try:
+            # クエリ最適化: VIEW → MV 参照に変更（2025-11-17）
+            # 狙い: 複雑なJOIN/集計をMV側で事前計算し、レスポンスタイム短縮
+            # 注意: MV は日次で REFRESH CONCURRENTLY される前提（make refresh-mv）
             query = text("""
 WITH today AS (
   SELECT CURRENT_DATE::date AS today
@@ -69,7 +78,7 @@ anchor AS (
     -- Future month: use first business day (or month_start if none)
     ELSE COALESCE(
       (SELECT MIN(v.ddate)::date
-       FROM mart.v_target_card_per_day v
+       FROM mart.mv_target_card_per_day v  -- ★ VIEW→MV変更
        WHERE v.ddate BETWEEN (SELECT month_start FROM bounds) AND (SELECT month_end FROM bounds)
          AND v.is_business = true),
       (SELECT month_start FROM bounds)
@@ -82,7 +91,7 @@ base AS (
     v.day_target_ton, v.week_target_ton, v.month_target_ton,
     v.day_actual_ton_prev, v.week_actual_ton, v.month_actual_ton,
     v.iso_year, v.iso_week, v.iso_dow, v.day_type, v.is_business
-  FROM mart.v_target_card_per_day v
+  FROM mart.mv_target_card_per_day v  -- ★ VIEW→MV変更
   JOIN anchor a ON v.ddate = a.ddate
   LIMIT 1
 ),
@@ -101,20 +110,20 @@ anchor_yesterday AS (
 -- 選択月内のみを対象とする
 month_target_to_date AS (
   SELECT COALESCE(SUM(v.day_target_ton), 0)::numeric AS month_target_to_date_ton
-  FROM mart.v_target_card_per_day v
+  FROM mart.mv_target_card_per_day v  -- ★ VIEW→MV変更
   WHERE v.ddate BETWEEN (SELECT month_start FROM bounds) AND (SELECT anchor_yesterday_date FROM anchor_yesterday)
 ),
 -- Calculate month total target (max of month_target_ton for the entire month)
 month_target_total AS (
   SELECT COALESCE(MAX(v.month_target_ton), 0)::numeric AS month_target_total_ton
-  FROM mart.v_target_card_per_day v
+  FROM mart.mv_target_card_per_day v  -- ★ VIEW→MV変更
   WHERE v.ddate BETWEEN (SELECT month_start FROM bounds) AND (SELECT month_end FROM bounds)
 ),
 -- Calculate week cumulative target (sum of day_target_ton from week_start to anchor_yesterday, same iso_year/iso_week)
 -- 選択月内かつ同一週のみを対象とする
 week_target_to_date AS (
   SELECT COALESCE(SUM(v.day_target_ton), 0)::numeric AS week_target_to_date_ton
-  FROM mart.v_target_card_per_day v, base b
+  FROM mart.mv_target_card_per_day v, base b  -- ★ VIEW→MV変更
   WHERE v.iso_year = b.iso_year
     AND v.iso_week = b.iso_week
     AND v.ddate >= (SELECT month_start FROM bounds)
@@ -124,7 +133,7 @@ week_target_to_date AS (
 -- 週全体だが選択月内のみ
 week_target_total AS (
   SELECT COALESCE(MAX(v.week_target_ton), 0)::numeric AS week_target_total_ton
-  FROM mart.v_target_card_per_day v, base b
+  FROM mart.mv_target_card_per_day v, base b  -- ★ VIEW→MV変更
   WHERE v.iso_year = b.iso_year
     AND v.iso_week = b.iso_week
     AND v.ddate >= (SELECT month_start FROM bounds)
@@ -227,6 +236,7 @@ FROM base b;
                 - ddate
         """
         try:
+            # ★ MV参照に変更（VIEW→MV）for faster response
             query = text("""
                 SELECT 
                     ddate,
@@ -241,7 +251,7 @@ FROM base b;
                     iso_dow,
                     day_type,
                     is_business
-                FROM mart.v_target_card_per_day
+                FROM mart.mv_target_card_per_day  -- ★ VIEW→MV変更
                 WHERE ddate = CAST(:target_date AS DATE)
                 LIMIT 1
             """)
@@ -250,7 +260,7 @@ FROM base b;
             result = self.db.execute(query, {"target_date": target_date}).fetchone()
             
             if not result:
-                logger.warning(f"No data found in mart.v_target_card_per_day for {target_date}")
+                logger.warning(f"No data found in mart.mv_target_card_per_day for {target_date}")
                 return None
             
             logger.info(f"Successfully fetched target card data for {target_date}")
@@ -284,9 +294,10 @@ FROM base b;
             The first business day in the month, or None if not found
         """
         try:
+            # ★ MV参照に変更（VIEW→MV）
             query = text("""
                 SELECT ddate
-                FROM mart.v_target_card_per_day
+                FROM mart.mv_target_card_per_day  -- ★ VIEW→MV変更
                 WHERE ddate BETWEEN CAST(:month_start AS DATE) AND CAST(:month_end AS DATE)
                   AND is_business = true
                 ORDER BY ddate ASC
@@ -301,10 +312,14 @@ FROM base b;
 
     def get_target_card_metrics(self, target_date: date_type) -> Optional[Dict[str, Any]]:
         """
-        Get target and actual metrics from mart.v_target_card_per_day.
+        Get target and actual metrics from mart.mv_target_card_per_day (Materialized View).
         
         For the specified date's month, retrieves the LAST day's record of that month
         to get cumulative actuals (month_actual_ton, week_actual_ton) and targets.
+        
+        Performance Note:
+        - Using MATERIALIZED VIEW for faster queries (pre-aggregated data)
+        - MV refreshed daily via `make refresh-mv`
         
         Returns:
             Dict with keys:
@@ -316,20 +331,21 @@ FROM base b;
                 - day_actual_ton_prev
         """
         try:
-            # まずビューの存在を確認
+            # ★ MVの存在確認に変更（VIEW→MV）
             check_view = text("""
                 SELECT EXISTS (
-                    SELECT FROM information_schema.tables 
-                    WHERE table_schema = 'mart' 
-                      AND table_name = 'v_target_card_per_day'
+                    SELECT FROM pg_matviews
+                    WHERE schemaname = 'mart' 
+                      AND matviewname = 'mv_target_card_per_day'
                 )
             """)
             view_exists = self.db.execute(check_view).scalar()
             
             if not view_exists:
-                logger.error("View mart.v_target_card_per_day does not exist!")
-                raise ValueError("View mart.v_target_card_per_day does not exist. Please create the view first.")
+                logger.error("Materialized View mart.mv_target_card_per_day does not exist!")
+                raise ValueError("Materialized View mart.mv_target_card_per_day does not exist. Please run migration first.")
             
+            # ★ MV参照に変更（VIEW→MV）
             query = text("""
                 SELECT 
                     month_target_ton,
@@ -339,7 +355,7 @@ FROM base b;
                     week_actual_ton,
                     day_actual_ton_prev,
                     ddate
-                FROM mart.v_target_card_per_day
+                FROM mart.mv_target_card_per_day  -- ★ VIEW→MV変更
                 WHERE date_trunc('month', ddate) = date_trunc('month', CAST(:target_date AS DATE))
                 ORDER BY ddate DESC
                 LIMIT 1
@@ -349,7 +365,7 @@ FROM base b;
             result = self.db.execute(query, {"target_date": target_date}).fetchone()
             
             if not result:
-                logger.warning(f"No data found in mart.v_target_card_per_day for month containing {target_date}")
+                logger.warning(f"No data found in mart.mv_target_card_per_day for month containing {target_date}")
                 return None
             
             logger.info(f"Successfully fetched target card metrics for {target_date}")
