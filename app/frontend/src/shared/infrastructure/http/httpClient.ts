@@ -52,9 +52,19 @@ export class ApiError extends Error {
     static fromAxiosError(error: AxiosError): ApiError {
         // レスポンスボディが ProblemDetails の場合
         const data = error.response?.data;
-        if (data && typeof data === 'object' && 'code' in data && 'userMessage' in data) {
-            const pd = data as ProblemDetails;
-            return ApiError.fromProblemDetails(pd);
+        if (data && typeof data === 'object' && 'code' in data) {
+            // Backend レスポンス形式: {status: 'error', code: 'XXX', detail: 'message'}
+            // または ProblemDetails 形式: {code: 'XXX', userMessage: 'message', status: 409}
+            const pd = data as any;
+            const userMessage = pd.userMessage || pd.detail || '処理に失敗しました';
+            const status = pd.status || error.response?.status || 500;
+            return new ApiError(
+                pd.code,
+                typeof status === 'number' ? status : error.response?.status || 500,
+                userMessage,
+                pd.title,
+                pd.traceId
+            );
         }
 
         // それ以外の場合

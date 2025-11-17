@@ -228,9 +228,80 @@ class RawDataRepository:
             logger.error(f"Failed to create upload_file: {e}")
             raise
     
+    def check_duplicate_upload(
+        self,
+        csv_type: str,
+        file_hash: str,
+        file_type: str,
+        file_name: Optional[str] = None,
+        file_size_bytes: Optional[int] = None,
+        row_count: Optional[int] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """
+        重複アップロードチェック（成功済みファイルのみ）
+        
+        優先順位:
+        1. file_hash + csv_type + file_type でマッチ（最も信頼性が高い）
+        2. フォールバック: file_name + file_size + row_count でマッチ
+        
+        Args:
+            csv_type: CSV種別 ('receive', 'yard', 'shipment')
+            file_hash: SHA-256ハッシュ
+            file_type: 'FLASH' or 'FINAL'
+            file_name: ファイル名（フォールバック用）
+            file_size_bytes: ファイルサイズ（フォールバック用）
+            row_count: 行数（フォールバック用）
+            
+        Returns:
+            重複ファイルの情報（id, uploaded_at等）、存在しない場合はNone
+        """
+        # 第1優先: file_hash + csv_type + file_type で検索
+        result = self.db.execute(
+            self.upload_file_table.select().where(
+                self.upload_file_table.c.csv_type == csv_type,
+                self.upload_file_table.c.file_hash == file_hash,
+                self.upload_file_table.c.file_type == file_type,
+                self.upload_file_table.c.processing_status == 'success',
+            ).order_by(self.upload_file_table.c.uploaded_at.desc())
+        ).fetchone()
+        
+        if result:
+            logger.info(f"Duplicate detected (hash match): csv_type={csv_type}, hash={file_hash[:8]}..., existing_id={result.id}")
+            return {
+                "id": result.id,
+                "file_name": result.file_name,
+                "uploaded_at": result.uploaded_at,
+                "uploaded_by": result.uploaded_by,
+                "match_type": "hash",
+            }
+        
+        # 第2優先: フォールバック（ファイル名、サイズ、行数）
+        if file_name and file_size_bytes is not None and row_count is not None:
+            result = self.db.execute(
+                self.upload_file_table.select().where(
+                    self.upload_file_table.c.csv_type == csv_type,
+                    self.upload_file_table.c.file_name == file_name,
+                    self.upload_file_table.c.file_size_bytes == file_size_bytes,
+                    self.upload_file_table.c.row_count == row_count,
+                    self.upload_file_table.c.processing_status == 'success',
+                ).order_by(self.upload_file_table.c.uploaded_at.desc())
+            ).fetchone()
+            
+            if result:
+                logger.info(f"Duplicate detected (fallback match): csv_type={csv_type}, name={file_name}, existing_id={result.id}")
+                return {
+                    "id": result.id,
+                    "file_name": result.file_name,
+                    "uploaded_at": result.uploaded_at,
+                    "uploaded_by": result.uploaded_by,
+                    "match_type": "fallback",
+                }
+        
+        return None
+    
     def check_file_exists(self, file_hash: str, csv_type: str) -> Optional[int]:
         """
-        同一ファイルがすでに登録されているかチェック
+        同一ファイルがすでに登録されているかチェック（後方互換性のため残す）
         
         Args:
             file_hash: SHA-256 ハッシュ

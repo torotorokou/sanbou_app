@@ -13,6 +13,7 @@ import {
   notifyInfo,
   notifyWarning,
 } from '@features/notification';
+import { ApiError } from '@shared/infrastructure/http/httpClient';
 
 export class DatasetImportRepositoryImpl implements DatasetImportRepository {
   async upload(filesByType: Record<string, File>, uploadPath: string, signal?: AbortSignal): Promise<void> {
@@ -53,9 +54,28 @@ export class DatasetImportRepositoryImpl implements DatasetImportRepository {
         }
       }
     } catch (error) {
+      // 409 Conflict (重複エラー) の特別処理
+      if (error instanceof ApiError && error.status === 409 && error.code === 'DUPLICATE_FILE') {
+        notifyError(
+          '重複エラー',
+          '同じファイルが既にアップロード済みです。'
+        );
+        notifyInfo(
+          '対処方法',
+          '「×」ボタンでファイルを削除し、別のファイルを選択してください。または、DB内の既存データを削除してから再度お試しください。'
+        );
+        throw error;
+      }
+
       if (error instanceof Error) {
         if (error.name === 'AbortError') {
           notifyWarning('キャンセル', 'アップロードがキャンセルされました。');
+        } else if (error instanceof ApiError) {
+          // ApiError の場合はより詳細な情報を表示
+          notifyError(
+            'アップロードエラー',
+            error.userMessage || error.message
+          );
         } else {
           notifyError('アップロードエラー', error.message);
         }

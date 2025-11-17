@@ -60,11 +60,11 @@ def create_shogun_model_class(csv_type: str, table_name: str | None = None, sche
         'Boolean': lambda: lambda: None,  # 未使用
     }
     
-    # 全カラムを通常列として追加し、後で複合主キーとして指定
-    # 理由: SQLAlchemyは主キーが必須だが、DBテーブルには主キーがないため、
-    #       全列を複合主キーとして扱うことでINSERT時に全値を送信
-    primary_key_cols = []
+    # まず id カラムを主キーとして追加（実テーブルの主キー）
+    # これによりSQLAlchemyが正しく動作する
+    attrs['id'] = Column(Integer, primary_key=True, autoincrement=True, comment='Primary key')
     
+    # 各YAMLカラムを通常列として追加
     for col in columns_def:
         col_type_str = col['type']
         col_name = col['en_name']
@@ -86,20 +86,32 @@ def create_shogun_model_class(csv_type: str, table_name: str | None = None, sche
             else:
                 col_instance = String()  # フォールバック
         
-        # カラムオブジェクトを作成（primary_key=False）
+        # カラムオブジェクトを作成（通常列として）
         col_obj = Column(
             col_instance,
             nullable=col['nullable'],
             comment=col['comment']
         )
         attrs[col_name] = col_obj
-        primary_key_cols.append(col_obj)  # 複合主キー用リストに追加
     
-    # SQLAlchemyのマッパー設定: 全列を複合主キーとして指定
-    # これによりINSERT時にすべての列が含まれる（主キー自動除外を回避）
-    attrs['__mapper_args__'] = {
-        'primary_key': primary_key_cols
-    }
+    # トラッキングカラムを追加（upload_file_id, source_row_no, created_at）
+    # これらはYAML定義外だが、全テーブルに共通で存在する
+    tracking_cols = [
+        ('upload_file_id', Integer, 'アップロード元ファイルID (log.upload_file.id への参照)'),
+        ('source_row_no', Integer, 'CSV元行番号（1-indexed）'),
+    ]
+    
+    for col_name, col_type, col_comment in tracking_cols:
+        col_obj = Column(col_type(), nullable=True, comment=col_comment)
+        attrs[col_name] = col_obj
+    
+    # created_at カラムを追加（タイムスタンプ用）
+    attrs['created_at'] = Column(
+        TIMESTAMP(timezone=True),
+        nullable=True,
+        server_default=func.now(),
+        comment='レコード作成日時'
+    )
     
     # 動的クラス名: {csv_type}_{schema}_{table_name}
     class_name = f"{csv_type.capitalize()}_{schema}_{actual_table_name}"
