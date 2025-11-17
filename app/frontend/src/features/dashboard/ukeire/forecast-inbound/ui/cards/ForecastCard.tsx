@@ -88,7 +88,14 @@ const KPIBlock: React.FC<KPIBlockProps> = ({ title, p50, p10, p90, target, actua
         <div style={{ width: 92, display: "flex", flexDirection: "column", alignItems: "center" }}>
           {pct != null ? (
             <>
-              <Progress percent={clamp(pct, 0, 200)} showInfo={false} strokeColor={pctColor} size={8} />
+              <Progress 
+                type="line" 
+                percent={clamp(pct, 0, 200)} 
+                showInfo={false} 
+                strokeColor={pctColor} 
+                size={["100%", 8]}
+                style={{ width: "100%" }}
+              />
               <div style={{ textAlign: "center", marginTop: 4, color: pctColor, fontWeight: 700, fontSize: 12 }}>
                 {pct}%
               </div>
@@ -137,7 +144,14 @@ const MobileKPIBlock: React.FC<MobileKPIBlockProps> = ({ title, p50, p10, p90, t
           <>
             <div style={{ textAlign: "center", color: pctColor, fontWeight: 700, fontSize: 11 }}>{displayPct}%</div>
             <div style={{ width: 96, marginTop: 6 }}>
-              <Progress percent={clamp(displayPct, 0, 200)} showInfo={false} size={8} strokeColor={pctColor} />
+              <Progress 
+                type="line" 
+                percent={clamp(displayPct, 0, 200)} 
+                showInfo={false} 
+                strokeColor={pctColor} 
+                size={["100%", 6]}
+                style={{ width: "100%" }}
+              />
             </div>
           </>
         ) : (

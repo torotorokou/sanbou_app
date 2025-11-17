@@ -39,7 +39,7 @@ export const ChartFrame: React.FC<ChartFrameProps> = ({ style, children }) => {
   }, [h]);
 
   return (
-    <div ref={ref} style={{ height: "100%", width: "100%", minHeight: 0, ...style }}>
+    <div ref={ref} style={{ height: "100%", width: "100%", minHeight: 200, ...style }}>
       {h > 0 ? (
         <ResponsiveContainer width="100%" height={h}>
           {children as unknown as React.ReactElement}
