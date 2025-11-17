@@ -21,6 +21,13 @@ export interface TargetMetricsDTO {
   iso_dow: number | null;
   day_type: string | null;
   is_business: boolean | null;
+  // New fields for achievement mode calculation (cumulative to yesterday vs. total at period end)
+  month_target_to_date_ton: number | null;
+  month_target_total_ton: number | null;
+  week_target_to_date_ton: number | null;
+  week_target_total_ton: number | null;
+  month_actual_to_date_ton: number | null;
+  week_actual_to_date_ton: number | null;
 }
 
 // Simple in-memory cache with 60-second TTL

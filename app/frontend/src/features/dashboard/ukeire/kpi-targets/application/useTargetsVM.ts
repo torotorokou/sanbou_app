@@ -1,19 +1,32 @@
 /**
  * kpi-targets/application/useTargetsVM.ts
  * KPI目標達成率計算・表示整形を担当するViewModel
- * TODO: TargetCard内のロジックをここに抽出してビジネスロジックを分離
+ * 
+ * 達成率モード:
+ *   - "toDate": 昨日までの累計目標に対する達成率
+ *   - "toEnd": 期末（週末・月末）のトータル目標に対する達成率
  */
 
 import { useMemo } from "react";
 import type { TargetCardRowData } from "../ui/cards/TargetCard";
 
+export type AchievementMode = "toDate" | "toEnd";
+
 export type UseTargetsVMParams = {
-  monthTarget: number;
-  weekTarget: number;
-  dayTarget: number;
-  todayActual: number;
-  weekActual: number;
-  monthActual: number;
+  mode: AchievementMode;
+  // Cumulative targets (month_start/week_start to yesterday)
+  monthTargetToDate: number | null;
+  weekTargetToDate: number | null;
+  dayTarget: number | null;
+  // Total targets (entire period)
+  monthTargetTotal: number | null;
+  weekTargetTotal: number | null;
+  // Actuals (cumulative to yesterday)
+  todayActual: number | null;
+  weekActual: number | null;
+  monthActual: number | null;
+  // 週次・日次を非表示にするかどうか(当月以外の場合true)
+  hideWeekAndDay?: boolean;
 };
 
 export type UseTargetsVMResult = {
@@ -22,19 +35,57 @@ export type UseTargetsVMResult = {
 
 /**
  * 目標カード用のVMロジック
- * - 各期間の達成率計算
- * - 色分け判定（将来的にここで実施）
+ * - mode に応じて目標値（分母）を切り替え
+ * - "toDate" モード: 昨日までの累計目標に対する達成率
+ * - "toEnd" モード: 期末（週末・月末）のトータル目標に対する達成率
  */
 export function useTargetsVM(params: UseTargetsVMParams): UseTargetsVMResult {
-  const { monthTarget, weekTarget, dayTarget, todayActual, weekActual, monthActual } = params;
+  const {
+    mode,
+    monthTargetToDate,
+    weekTargetToDate,
+    dayTarget,
+    monthTargetTotal,
+    weekTargetTotal,
+    todayActual,
+    weekActual,
+    monthActual,
+  } = params;
+
+  // mode に応じて分母となる目標値を選択
+  const monthTarget = mode === "toDate" ? monthTargetToDate : monthTargetTotal;
+  const weekTarget = mode === "toDate" ? weekTargetToDate : weekTargetTotal;
 
   const rows = useMemo<TargetCardRowData[]>(
     () => [
-      { key: "month", label: "当月目標", target: monthTarget, actual: monthActual },
-      { key: "week", label: "週目標", target: weekTarget, actual: weekActual },
-      { key: "day", label: "日目標", target: dayTarget, actual: todayActual },
+      {
+        key: "month",
+        label: mode === "toDate" ? "当月（昨日）" : "当月",
+        target: monthTarget,
+        actual: monthActual,
+      },
+      {
+        key: "week",
+        label: mode === "toDate" ? "今週（昨日）" : "今週",
+        target: weekTarget,
+        actual: weekActual,
+      },
+      {
+        key: "day",
+        label: "日目標",
+        target: dayTarget,
+        actual: todayActual,
+      },
     ],
-    [monthTarget, weekTarget, dayTarget, todayActual, weekActual, monthActual]
+    [
+      mode,
+      monthTarget,
+      weekTarget,
+      dayTarget,
+      todayActual,
+      weekActual,
+      monthActual,
+    ]
   );
 
   return { rows };

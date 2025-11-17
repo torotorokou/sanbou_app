@@ -128,3 +128,11 @@ class TargetMetricsResponse(BaseModel):
     iso_dow: Optional[int] = Field(default=None, description="ISO day of week (1=Monday, 7=Sunday)")
     day_type: Optional[str] = Field(default=None, description="Day type (weekday/sat/sun_hol)")
     is_business: Optional[bool] = Field(default=None, description="Is business day")
+    # New fields for achievement mode calculation (cumulative to yesterday vs. total at period end)
+    month_target_to_date_ton: Optional[float] = Field(default=None, description="Monthly cumulative target (month_start to yesterday)")
+    month_target_total_ton: Optional[float] = Field(default=None, description="Monthly total target (entire month)")
+    week_target_to_date_ton: Optional[float] = Field(default=None, description="Weekly cumulative target (week_start to yesterday)")
+    week_target_total_ton: Optional[float] = Field(default=None, description="Weekly total target (entire week)")
+    month_actual_to_date_ton: Optional[float] = Field(default=None, description="Monthly cumulative actual (month_start to yesterday)")
+    week_actual_to_date_ton: Optional[float] = Field(default=None, description="Weekly cumulative actual (week_start to yesterday)")
+

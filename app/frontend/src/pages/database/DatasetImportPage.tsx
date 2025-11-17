@@ -39,6 +39,7 @@ const DatasetImportPage: React.FC = () => {
     onRemoveFile,
     onToggleSkip,
     doUpload,
+    resetUploadState,
   } = useDatasetImportVM({ activeTypes, datasetKey });
 
   // PreviewSource を panelFiles から構築
@@ -142,8 +143,10 @@ const DatasetImportPage: React.FC = () => {
         centered
         maskClosable={true}
         onCancel={() => {
-          // エラー時など、強制的にモーダルを閉じられるようにする
-          console.log('Modal closed by user');
+          // モーダルを閉じた際にアップロード状態を確実にリセット
+          // (エラー発生時にモーダルが残ってしまうケースへの対処)
+          resetUploadState();
+          console.log('Modal closed by user - upload state reset');
         }}
         styles={{ mask: { backdropFilter: 'blur(2px)' } }}
       >

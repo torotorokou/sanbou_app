@@ -4,8 +4,8 @@
  */
 
 // Application
-export { useTargetsVM } from "./application/useTargetsVM";
+export { useTargetsVM, type AchievementMode, type UseTargetsVMParams } from "./application/useTargetsVM";
 export { useTargetMetrics } from "./application/useTargetMetrics";
 
 // UI
-export { TargetCard, type TargetCardProps } from "./ui/cards/TargetCard";
+export { TargetCard, type TargetCardProps, type AchievementMode as TargetCardAchievementMode } from "./ui/cards/TargetCard";

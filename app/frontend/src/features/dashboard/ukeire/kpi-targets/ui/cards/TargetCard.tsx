@@ -4,12 +4,15 @@
  */
 
 import React from "react";
-import { Card, Space, Typography, Tooltip, Statistic, Progress } from "antd";
+import { Card, Space, Typography, Tooltip, Statistic, Progress, Segmented } from "antd";
+import "./TargetCard.overrides.css";
 import dayjs from "dayjs";
 import isoWeekPlugin from "dayjs/plugin/isoWeek";
 import { InfoCircleOutlined } from "@ant-design/icons";
 import { COLORS } from "@/features/dashboard/ukeire/domain/constants";
 import { clamp } from "@/features/dashboard/ukeire/domain/valueObjects";
+
+export type AchievementMode = "toDate" | "toEnd";
 
 export type TargetCardRowData = {
   key: string;
@@ -22,11 +25,19 @@ export type TargetCardProps = {
   rows: TargetCardRowData[];
   style?: React.CSSProperties;
   isMobile?: boolean; // Mobile モードでフォントサイズを動的に調整
-  // 将来的にはバックグラウンドから取得する想定。指定があればそれを優先して表示する
-  isoWeek?: number;
+  isoWeek?: number; // 将来的にはバックグラウンドから取得する想定。指定があればそれを優先して表示する
+  achievementMode?: AchievementMode; // 達成率モード（親コンポーネントで管理）
+  onModeChange?: (mode: AchievementMode) => void; // モード変更コールバック
 };
 
-export const TargetCard: React.FC<TargetCardProps> = ({ rows, style, isMobile = false, isoWeek }) => {
+export const TargetCard: React.FC<TargetCardProps> = ({ 
+  rows, 
+  style, 
+  isMobile = false, 
+  isoWeek,
+  achievementMode = "toDate",
+  onModeChange,
+}) => {
   // isoWeek プラグインを拡張
   dayjs.extend(isoWeekPlugin);
   // Mobile モードでは clamp を使って動的にフォントサイズを調整
@@ -46,13 +57,33 @@ export const TargetCard: React.FC<TargetCardProps> = ({ rows, style, isMobile = 
       style={{ height: "100%", display: "flex", flexDirection: "column", ...style }}
       styles={{ body: { padding: 12, display: "flex", flexDirection: "column", gap: 8, flex: 1, minHeight: 0 } }}
     >
-      <Space align="baseline" style={{ justifyContent: "space-between", width: "100%" }}>
-        <Typography.Title level={5} style={{ margin: 0 }}>
-          目標カード
-        </Typography.Title>
-        <Tooltip title="週目標は当月の営業日配分で按分。日目標は平日/土/日祝の重みで配分。">
-          <InfoCircleOutlined style={{ color: "#8c8c8c" }} />
-        </Tooltip>
+      {/* ヘッダー: タイトル・ツールチップ・モード切り替え */}
+      <Space direction="vertical" size={8} style={{ width: "100%" }}>
+        <Space align="baseline" style={{ justifyContent: "space-between", width: "100%" }}>
+          <Space align="baseline">
+            <Typography.Title level={5} style={{ margin: 0 }}>
+              目標カード
+            </Typography.Title>
+            <Tooltip title="週目標は当月の営業日配分で按分。日目標は平日/土/日祝の重みで配分。">
+              <InfoCircleOutlined style={{ color: "#8c8c8c" }} />
+            </Tooltip>
+          </Space>
+          
+          {/* 達成率モード切り替え（親のコールバックを呼び出す） - 右寄せ */}
+            {onModeChange && (
+              <Segmented
+                className="customSegmented"
+                value={achievementMode}
+                onChange={(value) => onModeChange(value as AchievementMode)}
+                options={[
+                  { label: isMobile ? "累計" : "昨日まで", value: "toDate" },
+                  { label: isMobile ? "期末" : "月末・週末", value: "toEnd" },
+                ]}
+                size={isMobile ? "small" : "middle"}
+                style={{ width: isMobile ? "auto" : "auto" }}
+              />
+            )}
+        </Space>
       </Space>
 
       <div
@@ -103,20 +134,26 @@ export const TargetCard: React.FC<TargetCardProps> = ({ rows, style, isMobile = 
           return (
             <React.Fragment key={r.key}>
               <div style={{ color: "#595959", fontSize: labelFontSize, fontWeight: 800, lineHeight: 1 }}>
-                {/* 今週のラベルには (W##) を表示。Mobile では同一行、Desktop では改行して2行で表示 */}
+                {/* 今週のラベルにはW##を表示 */}
                 {(() => {
                   const label = r.label ?? "";
                   const isThisWeekLabel = label.startsWith("今週");
                   if (isThisWeekLabel && typeof isoWeekToShow === "number") {
                     const w = String(isoWeekToShow).padStart(2, "0");
                     if (isMobile) {
-                      return <span>{label} <span style={{ color: "#8c8c8c", fontWeight: 600 }}>(W{w})</span></span>;
+                      // Mobile: 1行で表示（ラベルを短縮してW##を強調）
+                      return (
+                        <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                          <span>今週</span>
+                          <span style={{ color: "#1890ff", fontWeight: 700, fontSize: "0.9em" }}>{`W${w}`}</span>
+                        </div>
+                      );
                     }
-                    // Desktop: 改行して2行表示
+                    // Desktop: 2行で表示（ラベルとW##を分ける）
                     return (
-                      <div style={{ display: "flex", flexDirection: "column", lineHeight: 1 }}>
-                        <span>{label}</span>
-                        <span style={{ color: "#8c8c8c", fontWeight: 600 }}>{`(W${w})`}</span>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                        <span>{label.replace("今週", "今週")}</span>
+                        <span style={{ color: "#1890ff", fontWeight: 700, fontSize: "0.85em" }}>{`W${w}`}</span>
                       </div>
                     );
                   }
