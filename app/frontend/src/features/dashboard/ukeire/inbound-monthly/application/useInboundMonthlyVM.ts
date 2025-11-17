@@ -114,14 +114,25 @@ export function useInboundMonthlyVM(params: UseInboundMonthlyVMParams): UseInbou
         };
       });
 
-      // 累積データ整形
-      const cumulativeChartData = data.map((row) => ({
-        label: dayjs(row.ddate).format("DD"),
-        yyyyMMdd: row.ddate,
-        actualCumulative: row.cum_ton ?? 0,
-        prevMonthCumulative: row.prev_month_cum_ton ?? 0, // 先月の累積データ
-        prevYearCumulative: row.prev_year_cum_ton ?? 0, // 前年の累積データ
-      }));
+      // 累積データ整形（X軸を0スタートに変更、0日目=0tを追加）
+      const cumulativeChartData = [
+        // 0日目の初期値（月初前日=0t）
+        {
+          label: "0",
+          yyyyMMdd: dayjs(start).subtract(1, "day").format("YYYY-MM-DD"),
+          actualCumulative: 0,
+          prevMonthCumulative: 0,
+          prevYearCumulative: 0,
+        },
+        // 1日目以降のデータ（index+1でラベル付け）
+        ...data.map((row, index) => ({
+          label: String(index + 1),
+          yyyyMMdd: row.ddate,
+          actualCumulative: row.cum_ton ?? 0,
+          prevMonthCumulative: row.prev_month_cum_ton ?? 0, // 先月の累積データ
+          prevYearCumulative: row.prev_year_cum_ton ?? 0, // 前年の累積データ
+        })),
+      ];
 
       setDailyProps({ chartData: dailyChartData });
       setCumulativeProps({ cumData: cumulativeChartData });
