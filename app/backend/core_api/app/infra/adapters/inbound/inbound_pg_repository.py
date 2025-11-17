@@ -30,10 +30,13 @@ class InboundPgRepository(InboundRepository):
 
     def __init__(self, db: Session):
         self.db = db
-        # Pre-load SQL for get_daily_with_cumulative
-        # We'll use string formatting to inject table names dynamically
+        # Pre-load SQL for get_daily_with_cumulative (legacy, kept for compatibility)
         self._daily_cumulative_sql_template = load_sql(
             "inbound/inbound_pg_repository__get_daily_with_cumulative.sql"
+        )
+        # Pre-load SQL for get_daily_with_comparisons (new: includes prev_month/prev_year)
+        self._daily_comparisons_sql_template = load_sql(
+            "inbound/inbound_pg_repository__get_daily_with_comparisons.sql"
         )
 
     def fetch_daily(
@@ -80,8 +83,9 @@ class InboundPgRepository(InboundRepository):
                            V_RECEIVE_DAILY, segment)
 
         # --- SQL with CTE + window function (loaded from external file) ---
+        # Use the new SQL that includes comparison data (prev_month/prev_year)
         # テーブル名は動的に差し込む必要があるため、f-stringで置換
-        sql_str = self._daily_cumulative_sql_template.replace(
+        sql_str = self._daily_comparisons_sql_template.replace(
             "mart.v_calendar", V_CALENDAR
         ).replace(
             "mart.v_receive_daily", V_RECEIVE_DAILY
@@ -102,6 +106,9 @@ class InboundPgRepository(InboundRepository):
             data: List[InboundDailyRow] = []
             for r in rows:
                 # rのポジションはSELECT順に対応
+                # New SQL returns: ddate, iso_year, iso_week, iso_dow, is_business, segment,
+                #                  ton, cum_ton, prev_month_ton, prev_year_ton,
+                #                  prev_month_cum_ton, prev_year_cum_ton
                 ddate = r[0]
                 iso_year = r[1]
                 iso_week = r[2]
@@ -110,6 +117,10 @@ class InboundPgRepository(InboundRepository):
                 seg = r[5]  # 現状はNone相当の文字列NULL::text
                 ton = float(r[6]) if r[6] is not None else 0.0
                 cum = float(r[7]) if r[7] is not None else None
+                prev_month_ton = float(r[8]) if r[8] is not None else None
+                prev_year_ton = float(r[9]) if r[9] is not None else None
+                prev_month_cum = float(r[10]) if r[10] is not None else None
+                prev_year_cum = float(r[11]) if r[11] is not None else None
 
                 data.append(
                     InboundDailyRow(
@@ -121,6 +132,10 @@ class InboundPgRepository(InboundRepository):
                         segment=seg,
                         ton=ton,
                         cum_ton=cum,
+                        prev_month_ton=prev_month_ton,
+                        prev_year_ton=prev_year_ton,
+                        prev_month_cum_ton=prev_month_cum,
+                        prev_year_cum_ton=prev_year_cum,
                     )
                 )
 

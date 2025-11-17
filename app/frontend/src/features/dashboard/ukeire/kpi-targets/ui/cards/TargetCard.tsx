@@ -225,7 +225,7 @@ export const TargetCard: React.FC<TargetCardProps> = ({
                       percent={barPct}
                       showInfo={false}
                       strokeColor={pctColor}
-                      strokeWidth={8}
+                      size={["100%", 8]}
                       style={{ margin: 0 }}
                     />
                   </>

@@ -108,8 +108,8 @@ export function useInboundMonthlyVM(params: UseInboundMonthlyVMParams): UseInbou
           label: dayjs(row.ddate).format("DD"),
           actual: row.ton,
           dateFull: row.ddate,
-          prevMonth: null, // TODO: 前月・前年データは別途取得が必要
-          prevYear: null,
+          prevMonth: row.prev_month_ton ?? null, // 先月（4週前）の同曜日データ
+          prevYear: row.prev_year_ton ?? null, // 前年の同ISO週・同曜日データ
           status, // 営業カレンダーのステータスを追加
         };
       });
@@ -119,8 +119,8 @@ export function useInboundMonthlyVM(params: UseInboundMonthlyVMParams): UseInbou
         label: dayjs(row.ddate).format("DD"),
         yyyyMMdd: row.ddate,
         actualCumulative: row.cum_ton ?? 0,
-        prevMonthCumulative: 0, // TODO: 前月・前年データは別途取得が必要
-        prevYearCumulative: 0,
+        prevMonthCumulative: row.prev_month_cum_ton ?? 0, // 先月の累積データ
+        prevYearCumulative: row.prev_year_cum_ton ?? 0, // 前年の累積データ
       }));
 
       setDailyProps({ chartData: dailyChartData });

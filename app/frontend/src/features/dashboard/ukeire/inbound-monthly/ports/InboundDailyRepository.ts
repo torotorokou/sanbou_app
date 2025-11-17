@@ -14,6 +14,10 @@ export type InboundDailyRow = {
   segment: string | null;
   ton: number;
   cum_ton: number | null;
+  prev_month_ton?: number | null; // 先月（4週前）の同曜日の搬入量
+  prev_year_ton?: number | null; // 前年の同ISO週・同曜日の搬入量
+  prev_month_cum_ton?: number | null; // 先月の累積搬入量
+  prev_year_cum_ton?: number | null; // 前年の累積搬入量
 };
 
 export type FetchDailyParams = {
