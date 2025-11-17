@@ -23,6 +23,7 @@ class DashboardTargetRepository:
     def get_by_date_optimized(self, target_date: date_type, mode: str = "daily") -> Optional[Dict[str, Any]]:
         """
         Optimized single-query fetch with anchor resolution and NULL masking.
+        Now also calculates cumulative and total targets for achievement modes.
         
         Anchor logic (all in one SQL query):
         - Current month: Use today (or month_end if today > month_end)
@@ -32,12 +33,20 @@ class DashboardTargetRepository:
         NULL masking (mode='monthly' and not current month):
         - day_target_ton, week_target_ton, day_actual_ton_prev, week_actual_ton → NULL
         
+        New fields for achievement rate calculation:
+        - month_target_to_date_ton: SUM(day_target_ton) from month_start to yesterday
+        - month_target_total_ton: MAX(month_target_ton) for the entire month
+        - week_target_to_date_ton: SUM(day_target_ton) from week_start to yesterday
+        - week_target_total_ton: MAX(week_target_ton) for the entire week
+        - month_actual_to_date_ton: SUM(receive_net_ton) from month_start to yesterday
+        - week_actual_to_date_ton: SUM(receive_net_ton) from week_start to yesterday
+        
         Args:
             target_date: Requested date (typically first day of month)
             mode: 'daily' or 'monthly'
             
         Returns:
-            Dict with all target/actual fields, or None if no data found
+            Dict with all target/actual fields including cumulative and total targets, or None if no data found
         """
         try:
             query = text("""
@@ -76,6 +85,67 @@ base AS (
   FROM mart.v_target_card_per_day v
   JOIN anchor a ON v.ddate = a.ddate
   LIMIT 1
+),
+-- アンカー日の前日を計算（選択月内に限定）
+anchor_yesterday AS (
+  SELECT 
+    CASE
+      -- アンカー日が月初の場合は月初を使用（前日がないため）
+      WHEN (SELECT ddate FROM anchor) = (SELECT month_start FROM bounds)
+        THEN (SELECT month_start FROM bounds)
+      -- それ以外はアンカー日の前日
+      ELSE ((SELECT ddate FROM anchor) - INTERVAL '1 day')::date
+    END AS anchor_yesterday_date
+),
+-- Calculate month cumulative target (sum of day_target_ton from month_start to anchor_yesterday)
+-- 選択月内のみを対象とする
+month_target_to_date AS (
+  SELECT COALESCE(SUM(v.day_target_ton), 0)::numeric AS month_target_to_date_ton
+  FROM mart.v_target_card_per_day v
+  WHERE v.ddate BETWEEN (SELECT month_start FROM bounds) AND (SELECT anchor_yesterday_date FROM anchor_yesterday)
+),
+-- Calculate month total target (max of month_target_ton for the entire month)
+month_target_total AS (
+  SELECT COALESCE(MAX(v.month_target_ton), 0)::numeric AS month_target_total_ton
+  FROM mart.v_target_card_per_day v
+  WHERE v.ddate BETWEEN (SELECT month_start FROM bounds) AND (SELECT month_end FROM bounds)
+),
+-- Calculate week cumulative target (sum of day_target_ton from week_start to anchor_yesterday, same iso_year/iso_week)
+-- 選択月内かつ同一週のみを対象とする
+week_target_to_date AS (
+  SELECT COALESCE(SUM(v.day_target_ton), 0)::numeric AS week_target_to_date_ton
+  FROM mart.v_target_card_per_day v, base b
+  WHERE v.iso_year = b.iso_year
+    AND v.iso_week = b.iso_week
+    AND v.ddate >= (SELECT month_start FROM bounds)
+    AND v.ddate <= (SELECT anchor_yesterday_date FROM anchor_yesterday)
+),
+-- Calculate week total target (max of week_target_ton for the entire week)
+-- 週全体だが選択月内のみ
+week_target_total AS (
+  SELECT COALESCE(MAX(v.week_target_ton), 0)::numeric AS week_target_total_ton
+  FROM mart.v_target_card_per_day v, base b
+  WHERE v.iso_year = b.iso_year
+    AND v.iso_week = b.iso_week
+    AND v.ddate >= (SELECT month_start FROM bounds)
+    AND v.ddate <= (SELECT month_end FROM bounds)
+),
+-- Calculate month cumulative actual (sum of receive_net_ton from month_start to anchor_yesterday)
+-- 選択月内のみを対象とする
+month_actual_to_date AS (
+  SELECT COALESCE(SUM(r.receive_net_ton), 0)::numeric AS month_actual_to_date_ton
+  FROM mart.v_receive_daily r
+  WHERE r.ddate BETWEEN (SELECT month_start FROM bounds) AND (SELECT anchor_yesterday_date FROM anchor_yesterday)
+),
+-- Calculate week cumulative actual (sum of receive_net_ton from week_start to anchor_yesterday, same iso_year/iso_week)
+-- 選択月内かつ同一週のみを対象とする
+week_actual_to_date AS (
+  SELECT COALESCE(SUM(r.receive_net_ton), 0)::numeric AS week_actual_to_date_ton
+  FROM mart.v_receive_daily r, base b
+  WHERE r.iso_year = b.iso_year
+    AND r.iso_week = b.iso_week
+    AND r.ddate >= (SELECT month_start FROM bounds)
+    AND r.ddate <= (SELECT anchor_yesterday_date FROM anchor_yesterday)
 )
 SELECT
   b.ddate,
@@ -98,7 +168,14 @@ SELECT
      AND date_trunc('month', CAST(:req AS DATE)) <> date_trunc('month', (SELECT today FROM today))
     THEN NULL ELSE b.week_actual_ton END AS week_actual_ton,
   b.month_actual_ton,
-  b.iso_year, b.iso_week, b.iso_dow, b.day_type, b.is_business
+  b.iso_year, b.iso_week, b.iso_dow, b.day_type, b.is_business,
+  -- New cumulative and total target fields
+  (SELECT month_target_to_date_ton FROM month_target_to_date) AS month_target_to_date_ton,
+  (SELECT month_target_total_ton FROM month_target_total) AS month_target_total_ton,
+  (SELECT week_target_to_date_ton FROM week_target_to_date) AS week_target_to_date_ton,
+  (SELECT week_target_total_ton FROM week_target_total) AS week_target_total_ton,
+  (SELECT month_actual_to_date_ton FROM month_actual_to_date) AS month_actual_to_date_ton,
+  (SELECT week_actual_to_date_ton FROM week_actual_to_date) AS week_actual_to_date_ton
 FROM base b;
             """)
             
@@ -125,6 +202,13 @@ FROM base b;
                 "iso_dow": result["iso_dow"],
                 "day_type": result["day_type"],
                 "is_business": result["is_business"],
+                # New cumulative and total target/actual fields
+                "month_target_to_date_ton": float(result["month_target_to_date_ton"]) if result["month_target_to_date_ton"] is not None else None,
+                "month_target_total_ton": float(result["month_target_total_ton"]) if result["month_target_total_ton"] is not None else None,
+                "week_target_to_date_ton": float(result["week_target_to_date_ton"]) if result["week_target_to_date_ton"] is not None else None,
+                "week_target_total_ton": float(result["week_target_total_ton"]) if result["week_target_total_ton"] is not None else None,
+                "month_actual_to_date_ton": float(result["month_actual_to_date_ton"]) if result["month_actual_to_date_ton"] is not None else None,
+                "week_actual_to_date_ton": float(result["week_actual_to_date_ton"]) if result["week_actual_to_date_ton"] is not None else None,
             }
         except Exception as e:
             logger.error(f"Error fetching optimized target card data for {target_date}: {str(e)}", exc_info=True)

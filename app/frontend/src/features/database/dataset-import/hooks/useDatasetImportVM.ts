@@ -201,9 +201,12 @@ export function useDatasetImportVM(opts?: DatasetImportVMOptions) {
       setSkipped({});
     } catch (error) {
       // エラー時は状態を確実にリセット（再アップロードを可能に）
+      // resetUploadStateは useSubmitVM のfinally で既に実行されているが、
+      // 念のため明示的に呼び出して状態の整合性を保証
       resetUploadState();
       console.error('Upload failed:', error);
       // ファイルは保持（ユーザーが削除できる）
+      // エラーは呼び出し側に伝播させない（通知は既に完了しているため）
     }
   };
 
@@ -216,5 +219,6 @@ export function useDatasetImportVM(opts?: DatasetImportVMOptions) {
     onRemoveFile,
     onToggleSkip,
     doUpload: doUploadActive,
+    resetUploadState,
   };
 }
