@@ -101,10 +101,10 @@ export const DailyCumulativeCard: React.FC<DailyCumulativeCardProps> = ({ cumDat
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis
               dataKey="label"
-              interval={0}
               tickFormatter={(v) => {
                 const n = Number(String(v));
                 if (Number.isNaN(n)) return String(v);
+                // 奇数のみ表示
                 return n % 2 === 1 ? String(v) : "";
               }}
               fontSize={FONT.size}
