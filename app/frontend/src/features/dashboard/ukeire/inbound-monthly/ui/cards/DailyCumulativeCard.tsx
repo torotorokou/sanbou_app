@@ -25,43 +25,72 @@ export const DailyCumulativeCard: React.FC<DailyCumulativeCardProps> = ({ cumDat
   const [showPrevMonth, setShowPrevMonth] = useState(false);
   const [showPrevYear, setShowPrevYear] = useState(false);
 
-  const tooltipFormatter = (...args: unknown[]) => {
-    const [v, name, payloadItem] = args as [unknown, unknown, { payload?: Record<string, unknown> }?];
-    const map: Record<string, string> = {
-      actualCumulative: "累積実績",
-      prevMonthCumulative: "先月累積",
-      prevYearCumulative: "前年累積",
+  // カスタムTooltip: すべての値を表示（実績、先月、前年）
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (!active || !payload || payload.length === 0) return null;
+
+    // payloadから各値を取得
+    const data = payload[0]?.payload as {
+      label: string;
+      actualCumulative?: number;
+      prevMonthCumulative?: number;
+      prevYearCumulative?: number;
+    } | undefined;
+
+    if (!data) return null;
+
+    const actual = data.actualCumulative ?? 0;
+    const prevMonth = data.prevMonthCumulative ?? 0;
+    const prevYear = data.prevYearCumulative ?? 0;
+
+    // 差分計算
+    const prevMonthDiff = actual !== 0 ? ((prevMonth - actual) / actual) * 100 : 0;
+    const prevYearDiff = actual !== 0 ? ((prevYear - actual) / actual) * 100 : 0;
+
+    const formatDiff = (diff: number) => {
+      const sign = diff >= 0 ? "+" : "-";
+      const absPct = Math.abs(diff).toFixed(1);
+      return `(${sign}${absPct}%)`;
     };
-    const key = name == null ? "" : String(name);
-    const label = key ? map[key] || key : "";
-    const payload = payloadItem && payloadItem.payload ? payloadItem.payload : null;
-    let actualCum: number | null = null;
-    if (payload && typeof payload === "object" && "actualCumulative" in payload) {
-      const a = (payload as Record<string, unknown>)["actualCumulative"];
-      if (typeof a === "number") actualCum = a;
-      else if (typeof a === "string" && !Number.isNaN(Number(a))) actualCum = Number(a);
-    }
-    if (v == null || v === "" || Number.isNaN(Number(v))) return ["—", label];
-    const valNum = Number(v);
-    if ((key === "prevMonthCumulative" || key === "prevYearCumulative") && actualCum != null && actualCum !== 0) {
-      const diffPct = ((valNum - actualCum) / actualCum) * 100;
-      const sign = diffPct >= 0 ? "+" : "-";
-      const absPct = Math.abs(diffPct).toFixed(1);
-      return [`${valNum}t (${sign}${absPct}%)`, label];
-    }
-    return [`${valNum}t`, label];
+
+    return (
+      <div
+        style={{
+          backgroundColor: "rgba(255, 255, 255, 0.96)",
+          border: "1px solid #ccc",
+          padding: "8px 10px",
+          fontSize: FONT.size,
+          borderRadius: 4,
+        }}
+      >
+        <div style={{ fontWeight: 600, marginBottom: 4, color: "#262626" }}>{label}</div>
+        <div style={{ color: COLORS.actual, marginBottom: 2 }}>
+          累積実績: {actual.toFixed(1)}t
+        </div>
+        {showPrevMonth && (
+          <div style={{ color: "#40a9ff", marginBottom: 2 }}>
+            先月: {prevMonth.toFixed(1)}t {formatDiff(prevMonthDiff)}
+          </div>
+        )}
+        {showPrevYear && (
+          <div style={{ color: "#fa8c16" }}>
+            前年: {prevYear.toFixed(1)}t {formatDiff(prevYearDiff)}
+          </div>
+        )}
+      </div>
+    );
   };
 
   const Inner = () => (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>
       <Space align="baseline" style={{ justifyContent: "space-between", width: "100%", paddingBottom: 4 }}>
         <Typography.Title level={5} style={{ margin: 0, fontSize: 13 }}>
-          日次累積搬入量（累積）
+          日次累積搬入量
         </Typography.Title>
         <Space size="small">
-          <span style={{ color: "#8c8c8c" }}>先月累積</span>
+          <span style={{ color: "#8c8c8c" }}>先月</span>
           <Switch size="small" checked={showPrevMonth} onChange={setShowPrevMonth} />
-          <span style={{ color: "#8c8c8c" }}>前年累積</span>
+          <span style={{ color: "#8c8c8c" }}>前年</span>
           <Switch size="small" checked={showPrevYear} onChange={setShowPrevYear} />
         </Space>
       </Space>
@@ -81,13 +110,13 @@ export const DailyCumulativeCard: React.FC<DailyCumulativeCardProps> = ({ cumDat
               fontSize={FONT.size}
             />
             <YAxis unit="t" domain={[0, "auto"]} fontSize={FONT.size} />
-            <RTooltip contentStyle={{ fontSize: FONT.size }} formatter={tooltipFormatter} />
-            <Area type="monotone" dataKey="actualCumulative" stroke={COLORS.actual} fill={COLORS.actual} fillOpacity={0.2} />
+            <RTooltip content={<CustomTooltip />} />
+            <Area type="monotone" dataKey="actualCumulative" name="累積実績" stroke={COLORS.actual} fill={COLORS.actual} fillOpacity={0.2} />
             {showPrevMonth && (
-              <Line type="monotone" dataKey="prevMonthCumulative" name="先月累積" stroke="#40a9ff" dot={false} strokeWidth={2} />
+              <Line type="monotone" dataKey="prevMonthCumulative" name="先月" stroke="#40a9ff" dot={false} strokeWidth={2} />
             )}
             {showPrevYear && (
-              <Line type="monotone" dataKey="prevYearCumulative" name="前年累積" stroke="#fa8c16" dot={false} strokeWidth={2} />
+              <Line type="monotone" dataKey="prevYearCumulative" name="前年" stroke="#fa8c16" dot={false} strokeWidth={2} />
             )}
             <Legend content={(props: unknown) => <SingleLineLegend {...(props as Parameters<typeof SingleLineLegend>[0])} />} verticalAlign="bottom" />
           </AreaChart>

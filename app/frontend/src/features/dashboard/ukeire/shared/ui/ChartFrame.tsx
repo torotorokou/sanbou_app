@@ -45,7 +45,7 @@ export const ChartFrame: React.FC<ChartFrameProps> = ({ style, children }) => {
           {children as unknown as React.ReactElement}
         </ResponsiveContainer>
       ) : (
-        <ResponsiveContainer width="100%" aspect={3}>
+        <ResponsiveContainer width="100%" minHeight={200} aspect={3}>
           {children as unknown as React.ReactElement}
         </ResponsiveContainer>
       )}

@@ -50,23 +50,35 @@ base AS (
   JOIN anchor a ON v.ddate = a.ddate
   LIMIT 1
 ),
--- アンカー日の前日を計算（選択月内に限定）
-anchor_yesterday AS (
+-- アンカー日に基づく累積計算の終了日を決定
+-- 当月: 昨日まで（today - 1）
+-- 過去月: 月末まで（month_end）※月末日を含む
+-- 未来月: first_business_day の前日（ただし月初より前にならないよう調整）
+cumulative_end_date AS (
   SELECT 
     CASE
-      -- アンカー日が月初の場合は月初を使用（前日がないため）
-      WHEN (SELECT ddate FROM anchor) = (SELECT month_start FROM bounds)
-        THEN (SELECT month_start FROM bounds)
-      -- それ以外はアンカー日の前日
-      ELSE ((SELECT ddate FROM anchor) - INTERVAL '1 day')::date
-    END AS anchor_yesterday_date
+      -- 当月の場合: 昨日まで（today - 1）
+      WHEN date_trunc('month', CAST(:req AS DATE)) = date_trunc('month', (SELECT today FROM today))
+        THEN GREATEST(
+          ((SELECT today FROM today) - INTERVAL '1 day')::date,
+          (SELECT month_start FROM bounds)
+        )
+      -- 過去月の場合: 月末まで（month_end）※月末日の実績を含める
+      WHEN date_trunc('month', CAST(:req AS DATE)) < date_trunc('month', (SELECT today FROM today))
+        THEN (SELECT month_end FROM bounds)
+      -- 未来月の場合: アンカー日（first_business_day）の前日、ただし月初より前にならない
+      ELSE GREATEST(
+        ((SELECT ddate FROM anchor) - INTERVAL '1 day')::date,
+        (SELECT month_start FROM bounds)
+      )
+    END AS cumulative_end_date
 ),
--- Calculate month cumulative target (sum of day_target_ton from month_start to anchor_yesterday)
+-- Calculate month cumulative target (sum of day_target_ton from month_start to cumulative_end_date)
 -- 選択月内のみを対象とする
 month_target_to_date AS (
   SELECT COALESCE(SUM(v.day_target_ton), 0)::numeric AS month_target_to_date_ton
   FROM mart.mv_target_card_per_day v
-  WHERE v.ddate BETWEEN (SELECT month_start FROM bounds) AND (SELECT anchor_yesterday_date FROM anchor_yesterday)
+  WHERE v.ddate BETWEEN (SELECT month_start FROM bounds) AND (SELECT cumulative_end_date FROM cumulative_end_date)
 ),
 -- Calculate month total target (max of month_target_ton for the entire month)
 month_target_total AS (
@@ -74,7 +86,7 @@ month_target_total AS (
   FROM mart.mv_target_card_per_day v
   WHERE v.ddate BETWEEN (SELECT month_start FROM bounds) AND (SELECT month_end FROM bounds)
 ),
--- Calculate week cumulative target (sum of day_target_ton from week_start to anchor_yesterday, same iso_year/iso_week)
+-- Calculate week cumulative target (sum of day_target_ton from week_start to cumulative_end_date, same iso_year/iso_week)
 -- 選択月内かつ同一週のみを対象とする
 week_target_to_date AS (
   SELECT COALESCE(SUM(v.day_target_ton), 0)::numeric AS week_target_to_date_ton
@@ -82,7 +94,7 @@ week_target_to_date AS (
   WHERE v.iso_year = b.iso_year
     AND v.iso_week = b.iso_week
     AND v.ddate >= (SELECT month_start FROM bounds)
-    AND v.ddate <= (SELECT anchor_yesterday_date FROM anchor_yesterday)
+    AND v.ddate <= (SELECT cumulative_end_date FROM cumulative_end_date)
 ),
 -- Calculate week total target (max of week_target_ton for the entire week)
 -- 週全体だが選択月内のみ
@@ -94,14 +106,14 @@ week_target_total AS (
     AND v.ddate >= (SELECT month_start FROM bounds)
     AND v.ddate <= (SELECT month_end FROM bounds)
 ),
--- Calculate month cumulative actual (sum of receive_net_ton from month_start to anchor_yesterday)
+-- Calculate month cumulative actual (sum of receive_net_ton from month_start to cumulative_end_date)
 -- 選択月内のみを対象とする
 month_actual_to_date AS (
   SELECT COALESCE(SUM(r.receive_net_ton), 0)::numeric AS month_actual_to_date_ton
   FROM mart.v_receive_daily r
-  WHERE r.ddate BETWEEN (SELECT month_start FROM bounds) AND (SELECT anchor_yesterday_date FROM anchor_yesterday)
+  WHERE r.ddate BETWEEN (SELECT month_start FROM bounds) AND (SELECT cumulative_end_date FROM cumulative_end_date)
 ),
--- Calculate week cumulative actual (sum of receive_net_ton from week_start to anchor_yesterday, same iso_year/iso_week)
+-- Calculate week cumulative actual (sum of receive_net_ton from week_start to cumulative_end_date, same iso_year/iso_week)
 -- 選択月内かつ同一週のみを対象とする
 week_actual_to_date AS (
   SELECT COALESCE(SUM(r.receive_net_ton), 0)::numeric AS week_actual_to_date_ton
@@ -109,7 +121,7 @@ week_actual_to_date AS (
   WHERE r.iso_year = b.iso_year
     AND r.iso_week = b.iso_week
     AND r.ddate >= (SELECT month_start FROM bounds)
-    AND r.ddate <= (SELECT anchor_yesterday_date FROM anchor_yesterday)
+    AND r.ddate <= (SELECT cumulative_end_date FROM cumulative_end_date)
 )
 SELECT
   b.ddate,
