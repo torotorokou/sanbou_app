@@ -17,7 +17,7 @@ UseCase: UploadSyogunCsvUseCase
   - backend_shared の既存 validator/formatter を活用
 """
 import logging
-from typing import Dict, Optional
+from typing import Dict, Optional, List, Any
 from fastapi import UploadFile
 from fastapi.concurrency import run_in_threadpool
 import pandas as pd
@@ -30,6 +30,7 @@ from backend_shared.adapters.presentation import SuccessApiResponse, ErrorApiRes
 
 from app.domain.ports.csv_writer_port import IShogunCsvWriter
 from app.infra.adapters.upload.raw_data_repository import RawDataRepository
+from app.infra.adapters.materialized_view.materialized_view_refresher import MaterializedViewRefresher
 
 logger = logging.getLogger(__name__)
 
@@ -44,6 +45,7 @@ class UploadSyogunCsvUseCase:
         csv_config: SyogunCsvConfigLoader,
         validator: CSVValidationResponder,
         raw_data_repo: Optional[RawDataRepository] = None,
+        mv_refresher: Optional[MaterializedViewRefresher] = None,
     ):
         """
         Args:
@@ -52,12 +54,14 @@ class UploadSyogunCsvUseCase:
             csv_config: CSV設定ローダー
             validator: CSVバリデーター
             raw_data_repo: log.upload_file へのアップロードログ保存用リポジトリ
+            mv_refresher: マテリアライズドビュー更新用リポジトリ（Optional）
         """
         self.raw_writer = raw_writer
         self.stg_writer = stg_writer
         self.csv_config = csv_config
         self.validator = validator
         self.raw_data_repo = raw_data_repo
+        self.mv_refresher = mv_refresher
     
     async def execute(
         self,
@@ -467,7 +471,7 @@ class UploadSyogunCsvUseCase:
         stg_result: Dict[str, dict],
     ) -> None:
         """
-        log.upload_file のステータスを更新
+        log.upload_file のステータスを更新し、必要に応じてマテリアライズドビューを更新
         
         Args:
             upload_file_ids: csv_type -> upload_file.id のマッピング
@@ -476,6 +480,9 @@ class UploadSyogunCsvUseCase:
         """
         if not self.raw_data_repo:
             return
+        
+        # マテビュー更新が必要な csv_type のリスト
+        mv_refresh_needed = []
         
         for csv_type, file_id in upload_file_ids.items():
             try:
@@ -491,6 +498,11 @@ class UploadSyogunCsvUseCase:
                         row_count=row_count,
                     )
                     logger.info(f"Marked {csv_type} upload as success: {row_count} rows")
+                    
+                    # ★ 受入CSVの成功時のみマテビュー更新リストに追加
+                    # （現状、MVが定義されているのは receive のみ）
+                    if csv_type == "receive":
+                        mv_refresh_needed.append(csv_type)
                 else:
                     # 失敗: エラーメッセージを記録
                     error_detail = result_info.get("detail", "Unknown error")
@@ -502,6 +514,41 @@ class UploadSyogunCsvUseCase:
                     logger.warning(f"Marked {csv_type} upload as failed: {error_detail}")
             except Exception as e:
                 logger.error(f"Failed to update upload log for {csv_type}: {e}")
+        
+        # ★ マテリアライズドビューの更新（受入CSV成功時のみ）
+        self._refresh_materialized_views(mv_refresh_needed)
+    
+    def _refresh_materialized_views(self, csv_types: List[str]) -> None:
+        """
+        指定された csv_type に関連するマテリアライズドビューを更新
+        
+        Args:
+            csv_types: 更新対象の csv_type リスト（例: ['receive', 'shipment']）
+            
+        Note:
+            - エラーが発生してもアップロード処理全体は失敗させない
+            - ログに記録して処理を継続
+        """
+        if not self.mv_refresher:
+            logger.debug("MaterializedViewRefresher not injected, skipping MV refresh")
+            return
+        
+        if not csv_types:
+            logger.debug("No csv_types provided for MV refresh")
+            return
+        
+        for csv_type in csv_types:
+            try:
+                logger.info(f"Starting materialized view refresh for csv_type='{csv_type}'")
+                self.mv_refresher.refresh_for_csv_type(csv_type)
+                logger.info(f"Successfully refreshed materialized views for csv_type='{csv_type}'")
+            except Exception as e:
+                # マテビュー更新失敗はログに記録するが、アップロード処理は成功扱い
+                logger.error(
+                    f"Failed to refresh materialized views for csv_type='{csv_type}': {e}",
+                    exc_info=True
+                )
+                # 呼び出し側には影響を与えない（アップロード自体は成功している）
     
     def _generate_response(
         self, raw_result: Dict[str, dict], stg_result: Dict[str, dict]
