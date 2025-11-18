@@ -5,6 +5,7 @@
 
 import React, { useState } from "react";
 import { Card, Typography, Space, Switch } from "antd";
+import InfoTooltip from "@/features/dashboard/ukeire/shared/ui/InfoTooltip";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RTooltip, Legend, Line } from "recharts";
 import { COLORS, FONT } from "@/features/dashboard/ukeire/domain/constants";
 import { ChartFrame } from "@/features/dashboard/ukeire/shared/ui/ChartFrame";
@@ -84,9 +85,12 @@ export const DailyCumulativeCard: React.FC<DailyCumulativeCardProps> = ({ cumDat
   const Inner = () => (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>
       <Space align="baseline" style={{ justifyContent: "space-between", width: "100%", paddingBottom: 4 }}>
-        <Typography.Title level={5} style={{ margin: 0, fontSize: 13 }}>
-          日次累積搬入量
-        </Typography.Title>
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <Typography.Title level={5} style={{ margin: 0, fontSize: 13 }}>
+            日次累積搬入量
+          </Typography.Title>
+          <InfoTooltip />
+        </div>
         <Space size="small">
           <span style={{ color: "#8c8c8c" }}>先月</span>
           <Switch size="small" checked={showPrevMonth} onChange={setShowPrevMonth} />

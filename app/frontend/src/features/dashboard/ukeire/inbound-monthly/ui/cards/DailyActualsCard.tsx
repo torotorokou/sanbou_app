@@ -4,8 +4,8 @@
  */
 
 import React, { useState } from "react";
-import { Card, Typography, Tooltip, Switch, Space } from "antd";
-import { InfoCircleOutlined } from "@ant-design/icons";
+import { Card, Typography, Switch, Space } from "antd";
+import InfoTooltip from "@/features/dashboard/ukeire/shared/ui/InfoTooltip";
 import dayjs from "dayjs";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RTooltip, Legend, Line, Cell } from "recharts";
 import type { IsoDate } from "@/features/dashboard/ukeire/domain/types";
@@ -53,11 +53,10 @@ export const DailyActualsCard: React.FC<DailyActualsCardProps> = ({ chartData, v
       <div style={{ display: "flex", alignItems: "center", gap: 8, justifyContent: "space-between", padding: "0 0 4px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
           <Typography.Title level={5} style={{ margin: 0, fontSize: 13 }}>
-            日次搬入量（実績）
+            日次搬入量
           </Typography.Title>
-          <Tooltip title="実際に搬入された日次トン数（モック）。">
-            <InfoCircleOutlined style={{ color: "#8c8c8c" }} />
-          </Tooltip>
+          {/* 共通化されたツールチップを使用 */}
+          <InfoTooltip />
         </div>
         <Space size="small">
           <span style={{ color: "#8c8c8c" }}>先月</span>
