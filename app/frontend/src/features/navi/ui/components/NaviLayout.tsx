@@ -155,6 +155,8 @@ export const NaviLayout: React.FC<NaviLayoutProps> = ({
                 minHeight: 0,
                 height: '100%',
                 overflow: 'hidden',
+                width: 0,
+                minWidth: 0,
               }}
             >
               <div
@@ -164,6 +166,8 @@ export const NaviLayout: React.FC<NaviLayoutProps> = ({
                   minHeight: 0,
                   overflowY: 'auto',
                   WebkitOverflowScrolling: 'touch' as unknown as undefined,
+                  width: '100%',
+                  maxWidth: '100%',
                 }}
               >
                 <ChatAnswerSection answer={answer} />
@@ -223,6 +227,8 @@ export const NaviLayout: React.FC<NaviLayoutProps> = ({
                 height: '100%',
                 flex: '1 1 auto',
                 overflow: 'hidden',
+                width: 0,
+                minWidth: 0,
               }}
             >
               <div
@@ -232,6 +238,8 @@ export const NaviLayout: React.FC<NaviLayoutProps> = ({
                   minHeight: 0,
                   overflowY: 'auto',
                   WebkitOverflowScrolling: 'touch' as unknown as undefined,
+                  width: '100%',
+                  maxWidth: '100%',
                 }}
               >
                 <ChatAnswerSection answer={answer} />

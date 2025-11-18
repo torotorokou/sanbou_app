@@ -3,7 +3,7 @@
 
 import type { NaviRepository } from '../ports/repository';
 import { NaviApiClient } from './navi.client';
-import type { CategoryDataMap, ChatAnswer } from '../domain/types/types';
+import type { CategoryDataMap, ChatAnswer, RagChatError } from '../domain/types/types';
 import type { ChatQuestionRequestDto } from '../domain/types/dto';
 
 /**
@@ -26,6 +26,16 @@ export class NaviRepositoryImpl implements NaviRepository {
     const dto = await NaviApiClient.generateAnswer(request);
 
     console.log('[NaviRepository] Raw DTO from API:', dto);
+
+    // エラーレスポンスのチェック
+    if (dto.status === 'error') {
+      const { RagChatError } = await import('../domain/types/types');
+      throw new RagChatError(
+        dto.code || 'UNKNOWN_ERROR',
+        dto.detail || 'エラーが発生しました',
+        dto.hint
+      );
+    }
 
     // DTOからDomainモデルへの変換
     return {

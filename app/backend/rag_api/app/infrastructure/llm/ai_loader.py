@@ -8,6 +8,7 @@ from app.core.file_ingest_service import get_resource_paths, load_json_data
 from app.utils.chunk_utils import load_faiss_vectorstore
 from typing import List, Optional
 import os
+from openai import RateLimitError
 
 
 def get_answer(
@@ -92,11 +93,29 @@ def get_answer(
             "sources": result["sources"],
             "pages": result["pages"]
         }
+    except RateLimitError as rate_err:
+        # OpenAI RateLimitError（insufficient_quota等）
+        error_msg = str(rate_err)
+        print("[DEBUG][ai_loader] RateLimitError:", repr(rate_err))
+        
+        # insufficient_quotaの判定
+        error_code = "OPENAI_RATE_LIMIT"
+        if "insufficient_quota" in error_msg.lower():
+            error_code = "OPENAI_INSUFFICIENT_QUOTA"
+        
+        return {
+            "error": error_msg,
+            "error_code": error_code,
+            "answer": None,
+            "sources": [],
+            "pages": None
+        }
     except Exception as e:
-        # ログ出力やエラー通知など拡張ポイント
+        # その他の予期しない例外
         print("[DEBUG][ai_loader] error:", repr(e))
         return {
             "error": str(e),
+            "error_code": "OPENAI_ERROR",
             "answer": None,
             "sources": [],
             "pages": None

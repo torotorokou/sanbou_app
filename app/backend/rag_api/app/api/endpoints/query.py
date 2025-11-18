@@ -91,6 +91,29 @@ async def generate_answer(
         )
         result = ai_service.generate_ai_response(request.query, request.category, request.tags)
         print("[DEBUG][/generate-answer] result keys:", list(result.keys()))
+        
+        # エラーコードの存在をチェック
+        if "error_code" in result:
+            error_code = result.get("error_code", "OPENAI_ERROR")
+            error_detail = result.get("error_detail", "AI回答の生成に失敗しました。")
+            print(f"[DEBUG][/generate-answer] error detected: code={error_code}")
+            
+            # エラーコードに応じたヒントメッセージ
+            if error_code == "OPENAI_INSUFFICIENT_QUOTA":
+                hint = "OpenAI APIの利用上限を超過しています。システム管理者にお問い合わせください。"
+            elif error_code == "OPENAI_RATE_LIMIT":
+                hint = "一時的なレート制限です。しばらく時間をおいて再度お試しください。"
+            else:
+                hint = "エラーが継続する場合は管理者にお問い合わせください。"
+            
+            return ErrorApiResponse(
+                code=error_code,
+                detail=error_detail,
+                hint=hint,
+                status_code=200,  # 既存互換性のため200を維持
+            ).to_json_response()
+        
+        # 正常系の処理
         print("[DEBUG][/generate-answer] pdf_url:", result.get("pdf_url"))
         print("[DEBUG][/generate-answer] sources count:", len(result.get("sources", [])))
 
@@ -118,7 +141,7 @@ async def generate_answer(
             detail="回答生成に失敗しました。",
             hint="質問内容やタグを見直して再度お試しください。改善しない場合は管理者に連絡してください。",
             result=None,
-            status_code=500,
+            status_code=200,
         ).to_json_response()
     except ValueError as e:
         # 予期したValueErrorはanswerが空のケースとして扱い、ErrorApiResponse

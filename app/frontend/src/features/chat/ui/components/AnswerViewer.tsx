@@ -14,6 +14,7 @@ const AnswerViewer: React.FC<Props> = ({ answer }) => {
                 maxWidth: '100%',
                 width: '100%',
                 boxSizing: 'border-box',
+                overflow: 'hidden',
             }}
         >
             <Typography.Paragraph
@@ -24,6 +25,7 @@ const AnswerViewer: React.FC<Props> = ({ answer }) => {
                     whiteSpace: 'pre-wrap',
                     wordBreak: 'break-word',
                     overflowWrap: 'anywhere',
+                    maxWidth: '100%',
                 }}
             >
                 {answer && answer.trim()

@@ -84,6 +84,16 @@ async def proxy_generate_answer(request: Request):
                     "sources": result_data.get("sources", []),
                 }
             
+            # エラーレスポンスの場合、status/code/detailをそのまま返す
+            if rag_response.get("status") == "error":
+                logger.warning(f"RAG API returned error: code={rag_response.get('code')}, detail={rag_response.get('detail')}")
+                return {
+                    "status": "error",
+                    "code": rag_response.get("code", "UNKNOWN_ERROR"),
+                    "detail": rag_response.get("detail", "エラーが発生しました"),
+                    "hint": rag_response.get("hint"),
+                }
+            
             # 既に期待される形式の場合はそのまま返す
             return rag_response
     except httpx.HTTPStatusError as e:
