@@ -4,7 +4,49 @@
 import { useEffect, useMemo, useState } from 'react';
 import { NaviRepositoryImpl } from '../infrastructure/navi.repository';
 import type { CategoryDataMap } from '../domain/types/types';
+import { RagChatError } from '../domain/types/types';
 import { useNotificationStore } from '@features/notification';
+
+/**
+ * エラーコードからユーザー向けメッセージへのマッピング
+ */
+function getErrorMessage(error: unknown): { title: string; message: string } {
+  if (error instanceof RagChatError) {
+    switch (error.code) {
+      case 'OPENAI_INSUFFICIENT_QUOTA':
+        return {
+          title: 'AI利用上限超過',
+          message:
+            'OpenAI APIの利用上限を超過しているため、現在回答を生成できません。システム管理者にお問い合わせください。',
+        };
+      case 'OPENAI_RATE_LIMIT':
+        return {
+          title: 'レート制限',
+          message:
+            'OpenAI APIのレート制限に達しました。しばらく時間をおいて再度お試しください。',
+        };
+      case 'OPENAI_ERROR':
+        return {
+          title: 'AI回答エラー',
+          message: error.detail || 'AI回答の生成中にエラーが発生しました。',
+        };
+      default:
+        return {
+          title: 'エラー',
+          message: error.detail || 'エラーが発生しました。',
+        };
+    }
+  }
+
+  const errorMessage =
+    error instanceof Error ? error.message : 'ネットワークまたはサーバーエラーです。';
+
+  return {
+    title: '取得に失敗しました',
+    message: errorMessage,
+  };
+}
+
 
 /**
  * Naviチャット機能のViewModel Hook
@@ -121,19 +163,23 @@ export function useNaviChat() {
     } catch (err: unknown) {
       console.error('[API][ERROR]', err);
       
-      // エラーメッセージの取得
-      const errorMessage = err instanceof Error 
-        ? err.message 
-        : 'ネットワークまたはサーバーエラーです。';
+      // エラーコードに応じたメッセージを取得
+      const { title, message } = getErrorMessage(err);
       
-      setAnswer(`エラー: ${errorMessage}`);
+      // エラー詳細を回答欄に表示
+      let displayMessage = message;
+      if (err instanceof RagChatError && err.hint) {
+        displayMessage += `\n\nヒント: ${err.hint}`;
+      }
+      
+      setAnswer(`❌ ${displayMessage}`);
       setPdfUrl(null);
 
       addNotification({
         type: 'error',
-        title: '取得に失敗しました',
-        message: errorMessage,
-        duration: 4000,
+        title,
+        message,
+        duration: err instanceof RagChatError && err.code === 'OPENAI_INSUFFICIENT_QUOTA' ? 8000 : 4000,
       });
     } finally {
       setLoading(false);

@@ -14,9 +14,16 @@ export interface ChatQuestionRequestDto {
  * チャット回答レスポンスDTO（バックエンドから受け取る形式）
  */
 export interface ChatAnswerResponseDto {
+  // 成功時
   answer?: string;
   pdf_url?: string | null;
   merged_pdf_url?: string | null;
+  
+  // エラー時
+  status?: "success" | "error";
+  code?: string;
+  detail?: string;
+  hint?: string;
 }
 
 /**

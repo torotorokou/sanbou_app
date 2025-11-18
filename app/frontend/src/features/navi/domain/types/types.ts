@@ -82,3 +82,16 @@ export interface StepItem {
   description: string;
 }
 
+/**
+ * RAGチャットエラークラス
+ */
+export class RagChatError extends Error {
+  constructor(
+    public code: string,
+    public detail: string,
+    public hint?: string
+  ) {
+    super(detail);
+    this.name = "RagChatError";
+  }
+}
