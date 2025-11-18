@@ -1,7 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect } from 'react';
 import type { UploadProps } from 'antd/es/upload';
-// useCsvValidation は削除されました - 新しい検証ロジックへの移行が必要
-// import { useCsvValidation } from '@features/database';
+import { useCsvFileValidator } from '@shared';
 import { useReportArtifact } from '@features/report/preview/model/useReportArtifact';
 import type {
     CsvFiles,
@@ -14,8 +13,7 @@ import type { ReportKey } from '@features/report/shared/config';
 /**
  * ReportBaseのビジネスロジックを統合管理するフック
  *
- * ⚠️ 注意: useCsvValidation は削除されました
- * TODO: useValidateOnPick を使用するように移行が必要
+ * 🔄 更新: 共通のcsv-validationを使用するように変更
  *
  * 🎯 目的：
  * - CSV検証、Excel生成の複雑なロジックを統合
@@ -23,32 +21,20 @@ import type { ReportKey } from '@features/report/shared/config';
  * - 関連する機能を一元化して保守性向上
  */
 
-// 一時的なスタブ実装
-const useCsvValidation = () => {
-    const [validationResults, setValidationResults] = useState<Record<string, 'valid' | 'invalid' | 'unknown'>>({});
-    
-    const validateCsvFile = useCallback((file: File, label: string) => {
-        // TODO: 実装が必要
-        setValidationResults(prev => ({ ...prev, [label]: 'unknown' }));
-    }, []);
-    
-    const resetValidation = useCallback((label: string) => {
-        setValidationResults(prev => ({ ...prev, [label]: 'unknown' }));
-    }, []);
-    
-    const getValidationResult = useCallback((label: string) => {
-        return validationResults[label] ?? 'unknown';
-    }, [validationResults]);
-    
-    return { validationResults, validateCsvFile, resetValidation, getValidationResult };
-};
 export const useReportBaseBusiness = (
     csvConfigs: CsvConfigEntry[],
     csvFiles: CsvFiles,
     onUploadFile: (label: string, file: File | null) => void,
     reportKey: ReportKey
 ) => {
-    const csvValidation = useCsvValidation();
+    // 共通のCSV検証フックを使用
+    const csvValidation = useCsvFileValidator({
+        getRequiredHeaders: (label: string) => {
+            const entry = csvConfigs.find(c => c.config.label === label);
+            return entry?.config.expectedHeaders;
+        },
+    });
+    
     const artifact = useReportArtifact();
 
     useEffect(() => {
@@ -73,7 +59,7 @@ export const useReportBaseBusiness = (
         (label: string, parser: (csvText: string) => void): UploadProps => ({
             accept: '.csv',
             showUploadList: false,
-            beforeUpload: (fileObj) => {
+            beforeUpload: async (fileObj) => {
                 onUploadFile(label, fileObj);
 
                 if (!fileObj) {
@@ -81,7 +67,18 @@ export const useReportBaseBusiness = (
                     return false;
                 }
 
-                csvValidation.validateCsvFile(fileObj, label, parser);
+                // 共通の検証フックを使用（ヘッダー検証 + カスタムパーサー検証）
+                await csvValidation.validateFile(label, fileObj);
+                
+                // パーサーも実行（データ構造の検証）
+                try {
+                    const text = await fileObj.text();
+                    parser(text);
+                } catch (parseError) {
+                    console.error(`CSV parsing failed for ${label}:`, parseError);
+                    // パース失敗は検証結果に反映済み
+                }
+                
                 return false;
             },
         }),
@@ -132,6 +129,7 @@ export const useReportBaseBusiness = (
      */
     const createMakeUploadProps = useCallback((): MakeUploadPropsFn => {
         return (label: string): UploadProps => {
+            // ラベルに対応するcsvConfigエントリを検索
             let entry = null;
             for (let i = 0; i < csvConfigs.length; i++) {
                 if (csvConfigs[i].config.label === label) {
@@ -139,7 +137,14 @@ export const useReportBaseBusiness = (
                     break;
                 }
             }
-            return entry ? makeUploadProps(label, entry.config.onParse) : {};
+            
+            if (!entry) {
+                console.warn(`CSV config not found for label: ${label}`);
+                return {};
+            }
+            
+            // parserを取得してmakeUploadPropsに渡す
+            return makeUploadProps(label, entry.config.onParse);
         };
     }, [csvConfigs, makeUploadProps]);
 

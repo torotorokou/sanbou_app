@@ -14,11 +14,11 @@ export * from '@features/report/shared/types/report-api.types';
 export type { IReportRepository } from '@features/report/upload/ports/repository';
 
 // Application (ViewModels)
-export * from '@features/report/select/model/useReportManager';
+export * from '@features/report/selector/model/useReportManager';
 export * from '@features/report/actions/model/useReportActions';
 export { useReportArtifact } from '@features/report/preview/model/useReportArtifact';  // Named export only, avoid type conflict
 export * from '@features/report/base/model/useReportBaseBusiness';
-export * from '@features/report/select/model/useReportLayoutStyles';
+export * from '@features/report/selector/model/useReportLayoutStyles';
 
 // Infrastructure
 export * from '@features/report/upload/api/report.repository';
@@ -26,3 +26,9 @@ export * from '@features/report/upload/api/report.repository';
 // UI
 export { default as ReportBase } from '@features/report/base/ui/ReportBase';
 export { default as ReportHeader } from '@features/report/base/ui/ReportHeader';
+
+// Selector (新規追加)
+export * from '@features/report/selector';
+
+// Modal (新規追加)
+export * from '@features/report/modal';

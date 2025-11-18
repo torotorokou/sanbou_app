@@ -1,6 +1,6 @@
 import React, { Suspense, useEffect, useState } from 'react';
 import ReportManagePageLayout from '@features/report/manage/ui/ReportManagePageLayout';
-import ReportStepperModal from '@features/report/select/ui/ReportStepperModal';
+import ReportStepperModal from '@features/report/modal/ui/ReportStepperModal';
 import BlockUnitPriceInteractiveModal, { type InitialApiResponse, type SessionData } from '@features/report/interactive/ui/BlockUnitPriceInteractiveModal';
 import type { TransportCandidateRow } from '@features/report/shared/types/interactive.types';
 import { normalizeRow, isRecord } from '@features/report/shared/lib/transportNormalization';
