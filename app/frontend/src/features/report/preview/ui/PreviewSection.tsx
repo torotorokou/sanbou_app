@@ -16,13 +16,10 @@ const PreviewSection: React.FC<PreviewSectionProps> = ({
     title = '📄 プレビュー画面',
     children
 }) => {
-    const { isMobile, isTablet } = useResponsive();
+    const { isMobile } = useResponsive();
     const [modalOpen, setModalOpen] = useState(false);
 
-    // 親の高さいっぱいにフィットさせる（モーダルのみやや拡大）
-    const BASE_HEIGHT = isMobile ? 320 : isTablet ? 420 : 520;
-    const MODAL_HEIGHT_SCALE = 1.3;
-    const modalMinHeight = Math.round(BASE_HEIGHT * MODAL_HEIGHT_SCALE);
+    // 親の高さいっぱいにフィットさせる（モーダルはビューポートに合わせて表示）
 
     const previewAreaStyle = {
         flex: 1,
@@ -61,7 +58,7 @@ const PreviewSection: React.FC<PreviewSectionProps> = ({
                 </div>
             </div>
 
-            <div style={previewAreaStyle} onClick={() => setModalOpen(true)}>
+            <div style={previewAreaStyle}>
                 {React.isValidElement(children) ? (
                     React.cloneElement(children, { height: '100%' })
                 ) : (
@@ -79,11 +76,12 @@ const PreviewSection: React.FC<PreviewSectionProps> = ({
                 footer={null}
                 width={isMobile ? '95%' : '80%'}
                 centered
-                styles={{ body: { padding: 12, minHeight: modalMinHeight } }}
+                bodyStyle={{ padding: 12 }}
+                style={{ top: 20 }}
             >
-                <div style={{ width: '100%', height: '100%', minHeight: modalMinHeight }}>
+                <div style={{ width: '100%', height: `calc(100vh - 160px)`, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                     {React.isValidElement(children) ? (
-                        React.cloneElement(children, { height: `${modalMinHeight}px` })
+                        React.cloneElement(children, { height: '100%' })
                     ) : (
                         children
                     )}
