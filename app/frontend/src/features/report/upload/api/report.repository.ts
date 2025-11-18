@@ -7,6 +7,25 @@
 
 import { coreApi } from '@/shared';
 
+// Re-export block unit price functions from dedicated module
+export {
+    initializeBlockUnitPrice,
+    startBlockUnitPrice,
+    selectTransport,
+    applyPrice,
+    finalizePrice,
+    type BlockUnitPriceInitialRequest,
+    type BlockUnitPriceInitialResponse,
+    type BlockUnitPriceStartRequest,
+    type BlockUnitPriceStartResponse,
+    type SelectTransportRequest,
+    type SelectTransportResponse,
+    type ApplyPriceRequest,
+    type ApplyPriceResponse,
+    type FinalizePriceRequest,
+    type FinalizePriceResponse,
+} from '@features/report/interactive/infrastructure';
+
 /**
  * レポート生成のレスポンス型
  */
@@ -87,18 +106,7 @@ export async function generateManagementSheet(
     );
 }
 
-/**
- * ブロック単価初期化
- */
-export async function initializeBlockUnitPrice(
-    date: string,
-    factory_id?: string
-): Promise<ReportArtifactResponse> {
-    return coreApi.post<ReportArtifactResponse>(
-        '/core_api/block_unit_price_interactive/initial',
-        { date, factory_id }
-    );
-}
+// NOTE: initializeBlockUnitPrice and related functions are re-exported from @/features/block-unit-price above
 
 /**
  * 汎用レポート生成（FormData使用）
