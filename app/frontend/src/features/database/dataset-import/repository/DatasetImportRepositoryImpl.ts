@@ -13,7 +13,7 @@ import {
   notifyInfo,
   notifyWarning,
 } from '@features/notification';
-import { ApiError } from '@shared/infrastructure/http/httpClient';
+import { ApiError } from '@shared/types';
 
 export class DatasetImportRepositoryImpl implements DatasetImportRepository {
   async upload(filesByType: Record<string, File>, uploadPath: string, signal?: AbortSignal): Promise<void> {
@@ -55,7 +55,7 @@ export class DatasetImportRepositoryImpl implements DatasetImportRepository {
       }
     } catch (error) {
       // 409 Conflict (重複エラー) の特別処理
-      if (error instanceof ApiError && error.status === 409 && error.code === 'DUPLICATE_FILE') {
+      if (error instanceof ApiError && error.httpStatus === 409 && error.code === 'DUPLICATE_FILE') {
         notifyError(
           '重複エラー',
           '同じファイルが既にアップロード済みです。'

@@ -41,8 +41,5 @@ export interface SampleSectionProps {
 
 export interface CsvUploadSectionProps {
     uploadFiles: CsvUploadFileType[];
-    makeUploadProps: (
-        label: string,
-        setter: (file: File) => void
-    ) => UploadProps;
+    makeUploadProps: (label: string) => UploadProps;
 }

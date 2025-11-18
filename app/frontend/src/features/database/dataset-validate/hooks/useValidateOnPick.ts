@@ -1,9 +1,10 @@
 /**
  * ファイル選択時の検証フック
+ * 共通のcsvHeaderValidatorを使用
  */
 
 import { useCallback } from 'react';
-import { validateHeaders } from '../core/csvHeaderValidator';
+import { validateHeaders } from '@shared';
 
 export function useValidateOnPick(
   getRequired: (typeKey: string) => string[] | undefined

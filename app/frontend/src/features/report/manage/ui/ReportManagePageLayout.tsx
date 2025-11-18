@@ -1,6 +1,6 @@
 import React from 'react';
 import type { ReactNode } from 'react';
-import { useReportLayoutStyles } from '@features/report/select/model/useReportLayoutStyles';
+import { useReportLayoutStyles } from '@features/report/selector/model/useReportLayoutStyles';
 import { useResponsive } from '@/shared';
 import SampleSection from '@features/report/base/ui/SampleSection';
 import CsvUploadSection from '@features/report/upload/ui/CsvUploadSection';

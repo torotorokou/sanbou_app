@@ -1,20 +1,20 @@
 import React from 'react';
-import { Typography, Alert } from 'antd';
+import { Typography } from 'antd';
 import { useResponsive } from '@/shared';
 import type { CsvUploadSectionProps } from './types';
+import { ReportUploadFileCard } from './ReportUploadFileCard';
 
 /**
  * CSVアップロードセクション - useResponsive(flags)統合版
- * 
- * ⚠️ 注意: CsvUploadPanelComponent は削除されました
- * TODO: 新しい SimpleUploadPanel を使用するように移行が必要
  * 
  * 🔄 リファクタリング内容：
  * - useResponsive(flags)のpickByDevice方式に統一
  * - 4段階レスポンシブ（Mobile/Tablet/Laptop/Desktop）
  * - データ準備に関する機能を集約
+ * - uploadFiles と makeUploadProps を使用してアップロード機能を実装
+ * - dataset-import のデザインに合わせた見た目（スキップ機能なし）
  */
-const CsvUploadSection: React.FC<CsvUploadSectionProps> = () => {
+const CsvUploadSection: React.FC<CsvUploadSectionProps> = ({ uploadFiles, makeUploadProps }) => {
     // responsive: flagsベースの段階スイッチ
     const { flags } = useResponsive();
 
@@ -30,6 +30,7 @@ const CsvUploadSection: React.FC<CsvUploadSectionProps> = () => {
     const titleLevel = pickByDevice<5 | 4>(5, 4, 4, 4);
     const marginBottom = pickByDevice(4, 6, 8, 8);
     const fontSize = pickByDevice('14px', '15px', '16px', '16px');
+    const itemGap = pickByDevice(6, 8, 10, 10);
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', minHeight: 0 }}>
@@ -44,19 +45,25 @@ const CsvUploadSection: React.FC<CsvUploadSectionProps> = () => {
                 📂 データセット（CSV）の準備
             </Typography.Title>
             <div style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
-                <Alert
-                    message="移行が必要です"
-                    description="CsvUploadPanelComponent は削除されました。SimpleUploadPanel と useDatasetImportVM を使用するように移行してください。"
-                    type="warning"
-                    showIcon
-                />
-                {/* TODO: SimpleUploadPanel を使用するように実装
-                <SimpleUploadPanel
-                    items={panelFiles}
-                    onPickFile={onPickFile}
-                    onRemoveFile={onRemoveFile}
-                />
-                */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: itemGap }}>
+                    {uploadFiles.map((uploadFile) => {
+                        // makeUploadPropsは1引数のみを受け取る
+                        const uploadProps = makeUploadProps(uploadFile.label);
+                        
+                        return (
+                            <ReportUploadFileCard
+                                key={uploadFile.label}
+                                label={uploadFile.label}
+                                file={uploadFile.file}
+                                required={uploadFile.required}
+                                validationResult={uploadFile.validationResult}
+                                onRemove={uploadFile.onRemove || (() => {})}
+                                uploadProps={uploadProps}
+                                size="compact"
+                            />
+                        );
+                    })}
+                </div>
             </div>
         </div>
     );
