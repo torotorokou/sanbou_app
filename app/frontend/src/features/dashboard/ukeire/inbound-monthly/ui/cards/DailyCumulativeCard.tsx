@@ -27,7 +27,7 @@ export const DailyCumulativeCard: React.FC<DailyCumulativeCardProps> = ({ cumDat
   const [showPrevYear, setShowPrevYear] = useState(false);
 
   // カスタムTooltip: すべての値を表示（実績、先月、前年）
-  const CustomTooltip = ({ active, payload, label }: any) => {
+  const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?: Array<{ payload: unknown }>; label?: string }) => {
     if (!active || !payload || payload.length === 0) return null;
 
     // payloadから各値を取得

@@ -168,7 +168,7 @@ const QuestionPanel: React.FC<Props> = ({
                         }}
                         style={{ width: '100%', marginTop: 4 }}
                         disabled={!category || tags.length === 0}
-                        popupClassName='template-select-dropdown'
+                        classNames={{ popup: { root: 'template-select-dropdown' } }}
                         className='template-select question-select question-select--template'
                         listHeight={360}
                     >

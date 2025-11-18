@@ -17,7 +17,7 @@ const defaultTitle = (
 
 export const InfoTooltip: React.FC<InfoTooltipProps> = ({ title = defaultTitle, placement = "top", className }) => {
   return (
-    <Tooltip title={title} placement={placement} overlayClassName={className}>
+    <Tooltip title={title} placement={placement} classNames={{ root: className }}>
       <InfoCircleOutlined style={{ color: "#8c8c8c" }} />
     </Tooltip>
   );

@@ -76,7 +76,7 @@ const PreviewSection: React.FC<PreviewSectionProps> = ({
                 footer={null}
                 width={isMobile ? '95%' : '80%'}
                 centered
-                bodyStyle={{ padding: 12 }}
+                styles={{ body: { padding: 12 } }}
                 style={{ top: 20 }}
             >
                 <div style={{ width: '100%', height: `calc(100vh - 160px)`, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
