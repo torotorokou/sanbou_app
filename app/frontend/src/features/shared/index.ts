@@ -4,5 +4,5 @@
  * 各機能間で共有される汎用的な機能をエクスポート
  */
 
-// CSV検証の共通機能
-export * from './csv-validation';
+// TODO: Add shared feature utilities here when needed
+

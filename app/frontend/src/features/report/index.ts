@@ -32,3 +32,6 @@ export * from '@features/report/selector';
 
 // Modal (新規追加)
 export * from '@features/report/modal';
+
+// Interactive (新規追加)
+export * from '@features/report/interactive';
