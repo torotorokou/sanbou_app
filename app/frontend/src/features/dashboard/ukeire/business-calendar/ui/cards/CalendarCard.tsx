@@ -98,6 +98,21 @@ function convertToPayload(year: number, month: number, days: CalendarDayDTO[]): 
   };
 }
 
+// カレンダー用ツールチップ文言をモジュール内にまとめて保守性を高める
+const CALENDAR_TOOLTIP_TEXTS = {
+  business: "営業日（残り日数）",
+  holiday: "日曜・祝日（残り日数）",
+  closed: "非営業日（残り日数）",
+};
+
+const CALENDAR_TOOLTIP_TITLE = (
+  <div>
+    <div>{CALENDAR_TOOLTIP_TEXTS.business}</div>
+    <div>{CALENDAR_TOOLTIP_TEXTS.holiday}</div>
+    <div>{CALENDAR_TOOLTIP_TEXTS.closed}</div>
+  </div>
+);
+
 export default function CalendarCard({ year, month, repository, title = "営業カレンダー", style }: Props) {
   const repo = useMemo(() => repository ?? new CalendarRepositoryForUkeire(), [repository]);
   const vm = useBusinessCalendarVM({ year, month, repository: repo });
@@ -123,7 +138,7 @@ export default function CalendarCard({ year, month, repository, title = "営業�
       <Card title={(
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <Typography.Title level={5} style={{ margin: 0, fontSize: 16 }}>{title}</Typography.Title>
-          <Tooltip title={"営業日・日祝・非営業日（括弧内は残り日数）"}>
+          <Tooltip title={CALENDAR_TOOLTIP_TITLE}>
             <InfoCircleOutlined style={{ color: "#8c8c8c" }} />
           </Tooltip>
         </div>
@@ -138,7 +153,7 @@ export default function CalendarCard({ year, month, repository, title = "営業�
       <Card title={(
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <Typography.Title level={5} style={{ margin: 0, fontSize: 16 }}>{title}</Typography.Title>
-          <Tooltip title={"営業日・日祝・非営業日（括弧内は残り日数）"}>
+          <Tooltip title={CALENDAR_TOOLTIP_TITLE}>
             <InfoCircleOutlined style={{ color: "#8c8c8c" }} />
           </Tooltip>
         </div>
@@ -153,7 +168,7 @@ export default function CalendarCard({ year, month, repository, title = "営業�
       title={(
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <Typography.Title level={5} style={{ margin: 0, fontSize: 16 }}>{title}</Typography.Title>
-          <Tooltip title={"営業日・日祝・非営業日（括弧内は残り日数）"}>
+          <Tooltip title={CALENDAR_TOOLTIP_TITLE}>
             <InfoCircleOutlined style={{ color: "#8c8c8c" }} />
           </Tooltip>
         </div>
