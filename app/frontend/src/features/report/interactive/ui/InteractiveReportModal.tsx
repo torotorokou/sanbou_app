@@ -69,7 +69,7 @@ const InteractiveReportModal: React.FC<InteractiveReportModalProps> = ({
             footer={null}
             width={800}
             style={{ top: 20 }}
-            destroyOnClose
+            destroyOnHidden
         >
             {/* ステップインジケーター */}
             {steps.length > 1 && (

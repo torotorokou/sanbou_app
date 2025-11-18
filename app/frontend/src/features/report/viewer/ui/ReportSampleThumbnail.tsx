@@ -114,7 +114,7 @@ const ReportSampleThumbnail: React.FC<Props> = ({
                     },
                 }}
                 maskClosable
-                destroyOnClose
+                destroyOnHidden
             >
                 <div
                     style={{

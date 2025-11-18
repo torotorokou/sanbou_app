@@ -55,15 +55,15 @@ export class ApiError extends Error {
         if (data && typeof data === 'object' && 'code' in data) {
             // Backend レスポンス形式: {status: 'error', code: 'XXX', detail: 'message'}
             // または ProblemDetails 形式: {code: 'XXX', userMessage: 'message', status: 409}
-            const pd = data as any;
-            const userMessage = pd.userMessage || pd.detail || '処理に失敗しました';
+            const pd = data as Record<string, unknown>;
+            const userMessage = (pd.userMessage as string) || (pd.detail as string) || '処理に失敗しました';
             const status = pd.status || error.response?.status || 500;
             return new ApiError(
-                pd.code,
+                pd.code as string,
                 typeof status === 'number' ? status : error.response?.status || 500,
                 userMessage,
-                pd.title,
-                pd.traceId
+                pd.title as string | undefined,
+                pd.traceId as string | undefined
             );
         }
 

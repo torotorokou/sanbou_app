@@ -107,9 +107,9 @@ const ReportManagePageLayout: React.FC<Props> = ({
                 {/* responsive: isXs (< 640px) - 1列縦並びレイアウト */}
                 {isExtraSmallLayout ? (
                     <>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, width: '100%', minHeight: 0, flex: 1 }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, width: '100%', minHeight: 0, flexGrow: 1, flexShrink: 1, flexBasis: 0 }}>
                             {/* データセット（上） */}
-                            <div style={{ flex: '0 0 auto', minHeight: 200 }}>
+                            <div style={{ flexGrow: 0, flexShrink: 0, flexBasis: 'auto', minHeight: 200 }}>
                                 <CsvUploadSection
                                     uploadFiles={convertToCsvFileType(mappedUploadFiles ?? [])}
                                     makeUploadProps={(label: string) =>
@@ -119,7 +119,7 @@ const ReportManagePageLayout: React.FC<Props> = ({
                             </div>
 
                             {/* プレビュー（下） */}
-                            <div style={{ flex: '1 1 auto', minHeight: 300 }}>
+                            <div style={{ flexGrow: 1, flexShrink: 1, flexBasis: 'auto', minHeight: 300 }}>
                                 <div style={styles.previewContainer}>
                                     <PreviewSection>{children}</PreviewSection>
                                 </div>
@@ -144,8 +144,8 @@ const ReportManagePageLayout: React.FC<Props> = ({
                 ) : isCompactLayout ? (
                     <>
                         {/* isSm/Tablet (640-1023px) - 2列横並びレイアウト */}
-                        <div style={{ display: 'flex', gap, width: '100%', minHeight: 0, flex: 1 }}>
-                            <div style={{ flex: '1 1 40%', display: 'flex', flexDirection: 'column', gap: 12, minHeight: 0 }}>
+                        <div style={{ display: 'flex', gap, width: '100%', minHeight: 0, flexGrow: 1, flexShrink: 1, flexBasis: 0 }}>
+                            <div style={{ flexGrow: 1, flexShrink: 1, flexBasis: '40%', display: 'flex', flexDirection: 'column', gap: 12, minHeight: 0 }}>
                                 <div style={{ display: 'none' }}>
                                     <SampleSection sampleImageUrl={sampleImageUrl} />
                                 </div>
@@ -157,7 +157,7 @@ const ReportManagePageLayout: React.FC<Props> = ({
                                 />
                             </div>
 
-                            <div style={{ flex: '1 1 60%', display: 'flex', minHeight: 0 }}>
+                            <div style={{ flexGrow: 1, flexShrink: 1, flexBasis: '60%', display: 'flex', minHeight: 0 }}>
                                 <div style={styles.previewContainer}>
                                     <PreviewSection>{children}</PreviewSection>
                                 </div>
