@@ -1,10 +1,11 @@
 /**
- * ReportUploadFileCard - レポート用のCSVファイルアップロードカード
+ * ReportUploadFileCard - レポート用のCSVファイルアップロードカード（カード全体クリック対応）
  * dataset-import/UploadFileCard のデザインをベースに、スキップ機能を除外
+ * ファイル未選択時はカード全体がクリック可能エリアとなり、キーボード操作にも対応
  */
 
-import React from 'react';
-import { Typography, Button, Upload } from 'antd';
+import React, { useRef } from 'react';
+import { Typography, Button } from 'antd';
 import { DeleteOutlined, UploadOutlined } from '@ant-design/icons';
 import type { UploadProps } from 'antd';
 import { CsvValidationBadge, mapLegacyToCsvStatus } from '@features/csv-validation';
@@ -35,6 +36,7 @@ export const ReportUploadFileCard: React.FC<ReportUploadFileCardProps> = ({
   errorMessage,
 }) => {
   const isCompact = size === 'compact';
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // レガシーステータスをCSVバリデーションステータスに変換
   const csvStatus = mapLegacyToCsvStatus(validationResult);
@@ -47,13 +49,62 @@ export const ReportUploadFileCard: React.FC<ReportUploadFileCardProps> = ({
   } as const;
   const cardStyle = statusStyles[csvStatus];
 
+  const handleClick = () => {
+    if (!file) {
+      fileInputRef.current?.click();
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (!file && (e.key === 'Enter' || e.key === ' ')) {
+      e.preventDefault();
+      fileInputRef.current?.click();
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = e.target.files?.[0];
+    if (selectedFile && uploadProps.beforeUpload) {
+      uploadProps.beforeUpload(selectedFile as any, [selectedFile] as any);
+      // input をリセットして同じファイルを再選択可能に
+      e.target.value = '';
+    }
+  };
+
   return (
     <div
+      role={!file ? 'button' : undefined}
+      tabIndex={!file ? 0 : undefined}
+      onClick={handleClick}
+      onKeyDown={handleKeyDown}
       style={{
         padding: isCompact ? 6 : 12,
         borderRadius: 6,
         background: cardStyle.background,
         border: cardStyle.border,
+        cursor: !file ? 'pointer' : 'default',
+        transition: 'background-color 0.2s, border-color 0.2s',
+      }}
+      onMouseEnter={(e) => {
+        if (!file) {
+          const current = e.currentTarget;
+          if (csvStatus === 'valid') {
+            current.style.backgroundColor = '#f0ffe6';
+            current.style.borderColor = '#95de64';
+          } else if (csvStatus === 'invalid') {
+            current.style.backgroundColor = '#ffe7e6';
+            current.style.borderColor = '#ff9c99';
+          } else {
+            current.style.backgroundColor = '#f0f0f0';
+            current.style.borderColor = '#d9d9d9';
+          }
+        }
+      }}
+      onMouseLeave={(e) => {
+        if (!file) {
+          e.currentTarget.style.backgroundColor = cardStyle.background;
+          e.currentTarget.style.borderColor = cardStyle.border.split(' ')[2];
+        }
       }}
     >
       {/* ヘッダー: ラベル + バッジ */}
@@ -87,22 +138,34 @@ export const ReportUploadFileCard: React.FC<ReportUploadFileCardProps> = ({
         </div>
       )}
 
-      {/* ファイル選択ボタン（ファイルがアップロードされていない場合のみ表示） */}
+      {/* ファイル選択エリア（ファイルがアップロードされていない場合のみ表示） */}
       {!file && (
-        <div style={{ display: 'flex', justifyContent: 'center', padding: isCompact ? '8px 0' : '12px 0' }}>
-          <Upload {...uploadProps}>
-            <Button
-              icon={<UploadOutlined />}
-              size={isCompact ? 'small' : 'middle'}
-              style={{
-                height: isCompact ? 32 : 40,
-                minWidth: isCompact ? 150 : 180,
-              }}
-            >
-              CSVファイルを選択
-            </Button>
-          </Upload>
-        </div>
+        <>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept={uploadProps.accept || '.csv'}
+            onChange={handleFileChange}
+            style={{ display: 'none' }}
+          />
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: isCompact ? '12px 8px' : '16px 12px',
+              borderRadius: 4,
+              border: '1px dashed #d9d9d9',
+              backgroundColor: '#fafafa',
+            }}
+          >
+            <UploadOutlined style={{ fontSize: isCompact ? 20 : 24, color: '#1890ff', marginBottom: 4 }} />
+            <div style={{ fontSize: isCompact ? 12 : 13, color: '#666', textAlign: 'center' }}>
+              ここをクリックして CSV をアップロード
+            </div>
+          </div>
+        </>
       )}
 
       {/* ファイル情報 + 削除ボタン */}

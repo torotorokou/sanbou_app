@@ -1,12 +1,11 @@
 /**
- * FileSelectButton - ファイル選択ボタンCSVファイル選択コンポーネント
+ * DragDropCsv - CSVファイル選択コンポーネント（カード全体クリック対応）
  * 
- * Upload ボタンを使用し、beforeUpload で既存の onPickFile に合流させる。
- * 自動アップロードは無効化（return false）。
+ * hidden input + ref でファイル選択ダイアログを開く
+ * カード全体がクリック可能エリアとなり、キーボード操作にも対応
  */
 
-import React from 'react';
-import { Upload, Button } from 'antd';
+import React, { useRef } from 'react';
 import { UploadOutlined } from '@ant-design/icons';
 
 export interface DragDropCsvProps {
@@ -23,30 +22,74 @@ export const DragDropCsv: React.FC<DragDropCsvProps> = ({
   onPickFile,
   compact = false,
 }) => {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleClick = () => {
+    if (!disabled) {
+      fileInputRef.current?.click();
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (!disabled && (e.key === 'Enter' || e.key === ' ')) {
+      e.preventDefault();
+      fileInputRef.current?.click();
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      onPickFile(typeKey, file);
+      // input をリセットして同じファイルを再選択可能に
+      e.target.value = '';
+    }
+  };
+
   return (
-    <div style={{ display: 'flex', justifyContent: 'center', padding: compact ? '8px 0' : '12px 0' }}>
-      <Upload
-        disabled={disabled}
+    <div
+      role="button"
+      tabIndex={disabled ? -1 : 0}
+      onClick={handleClick}
+      onKeyDown={handleKeyDown}
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: compact ? '12px 8px' : '16px 12px',
+        cursor: disabled ? 'not-allowed' : 'pointer',
+        borderRadius: 4,
+        transition: 'background-color 0.2s, border-color 0.2s',
+        backgroundColor: disabled ? '#fafafa' : '#ffffff',
+        border: '1px dashed #d9d9d9',
+        opacity: disabled ? 0.5 : 1,
+      }}
+      onMouseEnter={(e) => {
+        if (!disabled) {
+          e.currentTarget.style.backgroundColor = '#f5f5f5';
+          e.currentTarget.style.borderColor = '#1890ff';
+        }
+      }}
+      onMouseLeave={(e) => {
+        if (!disabled) {
+          e.currentTarget.style.backgroundColor = '#ffffff';
+          e.currentTarget.style.borderColor = '#d9d9d9';
+        }
+      }}
+    >
+      <input
+        ref={fileInputRef}
+        type="file"
         accept=".csv"
-        multiple={false}
-        showUploadList={false}
-        beforeUpload={(file) => {
-          onPickFile(typeKey, file as File);
-          return false; // AntDの自動アップロードを無効化
-        }}
-      >
-        <Button
-          icon={<UploadOutlined />}
-          disabled={disabled}
-          size={compact ? 'small' : 'middle'}
-          style={{
-            height: compact ? 32 : 40,
-            minWidth: compact ? 150 : 180,
-          }}
-        >
-          CSVファイルを選択
-        </Button>
-      </Upload>
+        onChange={handleFileChange}
+        style={{ display: 'none' }}
+        disabled={disabled}
+      />
+      <UploadOutlined style={{ fontSize: compact ? 20 : 24, color: disabled ? '#bfbfbf' : '#1890ff', marginBottom: 4 }} />
+      <div style={{ fontSize: compact ? 12 : 13, color: disabled ? '#bfbfbf' : '#666', textAlign: 'center' }}>
+        ここをクリックして CSV をアップロード
+      </div>
     </div>
   );
 };
