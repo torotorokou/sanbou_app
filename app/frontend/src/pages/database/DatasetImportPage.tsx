@@ -15,9 +15,8 @@ import {
   useDatasetImportVM,
 } from '@features/database/dataset-import';
 import { UploadGuide, toFileStates } from '@features/database/dataset-uploadguide';
-import { DatasetPreviewScreen } from '@features/database/dataset-preview';
-import type { PreviewSource, CsvPreviewData } from '@features/database/dataset-preview';
 import { getAllDatasets, collectTypesForDataset, type DatasetKey } from '@features/database/config';
+import { UploadCalendar } from '@features/database/upload-calendar';
 
 const { Text } = Typography;
 
@@ -44,24 +43,6 @@ const DatasetImportPage: React.FC = () => {
     resetUploadState,
   } = useDatasetImportVM({ activeTypes, datasetKey });
 
-  // PreviewSource を panelFiles から構築
-  const previewSource: PreviewSource = panelFiles.length > 0
-    ? {
-        kind: 'previews',
-        datasetKey,
-        data: panelFiles.reduce((acc, item) => {
-          if (item.preview) {
-            acc[item.typeKey] = item.preview;
-          }
-          return acc;
-        }, {} as Record<string, CsvPreviewData>),
-      }
-    : {
-        kind: 'fallback',
-        datasetKey,
-        mode: 'schema', // または 'empty', 'sample'
-      };
-
   // 進捗表示用
   const requiredFiles = panelFiles.filter(p => p.required);
   const validCount = requiredFiles.filter(p => p.status === 'valid' && p.file).length;
@@ -74,7 +55,7 @@ const DatasetImportPage: React.FC = () => {
       {/* Contentのpaddingを差し引いた固定高 */}
       <Row className={styles.pageContainer}>
         {/* 左カラム：アップロード面 */}
-        <Col span={8} className={styles.leftCol}>
+        <Col span={10} className={styles.leftCol}>
           {/* データセット切替 + 進捗 */}
           <div style={{ marginBottom: 12 }}>
             <Space size={8} wrap>
@@ -144,9 +125,9 @@ const DatasetImportPage: React.FC = () => {
           )}
         </Col>
 
-        {/* 右カラム：プレビュー */}
-        <Col span={16} className={styles.rightCol}>
-          <DatasetPreviewScreen source={previewSource} />
+        {/* 右カラム：カレンダー */}
+        <Col span={14} className={styles.rightCol}>
+          <UploadCalendar datasetKey={datasetKey} />
         </Col>
       </Row>
 

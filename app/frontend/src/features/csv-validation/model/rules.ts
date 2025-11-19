@@ -5,7 +5,7 @@
  * 新規コードでは config を直接使用してください。
  */
 
-import { DATASETS } from '../../config';
+import { DATASETS } from '@features/database/config';
 
 export interface ValidationRule {
   field: string;
