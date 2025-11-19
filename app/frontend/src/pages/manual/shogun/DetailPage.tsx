@@ -32,7 +32,7 @@ const ShogunManualDetailPage: React.FC = () => {
         <Space direction='vertical' size={12} style={{ width: '100%', marginBottom: 16 }}>
           <Breadcrumb items={[
             { title: <a onClick={() => nav('/manuals')} className={styles.detailLink}>マニュアル</a> },
-            { title: <a onClick={() => nav('/manuals/syogun')} className={styles.detailLink}>将軍</a> },
+            { title: <a onClick={() => nav('/manuals/shogun')} className={styles.detailLink}>将軍</a> },
             { title: item?.title || '' }
           ]} />
           <div className={styles.detailTitleBar}>
@@ -88,7 +88,7 @@ const ShogunManualDetailPage: React.FC = () => {
 
             {/* 下中央に配置する戻るボタン */}
             <div className={styles.detailFooter}>
-              <Button onClick={() => nav('/manuals/syogun')}>
+              <Button onClick={() => nav('/manuals/shogun')}>
                 一覧に戻る
               </Button>
             </div>

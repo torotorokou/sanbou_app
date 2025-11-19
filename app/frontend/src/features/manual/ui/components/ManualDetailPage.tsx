@@ -26,7 +26,7 @@ const ManualDetailPage: React.FC = () => {
       try {
         const [d, l] = await Promise.all([
           ShogunClient.get(id!),
-          ShogunClient.list({ category: 'syogun' }),
+          ShogunClient.list({ category: 'shogun' }),
         ]);
         if (!alive) return;
         setData(d);
@@ -50,7 +50,7 @@ const ManualDetailPage: React.FC = () => {
   useEffect(() => {
     if (forceFull || isMobile || !loc.state?.backgroundLocation) {
       // 単独ページにリプレース
-      nav(`/manuals/syogun/${id}?full=1${window.location.hash || ''}`, { replace: true });
+      nav(`/manuals/shogun/${id}?full=1${window.location.hash || ''}`, { replace: true });
     }
   }, [forceFull, isMobile, loc.state, id, nav]);
 
@@ -67,7 +67,7 @@ const ManualDetailPage: React.FC = () => {
         const nextIdx = e.key === 'ArrowLeft' ? idx - 1 : idx + 1;
         if (nextIdx < 0 || nextIdx >= list.length) return;
         const nextId = list[nextIdx].id;
-        nav(`/manuals/syogun/${nextId}`, { state: { backgroundLocation: loc.state?.backgroundLocation || loc } });
+        nav(`/manuals/shogun/${nextId}`, { state: { backgroundLocation: loc.state?.backgroundLocation || loc } });
       }
     };
     window.addEventListener('keydown', onKey);

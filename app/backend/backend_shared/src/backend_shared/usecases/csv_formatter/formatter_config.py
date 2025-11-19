@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
-from backend_shared.infrastructure.config.config_loader import SyogunCsvConfigLoader
+from backend_shared.infrastructure.config.config_loader import ShogunCsvConfigLoader
 
 
 @dataclass
@@ -27,11 +27,11 @@ class FormatterConfig:
 
 
 def build_formatter_config(
-    loader: SyogunCsvConfigLoader, sheet_type: str, **extra_settings
+    loader: ShogunCsvConfigLoader, sheet_type: str, **extra_settings
 ) -> FormatterConfig:
     """
     指定されたシートタイプに応じてFormatterConfigを生成する。
-    loader: 設定ローダー（SyogunCsvConfigLoader）
+    loader: 設定ローダー（ShogunCsvConfigLoader）
     sheet_type: シート種別（例: 'ukeire', 'syukka' など）
     extra_settings: 必要に応じて追加設定をキーワード引数で渡す
     戻り値: FormatterConfig インスタンス

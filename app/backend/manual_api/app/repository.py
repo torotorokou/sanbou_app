@@ -33,7 +33,7 @@ class InMemoryManualRepository:
                     doc_id=f"manual-{doc_id}",
                     page_title=title,
                     section_id=s.anchor,
-                    url=f"{base_url}/manuals/syogun/{doc_id}#{s.anchor}",
+                    url=f"{base_url}/manuals/shogun/{doc_id}#{s.anchor}",
                     category=category,
                     tags=tags,
                     version="2025-09-18",
@@ -53,8 +53,8 @@ class InMemoryManualRepository:
                 rag=rag,
             )
 
-        item1 = build("estimate-make", "見積書の作成フロー", "見積作成の全体像", "syogun", ["見積", "営業"])
-        item2 = build("mf-honest-out", "工場外のオネスト運搬のマニフェスト入力", "工場外マニフェスト入力の流れ", "syogun", ["マニフェスト", "E票"])
+        item1 = build("estimate-make", "見積書の作成フロー", "見積作成の全体像", "shogun", ["見積", "営業"])
+        item2 = build("mf-honest-out", "工場外のオネスト運搬のマニフェスト入力", "工場外マニフェスト入力の流れ", "shogun", ["マニフェスト", "E票"])
         self._items[item1.id] = item1
         self._items[item2.id] = item2
 
@@ -83,7 +83,7 @@ class InMemoryManualRepository:
         m = self._items.get(manual_id)
         return m.sections if m else []
 
-    def get_catalog(self, *, category: Optional[str] = "syogun") -> ManualCatalogResponse:
+    def get_catalog(self, *, category: Optional[str] = "shogun") -> ManualCatalogResponse:
         # Load from static dataset (migrated from frontend). Future: replace with SQL-backed repository.
         sections: List[CatalogSection] = []
         for sec in CATALOG_SECTIONS:

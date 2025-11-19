@@ -18,5 +18,5 @@ class ManualsService:
     def get_sections(self, manual_id: str):
         return self.repo.get_sections(manual_id)
 
-    def get_catalog(self, *, category: str | None = "syogun") -> ManualCatalogResponse:
+    def get_catalog(self, *, category: str | None = "shogun") -> ManualCatalogResponse:
         return self.repo.get_catalog(category=category)

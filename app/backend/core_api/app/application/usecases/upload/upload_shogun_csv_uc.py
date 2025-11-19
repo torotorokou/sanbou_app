@@ -1,5 +1,5 @@
 """
-UseCase: UploadSyogunCsvUseCase
+UseCase: UploadShogunCsvUseCase
 
 将軍CSV（receive/yard/shipment）のアップロード処理を担当。
 アプリケーションとして「何を・どの順で」行うかを記述。
@@ -23,7 +23,7 @@ from fastapi import UploadFile, BackgroundTasks
 from fastapi.concurrency import run_in_threadpool
 import pandas as pd
 
-from backend_shared.infrastructure.config.config_loader import SyogunCsvConfigLoader
+from backend_shared.infrastructure.config.config_loader import ShogunCsvConfigLoader
 from backend_shared.usecases.csv_validator.csv_upload_validator_api import CSVValidationResponder
 from backend_shared.usecases.csv_formatter.formatter_factory import CSVFormatterFactory
 from backend_shared.usecases.csv_formatter.formatter_config import build_formatter_config
@@ -36,14 +36,14 @@ from app.infra.adapters.materialized_view.materialized_view_refresher import Mat
 logger = logging.getLogger(__name__)
 
 
-class UploadSyogunCsvUseCase:
+class UploadShogunCsvUseCase:
     """将軍CSVアップロードのUseCase"""
     
     def __init__(
         self,
         raw_writer: IShogunCsvWriter,
         stg_writer: IShogunCsvWriter,
-        csv_config: SyogunCsvConfigLoader,
+        csv_config: ShogunCsvConfigLoader,
         validator: CSVValidationResponder,
         raw_data_repo: Optional[RawDataRepository] = None,
         mv_refresher: Optional[MaterializedViewRefresher] = None,
@@ -88,7 +88,7 @@ class UploadSyogunCsvUseCase:
             受付成功: upload_file_ids を含む SuccessApiResponse（即座）
             バリデーションエラー: ErrorApiResponse
         """
-        logger.info("Start async syogun CSV upload (acceptance phase)")
+        logger.info("Start async shogun CSV upload (acceptance phase)")
         
         # 入力ファイルの整理
         file_inputs = {"receive": receive, "yard": yard, "shipment": shipment}
@@ -298,7 +298,7 @@ class UploadSyogunCsvUseCase:
         Returns:
             SuccessApiResponse または ErrorApiResponse
         """
-        logger.info("Start syogun CSV upload usecase")
+        logger.info("Start shogun CSV upload usecase")
         
         # 入力ファイルの整理
         file_inputs = {"receive": receive, "yard": yard, "shipment": shipment}

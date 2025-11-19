@@ -9,7 +9,7 @@ Revision ID: 002
 Revises: 001
 Create Date: 2025-10-27 00:00:00
 
-このマイグレーションは syogun_csv_masters.yaml から動的に生成されます。
+このマイグレーションは shogun_csv_masters.yaml から動的に生成されます。
 YAMLファイルが唯一の真(Single Source of Truth)です。
 """
 from alembic import op

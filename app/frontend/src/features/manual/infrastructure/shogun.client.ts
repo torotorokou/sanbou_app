@@ -15,7 +15,7 @@ export const ShogunClient = {
    */
   async catalog(signal?: AbortSignal): Promise<ManualCatalogResponse> {
     return apiGet<ManualCatalogResponse>('/core_api/manual/manuals/catalog', {
-      params: { category: 'syogun' },
+      params: { category: 'shogun' },
       signal,
     });
   },

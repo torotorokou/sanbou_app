@@ -83,9 +83,9 @@ const AppRoutes: React.FC = () => {
 
     {/* マニュアル（新） */}
     <Route path='/manuals' element={<GlobalManualSearchPage />} />
-    <Route path='/manuals/syogun' element={<ShogunManualListPage />} />
+    <Route path='/manuals/shogun' element={<ShogunManualListPage />} />
         {/* 単独ページ（正ルート） */}
-        <Route path='/manuals/syogun/:id' element={<ManualDetailPage />} />
+        <Route path='/manuals/shogun/:id' element={<ManualDetailPage />} />
 
 
     {/* データベース関連 */}
@@ -110,7 +110,7 @@ const AppRoutes: React.FC = () => {
             {state?.backgroundLocation && (
                 <Suspense fallback={null}>
                     <Routes>
-                        <Route path='/manuals/syogun/:id' element={<ManualDetailRouteComponent />} />
+                        <Route path='/manuals/shogun/:id' element={<ManualDetailRouteComponent />} />
                     </Routes>
                 </Suspense>
             )}

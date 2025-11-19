@@ -5,7 +5,7 @@ CSVデータのフォーマット変換を行うサービスクラスです。
 設定ファイルに基づいて、CSVタイプごとに適切なフォーマッターを適用します。
 """
 
-from backend_shared.infrastructure.config.config_loader import SyogunCsvConfigLoader
+from backend_shared.infrastructure.config.config_loader import ShogunCsvConfigLoader
 from backend_shared.usecases.csv_formatter.formatter_factory import CSVFormatterFactory
 from backend_shared.usecases.csv_formatter.formatter_config import build_formatter_config
 
@@ -25,7 +25,7 @@ class CsvFormatterService:
         設定ローダーを初期化し、フォーマット処理の準備を行います。
         """
         # 昇軍CSV設定ローダーの初期化
-        self.loader = SyogunCsvConfigLoader()
+        self.loader = ShogunCsvConfigLoader()
 
     def format(self, dfs):
         """

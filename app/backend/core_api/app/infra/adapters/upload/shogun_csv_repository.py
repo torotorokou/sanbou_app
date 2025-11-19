@@ -3,7 +3,7 @@ Shogun CSV Repository
 
 将軍CSVデータをDBに保存するリポジトリ。
 backend_sharedのCSVバリデーター・フォーマッターを活用します。
-YAMLファイル(syogun_csv_masters.yaml)から動的にカラムマッピングを取得します。
+YAMLファイル(shogun_csv_masters.yaml)から動的にカラムマッピングを取得します。
 """
 
 import logging

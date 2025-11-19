@@ -2,7 +2,7 @@
 Shogun Flash CSV Row Validation Models
 
 将軍速報版CSVの行単位バリデーション用Pydanticモデル。
-syogun_csv_masters.yaml の定義に準拠し、型安全性とバリデーションを提供。
+shogun_csv_masters.yaml の定義に準拠し、型安全性とバリデーションを提供。
 
 config_loader から YAML を読み込んで動的にモデルを生成します。
 """
@@ -10,7 +10,7 @@ config_loader から YAML を読み込んで動的にモデルを生成します
 from datetime import datetime
 from typing import Optional, Any
 from pydantic import BaseModel, Field, field_validator, ConfigDict, create_model
-from backend_shared.infrastructure.config.config_loader import SyogunCsvConfigLoader
+from backend_shared.infrastructure.config.config_loader import ShogunCsvConfigLoader
 
 
 # 型マッピング: YAML の type 文字列 → Python 型
@@ -54,7 +54,7 @@ def create_flash_row_model(sheet_type: str) -> type[BaseModel]:
         >>> row = {"slip_date": "2025-11-12", "vendor_cd": 123, ...}
         >>> validated = model_cls(**row)
     """
-    loader = SyogunCsvConfigLoader()
+    loader = ShogunCsvConfigLoader()
     
     # 必須カラム（expected_headers に含まれるカラムの日本語名）
     expected_headers_jp = loader.get_expected_headers(sheet_type)
