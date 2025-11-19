@@ -3,8 +3,10 @@
  * データベース機能全体で共有する基本的な型
  */
 
+// ValidationStatusは共通型として@/sharedに移動しました
+export type { ValidationStatus } from '@/shared';
+
 export type TypeKey = string;
-export type ValidationStatus = 'valid' | 'invalid' | 'unknown';
 
 /**
  * CSV定義（種別ごとの設定）

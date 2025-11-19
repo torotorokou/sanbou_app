@@ -4,5 +4,5 @@
 
 export * from './SimpleUploadPanel';
 export * from './UploadFileCard';
-export * from './ValidationBadge';
+// ValidationBadge は @/shared/ui に移動しました
 export * from './DragDropCsv';

@@ -1,8 +1,9 @@
 /**
- * dataset-import モジュールの型定義
+ * dataset-import 型定義
  */
 
-import type { ValidationStatus, TypeKey } from '../../shared/types/common';
+import type { CsvValidationStatus } from '@features/csv-validation';
+import type { TypeKey } from '../../shared/types/common';
 import type { CsvPreviewData } from '../../dataset-preview/model/types';
 
 /**
@@ -13,7 +14,7 @@ export interface PanelFileItem {
   label: string;
   required: boolean;
   file: File | null;
-  status: ValidationStatus;
+  status: CsvValidationStatus;
   preview: CsvPreviewData | null;
   /** アップロードをスキップするか（チェックマークでスキップ指定） */
   skipped: boolean;

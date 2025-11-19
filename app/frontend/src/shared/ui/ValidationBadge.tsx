@@ -1,10 +1,13 @@
 /**
  * ValidationBadge - バリデーション状態を表示する純UI部品
+ * 
+ * アプリケーション全体で共有するバリデーションステータスバッジ
+ * dataset-import と report の両方で使用
  */
 
 import React from 'react';
 import { Tag } from 'antd';
-import type { ValidationStatus } from '../../shared/types/common';
+import type { ValidationStatus } from '@/shared/types/validation';
 
 export interface ValidationBadgeProps {
   status: ValidationStatus;
