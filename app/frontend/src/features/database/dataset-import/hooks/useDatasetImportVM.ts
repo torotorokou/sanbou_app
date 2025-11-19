@@ -1,113 +1,83 @@
 /**
  * データセットインポート ViewModel
  * ファイル選択、検証、送信を統括するメインフック
+ * 
+ * 最適化:
+ * - CSVプレビュー生成処理を削除（UI フリーズ防止）
+ * - 軽量なバリデーションのみ実施
  */
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import { useValidateOnPick } from '../../dataset-validate/hooks/useValidateOnPick';
 import { useSubmitVM } from '../../dataset-submit/hooks/useSubmitVM';
+import { globalUploadPollingManager } from '../services/globalUploadPollingManager';
 import { findCsv, getDatasetConfig } from '../../config';
 import type { PanelFileItem, DatasetImportVMOptions } from '../model/types';
 import type { ValidationStatus } from '../../shared/types/common';
 import type { CsvPreviewData } from '../../dataset-preview/model/types';
-import { parseCsvPreview } from '../../shared/csv/parseCsv';
 import type { DatasetKey, CsvTypeKey } from '../../config';
 
 export function useDatasetImportVM(opts?: DatasetImportVMOptions) {
-  const activeTypes = useMemo(
-    () => opts?.activeTypes ?? [],
-    [opts?.activeTypes]
-  );
-  
   const datasetKey = opts?.datasetKey;
+  const activeTypes = opts?.activeTypes ?? [];
 
   const [files, setFiles] = useState<Record<string, File | null>>({});
   const [status, setStatus] = useState<Record<string, ValidationStatus>>({});
   const [previews, setPreviews] = useState<Record<string, CsvPreviewData | null>>({});
   const [skipped, setSkipped] = useState<Record<string, boolean>>({});
+  const [uploadFileIds, setUploadFileIds] = useState<Record<string, number> | undefined>();
+  const uploadFileIdsRef = useRef<Record<string, number> | undefined>();
+  const isProcessingRef = useRef(false);
+  const resetUploadStateRef = useRef<(() => void) | null>(null);
 
+  // datasetKeyが変更されたら状態を初期化
   useEffect(() => {
-    setFiles(prev => {
-      const newFiles = { ...prev };
-      let changed = false;
-      activeTypes.forEach(t => {
-        if (!(t in newFiles)) {
-          newFiles[t] = null;
-          changed = true;
-        }
-      });
-      return changed ? newFiles : prev;
+    const newFiles: Record<string, File | null> = {};
+    const newStatus: Record<string, ValidationStatus> = {};
+    const newPreviews: Record<string, CsvPreviewData | null> = {};
+    const newSkipped: Record<string, boolean> = {};
+    
+    activeTypes.forEach(t => {
+      newFiles[t] = null;
+      newStatus[t] = 'unknown';
+      newPreviews[t] = null;
+      newSkipped[t] = false;
     });
     
-    setStatus(prev => {
-      const newStatus = { ...prev };
-      let changed = false;
-      activeTypes.forEach(t => {
-        if (!(t in newStatus)) {
-          newStatus[t] = 'unknown';
-          changed = true;
-        }
-      });
-      return changed ? newStatus : prev;
-    });
-    
-    setPreviews(prev => {
-      const newPreviews = { ...prev };
-      let changed = false;
-      activeTypes.forEach(t => {
-        if (!(t in newPreviews)) {
-          newPreviews[t] = null;
-          changed = true;
-        }
-      });
-      return changed ? newPreviews : prev;
-    });
-    
-    setSkipped(prev => {
-      const newSkipped = { ...prev };
-      let changed = false;
-      activeTypes.forEach(t => {
-        if (!(t in newSkipped)) {
-          newSkipped[t] = false;
-          changed = true;
-        }
-      });
-      return changed ? newSkipped : prev;
-    });
-  }, [activeTypes]);
+    setFiles(newFiles);
+    setStatus(newStatus);
+    setPreviews(newPreviews);
+    setSkipped(newSkipped);
+  }, [datasetKey]); // activeTypesではなくdatasetKeyに依存
 
   const getRequired = (typeKey: string) => {
     if (!datasetKey) return undefined;
     const csv = findCsv(datasetKey as DatasetKey, typeKey as CsvTypeKey);
     return csv?.validate.requiredHeaders;
   };
-  
   const validateOnPick = useValidateOnPick(getRequired);
   const { uploading, uploadSuccess, doUpload, resetUploadState } = useSubmitVM();
 
+  // resetUploadStateをrefに保存（最新の関数を保持）
+  useEffect(() => {
+    resetUploadStateRef.current = resetUploadState;
+  }, [resetUploadState]);
+
   const onPickFile = async (typeKey: string, file: File) => {
-    // 新しいファイルを選択したら成功状態をリセット
     if (uploadSuccess) {
       resetUploadState();
     }
     setFiles(prev => ({ ...prev, [typeKey]: file }));
     
-    // CSVファイルを読み込んでプレビューを生成
-    try {
-      const text = await file.text();
-      const preview = parseCsvPreview(text, 100);
-      setPreviews(prev => ({ ...prev, [typeKey]: preview }));
-    } catch (error) {
-      console.error('CSVプレビュー生成エラー:', error);
-      setPreviews(prev => ({ ...prev, [typeKey]: null }));
-    }
+    // CSVプレビュー生成は重い処理なのでスキップ（UI フリーズ防止）
+    // サーバー側で処理するため、フロントでは不要
+    setPreviews(prev => ({ ...prev, [typeKey]: null }));
     
     const s = await validateOnPick(typeKey, file);
     setStatus(prev => ({ ...prev, [typeKey]: s }));
   };
 
   const onRemoveFile = (typeKey: string) => {
-    // ファイル削除時に成功状態をリセット（再アップロードを可能に）
     if (uploadSuccess) {
       resetUploadState();
     }
@@ -118,7 +88,6 @@ export function useDatasetImportVM(opts?: DatasetImportVMOptions) {
   };
 
   const onToggleSkip = (typeKey: string) => {
-    // スキップ切り替え時に成功状態をリセット（アップロード対象が変わるため）
     if (uploadSuccess) {
       resetUploadState();
     }
@@ -142,7 +111,65 @@ export function useDatasetImportVM(opts?: DatasetImportVMOptions) {
     [files, status, previews, skipped, activeTypes, datasetKey]
   );
 
+  // uploadFileIdsをrefに同期
+  useEffect(() => {
+    uploadFileIdsRef.current = uploadFileIds;
+    isProcessingRef.current = !!uploadFileIds && Object.keys(uploadFileIds).length > 0;
+  }, [uploadFileIds]);
+
+  // バックグラウンド処理中かどうか（状態に基づいて計算）
+  const isProcessing = useMemo(() => {
+    return !!uploadFileIds && Object.keys(uploadFileIds).length > 0;
+  }, [uploadFileIds]);
+
+  // グローバルポーリングマネージャーの完了を監視（マウント時に1度だけ登録）
+  useEffect(() => {
+    // 完了コールバックを登録
+    const unsubscribe = globalUploadPollingManager.onCompletion((completedFileIds, allSuccess) => {
+      console.log('[useDatasetImportVM] Processing complete:', { completedFileIds, allSuccess });
+      
+      // 現在のuploadFileIdsのいずれかが完了した場合（refから取得）
+      const currentUploadFileIds = uploadFileIdsRef.current;
+      if (!currentUploadFileIds) return;
+      
+      const currentFileIds = Object.values(currentUploadFileIds);
+      const isOurBatch = completedFileIds.some(id => currentFileIds.includes(id));
+      
+      if (isOurBatch) {
+        console.log('[useDatasetImportVM] Our batch completed. Resetting state...');
+        
+        // 即座にref更新
+        uploadFileIdsRef.current = undefined;
+        isProcessingRef.current = false;
+        
+        // 状態更新
+        setUploadFileIds(undefined);
+        
+        // uploadSuccessもリセット（refから取得して実行）
+        if (resetUploadStateRef.current) {
+          resetUploadStateRef.current();
+        }
+        
+        if (allSuccess) {
+          // すべて成功した場合のみファイルをクリア
+          setFiles({});
+          setStatus({});
+          setPreviews({});
+          setSkipped({});
+        }
+      }
+    });
+
+    // クリーンアップ（アンマウント時のみ）
+    return () => {
+      unsubscribe();
+    };
+  }, []); // 依存配列を空にして、マウント時のみ実行
+
   const canUpload = useMemo(() => {
+    // ポーリング中はアップロード不可
+    if (isProcessing) return false;
+
     const requiredKeys = activeTypes.filter(t => {
       if (!datasetKey) return false;
       const csv = findCsv(datasetKey as DatasetKey, t as CsvTypeKey);
@@ -150,75 +177,82 @@ export function useDatasetImportVM(opts?: DatasetImportVMOptions) {
     });
     if (!requiredKeys.length) return false;
 
-    // 必須ファイルは「スキップされている」または「ファイルが選択されていてvalid」である必要がある
     const requiredOkay = requiredKeys.every(t => skipped[t] || (!!files[t] && status[t] === 'valid'));
-
-    // さらに、実際にアップロードするファイルが1つ以上あること（全てスキップは不可）
     const hasUploadTargets = activeTypes.some(t => !skipped[t] && !!files[t] && status[t] === 'valid');
 
     return requiredOkay && hasUploadTargets;
-  }, [files, status, skipped, activeTypes, datasetKey]);
+  }, [files, status, skipped, activeTypes, datasetKey, isProcessing]);
 
   const filesForUpload = useMemo(() => {
     const out: Record<string, File> = {};
     for (const t of activeTypes) {
-      // スキップされていないファイルのみを含める
-      if (!skipped[t]) {
-        const f = files[t];
-        if (f) out[t] = f;
+      if (!skipped[t] && files[t]) {
+        out[t] = files[t]!;
       }
     }
     return out;
   }, [files, skipped, activeTypes]);
 
-  const doUploadActive = async () => {
-    // アップロード中は実行しない（二重送信防止）
-    if (uploading) {
-      console.warn('Already uploading. Ignoring duplicate upload request.');
-      return;
-    }
-    // 既に成功済みの場合は実行しない
-    if (uploadSuccess) {
-      console.warn('Upload already succeeded.');
-      return;
-    }
-    // datasetKey からアップロード先のパスを取得
+  const handleUpload = useCallback(async () => {
     if (!datasetKey) {
       console.error('datasetKey が指定されていません');
       return;
     }
+    
     const dataset = getDatasetConfig(datasetKey as DatasetKey);
     if (!dataset) {
       console.error(`Dataset not found: ${datasetKey}`);
       return;
     }
+    
     try {
-      await doUpload(filesForUpload, dataset.upload.path);
-      // 成功したら全ファイルをクリア
-      setFiles({});
-      setStatus({});
-      setPreviews({});
-      setSkipped({});
+      const result = await doUpload(filesForUpload, dataset.upload.path);
+      
+      if (result.success) {
+        console.log('Upload accepted. Starting global status polling...', result.uploadFileIds);
+        
+        // グローバルポーリングマネージャーに登録
+        if (result.uploadFileIds && Object.keys(result.uploadFileIds).length > 0) {
+          setUploadFileIds(result.uploadFileIds);
+          globalUploadPollingManager.addJobs(result.uploadFileIds);
+        } else {
+          // upload_file_idsがない場合は即座にクリア（旧API対応）
+          console.warn('No upload_file_ids returned. Clearing files immediately.');
+          setFiles({});
+          setStatus({});
+          setPreviews({});
+          setSkipped({});
+        }
+      }
     } catch (error) {
-      // エラー時は状態を確実にリセット（再アップロードを可能に）
-      // resetUploadStateは useSubmitVM のfinally で既に実行されているが、
-      // 念のため明示的に呼び出して状態の整合性を保証
-      resetUploadState();
-      console.error('Upload failed:', error);
-      // ファイルは保持（ユーザーが削除できる）
-      // エラーは呼び出し側に伝播させない（通知は既に完了しているため）
+      console.error('[handleUpload] Upload failed:', error);
+      // エラーが発生してもUIをブロックしない
+      // エラー通知はuseSubmitVMで既に表示されている
     }
-  };
+  }, [datasetKey, filesForUpload, doUpload]);
+
+  const onResetAll = useCallback(() => {
+    console.log('[onResetAll] Clearing all files.');
+    if (uploadSuccess) {
+      resetUploadState();
+    }
+    setFiles({});
+    setStatus({});
+    setPreviews({});
+    setSkipped({});
+  }, [uploadSuccess, resetUploadState]);
 
   return {
     panelFiles,
     canUpload,
     uploading,
     uploadSuccess,
+    isProcessing,
     onPickFile,
     onRemoveFile,
     onToggleSkip,
-    doUpload: doUploadActive,
+    onResetAll,
+    doUpload: handleUpload,
     resetUploadState,
   };
 }

@@ -35,9 +35,11 @@ const DatasetImportPage: React.FC = () => {
     canUpload,
     uploading,
     uploadSuccess,
+    isProcessing,
     onPickFile,
     onRemoveFile,
     onToggleSkip,
+    onResetAll,
     doUpload,
     resetUploadState,
   } = useDatasetImportVM({ activeTypes, datasetKey });
@@ -106,21 +108,34 @@ const DatasetImportPage: React.FC = () => {
                 onPickFile={onPickFile}
                 onRemoveFile={onRemoveFile}
                 onToggleSkip={onToggleSkip}
+                onResetAll={onResetAll}
                 showTitle={false}
               />
             )}
           </div>
 
-          <Button
-            type="primary"
-            disabled={!canUpload || panelFiles.length === 0 || uploading || uploadSuccess}
-            onClick={doUpload}
-            className={styles.uploadButton}
-          >
-            {uploadSuccess ? 'アップロード完了' : 'アップロードする'}
-          </Button>
+          <Space direction="vertical" style={{ width: '100%' }}>
+            <Button
+              type="primary"
+              disabled={!canUpload || panelFiles.length === 0 || uploading || isProcessing}
+              loading={uploading || isProcessing}
+              onClick={doUpload}
+              block
+            >
+              {uploadSuccess ? 'アップロード完了' : isProcessing ? '処理中...' : uploading ? 'アップロード中...' : 'アップロードする'}
+            </Button>
+            
+            {uploadSuccess && (
+              <Button
+                onClick={resetUploadState}
+                block
+              >
+                別のファイルをアップロード
+              </Button>
+            )}
+          </Space>
           
-          {!canUpload && panelFiles.length > 0 && (
+          {!canUpload && panelFiles.length > 0 && !uploadSuccess && (
             <div className={styles.hint}>
               <Text type="secondary">
                 ※ 必須CSVをすべて選択＆検証OKにするとアップロード可能
@@ -139,15 +154,9 @@ const DatasetImportPage: React.FC = () => {
       <Modal
         open={uploading}
         footer={null}
-        closable={true}
+        closable={false}
         centered
-        maskClosable={true}
-        onCancel={() => {
-          // モーダルを閉じた際にアップロード状態を確実にリセット
-          // (エラー発生時にモーダルが残ってしまうケースへの対処)
-          resetUploadState();
-          console.log('Modal closed by user - upload state reset');
-        }}
+        maskClosable={false}
         styles={{ mask: { backdropFilter: 'blur(2px)' } }}
       >
         <div style={{ textAlign: 'center', padding: '2rem' }}>

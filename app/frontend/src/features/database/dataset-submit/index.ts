@@ -2,5 +2,6 @@
  * dataset-submit exports
  */
 
-export * from './hooks/useSubmitVM';
+export { useSubmitVM } from './hooks/useSubmitVM';
+export type { UploadResult } from './hooks/useSubmitVM';
 export * from './model/types';

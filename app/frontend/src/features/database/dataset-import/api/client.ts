@@ -5,6 +5,23 @@
 import { coreApi } from '@/shared';
 import type { UploadResponseShape } from '../../shared/types/common';
 
+export interface UploadStatusResponse {
+  status: 'success' | 'error';
+  code: string;
+  detail: string;
+  result?: {
+    id: number;
+    csv_type: string;
+    file_name: string;
+    file_type: string;
+    processing_status: 'pending' | 'processing' | 'success' | 'failed';
+    uploaded_at: string;
+    uploaded_by?: string;
+    row_count?: number;
+    error_message?: string;
+  };
+}
+
 export const DatasetImportClient = {
   /**
    * FormDataをPOSTする
@@ -24,5 +41,12 @@ export const DatasetImportClient = {
     } catch (error) {
       throw error;
     }
+  },
+
+  /**
+   * アップロード処理のステータスを照会
+   */
+  async checkStatus(uploadFileId: number): Promise<UploadStatusResponse> {
+    return await coreApi.get<UploadStatusResponse>(`/core_api/database/upload/status/${uploadFileId}`);
   },
 };
