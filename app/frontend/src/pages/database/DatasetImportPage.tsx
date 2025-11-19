@@ -6,7 +6,7 @@
  * プレビュー: DatasetPreviewScreen に委譲
  */
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Typography, Col, Row, Button, Modal, Spin, Empty, Select, Space, Badge } from 'antd';
 import styles from './DatasetImportPage.module.css';
 
@@ -27,6 +27,9 @@ const DatasetImportPage: React.FC = () => {
   // データセット一覧
   const datasets = getAllDatasets();
   
+  // カレンダーリロード用のref
+  const calendarReloadRef = useRef<(() => void) | null>(null);
+  
   // ===== ViewModel（状態管理・ロジック） =====
   const activeTypes = collectTypesForDataset(datasetKey);
   const {
@@ -41,7 +44,16 @@ const DatasetImportPage: React.FC = () => {
     onResetAll,
     doUpload,
     resetUploadState,
-  } = useDatasetImportVM({ activeTypes, datasetKey });
+  } = useDatasetImportVM({ 
+    activeTypes, 
+    datasetKey,
+    onUploadComplete: () => {
+      // アップロード完了時にカレンダーをリロード
+      if (calendarReloadRef.current) {
+        calendarReloadRef.current();
+      }
+    }
+  });
 
   // 進捗表示用
   const requiredFiles = panelFiles.filter(p => p.required);
@@ -127,7 +139,12 @@ const DatasetImportPage: React.FC = () => {
 
         {/* 右カラム：カレンダー */}
         <Col span={14} className={styles.rightCol}>
-          <UploadCalendar datasetKey={datasetKey} />
+          <UploadCalendar 
+            datasetKey={datasetKey} 
+            onMountReload={(reload) => {
+              calendarReloadRef.current = reload;
+            }}
+          />
         </Col>
       </Row>
 

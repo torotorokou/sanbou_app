@@ -17,6 +17,7 @@ import logging
 from typing import Optional
 from fastapi import APIRouter, HTTPException, UploadFile, File, Depends, status, BackgroundTasks
 from sqlalchemy.orm import Session
+from sqlalchemy import text
 
 from app.deps import get_db
 from app.config.settings import get_settings
@@ -250,6 +251,120 @@ async def get_upload_status(
             detail=f"ステータス取得エラー: {str(e)}",
             status_code=500,
         ).to_json_response()
+
+
+# ========================================================================
+# CSV Upload Calendar
+# ========================================================================
+
+@router.get("/upload-calendar")
+def get_upload_calendar(
+    year: int,
+    month: int,
+    db: Session = Depends(get_db),
+):
+    """
+    CSV アップロードカレンダー用の日次集計データを取得
+    
+    指定された年月の全日付について、各 CSV 種別のアップロード状況を取得します。
+    論理削除されたファイルのデータは除外されます。
+    
+    Args:
+        year: 年（例: 2025）
+        month: 月（1-12）
+        db: データベース接続
+    
+    Returns:
+        {
+            "items": [
+                {
+                    "date": "2025-11-01",
+                    "csvKind": "shogun_flash_receive",
+                    "rowCount": 1234
+                },
+                ...
+            ]
+        }
+    """
+    try:
+        from datetime import date
+        from calendar import monthrange
+        
+        # 指定月の開始日・終了日を計算
+        _, last_day = monthrange(year, month)
+        start_date = date(year, month, 1)
+        end_date = date(year, month, last_day)
+        
+        # mart.v_csv_calendar_daily から集計データを取得
+        sql = text("""
+            SELECT
+                data_date,
+                csv_kind,
+                row_count
+            FROM mart.v_csv_calendar_daily
+            WHERE data_date >= :start_date
+              AND data_date <= :end_date
+            ORDER BY data_date, csv_kind
+        """)
+        
+        result = db.execute(sql, {
+            "start_date": start_date,
+            "end_date": end_date
+        })
+        rows = result.fetchall()
+        
+        items = [
+            {
+                "date": row[0].isoformat(),
+                "csvKind": row[1],
+                "rowCount": row[2]
+            }
+            for row in rows
+        ]
+        
+        logger.info(f"Fetched upload calendar for {year}-{month:02d}: {len(items)} items")
+        return {"items": items}
+        
+    except Exception as e:
+        logger.error(f"Failed to fetch upload calendar: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.delete("/upload-calendar/{upload_file_id}")
+def delete_upload_file(
+    upload_file_id: int,
+    deleted_by: Optional[str] = None,
+    db: Session = Depends(get_db),
+):
+    """
+    アップロードファイルを論理削除
+    
+    指定された upload_file を論理削除（is_deleted=true に更新）し、
+    カレンダーから該当データを除外します。
+    
+    Args:
+        upload_file_id: 削除対象の log.upload_file.id
+        deleted_by: 削除実行者（オプション）
+        db: データベース接続
+    
+    Returns:
+        {"status": "deleted", "uploadFileId": <id>}
+    """
+    try:
+        from app.infra.adapters.upload.raw_data_repository import RawDataRepository
+        
+        repo = RawDataRepository(db)
+        repo.soft_delete_upload_file(upload_file_id, deleted_by)
+        
+        logger.info(f"Soft deleted upload_file {upload_file_id} by {deleted_by}")
+        return {
+            "status": "deleted",
+            "uploadFileId": upload_file_id
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to delete upload_file: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # ========================================================================

@@ -44,7 +44,7 @@ export function useUploadCalendar(): UseUploadCalendarResult {
     } finally {
       setIsLoading(false);
     }
-  }, [currentMonth]);
+  }, [currentMonth.getFullYear(), currentMonth.getMonth()]);
 
   // 初回マウント時と currentMonth 変更時にデータ取得
   useEffect(() => {

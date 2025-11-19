@@ -48,6 +48,9 @@ class RawDataRepository:
             Column('row_count', Integer, nullable=True),
             Column('uploaded_at', DateTime(timezone=True), server_default=text('CURRENT_TIMESTAMP'), nullable=False),
             Column('uploaded_by', String(100), nullable=True),
+            Column('is_deleted', Integer, nullable=False, server_default=text('false')),  # 論理削除フラグ
+            Column('deleted_at', DateTime(timezone=True), nullable=True),
+            Column('deleted_by', Text, nullable=True),
             Column('processing_status', String(20), server_default='pending', nullable=False),
             Column('error_message', Text, nullable=True),
             Column('env', Text, server_default='local_dev', nullable=False),
@@ -238,7 +241,7 @@ class RawDataRepository:
         row_count: Optional[int] = None,
     ) -> Optional[Dict[str, Any]]:
         """
-        重複アップロードチェック（成功済みファイルのみ）
+        重複アップロードチェック（成功済み＆有効なファイルのみ）
         
         優先順位:
         1. file_hash + csv_type + file_type でマッチ（最も信頼性が高い）
@@ -255,13 +258,14 @@ class RawDataRepository:
         Returns:
             重複ファイルの情報（id, uploaded_at等）、存在しない場合はNone
         """
-        # 第1優先: file_hash + csv_type + file_type で検索
+        # 第1優先: file_hash + csv_type + file_type で検索（論理削除されていない有効なレコードのみ）
         result = self.db.execute(
             self.upload_file_table.select().where(
                 self.upload_file_table.c.csv_type == csv_type,
                 self.upload_file_table.c.file_hash == file_hash,
                 self.upload_file_table.c.file_type == file_type,
                 self.upload_file_table.c.processing_status == 'success',
+                self.upload_file_table.c.is_deleted == False,  # 論理削除されていないレコードのみ
             ).order_by(self.upload_file_table.c.uploaded_at.desc())
         ).fetchone()
         
@@ -284,6 +288,7 @@ class RawDataRepository:
                     self.upload_file_table.c.file_size_bytes == file_size_bytes,
                     self.upload_file_table.c.row_count == row_count,
                     self.upload_file_table.c.processing_status == 'success',
+                    self.upload_file_table.c.is_deleted == False,  # 論理削除されていないレコードのみ
                 ).order_by(self.upload_file_table.c.uploaded_at.desc())
             ).fetchone()
             
@@ -353,6 +358,35 @@ class RawDataRepository:
         except Exception as e:
             self.db.rollback()
             logger.error(f"Failed to update upload_file status: {e}")
+            raise
+    
+    def soft_delete_upload_file(
+        self,
+        file_id: int,
+        deleted_by: Optional[str] = None,
+    ) -> None:
+        """
+        アップロードファイルを論理削除
+        
+        Args:
+            file_id: upload_file.id
+            deleted_by: 削除実行者（ユーザー名など）
+        """
+        try:
+            self.db.execute(
+                self.upload_file_table.update()
+                .where(self.upload_file_table.c.id == file_id)
+                .values(
+                    is_deleted=True,
+                    deleted_at=datetime.utcnow(),
+                    deleted_by=deleted_by,
+                )
+            )
+            self.db.commit()
+            logger.info(f"Soft deleted upload_file {file_id} by {deleted_by}")
+        except Exception as e:
+            self.db.rollback()
+            logger.error(f"Failed to soft delete upload_file: {e}")
             raise
     
     def save_receive_raw(

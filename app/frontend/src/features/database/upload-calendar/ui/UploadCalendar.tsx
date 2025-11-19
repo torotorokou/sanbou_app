@@ -19,9 +19,13 @@ const WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土'];
 
 interface UploadCalendarProps {
   datasetKey?: string; // 選択中のデータセットキー
+  onMountReload?: (reload: () => void) => void; // リロード関数を親に渡すコールバック
 }
 
-export const UploadCalendar: React.FC<UploadCalendarProps> = ({ datasetKey = 'shogun_flash' }) => {
+export const UploadCalendar: React.FC<UploadCalendarProps> = ({ 
+  datasetKey = 'shogun_flash',
+  onMountReload 
+}) => {
   const {
     currentMonth,
     weeks,
@@ -30,7 +34,16 @@ export const UploadCalendar: React.FC<UploadCalendarProps> = ({ datasetKey = 'sh
     goPrevMonth,
     goNextMonth,
     deleteUpload,
+    reload,
   } = useUploadCalendar();
+
+  // マウント時にreload関数を親に渡す（1回のみ）
+  React.useEffect(() => {
+    if (onMountReload) {
+      onMountReload(reload);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const [selectedDay, setSelectedDay] = useState<CalendarDay | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
@@ -73,23 +86,25 @@ export const UploadCalendar: React.FC<UploadCalendarProps> = ({ datasetKey = 'sh
       style={{ height: '100%', display: 'flex', flexDirection: 'column' }}
       styles={{ body: { flex: 1, overflow: 'auto', padding: '12px' } }}
     >
-      {/* 月移動ヘッダー */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-        <Button
-          type="text"
-          icon={<LeftOutlined />}
-          onClick={goPrevMonth}
-          size="small"
-        />
-        <Text strong style={{ fontSize: 14 }}>
-          {dayjs(currentMonth).format('YYYY年MM月')}
-        </Text>
-        <Button
-          type="text"
-          icon={<RightOutlined />}
-          onClick={goNextMonth}
-          size="small"
-        />
+      {/* 月移動ヘッダー（タイトル直近に Prev/Next を配置） */}
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <Button
+            type="text"
+            icon={<LeftOutlined />}
+            onClick={goPrevMonth}
+            size="small"
+          />
+          <Text strong style={{ fontSize: 18, minWidth: 160, textAlign: 'center' }}>
+            {dayjs(currentMonth).format('YYYY年MM月')}
+          </Text>
+          <Button
+            type="text"
+            icon={<RightOutlined />}
+            onClick={goNextMonth}
+            size="small"
+          />
+        </div>
       </div>
 
       {/* ローディング・エラー表示 */}
@@ -231,6 +246,25 @@ export const UploadCalendar: React.FC<UploadCalendarProps> = ({ datasetKey = 'sh
               })}
             </div>
           ))}
+
+          {/* 当月に戻るボタン */}
+          <div style={{ display: 'flex', justifyContent: 'center', marginTop: 12, marginBottom: 12 }}>
+            <Button
+              size="small"
+              onClick={() => {
+                const today = new Date();
+                // goToMonthが存在しない場合は、差分だけ移動する簡易実装
+                const diff = (today.getFullYear() - currentMonth.getFullYear()) * 12 + (today.getMonth() - currentMonth.getMonth());
+                if (diff > 0) {
+                  for (let i = 0; i < diff; i++) goNextMonth();
+                } else if (diff < 0) {
+                  for (let i = 0; i < -diff; i++) goPrevMonth();
+                }
+              }}
+            >
+              当月に戻る
+            </Button>
+          </div>
 
           {/* 凡例 */}
           <UploadCalendarLegend datasetKey={datasetKey} />
