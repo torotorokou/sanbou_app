@@ -17,8 +17,13 @@ export interface UploadCalendarRepository {
 
   /**
    * アップロードを削除（論理削除）
+   * stgテーブルの該当日付・種別のデータをis_deleted=trueに更新
    */
-  deleteUpload(id: string): Promise<void>;
+  deleteUpload(params: {
+    uploadFileId: number;
+    date: string; // 'YYYY-MM-DD'
+    csvKind: CsvUploadKind;
+  }): Promise<void>;
 }
 
 /**
@@ -36,6 +41,9 @@ interface MonthlyResponse {
 interface DeleteResponse {
   status: string;
   uploadFileId: number;
+  date: string;
+  csvKind: string;
+  affectedRows: number;
 }
 
 /**
@@ -107,25 +115,30 @@ export class UploadCalendarRepositoryImpl implements UploadCalendarRepository {
     return mockData;
   }
 
-  async deleteUpload(id: string): Promise<void> {
+  async deleteUpload(params: {
+    uploadFileId: number;
+    date: string;
+    csvKind: CsvUploadKind;
+  }): Promise<void> {
     // モックモード：即座に成功を返す
     if (this.useMockData) {
-      console.log(`[Mock] Deleted upload: ${id}`);
+      console.log(`[Mock] Deleted upload: uploadFileId=${params.uploadFileId}, date=${params.date}, kind=${params.csvKind}`);
       return Promise.resolve();
     }
 
-    // id は upload_file_id の文字列表現
-    const uploadFileId = parseInt(id, 10);
-    if (isNaN(uploadFileId)) {
-      throw new Error(`無効なアップロードID: ${id}`);
-    }
-    
     // バックエンドのDELETEエンドポイントを呼び出し
-    await coreApi.delete<DeleteResponse>(
-      `/core_api/database/upload-calendar/${uploadFileId}`
+    // 新しいAPI仕様: クエリパラメータでdate, csvKindを送信
+    const response = await coreApi.delete<DeleteResponse>(
+      `/core_api/database/upload-calendar/${params.uploadFileId}`,
+      {
+        params: {
+          date: params.date,
+          csvKind: params.csvKind,
+        }
+      }
     );
     
-    console.log(`Deleted upload_file: ${uploadFileId}`);
+    console.log(`Deleted stg data: uploadFileId=${params.uploadFileId}, date=${params.date}, kind=${params.csvKind}, affectedRows=${response.affectedRows}`);
   }
 }
 

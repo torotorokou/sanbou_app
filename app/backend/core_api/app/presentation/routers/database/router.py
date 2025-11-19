@@ -15,7 +15,8 @@ Database Router - CSV upload and database operations
 """
 import logging
 from typing import Optional
-from fastapi import APIRouter, HTTPException, UploadFile, File, Depends, status, BackgroundTasks
+from datetime import date
+from fastapi import APIRouter, HTTPException, UploadFile, File, Depends, status, BackgroundTasks, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 
@@ -310,6 +311,7 @@ def get_upload_calendar(
                 FROM log.upload_file uf
                 JOIN stg.receive_shogun_flash s ON s.upload_file_id = uf.id
                 WHERE uf.is_deleted = false
+                  AND s.is_deleted = false
                   AND s.slip_date IS NOT NULL
                   AND s.slip_date >= :start_date
                   AND s.slip_date <= :end_date
@@ -326,6 +328,7 @@ def get_upload_calendar(
                 FROM log.upload_file uf
                 JOIN stg.shipment_shogun_flash s ON s.upload_file_id = uf.id
                 WHERE uf.is_deleted = false
+                  AND s.is_deleted = false
                   AND s.slip_date IS NOT NULL
                   AND s.slip_date >= :start_date
                   AND s.slip_date <= :end_date
@@ -342,6 +345,7 @@ def get_upload_calendar(
                 FROM log.upload_file uf
                 JOIN stg.yard_shogun_flash s ON s.upload_file_id = uf.id
                 WHERE uf.is_deleted = false
+                  AND s.is_deleted = false
                   AND s.slip_date IS NOT NULL
                   AND s.slip_date >= :start_date
                   AND s.slip_date <= :end_date
@@ -358,6 +362,7 @@ def get_upload_calendar(
                 FROM log.upload_file uf
                 JOIN stg.receive_shogun_final s ON s.upload_file_id = uf.id
                 WHERE uf.is_deleted = false
+                  AND s.is_deleted = false
                   AND s.slip_date IS NOT NULL
                   AND s.slip_date >= :start_date
                   AND s.slip_date <= :end_date
@@ -374,6 +379,7 @@ def get_upload_calendar(
                 FROM log.upload_file uf
                 JOIN stg.shipment_shogun_final s ON s.upload_file_id = uf.id
                 WHERE uf.is_deleted = false
+                  AND s.is_deleted = false
                   AND s.slip_date IS NOT NULL
                   AND s.slip_date >= :start_date
                   AND s.slip_date <= :end_date
@@ -390,6 +396,7 @@ def get_upload_calendar(
                 FROM log.upload_file uf
                 JOIN stg.yard_shogun_final s ON s.upload_file_id = uf.id
                 WHERE uf.is_deleted = false
+                  AND s.is_deleted = false
                   AND s.slip_date IS NOT NULL
                   AND s.slip_date >= :start_date
                   AND s.slip_date <= :end_date
@@ -429,39 +436,74 @@ def get_upload_calendar(
 
 
 @router.delete("/upload-calendar/{upload_file_id}")
-def delete_upload_file(
+def delete_upload_scope(
     upload_file_id: int,
+    target_date: date = Query(..., alias="date"),
+    csv_kind: str = Query(..., alias="csvKind"),
     deleted_by: Optional[str] = None,
     db: Session = Depends(get_db),
 ):
     """
-    アップロードファイルを論理削除
+    指定されたアップロードファイルの特定日付・CSV種別のデータを論理削除
     
-    指定された upload_file を論理削除（is_deleted=true に更新）し、
-    カレンダーから該当データを除外します。
+    カレンダーの1マス（upload_file_id + date + csv_kind）に対応する
+    stg テーブルの行を is_deleted=true に更新します。
     
     Args:
         upload_file_id: 削除対象の log.upload_file.id
+        target_date: 削除対象の日付（クエリパラメータ: date）
+        csv_kind: CSV種別（クエリパラメータ: csvKind）
+                  例: 'shogun_flash_receive', 'shogun_final_yard'
         deleted_by: 削除実行者（オプション）
         db: データベース接続
     
     Returns:
-        {"status": "deleted", "uploadFileId": <id>}
+        {
+            "status": "deleted",
+            "uploadFileId": <id>,
+            "date": "YYYY-MM-DD",
+            "csvKind": <kind>,
+            "affectedRows": <count>
+        }
     """
     try:
         from app.infra.adapters.upload.raw_data_repository import RawDataRepository
         
         repo = RawDataRepository(db)
-        repo.soft_delete_upload_file(upload_file_id, deleted_by)
+        affected_rows = repo.soft_delete_by_date_and_kind(
+            upload_file_id=upload_file_id,
+            target_date=target_date,
+            csv_kind=csv_kind,
+            deleted_by=deleted_by,
+        )
         
-        logger.info(f"Soft deleted upload_file {upload_file_id} by {deleted_by}")
+        if affected_rows == 0:
+            raise HTTPException(
+                status_code=404,
+                detail="対象データが見つかりません（既に削除済みの可能性があります）",
+            )
+        
+        logger.info(
+            f"Soft deleted {affected_rows} rows "
+            f"for upload_file_id={upload_file_id}, date={target_date}, "
+            f"kind={csv_kind}, by={deleted_by}"
+        )
         return {
             "status": "deleted",
-            "uploadFileId": upload_file_id
+            "uploadFileId": upload_file_id,
+            "date": target_date.isoformat(),
+            "csvKind": csv_kind,
+            "affectedRows": affected_rows,
         }
         
+    except HTTPException:
+        raise
+    except ValueError as ve:
+        # csv_kind が不正な場合
+        logger.error(f"Invalid csv_kind: {ve}")
+        raise HTTPException(status_code=400, detail=str(ve))
     except Exception as e:
-        logger.error(f"Failed to delete upload_file: {e}", exc_info=True)
+        logger.error(f"Failed to delete upload scope: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 
