@@ -11,7 +11,7 @@ echo "========================================="
 RECEIVE_CSV="/home/koujiro/work_env/22.Work_React/sanbou_app/test_receive_mini.csv"
 
 # core_api のURL
-API_URL="http://localhost:8003/database/upload/syogun_csv_flash"
+API_URL="http://localhost:8003/database/upload/shogun_csv_flash"
 
 echo ""
 echo "1. テーブルをクリア"

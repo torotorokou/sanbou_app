@@ -136,12 +136,12 @@ class TestMaterializedViewRefresher:
 
 
 class TestUploadUseCaseIntegration:
-    """UploadSyogunCsvUseCase とのインテグレーションテスト（モック版）"""
+    """UploadShogunCsvUseCase とのインテグレーションテスト（モック版）"""
     
-    @patch('app.application.usecases.upload.upload_syogun_csv_uc.logger')
+    @patch('app.application.usecases.upload.upload_shogun_csv_uc.logger')
     def test_mv_refresh_called_on_receive_success(self, mock_logger):
         """受入CSV成功時にMV更新が呼ばれることを確認"""
-        from app.application.usecases.upload.upload_syogun_csv_uc import UploadSyogunCsvUseCase
+        from app.application.usecases.upload.upload_shogun_csv_uc import UploadShogunCsvUseCase
         
         # モックの準備
         mock_raw_writer = Mock()
@@ -152,7 +152,7 @@ class TestUploadUseCaseIntegration:
         mock_mv_refresher = Mock()
         
         # UseCase生成
-        uc = UploadSyogunCsvUseCase(
+        uc = UploadShogunCsvUseCase(
             raw_writer=mock_raw_writer,
             stg_writer=mock_stg_writer,
             csv_config=mock_csv_config,
@@ -173,10 +173,10 @@ class TestUploadUseCaseIntegration:
         # MV更新が呼ばれたか確認
         mock_mv_refresher.refresh_for_csv_type.assert_called_once_with("receive")
     
-    @patch('app.application.usecases.upload.upload_syogun_csv_uc.logger')
+    @patch('app.application.usecases.upload.upload_shogun_csv_uc.logger')
     def test_mv_refresh_not_called_on_failure(self, mock_logger):
         """アップロード失敗時にMV更新が呼ばれないことを確認"""
-        from app.application.usecases.upload.upload_syogun_csv_uc import UploadSyogunCsvUseCase
+        from app.application.usecases.upload.upload_shogun_csv_uc import UploadShogunCsvUseCase
         
         # モックの準備
         mock_raw_writer = Mock()
@@ -187,7 +187,7 @@ class TestUploadUseCaseIntegration:
         mock_mv_refresher = Mock()
         
         # UseCase生成
-        uc = UploadSyogunCsvUseCase(
+        uc = UploadShogunCsvUseCase(
             raw_writer=mock_raw_writer,
             stg_writer=mock_stg_writer,
             csv_config=mock_csv_config,
@@ -207,10 +207,10 @@ class TestUploadUseCaseIntegration:
         # MV更新が呼ばれないことを確認
         mock_mv_refresher.refresh_for_csv_type.assert_not_called()
     
-    @patch('app.application.usecases.upload.upload_syogun_csv_uc.logger')
+    @patch('app.application.usecases.upload.upload_shogun_csv_uc.logger')
     def test_mv_refresh_error_does_not_break_upload(self, mock_logger):
         """MV更新エラーでもアップロード処理は継続することを確認"""
-        from app.application.usecases.upload.upload_syogun_csv_uc import UploadSyogunCsvUseCase
+        from app.application.usecases.upload.upload_shogun_csv_uc import UploadShogunCsvUseCase
         
         # モックの準備
         mock_raw_writer = Mock()
@@ -222,7 +222,7 @@ class TestUploadUseCaseIntegration:
         mock_mv_refresher.refresh_for_csv_type = Mock(side_effect=Exception("MV error"))
         
         # UseCase生成
-        uc = UploadSyogunCsvUseCase(
+        uc = UploadShogunCsvUseCase(
             raw_writer=mock_raw_writer,
             stg_writer=mock_stg_writer,
             csv_config=mock_csv_config,

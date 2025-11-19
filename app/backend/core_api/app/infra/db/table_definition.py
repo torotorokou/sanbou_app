@@ -1,7 +1,7 @@
 """
 テーブル定義ユーティリティ
 
-syogun_csv_masters.yaml から動的にテーブル定義を生成するユーティリティ。
+shogun_csv_masters.yaml から動的にテーブル定義を生成するユーティリティ。
 YAMLファイルを唯一の真（Single Source of Truth）として扱う。
 """
 
@@ -36,7 +36,7 @@ class TableDefinitionGenerator:
             import os
             yaml_path = os.getenv(
                 "CSV_MASTERS_YAML_PATH",
-                "/backend/config/csv_config/syogun_csv_masters.yaml"
+                "/backend/config/csv_config/shogun_csv_masters.yaml"
             )
         self.yaml_path = yaml_path
         self.config = self._load_yaml()
@@ -233,7 +233,7 @@ class TableDefinitionGenerator:
 _generator_instance: Optional[TableDefinitionGenerator] = None
 
 def get_table_definition_generator(
-    yaml_path: str = "/backend/config/csv_config/syogun_csv_masters.yaml"
+    yaml_path: str = "/backend/config/csv_config/shogun_csv_masters.yaml"
 ) -> TableDefinitionGenerator:
     """テーブル定義ジェネレーターのシングルトンインスタンスを取得"""
     global _generator_instance

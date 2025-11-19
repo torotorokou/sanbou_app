@@ -8,12 +8,12 @@ CSV定義ファイル、設定ファイル、一時保存ディレクトリな�
 # backend_shared/config/paths.py
 
 # CSV設定ファイルのパス
-SYOGUNCSV_DEF_PATH = (
-    "/backend/config/csv_config/syogun_csv_masters.yaml"  # 昇軍CSV定義ファイル
+SHOGUNCSV_DEF_PATH = (
+    "/backend/config/csv_config/shogun_csv_masters.yaml"  # 昇軍CSV定義ファイル
 )
 MANAGER_CSV_DEF_PATH = (
     "/backend/config/report_config/manage_report_masters.yaml"  # 帳票管理設定ファイル
 )
 
 # CSV保存・一時ディレクトリ
-SAVE_DIR_TEMP = "/backend/app/data/syogun_csv"  # 一時CSV保存ディレクトリ
+SAVE_DIR_TEMP = "/backend/app/data/shogun_csv"  # 一時CSV保存ディレクトリ

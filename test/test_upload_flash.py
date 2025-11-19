@@ -13,7 +13,7 @@ csv_files = {
 }
 
 base_url = 'http://localhost:5173/core_api'
-upload_endpoint = f'{base_url}/database/upload/syogun_csv_flash'
+upload_endpoint = f'{base_url}/database/upload/shogun_csv_flash'
 
 print("=" * 80)
 print("将軍_速報版 CSVアップロードテスト")

@@ -2,7 +2,7 @@
 SQLAlchemy ORM models for database tables.
 Schemas: core, jobs, forecast, raw
 
-raw スキーマのモデルは syogun_csv_masters.yaml から動的に生成されます。
+raw スキーマのモデルは shogun_csv_masters.yaml から動的に生成されます。
 """
 from datetime import datetime, date as date_type
 from sqlalchemy import Column, Integer, String, Date, Numeric, Text, TIMESTAMP, JSON, func

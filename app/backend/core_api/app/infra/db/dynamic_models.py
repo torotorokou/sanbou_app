@@ -1,7 +1,7 @@
 """
 動的ORM モデルジェネレーター
 
-syogun_csv_masters.yaml からSQLAlchemy ORMモデルを動的に生成します。
+shogun_csv_masters.yaml からSQLAlchemy ORMモデルを動的に生成します。
 
 クラス名衝突を回避するため、同一クラス名の再生成を抑止します。
 """

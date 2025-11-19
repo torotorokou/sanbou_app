@@ -10,7 +10,7 @@ CSVファイルのバリデーション処理を統合的に管理するファ�
 - CsvValidatorService: ファサードとして全体を統合
 """
 
-from backend_shared.infrastructure.config.config_loader import SyogunCsvConfigLoader
+from backend_shared.infrastructure.config.config_loader import ShogunCsvConfigLoader
 from backend_shared.adapters.presentation.response_base import ErrorApiResponse
 from backend_shared.usecases.csv_validator.pure_csv_validator import PureCSVValidator
 from backend_shared.usecases.csv_validator.response_converter import (
@@ -35,7 +35,7 @@ class CsvValidatorService:
         設定ローダーとコンバーターを初期化し、バリデーション処理の準備を行います。
         """
         # 昇軍CSV設定ローダーの初期化
-        self.config_loader = SyogunCsvConfigLoader()
+        self.config_loader = ShogunCsvConfigLoader()
 
         # レスポンス変換器の初期化
         self.response_converter = ValidationResponseConverter()

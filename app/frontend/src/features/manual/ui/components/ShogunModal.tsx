@@ -100,7 +100,7 @@ export const ManualModal: React.FC<ManualModalProps> = ({
                 onClose();
                 // Use backend-provided id for routing to ensure we open the canonical DetailPage.
                 // Ignore item.route here to avoid slug/relative-path mismatches.
-                navigate(`/manuals/syogun/${item.id}`);
+                navigate(`/manuals/shogun/${item.id}`);
               }}
             >
               関連ページを開く

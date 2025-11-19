@@ -136,9 +136,9 @@ export const SIDEBAR_MENU = [
                     hidden: true,
                 },
                 {
-                    key: '/manuals/syogun',
+                    key: '/manuals/shogun',
                     icon: <BookOutlined />,
-                    label: <Link to='/manuals/syogun'>将軍マニュアル一覧</Link>,
+                    label: <Link to='/manuals/shogun'>将軍マニュアル一覧</Link>,
                 },
             ],
         },

@@ -13,7 +13,7 @@ service = ManualsService()
 def list_manuals(
     query: str | None = Query(default=None),
     tag: str | None = Query(default=None),
-    category: str | None = Query(default="syogun"),
+    category: str | None = Query(default="shogun"),
     page: int = Query(default=1, ge=1),
     size: int = Query(default=20, ge=1, le=100),
 ):
@@ -21,7 +21,7 @@ def list_manuals(
 
 
 @router.get("/catalog", response_model=ManualCatalogResponse)
-def get_manual_catalog(category: str | None = Query(default="syogun")):
+def get_manual_catalog(category: str | None = Query(default="shogun")):
     return service.get_catalog(category=category)
 
 

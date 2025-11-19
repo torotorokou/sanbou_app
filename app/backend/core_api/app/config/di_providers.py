@@ -98,12 +98,12 @@ def get_repo_raw_final(db: Session = Depends(get_db)) -> ShogunCsvRepository:
 # ========================================================================
 # UseCase Providers
 # ========================================================================
-from app.application.usecases.upload.upload_syogun_csv_uc import UploadSyogunCsvUseCase
-from backend_shared.infrastructure.config.config_loader import SyogunCsvConfigLoader
+from app.application.usecases.upload.upload_shogun_csv_uc import UploadShogunCsvUseCase
+from backend_shared.infrastructure.config.config_loader import ShogunCsvConfigLoader
 from backend_shared.usecases.csv_validator.csv_upload_validator_api import CSVValidationResponder
 
 # CSV設定とバリデーターの初期化（アプリケーションスコープで共有）
-_csv_config = SyogunCsvConfigLoader()
+_csv_config = ShogunCsvConfigLoader()
 _required_columns = {
     "receive": _csv_config.get_expected_headers("receive"),
     "yard": _csv_config.get_expected_headers("yard"),
@@ -132,9 +132,9 @@ def get_uc_default(
     stg_repo: ShogunCsvRepository = Depends(get_repo_stg_flash),
     raw_data_repo: RawDataRepository = Depends(get_raw_data_repo),
     mv_refresher: MaterializedViewRefresher = Depends(get_mv_refresher)
-) -> UploadSyogunCsvUseCase:
-    """デフォルト用のUploadSyogunCsvUseCase (raw.receive_shogun_flash + stg.receive_shogun_flash)"""
-    return UploadSyogunCsvUseCase(
+) -> UploadShogunCsvUseCase:
+    """デフォルト用のUploadShogunCsvUseCase (raw.receive_shogun_flash + stg.receive_shogun_flash)"""
+    return UploadShogunCsvUseCase(
         raw_writer=raw_repo,
         stg_writer=stg_repo,
         csv_config=_csv_config,
@@ -149,9 +149,9 @@ def get_uc_flash(
     stg_repo: ShogunCsvRepository = Depends(get_repo_stg_flash),
     raw_data_repo: RawDataRepository = Depends(get_raw_data_repo),
     mv_refresher: MaterializedViewRefresher = Depends(get_mv_refresher)
-) -> UploadSyogunCsvUseCase:
-    """Flash用のUploadSyogunCsvUseCase (raw.receive_shogun_flash + stg.receive_shogun_flash)"""
-    return UploadSyogunCsvUseCase(
+) -> UploadShogunCsvUseCase:
+    """Flash用のUploadShogunCsvUseCase (raw.receive_shogun_flash + stg.receive_shogun_flash)"""
+    return UploadShogunCsvUseCase(
         raw_writer=raw_repo,
         stg_writer=stg_repo,
         csv_config=_csv_config,
@@ -166,9 +166,9 @@ def get_uc_stg_final(
     stg_repo: ShogunCsvRepository = Depends(get_repo_stg_final),
     raw_data_repo: RawDataRepository = Depends(get_raw_data_repo),
     mv_refresher: MaterializedViewRefresher = Depends(get_mv_refresher)
-) -> UploadSyogunCsvUseCase:
-    """Final用のUploadSyogunCsvUseCase (raw.*_shogun_final + stg.*_shogun_final)"""
-    return UploadSyogunCsvUseCase(
+) -> UploadShogunCsvUseCase:
+    """Final用のUploadShogunCsvUseCase (raw.*_shogun_final + stg.*_shogun_final)"""
+    return UploadShogunCsvUseCase(
         raw_writer=raw_repo,
         stg_writer=stg_repo,
         csv_config=_csv_config,

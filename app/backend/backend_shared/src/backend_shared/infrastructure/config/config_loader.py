@@ -6,10 +6,10 @@ YAML形式の設定ファイルを読み込み、CSV処理や帳票生成に必�
 """
 
 import yaml
-from backend_shared.infrastructure.config.paths import SYOGUNCSV_DEF_PATH, MANAGER_CSV_DEF_PATH
+from backend_shared.infrastructure.config.paths import SHOGUNCSV_DEF_PATH, MANAGER_CSV_DEF_PATH
 
 
-class SyogunCsvConfigLoader:
+class ShogunCsvConfigLoader:
     """
     将軍CSV定義ファイルローダー
 
@@ -17,7 +17,7 @@ class SyogunCsvConfigLoader:
     カラム定義、型情報、一意キーなどの設定情報を提供します。
     """
 
-    def __init__(self, config_path: str = SYOGUNCSV_DEF_PATH):
+    def __init__(self, config_path: str = SHOGUNCSV_DEF_PATH):
         """
         コンストラクタ
 

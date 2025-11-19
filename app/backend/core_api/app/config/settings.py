@@ -26,7 +26,7 @@ class Settings(BaseSettings):
     # YAML設定ファイルパス（コンテナ内パス）
     CSV_MASTERS_YAML_PATH: str = os.getenv(
         "CSV_MASTERS_YAML_PATH",
-        "/backend/config/csv_config/syogun_csv_masters.yaml"
+        "/backend/config/csv_config/shogun_csv_masters.yaml"
     )
     
     # Shogun CSV Table Mapping (CSVタイプ → DBテーブル名)

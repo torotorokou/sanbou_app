@@ -19,7 +19,7 @@ export const DATASETS: Readonly<Record<string, DatasetConfig>> = {
       '自分で編集・加工・列の並び替え・名前変更をしたファイルは使用できません。',
     ],
     upload: {
-      path: '/core_api/database/upload/syogun_csv_flash',
+      path: '/core_api/database/upload/shogun_csv_flash',
       payloadShape: 'formData',
     },
     csv: [
@@ -77,7 +77,7 @@ export const DATASETS: Readonly<Record<string, DatasetConfig>> = {
       '速報版と混在させないこと。',
     ],
     upload: {
-      path: '/core_api/database/upload/syogun_csv_final',
+      path: '/core_api/database/upload/shogun_csv_final',
       payloadShape: 'formData',
     },
     csv: [
@@ -135,7 +135,7 @@ export const DATASETS: Readonly<Record<string, DatasetConfig>> = {
       '一次/二次を間違えないこと。',
     ],
     upload: {
-      path: '/core_api/database/upload/syogun_csv',
+      path: '/core_api/database/upload/shogun_csv',
       payloadShape: 'formData',
     },
     csv: [

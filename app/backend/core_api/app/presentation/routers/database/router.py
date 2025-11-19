@@ -29,7 +29,7 @@ from app.config.di_providers import (
     get_uc_flash,
     get_uc_stg_final,
 )
-from app.application.usecases.upload.upload_syogun_csv_uc import UploadSyogunCsvUseCase
+from app.application.usecases.upload.upload_shogun_csv_uc import UploadShogunCsvUseCase
 
 logger = logging.getLogger(__name__)
 
@@ -42,13 +42,13 @@ settings = get_settings()
 # CSV Upload Endpoints (UseCase経由に薄化)
 # ========================================================================
 
-@router.post("/upload/syogun_csv")
-async def upload_syogun_csv(
+@router.post("/upload/shogun_csv")
+async def upload_shogun_csv(
     background_tasks: BackgroundTasks,
     receive: Optional[UploadFile] = File(None),
     yard: Optional[UploadFile] = File(None),
     shipment: Optional[UploadFile] = File(None),
-    uc: UploadSyogunCsvUseCase = Depends(get_uc_default),
+    uc: UploadShogunCsvUseCase = Depends(get_uc_default),
 ):
     """
     将軍CSVアップロード（stg schema, *_shogun_flash tables）- 非同期版
@@ -66,7 +66,7 @@ async def upload_syogun_csv(
         receive: 受入一覧CSV
         yard: ヤード一覧CSV  
         shipment: 出荷一覧CSV
-        uc: UploadSyogunCsvUseCase (DI)
+        uc: UploadShogunCsvUseCase (DI)
         
     Returns:
         受付成功時: upload_file_ids を含む SuccessApiResponse（即座）
@@ -90,13 +90,13 @@ async def upload_syogun_csv(
         ).to_json_response()
 
 
-@router.post("/upload/syogun_csv_final")
-async def upload_syogun_csv_final(
+@router.post("/upload/shogun_csv_final")
+async def upload_shogun_csv_final(
     background_tasks: BackgroundTasks,
     receive: Optional[UploadFile] = File(None),
     yard: Optional[UploadFile] = File(None),
     shipment: Optional[UploadFile] = File(None),
-    uc: UploadSyogunCsvUseCase = Depends(get_uc_stg_final),
+    uc: UploadShogunCsvUseCase = Depends(get_uc_stg_final),
 ):
     """
     将軍CSVアップロード（最終版）- 非同期版
@@ -114,7 +114,7 @@ async def upload_syogun_csv_final(
         receive: 受入一覧CSV
         yard: ヤード一覧CSV  
         shipment: 出荷一覧CSV
-        uc: UploadSyogunCsvUseCase (DI with stg final schema)
+        uc: UploadShogunCsvUseCase (DI with stg final schema)
         
     Returns:
         受付成功時: upload_file_ids を含む SuccessApiResponse（即座）
@@ -138,13 +138,13 @@ async def upload_syogun_csv_final(
         ).to_json_response()
 
 
-@router.post("/upload/syogun_csv_flash")
-async def upload_syogun_csv_flash(
+@router.post("/upload/shogun_csv_flash")
+async def upload_shogun_csv_flash(
     background_tasks: BackgroundTasks,
     receive: Optional[UploadFile] = File(None),
     yard: Optional[UploadFile] = File(None),
     shipment: Optional[UploadFile] = File(None),
-    uc: UploadSyogunCsvUseCase = Depends(get_uc_flash),
+    uc: UploadShogunCsvUseCase = Depends(get_uc_flash),
 ):
     """
     将軍CSVアップロード（速報版）- 非同期版
@@ -162,7 +162,7 @@ async def upload_syogun_csv_flash(
         receive: 受入一覧CSV
         yard: ヤード一覧CSV  
         shipment: 出荷一覧CSV
-        uc: UploadSyogunCsvUseCase (DI with stg flash schema)
+        uc: UploadShogunCsvUseCase (DI with stg flash schema)
         
     Returns:
         受付成功時: upload_file_ids を含む SuccessApiResponse（即座）

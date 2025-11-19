@@ -7,7 +7,7 @@ from app.schemas.manuals import ManualDetail, ManualListResponse, ManualSectionC
 
 class InMemoryManualRepository:
     def __init__(self, base_url: str = "http://localhost:5173") -> None:
-        # 簡易データ: syogun カテゴリの manual アイテムを2件
+        # 簡易データ: shogun カテゴリの manual アイテムを2件
         self._items: Dict[str, ManualDetail] = {}
         self._seed(base_url)
 
@@ -23,7 +23,7 @@ class InMemoryManualRepository:
                     doc_id=f"manual-{doc_id}",
                     page_title=title,
                     section_id=s.anchor,
-                    url=f"{base_url}/manuals/syogun/{doc_id}#{s.anchor}",
+                    url=f"{base_url}/manuals/shogun/{doc_id}#{s.anchor}",
                     category=category,
                     tags=tags,
                     version="2025-09-18",
@@ -47,14 +47,14 @@ class InMemoryManualRepository:
             doc_id="estimate-make",
             title="見積書の作成フロー",
             description="見積作成の全体像",
-            category="syogun",
+            category="shogun",
             tags=["見積", "営業"]
         )
         item2 = build(
             doc_id="mf-honest-out",
             title="工場外のオネスト運搬のマニフェスト入力",
             description="工場外マニフェスト入力の流れ",
-            category="syogun",
+            category="shogun",
             tags=["マニフェスト", "E票"]
         )
         self._items[item1.id] = item1

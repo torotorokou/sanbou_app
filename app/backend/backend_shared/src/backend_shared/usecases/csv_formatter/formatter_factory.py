@@ -28,7 +28,7 @@ class CSVFormatterFactory:
 
     Example:
         # 使用例
-        loader = SyogunCsvConfigLoader()
+        loader = ShogunCsvConfigLoader()
         config = build_formatter_config(loader, "shipment")
         formatter = CSVFormatterFactory.get_formatter("shipment", config)
         df_formatted = formatter.format(df)
@@ -60,8 +60,8 @@ class CSVFormatterFactory:
 
 if __name__ == "__main__":
     # テスト用のサンプルコード（コメントアウト）
-    # from backend_shared.infrastructure.config.config_loader import SyogunCsvConfigLoader
-    # config_loader = SyogunCsvConfigLoader()
+    # from backend_shared.infrastructure.config.config_loader import ShogunCsvConfigLoader
+    # config_loader = ShogunCsvConfigLoader()
     # columns_def = config_loader.get_columns("shipment")
     # df = pd.read_csv("shipment.csv")
     # formatter = CSVFormatterFactory.get_formatter("shipment", columns_def)
