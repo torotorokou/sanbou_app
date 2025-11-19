@@ -15,10 +15,11 @@ UseCase: UploadSyogunCsvUseCase
   - ビジネスロジックはここに集約（Router には書かない）
   - 外部依存（DB、ファイル等）は Port 経由で注入
   - backend_shared の既存 validator/formatter を活用
+  - 非同期アップロード対応: start_async_upload で受付のみ行い、重い処理はバックグラウンドタスクへ
 """
 import logging
 from typing import Dict, Optional, List, Any
-from fastapi import UploadFile
+from fastapi import UploadFile, BackgroundTasks
 from fastapi.concurrency import run_in_threadpool
 import pandas as pd
 
@@ -62,6 +63,219 @@ class UploadSyogunCsvUseCase:
         self.validator = validator
         self.raw_data_repo = raw_data_repo
         self.mv_refresher = mv_refresher
+    
+    async def start_async_upload(
+        self,
+        background_tasks: BackgroundTasks,
+        receive: Optional[UploadFile],
+        yard: Optional[UploadFile],
+        shipment: Optional[UploadFile],
+        file_type: str = "FLASH",
+        uploaded_by: Optional[str] = None,
+    ) -> SuccessApiResponse | ErrorApiResponse:
+        """
+        非同期アップロードを開始（軽量バリデーション→即座に受付完了レスポンス→重い処理はバックグラウンド）
+        
+        Args:
+            background_tasks: FastAPI BackgroundTasks
+            receive: 受入一覧CSV
+            yard: ヤード一覧CSV
+            shipment: 出荷一覧CSV
+            file_type: 'FLASH' または 'FINAL'
+            uploaded_by: アップロードユーザー名
+        
+        Returns:
+            受付成功: upload_file_ids を含む SuccessApiResponse（即座）
+            バリデーションエラー: ErrorApiResponse
+        """
+        logger.info("Start async syogun CSV upload (acceptance phase)")
+        
+        # 入力ファイルの整理
+        file_inputs = {"receive": receive, "yard": yard, "shipment": shipment}
+        uploaded_files = {k: v for k, v in file_inputs.items() if v and v.filename}
+        
+        if not uploaded_files:
+            return ErrorApiResponse(
+                code="NO_FILES",
+                detail="少なくとも1つのCSVファイルをアップロードしてください",
+                status_code=400
+            )
+        
+        # 1. 軽量バリデーション（拡張子、MIME type）
+        validation_error = self._validate_file_types(uploaded_files)
+        if validation_error:
+            return validation_error
+        
+        # 2. 重複チェック＋log.upload_fileへの登録（pending状態）
+        upload_file_ids: Dict[str, int] = {}
+        duplicate_files: Dict[str, Dict[str, Any]] = {}
+        
+        if self.raw_data_repo:
+            for csv_type, uf in uploaded_files.items():
+                try:
+                    content = await uf.read()
+                    file_hash = self.raw_data_repo.calculate_file_hash(content)
+                    uf.file.seek(0)
+                    
+                    # 重複チェック
+                    duplicate_info = self.raw_data_repo.check_duplicate_upload(
+                        csv_type=csv_type,
+                        file_hash=file_hash,
+                        file_type=file_type,
+                        file_name=uf.filename,
+                        file_size_bytes=len(content),
+                    )
+                    
+                    if duplicate_info:
+                        duplicate_files[csv_type] = duplicate_info
+                        logger.warning(f"Duplicate file detected: {csv_type}")
+                    else:
+                        # 重複でない場合のみログ作成
+                        file_id = self.raw_data_repo.create_upload_file(
+                            csv_type=csv_type,
+                            file_name=uf.filename or f"{csv_type}.csv",
+                            file_hash=file_hash,
+                            file_type=file_type,
+                            file_size_bytes=len(content),
+                            uploaded_by=uploaded_by,
+                        )
+                        upload_file_ids[csv_type] = file_id
+                        logger.info(f"Created upload_file entry (pending): {csv_type} id={file_id}")
+                except Exception as e:
+                    logger.error(f"Failed to process {csv_type}: {e}")
+                    return ErrorApiResponse(
+                        code="UPLOAD_PREPARATION_ERROR",
+                        detail=f"{csv_type}の処理に失敗しました: {str(e)}",
+                        status_code=500,
+                    )
+        
+        # 重複ファイルがある場合は409を返す
+        if duplicate_files:
+            duplicate_details = []
+            for csv_type, info in duplicate_files.items():
+                duplicate_details.append({
+                    "csv_type": csv_type,
+                    "file_name": info["file_name"],
+                    "uploaded_at": info["uploaded_at"].isoformat() if info.get("uploaded_at") else None,
+                    "uploaded_by": info.get("uploaded_by"),
+                    "match_type": info["match_type"],
+                })
+            
+            return ErrorApiResponse(
+                code="DUPLICATE_FILE",
+                detail=f"同じファイルが既にアップロード済みです: {', '.join(duplicate_files.keys())}",
+                status_code=409,
+                result={"duplicates": duplicate_details}
+            )
+        
+        # 3. バックグラウンドタスクに重い処理を登録
+        #    UploadFileはメモリ上にバッファされているので、バックグラウンドでも読み取り可能
+        #    ただし、ファイル内容を bytes で保持してバックグラウンドに渡す
+        file_contents = {}
+        for csv_type, uf in uploaded_files.items():
+            uf.file.seek(0)
+            file_contents[csv_type] = {
+                "content": await uf.read(),
+                "filename": uf.filename,
+            }
+        
+        background_tasks.add_task(
+            self._process_csv_in_background,
+            file_contents=file_contents,
+            upload_file_ids=upload_file_ids,
+            file_type=file_type,
+        )
+        
+        # 4. 即座に受付完了レスポンスを返す
+        return SuccessApiResponse(
+            code="UPLOAD_ACCEPTED",
+            detail=f"CSVアップロードを受け付けました。処理中です。",
+            result={
+                "upload_file_ids": upload_file_ids,
+                "status": "processing",
+            },
+            hint="処理完了まで数秒～数十秒かかる場合があります。",
+        )
+    
+    async def _process_csv_in_background(
+        self,
+        file_contents: Dict[str, Dict[str, Any]],
+        upload_file_ids: Dict[str, int],
+        file_type: str,
+    ) -> None:
+        """
+        バックグラウンドで実行される重い処理
+        
+        Args:
+            file_contents: csv_type -> {"content": bytes, "filename": str}
+            upload_file_ids: csv_type -> upload_file.id
+            file_type: 'FLASH' or 'FINAL'
+        """
+        try:
+            logger.info(f"Background processing started for upload_file_ids: {upload_file_ids}")
+            
+            # ステータスを processing に更新
+            if self.raw_data_repo:
+                for csv_type, file_id in upload_file_ids.items():
+                    self.raw_data_repo.update_upload_status(file_id=file_id, status="processing")
+            
+            # CSV読込
+            import io
+            dfs: Dict[str, pd.DataFrame] = {}
+            for csv_type, file_info in file_contents.items():
+                try:
+                    content_io = io.BytesIO(file_info["content"])
+                    df = pd.read_csv(content_io, encoding="utf-8")
+                    dfs[csv_type] = df
+                    logger.info(f"[BG] Loaded {csv_type}: {len(df)} rows")
+                except Exception as e:
+                    logger.error(f"[BG] Failed to parse {csv_type}: {e}")
+                    self._mark_all_as_failed(upload_file_ids, f"CSV parse error: {csv_type}")
+                    return
+            
+            # バリデーション（ファイル名用のダミーUploadFile作成）
+            dummy_files = {}
+            for csv_type, file_info in file_contents.items():
+                class DummyUploadFile:
+                    def __init__(self, filename):
+                        self.filename = filename
+                dummy_files[csv_type] = DummyUploadFile(file_info["filename"])
+            
+            validation_error = self._validate_csv_data(dfs, dummy_files)
+            if validation_error:
+                logger.error(f"[BG] Validation failed: {validation_error.detail}")
+                self._mark_all_as_failed(upload_file_ids, f"Validation error: {validation_error.detail}")
+                return
+            
+            # source_row_no 追加
+            dfs_with_row_no = self._add_source_row_numbers(dfs)
+            
+            # raw層保存
+            raw_cleaned_dfs = await self._clean_empty_rows(dfs_with_row_no)
+            raw_result = await self._save_data(
+                self.raw_writer, raw_cleaned_dfs, dummy_files, "raw", upload_file_ids
+            )
+            
+            # フォーマット
+            formatted_dfs, format_error = await self._format_csv_data(dfs_with_row_no)
+            if format_error:
+                logger.error(f"[BG] Format failed: {format_error.detail}")
+                self._mark_all_as_failed(upload_file_ids, f"Format error: {format_error.detail}")
+                return
+            
+            # stg層保存
+            stg_result = await self._save_data(
+                self.stg_writer, formatted_dfs, dummy_files, "stg", upload_file_ids
+            )
+            
+            # ステータス更新
+            self._update_upload_logs(upload_file_ids, formatted_dfs, stg_result)
+            
+            logger.info(f"[BG] Background processing completed successfully for: {list(upload_file_ids.keys())}")
+            
+        except Exception as e:
+            logger.exception(f"[BG] Unexpected error in background processing: {e}")
+            self._mark_all_as_failed(upload_file_ids, f"Internal error: {str(e)}")
     
     async def execute(
         self,

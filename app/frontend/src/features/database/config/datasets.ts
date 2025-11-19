@@ -10,64 +10,6 @@
 import type { DatasetConfig } from './types';
 
 export const DATASETS: Readonly<Record<string, DatasetConfig>> = {
-  shogun_flash_debug: {
-    key: 'shogun_flash_debug',
-    label: '将軍_速報版（デバッグ）',
-    schemaVersion: 1,
-    notes: [
-      '⚠️ ファイルは UTF-8 エンコーディングでアップロードしてください。',
-      '⚠️ CSV各行がPydanticで検証され、debug スキーマのテーブルに保存されます。',
-      '既存のrawスキーマには影響しません。',
-    ],
-    upload: {
-      path: '/core_api/database/upload/shogun_flash',
-      payloadShape: 'formData',
-    },
-    csv: [
-      {
-        typeKey: 'receive',
-        label: '将軍_速報版:受入一覧',
-        required: true,
-        order: 1,
-        color: '#0EA5E9',
-        filenameHints: ['受入', 'ukeire', 'receive'],
-        parse: { encoding: 'utf8', delimiter: ',' },
-        preview: { columnWidth: 120, stickyHeader: true },
-        validate: {
-          requiredHeaders: ['伝票日付', '売上日付', '支払日付', '業者CD', '業者名', '品名CD', '品名', '正味重量', '数量', '受入番号'],
-          rowSchemaName: 'row_receive_flash_v1',
-        },
-      },
-      {
-        typeKey: 'shipment',
-        label: '将軍_速報版:出荷一覧',
-        required: true,
-        order: 2,
-        color: '#3B82F6',
-        filenameHints: ['出荷', 'shukka', 'shipment', 'ship'],
-        parse: { encoding: 'utf8', delimiter: ',' },
-        preview: { columnWidth: 120, stickyHeader: true },
-        validate: {
-          requiredHeaders: ['伝票日付', '出荷番号', '取引先名', '業者CD', '業者名'],
-          rowSchemaName: 'row_shipment_flash_v1',
-        },
-      },
-      {
-        typeKey: 'yard',
-        label: '将軍_速報版:ヤード一覧',
-        required: true,
-        order: 3,
-        color: '#06B6D4',
-        filenameHints: ['ヤード', 'yard'],
-        parse: { encoding: 'utf8', delimiter: ',' },
-        preview: { columnWidth: 120, stickyHeader: true },
-        validate: {
-          requiredHeaders: ['伝票日付', '取引先名', '品名', '正味重量', '数量'],
-          rowSchemaName: 'row_yard_flash_v1',
-        },
-      },
-    ],
-  },
   shogun_flash: {
     key: 'shogun_flash',
     label: '将軍_速報版',

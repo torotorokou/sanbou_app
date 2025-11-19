@@ -3,7 +3,7 @@
 
 import type { NaviRepository } from '../ports/repository';
 import { NaviApiClient } from './navi.client';
-import type { CategoryDataMap, ChatAnswer, RagChatError } from '../domain/types/types';
+import type { CategoryDataMap, ChatAnswer } from '../domain/types/types';
 import type { ChatQuestionRequestDto } from '../domain/types/dto';
 
 /**

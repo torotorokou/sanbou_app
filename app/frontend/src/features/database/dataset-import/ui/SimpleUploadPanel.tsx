@@ -6,7 +6,8 @@
  */
 
 import React from 'react';
-import { Card } from 'antd';
+import { Card, Button, Tooltip } from 'antd';
+import { ClearOutlined } from '@ant-design/icons';
 import type { PanelFileItem } from '../model/types';
 import { UploadFileCard } from './UploadFileCard';
 
@@ -15,6 +16,7 @@ export interface SimpleUploadPanelProps {
   onPickFile: (typeKey: string, file: File) => void;
   onRemoveFile: (typeKey: string) => void;
   onToggleSkip?: (typeKey: string) => void;
+  onResetAll?: () => void;
   /** カードサイズ: 'compact' | 'normal'。既定は 'compact' */
   size?: 'compact' | 'normal';
   /** タイトルを表示するか（既定: false） */
@@ -26,15 +28,31 @@ export const SimpleUploadPanel: React.FC<SimpleUploadPanelProps> = ({
   onPickFile,
   onRemoveFile,
   onToggleSkip,
+  onResetAll,
   size = 'compact',
   showTitle = false,
 }) => {
   const isCompact = size === 'compact';
+  const hasFiles = items.some(item => item.file !== null);
 
   return (
     <Card
       size="small"
       title={showTitle ? '📂 CSVアップロード' : undefined}
+      extra={
+        onResetAll && hasFiles ? (
+          <Tooltip title="すべてのCSVを削除">
+            <Button
+              type="text"
+              size="small"
+              icon={<ClearOutlined />}
+              onClick={onResetAll}
+              danger
+              style={{ fontSize: 16 }}
+            />
+          </Tooltip>
+        ) : null
+      }
       styles={{
         header: showTitle
           ? {
