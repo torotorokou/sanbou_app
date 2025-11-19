@@ -20,6 +20,7 @@ export type CsvUploadKind =
  */
 export interface UploadCalendarItem {
   id: string;
+  uploadFileId?: number; // log.upload_file.id（削除時に使用）
   date: string;      // 'YYYY-MM-DD'
   kind: CsvUploadKind;
   rowCount: number;  // データ数（行数）
