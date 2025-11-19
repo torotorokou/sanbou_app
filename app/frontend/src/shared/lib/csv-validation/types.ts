@@ -2,7 +2,8 @@
  * CSV検証の共通型定義
  */
 
-export type ValidationStatus = 'valid' | 'invalid' | 'unknown';
+// ValidationStatusは共通型として@/shared/types/validationに移動しました
+export type { ValidationStatus } from '../../types/validation';
 
 export interface ValidationResult {
   status: ValidationStatus;

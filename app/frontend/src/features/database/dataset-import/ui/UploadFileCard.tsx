@@ -7,7 +7,7 @@ import React from 'react';
 import { Typography, Button, Checkbox } from 'antd';
 import { DeleteOutlined } from '@ant-design/icons';
 import type { PanelFileItem } from '../model/types';
-import { ValidationBadge } from './ValidationBadge';
+import { CsvValidationBadge } from '@features/csv-validation';
 import { DragDropCsv } from './DragDropCsv';
 
 const { Text } = Typography;
@@ -76,7 +76,7 @@ export const UploadFileCard: React.FC<UploadFileCardProps> = ({
             </Text>
           )}
         </div>
-        <ValidationBadge status={item.status} size={isCompact ? 'small' : 'default'} />
+        <CsvValidationBadge status={item.status} size={isCompact ? 'small' : 'default'} />
       </div>
 
       {/* ファイル選択ボタン（ファイルがアップロードされていない場合かつスキップされていない場合のみ表示） */}

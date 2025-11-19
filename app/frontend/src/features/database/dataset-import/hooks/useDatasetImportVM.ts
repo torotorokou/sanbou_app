@@ -13,7 +13,7 @@ import { useSubmitVM } from '../../dataset-submit/hooks/useSubmitVM';
 import { globalUploadPollingManager } from '../services/globalUploadPollingManager';
 import { findCsv, getDatasetConfig } from '../../config';
 import type { PanelFileItem, DatasetImportVMOptions } from '../model/types';
-import type { ValidationStatus } from '../../shared/types/common';
+import type { CsvValidationStatus } from '@features/csv-validation';
 import type { CsvPreviewData } from '../../dataset-preview/model/types';
 import type { DatasetKey, CsvTypeKey } from '../../config';
 
@@ -22,7 +22,7 @@ export function useDatasetImportVM(opts?: DatasetImportVMOptions) {
   const activeTypes = opts?.activeTypes ?? [];
 
   const [files, setFiles] = useState<Record<string, File | null>>({});
-  const [status, setStatus] = useState<Record<string, ValidationStatus>>({});
+  const [status, setStatus] = useState<Record<string, CsvValidationStatus>>({});
   const [previews, setPreviews] = useState<Record<string, CsvPreviewData | null>>({});
   const [skipped, setSkipped] = useState<Record<string, boolean>>({});
   const [uploadFileIds, setUploadFileIds] = useState<Record<string, number> | undefined>();
@@ -33,7 +33,7 @@ export function useDatasetImportVM(opts?: DatasetImportVMOptions) {
   // datasetKeyが変更されたら状態を初期化
   useEffect(() => {
     const newFiles: Record<string, File | null> = {};
-    const newStatus: Record<string, ValidationStatus> = {};
+    const newStatus: Record<string, CsvValidationStatus> = {};
     const newPreviews: Record<string, CsvPreviewData | null> = {};
     const newSkipped: Record<string, boolean> = {};
     

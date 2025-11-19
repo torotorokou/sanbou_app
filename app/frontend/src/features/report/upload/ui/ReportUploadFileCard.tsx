@@ -7,6 +7,7 @@ import React from 'react';
 import { Typography, Button, Upload } from 'antd';
 import { DeleteOutlined, UploadOutlined } from '@ant-design/icons';
 import type { UploadProps } from 'antd';
+import { CsvValidationBadge, mapLegacyToCsvStatus } from '@features/csv-validation';
 
 const { Text } = Typography;
 
@@ -23,26 +24,6 @@ export interface ReportUploadFileCardProps {
   errorMessage?: string;
 }
 
-/**
- * ValidationBadge - バリデーション状態を表示
- */
-const ValidationBadge: React.FC<{ status: 'ok' | 'ng' | 'unknown'; size?: 'small' | 'default' }> = ({ 
-  status, 
-  size = 'default' 
-}) => {
-  const smallStyle = { fontSize: 13, padding: '0 6px', lineHeight: '20px', display: 'inline-block' };
-  const defaultStyle = { fontSize: 14, padding: '0 8px', lineHeight: '22px', display: 'inline-block' };
-  const style = size === 'small' ? smallStyle : defaultStyle;
-
-  if (status === 'ok') {
-    return <span style={{ ...style, backgroundColor: '#f6ffed', color: '#52c41a', border: '1px solid #b7eb8f', borderRadius: 4 }}>OK</span>;
-  }
-  if (status === 'ng') {
-    return <span style={{ ...style, backgroundColor: '#fff2f0', color: '#ff4d4f', border: '1px solid #ffccc7', borderRadius: 4 }}>NG</span>;
-  }
-  return <span style={{ ...style, backgroundColor: '#fafafa', color: '#666', border: '1px solid #d9d9d9', borderRadius: 4 }}>未検証</span>;
-};
-
 export const ReportUploadFileCard: React.FC<ReportUploadFileCardProps> = ({
   label,
   file,
@@ -55,14 +36,16 @@ export const ReportUploadFileCard: React.FC<ReportUploadFileCardProps> = ({
 }) => {
   const isCompact = size === 'compact';
 
+  // レガシーステータスをCSVバリデーションステータスに変換
+  const csvStatus = mapLegacyToCsvStatus(validationResult);
+  
   // ステータスに応じたカードの背景色・ボーダー色
   const statusStyles = {
-    ok: { background: '#f6ffed', border: '1px solid #b7eb8f' },
-    ng: { background: '#fff2f0', border: '1px solid #ffccc7' },
+    valid: { background: '#f6ffed', border: '1px solid #b7eb8f' },
+    invalid: { background: '#fff2f0', border: '1px solid #ffccc7' },
     unknown: { background: '#fafafa', border: '1px solid #f0f0f0' },
   } as const;
-  const currentStatus = validationResult === 'ok' ? 'ok' : validationResult === 'ng' ? 'ng' : 'unknown';
-  const cardStyle = statusStyles[currentStatus];
+  const cardStyle = statusStyles[csvStatus];
 
   return (
     <div
@@ -92,11 +75,11 @@ export const ReportUploadFileCard: React.FC<ReportUploadFileCardProps> = ({
             </Text>
           )}
         </div>
-        <ValidationBadge status={currentStatus} size={isCompact ? 'small' : 'default'} />
+        <CsvValidationBadge status={csvStatus} size={isCompact ? 'small' : 'default'} />
       </div>
 
       {/* バリデーションエラーメッセージ */}
-      {validationResult === 'ng' && errorMessage && (
+      {csvStatus === 'invalid' && errorMessage && (
         <div style={{ marginBottom: isCompact ? 6 : 8 }}>
           <Text type="danger" style={{ fontSize: isCompact ? 11 : 12 }}>
             ⚠️ {errorMessage}
