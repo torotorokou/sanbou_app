@@ -1,5 +1,5 @@
 /**
- * dataset-validate 型定義
+ * csv-validation 型定義
  */
 
 export interface ValidationResult {
