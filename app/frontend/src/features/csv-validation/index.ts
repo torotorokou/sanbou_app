@@ -1,5 +1,5 @@
 /**
- * dataset-validate exports
+ * csv-validation exports
  */
 
 export * from './core/csvHeaderValidator';
