@@ -1,26 +1,37 @@
 """
 Raw Data Repository
 
-CSV の生データ（変換前）を raw スキーマに保存するリポジトリ。
-- log.upload_file: 全 CSV アップロードの共通ログ（シンプル版）
-- raw.receive_raw: 受入CSV の生データ（TEXT 型）
-- raw.yard_raw: ヤードCSV の生データ（TEXT 型）
-- raw.shipment_raw: 出荷CSV の生データ（TEXT 型）
+CSV の生データ(変換前)を raw スキーマに保存するリポジトリ。
+- log.upload_file: 全 CSV アップロードの共通ログ(シンプル版)
+- raw.receive_raw: 受入CSV の生データ(TEXT 型)
+- raw.yard_raw: ヤードCSV の生データ(TEXT 型)
+- raw.shipment_raw: 出荷CSV の生データ(TEXT 型)
 
-log.upload_file はすべての CSV アップロード（将軍、マニフェスト、予約表など）で
+log.upload_file はすべての CSV アップロード(将軍、マニフェスト、予約表など)で
 共通のログテーブルとして使用します。
 """
 
 import logging
 import os
 import hashlib
-from typing import Optional, Dict, Any
-from datetime import datetime
+from typing import Optional, Dict, Any, Iterable
+from datetime import datetime, date
 import pandas as pd
 from sqlalchemy.orm import Session
 from sqlalchemy import text, Table, MetaData, Column, Integer, BigInteger, Text, String, DateTime, Boolean, ForeignKey
 
 logger = logging.getLogger(__name__)
+
+
+# csv_kind から stg テーブル名へのマッピング
+CSV_KIND_TABLE_MAP = {
+    "shogun_flash_receive": "stg.receive_shogun_flash",
+    "shogun_flash_shipment": "stg.shipment_shogun_flash",
+    "shogun_flash_yard": "stg.yard_shogun_flash",
+    "shogun_final_receive": "stg.receive_shogun_final",
+    "shogun_final_shipment": "stg.shipment_shogun_final",
+    "shogun_final_yard": "stg.yard_shogun_final",
+}
 
 
 class RawDataRepository:
@@ -388,6 +399,221 @@ class RawDataRepository:
             self.db.rollback()
             logger.error(f"Failed to soft delete upload_file: {e}")
             raise
+    
+    def soft_delete_scope_by_dates(
+        self,
+        *,
+        csv_kind: str,
+        dates: Iterable[date],
+        deleted_by: Optional[str] = None,
+    ) -> int:
+        """
+        指定された csv_kind について、指定日付の有効データをすべて論理削除する。
+        upload_file_id は問わず、「その日付の is_deleted = false 行すべて」が対象。
+        パターンA（同一日付＋種別は最後のアップロードだけ有効）用。
+        
+        Args:
+            csv_kind: CSV種別 ('shogun_flash_receive', 'shogun_final_yard', etc.)
+            dates: 削除対象の日付のイテラブル
+            deleted_by: 削除実行者（ユーザー名など）
+            
+        Returns:
+            int: 更新された行数
+            
+        Raises:
+            ValueError: 不正な csv_kind が指定された場合
+        """
+        from sqlalchemy import bindparam
+        
+        # csv_kind からテーブル名を取得
+        table_name = CSV_KIND_TABLE_MAP.get(csv_kind)
+        if not table_name:
+            raise ValueError(
+                f"Invalid csv_kind: {csv_kind}. "
+                f"Valid values are: {list(CSV_KIND_TABLE_MAP.keys())}"
+            )
+        
+        # dates が空の場合は何もしない
+        dates_list = list(dates)
+        if not dates_list:
+            logger.debug(f"No dates provided for soft_delete_scope_by_dates (csv_kind={csv_kind})")
+            return 0
+        
+        # dates を date 型のリストに変換(datetime.date または pd.Timestamp.date())
+        # PostgreSQL の date 型と互換性を持たせる
+        normalized_dates = []
+        for d in dates_list:
+            if hasattr(d, 'date') and callable(getattr(d, 'date', None)):
+                # pd.Timestamp の場合
+                normalized_dates.append(d.date())  # type: ignore
+            elif isinstance(d, date):
+                # datetime.date の場合
+                normalized_dates.append(d)
+            else:
+                logger.warning(f"Unexpected date type: {type(d)}, value={d}")
+                normalized_dates.append(d)
+        
+        logger.info(
+            f"[SOFT_DELETE] soft_delete_scope_by_dates called: table={table_name}, "
+            f"csv_kind={csv_kind}, dates_count={len(normalized_dates)}, "
+            f"dates_sample={normalized_dates[:3]}, deleted_by={deleted_by}"
+        )
+        
+        try:
+            # IN句 + expanding bindparam を使用（型の不整合を回避）
+            sql = text(f"""
+                UPDATE {table_name}
+                SET is_deleted = true,
+                    deleted_at = now(),
+                    deleted_by = :deleted_by
+                WHERE slip_date IN :dates
+                  AND is_deleted = false
+            """).bindparams(bindparam("dates", expanding=True))
+            
+            result = self.db.execute(sql, {
+                "dates": normalized_dates,
+                "deleted_by": deleted_by,
+            })
+            affected_rows = result.rowcount
+            self.db.commit()
+            
+            logger.info(
+                f"[SOFT_DELETE] ✅ soft_delete_scope_by_dates: table={table_name}, csv_kind={csv_kind}, "
+                f"dates={normalized_dates[:5]}{'...' if len(normalized_dates) > 5 else ''}, "
+                f"deleted_by={deleted_by}, ⚠️ affected_rows={affected_rows}"
+            )
+            return affected_rows
+            
+        except Exception as e:
+            self.db.rollback()
+            logger.error(
+                f"Failed to soft delete scope by dates: csv_kind={csv_kind}, "
+                f"table={table_name}, dates={normalized_dates[:5]}, error={e}",
+                exc_info=True
+            )
+            raise
+    
+    def soft_delete_by_date_and_kind(
+        self,
+        *,
+        upload_file_id: int,
+        target_date: date,
+        csv_kind: str,
+        deleted_by: Optional[str] = None,
+    ) -> int:
+        """
+        カレンダーの1マス（upload_file_id + date + csv_kind）に対応する行だけを論理削除。
+        特定ファイルの特定日付分だけ無効化したい場合に使用。
+        
+        Args:
+            upload_file_id: log.upload_file.id
+            target_date: 削除対象の日付
+            csv_kind: CSV種別 ('shogun_flash_receive', 'shogun_final_yard', etc.)
+            deleted_by: 削除実行者（ユーザー名など）
+            
+        Returns:
+            int: 更新された行数
+            
+        Raises:
+            ValueError: 不正な csv_kind が指定された場合
+        """
+        # csv_kind からテーブル名を取得
+        table_name = CSV_KIND_TABLE_MAP.get(csv_kind)
+        if not table_name:
+            raise ValueError(
+                f"Invalid csv_kind: {csv_kind}. "
+                f"Valid values are: {list(CSV_KIND_TABLE_MAP.keys())}"
+            )
+        
+        try:
+            sql = text(f"""
+                UPDATE {table_name}
+                SET is_deleted = true,
+                    deleted_at = now(),
+                    deleted_by = :deleted_by
+                WHERE upload_file_id = :upload_file_id
+                  AND slip_date = :target_date
+                  AND is_deleted = false
+            """)
+            
+            result = self.db.execute(sql, {
+                "upload_file_id": upload_file_id,
+                "target_date": target_date,
+                "deleted_by": deleted_by,
+            })
+            affected_rows = result.rowcount
+            self.db.commit()
+            
+            logger.info(
+                f"Soft deleted {affected_rows} rows from {table_name} "
+                f"for upload_file_id={upload_file_id}, date={target_date}, "
+                f"deleted_by={deleted_by}"
+            )
+            return affected_rows
+            
+        except Exception as e:
+            self.db.rollback()
+            logger.error(
+                f"Failed to soft delete by date and kind: "
+                f"upload_file_id={upload_file_id}, date={target_date}, "
+                f"csv_kind={csv_kind}, error={e}",
+                exc_info=True
+            )
+            raise
+    
+    def is_recent_duplicate_upload(
+        self,
+        *,
+        file_hash: str,
+        csv_type: str,
+        uploaded_by: str,
+        minutes: int = 3,
+    ) -> bool:
+        """
+        直近 minutes 分以内に、同一 file_hash + csv_type + uploaded_by の
+        upload_file レコードが存在するかを判定する。
+        UX 用の「連続アップロード防止」チェック。
+        
+        Args:
+            file_hash: SHA-256ハッシュ
+            csv_type: CSV種別 ('receive', 'yard', 'shipment')
+            uploaded_by: アップロードユーザー名
+            minutes: 判定する時間範囲（分）
+            
+        Returns:
+            bool: 直近に同一ファイルが存在すれば True
+        """
+        try:
+            sql = text("""
+                SELECT 1
+                FROM log.upload_file
+                WHERE file_hash = :file_hash
+                  AND csv_type = :csv_type
+                  AND uploaded_by = :uploaded_by
+                  AND uploaded_at >= now() - (:minutes || ' minutes')::interval
+                LIMIT 1
+            """)
+            
+            result = self.db.execute(sql, {
+                "file_hash": file_hash,
+                "csv_type": csv_type,
+                "uploaded_by": uploaded_by,
+                "minutes": minutes,
+            }).fetchone()
+            
+            is_duplicate = result is not None
+            if is_duplicate:
+                logger.warning(
+                    f"Recent duplicate detected: csv_type={csv_type}, "
+                    f"hash={file_hash[:8]}..., uploaded_by={uploaded_by}"
+                )
+            return is_duplicate
+            
+        except Exception as e:
+            logger.error(f"Failed to check recent duplicate: {e}", exc_info=True)
+            # エラー時は安全側に倒して False を返す（処理は継続させる）
+            return False
+
     
     def save_receive_raw(
         self,

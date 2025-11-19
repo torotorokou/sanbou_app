@@ -8,6 +8,8 @@ shipment:
         - 業者名
     unique_keys: ['伝票日付', '業者名', '品名', '出荷番号', '正味重量', '数量']
     unique_keys_en: ['slip_date', 'vendor_name', 'item_name', 'shipment_no', 'net_weight', 'quantity']
+    soft_delete_date_column: 伝票日付  # 論理削除時に使用する日付カラム（日本語名）
+    soft_delete_date_column_en: slip_date  # 論理削除時に使用する日付カラム（英語名）
     columns:
         伝票日付: { en_name: slip_date, type: datetime, agg: first }
         出荷番号: { en_name: shipment_no, type: str, agg: first }           # 先頭0許容など考慮
@@ -41,6 +43,8 @@ receive:
   # 主キー候補（名称ではなくコード中心に）
   unique_keys: ['伝票日付', '業者CD', '品名CD', '受入番号', '正味重量']
   unique_keys_en: ['slip_date', 'vendor_cd', 'item_cd', 'receive_no', 'net_weight']
+  soft_delete_date_column: 伝票日付  # 論理削除時に使用する日付カラム（日本語名）
+  soft_delete_date_column_en: slip_date  # 論理削除時に使用する日付カラム（英語名）
   columns:
     伝票日付: { en_name: slip_date, type: datetime, agg: first }
     売上日付: { en_name: sales_date, type: datetime, agg: first }
@@ -92,6 +96,8 @@ yard:
         - 数量
     unique_keys: ['伝票日付', '業者CD', '品名CD', '金額', '伝票番号']
     unique_keys_en: ['slip_date', 'vendor_cd', 'item_cd', 'amount', 'slip_no']
+    soft_delete_date_column: 伝票日付  # 論理削除時に使用する日付カラム（日本語名）
+    soft_delete_date_column_en: slip_date  # 論理削除時に使用する日付カラム（英語名）
     columns:
         伝票日付: { en_name: slip_date, type: datetime, agg: first }
         取引先名: { en_name: client_name, type: str, agg: first }

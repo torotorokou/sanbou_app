@@ -109,6 +109,7 @@ class UploadShogunCsvUseCase:
         # 2. 重複チェック＋log.upload_fileへの登録（pending状態）
         upload_file_ids: Dict[str, int] = {}
         duplicate_files: Dict[str, Dict[str, Any]] = {}
+        recent_duplicate_files: Dict[str, Dict[str, Any]] = {}
         
         if self.raw_data_repo:
             for csv_type, uf in uploaded_files.items():
@@ -117,30 +118,34 @@ class UploadShogunCsvUseCase:
                     file_hash = self.raw_data_repo.calculate_file_hash(content)
                     uf.file.seek(0)
                     
-                    # 重複チェック
-                    duplicate_info = self.raw_data_repo.check_duplicate_upload(
-                        csv_type=csv_type,
+                    # 短時間の連続アップロードチェック（UX用）
+                    is_recent_dup = self.raw_data_repo.is_recent_duplicate_upload(
                         file_hash=file_hash,
-                        file_type=file_type,
-                        file_name=uf.filename,
-                        file_size_bytes=len(content),
+                        csv_type=csv_type,
+                        uploaded_by=uploaded_by or "anonymous",
+                        minutes=3,  # デフォルト3分以内の連続アップロードを検知
                     )
                     
-                    if duplicate_info:
-                        duplicate_files[csv_type] = duplicate_info
-                        logger.warning(f"Duplicate file detected: {csv_type}")
-                    else:
-                        # 重複でない場合のみログ作成
-                        file_id = self.raw_data_repo.create_upload_file(
-                            csv_type=csv_type,
-                            file_name=uf.filename or f"{csv_type}.csv",
-                            file_hash=file_hash,
-                            file_type=file_type,
-                            file_size_bytes=len(content),
-                            uploaded_by=uploaded_by,
-                        )
-                        upload_file_ids[csv_type] = file_id
-                        logger.info(f"Created upload_file entry (pending): {csv_type} id={file_id}")
+                    if is_recent_dup:
+                        recent_duplicate_files[csv_type] = {
+                            "file_name": uf.filename,
+                            "file_hash": file_hash[:8] + "...",
+                            "reason": "同じファイルが直前（3分以内）にアップロードされています",
+                        }
+                        logger.warning(f"Recent duplicate detected: {csv_type}")
+                        continue
+                    
+                    # 重複でない場合のみログ作成
+                    file_id = self.raw_data_repo.create_upload_file(
+                        csv_type=csv_type,
+                        file_name=uf.filename or f"{csv_type}.csv",
+                        file_hash=file_hash,
+                        file_type=file_type,
+                        file_size_bytes=len(content),
+                        uploaded_by=uploaded_by,
+                    )
+                    upload_file_ids[csv_type] = file_id
+                    logger.info(f"Created upload_file entry (pending): {csv_type} id={file_id}")
                 except Exception as e:
                     logger.error(f"Failed to process {csv_type}: {e}")
                     return ErrorApiResponse(
@@ -149,23 +154,22 @@ class UploadShogunCsvUseCase:
                         status_code=500,
                     )
         
-        # 重複ファイルがある場合は409を返す
-        if duplicate_files:
+        # 短時間の重複ファイルがある場合は409を返す
+        if recent_duplicate_files:
             duplicate_details = []
-            for csv_type, info in duplicate_files.items():
+            for csv_type, info in recent_duplicate_files.items():
                 duplicate_details.append({
                     "csv_type": csv_type,
                     "file_name": info["file_name"],
-                    "uploaded_at": info["uploaded_at"].isoformat() if info.get("uploaded_at") else None,
-                    "uploaded_by": info.get("uploaded_by"),
-                    "match_type": info["match_type"],
+                    "reason": info["reason"],
                 })
             
             return ErrorApiResponse(
-                code="DUPLICATE_FILE",
-                detail=f"同じファイルが既にアップロード済みです: {', '.join(duplicate_files.keys())}",
+                code="DUPLICATE_FILE_RECENT",
+                detail=f"直前に同じファイルがアップロードされています: {', '.join(recent_duplicate_files.keys())}",
                 status_code=409,
-                result={"duplicates": duplicate_details}
+                result={"duplicates": duplicate_details},
+                hint="連続アップロードの可能性があります。少し時間をおいてから再試行してください。"
             )
         
         # 3. バックグラウンドタスクに重い処理を登録
@@ -184,6 +188,7 @@ class UploadShogunCsvUseCase:
             file_contents=file_contents,
             upload_file_ids=upload_file_ids,
             file_type=file_type,
+            uploaded_by=uploaded_by,
         )
         
         # 4. 即座に受付完了レスポンスを返す
@@ -202,6 +207,7 @@ class UploadShogunCsvUseCase:
         file_contents: Dict[str, Dict[str, Any]],
         upload_file_ids: Dict[str, int],
         file_type: str,
+        uploaded_by: Optional[str] = None,
     ) -> None:
         """
         バックグラウンドで実行される重い処理
@@ -210,6 +216,7 @@ class UploadShogunCsvUseCase:
             file_contents: csv_type -> {"content": bytes, "filename": str}
             upload_file_ids: csv_type -> upload_file.id
             file_type: 'FLASH' or 'FINAL'
+            uploaded_by: アップロードユーザー名
         """
         try:
             logger.info(f"Background processing started for upload_file_ids: {upload_file_ids}")
@@ -262,6 +269,11 @@ class UploadShogunCsvUseCase:
                 logger.error(f"[BG] Format failed: {format_error.detail}")
                 self._mark_all_as_failed(upload_file_ids, f"Format error: {format_error.detail}")
                 return
+            
+            # ★ stg層保存前に既存有効データを論理削除（パターンA: 同一日付＋種別は最後のアップロードだけ有効）
+            if self.raw_data_repo:
+                deleted_by = uploaded_by or "system_auto_replace"
+                self._soft_delete_existing_data_by_dates(formatted_dfs, file_type, deleted_by)
             
             # stg層保存
             stg_result = await self._save_data(
@@ -417,15 +429,20 @@ class UploadShogunCsvUseCase:
             self._mark_all_as_failed(upload_file_ids, "CSV format error")
             return format_error
         
-        # 7. stg層への保存（フォーマット済みデータ = 英語カラム名、型変換済み）
+        # 7. stg層保存前に既存有効データを論理削除（パターンA: 同一日付＋種別は最後のアップロードだけ有効）
+        if self.raw_data_repo:
+            deleted_by = uploaded_by or "system_auto_replace"
+            self._soft_delete_existing_data_by_dates(formatted_dfs, file_type, deleted_by)
+        
+        # 8. stg層への保存（フォーマット済みデータ = 英語カラム名、型変換済み）
         stg_result = await self._save_data(
             self.stg_writer, formatted_dfs, uploaded_files, "stg", upload_file_ids
         )
         
-        # 7. log.upload_file のステータスを更新
+        # 9. log.upload_file のステータスを更新
         self._update_upload_logs(upload_file_ids, formatted_dfs, stg_result)
         
-        # 8. レスポンス生成（raw + stg 両方の結果を統合）
+        # 10. レスポンス生成（raw + stg 両方の結果を統合）
         return self._generate_response(raw_result, stg_result)
     
     def _validate_file_types(self, uploaded_files: Dict[str, UploadFile]) -> Optional[ErrorApiResponse]:
@@ -677,6 +694,116 @@ class UploadShogunCsvUseCase:
                 )
             except Exception as e:
                 logger.error(f"Failed to update upload log for {csv_type}: {e}")
+    
+    def _soft_delete_existing_data_by_dates(
+        self,
+        formatted_dfs: Dict[str, pd.DataFrame],
+        file_type: str,
+        deleted_by: str,
+    ) -> None:
+        """
+        アップロード前に既存の有効データを論理削除する（パターンA用）
+        
+        同一日付＋種別は最後のアップロードだけ有効にするため、
+        新しいデータを挿入する前に、該当する日付の既存データをすべて is_deleted=true にする。
+        
+        Args:
+            formatted_dfs: csv_type -> DataFrame のマッピング（フォーマット済み）
+            file_type: 'FLASH' or 'FINAL'
+            deleted_by: 削除実行者（例: 'system_auto_replace' またはユーザー名）
+        """
+        if not self.raw_data_repo:
+            logger.warning("[SOFT_DELETE] ⚠️ RawDataRepository not available, skipping soft delete")
+            return
+        
+        logger.info(f"[SOFT_DELETE] 📋 Starting soft delete for {len(formatted_dfs)} CSV types, file_type={file_type}")
+        
+        # csv_type -> csv_kind へのマッピング（file_type を考慮）
+        csv_type_to_kind_map = {
+            "receive": f"shogun_{file_type.lower()}_receive",
+            "yard": f"shogun_{file_type.lower()}_yard",
+            "shipment": f"shogun_{file_type.lower()}_shipment",
+        }
+        
+        for csv_type, df in formatted_dfs.items():
+            try:
+                # [FIX] YAML設定から日付カラム名を動的に取得
+                csv_config = self.csv_config.config.get(csv_type, {})
+                if not csv_config:
+                    logger.warning(f"[SOFT_DELETE] ⚠️ No config found for {csv_type}, skipping soft delete")
+                    continue
+                
+                # 日本語カラム名と英語カラム名の両方をチェック
+                date_col_ja = csv_config.get("soft_delete_date_column")  # 例: "伝票日付"
+                date_col_en = csv_config.get("soft_delete_date_column_en")  # 例: "slip_date"
+                
+                slip_date_col = None
+                if date_col_en and date_col_en in df.columns:
+                    slip_date_col = date_col_en
+                elif date_col_ja and date_col_ja in df.columns:
+                    slip_date_col = date_col_ja
+                
+                if slip_date_col is None:
+                    logger.warning(
+                        f"[SOFT_DELETE] ⚠️ Date column not found in {csv_type}. "
+                        f"Expected: {date_col_ja}/{date_col_en}, "
+                        f"Available: {list(df.columns)[:10]}"
+                    )
+                    continue
+                
+                # NaT や None を除外して日付のセットを作成
+                dates = set(df[slip_date_col].dropna().dt.date.unique())
+                
+                if not dates:
+                    logger.info(f"No valid dates found in {csv_type}, skipping soft delete")
+                    continue
+                
+                # csv_kind を決定
+                csv_kind = csv_type_to_kind_map.get(csv_type)
+                if not csv_kind:
+                    logger.warning(f"Unknown csv_type: {csv_type}, skipping soft delete")
+                    continue
+                
+                # デバッグ: dates の中身と型を確認
+                dates_list_for_log = sorted(list(dates))
+                logger.info(
+                    f"[PRE-INSERT] 📋 About to soft delete: csv_type={csv_type}, csv_kind={csv_kind}, "
+                    f"dates_count={len(dates)}, dates_type={type(dates)}, "
+                    f"first_date_type={type(list(dates)[0]) if dates else 'N/A'}, "
+                    f"dates_sample={dates_list_for_log[:5]}"
+                )
+                
+                # 既存データを論理削除
+                logger.info(
+                    f"[PRE-INSERT] 🔄 Calling soft_delete for {csv_kind}, "
+                    f"dates={dates_list_for_log[:5]}{'...' if len(dates) > 5 else ''}"
+                )
+                affected_rows = self.raw_data_repo.soft_delete_scope_by_dates(
+                    csv_kind=csv_kind,
+                    dates=dates,
+                    deleted_by=deleted_by,
+                )
+                
+                # affected_rows を明確にログ出力
+                if affected_rows == 0:
+                    logger.warning(
+                        f"[PRE-INSERT] ⚠️ soft_delete returned affected_rows=0 for {csv_kind}. "
+                        f"This means no existing data was found for these dates: {dates_list_for_log[:5]}"
+                    )
+                else:
+                    logger.info(
+                        f"[PRE-INSERT] ✅ Soft deleted {affected_rows} existing rows "
+                        f"for {csv_kind} before inserting new data (dates: {len(dates)} dates)"
+                    )
+                
+            except Exception as e:
+                logger.error(
+                    f"Failed to soft delete existing data for {csv_type}: {e}",
+                    exc_info=True
+                )
+                # エラーが発生してもアップロード処理は継続
+                # （既存データの削除失敗は、新規データの挿入を妨げない）
+
     
     def _update_upload_logs(
         self,

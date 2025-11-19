@@ -16,7 +16,11 @@ export interface UseUploadCalendarResult {
   goPrevMonth: () => void;
   goNextMonth: () => void;
   reload: () => void;
-  deleteUpload: (id: string) => Promise<void>;
+  deleteUpload: (params: {
+    uploadFileId: number;
+    date: string;
+    csvKind: UploadCalendarItem['kind'];
+  }) => Promise<void>;
   uploadsByDate: Record<string, UploadCalendarItem[]>;
 }
 
@@ -72,8 +76,12 @@ export function useUploadCalendar(): UseUploadCalendarResult {
   }, [fetchData]);
 
   // 削除
-  const deleteUpload = useCallback(async (id: string) => {
-    await uploadCalendarRepository.deleteUpload(id);
+  const deleteUpload = useCallback(async (params: {
+    uploadFileId: number;
+    date: string;
+    csvKind: UploadCalendarItem['kind'];
+  }) => {
+    await uploadCalendarRepository.deleteUpload(params);
     // 削除後に再取得
     await fetchData();
   }, [fetchData]);
