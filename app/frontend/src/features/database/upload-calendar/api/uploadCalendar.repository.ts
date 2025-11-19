@@ -26,6 +26,7 @@ export interface UploadCalendarRepository {
  */
 interface MonthlyResponse {
   items: Array<{
+    uploadFileId: number; // log.upload_file.id
     date: string;      // 'YYYY-MM-DD'
     csvKind: string;   // CSV種別（キャメルケース）
     rowCount: number;  // 行数
@@ -62,14 +63,13 @@ export class UploadCalendarRepositoryImpl implements UploadCalendarRepository {
     );
 
     // バックエンドのレスポンスをフロントエンド用の型に変換
-    // 注意: バックエンドは集計データ（date + csvKind + rowCount）を返すため、
-    // フロントエンドのUploadCalendarItem形式に変換する
     return response.items.map((item) => ({
-      id: `${item.date}-${item.csvKind}`, // 一意なIDを生成
+      id: `${item.uploadFileId}`, // upload_file_id を文字列IDとして使用
+      uploadFileId: item.uploadFileId,
       date: item.date,
       kind: item.csvKind as CsvUploadKind,
       rowCount: item.rowCount, // データ数
-      deleted: false, // バックエンドのビューは is_deleted=false のみを返す
+      deleted: false, // バックエンドは is_deleted=false のみを返す
     }));
   }
 
@@ -114,18 +114,18 @@ export class UploadCalendarRepositoryImpl implements UploadCalendarRepository {
       return Promise.resolve();
     }
 
-    // id は "date-csvKind" 形式なので upload_file_id に変換する必要がある
-    // 実装の簡略化のため、ここでは削除APIを呼び出すが、
-    // 実際には upload_file_id を別途取得する必要がある
-    // TODO: フロントエンドのデータ構造を見直して upload_file_id を保持するようにする
+    // id は upload_file_id の文字列表現
+    const uploadFileId = parseInt(id, 10);
+    if (isNaN(uploadFileId)) {
+      throw new Error(`無効なアップロードID: ${id}`);
+    }
     
-    // 暫定実装: id から upload_file_id を抽出できないため、
-    // この機能は後続の実装で対応する
-    console.warn('Delete functionality requires upload_file_id. Current id format:', id);
-    throw new Error('削除機能は現在準備中です。upload_file_id が必要です。');
+    // バックエンドのDELETEエンドポイントを呼び出し
+    await coreApi.delete<DeleteResponse>(
+      `/core_api/database/upload-calendar/${uploadFileId}`
+    );
     
-    // 本来の実装（upload_file_id が分かる場合）:
-    // await coreApi.delete<DeleteResponse>(`/database/upload-calendar/${uploadFileId}`);
+    console.log(`Deleted upload_file: ${uploadFileId}`);
   }
 }
 

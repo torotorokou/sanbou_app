@@ -59,7 +59,8 @@ export async function fetchTargetMetrics(
   // Check cache first
   const cached = cache.get(cacheKey);
   if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
-    console.log(`[fetchTargetMetrics] Cache hit for ${cacheKey}`);
+    // キャッシュヒットのログは冗長なため削除（必要に応じてコメント解除）
+    // console.log(`[fetchTargetMetrics] Cache hit for ${cacheKey}`);
     return cached.data;
   }
   
@@ -73,6 +74,7 @@ export async function fetchTargetMetrics(
   // Create new request and track it
   const requestPromise = (async () => {
     try {
+      console.log(`[fetchTargetMetrics] Fetching ${cacheKey}...`);
       // Use coreApi instead of fetch
       const data = await coreApi.get<TargetMetricsDTO>(
         `/core_api/dashboard/target?date=${date}&mode=${mode}`
@@ -80,11 +82,11 @@ export async function fetchTargetMetrics(
       
       // Store in cache
       cache.set(cacheKey, { data, timestamp: Date.now() });
-      console.log(`[fetchTargetMetrics] Fetched and cached ${cacheKey}`);
+      console.log(`[fetchTargetMetrics] ✓ Fetched and cached ${cacheKey}`);
       
       return data;
     } catch (error) {
-      console.error(`[fetchTargetMetrics] Error fetching ${cacheKey}:`, error);
+      console.error(`[fetchTargetMetrics] ✗ Error fetching ${cacheKey}:`, error);
       throw error;
     } finally {
       // Clean up in-flight request tracker

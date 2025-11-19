@@ -18,7 +18,7 @@ from typing import Optional, Dict, Any
 from datetime import datetime
 import pandas as pd
 from sqlalchemy.orm import Session
-from sqlalchemy import text, Table, MetaData, Column, Integer, BigInteger, Text, String, DateTime, ForeignKey
+from sqlalchemy import text, Table, MetaData, Column, Integer, BigInteger, Text, String, DateTime, Boolean, ForeignKey
 
 logger = logging.getLogger(__name__)
 
@@ -48,7 +48,7 @@ class RawDataRepository:
             Column('row_count', Integer, nullable=True),
             Column('uploaded_at', DateTime(timezone=True), server_default=text('CURRENT_TIMESTAMP'), nullable=False),
             Column('uploaded_by', String(100), nullable=True),
-            Column('is_deleted', Integer, nullable=False, server_default=text('false')),  # 論理削除フラグ
+            Column('is_deleted', Boolean, nullable=False, server_default=text('false')),  # 論理削除フラグ
             Column('deleted_at', DateTime(timezone=True), nullable=True),
             Column('deleted_by', Text, nullable=True),
             Column('processing_status', String(20), server_default='pending', nullable=False),

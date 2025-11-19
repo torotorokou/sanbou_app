@@ -264,9 +264,10 @@ def get_upload_calendar(
     db: Session = Depends(get_db),
 ):
     """
-    CSV アップロードカレンダー用の日次集計データを取得
+    CSV アップロードカレンダー用のアップロードファイル情報を取得
     
-    指定された年月の全日付について、各 CSV 種別のアップロード状況を取得します。
+    指定された年月の全アップロードファイルについて、
+    データ日付、CSV種別、行数、upload_file_idを取得します。
     論理削除されたファイルのデータは除外されます。
     
     Args:
@@ -280,7 +281,8 @@ def get_upload_calendar(
                 {
                     "date": "2025-11-01",
                     "csvKind": "shogun_flash_receive",
-                    "rowCount": 1234
+                    "rowCount": 1234,
+                    "uploadFileId": 42
                 },
                 ...
             ]
@@ -295,16 +297,111 @@ def get_upload_calendar(
         start_date = date(year, month, 1)
         end_date = date(year, month, last_day)
         
-        # mart.v_csv_calendar_daily から集計データを取得
+        # log.upload_file から各CSVファイルのデータを取得し、
+        # 各テーブルから該当するデータ日付と行数を集計
         sql = text("""
-            SELECT
+            WITH upload_data AS (
+                -- 将軍速報版 受入
+                SELECT 
+                    uf.id AS upload_file_id,
+                    s.slip_date AS data_date,
+                    'shogun_flash_receive'::text AS csv_kind,
+                    COUNT(*) AS row_count
+                FROM log.upload_file uf
+                JOIN stg.receive_shogun_flash s ON s.upload_file_id = uf.id
+                WHERE uf.is_deleted = false
+                  AND s.slip_date IS NOT NULL
+                  AND s.slip_date >= :start_date
+                  AND s.slip_date <= :end_date
+                GROUP BY uf.id, s.slip_date
+                
+                UNION ALL
+                
+                -- 将軍速報版 出荷
+                SELECT 
+                    uf.id AS upload_file_id,
+                    s.slip_date AS data_date,
+                    'shogun_flash_shipment'::text AS csv_kind,
+                    COUNT(*) AS row_count
+                FROM log.upload_file uf
+                JOIN stg.shipment_shogun_flash s ON s.upload_file_id = uf.id
+                WHERE uf.is_deleted = false
+                  AND s.slip_date IS NOT NULL
+                  AND s.slip_date >= :start_date
+                  AND s.slip_date <= :end_date
+                GROUP BY uf.id, s.slip_date
+                
+                UNION ALL
+                
+                -- 将軍速報版 ヤード
+                SELECT 
+                    uf.id AS upload_file_id,
+                    s.slip_date AS data_date,
+                    'shogun_flash_yard'::text AS csv_kind,
+                    COUNT(*) AS row_count
+                FROM log.upload_file uf
+                JOIN stg.yard_shogun_flash s ON s.upload_file_id = uf.id
+                WHERE uf.is_deleted = false
+                  AND s.slip_date IS NOT NULL
+                  AND s.slip_date >= :start_date
+                  AND s.slip_date <= :end_date
+                GROUP BY uf.id, s.slip_date
+                
+                UNION ALL
+                
+                -- 将軍最終版 受入
+                SELECT 
+                    uf.id AS upload_file_id,
+                    s.slip_date AS data_date,
+                    'shogun_final_receive'::text AS csv_kind,
+                    COUNT(*) AS row_count
+                FROM log.upload_file uf
+                JOIN stg.receive_shogun_final s ON s.upload_file_id = uf.id
+                WHERE uf.is_deleted = false
+                  AND s.slip_date IS NOT NULL
+                  AND s.slip_date >= :start_date
+                  AND s.slip_date <= :end_date
+                GROUP BY uf.id, s.slip_date
+                
+                UNION ALL
+                
+                -- 将軍最終版 出荷
+                SELECT 
+                    uf.id AS upload_file_id,
+                    s.slip_date AS data_date,
+                    'shogun_final_shipment'::text AS csv_kind,
+                    COUNT(*) AS row_count
+                FROM log.upload_file uf
+                JOIN stg.shipment_shogun_final s ON s.upload_file_id = uf.id
+                WHERE uf.is_deleted = false
+                  AND s.slip_date IS NOT NULL
+                  AND s.slip_date >= :start_date
+                  AND s.slip_date <= :end_date
+                GROUP BY uf.id, s.slip_date
+                
+                UNION ALL
+                
+                -- 将軍最終版 ヤード
+                SELECT 
+                    uf.id AS upload_file_id,
+                    s.slip_date AS data_date,
+                    'shogun_final_yard'::text AS csv_kind,
+                    COUNT(*) AS row_count
+                FROM log.upload_file uf
+                JOIN stg.yard_shogun_final s ON s.upload_file_id = uf.id
+                WHERE uf.is_deleted = false
+                  AND s.slip_date IS NOT NULL
+                  AND s.slip_date >= :start_date
+                  AND s.slip_date <= :end_date
+                GROUP BY uf.id, s.slip_date
+            )
+            SELECT 
+                upload_file_id,
                 data_date,
                 csv_kind,
                 row_count
-            FROM mart.v_csv_calendar_daily
-            WHERE data_date >= :start_date
-              AND data_date <= :end_date
-            ORDER BY data_date, csv_kind
+            FROM upload_data
+            ORDER BY data_date, csv_kind, upload_file_id
         """)
         
         result = db.execute(sql, {
@@ -315,9 +412,10 @@ def get_upload_calendar(
         
         items = [
             {
-                "date": row[0].isoformat(),
-                "csvKind": row[1],
-                "rowCount": row[2]
+                "uploadFileId": row[0],
+                "date": row[1].strftime("%Y-%m-%d"),  # 'YYYY-MM-DD' 形式
+                "csvKind": row[2],
+                "rowCount": row[3]
             }
             for row in rows
         ]
