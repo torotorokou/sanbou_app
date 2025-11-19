@@ -156,6 +156,12 @@ export function useDatasetImportVM(opts?: DatasetImportVMOptions) {
           setStatus({});
           setPreviews({});
           setSkipped({});
+          
+          // アップロード完了コールバックを呼び出し
+          if (opts?.onUploadComplete) {
+            console.log('[useDatasetImportVM] Calling onUploadComplete callback');
+            opts.onUploadComplete();
+          }
         }
       }
     });
@@ -164,7 +170,7 @@ export function useDatasetImportVM(opts?: DatasetImportVMOptions) {
     return () => {
       unsubscribe();
     };
-  }, []); // 依存配列を空にして、マウント時のみ実行
+  }, [opts]); // opts を依存配列に追加
 
   const canUpload = useMemo(() => {
     // ポーリング中はアップロード不可

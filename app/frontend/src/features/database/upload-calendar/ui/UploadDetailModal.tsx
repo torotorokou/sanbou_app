@@ -26,8 +26,8 @@ export const UploadDetailModal: React.FC<UploadDetailModalProps> = ({
 }) => {
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  const handleDelete = async (id: string, fileName: string) => {
-    const confirmed = window.confirm(`「${fileName}」を削除しますか？`);
+  const handleDelete = async (id: string, rowCount: number) => {
+    const confirmed = window.confirm(`データ数: ${rowCount.toLocaleString()}行 を削除しますか？`);
     if (!confirmed) return;
 
     setDeletingId(id);
@@ -48,10 +48,10 @@ export const UploadDetailModal: React.FC<UploadDetailModalProps> = ({
 
   const columns = [
     {
-      title: '種別',
+      title: 'カテゴリ',
       dataIndex: 'kind',
-      key: 'kind',
-      width: '30%',
+      key: 'category',
+      width: '25%',
       render: (kind: string) => {
         const master = getCsvUploadKindMaster(kind as UploadCalendarItem['kind']);
         return (
@@ -65,28 +65,42 @@ export const UploadDetailModal: React.FC<UploadDetailModalProps> = ({
                 backgroundColor: master?.color || '#d9d9d9',
               }}
             />
-            <span>{master?.label || kind}</span>
+            <span>{master?.category || kind}</span>
           </Space>
         );
       },
     },
     {
-      title: 'ファイル名',
-      dataIndex: 'fileName',
-      key: 'fileName',
-      ellipsis: true,
+      title: 'CSV種別',
+      dataIndex: 'kind',
+      key: 'kind',
+      width: '25%',
+      render: (kind: string) => {
+        const master = getCsvUploadKindMaster(kind as UploadCalendarItem['kind']);
+        // ラベルから「将軍速報版 」などのプレフィックスを除いた部分を表示
+        const label = master?.label || kind;
+        const parts = label.split(' ');
+        return parts.length > 1 ? parts.slice(1).join(' ') : label;
+      },
+    },
+    {
+      title: 'データ数',
+      dataIndex: 'rowCount',
+      key: 'rowCount',
+      width: '25%',
+      render: (count: number) => `${count.toLocaleString()}行`,
     },
     {
       title: '操作',
       key: 'action',
-      width: 80,
+      width: '25%',
       render: (_: unknown, record: UploadCalendarItem) => (
         <Button
           type="text"
           danger
           icon={<DeleteOutlined />}
           loading={deletingId === record.id}
-          onClick={() => void handleDelete(record.id, record.fileName)}
+          onClick={() => void handleDelete(record.id, record.rowCount)}
         >
           削除
         </Button>

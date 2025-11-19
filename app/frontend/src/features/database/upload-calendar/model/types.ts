@@ -22,7 +22,7 @@ export interface UploadCalendarItem {
   id: string;
   date: string;      // 'YYYY-MM-DD'
   kind: CsvUploadKind;
-  fileName: string;
+  rowCount: number;  // データ数（行数）
   deleted: boolean;  // is_deleted のフロント側表現
 }
 
