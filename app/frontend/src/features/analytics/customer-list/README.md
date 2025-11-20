@@ -38,7 +38,7 @@ analysis/
 ## 使用例
 
 ```typescript
-import { useCustomerComparison, CustomerComparisonResultCard } from '@features/analysis';
+import { useCustomerComparison, CustomerComparisonResultCard } from '@features/analytics/customer-list';
 
 const { targetCustomers, onlyCompare } = useCustomerComparison(
   ['2024-04', '2024-05'],
