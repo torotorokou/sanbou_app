@@ -1,12 +1,12 @@
 /**
- * CSV ファイル検証フック（共通）
+ * CSV ファイル検証フック
  * 
  * database と report の両方で使用できる汎用的な検証フック
  */
 
 import { useCallback, useState } from 'react';
-import { validateHeaders } from './csvHeaderValidator';
-import type { ValidationStatus } from './types';
+import { validateHeaders } from '../core/csvHeaderValidator';
+import type { CsvValidationStatus } from '../model/validationStatus';
 
 export interface CsvFileValidatorOptions {
   /** ラベルごとの必須ヘッダーを取得する関数 */
@@ -19,13 +19,13 @@ export interface CsvFileValidatorOptions {
  * CSV ファイル検証フック
  */
 export function useCsvFileValidator(options?: CsvFileValidatorOptions) {
-  const [validationResults, setValidationResults] = useState<Record<string, ValidationStatus>>({});
+  const [validationResults, setValidationResults] = useState<Record<string, CsvValidationStatus>>({});
   
   /**
    * ファイルを検証
    */
   const validateFile = useCallback(
-    async (label: string, file: File): Promise<ValidationStatus> => {
+    async (label: string, file: File): Promise<CsvValidationStatus> => {
       try {
         // 必須ヘッダーの取得
         const requiredHeaders = options?.getRequiredHeaders?.(label);
@@ -43,7 +43,7 @@ export function useCsvFileValidator(options?: CsvFileValidatorOptions) {
         if (status === 'valid' && options?.onValidate) {
           const text = await file.text();
           const customValid = await options.onValidate(label, file, text);
-          const finalStatus: ValidationStatus = customValid ? 'valid' : 'invalid';
+          const finalStatus: CsvValidationStatus = customValid ? 'valid' : 'invalid';
           setValidationResults(prev => ({ ...prev, [label]: finalStatus }));
           return finalStatus;
         }
@@ -70,7 +70,7 @@ export function useCsvFileValidator(options?: CsvFileValidatorOptions) {
    * 検証結果を取得
    */
   const getValidationResult = useCallback(
-    (label: string): ValidationStatus => {
+    (label: string): CsvValidationStatus => {
       return validationResults[label] ?? 'unknown';
     },
     [validationResults]

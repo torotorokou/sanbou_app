@@ -7,3 +7,4 @@
 export * from './types';
 export * from './datasets';
 export * from './selectors';
+export * from './rules';

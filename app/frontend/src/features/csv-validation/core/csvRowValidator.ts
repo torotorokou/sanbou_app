@@ -2,7 +2,7 @@
  * CSV 行検証（将来的な拡張用）
  */
 
-import type { ValidationStatus } from '../../shared/types/common';
+import type { ValidationStatus } from '@/shared';
 
 export async function validateRows(
   // eslint-disable-next-line @typescript-eslint/no-unused-vars

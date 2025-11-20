@@ -2,11 +2,11 @@
  * アップロードカレンダー - 型定義
  */
 
-import type { CsvKind } from '@/shared';
+import type { CsvKind } from '../../shared/types/common';
 
 /**
  * CSV種別（アップロード対象の種類）
- * 注: 将軍CSV種別は @shared/types/csvKind の CsvKind と統一されています
+ * 注: 将軍CSV種別は database/shared/types/csvKind の CsvKind と統一されています
  */
 export type CsvUploadKind =
   | CsvKind

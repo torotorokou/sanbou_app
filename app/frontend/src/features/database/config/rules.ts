@@ -1,11 +1,11 @@
 /**
- * バリデーションルール定義
+ * バリデーションルール定義（Database Feature 専用）
  * 
- * @deprecated このファイルの必須CSV定義は config/datasets.ts に移行済みです。
- * 新規コードでは config を直接使用してください。
+ * データセット別の必須CSV定義を提供します。
+ * DATASETS から自動生成され、UploadGuide コンポーネントで使用されます。
  */
 
-import { DATASETS } from '@features/database/config';
+import { DATASETS } from './datasets';
 
 export interface ValidationRule {
   field: string;

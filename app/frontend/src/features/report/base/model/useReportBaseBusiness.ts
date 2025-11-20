@@ -1,6 +1,6 @@
 import { useCallback, useEffect } from 'react';
 import type { UploadProps } from 'antd/es/upload';
-import { useCsvFileValidator } from '@shared';
+import { useCsvFileValidator } from '@features/csv-validation';
 import { useReportArtifact } from '@features/report/preview/model/useReportArtifact';
 import type {
     CsvFiles,
