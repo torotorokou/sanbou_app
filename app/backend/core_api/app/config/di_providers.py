@@ -73,9 +73,9 @@ def get_repo_stg_final(db: Session = Depends(get_db)) -> ShogunCsvRepository:
         db,
         schema="stg",
         table_map={
-            "receive": "receive_shogun_final",
-            "yard": "yard_shogun_final",
-            "shipment": "shipment_shogun_final",
+            "receive": "shogun_final_receive",
+            "yard": "shogun_final_yard",
+            "shipment": "shogun_final_shipment",
         },
     )
 
@@ -88,9 +88,9 @@ def get_repo_raw_final(db: Session = Depends(get_db)) -> ShogunCsvRepository:
         db,
         schema="raw",
         table_map={
-            "receive": "receive_shogun_final",
-            "yard": "yard_shogun_final",
-            "shipment": "shipment_shogun_final",
+            "receive": "shogun_final_receive",
+            "yard": "shogun_final_yard",
+            "shipment": "shogun_final_shipment",
         },
     )
 
@@ -133,7 +133,7 @@ def get_uc_default(
     raw_data_repo: RawDataRepository = Depends(get_raw_data_repo),
     mv_refresher: MaterializedViewRefresher = Depends(get_mv_refresher)
 ) -> UploadShogunCsvUseCase:
-    """デフォルト用のUploadShogunCsvUseCase (raw.receive_shogun_flash + stg.receive_shogun_flash)"""
+    """デフォルト用のUploadShogunCsvUseCase (raw.shogun_flash_receive + stg.shogun_flash_receive)"""
     return UploadShogunCsvUseCase(
         raw_writer=raw_repo,
         stg_writer=stg_repo,
@@ -150,7 +150,7 @@ def get_uc_flash(
     raw_data_repo: RawDataRepository = Depends(get_raw_data_repo),
     mv_refresher: MaterializedViewRefresher = Depends(get_mv_refresher)
 ) -> UploadShogunCsvUseCase:
-    """Flash用のUploadShogunCsvUseCase (raw.receive_shogun_flash + stg.receive_shogun_flash)"""
+    """Flash用のUploadShogunCsvUseCase (raw.shogun_flash_receive + stg.shogun_flash_receive)"""
     return UploadShogunCsvUseCase(
         raw_writer=raw_repo,
         stg_writer=stg_repo,

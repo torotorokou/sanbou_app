@@ -51,7 +51,7 @@ def upgrade() -> None:
             s.slip_date::date              AS data_date,
             'shogun_flash_receive'::text   AS csv_kind,
             COUNT(*)                       AS row_count
-        FROM stg.receive_shogun_flash s
+        FROM stg.shogun_flash_receive s
         JOIN log.upload_file uf
           ON uf.id = s.upload_file_id
          AND uf.is_deleted = false
@@ -67,7 +67,7 @@ def upgrade() -> None:
             s.slip_date::date           AS data_date,
             'shogun_flash_yard'::text   AS csv_kind,
             COUNT(*)                    AS row_count
-        FROM stg.yard_shogun_flash s
+        FROM stg.shogun_flash_yard s
         JOIN log.upload_file uf
           ON uf.id = s.upload_file_id
          AND uf.is_deleted = false
@@ -83,7 +83,7 @@ def upgrade() -> None:
             s.slip_date::date               AS data_date,
             'shogun_flash_shipment'::text   AS csv_kind,
             COUNT(*)                        AS row_count
-        FROM stg.shipment_shogun_flash s
+        FROM stg.shogun_flash_shipment s
         JOIN log.upload_file uf
           ON uf.id = s.upload_file_id
          AND uf.is_deleted = false
@@ -103,7 +103,7 @@ def upgrade() -> None:
             s.slip_date::date              AS data_date,
             'shogun_final_receive'::text   AS csv_kind,
             COUNT(*)                       AS row_count
-        FROM stg.receive_shogun_final s
+        FROM stg.shogun_final_receive s
         JOIN log.upload_file uf
           ON uf.id = s.upload_file_id
          AND uf.is_deleted = false
@@ -119,7 +119,7 @@ def upgrade() -> None:
             s.slip_date::date           AS data_date,
             'shogun_final_yard'::text   AS csv_kind,
             COUNT(*)                    AS row_count
-        FROM stg.yard_shogun_final s
+        FROM stg.shogun_final_yard s
         JOIN log.upload_file uf
           ON uf.id = s.upload_file_id
          AND uf.is_deleted = false
@@ -135,7 +135,7 @@ def upgrade() -> None:
             s.slip_date::date               AS data_date,
             'shogun_final_shipment'::text   AS csv_kind,
             COUNT(*)                        AS row_count
-        FROM stg.shipment_shogun_final s
+        FROM stg.shogun_final_shipment s
         JOIN log.upload_file uf
           ON uf.id = s.upload_file_id
          AND uf.is_deleted = false

@@ -32,18 +32,18 @@ class Settings(BaseSettings):
     # Shogun CSV Table Mapping (CSVタイプ → DBテーブル名)
     # フロントエンドから送られてくるキー名 → DBスキーマ.テーブル名
     CSV_TABLE_MAPPING: dict[str, str] = {
-        "receive": "stg.receive_shogun_flash",    # 受入一覧
-        "yard": "stg.yard_shogun_flash",          # ヤード一覧
-        "shipment": "stg.shipment_shogun_flash",  # 出荷一覧
+        "receive": "stg.shogun_flash_receive",    # 受入一覧
+        "yard": "stg.shogun_flash_yard",          # ヤード一覧
+        "shipment": "stg.shogun_flash_shipment",  # 出荷一覧
     }
     
     # Shogun CSV Schema Name
     SHOGUN_CSV_SCHEMA: str = os.getenv("SHOGUN_CSV_SCHEMA", "stg")
     
     # Shogun CSV Table Names (変更しやすいように個別に定義)
-    RECEIVE_TABLE_NAME: str = os.getenv("RECEIVE_TABLE_NAME", "receive_shogun_flash")
-    YARD_TABLE_NAME: str = os.getenv("YARD_TABLE_NAME", "yard_shogun_flash")
-    SHIPMENT_TABLE_NAME: str = os.getenv("SHIPMENT_TABLE_NAME", "shipment_shogun_flash")
+    RECEIVE_TABLE_NAME: str = os.getenv("RECEIVE_TABLE_NAME", "shogun_flash_receive")
+    YARD_TABLE_NAME: str = os.getenv("YARD_TABLE_NAME", "shogun_flash_yard")
+    SHIPMENT_TABLE_NAME: str = os.getenv("SHIPMENT_TABLE_NAME", "shogun_flash_shipment")
     
     # API Settings
     LEDGER_API_BASE: str = os.getenv("LEDGER_API_BASE", "http://ledger_api:8002")
@@ -71,7 +71,7 @@ class Settings(BaseSettings):
             csv_type: CSV種別 ('receive', 'yard', 'shipment')
             
         Returns:
-            str: スキーマ.テーブル名 (例: 'raw.receive_shogun_flash')
+            str: スキーマ.テーブル名 (例: 'stg.shogun_flash_receive')
         """
         table_mapping = {
             "receive": f"{self.SHOGUN_CSV_SCHEMA}.{self.RECEIVE_TABLE_NAME}",
