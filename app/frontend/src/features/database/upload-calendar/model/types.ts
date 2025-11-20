@@ -2,7 +2,7 @@
  * アップロードカレンダー - 型定義
  */
 
-import type { CsvKind } from '@shared/types/csvKind';
+import type { CsvKind } from '@/shared';
 
 /**
  * CSV種別（アップロード対象の種類）

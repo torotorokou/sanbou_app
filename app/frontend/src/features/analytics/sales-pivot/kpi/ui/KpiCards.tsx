@@ -29,26 +29,21 @@ export const KpiCards: React.FC<KpiCardsProps> = ({
 }) => {
   if (!hasSelection) {
     return (
-      <Card className="accent-card accent-gold">
+      <Card className="sales-tree-accent-card sales-tree-accent-gold">
         <div style={{ padding: 12 }}>
           <Typography.Text type="secondary">
             営業が未選択のため、KPIは表示されません。左上の「営業」から選択してください。
           </Typography.Text>
         </div>
-
-        <style>{`
-          .accent-card { border-left: 4px solid #23780410; overflow: hidden; }
-          .accent-gold { border-left-color: #faad14; }
-        `}</style>
       </Card>
     );
   }
 
   return (
     <Card
-      className="accent-card accent-gold"
+      className="sales-tree-accent-card sales-tree-accent-gold"
       title={
-        <div className="card-section-header">
+        <div className="sales-tree-card-section-header">
           KPI（営業：
           <Tooltip title={selectedRepLabel}>
             <span>{selectedRepLabel}</span>
@@ -86,19 +81,6 @@ export const KpiCards: React.FC<KpiCardsProps> = ({
           />
         </Col>
       </Row>
-
-      <style>{`
-        .accent-card { border-left: 4px solid #23780410; overflow: hidden; }
-        .accent-gold { border-left-color: #faad14; }
-        .card-section-header { 
-          font-weight: 600; 
-          padding: 6px 10px; 
-          margin-bottom: 12px; 
-          border-radius: 6px; 
-          background: #f3fff4; 
-          border: 1px solid #e6f7e6; 
-        }
-      `}</style>
     </Card>
   );
 };

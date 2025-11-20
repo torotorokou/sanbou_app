@@ -5,7 +5,7 @@
  * ファイル名ヒント、プレビュー設定、アップロード先など）を統一管理する。
  */
 
-import type { CsvKind } from '@shared/types/csvKind';
+import type { CsvKind } from '@/shared';
 
 export type DatasetKey = 'shogun_flash_debug' | 'shogun_flash' | 'shogun_final' | 'manifest';
 

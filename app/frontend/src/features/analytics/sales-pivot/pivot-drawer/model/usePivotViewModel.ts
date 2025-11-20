@@ -14,7 +14,6 @@ import type {
   SummaryQuery,
 } from '../../shared/model/types';
 import type { SalesPivotRepository } from '../../shared/api/salesPivot.repository';
-import { axesFromMode } from '../../shared/model/metrics';
 
 export interface UsePivotViewModelParams {
   repository: SalesPivotRepository;
@@ -156,7 +155,6 @@ export function usePivotViewModel(params: UsePivotViewModelParams): UsePivotView
   useEffect(() => {
     if (!drawer.open) return;
     void loadPivot(drawer.activeAxis, true);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     drawer.open,
     drawer.open ? drawer.activeAxis : null,

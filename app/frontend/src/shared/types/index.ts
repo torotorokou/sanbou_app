@@ -3,6 +3,7 @@
 
 export * from './api';
 export * from './validation';
+export * from './csvKind';
 
 // yaml.d.ts は型定義ファイルなので自動的に利用可能
 

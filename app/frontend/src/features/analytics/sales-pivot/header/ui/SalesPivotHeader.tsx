@@ -127,11 +127,11 @@ export const SalesPivotHeader: React.FC<SalesPivotHeaderProps> = ({
   };
 
   return (
-    <div className="app-header">
-      <Typography.Title level={3} className="app-title">
-        <span className="app-title-accent">売上ツリー</span>
+    <div className="sales-tree-header">
+      <Typography.Title level={3} className="sales-tree-title">
+        <span className="sales-tree-title-accent">売上ツリー</span>
       </Typography.Title>
-      <div className="app-header-actions">
+      <div className="sales-tree-header-actions">
         {!canExport ? (
           <Tooltip title="営業が未選択のためCSV出力できません">
             <Button icon={<DownloadOutlined />} type="default" disabled>

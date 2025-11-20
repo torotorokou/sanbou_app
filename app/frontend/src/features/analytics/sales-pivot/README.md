@@ -29,8 +29,7 @@ sales-pivot/
 │   ├── api/           # Repository
 │   ├── model/         # 型定義・ユーティリティ
 │   └── ui/            # 共通UIコンポーネント
-├── model/             # 統合ViewModel（互換性維持）
-├── ui/                # 統合ページ（互換性維持）
+├── model/             # スライス横断型ユーティリティ（旧統合ViewModelは削除済み）
 └── index.ts           # 公開API
 ```
 
@@ -66,10 +65,9 @@ sales-pivot/
 
 ## 🔧 使用方法
 
-### 統合ページ（既存互換）
-```tsx
-import SalesPivotBoardPage from '@/features/analytics/sales-pivot';
-```
+### 統合ページ（廃止）
+旧 `SalesPivotBoardPage` およびその統合ViewModelは分割完了に伴い削除済み（2025-11-20）。
+今後は必要なスライスの ViewModel Hook と UI コンポーネントを個別にインポートしてください。
 
 ### スライス単位で使用
 ```tsx
@@ -115,3 +113,4 @@ import { SalesPivotLayout } from '@/pages/analytics/SalesTreePage';
   - 共通UI層作成 (SortBadge, MiniBarChart, EmptyStateCard, styles)
   - export-menu, detail-chart スライス追加
   - レイアウトをpages層に統合（layoutsディレクトリ削除）
+  - 旧統合ページ `SalesPivotBoardPage` 削除（レガシー互換終了）

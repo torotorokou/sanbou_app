@@ -18,13 +18,14 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { fmtCurrency, fmtNumber, fmtUnitPrice } from '../../shared/model/metrics';
+import type { MetricEntry, SummaryQuery } from '../../shared/model/types';
 
 interface MetricChartProps {
-  data: any[];
-  series: any[] | undefined;
+  data: MetricEntry[];
+  series: unknown[] | undefined;
   repName: string;
   onLoadSeries: () => Promise<void>;
-  query: any;
+  query: SummaryQuery;
 }
 
 /**
@@ -37,7 +38,7 @@ export const MetricChart: React.FC<MetricChartProps> = ({
   onLoadSeries,
   query,
 }) => {
-  const chartBarData = data.map((d: any) => ({
+  const chartBarData = data.map((d: MetricEntry) => ({
     name: d.name,
     売上: d.amount,
     数量: d.qty,

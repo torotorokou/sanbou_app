@@ -28,10 +28,12 @@ export { useKpiViewModel } from './kpi/model/useKpiViewModel';
 export type { UseKpiViewModelParams, UseKpiViewModelResult } from './kpi/model/useKpiViewModel';
 
 // ========== Summary Table Slice ==========
+export * from './summary-table/ui';
 export { useSummaryViewModel } from './summary-table/model/useSummaryViewModel';
 export type { UseSummaryViewModelParams, UseSummaryViewModelResult } from './summary-table/model/useSummaryViewModel';
 
 // ========== Pivot Drawer Slice ==========
+export * from './pivot-drawer/ui';
 export { usePivotViewModel } from './pivot-drawer/model/usePivotViewModel';
 export type { UsePivotViewModelParams, UsePivotViewModelResult } from './pivot-drawer/model/usePivotViewModel';
 
@@ -41,6 +43,4 @@ export * from './export-menu/ui';
 // ========== Detail Chart Slice ==========
 export * from './detail-chart/ui';
 
-// ========== Integrated Page (後方互換性のため残す) ==========
-export { default as SalesPivotBoardPage } from './ui/SalesPivotBoardPage';
-export { default } from './ui/SalesPivotBoardPage';
+// （旧）統合ページ `SalesPivotBoardPage` は削除済み（2025-11-20）
