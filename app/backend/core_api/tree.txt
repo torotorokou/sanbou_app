@@ -11,8 +11,12 @@
 │   ├── app.py
 │   ├── application
 │   │   ├── __init__.py
+│   │   ├── __pycache__
+│   │   │   └── __init__.cpython-312.pyc
 │   │   └── usecases
 │   │       ├── __init__.py
+│   │       ├── __pycache__
+│   │       │   └── __init__.cpython-312.pyc
 │   │       ├── dashboard
 │   │       │   ├── __init__.py
 │   │       │   └── build_target_card_uc.py
@@ -30,10 +34,14 @@
 │   │       │   └── ingest_uc.py
 │   │       ├── kpi
 │   │       │   ├── __init__.py
+│   │       │   ├── __pycache__
+│   │       │   │   ├── __init__.cpython-312.pyc
+│   │       │   │   └── kpi_uc.cpython-312.pyc
+│   │       │   ├── kpi_service.py
 │   │       │   └── kpi_uc.py
 │   │       └── upload
 │   │           ├── __init__.py
-│   │           └── upload_syogun_csv_uc.py
+│   │           └── upload_shogun_csv_uc.py
 │   ├── config
 │   │   ├── __init__.py
 │   │   ├── di_providers.py
@@ -45,18 +53,25 @@
 │   │   │   ├── __init__.cpython-312.pyc
 │   │   │   ├── models.cpython-312.pyc
 │   │   │   └── shogun_flash_schemas.cpython-312.pyc
+│   │   ├── csv
+│   │   │   ├── __init__.py
+│   │   │   └── csv_kind.py
 │   │   ├── entities
 │   │   │   └── __init__.py
 │   │   ├── inbound.py
 │   │   ├── models.py
 │   │   ├── ports
 │   │   │   ├── __init__.py
+│   │   │   ├── __pycache__
+│   │   │   │   ├── __init__.cpython-312.pyc
+│   │   │   │   └── kpi_port.cpython-312.pyc
 │   │   │   ├── csv_writer_port.py
 │   │   │   ├── dashboard_query_port.py
 │   │   │   ├── external_api_port.py
 │   │   │   ├── forecast_port.py
 │   │   │   ├── inbound_repository_port.py
-│   │   │   └── ingest_port.py
+│   │   │   ├── ingest_port.py
+│   │   │   └── kpi_port.py
 │   │   ├── rules.py
 │   │   ├── services
 │   │   │   ├── __init__.py
@@ -88,12 +103,19 @@
 │   │   │   ├── ingest
 │   │   │   │   ├── __init__.py
 │   │   │   │   └── ingest_adapter.py
+│   │   │   ├── kpi
+│   │   │   │   ├── __init__.py
+│   │   │   │   └── kpi_query_adapter.py
+│   │   │   ├── materialized_view
+│   │   │   │   ├── __init__.py
+│   │   │   │   └── materialized_view_refresher.py
 │   │   │   ├── misc
 │   │   │   │   ├── __init__.py
 │   │   │   │   ├── core_repo.py
 │   │   │   │   └── shogun_flash_debug_repo.py
 │   │   │   └── upload
 │   │   │       ├── __init__.py
+│   │   │       ├── raw_data_repository.py
 │   │   │       └── shogun_csv_repository.py
 │   │   ├── clients
 │   │   │   ├── __init__.py
@@ -112,6 +134,16 @@
 │   │   │   ├── db.py
 │   │   │   ├── dynamic_models.py
 │   │   │   ├── orm_models.py
+│   │   │   ├── sql
+│   │   │   │   ├── README.md
+│   │   │   │   ├── dashboard
+│   │   │   │   │   └── dashboard_target_repo__get_by_date_optimized.sql
+│   │   │   │   ├── forecast
+│   │   │   │   │   └── job_repo__claim_job.sql
+│   │   │   │   └── inbound
+│   │   │   │       ├── inbound_pg_repository__get_daily_with_comparisons.sql
+│   │   │   │       └── inbound_pg_repository__get_daily_with_cumulative.sql
+│   │   │   ├── sql_loader.py
 │   │   │   ├── sql_names.py
 │   │   │   └── table_definition.py
 │   │   └── http.py
@@ -172,13 +204,13 @@
 │   │   │       ├── __init__.py
 │   │   │       └── router.py
 │   │   └── schemas
-│   └── repositories
-│       └── __pycache__
-│           ├── __init__.cpython-312.pyc
-│           ├── core_repo.cpython-312.pyc
-│           ├── forecast_query_repo.cpython-312.pyc
-│           ├── job_repo.cpython-312.pyc
-│           └── orm_models.cpython-312.pyc
+│   │       └── __init__.py
+│   └── shared
+│       ├── __init__.py
+│       └── utils
+│           ├── __init__.py
+│           ├── df_normalizer.py
+│           └── json_sanitizer.py
 ├── docs
 │   ├── CSV_UPLOAD_IMPLEMENTATION.md
 │   ├── Dockerfile.bak.20251030_093302
@@ -225,6 +257,7 @@
 │   │   │   │   ├── mv_inb_avg5y_day_biz.sql
 │   │   │   │   ├── mv_inb_avg5y_day_scope.sql
 │   │   │   │   ├── mv_inb_avg5y_weeksum_biz.sql
+│   │   │   │   ├── mv_target_card_per_day.sql
 │   │   │   │   ├── receive_daily.sql
 │   │   │   │   ├── receive_monthly.sql
 │   │   │   │   ├── receive_weekly.sql
@@ -267,32 +300,70 @@
 │   │       ├── 20251105_174522163_drop_stg_v_king_receive_clean_min_and_.py
 │   │       ├── 20251105_174743743_drop_stg_v_king_receive_clean_legacy.py
 │   │       ├── 20251106_113719410_covering_index_for_king_invoice_d_.py
-│   │       └── _attic_2025-11-04
-│   │           ├── 001_initial_schema.py
-│   │           ├── 002_add_raw_shogun_tables.py
-│   │           ├── 454f7f0472db_manage_view_mart_receive_weekly.py
-│   │           ├── 4befa8148602_msg.py
-│   │           ├── 83f7cf7d956e_manage_view_mart_v_daily_target_with_.py
-│   │           ├── 9a092c4a1fcf_baseline_no_op.py
-│   │           ├── README.md
-│   │           ├── b3925aec6dda_manage_view_mart_receive_daily.py
-│   │           ├── d64c705dde4a_manage_view_mart_v_target_card_per_day.py
-│   │           ├── eb4da327ec9b_manage_view_mart_receive_monthly.py
-│   │           ├── env_legacy.py
-│   │           └── f59be045f166_baseline_no_op.py
+│   │       ├── 20251113_145848000_move_receive_tables_to_stg.py
+│   │       ├── 20251113_150255000_create_raw_upload_and_receive_raw_tables.py
+│   │       ├── 20251113_151137000_update_views_indexes_for_stg.py
+│   │       ├── 20251113_151556000_update_mart_receive_daily_view.py
+│   │       ├── 20251113_170000000_rename_receive_raw_columns_to_english.py
+│   │       ├── 20251113_171000000_create_raw_yard_shipment_tables.py
+│   │       ├── 20251113_172000000_create_stg_yard_shipment_tables.py
+│   │       ├── 20251113_173000000_rename_stg_receive_tables.py
+│   │       ├── 20251113_174000000_create_stg_final_tables.py
+│   │       ├── 20251113_175000000_create_raw_shogun_flash_final_tables.py
+│   │       ├── 20251113_180000000_change_raw_tables_to_all_text.py
+│   │       ├── 20251114_000600000_drop_plan_schema.py
+│   │       ├── 20251114_120000000_move_upload_file_to_log_and_extend.py
+│   │       ├── 20251114_130000000_add_upload_tracking_to_raw_tables.py
+│   │       ├── 20251114_130100000_add_upload_tracking_to_stg_tables.py
+│   │       ├── 20251114_130200000_add_duplicate_check_indexes.py
+│   │       ├── 20251114_200000000_enhance_upload_file_unique_constraint.py
+│   │       ├── 20251114_add_shipment_category.py
+│   │       ├── 20251114_remove_en_suffix.py
+│   │       ├── 20251117_135913797_create_mv_target_card_per_day.py
+│   │       ├── 20251119_100000000_add_soft_delete_to_upload_file.py
+│   │       ├── 20251119_110000000_partial_unique_index_for_soft_delete.py
+│   │       ├── 20251119_120000000_create_csv_calendar_daily_views.py
+│   │       ├── 20251119_130000000_add_soft_delete_to_stg_shogun_tables.py
+│   │       ├── 20251119_140000000_remove_unique_for_time_based_check.py
+│   │       ├── 20251120_091427843_rename_stg_shogun_tables_to_csv_kind.py
+│   │       ├── 20251120_092912697_rename_raw_shogun_tables_to_csv_kind.py
+│   │       ├── 20251120_150000000_update_views_for_renamed_tables.py
+│   │       ├── _attic_2025-11-04
+│   │       │   ├── 001_initial_schema.py
+│   │       │   ├── 002_add_raw_shogun_tables.py
+│   │       │   ├── 454f7f0472db_manage_view_mart_receive_weekly.py
+│   │       │   ├── 4befa8148602_msg.py
+│   │       │   ├── 83f7cf7d956e_manage_view_mart_v_daily_target_with_.py
+│   │       │   ├── 9a092c4a1fcf_baseline_no_op.py
+│   │       │   ├── README.md
+│   │       │   ├── b3925aec6dda_manage_view_mart_receive_daily.py
+│   │       │   ├── d64c705dde4a_manage_view_mart_v_target_card_per_day.py
+│   │       │   ├── eb4da327ec9b_manage_view_mart_receive_monthly.py
+│   │       │   ├── env_legacy.py
+│   │       │   └── f59be045f166_baseline_no_op.py
+│   │       ├── a4ae8a0272bd_merge_heads.py
+│   │       └── c42c526b6749_merge_duplicate_constraint_heads.py
 │   └── alembic.ini
+├── migrations.zip
 ├── pyproject.toml
 ├── requirements-dev.txt
 ├── requirements.txt
 ├── tests
 │   ├── test_inbound_daily.py
+│   ├── test_mv_refresh.py
 │   ├── test_shogun_flash_schemas.py
 │   └── unit
 │       └── application
-│           └── fakes
-│               ├── __init__.py
-│               └── fake_ports.py
-├── tree.txt
-└── tree_txt.txt
+│           ├── __pycache__
+│           │   └── test_kpi_uc.cpython-312-pytest-8.4.2.pyc
+│           ├── fakes
+│           │   ├── __init__.py
+│           │   ├── __pycache__
+│           │   │   ├── __init__.cpython-312.pyc
+│           │   │   └── fake_kpi_port.cpython-312.pyc
+│           │   ├── fake_kpi_port.py
+│           │   └── fake_ports.py
+│           └── test_kpi_uc.py
+└── tree.txt
 
-73 directories, 223 files
+86 directories, 281 files
