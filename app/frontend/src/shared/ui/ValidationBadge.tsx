@@ -7,7 +7,7 @@
 
 import React from 'react';
 import { Tag } from 'antd';
-import type { ValidationStatus } from '@/shared/types/validation';
+import type { ValidationStatus } from '@/shared';
 
 export interface ValidationBadgeProps {
   status: ValidationStatus;

@@ -4,11 +4,11 @@
  */
 
 import React from 'react';
-import { Card, Table, Tabs, Tag, Space, Button, Row, Col } from 'antd';
+import { Card, Table, Tabs, Tag, Space, Button } from 'antd';
 import type { TableColumnsType, TableProps } from 'antd';
-import { SwapOutlined, ReloadOutlined, InfoCircleOutlined } from '@ant-design/icons';
+import { SwapOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import { Tooltip } from 'antd';
-import type { SummaryRow, MetricEntry, Mode, SortKey, SortOrder } from '../../shared/model/types';
+import type { SummaryRow, MetricEntry, Mode, SortKey, SortOrder, SummaryQuery } from '../../shared/model/types';
 import { fmtCurrency, fmtNumber, fmtUnitPrice, axisLabel } from '../../shared/model/metrics';
 import { MetricChart } from './MetricChart';
 
@@ -31,10 +31,10 @@ interface ExpandedRowProps {
   sortBy: string;
   order: 'asc' | 'desc';
   onSortChange: (sortBy: string, order: 'asc' | 'desc') => void;
-  onRowClick: (repId: string) => void;
-  repSeriesCache: Record<string, any[]>;
+  onRowClick: (entry: MetricEntry) => void;
+  repSeriesCache: Record<string, unknown[]>;
   loadDailySeries: (repId: string) => Promise<void>;
-  query: any;
+  query: SummaryQuery;
 }
 
 /**
@@ -53,10 +53,10 @@ export const ExpandedRow: React.FC<ExpandedRowProps> = ({
   query,
 }) => {
   const data = row.topN;
-  const maxAmount = Math.max(1, ...data.map((x: any) => x.amount));
-  const maxQty = Math.max(1, ...data.map((x: any) => x.qty));
-  const maxCount = Math.max(1, ...data.map((x: any) => x.count));
-  const unitCandidates = data.map((x: any) => x.unit_price ?? 0);
+  const maxAmount = Math.max(1, ...data.map((x: MetricEntry) => x.amount));
+  const maxQty = Math.max(1, ...data.map((x: MetricEntry) => x.qty));
+  const maxCount = Math.max(1, ...data.map((x: MetricEntry) => x.count));
+  const unitCandidates = data.map((x: MetricEntry) => x.unit_price ?? 0);
   const maxUnit = Math.max(1, ...unitCandidates);
   const nameTitle = axisLabel(mode);
 
@@ -72,9 +72,9 @@ export const ExpandedRow: React.FC<ExpandedRowProps> = ({
       render: (v: number) => (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <span style={{ minWidth: 80, textAlign: 'right' }}>{fmtCurrency(v)}</span>
-          <div className="mini-bar-bg">
+          <div className="sales-tree-mini-bar-bg">
             <div
-              className="mini-bar mini-bar-blue"
+              className="sales-tree-mini-bar sales-tree-mini-bar-blue"
               style={{ width: `${Math.round((v / maxAmount) * 100)}%` }}
             />
           </div>
@@ -91,9 +91,9 @@ export const ExpandedRow: React.FC<ExpandedRowProps> = ({
       render: (v: number) => (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <span style={{ minWidth: 64, textAlign: 'right' }}>{fmtNumber(v)}</span>
-          <div className="mini-bar-bg">
+          <div className="sales-tree-mini-bar-bg">
             <div
-              className="mini-bar mini-bar-green"
+              className="sales-tree-mini-bar sales-tree-mini-bar-green"
               style={{ width: `${Math.round((v / maxQty) * 100)}%` }}
             />
           </div>
@@ -110,9 +110,9 @@ export const ExpandedRow: React.FC<ExpandedRowProps> = ({
       render: (v: number) => (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <span style={{ minWidth: 48, textAlign: 'right' }}>{fmtNumber(v)} 台</span>
-          <div className="mini-bar-bg">
+          <div className="sales-tree-mini-bar-bg">
             <div
-              className="mini-bar mini-bar-blue"
+              className="sales-tree-mini-bar sales-tree-mini-bar-blue"
               style={{ width: `${Math.round((v / maxCount) * 100)}%` }}
             />
           </div>
@@ -136,9 +136,9 @@ export const ExpandedRow: React.FC<ExpandedRowProps> = ({
       render: (v: number | null) => (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'flex-end' }}>
           <span style={{ minWidth: 64, textAlign: 'right' }}>{fmtUnitPrice(v)}</span>
-          <div className="mini-bar-bg">
+          <div className="sales-tree-mini-bar-bg">
             <div
-              className="mini-bar mini-bar-gold"
+              className="sales-tree-mini-bar sales-tree-mini-bar-gold"
               style={{ width: `${v ? Math.round((v / maxUnit) * 100) : 0}%` }}
             />
           </div>
@@ -150,8 +150,8 @@ export const ExpandedRow: React.FC<ExpandedRowProps> = ({
       key: 'ops',
       fixed: 'right',
       width: 120,
-      render: (_: any, rec: MetricEntry) => (
-        <Button size="small" icon={<SwapOutlined />} onClick={() => onRowClick(rec.id)}>
+      render: (_: unknown, rec: MetricEntry) => (
+        <Button size="small" icon={<SwapOutlined />} onClick={() => onRowClick(rec)}>
           詳細
         </Button>
       ),
@@ -180,7 +180,7 @@ export const ExpandedRow: React.FC<ExpandedRowProps> = ({
   };
 
   return (
-    <Card className="accent-card accent-secondary" size="small" style={{ marginTop: 8 }}>
+    <Card className="sales-tree-accent-card sales-tree-accent-secondary" size="small" style={{ marginTop: 8 }}>
       <Tabs
         tabBarExtraContent={
           <Space wrap>
@@ -201,7 +201,7 @@ export const ExpandedRow: React.FC<ExpandedRowProps> = ({
                 pagination={false}
                 onChange={onChildChange}
                 scroll={{ x: 1280 }}
-                rowClassName={(_: any, idx: number) => (idx % 2 === 0 ? 'zebra-even' : 'zebra-odd')}
+                rowClassName={(_: unknown, idx: number) => (idx % 2 === 0 ? 'sales-tree-zebra-even' : 'sales-tree-zebra-odd')}
               />
             ),
           },
@@ -220,18 +220,6 @@ export const ExpandedRow: React.FC<ExpandedRowProps> = ({
           },
         ]}
       />
-
-      <style>{`
-        .accent-card { border-left: 4px solid #23780410; overflow: hidden; }
-        .accent-secondary { border-left-color: #52c41a; }
-        .mini-bar-bg { flex: 1; height: 6px; background: #f6f7fb; border-radius: 4px; overflow: hidden; }
-        .mini-bar { height: 100%; }
-        .mini-bar-blue { background: #237804; }
-        .mini-bar-green { background: #52c41a; }
-        .mini-bar-gold { background: #faad14; }
-        .zebra-even { background: #ffffff; }
-        .zebra-odd { background: #fbfcfe; }
-      `}</style>
     </Card>
   );
 };

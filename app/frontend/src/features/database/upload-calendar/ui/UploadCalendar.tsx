@@ -10,7 +10,7 @@ import dayjs from 'dayjs';
 import { useUploadCalendar } from '../model/useUploadCalendar';
 import { UploadDetailModal } from './UploadDetailModal';
 import { UploadCalendarLegend } from './UploadCalendarLegend';
-import { getCsvUploadKindMaster, getKindsByDatasetKey, getMasterByDatasetKey, type CsvUploadKind } from '../model/types';
+import { getKindsByDatasetKey, getMasterByDatasetKey, type CsvUploadKind } from '../model/types';
 import type { CalendarDay } from '../model/types';
 
 const { Title, Text } = Typography;
@@ -42,8 +42,7 @@ export const UploadCalendar: React.FC<UploadCalendarProps> = ({
     if (onMountReload) {
       onMountReload(reload);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [onMountReload, reload]);
 
   const [selectedDay, setSelectedDay] = useState<CalendarDay | null>(null);
   const [modalOpen, setModalOpen] = useState(false);

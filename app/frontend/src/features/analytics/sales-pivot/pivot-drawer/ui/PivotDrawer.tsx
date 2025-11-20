@@ -47,8 +47,8 @@ export const PivotDrawer: React.FC<PivotDrawerProps> = ({
       width={1000}
     >
       <Card
-        className="accent-card accent-secondary"
-        title={<div className="card-section-header">ピボット</div>}
+        className="sales-tree-accent-card sales-tree-accent-secondary"
+        title={<div className="sales-tree-card-section-header">ピボット</div>}
       >
         {/* ヘッダー情報 */}
         <div style={{ marginBottom: 16 }}>
@@ -116,19 +116,6 @@ export const PivotDrawer: React.FC<PivotDrawerProps> = ({
           onOrderChange={onOrderChange}
         />
       </Card>
-
-      <style>{`
-        .accent-card { border-left: 4px solid #23780410; overflow: hidden; }
-        .accent-secondary { border-left-color: #52c41a; }
-        .card-section-header { 
-          font-weight: 600; 
-          padding: 6px 10px; 
-          margin-bottom: 12px; 
-          border-radius: 6px; 
-          background: #f3fff4; 
-          border: 1px solid #e6f7e6; 
-        }
-      `}</style>
     </Drawer>
   );
 };

@@ -67,7 +67,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
   onFilterIdsChange,
 }) => {
   return (
-    <Card className="accent-card accent-primary" title={<div className="card-section-header">条件</div>}>
+    <Card className="sales-tree-accent-card sales-tree-accent-primary" title={<div className="sales-tree-card-section-header">条件</div>}>
       <Row gutter={[16, 16]} align="middle">
         {/* 期間選択 */}
         <Col xs={24} lg={10}>

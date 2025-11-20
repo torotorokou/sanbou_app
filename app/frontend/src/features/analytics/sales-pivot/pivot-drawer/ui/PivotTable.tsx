@@ -92,9 +92,9 @@ export const PivotTable: React.FC<PivotTableProps> = ({
                 <span style={{ minWidth: 72, textAlign: 'right' }}>
                   {fmtCurrency(v)}
                 </span>
-                <div className="mini-bar-bg">
+                <div className="sales-tree-mini-bar-bg">
                   <div
-                    className="mini-bar mini-bar-blue"
+                    className="sales-tree-mini-bar sales-tree-mini-bar-blue"
                     style={{ width: `${Math.round((v / maxA) * 100)}%` }}
                   />
                 </div>
@@ -120,9 +120,9 @@ export const PivotTable: React.FC<PivotTableProps> = ({
                 <span style={{ minWidth: 60, textAlign: 'right' }}>
                   {fmtNumber(v)}
                 </span>
-                <div className="mini-bar-bg">
+                <div className="sales-tree-mini-bar-bg">
                   <div
-                    className="mini-bar mini-bar-green"
+                    className="sales-tree-mini-bar sales-tree-mini-bar-green"
                     style={{ width: `${Math.round((v / maxQ) * 100)}%` }}
                   />
                 </div>
@@ -148,9 +148,9 @@ export const PivotTable: React.FC<PivotTableProps> = ({
                 <span style={{ minWidth: 48, textAlign: 'right' }}>
                   {fmtNumber(v)} 台
                 </span>
-                <div className="mini-bar-bg">
+                <div className="sales-tree-mini-bar-bg">
                   <div
-                    className="mini-bar mini-bar-blue"
+                    className="sales-tree-mini-bar sales-tree-mini-bar-blue"
                     style={{ width: `${Math.round((v / maxC) * 100)}%` }}
                   />
                 </div>
@@ -183,9 +183,9 @@ export const PivotTable: React.FC<PivotTableProps> = ({
                 <span style={{ minWidth: 64, textAlign: 'right' }}>
                   {fmtUnitPrice(v)}
                 </span>
-                <div className="mini-bar-bg">
+                <div className="sales-tree-mini-bar-bg">
                   <div
-                    className="mini-bar mini-bar-gold"
+                    className="sales-tree-mini-bar sales-tree-mini-bar-gold"
                     style={{ width: `${v ? Math.round((v / maxU) * 100) : 0}%` }}
                   />
                 </div>
@@ -211,7 +211,7 @@ export const PivotTable: React.FC<PivotTableProps> = ({
                   emptyText: pivotLoading ? '読込中...' : <Empty description="該当なし" />,
                 }}
                 scroll={{ x: 980 }}
-                rowClassName={(_, idx) => (idx % 2 === 0 ? 'zebra-even' : 'zebra-odd')}
+                rowClassName={(_, idx) => (idx % 2 === 0 ? 'sales-tree-zebra-even' : 'sales-tree-zebra-odd')}
               />
               <Space style={{ marginTop: 8 }}>
                 <Button

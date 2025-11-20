@@ -28,7 +28,7 @@ export interface UseHeaderViewModelResult {
  * - CSV出力処理
  */
 export function useHeaderViewModel(params: UseHeaderViewModelParams): UseHeaderViewModelResult {
-  const { repository, query, repIds, periodLabel } = params;
+  const { repository, query, repIds } = params;
 
   // Export options（localStorage永続化）
   const [exportOptions, setExportOptions] = useState<ExportOptions>(() => {
