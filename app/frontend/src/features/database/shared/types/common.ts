@@ -6,6 +6,10 @@
 // ValidationStatusは共通型として@/sharedに移動しました
 export type { ValidationStatus } from '@/shared';
 
+// CsvKindはdatabase featureに移動
+export type { CsvKind } from './csvKind';
+export { CsvKindUtils, ALL_CSV_KINDS } from './csvKind';
+
 export type TypeKey = string;
 
 /**

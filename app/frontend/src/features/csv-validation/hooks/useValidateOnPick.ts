@@ -4,7 +4,7 @@
  */
 
 import { useCallback } from 'react';
-import { validateHeaders } from '@shared';
+import { validateHeaders } from '../core/csvHeaderValidator';
 
 export function useValidateOnPick(
   getRequired: (typeKey: string) => string[] | undefined

@@ -14,6 +14,9 @@ export type { INotificationRepository } from './ports/repository';
 // Application
 export * from './application/useNotificationVM';
 
+// Infrastructure - Job Service
+export * from './infrastructure/jobService';
+
 // UI Components
 export { default as NotificationCenter } from './ui/components/NotificationCenter';
 export { default as NotificationCenterAntd } from './ui/components/NotificationCenterAntd';

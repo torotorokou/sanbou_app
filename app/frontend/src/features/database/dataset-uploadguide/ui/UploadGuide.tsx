@@ -9,7 +9,7 @@ import React, { useEffect } from 'react';
 import { Collapse, List, Tag, Typography } from 'antd';
 import { InfoCircleOutlined } from '@ant-design/icons';
 import type { FileState } from '../model/types';
-import { DATASET_RULES } from '@/features/csv-validation/model/rules';
+import { DATASET_RULES } from '@features/database/config/rules';
 import { notifyError } from '@features/notification';
 import type { DatasetKey } from '@features/database/config';
 

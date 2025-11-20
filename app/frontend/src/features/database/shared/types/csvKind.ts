@@ -51,9 +51,33 @@ export const CsvKindUtils = {
   isFinal: (kind: CsvKind): boolean => kind.split('_')[1] === 'final',
   
   /**
-   * 対応するstgテーブル名を取得 (例: 'stg.shogun_flash_receive')
+   * 受入系かどうか
    */
-  getTableName: (kind: CsvKind): string => `stg.${kind}`,
+  isReceive: (kind: CsvKind): boolean => kind.split('_')[2] === 'receive',
+  
+  /**
+   * 出荷系かどうか
+   */
+  isShipment: (kind: CsvKind): boolean => kind.split('_')[2] === 'shipment',
+  
+  /**
+   * ヤード系かどうか
+   */
+  isYard: (kind: CsvKind): boolean => kind.split('_')[2] === 'yard',
+  
+  /**
+   * 表示名を取得（日本語）
+   */
+  getDisplayName: (kind: CsvKind): string => {
+    const version = CsvKindUtils.getVersion(kind);
+    const direction = CsvKindUtils.getDirection(kind);
+    const versionLabel = version === 'flash' ? '速報' : '確定';
+    const directionLabel = 
+      direction === 'receive' ? '受入' :
+      direction === 'shipment' ? '出荷' :
+      'ヤード';
+    return `${versionLabel}${directionLabel}`;
+  }
 };
 
 /**
@@ -67,3 +91,4 @@ export const ALL_CSV_KINDS: readonly CsvKind[] = [
   'shogun_final_shipment',
   'shogun_final_yard',
 ] as const;
+

@@ -5,6 +5,7 @@
  * - 型定義（バリデーションステータス）
  * - UI コンポーネント（バリデーションバッジ）
  * - バリデーションロジック（ヘッダー・行検証）
+ * - バリデーションフック
  */
 
 // ========================================
@@ -42,11 +43,22 @@ export { CsvValidationBadge } from './ui/CsvValidationBadge';
 export type { CsvValidationBadgeProps } from './ui/CsvValidationBadge';
 
 // ========================================
-// Validation Logic (既存)
+// Validation Logic
 // ========================================
 
-export * from './core/csvHeaderValidator';
+export { parseHeader, validateHeaders, validateHeadersFromText } from './core/csvHeaderValidator';
 export * from './core/csvRowValidator';
+
+// ========================================
+// Hooks
+// ========================================
+
+export { useCsvFileValidator } from './hooks/useCsvFileValidator';
+export type { CsvFileValidatorOptions } from './hooks/useCsvFileValidator';
 export * from './hooks/useValidateOnPick';
-export * from './model/types';
-export * from './model/rules';
+
+// ========================================
+// Model Types
+// ========================================
+
+export type { ValidationResult } from './model/types';

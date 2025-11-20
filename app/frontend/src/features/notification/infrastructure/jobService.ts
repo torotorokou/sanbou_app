@@ -1,14 +1,18 @@
 /**
- * ジョブポーリングサービス（サンプル実装）
+ * ジョブポーリングサービス
  * 
  * 目的:
  * - 非同期ジョブの状態をポーリング
- * - 失敗時に notifyApiError で通知
+ * - 失敗時に通知機能を利用してエラー通知
+ * 
+ * Note: このサービスは notification feature に配置されています。
+ * 理由: pollJob は notifyApiError/notifySuccess に依存しており、
+ * notification feature の一部として管理することで依存関係が明確になります。
  */
 
-import { notifyApiError, notifySuccess } from '@features/notification';
+import { notifyApiError, notifySuccess } from '../infrastructure/notify';
 import { apiGet } from '@/shared';
-import type { ProblemDetails } from '@features/notification/domain/types/contract';
+import type { ProblemDetails } from '../domain/types/contract';
 
 /**
  * ジョブステータス型
