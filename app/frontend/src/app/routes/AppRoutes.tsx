@@ -10,7 +10,10 @@ import { ROUTER_PATHS } from './routes';
 const InboundForecastDashboardPage = lazy(() => import('../../pages/dashboard/ukeire/InboundForecastDashboardPage'));
 const PricingDashboard = lazy(() => import('../../pages/dashboard/PricingDashboard'));
 const CustomerListDashboard = lazy(() => import('../../pages/dashboard/CustomerListDashboard'));
-const SalesTreePage = lazy(() => import('../../pages/dashboard/SalesTreePage'));
+
+// Analytics pages - using public API
+const SalesTreePage = lazy(() => import('@/pages/analytics').then(m => ({ default: m.SalesTreePage })));
+const CustomerListAnalysisPage = lazy(() => import('@/pages/analytics').then(m => ({ default: m.CustomerListAnalysisPage })));
 
 // Report pages - using public API
 const ReportManagePage = lazy(() => import('@/pages/report').then(m => ({ default: m.ReportManagePage })));
@@ -27,9 +30,6 @@ const GlobalManualSearchPage = lazy(() => import('@/pages/manual').then(m => ({ 
 const ShogunManualListPage = lazy(() => import('@/pages/manual').then(m => ({ default: m.ShogunManualListPage })));
 const ManualDetailPage = lazy(() => import('@/pages/manual').then(m => ({ default: m.ManualDetailPage })));
 const ManualDetailRouteComponent = lazy(() => import('@/features/manual').then(m => ({ default: m.ManualDetailRoute })));
-
-// Analysis pages - using public API
-const CustomerListAnalysisPage = lazy(() => import('@/pages/analysis').then(m => ({ default: m.CustomerListAnalysisPage })));
 
 // Chat pages - using public API
 const SolvestNaviPage = lazy(() => import('@/pages/navi').then(m => ({ default: m.SolvestNaviPage })));
