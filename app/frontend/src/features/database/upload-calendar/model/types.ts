@@ -2,16 +2,14 @@
  * アップロードカレンダー - 型定義
  */
 
+import type { CsvKind } from '@shared/types/csvKind';
+
 /**
  * CSV種別（アップロード対象の種類）
+ * 注: 将軍CSV種別は @shared/types/csvKind の CsvKind と統一されています
  */
 export type CsvUploadKind =
-  | 'shogun_flash_receive'   // 将軍_速報版: 受入
-  | 'shogun_flash_shipment'  // 将軍_速報版: 出荷
-  | 'shogun_flash_yard'      // 将軍_速報版: ヤード
-  | 'shogun_final_receive'   // 将軍_最終版: 受入
-  | 'shogun_final_shipment'  // 将軍_最終版: 出荷
-  | 'shogun_final_yard'      // 将軍_最終版: ヤード
+  | CsvKind
   | 'manifest_stage1'        // マニフェスト: 1次
   | 'manifest_stage2';       // マニフェスト: 2次
 

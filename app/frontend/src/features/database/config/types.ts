@@ -5,18 +5,15 @@
  * ファイル名ヒント、プレビュー設定、アップロード先など）を統一管理する。
  */
 
+import type { CsvKind } from '@shared/types/csvKind';
+
 export type DatasetKey = 'shogun_flash_debug' | 'shogun_flash' | 'shogun_final' | 'manifest';
 
 export type CsvTypeKey =
   | 'receive'
   | 'shipment'
   | 'yard'
-  | 'shogun_flash_receive'
-  | 'shogun_flash_ship'
-  | 'shogun_flash_yard'
-  | 'shogun_final_receive'
-  | 'shogun_final_ship'
-  | 'shogun_final_yard'
+  | CsvKind
   | 'manifest_primary'
   | 'manifest_secondary';
 

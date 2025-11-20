@@ -20,17 +20,15 @@ import pandas as pd
 from sqlalchemy.orm import Session
 from sqlalchemy import text, Table, MetaData, Column, Integer, BigInteger, Text, String, DateTime, Boolean, ForeignKey
 
+from app.domain.csv import CsvKind
+
 logger = logging.getLogger(__name__)
 
 
-# csv_kind から stg テーブル名へのマッピング
-CSV_KIND_TABLE_MAP = {
-    "shogun_flash_receive": "stg.receive_shogun_flash",
-    "shogun_flash_shipment": "stg.shipment_shogun_flash",
-    "shogun_flash_yard": "stg.yard_shogun_flash",
-    "shogun_final_receive": "stg.receive_shogun_final",
-    "shogun_final_shipment": "stg.shipment_shogun_final",
-    "shogun_final_yard": "stg.yard_shogun_final",
+# csv_kind から stg テーブル名へのマッピング（CsvKind Enum を使用）
+CSV_KIND_TABLE_MAP: Dict[str, str] = {
+    kind.value: kind.table_name
+    for kind in CsvKind
 }
 
 
