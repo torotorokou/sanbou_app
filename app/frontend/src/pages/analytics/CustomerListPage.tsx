@@ -8,7 +8,7 @@ import {
   CustomerComparisonResultCard,
   AnalysisProcessingModal,
   useCustomerComparison,
-} from '@features/analysis';
+} from '@features/analytics/customer-list';
 
 function getMonthRange(start: Dayjs | null, end: Dayjs | null): string[] {
     if (!start || !end) return [];
