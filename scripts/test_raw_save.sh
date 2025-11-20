@@ -16,8 +16,8 @@ API_URL="http://localhost:8003/database/upload/shogun_csv_flash"
 echo ""
 echo "1. テーブルをクリア"
 docker compose -f docker/docker-compose.dev.yml -p local_dev exec -T db psql -U myuser -d sanbou_dev -c "
-TRUNCATE TABLE raw.receive_shogun_flash;
-TRUNCATE TABLE stg.receive_shogun_flash;
+TRUNCATE TABLE raw.shogun_flash_receive;
+TRUNCATE TABLE stg.shogun_flash_receive;
 "
 
 echo ""
@@ -29,19 +29,19 @@ curl -X POST "$API_URL" \
 
 echo ""
 echo "3. raw層のデータ件数確認"
-RAW_COUNT=$(docker compose -f docker/docker-compose.dev.yml -p local_dev exec -T db psql -U myuser -d sanbou_dev -t -c "SELECT COUNT(*) FROM raw.receive_shogun_flash;")
-echo "raw.receive_shogun_flash: $RAW_COUNT 件"
+RAW_COUNT=$(docker compose -f docker/docker-compose.dev.yml -p local_dev exec -T db psql -U myuser -d sanbou_dev -t -c "SELECT COUNT(*) FROM raw.shogun_flash_receive;")
+echo "raw.shogun_flash_receive: $RAW_COUNT 件"
 
 echo ""
 echo "4. stg層のデータ件数確認"
-STG_COUNT=$(docker compose -f docker/docker-compose.dev.yml -p local_dev exec -T db psql -U myuser -d sanbou_dev -t -c "SELECT COUNT(*) FROM stg.receive_shogun_flash;")
-echo "stg.receive_shogun_flash: $STG_COUNT 件"
+STG_COUNT=$(docker compose -f docker/docker-compose.dev.yml -p local_dev exec -T db psql -U myuser -d sanbou_dev -t -c "SELECT COUNT(*) FROM stg.shogun_flash_receive;")
+echo "stg.shogun_flash_receive: $STG_COUNT 件"
 
 echo ""
 echo "5. raw層のサンプルデータ確認（最初の1件）"
 docker compose -f docker/docker-compose.dev.yml -p local_dev exec -T db psql -U myuser -d sanbou_dev -c "
 SELECT slip_date, vendor_cd, vendor_name, item_name, net_weight
-FROM raw.receive_shogun_flash
+FROM raw.shogun_flash_receive
 LIMIT 1;
 "
 
