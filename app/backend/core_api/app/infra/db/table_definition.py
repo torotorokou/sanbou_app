@@ -66,9 +66,9 @@ class TableDefinitionGenerator:
             schema: スキーマ名
             
         Returns:
-            完全修飾テーブル名（例: 'raw.receive_shogun_flash'）
+            完全修飾テーブル名（例: 'stg.shogun_flash_receive'）
         """
-        table_name = f"{csv_type}_shogun_flash"
+        table_name = f"shogun_flash_{csv_type}"
         return f"{schema}.{table_name}"
     
     def get_columns_definition(self, csv_type: str) -> List[Dict[str, Any]]:

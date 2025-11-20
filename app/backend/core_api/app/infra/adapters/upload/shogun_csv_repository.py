@@ -70,9 +70,9 @@ class ShogunCsvRepository:
             # table_map が指定された場合: カスタムテーブル名を使用
             table_name = override_table
         else:
-            # table_map が未指定の場合: デフォルトは *_shogun_flash
-            # raw.receive_shogun_flash, stg.receive_shogun_flash など
-            table_name = f"{csv_type}_shogun_flash"
+            # table_map が未指定の場合: デフォルトは shogun_flash_*
+            # raw.shogun_flash_receive, stg.shogun_flash_receive など
+            table_name = f"shogun_flash_{csv_type}"
         
         # YAMLから日本語→英語のカラムマッピングを取得
         column_mapping = self.table_gen.get_column_mapping(csv_type)

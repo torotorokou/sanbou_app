@@ -52,7 +52,7 @@ async def upload_shogun_csv(
     uc: UploadShogunCsvUseCase = Depends(get_uc_default),
 ):
     """
-    将軍CSVアップロード（stg schema, *_shogun_flash tables）- 非同期版
+    将軍CSVアップロード（stg schema, shogun_flash_* tables）- 非同期版
     
     3種類のCSV（受入一覧・ヤード一覧・出荷一覧）を受け取り、
     軽いバリデーション後に受付完了レスポンスを即座に返します。
@@ -60,7 +60,7 @@ async def upload_shogun_csv(
     
     保存先:
     - raw層: raw.receive_raw / raw.yard_raw / raw.shipment_raw
-    - stg層: stg.receive_shogun_flash / stg.yard_shogun_flash / stg.shipment_shogun_flash
+    - stg層: stg.shogun_flash_receive / stg.shogun_flash_yard / stg.shogun_flash_shipment
     
     Args:
         background_tasks: FastAPI BackgroundTasks
@@ -107,8 +107,8 @@ async def upload_shogun_csv_final(
     重い処理（CSV解析・DB保存・ETL）はバックグラウンドで実行されます。
     
     保存先:
-    - raw層: raw.receive_shogun_final / raw.yard_shogun_final / raw.shipment_shogun_final
-    - stg層: stg.receive_shogun_final / stg.yard_shogun_final / stg.shipment_shogun_final
+    - raw層: raw.shogun_final_receive / raw.shogun_final_yard / raw.shogun_final_shipment
+    - stg層: stg.shogun_final_receive / stg.shogun_final_yard / stg.shogun_final_shipment
     
     Args:
         background_tasks: FastAPI BackgroundTasks
@@ -155,8 +155,8 @@ async def upload_shogun_csv_flash(
     重い処理（CSV解析・DB保存・ETL）はバックグラウンドで実行されます。
     
     保存先:
-    - raw層: raw.receive_shogun_flash / raw.yard_shogun_flash / raw.shipment_shogun_flash
-    - stg層: stg.receive_shogun_flash / stg.yard_shogun_flash / stg.shipment_shogun_flash
+    - raw層: raw.shogun_flash_receive / raw.shogun_flash_yard / raw.shogun_flash_shipment
+    - stg層: stg.shogun_flash_receive / stg.shogun_flash_yard / stg.shogun_flash_shipment
     
     Args:
         background_tasks: FastAPI BackgroundTasks
