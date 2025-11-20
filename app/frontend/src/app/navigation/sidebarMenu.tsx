@@ -47,7 +47,7 @@ export const SIDEBAR_MENU = [
     {
         key: 'dashboardGroup',
         icon: <DashboardOutlined />,
-        label: 'ダッシュボード',
+        label: '速報ダッシュボード',
         hidden: false,
         children: [
             {
@@ -56,15 +56,33 @@ export const SIDEBAR_MENU = [
                 label: <Link to={ROUTER_PATHS.DASHBOARD_UKEIRE}>受入管理</Link>,
             },
             {
+                key: ROUTER_PATHS.CUSTOMER_LIST,
+                icon: <FileTextOutlined />,
+                label: <Link to={ROUTER_PATHS.CUSTOMER_LIST}>顧客リスト</Link>,
+                hidden: true,
+            },
+        ],
+    },
+    // アナリティクス
+    {
+        key: 'analytics',
+        icon: <BarChartOutlined />,
+        label: 'アナリティクス',
+        hidden: false,
+        children: [
+            {
                 key: ROUTER_PATHS.SALES_TREE,
                 icon: <BarChartOutlined />,
                 label: <Link to={ROUTER_PATHS.SALES_TREE}>営業・売上ツリー</Link>,
             },
             {
-                key: ROUTER_PATHS.CUSTOMER_LIST,
-                icon: <FileTextOutlined />,
-                label: <Link to={ROUTER_PATHS.CUSTOMER_LIST}>顧客リスト</Link>,
-                hidden: true,
+                key: ROUTER_PATHS.ANALYSIS_CUSTOMERLIST,
+                icon: <TeamOutlined />,
+                label: (
+                    <Link to={ROUTER_PATHS.ANALYSIS_CUSTOMERLIST}>
+                        搬入顧客リストチェック
+                    </Link>
+                ),
             },
         ],
     },
@@ -89,24 +107,6 @@ export const SIDEBAR_MENU = [
                 icon: <BookOutlined />,
                 label: <Link to={ROUTER_PATHS.LEDGER_BOOK}>帳簿</Link>,
                 hidden: true,
-            },
-        ],
-    },
-    // データ分析
-    {
-        key: 'analysis',
-        icon: <BarChartOutlined />,
-        label: 'データ分析',
-        hidden: true,
-        children: [
-            {
-                key: ROUTER_PATHS.ANALYSIS_CUSTOMERLIST,
-                icon: <TeamOutlined />,
-                label: (
-                    <Link to={ROUTER_PATHS.ANALYSIS_CUSTOMERLIST}>
-                        搬入顧客リストチェック
-                    </Link>
-                ),
             },
         ],
     },

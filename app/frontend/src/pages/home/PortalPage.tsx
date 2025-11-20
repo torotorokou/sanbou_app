@@ -12,6 +12,7 @@ import {
   CloudUploadOutlined,
   SettingOutlined,
   NotificationOutlined,
+  BarChartOutlined,
 } from '@ant-design/icons';
 // CalendarCard removed: right column widgets trimmed
 import { useNavigate } from 'react-router-dom';
@@ -295,7 +296,7 @@ const PortalCard: React.FC<PortalCardProps> = ({
             whiteSpace: 'nowrap',
             flex: '0 0 auto',
             alignSelf: 'center',
-            background: accent,
+            backgroundColor: accent,
             borderColor: 'transparent',
             color: btnText,
             backgroundImage: accentPlate,
@@ -324,16 +325,17 @@ const PortalCard: React.FC<PortalCardProps> = ({
 };
 
 /** メニュー定義（拡張・差し替え容易：OCP） */
-// カラーパレット（カラー理論に基づくトライアド + 明暗バリエーション）
-// 元の3色をベースに、ライト/ダークを追加して6色に拡張します。
-// 各色は、UI上での用途（アイコンプレート / アクセントボタン等）を想定して選定しています。
+// カラーパレット（8色 - 各カード専用の色）
+// モダンで洗練された配色、視認性とアクセシビリティを考慮
 const PALETTE = {
-  BLUE: '#226cb6ff', // ベースブルー
-  BLUE_DARK: '#22a114', // ダークブルー
-  ORANGE: '#eb4848ff', // ベースオレンジ
-  ORANGE_DARK: '#ecf023ff', // ダークオレンジ
-  PURPLE: '#c6c08d', // ベースパープル
-  PURPLE_DARK: '#555555', // ダークパープル
+  OCEAN: '#0284C7',   // オーシャンブルー - ダッシュボード（メインカラー）
+  LAVENDER: '#C4B5FD',// ラベンダー - アナリティクス（少し淡めの紫）
+  MINT: '#10B981',    // ミントグリーン - 帳簿作成（爽やかな緑）
+  CORAL: '#FB7185',   // コーラルピンク - 参謀 NAVI（柔らかいコーラル）
+  GOLD: '#FBBF24',    // ゴールド - マニュアル（アクセント用の黄）
+  PURPLE: '#6366F1',  // ロイヤルパープル - データベース（濃いめの青紫）
+  CYAN: '#06B6D4',    // シアン - 管理機能（すっきりしたシアン）
+  GRAY: '#6B7280',    // グレー - お知らせ（中間グレー）
 };
 
 const portalMenus: PortalCardProps[] = [
@@ -344,7 +346,16 @@ const portalMenus: PortalCardProps[] = [
       '工場別・顧客別・価格表などの管理ダッシュボードへアクセスできます。表示中のダッシュボードを切り替えて詳細を確認してください。',
     icon: <DashboardOutlined />,
     link: ROUTER_PATHS.DASHBOARD_UKEIRE,
-    color: PALETTE.BLUE_DARK,
+    color: PALETTE.OCEAN,
+  },
+  {
+    title: 'アナリティクス',
+    description: '売上・顧客データの多角的な分析を行います。',
+    detail:
+      '営業・売上ツリーや顧客リスト分析など、データに基づく洞察を得られます。経営判断や営業戦略の立案をサポートします。',
+    icon: <BarChartOutlined />,
+    link: ROUTER_PATHS.SALES_TREE,
+    color: PALETTE.LAVENDER,
   },
   {
     title: '帳簿作成',
@@ -353,7 +364,7 @@ const portalMenus: PortalCardProps[] = [
       '工場日報や管理表などの帳簿作成とエクセル・PDFのエクスポートが可能です。テンプレートで入力を簡素化できます。',
     icon: <BookOutlined />,
     link: ROUTER_PATHS.REPORT_MANAGE,
-    color: PALETTE.BLUE,
+    color: PALETTE.MINT,
   },
   {
     title: '参謀 NAVI',
@@ -362,7 +373,7 @@ const portalMenus: PortalCardProps[] = [
       '自然言語で質問 → マニュアル検索、帳簿補助、データ要約、定型処理の自動提案。内部データのみを安全に活用します。',
     icon: <RobotOutlined />,
     link: ROUTER_PATHS.NAVI,
-    color: PALETTE.ORANGE,
+    color: PALETTE.CORAL,
   },
   {
     title: 'マニュアル',
@@ -371,7 +382,7 @@ const portalMenus: PortalCardProps[] = [
       '部署別の手順書、FAQ、オンボーディング資料を検索。更新履歴や担当者情報も確認できます。',
     icon: <FileTextOutlined />,
   link: ROUTER_PATHS.MANUALS,
-    color: PALETTE.PURPLE,
+    color: PALETTE.GOLD,
   },
   {
     title: 'データベース',
@@ -380,8 +391,7 @@ const portalMenus: PortalCardProps[] = [
       'データセットインポート、レコード検索・編集・エクスポート、インポート履歴のトラッキングを行えます。',
     icon: <CloudUploadOutlined />,
     link: ROUTER_PATHS.DATASET_IMPORT,
-    // 同一系統でも差し色としてダーク変種を交互に使用
-    color: PALETTE.BLUE_DARK,
+    color: PALETTE.PURPLE,
   },
   {
     title: '管理機能',
@@ -390,7 +400,7 @@ const portalMenus: PortalCardProps[] = [
       'ユーザー権限、システム構成、外部連携の設定。操作履歴やログの確認も可能です（管理者向け）。',
     icon: <SettingOutlined />,
     link: ROUTER_PATHS.SETTINGS,
-    color: PALETTE.ORANGE_DARK,
+    color: PALETTE.CYAN,
   },
   {
     title: 'お知らせ',
@@ -399,7 +409,7 @@ const portalMenus: PortalCardProps[] = [
       'メンテナンス情報、リリースノート、社内イベント、法令改正などを掲載します。',
     icon: <NotificationOutlined />,
     link: ROUTER_PATHS.NEWS,
-    color: PALETTE.PURPLE_DARK,
+    color: PALETTE.GRAY,
   },
 ];
 
@@ -441,6 +451,11 @@ export const PortalPage: React.FC = () => {
 
   // レスポンシブに関係なく全カードで同じボタン幅に統一する
   const unifiedButtonWidth = BUTTON_WIDTH;
+
+  // カード間のギャップ（行間・列間）を一元管理
+  // さらに縮小：モバイルは2px、それ以外は4px
+  const CARD_COLUMN_GAP = pickByDevice(2, 4, 4, 4);
+  const CARD_ROW_GAP = pickByDevice(2, 4, 4, 4);
 
   const introText = isCompact
     ? '社内ポータルです。必要な機能を選択してください。'
@@ -526,21 +541,16 @@ export const PortalPage: React.FC = () => {
             - 通常：利用可能幅に応じて列数を算出
             - 半画面（isCompact が真）では最大2列に制限する
         */}
-  <div style={{ display: 'flex', gap: isXs ? 5 : 22, alignItems: 'flex-start' }}>
+  <div style={{ display: 'flex', gap: CARD_COLUMN_GAP, alignItems: 'flex-start' }}>
           {/* Left column: header + portal cards (keeps previous grid behavior) */}
-          <div style={{ flex: '1 1 0', display: 'flex', flexDirection: 'column', gap: 7 }}>
+          <div style={{ flex: '1 1 0', display: 'flex', flexDirection: 'column', gap: CARD_ROW_GAP }}>
             <div
               aria-label="ポータルメニュー一覧"
               style={{
                 display: 'grid',
-                // responsive: columnGap/rowGap
-                // Ensure a minimal spacing on very small screens to avoid visual overlap.
-                // Previously mobile rowGap was 1px which could allow cards to visually touch/overlap
-                // when hover/transform or content growth occurs. Use a safer minimum (8px).
-                // reduce mobile gaps to a few pixels for a very dense layout on small screens
-                // (mobile: 2px, tablet+: 22px)
-                columnGap: pickByDevice(4, 22, 22, 22),
-                rowGap: pickByDevice(2, 22, 22, 22),
+                // responsive: columnGap/rowGap - 一元管理された定数を使用
+                columnGap: CARD_COLUMN_GAP,
+                rowGap: CARD_ROW_GAP,
                 // responsive: gridAutoRows
                 // Use minmax(..., auto) so rows can grow if a card becomes taller (prevents overlap)
                 // Lower the mobile minimum so cards sit closer vertically.
@@ -550,7 +560,7 @@ export const PortalPage: React.FC = () => {
                 gridTemplateColumns: flags.isMobile
                   ? 'repeat(1, 1fr)'
                   : isLg
-                  ? `repeat(auto-fit, minmax(${Math.round(CARD_WIDTH * cardScale)}px, calc(100% / 3 - ${pickByDevice(4, 22, 22, 22)}px)))`
+                  ? `repeat(auto-fit, minmax(${Math.round(CARD_WIDTH * cardScale)}px, calc(100% / 3 - ${CARD_COLUMN_GAP}px)))`
                   : `repeat(auto-fit, minmax(${Math.round(CARD_WIDTH * cardScale)}px, 1fr))`,
               justifyContent: 'center',
               alignItems: 'stretch',
