@@ -1,5 +1,23 @@
 """
-External API Adapter: Implements ExternalApiPort using HTTP clients.
+External API Adapter - 外部API呼び出し用アダプタ
+
+機能:
+  - core_api が他のマイクロサービスを呼び出す際のアダプタ
+  - RAG API: 質問応答システム
+  - Ledger API: レポート生成、ブロック単価計算
+  - Manual API: マニュアル参照
+  - AI API: テキスト分類
+
+設計方針:
+  - Clean Architecture: Portの実装として機能する
+  - 他サービスへの依存をこのアダプタに集約
+  - 各サービス用のClientクラスを内部で使用
+  - エラーハンドリングはUseCase側で実装
+
+BFFパターン:
+  - core_api はフロントエンド向けのBFF(Backend For Frontend)
+  - 複数のマイクロサービスを統合して単一のAPIを提供
+  - フロントエンドは core_api のみを呼び出す
 """
 from typing import List, Dict
 import logging

@@ -15,20 +15,43 @@ from app.domain.ports.forecast_port import IForecastJobRepository, IForecastQuer
 
 
 class CreateForecastJobUseCase:
-    """予測ジョブ作成UseCase"""
+    """
+    予測ジョブ作成UseCase
+    
+    機能:
+      - 予測ジョブをlog.forecast_jobテーブルに登録（status='pending'）
+      - ジョブIDを返却し、フロントエンドでポーリング可能にする
+    
+    設計方針:
+      - 重い予測計算は別プロセス（plan_worker）で実行
+      - このUseCaseはジョブ登録のみ担当（責務の分離）
+      - Port経由でJobRepositoryにアクセス（DIP: Dependency Inversion Principle）
+    """
     
     def __init__(self, job_repo: IForecastJobRepository):
+        """
+        Args:
+            job_repo: 予測ジョブリポジトリのPort実装
+        """
         self._job_repo = job_repo
     
     def execute(self, req: ForecastJobCreate) -> ForecastJobResponse:
         """
         予測ジョブを作成してキューに登録
         
+        処理フロー:
+          1. job_repo.queue_forecast_job() でジョブをキューに登録
+          2. 登録されたジョブIDでジョブ情報を取得
+          3. ForecastJobResponse に変換して返却
+        
         Args:
-            req: ジョブ作成リクエスト
+            req: ジョブ作成リクエスト（job_type, target_from, target_to, actor, payload_json）
             
         Returns:
-            ForecastJobResponse: 作成されたジョブ情報
+            ForecastJobResponse: 作成されたジョブ情報（job_id, status='pending'等）
+        
+        Raises:
+            RuntimeError: ジョブ作成後の取得に失敗した場合
         """
         job_id = self._job_repo.queue_forecast_job(
             job_type=req.job_type,
@@ -46,9 +69,23 @@ class CreateForecastJobUseCase:
 
 
 class GetForecastJobStatusUseCase:
-    """予測ジョブステータス取得UseCase"""
+    """
+    予測ジョブステータス取得UseCase
+    
+    機能:
+      - ジョブIDからジョブのステータスを取得（フロントエンドでのポーリング用）
+      - ステータス: pending, running, completed, failed
+    
+    使用例:
+      - フロントエンドが5秒ごとにポーリングしてジョブの進捗を確認
+      - completed になったら結果取得APIを呼び出す
+    """
     
     def __init__(self, job_repo: IForecastJobRepository):
+        """
+        Args:
+            job_repo: 予測ジョブリポジトリのPort実装
+        """
         self._job_repo = job_repo
     
     def execute(self, job_id: int) -> Optional[ForecastJobResponse]:
@@ -59,7 +96,8 @@ class GetForecastJobStatusUseCase:
             job_id: ジョブID
             
         Returns:
-            ForecastJobResponse: ジョブ情報、見つからない場合はNone
+            ForecastJobResponse: ジョブ情報（status, created_at, updated_at等）
+            None: ジョブが見つからない場合
         """
         job = self._job_repo.get_job_by_id(job_id)
         if not job:

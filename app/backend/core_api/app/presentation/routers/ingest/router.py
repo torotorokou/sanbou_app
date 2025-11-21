@@ -1,9 +1,15 @@
 """
-Ingest router: CSV upload and reservation endpoints.
+Ingest Router - CSVアップロードと予約登録エンドポイント
 
-TODO: UseCase移行待ち
+機能:
+  1. CSVアップロード（受入実績データ）
+  2. トラック予約の作成/更新
+
+TODO: Clean Architecture移行待ち
+  - 現状: Routerにビジネスロジックが混在
+  - 目標: UseCaseパターンへ移行（UploadIngestCsvUseCase, CreateReservationUseCase）
   - DI経由でUseCaseを取得するよう変更予定
-  - Port&Adapter化予定
+  - Port&Adapter化予定（テスタビリティ向上）
 """
 from fastapi import APIRouter, Depends, UploadFile, File, HTTPException
 from sqlalchemy.orm import Session
@@ -23,10 +29,38 @@ async def upload_csv(
     db: Session = Depends(get_db),
 ):
     """
-    Upload CSV file with inbound actuals.
-    TODO: Define CSV column spec.
-    Expected columns: date, trucks, weight, vendor, etc.
-    TODO: Migrate to UseCase pattern (UploadIngestCsvUseCase)
+    CSVファイルをアップロード（受入実績データ）
+    
+    処理フロー:
+      1. CSVファイルバリデーション（拡張子チェック）
+      2. pandas.read_csv() で読み込み
+      3. 必須カラムのバリデーション（TODO）
+      4. データ正規化（日付フォーマット、数値型変換等、TODO）
+      5. IngestUseCase.upload_csv() でDB保存
+    
+    TODO:
+      - CSVカラム仕様の明確化
+      - 必須カラムのバリデーション実装
+      - 日付・数値のパース処理実装
+      - UploadIngestCsvUseCase への移行（Clean Architecture）
+    
+    期待カラム（例）:
+      - date: 日付
+      - trucks: 台数
+      - weight: 重量
+      - vendor: 仕入先
+      - ...等
+    
+    Args:
+        file: アップロードされたCSVファイル
+        db: SQLAlchemy Session
+    
+    Returns:
+        アップロード結果（行数等）
+    
+    Raises:
+        HTTPException(400): CSVファイル以外がアップロードされた場合
+        HTTPException(500): CSV処理失敗時
     """
     if not file.filename.endswith(".csv"):
         raise HTTPException(status_code=400, detail="Only CSV files are supported")

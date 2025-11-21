@@ -33,31 +33,36 @@ class DashboardTargetRepository:
 
     def get_by_date_optimized(self, target_date: date_type, mode: str = "daily") -> Optional[Dict[str, Any]]:
         """
-        Optimized single-query fetch with anchor resolution and NULL masking.
-        Now also calculates cumulative and total targets for achievement modes.
+        最適化されたターゲットデータ取得（アンカー解決 + NULLマスキング）
         
-        Anchor logic (all in one SQL query):
-        - Current month: Use today (or month_end if today > month_end)
-        - Past month: Use month_end
-        - Future month: Use first business day (or month_start if none exists)
+        機能:
+          1. アンカー日付の自動解決（全てSQLクエリ内で完結）
+             - 当月: 今日を使用（今日 > 月末の場合は月末）
+             - 過去月: 月末を使用
+             - 未来月: 最初の営業日を使用（存在しない場合は月初）
+          2. NULLマスキング（mode='monthly' かつ当月以外）
+             - day_target_ton, week_target_ton, day_actual_ton_prev, week_actual_ton → NULL
+             - フロントエンドでは「—」で表示
+          3. 達成率計算用の累計・合計ターゲット
+             - month_target_to_date_ton: 月初～昨日までのday_target_tonの累計
+             - month_target_total_ton: 月全体のMAX(month_target_ton)
+             - week_target_to_date_ton: 週初～昨日までのday_target_tonの累計
+             - week_target_total_ton: 週全体のMAX(week_target_ton)
+             - month_actual_to_date_ton: 月初～昨日までのreceive_net_tonの累計
+             - week_actual_to_date_ton: 週初～昨日までのreceive_net_tonの累計
         
-        NULL masking (mode='monthly' and not current month):
-        - day_target_ton, week_target_ton, day_actual_ton_prev, week_actual_ton → NULL
-        
-        New fields for achievement rate calculation:
-        - month_target_to_date_ton: SUM(day_target_ton) from month_start to yesterday
-        - month_target_total_ton: MAX(month_target_ton) for the entire month
-        - week_target_to_date_ton: SUM(day_target_ton) from week_start to yesterday
-        - week_target_total_ton: MAX(week_target_ton) for the entire week
-        - month_actual_to_date_ton: SUM(receive_net_ton) from month_start to yesterday
-        - week_actual_to_date_ton: SUM(receive_net_ton) from week_start to yesterday
+        パフォーマンス最適化（2025-11-17）:
+          - VIEW → MATERIALIZED VIEW（mart.mv_target_card_per_day）に切り替え
+          - 狙い: 複雑なJOIN/集計をMV側で事前計算し、レスポンスタイム短縮
+          - 前提: MVは日次で REFRESH CONCURRENTLY（make refresh-mv）
+          - ロールバック: mart.v_target_card_per_day（VIEW）に戻すことも可能
         
         Args:
-            target_date: Requested date (typically first day of month)
+            target_date: リクエスト日付（通常は月初）
             mode: 'daily' or 'monthly'
             
         Returns:
-            Dict with all target/actual fields including cumulative and total targets, or None if no data found
+            Dict: ターゲット/実績フィールド（累計・合計を含む）、データがない場合はNone
         """
         try:
             # クエリ最適化: VIEW → MV 参照に変更（2025-11-17）

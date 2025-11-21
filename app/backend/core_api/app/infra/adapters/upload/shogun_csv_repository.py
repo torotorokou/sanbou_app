@@ -48,6 +48,22 @@ class ShogunCsvRepository:
         """
         CSV種別に応じて適切なテーブルに保存
         
+        処理フロー:
+          1. テーブル名決定（table_map での上書き or デフォルト shogun_flash_*）
+          2. YAMLから日本語→英語のカラムマッピングを取得
+          3. DataFrameのカラム名を日本語→英語に変換
+          4. raw層 vs stg層で異なる処理:
+             - raw層: 全カラムを TEXT 型で保存（生データの完全性を保持）
+             - stg層: YAML定義カラムのみを抽出（正規化済みデータ）
+          5. pandas.DataFrame.to_sql() でバルクインサート
+        
+        設計方針:
+          - YAML駆動: テーブル定義やカラムマッピングはYAMLで管理（コード変更不要）
+          - 二層アーキテクチャ:
+            * raw層: 完全な生データ（監査・トラブルシューティング用）
+            * stg層: 正規化済みデータ（分析・集計用）
+          - トラッキングカラム: upload_file_id, source_row_no で元ファイルとの紐付け
+        
         Args:
             csv_type: CSV種別 ('receive', 'yard', 'shipment')
             df: 保存するDataFrame
@@ -56,6 +72,9 @@ class ShogunCsvRepository:
             
         Returns:
             int: 保存した行数
+        
+        Raises:
+            Exception: DB保存に失敗した場合
         """
         if df.empty:
             logger.warning(f"Empty DataFrame for {csv_type}, skipping save")
