@@ -1,6 +1,37 @@
 /**
  * header/ui/SalesPivotHeader.tsx
  * ヘッダーUI（タイトル + CSV出力Dropdownボタン）
+ * 
+ * 【概要】
+ * 売上ピボット分析画面のヘッダー部分を表示するプレゼンテーショナルコンポーネント
+ * 
+ * 【責務】
+ * 1. ページタイトルの表示
+ * 2. CSV出力ボタンとオプションメニューの表示
+ * 3. ユーザー操作の受付と親コンポーネントへの通知
+ * 
+ * 【機能】
+ * - CSV出力オプション設定（Dropdownメニュー内）
+ *   - 追加カラム選択（残りモード1, 2）
+ *   - 0実績除外
+ *   - 営業ごと分割出力
+ * - CSV出力実行（Blobダウンロード）
+ * 
+ * 【使用例】
+ * ```tsx
+ * <SalesPivotHeader
+ *   canExport={true}
+ *   exportOptions={exportOptions}
+ *   onExportOptionsChange={setExportOptions}
+ *   onExport={handleExport}
+ *   onExportSuccess={() => message.success('CSV出力完了')}
+ *   onExportError={(err) => message.error('CSV出力失敗')}
+ *   periodLabel="202511"
+ *   baseAx="customer"
+ *   axB="item"
+ *   axC="date"
+ * />
+ * ```
  */
 
 import React from 'react';
@@ -10,6 +41,20 @@ import { DownloadOutlined, DownOutlined } from '@ant-design/icons';
 import type { ExportOptions, Mode } from '../../shared/model/types';
 import { axisLabel } from '../../shared/model/metrics';
 
+/**
+ * SalesPivotHeader Props
+ * 
+ * @property canExport - CSV出力可能かどうか（営業選択有無で判定）
+ * @property exportOptions - 現在のCSV出力オプション
+ * @property onExportOptionsChange - 出力オプション変更時のコールバック
+ * @property onExport - CSV出力実行時のコールバック
+ * @property onExportSuccess - 出力成功時のコールバック（オプション）
+ * @property onExportError - 出力失敗時のコールバック（オプション）
+ * @property periodLabel - 期間ラベル（表示用、例: "202511" or "202501-202503"）
+ * @property baseAx - 基準軸（現在のモード）
+ * @property axB - 第2軸（残りモード1）
+ * @property axC - 第3軸（残りモード2）
+ */
 interface SalesPivotHeaderProps {
   canExport: boolean;
   exportOptions: ExportOptions;
@@ -25,6 +70,10 @@ interface SalesPivotHeaderProps {
 
 /**
  * ヘッダーコンポーネント
+ * 
+ * @description
+ * タイトルとCSV出力機能を提供するヘッダーUI
+ * Dropdown内でCSV出力オプションを設定可能
  */
 export const SalesPivotHeader: React.FC<SalesPivotHeaderProps> = ({
   canExport,
