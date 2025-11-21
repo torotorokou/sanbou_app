@@ -70,7 +70,7 @@ export const DailySeriesChart: React.FC<DailySeriesChartProps> = ({
               />
               <Line type="monotone" dataKey="amount" name="売上" stroke="#237804" />
               <Line type="monotone" dataKey="qty" name="数量" stroke="#52c41a" />
-              <Line type="monotone" dataKey="count" name="台数" stroke="#1890ff" />
+              <Line type="monotone" dataKey="count" name="件数" stroke="#1890ff" />
             </LineChart>
           ) : (
             <Empty description="日次データがありません" style={{ paddingTop: 100 }} />
