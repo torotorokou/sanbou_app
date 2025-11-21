@@ -62,9 +62,9 @@ export const DailySeriesChart: React.FC<DailySeriesChartProps> = ({
               <RTooltip
                 formatter={(value: number, name: string) => {
                   if (name === '売上') return fmtCurrency(value);
-                  if (name === '数量') return fmtNumber(value);
-                  if (name === '台数') return fmtNumber(value);
-                  if (name === '売単価') return fmtUnitPrice(value);
+                  if (name === '数量') return `${fmtNumber(value)} kg`;
+                  if (name === '件数') return `${fmtNumber(value)} 件`;
+                  if (name === '単価') return fmtUnitPrice(value);
                   return value;
                 }}
               />

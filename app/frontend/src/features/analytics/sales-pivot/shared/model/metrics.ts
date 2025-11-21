@@ -26,7 +26,7 @@ export const fmtNumber = (n: number): string => n.toLocaleString('ja-JP');
 export const fmtUnitPrice = (v: number | null): string =>
   v == null
     ? '—'
-    : `¥${v.toLocaleString('ja-JP', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+    : `¥${v.toLocaleString('ja-JP', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 /**
  * メトリクスから指定キーの値を取得

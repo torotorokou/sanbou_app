@@ -81,7 +81,7 @@ class MetricEntry(BaseModel):
     amount: float = Field(..., description="売上金額（円）")
     qty: float = Field(..., description="数量（kg）")
     slip_count: int = Field(..., description="伝票枚数")
-    unit_price: Optional[float] = Field(None, description="売単価（円/kg）")
+    unit_price: Optional[float] = Field(None, description="単価（円/kg）")
     date_key: Optional[str] = Field(None, description="日付キー（mode=dateの場合のみ）")
 
 
@@ -102,7 +102,7 @@ class DailyPoint(BaseModel):
     amount: float = Field(..., description="売上金額（円）")
     qty: float = Field(..., description="数量（kg）")
     slip_count: int = Field(..., description="伝票件数")
-    unit_price: Optional[float] = Field(None, description="売単価（円/kg）")
+    unit_price: Optional[float] = Field(None, description="単価（円/kg）")
 
 
 class CursorPage(BaseModel):
