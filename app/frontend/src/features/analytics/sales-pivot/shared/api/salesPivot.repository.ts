@@ -2,7 +2,26 @@
  * sales-pivot/infrastructure/salesPivot.repository.ts
  * Repository インターフェース + モック実装
  * 
- * 将来的に HttpSalesPivotRepository を追加して /api/sales/... を叩く想定
+ * 【概要】
+ * データアクセス層のインターフェース定義とモック実装を提供
+ * 
+ * 【設計パターン】
+ * - Repository パターン: ドメインロジックをデータアクセスから分離
+ * - Dependency Inversion Principle (DIP): インターフェースに依存、実装に依存しない
+ * 
+ * 【将来計画】
+ * 現在はモック実装のみだが、本番環境では以下の実装を追加予定:
+ * - `HttpSalesPivotRepository`: FastAPI バックエンド（/api/sales/...）との通信
+ * - coreApi (Axios instance) を使用したHTTP通信
+ * - レスポンスキャッシュ、エラーハンドリング
+ * 
+ * 【使用方法】
+ * ```typescript
+ * import { salesPivotRepository } from './salesPivot.repository';
+ * 
+ * // シングルトンインスタンスを使用
+ * const summary = await salesPivotRepository.fetchSummary(query);
+ * ```
  */
 
 import type {
@@ -19,55 +38,105 @@ import type {
 } from '../model/types';
 import { sortMetrics, monthDays, monthsBetween, allDaysInRange } from '../model/metrics';
 
+// ========================================
+// Repository インターフェース
+// ========================================
+
 /**
- * Repository インターフェース（DIP）
+ * 売上ピボット分析データアクセス用 Repository インターフェース
  * 
- * 将来的に FastAPI の /api/sales/... エンドポイントと連携する際は、
- * HttpSalesPivotRepository を実装して coreApi を使う
+ * @description
+ * DIP（依存性逆転の原則）に基づき、具体的な実装から独立したインターフェース
+ * ViewModelは常にこのインターフェースを通してデータを取得する
+ * 
+ * 【実装クラス】
+ * - MockSalesPivotRepository: モックデータを返すテスト用実装
+ * - HttpSalesPivotRepository（未実装）: FastAPI バックエンドと通信する本番実装
  */
 export interface SalesPivotRepository {
   /**
    * サマリデータ取得（営業ごとの TopN メトリクス）
+   * 
+   * @param query - サマリ取得クエリ（期間、モード、ソート条件等）
+   * @returns 営業ごとのTopNメトリクス配列
+   * 
+   * @description
+   * メイン画面のサマリテーブル表示用データを取得
+   * 各営業担当者について、指定されたモード（顧客/品名/日付）で
+   * TopN件のメトリクスを集計して返す
    */
   fetchSummary(query: SummaryQuery): Promise<SummaryRow[]>;
 
   /**
    * Pivot データ取得（固定軸 × 展開軸）
+   * 
+   * @param query - Pivot取得クエリ（固定軸、展開軸、ソート条件等）
+   * @returns カーソルページネーション形式のメトリクス
+   * 
+   * @description
+   * ドリルダウン用のPivotデータを取得
+   * 例: 「顧客A」を固定して「品名別」に展開した内訳データ
+   * カーソルベースページネーションに対応
    */
   fetchPivot(query: PivotQuery): Promise<CursorPage<MetricEntry>>;
 
   /**
    * 日次推移データ取得
+   * 
+   * @param query - 日次推移取得クエリ（期間、営業/顧客/品名の絞り込み）
+   * @returns 日次データポイント配列
+   * 
+   * @description
+   * 折れ線グラフ表示用の日次推移データを取得
+   * 指定された期間内の各日の売上・数量・件数を返す
    */
   fetchDailySeries(query: DailySeriesQuery): Promise<DailyPoint[]>;
 
   /**
-   * CSV エクスポート（Blob 返却 or ダウンロード）
-   * ※モック実装では Blob 返却、HTTP 実装では URL 返却も可
+   * CSV エクスポート
+   * 
+   * @param query - エクスポートクエリ（出力条件、フォーマット設定等）
+   * @returns CSV形式のBlob（ファイルダウンロード用）
+   * 
+   * @description
+   * サマリデータをCSV形式でエクスポート
+   * - モック実装: Blob を直接返却
+   * - HTTP実装（予定）: サーバー側でCSV生成し、Blob or ダウンロードURL を返却
    */
   exportModeCube(query: ExportQuery): Promise<Blob>;
 
   /**
-   * マスタデータ取得（営業）
+   * マスタデータ取得（営業担当者）
+   * 
+   * @returns 営業担当者マスタ配列
    */
   getSalesReps(): Promise<SalesRep[]>;
 
   /**
    * マスタデータ取得（顧客）
+   * 
+   * @returns 顧客マスタ配列
    */
   getCustomers(): Promise<UniverseEntry[]>;
 
   /**
    * マスタデータ取得（品名）
+   * 
+   * @returns 品名マスタ配列
    */
   getItems(): Promise<UniverseEntry[]>;
 }
 
-/* ========================================
- * モック実装
- * ======================================== */
+// ========================================
+// モック実装
+// ========================================
 
-// モックマスタデータ
+/**
+ * モックマスタデータ（営業担当者）
+ * 
+ * @description 開発・テスト用のサンプルデータ
+ * 本番環境では FastAPI から取得
+ */
 const MOCK_REPS: SalesRep[] = [
   { id: 'rep_a', name: '営業A' },
   { id: 'rep_b', name: '営業B' },
@@ -75,6 +144,12 @@ const MOCK_REPS: SalesRep[] = [
   { id: 'rep_d', name: '営業D' },
 ];
 
+/**
+ * モックマスタデータ（顧客）
+ * 
+ * @description 開発・テスト用のサンプルデータ
+ * 本番環境では FastAPI から取得
+ */
 const MOCK_CUSTOMERS: UniverseEntry[] = [
   { id: 'c_alpha', name: '顧客アルファ' },
   { id: 'c_bravo', name: '顧客ブラボー' },
@@ -88,6 +163,12 @@ const MOCK_CUSTOMERS: UniverseEntry[] = [
   { id: 'c_juliet', name: '顧客ジュリエット' },
 ];
 
+/**
+ * モックマスタデータ（品名）
+ * 
+ * @description 開発・テスト用のサンプルデータ
+ * 本番環境では FastAPI から取得
+ */
 const MOCK_ITEMS: UniverseEntry[] = [
   { id: 'i_a', name: '商品A' },
   { id: 'i_b', name: '商品B' },
@@ -102,28 +183,79 @@ const MOCK_ITEMS: UniverseEntry[] = [
   { id: 'i_k', name: '商品K' },
 ];
 
-// ユーティリティ
+// ========================================
+// モックデータ生成ユーティリティ
+// ========================================
+
+/**
+ * 遅延処理（ネットワーク遅延のシミュレーション）
+ * 
+ * @param ms - 遅延時間（ミリ秒）
+ * @returns Promise（指定時間後に resolve）
+ */
 const delay = (ms = 180) => new Promise((r) => setTimeout(r, ms));
+
+/**
+ * ランダムな整数を生成
+ * 
+ * @param min - 最小値（含む）
+ * @param max - 最大値（含む）
+ * @returns min以上max以下のランダムな整数
+ */
 const rndInt = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min;
 
 /**
- * 乱数でメトリクスを生成（矛盾を極力避ける）
+ * ランダムにメトリクスを生成（矛盾を極力避ける）
+ * 
+ * @param weight - 重み係数（営業担当者の実績傾向を反映、デフォルト1）
+ * @returns 生成されたメトリクス（amount, qty, count, unit_price）
+ * 
+ * @description
+ * リアリティのあるモックデータ生成のため、以下のロジックを実装:
+ * - 約17%の確率で0実績（has = false）
+ * - 数量(qty)と件数(count)に相関を持たせる（大量注文ほど件数も多い傾向）
+ * - 単価(unit_price)と数量から売上(amount)を逆算し、ランダム性を加える
+ * - 数量0の場合は単価もnull（計算不可）
  */
 const makeMetric = (
   weight = 1
 ): Pick<MetricEntry, 'amount' | 'qty' | 'count' | 'unit_price'> => {
-  const has = Math.random() < 0.83; // 17%は0実績
+  // 約83%の確率で実績あり、17%で0実績
+  const has = Math.random() < 0.83;
+  
+  // 数量（kg）: 0 ～ 140kg × weight
   const qty = has ? Math.max(0, Math.round(Math.random() * 140 * weight)) : 0;
-  // 台数はqtyにゆるく相関（qty>0なら最低1台）
+  
+  // 件数: qtyに相関（300～500kg あたり1件の割合）
+  // qty>0なら最低1件は保証
   const count = qty > 0 ? Math.max(1, Math.round(qty / rndInt(300, 500))) : 0;
+  
+  // 単価（円/kg）: 120～520円
   const price = has ? rndInt(120, 520) : 0;
+  
+  // 売上金額: 数量 × 単価 × (0.7～1.3のランダム係数)
+  // ランダム係数で取引ごとの価格変動を表現
   const amount = has ? Math.round(qty * price * (0.7 + Math.random() * 0.6)) : 0;
+  
+  // 実際の単価（逆算）: 売上 ÷ 数量（小数点2桁）
   const unit_price = qty > 0 ? Math.round((amount / qty) * 100) / 100 : null;
+  
   return { amount, qty, count, unit_price };
 };
 
 /**
  * カーソルベースページネーション
+ * 
+ * @param sorted - ソート済みの全データ配列
+ * @param cursor - 現在のカーソル位置（文字列形式の数値、null/undefinedは先頭）
+ * @param pageSize - 1ページあたりの件数
+ * @returns ページネーション結果（rows: データ配列, next_cursor: 次ページのカーソル）
+ * 
+ * @description
+ * オフセットベースではなくカーソルベースでページネーション
+ * - cursor = "0": 0番目から取得
+ * - cursor = "20": 20番目から取得
+ * - next_cursor = null: 最終ページ到達
  */
 function paginateWithCursor<T>(
   sorted: T[],
@@ -132,40 +264,93 @@ function paginateWithCursor<T>(
 ): CursorPage<T> {
   const start = cursor ? Number(cursor) : 0;
   const end = Math.min(start + pageSize, sorted.length);
+  
   return {
     rows: sorted.slice(start, end),
     next_cursor: end < sorted.length ? String(end) : null,
   };
 }
 
+// ========================================
+// モック Repository 実装クラス
+// ========================================
+
 /**
  * モック Repository 実装
+ * 
+ * @description
+ * 開発・テスト環境で使用するRepository実装
+ * ランダムデータを生成して返すため、バックエンドなしでUI開発が可能
+ * 
+ * 【特徴】
+ * - ネットワーク遅延をシミュレート（delay関数）
+ * - リアリティのあるランダムデータ生成
+ * - 実際のAPI仕様を想定したレスポンス構造
+ * 
+ * 【注意】
+ * - データは毎回ランダム生成されるため、リロードで変わる
+ * - ページネーションは見た目上動作するが、実際のDBアクセスはしない
+ * 
+ * @implements {SalesPivotRepository}
  */
 export class MockSalesPivotRepository implements SalesPivotRepository {
+  /**
+   * 営業マスタ取得
+   * 
+   * @returns 営業担当者マスタ配列
+   */
   async getSalesReps(): Promise<SalesRep[]> {
     await delay(50);
     return [...MOCK_REPS];
   }
 
+  /**
+   * 顧客マスタ取得
+   * 
+   * @returns 顧客マスタ配列
+   */
   async getCustomers(): Promise<UniverseEntry[]> {
     await delay(50);
     return [...MOCK_CUSTOMERS];
   }
 
+  /**
+   * 品名マスタ取得
+   * 
+   * @returns 品名マスタ配列
+   */
   async getItems(): Promise<UniverseEntry[]> {
     await delay(50);
     return [...MOCK_ITEMS];
   }
 
+  /**
+   * サマリデータ取得
+   * 
+   * @param q - サマリ取得クエリ
+   * @returns 営業ごとのTopNメトリクス配列
+   * 
+   * @description
+   * 以下の処理フローでモックデータを生成:
+   * 1. 対象営業を絞り込み（repIds が空なら全営業）
+   * 2. 期間から対象月を算出
+   * 3. モードに応じたユニバース（全件リスト）を生成
+   * 4. filterIds でフィルタリング
+   * 5. 各営業 × 各エンティティでランダムメトリクス生成
+   * 6. ソート・TopN抽出
+   */
   async fetchSummary(q: SummaryQuery): Promise<SummaryRow[]> {
+    // 1. 対象営業を絞り込み
     const reps = q.repIds.length
       ? MOCK_REPS.filter((r) => q.repIds.includes(r.id))
       : MOCK_REPS;
 
+    // 2. 期間から対象月を算出
     const months = q.monthRange
       ? monthsBetween(q.monthRange.from, q.monthRange.to)
       : [q.month!];
 
+    // 3. モードに応じたユニバース（全件リスト）を生成
     const universe: UniverseEntry[] =
       q.mode === 'customer'
         ? MOCK_CUSTOMERS
@@ -175,18 +360,26 @@ export class MockSalesPivotRepository implements SalesPivotRepository {
         ? allDaysInRange(q.monthRange)
         : monthDays(q.month!);
 
+    // 4. filterIds でフィルタリング（空なら全件）
     const filtered = q.filterIds.length
       ? universe.filter((u) => q.filterIds.includes(u.id))
       : universe;
 
+    // 5. 各営業ごとにメトリクスを生成
     const rows: SummaryRow[] = reps.map((rep) => {
+      // 営業ごとの重み係数（実績傾向の個人差をシミュレート）
       const weight = 1 + ((rep.id.charCodeAt(rep.id.length - 1) % 3) * 0.2);
+      
+      // 各エンティティについてメトリクス生成
       const pool: MetricEntry[] = filtered.map((t) => {
         const m = makeMetric(weight);
+        
+        // 期間が複数月の場合は月数分を乗算（単純化）
         const mult = q.mode === 'date' ? 1 : months.length;
         const amount = Math.round(m.amount * mult);
         const qty = Math.round(m.qty * mult);
         const count = Math.round(m.count * mult);
+        
         return {
           id: t.id,
           name: t.name,
@@ -197,6 +390,8 @@ export class MockSalesPivotRepository implements SalesPivotRepository {
           dateKey: t.dateKey,
         };
       });
+      
+      // 6. ソート
       sortMetrics(pool, q.sortBy, q.order);
       const top = q.topN === 'all' ? pool : pool.slice(0, q.topN);
       return { repId: rep.id, repName: rep.name, topN: top };
