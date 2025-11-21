@@ -85,6 +85,12 @@ const SalesTreePage: React.FC = () => {
   const [tableSortBy, setTableSortBy] = useState<SortKey>('amount');
   const [tableOrder, setTableOrder] = useState<SortOrder>('desc');
 
+  // フィルターパネルの並び順が変わったらテーブルの並び順も同期
+  useEffect(() => {
+    setTableSortBy(filterSortBy);
+    setTableOrder(filterOrder);
+  }, [filterSortBy, filterOrder]);
+
   // Export options
   const [exportOptions, setExportOptions] = useState<ExportOptions>(() => {
     try {
