@@ -52,7 +52,7 @@ export interface MetricEntry {
   name: string;         // 顧客名 | 品名 | 日付(YYYY-MM-DD)
   amount: number;       // 売上
   qty: number;          // 数量(kg)
-  count: number;        // 台数
+  count: number;        // 件数
   unit_price: number | null; // 売単価 = Σ金額 / Σ数量（数量=0はnull）
   dateKey?: YYYYMMDD;   // dateモードのソート用
 }

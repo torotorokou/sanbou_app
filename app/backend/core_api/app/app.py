@@ -37,6 +37,7 @@ from app.presentation.routers.block_unit_price.router import router as block_uni
 from app.presentation.routers.manual.router import router as manual_router
 from app.presentation.routers.dashboard.router import router as dashboard_router
 from app.presentation.routers.inbound.router import router as inbound_router
+from app.presentation.routers.sales_tree.router import router as sales_tree_router
 
 # ==========================================
 # 構造化JSONロギングの設定
@@ -90,6 +91,7 @@ app.include_router(forecast_router)    # 予測機能: ジョブ作成、ステ�
 app.include_router(kpi_router)         # KPI集計: ダッシュボード用メトリクス
 app.include_router(dashboard_router)   # ダッシュボード: ターゲット/実績データ
 app.include_router(inbound_router)     # 搬入データ: 日次データ取得(累積計算対応)
+app.include_router(sales_tree_router)  # 売上ツリー分析: サマリー/日次推移データ
 
 # --- 外部サービスプロキシ (BFF) ---
 app.include_router(external_router)           # 外部API統合エンドポイント

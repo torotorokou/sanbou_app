@@ -101,7 +101,7 @@ export const ExpandedRow: React.FC<ExpandedRowProps> = ({
       ),
     },
     {
-      title: '台数（台）',
+      title: '件数（件）',
       dataIndex: 'count',
       key: 'count',
       align: 'right',

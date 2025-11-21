@@ -69,7 +69,7 @@ export const SummaryTable: React.FC<SummaryTableProps> = ({
           <Space wrap size="small" className="sales-tree-summary-tags">
             <Tag color="#237804">合計 売上 {fmtCurrency(totalAmount)}</Tag>
             <Tag color="green">数量 {fmtNumber(totalQty)} kg</Tag>
-            <Tag color="blue">台数 {fmtNumber(totalCount)} 台</Tag>
+            <Tag color="blue">件数 {fmtNumber(totalCount)} 件</Tag>
             <Tag color="gold">単価 {fmtUnitPrice(unit)}</Tag>
           </Space>
         );

@@ -42,7 +42,7 @@ export const MetricChart: React.FC<MetricChartProps> = ({
     name: d.name,
     売上: d.amount,
     数量: d.qty,
-    台数: d.count,
+    件数: d.count,
     売単価: d.unit_price ?? 0,
   }));
 
@@ -50,7 +50,7 @@ export const MetricChart: React.FC<MetricChartProps> = ({
     <Row gutter={[16, 16]}>
       {/* TopN棒グラフ */}
       <Col xs={24} xl={14}>
-        <div className="card-subtitle">TopN（売上・数量・台数・売単価）</div>
+        <div className="card-subtitle">TopN（売上・数量・件数・売単価）</div>
         <div style={{ width: '100%', height: 320 }}>
           <ResponsiveContainer>
             <BarChart data={chartBarData} margin={{ top: 8, right: 8, left: 8, bottom: 24 }}>
@@ -60,7 +60,7 @@ export const MetricChart: React.FC<MetricChartProps> = ({
               <RTooltip />
               <Bar dataKey="売上" fill="#237804" />
               <Bar dataKey="数量" fill="#52c41a" />
-              <Bar dataKey="台数" fill="#1890ff" />
+              <Bar dataKey="件数" fill="#1890ff" />
               <Bar dataKey="売単価" fill="#faad14" />
             </BarChart>
           </ResponsiveContainer>
@@ -95,14 +95,14 @@ export const MetricChart: React.FC<MetricChartProps> = ({
                     : name === 'qty'
                     ? `${fmtNumber(Number(v))} kg`
                     : name === 'count'
-                    ? `${fmtNumber(Number(v))} 台`
+                    ? `${fmtNumber(Number(v))} 件`
                     : fmtUnitPrice(Number(v))
                 }
                 labelFormatter={(l) => l}
               />
               <Line type="monotone" dataKey="amount" name="売上" stroke="#237804" />
               <Line type="monotone" dataKey="qty" name="数量" stroke="#52c41a" />
-              <Line type="monotone" dataKey="count" name="台数" stroke="#1890ff" />
+              <Line type="monotone" dataKey="count" name="件数" stroke="#1890ff" />
             </LineChart>
           </ResponsiveContainer>
         </div>

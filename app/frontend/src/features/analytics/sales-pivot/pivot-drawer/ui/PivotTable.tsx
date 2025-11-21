@@ -130,7 +130,7 @@ export const PivotTable: React.FC<PivotTableProps> = ({
             ),
           },
           {
-            title: '台数（台）',
+            title: '件数（件）',
             dataIndex: 'count',
             key: 'count',
             align: 'right',
