@@ -15,11 +15,11 @@
  */
 
 // Domain Types
-export type { CustomerData } from './domain/types';
+export type { CustomerData } from './shared/domain/types';
 
 // Main ViewModel - 主要なエントリーポイント
-export { useCustomerChurnViewModel } from './model/useCustomerChurnViewModel';
-export type { CustomerChurnViewModel } from './model/useCustomerChurnViewModel';
+export { useCustomerChurnViewModel } from './shared/model/useCustomerChurnViewModel';
+export type { CustomerChurnViewModel } from './shared/model/useCustomerChurnViewModel';
 
 // Sub-features - 個別に使用可能な機能モジュール
 export * from './period-selector';

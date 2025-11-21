@@ -10,10 +10,10 @@ import type { Dayjs } from 'dayjs';
 import type { CustomerData } from '../domain/types';
 
 // Sub-features
-import { usePeriodSelector, isValidPeriodRange, getMonthRange } from '../period-selector';
-import { aggregateCustomers } from '../customer-aggregation';
-import { useCustomerComparison } from '../customer-comparison';
-import { useExcelDownload, buildCustomerCsv, downloadCsv } from '../data-export';
+import { usePeriodSelector, isValidPeriodRange, getMonthRange } from '../../period-selector';
+import { aggregateCustomers } from '../../customer-aggregation';
+import { useCustomerComparison } from '../../customer-comparison';
+import { useExcelDownload, buildCustomerCsv, downloadCsv } from '../../data-export';
 
 // Mock Data (TODO: 将来的にAPIに置き換え)
 import { generateMockResponse } from './mockData';

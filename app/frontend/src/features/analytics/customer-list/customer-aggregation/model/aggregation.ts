@@ -1,10 +1,10 @@
 /**
- * Customer Aggregation Sub-Feature
+ * Customer Aggregation Model
  * 
  * 顧客データの集約ロジック
  */
 
-import type { CustomerData } from '../../domain/types';
+import type { CustomerData } from '../../shared/domain/types';
 
 /**
  * 複数月の顧客データを集約する
