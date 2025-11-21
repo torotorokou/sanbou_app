@@ -76,13 +76,26 @@ class UploadShogunCsvUseCase:
         """
         非同期アップロードを開始（軽量バリデーション→即座に受付完了レスポンス→重い処理はバックグラウンド）
         
+        処理フロー:
+          1. ファイルタイプバリデーション（拡張子、MIME type）
+          2. 重複チェック + log.upload_file への登録（pending状態）
+             - ファイルハッシュ計算により、同一ファイルの連続アップロードを検知
+             - 3分以内の重複は409エラーで拒否（UX向上）
+          3. ファイル内容をメモリに読み込み、バックグラウンドタスクに登録
+          4. 即座に受付完了レスポンスを返す（upload_file_ids を含む）
+        
+        バックグラウンド処理:
+          - CSV読込 → バリデーション → フォーマット → DB保存（raw/stg層）
+          - マテリアライズドビューの自動更新（MVP: Most Valuable Process）
+          - エラー時は log.upload_file.status = 'error' に更新
+        
         Args:
             background_tasks: FastAPI BackgroundTasks
             receive: 受入一覧CSV
             yard: ヤード一覧CSV
             shipment: 出荷一覧CSV
-            file_type: 'FLASH' または 'FINAL'
-            uploaded_by: アップロードユーザー名
+            file_type: 'FLASH' または 'FINAL'（速報値 or 確定値）
+            uploaded_by: アップロードユーザー名（ログ記録用）
         
         Returns:
             受付成功: upload_file_ids を含む SuccessApiResponse（即座）
@@ -155,6 +168,8 @@ class UploadShogunCsvUseCase:
                     )
         
         # 短時間の重複ファイルがある場合は409を返す
+        # UX向上: ユーザーが誤って同じファイルを連続アップロードすることを防ぐ
+        # デフォルト3分以内の重複をチェック（raw_data_repo.is_recent_duplicate_upload）
         if recent_duplicate_files:
             duplicate_details = []
             for csv_type, info in recent_duplicate_files.items():

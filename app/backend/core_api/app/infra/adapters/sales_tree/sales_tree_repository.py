@@ -44,12 +44,30 @@ class SalesTreeRepository:
         """
         サマリーデータ取得
         
-        営業ごとに、指定軸（customer/item/date）でTOP-N集計
+        機能:
+          - 営業ごとに、指定軸（customer/item/date）でTOP-N集計
+          - ソート項目: amount, qty, slip_count, unit_price, date, name
+          - フィルタ: rep_ids, filter_ids（軸IDの絞り込み）
         
         処理フロー:
-        1. v_sales_tree_daily から期間・営業でフィルタ
-        2. mode に応じて GROUP BY 軸を切り替え
-        3. rep_id ごとに TOP-N を抽出（Window Function or Python側ソート）
+          1. v_sales_tree_daily から期間・営業でフィルタ
+          2. mode に応じて GROUP BY 軸を切り替え
+             - customer: customer_id, customer_name
+             - item: item_id, item_name
+             - date: sales_date, sales_date
+          3. rep_id ごとに TOP-N を抽出（Window Function: ROW_NUMBER()）
+          4. 営業ごとに SummaryRow として集約
+        
+        パフォーマンス最適化:
+          - Window FunctionでDB側でTOP-N抽出（Pythonループより高速）
+          - sandbox.v_sales_tree_dailyはMaterialized View（集計済み）
+          - インデックス: (sales_date, rep_id, customer_id, item_id)
+        
+        Args:
+            req: SummaryRequest（date_from, date_to, mode, rep_ids, filter_ids, top_n, sort_by, order）
+        
+        Returns:
+            list[SummaryRow]: 営業ごとのサマリーデータ（metrics に TOP-N 集計を格納）
         """
         try:
             logger.info(f"fetch_summary: mode={req.mode}, date_from={req.date_from}, date_to={req.date_to}, rep_ids={req.rep_ids}")

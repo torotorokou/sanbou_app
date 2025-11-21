@@ -1,9 +1,27 @@
 """
-Domain models for Sales Tree Analytics
+Domain models for Sales Tree Analytics - 売上ツリー分析ドメインモデル
 
-売上ツリー分析のドメインモデル
-- サマリー（営業×軸別の集計）
-- 日次推移データ
+機能:
+  1. サマリーデータ: 営業×軸別の集計(TOP-N対応)
+  2. 日次推移データ: 指定条件での日別集計
+  3. Pivotデータ: 固定軸に対する別軸での展開(ドリルダウン)
+
+設計方針:
+  - Clean Architecture: Domain層のモデル定義
+  - Pydantic: 型安全性とバリデーション
+  - フレームワーク非依存: FastAPIの外でも使用可能
+
+使用例:
+  # サマリーリクエスト: 顧客別TOP20
+  req = SummaryRequest(
+      date_from=date(2025, 10, 1),
+      date_to=date(2025, 10, 31),
+      mode="customer",
+      rep_ids=[101, 102],
+      top_n=20,
+      sort_by="amount",
+      order="desc"
+  )
 """
 from datetime import date as date_type
 from typing import Literal, Optional
