@@ -56,24 +56,85 @@ export const SummaryTable: React.FC<SummaryTableProps> = ({
   }
 
   const parentCols: TableColumnsType<SummaryRow> = [
-    { title: '営業', dataIndex: 'repName', key: 'repName', width: 160, fixed: 'left' },
+    { 
+      title: '営業', 
+      dataIndex: 'repName', 
+      key: 'repName', 
+      width: 160, 
+      fixed: 'left',
+      sorter: (a: SummaryRow, b: SummaryRow) => a.repName.localeCompare(b.repName, 'ja')
+    },
     {
       title: `${axisLabel(mode)} Top${topN === 'all' ? 'All' : topN}`,
       key: 'summary',
-      render: (_: unknown, row: SummaryRow) => {
-        const totalAmount = row.topN.reduce((s: number, x: MetricEntry) => s + x.amount, 0);
-        const totalQty = row.topN.reduce((s: number, x: MetricEntry) => s + x.qty, 0);
-        const totalCount = row.topN.reduce((s: number, x: MetricEntry) => s + x.count, 0);
-        const unit = totalQty > 0 ? Math.round((totalAmount / totalQty) * 100) / 100 : null;
-        return (
-          <Space wrap size="small" className="sales-tree-summary-tags">
-            <Tag color="#237804">合計 売上 {fmtCurrency(totalAmount)}</Tag>
-            <Tag color="green">数量 {fmtNumber(totalQty)} kg</Tag>
-            <Tag color="blue">件数 {fmtNumber(totalCount)} 件</Tag>
-            <Tag color="gold">単価 {fmtUnitPrice(unit)}</Tag>
-          </Space>
-        );
-      },
+      children: [
+        {
+          title: '売上',
+          key: 'amount',
+          align: 'right' as const,
+          width: 150,
+          sorter: (a: SummaryRow, b: SummaryRow) => {
+            const aTotal = a.topN.reduce((s: number, x: MetricEntry) => s + x.amount, 0);
+            const bTotal = b.topN.reduce((s: number, x: MetricEntry) => s + x.amount, 0);
+            return aTotal - bTotal;
+          },
+          render: (_: unknown, row: SummaryRow) => {
+            const totalAmount = row.topN.reduce((s: number, x: MetricEntry) => s + x.amount, 0);
+            return <Tag color="volcano" style={{ fontSize: '15px', padding: '4px 8px' }}>{fmtCurrency(totalAmount)}</Tag>;
+          },
+        },
+        {
+          title: '数量 (kg)',
+          key: 'qty',
+          align: 'right' as const,
+          width: 140,
+          sorter: (a: SummaryRow, b: SummaryRow) => {
+            const aTotal = a.topN.reduce((s: number, x: MetricEntry) => s + x.qty, 0);
+            const bTotal = b.topN.reduce((s: number, x: MetricEntry) => s + x.qty, 0);
+            return aTotal - bTotal;
+          },
+          render: (_: unknown, row: SummaryRow) => {
+            const totalQty = row.topN.reduce((s: number, x: MetricEntry) => s + x.qty, 0);
+            return <Tag color="green" style={{ fontSize: '15px', padding: '4px 8px' }}>{fmtNumber(totalQty)} kg</Tag>;
+          },
+        },
+        {
+          title: '件数',
+          key: 'count',
+          align: 'right' as const,
+          width: 120,
+          sorter: (a: SummaryRow, b: SummaryRow) => {
+            const aTotal = a.topN.reduce((s: number, x: MetricEntry) => s + x.count, 0);
+            const bTotal = b.topN.reduce((s: number, x: MetricEntry) => s + x.count, 0);
+            return aTotal - bTotal;
+          },
+          render: (_: unknown, row: SummaryRow) => {
+            const totalCount = row.topN.reduce((s: number, x: MetricEntry) => s + x.count, 0);
+            return <Tag color="blue" style={{ fontSize: '15px', padding: '4px 8px' }}>{fmtNumber(totalCount)} 件</Tag>;
+          },
+        },
+        {
+          title: '単価',
+          key: 'unit_price',
+          align: 'right' as const,
+          width: 120,
+          sorter: (a: SummaryRow, b: SummaryRow) => {
+            const aAmount = a.topN.reduce((s: number, x: MetricEntry) => s + x.amount, 0);
+            const aQty = a.topN.reduce((s: number, x: MetricEntry) => s + x.qty, 0);
+            const aUnit = aQty > 0 ? aAmount / aQty : 0;
+            const bAmount = b.topN.reduce((s: number, x: MetricEntry) => s + x.amount, 0);
+            const bQty = b.topN.reduce((s: number, x: MetricEntry) => s + x.qty, 0);
+            const bUnit = bQty > 0 ? bAmount / bQty : 0;
+            return aUnit - bUnit;
+          },
+          render: (_: unknown, row: SummaryRow) => {
+            const totalAmount = row.topN.reduce((s: number, x: MetricEntry) => s + x.amount, 0);
+            const totalQty = row.topN.reduce((s: number, x: MetricEntry) => s + x.qty, 0);
+            const unit = totalQty > 0 ? totalAmount / totalQty : null;
+            return <Tag color="gold" style={{ fontSize: '15px', padding: '4px 8px' }}>{fmtUnitPrice(unit)}</Tag>;
+          },
+        },
+      ],
     },
   ];
 
@@ -105,7 +166,7 @@ export const SummaryTable: React.FC<SummaryTableProps> = ({
           ),
           rowExpandable: () => true,
         }}
-        scroll={{ x: 1220 }}
+        scroll={{ x: 'max-content' }}
         rowClassName={(_: unknown, idx: number) => (idx % 2 === 0 ? 'sales-tree-zebra-even' : 'sales-tree-zebra-odd')}
       />
     </Card>
