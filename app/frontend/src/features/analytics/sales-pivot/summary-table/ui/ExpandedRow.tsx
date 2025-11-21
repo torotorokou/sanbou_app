@@ -65,7 +65,7 @@ export const ExpandedRow: React.FC<ExpandedRowProps> = ({
       title: nameTitle, 
       dataIndex: 'name', 
       key: 'name', 
-      width: 220, 
+      width: 150, 
       sorter: (a: MetricEntry, b: MetricEntry) => a.name.localeCompare(b.name, 'ja')
     },
     {
@@ -73,7 +73,7 @@ export const ExpandedRow: React.FC<ExpandedRowProps> = ({
       dataIndex: 'amount',
       key: 'amount',
       align: 'right',
-      width: 180,
+      width: 130,
       sorter: (a: MetricEntry, b: MetricEntry) => a.amount - b.amount,
       render: (v: number) => (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -92,7 +92,7 @@ export const ExpandedRow: React.FC<ExpandedRowProps> = ({
       dataIndex: 'qty',
       key: 'qty',
       align: 'right',
-      width: 160,
+      width: 130,
       sorter: (a: MetricEntry, b: MetricEntry) => a.qty - b.qty,
       render: (v: number) => (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -137,7 +137,7 @@ export const ExpandedRow: React.FC<ExpandedRowProps> = ({
       dataIndex: 'unit_price',
       key: 'unit_price',
       align: 'right',
-      width: 170,
+      width: 120,
       sorter: (a: MetricEntry, b: MetricEntry) => (a.unit_price ?? 0) - (b.unit_price ?? 0),
       render: (v: number | null) => (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'flex-end' }}>
@@ -155,7 +155,7 @@ export const ExpandedRow: React.FC<ExpandedRowProps> = ({
       title: '操作',
       key: 'ops',
       fixed: 'right',
-      width: 120,
+      width: 40,
       render: (_: unknown, rec: MetricEntry) => (
         <Button size="small" icon={<SwapOutlined />} onClick={() => onRowClick(rec)}>
           詳細
@@ -206,7 +206,7 @@ export const ExpandedRow: React.FC<ExpandedRowProps> = ({
                 dataSource={data}
                 pagination={false}
                 onChange={onChildChange}
-                scroll={{ x: 1280 }}
+                scroll={{ x: 'max-content' }}
                 rowClassName={(_: unknown, idx: number) => (idx % 2 === 0 ? 'sales-tree-zebra-even' : 'sales-tree-zebra-odd')}
               />
             ),
