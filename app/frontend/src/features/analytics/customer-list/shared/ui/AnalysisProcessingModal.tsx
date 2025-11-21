@@ -5,6 +5,11 @@ type Props = {
     open: boolean;
 };
 
+/**
+ * Analysis Processing Modal
+ * 
+ * 分析処理中を表示する共通モーダル
+ */
 const AnalysisProcessingModal: React.FC<Props> = ({ open }) => (
     <Modal
         open={open}

@@ -508,7 +508,7 @@ export const salesPivotRepository: SalesPivotRepository = new MockSalesPivotRepo
  * HTTP実装（実API連携）
  * ======================================== */
 
-import { coreApi } from '@/shared/infrastructure/http/coreApi';
+import { coreApi } from '@/shared';
 
 /**
  * HTTP Repository 実装

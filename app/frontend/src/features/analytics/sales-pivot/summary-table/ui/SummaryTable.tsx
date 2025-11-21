@@ -6,7 +6,7 @@
 import React from 'react';
 import { Card, Table, Typography } from 'antd';
 import type { TableColumnsType } from 'antd';
-import { Tag, Space } from 'antd';
+import { Tag } from 'antd';
 import type { SummaryRow, Mode, MetricEntry, SummaryQuery } from '../../shared/model/types';
 import { fmtCurrency, fmtNumber, fmtUnitPrice, axisLabel } from '../../shared/model/metrics';
 import { ExpandedRow } from './ExpandedRow';

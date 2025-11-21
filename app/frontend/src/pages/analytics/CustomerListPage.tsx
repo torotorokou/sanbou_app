@@ -1,108 +1,37 @@
-import React, { useState } from 'react';
-import { Row, Col, Button, Card, message } from 'antd';
-import { ReloadOutlined } from '@ant-design/icons';
+/**
+ * Customer List Analysis Page
+ * 
+ * FSD + MVVM + Repository パターンに準拠
+ * 
+ * Page層の責務:
+ * - レイアウト/ルーティング/配置（骨組み）のみ
+ * - ViewModel（useCustomerChurnViewModel）を呼び出し
+ * - 純粋なUIコンポーネントにデータを流し込むだけ
+ * - ビジネスロジック・状態管理・イベントハンドラは一切書かない
+ */
+
+import React from 'react';
+import { Row, Col, Button, Card } from 'antd';
+import { ReloadOutlined, DownloadOutlined } from '@ant-design/icons';
 import { customTokens, apiPostBlob } from '@/shared';
-import type { Dayjs } from 'dayjs';
 import {
-  ComparisonConditionForm,
+  PeriodSelectorForm,
   CustomerComparisonResultCard,
   AnalysisProcessingModal,
-  useCustomerComparison,
+  useCustomerChurnViewModel,
 } from '@features/analytics/customer-list';
 
-function getMonthRange(start: Dayjs | null, end: Dayjs | null): string[] {
-    if (!start || !end) return [];
-    const range: string[] = [];
-    let current = start.startOf('month');
-    while (
-        current.isBefore(end.endOf('month')) ||
-        current.isSame(end, 'month')
-    ) {
-        range.push(current.format('YYYY-MM'));
-        current = current.add(1, 'month');
-        if (range.length > 24) break;
-    }
-    return range;
-}
-
 const CustomerListAnalysis: React.FC = () => {
-    const [targetStart, setTargetStart] = useState<Dayjs | null>(null);
-    const [targetEnd, setTargetEnd] = useState<Dayjs | null>(null);
-    const [compareStart, setCompareStart] = useState<Dayjs | null>(null);
-    const [compareEnd, setCompareEnd] = useState<Dayjs | null>(null);
-    const [analysisStarted, setAnalysisStarted] = useState(false);
-    const [isAnalyzing, setIsAnalyzing] = useState(false);
-    const [downloading, setDownloading] = useState(false);
-
-    const targetMonths = getMonthRange(targetStart, targetEnd);
-    const compareMonths = getMonthRange(compareStart, compareEnd);
-
-    const { targetCustomers, compareCustomers, onlyCompare } =
-        useCustomerComparison(targetMonths, compareMonths);
-
-    const handleAnalyze = () => {
-        setIsAnalyzing(true);
-        setAnalysisStarted(false);
-        setTimeout(() => {
-            setIsAnalyzing(false);
-            setAnalysisStarted(true);
-        }, 1000);
-    };
-
-    const resetConditions = () => {
-        setTargetStart(null);
-        setTargetEnd(null);
-        setCompareStart(null);
-        setCompareEnd(null);
-        setAnalysisStarted(false);
-    };
-
-    // ダウンロードAPIリクエスト
-    const handleDownload = async () => {
-        if (!analysisStarted) return;
-        setDownloading(true);
-        try {
-            const blob = await apiPostBlob<Record<string, string | undefined>>(
-                '/core_api/customer-comparison/excel',
-                {
-                    targetStart: targetStart?.format('YYYY-MM'),
-                    targetEnd: targetEnd?.format('YYYY-MM'),
-                    compareStart: compareStart?.format('YYYY-MM'),
-                    compareEnd: compareEnd?.format('YYYY-MM'),
-                }
-            );
-
-            const url = window.URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.setAttribute('download', '顧客比較リスト.xlsx');
-            document.body.appendChild(link);
-            link.click();
-            link.parentNode?.removeChild(link);
-            window.URL.revokeObjectURL(url);
-            message.success('エクセルをダウンロードしました');
-        } catch {
-            message.error('ダウンロードに失敗しました');
-        }
-        setDownloading(false);
-    };
-
-    const isButtonDisabled =
-        !targetStart ||
-        !targetEnd ||
-        !compareStart ||
-        !compareEnd ||
-        targetEnd.isBefore(targetStart, 'month') ||
-        compareEnd.isBefore(compareStart, 'month') ||
-        isAnalyzing;
+    // ViewModel を呼び出し（すべての状態・ロジック・イベントハンドラがここに集約）
+    const vm = useCustomerChurnViewModel(apiPostBlob);
 
     return (
         <div style={{ height: '100%', minHeight: 0 }}>
             {/* 分析中モーダル */}
-            <AnalysisProcessingModal open={isAnalyzing} />
+            <AnalysisProcessingModal open={vm.isAnalyzing} />
 
             <Row gutter={24} style={{ height: '100%', minHeight: 0 }}>
-                {/* 左カラム */}
+                {/* 左カラム: 条件指定・実行ボタン */}
                 <Col
                     span={7}
                     style={{
@@ -146,7 +75,7 @@ const CustomerListAnalysis: React.FC = () => {
                                 <Button
                                     type='primary'
                                     danger
-                                    onClick={resetConditions}
+                                    onClick={vm.resetConditions}
                                     size='middle'
                                     icon={<ReloadOutlined />}
                                     style={{ fontWeight: 600 }}
@@ -155,23 +84,24 @@ const CustomerListAnalysis: React.FC = () => {
                                 </Button>
                             }
                         >
-                            <ComparisonConditionForm
-                                targetStart={targetStart}
-                                targetEnd={targetEnd}
-                                compareStart={compareStart}
-                                compareEnd={compareEnd}
-                                setTargetStart={setTargetStart}
-                                setTargetEnd={setTargetEnd}
-                                setCompareStart={setCompareStart}
-                                setCompareEnd={setCompareEnd}
+                            <PeriodSelectorForm
+                                currentStart={vm.currentStart}
+                                currentEnd={vm.currentEnd}
+                                previousStart={vm.previousStart}
+                                previousEnd={vm.previousEnd}
+                                setCurrentStart={vm.setCurrentStart}
+                                setCurrentEnd={vm.setCurrentEnd}
+                                setPreviousStart={vm.setPreviousStart}
+                                setPreviousEnd={vm.setPreviousEnd}
                             />
                         </Card>
+                        
                         <Button
                             type='primary'
                             size='large'
                             block
-                            disabled={isButtonDisabled}
-                            onClick={handleAnalyze}
+                            disabled={vm.isButtonDisabled}
+                            onClick={vm.handleAnalyze}
                             style={{
                                 fontWeight: 600,
                                 letterSpacing: 1,
@@ -181,25 +111,28 @@ const CustomerListAnalysis: React.FC = () => {
                         >
                             分析する
                         </Button>
+                        
                         <Button
                             type='default'
                             size='large'
                             block
-                            loading={downloading}
-                            disabled={!analysisStarted || downloading}
-                            onClick={handleDownload}
+                            disabled={!vm.analysisStarted}
+                            onClick={vm.handleDownloadLostCustomersCsv}
+                            icon={<DownloadOutlined />}
                             style={{
                                 fontWeight: 600,
                                 letterSpacing: 1,
                                 height: 48,
+                                borderColor: '#f43f5e',
+                                color: vm.analysisStarted ? '#f43f5e' : undefined,
                             }}
                         >
-                            ダウンロード
+                            CSVダウンロード
                         </Button>
                     </div>
                 </Col>
 
-                {/* 右カラム */}
+                {/* 右カラム: 分析結果表示 */}
                 <Col
                     span={17}
                     style={{
@@ -209,7 +142,7 @@ const CustomerListAnalysis: React.FC = () => {
                         flexDirection: 'column',
                     }}
                 >
-                    {!analysisStarted ? (
+                    {!vm.analysisStarted ? (
                         <div
                             style={{
                                 marginTop: 24,
@@ -235,8 +168,8 @@ const CustomerListAnalysis: React.FC = () => {
                             }}
                         >
                             <CustomerComparisonResultCard
-                                title='比較月グループにしかいない顧客'
-                                data={onlyCompare}
+                                title={`来なくなった顧客（離脱）: ${vm.lostCustomers.length} 件`}
+                                data={vm.lostCustomers}
                                 cardStyle={{
                                     backgroundColor:
                                         customTokens.colorBgContainer,
@@ -247,46 +180,7 @@ const CustomerListAnalysis: React.FC = () => {
                                     color: '#333',
                                 }}
                                 style={{
-                                    flex: 4,
-                                    minHeight: 0,
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                }}
-                            />
-
-                            <CustomerComparisonResultCard
-                                title='対象月グループの顧客'
-                                data={targetCustomers}
-                                cardStyle={{
-                                    backgroundColor:
-                                        customTokens.colorBgContainer,
-                                }}
-                                headerStyle={{
-                                    background:
-                                        'linear-gradient(90deg, rgba(16,185,129,0.4), rgba(16,185,129,0.05))',
-                                    color: '#333',
-                                }}
-                                style={{
-                                    flex: 3,
-                                    minHeight: 0,
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                }}
-                            />
-
-                            <CustomerComparisonResultCard
-                                title='比較月グループの顧客'
-                                data={compareCustomers}
-                                cardStyle={{
-                                    backgroundColor: customTokens.colorBgBase,
-                                }}
-                                headerStyle={{
-                                    background:
-                                        'linear-gradient(90deg, rgba(245,158,11,0.4), rgba(245,158,11,0.05))',
-                                    color: '#333',
-                                }}
-                                style={{
-                                    flex: 3,
+                                    flex: 1,
                                     minHeight: 0,
                                     display: 'flex',
                                     flexDirection: 'column',
