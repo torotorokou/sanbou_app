@@ -522,9 +522,41 @@ export class HttpSalesPivotRepository implements SalesPivotRepository {
   }
 
   async exportModeCube(query: ExportQuery): Promise<Blob> {
-    // TODO: CSV Export APIは後で実装
-    const mock = new MockSalesPivotRepository();
-    return mock.exportModeCube(query);
+    // ExportQueryをAPIリクエスト形式に変換
+    let date_from: string;
+    let date_to: string;
+    
+    if (query.monthRange) {
+      date_from = `${query.monthRange.from}-01`;
+      date_to = this._getMonthEndDate(query.monthRange.to);
+    } else if (query.month) {
+      date_from = `${query.month}-01`;
+      date_to = this._getMonthEndDate(query.month);
+    } else {
+      throw new Error('month or monthRange is required for CSV export');
+    }
+
+    const req = {
+      date_from,
+      date_to,
+      mode: query.mode,
+      rep_ids: query.targetRepIds.map(id => parseInt(id, 10)),
+      filter_ids: query.filterIds,
+      sort_by: query.sortBy,
+      order: query.order,
+    };
+
+    // CSV Export APIを呼び出し (Blob返却)
+    const blob = await coreApi.post<Blob>(
+      '/core_api/analytics/sales-tree/export',
+      req,
+      {
+        headers: { 'Content-Type': 'application/json' },
+        responseType: 'blob',
+      }
+    );
+
+    return blob;
   }
 
   /**

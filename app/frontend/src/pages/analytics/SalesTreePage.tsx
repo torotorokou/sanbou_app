@@ -73,13 +73,17 @@ const SalesTreePage: React.FC = () => {
   const [month, setMonth] = useState<Dayjs>(dayjs().startOf('month'));
   const [range, setRange] = useState<[Dayjs, Dayjs] | null>(null);
 
-  // Controls
+  // Controls - フィルターパネル用（API取得条件）
   const [mode, setMode] = useState<Mode>('customer');
-  const [topN, setTopN] = useState<10 | 20 | 50 | 'all'>('all');
-  const [sortBy, setSortBy] = useState<SortKey>('amount');
-  const [order, setOrder] = useState<SortOrder>('desc');
+  const [filterTopN, setFilterTopN] = useState<10 | 20 | 50 | 'all'>('all');
+  const [filterSortBy, setFilterSortBy] = useState<SortKey>('amount');
+  const [filterOrder, setFilterOrder] = useState<SortOrder>('desc');
   const [repIds, setRepIds] = useState<ID[]>([]);
   const [filterIds, setFilterIds] = useState<ID[]>([]);
+
+  // Controls - テーブル用（クライアント側処理）
+  const [tableSortBy, setTableSortBy] = useState<SortKey>('amount');
+  const [tableOrder, setTableOrder] = useState<SortOrder>('desc');
 
   // Export options
   const [exportOptions, setExportOptions] = useState<ExportOptions>(() => {
@@ -95,9 +99,42 @@ const SalesTreePage: React.FC = () => {
     localStorage.setItem('exportOptions_v1', JSON.stringify(exportOptions));
   }, [exportOptions]);
 
-  // Data
-  const [summary, setSummary] = useState<SummaryRow[]>([]);
+  // Data (生データ - API取得結果をそのまま保持)
+  const [rawSummary, setRawSummary] = useState<SummaryRow[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
+
+  // テーブル用のソート（クライアント側処理）
+  const summary = useMemo(() => {
+    // API取得結果に対してテーブルのソートのみ適用
+    const sorted = rawSummary.map(row => {
+      const sortedTopN = [...row.topN].sort((a, b) => {
+        let aVal: number | string;
+        let bVal: number | string;
+        
+        switch (tableSortBy) {
+          case 'amount': aVal = a.amount; bVal = b.amount; break;
+          case 'qty': aVal = a.qty; bVal = b.qty; break;
+          case 'count': aVal = a.count; bVal = b.count; break;
+          case 'unit_price': 
+            aVal = a.qty > 0 ? a.amount / a.qty : 0;
+            bVal = b.qty > 0 ? b.amount / b.qty : 0;
+            break;
+          case 'name': aVal = a.name; bVal = b.name; break;
+          case 'date': aVal = a.name; bVal = b.name; break;
+          default: aVal = a.amount; bVal = b.amount;
+        }
+
+        if (typeof aVal === 'string' && typeof bVal === 'string') {
+          return tableOrder === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+        }
+        return tableOrder === 'asc' ? (aVal as number) - (bVal as number) : (bVal as number) - (aVal as number);
+      });
+      
+      return { ...row, topN: sortedTopN };
+    });
+
+    return sorted;
+  }, [rawSummary, tableSortBy, tableOrder]);
 
   // Drawer (pivot)
   type DrawerState =
@@ -132,9 +169,9 @@ const SalesTreePage: React.FC = () => {
 
   const [repSeriesCache, setRepSeriesCache] = useState<Record<ID, DailyPoint[]>>({});
 
-  // Query materialize
-  const query: SummaryQuery = useMemo(() => {
-    const base = { mode, repIds, filterIds, sortBy, order, topN };
+  // Query materialize (API用 - フィルターパネルの条件）
+  const baseQuery: SummaryQuery = useMemo(() => {
+    const base = { mode, repIds, filterIds, sortBy: filterSortBy, order: filterOrder, topN: filterTopN };
     if (periodMode === 'single') return { ...base, month: month.format('YYYY-MM') };
     if (range)
       return {
@@ -142,22 +179,36 @@ const SalesTreePage: React.FC = () => {
         monthRange: { from: range[0].format('YYYY-MM'), to: range[1].format('YYYY-MM') },
       };
     return { ...base, month: month.format('YYYY-MM') };
-  }, [periodMode, month, range, mode, repIds, filterIds, sortBy, order, topN]);
+  }, [periodMode, month, range, mode, repIds, filterIds, filterSortBy, filterOrder, filterTopN]);
+
+  // エクスポート用のクエリ（フィルターパネルの条件を使用）
+  const query: SummaryQuery = useMemo(() => {
+    return { ...baseQuery };
+  }, [baseQuery]);
 
   // Load
   const reload = useCallback(async () => {
     setLoading(true);
     try {
-      const rows = await repository.fetchSummary(query);
-      setSummary(rows);
+      const rows = await repository.fetchSummary(baseQuery);
+      setRawSummary(rows);
     } finally {
       setLoading(false);
     }
-  }, [query]);
+  }, [baseQuery]);
 
   useEffect(() => {
-    reload();
-  }, [query]);
+    const loadData = async () => {
+      setLoading(true);
+      try {
+        const rows = await repository.fetchSummary(baseQuery);
+        setRawSummary(rows);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadData();
+  }, [baseQuery]);
 
   // マスタデータ
   const [reps, setReps] = useState<Array<{ id: ID; name: string }>>([]);
@@ -250,10 +301,10 @@ const SalesTreePage: React.FC = () => {
   }, [mode]);
 
   // Mode switch
-  const switchMode = (m: Mode) => {
+  const switchMode = useCallback((m: Mode) => {
     setMode(m);
     setFilterIds([]);
-  };
+  }, []);
 
   // Pivot drawer
   const openPivot = (rec: MetricEntry) => {
@@ -272,9 +323,9 @@ const SalesTreePage: React.FC = () => {
       repIds,
       targets,
       activeAxis: firstTarget?.axis ?? mode,
-      sortBy,
-      order,
-      topN,
+      sortBy: filterSortBy,
+      order: filterOrder,
+      topN: filterTopN,
       ...(query.monthRange ? { monthRange: query.monthRange } : { month: query.month }),
     };
 
@@ -369,13 +420,13 @@ const SalesTreePage: React.FC = () => {
         onMonthChange={setMonth}
         onRangeChange={setRange}
         mode={mode}
-        topN={topN}
-        sortBy={sortBy}
-        order={order}
+        topN={filterTopN}
+        sortBy={filterSortBy}
+        order={filterOrder}
         onModeChange={switchMode}
-        onTopNChange={setTopN}
-        onSortByChange={setSortBy}
-        onOrderChange={setOrder}
+        onTopNChange={setFilterTopN}
+        onSortByChange={setFilterSortBy}
+        onOrderChange={setFilterOrder}
         repIds={repIds}
         filterIds={filterIds}
         reps={reps}
@@ -401,16 +452,16 @@ const SalesTreePage: React.FC = () => {
         data={summary}
         loading={loading}
         mode={mode}
-        topN={topN}
+        topN={filterTopN}
         hasSelection={repIds.length > 0}
         onRowClick={openPivot}
         repSeriesCache={repSeriesCache}
         loadDailySeries={loadDailySeries}
-        sortBy={sortBy}
-        order={order}
+        sortBy={tableSortBy}
+        order={tableOrder}
         onSortChange={(sb, ord) => {
-          setSortBy(sb as SortKey);
-          setOrder(ord);
+          setTableSortBy(sb as SortKey);
+          setTableOrder(ord);
         }}
         query={query}
       />
