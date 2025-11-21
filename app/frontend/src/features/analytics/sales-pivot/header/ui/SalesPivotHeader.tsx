@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { Typography, Tooltip, Button, Dropdown, Switch, Select, Space } from 'antd';
+import { Typography, Button, Dropdown, Switch, Select, Space } from 'antd';
 import type { MenuProps } from 'antd';
 import { DownloadOutlined, DownOutlined } from '@ant-design/icons';
 import type { ExportOptions, Mode } from '../../shared/model/types';
@@ -133,35 +133,36 @@ export const SalesPivotHeader: React.FC<SalesPivotHeaderProps> = ({
       </Typography.Title>
       <div className="sales-tree-header-actions">
         {!canExport ? (
-          <Tooltip title="営業が未選択のためCSV出力できません">
-            <Button icon={<DownloadOutlined />} type="default" disabled>
-              CSV出力
-            </Button>
-          </Tooltip>
-        ) : (
-          <Tooltip
-            title={`出力：選択営業 × ${axisLabel(baseAx)}${
-              exportOptions.addAxisB ? ` × ${axisLabel(axB)}` : ''
-            }${exportOptions.addAxisC ? ` × ${axisLabel(axC)}` : ''}（期間：${periodLabel}、0実績は${
-              exportOptions.excludeZero ? '除外' : '含む'
-            }、${exportOptions.splitBy === 'rep' ? '営業別分割' : '単一ファイル'}）`}
+          <Button 
+            icon={<DownloadOutlined />} 
+            type="default" 
+            disabled
+            title="営業が未選択のためCSV出力できません"
           >
-            <Dropdown.Button
+            CSV出力
+          </Button>
+        ) : (
+          <Space.Compact>
+            <Button
               type="default"
               icon={<DownloadOutlined />}
-              overlayStyle={{ width: 380 }}
-              menu={{ items: exportMenu }}
               onClick={handleExportClick}
-              placement="bottomRight"
-              trigger={['click']}
-              buttonsRender={([left, right]) => [
-                left,
-                React.isValidElement(right) ? React.cloneElement(right, { icon: <DownOutlined /> }) : right,
-              ]}
+              title={`出力：選択営業 × ${axisLabel(baseAx)}${
+                exportOptions.addAxisB ? ` × ${axisLabel(axB)}` : ''
+              }${exportOptions.addAxisC ? ` × ${axisLabel(axC)}` : ''}（期間：${periodLabel}、0実績は${
+                exportOptions.excludeZero ? '除外' : '含む'
+              }、${exportOptions.splitBy === 'rep' ? '営業別分割' : '単一ファイル'}）`}
             >
               CSV出力
-            </Dropdown.Button>
-          </Tooltip>
+            </Button>
+            <Dropdown
+              menu={{ items: exportMenu }}
+              placement="bottomRight"
+              trigger={['click']}
+            >
+              <Button type="default" icon={<DownOutlined />} />
+            </Dropdown>
+          </Space.Compact>
         )}
       </div>
 
