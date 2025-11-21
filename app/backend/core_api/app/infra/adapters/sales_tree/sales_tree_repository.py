@@ -566,8 +566,8 @@ ORDER BY rep_id, {sort_col} {order_dir}
                 f"{axis_label}名",
                 "売上金額（円）",
                 "数量（kg）",
-                "伝票枚数",
-                "売単価（円/kg）"
+                "伝票件数",
+                "単価（円/kg）"
             ])
             
             # データ行

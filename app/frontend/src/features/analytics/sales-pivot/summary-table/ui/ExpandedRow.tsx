@@ -61,14 +61,20 @@ export const ExpandedRow: React.FC<ExpandedRowProps> = ({
   const nameTitle = axisLabel(mode);
 
   const childCols: TableColumnsType<MetricEntry> = [
-    { title: nameTitle, dataIndex: 'name', key: 'name', width: 220, sorter: true },
+    { 
+      title: nameTitle, 
+      dataIndex: 'name', 
+      key: 'name', 
+      width: 220, 
+      sorter: (a: MetricEntry, b: MetricEntry) => a.name.localeCompare(b.name, 'ja')
+    },
     {
       title: '売上',
       dataIndex: 'amount',
       key: 'amount',
       align: 'right',
       width: 180,
-      sorter: true,
+      sorter: (a: MetricEntry, b: MetricEntry) => a.amount - b.amount,
       render: (v: number) => (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <span style={{ minWidth: 80, textAlign: 'right' }}>{fmtCurrency(v)}</span>
@@ -87,7 +93,7 @@ export const ExpandedRow: React.FC<ExpandedRowProps> = ({
       key: 'qty',
       align: 'right',
       width: 160,
-      sorter: true,
+      sorter: (a: MetricEntry, b: MetricEntry) => a.qty - b.qty,
       render: (v: number) => (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <span style={{ minWidth: 64, textAlign: 'right' }}>{fmtNumber(v)}</span>
@@ -106,10 +112,10 @@ export const ExpandedRow: React.FC<ExpandedRowProps> = ({
       key: 'count',
       align: 'right',
       width: 120,
-      sorter: true,
+      sorter: (a: MetricEntry, b: MetricEntry) => a.count - b.count,
       render: (v: number) => (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ minWidth: 48, textAlign: 'right' }}>{fmtNumber(v)} 台</span>
+          <span style={{ minWidth: 48, textAlign: 'right' }}>{fmtNumber(v)} 件</span>
           <div className="sales-tree-mini-bar-bg">
             <div
               className="sales-tree-mini-bar sales-tree-mini-bar-blue"
@@ -122,7 +128,7 @@ export const ExpandedRow: React.FC<ExpandedRowProps> = ({
     {
       title: (
         <Space>
-          <span>売単価</span>
+          <span>単価</span>
           <Tooltip title="単価＝Σ金額 / Σ数量（数量=0は未定義）">
             <InfoCircleOutlined />
           </Tooltip>
@@ -132,7 +138,7 @@ export const ExpandedRow: React.FC<ExpandedRowProps> = ({
       key: 'unit_price',
       align: 'right',
       width: 170,
-      sorter: true,
+      sorter: (a: MetricEntry, b: MetricEntry) => (a.unit_price ?? 0) - (b.unit_price ?? 0),
       render: (v: number | null) => (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'flex-end' }}>
           <span style={{ minWidth: 64, textAlign: 'right' }}>{fmtUnitPrice(v)}</span>

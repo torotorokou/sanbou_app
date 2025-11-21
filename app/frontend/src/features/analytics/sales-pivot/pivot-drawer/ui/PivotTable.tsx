@@ -160,7 +160,7 @@ export const PivotTable: React.FC<PivotTableProps> = ({
           {
             title: (
               <Space>
-                <span>売単価</span>
+                <span>単価</span>
                 <Tooltip title="単価＝Σ金額 / Σ数量（数量=0は未定義）">
                   <InfoCircleOutlined />
                 </Tooltip>

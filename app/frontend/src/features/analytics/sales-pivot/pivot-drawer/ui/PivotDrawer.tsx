@@ -82,7 +82,7 @@ export const PivotDrawer: React.FC<PivotDrawerProps> = ({
                 { label: '売上', value: 'amount' },
                 { label: '数量', value: 'qty' },
                 { label: '件数', value: 'count' },
-                { label: '売単価', value: 'unit_price' },
+                { label: '単価', value: 'unit_price' },
                 {
                   label: drawer.activeAxis === 'date' ? '日付' : '名称',
                   value: drawer.activeAxis === 'date' ? 'date' : 'name',

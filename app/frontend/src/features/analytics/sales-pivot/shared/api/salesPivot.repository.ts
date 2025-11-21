@@ -286,7 +286,7 @@ export class MockSalesPivotRepository implements SalesPivotRepository {
         売上: 1000000,
         数量: 500,
         台数: 10,
-        売単価: 2000,
+        単価: 2000,
       });
     }
 
