@@ -6,6 +6,7 @@ export type CustomerData = {
     weight: number;
     amount: number;
     sales: string;
+    lastDeliveryDate?: string; // 最終搬入日 (YYYY-MM-DD形式)
 };
 
 export const allCustomerData: { [month: string]: CustomerData[] } = {

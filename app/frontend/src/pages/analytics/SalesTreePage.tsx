@@ -193,6 +193,7 @@ const SalesTreePage: React.FC = () => {
   }, [baseQuery]);
 
   // Load
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const reload = useCallback(async () => {
     setLoading(true);
     try {

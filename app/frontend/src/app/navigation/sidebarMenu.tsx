@@ -80,7 +80,7 @@ export const SIDEBAR_MENU = [
                 icon: <TeamOutlined />,
                 label: (
                     <Link to={ROUTER_PATHS.ANALYSIS_CUSTOMERLIST}>
-                        搬入顧客リストチェック
+                        搬入なし顧客チェック
                     </Link>
                 ),
             },
