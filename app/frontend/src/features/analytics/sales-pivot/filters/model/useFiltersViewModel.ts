@@ -95,7 +95,7 @@ export function useFiltersViewModel(params: UseFiltersViewModelParams): UseFilte
       { label: mode === 'date' ? '日付' : '名称', value: (mode === 'date' ? 'date' : 'name') as SortKey },
       { label: '売上', value: 'amount' as SortKey },
       { label: '数量', value: 'qty' as SortKey },
-      { label: '台数', value: 'count' as SortKey },
+      { label: '件数', value: 'count' as SortKey },
       { label: '売単価', value: 'unit_price' as SortKey },
     ];
   }, [mode]);

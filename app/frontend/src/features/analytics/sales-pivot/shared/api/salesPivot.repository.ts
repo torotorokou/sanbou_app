@@ -307,3 +307,234 @@ export class MockSalesPivotRepository implements SalesPivotRepository {
  * 将来的に環境変数などで HTTP 実装に切り替え可能
  */
 export const salesPivotRepository: SalesPivotRepository = new MockSalesPivotRepository();
+
+
+/* ========================================
+ * HTTP実装（実API連携）
+ * ======================================== */
+
+import { coreApi } from '@/shared/infrastructure/http/coreApi';
+
+/**
+ * HTTP Repository 実装
+ * バックエンド /core_api/analytics/sales-tree/* と連携
+ */
+export class HttpSalesPivotRepository implements SalesPivotRepository {
+  async getSalesReps(): Promise<SalesRep[]> {
+    // 実データから営業マスタを取得
+    interface ApiRep {
+      rep_id: number;
+      rep_name: string;
+    }
+    const reps = await coreApi.get<ApiRep[]>('/core_api/analytics/sales-tree/masters/reps');
+    return reps.map(r => ({
+      id: String(r.rep_id),
+      name: r.rep_name
+    }));
+  }
+
+  async getCustomers(): Promise<UniverseEntry[]> {
+    // 実データから顧客マスタを取得
+    interface ApiCustomer {
+      customer_id: string;
+      customer_name: string;
+    }
+    const customers = await coreApi.get<ApiCustomer[]>('/core_api/analytics/sales-tree/masters/customers');
+    return customers.map(c => ({
+      id: c.customer_id,
+      name: c.customer_name
+    }));
+  }
+
+  async getItems(): Promise<UniverseEntry[]> {
+    // 実データから品目マスタを取得
+    interface ApiItem {
+      item_id: number;
+      item_name: string;
+    }
+    const items = await coreApi.get<ApiItem[]>('/core_api/analytics/sales-tree/masters/items');
+    return items.map(i => ({
+      id: String(i.item_id),
+      name: i.item_name
+    }));
+  }
+
+  async fetchSummary(q: SummaryQuery): Promise<SummaryRow[]> {
+    // QueryをAPIリクエスト形式に変換
+    // month: "2025-10" -> date_from: "2025-10-01", date_to: "2025-10-31"
+    // monthRange: {from: "2025-10", to: "2025-12"} -> date_from: "2025-10-01", date_to: "2025-12-31"
+    let date_from: string;
+    let date_to: string;
+    
+    if (q.monthRange) {
+      date_from = `${q.monthRange.from}-01`;
+      date_to = this._getMonthEndDate(q.monthRange.to);
+    } else if (q.month) {
+      date_from = `${q.month}-01`;
+      date_to = this._getMonthEndDate(q.month);
+    } else {
+      // フォールバック（通常はここには来ない）
+      const now = new Date();
+      const yyyymm = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+      date_from = `${yyyymm}-01`;
+      date_to = this._getMonthEndDate(yyyymm);
+    }
+
+    const req = {
+      date_from,
+      date_to,
+      mode: q.mode,
+      rep_ids: q.repIds.map(id => parseInt(id, 10)),
+      filter_ids: q.filterIds,
+      top_n: q.topN === 'all' ? 0 : q.topN,
+      sort_by: q.sortBy,
+      order: q.order,
+    };
+
+    interface ApiSummaryRow {
+      rep_id: number;
+      rep_name: string;
+      metrics: Array<{
+        id: string;
+        name: string;
+        amount: number;
+        qty: number;
+        slip_count: number;
+        unit_price: number | null;
+        date_key?: string | null;
+      }>;
+    }
+
+    const res = await coreApi.post<ApiSummaryRow[]>('/core_api/analytics/sales-tree/summary', req);
+    
+    // snake_case → camelCase 変換
+    return res.map(row => ({
+      repId: String(row.rep_id),
+      repName: row.rep_name,
+      topN: row.metrics.map(m => ({
+        id: m.id,
+        name: m.name,
+        amount: m.amount,
+        qty: m.qty,
+        count: m.slip_count,
+        unit_price: m.unit_price,
+        dateKey: m.date_key ?? undefined,
+      })),
+    }));
+  }
+
+  async fetchPivot(params: PivotQuery): Promise<CursorPage<MetricEntry>> {
+    // PivotQueryをAPIリクエスト形式に変換
+    let date_from: string;
+    let date_to: string;
+    
+    if (params.monthRange) {
+      date_from = `${params.monthRange.from}-01`;
+      date_to = this._getMonthEndDate(params.monthRange.to);
+    } else if (params.month) {
+      date_from = `${params.month}-01`;
+      date_to = this._getMonthEndDate(params.month);
+    } else {
+      throw new Error('month or monthRange is required');
+    }
+
+    const req = {
+      date_from,
+      date_to,
+      base_axis: params.baseAxis,
+      base_id: params.baseId,
+      rep_ids: params.repIds.map(id => parseInt(id, 10)),
+      target_axis: params.targetAxis,
+      top_n: params.topN === 'all' ? 0 : params.topN,
+      sort_by: params.sortBy,
+      order: params.order,
+      cursor: params.cursor,
+    };
+
+    interface ApiCursorPage {
+      rows: Array<{
+        id: string;
+        name: string;
+        amount: number;
+        qty: number;
+        slip_count: number;
+        unit_price: number | null;
+        date_key?: string | null;
+      }>;
+      next_cursor: string | null;
+    }
+
+    const res = await coreApi.post<ApiCursorPage>('/core_api/analytics/sales-tree/pivot', req);
+    
+    return {
+      rows: res.rows.map(m => ({
+        id: m.id,
+        name: m.name,
+        amount: m.amount,
+        qty: m.qty,
+        count: m.slip_count,
+        unit_price: m.unit_price,
+        dateKey: m.date_key ?? undefined,
+      })),
+      next_cursor: res.next_cursor,
+    };
+  }
+
+  async fetchDailySeries(params: DailySeriesQuery): Promise<DailyPoint[]> {
+    let date_from: string;
+    let date_to: string;
+    
+    if (params.monthRange) {
+      date_from = `${params.monthRange.from}-01`;
+      date_to = this._getMonthEndDate(params.monthRange.to);
+    } else if (params.month) {
+      date_from = `${params.month}-01`;
+      date_to = this._getMonthEndDate(params.month);
+    } else {
+      throw new Error('month or monthRange is required');
+    }
+
+    const req = {
+      date_from,
+      date_to,
+      rep_id: params.repId ? parseInt(params.repId, 10) : undefined,
+      customer_id: params.customerId,
+      item_id: params.itemId ? parseInt(params.itemId, 10) : undefined,
+    };
+
+    interface ApiDailyPoint {
+      date: string;
+      amount: number;
+      qty: number;
+      slip_count: number;
+      unit_price: number | null;
+    }
+
+    const res = await coreApi.post<ApiDailyPoint[]>('/core_api/analytics/sales-tree/daily-series', req);
+    
+    return res.map(p => ({
+      date: p.date,
+      amount: p.amount,
+      qty: p.qty,
+      count: p.slip_count,
+      unit_price: p.unit_price,
+    }));
+  }
+
+  async exportModeCube(query: ExportQuery): Promise<Blob> {
+    // TODO: CSV Export APIは後で実装
+    const mock = new MockSalesPivotRepository();
+    return mock.exportModeCube(query);
+  }
+
+  /**
+   * YYYY-MM から月末日を取得 (YYYY-MM-DD形式)
+   */
+  private _getMonthEndDate(yyyymm: string): string {
+    const [year, month] = yyyymm.split('-').map(Number);
+    const nextMonth = new Date(year, month, 1);
+    const lastDay = new Date(nextMonth.getTime() - 86400000);
+    const dd = String(lastDay.getDate()).padStart(2, '0');
+    return `${yyyymm}-${dd}`;
+  }
+}

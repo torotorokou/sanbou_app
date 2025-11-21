@@ -32,7 +32,7 @@ import type {
   DailyPoint,
 } from '@/features/analytics/sales-pivot/shared/model/types';
 import { axesFromMode, axisLabel, monthDays, allDaysInRange } from '@/features/analytics/sales-pivot/shared/model/metrics';
-import { MockSalesPivotRepository } from '@/features/analytics/sales-pivot/shared/api/salesPivot.repository';
+import { HttpSalesPivotRepository } from '@/features/analytics/sales-pivot/shared/api/salesPivot.repository';
 import { SalesPivotHeader } from '@/features/analytics/sales-pivot/header/ui/SalesPivotHeader';
 import { FilterPanel } from '@/features/analytics/sales-pivot/filters/ui/FilterPanel';
 import { KpiCards } from '@/features/analytics/sales-pivot/kpi/ui/KpiCards';
@@ -40,8 +40,8 @@ import { SummaryTable } from '@/features/analytics/sales-pivot/summary-table/ui/
 import { PivotDrawer } from '@/features/analytics/sales-pivot/pivot-drawer/ui/PivotDrawer';
 import './SalesTreePage.css';
 
-// Repository（モック実装）
-const repository = new MockSalesPivotRepository();
+// Repository（実API連携版）
+const repository = new HttpSalesPivotRepository();
 
 // ダウンロードヘルパー
 function downloadBlob(blob: Blob, filename: string) {
@@ -244,7 +244,7 @@ const SalesTreePage: React.FC = () => {
       { label: mode === 'date' ? '日付' : '名称', value: (mode === 'date' ? 'date' : 'name') as SortKey },
       { label: '売上', value: 'amount' as SortKey },
       { label: '数量', value: 'qty' as SortKey },
-      { label: '台数', value: 'count' as SortKey },
+      { label: '件数', value: 'count' as SortKey },
       { label: '売単価', value: 'unit_price' as SortKey },
     ];
   }, [mode]);

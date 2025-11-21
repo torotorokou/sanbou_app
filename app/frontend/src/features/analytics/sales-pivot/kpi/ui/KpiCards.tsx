@@ -69,9 +69,9 @@ export const KpiCards: React.FC<KpiCardsProps> = ({
         </Col>
         <Col xs={24} md={6}>
           <Statistic
-            title="（表示対象）合計 台数"
+            title="（表示対象）合計 件数"
             value={totalCount}
-            formatter={(v) => `${fmtNumber(Number(v))} 台`}
+            formatter={(v) => `${fmtNumber(Number(v))} 件`}
           />
         </Col>
         <Col xs={24} md={6}>

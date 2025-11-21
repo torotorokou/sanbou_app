@@ -345,3 +345,46 @@ def get_kpi_uc(
     """KPIUseCase提供"""
     return KPIUseCase(kpi_query=kpi_query)
 
+
+# ========================================================================
+# Sales Tree UseCase Providers
+# ========================================================================
+from app.application.usecases.sales_tree.fetch_summary_uc import FetchSalesTreeSummaryUseCase
+from app.application.usecases.sales_tree.fetch_daily_series_uc import FetchSalesTreeDailySeriesUseCase
+from app.application.usecases.sales_tree.fetch_pivot_uc import FetchSalesTreePivotUseCase
+from app.application.usecases.sales_tree.export_csv_uc import ExportSalesTreeCSVUseCase
+from app.infra.adapters.sales_tree.sales_tree_repository import SalesTreeRepository
+
+
+def get_sales_tree_repo(db: Session = Depends(get_db)) -> SalesTreeRepository:
+    """SalesTreeRepository提供"""
+    return SalesTreeRepository(db)
+
+
+def get_fetch_sales_tree_summary_uc(
+    repo: SalesTreeRepository = Depends(get_sales_tree_repo)
+) -> FetchSalesTreeSummaryUseCase:
+    """FetchSalesTreeSummaryUseCase提供"""
+    return FetchSalesTreeSummaryUseCase(query=repo)
+
+
+def get_fetch_sales_tree_daily_series_uc(
+    repo: SalesTreeRepository = Depends(get_sales_tree_repo)
+) -> FetchSalesTreeDailySeriesUseCase:
+    """FetchSalesTreeDailySeriesUseCase提供"""
+    return FetchSalesTreeDailySeriesUseCase(query=repo)
+
+
+def get_fetch_sales_tree_pivot_uc(
+    repo: SalesTreeRepository = Depends(get_sales_tree_repo)
+) -> FetchSalesTreePivotUseCase:
+    """FetchSalesTreePivotUseCase提供"""
+    return FetchSalesTreePivotUseCase(query=repo)
+
+
+def get_export_sales_tree_csv_uc(
+    repo: SalesTreeRepository = Depends(get_sales_tree_repo)
+) -> ExportSalesTreeCSVUseCase:
+    """ExportSalesTreeCSVUseCase提供"""
+    return ExportSalesTreeCSVUseCase(query=repo)
+
