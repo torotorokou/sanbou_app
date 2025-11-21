@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, Table } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import type { CustomerData } from '../../domain/types';
+import type { CustomerData } from '../../shared/domain/types';
 
 type Props = {
     title: string;

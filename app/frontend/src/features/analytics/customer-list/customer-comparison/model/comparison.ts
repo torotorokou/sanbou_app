@@ -4,7 +4,7 @@
  * 顧客比較ロジックの純粋関数
  */
 
-import type { CustomerData } from '../../domain/types';
+import type { CustomerData } from '../../shared/domain/types';
 
 /**
  * 2つの顧客リストを比較し、片方にしか存在しない顧客を抽出する

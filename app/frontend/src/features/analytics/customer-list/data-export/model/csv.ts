@@ -4,7 +4,7 @@
  * CSV生成とダウンロード機能
  */
 
-import type { CustomerData } from '../../domain/types';
+import type { CustomerData } from '../../shared/domain/types';
 
 /**
  * 文字列をCSVセル用にエスケープする

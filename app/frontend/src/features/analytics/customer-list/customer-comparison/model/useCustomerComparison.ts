@@ -5,7 +5,7 @@
  */
 
 import { useMemo } from 'react';
-import type { CustomerData } from '../../domain/types';
+import type { CustomerData } from '../../shared/domain/types';
 import type { CustomerComparisonResult } from '../domain/types';
 import { getExclusiveCustomers, getCommonCustomers } from './comparison';
 
