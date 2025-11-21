@@ -146,7 +146,7 @@ export const PivotTable: React.FC<PivotTableProps> = ({
                 }}
               >
                 <span style={{ minWidth: 48, textAlign: 'right' }}>
-                  {fmtNumber(v)} 台
+                  {fmtNumber(v)} 件
                 </span>
                 <div className="sales-tree-mini-bar-bg">
                   <div
