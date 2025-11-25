@@ -18,7 +18,6 @@
 
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { Space, App } from 'antd';
-import dayjs from 'dayjs';
 import type {
   Mode,
   SortKey,
@@ -41,6 +40,7 @@ import { useDataLoading } from '@/features/analytics/sales-pivot/shared/model/us
 import { useSortedSummary } from '@/features/analytics/sales-pivot/shared/model/useSortedSummary';
 import { useFilterOptions } from '@/features/analytics/sales-pivot/shared/model/useFilterOptions';
 import { usePivotDrawerState, type DrawerState } from '@/features/analytics/sales-pivot/shared/model/usePivotDrawerState';
+import { useComputedLabels } from '@/features/analytics/sales-pivot/shared/model/useComputedLabels';
 import { SalesPivotHeader } from '@/features/analytics/sales-pivot/header/ui/SalesPivotHeader';
 import { FilterPanel } from '@/features/analytics/sales-pivot/filters/ui/FilterPanel';
 import { KpiCards } from '@/features/analytics/sales-pivot/kpi/ui/KpiCards';
@@ -149,32 +149,18 @@ const SalesTreePage: React.FC = () => {
   // フィルターオプション
   const { repOptions, filterOptions } = useFilterOptions(mode, query, reps, customers, items);
 
+  // 計算済みラベルと集計値
+  const { periodLabel, headerTotals, selectedRepLabel } = useComputedLabels(
+    periodMode,
+    month,
+    range,
+    summary,
+    repIds,
+    reps
+  );
+
   // 残り2軸の候補リスト
   const [baseAx, axB, axC] = useMemo(() => axesFromMode(mode), [mode]);
-
-  // Header totals
-  const headerTotals = useMemo(() => {
-    const flat = summary.flatMap((r) => r.topN);
-    const amount = flat.reduce((s, x) => s + x.amount, 0);
-    const qty = flat.reduce((s, x) => s + x.qty, 0);
-    const count = flat.reduce((s, x) => s + x.count, 0);
-    const unit = qty > 0 ? Math.round((amount / qty) * 100) / 100 : null;
-    return { amount, qty, count, unit };
-  }, [summary]);
-
-  // 選択営業名（KPIタイトル表示用）
-  const selectedRepLabel = useMemo(() => {
-    if (repIds.length === 0) return '未選択';
-    const names = reps.filter((r) => repIds.includes(r.id)).map((r) => r.name);
-    return names.length <= 3 ? names.join('・') : `${names.slice(0, 3).join('・')} ほか${names.length - 3}名`;
-  }, [repIds, reps]);
-
-  // 期間ラベル
-  const periodLabel = useMemo(() => {
-    return periodMode === 'single'
-      ? month.format('YYYYMM')
-      : `${(range?.[0] ?? dayjs()).format('YYYYMM')}-${(range?.[1] ?? dayjs()).format('YYYYMM')}`;
-  }, [periodMode, month, range]);
 
   // CSV Export
   const handleExport = async () => {
