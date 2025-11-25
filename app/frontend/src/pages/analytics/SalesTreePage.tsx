@@ -26,7 +26,6 @@ import type {
   ID,
   YYYYMM,
   SummaryQuery,
-  SummaryRow,
   MetricEntry,
   DailyPoint,
   CategoryKind,
@@ -41,6 +40,7 @@ import { useFilterState } from '@/features/analytics/sales-pivot/shared/model/us
 import { useExportOptions } from '@/features/analytics/sales-pivot/shared/model/useExportOptions';
 import { useMasterData } from '@/features/analytics/sales-pivot/shared/model/useMasterData';
 import { useDetailDrawerState } from '@/features/analytics/sales-pivot/shared/model/useDetailDrawerState';
+import { useDataLoading } from '@/features/analytics/sales-pivot/shared/model/useDataLoading';
 import { SalesPivotHeader } from '@/features/analytics/sales-pivot/header/ui/SalesPivotHeader';
 import { FilterPanel } from '@/features/analytics/sales-pivot/filters/ui/FilterPanel';
 import { KpiCards } from '@/features/analytics/sales-pivot/kpi/ui/KpiCards';
@@ -88,9 +88,20 @@ const SalesTreePage: React.FC = () => {
   // Export options（localStorage連携）
   const { exportOptions, setExportOptions } = useExportOptions();
 
-  // Data (生データ - API取得結果をそのまま保持)
-  const [rawSummary, setRawSummary] = useState<SummaryRow[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
+  // Query materialize (API用 - フィルターパネルの条件）
+  const baseQuery: SummaryQuery = useMemo(() => {
+    const base = { mode, categoryKind, repIds, filterIds, sortBy: filterSortBy, order: filterOrder, topN: filterTopN };
+    if (periodMode === 'single') return { ...base, month: month.format('YYYY-MM') };
+    if (range)
+      return {
+        ...base,
+        monthRange: { from: range[0].format('YYYY-MM'), to: range[1].format('YYYY-MM') },
+      };
+    return { ...base, month: month.format('YYYY-MM') };
+  }, [periodMode, month, range, mode, categoryKind, repIds, filterIds, filterSortBy, filterOrder, filterTopN]);
+
+  // Data loading
+  const { rawSummary, loading } = useDataLoading(repository, baseQuery);
 
   // テーブル用のソート（クライアント側処理）
   const summary = useMemo(() => {
@@ -174,46 +185,9 @@ const SalesTreePage: React.FC = () => {
     setDetailDrawerTotalCount,
   } = useDetailDrawerState();
 
-  // Query materialize (API用 - フィルターパネルの条件）
-  const baseQuery: SummaryQuery = useMemo(() => {
-    const base = { mode, categoryKind, repIds, filterIds, sortBy: filterSortBy, order: filterOrder, topN: filterTopN };
-    if (periodMode === 'single') return { ...base, month: month.format('YYYY-MM') };
-    if (range)
-      return {
-        ...base,
-        monthRange: { from: range[0].format('YYYY-MM'), to: range[1].format('YYYY-MM') },
-      };
-    return { ...base, month: month.format('YYYY-MM') };
-  }, [periodMode, month, range, mode, categoryKind, repIds, filterIds, filterSortBy, filterOrder, filterTopN]);
-
   // エクスポート用のクエリ（フィルターパネルの条件を使用）
   const query: SummaryQuery = useMemo(() => {
     return { ...baseQuery };
-  }, [baseQuery]);
-
-  // Load
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const reload = useCallback(async () => {
-    setLoading(true);
-    try {
-      const rows = await repository.fetchSummary(baseQuery);
-      setRawSummary(rows);
-    } finally {
-      setLoading(false);
-    }
-  }, [baseQuery]);
-
-  useEffect(() => {
-    const loadData = async () => {
-      setLoading(true);
-      try {
-        const rows = await repository.fetchSummary(baseQuery);
-        setRawSummary(rows);
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadData();
   }, [baseQuery]);
 
   // マスタデータ
