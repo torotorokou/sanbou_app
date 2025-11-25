@@ -473,15 +473,24 @@ const SalesTreePage: React.FC = () => {
     setDetailDrawerTitle(title || '詳細明細');
     
     try {
-      // 期間計算
+      // 期間計算（月末日を正確に計算）
       let dateFrom: string;
       let dateTo: string;
+      
+      const getMonthEndDate = (yyyymm: string): string => {
+        const [year, month] = yyyymm.split('-').map(Number);
+        const nextMonth = new Date(year, month, 1);
+        const lastDay = new Date(nextMonth.getTime() - 86400000);
+        const dd = String(lastDay.getDate()).padStart(2, '0');
+        return `${yyyymm}-${dd}`;
+      };
+      
       if (query.monthRange) {
         dateFrom = `${query.monthRange.from}-01`;
-        dateTo = `${query.monthRange.to}-28`; // 簡易的に28日で固定（実際は月末日を計算）
+        dateTo = getMonthEndDate(query.monthRange.to);
       } else if (query.month) {
         dateFrom = `${query.month}-01`;
-        dateTo = `${query.month}-28`;
+        dateTo = getMonthEndDate(query.month);
       } else {
         throw new Error('期間が設定されていません');
       }
@@ -497,12 +506,21 @@ const SalesTreePage: React.FC = () => {
         dateValue,
       };
 
+      console.log('📋 詳細明細取得リクエスト:', filter);
+
       const response = await repository.fetchDetailLines(filter);
+      
+      console.log('✅ 詳細明細取得成功:', {
+        mode: response.mode,
+        rowCount: response.rows.length,
+        totalCount: response.totalCount
+      });
+      
       setDetailDrawerMode(response.mode);
       setDetailDrawerRows(response.rows);
       setDetailDrawerTotalCount(response.totalCount);
     } catch (error) {
-      console.error('詳細明細取得エラー:', error);
+      console.error('❌ 詳細明細取得エラー:', error);
       message?.error?.('詳細明細の取得に失敗しました。');
       setDetailDrawerOpen(false);
     } finally {
@@ -545,6 +563,15 @@ const SalesTreePage: React.FC = () => {
     } else if (axis === 'date') {
       dateValue = row.id;
     }
+    
+    console.log('🔍 Pivot行クリック:', {
+      baseAxis,
+      baseId,
+      clickedAxis: axis,
+      clickedRow: { id: row.id, name: row.name },
+      lastGroupBy,
+      filters: { repId, customerId, itemId, dateValue }
+    });
     
     // タイトル構築
     const title = `${row.name} の詳細明細`;
