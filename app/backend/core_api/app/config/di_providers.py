@@ -19,7 +19,6 @@ from app.deps import get_db
 from app.infra.adapters.upload.shogun_csv_repository import ShogunCsvRepository
 from app.infra.adapters.upload.raw_data_repository import RawDataRepository
 from app.infra.adapters.materialized_view.materialized_view_refresher import MaterializedViewRefresher
-from app.infra.adapters.misc.shogun_flash_debug_repo import ShogunFlashDebugRepository
 from app.infra.adapters.dashboard.dashboard_target_repo import DashboardTargetRepository
 from app.infra.adapters.forecast.job_repo import JobRepository
 from app.infra.adapters.forecast.forecast_query_repo import ForecastQueryRepository

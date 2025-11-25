@@ -9,8 +9,6 @@ category_cd と category_kind カラムを追加し、廃棄物/有価物の両�
    - category_cd と category_kind カラムを追加
    - category_kind は CASE 式で 'waste' / 'valuable' に変換
 
-2. 既存の sandbox.v_sales_tree_detail_base (もしあれば) も同様に更新
-
 これにより、フロントエンドで廃棄物/有価物タブを実装できるようになります。
 
 Revision ID: 20251125_110000000

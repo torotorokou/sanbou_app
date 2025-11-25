@@ -4,7 +4,7 @@
 2025-11-21
 
 ## 実装概要
-売上ツリー分析機能を、モックデータから実DBデータ（sandbox.v_sales_tree_daily）を使用する実API連携版に移行しました。
+売上ツリー分析機能を、モックデータから実DBデータ（mart.v_sales_tree_daily）を使用する実API連携版に移行しました。
 
 ## アーキテクチャ
 
@@ -149,7 +149,7 @@ app/frontend/src/
 
 ## データソース
 
-### sandbox.v_sales_tree_daily
+### mart.v_sales_tree_daily
 ```sql
 -- ビュー定義
 SELECT 
@@ -163,7 +163,7 @@ SELECT
     amount_yen,
     qty_kg,        -- 注意: kg単位（tonではない）
     slip_count
-FROM sandbox.mv_sales_tree_daily;
+FROM mart.mv_sales_tree_daily;
 ```
 
 **重要**: 数量カラムは `qty_kg`（キログラム単位）です。フロントエンド表示時に適宜変換してください。
@@ -172,7 +172,7 @@ FROM sandbox.mv_sales_tree_daily;
 
 ### 前提条件
 1. Dockerコンテナが起動していること
-2. `sandbox.v_sales_tree_daily` にデータが存在すること
+2. `mart.v_sales_tree_daily` にデータが存在すること
 3. フロントエンドとバックエンドが起動していること
 
 ### 1. バックエンドAPI確認
@@ -229,7 +229,7 @@ docker compose -f docker/docker-compose.dev.yml -p local_dev exec core_api \
 ```bash
 # ビューのデータ件数確認
 docker compose -f docker/docker-compose.dev.yml -p local_dev exec -T db \
-  psql -U myuser -d sanbou_dev -c "SELECT COUNT(*) FROM sandbox.v_sales_tree_daily;"
+  psql -U myuser -d sanbou_dev -c "SELECT COUNT(*) FROM mart.v_sales_tree_daily;"
 
 # サンプルデータ確認
 docker compose -f docker/docker-compose.dev.yml -p local_dev exec -T db \
@@ -242,7 +242,7 @@ docker compose -f docker/docker-compose.dev.yml -p local_dev exec -T db \
       amount_yen, 
       qty_ton, 
       slip_count 
-    FROM sandbox.v_sales_tree_daily 
+    FROM mart.v_sales_tree_daily 
     LIMIT 10;
   "
 ```
@@ -259,11 +259,11 @@ docker compose -f docker/docker-compose.dev.yml -p local_dev restart core_api
 ```
 
 ### 2. データが空で返る
-- **原因**: `sandbox.v_sales_tree_daily` にデータがない
+- **原因**: `mart.v_sales_tree_daily` にデータがない
 - **確認**:
 ```bash
 docker compose -f docker/docker-compose.dev.yml -p local_dev exec -T db \
-  psql -U myuser -d sanbou_dev -c "SELECT COUNT(*) FROM sandbox.v_sales_tree_daily;"
+  psql -U myuser -d sanbou_dev -c "SELECT COUNT(*) FROM mart.v_sales_tree_daily;"
 ```
 - **解決**: CSVアップロードを実行してデータを投入
 
