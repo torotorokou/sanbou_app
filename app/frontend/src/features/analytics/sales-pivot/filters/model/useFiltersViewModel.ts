@@ -91,11 +91,14 @@ export function useFiltersViewModel(params: UseFiltersViewModelParams): UseFilte
 
   // ========== Sort key options ==========
   const sortKeyOptions = useMemo(() => {
+    // 件数/台数ラベルの動的切り替え
+    const countLabel = mode === 'item' ? '件数' : '台数';
+    
     return [
       { label: mode === 'date' ? '日付' : '名称', value: (mode === 'date' ? 'date' : 'name') as SortKey },
       { label: '売上', value: 'amount' as SortKey },
       { label: '数量', value: 'qty' as SortKey },
-      { label: '件数', value: 'count' as SortKey },
+      { label: countLabel, value: 'count' as SortKey },
       { label: '単価', value: 'unit_price' as SortKey },
     ];
   }, [mode]);

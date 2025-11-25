@@ -106,23 +106,32 @@ export interface SalesPivotRepository {
   exportModeCube(query: ExportQuery): Promise<Blob>;
 
   /**
-   * マスタデータ取得（営業担当者）
+   * 【SalesTree分析専用】営業フィルタ候補取得
    * 
-   * @returns 営業担当者マスタ配列
+   * NOTE: これは「営業マスタAPI」ではありません。
+   * sandbox.v_sales_tree_detail_base から SELECT DISTINCT で動的に取得します。
+   * 
+   * @returns 営業担当者フィルタ候補配列
    */
   getSalesReps(): Promise<SalesRep[]>;
 
   /**
-   * マスタデータ取得（顧客）
+   * 【SalesTree分析専用】顧客フィルタ候補取得
    * 
-   * @returns 顧客マスタ配列
+   * NOTE: これは「顧客マスタAPI」ではありません。
+   * sandbox.v_sales_tree_detail_base から SELECT DISTINCT で動的に取得します。
+   * 
+   * @returns 顧客フィルタ候補配列
    */
   getCustomers(): Promise<UniverseEntry[]>;
 
   /**
-   * マスタデータ取得（品名）
+   * 【SalesTree分析専用】商品フィルタ候補取得
    * 
-   * @returns 品名マスタ配列
+   * NOTE: これは「商品マスタAPI」ではありません。
+   * sandbox.v_sales_tree_detail_base から SELECT DISTINCT で動的に取得します。
+   * 
+   * @returns 商品フィルタ候補配列
    */
   getItems(): Promise<UniverseEntry[]>;
 }
@@ -587,14 +596,16 @@ export class HttpSalesPivotRepository implements SalesPivotRepository {
     };
 
     interface ApiSummaryRow {
-      rep_id: number;
-      rep_name: string;
-      metrics: Array<{
+      repId: number;
+      repName: string;
+      topN: Array<{
         id: string;
         name: string;
         amount: number;
         qty: number;
+        line_count: number;
         slip_count: number;
+        count: number;
         unit_price: number | null;
         date_key?: string | null;
       }>;
@@ -602,16 +613,18 @@ export class HttpSalesPivotRepository implements SalesPivotRepository {
 
     const res = await coreApi.post<ApiSummaryRow[]>('/core_api/analytics/sales-tree/summary', req);
     
-    // snake_case → camelCase 変換
+    // APIレスポンスはすでにcamelCaseなのでそのまま返す
     return res.map(row => ({
-      repId: String(row.rep_id),
-      repName: row.rep_name,
-      topN: row.metrics.map(m => ({
+      repId: String(row.repId),
+      repName: row.repName,
+      topN: row.topN.map(m => ({
         id: m.id,
         name: m.name,
         amount: m.amount,
         qty: m.qty,
-        count: m.slip_count,
+        line_count: m.line_count,
+        slip_count: m.slip_count,
+        count: m.count,
         unit_price: m.unit_price,
         dateKey: m.date_key ?? undefined,
       })),
@@ -652,7 +665,9 @@ export class HttpSalesPivotRepository implements SalesPivotRepository {
         name: string;
         amount: number;
         qty: number;
+        line_count: number;
         slip_count: number;
+        count: number;
         unit_price: number | null;
         date_key?: string | null;
       }>;
@@ -667,7 +682,9 @@ export class HttpSalesPivotRepository implements SalesPivotRepository {
         name: m.name,
         amount: m.amount,
         qty: m.qty,
-        count: m.slip_count,
+        line_count: m.line_count,
+        slip_count: m.slip_count,
+        count: m.count,
         unit_price: m.unit_price,
         dateKey: m.date_key ?? undefined,
       })),
@@ -701,7 +718,9 @@ export class HttpSalesPivotRepository implements SalesPivotRepository {
       date: string;
       amount: number;
       qty: number;
+      line_count: number;
       slip_count: number;
+      count: number;
       unit_price: number | null;
     }
 
@@ -711,7 +730,9 @@ export class HttpSalesPivotRepository implements SalesPivotRepository {
       date: p.date,
       amount: p.amount,
       qty: p.qty,
-      count: p.slip_count,
+      line_count: p.line_count,
+      slip_count: p.slip_count,
+      count: p.count,
       unit_price: p.unit_price,
     }));
   }

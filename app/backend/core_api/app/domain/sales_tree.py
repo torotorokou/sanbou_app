@@ -25,7 +25,7 @@ Domain models for Sales Tree Analytics - 売上ツリー分析ドメインモデ
 """
 from datetime import date as date_type
 from typing import Literal, Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 
 # ========================================
@@ -98,7 +98,9 @@ class MetricEntry(BaseModel):
     name: str = Field(..., description="名称（顧客名, 品目名, 日付文字列など）")
     amount: float = Field(..., description="売上金額（円）")
     qty: float = Field(..., description="数量（kg）")
-    slip_count: int = Field(..., description="伝票枚数")
+    line_count: int = Field(..., description="明細行数（件数） - COUNT(*)")
+    slip_count: int = Field(..., description="伝票数（台数） - COUNT(DISTINCT slip_no)")
+    count: int = Field(..., description="表示用カウント値（商品軸=line_count、それ以外=slip_count）")
     unit_price: Optional[float] = Field(None, description="単価（円/kg）")
     date_key: Optional[str] = Field(None, description="日付キー（mode=dateの場合のみ）")
 
@@ -107,9 +109,11 @@ class SummaryRow(BaseModel):
     """
     営業ごとのサマリー行
     """
-    rep_id: int = Field(..., description="営業ID")
-    rep_name: str = Field(..., description="営業名")
-    metrics: list[MetricEntry] = Field(default_factory=list, description="TOP-Nメトリクス")
+    model_config = ConfigDict(populate_by_name=True)
+    
+    rep_id: int = Field(..., description="営業ID", serialization_alias="repId")
+    rep_name: str = Field(..., description="営業名", serialization_alias="repName")
+    metrics: list[MetricEntry] = Field(default_factory=list, description="TOP-Nメトリクス", serialization_alias="topN")
 
 
 class DailyPoint(BaseModel):
@@ -119,7 +123,9 @@ class DailyPoint(BaseModel):
     date: date_type = Field(..., description="日付")
     amount: float = Field(..., description="売上金額（円）")
     qty: float = Field(..., description="数量（kg）")
-    slip_count: int = Field(..., description="伝票件数")
+    line_count: int = Field(..., description="明細行数（件数） - COUNT(*)")
+    slip_count: int = Field(..., description="伝票数（台数） - COUNT(DISTINCT slip_no)")
+    count: int = Field(..., description="表示用カウント値（現状は slip_count を使用）")
     unit_price: Optional[float] = Field(None, description="単価（円/kg）")
 
 

@@ -44,7 +44,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/analytics/sales-tree", tags=["sales-tree"])
 
 
-@router.post("/summary", response_model=list[SummaryRow], summary="Get sales tree summary")
+@router.post("/summary", response_model=list[SummaryRow], response_model_by_alias=True, summary="Get sales tree summary")
 def get_summary(
     req: SummaryRequest,
     uc: FetchSalesTreeSummaryUseCase = Depends(get_fetch_sales_tree_summary_uc),
@@ -240,14 +240,18 @@ def export_csv(
         )
 
 
-@router.get("/masters/reps", summary="Get sales reps master data")
+@router.get("/masters/reps", summary="Get sales reps filter options for SalesTree analysis")
 def get_sales_reps_master(
     repo: SalesTreeRepository = Depends(get_sales_tree_repo),
 ):
     """
-    営業マスタデータ取得
+    【SalesTree分析専用】営業フィルタ候補取得
     
-    sandbox.v_sales_tree_daily から重複を除いた営業一覧を返す
+    NOTE: これは「営業マスタAPI」ではありません。
+    sandbox.v_sales_tree_detail_base から SELECT DISTINCT で動的に営業候補を取得します。
+    
+    用途: SalesTree分析画面のプルダウンフィルタ用
+    データソース: sandbox.v_sales_tree_detail_base（実売上明細ビュー）
     
     **Response Example:**
     ```json
@@ -258,9 +262,9 @@ def get_sales_reps_master(
     ```
     """
     try:
-        logger.info("GET /analytics/sales-tree/masters/reps")
+        logger.info("GET /analytics/sales-tree/masters/reps (SalesTree filter API)")
         reps = repo.get_sales_reps()
-        logger.info(f"Successfully retrieved {len(reps)} sales reps")
+        logger.info(f"Successfully retrieved {len(reps)} sales reps for filter")
         return reps
     except Exception as e:
         logger.error(f"Error in get_sales_reps_master: {str(e)}", exc_info=True)
@@ -270,19 +274,23 @@ def get_sales_reps_master(
         )
 
 
-@router.get("/masters/customers", summary="Get customers master data")
+@router.get("/masters/customers", summary="Get customer filter options for SalesTree analysis")
 def get_customers_master(
     repo: SalesTreeRepository = Depends(get_sales_tree_repo),
 ):
     """
-    顧客マスタデータ取得
+    【SalesTree分析専用】顧客フィルタ候補取得
     
-    sandbox.v_sales_tree_daily から重複を除いた顧客一覧を返す
+    NOTE: これは「顧客マスタAPI」ではありません。
+    sandbox.v_sales_tree_detail_base から SELECT DISTINCT で動的に顧客候補を取得します。
+    
+    用途: SalesTree分析画面のプルダウンフィルタ用
+    データソース: sandbox.v_sales_tree_detail_base（実売上明細ビュー）
     """
     try:
-        logger.info("GET /analytics/sales-tree/masters/customers")
+        logger.info("GET /analytics/sales-tree/masters/customers (SalesTree filter API)")
         customers = repo.get_customers()
-        logger.info(f"Successfully retrieved {len(customers)} customers")
+        logger.info(f"Successfully retrieved {len(customers)} customers for filter")
         return customers
     except Exception as e:
         logger.error(f"Error in get_customers_master: {str(e)}", exc_info=True)
@@ -292,19 +300,23 @@ def get_customers_master(
         )
 
 
-@router.get("/masters/items", summary="Get items master data")
+@router.get("/masters/items", summary="Get item filter options for SalesTree analysis")
 def get_items_master(
     repo: SalesTreeRepository = Depends(get_sales_tree_repo),
 ):
     """
-    品目マスタデータ取得
+    【SalesTree分析専用】商品フィルタ候補取得
     
-    sandbox.v_sales_tree_daily から重複を除いた品目一覧を返す
+    NOTE: これは「商品マスタAPI」ではありません。
+    sandbox.v_sales_tree_detail_base から SELECT DISTINCT で動的に商品候補を取得します。
+    
+    用途: SalesTree分析画面のプルダウンフィルタ用
+    データソース: sandbox.v_sales_tree_detail_base（実売上明細ビュー）
     """
     try:
-        logger.info("GET /analytics/sales-tree/masters/items")
+        logger.info("GET /analytics/sales-tree/masters/items (SalesTree filter API)")
         items = repo.get_items()
-        logger.info(f"Successfully retrieved {len(items)} items")
+        logger.info(f"Successfully retrieved {len(items)} items for filter")
         return items
     except Exception as e:
         logger.error(f"Error in get_items_master: {str(e)}", exc_info=True)

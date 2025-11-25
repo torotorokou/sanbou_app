@@ -43,6 +43,9 @@ export const SummaryTable: React.FC<SummaryTableProps> = ({
   onSortChange,
   query,
 }) => {
+  // 件数/台数ラベルの動的切り替え
+  const countLabel = mode === 'item' ? '件数' : '台数';
+  
   if (!hasSelection) {
     return (
       <Card className="sales-tree-accent-card sales-tree-accent-primary">
@@ -99,7 +102,7 @@ export const SummaryTable: React.FC<SummaryTableProps> = ({
           },
         },
         {
-          title: '件数',
+          title: countLabel,
           key: 'count',
           align: 'right' as const,
           width: 120,
@@ -110,7 +113,8 @@ export const SummaryTable: React.FC<SummaryTableProps> = ({
           },
           render: (_: unknown, row: SummaryRow) => {
             const totalCount = row.topN.reduce((s: number, x: MetricEntry) => s + x.count, 0);
-            return <Tag color="blue" style={{ fontSize: '15px', padding: '4px 8px' }}>{fmtNumber(totalCount)} 件</Tag>;
+            const suffix = mode === 'item' ? '件' : '台';
+            return <Tag color="blue" style={{ fontSize: '15px', padding: '4px 8px' }}>{fmtNumber(totalCount)} {suffix}</Tag>;
           },
         },
         {

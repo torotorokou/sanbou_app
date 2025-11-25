@@ -1,8 +1,8 @@
 """
-Sales Tree Repository - mart.v_sales_tree_daily からのデータ取得
+Sales Tree Repository - sandbox.v_sales_tree_detail_base からのデータ取得
 
 売上ツリー分析用のリポジトリ実装
-データソース: mart.v_sales_tree_daily (Materialized View の公開ビュー)
+データソース: sandbox.v_sales_tree_detail_base (明細レベルの事実テーブルビュー)
 """
 import logging
 import csv
@@ -31,9 +31,10 @@ class SalesTreeRepository:
     """
     売上ツリー分析Repository
     
-    データソース: mart.v_sales_tree_daily
+    データソース: sandbox.v_sales_tree_detail_base
     - sales_date, rep_id, rep_name, customer_id, customer_name,
-      item_id, item_name, amount_yen, qty_ton, slip_count
+      item_id, item_name, amount_yen, qty_kg, slip_no
+    - 集計時に line_count=COUNT(*) と slip_count=COUNT(DISTINCT slip_no) を計算
     """
     
     def __init__(self, db: Session):
@@ -46,22 +47,22 @@ class SalesTreeRepository:
         
         機能:
           - 営業ごとに、指定軸（customer/item/date）でTOP-N集計
-          - ソート項目: amount, qty, slip_count, unit_price, date, name
+          - ソート項目: amount, qty, slip_count, line_count, unit_price, date, name
           - フィルタ: rep_ids, filter_ids（軸IDの絞り込み）
         
         処理フロー:
-          1. v_sales_tree_daily から期間・営業でフィルタ
+          1. sandbox.v_sales_tree_detail_base から期間・営業でフィルタ
           2. mode に応じて GROUP BY 軸を切り替え
              - customer: customer_id, customer_name
              - item: item_id, item_name
              - date: sales_date, sales_date
-          3. rep_id ごとに TOP-N を抽出（Window Function: ROW_NUMBER()）
-          4. 営業ごとに SummaryRow として集約
+          3. 集計時に line_count=COUNT(*) と slip_count=COUNT(DISTINCT slip_no) を両方計算
+          4. rep_id ごとに TOP-N を抽出（Window Function: ROW_NUMBER()）
+          5. 営業ごとに SummaryRow として集約
         
         パフォーマンス最適化:
           - Window FunctionでDB側でTOP-N抽出（Pythonループより高速）
-          - mart.v_sales_tree_dailyはMaterialized View（集計済み）
-          - インデックス: (sales_date, rep_id, customer_id, item_id)
+          - sandbox.v_sales_tree_detail_base は明細レベルの事実テーブル
         
         Args:
             req: SummaryRequest（date_from, date_to, mode, rep_ids, filter_ids, top_n, sort_by, order）
@@ -114,8 +115,7 @@ class SalesTreeRepository:
             limit_sql = "" if req.top_n == 0 else f"LIMIT {req.top_n}"
             
             # SQL構築（営業ごとにWINDOW関数でランキング）
-            # ただし、PostgreSQLのWINDOW関数でTOP-Nを抽出するのは複雑なため、
-            # ここでは営業ごとに全データを取得してPython側でTOP-N抽出
+            # sandbox.v_sales_tree_detail_base から line_count と slip_count の両方を計算
             sql = f"""
 WITH aggregated AS (
     SELECT
@@ -125,12 +125,13 @@ WITH aggregated AS (
         {axis_name_col} AS axis_name,
         SUM(amount_yen) AS amount,
         SUM(qty_kg) AS qty,
-        SUM(slip_count) AS slip_count,
+        COUNT(*) AS line_count,
+        COUNT(DISTINCT slip_no) AS slip_count,
         CASE
             WHEN SUM(qty_kg) > 0 THEN SUM(amount_yen) / SUM(qty_kg)
             ELSE NULL
         END AS unit_price
-    FROM mart.v_sales_tree_daily
+    FROM sandbox.v_sales_tree_detail_base
     WHERE {where_sql}
     GROUP BY rep_id, rep_name, {axis_id_col}, {axis_name_col}
 ),
@@ -147,6 +148,7 @@ SELECT
     axis_name,
     amount,
     qty,
+    line_count,
     slip_count,
     unit_price
 FROM ranked
@@ -174,12 +176,20 @@ ORDER BY rep_id, rn
                 axis_id_str = str(row["axis_id"])
                 date_key = axis_id_str if req.mode == "date" else None
                 
+                line_count = int(row["line_count"]) if row["line_count"] is not None else 0
+                slip_count = int(row["slip_count"]) if row["slip_count"] is not None else 0
+                
+                # ルール: 商品軸の場合は件数(line_count)、それ以外は台数(slip_count)
+                count = line_count if req.mode == "item" else slip_count
+                
                 metric = MetricEntry(
                     id=axis_id_str,
                     name=row["axis_name"],
                     amount=float(row["amount"]) if row["amount"] is not None else 0.0,
                     qty=float(row["qty"]) if row["qty"] is not None else 0.0,
-                    slip_count=int(row["slip_count"]) if row["slip_count"] is not None else 0,
+                    line_count=line_count,
+                    slip_count=slip_count,
+                    count=count,
                     unit_price=float(row["unit_price"]) if row["unit_price"] is not None else None,
                     date_key=date_key
                 )
@@ -229,12 +239,13 @@ SELECT
     sales_date AS date,
     SUM(amount_yen) AS amount,
     SUM(qty_kg) AS qty,
-    SUM(slip_count) AS slip_count,
+    COUNT(*) AS line_count,
+    COUNT(DISTINCT slip_no) AS slip_count,
     CASE
         WHEN SUM(qty_kg) > 0 THEN SUM(amount_yen) / SUM(qty_kg)
         ELSE NULL
     END AS unit_price
-FROM mart.v_sales_tree_daily
+FROM sandbox.v_sales_tree_detail_base
 WHERE {where_sql}
 GROUP BY sales_date
 ORDER BY sales_date
@@ -248,7 +259,9 @@ ORDER BY sales_date
                     date=row["date"],
                     amount=float(row["amount"]) if row["amount"] is not None else 0.0,
                     qty=float(row["qty"]) if row["qty"] is not None else 0.0,
+                    line_count=int(row["line_count"]) if row["line_count"] is not None else 0,
                     slip_count=int(row["slip_count"]) if row["slip_count"] is not None else 0,
+                    count=int(row["slip_count"]) if row["slip_count"] is not None else 0,  # 日次推移は台数を使用
                     unit_price=float(row["unit_price"]) if row["unit_price"] is not None else None
                 )
                 for row in result
@@ -324,12 +337,13 @@ WITH aggregated AS (
         {target_name_col} AS target_name,
         SUM(amount_yen) AS amount,
         SUM(qty_kg) AS qty,
-        SUM(slip_count) AS slip_count,
+        COUNT(*) AS line_count,
+        COUNT(DISTINCT slip_no) AS slip_count,
         CASE
             WHEN SUM(qty_kg) > 0 THEN SUM(amount_yen) / SUM(qty_kg)
             ELSE NULL
         END AS unit_price
-    FROM mart.v_sales_tree_daily
+    FROM sandbox.v_sales_tree_detail_base
     WHERE {where_sql}
     GROUP BY {target_id_col}, {target_name_col}
 ),
@@ -344,6 +358,7 @@ SELECT
     target_name,
     amount,
     qty,
+    line_count,
     slip_count,
     unit_price
 FROM ranked
@@ -365,12 +380,20 @@ LIMIT :page_size OFFSET :offset
                 target_id_str = str(row["target_id"])
                 date_key = target_id_str if req.target_axis == "date" else None
                 
+                line_count = int(row["line_count"]) if row["line_count"] is not None else 0
+                slip_count = int(row["slip_count"]) if row["slip_count"] is not None else 0
+                
+                # ルール: target_axisが商品の場合は件数(line_count)、それ以外は台数(slip_count)
+                count = line_count if req.target_axis == "item" else slip_count
+                
                 metric = MetricEntry(
                     id=target_id_str,
                     name=row["target_name"],
                     amount=float(row["amount"]) if row["amount"] is not None else 0.0,
                     qty=float(row["qty"]) if row["qty"] is not None else 0.0,
-                    slip_count=int(row["slip_count"]) if row["slip_count"] is not None else 0,
+                    line_count=line_count,
+                    slip_count=slip_count,
+                    count=count,
                     unit_price=float(row["unit_price"]) if row["unit_price"] is not None else None,
                     date_key=date_key
                 )
@@ -415,7 +438,10 @@ LIMIT :page_size OFFSET :offset
     
     def get_sales_reps(self) -> list[dict]:
         """
-        営業マスタを取得
+        【SalesTree分析専用】営業フィルタ候補を取得
+        
+        NOTE: これは「営業マスタAPI」ではありません。
+        sandbox.v_sales_tree_detail_base から SELECT DISTINCT で動的に取得します。
         
         Returns:
             list[dict]: [{"rep_id": int, "rep_name": str}, ...]
@@ -425,24 +451,34 @@ LIMIT :page_size OFFSET :offset
 SELECT DISTINCT
     rep_id,
     rep_name
-FROM mart.v_sales_tree_daily
+FROM sandbox.v_sales_tree_detail_base
 WHERE rep_id IS NOT NULL AND rep_name IS NOT NULL
 ORDER BY rep_id
             """
+            logger.info(f"Executing get_sales_reps SQL: {sql}")
             with self._engine.begin() as conn:
                 result = conn.execute(text(sql)).mappings().all()
             
-            return [
+            reps = [
                 {"rep_id": row["rep_id"], "rep_name": row["rep_name"]}
                 for row in result
             ]
+            logger.info(f"get_sales_reps: Retrieved {len(reps)} reps from sandbox.v_sales_tree_detail_base")
+            if reps:
+                logger.info(f"First rep: {reps[0]}")
+            else:
+                logger.warning("No sales reps found in sandbox.v_sales_tree_detail_base")
+            return reps
         except Exception as e:
             logger.error(f"Error in get_sales_reps: {str(e)}", exc_info=True)
             raise
     
     def get_customers(self) -> list[dict]:
         """
-        顧客マスタを取得
+        【SalesTree分析専用】顧客フィルタ候補を取得
+        
+        NOTE: これは「顧客マスタAPI」ではありません。
+        sandbox.v_sales_tree_detail_base から SELECT DISTINCT で動的に取得します。
         
         Returns:
             list[dict]: [{"customer_id": str, "customer_name": str}, ...]
@@ -452,24 +488,32 @@ ORDER BY rep_id
 SELECT DISTINCT
     customer_id,
     customer_name
-FROM mart.v_sales_tree_daily
+FROM sandbox.v_sales_tree_detail_base
 WHERE customer_id IS NOT NULL AND customer_name IS NOT NULL
 ORDER BY customer_id
             """
+            logger.info(f"Executing get_customers SQL")
             with self._engine.begin() as conn:
                 result = conn.execute(text(sql)).mappings().all()
             
-            return [
+            customers = [
                 {"customer_id": row["customer_id"], "customer_name": row["customer_name"]}
                 for row in result
             ]
+            logger.info(f"get_customers: Retrieved {len(customers)} customers from sandbox.v_sales_tree_detail_base")
+            if not customers:
+                logger.warning("No customers found in sandbox.v_sales_tree_detail_base")
+            return customers
         except Exception as e:
             logger.error(f"Error in get_customers: {str(e)}", exc_info=True)
             raise
     
     def get_items(self) -> list[dict]:
         """
-        品目マスタを取得
+        【SalesTree分析専用】商品フィルタ候補を取得
+        
+        NOTE: これは「商品マスタAPI」ではありません。
+        sandbox.v_sales_tree_detail_base から SELECT DISTINCT で動的に取得します。
         
         Returns:
             list[dict]: [{"item_id": int, "item_name": str}, ...]
@@ -479,17 +523,22 @@ ORDER BY customer_id
 SELECT DISTINCT
     item_id,
     item_name
-FROM mart.v_sales_tree_daily
+FROM sandbox.v_sales_tree_detail_base
 WHERE item_id IS NOT NULL AND item_name IS NOT NULL
 ORDER BY item_id
             """
+            logger.info(f"Executing get_items SQL")
             with self._engine.begin() as conn:
                 result = conn.execute(text(sql)).mappings().all()
             
-            return [
+            items = [
                 {"item_id": row["item_id"], "item_name": row["item_name"]}
                 for row in result
             ]
+            logger.info(f"get_items: Retrieved {len(items)} items from sandbox.v_sales_tree_detail_base")
+            if not items:
+                logger.warning("No items found in sandbox.v_sales_tree_detail_base")
+            return items
         except Exception as e:
             logger.error(f"Error in get_items: {str(e)}", exc_info=True)
             raise
@@ -546,12 +595,13 @@ WITH aggregated AS (
         {axis_name_col} AS axis_name,
         SUM(amount_yen) AS amount,
         SUM(qty_kg) AS qty,
-        SUM(slip_count) AS slip_count,
+        COUNT(*) AS line_count,
+        COUNT(DISTINCT slip_no) AS slip_count,
         CASE
             WHEN SUM(qty_kg) > 0 THEN SUM(amount_yen) / SUM(qty_kg)
             ELSE NULL
         END AS unit_price
-    FROM mart.v_sales_tree_daily
+    FROM sandbox.v_sales_tree_detail_base
     WHERE {where_sql}
     GROUP BY rep_id, rep_name, {axis_id_col}, {axis_name_col}
 )
@@ -562,6 +612,7 @@ SELECT
     axis_name,
     amount,
     qty,
+    line_count,
     slip_count,
     unit_price
 FROM aggregated
@@ -577,6 +628,7 @@ ORDER BY rep_id, {sort_col} {order_dir}
             
             # ヘッダー
             axis_label = "顧客" if req.mode == "customer" else "品目" if req.mode == "item" else "日付"
+            count_label = "件数" if req.mode == "item" else "台数"
             writer.writerow([
                 "営業ID",
                 "営業名",
@@ -584,12 +636,15 @@ ORDER BY rep_id, {sort_col} {order_dir}
                 f"{axis_label}名",
                 "売上金額（円）",
                 "数量（kg）",
-                "伝票件数",
+                count_label,
                 "単価（円/kg）"
             ])
             
             # データ行
             for row in result:
+                # ルール: 商品軸の場合は件数(line_count)、それ以外は台数(slip_count)
+                count_value = row["line_count"] if req.mode == "item" else row["slip_count"]
+                
                 writer.writerow([
                     row["rep_id"],
                     row["rep_name"],
@@ -597,7 +652,7 @@ ORDER BY rep_id, {sort_col} {order_dir}
                     row["axis_name"],
                     f"{row['amount']:.2f}" if row["amount"] else "0.00",
                     f"{row['qty']:.2f}" if row["qty"] else "0.00",
-                    row["slip_count"] or 0,
+                    count_value or 0,
                     f"{row['unit_price']:.2f}" if row["unit_price"] else ""
                 ])
             

@@ -138,30 +138,35 @@ export interface UniverseEntry {
  * @property name - 集計対象の表示名（顧客名 | 品名 | 日付(YYYY-MM-DD)）
  * @property amount - 売上金額（円）
  * @property qty - 数量（kg）
- * @property count - 取引件数
+ * @property line_count - 明細行数（件数） - COUNT(*)
+ * @property slip_count - 伝票数（台数） - COUNT(DISTINCT slip_no)
+ * @property count - 表示用カウント値（商品軸=line_count、それ以外=slip_count）
  * @property unit_price - 単価（円/kg）。計算式: Σ金額 / Σ数量（数量=0の場合はnull）
  * @property dateKey - 日付モード時のソート用キー（オプション、YYYY-MM-DD形式）
  * 
  * @example
- * // 顧客別集計の例
+ * // 顧客別集計の例（台数=slip_count）
  * {
  *   id: 'c_alpha',
  *   name: '顧客アルファ',
  *   amount: 1500000,
  *   qty: 500,
- *   count: 15,
+ *   line_count: 20,  // 明細行数
+ *   slip_count: 15,  // 伝票数（台数）
+ *   count: 15,       // 表示値=slip_count
  *   unit_price: 3000.00
  * }
  * 
- * // 日付別集計の例
+ * // 商品別集計の例（件数=line_count）
  * {
- *   id: 'd_2025-11-21',
- *   name: '2025-11-21',
- *   amount: 250000,
- *   qty: 80,
- *   count: 3,
- *   unit_price: 3125.00,
- *   dateKey: '2025-11-21'
+ *   id: 'i_001',
+ *   name: '商品A',
+ *   amount: 800000,
+ *   qty: 300,
+ *   line_count: 25,  // 明細行数（件数）
+ *   slip_count: 18,  // 伝票数
+ *   count: 25,       // 表示値=line_count
+ *   unit_price: 2666.67
  * }
  */
 export interface MetricEntry {
@@ -169,6 +174,8 @@ export interface MetricEntry {
   name: string;
   amount: number;
   qty: number;
+  line_count: number;
+  slip_count: number;
   count: number;
   unit_price: number | null;
   dateKey?: YYYYMMDD;
@@ -348,13 +355,17 @@ export interface DailySeriesQuery {
  * @property date - 日付（YYYY-MM-DD形式）
  * @property amount - その日の売上金額
  * @property qty - その日の数量
- * @property count - その日の取引件数
+ * @property line_count - その日の明細行数（件数） - COUNT(*)
+ * @property slip_count - その日の伝票数（台数） - COUNT(DISTINCT slip_no)
+ * @property count - 表示用カウント値（現状は slip_count を使用）
  * @property unit_price - その日の平均単価
  */
 export interface DailyPoint {
   date: YYYYMMDD;
   amount: number;
   qty: number;
+  line_count: number;
+  slip_count: number;
   count: number;
   unit_price: number | null;
 }
