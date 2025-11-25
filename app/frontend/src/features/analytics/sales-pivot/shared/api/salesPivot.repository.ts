@@ -106,10 +106,10 @@ export interface SalesPivotRepository {
   exportModeCube(query: ExportQuery): Promise<Blob>;
 
   /**
-   * 【SalesTree分析専用】営業フィルタ候補取得
+   * 【SalesTree分析専用】営業担当者フィルタ候補取得
    * 
    * NOTE: これは「営業マスタAPI」ではありません。
-   * sandbox.v_sales_tree_detail_base から SELECT DISTINCT で動的に取得します。
+   * mart.v_sales_tree_detail_base から SELECT DISTINCT で動的に取得します。
    * 
    * @returns 営業担当者フィルタ候補配列
    */
@@ -119,7 +119,7 @@ export interface SalesPivotRepository {
    * 【SalesTree分析専用】顧客フィルタ候補取得
    * 
    * NOTE: これは「顧客マスタAPI」ではありません。
-   * sandbox.v_sales_tree_detail_base から SELECT DISTINCT で動的に取得します。
+   * mart.v_sales_tree_detail_base から SELECT DISTINCT で動的に取得します。
    * 
    * @returns 顧客フィルタ候補配列
    */
@@ -129,7 +129,7 @@ export interface SalesPivotRepository {
    * 【SalesTree分析専用】商品フィルタ候補取得
    * 
    * NOTE: これは「商品マスタAPI」ではありません。
-   * sandbox.v_sales_tree_detail_base から SELECT DISTINCT で動的に取得します。
+   * mart.v_sales_tree_detail_base から SELECT DISTINCT で動的に取得します。
    * 
    * @returns 商品フィルタ候補配列
    */
