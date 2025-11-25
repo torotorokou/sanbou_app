@@ -1,8 +1,8 @@
 """
-Sales Tree Repository - sandbox.v_sales_tree_daily からのデータ取得
+Sales Tree Repository - mart.v_sales_tree_daily からのデータ取得
 
 売上ツリー分析用のリポジトリ実装
-データソース: sandbox.v_sales_tree_daily (Materialized View の公開ビュー)
+データソース: mart.v_sales_tree_daily (Materialized View の公開ビュー)
 """
 import logging
 import csv
@@ -31,7 +31,7 @@ class SalesTreeRepository:
     """
     売上ツリー分析Repository
     
-    データソース: sandbox.v_sales_tree_daily
+    データソース: mart.v_sales_tree_daily
     - sales_date, rep_id, rep_name, customer_id, customer_name,
       item_id, item_name, amount_yen, qty_ton, slip_count
     """
@@ -60,7 +60,7 @@ class SalesTreeRepository:
         
         パフォーマンス最適化:
           - Window FunctionでDB側でTOP-N抽出（Pythonループより高速）
-          - sandbox.v_sales_tree_dailyはMaterialized View（集計済み）
+          - mart.v_sales_tree_dailyはMaterialized View（集計済み）
           - インデックス: (sales_date, rep_id, customer_id, item_id)
         
         Args:
@@ -130,7 +130,7 @@ WITH aggregated AS (
             WHEN SUM(qty_kg) > 0 THEN SUM(amount_yen) / SUM(qty_kg)
             ELSE NULL
         END AS unit_price
-    FROM sandbox.v_sales_tree_daily
+    FROM mart.v_sales_tree_daily
     WHERE {where_sql}
     GROUP BY rep_id, rep_name, {axis_id_col}, {axis_name_col}
 ),
@@ -234,7 +234,7 @@ SELECT
         WHEN SUM(qty_kg) > 0 THEN SUM(amount_yen) / SUM(qty_kg)
         ELSE NULL
     END AS unit_price
-FROM sandbox.v_sales_tree_daily
+FROM mart.v_sales_tree_daily
 WHERE {where_sql}
 GROUP BY sales_date
 ORDER BY sales_date
@@ -329,7 +329,7 @@ WITH aggregated AS (
             WHEN SUM(qty_kg) > 0 THEN SUM(amount_yen) / SUM(qty_kg)
             ELSE NULL
         END AS unit_price
-    FROM sandbox.v_sales_tree_daily
+    FROM mart.v_sales_tree_daily
     WHERE {where_sql}
     GROUP BY {target_id_col}, {target_name_col}
 ),
@@ -425,7 +425,7 @@ LIMIT :page_size OFFSET :offset
 SELECT DISTINCT
     rep_id,
     rep_name
-FROM sandbox.v_sales_tree_daily
+FROM mart.v_sales_tree_daily
 WHERE rep_id IS NOT NULL AND rep_name IS NOT NULL
 ORDER BY rep_id
             """
@@ -452,7 +452,7 @@ ORDER BY rep_id
 SELECT DISTINCT
     customer_id,
     customer_name
-FROM sandbox.v_sales_tree_daily
+FROM mart.v_sales_tree_daily
 WHERE customer_id IS NOT NULL AND customer_name IS NOT NULL
 ORDER BY customer_id
             """
@@ -479,7 +479,7 @@ ORDER BY customer_id
 SELECT DISTINCT
     item_id,
     item_name
-FROM sandbox.v_sales_tree_daily
+FROM mart.v_sales_tree_daily
 WHERE item_id IS NOT NULL AND item_name IS NOT NULL
 ORDER BY item_id
             """
@@ -551,7 +551,7 @@ WITH aggregated AS (
             WHEN SUM(qty_kg) > 0 THEN SUM(amount_yen) / SUM(qty_kg)
             ELSE NULL
         END AS unit_price
-    FROM sandbox.v_sales_tree_daily
+    FROM mart.v_sales_tree_daily
     WHERE {where_sql}
     GROUP BY rep_id, rep_name, {axis_id_col}, {axis_name_col}
 )
