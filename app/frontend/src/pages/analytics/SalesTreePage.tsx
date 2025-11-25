@@ -41,6 +41,7 @@ import { useExportOptions } from '@/features/analytics/sales-pivot/shared/model/
 import { useMasterData } from '@/features/analytics/sales-pivot/shared/model/useMasterData';
 import { useDetailDrawerState } from '@/features/analytics/sales-pivot/shared/model/useDetailDrawerState';
 import { useDataLoading } from '@/features/analytics/sales-pivot/shared/model/useDataLoading';
+import { useSortedSummary } from '@/features/analytics/sales-pivot/shared/model/useSortedSummary';
 import { SalesPivotHeader } from '@/features/analytics/sales-pivot/header/ui/SalesPivotHeader';
 import { FilterPanel } from '@/features/analytics/sales-pivot/filters/ui/FilterPanel';
 import { KpiCards } from '@/features/analytics/sales-pivot/kpi/ui/KpiCards';
@@ -104,37 +105,7 @@ const SalesTreePage: React.FC = () => {
   const { rawSummary, loading } = useDataLoading(repository, baseQuery);
 
   // テーブル用のソート（クライアント側処理）
-  const summary = useMemo(() => {
-    // API取得結果に対してテーブルのソートのみ適用
-    const sorted = rawSummary.map(row => {
-      const sortedTopN = [...row.topN].sort((a, b) => {
-        let aVal: number | string;
-        let bVal: number | string;
-        
-        switch (tableSortBy) {
-          case 'amount': aVal = a.amount; bVal = b.amount; break;
-          case 'qty': aVal = a.qty; bVal = b.qty; break;
-          case 'count': aVal = a.count; bVal = b.count; break;
-          case 'unit_price': 
-            aVal = a.qty > 0 ? a.amount / a.qty : 0;
-            bVal = b.qty > 0 ? b.amount / b.qty : 0;
-            break;
-          case 'name': aVal = a.name; bVal = b.name; break;
-          case 'date': aVal = a.name; bVal = b.name; break;
-          default: aVal = a.amount; bVal = b.amount;
-        }
-
-        if (typeof aVal === 'string' && typeof bVal === 'string') {
-          return tableOrder === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
-        }
-        return tableOrder === 'asc' ? (aVal as number) - (bVal as number) : (bVal as number) - (aVal as number);
-      });
-      
-      return { ...row, topN: sortedTopN };
-    });
-
-    return sorted;
-  }, [rawSummary, tableSortBy, tableOrder]);
+  const summary = useSortedSummary(rawSummary, tableSortBy, tableOrder);
 
   // Drawer (pivot)
   type DrawerState =
