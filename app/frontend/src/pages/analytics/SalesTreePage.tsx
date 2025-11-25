@@ -44,6 +44,7 @@ import { useSortKeyOptions } from '@/features/analytics/sales-pivot/shared/model
 import { useQueryBuilder } from '@/features/analytics/sales-pivot/shared/model/useQueryBuilder';
 import { useAxesFromMode } from '@/features/analytics/sales-pivot/shared/model/useAxesFromMode';
 import { useDetailDrawerLoader } from '@/features/analytics/sales-pivot/shared/model/useDetailDrawerLoader';
+import { usePivotLoader } from '@/features/analytics/sales-pivot/shared/model/usePivotLoader';
 import { SalesPivotHeader } from '@/features/analytics/sales-pivot/header/ui/SalesPivotHeader';
 import { FilterPanel } from '@/features/analytics/sales-pivot/filters/ui/FilterPanel';
 import { KpiCards } from '@/features/analytics/sales-pivot/kpi/ui/KpiCards';
@@ -176,6 +177,17 @@ const SalesTreePage: React.FC = () => {
     message,
   });
 
+  // Pivotローダー
+  const { loadPivot } = usePivotLoader({
+    drawer,
+    pivotCursor,
+    categoryKind,
+    repository,
+    setPivotData,
+    setPivotCursor,
+    setPivotLoading,
+  });
+
   // CSV Export
   const handleExport = async () => {
     if (repIds.length === 0) return;
@@ -226,49 +238,6 @@ const SalesTreePage: React.FC = () => {
     setPivotData({ customer: [], item: [], date: [] });
     setPivotCursor({ customer: null, item: null, date: null });
   };
-
-  const loadPivot = useCallback(
-    async (axis: Mode, reset = false) => {
-      if (!drawer.open) return;
-      const {
-        baseAxis,
-        baseId,
-        repIds: drawerRepIds,
-        sortBy: drawerSortBy,
-        order: drawerOrder,
-        topN: drawerTopN,
-        month,
-        monthRange,
-      } = drawer;
-      const targetAxis = axis;
-      if (targetAxis === baseAxis) return;
-      
-      setPivotLoading(true);
-      try {
-        const periodParams = monthRange ? { monthRange } : { month };
-        const page = await repository.fetchPivot({
-          ...periodParams,
-          baseAxis,
-          baseId,
-          categoryKind,
-          repIds: drawerRepIds,
-          targetAxis,
-          sortBy: drawerSortBy,
-          order: drawerOrder,
-          topN: drawerTopN,
-          cursor: reset ? null : pivotCursor[targetAxis],
-        });
-        setPivotData((prev) => ({
-          ...prev,
-          [targetAxis]: reset ? page.rows : prev[targetAxis].concat(page.rows),
-        }));
-        setPivotCursor((prev) => ({ ...prev, [targetAxis]: page.next_cursor }));
-      } finally {
-        setPivotLoading(false);
-      }
-    },
-    [drawer, pivotCursor, categoryKind]
-  );
 
   const isDrawerOpen = (d: DrawerState): d is Extract<DrawerState, { open: true }> => d.open;
 
