@@ -42,6 +42,7 @@ import { usePivotDrawerState, type DrawerState } from '@/features/analytics/sale
 import { useComputedLabels } from '@/features/analytics/sales-pivot/shared/model/useComputedLabels';
 import { useCategoryKindState } from '@/features/analytics/sales-pivot/shared/model/useCategoryKindState';
 import { useEventHandlers } from '@/features/analytics/sales-pivot/shared/model/useEventHandlers';
+import { useSortKeyOptions } from '@/features/analytics/sales-pivot/shared/model/useSortKeyOptions';
 import { SalesPivotHeader } from '@/features/analytics/sales-pivot/header/ui/SalesPivotHeader';
 import { FilterPanel } from '@/features/analytics/sales-pivot/filters/ui/FilterPanel';
 import { KpiCards } from '@/features/analytics/sales-pivot/kpi/ui/KpiCards';
@@ -181,15 +182,7 @@ const SalesTreePage: React.FC = () => {
   };
 
   // Sort options
-  const sortKeyOptions = useMemo(() => {
-    return [
-      { label: mode === 'date' ? '日付' : '名称', value: (mode === 'date' ? 'date' : 'name') as SortKey },
-      { label: '売上', value: 'amount' as SortKey },
-      { label: '数量', value: 'qty' as SortKey },
-      { label: '件数', value: 'count' as SortKey },
-      { label: '単価', value: 'unit_price' as SortKey },
-    ];
-  }, [mode]);
+  const sortKeyOptions = useSortKeyOptions(mode);
 
   // Mode switch
   const { switchMode } = useEventHandlers({ setMode, setFilterIds });
