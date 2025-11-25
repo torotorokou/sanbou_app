@@ -16,7 +16,7 @@
  * - 完全なslice統合実装完了
  */
 
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import React, { useMemo, useCallback, useEffect } from 'react';
 import { Space, App } from 'antd';
 import type {
   Mode,
@@ -24,7 +24,6 @@ import type {
   ID,
   SummaryQuery,
   MetricEntry,
-  CategoryKind,
   DetailLinesFilter,
   GroupBy,
 } from '@/features/analytics/sales-pivot/shared/model/types';
@@ -41,6 +40,8 @@ import { useSortedSummary } from '@/features/analytics/sales-pivot/shared/model/
 import { useFilterOptions } from '@/features/analytics/sales-pivot/shared/model/useFilterOptions';
 import { usePivotDrawerState, type DrawerState } from '@/features/analytics/sales-pivot/shared/model/usePivotDrawerState';
 import { useComputedLabels } from '@/features/analytics/sales-pivot/shared/model/useComputedLabels';
+import { useCategoryKindState } from '@/features/analytics/sales-pivot/shared/model/useCategoryKindState';
+import { useEventHandlers } from '@/features/analytics/sales-pivot/shared/model/useEventHandlers';
 import { SalesPivotHeader } from '@/features/analytics/sales-pivot/header/ui/SalesPivotHeader';
 import { FilterPanel } from '@/features/analytics/sales-pivot/filters/ui/FilterPanel';
 import { KpiCards } from '@/features/analytics/sales-pivot/kpi/ui/KpiCards';
@@ -57,7 +58,7 @@ const SalesTreePage: React.FC = () => {
   const message = appContext?.message;
 
   // CategoryKind state (廃棄物/有価物タブ)
-  const [categoryKind, setCategoryKind] = useState<CategoryKind>('waste');
+  const { categoryKind, setCategoryKind } = useCategoryKindState('waste');
 
   // Repository（categoryKindに応じて自動設定）
   const repository = useRepository(categoryKind);
@@ -191,10 +192,7 @@ const SalesTreePage: React.FC = () => {
   }, [mode]);
 
   // Mode switch
-  const switchMode = useCallback((m: Mode) => {
-    setMode(m);
-    setFilterIds([]);
-  }, []);
+  const { switchMode } = useEventHandlers({ setMode, setFilterIds });
 
   // Pivot drawer
   const openPivot = (rec: MetricEntry, repId: ID) => {
