@@ -22,12 +22,9 @@ import dayjs from 'dayjs';
 import type {
   Mode,
   SortKey,
-  SortOrder,
   ID,
-  YYYYMM,
   SummaryQuery,
   MetricEntry,
-  DailyPoint,
   CategoryKind,
   DetailLinesFilter,
   GroupBy,
@@ -43,6 +40,7 @@ import { useDetailDrawerState } from '@/features/analytics/sales-pivot/shared/mo
 import { useDataLoading } from '@/features/analytics/sales-pivot/shared/model/useDataLoading';
 import { useSortedSummary } from '@/features/analytics/sales-pivot/shared/model/useSortedSummary';
 import { useFilterOptions } from '@/features/analytics/sales-pivot/shared/model/useFilterOptions';
+import { usePivotDrawerState, type DrawerState } from '@/features/analytics/sales-pivot/shared/model/usePivotDrawerState';
 import { SalesPivotHeader } from '@/features/analytics/sales-pivot/header/ui/SalesPivotHeader';
 import { FilterPanel } from '@/features/analytics/sales-pivot/filters/ui/FilterPanel';
 import { KpiCards } from '@/features/analytics/sales-pivot/kpi/ui/KpiCards';
@@ -109,37 +107,18 @@ const SalesTreePage: React.FC = () => {
   const summary = useSortedSummary(rawSummary, tableSortBy, tableOrder);
 
   // Drawer (pivot)
-  type DrawerState =
-    | { open: false }
-    | {
-        open: true;
-        baseAxis: Mode;
-        baseId: ID;
-        baseName: string;
-        month?: YYYYMM;
-        monthRange?: { from: YYYYMM; to: YYYYMM };
-        repIds: ID[];
-        targets: { axis: Mode; label: string }[];
-        activeAxis: Mode;
-        sortBy: SortKey;
-        order: SortOrder;
-        topN: 10 | 20 | 50 | 'all';
-      };
-  const [drawer, setDrawer] = useState<DrawerState>({ open: false });
-
-  const [pivotData, setPivotData] = useState<Record<Mode, MetricEntry[]>>({
-    customer: [],
-    item: [],
-    date: [],
-  });
-  const [pivotCursor, setPivotCursor] = useState<Record<Mode, string | null>>({
-    customer: null,
-    item: null,
-    date: null,
-  });
-  const [pivotLoading, setPivotLoading] = useState<boolean>(false);
-
-  const [repSeriesCache, setRepSeriesCache] = useState<Record<ID, DailyPoint[]>>({});
+  const {
+    drawer,
+    setDrawer,
+    pivotData,
+    setPivotData,
+    pivotCursor,
+    setPivotCursor,
+    pivotLoading,
+    setPivotLoading,
+    repSeriesCache,
+    setRepSeriesCache,
+  } = usePivotDrawerState();
 
   // Detail Drawer（詳細明細行表示用）
   const {
