@@ -6,7 +6,7 @@
 import React from 'react';
 import { Card, Row, Col, Statistic, Typography, Tooltip } from 'antd';
 import { fmtCurrency, fmtNumber, fmtUnitPrice } from '../../shared/model/metrics';
-import type { Mode } from '../../shared/model/types';
+import type { Mode, CategoryKind } from '../../shared/model/types';
 
 interface KpiCardsProps {
   totalAmount: number;
@@ -16,6 +16,7 @@ interface KpiCardsProps {
   selectedRepLabel: string;
   hasSelection: boolean;
   mode: Mode;
+  categoryKind: CategoryKind;
 }
 
 /**
@@ -29,10 +30,13 @@ export const KpiCards: React.FC<KpiCardsProps> = ({
   selectedRepLabel,
   hasSelection,
   mode,
+  categoryKind,
 }) => {
   // 件数/台数ラベルの動的切り替え
   const countLabel = mode === 'item' ? '件数' : '台数';
   const countSuffix = mode === 'item' ? '件' : '台';
+  // 売上/仕入ラベルの動的切り替え
+  const amountLabel = categoryKind === 'waste' ? '売上' : '仕入';
   if (!hasSelection) {
     return (
       <Card className="sales-tree-accent-card sales-tree-accent-gold">
@@ -61,7 +65,7 @@ export const KpiCards: React.FC<KpiCardsProps> = ({
       <Row gutter={[16, 16]}>
         <Col xs={24} md={6}>
           <Statistic
-            title="（表示対象）合計 売上"
+            title={`（表示対象）合計 ${amountLabel}`}
             value={totalAmount}
             formatter={(v) => fmtCurrency(Number(v))}
           />

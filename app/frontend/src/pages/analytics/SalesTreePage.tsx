@@ -30,6 +30,7 @@ import type {
   MetricEntry,
   ExportOptions,
   DailyPoint,
+  CategoryKind,
 } from '@/features/analytics/sales-pivot/shared/model/types';
 import { axesFromMode, axisLabel, monthDays, allDaysInRange } from '@/features/analytics/sales-pivot/shared/model/metrics';
 import { HttpSalesPivotRepository } from '@/features/analytics/sales-pivot/shared/api/salesPivot.repository';
@@ -67,6 +68,9 @@ const DEFAULT_EXPORT_OPTIONS: ExportOptions = {
 const SalesTreePage: React.FC = () => {
   const appContext = App.useApp?.();
   const message = appContext?.message;
+
+  // CategoryKind state (廃棄物/有価物タブ)
+  const [categoryKind, setCategoryKind] = useState<CategoryKind>('waste');
 
   // Period
   const [periodMode, setPeriodMode] = useState<'single' | 'range'>('single');
@@ -177,7 +181,7 @@ const SalesTreePage: React.FC = () => {
 
   // Query materialize (API用 - フィルターパネルの条件）
   const baseQuery: SummaryQuery = useMemo(() => {
-    const base = { mode, repIds, filterIds, sortBy: filterSortBy, order: filterOrder, topN: filterTopN };
+    const base = { mode, categoryKind, repIds, filterIds, sortBy: filterSortBy, order: filterOrder, topN: filterTopN };
     if (periodMode === 'single') return { ...base, month: month.format('YYYY-MM') };
     if (range)
       return {
@@ -185,7 +189,7 @@ const SalesTreePage: React.FC = () => {
         monthRange: { from: range[0].format('YYYY-MM'), to: range[1].format('YYYY-MM') },
       };
     return { ...base, month: month.format('YYYY-MM') };
-  }, [periodMode, month, range, mode, repIds, filterIds, filterSortBy, filterOrder, filterTopN]);
+  }, [periodMode, month, range, mode, categoryKind, repIds, filterIds, filterSortBy, filterOrder, filterTopN]);
 
   // エクスポート用のクエリ（フィルターパネルの条件を使用）
   const query: SummaryQuery = useMemo(() => {
@@ -222,6 +226,13 @@ const SalesTreePage: React.FC = () => {
   const [customers, setCustomers] = useState<Array<{ id: ID; name: string }>>([]);
   const [items, setItems] = useState<Array<{ id: ID; name: string }>>([]);
 
+  // categoryKindが変わったらRepositoryに設定
+  useEffect(() => {
+    if (repository && 'setCategoryKind' in repository) {
+      (repository as { setCategoryKind: (kind: string) => void }).setCategoryKind(categoryKind);
+    }
+  }, [categoryKind]);
+
   useEffect(() => {
     const loadMasters = async () => {
       try {
@@ -244,7 +255,7 @@ const SalesTreePage: React.FC = () => {
       }
     };
     loadMasters();
-  }, [message]);
+  }, [message, categoryKind]);  // categoryKind変更時にマスタデータを再取得
 
   const repOptions = useMemo(
     () => reps.map((r) => ({ label: r.name, value: r.id })),
@@ -388,6 +399,7 @@ const SalesTreePage: React.FC = () => {
           ...periodParams,
           baseAxis,
           baseId,
+          categoryKind,
           repIds: drawerRepIds,
           targetAxis,
           sortBy: drawerSortBy,
@@ -424,13 +436,20 @@ const SalesTreePage: React.FC = () => {
   const loadDailySeries = async (repId: ID) => {
     if (repSeriesCache[repId]) return;
     const s = await repository.fetchDailySeries(
-      query.month ? { month: query.month, repId } : { monthRange: query.monthRange!, repId }
+      query.month 
+        ? { month: query.month, categoryKind, repId } 
+        : { monthRange: query.monthRange!, categoryKind, repId }
     );
     setRepSeriesCache((prev) => ({ ...prev, [repId]: s }));
   };
 
   return (
-    <Space direction="vertical" size="large" style={{ display: 'block' }} className="sales-tree-page">
+    <Space 
+      direction="vertical" 
+      size="large" 
+      style={{ display: 'block' }} 
+      className={`sales-tree-page ${categoryKind === 'valuable' ? 'valuable-mode' : ''}`}
+    >
       {/* Header */}
       <SalesPivotHeader
         canExport={repIds.length > 0}
@@ -441,6 +460,7 @@ const SalesTreePage: React.FC = () => {
         baseAx={baseAx}
         axB={axB}
         axC={axC}
+        categoryKind={categoryKind}
       />
 
       {/* Filters */}
@@ -467,6 +487,8 @@ const SalesTreePage: React.FC = () => {
         sortKeyOptions={sortKeyOptions}
         onRepIdsChange={setRepIds}
         onFilterIdsChange={setFilterIds}
+        categoryKind={categoryKind}
+        onCategoryKindChange={setCategoryKind}
       />
 
       {/* KPI */}
@@ -478,6 +500,7 @@ const SalesTreePage: React.FC = () => {
         selectedRepLabel={selectedRepLabel}
         hasSelection={repIds.length > 0}
         mode={mode}
+        categoryKind={categoryKind}
       />
 
       {/* Summary Table */}
@@ -497,6 +520,7 @@ const SalesTreePage: React.FC = () => {
           setTableOrder(ord);
         }}
         query={query}
+        categoryKind={categoryKind}
       />
 
       {/* Pivot Drawer */}
@@ -513,6 +537,7 @@ const SalesTreePage: React.FC = () => {
         onSortByChange={(sb) => setDrawer((prev) => (prev.open ? { ...prev, sortBy: sb } : prev))}
         onOrderChange={(ord) => setDrawer((prev) => (prev.open ? { ...prev, order: ord } : prev))}
         onLoadMore={async (axis: Mode, reset: boolean) => loadPivot(axis, reset)}
+        categoryKind={categoryKind}
       />
     </Space>
   );

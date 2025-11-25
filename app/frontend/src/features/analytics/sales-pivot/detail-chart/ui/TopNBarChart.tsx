@@ -5,20 +5,22 @@
 
 import React from 'react';
 import { ResponsiveContainer, BarChart, Bar, CartesianGrid, XAxis, YAxis, Tooltip as RTooltip } from 'recharts';
-import type { MetricEntry } from '../../shared/model/types';
+import type { MetricEntry, CategoryKind } from '../../shared/model/types';
 import { fmtCurrency, fmtNumber, fmtUnitPrice } from '../../shared/model/metrics';
 
 export interface TopNBarChartProps {
   data: MetricEntry[];
+  categoryKind: CategoryKind;
 }
 
 /**
  * TopN棒グラフ
  */
-export const TopNBarChart: React.FC<TopNBarChartProps> = ({ data }) => {
+export const TopNBarChart: React.FC<TopNBarChartProps> = ({ data, categoryKind }) => {
+  const amountLabel = categoryKind === 'waste' ? '売上' : '仕入';
   const chartData = data.map((d) => ({
     name: d.name,
-    売上: d.amount,
+    [amountLabel]: d.amount,
     数量: d.qty,
     件数: d.count,
     単価: d.unit_price ?? 0,
@@ -33,14 +35,14 @@ export const TopNBarChart: React.FC<TopNBarChartProps> = ({ data }) => {
           <YAxis />
           <RTooltip
             formatter={(value: number, name: string) => {
-              if (name === '売上') return fmtCurrency(value);
+              if (name === amountLabel) return fmtCurrency(value);
               if (name === '数量') return `${fmtNumber(value)} kg`;
               if (name === '件数') return `${fmtNumber(value)} 件`;
               if (name === '単価') return fmtUnitPrice(value);
               return value;
             }}
           />
-          <Bar dataKey="売上" />
+          <Bar dataKey={amountLabel} />
           <Bar dataKey="数量" />
           <Bar dataKey="件数" />
           <Bar dataKey="単価" />

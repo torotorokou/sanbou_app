@@ -15,7 +15,7 @@ import {
   YAxis,
   Tooltip as RTooltip,
 } from 'recharts';
-import type { DailyPoint, YYYYMM } from '../../shared/model/types';
+import type { DailyPoint, YYYYMM, CategoryKind } from '../../shared/model/types';
 import { fmtCurrency, fmtNumber, fmtUnitPrice } from '../../shared/model/metrics';
 
 export interface DailySeriesChartProps {
@@ -24,6 +24,7 @@ export interface DailySeriesChartProps {
   month?: YYYYMM;
   monthRange?: { from: YYYYMM; to: YYYYMM };
   onLoad: () => void;
+  categoryKind: CategoryKind;
 }
 
 /**
@@ -35,7 +36,9 @@ export const DailySeriesChart: React.FC<DailySeriesChartProps> = ({
   month,
   monthRange,
   onLoad,
+  categoryKind,
 }) => {
+  const amountLabel = categoryKind === 'waste' ? '売上' : '仕入';
   const periodLabel = month
     ? `${month} 日次推移`
     : `${monthRange!.from}〜${monthRange!.to} 日次推移`;
@@ -61,14 +64,14 @@ export const DailySeriesChart: React.FC<DailySeriesChartProps> = ({
               <YAxis />
               <RTooltip
                 formatter={(value: number, name: string) => {
-                  if (name === '売上') return fmtCurrency(value);
+                  if (name === amountLabel) return fmtCurrency(value);
                   if (name === '数量') return `${fmtNumber(value)} kg`;
                   if (name === '件数') return `${fmtNumber(value)} 件`;
                   if (name === '単価') return fmtUnitPrice(value);
                   return value;
                 }}
               />
-              <Line type="monotone" dataKey="amount" name="売上" stroke="#237804" />
+              <Line type="monotone" dataKey="amount" name={amountLabel} stroke="#237804" />
               <Line type="monotone" dataKey="qty" name="数量" stroke="#52c41a" />
               <Line type="monotone" dataKey="count" name="件数" stroke="#1890ff" />
             </LineChart>

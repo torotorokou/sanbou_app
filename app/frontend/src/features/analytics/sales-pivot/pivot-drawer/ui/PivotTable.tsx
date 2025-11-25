@@ -7,7 +7,7 @@ import React from 'react';
 import { Tabs, Table, Space, Button, Empty, Tooltip, Typography } from 'antd';
 import type { TableColumnsType, TableProps } from 'antd';
 import { ReloadOutlined, InfoCircleOutlined } from '@ant-design/icons';
-import type { Mode, MetricEntry, SortKey, SortOrder } from '../../shared/model/types';
+import type { Mode, MetricEntry, SortKey, SortOrder, CategoryKind } from '../../shared/model/types';
 import { axisLabel, fmtCurrency, fmtNumber, fmtUnitPrice } from '../../shared/model/metrics';
 
 interface PivotTableProps {
@@ -21,6 +21,7 @@ interface PivotTableProps {
   onLoadMore: (axis: Mode, reset: boolean) => Promise<void>;
   onSortByChange: (sortBy: SortKey) => void;
   onOrderChange: (order: SortOrder) => void;
+  categoryKind: CategoryKind;
 }
 
 /**
@@ -39,7 +40,11 @@ export const PivotTable: React.FC<PivotTableProps> = ({
   onLoadMore,
   onSortByChange,
   onOrderChange,
+  categoryKind,
 }) => {
+  // 売上/仕入ラベルの動的切り替え
+  const amountLabel = categoryKind === 'waste' ? '売上' : '仕入';
+
   /**
    * テーブルソート変更ハンドラ
    */
@@ -78,7 +83,7 @@ export const PivotTable: React.FC<PivotTableProps> = ({
             sorter: true,
           },
           {
-            title: '売上',
+            title: amountLabel,
             dataIndex: 'amount',
             key: 'amount',
             align: 'right',

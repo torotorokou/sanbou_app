@@ -524,13 +524,21 @@ import { coreApi } from '@/shared';
  * バックエンド /core_api/analytics/sales-tree/* と連携
  */
 export class HttpSalesPivotRepository implements SalesPivotRepository {
+  private categoryKind: string = 'waste';  // デフォルト値
+
+  setCategoryKind(categoryKind: string) {
+    this.categoryKind = categoryKind;
+  }
+
   async getSalesReps(): Promise<SalesRep[]> {
     // 実データから営業マスタを取得
     interface ApiRep {
       rep_id: number;
       rep_name: string;
     }
-    const reps = await coreApi.get<ApiRep[]>('/core_api/analytics/sales-tree/masters/reps');
+    const reps = await coreApi.get<ApiRep[]>(
+      `/core_api/analytics/sales-tree/masters/reps?category_kind=${this.categoryKind}`
+    );
     return reps.map(r => ({
       id: String(r.rep_id),
       name: r.rep_name
@@ -543,7 +551,9 @@ export class HttpSalesPivotRepository implements SalesPivotRepository {
       customer_id: string;
       customer_name: string;
     }
-    const customers = await coreApi.get<ApiCustomer[]>('/core_api/analytics/sales-tree/masters/customers');
+    const customers = await coreApi.get<ApiCustomer[]>(
+      `/core_api/analytics/sales-tree/masters/customers?category_kind=${this.categoryKind}`
+    );
     return customers.map(c => ({
       id: c.customer_id,
       name: c.customer_name
@@ -556,7 +566,9 @@ export class HttpSalesPivotRepository implements SalesPivotRepository {
       item_id: number;
       item_name: string;
     }
-    const items = await coreApi.get<ApiItem[]>('/core_api/analytics/sales-tree/masters/items');
+    const items = await coreApi.get<ApiItem[]>(
+      `/core_api/analytics/sales-tree/masters/items?category_kind=${this.categoryKind}`
+    );
     return items.map(i => ({
       id: String(i.item_id),
       name: i.item_name
@@ -588,6 +600,7 @@ export class HttpSalesPivotRepository implements SalesPivotRepository {
       date_from,
       date_to,
       mode: q.mode,
+      category_kind: q.categoryKind,
       rep_ids: q.repIds.map(id => parseInt(id, 10)),
       filter_ids: q.filterIds,
       top_n: q.topN === 'all' ? 0 : q.topN,
@@ -651,6 +664,7 @@ export class HttpSalesPivotRepository implements SalesPivotRepository {
       date_to,
       base_axis: params.baseAxis,
       base_id: params.baseId,
+      category_kind: params.categoryKind,
       rep_ids: params.repIds.map(id => parseInt(id, 10)),
       target_axis: params.targetAxis,
       top_n: params.topN === 'all' ? 0 : params.topN,
@@ -709,6 +723,7 @@ export class HttpSalesPivotRepository implements SalesPivotRepository {
     const req = {
       date_from,
       date_to,
+      category_kind: params.categoryKind,
       rep_id: params.repId ? parseInt(params.repId, 10) : undefined,
       customer_id: params.customerId,
       item_id: params.itemId ? parseInt(params.itemId, 10) : undefined,
@@ -756,6 +771,7 @@ export class HttpSalesPivotRepository implements SalesPivotRepository {
       date_from,
       date_to,
       mode: query.mode,
+      category_kind: query.categoryKind,
       rep_ids: query.targetRepIds.map(id => parseInt(id, 10)),
       filter_ids: query.filterIds,
       sort_by: query.sortBy,

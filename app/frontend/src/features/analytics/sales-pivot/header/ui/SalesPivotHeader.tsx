@@ -38,7 +38,7 @@ import React from 'react';
 import { Typography, Button, Dropdown, Switch, Select, Space } from 'antd';
 import type { MenuProps } from 'antd';
 import { DownloadOutlined, DownOutlined } from '@ant-design/icons';
-import type { ExportOptions, Mode } from '../../shared/model/types';
+import type { ExportOptions, Mode, CategoryKind } from '../../shared/model/types';
 import { axisLabel } from '../../shared/model/metrics';
 
 /**
@@ -66,6 +66,7 @@ interface SalesPivotHeaderProps {
   baseAx: Mode;
   axB: Mode;
   axC: Mode;
+  categoryKind: CategoryKind;
 }
 
 /**
@@ -86,6 +87,7 @@ export const SalesPivotHeader: React.FC<SalesPivotHeaderProps> = ({
   baseAx,
   axB,
   axC,
+  categoryKind,
 }) => {
   // CSV出力メニュー
   const exportMenu: MenuProps['items'] = [
@@ -178,7 +180,7 @@ export const SalesPivotHeader: React.FC<SalesPivotHeaderProps> = ({
   return (
     <div className="sales-tree-header">
       <Typography.Title level={3} className="sales-tree-title">
-        <span className="sales-tree-title-accent">売上ツリー</span>
+        <span className="sales-tree-title-accent">{categoryKind === 'waste' ? '廃棄物ツリー' : '有価物ツリー'}</span>
       </Typography.Title>
       <div className="sales-tree-header-actions">
         {!canExport ? (

@@ -8,7 +8,7 @@ import { Card, Table, Tabs, Tag, Space, Button } from 'antd';
 import type { TableColumnsType, TableProps } from 'antd';
 import { SwapOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import { Tooltip } from 'antd';
-import type { SummaryRow, MetricEntry, Mode, SortKey, SortOrder, SummaryQuery } from '../../shared/model/types';
+import type { SummaryRow, MetricEntry, Mode, SortKey, SortOrder, SummaryQuery, CategoryKind } from '../../shared/model/types';
 import { fmtCurrency, fmtNumber, fmtUnitPrice, axisLabel } from '../../shared/model/metrics';
 import { MetricChart } from './MetricChart';
 
@@ -35,6 +35,7 @@ interface ExpandedRowProps {
   repSeriesCache: Record<string, unknown[]>;
   loadDailySeries: (repId: string) => Promise<void>;
   query: SummaryQuery;
+  categoryKind: CategoryKind;
 }
 
 /**
@@ -51,6 +52,7 @@ export const ExpandedRow: React.FC<ExpandedRowProps> = ({
   repSeriesCache,
   loadDailySeries,
   query,
+  categoryKind,
 }) => {
   const data = row.topN;
   const maxAmount = Math.max(1, ...data.map((x: MetricEntry) => x.amount));
@@ -63,6 +65,8 @@ export const ExpandedRow: React.FC<ExpandedRowProps> = ({
   // 件数/台数ラベルの動的切り替え
   const countLabel = mode === 'item' ? '件数' : '台数';
   const countSuffix = mode === 'item' ? '件' : '台';
+  // 売上/仕入ラベルの動的切り替え
+  const amountLabel = categoryKind === 'waste' ? '売上' : '仕入';
 
   const childCols: TableColumnsType<MetricEntry> = [
     { 
@@ -73,7 +77,7 @@ export const ExpandedRow: React.FC<ExpandedRowProps> = ({
       sorter: (a: MetricEntry, b: MetricEntry) => a.name.localeCompare(b.name, 'ja')
     },
     {
-      title: '売上',
+      title: amountLabel,
       dataIndex: 'amount',
       key: 'amount',
       align: 'right',
@@ -226,6 +230,7 @@ export const ExpandedRow: React.FC<ExpandedRowProps> = ({
                 onLoadSeries={handleLoadSeries}
                 query={query}
                 mode={mode}
+                categoryKind={categoryKind}
               />
             ),
           },
