@@ -524,3 +524,100 @@ export type DrawerState =
       order: SortOrder;
       topN: 10 | 20 | 50 | 'all';
     };
+
+// ========================================
+// 詳細明細行関連型（Detail Lines）
+// ========================================
+
+/**
+ * 詳細表示モード
+ * 
+ * @description 詳細テーブルの粒度を定義
+ * - `item_lines`: 品名明細行レベル（最後の軸が item の場合）
+ * - `slip_summary`: 伝票単位サマリ（最後の軸が item 以外の場合）
+ */
+export type DetailMode = 'item_lines' | 'slip_summary';
+
+/**
+ * 集計軸種別
+ * 
+ * @description 集計パスの各階層で使用される軸の種別
+ * - `rep`: 営業
+ * - `customer`: 顧客
+ * - `date`: 日付
+ * - `item`: 品名
+ */
+export type GroupBy = 'rep' | 'customer' | 'date' | 'item';
+
+/**
+ * 詳細明細行（またはサマリ行）
+ * 
+ * @description 集計行クリック時に表示する詳細データの1行
+ * mode により内容が変わる:
+ * - item_lines: 明細行そのまま（品名まで含む）
+ * - slip_summary: 伝票単位の集約（品名は含まない）
+ * 
+ * @property mode - 詳細表示モード
+ * @property salesDate - 売上日
+ * @property slipNo - 伝票No（receive_no）
+ * @property slipTypeName - 伝票種別（売上/仕入など）
+ * @property itemId - 品目ID（item_lines時のみ）
+ * @property itemName - 品目名（item_lines時のみ）
+ * @property lineCount - 明細行数（slip_summary時のみ）
+ * @property qtyKg - 数量（kg）
+ * @property unitPriceYenPerKg - 単価（円/kg）
+ * @property amountYen - 金額（円）
+ */
+export interface DetailLine {
+  mode: DetailMode;
+  salesDate: string;
+  slipNo: number;
+  repName: string;
+  customerName: string;
+  itemId: number | null;
+  itemName: string;
+  lineCount: number | null;
+  qtyKg: number;
+  unitPriceYenPerKg: number | null;
+  amountYen: number;
+}
+
+/**
+ * 詳細明細行取得リクエスト
+ * 
+ * @description 詳細テーブル表示のためのフィルタ条件
+ * 
+ * @property dateFrom - 集計開始日（YYYY-MM-DD）
+ * @property dateTo - 集計終了日（YYYY-MM-DD）
+ * @property lastGroupBy - 最後の集計軸（rep, customer, date, item）
+ * @property categoryKind - カテゴリ種別（waste, valuable）
+ * @property repId - 営業IDフィルタ
+ * @property customerId - 顧客IDフィルタ
+ * @property itemId - 品目IDフィルタ
+ * @property dateValue - 日付フィルタ（YYYY-MM-DD）
+ */
+export interface DetailLinesFilter {
+  dateFrom: string;
+  dateTo: string;
+  lastGroupBy: GroupBy;
+  categoryKind: CategoryKind;
+  repId?: number;
+  customerId?: string;
+  itemId?: number;
+  dateValue?: string;
+}
+
+/**
+ * 詳細明細行取得レスポンス
+ * 
+ * @description 詳細テーブル表示用データ
+ * 
+ * @property mode - 返却データのモード
+ * @property rows - 詳細明細行リスト
+ * @property totalCount - 総行数
+ */
+export interface DetailLinesResponse {
+  mode: DetailMode;
+  rows: DetailLine[];
+  totalCount: number;
+}

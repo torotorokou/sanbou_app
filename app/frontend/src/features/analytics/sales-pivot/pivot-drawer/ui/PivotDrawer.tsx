@@ -21,6 +21,7 @@ interface PivotDrawerProps {
   onOrderChange: (order: SortOrder) => void;
   onLoadMore: (axis: Mode, reset: boolean) => Promise<void>;
   categoryKind: CategoryKind;
+  onRowClick?: (row: MetricEntry, axis: Mode) => void;
 }
 
 /**
@@ -38,6 +39,7 @@ export const PivotDrawer: React.FC<PivotDrawerProps> = ({
   onOrderChange,
   onLoadMore,
   categoryKind,
+  onRowClick,
 }) => {
   if (!drawer.open) return null;
 
@@ -120,6 +122,7 @@ export const PivotDrawer: React.FC<PivotDrawerProps> = ({
           onSortByChange={onSortByChange}
           onOrderChange={onOrderChange}
           categoryKind={categoryKind}
+          onRowClick={onRowClick}
         />
       </Card>
     </Drawer>

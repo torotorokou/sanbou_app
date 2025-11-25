@@ -35,6 +35,8 @@ import type {
   ExportQuery,
   SalesRep,
   UniverseEntry,
+  DetailLinesFilter,
+  DetailLinesResponse,
 } from '../model/types';
 import { sortMetrics, monthDays, monthsBetween, allDaysInRange } from '../model/metrics';
 
@@ -134,6 +136,21 @@ export interface SalesPivotRepository {
    * @returns 商品フィルタ候補配列
    */
   getItems(): Promise<UniverseEntry[]>;
+
+  /**
+   * 詳細明細行取得（SalesTree集計行クリック時の詳細表示用）
+   * 
+   * @param filter - 詳細明細行取得フィルタ（期間、集計軸、フィルタ条件）
+   * @returns 詳細明細行レスポンス（mode + rows + totalCount）
+   * 
+   * @description
+   * 最後の集計軸に応じて粒度を切り替える:
+   * - last_group_by が 'item' の場合:
+   *     → mart.v_sales_tree_detail_base の明細行（GROUP BY なし）
+   * - それ以外の場合:
+   *     → sales_date, slip_no で GROUP BY した伝票単位のサマリ
+   */
+  fetchDetailLines(filter: DetailLinesFilter): Promise<DetailLinesResponse>;
 }
 
 // ========================================
@@ -501,8 +518,53 @@ export class MockSalesPivotRepository implements SalesPivotRepository {
     ].join('\r\n');
 
     const blob = new Blob(['\uFEFF', csv], { type: 'text/csv;charset=utf-8;' });
-    await delay(200);
+    await delay(500);
     return blob;
+  }
+
+  async fetchDetailLines(filter: DetailLinesFilter): Promise<DetailLinesResponse> {
+    // モック実装: ダミーデータを返す
+    await delay(300);
+    
+    const mode = filter.lastGroupBy === 'item' ? 'item_lines' : 'slip_summary';
+    const rows = [];
+    
+    // サンプルデータ生成
+    for (let i = 0; i < 20; i++) {
+      if (mode === 'item_lines') {
+        rows.push({
+          mode: 'item_lines' as const,
+          salesDate: `${filter.dateFrom.substring(0, 8)}${String(i + 1).padStart(2, '0')}`,
+          slipNo: 1000 + i,
+          slipTypeName: i % 2 === 0 ? '売上' : '仕入',
+          itemId: 100 + i,
+          itemName: `商品${i + 1}`,
+          lineCount: null,
+          qtyKg: Math.random() * 1000,
+          unitPriceYenPerKg: Math.random() * 500,
+          amountYen: Math.random() * 500000,
+        });
+      } else {
+        rows.push({
+          mode: 'slip_summary' as const,
+          salesDate: `${filter.dateFrom.substring(0, 8)}${String(i + 1).padStart(2, '0')}`,
+          slipNo: 1000 + i,
+          slipTypeName: i % 2 === 0 ? '売上' : '仕入',
+          itemId: null,
+          itemName: null,
+          lineCount: Math.floor(Math.random() * 10) + 1,
+          qtyKg: Math.random() * 1000,
+          unitPriceYenPerKg: Math.random() * 500,
+          amountYen: Math.random() * 500000,
+        });
+      }
+    }
+    
+    return {
+      mode,
+      rows,
+      totalCount: rows.length,
+    };
   }
 }
 
@@ -789,6 +851,31 @@ export class HttpSalesPivotRepository implements SalesPivotRepository {
     );
 
     return blob;
+  }
+
+  async fetchDetailLines(filter: DetailLinesFilter): Promise<DetailLinesResponse> {
+    // APIリクエストボディを構築
+    const req = {
+      date_from: filter.dateFrom,
+      date_to: filter.dateTo,
+      last_group_by: filter.lastGroupBy,
+      category_kind: filter.categoryKind,
+      rep_id: filter.repId ? parseInt(String(filter.repId), 10) : undefined,
+      customer_id: filter.customerId,
+      item_id: filter.itemId ? parseInt(String(filter.itemId), 10) : undefined,
+      date_value: filter.dateValue,
+    };
+
+    // Detail Lines APIを呼び出し
+    const res = await coreApi.post<DetailLinesResponse>(
+      '/core_api/analytics/sales-tree/detail-lines',
+      req,
+      {
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
+
+    return res;
   }
 
   /**

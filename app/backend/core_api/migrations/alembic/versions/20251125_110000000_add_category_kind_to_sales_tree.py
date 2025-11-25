@@ -60,7 +60,7 @@ def upgrade() -> None:
             category_name,
             CASE
                 WHEN category_cd = 1 THEN 'waste'     -- 廃棄物
-                WHEN category_cd = 2 THEN 'valuable'  -- 有価物
+                WHEN category_cd = 3 THEN 'valuable'  -- 有価物
                 ELSE 'other'
             END AS category_kind,
             aggregate_item_cd,

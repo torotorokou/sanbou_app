@@ -31,6 +31,10 @@ import type {
   ExportOptions,
   DailyPoint,
   CategoryKind,
+  DetailLinesFilter,
+  DetailLine,
+  DetailMode,
+  GroupBy,
 } from '@/features/analytics/sales-pivot/shared/model/types';
 import { axesFromMode, axisLabel, monthDays, allDaysInRange } from '@/features/analytics/sales-pivot/shared/model/metrics';
 import { HttpSalesPivotRepository } from '@/features/analytics/sales-pivot/shared/api/salesPivot.repository';
@@ -39,6 +43,7 @@ import { FilterPanel } from '@/features/analytics/sales-pivot/filters/ui/FilterP
 import { KpiCards } from '@/features/analytics/sales-pivot/kpi/ui/KpiCards';
 import { SummaryTable } from '@/features/analytics/sales-pivot/summary-table/ui/SummaryTable';
 import { PivotDrawer } from '@/features/analytics/sales-pivot/pivot-drawer/ui/PivotDrawer';
+import { DetailDrawer } from '@/features/analytics/sales-pivot/detail-drawer/ui/DetailDrawer';
 import './SalesTreePage.css';
 
 // Repository（実API連携版）
@@ -178,6 +183,14 @@ const SalesTreePage: React.FC = () => {
   const [pivotLoading, setPivotLoading] = useState<boolean>(false);
 
   const [repSeriesCache, setRepSeriesCache] = useState<Record<ID, DailyPoint[]>>({});
+
+  // Detail Drawer (詳細明細行表示用)
+  const [detailDrawerOpen, setDetailDrawerOpen] = useState<boolean>(false);
+  const [detailDrawerLoading, setDetailDrawerLoading] = useState<boolean>(false);
+  const [detailDrawerTitle, setDetailDrawerTitle] = useState<string>('');
+  const [detailDrawerMode, setDetailDrawerMode] = useState<DetailMode | null>(null);
+  const [detailDrawerRows, setDetailDrawerRows] = useState<DetailLine[]>([]);
+  const [detailDrawerTotalCount, setDetailDrawerTotalCount] = useState<number>(0);
 
   // Query materialize (API用 - フィルターパネルの条件）
   const baseQuery: SummaryQuery = useMemo(() => {
@@ -445,6 +458,99 @@ const SalesTreePage: React.FC = () => {
     setRepSeriesCache((prev) => ({ ...prev, [repId]: s }));
   };
 
+  // 詳細Drawer を開く（内部処理）
+  const openDetailDrawer = useCallback(async (
+    lastGroupBy: GroupBy,
+    repId?: string,
+    customerId?: string,
+    itemId?: string,
+    dateValue?: string,
+    title?: string
+  ) => {
+    setDetailDrawerLoading(true);
+    setDetailDrawerOpen(true);
+    setDetailDrawerTitle(title || '詳細明細');
+    
+    try {
+      // 期間計算
+      let dateFrom: string;
+      let dateTo: string;
+      if (query.monthRange) {
+        dateFrom = `${query.monthRange.from}-01`;
+        dateTo = `${query.monthRange.to}-28`; // 簡易的に28日で固定（実際は月末日を計算）
+      } else if (query.month) {
+        dateFrom = `${query.month}-01`;
+        dateTo = `${query.month}-28`;
+      } else {
+        throw new Error('期間が設定されていません');
+      }
+
+      const filter: DetailLinesFilter = {
+        dateFrom,
+        dateTo,
+        lastGroupBy,
+        categoryKind,
+        repId: repId ? parseInt(repId, 10) : undefined,
+        customerId,
+        itemId: itemId ? parseInt(itemId, 10) : undefined,
+        dateValue,
+      };
+
+      const response = await repository.fetchDetailLines(filter);
+      setDetailDrawerMode(response.mode);
+      setDetailDrawerRows(response.rows);
+      setDetailDrawerTotalCount(response.totalCount);
+    } catch (error) {
+      console.error('詳細明細取得エラー:', error);
+      message?.error?.('詳細明細の取得に失敗しました。');
+      setDetailDrawerOpen(false);
+    } finally {
+      setDetailDrawerLoading(false);
+    }
+  }, [query, categoryKind, repository, message]);
+
+  // Pivot行クリック時のハンドラー
+  const handlePivotRowClick = useCallback(async (row: MetricEntry, axis: Mode) => {
+    if (!drawer.open) return;
+    
+    // 現在のDrawer状態から必要な情報を取得
+    const { baseAxis, baseId, repIds } = drawer;
+    
+    // 集計パスの構築: baseAxis → activeAxis → クリックした行の軸
+    // 例: 顧客(base) → 品名(active) → 行をクリック
+    // lastGroupBy = activeAxis (クリックされたタブの軸)
+    const lastGroupBy = axis as GroupBy;
+    
+    // フィルタ条件を構築
+    const repId = repIds[0]; // 最初の営業IDを使用
+    let customerId: string | undefined;
+    let itemId: string | undefined;
+    let dateValue: string | undefined;
+    
+    // baseAxisに応じてフィルタを設定
+    if (baseAxis === 'customer') {
+      customerId = baseId;
+    } else if (baseAxis === 'item') {
+      itemId = baseId;
+    } else if (baseAxis === 'date') {
+      dateValue = baseId;
+    }
+    
+    // activeAxis（クリックされた行の軸）に応じてフィルタを追加
+    if (axis === 'customer') {
+      customerId = row.id;
+    } else if (axis === 'item') {
+      itemId = row.id;
+    } else if (axis === 'date') {
+      dateValue = row.id;
+    }
+    
+    // タイトル構築
+    const title = `${row.name} の詳細明細`;
+    
+    await openDetailDrawer(lastGroupBy, repId, customerId, itemId, dateValue, title);
+  }, [drawer, openDetailDrawer]);
+
   return (
     <Space 
       direction="vertical" 
@@ -540,6 +646,19 @@ const SalesTreePage: React.FC = () => {
         onOrderChange={(ord) => setDrawer((prev) => (prev.open ? { ...prev, order: ord } : prev))}
         onLoadMore={async (axis: Mode, reset: boolean) => loadPivot(axis, reset)}
         categoryKind={categoryKind}
+        onRowClick={handlePivotRowClick}
+      />
+
+      {/* Detail Drawer (詳細明細行表示) */}
+      <DetailDrawer
+        open={detailDrawerOpen}
+        loading={detailDrawerLoading}
+        mode={detailDrawerMode}
+        rows={detailDrawerRows}
+        totalCount={detailDrawerTotalCount}
+        title={detailDrawerTitle}
+        categoryKind={categoryKind}
+        onClose={() => setDetailDrawerOpen(false)}
       />
     </Space>
   );

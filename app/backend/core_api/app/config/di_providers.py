@@ -352,6 +352,7 @@ from app.application.usecases.sales_tree.fetch_summary_uc import FetchSalesTreeS
 from app.application.usecases.sales_tree.fetch_daily_series_uc import FetchSalesTreeDailySeriesUseCase
 from app.application.usecases.sales_tree.fetch_pivot_uc import FetchSalesTreePivotUseCase
 from app.application.usecases.sales_tree.export_csv_uc import ExportSalesTreeCSVUseCase
+from app.application.usecases.sales_tree.fetch_detail_lines_uc import FetchSalesTreeDetailLinesUseCase
 from app.infra.adapters.sales_tree.sales_tree_repository import SalesTreeRepository
 
 
@@ -386,4 +387,11 @@ def get_export_sales_tree_csv_uc(
 ) -> ExportSalesTreeCSVUseCase:
     """ExportSalesTreeCSVUseCase提供"""
     return ExportSalesTreeCSVUseCase(query=repo)
+
+
+def get_fetch_sales_tree_detail_lines_uc(
+    repo: SalesTreeRepository = Depends(get_sales_tree_repo)
+) -> FetchSalesTreeDetailLinesUseCase:
+    """FetchSalesTreeDetailLinesUseCase提供"""
+    return FetchSalesTreeDetailLinesUseCase(query=repo)
 
