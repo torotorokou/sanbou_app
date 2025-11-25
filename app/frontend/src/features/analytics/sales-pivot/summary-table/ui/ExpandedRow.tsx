@@ -8,7 +8,7 @@ import { Card, Table, Tabs, Tag, Space, Button } from 'antd';
 import type { TableColumnsType, TableProps } from 'antd';
 import { SwapOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import { Tooltip } from 'antd';
-import type { SummaryRow, MetricEntry, Mode, SortKey, SortOrder, SummaryQuery, CategoryKind } from '../../shared/model/types';
+import type { SummaryRow, MetricEntry, Mode, SortKey, SortOrder, SummaryQuery, CategoryKind, ID } from '../../shared/model/types';
 import { fmtCurrency, fmtNumber, fmtUnitPrice, axisLabel } from '../../shared/model/metrics';
 import { MetricChart } from './MetricChart';
 
@@ -31,7 +31,7 @@ interface ExpandedRowProps {
   sortBy: string;
   order: 'asc' | 'desc';
   onSortChange: (sortBy: string, order: 'asc' | 'desc') => void;
-  onRowClick: (entry: MetricEntry) => void;
+  onRowClick: (entry: MetricEntry, repId: ID) => void;
   repSeriesCache: Record<string, unknown[]>;
   loadDailySeries: (repId: string) => Promise<void>;
   query: SummaryQuery;
@@ -165,7 +165,7 @@ export const ExpandedRow: React.FC<ExpandedRowProps> = ({
       fixed: 'right',
       width: 40,
       render: (_: unknown, rec: MetricEntry) => (
-        <Button size="small" icon={<SwapOutlined />} onClick={() => onRowClick(rec)}>
+        <Button size="small" icon={<SwapOutlined />} onClick={() => onRowClick(rec, row.repId)}>
           詳細
         </Button>
       ),

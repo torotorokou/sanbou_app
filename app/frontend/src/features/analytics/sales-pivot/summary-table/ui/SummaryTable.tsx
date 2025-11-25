@@ -7,7 +7,7 @@ import React from 'react';
 import { Card, Table, Typography } from 'antd';
 import type { TableColumnsType } from 'antd';
 import { Tag } from 'antd';
-import type { SummaryRow, Mode, MetricEntry, SummaryQuery, CategoryKind } from '../../shared/model/types';
+import type { SummaryRow, Mode, MetricEntry, SummaryQuery, CategoryKind, ID } from '../../shared/model/types';
 import { fmtCurrency, fmtNumber, fmtUnitPrice, axisLabel } from '../../shared/model/metrics';
 import { ExpandedRow } from './ExpandedRow';
 
@@ -17,7 +17,7 @@ interface SummaryTableProps {
   mode: Mode;
   topN: 10 | 20 | 50 | 'all';
   hasSelection: boolean;
-  onRowClick: (entry: MetricEntry) => void;
+  onRowClick: (entry: MetricEntry, repId: ID) => void;
   repSeriesCache: Record<string, unknown[]>;
   loadDailySeries: (repId: string) => Promise<void>;
   sortBy: string;
