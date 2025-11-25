@@ -59,6 +59,10 @@ export const ExpandedRow: React.FC<ExpandedRowProps> = ({
   const unitCandidates = data.map((x: MetricEntry) => x.unit_price ?? 0);
   const maxUnit = Math.max(1, ...unitCandidates);
   const nameTitle = axisLabel(mode);
+  
+  // 件数/台数ラベルの動的切り替え
+  const countLabel = mode === 'item' ? '件数' : '台数';
+  const countSuffix = mode === 'item' ? '件' : '台';
 
   const childCols: TableColumnsType<MetricEntry> = [
     { 
@@ -107,7 +111,7 @@ export const ExpandedRow: React.FC<ExpandedRowProps> = ({
       ),
     },
     {
-      title: '件数（件）',
+      title: `${countLabel}（${countSuffix}）`,
       dataIndex: 'count',
       key: 'count',
       align: 'right',
@@ -115,7 +119,7 @@ export const ExpandedRow: React.FC<ExpandedRowProps> = ({
       sorter: (a: MetricEntry, b: MetricEntry) => a.count - b.count,
       render: (v: number) => (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ minWidth: 48, textAlign: 'right' }}>{fmtNumber(v)} 件</span>
+          <span style={{ minWidth: 48, textAlign: 'right' }}>{fmtNumber(v)} {countSuffix}</span>
           <div className="sales-tree-mini-bar-bg">
             <div
               className="sales-tree-mini-bar sales-tree-mini-bar-blue"
@@ -221,6 +225,7 @@ export const ExpandedRow: React.FC<ExpandedRowProps> = ({
                 repName={row.repName}
                 onLoadSeries={handleLoadSeries}
                 query={query}
+                mode={mode}
               />
             ),
           },

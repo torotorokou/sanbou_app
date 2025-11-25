@@ -64,6 +64,10 @@ export const PivotTable: React.FC<PivotTableProps> = ({
         const maxQ = Math.max(1, ...rows.map((x) => x.qty));
         const maxC = Math.max(1, ...rows.map((x) => x.count));
         const maxU = Math.max(1, ...rows.map((x) => x.unit_price ?? 0));
+        
+        // 件数/台数ラベルの動的切り替え
+        const countLabel = target.axis === 'item' ? '件数' : '台数';
+        const countSuffix = target.axis === 'item' ? '件' : '台';
 
         const columns: TableColumnsType<MetricEntry> = [
           {
@@ -130,7 +134,7 @@ export const PivotTable: React.FC<PivotTableProps> = ({
             ),
           },
           {
-            title: '件数（件）',
+            title: `${countLabel}（${countSuffix}）`,
             dataIndex: 'count',
             key: 'count',
             align: 'right',
@@ -146,7 +150,7 @@ export const PivotTable: React.FC<PivotTableProps> = ({
                 }}
               >
                 <span style={{ minWidth: 48, textAlign: 'right' }}>
-                  {fmtNumber(v)} 件
+                  {fmtNumber(v)} {countSuffix}
                 </span>
                 <div className="sales-tree-mini-bar-bg">
                   <div

@@ -224,17 +224,27 @@ const SalesTreePage: React.FC = () => {
 
   useEffect(() => {
     const loadMasters = async () => {
-      const [repData, custData, itemData] = await Promise.all([
-        repository.getSalesReps(),
-        repository.getCustomers(),
-        repository.getItems(),
-      ]);
-      setReps(repData);
-      setCustomers(custData);
-      setItems(itemData);
+      try {
+        const [repData, custData, itemData] = await Promise.all([
+          repository.getSalesReps(),
+          repository.getCustomers(),
+          repository.getItems(),
+        ]);
+        console.log('マスタデータ取得成功:', { 
+          営業: repData.length, 
+          顧客: custData.length, 
+          商品: itemData.length 
+        });
+        setReps(repData);
+        setCustomers(custData);
+        setItems(itemData);
+      } catch (error) {
+        console.error('マスタデータ取得エラー:', error);
+        message?.error?.('マスタデータの取得に失敗しました。');
+      }
     };
     loadMasters();
-  }, []);
+  }, [message]);
 
   const repOptions = useMemo(
     () => reps.map((r) => ({ label: r.name, value: r.id })),
@@ -452,6 +462,7 @@ const SalesTreePage: React.FC = () => {
         avgUnitPrice={headerTotals.unit}
         selectedRepLabel={selectedRepLabel}
         hasSelection={repIds.length > 0}
+        mode={mode}
       />
 
       {/* Summary Table */}
