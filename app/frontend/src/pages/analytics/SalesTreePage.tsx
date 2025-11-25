@@ -16,17 +16,12 @@
  * - 完全なslice統合実装完了
  */
 
-import React, { useCallback, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { Space, App } from 'antd';
 import type {
   Mode,
   SortKey,
-  ID,
-  MetricEntry,
-  GroupBy,
 } from '@/features/analytics/sales-pivot/shared/model/types';
-import { axisLabel } from '@/features/analytics/sales-pivot/shared/model/metrics';
-import { downloadBlob } from '@/features/analytics/sales-pivot/shared/lib/utils';
 import { useRepository } from '@/features/analytics/sales-pivot/shared/model/useRepository';
 import { usePeriodState } from '@/features/analytics/sales-pivot/shared/model/usePeriodState';
 import { useFilterState } from '@/features/analytics/sales-pivot/shared/model/useFilterState';
@@ -46,6 +41,9 @@ import { useAxesFromMode } from '@/features/analytics/sales-pivot/shared/model/u
 import { useDetailDrawerLoader } from '@/features/analytics/sales-pivot/shared/model/useDetailDrawerLoader';
 import { usePivotLoader } from '@/features/analytics/sales-pivot/shared/model/usePivotLoader';
 import { useOpenPivot } from '@/features/analytics/sales-pivot/shared/model/useOpenPivot';
+import { useExportHandler } from '@/features/analytics/sales-pivot/shared/model/useExportHandler';
+import { useDailySeriesLoader } from '@/features/analytics/sales-pivot/shared/model/useDailySeriesLoader';
+import { usePivotRowClickHandler } from '@/features/analytics/sales-pivot/shared/model/usePivotRowClickHandler';
 import { SalesPivotHeader } from '@/features/analytics/sales-pivot/header/ui/SalesPivotHeader';
 import { FilterPanel } from '@/features/analytics/sales-pivot/filters/ui/FilterPanel';
 import { KpiCards } from '@/features/analytics/sales-pivot/kpi/ui/KpiCards';
@@ -201,22 +199,31 @@ const SalesTreePage: React.FC = () => {
     setPivotCursor,
   });
 
-  // CSV Export
-  const handleExport = async () => {
-    if (repIds.length === 0) return;
-    try {
-      const blob = await repository.exportModeCube({
-        ...query,
-        options: exportOptions,
-        targetRepIds: repIds,
-      });
-      downloadBlob(blob, `csv_${axisLabel(baseAx)}_${periodLabel}.csv`);
-      message?.success?.('CSVを出力しました。');
-    } catch (e) {
-      console.error(e);
-      message?.error?.('CSV出力でエラーが発生しました。');
-    }
-  };
+  // CSV出力ハンドラー
+  const { handleExport } = useExportHandler({
+    repository,
+    query,
+    exportOptions,
+    repIds,
+    baseAx,
+    periodLabel,
+    message,
+  });
+
+  // 日次データローダー
+  const { loadDailySeries } = useDailySeriesLoader({
+    repository,
+    query,
+    categoryKind,
+    repSeriesCache,
+    setRepSeriesCache,
+  });
+
+  // Pivot行クリックハンドラー
+  const { handlePivotRowClick } = usePivotRowClickHandler({
+    drawer,
+    openDetailDrawer,
+  });
 
   // Sort options
   const sortKeyOptions = useSortKeyOptions(mode);
@@ -237,68 +244,6 @@ const SalesTreePage: React.FC = () => {
     isDrawerOpen(drawer) ? drawer.topN : null,
     categoryKind,
   ]);
-
-  // 日次推移データ取得
-  const loadDailySeries = async (repId: ID) => {
-    if (repSeriesCache[repId]) return;
-    const s = await repository.fetchDailySeries(
-      query.month 
-        ? { month: query.month, categoryKind, repId } 
-        : { monthRange: query.monthRange!, categoryKind, repId }
-    );
-    setRepSeriesCache((prev) => ({ ...prev, [repId]: s }));
-  };
-
-  // Pivot行クリック時のハンドラー
-  const handlePivotRowClick = useCallback(async (row: MetricEntry, axis: Mode) => {
-    if (!drawer.open) return;
-    
-    // 現在のDrawer状態から必要な情報を取得
-    const { baseAxis, baseId, repIds } = drawer;
-    
-    // 集計パスの構築: baseAxis → activeAxis → クリックした行の軸
-    // 例: 顧客(base) → 品名(active) → 行をクリック
-    // lastGroupBy = activeAxis (クリックされたタブの軸)
-    const lastGroupBy = axis as GroupBy;
-    
-    // フィルタ条件を構築
-    const repId = repIds[0]; // 最初の営業IDを使用
-    let customerId: string | undefined;
-    let itemId: string | undefined;
-    let dateValue: string | undefined;
-    
-    // baseAxisに応じてフィルタを設定
-    if (baseAxis === 'customer') {
-      customerId = baseId;
-    } else if (baseAxis === 'item') {
-      itemId = baseId;
-    } else if (baseAxis === 'date') {
-      dateValue = baseId;
-    }
-    
-    // activeAxis（クリックされた行の軸）に応じてフィルタを追加
-    if (axis === 'customer') {
-      customerId = row.id;
-    } else if (axis === 'item') {
-      itemId = row.id;
-    } else if (axis === 'date') {
-      dateValue = row.id;
-    }
-    
-    console.log('🔍 Pivot行クリック:', {
-      baseAxis,
-      baseId,
-      clickedAxis: axis,
-      clickedRow: { id: row.id, name: row.name },
-      lastGroupBy,
-      filters: { repId, customerId, itemId, dateValue }
-    });
-    
-    // タイトル構築
-    const title = `${row.name} の詳細明細`;
-    
-    await openDetailDrawer(lastGroupBy, repId, customerId, itemId, dateValue, title);
-  }, [drawer, openDetailDrawer]);
 
   return (
     <Space 
