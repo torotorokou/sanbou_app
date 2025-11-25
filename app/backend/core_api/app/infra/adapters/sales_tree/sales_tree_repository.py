@@ -23,6 +23,11 @@ from app.domain.sales_tree import (
     AxisMode,
     CategoryKind,
 )
+from app.domain.sales_tree_detail import (
+    DetailLinesRequest,
+    DetailLinesResponse,
+    DetailLine,
+)
 from app.infra.db.db import get_engine
 
 logger = logging.getLogger(__name__)
@@ -449,7 +454,14 @@ LIMIT :page_size OFFSET :offset
     
     @staticmethod
     def _category_kind_to_cd(category_kind: CategoryKind) -> int:
-        """CategoryKindをcategory_cdに変換"""
+        """
+        CategoryKindをcategory_cdに変換
+        
+        waste: 1 (処分費のみ)
+        valuable: 3 (有価物)
+        
+        注: category_cd=2 (運搬費) は除外
+        """
         return 1 if category_kind == "waste" else 3
     
     def get_sales_reps(self, category_kind: CategoryKind = "waste") -> list[dict]:
@@ -698,4 +710,147 @@ ORDER BY rep_id, {sort_col} {order_dir}
         
         except Exception as e:
             logger.error(f"Error in export_csv: {str(e)}", exc_info=True)
+            raise
+
+    def fetch_detail_lines(self, req: DetailLinesRequest) -> DetailLinesResponse:
+        """
+        詳細明細行取得（SalesTree集計行クリック時の詳細表示用）
+        
+        最後の集計軸に応じて粒度を切り替える:
+        - last_group_by が 'item' の場合:
+            → mart.v_sales_tree_detail_base の明細行（GROUP BY なし）
+        - それ以外の場合:
+            → sales_date, slip_no で GROUP BY した伝票単位のサマリ
+        
+        Args:
+            req: DetailLinesRequest（期間、集計軸、フィルタ条件）
+            
+        Returns:
+            DetailLinesResponse: 詳細明細行（mode + rows + total_count）
+        """
+        try:
+            logger.info(f"fetch_detail_lines: last_group_by={req.last_group_by}, date_from={req.date_from}, date_to={req.date_to}")
+            
+            # WHERE句構築（共通フィルタ）
+            where_clauses = [
+                "sales_date BETWEEN :date_from AND :date_to",
+                "category_cd = :category_cd"
+            ]
+            params: dict = {
+                "date_from": req.date_from,
+                "date_to": req.date_to,
+                "category_cd": self._category_kind_to_cd(req.category_kind),
+            }
+            
+            # フィルタ条件追加（集計パスを再現）
+            if req.rep_id is not None:
+                where_clauses.append("rep_id = :rep_id")
+                params["rep_id"] = req.rep_id
+            
+            if req.customer_id is not None:
+                where_clauses.append("customer_id = :customer_id")
+                params["customer_id"] = req.customer_id
+            
+            if req.item_id is not None:
+                where_clauses.append("item_id = :item_id")
+                params["item_id"] = req.item_id
+            
+            if req.date_value is not None:
+                where_clauses.append("sales_date = :date_value")
+                params["date_value"] = req.date_value
+            
+            where_sql = " AND ".join(where_clauses)
+            
+            # モード判定とSQL構築
+            if req.last_group_by == "item":
+                # 品名で終わる → 明細行そのまま
+                mode = "item_lines"
+                sql = f"""
+SELECT
+    sales_date,
+    slip_no,
+    rep_name,
+    customer_name,
+    item_id,
+    item_name,
+    qty_kg,
+    amount_yen
+FROM mart.v_sales_tree_detail_base
+WHERE {where_sql}
+ORDER BY
+    sales_date,
+    slip_no,
+    item_id
+                """
+            else:
+                # それ以外 → 伝票単位で集約
+                mode = "slip_summary"
+                sql = f"""
+SELECT
+    sales_date,
+    slip_no,
+    MAX(rep_name) AS rep_name,
+    MAX(customer_name) AS customer_name,
+    STRING_AGG(DISTINCT item_name, ', ' ORDER BY item_name) AS item_name,
+    COUNT(*) AS line_count,
+    SUM(qty_kg) AS qty_kg,
+    SUM(amount_yen) AS amount_yen
+FROM mart.v_sales_tree_detail_base
+WHERE {where_sql}
+GROUP BY
+    sales_date,
+    slip_no
+ORDER BY
+    sales_date,
+    slip_no
+                """
+            
+            with self._engine.begin() as conn:
+                result = conn.execute(text(sql), params).mappings().all()
+            
+            # レスポンス構築
+            rows: list[DetailLine] = []
+            for r in result:
+                qty = float(r["qty_kg"] or 0)
+                amount = float(r["amount_yen"] or 0)
+                unit_price = amount / qty if qty != 0 else None
+                
+                if mode == "item_lines":
+                    rows.append(
+                        DetailLine(
+                            mode=mode,
+                            sales_date=r["sales_date"],
+                            slip_no=int(r["slip_no"]),
+                            rep_name=r["rep_name"],
+                            customer_name=r["customer_name"],
+                            item_id=int(r["item_id"]) if r["item_id"] is not None else None,
+                            item_name=r["item_name"],
+                            line_count=None,
+                            qty_kg=qty,
+                            unit_price_yen_per_kg=unit_price,
+                            amount_yen=amount,
+                        )
+                    )
+                else:  # slip_summary
+                    rows.append(
+                        DetailLine(
+                            mode=mode,
+                            sales_date=r["sales_date"],
+                            slip_no=int(r["slip_no"]),
+                            rep_name=r["rep_name"],
+                            customer_name=r["customer_name"],
+                            item_id=None,
+                            item_name=r["item_name"],  # カンマ区切りの品目名
+                            line_count=int(r["line_count"] or 0),
+                            qty_kg=qty,
+                            unit_price_yen_per_kg=unit_price,
+                            amount_yen=amount,
+                        )
+                    )
+            
+            logger.info(f"fetch_detail_lines: returned {len(rows)} rows (mode={mode})")
+            return DetailLinesResponse(mode=mode, rows=rows, total_count=len(rows))
+        
+        except Exception as e:
+            logger.error(f"Error in fetch_detail_lines: {str(e)}", exc_info=True)
             raise

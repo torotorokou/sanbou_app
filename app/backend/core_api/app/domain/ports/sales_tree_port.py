@@ -14,6 +14,10 @@ from app.domain.sales_tree import (
     MetricEntry,
     ExportRequest
 )
+from app.domain.sales_tree_detail import (
+    DetailLinesRequest,
+    DetailLinesResponse
+)
 
 
 class ISalesTreeQuery(Protocol):
@@ -64,5 +68,23 @@ class ISalesTreeQuery(Protocol):
             
         Returns:
             bytes: CSV データ（UTF-8 BOM付き）
+        """
+        ...
+    
+    def fetch_detail_lines(self, req: DetailLinesRequest) -> DetailLinesResponse:
+        """
+        詳細明細行取得（SalesTree集計行クリック時の詳細表示用）
+        
+        最後の集計軸に応じて粒度を切り替える:
+        - last_group_by が 'item' の場合:
+            → mart.v_sales_tree_detail_base の明細行（GROUP BY なし）
+        - それ以外の場合:
+            → sales_date, slip_no で GROUP BY した伝票単位のサマリ
+        
+        Args:
+            req: DetailLinesRequest（期間、集計軸、フィルタ条件）
+            
+        Returns:
+            DetailLinesResponse: 詳細明細行（mode + rows + total_count）
         """
         ...

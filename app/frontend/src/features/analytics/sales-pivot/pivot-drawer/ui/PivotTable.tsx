@@ -6,7 +6,7 @@
 import React from 'react';
 import { Tabs, Table, Space, Button, Empty, Tooltip, Typography } from 'antd';
 import type { TableColumnsType, TableProps } from 'antd';
-import { ReloadOutlined, InfoCircleOutlined } from '@ant-design/icons';
+import { ReloadOutlined, InfoCircleOutlined, FileSearchOutlined } from '@ant-design/icons';
 import type { Mode, MetricEntry, SortKey, SortOrder, CategoryKind } from '../../shared/model/types';
 import { axisLabel, fmtCurrency, fmtNumber, fmtUnitPrice } from '../../shared/model/metrics';
 
@@ -22,6 +22,7 @@ interface PivotTableProps {
   onSortByChange: (sortBy: SortKey) => void;
   onOrderChange: (order: SortOrder) => void;
   categoryKind: CategoryKind;
+  onRowClick?: (row: MetricEntry, axis: Mode) => void;
 }
 
 /**
@@ -41,6 +42,7 @@ export const PivotTable: React.FC<PivotTableProps> = ({
   onSortByChange,
   onOrderChange,
   categoryKind,
+  onRowClick,
 }) => {
   // 売上/仕入ラベルの動的切り替え
   const amountLabel = categoryKind === 'waste' ? '売上' : '仕入';
@@ -201,6 +203,26 @@ export const PivotTable: React.FC<PivotTableProps> = ({
               </div>
             ),
           },
+          {
+            title: '操作',
+            key: 'action',
+            align: 'center',
+            width: 80,
+            fixed: 'right',
+            render: (_: unknown, record: MetricEntry) => (
+              <Button
+                type="link"
+                size="small"
+                icon={<FileSearchOutlined />}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onRowClick?.(record, target.axis);
+                }}
+              >
+                明細
+              </Button>
+            ),
+          },
         ];
 
         return {
@@ -219,7 +241,7 @@ export const PivotTable: React.FC<PivotTableProps> = ({
                 locale={{
                   emptyText: pivotLoading ? '読込中...' : <Empty description="該当なし" />,
                 }}
-                scroll={{ x: 980 }}
+                scroll={{ x: 1060 }}
                 rowClassName={(_, idx) => (idx % 2 === 0 ? 'sales-tree-zebra-even' : 'sales-tree-zebra-odd')}
               />
               <Space style={{ marginTop: 8 }}>
