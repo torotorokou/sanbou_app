@@ -350,7 +350,7 @@ const SalesTreePage: React.FC = () => {
   }, []);
 
   // Pivot drawer
-  const openPivot = (rec: MetricEntry) => {
+  const openPivot = (rec: MetricEntry, repId: ID) => {
     const others = (['customer', 'item', 'date'] as Mode[]).filter((ax) => ax !== mode);
     const targets: { axis: Mode; label: string }[] = others.map((ax) => ({
       axis: ax,
@@ -363,7 +363,7 @@ const SalesTreePage: React.FC = () => {
       baseAxis: mode,
       baseId: rec.id,
       baseName: rec.name,
-      repIds,
+      repIds: [repId],
       targets,
       activeAxis: firstTarget?.axis ?? mode,
       sortBy: filterSortBy,
@@ -392,6 +392,7 @@ const SalesTreePage: React.FC = () => {
       } = drawer;
       const targetAxis = axis;
       if (targetAxis === baseAxis) return;
+      
       setPivotLoading(true);
       try {
         const periodParams = monthRange ? { monthRange } : { month };
@@ -416,7 +417,7 @@ const SalesTreePage: React.FC = () => {
         setPivotLoading(false);
       }
     },
-    [drawer, pivotCursor]
+    [drawer, pivotCursor, categoryKind]
   );
 
   const isDrawerOpen = (d: DrawerState): d is Extract<DrawerState, { open: true }> => d.open;
@@ -430,6 +431,7 @@ const SalesTreePage: React.FC = () => {
     isDrawerOpen(drawer) ? drawer.sortBy : null,
     isDrawerOpen(drawer) ? drawer.order : null,
     isDrawerOpen(drawer) ? drawer.topN : null,
+    categoryKind,
   ]);
 
   // 日次推移データ取得

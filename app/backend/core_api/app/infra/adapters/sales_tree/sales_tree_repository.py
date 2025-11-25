@@ -89,9 +89,9 @@ class SalesTreeRepository:
             }
             
             if req.rep_ids:
-                # rep_ids は integer のリスト
-                where_clauses.append(f"rep_id = ANY(:rep_ids)")
-                params["rep_ids"] = req.rep_ids
+                # rep_ids は integer のリスト - PostgreSQL配列構文を使用
+                rep_ids_str = ', '.join(str(rid) for rid in req.rep_ids)
+                where_clauses.append(f"rep_id = ANY(ARRAY[{rep_ids_str}])")
             
             if req.filter_ids:
                 # filter_ids はaxis_id_colの型に応じて処理
@@ -292,7 +292,7 @@ ORDER BY sales_date
         3. ソート・TOP-N・ページネーション適用
         """
         try:
-            logger.info(f"fetch_pivot: base={req.base_axis}:{req.base_id}, target={req.target_axis}, date_from={req.date_from}, date_to={req.date_to}")
+            logger.info(f"fetch_pivot: base={req.base_axis}:{req.base_id}, target={req.target_axis}, date_from={req.date_from}, date_to={req.date_to}, rep_ids={req.rep_ids}, category_kind={req.category_kind}")
             
             # 軸カラムの決定
             base_id_col, _ = self._get_axis_columns(req.base_axis)
@@ -322,8 +322,9 @@ ORDER BY sales_date
             
             # rep_idsフィルタ
             if req.rep_ids:
-                where_clauses.append(f"rep_id = ANY(:rep_ids)")
-                params["rep_ids"] = req.rep_ids
+                # PostgreSQL配列構文を使用: = ANY(ARRAY[val1, val2, ...])
+                rep_ids_str = ', '.join(str(rid) for rid in req.rep_ids)
+                where_clauses.append(f"rep_id = ANY(ARRAY[{rep_ids_str}])")
             
             where_sql = " AND ".join(where_clauses)
             
@@ -377,6 +378,9 @@ LIMIT :page_size OFFSET :offset
             params["limit"] = limit
             params["page_size"] = page_size
             params["offset"] = offset
+            
+            logger.info(f"fetch_pivot SQL WHERE: {where_sql}")
+            logger.info(f"fetch_pivot SQL params: {params}")
             
             with self._engine.begin() as conn:
                 result = conn.execute(text(sql), params).mappings().all()
