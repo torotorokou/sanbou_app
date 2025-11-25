@@ -1,7 +1,7 @@
 """fix category mapping waste=1 valuable=3
 
 Revision ID: 7e3d1c5e0036
-Revises: 79524e501109
+Revises: 20251125_110000000
 Create Date: 2025-11-25 04:46:00.487125
 
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = '7e3d1c5e0036'
-down_revision = '79524e501109'
+down_revision = '20251125_110000000'
 branch_labels = None
 depends_on = None
 

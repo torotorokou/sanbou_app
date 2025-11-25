@@ -12,7 +12,7 @@ category_cd と category_kind カラムを追加し、廃棄物/有価物の両�
 これにより、フロントエンドで廃棄物/有価物タブを実装できるようになります。
 
 Revision ID: 20251125_110000000
-Revises: 20251125_100000000
+Revises: 20251121_100000000
 Create Date: 2025-11-25 11:00:00.000000
 """
 from alembic import op
@@ -20,7 +20,7 @@ import sqlalchemy as sa
 
 
 revision = "20251125_110000000"
-down_revision = "20251125_100000000"
+down_revision = "20251121_100000000"
 branch_labels = None
 depends_on = None
 
