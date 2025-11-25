@@ -28,7 +28,6 @@ import type {
   SummaryQuery,
   SummaryRow,
   MetricEntry,
-  ExportOptions,
   DailyPoint,
   CategoryKind,
   DetailLinesFilter,
@@ -37,10 +36,11 @@ import type {
   GroupBy,
 } from '@/features/analytics/sales-pivot/shared/model/types';
 import { axesFromMode, axisLabel, monthDays, allDaysInRange } from '@/features/analytics/sales-pivot/shared/model/metrics';
-import { DEFAULT_EXPORT_OPTIONS, downloadBlob } from '@/features/analytics/sales-pivot/shared/lib/utils';
+import { downloadBlob } from '@/features/analytics/sales-pivot/shared/lib/utils';
 import { useRepository } from '@/features/analytics/sales-pivot/shared/model/useRepository';
 import { usePeriodState } from '@/features/analytics/sales-pivot/shared/model/usePeriodState';
 import { useFilterState } from '@/features/analytics/sales-pivot/shared/model/useFilterState';
+import { useExportOptions } from '@/features/analytics/sales-pivot/shared/model/useExportOptions';
 import { SalesPivotHeader } from '@/features/analytics/sales-pivot/header/ui/SalesPivotHeader';
 import { FilterPanel } from '@/features/analytics/sales-pivot/filters/ui/FilterPanel';
 import { KpiCards } from '@/features/analytics/sales-pivot/kpi/ui/KpiCards';
@@ -85,19 +85,8 @@ const SalesTreePage: React.FC = () => {
     setTableOrder,
   } = useFilterState();
 
-  // Export options
-  const [exportOptions, setExportOptions] = useState<ExportOptions>(() => {
-    try {
-      const raw = localStorage.getItem('exportOptions_v1');
-      return raw ? (JSON.parse(raw) as ExportOptions) : DEFAULT_EXPORT_OPTIONS;
-    } catch {
-      return DEFAULT_EXPORT_OPTIONS;
-    }
-  });
-
-  useEffect(() => {
-    localStorage.setItem('exportOptions_v1', JSON.stringify(exportOptions));
-  }, [exportOptions]);
+  // Export options（localStorage連携）
+  const { exportOptions, setExportOptions } = useExportOptions();
 
   // Data (生データ - API取得結果をそのまま保持)
   const [rawSummary, setRawSummary] = useState<SummaryRow[]>([]);
