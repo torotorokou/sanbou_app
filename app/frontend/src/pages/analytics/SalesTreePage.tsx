@@ -31,8 +31,6 @@ import type {
   DailyPoint,
   CategoryKind,
   DetailLinesFilter,
-  DetailLine,
-  DetailMode,
   GroupBy,
 } from '@/features/analytics/sales-pivot/shared/model/types';
 import { axesFromMode, axisLabel, monthDays, allDaysInRange } from '@/features/analytics/sales-pivot/shared/model/metrics';
@@ -42,6 +40,7 @@ import { usePeriodState } from '@/features/analytics/sales-pivot/shared/model/us
 import { useFilterState } from '@/features/analytics/sales-pivot/shared/model/useFilterState';
 import { useExportOptions } from '@/features/analytics/sales-pivot/shared/model/useExportOptions';
 import { useMasterData } from '@/features/analytics/sales-pivot/shared/model/useMasterData';
+import { useDetailDrawerState } from '@/features/analytics/sales-pivot/shared/model/useDetailDrawerState';
 import { SalesPivotHeader } from '@/features/analytics/sales-pivot/header/ui/SalesPivotHeader';
 import { FilterPanel } from '@/features/analytics/sales-pivot/filters/ui/FilterPanel';
 import { KpiCards } from '@/features/analytics/sales-pivot/kpi/ui/KpiCards';
@@ -159,13 +158,21 @@ const SalesTreePage: React.FC = () => {
 
   const [repSeriesCache, setRepSeriesCache] = useState<Record<ID, DailyPoint[]>>({});
 
-  // Detail Drawer (詳細明細行表示用)
-  const [detailDrawerOpen, setDetailDrawerOpen] = useState<boolean>(false);
-  const [detailDrawerLoading, setDetailDrawerLoading] = useState<boolean>(false);
-  const [detailDrawerTitle, setDetailDrawerTitle] = useState<string>('');
-  const [detailDrawerMode, setDetailDrawerMode] = useState<DetailMode | null>(null);
-  const [detailDrawerRows, setDetailDrawerRows] = useState<DetailLine[]>([]);
-  const [detailDrawerTotalCount, setDetailDrawerTotalCount] = useState<number>(0);
+  // Detail Drawer（詳細明細行表示用）
+  const {
+    detailDrawerOpen,
+    detailDrawerLoading,
+    detailDrawerTitle,
+    detailDrawerMode,
+    detailDrawerRows,
+    detailDrawerTotalCount,
+    setDetailDrawerOpen,
+    setDetailDrawerLoading,
+    setDetailDrawerTitle,
+    setDetailDrawerMode,
+    setDetailDrawerRows,
+    setDetailDrawerTotalCount,
+  } = useDetailDrawerState();
 
   // Query materialize (API用 - フィルターパネルの条件）
   const baseQuery: SummaryQuery = useMemo(() => {
