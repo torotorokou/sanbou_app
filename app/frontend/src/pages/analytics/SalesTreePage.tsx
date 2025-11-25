@@ -37,7 +37,8 @@ import type {
   GroupBy,
 } from '@/features/analytics/sales-pivot/shared/model/types';
 import { axesFromMode, axisLabel, monthDays, allDaysInRange } from '@/features/analytics/sales-pivot/shared/model/metrics';
-import { HttpSalesPivotRepository } from '@/features/analytics/sales-pivot/shared/api/salesPivot.repository';
+import { DEFAULT_EXPORT_OPTIONS, downloadBlob } from '@/features/analytics/sales-pivot/shared/lib/utils';
+import { useRepository } from '@/features/analytics/sales-pivot/shared/model/useRepository';
 import { SalesPivotHeader } from '@/features/analytics/sales-pivot/header/ui/SalesPivotHeader';
 import { FilterPanel } from '@/features/analytics/sales-pivot/filters/ui/FilterPanel';
 import { KpiCards } from '@/features/analytics/sales-pivot/kpi/ui/KpiCards';
@@ -45,27 +46,6 @@ import { SummaryTable } from '@/features/analytics/sales-pivot/summary-table/ui/
 import { PivotDrawer } from '@/features/analytics/sales-pivot/pivot-drawer/ui/PivotDrawer';
 import { DetailDrawer } from '@/features/analytics/sales-pivot/detail-drawer/ui/DetailDrawer';
 import './SalesTreePage.css';
-
-// Repository（実API連携版）
-const repository = new HttpSalesPivotRepository();
-
-// ダウンロードヘルパー
-function downloadBlob(blob: Blob, filename: string) {
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(url);
-}
-
-// デフォルトのExportOptions
-const DEFAULT_EXPORT_OPTIONS: ExportOptions = {
-  addAxisB: false,
-  addAxisC: false,
-  excludeZero: true,
-  splitBy: 'none',
-};
 
 /**
  * 売上ツリーページ
@@ -76,6 +56,9 @@ const SalesTreePage: React.FC = () => {
 
   // CategoryKind state (廃棄物/有価物タブ)
   const [categoryKind, setCategoryKind] = useState<CategoryKind>('waste');
+
+  // Repository（categoryKindに応じて自動設定）
+  const repository = useRepository(categoryKind);
 
   // Period
   const [periodMode, setPeriodMode] = useState<'single' | 'range'>('single');
@@ -238,13 +221,6 @@ const SalesTreePage: React.FC = () => {
   const [reps, setReps] = useState<Array<{ id: ID; name: string }>>([]);
   const [customers, setCustomers] = useState<Array<{ id: ID; name: string }>>([]);
   const [items, setItems] = useState<Array<{ id: ID; name: string }>>([]);
-
-  // categoryKindが変わったらRepositoryに設定
-  useEffect(() => {
-    if (repository && 'setCategoryKind' in repository) {
-      (repository as { setCategoryKind: (kind: string) => void }).setCategoryKind(categoryKind);
-    }
-  }, [categoryKind]);
 
   useEffect(() => {
     const loadMasters = async () => {
