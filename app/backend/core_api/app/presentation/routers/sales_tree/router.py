@@ -248,10 +248,10 @@ def get_sales_reps_master(
     【SalesTree分析専用】営業フィルタ候補取得
     
     NOTE: これは「営業マスタAPI」ではありません。
-    sandbox.v_sales_tree_detail_base から SELECT DISTINCT で動的に営業候補を取得します。
+    mart.v_sales_tree_detail_base から SELECT DISTINCT で動的に営業候補を取得します。
     
     用途: SalesTree分析画面のプルダウンフィルタ用
-    データソース: sandbox.v_sales_tree_detail_base（実売上明細ビュー）
+    データソース: mart.v_sales_tree_detail_base（実売上明細ビュー）
     
     **Response Example:**
     ```json
@@ -282,10 +282,10 @@ def get_customers_master(
     【SalesTree分析専用】顧客フィルタ候補取得
     
     NOTE: これは「顧客マスタAPI」ではありません。
-    sandbox.v_sales_tree_detail_base から SELECT DISTINCT で動的に顧客候補を取得します。
+    mart.v_sales_tree_detail_base から SELECT DISTINCT で動的に顧客候補を取得します。
     
     用途: SalesTree分析画面のプルダウンフィルタ用
-    データソース: sandbox.v_sales_tree_detail_base（実売上明細ビュー）
+    データソース: mart.v_sales_tree_detail_base（実売上明細ビュー）
     """
     try:
         logger.info("GET /analytics/sales-tree/masters/customers (SalesTree filter API)")
@@ -308,10 +308,10 @@ def get_items_master(
     【SalesTree分析専用】商品フィルタ候補取得
     
     NOTE: これは「商品マスタAPI」ではありません。
-    sandbox.v_sales_tree_detail_base から SELECT DISTINCT で動的に商品候補を取得します。
+    mart.v_sales_tree_detail_base から SELECT DISTINCT で動的に商品候補を取得します。
     
     用途: SalesTree分析画面のプルダウンフィルタ用
-    データソース: sandbox.v_sales_tree_detail_base（実売上明細ビュー）
+    データソース: mart.v_sales_tree_detail_base（実売上明細ビュー）
     """
     try:
         logger.info("GET /analytics/sales-tree/masters/items (SalesTree filter API)")

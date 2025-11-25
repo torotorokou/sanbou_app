@@ -1,8 +1,8 @@
 """
-Sales Tree Repository - sandbox.v_sales_tree_detail_base からのデータ取得
+Sales Tree Repository - mart.v_sales_tree_detail_base からのデータ取得
 
 売上ツリー分析用のリポジトリ実装
-データソース: sandbox.v_sales_tree_detail_base (明細レベルの事実テーブルビュー)
+データソース: mart.v_sales_tree_detail_base (明細レベルの事実テーブルビュー)
 """
 import logging
 import csv
@@ -31,7 +31,7 @@ class SalesTreeRepository:
     """
     売上ツリー分析Repository
     
-    データソース: sandbox.v_sales_tree_detail_base
+    データソース: mart.v_sales_tree_detail_base
     - sales_date, rep_id, rep_name, customer_id, customer_name,
       item_id, item_name, amount_yen, qty_kg, slip_no
     - 集計時に line_count=COUNT(*) と slip_count=COUNT(DISTINCT slip_no) を計算
@@ -51,7 +51,7 @@ class SalesTreeRepository:
           - フィルタ: rep_ids, filter_ids（軸IDの絞り込み）
         
         処理フロー:
-          1. sandbox.v_sales_tree_detail_base から期間・営業でフィルタ
+          1. mart.v_sales_tree_detail_base から期間・営業でフィルタ
           2. mode に応じて GROUP BY 軸を切り替え
              - customer: customer_id, customer_name
              - item: item_id, item_name
@@ -62,7 +62,7 @@ class SalesTreeRepository:
         
         パフォーマンス最適化:
           - Window FunctionでDB側でTOP-N抽出（Pythonループより高速）
-          - sandbox.v_sales_tree_detail_base は明細レベルの事実テーブル
+          - mart.v_sales_tree_detail_base は明細レベルの事実テーブル
         
         Args:
             req: SummaryRequest（date_from, date_to, mode, rep_ids, filter_ids, top_n, sort_by, order）
@@ -115,7 +115,7 @@ class SalesTreeRepository:
             limit_sql = "" if req.top_n == 0 else f"LIMIT {req.top_n}"
             
             # SQL構築（営業ごとにWINDOW関数でランキング）
-            # sandbox.v_sales_tree_detail_base から line_count と slip_count の両方を計算
+            # mart.v_sales_tree_detail_base から line_count と slip_count の両方を計算
             sql = f"""
 WITH aggregated AS (
     SELECT
@@ -131,7 +131,7 @@ WITH aggregated AS (
             WHEN SUM(qty_kg) > 0 THEN SUM(amount_yen) / SUM(qty_kg)
             ELSE NULL
         END AS unit_price
-    FROM sandbox.v_sales_tree_detail_base
+    FROM mart.v_sales_tree_detail_base
     WHERE {where_sql}
     GROUP BY rep_id, rep_name, {axis_id_col}, {axis_name_col}
 ),
@@ -245,7 +245,7 @@ SELECT
         WHEN SUM(qty_kg) > 0 THEN SUM(amount_yen) / SUM(qty_kg)
         ELSE NULL
     END AS unit_price
-FROM sandbox.v_sales_tree_detail_base
+FROM mart.v_sales_tree_detail_base
 WHERE {where_sql}
 GROUP BY sales_date
 ORDER BY sales_date
@@ -343,7 +343,7 @@ WITH aggregated AS (
             WHEN SUM(qty_kg) > 0 THEN SUM(amount_yen) / SUM(qty_kg)
             ELSE NULL
         END AS unit_price
-    FROM sandbox.v_sales_tree_detail_base
+    FROM mart.v_sales_tree_detail_base
     WHERE {where_sql}
     GROUP BY {target_id_col}, {target_name_col}
 ),
@@ -441,7 +441,7 @@ LIMIT :page_size OFFSET :offset
         【SalesTree分析専用】営業フィルタ候補を取得
         
         NOTE: これは「営業マスタAPI」ではありません。
-        sandbox.v_sales_tree_detail_base から SELECT DISTINCT で動的に取得します。
+        mart.v_sales_tree_detail_base から SELECT DISTINCT で動的に取得します。
         
         Returns:
             list[dict]: [{"rep_id": int, "rep_name": str}, ...]
@@ -451,7 +451,7 @@ LIMIT :page_size OFFSET :offset
 SELECT DISTINCT
     rep_id,
     rep_name
-FROM sandbox.v_sales_tree_detail_base
+FROM mart.v_sales_tree_detail_base
 WHERE rep_id IS NOT NULL AND rep_name IS NOT NULL
 ORDER BY rep_id
             """
@@ -463,11 +463,11 @@ ORDER BY rep_id
                 {"rep_id": row["rep_id"], "rep_name": row["rep_name"]}
                 for row in result
             ]
-            logger.info(f"get_sales_reps: Retrieved {len(reps)} reps from sandbox.v_sales_tree_detail_base")
+            logger.info(f"get_sales_reps: Retrieved {len(reps)} reps from mart.v_sales_tree_detail_base")
             if reps:
                 logger.info(f"First rep: {reps[0]}")
             else:
-                logger.warning("No sales reps found in sandbox.v_sales_tree_detail_base")
+                logger.warning("No sales reps found in mart.v_sales_tree_detail_base")
             return reps
         except Exception as e:
             logger.error(f"Error in get_sales_reps: {str(e)}", exc_info=True)
@@ -478,7 +478,7 @@ ORDER BY rep_id
         【SalesTree分析専用】顧客フィルタ候補を取得
         
         NOTE: これは「顧客マスタAPI」ではありません。
-        sandbox.v_sales_tree_detail_base から SELECT DISTINCT で動的に取得します。
+        mart.v_sales_tree_detail_base から SELECT DISTINCT で動的に取得します。
         
         Returns:
             list[dict]: [{"customer_id": str, "customer_name": str}, ...]
@@ -488,7 +488,7 @@ ORDER BY rep_id
 SELECT DISTINCT
     customer_id,
     customer_name
-FROM sandbox.v_sales_tree_detail_base
+FROM mart.v_sales_tree_detail_base
 WHERE customer_id IS NOT NULL AND customer_name IS NOT NULL
 ORDER BY customer_id
             """
@@ -500,9 +500,9 @@ ORDER BY customer_id
                 {"customer_id": row["customer_id"], "customer_name": row["customer_name"]}
                 for row in result
             ]
-            logger.info(f"get_customers: Retrieved {len(customers)} customers from sandbox.v_sales_tree_detail_base")
+            logger.info(f"get_customers: Retrieved {len(customers)} customers from mart.v_sales_tree_detail_base")
             if not customers:
-                logger.warning("No customers found in sandbox.v_sales_tree_detail_base")
+                logger.warning("No customers found in mart.v_sales_tree_detail_base")
             return customers
         except Exception as e:
             logger.error(f"Error in get_customers: {str(e)}", exc_info=True)
@@ -513,7 +513,7 @@ ORDER BY customer_id
         【SalesTree分析専用】商品フィルタ候補を取得
         
         NOTE: これは「商品マスタAPI」ではありません。
-        sandbox.v_sales_tree_detail_base から SELECT DISTINCT で動的に取得します。
+        mart.v_sales_tree_detail_base から SELECT DISTINCT で動的に取得します。
         
         Returns:
             list[dict]: [{"item_id": int, "item_name": str}, ...]
@@ -523,7 +523,7 @@ ORDER BY customer_id
 SELECT DISTINCT
     item_id,
     item_name
-FROM sandbox.v_sales_tree_detail_base
+FROM mart.v_sales_tree_detail_base
 WHERE item_id IS NOT NULL AND item_name IS NOT NULL
 ORDER BY item_id
             """
@@ -535,9 +535,9 @@ ORDER BY item_id
                 {"item_id": row["item_id"], "item_name": row["item_name"]}
                 for row in result
             ]
-            logger.info(f"get_items: Retrieved {len(items)} items from sandbox.v_sales_tree_detail_base")
+            logger.info(f"get_items: Retrieved {len(items)} items from mart.v_sales_tree_detail_base")
             if not items:
-                logger.warning("No items found in sandbox.v_sales_tree_detail_base")
+                logger.warning("No items found in mart.v_sales_tree_detail_base")
             return items
         except Exception as e:
             logger.error(f"Error in get_items: {str(e)}", exc_info=True)
@@ -601,7 +601,7 @@ WITH aggregated AS (
             WHEN SUM(qty_kg) > 0 THEN SUM(amount_yen) / SUM(qty_kg)
             ELSE NULL
         END AS unit_price
-    FROM sandbox.v_sales_tree_detail_base
+    FROM mart.v_sales_tree_detail_base
     WHERE {where_sql}
     GROUP BY rep_id, rep_name, {axis_id_col}, {axis_name_col}
 )
