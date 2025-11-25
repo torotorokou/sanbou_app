@@ -45,6 +45,7 @@ import { useQueryBuilder } from '@/features/analytics/sales-pivot/shared/model/u
 import { useAxesFromMode } from '@/features/analytics/sales-pivot/shared/model/useAxesFromMode';
 import { useDetailDrawerLoader } from '@/features/analytics/sales-pivot/shared/model/useDetailDrawerLoader';
 import { usePivotLoader } from '@/features/analytics/sales-pivot/shared/model/usePivotLoader';
+import { useOpenPivot } from '@/features/analytics/sales-pivot/shared/model/useOpenPivot';
 import { SalesPivotHeader } from '@/features/analytics/sales-pivot/header/ui/SalesPivotHeader';
 import { FilterPanel } from '@/features/analytics/sales-pivot/filters/ui/FilterPanel';
 import { KpiCards } from '@/features/analytics/sales-pivot/kpi/ui/KpiCards';
@@ -188,6 +189,18 @@ const SalesTreePage: React.FC = () => {
     setPivotLoading,
   });
 
+  // Pivotドロワーを開く
+  const { openPivot } = useOpenPivot({
+    mode,
+    query,
+    filterSortBy,
+    filterOrder,
+    filterTopN,
+    setDrawer,
+    setPivotData,
+    setPivotCursor,
+  });
+
   // CSV Export
   const handleExport = async () => {
     if (repIds.length === 0) return;
@@ -210,34 +223,6 @@ const SalesTreePage: React.FC = () => {
 
   // Mode switch
   const { switchMode } = useEventHandlers({ setMode, setFilterIds });
-
-  // Pivot drawer
-  const openPivot = (rec: MetricEntry, repId: ID) => {
-    const others = (['customer', 'item', 'date'] as Mode[]).filter((ax) => ax !== mode);
-    const targets: { axis: Mode; label: string }[] = others.map((ax) => ({
-      axis: ax,
-      label: axisLabel(ax),
-    }));
-    const firstTarget = targets[0];
-
-    const drawerState: Extract<DrawerState, { open: true }> = {
-      open: true,
-      baseAxis: mode,
-      baseId: rec.id,
-      baseName: rec.name,
-      repIds: [repId],
-      targets,
-      activeAxis: firstTarget?.axis ?? mode,
-      sortBy: filterSortBy,
-      order: filterOrder,
-      topN: filterTopN,
-      ...(query.monthRange ? { monthRange: query.monthRange } : { month: query.month }),
-    };
-
-    setDrawer(drawerState);
-    setPivotData({ customer: [], item: [], date: [] });
-    setPivotCursor({ customer: null, item: null, date: null });
-  };
 
   const isDrawerOpen = (d: DrawerState): d is Extract<DrawerState, { open: true }> => d.open;
 
