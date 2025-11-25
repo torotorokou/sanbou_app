@@ -161,7 +161,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
 
       {/* 営業・絞り込み */}
       <Row gutter={[16, 16]}>
-        <Col xs={24} md={12}>
+        <Col xs={24} md={18}>
           <Space direction="vertical" size={2} style={{ width: '100%' }}>
             <Typography.Text type="secondary">営業</Typography.Text>
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
@@ -189,10 +189,11 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
             </div>
           </Space>
         </Col>
-        <Col xs={24} md={12}>
+        <Col xs={24} md={6}>
           <Space direction="vertical" size={2} style={{ width: '100%' }}>
             <Typography.Text type="secondary">{axisLabel(mode)}で絞る</Typography.Text>
             <Select
+              key={mode}
               mode="multiple"
               allowClear
               placeholder={`（未選択＝全${axisLabel(mode)}）`}

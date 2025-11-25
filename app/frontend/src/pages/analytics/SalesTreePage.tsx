@@ -253,7 +253,22 @@ const SalesTreePage: React.FC = () => {
 
   const filterOptions = useMemo(() => {
     if (mode === 'customer') return customers.map((c) => ({ label: c.name, value: c.id }));
-    if (mode === 'item') return items.map((i) => ({ label: i.name, value: i.id }));
+    
+    if (mode === 'item') {
+      // 品名の重複を削除（idでユニーク化）
+      const seen = new Set<ID>();
+      const uniqueItems: Array<{ label: string; value: ID }> = [];
+      
+      for (const item of items) {
+        if (!seen.has(item.id)) {
+          seen.add(item.id);
+          uniqueItems.push({ label: item.name, value: item.id });
+        }
+      }
+      
+      // 名前順でソート
+      return uniqueItems.sort((a, b) => a.label.localeCompare(b.label));
+    }
     
     // date mode
     const days = query.monthRange
