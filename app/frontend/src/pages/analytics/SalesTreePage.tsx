@@ -23,7 +23,6 @@ import type {
   SortKey,
   ID,
   MetricEntry,
-  DetailLinesFilter,
   GroupBy,
 } from '@/features/analytics/sales-pivot/shared/model/types';
 import { axisLabel } from '@/features/analytics/sales-pivot/shared/model/metrics';
@@ -44,6 +43,7 @@ import { useEventHandlers } from '@/features/analytics/sales-pivot/shared/model/
 import { useSortKeyOptions } from '@/features/analytics/sales-pivot/shared/model/useSortKeyOptions';
 import { useQueryBuilder } from '@/features/analytics/sales-pivot/shared/model/useQueryBuilder';
 import { useAxesFromMode } from '@/features/analytics/sales-pivot/shared/model/useAxesFromMode';
+import { useDetailDrawerLoader } from '@/features/analytics/sales-pivot/shared/model/useDetailDrawerLoader';
 import { SalesPivotHeader } from '@/features/analytics/sales-pivot/header/ui/SalesPivotHeader';
 import { FilterPanel } from '@/features/analytics/sales-pivot/filters/ui/FilterPanel';
 import { KpiCards } from '@/features/analytics/sales-pivot/kpi/ui/KpiCards';
@@ -161,6 +161,20 @@ const SalesTreePage: React.FC = () => {
 
   // 軸の取得
   const { baseAx, axB, axC } = useAxesFromMode(mode);
+
+  // 詳細Drawerローダー
+  const { openDetailDrawer } = useDetailDrawerLoader({
+    query,
+    categoryKind,
+    repository,
+    setDetailDrawerOpen,
+    setDetailDrawerLoading,
+    setDetailDrawerTitle,
+    setDetailDrawerMode,
+    setDetailDrawerRows,
+    setDetailDrawerTotalCount,
+    message,
+  });
 
   // CSV Export
   const handleExport = async () => {
@@ -280,75 +294,6 @@ const SalesTreePage: React.FC = () => {
     );
     setRepSeriesCache((prev) => ({ ...prev, [repId]: s }));
   };
-
-  // 詳細Drawer を開く（内部処理）
-  const openDetailDrawer = useCallback(async (
-    lastGroupBy: GroupBy,
-    repId?: string,
-    customerId?: string,
-    itemId?: string,
-    dateValue?: string,
-    title?: string
-  ) => {
-    setDetailDrawerLoading(true);
-    setDetailDrawerOpen(true);
-    setDetailDrawerTitle(title || '詳細明細');
-    
-    try {
-      // 期間計算（月末日を正確に計算）
-      let dateFrom: string;
-      let dateTo: string;
-      
-      const getMonthEndDate = (yyyymm: string): string => {
-        const [year, month] = yyyymm.split('-').map(Number);
-        const nextMonth = new Date(year, month, 1);
-        const lastDay = new Date(nextMonth.getTime() - 86400000);
-        const dd = String(lastDay.getDate()).padStart(2, '0');
-        return `${yyyymm}-${dd}`;
-      };
-      
-      if (query.monthRange) {
-        dateFrom = `${query.monthRange.from}-01`;
-        dateTo = getMonthEndDate(query.monthRange.to);
-      } else if (query.month) {
-        dateFrom = `${query.month}-01`;
-        dateTo = getMonthEndDate(query.month);
-      } else {
-        throw new Error('期間が設定されていません');
-      }
-
-      const filter: DetailLinesFilter = {
-        dateFrom,
-        dateTo,
-        lastGroupBy,
-        categoryKind,
-        repId: repId ? parseInt(repId, 10) : undefined,
-        customerId,
-        itemId: itemId ? parseInt(itemId, 10) : undefined,
-        dateValue,
-      };
-
-      console.log('📋 詳細明細取得リクエスト:', filter);
-
-      const response = await repository.fetchDetailLines(filter);
-      
-      console.log('✅ 詳細明細取得成功:', {
-        mode: response.mode,
-        rowCount: response.rows.length,
-        totalCount: response.totalCount
-      });
-      
-      setDetailDrawerMode(response.mode);
-      setDetailDrawerRows(response.rows);
-      setDetailDrawerTotalCount(response.totalCount);
-    } catch (error) {
-      console.error('❌ 詳細明細取得エラー:', error);
-      message?.error?.('詳細明細の取得に失敗しました。');
-      setDetailDrawerOpen(false);
-    } finally {
-      setDetailDrawerLoading(false);
-    }
-  }, [query, categoryKind, repository, message]);
 
   // Pivot行クリック時のハンドラー
   const handlePivotRowClick = useCallback(async (row: MetricEntry, axis: Mode) => {
