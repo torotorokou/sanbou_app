@@ -59,6 +59,32 @@
   border-radius: 3px;
 }
 
+/* 有価物モード用スタイル */
+.sales-tree-page.valuable-mode .sales-tree-title-accent::before {
+  background: #faad14;
+}
+
+.sales-tree-page.valuable-mode .sales-tree-accent-card {
+  border-left-color: #faad14;
+}
+
+.sales-tree-page.valuable-mode .sales-tree-card-section-header {
+  background: #fffbf0;
+  border: 1px solid #ffe7ba;
+}
+
+.sales-tree-page.valuable-mode .ant-table-tbody > tr:hover > td {
+  background: #fffbf0 !important;
+}
+
+.sales-tree-page.valuable-mode .sales-tree-mini-bar-blue {
+  background: #faad14;
+}
+
+.sales-tree-page.valuable-mode .sales-tree-zebra-odd {
+  background: #fffef9;
+}
+
 .sales-tree-header-actions {
   position: absolute;
   right: 0;

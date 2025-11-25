@@ -5,7 +5,7 @@
 
 import React from 'react';
 import { Drawer, Card, Space, Tag, Segmented } from 'antd';
-import type { DrawerState, Mode, SortKey, SortOrder, MetricEntry } from '../../shared/model/types';
+import type { DrawerState, Mode, SortKey, SortOrder, MetricEntry, CategoryKind } from '../../shared/model/types';
 import { axisLabel } from '../../shared/model/metrics';
 import { PivotTable } from './PivotTable';
 
@@ -20,6 +20,7 @@ interface PivotDrawerProps {
   onSortByChange: (sortBy: SortKey) => void;
   onOrderChange: (order: SortOrder) => void;
   onLoadMore: (axis: Mode, reset: boolean) => Promise<void>;
+  categoryKind: CategoryKind;
 }
 
 /**
@@ -36,8 +37,12 @@ export const PivotDrawer: React.FC<PivotDrawerProps> = ({
   onSortByChange,
   onOrderChange,
   onLoadMore,
+  categoryKind,
 }) => {
   if (!drawer.open) return null;
+
+  // 売上/仕入ラベルの動的切り替え
+  const amountLabel = categoryKind === 'waste' ? '売上' : '仕入';
 
   return (
     <Drawer
@@ -79,7 +84,7 @@ export const PivotDrawer: React.FC<PivotDrawerProps> = ({
             />
             <Segmented
               options={[
-                { label: '売上', value: 'amount' },
+                { label: amountLabel, value: 'amount' },
                 { label: '数量', value: 'qty' },
                 { label: drawer.activeAxis === 'item' ? '件数' : '台数', value: 'count' },
                 { label: '単価', value: 'unit_price' },
@@ -114,6 +119,7 @@ export const PivotDrawer: React.FC<PivotDrawerProps> = ({
           onLoadMore={onLoadMore}
           onSortByChange={onSortByChange}
           onOrderChange={onOrderChange}
+          categoryKind={categoryKind}
         />
       </Card>
     </Drawer>

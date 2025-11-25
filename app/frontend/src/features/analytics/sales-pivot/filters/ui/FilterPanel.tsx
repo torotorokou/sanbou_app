@@ -4,9 +4,9 @@
  */
 
 import React from 'react';
-import { Card, Row, Col, Divider, Space, Typography, Segmented, DatePicker, Select, Button } from 'antd';
+import { Card, Row, Col, Divider, Space, Typography, Segmented, DatePicker, Select, Button, Radio } from 'antd';
 import type { Dayjs } from 'dayjs';
-import type { Mode, SortKey, SortOrder, ID, SalesRep } from '../../shared/model/types';
+import type { Mode, SortKey, SortOrder, ID, SalesRep, CategoryKind } from '../../shared/model/types';
 import { axisLabel } from '../../shared/model/metrics';
 
 interface FilterPanelProps {
@@ -17,6 +17,10 @@ interface FilterPanelProps {
   onPeriodModeChange: (mode: 'single' | 'range') => void;
   onMonthChange: (month: Dayjs) => void;
   onRangeChange: (range: [Dayjs, Dayjs] | null) => void;
+
+  // Category
+  categoryKind: CategoryKind;
+  onCategoryKindChange: (kind: CategoryKind) => void;
 
   // Mode & Controls
   mode: Mode;
@@ -49,6 +53,8 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
   onPeriodModeChange,
   onMonthChange,
   onRangeChange,
+  categoryKind,
+  onCategoryKindChange,
   mode,
   topN,
   sortBy,
@@ -69,8 +75,75 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
   return (
     <Card className="sales-tree-accent-card sales-tree-accent-primary" title={<div className="sales-tree-card-section-header">条件</div>}>
       <Row gutter={[16, 16]} align="middle">
+        {/* 種別切り替え */}
+        <Col xs={24} sm={8} md={4}>
+          <Space direction="vertical" size={2}>
+            <Typography.Text type="secondary">種別</Typography.Text>
+            <Radio.Group
+              value={categoryKind}
+              onChange={(e) => onCategoryKindChange(e.target.value as CategoryKind)}
+              buttonStyle="solid"
+            >
+              <Radio.Button value="waste">廃棄物</Radio.Button>
+              <Radio.Button value="valuable">有価物</Radio.Button>
+            </Radio.Group>
+          </Space>
+        </Col>
+
+        {/* モード */}
+        <Col xs={24} sm={8} md={4}>
+          <Space direction="vertical" size={2}>
+            <Typography.Text type="secondary">モード</Typography.Text>
+            <Segmented
+              options={[
+                { label: '顧客', value: 'customer' },
+                { label: '品名', value: 'item' },
+                { label: '日付', value: 'date' },
+              ]}
+              value={mode}
+              onChange={(v) => onModeChange(v as Mode)}
+            />
+          </Space>
+        </Col>
+
+        {/* TopN・ソート */}
+        <Col xs={24} sm={16} md={16}>
+          <Space direction="vertical" size={2} style={{ width: '100%' }}>
+            <Typography.Text type="secondary">Top & 並び替え</Typography.Text>
+            <Space wrap>
+              <Segmented
+                options={[
+                  { label: '10', value: '10' },
+                  { label: '20', value: '20' },
+                  { label: '50', value: '50' },
+                  { label: 'All', value: 'all' },
+                ]}
+                value={String(topN)}
+                onChange={(v: string | number) =>
+                  onTopNChange(v === 'all' ? 'all' : (Number(v) as 10 | 20 | 50))
+                }
+              />
+              <Segmented
+                options={sortKeyOptions}
+                value={sortBy}
+                onChange={(v) => onSortByChange(v as SortKey)}
+              />
+              <Segmented
+                options={[
+                  { label: '降順', value: 'desc' },
+                  { label: '昇順', value: 'asc' },
+                ]}
+                value={order}
+                onChange={(v) => onOrderChange(v as SortOrder)}
+              />
+            </Space>
+          </Space>
+        </Col>
+      </Row>
+
+      <Row gutter={[16, 16]} align="middle" style={{ marginTop: 8 }}>
         {/* 期間選択 */}
-        <Col xs={24} lg={10}>
+        <Col xs={24} lg={24}>
           <Space direction="vertical" size={2} style={{ width: '100%' }}>
             <Typography.Text type="secondary">対象（単月 / 期間）</Typography.Text>
             <Space wrap>
@@ -103,9 +176,13 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
             </Space>
           </Space>
         </Col>
+      </Row>
 
-        {/* モード・TopN・ソート */}
-        <Col xs={24} lg={14}>
+      <Divider style={{ margin: '16px 0' }} />
+
+      {/* 旧レイアウトの残骸を削除するため、次のセクションを調整 */}
+      <Row gutter={[16, 16]} style={{ display: 'none' }}>
+        <Col xs={24} lg={11}>
           <Row gutter={[16, 16]}>
             <Col xs={24} md={8}>
               <Space direction="vertical" size={2}>

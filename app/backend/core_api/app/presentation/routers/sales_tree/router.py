@@ -14,7 +14,7 @@ Sales Tree Router - 売上ツリー分析APIエンドポイント
   - DI経由でUseCaseを取得（テスタビリティ向上）
   - エラーハンドリングを一元化
 """
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import Response
 import logging
 
@@ -37,7 +37,8 @@ from app.domain.sales_tree import (
     DailyPoint,
     PivotRequest,
     CursorPage,
-    ExportRequest
+    ExportRequest,
+    CategoryKind,
 )
 
 logger = logging.getLogger(__name__)
@@ -242,6 +243,7 @@ def export_csv(
 
 @router.get("/masters/reps", summary="Get sales reps filter options for SalesTree analysis")
 def get_sales_reps_master(
+    category_kind: CategoryKind = Query("waste", description="カテゴリ種別: waste, valuable"),
     repo: SalesTreeRepository = Depends(get_sales_tree_repo),
 ):
     """
@@ -253,6 +255,9 @@ def get_sales_reps_master(
     用途: SalesTree分析画面のプルダウンフィルタ用
     データソース: mart.v_sales_tree_detail_base（実売上明細ビュー）
     
+    **Query Parameters:**
+    - category_kind: カテゴリ種別（'waste'=廃棄物, 'valuable'=有価物）
+    
     **Response Example:**
     ```json
     [
@@ -262,8 +267,8 @@ def get_sales_reps_master(
     ```
     """
     try:
-        logger.info("GET /analytics/sales-tree/masters/reps (SalesTree filter API)")
-        reps = repo.get_sales_reps()
+        logger.info(f"GET /analytics/sales-tree/masters/reps (SalesTree filter API) category_kind={category_kind}")
+        reps = repo.get_sales_reps(category_kind)
         logger.info(f"Successfully retrieved {len(reps)} sales reps for filter")
         return reps
     except Exception as e:
@@ -276,6 +281,7 @@ def get_sales_reps_master(
 
 @router.get("/masters/customers", summary="Get customer filter options for SalesTree analysis")
 def get_customers_master(
+    category_kind: CategoryKind = Query("waste", description="カテゴリ種別: waste, valuable"),
     repo: SalesTreeRepository = Depends(get_sales_tree_repo),
 ):
     """
@@ -286,10 +292,13 @@ def get_customers_master(
     
     用途: SalesTree分析画面のプルダウンフィルタ用
     データソース: mart.v_sales_tree_detail_base（実売上明細ビュー）
+    
+    **Query Parameters:**
+    - category_kind: カテゴリ種別（'waste'=廃棄物, 'valuable'=有価物）
     """
     try:
-        logger.info("GET /analytics/sales-tree/masters/customers (SalesTree filter API)")
-        customers = repo.get_customers()
+        logger.info(f"GET /analytics/sales-tree/masters/customers (SalesTree filter API) category_kind={category_kind}")
+        customers = repo.get_customers(category_kind)
         logger.info(f"Successfully retrieved {len(customers)} customers for filter")
         return customers
     except Exception as e:
@@ -302,6 +311,7 @@ def get_customers_master(
 
 @router.get("/masters/items", summary="Get item filter options for SalesTree analysis")
 def get_items_master(
+    category_kind: CategoryKind = Query("waste", description="カテゴリ種別: waste, valuable"),
     repo: SalesTreeRepository = Depends(get_sales_tree_repo),
 ):
     """
@@ -312,10 +322,13 @@ def get_items_master(
     
     用途: SalesTree分析画面のプルダウンフィルタ用
     データソース: mart.v_sales_tree_detail_base（実売上明細ビュー）
+    
+    **Query Parameters:**
+    - category_kind: カテゴリ種別（'waste'=廃棄物, 'valuable'=有価物）
     """
     try:
-        logger.info("GET /analytics/sales-tree/masters/items (SalesTree filter API)")
-        items = repo.get_items()
+        logger.info(f"GET /analytics/sales-tree/masters/items (SalesTree filter API) category_kind={category_kind}")
+        items = repo.get_items(category_kind)
         logger.info(f"Successfully retrieved {len(items)} items for filter")
         return items
     except Exception as e:

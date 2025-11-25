@@ -78,9 +78,18 @@ export type SortKey = 'amount' | 'qty' | 'count' | 'unit_price' | 'date' | 'name
  * 
  * @description 昇順・降順の指定
  * - `asc`: 昇順（小さい値から大きい値へ）
- * - `desc`: 降順（大きい値から小さい値へ）- デフォルト推奨
+ * - `desc`: 降順（大きい値から小さい値へ）
  */
 export type SortOrder = 'asc' | 'desc';
+
+/**
+ * カテゴリ種別
+ * 
+ * @description 廃棄物/有価物の区分
+ * - `waste`: 廃棄物
+ * - `valuable`: 有価物
+ */
+export type CategoryKind = 'waste' | 'valuable';
 
 // ========================================
 // エンティティ型（マスタデータ）
@@ -257,6 +266,7 @@ export interface SummaryQuery {
   month?: YYYYMM;
   monthRange?: { from: YYYYMM; to: YYYYMM };
   mode: Mode;
+  categoryKind: CategoryKind;
   repIds: ID[];
   filterIds: ID[];
   sortBy: SortKey;
@@ -300,6 +310,7 @@ export interface PivotQuery {
   monthRange?: { from: YYYYMM; to: YYYYMM };
   baseAxis: Mode;
   baseId: ID;
+  categoryKind: CategoryKind;
   repIds: ID[];
   targetAxis: Mode;
   sortBy: SortKey;
@@ -343,6 +354,7 @@ export interface CursorPage<T> {
 export interface DailySeriesQuery {
   month?: YYYYMM;
   monthRange?: { from: YYYYMM; to: YYYYMM };
+  categoryKind: CategoryKind;
   repId?: ID;
   customerId?: ID;
   itemId?: ID;

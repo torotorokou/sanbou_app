@@ -7,7 +7,7 @@ import React from 'react';
 import { Card, Table, Typography } from 'antd';
 import type { TableColumnsType } from 'antd';
 import { Tag } from 'antd';
-import type { SummaryRow, Mode, MetricEntry, SummaryQuery } from '../../shared/model/types';
+import type { SummaryRow, Mode, MetricEntry, SummaryQuery, CategoryKind } from '../../shared/model/types';
 import { fmtCurrency, fmtNumber, fmtUnitPrice, axisLabel } from '../../shared/model/metrics';
 import { ExpandedRow } from './ExpandedRow';
 
@@ -24,6 +24,7 @@ interface SummaryTableProps {
   order: 'asc' | 'desc';
   onSortChange: (sortBy: string, order: 'asc' | 'desc') => void;
   query: SummaryQuery;
+  categoryKind: CategoryKind;
 }
 
 /**
@@ -42,9 +43,12 @@ export const SummaryTable: React.FC<SummaryTableProps> = ({
   order,
   onSortChange,
   query,
+  categoryKind,
 }) => {
   // 件数/台数ラベルの動的切り替え
   const countLabel = mode === 'item' ? '件数' : '台数';
+  // 売上/仕入ラベルの動的切り替え
+  const amountLabel = categoryKind === 'waste' ? '売上' : '仕入';
   
   if (!hasSelection) {
     return (
@@ -72,7 +76,7 @@ export const SummaryTable: React.FC<SummaryTableProps> = ({
       key: 'summary',
       children: [
         {
-          title: '売上',
+          title: amountLabel,
           key: 'amount',
           align: 'right' as const,
           width: 150,
@@ -166,6 +170,7 @@ export const SummaryTable: React.FC<SummaryTableProps> = ({
               repSeriesCache={repSeriesCache}
               loadDailySeries={loadDailySeries}
               query={query}
+              categoryKind={categoryKind}
             />
           ),
           rowExpandable: () => true,

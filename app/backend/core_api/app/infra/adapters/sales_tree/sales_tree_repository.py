@@ -21,6 +21,7 @@ from app.domain.sales_tree import (
     CursorPage,
     ExportRequest,
     AxisMode,
+    CategoryKind,
 )
 from app.infra.db.db import get_engine
 
@@ -71,18 +72,20 @@ class SalesTreeRepository:
             list[SummaryRow]: 営業ごとのサマリーデータ（metrics に TOP-N 集計を格納）
         """
         try:
-            logger.info(f"fetch_summary: mode={req.mode}, date_from={req.date_from}, date_to={req.date_to}, rep_ids={req.rep_ids}")
+            logger.info(f"fetch_summary: mode={req.mode}, date_from={req.date_from}, date_to={req.date_to}, rep_ids={req.rep_ids}, category_kind={req.category_kind}")
             
             # 軸カラムの決定
             axis_id_col, axis_name_col = self._get_axis_columns(req.mode)
             
             # WHERE句構築
             where_clauses = [
-                "sales_date BETWEEN :date_from AND :date_to"
+                "sales_date BETWEEN :date_from AND :date_to",
+                "category_cd = :category_cd"
             ]
             params: dict = {
                 "date_from": req.date_from,
                 "date_to": req.date_to,
+                "category_cd": self._category_kind_to_cd(req.category_kind),
             }
             
             if req.rep_ids:
@@ -213,11 +216,13 @@ ORDER BY rep_id, rn
             logger.info(f"fetch_daily_series: date_from={req.date_from}, date_to={req.date_to}, rep_id={req.rep_id}, customer_id={req.customer_id}, item_id={req.item_id}")
             
             where_clauses = [
-                "sales_date BETWEEN :date_from AND :date_to"
+                "sales_date BETWEEN :date_from AND :date_to",
+                "category_cd = :category_cd"
             ]
             params: dict = {
                 "date_from": req.date_from,
                 "date_to": req.date_to,
+                "category_cd": self._category_kind_to_cd(req.category_kind),
             }
             
             if req.rep_id is not None:
@@ -295,11 +300,13 @@ ORDER BY sales_date
             
             # WHERE句構築
             where_clauses = [
-                "sales_date BETWEEN :date_from AND :date_to"
+                "sales_date BETWEEN :date_from AND :date_to",
+                "category_cd = :category_cd"
             ]
             params: dict = {
                 "date_from": req.date_from,
                 "date_to": req.date_to,
+                "category_cd": self._category_kind_to_cd(req.category_kind),
             }
             
             # baseAxisフィルタ
@@ -436,28 +443,38 @@ LIMIT :page_size OFFSET :offset
         }
         return mapping.get(sort_by, "amount")
     
-    def get_sales_reps(self) -> list[dict]:
+    @staticmethod
+    def _category_kind_to_cd(category_kind: CategoryKind) -> int:
+        """CategoryKindをcategory_cdに変換"""
+        return 1 if category_kind == "waste" else 3
+    
+    def get_sales_reps(self, category_kind: CategoryKind = "waste") -> list[dict]:
         """
         【SalesTree分析専用】営業フィルタ候補を取得
         
         NOTE: これは「営業マスタAPI」ではありません。
         mart.v_sales_tree_detail_base から SELECT DISTINCT で動的に取得します。
         
+        Args:
+            category_kind: カテゴリ種別（'waste' or 'valuable'）
+        
         Returns:
             list[dict]: [{"rep_id": int, "rep_name": str}, ...]
         """
         try:
+            category_cd = self._category_kind_to_cd(category_kind)
             sql = """
 SELECT DISTINCT
     rep_id,
     rep_name
 FROM mart.v_sales_tree_detail_base
 WHERE rep_id IS NOT NULL AND rep_name IS NOT NULL
+  AND category_cd = :category_cd
 ORDER BY rep_id
             """
-            logger.info(f"Executing get_sales_reps SQL: {sql}")
+            logger.info(f"Executing get_sales_reps SQL with category_kind={category_kind}, category_cd={category_cd}")
             with self._engine.begin() as conn:
-                result = conn.execute(text(sql)).mappings().all()
+                result = conn.execute(text(sql), {"category_cd": category_cd}).mappings().all()
             
             reps = [
                 {"rep_id": row["rep_id"], "rep_name": row["rep_name"]}
@@ -473,28 +490,33 @@ ORDER BY rep_id
             logger.error(f"Error in get_sales_reps: {str(e)}", exc_info=True)
             raise
     
-    def get_customers(self) -> list[dict]:
+    def get_customers(self, category_kind: CategoryKind = "waste") -> list[dict]:
         """
         【SalesTree分析専用】顧客フィルタ候補を取得
         
         NOTE: これは「顧客マスタAPI」ではありません。
         mart.v_sales_tree_detail_base から SELECT DISTINCT で動的に取得します。
         
+        Args:
+            category_kind: カテゴリ種別（'waste' or 'valuable'）
+        
         Returns:
             list[dict]: [{"customer_id": str, "customer_name": str}, ...]
         """
         try:
+            category_cd = self._category_kind_to_cd(category_kind)
             sql = """
 SELECT DISTINCT
     customer_id,
     customer_name
 FROM mart.v_sales_tree_detail_base
 WHERE customer_id IS NOT NULL AND customer_name IS NOT NULL
+  AND category_cd = :category_cd
 ORDER BY customer_id
             """
-            logger.info(f"Executing get_customers SQL")
+            logger.info(f"Executing get_customers SQL with category_kind={category_kind}, category_cd={category_cd}")
             with self._engine.begin() as conn:
-                result = conn.execute(text(sql)).mappings().all()
+                result = conn.execute(text(sql), {"category_cd": category_cd}).mappings().all()
             
             customers = [
                 {"customer_id": row["customer_id"], "customer_name": row["customer_name"]}
@@ -508,28 +530,33 @@ ORDER BY customer_id
             logger.error(f"Error in get_customers: {str(e)}", exc_info=True)
             raise
     
-    def get_items(self) -> list[dict]:
+    def get_items(self, category_kind: CategoryKind = "waste") -> list[dict]:
         """
         【SalesTree分析専用】商品フィルタ候補を取得
         
         NOTE: これは「商品マスタAPI」ではありません。
         mart.v_sales_tree_detail_base から SELECT DISTINCT で動的に取得します。
         
+        Args:
+            category_kind: カテゴリ種別（'waste' or 'valuable'）
+        
         Returns:
             list[dict]: [{"item_id": int, "item_name": str}, ...]
         """
         try:
+            category_cd = self._category_kind_to_cd(category_kind)
             sql = """
 SELECT DISTINCT
     item_id,
     item_name
 FROM mart.v_sales_tree_detail_base
 WHERE item_id IS NOT NULL AND item_name IS NOT NULL
+  AND category_cd = :category_cd
 ORDER BY item_id
             """
-            logger.info(f"Executing get_items SQL")
+            logger.info(f"Executing get_items SQL with category_kind={category_kind}, category_cd={category_cd}")
             with self._engine.begin() as conn:
-                result = conn.execute(text(sql)).mappings().all()
+                result = conn.execute(text(sql), {"category_cd": category_cd}).mappings().all()
             
             items = [
                 {"item_id": row["item_id"], "item_name": row["item_name"]}
@@ -557,11 +584,13 @@ ORDER BY item_id
             
             # WHERE句構築
             where_clauses = [
-                "sales_date BETWEEN :date_from AND :date_to"
+                "sales_date BETWEEN :date_from AND :date_to",
+                "category_cd = :category_cd"
             ]
             params: dict = {
                 "date_from": req.date_from,
                 "date_to": req.date_to,
+                "category_cd": self._category_kind_to_cd(req.category_kind),
             }
             
             if req.rep_ids:
