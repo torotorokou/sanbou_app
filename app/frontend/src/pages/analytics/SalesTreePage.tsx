@@ -18,7 +18,7 @@
 
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { Space, App } from 'antd';
-import dayjs, { type Dayjs } from 'dayjs';
+import dayjs from 'dayjs';
 import type {
   Mode,
   SortKey,
@@ -39,6 +39,8 @@ import type {
 import { axesFromMode, axisLabel, monthDays, allDaysInRange } from '@/features/analytics/sales-pivot/shared/model/metrics';
 import { DEFAULT_EXPORT_OPTIONS, downloadBlob } from '@/features/analytics/sales-pivot/shared/lib/utils';
 import { useRepository } from '@/features/analytics/sales-pivot/shared/model/useRepository';
+import { usePeriodState } from '@/features/analytics/sales-pivot/shared/model/usePeriodState';
+import { useFilterState } from '@/features/analytics/sales-pivot/shared/model/useFilterState';
 import { SalesPivotHeader } from '@/features/analytics/sales-pivot/header/ui/SalesPivotHeader';
 import { FilterPanel } from '@/features/analytics/sales-pivot/filters/ui/FilterPanel';
 import { KpiCards } from '@/features/analytics/sales-pivot/kpi/ui/KpiCards';
@@ -60,28 +62,28 @@ const SalesTreePage: React.FC = () => {
   // Repository（categoryKindに応じて自動設定）
   const repository = useRepository(categoryKind);
 
-  // Period
-  const [periodMode, setPeriodMode] = useState<'single' | 'range'>('single');
-  const [month, setMonth] = useState<Dayjs>(dayjs().startOf('month'));
-  const [range, setRange] = useState<[Dayjs, Dayjs] | null>(null);
+  // Period（期間状態管理）
+  const { periodMode, month, range, setPeriodMode, setMonth, setRange } = usePeriodState();
 
-  // Controls - フィルターパネル用（API取得条件）
-  const [mode, setMode] = useState<Mode>('customer');
-  const [filterTopN, setFilterTopN] = useState<10 | 20 | 50 | 'all'>('all');
-  const [filterSortBy, setFilterSortBy] = useState<SortKey>('amount');
-  const [filterOrder, setFilterOrder] = useState<SortOrder>('desc');
-  const [repIds, setRepIds] = useState<ID[]>([]);
-  const [filterIds, setFilterIds] = useState<ID[]>([]);
-
-  // Controls - テーブル用（クライアント側処理）
-  const [tableSortBy, setTableSortBy] = useState<SortKey>('amount');
-  const [tableOrder, setTableOrder] = useState<SortOrder>('desc');
-
-  // フィルターパネルの並び順が変わったらテーブルの並び順も同期
-  useEffect(() => {
-    setTableSortBy(filterSortBy);
-    setTableOrder(filterOrder);
-  }, [filterSortBy, filterOrder]);
+  // Filters（フィルター状態管理）
+  const {
+    mode,
+    filterTopN,
+    filterSortBy,
+    filterOrder,
+    repIds,
+    filterIds,
+    setMode,
+    setFilterTopN,
+    setFilterSortBy,
+    setFilterOrder,
+    setRepIds,
+    setFilterIds,
+    tableSortBy,
+    tableOrder,
+    setTableSortBy,
+    setTableOrder,
+  } = useFilterState();
 
   // Export options
   const [exportOptions, setExportOptions] = useState<ExportOptions>(() => {
