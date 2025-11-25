@@ -22,7 +22,6 @@ import type {
   Mode,
   SortKey,
   ID,
-  SummaryQuery,
   MetricEntry,
   DetailLinesFilter,
   GroupBy,
@@ -43,6 +42,7 @@ import { useComputedLabels } from '@/features/analytics/sales-pivot/shared/model
 import { useCategoryKindState } from '@/features/analytics/sales-pivot/shared/model/useCategoryKindState';
 import { useEventHandlers } from '@/features/analytics/sales-pivot/shared/model/useEventHandlers';
 import { useSortKeyOptions } from '@/features/analytics/sales-pivot/shared/model/useSortKeyOptions';
+import { useQueryBuilder } from '@/features/analytics/sales-pivot/shared/model/useQueryBuilder';
 import { SalesPivotHeader } from '@/features/analytics/sales-pivot/header/ui/SalesPivotHeader';
 import { FilterPanel } from '@/features/analytics/sales-pivot/filters/ui/FilterPanel';
 import { KpiCards } from '@/features/analytics/sales-pivot/kpi/ui/KpiCards';
@@ -91,19 +91,21 @@ const SalesTreePage: React.FC = () => {
   const { exportOptions, setExportOptions } = useExportOptions();
 
   // Query materialize (API用 - フィルターパネルの条件）
-  const baseQuery: SummaryQuery = useMemo(() => {
-    const base = { mode, categoryKind, repIds, filterIds, sortBy: filterSortBy, order: filterOrder, topN: filterTopN };
-    if (periodMode === 'single') return { ...base, month: month.format('YYYY-MM') };
-    if (range)
-      return {
-        ...base,
-        monthRange: { from: range[0].format('YYYY-MM'), to: range[1].format('YYYY-MM') },
-      };
-    return { ...base, month: month.format('YYYY-MM') };
-  }, [periodMode, month, range, mode, categoryKind, repIds, filterIds, filterSortBy, filterOrder, filterTopN]);
+  const query = useQueryBuilder({
+    periodMode,
+    month,
+    range,
+    mode,
+    categoryKind,
+    repIds,
+    filterIds,
+    filterSortBy,
+    filterOrder,
+    filterTopN,
+  });
 
   // Data loading
-  const { rawSummary, loading } = useDataLoading(repository, baseQuery);
+  const { rawSummary, loading } = useDataLoading(repository, query);
 
   // テーブル用のソート（クライアント側処理）
   const summary = useSortedSummary(rawSummary, tableSortBy, tableOrder);
@@ -137,11 +139,6 @@ const SalesTreePage: React.FC = () => {
     setDetailDrawerRows,
     setDetailDrawerTotalCount,
   } = useDetailDrawerState();
-
-  // エクスポート用のクエリ（フィルターパネルの条件を使用）
-  const query: SummaryQuery = useMemo(() => {
-    return { ...baseQuery };
-  }, [baseQuery]);
 
   // マスタデータ
   const { reps, customers, items } = useMasterData(repository, categoryKind, (msg) => {
