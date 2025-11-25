@@ -16,7 +16,7 @@
  * - 完全なslice統合実装完了
  */
 
-import React, { useMemo, useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { Space, App } from 'antd';
 import type {
   Mode,
@@ -26,7 +26,7 @@ import type {
   DetailLinesFilter,
   GroupBy,
 } from '@/features/analytics/sales-pivot/shared/model/types';
-import { axesFromMode, axisLabel } from '@/features/analytics/sales-pivot/shared/model/metrics';
+import { axisLabel } from '@/features/analytics/sales-pivot/shared/model/metrics';
 import { downloadBlob } from '@/features/analytics/sales-pivot/shared/lib/utils';
 import { useRepository } from '@/features/analytics/sales-pivot/shared/model/useRepository';
 import { usePeriodState } from '@/features/analytics/sales-pivot/shared/model/usePeriodState';
@@ -43,6 +43,7 @@ import { useCategoryKindState } from '@/features/analytics/sales-pivot/shared/mo
 import { useEventHandlers } from '@/features/analytics/sales-pivot/shared/model/useEventHandlers';
 import { useSortKeyOptions } from '@/features/analytics/sales-pivot/shared/model/useSortKeyOptions';
 import { useQueryBuilder } from '@/features/analytics/sales-pivot/shared/model/useQueryBuilder';
+import { useAxesFromMode } from '@/features/analytics/sales-pivot/shared/model/useAxesFromMode';
 import { SalesPivotHeader } from '@/features/analytics/sales-pivot/header/ui/SalesPivotHeader';
 import { FilterPanel } from '@/features/analytics/sales-pivot/filters/ui/FilterPanel';
 import { KpiCards } from '@/features/analytics/sales-pivot/kpi/ui/KpiCards';
@@ -158,8 +159,8 @@ const SalesTreePage: React.FC = () => {
     reps
   );
 
-  // 残り2軸の候補リスト
-  const [baseAx, axB, axC] = useMemo(() => axesFromMode(mode), [mode]);
+  // 軸の取得
+  const { baseAx, axB, axC } = useAxesFromMode(mode);
 
   // CSV Export
   const handleExport = async () => {
