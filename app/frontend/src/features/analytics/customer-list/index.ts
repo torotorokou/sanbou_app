@@ -6,7 +6,9 @@
  * 
  * アーキテクチャ構成:
  * - domain/: ビジネスエンティティ（純粋なドメインモデル）
- * - model/: 主ViewModel（4つのサブフィーチャーを統合）
+ * - model/: 主ViewModel（Repositoryパターンでバックエンドと連携）
+ * - ports/: Repository抽象インターフェース
+ * - infrastructure/: Repository実装（HTTP経由）
  * - period-selector/: 期間選択サブフィーチャー
  * - customer-aggregation/: 顧客集約サブフィーチャー
  * - customer-comparison/: 顧客比較サブフィーチャー
@@ -15,7 +17,11 @@
  */
 
 // Domain Types
-export type { CustomerData } from './shared/domain/types';
+export type { CustomerData, LostCustomer, CustomerChurnAnalyzeParams, SalesRep } from './shared/domain/types';
+
+// Repository (Clean Architecture Ports & Adapters)
+export type { CustomerChurnRepository } from './shared/ports/customerChurnRepository';
+export { customerChurnRepository, CustomerChurnHttpRepository } from './shared/infrastructure/customerChurnRepository';
 
 // Main ViewModel - 主要なエントリーポイント
 export { useCustomerChurnViewModel } from './shared/model/useCustomerChurnViewModel';
@@ -23,6 +29,7 @@ export type { CustomerChurnViewModel } from './shared/model/useCustomerChurnView
 
 // Sub-features - 個別に使用可能な機能モジュール
 export * from './period-selector';
+export * from './sales-rep-filter';
 export * from './customer-aggregation';
 export * from './customer-comparison';
 export * from './data-export';

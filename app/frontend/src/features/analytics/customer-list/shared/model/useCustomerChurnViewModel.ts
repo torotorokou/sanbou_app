@@ -1,22 +1,32 @@
 /**
  * Customer Churn ViewModel - Main Orchestrator
  * 
- * 4つのサブフィーチャーを統合し、顧客離脱分析のメインロジックを提供
+ * Repository パターンを使用して顧客離脱分析のメインロジックを提供
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { message } from 'antd';
 import type { Dayjs } from 'dayjs';
-import type { CustomerData } from '../domain/types';
+import type { CustomerData, LostCustomer, SalesRep } from '../domain/types';
+import { customerChurnRepository } from '../infrastructure/customerChurnRepository';
 
 // Sub-features
-import { usePeriodSelector, isValidPeriodRange, getMonthRange } from '../../period-selector';
-import { aggregateCustomers } from '../../customer-aggregation';
-import { useCustomerComparison } from '../../customer-comparison';
-import { useExcelDownload, buildCustomerCsv, downloadCsv } from '../../data-export';
+import { usePeriodSelector, isValidPeriodRange } from '../../period-selector';
+import { buildCustomerCsv, downloadCsv } from '../../data-export';
 
-// Mock Data (TODO: 将来的にAPIに置き換え)
-import { generateMockResponse } from './mockData';
+/**
+ * LostCustomer を CustomerData に変換
+ */
+function mapLostCustomerToCustomerData(lost: LostCustomer): CustomerData {
+    return {
+        key: lost.customerId,
+        name: lost.customerName,
+        weight: lost.prevTotalQtyKg,
+        amount: lost.prevTotalAmountYen,
+        sales: lost.salesRepName || '不明',
+        lastDeliveryDate: lost.lastVisitDate,
+    };
+}
 
 export interface CustomerChurnViewModel {
     // Period Selection
@@ -29,45 +39,34 @@ export interface CustomerChurnViewModel {
     setPreviousStart: (date: Dayjs | null) => void;
     setPreviousEnd: (date: Dayjs | null) => void;
     
+    // Sales Rep Filter
+    salesReps: SalesRep[];
+    selectedSalesRepIds: string[];
+    setSelectedSalesRepIds: (ids: string[]) => void;
+    
     // Data Loading
     isLoading: boolean;
     isAnalyzing: boolean;
     analysisStarted: boolean;
-    dataSource: CustomerData[];
     
-    // Customer Data
-    currentCustomers: CustomerData[];
-    previousCustomers: CustomerData[];
-    
-    // Customer Comparison
+    // Customer Comparison (filtered)
     lostCustomers: CustomerData[];
-    commonCustomers: CustomerData[];
-    newCustomers: CustomerData[];
     
     // UI State
     isButtonDisabled: boolean;
-    downloadingExcel: boolean;
     
     // Actions
-    handleSearch: () => Promise<void>;
     handleAnalyze: () => Promise<void>;
-    handleDownloadLostCsv: () => void;
     handleDownloadLostCustomersCsv: () => void;
     resetConditions: () => void;
-    
-    // Excel Export
-    isDownloading: boolean;
-    handleDownloadExcel: () => Promise<void>;
 }
 
 /**
  * 顧客離脱分析の主ViewModel
  * 
- * @param apiPostBlob - API呼び出し関数（DI）
+ * Repository パターンを使用してバックエンドAPIと連携
  */
-export function useCustomerChurnViewModel(
-    apiPostBlob: <T>(url: string, data: T) => Promise<Blob>
-): CustomerChurnViewModel {
+export function useCustomerChurnViewModel(): CustomerChurnViewModel {
     // Sub-feature: Period Selection
     const {
         currentStart,
@@ -80,27 +79,49 @@ export function useCustomerChurnViewModel(
         setPreviousEnd,
     } = usePeriodSelector();
     
-    // Sub-feature: Excel Download
-    const { isDownloading, handleDownload: handleExcelDownload } = useExcelDownload(apiPostBlob);
+    // Sales Rep Filter
+    const [salesReps, setSalesReps] = useState<SalesRep[]>([]);
+    const [selectedSalesRepIds, setSelectedSalesRepIds] = useState<string[]>([]);
     
     // Data Loading
     const [isLoading, setIsLoading] = useState(false);
     const [analysisStarted, setAnalysisStarted] = useState(false);
-    const [currentData, setCurrentData] = useState<CustomerData[]>([]);
-    const [previousData, setPreviousData] = useState<CustomerData[]>([]);
+    const [lostCustomersData, setLostCustomersData] = useState<CustomerData[]>([]);
+    const [allLostCustomersData, setAllLostCustomersData] = useState<CustomerData[]>([]);
     
-    // Sub-feature: Customer Comparison
-    const { lostCustomers, retainedCustomers, newCustomers } = useCustomerComparison(currentData, previousData);
+    // Load sales reps on mount
+    useEffect(() => {
+        const loadSalesReps = async () => {
+            try {
+                const reps = await customerChurnRepository.getSalesReps();
+                setSalesReps(reps);
+            } catch (error) {
+                console.error('Failed to load sales reps:', error);
+                message.error('営業担当者リストの取得に失敗しました');
+            }
+        };
+        loadSalesReps();
+    }, []);
     
-    // Combine all data for display
-    const dataSource = [...currentData, ...previousData];
+    // Filter lost customers by selected sales reps
+    useEffect(() => {
+        if (selectedSalesRepIds.length === 0) {
+            setLostCustomersData(allLostCustomersData);
+        } else {
+            const filtered = allLostCustomersData.filter(customer => 
+                selectedSalesRepIds.some(id => {
+                    const rep = salesReps.find(r => r.salesRepId === id);
+                    return rep && customer.sales === rep.salesRepName;
+                })
+            );
+            setLostCustomersData(filtered);
+        }
+    }, [selectedSalesRepIds, allLostCustomersData, salesReps]);
     
     /**
-     * 検索処理
-     * 
-     * TODO: 現在はモックデータを使用。将来的にapiPostBlobでバックエンドAPIと連携
+     * 分析処理（Repository経由でバックエンドAPIを呼び出し）
      */
-    const handleSearch = async (): Promise<void> => {
+    const handleAnalyze = async (): Promise<void> => {
         if (!isValidPeriodRange(currentStart, currentEnd) || !isValidPeriodRange(previousStart, previousEnd)) {
             message.error('有効な期間を選択してください');
             return;
@@ -108,44 +129,45 @@ export function useCustomerChurnViewModel(
         
         setIsLoading(true);
         try {
-            // 期間から月リストを生成
-            const currentMonths = getMonthRange(currentStart!, currentEnd!);
-            const previousMonths = getMonthRange(previousStart!, previousEnd!);
+            // 月の選択を日付範囲に変換
+            // 開始月 → 月初（1日）、終了月 → 月末（最終日）
+            const currentStartDate = currentStart!.startOf('month').format('YYYY-MM-DD');
+            const currentEndDate = currentEnd!.endOf('month').format('YYYY-MM-DD');
+            const previousStartDate = previousStart!.startOf('month').format('YYYY-MM-DD');
+            const previousEndDate = previousEnd!.endOf('month').format('YYYY-MM-DD');
             
-            // TODO: 将来的にはこのコードに置き換え
-            /*
-            const blob = await apiPostBlob<Record<string, string | undefined>>(
-                '/core_api/customer-comparison',
-                {
-                    targetStart: currentStart?.format('YYYY-MM'),
-                    targetEnd: currentEnd?.format('YYYY-MM'),
-                    compareStart: previousStart?.format('YYYY-MM'),
-                    compareEnd: previousEnd?.format('YYYY-MM'),
-                }
-            );
-            const text = await blob.text();
-            const data = JSON.parse(text);
-            */
+            console.log('[DEBUG] 送信パラメータ:', {
+                currentStart: currentStartDate,
+                currentEnd: currentEndDate,
+                previousStart: previousStartDate,
+                previousEnd: previousEndDate,
+            });
             
-            // 暫定: モックデータを使用
-            await new Promise(resolve => setTimeout(resolve, 800)); // 読み込み感を演出
-            const data = generateMockResponse(currentMonths, previousMonths);
+            // Repository経由でバックエンドAPIを呼び出し
+            const lostCustomers = await customerChurnRepository.analyze({
+                currentStart: currentStartDate,
+                currentEnd: currentEndDate,
+                previousStart: previousStartDate,
+                previousEnd: previousEndDate,
+            });
             
-            // Parse API response into current/previous data
-            const monthlyData: Record<string, CustomerData[]> = data.results || {};
+            // デバッグログ: 野呂商店を含むデータを確認
+            const noroCustomers = lostCustomers.filter(c => c.customerName.includes('野呂'));
+            if (noroCustomers.length > 0) {
+                console.warn('[DEBUG] 野呂商店が含まれています:', noroCustomers);
+            }
+            console.log('[DEBUG] 受信した離脱顧客数:', lostCustomers.length);
             
-            // Sub-feature: Customer Aggregation
-            const aggregatedCurrent = aggregateCustomers(currentMonths, monthlyData);
-            const aggregatedPrevious = aggregateCustomers(previousMonths, monthlyData);
-            
-            setCurrentData(aggregatedCurrent);
-            setPreviousData(aggregatedPrevious);
+            // LostCustomer -> CustomerData に変換
+            const mappedData = lostCustomers.map(mapLostCustomerToCustomerData);
+            setAllLostCustomersData(mappedData);
+            setLostCustomersData(mappedData);
             setAnalysisStarted(true);
             
-            message.success('分析が完了しました');
+            message.success(`分析が完了しました（離脱顧客: ${lostCustomers.length}件）`);
         } catch (error) {
             console.error('Analysis error:', error);
-            message.error('データ取得に失敗しました');
+            message.error('分析に失敗しました');
         } finally {
             setIsLoading(false);
         }
@@ -159,8 +181,7 @@ export function useCustomerChurnViewModel(
         setCurrentEnd(null);
         setPreviousStart(null);
         setPreviousEnd(null);
-        setCurrentData([]);
-        setPreviousData([]);
+        setLostCustomersData([]);
         setAnalysisStarted(false);
     };
     
@@ -172,24 +193,17 @@ export function useCustomerChurnViewModel(
     /**
      * 離脱顧客のCSVダウンロード
      */
-    const handleDownloadLostCsv = (): void => {
-        if (lostCustomers.length === 0) {
+    const handleDownloadLostCustomersCsv = (): void => {
+        if (lostCustomersData.length === 0) {
             message.warning('離脱顧客がありません');
             return;
         }
         
         // Sub-feature: Data Export (CSV)
-        const csvContent = buildCustomerCsv(lostCustomers);
-        const filename = `離脱顧客リスト_${currentStart?.format('YYYYMM')}-${currentEnd?.format('YYYYMM')}.csv`;
+        const csvContent = buildCustomerCsv(lostCustomersData);
+        const filename = `離脱顧客リスト_${currentStart?.format('YYYYMMDD')}-${currentEnd?.format('YYYYMMDD')}.csv`;
         downloadCsv(csvContent, filename);
         message.success('CSVをダウンロードしました');
-    };
-    
-    /**
-     * Excelダウンロード
-     */
-    const handleDownloadExcel = async (): Promise<void> => {
-        await handleExcelDownload(currentStart, currentEnd, previousStart, previousEnd);
     };
     
     return {
@@ -203,34 +217,25 @@ export function useCustomerChurnViewModel(
         setPreviousStart,
         setPreviousEnd,
         
+        // Sales Rep Filter
+        salesReps,
+        selectedSalesRepIds,
+        setSelectedSalesRepIds,
+        
         // Data Loading
         isLoading,
         isAnalyzing: isLoading,
         analysisStarted,
-        dataSource,
-        
-        // Customer Data
-        currentCustomers: currentData,
-        previousCustomers: previousData,
         
         // Customer Comparison
-        lostCustomers,
-        commonCustomers: retainedCustomers,
-        newCustomers,
+        lostCustomers: lostCustomersData,
         
         // UI State
         isButtonDisabled,
-        downloadingExcel: isDownloading,
         
         // Actions
-        handleSearch,
-        handleAnalyze: handleSearch,
-        handleDownloadLostCsv,
-        handleDownloadLostCustomersCsv: handleDownloadLostCsv,
+        handleAnalyze,
+        handleDownloadLostCustomersCsv,
         resetConditions,
-        
-        // Excel Export
-        isDownloading,
-        handleDownloadExcel,
     };
 }

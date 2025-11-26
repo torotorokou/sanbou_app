@@ -111,6 +111,54 @@ class ManualListResponse(BaseModel):
 
 
 # ========================================
+# Customer Churn DTOs
+# ========================================
+
+class CustomerChurnAnalyzeRequest(BaseModel):
+    """Request to analyze customer churn."""
+    current_start: date_type = Field(description="Current period start date (YYYY-MM-DD)")
+    current_end: date_type = Field(description="Current period end date (YYYY-MM-DD)")
+    previous_start: date_type = Field(description="Previous period start date (YYYY-MM-DD)")
+    previous_end: date_type = Field(description="Previous period end date (YYYY-MM-DD)")
+
+
+class LostCustomerDTO(BaseModel):
+    """Lost customer data transfer object."""
+    customer_id: str = Field(description="Customer ID")
+    customer_name: str = Field(description="Customer name")
+    sales_rep_id: Optional[str] = Field(default=None, description="Sales representative ID")
+    sales_rep_name: Optional[str] = Field(default=None, description="Sales representative name")
+    last_visit_date: date_type = Field(description="Last visit date in previous period")
+    prev_visit_days: int = Field(description="Number of visit days in previous period")
+    prev_total_amount_yen: float = Field(description="Total amount in yen for previous period")
+    prev_total_qty_kg: float = Field(description="Total quantity in kg for previous period")
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class CustomerChurnAnalyzeResponse(BaseModel):
+    """Response for customer churn analysis."""
+    lost_customers: list[LostCustomerDTO] = Field(description="List of lost customers")
+
+
+# ========================================
+# Sales Rep DTOs
+# ========================================
+
+class SalesRepDTO(BaseModel):
+    """Sales representative data."""
+    sales_rep_id: str = Field(description="Sales rep ID")
+    sales_rep_name: str = Field(description="Sales rep name")
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class SalesRepListResponse(BaseModel):
+    """Response for sales rep list."""
+    sales_reps: list[SalesRepDTO] = Field(description="List of sales representatives")
+
+
+# ========================================
 # Dashboard Target DTOs
 # ========================================
 

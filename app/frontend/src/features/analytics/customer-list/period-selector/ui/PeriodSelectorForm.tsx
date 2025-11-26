@@ -17,7 +17,17 @@ type Props = {
 /**
  * Period Selector Form Component
  * 
- * 今期・前期の期間選択フォーム
+ * 期間選択フォーム
+ * 
+ * ロジック説明：
+ * - 最新期間：最近の期間（この期間に取引がなければ「離脱」と判定）
+ * - 比較期間：過去の基準期間（この期間に取引があった顧客を基準とする）
+ * - 離脱顧客の定義：比較期間に取引があったが、最新期間に取引がない顧客
+ * 
+ * 例：
+ * - 最新期間: 2025-01〜2025-11 →  この期間に取引がない
+ * - 比較期間: 2024-01〜2024-12 →  この期間に取引があった
+ * - 結果: 2024年は取引していたが2025年は取引がない顧客 = 離脱顧客
  */
 const PeriodSelectorForm: React.FC<Props> = ({
     currentStart,
@@ -30,9 +40,12 @@ const PeriodSelectorForm: React.FC<Props> = ({
     setPreviousEnd,
 }) => (
     <>
-        <Title level={5} style={{ marginBottom: 12 }}>
-            今期（分析対象期間）
+        <Title level={5} style={{ marginBottom: 8 }}>
+            最新期間（この期間に取引がなければ「離脱」）
         </Title>
+        <Typography.Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 12 }}>
+            最近の期間を指定してください（例：2025-01〜2025-11）
+        </Typography.Text>
         <div style={{ marginBottom: 8 }}>
             <div style={{ marginBottom: 8 }}>
                 開始月：
@@ -59,8 +72,12 @@ const PeriodSelectorForm: React.FC<Props> = ({
             </div>
         </div>
         <Title level={5} style={{ margin: '24px 0 8px 0' }}>
-            前期（比較期間）
+            比較期間（過去の基準期間）
         </Title>
+        <Typography.Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 12 }}>
+            過去の基準期間を指定してください（例：2024-01〜2024-12）<br/>
+            ※この期間に取引があり、最新期間に取引がない顧客を「離脱」として抽出
+        </Typography.Text>
         <div style={{ marginBottom: 8 }}>
             <div style={{ marginBottom: 8 }}>
                 開始月：
