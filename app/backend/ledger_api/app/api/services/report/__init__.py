@@ -14,7 +14,7 @@ Report service components.
 """
 
 # Core components
-from app.api.services.report.core import (
+from app.application.usecases.report import (
     BaseReportGenerator,
     BaseInteractiveReportGenerator,
     ReportProcessingService,
@@ -22,7 +22,7 @@ from app.api.services.report.core import (
 )
 
 # Concrete generators
-from app.api.services.report.core.concrete_generators import (
+from app.application.usecases.report import (
     FactoryReportGenerator,
     BalanceSheetGenerator,
     AverageSheetGenerator,

@@ -1,19 +1,14 @@
 """
-Core report service components.
+Backward compatibility for core report components.
 
-レポート生成のコアコンポーネントを提供します。
-
-モジュール構成:
-- base_generators/: 基底ジェネレータークラス
-- processors/: 処理サービス
-- concrete_generators: 具体的なレポートジェネレーター実装
+新しい場所: app.application.usecases.report
 """
 
-from app.api.services.report.core.base_generators import (
+from app.application.usecases.report import (
     BaseReportGenerator,
     BaseInteractiveReportGenerator,
 )
-from app.api.services.report.core.processors import (
+from app.application.usecases.report import (
     ReportProcessingService,
     InteractiveReportProcessingService,
 )

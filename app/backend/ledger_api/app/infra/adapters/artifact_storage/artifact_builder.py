@@ -9,7 +9,7 @@ from typing import Any, Dict, Optional
 
 from fastapi.responses import JSONResponse
 
-from app.api.services.report.core.base_generators import BaseReportGenerator
+from app.application.usecases.report.base_generators import BaseReportGenerator
 from app.infra.adapters.artifact_storage.artifact_service import get_report_artifact_storage
 from app.infra.adapters.file_processing.pdf_conversion import PdfConversionError, convert_excel_to_pdf
 
