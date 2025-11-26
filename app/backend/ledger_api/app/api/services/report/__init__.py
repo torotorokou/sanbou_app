@@ -31,14 +31,14 @@ from app.api.services.report.core.concrete_generators import (
 )
 
 # Artifacts
-from app.api.services.report.artifacts import (
+from app.infra.adapters.artifact_storage import (
     get_report_artifact_storage,
     ReportArtifactStorage,
     ArtifactResponseBuilder,
 )
 
 # Session
-from app.api.services.report.session import (
+from app.infra.adapters.session import (
     session_store,
     SessionStore,
 )
@@ -56,13 +56,13 @@ from app.api.services.report.core.processors.report_processing_service import (
 from app.api.services.report.core.processors.interactive_report_processing_service import (
     InteractiveReportProcessingService as interactive_report_processing_service_compat,
 )
-from app.api.services.report.artifacts.artifact_service import (
+from app.infra.adapters.artifact_storage import (
     get_report_artifact_storage as artifact_service_compat,
 )
-from app.api.services.report.artifacts.artifact_builder import (
+from app.infra.adapters.artifact_storage import (
     ArtifactResponseBuilder as artifact_builder_compat,
 )
-from app.api.services.report.session.session_store import (
+from app.infra.adapters.session import (
     session_store as session_store_compat,
 )
 
