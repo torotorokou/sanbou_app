@@ -35,7 +35,7 @@ FROM python:3.12-slim AS dev
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PYTHONPATH=/backend:/opt/backend_shared/src \
-    BASE_API_DIR=/backend/app/api
+    BASE_API_DIR=/backend/app
 
 WORKDIR /backend
 
@@ -86,7 +86,7 @@ FROM python:3.12-slim AS prod
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PYTHONPATH=/backend \
-    BASE_API_DIR=/backend/app/api
+    BASE_API_DIR=/backend/app
 
 WORKDIR /backend
 
