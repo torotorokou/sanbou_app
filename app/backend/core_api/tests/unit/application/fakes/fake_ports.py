@@ -6,6 +6,81 @@ from typing import List, Optional, Dict, Any
 
 from app.domain.inbound import InboundDailyRow, CumScope
 from app.domain.models import ForecastJobCreate, ForecastJobResponse, PredictionDTO
+from app.domain.ports.calendar_port import ICalendarQuery
+from app.domain.ports.upload_status_port import IUploadStatusQuery
+
+
+class FakeCalendarQuery(ICalendarQuery):
+    """
+    Fake implementation of ICalendarQuery for testing.
+    
+    Allows injecting test data via constructor.
+    """
+    
+    def __init__(self, calendar_data: Optional[List[Dict[str, Any]]] = None):
+        """
+        Args:
+            calendar_data: カレンダーデータのリスト（テスト用）
+        """
+        self._calendar_data = calendar_data or []
+    
+    def get_month_calendar(self, year: int, month: int) -> List[Dict[str, Any]]:
+        """Return preset calendar data"""
+        return self._calendar_data
+    
+    def set_calendar_data(self, data: List[Dict[str, Any]]) -> None:
+        """Update calendar data for testing"""
+        self._calendar_data = data
+
+
+class FakeUploadStatusQuery(IUploadStatusQuery):
+    """
+    Fake implementation of IUploadStatusQuery for testing.
+    
+    Allows injecting test data via constructor.
+    """
+    
+    def __init__(
+        self,
+        upload_status: Optional[Dict[str, Any]] = None,
+        upload_calendar: Optional[List[Dict[str, Any]]] = None,
+    ):
+        """
+        Args:
+            upload_status: アップロードステータスデータ（テスト用）
+            upload_calendar: アップロードカレンダーデータ（テスト用）
+        """
+        self._upload_status = upload_status
+        self._upload_calendar = upload_calendar or []
+        self._deleted_count = 0
+    
+    def get_upload_status(self, upload_file_id: int) -> Optional[Dict[str, Any]]:
+        """Return preset upload status"""
+        return self._upload_status
+    
+    def get_upload_calendar(self, year: int, month: int) -> List[Dict[str, Any]]:
+        """Return preset upload calendar"""
+        return self._upload_calendar
+    
+    def soft_delete_by_date_and_kind(
+        self, *, upload_file_id: int, target_date: date_type, csv_kind: str, deleted_by: Optional[str] = None
+    ) -> int:
+        """Mock soft delete operation"""
+        self._deleted_count += 1
+        return 1  # Simulate 1 row deleted
+    
+    # Test helpers
+    def set_upload_status(self, status: Optional[Dict[str, Any]]) -> None:
+        """Update upload status for testing"""
+        self._upload_status = status
+    
+    def set_upload_calendar(self, calendar: List[Dict[str, Any]]) -> None:
+        """Update upload calendar for testing"""
+        self._upload_calendar = calendar
+    
+    def get_deleted_count(self) -> int:
+        """Get number of delete calls for testing"""
+        return self._deleted_count
 
 
 class FakeDashboardQueryPort:
