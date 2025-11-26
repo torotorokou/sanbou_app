@@ -16,7 +16,7 @@ from app.application.usecases.report.processors.interactive_report_processing_se
     InteractiveReportProcessingService,
 )
 # 移行済みの実装ファイルからインポート
-from app.api.services.report.ledger.interactive import (
+from app.application.usecases.reports.interactive import (
     BlockUnitPriceInteractive,
 )
 

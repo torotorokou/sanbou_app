@@ -13,19 +13,19 @@ from app.infra.report_utils import (
     load_all_filtered_dataframes,
     load_master_and_template,
 )
-from app.api.services.report.ledger.processors.management_sheet.factory_report import (
+from app.application.domain.reports.processors.management_sheet.factory_report import (
     update_from_factory_report,
 )
-from app.api.services.report.ledger.processors.management_sheet.balance_sheet import (
+from app.application.domain.reports.processors.management_sheet.balance_sheet import (
     update_from_balance_sheet,
 )
-from app.api.services.report.ledger.processors.management_sheet.average_sheet import (
+from app.application.domain.reports.processors.management_sheet.average_sheet import (
     update_from_average_sheet,
 )
-from app.api.services.report.ledger.processors.management_sheet.scrap_senbetsu import (
+from app.application.domain.reports.processors.management_sheet.scrap_senbetsu import (
     scrap_senbetsu,
 )
-from app.api.services.report.ledger.processors.management_sheet.manage_etc import (
+from app.application.domain.reports.processors.management_sheet.manage_etc import (
     manage_etc,
 )
 

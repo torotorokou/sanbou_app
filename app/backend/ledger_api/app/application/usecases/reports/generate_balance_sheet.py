@@ -25,7 +25,7 @@ from backend_shared.utils.date_filter_utils import (
 )
 
 # 既存のドメインロジックを再利用
-from app.api.services.report.ledger.balance_sheet import process as balance_sheet_process
+from app.application.usecases.reports.balance_sheet import process as balance_sheet_process
 from app.infra.report_utils import write_values_to_template, get_template_config
 from app.infra.utils.pdf_conversion import convert_excel_to_pdf
 

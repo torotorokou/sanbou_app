@@ -1,4 +1,4 @@
-from app.api.services.report.utils.config import get_required_columns_definition
+from app.application.domain.reports.utils.config import get_required_columns_definition
 from app.infra.report_utils import app_logger
 
 

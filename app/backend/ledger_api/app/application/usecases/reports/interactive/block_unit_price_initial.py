@@ -9,7 +9,7 @@ from typing import Any, Dict, List, Tuple, Union
 import traceback
 import pandas as pd
 
-from app.api.services.report.ledger.processors.block_unit_price.process0 import (
+from app.application.domain.reports.processors.block_unit_price.process0 import (
     make_df_shipment_after_use,
 )
 from app.infra.report_utils import (
@@ -32,7 +32,7 @@ from .block_unit_price_utils import (
 )
 
 # Legacy exports for compatibility
-from app.api.services.report.ledger.processors.block_unit_price import process0 as _process0
+from app.application.domain.reports.processors.block_unit_price import process0 as _process0
 apply_unit_price_addition = _process0.apply_unit_price_addition
 apply_transport_fee_by1 = _process0.apply_transport_fee_by1
 

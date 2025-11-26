@@ -13,7 +13,7 @@ from app.infra.report_utils import (
     load_all_filtered_dataframes,
     load_master_and_template,
 )
-from app.api.services.report.ledger.processors.average_sheet.processors import (
+from app.application.domain.reports.processors.average_sheet.processors import (
     tikan,
     aggregate_vehicle_data,
     calculate_item_summary,

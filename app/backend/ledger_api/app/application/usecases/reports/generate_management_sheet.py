@@ -12,7 +12,7 @@ from app.application.ports import CsvGateway, ReportRepository
 from app.application.domain.reports.management_sheet import ManagementSheet
 from backend_shared.adapters.fastapi.error_handlers import DomainError
 from backend_shared.utils.date_filter_utils import filter_by_period_from_min_date as shared_filter_by_period_from_min_date
-from app.api.services.report.ledger.management_sheet import process as management_sheet_process
+from app.application.usecases.reports.management_sheet import process as management_sheet_process
 from app.infra.report_utils import write_values_to_template, get_template_config
 from app.infra.utils.pdf_conversion import convert_excel_to_pdf
 
