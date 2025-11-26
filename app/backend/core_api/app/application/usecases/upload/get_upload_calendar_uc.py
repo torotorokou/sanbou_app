@@ -7,6 +7,7 @@ import logging
 from typing import List, Dict, Any
 
 from app.domain.ports.upload_status_port import IUploadStatusQuery
+from app.shared.logging_utils import log_usecase_execution
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +29,7 @@ class GetUploadCalendarUseCase:
         """
         self.query = query
     
+    @log_usecase_execution(usecase_name="GetUploadCalendar", log_result=True)
     def execute(self, year: int, month: int) -> List[Dict[str, Any]]:
         """
         指定月のアップロードカレンダーデータを取得

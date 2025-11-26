@@ -8,6 +8,7 @@ import logging
 from typing import List, Dict, Any
 
 from app.domain.ports.calendar_port import ICalendarQuery
+from app.shared.logging_utils import log_usecase_execution
 
 logger = logging.getLogger(__name__)
 
@@ -29,6 +30,7 @@ class GetCalendarMonthUseCase:
         """
         self.query = query
     
+    @log_usecase_execution(usecase_name="GetCalendarMonth", log_result=True)
     def execute(self, year: int, month: int) -> List[Dict[str, Any]]:
         """
         指定された年月のカレンダーデータを取得

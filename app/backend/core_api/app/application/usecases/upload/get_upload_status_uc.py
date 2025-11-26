@@ -7,6 +7,7 @@ import logging
 from typing import Optional, Dict, Any
 
 from app.domain.ports.upload_status_port import IUploadStatusQuery
+from app.shared.logging_utils import log_usecase_execution
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +29,7 @@ class GetUploadStatusUseCase:
         """
         self.query = query
     
+    @log_usecase_execution(usecase_name="GetUploadStatus")
     def execute(self, upload_file_id: int) -> Optional[Dict[str, Any]]:
         """
         アップロードファイルのステータスを取得
