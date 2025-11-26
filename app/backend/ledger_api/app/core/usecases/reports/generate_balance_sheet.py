@@ -44,7 +44,7 @@ class GenerateBalanceSheetUseCase:
         self.csv_gateway = csv_gateway
         self.report_repository = report_repository
 
-    async def execute(
+    def execute(
         self,
         shipment: Optional[UploadFile] = None,
         yard: Optional[UploadFile] = None,
@@ -71,7 +71,7 @@ class GenerateBalanceSheetUseCase:
                 for k, v in {"shipment": shipment, "yard": yard, "receive": receive}.items()
                 if v is not None
             }
-            dfs = await self.csv_gateway.read_csv_files(files)
+            dfs = self.csv_gateway.read_csv_files(files)
 
             # Step 2: 期間フィルタ（オプション）
             if period_type:
@@ -142,31 +142,29 @@ class GenerateBalanceSheetUseCase:
                 title="内部エラー",
             ) from ex
 
-    def _generate_excel(self, result_df, report_date: date) -> bytes:
+    def _generate_excel(self, result_df, report_date: date) -> BytesIO:
         """Excel生成"""
         template_config = get_template_config()["balance_sheet"]
-        template_path = Path(template_config["template_path"])
+        template_path = template_config["template_path"]
+        extracted_date = report_date.strftime("%Y年%m月%d日")
         
-        excel_buffer = BytesIO()
-        write_values_to_template(
+        excel_bytes = write_values_to_template(
+            df=result_df,
             template_path=template_path,
-            result_df=result_df,
-            target_date=report_date,
-            output=excel_buffer,
+            extracted_date=extracted_date,
         )
-        excel_buffer.seek(0)
-        return excel_buffer.read()
+        return excel_bytes
 
-    def _generate_pdf(self, excel_bytes: bytes) -> bytes:
+    def _generate_pdf(self, excel_bytes: BytesIO) -> BytesIO:
         """PDF生成"""
         with tempfile.NamedTemporaryFile(suffix=".xlsx", delete=False) as tmp_excel:
-            tmp_excel.write(excel_bytes)
+            tmp_excel.write(excel_bytes.getvalue())
             tmp_excel_path = Path(tmp_excel.name)
 
         try:
-            pdf_buffer = BytesIO()
-            convert_excel_to_pdf(tmp_excel_path, pdf_buffer)
-            pdf_buffer.seek(0)
-            return pdf_buffer.read()
+            pdf_bytes_raw = convert_excel_to_pdf(tmp_excel_path)
+            pdf_bytes = BytesIO(pdf_bytes_raw)
+            return pdf_bytes
         finally:
-            tmp_excel_path.unlink(missing_ok=True)
+            if tmp_excel_path.exists():
+                tmp_excel_path.unlink()

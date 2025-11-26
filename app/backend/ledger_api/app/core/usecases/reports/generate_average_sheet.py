@@ -3,6 +3,8 @@ Generate Average Sheet UseCase.
 
 単価平均表生成のアプリケーションロジック。
 """
+import logging
+import time
 from datetime import date
 from io import BytesIO
 from pathlib import Path
@@ -32,7 +34,7 @@ class GenerateAverageSheetUseCase:
         self.csv_gateway = csv_gateway
         self.report_repository = report_repository
 
-    async def execute(
+    def execute(
         self,
         shipment: Optional[UploadFile] = None,
         yard: Optional[UploadFile] = None,
@@ -42,7 +44,7 @@ class GenerateAverageSheetUseCase:
         try:
             print("[UseCase] Step 1: CSV読み込み")
             files = {k: v for k, v in {"shipment": shipment, "yard": yard, "receive": receive}.items() if v is not None}
-            dfs = await self.csv_gateway.read_csv_files(files)
+            dfs = self.csv_gateway.read_csv_files(files)
 
             if period_type:
                 print(f"[UseCase] Step 2: 期間フィルタ - {period_type}")
@@ -101,22 +103,26 @@ class GenerateAverageSheetUseCase:
                 title="内部エラー",
             ) from ex
 
-    def _generate_excel(self, result_df, report_date: date) -> bytes:
+    def _generate_excel(self, result_df, report_date: date) -> BytesIO:
         template_config = get_template_config()["average_sheet"]
-        template_path = Path(template_config["template_path"])
-        excel_buffer = BytesIO()
-        write_values_to_template(template_path=template_path, result_df=result_df, target_date=report_date, output=excel_buffer)
-        excel_buffer.seek(0)
-        return excel_buffer.read()
+        template_path = template_config["template_path"]
+        extracted_date = report_date.strftime("%Y年%m月%d日")
+        
+        excel_bytes = write_values_to_template(
+            df=result_df,
+            template_path=template_path,
+            extracted_date=extracted_date,
+        )
+        return excel_bytes
 
-    def _generate_pdf(self, excel_bytes: bytes) -> bytes:
+    def _generate_pdf(self, excel_bytes: BytesIO) -> BytesIO:
         with tempfile.NamedTemporaryFile(suffix=".xlsx", delete=False) as tmp:
-            tmp.write(excel_bytes)
+            tmp.write(excel_bytes.getvalue())
             tmp_path = Path(tmp.name)
         try:
-            pdf_buffer = BytesIO()
-            convert_excel_to_pdf(tmp_path, pdf_buffer)
-            pdf_buffer.seek(0)
-            return pdf_buffer.read()
+            pdf_bytes_raw = convert_excel_to_pdf(tmp_path)
+            pdf_bytes = BytesIO(pdf_bytes_raw)
+            return pdf_bytes
         finally:
-            tmp_path.unlink(missing_ok=True)
+            if tmp_path.exists():
+                tmp_path.unlink()
