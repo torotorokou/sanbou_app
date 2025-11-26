@@ -1,5 +1,5 @@
 import pandas as pd
-from app.api.services.report.utils.paths import MainPath
+from app.infra.report_utils import MainPath
 
 
 def clean_na_strings(val):

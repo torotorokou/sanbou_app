@@ -1,7 +1,7 @@
 import yaml
 import pandas as pd
 from typing import Optional, Union
-from app.api.services.report.utils.paths import MainPath
+from .main_path import MainPath
 
 
 def clean_na_strings(val):

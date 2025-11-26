@@ -14,7 +14,7 @@ import re
 import pandas as pd
 from pandas.api.types import is_datetime64_any_dtype as _is_dt
 
-from app.api.services.report.utils.logging import app_logger
+from app.infra.report_utils import app_logger
 
 logger = app_logger()
 

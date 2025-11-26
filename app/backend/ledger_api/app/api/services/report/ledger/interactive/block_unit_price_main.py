@@ -11,7 +11,7 @@ import pandas as pd
 from app.api.services.report.core.base_generators import (
     BaseInteractiveReportGenerator,
 )
-from app.api.services.report.utils.logging import app_logger
+from app.infra.report_utils import app_logger
 
 # 分離したモジュールをインポート
 from .block_unit_price_initial import execute_initial_step
