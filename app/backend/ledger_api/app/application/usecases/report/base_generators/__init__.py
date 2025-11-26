@@ -14,7 +14,6 @@ from app.application.usecases.report.base_generators.base_report_generator impor
 from app.application.usecases.report.base_generators.base_interactive_report_generator import (
     BaseInteractiveReportGenerator,
 )
-)
 
 __all__ = [
     "BaseReportGenerator",

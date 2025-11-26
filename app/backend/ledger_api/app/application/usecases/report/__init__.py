@@ -12,22 +12,13 @@ from app.application.usecases.report.processors import (
     ReportProcessingService,
     InteractiveReportProcessingService,
 )
-from app.application.usecases.report.concrete_generators import (
-    FactoryReportGenerator,
-    BalanceSheetGenerator,
-    AverageSheetGenerator,
-    BlockUnitPriceGenerator,
-    ManagementSheetGenerator,
-)
+
+# Note: concrete_generators imports are avoided here to prevent circular imports
+# Import them directly where needed instead
 
 __all__ = [
     "BaseReportGenerator",
     "BaseInteractiveReportGenerator",
     "ReportProcessingService",
     "InteractiveReportProcessingService",
-    "FactoryReportGenerator",
-    "BalanceSheetGenerator",
-    "AverageSheetGenerator",
-    "BlockUnitPriceGenerator",
-    "ManagementSheetGenerator",
 ]
