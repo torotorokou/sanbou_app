@@ -13,7 +13,7 @@ from typing import Optional
 
 from app.core.ports import ReportRepository
 from app.core.ports.report_repository import ArtifactUrls
-from app.api.services.report.artifacts import get_report_artifact_storage
+from app.infra.adapters.artifact_storage import get_report_artifact_storage
 
 logger = logging.getLogger(__name__)
 

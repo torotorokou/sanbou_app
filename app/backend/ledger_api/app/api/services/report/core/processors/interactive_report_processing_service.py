@@ -21,7 +21,7 @@ from app.api.services.report.core.base_generators import (
     BaseInteractiveReportGenerator,
 )
 from app.api.services.report.core.processors.report_processing_service import ReportProcessingService
-from app.api.services.report.session import session_store
+from app.infra.adapters.session import session_store
 
 # (NoFilesUploadedResponse, read_csv_files は base クラス経由で利用しないため削除)
 from backend_shared.utils.date_filter_utils import (
