@@ -8,10 +8,10 @@ Core base generators for report generation.
 - base_interactive_report_generator: インタラクティブレポート生成基底クラス
 """
 
-from app.application.usecases.report.base_generators.base_report_generator import (
+from app.application.usecases.reports.base_generators.base_report_generator import (
     BaseReportGenerator,
 )
-from app.application.usecases.report.base_generators.base_interactive_report_generator import (
+from app.application.usecases.reports.base_generators.base_interactive_report_generator import (
     BaseInteractiveReportGenerator,
 )
 

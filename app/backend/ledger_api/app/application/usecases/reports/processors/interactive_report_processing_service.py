@@ -17,10 +17,10 @@ from fastapi import UploadFile
 from fastapi.responses import JSONResponse
 
 from backend_shared.adapters.fastapi.error_handlers import DomainError
-from app.application.usecases.report.base_generators import (
+from app.application.usecases.reports.base_generators import (
     BaseInteractiveReportGenerator,
 )
-from app.application.usecases.report.processors.report_processing_service import ReportProcessingService
+from app.application.usecases.reports.processors.report_processing_service import ReportProcessingService
 from app.infra.adapters.session import session_store
 
 # (NoFilesUploadedResponse, read_csv_files は base クラス経由で利用しないため削除)
