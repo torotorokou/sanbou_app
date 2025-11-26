@@ -1,4 +1,4 @@
-"""Block Unit Price Domain Model."""
+"""Management Sheet Domain Model."""
 from dataclasses import dataclass
 from datetime import date
 from typing import List
@@ -6,8 +6,8 @@ import pandas as pd
 
 
 @dataclass
-class BlockUnitPrice:
-    """ブロック単価表エンティティ"""
+class ManagementSheet:
+    """経営管理表エンティティ"""
     report_date: date
     shipment_items: List
     yard_items: List
@@ -15,8 +15,8 @@ class BlockUnitPrice:
 
     @classmethod
     def from_dataframes(cls, df_shipment, df_yard, df_receive):
-        from app.core.domain.reports.factory_report import ShipmentItem, YardItem
-        from app.core.domain.reports.balance_sheet import ReceiveItem
+        from app.application.domain.reports.factory_report import ShipmentItem, YardItem
+        from app.application.domain.reports.balance_sheet import ReceiveItem
         
         shipment_items, yard_items, receive_items = [], [], []
         report_date = date.today()

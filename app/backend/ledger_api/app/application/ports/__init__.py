@@ -7,8 +7,8 @@ UseCase 層はこれらの抽象に依存し、具体的な実装（Adapter）�
 依存性逆転の原則（DIP）により、ビジネスロジックが外部技術から独立します。
 """
 
-from app.core.ports.csv_gateway import CsvGateway
-from app.core.ports.report_repository import ReportRepository
+from app.application.ports.csv_gateway import CsvGateway
+from app.application.ports.report_repository import ReportRepository
 
 __all__ = [
     "CsvGateway",

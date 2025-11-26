@@ -11,8 +11,8 @@ from datetime import date
 from io import BytesIO
 from typing import Optional
 
-from app.core.ports import ReportRepository
-from app.core.ports.report_repository import ArtifactUrls
+from app.application.ports import ReportRepository
+from app.application.ports.report_repository import ArtifactUrls
 from app.infra.adapters.artifact_storage import get_report_artifact_storage
 
 logger = logging.getLogger(__name__)

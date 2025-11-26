@@ -3,7 +3,7 @@ from typing import Optional
 from fastapi import APIRouter, File, Form, UploadFile, Depends
 from fastapi.responses import JSONResponse
 
-from app.core.usecases.reports.generate_average_sheet import GenerateAverageSheetUseCase
+from app.application.usecases.reports.generate_average_sheet import GenerateAverageSheetUseCase
 from app.config.di_providers import get_average_sheet_usecase
 
 router = APIRouter()

@@ -11,12 +11,12 @@ Dependency Injection (DI) providers.
 
 from functools import lru_cache
 
-from app.core.usecases.reports import GenerateFactoryReportUseCase
-from app.core.usecases.reports.generate_balance_sheet import GenerateBalanceSheetUseCase
-from app.core.usecases.reports.generate_average_sheet import GenerateAverageSheetUseCase
-from app.core.usecases.reports.generate_management_sheet import GenerateManagementSheetUseCase
-from app.core.usecases.reports.generate_block_unit_price import GenerateBlockUnitPriceUseCase
-from app.core.ports import CsvGateway, ReportRepository
+from app.application.usecases.reports import GenerateFactoryReportUseCase
+from app.application.usecases.reports.generate_balance_sheet import GenerateBalanceSheetUseCase
+from app.application.usecases.reports.generate_average_sheet import GenerateAverageSheetUseCase
+from app.application.usecases.reports.generate_management_sheet import GenerateManagementSheetUseCase
+from app.application.usecases.reports.generate_block_unit_price import GenerateBlockUnitPriceUseCase
+from app.application.ports import CsvGateway, ReportRepository
 from app.infra.adapters import PandasCsvGateway, FileSystemReportRepository
 
 

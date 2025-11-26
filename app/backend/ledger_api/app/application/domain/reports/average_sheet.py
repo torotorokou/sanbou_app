@@ -35,8 +35,8 @@ class AverageSheet:
         df_receive: Optional[pd.DataFrame],
     ) -> "AverageSheet":
         """DataFrameから単価平均表エンティティを生成"""
-        from app.core.domain.reports.factory_report import ShipmentItem, YardItem
-        from app.core.domain.reports.balance_sheet import ReceiveItem
+        from app.application.domain.reports.factory_report import ShipmentItem, YardItem
+        from app.application.domain.reports.balance_sheet import ReceiveItem
         
         shipment_items: List[ShipmentItem] = []
         yard_items: List[YardItem] = []
