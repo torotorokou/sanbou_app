@@ -14,6 +14,8 @@ from functools import lru_cache
 from app.core.usecases.reports import GenerateFactoryReportUseCase
 from app.core.usecases.reports.generate_balance_sheet import GenerateBalanceSheetUseCase
 from app.core.usecases.reports.generate_average_sheet import GenerateAverageSheetUseCase
+from app.core.usecases.reports.generate_management_sheet import GenerateManagementSheetUseCase
+from app.core.usecases.reports.generate_block_unit_price import GenerateBlockUnitPriceUseCase
 from app.core.ports import CsvGateway, ReportRepository
 from app.infra.adapters import PandasCsvGateway, FileSystemReportRepository
 
@@ -67,8 +69,24 @@ def get_balance_sheet_usecase() -> GenerateBalanceSheetUseCase:
 
 
 def get_average_sheet_usecase() -> GenerateAverageSheetUseCase:
-    """単価平均表生成 UseCase を返す."""
+    """単価平均表生成 UseCase を返す。"""
     return GenerateAverageSheetUseCase(
+        csv_gateway=get_csv_gateway(),
+        report_repository=get_report_repository(),
+    )
+
+
+def get_management_sheet_usecase() -> GenerateManagementSheetUseCase:
+    """経営管理表生成 UseCase を返す。"""
+    return GenerateManagementSheetUseCase(
+        csv_gateway=get_csv_gateway(),
+        report_repository=get_report_repository(),
+    )
+
+
+def get_block_unit_price_usecase() -> GenerateBlockUnitPriceUseCase:
+    """ブロック単価表生成 UseCase を返す。"""
+    return GenerateBlockUnitPriceUseCase(
         csv_gateway=get_csv_gateway(),
         report_repository=get_report_repository(),
     )
