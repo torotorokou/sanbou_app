@@ -7,7 +7,7 @@ Session management for interactive reports.
 - session_store: セッションストレージ（Redis/メモリ）
 """
 
-from app.api.services.report.session.session_store import (
+from app.infra.adapters.session_storage.session_store import (
     session_store,
     SessionStore,
 )
