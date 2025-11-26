@@ -4,13 +4,13 @@ Input/Output utilities for report generation.
 CSV読み込み、テンプレート読み込み、Excel書き込みなどのIO操作を提供します。
 """
 
-from app.api.services.report.utils.io.csv_loader import (
+from app.infra.report_utils.csv_loader import (
     load_all_filtered_dataframes,
 )
-from app.api.services.report.utils.io.template_loader import (
+from app.infra.report_utils.template_loader import (
     load_master_and_template,
 )
-from app.api.services.report.utils.io.excel_writer import (
+from app.infra.report_utils.excel_writer import (
     write_values_to_template,
 )
 
