@@ -6,11 +6,11 @@ def load_settings():
     app_env = os.getenv("APP_ENV", "dev")
 
     if app_env == "prod":
-        from app.config.settings import prod as settings_module
+        from app.local_config.settings import prod as settings_module
     elif app_env == "staging":
-        from app.config.settings import staging as settings_module
+        from app.local_config.settings import staging as settings_module
     else:
-        from app.config.settings import dev as settings_module
+        from app.local_config.settings import dev as settings_module
 
     settings = {
         "ENV_NAME": settings_module.ENV_NAME,

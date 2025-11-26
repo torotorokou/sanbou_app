@@ -5,7 +5,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, File, Form, UploadFile
 from fastapi.responses import Response
 
-from app.config.di_providers import get_factory_report_usecase
+from app.local_config.di_providers import get_factory_report_usecase
 from app.application.usecases.reports import GenerateFactoryReportUseCase
 
 # APIルーターの初期化
