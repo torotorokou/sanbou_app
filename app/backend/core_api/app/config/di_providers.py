@@ -395,3 +395,56 @@ def get_fetch_sales_tree_detail_lines_uc(
     """FetchSalesTreeDetailLinesUseCase提供"""
     return FetchSalesTreeDetailLinesUseCase(query=repo)
 
+
+# ========================================================================
+# Calendar UseCase Providers
+# ========================================================================
+from app.application.usecases.calendar.get_calendar_month_uc import GetCalendarMonthUseCase
+from app.infra.adapters.calendar.calendar_repository import CalendarRepository
+
+
+def get_calendar_repo(db: Session = Depends(get_db)) -> CalendarRepository:
+    """CalendarRepository提供"""
+    return CalendarRepository(db)
+
+
+def get_calendar_month_uc(
+    repo: CalendarRepository = Depends(get_calendar_repo)
+) -> GetCalendarMonthUseCase:
+    """GetCalendarMonthUseCase提供"""
+    return GetCalendarMonthUseCase(query=repo)
+
+
+# ========================================================================
+# Upload Status UseCase Providers
+# ========================================================================
+from app.application.usecases.upload.get_upload_status_uc import GetUploadStatusUseCase
+from app.application.usecases.upload.get_upload_calendar_uc import GetUploadCalendarUseCase
+from app.application.usecases.upload.delete_upload_scope_uc import DeleteUploadScopeUseCase
+
+
+# RawDataRepository は既に定義されているので、それを再利用
+# get_raw_data_repo() は既に定義済み（上部参照）
+
+
+def get_upload_status_uc(
+    repo: RawDataRepository = Depends(get_raw_data_repo)
+) -> GetUploadStatusUseCase:
+    """GetUploadStatusUseCase提供"""
+    return GetUploadStatusUseCase(query=repo)
+
+
+def get_upload_calendar_uc(
+    repo: RawDataRepository = Depends(get_raw_data_repo)
+) -> GetUploadCalendarUseCase:
+    """GetUploadCalendarUseCase提供"""
+    return GetUploadCalendarUseCase(query=repo)
+
+
+def get_delete_upload_scope_uc(
+    repo: RawDataRepository = Depends(get_raw_data_repo)
+) -> DeleteUploadScopeUseCase:
+    """DeleteUploadScopeUseCase提供"""
+    return DeleteUploadScopeUseCase(query=repo)
+
+
