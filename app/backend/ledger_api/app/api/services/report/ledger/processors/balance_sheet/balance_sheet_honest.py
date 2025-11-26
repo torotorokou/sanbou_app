@@ -1,6 +1,6 @@
 import pandas as pd
 from app.infra.report_utils import get_template_config, load_master_and_template
-from app.api.services.report.utils.formatters import summary_apply
+from app.infra.report_utils.formatters import summary_apply
 
 
 def calculate_honest_sales_by_unit(df_receive: pd.DataFrame) -> tuple[int, int]:

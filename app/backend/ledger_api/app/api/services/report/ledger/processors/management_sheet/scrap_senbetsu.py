@@ -1,6 +1,6 @@
 import pandas as pd
 from app.api.services.report.utils import load_master_and_template, get_template_config
-from app.api.services.report.utils.formatters import summary_apply
+from app.infra.report_utils.formatters import summary_apply
 from app.api.services.report.utils.dataframe.operations import apply_summary_all_items
 
 

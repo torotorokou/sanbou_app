@@ -134,7 +134,7 @@ def first_cell_in_template(df: DataFrame) -> DataFrame:
 
 
 def make_sum_date(df: DataFrame, df_shipping: DataFrame) -> DataFrame:
-    from app.api.services.report.utils.formatters import to_reiwa_format
+    from app.infra.report_utils.formatters import to_reiwa_format
 
     # 日付を令和表記に変換（例: "令和6年5月16日"）
     date = to_reiwa_format(df_shipping["伝票日付"].iloc[0])
@@ -218,7 +218,7 @@ def add_date_information(df: DataFrame, df_shipping: DataFrame) -> DataFrame:
     Returns:
         pd.DataFrame: 日付情報が追加されたデータフレーム
     """
-    from app.api.services.report.utils.formatters import to_reiwa_format
+    from app.infra.report_utils.formatters import to_reiwa_format
 
     # 伝票日付を令和形式に変換
     reiwa_date = to_reiwa_format(df_shipping["伝票日付"].iloc[0])

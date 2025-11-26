@@ -244,7 +244,7 @@ def test_utility_functions():
     
     # date_tools のテスト
     try:
-        from app.api.services.report.utils.formatters import get_weekday_japanese
+        from app.infra.report_utils.formatters import get_weekday_japanese
         from datetime import date
         weekday = get_weekday_japanese(date(2024, 1, 1))
         assert isinstance(weekday, str), "曜日は文字列である必要があります"
