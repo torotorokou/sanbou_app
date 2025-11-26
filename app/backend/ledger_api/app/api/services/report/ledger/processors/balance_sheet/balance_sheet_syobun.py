@@ -1,8 +1,8 @@
 import pandas as pd
 from app.infra.report_utils import get_template_config, load_master_and_template
 from app.api.services.report.utils.config import get_unit_price_table_csv
-from app.api.services.report.utils.formatters import summary_apply
-from app.api.services.report.utils.formatters import multiply_columns
+from app.infra.report_utils.formatters import summary_apply
+from app.infra.report_utils.formatters import multiply_columns
 
 
 def calculate_total_disposal_cost(

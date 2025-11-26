@@ -1,7 +1,7 @@
 import pandas as pd
 from app.api.services.report.utils import app_logger, get_template_config
 from app.api.services.report.utils import load_master_and_template
-from app.api.services.report.utils.formatters import (
+from app.infra.report_utils.formatters import (
     summarize_value_by_cell_with_label,
 )
 from app.api.services.report.ledger.processors.factory_report.summary import (
