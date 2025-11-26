@@ -6,7 +6,7 @@ from app.api.services.report.utils import (
     load_master_and_template,
     clean_na_strings,
 )
-from app.api.services.report.utils.dataframe.cleaning import clean_cd_column as _clean_cd_column
+from app.infra.report_utils.dataframe.cleaning import clean_cd_column as _clean_cd_column
 
 
 def process_shobun(df_shipment: pd.DataFrame) -> pd.DataFrame:

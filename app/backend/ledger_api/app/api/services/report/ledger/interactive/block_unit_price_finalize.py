@@ -17,7 +17,7 @@ from app.api.services.report.ledger.processors.block_unit_price.process2 import 
     first_cell_in_template,
     make_sum_date,
 )
-from app.api.services.report.utils.domain import ReadTransportDiscount
+from app.infra.report_utils.domain import ReadTransportDiscount
 from app.infra.report_utils import (
     MainPath,
     get_template_config,

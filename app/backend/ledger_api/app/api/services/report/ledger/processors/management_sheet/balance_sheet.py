@@ -1,5 +1,5 @@
 from app.api.services.report.ledger.balance_sheet import process as process_bal
-from app.api.services.report.utils.dataframe.operations import (
+from app.infra.report_utils.dataframe.operations import (
     apply_summary_all_items,
     apply_division_result_to_master,
     apply_subtraction_result_to_master,

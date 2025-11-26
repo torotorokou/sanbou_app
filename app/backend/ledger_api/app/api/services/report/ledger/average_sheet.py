@@ -11,8 +11,8 @@ from app.api.services.report.utils import (
     app_logger,
     get_template_config,
 )
-from app.api.services.report.utils import load_all_filtered_dataframes
-from app.api.services.report.utils import load_master_and_template
+from app.infra.report_utils import load_all_filtered_dataframes
+from app.infra.report_utils import load_master_and_template
 from app.api.services.report.ledger.processors.average_sheet.processors import (
     tikan,
     aggregate_vehicle_data,

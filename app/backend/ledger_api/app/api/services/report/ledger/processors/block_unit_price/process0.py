@@ -80,7 +80,7 @@ def apply_unit_price_addition(
         - 業者CDをキーにしてマスターデータと結合します
         - 手数料が設定されていない業者は、元の単価がそのまま維持されます
     """
-    from app.api.services.report.utils.dataframe import (
+    from app.infra.report_utils.dataframe import (
         apply_column_addition_by_keys,
     )
 
@@ -111,7 +111,7 @@ def apply_transport_fee_by1(
     Returns:
         pd.DataFrame: 固定運搬費が適用された出荷データ（業者CD順にソート済み）
     """
-    from app.api.services.report.utils.dataframe import (
+    from app.infra.report_utils.dataframe import (
         apply_column_addition_by_keys,
     )
 

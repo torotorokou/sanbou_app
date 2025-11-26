@@ -1,7 +1,7 @@
 import pandas as pd
-from app.api.services.report.utils import load_master_and_template, get_template_config
+from app.infra.report_utils import load_master_and_template, get_template_config
 from app.infra.report_utils.formatters import summary_apply
-from app.api.services.report.utils.dataframe.operations import apply_summary_all_items
+from app.infra.report_utils.dataframe.operations import apply_summary_all_items
 
 
 def scrap_senbetsu(df_receive: pd.DataFrame, master_csv: pd.DataFrame) -> pd.DataFrame:

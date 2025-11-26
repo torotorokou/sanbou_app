@@ -1,5 +1,5 @@
 import pandas as pd
-from app.api.services.report.utils import app_logger
+from app.infra.report_utils import app_logger
 from app.api.services.report.utils.config import clean_na_strings
 from app.infra.report_utils.formatters import set_value_fast_safe
 from app.infra.report_utils.formatters import get_weekday_japanese

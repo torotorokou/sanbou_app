@@ -1,5 +1,5 @@
 from app.api.services.report.ledger.factory_report import process as process_fact
-from app.api.services.report.utils.dataframe.operations import apply_summary_all_items
+from app.infra.report_utils.dataframe.operations import apply_summary_all_items
 
 
 def update_from_factory_report(dfs, master_csv):
