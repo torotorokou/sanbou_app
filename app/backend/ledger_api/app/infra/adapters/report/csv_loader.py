@@ -1,5 +1,4 @@
-from app.application.domain.reports.utils.config import get_required_columns_definition
-from app.infra.report_utils import app_logger
+from app.infra.report_utils import get_required_columns_definition, app_logger
 
 
 def load_filtered_dataframe(dfs, key, target_columns):
