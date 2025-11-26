@@ -19,9 +19,9 @@ from app.deps import get_db
 from app.infra.adapters.upload.shogun_csv_repository import ShogunCsvRepository
 from app.infra.adapters.upload.raw_data_repository import RawDataRepository
 from app.infra.adapters.materialized_view.materialized_view_refresher import MaterializedViewRefresher
-from app.infra.adapters.dashboard.dashboard_target_repo import DashboardTargetRepository
-from app.infra.adapters.forecast.job_repo import JobRepository
-from app.infra.adapters.forecast.forecast_query_repo import ForecastQueryRepository
+from app.infra.adapters.dashboard.dashboard_target_repository import DashboardTargetRepository
+from app.infra.adapters.forecast.job_repository import JobRepository
+from app.infra.adapters.forecast.forecast_query_repository import ForecastQueryRepository
 from app.infra.clients.rag_client import RAGClient
 from app.infra.clients.ledger_client import LedgerClient
 from app.infra.clients.manual_client import ManualClient
@@ -311,16 +311,17 @@ def get_classify_text_uc(client: AIClient = Depends(get_ai_client)) -> ClassifyT
 # Inbound UseCase Providers
 # ========================================================================
 from app.application.usecases.inbound.get_inbound_daily_uc import GetInboundDailyUseCase
-from app.infra.adapters.inbound.inbound_pg_repository import InboundPgRepository
+from app.infra.adapters.inbound.inbound_repository import InboundRepositoryImpl
+from app.domain.ports.inbound_repository_port import InboundRepository
 
 
-def get_inbound_repo(db: Session = Depends(get_db)) -> InboundPgRepository:
-    """InboundPgRepository提供"""
-    return InboundPgRepository(db)
+def get_inbound_repo(db: Session = Depends(get_db)) -> InboundRepository:
+    """InboundRepository 提供"""
+    return InboundRepositoryImpl(db)
 
 
 def get_inbound_daily_uc(
-    repo: InboundPgRepository = Depends(get_inbound_repo)
+    repo: InboundRepository = Depends(get_inbound_repo)
 ) -> GetInboundDailyUseCase:
     """GetInboundDailyUseCase提供"""
     return GetInboundDailyUseCase(query=repo)

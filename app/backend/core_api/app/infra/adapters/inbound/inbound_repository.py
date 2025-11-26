@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 ALLOWED_CUM_SCOPES = {"none", "range", "month", "week"}
 
 
-class InboundPgRepository(InboundRepository):
+class InboundRepositoryImpl(InboundRepository):
     """
     PostgreSQL implementation of InboundRepository.
     CTE + ウィンドウ関数で連続日・0埋め・累積計算を実現
