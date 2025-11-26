@@ -136,13 +136,6 @@ export function useCustomerChurnViewModel(): CustomerChurnViewModel {
             const previousStartDate = previousStart!.startOf('month').format('YYYY-MM-DD');
             const previousEndDate = previousEnd!.endOf('month').format('YYYY-MM-DD');
             
-            console.log('[DEBUG] 送信パラメータ:', {
-                currentStart: currentStartDate,
-                currentEnd: currentEndDate,
-                previousStart: previousStartDate,
-                previousEnd: previousEndDate,
-            });
-            
             // Repository経由でバックエンドAPIを呼び出し
             const lostCustomers = await customerChurnRepository.analyze({
                 currentStart: currentStartDate,
@@ -150,13 +143,6 @@ export function useCustomerChurnViewModel(): CustomerChurnViewModel {
                 previousStart: previousStartDate,
                 previousEnd: previousEndDate,
             });
-            
-            // デバッグログ: 野呂商店を含むデータを確認
-            const noroCustomers = lostCustomers.filter(c => c.customerName.includes('野呂'));
-            if (noroCustomers.length > 0) {
-                console.warn('[DEBUG] 野呂商店が含まれています:', noroCustomers);
-            }
-            console.log('[DEBUG] 受信した離脱顧客数:', lostCustomers.length);
             
             // LostCustomer -> CustomerData に変換
             const mappedData = lostCustomers.map(mapLostCustomerToCustomerData);

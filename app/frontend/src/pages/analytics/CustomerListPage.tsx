@@ -11,13 +11,11 @@
  */
 
 import React from 'react';
-import { Row, Col, Button, Card } from 'antd';
-import { ReloadOutlined, DownloadOutlined } from '@ant-design/icons';
-import { customTokens } from '@/shared';
+import { Row, Col } from 'antd';
 import {
-  PeriodSelectorForm,
-  SalesRepFilter,
-  CustomerComparisonResultCard,
+  ConditionPanel,
+  AnalysisActionButtons,
+  ResultPanel,
   AnalysisProcessingModal,
   useCustomerChurnViewModel,
 } from '@features/analytics/customer-list';
@@ -53,95 +51,28 @@ const CustomerListAnalysis: React.FC = () => {
                             alignItems: 'stretch',
                         }}
                     >
-                        <Card
-                            title='条件指定'
-                            variant="borderless"
-                            style={{
-                                boxShadow: '0 4px 24px rgba(0,0,0,0.08)',
-                                marginBottom: 24,
-                                borderRadius: 16,
-                            }}
-                            styles={{
-                                header: {
-                                    background: '#f0f5ff',
-                                    fontWeight: 600,
-                                    borderTopLeftRadius: 16,
-                                    borderTopRightRadius: 16,
-                                    display: 'flex',
-                                    justifyContent: 'space-between',
-                                    alignItems: 'center',
-                                },
-                            }}
-                            extra={
-                                <Button
-                                    type='primary'
-                                    danger
-                                    onClick={vm.resetConditions}
-                                    size='middle'
-                                    icon={<ReloadOutlined />}
-                                    style={{ fontWeight: 600 }}
-                                >
-                                    リセット
-                                </Button>
-                            }
-                        >
-                            <PeriodSelectorForm
-                                currentStart={vm.currentStart}
-                                currentEnd={vm.currentEnd}
-                                previousStart={vm.previousStart}
-                                previousEnd={vm.previousEnd}
-                                setCurrentStart={vm.setCurrentStart}
-                                setCurrentEnd={vm.setCurrentEnd}
-                                setPreviousStart={vm.setPreviousStart}
-                                setPreviousEnd={vm.setPreviousEnd}
-                            />
-                            
-                            <div style={{ marginTop: 24 }}>
-                                <div style={{ marginBottom: 8, fontWeight: 600, fontSize: 14 }}>
-                                    営業担当者フィルター
-                                </div>
-                                <SalesRepFilter
-                                    salesReps={vm.salesReps}
-                                    selectedSalesRepIds={vm.selectedSalesRepIds}
-                                    onChange={vm.setSelectedSalesRepIds}
-                                    disabled={!vm.analysisStarted}
-                                />
-                            </div>
-                        </Card>
+                        <ConditionPanel
+                            currentStart={vm.currentStart}
+                            currentEnd={vm.currentEnd}
+                            previousStart={vm.previousStart}
+                            previousEnd={vm.previousEnd}
+                            setCurrentStart={vm.setCurrentStart}
+                            setCurrentEnd={vm.setCurrentEnd}
+                            setPreviousStart={vm.setPreviousStart}
+                            setPreviousEnd={vm.setPreviousEnd}
+                            salesReps={vm.salesReps}
+                            selectedSalesRepIds={vm.selectedSalesRepIds}
+                            setSelectedSalesRepIds={vm.setSelectedSalesRepIds}
+                            analysisStarted={vm.analysisStarted}
+                            onReset={vm.resetConditions}
+                        />
                         
-                        <Button
-                            type='primary'
-                            size='large'
-                            block
-                            disabled={vm.isButtonDisabled}
-                            onClick={vm.handleAnalyze}
-                            style={{
-                                fontWeight: 600,
-                                letterSpacing: 1,
-                                marginBottom: 16,
-                                height: 48,
-                            }}
-                        >
-                            分析する
-                        </Button>
-                        
-                        <Button
-                            type='default'
-                            size='large'
-                            block
-                            disabled={!vm.analysisStarted}
-                            onClick={vm.handleDownloadLostCustomersCsv}
-                            icon={<DownloadOutlined />}
-                            style={{
-                                fontWeight: 600,
-                                letterSpacing: 1,
-                                height: 48,
-                                borderColor: '#f43f5e',
-                                color: vm.analysisStarted ? '#f43f5e' : undefined,
-                            }}
-                        >
-                            CSVダウンロード
-                        </Button>
+                        <AnalysisActionButtons
+                            onAnalyze={vm.handleAnalyze}
+                            onDownload={vm.handleDownloadLostCustomersCsv}
+                            isAnalyzeDisabled={vm.isButtonDisabled}
+                            isDownloadDisabled={!vm.analysisStarted}
+                        />
                     </div>
                 </Col>
 
@@ -155,52 +86,11 @@ const CustomerListAnalysis: React.FC = () => {
                         flexDirection: 'column',
                     }}
                 >
-                    {!vm.analysisStarted ? (
-                        <div
-                            style={{
-                                marginTop: 24,
-                                color: '#888',
-                                height: '100%',
-                                minHeight: 0,
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                            }}
-                        >
-                            左で月を選択し、「分析する」ボタンを押してください。
-                        </div>
-                    ) : (
-                        <div
-                            style={{
-                                display: 'flex',
-                                flexDirection: 'column',
-                                gap: 12,
-                                height: '100%',
-                                minHeight: 0,
-                                flex: 1,
-                            }}
-                        >
-                            <CustomerComparisonResultCard
-                                title={`来なくなった顧客（離脱）: ${vm.lostCustomers.length} 件`}
-                                data={vm.lostCustomers}
-                                cardStyle={{
-                                    backgroundColor:
-                                        customTokens.colorBgContainer,
-                                }}
-                                headerStyle={{
-                                    background:
-                                        'linear-gradient(90deg, rgba(244,63,94,0.4), rgba(244,63,94,0.05))',
-                                    color: '#333',
-                                }}
-                                style={{
-                                    flex: 1,
-                                    minHeight: 0,
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                }}
-                            />
-                        </div>
-                    )}
+                    <ResultPanel
+                        data={vm.lostCustomers}
+                        isAnalyzing={vm.isAnalyzing}
+                        analysisStarted={vm.analysisStarted}
+                    />
                 </Col>
             </Row>
         </div>

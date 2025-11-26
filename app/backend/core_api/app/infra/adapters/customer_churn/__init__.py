@@ -37,17 +37,17 @@ class CustomerChurnQueryAdapter:
         
         ロジック：
         - previous期間（比較基準期間）= 過去の基準期間に取引があった顧客を集計
-        - current期間（最新期間）= 最近の期間に取引がある顧客をリスト化
+        - current期間（対象期間）= 最近の期間に取引がある顧客をリスト化
         - 離脱顧客 = previous期間に取引があり、current期間に取引がない顧客
         
         例：
-        - current: 2025-01-01 〜 2025-11-30（最新期間）
+        - current: 2025-01-01 〜 2025-11-30（対象期間）
         - previous: 2024-01-01 〜 2024-12-31（比較基準期間）
         - 結果: 2024年に取引があったが、2025年に取引がない顧客 = 離脱顧客
         
         Args:
-            current_start: 最新期間の開始日（この期間に取引がなければ「離脱」）
-            current_end: 最新期間の終了日
+            current_start: 対象期間の開始日（この期間に取引がなければ「離脱」）
+            current_end: 対象期間の終了日
             previous_start: 比較基準期間の開始日（この期間に取引があった顧客が対象）
             previous_end: 比較基準期間の終了日
             
@@ -72,7 +72,7 @@ class CustomerChurnQueryAdapter:
                 GROUP BY customer_id
             ),
             curr AS (
-                -- 最新期間（current）の顧客リスト
+                -- 対象期間（current）の顧客リスト
                 SELECT DISTINCT customer_id
                 FROM mart.v_customer_sales_daily
                 WHERE sales_date BETWEEN :current_start AND :current_end
@@ -88,12 +88,9 @@ class CustomerChurnQueryAdapter:
                 p.prev_total_qty_kg
             FROM prev p
             LEFT JOIN curr c ON p.customer_id = c.customer_id
-            WHERE c.customer_id IS NULL  -- 比較基準期間（previous）には存在するが、最新期間（current）には存在しない = 離脱
+            WHERE c.customer_id IS NULL  -- 比較基準期間（previous）には存在するが、対象期間（current）には存在しない = 離脱
             ORDER BY p.last_visit_date DESC
         """)
-        
-        # デバッグログ
-        logger.info(f"[CHURN QUERY] Parameters: current={current_start}~{current_end}, previous={previous_start}~{previous_end}")
         
         result = self.db.execute(
             sql,
@@ -106,16 +103,7 @@ class CustomerChurnQueryAdapter:
         )
         
         rows = result.fetchall()
-        logger.info(f"[CHURN QUERY] Found {len(rows)} lost customers")
-        
-        # デバッグ: 野呂商店を含む場合はログ出力
-        for row in rows:
-            if '野呂' in row.customer_name:
-                logger.warning(
-                    f"[CHURN QUERY] 野呂商店が離脱リストに含まれています: "
-                    f"customer_id={row.customer_id}, name={row.customer_name}, "
-                    f"last_visit={row.last_visit_date}"
-                )
+        logger.info(f"Found {len(rows)} lost customers")
         
         lost_customers = []
         for row in rows:
