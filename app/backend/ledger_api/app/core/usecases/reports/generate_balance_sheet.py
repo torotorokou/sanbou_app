@@ -5,6 +5,8 @@ Generate Balance Sheet UseCase.
 factory_reportと同じClean Architectureパターンを適用。
 """
 
+import logging
+import time
 from datetime import date
 from io import BytesIO
 from pathlib import Path
@@ -27,6 +29,8 @@ from app.api.services.report.ledger.balance_sheet import process as balance_shee
 from app.api.services.report.utils.io import write_values_to_template
 from app.api.services.report.utils.config import get_template_config
 from app.api.utils.pdf_conversion import convert_excel_to_pdf
+
+logger = logging.getLogger(__name__)
 
 
 class GenerateBalanceSheetUseCase:
