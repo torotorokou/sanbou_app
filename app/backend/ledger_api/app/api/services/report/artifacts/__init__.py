@@ -1,16 +1,19 @@
 """
-Backward compatibility for artifact management.
+Report artifact management.
 
-新しい場所: app.infra.adapters.artifact_storage
+レポートファイル（Excel/PDF）の保存と署名付きURL生成を担当します。
+
+モジュール:
+- artifact_service: アーティファクトストレージ管理
+- artifact_builder: アーティファクトレスポンス構築
 """
 
-from app.infra.adapters.artifact_storage import (
+from app.api.services.report.artifacts.artifact_service import (
     get_report_artifact_storage,
     ReportArtifactStorage,
 )
-from app.infra.adapters.artifact_storage import (
+from app.api.services.report.artifacts.artifact_builder import (
     ArtifactResponseBuilder,
-)
 )
 
 __all__ = [

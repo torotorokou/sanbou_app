@@ -12,7 +12,7 @@ from fastapi import UploadFile
 from fastapi.responses import JSONResponse, Response
 
 from app.api.services.report.core.base_generators import BaseReportGenerator
-from app.infra.adapters.artifact_storage import ArtifactResponseBuilder
+from app.api.services.report.artifacts import ArtifactResponseBuilder
 from backend_shared.adapters.presentation.response_error import NoFilesUploadedResponse
 from backend_shared.adapters.fastapi.error_handlers import DomainError
 from backend_shared.utils.csv_reader import read_csv_files

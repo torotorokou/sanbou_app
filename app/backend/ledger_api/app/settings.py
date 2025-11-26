@@ -60,7 +60,8 @@ class Settings:
 
     @property
     def data_dir(self) -> Path:
-        return self.base_api_dir / "data"
+        # データソースはinfra/data_sourcesに移動済み
+        return self.base_api_dir.parent / "infra" / "data_sources"
 
     @property
     def logs_dir(self) -> Path:
