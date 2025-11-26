@@ -347,6 +347,25 @@ def get_kpi_uc(
 
 
 # ========================================================================
+# Customer Churn UseCase Providers
+# ========================================================================
+from app.application.usecases.customer_churn import AnalyzeCustomerChurnUseCase
+from app.infra.adapters.customer_churn import CustomerChurnQueryAdapter
+
+
+def get_customer_churn_query_adapter(db: Session = Depends(get_db)) -> CustomerChurnQueryAdapter:
+    """CustomerChurnQueryAdapter提供"""
+    return CustomerChurnQueryAdapter(db)
+
+
+def get_analyze_customer_churn_uc(
+    query_adapter: CustomerChurnQueryAdapter = Depends(get_customer_churn_query_adapter)
+) -> AnalyzeCustomerChurnUseCase:
+    """AnalyzeCustomerChurnUseCase提供"""
+    return AnalyzeCustomerChurnUseCase(query_port=query_adapter)
+
+
+# ========================================================================
 # Sales Tree UseCase Providers
 # ========================================================================
 from app.application.usecases.sales_tree.fetch_summary_uc import FetchSalesTreeSummaryUseCase

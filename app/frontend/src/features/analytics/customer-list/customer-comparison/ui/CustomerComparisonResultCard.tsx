@@ -13,6 +13,13 @@ type Props = {
 
 const customerColumns: ColumnsType<CustomerData> = [
     { 
+        title: '顧客CD', 
+        dataIndex: 'key', 
+        key: 'key', 
+        width: 100,
+        sorter: (a, b) => a.key.localeCompare(b.key),
+    },
+    { 
         title: '顧客名', 
         dataIndex: 'name', 
         key: 'name', 

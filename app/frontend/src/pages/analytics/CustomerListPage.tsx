@@ -13,9 +13,10 @@
 import React from 'react';
 import { Row, Col, Button, Card } from 'antd';
 import { ReloadOutlined, DownloadOutlined } from '@ant-design/icons';
-import { customTokens, apiPostBlob } from '@/shared';
+import { customTokens } from '@/shared';
 import {
   PeriodSelectorForm,
+  SalesRepFilter,
   CustomerComparisonResultCard,
   AnalysisProcessingModal,
   useCustomerChurnViewModel,
@@ -23,7 +24,7 @@ import {
 
 const CustomerListAnalysis: React.FC = () => {
     // ViewModel を呼び出し（すべての状態・ロジック・イベントハンドラがここに集約）
-    const vm = useCustomerChurnViewModel(apiPostBlob);
+    const vm = useCustomerChurnViewModel();
 
     return (
         <div style={{ height: '100%', minHeight: 0 }}>
@@ -94,6 +95,18 @@ const CustomerListAnalysis: React.FC = () => {
                                 setPreviousStart={vm.setPreviousStart}
                                 setPreviousEnd={vm.setPreviousEnd}
                             />
+                            
+                            <div style={{ marginTop: 24 }}>
+                                <div style={{ marginBottom: 8, fontWeight: 600, fontSize: 14 }}>
+                                    営業担当者フィルター
+                                </div>
+                                <SalesRepFilter
+                                    salesReps={vm.salesReps}
+                                    selectedSalesRepIds={vm.selectedSalesRepIds}
+                                    onChange={vm.setSelectedSalesRepIds}
+                                    disabled={!vm.analysisStarted}
+                                />
+                            </div>
                         </Card>
                         
                         <Button
