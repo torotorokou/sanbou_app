@@ -8,10 +8,8 @@ Hexagonal Architecture における「アダプター」を提供します。
 ビジネスロジック（core）はこれらを知らないため、技術選定の変更が容易です。
 """
 
-from app.infra.adapters.pandas_csv_gateway import PandasCsvGateway
-from app.infra.adapters.filesystem_report_repository import (
-    FileSystemReportRepository,
-)
+from app.infra.adapters.csv import PandasCsvGateway
+from app.infra.adapters.repository import FileSystemReportRepository
 
 __all__ = [
     "PandasCsvGateway",

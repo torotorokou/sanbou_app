@@ -15,6 +15,5 @@ def load_settings():
     settings = {
         "ENV_NAME": settings_module.ENV_NAME,
         "DEBUG": settings_module.DEBUG,
-        "STREAMLIT_SERVER_PORT": settings_module.STREAMLIT_SERVER_PORT,
     }
     return settings

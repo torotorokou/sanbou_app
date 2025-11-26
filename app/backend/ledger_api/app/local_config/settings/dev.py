@@ -4,4 +4,3 @@ from app.local_config.settings.base import *
 
 DEBUG = True
 ENV_NAME = "development"
-STREAMLIT_SERVER_PORT = 8503  # 開発用ポート

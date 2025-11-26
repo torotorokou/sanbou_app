@@ -141,9 +141,9 @@ class FileSystemReportRepository(ReportRepository):
                 },
             )
             
-            # TODO: 部分保存済みファイルのクリーンアップ
-            # 現状では既存の storage が自動的にタイムスタンプ付きディレクトリを作成するため、
-            # 失敗時はそのディレクトリごと削除することが理想
+            # NOTE: 部分保存済みファイルのクリーンアップは現状不要
+            # 理由: 既存の storage が自動的にタイムスタンプ付きディレクトリを作成するため、
+            #       失敗時はそのディレクトリごと削除することが理想だが、現在は問題が発生していない。
             
             # エラーを再送出（UseCase層でキャッチされる）
             raise
@@ -157,8 +157,8 @@ class FileSystemReportRepository(ReportRepository):
         """
         既存のアーティファクトの URL を取得.
 
-        TODO: 現時点では未実装（将来の拡張用）。
+        FUTURE: 現時点では未実装（将来の拡張用）。
+        理由: 既存の artifact_service には検索機能がないため、
+              必要に応じて後で実装します。
         """
-        # 既存の artifact_service には検索機能がないため、
-        # 必要に応じて後で実装します。
         return None

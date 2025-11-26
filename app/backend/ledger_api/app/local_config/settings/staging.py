@@ -4,4 +4,3 @@ from app.local_config.settings.base import *
 
 DEBUG = False
 ENV_NAME = "staging"
-STREAMLIT_SERVER_PORT = 8502
