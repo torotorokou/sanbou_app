@@ -4,4 +4,3 @@ from app.local_config.settings.base import *
 
 DEBUG = False
 ENV_NAME = "production"
-STREAMLIT_SERVER_PORT = 8501
