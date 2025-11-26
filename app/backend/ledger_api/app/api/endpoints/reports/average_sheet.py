@@ -31,7 +31,7 @@ async def generate_average_sheet(
     Returns:
         JSONResponse: 署名付きURLを含むレスポンス
     """
-    return await usecase.execute(
+    return usecase.execute(
         receive=receive,
         period_type=period_type,
     )
