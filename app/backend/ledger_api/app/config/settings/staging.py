@@ -1,4 +1,4 @@
-from app.api.config.settings.base import *
+from app.config.settings.base import *
 
 # --- ステージング環境用設定 ---
 
