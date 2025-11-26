@@ -6,10 +6,9 @@ services.report.ledger.balance_sheet
 from typing import Any, Dict
 import pandas as pd
 
-from app.api.services.report.utils.logging import app_logger
+from app.infra.report_utils import app_logger, get_template_config
 from app.api.services.report.utils.io.csv_loader import load_all_filtered_dataframes
 from app.api.services.report.utils.io.template_loader import load_master_and_template
-from app.infra.report_utils import get_template_config
 from app.api.services.report.ledger.processors.balance_sheet.balance_sheet_fact import (
     process_factory_report,
 )

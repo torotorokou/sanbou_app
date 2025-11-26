@@ -234,7 +234,7 @@ def test_utility_functions():
     
     # MainPath のテスト
     try:
-        from app.api.services.report.utils.paths import MainPath
+        from app.infra.report_utils import MainPath
         _ = MainPath()  # インスタンス化のみ確認
         print("✅ MainPath                                               OK")
         success_count += 1

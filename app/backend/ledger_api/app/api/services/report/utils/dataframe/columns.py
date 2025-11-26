@@ -1,5 +1,5 @@
 import pandas as pd
-from app.api.services.report.utils.logging import app_logger
+from app.infra.report_utils import app_logger
 from app.api.services.report.utils.formatters.summary import safe_merge_by_keys
 
 

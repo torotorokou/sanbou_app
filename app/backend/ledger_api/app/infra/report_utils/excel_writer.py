@@ -11,7 +11,7 @@ import os
 import unicodedata
 from typing import Any, cast
 import re
-from app.api.services.report.utils.logging import app_logger
+from .logger import app_logger
 
 
 def safe_excel_value(value):
