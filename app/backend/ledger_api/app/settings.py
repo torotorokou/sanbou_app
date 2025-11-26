@@ -108,7 +108,9 @@ def load_settings() -> Settings:
     gcs_ledger_bucket_prod = _clean(os.getenv("GCS_LEDGER_BUCKET_PROD"))
     subdirs_raw = os.getenv("LEDGER_SYNC_SUBDIRS", "master,templates").strip()
     ledger_sync_subdirs = [s.strip() for s in subdirs_raw.split(",") if s.strip()]
-    artifact_root_default = base_api_dir / "report_artifacts"
+    
+    # presentation/static/reports をデフォルトのアーティファクト保存先とする
+    artifact_root_default = base_api_dir.parent / "presentation" / "static"
     report_artifact_root_dir = Path(os.getenv("REPORT_ARTIFACT_ROOT_DIR", str(artifact_root_default))).resolve()
     
     # アーティファクトURL生成用の内部論理パス
