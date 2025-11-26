@@ -12,6 +12,7 @@ Dependency Injection (DI) providers.
 from functools import lru_cache
 
 from app.core.usecases.reports import GenerateFactoryReportUseCase
+from app.core.usecases.reports.generate_balance_sheet import GenerateBalanceSheetUseCase
 from app.core.ports import CsvGateway, ReportRepository
 from app.infra.adapters import PandasCsvGateway, FileSystemReportRepository
 
@@ -46,6 +47,19 @@ def get_factory_report_usecase() -> GenerateFactoryReportUseCase:
     FastAPI の Depends() で利用されます。
     """
     return GenerateFactoryReportUseCase(
+        csv_gateway=get_csv_gateway(),
+        report_repository=get_report_repository(),
+    )
+
+
+def get_balance_sheet_usecase() -> GenerateBalanceSheetUseCase:
+    """
+    搬出入収支表生成 UseCase を返す.
+
+    依存する Port の実装を注入して UseCase を構築します。
+    FastAPI の Depends() で利用されます。
+    """
+    return GenerateBalanceSheetUseCase(
         csv_gateway=get_csv_gateway(),
         report_repository=get_report_repository(),
     )
