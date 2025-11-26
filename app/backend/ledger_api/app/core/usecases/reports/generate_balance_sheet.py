@@ -28,7 +28,7 @@ from backend_shared.utils.date_filter_utils import (
 from app.api.services.report.ledger.balance_sheet import process as balance_sheet_process
 from app.api.services.report.utils.io import write_values_to_template
 from app.api.services.report.utils.config import get_template_config
-from app.api.utils.pdf_conversion import convert_excel_to_pdf
+from app.infra.utils.pdf_conversion import convert_excel_to_pdf
 
 logger = logging.getLogger(__name__)
 
