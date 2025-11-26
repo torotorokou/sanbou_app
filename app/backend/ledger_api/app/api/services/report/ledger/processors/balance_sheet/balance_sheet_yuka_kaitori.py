@@ -1,7 +1,6 @@
 import pandas as pd
-from app.infra.report_utils import get_template_config
+from app.infra.report_utils import get_template_config, load_master_and_template
 from app.api.services.report.utils.config import get_unit_price_table_csv
-from app.api.services.report.utils.io import load_master_and_template
 from app.api.services.report.utils.formatters import summary_apply
 from app.api.services.report.utils.formatters import multiply_columns
 
