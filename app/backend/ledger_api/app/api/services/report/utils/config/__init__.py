@@ -4,7 +4,7 @@ Configuration utilities for report generation.
 テンプレート設定やデータクリーニング設定を管理します。
 """
 
-from app.api.services.report.utils.config.template_config import (
+from app.infra.report_utils.template_config import (
     clean_na_strings,
     get_template_config,
     get_unit_price_table_csv,
