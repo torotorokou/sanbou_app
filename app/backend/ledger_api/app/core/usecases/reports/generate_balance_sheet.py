@@ -63,63 +63,141 @@ class GenerateBalanceSheetUseCase:
         Returns:
             JSONResponse: 署名付きURLを含むレスポンス
         """
+        start_time = time.time()
+        file_keys = [k for k, v in {"shipment": shipment, "yard": yard, "receive": receive}.items() if v is not None]
+        
+        logger.info(
+            "搬出入収支表生成開始",
+            extra={
+                "usecase": "balance_sheet",
+                "file_keys": file_keys,
+                "period_type": period_type,
+            },
+        )
+        
         try:
-            # Step 1: CSV読み込み
-            print("[UseCase] Step 1: CSV読み込み")
-            files = {
-                k: v
-                for k, v in {"shipment": shipment, "yard": yard, "receive": receive}.items()
-                if v is not None
-            }
+            # Step 1: CSV読み込み (Port 経由)
+            step_start = time.time()
+            logger.debug("Step 1: CSV読み込み開始")
+            
+            files = {k: v for k, v in {"shipment": shipment, "yard": yard, "receive": receive}.items() if v is not None}
             dfs = self.csv_gateway.read_csv_files(files)
+            
+            logger.debug(
+                "Step 1: CSV読み込み完了",
+                extra={"elapsed_seconds": round(time.time() - step_start, 3)},
+            )
 
             # Step 2: 期間フィルタ（オプション）
             if period_type:
-                print(f"[UseCase] Step 2: 期間フィルタ適用 - {period_type}")
+                step_start = time.time()
+                logger.debug(f"Step 2: 期間フィルタ適用開始", extra={"period_type": period_type})
+                
                 try:
                     dfs = shared_filter_by_period_from_min_date(dfs, period_type)
+                    logger.debug(
+                        "Step 2: 期間フィルタ適用完了",
+                        extra={
+                            "period_type": period_type,
+                            "elapsed_seconds": round(time.time() - step_start, 3),
+                        },
+                    )
                 except Exception as e:
-                    print(f"[UseCase] 期間フィルタスキップ: {e}")
+                    logger.warning("Step 2: 期間フィルタスキップ（エラー）", extra={"exception": str(e)})
 
-            # Step 3: 整形
-            print("[UseCase] Step 3: CSV整形")
+            # Step 3: 整形（Port 経由）
+            step_start = time.time()
+            logger.debug("Step 3: CSV整形開始")
+            
             df_formatted = self.csv_gateway.format_csv_data(dfs)
+            logger.debug(
+                "Step 3: CSV整形完了",
+                extra={"elapsed_seconds": round(time.time() - step_start, 3)},
+            )
 
             # Step 4: ドメインモデル生成
-            print("[UseCase] Step 4: ドメインモデル生成")
+            step_start = time.time()
+            logger.debug("Step 4: ドメインモデル生成開始")
+            
             balance_sheet = BalanceSheet.from_dataframes(
                 df_receive=df_formatted.get("receive"),
                 df_shipment=df_formatted.get("shipment"),
                 df_yard=df_formatted.get("yard"),
             )
-            print(f"[UseCase] 受入データ件数: {len(balance_sheet.receive_items)}")
-            print(f"[UseCase] 出荷データ件数: {len(balance_sheet.shipment_items)}")
-            print(f"[UseCase] ヤードデータ件数: {len(balance_sheet.yard_items)}")
-            print(f"[UseCase] レポート日付: {balance_sheet.report_date}")
+            
+            logger.debug(
+                "Step 4: ドメインモデル生成完了",
+                extra={
+                    "receive_count": len(balance_sheet.receive_items),
+                    "shipment_count": len(balance_sheet.shipment_items),
+                    "yard_count": len(balance_sheet.yard_items),
+                    "report_date": balance_sheet.report_date.isoformat(),
+                    "elapsed_seconds": round(time.time() - step_start, 3),
+                },
+            )
 
             # Step 5: ドメインロジック実行（既存process関数）
-            print("[UseCase] Step 5: ドメインロジック実行")
+            step_start = time.time()
+            logger.debug("Step 5: ドメインロジック実行開始")
+            
             result_df = balance_sheet_process(df_formatted)
+            logger.debug(
+                "Step 5: ドメインロジック実行完了",
+                extra={"elapsed_seconds": round(time.time() - step_start, 3)},
+            )
 
             # Step 6: Excel生成
-            print("[UseCase] Step 6: Excel生成")
+            step_start = time.time()
+            logger.debug("Step 6: Excel生成開始")
+            
             excel_bytes = self._generate_excel(result_df, balance_sheet.report_date)
+            logger.debug(
+                "Step 6: Excel生成完了",
+                extra={
+                    "size_bytes": len(excel_bytes.getvalue()),
+                    "elapsed_seconds": round(time.time() - step_start, 3),
+                },
+            )
 
             # Step 7: PDF生成
-            print("[UseCase] Step 7: PDF生成")
+            step_start = time.time()
+            logger.debug("Step 7: PDF生成開始")
+            
             pdf_bytes = self._generate_pdf(excel_bytes)
+            logger.debug(
+                "Step 7: PDF生成完了",
+                extra={
+                    "size_bytes": len(pdf_bytes.getvalue()),
+                    "elapsed_seconds": round(time.time() - step_start, 3),
+                },
+            )
 
-            # Step 8: 保存とURL生成
-            print("[UseCase] Step 8: 保存とURL生成")
+            # Step 8: 保存と署名付き URL 生成（Port 経由）
+            step_start = time.time()
+            logger.debug("Step 8: 保存とURL生成開始")
+            
             artifact_urls = self.report_repository.save_report(
                 report_key="balance_sheet",
                 report_date=balance_sheet.report_date,
                 excel_bytes=excel_bytes,
                 pdf_bytes=pdf_bytes,
             )
+            logger.debug(
+                "Step 8: 保存とURL生成完了",
+                extra={"elapsed_seconds": round(time.time() - step_start, 3)},
+            )
 
             # Step 9: レスポンス返却
-            print(f"[UseCase] Step 9: 完了 - URLs: {artifact_urls.to_dict()}")
+            total_elapsed = time.time() - start_time
+            logger.info(
+                "搬出入収支表生成完了",
+                extra={
+                    "usecase": "balance_sheet",
+                    "report_date": balance_sheet.report_date.isoformat(),
+                    "total_elapsed_seconds": round(total_elapsed, 3),
+                },
+            )
+            
             return JSONResponse(
                 status_code=200,
                 content={
@@ -132,9 +210,15 @@ class GenerateBalanceSheetUseCase:
         except DomainError:
             raise
         except Exception as ex:
-            print(f"[UseCase] 予期しないエラー: {ex}")
-            import traceback
-            traceback.print_exc()
+            logger.exception(
+                "搬出入収支表生成失敗",
+                extra={
+                    "usecase": "balance_sheet",
+                    "error": str(ex),
+                    "elapsed_seconds": round(time.time() - start_time, 3),
+                },
+                exc_info=True,
+            )
             raise DomainError(
                 code="INTERNAL_ERROR",
                 status=500,

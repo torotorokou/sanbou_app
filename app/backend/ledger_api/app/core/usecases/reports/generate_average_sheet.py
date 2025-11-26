@@ -41,47 +41,141 @@ class GenerateAverageSheetUseCase:
         receive: Optional[UploadFile] = None,
         period_type: Optional[str] = None,
     ) -> JSONResponse:
+        start_time = time.time()
+        file_keys = [k for k, v in {"shipment": shipment, "yard": yard, "receive": receive}.items() if v is not None]
+        
+        logger.info(
+            "単価平均表生成開始",
+            extra={
+                "usecase": "average_sheet",
+                "file_keys": file_keys,
+                "period_type": period_type,
+            },
+        )
+        
         try:
-            print("[UseCase] Step 1: CSV読み込み")
+            # Step 1: CSV読み込み
+            step_start = time.time()
+            logger.debug("Step 1: CSV読み込み開始")
+            
             files = {k: v for k, v in {"shipment": shipment, "yard": yard, "receive": receive}.items() if v is not None}
             dfs = self.csv_gateway.read_csv_files(files)
+            
+            logger.debug(
+                "Step 1: CSV読み込み完了",
+                extra={"elapsed_seconds": round(time.time() - step_start, 3)},
+            )
 
+            # Step 2: 期間フィルタ（オプション）
             if period_type:
-                print(f"[UseCase] Step 2: 期間フィルタ - {period_type}")
+                step_start = time.time()
+                logger.debug("Step 2: 期間フィルタ適用開始", extra={"period_type": period_type})
+                
                 try:
                     dfs = shared_filter_by_period_from_min_date(dfs, period_type)
+                    logger.debug(
+                        "Step 2: 期間フィルタ適用完了",
+                        extra={
+                            "period_type": period_type,
+                            "elapsed_seconds": round(time.time() - step_start, 3),
+                        },
+                    )
                 except Exception as e:
-                    print(f"[UseCase] 期間フィルタスキップ: {e}")
+                    logger.warning("Step 2: 期間フィルタスキップ（エラー）", extra={"exception": str(e)})
 
-            print("[UseCase] Step 3: CSV整形")
+            # Step 3: CSV整形
+            step_start = time.time()
+            logger.debug("Step 3: CSV整形開始")
+            
             df_formatted = self.csv_gateway.format_csv_data(dfs)
+            logger.debug(
+                "Step 3: CSV整形完了",
+                extra={"elapsed_seconds": round(time.time() - step_start, 3)},
+            )
 
-            print("[UseCase] Step 4: ドメインモデル生成")
+            # Step 4: ドメインモデル生成
+            step_start = time.time()
+            logger.debug("Step 4: ドメインモデル生成開始")
+            
             average_sheet = AverageSheet.from_dataframes(
                 df_shipment=df_formatted.get("shipment"),
                 df_yard=df_formatted.get("yard"),
                 df_receive=df_formatted.get("receive"),
             )
-            print(f"[UseCase] データ件数: 出荷{len(average_sheet.shipment_items)} ヤード{len(average_sheet.yard_items)} 受入{len(average_sheet.receive_items)}")
+            
+            logger.debug(
+                "Step 4: ドメインモデル生成完了",
+                extra={
+                    "shipment_count": len(average_sheet.shipment_items),
+                    "yard_count": len(average_sheet.yard_items),
+                    "receive_count": len(average_sheet.receive_items),
+                    "report_date": average_sheet.report_date.isoformat(),
+                    "elapsed_seconds": round(time.time() - step_start, 3),
+                },
+            )
 
-            print("[UseCase] Step 5: ドメインロジック実行")
+            # Step 5: ドメインロジック実行
+            step_start = time.time()
+            logger.debug("Step 5: ドメインロジック実行開始")
+            
             result_df = average_sheet_process(df_formatted)
+            logger.debug(
+                "Step 5: ドメインロジック実行完了",
+                extra={"elapsed_seconds": round(time.time() - step_start, 3)},
+            )
 
-            print("[UseCase] Step 6: Excel生成")
+            # Step 6: Excel生成
+            step_start = time.time()
+            logger.debug("Step 6: Excel生成開始")
+            
             excel_bytes = self._generate_excel(result_df, average_sheet.report_date)
+            logger.debug(
+                "Step 6: Excel生成完了",
+                extra={
+                    "size_bytes": len(excel_bytes.getvalue()),
+                    "elapsed_seconds": round(time.time() - step_start, 3),
+                },
+            )
 
-            print("[UseCase] Step 7: PDF生成")
+            # Step 7: PDF生成
+            step_start = time.time()
+            logger.debug("Step 7: PDF生成開始")
+            
             pdf_bytes = self._generate_pdf(excel_bytes)
+            logger.debug(
+                "Step 7: PDF生成完了",
+                extra={
+                    "size_bytes": len(pdf_bytes.getvalue()),
+                    "elapsed_seconds": round(time.time() - step_start, 3),
+                },
+            )
 
-            print("[UseCase] Step 8: 保存とURL生成")
+            # Step 8: 保存とURL生成
+            step_start = time.time()
+            logger.debug("Step 8: 保存とURL生成開始")
+            
             artifact_urls = self.report_repository.save_report(
                 report_key="average_sheet",
                 report_date=average_sheet.report_date,
                 excel_bytes=excel_bytes,
                 pdf_bytes=pdf_bytes,
             )
+            logger.debug(
+                "Step 8: 保存とURL生成完了",
+                extra={"elapsed_seconds": round(time.time() - step_start, 3)},
+            )
 
-            print(f"[UseCase] Step 9: 完了")
+            # Step 9: レスポンス返却
+            total_elapsed = time.time() - start_time
+            logger.info(
+                "単価平均表生成完了",
+                extra={
+                    "usecase": "average_sheet",
+                    "report_date": average_sheet.report_date.isoformat(),
+                    "total_elapsed_seconds": round(total_elapsed, 3),
+                },
+            )
+            
             return JSONResponse(
                 status_code=200,
                 content={
@@ -93,9 +187,15 @@ class GenerateAverageSheetUseCase:
         except DomainError:
             raise
         except Exception as ex:
-            print(f"[UseCase] エラー: {ex}")
-            import traceback
-            traceback.print_exc()
+            logger.exception(
+                "単価平均表生成失敗",
+                extra={
+                    "usecase": "average_sheet",
+                    "error": str(ex),
+                    "elapsed_seconds": round(time.time() - start_time, 3),
+                },
+                exc_info=True,
+            )
             raise DomainError(
                 code="INTERNAL_ERROR",
                 status=500,
