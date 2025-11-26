@@ -1,30 +1,20 @@
 """
-Formatting utilities for report generation.
-
-日付、値の設定、サマリー、計算、丸め処理などのフォーマッティングを提供します。
+Formatting utilities for report generation (DEPRECATED - Use app.infra.report_utils.formatters).
 """
 
-from app.api.services.report.utils.formatters.dates import (
+from app.infra.report_utils.formatters import (
     get_weekday_japanese,
     to_reiwa_format,
     to_japanese_era,
     to_japanese_month_day,
     get_title_from_date,
-)
-from app.api.services.report.utils.formatters.value_setter import (
     set_value_fast_safe,
-)
-from app.api.services.report.utils.formatters.summary import (
     summary_apply,
     summarize_value_by_cell_with_label,
     safe_merge_by_keys,
     summary_update_column_if_notna,
     write_sum_to_target_cell,
-)
-from app.api.services.report.utils.formatters.multiply import (
     multiply_columns,
-)
-from app.api.services.report.utils.formatters.rounding import (
     round_value_column_generic,
 )
 

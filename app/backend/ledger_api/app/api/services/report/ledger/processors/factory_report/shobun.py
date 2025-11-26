@@ -1,6 +1,6 @@
 import pandas as pd
 
-from app.api.services.report.utils import (
+from app.infra.report_utils import (
     app_logger,
     get_template_config,
     load_master_and_template,

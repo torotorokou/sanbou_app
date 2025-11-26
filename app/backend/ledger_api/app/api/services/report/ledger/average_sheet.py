@@ -7,12 +7,12 @@ st_app依存を排し、services側のprocessors/utilsを利用する。
 from typing import Any, Dict
 import pandas as pd
 
-from app.api.services.report.utils import (
+from app.infra.report_utils import (
     app_logger,
     get_template_config,
+    load_all_filtered_dataframes,
+    load_master_and_template,
 )
-from app.infra.report_utils import load_all_filtered_dataframes
-from app.infra.report_utils import load_master_and_template
 from app.api.services.report.ledger.processors.average_sheet.processors import (
     tikan,
     aggregate_vehicle_data,
