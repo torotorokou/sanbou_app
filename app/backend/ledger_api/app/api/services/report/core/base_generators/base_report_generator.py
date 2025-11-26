@@ -9,8 +9,7 @@ import pandas as pd
 
 # CSV処理サービス（新しいインポートパス）
 from app.api.services.csv import CsvFormatterService, CsvValidatorService
-from app.api.services.report.utils.config import get_template_config
-from app.api.services.report.utils.io import write_values_to_template
+from app.infra.report_utils import get_template_config, write_values_to_template
 from backend_shared.infrastructure.config.config_loader import ReportTemplateConfigLoader
 from backend_shared.usecases.report_checker.check_csv_files import check_csv_files
 

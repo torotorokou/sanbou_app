@@ -35,8 +35,7 @@ from backend_shared.utils.date_filter_utils import (
 
 # 既存のドメインロジックを再利用（将来的には Entity に移行）
 from app.api.services.report.ledger.factory_report import process as factory_report_process
-from app.api.services.report.utils.io import write_values_to_template
-from app.api.services.report.utils.config import get_template_config
+from app.infra.report_utils import write_values_to_template, get_template_config
 from app.infra.utils.pdf_conversion import convert_excel_to_pdf
 
 logger = logging.getLogger(__name__)
