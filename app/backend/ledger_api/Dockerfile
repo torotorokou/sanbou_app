@@ -63,7 +63,7 @@ COPY ./backend_shared /opt/backend_shared
 RUN pip install -e /opt/backend_shared
 
 # USER 切替前に必要ディレクトリを作成・chown
-RUN mkdir -p /backend/app /backend/app/api/data/input /backend/app/api/data/output \
+RUN mkdir -p /backend/app /backend/app/infra/data_sources/input /backend/app/infra/data_sources/output \
              /backend/app/api/logs /backend/test && \
     chown -R appuser:appuser /backend /opt/backend_shared
 
@@ -107,7 +107,7 @@ RUN pip install --no-cache-dir /wheels/*.whl && \
     rm -rf /wheels
 
 # USER 切替前に必要ディレクトリを作成・chown
-RUN mkdir -p /backend/app /backend/app/api/data/input /backend/app/api/data/output \
+RUN mkdir -p /backend/app /backend/app/infra/data_sources/input /backend/app/infra/data_sources/output \
              /backend/app/api/logs /backend/test && \
     chown -R appuser:appuser /backend
 
