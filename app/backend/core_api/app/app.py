@@ -105,6 +105,12 @@ app.include_router(database_router)           # BFF: sql_api データベース�
 # --- その他 ---
 app.include_router(calendar_router)    # カレンダー: 営業日情報等
 
+# ==========================================
+# 統一エラーハンドリング登録
+# ==========================================
+from app.presentation.middleware.error_handler import register_exception_handlers
+register_exception_handlers(app)
+
 
 @app.get("/healthz", include_in_schema=False, tags=["health"])
 @app.get("/health", include_in_schema=False, tags=["health"])

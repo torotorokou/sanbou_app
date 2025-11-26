@@ -798,3 +798,148 @@ class RawDataRepository:
             self.db.rollback()
             logger.error(f"Failed to save shipment raw data: {e}")
             raise
+    
+    # ========================================================================
+    # Upload Status Query Methods (IUploadStatusQuery Port implementation)
+    # ========================================================================
+    
+    def get_upload_status(self, upload_file_id: int) -> Optional[Dict[str, Any]]:
+        """
+        アップロードファイルのステータスを取得
+        
+        Args:
+            upload_file_id: log.upload_file.id
+            
+        Returns:
+            アップロード情報の辞書、または None（見つからない場合）
+        """
+        from sqlalchemy import select
+        
+        try:
+            result = self.db.execute(
+                select(self.upload_file_table).where(
+                    self.upload_file_table.c.id == upload_file_id
+                )
+            ).first()
+            
+            if not result:
+                return None
+            
+            # レコードを辞書に変換
+            upload_info = {
+                "id": result.id,
+                "csv_type": result.csv_type,
+                "file_name": result.file_name,
+                "file_type": result.file_type,
+                "processing_status": result.processing_status,
+                "uploaded_at": result.uploaded_at.isoformat() if result.uploaded_at else None,
+                "uploaded_by": result.uploaded_by,
+                "row_count": result.row_count,
+                "error_message": result.error_message,
+            }
+            
+            return upload_info
+            
+        except Exception as e:
+            logger.error(f"Failed to get upload status: upload_file_id={upload_file_id}, error={e}", exc_info=True)
+            raise
+    
+    def get_upload_calendar(self, year: int, month: int) -> list[Dict[str, Any]]:
+        """
+        指定月のアップロードカレンダーデータを取得
+        
+        Args:
+            year: 年
+            month: 月 (1-12)
+            
+        Returns:
+            カレンダーアイテムのリスト
+        """
+        from datetime import date
+        from calendar import monthrange
+        
+        try:
+            # 指定月の開始日・終了日を計算
+            _, last_day = monthrange(year, month)
+            start_date = date(year, month, 1)
+            end_date = date(year, month, last_day)
+            
+            # 各 stg テーブルから upload_file_id, slip_date, csv_kind, row_count を取得
+            # 論理削除されていないデータのみ
+            sql = text("""
+            WITH upload_data AS (
+                SELECT 
+                    uf.id as upload_file_id,
+                    r.slip_date as data_date,
+                    'shogun_flash_receive' as csv_kind,
+                    COUNT(*) as row_count
+                FROM log.upload_file uf
+                JOIN stg.shogun_flash_receive r ON r.upload_file_id = uf.id
+                WHERE r.is_deleted = false
+                  AND r.slip_date IS NOT NULL
+                  AND r.slip_date >= :start_date
+                  AND r.slip_date <= :end_date
+                GROUP BY uf.id, r.slip_date
+                
+                UNION ALL
+                
+                SELECT 
+                    uf.id,
+                    y.slip_date,
+                    'shogun_flash_yard' as csv_kind,
+                    COUNT(*) as row_count
+                FROM log.upload_file uf
+                JOIN stg.shogun_flash_yard y ON y.upload_file_id = uf.id
+                WHERE y.is_deleted = false
+                  AND y.slip_date IS NOT NULL
+                  AND y.slip_date >= :start_date
+                  AND y.slip_date <= :end_date
+                GROUP BY uf.id, y.slip_date
+                
+                UNION ALL
+                
+                SELECT 
+                    uf.id,
+                    s.slip_date,
+                    'shogun_flash_shipment' as csv_kind,
+                    COUNT(*) as row_count
+                FROM log.upload_file uf
+                JOIN stg.shogun_flash_shipment s ON s.upload_file_id = uf.id
+                WHERE s.is_deleted = false
+                  AND s.slip_date IS NOT NULL
+                  AND s.slip_date >= :start_date
+                  AND s.slip_date <= :end_date
+                GROUP BY uf.id, s.slip_date
+            )
+            SELECT 
+                upload_file_id,
+                data_date,
+                csv_kind,
+                row_count
+            FROM upload_data
+            ORDER BY data_date, csv_kind, upload_file_id
+            """)
+            
+            result = self.db.execute(sql, {
+                "start_date": start_date,
+                "end_date": end_date
+            })
+            rows = result.fetchall()
+            
+            items = [
+                {
+                    "uploadFileId": row[0],
+                    "date": row[1].strftime("%Y-%m-%d"),  # 'YYYY-MM-DD' 形式
+                    "csvKind": row[2],
+                    "rowCount": row[3]
+                }
+                for row in rows
+            ]
+            
+            logger.debug(f"Fetched upload calendar for {year}-{month:02d}: {len(items)} items")
+            return items
+            
+        except Exception as e:
+            logger.error(f"Failed to fetch upload calendar: year={year}, month={month}, error={e}", exc_info=True)
+            raise
+

@@ -1,13 +1,18 @@
 """
 Calendar API Router
 営業カレンダーデータの取得エンドポイント
+
+設計方針:
+  - Router は HTTP I/O のみを担当
+  - ビジネスロジックは UseCase に委譲
+  - DI 経由で UseCase を取得
 """
 from fastapi import APIRouter, Query, HTTPException, Depends
 from typing import List, Dict, Any
 import logging
-from sqlalchemy.orm import Session
-from sqlalchemy import text
-from app.deps import get_db
+
+from app.application.usecases.calendar.get_calendar_month_uc import GetCalendarMonthUseCase
+from app.config.di_providers import get_calendar_month_uc
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +23,7 @@ router = APIRouter(prefix="/calendar", tags=["calendar"])
 def get_calendar_month(
     year: int = Query(..., ge=1900, le=2100, description="Year"),
     month: int = Query(..., ge=1, le=12, description="Month"),
-    db: Session = Depends(get_db),
+    uc: GetCalendarMonthUseCase = Depends(get_calendar_month_uc),
 ) -> List[Dict[str, Any]]:
     """
     指定された年月の営業カレンダーデータを取得
@@ -26,33 +31,19 @@ def get_calendar_month(
     Args:
         year: 年 (1900-2100)
         month: 月 (1-12)
-        db: データベース接続
+        uc: GetCalendarMonthUseCase (DI)
     
     Returns:
         カレンダーデータのリスト
     """
-    sql = text("""
-    SELECT ddate, y, m, iso_year, iso_week, iso_dow,
-           is_holiday, is_second_sunday, is_company_closed,
-           day_type, is_business
-    FROM ref.v_calendar_classified
-    WHERE y = :year AND m = :month
-    ORDER BY ddate
-    """)
-    
     try:
-        result = db.execute(sql, {"year": year, "month": month})
-        rows = result.fetchall()
-        
-        cols = [
-            "ddate", "y", "m", "iso_year", "iso_week", "iso_dow",
-            "is_holiday", "is_second_sunday", "is_company_closed",
-            "day_type", "is_business"
-        ]
-        
-        data = [dict(zip(cols, r)) for r in rows]
+        data = uc.execute(year, month)
         logger.info(f"Fetched calendar for {year}-{month:02d}: {len(data)} days")
         return data
+        
+    except ValueError as e:
+        logger.warning(f"Validation error: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
         
     except Exception as e:
         logger.error(f"Failed to fetch calendar for {year}-{month:02d}: {e}", exc_info=True)

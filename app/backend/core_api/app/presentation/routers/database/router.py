@@ -29,8 +29,14 @@ from app.config.di_providers import (
     get_uc_default,
     get_uc_flash,
     get_uc_stg_final,
+    get_upload_status_uc,
+    get_upload_calendar_uc,
+    get_delete_upload_scope_uc,
 )
 from app.application.usecases.upload.upload_shogun_csv_uc import UploadShogunCsvUseCase
+from app.application.usecases.upload.get_upload_status_uc import GetUploadStatusUseCase
+from app.application.usecases.upload.get_upload_calendar_uc import GetUploadCalendarUseCase
+from app.application.usecases.upload.delete_upload_scope_uc import DeleteUploadScopeUseCase
 
 logger = logging.getLogger(__name__)
 
@@ -194,55 +200,40 @@ async def upload_shogun_csv_flash(
 @router.get("/upload/status/{upload_file_id}")
 async def get_upload_status(
     upload_file_id: int,
-    db: Session = Depends(get_db),
+    uc: GetUploadStatusUseCase = Depends(get_upload_status_uc),
 ):
     """
     アップロード処理のステータスを照会
     
     Args:
         upload_file_id: log.upload_file.id
-        db: Database session
+        uc: GetUploadStatusUseCase (DI)
         
     Returns:
         ステータス情報（processing_status, error_message, row_count など）
     """
     try:
-        from app.infra.adapters.upload.raw_data_repository import RawDataRepository
+        upload_info = uc.execute(upload_file_id)
         
-        repo = RawDataRepository(db)
-        
-        # upload_file テーブルから該当レコードを取得
-        from sqlalchemy import select
-        result = db.execute(
-            select(repo.upload_file_table).where(
-                repo.upload_file_table.c.id == upload_file_id
-            )
-        ).first()
-        
-        if not result:
+        if upload_info is None:
             return ErrorApiResponse(
                 code="UPLOAD_NOT_FOUND",
                 detail=f"アップロードID {upload_file_id} が見つかりません",
                 status_code=404,
             ).to_json_response()
         
-        # レコードを辞書に変換
-        upload_info = {
-            "id": result.id,
-            "csv_type": result.csv_type,
-            "file_name": result.file_name,
-            "file_type": result.file_type,
-            "processing_status": result.processing_status,
-            "uploaded_at": result.uploaded_at.isoformat() if result.uploaded_at else None,
-            "uploaded_by": result.uploaded_by,
-            "row_count": result.row_count,
-            "error_message": result.error_message,
-        }
-        
         return SuccessApiResponse(
             code="STATUS_OK",
-            detail=f"ステータス: {result.processing_status}",
+            detail=f"ステータス: {upload_info['processing_status']}",
             result=upload_info,
+        ).to_json_response()
+        
+    except ValueError as e:
+        logger.warning(f"Validation error: {e}")
+        return ErrorApiResponse(
+            code="INVALID_REQUEST",
+            detail=str(e),
+            status_code=400,
         ).to_json_response()
         
     except Exception as e:
@@ -441,7 +432,7 @@ def delete_upload_scope(
     target_date: date = Query(..., alias="date"),
     csv_kind: str = Query(..., alias="csvKind"),
     deleted_by: Optional[str] = None,
-    db: Session = Depends(get_db),
+    uc: DeleteUploadScopeUseCase = Depends(get_delete_upload_scope_uc),
 ):
     """
     指定されたアップロードファイルの特定日付・CSV種別のデータを論理削除
@@ -455,7 +446,7 @@ def delete_upload_scope(
         csv_kind: CSV種別（クエリパラメータ: csvKind）
                   例: 'shogun_flash_receive', 'shogun_final_yard'
         deleted_by: 削除実行者（オプション）
-        db: データベース接続
+        uc: DeleteUploadScopeUseCase (DI)
     
     Returns:
         {
@@ -467,10 +458,7 @@ def delete_upload_scope(
         }
     """
     try:
-        from app.infra.adapters.upload.raw_data_repository import RawDataRepository
-        
-        repo = RawDataRepository(db)
-        affected_rows = repo.soft_delete_by_date_and_kind(
+        affected_rows = uc.execute(
             upload_file_id=upload_file_id,
             target_date=target_date,
             csv_kind=csv_kind,
@@ -495,6 +483,10 @@ def delete_upload_scope(
             "csvKind": csv_kind,
             "affectedRows": affected_rows,
         }
+        
+    except ValueError as e:
+        logger.warning(f"Validation error: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
         
     except HTTPException:
         raise
