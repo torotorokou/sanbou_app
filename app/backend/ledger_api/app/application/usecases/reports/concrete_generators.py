@@ -11,7 +11,7 @@ from app.application.usecases.reports.management_sheet import (
     process as process_management_sheet,
 )
 
-from app.application.usecases.report.base_generators import BaseReportGenerator
+from app.application.usecases.reports.base_generators import BaseReportGenerator
 
 
 class FactoryReportGenerator(BaseReportGenerator):
@@ -50,7 +50,7 @@ class BlockUnitPriceGenerator(BaseReportGenerator):
         from app.application.usecases.reports.interactive import (
             BlockUnitPriceInteractive,
         )
-        from app.application.usecases.report.processors import (
+        from app.application.usecases.reports.processors import (
             InteractiveReportProcessingService,
         )
 

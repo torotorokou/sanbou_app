@@ -36,7 +36,7 @@ from typing import Any, Callable, Dict, Tuple
 
 import pandas as pd
 
-from app.application.usecases.report.base_generators.base_report_generator import (
+from app.application.usecases.reports.base_generators.base_report_generator import (
     BaseReportGenerator,
 )
 

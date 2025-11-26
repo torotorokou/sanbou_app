@@ -11,7 +11,7 @@ import traceback
 from fastapi import UploadFile
 from fastapi.responses import JSONResponse, Response
 
-from app.application.usecases.report.base_generators import BaseReportGenerator
+from app.application.usecases.reports.base_generators import BaseReportGenerator
 from backend_shared.adapters.presentation.response_error import NoFilesUploadedResponse
 from backend_shared.adapters.fastapi.error_handlers import DomainError
 from backend_shared.utils.csv_reader import read_csv_files
