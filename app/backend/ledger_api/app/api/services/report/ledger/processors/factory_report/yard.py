@@ -18,10 +18,13 @@ def process_yard(df_yard: pd.DataFrame, df_shipment: pd.DataFrame) -> pd.DataFra
     try:
         master_csv = load_master_and_template(master_path)
     except Exception as e:
-        logger.warning(
-            f"マスターCSVの読み込みに失敗しました（ヤード）。パス: {master_path}。理由: {e}。空データで継続します。"
+        logger.error(
+            f"マスターCSVの読み込みに失敗しました（ヤード）。パス: {master_path}。理由: {e}"
         )
-        return pd.DataFrame(columns=["大項目", "セル", "値", "セルロック", "順番", "品目名", "種類名", "品名"])  # 空
+        raise FileNotFoundError(
+            f"工場日報のヤードマスターファイルが見つかりません。パス: {master_path}。"
+            f"システム管理者に連絡してください。"
+        ) from e
 
     # --- ② ヤードの値集計処理（df_yard + df_shipmentを使用） ---
     updated_master_csv = apply_yard_summary(master_csv, df_yard, df_shipment)
