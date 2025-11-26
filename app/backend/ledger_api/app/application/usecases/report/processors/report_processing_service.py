@@ -12,7 +12,6 @@ from fastapi import UploadFile
 from fastapi.responses import JSONResponse, Response
 
 from app.application.usecases.report.base_generators import BaseReportGenerator
-from app.infra.adapters.artifact_storage import ArtifactResponseBuilder
 from backend_shared.adapters.presentation.response_error import NoFilesUploadedResponse
 from backend_shared.adapters.fastapi.error_handlers import DomainError
 from backend_shared.utils.csv_reader import read_csv_files
@@ -209,6 +208,8 @@ class ReportProcessingService:
         extra_payload: Optional[Dict[str, Any]] = None,
     ) -> JSONResponse:
         """Excel/PDF を保存し、署名付き URL を含む JSON を返却する。"""
+        from app.infra.adapters.artifact_storage import ArtifactResponseBuilder
+        
         builder = ArtifactResponseBuilder()
         return builder.build(
             generator,

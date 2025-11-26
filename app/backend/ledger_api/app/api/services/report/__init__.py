@@ -21,8 +21,8 @@ from app.application.usecases.report import (
     InteractiveReportProcessingService,
 )
 
-# Concrete generators
-from app.application.usecases.report import (
+# Concrete generators - avoid circular imports by importing directly
+from app.application.usecases.report.concrete_generators import (
     FactoryReportGenerator,
     BalanceSheetGenerator,
     AverageSheetGenerator,
