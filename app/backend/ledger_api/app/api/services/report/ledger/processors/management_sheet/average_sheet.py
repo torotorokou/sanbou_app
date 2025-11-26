@@ -1,5 +1,5 @@
 from app.api.services.report.ledger.average_sheet import process as process_ave
-from app.api.services.report.utils.dataframe.operations import (
+from app.infra.report_utils.dataframe.operations import (
     apply_summary_all_items,
 )
 

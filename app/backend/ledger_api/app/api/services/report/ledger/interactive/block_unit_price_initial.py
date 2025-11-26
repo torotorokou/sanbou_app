@@ -19,7 +19,7 @@ from app.infra.report_utils import (
     load_master_and_template,
     load_all_filtered_dataframes,
 )
-from app.api.services.report.utils.domain import ReadTransportDiscount
+from app.infra.report_utils.domain import ReadTransportDiscount
 
 from .block_unit_price_utils import (
     make_session_id,

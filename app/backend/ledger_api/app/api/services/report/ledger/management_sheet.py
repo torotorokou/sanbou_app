@@ -11,7 +11,7 @@ from app.api.services.report.utils import (
     app_logger,
     get_template_config,
 )
-from app.api.services.report.utils import load_all_filtered_dataframes, load_master_and_template
+from app.infra.report_utils import load_all_filtered_dataframes, load_master_and_template
 from app.api.services.report.ledger.processors.management_sheet.factory_report import (
     update_from_factory_report,
 )

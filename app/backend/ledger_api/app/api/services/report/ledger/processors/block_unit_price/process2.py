@@ -14,7 +14,7 @@ def apply_transport_fee_by_vendor(
     Returns:
         pd.DataFrame: 運搬費が適用された出荷データフレーム
     """
-    from app.api.services.report.utils.dataframe import apply_column_addition_by_keys
+    from app.infra.report_utils.dataframe import apply_column_addition_by_keys
 
     # 運搬業者が設定されている行を抽出
     target_rows = df_after[df_after["運搬業者"].notna()].copy()
