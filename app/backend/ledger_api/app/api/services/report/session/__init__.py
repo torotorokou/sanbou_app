@@ -1,10 +1,13 @@
 """
-Backward compatibility for session management.
+Session management for interactive reports.
 
-新しい場所: app.infra.adapters.session
+インタラクティブレポートのセッション状態管理を提供します。
+
+モジュール:
+- session_store: セッションストレージ（Redis/メモリ）
 """
 
-from app.infra.adapters.session import (
+from app.api.services.report.session.session_store import (
     session_store,
     SessionStore,
 )

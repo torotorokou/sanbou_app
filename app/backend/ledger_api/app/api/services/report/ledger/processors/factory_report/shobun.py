@@ -32,13 +32,12 @@ def process_shobun(df_shipment: pd.DataFrame) -> pd.DataFrame:
     try:
         master_csv = load_master_and_template(master_path)
     except Exception as e:
-        logger.error(
-            f"マスターCSVの読み込みに失敗しました（処分）。パス: {master_path}。理由: {e}"
+        logger.warning(
+            f"マスターCSVの読み込みに失敗しました（処分）。パス: {master_path}。理由: {e}。空データで継続します。"
         )
-        raise FileNotFoundError(
-            f"工場日報の処分マスターファイルが見つかりません。パス: {master_path}。"
-            f"システム管理者に連絡してください。"
-        ) from e
+        # 下流で期待される最小列を用意して空で返す
+        empty_cols = ["業者名", "セル", "値", "セルロック", "順番", "業者CD", "品名"]
+        return pd.DataFrame(columns=empty_cols)
 
     # --- ② 処分重量を加算（業者別）---
     updated_master_csv = apply_shobun_weight(master_csv, df_shipment)

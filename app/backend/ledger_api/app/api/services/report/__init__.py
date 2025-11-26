@@ -14,15 +14,15 @@ Report service components.
 """
 
 # Core components
-from app.application.usecases.report import (
+from app.api.services.report.core import (
     BaseReportGenerator,
     BaseInteractiveReportGenerator,
     ReportProcessingService,
     InteractiveReportProcessingService,
 )
 
-# Concrete generators - avoid circular imports by importing directly
-from app.application.usecases.report.concrete_generators import (
+# Concrete generators
+from app.api.services.report.core.concrete_generators import (
     FactoryReportGenerator,
     BalanceSheetGenerator,
     AverageSheetGenerator,
@@ -31,14 +31,14 @@ from app.application.usecases.report.concrete_generators import (
 )
 
 # Artifacts
-from app.infra.adapters.artifact_storage import (
+from app.api.services.report.artifacts import (
     get_report_artifact_storage,
     ReportArtifactStorage,
     ArtifactResponseBuilder,
 )
 
 # Session
-from app.infra.adapters.session import (
+from app.api.services.report.session import (
     session_store,
     SessionStore,
 )
@@ -56,13 +56,13 @@ from app.api.services.report.core.processors.report_processing_service import (
 from app.api.services.report.core.processors.interactive_report_processing_service import (
     InteractiveReportProcessingService as interactive_report_processing_service_compat,
 )
-from app.infra.adapters.artifact_storage import (
+from app.api.services.report.artifacts.artifact_service import (
     get_report_artifact_storage as artifact_service_compat,
 )
-from app.infra.adapters.artifact_storage import (
+from app.api.services.report.artifacts.artifact_builder import (
     ArtifactResponseBuilder as artifact_builder_compat,
 )
-from app.infra.adapters.session import (
+from app.api.services.report.session.session_store import (
     session_store as session_store_compat,
 )
 

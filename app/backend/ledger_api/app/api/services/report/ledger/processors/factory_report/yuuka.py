@@ -22,13 +22,11 @@ def process_yuuka(df_yard: pd.DataFrame, df_shipment: pd.DataFrame) -> pd.DataFr
     try:
         master_csv = load_master_and_template(master_path)
     except Exception as e:
-        logger.error(
-            f"マスターCSVの読み込みに失敗しました（有価）。パス: {master_path}。理由: {e}"
+        logger.warning(
+            f"マスターCSVの読み込みに失敗しました（有価）。パス: {master_path}。理由: {e}。空データで継続します。"
         )
-        raise FileNotFoundError(
-            f"工場日報の有価マスターファイルが見つかりません。パス: {master_path}。"
-            f"システム管理者に連絡してください。"
-        ) from e
+        # 後段の format_table で参照される列を用意
+        return pd.DataFrame(columns=["大項目", "セル", "値", "セルロック", "順番", "有価名"])  # 空
 
     # --- ② 有価の値集計処理（df_yard + df_shipmentを使用） ---
     updated_master_csv = apply_yuuka_summary(master_csv, df_yard, df_shipment)

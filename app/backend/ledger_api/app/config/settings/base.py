@@ -10,7 +10,8 @@ BASE_DIR = os.path.dirname(
 # よく使うパス
 CONFIG_DIR = os.path.join(BASE_DIR, "config")
 LOG_DIR = os.path.join(BASE_DIR, "logs")
-DATA_DIR = os.path.join(BASE_DIR, "data")
+# データソースはinfra/data_sourcesに移動済み
+DATA_DIR = os.path.join(BASE_DIR, "infra", "data_sources")
 
 # Streamlit共通設定
 DEFAULT_PORT = 8501  # 基本ポート
