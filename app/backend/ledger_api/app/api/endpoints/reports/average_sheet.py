@@ -1,15 +1,12 @@
 from typing import Optional
 
-from fastapi import APIRouter, File, Form, UploadFile
-from fastapi.responses import Response
+from fastapi import APIRouter, File, Form, UploadFile, Depends
+from fastapi.responses import JSONResponse
 
-from app.api.services.report import AverageSheetGenerator, ReportProcessingService
+from app.core.usecases.reports.generate_average_sheet import GenerateAverageSheetUseCase
+from app.config.di_providers import get_average_sheet_usecase
 
-# APIルーターの初期化
 router = APIRouter()
-
-# 共通処理サービスのインスタンス
-report_service = ReportProcessingService()
 
 
 @router.post("")
@@ -17,28 +14,24 @@ report_service = ReportProcessingService()
 async def generate_average_sheet(
     receive: UploadFile = File(None),
     report_key: Optional[str] = Form(None),
-    period_type: Optional[str] = Form(
-        None
-    ),  # "oneday" | "oneweek" | "onemonth"（任意）
-) -> Response:
+    period_type: Optional[str] = Form(None),
+    usecase: GenerateAverageSheetUseCase = Depends(get_average_sheet_usecase),
+) -> JSONResponse:
     """
     工場平均表生成APIエンドポイント
 
     受入一覧から平均表を自動集計します。
 
     Args:
-        receive (UploadFile, optional): 受入データCSVファイル
-        report_key (str, optional): レポートキー（フロントエンドとの互換性のため）
-        period_type (str, optional): 期間タイプ ("oneday" | "oneweek" | "onemonth")
+        receive: 受入データCSVファイル
+        report_key: レポートキー（互換性のため）
+        period_type: 期間フィルタ
+        usecase: 依存性注入されたUseCase
 
     Returns:
-        StreamingResponse: Excel・PDFファイルが含まれたZIPファイル
+        JSONResponse: 署名付きURLを含むレスポンス
     """
-    # アップロードされたファイルの整理
-    files = {k: v for k, v in {"receive": receive}.items() if v is not None}
-
-    # 対象Generatorを直接生成し、共通フローを実行
-    generator = AverageSheetGenerator("average_sheet", files)
-    if period_type:
-        generator.period_type = period_type
-    return report_service.run(generator, files)
+    return await usecase.execute(
+        receive=receive,
+        period_type=period_type,
+    )
