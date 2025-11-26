@@ -121,6 +121,89 @@ sudo sh -c 'echo "127.0.0.1 stg.local" >> /etc/hosts'
 
 ---
 
+## Database Migration (Alembic)
+
+本プロジェクトでは [Alembic](https://alembic.sqlalchemy.org/) を使用して PostgreSQL のスキーマ管理を行っています。
+
+### クイックコマンド
+
+```bash
+# マイグレーション実行（最新版に更新）
+make al-up
+
+# 現在のリビジョン確認
+make al-cur
+
+# マイグレーション履歴表示
+make al-hist
+
+# 新規リビジョン作成（手動）
+make al-rev MSG="add column xxx to table yyy"
+
+# 新規リビジョン作成（自動検出）
+make al-rev-auto MSG="add column xxx to table yyy"
+
+# 最新スキーマをダンプ（sql_current/schema_head.sql に出力）
+make al-dump-schema-current
+
+# 1つ前にロールバック
+make al-down
+```
+
+### 詳細ドキュメント
+
+- **[DB Migration Policy](docs/db_migration_policy.md)** - 運用ルール・新規環境構築手順・トラブルシューティング
+- **[外部SQL参照調査結果](docs/ALEMBIC_SQL_REFERENCE_SURVEY_20251126.md)** - 既存リビジョンの外部SQLファイル依存状況
+- **[sql_current/ README](app/backend/core_api/migrations/alembic/sql_current/README.md)** - 最新版スキーマスナップショットの管理方法
+
+### ディレクトリ構成
+
+```
+app/backend/core_api/migrations/
+├── alembic.ini              # Alembic 設定
+├── alembic/
+│   ├── env.py              # 環境設定（DSN、複数スキーマ対応）
+│   ├── versions/           # マイグレーション履歴（70+ revisions）
+│   ├── sql/                # 既存revisionが参照するSQLファイル（互換性維持）
+│   └── sql_current/        # 最新版スキーマスナップショット
+│       ├── README.md
+│       └── schema_head.sql # pg_dump --schema-only の出力
+```
+
+### 新規環境のセットアップ
+
+**パターンA: スキーマダンプから高速初期化（推奨）**
+
+```bash
+# 1. DB起動
+make up ENV=local_dev
+
+# 2. スキーマ一括投入
+make al-init-from-schema
+
+# 3. Alembic履歴をHEADにマーク
+make al-cur  # HEAD revision IDを確認
+make al-stamp REV=<HEAD_REVISION_ID>
+```
+
+**パターンB: マイグレーション履歴から順次適用**
+
+```bash
+# 1. DB起動
+make up ENV=local_dev
+
+# 2. 全マイグレーション実行
+make al-up
+```
+
+### 新規リビジョン作成のベストプラクティス
+
+- ✅ **推奨**: SQLを revision ファイル内にべた書き（`op.execute("""...""")`）
+- ❌ **非推奨**: 外部SQLファイルを読み込む（`Path(...).read_text()`）
+- 詳細は [DB Migration Policy](docs/db_migration_policy.md) を参照
+
+---
+
 ## STG / 本番 (vm_stg / vm_prod)
 
 1) 環境変数ファイルを用意

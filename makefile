@@ -371,6 +371,26 @@ refresh-mv:
 
 # 目標カードMVのみリフレッシュ（個別実行用）
 refresh-mv-target-card:
+
+# =============================================================
+# Alembic: Schema Dump & Management
+# =============================================================
+.PHONY: al-dump-schema-current al-init-from-schema
+
+# 最新スキーマをsql_current/schema_head.sqlにダンプ
+al-dump-schema-current:
+	@echo "[info] Dumping current schema to sql_current/schema_head.sql"
+	@bash scripts/db/dump_schema_current.sh
+
+# 新規環境をschema_head.sqlから初期化（データなし・スキーマのみ）
+al-init-from-schema:
+	@echo "[info] Initializing database from schema_head.sql"
+	@if [ ! -f app/backend/core_api/migrations/alembic/sql_current/schema_head.sql ]; then \
+	  echo "[error] schema_head.sql not found. Run 'make al-dump-schema-current' first."; \
+	  exit 1; \
+	fi
+	$(DC) exec -T db psql -U myuser -d sanbou_dev < app/backend/core_api/migrations/alembic/sql_current/schema_head.sql
+	@echo "[ok] Schema initialized. Now run: make al-stamp REV=<HEAD_REVISION>"
 	@echo "[refresh-mv-target-card] Refreshing mart.mv_target_card_per_day..."
 	$(DC) exec -T db psql -U myuser -d sanbou_dev -c "REFRESH MATERIALIZED VIEW CONCURRENTLY mart.mv_target_card_per_day;"
 	@echo "[ok] mv_target_card_per_day refreshed"
