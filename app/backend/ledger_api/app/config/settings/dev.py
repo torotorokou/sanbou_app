@@ -1,4 +1,4 @@
-from app.api.config.settings.base import *
+from app.config.settings.base import *
 
 # --- 開発環境用設定 ---
 

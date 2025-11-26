@@ -3,9 +3,9 @@ import yaml
 import os
 from typing import Optional, Union
 
-# 設定ファイルのパスを api/config に変更
-MAIN_PATHS = "/backend/app/api/config/main_paths.yaml"
-BASE_DIR_PATH = "/backend/app/api"
+# 設定ファイルのパスをapp/configに変更
+MAIN_PATHS = "/backend/app/config/main_paths.yaml"
+BASE_DIR_PATH = "/backend/app"
 
 
 class MainPath:
@@ -25,8 +25,8 @@ class MainPath:
 
 class BaseDirProvider:
     def __init__(self, default_path: str = BASE_DIR_PATH):
-        # 環境変数名も BASE_API_DIR に変更
-        self.base_dir = Path(os.getenv("BASE_API_DIR", default_path))
+        # 環境変数名もBASE_APP_DIRに変更
+        self.base_dir = Path(os.getenv("BASE_APP_DIR", default_path))
 
     def get_base_dir(self) -> Path:
         return self.base_dir
