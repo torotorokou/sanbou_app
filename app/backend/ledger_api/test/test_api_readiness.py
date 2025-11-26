@@ -223,7 +223,7 @@ def test_utility_functions():
     
     # config のテスト
     try:
-        from app.api.services.report.utils.config import get_template_config
+        from app.infra.report_utils import get_template_config
         config = get_template_config()
         assert isinstance(config, dict), "config は辞書である必要があります"
         print("✅ get_template_config                                    OK")

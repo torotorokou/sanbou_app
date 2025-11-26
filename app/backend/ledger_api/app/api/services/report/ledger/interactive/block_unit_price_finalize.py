@@ -20,7 +20,7 @@ from app.api.services.report.ledger.processors.block_unit_price.process2 import 
 from app.api.services.report.utils.domain import ReadTransportDiscount
 from app.api.services.report.utils.paths import MainPath
 from app.api.services.report.utils.io import load_master_and_template
-from app.api.services.report.utils.config import get_template_config
+from app.infra.report_utils import get_template_config
 from app.api.services.report.utils.logging import app_logger
 
 from .block_unit_price_utils import (
