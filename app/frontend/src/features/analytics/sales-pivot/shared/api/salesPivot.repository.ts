@@ -641,10 +641,15 @@ export class HttpSalesPivotRepository implements SalesPivotRepository {
     // QueryをAPIリクエスト形式に変換
     // month: "2025-10" -> date_from: "2025-10-01", date_to: "2025-10-31"
     // monthRange: {from: "2025-10", to: "2025-12"} -> date_from: "2025-10-01", date_to: "2025-12-31"
+    // dateFrom/dateTo: 直接使用
     let date_from: string;
     let date_to: string;
     
-    if (q.monthRange) {
+    if (q.dateFrom && q.dateTo) {
+      // 日付モード: そのまま使用
+      date_from = q.dateFrom;
+      date_to = q.dateTo;
+    } else if (q.monthRange) {
       date_from = `${q.monthRange.from}-01`;
       date_to = this._getMonthEndDate(q.monthRange.to);
     } else if (q.month) {
@@ -711,14 +716,18 @@ export class HttpSalesPivotRepository implements SalesPivotRepository {
     let date_from: string;
     let date_to: string;
     
-    if (params.monthRange) {
+    if (params.dateFrom && params.dateTo) {
+      // 日付モード: そのまま使用
+      date_from = params.dateFrom;
+      date_to = params.dateTo;
+    } else if (params.monthRange) {
       date_from = `${params.monthRange.from}-01`;
       date_to = this._getMonthEndDate(params.monthRange.to);
     } else if (params.month) {
       date_from = `${params.month}-01`;
       date_to = this._getMonthEndDate(params.month);
     } else {
-      throw new Error('month or monthRange is required');
+      throw new Error('month, monthRange, or dateFrom/dateTo is required');
     }
 
     const req = {
@@ -772,7 +781,11 @@ export class HttpSalesPivotRepository implements SalesPivotRepository {
     let date_from: string;
     let date_to: string;
     
-    if (params.monthRange) {
+    if (params.dateFrom && params.dateTo) {
+      // 日付モード: そのまま使用
+      date_from = params.dateFrom;
+      date_to = params.dateTo;
+    } else if (params.monthRange) {
       date_from = `${params.monthRange.from}-01`;
       date_to = this._getMonthEndDate(params.monthRange.to);
     } else if (params.month) {
@@ -819,14 +832,18 @@ export class HttpSalesPivotRepository implements SalesPivotRepository {
     let date_from: string;
     let date_to: string;
     
-    if (query.monthRange) {
+    if (query.dateFrom && query.dateTo) {
+      // 日付モード: そのまま使用
+      date_from = query.dateFrom;
+      date_to = query.dateTo;
+    } else if (query.monthRange) {
       date_from = `${query.monthRange.from}-01`;
       date_to = this._getMonthEndDate(query.monthRange.to);
     } else if (query.month) {
       date_from = `${query.month}-01`;
       date_to = this._getMonthEndDate(query.month);
     } else {
-      throw new Error('month or monthRange is required for CSV export');
+      throw new Error('month, monthRange, or dateFrom/dateTo is required for CSV export');
     }
 
     const req = {

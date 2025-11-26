@@ -20,27 +20,45 @@ export interface ComputedLabelsState {
 
 /**
  * 計算済みラベルと集計値フック
- * @param periodMode 期間モード
+ * @param granularity 粒度（月次/日次）
+ * @param periodMode 期間モード（単一/期間）
  * @param month 単月
- * @param range 期間範囲
+ * @param range 月範囲
+ * @param singleDate 単一日付
+ * @param dateRange 日付範囲
  * @param summary サマリーデータ
  * @param repIds 選択営業ID配列
  * @param reps 営業マスタ
  */
 export function useComputedLabels(
+  granularity: 'month' | 'date',
   periodMode: 'single' | 'range',
   month: Dayjs,
   range: [Dayjs, Dayjs] | null,
+  singleDate: Dayjs,
+  dateRange: [Dayjs, Dayjs] | null,
   summary: SummaryRow[],
   repIds: ID[],
   reps: Array<{ id: ID; name: string }>
 ): ComputedLabelsState {
   // 期間ラベル
   const periodLabel = useMemo(() => {
-    return periodMode === 'single'
-      ? month.format('YYYYMM')
-      : `${(range?.[0] ?? month).format('YYYYMM')}-${(range?.[1] ?? month).format('YYYYMM')}`;
-  }, [periodMode, month, range]);
+    if (granularity === 'date') {
+      if (periodMode === 'range') {
+        const dr = dateRange || [singleDate, singleDate];
+        return `${dr[0].format('YYYY-MM-DD')} - ${dr[1].format('YYYY-MM-DD')}`;
+      } else {
+        return singleDate.format('YYYY-MM-DD');
+      }
+    } else {
+      if (periodMode === 'range') {
+        const r = range || [month, month];
+        return `${r[0].format('YYYYMM')}-${r[1].format('YYYYMM')}`;
+      } else {
+        return month.format('YYYYMM');
+      }
+    }
+  }, [granularity, periodMode, month, range, singleDate, dateRange]);
 
   // Header totals
   const headerTotals = useMemo(() => {

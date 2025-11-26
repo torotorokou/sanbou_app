@@ -8,9 +8,12 @@ import type { SummaryQuery, Mode, ID, SortKey, SortOrder } from './types';
 import type { Dayjs } from 'dayjs';
 
 interface QueryBuilderParams {
+  granularity: 'month' | 'date';
   periodMode: 'single' | 'range';
   month: Dayjs;
   range: [Dayjs, Dayjs] | null;
+  singleDate: Dayjs;
+  dateRange: [Dayjs, Dayjs] | null;
   mode: Mode;
   categoryKind: 'waste' | 'valuable';
   repIds: ID[];
@@ -22,9 +25,12 @@ interface QueryBuilderParams {
 
 export function useQueryBuilder(params: QueryBuilderParams) {
   const {
+    granularity,
     periodMode,
     month,
     range,
+    singleDate,
+    dateRange,
     mode,
     categoryKind,
     repIds,
@@ -36,14 +42,40 @@ export function useQueryBuilder(params: QueryBuilderParams) {
 
   const query: SummaryQuery = useMemo(() => {
     const base = { mode, categoryKind, repIds, filterIds, sortBy: filterSortBy, order: filterOrder, topN: filterTopN };
-    if (periodMode === 'single') return { ...base, month: month.format('YYYY-MM') };
-    if (range)
-      return {
-        ...base,
-        monthRange: { from: range[0].format('YYYY-MM'), to: range[1].format('YYYY-MM') },
-      };
-    return { ...base, month: month.format('YYYY-MM') };
-  }, [periodMode, month, range, mode, categoryKind, repIds, filterIds, filterSortBy, filterOrder, filterTopN]);
+    
+    if (granularity === 'date') {
+      // 日次モード
+      if (periodMode === 'range') {
+        // 日付範囲
+        const dr = dateRange || [singleDate, singleDate];
+        return {
+          ...base,
+          dateFrom: dr[0].format('YYYY-MM-DD'),
+          dateTo: dr[1].format('YYYY-MM-DD'),
+        };
+      } else {
+        // 単一日付
+        return {
+          ...base,
+          dateFrom: singleDate.format('YYYY-MM-DD'),
+          dateTo: singleDate.format('YYYY-MM-DD'),
+        };
+      }
+    } else {
+      // 月次モード
+      if (periodMode === 'range') {
+        // 月範囲
+        const r = range || [month, month];
+        return {
+          ...base,
+          monthRange: { from: r[0].format('YYYY-MM'), to: r[1].format('YYYY-MM') },
+        };
+      } else {
+        // 単月
+        return { ...base, month: month.format('YYYY-MM') };
+      }
+    }
+  }, [granularity, periodMode, month, range, singleDate, dateRange, mode, categoryKind, repIds, filterIds, filterSortBy, filterOrder, filterTopN]);
 
   return query;
 }

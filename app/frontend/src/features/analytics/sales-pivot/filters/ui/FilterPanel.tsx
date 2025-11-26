@@ -11,12 +11,18 @@ import { axisLabel } from '../../shared/model/metrics';
 
 interface FilterPanelProps {
   // Period
+  granularity: 'month' | 'date';
   periodMode: 'single' | 'range';
   month: Dayjs;
   range: [Dayjs, Dayjs] | null;
+  singleDate: Dayjs;
+  dateRange: [Dayjs, Dayjs] | null;
+  onGranularityChange: (granularity: 'month' | 'date') => void;
   onPeriodModeChange: (mode: 'single' | 'range') => void;
   onMonthChange: (month: Dayjs) => void;
   onRangeChange: (range: [Dayjs, Dayjs] | null) => void;
+  onSingleDateChange: (date: Dayjs) => void;
+  onDateRangeChange: (range: [Dayjs, Dayjs] | null) => void;
 
   // Category
   categoryKind: CategoryKind;
@@ -47,12 +53,18 @@ interface FilterPanelProps {
  * フィルタパネルコンポーネント
  */
 export const FilterPanel: React.FC<FilterPanelProps> = ({
+  granularity,
   periodMode,
   month,
   range,
+  singleDate,
+  dateRange,
+  onGranularityChange,
   onPeriodModeChange,
   onMonthChange,
   onRangeChange,
+  onSingleDateChange,
+  onDateRangeChange,
   categoryKind,
   onCategoryKindChange,
   mode,
@@ -145,33 +157,69 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
         {/* 期間選択 */}
         <Col xs={24} lg={24}>
           <Space direction="vertical" size={2} style={{ width: '100%' }}>
-            <Typography.Text type="secondary">対象（単月 / 期間）</Typography.Text>
+            <Typography.Text type="secondary">対象（月次 / 日次）</Typography.Text>
             <Space wrap>
+              {/* 粒度選択 */}
               <Segmented
                 options={[
-                  { label: '単月', value: 'single' },
+                  { label: '月次', value: 'month' },
+                  { label: '日次', value: 'date' },
+                ]}
+                value={granularity}
+                onChange={(v: string | number) => onGranularityChange(v as 'month' | 'date')}
+              />
+              {/* 単一/期間選択 */}
+              <Segmented
+                options={[
+                  { label: '単一', value: 'single' },
                   { label: '期間', value: 'range' },
                 ]}
                 value={periodMode}
                 onChange={(v: string | number) => onPeriodModeChange(v as 'single' | 'range')}
               />
-              {periodMode === 'single' ? (
-                <DatePicker
-                  picker="month"
-                  value={month}
-                  onChange={(d: Dayjs | null) => d && onMonthChange(d.startOf('month'))}
-                  allowClear={false}
-                />
+              {/* 日付/月の選択 */}
+              {granularity === 'month' ? (
+                periodMode === 'single' ? (
+                  <DatePicker
+                    picker="month"
+                    value={month}
+                    onChange={(d: Dayjs | null) => d && onMonthChange(d.startOf('month'))}
+                    allowClear={false}
+                    placeholder="対象月"
+                  />
+                ) : (
+                  <DatePicker.RangePicker
+                    picker="month"
+                    value={range}
+                    onChange={(vals: [Dayjs | null, Dayjs | null] | null) => {
+                      if (vals && vals[0] && vals[1])
+                        onRangeChange([vals[0].startOf('month'), vals[1].startOf('month')]);
+                    }}
+                    allowEmpty={[false, false]}
+                    placeholder={['開始月', '終了月']}
+                  />
+                )
               ) : (
-                <DatePicker.RangePicker
-                  picker="month"
-                  value={range}
-                  onChange={(vals: [Dayjs | null, Dayjs | null] | null) => {
-                    if (vals && vals[0] && vals[1])
-                      onRangeChange([vals[0].startOf('month'), vals[1].startOf('month')]);
-                  }}
-                  allowEmpty={[false, false]}
-                />
+                periodMode === 'single' ? (
+                  <DatePicker
+                    value={singleDate}
+                    onChange={(d: Dayjs | null) => d && onSingleDateChange(d)}
+                    allowClear={false}
+                    placeholder="対象日"
+                  />
+                ) : (
+                  <DatePicker.RangePicker
+                    value={dateRange}
+                    onChange={(vals: [Dayjs | null, Dayjs | null] | null) => {
+                      if (vals && vals[0] && vals[1]) {
+                        onDateRangeChange([vals[0], vals[1]]);
+                      } else {
+                        onDateRangeChange(null);
+                      }
+                    }}
+                    placeholder={['開始日', '終了日']}
+                  />
+                )
               )}
             </Space>
           </Space>

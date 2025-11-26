@@ -265,6 +265,8 @@ export interface SummaryRow {
 export interface SummaryQuery {
   month?: YYYYMM;
   monthRange?: { from: YYYYMM; to: YYYYMM };
+  dateFrom?: YYYYMMDD;
+  dateTo?: YYYYMMDD;
   mode: Mode;
   categoryKind: CategoryKind;
   repIds: ID[];
@@ -308,6 +310,8 @@ export interface SummaryQuery {
 export interface PivotQuery {
   month?: YYYYMM;
   monthRange?: { from: YYYYMM; to: YYYYMM };
+  dateFrom?: YYYYMMDD;
+  dateTo?: YYYYMMDD;
   baseAxis: Mode;
   baseId: ID;
   categoryKind: CategoryKind;
@@ -354,6 +358,8 @@ export interface CursorPage<T> {
 export interface DailySeriesQuery {
   month?: YYYYMM;
   monthRange?: { from: YYYYMM; to: YYYYMM };
+  dateFrom?: YYYYMMDD;
+  dateTo?: YYYYMMDD;
   categoryKind: CategoryKind;
   repId?: ID;
   customerId?: ID;

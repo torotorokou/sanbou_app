@@ -66,7 +66,7 @@ const SalesTreePage: React.FC = () => {
   const repository = useRepository(categoryKind);
 
   // Period（期間状態管理）
-  const { periodMode, month, range, setPeriodMode, setMonth, setRange } = usePeriodState();
+  const { granularity, periodMode, month, range, singleDate, dateRange, setGranularity, setPeriodMode, setMonth, setRange, setSingleDate, setDateRange } = usePeriodState();
 
   // Filters（フィルター状態管理）
   const {
@@ -93,9 +93,12 @@ const SalesTreePage: React.FC = () => {
 
   // Query materialize (API用 - フィルターパネルの条件）
   const query = useQueryBuilder({
+    granularity,
     periodMode,
     month,
     range,
+    singleDate,
+    dateRange,
     mode,
     categoryKind,
     repIds,
@@ -151,9 +154,12 @@ const SalesTreePage: React.FC = () => {
 
   // 計算済みラベルと集計値
   const { periodLabel, headerTotals, selectedRepLabel } = useComputedLabels(
+    granularity,
     periodMode,
     month,
     range,
+    singleDate,
+    dateRange,
     summary,
     repIds,
     reps
@@ -267,12 +273,18 @@ const SalesTreePage: React.FC = () => {
 
       {/* Filters */}
       <FilterPanel
+        granularity={granularity}
         periodMode={periodMode}
         month={month}
         range={range}
+        singleDate={singleDate}
+        dateRange={dateRange}
+        onGranularityChange={setGranularity}
         onPeriodModeChange={setPeriodMode}
         onMonthChange={setMonth}
         onRangeChange={setRange}
+        onSingleDateChange={setSingleDate}
+        onDateRangeChange={setDateRange}
         mode={mode}
         topN={filterTopN}
         sortBy={filterSortBy}
