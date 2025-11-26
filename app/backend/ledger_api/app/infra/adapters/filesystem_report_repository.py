@@ -5,6 +5,8 @@ File System Report Repository (ファイルシステムへのレポート保存�
 既存の artifacts/artifact_service を活用します。
 """
 
+import logging
+import time
 from datetime import date
 from io import BytesIO
 from typing import Optional
@@ -12,6 +14,8 @@ from typing import Optional
 from app.core.ports import ReportRepository
 from app.core.ports.report_repository import ArtifactUrls
 from app.api.services.report.artifacts import get_report_artifact_storage
+
+logger = logging.getLogger(__name__)
 
 
 class FileSystemReportRepository(ReportRepository):
@@ -33,27 +37,116 @@ class FileSystemReportRepository(ReportRepository):
 
         既存の ReportArtifactStorage を利用します。
         """
-        # ArtifactLocation を確保
-        location = self._storage.allocate(
-            report_key=report_key,
-            report_date=report_date.isoformat(),
+        start_time = time.time()
+        
+        logger.info(
+            "レポート保存開始",
+            extra={
+                "operation": "save_report",
+                "report_key": report_key,
+                "report_date": report_date.isoformat(),
+            },
         )
 
-        # Excel と PDF を保存
-        excel_content = excel_bytes.getvalue() if hasattr(excel_bytes, 'getvalue') else excel_bytes.read()
-        pdf_content = pdf_bytes.getvalue() if hasattr(pdf_bytes, 'getvalue') else pdf_bytes.read()
+        location = None
+        excel_saved = False
+        pdf_saved = False
 
-        self._storage.save_excel(location, excel_content)
-        self._storage.save_pdf(location, pdf_content)
+        try:
+            # ArtifactLocation を確保
+            location = self._storage.allocate(
+                report_key=report_key,
+                report_date=report_date.isoformat(),
+            )
+            
+            logger.debug(
+                "Artifactロケーション確保完了",
+                extra={
+                    "operation": "save_report",
+                    "report_key": report_key,
+                    "location": str(location),
+                },
+            )
 
-        # 署名付き URL を生成
-        payload = self._storage.build_payload(location, excel_exists=True, pdf_exists=True)
+            # Excel と PDF のバイトデータを取得
+            excel_content = excel_bytes.getvalue() if hasattr(excel_bytes, 'getvalue') else excel_bytes.read()
+            pdf_content = pdf_bytes.getvalue() if hasattr(pdf_bytes, 'getvalue') else pdf_bytes.read()
+            
+            excel_size = len(excel_content)
+            pdf_size = len(pdf_content)
 
-        return ArtifactUrls(
-            excel_url=payload["excel_download_url"],
-            pdf_url=payload["pdf_preview_url"],
-            zip_url=None,  # 既存実装には zip がないため None
-        )
+            # Excel を保存
+            self._storage.save_excel(location, excel_content)
+            excel_saved = True
+            logger.debug(
+                "Excel保存完了",
+                extra={
+                    "operation": "save_report",
+                    "report_key": report_key,
+                    "size_bytes": excel_size,
+                },
+            )
+
+            # PDF を保存
+            self._storage.save_pdf(location, pdf_content)
+            pdf_saved = True
+            logger.debug(
+                "PDF保存完了",
+                extra={
+                    "operation": "save_report",
+                    "report_key": report_key,
+                    "size_bytes": pdf_size,
+                },
+            )
+
+            # 署名付き URL を生成
+            payload = self._storage.build_payload(location, excel_exists=True, pdf_exists=True)
+            
+            urls = ArtifactUrls(
+                excel_url=payload["excel_download_url"],
+                pdf_url=payload["pdf_preview_url"],
+                zip_url=None,  # 既存実装には zip がないため None
+            )
+
+            elapsed = time.time() - start_time
+            logger.info(
+                "レポート保存完了",
+                extra={
+                    "operation": "save_report",
+                    "report_key": report_key,
+                    "report_date": report_date.isoformat(),
+                    "excel_size_bytes": excel_size,
+                    "pdf_size_bytes": pdf_size,
+                    "elapsed_seconds": round(elapsed, 3),
+                },
+            )
+            
+            return urls
+
+        except Exception as e:
+            elapsed = time.time() - start_time
+            
+            # エラー情報を詳細にログ出力
+            logger.exception(
+                "レポート保存中にエラー",
+                extra={
+                    "operation": "save_report",
+                    "report_key": report_key,
+                    "report_date": report_date.isoformat(),
+                    "excel_saved": excel_saved,
+                    "pdf_saved": pdf_saved,
+                    "elapsed_seconds": round(elapsed, 3),
+                    "exception_type": type(e).__name__,
+                    "exception_message": str(e),
+                },
+            )
+            
+            # TODO: 部分保存済みファイルのクリーンアップ
+            # 現状では既存の storage が自動的にタイムスタンプ付きディレクトリを作成するため、
+            # 失敗時はそのディレクトリごと削除することが理想
+            
+            # エラーを再送出（UseCase層でキャッチされる）
+            raise
 
     def get_artifact_urls(
         self,
