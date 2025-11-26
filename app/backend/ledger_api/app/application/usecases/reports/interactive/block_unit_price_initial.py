@@ -199,7 +199,7 @@ def execute_initial_step(df_formatted: Dict[str, Any]) -> Tuple[Dict[str, Any], 
         entry_index_map: Dict[str, Union[int, str]] = {}
 
         # 各行の処理
-        for idx, row in target_rows.iterrows():
+        for row_num, (idx, row) in enumerate(target_rows.iterrows()):
             df_idx = normalize_df_index(idx)
             
             # オプションと初期選択の計算
@@ -207,8 +207,8 @@ def execute_initial_step(df_formatted: Dict[str, Any]) -> Tuple[Dict[str, Any], 
                 row, df_transport_cost
             )
             
-            # エントリIDの生成
-            entry_id = stable_entry_id(row, fallback_key=f"{gyousha_cd_str}:{df_idx}")
+            # エントリIDの生成（row_numを渡して一意性を保証）
+            entry_id = stable_entry_id(row, fallback_key=f"{gyousha_cd_str}:{df_idx}", row_index=row_num)
             
             # ペイロードの構築
             payload_entry, df_idx_ret = build_row_payload(

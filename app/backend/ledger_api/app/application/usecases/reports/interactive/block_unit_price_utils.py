@@ -48,14 +48,21 @@ def make_session_id() -> str:
     return f"bup-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}-{secrets.token_hex(3)}"
 
 
-def stable_entry_id(row: pd.Series, fallback_key: str) -> str:
-    """行の安定したエントリIDを生成"""
+def stable_entry_id(row: pd.Series, fallback_key: str, row_index: int = 0) -> str:
+    """行の安定したエントリIDを生成
+    
+    Args:
+        row: データ行
+        fallback_key: フォールバックキー
+        row_index: 行インデックス（一意性を保証するため）
+    """
     parts = [
         str(row.get("業者CD", "")),
         str(row.get("品名", "")),
         str(row.get("明細備考", "")),
         str(row.get("伝票番号", "")),
         str(row.get("行番号", "")),
+        str(row_index),  # インデックスを追加して一意性を保証
     ]
     base = "|".join(parts).strip("|") or fallback_key
     h = hashlib.sha1(base.encode("utf-8")).hexdigest()[:10]
