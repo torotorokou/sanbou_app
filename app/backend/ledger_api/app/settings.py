@@ -73,6 +73,8 @@ class Settings:
             raw = None
         if raw is not None:
             return _as_bool(raw, False)
+        # dev環境ではGit管理されたローカルファイルを使用するため、デフォルトでGCS同期しない
+        # stg/prodのみGCS同期を実行
         return self.stage in {"stg", "prod"}
 
     def should_download_reason(self) -> str:

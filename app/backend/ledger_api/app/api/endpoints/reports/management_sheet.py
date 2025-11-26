@@ -19,7 +19,7 @@ async def generate_management_sheet(
     usecase: GenerateManagementSheetUseCase = Depends(get_management_sheet_usecase),
 ) -> JSONResponse:
     """経営管理表生成APIエンドポイント"""
-    return await usecase.execute(
+    return usecase.execute(
         shipment=shipment,
         yard=yard,
         receive=receive,

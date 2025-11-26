@@ -168,6 +168,9 @@ nginx/cache/
 # CSV は生成データ混在の可能性があるため必要ならここで一括除外し、config 配下は allow
 *.csv
 
+
+data
+
 # --- allow Node.js package manifests & lock files (were excluded by *.json / *.yaml) ---
 !package.json
 !**/package.json

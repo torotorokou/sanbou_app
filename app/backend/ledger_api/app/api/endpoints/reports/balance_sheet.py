@@ -35,7 +35,7 @@ async def generate_balance_sheet(
     Returns:
         JSONResponse: 署名付きURLを含むレスポンス
     """
-    return await usecase.execute(
+    return usecase.execute(
         shipment=shipment,
         yard=yard,
         receive=receive,

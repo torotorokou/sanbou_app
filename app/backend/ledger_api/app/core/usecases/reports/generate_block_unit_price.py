@@ -42,8 +42,15 @@ class GenerateBlockUnitPriceUseCase:
             logger.debug("Step 1: CSV読み込み開始")
             
             files = {k: v for k, v in {"shipment": shipment, "yard": yard, "receive": receive}.items() if v}
-            dfs = self.csv_gateway.read_csv_files(files)
+            dfs, error = self.csv_gateway.read_csv_files(files)
+            if error:
+                logger.warning(
+                    "Step 1: CSV読み込みエラー",
+                    extra={"error_type": type(error).__name__},
+                )
+                return error.to_json_response()
             
+            assert dfs is not None
             logger.debug(
                 "Step 1: CSV読み込み完了",
                 extra={"elapsed_seconds": round(time.time() - step_start, 3)},
@@ -146,7 +153,19 @@ class GenerateBlockUnitPriceUseCase:
                 },
             )
             
-            return JSONResponse(status_code=200, content={"message": "ブロック単価表の生成が完了しました", "report_date": block_unit_price.report_date.isoformat(), **artifact_urls.to_dict()})
+            # BFF互換のレスポンス形式に変換
+            artifact_dict = artifact_urls.to_dict()
+            return JSONResponse(
+                status_code=200,
+                content={
+                    "message": "ブロック単価表の生成が完了しました",
+                    "report_date": block_unit_price.report_date.isoformat(),
+                    "artifact": {
+                        "excel_download_url": artifact_dict["excel_url"],
+                        "pdf_preview_url": artifact_dict["pdf_url"],
+                    },
+                },
+            )
         except DomainError:
             raise
         except Exception as ex:
@@ -164,7 +183,7 @@ class GenerateBlockUnitPriceUseCase:
     def _generate_excel(self, result_df, report_date: date) -> BytesIO:
         config = get_template_config()["block_unit_price"]
         extracted_date = report_date.strftime("%Y年%m月%d日")
-        buffer = write_values_to_template(result_df, config["template_path"], extracted_date)
+        buffer = write_values_to_template(result_df, config["template_excel_path"], extracted_date)
         return buffer
 
     def _generate_pdf(self, excel_bytes: BytesIO) -> BytesIO:

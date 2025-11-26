@@ -275,12 +275,17 @@ class GenerateFactoryReportUseCase:
                 },
             )
             
+            # BFF互換のレスポンス形式に変換
+            artifact_dict = artifact_urls.to_dict()
             return JSONResponse(
                 status_code=200,
                 content={
                     "message": "工場日報の生成が完了しました",
                     "report_date": factory_report.report_date.isoformat(),
-                    **artifact_urls.to_dict(),
+                    "artifact": {
+                        "excel_download_url": artifact_dict["excel_url"],
+                        "pdf_preview_url": artifact_dict["pdf_url"],
+                    },
                 },
             )
 
@@ -346,7 +351,7 @@ class GenerateFactoryReportUseCase:
         """
         template_key = "factory_report"
         template_config = get_template_config()[template_key]
-        template_path = template_config["template_path"]
+        template_path = template_config["template_excel_path"]
         
         # 日付文字列を生成（シート名用）
         extracted_date = report_date.strftime("%Y年%m月%d日")
