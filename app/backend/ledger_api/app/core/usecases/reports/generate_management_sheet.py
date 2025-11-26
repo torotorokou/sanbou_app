@@ -17,15 +17,17 @@ from app.api.services.report.utils.io import write_values_to_template
 from app.api.services.report.utils.config import get_template_config
 from app.api.utils.pdf_conversion import convert_excel_to_pdf
 
+logger = logging.getLogger(__name__)
+
 
 class GenerateManagementSheetUseCase:
     def __init__(self, csv_gateway: CsvGateway, report_repository: ReportRepository):
         self.csv_gateway, self.report_repository = csv_gateway, report_repository
 
-    async def execute(self, shipment: Optional[UploadFile] = None, yard: Optional[UploadFile] = None, receive: Optional[UploadFile] = None, period_type: Optional[str] = None) -> JSONResponse:
+    def execute(self, shipment: Optional[UploadFile] = None, yard: Optional[UploadFile] = None, receive: Optional[UploadFile] = None, period_type: Optional[str] = None) -> JSONResponse:
         try:
             files = {k: v for k, v in {"shipment": shipment, "yard": yard, "receive": receive}.items() if v}
-            dfs = await self.csv_gateway.read_csv_files(files)
+            dfs = self.csv_gateway.read_csv_files(files)
             if period_type:
                 try:
                     dfs = shared_filter_by_period_from_min_date(dfs, period_type)
@@ -43,17 +45,19 @@ class GenerateManagementSheetUseCase:
         except Exception as ex:
             raise DomainError("INTERNAL_ERROR", 500, "経営管理表の生成中に予期しないエラーが発生しました", "内部エラー") from ex
 
-    def _generate_excel(self, result_df, report_date: date) -> bytes:
+    def _generate_excel(self, result_df, report_date: date) -> BytesIO:
         config = get_template_config()["management_sheet"]
-        buffer = write_values_to_template(result_df, config["template_path"], report_date.isoformat())
-        buffer.seek(0)
-        return buffer.read()
+        extracted_date = report_date.strftime("%Y年%m月%d日")
+        buffer = write_values_to_template(result_df, config["template_path"], extracted_date)
+        return buffer
 
-    def _generate_pdf(self, excel_bytes: bytes) -> bytes:
+    def _generate_pdf(self, excel_bytes: BytesIO) -> BytesIO:
         with tempfile.NamedTemporaryFile(suffix=".xlsx", delete=False) as tmp:
-            tmp.write(excel_bytes)
+            tmp.write(excel_bytes.getvalue())
             tmp_path = Path(tmp.name)
         try:
-            return convert_excel_to_pdf(tmp_path)
+            pdf_bytes_raw = convert_excel_to_pdf(tmp_path)
+            return BytesIO(pdf_bytes_raw)
         finally:
-            tmp_path.unlink(missing_ok=True)
+            if tmp_path.exists():
+                tmp_path.unlink()
