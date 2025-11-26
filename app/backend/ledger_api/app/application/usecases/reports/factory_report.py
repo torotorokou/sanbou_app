@@ -13,22 +13,22 @@ from app.infra.report_utils import (
     load_all_filtered_dataframes,
 )
 from app.infra.report_utils.excel import sort_by_cell_row
-from app.api.services.report.ledger.processors.factory_report.shobun import (
+from app.application.domain.reports.processors.factory_report.shobun import (
     process_shobun,
 )
-from app.api.services.report.ledger.processors.factory_report.yuuka import (
+from app.application.domain.reports.processors.factory_report.yuuka import (
     process_yuuka,
 )
-from app.api.services.report.ledger.processors.factory_report.yard import (
+from app.application.domain.reports.processors.factory_report.yard import (
     process_yard,
 )
-from app.api.services.report.ledger.processors.factory_report.make_cell_num import (
+from app.application.domain.reports.processors.factory_report.make_cell_num import (
     make_cell_num,
 )
-from app.api.services.report.ledger.processors.factory_report.make_label import (
+from app.application.domain.reports.processors.factory_report.make_label import (
     make_label,
 )
-from app.api.services.report.ledger.processors.factory_report.etc import (
+from app.application.domain.reports.processors.factory_report.etc import (
     generate_summary_dataframe,
     date_format,
 )

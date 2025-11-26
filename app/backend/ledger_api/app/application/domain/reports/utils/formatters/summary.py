@@ -1,6 +1,6 @@
 import pandas as pd
-from app.api.services.report.utils.formatters.value_setter import set_value_fast_safe
-from app.api.services.report.utils.logging.logger import app_logger
+from app.application.domain.reports.utils.formatters.value_setter import set_value_fast_safe
+from app.application.domain.reports.utils.logging.logger import app_logger
 
 
 def clean_na_strings(val):

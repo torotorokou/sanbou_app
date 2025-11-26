@@ -4,10 +4,10 @@ from typing import Any, Dict
 
 import pandas as pd
 
-from app.api.services.report.ledger.average_sheet import process as process_average_sheet
-from app.api.services.report.ledger.balance_sheet import process as process_balance_sheet
-from app.api.services.report.ledger.factory_report import process as process_factory_report
-from app.api.services.report.ledger.management_sheet import (
+from app.application.usecases.reports.average_sheet import process as process_average_sheet
+from app.application.usecases.reports.balance_sheet import process as process_balance_sheet
+from app.application.usecases.reports.factory_report import process as process_factory_report
+from app.application.usecases.reports.management_sheet import (
     process as process_management_sheet,
 )
 
@@ -47,7 +47,7 @@ class BlockUnitPriceGenerator(BaseReportGenerator):
     def main_process(self, df_formatted: Dict[str, Any]) -> pd.DataFrame:
         # 対話型処理のみを実行
         # 対話型は専用の Interactive クラスを使用
-        from app.api.services.report.ledger.interactive import (
+        from app.application.usecases.reports.interactive import (
             BlockUnitPriceInteractive,
         )
         from app.application.usecases.report.processors import (

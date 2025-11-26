@@ -11,7 +11,7 @@ Dependency Injection (DI) providers.
 
 from functools import lru_cache
 
-from app.application.usecases.reports import GenerateFactoryReportUseCase
+from app.application.usecases.reports.generate_factory_report import GenerateFactoryReportUseCase
 from app.application.usecases.reports.generate_balance_sheet import GenerateBalanceSheetUseCase
 from app.application.usecases.reports.generate_average_sheet import GenerateAverageSheetUseCase
 from app.application.usecases.reports.generate_management_sheet import GenerateManagementSheetUseCase

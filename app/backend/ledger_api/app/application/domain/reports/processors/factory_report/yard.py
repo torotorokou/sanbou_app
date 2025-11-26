@@ -4,7 +4,7 @@ from app.infra.report_utils import load_master_and_template
 from app.infra.report_utils.formatters import (
     summarize_value_by_cell_with_label,
 )
-from app.api.services.report.ledger.processors.factory_report.summary import (
+from app.application.domain.reports.processors.factory_report.summary import (
     summary_apply_by_sheet,
 )
 
