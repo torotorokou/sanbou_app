@@ -70,7 +70,7 @@ class BalanceSheet:
         Returns:
             BalanceSheet: 搬出入収支表エンティティ
         """
-        from app.core.domain.reports.factory_report import ShipmentItem, YardItem
+        from app.application.domain.reports.factory_report import ShipmentItem, YardItem
         
         receive_items: List[ReceiveItem] = []
         shipment_items: List[ShipmentItem] = []
