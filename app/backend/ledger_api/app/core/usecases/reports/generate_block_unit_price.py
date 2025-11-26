@@ -15,7 +15,7 @@ from backend_shared.utils.date_filter_utils import filter_by_period_from_min_dat
 from app.api.services.report.ledger.interactive.block_unit_price_initial import execute_initial_step
 from app.api.services.report.utils.io import write_values_to_template
 from app.api.services.report.utils.config import get_template_config
-from app.api.utils.pdf_conversion import convert_excel_to_pdf
+from app.infra.utils.pdf_conversion import convert_excel_to_pdf
 
 logger = logging.getLogger(__name__)
 

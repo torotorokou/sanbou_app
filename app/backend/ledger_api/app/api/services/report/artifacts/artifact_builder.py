@@ -11,7 +11,7 @@ from fastapi.responses import JSONResponse
 
 from app.api.services.report.core.base_generators import BaseReportGenerator
 from app.api.services.report.artifacts.artifact_service import get_report_artifact_storage
-from app.api.utils.pdf_conversion import PdfConversionError, convert_excel_to_pdf
+from app.infra.utils.pdf_conversion import PdfConversionError, convert_excel_to_pdf
 
 
 def _ensure_bytes(value: Any, *, label: str) -> bytes:
