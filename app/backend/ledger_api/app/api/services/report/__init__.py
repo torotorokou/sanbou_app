@@ -14,7 +14,7 @@ Report service components.
 """
 
 # Core components
-from app.api.services.report.core import (
+from app.application.usecases.report import (
     BaseReportGenerator,
     BaseInteractiveReportGenerator,
     ReportProcessingService,
@@ -22,7 +22,7 @@ from app.api.services.report.core import (
 )
 
 # Concrete generators
-from app.api.services.report.core.concrete_generators import (
+from app.application.usecases.report.concrete_generators import (
     FactoryReportGenerator,
     BalanceSheetGenerator,
     AverageSheetGenerator,
@@ -31,38 +31,38 @@ from app.api.services.report.core.concrete_generators import (
 )
 
 # Artifacts
-from app.api.services.report.artifacts import (
+from app.infra.adapters.artifact_storage import (
     get_report_artifact_storage,
     ReportArtifactStorage,
     ArtifactResponseBuilder,
 )
 
 # Session
-from app.api.services.report.session import (
+from app.infra.adapters.session_storage import (
     session_store,
     SessionStore,
 )
 
 # 後方互換性のための再エクスポート
-from app.api.services.report.core.base_generators.base_report_generator import (
+from app.application.usecases.report.base_generators.base_report_generator import (
     BaseReportGenerator as base_report_generator_compat,
 )
-from app.api.services.report.core.base_generators.base_interactive_report_generator import (
+from app.application.usecases.report.base_generators.base_interactive_report_generator import (
     BaseInteractiveReportGenerator as base_interactive_report_generator_compat,
 )
-from app.api.services.report.core.processors.report_processing_service import (
+from app.application.usecases.report.processors.report_processing_service import (
     ReportProcessingService as report_processing_service_compat,
 )
-from app.api.services.report.core.processors.interactive_report_processing_service import (
+from app.application.usecases.report.processors.interactive_report_processing_service import (
     InteractiveReportProcessingService as interactive_report_processing_service_compat,
 )
-from app.api.services.report.artifacts.artifact_service import (
+from app.infra.adapters.artifact_storage.artifact_service import (
     get_report_artifact_storage as artifact_service_compat,
 )
-from app.api.services.report.artifacts.artifact_builder import (
+from app.infra.adapters.artifact_storage.artifact_builder import (
     ArtifactResponseBuilder as artifact_builder_compat,
 )
-from app.api.services.report.session.session_store import (
+from app.infra.adapters.session_storage.session_store import (
     session_store as session_store_compat,
 )
 

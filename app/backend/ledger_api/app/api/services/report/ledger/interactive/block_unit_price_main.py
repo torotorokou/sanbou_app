@@ -8,7 +8,7 @@ Block Unit Price Interactive - Main Entry Point
 from typing import Any, Callable, Dict, Optional, Tuple, Union
 import pandas as pd
 
-from app.api.services.report.core.base_generators import (
+from app.application.usecases.report.base_generators import (
     BaseInteractiveReportGenerator,
 )
 from app.infra.report_utils import app_logger
