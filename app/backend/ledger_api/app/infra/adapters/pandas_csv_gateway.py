@@ -17,7 +17,7 @@ from backend_shared.adapters.presentation.response_error import (
     NoFilesUploadedResponse,
     CSVReadErrorResponse,
 )
-from app.api.services.csv import CsvValidatorService, CsvFormatterService
+from app.application.usecases.csv import CsvValidatorService, CsvFormatterService
 
 logger = logging.getLogger(__name__)
 
