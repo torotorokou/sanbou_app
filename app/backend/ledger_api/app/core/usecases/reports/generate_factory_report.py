@@ -5,12 +5,13 @@ Generate Factory Report UseCase.
 
 👶 UseCase の責務:
 1. CSV 読み込み（Port 経由）
-2. データ検証
+2. ドメインモデル（FactoryReport Entity）の生成
 3. ドメインロジック呼び出し（既存の services/report/ledger/factory_report.process）
 4. Excel/PDF 生成
 5. 保存と署名付き URL 返却（Port 経由）
 
 外部依存（pandas, ファイルシステム等）は Port を通して抽象化されています。
+DataFrame依存はドメイン層で緩和し、将来的な置き換えを容易にします。
 """
 
 from datetime import date, datetime
@@ -24,6 +25,7 @@ from fastapi.responses import JSONResponse
 
 from app.core.ports import CsvGateway, ReportRepository
 from app.core.ports.report_repository import ArtifactUrls
+from app.core.domain.reports.factory_report import FactoryReport
 from backend_shared.adapters.fastapi.error_handlers import DomainError
 from backend_shared.utils.date_filter_utils import (
     filter_by_period_from_min_date as shared_filter_by_period_from_min_date,
@@ -115,12 +117,28 @@ class GenerateFactoryReportUseCase:
                     title="データ整形エラー",
                 ) from ex
 
-            # Step 4: レポート日付の決定
-            report_date = self._extract_report_date(df_formatted)
-            print(f"[UseCase] Step 4: レポート日付 - {report_date}")
+            # Step 4: ドメインモデル生成
+            print("[UseCase] Step 4: ドメインモデル生成")
+            try:
+                factory_report = FactoryReport.from_dataframes(
+                    df_shipment=df_formatted.get("shipment"),
+                    df_yard=df_formatted.get("yard"),
+                )
+                print(f"[UseCase] 出荷データ件数: {len(factory_report.shipment_items)}")
+                print(f"[UseCase] ヤードデータ件数: {len(factory_report.yard_items)}")
+                print(f"[UseCase] レポート日付: {factory_report.report_date}")
+            except Exception as ex:
+                print(f"[UseCase] ドメインモデル生成エラー: {ex}")
+                raise DomainError(
+                    code="DOMAIN_MODEL_ERROR",
+                    status=500,
+                    user_message=f"ドメインモデルの生成中にエラーが発生しました: {str(ex)}",
+                    title="ドメインモデルエラー",
+                ) from ex
 
             # Step 5: ドメインロジック実行（既存の process 関数を利用）
-            print("[UseCase] Step 5: ドメインロジック実行")
+            # 注: 現時点では既存のDataFrame処理を維持し、段階的に移行
+            print("[UseCase] Step 5: ドメインロジック実行（既存process）")
             try:
                 result_df = factory_report_process(df_formatted)
             except Exception as ex:
@@ -134,7 +152,7 @@ class GenerateFactoryReportUseCase:
 
             # Step 6: Excel 生成
             print("[UseCase] Step 6: Excel 生成")
-            excel_bytes = self._generate_excel(result_df, report_date)
+            excel_bytes = self._generate_excel(result_df, factory_report.report_date)
 
             # Step 7: PDF 生成
             print("[UseCase] Step 7: PDF 生成")
@@ -144,7 +162,7 @@ class GenerateFactoryReportUseCase:
             print("[UseCase] Step 8: 保存と URL 生成")
             artifact_urls = self.report_repository.save_report(
                 report_key="factory_report",
-                report_date=report_date,
+                report_date=factory_report.report_date,
                 excel_bytes=excel_bytes,
                 pdf_bytes=pdf_bytes,
             )
@@ -155,7 +173,7 @@ class GenerateFactoryReportUseCase:
                 status_code=200,
                 content={
                     "message": "工場日報の生成が完了しました",
-                    "report_date": report_date.isoformat(),
+                    "report_date": factory_report.report_date.isoformat(),
                     **artifact_urls.to_dict(),
                 },
             )
