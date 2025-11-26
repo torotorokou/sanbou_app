@@ -8,6 +8,7 @@ from typing import Optional
 from datetime import date
 
 from app.domain.ports.upload_status_port import IUploadStatusQuery
+from app.shared.logging_utils import log_usecase_execution
 
 logger = logging.getLogger(__name__)
 
@@ -29,6 +30,7 @@ class DeleteUploadScopeUseCase:
         """
         self.query = query
     
+    @log_usecase_execution(usecase_name="DeleteUploadScope")
     def execute(
         self,
         upload_file_id: int,
