@@ -39,7 +39,8 @@ try:
 except Exception:  # pragma: no cover - optional
     storage = None  # type: ignore
 
-DATA_DIR = settings.data_dir
+# Phase 3移行後: app/infra/data_sources/ を使用
+DATA_DIR = settings.base_api_dir.parent / "infra" / "data_sources"
 TARGET_SUBDIRS = settings.ledger_sync_subdirs
 
 
