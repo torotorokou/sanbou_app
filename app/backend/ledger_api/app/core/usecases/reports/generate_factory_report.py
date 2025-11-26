@@ -14,6 +14,8 @@ Generate Factory Report UseCase.
 DataFrame依存はドメイン層で緩和し、将来的な置き換えを容易にします。
 """
 
+import logging
+import time
 from datetime import date, datetime
 from io import BytesIO
 from pathlib import Path
@@ -36,6 +38,8 @@ from app.api.services.report.ledger.factory_report import process as factory_rep
 from app.api.services.report.utils.io import write_values_to_template
 from app.api.services.report.utils.config import get_template_config
 from app.api.utils.pdf_conversion import convert_excel_to_pdf
+
+logger = logging.getLogger(__name__)
 
 
 class GenerateFactoryReportUseCase:
@@ -76,40 +80,91 @@ class GenerateFactoryReportUseCase:
         Raises:
             DomainError: ビジネスルール違反や処理失敗時
         """
+        start_time = time.time()
+        file_keys = list(files.keys())
+        
+        logger.info(
+            "工場日報生成開始",
+            extra={
+                "usecase": "GenerateFactoryReportUseCase",
+                "file_keys": file_keys,
+                "period_type": period_type,
+            },
+        )
+
         try:
             # Step 1: CSV 読み込み（Port 経由）
-            print(f"[UseCase] Step 1: CSV 読み込み - files: {list(files.keys())}")
+            step_start = time.time()
+            logger.debug("Step 1: CSV読み込み開始", extra={"file_keys": file_keys})
+            
             dfs, error = self.csv_gateway.read_csv_files(files)
             if error:
-                print(f"[UseCase] CSV 読み込みエラー: {error}")
+                logger.warning(
+                    "Step 1: CSV読み込みエラー",
+                    extra={"error_type": type(error).__name__},
+                )
                 return error.to_json_response()
 
             assert dfs is not None
+            logger.debug(
+                "Step 1: CSV読み込み完了",
+                extra={"elapsed_seconds": round(time.time() - step_start, 3)},
+            )
 
             # Step 2: 検証（Port 経由）
-            print("[UseCase] Step 2: CSV 検証")
+            step_start = time.time()
+            logger.debug("Step 2: CSV検証開始")
+            
             validation_error = self.csv_gateway.validate_csv_structure(dfs, files)
             if validation_error:
-                print(f"[UseCase] 検証エラー: {validation_error}")
+                logger.warning("Step 2: CSV検証エラー")
                 return validation_error.to_json_response()
+            
+            logger.debug(
+                "Step 2: CSV検証完了",
+                extra={"elapsed_seconds": round(time.time() - step_start, 3)},
+            )
 
             # Step 2.5: 期間フィルタ適用（オプション）
             if period_type:
-                print(f"[UseCase] Step 2.5: 期間フィルタ適用 - {period_type}")
+                step_start = time.time()
+                logger.debug(
+                    "Step 2.5: 期間フィルタ適用開始",
+                    extra={"period_type": period_type},
+                )
                 try:
                     dfs = shared_filter_by_period_from_min_date(dfs, period_type)
-                    print(f"[UseCase] 期間フィルタ完了: {period_type}")
+                    logger.debug(
+                        "Step 2.5: 期間フィルタ完了",
+                        extra={
+                            "period_type": period_type,
+                            "elapsed_seconds": round(time.time() - step_start, 3),
+                        },
+                    )
                 except Exception as e:
-                    print(f"[UseCase] 期間フィルタスキップ（エラー）: {e}")
+                    logger.warning(
+                        "Step 2.5: 期間フィルタスキップ（エラー）",
+                        extra={"exception": str(e)},
+                    )
 
             # Step 3: 整形（Port 経由）
-            print("[UseCase] Step 3: CSV 整形")
+            step_start = time.time()
+            logger.debug("Step 3: CSV整形開始")
+            
             try:
                 df_formatted = self.csv_gateway.format_csv_data(dfs)
+                logger.debug(
+                    "Step 3: CSV整形完了",
+                    extra={"elapsed_seconds": round(time.time() - step_start, 3)},
+                )
             except DomainError:
                 raise
             except Exception as ex:
-                print(f"[UseCase] 整形エラー: {ex}")
+                logger.error(
+                    "Step 3: CSV整形エラー",
+                    extra={"exception": str(ex)},
+                    exc_info=True,
+                )
                 raise DomainError(
                     code="REPORT_FORMAT_ERROR",
                     status=500,
@@ -118,17 +173,29 @@ class GenerateFactoryReportUseCase:
                 ) from ex
 
             # Step 4: ドメインモデル生成
-            print("[UseCase] Step 4: ドメインモデル生成")
+            step_start = time.time()
+            logger.debug("Step 4: ドメインモデル生成開始")
+            
             try:
                 factory_report = FactoryReport.from_dataframes(
                     df_shipment=df_formatted.get("shipment"),
                     df_yard=df_formatted.get("yard"),
                 )
-                print(f"[UseCase] 出荷データ件数: {len(factory_report.shipment_items)}")
-                print(f"[UseCase] ヤードデータ件数: {len(factory_report.yard_items)}")
-                print(f"[UseCase] レポート日付: {factory_report.report_date}")
+                logger.info(
+                    "Step 4: ドメインモデル生成完了",
+                    extra={
+                        "shipment_count": len(factory_report.shipment_items),
+                        "yard_count": len(factory_report.yard_items),
+                        "report_date": factory_report.report_date.isoformat(),
+                        "elapsed_seconds": round(time.time() - step_start, 3),
+                    },
+                )
             except Exception as ex:
-                print(f"[UseCase] ドメインモデル生成エラー: {ex}")
+                logger.error(
+                    "Step 4: ドメインモデル生成エラー",
+                    extra={"exception": str(ex)},
+                    exc_info=True,
+                )
                 raise DomainError(
                     code="DOMAIN_MODEL_ERROR",
                     status=500,
@@ -138,11 +205,21 @@ class GenerateFactoryReportUseCase:
 
             # Step 5: ドメインロジック実行（既存の process 関数を利用）
             # 注: 現時点では既存のDataFrame処理を維持し、段階的に移行
-            print("[UseCase] Step 5: ドメインロジック実行（既存process）")
+            step_start = time.time()
+            logger.debug("Step 5: ドメインロジック実行開始")
+            
             try:
                 result_df = factory_report_process(df_formatted)
+                logger.debug(
+                    "Step 5: ドメインロジック実行完了",
+                    extra={"elapsed_seconds": round(time.time() - step_start, 3)},
+                )
             except Exception as ex:
-                print(f"[UseCase] ドメインロジックエラー: {ex}")
+                logger.error(
+                    "Step 5: ドメインロジックエラー",
+                    extra={"exception": str(ex)},
+                    exc_info=True,
+                )
                 raise DomainError(
                     code="REPORT_GENERATION_ERROR",
                     status=500,
@@ -151,24 +228,54 @@ class GenerateFactoryReportUseCase:
                 ) from ex
 
             # Step 6: Excel 生成
-            print("[UseCase] Step 6: Excel 生成")
+            step_start = time.time()
+            logger.debug("Step 6: Excel生成開始")
             excel_bytes = self._generate_excel(result_df, factory_report.report_date)
+            logger.debug(
+                "Step 6: Excel生成完了",
+                extra={
+                    "size_bytes": len(excel_bytes.getvalue()),
+                    "elapsed_seconds": round(time.time() - step_start, 3),
+                },
+            )
 
             # Step 7: PDF 生成
-            print("[UseCase] Step 7: PDF 生成")
+            step_start = time.time()
+            logger.debug("Step 7: PDF生成開始")
             pdf_bytes = self._generate_pdf(excel_bytes)
+            logger.debug(
+                "Step 7: PDF生成完了",
+                extra={
+                    "size_bytes": len(pdf_bytes.getvalue()),
+                    "elapsed_seconds": round(time.time() - step_start, 3),
+                },
+            )
 
             # Step 8: 保存と署名付き URL 生成（Port 経由）
-            print("[UseCase] Step 8: 保存と URL 生成")
+            step_start = time.time()
+            logger.debug("Step 8: 保存とURL生成開始")
             artifact_urls = self.report_repository.save_report(
                 report_key="factory_report",
                 report_date=factory_report.report_date,
                 excel_bytes=excel_bytes,
                 pdf_bytes=pdf_bytes,
             )
+            logger.debug(
+                "Step 8: 保存とURL生成完了",
+                extra={"elapsed_seconds": round(time.time() - step_start, 3)},
+            )
 
             # Step 9: レスポンス返却
-            print(f"[UseCase] Step 9: 完了 - URLs: {artifact_urls.to_dict()}")
+            total_elapsed = time.time() - start_time
+            logger.info(
+                "工場日報生成完了",
+                extra={
+                    "usecase": "GenerateFactoryReportUseCase",
+                    "report_date": factory_report.report_date.isoformat(),
+                    "total_elapsed_seconds": round(total_elapsed, 3),
+                },
+            )
+            
             return JSONResponse(
                 status_code=200,
                 content={
@@ -182,9 +289,16 @@ class GenerateFactoryReportUseCase:
             # DomainError はそのまま再 raise
             raise
         except Exception as ex:
-            print(f"[UseCase] 予期しないエラー: {ex}")
-            import traceback
-            traceback.print_exc()
+            total_elapsed = time.time() - start_time
+            logger.exception(
+                "工場日報生成中に予期しないエラー",
+                extra={
+                    "usecase": "GenerateFactoryReportUseCase",
+                    "total_elapsed_seconds": round(total_elapsed, 3),
+                    "exception_type": type(ex).__name__,
+                    "exception_message": str(ex),
+                },
+            )
             raise DomainError(
                 code="INTERNAL_ERROR",
                 status=500,
