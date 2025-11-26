@@ -4,7 +4,7 @@ Domain-specific utilities.
 ドメイン固有のビジネスロジックを提供します。
 """
 
-from app.api.services.report.utils.domain.transport_discount import (
+from app.infra.report_utils.domain.transport_discount import (
     ReadTransportDiscount,
 )
 
