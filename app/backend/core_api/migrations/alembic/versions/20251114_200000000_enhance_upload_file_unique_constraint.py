@@ -12,13 +12,13 @@ log.upload_file の UNIQUE 制約を強化し、並行リクエストによる�
 - processing_status = 'success' のファイルのみを重複対象とするロジックを DB 制約でサポート
 
 Revision ID: 20251114_200000000
-Revises: 20251114_add_shipment_category
+Revises: 20251114_093000000
 Create Date: 2025-11-14 20:00:00.000000
 """
 from alembic import op
 
 revision = "20251114_200000000"
-down_revision = "20251114_add_shipment_category"
+down_revision = "20251114_093000000"
 branch_labels = None
 depends_on = None
 

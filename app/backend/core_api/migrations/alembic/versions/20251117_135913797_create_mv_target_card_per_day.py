@@ -37,7 +37,7 @@ BASE = Path("/backend/migrations/alembic/sql/mart")
 
 # Alembic identifiers
 revision = "20251117_135913797"
-down_revision = "c42c526b6749"  # 現在のDBリビジョン（mergepoint）
+down_revision = "20251114_090304320"  # 現在のDBリビジョン(mergepoint)
 branch_labels = None
 depends_on = None
 

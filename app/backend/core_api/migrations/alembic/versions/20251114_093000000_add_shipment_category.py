@@ -1,7 +1,7 @@
 """add category columns to shipment tables
 
-Revision ID: 20251114_add_shipment_category
-Revises: 20251114_remove_en_suffix
+Revision ID: 20251114_093000000
+Revises: 20251114_092500000
 Create Date: 2025-11-14
 
 Description:
@@ -21,8 +21,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '20251114_add_shipment_category'
-down_revision: Union[str, None] = '20251114_remove_en_suffix'
+revision: str = '20251114_093000000'
+down_revision: Union[str, None] = '20251114_092500000'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
