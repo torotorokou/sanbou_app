@@ -1,6 +1,6 @@
 """rename columns remove en suffix
 
-Revision ID: 20251114_remove_en_suffix
+Revision ID: 20251114_092500000
 Revises: 20251113_180000000
 Create Date: 2025-11-14
 
@@ -32,8 +32,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '20251114_remove_en_suffix'
-down_revision: Union[str, None] = '20251114_120000000'
+revision: str = '20251114_092500000'
+down_revision: Union[str, None] = '20251113_180000000'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

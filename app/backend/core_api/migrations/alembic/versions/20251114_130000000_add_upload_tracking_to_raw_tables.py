@@ -13,7 +13,7 @@ raw層テーブルに upload_file_id と source_row_no のトラッキング機�
 - raw.shipment_shogun_flash / raw.shipment_shogun_final
 
 Revision ID: 20251114_130000000
-Revises: 20251114_add_shipment_category
+Revises: 20251114_093000000
 Create Date: 2025-11-14 13:00:00.000000
 """
 from alembic import op
@@ -21,7 +21,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = "20251114_130000000"
-down_revision = "20251114_add_shipment_category"
+down_revision = "20251114_093000000"
 branch_labels = None
 depends_on = None
 

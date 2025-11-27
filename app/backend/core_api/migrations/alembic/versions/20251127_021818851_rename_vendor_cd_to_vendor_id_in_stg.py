@@ -1,6 +1,6 @@
 """rename_vendor_cd_to_vendor_id_in_stg
 
-Revision ID: 20251127_120000000
+Revision ID: 20251127_021818851
 Revises: 20251127_110000000
 Create Date: 2025-11-27 02:18:18.851218
 
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '20251127_120000000'
+revision = '20251127_021818851'
 down_revision = '20251127_110000000'
 branch_labels = None
 depends_on = None
