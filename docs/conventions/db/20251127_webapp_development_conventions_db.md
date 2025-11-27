@@ -73,8 +73,6 @@
     - `receive_no AS slip_no`
 - このマッピングは VIEW 定義や `column_naming_dictionary.md` に明記する
 
----
-
 ## 4. 論理削除・監査カラム
 
 - 論理削除:
