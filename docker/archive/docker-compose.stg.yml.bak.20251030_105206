@@ -1,0 +1,200 @@
+## =============================================================
+## docker-compose.stg.yml (ステージング環境)
+## - Makefile が STG_ENV_FILE 変数経由で env_file を解決
+## - backend サービスは標準化された Dockerfile (wheelbuilder/dev/prod) を利用
+## - target: prod を明示
+## =============================================================
+services:
+  # ===========================================================================
+  # Core API (BFF)
+  # ===========================================================================
+  core_api:
+    build:
+      context: ../app/backend
+      dockerfile: core_api/Dockerfile
+      target: prod
+    networks: [app-net]
+    depends_on:
+      - db
+    env_file:
+      - ../env/.env.common
+      - ../env/.env.${STG_ENV_FILE}
+    environment:
+      - TZ=Asia/Tokyo
+      - RAG_API_BASE=http://rag_api:8000
+      - LEDGER_API_BASE=http://ledger_api:8000
+      - MANUAL_API_BASE=http://manual_api:8000
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # ===========================================================================
+  # Plan Worker
+  # ===========================================================================
+  plan_worker:
+    build:
+      context: ../app/backend
+      dockerfile: plan_worker/Dockerfile
+      target: prod
+    networks: [app-net]
+    depends_on:
+      - db
+    env_file:
+      - ../env/.env.common
+      - ../env/.env.${STG_ENV_FILE}
+    environment:
+      - TZ=Asia/Tokyo
+      - POLL_INTERVAL=10
+    restart: unless-stopped
+
+  # ===========================================================================
+  # AI API
+  # ===========================================================================
+  ai_api:
+    build:
+      context: ../app/backend
+      dockerfile: ai_api/Dockerfile
+      target: prod
+    networks: [app-net]
+    depends_on:
+      - db
+    env_file:
+      - ../env/.env.common
+      - ../env/.env.${STG_ENV_FILE}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # ===========================================================================
+  # Ledger API
+  # ===========================================================================
+  ledger_api:
+    build:
+      context: ../app/backend
+      dockerfile: ledger_api/Dockerfile
+      target: prod
+    networks: [app-net]
+    depends_on:
+      - db
+    env_file:
+      - ../env/.env.common
+      - ../env/.env.${STG_ENV_FILE}
+    environment:
+      GOOGLE_APPLICATION_CREDENTIALS: /run/secrets/ledger_gcs_key.json
+      STRICT_STARTUP: "true"
+    volumes:
+      - ../secrets:/backend/secrets:ro
+      - ../secrets/stg_key.json:/run/secrets/ledger_gcs_key.json:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # ===========================================================================
+  # RAG API
+  # ===========================================================================
+  rag_api:
+    build:
+      context: ../app/backend
+      dockerfile: rag_api/Dockerfile
+      target: prod
+    networks: [app-net]
+    depends_on:
+      - db
+    env_file:
+      - ../env/.env.common
+      - ../env/.env.${STG_ENV_FILE}
+    environment:
+      GOOGLE_APPLICATION_CREDENTIALS: /run/secrets/rag_gcs_key.json
+      RAG_GCS_URI: ${RAG_GCS_URI}
+      GCS_BUCKET_NAME: object_haikibutu
+      GCS_DATA_PREFIX: master
+    volumes:
+      - ../secrets:/backend/secrets:ro
+      - ../secrets/stg_key.json:/run/secrets/rag_gcs_key.json:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # ===========================================================================
+  # Manual API
+  # ===========================================================================
+  manual_api:
+    build:
+      context: ../app/backend
+      dockerfile: manual_api/Dockerfile
+      target: prod
+    networks: [app-net]
+    env_file:
+      - ../env/.env.common
+      - ../env/.env.${STG_ENV_FILE}
+    environment:
+      - TZ=Asia/Tokyo
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # ===========================================================================
+  # nginx (stg)
+  # ===========================================================================
+  nginx:
+    build:
+      context: ../app/frontend
+      dockerfile: Dockerfile
+      target: runtime
+    depends_on:
+      - core_api
+      - ai_api
+      - ledger_api
+      - rag_api
+      - manual_api
+    networks:
+      - app-net
+    ports:
+      - "${STG_NGINX_HTTP_PORT:-8080}:80"
+      - "${STG_NGINX_HTTPS_PORT:-8443}:443"
+    volumes:
+      - ../app/nginx/conf.d:/etc/nginx/conf.d:ro
+      - ../app/nginx/certs:/etc/nginx/certs:ro
+    restart: unless-stopped
+
+  # ===========================================================================
+  # PostgreSQL Database
+  # ===========================================================================
+  db:
+    image: postgres:16-alpine
+    networks: [app-net]
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+networks:
+  app-net:
+    driver: bridge
+
+volumes:
+  db_data:
+    driver: local

@@ -1,0 +1,182 @@
+/**
+ * SalesTreePage.css
+ * 売上ツリー分析ページ専用スタイル
+ */
+
+/* カードホバー効果を無効化（ページ内およびDrawer内） */
+.sales-tree-page .ant-card,
+.ant-drawer .ant-card {
+  transition: none !important;
+}
+
+.sales-tree-page .ant-card:hover,
+.ant-drawer .ant-card:hover {
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+.sales-tree-page .ant-card-hoverable,
+.ant-drawer .ant-card-hoverable {
+  cursor: default !important;
+}
+
+.sales-tree-page .ant-card-hoverable:hover,
+.ant-drawer .ant-card-hoverable:hover {
+  box-shadow: 0 1px 2px -2px rgba(0, 0, 0, 0.16), 0 3px 6px 0 rgba(0, 0, 0, 0.12), 0 5px 12px 4px rgba(0, 0, 0, 0.09) !important;
+  border-color: rgba(0, 0, 0, 0.09) !important;
+}
+
+/* ヘッダー */
+.sales-tree-header {
+  position: relative;
+  padding: 12px 0 4px;
+}
+
+.sales-tree-title {
+  text-align: center;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  margin: 0;
+}
+
+.sales-tree-title-accent {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding-left: 8px;
+  color: #000;
+  font-weight: 700;
+  line-height: 1.2;
+  font-size: 1.05em;
+}
+
+.sales-tree-title-accent::before {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 22px;
+  background: #237804;
+  border-radius: 3px;
+}
+
+/* 有価物モード用スタイル */
+.sales-tree-page.valuable-mode .sales-tree-title-accent::before {
+  background: #faad14;
+}
+
+.sales-tree-page.valuable-mode .sales-tree-accent-card {
+  border-left-color: #faad14;
+}
+
+.sales-tree-page.valuable-mode .sales-tree-card-section-header {
+  background: #fffbf0;
+  border: 1px solid #ffe7ba;
+}
+
+.sales-tree-page.valuable-mode .ant-table-tbody > tr:hover > td {
+  background: #fffbf0 !important;
+}
+
+.sales-tree-page.valuable-mode .sales-tree-mini-bar-blue {
+  background: #faad14;
+}
+
+.sales-tree-page.valuable-mode .sales-tree-zebra-odd {
+  background: #fffef9;
+}
+
+.sales-tree-header-actions {
+  position: absolute;
+  right: 0;
+  top: 8px;
+  display: flex;
+  gap: 8px;
+}
+
+/* アクセントカード */
+.sales-tree-accent-card {
+  border-left: 4px solid #23780410;
+  overflow: hidden;
+}
+
+.sales-tree-accent-primary {
+  border-left-color: #237804;
+}
+
+.sales-tree-accent-secondary {
+  border-left-color: #52c41a;
+}
+
+.sales-tree-accent-gold {
+  border-left-color: #faad14;
+}
+
+/* カードセクション */
+.sales-tree-card-section-header {
+  font-weight: 600;
+  padding: 6px 10px;
+  margin-bottom: 12px;
+  border-radius: 6px;
+  background: #f3fff4;
+  border: 1px solid #e6f7e6;
+}
+
+.sales-tree-card-subtitle {
+  color: rgba(0, 0, 0, 0.55);
+  margin-bottom: 6px;
+  font-size: 12px;
+}
+
+/* ミニバーチャート */
+.sales-tree-mini-bar-bg {
+  flex: 1;
+  height: 6px;
+  background: #f6f7fb;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.sales-tree-mini-bar {
+  height: 100%;
+}
+
+.sales-tree-mini-bar-blue {
+  background: #237804;
+}
+
+.sales-tree-mini-bar-green {
+  background: #52c41a;
+}
+
+.sales-tree-mini-bar-gold {
+  background: #faad14;
+}
+
+/* テーブルゼブラストライプ */
+.sales-tree-zebra-even {
+  background: #ffffff;
+}
+
+.sales-tree-zebra-odd {
+  background: #fbfcfe;
+}
+
+/* テーブルホバー */
+.sales-tree-page .ant-table-tbody > tr:hover > td {
+  background: #f6fff4 !important;
+}
+
+/* テーブルヘッダー */
+.sales-tree-page .ant-table-header {
+  box-shadow: inset 0 -1px 0 #f0f0f0;
+}
+
+/* サマリタグ */
+.sales-tree-summary-tags {
+  font-size: 14px;
+}
+
+.sales-tree-summary-tags .ant-tag {
+  font-size: 14px;
+  padding: 0 10px;
+}

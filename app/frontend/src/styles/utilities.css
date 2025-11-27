@@ -1,0 +1,102 @@
+/* ===================================================
+ * Utility Classes
+ * ===================================================
+ * Reusable helper classes for common patterns
+ */
+
+/* === Responsive Utilities === */
+.responsive-x {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.u-wrap {
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+/* === Accessibility === */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* === Dashboard Specific === */
+.inbound-forecast-grid {
+  display: grid;
+  grid-template-rows: auto 1fr 1.2fr;
+  row-gap: 8px;
+}
+
+.dashboard-month-picker {
+  width: 140px;
+}
+
+/* === Navi Page Utilities === */
+.navi-page {
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.navi-scroll-area {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
+/* === Answer Viewer === */
+.answer-viewer-card {
+  max-width: 100%;
+  width: 100%;
+  box-sizing: border-box;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+/* === Sample Thumbnail === */
+.sample-thumbnail {
+  cursor: pointer;
+  border-radius: 8px;
+  overflow: hidden;
+  transition: transform 0.1s, box-shadow 0.2s;
+}
+
+.sample-thumbnail:hover {
+  transform: scale(1.01);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* ===================================================
+ * Responsive Adjustments (Lean-3)
+ * ===================================================
+ */
+
+/* === Mobile: ≤767px === */
+@media (--lt-md) {
+  .inbound-forecast-grid {
+    grid-template-rows: auto auto auto;
+  }
+
+  .dashboard-month-picker {
+    width: 100px;
+  }
+}
+
+/* === Tablet+: ≥768px === */
+@media (--ge-md) {
+  .inbound-forecast-grid {
+    grid-template-rows: auto 1fr 1fr;
+  }
+
+  .dashboard-month-picker {
+    width: 120px;
+  }
+}

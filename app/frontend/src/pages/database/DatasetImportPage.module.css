@@ -1,0 +1,35 @@
+.pageContainer {
+  height: calc(100dvh - (var(--page-padding, 0px) * 2));
+  min-height: 600px;
+  overflow: hidden;
+}
+
+.leftCol,
+.rightCol {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0; /* flex連鎖で子要素が縮められるように */
+}
+
+.leftCol {
+  padding: 16px;
+  gap: 12px;
+}
+
+.rightCol {
+  /* padding/gap は Screen 側（.dp-right）で管理 */
+  /* Tabs の内部構造も Screen 側（styles.css）で管理 */
+}
+
+.uploadSection {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.hint {
+  margin-top: 8px;
+}

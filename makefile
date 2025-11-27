@@ -1,203 +1,396 @@
-# ===== ultra-simple Makefile (interactive secrets, fixed, with leveled logs) =====
-# 使い方:
-#   make up ENV=dev
-#   make up ENV=stg     # 初回のみキー入力（非表示）→ secrets/.env.stg.secrets に保存
-#   make up ENV=prod
-#   make down ENV=stg / make logs ENV=prod / make rebuild ENV=stg など
-#   追加: DEBUG=1 を付けると [debug] ログを表示
-#
-# 例:
-#   make rebuild ENV=dev
-#   make up ENV=stg DEBUG=1
+## =============================================================
+## Makefile: dev / stg / prod 用 docker compose 起動ヘルパ
+## -------------------------------------------------------------
+## 主なターゲット:
+##   make up        ENV=local_dev|local_stg|vm_stg|vm_prod
+##   make down      ENV=...
+##   make rebuild   ENV=...
+##   make backup    ENV=local_dev    # ← 追加：バックアップ
+## -------------------------------------------------------------
 
 SHELL := /bin/bash
 .ONESHELL:
 .SHELLFLAGS := -eu -o pipefail -c
 
-# --------- 設定項目 ----------
-ENV ?= dev                   # dev / stg / prod
-DEBUG ?= 0                   # 1で[debug]を表示
+ENV ?= local_dev
+ENV := $(strip $(ENV))
 DC := docker compose
-BASE := docker-compose.yml
-OVERRIDE := docker-compose.override.yml
-EDGE := edge                 # Nginx を起動する profile 名（stg/prod 用）
+BUILDKIT ?= 1
+PROGRESS ?= plain
+BUILDER_DEFAULT ?=
 
-ENV_FILE := env/.env.$(ENV)
-SECRETS_FILE := $(strip secrets/.env.$(ENV).secrets) # stg/prod の秘密保存先（git ignore想定）
-GCP_SA_FILE ?= secrets/gcs-key.json # 必要なら存在チェック
-GCP_SA_FILE := $(strip $(GCP_SA_FILE))
+## =============================================================
+## 環境マッピング
+## =============================================================
+ENV_CANON := $(ENV)
 
-# docker compose の変数展開で ${ENV_FILE} を参照させるため export
-export ENV_FILE
-export FRONTEND_PORT
-export AI_API_PORT
-export LEDGER_API_PORT
-export SQL_API_PORT
-export RAG_API_PORT
-
-# dev は override を使い、stg/prod は base のみ＋profile=edge
-FILES := -f $(BASE)
-PROFILE :=
 ifeq ($(ENV),dev)
-  FILES := -f $(BASE) -f $(OVERRIDE)
-else
-  PROFILE := --profile $(EDGE)
+	$(warning [compat] ENV=dev は非推奨。ENV=local_dev を使用してください)
+	ENV_CANON := local_dev
+endif
+ifeq ($(ENV),stg)
+	$(warning [compat] ENV=stg は非推奨。ENV=vm_stg を使用してください)
+	ENV_CANON := vm_stg
+endif
+ifeq ($(ENV),prod)
+	$(warning [compat] ENV=prod は非推奨。ENV=vm_prod を使用してください)
+	ENV_CANON := vm_prod
 endif
 
-# --------- ログマクロ ----------
-# 使い方: $(call LOG_INFO,Message)
-define LOG_INFO
-	@echo "[info] $(1)"
-endef
+ENV_FILE_COMMON := env/.env.common
+ENV_FILE := env/.env.$(ENV)
 
-define LOG_WARN
-	@echo "[warn] $(1)"
-endef
+ifeq ($(ENV_CANON),local_dev)
+	ENV_FILE := env/.env.local_dev
+	COMPOSE_FILES := -f docker/docker-compose.dev.yml
+	HEALTH_URL := http://localhost:8001/health
+else ifeq ($(ENV_CANON),local_stg)
+	ENV_FILE := env/.env.local_stg
+	COMPOSE_FILES := -f docker/docker-compose.stg.yml
+	HEALTH_PORT := $(if $(STG_NGINX_HTTP_PORT),$(STG_NGINX_HTTP_PORT),8080)
+	HEALTH_URL := http://localhost:$(HEALTH_PORT)/health
+	STG_ENV_FILE := local_stg
+else ifeq ($(ENV_CANON),vm_stg)
+	ENV_FILE := env/.env.vm_stg
+	COMPOSE_FILES := -f docker/docker-compose.stg.yml
+	HEALTH_URL := http://stg.sanbou-app.jp/health
+	STG_ENV_FILE := vm_stg
+else ifeq ($(ENV_CANON),vm_prod)
+	ENV_FILE := env/.env.vm_prod
+	COMPOSE_FILES := -f docker/docker-compose.prod.yml
+	HEALTH_URL := https://sanbou-app.jp/health
+else
+	$(error Unsupported ENV: $(ENV))
+endif
 
-define LOG_DEBUG
-	@if [[ "$(DEBUG)" == "1" ]]; then echo "[debug] $(1)"; fi
-endef
+SECRETS_FILE := secrets/.env.$(ENV).secrets
+COMPOSE_ENV_ARGS := --env-file $(ENV_FILE_COMMON) --env-file $(ENV_FILE) --env-file $(SECRETS_FILE)
+DC_ENV_PREFIX := $(if $(STG_ENV_FILE),STG_ENV_FILE=$(STG_ENV_FILE) ,)
+COMPOSE_FILE_LIST := $(strip $(subst -f ,,$(COMPOSE_FILES)))
 
-# エラーはメッセージを出して終了
-define LOG_ERROR_EXIT
-	@echo "[error] $(1)"; exit 1
-endef
+.PHONY: up down logs ps rebuild config prune secrets restart backup
 
-# --------- 便利マクロ ----------
-# コマンド実行前後で情報を出すヘルパ（エラー時はそのまま落ちる）
-# 使い方: $(call RUN,説明文,実コマンド)
-define RUN
-	@echo "[info] $(1)"
-	$(2)
-endef
+## =============================================================
+## 基本操作
+## =============================================================
+check:
+	@for f in $(COMPOSE_FILE_LIST); do \
+	  if [ ! -f "$$f" ]; then echo "[error] compose file $$f not found"; exit 1; fi; \
+	done
+	@if [ ! -f "$(ENV_FILE_COMMON)" ]; then echo "[error] $(ENV_FILE_COMMON) not found"; exit 1; fi
+	@if [ ! -f "$(ENV_FILE)" ]; then echo "[error] $(ENV_FILE) not found"; exit 1; fi
 
-.PHONY: up down logs ps rebuild config
-
-up:
-	$(call LOG_INFO,Start 'up' (ENV=$(ENV)) )
-	$(call LOG_DEBUG,ENV_FILE=$(ENV_FILE) SECRETS_FILE=$(SECRETS_FILE) GCP_SA_FILE=$(GCP_SA_FILE))
-	$(call LOG_DEBUG,FILES="$(FILES)" PROFILE="$(PROFILE)")
-
-	if [[ ! -f "$(ENV_FILE)" ]]; then
-	  $(call LOG_ERROR_EXIT,$(ENV_FILE) がありません)
-	fi
-
-	# --- migrate legacy path: secret/gcs-key.json -> secrets/gcs-key.json ---
-	mkdir -p secrets
-	if [[ -f "secret/gcs-key.json" && ! -f "$(GCP_SA_FILE)" ]]; then
-	  mv -f secret/gcs-key.json "$(GCP_SA_FILE)"
-	  $(call LOG_WARN,Migrated legacy 'secret/gcs-key.json' -> '$(GCP_SA_FILE)')
-	fi
-
-	# --- dev: GCP SA の簡易用意 ---
-	if [[ "$(ENV)" == "dev" ]]; then
-	  if [[ ! -f "$(GCP_SA_FILE)" ]]; then
-	    $(call LOG_WARN,$(GCP_SA_FILE) が見つかりません（GCP を使わない場合は無視可）)
-	  fi
-
-	# --- stg/prod: 秘密を対話取得→保存→読み込み ---
-	else
-	  [[ -f "$(SECRETS_FILE)" ]] || { touch "$(SECRETS_FILE)"; chmod 600 "$(SECRETS_FILE)"; }
-
-	  # 末尾スペース付き誤ファイルが存在する場合は自動修正
-	  if [[ -f "secrets/.env.$(ENV).secrets " && ! -f "$(SECRETS_FILE)" ]]; then
-	    mv -f "secrets/.env.$(ENV).secrets " "$(SECRETS_FILE)"
-	    $(call LOG_WARN,Renamed 'secrets/.env.$(ENV).secrets ' -> '$(SECRETS_FILE)')
-	  fi
-		if [[ -f "secrets/gcs-key.json " && ! -f "$(GCP_SA_FILE)" ]]; then
-			mv -f "secrets/gcs-key.json " "$(GCP_SA_FILE)"
-			$(call LOG_WARN,Renamed 'secrets/gcs-key.json ' -> '$(GCP_SA_FILE)')
-		fi
-
-	  # 既存の秘密を読み込み（あれば；未設定でもエラーにしない）
-	  set +e; set -a; . "$(SECRETS_FILE)" 2>/dev/null; set +a; set -e
-
-	  if [[ -z "${OPENAI_API_KEY:-}" ]]; then
-	    read -rsp "Enter OPENAI_API_KEY (hidden): " OPENAI_API_KEY; echo
-	    printf 'OPENAI_API_KEY=%s\n' "$$OPENAI_API_KEY" >> "$(SECRETS_FILE)"
-	    $(call LOG_INFO,OPENAI_API_KEY saved to $(SECRETS_FILE))
-	  fi
-	  if [[ -z "${GEMINI_API_KEY:-}" ]]; then
-	    read -rsp "Enter GEMINI_API_KEY (hidden): " GEMINI_API_KEY; echo
-	    printf 'GEMINI_API_KEY=%s\n' "$$GEMINI_API_KEY" >> "$(SECRETS_FILE)"
-	    $(call LOG_INFO,GEMINI_API_KEY saved to $(SECRETS_FILE))
-	  fi
-
-	  # このシェルに export
-	  set -a; . "$(SECRETS_FILE)"; set +a
-
-	  # 必要なら GCP SA JSON の存在チェック
-	  if [[ ! -f "$(GCP_SA_FILE)" ]]; then
-	    $(call LOG_ERROR_EXIT,$(GCP_SA_FILE) not found)
-	  fi
-
-	  # stg/prod はタグ更新を取り込むため pull を実行（定義が無い場合は無視）
-	  $(call RUN,compose pull,$(DC) --env-file "$(ENV_FILE)" -p $(ENV) $(PROFILE) $(FILES) pull || true)
-	fi
-
-	$(call RUN,compose up,$(DC) --env-file "$(ENV_FILE)" -p $(ENV) $(PROFILE) $(FILES) up -d --remove-orphans)
-	$(call LOG_INFO,Finished 'up' successfully)
+up: check
+	@echo "[info] UP (ENV=$(ENV))"
+	DOCKER_BUILDKIT=$(BUILDKIT) BUILDKIT_PROGRESS=$(PROGRESS) \
+	$(DC_ENV_PREFIX)$(DC) $(COMPOSE_ENV_ARGS) -p $(ENV) $(COMPOSE_FILES) up -d --build --remove-orphans
+	@echo "[ok] up done"
 
 down:
-	$(call RUN,compose down,$(DC) -p $(ENV) down --remove-orphans)
-	$(call LOG_INFO,Finished 'down' successfully)
+	@echo "[info] DOWN (ENV=$(ENV))"
+	@CIDS="$$( $(DC) -p $(ENV) ps -q | wc -l )"; \
+	if [ "$$CIDS" -gt 0 ]; then \
+	  $(DC) -p $(ENV) down --remove-orphans; \
+	else echo "[info] no running containers"; fi
 
 logs:
-	$(call LOG_INFO,Attaching logs -f (CTRL+Cで離脱))
-	$(DC) -p $(ENV) logs -f
+	$(DC) -p $(ENV) logs -f $(S)
 
 ps:
-	$(call RUN,compose ps,$(DC) -p $(ENV) ps)
+	$(DC) -p $(ENV) ps
 
-rebuild:
-	$(call LOG_INFO,Start 'rebuild' (ENV=$(ENV)) )
-	$(call LOG_DEBUG,ENV_FILE=$(ENV_FILE) SECRETS_FILE=$(SECRETS_FILE) GCP_SA_FILE=$(GCP_SA_FILE))
-	$(call LOG_DEBUG,FILES="$(FILES)" PROFILE="$(PROFILE)")
+restart:
+	$(MAKE) down ENV=$(ENV)
+	$(MAKE) up ENV=$(ENV)
 
-	if [[ ! -f "$(ENV_FILE)" ]]; then
-	  $(call LOG_ERROR_EXIT,$(ENV_FILE) がありません)
+## =============================================================
+## secrets / prune / rebuild
+## =============================================================
+secrets:
+	@mkdir -p secrets
+	@if [ "$(REGENERATE)" = "1" ] || [ ! -s "$(SECRETS_FILE)" ]; then \
+	  echo "[info] generate secrets $(SECRETS_FILE)"; \
+	  { echo "# Auto-generated"; echo "GEMINI_API_KEY="; echo "OPENAI_API_KEY="; } > $(SECRETS_FILE); chmod 600 $(SECRETS_FILE); \
+	else echo "[info] reuse existing $(SECRETS_FILE)"; fi
+
+prune:
+	@echo "[info] prune builder cache + unused images"
+	@docker builder prune -af && docker image prune -a -f || true
+
+PULL ?= 0
+BUILD_PULL_FLAG := $(if $(filter 1,$(PULL)),--pull,)
+
+rebuild: check
+	@echo "[info] rebuild ENV=$(ENV)"
+	$(MAKE) down ENV=$(ENV)
+	DOCKER_BUILDKIT=$(BUILDKIT) BUILDKIT_PROGRESS=$(PROGRESS) \
+	$(DC_ENV_PREFIX)$(DC) $(COMPOSE_ENV_ARGS) -p $(ENV) $(COMPOSE_FILES) build $(BUILD_PULL_FLAG) --no-cache
+	DOCKER_BUILDKIT=$(BUILDKIT) BUILDKIT_PROGRESS=$(PROGRESS) \
+	$(DC_ENV_PREFIX)$(DC) $(COMPOSE_ENV_ARGS) -p $(ENV) $(COMPOSE_FILES) up -d --remove-orphans
+	@echo "[ok] rebuild done"
+
+## =============================================================
+## health
+## =============================================================
+health:
+	@echo "[info] health check -> $(HEALTH_URL)"
+	@curl -I "$(HEALTH_URL)" || echo "[warn] curl failed"
+
+config: check
+	$(DC_ENV_PREFIX)$(DC) $(COMPOSE_ENV_ARGS) -p $(ENV) $(COMPOSE_FILES) config
+
+## =============================================================
+## バックアップ関連
+## =============================================================
+.PHONY: backup backup_pg backup_pg_all backup_pgdata backup_code backup_win_info
+
+DATE := $(shell date +%F)
+DESKTOP_WIN := $(shell (powershell.exe -NoProfile -Command "[Environment]::GetFolderPath('Desktop')" || echo) 2>/dev/null | tr -d '\r')
+DESKTOP := $(strip $(if $(DESKTOP_WIN),$(shell wslpath -u "$(DESKTOP_WIN)" 2>/dev/null),$(HOME)/Desktop))
+BACKUP_DIR := $(DESKTOP)/backup
+
+PG_SERVICE ?= db
+PGUSER ?= myuser
+PGDB ?= sanbou_dev
+PGDATA_HOST ?= data/postgres
+DC_FULL := $(DC_ENV_PREFIX)$(DC) $(COMPOSE_ENV_ARGS) -p $(ENV) $(COMPOSE_FILES)
+USE_DOCKER_TAR ?= 0
+
+backup: backup_pg backup_pg_all backup_pgdata backup_code
+	@echo "[info] backup completed -> $(BACKUP_DIR)"
+	@ls -lh "$(BACKUP_DIR)" | head -20 || true
+
+backup_win_info:
+	@echo "[info] Windows Desktop detected: $(DESKTOP)"
+	@echo "[info] Backup dir: $(BACKUP_DIR)"
+
+backup_pg:
+	@echo "[info] logical backup (pg_dump)"
+	@mkdir -p "$(BACKUP_DIR)"
+	$(DC_FULL) exec -T $(PG_SERVICE) pg_dump -U $(PGUSER) -d $(PGDB) --format=custom --file=/tmp/$(PGDB).dump
+	$(DC_FULL) cp $(PG_SERVICE):/tmp/$(PGDB).dump "$(BACKUP_DIR)/$(PGDB)_$(DATE).dump"
+	@echo "[ok] $(BACKUP_DIR)/$(PGDB)_$(DATE).dump"
+
+backup_pg_all:
+	@echo "[info] full dumpall -> $(BACKUP_DIR)"
+	@mkdir -p "$(BACKUP_DIR)"
+	$(DC_FULL) exec -T $(PG_SERVICE) pg_dumpall -U $(PGUSER) --globals-only > "$(BACKUP_DIR)/pg_globals_$(DATE).sql"
+	$(DC_FULL) exec -T $(PG_SERVICE) pg_dumpall -U $(PGUSER) --clean --if-exists > "$(BACKUP_DIR)/pg_all_$(DATE).sql"
+	@echo "[ok] pg_dumpall done"
+
+backup_pgdata:
+	@echo "[info] physical backup (PostgreSQL data) -> $(BACKUP_DIR)"
+	@mkdir -p "$(BACKUP_DIR)"
+	@if [ "$(ENV_CANON)" != "local_dev" ]; then \
+	  echo "[warn] 物理バックアップは local_dev 前提のホストバインドのみ対応。"; \
+	  exit 0; \
 	fi
-
-	# --- migrate legacy path: secret/gcs-key.json -> secrets/gcs-key.json ---
-	mkdir -p secrets
-	if [[ -f "secret/gcs-key.json" && ! -f "$(GCP_SA_FILE)" ]]; then
-	  mv -f secret/gcs-key.json "$(GCP_SA_FILE)"
-	  $(call LOG_WARN,Migrated legacy 'secret/gcs-key.json' -> '$(GCP_SA_FILE)')
+	@echo "[step] stop db"
+	$(DC_FULL) stop $(PG_SERVICE)
+	@if [ "$(USE_DOCKER_TAR)" = "1" ]; then \
+	  echo "[info] docker-run tar mode"; \
+	  docker compose -p $(ENV) $(COMPOSE_FILES) $(COMPOSE_ENV_ARGS) \
+	    run --rm -v "$$(pwd)/$(PGDATA_HOST)":/pgdata:ro -v "$(BACKUP_DIR)":/backup $(PG_SERVICE) \
+	    sh -lc 'tar czf /backup/pgdata_$$(date +%F).tgz -C /pgdata .'; \
+	else \
+	  if [ -d "$(PGDATA_HOST)" ]; then \
+	    echo "[info] try plain tar"; \
+	    tar czf "$(BACKUP_DIR)/pgdata_$(DATE).tgz" -C "$(PGDATA_HOST)" . 2>/tmp/_pg_tar.err || true; \
+	    if grep -qi "Permission denied" /tmp/_pg_tar.err 2>/dev/null; then \
+	      echo "[warn] permission denied -> retry with sudo"; \
+	      if command -v sudo >/dev/null 2>&1; then \
+	        sudo tar czf "$(BACKUP_DIR)/pgdata_$(DATE).tgz" -C "$(PGDATA_HOST)" . || { \
+	          echo "[warn] sudo tar failed -> fallback docker-run"; \
+	          docker compose -p $(ENV) $(COMPOSE_FILES) $(COMPOSE_ENV_ARGS) \
+	            run --rm -v "$$(pwd)/$(PGDATA_HOST)":/pgdata:ro -v "$(BACKUP_DIR)":/backup $(PG_SERVICE) \
+	            sh -lc 'tar czf /backup/pgdata_$$(date +%F).tgz -C /pgdata .'; }; \
+	      else \
+	        echo "[info] sudo not found -> use docker-run fallback"; \
+	        docker compose -p $(ENV) $(COMPOSE_FILES) $(COMPOSE_ENV_ARGS) \
+	          run --rm -v "$$(pwd)/$(PGDATA_HOST)":/pgdata:ro -v "$(BACKUP_DIR)":/backup $(PG_SERVICE) \
+	          sh -lc 'tar czf /backup/pgdata_$$(date +%F).tgz -C /pgdata .'; \
+	      fi; \
+	    else echo "[ok] $(BACKUP_DIR)/pgdata_$(DATE).tgz"; fi; \
+	    rm -f /tmp/_pg_tar.err || true; \
+	  else echo "[warn] $(PGDATA_HOST) not found."; fi; \
 	fi
+	@echo "[step] start db"
+	$(DC_FULL) start $(PG_SERVICE) >/dev/null 2>&1 || true
 
-	# stg/prod は secrets と SA を確認してから再作成
-	if [[ "$(ENV)" != "dev" ]]; then
-	  # 末尾スペース付き誤ファイルが存在する場合は自動修正
-	  if [[ -f "secrets/.env.$(ENV).secrets " && ! -f "$(SECRETS_FILE)" ]]; then
-	    mv -f "secrets/.env.$(ENV).secrets " "$(SECRETS_FILE)"
-	    $(call LOG_WARN,Renamed 'secrets/.env.$(ENV).secrets ' -> '$(SECRETS_FILE)')
-	  fi
-		if [[ -f "secrets/gcs-key.json " && ! -f "$(GCP_SA_FILE)" ]]; then
-			mv -f "secrets/gcs-key.json " "$(GCP_SA_FILE)"
-			$(call LOG_WARN,Renamed 'secrets/gcs-key.json ' -> '$(GCP_SA_FILE)')
-		fi
-	  if [[ ! -f "$(SECRETS_FILE)" ]]; then
-	    $(call LOG_ERROR_EXIT,secrets 未設定。先に 'make up ENV=$(ENV)' で設定してください。)
-	  fi
-	  set -a; . "$(SECRETS_FILE)"; set +a
-
-	  if [[ ! -f "$(GCP_SA_FILE)" ]]; then
-	    $(call LOG_ERROR_EXIT,$(GCP_SA_FILE) not found)
-	  fi
-
-	  $(call RUN,compose pull,$(DC) --env-file "$(ENV_FILE)" -p $(ENV) $(PROFILE) $(FILES) pull || true)
+backup_code:
+	@echo "[info] snapshot code/config -> $(BACKUP_DIR)/code_snapshot_$(DATE)"
+	@mkdir -p "$(BACKUP_DIR)/code_snapshot_$(DATE)"
+	@if [ -d app/backend ]; then \
+	  tar czf "$(BACKUP_DIR)/code_snapshot_$(DATE)/backend_$(DATE).tgz" app/backend docker env secrets config 2>/dev/null || true; \
+	  echo "[ok] backend snapshot"; \
 	fi
+	@if [ -d db ]; then \
+	  tar czf "$(BACKUP_DIR)/code_snapshot_$(DATE)/sql_$(DATE).tgz" db 2>/dev/null || true; fi
+	@if [ -d sql ]; then \
+	  tar czf "$(BACKUP_DIR)/code_snapshot_$(DATE)/sql_extra_$(DATE).tgz" sql 2>/dev/null || true; fi
+	@echo "[ok] code snapshot done"
 
-	# dev 環境: SA の簡易用意（up と同等）
-	if [[ "$(ENV)" == "dev" ]]; then
-	  if [[ ! -f "$(GCP_SA_FILE)" ]]; then
-	    $(call LOG_WARN,$(GCP_SA_FILE) が見つかりません（GCP を使わない場合は無視可）)
-	  fi
+## =============================================================
+## PostgreSQL Safe Upgrade (16 -> 17)
+## =============================================================
+PG_OLD_VOLUME ?= pgdata
+PG_NEW_VOLUME ?= pgdata_v17
+PG_HOST ?= localhost
+PG_PORT ?= 5432
+
+.PHONY: pg.version pg.archive pg.dumpall pg.compose17 pg.up17 pg.restore pg.extensions pg.verify
+
+pg.version:
+	@echo "[info] Checking PostgreSQL version in volume: $(PG_OLD_VOLUME)"
+	@bash scripts/pg/print_pg_version_in_volume.sh "$(PG_OLD_VOLUME)"
+
+pg.archive:
+	@echo "[info] Archiving volume: $(PG_OLD_VOLUME)"
+	@bash scripts/pg/archive_volume_tar.sh "$(PG_OLD_VOLUME)"
+
+pg.dumpall:
+	@echo "[info] Running pg_dumpall from volume: $(PG_OLD_VOLUME)"
+	@bash scripts/pg/dumpall_from_v16.sh "$(PG_OLD_VOLUME)"
+
+pg.compose17:
+	@echo ">>> Creating compose override for Postgres 17"
+	@echo "# =============================================================" > docker-compose.pg17.yml
+	@echo "# docker-compose.pg17.yml" >> docker-compose.pg17.yml
+	@echo "# PostgreSQL 17 Upgrade Override" >> docker-compose.pg17.yml
+	@echo "# WARNING: DO NOT RUN 'docker compose down -v'" >> docker-compose.pg17.yml
+	@echo "#          This will DELETE your old volume!" >> docker-compose.pg17.yml
+	@echo "# =============================================================" >> docker-compose.pg17.yml
+	@echo "" >> docker-compose.pg17.yml
+	@echo "services:" >> docker-compose.pg17.yml
+	@echo "  db:" >> docker-compose.pg17.yml
+	@echo "    image: postgres:17-alpine" >> docker-compose.pg17.yml
+	@echo "    volumes:" >> docker-compose.pg17.yml
+	@echo "      - $(PG_NEW_VOLUME):/var/lib/postgresql/data" >> docker-compose.pg17.yml
+	@echo "" >> docker-compose.pg17.yml
+	@echo "volumes:" >> docker-compose.pg17.yml
+	@echo "  $(PG_NEW_VOLUME):" >> docker-compose.pg17.yml
+	@echo "    driver: local" >> docker-compose.pg17.yml
+	@echo ""
+	@echo "[ok] Created docker-compose.pg17.yml"
+	@echo "[info] Review the file before running 'make pg.up17'"
+	@echo ""
+	@echo "# If using PostGIS, change image to:"
+	@echo "#   image: postgis/postgis:17-3.5"
+
+pg.up17:
+	@echo "[info] Starting PostgreSQL 17 with new volume"
+	@echo "[warn] Make sure you have reviewed docker-compose.pg17.yml"
+	@sleep 2
+	DOCKER_BUILDKIT=$(BUILDKIT) $(DC_ENV_PREFIX)$(DC) $(COMPOSE_ENV_ARGS) -p $(ENV) $(COMPOSE_FILES) -f docker-compose.pg17.yml up -d db
+
+pg.restore:
+	@if [ -z "$(SQL)" ]; then \
+	  echo "[error] SQL parameter is required. Usage: make pg.restore SQL=backups/pg/pg_dumpall_YYYYMMDD_HHMMSS.sql"; \
+	  exit 1; \
 	fi
+	@echo "[info] Restoring SQL: $(SQL)"
+	@bash scripts/pg/restore_to_v17.sh "$(SQL)"
 
-	$(call RUN,compose build --no-cache,$(DC) --env-file "$(ENV_FILE)" -p $(ENV) $(PROFILE) $(FILES) build --no-cache)
-	$(call RUN,compose up -d --force-recreate,$(DC) --env-file "$(ENV_FILE)" -p $(ENV) $(PROFILE) $(FILES) up -d --force-recreate --remove-orphans)
-	$(call LOG_INFO,Finished 'rebuild' successfully)
+pg.extensions:
+	@echo "[info] Re-enabling extensions"
+	@if [ -z "$(PGPASSWORD)" ]; then \
+	  echo "[warn] PGPASSWORD not set. You may be prompted for password."; \
+	fi
+	@PGHOST=$(PG_HOST) PGPORT=$(PG_PORT) psql -U $${PGUSER:-postgres} -d $${PGDATABASE:-postgres} -f sql/extensions_after_restore.sql
 
-config:
-	$(call RUN,compose config,$(DC) --env-file "$(ENV_FILE)" -p $(ENV) $(PROFILE) $(FILES) config)
+pg.verify:
+	@echo "========================================="
+	@echo "PostgreSQL Version:"
+	@echo "========================================="
+	@PGHOST=$(PG_HOST) PGPORT=$(PG_PORT) psql -U $${PGUSER:-postgres} -c "SELECT version();" || true
+	@echo ""
+	@echo "========================================="
+	@echo "Databases:"
+	@echo "========================================="
+	@PGHOST=$(PG_HOST) PGPORT=$(PG_PORT) psql -U $${PGUSER:-postgres} -c "\\l" || true
+	@echo ""
+	@echo "========================================="
+	@echo "Extensions:"
+	@echo "========================================="
+	@PGHOST=$(PG_HOST) PGPORT=$(PG_PORT) psql -U $${PGUSER:-postgres} -d $${PGDATABASE:-postgres} -c "\\dx" || true
+
+
+.PHONY: al-rev al-rev-auto al-up al-down al-cur al-hist al-heads al-stamp
+
+DC = docker compose -f docker/docker-compose.dev.yml -p local_dev
+ALEMBIC = $(DC) exec core_api alembic -c /backend/migrations/alembic.ini
+
+# 使い方:
+#   make al-rev MSG="manage view: mart.v_xxx"           # REV_IDは自動生成
+#   make al-rev MSG="..." REV_ID=20251104_153045123     # 固定REV_IDを明示
+MSG ?= update schema
+REV_ID ?= $(shell date +%Y%m%d_%H%M%S%3N)  # 例: 20251104_153045123
+
+al-rev:
+	@echo "[al-rev] REV_ID=$(REV_ID) MSG=$(MSG)"
+	$(ALEMBIC) revision -m "$(MSG)" --rev-id $(REV_ID)
+
+al-rev-auto:
+	@echo "[al-rev-auto] REV_ID=$(REV_ID) MSG=$(MSG)"
+	$(ALEMBIC) revision --autogenerate -m "$(MSG)" --rev-id $(REV_ID)
+
+al-up:
+	$(ALEMBIC) upgrade head
+
+al-down:
+	$(ALEMBIC) downgrade -1
+
+al-cur:
+	$(ALEMBIC) current
+
+al-hist:
+	$(ALEMBIC) history
+
+al-heads:
+	$(ALEMBIC) heads
+
+# 既存DBに「適用済み印」を付ける
+# 使い方: make al-stamp REV=20251104_153045123
+al-stamp:
+	$(ALEMBIC) stamp $(REV)
+
+# =============================================================
+# Materialized View Refresh (daily ETL batch)
+# =============================================================
+.PHONY: refresh-mv refresh-mv-target-card
+
+# 全てのマテリアライズドビューをリフレッシュ（ETL完了後に実行）
+refresh-mv:
+	@echo "[refresh-mv] Refreshing all materialized views..."
+	$(DC) exec -T db psql -U myuser -d sanbou_dev -c "REFRESH MATERIALIZED VIEW CONCURRENTLY mart.mv_target_card_per_day;"
+	$(DC) exec -T db psql -U myuser -d sanbou_dev -c "REFRESH MATERIALIZED VIEW CONCURRENTLY mart.mv_inb5y_week_profile_min;"
+	$(DC) exec -T db psql -U myuser -d sanbou_dev -c "REFRESH MATERIALIZED VIEW CONCURRENTLY mart.mv_inb_avg5y_day_biz;"
+	$(DC) exec -T db psql -U myuser -d sanbou_dev -c "REFRESH MATERIALIZED VIEW CONCURRENTLY mart.mv_inb_avg5y_weeksum_biz;"
+	$(DC) exec -T db psql -U myuser -d sanbou_dev -c "REFRESH MATERIALIZED VIEW CONCURRENTLY mart.mv_inb_avg5y_day_scope;"
+	@echo "[ok] All materialized views refreshed"
+
+# 目標カードMVのみリフレッシュ（個別実行用）
+refresh-mv-target-card:
+
+# =============================================================
+# Alembic: Schema Dump & Management
+# =============================================================
+.PHONY: al-dump-schema-current al-init-from-schema
+
+# 最新スキーマをsql_current/schema_head.sqlにダンプ
+al-dump-schema-current:
+	@echo "[info] Dumping current schema to sql_current/schema_head.sql"
+	@bash scripts/db/dump_schema_current.sh
+
+# 新規環境をschema_head.sqlから初期化（データなし・スキーマのみ）
+al-init-from-schema:
+	@echo "[info] Initializing database from schema_head.sql"
+	@if [ ! -f app/backend/core_api/migrations/alembic/sql_current/schema_head.sql ]; then \
+	  echo "[error] schema_head.sql not found. Run 'make al-dump-schema-current' first."; \
+	  exit 1; \
+	fi
+	$(DC) exec -T db psql -U myuser -d sanbou_dev < app/backend/core_api/migrations/alembic/sql_current/schema_head.sql
+	@echo "[ok] Schema initialized. Now run: make al-stamp REV=<HEAD_REVISION>"
+	@echo "[refresh-mv-target-card] Refreshing mart.mv_target_card_per_day..."
+	$(DC) exec -T db psql -U myuser -d sanbou_dev -c "REFRESH MATERIALIZED VIEW CONCURRENTLY mart.mv_target_card_per_day;"
+	@echo "[ok] mv_target_card_per_day refreshed"

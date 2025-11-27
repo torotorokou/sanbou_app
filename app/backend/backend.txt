@@ -1,0 +1,988 @@
+.
+├── README.md
+├── ai_api
+│   ├── Dockerfile
+│   ├── Dockerfile.bak.20251030_093302
+│   ├── app
+│   │   ├── __init__.py
+│   │   └── main.py
+│   └── requirements.txt
+├── backend.txt
+├── backend_shared
+│   ├── ERROR_HANDLING_GUIDE.md
+│   ├── README.md
+│   ├── pyproject.toml
+│   ├── src
+│   │   └── backend_shared
+│   │       ├── __init__.py
+│   │       ├── __pycache__
+│   │       │   └── __init__.cpython-312.pyc
+│   │       ├── adapters
+│   │       │   ├── __init__.py
+│   │       │   ├── fastapi
+│   │       │   │   ├── __init__.py
+│   │       │   │   └── error_handlers.py
+│   │       │   ├── middleware
+│   │       │   │   ├── __init__.py
+│   │       │   │   └── request_id.py
+│   │       │   └── presentation
+│   │       │       ├── __init__.py
+│   │       │       ├── response_base.py
+│   │       │       ├── response_error.py
+│   │       │       ├── response_success.py
+│   │       │       └── response_utils.py
+│   │       ├── config
+│   │       │   └── __init__.py
+│   │       ├── db
+│   │       │   ├── __init__.py
+│   │       │   ├── __pycache__
+│   │       │   │   ├── __init__.cpython-312.pyc
+│   │       │   │   └── database.cpython-312.pyc
+│   │       │   ├── base_model.py
+│   │       │   ├── database.py
+│   │       │   ├── repository_base.py
+│   │       │   └── utils.py
+│   │       ├── domain
+│   │       │   ├── README.md
+│   │       │   ├── __init__.py
+│   │       │   ├── contract.py
+│   │       │   └── job.py
+│   │       ├── infrastructure
+│   │       │   ├── __init__.py
+│   │       │   ├── config
+│   │       │   │   ├── __init__.py
+│   │       │   │   ├── config_loader.py
+│   │       │   │   └── paths.py
+│   │       │   └── logging_utils
+│   │       │       ├── __init__.py
+│   │       │       └── access_log.py
+│   │       ├── usecases
+│   │       │   ├── __init__.py
+│   │       │   ├── csv_formatter
+│   │       │   │   ├── __init__.py
+│   │       │   │   ├── dataframe.py
+│   │       │   │   ├── formatter_base.py
+│   │       │   │   ├── formatter_config.py
+│   │       │   │   ├── formatter_core.py
+│   │       │   │   ├── formatter_factory.py
+│   │       │   │   ├── formatter_impls.py
+│   │       │   │   └── type_parser_map.py
+│   │       │   ├── csv_validator
+│   │       │   │   ├── __init__.py
+│   │       │   │   ├── csv_upload_validator_api.py
+│   │       │   │   ├── pure_csv_validator.py
+│   │       │   │   ├── response_converter.py
+│   │       │   │   └── validation_result.py
+│   │       │   └── report_checker
+│   │       │       ├── __init__.py
+│   │       │       └── check_csv_files.py
+│   │       └── utils
+│   │           ├── __init__.py
+│   │           ├── csv_reader.py
+│   │           ├── dataframe_utils.py
+│   │           ├── dataframe_validator.py
+│   │           └── date_filter_utils.py
+│   └── tests
+│       └── test_smoke.py
+├── backend_tree.txt
+├── core_api
+│   ├── Dockerfile
+│   ├── README.md
+│   ├── app
+│   │   ├── __init__.py
+│   │   ├── __pycache__
+│   │   │   ├── __init__.cpython-312.pyc
+│   │   │   ├── app.cpython-312.pyc
+│   │   │   └── deps.cpython-312.pyc
+│   │   ├── app.py
+│   │   ├── config
+│   │   │   ├── __init__.py
+│   │   │   ├── settings.py
+│   │   │   └── table_definition.py
+│   │   ├── deps.py
+│   │   ├── domain
+│   │   │   ├── __init__.py
+│   │   │   ├── __pycache__
+│   │   │   │   ├── __init__.cpython-312.pyc
+│   │   │   │   └── models.cpython-312.pyc
+│   │   │   ├── inbound.py
+│   │   │   ├── models.py
+│   │   │   └── rules.py
+│   │   ├── infra
+│   │   │   ├── __init__.py
+│   │   │   ├── __pycache__
+│   │   │   │   ├── __init__.cpython-312.pyc
+│   │   │   │   └── db.cpython-312.pyc
+│   │   │   ├── clients
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── __pycache__
+│   │   │   │   │   ├── __init__.cpython-312.pyc
+│   │   │   │   │   ├── ai_client.cpython-312.pyc
+│   │   │   │   │   ├── ledger_client.cpython-312.pyc
+│   │   │   │   │   ├── manual_client.cpython-312.pyc
+│   │   │   │   │   └── rag_client.cpython-312.pyc
+│   │   │   │   ├── ai_client.py
+│   │   │   │   ├── ledger_client.py
+│   │   │   │   ├── manual_client.py
+│   │   │   │   └── rag_client.py
+│   │   │   ├── db.py
+│   │   │   └── http.py
+│   │   ├── ports
+│   │   │   ├── __init__.py
+│   │   │   └── inbound_repository.py
+│   │   ├── repositories
+│   │   │   ├── __init__.py
+│   │   │   ├── __pycache__
+│   │   │   │   ├── __init__.cpython-312.pyc
+│   │   │   │   ├── core_repo.cpython-312.pyc
+│   │   │   │   ├── forecast_query_repo.cpython-312.pyc
+│   │   │   │   ├── job_repo.cpython-312.pyc
+│   │   │   │   └── orm_models.cpython-312.pyc
+│   │   │   ├── core_repo.py
+│   │   │   ├── dashboard_target_repo.py
+│   │   │   ├── dynamic_models.py
+│   │   │   ├── forecast_query_repo.py
+│   │   │   ├── inbound_pg_repo.py
+│   │   │   ├── job_repo.py
+│   │   │   ├── orm_models.py
+│   │   │   └── shogun_csv_repo.py
+│   │   ├── routers
+│   │   │   ├── __init__.py
+│   │   │   ├── __pycache__
+│   │   │   │   ├── __init__.cpython-312.pyc
+│   │   │   │   ├── analysis.cpython-312.pyc
+│   │   │   │   ├── block_unit_price.cpython-312.pyc
+│   │   │   │   ├── calendar.cpython-312.pyc
+│   │   │   │   ├── chat.cpython-312.pyc
+│   │   │   │   ├── database.cpython-312.pyc
+│   │   │   │   ├── external.cpython-312.pyc
+│   │   │   │   ├── forecast.cpython-312.pyc
+│   │   │   │   ├── ingest.cpython-312.pyc
+│   │   │   │   ├── kpi.cpython-312.pyc
+│   │   │   │   ├── manual.cpython-312.pyc
+│   │   │   │   └── reports.cpython-312.pyc
+│   │   │   ├── analysis.py
+│   │   │   ├── block_unit_price.py
+│   │   │   ├── calendar.py
+│   │   │   ├── chat.py
+│   │   │   ├── dashboard.py
+│   │   │   ├── database.py
+│   │   │   ├── external.py
+│   │   │   ├── forecast.py
+│   │   │   ├── inbound.py
+│   │   │   ├── ingest.py
+│   │   │   ├── kpi.py
+│   │   │   ├── manual.py
+│   │   │   └── reports.py
+│   │   └── services
+│   │       ├── __init__.py
+│   │       ├── __pycache__
+│   │       │   ├── __init__.cpython-312.pyc
+│   │       │   ├── external_service.cpython-312.pyc
+│   │       │   ├── forecast_service.cpython-312.pyc
+│   │       │   ├── ingest_service.cpython-312.pyc
+│   │       │   └── kpi_service.cpython-312.pyc
+│   │       ├── external_service.py
+│   │       ├── forecast_service.py
+│   │       ├── ingest_service.py
+│   │       ├── kpi_service.py
+│   │       └── target_card_service.py
+│   ├── docs
+│   │   ├── CSV_UPLOAD_IMPLEMENTATION.md
+│   │   ├── Dockerfile.bak.20251030_093302
+│   │   ├── IMPLEMENTATION_COMPLETE.md
+│   │   └── YAML_FIRST_ARCHITECTURE.md
+│   ├── migrations
+│   │   ├── alembic
+│   │   │   ├── env.py
+│   │   │   ├── script.py.mako
+│   │   │   └── versions
+│   │   │       ├── 9a092c4a1fcf_baseline_no_op.py
+│   │   │       └── _attic_2025-11-04
+│   │   │           ├── 001_initial_schema.py
+│   │   │           ├── 002_add_raw_shogun_tables.py
+│   │   │           ├── 4befa8148602_msg.py
+│   │   │           ├── README.md
+│   │   │           └── f59be045f166_baseline_no_op.py
+│   │   ├── alembic.ini
+│   │   └── env_legacy.py
+│   ├── pyproject.toml
+│   ├── requirements-dev.txt
+│   ├── requirements.txt
+│   ├── tests
+│   │   └── test_inbound_daily.py
+│   └── tree.txt
+├── ledger_api
+│   ├── Dockerfile
+│   ├── Dockerfile.bak.20251030_093302
+│   ├── app
+│   │   ├── __init__.py
+│   │   ├── __pycache__
+│   │   ├── api
+│   │   │   ├── __init__.py
+│   │   │   ├── __pycache__
+│   │   │   ├── config
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── app_config.yaml
+│   │   │   │   ├── csv_sources_config.yaml
+│   │   │   │   ├── expected_import_csv_dtypes.yaml
+│   │   │   │   ├── factory_manage
+│   │   │   │   │   └── menu_config.yaml
+│   │   │   │   ├── loader
+│   │   │   │   │   ├── __init__.py
+│   │   │   │   │   ├── base_loader.py
+│   │   │   │   │   └── main_path.py
+│   │   │   │   ├── main_paths.yaml
+│   │   │   │   ├── page_config.yaml
+│   │   │   │   ├── required_columns_definition.yaml
+│   │   │   │   ├── settings
+│   │   │   │   │   ├── __init__.py
+│   │   │   │   │   ├── base.py
+│   │   │   │   │   ├── config.py
+│   │   │   │   │   ├── dev.py
+│   │   │   │   │   ├── loader.py
+│   │   │   │   │   ├── prod.py
+│   │   │   │   │   └── staging.py
+│   │   │   │   └── templates_config.yaml
+│   │   │   ├── data
+│   │   │   │   ├── master
+│   │   │   │   │   ├── average_sheet
+│   │   │   │   │   │   └── average_sheet_map.csv
+│   │   │   │   │   ├── balance_sheet
+│   │   │   │   │   │   ├── etc.csv
+│   │   │   │   │   │   ├── factory_report.csv
+│   │   │   │   │   │   ├── syobun_cost.csv
+│   │   │   │   │   │   ├── syobun_cost_kinko.csv
+│   │   │   │   │   │   ├── syobun_cost_kinko_yard.csv
+│   │   │   │   │   │   ├── uriage.csv
+│   │   │   │   │   │   ├── uriage_yuka_kaitori.csv
+│   │   │   │   │   │   ├── yuka.csv
+│   │   │   │   │   │   ├── yuka_shipment.csv
+│   │   │   │   │   │   └── yuka_yard.csv
+│   │   │   │   │   ├── block_unit_price
+│   │   │   │   │   │   ├── etc.csv
+│   │   │   │   │   │   ├── first_cell_map.csv
+│   │   │   │   │   │   └── vendor_code_map.csv
+│   │   │   │   │   ├── costs
+│   │   │   │   │   │   ├── transport_costs.csv
+│   │   │   │   │   │   └── unit_price_table.csv
+│   │   │   │   │   ├── factory_manage
+│   │   │   │   │   │   └── balance
+│   │   │   │   │   │       └── balance_management_table.csv
+│   │   │   │   │   ├── factory_report
+│   │   │   │   │   │   ├── etc.csv
+│   │   │   │   │   │   ├── shobun_map.csv
+│   │   │   │   │   │   ├── yard_map.csv
+│   │   │   │   │   │   └── yuka_map.csv
+│   │   │   │   │   ├── management_sheet
+│   │   │   │   │   │   ├── etc.csv
+│   │   │   │   │   │   ├── management_sheet.csv
+│   │   │   │   │   │   └── scrap_senbetsu_map.csv
+│   │   │   │   │   ├── receive_header_definition.csv
+│   │   │   │   │   └── 工場_現在数量.csv
+│   │   │   │   └── templates
+│   │   │   │       ├── average_sheet.xlsx
+│   │   │   │       ├── balance_sheet.xlsx
+│   │   │   │       ├── block_unit_price.xlsx
+│   │   │   │       ├── factory_report.xlsx
+│   │   │   │       └── management_sheet.xlsx
+│   │   │   ├── dto
+│   │   │   │   ├── __init__.py
+│   │   │   │   └── block_unit_price.py
+│   │   │   ├── endpoints
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── __pycache__
+│   │   │   │   ├── jobs.py
+│   │   │   │   ├── notifications.py
+│   │   │   │   ├── report_artifacts.py
+│   │   │   │   └── reports
+│   │   │   │       ├── __init__.py
+│   │   │   │       ├── __pycache__
+│   │   │   │       ├── average_sheet.py
+│   │   │   │       ├── balance_sheet.py
+│   │   │   │       ├── block_unit_price_interactive.py
+│   │   │   │       ├── factory_report.py
+│   │   │   │       └── management_sheet.py
+│   │   │   ├── notifications.py
+│   │   │   ├── report_artifacts
+│   │   │   │   └── reports
+│   │   │   │       ├── average_sheet
+│   │   │   │       │   └── 2025-10-01
+│   │   │   │       │       ├── 20251002_075450-d4be520d
+│   │   │   │       │       │   ├── average_sheet-2025-10-01.pdf
+│   │   │   │       │       │   ├── average_sheet-2025-10-01.xlsx
+│   │   │   │       │       │   └── lo_profile  [error opening dir]
+│   │   │   │       │       ├── 20251003_012634-14fe4565
+│   │   │   │       │       │   ├── average_sheet-2025-10-01.pdf
+│   │   │   │       │       │   ├── average_sheet-2025-10-01.xlsx
+│   │   │   │       │       │   └── lo_profile  [error opening dir]
+│   │   │   │       │       ├── 20251003_015624-defc4a42
+│   │   │   │       │       │   ├── average_sheet-2025-10-01.pdf
+│   │   │   │       │       │   ├── average_sheet-2025-10-01.xlsx
+│   │   │   │       │       │   └── lo_profile  [error opening dir]
+│   │   │   │       │       ├── 20251003_021649-67d96bf7
+│   │   │   │       │       │   ├── average_sheet-2025-10-01.pdf
+│   │   │   │       │       │   ├── average_sheet-2025-10-01.xlsx
+│   │   │   │       │       │   └── lo_profile  [error opening dir]
+│   │   │   │       │       ├── 20251017_040250-c8bbb7d6
+│   │   │   │       │       │   ├── average_sheet-2025-10-01.pdf
+│   │   │   │       │       │   ├── average_sheet-2025-10-01.xlsx
+│   │   │   │       │       │   └── lo_profile  [error opening dir]
+│   │   │   │       │       ├── 20251017_041732-420bd557
+│   │   │   │       │       │   ├── average_sheet-2025-10-01.pdf
+│   │   │   │       │       │   ├── average_sheet-2025-10-01.xlsx
+│   │   │   │       │       │   └── lo_profile  [error opening dir]
+│   │   │   │       │       ├── 20251017_043255-b806997a
+│   │   │   │       │       │   ├── average_sheet-2025-10-01.pdf
+│   │   │   │       │       │   ├── average_sheet-2025-10-01.xlsx
+│   │   │   │       │       │   └── lo_profile  [error opening dir]
+│   │   │   │       │       └── 20251023_043121-ae939e30
+│   │   │   │       │           ├── average_sheet-2025-10-01.pdf
+│   │   │   │       │           ├── average_sheet-2025-10-01.xlsx
+│   │   │   │       │           └── lo_profile  [error opening dir]
+│   │   │   │       ├── balance_sheet
+│   │   │   │       │   └── 2025-10-01
+│   │   │   │       │       ├── 20251002_075444-dd760878
+│   │   │   │       │       │   ├── balance_sheet-2025-10-01.pdf
+│   │   │   │       │       │   ├── balance_sheet-2025-10-01.xlsx
+│   │   │   │       │       │   └── lo_profile  [error opening dir]
+│   │   │   │       │       ├── 20251003_012626-b393b083
+│   │   │   │       │       │   ├── balance_sheet-2025-10-01.pdf
+│   │   │   │       │       │   ├── balance_sheet-2025-10-01.xlsx
+│   │   │   │       │       │   └── lo_profile  [error opening dir]
+│   │   │   │       │       ├── 20251003_015618-7e185413
+│   │   │   │       │       │   ├── balance_sheet-2025-10-01.pdf
+│   │   │   │       │       │   ├── balance_sheet-2025-10-01.xlsx
+│   │   │   │       │       │   └── lo_profile  [error opening dir]
+│   │   │   │       │       ├── 20251003_021639-1787acf1
+│   │   │   │       │       │   ├── balance_sheet-2025-10-01.pdf
+│   │   │   │       │       │   ├── balance_sheet-2025-10-01.xlsx
+│   │   │   │       │       │   └── lo_profile  [error opening dir]
+│   │   │   │       │       ├── 20251003_022347-c381d122
+│   │   │   │       │       │   ├── balance_sheet-2025-10-01.pdf
+│   │   │   │       │       │   ├── balance_sheet-2025-10-01.xlsx
+│   │   │   │       │       │   └── lo_profile  [error opening dir]
+│   │   │   │       │       ├── 20251003_042948-a3a095cc
+│   │   │   │       │       │   ├── balance_sheet-2025-10-01.pdf
+│   │   │   │       │       │   ├── balance_sheet-2025-10-01.xlsx
+│   │   │   │       │       │   └── lo_profile  [error opening dir]
+│   │   │   │       │       ├── 20251003_043024-72d37798
+│   │   │   │       │       │   ├── balance_sheet-2025-10-01.pdf
+│   │   │   │       │       │   ├── balance_sheet-2025-10-01.xlsx
+│   │   │   │       │       │   └── lo_profile  [error opening dir]
+│   │   │   │       │       ├── 20251017_040239-e2d48478
+│   │   │   │       │       │   ├── balance_sheet-2025-10-01.pdf
+│   │   │   │       │       │   ├── balance_sheet-2025-10-01.xlsx
+│   │   │   │       │       │   └── lo_profile  [error opening dir]
+│   │   │   │       │       ├── 20251017_043247-915221e1
+│   │   │   │       │       │   ├── balance_sheet-2025-10-01.pdf
+│   │   │   │       │       │   ├── balance_sheet-2025-10-01.xlsx
+│   │   │   │       │       │   └── lo_profile  [error opening dir]
+│   │   │   │       │       ├── 20251023_041533-9045293a
+│   │   │   │       │       │   ├── balance_sheet-2025-10-01.pdf
+│   │   │   │       │       │   ├── balance_sheet-2025-10-01.xlsx
+│   │   │   │       │       │   └── lo_profile  [error opening dir]
+│   │   │   │       │       └── 20251023_043115-d78c2858
+│   │   │   │       │           ├── balance_sheet-2025-10-01.pdf
+│   │   │   │       │           ├── balance_sheet-2025-10-01.xlsx
+│   │   │   │       │           └── lo_profile  [error opening dir]
+│   │   │   │       ├── block_unit_price
+│   │   │   │       │   └── 2025-10-01
+│   │   │   │       │       ├── 20251002_075506-26eec599
+│   │   │   │       │       │   ├── block_unit_price-2025-10-01.pdf
+│   │   │   │       │       │   ├── block_unit_price-2025-10-01.xlsx
+│   │   │   │       │       │   └── lo_profile  [error opening dir]
+│   │   │   │       │       ├── 20251003_012643-6e4bfbc0
+│   │   │   │       │       │   ├── block_unit_price-2025-10-01.pdf
+│   │   │   │       │       │   ├── block_unit_price-2025-10-01.xlsx
+│   │   │   │       │       │   └── lo_profile  [error opening dir]
+│   │   │   │       │       ├── 20251003_015653-e66ca1e5
+│   │   │   │       │       │   ├── block_unit_price-2025-10-01.pdf
+│   │   │   │       │       │   ├── block_unit_price-2025-10-01.xlsx
+│   │   │   │       │       │   └── lo_profile  [error opening dir]
+│   │   │   │       │       ├── 20251003_021707-22a365de
+│   │   │   │       │       │   ├── block_unit_price-2025-10-01.pdf
+│   │   │   │       │       │   ├── block_unit_price-2025-10-01.xlsx
+│   │   │   │       │       │   └── lo_profile  [error opening dir]
+│   │   │   │       │       ├── 20251003_040340-4eb9568d
+│   │   │   │       │       │   ├── block_unit_price-2025-10-01.pdf
+│   │   │   │       │       │   ├── block_unit_price-2025-10-01.xlsx
+│   │   │   │       │       │   └── lo_profile  [error opening dir]
+│   │   │   │       │       ├── 20251003_040409-ca2629c6
+│   │   │   │       │       │   ├── block_unit_price-2025-10-01.pdf
+│   │   │   │       │       │   ├── block_unit_price-2025-10-01.xlsx
+│   │   │   │       │       │   └── lo_profile  [error opening dir]
+│   │   │   │       │       ├── 20251017_042240-a40802e0
+│   │   │   │       │       │   ├── block_unit_price-2025-10-01.pdf
+│   │   │   │       │       │   ├── block_unit_price-2025-10-01.xlsx
+│   │   │   │       │       │   └── lo_profile  [error opening dir]
+│   │   │   │       │       ├── 20251017_042520-b6de8269
+│   │   │   │       │       │   ├── block_unit_price-2025-10-01.pdf
+│   │   │   │       │       │   ├── block_unit_price-2025-10-01.xlsx
+│   │   │   │       │       │   └── lo_profile  [error opening dir]
+│   │   │   │       │       ├── 20251017_043305-a50928ec
+│   │   │   │       │       │   ├── block_unit_price-2025-10-01.pdf
+│   │   │   │       │       │   ├── block_unit_price-2025-10-01.xlsx
+│   │   │   │       │       │   └── lo_profile  [error opening dir]
+│   │   │   │       │       ├── 20251023_041633-b62e3b0e
+│   │   │   │       │       │   ├── block_unit_price-2025-10-01.pdf
+│   │   │   │       │       │   ├── block_unit_price-2025-10-01.xlsx
+│   │   │   │       │       │   └── lo_profile  [error opening dir]
+│   │   │   │       │       ├── 20251023_042423-ca29e06b
+│   │   │   │       │       │   ├── block_unit_price-2025-10-01.pdf
+│   │   │   │       │       │   ├── block_unit_price-2025-10-01.xlsx
+│   │   │   │       │       │   └── lo_profile  [error opening dir]
+│   │   │   │       │       └── 20251023_043139-b826214d
+│   │   │   │       │           ├── block_unit_price-2025-10-01.pdf
+│   │   │   │       │           ├── block_unit_price-2025-10-01.xlsx
+│   │   │   │       │           └── lo_profile  [error opening dir]
+│   │   │   │       ├── factory_report
+│   │   │   │       │   └── 2025-10-01
+│   │   │   │       │       ├── 20251002_075434-d1ff5251
+│   │   │   │       │       │   ├── factory_report-2025-10-01.pdf
+│   │   │   │       │       │   ├── factory_report-2025-10-01.xlsx
+│   │   │   │       │       │   └── lo_profile  [error opening dir]
+│   │   │   │       │       ├── 20251003_012608-5c25f617
+│   │   │   │       │       │   ├── factory_report-2025-10-01.pdf
+│   │   │   │       │       │   ├── factory_report-2025-10-01.xlsx
+│   │   │   │       │       │   └── lo_profile  [error opening dir]
+│   │   │   │       │       ├── 20251003_015606-f542286f
+│   │   │   │       │       │   ├── factory_report-2025-10-01.pdf
+│   │   │   │       │       │   ├── factory_report-2025-10-01.xlsx
+│   │   │   │       │       │   └── lo_profile  [error opening dir]
+│   │   │   │       │       ├── 20251003_021620-91afc036
+│   │   │   │       │       │   ├── factory_report-2025-10-01.pdf
+│   │   │   │       │       │   ├── factory_report-2025-10-01.xlsx
+│   │   │   │       │       │   └── lo_profile  [error opening dir]
+│   │   │   │       │       ├── 20251003_021824-2b295b0a
+│   │   │   │       │       │   ├── factory_report-2025-10-01.pdf
+│   │   │   │       │       │   ├── factory_report-2025-10-01.xlsx
+│   │   │   │       │       │   └── lo_profile  [error opening dir]
+│   │   │   │       │       ├── 20251003_022329-abd1ede7
+│   │   │   │       │       │   ├── factory_report-2025-10-01.pdf
+│   │   │   │       │       │   ├── factory_report-2025-10-01.xlsx
+│   │   │   │       │       │   └── lo_profile  [error opening dir]
+│   │   │   │       │       ├── 20251003_040358-d864350e
+│   │   │   │       │       │   ├── factory_report-2025-10-01.pdf
+│   │   │   │       │       │   ├── factory_report-2025-10-01.xlsx
+│   │   │   │       │       │   └── lo_profile  [error opening dir]
+│   │   │   │       │       ├── 20251003_040414-ea863020
+│   │   │   │       │       │   ├── factory_report-2025-10-01.pdf
+│   │   │   │       │       │   ├── factory_report-2025-10-01.xlsx
+│   │   │   │       │       │   └── lo_profile  [error opening dir]
+│   │   │   │       │       ├── 20251003_040753-b63ac608
+│   │   │   │       │       │   ├── factory_report-2025-10-01.pdf
+│   │   │   │       │       │   ├── factory_report-2025-10-01.xlsx
+│   │   │   │       │       │   └── lo_profile  [error opening dir]
+│   │   │   │       │       ├── 20251003_040823-982bab01
+│   │   │   │       │       │   ├── factory_report-2025-10-01.pdf
+│   │   │   │       │       │   ├── factory_report-2025-10-01.xlsx
+│   │   │   │       │       │   └── lo_profile  [error opening dir]
+│   │   │   │       │       ├── 20251003_041036-e1440e46
+│   │   │   │       │       │   ├── factory_report-2025-10-01.pdf
+│   │   │   │       │       │   ├── factory_report-2025-10-01.xlsx
+│   │   │   │       │       │   └── lo_profile  [error opening dir]
+│   │   │   │       │       ├── 20251003_041140-302075ab
+│   │   │   │       │       │   ├── factory_report-2025-10-01.pdf
+│   │   │   │       │       │   ├── factory_report-2025-10-01.xlsx
+│   │   │   │       │       │   └── lo_profile  [error opening dir]
+│   │   │   │       │       ├── 20251003_041453-12b68f66
+│   │   │   │       │       │   ├── factory_report-2025-10-01.pdf
+│   │   │   │       │       │   ├── factory_report-2025-10-01.xlsx
+│   │   │   │       │       │   └── lo_profile  [error opening dir]
+│   │   │   │       │       ├── 20251003_041738-7120d279
+│   │   │   │       │       │   ├── factory_report-2025-10-01.pdf
+│   │   │   │       │       │   ├── factory_report-2025-10-01.xlsx
+│   │   │   │       │       │   └── lo_profile  [error opening dir]
+│   │   │   │       │       ├── 20251003_041751-05821733
+│   │   │   │       │       │   ├── factory_report-2025-10-01.pdf
+│   │   │   │       │       │   ├── factory_report-2025-10-01.xlsx
+│   │   │   │       │       │   └── lo_profile  [error opening dir]
+│   │   │   │       │       ├── 20251003_041812-b29626a6
+│   │   │   │       │       │   ├── factory_report-2025-10-01.pdf
+│   │   │   │       │       │   ├── factory_report-2025-10-01.xlsx
+│   │   │   │       │       │   └── lo_profile  [error opening dir]
+│   │   │   │       │       ├── 20251003_042146-d6eb751a
+│   │   │   │       │       │   ├── factory_report-2025-10-01.pdf
+│   │   │   │       │       │   ├── factory_report-2025-10-01.xlsx
+│   │   │   │       │       │   └── lo_profile  [error opening dir]
+│   │   │   │       │       ├── 20251003_042422-5f61d085
+│   │   │   │       │       │   ├── factory_report-2025-10-01.pdf
+│   │   │   │       │       │   ├── factory_report-2025-10-01.xlsx
+│   │   │   │       │       │   └── lo_profile  [error opening dir]
+│   │   │   │       │       ├── 20251003_042924-6b36dc98
+│   │   │   │       │       │   ├── factory_report-2025-10-01.pdf
+│   │   │   │       │       │   ├── factory_report-2025-10-01.xlsx
+│   │   │   │       │       │   └── lo_profile  [error opening dir]
+│   │   │   │       │       ├── 20251003_043154-cf65073c
+│   │   │   │       │       │   ├── factory_report-2025-10-01.pdf
+│   │   │   │       │       │   ├── factory_report-2025-10-01.xlsx
+│   │   │   │       │       │   └── lo_profile  [error opening dir]
+│   │   │   │       │       ├── 20251003_043312-0ac96213
+│   │   │   │       │       │   ├── factory_report-2025-10-01.pdf
+│   │   │   │       │       │   ├── factory_report-2025-10-01.xlsx
+│   │   │   │       │       │   └── lo_profile  [error opening dir]
+│   │   │   │       │       ├── 20251003_043316-a7c84877
+│   │   │   │       │       │   ├── factory_report-2025-10-01.pdf
+│   │   │   │       │       │   ├── factory_report-2025-10-01.xlsx
+│   │   │   │       │       │   └── lo_profile  [error opening dir]
+│   │   │   │       │       ├── 20251003_044648-35ae2a6c
+│   │   │   │       │       │   ├── factory_report-2025-10-01.pdf
+│   │   │   │       │       │   ├── factory_report-2025-10-01.xlsx
+│   │   │   │       │       │   └── lo_profile  [error opening dir]
+│   │   │   │       │       ├── 20251003_044653-cf33cd4a
+│   │   │   │       │       │   ├── factory_report-2025-10-01.pdf
+│   │   │   │       │       │   ├── factory_report-2025-10-01.xlsx
+│   │   │   │       │       │   └── lo_profile  [error opening dir]
+│   │   │   │       │       ├── 20251003_052530-36b4f2f4
+│   │   │   │       │       │   ├── factory_report-2025-10-01.pdf
+│   │   │   │       │       │   ├── factory_report-2025-10-01.xlsx
+│   │   │   │       │       │   └── lo_profile  [error opening dir]
+│   │   │   │       │       ├── 20251003_052626-3515be29
+│   │   │   │       │       │   ├── factory_report-2025-10-01.pdf
+│   │   │   │       │       │   ├── factory_report-2025-10-01.xlsx
+│   │   │   │       │       │   └── lo_profile  [error opening dir]
+│   │   │   │       │       ├── 20251006_023331-a5e1f6a7
+│   │   │   │       │       │   ├── factory_report-2025-10-01.pdf
+│   │   │   │       │       │   ├── factory_report-2025-10-01.xlsx
+│   │   │   │       │       │   └── lo_profile  [error opening dir]
+│   │   │   │       │       ├── 20251006_040102-98dc8b62
+│   │   │   │       │       │   ├── factory_report-2025-10-01.pdf
+│   │   │   │       │       │   ├── factory_report-2025-10-01.xlsx
+│   │   │   │       │       │   └── lo_profile  [error opening dir]
+│   │   │   │       │       ├── 20251006_040112-248d9f00
+│   │   │   │       │       │   ├── factory_report-2025-10-01.pdf
+│   │   │   │       │       │   ├── factory_report-2025-10-01.xlsx
+│   │   │   │       │       │   └── lo_profile  [error opening dir]
+│   │   │   │       │       ├── 20251006_041252-d829e8fe
+│   │   │   │       │       │   ├── factory_report-2025-10-01.pdf
+│   │   │   │       │       │   ├── factory_report-2025-10-01.xlsx
+│   │   │   │       │       │   └── lo_profile  [error opening dir]
+│   │   │   │       │       ├── 20251006_050956-0abb2199
+│   │   │   │       │       │   ├── factory_report-2025-10-01.pdf
+│   │   │   │       │       │   ├── factory_report-2025-10-01.xlsx
+│   │   │   │       │       │   └── lo_profile  [error opening dir]
+│   │   │   │       │       ├── 20251006_051743-746bc7cf
+│   │   │   │       │       │   ├── factory_report-2025-10-01.pdf
+│   │   │   │       │       │   ├── factory_report-2025-10-01.xlsx
+│   │   │   │       │       │   └── lo_profile  [error opening dir]
+│   │   │   │       │       ├── 20251017_024022-4bd275f1
+│   │   │   │       │       │   ├── factory_report-2025-10-01.pdf
+│   │   │   │       │       │   ├── factory_report-2025-10-01.xlsx
+│   │   │   │       │       │   └── lo_profile  [error opening dir]
+│   │   │   │       │       ├── 20251017_024657-daff239f
+│   │   │   │       │       │   ├── factory_report-2025-10-01.pdf
+│   │   │   │       │       │   ├── factory_report-2025-10-01.xlsx
+│   │   │   │       │       │   └── lo_profile  [error opening dir]
+│   │   │   │       │       ├── 20251017_025054-53650285
+│   │   │   │       │       │   ├── factory_report-2025-10-01.pdf
+│   │   │   │       │       │   ├── factory_report-2025-10-01.xlsx
+│   │   │   │       │       │   └── lo_profile  [error opening dir]
+│   │   │   │       │       ├── 20251017_030025-74442f75
+│   │   │   │       │       │   ├── factory_report-2025-10-01.pdf
+│   │   │   │       │       │   ├── factory_report-2025-10-01.xlsx
+│   │   │   │       │       │   └── lo_profile  [error opening dir]
+│   │   │   │       │       ├── 20251017_040229-fa698b66
+│   │   │   │       │       │   ├── factory_report-2025-10-01.pdf
+│   │   │   │       │       │   ├── factory_report-2025-10-01.xlsx
+│   │   │   │       │       │   └── lo_profile  [error opening dir]
+│   │   │   │       │       ├── 20251017_043239-9578cb91
+│   │   │   │       │       │   ├── factory_report-2025-10-01.pdf
+│   │   │   │       │       │   ├── factory_report-2025-10-01.xlsx
+│   │   │   │       │       │   └── lo_profile  [error opening dir]
+│   │   │   │       │       ├── 20251017_090046-6c7ef005
+│   │   │   │       │       │   ├── factory_report-2025-10-01.pdf
+│   │   │   │       │       │   ├── factory_report-2025-10-01.xlsx
+│   │   │   │       │       │   └── lo_profile  [error opening dir]
+│   │   │   │       │       ├── 20251021_015248-88e26971
+│   │   │   │       │       │   ├── factory_report-2025-10-01.pdf
+│   │   │   │       │       │   ├── factory_report-2025-10-01.xlsx
+│   │   │   │       │       │   └── lo_profile  [error opening dir]
+│   │   │   │       │       ├── 20251023_023435-1154cf7e
+│   │   │   │       │       │   ├── factory_report-2025-10-01.pdf
+│   │   │   │       │       │   ├── factory_report-2025-10-01.xlsx
+│   │   │   │       │       │   └── lo_profile  [error opening dir]
+│   │   │   │       │       ├── 20251023_041526-0496c403
+│   │   │   │       │       │   ├── factory_report-2025-10-01.pdf
+│   │   │   │       │       │   ├── factory_report-2025-10-01.xlsx
+│   │   │   │       │       │   └── lo_profile  [error opening dir]
+│   │   │   │       │       ├── 20251023_042407-4c74fc0c
+│   │   │   │       │       │   ├── factory_report-2025-10-01.pdf
+│   │   │   │       │       │   ├── factory_report-2025-10-01.xlsx
+│   │   │   │       │       │   └── lo_profile  [error opening dir]
+│   │   │   │       │       ├── 20251023_043107-8a935ffe
+│   │   │   │       │       │   ├── factory_report-2025-10-01.pdf
+│   │   │   │       │       │   ├── factory_report-2025-10-01.xlsx
+│   │   │   │       │       │   └── lo_profile  [error opening dir]
+│   │   │   │       │       ├── 20251024_085129-3b796bed
+│   │   │   │       │       │   ├── factory_report-2025-10-01.pdf
+│   │   │   │       │       │   ├── factory_report-2025-10-01.xlsx
+│   │   │   │       │       │   └── lo_profile  [error opening dir]
+│   │   │   │       │       ├── 20251024_085558-bfdd390f
+│   │   │   │       │       │   ├── factory_report-2025-10-01.pdf
+│   │   │   │       │       │   ├── factory_report-2025-10-01.xlsx
+│   │   │   │       │       │   └── lo_profile  [error opening dir]
+│   │   │   │       │       └── 20251024_085817-52a57853
+│   │   │   │       │           ├── factory_report-2025-10-01.pdf
+│   │   │   │       │           ├── factory_report-2025-10-01.xlsx
+│   │   │   │       │           └── lo_profile  [error opening dir]
+│   │   │   │       └── management_sheet
+│   │   │   │           └── 2025-10-01
+│   │   │   │               ├── 20251002_075512-d0b797e9
+│   │   │   │               │   ├── lo_profile  [error opening dir]
+│   │   │   │               │   ├── management_sheet-2025-10-01.pdf
+│   │   │   │               │   └── management_sheet-2025-10-01.xlsx
+│   │   │   │               ├── 20251003_012649-152757ec
+│   │   │   │               │   ├── lo_profile  [error opening dir]
+│   │   │   │               │   ├── management_sheet-2025-10-01.pdf
+│   │   │   │               │   └── management_sheet-2025-10-01.xlsx
+│   │   │   │               ├── 20251003_015701-285ae609
+│   │   │   │               │   ├── lo_profile  [error opening dir]
+│   │   │   │               │   ├── management_sheet-2025-10-01.pdf
+│   │   │   │               │   └── management_sheet-2025-10-01.xlsx
+│   │   │   │               ├── 20251003_021658-40da7cd1
+│   │   │   │               │   ├── lo_profile  [error opening dir]
+│   │   │   │               │   ├── management_sheet-2025-10-01.pdf
+│   │   │   │               │   └── management_sheet-2025-10-01.xlsx
+│   │   │   │               ├── 20251017_040305-e02e367a
+│   │   │   │               │   ├── lo_profile  [error opening dir]
+│   │   │   │               │   ├── management_sheet-2025-10-01.pdf
+│   │   │   │               │   └── management_sheet-2025-10-01.xlsx
+│   │   │   │               ├── 20251017_043313-b02216fa
+│   │   │   │               │   ├── lo_profile  [error opening dir]
+│   │   │   │               │   ├── management_sheet-2025-10-01.pdf
+│   │   │   │               │   └── management_sheet-2025-10-01.xlsx
+│   │   │   │               └── 20251023_043147-817630cb
+│   │   │   │                   ├── lo_profile  [error opening dir]
+│   │   │   │                   ├── management_sheet-2025-10-01.pdf
+│   │   │   │                   └── management_sheet-2025-10-01.xlsx
+│   │   │   ├── services
+│   │   │   │   ├── README.md
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── __pycache__
+│   │   │   │   ├── csv
+│   │   │   │   │   ├── README.md
+│   │   │   │   │   ├── __init__.py
+│   │   │   │   │   ├── __pycache__
+│   │   │   │   │   ├── formatter_service.py
+│   │   │   │   │   └── validator_service.py
+│   │   │   │   └── report
+│   │   │   │       ├── README.md
+│   │   │   │       ├── __init__.py
+│   │   │   │       ├── artifacts
+│   │   │   │       │   ├── __init__.py
+│   │   │   │       │   ├── artifact_builder.py
+│   │   │   │       │   └── artifact_service.py
+│   │   │   │       ├── core
+│   │   │   │       │   ├── __init__.py
+│   │   │   │       │   ├── base_generators
+│   │   │   │       │   │   ├── __init__.py
+│   │   │   │       │   │   ├── base_interactive_report_generator.py
+│   │   │   │       │   │   └── base_report_generator.py
+│   │   │   │       │   ├── concrete_generators.py
+│   │   │   │       │   └── processors
+│   │   │   │       │       ├── __init__.py
+│   │   │   │       │       ├── interactive_report_processing_service.py
+│   │   │   │       │       └── report_processing_service.py
+│   │   │   │       ├── ledger
+│   │   │   │       │   ├── README.md
+│   │   │   │       │   ├── __init__.py
+│   │   │   │       │   ├── average_sheet.py
+│   │   │   │       │   ├── balance_sheet.py
+│   │   │   │       │   ├── factory_report.py
+│   │   │   │       │   ├── interactive
+│   │   │   │       │   │   ├── __init__.py
+│   │   │   │       │   │   ├── block_unit_price_finalize.py
+│   │   │   │       │   │   ├── block_unit_price_initial.py
+│   │   │   │       │   │   ├── block_unit_price_main.py
+│   │   │   │       │   │   └── block_unit_price_utils.py
+│   │   │   │       │   ├── management_sheet.py
+│   │   │   │       │   └── processors
+│   │   │   │       │       ├── average_sheet
+│   │   │   │       │       │   ├── __init__.py
+│   │   │   │       │       │   └── processors.py
+│   │   │   │       │       ├── balance_sheet
+│   │   │   │       │       │   ├── __pycache__
+│   │   │   │       │       │   ├── balacne_sheet_inbound_weight.py
+│   │   │   │       │       │   ├── balance_sheet_etc.py
+│   │   │   │       │       │   ├── balance_sheet_fact.py
+│   │   │   │       │       │   ├── balance_sheet_honest.py
+│   │   │   │       │       │   ├── balance_sheet_inbound_truck_count.py
+│   │   │   │       │       │   ├── balance_sheet_syobun.py
+│   │   │   │       │       │   ├── balance_sheet_yuka_kaitori.py
+│   │   │   │       │       │   └── balance_sheet_yuukabutu.py
+│   │   │   │       │       ├── block_unit_price
+│   │   │   │       │       │   ├── __init__.py
+│   │   │   │       │       │   ├── process0.py
+│   │   │   │       │       │   ├── process1.py
+│   │   │   │       │       │   ├── process2.py
+│   │   │   │       │       │   └── style.py
+│   │   │   │       │       ├── factory_report
+│   │   │   │       │       │   ├── __init__.py
+│   │   │   │       │       │   ├── etc.py
+│   │   │   │       │       │   ├── make_cell_num.py
+│   │   │   │       │       │   ├── make_label.py
+│   │   │   │       │       │   ├── shobun.py
+│   │   │   │       │       │   ├── summary.py
+│   │   │   │       │       │   ├── yard.py
+│   │   │   │       │       │   └── yuuka.py
+│   │   │   │       │       └── management_sheet
+│   │   │   │       │           ├── __init__.py
+│   │   │   │       │           ├── average_sheet.py
+│   │   │   │       │           ├── balance_sheet.py
+│   │   │   │       │           ├── factory_report.py
+│   │   │   │       │           ├── manage_etc.py
+│   │   │   │       │           └── scrap_senbetsu.py
+│   │   │   │       ├── session
+│   │   │   │       │   ├── __init__.py
+│   │   │   │       │   └── session_store.py
+│   │   │   │       └── utils
+│   │   │   │           ├── __init__.py
+│   │   │   │           ├── config
+│   │   │   │           │   ├── __init__.py
+│   │   │   │           │   └── template_config.py
+│   │   │   │           ├── dataframe
+│   │   │   │           │   ├── __init__.py
+│   │   │   │           │   ├── cleaning.py
+│   │   │   │           │   ├── columns.py
+│   │   │   │           │   └── operations.py
+│   │   │   │           ├── domain
+│   │   │   │           │   ├── __init__.py
+│   │   │   │           │   └── transport_discount.py
+│   │   │   │           ├── excel
+│   │   │   │           │   ├── __init__.py
+│   │   │   │           │   └── tools.py
+│   │   │   │           ├── formatters
+│   │   │   │           │   ├── __init__.py
+│   │   │   │           │   ├── dates.py
+│   │   │   │           │   ├── multiply.py
+│   │   │   │           │   ├── rounding.py
+│   │   │   │           │   ├── summary.py
+│   │   │   │           │   └── value_setter.py
+│   │   │   │           ├── io
+│   │   │   │           │   ├── __init__.py
+│   │   │   │           │   ├── csv_loader.py
+│   │   │   │           │   ├── excel_writer.py
+│   │   │   │           │   └── template_loader.py
+│   │   │   │           ├── logging
+│   │   │   │           │   ├── __init__.py
+│   │   │   │           │   └── logger.py
+│   │   │   │           └── paths
+│   │   │   │               ├── __init__.py
+│   │   │   │               └── main_path.py
+│   │   │   └── utils
+│   │   │       ├── __init__.py
+│   │   │       ├── excel_pdf_zip_utils.py
+│   │   │       └── pdf_conversion.py
+│   │   ├── local_config
+│   │   │   └── paths.py
+│   │   ├── main.py
+│   │   ├── settings.py
+│   │   ├── startup.py
+│   │   └── streamlit.py
+│   ├── apt-packages.txt
+│   ├── docs
+│   │   ├── API_REFACTORING_GUIDE.md
+│   │   ├── ARCHITECTURE_IMPROVEMENT_PROPOSAL.md
+│   │   ├── COMPLETE_MIGRATION_SUMMARY.md
+│   │   ├── DOCKERFILE_MIGRATION_REPORT.md
+│   │   ├── FINAL_MIGRATION_REPORT.md
+│   │   ├── LEDGER_MIGRATION_NOTES.md
+│   │   ├── REFACTORING_FINAL.md
+│   │   ├── REFACTORING_SERVICES.md
+│   │   ├── REFACTORING_SUMMARY.md
+│   │   ├── ST_APP_DELETION_CHECKLIST.md
+│   │   └── ST_APP_MIGRATION_REPORT.md
+│   ├── requirements-dev.txt
+│   ├── requirements.txt
+│   ├── startup.sh
+│   └── test
+│       ├── test_api_readiness.py
+│       ├── test_block_finalize.py
+│       ├── test_block_initial.py
+│       ├── test_process2.py
+│       ├── test_services_entrypoints.py
+│       ├── validate_syogun_csv.py
+│       ├── verify_st_app_migration.py
+│       ├── 出荷一覧_20250630_180038.csv
+│       └── 出荷一覧_20250829_164653.csv
+├── manual_api
+│   ├── Dockerfile
+│   ├── Dockerfile.bak.20251030_093302
+│   ├── app
+│   │   ├── __pycache__
+│   │   ├── catalog_data.py
+│   │   ├── main.py
+│   │   ├── repository.py
+│   │   ├── routers.py
+│   │   ├── schemas.py
+│   │   ├── service.py
+│   │   └── utils.py
+│   ├── data
+│   │   └── master
+│   │       └── vender
+│   │           ├── vender_fllowchart.png
+│   │           └── vender_movie.mp4
+│   ├── requirements.txt
+│   └── startup.sh
+├── plan_worker
+│   ├── Dockerfile
+│   ├── README.md
+│   ├── app
+│   │   ├── __init__.py
+│   │   ├── application
+│   │   │   └── __init__.py
+│   │   ├── domain
+│   │   │   ├── __init__.py
+│   │   │   ├── predictor.py
+│   │   │   └── services
+│   │   ├── infrastructure
+│   │   │   ├── __init__.py
+│   │   │   └── db
+│   │   │       ├── connection.py
+│   │   │       ├── health.py
+│   │   │       └── queries
+│   │   │           └── daytype_stats.sql
+│   │   ├── interfaces
+│   │   │   ├── __init__.py
+│   │   │   └── worker
+│   │   │       ├── __init__.py
+│   │   │       ├── cli.py
+│   │   │       └── test_db_connection.py
+│   │   ├── ports
+│   │   │   ├── __init__.py
+│   │   │   └── repositories.py
+│   │   ├── scripts
+│   │   │   ├── __init__.py
+│   │   │   └── db_healthcheck.py
+│   │   ├── shared
+│   │   │   ├── __init__.py
+│   │   │   ├── config
+│   │   │   │   ├── __init__.py
+│   │   │   │   └── settings.py
+│   │   │   └── logging
+│   │   │       ├── __init__.py
+│   │   │       └── logger.py
+│   │   ├── test
+│   │   │   ├── __pycache__
+│   │   │   │   ├── plan_smoothing.cpython-312.pyc
+│   │   │   │   └── step04_plan_calc.cpython-312.pyc
+│   │   │   ├── check_data.ipynb
+│   │   │   ├── common.py
+│   │   │   ├── out
+│   │   │   │   ├── calendar.csv
+│   │   │   │   ├── kpi_inbound.csv
+│   │   │   │   ├── mv_scope.csv
+│   │   │   │   ├── plan
+│   │   │   │   │   ├── daily_plan_smooth_final.csv
+│   │   │   │   │   └── weekly_plan_smooth_final.csv
+│   │   │   │   ├── plan_2
+│   │   │   │   │   ├── daily_plan.csv
+│   │   │   │   │   ├── plan_month_check.csv
+│   │   │   │   │   ├── plan_week_month_check.csv
+│   │   │   │   │   ├── weekly_plan.csv
+│   │   │   │   │   ├── weekly_targets_after.csv
+│   │   │   │   │   └── weekly_weights_debug.csv
+│   │   │   │   ├── plan_3
+│   │   │   │   │   ├── daily_plan.csv
+│   │   │   │   │   ├── plan_month_check.csv
+│   │   │   │   │   └── weekly_plan.csv
+│   │   │   │   ├── plan_4
+│   │   │   │   │   ├── daily_plan.csv
+│   │   │   │   │   ├── plan_month_check.csv
+│   │   │   │   │   └── weekly_plan.csv
+│   │   │   │   ├── plan_5
+│   │   │   │   │   ├── daily_plan.csv
+│   │   │   │   │   ├── plan_month_check.csv
+│   │   │   │   │   └── weekly_plan.csv
+│   │   │   │   ├── smooth_compare_diff_heatmap.png
+│   │   │   │   ├── smooth_compare_heatmaps.png
+│   │   │   │   ├── smooth_compare_weekly_mean.png
+│   │   │   │   └── smooth_preview.csv
+│   │   │   ├── plan_smoothing_plus.py
+│   │   │   ├── step01_fetch.py
+│   │   │   ├── step02_smooth.py
+│   │   │   ├── step04_plan_calc.py
+│   │   │   ├── step04_plan_calc_plus.py
+│   │   │   ├── tep03_save.py
+│   │   │   ├── ゴーストなしモデル
+│   │   │   │   ├── plan_smoothing.py
+│   │   │   │   └── step04_plan_calc.py
+│   │   │   └── シンプルモデル
+│   │   │       ├── plan_smoothing.py
+│   │   │       └── step04_plan_calc.py
+│   │   └── worker.py
+│   ├── archive
+│   │   └── app
+│   │       ├── __init__.py
+│   │       └── worker.py
+│   ├── pyproject.toml
+│   ├── requirements.txt
+│   ├── src
+│   │   ├── interfaces
+│   │   │   └── worker
+│   │   │       └── cli.py
+│   │   └── shared
+│   │       └── logging
+│   │           └── logger.py
+│   └── test
+└── rag_api
+    ├── Dockerfile
+    ├── Dockerfile.bak.20251030_093302
+    ├── FRONTEND_API_GUIDE.md
+    ├── README.md
+    ├── app
+    │   ├── __init__.py
+    │   ├── ai_loader.py
+    │   ├── api
+    │   │   ├── __init__.py
+    │   │   └── endpoints
+    │   │       ├── __init__.py
+    │   │       ├── manuals
+    │   │       │   ├── __init__.py
+    │   │       │   └── router.py
+    │   │       └── query.py
+    │   ├── core
+    │   │   ├── __init__.py
+    │   │   ├── file_ingest_service.py
+    │   │   └── rag_service.py
+    │   ├── dependencies.py
+    │   ├── infrastructure
+    │   │   ├── llm
+    │   │   │   ├── __init__.py
+    │   │   │   ├── ai_loader.py
+    │   │   │   └── openai_client.py
+    │   │   ├── manuals_repository.py
+    │   │   └── pdf
+    │   │       ├── __init__.py
+    │   │       └── pdf_loader.py
+    │   ├── local_config
+    │   │   ├── __init__.py
+    │   │   └── constants.py
+    │   ├── main.py
+    │   ├── paths.py
+    │   ├── schemas
+    │   │   ├── __init__.py
+    │   │   ├── manuals.py
+    │   │   └── query_schema.py
+    │   ├── services
+    │   │   ├── __init__.py
+    │   │   ├── ai_response_service.py
+    │   │   ├── dummy_response_service.py
+    │   │   ├── manuals_service.py
+    │   │   ├── mock_pdf_service.py
+    │   │   ├── pdf_service.py
+    │   │   └── pdf_service_base.py
+    │   └── utils
+    │       ├── __init__.py
+    │       ├── chunk_utils.py
+    │       ├── env_loader.py
+    │       ├── file_utils.py
+    │       └── utils.py
+    ├── requirements.txt
+    ├── startup.sh
+    └── tests
+        ├── test_ai_response_service_pages.py
+        └── test_chunk_utils_tags.py
+
+339 directories, 647 files

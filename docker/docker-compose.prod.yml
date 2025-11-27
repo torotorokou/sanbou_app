@@ -1,0 +1,258 @@
+## =============================================================
+## docker-compose.prod.yml (本番環境)
+## - 外部公開は nginx のみ (80/443)
+## - frontend/backend は内部ネットワークのみ
+## - 3層ネットワーク分離: edge-net / app-net / data-net
+## - backend サービスは標準化された Dockerfile (wheelbuilder/dev/prod) を利用
+## - target: prod を明示
+## =============================================================
+services:
+  # ===========================================================================
+  # Core API (BFF) - All frontend requests go through this
+  # ===========================================================================
+  core_api:
+    build:
+      context: ../app/backend
+      dockerfile: core_api/Dockerfile
+      target: prod
+    networks: [app-net, data-net]
+    depends_on:
+      - db
+    env_file:
+      - ../env/.env.common
+      - ../env/.env.vm_prod
+    environment:
+      - TZ=Asia/Tokyo
+      - RAG_API_BASE=http://rag_api:8000
+      - LEDGER_API_BASE=http://ledger_api:8000
+      - MANUAL_API_BASE=http://manual_api:8000
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ===========================================================================
+  # Plan Worker - Background job execution
+  # ===========================================================================
+  plan_worker:
+    build:
+      context: ../app/backend
+      dockerfile: plan_worker/Dockerfile
+      target: prod
+    networks: [data-net]
+    depends_on:
+      - db
+    env_file:
+      - ../env/.env.common
+      - ../env/.env.vm_prod
+    environment:
+      TZ: "Asia/Tokyo"
+      POLL_INTERVAL: "10"
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ===========================================================================
+  # AI API
+  # ===========================================================================
+  ai_api:
+    build:
+      context: ../app/backend
+      dockerfile: ai_api/Dockerfile
+      target: prod
+    networks: [app-net]
+    depends_on:
+      - db
+    env_file:
+      - ../env/.env.common
+      - ../env/.env.vm_prod
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ===========================================================================
+  # Ledger API
+  # ===========================================================================
+  ledger_api:
+    build:
+      context: ../app/backend
+      dockerfile: ledger_api/Dockerfile
+      target: prod
+    networks: [app-net, data-net]
+    depends_on:
+      - db
+    env_file:
+      - ../env/.env.common
+      - ../env/.env.vm_prod
+    environment:
+      - TZ=Asia/Tokyo
+      - STRICT_STARTUP=true
+    volumes:
+      - ../secrets:/backend/secrets:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ===========================================================================
+  # RAG API
+  # ===========================================================================
+  rag_api:
+    build:
+      context: ../app/backend
+      dockerfile: rag_api/Dockerfile
+      target: prod
+    networks: [app-net, data-net]
+    depends_on:
+      - db
+    env_file:
+      - ../env/.env.common
+      - ../env/.env.vm_prod
+    environment:
+      - TZ=Asia/Tokyo
+    volumes:
+      - ../secrets:/backend/secrets:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ===========================================================================
+  # Manual API
+  # ===========================================================================
+  manual_api:
+    build:
+      context: ../app/backend
+      dockerfile: manual_api/Dockerfile
+      target: prod
+    networks: [app-net]
+    env_file:
+      - ../env/.env.common
+      - ../env/.env.vm_prod
+    environment:
+      - TZ=Asia/Tokyo
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ===========================================================================
+  # nginx (prod)
+  # ===========================================================================
+  nginx:
+    build:
+      context: ../app/frontend
+      dockerfile: Dockerfile
+      target: runtime
+    depends_on:
+      - core_api
+      - ai_api
+      - ledger_api
+      - rag_api
+      - manual_api
+    networks:
+      - edge-net
+      - app-net
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      - TZ=Asia/Tokyo
+    volumes:
+      - ../app/nginx/conf.d:/etc/nginx/conf.d:ro
+      - ../app/nginx/certs:/etc/nginx/certs:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ===========================================================================
+  # PostgreSQL Database (Internal only, accessible from data-net)
+  # ===========================================================================
+  db:
+    image: postgres:17-alpine
+    networks: [data-net]
+    environment:
+      - TZ=Asia/Tokyo
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+# =============================================================================
+# Networks (3-tier isolation)
+# =============================================================================
+networks:
+  edge-net:
+    driver: bridge
+    name: sanbou_edge
+  app-net:
+    driver: bridge
+    name: sanbou_app
+    internal: false
+  data-net:
+    driver: bridge
+    name: sanbou_data
+    internal: true
+
+volumes:
+  db_data:
+    driver: local
