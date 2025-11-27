@@ -1,0 +1,229 @@
+## =============================================================
+## docker-compose.local_demo.yml (デモ環境)
+## - local_dev と完全に独立した環境
+## - ポート・DB・データディレクトリがすべて分離
+## =============================================================
+services:
+  # ===========================================================================
+  # Frontend
+  # ===========================================================================
+  frontend:
+    build:
+      context: ../app/frontend
+      dockerfile: Dockerfile
+      target: dev
+    env_file:
+      - ../env/.env.common
+      - ../env/.env.local_demo
+      - ../secrets/.env.local_demo.secrets
+    command: ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
+    ports:
+      - "${DEV_FRONTEND_PORT:-5174}:5173"
+    volumes:
+      - node_modules_demo:/app/node_modules
+      - ../app/frontend:/app
+    environment:
+      - DOCKER=true
+    networks:
+      - app-net
+
+  # ===========================================================================
+  # AI API
+  # ===========================================================================
+  ai_api:
+    build:
+      context: ../app/backend
+      dockerfile: ai_api/Dockerfile
+      target: dev
+    env_file:
+      - ../env/.env.common
+      - ../env/.env.local_demo
+      - ../secrets/.env.local_demo.secrets
+    command: >
+      uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+      --reload-dir /backend/app
+      --reload-dir /opt/backend_shared/src
+    ports:
+      - "${DEV_AI_API_PORT:-8011}:8000"
+    volumes:
+      - ../app/backend/ai_api/app:/backend/app:rw
+      - ../app/backend/backend_shared:/opt/backend_shared:rw
+      - ../app/config:/backend/config
+    environment:
+      - WATCHFILES_FORCE_POLLING=1
+    depends_on:
+      - db
+    networks:
+      - app-net
+
+  # ===========================================================================
+  # Ledger API
+  # ===========================================================================
+  ledger_api:
+    build:
+      context: ../app/backend
+      dockerfile: ledger_api/Dockerfile
+      target: dev
+    env_file:
+      - ../env/.env.common
+      - ../env/.env.local_demo
+      - ../secrets/.env.local_demo.secrets
+    user: "0:0"
+    command: >
+      uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+      --reload-dir /backend/app
+      --reload-dir /opt/backend_shared/src
+    ports:
+      - "${DEV_LEDGER_API_PORT:-8012}:8000"
+    volumes:
+      - ../app/backend/ledger_api/app:/backend/app:rw
+      - ../app/backend/backend_shared:/opt/backend_shared:rw
+      - ../app/config:/backend/config
+      - ../secrets:/backend/secrets:ro
+    environment:
+      GOOGLE_APPLICATION_CREDENTIALS: /backend/secrets/dev_key.json
+      WATCHFILES_FORCE_POLLING: "1"
+      REPORT_ARTIFACT_URL_PREFIX: "/reports/artifacts"
+    depends_on:
+      - db
+    networks:
+      - app-net
+
+  # ===========================================================================
+  # Core API (BFF)
+  # ===========================================================================
+  core_api:
+    build:
+      context: ../app/backend
+      dockerfile: core_api/Dockerfile
+      target: dev
+    env_file:
+      - ../env/.env.common
+      - ../env/.env.local_demo
+      - ../secrets/.env.local_demo.secrets
+    command: >
+      uvicorn app.app:app --host 0.0.0.0 --port 8000 --reload
+      --reload-dir /backend/app
+      --reload-dir /opt/backend_shared/src
+    ports:
+      - "${DEV_CORE_API_PORT:-8013}:8000"
+    volumes:
+      - ../app/backend/core_api/app:/backend/app:rw
+      - ../app/backend/core_api/migrations:/backend/migrations:rw
+      - ../app/backend/backend_shared:/opt/backend_shared:rw
+      - ../app/config:/backend/config
+    environment:
+      - WATCHFILES_FORCE_POLLING=1
+    depends_on:
+      - db
+    networks:
+      - app-net
+
+  # ===========================================================================
+  # Plan Worker
+  # ===========================================================================
+  plan_worker:
+    build:
+      context: ../app/backend
+      dockerfile: plan_worker/Dockerfile
+      target: dev
+    env_file:
+      - ../env/.env.common
+      - ../env/.env.local_demo
+      - ../secrets/.env.local_demo.secrets
+    command: ["python", "-m", "app.worker"]
+    volumes:
+      - ../app/backend/plan_worker/app:/backend/app:rw
+      - ../app/backend/plan_worker/test:/backend/test:rw
+      - ../app/backend/backend_shared:/opt/backend_shared:rw
+    environment:
+      WATCHFILES_FORCE_POLLING: "1"
+    depends_on:
+      - db
+    networks:
+      - app-net
+    restart: unless-stopped
+
+  # ===========================================================================
+  # RAG API
+  # ===========================================================================
+  rag_api:
+    build:
+      context: ../app/backend
+      dockerfile: rag_api/Dockerfile
+      target: dev
+    env_file:
+      - ../env/.env.common
+      - ../env/.env.local_demo
+      - ../secrets/.env.local_demo.secrets
+    command: ["bash", "startup.sh"]
+    ports:
+      - "${DEV_RAG_API_PORT:-8014}:8000"
+    volumes:
+      - ../app/backend/rag_api/app:/backend/app:rw
+      - ../app/backend/backend_shared:/opt/backend_shared:rw
+      - ../app/config:/backend/config
+      - ../secrets:/backend/secrets:ro
+    environment:
+      GOOGLE_APPLICATION_CREDENTIALS: /backend/secrets/dev_key.json
+      CATEGORY_QUESTION_TEMPLATES_WITH_TAGS: /backend/config/category_question_templates_with_tags.yaml
+      DEV_RELOAD: "1"
+      LOCAL_DATA_DIR: /backend/local_data/master
+      RAG_GCS_URI: gs://sanbouapp-dev/rag_api/object_haikibutu/master/
+      WATCHFILES_FORCE_POLLING: "1"
+    depends_on:
+      - db
+    networks:
+      - app-net
+
+  # ===========================================================================
+  # Manual API
+  # ===========================================================================
+  manual_api:
+    build:
+      context: ../app/backend
+      dockerfile: manual_api/Dockerfile
+      target: dev
+    env_file:
+      - ../env/.env.common
+      - ../env/.env.local_demo
+      - ../secrets/.env.local_demo.secrets
+    command: ["bash", "startup.sh"]
+    ports:
+      - "${DEV_MANUAL_API_PORT:-8015}:8000"
+    volumes:
+      - ../app/backend/manual_api/app:/backend/app:rw
+      - ../app/backend/backend_shared:/opt/backend_shared:rw
+    environment:
+      MANUAL_FRONTEND_BASE_URL: ${MANUAL_FRONTEND_BASE_URL:-http://localhost:5174}
+    networks:
+      - app-net
+
+  # ===========================================================================
+  # PostgreSQL Database
+  # ===========================================================================
+  db:
+    image: postgres:17-alpine
+    env_file:
+      - ../env/.env.common
+      - ../env/.env.local_demo
+      - ../secrets/.env.local_demo.secrets
+    ports:
+      - "${DEV_DB_PORT:-5433}:5432"
+    volumes:
+      - ../data/local_demo/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U myuser -d sanbou_demo"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app-net
+
+volumes:
+  node_modules_demo:
+    driver: local
+
+networks:
+  app-net:
+    driver: bridge
