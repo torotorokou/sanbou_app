@@ -150,7 +150,7 @@
    - ✅ 金額・重量・単価の単位サフィックス付き命名（canonical と現行が一致）
 
 2. **Priority Medium（段階的対応）**: 
-   - `qty_kg` → `net_weight_kg` への統一（用語の統一、優先度: 低）
+   - ✅ `qty_kg` → `net_weight_kg` への統一（2025-11-27完了 - エイリアスとして両方利用可能）
    - **推奨**: 新規ビューでは canonical 採用、既存ビューは段階的に移行
 
 3. **Priority Low（長期課題）**: 
@@ -215,15 +215,17 @@
 
 | 概念 | 現行の使用状況 | canonical |
 |---|---|---|
-| **正味重量（kg）** | **raw/stg**: `net_weight` (numeric)<br>**mart**: `qty_kg` (⚠️ 用語の違い)<br>**API**: `qty` (float)<br>**FE**: `qty` (number) | `net_weight_kg` |
-| **合計正味重量** | **mart**: `total_qty_kg` (⚠️ 用語の違い)<br>**API/FE**: 変換済み | `total_net_weight_kg` |
+| **正味重量（kg）** | **raw/stg**: `net_weight` (numeric)<br>**mart**: `qty_kg` + `net_weight_kg` (✅ 両方利用可能)<br>**API**: `qty` (float)<br>**FE**: `qty` (number) | `net_weight_kg` |
+| **合計正味重量** | **mart**: `total_qty_kg` + `total_net_weight_kg` (✅ 両方利用可能)<br>**API/FE**: 変換済み | `total_net_weight_kg` |
 
-**ステータス**: ⚠️ **mart層で用語のギャップあり**（`qty` vs `net_weight`）
+**ステータス**: ✅ **2025-11-27にエイリアス追加完了**（`qty_kg` と `net_weight_kg` 両方が利用可能）
 
-**段階的移行案**:
-1. 短期: 現状維持（`qty_kg` は実質 net_weight を指す、COMMENT で明記済み）
-2. 中期: 新規ビューでは `net_weight_kg` を採用
-3. 長期: 既存ビューを `net_weight_kg` に統一（用語の一貫性向上）
+**段階的移行の実施状況**:
+1. ✅ 短期: `qty_kg` 維持（後方互換性確保）
+2. ✅ 中期: `net_weight_kg` エイリアス追加（2025-11-27完了）
+   - `mart.mv_sales_tree_daily`: `qty_kg` と `net_weight_kg` の両カラムを保持
+   - `mart.v_customer_sales_daily`: `total_qty_kg` と `total_net_weight_kg` の両カラムを保持
+3. ⏳ 長期: API/FE層での段階的移行（計画中）
 
 ---
 
@@ -498,12 +500,15 @@ CREATE TABLE sales (
 - ✅ 金額: `amount_yen` - mart層で単位サフィックス付き canonical 準拠
 - ✅ 単価: `unit_price_yen_per_kg` - mart層で単位サフィックス付き canonical 準拠
 - ✅ 仕入先: `vendor_id` - stg層で `_cd` → `_id` 統一完了（2025-11-27）
+- ✅ 重量: `net_weight_kg` - mart層でエイリアス追加完了（2025-11-27、`qty_kg` も互換維持）
 
 ### ⚠️ ギャップが残っている領域
 
-以下の領域で canonical とのギャップがあります（詳細は「ギャップ一覧」参照）：
+現在、主要な canonical 命名へのギャップは解消されています。
 
-- ⚠️ 重量: `qty_kg` → `net_weight_kg`（用語統一の必要性、優先度: 低）
+今後の課題：
+- API/FE層での `qty` → `netWeight` への段階的移行（長期計画）
+- 追加のビュー・テーブルへのCOMMENT追加
 
 ### 推奨アクション
 
@@ -516,9 +521,9 @@ CREATE TABLE sales (
 1. `qty_kg` → `net_weight_kg` の統一（API/FEに影響、優先度: 低）
 
 **対応方針**:
-- 短期: 単位サフィックス付き canonical 方針を新規開発で採用
-- 中期: `qty_kg` → `net_weight_kg` 検討
-- 長期: 既存ビューの用語統一（破壊的変更のため計画的に実施）
+- ✅ 短期: 単位サフィックス付き canonical 方針を新規開発で採用（完了）
+- ✅ 中期: `qty_kg` + `net_weight_kg` 両対応（2025-11-27完了）
+- ⏳ 長期: API/FE層での段階的移行（計画中）
 
 ---
 
@@ -532,5 +537,5 @@ CREATE TABLE sales (
 ---
 
 **最終更新**: 2025-11-27  
-**更新内容**: canonical命名ルールの明確化、raw/stg → mart マッピング辞書の追加、現行スキーマとのギャップ一覧の作成  
+**更新内容**: net_weight_kg エイリアス追加完了、canonical命名への移行状況更新  
 **更新者**: GitHub Copilot (AI Assistant)
