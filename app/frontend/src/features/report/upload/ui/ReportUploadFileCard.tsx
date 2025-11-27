@@ -66,8 +66,9 @@ export const ReportUploadFileCard: React.FC<ReportUploadFileCardProps> = ({
     const selectedFile = e.target.files?.[0];
     if (selectedFile && uploadProps.beforeUpload) {
       // beforeUpload は (file: RcFile, FileList: RcFile[]) => ... の型を期待
-      // File を RcFile として扱う（互換性あり）
-      uploadProps.beforeUpload(selectedFile as File & { uid: string }, [selectedFile] as (File & { uid: string })[]);
+      // File を RcFile として扱う(互換性あり)
+      const rcFile = Object.assign(selectedFile, { uid: `${Date.now()}`, lastModifiedDate: new Date(selectedFile.lastModified) });
+      uploadProps.beforeUpload(rcFile as any, [rcFile] as any);
       // input をリセットして同じファイルを再選択可能に
       e.target.value = '';
     }
