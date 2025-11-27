@@ -51,6 +51,31 @@ class IUploadStatusQuery(Protocol):
             - rowCount: 行数
         """
         ...
+
+
+class IUploadCalendarQuery(Protocol):
+    """
+    アップロードカレンダー詳細取得の抽象インターフェース
+    
+    stg テーブルからデータ日付と行数を集計してカレンダー表示用データを提供します。
+    """
+    
+    def fetch_upload_calendar(self, start_date: date, end_date: date) -> List[Dict[str, Any]]:
+        """
+        指定期間のアップロードカレンダーデータを取得
+        
+        Args:
+            start_date: 開始日
+            end_date: 終了日
+            
+        Returns:
+            カレンダーアイテムのリスト。各要素は以下のキーを含む:
+            - uploadFileId: アップロードファイルID
+            - date: データ日付 (YYYY-MM-DD文字列)
+            - csvKind: CSV種別
+            - rowCount: 行数
+        """
+        ...
     
     def soft_delete_by_date_and_kind(
         self,
