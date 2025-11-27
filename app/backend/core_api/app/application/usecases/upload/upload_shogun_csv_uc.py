@@ -481,6 +481,24 @@ class UploadShogunCsvUseCase:
                 self.stg_writer, formatted_dfs, uploaded_files, "stg", upload_file_ids
             )
             
+            # stg_result をチェック: エラーがある場合は rollback
+            has_error = any(r.get("status") == "error" for r in stg_result.values())
+            if has_error:
+                if self.raw_data_repo:
+                    self.raw_data_repo.db.rollback()
+                    logger.error(f"[SYNC] Transaction rolled back: stg save had errors")
+                
+                # エラー詳細を収集
+                error_details = [f"{k}: {v.get('detail', 'unknown')}" for k, v in stg_result.items() if v.get("status") == "error"]
+                error_msg = f"stg層への保存に失敗しました: {', '.join(error_details)}"
+                self._mark_all_as_failed(upload_file_ids, error_msg)
+                
+                return ErrorApiResponse(
+                    code="STG_SAVE_ERROR",
+                    detail=error_msg,
+                    status_code=500,
+                )
+            
             # 両方成功した場合のみ commit
             if self.raw_data_repo:
                 self.raw_data_repo.db.commit()
@@ -490,13 +508,13 @@ class UploadShogunCsvUseCase:
             # どちらかが失敗したら rollback
             if self.raw_data_repo:
                 self.raw_data_repo.db.rollback()
-                logger.error(f"[SYNC] Transaction rolled back due to error: {tx_error}")
+                logger.error(f"[SYNC] Transaction rolled back due to exception: {tx_error}")
             
-            error_detail = tx_error.detail if hasattr(tx_error, 'detail') else str(tx_error)
-            self._mark_all_as_failed(upload_file_ids, f"stg save error: {error_detail}")
+            error_detail = str(tx_error)
+            self._mark_all_as_failed(upload_file_ids, f"Transaction error: {error_detail}")
             return ErrorApiResponse(
-                code="STG_SAVE_ERROR",
-                detail=f"stg層への保存に失敗しました: {error_detail}",
+                code="TRANSACTION_ERROR",
+                detail=f"トランザクション処理に失敗しました: {error_detail}",
                 status_code=500,
             )
         
