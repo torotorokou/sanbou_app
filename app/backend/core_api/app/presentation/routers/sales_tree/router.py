@@ -101,7 +101,7 @@ def get_summary(
         )
 
 
-@router.post("/daily-series", response_model=list[DailyPoint], summary="Get daily series data")
+@router.post("/daily-series", response_model=list[DailyPoint], response_model_by_alias=True, summary="Get daily series data")
 def get_daily_series(
     req: DailySeriesRequest,
     uc: FetchSalesTreeDailySeriesUseCase = Depends(get_fetch_sales_tree_daily_series_uc),
@@ -143,7 +143,7 @@ def get_daily_series(
         )
 
 
-@router.post("/pivot", response_model=CursorPage, summary="Get pivot data for drill-down")
+@router.post("/pivot", response_model=CursorPage, response_model_by_alias=True, summary="Get pivot data for drill-down")
 def get_pivot(
     req: PivotRequest,
     uc: FetchSalesTreePivotUseCase = Depends(get_fetch_sales_tree_pivot_uc),

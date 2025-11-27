@@ -98,15 +98,17 @@ class MetricEntry(BaseModel):
     """
     メトリクスエントリ（集計結果1行）
     """
+    model_config = ConfigDict(populate_by_name=True)
+    
     id: str = Field(..., description="ID（顧客ID, 品目ID, 日付文字列など）")
     name: str = Field(..., description="名称（顧客名, 品目名, 日付文字列など）")
     amount: float = Field(..., description="売上金額（円）")
     qty: float = Field(..., description="数量（kg）")
-    line_count: int = Field(..., description="明細行数（件数） - COUNT(*)")
-    slip_count: int = Field(..., description="伝票数（台数） - COUNT(DISTINCT slip_no)")
+    line_count: int = Field(..., description="明細行数（件数） - COUNT(*)", serialization_alias="lineCount")
+    slip_count: int = Field(..., description="伝票数（台数） - COUNT(DISTINCT slip_no)", serialization_alias="slipCount")
     count: int = Field(..., description="表示用カウント値（商品軸=line_count、それ以外=slip_count）")
-    unit_price: Optional[float] = Field(None, description="単価（円/kg）")
-    date_key: Optional[str] = Field(None, description="日付キー（mode=dateの場合のみ）")
+    unit_price: Optional[float] = Field(None, description="単価（円/kg）", serialization_alias="unitPrice")
+    date_key: Optional[str] = Field(None, description="日付キー（mode=dateの場合のみ）", serialization_alias="dateKey")
 
 
 class SummaryRow(BaseModel):
@@ -124,21 +126,25 @@ class DailyPoint(BaseModel):
     """
     日次推移データポイント
     """
+    model_config = ConfigDict(populate_by_name=True)
+    
     date: date_type = Field(..., description="日付")
     amount: float = Field(..., description="売上金額（円）")
     qty: float = Field(..., description="数量（kg）")
-    line_count: int = Field(..., description="明細行数（件数） - COUNT(*)")
-    slip_count: int = Field(..., description="伝票数（台数） - COUNT(DISTINCT slip_no)")
+    line_count: int = Field(..., description="明細行数（件数） - COUNT(*)", serialization_alias="lineCount")
+    slip_count: int = Field(..., description="伝票数（台数） - COUNT(DISTINCT slip_no)", serialization_alias="slipCount")
     count: int = Field(..., description="表示用カウント値（現状は slip_count を使用）")
-    unit_price: Optional[float] = Field(None, description="単価（円/kg）")
+    unit_price: Optional[float] = Field(None, description="単価（円/kg）", serialization_alias="unitPrice")
 
 
 class CursorPage(BaseModel):
     """
     カーソルベースページネーション結果
     """
+    model_config = ConfigDict(populate_by_name=True)
+    
     rows: list[MetricEntry] = Field(..., description="データ行")
-    next_cursor: Optional[str] = Field(None, description="次ページのカーソル（なければNull）")
+    next_cursor: Optional[str] = Field(None, description="次ページのカーソル（なければNull）", serialization_alias="nextCursor")
 
 
 class ExportRequest(BaseModel):

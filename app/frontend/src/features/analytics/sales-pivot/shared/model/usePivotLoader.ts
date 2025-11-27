@@ -64,7 +64,7 @@ export function usePivotLoader(params: PivotLoaderParams) {
           ...prev,
           [targetAxis]: reset ? page.rows : prev[targetAxis].concat(page.rows),
         }));
-        setPivotCursor((prev) => ({ ...prev, [targetAxis]: page.next_cursor }));
+        setPivotCursor((prev) => ({ ...prev, [targetAxis]: page.nextCursor }));
       } finally {
         setPivotLoading(false);
       }
