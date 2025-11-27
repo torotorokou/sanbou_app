@@ -415,10 +415,3 @@ async def proxy_job_status(job_id: str):
     except httpx.HTTPError as e:
         raise HTTPException(status_code=502, detail={"code": "LEDGER_UNREACHABLE", "message": str(e)})
 
-
-# TODO: 以下のエンドポイントは未実装（ledger_api側に実装が必要）
-# @router.post("/excel")
-# async def proxy_report_excel(request: Request):
-#     """レポートExcel出力（ledger_apiへフォワード）"""
-#     # FormData を受け取って ledger_api の /reports/excel へフォワード
-#     pass
