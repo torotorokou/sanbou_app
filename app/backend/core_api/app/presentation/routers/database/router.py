@@ -358,35 +358,38 @@ def delete_upload_scope(
 
 
 # ========================================================================
-# Cache Management
+# Cache Management (DEPRECATED)
 # ========================================================================
 
-@router.post("/cache/clear", summary="Clear target card cache")
-def clear_target_card_cache(db: Session = Depends(get_db)):
+@router.post("/cache/clear", summary="Clear target card cache (DEPRECATED)")
+def clear_target_card_cache():
     """
     Clear the target card TTL cache.
     
-    Useful after CSV uploads or data refreshes to ensure users see the latest data.
-    This endpoint clears the in-memory cache that optimizes repeated target card requests.
-    
     DEPRECATED: このエンドポイントは target_card_service のキャッシュクリア用でしたが、
-    UseCase移行により不要になりました。互換性のため残していますが、将来削除予定です。
+    UseCase移行によりキャッシュ機能が不要になりました。
+    互換性のため残していますが、将来削除予定です。
+    
+    Note:
+        - 現在のUseCaseパターンではキャッシュを使用していません
+        - このエンドポイントは何も実行せずに成功を返します
+        - 新しいリクエストは常にDBから最新データを取得します
     """
     try:
         from app.application.usecases.dashboard.build_target_card_uc import BuildTargetCardUseCase
         
         BuildTargetCardUseCase.clear_cache()
         
-        logger.info("Target card cache cleared successfully")
+        logger.info("Cache clear requested (no-op - UseCase doesn't use cache)")
         return {
             "status": "success",
-            "message": "Target card cache has been cleared (DEPRECATED endpoint)",
-            "hint": "New requests will fetch fresh data from database",
-            "deprecation_notice": "This endpoint will be removed in future versions as UseCase pattern doesn't use TTL cache"
+            "message": "Cache clear request processed (DEPRECATED endpoint)",
+            "note": "UseCase pattern doesn't use TTL cache - always fetches fresh data",
+            "deprecation_notice": "This endpoint will be removed in future versions"
         }
     except Exception as e:
-        logger.error(f"Error clearing target card cache: {str(e)}", exc_info=True)
+        logger.error(f"Error in cache clear endpoint: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to clear cache: {str(e)}"
+            detail=f"Failed to process cache clear: {str(e)}"
         )
