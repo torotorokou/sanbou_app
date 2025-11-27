@@ -1,0 +1,24 @@
+/* ===================================================
+ * Main Entry Point - Import Order Matters!
+ * ===================================================
+ * 1. Custom Media Queries (must be first)
+ * 2. Design Tokens (CSS variables)
+ * 3. Global Base Styles
+ * 4. Ant Design Overrides
+ * 5. Utility Classes
+ */
+
+@import "@/shared/styles/custom-media.css";
+@import "@/shared/styles/tokens.css";
+@import "@/styles/globals.css";
+@import "@/styles/antd-overrides.css";
+@import "@/styles/utilities.css";
+
+/* ===================================================
+ * Theme-specific Variables (App Colors)
+ * ===================================================
+ */
+body {
+    background-color: var(--color-bg-base);
+    color: var(--color-text);
+}

@@ -1,0 +1,3 @@
+"""
+Sales Tree usecases package
+"""

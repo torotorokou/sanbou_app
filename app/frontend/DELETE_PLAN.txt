@@ -1,0 +1,23 @@
+=== 旧ディレクトリ削除プラン ===
+
+削除対象（features/database配下）:
+- api/          # 旧APIクライアント（新: dataset-import/api/）
+- application/  # 旧アプリケーション層（新: dataset-import/hooks/）
+- domain/       # 旧ドメイン層（新: dataset-validate/, shared/types/）
+- hooks/        # 旧フック（新: dataset-import/hooks/useDatasetImportVM）
+- model/        # 旧モデル（新: dataset-import/model/, shared/）
+- ports/        # 旧ポート（新: dataset-import/repository/）
+- repository/   # 旧リポジトリ（新: dataset-import/repository/）
+- ui/           # 旧UI（新: dataset-import/ui/, dataset-preview/ui/）
+- infrastructure/ # 空ディレクトリ
+
+条件:
+✅ 外部からの旧パス参照なし（@features/database/(api|application|...)は存在しない）
+✅ 新構造（dataset-*, shared/）は型チェック合格
+✅ DatasetImportPage は新構造で動作確認済み
+✅ index.ts から旧実装を re-export しているため互換性維持
+
+注意:
+⚠️ UploadPage.tsx は旧UIコンポーネントを使用しているが、
+   index.ts 経由でアクセスしているため削除後も動作する
+⚠️ report機能も index.ts 経由でアクセスしているため問題なし

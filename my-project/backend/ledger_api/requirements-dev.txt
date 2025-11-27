@@ -1,4 +1,0 @@
-requests
-streamlit
-pytest
-httpx

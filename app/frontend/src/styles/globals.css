@@ -1,0 +1,105 @@
+/* ===================================================
+ * Global Base Styles
+ * ===================================================
+ * Foundation: html, body, root, media elements, utilities
+ */
+
+/* === Box Model Reset === */
+html {
+  box-sizing: border-box;
+  height: 100%;
+  overflow-x: clip;
+  width: 100%;
+  scrollbar-gutter: stable;
+}
+
+*, *::before, *::after {
+  box-sizing: inherit;
+}
+
+/* === Body Base === */
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-size: var(--fs-body);
+  line-height: var(--lh-base);
+  overflow-x: clip;
+  width: 100%;
+  min-height: 100dvh;
+  scrollbar-gutter: stable;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* === Root Container === */
+#root {
+  height: 100%;
+  min-width: 0;
+}
+
+/* === Layout Base === */
+.ant-layout {
+  min-height: 100vh;
+}
+
+@supports (min-height: 100dvh) {
+  .ant-layout {
+    min-height: 100dvh;
+  }
+}
+
+/* === Media Elements === */
+img, video, canvas, svg {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* === Text Overflow Prevention === */
+pre, code {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+/* === Container Utility === */
+.container {
+  width: min(var(--container-max), 92%);
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: var(--space-md);
+  padding-right: var(--space-md);
+}
+
+/* === Responsive Overflow Utility === */
+.responsive-x,
+.table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* === Text Utilities === */
+.ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.break-words {
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+/* === Print Styles === */
+@media print {
+  .ant-layout-sider,
+  .ant-drawer {
+    display: none !important;
+  }
+
+  .ant-layout-content {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+}

@@ -1,0 +1,28 @@
+## Node build context optimization
+node_modules/
+dist/
+build/
+*.log
+npm-debug.log*
+yarn-error.log*
+.pnpm-store/
+.turbo/
+
+# Env / secrets
+.env*
+
+# VCS / IDE
+.git
+.gitignore
+.vscode
+.idea
+
+# Tests / coverage
+coverage/
+__tests__/
+*.spec.*
+*.test.*
+
+# Misc
+Dockerfile*
+*.md

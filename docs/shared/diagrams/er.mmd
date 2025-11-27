@@ -1,0 +1,15 @@
+erDiagram
+    USER ||--o{ ORDER : places
+    ORDER ||--|{ LINE_ITEM : contains
+    PRODUCT }|..|{ LINE_ITEM : "ordered in"
+
+%% 追加のエンティティ例（必要に応じて編集してください）
+CUSTOMER {
+  string id
+  string name
+}
+ADDRESS {
+  string id
+  string street
+}
+CUSTOMER ||--o{ ADDRESS : has

@@ -1,0 +1,502 @@
+================================================================================
+customer-list フィーチャー データベース設計書
+================================================================================
+
+作成日: 2025-11-21
+対象フィーチャー: analytics/customer-list (顧客離脱分析)
+
+================================================================================
+【概要】
+================================================================================
+
+customer-listフィーチャーは、指定期間の顧客取引データを比較し、
+離脱顧客（前期には存在したが今期には存在しない顧客）を特定する機能です。
+
+フロントエンドで必要なデータ:
+- 顧客ID (key)
+- 顧客名 (name)
+- 合計重量 (weight) - kg
+- 合計金額 (amount) - 円
+- 担当営業者 (sales)
+- 最終搬入日 (lastDeliveryDate) - YYYY-MM-DD形式
+
+
+================================================================================
+【テーブル設計】
+================================================================================
+
+--------------------------------------------------------------------------------
+1. 顧客マスタテーブル (customers)
+--------------------------------------------------------------------------------
+目的: 顧客の基本情報を管理
+
+CREATE TABLE customers (
+    customer_id VARCHAR(50) PRIMARY KEY,
+    customer_name VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP NULL,
+    
+    CONSTRAINT chk_customer_id CHECK (customer_id ~ '^C[0-9]+$')
+);
+
+CREATE INDEX idx_customers_name ON customers(customer_name);
+CREATE INDEX idx_customers_deleted ON customers(deleted_at) WHERE deleted_at IS NULL;
+
+カラム説明:
+- customer_id: 顧客ID（例: C001, C002）
+- customer_name: 顧客名（例: 株式会社サンプル商事）
+- deleted_at: ソフトデリート対応（NULL=有効、値あり=削除済み）
+
+
+--------------------------------------------------------------------------------
+2. 営業担当者マスタテーブル (sales_representatives)
+--------------------------------------------------------------------------------
+目的: 営業担当者の基本情報を管理
+
+CREATE TABLE sales_representatives (
+    rep_id VARCHAR(50) PRIMARY KEY,
+    rep_name VARCHAR(100) NOT NULL,
+    email VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP NULL
+);
+
+CREATE INDEX idx_sales_reps_name ON sales_representatives(rep_name);
+CREATE INDEX idx_sales_reps_deleted ON sales_representatives(deleted_at) WHERE deleted_at IS NULL;
+
+カラム説明:
+- rep_id: 営業担当者ID
+- rep_name: 営業担当者名（例: 山田太郎、佐藤花子）
+- email: メールアドレス（オプション）
+
+
+--------------------------------------------------------------------------------
+3. 配送実績テーブル (delivery_records)
+--------------------------------------------------------------------------------
+目的: 日次の配送・搬入実績を記録
+
+CREATE TABLE delivery_records (
+    delivery_id BIGSERIAL PRIMARY KEY,
+    customer_id VARCHAR(50) NOT NULL,
+    rep_id VARCHAR(50) NOT NULL,
+    delivery_date DATE NOT NULL,
+    weight DECIMAL(12, 2) NOT NULL,
+    amount DECIMAL(15, 2) NOT NULL,
+    item_id VARCHAR(50),
+    item_name VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP NULL,
+    
+    FOREIGN KEY (customer_id) REFERENCES customers(customer_id),
+    FOREIGN KEY (rep_id) REFERENCES sales_representatives(rep_id),
+    
+    CONSTRAINT chk_weight CHECK (weight >= 0),
+    CONSTRAINT chk_amount CHECK (amount >= 0)
+);
+
+CREATE INDEX idx_delivery_date ON delivery_records(delivery_date);
+CREATE INDEX idx_delivery_customer_date ON delivery_records(customer_id, delivery_date);
+CREATE INDEX idx_delivery_rep_date ON delivery_records(rep_id, delivery_date);
+CREATE INDEX idx_delivery_deleted ON delivery_records(deleted_at) WHERE deleted_at IS NULL;
+
+カラム説明:
+- delivery_id: 配送実績ID（自動採番）
+- customer_id: 顧客ID
+- rep_id: 担当営業者ID
+- delivery_date: 搬入日
+- weight: 重量（kg単位）
+- amount: 金額（円単位）
+- item_id/item_name: 品目情報（オプション、将来の拡張用）
+
+
+================================================================================
+【マテリアライズドビュー】
+================================================================================
+
+--------------------------------------------------------------------------------
+4. 月次顧客集計ビュー (mv_monthly_customer_summary)
+--------------------------------------------------------------------------------
+目的: 月次での顧客別集計を事前計算し、クエリ高速化
+
+CREATE MATERIALIZED VIEW mv_monthly_customer_summary AS
+SELECT 
+    dr.customer_id,
+    DATE_TRUNC('month', dr.delivery_date)::DATE AS month,
+    c.customer_name,
+    s.rep_id,
+    s.rep_name AS sales_rep_name,
+    SUM(dr.weight) AS total_weight,
+    SUM(dr.amount) AS total_amount,
+    MAX(dr.delivery_date) AS last_delivery_date,
+    COUNT(DISTINCT dr.delivery_date) AS delivery_count
+FROM delivery_records dr
+INNER JOIN customers c ON dr.customer_id = c.customer_id
+INNER JOIN sales_representatives s ON dr.rep_id = s.rep_id
+WHERE dr.deleted_at IS NULL
+  AND c.deleted_at IS NULL
+  AND s.deleted_at IS NULL
+GROUP BY 
+    dr.customer_id,
+    DATE_TRUNC('month', dr.delivery_date),
+    c.customer_name,
+    s.rep_id,
+    s.rep_name;
+
+-- インデックス作成
+CREATE UNIQUE INDEX idx_mv_monthly_pk 
+    ON mv_monthly_customer_summary(customer_id, month);
+CREATE INDEX idx_mv_monthly_month 
+    ON mv_monthly_customer_summary(month);
+CREATE INDEX idx_mv_monthly_rep 
+    ON mv_monthly_customer_summary(rep_id, month);
+
+カラム説明:
+- month: 対象月（月初日）
+- total_weight: 月合計重量
+- total_amount: 月合計金額
+- last_delivery_date: 最終搬入日
+- delivery_count: 月内の搬入回数
+
+
+リフレッシュ戦略:
+----------------------------------------
+-- 方法1: 日次バッチで一括リフレッシュ（推奨）
+REFRESH MATERIALIZED VIEW CONCURRENTLY mv_monthly_customer_summary;
+
+-- 方法2: データ投入後に自動リフレッシュ（高負荷に注意）
+CREATE OR REPLACE FUNCTION refresh_monthly_summary()
+RETURNS TRIGGER AS $$
+BEGIN
+    REFRESH MATERIALIZED VIEW CONCURRENTLY mv_monthly_customer_summary;
+    RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_refresh_after_delivery
+AFTER INSERT OR UPDATE OR DELETE ON delivery_records
+FOR EACH STATEMENT
+EXECUTE FUNCTION refresh_monthly_summary();
+
+
+================================================================================
+【SQLクエリ例】
+================================================================================
+
+--------------------------------------------------------------------------------
+期間指定での顧客集計取得
+--------------------------------------------------------------------------------
+-- 今期（2024-06 ~ 2024-08）の顧客データ取得
+SELECT 
+    customer_id AS key,
+    customer_name AS name,
+    SUM(total_weight) AS weight,
+    SUM(total_amount) AS amount,
+    MAX(sales_rep_name) AS sales,
+    MAX(last_delivery_date) AS "lastDeliveryDate"
+FROM mv_monthly_customer_summary
+WHERE month >= '2024-06-01'::DATE 
+  AND month < '2024-09-01'::DATE
+GROUP BY customer_id, customer_name
+ORDER BY customer_name;
+
+
+-- 前期（2024-03 ~ 2024-05）の顧客データ取得
+SELECT 
+    customer_id AS key,
+    customer_name AS name,
+    SUM(total_weight) AS weight,
+    SUM(total_amount) AS amount,
+    MAX(sales_rep_name) AS sales,
+    MAX(last_delivery_date) AS "lastDeliveryDate"
+FROM mv_monthly_customer_summary
+WHERE month >= '2024-03-01'::DATE 
+  AND month < '2024-06-01'::DATE
+GROUP BY customer_id, customer_name
+ORDER BY customer_name;
+
+
+--------------------------------------------------------------------------------
+パフォーマンス確認クエリ
+--------------------------------------------------------------------------------
+-- 月別データ件数確認
+SELECT 
+    month,
+    COUNT(*) AS customer_count,
+    SUM(total_weight) AS total_weight,
+    SUM(total_amount) AS total_amount
+FROM mv_monthly_customer_summary
+GROUP BY month
+ORDER BY month DESC;
+
+
+-- 特定顧客の取引履歴
+SELECT 
+    month,
+    total_weight,
+    total_amount,
+    last_delivery_date,
+    delivery_count
+FROM mv_monthly_customer_summary
+WHERE customer_id = 'C001'
+ORDER BY month DESC;
+
+
+================================================================================
+【バックエンドAPI設計】
+================================================================================
+
+エンドポイント: /api/customer-churn/aggregate
+メソッド: GET
+パラメータ:
+  - month_from: 開始月 (YYYY-MM-DD形式)
+  - month_to: 終了月の翌月初日 (YYYY-MM-DD形式)
+
+レスポンス例:
+{
+  "data": [
+    {
+      "key": "C001",
+      "name": "株式会社サンプル商事",
+      "weight": 4000.50,
+      "amount": 1500000,
+      "sales": "山田太郎",
+      "lastDeliveryDate": "2024-08-30"
+    },
+    {
+      "key": "C004",
+      "name": "京都工業",
+      "weight": 5100.00,
+      "amount": 2040000,
+      "sales": "田中美咲",
+      "lastDeliveryDate": "2024-08-31"
+    }
+  ]
+}
+
+
+Pythonコード例（FastAPI）:
+----------------------------------------
+from fastapi import APIRouter, Depends, Query
+from datetime import date
+from typing import List
+from pydantic import BaseModel
+from sqlalchemy.ext.asyncio import AsyncSession
+
+router = APIRouter(prefix="/api/customer-churn", tags=["customer-churn"])
+
+class CustomerData(BaseModel):
+    key: str
+    name: str
+    weight: float
+    amount: float
+    sales: str
+    lastDeliveryDate: str | None = None
+
+@router.get("/aggregate", response_model=List[CustomerData])
+async def get_customer_aggregate(
+    month_from: date = Query(..., description="開始月"),
+    month_to: date = Query(..., description="終了月の翌月初日"),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    指定期間の顧客集計データを取得
+    
+    Args:
+        month_from: 集計開始月（例: 2024-06-01）
+        month_to: 集計終了月の翌月初日（例: 2024-09-01）
+    
+    Returns:
+        顧客データのリスト
+    """
+    query = text("""
+        SELECT 
+            customer_id AS key,
+            customer_name AS name,
+            SUM(total_weight) AS weight,
+            SUM(total_amount) AS amount,
+            MAX(sales_rep_name) AS sales,
+            MAX(last_delivery_date) AS "lastDeliveryDate"
+        FROM mv_monthly_customer_summary
+        WHERE month >= :month_from 
+          AND month < :month_to
+        GROUP BY customer_id, customer_name
+        ORDER BY customer_name
+    """)
+    
+    result = await db.execute(
+        query, 
+        {"month_from": month_from, "month_to": month_to}
+    )
+    
+    return [
+        CustomerData(
+            key=row.key,
+            name=row.name,
+            weight=float(row.weight),
+            amount=float(row.amount),
+            sales=row.sales,
+            lastDeliveryDate=row.lastDeliveryDate.isoformat() if row.lastDeliveryDate else None
+        )
+        for row in result
+    ]
+
+
+================================================================================
+【データ型マッピング】
+================================================================================
+
+フロントエンド (TypeScript) | バックエンド (Python)  | データベース (PostgreSQL)
+----------------------------|------------------------|---------------------------
+key: string                 | customer_id: str       | customer_id VARCHAR(50)
+name: string                | customer_name: str     | customer_name VARCHAR(255)
+weight: number              | weight: Decimal/float  | weight DECIMAL(12, 2)
+amount: number              | amount: Decimal/float  | amount DECIMAL(15, 2)
+sales: string               | sales_rep_name: str    | rep_name VARCHAR(100)
+lastDeliveryDate?: string   | last_delivery_date     | last_delivery_date DATE
+                            | : Optional[date]       |
+
+
+================================================================================
+【初期データ投入例】
+================================================================================
+
+-- 顧客マスタ
+INSERT INTO customers (customer_id, customer_name) VALUES
+('C001', '株式会社サンプル商事'),
+('C002', '東京物産株式会社'),
+('C003', '大阪商店'),
+('C004', '京都工業'),
+('C005', '福岡物流');
+
+-- 営業担当者マスタ
+INSERT INTO sales_representatives (rep_id, rep_name) VALUES
+('REP001', '山田太郎'),
+('REP002', '佐藤花子'),
+('REP003', '鈴木一郎'),
+('REP004', '田中美咲'),
+('REP005', '高橋健太');
+
+-- 配送実績（サンプル）
+INSERT INTO delivery_records 
+(customer_id, rep_id, delivery_date, weight, amount) VALUES
+('C001', 'REP001', '2024-01-15', 1200.00, 450000),
+('C001', 'REP001', '2024-02-20', 1300.00, 480000),
+('C002', 'REP002', '2024-01-10', 800.00, 320000),
+('C004', 'REP004', '2024-01-25', 1500.00, 600000),
+('C004', 'REP004', '2024-02-28', 1600.00, 640000);
+
+-- ビューの初期リフレッシュ
+REFRESH MATERIALIZED VIEW mv_monthly_customer_summary;
+
+
+================================================================================
+【運用・保守】
+================================================================================
+
+日次バッチ処理:
+----------------------------------------
+1. 配送実績データの取り込み（夜間バッチ）
+2. マテリアライズドビューのリフレッシュ
+3. 統計情報の更新
+
+-- 実行例
+BEGIN;
+  -- データ取り込み処理
+  CALL import_daily_deliveries();
+  
+  -- ビューリフレッシュ
+  REFRESH MATERIALIZED VIEW CONCURRENTLY mv_monthly_customer_summary;
+  
+  -- 統計更新
+  ANALYZE delivery_records;
+  ANALYZE mv_monthly_customer_summary;
+COMMIT;
+
+
+パーティショニング戦略（将来的な拡張）:
+----------------------------------------
+配送実績テーブルが大規模化した場合、月次パーティショニングを検討:
+
+CREATE TABLE delivery_records (
+    -- 同じカラム定義
+) PARTITION BY RANGE (delivery_date);
+
+CREATE TABLE delivery_records_2024_01 
+    PARTITION OF delivery_records
+    FOR VALUES FROM ('2024-01-01') TO ('2024-02-01');
+
+CREATE TABLE delivery_records_2024_02 
+    PARTITION OF delivery_records
+    FOR VALUES FROM ('2024-02-01') TO ('2024-03-01');
+-- 以降、月ごとにパーティション作成
+
+
+================================================================================
+【パフォーマンス最適化】
+================================================================================
+
+想定データ規模:
+- 顧客数: 1,000〜10,000件
+- 月間配送件数: 10,000〜100,000件
+- 保持期間: 2〜3年分
+
+推奨設定:
+----------------------------------------
+-- shared_buffers: DBサーバーメモリの25%
+-- effective_cache_size: DBサーバーメモリの50-75%
+-- work_mem: 16MB〜64MB
+-- maintenance_work_mem: 256MB〜1GB
+
+インデックス戦略:
+----------------------------------------
+1. 主キー: 自動作成（PRIMARY KEY）
+2. 外部キー: 自動作成（FOREIGN KEY）
+3. 検索頻度の高いカラム: 個別インデックス
+4. 複合検索: 複合インデックス
+5. 部分インデックス: WHERE deleted_at IS NULL
+
+
+================================================================================
+【セキュリティ考慮事項】
+================================================================================
+
+1. アクセス制御
+   - 顧客データは営業担当者のみアクセス可能
+   - Row Level Security (RLS) の適用検討
+
+2. データマスキング
+   - 開発環境では個人情報をマスキング
+   - テストデータには実在しない顧客名を使用
+
+3. 監査ログ
+   - 重要データの変更履歴を記録
+   - audit_log テーブルの追加検討
+
+
+================================================================================
+【今後の拡張性】
+================================================================================
+
+1. 品目別分析
+   - 現在: 顧客単位の集計のみ
+   - 将来: 品目別の取引分析を追加
+
+2. 地域別分析
+   - 顧客の所在地情報を追加
+   - 地域ごとの離脱率分析
+
+3. 予測機能
+   - 機械学習モデルによる離脱予測
+   - 早期警告システムの構築
+
+4. リアルタイム更新
+   - 現在: マテリアライズドビュー（準リアルタイム）
+   - 将来: ストリーミング処理による即時反映
+
+
+================================================================================
+以上
+================================================================================

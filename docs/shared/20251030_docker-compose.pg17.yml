@@ -1,0 +1,19 @@
+# =============================================================
+# docker-compose.pg17.yml
+# PostgreSQL 17 Upgrade Override
+# WARNING: DO NOT RUN 'docker compose down -v'
+#          This will DELETE your old volume!
+# =============================================================
+
+services:
+  db:
+    image: postgres:17-alpine
+    volumes:
+      - ../data/postgres_v17:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypassword
+      POSTGRES_DB: sanbou_dev
+
+# Note: For local_dev, we use host bind mount (data/postgres_v17)
+# Old data is preserved in data/postgres

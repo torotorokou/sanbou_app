@@ -1,0 +1,132 @@
+/* 将軍マニュアル一覧ページ専用スタイル */
+
+/* ShogunList styles - Lean-3 responsive */
+@import "@/shared/styles/custom-media.css";
+
+:root {
+  --header-height: 56px;
+}
+
+.layoutRoot {
+  height: 100vh;
+  overflow: hidden;
+  background: transparent;
+}
+
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  height: var(--header-height);
+  line-height: var(--header-height);
+  padding-inline: 24px;
+  background: var(--ant-color-bg-container, #fff);
+  border-bottom: 1px solid var(--ant-color-border-secondary, #f0f0f0);
+}
+
+.headerInner {
+  height: 100%;
+  position: relative;
+}
+
+.titleWrap {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.title {
+  margin: 0;
+  text-align: center;
+  pointer-events: auto;
+}
+
+.sider {
+  background: var(--ant-color-bg-container, #fff);
+  border-right: 1px solid var(--ant-color-border-secondary, #f0f0f0);
+  padding: 16px;
+  position: sticky;
+  top: var(--header-height);
+  height: calc(100% - var(--header-height));
+  overflow: auto;
+}
+
+.content {
+  padding: 24px;
+}
+
+.contentScroll {
+  height: calc(100% - var(--header-height) - 48px);
+  overflow: auto;
+  padding-right: 8px;
+}
+
+.sectionBlock {
+  scroll-margin-top: 80px;
+  margin-bottom: 32px;
+}
+
+.sectionHeader {
+  margin-bottom: 12px;
+}
+
+.itemCard {
+  height: 100%;
+}
+
+.flowPane,
+.videoPane {
+  height: calc(100% - 28px);
+}
+
+/* Subtle polish for Anchor */
+:global(.ant-anchor) {
+  font-size: 13px;
+}
+:global(.ant-anchor-link-title) {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Improve image/video containment inside modal panes */
+.paneFrame,
+.paneImg,
+.paneVideo {
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+.paneImg {
+  object-fit: contain;
+}
+
+.headerSearchInput {
+  border-radius: 6px;
+  padding: 4px 8px;
+  border: 1px solid var(--ant-color-border, rgba(0,0,0,0.06));
+}
+
+/* xl: 1280px+ */
+@media (--ge-xl) {
+  .headerSearchInput {
+    background: var(--ant-color-bg-container, #f3fff5);
+  }
+}
+
+.searchInput {
+  border-radius: 6px;
+  padding: 6px 10px;
+  border: 1px solid var(--ant-color-border, rgba(0,0,0,0.08));
+  transition: box-shadow 0.16s ease, border-color 0.16s ease;
+  background: #fff;
+}
+
+.searchInput:focus,
+.searchInput:focus-visible {
+  outline: none;
+  border-color: var(--ant-color-primary, #52c41a);
+  box-shadow: 0 0 0 6px rgba(82,196,26,0.09);
+}
