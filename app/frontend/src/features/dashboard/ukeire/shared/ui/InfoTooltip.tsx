@@ -4,7 +4,7 @@ import { InfoCircleOutlined } from "@ant-design/icons";
 
 export type InfoTooltipProps = {
   title?: React.ReactNode;
-  placement?: "top" | "left" | "right" | "bottom" | string;
+  placement?: "top" | "left" | "right" | "bottom" | "topLeft" | "topRight" | "bottomLeft" | "bottomRight" | "leftTop" | "leftBottom" | "rightTop" | "rightBottom";
   className?: string;
 };
 

@@ -7,7 +7,7 @@
 import { useState } from 'react';
 import { message } from 'antd';
 import type { Dayjs } from 'dayjs';
-import type { CustomerData } from './types';
+import type { CustomerData } from './domain/types';
 
 // Sub-features
 import { usePeriodSelector, isValidPeriodRange, getMonthRange } from '../period-selector';

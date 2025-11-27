@@ -1,10 +1,10 @@
 /**
  * Mock Data for Customer List Feature
  * 
- * ダミーデータ（将来的にはSQL/APIから取得）
+ * ダミーデータ(将来的にはSQL/APIから取得)
  */
 
-import type { CustomerData } from './types';
+import type { CustomerData } from './domain/types';
 
 /**
  * 月別の顧客データ（モックデータ）
