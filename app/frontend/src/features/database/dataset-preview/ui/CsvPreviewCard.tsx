@@ -142,7 +142,6 @@ export const CsvPreviewCard: React.FC<Props> = ({
                 pagination={false}
                 size="small"
                 scroll={{ x: 'max-content', y: scrollY }}
-                variant="outlined"
                 rowKey={(_, i) => (i ?? 0).toString()}
               />
             </div>
@@ -174,8 +173,7 @@ export const CsvPreviewCard: React.FC<Props> = ({
                 pagination={false}
                 size="small"
                 scroll={{ x: 'max-content', y: scrollY }}
-                variant="outlined"
-                locale={{ emptyText: 'CSV未アップロード（ヘッダー定義）' }}
+                locale={{ emptyText: 'CSV未アップロード(ヘッダー定義)' }}
               />
             </div>
           );
@@ -200,7 +198,6 @@ export const CsvPreviewCard: React.FC<Props> = ({
                 pagination={false}
                 size="small"
                 scroll={{ x: 'max-content', y: scrollY }}
-                variant="outlined"
                 locale={{ emptyText: 'CSV未アップロード' }}
               />
             </div>
