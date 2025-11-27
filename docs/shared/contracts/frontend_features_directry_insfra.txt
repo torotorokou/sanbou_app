@@ -1,0 +1,7 @@
+| 層                  | 意味       | 中身の例               | 他層との関係                     |
+| ------------------ | -------- | ------------------ | -------------------------- |
+| **domain**         | ビジネスロジック | 型・定数・計算            | 誰にも依存しない                   |
+| **ports**          | 契約書      | RepositoryのI/F     | domain, applicationから参照される |
+| **application**    | 司令塔      | ViewModel, mappers | domain, portsに依存           |
+| **infrastructure** | 手足       | API実装, Mock        | portsに依存                   |
+| **ui**             | 見た目      | React, CSS, Chart  | applicationに依存             |

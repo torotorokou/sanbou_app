@@ -1,4 +1,3 @@
-## syntax=docker/dockerfile:1.6
 # =========================
 # Frontend (React/Vite) Multi-stage
 # builder: node:20-slim で依存取得+ビルド
@@ -14,14 +13,10 @@ COPY package.json package-lock.json* ./
 # curl が slim に含まれないため追加
 RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates \
     && rm -rf /var/lib/apt/lists/*
-RUN --mount=type=cache,target=/root/.npm \
-    npm ci
+RUN npm ci
 
 # ソースコピー（テスト等は .dockerignore で除外）
 COPY . .
-# 外部取得アセット（サイズ小）
-RUN mkdir -p public \
- && curl -sSL -o public/pdf.worker.min.js https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.worker.min.js
 
 # Vite ビルド（環境変数は compose 側で注入想定）
 RUN npm run build
@@ -55,6 +50,23 @@ COPY package.json package-lock.json* ./
 RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 RUN npm ci || true
+# エントリポイント: ボリュームで node_modules が空になる場合に備え起動時に依存を整える
+RUN printf '%s\n' \
+    '#!/usr/bin/env bash' \
+    'set -euo pipefail' \
+    'cd /app' \
+    'if [ "${NODE_ENV:-}" = "production" ] || [ "${npm_config_production:-}" = "true" ]; then' \
+    '  echo "[dev-entrypoint] forcing npm_config_production=false for dev"' \
+    '  export npm_config_production=false' \
+    'fi' \
+    'if [ ! -x node_modules/.bin/vite ]; then' \
+    '  echo "[dev-entrypoint] installing deps (npm ci)..."' \
+    '  if [ -f package-lock.json ]; then npm ci; else npm install; fi' \
+    'fi' \
+    'exec "$@"' \
+    > /usr/local/bin/dev-entrypoint.sh \
+    && chmod +x /usr/local/bin/dev-entrypoint.sh
+ENTRYPOINT ["/usr/local/bin/dev-entrypoint.sh"]
 EXPOSE 5173
 # Simplify dev CMD: rely on package.json passing host/port to vite to avoid shell argument parsing issues
-CMD ["bash", "-c", "set -e; if [ ! -x ./node_modules/.bin/vite ]; then echo '[dev] vite missing -> npm ci'; npm ci; fi; npm run dev -- --host 0.0.0.0 --port 5173"]
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "5173"]

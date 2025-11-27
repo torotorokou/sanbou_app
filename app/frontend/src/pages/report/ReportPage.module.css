@@ -1,0 +1,17 @@
+/* Report Page Styles - 共通レイアウト */
+
+.pageContainer {
+    height: calc(100dvh - (var(--page-padding, 0px) * 2));
+    padding: var(--page-padding, 16px);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-sizing: border-box;
+    scrollbar-gutter: stable both-edges;
+}
+
+.contentArea {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+}

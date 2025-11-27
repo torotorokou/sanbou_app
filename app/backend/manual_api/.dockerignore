@@ -1,0 +1,49 @@
+## =============================================================
+## .dockerignore for manual_api (サービス直下コンテキスト)
+## =============================================================
+## このファイルは build.context: ../app/backend/manual_api に対して適用されます
+
+## 共通除外パターン
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.venv/
+.env*
+*.log
+.DS_Store
+node_modules/
+.vscode/
+.idea/
+
+## 実行時生成ファイル・データ（ビルドに含めない）
+report_artifacts/
+logs/
+local_data/
+*.sqlite
+*.db
+
+## テスト・開発専用ファイル
+tests/
+test/
+coverage/
+.coverage
+
+## 配布・ビルド成果物
+dist/
+build/
+*.egg-info/
+
+## 大容量メディアファイル（manual_api 特有）
+artifacts/
+**/*.mp4
+**/*.mov
+**/*.avi
+**/*.mkv
+**/*.flv
+**/*.wmv
+data/*.mp4
+data/*.mov
+data/**/*.mp4
+data/**/*.mov

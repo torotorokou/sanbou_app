@@ -1,0 +1,26 @@
+/**
+ * InboundForecastDashboardPage - ページ専用スタイル
+ * 
+ * 責務：ページレイアウトのスタイルのみ
+ * UI部品のスタイルはFeatures層に配置
+ */
+
+.pageContainer {
+  min-height: 100dvh;
+  height: 100dvh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.contentWrapper {
+  box-sizing: border-box;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  display: flex;
+  flex-direction: column;
+}

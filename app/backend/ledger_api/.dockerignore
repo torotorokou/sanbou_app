@@ -20,3 +20,20 @@ tests/
 test/
 coverage/
 local_data/
+
+## 実行時生成ファイル（ビルドに含めない）
+app/api/report_artifacts/
+app/api/logs/
+app/st_app/logs/
+app/st_app/report_artifacts/
+app/presentation/static/reports/reports/
+
+## st_app 全体を除外（削除予定のため）
+app/st_app/
+
+## 大容量メディアファイル
+artifacts/
+**/*.mp4
+**/*.mov
+**/*.avi
+app/st_app/

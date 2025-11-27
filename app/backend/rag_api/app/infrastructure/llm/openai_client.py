@@ -9,9 +9,12 @@ from openai import OpenAI
 import os
 from dotenv import load_dotenv
 from app.paths import CONFIG_ENV
+from app.utils.env_loader import load_env_and_secrets
 
 print(f"[DEBUG] .env path: {CONFIG_ENV}")
 load_dotenv(dotenv_path=str(CONFIG_ENV))
+_secrets_loaded = load_env_and_secrets()
+print(f"[DEBUG] secrets loaded from: {_secrets_loaded}")
 _k = os.getenv("OPENAI_API_KEY")
 masked = f"***{_k[-4:]}" if _k and len(_k) > 8 else ("set" if _k else "missing")
 print(f"[DEBUG] OPENAI_API_KEY: {masked}")

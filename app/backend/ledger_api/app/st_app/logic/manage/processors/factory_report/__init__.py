@@ -1,1 +1,0 @@
-"""Factory report processors."""

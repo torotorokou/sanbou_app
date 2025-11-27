@@ -18,8 +18,8 @@ from app.core import file_ingest_service as loader
 from app.infrastructure.pdf import pdf_loader
 from app.schemas.query_schema import QueryRequest
 from app.dependencies import get_dummy_response_service, get_ai_response_service
-from backend_shared.src.api_response.response_base import SuccessApiResponse, ErrorApiResponse
-from backend_shared.src.api_response.response_utils import api_response
+from backend_shared.adapters.presentation.response_base import SuccessApiResponse, ErrorApiResponse
+from backend_shared.adapters.presentation.response_utils import api_response
 
 router = APIRouter()
 
@@ -91,6 +91,29 @@ async def generate_answer(
         )
         result = ai_service.generate_ai_response(request.query, request.category, request.tags)
         print("[DEBUG][/generate-answer] result keys:", list(result.keys()))
+        
+        # エラーコードの存在をチェック
+        if "error_code" in result:
+            error_code = result.get("error_code", "OPENAI_ERROR")
+            error_detail = result.get("error_detail", "AI回答の生成に失敗しました。")
+            print(f"[DEBUG][/generate-answer] error detected: code={error_code}")
+            
+            # エラーコードに応じたヒントメッセージ
+            if error_code == "OPENAI_INSUFFICIENT_QUOTA":
+                hint = "OpenAI APIの利用上限を超過しています。システム管理者にお問い合わせください。"
+            elif error_code == "OPENAI_RATE_LIMIT":
+                hint = "一時的なレート制限です。しばらく時間をおいて再度お試しください。"
+            else:
+                hint = "エラーが継続する場合は管理者にお問い合わせください。"
+            
+            return ErrorApiResponse(
+                code=error_code,
+                detail=error_detail,
+                hint=hint,
+                status_code=200,  # 既存互換性のため200を維持
+            ).to_json_response()
+        
+        # 正常系の処理
         print("[DEBUG][/generate-answer] pdf_url:", result.get("pdf_url"))
         print("[DEBUG][/generate-answer] sources count:", len(result.get("sources", [])))
 
@@ -118,7 +141,7 @@ async def generate_answer(
             detail="回答生成に失敗しました。",
             hint="質問内容やタグを見直して再度お試しください。改善しない場合は管理者に連絡してください。",
             result=None,
-            status_code=500,
+            status_code=200,
         ).to_json_response()
     except ValueError as e:
         # 予期したValueErrorはanswerが空のケースとして扱い、ErrorApiResponse
@@ -251,40 +274,60 @@ def pdf_page(page_num: str):
         return StreamingResponse(image_bytes, media_type="image/png")
 
 
-@router.get("/question-options", tags=["template"])
+@router.get("/question-options", tags=["question"])
 def get_question_options():
     """
     質問テンプレートをカテゴリ・タグごとにグループ化して返すエンドポイント。
 
     Returns:
-        dict: カテゴリ・タグごとにグループ化されたテンプレート
+        dict: YAMLファイルと同じ、カテゴリ名 => [ { title, tag }, ... ] 構造
     """
     data = loader.load_question_templates()
+    # すでに YAML と同等の {カテゴリ: [ {title, tag}, ... ]} 構造で
+    # 読み込めている場合（load_question_templates は dict を [dict] で返す）
+    if isinstance(data, list) and data and isinstance(data[0], dict):
+        return data[0]
 
-    # YAMLのカテゴリ:質問リスト形式をフラット化
-    def flatten_templates(data):
-        flat = []
-        for category, questions in data[0].items():
-            for q in questions:
-                q = dict(q)  # copy
-                q["category"] = category
-                # tag→tagsにリネーム（OCP/既存関数互換）
-                if "tag" in q:
-                    q["tags"] = q.pop("tag")
-                flat.append(q)
-        return flat
+    # フラット（{category, title, tags|tag}）な形式から YAML と同じ構造を再構築
+    nested = {}
+    if isinstance(data, list):
+        for item in data:
+            if not isinstance(item, dict):
+                continue
+            category = item.get("category")
+            title = item.get("title")
+            tags = item.get("tag")
+            if tags is None:
+                tags = item.get("tags", [])
 
-    # データがカテゴリ:リスト形式ならフラット化
-    if isinstance(data, list) and len(data) > 0 and isinstance(data[0], dict):
-        if all(isinstance(v, list) for v in data[0].values()):
-            data = flatten_templates(data)
+            if not category or not title:
+                continue
 
-    grouped = loader.group_templates_by_category_and_tags(data)
-    # tagsタプルを'|'区切りの文字列に変換
-    grouped_strkey = {}
-    for category, tags_dict in grouped.items():
-        grouped_strkey[category] = {}
-        for tags_tuple, titles in tags_dict.items():
-            tags_str = "|".join(tags_tuple)
-            grouped_strkey[category][tags_str] = titles
-    return grouped_strkey
+            def _append(cat):
+                nested.setdefault(cat, []).append({"title": title, "tag": tags})
+
+            if isinstance(category, list):
+                for cat in category:
+                    _append(cat)
+            else:
+                _append(category)
+
+    return nested
+
+
+# --- 環境デバッグ（キー存在確認・マスク表示） ---
+@router.get("/debug-keys", tags=["debug"])
+def debug_keys() -> JSONResponse:
+    import os
+    k = os.environ.get("OPENAI_API_KEY")
+    masked = f"***{k[-4:]}" if k and len(k) > 8 else ("set" if k else "missing")
+    payload = {
+        "OPENAI_API_KEY": masked,
+        "SECRETS_LOADED_FROM": os.environ.get("SECRETS_LOADED_FROM"),
+        "STAGE": os.environ.get("STAGE"),
+    }
+    return SuccessApiResponse(
+        code="S200",
+        detail="env debug",
+        result=payload,
+    ).to_json_response()

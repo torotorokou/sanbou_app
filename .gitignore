@@ -115,6 +115,7 @@ postgres_data/
 # **/data/
 !**/data/templates/**
 !**/data/master/**
+/app/frontend/src/data/
 
 # local_data/master 内でコード参照される設定 (yaml / json) は許可
 !**/local_data/master/**/*.yaml
@@ -167,6 +168,9 @@ nginx/cache/
 # CSV は生成データ混在の可能性があるため必要ならここで一括除外し、config 配下は allow
 *.csv
 
+
+data
+
 # --- allow Node.js package manifests & lock files (were excluded by *.json / *.yaml) ---
 !package.json
 !**/package.json
@@ -211,12 +215,22 @@ cache_embeddings/
 # 追加で無視したいものがあればこの下に
 # ============================
 
-# 履歴保持不要な一時/退避ディレクトリ
-__archive__/
-
 # 誤って混入しやすい資格情報 (既に secrets/ は除外済だがコピー漏れ対策)
 **/gcp-sa.json
 **/gcs-key*.json
 
 # (EOF)
 app/nginx/certs/*
+
+*.mp4
+
+
+# Exclude specific local config templates (tracked config allowed elsewhere)
+# These files contain local or sensitive content and should not be committed
+category_question_templates_with_tags.yaml
+category_question_templates.yaml
+
+
+!*notifications.openapi.yaml
+
+recovery

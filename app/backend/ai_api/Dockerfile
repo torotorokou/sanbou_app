@@ -1,56 +1,104 @@
-## syntax=docker/dockerfile:1.6
 # =========================
-# ai_api FastAPI multi-stage build
-# builder: wheel ビルド / runtime: slim + 非root
+# ai_api Dockerfile (multi-stage: wheelbuilder/dev/prod)
+# Context: app/backend
 # =========================
 
-FROM python:3.11-slim AS builder
-ARG SERVICE_DIR=ai_api
-ARG BASE_PATH=backend
+# ──────────────────────────────────────────────────────────────
+# Stage: wheelbuilder
+# ──────────────────────────────────────────────────────────────
+FROM python:3.12-slim AS wheelbuilder
 ENV PYTHONDONTWRITEBYTECODE=1 \
-		PYTHONUNBUFFERED=1 \
-		PIP_NO_CACHE_DIR=1
-WORKDIR /wheels
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1
 
-# システム依存ライブラリが必要ならここで (現状なし)
-RUN apt-get update && apt-get install -y --no-install-recommends build-essential \
-		&& rm -rf /var/lib/apt/lists/*
+WORKDIR /build
 
-COPY ${BASE_PATH}/${SERVICE_DIR}/requirements.txt requirements.txt
-# Wheel 化 (キャッシュ利用)
-RUN --mount=type=cache,target=/root/.cache/pip \
-		pip wheel --no-deps -r requirements.txt -w /wheels
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+      build-essential \
+      ca-certificates \
+      curl && \
+    rm -rf /var/lib/apt/lists/*
 
-# 共有モジュール / アプリ本体は runtime へ直接コピーするためここでは不要
+COPY ./backend_shared /build/backend_shared
+RUN pip install --upgrade pip setuptools wheel && \
+    cd /build/backend_shared && \
+    pip wheel --no-deps . -w /wheels
 
-FROM python:3.11-slim AS runtime
-ARG SERVICE_DIR=ai_api
-ARG BASE_PATH=backend
+COPY ./ai_api/requirements.txt /build/requirements.txt
+RUN pip wheel --no-deps -r /build/requirements.txt -w /wheels
+
+# ──────────────────────────────────────────────────────────────
+# Stage: dev (ホットリロード対応)
+# ──────────────────────────────────────────────────────────────
+FROM python:3.12-slim AS dev
 ENV PYTHONDONTWRITEBYTECODE=1 \
-		PYTHONUNBUFFERED=1 \
-		PYTHONPATH=/backend \
-		PATH="/home/appuser/.local/bin:${PATH}"
+    PYTHONUNBUFFERED=1 \
+    PYTHONPATH=/backend:/opt/backend_shared/src
+
 WORKDIR /backend
 
-# 非rootユーザー
-RUN useradd -m appuser
-USER appuser
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+      curl \
+      ca-certificates \
+      build-essential \
+      git && \
+    rm -rf /var/lib/apt/lists/* && \
+    useradd -m -u 1000 -s /bin/bash appuser
 
-# 依存インストール
-COPY --from=builder /wheels /wheels
-COPY ${BASE_PATH}/${SERVICE_DIR}/requirements.txt ./requirements.txt
-USER root
-RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates \
-	&& rm -rf /var/lib/apt/lists/*
-USER appuser
-RUN pip install --no-cache-dir /wheels/*.whl
+COPY ./ai_api/requirements.txt /backend/requirements.txt
+RUN pip install --no-cache-dir -r /backend/requirements.txt watchfiles
 
-# アプリコード / 共有コード
-COPY ${BASE_PATH}/backend_shared/ /backend/backend_shared
-COPY ${BASE_PATH}/${SERVICE_DIR}/app /backend/app
-COPY config /backend/config
+# backend_shared を editable モードでインストール
+RUN mkdir -p /opt/backend_shared
+COPY ./backend_shared /opt/backend_shared
+RUN pip install -e /opt/backend_shared
+
+# USER 切替前に必要ディレクトリを作成・chown
+RUN mkdir -p /backend/app /backend/test && \
+    chown -R appuser:appuser /backend /opt/backend_shared
+
+USER appuser
+COPY --chown=appuser:appuser ./ai_api/app /backend/app
 
 EXPOSE 8000
-HEALTHCHECK --interval=30s --timeout=5s --retries=3 CMD curl -fsS http://localhost:8000/health >/dev/null || exit 1
+HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
+  CMD curl -fsS http://localhost:8000/health || exit 1
+
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", \
+     "--reload", "--reload-dir", "/backend/app", "--reload-dir", "/opt/backend_shared/src"]
+
+# ──────────────────────────────────────────────────────────────
+# Stage: prod (wheel からインストール、イミュータブル)
+# ──────────────────────────────────────────────────────────────
+FROM python:3.12-slim AS prod
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONPATH=/backend
+
+WORKDIR /backend
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+      curl \
+      ca-certificates && \
+    rm -rf /var/lib/apt/lists/* && \
+    useradd -m -u 1000 -s /bin/bash appuser
+
+COPY --from=wheelbuilder /wheels /wheels
+RUN pip install --no-cache-dir /wheels/*.whl && \
+    rm -rf /wheels
+
+# USER 切替前に必要ディレクトリを作成・chown
+RUN mkdir -p /backend/app /backend/test && \
+    chown -R appuser:appuser /backend
+
+USER appuser
+COPY --chown=appuser:appuser ./ai_api/app /backend/app
+
+EXPOSE 8000
+HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
+  CMD curl -fsS http://localhost:8000/health || exit 1
 
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

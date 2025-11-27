@@ -1,7 +1,12 @@
 ## =============================================================
-## docker-compose.dev.yml (再構築: 開発用 Override)
+## docker-compose.dev.yml (開発環境)
+## - Makefile が env_file を渡す前提
+## - backend サービスは標準化された Dockerfile (wheelbuilder/dev/prod) を利用
 ## =============================================================
 services:
+  # ===========================================================================
+  # Frontend
+  # ===========================================================================
   frontend:
     build:
       context: ../app/frontend
@@ -12,105 +17,195 @@ services:
       - ../env/.env.local_dev
     command: ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
     ports:
-      - "5173:5173"
+      - "${DEV_FRONTEND_PORT:-5173}:5173"
     volumes:
       - node_modules_dev:/app/node_modules
       - ../app/frontend:/app
     environment:
-      CHOKIDAR_USEPOLLING: "true"
+      - DOCKER=true
     networks:
       - app-net
 
+  # ===========================================================================
+  # AI API
+  # ===========================================================================
   ai_api:
-    build: { context: ../app, dockerfile: backend/ai_api/Dockerfile }
+    build:
+      context: ../app/backend
+      dockerfile: ai_api/Dockerfile
+      target: dev
     env_file:
       - ../env/.env.common
       - ../env/.env.local_dev
-    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+    command: >
+      uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+      --reload-dir /backend/app
+      --reload-dir /opt/backend_shared/src
     ports:
-      - "8001:8000"
+      - "${DEV_AI_API_PORT:-8001}:8000"
     volumes:
-      - ../app/backend/ai_api/app:/backend/app
-      - ../app/backend/backend_shared:/backend/backend_shared
+      - ../app/backend/ai_api/app:/backend/app:rw
+      - ../app/backend/backend_shared:/opt/backend_shared:rw
       - ../app/config:/backend/config
+    environment:
+      - WATCHFILES_FORCE_POLLING=1
     depends_on:
       - db
     networks:
       - app-net
 
+  # ===========================================================================
+  # Ledger API
+  # ===========================================================================
   ledger_api:
-    build: { context: ../app, dockerfile: backend/ledger_api/Dockerfile }
+    build:
+      context: ../app/backend
+      dockerfile: ledger_api/Dockerfile
+      target: dev
     env_file:
       - ../env/.env.common
       - ../env/.env.local_dev
     user: "0:0"
-    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+    command: >
+      uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+      --reload-dir /backend/app
+      --reload-dir /opt/backend_shared/src
     ports:
-      - "8002:8000"
+      - "${DEV_LEDGER_API_PORT:-8002}:8000"
     volumes:
-      - ../app/backend/ledger_api/app:/backend/app
-      - ../app/backend/backend_shared:/backend/backend_shared
+      - ../app/backend/ledger_api/app:/backend/app:rw
+      - ../app/backend/backend_shared:/opt/backend_shared:rw
       - ../app/config:/backend/config
-      # base compose の secrets マウントが override で消えるため再指定
       - ../secrets:/backend/secrets:ro
     environment:
-      STAGE: dev
-      # dev 環境ではコンテナ内の secrets を優先して使用
       GOOGLE_APPLICATION_CREDENTIALS: /backend/secrets/dev_key.json
+      WATCHFILES_FORCE_POLLING: "1"
+      REPORT_ARTIFACT_URL_PREFIX: "/reports/artifacts"
     depends_on:
       - db
     networks:
       - app-net
 
-  sql_api:
-    build: { context: ../app, dockerfile: backend/sql_api/Dockerfile }
+  # ===========================================================================
+  # Core API (BFF)
+  # ===========================================================================
+  core_api:
+    build:
+      context: ../app/backend
+      dockerfile: core_api/Dockerfile
+      target: dev
     env_file:
       - ../env/.env.common
       - ../env/.env.local_dev
-    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+    command: >
+      uvicorn app.app:app --host 0.0.0.0 --port 8000 --reload
+      --reload-dir /backend/app
+      --reload-dir /opt/backend_shared/src
     ports:
-      - "8003:8000"
+      - "${DEV_CORE_API_PORT:-8003}:8000"
     volumes:
-      - ../app/backend/sql_api/app:/backend/app
-      - ../app/backend/backend_shared:/backend/backend_shared
-      - ../app/config:/backend/config
-    depends_on:
-      - db
-    networks:
-      - app-net
-
-  rag_api:
-    build: { context: ../app, dockerfile: backend/rag_api/Dockerfile }
-    env_file:
-      - ../env/.env.common
-      - ../env/.env.local_dev
-    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
-    ports:
-      - "8004:8000"
-    volumes:
-      - ../app/backend/rag_api/app:/backend/app
-      - ../app/backend/backend_shared:/backend/backend_shared
+      - ../app/backend/core_api/app:/backend/app:rw
+      - ../app/backend/core_api/migrations:/backend/migrations:rw
+      - ../app/backend/backend_shared:/opt/backend_shared:rw
       - ../app/config:/backend/config
     environment:
-      STAGE: dev
+      - WATCHFILES_FORCE_POLLING=1
     depends_on:
       - db
     networks:
       - app-net
 
+  # ===========================================================================
+  # Plan Worker
+  # ===========================================================================
+  plan_worker:
+    build:
+      context: ../app/backend
+      dockerfile: plan_worker/Dockerfile
+      target: dev
+    env_file:
+      - ../env/.env.common
+      - ../env/.env.local_dev
+    command: ["python", "-m", "app.worker"]
+    volumes:
+      - ../app/backend/plan_worker/app:/backend/app:rw
+      - ../app/backend/plan_worker/test:/backend/test:rw
+      - ../app/backend/backend_shared:/opt/backend_shared:rw
+    environment:
+      WATCHFILES_FORCE_POLLING: "1"
+    depends_on:
+      - db
+    networks:
+      - app-net
+    restart: unless-stopped
+
+  # ===========================================================================
+  # RAG API
+  # ===========================================================================
+  rag_api:
+    build:
+      context: ../app/backend
+      dockerfile: rag_api/Dockerfile
+      target: dev
+    env_file:
+      - ../env/.env.common
+      - ../env/.env.local_dev
+    command: ["bash", "startup.sh"]
+    ports:
+      - "${DEV_RAG_API_PORT:-8004}:8000"
+    volumes:
+      - ../app/backend/rag_api/app:/backend/app:rw
+      - ../app/backend/backend_shared:/opt/backend_shared:rw
+      - ../app/config:/backend/config
+      - ../secrets:/backend/secrets:ro
+    environment:
+      GOOGLE_APPLICATION_CREDENTIALS: /backend/secrets/dev_key.json
+      CATEGORY_QUESTION_TEMPLATES_WITH_TAGS: /backend/config/category_question_templates_with_tags.yaml
+      DEV_RELOAD: "1"
+      LOCAL_DATA_DIR: /backend/local_data/master
+      RAG_GCS_URI: gs://sanbouapp-dev/rag_api/object_haikibutu/master/
+      WATCHFILES_FORCE_POLLING: "1"
+    depends_on:
+      - db
+    networks:
+      - app-net
+
+  # ===========================================================================
+  # Manual API
+  # ===========================================================================
+  manual_api:
+    build:
+      context: ../app/backend
+      dockerfile: manual_api/Dockerfile
+      target: dev
+    env_file:
+      - ../env/.env.common
+      - ../env/.env.local_dev
+    command: ["bash", "startup.sh"]
+    ports:
+      - "${DEV_MANUAL_API_PORT:-8005}:8000"
+    volumes:
+      - ../app/backend/manual_api/app:/backend/app:rw
+      - ../app/backend/backend_shared:/opt/backend_shared:rw
+    environment:
+      MANUAL_FRONTEND_BASE_URL: ${MANUAL_FRONTEND_BASE_URL:-http://localhost:5173}
+    networks:
+      - app-net
+
+  # ===========================================================================
+  # PostgreSQL Database
+  # ===========================================================================
   db:
-    image: postgres:15-alpine
+    image: postgres:17-alpine
+    env_file:
+      - ../env/.env.common
+      - ../env/.env.local_dev
     ports:
       - "${DEV_DB_PORT:-5432}:5432"
-    # dev 用データ永続化 (ベース compose の named volume を利用)
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
     volumes:
-      - db_data:/var/lib/postgresql/data
+      - ../data/postgres_v17:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      test: ["CMD-SHELL", "pg_isready -U myuser -d sanbou_dev"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -119,8 +214,6 @@ services:
 
 volumes:
   node_modules_dev:
-    driver: local
-  db_data:
     driver: local
 
 networks:

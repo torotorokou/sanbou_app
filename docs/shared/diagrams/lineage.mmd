@@ -1,0 +1,8 @@
+flowchart TD
+  RawEvents[Raw events] --> Transform[Transform]
+  Transform --> Aggregations[Aggregations]
+  Aggregations --> Reports[Reports]
+  Reports --> Dashboard[Dashboard]
+
+%% 各ノードにメタ情報が必要な場合はコメントや属性を追記してください。
+%% CIでレンダリングする場合はこのファイルを使って `mmdc` や Mermaid CLI を利用できます。
