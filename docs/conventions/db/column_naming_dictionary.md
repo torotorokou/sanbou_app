@@ -129,8 +129,10 @@
 | **mart** | **v_receive_daily** | `unit_price_yen_per_kg` | `unit_price_yen_per_kg` | ✅ canonical準拠 | 対応不要 |
 | mart | v_receive_weekly | `unit_price_yen_per_kg` | `unit_price_yen_per_kg` | ✅ canonical準拠 | 対応不要 |
 | mart | v_receive_monthly | `unit_price_yen_per_kg` | `unit_price_yen_per_kg` | ✅ canonical準拠 | 対応不要 |
-| **stg** | **shogun_flash_receive** | `vendor_cd` | `vendor_id` | カラム名サフィックス統一 | 中期: `vendor_cd` → `vendor_id` に統一 |
+| **stg** | **shogun_flash_receive** | `vendor_id` | `vendor_id` | ✅ canonical準拠 | 対応済み（2025-11-27） |
 | stg | shogun_flash_receive | `vendor_name` | `vendor_name` | ✅ canonical準拠 | 対応不要 |
+| stg | shogun_final_receive | `vendor_id` | `vendor_id` | ✅ canonical準拠 | 対応済み（2025-11-27） |
+| stg | shogun_final_receive | `vendor_name` | `vendor_name` | ✅ canonical準拠 | 対応不要 |
 | **ref** | **v_sales_rep** | `rep_id` | `rep_id` | ✅ canonical準拠 | 対応済み（2025-11-27） |
 | **mart** | **v_customer_sales_daily** | `rep_id` | `rep_id` | ✅ canonical準拠 | 対応済み（2025-11-27） |
 
@@ -141,14 +143,14 @@
 
 **対応の優先度**:
 
-1. **Priority Low（既対応）**: 
+1. **Priority High（既対応）**: 
    - ✅ `rep_id`/`rep_name` への統一（2025-11-27完了）
+   - ✅ `vendor_cd` → `vendor_id` への統一（2025-11-27完了）
    - ✅ カラムCOMMENTでの単位明記（2025-11-27完了）
    - ✅ 金額・重量・単価の単位サフィックス付き命名（canonical と現行が一致）
 
 2. **Priority Medium（段階的対応）**: 
-   - `qty_kg` → `net_weight_kg` への統一（用語の統一）
-   - `vendor_cd` → `vendor_id` への統一（サフィックスの統一）
+   - `qty_kg` → `net_weight_kg` への統一（用語の統一、優先度: 低）
    - **推奨**: 新規ビューでは canonical 採用、既存ビューは段階的に移行
 
 3. **Priority Low（長期課題）**: 
@@ -495,13 +497,13 @@ CREATE TABLE sales (
 - ✅ アップロード追跡 (`upload_file_id`, `source_row_no`)
 - ✅ 金額: `amount_yen` - mart層で単位サフィックス付き canonical 準拠
 - ✅ 単価: `unit_price_yen_per_kg` - mart層で単位サフィックス付き canonical 準拠
+- ✅ 仕入先: `vendor_id` - stg層で `_cd` → `_id` 統一完了（2025-11-27）
 
 ### ⚠️ ギャップが残っている領域
 
 以下の領域で canonical とのギャップがあります（詳細は「ギャップ一覧」参照）：
 
 - ⚠️ 重量: `qty_kg` → `net_weight_kg`（用語統一の必要性、優先度: 低）
-- ⚠️ 仕入先: `vendor_cd` → `vendor_id`（独立概念としての整理、優先度: 中）
 
 ### 推奨アクション
 
@@ -509,14 +511,13 @@ CREATE TABLE sales (
 1. 新規ビュー/テーブルは canonical 命名を採用
 2. 本ドキュメントをチーム内で共有・周知
 3. コードレビュー時に canonical 準拠をチェック
-4. `vendor_cd` → `vendor_id` への統一（次回マイグレーション時）
 
 **慎重に検討すべき**（破壊的変更）:
 1. `qty_kg` → `net_weight_kg` の統一（API/FEに影響、優先度: 低）
 
 **対応方針**:
 - 短期: 単位サフィックス付き canonical 方針を新規開発で採用
-- 中期: `vendor_cd` → `vendor_id` 統一、`qty_kg` → `net_weight_kg` 検討
+- 中期: `qty_kg` → `net_weight_kg` 検討
 - 長期: 既存ビューの用語統一（破壊的変更のため計画的に実施）
 
 ---
