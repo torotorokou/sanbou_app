@@ -6,16 +6,19 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from backend_shared.src.logging_utils import setup_uvicorn_access_filter
+from backend_shared.infrastructure.logging_utils import setup_uvicorn_access_filter
 from fastapi.responses import JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.paths import CONFIG_ENV
+from app.utils.env_loader import load_env_and_secrets
 from app.api.endpoints import query  # ← query.py に router を定義
 
 
-# --- .env 読み込み ------------------------------------------------------------
+# --- .env + secrets 読み込み --------------------------------------------------
 load_dotenv(dotenv_path=CONFIG_ENV)
+_secrets_file = load_env_and_secrets()
+print(f"[DEBUG] secrets loaded from: {_secrets_file}")
 
 # --- PYTHONPATH 追加（任意） ---------------------------------------------------
 py_path = os.getenv("PYTHONPATH")

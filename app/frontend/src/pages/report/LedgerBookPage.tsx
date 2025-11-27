@@ -1,9 +1,7 @@
-// src/pages/report/LedgerBookPage.tsx
-
 import React from 'react';
-import ReportBase from '../../components/Report/ReportBase';
-import ReportHeader from '../../components/Report/common/ReportHeader';
-import { useReportManager } from '../../hooks/report';
+import { ReportBase, ReportHeader } from '@features/report';
+import { useReportManager } from '@features/report';
+import styles from './ReportPage.module.css';
 
 /**
  * 帳簿専用ページ - 完全な再利用設計
@@ -12,6 +10,7 @@ import { useReportManager } from '../../hooks/report';
  * - 既存のアーキテクチャを100%活用
  * - ゼロからの開発コストを削減
  * - 既存機能（CSV管理、PDF生成、プレビュー等）を継承
+ * - インラインスタイルをCSS Modulesに移行
  * 
  * 💡 拡張ポイント：
  * - 帳簿特有のカスタムロジックが必要な場合は、
@@ -26,15 +25,19 @@ const LedgerBookPage: React.FC = () => {
     const reportBaseProps = reportManager.getReportBaseProps();
 
     return (
-        <>
+        <div className={styles.pageContainer}>
             <ReportHeader
                 reportKey={reportManager.selectedReport}
                 onChangeReportKey={reportManager.changeReport}
                 currentStep={reportManager.currentStep}
+                areRequiredCsvsUploaded={reportManager.areRequiredCsvsUploaded}
+                isFinalized={reportManager.isFinalized}
                 pageGroup="ledger"
             />
-            <ReportBase {...reportBaseProps} />
-        </>
+            <div className={styles.contentArea}>
+                <ReportBase {...reportBaseProps} />
+            </div>
+        </div>
     );
 };
 

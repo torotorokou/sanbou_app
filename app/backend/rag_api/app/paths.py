@@ -20,16 +20,17 @@ LOCAL_DATA_DIR = Path(
     os.environ.get("LOCAL_DATA_DIR", str(BASE_DIR / "local_data/master"))
 )
 
-CATEGORY_QUESTION_TEMPLATES = Path(
-    os.environ.get(
-        "CATEGORY_QUESTION_TEMPLATES",
-        str(LOCAL_DATA_DIR / "category_question_templates.yaml"),
-    )
-)
+# YAML: with_tags に統一。旧名は互換のため同一パスを指す。
 CATEGORY_QUESTION_TEMPLATES_WITH_TAGS = Path(
     os.environ.get(
         "CATEGORY_QUESTION_TEMPLATES_WITH_TAGS",
         str(LOCAL_DATA_DIR / "category_question_templates_with_tags.yaml"),
+    )
+)
+CATEGORY_QUESTION_TEMPLATES = Path(
+    os.environ.get(
+        "CATEGORY_QUESTION_TEMPLATES",
+        str(CATEGORY_QUESTION_TEMPLATES_WITH_TAGS),
     )
 )
 SOLVEST_PDF = Path(os.environ.get("SOLVEST_PDF", str(LOCAL_DATA_DIR / "SOLVEST.pdf")))

@@ -11,7 +11,7 @@
   GCS_LEDGER_BUCKET_STG=<gs://...>
   GCS_LEDGER_BUCKET_PROD=<gs://...>
     GCS_LEDGER_BUCKET_DEV=<gs://...>
-  BASE_ST_APP_DIR=/backend/app/st_app (data/logs 配下算出に利用)
+  BASE_API_DIR=/backend/app/api (data/logs 配下算出に利用)
   LEDGER_SYNC_SUBDIRS=master,templates (カンマ区切り)
 """
 from __future__ import annotations
@@ -36,12 +36,16 @@ class Settings:
     stage: str
     strict_startup: bool
     startup_download_enable_raw: Optional[str]
-    base_st_app_dir: Path
+    base_api_dir: Path
     gcs_ledger_bucket_override: Optional[str]
     gcs_ledger_bucket_dev: Optional[str]
     gcs_ledger_bucket_stg: Optional[str]
     gcs_ledger_bucket_prod: Optional[str]
     ledger_sync_subdirs: List[str]
+    report_artifact_root_dir: Path
+    report_artifact_url_prefix: str
+    report_artifact_url_ttl: int
+    report_artifact_secret: str
 
     def bucket_base(self) -> Optional[str]:
         if self.gcs_ledger_bucket_override:
@@ -56,11 +60,12 @@ class Settings:
 
     @property
     def data_dir(self) -> Path:
-        return self.base_st_app_dir / "data"
+        # データソースはinfra/data_sourcesに移動済み
+        return self.base_api_dir.parent / "infra" / "data_sources"
 
     @property
     def logs_dir(self) -> Path:
-        return self.base_st_app_dir / "logs"
+        return self.base_api_dir / "logs"
 
     def should_download(self) -> bool:
         raw = self.startup_download_enable_raw
@@ -69,6 +74,8 @@ class Settings:
             raw = None
         if raw is not None:
             return _as_bool(raw, False)
+        # dev環境ではGit管理されたローカルファイルを使用するため、デフォルトでGCS同期しない
+        # stg/prodのみGCS同期を実行
         return self.stage in {"stg", "prod"}
 
     def should_download_reason(self) -> str:
@@ -84,7 +91,7 @@ def load_settings() -> Settings:
     stage = os.getenv("STAGE", "dev").lower()
     strict_startup = _as_bool(os.getenv("STRICT_STARTUP"), False)
     startup_download_enable_raw = os.getenv("STARTUP_DOWNLOAD_ENABLE")
-    base_st_app_dir = Path(os.getenv("BASE_ST_APP_DIR", "/backend/app/st_app"))
+    base_api_dir = Path(os.getenv("BASE_API_DIR", "/backend/app/api"))
     def _clean(val: Optional[str]) -> Optional[str]:
         if val is None:
             return None
@@ -102,16 +109,39 @@ def load_settings() -> Settings:
     gcs_ledger_bucket_prod = _clean(os.getenv("GCS_LEDGER_BUCKET_PROD"))
     subdirs_raw = os.getenv("LEDGER_SYNC_SUBDIRS", "master,templates").strip()
     ledger_sync_subdirs = [s.strip() for s in subdirs_raw.split(",") if s.strip()]
+    
+    # presentation/static/reports をデフォルトのアーティファクト保存先とする
+    artifact_root_default = base_api_dir.parent / "presentation" / "static"
+    report_artifact_root_dir = Path(os.getenv("REPORT_ARTIFACT_ROOT_DIR", str(artifact_root_default))).resolve()
+    
+    # アーティファクトURL生成用の内部論理パス
+    # BFF(core_api)が外向きプレフィックス(/core_api)を担保するため、
+    # ledger_apiは内部論理パス(/reports/artifacts)のみを知る（DIP: 依存関係逆転）
+    report_artifact_url_prefix = os.getenv(
+        "REPORT_ARTIFACT_URL_PREFIX", 
+        "/reports/artifacts"  # デフォルトは内部論理パス
+    ).strip() or "/reports/artifacts"
+    
+    report_artifact_url_ttl_raw = os.getenv("REPORT_ARTIFACT_URL_TTL", "900")
+    try:
+        report_artifact_url_ttl = int(report_artifact_url_ttl_raw)
+    except ValueError:
+        report_artifact_url_ttl = 900
+    report_artifact_secret = os.getenv("REPORT_ARTIFACT_SECRET", "change-me-in-production")
     return Settings(
         stage=stage,
         strict_startup=strict_startup,
         startup_download_enable_raw=startup_download_enable_raw,
-        base_st_app_dir=base_st_app_dir,
+        base_api_dir=base_api_dir,
         gcs_ledger_bucket_override=gcs_ledger_bucket_override,
-    gcs_ledger_bucket_dev=gcs_ledger_bucket_dev,
+        gcs_ledger_bucket_dev=gcs_ledger_bucket_dev,
         gcs_ledger_bucket_stg=gcs_ledger_bucket_stg,
         gcs_ledger_bucket_prod=gcs_ledger_bucket_prod,
         ledger_sync_subdirs=ledger_sync_subdirs,
+        report_artifact_root_dir=report_artifact_root_dir,
+        report_artifact_url_prefix=report_artifact_url_prefix,
+        report_artifact_url_ttl=report_artifact_url_ttl,
+        report_artifact_secret=report_artifact_secret,
     )
 
 

@@ -66,17 +66,59 @@ class AIResponseService:
         answer = None
         sources: list[Any] = []
         pages = None
+        error_code: str | None = None
+        error_detail: str | None = None
+        
         try:
             # 遅延インポート：テストや軽量実行時に不要な依存を避ける
             from app.infrastructure.llm import ai_loader  # type: ignore
             result = ai_loader.get_answer(query, category, tags)
-            answer = result.get("answer")
-            sources = result.get("sources", [])
-            pages = result.get("pages")
-            print("[DEBUG][AIResponseService] ai_loader result pages:", pages)
+            
+            # エラーレスポンスのチェック
+            if "error" in result:
+                error_msg = result.get("error", "不明なエラー")
+                error_code = result.get("error_code", "OPENAI_ERROR")
+                print("[DEBUG][AIResponseService] ai_loader returned error:", error_msg)
+                print("[DEBUG][AIResponseService] error_code:", error_code)
+                
+                # エラーコードに応じたメッセージ生成
+                if error_code == "OPENAI_INSUFFICIENT_QUOTA":
+                    error_detail = (
+                        "OpenAI APIの利用上限を超過しているため、現在回答を生成できません。"
+                        "管理者にお問い合わせください。"
+                    )
+                elif error_code == "OPENAI_RATE_LIMIT":
+                    error_detail = (
+                        "OpenAI APIのレート制限に達しました。しばらく時間をおいて再度お試しください。"
+                    )
+                else:
+                    error_detail = (
+                        f"AI回答の生成中にエラーが発生しました: {error_msg}"
+                    )
+                
+                # エラー情報を返却（answer=None, error_code/error_detailを含む）
+                return {
+                    "answer": None,
+                    "sources": [],
+                    "pdf_url": None,
+                    "error_code": error_code,
+                    "error_detail": error_detail,
+                }
+            else:
+                answer = result.get("answer")
+                sources = result.get("sources", [])
+                pages = result.get("pages")
+                print("[DEBUG][AIResponseService] ai_loader result pages:", pages)
         except Exception as ae:
-            # 回答生成に失敗しても以降の処理は継続（pdf_urlはNone）
+            # 予期しない例外：汎用エラーとして扱う
             print("[DEBUG][AIResponseService] ai_loader failed:", repr(ae))
+            return {
+                "answer": None,
+                "sources": [],
+                "pdf_url": None,
+                "error_code": "OPENAI_ERROR",
+                "error_detail": f"AI回答の生成中に予期しないエラーが発生しました: {str(ae)}",
+            }
 
         # PDF保存先ディレクトリ
         static_dir = os.environ.get("PDFS_DIR") or "/backend/static/pdfs"

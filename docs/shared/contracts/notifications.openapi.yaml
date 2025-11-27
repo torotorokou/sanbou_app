@@ -1,0 +1,48 @@
+openapi: 3.0.3
+info:
+  title: Notifications Contract (MVP)
+  version: 1.0.0
+components:
+  schemas:
+    ProblemDetails:
+      type: object
+      required: [status, code, userMessage]
+      properties:
+        status:
+          type: integer
+        code:
+          type: string
+        userMessage:
+          type: string
+        title:
+          type: string
+        traceId:
+          type: string
+    NotificationEvent:
+      type: object
+      required: [id, severity, title]
+      properties:
+        id:
+          type: string
+          format: uuid
+        severity:
+          type: string
+          enum: [success, info, warning, error]
+        title:
+          type: string
+        message:
+          type: string
+        duration:
+          type: integer
+          nullable: true
+        feature:
+          type: string
+        resultUrl:
+          type: string
+        jobId:
+          type: string
+        traceId:
+          type: string
+        createdAt:
+          type: string
+          format: date-time

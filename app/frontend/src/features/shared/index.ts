@@ -1,0 +1,8 @@
+/**
+ * Shared features エクスポート
+ * 
+ * 各機能間で共有される汎用的な機能をエクスポート
+ */
+
+// TODO: Add shared feature utilities here when needed
+

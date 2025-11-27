@@ -1,0 +1,150 @@
+/* ===================================================
+ * Ant Design Component Overrides
+ * ===================================================
+ * Centralized customization for Ant Design components
+ * Responsive adjustments for Card, Table, Tabs, Layout, Sider
+ */
+
+/* === Card === */
+.ant-card {
+  border-radius: 10px;
+  background-color: var(--color-bg-container);
+  border-color: var(--color-border-secondary);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.ant-card:hover {
+  transform: scale(1.01);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.ant-card.no-hover:hover {
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.ant-card .ant-card-head {
+  font-weight: 600;
+  font-size: 1rem;
+  border-bottom: none;
+}
+
+.ant-card .ant-card-body {
+  padding: 16px;
+}
+
+/* === Table === */
+.ant-table-wrapper {
+  overflow-x: auto;
+}
+
+.ant-table {
+  width: 100%;
+  min-width: 0;
+}
+
+/* === Tabs === */
+:global(.ant-tabs-nav) {
+  margin-bottom: 0 !important;
+}
+
+:global(.ant-tabs-content-holder) {
+  padding-top: 0 !important;
+}
+
+/* === Layout Content === */
+.ant-layout-content {
+  min-width: 0;
+}
+
+/* === Sider Menu === */
+.custom-sider-menu .ant-menu-item:hover {
+  background-color: var(--color-sider-hover) !important;
+  color: #ffffff !important;
+  cursor: pointer;
+  border-left: 4px solid var(--color-primary);
+  padding-left: calc(24px - 4px);
+  transition: background-color 0.3s ease, padding-left 0.3s ease,
+    border-left 0.3s ease, color 0.3s ease;
+}
+
+.custom-sider-menu .ant-menu-item:hover .anticon {
+  color: #ffffff !important;
+}
+
+.custom-sider-menu .ant-menu-item-selected {
+  background-color: var(--color-primary) !important;
+  color: #ffffff !important;
+  border-left: none !important;
+  padding-left: 24px;
+  transition: background-color 0.3s ease, padding-left 0.3s ease;
+}
+
+.custom-sider-menu .ant-menu-item-selected .anticon {
+  color: #ffffff !important;
+}
+
+/* ===================================================
+ * Responsive Adjustments (Lean-3)
+ * ===================================================
+ */
+
+/* === Mobile: ≤767px === */
+@media (--lt-md) {
+  .ant-card {
+    margin: 8px 0;
+    border-radius: 8px;
+  }
+
+  .ant-card .ant-card-body {
+    padding: var(--space-2);
+  }
+
+  .ant-table {
+    font-size: var(--fs-small);
+  }
+
+  .ant-layout-content {
+    padding: 12px;
+  }
+}
+
+/* === Tablet+: ≥768px === */
+@media (--ge-md) {
+  .ant-card {
+    margin: 12px 0;
+    border-radius: 10px;
+  }
+
+  .ant-card .ant-card-body {
+    padding: var(--space-3);
+  }
+
+  .ant-table {
+    font-size: var(--fs-body);
+  }
+
+  .ant-layout-content {
+    padding: 16px;
+    margin-left: 12px;
+  }
+
+  .ant-layout-sider {
+    display: block !important;
+    min-width: 160px;
+    max-width: 260px;
+    width: 220px;
+  }
+}
+
+/* === Desktop: ≥1280px === */
+@media (--ge-xl) {
+  .ant-card {
+    margin: 16px 0;
+    border-radius: 12px;
+  }
+
+  .ant-layout-content {
+    padding: 24px;
+  }
+}

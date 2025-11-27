@@ -1,0 +1,73 @@
+.
+├── README.md
+├── constants
+│   ├── breakpoints.ts
+│   ├── index.ts
+│   └── tests
+│       └── breakpoints.spec.ts
+├── file_tree.txt
+├── hooks
+│   ├── index.ts
+│   └── ui
+│       ├── index.ts
+│       ├── useContainerSize.ts
+│       ├── useElementResponsive.ts
+│       ├── useResponsive.ts
+│       ├── useScrollTracker.ts
+│       └── useSidebar.ts
+├── index.ts
+├── infrastructure
+│   ├── http
+│   │   ├── coreApi.ts
+│   │   ├── coreApiClient.ts
+│   │   ├── httpClient.ts
+│   │   └── index.ts
+│   └── job
+│       ├── index.ts
+│       └── jobService.ts
+├── lib
+│   └── csv-validation
+│       ├── README.md
+│       ├── csvHeaderValidator.ts
+│       ├── index.ts
+│       ├── types.ts
+│       └── useCsvFileValidator.ts
+├── styles
+│   ├── base.css
+│   ├── custom-media.css
+│   └── tokens.css
+├── theme
+│   ├── colorMaps.ts
+│   ├── cssVars.ts
+│   ├── index.ts
+│   └── tokens.ts
+├── tree.txt
+├── types
+│   ├── api.ts
+│   ├── csvKind.ts
+│   ├── index.ts
+│   ├── validation.ts
+│   └── yaml.d.ts
+├── ui
+│   ├── AnimatedStatistic.tsx
+│   ├── DiffIndicator.tsx
+│   ├── DownloadButton.tsx
+│   ├── ReportStepIndicator.tsx
+│   ├── StatisticCard.tsx
+│   ├── TrendChart.tsx
+│   ├── TypewriterText.tsx
+│   ├── ValidationBadge.tsx
+│   ├── VerticalActionButton.tsx
+│   ├── debug
+│   │   └── ResponsiveDebugInfo.tsx
+│   └── index.ts
+└── utils
+    ├── anchors.ts
+    ├── index.ts
+    ├── logger.ts
+    ├── pdf
+    │   ├── README.md
+    │   └── workerLoader.ts
+    └── responsiveTest.ts
+
+17 directories, 54 files

@@ -1,0 +1,268 @@
+"""
+Dashboard target repository: fetch monthly/weekly/daily targets and actuals.
+Optimized with single-query anchor resolution and NULL masking.
+"""
+from datetime import date as date_type, timedelta
+from typing import Optional, Dict, Any
+from sqlalchemy import text
+from sqlalchemy.orm import Session
+import logging
+
+from app.infra.db.db import get_engine
+from app.infra.db.sql_loader import load_sql
+
+logger = logging.getLogger(__name__)
+
+
+class DashboardTargetRepository:
+    """Repository for retrieving target and actual metrics from mart.mv_target_card_per_day (Materialized View).
+    
+    Performance Note:
+    - Switched from VIEW to MATERIALIZED VIEW for faster response times
+    - MV is refreshed daily via `make refresh-mv` (see Makefile)
+    - Rollback: Change all queries back to mart.v_target_card_per_day if needed
+    """
+
+    def __init__(self, db: Session):
+        self.db = db
+        self._engine = get_engine()
+        # Pre-load and compile SQL queries for performance
+        self._get_by_date_optimized_sql = text(
+            load_sql("dashboard/dashboard_target_repo__get_by_date_optimized.sql")
+        )
+
+    def get_by_date_optimized(self, target_date: date_type, mode: str = "daily") -> Optional[Dict[str, Any]]:
+        """
+        最適化されたターゲットデータ取得（アンカー解決 + NULLマスキング）
+        
+        機能:
+          1. アンカー日付の自動解決（全てSQLクエリ内で完結）
+             - 当月: 今日を使用（今日 > 月末の場合は月末）
+             - 過去月: 月末を使用
+             - 未来月: 最初の営業日を使用（存在しない場合は月初）
+          2. NULLマスキング（mode='monthly' かつ当月以外）
+             - day_target_ton, week_target_ton, day_actual_ton_prev, week_actual_ton → NULL
+             - フロントエンドでは「—」で表示
+          3. 達成率計算用の累計・合計ターゲット
+             - month_target_to_date_ton: 月初～昨日までのday_target_tonの累計
+             - month_target_total_ton: 月全体のMAX(month_target_ton)
+             - week_target_to_date_ton: 週初～昨日までのday_target_tonの累計
+             - week_target_total_ton: 週全体のMAX(week_target_ton)
+             - month_actual_to_date_ton: 月初～昨日までのreceive_net_tonの累計
+             - week_actual_to_date_ton: 週初～昨日までのreceive_net_tonの累計
+        
+        パフォーマンス最適化（2025-11-17）:
+          - VIEW → MATERIALIZED VIEW（mart.mv_target_card_per_day）に切り替え
+          - 狙い: 複雑なJOIN/集計をMV側で事前計算し、レスポンスタイム短縮
+          - 前提: MVは日次で REFRESH CONCURRENTLY（make refresh-mv）
+          - ロールバック: mart.v_target_card_per_day（VIEW）に戻すことも可能
+        
+        Args:
+            target_date: リクエスト日付（通常は月初）
+            mode: 'daily' or 'monthly'
+            
+        Returns:
+            Dict: ターゲット/実績フィールド（累計・合計を含む）、データがない場合はNone
+        """
+        try:
+            # クエリ最適化: VIEW → MV 参照に変更（2025-11-17）
+            # 狙い: 複雑なJOIN/集計をMV側で事前計算し、レスポンスタイム短縮
+            # 注意: MV は日次で REFRESH CONCURRENTLY される前提（make refresh-mv）
+            # SQL is loaded from external file for better maintainability
+            
+            logger.info(f"Fetching optimized target card data for date={target_date}, mode={mode}")
+            
+            with self._engine.begin() as conn:
+                result = conn.execute(
+                    self._get_by_date_optimized_sql,
+                    {"req": target_date, "mode": mode}
+                ).mappings().first()
+            
+            if not result:
+                logger.warning(f"No data found for date={target_date}, mode={mode}")
+                return None
+            
+            logger.info(f"Successfully fetched optimized target card data for {target_date}")
+            return {
+                "ddate": result["ddate"],
+                "month_target_ton": float(result["month_target_ton"]) if result["month_target_ton"] is not None else None,
+                "week_target_ton": float(result["week_target_ton"]) if result["week_target_ton"] is not None else None,
+                "day_target_ton": float(result["day_target_ton"]) if result["day_target_ton"] is not None else None,
+                "month_actual_ton": float(result["month_actual_ton"]) if result["month_actual_ton"] is not None else None,
+                "week_actual_ton": float(result["week_actual_ton"]) if result["week_actual_ton"] is not None else None,
+                "day_actual_ton_prev": float(result["day_actual_ton_prev"]) if result["day_actual_ton_prev"] is not None else None,
+                "iso_year": result["iso_year"],
+                "iso_week": result["iso_week"],
+                "iso_dow": result["iso_dow"],
+                "day_type": result["day_type"],
+                "is_business": result["is_business"],
+                # New cumulative and total target/actual fields
+                "month_target_to_date_ton": float(result["month_target_to_date_ton"]) if result["month_target_to_date_ton"] is not None else None,
+                "month_target_total_ton": float(result["month_target_total_ton"]) if result["month_target_total_ton"] is not None else None,
+                "week_target_to_date_ton": float(result["week_target_to_date_ton"]) if result["week_target_to_date_ton"] is not None else None,
+                "week_target_total_ton": float(result["week_target_total_ton"]) if result["week_target_total_ton"] is not None else None,
+                "month_actual_to_date_ton": float(result["month_actual_to_date_ton"]) if result["month_actual_to_date_ton"] is not None else None,
+                "week_actual_to_date_ton": float(result["week_actual_to_date_ton"]) if result["week_actual_to_date_ton"] is not None else None,
+            }
+        except Exception as e:
+            logger.error(f"Error fetching optimized target card data for {target_date}: {str(e)}", exc_info=True)
+            raise
+
+    def get_by_date(self, target_date: date_type) -> Optional[Dict[str, Any]]:
+        """
+        Get target and actual metrics for a specific date.
+        
+        Returns:
+            Dict with all columns from mart.v_target_card_per_day including:
+                - month_target_ton, week_target_ton, day_target_ton
+                - month_actual_ton, week_actual_ton, day_actual_ton_prev
+                - iso_year, iso_week, iso_dow
+                - day_type, is_business
+                - ddate
+        """
+        try:
+            # ★ MV参照に変更（VIEW→MV）for faster response
+            query = text("""
+                SELECT 
+                    ddate,
+                    month_target_ton,
+                    week_target_ton,
+                    day_target_ton,
+                    month_actual_ton,
+                    week_actual_ton,
+                    day_actual_ton_prev,
+                    iso_year,
+                    iso_week,
+                    iso_dow,
+                    day_type,
+                    is_business
+                FROM mart.mv_target_card_per_day  -- ★ VIEW→MV変更
+                WHERE ddate = CAST(:target_date AS DATE)
+                LIMIT 1
+            """)
+            
+            logger.info(f"Fetching target card data for date: {target_date}")
+            result = self.db.execute(query, {"target_date": target_date}).fetchone()
+            
+            if not result:
+                logger.warning(f"No data found in mart.mv_target_card_per_day for {target_date}")
+                return None
+            
+            logger.info(f"Successfully fetched target card data for {target_date}")
+            return {
+                "ddate": result[0],
+                "month_target_ton": float(result[1]) if result[1] is not None else None,
+                "week_target_ton": float(result[2]) if result[2] is not None else None,
+                "day_target_ton": float(result[3]) if result[3] is not None else None,
+                "month_actual_ton": float(result[4]) if result[4] is not None else None,
+                "week_actual_ton": float(result[5]) if result[5] is not None else None,
+                "day_actual_ton_prev": float(result[6]) if result[6] is not None else None,
+                "iso_year": result[7],
+                "iso_week": result[8],
+                "iso_dow": result[9],
+                "day_type": result[10],
+                "is_business": result[11],
+            }
+        except Exception as e:
+            logger.error(f"Error fetching target card data for {target_date}: {str(e)}", exc_info=True)
+            raise
+
+    def get_first_business_in_month(self, month_start: date_type, month_end: date_type) -> Optional[date_type]:
+        """
+        Get the first business day in the specified month range.
+        
+        Args:
+            month_start: First day of the month
+            month_end: Last day of the month
+            
+        Returns:
+            The first business day in the month, or None if not found
+        """
+        try:
+            # ★ MV参照に変更（VIEW→MV）
+            query = text("""
+                SELECT ddate
+                FROM mart.mv_target_card_per_day  -- ★ VIEW→MV変更
+                WHERE ddate BETWEEN CAST(:month_start AS DATE) AND CAST(:month_end AS DATE)
+                  AND is_business = true
+                ORDER BY ddate ASC
+                LIMIT 1
+            """)
+            
+            result = self.db.execute(query, {"month_start": month_start, "month_end": month_end}).fetchone()
+            return result[0] if result else None
+        except Exception as e:
+            logger.error(f"Error getting first business day for {month_start} to {month_end}: {str(e)}", exc_info=True)
+            raise
+
+    def get_target_card_metrics(self, target_date: date_type) -> Optional[Dict[str, Any]]:
+        """
+        Get target and actual metrics from mart.mv_target_card_per_day (Materialized View).
+        
+        For the specified date's month, retrieves the LAST day's record of that month
+        to get cumulative actuals (month_actual_ton, week_actual_ton) and targets.
+        
+        Performance Note:
+        - Using MATERIALIZED VIEW for faster queries (pre-aggregated data)
+        - MV refreshed daily via `make refresh-mv`
+        
+        Returns:
+            Dict with keys:
+                - month_target_ton
+                - week_target_ton
+                - day_target_ton
+                - month_actual_ton
+                - week_actual_ton
+                - day_actual_ton_prev
+        """
+        try:
+            # ★ MVの存在確認に変更（VIEW→MV）
+            check_view = text("""
+                SELECT EXISTS (
+                    SELECT FROM pg_matviews
+                    WHERE schemaname = 'mart' 
+                      AND matviewname = 'mv_target_card_per_day'
+                )
+            """)
+            view_exists = self.db.execute(check_view).scalar()
+            
+            if not view_exists:
+                logger.error("Materialized View mart.mv_target_card_per_day does not exist!")
+                raise ValueError("Materialized View mart.mv_target_card_per_day does not exist. Please run migration first.")
+            
+            # ★ MV参照に変更（VIEW→MV）
+            query = text("""
+                SELECT 
+                    month_target_ton,
+                    week_target_ton,
+                    day_target_ton,
+                    month_actual_ton,
+                    week_actual_ton,
+                    day_actual_ton_prev,
+                    ddate
+                FROM mart.mv_target_card_per_day  -- ★ VIEW→MV変更
+                WHERE date_trunc('month', ddate) = date_trunc('month', CAST(:target_date AS DATE))
+                ORDER BY ddate DESC
+                LIMIT 1
+            """)
+            
+            logger.info(f"Fetching target card metrics for date: {target_date}")
+            result = self.db.execute(query, {"target_date": target_date}).fetchone()
+            
+            if not result:
+                logger.warning(f"No data found in mart.mv_target_card_per_day for month containing {target_date}")
+                return None
+            
+            logger.info(f"Successfully fetched target card metrics for {target_date}")
+            return {
+                "month_target_ton": float(result[0]) if result[0] is not None else None,
+                "week_target_ton": float(result[1]) if result[1] is not None else None,
+                "day_target_ton": float(result[2]) if result[2] is not None else None,
+                "month_actual_ton": float(result[3]) if result[3] is not None else None,
+                "week_actual_ton": float(result[4]) if result[4] is not None else None,
+                "day_actual_ton_prev": float(result[5]) if result[5] is not None else None,
+            }
+        except Exception as e:
+            logger.error(f"Error fetching target card metrics for {target_date}: {str(e)}", exc_info=True)
+            raise
+

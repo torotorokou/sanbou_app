@@ -1,0 +1,81 @@
+shared/
+├── index.ts
+├── README.md
+├── constants/
+│   ├── breakpoints.ts
+│   ├── CsvDefinition.ts
+│   ├── router.ts
+│   ├── sidebarMenu.tsx
+│   └── uploadCsvConfig.ts
+├── reportConfig/
+│   ├── index.ts
+│   └── pages/
+│       ├── factoryPageConfig.ts
+│       ├── ledgerPageConfig.ts
+│       └── managePageConfig.ts
+├── reportConfig/shared/
+│   ├── common.ts
+│   └── types.ts
+├── tests/
+│   └── breakpoints.spec.ts
+├── hooks/
+│   ├── index.ts
+│   └── useBreakpoint.ts
+├── ui/
+│   ├── index.ts
+│   ├── useContainerSize.ts
+│   ├── useResponsive.ts
+│   ├── useScrollTracker.ts
+│   ├── useSidebarDefault.ts
+│   ├── useSidebarResponsive.ts
+│   └── useWindowSize.ts
+├── infrastructure/
+│   ├── http/
+│   │   ├── httpClient_impl.ts
+│   │   ├── httpClient.ts
+│   │   └── index.ts
+│   └── stores/
+│       ├── index.ts
+│       └── manualsStore.ts
+├── lib/
+│   ├── csvParsers.ts
+│   └── parsers/
+│       └── csvParsers.ts
+├── styles/
+│   └── base.css
+├── theme/
+│   ├── colorMaps.ts
+│   ├── cssVars.ts
+│   ├── index.ts
+│   ├── responsive.css
+│   ├── ThemeProvider.tsx
+│   └── tokens.ts
+├── types/
+│   ├── api.ts
+│   ├── index.ts
+│   ├── manuals.ts
+│   ├── navi.ts
+│   ├── report.ts
+│   ├── reportBase.ts
+│   └── yaml.d.ts
+├── ui/
+│   ├── AnimatedStatistic.tsx
+│   ├── DiffIndicator.tsx
+│   ├── DownloadButton_.tsx
+│   ├── index.ts
+│   ├── ReportStepIndicator.tsx
+│   ├── StatisticCard.tsx
+│   ├── TrendChart.tsx
+│   ├── TypewriterText.tsx
+│   ├── VerticalActionButton.tsx
+│   └── debug/
+│       └── ResponsiveDebugInfo.tsx
+├── utils/
+│   ├── anchors.ts
+│   ├── index.ts
+│   ├── pdfWorkerLoader.ts
+│   ├── responsiveTest.ts
+│   └── csv/
+│       └── csvPreview.ts
+└── validators/
+    └── csvValidator.ts
