@@ -468,3 +468,30 @@ def get_delete_upload_scope_uc(
     return DeleteUploadScopeUseCase(query=repo)
 
 
+# ========================================================================
+# Ingest UseCase Providers
+# ========================================================================
+from app.application.usecases.ingest.upload_ingest_csv_uc import UploadIngestCsvUseCase
+from app.application.usecases.ingest.create_reservation_uc import CreateReservationUseCase
+from app.infra.adapters.ingest.ingest_repository import IngestRepository
+
+
+def get_ingest_repo(db: Session = Depends(get_db)) -> IngestRepository:
+    """IngestRepository提供"""
+    return IngestRepository(db)
+
+
+def get_upload_ingest_csv_uc(
+    repo: IngestRepository = Depends(get_ingest_repo)
+) -> UploadIngestCsvUseCase:
+    """UploadIngestCsvUseCase提供"""
+    return UploadIngestCsvUseCase(ingest_repo=repo)
+
+
+def get_create_reservation_uc(
+    repo: IngestRepository = Depends(get_ingest_repo)
+) -> CreateReservationUseCase:
+    """CreateReservationUseCase提供"""
+    return CreateReservationUseCase(ingest_repo=repo)
+
+
