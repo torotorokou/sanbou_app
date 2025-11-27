@@ -354,6 +354,64 @@ al-heads:
 al-stamp:
 	$(ALEMBIC) stamp $(REV)
 
+## =============================================================
+## Local Demo Environment (完全独立環境)
+## =============================================================
+.PHONY: demo-up demo-down demo-logs demo-ps demo-restart demo-db-shell demo-db-clone-from-dev
+
+DC_DEMO = docker compose -f docker/docker-compose.local_demo.yml -p local_demo
+COMPOSE_ENV_ARGS_DEMO = --env-file env/.env.common --env-file env/.env.local_demo --env-file secrets/.env.local_demo.secrets
+
+demo-up:
+	@echo "[info] Starting local_demo environment"
+	DOCKER_BUILDKIT=$(BUILDKIT) BUILDKIT_PROGRESS=$(PROGRESS) \
+	$(DC_DEMO) $(COMPOSE_ENV_ARGS_DEMO) up -d --build --remove-orphans
+	@echo "[ok] demo-up done. Access: http://localhost:5174 (frontend), http://localhost:8013/docs (core_api)"
+
+demo-down:
+	@echo "[info] Stopping local_demo environment"
+	$(DC_DEMO) down --remove-orphans
+	@echo "[ok] demo-down done"
+
+demo-logs:
+	@echo "[info] Showing logs for local_demo (use Ctrl+C to exit)"
+	$(DC_DEMO) logs -f $(S)
+
+demo-ps:
+	@echo "[info] Container status for local_demo"
+	$(DC_DEMO) ps
+
+demo-restart:
+	@echo "[info] Restarting local_demo environment"
+	$(MAKE) demo-down
+	$(MAKE) demo-up
+
+demo-db-shell:
+	@echo "[info] Connecting to local_demo PostgreSQL"
+	$(DC_DEMO) exec db psql -U myuser -d sanbou_demo
+
+# local_dev → local_demo への DB クローン
+demo-db-clone-from-dev:
+	@echo "[info] Cloning DB from local_dev to local_demo"
+	@echo "[step 1/5] Dumping local_dev DB..."
+	@mkdir -p backup
+	docker compose -f docker/docker-compose.dev.yml -p local_dev exec -T db \
+	  pg_dump -U myuser -d sanbou_dev --format=custom --file=/tmp/dev_to_demo.dump
+	docker compose -f docker/docker-compose.dev.yml -p local_dev cp \
+	  db:/tmp/dev_to_demo.dump ./backup/dev_to_demo.dump
+	@echo "[step 2/5] Copying dump to local_demo container..."
+	$(DC_DEMO) cp ./backup/dev_to_demo.dump db:/tmp/dev_to_demo.dump
+	@echo "[step 3/5] Dropping existing sanbou_demo DB (if exists)..."
+	-$(DC_DEMO) exec -T db dropdb -U myuser --if-exists sanbou_demo
+	@echo "[step 4/5] Creating fresh sanbou_demo DB..."
+	$(DC_DEMO) exec -T db createdb -U myuser sanbou_demo
+	@echo "[step 5/5] Restoring dump to sanbou_demo..."
+	$(DC_DEMO) exec -T db pg_restore -U myuser -d sanbou_demo /tmp/dev_to_demo.dump
+	@echo "[ok] DB clone completed. local_dev → local_demo"
+	@echo "[info] Cleaning up temporary files..."
+	-$(DC_DEMO) exec -T db rm /tmp/dev_to_demo.dump
+	@echo "[ok] Done!"
+
 # =============================================================
 # Materialized View Refresh (daily ETL batch)
 # =============================================================
