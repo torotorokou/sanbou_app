@@ -4,6 +4,7 @@ from backend_shared.utils.dataframe_utils import (
     combine_date_and_time,
     remove_weekday_parentheses,
 )
+from backend_shared.utils.code_normalizer import normalize_dataframe_client_codes
 from backend_shared.usecases.csv_formatter.formatter_config import FormatterConfig
 
 
@@ -36,6 +37,10 @@ class ReceiveFormatter(CommonCSVFormatter):
         super().__init__(config)
 
     def individual_process(self, df: pd.DataFrame) -> pd.DataFrame:
+        # 取引先コードの正規化（先頭0削除）
+        df = normalize_dataframe_client_codes(df, column='取引先CD')
+        
+        # 日付・時刻の整形
         df = remove_weekday_parentheses(df, "伝票日付")
         df = combine_date_and_time(df, "伝票日付", "計量時間（総重量）")
         df = combine_date_and_time(df, "伝票日付", "計量時間（空車重量）")
