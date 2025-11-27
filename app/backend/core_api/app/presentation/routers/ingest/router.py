@@ -5,19 +5,18 @@ Ingest Router - CSVアップロードと予約登録エンドポイント
   1. CSVアップロード（受入実績データ）
   2. トラック予約の作成/更新
 
-TODO: Clean Architecture移行待ち
-  - 現状: Routerにビジネスロジックが混在
-  - 目標: UseCaseパターンへ移行（UploadIngestCsvUseCase, CreateReservationUseCase）
-  - DI経由でUseCaseを取得するよう変更予定
-  - Port&Adapter化予定（テスタビリティ向上）
+設計方針:
+  - Port&Adapter パターン適用済み
+  - Router層は薄く保つ（DI + UseCase呼び出しのみ）
+  - ビジネスロジックはUseCaseに集約
 """
 from fastapi import APIRouter, Depends, UploadFile, File, HTTPException
-from sqlalchemy.orm import Session
 import pandas as pd
 import io
 
-from app.deps import get_db
-from app.application.usecases.ingest.ingest_uc import IngestUseCase
+from app.application.usecases.ingest.upload_ingest_csv_uc import UploadIngestCsvUseCase
+from app.application.usecases.ingest.create_reservation_uc import CreateReservationUseCase
+from app.config.di_providers import get_upload_ingest_csv_uc, get_create_reservation_uc
 from app.presentation.schemas import ReservationCreate, ReservationResponse
 
 router = APIRouter(prefix="/ingest", tags=["ingest"])
@@ -26,7 +25,7 @@ router = APIRouter(prefix="/ingest", tags=["ingest"])
 @router.post("/csv", summary="Upload CSV data")
 async def upload_csv(
     file: UploadFile = File(...),
-    db: Session = Depends(get_db),
+    uc: UploadIngestCsvUseCase = Depends(get_upload_ingest_csv_uc),
 ):
     """
     CSVファイルをアップロード（受入実績データ）
@@ -34,26 +33,18 @@ async def upload_csv(
     処理フロー:
       1. CSVファイルバリデーション（拡張子チェック）
       2. pandas.read_csv() で読み込み
-      3. 必須カラムのバリデーション（TODO）
-      4. データ正規化（日付フォーマット、数値型変換等、TODO）
-      5. IngestUseCase.upload_csv() でDB保存
+      3. UploadIngestCsvUseCase.execute() でDB保存
     
-    TODO:
-      - CSVカラム仕様の明確化
-      - 必須カラムのバリデーション実装
-      - 日付・数値のパース処理実装
-      - UploadIngestCsvUseCase への移行（Clean Architecture）
-    
-    期待カラム（例）:
-      - date: 日付
-      - trucks: 台数
-      - weight: 重量
-      - vendor: 仕入先
-      - ...等
+    Note:
+      - 現状はスタブ実装（バリデーション・フォーマットは将来実装）
+      - 完全実装には要件定義が必要:
+        * CSVカラム仕様の明確化
+        * 必須カラムの定義
+        * 日付・数値のパース処理
     
     Args:
         file: アップロードされたCSVファイル
-        db: SQLAlchemy Session
+        uc: UploadIngestCsvUseCase (DI)
     
     Returns:
         アップロード結果（行数等）
@@ -68,13 +59,9 @@ async def upload_csv(
     try:
         contents = await file.read()
         df = pd.read_csv(io.BytesIO(contents))
-
-        # TODO: Validate required columns
-        # TODO: Parse and normalize data (e.g., date formats, numeric types)
         rows = df.to_dict(orient="records")
 
-        uc = IngestUseCase(db)
-        result = uc.upload_csv(rows)
+        result = uc.execute(rows)
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to process CSV: {str(e)}")
@@ -83,11 +70,23 @@ async def upload_csv(
 @router.post("/reserve", response_model=ReservationResponse, summary="Create truck reservation")
 def create_reservation(
     req: ReservationCreate,
-    db: Session = Depends(get_db),
+    uc: CreateReservationUseCase = Depends(get_create_reservation_uc),
 ):
     """
-    Create or update a truck reservation for a specific date.
-    TODO: Migrate to UseCase pattern (CreateReservationUseCase)
+    トラック予約の作成/更新
+    
+    Note:
+      - 現状はスタブ実装（予約ビジネスルールは将来実装）
+      - 完全実装には要件定義が必要:
+        * 予約上限チェック
+        * 重複予約のハンドリング
+        * 予約履歴の記録
+    
+    Args:
+        req: 予約作成リクエスト
+        uc: CreateReservationUseCase (DI)
+    
+    Returns:
+        予約作成結果
     """
-    uc = IngestUseCase(db)
-    return uc.create_reservation(req)
+    return uc.execute(req)
