@@ -40,7 +40,7 @@ def controller_education_gpt_page():
     category_template = templates.get(main_category, [])
 
     all_tags = sorted(set(
-        tag.strip(" []'"")
+        tag.strip(" []'\"")
         for t in category_template
         for tag in t.get("tag", [])
         if isinstance(tag, str)
@@ -50,7 +50,7 @@ def controller_education_gpt_page():
 
     filtered_questions = [
         t["title"] for t in category_template
-        if any(tag.strip(" []'"") in selected_tags for tag in t.get("tag", []))
+        if any(tag.strip(" []'\"") in selected_tags for tag in t.get("tag", []))
     ] if selected_tags else []
     subcategory_options = ["自由入力"] + filtered_questions
     sub_category = st.selectbox("質問テンプレートを選択（または自由入力）", options=subcategory_options)
