@@ -44,14 +44,14 @@ def get_sales_reps(db: Session = Depends(get_db)):
     """
     logger.info("Fetching sales rep list")
     
-    sql = text("SELECT sales_rep_id, sales_rep_name FROM ref.v_sales_rep ORDER BY sales_rep_id")
+    sql = text("SELECT rep_id, rep_name FROM ref.v_sales_rep ORDER BY rep_id")
     result = db.execute(sql)
     rows = result.fetchall()
     
     sales_reps = [
         SalesRepDTO(
-            sales_rep_id=str(row.sales_rep_id),
-            sales_rep_name=row.sales_rep_name,
+            rep_id=str(row.rep_id),
+            rep_name=row.rep_name,
         )
         for row in rows
     ]
@@ -99,10 +99,10 @@ def analyze_customer_churn(
     # Domain Entity -> DTO 変換
     lost_customer_dtos = [
         LostCustomerDTO(
-            customer_id=str(c.customer_id),
+            customer_id=c.customer_id,
             customer_name=c.customer_name,
-            sales_rep_id=str(c.sales_rep_id) if c.sales_rep_id is not None else None,
-            sales_rep_name=c.sales_rep_name,
+            rep_id=str(c.rep_id) if c.rep_id is not None else None,
+            rep_name=c.rep_name,
             last_visit_date=c.last_visit_date,
             prev_visit_days=c.prev_visit_days,
             prev_total_amount_yen=c.prev_total_amount_yen,

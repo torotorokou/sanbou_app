@@ -130,6 +130,7 @@ export function usePivotViewModel(params: UsePivotViewModelParams): UsePivotView
           ...periodParams,
           baseAxis,
           baseId,
+          categoryKind: 'waste',
           repIds: drawerRepIds,
           targetAxis,
           sortBy: drawerSortBy,

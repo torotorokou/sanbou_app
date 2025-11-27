@@ -94,7 +94,7 @@ type NumericSortKey = Exclude<SortKey, 'date' | 'name'>;
  * @returns 指定されたメトリクス値。存在しない場合はnull
  * 
  * @example
- * const entry = { id: 'c_alpha', name: '顧客A', amount: 1000, qty: 50, count: 5, unit_price: 20 };
+ * const entry = { id: 'c_alpha', name: '顧客A', amount: 1000, qty: 50, count: 5, unitPrice: 20 };
  * metricValue(entry, 'amount')  // 1000
  * metricValue(entry, 'qty')     // 50
  * metricValue(entry, 'unit_price') // 20
@@ -108,7 +108,7 @@ export const metricValue = (entry: MetricEntry, key: NumericSortKey): number | n
     case 'count':
       return entry.count;
     case 'unit_price':
-      return entry.unit_price;
+      return entry.unitPrice;
     default:
       return null;
   }
@@ -135,9 +135,9 @@ export const metricValue = (entry: MetricEntry, key: NumericSortKey): number | n
  * 
  * @example
  * const metrics = [
- *   { id: '1', name: 'A', amount: 100, qty: 10, count: 1, unit_price: 10 },
- *   { id: '2', name: 'B', amount: 200, qty: 20, count: 2, unit_price: 10 },
- *   { id: '3', name: 'C', amount: 150, qty: 15, count: 1, unit_price: 10 },
+ *   { id: '1', name: 'A', amount: 100, qty: 10, count: 1, unitPrice: 10 },
+ *   { id: '2', name: 'B', amount: 200, qty: 20, count: 2, unitPrice: 10 },
+ *   { id: '3', name: 'C', amount: 150, qty: 15, count: 1, unitPrice: 10 },
  * ];
  * sortMetrics(metrics, 'amount', 'desc');
  * // => [B(200), C(150), A(100)] の順にソート（破壊的）

@@ -58,7 +58,7 @@ export const ExpandedRow: React.FC<ExpandedRowProps> = ({
   const maxAmount = Math.max(1, ...data.map((x: MetricEntry) => x.amount));
   const maxQty = Math.max(1, ...data.map((x: MetricEntry) => x.qty));
   const maxCount = Math.max(1, ...data.map((x: MetricEntry) => x.count));
-  const unitCandidates = data.map((x: MetricEntry) => x.unit_price ?? 0);
+  const unitCandidates = data.map((x: MetricEntry) => x.unitPrice ?? 0);
   const maxUnit = Math.max(1, ...unitCandidates);
   const nameTitle = axisLabel(mode);
   
@@ -142,11 +142,11 @@ export const ExpandedRow: React.FC<ExpandedRowProps> = ({
           </Tooltip>
         </Space>
       ),
-      dataIndex: 'unit_price',
-      key: 'unit_price',
+      dataIndex: 'unitPrice',
+      key: 'unitPrice',
       align: 'right',
       width: 120,
-      sorter: (a: MetricEntry, b: MetricEntry) => (a.unit_price ?? 0) - (b.unit_price ?? 0),
+      sorter: (a: MetricEntry, b: MetricEntry) => (a.unitPrice ?? 0) - (b.unitPrice ?? 0),
       render: (v: number | null) => (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'flex-end' }}>
           <span style={{ minWidth: 64, textAlign: 'right' }}>{fmtUnitPrice(v)}</span>

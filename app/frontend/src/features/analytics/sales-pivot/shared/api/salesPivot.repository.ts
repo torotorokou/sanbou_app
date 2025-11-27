@@ -245,7 +245,7 @@ const rndInt = (min: number, max: number) => Math.floor(Math.random() * (max - m
  */
 const makeMetric = (
   weight = 1
-): Pick<MetricEntry, 'amount' | 'qty' | 'count' | 'unit_price'> => {
+): Pick<MetricEntry, 'amount' | 'qty' | 'count' | 'unitPrice'> => {
   // 約83%の確率で実績あり、17%で0実績
   const has = Math.random() < 0.83;
   
@@ -264,9 +264,9 @@ const makeMetric = (
   const amount = has ? Math.round(qty * price * (0.7 + Math.random() * 0.6)) : 0;
   
   // 実際の単価（逆算）: 売上 ÷ 数量（小数点2桁）
-  const unit_price = qty > 0 ? Math.round((amount / qty) * 100) / 100 : null;
-  
-  return { amount, qty, count, unit_price };
+  const unitPrice = qty > 0 ? Math.round((amount / qty) * 100) / 100 : null;
+
+  return { amount, qty, count, unitPrice };
 };
 
 /**
@@ -412,7 +412,9 @@ export class MockSalesPivotRepository implements SalesPivotRepository {
           amount,
           qty,
           count,
-          unit_price: qty > 0 ? Math.round((amount / qty) * 100) / 100 : null,
+          lineCount: count, // モックでは count と同じ値を使用
+          slipCount: Math.max(1, Math.round(count * 0.7)), // モックでは count の約70%
+          unitPrice: qty > 0 ? Math.round((amount / qty) * 100) / 100 : null,
           dateKey: t.dateKey,
         };
       });
@@ -459,7 +461,9 @@ export class MockSalesPivotRepository implements SalesPivotRepository {
         amount,
         qty,
         count,
-        unit_price: qty > 0 ? Math.round((amount / qty) * 100) / 100 : null,
+        lineCount: count,
+        slipCount: Math.max(1, Math.round(count * 0.7)),
+        unitPrice: qty > 0 ? Math.round((amount / qty) * 100) / 100 : null,
         dateKey: t.dateKey,
       };
     });
@@ -487,7 +491,9 @@ export class MockSalesPivotRepository implements SalesPivotRepository {
         amount: m.amount,
         qty: m.qty,
         count: m.count,
-        unit_price: m.qty > 0 ? Math.round((m.amount / m.qty) * 100) / 100 : null,
+        lineCount: m.count,
+        slipCount: Math.max(1, Math.round(m.count * 0.7)),
+        unitPrice: m.qty > 0 ? Math.round((m.amount / m.qty) * 100) / 100 : null,
       };
     });
     await delay(120);
@@ -537,6 +543,8 @@ export class MockSalesPivotRepository implements SalesPivotRepository {
           salesDate: `${filter.dateFrom.substring(0, 8)}${String(i + 1).padStart(2, '0')}`,
           slipNo: 1000 + i,
           slipTypeName: i % 2 === 0 ? '売上' : '仕入',
+          repName: `営業${(i % 3) + 1}`,
+          customerName: `顧客${(i % 5) + 1}`,
           itemId: 100 + i,
           itemName: `商品${i + 1}`,
           lineCount: null,
@@ -550,6 +558,8 @@ export class MockSalesPivotRepository implements SalesPivotRepository {
           salesDate: `${filter.dateFrom.substring(0, 8)}${String(i + 1).padStart(2, '0')}`,
           slipNo: 1000 + i,
           slipTypeName: i % 2 === 0 ? '売上' : '仕入',
+          repName: `営業${(i % 3) + 1}`,
+          customerName: `顧客${(i % 5) + 1}`,
           itemId: null,
           itemName: null,
           lineCount: Math.floor(Math.random() * 10) + 1,
@@ -693,7 +703,7 @@ export class HttpSalesPivotRepository implements SalesPivotRepository {
 
     const res = await coreApi.post<ApiSummaryRow[]>('/core_api/analytics/sales-tree/summary', req);
     
-    // APIレスポンスはすでにcamelCaseなのでそのまま返す
+    // APIレスポンスをcamelCaseに変換
     return res.map(row => ({
       repId: String(row.repId),
       repName: row.repName,
@@ -702,10 +712,10 @@ export class HttpSalesPivotRepository implements SalesPivotRepository {
         name: m.name,
         amount: m.amount,
         qty: m.qty,
-        line_count: m.line_count,
-        slip_count: m.slip_count,
+        lineCount: m.line_count,
+        slipCount: m.slip_count,
         count: m.count,
-        unit_price: m.unit_price,
+        unitPrice: m.unit_price,
         dateKey: m.date_key ?? undefined,
       })),
     }));
@@ -767,10 +777,10 @@ export class HttpSalesPivotRepository implements SalesPivotRepository {
         name: m.name,
         amount: m.amount,
         qty: m.qty,
-        line_count: m.line_count,
-        slip_count: m.slip_count,
+        lineCount: m.line_count,
+        slipCount: m.slip_count,
         count: m.count,
-        unit_price: m.unit_price,
+        unitPrice: m.unit_price,
         dateKey: m.date_key ?? undefined,
       })),
       next_cursor: res.next_cursor,
@@ -820,10 +830,10 @@ export class HttpSalesPivotRepository implements SalesPivotRepository {
       date: p.date,
       amount: p.amount,
       qty: p.qty,
-      line_count: p.line_count,
-      slip_count: p.slip_count,
+      lineCount: p.line_count,
+      slipCount: p.slip_count,
       count: p.count,
-      unit_price: p.unit_price,
+      unitPrice: p.unit_price,
     }));
   }
 

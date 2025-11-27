@@ -70,7 +70,7 @@ export const PivotTable: React.FC<PivotTableProps> = ({
         const maxA = Math.max(1, ...rows.map((x) => x.amount));
         const maxQ = Math.max(1, ...rows.map((x) => x.qty));
         const maxC = Math.max(1, ...rows.map((x) => x.count));
-        const maxU = Math.max(1, ...rows.map((x) => x.unit_price ?? 0));
+        const maxU = Math.max(1, ...rows.map((x) => x.unitPrice ?? 0));
         
         // 件数/台数ラベルの動的切り替え
         const countLabel = target.axis === 'item' ? '件数' : '台数';

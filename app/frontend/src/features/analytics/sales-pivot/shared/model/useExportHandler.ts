@@ -4,7 +4,7 @@
  */
 
 import { useCallback } from 'react';
-import type { SummaryQuery, ExportOptions } from './types';
+import type { SummaryQuery, ExportOptions, Mode } from './types';
 import type { HttpSalesPivotRepository } from '../api/salesPivot.repository';
 import { axisLabel } from './metrics';
 import { downloadBlob } from '../lib/utils';
@@ -14,7 +14,7 @@ interface ExportHandlerParams {
   query: SummaryQuery;
   exportOptions: ExportOptions;
   repIds: string[];
-  baseAx: string;
+  baseAx: Mode;
   periodLabel: string;
   message?: { success?: (msg: string) => void; error?: (msg: string) => void };
 }

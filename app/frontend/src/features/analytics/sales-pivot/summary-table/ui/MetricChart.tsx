@@ -53,7 +53,7 @@ export const MetricChart: React.FC<MetricChartProps> = ({
     [amountLabel]: d.amount,
     数量: d.qty,
     [countLabel]: d.count,
-    単価: d.unit_price ?? 0,
+    単価: d.unitPrice ?? 0,
   }));
 
   return (

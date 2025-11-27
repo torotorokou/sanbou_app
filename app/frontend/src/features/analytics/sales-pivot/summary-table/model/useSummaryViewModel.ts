@@ -57,7 +57,9 @@ export function useSummaryViewModel(
       if (repSeriesCache[repId]) return;
       try {
         const s = await repository.fetchDailySeries(
-          query.month ? { month: query.month, repId } : { monthRange: query.monthRange!, repId }
+          query.month
+            ? { month: query.month, repId, categoryKind: 'waste' }
+            : { monthRange: query.monthRange!, repId, categoryKind: 'waste' }
         );
         setRepSeriesCache((prev) => ({ ...prev, [repId]: s }));
       } catch (error) {

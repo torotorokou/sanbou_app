@@ -23,7 +23,7 @@ export const TopNBarChart: React.FC<TopNBarChartProps> = ({ data, categoryKind }
     [amountLabel]: d.amount,
     数量: d.qty,
     件数: d.count,
-    単価: d.unit_price ?? 0,
+    単価: d.unitPrice ?? 0,
   }));
 
   return (

@@ -147,35 +147,35 @@ export interface UniverseEntry {
  * @property name - 集計対象の表示名（顧客名 | 品名 | 日付(YYYY-MM-DD)）
  * @property amount - 売上金額（円）
  * @property qty - 数量（kg）
- * @property line_count - 明細行数（件数） - COUNT(*)
- * @property slip_count - 伝票数（台数） - COUNT(DISTINCT slip_no)
- * @property count - 表示用カウント値（商品軸=line_count、それ以外=slip_count）
- * @property unit_price - 単価（円/kg）。計算式: Σ金額 / Σ数量（数量=0の場合はnull）
+ * @property lineCount - 明細行数（件数） - COUNT(*)
+ * @property slipCount - 伝票数（台数） - COUNT(DISTINCT slip_no)
+ * @property count - 表示用カウント値（商品軸=lineCount、それ以外=slipCount）
+ * @property unitPrice - 単価（円/kg）。計算式: Σ金額 / Σ数量（数量=0の場合はnull）
  * @property dateKey - 日付モード時のソート用キー（オプション、YYYY-MM-DD形式）
  * 
  * @example
- * // 顧客別集計の例（台数=slip_count）
+ * // 顧客別集計の例（台数=slipCount）
  * {
  *   id: 'c_alpha',
  *   name: '顧客アルファ',
  *   amount: 1500000,
  *   qty: 500,
- *   line_count: 20,  // 明細行数
- *   slip_count: 15,  // 伝票数（台数）
- *   count: 15,       // 表示値=slip_count
- *   unit_price: 3000.00
+ *   lineCount: 20,  // 明細行数
+ *   slipCount: 15,  // 伝票数（台数）
+ *   count: 15,       // 表示値=slipCount
+ *   unitPrice: 3000.00
  * }
  * 
- * // 商品別集計の例（件数=line_count）
+ * // 商品別集計の例（件数=lineCount）
  * {
  *   id: 'i_001',
  *   name: '商品A',
  *   amount: 800000,
  *   qty: 300,
- *   line_count: 25,  // 明細行数（件数）
- *   slip_count: 18,  // 伝票数
- *   count: 25,       // 表示値=line_count
- *   unit_price: 2666.67
+ *   lineCount: 25,  // 明細行数（件数）
+ *   slipCount: 18,  // 伝票数
+ *   count: 25,       // 表示値=lineCount
+ *   unitPrice: 2666.67
  * }
  */
 export interface MetricEntry {
@@ -183,10 +183,10 @@ export interface MetricEntry {
   name: string;
   amount: number;
   qty: number;
-  line_count: number;
-  slip_count: number;
+  lineCount: number;
+  slipCount: number;
   count: number;
-  unit_price: number | null;
+  unitPrice: number | null;
   dateKey?: YYYYMMDD;
 }
 
@@ -205,8 +205,8 @@ export interface MetricEntry {
  *   repId: 'rep_a',
  *   repName: '営業A',
  *   topN: [
- *     { id: 'c_alpha', name: '顧客アルファ', amount: 1500000, qty: 500, count: 15, unit_price: 3000 },
- *     { id: 'c_bravo', name: '顧客ブラボー', amount: 1200000, qty: 400, count: 12, unit_price: 3000 },
+ *     { id: 'c_alpha', name: '顧客アルファ', amount: 1500000, qty: 500, count: 15, unitPrice: 3000 },
+ *     { id: 'c_bravo', name: '顧客ブラボー', amount: 1200000, qty: 400, count: 12, unitPrice: 3000 },
  *     // ... 以下TopN件
  *   ]
  * }
@@ -370,22 +370,22 @@ export interface DailySeriesQuery {
  * 日次推移データポイント
  * 
  * @description 日次推移グラフの1日分のデータ
- * @property date - 日付（YYYY-MM-DD形式）
+ * @property date - 日付（YYYY-MM-DD）
  * @property amount - その日の売上金額
  * @property qty - その日の数量
- * @property line_count - その日の明細行数（件数） - COUNT(*)
- * @property slip_count - その日の伝票数（台数） - COUNT(DISTINCT slip_no)
- * @property count - 表示用カウント値（現状は slip_count を使用）
- * @property unit_price - その日の平均単価
+ * @property lineCount - その日の明細行数（件数） - COUNT(*)
+ * @property slipCount - その日の伝票数（台数） - COUNT(DISTINCT slip_no)
+ * @property count - 表示用カウント値（現状は slipCount を使用）
+ * @property unitPrice - その日の平均単価
  */
 export interface DailyPoint {
   date: YYYYMMDD;
   amount: number;
   qty: number;
-  line_count: number;
-  slip_count: number;
+  lineCount: number;
+  slipCount: number;
   count: number;
-  unit_price: number | null;
+  unitPrice: number | null;
 }
 
 // ========================================
@@ -578,10 +578,11 @@ export interface DetailLine {
   mode: DetailMode;
   salesDate: string;
   slipNo: number;
+  slipTypeName: string;
   repName: string;
   customerName: string;
   itemId: number | null;
-  itemName: string;
+  itemName: string | null;
   lineCount: number | null;
   qtyKg: number;
   unitPriceYenPerKg: number | null;
