@@ -126,8 +126,8 @@ class LostCustomerDTO(BaseModel):
     """Lost customer data transfer object."""
     customer_id: str = Field(description="Customer ID")
     customer_name: str = Field(description="Customer name")
-    sales_rep_id: Optional[str] = Field(default=None, description="Sales representative ID")
-    sales_rep_name: Optional[str] = Field(default=None, description="Sales representative name")
+    rep_id: Optional[str] = Field(default=None, description="Sales representative ID")
+    rep_name: Optional[str] = Field(default=None, description="Sales representative name")
     last_visit_date: date_type = Field(description="Last visit date in previous period")
     prev_visit_days: int = Field(description="Number of visit days in previous period")
     prev_total_amount_yen: float = Field(description="Total amount in yen for previous period")
@@ -147,8 +147,8 @@ class CustomerChurnAnalyzeResponse(BaseModel):
 
 class SalesRepDTO(BaseModel):
     """Sales representative data."""
-    sales_rep_id: str = Field(description="Sales rep ID")
-    sales_rep_name: str = Field(description="Sales rep name")
+    rep_id: str = Field(description="Sales rep ID")
+    rep_name: str = Field(description="Sales rep name")
 
     model_config = ConfigDict(from_attributes=True)
 

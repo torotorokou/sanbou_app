@@ -72,7 +72,7 @@ export function useFiltersViewModel(params: UseFiltersViewModelParams): UseFilte
 
   // ========== Query ==========
   const query: SummaryQuery = useMemo(() => {
-    const base = { mode, repIds, filterIds, sortBy, order, topN };
+    const base = { mode, repIds, filterIds, sortBy, order, topN, categoryKind: 'waste' as const };
     if (periodMode === 'single') return { ...base, month: month.format('YYYY-MM') };
     if (range)
       return {

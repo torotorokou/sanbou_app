@@ -65,8 +65,8 @@ class CustomerChurnQueryAdapter:
                     SUM(total_qty_kg)           AS prev_total_qty_kg,
                     MAX(sales_date)             AS last_visit_date,
                     MAX(customer_name)          AS customer_name,
-                    MAX(sales_rep_id)           AS sales_rep_id,
-                    MAX(sales_rep_name)         AS sales_rep_name
+                    MAX(rep_id)           AS rep_id,
+                    MAX(rep_name)         AS rep_name
                 FROM mart.v_customer_sales_daily
                 WHERE sales_date BETWEEN :previous_start AND :previous_end
                 GROUP BY customer_id
@@ -80,8 +80,8 @@ class CustomerChurnQueryAdapter:
             SELECT
                 p.customer_id,
                 p.customer_name,
-                p.sales_rep_id,
-                p.sales_rep_name,
+                p.rep_id,
+                p.rep_name,
                 p.last_visit_date,
                 p.prev_visit_days,
                 p.prev_total_amount_yen,
@@ -111,8 +111,8 @@ class CustomerChurnQueryAdapter:
                 LostCustomer(
                     customer_id=row.customer_id,
                     customer_name=row.customer_name or "",
-                    sales_rep_id=row.sales_rep_id,
-                    sales_rep_name=row.sales_rep_name,
+                    rep_id=row.rep_id,
+                    rep_name=row.rep_name,
                     last_visit_date=row.last_visit_date,
                     prev_visit_days=row.prev_visit_days,
                     prev_total_amount_yen=float(row.prev_total_amount_yen or 0),

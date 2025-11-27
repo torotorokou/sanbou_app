@@ -18,14 +18,14 @@ export class CustomerChurnHttpRepository implements CustomerChurnRepository {
     async getSalesReps(): Promise<SalesRep[]> {
         const response = await coreApi.get<{
             sales_reps: Array<{
-                sales_rep_id: string;
-                sales_rep_name: string;
+                rep_id: string;
+                rep_name: string;
             }>;
         }>('/core_api/analysis/sales-reps');
 
         return response.sales_reps.map((rep) => ({
-            salesRepId: rep.sales_rep_id,
-            salesRepName: rep.sales_rep_name,
+            salesRepId: rep.rep_id,
+            salesRepName: rep.rep_name,
         }));
     }
 
@@ -40,8 +40,8 @@ export class CustomerChurnHttpRepository implements CustomerChurnRepository {
             lost_customers: Array<{
                 customer_id: string;
                 customer_name: string;
-                sales_rep_id: string | null;
-                sales_rep_name: string | null;
+                rep_id: string | null;
+                rep_name: string | null;
                 last_visit_date: string;
                 prev_visit_days: number;
                 prev_total_amount_yen: number;
@@ -58,8 +58,8 @@ export class CustomerChurnHttpRepository implements CustomerChurnRepository {
         return response.lost_customers.map((customer) => ({
             customerId: customer.customer_id,
             customerName: customer.customer_name,
-            salesRepId: customer.sales_rep_id,
-            salesRepName: customer.sales_rep_name,
+            salesRepId: customer.rep_id,
+            salesRepName: customer.rep_name,
             lastVisitDate: customer.last_visit_date,
             prevVisitDays: customer.prev_visit_days,
             prevTotalAmountYen: customer.prev_total_amount_yen,

@@ -17,8 +17,8 @@ class LostCustomer:
     """
     customer_id: str
     customer_name: str
-    sales_rep_id: Optional[str]
-    sales_rep_name: Optional[str]
+    rep_id: Optional[str]
+    rep_name: Optional[str]
     last_visit_date: date_type
     prev_visit_days: int
     prev_total_amount_yen: float
