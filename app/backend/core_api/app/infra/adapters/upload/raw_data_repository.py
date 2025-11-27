@@ -473,12 +473,13 @@ class RawDataRepository:
                 "deleted_by": deleted_by,
             })
             affected_rows = result.rowcount
-            self.db.commit()
+            # NOTE: commit は呼び出し側(UseCase)で実行する
+            # トランザクションの一貫性を保つため、soft delete と INSERT を同一トランザクション内で実行
             
             logger.info(
                 f"[SOFT_DELETE] ✅ soft_delete_scope_by_dates: table={table_name}, csv_kind={csv_kind}, "
                 f"dates={normalized_dates[:5]}{'...' if len(normalized_dates) > 5 else ''}, "
-                f"deleted_by={deleted_by}, ⚠️ affected_rows={affected_rows}"
+                f"deleted_by={deleted_by}, ⚠️ affected_rows={affected_rows} (not committed yet)"
             )
             return affected_rows
             
@@ -874,9 +875,8 @@ class RawDataRepository:
                     'shogun_flash_receive' as csv_kind,
                     COUNT(*) as row_count
                 FROM log.upload_file uf
-                JOIN stg.shogun_flash_receive r ON r.upload_file_id = uf.id
-                WHERE r.is_deleted = false
-                  AND r.slip_date IS NOT NULL
+                JOIN stg.v_active_shogun_flash_receive r ON r.upload_file_id = uf.id
+                WHERE r.slip_date IS NOT NULL
                   AND r.slip_date >= :start_date
                   AND r.slip_date <= :end_date
                 GROUP BY uf.id, r.slip_date

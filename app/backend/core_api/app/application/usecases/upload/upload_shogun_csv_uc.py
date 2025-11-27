@@ -285,15 +285,40 @@ class UploadShogunCsvUseCase:
                 self._mark_all_as_failed(upload_file_ids, f"Format error: {format_error.detail}")
                 return
             
-            # ★ stg層保存前に既存有効データを論理削除（パターンA: 同一日付＋種別は最後のアップロードだけ有効）
-            if self.raw_data_repo:
-                deleted_by = uploaded_by or "system_auto_replace"
-                self._soft_delete_existing_data_by_dates(formatted_dfs, file_type, deleted_by)
-            
-            # stg層保存
-            stg_result = await self._save_data(
-                self.stg_writer, formatted_dfs, dummy_files, "stg", upload_file_ids
-            )
+            # ★ トランザクション開始: soft delete + INSERT を同一トランザクション内で実行
+            try:
+                # 1. stg層保存前に既存有効データを論理削除（パターンA: 同一日付＋種別は最後のアップロードだけ有効）
+                if self.raw_data_repo:
+                    deleted_by = uploaded_by or "system_auto_replace"
+                    self._soft_delete_existing_data_by_dates(formatted_dfs, file_type, deleted_by)
+                
+                # 2. stg層保存
+                stg_result = await self._save_data(
+                    self.stg_writer, formatted_dfs, dummy_files, "stg", upload_file_ids
+                )
+                
+                # stg_result をチェック: エラーがある場合は rollback
+                has_error = any(r.get("status") == "error" for r in stg_result.values())
+                if has_error:
+                    if self.raw_data_repo:
+                        self.raw_data_repo.db.rollback()
+                        logger.error(f"[BG] Transaction rolled back: stg save had errors")
+                    self._mark_all_as_failed(upload_file_ids, "stg save error")
+                    return
+                
+                # 3. 両方成功した場合のみ commit
+                if self.raw_data_repo:
+                    self.raw_data_repo.db.commit()
+                    logger.info("[BG] Transaction committed: soft delete + INSERT completed successfully")
+                
+            except Exception as tx_error:
+                # どちらかが失敗したら rollback
+                if self.raw_data_repo:
+                    self.raw_data_repo.db.rollback()
+                    logger.error(f"[BG] Transaction rolled back due to exception: {tx_error}")
+                logger.error(f"[BG] stg save failed: {tx_error.detail if hasattr(tx_error, 'detail') else str(tx_error)}")
+                self._mark_all_as_failed(upload_file_ids, f"stg save error: {str(tx_error)}")
+                return
             
             # ステータス更新
             self._update_upload_logs(upload_file_ids, formatted_dfs, stg_result)
@@ -444,15 +469,36 @@ class UploadShogunCsvUseCase:
             self._mark_all_as_failed(upload_file_ids, "CSV format error")
             return format_error
         
-        # 7. stg層保存前に既存有効データを論理削除（パターンA: 同一日付＋種別は最後のアップロードだけ有効）
-        if self.raw_data_repo:
-            deleted_by = uploaded_by or "system_auto_replace"
-            self._soft_delete_existing_data_by_dates(formatted_dfs, file_type, deleted_by)
-        
-        # 8. stg層への保存（フォーマット済みデータ = 英語カラム名、型変換済み）
-        stg_result = await self._save_data(
-            self.stg_writer, formatted_dfs, uploaded_files, "stg", upload_file_ids
-        )
+        # 7-8. ★ トランザクション開始: soft delete + INSERT を同一トランザクション内で実行
+        try:
+            # 7. stg層保存前に既存有効データを論理削除（パターンA: 同一日付＋種別は最後のアップロードだけ有効）
+            if self.raw_data_repo:
+                deleted_by = uploaded_by or "system_auto_replace"
+                self._soft_delete_existing_data_by_dates(formatted_dfs, file_type, deleted_by)
+            
+            # 8. stg層への保存（フォーマット済みデータ = 英語カラム名、型変換済み）
+            stg_result = await self._save_data(
+                self.stg_writer, formatted_dfs, uploaded_files, "stg", upload_file_ids
+            )
+            
+            # 両方成功した場合のみ commit
+            if self.raw_data_repo:
+                self.raw_data_repo.db.commit()
+                logger.info("[SYNC] Transaction committed: soft delete + INSERT completed successfully")
+            
+        except Exception as tx_error:
+            # どちらかが失敗したら rollback
+            if self.raw_data_repo:
+                self.raw_data_repo.db.rollback()
+                logger.error(f"[SYNC] Transaction rolled back due to error: {tx_error}")
+            
+            error_detail = tx_error.detail if hasattr(tx_error, 'detail') else str(tx_error)
+            self._mark_all_as_failed(upload_file_ids, f"stg save error: {error_detail}")
+            return ErrorApiResponse(
+                code="STG_SAVE_ERROR",
+                detail=f"stg層への保存に失敗しました: {error_detail}",
+                status_code=500,
+            )
         
         # 9. log.upload_file のステータスを更新
         self._update_upload_logs(upload_file_ids, formatted_dfs, stg_result)

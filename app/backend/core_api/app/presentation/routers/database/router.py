@@ -300,9 +300,8 @@ def get_upload_calendar(
                     'shogun_flash_receive'::text AS csv_kind,
                     COUNT(*) AS row_count
                 FROM log.upload_file uf
-                JOIN stg.shogun_flash_receive s ON s.upload_file_id = uf.id
+                JOIN stg.v_active_shogun_flash_receive s ON s.upload_file_id = uf.id
                 WHERE uf.is_deleted = false
-                  AND s.is_deleted = false
                   AND s.slip_date IS NOT NULL
                   AND s.slip_date >= :start_date
                   AND s.slip_date <= :end_date
