@@ -142,7 +142,7 @@ export function usePivotViewModel(params: UsePivotViewModelParams): UsePivotView
           ...prev,
           [targetAxis]: reset ? page.rows : prev[targetAxis].concat(page.rows),
         }));
-        setPivotCursor((prev) => ({ ...prev, [targetAxis]: page.next_cursor }));
+        setPivotCursor((prev) => ({ ...prev, [targetAxis]: page.nextCursor }));
       } catch (error) {
         console.error('Failed to fetch pivot:', error);
       } finally {

@@ -328,13 +328,13 @@ export interface PivotQuery {
  * 
  * @description ページネーションのレスポンス型
  * @property rows - 取得されたデータ行配列
- * @property next_cursor - 次ページのカーソル（最終ページの場合はnull）
+ * @property nextCursor - 次ページのカーソル（最終ページの場合はnull）
  * 
  * @template T - ページネーション対象のデータ型（通常は MetricEntry）
  */
 export interface CursorPage<T> {
   rows: T[];
-  next_cursor: string | null;
+  nextCursor: string | null;
 }
 
 /**
@@ -578,7 +578,6 @@ export interface DetailLine {
   mode: DetailMode;
   salesDate: string;
   slipNo: number;
-  slipTypeName: string;
   repName: string;
   customerName: string;
   itemId: number | null;

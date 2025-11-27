@@ -293,7 +293,7 @@ function paginateWithCursor<T>(
   
   return {
     rows: sorted.slice(start, end),
-    next_cursor: end < sorted.length ? String(end) : null,
+    nextCursor: end < sorted.length ? String(end) : null,
   };
 }
 
@@ -476,7 +476,7 @@ export class MockSalesPivotRepository implements SalesPivotRepository {
       return page;
     } else {
       await delay();
-      return { rows: rows.slice(0, params.topN), next_cursor: null };
+      return { rows: rows.slice(0, params.topN), nextCursor: null };
     }
   }
 
@@ -693,11 +693,11 @@ export class HttpSalesPivotRepository implements SalesPivotRepository {
         name: string;
         amount: number;
         qty: number;
-        line_count: number;
-        slip_count: number;
+        lineCount: number;
+        slipCount: number;
         count: number;
-        unit_price: number | null;
-        date_key?: string | null;
+        unitPrice: number | null;
+        dateKey?: string | null;
       }>;
     }
 
@@ -712,11 +712,11 @@ export class HttpSalesPivotRepository implements SalesPivotRepository {
         name: m.name,
         amount: m.amount,
         qty: m.qty,
-        lineCount: m.line_count,
-        slipCount: m.slip_count,
+        lineCount: m.lineCount,
+        slipCount: m.slipCount,
         count: m.count,
-        unitPrice: m.unit_price,
-        dateKey: m.date_key ?? undefined,
+        unitPrice: m.unitPrice,
+        dateKey: m.dateKey ?? undefined,
       })),
     }));
   }
@@ -760,13 +760,13 @@ export class HttpSalesPivotRepository implements SalesPivotRepository {
         name: string;
         amount: number;
         qty: number;
-        line_count: number;
-        slip_count: number;
+        lineCount: number;
+        slipCount: number;
         count: number;
-        unit_price: number | null;
-        date_key?: string | null;
+        unitPrice: number | null;
+        dateKey?: string | null;
       }>;
-      next_cursor: string | null;
+      nextCursor: string | null;
     }
 
     const res = await coreApi.post<ApiCursorPage>('/core_api/analytics/sales-tree/pivot', req);
@@ -777,13 +777,13 @@ export class HttpSalesPivotRepository implements SalesPivotRepository {
         name: m.name,
         amount: m.amount,
         qty: m.qty,
-        lineCount: m.line_count,
-        slipCount: m.slip_count,
+        lineCount: m.lineCount,
+        slipCount: m.slipCount,
         count: m.count,
-        unitPrice: m.unit_price,
-        dateKey: m.date_key ?? undefined,
+        unitPrice: m.unitPrice,
+        dateKey: m.dateKey ?? undefined,
       })),
-      next_cursor: res.next_cursor,
+      nextCursor: res.nextCursor,
     };
   }
 
@@ -818,10 +818,10 @@ export class HttpSalesPivotRepository implements SalesPivotRepository {
       date: string;
       amount: number;
       qty: number;
-      line_count: number;
-      slip_count: number;
+      lineCount: number;
+      slipCount: number;
       count: number;
-      unit_price: number | null;
+      unitPrice: number | null;
     }
 
     const res = await coreApi.post<ApiDailyPoint[]>('/core_api/analytics/sales-tree/daily-series', req);
@@ -830,10 +830,10 @@ export class HttpSalesPivotRepository implements SalesPivotRepository {
       date: p.date,
       amount: p.amount,
       qty: p.qty,
-      lineCount: p.line_count,
-      slipCount: p.slip_count,
+      lineCount: p.lineCount,
+      slipCount: p.slipCount,
       count: p.count,
-      unitPrice: p.unit_price,
+      unitPrice: p.unitPrice,
     }));
   }
 
