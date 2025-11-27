@@ -440,11 +440,18 @@ def get_calendar_month_uc(
 # ========================================================================
 from app.application.usecases.upload.get_upload_status_uc import GetUploadStatusUseCase
 from app.application.usecases.upload.get_upload_calendar_uc import GetUploadCalendarUseCase
+from app.application.usecases.upload.get_upload_calendar_detail_uc import GetUploadCalendarDetailUseCase
 from app.application.usecases.upload.delete_upload_scope_uc import DeleteUploadScopeUseCase
+from app.infra.adapters.upload.upload_calendar_query_adapter import UploadCalendarQueryAdapter
 
 
 # RawDataRepository は既に定義されているので、それを再利用
 # get_raw_data_repo() は既に定義済み（上部参照）
+
+
+def get_upload_calendar_query_adapter(db: Session = Depends(get_db)) -> UploadCalendarQueryAdapter:
+    """UploadCalendarQueryAdapter提供"""
+    return UploadCalendarQueryAdapter(db)
 
 
 def get_upload_status_uc(
@@ -459,6 +466,13 @@ def get_upload_calendar_uc(
 ) -> GetUploadCalendarUseCase:
     """GetUploadCalendarUseCase提供"""
     return GetUploadCalendarUseCase(query=repo)
+
+
+def get_upload_calendar_detail_uc(
+    query: UploadCalendarQueryAdapter = Depends(get_upload_calendar_query_adapter)
+) -> GetUploadCalendarDetailUseCase:
+    """GetUploadCalendarDetailUseCase提供"""
+    return GetUploadCalendarDetailUseCase(query=query)
 
 
 def get_delete_upload_scope_uc(
