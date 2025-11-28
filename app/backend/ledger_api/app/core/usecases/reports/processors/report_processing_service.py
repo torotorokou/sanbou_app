@@ -16,7 +16,7 @@ from backend_shared.infra.adapters.presentation.response_error import NoFilesUpl
 from backend_shared.infra.adapters.fastapi.error_handlers import DomainError
 from backend_shared.utils.csv_reader import read_csv_files
 from backend_shared.utils.date_filter_utils import (
-    filter_by_period_from_min_date as shared_filter_by_period_from_min_date,
+    filter_by_period_from_max_date as shared_filter_by_period_from_max_date,
 )
 
 
@@ -109,7 +109,7 @@ class ReportProcessingService:
                         )
 
                 try:
-                    dfs = shared_filter_by_period_from_min_date(dfs, period_type)
+                    dfs = shared_filter_by_period_from_max_date(dfs, period_type)
                     print(f"Applied date filtering by period: {period_type}")
                     print("[DEBUG] DataFrame shapes AFTER filtering:")
                     for csv_type, df in dfs.items():

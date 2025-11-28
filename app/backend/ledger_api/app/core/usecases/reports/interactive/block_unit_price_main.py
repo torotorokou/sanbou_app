@@ -32,6 +32,9 @@ class BlockUnitPriceInteractive(BaseInteractiveReportGenerator):
     def __init__(self, files: Optional[Dict[str, Any]] = None):
         super().__init__(report_key="block_unit_price", files=files or {})
         self.logger = logger
+        # 最新の日付のみを対象とする
+        self.period_type = "oneday"
+        self.date_filter_strategy = "max"
 
     def initial_step(self, df_formatted: Dict[str, Any]):  # type: ignore[override]
         """初期ステップ: 運搬業者選択肢を生成"""

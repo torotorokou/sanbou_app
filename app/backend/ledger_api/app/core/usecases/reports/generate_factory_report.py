@@ -30,7 +30,7 @@ from app.core.ports.inbound.report_repository import ArtifactUrls
 from app.core.domain.reports.factory_report import FactoryReport
 from backend_shared.infra.adapters.fastapi.error_handlers import DomainError
 from backend_shared.utils.date_filter_utils import (
-    filter_by_period_from_min_date as shared_filter_by_period_from_min_date,
+    filter_by_period_from_max_date as shared_filter_by_period_from_max_date,
 )
 
 # 既存のドメインロジックを再利用（将来的には Entity に移行）
@@ -132,7 +132,7 @@ class GenerateFactoryReportUseCase:
                     extra={"period_type": period_type},
                 )
                 try:
-                    dfs = shared_filter_by_period_from_min_date(dfs, period_type)
+                    dfs = shared_filter_by_period_from_max_date(dfs, period_type)
                     logger.debug(
                         "Step 2.5: 期間フィルタ完了",
                         extra={

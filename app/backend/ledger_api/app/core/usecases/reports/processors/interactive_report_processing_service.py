@@ -26,6 +26,7 @@ from app.infra.adapters.session import session_store
 # (NoFilesUploadedResponse, read_csv_files は base クラス経由で利用しないため削除)
 from backend_shared.utils.date_filter_utils import (
     filter_by_period_from_min_date as shared_filter_by_period_from_min_date,
+    filter_by_period_from_max_date as shared_filter_by_period_from_max_date,
 )
 
 
@@ -66,9 +67,14 @@ class InteractiveReportProcessingService(ReportProcessingService):
             return {"status": "error", "message": str(validation_error)}
 
         period_type = getattr(generator, "period_type", None)
+        date_filter_strategy = getattr(generator, "date_filter_strategy", "min")
+
         if period_type:
             try:
-                dfs = shared_filter_by_period_from_min_date(dfs, period_type)
+                if date_filter_strategy == "max":
+                    dfs = shared_filter_by_period_from_max_date(dfs, period_type)
+                else:
+                    dfs = shared_filter_by_period_from_min_date(dfs, period_type)
             except Exception as e:  # noqa: BLE001
                 print(f"[WARN] date filtering skipped: {e}")
 
