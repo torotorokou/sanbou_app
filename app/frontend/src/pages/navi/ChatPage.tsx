@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { ROUTER_PATHS } from '@app/routes/routes';
 import { useNaviChat } from '@features/navi';
-import { NaviLayout } from '@features/navi/ui';
-import { PdfReferenceButton } from '@features/navi/ui';
+import { NaviLayout, PdfReferenceButton, UsageWarningModal } from '@features/navi/ui';
 import { normalizePdfUrl } from '@features/navi';
 import type { StepItem } from '@features/navi';
 import styles from './ChatPage.module.css';
@@ -15,6 +16,16 @@ const stepItems: StepItem[] = [
 
 const ChatPage: React.FC = () => {
   const vm = useNaviChat();
+  const navigate = useNavigate();
+  const [isWarningModalVisible, setIsWarningModalVisible] = useState(true);
+
+  const handleAgree = () => {
+    setIsWarningModalVisible(false);
+  };
+
+  const handleCancel = () => {
+    navigate(ROUTER_PATHS.PORTAL);
+  };
 
   const handlePdfClick = () => {
     if (vm.pdfUrl) {
@@ -27,6 +38,12 @@ const ChatPage: React.FC = () => {
 
   return (
     <div className={styles.pageContainer}>
+      <UsageWarningModal
+        open={isWarningModalVisible}
+        onAgree={handleAgree}
+        onCancel={handleCancel}
+      />
+
       <NaviLayout
         loading={vm.loading}
         currentStep={vm.currentStep}
