@@ -8,7 +8,7 @@ from fastapi import APIRouter, Request
 from fastapi.responses import StreamingResponse, JSONResponse
 import httpx
 
-from app.shared.exceptions import ExternalServiceError, ValidationError
+from backend_shared.core.domain.exceptions import ExternalServiceError, ValidationError
 
 logger = logging.getLogger(__name__)
 

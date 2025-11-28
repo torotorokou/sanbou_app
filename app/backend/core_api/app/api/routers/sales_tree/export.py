@@ -12,7 +12,7 @@ from fastapi.responses import Response
 from app.config.di_providers import get_export_sales_tree_csv_uc
 from app.core.usecases.sales_tree.export_csv_uc import ExportSalesTreeCSVUseCase
 from app.core.domain.sales_tree import ExportRequest
-from app.shared.exceptions import InfrastructureError
+from backend_shared.core.domain.exceptions import InfrastructureError
 
 logger = logging.getLogger(__name__)
 router = APIRouter()

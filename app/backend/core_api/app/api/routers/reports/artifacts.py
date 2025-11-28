@@ -7,7 +7,7 @@ from fastapi import APIRouter, Request
 from fastapi.responses import StreamingResponse
 import httpx
 
-from app.shared.exceptions import ExternalServiceError
+from backend_shared.core.domain.exceptions import ExternalServiceError
 
 logger = logging.getLogger(__name__)
 

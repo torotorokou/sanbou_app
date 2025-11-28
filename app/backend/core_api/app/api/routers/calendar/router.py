@@ -15,7 +15,7 @@ import logging
 from app.core.usecases.calendar.get_calendar_month_uc import GetCalendarMonthUseCase
 from app.core.usecases.calendar.dto import GetCalendarMonthInput
 from app.config.di_providers import get_calendar_month_uc
-from app.shared.exceptions import ValidationError, InfrastructureError
+from backend_shared.core.domain.exceptions import ValidationError, InfrastructureError
 
 logger = logging.getLogger(__name__)
 

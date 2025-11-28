@@ -17,7 +17,7 @@ from app.config.di_providers import (
 )
 from app.core.usecases.upload.get_upload_calendar_detail_uc import GetUploadCalendarDetailUseCase
 from app.core.usecases.upload.delete_upload_scope_uc import DeleteUploadScopeUseCase
-from app.shared.exceptions import ValidationError, InfrastructureError, NotFoundError
+from backend_shared.core.domain.exceptions import ValidationError, InfrastructureError, NotFoundError
 
 logger = logging.getLogger(__name__)
 

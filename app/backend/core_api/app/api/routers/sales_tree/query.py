@@ -26,7 +26,7 @@ from app.core.domain.sales_tree import (
     PivotRequest,
     CursorPage,
 )
-from app.shared.exceptions import InfrastructureError
+from backend_shared.core.domain.exceptions import InfrastructureError
 
 logger = logging.getLogger(__name__)
 router = APIRouter()

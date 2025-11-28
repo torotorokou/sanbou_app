@@ -16,7 +16,7 @@ from fastapi import APIRouter, Depends, Query
 from app.config.di_providers import get_sales_tree_repo
 from app.infra.adapters.sales_tree.sales_tree_repository import SalesTreeRepository
 from app.core.domain.sales_tree import CategoryKind
-from app.shared.exceptions import InfrastructureError
+from backend_shared.core.domain.exceptions import InfrastructureError
 
 logger = logging.getLogger(__name__)
 router = APIRouter()

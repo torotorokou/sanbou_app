@@ -37,7 +37,7 @@ from app.core.usecases.forecast.forecast_job_uc import (
     GetPredictionsUseCase,
 )
 from app.api.schemas import ForecastJobCreate, ForecastJobResponse, PredictionDTO
-from app.shared.exceptions import NotFoundError
+from backend_shared.core.domain.exceptions import NotFoundError
 
 router = APIRouter(prefix="/forecast", tags=["forecast"])
 
