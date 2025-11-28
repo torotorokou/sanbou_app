@@ -10,7 +10,7 @@ from pathlib import Path
 import json
 import yaml
 from typing import Dict, Tuple, List
-from app.utils.file_utils import PDF_PATH, JSON_PATH, FAISS_PATH, ENV_PATH, YAML_PATH
+from app.shared.file_utils import PDF_PATH, JSON_PATH, FAISS_PATH, ENV_PATH, YAML_PATH
 from backend_shared.core.domain.exceptions import InfrastructureError, NotFoundError
 
 

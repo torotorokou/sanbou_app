@@ -3,13 +3,13 @@ OpenAI APIを用いたAI回答生成クライアント。
 """
 
 from typing import List, Optional
-from app.utils.chunk_utils import search_documents_with_category
+from app.shared.chunk_utils import search_documents_with_category
 from app.config.constants import build_prompt
 from openai import OpenAI
 import os
 from dotenv import load_dotenv
-from app.paths import CONFIG_ENV
-from app.utils.env_loader import load_env_and_secrets
+from app.config.paths import CONFIG_ENV
+from app.shared.env_loader import load_env_and_secrets
 
 print(f"[DEBUG] .env path: {CONFIG_ENV}")
 load_dotenv(dotenv_path=str(CONFIG_ENV))

@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import JSONResponse
 
-from app.routers import router as manuals_router
+from app.api.routers.manuals import router as manuals_router
 from backend_shared.core.domain.exceptions import (
     DomainException,
     ValidationError,

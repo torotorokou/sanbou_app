@@ -6,7 +6,7 @@
 """
 
 from typing import List
-from app.core.ports.pdf_service_port import PDFServiceBase
+from app.core.ports.rag.pdf_service_port import PDFServiceBase
 
 class MockPDFService(PDFServiceBase):
     """

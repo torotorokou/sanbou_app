@@ -1,4 +1,4 @@
-from .utils import build_manual_asset_url
+from app.utils.utils import build_manual_asset_url
 
 
 sections = [
@@ -101,52 +101,6 @@ sections = [
                 "flow_url": "https://example.com/ext_purchase_flow.png",
                 "video_url": "https://example.com/ext_purchase.mp4",
             },
-            {"id": "ext-gp", "title": "粗利入力", "route": "/manual/external/gross-profit"},
-        ],
-    },
-    {
-        "id": "billing",
-        "title": "請求書・支払い関係",
-        "icon": "DollarOutlined",
-        "items": [
-            {
-                "id": "doc-issue",
-                "title": "各書類の発行（相殺含む）",
-                "flow_url": "https://example.com/billing_issue_flow.pdf",
-                "video_url": "https://example.com/billing_issue.mp4",
-            },
-            {"id": "doc-reissue", "title": "各書類の再発行", "route": "/manual/billing/reissue"},
-            {"id": "doc-delete", "title": "各処理の削除", "route": "/manual/billing/delete"},
-        ],
-    },
-    {
-        "id": "e-manifest",
-        "title": "電子マニフェスト",
-        "icon": "FileSyncOutlined",
-        "items": [
-            {"id": "e-transport", "title": "運搬終了報告", "route": "/manual/emanifest/transport-finish"},
-            {"id": "e-disposal", "title": "処分終了報告", "route": "/manual/emanifest/disposal-finish"},
-            {
-                "id": "e-helper",
-                "title": "補助データ作成",
-                "flow_url": "https://example.com/emanifest_helper_flow.pdf",
-                "video_url": "https://example.com/emanifest_helper.mp4",
-            },
-            {
-                "id": "e-mix",
-                "title": "混合振り分け",
-                "flow_url": "https://example.com/emanifest_mix.png",
-                "video_url": "https://example.com/emanifest_mix.mp4",
-            },
-        ],
-    },
-    {
-        "id": "reports",
-        "title": "報告書",
-        "icon": "FileSearchOutlined",
-        "items": [
-            {"id": "report-result", "title": "実績報告", "route": "/manual/reports/results"},
-            {"id": "report-kofu", "title": "交付等状況報告書", "route": "/manual/reports/kofu"},
         ],
     },
 ]

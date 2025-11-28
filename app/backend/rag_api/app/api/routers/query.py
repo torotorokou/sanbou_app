@@ -14,44 +14,21 @@ from fastapi import APIRouter, Body, Request, Depends
 from fastapi.responses import FileResponse, StreamingResponse, JSONResponse
 from pydantic import BaseModel
 
-from app.core.usecases import file_ingest_service as loader
+from app.core.usecases.rag import file_ingest_service as loader
 from app.infra.adapters.pdf import pdf_loader
-from app.api.schemas.query_schema import QueryRequest
-from app.dependencies import get_dummy_response_service, get_ai_response_service
+from app.api.schemas.query_schema import QueryRequest, QueryResponse
+from app.api.dependencies import get_dummy_response_service, get_ai_response_service
 from backend_shared.infra.adapters.presentation.response_base import SuccessApiResponse, ErrorApiResponse
 from backend_shared.infra.adapters.presentation.response_utils import api_response
 
 router = APIRouter()
-
-# --- Pydanticモデル ---
-
-
-class QuestionRequest(BaseModel):
-    query: str
-    category: str
-    tags: List[str]
-
-
-class AnswerResponse(BaseModel):
-    answer: str
-    sources: List[Tuple[str, int]]
-
-
-# --- generate-answer用レスポンスモデル ---
-
-
-class QueryResponse(BaseModel):
-    answer: str
-    sources: Any
-    pages: Any
-
 
 # --- 質問を受け取ってダミー回答を返すAPI ---
 
 
 @router.post("/test-answer", tags=["dummy"])
 async def answer_api(
-    req: QuestionRequest,
+    req: QueryRequest,
     dummy_service=Depends(get_dummy_response_service),
 ) -> JSONResponse:
     try:
@@ -171,7 +148,7 @@ async def download_report(request: Request, pages: list = Body(..., embed=True))
     pages: [1] または [1,2,3] のようなリスト
     """
     try:
-        from app.utils.file_utils import PDF_PATH
+        from app.shared.file_utils import PDF_PATH
 
         pdf_path = str(PDF_PATH)
         print("[DEBUG][/download-report] pages:", pages, "pdf_path:", pdf_path)
@@ -249,7 +226,7 @@ def pdf_page(page_num: str):
     指定されたPDFページ番号の画像を返すエンドポイント。
     1ページの場合はPNG画像、範囲指定（例: 1-3）の場合はZIPで複数ページを返す。
     """
-    from app.utils.file_utils import PDF_PATH
+    from app.shared.file_utils import PDF_PATH
 
     pdf_path = str(PDF_PATH)
     print("[DEBUG][/pdf-page] page_num:", page_num, "pdf_path:", pdf_path)

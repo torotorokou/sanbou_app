@@ -11,9 +11,9 @@ from backend_shared.core.domain.exceptions import ValidationError, NotFoundError
 from fastapi.responses import JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from app.paths import CONFIG_ENV
-from app.utils.env_loader import load_env_and_secrets
-from app.api.routers import query  # ← query.py に router を定義
+from app.config.paths import CONFIG_ENV
+from app.shared.env_loader import load_env_and_secrets
+from app.api.routers import query, manuals  # ← query.py に router を定義
 
 
 # --- .env + secrets 読み込み --------------------------------------------------
@@ -121,6 +121,7 @@ setup_uvicorn_access_filter(excluded_paths=("/health",))
 # --- ルーター登録（mount より後に置かないと競合しない） -----------------------
 routers = [
     (query.router, "/api"),
+    (manuals.router, "/api"),
     # 追加ルーターがあればここに追記
 ]
 for router, prefix in routers:

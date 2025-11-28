@@ -2,10 +2,11 @@ from __future__ import annotations
 
 from typing import Dict, List, Optional
 
-from app.api.schemas.manuals import ManualDetail, ManualListResponse, ManualSectionChunk, ManualSummary, RagMetadata
+from app.core.domain.manuals.manual_entity import ManualDetail, ManualListResponse, ManualSectionChunk, ManualSummary, RagMetadata
+from app.core.ports.manuals.manuals_repository import ManualsRepository
 
 
-class InMemoryManualRepository:
+class InMemoryManualRepository(ManualsRepository):
     def __init__(self, base_url: str = "http://localhost:5173") -> None:
         # 簡易データ: shogun カテゴリの manual アイテムを2件
         self._items: Dict[str, ManualDetail] = {}
