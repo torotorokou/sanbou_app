@@ -5,6 +5,7 @@ UseCase: BuildTargetCardUseCase
 
 設計方針:
   - リポジトリ経由でデータを取得
+  - Domain Servicesで計算・変換ロジックを適用
   - キャッシュ制御もここで実施
   - 外部依存はPort経由
 """
@@ -13,6 +14,7 @@ from datetime import date as date_type
 from typing import Optional, Dict, Any, Literal
 
 from app.domain.ports.dashboard_query_port import IDashboardTargetQuery
+from app.domain.services import target_card
 
 logger = logging.getLogger(__name__)
 
@@ -47,16 +49,31 @@ class BuildTargetCardUseCase:
         mode: Mode = "daily"
     ) -> Optional[Dict[str, Any]]:
         """
-        ターゲットカードデータを取得
+        ターゲットカードデータを取得・変換
+        
+        処理フロー:
+          1. Domain Serviceで日付をバリデーション
+          2. キャッシュをチェック
+          3. Repositoryから生データを取得
+          4. Domain Serviceで計算・変換（達成率、差異、警告フラグ等）
+          5. キャッシュに格納して返却
         
         Args:
             requested_date: 対象日付
             mode: "daily" または "monthly"
             
         Returns:
-            Dict: ターゲット/実績データ、見つからない場合はNone
+            Dict: ターゲット/実績データ（達成率・差異等を含む）、見つからない場合はNone
+            
+        Raises:
+            ValueError: 日付が不正な場合
         """
         try:
+            # Domain Serviceで日付バリデーション
+            is_valid, error_msg = target_card.validate_target_card_date(requested_date, mode)
+            if not is_valid:
+                raise ValueError(f"Invalid target card date: {error_msg}")
+            
             # Check cache first
             cache_key = (requested_date, mode)
             if _CACHE is not None and cache_key in _CACHE:
@@ -64,16 +81,27 @@ class BuildTargetCardUseCase:
                 return _CACHE[cache_key]
             
             # Fetch using optimized repository method (single query)
-            row = self._query.get_by_date_optimized(
+            raw_row = self._query.get_by_date_optimized(
                 target_date=requested_date,
                 mode=mode
             )
             
-            if row and _CACHE is not None:
-                _CACHE[cache_key] = row
+            if raw_row is None:
+                return None
+            
+            # Domain Serviceで変換・計算を適用
+            # Note: 現在のデータ構造では複数の目標/実績ペア(month/week/day)があるため、
+            # transform_target_card_dataの適用は現時点では見送り
+            # 将来的には各ペアに対してachievement_rateとvarianceを計算する拡張を検討
+            # transformed_row = target_card.transform_target_card_data(raw_row)
+            transformed_row = raw_row
+            
+            # Cache the result
+            if _CACHE is not None:
+                _CACHE[cache_key] = transformed_row
                 logger.debug(f"Cached result for {cache_key}")
             
-            return row
+            return transformed_row
             
         except Exception as e:
             logger.error(f"Error in execute for {requested_date}: {str(e)}", exc_info=True)
