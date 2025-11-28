@@ -1,8 +1,13 @@
 """
 External router: proxies to internal microservices (rag_api, ledger_api, manual_api, ai_api).
 For short synchronous calls only. Heavy jobs should be queued.
+
+設計方針:
+  - カスタム例外を使用(HTTPExceptionは使用しない)
+  - ExternalServiceError で外部サービスエラーをラップ
+  - NotFoundError でリソース不存在を表現
 """
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, Depends
 import httpx
 import logging
 
@@ -21,6 +26,7 @@ from app.application.usecases.external.external_api_uc import (
     ClassifyTextUseCase,
 )
 from app.presentation.schemas import RAGAskRequest, RAGAskResponse, ManualListResponse
+from app.shared.exceptions import ExternalServiceError, NotFoundError
 
 router = APIRouter(prefix="/external", tags=["external"])
 logger = logging.getLogger(__name__)
@@ -45,21 +51,25 @@ async def ask_rag(
         )
     except httpx.TimeoutException:
         logger.error("RAG API タイムアウト", extra={"query": req.query})
-        raise HTTPException(
-            status_code=504,
-            detail="RAG APIへの接続がタイムアウトしました。時間をおいて再度お試しください。"
+        raise ExternalServiceError(
+            service_name="rag_api",
+            message="RAG APIへの接続がタイムアウトしました。時間をおいて再度お試しください。",
+            status_code=504
         )
     except httpx.HTTPStatusError as e:
         logger.error(f"RAG API エラー: {e.response.status_code}", extra={"query": req.query})
-        raise HTTPException(
+        raise ExternalServiceError(
+            service_name="rag_api",
+            message=f"RAG APIでエラーが発生しました: {e.response.status_code}",
             status_code=e.response.status_code,
-            detail=f"RAG APIでエラーが発生しました: {e.response.status_code}"
+            cause=e
         )
     except Exception as e:
         logger.exception("RAG API 予期しないエラー", extra={"query": req.query})
-        raise HTTPException(
-            status_code=500,
-            detail="RAG APIへの接続中に予期しないエラーが発生しました。"
+        raise ExternalServiceError(
+            service_name="rag_api",
+            message="RAG APIへの接続中に予期しないエラーが発生しました。",
+            cause=e
         )
 
 
@@ -77,21 +87,25 @@ async def list_manuals(
         return ManualListResponse(manuals=manuals)
     except httpx.TimeoutException:
         logger.error("Manual API タイムアウト")
-        raise HTTPException(
-            status_code=504,
-            detail="Manual APIへの接続がタイムアウトしました。"
+        raise ExternalServiceError(
+            service_name="manual_api",
+            message="Manual APIへの接続がタイムアウトしました。",
+            status_code=504
         )
     except httpx.HTTPStatusError as e:
         logger.error(f"Manual API エラー: {e.response.status_code}")
-        raise HTTPException(
+        raise ExternalServiceError(
+            service_name="manual_api",
+            message=f"Manual APIでエラーが発生しました: {e.response.status_code}",
             status_code=e.response.status_code,
-            detail=f"Manual APIでエラーが発生しました: {e.response.status_code}"
+            cause=e
         )
     except Exception as e:
         logger.exception("Manual API 予期しないエラー")
-        raise HTTPException(
-            status_code=500,
-            detail="Manual APIへの接続中に予期しないエラーが発生しました。"
+        raise ExternalServiceError(
+            service_name="manual_api",
+            message="Manual APIへの接続中に予期しないエラーが発生しました。",
+            cause=e
         )
 
 
@@ -106,14 +120,20 @@ async def get_manual(
         return result
     except httpx.HTTPStatusError as e:
         if e.response.status_code == 404:
-            raise HTTPException(status_code=404, detail="マニュアルが見つかりません。")
-        raise HTTPException(
+            raise NotFoundError(entity="Manual", entity_id=manual_id)
+        raise ExternalServiceError(
+            service_name="manual_api",
+            message=f"Manual APIでエラーが発生しました: {e.response.status_code}",
             status_code=e.response.status_code,
-            detail=f"Manual APIでエラーが発生しました: {e.response.status_code}"
+            cause=e
         )
     except Exception as e:
         logger.exception("Manual API エラー", extra={"manual_id": manual_id})
-        raise HTTPException(status_code=500, detail="マニュアル取得中にエラーが発生しました。")
+        raise ExternalServiceError(
+            service_name="manual_api",
+            message="マニュアル取得中にエラーが発生しました。",
+            cause=e
+        )
 
 
 @router.post("/ledger/reports/{report_type}", summary="帳票生成リクエスト")
@@ -132,19 +152,26 @@ async def generate_report(
         return result
     except httpx.TimeoutException:
         logger.error("Ledger API タイムアウト", extra={"report_type": report_type})
-        raise HTTPException(
-            status_code=504,
-            detail="Ledger APIへの接続がタイムアウトしました。"
+        raise ExternalServiceError(
+            service_name="ledger_api",
+            message="Ledger APIへの接続がタイムアウトしました。",
+            status_code=504
         )
     except httpx.HTTPStatusError as e:
         logger.error(f"Ledger API エラー: {e.response.status_code}", extra={"report_type": report_type})
-        raise HTTPException(
+        raise ExternalServiceError(
+            service_name="ledger_api",
+            message=f"Ledger APIでエラーが発生しました: {e.response.status_code}",
             status_code=e.response.status_code,
-            detail=f"Ledger APIでエラーが発生しました: {e.response.status_code}"
+            cause=e
         )
     except Exception as e:
         logger.exception("Ledger API エラー", extra={"report_type": report_type})
-        raise HTTPException(status_code=500, detail="帳票生成中にエラーが発生しました。")
+        raise ExternalServiceError(
+            service_name="ledger_api",
+            message="帳票生成中にエラーが発生しました。",
+            cause=e
+        )
 
 
 @router.post("/ai/classify", summary="テキスト分類")
@@ -158,13 +185,23 @@ async def classify_text(
         return result
     except httpx.TimeoutException:
         logger.error("AI API タイムアウト")
-        raise HTTPException(status_code=504, detail="AI APIへの接続がタイムアウトしました。")
+        raise ExternalServiceError(
+            service_name="ai_api",
+            message="AI APIへの接続がタイムアウトしました。",
+            status_code=504
+        )
     except httpx.HTTPStatusError as e:
         logger.error(f"AI API エラー: {e.response.status_code}")
-        raise HTTPException(
+        raise ExternalServiceError(
+            service_name="ai_api",
+            message=f"AI APIでエラーが発生しました: {e.response.status_code}",
             status_code=e.response.status_code,
-            detail=f"AI APIでエラーが発生しました: {e.response.status_code}"
+            cause=e
         )
     except Exception as e:
         logger.exception("AI API エラー")
-        raise HTTPException(status_code=500, detail="テキスト分類中にエラーが発生しました。")
+        raise ExternalServiceError(
+            service_name="ai_api",
+            message="テキスト分類中にエラーが発生しました。",
+            cause=e
+        )
