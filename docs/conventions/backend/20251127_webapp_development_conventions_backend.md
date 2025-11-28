@@ -20,6 +20,7 @@
 ```text
 app/
   api/
+   main.py
     routers/
     schemas/
   core/
