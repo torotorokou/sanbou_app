@@ -12,8 +12,8 @@ from fastapi import UploadFile
 from fastapi.responses import JSONResponse, Response
 
 from app.application.usecases.reports.base_generators import BaseReportGenerator
-from backend_shared.adapters.presentation.response_error import NoFilesUploadedResponse
-from backend_shared.adapters.fastapi.error_handlers import DomainError
+from backend_shared.infra.adapters.presentation.response_error import NoFilesUploadedResponse
+from backend_shared.infra.adapters.fastapi.error_handlers import DomainError
 from backend_shared.utils.csv_reader import read_csv_files
 from backend_shared.utils.date_filter_utils import (
     filter_by_period_from_min_date as shared_filter_by_period_from_min_date,

@@ -16,7 +16,7 @@ from fastapi.responses import JSONResponse
 
 from app.application.ports import CsvGateway, ReportRepository
 from app.application.domain.reports.average_sheet import AverageSheet
-from backend_shared.adapters.fastapi.error_handlers import DomainError
+from backend_shared.infra.adapters.fastapi.error_handlers import DomainError
 from backend_shared.utils.date_filter_utils import filter_by_period_from_min_date as shared_filter_by_period_from_min_date
 
 from app.application.usecases.reports.average_sheet import process as average_sheet_process

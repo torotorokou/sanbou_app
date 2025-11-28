@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from backend_shared.infrastructure.logging_utils import setup_uvicorn_access_filter
+from backend_shared.infra.frameworks.logging_utils import setup_uvicorn_access_filter
 from fastapi.responses import JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 

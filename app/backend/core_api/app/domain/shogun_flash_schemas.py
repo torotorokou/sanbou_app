@@ -10,7 +10,7 @@ config_loader から YAML を読み込んで動的にモデルを生成します
 from datetime import datetime
 from typing import Optional, Any
 from pydantic import BaseModel, Field, field_validator, ConfigDict, create_model
-from backend_shared.infrastructure.config.config_loader import ShogunCsvConfigLoader
+from backend_shared.config.config_loader import ShogunCsvConfigLoader
 
 
 # 型マッピング: YAML の type 文字列 → Python 型

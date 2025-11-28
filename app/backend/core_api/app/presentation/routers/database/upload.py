@@ -11,7 +11,7 @@ import logging
 from typing import Optional
 from fastapi import APIRouter, UploadFile, File, Depends, BackgroundTasks
 
-from backend_shared.adapters.presentation import ErrorApiResponse
+from backend_shared.infra.adapters.presentation import ErrorApiResponse
 from app.config.di_providers import get_uc_default, get_uc_flash, get_uc_stg_final
 from app.application.usecases.upload.upload_shogun_csv_uc import UploadShogunCsvUseCase
 

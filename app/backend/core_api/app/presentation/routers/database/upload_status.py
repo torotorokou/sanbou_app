@@ -8,7 +8,7 @@ Database Upload Status Router - Upload status query
 import logging
 from fastapi import APIRouter, Depends
 
-from backend_shared.adapters.presentation import SuccessApiResponse, ErrorApiResponse
+from backend_shared.infra.adapters.presentation import SuccessApiResponse, ErrorApiResponse
 from app.config.di_providers import get_upload_status_uc
 from app.application.usecases.upload.get_upload_status_uc import GetUploadStatusUseCase
 

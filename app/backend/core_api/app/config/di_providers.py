@@ -98,8 +98,8 @@ def get_repo_raw_final(db: Session = Depends(get_db)) -> ShogunCsvRepository:
 # UseCase Providers
 # ========================================================================
 from app.application.usecases.upload.upload_shogun_csv_uc import UploadShogunCsvUseCase
-from backend_shared.infrastructure.config.config_loader import ShogunCsvConfigLoader
-from backend_shared.usecases.csv_validator.csv_upload_validator_api import CSVValidationResponder
+from backend_shared.config.config_loader import ShogunCsvConfigLoader
+from backend_shared.core.usecases.csv_validator.csv_upload_validator_api import CSVValidationResponder
 
 # CSV設定とバリデーターの初期化（アプリケーションスコープで共有）
 _csv_config = ShogunCsvConfigLoader()
