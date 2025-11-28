@@ -29,7 +29,7 @@ from app.presentation.routers.forecast.router import router as forecast_router
 from app.presentation.routers.kpi.router import router as kpi_router
 from app.presentation.routers.external.router import router as external_router
 from app.presentation.routers.calendar.router import router as calendar_router
-from app.presentation.routers.reports.router import router as reports_router
+from app.presentation.routers.reports import router as reports_router
 from app.presentation.routers.chat.router import router as chat_router
 from app.presentation.routers.analysis.router import router as analysis_router
 from app.presentation.routers.database.router import router as database_router
