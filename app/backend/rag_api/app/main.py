@@ -7,6 +7,7 @@ from fastapi import FastAPI, Request, HTTPException
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from backend_shared.infra.frameworks.logging_utils import setup_uvicorn_access_filter
+from backend_shared.core.domain.exceptions import ValidationError, NotFoundError, InfrastructureError
 from fastapi.responses import JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -58,6 +59,46 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         content={
             "error": "リクエストの形式が正しくありません。",
             "detail": exc.errors(),
+        },
+    )
+
+# --- backend_shared exception handlers -----------------------------------------
+@app.exception_handler(ValidationError)
+async def handle_validation_error(request: Request, exc: ValidationError):
+    return JSONResponse(
+        status_code=400,
+        content={
+            "error": {
+                "code": "VALIDATION_ERROR",
+                "message": exc.message,
+                "field": exc.field,
+            }
+        },
+    )
+
+@app.exception_handler(NotFoundError)
+async def handle_not_found_error(request: Request, exc: NotFoundError):
+    return JSONResponse(
+        status_code=404,
+        content={
+            "error": {
+                "code": "NOT_FOUND",
+                "message": exc.message,
+                "entity": exc.entity,
+                "entity_id": str(exc.entity_id),
+            }
+        },
+    )
+
+@app.exception_handler(InfrastructureError)
+async def handle_infrastructure_error(request: Request, exc: InfrastructureError):
+    return JSONResponse(
+        status_code=503,
+        content={
+            "error": {
+                "code": "INFRASTRUCTURE_ERROR",
+                "message": exc.message,
+            }
         },
     )
 

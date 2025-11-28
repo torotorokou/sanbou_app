@@ -11,6 +11,7 @@ import json
 import yaml
 from typing import Dict, Tuple, List
 from app.utils.file_utils import PDF_PATH, JSON_PATH, FAISS_PATH, ENV_PATH, YAML_PATH
+from backend_shared.core.domain.exceptions import InfrastructureError, NotFoundError
 
 
 def get_resource_paths() -> Dict[str, str]:
@@ -44,12 +45,12 @@ def load_json_data(json_path: str) -> Dict:
         dict: パース済みJSONデータ
     """
     if not json_path or not os.path.exists(json_path):
-        raise FileNotFoundError(f"JSONファイルが見つかりません: {json_path}")
+        raise NotFoundError("JSON file", json_path)
     try:
         with open(json_path, encoding="utf-8") as f:
             return json.load(f)
     except Exception as e:
-        raise RuntimeError(f"JSONファイルの読み込みに失敗: {json_path} ({e})")
+        raise InfrastructureError(f"JSONファイルの読み込みに失敗: {json_path}", cause=e)
 
 
 def load_question_templates() -> List[Dict]:

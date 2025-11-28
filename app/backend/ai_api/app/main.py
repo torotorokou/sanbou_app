@@ -1,4 +1,5 @@
-from fastapi import FastAPI, APIRouter
+from fastapi import FastAPI, APIRouter, Request
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from typing import List
 import requests
@@ -6,6 +7,7 @@ import os
 from dotenv import load_dotenv
 from fastapi.middleware.cors import CORSMiddleware
 from backend_shared.infra.frameworks.logging_utils import setup_uvicorn_access_filter
+from backend_shared.core.domain.exceptions import ExternalServiceError, InfrastructureError
 
 # .envからAPIキーを読み込む
 load_dotenv()
@@ -17,6 +19,34 @@ app = FastAPI(
     version="1.0.0",
     root_path="/ai_api",  # ベースパスを統一
 )
+
+# Exception handlers for backend_shared exceptions
+@app.exception_handler(ExternalServiceError)
+async def handle_external_service_error(request: Request, exc: ExternalServiceError):
+    status_code = 502 if exc.status_code is None else (504 if exc.status_code >= 500 else 502)
+    return JSONResponse(
+        status_code=status_code,
+        content={
+            "error": {
+                "code": "EXTERNAL_SERVICE_ERROR",
+                "message": f"{exc.service_name}: {exc.message}",
+                "service": exc.service_name,
+                "status_code": exc.status_code,
+            }
+        },
+    )
+
+@app.exception_handler(InfrastructureError)
+async def handle_infrastructure_error(request: Request, exc: InfrastructureError):
+    return JSONResponse(
+        status_code=503,
+        content={
+            "error": {
+                "code": "INFRASTRUCTURE_ERROR",
+                "message": exc.message,
+            }
+        },
+    )
 
 # CORS設定
 app.add_middleware(
@@ -75,14 +105,21 @@ def chat(req: ChatRequest):
                 }
             ],
         }
-    except Exception as e:
-        import traceback
-
-        traceback.print_exc()
-        return {
-            "answer": f"Gemini APIとの通信に失敗しました。\nエラー: {str(e)}",
-            "sources": [],
-        }
+    except requests.exceptions.RequestException as e:
+        # Gemini API通信エラー
+        raise ExternalServiceError(
+            service_name="Gemini API",
+            message=f"Chat endpoint communication failed: {str(e)}",
+            status_code=getattr(e.response, 'status_code', None) if hasattr(e, 'response') else None,
+            cause=e
+        )
+    except (KeyError, IndexError) as e:
+        # レスポンス形式が不正
+        raise ExternalServiceError(
+            service_name="Gemini API",
+            message=f"Unexpected response format: {str(e)}",
+            cause=e
+        )
 
 
 @router.get("/intro")
@@ -111,11 +148,21 @@ def get_intro():
         data = response.json()
         message = data["candidates"][0]["content"]["parts"][0]["text"]
         return {"text": message}
-    except Exception as e:
-        import traceback
-
-        traceback.print_exc()
-        return {"text": f"Gemini APIとの通信に失敗しました。エラー: {str(e)}"}
+    except requests.exceptions.RequestException as e:
+        # Gemini API通信エラー
+        raise ExternalServiceError(
+            service_name="Gemini API",
+            message=f"Intro endpoint communication failed: {str(e)}",
+            status_code=getattr(e.response, 'status_code', None) if hasattr(e, 'response') else None,
+            cause=e
+        )
+    except (KeyError, IndexError) as e:
+        # レスポンス形式が不正
+        raise ExternalServiceError(
+            service_name="Gemini API",
+            message=f"Unexpected response format: {str(e)}",
+            cause=e
+        )
 
 
 # 疎通確認用
