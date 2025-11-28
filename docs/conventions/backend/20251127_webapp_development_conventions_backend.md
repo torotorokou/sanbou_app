@@ -19,8 +19,8 @@
 
 ```text
 app/
-  api/
-   main.py
+  main.py
+  api/  
     routers/
     schemas/
   core/

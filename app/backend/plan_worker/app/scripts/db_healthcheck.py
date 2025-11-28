@@ -2,7 +2,7 @@
 import json
 import sys
 
-from app.infrastructure.db.health import ping_db
+from app.infra.db.health import ping_db
 
 
 def main() -> int:
