@@ -12,7 +12,7 @@
 
 from fastapi import Request
 from fastapi.responses import JSONResponse
-from backend_shared.domain.contract import ProblemDetails
+from backend_shared.core.domain.contract import ProblemDetails
 
 
 class DomainError(Exception):

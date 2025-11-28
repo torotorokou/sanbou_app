@@ -13,7 +13,7 @@ from fastapi import UploadFile
 
 from app.application.ports import CsvGateway
 from backend_shared.utils.csv_reader import read_csv_files
-from backend_shared.adapters.presentation.response_error import (
+from backend_shared.infra.adapters.presentation.response_error import (
     NoFilesUploadedResponse,
     CSVReadErrorResponse,
 )
