@@ -7,6 +7,10 @@ Database Router - CSV upload and database operations
   - Router層は HTTP I/O と DI の入口のみ
   - ビジネスロジックは UseCase に委譲
   - DI は config/di_providers.py に集約
+  - カスタム例外を使用(HTTPExceptionは使用しない)
+  - ValidationError でバリデーションエラーを表現
+  - InfrastructureError でDB操作エラーを表現
+  - NotFoundError でリソース不存在を表現
 
 動作確認:
   - 4本のエンドポイントが正常に動作することを確認
@@ -16,7 +20,7 @@ Database Router - CSV upload and database operations
 import logging
 from typing import Optional
 from datetime import date
-from fastapi import APIRouter, HTTPException, UploadFile, File, Depends, status, BackgroundTasks, Query
+from fastapi import APIRouter, UploadFile, File, Depends, status, BackgroundTasks, Query
 
 from app.config.settings import get_settings
 from backend_shared.adapters.presentation import SuccessApiResponse, ErrorApiResponse
@@ -34,6 +38,7 @@ from app.application.usecases.upload.upload_shogun_csv_uc import UploadShogunCsv
 from app.application.usecases.upload.get_upload_status_uc import GetUploadStatusUseCase
 from app.application.usecases.upload.get_upload_calendar_detail_uc import GetUploadCalendarDetailUseCase
 from app.application.usecases.upload.delete_upload_scope_uc import DeleteUploadScopeUseCase
+from app.shared.exceptions import ValidationError, InfrastructureError, NotFoundError
 
 logger = logging.getLogger(__name__)
 
@@ -281,7 +286,7 @@ def get_upload_calendar(
         return uc.execute(year=year, month=month)
     except Exception as e:
         logger.error(f"Failed to fetch upload calendar: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=str(e))
+        raise InfrastructureError(message=f"Calendar query failed: {str(e)}", cause=e)
 
 
 @router.delete("/upload-calendar/{upload_file_id}")
@@ -324,9 +329,10 @@ def delete_upload_scope(
         )
         
         if affected_rows == 0:
-            raise HTTPException(
-                status_code=404,
-                detail="対象データが見つかりません（既に削除済みの可能性があります）",
+            raise NotFoundError(
+                entity="UploadScope",
+                entity_id=f"file={upload_file_id},date={target_date},kind={csv_kind}",
+                message="対象データが見つかりません（既に削除済みの可能性があります）"
             )
         
         logger.info(
@@ -344,17 +350,13 @@ def delete_upload_scope(
         
     except ValueError as e:
         logger.warning(f"Validation error: {e}")
-        raise HTTPException(status_code=400, detail=str(e))
+        raise ValidationError(message=str(e), field="csv_kind")
         
-    except HTTPException:
+    except NotFoundError:
         raise
-    except ValueError as ve:
-        # csv_kind が不正な場合
-        logger.error(f"Invalid csv_kind: {ve}")
-        raise HTTPException(status_code=400, detail=str(ve))
     except Exception as e:
         logger.error(f"Failed to delete upload scope: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=str(e))
+        raise InfrastructureError(message=f"Delete operation failed: {str(e)}", cause=e)
 
 
 # ========================================================================
@@ -389,7 +391,7 @@ def clear_target_card_cache():
         }
     except Exception as e:
         logger.error(f"Error in cache clear endpoint: {str(e)}", exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to process cache clear: {str(e)}"
+        raise InfrastructureError(
+            message=f"Failed to process cache clear: {str(e)}",
+            cause=e
         )
