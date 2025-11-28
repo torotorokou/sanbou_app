@@ -16,8 +16,8 @@ import sqlalchemy as sa
 from app.infra.db.dynamic_models import get_shogun_model_class, create_shogun_model_class
 from app.config.settings import get_settings
 from app.infra.db.table_definition import get_table_definition_generator
-from app.shared.utils.df_normalizer import to_sql_ready_df, filter_defined_columns
-from app.shared.utils.json_sanitizer import deep_jsonable
+from backend_shared.infra.dataframe import to_sql_ready_df, filter_defined_columns
+from backend_shared.infra.json_utils import deep_jsonable
 
 logger = logging.getLogger(__name__)
 

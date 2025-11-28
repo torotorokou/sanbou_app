@@ -1,8 +1,8 @@
 """
-DataFrame Normalizer for SQL Database Insertion
+Backend Shared DataFrame Normalizer for SQL Database Insertion
 
 DataFrame を SQL データベースに挿入可能な形式に正規化するユーティリティ。
-backend_shared のユーティリティを活用しつつ、SQL 保存時の型安全性を保証します。
+全バックエンドサービスで共通利用でき、SQL保存時の型安全性を保証します。
 
 主な機能:
 - pandas nullable Int64 → Python int/None への変換
@@ -12,10 +12,10 @@ backend_shared のユーティリティを活用しつつ、SQL 保存時の型�
 - JSON シリアライズ可能な型への統一
 
 使用例:
-    from backend_shared.utils.dataframe_normalizer import to_sql_ready_df
+    from backend_shared.infra.dataframe import to_sql_ready_df, filter_defined_columns
     
     normalized_df = to_sql_ready_df(raw_df)
-    # これで ORM や to_sql() でエラーが出なくなる
+    filtered_df = filter_defined_columns(normalized_df, ["id", "name", "created_at"])
 """
 
 import logging
@@ -23,7 +23,7 @@ import pandas as pd
 import numpy as np
 from datetime import datetime, date, time
 from typing import Any
-from app.shared.utils.json_sanitizer import deep_jsonable
+from backend_shared.infra.json_utils import deep_jsonable
 
 logger = logging.getLogger(__name__)
 
@@ -150,6 +150,12 @@ def filter_defined_columns(
         
     Returns:
         フィルタ済みDataFrame
+        
+    使用例:
+        >>> df = pd.DataFrame({"id": [1, 2], "name": ["A", "B"], "extra": ["X", "Y"]})
+        >>> filter_defined_columns(df, ["id", "name"])
+        # WARNING: Dropping undefined columns: ['extra']
+        # Returns: DataFrame with only "id" and "name"
     """
     defined = set(defined_cols)
     dropping = sorted([c for c in df.columns if c not in defined])
