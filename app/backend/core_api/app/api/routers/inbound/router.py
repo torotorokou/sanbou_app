@@ -24,9 +24,9 @@ from typing import List, Optional
 import logging
 from datetime import date as date_type
 
-from app.domain.inbound import InboundDailyRow, CumScope
-from app.application.usecases.inbound.dto import GetInboundDailyInput
-from app.application.usecases.inbound.get_inbound_daily_uc import GetInboundDailyUseCase
+from app.core.domain.inbound import InboundDailyRow, CumScope
+from app.core.usecases.inbound.dto import GetInboundDailyInput
+from app.core.usecases.inbound.get_inbound_daily_uc import GetInboundDailyUseCase
 from app.config.di_providers import get_inbound_daily_uc
 from app.shared.exceptions import ValidationError, InfrastructureError
 

@@ -9,8 +9,8 @@ import logging
 from fastapi import APIRouter, Depends
 
 from app.config.di_providers import get_fetch_sales_tree_detail_lines_uc
-from app.application.usecases.sales_tree.fetch_detail_lines_uc import FetchSalesTreeDetailLinesUseCase
-from app.domain.sales_tree_detail import (
+from app.core.usecases.sales_tree.fetch_detail_lines_uc import FetchSalesTreeDetailLinesUseCase
+from app.core.domain.sales_tree_detail import (
     DetailLinesRequest,
     DetailLinesResponse,
 )

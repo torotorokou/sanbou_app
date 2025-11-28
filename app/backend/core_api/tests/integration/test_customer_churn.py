@@ -8,7 +8,7 @@ from datetime import date
 from sqlalchemy.orm import Session
 
 from app.infra.adapters.customer_churn import CustomerChurnQueryAdapter
-from app.application.usecases.customer_churn import AnalyzeCustomerChurnUseCase
+from app.core.usecases.customer_churn import AnalyzeCustomerChurnUseCase
 
 
 @pytest.mark.integration

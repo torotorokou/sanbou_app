@@ -15,10 +15,10 @@ from app.config.di_providers import (
     get_fetch_sales_tree_daily_series_uc,
     get_fetch_sales_tree_pivot_uc,
 )
-from app.application.usecases.sales_tree.fetch_summary_uc import FetchSalesTreeSummaryUseCase
-from app.application.usecases.sales_tree.fetch_daily_series_uc import FetchSalesTreeDailySeriesUseCase
-from app.application.usecases.sales_tree.fetch_pivot_uc import FetchSalesTreePivotUseCase
-from app.domain.sales_tree import (
+from app.core.usecases.sales_tree.fetch_summary_uc import FetchSalesTreeSummaryUseCase
+from app.core.usecases.sales_tree.fetch_daily_series_uc import FetchSalesTreeDailySeriesUseCase
+from app.core.usecases.sales_tree.fetch_pivot_uc import FetchSalesTreePivotUseCase
+from app.core.domain.sales_tree import (
     SummaryRequest,
     SummaryRow,
     DailySeriesRequest,

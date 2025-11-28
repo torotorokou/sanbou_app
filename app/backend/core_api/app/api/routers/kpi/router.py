@@ -10,8 +10,8 @@ Design:
 from fastapi import APIRouter, Depends
 
 from app.api.schemas import KPIOverview
-from app.application.usecases.kpi.kpi_uc import KPIUseCase
-from app.application.usecases.kpi.dto import GetKPIOverviewInput
+from app.core.usecases.kpi.kpi_uc import KPIUseCase
+from app.core.usecases.kpi.dto import GetKPIOverviewInput
 from app.config.di_providers import get_kpi_uc
 
 router = APIRouter(prefix="/kpi", tags=["kpi"])

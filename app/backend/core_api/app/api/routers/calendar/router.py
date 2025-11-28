@@ -12,8 +12,8 @@ from fastapi import APIRouter, Query, Depends
 from typing import List, Dict, Any
 import logging
 
-from app.application.usecases.calendar.get_calendar_month_uc import GetCalendarMonthUseCase
-from app.application.usecases.calendar.dto import GetCalendarMonthInput
+from app.core.usecases.calendar.get_calendar_month_uc import GetCalendarMonthUseCase
+from app.core.usecases.calendar.dto import GetCalendarMonthInput
 from app.config.di_providers import get_calendar_month_uc
 from app.shared.exceptions import ValidationError, InfrastructureError
 

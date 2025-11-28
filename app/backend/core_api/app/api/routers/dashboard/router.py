@@ -20,8 +20,8 @@ from typing import Literal
 import logging
 
 from app.config.di_providers import get_build_target_card_uc
-from app.application.usecases.dashboard.dto import BuildTargetCardInput
-from app.application.usecases.dashboard.build_target_card_uc import BuildTargetCardUseCase
+from app.core.usecases.dashboard.dto import BuildTargetCardInput
+from app.core.usecases.dashboard.build_target_card_uc import BuildTargetCardUseCase
 from app.api.schemas import TargetMetricsResponse
 from app.shared.exceptions import NotFoundError
 

@@ -16,7 +16,7 @@ from app.api.schemas import (
     SalesRepDTO,
     SalesRepListResponse,
 )
-from app.application.usecases.customer_churn import AnalyzeCustomerChurnUseCase
+from app.core.usecases.customer_churn import AnalyzeCustomerChurnUseCase
 from app.config.di_providers import get_analyze_customer_churn_uc, get_db
 
 logger = logging.getLogger(__name__)

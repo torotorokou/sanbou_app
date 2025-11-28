@@ -2,7 +2,7 @@
 from datetime import date
 from typing import Optional
 
-from app.domain.ports.kpi_port import KPIQueryPort
+from app.core.ports.kpi_port import KPIQueryPort
 
 
 class FakeKPIQueryPort(KPIQueryPort):
