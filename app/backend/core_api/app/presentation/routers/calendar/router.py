@@ -2,16 +2,18 @@
 Calendar API Router
 営業カレンダーデータの取得エンドポイント
 
-設計方針:
-  - Router は HTTP I/O のみを担当
-  - ビジネスロジックは UseCase に委譲
-  - DI 経由で UseCase を取得
+Design:
+  - Thin router layer (3-step pattern)
+  - Query params → Input DTO → UseCase → Output DTO → Response
+  - No business logic in this layer
+  - Exception handling with custom exceptions
 """
 from fastapi import APIRouter, Query, Depends
 from typing import List, Dict, Any
 import logging
 
 from app.application.usecases.calendar.get_calendar_month_uc import GetCalendarMonthUseCase
+from app.application.usecases.calendar.dto import GetCalendarMonthInput
 from app.config.di_providers import get_calendar_month_uc
 from app.shared.exceptions import ValidationError, InfrastructureError
 
@@ -29,6 +31,11 @@ def get_calendar_month(
     """
     指定された年月の営業カレンダーデータを取得
     
+    Follows Clean Architecture with 3-step pattern:
+      1. Query params → Input DTO
+      2. UseCase execution
+      3. Output DTO → Response
+    
     Args:
         year: 年 (1900-2100)
         month: 月 (1-12)
@@ -38,9 +45,15 @@ def get_calendar_month(
         カレンダーデータのリスト
     """
     try:
-        data = uc.execute(year, month)
-        logger.info(f"Fetched calendar for {year}-{month:02d}: {len(data)} days")
-        return data
+        # Step 1: Query params → Input DTO
+        input_dto = GetCalendarMonthInput(year=year, month=month)
+        
+        # Step 2: UseCase execution
+        output_dto = uc.execute(input_dto)
+        
+        # Step 3: Output DTO → Response
+        logger.info(f"Fetched calendar for {year}-{month:02d}: {len(output_dto.calendar_days)} days")
+        return output_dto.calendar_days
         
     except ValueError as e:
         logger.warning(f"Validation error: {e}")
