@@ -9,17 +9,21 @@ Ingest Router - CSVアップロードと予約登録エンドポイント
   - Port&Adapter パターン適用済み
   - Router層は薄く保つ（DI + UseCase呼び出しのみ）
   - ビジネスロジックはUseCaseに集約
+  - カスタム例外を使用（HTTPExceptionは使用しない）
 """
-from fastapi import APIRouter, Depends, UploadFile, File, HTTPException
+from fastapi import APIRouter, Depends, UploadFile, File
 import pandas as pd
 import io
+import logging
 
 from app.application.usecases.ingest.upload_ingest_csv_uc import UploadIngestCsvUseCase
 from app.application.usecases.ingest.create_reservation_uc import CreateReservationUseCase
 from app.config.di_providers import get_upload_ingest_csv_uc, get_create_reservation_uc
 from app.presentation.schemas import ReservationCreate, ReservationResponse
+from app.shared.exceptions import ValidationError, InfrastructureError
 
 router = APIRouter(prefix="/ingest", tags=["ingest"])
+logger = logging.getLogger(__name__)
 
 
 @router.post("/csv", summary="Upload CSV data")
@@ -50,21 +54,27 @@ async def upload_csv(
         アップロード結果（行数等）
     
     Raises:
-        HTTPException(400): CSVファイル以外がアップロードされた場合
-        HTTPException(500): CSV処理失敗時
+        ValidationError: CSVファイル以外がアップロードされた場合
+        InfrastructureError: CSV処理失敗時
     """
-    if not file.filename.endswith(".csv"):
-        raise HTTPException(status_code=400, detail="Only CSV files are supported")
+    if not file.filename or not file.filename.endswith(".csv"):
+        raise ValidationError("Only CSV files are supported", field="file")
 
     try:
         contents = await file.read()
         df = pd.read_csv(io.BytesIO(contents))
         rows = df.to_dict(orient="records")
 
+        logger.info(f"Processing CSV upload: {file.filename}, rows={len(rows)}")
         result = uc.execute(rows)
         return result
+    except pd.errors.EmptyDataError:
+        raise ValidationError("CSV file is empty", field="file")
+    except pd.errors.ParserError as e:
+        raise ValidationError(f"Failed to parse CSV: {str(e)}", field="file")
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to process CSV: {str(e)}")
+        logger.error(f"Failed to process CSV: {str(e)}", exc_info=True)
+        raise InfrastructureError(f"Failed to process CSV", cause=e)
 
 
 @router.post("/reserve", response_model=ReservationResponse, summary="Create truck reservation")

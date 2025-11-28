@@ -21,6 +21,8 @@ class ValidationError(DomainException):
     
     入力値が業務ルールに違反している場合に使用します。
     例: 日付範囲が不正、必須項目が空、形式が不正 など
+    
+    HTTP Status: 400 Bad Request
     """
     def __init__(self, message: str, field: str | None = None):
         """
@@ -39,6 +41,8 @@ class NotFoundError(DomainException):
     
     指定されたIDやキーのリソースが存在しない場合に使用します。
     例: アップロードファイルが存在しない、ユーザーが見つからない など
+    
+    HTTP Status: 404 Not Found
     """
     def __init__(self, resource_type: str, identifier: str | int):
         """
@@ -58,6 +62,8 @@ class BusinessRuleViolation(DomainException):
     
     業務ロジック上許可されない操作を試みた場合に使用します。
     例: 締め処理後のデータ変更、重複登録の試み など
+    
+    HTTP Status: 422 Unprocessable Entity
     """
     def __init__(self, rule: str, details: str | None = None):
         """
@@ -73,11 +79,41 @@ class BusinessRuleViolation(DomainException):
         super().__init__(message)
 
 
+class UnauthorizedError(DomainException):
+    """
+    認証エラー
+    
+    認証が必要なリソースに未認証でアクセスした場合に使用します。
+    
+    HTTP Status: 401 Unauthorized
+    """
+    def __init__(self, message: str = "Authentication required"):
+        self.message = message
+        super().__init__(message)
+
+
+class ForbiddenError(DomainException):
+    """
+    権限エラー
+    
+    認証済みだが権限が不足している場合に使用します。
+    例: 管理者権限が必要な操作を一般ユーザーが試みた など
+    
+    HTTP Status: 403 Forbidden
+    """
+    def __init__(self, message: str = "Access forbidden", required_permission: str | None = None):
+        self.message = message
+        self.required_permission = required_permission
+        super().__init__(message)
+
+
 class InfrastructureError(Exception):
     """
     インフラストラクチャ層のエラー
     
     外部システム（DB、API、ファイルシステム）との連携で発生するエラー。
+    
+    HTTP Status: 503 Service Unavailable
     """
     def __init__(self, message: str, cause: Exception | None = None):
         """
@@ -88,3 +124,26 @@ class InfrastructureError(Exception):
         self.message = message
         self.cause = cause
         super().__init__(message)
+
+
+class ExternalServiceError(InfrastructureError):
+    """
+    外部サービスエラー
+    
+    外部API呼び出しでエラーが発生した場合に使用します。
+    例: ledger_api, rag_api, manual_apiなどとの通信エラー
+    
+    HTTP Status: 502 Bad Gateway または 504 Gateway Timeout
+    """
+    def __init__(self, service_name: str, message: str, status_code: int | None = None, cause: Exception | None = None):
+        """
+        Args:
+            service_name: サービス名（例: "ledger_api", "rag_api"）
+            message: エラーメッセージ
+            status_code: 外部サービスから返されたHTTPステータスコード（オプション）
+            cause: 元となった例外（オプション）
+        """
+        self.service_name = service_name
+        self.status_code = status_code
+        super().__init__(f"{service_name}: {message}", cause)
+

@@ -12,18 +12,17 @@ Dashboard Router - ダッシュボード用エンドポイント
 設計方針:
   - RouterはHTTP I/Oのみを担当(ビジネスロジックはUseCaseに委譲)
   - DI経由でUseCaseを取得(テスタビリティ向上)
-  - エラーハンドリングを一元化(ロギング + HTTPステータスコード)
+  - カスタム例外を使用(HTTPExceptionは使用しない)
 """
-from fastapi import APIRouter, Depends, Query, HTTPException
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, Depends, Query
 from datetime import date as date_type
 from typing import Literal
 import logging
 
-from app.deps import get_db
 from app.config.di_providers import get_build_target_card_uc
 from app.application.usecases.dashboard.build_target_card_uc import BuildTargetCardUseCase
 from app.presentation.schemas import TargetMetricsResponse
+from app.shared.exceptions import NotFoundError
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/dashboard", tags=["dashboard"])
@@ -53,28 +52,18 @@ def get_target_metrics(
     - Future month monthly view: `?date=2025-12-01&mode=monthly` → fetches first business day with day/week masked
     - Specific day view: `?date=2025-10-15&mode=daily` → fetches 2025-10-15 data without masking
     """
-    try:
-        logger.info(f"GET /dashboard/target called with date={date}, mode={mode}")
-        
-        data = uc.execute(date, mode=mode)  # type: ignore[arg-type]
-        
-        if not data:
-            logger.warning(f"No target card data found for date={date}, mode={mode}")
-            raise HTTPException(
-                status_code=404,
-                detail=f"No target card data found for {date}. Please check if mart.mv_target_card_per_day (Materialized View) has data for this period."
-            )
-        
-        logger.info(f"Successfully retrieved target metrics for date={date}, mode={mode}")
-        return TargetMetricsResponse(**data)
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Error retrieving target metrics for date={date}, mode={mode}: {str(e)}", exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail=f"Internal server error while fetching target metrics: {str(e)}"
+    logger.info(f"GET /dashboard/target called with date={date}, mode={mode}")
+    
+    data = uc.execute(date, mode=mode)  # type: ignore[arg-type]
+    
+    if not data:
+        logger.warning(f"No target card data found for date={date}, mode={mode}")
+        raise NotFoundError(
+            resource_type="Target card data",
+            identifier=f"{date} (mode={mode})"
         )
+    
+    logger.info(f"Successfully retrieved target metrics for date={date}, mode={mode}")
+    return TargetMetricsResponse(**data)
 
 

@@ -15,7 +15,10 @@ from app.shared.exceptions import (
     ValidationError,
     NotFoundError,
     BusinessRuleViolation,
+    UnauthorizedError,
+    ForbiddenError,
     InfrastructureError,
+    ExternalServiceError,
     DomainException,
 )
 
@@ -72,6 +75,33 @@ async def domain_exception_handler(request: Request, exc: DomainException) -> JS
             },
         )
     
+    # UnauthorizedError
+    if isinstance(exc, UnauthorizedError):
+        logger.warning(f"Unauthorized access: {exc.message}")
+        return JSONResponse(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            content={
+                "error": {
+                    "code": "UNAUTHORIZED",
+                    "message": exc.message,
+                }
+            },
+        )
+    
+    # ForbiddenError
+    if isinstance(exc, ForbiddenError):
+        logger.warning(f"Forbidden access: {exc.message}, required_permission={exc.required_permission}")
+        return JSONResponse(
+            status_code=status.HTTP_403_FORBIDDEN,
+            content={
+                "error": {
+                    "code": "FORBIDDEN",
+                    "message": exc.message,
+                    "required_permission": exc.required_permission,
+                }
+            },
+        )
+    
     # 上記以外の DomainException
     logger.error(f"Unhandled domain exception: {exc}", exc_info=True)
     return JSONResponse(
@@ -80,6 +110,32 @@ async def domain_exception_handler(request: Request, exc: DomainException) -> JS
             "error": {
                 "code": "DOMAIN_ERROR",
                 "message": str(exc),
+            }
+        },
+    )
+
+
+async def external_service_exception_handler(request: Request, exc: ExternalServiceError) -> JSONResponse:
+    """
+    外部サービス例外のハンドラー
+    
+    外部API呼び出しエラーを処理します。
+    """
+    # ステータスコードの決定: タイムアウトなら504、それ以外は502
+    if exc.status_code:
+        status_code = exc.status_code if exc.status_code >= 500 else status.HTTP_502_BAD_GATEWAY
+    else:
+        status_code = status.HTTP_502_BAD_GATEWAY
+    
+    logger.error(f"External service error: {exc.service_name}, status={exc.status_code}, cause={exc.cause}", exc_info=True)
+    return JSONResponse(
+        status_code=status_code,
+        content={
+            "error": {
+                "code": "EXTERNAL_SERVICE_ERROR",
+                "message": f"External service '{exc.service_name}' is unavailable.",
+                "service": exc.service_name,
+                "upstream_status": exc.status_code,
             }
         },
     )
@@ -167,10 +223,18 @@ def register_exception_handlers(app):
     Args:
         app: FastAPI アプリケーションインスタンス
     """
+    # ドメイン例外（優先度: 高）
     app.add_exception_handler(DomainException, domain_exception_handler)
+    
+    # インフラストラクチャ例外
+    app.add_exception_handler(ExternalServiceError, external_service_exception_handler)
     app.add_exception_handler(InfrastructureError, infrastructure_exception_handler)
+    
+    # FastAPI標準例外
     app.add_exception_handler(RequestValidationError, validation_exception_handler)
     app.add_exception_handler(StarletteHTTPException, http_exception_handler)
+    
+    # 最後のセーフティネット
     app.add_exception_handler(Exception, unhandled_exception_handler)
     
     logger.info("Exception handlers registered successfully")
