@@ -4,13 +4,16 @@ DI Providers - Dependency Injection Container
 このファイルはアプリケーション全体のDIを集約します。
 - Repository の生成（schema/table_map の切替）
 - UseCase の生成（将来的に拡張）
+- FileStorage の生成（ローカル/GCS切替）
 
 設計方針:
   - Router から new を排除し、DI 経由でインスタンスを取得
   - 環境差分（debug/raw、flash/final）をここで吸収
   - SET LOCAL search_path によるスキーマ切替を活用
 """
+import os
 import logging
+from pathlib import Path
 from fastapi import Depends
 from sqlalchemy import text
 from sqlalchemy.orm import Session
@@ -27,7 +30,56 @@ from app.infra.clients.ledger_client import LedgerClient
 from app.infra.clients.manual_client import ManualClient
 from app.infra.clients.ai_client import AIClient
 
+# FileStoragePort関連
+from backend_shared.core.ports.file_storage_port import FileStoragePort
+from backend_shared.infra.storage.local_file_storage_repository import LocalFileStorageRepository
+from backend_shared.infra.storage.gcs_file_storage_repository import GcsFileStorageRepository
+
 logger = logging.getLogger(__name__)
+
+
+# ========================================================================
+# FileStorage Provider (Local / GCS切替)
+# ========================================================================
+def get_file_storage() -> FileStoragePort:
+    """
+    FileStoragePort提供（環境変数で動的切替）
+    
+    環境変数:
+        FILE_STORAGE_MODE: "local" or "gcs" (default: "local")
+        FILE_STORAGE_LOCAL_BASE_DIR: ローカルモード時のベースディレクトリ (default: /backend/data)
+        FILE_STORAGE_GCS_BUCKET: GCSモード時のバケット名 (required if mode=gcs)
+        FILE_STORAGE_GCS_BASE_PREFIX: GCSモード時のベースプレフィックス (optional)
+        FILE_STORAGE_GCS_CREDENTIALS: GCSモード時の認証ファイルパス (optional, デフォルトは環境変数から)
+    
+    Returns:
+        FileStoragePort の実装インスタンス
+    """
+    mode = os.getenv("FILE_STORAGE_MODE", "local").lower()
+
+    if mode == "gcs":
+        bucket = os.getenv("FILE_STORAGE_GCS_BUCKET")
+        if not bucket:
+            raise ValueError(
+                "FILE_STORAGE_MODE=gcs requires FILE_STORAGE_GCS_BUCKET environment variable"
+            )
+        
+        base_prefix = os.getenv("FILE_STORAGE_GCS_BASE_PREFIX", "")
+        credentials_path = os.getenv("FILE_STORAGE_GCS_CREDENTIALS")
+        
+        logger.info(
+            f"[FileStorage] GCS mode: bucket={bucket}, prefix={base_prefix or '(root)'}"
+        )
+        return GcsFileStorageRepository(
+            bucket_name=bucket,
+            base_prefix=base_prefix,
+            credentials_path=credentials_path,
+        )
+    
+    # default: local
+    base_dir = Path(os.getenv("FILE_STORAGE_LOCAL_BASE_DIR", "/backend/data"))
+    logger.info(f"[FileStorage] Local mode: base_dir={base_dir}")
+    return LocalFileStorageRepository(base_dir=base_dir)
 
 
 # ========================================================================

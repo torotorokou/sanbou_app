@@ -38,6 +38,7 @@ from app.api.routers.manual.router import router as manual_router
 from app.api.routers.dashboard.router import router as dashboard_router
 from app.api.routers.inbound.router import router as inbound_router
 from app.api.routers.sales_tree import router as sales_tree_router
+from app.api.routers.system import router as system_router
 
 # ==========================================
 # 構造化JSONロギングの設定
@@ -92,6 +93,9 @@ app.include_router(kpi_router)         # KPI集計: ダッシュボード用メ�
 app.include_router(dashboard_router)   # ダッシュボード: ターゲット/実績データ
 app.include_router(inbound_router)     # 搬入データ: 日次データ取得(累積計算対応)
 app.include_router(sales_tree_router)  # 売上ツリー分析: サマリー/日次推移データ
+
+# --- システム管理 ---
+app.include_router(system_router)      # システム: ヘルスチェック、ストレージ状態確認
 
 # --- 外部サービスプロキシ (BFF) ---
 app.include_router(external_router)           # 外部API統合エンドポイント

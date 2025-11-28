@@ -1,12 +1,23 @@
 #!/usr/bin/env python3
 """GCSから手動でマスターデータをダウンロードするスクリプト
 
+⚠️ 重要: このスクリプトは開発環境専用です
+   - 本番環境・Staging環境では使用しないでください
+   - 本番・Stagingでは、各コンテナが backend_shared の GcsFileStorageRepository を
+     使用して GCS から直接データを取得します
+   - このスクリプトは、ローカル開発者が GCS に直接アクセスできない場合の
+     ワークアラウンドとして提供されています
+
 使用方法:
     python scripts/download_master_data.py
 
 前提条件:
     - GOOGLE_APPLICATION_CREDENTIALS環境変数が設定されている
     - google-cloud-storageがインストールされている
+    
+推奨される方法:
+    - 各コンテナで FILE_STORAGE_MODE=gcs を設定し、backend_shared の
+      GcsFileStorageRepository 経由で直接 GCS にアクセスすることを推奨します
 """
 import os
 from pathlib import Path
