@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field, HttpUrl
 
 class ManualSectionChunk(BaseModel):
     title: str
-    anchor: str = Field(..., regex=r"^s-\d+$")
+    anchor: str = Field(..., pattern=r"^s-\d+$")
     html: Optional[str] = None
     markdown: Optional[str] = None
 
