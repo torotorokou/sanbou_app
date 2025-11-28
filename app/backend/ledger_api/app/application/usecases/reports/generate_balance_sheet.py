@@ -16,9 +16,9 @@ from typing import Any, Dict, Optional
 from fastapi import UploadFile
 from fastapi.responses import JSONResponse
 
-from app.application.ports import CsvGateway, ReportRepository
-from app.application.ports.report_repository import ArtifactUrls
-from app.application.domain.reports.balance_sheet import BalanceSheet
+from app.core.ports.inbound import CsvGateway, ReportRepository
+from app.core.ports.inbound.report_repository import ArtifactUrls
+from app.core.domain.reports.balance_sheet import BalanceSheet
 from backend_shared.infra.adapters.fastapi.error_handlers import DomainError
 from backend_shared.utils.date_filter_utils import (
     filter_by_period_from_min_date as shared_filter_by_period_from_min_date,
