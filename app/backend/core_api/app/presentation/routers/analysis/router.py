@@ -4,7 +4,7 @@ Analysis Router - BFF for analysis endpoints
 """
 import logging
 import os
-from fastapi import APIRouter, HTTPException, Request, Depends
+from fastapi import APIRouter, Request, Depends
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 import httpx

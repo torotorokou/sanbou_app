@@ -4,9 +4,11 @@ Manual API Router - BFF for manual_api endpoints
 """
 import logging
 import os
-from fastapi import APIRouter, Request, HTTPException
+from fastapi import APIRouter, Request
 from fastapi.responses import StreamingResponse, JSONResponse
 import httpx
+
+from app.shared.exceptions import ExternalServiceError, ValidationError
 
 logger = logging.getLogger(__name__)
 
@@ -51,9 +53,10 @@ async def proxy_manual_doc(doc_id: str, filename: str, request: Request):
                 if resp.status_code >= 400:
                     body = await resp.aread()
                     logger.error(f"[BFF Manual] Upstream error: {resp.status_code} - {body.decode(errors='ignore')}")
-                    raise HTTPException(
-                        status_code=resp.status_code,
-                        detail=body.decode(errors="ignore")
+                    raise ExternalServiceError(
+                        service_name="manual_api",
+                        message=f"Document retrieval failed: {body.decode(errors='ignore')}",
+                        status_code=resp.status_code
                     )
                 
                 # 透過するレスポンスヘッダ
@@ -79,12 +82,22 @@ async def proxy_manual_doc(doc_id: str, filename: str, request: Request):
                     media_type=resp.headers.get("content-type", "application/octet-stream")
                 )
     
-    except httpx.TimeoutException:
+    except httpx.TimeoutException as e:
         logger.error(f"[BFF Manual] Timeout accessing {upstream}")
-        raise HTTPException(status_code=504, detail="Gateway timeout")
+        raise ExternalServiceError(
+            service_name="manual_api",
+            message="Gateway timeout",
+            cause=e,
+            status_code=504
+        )
     except httpx.HTTPError as e:
         logger.error(f"[BFF Manual] HTTP error: {str(e)}", exc_info=True)
-        raise HTTPException(status_code=502, detail=f"Bad gateway: {str(e)}")
+        raise ExternalServiceError(
+            service_name="manual_api",
+            message=f"Bad gateway: {str(e)}",
+            cause=e,
+            status_code=502
+        )
 
 
 @router.post("/search")
@@ -101,7 +114,7 @@ async def proxy_manual_search(request: Request):
     try:
         payload = await request.json()
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Invalid JSON: {str(e)}")
+        raise ValidationError(message=f"Invalid JSON: {str(e)}", field="request_body")
     
     upstream = f"{MANUAL_API_BASE}/manual/search"
     logger.info(f"[BFF Manual] Proxying search request: {upstream}")
@@ -123,7 +136,12 @@ async def proxy_manual_search(request: Request):
     
     except httpx.HTTPError as e:
         logger.error(f"[BFF Manual] HTTP error: {str(e)}", exc_info=True)
-        raise HTTPException(status_code=502, detail=f"Bad gateway: {str(e)}")
+        raise ExternalServiceError(
+            service_name="manual_api",
+            message=f"Search request failed: {str(e)}",
+            cause=e,
+            status_code=502
+        )
 
 
 @router.get("/toc")
@@ -146,13 +164,20 @@ async def proxy_manual_toc():
     
     except httpx.HTTPStatusError as e:
         logger.error(f"[BFF Manual] TOC error: {e.response.status_code}", exc_info=True)
-        raise HTTPException(
-            status_code=e.response.status_code,
-            detail={"code": "MANUAL_UPSTREAM_ERROR", "message": str(e)}
+        raise ExternalServiceError(
+            service_name="manual_api",
+            message="TOC retrieval failed",
+            cause=e,
+            status_code=e.response.status_code
         )
     except httpx.HTTPError as e:
         logger.error(f"[BFF Manual] HTTP error: {str(e)}", exc_info=True)
-        raise HTTPException(status_code=502, detail=f"Bad gateway: {str(e)}")
+        raise ExternalServiceError(
+            service_name="manual_api",
+            message=f"Bad gateway: {str(e)}",
+            cause=e,
+            status_code=502
+        )
 
 
 @router.get("/categories")
@@ -175,13 +200,20 @@ async def proxy_manual_categories():
     
     except httpx.HTTPStatusError as e:
         logger.error(f"[BFF Manual] Categories error: {e.response.status_code}", exc_info=True)
-        raise HTTPException(
-            status_code=e.response.status_code,
-            detail={"code": "MANUAL_UPSTREAM_ERROR", "message": str(e)}
+        raise ExternalServiceError(
+            service_name="manual_api",
+            message="Categories retrieval failed",
+            cause=e,
+            status_code=e.response.status_code
         )
     except httpx.HTTPError as e:
         logger.error(f"[BFF Manual] HTTP error: {str(e)}", exc_info=True)
-        raise HTTPException(status_code=502, detail=f"Bad gateway: {str(e)}")
+        raise ExternalServiceError(
+            service_name="manual_api",
+            message=f"Bad gateway: {str(e)}",
+            cause=e,
+            status_code=502
+        )
 
 
 # ============================================================================
@@ -210,10 +242,20 @@ async def proxy_list_manuals(request: Request):
     
     except httpx.HTTPStatusError as e:
         logger.error(f"[BFF Manual] List manuals error: {e.response.status_code}", exc_info=True)
-        raise HTTPException(status_code=e.response.status_code, detail=str(e))
+        raise ExternalServiceError(
+            service_name="manual_api",
+            message="List manuals failed",
+            cause=e,
+            status_code=e.response.status_code
+        )
     except httpx.HTTPError as e:
         logger.error(f"[BFF Manual] HTTP error: {str(e)}", exc_info=True)
-        raise HTTPException(status_code=502, detail=f"Bad gateway: {str(e)}")
+        raise ExternalServiceError(
+            service_name="manual_api",
+            message=f"Bad gateway: {str(e)}",
+            cause=e,
+            status_code=502
+        )
 
 
 @router.get("/manuals/catalog")
@@ -238,10 +280,20 @@ async def proxy_manual_catalog(request: Request):
     
     except httpx.HTTPStatusError as e:
         logger.error(f"[BFF Manual] Catalog error: {e.response.status_code}", exc_info=True)
-        raise HTTPException(status_code=e.response.status_code, detail=str(e))
+        raise ExternalServiceError(
+            service_name="manual_api",
+            message="Catalog retrieval failed",
+            cause=e,
+            status_code=e.response.status_code
+        )
     except httpx.HTTPError as e:
         logger.error(f"[BFF Manual] HTTP error: {str(e)}", exc_info=True)
-        raise HTTPException(status_code=502, detail=f"Bad gateway: {str(e)}")
+        raise ExternalServiceError(
+            service_name="manual_api",
+            message=f"Bad gateway: {str(e)}",
+            cause=e,
+            status_code=502
+        )
 
 
 @router.get("/manuals/{manual_id}")
@@ -261,10 +313,20 @@ async def proxy_manual_detail(manual_id: str):
     
     except httpx.HTTPStatusError as e:
         logger.error(f"[BFF Manual] Manual detail error: {e.response.status_code}", exc_info=True)
-        raise HTTPException(status_code=e.response.status_code, detail=str(e))
+        raise ExternalServiceError(
+            service_name="manual_api",
+            message="Manual detail retrieval failed",
+            cause=e,
+            status_code=e.response.status_code
+        )
     except httpx.HTTPError as e:
         logger.error(f"[BFF Manual] HTTP error: {str(e)}", exc_info=True)
-        raise HTTPException(status_code=502, detail=f"Bad gateway: {str(e)}")
+        raise ExternalServiceError(
+            service_name="manual_api",
+            message=f"Bad gateway: {str(e)}",
+            cause=e,
+            status_code=502
+        )
 
 
 @router.get("/manuals/{manual_id}/sections")
@@ -284,7 +346,17 @@ async def proxy_manual_sections(manual_id: str):
     
     except httpx.HTTPStatusError as e:
         logger.error(f"[BFF Manual] Manual sections error: {e.response.status_code}", exc_info=True)
-        raise HTTPException(status_code=e.response.status_code, detail=str(e))
+        raise ExternalServiceError(
+            service_name="manual_api",
+            message="Manual sections retrieval failed",
+            cause=e,
+            status_code=e.response.status_code
+        )
     except httpx.HTTPError as e:
         logger.error(f"[BFF Manual] HTTP error: {str(e)}", exc_info=True)
-        raise HTTPException(status_code=502, detail=f"Bad gateway: {str(e)}")
+        raise ExternalServiceError(
+            service_name="manual_api",
+            message=f"Bad gateway: {str(e)}",
+            cause=e,
+            status_code=502
+        )

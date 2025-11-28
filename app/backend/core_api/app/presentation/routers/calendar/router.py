@@ -7,12 +7,13 @@ Calendar API Router
   - ビジネスロジックは UseCase に委譲
   - DI 経由で UseCase を取得
 """
-from fastapi import APIRouter, Query, HTTPException, Depends
+from fastapi import APIRouter, Query, Depends
 from typing import List, Dict, Any
 import logging
 
 from app.application.usecases.calendar.get_calendar_month_uc import GetCalendarMonthUseCase
 from app.config.di_providers import get_calendar_month_uc
+from app.shared.exceptions import ValidationError, InfrastructureError
 
 logger = logging.getLogger(__name__)
 
@@ -43,8 +44,8 @@ def get_calendar_month(
         
     except ValueError as e:
         logger.warning(f"Validation error: {e}")
-        raise HTTPException(status_code=400, detail=str(e))
+        raise ValidationError(message=str(e), field="year_or_month")
         
     except Exception as e:
         logger.error(f"Failed to fetch calendar for {year}-{month:02d}: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=str(e))
+        raise InfrastructureError(message=f"Calendar data retrieval failed: {str(e)}", cause=e)
