@@ -1,11 +1,11 @@
 """
-JSON互換性を保証するためのサニタイザ
+Backend Shared JSON Sanitizer
 
 pandas.Timestamp、numpy型、datetime型など、JSON直列化で失敗する型を
-再帰的にJSON互換な型に変換する最後の砦。
+再帰的にJSON互換な型に変換します。全バックエンドサービスで共通利用できます。
 
-Usage:
-    from app.shared.utils.json_sanitizer import deep_jsonable
+使用例:
+    from backend_shared.infra.json_utils import deep_jsonable
     
     payload = row.to_dict()
     payload = deep_jsonable(payload)  # 最終バリア
@@ -18,7 +18,15 @@ from typing import Any
 
 
 def _to_jsonable(v: Any) -> Any:
-    """単一の値をJSON互換な型に変換"""
+    """
+    単一の値をJSON互換な型に変換
+    
+    Args:
+        v: 変換対象の値
+        
+    Returns:
+        JSON互換の値
+    """
     # 最優先: NaN/NaT の検出（pd.Timestamp('NaT') もこれでキャッチ）
     if pd.isna(v):  # pd.NA, np.nan, pd.NaT など
         return None
@@ -40,13 +48,18 @@ def deep_jsonable(obj: Any) -> Any:
     オブジェクトを再帰的にJSON互換に変換
     
     dict, list, tuple を再帰的に走査し、すべての値を
-    JSON直列化可能な型に変換する。
+    JSON直列化可能な型に変換します。
     
     Args:
         obj: 変換対象のオブジェクト
         
     Returns:
         JSON互換に変換されたオブジェクト
+        
+    使用例:
+        >>> data = {"timestamp": pd.Timestamp("2025-01-01"), "value": np.int64(42)}
+        >>> deep_jsonable(data)
+        {'timestamp': '2025-01-01T00:00:00', 'value': 42}
     """
     if isinstance(obj, dict):
         return {k: deep_jsonable(v) for k, v in obj.items()}
