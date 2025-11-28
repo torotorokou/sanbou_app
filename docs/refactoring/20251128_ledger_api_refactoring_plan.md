@@ -3,7 +3,8 @@
 - 作成日: 2025-11-28
 - 対象プロジェクト: sanbou_app
 - 対象サービス: `ledger_api`
-- ブランチ戦略: `refactor/ledger-api-clean-architecture`
+- ブランチ戦略: `refactor/core-api-clean-architecture`
+- ステータス: **Phase 1-7完了** (2025-11-28 13:30)
 
 ---
 
@@ -682,6 +683,63 @@ def get_management_sheet_usecase() -> GenerateManagementSheetUseCase:
 
 ---
 
+## 実施状況
+
+### Phase 1-7: 完了 (2025-11-28)
+
+**実施内容:**
+- ✅ Phase 1: `core/` ディレクトリ構造作成
+- ✅ Phase 2: Domain 層移行 (`application/domain/` → `core/domain/`)
+- ✅ Phase 3: Ports 層移行 (`application/ports/` → `core/ports/inbound/`)
+- ✅ Phase 4: UseCase 層移行 (`application/usecases/reports/` → `core/usecases/reports/`)
+- ✅ Phase 5: Config 移行 (`local_config/` → `config/`)
+- ✅ Phase 6: CSV Adapter 移行 (`application/usecases/csv/` → `infra/adapters/csv/`)
+- ✅ Phase 7: 旧ディレクトリ削除 (`application/`, `local_config/`)
+
+**コミット:**
+- `ac2a7be` - Phase 1-4: core/ layer creation and file migration
+- `688d6ab` - Phase 1-4: Fix circular imports and syntax errors
+- `eeb0d1c` - Phase 6: Migrate CSV services to infra/adapters/csv
+- `d41d0f2` - Phase 7: Cleanup old application/ and local_config/ directories
+
+**検証結果:**
+- ledger_api コンテナ: 正常起動・healthy
+- API エンドポイント: 全て正常応答 (OpenAPI spec 確認済み)
+- フロントエンド影響: なし (API インターフェース不変)
+- 他バックエンド影響: なし (core_api は HTTP プロキシのみ)
+- DB 影響: なし (ledger_api は DB 未使用)
+
+**最終ディレクトリ構造:**
+```
+app/
+├── config/              # DI コンテナ、設定
+│   └── settings/
+├── core/                # ビジネスロジック層（外部依存なし）
+│   ├── domain/          # エンティティ、値オブジェクト
+│   │   └── reports/
+│   ├── ports/           # 抽象インターフェース
+│   │   └── inbound/
+│   └── usecases/        # アプリケーション固有のビジネスフロー
+│       └── reports/
+├── infra/               # インフラストラクチャ層
+│   ├── adapters/        # Port の具象実装
+│   │   ├── csv/         # CSV 処理アダプタ
+│   │   ├── artifact_storage/
+│   │   ├── file_processing/
+│   │   ├── repository/
+│   │   └── session/
+│   ├── data_sources/
+│   ├── report_utils/
+│   └── utils/
+└── presentation/        # プレゼンテーション層
+    ├── api/             # FastAPI routers, schemas
+    │   ├── routers/
+    │   └── schemas/
+    └── static/
+```
+
+---
+
 ## まとめ
 
 本リファクタリングにより、ledger_api は以下のメリットを享受できます：
@@ -691,4 +749,5 @@ def get_management_sheet_usecase() -> GenerateManagementSheetUseCase:
 3. **拡張性の向上**: 新しい Adapter（例: Polars CSV Gateway）の追加が容易
 4. **可読性の向上**: ディレクトリ構造がアーキテクチャを反映し、新規参加者が理解しやすい
 
-次のステップ: Phase 1 からリファクタリングを開始してください。
+**Phase 1-7 完了**: Clean Architecture / Hexagonal Architecture への移行が完了しました。
+
