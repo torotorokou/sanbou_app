@@ -29,7 +29,8 @@ import logging
 logger = logging.getLogger(__name__)
 
 RAG_API_BASE = os.getenv("RAG_API_BASE", "http://rag_api:8000")
-TIMEOUT = httpx.Timeout(connect=1.0, read=5.0, write=5.0, pool=1.0)
+# OpenAIの応答待ち時間を考慮してタイムアウトを長めに設定
+TIMEOUT = httpx.Timeout(connect=2.0, read=60.0, write=10.0, pool=2.0)
 
 
 class RAGClient:
