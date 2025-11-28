@@ -26,7 +26,7 @@ from app.core.usecases.external.external_api_uc import (
     ClassifyTextUseCase,
 )
 from app.api.schemas import RAGAskRequest, RAGAskResponse, ManualListResponse
-from app.shared.exceptions import ExternalServiceError, NotFoundError
+from backend_shared.core.domain.exceptions import ExternalServiceError, NotFoundError
 
 router = APIRouter(prefix="/external", tags=["external"])
 logger = logging.getLogger(__name__)

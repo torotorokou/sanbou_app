@@ -15,12 +15,13 @@
 
 ## 2. ディレクトリ構成・レイヤー
 
-### 2-1. 代表的構成
+### 2-1. 代表的構成例
 
 ```text
 app/
   api/
     routers/
+    schemas/
   core/
     domain/
       inbound/

@@ -20,7 +20,7 @@ from app.core.usecases.ingest.upload_ingest_csv_uc import UploadIngestCsvUseCase
 from app.core.usecases.ingest.create_reservation_uc import CreateReservationUseCase
 from app.config.di_providers import get_upload_ingest_csv_uc, get_create_reservation_uc
 from app.api.schemas import ReservationCreate, ReservationResponse
-from app.shared.exceptions import ValidationError, InfrastructureError
+from backend_shared.core.domain.exceptions import ValidationError, InfrastructureError
 
 router = APIRouter(prefix="/ingest", tags=["ingest"])
 logger = logging.getLogger(__name__)
