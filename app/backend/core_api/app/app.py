@@ -37,7 +37,7 @@ from app.presentation.routers.block_unit_price.router import router as block_uni
 from app.presentation.routers.manual.router import router as manual_router
 from app.presentation.routers.dashboard.router import router as dashboard_router
 from app.presentation.routers.inbound.router import router as inbound_router
-from app.presentation.routers.sales_tree.router import router as sales_tree_router
+from app.presentation.routers.sales_tree import router as sales_tree_router
 
 # ==========================================
 # 構造化JSONロギングの設定
