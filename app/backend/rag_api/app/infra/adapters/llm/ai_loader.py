@@ -3,8 +3,8 @@ AIによる回答生成のためのローダーモジュール。
 OpenAIクライアント・ベクトルストア・JSONデータを組み合わせて回答を生成する。
 """
 
-from app.infrastructure.llm.openai_client import generate_answer
-from app.core.file_ingest_service import get_resource_paths, load_json_data
+from app.infra.adapters.llm.openai_client import generate_answer
+from app.core.usecases.file_ingest_service import get_resource_paths, load_json_data
 from app.utils.chunk_utils import load_faiss_vectorstore
 from typing import List, Optional
 import os

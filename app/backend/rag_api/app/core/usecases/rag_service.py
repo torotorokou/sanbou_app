@@ -2,19 +2,19 @@ import streamlit as st
 from langchain_community.vectorstores import FAISS
 from langchain_community.embeddings import OpenAIEmbeddings
 
-from app.infrastructure.pdf.pdf_loader import (
+from app.infra.adapters.pdf.pdf_loader import (
     load_pdf_first_page,
     render_pdf_first_page,
     render_pdf_pages,
 )
-from app.core.file_ingest_service import (
+from app.core.usecases.file_ingest_service import (
     load_config,
     load_json_data,
     extract_categories_and_titles,
     load_question_templates,
 )
-from app.infrastructure.llm.ai_loader import OpenAIConfig, load_ai
-from app.infrastructure.llm.openai_client import OpenAIClient, generate_answer
+from app.infra.adapters.llm.ai_loader import OpenAIConfig, load_ai
+from app.infra.adapters.llm.openai_client import OpenAIClient, generate_answer
 from app.utils.chunk_utils import load_vectorstore
 from components.custom_button import centered_button
 

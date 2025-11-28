@@ -33,7 +33,7 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 from typing import Dict, Any
 from app.paths import get_pdf_url_prefix
-from .pdf_service_base import PDFServiceBase
+from app.core.ports.pdf_service_port import PDFServiceBase
 
 
 class DummyResponseService:

@@ -20,9 +20,9 @@ FastAPIのDependsで使用するサービスインスタンスを生成します
 切り替えるだけで開発→本番移行が可能です。
 """
 
-from app.services.pdf_service import PDFService
-from app.services.dummy_response_service import DummyResponseService
-from app.services.ai_response_service import AIResponseService
+from app.infra.adapters.pdf_service_adapter import PDFService
+from app.core.usecases.dummy_response_service import DummyResponseService
+from app.core.usecases.ai_response_service import AIResponseService
 
 
 def get_pdf_service() -> PDFService:
