@@ -13,6 +13,7 @@ from fastapi import APIRouter, Request, UploadFile, File, Form
 import httpx
 
 from app.shared.exceptions import ExternalServiceError
+from app.shared.utils import rewrite_artifact_urls_to_bff
 
 logger = logging.getLogger(__name__)
 
@@ -20,28 +21,6 @@ router = APIRouter(prefix="/block_unit_price_interactive", tags=["block_unit_pri
 
 # ledger_api のベースURL（環境変数から取得、デフォルトはDocker Compose用）
 LEDGER_API_BASE = os.getenv("LEDGER_API_BASE", "http://ledger_api:8000")
-
-
-def rewrite_artifact_urls_to_bff(response_data: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    BFFの責務: ledger_apiの内部論理パス(/reports/artifacts)を
-    外向きパス(/core_api/reports/artifacts)に変換
-    
-    Args:
-        response_data: ledger_apiからのレスポンスJSON
-        
-    Returns:
-        URLが書き換えられたレスポンスJSON
-    """
-    if "artifact" in response_data:
-        artifact = response_data["artifact"]
-        # excel_download_url と pdf_preview_url に /core_api プレフィックスを追加
-        if "excel_download_url" in artifact and artifact["excel_download_url"]:
-            artifact["excel_download_url"] = f"/core_api{artifact['excel_download_url']}"
-        if "pdf_preview_url" in artifact and artifact["pdf_preview_url"]:
-            artifact["pdf_preview_url"] = f"/core_api{artifact['pdf_preview_url']}"
-        logger.debug(f"[BFF] Rewritten artifact URLs with /core_api prefix")
-    return response_data
 
 
 @router.post("/initial")
