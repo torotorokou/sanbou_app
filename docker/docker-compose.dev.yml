@@ -158,6 +158,7 @@ services:
       - ../app/backend/backend_shared:/opt/backend_shared:rw
       - ../app/config:/backend/config
       - ../secrets:/backend/secrets:ro
+      - ../data/gcs_download/rag_api/master:/backend/local_data/master:ro
     environment:
       GOOGLE_APPLICATION_CREDENTIALS: /backend/secrets/dev_key.json
       CATEGORY_QUESTION_TEMPLATES_WITH_TAGS: /backend/config/category_question_templates_with_tags.yaml
