@@ -3,8 +3,8 @@ import yaml
 import os
 from typing import Optional, Union
 
-# 設定ファイルのパスをapp/local_configに変更
-MAIN_PATHS = "/backend/app/local_config/main_paths.yaml"
+# 設定ファイルのパスをapp/configに変更
+MAIN_PATHS = "/backend/app/config/main_paths.yaml"
 BASE_DIR_PATH = "/backend/app"
 
 
