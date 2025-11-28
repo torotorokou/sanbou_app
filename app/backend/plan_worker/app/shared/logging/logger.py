@@ -1,5 +1,5 @@
 import logging
-from app.shared.config.settings import settings
+from app.config.settings import settings
 
 _FMT = "%(asctime)s %(levelname)s %(name)s - %(message)s"
 

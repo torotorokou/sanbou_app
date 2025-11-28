@@ -2,8 +2,8 @@ from __future__ import annotations
 import argparse
 from datetime import date
 from app.shared.logging.logger import get_logger
-from app.infrastructure.db.pg_repositories import PgActualsRepository, PgRatiosRepository
-from app.application.usecases.rebuild_daytype_ratios import rebuild_daytype_ratios
+from app.infra.db.pg_repositories import PgActualsRepository, PgRatiosRepository
+from app.core.usecases.rebuild_daytype_ratios import rebuild_daytype_ratios
 
 logger = get_logger(__name__)
 
