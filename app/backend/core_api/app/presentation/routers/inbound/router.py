@@ -12,8 +12,13 @@ Inbound Router - 搬入データ取得エンドポイント
   - グラフ表示用の日次データ取得
   - 月別/週別集計の基礎データ
   - トレンド分析用の累積データ
+
+設計方針:
+  - カスタム例外を使用(HTTPExceptionは使用しない)
+  - ValidationError でバリデーションエラーを表現
+  - InfrastructureError でDB接続エラーを表現
 """
-from fastapi import APIRouter, Query, HTTPException, Depends
+from fastapi import APIRouter, Query, Depends
 from typing import List, Optional
 import logging
 from datetime import date as date_type
@@ -21,6 +26,7 @@ from datetime import date as date_type
 from app.domain.inbound import InboundDailyRow, CumScope
 from app.application.usecases.inbound.get_inbound_daily_uc import GetInboundDailyUseCase
 from app.config.di_providers import get_inbound_daily_uc
+from app.shared.exceptions import ValidationError, InfrastructureError
 
 logger = logging.getLogger(__name__)
 
@@ -53,7 +59,8 @@ def get_inbound_daily(
         日次搬入量データのリスト（連続日・0埋め済み）
     
     Raises:
-        HTTPException: バリデーションエラーまたはDB接続エラー
+        ValidationError: バリデーションエラー
+        InfrastructureError: DB接続エラー
     """
     try:
         data = uc.execute(start, end, segment, cum_scope)
@@ -66,8 +73,8 @@ def get_inbound_daily(
 
     except ValueError as e:
         logger.warning(f"Validation error: {e}")
-        raise HTTPException(status_code=400, detail=str(e))
+        raise ValidationError(message=str(e), field="date_range")
     
     except Exception as e:
         logger.error(f"Failed to fetch inbound daily: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=str(e))
+        raise InfrastructureError(message=f"Database query failed: {str(e)}", cause=e)
