@@ -2,7 +2,7 @@
 KPI API Router
 KPI overview and metrics endpoints
 """
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 import logging
 
 from app.presentation.schemas import KPIOverview
