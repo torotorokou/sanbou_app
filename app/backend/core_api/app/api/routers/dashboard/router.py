@@ -22,7 +22,7 @@ import logging
 from app.config.di_providers import get_build_target_card_uc
 from app.application.usecases.dashboard.dto import BuildTargetCardInput
 from app.application.usecases.dashboard.build_target_card_uc import BuildTargetCardUseCase
-from app.presentation.schemas import TargetMetricsResponse
+from app.api.schemas import TargetMetricsResponse
 from app.shared.exceptions import NotFoundError
 
 logger = logging.getLogger(__name__)

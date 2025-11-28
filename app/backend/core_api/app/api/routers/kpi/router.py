@@ -9,7 +9,7 @@ Design:
 """
 from fastapi import APIRouter, Depends
 
-from app.presentation.schemas import KPIOverview
+from app.api.schemas import KPIOverview
 from app.application.usecases.kpi.kpi_uc import KPIUseCase
 from app.application.usecases.kpi.dto import GetKPIOverviewInput
 from app.config.di_providers import get_kpi_uc
