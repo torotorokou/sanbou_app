@@ -1,13 +1,22 @@
 """
-UseCase Logging and Monitoring Utilities
+Backend Shared UseCase Logging and Monitoring Utilities
 
-UseCaseの実行をトレース・監視するためのデコレータとユーティリティ。
+全バックエンドサービスで共通利用するUseCaseトレース・監視機能。
+構造化ログ出力、実行時間計測、メトリクス収集を提供します。
 
 Features:
   - 実行時間の計測
-  - 構造化ログの出力
-  - エラートラッキング
-  - メトリクス収集（オプション）
+  - 構造化ログの出力 (JSON format)
+  - エラートラッキング (exc_info付き)
+  - メトリクス収集 (success/error/validation_error カウント)
+
+使用例:
+    from backend_shared.application.logging import log_usecase_execution
+    
+    class GetCalendarMonthUseCase:
+        @log_usecase_execution(usecase_name="GetCalendarMonth", log_args=True)
+        def execute(self, year: int, month: int):
+            return self.query.get_month_calendar(year, month)
 """
 import logging
 import time
@@ -37,9 +46,9 @@ def log_usecase_execution(
         デコレータ関数
         
     Example:
-    >>> @log_usecase_execution(usecase_name="GetCalendarMonth")
-    >>> def execute(self, year: int, month: int):
-    >>>     return self.query.get_month_calendar(year, month)
+        >>> @log_usecase_execution(usecase_name="GetCalendarMonth")
+        >>> def execute(self, year: int, month: int):
+        >>>     return self.query.get_month_calendar(year, month)
     """
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
@@ -122,6 +131,11 @@ class UseCaseMetrics:
     
     将来的に Prometheus, CloudWatch などに統合可能。
     現在はメモリ内でカウントのみ保持。
+    
+    使用例:
+        metrics = UseCaseMetrics()
+        metrics.increment("GetCalendarMonth", "success")
+        print(metrics.get_metrics("GetCalendarMonth"))  # {'success': 1}
     """
     
     _instance = None

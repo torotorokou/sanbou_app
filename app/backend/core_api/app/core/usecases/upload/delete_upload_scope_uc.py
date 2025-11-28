@@ -8,7 +8,7 @@ from typing import Optional
 from datetime import date
 
 from app.core.ports.upload_status_port import IUploadStatusQuery
-from app.shared.logging_utils import log_usecase_execution
+from backend_shared.application.logging import log_usecase_execution
 
 logger = logging.getLogger(__name__)
 

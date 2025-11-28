@@ -13,7 +13,7 @@ import logging
 
 from app.core.ports.calendar_port import ICalendarQuery
 from app.core.usecases.calendar.dto import GetCalendarMonthInput, GetCalendarMonthOutput
-from app.shared.logging_utils import log_usecase_execution
+from backend_shared.application.logging import log_usecase_execution
 
 logger = logging.getLogger(__name__)
 
