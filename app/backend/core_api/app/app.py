@@ -32,7 +32,7 @@ from app.presentation.routers.calendar.router import router as calendar_router
 from app.presentation.routers.reports import router as reports_router
 from app.presentation.routers.chat.router import router as chat_router
 from app.presentation.routers.analysis.router import router as analysis_router
-from app.presentation.routers.database.router import router as database_router
+from app.presentation.routers.database import router as database_router
 from app.presentation.routers.block_unit_price.router import router as block_unit_price_router
 from app.presentation.routers.manual.router import router as manual_router
 from app.presentation.routers.dashboard.router import router as dashboard_router
