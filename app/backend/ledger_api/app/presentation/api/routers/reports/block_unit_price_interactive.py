@@ -12,11 +12,11 @@ from fastapi import APIRouter, File, UploadFile
 from pydantic import BaseModel
 
 from backend_shared.infra.adapters.fastapi.error_handlers import DomainError
-from app.application.usecases.reports.processors.interactive_report_processing_service import (
+from app.core.usecases.reports.processors.interactive_report_processing_service import (
     InteractiveReportProcessingService,
 )
 # 移行済みの実装ファイルからインポート
-from app.application.usecases.reports.interactive import (
+from app.core.usecases.reports.interactive import (
     BlockUnitPriceInteractive,
 )
 

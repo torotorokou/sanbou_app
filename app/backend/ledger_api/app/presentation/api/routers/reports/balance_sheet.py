@@ -2,8 +2,8 @@
 
 from typing import Optional
 
-from app.application.usecases.reports.generate_balance_sheet import GenerateBalanceSheetUseCase
-from app.local_config.di_providers import get_balance_sheet_usecase
+from app.core.usecases.reports.generate_balance_sheet import GenerateBalanceSheetUseCase
+from app.config.di_providers import get_balance_sheet_usecase
 from fastapi import APIRouter, File, Form, UploadFile, Depends
 from fastapi.responses import JSONResponse
 
