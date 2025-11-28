@@ -36,7 +36,7 @@ from app.application.usecases.forecast.forecast_job_uc import (
     GetForecastJobStatusUseCase,
     GetPredictionsUseCase,
 )
-from app.presentation.schemas import ForecastJobCreate, ForecastJobResponse, PredictionDTO
+from app.api.schemas import ForecastJobCreate, ForecastJobResponse, PredictionDTO
 from app.shared.exceptions import NotFoundError
 
 router = APIRouter(prefix="/forecast", tags=["forecast"])

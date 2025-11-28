@@ -19,7 +19,7 @@ import logging
 from app.application.usecases.ingest.upload_ingest_csv_uc import UploadIngestCsvUseCase
 from app.application.usecases.ingest.create_reservation_uc import CreateReservationUseCase
 from app.config.di_providers import get_upload_ingest_csv_uc, get_create_reservation_uc
-from app.presentation.schemas import ReservationCreate, ReservationResponse
+from app.api.schemas import ReservationCreate, ReservationResponse
 from app.shared.exceptions import ValidationError, InfrastructureError
 
 router = APIRouter(prefix="/ingest", tags=["ingest"])

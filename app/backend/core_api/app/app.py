@@ -24,20 +24,20 @@ from pythonjsonlogger import jsonlogger
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.presentation.routers.ingest.router import router as ingest_router
-from app.presentation.routers.forecast.router import router as forecast_router
-from app.presentation.routers.kpi.router import router as kpi_router
-from app.presentation.routers.external.router import router as external_router
-from app.presentation.routers.calendar.router import router as calendar_router
-from app.presentation.routers.reports import router as reports_router
-from app.presentation.routers.chat.router import router as chat_router
-from app.presentation.routers.analysis.router import router as analysis_router
-from app.presentation.routers.database import router as database_router
-from app.presentation.routers.block_unit_price.router import router as block_unit_price_router
-from app.presentation.routers.manual.router import router as manual_router
-from app.presentation.routers.dashboard.router import router as dashboard_router
-from app.presentation.routers.inbound.router import router as inbound_router
-from app.presentation.routers.sales_tree import router as sales_tree_router
+from app.api.routers.ingest.router import router as ingest_router
+from app.api.routers.forecast.router import router as forecast_router
+from app.api.routers.kpi.router import router as kpi_router
+from app.api.routers.external.router import router as external_router
+from app.api.routers.calendar.router import router as calendar_router
+from app.api.routers.reports import router as reports_router
+from app.api.routers.chat.router import router as chat_router
+from app.api.routers.analysis.router import router as analysis_router
+from app.api.routers.database import router as database_router
+from app.api.routers.block_unit_price.router import router as block_unit_price_router
+from app.api.routers.manual.router import router as manual_router
+from app.api.routers.dashboard.router import router as dashboard_router
+from app.api.routers.inbound.router import router as inbound_router
+from app.api.routers.sales_tree import router as sales_tree_router
 
 # ==========================================
 # 構造化JSONロギングの設定
@@ -108,7 +108,7 @@ app.include_router(calendar_router)    # カレンダー: 営業日情報等
 # ==========================================
 # 統一エラーハンドリング登録
 # ==========================================
-from app.presentation.middleware.error_handler import register_exception_handlers
+from app.api.middleware.error_handler import register_exception_handlers
 register_exception_handlers(app)
 
 

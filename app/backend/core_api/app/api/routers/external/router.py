@@ -25,7 +25,7 @@ from app.application.usecases.external.external_api_uc import (
     GenerateReportUseCase,
     ClassifyTextUseCase,
 )
-from app.presentation.schemas import RAGAskRequest, RAGAskResponse, ManualListResponse
+from app.api.schemas import RAGAskRequest, RAGAskResponse, ManualListResponse
 from app.shared.exceptions import ExternalServiceError, NotFoundError
 
 router = APIRouter(prefix="/external", tags=["external"])

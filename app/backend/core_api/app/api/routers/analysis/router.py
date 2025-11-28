@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import text
 import httpx
 
-from app.presentation.schemas import (
+from app.api.schemas import (
     CustomerChurnAnalyzeRequest,
     CustomerChurnAnalyzeResponse,
     LostCustomerDTO,
