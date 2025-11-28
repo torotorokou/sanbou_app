@@ -3,6 +3,7 @@ import re
 import hashlib
 import PyPDF2
 from .pdf_service_base import PDFServiceBase
+from backend_shared.core.domain.exceptions import ValidationError
 
 
 class PDFService(PDFServiceBase):
@@ -83,7 +84,7 @@ class PDFService(PDFServiceBase):
                 # 入力PDFがおかしい場合はスキップ
                 continue
         if added == 0:
-            raise ValueError("No valid pages to merge")
+            raise ValidationError("No valid pages to merge", field="pdf_file_paths")
         with open(output_path, "wb") as out_f:
             writer.write(out_f)
         return output_path

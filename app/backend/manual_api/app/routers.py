@@ -3,6 +3,7 @@ from __future__ import annotations
 from fastapi import APIRouter, HTTPException, Query
 from .service import ManualsService
 from .schemas import ManualDetail, ManualListResponse, ManualCatalogResponse
+from backend_shared.core.domain.exceptions import NotFoundError
 
 
 router = APIRouter(prefix="/manuals", tags=["manuals"])
@@ -29,7 +30,7 @@ def get_manual_catalog(category: str | None = Query(default="shogun")):
 def get_manual(manual_id: str):
     m = service.get(manual_id)
     if not m:
-        raise HTTPException(status_code=404, detail="manual not found")
+        raise NotFoundError("Manual", manual_id)
     return m
 
 
@@ -37,5 +38,5 @@ def get_manual(manual_id: str):
 def get_manual_sections(manual_id: str):
     m = service.get(manual_id)
     if not m:
-        raise HTTPException(status_code=404, detail="manual not found")
+        raise NotFoundError("Manual", manual_id)
     return service.get_sections(manual_id)
