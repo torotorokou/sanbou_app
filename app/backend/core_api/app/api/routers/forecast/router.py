@@ -31,7 +31,7 @@ from app.config.di_providers import (
     get_forecast_job_status_uc,
     get_predictions_uc,
 )
-from app.application.usecases.forecast.forecast_job_uc import (
+from app.core.usecases.forecast.forecast_job_uc import (
     CreateForecastJobUseCase,
     GetForecastJobStatusUseCase,
     GetPredictionsUseCase,

@@ -18,7 +18,7 @@ from app.config.di_providers import (
     get_generate_report_uc,
     get_classify_text_uc,
 )
-from app.application.usecases.external.external_api_uc import (
+from app.core.usecases.external.external_api_uc import (
     AskRAGUseCase,
     ListManualsUseCase,
     GetManualUseCase,

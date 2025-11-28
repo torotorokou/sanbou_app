@@ -4,10 +4,10 @@ Fake implementations of Domain Ports for testing.
 from datetime import date as date_type
 from typing import List, Optional, Dict, Any
 
-from app.domain.inbound import InboundDailyRow, CumScope
-from app.domain.models import ForecastJobCreate, ForecastJobResponse, PredictionDTO
-from app.domain.ports.calendar_port import ICalendarQuery
-from app.domain.ports.upload_status_port import IUploadStatusQuery
+from app.core.domain.inbound import InboundDailyRow, CumScope
+from app.core.domain.models import ForecastJobCreate, ForecastJobResponse, PredictionDTO
+from app.core.ports.calendar_port import ICalendarQuery
+from app.core.ports.upload_status_port import IUploadStatusQuery
 
 
 class FakeCalendarQuery(ICalendarQuery):

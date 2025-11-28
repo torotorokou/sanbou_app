@@ -17,7 +17,7 @@ sys.path.insert(0, str(backend_path / "core_api"))
 import backend_shared.infrastructure.config.paths as paths_module
 paths_module.SHOGUNCSV_DEF_PATH = str(backend_path.parent / "config" / "csv_config" / "shogun_csv_masters.yaml")
 
-from app.domain.shogun_flash_schemas import ReceiveFlashRow, ShipmentFlashRow, YardFlashRow
+from app.core.domain.shogun_flash_schemas import ReceiveFlashRow, ShipmentFlashRow, YardFlashRow
 from pydantic import ValidationError
 
 

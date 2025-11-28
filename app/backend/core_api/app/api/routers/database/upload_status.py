@@ -10,7 +10,7 @@ from fastapi import APIRouter, Depends
 
 from backend_shared.infra.adapters.presentation import SuccessApiResponse, ErrorApiResponse
 from app.config.di_providers import get_upload_status_uc
-from app.application.usecases.upload.get_upload_status_uc import GetUploadStatusUseCase
+from app.core.usecases.upload.get_upload_status_uc import GetUploadStatusUseCase
 
 logger = logging.getLogger(__name__)
 
