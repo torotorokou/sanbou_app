@@ -1,4 +1,4 @@
-from app.application.usecases.reports.balance_sheet import process as process_bal
+from app.core.usecases.reports.balance_sheet import process as process_bal
 from app.infra.report_utils.dataframe.operations import (
     apply_summary_all_items,
     apply_division_result_to_master,
