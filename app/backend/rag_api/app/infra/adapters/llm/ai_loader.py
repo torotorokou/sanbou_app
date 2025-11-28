@@ -4,8 +4,8 @@ OpenAIクライアント・ベクトルストア・JSONデータを組み合わ�
 """
 
 from app.infra.adapters.llm.openai_client import generate_answer
-from app.core.usecases.file_ingest_service import get_resource_paths, load_json_data
-from app.utils.chunk_utils import load_faiss_vectorstore
+from app.core.usecases.rag.file_ingest_service import get_resource_paths, load_json_data
+from app.shared.chunk_utils import load_faiss_vectorstore
 from typing import List, Optional
 import os
 from openai import RateLimitError

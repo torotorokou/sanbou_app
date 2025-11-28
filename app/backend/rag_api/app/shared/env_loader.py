@@ -20,7 +20,7 @@ import os
 from pathlib import Path
 from typing import Optional
 from dotenv import load_dotenv
-from app.paths import CONFIG_ENV
+from app.config.paths import CONFIG_ENV
 
 
 def load_env_and_secrets() -> Optional[str]:

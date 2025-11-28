@@ -20,21 +20,31 @@ FastAPIのDependsで使用するサービスインスタンスを生成します
 切り替えるだけで開発→本番移行が可能です。
 """
 
-from app.infra.adapters.pdf_service_adapter import PDFService
-from app.core.usecases.dummy_response_service import DummyResponseService
-from app.core.usecases.ai_response_service import AIResponseService
+from app.core.ports.rag.pdf_service_port import PDFServiceBase
+from app.core.usecases.rag.dummy_response_service import DummyResponseService
+from app.core.usecases.rag.ai_response_service import AIResponseService
+from app.core.usecases.manuals.manuals_service import ManualsService
+from app.config.di_providers import get_pdf_service as _get_pdf_service
+from app.config.di_providers import get_dummy_response_service as _get_dummy_response_service
+from app.config.di_providers import get_ai_response_service as _get_ai_response_service
+from app.config.di_providers import get_manuals_service as _get_manuals_service
 
 
-def get_pdf_service() -> PDFService:
+def get_pdf_service() -> PDFServiceBase:
     """PDFサービスのインスタンスを取得"""
-    return PDFService()
+    return _get_pdf_service()
 
 
 def get_dummy_response_service() -> DummyResponseService:
     """ダミーレスポンスサービスのインスタンスを取得"""
-    return DummyResponseService(get_pdf_service())
+    return _get_dummy_response_service()
 
 
 def get_ai_response_service() -> AIResponseService:
     """AI回答サービスのインスタンスを取得"""
-    return AIResponseService(get_pdf_service())
+    return _get_ai_response_service()
+
+
+def get_manuals_service() -> ManualsService:
+    """マニュアルサービスのインスタンスを取得"""
+    return _get_manuals_service()

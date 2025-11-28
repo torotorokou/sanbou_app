@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException, Query
-from .service import ManualsService
-from .schemas import ManualDetail, ManualListResponse, ManualCatalogResponse
+from fastapi import APIRouter, HTTPException, Query, Depends
+from app.core.usecases.manuals_service import ManualsService
+from app.core.domain.manual_entity import ManualDetail, ManualListResponse, ManualCatalogResponse
 from backend_shared.core.domain.exceptions import NotFoundError
+from app.config.di_providers import get_manuals_service
 
 
 router = APIRouter(prefix="/manuals", tags=["manuals"])
-service = ManualsService()
 
 
 @router.get("", response_model=ManualListResponse)
@@ -17,17 +17,24 @@ def list_manuals(
     category: str | None = Query(default="shogun"),
     page: int = Query(default=1, ge=1),
     size: int = Query(default=20, ge=1, le=100),
+    service: ManualsService = Depends(get_manuals_service),
 ):
     return service.list(query=query, tag=tag, category=category, page=page, size=size)
 
 
 @router.get("/catalog", response_model=ManualCatalogResponse)
-def get_manual_catalog(category: str | None = Query(default="shogun")):
+def get_manual_catalog(
+    category: str | None = Query(default="shogun"),
+    service: ManualsService = Depends(get_manuals_service),
+):
     return service.get_catalog(category=category)
 
 
 @router.get("/{manual_id}", response_model=ManualDetail)
-def get_manual(manual_id: str):
+def get_manual(
+    manual_id: str,
+    service: ManualsService = Depends(get_manuals_service),
+):
     m = service.get(manual_id)
     if not m:
         raise NotFoundError("Manual", manual_id)
@@ -35,7 +42,10 @@ def get_manual(manual_id: str):
 
 
 @router.get("/{manual_id}/sections")
-def get_manual_sections(manual_id: str):
+def get_manual_sections(
+    manual_id: str,
+    service: ManualsService = Depends(get_manuals_service),
+):
     m = service.get(manual_id)
     if not m:
         raise NotFoundError("Manual", manual_id)

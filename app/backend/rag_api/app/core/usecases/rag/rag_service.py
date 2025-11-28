@@ -7,7 +7,7 @@ from app.infra.adapters.pdf.pdf_loader import (
     render_pdf_first_page,
     render_pdf_pages,
 )
-from app.core.usecases.file_ingest_service import (
+from app.core.usecases.rag.file_ingest_service import (
     load_config,
     load_json_data,
     extract_categories_and_titles,
@@ -15,7 +15,7 @@ from app.core.usecases.file_ingest_service import (
 )
 from app.infra.adapters.llm.ai_loader import OpenAIConfig, load_ai
 from app.infra.adapters.llm.openai_client import OpenAIClient, generate_answer
-from app.utils.chunk_utils import load_vectorstore
+from app.shared.chunk_utils import load_vectorstore
 from components.custom_button import centered_button
 
 

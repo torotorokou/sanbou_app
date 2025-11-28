@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import os
 from typing import Dict, List, Optional
-from .schemas import (
+
+from app.core.domain.manual_entity import (
     ManualDetail,
     ManualListResponse,
     ManualSectionChunk,
@@ -12,10 +13,11 @@ from .schemas import (
     CatalogSection,
     ManualCatalogResponse,
 )
-from .catalog_data import sections as CATALOG_SECTIONS
+from app.core.ports.manuals_repository import ManualsRepository
+from app.infra.adapters.catalog_data import sections as CATALOG_SECTIONS
 
 
-class InMemoryManualRepository:
+class InMemoryManualRepository(ManualsRepository):
     def __init__(self, base_url: Optional[str] = None) -> None:
         resolved_base_url = base_url or os.getenv("MANUAL_FRONTEND_BASE_URL", "http://localhost:5173")
         self._items: Dict[str, ManualDetail] = {}
@@ -33,7 +35,7 @@ class InMemoryManualRepository:
                     doc_id=f"manual-{doc_id}",
                     page_title=title,
                     section_id=s.anchor,
-                    url=f"{base_url}/manuals/shogun/{doc_id}#{s.anchor}",
+                    url=f"{base_url}/manuals/shogun/{doc_id}#{s.anchor}",  # type: ignore
                     category=category,
                     tags=tags,
                     version="2025-09-18",
@@ -89,8 +91,8 @@ class InMemoryManualRepository:
         for sec in CATALOG_SECTIONS:
             items = [
                 CatalogItem(
-                    id=it.get("id"),
-                    title=it.get("title"),
+                    id=str(it.get("id", "")),
+                    title=str(it.get("title", "")),
                     description=it.get("description"),
                     route=it.get("route"),
                     tags=it.get("tags", []),
@@ -101,8 +103,8 @@ class InMemoryManualRepository:
             ]
             sections.append(
                 CatalogSection(
-                    id=sec.get("id"),
-                    title=sec.get("title"),
+                    id=str(sec.get("id", "")),
+                    title=str(sec.get("title", "")),
                     icon=sec.get("icon"),
                     items=items,
                 )
