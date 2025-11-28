@@ -7,8 +7,8 @@ from typing import Any, Dict, Optional
 
 import pandas as pd
 
-# CSV処理サービス（新しいインポートパス）
-from app.core.usecases.csv import CsvFormatterService, CsvValidatorService
+# CSV処理サービス（application/usecases/csvから参照）
+from app.application.usecases.csv import CsvFormatterService, CsvValidatorService
 from app.infra.report_utils import get_template_config, write_values_to_template
 from backend_shared.config.config_loader import ReportTemplateConfigLoader
 from backend_shared.core.usecases.report_checker.check_csv_files import check_csv_files
