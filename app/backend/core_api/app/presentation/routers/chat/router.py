@@ -1,12 +1,18 @@
 """
 Chat Router - BFF for rag_api chat endpoints
 フロントエンドからのチャットリクエストを受け、rag_apiに転送
+
+設計方針:
+  - カスタム例外を使用(HTTPExceptionは使用しない)
+  - ExternalServiceError で外部サービスエラーをラップ
 """
 import logging
 import os
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, Request
 from fastapi.responses import Response
 import httpx
+
+from app.shared.exceptions import ExternalServiceError
 
 logger = logging.getLogger(__name__)
 
@@ -30,21 +36,18 @@ async def proxy_question_options():
             return r.json()
     except httpx.HTTPStatusError as e:
         logger.error(f"RAG API returned error: {e.response.status_code} - {e.response.text}")
-        raise HTTPException(
+        raise ExternalServiceError(
+            service_name="rag_api",
+            message=f"Question options fetch failed: {e.response.text[:200]}",
             status_code=e.response.status_code,
-            detail={
-                "code": "RAG_UPSTREAM_ERROR",
-                "message": f"RAG API error: {e.response.text[:200]}"
-            }
+            cause=e
         )
     except httpx.HTTPError as e:
         logger.error(f"Failed to reach rag_api: {str(e)}")
-        raise HTTPException(
-            status_code=502,
-            detail={
-                "code": "RAG_UNREACHABLE",
-                "message": f"Cannot reach rag_api: {str(e)}"
-            }
+        raise ExternalServiceError(
+            service_name="rag_api",
+            message=f"Cannot reach rag_api: {str(e)}",
+            cause=e
         )
 
 
@@ -98,21 +101,18 @@ async def proxy_generate_answer(request: Request):
             return rag_response
     except httpx.HTTPStatusError as e:
         logger.error(f"RAG API returned error: {e.response.status_code} - {e.response.text}")
-        raise HTTPException(
+        raise ExternalServiceError(
+            service_name="rag_api",
+            message=f"Answer generation failed: {e.response.text[:200]}",
             status_code=e.response.status_code,
-            detail={
-                "code": "RAG_UPSTREAM_ERROR",
-                "message": f"RAG API error: {e.response.text[:200]}"
-            }
+            cause=e
         )
     except httpx.HTTPError as e:
         logger.error(f"Failed to reach rag_api: {str(e)}")
-        raise HTTPException(
-            status_code=502,
-            detail={
-                "code": "RAG_UNREACHABLE",
-                "message": f"Cannot reach rag_api: {str(e)}"
-            }
+        raise ExternalServiceError(
+            service_name="rag_api",
+            message=f"Cannot reach rag_api: {str(e)}",
+            cause=e
         )
 
 
@@ -142,21 +142,18 @@ async def proxy_pdf(file_path: str):
             )
     except httpx.HTTPStatusError as e:
         logger.error(f"RAG API PDF error: {e.response.status_code} - {file_path}")
-        raise HTTPException(
+        raise ExternalServiceError(
+            service_name="rag_api",
+            message=f"PDF file not found: {file_path}",
             status_code=e.response.status_code,
-            detail={
-                "code": "PDF_NOT_FOUND",
-                "message": f"PDF file not found: {file_path}"
-            }
+            cause=e
         )
     except httpx.HTTPError as e:
         logger.error(f"Failed to fetch PDF from rag_api: {str(e)}")
-        raise HTTPException(
-            status_code=502,
-            detail={
-                "code": "PDF_FETCH_ERROR",
-                "message": f"Cannot fetch PDF: {str(e)}"
-            }
+        raise ExternalServiceError(
+            service_name="rag_api",
+            message=f"Cannot fetch PDF: {str(e)}",
+            cause=e
         )
 
 
@@ -175,19 +172,16 @@ async def proxy_test_answer(request: Request):
             return r.json()
     except httpx.HTTPStatusError as e:
         logger.error(f"RAG API returned error: {e.response.status_code} - {e.response.text}")
-        raise HTTPException(
+        raise ExternalServiceError(
+            service_name="rag_api",
+            message=f"Test answer generation failed: {e.response.text[:200]}",
             status_code=e.response.status_code,
-            detail={
-                "code": "RAG_UPSTREAM_ERROR",
-                "message": f"RAG API error: {e.response.text[:200]}"
-            }
+            cause=e
         )
     except httpx.HTTPError as e:
         logger.error(f"Failed to reach rag_api: {str(e)}")
-        raise HTTPException(
-            status_code=502,
-            detail={
-                "code": "RAG_UNREACHABLE",
-                "message": f"Cannot reach rag_api: {str(e)}"
-            }
+        raise ExternalServiceError(
+            service_name="rag_api",
+            message=f"Cannot reach rag_api: {str(e)}",
+            cause=e
         )
