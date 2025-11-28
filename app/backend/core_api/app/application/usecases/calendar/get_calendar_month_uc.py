@@ -3,11 +3,16 @@ Get Calendar Month UseCase - 月次カレンダーデータ取得ユースケー
 
 指定された年月の営業カレンダーデータを取得し、
 営業日判定・祝日情報を提供します。
+
+Design:
+  - execute() method with Input/Output DTO pattern
+  - Port abstraction for data access
+  - Business logic and validation in UseCase layer
 """
 import logging
-from typing import List, Dict, Any
 
 from app.domain.ports.calendar_port import ICalendarQuery
+from app.application.usecases.calendar.dto import GetCalendarMonthInput, GetCalendarMonthOutput
 from app.shared.logging_utils import log_usecase_execution
 
 logger = logging.getLogger(__name__)
@@ -17,10 +22,10 @@ class GetCalendarMonthUseCase:
     """
     月次カレンダーデータ取得ユースケース
     
-    責務:
-      - 年月のバリデーション（範囲チェック）
-      - カレンダーデータの取得（Port経由）
-      - ログ記録
+    Responsibilities:
+      - Input validation (year/month range check)
+      - Calendar data retrieval via Port
+      - Structured output via DTO
     """
     
     def __init__(self, query: ICalendarQuery):
@@ -31,32 +36,33 @@ class GetCalendarMonthUseCase:
         self.query = query
     
     @log_usecase_execution(usecase_name="GetCalendarMonth", log_result=True)
-    def execute(self, year: int, month: int) -> List[Dict[str, Any]]:
+    def execute(self, input_dto: GetCalendarMonthInput) -> GetCalendarMonthOutput:
         """
         指定された年月のカレンダーデータを取得
         
+        Process:
+          1. Validate input DTO
+          2. Fetch calendar data via Port
+          3. Return structured Output DTO
+        
         Args:
-            year: 年 (1900-2100)
-            month: 月 (1-12)
+            input_dto: Input DTO with year and month
             
         Returns:
-            カレンダーデータのリスト
+            GetCalendarMonthOutput: カレンダーデータを含む出力DTO
             
         Raises:
             ValueError: 年月の範囲外
-            Exception: データベースエラー
         """
-        # バリデーション
-        if not (1900 <= year <= 2100):
-            raise ValueError(f"Invalid year: {year} (must be 1900-2100)")
-        if not (1 <= month <= 12):
-            raise ValueError(f"Invalid month: {month} (must be 1-12)")
+        # Step 1: Validation
+        input_dto.validate()
         
-        logger.info(f"Fetching calendar for {year}-{month:02d}")
+        logger.info(f"Fetching calendar for {input_dto.year}-{input_dto.month:02d}")
         
-        # データ取得（Port経由）
-        data = self.query.get_month_calendar(year, month)
+        # Step 2: データ取得（Port経由）
+        data = self.query.get_month_calendar(input_dto.year, input_dto.month)
         
         logger.info(f"Successfully fetched calendar: {len(data)} days")
         
-        return data
+        # Step 3: Return structured output
+        return GetCalendarMonthOutput(calendar_days=data)

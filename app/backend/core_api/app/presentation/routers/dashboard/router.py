@@ -20,6 +20,7 @@ from typing import Literal
 import logging
 
 from app.config.di_providers import get_build_target_card_uc
+from app.application.usecases.dashboard.dto import BuildTargetCardInput
 from app.application.usecases.dashboard.build_target_card_uc import BuildTargetCardUseCase
 from app.presentation.schemas import TargetMetricsResponse
 from app.shared.exceptions import NotFoundError
@@ -37,6 +38,11 @@ def get_target_metrics(
     """
     Retrieve monthly, weekly, and daily target metrics with actuals for the specified date.
     
+    Router層の責務:
+      1. Query Parameters → Input DTO 変換
+      2. UseCase 呼び出し
+      3. Output DTO → Response 変換
+    
     **Anchor Date Resolution:**
     - Current month: Uses today as anchor
     - Past month: Uses last day of month as anchor
@@ -51,19 +57,39 @@ def get_target_metrics(
     - Past month monthly view: `?date=2025-09-01&mode=monthly` → fetches 2025-09-30 data with day/week masked
     - Future month monthly view: `?date=2025-12-01&mode=monthly` → fetches first business day with day/week masked
     - Specific day view: `?date=2025-10-15&mode=daily` → fetches 2025-10-15 data without masking
+    
+    Args:
+        date: 対象日付（月次表示の場合は月初日を推奨）
+        mode: 表示モード（"daily": 特定日、"monthly": 月次ビュー）
+        uc: BuildTargetCardUseCase（DI経由で注入）
+    
+    Returns:
+        TargetMetricsResponse: ターゲット/実績データ
+    
+    Raises:
+        NotFoundError: データが見つからない（404 Not Found）
+        ValidationError: 入力値が不正（400 Bad Request）
     """
-    logger.info(f"GET /dashboard/target called with date={date}, mode={mode}")
+    # 1. Request → Input DTO 変換
+    input_dto = BuildTargetCardInput(
+        requested_date=date,
+        mode=mode,  # type: ignore[arg-type]
+    )
     
-    data = uc.execute(date, mode=mode)  # type: ignore[arg-type]
+    # 2. UseCase 実行
+    output = uc.execute(input_dto)
     
-    if not data:
+    # 3. データが見つからない場合はNotFoundErrorを発生
+    if not output.found or output.data is None:
         logger.warning(f"No target card data found for date={date}, mode={mode}")
         raise NotFoundError(
             resource_type="Target card data",
             identifier=f"{date} (mode={mode})"
         )
     
-    logger.info(f"Successfully retrieved target metrics for date={date}, mode={mode}")
-    return TargetMetricsResponse(**data)
+    logger.info(f"GET /dashboard/target: success, date={date}, mode={mode}")
+    
+    # 4. Output DTO → Response 変換
+    return TargetMetricsResponse(**output.data)
 
 
