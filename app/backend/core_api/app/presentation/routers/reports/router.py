@@ -1,14 +1,20 @@
 """
 Reports Router - BFF for ledger_api report endpoints
 フロントエンドからの全レポートリクエストを受け、ledger_apiに転送
+
+設計方針:
+  - カスタム例外を使用(HTTPExceptionは使用しない)
+  - ExternalServiceError で外部サービスエラーをラップ
 """
 import logging
 import os
 from typing import Any, Dict, Optional
-from fastapi import APIRouter, HTTPException, Request, Response
+from fastapi import APIRouter, Request, Response
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 import httpx
+
+from app.shared.exceptions import ExternalServiceError
 
 logger = logging.getLogger(__name__)
 
@@ -112,30 +118,18 @@ async def proxy_factory_report(request: Request):
             return rewrite_artifact_urls_to_bff(response_data)
     except httpx.HTTPStatusError as e:
         logger.error(f"Ledger API returned error: {e.response.status_code} - {e.response.text}", exc_info=True)
-        raise HTTPException(
+        raise ExternalServiceError(
+            service_name="ledger_api",
+            message=f"Factory report generation failed: {e.response.text[:200]}",
             status_code=e.response.status_code,
-            detail={
-                "code": "LEDGER_UPSTREAM_ERROR",
-                "message": f"Ledger API error: {e.response.text[:200]}"
-            }
+            cause=e
         )
     except httpx.HTTPError as e:
         logger.error(f"Failed to reach ledger_api: {str(e)}", exc_info=True)
-        raise HTTPException(
-            status_code=502,
-            detail={
-                "code": "LEDGER_UNREACHABLE",
-                "message": f"Cannot reach ledger_api: {str(e)}"
-            }
-        )
-    except Exception as e:
-        logger.error(f"Unexpected error in factory_report: {str(e)}", exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail={
-                "code": "INTERNAL_ERROR",
-                "message": f"Internal error: {str(e)}"
-            }
+        raise ExternalServiceError(
+            service_name="ledger_api",
+            message=f"Cannot reach ledger_api: {str(e)}",
+            cause=e
         )
 
 
@@ -200,9 +194,10 @@ async def proxy_artifact(
             if upstream_response.status_code >= 400:
                 body = await upstream_response.aread()
                 logger.error(f"[BFF] Ledger API returned error: {upstream_response.status_code}")
-                raise HTTPException(
-                    status_code=upstream_response.status_code,
-                    detail=body.decode(errors="ignore")
+                raise ExternalServiceError(
+                    service_name="ledger_api",
+                    message=f"Artifact download failed: {body.decode(errors='ignore')[:200]}",
+                    status_code=upstream_response.status_code
                 )
             
             # レスポンスヘッダーを透過（Content-Type, Content-Disposition等）
@@ -240,13 +235,19 @@ async def proxy_artifact(
             
     except httpx.TimeoutException as e:
         logger.error(f"[BFF] Timeout while fetching artifact: {str(e)}")
-        raise HTTPException(status_code=504, detail="Gateway timeout")
+        raise ExternalServiceError(
+            service_name="ledger_api",
+            message=f"Artifact download timeout: {str(e)}",
+            status_code=504,
+            cause=e
+        )
     except httpx.HTTPError as e:
         logger.error(f"[BFF] HTTP error while fetching artifact: {str(e)}")
-        raise HTTPException(status_code=502, detail="Bad gateway")
-    except Exception as e:
-        logger.error(f"[BFF] Unexpected error in artifact proxy: {str(e)}", exc_info=True)
-        raise HTTPException(status_code=500, detail="Internal server error")
+        raise ExternalServiceError(
+            service_name="ledger_api",
+            message=f"Artifact download failed: {str(e)}",
+            cause=e
+        )
 
 
 @router.post("/balance_sheet/")
@@ -279,10 +280,19 @@ async def proxy_balance_sheet(request: Request):
             return rewrite_artifact_urls_to_bff(r.json())
     except httpx.HTTPStatusError as e:
         logger.error(f"Ledger API returned error: {e.response.status_code}")
-        raise HTTPException(status_code=e.response.status_code, detail={"code": "LEDGER_UPSTREAM_ERROR", "message": str(e)})
+        raise ExternalServiceError(
+            service_name="ledger_api",
+            message=f"Balance sheet generation failed: {str(e)}",
+            status_code=e.response.status_code,
+            cause=e
+        )
     except httpx.HTTPError as e:
         logger.error(f"Failed to reach ledger_api: {str(e)}")
-        raise HTTPException(status_code=502, detail={"code": "LEDGER_UNREACHABLE", "message": str(e)})
+        raise ExternalServiceError(
+            service_name="ledger_api",
+            message=f"Cannot reach ledger_api: {str(e)}",
+            cause=e
+        )
 
 
 @router.post("/average_sheet/")
@@ -317,30 +327,18 @@ async def proxy_average_sheet(request: Request):
             return rewrite_artifact_urls_to_bff(r.json())
     except httpx.HTTPStatusError as e:
         logger.error(f"Ledger API returned error: {e.response.status_code} - {e.response.text}", exc_info=True)
-        raise HTTPException(
+        raise ExternalServiceError(
+            service_name="ledger_api",
+            message=f"Average sheet generation failed: {e.response.text[:200]}",
             status_code=e.response.status_code,
-            detail={
-                "code": "LEDGER_UPSTREAM_ERROR",
-                "message": f"Ledger API error: {e.response.text[:200]}"
-            }
+            cause=e
         )
     except httpx.HTTPError as e:
         logger.error(f"Failed to reach ledger_api: {str(e)}", exc_info=True)
-        raise HTTPException(
-            status_code=502,
-            detail={
-                "code": "LEDGER_UNREACHABLE",
-                "message": f"Cannot reach ledger_api: {str(e)}"
-            }
-        )
-    except Exception as e:
-        logger.error(f"Unexpected error in average_sheet: {str(e)}", exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail={
-                "code": "INTERNAL_ERROR",
-                "message": f"Internal error: {str(e)}"
-            }
+        raise ExternalServiceError(
+            service_name="ledger_api",
+            message=f"Cannot reach ledger_api: {str(e)}",
+            cause=e
         )
 
 
@@ -373,9 +371,18 @@ async def proxy_management_sheet(request: Request):
             r.raise_for_status()
             return rewrite_artifact_urls_to_bff(r.json())
     except httpx.HTTPStatusError as e:
-        raise HTTPException(status_code=e.response.status_code, detail={"code": "LEDGER_UPSTREAM_ERROR", "message": str(e)})
+        raise ExternalServiceError(
+            service_name="ledger_api",
+            message=f"Management sheet generation failed: {str(e)}",
+            status_code=e.response.status_code,
+            cause=e
+        )
     except httpx.HTTPError as e:
-        raise HTTPException(status_code=502, detail={"code": "LEDGER_UNREACHABLE", "message": str(e)})
+        raise ExternalServiceError(
+            service_name="ledger_api",
+            message=f"Cannot reach ledger_api: {str(e)}",
+            cause=e
+        )
 
 
 # 通知ストリームエンドポイント
@@ -411,7 +418,16 @@ async def proxy_job_status(job_id: str):
             r.raise_for_status()
             return r.json()
     except httpx.HTTPStatusError as e:
-        raise HTTPException(status_code=e.response.status_code, detail={"code": "LEDGER_UPSTREAM_ERROR", "message": str(e)})
+        raise ExternalServiceError(
+            service_name="ledger_api",
+            message=f"Job status fetch failed: {str(e)}",
+            status_code=e.response.status_code,
+            cause=e
+        )
     except httpx.HTTPError as e:
-        raise HTTPException(status_code=502, detail={"code": "LEDGER_UNREACHABLE", "message": str(e)})
+        raise ExternalServiceError(
+            service_name="ledger_api",
+            message=f"Cannot reach ledger_api: {str(e)}",
+            cause=e
+        )
 

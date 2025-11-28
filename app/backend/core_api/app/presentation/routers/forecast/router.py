@@ -18,8 +18,12 @@ Forecast Router - 予測機能エンドポイント
 注意:
   - ジョブ作成は同期処理だが、実行は非同期(バックグラウンド)
   - 長時間実行ジョブのため、ポーリングまたはWebhookで結果を取得
+
+設計方針:
+  - カスタム例外を使用(HTTPExceptionは使用しない)
+  - NotFoundError でリソース不存在エラーを表現
 """
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, Query
 from datetime import date as date_type
 
 from app.config.di_providers import (
@@ -33,6 +37,7 @@ from app.application.usecases.forecast.forecast_job_uc import (
     GetPredictionsUseCase,
 )
 from app.presentation.schemas import ForecastJobCreate, ForecastJobResponse, PredictionDTO
+from app.shared.exceptions import NotFoundError
 
 router = APIRouter(prefix="/forecast", tags=["forecast"])
 
@@ -59,7 +64,7 @@ def get_job_status(
     """
     job = uc.execute(job_id)
     if not job:
-        raise HTTPException(status_code=404, detail="Job not found")
+        raise NotFoundError(entity="ForecastJob", entity_id=job_id)
     return job
 
 
