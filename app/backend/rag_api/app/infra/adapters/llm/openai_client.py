@@ -4,7 +4,7 @@ OpenAI APIを用いたAI回答生成クライアント。
 
 from typing import List, Optional
 from app.utils.chunk_utils import search_documents_with_category
-from app.local_config.constants import build_prompt
+from app.config.constants import build_prompt
 from openai import OpenAI
 import os
 from dotenv import load_dotenv

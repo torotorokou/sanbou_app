@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Dict, List, Optional
 
-from app.schemas.manuals import ManualDetail, ManualListResponse, ManualSectionChunk, ManualSummary, RagMetadata
+from app.api.schemas.manuals import ManualDetail, ManualListResponse, ManualSectionChunk, ManualSummary, RagMetadata
 
 
 class InMemoryManualRepository:

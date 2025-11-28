@@ -2,7 +2,7 @@ import os
 import re
 import hashlib
 import PyPDF2
-from .pdf_service_base import PDFServiceBase
+from app.core.ports.pdf_service_port import PDFServiceBase
 from backend_shared.core.domain.exceptions import ValidationError
 
 

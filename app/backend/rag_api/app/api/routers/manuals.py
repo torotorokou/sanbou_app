@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException, Query
 
-from app.schemas.manuals import ManualDetail, ManualListResponse
-from app.services.manuals_service import ManualsService
+from app.api.schemas.manuals import ManualDetail, ManualListResponse
+from app.core.usecases.manuals_service import ManualsService
 
 
 router = APIRouter(prefix="/manuals", tags=["manuals"])

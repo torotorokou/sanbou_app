@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from typing import Optional
 
-from app.infrastructure.manuals_repository import InMemoryManualRepository
-from app.schemas.manuals import ManualDetail, ManualListResponse
+from app.infra.adapters.manuals_repository import InMemoryManualRepository
+from app.api.schemas.manuals import ManualDetail, ManualListResponse
 
 
 class ManualsService:

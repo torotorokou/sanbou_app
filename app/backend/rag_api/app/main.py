@@ -13,7 +13,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app.paths import CONFIG_ENV
 from app.utils.env_loader import load_env_and_secrets
-from app.api.endpoints import query  # ← query.py に router を定義
+from app.api.routers import query  # ← query.py に router を定義
 
 
 # --- .env + secrets 読み込み --------------------------------------------------

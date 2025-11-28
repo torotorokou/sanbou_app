@@ -14,9 +14,9 @@ from fastapi import APIRouter, Body, Request, Depends
 from fastapi.responses import FileResponse, StreamingResponse, JSONResponse
 from pydantic import BaseModel
 
-from app.core import file_ingest_service as loader
-from app.infrastructure.pdf import pdf_loader
-from app.schemas.query_schema import QueryRequest
+from app.core.usecases import file_ingest_service as loader
+from app.infra.adapters.pdf import pdf_loader
+from app.api.schemas.query_schema import QueryRequest
 from app.dependencies import get_dummy_response_service, get_ai_response_service
 from backend_shared.infra.adapters.presentation.response_base import SuccessApiResponse, ErrorApiResponse
 from backend_shared.infra.adapters.presentation.response_utils import api_response

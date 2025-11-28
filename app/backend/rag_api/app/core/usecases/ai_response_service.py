@@ -31,7 +31,7 @@ from zoneinfo import ZoneInfo
 from typing import List, Dict, Any
 from app.utils.file_utils import PDF_PATH
 from app.paths import get_pdf_url_prefix
-from .pdf_service_base import PDFServiceBase
+from app.core.ports.pdf_service_port import PDFServiceBase
 
 
 class AIResponseService:
@@ -71,7 +71,7 @@ class AIResponseService:
         
         try:
             # 遅延インポート：テストや軽量実行時に不要な依存を避ける
-            from app.infrastructure.llm import ai_loader  # type: ignore
+            from app.infra.adapters.llm import ai_loader  # type: ignore
             result = ai_loader.get_answer(query, category, tags)
             
             # エラーレスポンスのチェック
