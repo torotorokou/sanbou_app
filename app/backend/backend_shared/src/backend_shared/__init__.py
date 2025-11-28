@@ -3,25 +3,42 @@ Backend Shared Package
 
 共通ユーティリティ・ドメインモデル・ミドルウェアなどを提供します。
 
-� パッケージ構造:
-  - adapters/         # プレゼンテーション層・ミドルウェア・FastAPI統合
-  - usecases/         # ビジネスロジック層
-  - infrastructure/   # インフラストラクチャ層
-  - domain/          # ドメインモデル
-  - utils/           # 共通ユーティリティ
+🏗️ Clean Architecture 構成:
+  - core/                  # コア層（ビジネスロジック）
+    - domain/              # ドメインモデル（Entity, 値オブジェクト）
+    - ports/               # 抽象インターフェース（Repository, Gateway）
+    - usecases/            # アプリケーションロジック（UseCase）
+  - infra/                 # インフラストラクチャ層
+    - adapters/            # Ports の具体実装
+      - fastapi/           # FastAPI 統合
+      - middleware/        # ミドルウェア
+      - presentation/      # プレゼンテーション層
+    - frameworks/          # フレームワーク固有処理
+  - config/                # 設定管理・DI
+  - utils/                 # 共通ユーティリティ
 
 🔄 推奨されるインポートパス:
-  - backend_shared.adapters.presentation
-  - backend_shared.usecases.csv_validator
-  - backend_shared.usecases.csv_formatter
-  - backend_shared.usecases.report_checker
-  - backend_shared.adapters.middleware
-  - backend_shared.infrastructure.logging_utils
-  - backend_shared.infrastructure.config
-  - backend_shared.adapters.fastapi
+  # Domain & Use Cases
+  - backend_shared.core.domain
+  - backend_shared.core.usecases.csv_validator
+  - backend_shared.core.usecases.csv_formatter
+  
+  # Infrastructure
+  - backend_shared.infra.adapters.presentation
+  - backend_shared.infra.adapters.middleware
+  - backend_shared.infra.adapters.fastapi
+  - backend_shared.infra.frameworks.database
+  
+  # Configuration & DI
+  - backend_shared.config.config_loader
+  - backend_shared.config.di_providers
+
+📐 依存関係のルール:
+  - core は他のどの層にも依存しない
+  - infra は core に依存する（依存関係逆転）
+  - config で依存関係を組み立てる
 """
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"  # Clean Architecture リファクタリング完了
 
 __all__: list[str] = ["__version__"]
-# Test comment for hot reload

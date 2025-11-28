@@ -16,7 +16,7 @@ from typing import Any, Dict, Optional, Tuple, Union
 from fastapi import UploadFile
 from fastapi.responses import JSONResponse
 
-from backend_shared.adapters.fastapi.error_handlers import DomainError
+from backend_shared.infra.adapters.fastapi.error_handlers import DomainError
 from app.application.usecases.reports.base_generators import (
     BaseInteractiveReportGenerator,
 )
@@ -55,7 +55,7 @@ class InteractiveReportProcessingService(ReportProcessingService):
             # ErrorApiResponse 系なら内部 payload を dict 化して返す
             if hasattr(validation_error, "payload"):
                 try:
-                    from backend_shared.adapters.presentation.response_base import (
+                    from backend_shared.infra.adapters.presentation.response_base import (
                         _model_to_dict,
                     )
 

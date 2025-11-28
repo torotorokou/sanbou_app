@@ -1,1 +1,1 @@
-# Config utilities
+# Makes config a package
