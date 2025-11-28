@@ -4,6 +4,15 @@ from typing import List, Optional
 from pydantic import BaseModel, Field, HttpUrl
 
 
+class SearchRequest(BaseModel):
+    """マニュアル検索リクエスト"""
+    query: Optional[str] = None
+    tag: Optional[str] = None
+    category: Optional[str] = "shogun"
+    page: int = 1
+    limit: Optional[int] = 20
+
+
 class ManualSectionChunk(BaseModel):
     title: str
     anchor: str = Field(..., pattern=r"^s-\d+$")
