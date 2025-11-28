@@ -9,13 +9,13 @@ import pandas as pd
 from abc import ABC, abstractmethod
 
 from backend_shared.utils.dataframe_utils import common_cleaning
-from backend_shared.usecases.csv_formatter.formatter_core import (
+from backend_shared.core.usecases.csv_formatter.formatter_core import (
     apply_column_cleaning,
     apply_column_type_parsing,
     dedupe_and_aggregate,
 )
 
-from backend_shared.usecases.csv_formatter.formatter_config import FormatterConfig
+from backend_shared.core.usecases.csv_formatter.formatter_config import FormatterConfig
 
 
 # =========================

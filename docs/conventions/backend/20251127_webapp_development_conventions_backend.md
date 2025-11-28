@@ -21,8 +21,6 @@
 app/
   api/
     routers/
-      inbound_forecast.py
-      customer_analysis.py
   core/
     domain/
       inbound/
@@ -39,10 +37,17 @@ app/
     adapters/
       inbound/
         inbound_repository.py
+    db/
+      models/                  ← schema（SQLAlchemy、Pydantic）ここ
+        inbound_models.py
+        sales_models.py
+      migrations/              ← Alembic
+      db.py
     frameworks/
-      db.py                   # DB 接続・Session 管理
+      http_client.py
+      file_storage.py
   config/
-    di_providers.py          # DI コンテナ（依存関係組み立て）
+    di_providers.py
 ```
 
 ### 2-2. 各層の役割

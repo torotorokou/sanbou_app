@@ -5,7 +5,7 @@ import requests
 import os
 from dotenv import load_dotenv
 from fastapi.middleware.cors import CORSMiddleware
-from backend_shared.infrastructure.logging_utils import setup_uvicorn_access_filter
+from backend_shared.infra.frameworks.logging_utils import setup_uvicorn_access_filter
 
 # .envからAPIキーを読み込む
 load_dotenv()
