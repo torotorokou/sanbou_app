@@ -20,10 +20,10 @@ export type {
 export type { IChatRepository } from './ports/repository';
 
 // ============================================================================
-// Application (ViewModel / API)
+// Infrastructure (Repository)
 // ============================================================================
 
-export { postChatAnswer, ChatRepository } from './application/useChatVM';
+export { postChatAnswer, ChatRepository } from './infrastructure/chat.repository';
 
 // ============================================================================
 // UI Components
