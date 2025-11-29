@@ -4,7 +4,7 @@ import { CheckCircleOutlined } from '@ant-design/icons';
 import { getApiEndpoint } from '@features/report/shared/config';
 import type { ReportKey } from '@features/report/shared/config';
 import type { ReportArtifactResponse } from '@features/report/preview/model/useReportArtifact';
-import { coreApi } from '@features/report/shared/api/http.adapter';
+import { coreApi } from '@features/report/shared/infrastructure/http.adapter';
 import type {
     InteractiveItem,
     InitialApiResponse,
