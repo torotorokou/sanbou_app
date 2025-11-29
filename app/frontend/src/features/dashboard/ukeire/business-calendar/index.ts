@@ -6,9 +6,9 @@
 // Ports
 export type { ICalendarRepository } from "./ports/repository";
 
-// Application
-export { useBusinessCalendarVM } from "./application/useBusinessCalendarVM";
-export { decorateCalendarCells } from "./application/decorators";
+// Model (ViewModel & decorators)
+export { useBusinessCalendarVM } from "./model/useBusinessCalendarVM";
+export { decorateCalendarCells } from "./model/decorators";
 
 // UI
 export { default as CalendarCard } from "./ui/cards/CalendarCard";

@@ -14,7 +14,7 @@ export { MockInboundForecastRepository } from "./infrastructure/inboundForecast.
 export {
   useInboundForecastVM,
   type InboundForecastViewModel,
-} from "./application/useInboundForecastVM";
+} from "./model/useInboundForecastVM";
 
 // UI
 export { ForecastCard, type ForecastCardProps, type KPIBlockProps } from "./ui/cards/ForecastCard";
