@@ -47,7 +47,7 @@ export type { CsvValidationBadgeProps } from './ui/CsvValidationBadge';
 // ========================================
 
 export { parseHeader, validateHeaders, validateHeadersFromText } from './core/csvHeaderValidator';
-export * from './core/csvRowValidator';
+export { validateRows } from './core/csvRowValidator';
 
 // ========================================
 // Model (Hooks & Business Logic)
@@ -55,7 +55,7 @@ export * from './core/csvRowValidator';
 
 export { useCsvFileValidator } from './model/useCsvFileValidator';
 export type { CsvFileValidatorOptions } from './model/useCsvFileValidator';
-export * from './model/useValidateOnPick';
+export { useValidateOnPick } from './model/useValidateOnPick';
 
 // ========================================
 // Model Types

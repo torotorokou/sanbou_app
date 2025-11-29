@@ -26,7 +26,7 @@ export { decorateCalendarCells } from "./business-calendar/model/decorators";
 export { useBusinessCalendarVM } from "./business-calendar/model/useBusinessCalendarVM";
 export { CalendarRepositoryForUkeire } from "./business-calendar/infrastructure/calendar.repository";
 export { MockCalendarRepositoryForUkeire } from "./business-calendar/infrastructure/calendar.mock.repository";
-export { default as UkeireCalendarCard } from "./business-calendar/ui/cards/CalendarCard";
+export { CalendarCard as UkeireCalendarCard } from "./business-calendar/ui/cards/CalendarCard";
 export { default as UkeireCalendar, UkeireCalendar as UkeireCalendarNamed } from "./business-calendar/ui/components/UkeireCalendar";
 
 // ========== KPI Targets ==========

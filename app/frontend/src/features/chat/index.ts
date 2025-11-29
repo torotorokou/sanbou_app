@@ -35,7 +35,7 @@ export { default as ChatQuestionSection } from './ui/cards/ChatQuestionSection';
 export { default as ChatSendButtonSection } from './ui/cards/ChatSendButtonSection';
 
 // Components
-export { default as AnswerViewer } from './ui/components/AnswerViewer';
+export { AnswerViewer } from './ui/components/AnswerViewer';
 export { default as ChatMessageCard } from './ui/components/ChatMessageCard';
 export { default as PdfCardList } from './ui/components/PdfCardList';
 export { default as PdfPreviewModal } from './ui/components/PdfPreviewModal';
