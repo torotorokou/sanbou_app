@@ -1,5 +1,5 @@
 /**
- * filters/model/useFiltersViewModel.ts
+ * filters/model/useFiltersVM.ts
  * フィルタ状態管理ViewModel
  */
 

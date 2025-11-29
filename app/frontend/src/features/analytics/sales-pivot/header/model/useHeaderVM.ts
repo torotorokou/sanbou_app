@@ -1,5 +1,5 @@
 /**
- * header/model/useHeaderViewModel.ts
+ * header/model/useHeaderVM.ts
  * ヘッダー機能のViewModel(CSV出力管理)
  * 
  * 【概要】
