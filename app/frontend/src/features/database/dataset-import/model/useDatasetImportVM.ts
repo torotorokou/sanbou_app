@@ -8,7 +8,7 @@
  */
 
 import { useEffect, useMemo, useState, useCallback, useRef } from 'react';
-import { useValidateOnPick } from '@/features/csv-validation/hooks/useValidateOnPick';
+import { useValidateOnPick } from '@/features/csv-validation/model/useValidateOnPick';
 import { useSubmitVM } from '../../dataset-submit/model/useSubmitVM';
 import { globalUploadPollingManager } from '../services/globalUploadPollingManager';
 import { findCsv, getDatasetConfig } from '../../config';
