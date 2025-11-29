@@ -301,8 +301,12 @@ const data = await salesPivotRepository.fetchSummary(params);
 - ✅ 全 ViewModel を `useXxxVM.ts` 命名に統一
 - ✅ 全 `api/` ディレクトリを `infrastructure/` に移行
 - ✅ 全 `application/` ディレクトリを `model/` に統合
-- ✅ 全 `hooks/` ディレクトリを `model/` に統合
+- ✅ 全 `hooks/` ディレクトリを `model/` に統合 (Step 18 最終確認完了)
 - ✅ FSD アーキテクチャ完全準拠達成
-- 📝 Export スタイルガイドライン追加（Named Export 推奨）
+- ✅ Export スタイルガイドライン完全準拠
+  - Named Export を推奨として明文化
+  - 主要コンポーネント（CalendarCard, InfoTooltip, AnswerViewer）を Named Export に移行
+  - Barrel export (`export *`) を最適化（型定義は許容、実装は明示的に）
+  - csv-validation と report の index.ts を明示的な export に変更
 
 以上をフロントエンド共通ルールとし、新規実装およびリファクタリング時の基準とする。

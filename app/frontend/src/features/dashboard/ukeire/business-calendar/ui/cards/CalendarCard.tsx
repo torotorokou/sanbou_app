@@ -113,7 +113,7 @@ const CALENDAR_TOOLTIP_TITLE = (
   </div>
 );
 
-export default function CalendarCard({ year, month, repository, title = "営業カレンダー", style }: Props) {
+export function CalendarCard({ year, month, repository, title = "営業カレンダー", style }: Props) {
   const repo = useMemo(() => repository ?? new CalendarRepositoryForUkeire(), [repository]);
   const vm = useBusinessCalendarVM({ year, month, repository: repo });
 

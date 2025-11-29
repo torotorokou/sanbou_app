@@ -5,7 +5,7 @@
 
 import React, { useState } from "react";
 import { Card, Typography, Space, Switch } from "antd";
-import InfoTooltip from "@/features/dashboard/ukeire/shared/ui/InfoTooltip";
+import { InfoTooltip } from "@/features/dashboard/ukeire/shared/ui/InfoTooltip";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RTooltip, Legend, Line } from "recharts";
 import { COLORS, FONT } from "@/features/dashboard/ukeire/domain/constants";
 import { ChartFrame } from "@/features/dashboard/ukeire/shared/ui/ChartFrame";
