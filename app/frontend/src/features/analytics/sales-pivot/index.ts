@@ -38,8 +38,8 @@
 // ========== Shared（共通層） ==========
 export * from './shared/model/types';
 export * from './shared/model/metrics';
-export type { SalesPivotRepository } from './shared/api/salesPivot.repository';
-export { salesPivotRepository, MockSalesPivotRepository } from './shared/api/salesPivot.repository';
+export type { SalesPivotRepository } from './shared/infrastructure/salesPivot.repository';
+export { salesPivotRepository, MockSalesPivotRepository } from './shared/infrastructure/salesPivot.repository';
 export * from './shared/ui';
 
 // ========== Header Slice（ヘッダー機能） ==========

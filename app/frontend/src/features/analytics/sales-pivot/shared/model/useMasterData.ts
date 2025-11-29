@@ -5,7 +5,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import type { ID, CategoryKind } from './types';
-import type { SalesPivotRepository } from '../api/salesPivot.repository';
+import type { SalesPivotRepository } from '../infrastructure/salesPivot.repository';
 
 export interface MasterDataState {
   reps: Array<{ id: ID; name: string }>;

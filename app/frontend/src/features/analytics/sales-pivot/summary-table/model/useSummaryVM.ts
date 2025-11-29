@@ -5,7 +5,7 @@
 
 import { useState, useCallback } from 'react';
 import type { SummaryRow, SummaryQuery, MetricEntry, ID, DailyPoint } from '../../shared/model/types';
-import type { SalesPivotRepository } from '../../shared/api/salesPivot.repository';
+import type { SalesPivotRepository } from '../../shared/infrastructure/salesPivot.repository';
 
 export interface UseSummaryViewModelParams {
   repository: SalesPivotRepository;

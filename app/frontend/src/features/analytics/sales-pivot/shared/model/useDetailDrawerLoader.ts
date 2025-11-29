@@ -5,7 +5,7 @@
 
 import { useCallback } from 'react';
 import type { GroupBy, DetailLinesFilter, SummaryQuery, DetailLine, DetailMode } from './types';
-import type { HttpSalesPivotRepository } from '../api/salesPivot.repository';
+import type { HttpSalesPivotRepository } from '../infrastructure/salesPivot.repository';
 
 interface DetailDrawerLoaderParams {
   query: SummaryQuery;
