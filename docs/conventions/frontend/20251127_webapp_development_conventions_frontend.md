@@ -9,12 +9,19 @@
 
 - 言語: **TypeScript + React**
 - 構成:
-  - **Feature-Sliced Design (FSD)**
-  - **MVVM（Hooks = ViewModel）**
-  - **Repository パターン**（HTTP アダプタを features 側で抽象化）
+  - **Feature-Sliced Design (FSD)**  
+    - 「機能ごと」にフォルダを分割する
+  - **MVVM / VVMC パターン**  
+    - View（UI コンポーネント）
+    - ViewModel（Hooks = 画面状態＋イベント）
+    - Model（domain / ports / infrastructure）
+    - Controller（ルーティング・画面遷移）
+  - **Repository パターン**  
+    - HTTP アダプタを features 側で抽象化し、画面からは直接 HTTP を意識しない
 - 目的:
   - 機能単位でコードを整理し、責務を明確にする
   - フロントとバックエンドの責務分離（画面側にビジネスロジックを持たせない）
+  - 命名とディレクトリ構造の一貫性を保ち、保守性を高める
 
 ---
 
@@ -22,68 +29,141 @@
 
 ### 2-1. 全体構成（例）
 
+フロントエンド全体の代表的な構成例:
+
 ```text
 src/
+  app/
+    router/                         # ルーティング設定（React Router 等）
   pages/
     analytics/
-      SalesTreePage.tsx             # 画面骨組み・ルーティング
+      SalesTreePage.tsx             # 画面の骨組み・ルーティングの着地点
     report/
       ReportDailyPage.tsx
   features/
     analytics/
-      sales-pivot/
-        ui/                         # 状態レスの View コンポーネント
-        model/
-          useSalesPivotViewModel.ts # MVVM: 画面状態・イベント集約
-          types.ts                  # DTO / ViewModel 型定義
-        domain/                     # 必要に応じたドメインオブジェクト
-        ports/                      # Repository インターフェース（抽象）
-        infrastructure/
-          salesPivot.repository.ts  # Repository 実装（HTTP + DTO整形）
+      salesPivot/
+      customerList/
     report/
-      ...
+      reportDaily/
+      reportMonthly/
+    dashboard/
+      ukeire/
+      inbound/
+    ...
   shared/
+    ui/                             # 汎用 UI コンポーネント
+    hooks/
+      ui/                           # 共通 UI hooks（レスポンシブ等）
     infrastructure/http/            # 共通 HTTP クライアント (coreApi など)
-  hooks/ui/                         # 共通 UI hooks（レスポンシブ等）
   constants/                        # カラー・ブレイクポイントなど
 ```
 
-### 2-2. 役割分担
+- `pages/` … 画面単位（ルーティングの終点）  
+- `features/` … 機能（feature）単位のモジュール  
+- `shared/` … 複数 feature から利用される共通部品  
+- `constants/` … カラー・ブレイクポイント・定数類  
 
-- **pages/**  
-  - 画面の骨組み・レイアウト・ルーティングのみを担当
-  - 画面状態やビジネスロジックは ViewModel に委譲
-  - API 呼び出しや Repository の利用は禁止
+**注意:**  
+既存構成では `analytics`, `dashboard`, `database`, `manual`, `navi`, `notification`, `report` などが `features` 相当のルートになっている。  
+今後は上記方針を「理想形」としつつ、段階的に揃えていく。
 
-- **features/<feature>/ui/**  
-  - 完全に **状態レス**の View コンポーネント
-  - props で値・コールバックを受け取り、表示だけに専念
+### 2-2. 各機能配下（`features/<group>/<feature>/` の例）
+
+```text
+src/
+  features/
+    analytics/
+      salesPivot/
+        ui/                         # 状態レスの View コンポーネント
+          SalesPivotBoard.tsx
+          SalesPivotFilterPanel.tsx
+        application/                # ViewModel (画面状態＋イベント)
+          useSalesPivotVM.ts
+          types.ts                  # ViewModel / DTO 型定義
+        domain/                     # 機能専用ドメインオブジェクト
+          salesPivot.ts
+        ports/                      # Repository インターフェース（抽象）
+          SalesPivotRepository.ts
+        infrastructure/             # Repository 実装・HTTP アダプタ
+          salesPivot.repository.ts
+          salesPivot.client.ts      # 必要に応じて
+```
+
+- `<group>` … 大きな機能カテゴリ（例: `analytics`, `dashboard`, `report`）
+- `<feature>` … その中のサブ機能（例: `salesPivot`, `customerList` など）
+
+※ 既存コードの `application`, `model`, `infrastructure`, `ports`, `domain`, `ui` ディレクトリは、以下の役割分担に合わせて新規実装・リファクタリング時に揃えていく。
+
+### 2-3. 役割分担（VVMC との対応）
+
+#### View（V）
+
+- 対応ディレクトリ:
+  - `features/<group>/<feature>/ui/`
+  - `src/pages/**`（画面の骨組み）
+- 役割:
+  - 完全に **状態レス**の View コンポーネントを置く
+  - props で値・コールバックを受け取り、表示に専念
   - `useState` や API 呼び出しは原則禁止
+- 例:
+  - `SalesPivotBoard.tsx`
+  - `ConditionPanel.tsx`
+  - `CustomerComparisonResultCard.tsx`
 
-- **features/<feature>/model/**  
-  - `useXxxViewModel` で画面の状態・イベントを集約
+#### ViewModel（VM）
+
+- 対応ディレクトリ:
+  - `features/<group>/<feature>/application/`
+- 役割:
+  - 画面の状態・イベントを集約する hooks（**`useXxxVM`**）を置く
   - Repository（ports）を呼び出してデータ取得・更新を行う
   - UI で扱いやすい形にデータを整形する
-  - ビジネスロジックは極力ここか domain に寄せる
+  - 軽いビジネスロジックはここに置いてよい（重いものは domain に寄せる）
+- ファイル命名:
+  - `useSalesPivotVM.ts`
+  - `useInboundMonthlyVM.ts`
+  - `useCalendarVM.ts`
 
-- **features/<feature>/domain/**  
-  - その機能専用の軽量ドメインオブジェクト・値オブジェクト
-  - 値の検証・変換ロジックなどをまとめる
-  - 外部 I/O（HTTP・localStorage 等）は行わない
+#### Model（M）
 
-- **features/<feature>/ports/**  
-  - Repository のインターフェース（抽象）を定義
-  - `interface SalesPivotRepository { ... }` のように宣言のみ
-  - 実装詳細（axios/fetch 等）に依存しない
+- 対応ディレクトリ:
+  - `features/<group>/<feature>/domain/`
+  - `features/<group>/<feature>/ports/`
+  - `features/<group>/<feature>/infrastructure/`
+  - （必要に応じて）`features/<group>/<feature>/model/`  
+    - Domain や ViewModel を補助する純ロジックを置く
 
-- **features/<feature>/infrastructure/**  
-  - Repository インターフェースの実装
-  - 共通 HTTP クライアント（`coreApi` など）を利用して通信
-  - DTO（APIレスポンス）⇔ Domain / ViewModel 型の変換を担当
+1. **domain/**
+   - 機能専用のドメインオブジェクト・値オブジェクト・サービス
+   - 値の検証・変換ロジックなど
+   - 外部 I/O（HTTP・localStorage 等）には依存しない
 
-- **shared/**  
-  - 複数 feature から共有される UI コンポーネント・hooks・定数等
-  - 特定機能に強く依存するものは置かない
+2. **ports/**
+   - Repository インターフェース（抽象）を定義
+   - 例: `interface SalesPivotRepository { ... }`
+   - 実装詳細（axios/fetch 等）に依存しない
+
+3. **infrastructure/**
+   - Repository インターフェースの実装
+   - 共通 HTTP クライアント（`coreApi` など）を利用して通信
+   - DTO（API レスポンス）⇔ Domain / ViewModel 型の変換を担当
+   - 既存の `api/` ディレクトリで HTTP アダプタを持っているものは、将来的に `infrastructure/` へ寄せる
+
+4. **model/**（任意）
+   - 上記いずれにも属さないが、純粋なロジックとして切り出したいもの
+   - 例: 計算ロジック、グラフ描画用のデータ整形など
+   - 将来的には domain/application へ移動する候補として扱う
+
+#### Controller（C）
+
+- 対応ディレクトリ:
+  - `src/app/router/`
+  - `src/pages/**`
+- 役割:
+  - URL とページコンポーネントの結びつけ（ルーティング）
+  - 「このページでどの ViewModel を使うか」の選択
+  - 極力ビジネスロジックは持たず、画面遷移と構成の制御に限定する
 
 ---
 
@@ -97,51 +177,83 @@ src/
   - 例: `SalesPivotBoard`, `ReportDailyPageProps`
 - ファイル名:
   - コンポーネント: `SalesPivotBoard.tsx`
-  - hooks: `useSalesPivotViewModel.ts`
+  - ViewModel hooks: `useSalesPivotVM.ts`
   - 型定義: `types.ts`（feature 内で共通）
+  - Repository 抽象: `SalesPivotRepository.ts`
+  - Repository 実装: `salesPivot.repository.ts`
 
 ### 3-2. 型と安全性
 
 - TypeScript の型定義は必須
 - `any` の使用は禁止（やむを得ない場合は TODO コメントを付ける）
 - API レスポンスは **専用の型（interface）** を定義し、Repository で変換する
+  - 例:
+    - `SalesPivotSummaryResponse`（生レスポンス）
+    - `SalesPivotSummary`（ViewModel / Domain 用）
 
-### 3-3. API 通信
+---
 
-- 画面（pages/ui）から `fetch` / `axios` を直接呼ばない
+## 4. API 通信ルール
+
+- View（`pages` / `ui`）から `fetch` / `axios` を直接呼ばない
 - 必ず Repository（ports + infrastructure）経由で API を呼び出す
 
 ```ts
 // NG (pages 直で axios)
 const res = await axios.get('/api/sales');
 
-// OK (ViewModel から Repository)
+// OK (ViewModel から Repository 経由)
 const data = await salesPivotRepository.fetchSummary(params);
 ```
 
+- 共通 HTTP クライアント（`coreApi` など）は `shared/infrastructure/http/` に配置する
+- 各 Repository 実装では:
+  - `coreApi.get<RawResponse>(...)` などで通信
+  - RawResponse → Domain 型 or ViewModel DTO へ変換して返す
+
 ---
 
-## 4. レイアウト・UI 共通ルール
+## 5. レイアウト・UI 共通ルール
 
 - レイアウト:
-  - 共通の breakpoints（`constants/breakpoints.ts`）を使用
-  - PC / タブレット / スマホでの表示切替は共通 hooks（`useResponsive` 等）を使う
+  - 共通の breakpoints（`constants/breakpoints.ts`）を使用する
+  - PC / タブレット / スマホでの表示切替は `shared/hooks/ui/useResponsive` 等の共通 hooks を使う
 - カラー:
-  - PALETTE 定義を利用し、マジックナンバーのカラーコードは使わない
+  - PALETTE 定義（`constants/colors.ts` など）を利用し、マジックナンバーのカラーコードは使わない
 - コンポーネント:
-  - 再利用可能な UI は `shared/ui`（または既存方針に従う）へ切り出す
+  - 再利用可能な UI は `shared/ui` に切り出す  
+    （ボタン、カード、モーダル、チャートラッパー等）
+  - 特定機能に強く依存する UI は、当該 feature 配下に留める
 
 ---
 
-## 5. エラーハンドリング・メッセージ
+## 6. エラーハンドリング・メッセージ
 
-- API エラーは ViewModel で受け取り、UI には「文言」と「状態」を渡す
-- ユーザー向けメッセージは日本語で分かりやすく
+- API エラーは **ViewModel で受け取る**
+  - 例: `errorMessage`, `isNetworkError`, `isLoading` などの状態を用意する
+- UI では props として渡された状態に応じてメッセージやローディングを表示する
+- ユーザー向けメッセージは日本語で分かりやすく記述する
   - 例: 「データの取得に失敗しました。時間をおいて再度お試しください。」
 
 ---
 
-## 6. ドキュメントとの関係
+## 7. ドキュメントとの関係
 
 - フロントエンドで使用する API エンドポイント・パラメータは、必要に応じて `docs/` 以下にまとめる
-- カラム名・フィールド名などは `column_naming_dictionary.md` のルールに従う（※DB/バックエンド側ドキュメントを参照）
+- カラム名・フィールド名などは `column_naming_dictionary.md` のルールに従う（DB/バックエンド側ドキュメントを参照）
+- バックエンドの規約（`20251127_webapp_development_conventions_backend.md`）と整合を取ること
+  - API のレスポンスフィールドは基本的に DB（mart）のカラム名に合わせた snake_case（バックエンド）
+  - フロントでは camelCase に変換して扱う（必要に応じて）
+
+---
+
+## 8. 今後のリファクタリング方針（ガイドライン）
+
+- 既存コードは一気に作り直さず、**触るタイミングで徐々にルールに揃える**
+- 特に以下の点を優先する:
+  1. ViewModel hooks の命名を `useXxxVM.ts` に統一する
+  2. HTTP 関連の実装を `infrastructure/` に寄せる（`api/` から移動）
+  3. View（ui）から直接 HTTP を呼ばない構造にする
+  4. `application`（ViewModel）と `model`（純ロジック）の役割をコメントや README で明示する
+
+以上をフロントエンド共通ルールとし、新規実装およびリファクタリング時の基準とする。
