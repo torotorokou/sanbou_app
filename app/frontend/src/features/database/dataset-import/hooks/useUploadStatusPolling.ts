@@ -8,7 +8,7 @@
  */
 
 import { useEffect, useRef, useCallback } from 'react';
-import { DatasetImportClient } from '../api/client';
+import { DatasetImportClient } from '../infrastructure/client';
 import { notifySuccess, notifyPersistent } from '@features/notification';
 
 export interface UploadStatusPollingOptions {

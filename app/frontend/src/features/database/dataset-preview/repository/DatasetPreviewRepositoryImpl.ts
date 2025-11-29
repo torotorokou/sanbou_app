@@ -4,7 +4,7 @@
 
 import type { DatasetPreviewRepository } from './DatasetPreviewRepository';
 import type { DatasetKey, CsvPreviewData } from '../model/types';
-import { PreviewClient } from '../api/client';
+import { PreviewClient } from '../infrastructure/client';
 
 export class DatasetPreviewRepositoryImpl implements DatasetPreviewRepository {
   async getPreviewsByUploadId(
