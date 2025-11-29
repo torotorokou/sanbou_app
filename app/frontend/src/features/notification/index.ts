@@ -11,8 +11,8 @@ export * from './domain/config';
 // Ports
 export type { INotificationRepository } from './ports/repository';
 
-// Application
-export * from './application/useNotificationVM';
+// Model (Store & ViewModel)
+export * from './model/useNotificationVM';
 
 // Infrastructure - Job Service
 export * from './infrastructure/jobService';
