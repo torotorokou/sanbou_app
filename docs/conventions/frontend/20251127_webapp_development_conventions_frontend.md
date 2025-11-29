@@ -53,8 +53,7 @@ src/
     ...
   shared/
     ui/                             # 汎用 UI コンポーネント
-    hooks/
-      ui/                           # 共通 UI hooks（レスポンシブ等）
+      hooks/                        # 共通 UI hooks（レスポンシブ等）
     infrastructure/http/            # 共通 HTTP クライアント (coreApi など)
   constants/                        # カラー・ブレイクポイントなど
 ```
@@ -94,7 +93,8 @@ src/
 - `<group>` … 大きな機能カテゴリ（例: `analytics`, `dashboard`, `report`）
 - `<feature>` … その中のサブ機能（例: `salesPivot`, `customerList` など）
 
-※ 既存コードの `application`, `model`, `infrastructure`, `ports`, `domain`, `ui` ディレクトリは、以下の役割分担に合わせて新規実装・リファクタリング時に揃えていく。
+※ 既存コードは `model/`, `infrastructure/`, `ports/`, `domain/`, `ui/` ディレクトリを使用。
+新規実装・リファクタリング時は以下の役割分担に合わせて統一する。
 
 ### 2-3. 役割分担（VVMC との対応）
 
@@ -252,7 +252,7 @@ const data = await salesPivotRepository.fetchSummary(params);
 
 - レイアウト:
   - 共通の breakpoints（`constants/breakpoints.ts`）を使用する
-  - PC / タブレット / スマホでの表示切替は `shared/hooks/ui/useResponsive` 等の共通 hooks を使う
+  - PC / タブレット / スマホでの表示切替は `shared/ui/hooks/useResponsive` 等の共通 hooks を使う
 - カラー:
   - PALETTE 定義（`constants/colors.ts` など）を利用し、マジックナンバーのカラーコードは使わない
 - コンポーネント:
