@@ -9,8 +9,8 @@ export type { CalendarDayDTO, CalendarCell } from "./domain/types";
 // Ports
 export type { ICalendarRepository } from "./ports/repository";
 
-// Application
-export { useCalendarVM } from "./application/useCalendarVM";
+// Model (ViewModel)
+export { useCalendarVM } from "./model/useCalendarVM";
 
 // UI
 export { default as CalendarCard } from "./ui/cards/CalendarCard";
