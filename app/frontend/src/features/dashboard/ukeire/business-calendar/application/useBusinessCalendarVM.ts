@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { useCalendarVM } from "@/features/calendar/application/useCalendarVM";
+import { useCalendarVM } from "@/features/calendar/model/useCalendarVM";
 import { decorateCalendarCells } from "./decorators";
 import type { ICalendarRepository } from "@/features/calendar/ports/repository";
 
