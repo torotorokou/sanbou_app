@@ -30,6 +30,5 @@ export const client = httpClient;
 
 /**
  * Re-export coreApi for backward compatibility
- * TODO: 段階的に apiPost, apiGet に置き換え
  */
 export { coreApi };
