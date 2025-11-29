@@ -2,8 +2,8 @@
  * dataset-import exports
  */
 
-export * from './hooks/useDatasetImportVM';
-export * from './hooks/useUploadStatusPolling';
+export * from './model/useDatasetImportVM';
+export * from './model/useUploadStatusPolling';
 export * from './ui';
 export * from './model/types';
 export * from './model/constants';
