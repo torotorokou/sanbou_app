@@ -9,7 +9,7 @@
 
 import React, { useLayoutEffect, useRef, useState } from 'react';
 import { Col, Row, Tabs, Empty } from 'antd';
-import { useDatasetPreviewVM } from '../hooks/useDatasetPreviewVM';
+import { useDatasetPreviewVM } from '../model/useDatasetPreviewVM';
 import { CsvPreviewCard } from '../ui/CsvPreviewCard';
 import { readableTextColor } from '../../shared/ui/colors';
 import type { PreviewSource } from '../model/types';
