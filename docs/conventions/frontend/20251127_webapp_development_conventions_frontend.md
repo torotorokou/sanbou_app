@@ -78,8 +78,9 @@ src/
         ui/                         # 状態レスの View コンポーネント
           SalesPivotBoard.tsx
           SalesPivotFilterPanel.tsx
-        application/                # ViewModel (画面状態＋イベント)
-          useSalesPivotVM.ts
+        model/                      # ViewModel + 補助 hooks + 型定義
+          useSalesPivotVM.ts        # メイン ViewModel
+          useMasterData.ts          # 補助 hook
           types.ts                  # ViewModel / DTO 型定義
         domain/                     # 機能専用ドメインオブジェクト
           salesPivot.ts
@@ -114,46 +115,49 @@ src/
 #### ViewModel（VM）
 
 - 対応ディレクトリ:
-  - `features/<group>/<feature>/application/`
+  - `features/<group>/<feature>/model/`
 - 役割:
   - 画面の状態・イベントを集約する hooks（**`useXxxVM`**）を置く
   - Repository（ports）を呼び出してデータ取得・更新を行う
   - UI で扱いやすい形にデータを整形する
   - 軽いビジネスロジックはここに置いてよい（重いものは domain に寄せる）
+  - ViewModel を補助する hooks も同じ `model/` に配置可能
 - ファイル命名:
-  - `useSalesPivotVM.ts`
-  - `useInboundMonthlyVM.ts`
-  - `useCalendarVM.ts`
+  - `useSalesPivotVM.ts` (ViewModel)
+  - `useInboundMonthlyVM.ts` (ViewModel)
+  - `useCalendarVM.ts` (ViewModel)
+  - `useReportArtifact.ts` (補助 hook)
+  - `useCustomerComparison.ts` (補助 hook)
 
 #### Model（M）
 
 - 対応ディレクトリ:
-  - `features/<group>/<feature>/domain/`
-  - `features/<group>/<feature>/ports/`
-  - `features/<group>/<feature>/infrastructure/`
-  - （必要に応じて）`features/<group>/<feature>/model/`  
-    - Domain や ViewModel を補助する純ロジックを置く
+  - `features/<group>/<feature>/model/` - **ViewModel と補助 hooks**
+  - `features/<group>/<feature>/domain/` - ドメインロジック
+  - `features/<group>/<feature>/ports/` - Repository 抽象
+  - `features/<group>/<feature>/infrastructure/` - Repository 実装
 
-1. **domain/**
+1. **model/**
+   - 画面の状態・イベント管理を担当する ViewModel hooks（`useXxxVM.ts`）
+   - ViewModel を補助する hooks（データ取得、状態管理、計算ロジックなど）
+   - 型定義（`types.ts`）や定数も配置可能
+   - 例: `useSalesPivotVM.ts`, `useReportArtifact.ts`, `useMasterData.ts`
+
+2. **domain/**
    - 機能専用のドメインオブジェクト・値オブジェクト・サービス
    - 値の検証・変換ロジックなど
    - 外部 I/O（HTTP・localStorage 等）には依存しない
 
-2. **ports/**
+3. **ports/**
    - Repository インターフェース（抽象）を定義
    - 例: `interface SalesPivotRepository { ... }`
    - 実装詳細（axios/fetch 等）に依存しない
 
-3. **infrastructure/**
+4. **infrastructure/**
    - Repository インターフェースの実装
    - 共通 HTTP クライアント（`coreApi` など）を利用して通信
    - DTO（API レスポンス）⇔ Domain / ViewModel 型の変換を担当
    - 既存の `api/` ディレクトリで HTTP アダプタを持っているものは、将来的に `infrastructure/` へ寄せる
-
-4. **model/**（任意）
-   - 上記いずれにも属さないが、純粋なロジックとして切り出したいもの
-   - 例: 計算ロジック、グラフ描画用のデータ整形など
-   - 将来的には domain/application へ移動する候補として扱う
 
 #### Controller（C）
 
@@ -286,9 +290,11 @@ const data = await salesPivotRepository.fetchSummary(params);
   2. HTTP 関連の実装を `infrastructure/` に寄せる（`api/` から移動）✅ 完了 (Step 2B-6)
   3. hooks/ ディレクトリを `model/` に統合する ✅ 完了 (Step 13-16)
   4. `application/` ディレクトリを `model/` に統一する ✅ 完了 (Step 7-12)
+     - **重要**: FSD 公式では application layer を推奨するが、本プロジェクトでは
+       ViewModel + 補助hooks を包含する `model/` に統一する方針を採用済み
   5. View（ui）から直接 HTTP を呼ばない構造にする
   6. 新規コンポーネントで Named Export を使用する（既存は段階的に移行）
-  7. `application`（ViewModel）と `model`（純ロジック）の役割をコメントや README で明示する
+  7. `model/`（ViewModel + 補助hooks）と `domain/`（純ロジック）の役割をコメントや README で明示する
 
 ### リファクタリング完了状況 (2025-11-29)
 
