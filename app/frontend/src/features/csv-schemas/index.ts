@@ -3,8 +3,8 @@
  * MVVM+SOLID アーキテクチャに準拠した barrel export
  */
 
-// Domain Services
-export * from './application/useCsvToolsVM';
+// Model (ViewModel)
+export * from './model/useCsvToolsVM';
 
 // Ports
 export type { ICsvRepository } from './ports/repository';
