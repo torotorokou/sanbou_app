@@ -11,8 +11,8 @@ export * from './domain/services/pdfUrlNormalizer';
 // Ports
 export * from './ports/repository';
 
-// Application
-export { useNaviChat } from './application/useNaviVM';
+// Model (ViewModel)
+export { useNaviChat } from './model/useNaviVM';
 
 // Infrastructure
 export { NaviRepositoryImpl } from './infrastructure/navi.repository';
