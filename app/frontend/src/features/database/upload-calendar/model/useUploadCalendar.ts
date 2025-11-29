@@ -6,7 +6,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import dayjs from 'dayjs';
 import type { UploadCalendarItem, CalendarDay, CalendarWeek } from './types';
-import { uploadCalendarRepository } from '../api/uploadCalendar.repository';
+import { uploadCalendarRepository } from '../infrastructure/uploadCalendar.repository';
 
 export interface UseUploadCalendarResult {
   currentMonth: Date;
