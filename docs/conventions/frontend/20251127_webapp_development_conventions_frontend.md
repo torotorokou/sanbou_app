@@ -191,6 +191,37 @@ src/
     - `SalesPivotSummaryResponse`（生レスポンス）
     - `SalesPivotSummary`（ViewModel / Domain 用）
 
+### 3-3. Export / Import スタイル
+
+- **Named Export を推奨** (FSD ベストプラクティス)
+  - TypeScript/hooks/utilities: 必ず named export を使用
+    ```typescript
+    // ✅ Good
+    export function useCustomerChurnVM() { ... }
+    export const calculateTotal = () => { ... }
+    export interface CustomerData { ... }
+    ```
+  - React コンポーネント: named export を推奨（既存の default export も許容）
+    ```typescript
+    // ✅ Preferred (新規コード)
+    export function CustomerList() { ... }
+    
+    // ✅ Acceptable (既存コード・互換性)
+    export default function CustomerList() { ... }
+    ```
+- Feature の `index.ts` では明示的な re-export
+  ```typescript
+  // ✅ Good - 明示的
+  export { useCustomerChurnVM } from './model/useCustomerChurnVM';
+  export { CustomerList } from './ui/CustomerList';
+  
+  // ⚠️ 既存コードとの互換性のため許容
+  export { default as CustomerList } from './ui/CustomerList';
+  ```
+- Barrel export (`export *`) は慎重に使用
+  - 型定義の場合は許容: `export * from './types'`
+  - 実装コードは明示的な export を優先
+
 ---
 
 ## 4. API 通信ルール
@@ -251,9 +282,21 @@ const data = await salesPivotRepository.fetchSummary(params);
 
 - 既存コードは一気に作り直さず、**触るタイミングで徐々にルールに揃える**
 - 特に以下の点を優先する:
-  1. ViewModel hooks の命名を `useXxxVM.ts` に統一する
-  2. HTTP 関連の実装を `infrastructure/` に寄せる（`api/` から移動）
-  3. View（ui）から直接 HTTP を呼ばない構造にする
-  4. `application`（ViewModel）と `model`（純ロジック）の役割をコメントや README で明示する
+  1. ViewModel hooks の命名を `useXxxVM.ts` に統一する ✅ 完了 (Step 1-6)
+  2. HTTP 関連の実装を `infrastructure/` に寄せる（`api/` から移動）✅ 完了 (Step 2B-6)
+  3. hooks/ ディレクトリを `model/` に統合する ✅ 完了 (Step 13-16)
+  4. `application/` ディレクトリを `model/` に統一する ✅ 完了 (Step 7-12)
+  5. View（ui）から直接 HTTP を呼ばない構造にする
+  6. 新規コンポーネントで Named Export を使用する（既存は段階的に移行）
+  7. `application`（ViewModel）と `model`（純ロジック）の役割をコメントや README で明示する
+
+### リファクタリング完了状況 (2025-11-29)
+
+- ✅ 全 ViewModel を `useXxxVM.ts` 命名に統一
+- ✅ 全 `api/` ディレクトリを `infrastructure/` に移行
+- ✅ 全 `application/` ディレクトリを `model/` に統合
+- ✅ 全 `hooks/` ディレクトリを `model/` に統合
+- ✅ FSD アーキテクチャ完全準拠達成
+- 📝 Export スタイルガイドライン追加（Named Export 推奨）
 
 以上をフロントエンド共通ルールとし、新規実装およびリファクタリング時の基準とする。
