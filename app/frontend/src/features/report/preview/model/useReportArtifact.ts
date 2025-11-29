@@ -3,7 +3,7 @@ import { notifySuccess, notifyError, notifyInfo } from '@features/notification';
 import { getApiEndpoint, REPORT_KEYS } from '@features/report/shared/config';
 import type { ReportKey } from '@features/report/shared/config';
 import type { CsvFiles } from '@features/report/shared/types/report.types';
-import { coreApi } from '@features/report/shared/api/http.adapter';
+import { coreApi } from '@features/report/shared/infrastructure/http.adapter';
 
 export type ReportArtifactResponse = {
     status?: string;

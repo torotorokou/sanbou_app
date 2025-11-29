@@ -11,7 +11,7 @@ import { pdfPreviewMap, modalStepsMap, isInteractiveReport, getApiEndpoint } fro
 import { useReportBaseBusiness } from '../model/useReportBaseBusiness';
 import type { ReportBaseProps } from '@features/report/shared/types/report.types';
 import type { ReportArtifactResponse } from '@features/report/preview/model/useReportArtifact';
-import { coreApi } from '@features/report/shared/api/http.adapter';
+import { coreApi } from '@features/report/shared/infrastructure/http.adapter';
 
 // normalizeRow is now provided by ./interactive/transportNormalization
 
