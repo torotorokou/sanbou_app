@@ -44,30 +44,30 @@ export * from './shared/ui';
 
 // ========== Header Slice（ヘッダー機能） ==========
 export { SalesPivotHeader } from './header/ui/SalesPivotHeader';
-export { useHeaderViewModel } from './header/model/useHeaderViewModel';
-export type { UseHeaderViewModelParams, UseHeaderViewModelResult } from './header/model/useHeaderViewModel';
+export { useHeaderViewModel } from './header/model/useHeaderVM';
+export type { UseHeaderViewModelParams, UseHeaderViewModelResult } from './header/model/useHeaderVM';
 
 // ========== Filters Slice（フィルタ機能） ==========
 export { FilterPanel } from './filters/ui/FilterPanel';
-export { useFiltersViewModel } from './filters/model/useFiltersViewModel';
+export { useFiltersViewModel } from './filters/model/useFiltersVM';
 export { useMasters } from './filters/model/useMasters';
-export type { UseFiltersViewModelParams, UseFiltersViewModelResult } from './filters/model/useFiltersViewModel';
+export type { UseFiltersViewModelParams, UseFiltersViewModelResult } from './filters/model/useFiltersVM';
 export type { UseMastersResult } from './filters/model/useMasters';
 
 // ========== KPI Slice（KPI集計機能） ==========
 export { KpiCards } from './kpi/ui/KpiCards';
-export { useKpiViewModel } from './kpi/model/useKpiViewModel';
-export type { UseKpiViewModelParams, UseKpiViewModelResult } from './kpi/model/useKpiViewModel';
+export { useKpiViewModel } from './kpi/model/useKpiVM';
+export type { UseKpiViewModelParams, UseKpiViewModelResult } from './kpi/model/useKpiVM';
 
 // ========== Summary Table Slice（サマリテーブル機能） ==========
 export * from './summary-table/ui';
-export { useSummaryViewModel } from './summary-table/model/useSummaryViewModel';
-export type { UseSummaryViewModelParams, UseSummaryViewModelResult } from './summary-table/model/useSummaryViewModel';
+export { useSummaryViewModel } from './summary-table/model/useSummaryVM';
+export type { UseSummaryViewModelParams, UseSummaryViewModelResult } from './summary-table/model/useSummaryVM';
 
 // ========== Pivot Drawer Slice（Pivotドロワー機能） ==========
 export * from './pivot-drawer/ui';
-export { usePivotViewModel } from './pivot-drawer/model/usePivotViewModel';
-export type { UsePivotViewModelParams, UsePivotViewModelResult } from './pivot-drawer/model/usePivotViewModel';
+export { usePivotViewModel } from './pivot-drawer/model/usePivotVM';
+export type { UsePivotViewModelParams, UsePivotViewModelResult } from './pivot-drawer/model/usePivotVM';
 
 // ========== Export Menu Slice（CSV出力メニュー） ==========
 export * from './export-menu/ui';

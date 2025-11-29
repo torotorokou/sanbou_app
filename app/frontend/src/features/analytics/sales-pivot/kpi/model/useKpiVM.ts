@@ -1,5 +1,5 @@
 /**
- * kpi/model/useKpiViewModel.ts
+ * kpi/model/useKpiVM.ts
  * KPIサマリ計算ViewModel
  * 
  * 【概要】

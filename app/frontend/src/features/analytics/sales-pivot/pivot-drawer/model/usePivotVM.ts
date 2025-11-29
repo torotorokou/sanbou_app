@@ -1,5 +1,5 @@
 /**
- * pivot-drawer/model/usePivotViewModel.ts
+ * pivot-drawer/model/usePivotVM.ts
  * Pivotドロワー機能のViewModel
  */
 

@@ -1,5 +1,5 @@
 /**
- * summary-table/model/useSummaryViewModel.ts
+ * summary-table/model/useSummaryVM.ts
  * サマリテーブル機能のViewModel
  */
 
