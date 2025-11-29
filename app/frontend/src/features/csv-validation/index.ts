@@ -50,12 +50,12 @@ export { parseHeader, validateHeaders, validateHeadersFromText } from './core/cs
 export * from './core/csvRowValidator';
 
 // ========================================
-// Hooks
+// Model (Hooks & Business Logic)
 // ========================================
 
-export { useCsvFileValidator } from './hooks/useCsvFileValidator';
-export type { CsvFileValidatorOptions } from './hooks/useCsvFileValidator';
-export * from './hooks/useValidateOnPick';
+export { useCsvFileValidator } from './model/useCsvFileValidator';
+export type { CsvFileValidatorOptions } from './model/useCsvFileValidator';
+export * from './model/useValidateOnPick';
 
 // ========================================
 // Model Types
