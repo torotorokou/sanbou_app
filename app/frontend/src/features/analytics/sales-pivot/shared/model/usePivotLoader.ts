@@ -6,7 +6,7 @@
 import { useCallback } from 'react';
 import type { Mode, MetricEntry } from './types';
 import type { DrawerState } from './usePivotDrawerState';
-import type { HttpSalesPivotRepository } from '../api/salesPivot.repository';
+import type { HttpSalesPivotRepository } from '../infrastructure/salesPivot.repository';
 
 interface PivotLoaderParams {
   drawer: DrawerState;

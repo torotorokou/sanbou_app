@@ -29,7 +29,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { ExportOptions, SummaryQuery, ID } from '../../shared/model/types';
 import { DEFAULT_EXPORT_OPTIONS } from '../../shared/model/types';
-import type { SalesPivotRepository } from '../../shared/api/salesPivot.repository';
+import type { SalesPivotRepository } from '../../shared/infrastructure/salesPivot.repository';
 
 /**
  * ヘッダーViewModel入力パラメータ

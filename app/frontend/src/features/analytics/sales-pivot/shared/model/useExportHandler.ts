@@ -5,7 +5,7 @@
 
 import { useCallback } from 'react';
 import type { SummaryQuery, ExportOptions, Mode } from './types';
-import type { HttpSalesPivotRepository } from '../api/salesPivot.repository';
+import type { HttpSalesPivotRepository } from '../infrastructure/salesPivot.repository';
 import { axisLabel } from './metrics';
 import { downloadBlob } from '../lib/utils';
 

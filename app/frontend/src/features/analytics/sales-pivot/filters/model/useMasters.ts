@@ -5,7 +5,7 @@
 
 import { useState, useEffect } from 'react';
 import type { SalesRep, UniverseEntry } from '../../shared/model/types';
-import type { SalesPivotRepository } from '../../shared/api/salesPivot.repository';
+import type { SalesPivotRepository } from '../../shared/infrastructure/salesPivot.repository';
 
 export interface UseMastersResult {
   reps: SalesRep[];

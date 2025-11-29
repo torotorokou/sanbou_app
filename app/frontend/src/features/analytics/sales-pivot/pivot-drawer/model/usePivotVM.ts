@@ -13,7 +13,7 @@ import type {
   DrawerState,
   SummaryQuery,
 } from '../../shared/model/types';
-import type { SalesPivotRepository } from '../../shared/api/salesPivot.repository';
+import type { SalesPivotRepository } from '../../shared/infrastructure/salesPivot.repository';
 
 export interface UsePivotViewModelParams {
   repository: SalesPivotRepository;
