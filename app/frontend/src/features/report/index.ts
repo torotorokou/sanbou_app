@@ -21,7 +21,7 @@ export * from '@features/report/base/model/useReportBaseBusiness';
 export * from '@features/report/selector/model/useReportLayoutStyles';
 
 // Infrastructure
-export * from '@features/report/upload/api/report.repository';
+export * from '@features/report/upload/infrastructure/report.repository';
 
 // UI
 export { default as ReportBase } from '@features/report/base/ui/ReportBase';
