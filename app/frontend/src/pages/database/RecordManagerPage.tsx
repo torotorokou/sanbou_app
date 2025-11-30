@@ -18,6 +18,7 @@ import {
   Alert,
   Empty,
 } from 'antd';
+import { notifyInfo, notifySuccess } from '@features/notification';
 import type { ColumnsType } from 'antd/es/table';
 
 const { Title, Text } = Typography;
@@ -297,7 +298,7 @@ const RecordManagerPage: React.FC = () => {
       r.date === target && (groupFilter === 'all' || r.group === groupFilter);
     const count = rows.filter(condition).length;
     if (count === 0) {
-      message.info('削除対象がありません');
+      notifyInfo('情報', '削除対象がありません');
       return;
     }
 
@@ -319,7 +320,7 @@ const RecordManagerPage: React.FC = () => {
         setRows(next);
         saveRows(next);
         setSelectedRow(null);
-        message.success(`削除しました（${count}件）`);
+        notifySuccess('削除完了', `削除しました（${count}件）`);
       },
     });
   };
@@ -336,7 +337,7 @@ const RecordManagerPage: React.FC = () => {
         setRows(next);
         saveRows(next);
         setSelectedRow(null);
-        message.success('削除しました');
+        notifySuccess('削除完了', '削除しました');
       },
     });
   };
@@ -349,7 +350,7 @@ const RecordManagerPage: React.FC = () => {
     });
     setRows(next);
     saveRows(next);
-    message.success('再検証を実行しました');
+    notifySuccess('再検証完了', '再検証を実行しました');
   };
 
   const exportCsv = () => {
