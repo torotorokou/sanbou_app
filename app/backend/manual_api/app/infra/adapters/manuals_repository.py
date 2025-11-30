@@ -98,6 +98,7 @@ class InMemoryManualRepository(ManualsRepository):
                     tags=it.get("tags", []),
                     flow_url=it.get("flow_url"),
                     video_url=it.get("video_url"),
+                    thumbnail_url=it.get("thumbnail_url"),
                 )
                 for it in sec.get("items", [])
             ]
