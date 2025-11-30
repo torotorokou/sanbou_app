@@ -4,6 +4,31 @@
  * config レジストリのすべての公開APIをエクスポート
  */
 
-export * from './types';
-export * from './datasets';
-export * from './selectors';
+// Types
+export type {
+    DatasetKey,
+    CsvTypeKey,
+    CsvConfig,
+    DatasetConfig,
+} from './types';
+
+// Dataset Registry
+export {
+    DATASETS,
+} from './datasets';
+
+// Selectors (Query Functions)
+export {
+    getDatasetConfig,
+    getCsvListSorted,
+    findCsv,
+    guessCsvTypeByFilename,
+    getUploadEndpoint,
+    getRequiredCsvTypes,
+    getCsvTypeKeys,
+    collectTypesForDataset,
+    getCsvLabel,
+    getCsvColor,
+    getAllDatasets,
+    getDatasetLabel,
+} from './selectors';
