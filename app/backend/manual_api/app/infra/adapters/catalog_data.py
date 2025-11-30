@@ -21,6 +21,7 @@ sections = [
                 "description": "運搬業者・処分業者マスタの管理方法。業者情報の登録、更新、業者区分の設定、許可証管理など、業者マスタに関する操作手順を詳しく説明します。",
                 "flow_url": build_manual_asset_url("master/vender/vender_fllowchart.png"),
                 "video_url": build_manual_asset_url("master/vender/vender_movie.mp4"),
+                "thumbnail_url": build_manual_asset_url("master/vender/vender_fllowchart.png"),
                 "tags": ["業者", "マスター", "運搬", "処分"],
             },
             {
