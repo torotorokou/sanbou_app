@@ -14,8 +14,6 @@ export * from '@features/report/shared/types/report-api.types';
 export type { IReportRepository } from '@features/report/upload/ports/repository';
 
 // Application (ViewModels)
-export { useReportManager } from '@features/report/selector/model/useReportManager';
-export { useReportLayoutStyles } from '@features/report/selector/model/useReportLayoutStyles';
 export { useReportActions } from '@features/report/actions/model/useReportActions';
 export { useReportArtifact } from '@features/report/preview/model/useReportArtifact';
 export { useReportBaseBusiness } from '@features/report/base/model/useReportBaseBusiness';
