@@ -4,8 +4,9 @@
  */
 
 import React, { useState } from 'react';
-import { Modal, Table, Button, message, Space } from 'antd';
+import { Modal, Table, Button, Space } from 'antd';
 import { DeleteOutlined } from '@ant-design/icons';
+import { notifyError, notifySuccess } from '@features/notification';
 import type { UploadCalendarItem } from '../model/types';
 import { getCsvUploadKindMaster } from '../model/types';
 
@@ -35,7 +36,7 @@ export const UploadDetailModal: React.FC<UploadDetailModalProps> = ({
     if (!confirmed) return;
 
     if (!upload.uploadFileId) {
-      message.error('uploadFileIdが見つかりません');
+      notifyError('エラー', 'uploadFileIdが見つかりません');
       return;
     }
 
@@ -46,14 +47,14 @@ export const UploadDetailModal: React.FC<UploadDetailModalProps> = ({
         date: upload.date,
         csvKind: upload.kind,
       });
-      message.success('削除しました');
+      notifySuccess('削除完了', '削除しました');
       // 削除後、アップロードが0件になった場合はモーダルを閉じる
       if (uploads.length <= 1) {
         onClose();
       }
     } catch (error) {
       console.error('Failed to delete upload:', error);
-      message.error('削除に失敗しました');
+      notifyError('エラー', '削除に失敗しました');
     } finally {
       setDeletingId(null);
     }
