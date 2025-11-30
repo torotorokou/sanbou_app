@@ -53,6 +53,7 @@ class CatalogItem(BaseModel):
     tags: List[str] = Field(default_factory=list)
     flow_url: Optional[str] = None
     video_url: Optional[str] = None
+    thumbnail_url: Optional[str] = None
 
 
 class CatalogSection(BaseModel):
