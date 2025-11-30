@@ -523,6 +523,8 @@ export type DrawerState =
       baseName: string;
       month?: YYYYMM;
       monthRange?: { from: YYYYMM; to: YYYYMM };
+      dateFrom?: YYYYMMDD;
+      dateTo?: YYYYMMDD;
       repIds: ID[];
       targets: { axis: Mode; label: string }[];
       activeAxis: Mode;

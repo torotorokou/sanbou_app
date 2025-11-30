@@ -41,13 +41,19 @@ export function usePivotLoader(params: PivotLoaderParams) {
         topN: drawerTopN,
         month,
         monthRange,
+        dateFrom,
+        dateTo,
       } = drawer;
       const targetAxis = axis;
       if (targetAxis === baseAxis) return;
 
       setPivotLoading(true);
       try {
-        const periodParams = monthRange ? { monthRange } : { month };
+        const periodParams = dateFrom && dateTo
+          ? { dateFrom, dateTo }
+          : monthRange
+          ? { monthRange }
+          : { month };
         const page = await repository.fetchPivot({
           ...periodParams,
           baseAxis,
