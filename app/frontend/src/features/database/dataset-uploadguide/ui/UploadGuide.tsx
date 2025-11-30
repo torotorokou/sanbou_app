@@ -9,7 +9,7 @@ import React, { useEffect } from 'react';
 import { Collapse, List, Tag, Typography } from 'antd';
 import { InfoCircleOutlined } from '@ant-design/icons';
 import type { FileState } from '../model/types';
-import { DATASET_RULES } from '@features/database/config/rules';
+import { DATASETS } from '@features/database/config/datasets';
 import { notifyError } from '@features/notification';
 import type { DatasetKey } from '@features/database/config';
 
@@ -23,8 +23,8 @@ export interface UploadGuideProps {
 }
 
 export const UploadGuide: React.FC<UploadGuideProps> = ({ datasetKey, files }) => {
-  const rule = DATASET_RULES?.[datasetKey];
-  const reqList = rule?.requiredCsv ?? [];
+  const dataset = DATASETS?.[datasetKey];
+  const reqList = dataset?.csv ?? [];
   const reqTotal = reqList.length;
 
   // 未完了（必須 & valid でない）
@@ -131,22 +131,12 @@ export const UploadGuide: React.FC<UploadGuideProps> = ({ datasetKey, files }) =
                         受入ファイル名例: {r.filenameHints.join(' / ')}
                       </span>
                     )}
-                    {r.sampleUrl && (
-                      <a
-                        style={{ marginLeft: 8, fontSize: 12 }}
-                        href={r.sampleUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        サンプル
-                      </a>
-                    )}
                   </List.Item>
                 )}
               />
             ),
           },
-          ...(Array.isArray(rule?.globalNotes) && rule.globalNotes.length > 0
+          ...(Array.isArray(dataset?.notes) && dataset.notes.length > 0
             ? [
                 {
                   key: 'notes',
@@ -159,7 +149,7 @@ export const UploadGuide: React.FC<UploadGuideProps> = ({ datasetKey, files }) =
                   children: (
                     <List
                       size="small"
-                      dataSource={rule.globalNotes}
+                      dataSource={dataset.notes}
                       renderItem={(note) => (
                         <List.Item style={{ paddingLeft: 0 }}>
                           <Text>{note}</Text>
