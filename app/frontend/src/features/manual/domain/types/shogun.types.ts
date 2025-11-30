@@ -14,6 +14,7 @@ export interface ManualItem {
   description?: string;
   flowUrl?: string;
   videoUrl?: string;
+  thumbnailUrl?: string;
   route?: string;
   tags?: string[];
 }
