@@ -5,10 +5,11 @@
 import { useMemo } from 'react';
 import type { PreviewSource, TabDef } from '../model/types';
 import { getCsvListSorted, findCsv } from '../../config';
-import { DEFAULT_CSV_COLOR } from '../../shared/ui/colors';
 import { createFallbackPreview } from '../factory/previewFactory';
 import { getHeadersByType } from '../model/schema';
 import type { CsvTypeKey } from '../../config';
+
+const DEFAULT_CSV_COLOR = '#777777';
 
 export function useDatasetPreviewVM(source: PreviewSource) {
   const tabs: TabDef[] = useMemo(() => {
