@@ -112,4 +112,3 @@ export const SingleLineLegend: React.FC<LegendPropsLike> = (props) => {
     </div>
   );
 };
-/* eslint-enable @typescript-eslint/no-explicit-any */

@@ -221,7 +221,7 @@ const DayCell: React.FC<DayCellProps> = ({ date, month, counts, onClick, selecte
 
 /* ========== Main Component ========== */
 const RecordManagerPage: React.FC = () => {
-  const { message, modal } = App.useApp();
+  const { modal } = App.useApp();
 
   const [month, setMonth] = useState(dayjs().startOf('month'));
   const [selectedDate, setSelectedDate] = useState<Dayjs>(dayjs());
