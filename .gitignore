@@ -234,3 +234,5 @@ category_question_templates.yaml
 !*notifications.openapi.yaml
 
 recovery
+
+*/backend/manual_api/data/
