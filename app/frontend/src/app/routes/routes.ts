@@ -26,6 +26,9 @@ export const ROUTER_PATHS = {
     NAVI: '/navi',
 
     MANUALS: '/manuals',
+    
+    // マニュアル - マスター系
+    MANUAL_MASTER_VENDOR: '/manual/master/vendor',
 
     // 設定系
     SETTINGS: '/settings',
