@@ -6,11 +6,24 @@
 import React from "react";
 import { FONT } from "../../domain/constants";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-type LegendPropsLike = Record<string, any> & {
-  payload?: readonly any[];
+// Recharts Legend types
+interface LegendPayloadItem {
+  dataKey?: string;
+  value?: string;
+  payloadKey?: string;
+  color?: string;
+  payload?: {
+    color?: string;
+    [key: string]: unknown;
+  };
+  [key: string]: unknown;
+}
+
+interface LegendPropsLike {
+  payload?: readonly LegendPayloadItem[];
   extraStatic?: { label: string; color: string }[];
-};
+  [key: string]: unknown;
+}
 
 export const SingleLineLegend: React.FC<LegendPropsLike> = (props) => {
   const payload = props.payload;
@@ -30,10 +43,9 @@ export const SingleLineLegend: React.FC<LegendPropsLike> = (props) => {
     daily: "バック予測",
   };
 
-  const normalizeLabel = (p: unknown) => {
-    const obj = p as Record<string, unknown> | undefined;
-    const rawKey = obj && (obj.dataKey ?? obj.value ?? obj.payloadKey ?? "");
-    const key = String(rawKey ?? "");
+  const normalizeLabel = (p: LegendPayloadItem) => {
+    const rawKey = p.dataKey ?? p.value ?? p.payloadKey ?? "";
+    const key = String(rawKey);
     if (
       key === "先月" ||
       key === "前年" ||
@@ -47,9 +59,8 @@ export const SingleLineLegend: React.FC<LegendPropsLike> = (props) => {
   };
 
   const items = (payload ?? []).filter((p) => {
-    const obj = p as Record<string, unknown> | undefined;
-    const raw = obj && (obj.dataKey ?? obj.value ?? "");
-    const name = String(raw ?? "");
+    const raw = p.dataKey ?? p.value ?? "";
+    const name = String(raw);
     if (
       name === "actual" ||
       name === "実績" ||
@@ -58,7 +69,7 @@ export const SingleLineLegend: React.FC<LegendPropsLike> = (props) => {
     )
       return false;
     return true;
-  }) as unknown[];
+  });
 
   if (items.length === 0 && extraStatic.length === 0) return null;
 
@@ -77,9 +88,7 @@ export const SingleLineLegend: React.FC<LegendPropsLike> = (props) => {
       {items.map((p, i) => {
         const label = normalizeLabel(p);
         if (label === "実績") return null;
-        const obj = p as Record<string, unknown> | undefined;
-        const color =
-          (obj && (obj.color ?? (obj.payload && (obj.payload as Record<string, any>).color))) || "#ccc";
+        const color = p.color ?? p.payload?.color ?? "#ccc";
         return (
           <div key={i} style={{ display: "flex", gap: 6, alignItems: "center" }}>
             <div
