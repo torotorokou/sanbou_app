@@ -11,7 +11,6 @@ export * from './shared/constants';
 export * from './shared/types/common';
 export * from './shared/csv/parseCsv';
 export * from './shared/csv/detectEncoding';
-export * from './shared/ui/colors';
 export * from './shared/upload/buildFormData';
 // dataset/dataset.ts は deprecated なので config を優先
 
