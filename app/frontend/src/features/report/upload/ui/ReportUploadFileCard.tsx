@@ -8,6 +8,7 @@ import React, { useRef } from 'react';
 import { Typography, Button } from 'antd';
 import { DeleteOutlined, UploadOutlined } from '@ant-design/icons';
 import type { UploadProps } from 'antd';
+import type { RcFile } from 'antd/es/upload';
 import { CsvValidationBadge, mapLegacyToCsvStatus } from '@features/csv-validation';
 
 const { Text } = Typography;
@@ -68,11 +69,11 @@ export const ReportUploadFileCard: React.FC<ReportUploadFileCardProps> = ({
       // beforeUpload に File オブジェクトをそのまま渡す
       // antd の Upload コンポーネントは内部的に File を RcFile として扱える
       // RcFile に必要なプロパティを追加
-      const rcFile = Object.assign(selectedFile, {
+      const rcFile: RcFile = Object.assign(selectedFile, {
         uid: selectedFile.name + Date.now(),
         lastModifiedDate: new Date(selectedFile.lastModified)
       });
-      uploadProps.beforeUpload(rcFile as any, [rcFile as any]);
+      uploadProps.beforeUpload(rcFile, [rcFile]);
       // input をリセットして同じファイルを再選択可能に
       e.target.value = '';
     }
