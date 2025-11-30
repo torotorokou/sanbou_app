@@ -8,7 +8,15 @@ export * from './config';
 
 // Shared (個別エクスポートで重複を回避)
 export * from './shared/constants';
-export * from './shared/types/common';
+export { 
+  CsvKindUtils, 
+  ALL_CSV_KINDS,
+  type CsvKind,
+  type TypeKey,
+  type CsvDefinition,
+  type UploadFileIssue,
+  type UploadResponseShape,
+} from './shared/types/common';
 export * from './shared/csv/parseCsv';
 export * from './shared/csv/detectEncoding';
 export * from './shared/upload/buildFormData';
@@ -23,14 +31,8 @@ export * from './dataset-submit';
 // Dataset Preview
 export * from './dataset-preview';
 
-// 旧互換性エクスポート（非推奨 - 段階的に削除予定）
-export { useDatasetImportVM as useDatabaseVM } from './dataset-import';
-export { useDatasetImportVM as useDatabaseUploadVM } from './dataset-import';
-export { CsvPreviewCard } from './dataset-preview';
-export { SimpleUploadPanel } from './dataset-import';
+// Upload Calendar
+export * from './upload-calendar';
 
-// 旧型定義の互換性
-export type { PanelFileItem, DatasetImportVMOptions as UseDatabaseUploadVMOptions } from './dataset-import/model/types';
-export type { ValidationStatus, CsvDefinition, UploadResponseShape } from './shared/types/common';
-export type { CsvPreviewData as CsvPreview } from './dataset-preview/model/types';
-// export type { CsvFileType, CsvUploadCardEntry } from './domain/types';
+// Upload Guide
+export * from './dataset-uploadguide';
