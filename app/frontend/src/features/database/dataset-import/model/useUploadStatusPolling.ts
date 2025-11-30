@@ -9,7 +9,7 @@
 
 import { useEffect, useRef, useCallback } from 'react';
 import { DatasetImportClient } from '../infrastructure/client';
-import { notifySuccess, notifyPersistent } from '@features/notification';
+import { notifySuccess, notifyWarning, notifyError } from '@features/notification';
 
 export interface UploadStatusPollingOptions {
   /** ポーリング対象の upload_file_ids （csv_type -> upload_file_id） */
@@ -137,8 +137,7 @@ export function useUploadStatusPolling(options: UploadStatusPollingOptions = {})
             .map(f => `【${f.fileName || f.csvType}】${f.errorMessage || '処理エラー'}`)
             .join('\n');
 
-          notifyPersistent(
-            'error',
+          notifyError(
             '処理失敗',
             `以下のファイルの処理に失敗しました:\n${errorDetails}`,
           );
@@ -164,8 +163,7 @@ export function useUploadStatusPolling(options: UploadStatusPollingOptions = {})
         stopPolling();
         const processingFiles = processing.map(f => f.fileName || f.csvType).join('、');
         
-        notifyPersistent(
-          'warning',
+        notifyWarning(
           '処理タイムアウト',
           `${processingFiles} の処理が時間内に完了しませんでした。履歴画面で確認してください。`,
         );
@@ -180,8 +178,7 @@ export function useUploadStatusPolling(options: UploadStatusPollingOptions = {})
       console.error('[UploadStatusPolling] Unexpected error:', error);
       stopPolling();
       
-      notifyPersistent(
-        'error',
+      notifyError(
         'ステータス確認エラー',
         '処理状況の確認中にエラーが発生しました。履歴画面で確認してください。',
       );

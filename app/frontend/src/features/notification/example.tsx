@@ -6,7 +6,7 @@ import React from 'react';
 import {
     notifySuccess,
     notifyError,
-    notifyPersistent,
+    notifyWarning,
     notifyApiError,
     useNotificationStore,
     NotificationCenterAntd,
@@ -35,7 +35,8 @@ export function ExampleUsage() {
     };
 
     const handlePersistent = () => {
-        notifyPersistent('warning', '重要', 'この通知は手動で閉じるまで表示されます');
+        // 永続通知（duration を undefined に設定）
+        notifyWarning('重要', 'この通知は手動で閉じるまで表示されます');
     };
 
     return (

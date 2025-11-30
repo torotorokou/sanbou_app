@@ -3,7 +3,21 @@
  * ViewModel: Notification 状態管理
  */
 
-// Re-export store and infrastructure
-export * from '../domain/services/notificationStore';
-export * from '../infrastructure/sse';
-export * from '../infrastructure/notify';
+// Store
+export { useNotificationStore } from '../domain/services/notificationStore';
+
+// SSE Client
+export { 
+  startSSE, 
+  stopSSE, 
+  getSSEState 
+} from '../infrastructure/sse';
+
+// Notify API
+export {
+  notifySuccess,
+  notifyError,
+  notifyWarning,
+  notifyInfo,
+  notifyApiError,
+} from '../infrastructure/notify';
