@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 from functools import lru_cache
 
-DEFAULT_ASSET_ROUTE = "/manual_api/api/assets"
+DEFAULT_ASSET_ROUTE = "/core_api/manual/assets"
 
 
 def _join_url(base: str, path: str) -> str:
@@ -24,8 +24,8 @@ def build_manual_asset_url(relative_path: str) -> str:
 
     - If ``relative_path`` is already an absolute URL (http/https), it is returned as-is.
     - Otherwise, it is resolved against ``MANUAL_ASSET_BASE_URL`` when provided.
-    - If the environment variable is not set, ``/manual_api/api/assets`` is used, which
-      is served directly by the manual API. This makes it easy to swap in a signed GCS
+    - If the environment variable is not set, ``/core_api/manual/assets`` is used, which
+      is proxied through core_api to manual_api. This makes it easy to swap in a signed GCS
       URL provider in the future without touching the catalog dataset.
     """
     if not relative_path:
