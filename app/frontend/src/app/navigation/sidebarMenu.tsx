@@ -6,16 +6,13 @@ import React from 'react';
 import {
     HomeOutlined, // ホーム
     DashboardOutlined, // ダッシュボード
-    BarChartOutlined, // チャート・分析
     LineChartOutlined, // アナリティクス
     BookOutlined, // 帳簿・マニュアル
     FileTextOutlined, // 文書
     DatabaseOutlined, // データベース
     SettingOutlined, // 設定
     NotificationOutlined, // お知らせ
-    FileAddOutlined, // ファイル追加
     SolutionOutlined, // ソリューション
-    FileDoneOutlined, // 完了済みファイル
     TeamOutlined, // チーム・顧客
     CompassOutlined, // ナビゲーション
     UserSwitchOutlined, // ユーザー管理
