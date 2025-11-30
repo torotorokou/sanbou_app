@@ -30,11 +30,6 @@ export { useDatasetImportVM as useDatabaseUploadVM } from './dataset-import';
 export { CsvPreviewCard } from './dataset-preview';
 export { SimpleUploadPanel } from './dataset-import';
 
-/**
- * @deprecated config レジストリに移行済み。config/datasets.ts を使用してください。
- */
-export { UPLOAD_CSV_DEFINITIONS, UPLOAD_CSV_TYPES, csvTypeColors } from './dataset-import/model/constants';
-
 // 旧型定義の互換性
 export type { PanelFileItem, DatasetImportVMOptions as UseDatabaseUploadVMOptions } from './dataset-import/model/types';
 export type { ValidationStatus, CsvDefinition, UploadResponseShape } from './shared/types/common';
