@@ -5,8 +5,8 @@
  */
 
 // Model
-export * from './model/useReportManager';
-export * from './model/useReportLayoutStyles';
+export { useReportManager } from './model/useReportManager';
+export { useReportLayoutStyles } from './model/useReportLayoutStyles';
 
 // UI
 export { default as ReportSelector } from './ui/ReportSelector';
