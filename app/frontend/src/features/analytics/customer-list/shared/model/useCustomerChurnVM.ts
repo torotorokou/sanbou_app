@@ -5,7 +5,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import { message } from 'antd';
+import { notifyError, notifySuccess, notifyWarning } from '@features/notification';
 import type { Dayjs } from 'dayjs';
 import type { CustomerData, LostCustomer, SalesRep } from '../domain/types';
 import { customerChurnRepository } from '../infrastructure/customerChurnRepository';
@@ -97,7 +97,7 @@ export function useCustomerChurnViewModel(): CustomerChurnViewModel {
                 setSalesReps(reps);
             } catch (error) {
                 console.error('Failed to load sales reps:', error);
-                message.error('営業担当者リストの取得に失敗しました');
+                notifyError('エラー', '営業担当者リストの取得に失敗しました');
             }
         };
         loadSalesReps();
@@ -123,7 +123,7 @@ export function useCustomerChurnViewModel(): CustomerChurnViewModel {
      */
     const handleAnalyze = async (): Promise<void> => {
         if (!isValidPeriodRange(currentStart, currentEnd) || !isValidPeriodRange(previousStart, previousEnd)) {
-            message.error('有効な期間を選択してください');
+            notifyError('エラー', '有効な期間を選択してください');
             return;
         }
         
@@ -150,10 +150,10 @@ export function useCustomerChurnViewModel(): CustomerChurnViewModel {
             setLostCustomersData(mappedData);
             setAnalysisStarted(true);
             
-            message.success(`分析が完了しました（離脱顧客: ${lostCustomers.length}件）`);
+            notifySuccess('分析完了', `分析が完了しました（離脱顧客: ${lostCustomers.length}件）`);
         } catch (error) {
             console.error('Analysis error:', error);
-            message.error('分析に失敗しました');
+            notifyError('エラー', '分析に失敗しました');
         } finally {
             setIsLoading(false);
         }
@@ -181,7 +181,7 @@ export function useCustomerChurnViewModel(): CustomerChurnViewModel {
      */
     const handleDownloadLostCustomersCsv = (): void => {
         if (lostCustomersData.length === 0) {
-            message.warning('離脱顧客がありません');
+            notifyWarning('確認', '離脱顧客がありません');
             return;
         }
         
@@ -189,7 +189,7 @@ export function useCustomerChurnViewModel(): CustomerChurnViewModel {
         const csvContent = buildCustomerCsv(lostCustomersData);
         const filename = `離脱顧客リスト_${currentStart?.format('YYYYMMDD')}-${currentEnd?.format('YYYYMMDD')}.csv`;
         downloadCsv(csvContent, filename);
-        message.success('CSVをダウンロードしました');
+        notifySuccess('ダウンロード完了', 'CSVをダウンロードしました');
     };
     
     return {

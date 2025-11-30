@@ -5,7 +5,7 @@
  */
 
 import { useState } from 'react';
-import { message } from 'antd';
+import { notifySuccess, notifyError } from '@features/notification';
 import type { Dayjs } from 'dayjs';
 
 export interface ExcelDownloadViewModel {
@@ -55,9 +55,9 @@ export function useExcelDownload(
             link.parentNode?.removeChild(link);
             window.URL.revokeObjectURL(url);
             
-            message.success('エクセルをダウンロードしました');
+            notifySuccess('ダウンロード完了', 'エクセルをダウンロードしました');
         } catch {
-            message.error('ダウンロードに失敗しました');
+            notifyError('エラー', 'ダウンロードに失敗しました');
         } finally {
             setIsDownloading(false);
         }
