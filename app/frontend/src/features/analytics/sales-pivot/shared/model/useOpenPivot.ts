@@ -51,7 +51,11 @@ export function useOpenPivot(params: OpenPivotParams) {
         sortBy: filterSortBy,
         order: filterOrder,
         topN: filterTopN,
-        ...(query.monthRange ? { monthRange: query.monthRange } : { month: query.month }),
+        ...(query.dateFrom && query.dateTo
+          ? { dateFrom: query.dateFrom, dateTo: query.dateTo }
+          : query.monthRange
+          ? { monthRange: query.monthRange }
+          : { month: query.month }),
       };
 
       setDrawer(drawerState);
