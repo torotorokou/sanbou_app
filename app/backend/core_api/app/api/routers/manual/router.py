@@ -360,3 +360,75 @@ async def proxy_manual_sections(manual_id: str):
             cause=e,
             status_code=502
         )
+
+
+@router.get("/assets/{file_path:path}")
+async def proxy_manual_assets(file_path: str, request: Request):
+    """
+    マニュアルアセット取得（画像・動画等のストリーミング）
+    
+    Args:
+        file_path: アセットファイルパス（例: master/vender/vender_fllowchart.png）
+        request: FastAPI Request（クエリパラメータとヘッダを透過）
+    
+    Returns:
+        StreamingResponse: manual_apiからのストリーミングレスポンス
+    """
+    upstream = f"{MANUAL_API_BASE}/manual/assets/{file_path}"
+    if request.url.query:
+        upstream += f"?{request.url.query}"
+    
+    logger.info(f"[BFF Manual] Proxying asset request: {upstream}")
+    
+    # 透過するリクエストヘッダ（Range対応、キャッシュ制御）
+    req_headers = {}
+    for header_key in ["range", "if-none-match", "if-modified-since", "authorization"]:
+        if header_key in request.headers:
+            req_headers[header_key] = request.headers[header_key]
+    
+    # タイムアウト設定（大きなファイルの読み込みに対応）
+    timeout = httpx.Timeout(60.0, read=300.0)
+    
+    try:
+        async with httpx.AsyncClient(timeout=timeout) as client:
+            async with client.stream("GET", upstream, headers=req_headers) as resp:
+                if resp.status_code >= 400:
+                    body = await resp.aread()
+                    logger.error(f"[BFF Manual] Asset upstream error: {resp.status_code} - {body.decode(errors='ignore')}")
+                    raise ExternalServiceError(
+                        service_name="manual_api",
+                        message=f"Asset retrieval failed: {body.decode(errors='ignore')}",
+                        status_code=resp.status_code
+                    )
+                
+                # 透過するレスポンスヘッダ
+                res_headers = {}
+                for header_key in [
+                    "content-type", "content-length", "content-disposition",
+                    "etag", "cache-control", "last-modified",
+                    "accept-ranges", "content-range"
+                ]:
+                    if header_key in resp.headers:
+                        res_headers[header_key] = resp.headers[header_key]
+                
+                logger.info(f"[BFF Manual] Streaming asset: {file_path}, status={resp.status_code}, content-type={resp.headers.get('content-type')}")
+                
+                async def iter_bytes():
+                    async for chunk in resp.aiter_bytes(chunk_size=65536):
+                        yield chunk
+                
+                return StreamingResponse(
+                    iter_bytes(),
+                    status_code=resp.status_code,
+                    headers=res_headers,
+                    media_type=resp.headers.get("content-type")
+                )
+    
+    except httpx.HTTPError as e:
+        logger.error(f"[BFF Manual] Asset HTTP error: {str(e)}", exc_info=True)
+        raise ExternalServiceError(
+            service_name="manual_api",
+            message=f"Asset retrieval failed: {str(e)}",
+            cause=e,
+            status_code=502
+        )
