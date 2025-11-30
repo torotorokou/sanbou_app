@@ -5,7 +5,7 @@ import BlockUnitPriceInteractiveModal from '@features/report/interactive/ui/Bloc
 import type { InitialApiResponse, SessionData } from '@features/report/shared/types/interactive.types';
 import type { TransportCandidateRow } from '@features/report/shared/types/interactive.types';
 import { normalizeRow, isRecord } from '@features/report/shared/lib/transportNormalization';
-import { message } from 'antd';
+import { notifyWarning, notifySuccess, notifyError, notifyInfo } from '@features/notification';
 const PDFViewer = React.lazy(() => import('@features/report/viewer/ui/PDFViewer'));
 import { pdfPreviewMap, modalStepsMap, isInteractiveReport, getApiEndpoint } from '@features/report/shared/config';
 import { useReportBaseBusiness } from '../model/useReportBaseBusiness';
@@ -114,7 +114,7 @@ const ReportBase: React.FC<ReportBaseProps> = ({
      */
     const handleInteractiveGenerate = async () => {
         if (!business.isReadyToCreate) {
-            message.warning('必要なCSVファイルをアップロードしてください。');
+            notifyWarning('確認', '必要なCSVファイルをアップロードしてください。');
             return;
         }
 
@@ -215,10 +215,11 @@ const ReportBase: React.FC<ReportBaseProps> = ({
             setInteractiveSessionData(sessionData);
 
             modal.setModalOpen(true);
-            message.success('初期データを取得しました。');
+            notifySuccess('取得成功', '初期データを取得しました。');
         } catch (error) {
             console.error('Interactive initial API failed:', error);
-            message.error(
+            notifyError(
+                'エラー',
                 error instanceof Error
                     ? error.message
                     : '初期データの取得に失敗しました。'
@@ -246,7 +247,7 @@ const ReportBase: React.FC<ReportBaseProps> = ({
                     resetInteractiveState();
                 }, 1500);
             } else {
-                message.info('帳簿レスポンスを確認してください。');
+                notifyInfo('情報', '帳簿レスポンスを確認してください。');
             }
         } catch (error) {
             console.error('Interactive success handling failed:', error);
