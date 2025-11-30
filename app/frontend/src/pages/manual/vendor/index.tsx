@@ -83,7 +83,8 @@ const VendorMasterPage: React.FC = () => {
                   <VideoPane
                     src={vendorItem.videoUrl}
                     title={vendorItem.title ?? '業者マスター動画'}
-                    className={styles.paneFrame}
+                    frameClassName={styles.paneFrame}
+                    videoClassName={styles.paneFrame}
                   />
                 </div>
               </Col>
