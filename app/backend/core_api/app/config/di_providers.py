@@ -127,12 +127,12 @@ def get_mv_refresher(db: Session = Depends(get_db)) -> MaterializedViewRefresher
 
 
 def get_uc_default(
-    raw_repo: ShogunCsvRepository = Depends(get_repo_raw_default),
-    stg_repo: ShogunCsvRepository = Depends(get_repo_stg_flash),
+    raw_repo: ShogunCsvRepository = Depends(get_repo_raw_final),
+    stg_repo: ShogunCsvRepository = Depends(get_repo_stg_final),
     raw_data_repo: RawDataRepository = Depends(get_raw_data_repo),
     mv_refresher: MaterializedViewRefresher = Depends(get_mv_refresher)
 ) -> UploadShogunCsvUseCase:
-    """デフォルト用のUploadShogunCsvUseCase (raw.shogun_flash_receive + stg.shogun_flash_receive)"""
+    """デフォルト用のUploadShogunCsvUseCase (raw.shogun_final_receive + stg.shogun_final_receive)"""
     return UploadShogunCsvUseCase(
         raw_writer=raw_repo,
         stg_writer=stg_repo,
