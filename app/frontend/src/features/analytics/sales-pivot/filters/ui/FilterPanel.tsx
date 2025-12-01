@@ -9,6 +9,7 @@ import type { Dayjs } from 'dayjs';
 import type { Mode, SortKey, SortOrder, ID, SalesRep, CategoryKind } from '../../shared/model/types';
 import { axisLabel } from '../../shared/model/metrics';
 import { useResponsive } from '@/shared';
+import styles from './FilterPanel.module.css';
 
 interface FilterPanelProps {
   // Period
@@ -89,22 +90,24 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
   const { isDesktop } = useResponsive();
 
   return (
-    <Card className="sales-tree-accent-card sales-tree-accent-primary" title={<div className="sales-tree-card-section-header">条件</div>}>
+    <Card 
+      className={`${styles.accentCard} ${styles.accentPrimary} sales-tree-accent-card sales-tree-accent-primary`}
+      title={<div className={`${styles.cardSectionHeader} sales-tree-card-section-header`}>条件</div>}
+    >
       {/* 1行目（xl以上）/ 1行目（xl以下）: 種別 */}
       <Row gutter={[16, 16]} align="middle">
         {/* 種別切り替え */}
         <Col xs={24} md={24} xl={5}>
-          <Space direction="vertical" size={2} style={{ width: '100%' }}>
+          <Space direction="vertical" size={2} className={styles.fullWidth}>
             <Typography.Text type="secondary">種別</Typography.Text>
             <Radio.Group
               value={categoryKind}
               onChange={(e) => onCategoryKindChange(e.target.value as CategoryKind)}
               buttonStyle="solid"
-              style={{ width: '100%', display: 'flex' }}
-              className="category-radio-group"
+              className={styles.categoryRadioGroup}
             >
-              <Radio.Button value="waste" style={{ flex: 1, textAlign: 'center' }}>廃棄物</Radio.Button>
-              <Radio.Button value="valuable" style={{ flex: 1, textAlign: 'center' }}>有価物</Radio.Button>
+              <Radio.Button value="waste">廃棄物</Radio.Button>
+              <Radio.Button value="valuable">有価物</Radio.Button>
             </Radio.Group>
           </Space>
         </Col>
@@ -340,44 +343,6 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
           </Space>
         </Col>
       </Row>
-
-      {/* スタイル */}
-      <style>{`
-        .accent-card { border-left: 4px solid #23780410; overflow: hidden; }
-        .accent-primary { border-left-color: #237804; }
-        .card-section-header { 
-          font-weight: 600; 
-          padding: 6px 10px; 
-          margin-bottom: 12px; 
-          border-radius: 6px; 
-          background: #f3fff4; 
-          border: 1px solid #e6f7e6; 
-        }
-        
-        /* 種別ボタンのレスポンシブフォントサイズ */
-        .category-radio-group .ant-radio-button-wrapper {
-          font-size: clamp(12px, 1.2vw, 14px);
-          padding: 4px 8px;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-        }
-        
-        /* xl以上でのフォントサイズ調整 */
-        @media (min-width: 1280px) and (max-width: 1400px) {
-          .category-radio-group .ant-radio-button-wrapper {
-            font-size: 12px;
-            padding: 4px 6px;
-          }
-        }
-        
-        @media (min-width: 1401px) {
-          .category-radio-group .ant-radio-button-wrapper {
-            font-size: 14px;
-            padding: 4px 15px;
-          }
-        }
-      `}</style>
     </Card>
   );
 };
