@@ -4,11 +4,12 @@
  */
 
 import React from 'react';
-import { Card, Row, Col, Divider, Space, Typography, Segmented, DatePicker, Select, Button, Radio } from 'antd';
+import { Card, Row, Col, Divider, Space, Typography, Segmented, DatePicker, Select, Button } from 'antd';
 import type { Dayjs } from 'dayjs';
 import type { Mode, SortKey, SortOrder, ID, SalesRep, CategoryKind } from '../../shared/model/types';
 import { axisLabel } from '../../shared/model/metrics';
 import { useResponsive } from '@/shared';
+import { CategorySelector } from './components/CategorySelector';
 import styles from './FilterPanel.module.css';
 
 interface FilterPanelProps {
@@ -98,18 +99,10 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
       <Row gutter={[16, 16]} align="middle">
         {/* 種別切り替え */}
         <Col xs={24} md={24} xl={5}>
-          <Space direction="vertical" size={2} className={styles.fullWidth}>
-            <Typography.Text type="secondary">種別</Typography.Text>
-            <Radio.Group
-              value={categoryKind}
-              onChange={(e) => onCategoryKindChange(e.target.value as CategoryKind)}
-              buttonStyle="solid"
-              className={styles.categoryRadioGroup}
-            >
-              <Radio.Button value="waste">廃棄物</Radio.Button>
-              <Radio.Button value="valuable">有価物</Radio.Button>
-            </Radio.Group>
-          </Space>
+          <CategorySelector
+            value={categoryKind}
+            onChange={onCategoryKindChange}
+          />
         </Col>
 
         {/* xl以上: モード+TopN・ソートを同じ行に表示 */}

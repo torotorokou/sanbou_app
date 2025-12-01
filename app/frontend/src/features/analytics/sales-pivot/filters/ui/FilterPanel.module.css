@@ -25,40 +25,6 @@
 }
 
 /* ========================================
-   種別ボタン（廃棄物/有価物）
-   ======================================== */
-.categoryRadioGroup {
-  width: 100%;
-  display: flex;
-}
-
-.categoryRadioGroup :global(.ant-radio-button-wrapper) {
-  flex: 1;
-  text-align: center;
-  font-size: clamp(12px, 1.2vw, 14px);
-  padding: 4px 8px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* xl以上でのフォントサイズ調整（1280px-1400px） */
-@media (min-width: 1280px) and (max-width: 1400px) {
-  .categoryRadioGroup :global(.ant-radio-button-wrapper) {
-    font-size: 12px;
-    padding: 4px 6px;
-  }
-}
-
-/* xl以上でのフォントサイズ調整（1401px以上） */
-@media (min-width: 1401px) {
-  .categoryRadioGroup :global(.ant-radio-button-wrapper) {
-    font-size: 14px;
-    padding: 4px 15px;
-  }
-}
-
-/* ========================================
    Space・Column共通スタイル
    ======================================== */
 .fullWidth {
