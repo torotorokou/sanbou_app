@@ -1,40 +1,38 @@
 /**
  * PeriodSelector.module.css
- * 日次カレンダーの曜日色付けスタイル
+ * 日次カレンダーの曜日に色付け
+ * - 土曜日（6列目）: 青
+ * - 日曜日（7列目）: 赤
  */
 
-/* 土曜日（6列目）を青色に */
-.datePickerWrapper :global(.ant-picker-calendar-date-content),
-.datePickerWrapper :global(.ant-picker-cell):nth-child(6) :global(.ant-picker-cell-inner) {
-  color: #1890ff;
-}
-
-/* 日曜日（7列目）を赤色に */
-.datePickerWrapper :global(.ant-picker-cell):nth-child(7) :global(.ant-picker-cell-inner) {
-  color: #ff4d4f;
-}
-
-/* 曜日ヘッダーの土曜日（6列目）を青色に */
-.datePickerWrapper :global(.ant-picker-content) thead th:nth-child(6) {
+/* 土曜日（6列目）を青に */
+.datePicker :global(.ant-picker-cell):nth-child(6) :global(.ant-picker-cell-inner) {
   color: #1890ff !important;
 }
 
-/* 曜日ヘッダーの日曜日（7列目）を赤色に */
-.datePickerWrapper :global(.ant-picker-content) thead th:nth-child(7) {
+/* 日曜日（7列目）を赤に */
+.datePicker :global(.ant-picker-cell):nth-child(7) :global(.ant-picker-cell-inner) {
   color: #ff4d4f !important;
 }
 
-/* 選択中の日付は色を保持 */
-.datePickerWrapper :global(.ant-picker-cell-selected) :global(.ant-picker-cell-inner) {
+/* 選択された日付の色を維持 */
+.datePicker :global(.ant-picker-cell-selected) :global(.ant-picker-cell-inner) {
   color: #fff !important;
 }
 
-/* 今日の日付は色を保持 */
-.datePickerWrapper :global(.ant-picker-cell-today) :global(.ant-picker-cell-inner) {
-  color: inherit;
+/* 今日の日付の色を維持 */
+.datePicker :global(.ant-picker-cell-today) :global(.ant-picker-cell-inner)::before {
+  border-color: #1890ff;
 }
 
-/* 無効化された日付は色を薄く */
-.datePickerWrapper :global(.ant-picker-cell-disabled) :global(.ant-picker-cell-inner) {
-  opacity: 0.3;
+/* 範囲選択時の色を維持 */
+.datePicker :global(.ant-picker-cell-in-view.ant-picker-cell-range-start) :global(.ant-picker-cell-inner),
+.datePicker :global(.ant-picker-cell-in-view.ant-picker-cell-range-end) :global(.ant-picker-cell-inner),
+.datePicker :global(.ant-picker-cell-in-view.ant-picker-cell-in-range) :global(.ant-picker-cell-inner) {
+  background: #e6f7ff;
+}
+
+/* ホバー時の色を維持 */
+.datePicker :global(.ant-picker-cell):hover :global(.ant-picker-cell-inner) {
+  background: #f5f5f5;
 }

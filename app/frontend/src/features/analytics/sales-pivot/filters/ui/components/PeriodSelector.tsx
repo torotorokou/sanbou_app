@@ -1,13 +1,8 @@
-import React from 'react';
 import { Space, Segmented, DatePicker, Typography } from 'antd';
 import type { Dayjs } from 'dayjs';
 import locale from 'antd/es/date-picker/locale/ja_JP';
-import dayjs from 'dayjs';
 import 'dayjs/locale/ja';
 import styles from './PeriodSelector.module.css';
-
-// dayjsのロケールを日本語に設定（月曜始まりにするため）
-dayjs.locale('ja');
 
 interface PeriodSelectorProps {
   granularity: 'month' | 'date';
@@ -84,30 +79,28 @@ export const PeriodSelector: React.FC<PeriodSelectorProps> = ({
           )
         ) : (
           periodMode === 'single' ? (
-            <div className={styles.datePickerWrapper}>
-              <DatePicker
-                value={singleDate}
-                onChange={(d: Dayjs | null) => d && onSingleDateChange(d)}
-                allowClear={false}
-                placeholder="対象日"
-                locale={locale}
-              />
-            </div>
+            <DatePicker
+              value={singleDate}
+              onChange={(d: Dayjs | null) => d && onSingleDateChange(d)}
+              allowClear={false}
+              placeholder="対象日"
+              locale={locale}
+              className={styles.datePicker}
+            />
           ) : (
-            <div className={styles.datePickerWrapper}>
-              <DatePicker.RangePicker
-                value={dateRange}
-                onChange={(vals: [Dayjs | null, Dayjs | null] | null) => {
-                  if (vals && vals[0] && vals[1]) {
-                    onDateRangeChange([vals[0], vals[1]]);
-                  } else {
-                    onDateRangeChange(null);
-                  }
-                }}
-                placeholder={['開始日', '終了日']}
-                locale={locale}
-              />
-            </div>
+            <DatePicker.RangePicker
+              value={dateRange}
+              onChange={(vals: [Dayjs | null, Dayjs | null] | null) => {
+                if (vals && vals[0] && vals[1]) {
+                  onDateRangeChange([vals[0], vals[1]]);
+                } else {
+                  onDateRangeChange(null);
+                }
+              }}
+              placeholder={['開始日', '終了日']}
+              locale={locale}
+              className={styles.datePicker}
+            />
           )
         )}
       </Space>
