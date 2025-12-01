@@ -10,6 +10,8 @@ import type { Mode, SortKey, SortOrder, ID, SalesRep, CategoryKind } from '../..
 import { axisLabel } from '../../shared/model/metrics';
 import { useResponsive } from '@/shared';
 import { CategorySelector } from './components/CategorySelector';
+import { ModeSelector } from './components/ModeSelector';
+import { TopNSortControls } from './components/TopNSortControls';
 import styles from './FilterPanel.module.css';
 
 interface FilterPanelProps {
@@ -110,52 +112,20 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
           <>
             {/* モード */}
             <Col xs={24} md={24} xl={5}>
-              <Space direction="vertical" size={2}>
-                <Typography.Text type="secondary">モード</Typography.Text>
-                <Segmented
-                  options={[
-                    { label: '顧客', value: 'customer' },
-                    { label: '品名', value: 'item' },
-                    { label: '日付', value: 'date' },
-                  ]}
-                  value={mode}
-                  onChange={(v) => onModeChange(v as Mode)}
-                />
-              </Space>
+              <ModeSelector value={mode} onChange={onModeChange} />
             </Col>
 
             {/* TopN・ソート */}
             <Col xs={24} xl={14}>
-              <Space direction="vertical" size={2} style={{ width: '100%' }}>
-                <Typography.Text type="secondary">Top & 並び替え</Typography.Text>
-                <Space wrap>
-                  <Segmented
-                    options={[
-                      { label: '10', value: '10' },
-                      { label: '20', value: '20' },
-                      { label: '50', value: '50' },
-                      { label: 'All', value: 'all' },
-                    ]}
-                    value={String(topN)}
-                    onChange={(v: string | number) =>
-                      onTopNChange(v === 'all' ? 'all' : (Number(v) as 10 | 20 | 50))
-                    }
-                  />
-                  <Segmented
-                    options={sortKeyOptions}
-                    value={sortBy}
-                    onChange={(v) => onSortByChange(v as SortKey)}
-                  />
-                  <Segmented
-                    options={[
-                      { label: '降順', value: 'desc' },
-                      { label: '昇順', value: 'asc' },
-                    ]}
-                    value={order}
-                    onChange={(v) => onOrderChange(v as SortOrder)}
-                  />
-                </Space>
-              </Space>
+              <TopNSortControls
+                topN={topN}
+                sortBy={sortBy}
+                order={order}
+                sortKeyOptions={sortKeyOptions}
+                onTopNChange={onTopNChange}
+                onSortByChange={onSortByChange}
+                onOrderChange={onOrderChange}
+              />
             </Col>
           </>
         )}
@@ -166,52 +136,20 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
         <Row gutter={[16, 16]} align="middle" style={{ marginTop: 16 }}>
           {/* モード */}
           <Col xs={24} md={8}>
-            <Space direction="vertical" size={2}>
-              <Typography.Text type="secondary">モード</Typography.Text>
-              <Segmented
-                options={[
-                  { label: '顧客', value: 'customer' },
-                  { label: '品名', value: 'item' },
-                  { label: '日付', value: 'date' },
-                ]}
-                value={mode}
-                onChange={(v) => onModeChange(v as Mode)}
-              />
-            </Space>
+            <ModeSelector value={mode} onChange={onModeChange} />
           </Col>
 
           {/* TopN・ソート */}
           <Col xs={24} md={16}>
-            <Space direction="vertical" size={2} style={{ width: '100%' }}>
-              <Typography.Text type="secondary">Top & 並び替え</Typography.Text>
-              <Space wrap>
-                <Segmented
-                  options={[
-                    { label: '10', value: '10' },
-                    { label: '20', value: '20' },
-                    { label: '50', value: '50' },
-                    { label: 'All', value: 'all' },
-                  ]}
-                  value={String(topN)}
-                  onChange={(v: string | number) =>
-                    onTopNChange(v === 'all' ? 'all' : (Number(v) as 10 | 20 | 50))
-                  }
-                />
-                <Segmented
-                  options={sortKeyOptions}
-                  value={sortBy}
-                  onChange={(v) => onSortByChange(v as SortKey)}
-                />
-                <Segmented
-                  options={[
-                    { label: '降順', value: 'desc' },
-                    { label: '昇順', value: 'asc' },
-                  ]}
-                  value={order}
-                  onChange={(v) => onOrderChange(v as SortOrder)}
-                />
-              </Space>
-            </Space>
+            <TopNSortControls
+              topN={topN}
+              sortBy={sortBy}
+              order={order}
+              sortKeyOptions={sortKeyOptions}
+              onTopNChange={onTopNChange}
+              onSortByChange={onSortByChange}
+              onOrderChange={onOrderChange}
+            />
           </Col>
         </Row>
       )}
