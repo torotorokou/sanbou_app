@@ -15,25 +15,26 @@
 .radioGroup :global(.ant-radio-button-wrapper) {
   flex: 1;
   text-align: center;
-  font-size: clamp(12px, 1.2vw, 14px);
-  padding: 4px 8px;
+  font-size: clamp(13px, 1.4vw, 16px);
+  padding: 6px 10px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  font-weight: 500;
 }
 
 /* xl以上でのフォントサイズ調整（1280px-1400px） */
 @media (min-width: 1280px) and (max-width: 1400px) {
   .radioGroup :global(.ant-radio-button-wrapper) {
-    font-size: 12px;
-    padding: 4px 6px;
+    font-size: 13px;
+    padding: 6px 8px;
   }
 }
 
 /* xl以上でのフォントサイズ調整（1401px以上） */
 @media (min-width: 1401px) {
   .radioGroup :global(.ant-radio-button-wrapper) {
-    font-size: 14px;
-    padding: 4px 15px;
+    font-size: 16px;
+    padding: 6px 16px;
   }
 }
