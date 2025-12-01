@@ -3,7 +3,7 @@ Sales Tree Repository - mart.v_sales_tree_detail_base からのデータ取得
 
 売上ツリー分析用のリポジトリ実装
 データソース: mart.v_sales_tree_detail_base (明細レベルの事実テーブルビュー)
-  → stg.shogun_final_receive (確定受入データ) ※2025-12-01より変更
+  → stg.v_active_shogun_final_receive (確定受入データ、is_deleted=falseのみ) ※2025-12-01より変更
 """
 import logging
 import csv
