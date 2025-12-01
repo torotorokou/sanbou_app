@@ -77,3 +77,5 @@ export const VideoPane = React.forwardRef<VideoPaneRef, VideoPaneProps>(({ src, 
 
   return <iframe ref={iframeRef} title={`${title}-video`} src={src} className={frameClassName} />;
 });
+
+VideoPane.displayName = 'VideoPane';

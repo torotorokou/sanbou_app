@@ -4,7 +4,6 @@ import dayjs from 'dayjs';
 import updateLocale from 'dayjs/plugin/updateLocale';
 import locale from 'antd/es/date-picker/locale/ja_JP';
 import 'dayjs/locale/ja';
-import styles from './PeriodSelector.module.css';
 
 // updateLocaleプラグインを有効化
 dayjs.extend(updateLocale);
@@ -96,7 +95,6 @@ export const PeriodSelector: React.FC<PeriodSelectorProps> = ({
               allowClear={false}
               placeholder="対象日"
               locale={locale}
-              className={styles.datePicker}
             />
           ) : (
             <DatePicker.RangePicker
@@ -110,7 +108,6 @@ export const PeriodSelector: React.FC<PeriodSelectorProps> = ({
               }}
               placeholder={['開始日', '終了日']}
               locale={locale}
-              className={styles.datePicker}
             />
           )
         )}

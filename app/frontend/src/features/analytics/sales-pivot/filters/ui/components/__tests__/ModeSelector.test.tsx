@@ -2,7 +2,6 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ModeSelector } from '../ModeSelector';
-import type { Mode } from '../../../../shared/model/types';
 
 describe('ModeSelector', () => {
   it('顧客モードが選択された状態で表示される', () => {

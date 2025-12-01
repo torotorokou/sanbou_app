@@ -5,7 +5,6 @@ import { ModeSelector } from '../ModeSelector';
 import { TopNSortControls } from '../TopNSortControls';
 import type { Mode, SortKey, SortOrder, CategoryKind } from '../../../../shared/model/types';
 import type { FilterLayoutResult } from '../../hooks/useFilterLayout';
-import type { GridConfig } from '../../config/layout.config';
 
 interface CategoryModeSectionProps {
   // Layout

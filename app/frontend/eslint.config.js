@@ -57,6 +57,10 @@ export default defineConfig([
             ...pluginTs.configs.recommended.rules,
             ...pluginReact.configs.recommended.rules,
             '@typescript-eslint/consistent-type-imports': 'warn',
+            // React 17+ では React インポート不要
+            'react/react-in-jsx-scope': 'off',
+            // TypeScript で型定義されているため prop-types は不要
+            'react/prop-types': 'off',
             // 暫定: any は段階的移行のため warn に緩和
             '@typescript-eslint/no-explicit-any': 'warn',
             // ブレークポイントのマジックナンバー混入防止（比較演算子の文脈に限定）
