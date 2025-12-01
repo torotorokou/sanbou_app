@@ -24,8 +24,8 @@ export type { CustomerChurnRepository } from './shared/ports/customerChurnReposi
 export { customerChurnRepository, CustomerChurnHttpRepository } from './shared/infrastructure/customerChurnRepository';
 
 // Main ViewModel - 主要なエントリーポイント
-export { useCustomerChurnViewModel } from './shared/model/useCustomerChurnViewModel';
-export type { CustomerChurnViewModel } from './shared/model/useCustomerChurnViewModel';
+export { useCustomerChurnViewModel } from './shared/model/useCustomerChurnVM';
+export type { CustomerChurnViewModel } from './shared/model/useCustomerChurnVM';
 
 // Sub-features - 個別に使用可能な機能モジュール
 export * from './period-selector';

@@ -5,5 +5,5 @@
 export * from './ui/CsvPreviewCard';
 export * from './model/types';
 export * from './screen/DatasetPreviewScreen';
-export * from './hooks';
+export * from './model';
 export * from './repository';

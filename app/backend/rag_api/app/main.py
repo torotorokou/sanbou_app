@@ -6,13 +6,14 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from backend_shared.infrastructure.logging_utils import setup_uvicorn_access_filter
+from backend_shared.infra.frameworks.logging_utils import setup_uvicorn_access_filter
+from backend_shared.core.domain.exceptions import ValidationError, NotFoundError, InfrastructureError
 from fastapi.responses import JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from app.paths import CONFIG_ENV
-from app.utils.env_loader import load_env_and_secrets
-from app.api.endpoints import query  # ← query.py に router を定義
+from app.config.paths import CONFIG_ENV
+from app.shared.env_loader import load_env_and_secrets
+from app.api.routers import query, manuals  # ← query.py に router を定義
 
 
 # --- .env + secrets 読み込み --------------------------------------------------
@@ -61,6 +62,46 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         },
     )
 
+# --- backend_shared exception handlers -----------------------------------------
+@app.exception_handler(ValidationError)
+async def handle_validation_error(request: Request, exc: ValidationError):
+    return JSONResponse(
+        status_code=400,
+        content={
+            "error": {
+                "code": "VALIDATION_ERROR",
+                "message": exc.message,
+                "field": exc.field,
+            }
+        },
+    )
+
+@app.exception_handler(NotFoundError)
+async def handle_not_found_error(request: Request, exc: NotFoundError):
+    return JSONResponse(
+        status_code=404,
+        content={
+            "error": {
+                "code": "NOT_FOUND",
+                "message": exc.message,
+                "entity": exc.entity,
+                "entity_id": str(exc.entity_id),
+            }
+        },
+    )
+
+@app.exception_handler(InfrastructureError)
+async def handle_infrastructure_error(request: Request, exc: InfrastructureError):
+    return JSONResponse(
+        status_code=503,
+        content={
+            "error": {
+                "code": "INFRASTRUCTURE_ERROR",
+                "message": exc.message,
+            }
+        },
+    )
+
 
 # --- CORS 設定 -----------------------------------------------------------------
 # デフォルトで Vite (5173) を許可。必要に応じて .env の CORS_ORIGINS で上書き
@@ -80,6 +121,7 @@ setup_uvicorn_access_filter(excluded_paths=("/health",))
 # --- ルーター登録（mount より後に置かないと競合しない） -----------------------
 routers = [
     (query.router, "/api"),
+    (manuals.router, "/api"),
     # 追加ルーターがあればここに追記
 ]
 for router, prefix in routers:

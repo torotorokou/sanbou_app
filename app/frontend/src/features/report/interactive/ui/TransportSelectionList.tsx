@@ -31,8 +31,8 @@ export const TransportSelectionCard: React.FC<TransportSelectionCardProps> = ({
         <Card
             size="small"
             style={{
-                marginBottom: 6,
-                padding: 6,
+                marginBottom: 4,
+                padding: 0,
                 background: bgColor,
                 border: `1px solid ${borderColor}`,
                 borderRadius: 8,
@@ -40,6 +40,7 @@ export const TransportSelectionCard: React.FC<TransportSelectionCardProps> = ({
                 maxWidth: 820,
                 marginInline: 'auto',
             }}
+            bodyStyle={{ padding: '4px 8px' }}
         >
             <div style={{ display: 'flex', justifyContent: 'center' }}>
                 <div
@@ -56,7 +57,7 @@ export const TransportSelectionCard: React.FC<TransportSelectionCardProps> = ({
                         style={{
                             minWidth: 44,
                             textAlign: 'center',
-                            fontSize: 14,
+                            fontSize: 13,
                             fontWeight: 600,
                             color: '#1890ff',
                             paddingTop: 4,
@@ -73,24 +74,25 @@ export const TransportSelectionCard: React.FC<TransportSelectionCardProps> = ({
                             marginLeft: 8,
                         }}
                     >
-                        <div style={{ fontSize: 16 }}>
+                        <div style={{ fontSize: 14 }}>
                             <strong>処分業者：</strong> {item.processor_name}
                         </div>
-                        <div style={{ fontSize: 16, marginTop: 4 }}>
+                        <div style={{ fontSize: 14, marginTop: 2 }}>
                             <strong>商品名：</strong> {item.product_name}
                         </div>
-                        <div style={{ fontSize: 16, color: '#444', marginTop: 4 }}>
+                        <div style={{ fontSize: 14, color: '#444', marginTop: 2 }}>
                             <strong>備考：</strong> {item.note ?? '（なし）'}
                         </div>
                     </div>
 
                     {/* 運搬業者選択 */}
                     <div style={{ flex: '0 0 160px' }}>
-                        <div style={{ marginBottom: 2, fontSize: 16 }}>
+                        <div style={{ marginBottom: 2, fontSize: 14 }}>
                             <strong>運搬業者：</strong> 選択
                         </div>
                         <Select
                             style={{ width: '100%' }}
+                            dropdownMatchSelectWidth={false}
                             placeholder="選択してください"
                             value={selection?.index}
                             onChange={(selected) => {

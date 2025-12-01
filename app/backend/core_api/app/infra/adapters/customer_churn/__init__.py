@@ -10,7 +10,7 @@ from datetime import date as date_type
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 
-from app.domain.entities.customer_churn import LostCustomer
+from app.core.domain.entities.customer_churn import LostCustomer
 
 logger = logging.getLogger(__name__)
 

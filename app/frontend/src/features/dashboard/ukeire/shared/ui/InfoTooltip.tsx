@@ -22,5 +22,3 @@ export const InfoTooltip: React.FC<InfoTooltipProps> = ({ title = defaultTitle, 
     </Tooltip>
   );
 };
-
-export default InfoTooltip;

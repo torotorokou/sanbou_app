@@ -30,6 +30,7 @@ const GlobalManualSearchPage = lazy(() => import('@/pages/manual').then(m => ({ 
 const ShogunManualListPage = lazy(() => import('@/pages/manual').then(m => ({ default: m.ShogunManualListPage })));
 const ManualDetailPage = lazy(() => import('@/pages/manual').then(m => ({ default: m.ManualDetailPage })));
 const ManualDetailRouteComponent = lazy(() => import('@/features/manual').then(m => ({ default: m.ManualDetailRoute })));
+const VendorMasterPage = lazy(() => import('@/pages/manual').then(m => ({ default: m.VendorMasterPage })));
 
 // Chat pages - using public API
 const SolvestNaviPage = lazy(() => import('@/pages/navi').then(m => ({ default: m.SolvestNaviPage })));
@@ -86,6 +87,8 @@ const AppRoutes: React.FC = () => {
     <Route path='/manuals/shogun' element={<ShogunManualListPage />} />
         {/* 単独ページ（正ルート） */}
         <Route path='/manuals/shogun/:id' element={<ManualDetailPage />} />
+        {/* マスター - 業者ページ */}
+        <Route path='/manual/master/vendor' element={<VendorMasterPage />} />
 
 
     {/* データベース関連 */}

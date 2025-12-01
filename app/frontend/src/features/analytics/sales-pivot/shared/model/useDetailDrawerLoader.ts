@@ -5,7 +5,7 @@
 
 import { useCallback } from 'react';
 import type { GroupBy, DetailLinesFilter, SummaryQuery, DetailLine, DetailMode } from './types';
-import type { HttpSalesPivotRepository } from '../api/salesPivot.repository';
+import type { HttpSalesPivotRepository } from '../infrastructure/salesPivot.repository';
 
 interface DetailDrawerLoaderParams {
   query: SummaryQuery;
@@ -59,14 +59,20 @@ export function useDetailDrawerLoader(params: DetailDrawerLoaderParams) {
       setDetailDrawerTitle(title || '詳細明細');
 
       try {
-        // 期間計算（月末日を正確に計算）
+        // 期間計算（月次モードと日次モードの両方に対応）
         let dateFrom: string;
         let dateTo: string;
 
-        if (query.monthRange) {
+        if (query.dateFrom && query.dateTo) {
+          // 日次モード：dateFrom/dateToを直接使用
+          dateFrom = query.dateFrom;
+          dateTo = query.dateTo;
+        } else if (query.monthRange) {
+          // 月次モード（範囲）：月末日を正確に計算
           dateFrom = `${query.monthRange.from}-01`;
           dateTo = getMonthEndDate(query.monthRange.to);
         } else if (query.month) {
+          // 月次モード（単月）：月末日を正確に計算
           dateFrom = `${query.month}-01`;
           dateTo = getMonthEndDate(query.month);
         } else {

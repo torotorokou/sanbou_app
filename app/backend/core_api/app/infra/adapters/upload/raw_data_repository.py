@@ -20,7 +20,7 @@ import pandas as pd
 from sqlalchemy.orm import Session
 from sqlalchemy import text, Table, MetaData, Column, Integer, BigInteger, Text, String, DateTime, Boolean, ForeignKey
 
-from app.domain.csv import CsvKind
+from app.core.domain.csv import CsvKind
 
 logger = logging.getLogger(__name__)
 

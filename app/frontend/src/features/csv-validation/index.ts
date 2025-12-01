@@ -47,15 +47,15 @@ export type { CsvValidationBadgeProps } from './ui/CsvValidationBadge';
 // ========================================
 
 export { parseHeader, validateHeaders, validateHeadersFromText } from './core/csvHeaderValidator';
-export * from './core/csvRowValidator';
+export { validateRows } from './core/csvRowValidator';
 
 // ========================================
-// Hooks
+// Model (Hooks & Business Logic)
 // ========================================
 
-export { useCsvFileValidator } from './hooks/useCsvFileValidator';
-export type { CsvFileValidatorOptions } from './hooks/useCsvFileValidator';
-export * from './hooks/useValidateOnPick';
+export { useCsvFileValidator } from './model/useCsvFileValidator';
+export type { CsvFileValidatorOptions } from './model/useCsvFileValidator';
+export { useValidateOnPick } from './model/useValidateOnPick';
 
 // ========================================
 // Model Types

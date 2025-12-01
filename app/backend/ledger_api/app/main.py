@@ -19,17 +19,17 @@ except Exception:  # if not available, inject stub module
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from backend_shared.infrastructure.logging_utils import setup_uvicorn_access_filter
-from backend_shared.adapters.middleware import RequestIdMiddleware
-from backend_shared.adapters.fastapi import register_error_handlers
+from backend_shared.infra.frameworks.logging_utils import setup_uvicorn_access_filter
+from backend_shared.infra.adapters.middleware import RequestIdMiddleware
+from backend_shared.infra.adapters.fastapi import register_error_handlers
 
-from app.presentation.api.routers.reports.block_unit_price_interactive import (
+from app.api.routers.reports.block_unit_price_interactive import (
     router as block_unit_price_router,
 )
-from app.presentation.api.routers.report_artifacts import router as report_artifact_router
-from app.presentation.api.routers.reports import reports_router
-from app.presentation.api.routers.jobs import router as jobs_router
-from app.presentation.api.routers.notifications import router as notifications_router
+from app.api.routers.report_artifacts import router as report_artifact_router
+from app.api.routers.reports import reports_router
+from app.api.routers.jobs import router as jobs_router
+from app.api.routers.notifications import router as notifications_router
 from app.settings import settings
 
 # FastAPIアプリケーションの初期化

@@ -10,13 +10,13 @@ export * from './domain/types/shogun.types';
 // Ports
 export * from './ports/repository';
 
-// Application (ViewModels)
-export { useManualSearch } from './application/useManualSearchVM';
-export { useManualCategories } from './application/useManualCategoriesVM';
-export { useManualDoc } from './application/useManualDocVM';
-export { useManualToc } from './application/useManualTocVM';
-export { useShogunDetail } from './application/useShogunDetailVM';
-export { useShogunCatalog } from './application/useShogunCatalogVM';
+// Model (ViewModels)
+export { useManualSearch } from './model/useManualSearchVM';
+export { useManualCategories } from './model/useManualCategoriesVM';
+export { useManualDoc } from './model/useManualDocVM';
+export { useManualToc } from './model/useManualTocVM';
+export { useShogunDetail } from './model/useShogunDetailVM';
+export { useShogunCatalog } from './model/useShogunCatalogVM';
 
 // Infrastructure
 export { ManualRepositoryImpl } from './infrastructure/manual.repository';

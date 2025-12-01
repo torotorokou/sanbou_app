@@ -2,7 +2,7 @@
 import pytest
 from datetime import date
 
-from app.application.usecases.calendar.get_calendar_month_uc import GetCalendarMonthUseCase
+from app.core.usecases.calendar.get_calendar_month_uc import GetCalendarMonthUseCase
 
 from tests.unit.application.fakes.fake_ports import FakeCalendarQuery
 

@@ -119,7 +119,7 @@ export const MetricChart: React.FC<MetricChartProps> = ({
               <Line type="monotone" dataKey="amount" name={amountLabel} stroke="#237804" />
               <Line type="monotone" dataKey="qty" name="数量" stroke="#52c41a" />
               <Line type="monotone" dataKey="count" name={countLabel} stroke="#1890ff" />
-              <Line type="monotone" dataKey="unit_price" name="単価" stroke="#faad14" />
+              <Line type="monotone" dataKey="unitPrice" name="単価" stroke="#faad14" />
             </LineChart>
           </ResponsiveContainer>
         </div>

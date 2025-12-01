@@ -7,7 +7,7 @@ import React, { useMemo } from "react";
 import { Card, Typography, Tooltip, Skeleton } from "antd";
 import { InfoCircleOutlined } from "@ant-design/icons";
 import UkeireCalendar from "@/features/dashboard/ukeire/business-calendar/ui/components/UkeireCalendar";
-import { useCalendarVM } from "@/features/calendar/application/useCalendarVM";
+import { useCalendarVM } from "@/features/calendar/model/useCalendarVM";
 import type { ICalendarRepository } from "@/features/calendar/ports/repository";
 import type { CalendarDayDTO } from "@/features/calendar/domain/types";
 

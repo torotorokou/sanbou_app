@@ -36,4 +36,4 @@ const AnswerViewer: React.FC<Props> = ({ answer }) => {
     );
 };
 
-export default AnswerViewer;
+export { AnswerViewer };

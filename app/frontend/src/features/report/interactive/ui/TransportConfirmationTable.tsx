@@ -28,7 +28,7 @@ export const TransportConfirmationTable: React.FC<TransportConfirmationTableProp
                             width: 72,
                             textAlign: 'left',
                             padding: '6px 8px',
-                            fontSize: 13,
+                            fontSize: 12,
                             borderBottom: '1px solid #eee',
                         }}
                     >
@@ -38,7 +38,7 @@ export const TransportConfirmationTable: React.FC<TransportConfirmationTableProp
                         style={{
                             textAlign: 'left',
                             padding: '6px 8px',
-                            fontSize: 14,
+                            fontSize: 13,
                             borderBottom: '1px solid #eee',
                         }}
                     >
@@ -48,7 +48,7 @@ export const TransportConfirmationTable: React.FC<TransportConfirmationTableProp
                         style={{
                             textAlign: 'left',
                             padding: '6px 8px',
-                            fontSize: 14,
+                            fontSize: 13,
                             borderBottom: '1px solid #eee',
                         }}
                     >
@@ -58,7 +58,7 @@ export const TransportConfirmationTable: React.FC<TransportConfirmationTableProp
                         style={{
                             textAlign: 'left',
                             padding: '6px 8px',
-                            fontSize: 14,
+                            fontSize: 13,
                             borderBottom: '1px solid #eee',
                         }}
                     >
@@ -69,7 +69,7 @@ export const TransportConfirmationTable: React.FC<TransportConfirmationTableProp
                             width: 160,
                             textAlign: 'left',
                             padding: '6px 8px',
-                            fontSize: 14,
+                            fontSize: 13,
                             borderBottom: '1px solid #eee',
                         }}
                     >
@@ -89,7 +89,7 @@ export const TransportConfirmationTable: React.FC<TransportConfirmationTableProp
                                     border: `1px solid ${borderColor}`,
                                     borderRadius: 6,
                                     verticalAlign: 'top',
-                                    fontSize: 14,
+                                    fontSize: 13,
                                     textAlign: 'center',
                                     width: 72,
                                 }}
@@ -102,7 +102,7 @@ export const TransportConfirmationTable: React.FC<TransportConfirmationTableProp
                                     border: `1px solid ${borderColor}`,
                                     borderRadius: 6,
                                     verticalAlign: 'top',
-                                    fontSize: 15,
+                                    fontSize: 14,
                                 }}
                             >
                                 {item.processor_name}
@@ -113,7 +113,7 @@ export const TransportConfirmationTable: React.FC<TransportConfirmationTableProp
                                     border: `1px solid ${borderColor}`,
                                     borderRadius: 6,
                                     verticalAlign: 'top',
-                                    fontSize: 14,
+                                    fontSize: 13,
                                 }}
                             >
                                 {item.product_name}
@@ -124,7 +124,7 @@ export const TransportConfirmationTable: React.FC<TransportConfirmationTableProp
                                     border: `1px solid ${borderColor}`,
                                     borderRadius: 6,
                                     verticalAlign: 'top',
-                                    fontSize: 12,
+                                    fontSize: 11,
                                     color: '#444',
                                 }}
                             >
@@ -136,7 +136,7 @@ export const TransportConfirmationTable: React.FC<TransportConfirmationTableProp
                                     border: `1px solid ${borderColor}`,
                                     borderRadius: 6,
                                     verticalAlign: 'top',
-                                    fontSize: 13,
+                                    fontSize: 12,
                                     width: 160,
                                 }}
                             >

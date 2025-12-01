@@ -6,7 +6,7 @@
 import { useCallback } from 'react';
 import type { Mode, MetricEntry } from './types';
 import type { DrawerState } from './usePivotDrawerState';
-import type { HttpSalesPivotRepository } from '../api/salesPivot.repository';
+import type { HttpSalesPivotRepository } from '../infrastructure/salesPivot.repository';
 
 interface PivotLoaderParams {
   drawer: DrawerState;
@@ -41,13 +41,19 @@ export function usePivotLoader(params: PivotLoaderParams) {
         topN: drawerTopN,
         month,
         monthRange,
+        dateFrom,
+        dateTo,
       } = drawer;
       const targetAxis = axis;
       if (targetAxis === baseAxis) return;
 
       setPivotLoading(true);
       try {
-        const periodParams = monthRange ? { monthRange } : { month };
+        const periodParams = dateFrom && dateTo
+          ? { dateFrom, dateTo }
+          : monthRange
+          ? { monthRange }
+          : { month };
         const page = await repository.fetchPivot({
           ...periodParams,
           baseAxis,
@@ -64,7 +70,7 @@ export function usePivotLoader(params: PivotLoaderParams) {
           ...prev,
           [targetAxis]: reset ? page.rows : prev[targetAxis].concat(page.rows),
         }));
-        setPivotCursor((prev) => ({ ...prev, [targetAxis]: page.next_cursor }));
+        setPivotCursor((prev) => ({ ...prev, [targetAxis]: page.nextCursor }));
       } finally {
         setPivotLoading(false);
       }

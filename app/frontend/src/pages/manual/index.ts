@@ -10,6 +10,9 @@ export { default as ManualSearchPage } from './search';
 export { default as ShogunManualListPage } from './shogun';
 export { default as ShogunManualDetailPage } from './shogun/DetailPage';
 
+// マスターページ
+export { default as VendorMasterPage } from './vendor';
+
 // レガシーエイリアス (後方互換性のため)
 export { default as GlobalManualSearchPage } from './search';
 export { default as ManualDetailPage } from './shogun/DetailPage';

@@ -1,4 +1,4 @@
-import { client } from '@features/report/shared/api/http.adapter';
+import { client } from '@features/report/shared/infrastructure/http.adapter';
 
 export const downloadExcelFile = async (
     reportKey: string,

@@ -8,8 +8,8 @@
 export type { CustomerData } from './domain/types';
 
 // Main ViewModel
-export { useCustomerChurnViewModel } from './model/useCustomerChurnViewModel';
-export type { CustomerChurnViewModel } from './model/useCustomerChurnViewModel';
+export { useCustomerChurnViewModel } from './model/useCustomerChurnVM';
+export type { CustomerChurnViewModel } from './model/useCustomerChurnVM';
 
 // UI Components
 export * from './ui';
