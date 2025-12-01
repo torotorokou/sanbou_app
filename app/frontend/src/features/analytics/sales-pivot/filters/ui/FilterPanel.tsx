@@ -93,7 +93,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
       {/* 1行目（xl以上）/ 1行目（xl以下）: 種別 */}
       <Row gutter={[16, 16]} align="middle">
         {/* 種別切り替え */}
-        <Col xs={24} md={24} xl={4}>
+        <Col xs={24} md={24} xl={5}>
           <Space direction="vertical" size={2} style={{ width: '100%' }}>
             <Typography.Text type="secondary">種別</Typography.Text>
             <Radio.Group
@@ -101,6 +101,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
               onChange={(e) => onCategoryKindChange(e.target.value as CategoryKind)}
               buttonStyle="solid"
               style={{ width: '100%', display: 'flex' }}
+              className="category-radio-group"
             >
               <Radio.Button value="waste" style={{ flex: 1, textAlign: 'center' }}>廃棄物</Radio.Button>
               <Radio.Button value="valuable" style={{ flex: 1, textAlign: 'center' }}>有価物</Radio.Button>
@@ -112,7 +113,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
         {isDesktop && (
           <>
             {/* モード */}
-            <Col xs={24} md={24} xl={4}>
+            <Col xs={24} md={24} xl={5}>
               <Space direction="vertical" size={2}>
                 <Typography.Text type="secondary">モード</Typography.Text>
                 <Segmented
@@ -128,7 +129,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
             </Col>
 
             {/* TopN・ソート */}
-            <Col xs={24} xl={16}>
+            <Col xs={24} xl={14}>
               <Space direction="vertical" size={2} style={{ width: '100%' }}>
                 <Typography.Text type="secondary">Top & 並び替え</Typography.Text>
                 <Space wrap>
@@ -351,6 +352,30 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
           border-radius: 6px; 
           background: #f3fff4; 
           border: 1px solid #e6f7e6; 
+        }
+        
+        /* 種別ボタンのレスポンシブフォントサイズ */
+        .category-radio-group .ant-radio-button-wrapper {
+          font-size: clamp(12px, 1.2vw, 14px);
+          padding: 4px 8px;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+        
+        /* xl以上でのフォントサイズ調整 */
+        @media (min-width: 1280px) and (max-width: 1400px) {
+          .category-radio-group .ant-radio-button-wrapper {
+            font-size: 12px;
+            padding: 4px 6px;
+          }
+        }
+        
+        @media (min-width: 1401px) {
+          .category-radio-group .ant-radio-button-wrapper {
+            font-size: 14px;
+            padding: 4px 15px;
+          }
         }
       `}</style>
     </Card>
