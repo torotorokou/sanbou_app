@@ -14,9 +14,9 @@ shipment:
         伝票日付: { en_name: slip_date, type: datetime, agg: first }
         出荷番号: { en_name: shipment_no, type: str, agg: first }           # 先頭0許容など考慮
         取引先名: { en_name: client_name, type: str, agg: first }
-        業者CD: { en_name: vendor_cd, type: int, agg: first }
+        業者CD: { en_name: vendor_cd, type: Int64, agg: first }
         業者名: { en_name: vendor_name, type: str, agg: first }
-        現場CD: { en_name: site_cd, type: int, agg: first }
+        現場CD: { en_name: site_cd, type: Int64, agg: first }
         現場名: { en_name: site_name, type: str, agg: first }
         品名: { en_name: item_name, type: str, agg: first }
         正味重量: { en_name: net_weight, type: float, agg: sum }
@@ -27,7 +27,7 @@ shipment:
         運搬業者名: { en_name: transport_vendor_name, type: str, agg: first }
         伝票区分名: { en_name: slip_type_name, type: str, agg: first }
         明細備考: { en_name: detail_note, type: str, agg: first }
-        種類CD: { en_name: category_cd, type: int, agg: first }
+        種類CD: { en_name: category_cd, type: Int64, agg: first }
         種類名: { en_name: category_name, type: str, agg: first }
 
 
@@ -108,11 +108,11 @@ yard:
         単価: { en_name: unit_price, type: float, agg: mean }
         金額: { en_name: amount, type: float, agg: sum }
         営業担当者名: { en_name: sales_staff_name, type: str, agg: first }
-        業者CD: { en_name: vendor_cd, type: int, agg: first }
+        業者CD: { en_name: vendor_cd, type: Int64, agg: first }
         業者名: { en_name: vendor_name, type: str, agg: first }
-        種類CD: { en_name: category_cd, type: int, agg: first }
+        種類CD: { en_name: category_cd, type: Int64, agg: first }
         種類名: { en_name: category_name, type: str, agg: first }
-        品名CD: { en_name: item_cd, type: int, agg: first }
+        品名CD: { en_name: item_cd, type: Int64, agg: first }
         伝票番号: { en_name: slip_no, type: str, agg: first }   # 番号はstr推奨
 
 payable:
