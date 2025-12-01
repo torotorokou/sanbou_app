@@ -8,6 +8,7 @@ import { Card, Row, Col, Divider, Space, Typography, Segmented, DatePicker, Sele
 import type { Dayjs } from 'dayjs';
 import type { Mode, SortKey, SortOrder, ID, SalesRep, CategoryKind } from '../../shared/model/types';
 import { axisLabel } from '../../shared/model/metrics';
+import { useResponsive } from '@/shared';
 
 interface FilterPanelProps {
   // Period
@@ -51,6 +52,7 @@ interface FilterPanelProps {
 
 /**
  * フィルタパネルコンポーネント
+ * xl: 1280px以下で2行レイアウト（種別 / モード+Top&並び替え）
  */
 export const FilterPanel: React.FC<FilterPanelProps> = ({
   granularity,
@@ -84,77 +86,140 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
   onRepIdsChange,
   onFilterIdsChange,
 }) => {
+  const { isDesktop } = useResponsive();
+
   return (
     <Card className="sales-tree-accent-card sales-tree-accent-primary" title={<div className="sales-tree-card-section-header">条件</div>}>
+      {/* 1行目（xl以上）/ 1行目（xl以下）: 種別 */}
       <Row gutter={[16, 16]} align="middle">
         {/* 種別切り替え */}
-        <Col xs={24} sm={8} md={4}>
-          <Space direction="vertical" size={2}>
+        <Col xs={24} md={24} xl={4}>
+          <Space direction="vertical" size={2} style={{ width: '100%' }}>
             <Typography.Text type="secondary">種別</Typography.Text>
             <Radio.Group
               value={categoryKind}
               onChange={(e) => onCategoryKindChange(e.target.value as CategoryKind)}
               buttonStyle="solid"
+              style={{ width: '100%' }}
             >
-              <Radio.Button value="waste">廃棄物</Radio.Button>
-              <Radio.Button value="valuable">有価物</Radio.Button>
+              <Radio.Button value="waste" style={{ width: '50%' }}>廃棄物</Radio.Button>
+              <Radio.Button value="valuable" style={{ width: '50%' }}>有価物</Radio.Button>
             </Radio.Group>
           </Space>
         </Col>
 
-        {/* モード */}
-        <Col xs={24} sm={8} md={4}>
-          <Space direction="vertical" size={2}>
-            <Typography.Text type="secondary">モード</Typography.Text>
-            <Segmented
-              options={[
-                { label: '顧客', value: 'customer' },
-                { label: '品名', value: 'item' },
-                { label: '日付', value: 'date' },
-              ]}
-              value={mode}
-              onChange={(v) => onModeChange(v as Mode)}
-            />
-          </Space>
-        </Col>
+        {/* xl以上: モード+TopN・ソートを同じ行に表示 */}
+        {isDesktop && (
+          <>
+            {/* モード */}
+            <Col xs={24} md={24} xl={4}>
+              <Space direction="vertical" size={2}>
+                <Typography.Text type="secondary">モード</Typography.Text>
+                <Segmented
+                  options={[
+                    { label: '顧客', value: 'customer' },
+                    { label: '品名', value: 'item' },
+                    { label: '日付', value: 'date' },
+                  ]}
+                  value={mode}
+                  onChange={(v) => onModeChange(v as Mode)}
+                />
+              </Space>
+            </Col>
 
-        {/* TopN・ソート */}
-        <Col xs={24} sm={16} md={16}>
-          <Space direction="vertical" size={2} style={{ width: '100%' }}>
-            <Typography.Text type="secondary">Top & 並び替え</Typography.Text>
-            <Space wrap>
-              <Segmented
-                options={[
-                  { label: '10', value: '10' },
-                  { label: '20', value: '20' },
-                  { label: '50', value: '50' },
-                  { label: 'All', value: 'all' },
-                ]}
-                value={String(topN)}
-                onChange={(v: string | number) =>
-                  onTopNChange(v === 'all' ? 'all' : (Number(v) as 10 | 20 | 50))
-                }
-              />
-              <Segmented
-                options={sortKeyOptions}
-                value={sortBy}
-                onChange={(v) => onSortByChange(v as SortKey)}
-              />
-              <Segmented
-                options={[
-                  { label: '降順', value: 'desc' },
-                  { label: '昇順', value: 'asc' },
-                ]}
-                value={order}
-                onChange={(v) => onOrderChange(v as SortOrder)}
-              />
-            </Space>
-          </Space>
-        </Col>
+            {/* TopN・ソート */}
+            <Col xs={24} xl={16}>
+              <Space direction="vertical" size={2} style={{ width: '100%' }}>
+                <Typography.Text type="secondary">Top & 並び替え</Typography.Text>
+                <Space wrap>
+                  <Segmented
+                    options={[
+                      { label: '10', value: '10' },
+                      { label: '20', value: '20' },
+                      { label: '50', value: '50' },
+                      { label: 'All', value: 'all' },
+                    ]}
+                    value={String(topN)}
+                    onChange={(v: string | number) =>
+                      onTopNChange(v === 'all' ? 'all' : (Number(v) as 10 | 20 | 50))
+                    }
+                  />
+                  <Segmented
+                    options={sortKeyOptions}
+                    value={sortBy}
+                    onChange={(v) => onSortByChange(v as SortKey)}
+                  />
+                  <Segmented
+                    options={[
+                      { label: '降順', value: 'desc' },
+                      { label: '昇順', value: 'asc' },
+                    ]}
+                    value={order}
+                    onChange={(v) => onOrderChange(v as SortOrder)}
+                  />
+                </Space>
+              </Space>
+            </Col>
+          </>
+        )}
       </Row>
 
-      <Row gutter={[16, 16]} align="middle" style={{ marginTop: 8 }}>
-        {/* 期間選択 */}
+      {/* xl以下: 2行目にモード+TopN・ソートを表示 */}
+      {!isDesktop && (
+        <Row gutter={[16, 16]} align="middle" style={{ marginTop: 16 }}>
+          {/* モード */}
+          <Col xs={24} md={8}>
+            <Space direction="vertical" size={2}>
+              <Typography.Text type="secondary">モード</Typography.Text>
+              <Segmented
+                options={[
+                  { label: '顧客', value: 'customer' },
+                  { label: '品名', value: 'item' },
+                  { label: '日付', value: 'date' },
+                ]}
+                value={mode}
+                onChange={(v) => onModeChange(v as Mode)}
+              />
+            </Space>
+          </Col>
+
+          {/* TopN・ソート */}
+          <Col xs={24} md={16}>
+            <Space direction="vertical" size={2} style={{ width: '100%' }}>
+              <Typography.Text type="secondary">Top & 並び替え</Typography.Text>
+              <Space wrap>
+                <Segmented
+                  options={[
+                    { label: '10', value: '10' },
+                    { label: '20', value: '20' },
+                    { label: '50', value: '50' },
+                    { label: 'All', value: 'all' },
+                  ]}
+                  value={String(topN)}
+                  onChange={(v: string | number) =>
+                    onTopNChange(v === 'all' ? 'all' : (Number(v) as 10 | 20 | 50))
+                  }
+                />
+                <Segmented
+                  options={sortKeyOptions}
+                  value={sortBy}
+                  onChange={(v) => onSortByChange(v as SortKey)}
+                />
+                <Segmented
+                  options={[
+                    { label: '降順', value: 'desc' },
+                    { label: '昇順', value: 'asc' },
+                  ]}
+                  value={order}
+                  onChange={(v) => onOrderChange(v as SortOrder)}
+                />
+              </Space>
+            </Space>
+          </Col>
+        </Row>
+      )}
+      {/* 期間選択 */}
+      <Row gutter={[16, 16]} align="middle" style={{ marginTop: 16 }}>
         <Col xs={24} lg={24}>
           <Space direction="vertical" size={2} style={{ width: '100%' }}>
             <Typography.Text type="secondary">対象（月次 / 日次）</Typography.Text>
@@ -223,62 +288,6 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
               )}
             </Space>
           </Space>
-        </Col>
-      </Row>
-
-      <Divider style={{ margin: '16px 0' }} />
-
-      {/* 旧レイアウトの残骸を削除するため、次のセクションを調整 */}
-      <Row gutter={[16, 16]} style={{ display: 'none' }}>
-        <Col xs={24} lg={11}>
-          <Row gutter={[16, 16]}>
-            <Col xs={24} md={8}>
-              <Space direction="vertical" size={2}>
-                <Typography.Text type="secondary">モード</Typography.Text>
-                <Segmented
-                  options={[
-                    { label: '顧客', value: 'customer' },
-                    { label: '品名', value: 'item' },
-                    { label: '日付', value: 'date' },
-                  ]}
-                  value={mode}
-                  onChange={(v) => onModeChange(v as Mode)}
-                />
-              </Space>
-            </Col>
-            <Col xs={24} md={16}>
-              <Space direction="vertical" size={2} style={{ width: '100%' }}>
-                <Typography.Text type="secondary">Top & 並び替え</Typography.Text>
-                <Space wrap>
-                  <Segmented
-                    options={[
-                      { label: '10', value: '10' },
-                      { label: '20', value: '20' },
-                      { label: '50', value: '50' },
-                      { label: 'All', value: 'all' },
-                    ]}
-                    value={String(topN)}
-                    onChange={(v: string | number) =>
-                      onTopNChange(v === 'all' ? 'all' : (Number(v) as 10 | 20 | 50))
-                    }
-                  />
-                  <Segmented
-                    options={sortKeyOptions}
-                    value={sortBy}
-                    onChange={(v) => onSortByChange(v as SortKey)}
-                  />
-                  <Segmented
-                    options={[
-                      { label: '降順', value: 'desc' },
-                      { label: '昇順', value: 'asc' },
-                    ]}
-                    value={order}
-                    onChange={(v) => onOrderChange(v as SortOrder)}
-                  />
-                </Space>
-              </Space>
-            </Col>
-          </Row>
         </Col>
       </Row>
 
