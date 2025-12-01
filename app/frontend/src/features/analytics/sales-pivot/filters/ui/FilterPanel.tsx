@@ -100,10 +100,10 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
               value={categoryKind}
               onChange={(e) => onCategoryKindChange(e.target.value as CategoryKind)}
               buttonStyle="solid"
-              style={{ width: '100%' }}
+              style={{ width: '100%', display: 'flex' }}
             >
-              <Radio.Button value="waste" style={{ width: '50%' }}>廃棄物</Radio.Button>
-              <Radio.Button value="valuable" style={{ width: '50%' }}>有価物</Radio.Button>
+              <Radio.Button value="waste" style={{ flex: 1, textAlign: 'center' }}>廃棄物</Radio.Button>
+              <Radio.Button value="valuable" style={{ flex: 1, textAlign: 'center' }}>有価物</Radio.Button>
             </Radio.Group>
           </Space>
         </Col>
