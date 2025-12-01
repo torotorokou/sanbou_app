@@ -15,7 +15,7 @@ import type { CalendarDay } from '../model/types';
 
 const { Title, Text } = Typography;
 
-const WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土'];
+const WEEKDAYS = ['月', '火', '水', '木', '金', '土', '日'];
 
 interface UploadCalendarProps {
   datasetKey?: string; // 選択中のデータセットキー
@@ -129,7 +129,7 @@ export const UploadCalendar: React.FC<UploadCalendarProps> = ({
                       textAlign: 'center',
                       fontSize: 15,
                       fontWeight: 'bold',
-                      color: idx === 0 ? '#ff4d4f' : idx === 6 ? '#1890ff' : '#595959',
+                      color: idx === 5 ? '#1890ff' : idx === 6 ? '#ff4d4f' : '#595959',
                       padding: '8px 0',
                     }}
                   >
@@ -200,10 +200,10 @@ export const UploadCalendar: React.FC<UploadCalendarProps> = ({
                           ? '#bfbfbf'
                           : isToday
                           ? '#faad14'  // 今日はオレンジ色
-                          : dayIdx === 0
-                          ? '#ff4d4f'
+                          : dayIdx === 5
+                          ? '#1890ff'  // 土曜日
                           : dayIdx === 6
-                          ? '#1890ff'
+                          ? '#ff4d4f'  // 日曜日
                           : '#595959',
                         fontWeight: day.isCurrentMonth ? 'bold' : 'normal',
                         marginBottom: 4,
