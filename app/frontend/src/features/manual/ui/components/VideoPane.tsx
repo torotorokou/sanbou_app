@@ -22,7 +22,29 @@ export interface VideoPaneProps {
   videoClassName?: string;
 }
 
-export const VideoPane: React.FC<VideoPaneProps> = ({ src, title, frameClassName, videoClassName }) => {
+export interface VideoPaneRef {
+  stopVideo: () => void;
+}
+
+export const VideoPane = React.forwardRef<VideoPaneRef, VideoPaneProps>(({ src, title, frameClassName, videoClassName }, ref) => {
+  const videoRef = React.useRef<HTMLVideoElement>(null);
+  const iframeRef = React.useRef<HTMLIFrameElement>(null);
+
+  React.useImperativeHandle(ref, () => ({
+    stopVideo: () => {
+      // MP4動画の停止
+      if (videoRef.current) {
+        videoRef.current.pause();
+      }
+      // YouTube/iframe動画の停止(srcを再設定してリロード)
+      if (iframeRef.current && iframeRef.current.src) {
+        const currentSrc = iframeRef.current.src;
+        iframeRef.current.src = '';
+        iframeRef.current.src = currentSrc;
+      }
+    },
+  }));
+
   if (!src) {
     return (
       <div style={{ height: '100%' }}>
@@ -36,13 +58,14 @@ export const VideoPane: React.FC<VideoPaneProps> = ({ src, title, frameClassName
   const isYouTube = /youtube\.com|youtu\.be/.test(lower);
 
   if (isMp4) {
-    return <video src={src} className={videoClassName} controls />;
+    return <video ref={videoRef} src={src} className={videoClassName} controls />;
   }
 
   if (isYouTube) {
     const embed = toYouTubeEmbed(src);
     return (
       <iframe
+        ref={iframeRef}
         title={`${title}-video`}
         src={embed}
         className={frameClassName}
@@ -52,5 +75,5 @@ export const VideoPane: React.FC<VideoPaneProps> = ({ src, title, frameClassName
     );
   }
 
-  return <iframe title={`${title}-video`} src={src} className={frameClassName} />;
-};
+  return <iframe ref={iframeRef} title={`${title}-video`} src={src} className={frameClassName} />;
+});
