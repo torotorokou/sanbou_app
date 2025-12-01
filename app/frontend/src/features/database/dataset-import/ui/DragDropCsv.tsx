@@ -51,7 +51,7 @@ export const DragDropCsv: React.FC<DragDropCsvProps> = ({
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (!disabled) {
+    if (!disabled && !isDragging) {
       setIsDragging(true);
     }
   };
@@ -59,7 +59,15 @@ export const DragDropCsv: React.FC<DragDropCsvProps> = ({
   const handleDragLeave = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setIsDragging(false);
+    // relatedTarget が null または div の外側の場合のみ状態をリセット
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX;
+    const y = e.clientY;
+    
+    // マウスが完全に要素の外に出た場合のみリセット
+    if (x < rect.left || x >= rect.right || y < rect.top || y >= rect.bottom) {
+      setIsDragging(false);
+    }
   };
 
   const handleDrop = (e: React.DragEvent) => {
@@ -100,6 +108,7 @@ export const DragDropCsv: React.FC<DragDropCsvProps> = ({
         backgroundColor: disabled ? '#fafafa' : isDragging ? '#e6f7ff' : '#ffffff',
         border: isDragging ? '2px dashed #1890ff' : '1px dashed #d9d9d9',
         opacity: disabled ? 0.5 : 1,
+        pointerEvents: disabled ? 'none' : 'auto',
       }}
       onMouseEnter={(e) => {
         if (!disabled && !isDragging) {
