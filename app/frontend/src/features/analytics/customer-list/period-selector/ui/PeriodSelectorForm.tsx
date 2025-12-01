@@ -41,10 +41,10 @@ const PeriodSelectorForm: React.FC<Props> = ({
 }) => (
     <>
         <Title level={5} style={{ marginBottom: 8 }}>
-            対象期間（この期間に取引がなし：「離脱」）
+            対象期間<br/>「（この期間に取引なし：離脱」）
         </Title>
         <Typography.Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 12 }}>
-            最近の期間を指定してください（例：2025-01〜2025-11）
+            最近の期間を指定してください<br/>「（例：2025-01〜2025-11）
         </Typography.Text>
         <div style={{ marginBottom: 8 }}>
             <div style={{ marginBottom: 8 }}>
@@ -75,7 +75,7 @@ const PeriodSelectorForm: React.FC<Props> = ({
             比較期間（過去の基準期間）
         </Title>
         <Typography.Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 12 }}>
-            過去の基準期間を指定してください（例：2024-01〜2024-12）<br/>
+            過去の基準期間を指定してください<br/>「（例：2024-01〜2024-12）<br/>
             ※この期間に取引があり、対象期間に取引がない顧客を「離脱」として抽出
         </Typography.Text>
         <div style={{ marginBottom: 8 }}>
