@@ -4,14 +4,15 @@
  */
 
 import React from 'react';
-import { Card, Row, Col, Divider, Space, Typography, Segmented, DatePicker, Select, Button } from 'antd';
+import { Card, Row, Col, Divider } from 'antd';
 import type { Dayjs } from 'dayjs';
 import type { Mode, SortKey, SortOrder, ID, SalesRep, CategoryKind } from '../../shared/model/types';
-import { axisLabel } from '../../shared/model/metrics';
 import { useResponsive } from '@/shared';
 import { CategorySelector } from './components/CategorySelector';
 import { ModeSelector } from './components/ModeSelector';
 import { TopNSortControls } from './components/TopNSortControls';
+import { PeriodSelector } from './components/PeriodSelector';
+import { RepFilterSelector } from './components/RepFilterSelector';
 import styles from './FilterPanel.module.css';
 
 interface FilterPanelProps {
@@ -156,73 +157,20 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
       {/* 期間選択 */}
       <Row gutter={[16, 16]} align="middle" style={{ marginTop: 16 }}>
         <Col xs={24} lg={24}>
-          <Space direction="vertical" size={2} style={{ width: '100%' }}>
-            <Typography.Text type="secondary">対象（月次 / 日次）</Typography.Text>
-            <Space wrap>
-              {/* 粒度選択 */}
-              <Segmented
-                options={[
-                  { label: '月次', value: 'month' },
-                  { label: '日次', value: 'date' },
-                ]}
-                value={granularity}
-                onChange={(v: string | number) => onGranularityChange(v as 'month' | 'date')}
-              />
-              {/* 単一/期間選択 */}
-              <Segmented
-                options={[
-                  { label: '単一', value: 'single' },
-                  { label: '期間', value: 'range' },
-                ]}
-                value={periodMode}
-                onChange={(v: string | number) => onPeriodModeChange(v as 'single' | 'range')}
-              />
-              {/* 日付/月の選択 */}
-              {granularity === 'month' ? (
-                periodMode === 'single' ? (
-                  <DatePicker
-                    picker="month"
-                    value={month}
-                    onChange={(d: Dayjs | null) => d && onMonthChange(d.startOf('month'))}
-                    allowClear={false}
-                    placeholder="対象月"
-                  />
-                ) : (
-                  <DatePicker.RangePicker
-                    picker="month"
-                    value={range}
-                    onChange={(vals: [Dayjs | null, Dayjs | null] | null) => {
-                      if (vals && vals[0] && vals[1])
-                        onRangeChange([vals[0].startOf('month'), vals[1].startOf('month')]);
-                    }}
-                    allowEmpty={[false, false]}
-                    placeholder={['開始月', '終了月']}
-                  />
-                )
-              ) : (
-                periodMode === 'single' ? (
-                  <DatePicker
-                    value={singleDate}
-                    onChange={(d: Dayjs | null) => d && onSingleDateChange(d)}
-                    allowClear={false}
-                    placeholder="対象日"
-                  />
-                ) : (
-                  <DatePicker.RangePicker
-                    value={dateRange}
-                    onChange={(vals: [Dayjs | null, Dayjs | null] | null) => {
-                      if (vals && vals[0] && vals[1]) {
-                        onDateRangeChange([vals[0], vals[1]]);
-                      } else {
-                        onDateRangeChange(null);
-                      }
-                    }}
-                    placeholder={['開始日', '終了日']}
-                  />
-                )
-              )}
-            </Space>
-          </Space>
+          <PeriodSelector
+            granularity={granularity}
+            periodMode={periodMode}
+            month={month}
+            range={range}
+            singleDate={singleDate}
+            dateRange={dateRange}
+            onGranularityChange={onGranularityChange}
+            onPeriodModeChange={onPeriodModeChange}
+            onMonthChange={onMonthChange}
+            onRangeChange={onRangeChange}
+            onSingleDateChange={onSingleDateChange}
+            onDateRangeChange={onDateRangeChange}
+          />
         </Col>
       </Row>
 
@@ -230,48 +178,17 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
 
       {/* 営業・絞り込み */}
       <Row gutter={[16, 16]}>
-        <Col xs={24} md={18}>
-          <Space direction="vertical" size={2} style={{ width: '100%' }}>
-            <Typography.Text type="secondary">営業</Typography.Text>
-            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-              <Select
-                mode="multiple"
-                allowClear
-                placeholder="（未選択）"
-                options={repOptions}
-                value={repIds}
-                onChange={onRepIdsChange}
-                style={{ flex: 1 }}
-              />
-              <Space>
-                <Button
-                  size="small"
-                  onClick={() => onRepIdsChange(reps.map((r) => r.id))}
-                  disabled={repIds.length === reps.length}
-                >
-                  全営業を表示
-                </Button>
-                <Button size="small" onClick={() => onRepIdsChange([])} disabled={repIds.length === 0}>
-                  クリア
-                </Button>
-              </Space>
-            </div>
-          </Space>
-        </Col>
-        <Col xs={24} md={6}>
-          <Space direction="vertical" size={2} style={{ width: '100%' }}>
-            <Typography.Text type="secondary">{axisLabel(mode)}で絞る</Typography.Text>
-            <Select
-              key={mode}
-              mode="multiple"
-              allowClear
-              placeholder={`（未選択＝全${axisLabel(mode)}）`}
-              options={filterOptions}
-              value={filterIds}
-              onChange={onFilterIdsChange}
-              style={{ width: '100%' }}
-            />
-          </Space>
+        <Col xs={24}>
+          <RepFilterSelector
+            mode={mode}
+            repIds={repIds}
+            filterIds={filterIds}
+            reps={reps}
+            repOptions={repOptions}
+            filterOptions={filterOptions}
+            onRepIdsChange={onRepIdsChange}
+            onFilterIdsChange={onFilterIdsChange}
+          />
         </Col>
       </Row>
     </Card>
