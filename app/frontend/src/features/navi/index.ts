@@ -3,16 +3,41 @@
  * MVVM+SOLID アーキテクチャに準拠した barrel export
  */
 
-// Domain Types
-export * from './domain/types/dto';
-export * from './domain/types/types';
-export * from './domain/services/pdfUrlNormalizer';
+// Domain Types - DTO
+export type {
+    ChatQuestionRequestDto,
+    ChatAnswerResponseDto,
+    QuestionOptionsResponseDto,
+} from './domain/types/dto';
+
+// Domain Types - Domain Models
+export type {
+    MenuItem,
+    CategoryTemplate,
+    CategoryDataMap,
+    ChatState,
+    PdfPreviewState,
+    ChatAnswer,
+    StepItem,
+} from './domain/types/types';
+
+export {
+    filterMenuItems,
+    RagChatError,
+} from './domain/types/types';
+
+// Domain Services
+export {
+    normalizePdfUrl,
+} from './domain/services/pdfUrlNormalizer';
 
 // Ports
-export * from './ports/repository';
+export type {
+    NaviRepository,
+} from './ports/repository';
 
-// Application
-export { useNaviChat } from './application/useNaviVM';
+// Model (ViewModel)
+export { useNaviChat } from './model/useNaviVM';
 
 // Infrastructure
 export { NaviRepositoryImpl } from './infrastructure/navi.repository';

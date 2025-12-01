@@ -5,7 +5,7 @@
 
 import React, { useState } from "react";
 import { Card, Typography, Switch, Space } from "antd";
-import InfoTooltip from "@/features/dashboard/ukeire/shared/ui/InfoTooltip";
+import { InfoTooltip } from "@/features/dashboard/ukeire/shared/ui/InfoTooltip";
 import dayjs from "dayjs";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RTooltip, Legend, Line, Cell, ReferenceLine } from "recharts";
 import type { IsoDate } from "@/features/dashboard/ukeire/domain/types";

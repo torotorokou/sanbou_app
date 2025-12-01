@@ -5,7 +5,7 @@
 
 import { useEffect, useMemo } from 'react';
 import type { CategoryKind } from './types';
-import { HttpSalesPivotRepository } from '../api/salesPivot.repository';
+import { HttpSalesPivotRepository } from '../infrastructure/salesPivot.repository';
 
 /**
  * SalesPivotRepositoryインスタンスを管理し、

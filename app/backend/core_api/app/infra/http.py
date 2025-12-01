@@ -21,7 +21,7 @@ Core APIが他のマイクロサービス(rag_api, ledger_api, manual_api)を
     
     # 非同期呼び出し
     async with get_async_http_client() as client:
-        response = await client.get(f"{RAG_API_BASE}/ask")
+        response = await client.get(f"{RAG_API_BASE}/health")
 
 注意:
   - 内部ネットワーク専用(外部API呼び出しには使用しない)
@@ -88,7 +88,7 @@ async def get_async_http_client() -> httpx.AsyncClient:
         
     使用例:
         async with get_async_http_client() as client:
-            response = await client.get("http://rag_api:8000/ask")
+            response = await client.get("http://rag_api:8000/health")
             data = response.json()
             
     注意:

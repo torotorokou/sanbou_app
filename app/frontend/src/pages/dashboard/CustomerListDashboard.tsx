@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useState } from "react";
 import { MapContainer, TileLayer, Circle, Tooltip, Marker, Popup, GeoJSON } from "react-leaflet";
+import type { FeatureCollection } from "geojson";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { Card, Table, Statistic, Row, Col } from "antd";
@@ -111,7 +112,7 @@ function getCenterOfGeometry(feature: any): [number, number] {
 }
 
 const CustomerListDashboard: React.FC = () => {
-    const [prefGeoJson, setPrefGeoJson] = useState<any>(null);
+    const [prefGeoJson, setPrefGeoJson] = useState<FeatureCollection | null>(null);
 
     useEffect(() => {
         fetch(GEOJSON_URL)

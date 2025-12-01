@@ -16,18 +16,18 @@ def test_import_package():
 def test_new_paths_import():
     """新しいパス構造でインポート可能であることを確認"""
     # adapters
-    from backend_shared.adapters.presentation import response_base
-    from backend_shared.adapters.middleware import request_id
-    from backend_shared.adapters.fastapi import error_handlers
+    from backend_shared.infra.adapters.presentation import response_base
+    from backend_shared.infra.adapters.middleware import request_id
+    from backend_shared.infra.adapters.fastapi import error_handlers
     
     # usecases
-    from backend_shared.usecases.csv_validator import validation_result
-    from backend_shared.usecases.csv_formatter import formatter_config
-    from backend_shared.usecases.report_checker import check_csv_files
+    from backend_shared.core.usecases.csv_validator import validation_result
+    from backend_shared.core.usecases.csv_formatter import formatter_config
+    from backend_shared.core.usecases.report_checker import check_csv_files
     
     # infrastructure
-    from backend_shared.infrastructure.config import config_loader
-    from backend_shared.infrastructure.logging_utils import access_log
+    from backend_shared.config import config_loader
+    from backend_shared.infra.frameworks.logging_utils import access_log
     
     # domain & utils
     from backend_shared.domain import contract

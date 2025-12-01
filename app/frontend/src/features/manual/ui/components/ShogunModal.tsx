@@ -90,17 +90,17 @@ export const ManualModal: React.FC<ManualModalProps> = ({
           <Flex justify="end">
             <Button
               type="link"
-              disabled={!item.id}
+              disabled={!item.id && !item.route}
               onClick={() => {
-                // Guard: Ensure item.id exists before navigating
-                if (!item.id) {
-                  console.warn('ManualModal: Cannot navigate - item.id is missing', item);
-                  return;
-                }
                 onClose();
-                // Use backend-provided id for routing to ensure we open the canonical DetailPage.
-                // Ignore item.route here to avoid slug/relative-path mismatches.
-                navigate(`/manuals/shogun/${item.id}`);
+                // routeプロパティがある場合はそれを使用、なければ従来のパターン
+                if (item.route) {
+                  navigate(item.route);
+                } else if (item.id) {
+                  navigate(`/manuals/shogun/${item.id}`);
+                } else {
+                  console.warn('ManualModal: Cannot navigate - item.id and item.route are missing', item);
+                }
               }}
             >
               関連ページを開く

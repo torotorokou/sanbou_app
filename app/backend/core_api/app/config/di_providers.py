@@ -97,9 +97,9 @@ def get_repo_raw_final(db: Session = Depends(get_db)) -> ShogunCsvRepository:
 # ========================================================================
 # UseCase Providers
 # ========================================================================
-from app.application.usecases.upload.upload_shogun_csv_uc import UploadShogunCsvUseCase
-from backend_shared.infrastructure.config.config_loader import ShogunCsvConfigLoader
-from backend_shared.usecases.csv_validator.csv_upload_validator_api import CSVValidationResponder
+from app.core.usecases.upload.upload_shogun_csv_uc import UploadShogunCsvUseCase
+from backend_shared.config.config_loader import ShogunCsvConfigLoader
+from backend_shared.core.usecases.csv_validator.csv_upload_validator_api import CSVValidationResponder
 
 # CSV設定とバリデーターの初期化（アプリケーションスコープで共有）
 _csv_config = ShogunCsvConfigLoader()
@@ -180,7 +180,7 @@ def get_uc_stg_final(
 # ========================================================================
 # Dashboard UseCase Providers
 # ========================================================================
-from app.application.usecases.dashboard.build_target_card_uc import BuildTargetCardUseCase
+from app.core.usecases.dashboard.build_target_card_uc import BuildTargetCardUseCase
 
 
 def get_dashboard_target_repo(db: Session = Depends(get_db)) -> DashboardTargetRepository:
@@ -198,7 +198,7 @@ def get_build_target_card_uc(
 # ========================================================================
 # Forecast UseCase Providers
 # ========================================================================
-from app.application.usecases.forecast.forecast_job_uc import (
+from app.core.usecases.forecast.forecast_job_uc import (
     CreateForecastJobUseCase,
     GetForecastJobStatusUseCase,
     GetPredictionsUseCase,
@@ -239,7 +239,7 @@ def get_predictions_uc(
 # ========================================================================
 # External API UseCase Providers
 # ========================================================================
-from app.application.usecases.external.external_api_uc import (
+from app.core.usecases.external.external_api_uc import (
     AskRAGUseCase,
     GenerateLedgerReportUseCase,
     GenerateReportUseCase,
@@ -310,9 +310,9 @@ def get_classify_text_uc(client: AIClient = Depends(get_ai_client)) -> ClassifyT
 # ========================================================================
 # Inbound UseCase Providers
 # ========================================================================
-from app.application.usecases.inbound.get_inbound_daily_uc import GetInboundDailyUseCase
+from app.core.usecases.inbound.get_inbound_daily_uc import GetInboundDailyUseCase
 from app.infra.adapters.inbound.inbound_repository import InboundRepositoryImpl
-from app.domain.ports.inbound_repository_port import InboundRepository
+from app.core.ports.inbound_repository_port import InboundRepository
 
 
 def get_inbound_repo(db: Session = Depends(get_db)) -> InboundRepository:
@@ -330,7 +330,7 @@ def get_inbound_daily_uc(
 # ========================================================================
 # KPI UseCase Providers
 # ========================================================================
-from app.application.usecases.kpi.kpi_uc import KPIUseCase
+from app.core.usecases.kpi.kpi_uc import KPIUseCase
 from app.infra.adapters.kpi.kpi_query_adapter import KPIQueryAdapter
 
 
@@ -349,7 +349,7 @@ def get_kpi_uc(
 # ========================================================================
 # Customer Churn UseCase Providers
 # ========================================================================
-from app.application.usecases.customer_churn import AnalyzeCustomerChurnUseCase
+from app.core.usecases.customer_churn import AnalyzeCustomerChurnUseCase
 from app.infra.adapters.customer_churn import CustomerChurnQueryAdapter
 
 
@@ -368,11 +368,11 @@ def get_analyze_customer_churn_uc(
 # ========================================================================
 # Sales Tree UseCase Providers
 # ========================================================================
-from app.application.usecases.sales_tree.fetch_summary_uc import FetchSalesTreeSummaryUseCase
-from app.application.usecases.sales_tree.fetch_daily_series_uc import FetchSalesTreeDailySeriesUseCase
-from app.application.usecases.sales_tree.fetch_pivot_uc import FetchSalesTreePivotUseCase
-from app.application.usecases.sales_tree.export_csv_uc import ExportSalesTreeCSVUseCase
-from app.application.usecases.sales_tree.fetch_detail_lines_uc import FetchSalesTreeDetailLinesUseCase
+from app.core.usecases.sales_tree.fetch_summary_uc import FetchSalesTreeSummaryUseCase
+from app.core.usecases.sales_tree.fetch_daily_series_uc import FetchSalesTreeDailySeriesUseCase
+from app.core.usecases.sales_tree.fetch_pivot_uc import FetchSalesTreePivotUseCase
+from app.core.usecases.sales_tree.export_csv_uc import ExportSalesTreeCSVUseCase
+from app.core.usecases.sales_tree.fetch_detail_lines_uc import FetchSalesTreeDetailLinesUseCase
 from app.infra.adapters.sales_tree.sales_tree_repository import SalesTreeRepository
 
 
@@ -419,7 +419,7 @@ def get_fetch_sales_tree_detail_lines_uc(
 # ========================================================================
 # Calendar UseCase Providers
 # ========================================================================
-from app.application.usecases.calendar.get_calendar_month_uc import GetCalendarMonthUseCase
+from app.core.usecases.calendar.get_calendar_month_uc import GetCalendarMonthUseCase
 from app.infra.adapters.calendar.calendar_repository import CalendarRepository
 
 
@@ -438,13 +438,20 @@ def get_calendar_month_uc(
 # ========================================================================
 # Upload Status UseCase Providers
 # ========================================================================
-from app.application.usecases.upload.get_upload_status_uc import GetUploadStatusUseCase
-from app.application.usecases.upload.get_upload_calendar_uc import GetUploadCalendarUseCase
-from app.application.usecases.upload.delete_upload_scope_uc import DeleteUploadScopeUseCase
+from app.core.usecases.upload.get_upload_status_uc import GetUploadStatusUseCase
+from app.core.usecases.upload.get_upload_calendar_uc import GetUploadCalendarUseCase
+from app.core.usecases.upload.get_upload_calendar_detail_uc import GetUploadCalendarDetailUseCase
+from app.core.usecases.upload.delete_upload_scope_uc import DeleteUploadScopeUseCase
+from app.infra.adapters.upload.upload_calendar_query_adapter import UploadCalendarQueryAdapter
 
 
 # RawDataRepository は既に定義されているので、それを再利用
 # get_raw_data_repo() は既に定義済み（上部参照）
+
+
+def get_upload_calendar_query_adapter(db: Session = Depends(get_db)) -> UploadCalendarQueryAdapter:
+    """UploadCalendarQueryAdapter提供"""
+    return UploadCalendarQueryAdapter(db)
 
 
 def get_upload_status_uc(
@@ -461,10 +468,44 @@ def get_upload_calendar_uc(
     return GetUploadCalendarUseCase(query=repo)
 
 
+def get_upload_calendar_detail_uc(
+    query: UploadCalendarQueryAdapter = Depends(get_upload_calendar_query_adapter)
+) -> GetUploadCalendarDetailUseCase:
+    """GetUploadCalendarDetailUseCase提供"""
+    return GetUploadCalendarDetailUseCase(query=query)
+
+
 def get_delete_upload_scope_uc(
     repo: RawDataRepository = Depends(get_raw_data_repo)
 ) -> DeleteUploadScopeUseCase:
     """DeleteUploadScopeUseCase提供"""
     return DeleteUploadScopeUseCase(query=repo)
+
+
+# ========================================================================
+# Ingest UseCase Providers
+# ========================================================================
+from app.core.usecases.ingest.upload_ingest_csv_uc import UploadIngestCsvUseCase
+from app.core.usecases.ingest.create_reservation_uc import CreateReservationUseCase
+from app.infra.adapters.ingest.ingest_repository import IngestRepository
+
+
+def get_ingest_repo(db: Session = Depends(get_db)) -> IngestRepository:
+    """IngestRepository提供"""
+    return IngestRepository(db)
+
+
+def get_upload_ingest_csv_uc(
+    repo: IngestRepository = Depends(get_ingest_repo)
+) -> UploadIngestCsvUseCase:
+    """UploadIngestCsvUseCase提供"""
+    return UploadIngestCsvUseCase(ingest_repo=repo)
+
+
+def get_create_reservation_uc(
+    repo: IngestRepository = Depends(get_ingest_repo)
+) -> CreateReservationUseCase:
+    """CreateReservationUseCase提供"""
+    return CreateReservationUseCase(ingest_repo=repo)
 
 

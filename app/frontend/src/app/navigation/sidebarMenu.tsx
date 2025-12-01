@@ -4,19 +4,27 @@ import React from 'react';
 
 // アイコン（Ant Design）
 import {
+    HomeOutlined, // ホーム
     DashboardOutlined, // ダッシュボード
-    BarChartOutlined, // 売上分析
-    BookOutlined, // 帳簿
-    FileTextOutlined, // マニュアル
-    CloudUploadOutlined, // データベース
+    LineChartOutlined, // アナリティクス
+    BookOutlined, // 帳簿・マニュアル
+    FileTextOutlined, // 文書
+    DatabaseOutlined, // データベース
     SettingOutlined, // 設定
-    NotificationOutlined,
-    FileAddOutlined,
-    SolutionOutlined,
-    FileDoneOutlined,
-    TeamOutlined,
-    CompassOutlined,
-    UserSwitchOutlined,
+    NotificationOutlined, // お知らせ
+    SolutionOutlined, // ソリューション
+    TeamOutlined, // チーム・顧客
+    CompassOutlined, // ナビゲーション
+    UserSwitchOutlined, // ユーザー管理
+    InboxOutlined, // 受入
+    FundOutlined, // 売上ツリー
+    UserDeleteOutlined, // 顧客チェック
+    ContainerOutlined, // レポート
+    ProfileOutlined, // 工場帳簿
+    ReadOutlined, // マニュアル
+    UploadOutlined, // アップロード
+    UnorderedListOutlined, // リスト
+    ControlOutlined, // 管理機能
 } from '@ant-design/icons';
 
 // ルーティング
@@ -28,12 +36,12 @@ export const SIDEBAR_MENU = [
     // ホーム（ポータル + お知らせ を統合）
     {
         key: 'home',
-        icon: <DashboardOutlined />,
+        icon: <HomeOutlined />,
         label: 'ホーム',
         children: [
             {
                 key: ROUTER_PATHS.PORTAL,
-                icon: <DashboardOutlined />,
+                icon: <HomeOutlined />,
                 label: <Link to={ROUTER_PATHS.PORTAL}>トップページ</Link>,
             },
             {
@@ -52,12 +60,12 @@ export const SIDEBAR_MENU = [
         children: [
             {
                 key: ROUTER_PATHS.DASHBOARD_UKEIRE,
-                icon: <BarChartOutlined />,
+                icon: <InboxOutlined />,
                 label: <Link to={ROUTER_PATHS.DASHBOARD_UKEIRE}>受入管理</Link>,
             },
             {
                 key: ROUTER_PATHS.CUSTOMER_LIST,
-                icon: <FileTextOutlined />,
+                icon: <TeamOutlined />,
                 label: <Link to={ROUTER_PATHS.CUSTOMER_LIST}>顧客リスト</Link>,
                 hidden: true,
             },
@@ -66,18 +74,18 @@ export const SIDEBAR_MENU = [
     // アナリティクス
     {
         key: 'analytics',
-        icon: <BarChartOutlined />,
+        icon: <LineChartOutlined />,
         label: 'アナリティクス',
         hidden: false,
         children: [
             {
                 key: ROUTER_PATHS.SALES_TREE,
-                icon: <BarChartOutlined />,
+                icon: <FundOutlined />,
                 label: <Link to={ROUTER_PATHS.SALES_TREE}>営業・売上ツリー</Link>,
             },
             {
                 key: ROUTER_PATHS.ANALYSIS_CUSTOMERLIST,
-                icon: <TeamOutlined />,
+                icon: <UserDeleteOutlined />,
                 label: (
                     <Link to={ROUTER_PATHS.ANALYSIS_CUSTOMERLIST}>
                         搬入なし顧客チェック
@@ -89,7 +97,7 @@ export const SIDEBAR_MENU = [
     // 帳票作成
     {
         key: 'report',
-        icon: <FileAddOutlined />,
+        icon: <ContainerOutlined />,
         label: '帳票作成',
         children: [
             {
@@ -99,7 +107,7 @@ export const SIDEBAR_MENU = [
             },
             {
                 key: ROUTER_PATHS.REPORT_FACTORY,
-                icon: <FileDoneOutlined />,
+                icon: <ProfileOutlined />,
                 label: <Link to={ROUTER_PATHS.REPORT_FACTORY}>工場帳簿</Link>,
             },
             {
@@ -126,12 +134,12 @@ export const SIDEBAR_MENU = [
         // マニュアル（親メニュー化：子に既存のマニュアル一覧を置く）
         {
             key: 'manual',
-            icon: <BookOutlined />,
+            icon: <ReadOutlined />,
             label: 'マニュアル',
             children: [
                 {
                     key: `${ROUTER_PATHS.MANUALS}`,
-                    icon: <BookOutlined />,
+                    icon: <FileTextOutlined />,
                     label: <Link to={ROUTER_PATHS.MANUALS}>全体検索</Link>,
                     hidden: true,
                 },
@@ -145,19 +153,19 @@ export const SIDEBAR_MENU = [
     // データベース
     {
         key: 'database',
-        icon: <CloudUploadOutlined />,
+        icon: <DatabaseOutlined />,
         label: 'データベース',
         children: [
             {
                 key: ROUTER_PATHS.DATASET_IMPORT,
-                icon: <CloudUploadOutlined />,
+                icon: <UploadOutlined />,
                 label: (
                     <Link to={ROUTER_PATHS.DATASET_IMPORT}>CSVインポート</Link>
                 ),
             },
             {
                 key: ROUTER_PATHS.RECORD_LIST,
-                icon: <CloudUploadOutlined />,
+                icon: <UnorderedListOutlined />,
                 label: <Link to={ROUTER_PATHS.RECORD_LIST}>レコード一覧</Link>,
                 hidden: true,
             },
@@ -167,7 +175,7 @@ export const SIDEBAR_MENU = [
     // 管理機能
     {
         key: 'management',
-        icon: <SettingOutlined />,
+        icon: <ControlOutlined />,
         label: '管理機能',
         children: [
             {

@@ -1,0 +1,60 @@
+.
+├── ERROR_HANDLING_GUIDE.md
+├── README.md
+├── docs
+│   ├── README.md
+│   └── REFACTORING_REPORT_20251128.md
+├── pyproject.toml
+├── src
+│   └── backend_shared
+│       ├── __init__.py
+│       ├── adapters
+│       │   ├── __init__.py
+│       │   ├── fastapi
+│       │   ├── middleware
+│       │   └── presentation
+│       ├── config
+│       │   ├── __init__.py
+│       │   ├── config_loader.py
+│       │   ├── di_providers.py
+│       │   └── paths.py
+│       ├── core
+│       │   ├── __init__.py
+│       │   ├── domain
+│       │   ├── ports
+│       │   └── usecases
+│       ├── db
+│       │   ├── __init__.py
+│       │   ├── base_model.py
+│       │   ├── database.py
+│       │   ├── repository_base.py
+│       │   └── utils.py
+│       ├── domain
+│       │   ├── README.md
+│       │   ├── __init__.py
+│       │   ├── contract.py
+│       │   └── job.py
+│       ├── infra
+│       │   ├── __init__.py
+│       │   ├── adapters
+│       │   └── frameworks
+│       ├── infrastructure
+│       │   ├── __init__.py
+│       │   ├── config
+│       │   └── logging_utils
+│       ├── usecases
+│       │   ├── __init__.py
+│       │   ├── csv_formatter
+│       │   ├── csv_validator
+│       │   └── report_checker
+│       └── utils
+│           ├── __init__.py
+│           ├── csv_reader.py
+│           ├── dataframe_utils.py
+│           ├── dataframe_validator.py
+│           └── date_filter_utils.py
+├── tests
+│   └── test_smoke.py
+└── tree.txt
+
+27 directories, 31 files

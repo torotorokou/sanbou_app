@@ -29,7 +29,8 @@ import logging
 logger = logging.getLogger(__name__)
 
 RAG_API_BASE = os.getenv("RAG_API_BASE", "http://rag_api:8000")
-TIMEOUT = httpx.Timeout(connect=1.0, read=5.0, write=5.0, pool=1.0)
+# OpenAIの応答待ち時間を考慮してタイムアウトを長めに設定
+TIMEOUT = httpx.Timeout(connect=2.0, read=60.0, write=10.0, pool=2.0)
 
 
 class RAGClient:
@@ -38,12 +39,14 @@ class RAGClient:
     def __init__(self, base_url: str = RAG_API_BASE):
         self.base_url = base_url.rstrip("/")
 
-    async def ask(self, query: str) -> dict:
+    async def ask(self, query: str, category: str = "shogun", tags: Optional[list[str]] = None) -> dict:
         """
         Ask RAG API a question.
         
         Args:
             query: User query string
+            category: Question category (default: "shogun")
+            tags: List of tags (default: None)
             
         Returns:
             dict with 'answer' and optional 'sources'
@@ -53,15 +56,19 @@ class RAGClient:
             httpx.HTTPStatusError: If RAG API returns error status
         """
         async with httpx.AsyncClient(timeout=TIMEOUT) as client:
-            logger.info(f"Calling RAG API: {self.base_url}/ask", extra={"query": query})
+            logger.info(f"Calling RAG API: {self.base_url}/api/generate-answer", extra={"query": query})
             response = await client.post(
-                f"{self.base_url}/ask",
-                json={"query": query},
+                f"{self.base_url}/api/generate-answer",
+                json={"query": query, "category": category, "tags": tags or []},
             )
             response.raise_for_status()
             data = response.json()
-            logger.info("RAG API response received", extra={"answer_length": len(data.get("answer", ""))})
+            
+            # レスポンス形式の正規化 (SuccessApiResponse or direct dict)
+            result = data.get("result", data)
+            
+            logger.info("RAG API response received", extra={"answer_length": len(result.get("answer", ""))})
             return {
-                "answer": data.get("answer", ""),
-                "sources": data.get("sources", []),
+                "answer": result.get("answer", ""),
+                "sources": result.get("sources", []),
             }

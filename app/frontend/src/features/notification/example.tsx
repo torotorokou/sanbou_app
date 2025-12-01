@@ -6,15 +6,11 @@ import React from 'react';
 import {
     notifySuccess,
     notifyError,
-    notifyPersistent,
+    notifyWarning,
     notifyApiError,
     useNotificationStore,
     NotificationCenterAntd,
 } from '@features/notification';
-
-// ✅ 互換性: 既存のパスも動作（内部で @features/notification に転送）
-// import { notifySuccess as notifySuccess2 } from '@/utils/notify';
-// import { useNotificationStore as useNotificationStore2 } from '@stores/index';
 
 // 基本的な使用
 export function ExampleUsage() {
@@ -35,7 +31,8 @@ export function ExampleUsage() {
     };
 
     const handlePersistent = () => {
-        notifyPersistent('warning', '重要', 'この通知は手動で閉じるまで表示されます');
+        // 永続通知（duration を undefined に設定）
+        notifyWarning('重要', 'この通知は手動で閉じるまで表示されます');
     };
 
     return (

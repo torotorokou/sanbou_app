@@ -2,7 +2,7 @@ import React, { useMemo } from "react";
 import { Card, Skeleton, Typography, Tooltip } from "antd";
 import { InfoCircleOutlined } from "@ant-design/icons";
 import UkeireCalendar from "../components/UkeireCalendar";
-import { useBusinessCalendarVM } from "../../application/useBusinessCalendarVM";
+import { useBusinessCalendarVM } from "../../model/useBusinessCalendarVM";
 import { CalendarRepositoryForUkeire } from "../../infrastructure/calendar.repository";
 import type { ICalendarRepository } from "@/features/calendar/ports/repository";
 import type { CalendarDayDTO } from "@/features/calendar/domain/types";
@@ -113,7 +113,7 @@ const CALENDAR_TOOLTIP_TITLE = (
   </div>
 );
 
-export default function CalendarCard({ year, month, repository, title = "営業カレンダー", style }: Props) {
+export function CalendarCard({ year, month, repository, title = "営業カレンダー", style }: Props) {
   const repo = useMemo(() => repository ?? new CalendarRepositoryForUkeire(), [repository]);
   const vm = useBusinessCalendarVM({ year, month, repository: repo });
 

@@ -11,13 +11,14 @@ from typing import Any, Dict, Optional
 
 from fastapi import UploadFile
 
-from app.application.ports import CsvGateway
+from app.core.ports.inbound import CsvGateway
 from backend_shared.utils.csv_reader import read_csv_files
-from backend_shared.adapters.presentation.response_error import (
+from backend_shared.infra.adapters.presentation.response_error import (
     NoFilesUploadedResponse,
     CSVReadErrorResponse,
 )
-from app.application.usecases.csv import CsvValidatorService, CsvFormatterService
+from app.infra.adapters.csv.validator_service import CsvValidatorService
+from app.infra.adapters.csv.formatter_service import CsvFormatterService
 
 logger = logging.getLogger(__name__)
 

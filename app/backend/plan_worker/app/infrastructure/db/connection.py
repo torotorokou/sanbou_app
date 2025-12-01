@@ -1,6 +1,0 @@
-import psycopg
-from shared.config.settings import settings
-
-def get_conn():
-    # psycopg3: autocommit=False (withでcommit/rollback)
-    return psycopg.connect(settings.database_url)

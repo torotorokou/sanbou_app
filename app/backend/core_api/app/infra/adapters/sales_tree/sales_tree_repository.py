@@ -11,7 +11,7 @@ from typing import Optional
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from app.domain.sales_tree import (
+from app.core.domain.sales_tree import (
     SummaryRequest,
     SummaryRow,
     MetricEntry,
@@ -23,7 +23,7 @@ from app.domain.sales_tree import (
     AxisMode,
     CategoryKind,
 )
-from app.domain.sales_tree_detail import (
+from app.core.domain.sales_tree_detail import (
     DetailLinesRequest,
     DetailLinesResponse,
     DetailLine,

@@ -2,7 +2,7 @@
 import pytest
 from datetime import date
 
-from app.application.usecases.kpi.kpi_uc import KPIUseCase
+from app.core.usecases.kpi.kpi_uc import KPIUseCase
 from tests.unit.application.fakes.fake_kpi_port import FakeKPIQueryPort
 
 

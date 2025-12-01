@@ -5,7 +5,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import type { SummaryRow, SummaryQuery } from './types';
-import type { SalesPivotRepository } from '../api/salesPivot.repository';
+import type { SalesPivotRepository } from '../infrastructure/salesPivot.repository';
 
 export interface DataLoadingState {
   rawSummary: SummaryRow[];
