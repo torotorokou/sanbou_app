@@ -214,6 +214,68 @@ def upgrade():
     
     print("[sandbox.v_sales_tree_detail_base] Updated - now using slip_date only.")
     
+    # ============================================================
+    # 4. ref.v_sales_rep の再作成（CASCADE削除されたため）
+    # ============================================================
+    print("[ref.v_sales_rep] Recreating view (uses mart.v_sales_tree_detail_base)...")
+    
+    op.execute("""
+        CREATE VIEW ref.v_sales_rep AS
+        SELECT DISTINCT
+            rep_id,
+            rep_name
+        FROM mart.v_sales_tree_detail_base
+        ORDER BY rep_id;
+    """)
+    
+    op.execute("""
+        GRANT SELECT ON ref.v_sales_rep TO app_readonly;
+    """)
+    
+    print("[ref.v_sales_rep] Recreated successfully.")
+    
+    # ============================================================
+    # 5. ref.v_customer の再作成（CASCADE削除されたため）
+    # ============================================================
+    print("[ref.v_customer] Recreating view (uses mart.v_sales_tree_detail_base)...")
+    
+    op.execute("""
+        CREATE VIEW ref.v_customer AS
+        SELECT DISTINCT
+            customer_id,
+            customer_name
+        FROM mart.v_sales_tree_detail_base
+        ORDER BY customer_id;
+    """)
+    
+    op.execute("""
+        GRANT SELECT ON ref.v_customer TO app_readonly;
+    """)
+    
+    print("[ref.v_customer] Recreated successfully.")
+    
+    # ============================================================
+    # 6. ref.v_item の再作成（CASCADE削除されたため）
+    # ============================================================
+    print("[ref.v_item] Recreating view (uses mart.v_sales_tree_detail_base)...")
+    
+    op.execute("""
+        CREATE VIEW ref.v_item AS
+        SELECT DISTINCT
+            item_id,
+            item_name,
+            category_cd,
+            category_name
+        FROM mart.v_sales_tree_detail_base
+        ORDER BY item_id;
+    """)
+    
+    op.execute("""
+        GRANT SELECT ON ref.v_item TO app_readonly;
+    """)
+    
+    print("[ref.v_item] Recreated successfully.")
+    
     print("=" * 60)
     print("[OK] Migration complete - All views now use slip_date instead of COALESCE")
     print("=" * 60)
@@ -390,6 +452,68 @@ def downgrade():
     """)
     
     print("[sandbox.v_sales_tree_detail_base] Reverted to COALESCE.")
+    
+    # ============================================================
+    # 4. ref.v_sales_rep の再作成
+    # ============================================================
+    print("[ref.v_sales_rep] Recreating view with COALESCE...")
+    
+    op.execute("""
+        CREATE VIEW ref.v_sales_rep AS
+        SELECT DISTINCT
+            rep_id,
+            rep_name
+        FROM mart.v_sales_tree_detail_base
+        ORDER BY rep_id;
+    """)
+    
+    op.execute("""
+        GRANT SELECT ON ref.v_sales_rep TO app_readonly;
+    """)
+    
+    print("[ref.v_sales_rep] Recreated.")
+    
+    # ============================================================
+    # 5. ref.v_customer の再作成
+    # ============================================================
+    print("[ref.v_customer] Recreating view with COALESCE...")
+    
+    op.execute("""
+        CREATE VIEW ref.v_customer AS
+        SELECT DISTINCT
+            customer_id,
+            customer_name
+        FROM mart.v_sales_tree_detail_base
+        ORDER BY customer_id;
+    """)
+    
+    op.execute("""
+        GRANT SELECT ON ref.v_customer TO app_readonly;
+    """)
+    
+    print("[ref.v_customer] Recreated.")
+    
+    # ============================================================
+    # 6. ref.v_item の再作成
+    # ============================================================
+    print("[ref.v_item] Recreating view with COALESCE...")
+    
+    op.execute("""
+        CREATE VIEW ref.v_item AS
+        SELECT DISTINCT
+            item_id,
+            item_name,
+            category_cd,
+            category_name
+        FROM mart.v_sales_tree_detail_base
+        ORDER BY item_id;
+    """)
+    
+    op.execute("""
+        GRANT SELECT ON ref.v_item TO app_readonly;
+    """)
+    
+    print("[ref.v_item] Recreated.")
     
     print("=" * 60)
     print("[OK] Downgrade complete - All views reverted to COALESCE")
