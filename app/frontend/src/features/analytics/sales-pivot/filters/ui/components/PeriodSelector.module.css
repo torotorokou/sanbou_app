@@ -1,38 +1,16 @@
 /**
  * PeriodSelector.module.css
- * 日次カレンダーの曜日に色付け
+ * 日次カレンダーの曜日ヘッダーに色付け（月曜始まり）
  * - 土曜日（6列目）: 青
  * - 日曜日（7列目）: 赤
  */
 
-/* 土曜日（6列目）を青に */
-.datePicker :global(.ant-picker-cell):nth-child(6) :global(.ant-picker-cell-inner) {
+/* 曜日ヘッダー: 土曜日（6列目）を青に */
+.datePicker :global(.ant-picker-content thead th):nth-child(6) {
   color: #1890ff !important;
 }
 
-/* 日曜日（7列目）を赤に */
-.datePicker :global(.ant-picker-cell):nth-child(7) :global(.ant-picker-cell-inner) {
+/* 曜日ヘッダー: 日曜日（7列目）を赤に */
+.datePicker :global(.ant-picker-content thead th):nth-child(7) {
   color: #ff4d4f !important;
-}
-
-/* 選択された日付の色を維持 */
-.datePicker :global(.ant-picker-cell-selected) :global(.ant-picker-cell-inner) {
-  color: #fff !important;
-}
-
-/* 今日の日付の色を維持 */
-.datePicker :global(.ant-picker-cell-today) :global(.ant-picker-cell-inner)::before {
-  border-color: #1890ff;
-}
-
-/* 範囲選択時の色を維持 */
-.datePicker :global(.ant-picker-cell-in-view.ant-picker-cell-range-start) :global(.ant-picker-cell-inner),
-.datePicker :global(.ant-picker-cell-in-view.ant-picker-cell-range-end) :global(.ant-picker-cell-inner),
-.datePicker :global(.ant-picker-cell-in-view.ant-picker-cell-in-range) :global(.ant-picker-cell-inner) {
-  background: #e6f7ff;
-}
-
-/* ホバー時の色を維持 */
-.datePicker :global(.ant-picker-cell):hover :global(.ant-picker-cell-inner) {
-  background: #f5f5f5;
 }

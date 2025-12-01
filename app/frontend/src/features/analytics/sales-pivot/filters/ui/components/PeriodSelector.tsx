@@ -1,8 +1,15 @@
 import { Space, Segmented, DatePicker, Typography } from 'antd';
 import type { Dayjs } from 'dayjs';
+import dayjs from 'dayjs';
 import locale from 'antd/es/date-picker/locale/ja_JP';
 import 'dayjs/locale/ja';
 import styles from './PeriodSelector.module.css';
+
+// dayjsのロケールを日本語に設定し、月曜始まりに変更
+dayjs.locale('ja');
+dayjs.updateLocale('ja', {
+  weekStart: 1, // 月曜始まり
+});
 
 interface PeriodSelectorProps {
   granularity: 'month' | 'date';
