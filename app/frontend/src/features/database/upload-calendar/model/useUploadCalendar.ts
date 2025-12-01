@@ -107,10 +107,10 @@ export function useUploadCalendar(): UseUploadCalendarResult {
     const firstDayOfMonth = dayjs(new Date(year, month, 1));
     const lastDayOfMonth = firstDayOfMonth.endOf('month');
 
-    // カレンダー表示の開始日（週の始まりを日曜日とする）
-    const startDate = firstDayOfMonth.startOf('week');
-    // カレンダー表示の終了日（週の終わりを土曜日とする）
-    const endDate = lastDayOfMonth.endOf('week');
+    // カレンダー表示の開始日（週の始まりを月曜日とする）
+    const startDate = firstDayOfMonth.startOf('week').add(1, 'day');
+    // カレンダー表示の終了日（週の終わりを日曜日とする）
+    const endDate = lastDayOfMonth.endOf('week').add(1, 'day');
 
     const calendarWeeks: CalendarWeek[] = [];
     let currentWeek: CalendarDay[] = [];
@@ -136,7 +136,7 @@ export function useUploadCalendar(): UseUploadCalendarResult {
         uploadsByKind,
       });
 
-      // 週の終わり（土曜日）に達したら週を確定
+      // 週の終わり（日曜日）に達したら週を確定
       if (currentWeek.length === 7) {
         calendarWeeks.push({ days: currentWeek });
         currentWeek = [];
