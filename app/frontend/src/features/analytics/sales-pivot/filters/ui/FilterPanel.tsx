@@ -7,12 +7,13 @@ import React from 'react';
 import { Card, Row, Col, Divider } from 'antd';
 import type { Dayjs } from 'dayjs';
 import type { Mode, SortKey, SortOrder, ID, SalesRep, CategoryKind } from '../../shared/model/types';
-import { useResponsive } from '@/shared';
 import { CategorySelector } from './components/CategorySelector';
 import { ModeSelector } from './components/ModeSelector';
 import { TopNSortControls } from './components/TopNSortControls';
 import { PeriodSelector } from './components/PeriodSelector';
 import { RepFilterSelector } from './components/RepFilterSelector';
+import { useFilterLayout } from './hooks/useFilterLayout';
+import { GRID_GUTTER, MARGINS } from './config/layout.config';
 import styles from './FilterPanel.module.css';
 
 interface FilterPanelProps {
@@ -91,7 +92,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
   onRepIdsChange,
   onFilterIdsChange,
 }) => {
-  const { isDesktop } = useResponsive();
+  const layout = useFilterLayout();
 
   return (
     <Card 
@@ -99,9 +100,9 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
       title={<div className={`${styles.cardSectionHeader} sales-tree-card-section-header`}>条件</div>}
     >
       {/* 1行目（xl以上）/ 1行目（xl以下）: 種別 */}
-      <Row gutter={[16, 16]} align="middle">
+      <Row gutter={[GRID_GUTTER.horizontal, GRID_GUTTER.vertical]} align="middle">
         {/* 種別切り替え */}
-        <Col xs={24} md={24} xl={5}>
+        <Col {...layout.categoryGrid}>
           <CategorySelector
             value={categoryKind}
             onChange={onCategoryKindChange}
@@ -109,15 +110,15 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
         </Col>
 
         {/* xl以上: モード+TopN・ソートを同じ行に表示 */}
-        {isDesktop && (
+        {layout.isDesktop && (
           <>
             {/* モード */}
-            <Col xs={24} md={24} xl={5}>
+            <Col {...layout.modeGrid}>
               <ModeSelector value={mode} onChange={onModeChange} />
             </Col>
 
             {/* TopN・ソート */}
-            <Col xs={24} xl={14}>
+            <Col {...layout.topNSortGrid}>
               <TopNSortControls
                 topN={topN}
                 sortBy={sortBy}
@@ -133,15 +134,15 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
       </Row>
 
       {/* xl以下: 2行目にモード+TopN・ソートを表示 */}
-      {!isDesktop && (
-        <Row gutter={[16, 16]} align="middle" style={{ marginTop: 16 }}>
+      {!layout.isDesktop && (
+        <Row gutter={[GRID_GUTTER.horizontal, GRID_GUTTER.vertical]} align="middle" style={{ marginTop: MARGINS.sectionTop }}>
           {/* モード */}
-          <Col xs={24} md={8}>
+          <Col {...layout.modeGrid}>
             <ModeSelector value={mode} onChange={onModeChange} />
           </Col>
 
           {/* TopN・ソート */}
-          <Col xs={24} md={16}>
+          <Col {...layout.topNSortGrid}>
             <TopNSortControls
               topN={topN}
               sortBy={sortBy}
@@ -155,8 +156,8 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
         </Row>
       )}
       {/* 期間選択 */}
-      <Row gutter={[16, 16]} align="middle" style={{ marginTop: 16 }}>
-        <Col xs={24} lg={24}>
+      <Row gutter={[GRID_GUTTER.horizontal, GRID_GUTTER.vertical]} align="middle" style={{ marginTop: MARGINS.sectionTop }}>
+        <Col {...layout.periodGrid}>
           <PeriodSelector
             granularity={granularity}
             periodMode={periodMode}
@@ -174,10 +175,10 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
         </Col>
       </Row>
 
-      <Divider style={{ margin: '16px 0' }} />
+      <Divider style={{ margin: MARGINS.divider }} />
 
       {/* 営業・絞り込み */}
-      <Row gutter={[16, 16]}>
+      <Row gutter={[GRID_GUTTER.horizontal, GRID_GUTTER.vertical]}>
         <Col xs={24}>
           <RepFilterSelector
             mode={mode}
