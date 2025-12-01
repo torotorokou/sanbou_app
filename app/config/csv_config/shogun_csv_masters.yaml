@@ -113,7 +113,7 @@ yard:
         種類CD: { en_name: category_cd, type: Int64, agg: first }
         種類名: { en_name: category_name, type: str, agg: first }
         品名CD: { en_name: item_cd, type: Int64, agg: first }
-        伝票番号: { en_name: slip_no, type: str, agg: first }   # 番号はstr推奨
+        伝票番号: { en_name: slip_no, type: Int64, agg: first }  # 数値、NULL許容
 
 payable:
     label: 買掛一覧表
