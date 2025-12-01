@@ -14,7 +14,6 @@ export interface ItemCardProps {
   className?: string;
 }
 
-/* eslint-disable react/prop-types */
 export const ItemCard: React.FC<ItemCardProps> = memo(({ item, onOpen, className }) => (
   <Card
     size="small"
@@ -68,6 +67,5 @@ export const ItemCard: React.FC<ItemCardProps> = memo(({ item, onOpen, className
     </Space>
   </Card>
 ));
-/* eslint-enable react/prop-types */
 
 ItemCard.displayName = 'ItemCard';

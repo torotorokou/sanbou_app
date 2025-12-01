@@ -41,7 +41,7 @@ const PeriodSelectorForm: React.FC<Props> = ({
 }) => (
     <>
         <Title level={5} style={{ marginBottom: 8 }}>
-            対象期間（この期間に取引がなければ「離脱」）
+            対象期間（この期間に取引がなし：「離脱」）
         </Title>
         <Typography.Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 12 }}>
             最近の期間を指定してください（例：2025-01〜2025-11）

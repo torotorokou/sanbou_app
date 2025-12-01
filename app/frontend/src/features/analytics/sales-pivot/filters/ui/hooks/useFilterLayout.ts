@@ -1,6 +1,5 @@
 import { useResponsive } from '@/shared';
 import { FILTER_GRID } from '../config/layout.config';
-import type { GridConfig } from '../config/layout.config';
 
 /**
  * FilterPanelのレイアウト設定を管理するカスタムフック

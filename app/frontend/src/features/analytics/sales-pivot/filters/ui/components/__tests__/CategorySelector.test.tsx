@@ -2,7 +2,6 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { CategorySelector } from '../CategorySelector';
-import type { CategoryKind } from '../../../../shared/model/types';
 
 describe('CategorySelector', () => {
   it('廃棄物が選択された状態で表示される', () => {

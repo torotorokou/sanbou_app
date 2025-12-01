@@ -1,53 +1,54 @@
 /**
  * PeriodSelector.module.css
- * 日次カレンダーの曜日ヘッダーに色付け（月曜始まり）
+ * 日次カレンダーの曜日ヘッダーと日付セルに色付け（月曜始まり）
  * - 土曜日（6列目）: 青
  * - 日曜日（7列目）: 赤
  */
 
-/* 曜日ヘッダー: 土曜日（6列目）を青に */
-.datePicker :global(.ant-picker-content thead th):nth-child(6) {
+/* 曜日ヘッダー: 土曜日を青に */
+:global(.ant-picker-dropdown .ant-picker-content thead th):nth-child(6) {
   color: #1890ff !important;
 }
 
-/* 曜日ヘッダー: 日曜日（7列目）を赤に */
-.datePicker :global(.ant-picker-content thead th):nth-child(7) {
+/* 曜日ヘッダー: 日曜日を赤に */
+:global(.ant-picker-dropdown .ant-picker-content thead th):nth-child(7) {
   color: #ff4d4f !important;
 }
 
-/* 日付セル: 土曜日（6列目）に薄い青の背景 */
-.datePicker :global(.ant-picker-content tbody tr td):nth-child(6) :global(.ant-picker-cell-inner) {
+/* 日付セル: 土曜日に薄い青の背景 */
+:global(.ant-picker-dropdown .ant-picker-content tbody tr td):nth-child(6):not(:global(.ant-picker-cell-disabled)) :global(.ant-picker-cell-inner) {
   background-color: #e6f7ff;
 }
 
-/* 日付セル: 日曜日（7列目）に薄い赤の背景 */
-.datePicker :global(.ant-picker-content tbody tr td):nth-child(7) :global(.ant-picker-cell-inner) {
+/* 日付セル: 日曜日に薄い赤の背景 */
+:global(.ant-picker-dropdown .ant-picker-content tbody tr td):nth-child(7):not(:global(.ant-picker-cell-disabled)) :global(.ant-picker-cell-inner) {
   background-color: #fff1f0;
 }
 
 /* 選択された日付は元の色を維持 */
-.datePicker :global(.ant-picker-cell-selected) :global(.ant-picker-cell-inner) {
+:global(.ant-picker-dropdown .ant-picker-cell-selected .ant-picker-cell-inner) {
   background-color: #1890ff !important;
   color: #fff !important;
 }
 
 /* 範囲選択の開始・終了も元の色を維持 */
-.datePicker :global(.ant-picker-cell-range-start) :global(.ant-picker-cell-inner),
-.datePicker :global(.ant-picker-cell-range-end) :global(.ant-picker-cell-inner) {
+:global(.ant-picker-dropdown .ant-picker-cell-range-start .ant-picker-cell-inner),
+:global(.ant-picker-dropdown .ant-picker-cell-range-end .ant-picker-cell-inner) {
   background-color: #1890ff !important;
   color: #fff !important;
 }
 
 /* 範囲選択中の日付も元の色を維持 */
-.datePicker :global(.ant-picker-cell-in-range) :global(.ant-picker-cell-inner) {
+:global(.ant-picker-dropdown .ant-picker-cell-in-range .ant-picker-cell-inner) {
   background-color: #e6f7ff !important;
 }
 
-/* ホバー時も土日の色を維持 */
-.datePicker :global(.ant-picker-content tbody tr td):nth-child(6):hover :global(.ant-picker-cell-inner) {
+/* ホバー時: 土曜日 */
+:global(.ant-picker-dropdown .ant-picker-content tbody tr td):nth-child(6):hover:not(:global(.ant-picker-cell-selected)):not(:global(.ant-picker-cell-disabled)) :global(.ant-picker-cell-inner) {
   background-color: #bae7ff;
 }
 
-.datePicker :global(.ant-picker-content tbody tr td):nth-child(7):hover :global(.ant-picker-cell-inner) {
+/* ホバー時: 日曜日 */
+:global(.ant-picker-dropdown .ant-picker-content tbody tr td):nth-child(7):hover:not(:global(.ant-picker-cell-selected)):not(:global(.ant-picker-cell-disabled)) :global(.ant-picker-cell-inner) {
   background-color: #ffccc7;
 }
