@@ -100,7 +100,7 @@ class GenerateBalanceSheetUseCase:
                 step_start = time.time()
                 logger.debug(
                     "Step 2: 期間フィルタ適用開始",
-                    extra=create_log_context(period_type=period_type)
+                    extra=create_log_context(operation="generate_balance_sheet", period_type=period_type)
                 )
                 
                 try:

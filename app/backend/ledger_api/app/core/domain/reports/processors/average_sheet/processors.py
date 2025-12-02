@@ -79,7 +79,7 @@ def calculate_item_summary(
             if total_weight == 0:
                 logger.warning(
                     "ABC重量0のため単価が0",
-                    extra=create_log_context(abc_key=abc_key, item_name=item_name)
+                    extra=create_log_context(operation="calculate_abc_unit_prices", abc_key=abc_key, item_name=item_name)
                 )
 
     return master_csv
@@ -221,7 +221,7 @@ def set_report_date_info(
 
     logger.info(
         "日付設定完了",
-        extra=create_log_context(date=formatted_date, weekday=weekday)
+        extra=create_log_context(operation="apply_date_and_weekday", date=formatted_date, weekday=weekday)
     )
     return master_csv
 

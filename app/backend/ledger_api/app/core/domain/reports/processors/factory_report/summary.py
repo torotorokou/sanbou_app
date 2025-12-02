@@ -19,7 +19,7 @@ def apply_negation_filters(
             if logger:
                 logger.warning(
                     "データに列が存在せず",
-                    extra=create_log_context(column=col)
+                    extra=create_log_context(operation="process_sheet_partition", column=col)
                 )
             continue
 
@@ -63,7 +63,7 @@ def process_sheet_partition(
         if logger:
             logger.error(
                 "key_level変換エラー",
-                extra=create_log_context(error=str(e)),
+                extra=create_log_context(operation="process_sheet_partition", error=str(e)),
                 exc_info=True
             )
         return pd.DataFrame(), pd.DataFrame()
@@ -85,7 +85,7 @@ def summary_apply_by_sheet(
     logger = app_logger()
     logger.info(
         "シート集計開始",
-        extra=create_log_context(sheet_name=sheet_name, key_cols=key_cols, source_col=source_col)
+        extra=create_log_context(operation="summary_apply_by_sheet", sheet_name=sheet_name, key_cols=key_cols, source_col=source_col)
     )
 
     # --- 該当シートの key_level フィルタ ---

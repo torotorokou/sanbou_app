@@ -30,7 +30,7 @@ def process_shobun(df_shipment: pd.DataFrame) -> pd.DataFrame:
     master_path = config["master_csv_path"]["shobun"]
     logger.info(
         "マスターCSVパス取得",
-        extra=create_log_context(master_path=master_path)
+        extra=create_log_context(operation="process_shobun", master_path=master_path)
     )
 
     try:
