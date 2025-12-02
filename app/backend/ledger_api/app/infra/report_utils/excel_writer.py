@@ -12,6 +12,7 @@ import unicodedata
 from typing import Any, cast
 import re
 from .logger import app_logger
+from backend_shared.application.logging import create_log_context
 
 
 def safe_excel_value(value):

@@ -15,6 +15,7 @@ import pandas as pd
 from pandas.api.types import is_datetime64_any_dtype as _is_dt
 
 from app.infra.report_utils import app_logger
+from backend_shared.application.logging import create_log_context
 
 logger = app_logger()
 
