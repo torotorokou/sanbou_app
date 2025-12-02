@@ -10,6 +10,8 @@
  * - 型安全性を確保（as const）
  */
 
+import { bp } from '@shared';
+
 /**
  * Ant Design Grid型定義
  */
@@ -39,16 +41,15 @@ export const MARGINS = {
 } as const;
 
 /**
- * ブレークポイントしきい値（参考値）
- * 実際のブレークポイントはuseResponsive内で管理されています
+ * @deprecated 代わりに @shared から bp をインポートして使用してください
+ * 
+ * 例:
+ * ```typescript
+ * import { bp } from '@shared';
+ * const isDesktop = width >= bp.xl;
+ * ```
  */
-export const BREAKPOINTS = {
-  xs: 0,
-  sm: 640,
-  md: 768,
-  lg: 1024,
-  xl: 1280,
-} as const;
+export const BREAKPOINTS = bp;
 
 /**
  * FilterPanel グリッド設定
