@@ -276,14 +276,14 @@ def get_request_id() -> str:
 # Helper 関数: 構造化ログコンテキスト作成
 # ========================================
 def create_log_context(
-    operation: Optional[str] = None,
+    operation: str,
     **kwargs: Any
 ) -> Dict[str, Any]:
     """
     構造化ログのコンテキスト辞書を作成
     
     Args:
-        operation: 操作名（例: "csv_upload", "build_target_card"）- オプショナル
+        operation: 操作名（例: "csv_upload", "build_target_card"）- 必須
         **kwargs: 追加のコンテキスト情報
         
     Returns:
@@ -305,11 +305,7 @@ def create_log_context(
     sensitive_keywords = ["password", "token", "secret", "key", "credential"]
     
     # コンテキスト辞書を構築
-    context = {}
-    
-    # operation が指定されている場合のみ追加
-    if operation is not None:
-        context["operation"] = operation
+    context = {"operation": operation}
     
     for key, value in kwargs.items():
         # センシティブ情報をスキップ
