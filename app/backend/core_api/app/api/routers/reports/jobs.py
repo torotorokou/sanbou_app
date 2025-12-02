@@ -8,6 +8,7 @@ from fastapi.responses import StreamingResponse
 import httpx
 
 from backend_shared.core.domain.exceptions import ExternalServiceError
+from backend_shared.application.logging import create_log_context
 
 logger = logging.getLogger(__name__)
 
