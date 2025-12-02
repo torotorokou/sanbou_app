@@ -147,13 +147,23 @@ async def proxy_manual_search(request: Request):
             r = await client.post(upstream, json=payload)
             
             if r.status_code >= 400:
-                logger.error(f"[BFF Manual] Search error: {r.status_code} - {r.text}")
+                logger.error(
+                    "[BFF Manual] Search error",
+                    extra=create_log_context(
+                        operation="proxy_search",
+                        status_code=r.status_code,
+                        response_text=r.text[:200]
+                    )
+                )
                 return JSONResponse(
                     status_code=r.status_code,
                     content=r.json() if r.headers.get("content-type") == "application/json" else {"error": r.text}
                 )
             
-            logger.info(f"[BFF Manual] Search success: {r.status_code}")
+            logger.info(
+                "[BFF Manual] Search success",
+                extra=create_log_context(operation="proxy_search", status_code=r.status_code)
+            )
             return JSONResponse(status_code=r.status_code, content=r.json())
     
     except httpx.HTTPError as e:
@@ -175,13 +185,19 @@ async def proxy_manual_toc():
         JSON: 目次データ
     """
     upstream = f"{MANUAL_API_BASE}/manual/toc"
-    logger.info(f"[BFF Manual] Proxying toc request: {upstream}")
+    logger.info(
+        "[BFF Manual] Proxying toc request",
+        extra=create_log_context(operation="proxy_manual_toc", upstream=upstream)
+    )
     
     try:
         async with httpx.AsyncClient(timeout=30.0) as client:
             r = await client.get(upstream)
             r.raise_for_status()
-            logger.info(f"[BFF Manual] TOC success: {r.status_code}")
+            logger.info(
+                "[BFF Manual] TOC success",
+                extra=create_log_context(operation="proxy_manual_toc", status_code=r.status_code)
+            )
             return r.json()
     
     except httpx.HTTPStatusError as e:
@@ -211,13 +227,19 @@ async def proxy_manual_categories():
         JSON: カテゴリデータ
     """
     upstream = f"{MANUAL_API_BASE}/manual/categories"
-    logger.info(f"[BFF Manual] Proxying categories request: {upstream}")
+    logger.info(
+        "[BFF Manual] Proxying categories request",
+        extra=create_log_context(operation="proxy_manual_categories", upstream=upstream)
+    )
     
     try:
         async with httpx.AsyncClient(timeout=30.0) as client:
             r = await client.get(upstream)
             r.raise_for_status()
-            logger.info(f"[BFF Manual] Categories success: {r.status_code}")
+            logger.info(
+                "[BFF Manual] Categories success",
+                extra=create_log_context(operation="proxy_manual_categories", status_code=r.status_code)
+            )
             return r.json()
     
     except httpx.HTTPStatusError as e:
@@ -259,7 +281,10 @@ async def proxy_list_manuals(request: Request):
         async with httpx.AsyncClient(timeout=30.0) as client:
             r = await client.get(upstream)
             r.raise_for_status()
-            logger.info(f"[BFF Manual] List manuals success: {r.status_code}")
+            logger.info(
+                "[BFF Manual] List manuals success",
+                extra=create_log_context(operation="proxy_list_manuals", status_code=r.status_code)
+            )
             return r.json()
     
     except httpx.HTTPStatusError as e:

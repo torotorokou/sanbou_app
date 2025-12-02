@@ -33,7 +33,15 @@ async def domain_exception_handler(request: Request, exc: DomainException) -> JS
     """
     # ValidationError
     if isinstance(exc, ValidationError):
-        logger.warning(f"Validation error: {exc.message}, field={exc.field}")
+        logger.warning(
+            "Validation error",
+            extra=create_log_context(
+                operation="domain_exception_handler",
+                error_type="ValidationError",
+                message=exc.message,
+                field=exc.field
+            )
+        )
         return JSONResponse(
             status_code=status.HTTP_400_BAD_REQUEST,
             content={
@@ -47,7 +55,15 @@ async def domain_exception_handler(request: Request, exc: DomainException) -> JS
     
     # NotFoundError
     if isinstance(exc, NotFoundError):
-        logger.info(f"Resource not found: {exc.resource_type} {exc.identifier}")
+        logger.info(
+            "Resource not found",
+            extra=create_log_context(
+                operation="domain_exception_handler",
+                error_type="NotFoundError",
+                resource_type=exc.resource_type,
+                identifier=str(exc.identifier)
+            )
+        )
         return JSONResponse(
             status_code=status.HTTP_404_NOT_FOUND,
             content={
@@ -62,7 +78,15 @@ async def domain_exception_handler(request: Request, exc: DomainException) -> JS
     
     # BusinessRuleViolation
     if isinstance(exc, BusinessRuleViolation):
-        logger.warning(f"Business rule violation: {exc.rule}, details={exc.details}")
+        logger.warning(
+            "Business rule violation",
+            extra=create_log_context(
+                operation="domain_exception_handler",
+                error_type="BusinessRuleViolation",
+                rule=exc.rule,
+                details=exc.details
+            )
+        )
         return JSONResponse(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             content={
@@ -77,7 +101,14 @@ async def domain_exception_handler(request: Request, exc: DomainException) -> JS
     
     # UnauthorizedError
     if isinstance(exc, UnauthorizedError):
-        logger.warning(f"Unauthorized access: {exc.message}")
+        logger.warning(
+            "Unauthorized access",
+            extra=create_log_context(
+                operation="domain_exception_handler",
+                error_type="UnauthorizedError",
+                message=exc.message
+            )
+        )
         return JSONResponse(
             status_code=status.HTTP_401_UNAUTHORIZED,
             content={
@@ -90,7 +121,15 @@ async def domain_exception_handler(request: Request, exc: DomainException) -> JS
     
     # ForbiddenError
     if isinstance(exc, ForbiddenError):
-        logger.warning(f"Forbidden access: {exc.message}, required_permission={exc.required_permission}")
+        logger.warning(
+            "Forbidden access",
+            extra=create_log_context(
+                operation="domain_exception_handler",
+                error_type="ForbiddenError",
+                message=exc.message,
+                required_permission=exc.required_permission
+            )
+        )
         return JSONResponse(
             status_code=status.HTTP_403_FORBIDDEN,
             content={
@@ -147,7 +186,15 @@ async def infrastructure_exception_handler(request: Request, exc: Infrastructure
     
     DB接続エラーや外部API呼び出しエラーなどを処理します。
     """
-    logger.error(f"Infrastructure error: {exc.message}, cause={exc.cause}", exc_info=True)
+    logger.error(
+        "Infrastructure error",
+        extra=create_log_context(
+            operation="infrastructure_error_handler",
+            message=exc.message,
+            cause=str(exc.cause) if exc.cause else None
+        ),
+        exc_info=True
+    )
     return JSONResponse(
         status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
         content={
@@ -166,7 +213,13 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     
     Pydantic によるリクエストバリデーションエラーを処理します。
     """
-    logger.warning(f"Request validation error: {exc.errors()}")
+    logger.warning(
+        "Request validation error",
+        extra=create_log_context(
+            operation="validation_exception_handler",
+            errors=exc.errors()
+        )
+    )
     return JSONResponse(
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
         content={
@@ -185,7 +238,14 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException) 
     
     FastAPI/Starlette の HTTPException を処理します。
     """
-    logger.info(f"HTTP exception: {exc.status_code} - {exc.detail}")
+    logger.info(
+        "HTTP exception",
+        extra=create_log_context(
+            operation="http_exception_handler",
+            status_code=exc.status_code,
+            detail=str(exc.detail)
+        )
+    )
     return JSONResponse(
         status_code=exc.status_code,
         content={

@@ -65,7 +65,14 @@ async def upload_csv(
         df = pd.read_csv(io.BytesIO(contents))
         rows = df.to_dict(orient="records")
 
-        logger.info(f"Processing CSV upload: {file.filename}, rows={len(rows)}")
+        logger.info(
+            "Processing CSV upload",
+            extra=create_log_context(
+                operation="upload_csv",
+                filename=file.filename,
+                row_count=len(rows)
+            )
+        )
         result = uc.execute(rows)
         return result
     except pd.errors.EmptyDataError:
@@ -73,7 +80,11 @@ async def upload_csv(
     except pd.errors.ParserError as e:
         raise ValidationError(f"Failed to parse CSV: {str(e)}", field="file")
     except Exception as e:
-        logger.error(f"Failed to process CSV: {str(e)}", exc_info=True)
+        logger.error(
+            "Failed to process CSV",
+            extra=create_log_context(operation="upload_csv", error=str(e)),
+            exc_info=True
+        )
         raise InfrastructureError(f"Failed to process CSV", cause=e)
 
 

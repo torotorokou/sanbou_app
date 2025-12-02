@@ -49,7 +49,10 @@ async def get_upload_status(
         ).to_json_response()
         
     except ValueError as e:
-        logger.warning(f"Validation error: {e}")
+        logger.warning(
+            "Validation error",
+            extra=create_log_context(operation="get_upload_status", error=str(e))
+        )
         return ErrorApiResponse(
             code="INVALID_REQUEST",
             detail=str(e),

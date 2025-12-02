@@ -56,7 +56,10 @@ def get_sales_reps(db: Session = Depends(get_db)):
         for row in rows
     ]
     
-    logger.info(f"Found {len(sales_reps)} sales reps")
+    logger.info(
+        "Found sales reps",
+        extra=create_log_context(operation="get_all_sales_reps", count=len(sales_reps))
+    )
     
     return SalesRepListResponse(sales_reps=sales_reps)
 
@@ -94,7 +97,10 @@ def analyze_customer_churn(
         previous_end=request.previous_end,
     )
     
-    logger.info(f"Found {len(lost_customers)} lost customers")
+    logger.info(
+        "Found lost customers",
+        extra=create_log_context(operation="get_lost_customers", count=len(lost_customers))
+    )
     
     # Domain Entity -> DTO 変換
     lost_customer_dtos = [
