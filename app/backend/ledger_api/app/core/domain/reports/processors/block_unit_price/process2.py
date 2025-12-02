@@ -14,10 +14,36 @@ def apply_transport_fee_by_vendor(
     Returns:
         pd.DataFrame: 運搬費が適用された出荷データフレーム
     """
+    from app.infra.report_utils import app_logger
     from app.infra.report_utils.dataframe import apply_column_addition_by_keys
+    from backend_shared.application.logging import create_log_context
+
+    logger = app_logger()
 
     # 運搬業者が設定されている行を抽出
     target_rows = df_after[df_after["運搬業者"].notna()].copy()
+    
+    # デバッグ: マージ前の業者CD・運搬業者の組み合わせを確認
+    if not target_rows.empty:
+        df_combinations = target_rows[["業者CD", "運搬業者"]].drop_duplicates()
+        logger.info(
+            f"Transport fee merge - Target combinations: {len(df_combinations)}",
+            extra=create_log_context(
+                operation="apply_transport_fee_by_vendor",
+                target_combinations=df_combinations.to_dict('records'),
+                target_rows_count=len(target_rows)
+            )
+        )
+        
+        # transport_costsに存在する組み合わせを確認
+        transport_combinations = df_transport[["業者CD", "運搬業者"]].drop_duplicates()
+        logger.info(
+            f"Transport fee merge - Available in master: {len(transport_combinations)}",
+            extra=create_log_context(
+                operation="apply_transport_fee_by_vendor",
+                transport_combinations=transport_combinations.to_dict('records')[:20]
+            )
+        )
 
     # 運搬費の適用（業者CDで結合）
     updated_target_rows = apply_column_addition_by_keys(
@@ -27,6 +53,19 @@ def apply_transport_fee_by_vendor(
         value_col_to_add="運搬費",
         update_target_col="運搬費",
     )
+    
+    # デバッグ: マージ後の運搬費を確認
+    if not updated_target_rows.empty:
+        transport_fee_stats = updated_target_rows["運搬費"].describe().to_dict()
+        vendor_fee_summary = updated_target_rows.groupby("運搬業者")["運搬費"].first().to_dict()
+        logger.info(
+            f"Transport fee applied - Stats: {transport_fee_stats}",
+            extra=create_log_context(
+                operation="apply_transport_fee_by_vendor",
+                vendor_fee_summary=vendor_fee_summary,
+                updated_rows_count=len(updated_target_rows)
+            )
+        )
 
     # 運搬業者が未設定の行を保持
     non_transport_rows = df_after[df_after["運搬業者"].isna()].copy()
