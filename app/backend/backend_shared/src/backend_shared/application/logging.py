@@ -255,6 +255,177 @@ def get_request_id() -> str:
 
 
 # ========================================
+# Helper 関数: 構造化ログコンテキスト作成
+# ========================================
+def create_log_context(
+    operation: str,
+    **kwargs: Any
+) -> Dict[str, Any]:
+    """
+    構造化ログのコンテキスト辞書を作成
+    
+    Args:
+        operation: 操作名（例: "csv_upload", "build_target_card"）
+        **kwargs: 追加のコンテキスト情報
+        
+    Returns:
+        Dict[str, Any]: extra辞書として使用可能なコンテキスト
+        
+    Description:
+        標準化された構造化ログを簡単に作成するためのヘルパー関数。
+        Noneやセンシティブ情報を自動除外します。
+        
+    Example:
+        >>> context = create_log_context(
+        ...     operation="csv_upload",
+        ...     file_type="FLASH",
+        ...     uploaded_by="user@example.com"
+        ... )
+        >>> logger.info("CSV upload started", extra=context)
+    """
+    # センシティブなキーワードリスト
+    sensitive_keywords = ["password", "token", "secret", "key", "credential"]
+    
+    # コンテキスト辞書を構築
+    context = {"operation": operation}
+    
+    for key, value in kwargs.items():
+        # センシティブ情報をスキップ
+        if any(sensitive in key.lower() for sensitive in sensitive_keywords):
+            continue
+        
+        # None値をスキップ
+        if value is None:
+            continue
+        
+        context[key] = value
+    
+    return context
+
+
+def get_module_logger(name: str | None = None) -> logging.Logger:
+    """
+    モジュール用のロガーを取得
+    
+    Args:
+        name: ロガー名（省略時は呼び出し元モジュール名を自動取得）
+        
+    Returns:
+        logging.Logger: 設定済みのロガー
+        
+    Description:
+        標準的な logging.getLogger(__name__) のラッパー。
+        将来的にロガーのカスタマイズが必要になった場合に対応しやすくする。
+        
+    Example:
+        >>> logger = get_module_logger(__name__)
+        >>> logger.info("Processing started")
+    """
+    if name is None:
+        # 呼び出し元のモジュール名を自動取得
+        import inspect
+        frame = inspect.currentframe()
+        if frame and frame.f_back:
+            name = frame.f_back.f_globals.get('__name__', 'unknown')
+        else:
+            name = 'unknown'
+    
+    return logging.getLogger(name)
+
+
+# ========================================
+# Helper 関数: 時間計測コンテキストマネージャー
+# ========================================
+class TimedOperation:
+    """
+    時間計測付きコンテキストマネージャー
+    
+    with文で囲んだブロックの実行時間を自動計測し、ログに記録します。
+    
+    Example:
+        >>> with TimedOperation("database_query", logger=logger, threshold_ms=1000):
+        ...     result = db.execute_slow_query()
+        # ログ: "database_query completed in 1234ms"
+        
+        >>> with TimedOperation("csv_processing", logger=logger) as timer:
+        ...     process_csv(file)
+        ...     timer.add_context(rows=1000)
+        # ログ: "csv_processing completed in 567ms" extra={"rows": 1000}
+    """
+    
+    def __init__(
+        self,
+        operation_name: str,
+        logger: logging.Logger | None = None,
+        level: int = logging.INFO,
+        threshold_ms: float | None = None,
+        **context: Any
+    ):
+        """
+        Args:
+            operation_name: 操作名
+            logger: ロガー（省略時は backend_shared.application.logging のロガー）
+            level: ログレベル（デフォルト: INFO）
+            threshold_ms: 閾値（ミリ秒）。実行時間がこれを超えた場合のみログ出力
+            **context: 追加のコンテキスト情報
+        """
+        self.operation_name = operation_name
+        self.logger = logger or logging.getLogger(__name__)
+        self.level = level
+        self.threshold_ms = threshold_ms
+        self.context = context
+        self.start_time: float | None = None
+        self.duration_ms: float | None = None
+    
+    def __enter__(self) -> "TimedOperation":
+        self.start_time = time.perf_counter()
+        return self
+    
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if self.start_time is None:
+            return
+        
+        elapsed = time.perf_counter() - self.start_time
+        self.duration_ms = round(elapsed * 1000, 2)
+        
+        # 閾値チェック
+        if self.threshold_ms is not None and self.duration_ms < self.threshold_ms:
+            return  # 閾値未満の場合はログ出力しない
+        
+        # ログコンテキストを構築
+        log_context = create_log_context(
+            operation=self.operation_name,
+            duration_ms=self.duration_ms,
+            **self.context
+        )
+        
+        # エラーがあればERROR、なければ指定されたレベルでログ出力
+        if exc_type is not None:
+            log_context["error_type"] = exc_type.__name__
+            log_context["error_message"] = str(exc_val)
+            self.logger.error(
+                f"{self.operation_name} failed after {self.duration_ms}ms",
+                extra=log_context,
+                exc_info=True
+            )
+        else:
+            self.logger.log(
+                self.level,
+                f"{self.operation_name} completed in {self.duration_ms}ms",
+                extra=log_context
+            )
+    
+    def add_context(self, **kwargs: Any) -> None:
+        """
+        実行中にコンテキスト情報を追加
+        
+        Args:
+            **kwargs: 追加のコンテキスト情報
+        """
+        self.context.update(kwargs)
+
+
+# ========================================
 # ログレベル定数（可読性向上）
 # ========================================
 LOG_LEVEL_DEBUG = "DEBUG"
