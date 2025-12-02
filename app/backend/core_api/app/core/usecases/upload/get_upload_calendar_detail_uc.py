@@ -14,9 +14,9 @@ from datetime import date
 from calendar import monthrange
 
 from app.core.ports.upload_status_port import IUploadCalendarQuery
-from backend_shared.application.logging import create_log_context
+from backend_shared.application.logging import create_log_context, get_module_logger
 
-logger = logging.getLogger(__name__)
+logger = get_module_logger(__name__)
 
 
 class GetUploadCalendarDetailUseCase:

@@ -51,7 +51,8 @@ from app.api.routers.auth import router as auth_router
 # 環境変数 LOG_LEVEL で制御可能（DEBUG/INFO/WARNING/ERROR/CRITICAL）
 setup_logging()
 
-logger = logging.getLogger(__name__)
+from backend_shared.application.logging import get_module_logger
+logger = get_module_logger(__name__)
 
 # ==========================================
 # FastAPI アプリケーション初期化

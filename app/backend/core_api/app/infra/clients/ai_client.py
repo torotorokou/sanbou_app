@@ -26,7 +26,8 @@ import httpx
 from typing import Optional
 import logging
 
-logger = logging.getLogger(__name__)
+from backend_shared.application.logging import get_module_logger, create_log_context
+logger = get_module_logger(__name__)
 
 AI_API_BASE = os.getenv("AI_API_BASE", "http://ai_api:8000")
 TIMEOUT = httpx.Timeout(connect=1.0, read=5.0, write=5.0, pool=1.0)

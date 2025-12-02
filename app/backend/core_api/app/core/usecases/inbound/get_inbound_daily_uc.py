@@ -12,13 +12,14 @@ UseCase: Get Inbound Daily Data
 """
 import logging
 
+from backend_shared.application.logging import get_module_logger
 from app.core.usecases.inbound.dto import (
     GetInboundDailyInput,
     GetInboundDailyOutput,
 )
 from app.core.ports.inbound_repository_port import InboundRepository
 
-logger = logging.getLogger(__name__)
+logger = get_module_logger(__name__)
 
 
 class GetInboundDailyUseCase:

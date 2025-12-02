@@ -11,9 +11,9 @@ from sqlalchemy.orm import Session
 from sqlalchemy import text
 
 from app.core.domain.entities.customer_churn import LostCustomer
-from backend_shared.application.logging import create_log_context
+from backend_shared.application.logging import create_log_context, get_module_logger
 
-logger = logging.getLogger(__name__)
+logger = get_module_logger(__name__)
 
 
 class CustomerChurnQueryAdapter:

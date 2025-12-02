@@ -12,6 +12,7 @@ from typing import Any, Dict, Optional
 from fastapi import UploadFile
 
 from app.core.ports.inbound import CsvGateway
+from backend_shared.application.logging import get_module_logger, create_log_context
 from backend_shared.utils.csv_reader import read_csv_files
 from backend_shared.infra.adapters.presentation.response_error import (
     NoFilesUploadedResponse,
@@ -20,7 +21,7 @@ from backend_shared.infra.adapters.presentation.response_error import (
 from app.infra.adapters.csv.validator_service import CsvValidatorService
 from app.infra.adapters.csv.formatter_service import CsvFormatterService
 
-logger = logging.getLogger(__name__)
+logger = get_module_logger(__name__)
 
 
 class PandasCsvGateway(CsvGateway):

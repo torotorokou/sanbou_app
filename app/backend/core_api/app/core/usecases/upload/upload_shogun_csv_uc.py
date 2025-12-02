@@ -28,13 +28,13 @@ from backend_shared.core.usecases.csv_validator.csv_upload_validator_api import 
 from backend_shared.core.usecases.csv_formatter.formatter_factory import CSVFormatterFactory
 from backend_shared.core.usecases.csv_formatter.formatter_config import build_formatter_config
 from backend_shared.infra.adapters.presentation import SuccessApiResponse, ErrorApiResponse
-from backend_shared.application.logging import create_log_context
+from backend_shared.application.logging import create_log_context, get_module_logger
 
 from app.core.ports.csv_writer_port import IShogunCsvWriter
 from app.infra.adapters.upload.raw_data_repository import RawDataRepository
 from app.infra.adapters.materialized_view.materialized_view_refresher import MaterializedViewRefresher
 
-logger = logging.getLogger(__name__)
+logger = get_module_logger(__name__)
 
 
 class UploadShogunCsvUseCase:

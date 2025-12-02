@@ -1,13 +1,16 @@
 from fastapi import APIRouter
 from typing import List
+from backend_shared.application.logging import get_module_logger
 from app.api.schemas.chat import ChatRequest
 from app.infra.adapters.gemini_client import GeminiClient
 
+logger = get_module_logger(__name__)
 router = APIRouter()
 ai_client = GeminiClient()
 
 @router.post("/chat")
 def chat(req: ChatRequest):
+    logger.info("Chat request received", extra={"query": req.query, "tags": req.tags, "pdf": req.pdf})
     prompt = f"""
 以下はPDFに関連する質問です。
 

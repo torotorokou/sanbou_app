@@ -20,7 +20,7 @@ from app.core.ports.inbound import CsvGateway, ReportRepository
 from app.core.ports.inbound.report_repository import ArtifactUrls
 from app.core.domain.reports.balance_sheet import BalanceSheet
 from backend_shared.infra.adapters.fastapi.error_handlers import DomainError
-from backend_shared.application.logging import create_log_context
+from backend_shared.application.logging import create_log_context, get_module_logger
 from backend_shared.utils.date_filter_utils import (
     filter_by_period_from_max_date as shared_filter_by_period_from_max_date,
 )
@@ -30,7 +30,7 @@ from app.core.usecases.reports.balance_sheet import process as balance_sheet_pro
 from app.infra.report_utils import write_values_to_template, get_template_config
 from app.infra.utils.pdf_conversion import convert_excel_to_pdf
 
-logger = logging.getLogger(__name__)
+logger = get_module_logger(__name__)
 
 
 class GenerateBalanceSheetUseCase:

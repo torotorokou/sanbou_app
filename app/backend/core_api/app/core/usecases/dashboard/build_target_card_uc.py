@@ -11,7 +11,7 @@
 """
 import logging
 
-from backend_shared.application.logging import log_usecase_execution, create_log_context
+from backend_shared.application.logging import log_usecase_execution, create_log_context, get_module_logger
 from app.core.usecases.dashboard.dto import (
     BuildTargetCardInput,
     BuildTargetCardOutput,
@@ -19,7 +19,7 @@ from app.core.usecases.dashboard.dto import (
 from app.core.ports.dashboard_query_port import IDashboardTargetQuery
 from app.core.domain.services import target_card
 
-logger = logging.getLogger(__name__)
+logger = get_module_logger(__name__)
 
 # Optional TTL cache for repeated requests
 try:

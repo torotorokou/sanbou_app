@@ -1,9 +1,14 @@
 import requests
 from backend_shared.core.domain.exceptions import ExternalServiceError
+from backend_shared.application.logging import get_module_logger
 from app.config.settings import GEMINI_API_KEY
+
+logger = get_module_logger(__name__)
+
 
 class GeminiClient:
     def generate_content(self, prompt: str) -> str:
+        logger.info("Generating content with Gemini API", extra={"prompt_length": len(prompt)})
         try:
             url = (
                 f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
@@ -16,9 +21,12 @@ class GeminiClient:
             )
             response.raise_for_status()
             data = response.json()
-            return data["candidates"][0]["content"]["parts"][0]["text"]
+            result = data["candidates"][0]["content"]["parts"][0]["text"]
+            logger.info("Successfully generated content", extra={"response_length": len(result)})
+            return result
         except requests.exceptions.RequestException as e:
             # Gemini API通信エラー
+            logger.error("Gemini API communication failed", exc_info=True, extra={"error": str(e)})
             raise ExternalServiceError(
                 service_name="Gemini API",
                 message=f"Communication failed: {str(e)}",
@@ -27,6 +35,7 @@ class GeminiClient:
             )
         except (KeyError, IndexError) as e:
             # レスポンス形式が不正
+            logger.error("Gemini API response format error", exc_info=True, extra={"error": str(e)})
             raise ExternalServiceError(
                 service_name="Gemini API",
                 message=f"Unexpected response format: {str(e)}",

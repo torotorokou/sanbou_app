@@ -12,9 +12,10 @@ from sqlalchemy.sql.type_api import TypeEngine
 from typing import Type, Dict, Any, Union, Callable
 import logging
 
+from backend_shared.application.logging import get_module_logger, create_log_context
 from app.infra.db.table_definition import get_table_definition_generator
 
-logger = logging.getLogger(__name__)
+logger = get_module_logger(__name__)
 
 Base = declarative_base()
 mapper_registry = registry()
