@@ -57,12 +57,9 @@ class GetCalendarMonthUseCase:
         # Step 1: Validation
         input_dto.validate()
         
-        logger.info(f"Fetching calendar for {input_dto.year}-{input_dto.month:02d}")
-        
         # Step 2: データ取得（Port経由）
+        # デコレータが自動でログ出力するため、手動ログは不要
         data = self.query.get_month_calendar(input_dto.year, input_dto.month)
-        
-        logger.info(f"Successfully fetched calendar: {len(data)} days")
         
         # Step 3: Return structured output
         return GetCalendarMonthOutput(calendar_days=data)

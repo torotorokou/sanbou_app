@@ -28,6 +28,7 @@ from backend_shared.core.usecases.csv_validator.csv_upload_validator_api import 
 from backend_shared.core.usecases.csv_formatter.formatter_factory import CSVFormatterFactory
 from backend_shared.core.usecases.csv_formatter.formatter_config import build_formatter_config
 from backend_shared.infra.adapters.presentation import SuccessApiResponse, ErrorApiResponse
+from backend_shared.application.logging import create_log_context
 
 from app.core.ports.csv_writer_port import IShogunCsvWriter
 from app.infra.adapters.upload.raw_data_repository import RawDataRepository
@@ -155,7 +156,14 @@ class UploadShogunCsvUseCase:
                             "file_hash": file_hash[:8] + "...",
                             "reason": "同じファイルが直前（3分以内）にアップロードされています",
                         }
-                        logger.warning(f"Recent duplicate detected: {csv_type}")
+                        logger.warning(
+                            "Recent duplicate file detected",
+                            extra=create_log_context(
+                                operation="csv_upload_duplicate_check",
+                                csv_type=csv_type,
+                                file_name=uf.filename,
+                            )
+                        )
                         continue
                     
                     # 重複でない場合のみログ作成
@@ -168,9 +176,25 @@ class UploadShogunCsvUseCase:
                         uploaded_by=uploaded_by,
                     )
                     upload_file_ids[csv_type] = file_id
-                    logger.info(f"Created upload_file entry (pending): {csv_type} id={file_id}")
+                    logger.info(
+                        "Upload file entry created",
+                        extra=create_log_context(
+                            operation="csv_upload_file_registration",
+                            csv_type=csv_type,
+                            file_id=file_id,
+                            status="pending",
+                        )
+                    )
                 except Exception as e:
-                    logger.error(f"Failed to process {csv_type}: {e}")
+                    logger.error(
+                        "Failed to process upload file",
+                        extra=create_log_context(
+                            operation="csv_upload_file_registration",
+                            csv_type=csv_type,
+                            error=str(e),
+                        ),
+                        exc_info=True
+                    )
                     return ErrorApiResponse(
                         code="UPLOAD_PREPARATION_ERROR",
                         detail=f"{csv_type}の処理に失敗しました: {str(e)}",
@@ -281,9 +305,26 @@ class UploadShogunCsvUseCase:
                     content_io = io.BytesIO(file_info["content"])
                     df = pd.read_csv(content_io, encoding="utf-8")
                     dfs[csv_type] = df
-                    logger.info(f"[BG] Loaded {csv_type}: {len(df)} rows")
+                    logger.info(
+                        "CSV file loaded",
+                        extra=create_log_context(
+                            operation="csv_background_processing",
+                            csv_type=csv_type,
+                            row_count=len(df),
+                            phase="load",
+                        )
+                    )
                 except Exception as e:
-                    logger.error(f"[BG] Failed to parse {csv_type}: {e}")
+                    logger.error(
+                        "CSV parsing failed",
+                        extra=create_log_context(
+                            operation="csv_background_processing",
+                            csv_type=csv_type,
+                            error=str(e),
+                            phase="load",
+                        ),
+                        exc_info=True
+                    )
                     self._mark_all_as_failed(upload_file_ids, f"CSV parse error: {csv_type}")
                     return
             
@@ -297,7 +338,14 @@ class UploadShogunCsvUseCase:
             
             validation_error = self._validate_csv_data(dfs, dummy_files)
             if validation_error:
-                logger.error(f"[BG] Validation failed: {validation_error.detail}")
+                logger.error(
+                    "CSV validation failed",
+                    extra=create_log_context(
+                        operation="csv_background_processing",
+                        error_detail=validation_error.detail,
+                        phase="validation",
+                    )
+                )
                 self._mark_all_as_failed(upload_file_ids, f"Validation error: {validation_error.detail}")
                 return
             
@@ -313,7 +361,14 @@ class UploadShogunCsvUseCase:
             # フォーマット
             formatted_dfs, format_error = await self._format_csv_data(dfs_with_row_no)
             if format_error:
-                logger.error(f"[BG] Format failed: {format_error.detail}")
+                logger.error(
+                    "CSV formatting failed",
+                    extra=create_log_context(
+                        operation="csv_background_processing",
+                        error_detail=format_error.detail,
+                        phase="format",
+                    )
+                )
                 self._mark_all_as_failed(upload_file_ids, f"Format error: {format_error.detail}")
                 return
             
