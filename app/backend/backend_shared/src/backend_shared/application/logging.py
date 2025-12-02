@@ -53,6 +53,24 @@ _logging_configured: bool = False
 
 
 # ========================================
+# センシティブ情報フィルタリング設定
+# ========================================
+# ログに含めるべきでないセンシティブな情報のキーワードリスト
+SENSITIVE_KEYWORDS = frozenset([
+    "password", "passwd", "pwd",
+    "token", "access_token", "refresh_token", "id_token",
+    "secret", "api_secret", "client_secret",
+    "key", "api_key", "private_key", "public_key",
+    "credential", "credentials",
+    "auth", "authorization",
+    "bearer",
+    "ssn", "social_security",
+    "credit_card", "card_number", "cvv", "cvc",
+    "session", "session_id",
+])
+
+
+# ========================================
 # ContextVar: Request ID の保持
 # ========================================
 # リクエスト単位でrequest_idを保持するためのContextVar
@@ -302,15 +320,12 @@ def create_log_context(
         ... )
         >>> logger.info("CSV upload started", extra=context)
     """
-    # センシティブなキーワードリスト
-    sensitive_keywords = ["password", "token", "secret", "key", "credential"]
-    
     # コンテキスト辞書を構築
     context = {"operation": operation}
     
     for key, value in kwargs.items():
-        # センシティブ情報をスキップ
-        if any(sensitive in key.lower() for sensitive in sensitive_keywords):
+        # センシティブ情報をスキップ（グローバル設定を使用）
+        if any(sensitive in key.lower() for sensitive in SENSITIVE_KEYWORDS):
             continue
         
         # None値をスキップ
@@ -516,10 +531,10 @@ def log_usecase_execution(
             }
             
             if log_args and kwargs:
-                # センシティブな情報を除外（password, token など）
+                # センシティブな情報を除外（グローバル設定を使用）
                 safe_kwargs = {
                     k: v for k, v in kwargs.items()
-                    if not any(sensitive in k.lower() for sensitive in ["password", "token", "secret"])
+                    if not any(sensitive in k.lower() for sensitive in SENSITIVE_KEYWORDS)
                 }
                 log_data["input_args"] = safe_kwargs
             
