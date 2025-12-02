@@ -12,6 +12,8 @@ BFFの責務として、内部マイクロサービス(ledger_api等)の論理�
 import logging
 from typing import Any, Dict
 
+from backend_shared.application.logging import create_log_context
+
 logger = logging.getLogger(__name__)
 
 
