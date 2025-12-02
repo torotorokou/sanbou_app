@@ -6,6 +6,7 @@ from app.infra.report_utils import (
     load_master_and_template,
     clean_na_strings,
 )
+from backend_shared.application.logging import create_log_context
 from app.infra.report_utils.dataframe.cleaning import clean_cd_column as _clean_cd_column
 
 
@@ -27,7 +28,10 @@ def process_shobun(df_shipment: pd.DataFrame) -> pd.DataFrame:
     logger.info("Loading template config...")
     config = get_template_config()["factory_report"]
     master_path = config["master_csv_path"]["shobun"]
-    logger.info(f"Master path from config: {master_path}")
+    logger.info(
+        "マスターCSVパス取得",
+        extra=create_log_context(master_path=master_path)
+    )
 
     try:
         master_csv = load_master_and_template(master_path)

@@ -19,7 +19,13 @@ LEDGER_API_BASE = os.getenv("LEDGER_API_BASE", "http://ledger_api:8000")
 @router.post("/average_sheet/")
 async def proxy_average_sheet(request: Request):
     """平均表生成（ledger_apiへフォワード）- FormData対応"""
-    logger.info(f"Proxying average_sheet request (FormData) from {request.client}")
+    logger.info(
+        "Proxying average_sheet request (FormData)",
+        extra=create_log_context(
+            operation="proxy_average_sheet",
+            client=str(request.client)
+        )
+    )
     try:
         form = await request.form()
         logger.info(f"Received form keys: {list(form.keys())}")

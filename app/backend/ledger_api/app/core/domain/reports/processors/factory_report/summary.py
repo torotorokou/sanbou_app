@@ -1,5 +1,6 @@
 import pandas as pd
 from app.infra.report_utils import app_logger
+from backend_shared.application.logging import create_log_context
 from app.infra.report_utils.formatters import (
     safe_merge_by_keys,
     summary_update_column_if_notna,
@@ -16,7 +17,10 @@ def apply_negation_filters(
     for col in key_cols:
         if col not in df.columns:
             if logger:
-                logger.warning(f"⚠️ データに列 '{col}' が存在しません。スキップします。")
+                logger.warning(
+                    "データに列が存在せず",
+                    extra=create_log_context(column=col)
+                )
             continue
 
         unique_vals = match_df[col].dropna().unique()
@@ -57,7 +61,11 @@ def process_sheet_partition(
         return match_df, remain_df
     except Exception as e:
         if logger:
-            logger.error(f"❌ key_level変換エラー: {e}")
+            logger.error(
+                "key_level変換エラー",
+                extra=create_log_context(error=str(e)),
+                exc_info=True
+            )
         return pd.DataFrame(), pd.DataFrame()
 
 
@@ -75,7 +83,10 @@ def summary_apply_by_sheet(
     `Not値` を含む列はマージキーから除外する。
     """
     logger = app_logger()
-    logger.info(f"▶️ シート: {sheet_name}, キー: {key_cols}, 集計列: {source_col}")
+    logger.info(
+        "シート集計開始",
+        extra=create_log_context(sheet_name=sheet_name, key_cols=key_cols, source_col=source_col)
+    )
 
     # --- 該当シートの key_level フィルタ ---
     expected_level = len(key_cols)

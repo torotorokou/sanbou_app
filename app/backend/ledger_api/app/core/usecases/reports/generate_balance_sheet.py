@@ -97,7 +97,10 @@ class GenerateBalanceSheetUseCase:
             # Step 2: 期間フィルタ（オプション）
             if period_type:
                 step_start = time.time()
-                logger.debug(f"Step 2: 期間フィルタ適用開始", extra={"period_type": period_type})
+                logger.debug(
+                    "Step 2: 期間フィルタ適用開始",
+                    extra=create_log_context(period_type=period_type)
+                )
                 
                 try:
                     dfs = shared_filter_by_period_from_max_date(dfs, period_type)

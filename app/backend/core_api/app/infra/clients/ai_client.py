@@ -53,7 +53,14 @@ class AIClient:
             httpx.HTTPStatusError: If AI API returns error status
         """
         async with httpx.AsyncClient(timeout=TIMEOUT) as client:
-            logger.info(f"Calling AI API: {self.base_url}/classify", extra={"text_length": len(text)})
+            logger.info(
+                "Calling AI API",
+                extra=create_log_context(
+                    operation="classify_text",
+                    url=f"{self.base_url}/classify",
+                    text_length=len(text)
+                )
+            )
             response = await client.post(
                 f"{self.base_url}/classify",
                 json={"text": text},

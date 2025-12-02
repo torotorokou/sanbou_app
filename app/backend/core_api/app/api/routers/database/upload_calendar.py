@@ -58,7 +58,11 @@ def get_upload_calendar(
     try:
         return uc.execute(year=year, month=month)
     except Exception as e:
-        logger.error(f"Failed to fetch upload calendar: {e}", exc_info=True)
+        logger.error(
+            "Failed to fetch upload calendar",
+            extra=create_log_context(operation="get_upload_calendar", error=str(e)),
+            exc_info=True
+        )
         raise InfrastructureError(message=f"Calendar query failed: {str(e)}", cause=e)
 
 
@@ -122,11 +126,18 @@ def delete_upload_scope(
         }
         
     except ValueError as e:
-        logger.warning(f"Validation error: {e}")
+        logger.warning(
+            "Validation error",
+            extra=create_log_context(operation="delete_upload_scope", error=str(e))
+        )
         raise ValidationError(message=str(e), field="csv_kind")
         
     except NotFoundError:
         raise
     except Exception as e:
-        logger.error(f"Failed to delete upload scope: {e}", exc_info=True)
+        logger.error(
+            "Failed to delete upload scope",
+            extra=create_log_context(operation="delete_upload_scope", error=str(e)),
+            exc_info=True
+        )
         raise InfrastructureError(message=f"Delete operation failed: {str(e)}", cause=e)

@@ -1,5 +1,6 @@
 import pandas as pd
 from app.infra.report_utils import app_logger
+from backend_shared.application.logging import create_log_context
 from app.infra.report_utils import clean_na_strings
 from app.infra.report_utils.formatters import set_value_fast_safe
 from app.infra.report_utils.formatters import get_weekday_japanese
@@ -76,7 +77,10 @@ def calculate_item_summary(
             )
 
             if total_weight == 0:
-                logger.warning(f"⚠️ {abc_key}・{item_name} の重量が0のため単価が0になります。")
+                logger.warning(
+                    "ABC重量0のため単価が0",
+                    extra=create_log_context(abc_key=abc_key, item_name=item_name)
+                )
 
     return master_csv
 
@@ -215,7 +219,10 @@ def set_report_date_info(
         master_csv, master_columns_keys, ["曜日", None, None], weekday
     )
 
-    logger.info(f"日付: {formatted_date}（{weekday}）")
+    logger.info(
+        "日付設定完了",
+        extra=create_log_context(date=formatted_date, weekday=weekday)
+    )
     return master_csv
 
 
