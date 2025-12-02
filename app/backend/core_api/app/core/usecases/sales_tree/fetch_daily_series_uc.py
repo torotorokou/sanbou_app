@@ -4,6 +4,7 @@ UseCase: FetchSalesTreeDailySeries
 売上ツリーの日次推移データ取得UseCase
 """
 import logging
+from backend_shared.application.logging import log_usecase_execution
 from app.core.domain.sales_tree import DailySeriesRequest, DailyPoint
 from app.core.ports.sales_tree_port import ISalesTreeQuery
 
@@ -20,6 +21,7 @@ class FetchSalesTreeDailySeriesUseCase:
     def __init__(self, query: ISalesTreeQuery):
         self._query = query
     
+    @log_usecase_execution(usecase_name="FetchSalesTreeDailySeries", log_args=True)
     def execute(self, req: DailySeriesRequest) -> list[DailyPoint]:
         """
         日次推移データを取得
@@ -30,9 +32,4 @@ class FetchSalesTreeDailySeriesUseCase:
         Returns:
             list[DailyPoint]: 日別データポイント
         """
-        try:
-            logger.info(f"FetchSalesTreeDailySeriesUseCase: date_from={req.date_from}, date_to={req.date_to}")
-            return self._query.fetch_daily_series(req)
-        except Exception as e:
-            logger.error(f"Error in FetchSalesTreeDailySeriesUseCase: {str(e)}", exc_info=True)
-            raise
+        return self._query.fetch_daily_series(req)

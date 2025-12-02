@@ -161,14 +161,20 @@ def ensure_datetime_col(df: Optional[pd.DataFrame], col: str = "伝票日付") -
             else:
                 unit = "s"
             
-            logger.debug(f"date normalize: detected epoch '{col}', unit={unit}")
+            logger.debug(
+                "epoch形式検出",
+                extra=create_log_context(column=col, unit=unit)
+            )
             df[col] = pd.to_datetime(ser, unit=unit, errors="coerce")
             return df
         
         df[col] = pd.to_datetime(s, errors="coerce")
         return df
     except Exception as e:
-        logger.warning(f"date normalize failed for '{col}': {type(e).__name__}: {e}")
+        logger.warning(
+            "日付正規化失敗",
+            extra=create_log_context(column=col, error_type=type(e).__name__, error=str(e))
+        )
         return df
 
 

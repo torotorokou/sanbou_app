@@ -44,5 +44,8 @@ def rewrite_artifact_urls_to_bff(
             artifact["excel_download_url"] = f"{base_prefix}{artifact['excel_download_url']}"
         if "pdf_preview_url" in artifact and artifact["pdf_preview_url"]:
             artifact["pdf_preview_url"] = f"{base_prefix}{artifact['pdf_preview_url']}"
-        logger.debug(f"[BFF] Rewritten artifact URLs with {base_prefix} prefix")
+        logger.debug(
+            "[BFF] Rewritten artifact URLs with prefix",
+            extra=create_log_context(operation="rewrite_artifact_urls", base_prefix=base_prefix)
+        )
     return response_data

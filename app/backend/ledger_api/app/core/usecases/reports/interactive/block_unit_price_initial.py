@@ -147,10 +147,18 @@ def execute_initial_step(df_formatted: Dict[str, Any]) -> Tuple[Dict[str, Any], 
         try:
             _df_dbg = df_formatted.get("shipment")
             if isinstance(_df_dbg, pd.DataFrame):
-                logger.debug(f"[DEBUG] initial_step shipment columns: {list(_df_dbg.columns)}")
-                logger.debug(f"[DEBUG] initial_step shipment head: {_df_dbg.head(3).to_dict()}")
+                logger.debug(
+                    "initial_step shipmentデータ",
+                    extra=create_log_context(
+                        columns=list(_df_dbg.columns),
+                        head=_df_dbg.head(3).to_dict()
+                    )
+                )
         except Exception as _e:
-            logger.debug(f"[DEBUG] failed to dump incoming shipment: {_e}")
+            logger.debug(
+                "shipmentダンプ失敗",
+                extra=create_log_context(error=str(_e))
+            )
 
         session_id = make_session_id()
 

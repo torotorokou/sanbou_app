@@ -12,6 +12,7 @@ from app.infra.report_utils import (
     load_all_filtered_dataframes,
     load_master_and_template,
 )
+from backend_shared.application.logging import create_log_context
 from app.core.domain.reports.processors.balance_sheet.balance_sheet_fact import (
     process_factory_report,
 )
@@ -54,7 +55,10 @@ def process(dfs: Dict[str, Any]) -> pd.DataFrame:
     optional_keys = template_config.get("optional_files", [])
     csv_keys = required_keys + optional_keys
 
-    logger.info(f"[テンプレート設定読込] key={template_key}, files={csv_keys}")
+    logger.info(
+        "テンプレート設定読込",
+        extra=create_log_context(template_key=template_key, files=csv_keys)
+    )
 
     df_dict = load_all_filtered_dataframes(dfs, csv_keys, template_name)
 

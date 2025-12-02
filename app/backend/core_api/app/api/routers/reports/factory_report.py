@@ -22,7 +22,13 @@ async def proxy_factory_report(request: Request):
     工場日報生成（ledger_apiへフォワード）
     FormDataをそのまま転送
     """
-    logger.info(f"Proxying factory_report request (FormData) from {request.client}")
+    logger.info(
+        "Proxying factory_report request (FormData)",
+        extra=create_log_context(
+            operation="proxy_factory_report",
+            client=str(request.client)
+        )
+    )
     logger.info(f"Request headers: {dict(request.headers)}")
     try:
         # FormDataをそのまま読み取り

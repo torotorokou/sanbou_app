@@ -8,6 +8,7 @@ Block Unit Price Interactive - Finalize Step Handler
 from typing import Any, Dict, Optional, cast
 import traceback
 import pandas as pd
+from backend_shared.application.logging import create_log_context
 
 from app.core.domain.reports.processors.block_unit_price.process2 import (
     apply_transport_fee_by_vendor,
@@ -181,11 +182,17 @@ def run_block_unit_price_pipeline(
     # パイプライン処理
     df_after = apply_transport_fee_by_vendor(df_after, df_transport_cost)
     log_checkpoint("after_apply_transport_fee_by_vendor", df_after, df_transport_cost)
-    logger.debug(f"AFTER vendor: df head: {fmt_head_rows(df_after)}")
+    logger.debug(
+        "運搬費(業者別)適用後",
+        extra=create_log_context(head=fmt_head_rows(df_after))
+    )
 
     df_after = apply_weight_based_transport_fee(df_after, df_transport_cost)
     log_checkpoint("after_apply_weight_based_transport_fee", df_after, df_transport_cost)
-    logger.debug(f"AFTER weight_based: df head: {fmt_head_rows(df_after)}")
+    logger.debug(
+        "運搬費(重量別)適用後",
+        extra=create_log_context(head=fmt_head_rows(df_after))
+    )
     
     # --- Fallback for transport fee ---
     # Ensure '運搬費' exists and is numeric; prefer newly calculated values but
@@ -204,11 +211,17 @@ def run_block_unit_price_pipeline(
 
     df_after = make_total_sum(df_after, master_csv)
     log_checkpoint("after_make_total_sum", df_after, master_csv)
-    logger.debug(f"AFTER total_sum: df head: {fmt_head_rows(df_after)}")
+    logger.debug(
+        "合計行追加後",
+        extra=create_log_context(head=fmt_head_rows(df_after))
+    )
 
     df_after = df_cul_filtering(df_after)
     log_checkpoint("after_df_cul_filtering", df_after, None)
-    logger.debug(f"AFTER cul_filtering: df head: {fmt_head_rows(df_after)}")
+    logger.debug(
+        "重複フィルタ後",
+        extra=create_log_context(head=fmt_head_rows(df_after))
+    )
 
     return df_after
 
@@ -227,9 +240,12 @@ def execute_finalize_step(state: Dict[str, Any]) -> tuple[pd.DataFrame, Dict[str
     """
     try:
         logger.debug(
-            f"Finalize step start | session_id={state.get('session_id')} | "
-            f"has_selection_df={bool(state.get('selection_df') is not None)} | "
-            f"selections_count={len(state.get('selections') or {})}"
+            "Finalize step開始",
+            extra=create_log_context(
+                session_id=state.get('session_id'),
+                has_selection_df=bool(state.get('selection_df') is not None),
+                selections_count=len(state.get('selections') or {})
+            )
         )
 
         # マスターCSVと運搬費用データの読み込み
@@ -242,7 +258,10 @@ def execute_finalize_step(state: Dict[str, Any]) -> tuple[pd.DataFrame, Dict[str
         df_transport_cost = reader.load_discounted_df()
         
         log_checkpoint("transport_cost_loaded", df_transport_cost)
-        logger.debug(f"transport_cost head: {fmt_head_rows(df_transport_cost)}")
+        logger.debug(
+            "運搬費用データ読込",
+            extra=create_log_context(head=fmt_head_rows(df_transport_cost))
+        )
 
         # 初期出荷データの取得
         df_shipment_initial: pd.DataFrame = state["df_shipment"]
@@ -424,7 +443,10 @@ def execute_finalize_with_optional_selections(
         if isinstance(selection_rows, list) and selection_rows:
             try:
                 state["selection_df"] = pd.DataFrame(selection_rows)
-                logger.info(f"selection_rows→DataFrame: rows={len(selection_rows)}")
+                logger.info(
+                    "selection_rows→DataFrame変換",
+                    extra=create_log_context(rows=len(selection_rows))
+                )
             except Exception as e:
                 logger.warning(
                     f"selection_rows の DataFrame 化に失敗: {type(e).__name__}: {e}"
@@ -436,7 +458,10 @@ def execute_finalize_with_optional_selections(
             # NOTE: resolve_and_apply_selections は元のクラスメソッドだが、
             # ここでは簡易的に状態に直接設定
             state["selections"] = selections
-            logger.info(f"selections 設定: count={len(selections)}")
+            logger.info(
+                "selections設定",
+                extra=create_log_context(count=len(selections))
+            )
             
             try:
                 sel_df = pd.DataFrame([
@@ -444,7 +469,10 @@ def execute_finalize_with_optional_selections(
                     for k, v in selections.items()
                 ])
                 state["selection_df"] = sel_df
-                logger.info(f"selections→selection_df 生成: rows={len(sel_df)}")
+                logger.info(
+                    "selections→selection_df生成",
+                    extra=create_log_context(rows=len(sel_df))
+                )
             except Exception as e:
                 logger.warning(
                     f"selections の DataFrame 化に失敗: {type(e).__name__}: {e}"

@@ -11,6 +11,7 @@
 """
 import logging
 
+from backend_shared.application.logging import log_usecase_execution, create_log_context
 from app.core.usecases.dashboard.dto import (
     BuildTargetCardInput,
     BuildTargetCardOutput,
@@ -24,7 +25,7 @@ logger = logging.getLogger(__name__)
 try:
     from cachetools import TTLCache
     _CACHE: TTLCache = TTLCache(maxsize=256, ttl=60)  # 60 seconds TTL
-    logger.info("TTL cache enabled for BuildTargetCardUseCase (60s, maxsize=256)")
+    logger.info("TTL cache enabled for BuildTargetCardUseCase", extra=create_log_context(operation="init_cache", ttl=60, maxsize=256))
 except ImportError:
     _CACHE = None  # type: ignore
     logger.info("cachetools not installed, running without TTL cache")
@@ -43,6 +44,7 @@ class BuildTargetCardUseCase:
     def __init__(self, query: IDashboardTargetQuery):
         self._query = query
 
+    @log_usecase_execution(usecase_name="BuildTargetCard", log_args=True)
     def execute(self, input_dto: BuildTargetCardInput) -> BuildTargetCardOutput:
         """
         ターゲットカードデータを取得・変換
@@ -67,16 +69,6 @@ class BuildTargetCardUseCase:
             InfrastructureError: DB接続エラー等（Repository層から伝播）
         """
         try:
-            # 開始ログ: 構造化情報
-            logger.info(
-                "Dashboard target card query started",
-                extra={
-                    "operation": "build_target_card",
-                    "requested_date": input_dto.requested_date,
-                    "mode": input_dto.mode,
-                }
-            )
-            
             # 1. Input DTOのバリデーション
             input_dto.validate()
             
@@ -90,7 +82,10 @@ class BuildTargetCardUseCase:
             # 3. キャッシュをチェック
             cache_key = (input_dto.requested_date, input_dto.mode)
             if _CACHE is not None and cache_key in _CACHE:
-                logger.debug(f"Cache hit for {cache_key}")
+                logger.debug(
+                    "Cache hit",
+                    extra=create_log_context(operation="build_target_card", cache_key=str(cache_key))
+                )
                 return BuildTargetCardOutput.from_domain(_CACHE[cache_key])
             
             # 4. Repository経由でデータ取得（最適化クエリ: 1回のSQLで取得）
@@ -108,35 +103,13 @@ class BuildTargetCardUseCase:
             # 6. キャッシュに格納
             if _CACHE is not None:
                 _CACHE[cache_key] = transformed_row
-                logger.debug(f"Cached result for {cache_key}")
-            
-            # 完了ログ: 構造化情報
-            logger.info(
-                "Dashboard target card query completed",
-                extra={
-                    "operation": "build_target_card",
-                    "requested_date": input_dto.requested_date,
-                    "mode": input_dto.mode,
-                    "found": transformed_row is not None,
-                    "cached": cache_key in _CACHE if _CACHE else False,
-                }
-            )
+                logger.debug(
+                    "Cached result",
+                    extra=create_log_context(operation="build_target_card", cache_key=str(cache_key))
+                )
             
             # 7. Output DTOに変換
             return BuildTargetCardOutput.from_domain(transformed_row)
-            
-        except Exception as e:
-            logger.error(
-                "Dashboard target card query failed",
-                extra={
-                    "operation": "build_target_card",
-                    "requested_date": input_dto.requested_date,
-                    "mode": input_dto.mode,
-                    "error": str(e),
-                },
-                exc_info=True
-            )
-            raise
 
     @staticmethod
     def clear_cache() -> None:

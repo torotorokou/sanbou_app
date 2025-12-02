@@ -55,7 +55,14 @@ class LedgerClient:
             httpx.HTTPStatusError: If Ledger API returns error status
         """
         async with httpx.AsyncClient(timeout=TIMEOUT) as client:
-            logger.info(f"Calling Ledger API: {self.base_url}/reports/{report_type}", extra={"params": params})
+            logger.info(
+                "Calling Ledger API",
+                extra=create_log_context(
+                    operation="call_ledger_api",
+                    url=f"{self.base_url}/reports/{report_type}",
+                    params=params
+                )
+            )
             response = await client.post(
                 f"{self.base_url}/reports/{report_type}",
                 json=params,

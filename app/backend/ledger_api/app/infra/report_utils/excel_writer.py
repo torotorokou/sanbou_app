@@ -131,7 +131,10 @@ def normalize_workbook_fonts(wb: Workbook, logger=None) -> None:
     if tracker:
         logger = logger or app_logger()
         replacements = ", ".join(f"{src}→{dst}" for src, dst in sorted(tracker))
-        logger.info(f"Excelテンプレートのフォントを標準フォントに置換しました: {replacements}")
+        logger.info(
+            "Excelフォント置換完了",
+            extra=create_log_context(replacements=replacements)
+        )
 
 
 def write_dataframe_to_worksheet(df: pd.DataFrame, ws: Worksheet, logger=None):
@@ -149,14 +152,20 @@ def write_dataframe_to_worksheet(df: pd.DataFrame, ws: Worksheet, logger=None):
             or cell_ref_str in ["", "未設定"]
             or not re.match(r"^[A-Za-z]+[0-9]+$", cell_ref_str)
         ):
-            logger.info(f"空欄または未設定のセルはスキップされました。行 {idx}")
+            logger.info(
+                "セルスキップ",
+                extra=create_log_context(row=idx, reason="empty_or_unset")
+            )
             continue
 
         try:
             cell = cast(Cell, ws[cell_ref_str])
 
             if isinstance(cell, MergedCell):
-                logger.warning(f"セル {cell_ref} は結合セルで書き込み不可。値: {value}")
+                logger.warning(
+                    "結合セル書き込み不可",
+                    extra=create_log_context(cell_ref=cell_ref, value=value)
+                )
                 continue
 
             # --- 書式をdeep copyで保持 ---
@@ -175,7 +184,11 @@ def write_dataframe_to_worksheet(df: pd.DataFrame, ws: Worksheet, logger=None):
             cell.number_format = original_format
 
         except Exception as e:
-            logger.error(f"セル {cell_ref} 書き込み失敗: {e} / 値: {value}")
+            logger.error(
+                "セル書き込み失敗",
+                extra=create_log_context(cell_ref=cell_ref, value=value, error=str(e)),
+                exc_info=True
+            )
 
 
 def rename_sheet(wb: Workbook, new_title: str):
