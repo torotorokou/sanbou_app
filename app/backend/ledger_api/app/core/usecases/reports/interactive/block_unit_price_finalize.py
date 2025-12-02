@@ -151,12 +151,13 @@ def merge_selected_transport_vendors_with_df(
     # 最終結果のログ
     final_vendor_counts = merged["運搬業者"].value_counts().to_dict()
     logger.info(
-        "=== MERGE_COPY DEBUG END ===",
+        f"=== MERGE DEBUG END === Vendor distribution: {final_vendor_counts}",
         extra=create_log_context(
-            operation="merge_transport_vendors_copy",
+            operation="merge_transport_vendors",
             after_cols=list(merged.columns),
             applied_count=int(merged["運搬業者"].notna().sum()),
-            vendor_distribution=final_vendor_counts
+            vendor_distribution=final_vendor_counts,
+            total_rows=len(merged)
         )
     )
     
@@ -240,12 +241,14 @@ def merge_selected_transport_vendors_copy(
         )
 
     logger.info(
-        "=== MERGE_COPY DEBUG END ===",
+        f"=== MERGE_COPY DEBUG END === Applied: {applied}, Vendor distribution: {vendor_counts}",
         extra=create_log_context(
             operation="merge_transport_vendors_copy",
             applied_rows=applied,
             notna_count=int(df_after["運搬業者"].notna().sum()),
-            vendor_distribution=vendor_counts
+            vendor_distribution=vendor_counts,
+            total_rows=len(df_after),
+            not_found_count=len(not_found)
         )
     )
     
@@ -390,7 +393,8 @@ def execute_finalize_step(state: Dict[str, Any]) -> tuple[pd.DataFrame, Dict[str
                     for k, v in selections_dict.items()
                 ])
                 logger.info(
-                    "selection_df created from selections dict",
+                    f"selection_df created from selections dict: shape={selection_df.shape}, "
+                    f"cols={list(selection_df.columns)}, sample={selection_df.head(3).to_dict()}",
                     extra=create_log_context(
                         operation="finalize_block_unit_price",
                         selection_df_cols=list(selection_df.columns),
@@ -412,16 +416,28 @@ def execute_finalize_step(state: Dict[str, Any]) -> tuple[pd.DataFrame, Dict[str
 
         # 選択の適用
         if selection_df is not None and not selection_df.empty:
-            logger.debug(
-                f"Applying selection_df to shipment: {fmt_cols(selection_df)}"
+            logger.info(
+                "Using merge_selected_transport_vendors_with_df",
+                extra=create_log_context(
+                    operation="finalize_block_unit_price",
+                    method="merge_with_df",
+                    selection_df_shape=selection_df.shape,
+                    selection_df_columns=list(selection_df.columns)
+                )
             )
             df_selected = merge_selected_transport_vendors_with_df(
                 df_shipment_initial, selection_df
             )
         else:
-            logger.debug(
-                f"No selection_df => apply selections(dict) copy | "
-                f"selections_count={len(state.get('selections') or {})}"
+            logger.info(
+                "Using merge_selected_transport_vendors_copy",
+                extra=create_log_context(
+                    operation="finalize_block_unit_price",
+                    method="merge_copy",
+                    selections_count=len(state.get('selections') or {}),
+                    has_selection_df=selection_df is not None,
+                    selection_df_empty=selection_df.empty if selection_df is not None else None
+                )
             )
             df_selected = merge_selected_transport_vendors_copy(
                 df_shipment_initial, state
