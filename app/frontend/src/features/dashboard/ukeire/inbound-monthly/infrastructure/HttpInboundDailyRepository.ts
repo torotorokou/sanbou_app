@@ -8,17 +8,18 @@ import type {
   FetchDailyParams,
   InboundDailyRow,
 } from "../ports/InboundDailyRepository";
+import { DASHBOARD_ENDPOINTS } from '@/shared';
 
 /**
  * HTTP経由で日次搬入量データを取得
  */
 export class HttpInboundDailyRepository implements InboundDailyRepository {
-  constructor(private readonly baseUrl: string = "/api/inbound") {}
+  constructor(private readonly baseUrl: string = DASHBOARD_ENDPOINTS.inboundDaily) {}
 
   async fetchDaily(params: FetchDailyParams): Promise<InboundDailyRow[]> {
     const { start, end, segment, cum_scope = "none" } = params;
 
-    const url = new URL(`${this.baseUrl}/daily`, window.location.origin);
+    const url = new URL(this.baseUrl, window.location.origin);
     url.searchParams.set("start", start);
     url.searchParams.set("end", end);
     if (segment != null && segment !== "") {

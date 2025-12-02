@@ -2,6 +2,7 @@
 import React from 'react';
 import { Spin } from 'antd';
 import type { CsvConfigGroup, ModalStepConfig, ReportConfig } from './types';
+import { REPORT_ENDPOINTS, getReportEndpoint } from '@shared/config/apiEndpoints';
 
 // ==============================
 // 🌐 共通定数・設定
@@ -10,42 +11,43 @@ import type { CsvConfigGroup, ModalStepConfig, ReportConfig } from './types';
 /**
  * APIエンドポイント定数
  * BFF統一: すべて /core_api 経由でアクセス
+ * 
+ * @deprecated 代わりに @shared/config/apiEndpoints から直接インポートしてください
  */
-export const CORE_API_URL = '/core_api/reports';
-export const LEDGER_REPORT_URL = '/core_api/reports';
+export const CORE_API_URL = REPORT_ENDPOINTS.base;
+export const LEDGER_REPORT_URL = REPORT_ENDPOINTS.base;
 
 /**
  * 帳簿タイプ別APIエンドポイント設定
  * すべて core_api(BFF) 経由でアクセス
+ * 
+ * @deprecated 代わりに @shared/config/apiEndpoints の REPORT_ENDPOINTS を使用してください
  */
 export const REPORT_API_ENDPOINTS = {
     // 工場日報系
-    factory_report: `${LEDGER_REPORT_URL}/factory_report`,
+    factory_report: REPORT_ENDPOINTS.factoryReport,
     // 互換キー（工場実績報告書）→ 同じエンドポイントを使用
-    factory_report2: `${LEDGER_REPORT_URL}/factory_report`,
+    factory_report2: REPORT_ENDPOINTS.factoryReport2,
 
     // 収支・管理表系
-    balance_sheet: `${LEDGER_REPORT_URL}/balance_sheet`,
-    average_sheet: `${LEDGER_REPORT_URL}/average_sheet`,
-    management_sheet: `${LEDGER_REPORT_URL}/management_sheet`,
+    balance_sheet: REPORT_ENDPOINTS.balanceSheet,
+    average_sheet: REPORT_ENDPOINTS.averageSheet,
+    management_sheet: REPORT_ENDPOINTS.managementSheet,
 
     // インタラクティブ帳簿系
     // BFF経由: /core_api/block_unit_price_interactive/initial
-    block_unit_price: `/core_api/block_unit_price_interactive/initial`,
+    block_unit_price: `${REPORT_ENDPOINTS.blockUnitPrice}/initial`,
 
     // 台帳系（将来追加用）
-    ledger_book: `${LEDGER_REPORT_URL}/ledger`,
+    ledger_book: REPORT_ENDPOINTS.ledgerBook,
 } as const;
 
 /**
  * 帳簿タイプからAPIエンドポイントを取得
+ * 
+ * @deprecated 代わりに @shared/config/apiEndpoints の getReportEndpoint を使用してください
  */
-export const getApiEndpoint = (reportKey: string): string => {
-    return (
-        REPORT_API_ENDPOINTS[reportKey as keyof typeof REPORT_API_ENDPOINTS] ||
-        CORE_API_URL
-    );
-};
+export const getApiEndpoint = getReportEndpoint;
 
 /**
  * インタラクティブ帳簿の設定
