@@ -242,6 +242,7 @@ def execute_finalize_step(state: Dict[str, Any]) -> tuple[pd.DataFrame, Dict[str
         logger.debug(
             "Finalize step開始",
             extra=create_log_context(
+                operation="finalize_block_unit_price",
                 session_id=state.get('session_id'),
                 has_selection_df=bool(state.get('selection_df') is not None),
                 selections_count=len(state.get('selections') or {})

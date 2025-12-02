@@ -151,6 +151,7 @@ def execute_initial_step(df_formatted: Dict[str, Any]) -> Tuple[Dict[str, Any], 
                 logger.debug(
                     "initial_step shipmentデータ",
                     extra=create_log_context(
+                        operation="initial_block_unit_price",
                         columns=list(_df_dbg.columns),
                         head=_df_dbg.head(3).to_dict()
                     )
