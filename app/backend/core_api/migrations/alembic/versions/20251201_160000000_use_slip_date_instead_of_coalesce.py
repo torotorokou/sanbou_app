@@ -116,6 +116,33 @@ def upgrade():
     print("[mart.v_sales_tree_daily] Recreated - automatically uses slip_date via detail_base.")
     
     # ============================================================
+    # 1.6. mart.v_customer_sales_daily の再作成 (v_sales_tree_daily を参照)
+    # ============================================================
+    print("[mart.v_customer_sales_daily] Recreating view (references v_sales_tree_daily)...")
+    
+    op.execute("""
+        CREATE VIEW mart.v_customer_sales_daily AS
+        SELECT
+            sales_date,
+            customer_id,
+            MAX(customer_name) AS customer_name,
+            MAX(rep_id) AS rep_id,
+            MAX(rep_name) AS rep_name,
+            COUNT(DISTINCT slip_no) AS visit_count,
+            SUM(amount_yen) AS total_amount_yen,
+            SUM(qty_kg) AS total_qty_kg,
+            SUM(qty_kg) AS total_net_weight_kg
+        FROM mart.v_sales_tree_daily v
+        GROUP BY sales_date, customer_id;
+    """)
+    
+    op.execute("""
+        GRANT SELECT ON mart.v_customer_sales_daily TO app_readonly;
+    """)
+    
+    print("[mart.v_customer_sales_daily] Recreated successfully.")
+    
+    # ============================================================
     # 2. mart.mv_sales_tree_daily の更新 (MATERIALIZED VIEW)
     # ============================================================
     print("[mart.mv_sales_tree_daily] Dropping and recreating with slip_date only...")
@@ -360,6 +387,33 @@ def downgrade():
     """)
     
     print("[mart.v_sales_tree_daily] Recreated with COALESCE via detail_base.")
+    
+    # ============================================================
+    # 1.6. mart.v_customer_sales_daily の再作成
+    # ============================================================
+    print("[mart.v_customer_sales_daily] Recreating view (references v_sales_tree_daily)...")
+    
+    op.execute("""
+        CREATE VIEW mart.v_customer_sales_daily AS
+        SELECT
+            sales_date,
+            customer_id,
+            MAX(customer_name) AS customer_name,
+            MAX(rep_id) AS rep_id,
+            MAX(rep_name) AS rep_name,
+            COUNT(DISTINCT slip_no) AS visit_count,
+            SUM(amount_yen) AS total_amount_yen,
+            SUM(qty_kg) AS total_qty_kg,
+            SUM(qty_kg) AS total_net_weight_kg
+        FROM mart.v_sales_tree_daily v
+        GROUP BY sales_date, customer_id;
+    """)
+    
+    op.execute("""
+        GRANT SELECT ON mart.v_customer_sales_daily TO app_readonly;
+    """)
+    
+    print("[mart.v_customer_sales_daily] Recreated with COALESCE via detail_base.")
     
     # ============================================================
     # 2. mart.mv_sales_tree_daily を元に戻す
