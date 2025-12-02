@@ -2,7 +2,7 @@
  * 受入ダッシュボード - Value Objects
  * 日付操作・純粋関数群
  * 
- * @deprecated 日付関連の関数は @shared/utils/dateUtils を使用してください
+ * @deprecated 日付関連の関数は @shared を使用してください
  * このファイルは後方互換性のために残されています
  */
 
@@ -18,9 +18,9 @@ import {
   monthNameJP,
   todayInMonth,
   dayjs,
-} from "@shared/utils/dateUtils";
-
-import type { IsoMonth, IsoDate } from "@shared/utils/dateUtils";
+  type IsoMonth,
+  type IsoDate,
+} from "@shared";
 
 // ========================================
 // Re-export from shared/utils/dateUtils

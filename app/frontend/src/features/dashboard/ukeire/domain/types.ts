@@ -2,10 +2,10 @@
  * 受入ダッシュボード - Domain Types
  * DTO型定義（API/Repository層のコントラクト）
  * 
- * @deprecated IsoMonth, IsoDate型は @shared/utils/dateUtils から使用してください
+ * @deprecated IsoMonth, IsoDate型は @shared から使用してください
  */
 
-import type { IsoMonth, IsoDate } from "@shared/utils/dateUtils";
+import type { IsoMonth, IsoDate } from "@shared";
 
 /**
  * @deprecated 代わりに @shared/utils/dateUtils の IsoMonth を使用してください
