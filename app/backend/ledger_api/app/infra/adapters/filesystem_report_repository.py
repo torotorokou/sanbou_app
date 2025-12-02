@@ -14,8 +14,9 @@ from typing import Optional
 from app.core.ports.inbound import ReportRepository
 from app.core.ports.inbound.report_repository import ArtifactUrls
 from app.infra.adapters.artifact_storage import get_report_artifact_storage
+from backend_shared.application.logging import get_module_logger, create_log_context
 
-logger = logging.getLogger(__name__)
+logger = get_module_logger(__name__)
 
 
 class FileSystemReportRepository(ReportRepository):

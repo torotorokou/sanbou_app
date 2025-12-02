@@ -14,6 +14,7 @@ from fastapi import APIRouter, Body, Request, Depends
 from fastapi.responses import FileResponse, StreamingResponse, JSONResponse
 from pydantic import BaseModel
 
+from backend_shared.application.logging import get_module_logger
 from app.core.usecases.rag import file_ingest_service as loader
 from app.infra.adapters.pdf import pdf_loader
 from app.api.schemas.query_schema import QueryRequest, QueryResponse
@@ -21,6 +22,7 @@ from app.api.dependencies import get_dummy_response_service, get_ai_response_ser
 from backend_shared.infra.adapters.presentation.response_base import SuccessApiResponse, ErrorApiResponse
 from backend_shared.infra.adapters.presentation.response_utils import api_response
 
+logger = get_module_logger(__name__)
 router = APIRouter()
 
 # --- 質問を受け取ってダミー回答を返すAPI ---
@@ -57,6 +59,7 @@ async def generate_answer(
     request: QueryRequest,
     ai_service=Depends(get_ai_response_service),
 ) -> JSONResponse:
+    logger.info("Generate answer request", extra={"query": request.query, "category": request.category, "tags": request.tags})
     try:
         print(
             "[DEBUG][/generate-answer] request:",
@@ -73,6 +76,7 @@ async def generate_answer(
         if "error_code" in result:
             error_code = result.get("error_code", "OPENAI_ERROR")
             error_detail = result.get("error_detail", "AI回答の生成に失敗しました。")
+            logger.error("Generate answer failed", extra={"error_code": error_code, "error_detail": error_detail})
             print(f"[DEBUG][/generate-answer] error detected: code={error_code}")
             
             # エラーコードに応じたヒントメッセージ
@@ -99,6 +103,7 @@ async def generate_answer(
 
         if answer_ok and pdf_ok:
             # 両方成功
+            logger.info("Generate answer succeeded", extra={"answer_length": len(result.get("answer", "")), "has_pdf": True})
             return SuccessApiResponse(
                 code="S200",
                 detail="AI回答生成成功",
@@ -106,6 +111,7 @@ async def generate_answer(
             ).to_json_response()
         if answer_ok and not pdf_ok:
             # 回答は成功、PDFは失敗
+            logger.warning("Generate answer succeeded without PDF", extra={"answer_length": len(result.get("answer", ""))})
             return SuccessApiResponse(
                 code="S200",
                 detail="AI回答生成（PDFなし）",
@@ -113,6 +119,7 @@ async def generate_answer(
                 result=result,
             ).to_json_response()
         # answer失敗（空/None）
+        logger.error("Generate answer failed - no answer generated")
         return ErrorApiResponse(
             code="E400",
             detail="回答生成に失敗しました。",
@@ -122,6 +129,7 @@ async def generate_answer(
         ).to_json_response()
     except ValueError as e:
         # 予期したValueErrorはanswerが空のケースとして扱い、ErrorApiResponse
+        logger.error("Generate answer ValueError", exc_info=True, extra={"error": str(e)})
         print("[DEBUG][/generate-answer] ValueError:", repr(e))
         return ErrorApiResponse(
             code="E400",
@@ -131,6 +139,7 @@ async def generate_answer(
             status_code=500,
         ).to_json_response()
     except Exception as e:
+        logger.error("Generate answer exception", exc_info=True, extra={"error": str(e)})
         print("[DEBUG][/generate-answer] ERROR:", repr(e))
         return api_response(
             status_code=500,

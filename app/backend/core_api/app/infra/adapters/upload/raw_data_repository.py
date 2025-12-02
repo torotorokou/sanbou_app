@@ -19,11 +19,11 @@ from datetime import datetime, date
 import pandas as pd
 from sqlalchemy.orm import Session
 from sqlalchemy import text, Table, MetaData, Column, Integer, BigInteger, Text, String, DateTime, Boolean, ForeignKey
-from backend_shared.application.logging import create_log_context
+from backend_shared.application.logging import create_log_context, get_module_logger
 
 from app.core.domain.csv import CsvKind
 
-logger = logging.getLogger(__name__)
+logger = get_module_logger(__name__)
 
 
 # csv_kind から stg テーブル名へのマッピング（CsvKind Enum を使用）

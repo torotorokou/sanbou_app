@@ -12,7 +12,7 @@ from typing import Optional
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from backend_shared.application.logging import create_log_context
+from backend_shared.application.logging import create_log_context, get_module_logger, get_module_logger
 from app.core.domain.sales_tree import (
     SummaryRequest,
     SummaryRow,
@@ -32,7 +32,7 @@ from app.core.domain.sales_tree_detail import (
 )
 from app.infra.db.db import get_engine
 
-logger = logging.getLogger(__name__)
+logger = get_module_logger(__name__)
 
 
 class SalesTreeRepository:

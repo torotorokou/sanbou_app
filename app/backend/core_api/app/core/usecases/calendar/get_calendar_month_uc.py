@@ -13,9 +13,9 @@ import logging
 
 from app.core.ports.calendar_port import ICalendarQuery
 from app.core.usecases.calendar.dto import GetCalendarMonthInput, GetCalendarMonthOutput
-from backend_shared.application.logging import log_usecase_execution
+from backend_shared.application.logging import log_usecase_execution, get_module_logger
 
-logger = logging.getLogger(__name__)
+logger = get_module_logger(__name__)
 
 
 class GetCalendarMonthUseCase:

@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException, Query, Depends
+from backend_shared.application.logging import get_module_logger
 from app.core.usecases.manuals_service import ManualsService
 from app.core.domain.manual_entity import ManualDetail, ManualListResponse, ManualCatalogResponse
 from backend_shared.core.domain.exceptions import NotFoundError
 from app.config.di_providers import get_manuals_service
 
-
+logger = get_module_logger(__name__)
 router = APIRouter(prefix="/manuals", tags=["manuals"])
 
 

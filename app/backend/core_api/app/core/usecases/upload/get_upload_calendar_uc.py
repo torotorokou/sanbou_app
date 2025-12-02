@@ -7,9 +7,9 @@ import logging
 from typing import List, Dict, Any
 
 from app.core.ports.upload_status_port import IUploadStatusQuery
-from backend_shared.application.logging import log_usecase_execution, create_log_context
+from backend_shared.application.logging import log_usecase_execution, create_log_context, get_module_logger
 
-logger = logging.getLogger(__name__)
+logger = get_module_logger(__name__)
 
 
 class GetUploadCalendarUseCase:

@@ -29,6 +29,7 @@ from app.core.ports.inbound import CsvGateway, ReportRepository
 from app.core.ports.inbound.report_repository import ArtifactUrls
 from app.core.domain.reports.factory_report import FactoryReport
 from backend_shared.infra.adapters.fastapi.error_handlers import DomainError
+from backend_shared.application.logging import get_module_logger, create_log_context
 from backend_shared.utils.date_filter_utils import (
     filter_by_period_from_max_date as shared_filter_by_period_from_max_date,
 )
@@ -38,7 +39,7 @@ from app.core.usecases.reports.factory_report import process as factory_report_p
 from app.infra.report_utils import write_values_to_template, get_template_config
 from app.infra.utils.pdf_conversion import convert_excel_to_pdf
 
-logger = logging.getLogger(__name__)
+logger = get_module_logger(__name__)
 
 
 class GenerateFactoryReportUseCase:
