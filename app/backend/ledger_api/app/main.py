@@ -19,6 +19,11 @@ except Exception:  # if not available, inject stub module
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
+# ==========================================
+# 統一ロギング設定のインポート（backend_shared）
+# ==========================================
+from backend_shared.application.logging import setup_logging
 from backend_shared.infra.frameworks.logging_utils import setup_uvicorn_access_filter
 from backend_shared.infra.adapters.middleware import RequestIdMiddleware
 from backend_shared.infra.adapters.fastapi import register_error_handlers
@@ -31,6 +36,13 @@ from app.api.routers.reports import reports_router
 from app.api.routers.jobs import router as jobs_router
 from app.api.routers.notifications import router as notifications_router
 from app.settings import settings
+
+# ==========================================
+# 統一ロギング設定の初期化
+# ==========================================
+# テクニカルログ基盤: JSON形式、Request ID付与、Uvicorn統合
+# 環境変数 LOG_LEVEL で制御可能（DEBUG/INFO/WARNING/ERROR/CRITICAL）
+setup_logging()
 
 # FastAPIアプリケーションの初期化
 # NOTE:

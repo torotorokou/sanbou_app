@@ -9,6 +9,7 @@ from fastapi.responses import StreamingResponse, JSONResponse
 import httpx
 
 from backend_shared.core.domain.exceptions import ExternalServiceError, ValidationError
+from backend_shared.application.logging import create_log_context
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +37,15 @@ async def proxy_manual_doc(doc_id: str, filename: str, request: Request):
     if request.url.query:
         upstream += f"?{request.url.query}"
     
-    logger.info(f"[BFF Manual] Proxying doc request: {upstream}")
+    logger.info(
+        "[BFF Manual] Proxying doc request",
+        extra=create_log_context(
+            operation="proxy_manual_doc",
+            doc_id=doc_id,
+            filename=filename,
+            upstream=upstream
+        )
+    )
     
     # 透過するリクエストヘッダ（Range対応、キャッシュ制御）
     req_headers = {}
@@ -52,7 +61,14 @@ async def proxy_manual_doc(doc_id: str, filename: str, request: Request):
             async with client.stream("GET", upstream, headers=req_headers) as resp:
                 if resp.status_code >= 400:
                     body = await resp.aread()
-                    logger.error(f"[BFF Manual] Upstream error: {resp.status_code} - {body.decode(errors='ignore')}")
+                    logger.error(
+                        "[BFF Manual] Upstream error",
+                        extra=create_log_context(
+                            operation="proxy_manual_doc",
+                            status_code=resp.status_code,
+                            response_body=body.decode(errors='ignore')[:200]
+                        )
+                    )
                     raise ExternalServiceError(
                         service_name="manual_api",
                         message=f"Document retrieval failed: {body.decode(errors='ignore')}",
@@ -117,8 +133,14 @@ async def proxy_manual_search(request: Request):
         raise ValidationError(message=f"Invalid JSON: {str(e)}", field="request_body")
     
     upstream = f"{MANUAL_API_BASE}/manual/search"
-    logger.info(f"[BFF Manual] Proxying search request: {upstream}")
-    logger.debug(f"[BFF Manual] Search payload: {payload}")
+    logger.info(
+        "[BFF Manual] Proxying search request",
+        extra=create_log_context(operation="proxy_search", upstream=upstream)
+    )
+    logger.debug(
+        "[BFF Manual] Search payload",
+        extra=create_log_context(operation="proxy_search", payload=payload)
+    )
     
     try:
         async with httpx.AsyncClient(timeout=60.0) as client:

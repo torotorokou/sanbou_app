@@ -6,7 +6,14 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+
+# ==========================================
+# 統一ロギング設定のインポート（backend_shared）
+# ==========================================
+from backend_shared.application.logging import setup_logging
 from backend_shared.infra.frameworks.logging_utils import setup_uvicorn_access_filter
+from backend_shared.infra.adapters.middleware import RequestIdMiddleware
+
 from backend_shared.core.domain.exceptions import ValidationError, NotFoundError, InfrastructureError
 from fastapi.responses import JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -20,6 +27,13 @@ from app.api.routers import query, manuals  # ← query.py に router を定義
 load_dotenv(dotenv_path=CONFIG_ENV)
 _secrets_file = load_env_and_secrets()
 print(f"[DEBUG] secrets loaded from: {_secrets_file}")
+
+# ==========================================
+# 統一ロギング設定の初期化
+# ==========================================
+# テクニカルログ基盤: JSON形式、Request ID付与、Uvicorn統合
+# 環境変数 LOG_LEVEL で制御可能（DEBUG/INFO/WARNING/ERROR/CRITICAL）
+setup_logging()
 
 # --- PYTHONPATH 追加（任意） ---------------------------------------------------
 py_path = os.getenv("PYTHONPATH")
@@ -37,6 +51,11 @@ app = FastAPI(
     docs_url=os.getenv("API_DOCS_URL", "/docs"),
     openapi_url=os.getenv("API_OPENAPI_URL", "/openapi.json"),
 )
+
+# --- ミドルウェア: Request ID追跡 ----------------------------------------------
+# 統一ロギング基盤: HTTPリクエストごとに一意のrequest_idを割り当て、ContextVarで管理
+# 全ログ出力にrequest_idが付与され、分散トレーシングが可能になる
+app.add_middleware(RequestIdMiddleware)
 
 # --- 静的配信: /pdfs ----------------------------------------------------------
 PDF_DIR = Path("/backend/static/pdfs")
