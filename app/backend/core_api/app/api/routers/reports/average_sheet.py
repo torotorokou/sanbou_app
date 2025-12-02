@@ -7,6 +7,7 @@ from fastapi import APIRouter, Request
 import httpx
 
 from backend_shared.core.domain.exceptions import ExternalServiceError
+from backend_shared.application.logging import create_log_context
 from app.shared.utils import rewrite_artifact_urls_to_bff
 
 logger = logging.getLogger(__name__)
