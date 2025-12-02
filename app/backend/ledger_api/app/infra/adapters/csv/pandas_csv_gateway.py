@@ -5,7 +5,6 @@ Pandas CSV Gateway (pandas を使った CSV 読み込み実装).
 既存の backend_shared.utils.csv_reader と services/csv を活用します。
 """
 
-import logging
 import time
 from typing import Any, Dict, Optional
 

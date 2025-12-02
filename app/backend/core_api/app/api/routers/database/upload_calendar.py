@@ -6,11 +6,11 @@ CSVアップロードカレンダー取得と削除エンドポイント
   - GET /database/upload-calendar: 年月指定でアップロードカレンダー取得
   - DELETE /database/upload-calendar/{upload_file_id}: 特定日付・CSV種別のデータを論理削除
 """
-import logging
 from typing import Optional
 from datetime import date
 from fastapi import APIRouter, Depends, Query
 
+from backend_shared.application.logging import get_module_logger
 from app.config.di_providers import (
     get_upload_calendar_detail_uc,
     get_delete_upload_scope_uc,
@@ -19,7 +19,7 @@ from app.core.usecases.upload.get_upload_calendar_detail_uc import GetUploadCale
 from app.core.usecases.upload.delete_upload_scope_uc import DeleteUploadScopeUseCase
 from backend_shared.core.domain.exceptions import ValidationError, InfrastructureError, NotFoundError
 
-logger = logging.getLogger(__name__)
+logger = get_module_logger(__name__)
 
 router = APIRouter()
 

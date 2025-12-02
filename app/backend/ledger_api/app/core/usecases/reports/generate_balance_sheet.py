@@ -5,7 +5,6 @@ Generate Balance Sheet UseCase.
 factory_reportと同じClean Architectureパターンを適用。
 """
 
-import logging
 import time
 from datetime import date
 from io import BytesIO

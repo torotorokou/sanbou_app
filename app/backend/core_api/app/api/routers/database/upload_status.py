@@ -5,14 +5,14 @@ Database Upload Status Router - Upload status query
 エンドポイント:
   - GET /database/upload/status/{upload_file_id}: ステータス照会
 """
-import logging
 from fastapi import APIRouter, Depends
 
+from backend_shared.application.logging import get_module_logger
 from backend_shared.infra.adapters.presentation import SuccessApiResponse, ErrorApiResponse
 from app.config.di_providers import get_upload_status_uc
 from app.core.usecases.upload.get_upload_status_uc import GetUploadStatusUseCase
 
-logger = logging.getLogger(__name__)
+logger = get_module_logger(__name__)
 
 router = APIRouter()
 

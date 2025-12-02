@@ -5,7 +5,6 @@ File System Report Repository (ファイルシステムへのレポート保存�
 既存の artifacts/artifact_service を活用します。
 """
 
-import logging
 import time
 from datetime import date
 from io import BytesIO

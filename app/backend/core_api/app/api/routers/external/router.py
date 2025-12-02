@@ -9,8 +9,8 @@ For short synchronous calls only. Heavy jobs should be queued.
 """
 from fastapi import APIRouter, Depends
 import httpx
-import logging
 
+from backend_shared.application.logging import get_module_logger
 from app.config.di_providers import (
     get_ask_rag_uc,
     get_list_manuals_uc,
@@ -29,7 +29,7 @@ from app.api.schemas import RAGAskRequest, RAGAskResponse, ManualListResponse
 from backend_shared.core.domain.exceptions import ExternalServiceError, NotFoundError
 
 router = APIRouter(prefix="/external", tags=["external"])
-logger = logging.getLogger(__name__)
+logger = get_module_logger(__name__)
 
 
 @router.post("/rag/ask", response_model=RAGAskResponse, summary="RAGに質問する")

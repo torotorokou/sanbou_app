@@ -5,13 +5,12 @@ Error Handler Middleware - 統一エラーハンドリング
 カスタム例外を HTTP ステータスコードにマッピングし、
 構造化されたエラーレスポンスを返します。
 """
-import logging
 from fastapi import Request, status
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from backend_shared.application.logging import create_log_context
+from backend_shared.application.logging import create_log_context, get_module_logger
 from backend_shared.core.domain.exceptions import (
     ValidationError,
     NotFoundError,
@@ -23,7 +22,7 @@ from backend_shared.core.domain.exceptions import (
     DomainException,
 )
 
-logger = logging.getLogger(__name__)
+logger = get_module_logger(__name__)
 
 
 async def domain_exception_handler(request: Request, exc: DomainException) -> JSONResponse:

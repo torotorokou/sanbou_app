@@ -7,15 +7,15 @@ Database Upload Router - CSV upload endpoints
   - POST /database/upload/shogun_csv_final: 最終版CSVアップロード
   - POST /database/upload/shogun_csv_flash: 速報版CSVアップロード
 """
-import logging
 from typing import Optional
 from fastapi import APIRouter, UploadFile, File, Depends, BackgroundTasks
 
+from backend_shared.application.logging import get_module_logger
 from backend_shared.infra.adapters.presentation import ErrorApiResponse
 from app.config.di_providers import get_uc_default, get_uc_flash, get_uc_stg_final
 from app.core.usecases.upload.upload_shogun_csv_uc import UploadShogunCsvUseCase
 
-logger = logging.getLogger(__name__)
+logger = get_module_logger(__name__)
 
 router = APIRouter()
 

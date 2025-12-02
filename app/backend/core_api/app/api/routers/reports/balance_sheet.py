@@ -1,16 +1,15 @@
 """
 Balance Sheet - 収支表生成エンドポイント
 """
-import logging
 import os
 from fastapi import APIRouter, Request
 import httpx
 
 from backend_shared.core.domain.exceptions import ExternalServiceError
-from backend_shared.application.logging import create_log_context
+from backend_shared.application.logging import create_log_context, get_module_logger
 from app.shared.utils import rewrite_artifact_urls_to_bff
 
-logger = logging.getLogger(__name__)
+logger = get_module_logger(__name__)
 
 router = APIRouter()
 

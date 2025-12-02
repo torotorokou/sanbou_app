@@ -3,7 +3,6 @@ Generate Average Sheet UseCase.
 
 単価平均表生成のアプリケーションロジック。
 """
-import logging
 import time
 from datetime import date
 from io import BytesIO

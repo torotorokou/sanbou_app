@@ -7,9 +7,9 @@ Sales Tree Query Router - Summary, daily series, and pivot endpoints
   - POST /analytics/sales-tree/daily-series: 日次推移データ取得
   - POST /analytics/sales-tree/pivot: Pivotデータ取得（詳細ドリルダウン）
 """
-import logging
 from fastapi import APIRouter, Depends
 
+from backend_shared.application.logging import get_module_logger
 from app.config.di_providers import (
     get_fetch_sales_tree_summary_uc,
     get_fetch_sales_tree_daily_series_uc,
@@ -28,7 +28,7 @@ from app.core.domain.sales_tree import (
 )
 from backend_shared.core.domain.exceptions import InfrastructureError
 
-logger = logging.getLogger(__name__)
+logger = get_module_logger(__name__)
 router = APIRouter()
 
 
