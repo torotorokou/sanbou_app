@@ -4,7 +4,8 @@
  */
 
 import React from 'react';
-import { Card, Divider } from 'antd';
+import { Card, Divider, Button } from 'antd';
+import { ReloadOutlined } from '@ant-design/icons';
 import { CategoryModeSection } from './components/sections/CategoryModeSection';
 import { PeriodSection } from './components/sections/PeriodSection';
 import { RepFilterSection } from './components/sections/RepFilterSection';
@@ -55,6 +56,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
   sortKeyOptions,
   onRepIdsChange,
   onFilterIdsChange,
+  onReset,
 }) => {
   const layout = useFilterLayout();
 
@@ -62,6 +64,15 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
     <Card 
       className={`${styles.accentCard} ${styles.accentPrimary} sales-tree-accent-card sales-tree-accent-primary`}
       title={<div className={`${styles.cardSectionHeader} sales-tree-card-section-header`}>条件</div>}
+      extra={
+        <Button 
+          icon={<ReloadOutlined />} 
+          onClick={onReset}
+          size="small"
+        >
+          リセット
+        </Button>
+      }
     >
       {/* セクション1: 種別・モード・TopN/ソート */}
       <CategoryModeSection

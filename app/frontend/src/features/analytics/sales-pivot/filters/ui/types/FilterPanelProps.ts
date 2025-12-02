@@ -62,6 +62,13 @@ export interface RepFilterProps {
 }
 
 /**
+ * リセット関連のProps
+ */
+export interface ResetProps {
+  onReset: () => void;
+}
+
+/**
  * FilterPanelの全Props
  * 各責務の型を結合
  */
@@ -69,4 +76,5 @@ export type FilterPanelProps =
   & PeriodProps 
   & CategoryProps 
   & ModeControlProps 
-  & RepFilterProps;
+  & RepFilterProps
+  & ResetProps;
