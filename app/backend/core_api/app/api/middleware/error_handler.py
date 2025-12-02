@@ -191,7 +191,7 @@ async def infrastructure_exception_handler(request: Request, exc: Infrastructure
         "Infrastructure error",
         extra=create_log_context(
             operation="infrastructure_error_handler",
-            message=exc.message,
+            error_message=exc.message,
             cause=str(exc.cause) if exc.cause else None
         ),
         exc_info=True

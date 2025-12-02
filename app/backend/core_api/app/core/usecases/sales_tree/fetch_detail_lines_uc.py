@@ -48,7 +48,7 @@ class FetchSalesTreeDetailLinesUseCase:
         except Exception as e:
             logger.error(
                 "FetchSalesTreeDetailLinesエラー",
-                extra=create_log_context(error=str(e)),
+                extra=create_log_context(operation="fetch_detail_lines", error=str(e)),
                 exc_info=True
             )
             raise

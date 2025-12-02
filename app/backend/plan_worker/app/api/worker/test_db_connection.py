@@ -16,7 +16,7 @@ def main():
                 logger.info("✅ PostgreSQLに接続成功!")
                 logger.info(
                     "PostgreSQL version",
-                    extra=create_log_context(version=version)
+                    extra=create_log_context(operation="test_db_connection", version=version)
                 )
     except Exception as e:
         logger.error("❌ 接続失敗: %s", e)

@@ -217,14 +217,14 @@ ORDER BY rep_id, rn
             result_list = list(summary_dict.values())
             logger.info(
                 "fetch_summary完了",
-                extra=create_log_context(reps_count=len(result_list))
+                extra=create_log_context(operation="fetch_summary", reps_count=len(result_list))
             )
             return result_list
         
         except Exception as e:
             logger.error(
                 "fetch_summaryエラー",
-                extra=create_log_context(error=str(e)),
+                extra=create_log_context(operation="fetch_summary", error=str(e)),
                 exc_info=True
             )
             raise
@@ -306,14 +306,14 @@ ORDER BY sales_date
             
             logger.info(
                 "fetch_daily_series完了",
-                extra=create_log_context(points_count=len(points))
+                extra=create_log_context(operation="fetch_daily_series", points_count=len(points))
             )
             return points
         
         except Exception as e:
             logger.error(
                 "fetch_daily_seriesエラー",
-                extra=create_log_context(error=str(e)),
+                extra=create_log_context(operation="fetch_daily_series", error=str(e)),
                 exc_info=True
             )
             raise
@@ -431,7 +431,7 @@ LIMIT :page_size OFFSET :offset
             
             logger.info(
                 "fetch_pivot SQL実行",
-                extra=create_log_context(where_sql=where_sql, params=str(params))
+                extra=create_log_context(operation="fetch_pivot", where_sql=where_sql, params=str(params))
             )
             
             with self._engine.begin() as conn:
@@ -469,14 +469,14 @@ LIMIT :page_size OFFSET :offset
             
             logger.info(
                 "fetch_pivot完了",
-                extra=create_log_context(rows_count=len(rows), next_cursor=next_cursor)
+                extra=create_log_context(operation="fetch_pivot", rows_count=len(rows), next_cursor=next_cursor)
             )
             return CursorPage(items=rows, next_cursor=next_cursor)
         
         except Exception as e:
             logger.error(
                 "fetch_pivotエラー",
-                extra=create_log_context(error=str(e)),
+                extra=create_log_context(operation="fetch_pivot", error=str(e)),
                 exc_info=True
             )
             raise

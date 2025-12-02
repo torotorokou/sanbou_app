@@ -237,6 +237,7 @@ class RawDataRepository:
             logger.info(
                 "upload_fileレコード作成",
                 extra=create_log_context(
+                    operation="create_upload_file",
                     file_id=file_id,
                     csv_type=csv_type,
                     hash_prefix=file_hash[:8]
@@ -247,7 +248,7 @@ class RawDataRepository:
             self.db.rollback()
             logger.error(
                 "upload_file作成失敗",
-                extra=create_log_context(error=str(e)),
+                extra=create_log_context(operation="create_upload_file", error=str(e)),
                 exc_info=True
             )
             raise
@@ -294,6 +295,7 @@ class RawDataRepository:
             logger.info(
                 "重複検出(hash一致)",
                 extra=create_log_context(
+                    operation="check_duplicate_upload",
                     csv_type=csv_type,
                     hash_prefix=file_hash[:8],
                     existing_id=result.id
@@ -324,6 +326,7 @@ class RawDataRepository:
                 logger.info(
                     "重複検出(fallback一致)",
                     extra=create_log_context(
+                        operation="check_duplicate_upload",
                         csv_type=csv_type,
                         file_name=file_name,
                         existing_id=result.id
@@ -391,13 +394,13 @@ class RawDataRepository:
             self.db.commit()
             logger.info(
                 "upload_fileステータス更新",
-                extra=create_log_context(file_id=file_id, status=status)
+                extra=create_log_context(operation="update_upload_status", file_id=file_id, status=status)
             )
         except Exception as e:
             self.db.rollback()
             logger.error(
                 "upload_fileステータス更新失敗",
-                extra=create_log_context(error=str(e)),
+                extra=create_log_context(operation="update_upload_status", error=str(e)),
                 exc_info=True
             )
             raise
@@ -427,13 +430,13 @@ class RawDataRepository:
             self.db.commit()
             logger.info(
                 "upload_file論理削除",
-                extra=create_log_context(file_id=file_id, deleted_by=deleted_by)
+                extra=create_log_context(operation="soft_delete_upload_file", file_id=file_id, deleted_by=deleted_by)
             )
         except Exception as e:
             self.db.rollback()
             logger.error(
                 "upload_file論理削除失敗",
-                extra=create_log_context(error=str(e)),
+                extra=create_log_context(operation="soft_delete_upload_file", error=str(e)),
                 exc_info=True
             )
             raise
@@ -476,7 +479,7 @@ class RawDataRepository:
         if not dates_list:
             logger.debug(
                 "削除対象日付なし",
-                extra=create_log_context(csv_kind=csv_kind)
+                extra=create_log_context(operation="delete_shogun_data_for_dates", csv_kind=csv_kind)
             )
             return 0
         
@@ -647,6 +650,7 @@ class RawDataRepository:
                 logger.warning(
                     "直近重複検出",
                     extra=create_log_context(
+                        operation="check_duplicate_upload",
                         csv_type=csv_type,
                         hash_prefix=file_hash[:8],
                         uploaded_by=uploaded_by
@@ -657,7 +661,7 @@ class RawDataRepository:
         except Exception as e:
             logger.error(
                 "直近重複チェック失敗",
-                extra=create_log_context(error=str(e)),
+                extra=create_log_context(operation="check_duplicate_upload", error=str(e)),
                 exc_info=True
             )
             # エラー時は安全側に倒して False を返す（処理は継続させる）
@@ -894,7 +898,7 @@ class RawDataRepository:
         except Exception as e:
             logger.error(
                 "upload_status取得失敗",
-                extra=create_log_context(upload_file_id=upload_file_id, error=str(e)),
+                extra=create_log_context(operation="get_upload_status", upload_file_id=upload_file_id, error=str(e)),
                 exc_info=True
             )
             raise

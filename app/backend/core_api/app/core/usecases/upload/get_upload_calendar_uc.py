@@ -53,7 +53,7 @@ class GetUploadCalendarUseCase:
         
         logger.info(
             "アップロードカレンダー取得開始",
-            extra=create_log_context(year=year, month=month)
+            extra=create_log_context(operation="get_upload_calendar", year=year, month=month)
         )
         
         # データ取得（Port経由）
@@ -61,7 +61,7 @@ class GetUploadCalendarUseCase:
         
         logger.info(
             "アップロードカレンダー取得成功",
-            extra=create_log_context(items_count=len(items))
+            extra=create_log_context(operation="get_upload_calendar", items_count=len(items))
         )
         
         return items

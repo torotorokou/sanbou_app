@@ -50,7 +50,7 @@ class GetUploadStatusUseCase:
         
         logger.info(
             "アップロードステータス取得開始",
-            extra=create_log_context(upload_file_id=upload_file_id)
+            extra=create_log_context(operation="get_upload_status", upload_file_id=upload_file_id)
         )
         
         # データ取得（Port経由）
@@ -59,12 +59,13 @@ class GetUploadStatusUseCase:
         if status is None:
             logger.warning(
                 "アップロードファイル未検出",
-                extra=create_log_context(upload_file_id=upload_file_id)
+                extra=create_log_context(operation="get_upload_status", upload_file_id=upload_file_id)
             )
         else:
             logger.info(
                 "アップロードステータス取得成功",
                 extra=create_log_context(
+                    operation="get_upload_status",
                     upload_file_id=upload_file_id,
                     status=status.get('processing_status')
                 )

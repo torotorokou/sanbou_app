@@ -65,6 +65,6 @@ class GetUploadCalendarDetailUseCase:
         
         logger.info(
             "アップロードカレンダー詳細取得",
-            extra=create_log_context(year=year, month=month, items_count=len(items))
+            extra=create_log_context(operation="get_upload_calendar_detail", year=year, month=month, items_count=len(items))
         )
         return {"items": items}
