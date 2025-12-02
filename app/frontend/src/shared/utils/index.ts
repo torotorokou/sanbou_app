@@ -4,6 +4,9 @@
 // 日付関連
 export * from './dateUtils';
 
+// エラーハンドリング関連
+export * from './errorHandling';
+
 // アンカー関連
 export * from './anchors';
 
