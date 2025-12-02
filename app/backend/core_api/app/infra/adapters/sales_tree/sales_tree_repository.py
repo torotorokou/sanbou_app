@@ -82,6 +82,7 @@ class SalesTreeRepository:
             logger.info(
                 "fetch_summary開始",
                 extra=create_log_context(
+                    operation="fetch_summary",
                     mode=req.mode,
                     date_from=str(req.date_from),
                     date_to=str(req.date_to),

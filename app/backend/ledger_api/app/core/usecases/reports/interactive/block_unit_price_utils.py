@@ -164,7 +164,7 @@ def ensure_datetime_col(df: Optional[pd.DataFrame], col: str = "伝票日付") -
             
             logger.debug(
                 "epoch形式検出",
-                extra=create_log_context(column=col, unit=unit)
+                extra=create_log_context(operation="normalize_datetime_columns", column=col, unit=unit)
             )
             df[col] = pd.to_datetime(ser, unit=unit, errors="coerce")
             return df
@@ -174,7 +174,7 @@ def ensure_datetime_col(df: Optional[pd.DataFrame], col: str = "伝票日付") -
     except Exception as e:
         logger.warning(
             "日付正規化失敗",
-            extra=create_log_context(column=col, error_type=type(e).__name__, error=str(e))
+            extra=create_log_context(operation="normalize_datetime_columns", column=col, error_type=type(e).__name__, error=str(e))
         )
         return df
 

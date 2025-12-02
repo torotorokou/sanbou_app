@@ -107,6 +107,7 @@ class CustomerChurnQueryAdapter:
         logger.info(
             "Lost customers found",
             extra=create_log_context(
+                operation="find_lost_customers",
                 count=len(rows),
                 current_period=f"{current_start} to {current_end}",
                 previous_period=f"{previous_start} to {previous_end}"

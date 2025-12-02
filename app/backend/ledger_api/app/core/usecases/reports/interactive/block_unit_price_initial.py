@@ -158,7 +158,7 @@ def execute_initial_step(df_formatted: Dict[str, Any]) -> Tuple[Dict[str, Any], 
         except Exception as _e:
             logger.debug(
                 "shipmentダンプ失敗",
-                extra=create_log_context(error=str(_e))
+                extra=create_log_context(operation="initialize_block_unit_price", error=str(_e))
             )
 
         session_id = make_session_id()
