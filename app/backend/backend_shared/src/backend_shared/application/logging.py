@@ -45,6 +45,13 @@ logger = logging.getLogger(__name__)
 
 
 # ========================================
+# グローバル状態: Logging 設定済みフラグ
+# ========================================
+# setup_logging() の重複呼び出しを防ぐためのフラグ
+_logging_configured: bool = False
+
+
+# ========================================
 # ContextVar: Request ID の保持
 # ========================================
 # リクエスト単位でrequest_idを保持するためのContextVar
@@ -123,13 +130,14 @@ def create_json_formatter() -> logging.Formatter:
 # ========================================
 # Logging 設定関数
 # ========================================
-def setup_logging(log_level: str | None = None) -> None:
+def setup_logging(log_level: str | None = None, force: bool = False) -> None:
     """
     アプリケーション全体の logging 設定を行う
     
     Args:
         log_level: ログレベル (DEBUG/INFO/WARNING/ERROR/CRITICAL)
                    省略時は環境変数 LOG_LEVEL または INFO
+        force: True の場合、既に設定済みでも再設定を強制する（テスト用）
                    
     Description:
         以下の設定を行います:
@@ -140,12 +148,19 @@ def setup_logging(log_level: str | None = None) -> None:
         
     Note:
         アプリケーション起動時に1回だけ呼び出してください。
-        複数回呼び出すと、ハンドラが重複してログが多重出力されます。
+        複数回呼び出しても、2回目以降は無視されます（force=True でない限り）。
         
     Example:
         >>> from backend_shared.application.logging import setup_logging
         >>> setup_logging()  # app.py の最初で実行
+        >>> setup_logging()  # 2回目は無視される
     """
+    global _logging_configured
+    
+    # 既に設定済みの場合はスキップ（force=True でない限り）
+    if _logging_configured and not force:
+        return
+    
     # ログレベルの決定
     if log_level is None:
         log_level = os.getenv("LOG_LEVEL", "INFO").upper()
@@ -201,6 +216,9 @@ def setup_logging(log_level: str | None = None) -> None:
     # httpx, httpcore などの詳細ログを抑制（本番環境でのノイズ削減）
     logging.getLogger("httpx").setLevel(logging.WARNING)
     logging.getLogger("httpcore").setLevel(logging.WARNING)
+    
+    # 設定完了フラグを立てる
+    _logging_configured = True
     
     # 設定完了ログ
     format_type = "json" if HAS_JSON_LOGGER else "text"
