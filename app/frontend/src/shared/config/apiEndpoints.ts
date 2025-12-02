@@ -38,8 +38,8 @@ export const REPORT_ENDPOINTS = {
   managementSheet: `${CORE_API_BASE}/reports/management_sheet`,
   
   // インタラクティブ帳簿系
-  /** ブロック単価インタラクティブ処理 */
-  blockUnitPrice: `${CORE_API_BASE}/block_unit_price_interactive`,
+  /** ブロック単価インタラクティブ処理 (初期化エンドポイント) */
+  blockUnitPrice: `${CORE_API_BASE}/block_unit_price_interactive/initial`,
   
   // 台帳系
   /** 台帳 */
