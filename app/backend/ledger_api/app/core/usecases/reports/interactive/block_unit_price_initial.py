@@ -268,7 +268,7 @@ def execute_initial_step(df_formatted: Dict[str, Any]) -> Tuple[Dict[str, Any], 
                 "entry_id_dtype": str(df_shipment["entry_id"].dtype),
                 "entry_id_sample": df_shipment["entry_id"].dropna().head(5).tolist()
             }
-            logger.debug(
+            logger.info(
                 "INITIAL entry_id info",
                 extra=create_log_context(
                     operation="initial_block_unit_price",

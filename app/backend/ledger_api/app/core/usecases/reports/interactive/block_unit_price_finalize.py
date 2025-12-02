@@ -70,7 +70,7 @@ def merge_selected_transport_vendors_with_df(
     sel = selection_df.copy()
     sel["entry_id"] = sel["entry_id"].astype(str)
 
-    logger.debug(
+    logger.info(
         f"=== MERGE DEBUG START ===",
         extra=create_log_context(
             operation="merge_transport_vendors",
@@ -119,7 +119,7 @@ def merge_selected_transport_vendors_with_df(
     
     # マージ結果の統計
     merge_stats = merged["_merge"].value_counts().to_dict()
-    logger.debug(
+    logger.info(
         f"Merge statistics: {merge_stats}",
         extra=create_log_context(
             operation="merge_transport_vendors",
@@ -150,10 +150,10 @@ def merge_selected_transport_vendors_with_df(
     
     # 最終結果のログ
     final_vendor_counts = merged["運搬業者"].value_counts().to_dict()
-    logger.debug(
-        "=== MERGE DEBUG END ===",
+    logger.info(
+        "=== MERGE_COPY DEBUG END ===",
         extra=create_log_context(
-            operation="merge_transport_vendors",
+            operation="merge_transport_vendors_copy",
             after_cols=list(merged.columns),
             applied_count=int(merged["運搬業者"].notna().sum()),
             vendor_distribution=final_vendor_counts
@@ -190,7 +190,7 @@ def merge_selected_transport_vendors_copy(
     # entry_idを文字列型に統一
     df_after["entry_id"] = df_after["entry_id"].astype(str)
 
-    logger.debug(
+    logger.info(
         "=== MERGE_COPY DEBUG START ===",
         extra=create_log_context(
             operation="merge_transport_vendors_copy",
@@ -239,7 +239,7 @@ def merge_selected_transport_vendors_copy(
             )
         )
 
-    logger.debug(
+    logger.info(
         "=== MERGE_COPY DEBUG END ===",
         extra=create_log_context(
             operation="merge_transport_vendors_copy",
@@ -248,8 +248,6 @@ def merge_selected_transport_vendors_copy(
             vendor_distribution=vendor_counts
         )
     )
-    
-    return df_after
     
     return df_after
 
@@ -391,7 +389,7 @@ def execute_finalize_step(state: Dict[str, Any]) -> tuple[pd.DataFrame, Dict[str
                     {"entry_id": str(k), "selected_vendor": str(v)}
                     for k, v in selections_dict.items()
                 ])
-                logger.debug(
+                logger.info(
                     "selection_df created from selections dict",
                     extra=create_log_context(
                         operation="finalize_block_unit_price",
