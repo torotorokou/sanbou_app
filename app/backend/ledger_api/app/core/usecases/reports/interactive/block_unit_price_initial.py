@@ -260,6 +260,22 @@ def execute_initial_step(df_formatted: Dict[str, Any]) -> Tuple[Dict[str, Any], 
             "rows": rows_payload,
         }
 
+        # entry_idのデバッグログ
+        if "entry_id" in df_shipment.columns:
+            entry_id_info = {
+                "total_rows": len(df_shipment),
+                "entry_id_count": df_shipment["entry_id"].notna().sum(),
+                "entry_id_dtype": str(df_shipment["entry_id"].dtype),
+                "entry_id_sample": df_shipment["entry_id"].dropna().head(5).tolist()
+            }
+            logger.debug(
+                "INITIAL entry_id info",
+                extra=create_log_context(
+                    operation="initial_block_unit_price",
+                    **entry_id_info
+                )
+            )
+
         logger.debug(
             f"INITIAL OK: df_shipment {fmt_cols(df_shipment)} | "
             f"transport_cost {fmt_cols(df_transport_cost)} | rows={len(rows_payload)}"
