@@ -617,7 +617,8 @@ class UseCaseMetrics:
                 # Double-checked locking pattern
                 if cls._instance is None:
                     instance = super().__new__(cls)
-                    instance._metrics: Dict[str, Dict[str, int]] = {}
+                    # インスタンス変数の初期化（型アノテーションなし）
+                    instance._metrics = {}
                     instance._metrics_lock = threading.Lock()
                     cls._instance = instance
         return cls._instance
