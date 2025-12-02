@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import text
 
 from app.core.domain.entities.customer_churn import LostCustomer
+from backend_shared.application.logging import create_log_context
 
 logger = logging.getLogger(__name__)
 
@@ -103,7 +104,14 @@ class CustomerChurnQueryAdapter:
         )
         
         rows = result.fetchall()
-        logger.info(f"Found {len(rows)} lost customers")
+        logger.info(
+            "Lost customers found",
+            extra=create_log_context(
+                count=len(rows),
+                current_period=f"{current_start} to {current_end}",
+                previous_period=f"{previous_start} to {previous_end}"
+            )
+        )
         
         lost_customers = []
         for row in rows:
