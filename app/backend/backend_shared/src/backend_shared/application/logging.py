@@ -30,6 +30,7 @@ import logging.config
 import os
 import time
 import functools
+import threading
 from typing import Callable, Any, Optional, Dict
 from datetime import datetime
 from contextvars import ContextVar
@@ -575,6 +576,7 @@ class UseCaseMetrics:
     
     将来的に Prometheus, CloudWatch などに統合可能。
     現在はメモリ内でカウントのみ保持。
+    スレッドセーフな実装。
     
     使用例:
         metrics = UseCaseMetrics()
@@ -582,34 +584,40 @@ class UseCaseMetrics:
         print(metrics.get_metrics("GetCalendarMonth"))  # {'success': 1}
     """
     
-    _instance = None
-    _metrics: Dict[str, Dict[str, int]] = {}
+    _instance: Optional["UseCaseMetrics"] = None
+    _lock = threading.Lock()
     
     def __new__(cls):
         if cls._instance is None:
-            cls._instance = super().__new__(cls)
-            cls._metrics = {}
+            with cls._lock:
+                # Double-checked locking pattern
+                if cls._instance is None:
+                    instance = super().__new__(cls)
+                    instance._metrics: Dict[str, Dict[str, int]] = {}
+                    instance._metrics_lock = threading.Lock()
+                    cls._instance = instance
         return cls._instance
     
     def increment(self, usecase_name: str, status: str = "success") -> None:
         """
-        UseCaseの実行カウントをインクリメント
+        UseCaseの実行カウントをインクリメント（スレッドセーフ）
         
         Args:
             usecase_name: UseCase名
             status: 実行ステータス (success, error, validation_error)
         """
-        if usecase_name not in self._metrics:
-            self._metrics[usecase_name] = {}
-        
-        if status not in self._metrics[usecase_name]:
-            self._metrics[usecase_name][status] = 0
-        
-        self._metrics[usecase_name][status] += 1
+        with self._metrics_lock:
+            if usecase_name not in self._metrics:
+                self._metrics[usecase_name] = {}
+            
+            if status not in self._metrics[usecase_name]:
+                self._metrics[usecase_name][status] = 0
+            
+            self._metrics[usecase_name][status] += 1
     
     def get_metrics(self, usecase_name: Optional[str] = None) -> Dict[str, Any]:
         """
-        メトリクスを取得
+        メトリクスを取得（スレッドセーフ）
         
         Args:
             usecase_name: 特定のUseCaseのメトリクスを取得（省略時は全て）
@@ -617,13 +625,15 @@ class UseCaseMetrics:
         Returns:
             メトリクスの辞書
         """
-        if usecase_name:
-            return self._metrics.get(usecase_name, {})
-        return self._metrics.copy()
+        with self._metrics_lock:
+            if usecase_name:
+                return self._metrics.get(usecase_name, {}).copy()
+            return {k: v.copy() for k, v in self._metrics.items()}
     
     def reset(self) -> None:
-        """全メトリクスをリセット"""
-        self._metrics.clear()
+        """全メトリクスをリセット（スレッドセーフ）"""
+        with self._metrics_lock:
+            self._metrics.clear()
         logger.info("UseCase metrics reset")
 
 
