@@ -14,6 +14,7 @@ from datetime import date
 from calendar import monthrange
 
 from app.core.ports.upload_status_port import IUploadCalendarQuery
+from backend_shared.application.logging import create_log_context
 
 logger = logging.getLogger(__name__)
 
@@ -62,5 +63,8 @@ class GetUploadCalendarDetailUseCase:
         # Port経由でデータ取得
         items = self.query.fetch_upload_calendar(start_date, end_date)
         
-        logger.info(f"Fetched upload calendar for {year}-{month:02d}: {len(items)} items")
+        logger.info(
+            "アップロードカレンダー詳細取得",
+            extra=create_log_context(year=year, month=month, items_count=len(items))
+        )
         return {"items": items}

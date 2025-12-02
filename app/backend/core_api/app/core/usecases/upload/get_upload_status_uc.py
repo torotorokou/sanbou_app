@@ -7,7 +7,7 @@ import logging
 from typing import Optional, Dict, Any
 
 from app.core.ports.upload_status_port import IUploadStatusQuery
-from backend_shared.application.logging import log_usecase_execution
+from backend_shared.application.logging import log_usecase_execution, create_log_context
 
 logger = logging.getLogger(__name__)
 
@@ -48,14 +48,26 @@ class GetUploadStatusUseCase:
         if upload_file_id <= 0:
             raise ValueError(f"Invalid upload_file_id: {upload_file_id}")
         
-        logger.info(f"Fetching upload status for upload_file_id={upload_file_id}")
+        logger.info(
+            "アップロードステータス取得開始",
+            extra=create_log_context(upload_file_id=upload_file_id)
+        )
         
         # データ取得（Port経由）
         status = self.query.get_upload_status(upload_file_id)
         
         if status is None:
-            logger.warning(f"Upload file not found: upload_file_id={upload_file_id}")
+            logger.warning(
+                "アップロードファイル未検出",
+                extra=create_log_context(upload_file_id=upload_file_id)
+            )
         else:
-            logger.info(f"Successfully fetched upload status: id={upload_file_id}, status={status.get('processing_status')}")
+            logger.info(
+                "アップロードステータス取得成功",
+                extra=create_log_context(
+                    upload_file_id=upload_file_id,
+                    status=status.get('processing_status')
+                )
+            )
         
         return status

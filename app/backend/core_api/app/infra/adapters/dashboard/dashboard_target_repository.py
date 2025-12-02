@@ -7,6 +7,7 @@ from typing import Optional, Dict, Any
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 import logging
+from backend_shared.application.logging import create_log_context
 
 from app.infra.db.db import get_engine
 from app.infra.db.sql_loader import load_sql
@@ -70,7 +71,10 @@ class DashboardTargetRepository:
             # 注意: MV は日次で REFRESH CONCURRENTLY される前提（make refresh-mv）
             # SQL is loaded from external file for better maintainability
             
-            logger.info(f"Fetching optimized target card data for date={target_date}, mode={mode}")
+            logger.info(
+                "最適化target cardデータ取得開始",
+                extra=create_log_context(date=str(target_date), mode=mode)
+            )
             
             with self._engine.begin() as conn:
                 result = conn.execute(
@@ -79,10 +83,16 @@ class DashboardTargetRepository:
                 ).mappings().first()
             
             if not result:
-                logger.warning(f"No data found for date={target_date}, mode={mode}")
+                logger.warning(
+                    "target cardデータ未検出",
+                    extra=create_log_context(date=str(target_date), mode=mode)
+                )
                 return None
             
-            logger.info(f"Successfully fetched optimized target card data for {target_date}")
+            logger.info(
+                "target cardデータ取得成功",
+                extra=create_log_context(date=str(target_date))
+            )
             return {
                 "ddate": result["ddate"],
                 "month_target_ton": float(result["month_target_ton"]) if result["month_target_ton"] is not None else None,
@@ -105,7 +115,11 @@ class DashboardTargetRepository:
                 "week_actual_to_date_ton": float(result["week_actual_to_date_ton"]) if result["week_actual_to_date_ton"] is not None else None,
             }
         except Exception as e:
-            logger.error(f"Error fetching optimized target card data for {target_date}: {str(e)}", exc_info=True)
+            logger.error(
+                "target cardデータ取得エラー",
+                extra=create_log_context(date=str(target_date), error=str(e)),
+                exc_info=True
+            )
             raise
 
     def get_by_date(self, target_date: date_type) -> Optional[Dict[str, Any]]:
@@ -141,14 +155,23 @@ class DashboardTargetRepository:
                 LIMIT 1
             """)
             
-            logger.info(f"Fetching target card data for date: {target_date}")
+            logger.info(
+                "target cardデータ取得開始(get_by_date)",
+                extra=create_log_context(date=str(target_date))
+            )
             result = self.db.execute(query, {"target_date": target_date}).fetchone()
             
             if not result:
-                logger.warning(f"No data found in mart.mv_target_card_per_day for {target_date}")
+                logger.warning(
+                    "mv_target_card_per_dayにデータ未検出",
+                    extra=create_log_context(date=str(target_date))
+                )
                 return None
             
-            logger.info(f"Successfully fetched target card data for {target_date}")
+            logger.info(
+                "target cardデータ取得成功(get_by_date)",
+                extra=create_log_context(date=str(target_date))
+            )
             return {
                 "ddate": result[0],
                 "month_target_ton": float(result[1]) if result[1] is not None else None,
@@ -164,7 +187,11 @@ class DashboardTargetRepository:
                 "is_business": result[11],
             }
         except Exception as e:
-            logger.error(f"Error fetching target card data for {target_date}: {str(e)}", exc_info=True)
+            logger.error(
+                "target cardデータ取得エラー(get_by_date)",
+                extra=create_log_context(date=str(target_date), error=str(e)),
+                exc_info=True
+            )
             raise
 
     def get_first_business_in_month(self, month_start: date_type, month_end: date_type) -> Optional[date_type]:
@@ -192,7 +219,15 @@ class DashboardTargetRepository:
             result = self.db.execute(query, {"month_start": month_start, "month_end": month_end}).fetchone()
             return result[0] if result else None
         except Exception as e:
-            logger.error(f"Error getting first business day for {month_start} to {month_end}: {str(e)}", exc_info=True)
+            logger.error(
+                "最初の営業日取得エラー",
+                extra=create_log_context(
+                    month_start=str(month_start),
+                    month_end=str(month_end),
+                    error=str(e)
+                ),
+                exc_info=True
+            )
             raise
 
     def get_target_card_metrics(self, target_date: date_type) -> Optional[Dict[str, Any]]:
@@ -246,14 +281,23 @@ class DashboardTargetRepository:
                 LIMIT 1
             """)
             
-            logger.info(f"Fetching target card metrics for date: {target_date}")
+            logger.info(
+                "target card metrics取得開始",
+                extra=create_log_context(date=str(target_date))
+            )
             result = self.db.execute(query, {"target_date": target_date}).fetchone()
             
             if not result:
-                logger.warning(f"No data found in mart.mv_target_card_per_day for month containing {target_date}")
+                logger.warning(
+                    "指定月のmv_target_card_per_dayデータ未検出",
+                    extra=create_log_context(date=str(target_date))
+                )
                 return None
             
-            logger.info(f"Successfully fetched target card metrics for {target_date}")
+            logger.info(
+                "target card metrics取得成功",
+                extra=create_log_context(date=str(target_date))
+            )
             return {
                 "month_target_ton": float(result[0]) if result[0] is not None else None,
                 "week_target_ton": float(result[1]) if result[1] is not None else None,
@@ -263,6 +307,10 @@ class DashboardTargetRepository:
                 "day_actual_ton_prev": float(result[5]) if result[5] is not None else None,
             }
         except Exception as e:
-            logger.error(f"Error fetching target card metrics for {target_date}: {str(e)}", exc_info=True)
+            logger.error(
+                "target card metrics取得エラー",
+                extra=create_log_context(date=str(target_date), error=str(e)),
+                exc_info=True
+            )
             raise
 

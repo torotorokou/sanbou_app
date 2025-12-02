@@ -61,6 +61,9 @@ class CalendarRepository:
         # 辞書形式に変換
         data = [dict(zip(cols, r)) for r in rows]
         
-        logger.debug(f"Fetched calendar for {year}-{month:02d}: {len(data)} days")
+        logger.debug(
+            "カレンダー取得",
+            extra=create_log_context(year=year, month=month, days_count=len(data))
+        )
         
         return data
