@@ -101,13 +101,23 @@ class UploadShogunCsvUseCase:
             受付成功: upload_file_ids を含む SuccessApiResponse（即座）
             バリデーションエラー: ErrorApiResponse
         """
-        logger.info("Start async shogun CSV upload (acceptance phase)")
+        # 開始ログ: 構造化情報を含める
+        logger.info(
+            "CSV upload started (async)",
+            extra={
+                "operation": "shogun_csv_upload",
+                "file_type": file_type,
+                "uploaded_by": uploaded_by or "anonymous",
+                "csv_types": [k for k, v in {"receive": receive, "yard": yard, "shipment": shipment}.items() if v and v.filename],
+            }
+        )
         
         # 入力ファイルの整理
         file_inputs = {"receive": receive, "yard": yard, "shipment": shipment}
         uploaded_files = {k: v for k, v in file_inputs.items() if v and v.filename}
         
         if not uploaded_files:
+            logger.warning("CSV upload rejected: no files provided")
             return ErrorApiResponse(
                 code="NO_FILES",
                 detail="少なくとも1つのCSVファイルをアップロードしてください",
@@ -207,6 +217,17 @@ class UploadShogunCsvUseCase:
         )
         
         # 4. 即座に受付完了レスポンスを返す
+        logger.info(
+            "CSV upload accepted",
+            extra={
+                "operation": "shogun_csv_upload",
+                "file_type": file_type,
+                "uploaded_by": uploaded_by or "anonymous",
+                "upload_file_ids": upload_file_ids,
+                "csv_types": list(upload_file_ids.keys()),
+            }
+        )
+        
         return SuccessApiResponse(
             code="UPLOAD_ACCEPTED",
             detail=f"CSVアップロードを受け付けました。処理中です。",
@@ -233,8 +254,19 @@ class UploadShogunCsvUseCase:
             file_type: 'FLASH' or 'FINAL'
             uploaded_by: アップロードユーザー名
         """
+        import time
+        start_time = time.time()
+        
         try:
-            logger.info(f"Background processing started for upload_file_ids: {upload_file_ids}")
+            logger.info(
+                "CSV background processing started",
+                extra={
+                    "operation": "csv_background_processing",
+                    "upload_file_ids": upload_file_ids,
+                    "file_type": file_type,
+                    "uploaded_by": uploaded_by or "anonymous",
+                }
+            )
             
             # ステータスを processing に更新
             if self.raw_data_repo:
@@ -298,10 +330,31 @@ class UploadShogunCsvUseCase:
             # ステータス更新
             self._update_upload_logs(upload_file_ids, formatted_dfs, stg_result)
             
-            logger.info(f"[BG] Background processing completed successfully for: {list(upload_file_ids.keys())}")
+            # 完了ログ: 処理時間、件数を記録
+            duration_ms = int((time.time() - start_time) * 1000)
+            total_rows = sum(len(df) for df in formatted_dfs.values())
+            
+            logger.info(
+                "CSV background processing completed",
+                extra={
+                    "operation": "csv_background_processing",
+                    "upload_file_ids": upload_file_ids,
+                    "csv_types": list(upload_file_ids.keys()),
+                    "total_rows": total_rows,
+                    "duration_ms": duration_ms,
+                    "file_type": file_type,
+                }
+            )
             
         except Exception as e:
-            logger.exception(f"[BG] Unexpected error in background processing: {e}")
+            logger.exception(
+                "CSV background processing failed",
+                extra={
+                    "operation": "csv_background_processing",
+                    "upload_file_ids": upload_file_ids,
+                    "error": str(e),
+                }
+            )
             self._mark_all_as_failed(upload_file_ids, f"Internal error: {str(e)}")
     
     async def execute(

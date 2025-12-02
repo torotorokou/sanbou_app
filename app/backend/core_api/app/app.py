@@ -20,9 +20,13 @@ Core API - BFF/Facade for frontend
 """
 import logging
 import os
-from pythonjsonlogger import jsonlogger
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
+# ==========================================
+# 統一ロギング設定のインポート
+# ==========================================
+from app.config.logging import setup_logging
 
 from app.api.routers.ingest.router import router as ingest_router
 from app.api.routers.forecast.router import router as forecast_router
@@ -41,17 +45,13 @@ from app.api.routers.sales_tree import router as sales_tree_router
 from app.api.routers.auth import router as auth_router
 
 # ==========================================
-# 構造化JSONロギングの設定
+# 統一ロギング設定の初期化
 # ==========================================
-# CloudWatch/Datadogなどのログアグリゲーターでのパースやクエリを容易にするため、
-# JSON形式でログを出力する。各ログエントリにはタイムスタンプ、ロガー名、
-# ログレベル、メッセージが含まれる。
-logger = logging.getLogger()
-logHandler = logging.StreamHandler()
-formatter = jsonlogger.JsonFormatter("%(asctime)s %(name)s %(levelname)s %(message)s")
-logHandler.setFormatter(formatter)
-logger.addHandler(logHandler)
-logger.setLevel(logging.INFO)
+# テクニカルログ基盤: JSON形式、Request ID付与、Uvicorn統合
+# 環境変数 LOG_LEVEL で制御可能（DEBUG/INFO/WARNING/ERROR/CRITICAL）
+setup_logging()
+
+logger = logging.getLogger(__name__)
 
 # ==========================================
 # FastAPI アプリケーション初期化
@@ -64,6 +64,14 @@ app = FastAPI(
     version="1.0.0",
     root_path="/core_api",  # リバースプロキシ対応: /core_api/* でアクセス可能
 )
+
+# ==========================================
+# Middleware 登録
+# ==========================================
+# Request ID Middleware: リクエストトレーシング用
+# 全リクエストに X-Request-ID を付与し、ログとレスポンスに含める
+from app.api.middleware.request_id import RequestIdMiddleware
+app.add_middleware(RequestIdMiddleware)
 
 # ==========================================
 # CORS設定 (開発モード用)
