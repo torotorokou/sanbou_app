@@ -25,6 +25,7 @@ import logging
 from fastapi import Request, HTTPException, status
 from app.core.domain.auth.entities import AuthUser
 from app.core.ports.auth.auth_provider import IAuthProvider
+from backend_shared.application.logging import create_log_context
 
 logger = logging.getLogger(__name__)
 
@@ -64,7 +65,10 @@ class IapAuthProvider(IAuthProvider):
             allowed_domain: 許可するメールドメイン（デフォルト: honest-recycle.co.jp）
         """
         self._allowed_domain = allowed_domain
-        logger.info(f"IapAuthProvider initialized with allowed domain: {allowed_domain}")
+        logger.info(
+            "IapAuthProvider initialized",
+            extra=create_log_context(allowed_domain=allowed_domain)
+        )
     
     async def get_current_user(self, request: Request) -> AuthUser:
         """
@@ -93,7 +97,10 @@ class IapAuthProvider(IAuthProvider):
         
         if not raw_header:
             # IAP ヘッダーが存在しない場合は認証失敗
-            logger.warning("IAP header not found in request")
+            logger.warning(
+                "IAP header not found",
+                extra=create_log_context()
+            )
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Authentication required (IAP header not found)",
@@ -101,7 +108,10 @@ class IapAuthProvider(IAuthProvider):
         
         # ヘッダー形式を確認（開発時のデバッグ用）
         # 本番環境では個人情報ログに注意すること
-        logger.debug(f"IAP header value: {raw_header}")
+        logger.debug(
+            "IAP header received",
+            extra=create_log_context(header_value=raw_header)
+        )
         
         # IAP ヘッダーの形式: "accounts.google.com:user@domain.com"
         # または単純に "user@domain.com" の場合もある
@@ -112,7 +122,10 @@ class IapAuthProvider(IAuthProvider):
         
         # ドメインチェック（ホワイトリスト方式）
         if not email.endswith(f"@{self._allowed_domain}"):
-            logger.warning(f"Unauthorized domain: {email}")
+            logger.warning(
+                "Unauthorized domain",
+                extra=create_log_context(email=email, allowed_domain=self._allowed_domain)
+            )
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail=f"Access denied: Only @{self._allowed_domain} users are allowed",
@@ -127,7 +140,10 @@ class IapAuthProvider(IAuthProvider):
         user_id = f"iap_{email.split('@')[0]}"
         role = "user"  # デフォルトロール
         
-        logger.info(f"IAP authentication successful: {email}")
+        logger.info(
+            "IAP authentication successful",
+            extra=create_log_context(email=email, user_id=user_id, role=role)
+        )
         
         return AuthUser(
             email=email,

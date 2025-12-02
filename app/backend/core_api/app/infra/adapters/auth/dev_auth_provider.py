@@ -19,6 +19,7 @@ import logging
 from fastapi import Request
 from app.core.domain.auth.entities import AuthUser
 from app.core.ports.auth.auth_provider import IAuthProvider
+from backend_shared.application.logging import create_log_context
 
 logger = logging.getLogger(__name__)
 
@@ -54,7 +55,10 @@ class DevAuthProvider(IAuthProvider):
             user_id="dev_001",
             role="admin",
         )
-        logger.info("DevAuthProvider initialized with fixed dev user")
+        logger.info(
+            "DevAuthProvider initialized",
+            extra=create_log_context(user_email=self._dev_user.email, user_role=self._dev_user.role)
+        )
     
     async def get_current_user(self, request: Request) -> AuthUser:
         """
@@ -72,5 +76,8 @@ class DevAuthProvider(IAuthProvider):
         """
         # TODO: 本番環境では AUTH_MODE を "iap" または "oauth2" に設定し、
         #       このプロバイダを使用しないようにすること
-        logger.debug(f"Returning dev user: {self._dev_user.email}")
+        logger.debug(
+            "Returning dev user",
+            extra=create_log_context(user_email=self._dev_user.email, user_id=self._dev_user.user_id)
+        )
         return self._dev_user
