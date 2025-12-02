@@ -6,6 +6,7 @@ UseCase: ExportSalesTreeCSV
 import logging
 from app.core.domain.sales_tree import ExportRequest
 from app.core.ports.sales_tree_port import ISalesTreeQuery
+from backend_shared.application.logging import create_log_context
 
 logger = logging.getLogger(__name__)
 
@@ -31,8 +32,19 @@ class ExportSalesTreeCSVUseCase:
             bytes: CSV データ（UTF-8 BOM付き）
         """
         try:
-            logger.info(f"ExportSalesTreeCSVUseCase: mode={req.mode}, date_from={req.date_from}, date_to={req.date_to}")
+            logger.info(
+                "ExportSalesTreeCSV実行",
+                extra=create_log_context(
+                    mode=req.mode,
+                    date_from=str(req.date_from),
+                    date_to=str(req.date_to)
+                )
+            )
             return self._query.export_csv(req)
         except Exception as e:
-            logger.error(f"Error in ExportSalesTreeCSVUseCase: {str(e)}", exc_info=True)
+            logger.error(
+                "ExportSalesTreeCSVエラー",
+                extra=create_log_context(error=str(e)),
+                exc_info=True
+            )
             raise
