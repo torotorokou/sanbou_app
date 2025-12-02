@@ -1,9 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { Table, DatePicker, Select, Space, Button, Pagination } from 'antd';
-import dayjs from 'dayjs';
-import type { Dayjs } from 'dayjs';
-import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
-import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
+import { dayjs, type Dayjs, isInRange, toIsoMonth } from '@shared/utils/dateUtils';
 import {
     useReactTable,
     getCoreRowModel,
@@ -14,9 +11,6 @@ import {
     type ColumnFiltersState,
     type SortingState,
 } from '@tanstack/react-table';
-
-dayjs.extend(isSameOrAfter);
-dayjs.extend(isSameOrBefore);
 
 const { MonthPicker, RangePicker } = DatePicker;
 
@@ -68,11 +62,11 @@ const RecordListPage: React.FC = () => {
 
             // 伝票日付範囲フィルター
             if (dateRange[0] && dateRange[1]) {
-                if (!(parsed.isSameOrAfter(dateRange[0], 'day') && parsed.isSameOrBefore(dateRange[1], 'day'))) return false;
+                if (!isInRange(parsed, dateRange[0], dateRange[1])) return false;
             } else if (dateRange[0]) {
-                if (!parsed.isSameOrAfter(dateRange[0], 'day')) return false;
+                if (!isInRange(parsed, dateRange[0], parsed)) return false;
             } else if (dateRange[1]) {
-                if (!parsed.isSameOrBefore(dateRange[1], 'day')) return false;
+                if (!isInRange(parsed, parsed, dateRange[1])) return false;
             }
 
             // string型フィルター

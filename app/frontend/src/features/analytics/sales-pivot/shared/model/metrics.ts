@@ -17,7 +17,7 @@
  * - テスタブル（単体テストが容易）
  */
 
-import dayjs from 'dayjs';
+import { dayjs, formatCurrency } from '@shared/utils/dateUtils';
 import type {
   Mode,
   SortKey,
@@ -35,14 +35,12 @@ import type {
 /**
  * 通貨フォーマット
  * 
+ * @deprecated 代わりに @shared/utils/dateUtils の formatCurrency を使用してください
+ * 
  * @param n - 金額（数値）
  * @returns 日本円表記の文字列（例: "¥1,234,567"）
- * 
- * @example
- * fmtCurrency(1234567) // "¥1,234,567"
- * fmtCurrency(0)       // "¥0"
  */
-export const fmtCurrency = (n: number): string => `¥${n.toLocaleString('ja-JP')}`;
+export const fmtCurrency = formatCurrency;
 
 /**
  * 数値フォーマット（3桁区切り）
