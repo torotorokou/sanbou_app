@@ -7,6 +7,7 @@ import logging
 from typing import List, Dict, Any
 from sqlalchemy.orm import Session
 from sqlalchemy import text
+from backend_shared.application.logging import create_log_context
 
 logger = logging.getLogger(__name__)
 

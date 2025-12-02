@@ -73,7 +73,7 @@ class DashboardTargetRepository:
             
             logger.info(
                 "最適化target cardデータ取得開始",
-                extra=create_log_context(date=str(target_date), mode=mode)
+                extra=create_log_context(operation="get_by_date_optimized", date=str(target_date), mode=mode)
             )
             
             with self._engine.begin() as conn:
@@ -85,7 +85,7 @@ class DashboardTargetRepository:
             if not result:
                 logger.warning(
                     "target cardデータ未検出",
-                    extra=create_log_context(date=str(target_date), mode=mode)
+                    extra=create_log_context(operation="get_by_date_optimized", date=str(target_date), mode=mode)
                 )
                 return None
             
@@ -117,7 +117,7 @@ class DashboardTargetRepository:
         except Exception as e:
             logger.error(
                 "target cardデータ取得エラー",
-                extra=create_log_context(date=str(target_date), error=str(e)),
+                extra=create_log_context(operation="get_by_date_optimized", date=str(target_date), error=str(e)),
                 exc_info=True
             )
             raise

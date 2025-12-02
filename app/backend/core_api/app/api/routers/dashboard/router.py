@@ -24,6 +24,7 @@ from app.core.usecases.dashboard.dto import BuildTargetCardInput
 from app.core.usecases.dashboard.build_target_card_uc import BuildTargetCardUseCase
 from app.api.schemas import TargetMetricsResponse
 from backend_shared.core.domain.exceptions import NotFoundError
+from backend_shared.application.logging import create_log_context
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/dashboard", tags=["dashboard"])
