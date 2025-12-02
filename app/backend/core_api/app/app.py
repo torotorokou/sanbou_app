@@ -38,6 +38,7 @@ from app.api.routers.manual.router import router as manual_router
 from app.api.routers.dashboard.router import router as dashboard_router
 from app.api.routers.inbound.router import router as inbound_router
 from app.api.routers.sales_tree import router as sales_tree_router
+from app.api.routers.auth import router as auth_router
 
 # ==========================================
 # 構造化JSONロギングの設定
@@ -86,6 +87,7 @@ if os.getenv("ENABLE_CORS", "false").lower() == "true":
 # プレフィックス(/forecast, /kpi等)は各ルーターファイル内で定義される。
 
 # --- Core機能 ---
+app.include_router(auth_router)        # 認証: ユーザー情報取得
 app.include_router(ingest_router)      # データ取り込み: CSV アップロード、予約登録
 app.include_router(forecast_router)    # 予測機能: ジョブ作成、ステータス確認、結果取得
 app.include_router(kpi_router)         # KPI集計: ダッシュボード用メトリクス

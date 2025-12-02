@@ -11,6 +11,7 @@ DI Providers - Dependency Injection Container
   - SET LOCAL search_path によるスキーマ切替を活用
 """
 import logging
+import os
 from fastapi import Depends
 from sqlalchemy import text
 from sqlalchemy.orm import Session
@@ -507,5 +508,48 @@ def get_create_reservation_uc(
 ) -> CreateReservationUseCase:
     """CreateReservationUseCase提供"""
     return CreateReservationUseCase(ingest_repo=repo)
+
+
+# ========================================================================
+# Auth UseCase Providers
+# ========================================================================
+from app.core.usecases.auth.get_current_user import GetCurrentUserUseCase
+from app.core.ports.auth.auth_provider import IAuthProvider
+from app.infra.adapters.auth.dev_auth_provider import DevAuthProvider
+from app.infra.adapters.auth.iap_auth_provider import IapAuthProvider
+
+
+def get_auth_provider() -> IAuthProvider:
+    """
+    認証プロバイダを取得
+    
+    環境変数 AUTH_MODE に応じて適切なプロバイダを返します。
+    - "dev": DevAuthProvider（開発用固定ユーザー）
+    - "iap": IapAuthProvider（Google Cloud IAP）
+    - デフォルト: DevAuthProvider
+    
+    Returns:
+        IAuthProvider: 認証プロバイダ実装
+    
+    Note:
+        本番環境では必ず AUTH_MODE=iap を設定してください。
+        開発・ステージング環境では AUTH_MODE=dev を使用します。
+    """
+    auth_mode = os.getenv("AUTH_MODE", "dev").lower()
+    
+    if auth_mode == "iap":
+        logger.info("Using IapAuthProvider (Google Cloud IAP)")
+        return IapAuthProvider()
+    
+    # デフォルトは開発用
+    logger.info("Using DevAuthProvider (development mode)")
+    return DevAuthProvider()
+
+
+def get_get_current_user_usecase(
+    auth_provider: IAuthProvider = Depends(get_auth_provider)
+) -> GetCurrentUserUseCase:
+    """GetCurrentUserUseCase提供"""
+    return GetCurrentUserUseCase(auth_provider=auth_provider)
 
 
