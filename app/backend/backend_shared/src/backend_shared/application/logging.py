@@ -530,13 +530,22 @@ def log_usecase_execution(
                 "event": "start",
             }
             
-            if log_args and kwargs:
-                # センシティブな情報を除外（グローバル設定を使用）
-                safe_kwargs = {
-                    k: v for k, v in kwargs.items()
-                    if not any(sensitive in k.lower() for sensitive in SENSITIVE_KEYWORDS)
-                }
-                log_data["input_args"] = safe_kwargs
+            if log_args:
+                # 位置引数を記録（self を除外）
+                if args and len(args) > 1:
+                    # args[0] は self なのでスキップ、残りを記録
+                    positional_args = [repr(arg)[:100] for arg in args[1:]]  # 最大100文字
+                    if positional_args:
+                        log_data["positional_args"] = positional_args
+                
+                # キーワード引数を記録（センシティブ情報を除外）
+                if kwargs:
+                    safe_kwargs = {
+                        k: v for k, v in kwargs.items()
+                        if not any(sensitive in k.lower() for sensitive in SENSITIVE_KEYWORDS)
+                    }
+                    if safe_kwargs:
+                        log_data["keyword_args"] = safe_kwargs
             
             logger.info(f"[UseCase] {uc_name} started", extra=log_data)
             
