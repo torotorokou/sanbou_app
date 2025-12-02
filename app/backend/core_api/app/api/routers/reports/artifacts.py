@@ -8,6 +8,7 @@ from fastapi.responses import StreamingResponse
 import httpx
 
 from backend_shared.core.domain.exceptions import ExternalServiceError
+from backend_shared.application.logging import create_log_context
 
 logger = logging.getLogger(__name__)
 
@@ -55,14 +56,20 @@ async def proxy_artifact(
     if request.url.query:
         upstream_url += f"?{request.url.query}"
     
-    logger.info(f"[BFF] Proxying artifact request to {upstream_url}")
+    logger.info(
+        "[BFF] Proxying artifact request",
+        extra=create_log_context(operation="proxy_report_artifact", upstream_url=upstream_url)
+    )
     
     # Range, ETag, キャッシュ関連ヘッダーを透過
     passthrough_req_headers = {}
     for header_name in ["range", "if-none-match", "if-modified-since", "authorization"]:
         if header_name in request.headers:
             passthrough_req_headers[header_name] = request.headers[header_name]
-            logger.debug(f"[BFF] Passing request header: {header_name}")
+            logger.debug(
+                "[BFF] Passing request header",
+                extra=create_log_context(operation="proxy_report_artifact", header_name=header_name)
+            )
     
     try:
         timeout = httpx.Timeout(60.0, read=300.0)  # 大容量ファイル対応
@@ -76,7 +83,13 @@ async def proxy_artifact(
             # エラーレスポンスはそのまま返す
             if upstream_response.status_code >= 400:
                 body = await upstream_response.aread()
-                logger.error(f"[BFF] Ledger API returned error: {upstream_response.status_code}")
+                logger.error(
+                    "[BFF] Ledger API returned error",
+                    extra=create_log_context(
+                        operation="proxy_report_artifact",
+                        status_code=upstream_response.status_code
+                    )
+                )
                 raise ExternalServiceError(
                     service_name="ledger_api",
                     message=f"Artifact download failed: {body.decode(errors='ignore')[:200]}",
