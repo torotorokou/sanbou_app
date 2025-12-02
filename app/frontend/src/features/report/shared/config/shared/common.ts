@@ -35,8 +35,7 @@ export const REPORT_API_ENDPOINTS = {
     management_sheet: REPORT_ENDPOINTS.managementSheet,
 
     // インタラクティブ帳簿系
-    // BFF経由: /core_api/block_unit_price_interactive/initial
-    block_unit_price: `${REPORT_ENDPOINTS.blockUnitPrice}/initial`,
+    block_unit_price: REPORT_ENDPOINTS.blockUnitPrice,
 
     // 台帳系（将来追加用）
     ledger_book: REPORT_ENDPOINTS.ledgerBook,
