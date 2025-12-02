@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import text
 import httpx
 
+from backend_shared.application.logging import create_log_context
 from app.api.schemas import (
     CustomerChurnAnalyzeRequest,
     CustomerChurnAnalyzeResponse,
