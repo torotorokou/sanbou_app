@@ -134,7 +134,7 @@ def normalize_workbook_fonts(wb: Workbook, logger=None) -> None:
         replacements = ", ".join(f"{src}→{dst}" for src, dst in sorted(tracker))
         logger.info(
             "Excelフォント置換完了",
-            extra=create_log_context(replacements=replacements)
+            extra=create_log_context(operation="replace_fonts", replacements=replacements)
         )
 
 
@@ -155,7 +155,7 @@ def write_dataframe_to_worksheet(df: pd.DataFrame, ws: Worksheet, logger=None):
         ):
             logger.info(
                 "セルスキップ",
-                extra=create_log_context(row=idx, reason="empty_or_unset")
+                extra=create_log_context(operation="write_dataframe_to_worksheet", row=idx, reason="empty_or_unset")
             )
             continue
 
@@ -165,7 +165,7 @@ def write_dataframe_to_worksheet(df: pd.DataFrame, ws: Worksheet, logger=None):
             if isinstance(cell, MergedCell):
                 logger.warning(
                     "結合セル書き込み不可",
-                    extra=create_log_context(cell_ref=cell_ref, value=value)
+                    extra=create_log_context(operation="write_dataframe_to_worksheet", cell_ref=cell_ref, value=value)
                 )
                 continue
 
@@ -187,7 +187,7 @@ def write_dataframe_to_worksheet(df: pd.DataFrame, ws: Worksheet, logger=None):
         except Exception as e:
             logger.error(
                 "セル書き込み失敗",
-                extra=create_log_context(cell_ref=cell_ref, value=value, error=str(e)),
+                extra=create_log_context(operation="write_dataframe_to_worksheet", cell_ref=cell_ref, value=value, error=str(e)),
                 exc_info=True
             )
 

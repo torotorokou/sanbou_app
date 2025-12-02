@@ -184,14 +184,14 @@ def run_block_unit_price_pipeline(
     log_checkpoint("after_apply_transport_fee_by_vendor", df_after, df_transport_cost)
     logger.debug(
         "運搬費(業者別)適用後",
-        extra=create_log_context(head=fmt_head_rows(df_after))
+        extra=create_log_context(operation="finalize_block_unit_price", head=fmt_head_rows(df_after))
     )
 
     df_after = apply_weight_based_transport_fee(df_after, df_transport_cost)
     log_checkpoint("after_apply_weight_based_transport_fee", df_after, df_transport_cost)
     logger.debug(
         "運搬費(重量別)適用後",
-        extra=create_log_context(head=fmt_head_rows(df_after))
+        extra=create_log_context(operation="finalize_block_unit_price", head=fmt_head_rows(df_after))
     )
     
     # --- Fallback for transport fee ---
@@ -213,14 +213,14 @@ def run_block_unit_price_pipeline(
     log_checkpoint("after_make_total_sum", df_after, master_csv)
     logger.debug(
         "合計行追加後",
-        extra=create_log_context(head=fmt_head_rows(df_after))
+        extra=create_log_context(operation="finalize_block_unit_price", head=fmt_head_rows(df_after))
     )
 
     df_after = df_cul_filtering(df_after)
     log_checkpoint("after_df_cul_filtering", df_after, None)
     logger.debug(
         "重複フィルタ後",
-        extra=create_log_context(head=fmt_head_rows(df_after))
+        extra=create_log_context(operation="finalize_block_unit_price", head=fmt_head_rows(df_after))
     )
 
     return df_after
@@ -260,7 +260,7 @@ def execute_finalize_step(state: Dict[str, Any]) -> tuple[pd.DataFrame, Dict[str
         log_checkpoint("transport_cost_loaded", df_transport_cost)
         logger.debug(
             "運搬費用データ読込",
-            extra=create_log_context(head=fmt_head_rows(df_transport_cost))
+            extra=create_log_context(operation="finalize_block_unit_price", head=fmt_head_rows(df_transport_cost))
         )
 
         # 初期出荷データの取得
@@ -445,7 +445,7 @@ def execute_finalize_with_optional_selections(
                 state["selection_df"] = pd.DataFrame(selection_rows)
                 logger.info(
                     "selection_rows→DataFrame変換",
-                    extra=create_log_context(rows=len(selection_rows))
+                    extra=create_log_context(operation="finalize_block_unit_price", rows=len(selection_rows))
                 )
             except Exception as e:
                 logger.warning(
@@ -460,7 +460,7 @@ def execute_finalize_with_optional_selections(
             state["selections"] = selections
             logger.info(
                 "selections設定",
-                extra=create_log_context(count=len(selections))
+                extra=create_log_context(operation="finalize_block_unit_price", count=len(selections))
             )
             
             try:
@@ -471,7 +471,7 @@ def execute_finalize_with_optional_selections(
                 state["selection_df"] = sel_df
                 logger.info(
                     "selections→selection_df生成",
-                    extra=create_log_context(rows=len(sel_df))
+                    extra=create_log_context(operation="finalize_block_unit_price", rows=len(sel_df))
                 )
             except Exception as e:
                 logger.warning(

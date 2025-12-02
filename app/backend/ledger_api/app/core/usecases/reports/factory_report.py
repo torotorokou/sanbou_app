@@ -53,7 +53,7 @@ def process(dfs: Dict[str, Any]) -> pd.DataFrame:
     csv_keys = template_config["required_files"]
     logger.info(
         "テンプレート設定読込",
-        extra=create_log_context(template_key=template_key, files=csv_keys)
+        extra=create_log_context(operation="generate_factory_report", template_key=template_key, files=csv_keys)
     )
 
     # --- CSVの読み込み ---

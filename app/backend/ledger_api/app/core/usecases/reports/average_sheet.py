@@ -32,7 +32,7 @@ def process(dfs: Dict[str, Any]) -> pd.DataFrame:
     csv_name = get_template_config()["average_sheet"]["required_files"]
     logger.info(
         "average_sheet process開始",
-        extra=create_log_context(csv_name=csv_name)
+        extra=create_log_context(operation="generate_average_sheet", csv_name=csv_name)
     )
     df_dict = load_all_filtered_dataframes(dfs, csv_name, template_name)
 
@@ -41,7 +41,7 @@ def process(dfs: Dict[str, Any]) -> pd.DataFrame:
     master_path = get_template_config()[template_name]["master_csv_path"]
     logger.info(
         "マスターCSV読込",
-        extra=create_log_context(master_path=master_path)
+        extra=create_log_context(operation="generate_average_sheet", master_path=master_path)
     )
     master_csv = load_master_and_template(master_path)
     logger.info(
@@ -99,7 +99,7 @@ def process(dfs: Dict[str, Any]) -> pd.DataFrame:
 
         logger.error(
             "average_sheet処理失敗",
-            extra=create_log_context(error=str(ex), traceback=_tb.format_exc()),
+            extra=create_log_context(operation="generate_average_sheet", error=str(ex), traceback=_tb.format_exc()),
             exc_info=True
         )
         raise
