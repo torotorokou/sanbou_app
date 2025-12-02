@@ -371,6 +371,9 @@ class TimedOperation:
         # ログ: "csv_processing completed in 567ms" extra={"rows": 1000}
     """
     
+    # ビジネスエラーとして扱う例外タイプ（WARNING レベル）
+    BUSINESS_ERRORS = (ValueError, KeyError, TypeError, AttributeError)
+    
     def __init__(
         self,
         operation_name: str,
@@ -417,15 +420,25 @@ class TimedOperation:
             **self.context
         )
         
-        # エラーがあればERROR、なければ指定されたレベルでログ出力
+        # エラーがあれば適切なレベルでログ出力、なければ指定されたレベルでログ出力
         if exc_type is not None:
             log_context["error_type"] = exc_type.__name__
             log_context["error_message"] = str(exc_val)
-            self.logger.error(
-                f"{self.operation_name} failed after {self.duration_ms}ms",
-                extra=log_context,
-                exc_info=True
-            )
+            
+            # ビジネスエラー（予期されたエラー）は WARNING レベル
+            if isinstance(exc_val, self.BUSINESS_ERRORS):
+                self.logger.warning(
+                    f"{self.operation_name} failed with business error after {self.duration_ms}ms",
+                    extra=log_context,
+                    exc_info=False  # スタックトレース不要
+                )
+            else:
+                # システムエラー（予期しないエラー）は ERROR レベル
+                self.logger.error(
+                    f"{self.operation_name} failed after {self.duration_ms}ms",
+                    extra=log_context,
+                    exc_info=True  # スタックトレース付き
+                )
         else:
             self.logger.log(
                 self.level,
