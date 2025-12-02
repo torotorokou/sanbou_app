@@ -63,13 +63,13 @@ class MaterializedViewRefresher:
         if not mv_list:
             logger.info(
                 "No MV defined, skipping refresh",
-                extra=create_log_context(csv_type=csv_type)
+                extra=create_log_context(operation="refresh_views", csv_type=csv_type)
             )
             return
         
         logger.info(
             "Starting MV refresh",
-            extra=create_log_context(csv_type=csv_type, mv_count=len(mv_list), mv_list=mv_list)
+            extra=create_log_context(operation="refresh_views", csv_type=csv_type, mv_count=len(mv_list), mv_list=mv_list)
         )
         
         for mv_name in mv_list:
@@ -78,7 +78,7 @@ class MaterializedViewRefresher:
             except Exception as e:
                 logger.error(
                     "MV refresh failed",
-                    extra=create_log_context(mv_name=mv_name, error=str(e)),
+                    extra=create_log_context(operation="refresh_views", mv_name=mv_name, error=str(e)),
                     exc_info=True
                 )
                 # 個別MVの失敗は記録するが、全体処理は継続
@@ -99,7 +99,7 @@ class MaterializedViewRefresher:
         try:
             logger.info(
                 "Refreshing MV",
-                extra=create_log_context(mv_name=mv_name)
+                extra=create_log_context(operation="refresh_single_mv", mv_name=mv_name)
             )
             
             # REFRESH MATERIALIZED VIEW CONCURRENTLY を実行
@@ -112,14 +112,14 @@ class MaterializedViewRefresher:
             
             logger.info(
                 "MV refresh successful",
-                extra=create_log_context(mv_name=mv_name)
+                extra=create_log_context(operation="refresh_single_mv", mv_name=mv_name)
             )
             
         except Exception as e:
             self.db.rollback()
             logger.error(
                 "MV refresh error",
-                extra=create_log_context(mv_name=mv_name, error=str(e)),
+                extra=create_log_context(operation="refresh_single_mv", mv_name=mv_name, error=str(e)),
                 exc_info=True
             )
             raise

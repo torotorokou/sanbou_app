@@ -91,7 +91,10 @@ class DashboardTargetRepository:
             
             logger.info(
                 "target cardデータ取得成功",
-                extra=create_log_context(date=str(target_date))
+                extra=create_log_context(
+                    operation="get_by_date_optimized",
+                    date=str(target_date)
+                )
             )
             return {
                 "ddate": result["ddate"],
@@ -157,20 +160,20 @@ class DashboardTargetRepository:
             
             logger.info(
                 "target cardデータ取得開始(get_by_date)",
-                extra=create_log_context(date=str(target_date))
+                extra=create_log_context(operation="get_by_date", date=str(target_date))
             )
             result = self.db.execute(query, {"target_date": target_date}).fetchone()
             
             if not result:
                 logger.warning(
                     "mv_target_card_per_dayにデータ未検出",
-                    extra=create_log_context(date=str(target_date))
+                    extra=create_log_context(operation="get_by_date", date=str(target_date))
                 )
                 return None
             
             logger.info(
                 "target cardデータ取得成功(get_by_date)",
-                extra=create_log_context(date=str(target_date))
+                extra=create_log_context(operation="get_by_date", date=str(target_date))
             )
             return {
                 "ddate": result[0],
@@ -189,7 +192,7 @@ class DashboardTargetRepository:
         except Exception as e:
             logger.error(
                 "target cardデータ取得エラー(get_by_date)",
-                extra=create_log_context(date=str(target_date), error=str(e)),
+                extra=create_log_context(operation="get_by_date", date=str(target_date), error=str(e)),
                 exc_info=True
             )
             raise
@@ -222,6 +225,7 @@ class DashboardTargetRepository:
             logger.error(
                 "最初の営業日取得エラー",
                 extra=create_log_context(
+                    operation="get_first_business_day_of_month",
                     month_start=str(month_start),
                     month_end=str(month_end),
                     error=str(e)
@@ -283,20 +287,20 @@ class DashboardTargetRepository:
             
             logger.info(
                 "target card metrics取得開始",
-                extra=create_log_context(date=str(target_date))
+                extra=create_log_context(operation="get_target_card_metrics", date=str(target_date))
             )
             result = self.db.execute(query, {"target_date": target_date}).fetchone()
             
             if not result:
                 logger.warning(
                     "指定月のmv_target_card_per_dayデータ未検出",
-                    extra=create_log_context(date=str(target_date))
+                    extra=create_log_context(operation="get_target_card_metrics", date=str(target_date))
                 )
                 return None
             
             logger.info(
                 "target card metrics取得成功",
-                extra=create_log_context(date=str(target_date))
+                extra=create_log_context(operation="get_target_card_metrics", date=str(target_date))
             )
             return {
                 "month_target_ton": float(result[0]) if result[0] is not None else None,
@@ -309,7 +313,7 @@ class DashboardTargetRepository:
         except Exception as e:
             logger.error(
                 "target card metrics取得エラー",
-                extra=create_log_context(date=str(target_date), error=str(e)),
+                extra=create_log_context(operation="get_target_card_metrics", date=str(target_date), error=str(e)),
                 exc_info=True
             )
             raise

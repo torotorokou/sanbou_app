@@ -64,7 +64,12 @@ class CalendarRepository:
         
         logger.debug(
             "カレンダー取得",
-            extra=create_log_context(year=year, month=month, days_count=len(data))
+            extra=create_log_context(
+                operation="get_month_calendar",
+                year=year,
+                month=month,
+                days_count=len(data)
+            )
         )
         
         return data

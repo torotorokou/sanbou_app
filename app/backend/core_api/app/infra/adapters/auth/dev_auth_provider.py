@@ -57,7 +57,11 @@ class DevAuthProvider(IAuthProvider):
         )
         logger.info(
             "DevAuthProvider initialized",
-            extra=create_log_context(user_email=self._dev_user.email, user_role=self._dev_user.role)
+            extra=create_log_context(
+                operation="dev_auth_init",
+                user_email=self._dev_user.email,
+                user_role=self._dev_user.role
+            )
         )
     
     async def get_current_user(self, request: Request) -> AuthUser:
@@ -77,7 +81,11 @@ class DevAuthProvider(IAuthProvider):
         # TODO: 本番環境では AUTH_MODE を "iap" または "oauth2" に設定し、
         #       このプロバイダを使用しないようにすること
         logger.debug(
-            "Returning dev user",
-            extra=create_log_context(user_email=self._dev_user.email, user_id=self._dev_user.user_id)
+            "Returning fixed dev user",
+            extra=create_log_context(
+                operation="get_current_user",
+                user_email=self._dev_user.email,
+                user_id=self._dev_user.user_id
+            )
         )
         return self._dev_user

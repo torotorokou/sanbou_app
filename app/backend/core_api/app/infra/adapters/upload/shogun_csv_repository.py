@@ -80,7 +80,7 @@ class ShogunCsvRepository:
         if df.empty:
             logger.warning(
                 "DataFrameが空のため保存スキップ",
-                extra=create_log_context(csv_type=csv_type)
+                extra=create_log_context(operation="save_dataframe_to_stg", csv_type=csv_type)
             )
             return 0
         
@@ -222,6 +222,7 @@ class ShogunCsvRepository:
             logger.info(
                 "CSVデータ保存完了",
                 extra=create_log_context(
+                    operation="save_dataframe_to_stg",
                     rows_count=len(payloads),
                     schema=schema,
                     table_name=table_name,
@@ -235,6 +236,7 @@ class ShogunCsvRepository:
             logger.error(
                 "CSVデータ保存失敗",
                 extra=create_log_context(
+                    operation="save_dataframe_to_stg",
                     csv_type=csv_type,
                     schema=schema,
                     table_name=table_name,
@@ -273,13 +275,13 @@ class ShogunCsvRepository:
             self.db.commit()
             logger.info(
                 "テーブルtruncate完了",
-                extra=create_log_context(table_name=table_name)
+                extra=create_log_context(operation="truncate_table", table_name=table_name)
             )
         except Exception as e:
             self.db.rollback()
             logger.error(
                 "テーブルtruncate失敗",
-                extra=create_log_context(table_name=table_name, error=str(e)),
+                extra=create_log_context(operation="truncate_table", table_name=table_name, error=str(e)),
                 exc_info=True
             )
             raise

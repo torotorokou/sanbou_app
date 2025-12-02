@@ -39,7 +39,7 @@ class IngestRepository:
         """
         logger.info(
             "upsert_actuals (stub)",
-            extra=create_log_context(rows_count=len(rows))
+            extra=create_log_context(operation="upsert_actuals", rows_count=len(rows))
         )
         # TODO: 実際のDB操作実装
         # 例: bulk_insert_mappings, INSERT ON CONFLICT 等
@@ -65,7 +65,7 @@ class IngestRepository:
         """
         logger.info(
             "insert_reservation (stub)",
-            extra=create_log_context(date=str(date), trucks=trucks)
+            extra=create_log_context(operation="insert_reservation", date=str(date), trucks=trucks)
         )
         # TODO: 実際のDB操作実装
         return {"date": date, "trucks": trucks}

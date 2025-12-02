@@ -67,7 +67,7 @@ class IapAuthProvider(IAuthProvider):
         self._allowed_domain = allowed_domain
         logger.info(
             "IapAuthProvider initialized",
-            extra=create_log_context(allowed_domain=allowed_domain)
+            extra=create_log_context(operation="iap_auth_init", allowed_domain=allowed_domain)
         )
     
     async def get_current_user(self, request: Request) -> AuthUser:
@@ -99,7 +99,7 @@ class IapAuthProvider(IAuthProvider):
             # IAP ヘッダーが存在しない場合は認証失敗
             logger.warning(
                 "IAP header not found",
-                extra=create_log_context()
+                extra=create_log_context(operation="get_current_user")
             )
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -110,7 +110,7 @@ class IapAuthProvider(IAuthProvider):
         # 本番環境では個人情報ログに注意すること
         logger.debug(
             "IAP header received",
-            extra=create_log_context(header_value=raw_header)
+            extra=create_log_context(operation="get_current_user", header_value=raw_header)
         )
         
         # IAP ヘッダーの形式: "accounts.google.com:user@domain.com"
@@ -124,7 +124,7 @@ class IapAuthProvider(IAuthProvider):
         if not email.endswith(f"@{self._allowed_domain}"):
             logger.warning(
                 "Unauthorized domain",
-                extra=create_log_context(email=email, allowed_domain=self._allowed_domain)
+                extra=create_log_context(operation="get_current_user", email=email, allowed_domain=self._allowed_domain)
             )
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
@@ -142,7 +142,7 @@ class IapAuthProvider(IAuthProvider):
         
         logger.info(
             "IAP authentication successful",
-            extra=create_log_context(email=email, user_id=user_id, role=role)
+            extra=create_log_context(operation="get_current_user", email=email, user_id=user_id, role=role)
         )
         
         return AuthUser(

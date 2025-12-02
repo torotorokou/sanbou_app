@@ -44,7 +44,7 @@ class FetchSalesTreePivotUseCase:
         except Exception as e:
             logger.error(
                 "FetchSalesTreePivotエラー",
-                extra=create_log_context(error=str(e)),
+                extra=create_log_context(operation="fetch_pivot", error=str(e)),
                 exc_info=True
             )
             raise

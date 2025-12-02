@@ -37,7 +37,7 @@ def main():
         except Exception as e:
             logger.error(
                 "Task processing error",
-                extra=create_log_context(error=str(e)),
+                extra=create_log_context(operation="process_task", error=str(e)),
                 exc_info=True
             )
         

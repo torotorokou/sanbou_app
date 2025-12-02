@@ -44,7 +44,7 @@ class ExportSalesTreeCSVUseCase:
         except Exception as e:
             logger.error(
                 "ExportSalesTreeCSVエラー",
-                extra=create_log_context(error=str(e)),
+                extra=create_log_context(operation="export_csv", error=str(e)),
                 exc_info=True
             )
             raise
