@@ -15,7 +15,6 @@ def apply_transport_fee_by_vendor(
         pd.DataFrame: 運搬費が適用された出荷データフレーム
     """
     from app.infra.report_utils import app_logger
-    from app.infra.report_utils.dataframe import apply_column_addition_by_keys
     from backend_shared.application.logging import create_log_context
 
     logger = app_logger()
@@ -45,24 +44,43 @@ def apply_transport_fee_by_vendor(
             )
         )
 
-    # 運搬費の適用（業者CDで結合）
-    updated_target_rows = apply_column_addition_by_keys(
-        base_df=target_rows,
-        addition_df=df_transport,
-        join_keys=["業者CD", "運搬業者"],
-        value_col_to_add="運搬費",
-        update_target_col="運搬費",
+    # 運搬費マスターを準備（重複除外）
+    transport_fees = df_transport[["業者CD", "運搬業者", "運搬費"]].drop_duplicates(
+        subset=["業者CD", "運搬業者"]
+    ).copy()
+    
+    # 運搬費をマージ（LEFT JOIN で全行を保持）
+    updated_target_rows = target_rows.merge(
+        transport_fees,
+        on=["業者CD", "運搬業者"],
+        how="left",
+        suffixes=("_old", "_new")
     )
     
+    # マージされた運搬費で既存の運搬費を上書き（マッチした場合のみ）
+    if "運搬費_new" in updated_target_rows.columns:
+        # 元の運搬費をクリーンアップ
+        if "運搬費_old" in updated_target_rows.columns:
+            updated_target_rows["運搬費"] = updated_target_rows["運搬費_old"]
+            updated_target_rows.drop(columns=["運搬費_old"], inplace=True)
+        
+        # 新しい運搬費で上書き（NaNでない場合）
+        mask = updated_target_rows["運搬費_new"].notna()
+        updated_target_rows.loc[mask, "運搬費"] = pd.to_numeric(
+            updated_target_rows.loc[mask, "運搬費_new"], errors="coerce"
+        )
+        updated_target_rows.drop(columns=["運搬費_new"], inplace=True)
+    
     # デバッグ: マージ後の運搬費を確認
-    if not updated_target_rows.empty:
+    if not updated_target_rows.empty and "運搬費" in updated_target_rows.columns:
         transport_fee_stats = updated_target_rows["運搬費"].describe().to_dict()
         vendor_fee_summary = updated_target_rows.groupby("運搬業者")["運搬費"].first().to_dict()
         logger.info(
-            f"Transport fee applied - Stats: {transport_fee_stats}",
+            f"Transport fee applied - Vendor fees: {vendor_fee_summary}",
             extra=create_log_context(
                 operation="apply_transport_fee_by_vendor",
                 vendor_fee_summary=vendor_fee_summary,
+                transport_fee_stats=transport_fee_stats,
                 updated_rows_count=len(updated_target_rows)
             )
         )
