@@ -68,11 +68,9 @@ export const ReportUploadFileCard: React.FC<ReportUploadFileCardProps> = ({
     if (selectedFile && uploadProps.beforeUpload) {
       // beforeUpload に File オブジェクトをそのまま渡す
       // antd の Upload コンポーネントは内部的に File を RcFile として扱える
-      // RcFile に必要なプロパティを追加
-      const rcFile: RcFile = Object.assign(selectedFile, {
-        uid: selectedFile.name + Date.now(),
-        lastModifiedDate: new Date(selectedFile.lastModified)
-      });
+      // RcFile に必要なプロパティを追加（読み取り専用プロパティを避ける）
+      const rcFile = selectedFile as RcFile;
+      rcFile.uid = selectedFile.name + Date.now();
       uploadProps.beforeUpload(rcFile, [rcFile]);
       // input をリセットして同じファイルを再選択可能に
       e.target.value = '';
