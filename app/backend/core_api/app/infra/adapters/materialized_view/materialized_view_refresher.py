@@ -14,13 +14,12 @@ Clean Architecture の Infra 層に配置。
   - 疎結合: UseCase から DI 経由で注入
   - 拡張性: 新しい MV を容易に追加可能
 """
-import logging
 from typing import List, Optional
 from sqlalchemy import text
 from sqlalchemy.orm import Session
-from backend_shared.application.logging import create_log_context
+from backend_shared.application.logging import create_log_context, get_module_logger
 
-logger = logging.getLogger(__name__)
+logger = get_module_logger(__name__)
 
 
 class MaterializedViewRefresher:

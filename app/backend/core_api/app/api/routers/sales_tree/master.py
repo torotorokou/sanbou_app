@@ -10,15 +10,15 @@ Sales Tree Master Router - Filter option endpoints
 Note: これは「マスタAPI」ではなく、SalesTree分析画面のプルダウンフィルタ用です。
       mart.v_sales_tree_detail_base から SELECT DISTINCT で動的に取得します。
 """
-import logging
 from fastapi import APIRouter, Depends, Query
 
+from backend_shared.application.logging import get_module_logger
 from app.config.di_providers import get_sales_tree_repo
 from app.infra.adapters.sales_tree.sales_tree_repository import SalesTreeRepository
 from app.core.domain.sales_tree import CategoryKind
 from backend_shared.core.domain.exceptions import InfrastructureError
 
-logger = logging.getLogger(__name__)
+logger = get_module_logger(__name__)
 router = APIRouter()
 
 

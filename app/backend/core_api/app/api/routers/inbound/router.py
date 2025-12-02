@@ -21,16 +21,16 @@ Inbound Router - 搬入データ取得エンドポイント
 """
 from fastapi import APIRouter, Query, Depends
 from typing import List, Optional
-import logging
 from datetime import date as date_type
 
+from backend_shared.application.logging import get_module_logger
 from app.core.domain.inbound import InboundDailyRow, CumScope
 from app.core.usecases.inbound.dto import GetInboundDailyInput
 from app.core.usecases.inbound.get_inbound_daily_uc import GetInboundDailyUseCase
 from app.config.di_providers import get_inbound_daily_uc
 from backend_shared.core.domain.exceptions import ValidationError, InfrastructureError
 
-logger = logging.getLogger(__name__)
+logger = get_module_logger(__name__)
 
 router = APIRouter(prefix="/inbound", tags=["inbound"])
 

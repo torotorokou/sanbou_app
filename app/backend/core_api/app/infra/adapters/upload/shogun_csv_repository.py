@@ -6,13 +6,12 @@ backend_sharedのCSVバリデーター・フォーマッターを活用します
 YAMLファイル(shogun_csv_masters.yaml)から動的にカラムマッピングを取得します。
 """
 
-import logging
 from typing import Optional, Dict, Any
 import pandas as pd
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 import sqlalchemy as sa
-from backend_shared.application.logging import create_log_context
+from backend_shared.application.logging import create_log_context, get_module_logger
 
 from app.infra.db.dynamic_models import get_shogun_model_class, create_shogun_model_class
 from app.config.settings import get_settings
@@ -20,7 +19,7 @@ from app.infra.db.table_definition import get_table_definition_generator
 from backend_shared.infra.dataframe import to_sql_ready_df, filter_defined_columns
 from backend_shared.infra.json_utils import deep_jsonable
 
-logger = logging.getLogger(__name__)
+logger = get_module_logger(__name__)
 
 
 class ShogunCsvRepository:

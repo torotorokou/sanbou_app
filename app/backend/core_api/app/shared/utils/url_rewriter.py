@@ -9,12 +9,11 @@ BFFの責務として、内部マイクロサービス(ledger_api等)の論理�
     rewritten = rewrite_artifact_urls_to_bff(response_data)
     # => {"artifact": {"excel_download_url": "/core_api/reports/artifacts/..."}}
 """
-import logging
 from typing import Any, Dict
 
-from backend_shared.application.logging import create_log_context
+from backend_shared.application.logging import create_log_context, get_module_logger
 
-logger = logging.getLogger(__name__)
+logger = get_module_logger(__name__)
 
 
 def rewrite_artifact_urls_to_bff(

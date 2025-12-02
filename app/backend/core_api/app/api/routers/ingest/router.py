@@ -14,8 +14,8 @@ Ingest Router - CSVアップロードと予約登録エンドポイント
 from fastapi import APIRouter, Depends, UploadFile, File
 import pandas as pd
 import io
-import logging
 
+from backend_shared.application.logging import get_module_logger
 from app.core.usecases.ingest.upload_ingest_csv_uc import UploadIngestCsvUseCase
 from app.core.usecases.ingest.create_reservation_uc import CreateReservationUseCase
 from app.config.di_providers import get_upload_ingest_csv_uc, get_create_reservation_uc
@@ -23,7 +23,7 @@ from app.api.schemas import ReservationCreate, ReservationResponse
 from backend_shared.core.domain.exceptions import ValidationError, InfrastructureError
 
 router = APIRouter(prefix="/ingest", tags=["ingest"])
-logger = logging.getLogger(__name__)
+logger = get_module_logger(__name__)
 
 
 @router.post("/csv", summary="Upload CSV data")

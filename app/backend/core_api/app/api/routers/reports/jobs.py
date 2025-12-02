@@ -1,16 +1,15 @@
 """
 Jobs - ジョブステータス・通知ストリームエンドポイント
 """
-import logging
 import os
 from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
 import httpx
 
 from backend_shared.core.domain.exceptions import ExternalServiceError
-from backend_shared.application.logging import create_log_context
+from backend_shared.application.logging import create_log_context, get_module_logger
 
-logger = logging.getLogger(__name__)
+logger = get_module_logger(__name__)
 
 router = APIRouter()
 

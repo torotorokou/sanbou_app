@@ -4,13 +4,14 @@ Upload Calendar Query Adapter
 アップロードカレンダー表示用のSQL集計ロジックを実装。
 複雑なUNION ALLによる集計クエリをカプセル化します。
 """
-import logging
 from typing import List, Dict, Any
 from datetime import date as date_type
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 
-logger = logging.getLogger(__name__)
+from backend_shared.application.logging import get_module_logger
+
+logger = get_module_logger(__name__)
 
 
 class UploadCalendarQueryAdapter:

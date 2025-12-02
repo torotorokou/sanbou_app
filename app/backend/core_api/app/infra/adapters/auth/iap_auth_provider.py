@@ -21,13 +21,12 @@ Google Cloud Identity-Aware Proxy (IAP) が付与するヘッダーから
 - ログ出力を活用して実際のヘッダー内容を確認してください
 """
 
-import logging
 from fastapi import Request, HTTPException, status
+from backend_shared.application.logging import create_log_context, get_module_logger
 from app.core.domain.auth.entities import AuthUser
 from app.core.ports.auth.auth_provider import IAuthProvider
-from backend_shared.application.logging import create_log_context
 
-logger = logging.getLogger(__name__)
+logger = get_module_logger(__name__)
 
 
 class IapAuthProvider(IAuthProvider):

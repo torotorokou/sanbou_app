@@ -18,14 +18,14 @@ DataFrame を SQL データベースに挿入可能な形式に正規化する�
     filtered_df = filter_defined_columns(normalized_df, ["id", "name", "created_at"])
 """
 
-import logging
 import pandas as pd
 import numpy as np
 from datetime import datetime, date, time
 from typing import Any
 from backend_shared.infra.json_utils import deep_jsonable
+from backend_shared.application.logging import get_module_logger
 
-logger = logging.getLogger(__name__)
+logger = get_module_logger(__name__)
 
 
 def to_sql_ready_df(df: pd.DataFrame) -> pd.DataFrame:

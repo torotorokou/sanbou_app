@@ -2,14 +2,13 @@
 Analysis Router - BFF for analysis endpoints
 フロントエンドからの分析リクエストを受け、適切なバックエンドサービスに転送
 """
-import logging
 import os
 from fastapi import APIRouter, Request, Depends
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 import httpx
 
-from backend_shared.application.logging import create_log_context
+from backend_shared.application.logging import create_log_context, get_module_logger
 from app.api.schemas import (
     CustomerChurnAnalyzeRequest,
     CustomerChurnAnalyzeResponse,
@@ -20,7 +19,7 @@ from app.api.schemas import (
 from app.core.usecases.customer_churn import AnalyzeCustomerChurnUseCase
 from app.config.di_providers import get_analyze_customer_churn_uc, get_db
 
-logger = logging.getLogger(__name__)
+logger = get_module_logger(__name__)
 
 router = APIRouter(prefix="/analysis", tags=["analysis"])
 

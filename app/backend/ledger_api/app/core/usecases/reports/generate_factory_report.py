@@ -14,7 +14,6 @@ Generate Factory Report UseCase.
 DataFrame依存はドメイン層で緩和し、将来的な置き換えを容易にします。
 """
 
-import logging
 import time
 from datetime import date, datetime
 from io import BytesIO

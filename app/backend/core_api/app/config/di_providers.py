@@ -10,12 +10,12 @@ DI Providers - Dependency Injection Container
   - 環境差分（debug/raw、flash/final）をここで吸収
   - SET LOCAL search_path によるスキーマ切替を活用
 """
-import logging
 import os
 from fastapi import Depends
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from backend_shared.application.logging import get_module_logger
 from app.deps import get_db
 from app.infra.adapters.upload.shogun_csv_repository import ShogunCsvRepository
 from app.infra.adapters.upload.raw_data_repository import RawDataRepository
@@ -28,7 +28,7 @@ from app.infra.clients.ledger_client import LedgerClient
 from app.infra.clients.manual_client import ManualClient
 from app.infra.clients.ai_client import AIClient
 
-logger = logging.getLogger(__name__)
+logger = get_module_logger(__name__)
 
 
 # ========================================================================
