@@ -12,6 +12,7 @@ from typing import Optional
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from backend_shared.application.logging import create_log_context
 from app.core.domain.sales_tree import (
     SummaryRequest,
     SummaryRow,
