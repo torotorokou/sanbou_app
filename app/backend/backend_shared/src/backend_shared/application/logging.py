@@ -1,16 +1,23 @@
 """
-Backend Shared UseCase Logging and Monitoring Utilities
+Backend Shared Logging Infrastructure
 
-全バックエンドサービスで共通利用するUseCaseトレース・監視機能。
-構造化ログ出力、実行時間計測、メトリクス収集を提供します。
+全バックエンドサービスで共通利用するログ基盤。
+構造化ログ出力、Request ID トレーシング、実行時間計測を提供します。
 
 Features:
+  - 統一logging設定（JSON形式、Request ID自動付与）
+  - Request ID による完全なリクエストトレーシング
+  - UseCase実行ログ（デコレータ形式）
   - 実行時間の計測
-  - 構造化ログの出力 (JSON format)
   - エラートラッキング (exc_info付き)
   - メトリクス収集 (success/error/validation_error カウント)
 
 使用例:
+    # アプリケーション起動時（main.py / app.py）
+    from backend_shared.application.logging import setup_logging
+    setup_logging()
+    
+    # UseCase内でのログ出力
     from backend_shared.application.logging import log_usecase_execution
     
     class GetCalendarMonthUseCase:
@@ -19,12 +26,247 @@ Features:
             return self.query.get_month_calendar(year, month)
 """
 import logging
+import logging.config
+import os
 import time
 import functools
 from typing import Callable, Any, Optional, Dict
 from datetime import datetime
+from contextvars import ContextVar
+
+# pythonjsonlogger は optional: なければ通常のフォーマッタを使用
+try:
+    from pythonjsonlogger import jsonlogger
+    HAS_JSON_LOGGER = True
+except ImportError:
+    HAS_JSON_LOGGER = False
 
 logger = logging.getLogger(__name__)
+
+
+# ========================================
+# ContextVar: Request ID の保持
+# ========================================
+# リクエスト単位でrequest_idを保持するためのContextVar
+# Middleware で設定され、Filter で取得される
+request_id_var: ContextVar[str] = ContextVar("request_id", default="-")
+
+
+# ========================================
+# Custom Filter: Request ID 付与
+# ========================================
+class RequestIdFilter(logging.Filter):
+    """
+    Request ID をログレコードに自動付与する Filter
+    
+    ContextVar から request_id を取得し、LogRecord に追加します。
+    これにより、フォーマッタで %(request_id)s を使用できるようになります。
+    """
+    
+    def filter(self, record: logging.LogRecord) -> bool:
+        """
+        ログレコードに request_id 属性を追加
+        
+        Args:
+            record: ログレコード
+            
+        Returns:
+            True (常にログを通過させる)
+        """
+        # ContextVar から request_id を取得（なければ "-"）
+        record.request_id = request_id_var.get()
+        return True
+
+
+# ========================================
+# JSON Formatter の定義
+# ========================================
+def create_json_formatter() -> logging.Formatter:
+    """
+    JSON形式のログフォーマッタを作成
+    
+    Returns:
+        JsonFormatter または Formatter
+        
+    Description:
+        pythonjsonlogger がインストールされている場合はJSON形式、
+        なければ通常のテキスト形式でログを出力します。
+        
+        JSONフィールド:
+        - timestamp: ISO 8601形式のタイムスタンプ
+        - level: ログレベル (DEBUG/INFO/WARNING/ERROR/CRITICAL)
+        - logger: ロガー名 (通常はモジュール名)
+        - request_id: リクエストID (Middleware で設定)
+        - message: ログメッセージ
+        - その他: extra で渡された任意のフィールド
+    """
+    if HAS_JSON_LOGGER:
+        # JSON形式
+        log_format = "%(asctime)s %(levelname)s %(name)s %(request_id)s %(message)s"
+        formatter = jsonlogger.JsonFormatter(
+            log_format,
+            rename_fields={
+                "asctime": "timestamp",
+                "levelname": "level",
+                "name": "logger",
+            },
+            datefmt="%Y-%m-%dT%H:%M:%S",  # ISO 8601 形式
+        )
+    else:
+        # テキスト形式（fallback）
+        log_format = "[%(asctime)s] [%(levelname)s] [%(name)s] [%(request_id)s] %(message)s"
+        formatter = logging.Formatter(log_format, datefmt="%Y-%m-%d %H:%M:%S")
+    
+    return formatter
+
+
+# ========================================
+# Logging 設定関数
+# ========================================
+def setup_logging(log_level: str | None = None) -> None:
+    """
+    アプリケーション全体の logging 設定を行う
+    
+    Args:
+        log_level: ログレベル (DEBUG/INFO/WARNING/ERROR/CRITICAL)
+                   省略時は環境変数 LOG_LEVEL または INFO
+                   
+    Description:
+        以下の設定を行います:
+        1. ルートロガーの設定（レベル、ハンドラ、フォーマッタ）
+        2. Request ID Filter の追加
+        3. Uvicorn / FastAPI ロガーの統合
+        4. 既存ハンドラのクリア（重複防止）
+        
+    Note:
+        アプリケーション起動時に1回だけ呼び出してください。
+        複数回呼び出すと、ハンドラが重複してログが多重出力されます。
+        
+    Example:
+        >>> from backend_shared.application.logging import setup_logging
+        >>> setup_logging()  # app.py の最初で実行
+    """
+    # ログレベルの決定
+    if log_level is None:
+        log_level = os.getenv("LOG_LEVEL", "INFO").upper()
+    
+    # 数値レベルに変換
+    numeric_level = getattr(logging, log_level, logging.INFO)
+    
+    # ルートロガーの取得
+    root_logger = logging.getLogger()
+    
+    # 既存ハンドラのクリア（重複防止）
+    root_logger.handlers.clear()
+    
+    # レベル設定
+    root_logger.setLevel(numeric_level)
+    
+    # StreamHandler の作成（標準出力）
+    stream_handler = logging.StreamHandler()
+    stream_handler.setLevel(numeric_level)
+    
+    # Formatter の設定（JSON or Text）
+    formatter = create_json_formatter()
+    stream_handler.setFormatter(formatter)
+    
+    # Request ID Filter の追加
+    request_id_filter = RequestIdFilter()
+    stream_handler.addFilter(request_id_filter)
+    
+    # ルートロガーにハンドラを追加
+    root_logger.addHandler(stream_handler)
+    
+    # ========================================
+    # Uvicorn / FastAPI ロガーの統合
+    # ========================================
+    # Uvicorn の各ロガーに対して、同じハンドラ・フィルタを適用
+    uvicorn_loggers = [
+        "uvicorn",
+        "uvicorn.error",
+        "uvicorn.access",
+        "fastapi",
+    ]
+    
+    for logger_name in uvicorn_loggers:
+        logger_instance = logging.getLogger(logger_name)
+        logger_instance.handlers.clear()  # 既存ハンドラをクリア
+        logger_instance.addHandler(stream_handler)  # 共通ハンドラを追加
+        logger_instance.setLevel(numeric_level)
+        logger_instance.propagate = False  # ルートロガーへの伝播を防ぐ（重複防止）
+    
+    # ========================================
+    # サードパーティライブラリのログレベル調整
+    # ========================================
+    # httpx, httpcore などの詳細ログを抑制（本番環境でのノイズ削減）
+    logging.getLogger("httpx").setLevel(logging.WARNING)
+    logging.getLogger("httpcore").setLevel(logging.WARNING)
+    
+    # 設定完了ログ
+    format_type = "json" if HAS_JSON_LOGGER else "text"
+    root_logger.info(
+        "Logging configuration initialized",
+        extra={
+            "log_level": log_level,
+            "format": format_type,
+            "output": "stdout",
+        }
+    )
+
+
+# ========================================
+# Helper 関数: Request ID の設定・取得
+# ========================================
+def set_request_id(request_id: str) -> None:
+    """
+    Request ID を ContextVar に設定
+    
+    Args:
+        request_id: リクエストID（UUID等）
+        
+    Description:
+        Middleware からこの関数を呼び出して request_id を設定します。
+        以降、同じコンテキスト内の全ログに自動で request_id が付与されます。
+        
+    Example:
+        >>> from backend_shared.application.logging import set_request_id
+        >>> set_request_id("550e8400-e29b-41d4-a716-446655440000")
+    """
+    request_id_var.set(request_id)
+
+
+def get_request_id() -> str:
+    """
+    Request ID を ContextVar から取得
+    
+    Returns:
+        str: リクエストID（未設定の場合は "-"）
+        
+    Description:
+        現在のコンテキストの request_id を取得します。
+        主にテスト用途やデバッグ用途で使用します。
+        
+    Example:
+        >>> from backend_shared.application.logging import get_request_id
+        >>> print(get_request_id())
+        "550e8400-e29b-41d4-a716-446655440000"
+    """
+    return request_id_var.get()
+
+
+# ========================================
+# ログレベル定数（可読性向上）
+# ========================================
+LOG_LEVEL_DEBUG = "DEBUG"
+LOG_LEVEL_INFO = "INFO"
+LOG_LEVEL_WARNING = "WARNING"
+LOG_LEVEL_ERROR = "ERROR"
+LOG_LEVEL_CRITICAL = "CRITICAL"
+
+
+# ========================================
+# UseCase ログデコレータ（既存機能）
+# ========================================
 
 
 def log_usecase_execution(

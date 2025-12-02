@@ -24,9 +24,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 # ==========================================
-# 統一ロギング設定のインポート
+# 統一ロギング設定のインポート（backend_shared）
 # ==========================================
-from app.config.logging import setup_logging
+from backend_shared.application.logging import setup_logging
 
 from app.api.routers.ingest.router import router as ingest_router
 from app.api.routers.forecast.router import router as forecast_router
@@ -68,9 +68,9 @@ app = FastAPI(
 # ==========================================
 # Middleware 登録
 # ==========================================
-# Request ID Middleware: リクエストトレーシング用
+# Request ID Middleware: リクエストトレーシング用（backend_shared）
 # 全リクエストに X-Request-ID を付与し、ログとレスポンスに含める
-from app.api.middleware.request_id import RequestIdMiddleware
+from backend_shared.infra.adapters.middleware.request_id import RequestIdMiddleware
 app.add_middleware(RequestIdMiddleware)
 
 # ==========================================

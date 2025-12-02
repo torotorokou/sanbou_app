@@ -1,19 +1,21 @@
 # テクニカルログ仕様書
 
 **作成日**: 2025-12-02  
-**対象サービス**: core_api (Backend)  
-**ログ基盤バージョン**: 1.0
+**対象**: 全バックエンドサービス (core_api, ledger_api, rag_api, manual_api 等)  
+**ログ基盤**: backend_shared  
+**バージョン**: 2.0
 
 ---
 
 ## 📋 概要
 
-本ドキュメントは、`core_api` におけるテクニカルログ（アプリケーションログ）の設計方針と運用ルールを定義します。
+本ドキュメントは、全バックエンドサービスで共通利用する**テクニカルログ基盤**（`backend_shared`）の設計方針と運用ルールを定義します。
 
 ### 目的
 
 - GCP Cloud Logging への統合を見据えた構造化ログの実現
 - リクエスト単位のトレーシング（Request ID による紐付け）
+- マイクロサービス間の統一ログフォーマット
 - 本番環境でのトラブルシューティングとパフォーマンス分析
 - 監査ログ・業務ログとの明確な分離
 
@@ -30,15 +32,15 @@
 
 ```
 ┌─────────────────────────────────────────────────┐
-│              FastAPI Application                │
+│       FastAPI Application (各マイクロサービス)    │
 ├─────────────────────────────────────────────────┤
-│  Request ID Middleware                          │
+│  Request ID Middleware (backend_shared)         │
 │  ↓ (ContextVar に request_id を設定)            │
 ├─────────────────────────────────────────────────┤
 │  UseCase / Domain / Infra Layers                │
 │  ↓ (logging.getLogger(__name__) でログ出力)    │
 ├─────────────────────────────────────────────────┤
-│  Logging Config (app/config/logging.py)         │
+│  Logging Infrastructure (backend_shared)        │
 │  - Request ID Filter (ContextVar から取得)      │
 │  - JSON Formatter (pythonjsonlogger)            │
 │  - StreamHandler (stdout)                       │
@@ -49,14 +51,27 @@
           Docker / GCP Cloud Logging
 ```
 
-### 主要モジュール
+### 主要モジュール（backend_shared）
 
 | ファイルパス | 役割 |
 |------------|------|
-| `app/config/logging.py` | グローバルlogging設定、Request ID Filter、JSON Formatter |
-| `app/api/middleware/request_id.py` | Request ID の生成・ContextVar設定・レスポンスヘッダ追加 |
-| `app/app.py` | logging初期化 (`setup_logging()`) と Middleware登録 |
-| 各UseCase | `logger.info()` / `logger.error()` によるビジネスログ出力 |
+| `backend_shared/application/logging.py` | 統一logging設定、Request ID Filter、JSON Formatter、setup_logging() |
+| `backend_shared/infra/adapters/middleware/request_id.py` | Request ID の生成・ContextVar設定・レスポンスヘッダ追加 |
+
+### 各サービスでの使用方法
+
+```python
+# app.py または main.py
+from backend_shared.application.logging import setup_logging
+from backend_shared.infra.adapters.middleware.request_id import RequestIdMiddleware
+
+# 1. logging初期化（アプリ起動時に1回）
+setup_logging()
+
+# 2. Middleware登録
+app = FastAPI()
+app.add_middleware(RequestIdMiddleware)
+```
 
 ---
 
@@ -261,6 +276,26 @@ class MyUseCase:
             raise
 ```
 
+### UseCase デコレータの活用（推奨）
+
+`backend_shared` が提供するデコレータを使用すると、さらに簡潔に書けます:
+
+```python
+from backend_shared.application.logging import log_usecase_execution
+
+class MyUseCase:
+    @log_usecase_execution(usecase_name="MyOperation", log_args=True)
+    def execute(self, input_dto):
+        # デコレータが自動的に開始/完了/エラーログを出力
+        result = self._process(input_dto)
+        return result
+```
+
+デコレータが自動で出力する内容:
+- 開始ログ: UseCase名、引数（センシティブ情報を除外）
+- 完了ログ: UseCase名、実行時間（ms）、結果サイズ
+- エラーログ: UseCase名、エラー型、エラーメッセージ、スタックトレース
+
 ### ログ出力のベストプラクティス
 
 #### ✅ Good
@@ -367,6 +402,7 @@ app.add_middleware(RequestIdMiddleware)
 
 | 日付 | バージョン | 変更内容 |
 |------|----------|---------|
+| 2025-12-02 | 2.0 | **backend_shared への移行完了**<br>- ログ基盤を backend_shared に集約<br>- 全マイクロサービスで共通利用可能に<br>- UseCase デコレータとの統合 |
 | 2025-12-02 | 1.0 | 初版作成（Phase 1-4 実装完了） |
 
 ---
