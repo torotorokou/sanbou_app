@@ -68,48 +68,47 @@ class BuildTargetCardUseCase:
             ValueError: Input DTOまたは日付が不正な場合
             InfrastructureError: DB接続エラー等（Repository層から伝播）
         """
-        try:
-            # 1. Input DTOのバリデーション
-            input_dto.validate()
-            
-            # 2. Domain Serviceで日付バリデーション
-            is_valid, error_msg = target_card.validate_target_card_date(
-                input_dto.requested_date, input_dto.mode
+        # 1. Input DTOのバリデーション
+        input_dto.validate()
+        
+        # 2. Domain Serviceで日付バリデーション
+        is_valid, error_msg = target_card.validate_target_card_date(
+            input_dto.requested_date, input_dto.mode
+        )
+        if not is_valid:
+            raise ValueError(f"Invalid target card date: {error_msg}")
+        
+        # 3. キャッシュをチェック
+        cache_key = (input_dto.requested_date, input_dto.mode)
+        if _CACHE is not None and cache_key in _CACHE:
+            logger.debug(
+                "Cache hit",
+                extra=create_log_context(operation="build_target_card", cache_key=str(cache_key))
             )
-            if not is_valid:
-                raise ValueError(f"Invalid target card date: {error_msg}")
-            
-            # 3. キャッシュをチェック
-            cache_key = (input_dto.requested_date, input_dto.mode)
-            if _CACHE is not None and cache_key in _CACHE:
-                logger.debug(
-                    "Cache hit",
-                    extra=create_log_context(operation="build_target_card", cache_key=str(cache_key))
-                )
-                return BuildTargetCardOutput.from_domain(_CACHE[cache_key])
-            
-            # 4. Repository経由でデータ取得（最適化クエリ: 1回のSQLで取得）
-            raw_row = self._query.get_by_date_optimized(
-                target_date=input_dto.requested_date,
-                mode=input_dto.mode
+            return BuildTargetCardOutput.from_domain(_CACHE[cache_key])
+        
+        # 4. Repository経由でデータ取得（最適化クエリ: 1回のSQLで取得）
+        raw_row = self._query.get_by_date_optimized(
+            target_date=input_dto.requested_date,
+            mode=input_dto.mode
+        )
+        
+        # 5. Domain Serviceで変換・計算を適用
+        # Note: 現在のデータ構造では複数の目標/実績ペア(month/week/day)があるため、
+        # transform_target_card_dataの適用は現時点では見送り
+        # 将来的には各ペアに対してachievement_rateとvarianceを計算する拡張を検討
+        transformed_row = raw_row
+        
+        # 6. キャッシュに格納
+        if _CACHE is not None:
+            _CACHE[cache_key] = transformed_row
+            logger.debug(
+                "Cached result",
+                extra=create_log_context(operation="build_target_card", cache_key=str(cache_key))
             )
-            
-            # 5. Domain Serviceで変換・計算を適用
-            # Note: 現在のデータ構造では複数の目標/実績ペア(month/week/day)があるため、
-            # transform_target_card_dataの適用は現時点では見送り
-            # 将来的には各ペアに対してachievement_rateとvarianceを計算する拡張を検討
-            transformed_row = raw_row
-            
-            # 6. キャッシュに格納
-            if _CACHE is not None:
-                _CACHE[cache_key] = transformed_row
-                logger.debug(
-                    "Cached result",
-                    extra=create_log_context(operation="build_target_card", cache_key=str(cache_key))
-                )
-            
-            # 7. Output DTOに変換
-            return BuildTargetCardOutput.from_domain(transformed_row)
+        
+        # 7. Output DTOに変換
+        return BuildTargetCardOutput.from_domain(transformed_row)
 
     @staticmethod
     def clear_cache() -> None:
