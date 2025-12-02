@@ -12,6 +12,7 @@ import pandas as pd
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 import sqlalchemy as sa
+from backend_shared.application.logging import create_log_context
 
 from app.infra.db.dynamic_models import get_shogun_model_class, create_shogun_model_class
 from app.config.settings import get_settings
@@ -77,7 +78,10 @@ class ShogunCsvRepository:
             Exception: DB保存に失敗した場合
         """
         if df.empty:
-            logger.warning(f"Empty DataFrame for {csv_type}, skipping save")
+            logger.warning(
+                "DataFrameが空のため保存スキップ",
+                extra=create_log_context(csv_type=csv_type)
+            )
             return 0
         
         # スキーマとテーブル名の決定
@@ -215,12 +219,29 @@ class ShogunCsvRepository:
             )
             self.db.commit()
             
-            logger.info(f"Saved {len(payloads)} rows to {schema}.{table_name} (csv_type={csv_type})")
+            logger.info(
+                "CSVデータ保存完了",
+                extra=create_log_context(
+                    rows_count=len(payloads),
+                    schema=schema,
+                    table_name=table_name,
+                    csv_type=csv_type
+                )
+            )
             return len(payloads)
             
         except Exception as e:
             self.db.rollback()
-            logger.error(f"Failed to save {csv_type} data to {schema}.{table_name}: {e}")
+            logger.error(
+                "CSVデータ保存失敗",
+                extra=create_log_context(
+                    csv_type=csv_type,
+                    schema=schema,
+                    table_name=table_name,
+                    error=str(e)
+                ),
+                exc_info=True
+            )
             raise
     
     def save_receive_csv(self, df: pd.DataFrame) -> int:
@@ -250,10 +271,17 @@ class ShogunCsvRepository:
             # TRUNCATE実行
             self.db.execute(text(f"TRUNCATE TABLE {table_name} RESTART IDENTITY CASCADE"))
             self.db.commit()
-            logger.info(f"Truncated table: {table_name}")
+            logger.info(
+                "テーブルtruncate完了",
+                extra=create_log_context(table_name=table_name)
+            )
         except Exception as e:
             self.db.rollback()
-            logger.error(f"Failed to truncate {table_name}: {e}")
+            logger.error(
+                "テーブルtruncate失敗",
+                extra=create_log_context(table_name=table_name, error=str(e)),
+                exc_info=True
+            )
             raise
     
     def get_record_count(self, csv_type: str) -> int:
