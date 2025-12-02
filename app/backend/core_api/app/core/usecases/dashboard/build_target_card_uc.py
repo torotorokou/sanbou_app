@@ -67,6 +67,16 @@ class BuildTargetCardUseCase:
             InfrastructureError: DB接続エラー等（Repository層から伝播）
         """
         try:
+            # 開始ログ: 構造化情報
+            logger.info(
+                "Dashboard target card query started",
+                extra={
+                    "operation": "build_target_card",
+                    "requested_date": input_dto.requested_date,
+                    "mode": input_dto.mode,
+                }
+            )
+            
             # 1. Input DTOのバリデーション
             input_dto.validate()
             
@@ -100,16 +110,32 @@ class BuildTargetCardUseCase:
                 _CACHE[cache_key] = transformed_row
                 logger.debug(f"Cached result for {cache_key}")
             
+            # 完了ログ: 構造化情報
             logger.info(
-                f"BuildTargetCardUseCase: fetched target card data, "
-                f"date={input_dto.requested_date}, mode={input_dto.mode}, found={transformed_row is not None}"
+                "Dashboard target card query completed",
+                extra={
+                    "operation": "build_target_card",
+                    "requested_date": input_dto.requested_date,
+                    "mode": input_dto.mode,
+                    "found": transformed_row is not None,
+                    "cached": cache_key in _CACHE if _CACHE else False,
+                }
             )
             
             # 7. Output DTOに変換
             return BuildTargetCardOutput.from_domain(transformed_row)
             
         except Exception as e:
-            logger.error(f"Error in execute: {str(e)}", exc_info=True)
+            logger.error(
+                "Dashboard target card query failed",
+                extra={
+                    "operation": "build_target_card",
+                    "requested_date": input_dto.requested_date,
+                    "mode": input_dto.mode,
+                    "error": str(e),
+                },
+                exc_info=True
+            )
             raise
 
     @staticmethod
