@@ -28,6 +28,7 @@ export * from './config';
 // Utils - 日付・数値・汎用ユーティリティ
 // ===================================================
 export * from './utils/dateUtils';
+export * from './utils/errorHandling';
 export * from './utils/anchors';
 export * from './utils/pdf/workerLoader';
 export * from './utils/responsiveTest';

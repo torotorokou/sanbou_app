@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { Table, DatePicker, Select, Space, Button, Pagination } from 'antd';
-import { dayjs, type Dayjs, isInRange, toIsoMonth } from '@shared/utils/dateUtils';
+import { dayjs, type Dayjs, isInRange } from '@shared';
 import {
     useReactTable,
     getCoreRowModel,

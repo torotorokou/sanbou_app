@@ -17,7 +17,7 @@
  * - テスタブル（単体テストが容易）
  */
 
-import { dayjs, formatCurrency } from '@shared/utils/dateUtils';
+import { dayjs, formatCurrency } from '@shared';
 import type {
   Mode,
   SortKey,

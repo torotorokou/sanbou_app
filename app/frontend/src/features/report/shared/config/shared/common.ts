@@ -2,7 +2,7 @@
 import React from 'react';
 import { Spin } from 'antd';
 import type { CsvConfigGroup, ModalStepConfig, ReportConfig } from './types';
-import { REPORT_ENDPOINTS, getReportEndpoint } from '@shared/config/apiEndpoints';
+import { REPORT_ENDPOINTS, getReportEndpoint } from '@shared';
 
 // ==============================
 // 🌐 共通定数・設定
