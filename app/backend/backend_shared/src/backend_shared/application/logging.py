@@ -611,13 +611,18 @@ class UseCaseMetrics:
     _instance: Optional["UseCaseMetrics"] = None
     _lock = threading.Lock()
     
+    def __init__(self) -> None:
+        """インスタンス変数の型ヒント定義"""
+        self._metrics: Dict[str, Dict[str, int]]
+        self._metrics_lock: threading.Lock
+    
     def __new__(cls):
         if cls._instance is None:
             with cls._lock:
                 # Double-checked locking pattern
                 if cls._instance is None:
                     instance = super().__new__(cls)
-                    # インスタンス変数の初期化（型アノテーションなし）
+                    # インスタンス変数の初期化
                     instance._metrics = {}
                     instance._metrics_lock = threading.Lock()
                     cls._instance = instance
