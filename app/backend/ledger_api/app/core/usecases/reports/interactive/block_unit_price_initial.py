@@ -20,6 +20,7 @@ from app.infra.report_utils import (
     load_all_filtered_dataframes,
 )
 from app.infra.report_utils.domain import ReadTransportDiscount
+from backend_shared.application.logging import create_log_context
 
 from .block_unit_price_utils import (
     make_session_id,
