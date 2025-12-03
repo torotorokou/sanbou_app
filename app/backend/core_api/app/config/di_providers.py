@@ -553,3 +553,21 @@ def get_get_current_user_usecase(
     return GetCurrentUserUseCase(auth_provider=auth_provider)
 
 
+# ========================================================================
+# Health Check UseCase Providers
+# ========================================================================
+from app.core.usecases.health_check_uc import HealthCheckUseCase
+from app.config.settings import settings
+
+
+def get_health_check_usecase() -> HealthCheckUseCase:
+    """HealthCheckUseCase提供"""
+    return HealthCheckUseCase(
+        ai_api_base=settings.AI_API_BASE,
+        ledger_api_base=settings.LEDGER_API_BASE,
+        rag_api_base=settings.RAG_API_BASE,
+        manual_api_base=settings.MANUAL_API_BASE,
+        timeout=2.0,
+    )
+
+
