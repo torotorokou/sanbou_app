@@ -112,54 +112,20 @@ class FactoryReport:
         Returns:
             FactoryReport: 工場日報エンティティ
         """
-        shipment_items: List[ShipmentItem] = []
-        yard_items: List[YardItem] = []
-        report_date = date.today()  # デフォルト値
-
-        # 日付の抽出（出荷→ヤードの優先順、他の帳票と同じパターン）
-        if df_shipment is not None and not df_shipment.empty:
-            if "伝票日付" in df_shipment.columns and not df_shipment["伝票日付"].isna().all():
-                first_date = df_shipment["伝票日付"].iloc[0]
-                if pd.notna(first_date):
-                    report_date = pd.to_datetime(first_date).date()
-        elif df_yard is not None and not df_yard.empty:
-            if "伝票日付" in df_yard.columns and not df_yard["伝票日付"].isna().all():
-                first_date = df_yard["伝票日付"].iloc[0]
-                if pd.notna(first_date):
-                    report_date = pd.to_datetime(first_date).date()
-
-        # 出荷データの変換
-        if df_shipment is not None and not df_shipment.empty:
-            for _, row in df_shipment.iterrows():
-                try:
-                    shipment_items.append(
-                        ShipmentItem(
-                            vendor_code=str(row.get("業者CD", "")),
-                            vendor_name=str(row.get("業者名", "")),
-                            item_name=str(row.get("品名", "")),
-                            net_weight=float(row.get("正味重量", 0.0)),
-                            site_name=str(row.get("現場名", "")) if pd.notna(row.get("現場名")) else None,
-                        )
-                    )
-                except (ValueError, TypeError) as e:
-                    # データ不正の場合はスキップ（ログは上位層で）
-                    continue
-
-        # ヤードデータの変換
-        if df_yard is not None and not df_yard.empty:
-            for _, row in df_yard.iterrows():
-                try:
-                    yard_items.append(
-                        YardItem(
-                            item_group=str(row.get("品目名", "")),
-                            category_name=str(row.get("種類名", "")),
-                            item_name=str(row.get("品名", "")),
-                            net_weight=float(row.get("正味重量", 0.0)),
-                        )
-                    )
-                except (ValueError, TypeError) as e:
-                    # データ不正の場合はスキップ
-                    continue
+        from app.core.domain.reports.report_utils import (
+            extract_report_date,
+            convert_to_shipment_items,
+            convert_to_yard_items,
+        )
+        
+        # 共通ユーティリティを使用して日付抽出とデータ変換
+        report_date = extract_report_date(
+            (df_shipment, "伝票日付"),
+            (df_yard, "伝票日付"),
+        )
+        
+        shipment_items = convert_to_shipment_items(df_shipment)
+        yard_items = convert_to_yard_items(df_yard)
 
         return cls(
             report_date=report_date,
