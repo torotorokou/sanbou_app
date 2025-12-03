@@ -678,7 +678,7 @@ No errors found.
 
 次のステップとして、以下の作業を推奨:
 
-1. **優先度：中** - `header_mappings/master.yaml`の使用状況確認
+1. ✅ ~~`header_mappings/master.yaml`の使用状況確認~~ **完了**
 2. **優先度：中** - `required_columns_definition.yaml`と`expected_import_csv_dtypes.yaml`のbackend_shared移行検討
 3. **優先度：低** - `main_paths.yaml`のリファクタリング
 
@@ -686,3 +686,204 @@ No errors found.
 
 **実装者**: GitHub Copilot  
 **レビュー**: 動作確認済み・エラーなし
+
+---
+
+## 📋 追加調査: header_mappings/master.yaml
+
+**調査日**: 2025年12月3日
+
+### 調査結果
+
+✅ **確認完了**: `header_mappings/master.yaml`は**現在使用されていません**
+
+**詳細**:
+- Pythonコード内での参照なし（grep検索で0件）
+- インポート文なし
+- YAMLファイル内のキー名（取引先一覧、業者一覧、品名一覧）の参照もなし
+
+**作成したドキュメント**:
+- `app/config/csv_config/header_mappings/README.md`を作成
+- 使用状況、経緯、今後の対応オプションを記載
+
+**推奨アクション**:
+1. **即時対応可**: ファイルを削除またはアーカイブ
+2. 削除する場合: `rm -rf app/config/csv_config/header_mappings/`（README作成後なので保留）
+3. アーカイブする場合: `mv app/config/csv_config/header_mappings app/config/archive/`
+
+**判断保留理由**:
+- 将来的に使用する計画があるか確認が必要
+- プロジェクトオーナーの判断を待つ
+
+---
+
+## 🎯 次にやるべきこと
+
+### 優先度：高 🔴
+
+#### A. `header_mappings/`ディレクトリの処理
+
+**現状**: 未使用であることが確認済み
+
+**アクション**:
+1. プロジェクトオーナーに確認
+   - 将来的に使用する予定があるか？
+   - 削除してよいか？
+2. 確認後、削除またはアーカイブを実行
+
+**想定作業時間**: 5分（確認後）
+
+---
+
+### 優先度：中 🟡
+
+#### B. ledger_api専用設定のbackend_shared移行検討
+
+**対象ファイル**:
+- `required_columns_definition.yaml`
+- `expected_import_csv_dtypes.yaml`
+
+**判断ポイント**:
+1. 他のサービス（rag_api、manual_api）でレポート機能が必要になるか？
+   - YES → backend_sharedに移行
+   - NO → 現状維持（ledger_api専用）
+
+**移行する場合の手順**:
+
+1. **ファイル移動**:
+   ```bash
+   mv app/backend/ledger_api/app/config/required_columns_definition.yaml \
+      app/config/csv_config/required_columns_definition.yaml
+   
+   mv app/backend/ledger_api/app/config/expected_import_csv_dtypes.yaml \
+      app/config/csv_config/expected_import_csv_dtypes.yaml
+   ```
+
+2. **backend_sharedにローダークラス追加**:
+   ```python
+   # backend_shared/config/config_loader.py
+   
+   class RequiredColumnsLoader:
+       """レポート用必須カラム定義ローダー"""
+       def __init__(self, path="/backend/config/csv_config/required_columns_definition.yaml"):
+           with open(path, "r", encoding="utf-8") as f:
+               self.config = yaml.safe_load(f)
+       
+       def get_required_columns(self, template_name: str, csv_type: str) -> list[str]:
+           return self.config.get(template_name, {}).get(csv_type, [])
+   
+   class ExpectedDtypesLoader:
+       """レポート用型定義ローダー"""
+       def __init__(self, path="/backend/config/csv_config/expected_import_csv_dtypes.yaml"):
+           with open(path, "r", encoding="utf-8") as f:
+               self.config = yaml.safe_load(f)
+       
+       def get_dtypes(self, template_name: str, csv_type: str) -> dict:
+           return self.config.get(template_name, {}).get(csv_type, {})
+   ```
+
+3. **ledger_apiのコード修正**:
+   - `template_config.py`の`get_required_columns_definition()`を修正
+   - `template_config.py`の`get_expected_dtypes()`を修正
+   - `main_paths.yaml`から参照を削除
+
+4. **動作確認**:
+   - レポート生成が正常に動作するか
+   - エラーログの確認
+
+**想定作業時間**: 1-2時間
+
+**メリット**:
+- 設定ファイルが`app/config/`に集約
+- 他サービスでの再利用が可能
+- backend_sharedで一元管理
+
+**デメリット**:
+- ledger_api専用の場合は過剰設計
+- `main_paths.yaml`のリファクタリングが必要
+
+**判断基準**:
+- 他サービスでレポート機能が必要 → 移行
+- ledger_apiのみで使用 → 現状維持
+
+---
+
+### 優先度：低 🟢
+
+#### C. `main_paths.yaml`のリファクタリング
+
+**現状の問題点**:
+- メタ設定（他のYAMLファイルへのパス）が記載されている
+- 相対パスと絶対パスが混在
+- ledger_api専用だが、汎用的な名前
+
+**推奨アクション**:
+
+**オプション1**: `main_paths.yaml`を廃止
+- 環境変数またはコンストラクタ引数でパスを注入
+- 設定ファイルのパスをハードコーディングではなく、DIで管理
+
+**オプション2**: `backend_shared/config/paths.py`に統合
+- ledger_api固有のパスも`paths.py`で管理
+- サービスごとのセクションを作成
+
+**想定作業時間**: 2-3時間
+
+**メリット**:
+- パス管理が一元化
+- 環境ごとの切り替えが容易
+- テストがしやすい
+
+**デメリット**:
+- 既存コードの変更箇所が多い
+- リスクが高い（動作確認が必要）
+
+---
+
+## 📊 推奨作業順序
+
+### フェーズ1: クリーンアップ（即時実行可）
+
+1. ✅ ~~レポートテンプレート設定の重複解消~~ **完了**
+2. ✅ ~~`header_mappings/master.yaml`の使用状況確認~~ **完了**
+3. 🔄 `header_mappings/`ディレクトリの削除またはアーカイブ **← 次はこれ**
+
+### フェーズ2: アーキテクチャ改善（判断待ち）
+
+4. `required_columns_definition.yaml`と`expected_import_csv_dtypes.yaml`の移行判断
+   - 他サービスでのレポート機能の必要性を確認
+   - 必要であれば移行を実施
+
+### フェーズ3: 大規模リファクタリング（低優先度）
+
+5. `main_paths.yaml`のリファクタリング
+   - パス管理方法の統一
+   - 環境変数化の検討
+
+---
+
+## ✅ 即座に実行できるアクション
+
+以下のアクションは**即座に実行可能**です:
+
+### 1. header_mappingsディレクトリの削除（推奨）
+
+```bash
+# READMEを作成済みなので、アーカイブせずに削除推奨
+git rm -r app/config/csv_config/header_mappings/
+git commit -m "chore: 未使用のheader_mappingsディレクトリを削除
+
+- header_mappings/master.yamlは現在使用されていない
+- 調査結果: Pythonコード内での参照なし
+- 代替: shogun_csv_masters.yamlを使用"
+```
+
+### 2. ドキュメントの整理
+
+- ✅ このレポートを`docs/refactoring/`に配置済み
+- ✅ `header_mappings/README.md`を作成済み
+
+---
+
+**更新日**: 2025年12月3日  
+**次のアクション**: `header_mappings/`ディレクトリの削除確認
