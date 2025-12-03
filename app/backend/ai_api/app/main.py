@@ -1,3 +1,4 @@
+import os
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -5,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 # ==========================================
 # 統一ロギング設定のインポート（backend_shared）
 # ==========================================
-from backend_shared.application.logging import setup_logging
+from backend_shared.application.logging import setup_logging, get_module_logger
 from backend_shared.infra.frameworks.logging_utils import setup_uvicorn_access_filter
 from backend_shared.infra.adapters.middleware import RequestIdMiddleware
 
@@ -18,12 +19,25 @@ from app.api.routers import chat
 # テクニカルログ基盤: JSON形式、Request ID付与、Uvicorn統合
 # 環境変数 LOG_LEVEL で制御可能（DEBUG/INFO/WARNING/ERROR/CRITICAL）
 setup_logging()
+logger = get_module_logger(__name__)
+
+# DEBUG モード判定
+DEBUG = os.getenv("DEBUG", "false").lower() == "true"
 
 app = FastAPI(
     title="AI 応答API",
     description="PDF連動のAI応答や自然言語処理を提供するAPI群です。",
     version="1.0.0",
     root_path="/ai_api",  # ベースパスを統一
+    # 本番環境（DEBUG=False）では /docs と /redoc を無効化
+    docs_url="/docs" if DEBUG else None,
+    redoc_url="/redoc" if DEBUG else None,
+    openapi_url="/openapi.json" if DEBUG else None,
+)
+
+logger.info(
+    f"AI API initialized (DEBUG={DEBUG}, docs_enabled={DEBUG})",
+    extra={"operation": "app_init", "debug": DEBUG}
 )
 
 # --- ミドルウェア: Request ID追跡 ----------------------------------------------
