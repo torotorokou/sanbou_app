@@ -13,6 +13,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from backend_shared.application.logging import setup_logging
 from backend_shared.infra.frameworks.logging_utils import setup_uvicorn_access_filter
 from backend_shared.infra.adapters.middleware import RequestIdMiddleware
+from backend_shared.config.env_utils import is_debug_mode
 
 from backend_shared.core.domain.exceptions import ValidationError, NotFoundError, InfrastructureError
 from fastapi.responses import JSONResponse, FileResponse
@@ -43,8 +44,8 @@ if py_path:
         sys.path.append(str(full_path))
 
 # --- FastAPI アプリ作成（root_path は本番の reverse proxy 下でのみ設定） -----
-# DEBUG モード判定
-DEBUG = os.getenv("DEBUG", "false").lower() == "true"
+# DEBUG モード判定（共通ユーティリティ使用）
+DEBUG = is_debug_mode()
 
 app = FastAPI(
     title=os.getenv("API_TITLE", "RAG_API"),

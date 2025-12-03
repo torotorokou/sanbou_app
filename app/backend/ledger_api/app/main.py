@@ -28,6 +28,7 @@ from backend_shared.application.logging import setup_logging, get_module_logger
 from backend_shared.infra.frameworks.logging_utils import setup_uvicorn_access_filter
 from backend_shared.infra.adapters.middleware import RequestIdMiddleware
 from backend_shared.infra.adapters.fastapi import register_error_handlers
+from backend_shared.config.env_utils import is_debug_mode
 
 from app.api.routers.reports.block_unit_price_interactive import (
     router as block_unit_price_router,
@@ -46,8 +47,8 @@ from app.settings import settings
 setup_logging()
 logger = get_module_logger(__name__)
 
-# DEBUG モード判定
-DEBUG = os.getenv("DEBUG", "false").lower() == "true"
+# DEBUG モード判定（共通ユーティリティ使用）
+DEBUG = is_debug_mode()
 
 # FastAPIアプリケーションの初期化
 # NOTE:

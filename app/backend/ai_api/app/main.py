@@ -9,6 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from backend_shared.application.logging import setup_logging, get_module_logger
 from backend_shared.infra.frameworks.logging_utils import setup_uvicorn_access_filter
 from backend_shared.infra.adapters.middleware import RequestIdMiddleware
+from backend_shared.config.env_utils import is_debug_mode
 
 from backend_shared.core.domain.exceptions import ExternalServiceError, InfrastructureError
 from app.api.routers import chat
@@ -21,8 +22,8 @@ from app.api.routers import chat
 setup_logging()
 logger = get_module_logger(__name__)
 
-# DEBUG モード判定
-DEBUG = os.getenv("DEBUG", "false").lower() == "true"
+# DEBUG モード判定（共通ユーティリティ使用）
+DEBUG = is_debug_mode()
 
 app = FastAPI(
     title="AI 応答API",

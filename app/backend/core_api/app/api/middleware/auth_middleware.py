@@ -28,6 +28,7 @@ from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import JSONResponse
 from backend_shared.application.logging import get_module_logger
+from backend_shared.config.env_utils import is_iap_enabled
 from app.deps import get_auth_provider
 
 logger = get_module_logger(__name__)
@@ -61,7 +62,7 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
             "/redoc",
             "/openapi.json",
         ]
-        self.iap_enabled = os.getenv("IAP_ENABLED", "false").lower() == "true"
+        self.iap_enabled = is_iap_enabled()
         
         logger.info(
             f"AuthenticationMiddleware initialized (IAP_ENABLED={self.iap_enabled})",
