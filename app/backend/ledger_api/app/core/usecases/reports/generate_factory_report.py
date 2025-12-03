@@ -43,6 +43,8 @@ logger = get_module_logger(__name__)
 
 class GenerateFactoryReportUseCase:
     """工場日報生成 UseCase."""
+    
+    REPORT_KEY = "factory_report"
 
     def __init__(
         self,
@@ -281,6 +283,7 @@ class GenerateFactoryReportUseCase:
                 status_code=200,
                 content={
                     "message": "工場日報の生成が完了しました",
+                    "report_key": self.REPORT_KEY,
                     "report_date": factory_report.report_date.isoformat(),
                     "artifact": {
                         "excel_download_url": artifact_dict["excel_url"],

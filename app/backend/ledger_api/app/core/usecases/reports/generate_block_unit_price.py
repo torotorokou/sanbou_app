@@ -159,6 +159,7 @@ class GenerateBlockUnitPriceUseCase:
                 status_code=200,
                 content={
                     "message": "ブロック単価表の生成が完了しました",
+                    "report_key": "block_unit_price",
                     "report_date": block_unit_price.report_date.isoformat(),
                     "artifact": {
                         "excel_download_url": artifact_dict["excel_url"],

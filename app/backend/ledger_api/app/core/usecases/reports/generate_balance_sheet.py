@@ -213,6 +213,7 @@ class GenerateBalanceSheetUseCase:
                 status_code=200,
                 content={
                     "message": "搬出入収支表の生成が完了しました",
+                    "report_key": "balance_sheet",
                     "report_date": balance_sheet.report_date.isoformat(),
                     "artifact": {
                         "excel_download_url": artifact_dict["excel_url"],
