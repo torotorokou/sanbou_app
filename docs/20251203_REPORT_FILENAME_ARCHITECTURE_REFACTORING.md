@@ -123,20 +123,21 @@ response.headers["X-Report-Artifact"] = artifact_path
 
 #### reportKeyTranslation.ts（新規作成）
 
+**最終版（自動生成）:**
 ```typescript
-/**
- * 帳票キーの英語・日本語変換ユーティリティ
- */
+import { REPORT_KEYS } from '@features/report/shared/config';
 
-export const REPORT_KEY_TO_JAPANESE: Record<string, string> = {
-    factory_report: '工場日報',
-    balance_sheet: '収支表',
-    average_sheet: '平均表',
-    management_sheet: '管理表',
-    block_unit_price: 'ブロック単価表',
-    ledger_book: '台帳',
-    factory_report2: '工場実績報告書',
-} as const;
+/**
+ * 帳票キーから日本語ラベルへの変換マップ
+ * REPORT_KEYSから自動生成されるため、設定の重複なし
+ */
+export const REPORT_KEY_TO_JAPANESE: Record<string, string> = Object.entries(REPORT_KEYS).reduce(
+    (acc, [key, config]) => {
+        acc[key] = config.label;
+        return acc;
+    },
+    {} as Record<string, string>
+);
 
 export const translateReportKeyToJapanese = (reportKey: string): string => {
     return REPORT_KEY_TO_JAPANESE[reportKey] || reportKey;
@@ -151,6 +152,11 @@ export const generateJapaneseFilename = (
     return `${japaneseLabel}-${reportDate}${extension}`;
 };
 ```
+
+**保守性の改善:**
+- ✅ 単一の情報源（REPORT_KEYS）から自動生成
+- ✅ 新しい帳票追加時に自動的に反映
+- ✅ 設定の重複排除（DRY原則）
 
 #### useReportArtifact.ts
 
