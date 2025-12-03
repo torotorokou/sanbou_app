@@ -7,6 +7,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import Optional
+from urllib.parse import quote
 
 from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import FileResponse
@@ -54,7 +55,19 @@ async def download_artifact(
     media_type = _guess_media_type(resolved_path)
     response = FileResponse(resolved_path, media_type=media_type, filename=resolved_path.name)
 
-    disposition_value = "inline" if disposition == "inline" else "attachment"
-    response.headers["Content-Disposition"] = f"{disposition_value}; filename=\"{resolved_path.name}\""
+    # RFC 5987に準拠した日本語ファイル名のエンコーディング
+    # ASCII文字のみの場合はそのまま、日本語が含まれる場合はRFC 5987形式でエンコード
+    filename = resolved_path.name
+    try:
+        # ASCII範囲内かチェック
+        filename.encode('ascii')
+        disposition_value = "inline" if disposition == "inline" else "attachment"
+        response.headers["Content-Disposition"] = f"{disposition_value}; filename=\"{filename}\""
+    except UnicodeEncodeError:
+        # 日本語が含まれる場合はRFC 5987形式
+        disposition_value = "inline" if disposition == "inline" else "attachment"
+        encoded_filename = quote(filename, safe='')
+        response.headers["Content-Disposition"] = f"{disposition_value}; filename*=UTF-8''{encoded_filename}"
+    
     response.headers["X-Report-Artifact"] = artifact_path
     return response
