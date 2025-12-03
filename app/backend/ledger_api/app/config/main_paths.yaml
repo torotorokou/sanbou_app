@@ -23,5 +23,4 @@ logs:
 # yamlパス
 config_files:
     expected_dtypes: 'config/expected_import_csv_dtypes.yaml'
-    templates_config: 'config/templates_config.yaml'
     required_columns_definition: 'config/required_columns_definition.yaml'

@@ -2,6 +2,7 @@ import yaml
 import pandas as pd
 from typing import Optional, Union
 from backend_shared.utils.dataframe_utils import clean_na_strings
+from backend_shared.config.config_loader import ReportTemplateConfigLoader
 from .main_path import MainPath
 
 
@@ -79,8 +80,14 @@ def get_expected_dtypes() -> dict:
 
 
 def get_template_config() -> dict:
-    """main_paths.yaml 経由で templates_config.yaml を読み込む"""
-    return load_yaml("templates_config", section="config_files")
+    """
+    backend_sharedのReportTemplateConfigLoaderを使用してテンプレート設定を読み込む
+    
+    Returns:
+        dict: 全ての帳票設定の辞書
+    """
+    loader = ReportTemplateConfigLoader()
+    return loader.get_all_config()
 
 
 def get_unit_price_table_csv() -> pd.DataFrame:

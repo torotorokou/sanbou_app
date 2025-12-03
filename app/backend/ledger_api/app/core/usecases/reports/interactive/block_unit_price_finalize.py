@@ -31,6 +31,7 @@ from .block_unit_price_utils import (
     fmt_cols,
     fmt_head_rows,
     log_checkpoint,
+    handle_step_error,
 )
 
 logger = get_module_logger(__name__)
@@ -519,38 +520,25 @@ def execute_finalize_step(state: Dict[str, Any]) -> tuple[pd.DataFrame, Dict[str
         return final_master_csv, payload
 
     except Exception as e:
-        tb = traceback.format_exc(limit=20)
-        extra: Dict[str, Any] = {
-            "err_type": type(e).__name__,
-            "err": str(e),
-            "traceback": tb,
-        }
-        
+        # 共通エラーハンドリングを使用
+        context: Dict[str, Any] = {}
         try:
             if "df_selected" in locals():
-                extra["df_selected_cols"] = list(
+                context["df_selected_cols"] = list(
                     getattr(locals()["df_selected"], "columns", [])
                 )
-                extra["df_selected_head"] = fmt_head_rows(locals()["df_selected"])
+                context["df_selected_head"] = fmt_head_rows(locals()["df_selected"])
             if "df_transport_cost" in locals():
-                extra["transport_cost_cols"] = list(
+                context["transport_cost_cols"] = list(
                     getattr(locals()["df_transport_cost"], "columns", [])
                 )
-                extra["transport_cost_head"] = fmt_head_rows(
+                context["transport_cost_head"] = fmt_head_rows(
                     locals()["df_transport_cost"]
                 )
         except Exception:
             pass
         
-        logger.error(
-            "Step 2 error: "
-            f"{extra.get('err_type')}: {extra.get('err')} | "
-            f"df_selected_cols={extra.get('df_selected_cols')} | "
-            f"transport_cost_cols={extra.get('transport_cost_cols')} | "
-            f"tb={extra.get('traceback')}"
-        )
-        
-        return error_payload("STEP2_EXCEPTION", str(e), step=2, extra=extra)
+        return handle_step_error("finalize", 2, e, context)
 
 
 def execute_finalize_with_optional_selections(
@@ -618,9 +606,6 @@ def execute_finalize_with_optional_selections(
         return execute_finalize_step(state)
 
     except Exception as e:
-        tb = traceback.format_exc(limit=5)
-        logger.error(
-            f"finalize_with_optional_selections error: "
-            f"{type(e).__name__}: {e} | tb={tb}"
-        )
-        return error_payload("STEP2_EXCEPTION", str(e), step=2, extra={"traceback": tb})
+        # 共通エラーハンドリングを使用
+        context = {"function": "finalize_with_optional_selections"}
+        return handle_step_error("finalize_with_selections", 2, e, context)

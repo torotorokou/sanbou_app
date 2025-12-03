@@ -204,6 +204,57 @@ def missing_cols(df: pd.DataFrame, required: List[str]) -> List[str]:
     return [c for c in required if c not in df.columns]
 
 
+def handle_step_error(
+    step_name: str,
+    step_number: int,
+    error: Exception,
+    context: Optional[Dict[str, Any]] = None
+) -> Tuple[pd.DataFrame, Dict[str, Any]]:
+    """ステップエラーを統一的に処理
+    
+    Args:
+        step_name: ステップ名（例: "initial", "finalize"）
+        step_number: ステップ番号
+        error: 発生した例外
+        context: 追加コンテキスト情報
+    
+    Returns:
+        エラーペイロード
+    """
+    import traceback
+    
+    tb = traceback.format_exc(limit=5)
+    error_type = type(error).__name__
+    error_msg = str(error)
+    
+    extra_data: Dict[str, Any] = {
+        "err_type": error_type,
+        "err": error_msg,
+        "traceback": tb,
+    }
+    
+    if context:
+        extra_data.update(context)
+    
+    logger.error(
+        f"{step_name} step error",
+        extra=create_log_context(
+            operation=f"block_unit_price_{step_name}",
+            step=step_number,
+            error_type=error_type,
+            error_msg=error_msg,
+            **extra_data
+        )
+    )
+    
+    return error_payload(
+        code=f"STEP{step_number}_EXCEPTION",
+        detail=error_msg,
+        step=step_number,
+        extra=extra_data
+    )
+
+
 # ------------------------------ Debug Helpers ------------------------------
 
 def fmt_cols(df: Optional[pd.DataFrame]) -> str:
