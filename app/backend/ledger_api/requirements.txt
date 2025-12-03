@@ -27,3 +27,5 @@ typing-extensions==4.11.0
 
 # GCS からマスタ/テンプレート同期用
 google-cloud-storage==2.18.2
+
+# backend_shared は Dockerfile でインストールされます

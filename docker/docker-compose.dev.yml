@@ -23,6 +23,9 @@ services:
       - ../app/frontend:/app
     environment:
       - DOCKER=true
+    depends_on:
+      core_api:
+        condition: service_healthy
     networks:
       - app-net
 
@@ -50,7 +53,8 @@ services:
     environment:
       - WATCHFILES_FORCE_POLLING=1
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     networks:
       - app-net
 
@@ -82,7 +86,8 @@ services:
       WATCHFILES_FORCE_POLLING: "1"
       REPORT_ARTIFACT_URL_PREFIX: "/reports/artifacts"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     networks:
       - app-net
 
@@ -111,7 +116,8 @@ services:
     environment:
       - WATCHFILES_FORCE_POLLING=1
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     networks:
       - app-net
 
@@ -134,7 +140,8 @@ services:
     environment:
       WATCHFILES_FORCE_POLLING: "1"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     networks:
       - app-net
     restart: unless-stopped
@@ -167,7 +174,8 @@ services:
       RAG_GCS_URI: gs://sanbouapp-dev/rag_api/object_haikibutu/master/
       WATCHFILES_FORCE_POLLING: "1"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     networks:
       - app-net
 

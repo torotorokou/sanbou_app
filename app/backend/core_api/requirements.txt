@@ -7,6 +7,7 @@ python-multipart==0.0.9
 
 # Authentication & Security
 google-auth==2.35.0
+requests==2.32.3
 
 # Database
 sqlalchemy==2.0.35
@@ -27,3 +28,5 @@ python-json-logger==2.0.7
 # Data processing (for CSV handling)
 pandas==2.2.2
 openpyxl==3.1.5
+
+# backend_shared は Dockerfile でインストールされます
