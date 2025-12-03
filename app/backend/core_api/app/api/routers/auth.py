@@ -39,11 +39,12 @@ class AuthMeResponse(BaseModel):
     description="""
     現在ログインしているユーザーの情報を取得します。
     
-    認証方式（Dev / IAP / OAuth2）は環境変数 AUTH_MODE で切り替え可能です。
-    - dev: 固定の開発用ユーザーを返す
-    - iap: Google Cloud IAP のヘッダーからユーザー情報を抽出
+    認証方式（Dev / IAP）は環境変数 IAP_ENABLED で切り替え可能です。
+    - IAP_ENABLED=false: 固定の開発用ユーザーを返す（DevAuthProvider）
+    - IAP_ENABLED=true: Google Cloud IAP のヘッダーから JWT を検証してユーザー情報を抽出（IapAuthProvider）
     
-    本番環境では必ず AUTH_MODE=iap を設定してください。
+    本番環境では必ず IAP_ENABLED=true を設定してください。
+    また、IAP_AUDIENCE 環境変数に正しい audience 値を設定する必要があります。
     """,
     responses={
         200: {
