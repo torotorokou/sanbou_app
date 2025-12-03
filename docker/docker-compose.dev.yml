@@ -50,6 +50,7 @@ services:
       - ../app/backend/ai_api/app:/backend/app:rw
       - ../app/backend/backend_shared:/opt/backend_shared:rw
       - ../app/config:/backend/config
+      - ~/.config/gcloud:/home/appuser/.config/gcloud:ro
     environment:
       - WATCHFILES_FORCE_POLLING=1
     depends_on:
@@ -80,6 +81,7 @@ services:
       - ../app/backend/ledger_api/app:/backend/app:rw
       - ../app/backend/backend_shared:/opt/backend_shared:rw
       - ../app/config:/backend/config
+      - ~/.config/gcloud:/home/appuser/.config/gcloud:ro
     environment:
       WATCHFILES_FORCE_POLLING: "1"
       REPORT_ARTIFACT_URL_PREFIX: "/reports/artifacts"
@@ -111,6 +113,7 @@ services:
       - ../app/backend/core_api/migrations:/backend/migrations:rw
       - ../app/backend/backend_shared:/opt/backend_shared:rw
       - ../app/config:/backend/config
+      - ~/.config/gcloud:/home/appuser/.config/gcloud:ro
     environment:
       - WATCHFILES_FORCE_POLLING=1
     depends_on:
@@ -135,6 +138,7 @@ services:
       - ../app/backend/plan_worker/app:/backend/app:rw
       - ../app/backend/plan_worker/test:/backend/test:rw
       - ../app/backend/backend_shared:/opt/backend_shared:rw
+      - ~/.config/gcloud:/home/appuser/.config/gcloud:ro
     environment:
       WATCHFILES_FORCE_POLLING: "1"
     depends_on:
@@ -163,6 +167,7 @@ services:
       - ../app/backend/backend_shared:/opt/backend_shared:rw
       - ../app/config:/backend/config
       - ../data/gcs_download/rag_api/master:/backend/local_data/master:ro
+      - ~/.config/gcloud:/home/appuser/.config/gcloud:ro
     environment:
       CATEGORY_QUESTION_TEMPLATES_WITH_TAGS: /backend/config/category_question_templates_with_tags.yaml
       DEV_RELOAD: "1"
@@ -192,6 +197,7 @@ services:
     volumes:
       - ../app/backend/manual_api/app:/backend/app:rw
       - ../app/backend/backend_shared:/opt/backend_shared:rw
+      - ~/.config/gcloud:/home/appuser/.config/gcloud:ro
     environment:
       MANUAL_FRONTEND_BASE_URL: ${MANUAL_FRONTEND_BASE_URL:-http://localhost:5173}
     networks:
