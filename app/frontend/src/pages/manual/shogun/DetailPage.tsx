@@ -1,6 +1,6 @@
 /**
  * 将軍マニュアル詳細ページ
- * FSD: ページ層は組み立てのみ
+ * FSD: ページ層は組み立てのみ + パフォーマンス最適化
  */
 import React from 'react';
 import { Breadcrumb, Button, Col, Layout, Row, Space, Spin, Typography } from 'antd';
@@ -26,6 +26,9 @@ const ShogunManualDetailPage: React.FC = () => {
     return null;
   }, [sections, id]);
 
+  // ページ遷移を即座に行い、ローディングインジケーターを表示
+  const showSkeleton = loading || !item;
+
   return (
     <Layout className={styles.detailLayout}>
       <Layout.Content className={styles.detailContent}>
@@ -33,19 +36,17 @@ const ShogunManualDetailPage: React.FC = () => {
           <Breadcrumb items={[
             { title: <a onClick={() => nav('/manuals')} className={styles.detailLink}>マニュアル</a> },
             { title: <a onClick={() => nav('/manuals/shogun')} className={styles.detailLink}>将軍</a> },
-            { title: item?.title || '' }
+            { title: item?.title || '読み込み中...' }
           ]} />
           <div className={styles.detailTitleBar}>
-            <Title level={3} className={styles.detailTitle}>{item?.title || '読み込み中...'}</Title>
+            <Title level={3} className={styles.detailTitle}>
+              {showSkeleton ? '読み込み中...' : item.title}
+            </Title>
           </div>
         </Space>
 
-        {loading ? (
-          <div className={styles.detailLoadingContainer}><Spin size='large' /></div>
-        ) : !item ? (
-          <div style={{ padding: 24, textAlign: 'center' }}>
-            <Typography.Text type="secondary">マニュアルが見つかりません</Typography.Text>
-          </div>
+        {showSkeleton ? (
+          <div className={styles.detailLoadingContainer}><Spin size='large' tip="データを読み込んでいます..." /></div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16, padding: 16 }}>
             {/* 概要 */}
@@ -55,7 +56,7 @@ const ShogunManualDetailPage: React.FC = () => {
               </Paragraph>
             </div>
 
-            {/* フロー・動画 */}
+            {/* フロー・動画（遅延ロード） */}
             <Row gutter={[16, 16]}>
               <Col xs={24} md={7}>
                 <Title level={5} style={{ marginTop: 0 }}>
@@ -67,6 +68,7 @@ const ShogunManualDetailPage: React.FC = () => {
                     title={item.title ?? 'flow'}
                     frameClassName={styles.paneFrame}
                     imgClassName={styles.paneImg}
+                    lazy={true}
                   />
                 </div>
               </Col>
@@ -81,6 +83,7 @@ const ShogunManualDetailPage: React.FC = () => {
                     title={item.title ?? 'video'}
                     frameClassName={styles.paneFrame}
                     videoClassName={styles.paneVideo}
+                    lazy={true}
                   />
                 </div>
               </Col>

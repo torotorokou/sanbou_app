@@ -264,6 +264,7 @@ const BlockUnitPriceInteractiveModal: React.FC<BlockUnitPriceInteractiveModalPro
             onCancel={handleClose}
             width={800}
             footer={null}
+            maskClosable={false}
             styles={{
                 body: {
                     maxHeight: '70vh',
