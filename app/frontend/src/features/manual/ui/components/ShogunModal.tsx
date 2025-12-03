@@ -110,7 +110,7 @@ export const ManualModal: React.FC<ManualModalProps> = ({
                 }
               }}
             >
-              関連ページを開く
+              詳細ページを開く
             </Button>
           </Flex>
         )}

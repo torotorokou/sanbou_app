@@ -1,6 +1,6 @@
 /**
  * VideoPane UI Component
- * 動画表示（純粋UI）
+ * 動画表示（純粋UI）+ 遅延ロード対応
  */
 import React from 'react';
 import { Empty } from 'antd';
@@ -20,15 +20,25 @@ export interface VideoPaneProps {
   title: string;
   frameClassName?: string;
   videoClassName?: string;
+  lazy?: boolean; // 遅延ロードフラグ
 }
 
 export interface VideoPaneRef {
   stopVideo: () => void;
 }
 
-export const VideoPane = React.forwardRef<VideoPaneRef, VideoPaneProps>(({ src, title, frameClassName, videoClassName }, ref) => {
+export const VideoPane = React.forwardRef<VideoPaneRef, VideoPaneProps>(({ src, title, frameClassName, videoClassName, lazy = false }, ref) => {
   const videoRef = React.useRef<HTMLVideoElement>(null);
   const iframeRef = React.useRef<HTMLIFrameElement>(null);
+  const [shouldLoad, setShouldLoad] = React.useState(!lazy);
+
+  React.useEffect(() => {
+    if (lazy && src) {
+      // 遅延ロード：少し待ってからロード開始
+      const timer = setTimeout(() => setShouldLoad(true), 100);
+      return () => clearTimeout(timer);
+    }
+  }, [lazy, src]);
 
   React.useImperativeHandle(ref, () => ({
     stopVideo: () => {
@@ -49,6 +59,14 @@ export const VideoPane = React.forwardRef<VideoPaneRef, VideoPaneProps>(({ src, 
     return (
       <div style={{ height: '100%' }}>
         <Empty description="動画未設定" />
+      </div>
+    );
+  }
+
+  if (!shouldLoad) {
+    return (
+      <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f5f5f5' }}>
+        <span style={{ color: '#999' }}>読み込み中...</span>
       </div>
     );
   }
