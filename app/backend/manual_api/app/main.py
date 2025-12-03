@@ -11,6 +11,7 @@ from fastapi.responses import JSONResponse
 from backend_shared.application.logging import setup_logging
 from backend_shared.infra.frameworks.logging_utils import setup_uvicorn_access_filter
 from backend_shared.infra.adapters.middleware import RequestIdMiddleware
+from backend_shared.config.env_utils import is_debug_mode
 
 from app.api.routers.manuals import router as manuals_router
 from backend_shared.core.domain.exceptions import (
@@ -34,8 +35,8 @@ setup_logging()
 from backend_shared.application.logging import get_module_logger
 logger = get_module_logger(__name__)
 
-# DEBUG モード判定
-DEBUG = os.getenv("DEBUG", "false").lower() == "true"
+# DEBUG モード判定（共通ユーティリティ使用）
+DEBUG = is_debug_mode()
 
 app = FastAPI(
     title=os.getenv("API_TITLE", "MANUAL_API"),

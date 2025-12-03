@@ -27,6 +27,7 @@ from fastapi.middleware.cors import CORSMiddleware
 # 統一ロギング設定のインポート（backend_shared）
 # ==========================================
 from backend_shared.application.logging import setup_logging
+from backend_shared.config.env_utils import is_debug_mode
 
 from app.api.routers.ingest.router import router as ingest_router
 from app.api.routers.forecast.router import router as forecast_router
@@ -61,8 +62,8 @@ logger = get_module_logger(__name__)
 # root_path: リバースプロキシ(nginx)経由でのパスプレフィックス対応
 # 例: https://example.com/core_api/* → 本アプリケーションにルーティング
 
-# DEBUG モード判定
-DEBUG = os.getenv("DEBUG", "false").lower() == "true"
+# DEBUG モード判定（共通ユーティリティ使用）
+DEBUG = is_debug_mode()
 
 app = FastAPI(
     title="Core API",
