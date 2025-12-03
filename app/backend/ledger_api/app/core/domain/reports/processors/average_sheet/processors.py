@@ -1,6 +1,6 @@
 import pandas as pd
 from backend_shared.application.logging import get_module_logger, create_log_context
-from app.infra.report_utils import clean_na_strings
+from backend_shared.utils.dataframe_utils import clean_na_strings
 from app.infra.report_utils.formatters import set_value_fast_safe
 from app.infra.report_utils.formatters import get_weekday_japanese
 from app.infra.report_utils.formatters import round_value_column_generic

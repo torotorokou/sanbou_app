@@ -100,6 +100,28 @@ def has_denpyou_date_column(df: pd.DataFrame, column_name: str = "伝票日付")
     return column_name in df.columns
 
 
+def clean_na_strings(val):
+    """
+    <NA>等の文字列や空文字列をNoneに変換する共通関数
+    """
+    if isinstance(val, str) and (
+        val
+        in [
+            "<NA>",
+            "NaN",
+            "nan",
+            "None",
+            "NULL",
+            "null",
+            "#N/A",
+            "#NA",
+        ]
+        or val.strip() == ""
+    ):
+        return None
+    return val
+
+
 def common_cleaning(df: pd.DataFrame) -> pd.DataFrame:
     """
     全カラム名と object 型の各値に対して、前後・内部のスペース（半角・全角）を除去。
