@@ -8,8 +8,6 @@ factory_reportと同じClean Architectureパターンを適用。
 import time
 from datetime import date
 from io import BytesIO
-from pathlib import Path
-import tempfile
 from typing import Any, Dict, Optional
 
 from fastapi import UploadFile
@@ -26,14 +24,18 @@ from backend_shared.utils.date_filter_utils import (
 
 # 既存のドメインロジックを再利用
 from app.core.usecases.reports.balance_sheet import process as balance_sheet_process
-from app.infra.report_utils import write_values_to_template, get_template_config
-from app.infra.utils.pdf_conversion import convert_excel_to_pdf
+from app.application.usecases.reports.report_generation_utils import (
+    generate_pdf_from_excel,
+    generate_excel_from_dataframe,
+)
 
 logger = get_module_logger(__name__)
 
 
 class GenerateBalanceSheetUseCase:
     """搬出入収支表生成 UseCase."""
+    
+    REPORT_KEY = "balance_sheet"
 
     def __init__(
         self,
@@ -256,14 +258,4 @@ class GenerateBalanceSheetUseCase:
 
     def _generate_pdf(self, excel_bytes: BytesIO) -> BytesIO:
         """PDF生成"""
-        with tempfile.NamedTemporaryFile(suffix=".xlsx", delete=False) as tmp_excel:
-            tmp_excel.write(excel_bytes.getvalue())
-            tmp_excel_path = Path(tmp_excel.name)
-
-        try:
-            pdf_bytes_raw = convert_excel_to_pdf(tmp_excel_path)
-            pdf_bytes = BytesIO(pdf_bytes_raw)
-            return pdf_bytes
-        finally:
-            if tmp_excel_path.exists():
-                tmp_excel_path.unlink()
+        return generate_pdf_from_excel(excel_bytes)

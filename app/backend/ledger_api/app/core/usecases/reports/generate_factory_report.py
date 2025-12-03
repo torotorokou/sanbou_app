@@ -17,8 +17,6 @@ DataFrame依存はドメイン層で緩和し、将来的な置き換えを容�
 import time
 from datetime import date, datetime
 from io import BytesIO
-from pathlib import Path
-import tempfile
 from typing import Any, Dict, Optional
 
 from fastapi import UploadFile
@@ -35,8 +33,10 @@ from backend_shared.utils.date_filter_utils import (
 
 # 既存のドメインロジックを再利用（将来的には Entity に移行）
 from app.core.usecases.reports.factory_report import process as factory_report_process
-from app.infra.report_utils import write_values_to_template, get_template_config
-from app.infra.utils.pdf_conversion import convert_excel_to_pdf
+from app.application.usecases.reports.report_generation_utils import (
+    generate_pdf_from_excel,
+    generate_excel_from_dataframe,
+)
 
 logger = get_module_logger(__name__)
 
@@ -350,42 +350,18 @@ class GenerateFactoryReportUseCase:
         """
         DataFrame から Excel バイトストリームを生成.
 
-        既存の write_values_to_template を利用します。
+        共通ユーティリティを使用してExcelを生成します。
         """
-        template_key = "factory_report"
-        template_config = get_template_config()[template_key]
-        template_path = template_config["template_excel_path"]
-        
-        # 日付文字列を生成（シート名用）
-        extracted_date = report_date.strftime("%Y年%m月%d日")
-
-        excel_bytes = write_values_to_template(
-            df=result_df,
-            template_path=template_path,
-            extracted_date=extracted_date,
+        return generate_excel_from_dataframe(
+            result_df=result_df,
+            report_key=self.REPORT_KEY,
+            report_date=report_date,
         )
-
-        return excel_bytes
 
     def _generate_pdf(self, excel_bytes: BytesIO) -> BytesIO:
         """
         Excel バイトストリームから PDF を生成.
 
-        既存の convert_excel_to_pdf を利用します（一時ファイル経由）。
+        共通ユーティリティを使用してPDFを生成します。
         """
-        # 一時ファイルに Excel を書き出し
-        with tempfile.NamedTemporaryFile(suffix=".xlsx", delete=False) as tmp_excel:
-            tmp_excel.write(excel_bytes.getvalue())
-            tmp_excel_path = Path(tmp_excel.name)
-
-        try:
-            # PDF に変換
-            pdf_bytes_raw = convert_excel_to_pdf(tmp_excel_path)
-            
-            # BytesIO にラップして返却
-            pdf_bytes = BytesIO(pdf_bytes_raw)
-            return pdf_bytes
-        finally:
-            # 一時ファイルを削除
-            if tmp_excel_path.exists():
-                tmp_excel_path.unlink()
+        return generate_pdf_from_excel(excel_bytes)
