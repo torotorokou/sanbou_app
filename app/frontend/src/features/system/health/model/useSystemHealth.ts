@@ -1,23 +1,36 @@
 /**
  * システムヘルスチェック Hook
  * 
- * バックエンドサービスの稼働状態を監視し、問題がある場合に通知を表示する。
+ * 管理者向けのオンデマンドヘルスチェック機能を提供。
+ * 
+ * ## 設計思想
+ * - 通常運用では自動実行しない(Docker/K8sのHEALTHCHECKに任せる)
+ * - 管理画面などで明示的に「システム状態確認」を実行する際に使用
+ * - ユーザー向けエラーハンドリングはAxiosインターセプターで実施
+ * - インフラ監視はPrometheus/Grafana/Datadog等の専用ツールで実施
+ * 
+ * ## 使用例
+ * ```tsx
+ * // 管理画面でシステムステータスを表示
+ * const { status, checkHealth, isChecking } = useSystemHealth();
+ * 
+ * return (
+ *   <Button onClick={checkHealth} loading={isChecking}>
+ *     システム状態を確認
+ *   </Button>
+ * );
+ * ```
  */
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { coreApi } from '@/shared';
-import { notifyWarning, notifyError } from '@features/notification';
 
 export type ServiceStatus = 'healthy' | 'unhealthy' | 'timeout' | 'error' | 'unknown';
 export type OverallStatus = 'healthy' | 'degraded' | 'critical' | 'unknown';
 
-export interface ServiceHealth {
-    name: string;
-    status: ServiceStatus;
-    url?: string;
-    response_time_ms?: number;
-    error?: string;
-    checked_at?: string;
+export interface UseSystemHealthOptions {
+    /** 初回マウント時に自動実行するか（デフォルト: false） */
+    autoCheckOnMount?: boolean;
 }
 
 export interface SystemHealthStatus {
@@ -42,117 +55,64 @@ export interface UseSystemHealthReturn {
     status: SystemHealthStatus | null;
     /** ヘルスチェック中かどうか */
     isChecking: boolean;
+    /** ヘルスチェックエラー */
+    error: Error | null;
     /** 手動でヘルスチェックを実行 */
     checkHealth: () => Promise<void>;
     /** 最後のチェック時刻 */
     lastChecked: Date | null;
 }
 
-const SERVICE_LABELS: Record<string, string> = {
-    ai_api: 'AI API',
-    ledger_api: '帳簿API',
-    rag_api: 'RAG API',
-    manual_api: 'マニュアルAPI',
-};
-
 /**
  * システムヘルスチェック Hook
+ * 
+ * オンデマンドでバックエンドサービスの状態を確認する。
+ * 自動実行は行わず、管理者が明示的に実行する設計。
  */
 export function useSystemHealth(options: UseSystemHealthOptions = {}): UseSystemHealthReturn {
-    const {
-        enabled = true,
-        interval = 30000, // 30秒
-        showNotifications = true,
-    } = options;
+    const { autoCheckOnMount = false } = options;
 
     const [status, setStatus] = useState<SystemHealthStatus | null>(null);
     const [isChecking, setIsChecking] = useState(false);
+    const [error, setError] = useState<Error | null>(null);
     const [lastChecked, setLastChecked] = useState<Date | null>(null);
-    const notifiedServicesRef = useRef<Set<string>>(new Set());
-    const intervalIdRef = useRef<NodeJS.Timeout | null>(null);
+    const isCheckingRef = useRef(false);
 
     const checkHealth = useCallback(async () => {
-        if (isChecking) return;
+        if (isCheckingRef.current) {
+            console.warn('[useSystemHealth] Health check already in progress');
+            return;
+        }
 
+        isCheckingRef.current = true;
         setIsChecking(true);
+        setError(null);
+
         try {
             const result = await coreApi.get<SystemHealthStatus>('/core_api/health/services');
             setStatus(result);
             setLastChecked(new Date());
-
-            // 通知処理
-            if (showNotifications) {
-                const currentUnhealthyServices = new Set<string>();
-
-                // 問題のあるサービスを検出
-                Object.entries(result.services).forEach(([serviceName, serviceStatus]) => {
-                    if (serviceStatus.status !== 'healthy') {
-                        currentUnhealthyServices.add(serviceName);
-
-                        // まだ通知していないサービスの場合のみ通知
-                        if (!notifiedServicesRef.current.has(serviceName)) {
-                            const label = SERVICE_LABELS[serviceName] || serviceName;
-                            const errorMsg = serviceStatus.error || '接続できません';
-                            
-                            if (serviceStatus.status === 'timeout') {
-                                notifyWarning(
-                                    `${label}がタイムアウトしています`,
-                                    'サービスの応答が遅くなっています。'
-                                );
-                            } else {
-                                notifyError(
-                                    `${label}が利用できません`,
-                                    errorMsg
-                                );
-                            }
-                            
-                            notifiedServicesRef.current.add(serviceName);
-                        }
-                    }
-                });
-
-                // 回復したサービスを通知済みセットから削除
-                notifiedServicesRef.current.forEach((serviceName) => {
-                    if (!currentUnhealthyServices.has(serviceName)) {
-                        notifiedServicesRef.current.delete(serviceName);
-                    }
-                });
-            }
-        } catch (error) {
-            console.error('[useSystemHealth] Health check failed:', error);
-            // Core API自体が落ちている場合は通知を抑制（ノイズを避けるため）
+        } catch (err) {
+            const errorObj = err instanceof Error ? err : new Error('Unknown error');
+            setError(errorObj);
+            console.error('[useSystemHealth] Health check failed:', errorObj);
         } finally {
             setIsChecking(false);
+            isCheckingRef.current = false;
         }
-    }, [isChecking, showNotifications]);
+    }, []);
 
-    // 自動チェックの設定
-    useEffect(() => {
-        if (!enabled) {
-            if (intervalIdRef.current) {
-                clearInterval(intervalIdRef.current);
-                intervalIdRef.current = null;
-            }
-            return;
-        }
-
-        // 初回実行
-        checkHealth();
-
-        // 定期実行
-        intervalIdRef.current = setInterval(checkHealth, interval);
-
-        return () => {
-            if (intervalIdRef.current) {
-                clearInterval(intervalIdRef.current);
-                intervalIdRef.current = null;
-            }
-        };
-    }, [enabled, interval, checkHealth]);
+    // Note: 自動実行は削除。必要な場合は管理画面で明示的に checkHealth() を呼び出す
+    // useEffect(() => {
+    //     if (autoCheckOnMount) {
+    //         checkHealth();
+    //     }
+    // }, [autoCheckOnMount, checkHealth]);
 
     return {
         status,
         isChecking,
+        error,
         checkHealth,
         lastChecked,
     };

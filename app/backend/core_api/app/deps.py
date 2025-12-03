@@ -91,25 +91,35 @@ from app.infra.adapters.auth.dev_auth_provider import DevAuthProvider
 from app.infra.adapters.auth.iap_auth_provider import IapAuthProvider
 
 # ==========================================
-# 認証プロバイダーのファクトリー
+# 認証プロバイダーのファクトリー（シングルトン）
 # ==========================================
+
+_auth_provider_instance: IAuthProvider | None = None
 
 def get_auth_provider() -> IAuthProvider:
     """
-    環境変数に基づいて適切な認証プロバイダーを返す
+    環境変数に基づいて適切な認証プロバイダーを返す（シングルトン）
     
     - IAP_ENABLED=true: IapAuthProvider（本番・ステージング）
     - IAP_ENABLED=false: DevAuthProvider（開発環境）
     
+    プロバイダーは初回呼び出し時に一度だけ作成され、以降は同じインスタンスを再利用する。
+    これにより、DevAuthProviderの初期化ログが大量に出力されることを防ぐ。
+    
     Returns:
         IAuthProvider: 認証プロバイダーのインスタンス
     """
-    iap_enabled = os.getenv("IAP_ENABLED", "false").lower() == "true"
+    global _auth_provider_instance
     
-    if iap_enabled:
-        return IapAuthProvider()
-    else:
-        return DevAuthProvider()
+    if _auth_provider_instance is None:
+        iap_enabled = os.getenv("IAP_ENABLED", "false").lower() == "true"
+        
+        if iap_enabled:
+            _auth_provider_instance = IapAuthProvider()
+        else:
+            _auth_provider_instance = DevAuthProvider()
+    
+    return _auth_provider_instance
 
 
 # ==========================================
