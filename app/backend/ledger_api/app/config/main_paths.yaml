@@ -2,7 +2,6 @@
 
 # 📄 CSVファイル関連パス
 csv:
-    receive_header_definition: 'infra/data_sources/master/receive_header_definition.csv' # 種別判定用ヘッダー
     unit_price_table: 'infra/data_sources/master/costs/unit_price_table.csv'
     transport_costs: 'infra/data_sources/master/costs/transport_costs.csv'
 
