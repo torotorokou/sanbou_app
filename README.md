@@ -94,7 +94,12 @@ sudo sh -c 'echo "127.0.0.1 stg.local" >> /etc/hosts'
      RAG_API_PORT=8004
      ```
 
-   - GCP を使う場合はサービスアカウント鍵を `secrets/gcs-key.json` に配置（devは任意、stg/prodは必須）
+   - **GCP 認証 (ADC) のセットアップ**:
+     ```bash
+     # 初回のみ実行
+     gcloud auth application-default login
+     ```
+     詳細は [GCP ADC セットアップガイド](./docs/20251203_GCP_ADC_SETUP.md) を参照してください。
 
 2) コンテナを起動
 
@@ -210,9 +215,13 @@ make al-up
 
 - env/.env.vm_stg または env/.env.vm_prod を作成
 - 初回の `make up` 実行時、`OPENAI_API_KEY` と `GEMINI_API_KEY` を対話入力すると `secrets/.env.<ENV>.secrets` に安全に保存されます
-- GCP利用時は `secrets/gcs-key.json` を必ず配置
 
-2) 起動 (Nginx を有効化する edge プロファイルを利用)
+2) **GCP 認証 (ADC) のセットアップ**
+
+- GCE VM にサービスアカウントをアタッチしてください
+- 詳細は [GCP ADC セットアップガイド](./docs/20251203_GCP_ADC_SETUP.md) を参照してください
+
+3) 起動 (Nginx を有効化する edge プロファイルを利用)
 
 ```bash
 COMPOSE_PROFILES=edge make up ENV=vm_stg
@@ -220,7 +229,7 @@ COMPOSE_PROFILES=edge make up ENV=vm_stg
 COMPOSE_PROFILES=edge make up ENV=vm_prod
 ```
 
-3) Nginx（エッジ）
+4) Nginx（エッジ）
 
 - stg/prod は Nginx プロファイル（edge）で起動し、80/443 を公開
 - 証明書と設定を配置:
@@ -239,8 +248,10 @@ COMPOSE_PROFILES=edge make up ENV=vm_prod
   - 恒久対応するなら `.env.stg` に `STG_NGINX_HTTP_PORT=18080` / `STG_NGINX_HTTPS_PORT=18443` を追記
   - 8080 を占有しているプロセス調査: `ss -ltnp | grep :8080` または `lsof -iTCP:8080 -sTCP:LISTEN`
   - 不要な systemd サービスなら: `sudo systemctl disable --now <service>` （停止前に影響調査）
-- `secrets/gcs-key.json not found`
-  - GCP連携が必須の環境（stg/prod）ではファイルを配置。devでは警告のみ
+- GCP 認証エラー
+  - ローカル開発: `gcloud auth application-default login` を実行
+  - GCE: VM にサービスアカウントがアタッチされているか確認
+  - 詳細は [GCP ADC セットアップガイド](./docs/20251203_GCP_ADC_SETUP.md) を参照
 
 ---
 

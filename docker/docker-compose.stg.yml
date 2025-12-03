@@ -107,9 +107,7 @@ services:
       - ../env/.env.${STG_ENV_FILE}
     volumes:
       - ../app/config:/backend/config
-      - ../secrets:/backend/secrets:ro
     environment:
-      GOOGLE_APPLICATION_CREDENTIALS: /backend/secrets/stg_key.json
       REPORT_ARTIFACT_URL_PREFIX: "/reports/artifacts"
       STRICT_STARTUP: "true"
       TZ: "Asia/Tokyo"
@@ -141,9 +139,7 @@ services:
       - ../env/.env.${STG_ENV_FILE}
     volumes:
       - ../app/config:/backend/config
-      - ../secrets:/backend/secrets:ro
     environment:
-      GOOGLE_APPLICATION_CREDENTIALS: /backend/secrets/stg_key.json
       CATEGORY_QUESTION_TEMPLATES_WITH_TAGS: /backend/config/category_question_templates_with_tags.yaml
       TZ: "Asia/Tokyo"
     restart: unless-stopped

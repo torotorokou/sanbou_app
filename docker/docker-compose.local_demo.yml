@@ -79,9 +79,7 @@ services:
       - ../app/backend/ledger_api/app:/backend/app:rw
       - ../app/backend/backend_shared:/opt/backend_shared:rw
       - ../app/config:/backend/config
-      - ../secrets:/backend/secrets:ro
     environment:
-      GOOGLE_APPLICATION_CREDENTIALS: /backend/secrets/dev_key.json
       WATCHFILES_FORCE_POLLING: "1"
       REPORT_ARTIFACT_URL_PREFIX: "/reports/artifacts"
     depends_on:
@@ -163,9 +161,7 @@ services:
       - ../app/backend/rag_api/app:/backend/app:rw
       - ../app/backend/backend_shared:/opt/backend_shared:rw
       - ../app/config:/backend/config
-      - ../secrets:/backend/secrets:ro
     environment:
-      GOOGLE_APPLICATION_CREDENTIALS: /backend/secrets/dev_key.json
       CATEGORY_QUESTION_TEMPLATES_WITH_TAGS: /backend/config/category_question_templates_with_tags.yaml
       DEV_RELOAD: "1"
       LOCAL_DATA_DIR: /backend/local_data/master
