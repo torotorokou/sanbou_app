@@ -108,9 +108,20 @@ export function useUploadCalendar(): UseUploadCalendarResult {
     const lastDayOfMonth = firstDayOfMonth.endOf('month');
 
     // カレンダー表示の開始日（週の始まりを月曜日とする）
-    const startDate = firstDayOfMonth.startOf('week').add(1, 'day');
+    // 月の最初の日の曜日を取得 (0=日曜, 1=月曜, ..., 6=土曜)
+    const firstDayOfWeek = firstDayOfMonth.day();
+    // 月曜始まりにするため、月曜日(1)を基準に調整
+    // 日曜(0)なら6日前、月曜(1)なら0日前、火曜(2)なら1日前...
+    const daysToSubtract = firstDayOfWeek === 0 ? 6 : firstDayOfWeek - 1;
+    const startDate = firstDayOfMonth.subtract(daysToSubtract, 'day');
+    
     // カレンダー表示の終了日（週の終わりを日曜日とする）
-    const endDate = lastDayOfMonth.endOf('week').add(1, 'day');
+    // 月の最後の日の曜日を取得
+    const lastDayOfWeek = lastDayOfMonth.day();
+    // 日曜日(0)を基準に調整
+    // 月曜(1)なら6日後、火曜(2)なら5日後...、日曜(0)なら0日後
+    const daysToAdd = lastDayOfWeek === 0 ? 0 : 7 - lastDayOfWeek;
+    const endDate = lastDayOfMonth.add(daysToAdd, 'day');
 
     const calendarWeeks: CalendarWeek[] = [];
     let currentWeek: CalendarDay[] = [];
