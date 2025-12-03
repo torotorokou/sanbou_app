@@ -6,6 +6,7 @@
 ##   make down      ENV=...
 ##   make rebuild   ENV=...
 ##   make backup    ENV=local_dev    # ← 追加：バックアップ
+##   make restore-from-dump ENV=local_dev DUMP=backups/sanbou_dev_2025-12-03.dump
 ## -------------------------------------------------------------
 
 SHELL := /bin/bash
@@ -231,6 +232,27 @@ backup_code:
 	@echo "[ok] code snapshot done"
 
 ## =============================================================
+## Restore from custom dump (.dump)
+##   使い方:
+##     make restore-from-dump ENV=local_dev DUMP=backups/sanbou_dev_2025-12-03.dump
+## =============================================================
+.PHONY: restore-from-dump
+DUMP ?= backups/sanbou_dev_2025-12-03.dump
+
+restore-from-dump: check
+	@if [ ! -f "$(DUMP)" ]; then \
+	  echo "[error] dump file not found: $(DUMP)"; exit 1; \
+	fi
+	@echo "[info] Restoring $(DUMP) into DB=$(PGDB) (ENV=$(ENV))"
+	$(DC_FULL) cp "$(DUMP)" $(PG_SERVICE):/tmp/restore.dump
+	$(DC_FULL) exec -T $(PG_SERVICE) bash -lc '\
+	  dropdb  -U $(PGUSER) --if-exists --force $(PGDB) && \
+	  createdb -U $(PGUSER) $(PGDB) && \
+	  pg_restore -U $(PGUSER) -d $(PGDB) /tmp/restore.dump \
+	'
+	@$(DC_FULL) exec -T $(PG_SERVICE) rm -f /tmp/restore.dump || true
+	@echo "[ok] restore-from-dump completed"
+## =============================================================
 ## PostgreSQL Safe Upgrade (16 -> 17)
 ## =============================================================
 PG_OLD_VOLUME ?= pgdata
@@ -270,7 +292,7 @@ pg.compose17:
 	@echo "volumes:" >> docker-compose.pg17.yml
 	@echo "  $(PG_NEW_VOLUME):" >> docker-compose.pg17.yml
 	@echo "    driver: local" >> docker-compose.pg17.yml
-	@echo ""
+	@echo "" >> docker-compose.pg17.yml
 	@echo "[ok] Created docker-compose.pg17.yml"
 	@echo "[info] Review the file before running 'make pg.up17'"
 	@echo ""
@@ -307,13 +329,12 @@ pg.verify:
 	@echo "========================================="
 	@echo "Databases:"
 	@echo "========================================="
-	@PGHOST=$(PG_HOST) PGPORT=$(PG_PORT) psql -U $${PGUSER:-postgres} -c "\\l" || true
+	@PGHOST=$(PG_HOST) PGPORT=$(PG_PORT) psql -U $${PGUSER:-postgres} -c "\l" || true
 	@echo ""
 	@echo "========================================="
 	@echo "Extensions:"
 	@echo "========================================="
-	@PGHOST=$(PG_HOST) PGPORT=$(PG_PORT) psql -U $${PGUSER:-postgres} -d $${PGDATABASE:-postgres} -c "\\dx" || true
-
+	@PGHOST=$(PG_HOST) PGPORT=$(PG_PORT) psql -U $${PGUSER:-postgres} -d $${PGDATABASE:-postgres} -c "\dx" || true
 
 .PHONY: al-rev al-rev-auto al-up al-down al-cur al-hist al-heads al-stamp
 
@@ -429,6 +450,9 @@ refresh-mv:
 
 # 目標カードMVのみリフレッシュ（個別実行用）
 refresh-mv-target-card:
+	@echo "[refresh-mv-target-card] Refreshing mart.mv_target_card_per_day..."
+	$(DC) exec -T db psql -U myuser -d sanbou_dev -c "REFRESH MATERIALIZED VIEW CONCURRENTLY mart.mv_target_card_per_day;"
+	@echo "[ok] mv_target_card_per_day refreshed"
 
 # =============================================================
 # Alembic: Schema Dump & Management
