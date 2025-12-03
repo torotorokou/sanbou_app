@@ -1,5 +1,8 @@
 import pandas as pd
 from pandas import DataFrame
+from backend_shared.application.logging import get_module_logger, create_log_context
+
+logger = get_module_logger(__name__)
 
 
 def apply_transport_fee_by_vendor(
@@ -14,10 +17,6 @@ def apply_transport_fee_by_vendor(
     Returns:
         pd.DataFrame: 運搬費が適用された出荷データフレーム
     """
-    from app.infra.report_utils import app_logger
-    from backend_shared.application.logging import create_log_context
-
-    logger = app_logger()
 
     # 運搬業者が設定されている行を抽出
     target_rows = df_after[df_after["運搬業者"].notna()].copy()

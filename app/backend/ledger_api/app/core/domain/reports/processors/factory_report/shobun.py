@@ -1,13 +1,14 @@
 import pandas as pd
 
 from app.infra.report_utils import (
-    app_logger,
     get_template_config,
     load_master_and_template,
     clean_na_strings,
 )
-from backend_shared.application.logging import create_log_context
+from backend_shared.application.logging import get_module_logger, create_log_context
 from app.infra.report_utils.dataframe.cleaning import clean_cd_column as _clean_cd_column
+
+logger = get_module_logger(__name__)
 
 
 def process_shobun(df_shipment: pd.DataFrame) -> pd.DataFrame:
@@ -22,7 +23,6 @@ def process_shobun(df_shipment: pd.DataFrame) -> pd.DataFrame:
         pd.DataFrame
             整形済みの出荷処分帳票
     """
-    logger = app_logger()
 
     # --- ① マスターCSVの読み込み ---
     logger.info("Loading template config...")

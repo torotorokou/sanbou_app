@@ -1,6 +1,7 @@
 from .template_config import get_required_columns_definition
-from .logger import app_logger
-from backend_shared.application.logging import create_log_context
+from backend_shared.application.logging import get_module_logger, create_log_context
+
+logger = get_module_logger(__name__)
 
 
 def load_filtered_dataframe(dfs, key, target_columns):
@@ -17,7 +18,6 @@ def load_filtered_dataframe(dfs, key, target_columns):
     Returns:
         pd.DataFrame: 指定されたカラムのみを持つDataFrame（フィルタ済み）
     """
-    logger = app_logger()
 
     if key not in dfs:
         raise KeyError(f"{key} はdfsに存在しません。")

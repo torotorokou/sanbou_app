@@ -1,6 +1,8 @@
 import pandas as pd
 from .value_setter import set_value_fast_safe
-from ..logger import app_logger
+from backend_shared.application.logging import get_module_logger
+
+logger = get_module_logger(__name__)
 
 
 def clean_na_strings(val):
@@ -104,7 +106,6 @@ def summary_apply(
     """
     インポートCSVをgroupby＆sumし、マスターCSVにマージ＆更新する汎用関数（シート名なし版）。
     """
-    logger = app_logger()
     logger.info(
         f"▶️ マスター更新処理: キー={key_cols}, 集計列={source_col} ➡ 書き込み列={target_col}"
     )
