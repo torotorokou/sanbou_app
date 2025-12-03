@@ -240,6 +240,7 @@ ORDER BY rep_id, rn
             logger.info(
                 "fetch_daily_series開始",
                 extra=create_log_context(
+                    operation="fetch_daily_series",
                     date_from=str(req.date_from),
                     date_to=str(req.date_to),
                     rep_id=req.rep_id,
@@ -335,6 +336,7 @@ ORDER BY sales_date
             logger.info(
                 "fetch_pivot開始",
                 extra=create_log_context(
+                    operation="fetch_pivot",
                     base_axis=req.base_axis,
                     base_id=str(req.base_id),
                     target_axis=req.target_axis,
@@ -472,7 +474,7 @@ LIMIT :page_size OFFSET :offset
                 "fetch_pivot完了",
                 extra=create_log_context(operation="fetch_pivot", rows_count=len(rows), next_cursor=next_cursor)
             )
-            return CursorPage(items=rows, next_cursor=next_cursor)
+            return CursorPage(rows=rows, next_cursor=next_cursor)
         
         except Exception as e:
             logger.error(

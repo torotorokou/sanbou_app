@@ -35,6 +35,7 @@ class FetchSalesTreePivotUseCase:
             logger.info(
                 "FetchSalesTreePivot実行",
                 extra=create_log_context(
+                    operation="fetch_pivot",
                     base_axis=req.base_axis,
                     base_id=req.base_id,
                     target_axis=req.target_axis
