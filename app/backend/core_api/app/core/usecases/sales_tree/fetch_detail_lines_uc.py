@@ -36,6 +36,7 @@ class FetchSalesTreeDetailLinesUseCase:
             logger.info(
                 "FetchSalesTreeDetailLines実行",
                 extra=create_log_context(
+                    operation="fetch_detail_lines",
                     last_group_by=req.last_group_by,
                     date_from=str(req.date_from),
                     date_to=str(req.date_to),

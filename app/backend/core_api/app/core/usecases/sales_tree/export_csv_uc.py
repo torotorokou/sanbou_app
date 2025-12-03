@@ -35,6 +35,7 @@ class ExportSalesTreeCSVUseCase:
             logger.info(
                 "ExportSalesTreeCSV実行",
                 extra=create_log_context(
+                    operation="export_csv",
                     mode=req.mode,
                     date_from=str(req.date_from),
                     date_to=str(req.date_to)
