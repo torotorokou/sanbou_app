@@ -88,7 +88,7 @@ def _maybe_replace_font(font: Any, tracker: set[tuple[str, str]]) -> Any:
     return font
 
 
-def normalize_workbook_fonts(wb: Workbook, logger=None) -> None:
+def normalize_workbook_fonts(wb: Workbook) -> None:
     tracker: set[tuple[str, str]] = set()
 
     for ws in wb.worksheets:
