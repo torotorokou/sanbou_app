@@ -8,12 +8,11 @@ from typing import Any, Dict
 import pandas as pd
 
 from app.infra.report_utils import (
-    app_logger,
     get_template_config,
     load_all_filtered_dataframes,
     load_master_and_template,
 )
-from backend_shared.application.logging import create_log_context
+from backend_shared.application.logging import get_module_logger, create_log_context
 from app.core.domain.reports.processors.average_sheet.processors import (
     tikan,
     aggregate_vehicle_data,
@@ -26,7 +25,7 @@ from app.core.domain.reports.processors.average_sheet.processors import (
 
 
 def process(dfs: Dict[str, Any]) -> pd.DataFrame:
-    logger = app_logger()
+    logger = get_module_logger(__name__)
     template_name = get_template_config()["average_sheet"]["key"]
 
     csv_name = get_template_config()["average_sheet"]["required_files"]

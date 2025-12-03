@@ -8,12 +8,11 @@ from typing import Any, Dict
 import pandas as pd
 
 from app.infra.report_utils import (
-    app_logger,
     get_template_config,
     load_all_filtered_dataframes,
 )
 from app.infra.report_utils.excel import sort_by_cell_row
-from backend_shared.application.logging import create_log_context
+from backend_shared.application.logging import get_module_logger, create_log_context
 from app.core.domain.reports.processors.factory_report.shobun import (
     process_shobun,
 )
@@ -44,7 +43,7 @@ def process(dfs: Dict[str, Any]) -> pd.DataFrame:
     - 備考: CSVが欠落している場合は該当処理をスキップします。
     """
 
-    logger = app_logger()
+    logger = get_module_logger(__name__)
 
     # --- テンプレート設定の取得 ---
     template_key = "factory_report"
