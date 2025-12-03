@@ -20,9 +20,14 @@ Core API - BFF/Facade for frontend
 """
 import logging
 import os
-from pythonjsonlogger import jsonlogger
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
+# ==========================================
+# 統一ロギング設定のインポート（backend_shared）
+# ==========================================
+from backend_shared.application.logging import setup_logging
+from backend_shared.config.env_utils import is_debug_mode
 
 from app.api.routers.ingest.router import router as ingest_router
 from app.api.routers.forecast.router import router as forecast_router
@@ -38,30 +43,58 @@ from app.api.routers.manual.router import router as manual_router
 from app.api.routers.dashboard.router import router as dashboard_router
 from app.api.routers.inbound.router import router as inbound_router
 from app.api.routers.sales_tree import router as sales_tree_router
+from app.api.routers.auth import router as auth_router
+from app.api.routers.health import router as health_router
 
 # ==========================================
-# 構造化JSONロギングの設定
+# 統一ロギング設定の初期化
 # ==========================================
-# CloudWatch/Datadogなどのログアグリゲーターでのパースやクエリを容易にするため、
-# JSON形式でログを出力する。各ログエントリにはタイムスタンプ、ロガー名、
-# ログレベル、メッセージが含まれる。
-logger = logging.getLogger()
-logHandler = logging.StreamHandler()
-formatter = jsonlogger.JsonFormatter("%(asctime)s %(name)s %(levelname)s %(message)s")
-logHandler.setFormatter(formatter)
-logger.addHandler(logHandler)
-logger.setLevel(logging.INFO)
+# テクニカルログ基盤: JSON形式、Request ID付与、Uvicorn統合
+# 環境変数 LOG_LEVEL で制御可能（DEBUG/INFO/WARNING/ERROR/CRITICAL）
+setup_logging()
+
+from backend_shared.application.logging import get_module_logger
+logger = get_module_logger(__name__)
 
 # ==========================================
 # FastAPI アプリケーション初期化
 # ==========================================
 # root_path: リバースプロキシ(nginx)経由でのパスプレフィックス対応
 # 例: https://example.com/core_api/* → 本アプリケーションにルーティング
+
+# DEBUG モード判定（共通ユーティリティ使用）
+DEBUG = is_debug_mode()
+
 app = FastAPI(
     title="Core API",
     description="BFF/Facade API for frontend - handles sync calls and job queuing",
     version="1.0.0",
     root_path="/core_api",  # リバースプロキシ対応: /core_api/* でアクセス可能
+    # 本番環境（DEBUG=False）では /docs と /redoc を無効化
+    docs_url="/docs" if DEBUG else None,
+    redoc_url="/redoc" if DEBUG else None,
+    openapi_url="/openapi.json" if DEBUG else None,
+)
+
+logger.info(
+    f"Core API initialized (DEBUG={DEBUG}, docs_enabled={DEBUG})",
+    extra={"operation": "app_init", "debug": DEBUG}
+)
+
+# ==========================================
+# Middleware 登録
+# ==========================================
+# Request ID Middleware: リクエストトレーシング用（backend_shared）
+# 全リクエストに X-Request-ID を付与し、ログとレスポンスに含める
+from backend_shared.infra.adapters.middleware.request_id import RequestIdMiddleware
+app.add_middleware(RequestIdMiddleware)
+
+# Authentication Middleware: IAP 認証を強制（本番環境のみ）
+# IAP_ENABLED=true の場合、全てのリクエストで認証を実施
+from app.api.middleware.auth_middleware import AuthenticationMiddleware
+app.add_middleware(
+    AuthenticationMiddleware,
+    excluded_paths=["/health", "/healthz", "/", "/docs", "/redoc", "/openapi.json"]
 )
 
 # ==========================================
@@ -86,6 +119,8 @@ if os.getenv("ENABLE_CORS", "false").lower() == "true":
 # プレフィックス(/forecast, /kpi等)は各ルーターファイル内で定義される。
 
 # --- Core機能 ---
+app.include_router(health_router)      # ヘルスチェック: サービス稼働状態監視
+app.include_router(auth_router)        # 認証: ユーザー情報取得
 app.include_router(ingest_router)      # データ取り込み: CSV アップロード、予約登録
 app.include_router(forecast_router)    # 予測機能: ジョブ作成、ステータス確認、結果取得
 app.include_router(kpi_router)         # KPI集計: ダッシュボード用メトリクス

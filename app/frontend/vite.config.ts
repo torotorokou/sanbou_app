@@ -21,11 +21,12 @@ export default defineConfig(({ mode }) => {
     // 環境に応じたターゲットURL
     // Docker内で実行: サービス名を使用
     // ローカルで実行: localhost:8003を使用
-    const isDockerEnvironment = process.env.DOCKER === 'true' || process.env.IS_DOCKER === 'true';
+    const isDockerEnvironment = process.env.DOCKER === 'true';
     const coreApiTarget = isDockerEnvironment 
         ? 'http://core_api:8000'
         : `http://localhost:${CORE_PORT}`;
     
+    console.log(`[Vite] Docker environment: ${isDockerEnvironment}`);
     console.log(`[Vite] Core API target: ${coreApiTarget}`);
 
     return {
@@ -50,15 +51,16 @@ export default defineConfig(({ mode }) => {
             port: DEV_PORT,
             proxy: {
                 // BFF統一: /core_api リクエストを core_api サービスに転送
-                // core_apiのROOT_PATHは /core_api なので、パスはそのまま転送
                 '/core_api': {
                     target: coreApiTarget,
                     changeOrigin: true,
+                    secure: false,
                 },
                 // Legacy support: /api/* も core_api に転送（互換性のため）
                 '/api': { 
                     target: coreApiTarget, 
                     changeOrigin: true,
+                    secure: false,
                     rewrite: (p) => p.replace(/^\/api/, '/core_api'),
                 },
             },

@@ -28,6 +28,39 @@ from backend_shared.utils.date_filter_utils import (
     filter_by_period_from_min_date as shared_filter_by_period_from_min_date,
     filter_by_period_from_max_date as shared_filter_by_period_from_max_date,
 )
+from backend_shared.application.logging import get_module_logger, create_log_context
+
+logger = get_module_logger(__name__)
+
+
+def _convert_error_to_dict(error: Any) -> Dict[str, Any]:
+    """エラーオブジェクトを辞書形式に変換（共通化）
+    
+    Args:
+        error: エラーオブジェクト
+        
+    Returns:
+        エラー辞書
+    """
+    # ErrorApiResponse系の処理
+    if hasattr(error, "payload"):
+        try:
+            from backend_shared.infra.adapters.presentation.response_base import (
+                _model_to_dict,
+            )
+            return _model_to_dict(error.payload)
+        except Exception:
+            pass
+    
+    # to_dict メソッドがある場合
+    if hasattr(error, "to_dict"):
+        try:
+            return error.to_dict()
+        except Exception:
+            pass
+    
+    # フォールバック: 文字列化
+    return {"status": "error", "message": str(error)}
 
 
 class InteractiveReportProcessingService(ReportProcessingService):
@@ -35,90 +68,126 @@ class InteractiveReportProcessingService(ReportProcessingService):
 
     # 既存 _read_uploaded_files を再利用しても良いが、型が同一なのでそのまま呼ぶ
 
-    # -------- Initial --------
     def initial(
         self, generator: BaseInteractiveReportGenerator, files: Dict[str, UploadFile]
     ) -> Dict[str, Any]:
-        dfs, error = self._read_uploaded_files(files)
-        if error:
-            # エラーオブジェクトを可能な限り展開して返す
-            try:
-                if hasattr(error, "to_dict"):
-                    return error.to_dict()
-            except Exception:
-                pass
-            return {"status": "error", "message": str(error)}
+        """初期処理（共通化されたエラーハンドリング）"""
+        try:
+            dfs, error = self._read_uploaded_files(files)
+            if error:
+                logger.warning(
+                    "CSV読み込みエラー",
+                    extra=create_log_context(
+                        operation="interactive_initial",
+                        error_type=type(error).__name__
+                    )
+                )
+                return _convert_error_to_dict(error)
 
-        assert dfs is not None
+            assert dfs is not None
 
-        validation_error = generator.validate(dfs, files)
-        if validation_error:
-            # ErrorApiResponse 系なら内部 payload を dict 化して返す
-            if hasattr(validation_error, "payload"):
+            validation_error = generator.validate(dfs, files)
+            if validation_error:
+                logger.warning(
+                    "CSV検証エラー",
+                    extra=create_log_context(
+                        operation="interactive_initial",
+                        error_type=type(validation_error).__name__
+                    )
+                )
+                return _convert_error_to_dict(validation_error)
+
+            # 期間フィルタ適用
+            period_type = getattr(generator, "period_type", None)
+            date_filter_strategy = getattr(generator, "date_filter_strategy", "min")
+
+            if period_type:
                 try:
-                    from backend_shared.infra.adapters.presentation.response_base import (
-                        _model_to_dict,
+                    if date_filter_strategy == "max":
+                        dfs = shared_filter_by_period_from_max_date(dfs, period_type)
+                    else:
+                        dfs = shared_filter_by_period_from_min_date(dfs, period_type)
+                    logger.debug(
+                        "期間フィルタ適用完了",
+                        extra=create_log_context(
+                            operation="interactive_initial",
+                            period_type=period_type,
+                            strategy=date_filter_strategy
+                        )
+                    )
+                except Exception as e:
+                    logger.warning(
+                        "期間フィルタスキップ",
+                        extra=create_log_context(
+                            operation="interactive_initial",
+                            error=str(e)
+                        )
                     )
 
-                    return _model_to_dict(validation_error.payload)
-                except Exception:
-                    pass
-            # フォールバック
-            return {"status": "error", "message": str(validation_error)}
+            df_formatted = generator.format(dfs)
 
-        period_type = getattr(generator, "period_type", None)
-        date_filter_strategy = getattr(generator, "date_filter_strategy", "min")
+            state, payload = generator.initial_step(df_formatted)
+            
+            # セッションID処理
+            preferred_session_id: Optional[str] = None
+            state_session_id = state.get("session_id") if isinstance(state, dict) else None
+            if isinstance(state_session_id, str) and state_session_id:
+                preferred_session_id = state_session_id
+            else:
+                payload_session_id = (
+                    payload.get("session_id")
+                    if isinstance(payload, dict)
+                    else None
+                )
+                if isinstance(payload_session_id, str) and payload_session_id:
+                    preferred_session_id = payload_session_id
 
-        if period_type:
-            try:
-                if date_filter_strategy == "max":
-                    dfs = shared_filter_by_period_from_max_date(dfs, period_type)
-                else:
-                    dfs = shared_filter_by_period_from_min_date(dfs, period_type)
-            except Exception as e:  # noqa: BLE001
-                print(f"[WARN] date filtering skipped: {e}")
-
-        df_formatted = generator.format(dfs)
-
-        state, payload = generator.initial_step(df_formatted)
-        # state に元 df_formatted が必要なら利用側で含める方針 (明示性)
-
-        preferred_session_id: Optional[str] = None
-        state_session_id = state.get("session_id") if isinstance(state, dict) else None
-        if isinstance(state_session_id, str) and state_session_id:
-            preferred_session_id = state_session_id
-        else:
-            payload_session_id = (
-                payload.get("session_id")
-                if isinstance(payload, dict)
-                else None
-            )
-            if isinstance(payload_session_id, str) and payload_session_id:
-                preferred_session_id = payload_session_id
-
-        session_data = generator.serialize_state(state)
-        session_id = session_store.save(session_data, session_id=preferred_session_id)
-
-        if session_id != preferred_session_id:
-            # generator 側で採番した session_id と実際に保存された ID を揃える
-            if isinstance(state, dict):
-                state["session_id"] = session_id
             session_data = generator.serialize_state(state)
-            session_store.save(session_data, session_id=session_id)
+            session_id = session_store.save(session_data, session_id=preferred_session_id)
 
-        payload = self._to_serializable(payload)
-        if isinstance(payload, dict):
-            payload["session_id"] = session_id
+            if session_id != preferred_session_id:
+                if isinstance(state, dict):
+                    state["session_id"] = session_id
+                session_data = generator.serialize_state(state)
+                session_store.save(session_data, session_id=session_id)
 
-        if isinstance(payload, dict) and payload.get("status") == "error":
-            return payload
+            payload = self._to_serializable(payload)
+            if isinstance(payload, dict):
+                payload["session_id"] = session_id
 
-        response_payload: Dict[str, Any] = {
-            "session_id": session_id,
-            "rows": payload.get("rows", []) if isinstance(payload, dict) else [],
-        }
+            if isinstance(payload, dict) and payload.get("status") == "error":
+                return payload
 
-        return response_payload
+            response_payload: Dict[str, Any] = {
+                "session_id": session_id,
+                "rows": payload.get("rows", []) if isinstance(payload, dict) else [],
+            }
+
+            logger.info(
+                "初期処理完了",
+                extra=create_log_context(
+                    operation="interactive_initial",
+                    session_id=session_id,
+                    rows_count=len(response_payload["rows"])
+                )
+            )
+
+            return response_payload
+            
+        except Exception as e:
+            logger.exception(
+                "初期処理中に予期しないエラー",
+                extra=create_log_context(
+                    operation="interactive_initial",
+                    error_type=type(e).__name__,
+                    error=str(e)
+                )
+            )
+            return {
+                "status": "error",
+                "code": "INITIAL_FAILED",
+                "message": f"初期処理中にエラーが発生しました: {str(e)}"
+            }
 
     # -------- Apply (中間) --------
     def apply(

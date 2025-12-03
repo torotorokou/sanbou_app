@@ -8,9 +8,9 @@ from typing import Optional
 from datetime import date
 
 from app.core.ports.upload_status_port import IUploadStatusQuery
-from backend_shared.application.logging import log_usecase_execution
+from backend_shared.application.logging import log_usecase_execution, get_module_logger
 
-logger = logging.getLogger(__name__)
+logger = get_module_logger(__name__)
 
 
 class DeleteUploadScopeUseCase:

@@ -1,6 +1,12 @@
 // shared/utils/index.ts
 // ユーティリティ関数の公開API
 
+// 日付関連
+export * from './dateUtils';
+
+// エラーハンドリング関連
+export * from './errorHandling';
+
 // アンカー関連
 export * from './anchors';
 

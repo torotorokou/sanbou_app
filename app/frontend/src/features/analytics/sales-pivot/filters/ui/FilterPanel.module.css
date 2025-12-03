@@ -1,0 +1,32 @@
+/**
+ * FilterPanel.module.css
+ * フィルターパネルのスタイル定義
+ */
+
+/* ========================================
+   カード全体のスタイル
+   ======================================== */
+.accentCard {
+  border-left: 4px solid #23780410;
+  overflow: hidden;
+}
+
+.accentPrimary {
+  border-left-color: #237804;
+}
+
+.cardSectionHeader {
+  font-weight: 600;
+  padding: 6px 10px;
+  margin-bottom: 12px;
+  border-radius: 6px;
+  background: #f3fff4;
+  border: 1px solid #e6f7e6;
+}
+
+/* ========================================
+   Space・Column共通スタイル
+   ======================================== */
+.fullWidth {
+  width: 100%;
+}

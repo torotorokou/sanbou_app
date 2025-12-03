@@ -4,13 +4,14 @@ Upload Calendar Query Adapter
 アップロードカレンダー表示用のSQL集計ロジックを実装。
 複雑なUNION ALLによる集計クエリをカプセル化します。
 """
-import logging
 from typing import List, Dict, Any
 from datetime import date as date_type
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 
-logger = logging.getLogger(__name__)
+from backend_shared.application.logging import get_module_logger
+
+logger = get_module_logger(__name__)
 
 
 class UploadCalendarQueryAdapter:
@@ -95,9 +96,8 @@ class UploadCalendarQueryAdapter:
                     'shogun_final_receive'::text AS csv_kind,
                     COUNT(*) AS row_count
                 FROM log.upload_file uf
-                JOIN stg.shogun_final_receive s ON s.upload_file_id = uf.id
+                JOIN stg.v_active_shogun_final_receive s ON s.upload_file_id = uf.id
                 WHERE uf.is_deleted = false
-                  AND s.is_deleted = false
                   AND s.slip_date IS NOT NULL
                   AND s.slip_date >= :start_date
                   AND s.slip_date <= :end_date
@@ -112,9 +112,8 @@ class UploadCalendarQueryAdapter:
                     'shogun_final_shipment'::text AS csv_kind,
                     COUNT(*) AS row_count
                 FROM log.upload_file uf
-                JOIN stg.shogun_final_shipment s ON s.upload_file_id = uf.id
+                JOIN stg.v_active_shogun_final_shipment s ON s.upload_file_id = uf.id
                 WHERE uf.is_deleted = false
-                  AND s.is_deleted = false
                   AND s.slip_date IS NOT NULL
                   AND s.slip_date >= :start_date
                   AND s.slip_date <= :end_date
@@ -129,9 +128,8 @@ class UploadCalendarQueryAdapter:
                     'shogun_final_yard'::text AS csv_kind,
                     COUNT(*) AS row_count
                 FROM log.upload_file uf
-                JOIN stg.shogun_final_yard s ON s.upload_file_id = uf.id
+                JOIN stg.v_active_shogun_final_yard s ON s.upload_file_id = uf.id
                 WHERE uf.is_deleted = false
-                  AND s.is_deleted = false
                   AND s.slip_date IS NOT NULL
                   AND s.slip_date >= :start_date
                   AND s.slip_date <= :end_date

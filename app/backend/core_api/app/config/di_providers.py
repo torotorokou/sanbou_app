@@ -10,11 +10,12 @@ DI Providers - Dependency Injection Container
   - 環境差分（debug/raw、flash/final）をここで吸収
   - SET LOCAL search_path によるスキーマ切替を活用
 """
-import logging
+import os
 from fastapi import Depends
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from backend_shared.application.logging import get_module_logger
 from app.deps import get_db
 from app.infra.adapters.upload.shogun_csv_repository import ShogunCsvRepository
 from app.infra.adapters.upload.raw_data_repository import RawDataRepository
@@ -27,7 +28,7 @@ from app.infra.clients.ledger_client import LedgerClient
 from app.infra.clients.manual_client import ManualClient
 from app.infra.clients.ai_client import AIClient
 
-logger = logging.getLogger(__name__)
+logger = get_module_logger(__name__)
 
 
 # ========================================================================
@@ -127,12 +128,12 @@ def get_mv_refresher(db: Session = Depends(get_db)) -> MaterializedViewRefresher
 
 
 def get_uc_default(
-    raw_repo: ShogunCsvRepository = Depends(get_repo_raw_default),
-    stg_repo: ShogunCsvRepository = Depends(get_repo_stg_flash),
+    raw_repo: ShogunCsvRepository = Depends(get_repo_raw_final),
+    stg_repo: ShogunCsvRepository = Depends(get_repo_stg_final),
     raw_data_repo: RawDataRepository = Depends(get_raw_data_repo),
     mv_refresher: MaterializedViewRefresher = Depends(get_mv_refresher)
 ) -> UploadShogunCsvUseCase:
-    """デフォルト用のUploadShogunCsvUseCase (raw.shogun_flash_receive + stg.shogun_flash_receive)"""
+    """デフォルト用のUploadShogunCsvUseCase (raw.shogun_final_receive + stg.shogun_final_receive)"""
     return UploadShogunCsvUseCase(
         raw_writer=raw_repo,
         stg_writer=stg_repo,
@@ -507,5 +508,68 @@ def get_create_reservation_uc(
 ) -> CreateReservationUseCase:
     """CreateReservationUseCase提供"""
     return CreateReservationUseCase(ingest_repo=repo)
+
+
+# ========================================================================
+# Auth UseCase Providers
+# ========================================================================
+from app.core.usecases.auth.get_current_user import GetCurrentUserUseCase
+from app.core.ports.auth.auth_provider import IAuthProvider
+from app.infra.adapters.auth.dev_auth_provider import DevAuthProvider
+from app.infra.adapters.auth.iap_auth_provider import IapAuthProvider
+
+
+def get_auth_provider() -> IAuthProvider:
+    """
+    認証プロバイダを取得
+    
+    環境変数 AUTH_MODE に応じて適切なプロバイダを返します。
+    - "dev": DevAuthProvider（開発用固定ユーザー）
+    - "iap": IapAuthProvider（Google Cloud IAP）
+    - デフォルト: DevAuthProvider
+    
+    Returns:
+        IAuthProvider: 認証プロバイダ実装
+    
+    Note:
+        本番環境では必ず AUTH_MODE=iap を設定してください。
+        開発・ステージング環境では AUTH_MODE=dev を使用します。
+    """
+    auth_mode = os.getenv("AUTH_MODE", "dev").lower()
+    
+    if auth_mode == "iap":
+        logger.info("Using IapAuthProvider (Google Cloud IAP)")
+        return IapAuthProvider()
+    
+    # デフォルトは開発用
+    logger.info("Using DevAuthProvider (development mode)")
+    return DevAuthProvider()
+
+
+def get_get_current_user_usecase(
+    auth_provider: IAuthProvider = Depends(get_auth_provider)
+) -> GetCurrentUserUseCase:
+    """GetCurrentUserUseCase提供"""
+    return GetCurrentUserUseCase(auth_provider=auth_provider)
+
+
+# ========================================================================
+# Health Check UseCase Providers
+# ========================================================================
+from app.core.usecases.health_check_uc import HealthCheckUseCase
+from app.config.settings import get_settings
+
+_settings = get_settings()
+
+
+def get_health_check_usecase() -> HealthCheckUseCase:
+    """HealthCheckUseCase提供"""
+    return HealthCheckUseCase(
+        ai_api_base=_settings.AI_API_BASE,
+        ledger_api_base=_settings.LEDGER_API_BASE,
+        rag_api_base=_settings.RAG_API_BASE,
+        manual_api_base=_settings.MANUAL_API_BASE,
+        timeout=2.0,
+    )
 
 

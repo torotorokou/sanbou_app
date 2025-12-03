@@ -1,6 +1,8 @@
 import pandas as pd
 from app.infra.report_utils import get_template_config, load_master_and_template
+from app.infra.report_utils import get_unit_price_table_csv
 from app.infra.report_utils.formatters import summary_apply
+from app.infra.report_utils.formatters import multiply_columns
 
 
 def calculate_total_valuable_material_cost(
@@ -38,6 +40,7 @@ def calculate_valuable_material_cost_by_item(df_yard: pd.DataFrame) -> pd.DataFr
     master_path = config["master_csv_path"]["yuka_yard"]
     master_df = load_master_and_template(master_path)
 
+    # ① ヤードデータから品名別に数量を集計
     master_with_quantity = summary_apply(
         master_df,
         df_yard,
@@ -46,12 +49,23 @@ def calculate_valuable_material_cost_by_item(df_yard: pd.DataFrame) -> pd.DataFr
         target_col="数量",
     )
 
-    result_df = summary_apply(
+    # ② 単価テーブルから有価物の単価を取得
+    unit_price_df = get_unit_price_table_csv()
+    unit_price_df = unit_price_df[unit_price_df["必要項目"] == "有価物"]
+
+    # ③ 単価をマージ
+    master_with_price = summary_apply(
         master_with_quantity,
-        master_with_quantity,
+        unit_price_df,
         key_cols=["品名"],
-        source_col="数量",
-        target_col="数量",
+        source_col="設定単価",
+        target_col="設定単価",
     )
+
+    # ④ 数量 × 単価 = 金額（値）
+    result_df = multiply_columns(
+        master_with_price, col1="設定単価", col2="数量", result_col="値"
+    )
+    
     result_df = result_df.rename(columns={"品名": "大項目"})
     return result_df

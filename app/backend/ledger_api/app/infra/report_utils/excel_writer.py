@@ -11,7 +11,9 @@ import os
 import unicodedata
 from typing import Any, cast
 import re
-from .logger import app_logger
+from backend_shared.application.logging import get_module_logger, create_log_context
+
+logger = get_module_logger(__name__)
 
 
 def safe_excel_value(value):
@@ -30,7 +32,6 @@ def load_template_workbook(template_path: str | Path) -> Workbook:
     テンプレートExcelを読み込む。
     見つからない/読み込めない場合は空のWorkbookでフォールバックし、サーバーログに警告を出す。
     """
-    logger = app_logger()
     # BASE_API_DIR環境変数を使用、未設定の場合はapiディレクトリを基準とする
     current_file_dir = Path(__file__).parent.parent  # utils -> ledger
     base_dir = Path(os.getenv("BASE_API_DIR", str(current_file_dir.parent.parent.parent.parent.parent / "api")))
@@ -87,7 +88,7 @@ def _maybe_replace_font(font: Any, tracker: set[tuple[str, str]]) -> Any:
     return font
 
 
-def normalize_workbook_fonts(wb: Workbook, logger=None) -> None:
+def normalize_workbook_fonts(wb: Workbook) -> None:
     tracker: set[tuple[str, str]] = set()
 
     for ws in wb.worksheets:
@@ -129,15 +130,14 @@ def normalize_workbook_fonts(wb: Workbook, logger=None) -> None:
                     continue
 
     if tracker:
-        logger = logger or app_logger()
         replacements = ", ".join(f"{src}→{dst}" for src, dst in sorted(tracker))
-        logger.info(f"Excelテンプレートのフォントを標準フォントに置換しました: {replacements}")
+        logger.info(
+            "Excelフォント置換完了",
+            extra=create_log_context(operation="replace_fonts", replacements=replacements)
+        )
 
 
-def write_dataframe_to_worksheet(df: pd.DataFrame, ws: Worksheet, logger=None):
-    if logger is None:
-        logger = app_logger()
-
+def write_dataframe_to_worksheet(df: pd.DataFrame, ws: Worksheet):
     for idx, row in df.iterrows():
         cell_ref = row.get("セル")
         value = safe_excel_value(row.get("値"))
@@ -149,14 +149,20 @@ def write_dataframe_to_worksheet(df: pd.DataFrame, ws: Worksheet, logger=None):
             or cell_ref_str in ["", "未設定"]
             or not re.match(r"^[A-Za-z]+[0-9]+$", cell_ref_str)
         ):
-            logger.info(f"空欄または未設定のセルはスキップされました。行 {idx}")
+            logger.info(
+                "セルスキップ",
+                extra=create_log_context(operation="write_dataframe_to_worksheet", row=idx, reason="empty_or_unset")
+            )
             continue
 
         try:
             cell = cast(Cell, ws[cell_ref_str])
 
             if isinstance(cell, MergedCell):
-                logger.warning(f"セル {cell_ref} は結合セルで書き込み不可。値: {value}")
+                logger.warning(
+                    "結合セル書き込み不可",
+                    extra=create_log_context(operation="write_dataframe_to_worksheet", cell_ref=cell_ref, value=value)
+                )
                 continue
 
             # --- 書式をdeep copyで保持 ---
@@ -175,7 +181,11 @@ def write_dataframe_to_worksheet(df: pd.DataFrame, ws: Worksheet, logger=None):
             cell.number_format = original_format
 
         except Exception as e:
-            logger.error(f"セル {cell_ref} 書き込み失敗: {e} / 値: {value}")
+            logger.error(
+                "セル書き込み失敗",
+                extra=create_log_context(operation="write_dataframe_to_worksheet", cell_ref=cell_ref, value=value, error=str(e)),
+                exc_info=True
+            )
 
 
 def rename_sheet(wb: Workbook, new_title: str):
@@ -210,13 +220,12 @@ def write_values_to_template(
     - シート名変更
     - メモリ出力
     """
-    logger = app_logger()
     wb = load_template_workbook(template_path)
-    normalize_workbook_fonts(wb, logger=logger)
+    normalize_workbook_fonts(wb)
     ws = wb.active
     if not isinstance(ws, Worksheet):
         raise TypeError("Workbook のアクティブシートが Worksheet ではありません")
 
-    write_dataframe_to_worksheet(df, ws, logger=logger)
+    write_dataframe_to_worksheet(df, ws)
     rename_sheet(wb, extracted_date)
     return save_workbook_to_bytesio(wb)

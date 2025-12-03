@@ -1,22 +1,23 @@
 /**
  * shared/tokens.ts
  * 共通トークン（ブレークポイント・余白など）
- * TODO: 必要に応じてブレークポイントやスペーシングトークンを定義
+ * 
+ * @deprecated このファイルのBREAKPOINTSは使用しないでください
+ * 代わりに @shared/constants/breakpoints からインポートしてください
  */
 
-// 今後、共通のデザイントークンをここに配置
+import { bp } from '@shared';
+
 /**
- * ⚠️ 非推奨: このローカルBREAKPOINTSは使用しないでください。
- * SSOT: src/shared/constants/breakpoints.ts (md:768, lg:1024, xl:1280)
+ * @deprecated 代わりに @shared から bp をインポートしてください
+ * 
+ * 例:
+ * ```typescript
+ * import { bp } from '@shared';
+ * const isMobile = width < bp.md;
+ * ```
  */
-export const BREAKPOINTS = {
-  xs: 480,
-  sm: 640,   // Tailwind準拠
-  md: 768,
-  lg: 1024,  // Tailwind準拠
-  xl: 1280,  // Tailwind準拠
-  xxl: 1600,
-};
+export const BREAKPOINTS = bp;
 
 export const SPACING = {
   xs: 4,

@@ -225,3 +225,29 @@ class ReportTemplateConfigLoader:
             str: Excelテンプレートファイルのパス
         """
         return self.config[report_key].get("template_excel_path", "")
+
+    def get_all_config(self) -> dict:
+        """
+        全ての帳票設定を取得
+
+        Returns:
+            dict: 全ての帳票設定の辞書
+        """
+        return self.config
+
+    def get_report_config(self, report_key: str) -> dict:
+        """
+        特定の帳票設定を取得
+
+        Args:
+            report_key (str): 帳票キー
+
+        Returns:
+            dict: 指定された帳票の設定辞書
+
+        Raises:
+            KeyError: 指定された帳票キーが存在しない場合
+        """
+        if report_key not in self.config:
+            raise KeyError(f"{report_key}はテンプレート定義に存在しません")
+        return self.config[report_key]

@@ -474,7 +474,9 @@ export const PortalPage: React.FC = () => {
   ];
 
   const [notices] = React.useState<Notice[]>(sampleNotices);
-  const [noticeVisible, setNoticeVisible] = React.useState<boolean>(true);
+  // デフォルトでトップページの重要通知バナーは非表示にする
+  // ここを切り替えて、通知を表示するか制御する
+  const [noticeVisible, setNoticeVisible] = React.useState<boolean>(false);
   const [modalOpen, setModalOpen] = React.useState<boolean>(false);
   const [activeNotice, setActiveNotice] = React.useState<Notice | null>(null);
 
@@ -566,7 +568,10 @@ export const PortalPage: React.FC = () => {
               alignItems: 'stretch',
             }}
           >
-            {portalMenus.map((menu) => (
+            {portalMenus
+              // トップページでは「お知らせ」カードは表示しない
+              .filter((m) => m.link !== ROUTER_PATHS.NEWS && m.title !== 'お知らせ')
+              .map((menu) => (
               <PortalCard
                 key={menu.link}
                 {...menu}

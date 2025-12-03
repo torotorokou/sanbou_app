@@ -14,12 +14,12 @@ Clean Architecture の Infra 層に配置。
   - 疎結合: UseCase から DI 経由で注入
   - 拡張性: 新しい MV を容易に追加可能
 """
-import logging
 from typing import List, Optional
 from sqlalchemy import text
 from sqlalchemy.orm import Session
+from backend_shared.application.logging import create_log_context, get_module_logger
 
-logger = logging.getLogger(__name__)
+logger = get_module_logger(__name__)
 
 
 class MaterializedViewRefresher:
@@ -60,16 +60,26 @@ class MaterializedViewRefresher:
         mv_list = self.MV_MAPPINGS.get(csv_type, [])
         
         if not mv_list:
-            logger.info(f"No materialized views defined for csv_type='{csv_type}', skipping refresh")
+            logger.info(
+                "No MV defined, skipping refresh",
+                extra=create_log_context(operation="refresh_views", csv_type=csv_type)
+            )
             return
         
-        logger.info(f"Starting MV refresh for csv_type='{csv_type}': {mv_list}")
+        logger.info(
+            "Starting MV refresh",
+            extra=create_log_context(operation="refresh_views", csv_type=csv_type, mv_count=len(mv_list), mv_list=mv_list)
+        )
         
         for mv_name in mv_list:
             try:
                 self._refresh_single_mv(mv_name)
             except Exception as e:
-                logger.error(f"Failed to refresh {mv_name}: {e}", exc_info=True)
+                logger.error(
+                    "MV refresh failed",
+                    extra=create_log_context(operation="refresh_views", mv_name=mv_name, error=str(e)),
+                    exc_info=True
+                )
                 # 個別MVの失敗は記録するが、全体処理は継続
                 # 呼び出し側で必要に応じて再 raise を判断
                 raise
@@ -86,7 +96,10 @@ class MaterializedViewRefresher:
             （UNIQUE INDEX が必要）
         """
         try:
-            logger.info(f"Refreshing materialized view: {mv_name}")
+            logger.info(
+                "Refreshing MV",
+                extra=create_log_context(operation="refresh_single_mv", mv_name=mv_name)
+            )
             
             # REFRESH MATERIALIZED VIEW CONCURRENTLY を実行
             # CONCURRENTLY: ロックを最小化（SELECT は可能、UPDATE は待機）
@@ -96,11 +109,18 @@ class MaterializedViewRefresher:
             self.db.execute(sql)
             self.db.commit()
             
-            logger.info(f"Successfully refreshed materialized view: {mv_name}")
+            logger.info(
+                "MV refresh successful",
+                extra=create_log_context(operation="refresh_single_mv", mv_name=mv_name)
+            )
             
         except Exception as e:
             self.db.rollback()
-            logger.error(f"Failed to refresh materialized view {mv_name}: {e}", exc_info=True)
+            logger.error(
+                "MV refresh error",
+                extra=create_log_context(operation="refresh_single_mv", mv_name=mv_name, error=str(e)),
+                exc_info=True
+            )
             raise
     
     def refresh_all_receive_mvs(self) -> None:

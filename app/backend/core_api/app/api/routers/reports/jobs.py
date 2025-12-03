@@ -1,15 +1,15 @@
 """
 Jobs - ジョブステータス・通知ストリームエンドポイント
 """
-import logging
 import os
 from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
 import httpx
 
 from backend_shared.core.domain.exceptions import ExternalServiceError
+from backend_shared.application.logging import create_log_context, get_module_logger
 
-logger = logging.getLogger(__name__)
+logger = get_module_logger(__name__)
 
 router = APIRouter()
 
@@ -39,7 +39,10 @@ async def proxy_notifications_stream():
 @router.get("/jobs/{job_id}")
 async def proxy_job_status(job_id: str):
     """ジョブステータス取得（ledger_apiへフォワード）"""
-    logger.info(f"Proxying job status request for job_id: {job_id}")
+    logger.info(
+        "Proxying job status request",
+        extra=create_log_context(operation="proxy_job_status", job_id=job_id)
+    )
     try:
         async with httpx.AsyncClient(timeout=30.0) as client:
             url = f"{LEDGER_API_BASE}/api/jobs/{job_id}"

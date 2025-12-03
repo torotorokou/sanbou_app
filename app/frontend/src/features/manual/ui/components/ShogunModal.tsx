@@ -1,13 +1,13 @@
 /**
  * ManualModal UI Component
- * マニュアル詳細モーダル（純粋UI）
+ * マニュアル詳細モーダル(純粋UI)
  */
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button, Col, Flex, Modal, Row, Typography } from 'antd';
 import type { ManualItem } from '../../domain/types/shogun.types';
 import { FlowPane } from './FlowPane';
-import { VideoPane } from './VideoPane';
+import { VideoPane, type VideoPaneRef } from './VideoPane';
 
 const { Title, Paragraph } = Typography;
 
@@ -33,11 +33,17 @@ export const ManualModal: React.FC<ManualModalProps> = ({
   paneVideoClassName,
 }) => {
   const navigate = useNavigate();
+  const videoPaneRef = React.useRef<VideoPaneRef>(null);
+
+  const handleClose = () => {
+    videoPaneRef.current?.stopVideo();
+    onClose();
+  };
   return (
     <Modal
       open={open}
-      onCancel={onClose}
-      onOk={onClose}
+      onCancel={handleClose}
+      onOk={handleClose}
       okText="閉じる"
       cancelButtonProps={{ style: { display: 'none' } }}
       title={item?.title ?? 'マニュアル'}
@@ -76,6 +82,7 @@ export const ManualModal: React.FC<ManualModalProps> = ({
               </Title>
               <div className={videoPaneClassName}>
                 <VideoPane
+                  ref={videoPaneRef}
                   src={item?.videoUrl}
                   title={item?.title ?? 'video'}
                   frameClassName={paneFrameClassName}
@@ -92,7 +99,7 @@ export const ManualModal: React.FC<ManualModalProps> = ({
               type="link"
               disabled={!item.id && !item.route}
               onClick={() => {
-                onClose();
+                handleClose();
                 // routeプロパティがある場合はそれを使用、なければ従来のパターン
                 if (item.route) {
                   navigate(item.route);
@@ -103,7 +110,7 @@ export const ManualModal: React.FC<ManualModalProps> = ({
                 }
               }}
             >
-              関連ページを開く
+              詳細ページを開く
             </Button>
           </Flex>
         )}

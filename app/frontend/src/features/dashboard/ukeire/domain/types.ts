@@ -1,10 +1,21 @@
 /**
  * 受入ダッシュボード - Domain Types
  * DTO型定義（API/Repository層のコントラクト）
+ * 
+ * @deprecated IsoMonth, IsoDate型は @shared から使用してください
  */
 
-export type IsoMonth = string; // "YYYY-MM"
-export type IsoDate = string; // "YYYY-MM-DD"
+import type { IsoMonth, IsoDate } from "@shared";
+
+/**
+ * @deprecated 代わりに @shared/utils/dateUtils の IsoMonth を使用してください
+ */
+export type { IsoMonth };
+
+/**
+ * @deprecated 代わりに @shared/utils/dateUtils の IsoDate を使用してください
+ */
+export type { IsoDate };
 
 export type CalendarDay = {
   date: IsoDate;

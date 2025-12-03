@@ -54,7 +54,10 @@ async def download_artifact(
     media_type = _guess_media_type(resolved_path)
     response = FileResponse(resolved_path, media_type=media_type, filename=resolved_path.name)
 
+    # バックエンドは英語キーのみ使用（ASCII安全）
+    # フロントエンドで日本語ファイル名に変換してダウンロード
     disposition_value = "inline" if disposition == "inline" else "attachment"
-    response.headers["Content-Disposition"] = f"{disposition_value}; filename=\"{resolved_path.name}\""
+    response.headers["Content-Disposition"] = f'{disposition_value}; filename="{resolved_path.name}"'
     response.headers["X-Report-Artifact"] = artifact_path
+    
     return response

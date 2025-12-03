@@ -1,12 +1,14 @@
 import pandas as pd
 
+from backend_shared.application.logging import get_module_logger, create_log_context
+from backend_shared.utils.dataframe_utils import clean_na_strings
 from app.infra.report_utils import (
-    app_logger,
     get_template_config,
     load_master_and_template,
-    clean_na_strings,
 )
 from app.infra.report_utils.dataframe.cleaning import clean_cd_column as _clean_cd_column
+
+logger = get_module_logger(__name__)
 
 
 def process_shobun(df_shipment: pd.DataFrame) -> pd.DataFrame:
@@ -21,13 +23,15 @@ def process_shobun(df_shipment: pd.DataFrame) -> pd.DataFrame:
         pd.DataFrame
             整形済みの出荷処分帳票
     """
-    logger = app_logger()
 
     # --- ① マスターCSVの読み込み ---
     logger.info("Loading template config...")
     config = get_template_config()["factory_report"]
     master_path = config["master_csv_path"]["shobun"]
-    logger.info(f"Master path from config: {master_path}")
+    logger.info(
+        "マスターCSVパス取得",
+        extra=create_log_context(operation="process_shobun", master_path=master_path)
+    )
 
     try:
         master_csv = load_master_and_template(master_path)

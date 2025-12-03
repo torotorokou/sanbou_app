@@ -23,6 +23,9 @@ services:
       - ../app/frontend:/app
     environment:
       - DOCKER=true
+    depends_on:
+      core_api:
+        condition: service_healthy
     networks:
       - app-net
 
@@ -50,7 +53,8 @@ services:
     environment:
       - WATCHFILES_FORCE_POLLING=1
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     networks:
       - app-net
 
@@ -76,13 +80,12 @@ services:
       - ../app/backend/ledger_api/app:/backend/app:rw
       - ../app/backend/backend_shared:/opt/backend_shared:rw
       - ../app/config:/backend/config
-      - ../secrets:/backend/secrets:ro
     environment:
-      GOOGLE_APPLICATION_CREDENTIALS: /backend/secrets/dev_key.json
       WATCHFILES_FORCE_POLLING: "1"
       REPORT_ARTIFACT_URL_PREFIX: "/reports/artifacts"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     networks:
       - app-net
 
@@ -111,7 +114,8 @@ services:
     environment:
       - WATCHFILES_FORCE_POLLING=1
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     networks:
       - app-net
 
@@ -134,7 +138,8 @@ services:
     environment:
       WATCHFILES_FORCE_POLLING: "1"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     networks:
       - app-net
     restart: unless-stopped
@@ -157,17 +162,16 @@ services:
       - ../app/backend/rag_api/app:/backend/app:rw
       - ../app/backend/backend_shared:/opt/backend_shared:rw
       - ../app/config:/backend/config
-      - ../secrets:/backend/secrets:ro
       - ../data/gcs_download/rag_api/master:/backend/local_data/master:ro
     environment:
-      GOOGLE_APPLICATION_CREDENTIALS: /backend/secrets/dev_key.json
       CATEGORY_QUESTION_TEMPLATES_WITH_TAGS: /backend/config/category_question_templates_with_tags.yaml
       DEV_RELOAD: "1"
       LOCAL_DATA_DIR: /backend/local_data/master
       RAG_GCS_URI: gs://sanbouapp-dev/rag_api/object_haikibutu/master/
       WATCHFILES_FORCE_POLLING: "1"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     networks:
       - app-net
 

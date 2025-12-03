@@ -17,11 +17,18 @@ except Exception:  # if not available, inject stub module
         # If stub missing, ignore; only interactive pages require it
         pass
 
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
+# ==========================================
+# 統一ロギング設定のインポート（backend_shared）
+# ==========================================
+from backend_shared.application.logging import setup_logging, get_module_logger
 from backend_shared.infra.frameworks.logging_utils import setup_uvicorn_access_filter
 from backend_shared.infra.adapters.middleware import RequestIdMiddleware
 from backend_shared.infra.adapters.fastapi import register_error_handlers
+from backend_shared.config.env_utils import is_debug_mode
 
 from app.api.routers.reports.block_unit_price_interactive import (
     router as block_unit_price_router,
@@ -32,6 +39,17 @@ from app.api.routers.jobs import router as jobs_router
 from app.api.routers.notifications import router as notifications_router
 from app.settings import settings
 
+# ==========================================
+# 統一ロギング設定の初期化
+# ==========================================
+# テクニカルログ基盤: JSON形式、Request ID付与、Uvicorn統合
+# 環境変数 LOG_LEVEL で制御可能（DEBUG/INFO/WARNING/ERROR/CRITICAL）
+setup_logging()
+logger = get_module_logger(__name__)
+
+# DEBUG モード判定（共通ユーティリティ使用）
+DEBUG = is_debug_mode()
+
 # FastAPIアプリケーションの初期化
 # NOTE:
 #   DIP（依存性逆転の原則）に従い、ledger_api は /ledger_api プレフィックスの存在を知らない。
@@ -41,9 +59,15 @@ app = FastAPI(
     title="帳票・日報API",
     description="帳票生成、日報管理、PDF出力に関するAPI群です。内部論理パスで公開。",
     version="1.0.0",
-    docs_url="/docs",
-    redoc_url="/redoc",
-    openapi_url="/openapi.json",
+    # 本番環境（DEBUG=False）では /docs と /redoc を無効化
+    docs_url="/docs" if DEBUG else None,
+    redoc_url="/redoc" if DEBUG else None,
+    openapi_url="/openapi.json" if DEBUG else None,
+)
+
+logger.info(
+    f"Ledger API initialized (DEBUG={DEBUG}, docs_enabled={DEBUG})",
+    extra={"operation": "app_init", "debug": DEBUG}
 )
 
 # ミドルウェア: Request ID（traceId）の付与

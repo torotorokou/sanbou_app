@@ -14,8 +14,8 @@ Ingest Router - CSVアップロードと予約登録エンドポイント
 from fastapi import APIRouter, Depends, UploadFile, File
 import pandas as pd
 import io
-import logging
 
+from backend_shared.application.logging import get_module_logger
 from app.core.usecases.ingest.upload_ingest_csv_uc import UploadIngestCsvUseCase
 from app.core.usecases.ingest.create_reservation_uc import CreateReservationUseCase
 from app.config.di_providers import get_upload_ingest_csv_uc, get_create_reservation_uc
@@ -23,7 +23,7 @@ from app.api.schemas import ReservationCreate, ReservationResponse
 from backend_shared.core.domain.exceptions import ValidationError, InfrastructureError
 
 router = APIRouter(prefix="/ingest", tags=["ingest"])
-logger = logging.getLogger(__name__)
+logger = get_module_logger(__name__)
 
 
 @router.post("/csv", summary="Upload CSV data")
@@ -65,7 +65,14 @@ async def upload_csv(
         df = pd.read_csv(io.BytesIO(contents))
         rows = df.to_dict(orient="records")
 
-        logger.info(f"Processing CSV upload: {file.filename}, rows={len(rows)}")
+        logger.info(
+            "Processing CSV upload",
+            extra=create_log_context(
+                operation="upload_csv",
+                filename=file.filename,
+                row_count=len(rows)
+            )
+        )
         result = uc.execute(rows)
         return result
     except pd.errors.EmptyDataError:
@@ -73,7 +80,11 @@ async def upload_csv(
     except pd.errors.ParserError as e:
         raise ValidationError(f"Failed to parse CSV: {str(e)}", field="file")
     except Exception as e:
-        logger.error(f"Failed to process CSV: {str(e)}", exc_info=True)
+        logger.error(
+            "Failed to process CSV",
+            extra=create_log_context(operation="upload_csv", error=str(e)),
+            exc_info=True
+        )
         raise InfrastructureError(f"Failed to process CSV", cause=e)
 
 

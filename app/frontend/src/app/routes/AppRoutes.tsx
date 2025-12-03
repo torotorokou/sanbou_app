@@ -43,6 +43,9 @@ const NewsPage = lazy(() => import('@/pages/home').then(m => ({ default: m.NewsP
 const TokenPreviewPage = lazy(() => import('@/pages/utils').then(m => ({ default: m.TokenPreviewPage })));
 const TestPage = lazy(() => import('@/pages/utils').then(m => ({ default: m.TestPage })));
 
+// Settings pages - using public API
+const SettingsPage = lazy(() => import('@/pages/settings').then(m => ({ default: m.SettingsPage })));
+
 const AppRoutes: React.FC = () => {
     const location = useLocation();
     const state = location.state as { backgroundLocation?: Location } | undefined;
@@ -51,11 +54,11 @@ const AppRoutes: React.FC = () => {
     <>
     <Suspense fallback={<div style={{padding:16}}><Spin /></div>}>
     <Routes location={state?.backgroundLocation || location}>
+        {/* ポータル(トップ) - 最初に定義して優先度を高める */}
+        <Route path={ROUTER_PATHS.PORTAL} element={<PortalPage />} />
+        
         {/* テスト用ルート */}
         <Route path='/test' element={<TestPage />} />
-
-    {/* ポータル(トップ) */}
-    <Route path={ROUTER_PATHS.PORTAL} element={<PortalPage />} />
 
         {/* ダッシュボード */}
         <Route path={ROUTER_PATHS.DASHBOARD_UKEIRE} element={<InboundForecastDashboardPage />} />
@@ -101,6 +104,9 @@ const AppRoutes: React.FC = () => {
             path={ROUTER_PATHS.TOKEN_PREVIEW}
             element={<TokenPreviewPage />}
         />
+
+        {/* 設定 */}
+        <Route path={ROUTER_PATHS.SETTINGS} element={<SettingsPage />} />
 
     {/* お知らせ */}
     <Route path={ROUTER_PATHS.NEWS} element={<NewsPage />} />

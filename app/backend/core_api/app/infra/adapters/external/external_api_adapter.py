@@ -20,14 +20,14 @@ BFFパターン:
   - フロントエンドは core_api のみを呼び出す
 """
 from typing import List, Dict
-import logging
 
+from backend_shared.application.logging import get_module_logger
 from app.infra.clients.rag_client import RAGClient
 from app.infra.clients.ledger_client import LedgerClient
 from app.infra.clients.manual_client import ManualClient
 from app.infra.clients.ai_client import AIClient
 
-logger = logging.getLogger(__name__)
+logger = get_module_logger(__name__)
 
 
 class ExternalApiAdapter:

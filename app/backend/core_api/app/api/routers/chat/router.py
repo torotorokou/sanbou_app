@@ -6,15 +6,15 @@ Chat Router - BFF for rag_api chat endpoints
   - カスタム例外を使用(HTTPExceptionは使用しない)
   - ExternalServiceError で外部サービスエラーをラップ
 """
-import logging
 import os
 from fastapi import APIRouter, Request
 from fastapi.responses import Response
 import httpx
 
+from backend_shared.application.logging import get_module_logger
 from backend_shared.core.domain.exceptions import ExternalServiceError
 
-logger = logging.getLogger(__name__)
+logger = get_module_logger(__name__)
 
 router = APIRouter(prefix="/rag", tags=["rag"])
 

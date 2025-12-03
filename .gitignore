@@ -148,6 +148,7 @@ coverage/
 *.pptx
 *.xlsx
 *.Identifier
+*:Zone.Identifier
 
 # ============================
 # Nginx
@@ -160,18 +161,24 @@ nginx/cache/
 # ============================
 # YAML / JSON / CSV 管理方針
 # ============================
-# 原則: 設定ファイルは tracking したいので config 以下は許可。
-# まず一括で拡張子除外 → config のみ許可 (例: my-project/config, backend/*/config 等)
-# *.json
+# 原則: 設定・マスター・テンプレートファイルは追跡、生成データは除外
+
+# --- グローバル除外（生成ファイル・ランタイムデータ） ---
 *.yaml
 # *.yml
-# CSV は生成データ混在の可能性があるため必要ならここで一括除外し、config 配下は allow
-*.csv
+# *.json
+# *.csv (まず除外、後で明示許可)
 
+# 大きなディレクトリを先に除外
+data/
+**/data/
+/app/frontend/src/data/
 
-data
+# --- 明示除外: テストデータ（masterより先に） ---
+test/**/*.csv
+**/test/**/*.csv
 
-# --- allow Node.js package manifests & lock files (were excluded by *.json / *.yaml) ---
+# --- 明示許可: Node.js / Docker / Config ---
 !package.json
 !**/package.json
 !package-lock.json
@@ -181,19 +188,14 @@ data
 !yarn.lock
 !**/yarn.lock
 
-# --- allow docker compose files (needed for environment provisioning) ---
 !docker/docker-compose.yml
 !docker/docker-compose.dev.yml
 !docker/docker-compose.stg.yml
 !docker/docker-compose.prod.yml
 
+# --- 明示許可: config ディレクトリ（設定ファイル） ---
 !config/**
 !**/config/**
-!**/config.example.json
-!**/config.example.yaml
-!**/config.example.yml
-
-# config 配下 CSV / JSON / YAML を明示許可 (二重許可だが将来の順序変更安全策)
 !config/**/*.json
 !config/**/*.yaml
 !config/**/*.yml
@@ -202,6 +204,29 @@ data
 !**/config/**/*.yaml
 !**/config/**/*.yml
 !**/config/**/*.csv
+
+# --- 明示許可: master ディレクトリ（マスターデータ） ---
+!**/master/**
+!**/master/**/*.csv
+!**/master/**/*.json
+!**/master/**/*.yaml
+!**/master/**/*.yml
+
+# --- 明示許可: templates ディレクトリ（テンプレートファイル） ---
+!**/templates/**
+!**/templates/**/*.xlsx
+!**/templates/**/*.csv
+!**/templates/**/*.json
+
+# --- 明示除外: テストデータ・動的生成・大容量データ ---
+test/**/*.csv
+**/test/**/*.csv
+
+# data配下は除外済みだが、local_data/master内の設定のみ許可
+**/local_data/
+!**/local_data/master/**/*.yaml
+!**/local_data/master/**/*.yml
+!**/local_data/master/**/*.json
 
 # ============================
 # RAG / ベクターストア（将来）

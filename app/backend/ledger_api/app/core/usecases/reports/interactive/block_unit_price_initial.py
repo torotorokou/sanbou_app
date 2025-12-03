@@ -13,13 +13,13 @@ from app.core.domain.reports.processors.block_unit_price.process0 import (
     make_df_shipment_after_use,
 )
 from app.infra.report_utils import (
-    app_logger,
     get_template_config,
     MainPath,
     load_master_and_template,
     load_all_filtered_dataframes,
 )
 from app.infra.report_utils.domain import ReadTransportDiscount
+from backend_shared.application.logging import get_module_logger, create_log_context
 
 from .block_unit_price_utils import (
     make_session_id,
@@ -29,6 +29,7 @@ from .block_unit_price_utils import (
     stable_entry_id,
     normalize_df_index,
     fmt_cols,
+    handle_step_error,
 )
 
 # Legacy exports for compatibility
@@ -36,7 +37,7 @@ from app.core.domain.reports.processors.block_unit_price import process0 as _pro
 apply_unit_price_addition = _process0.apply_unit_price_addition
 apply_transport_fee_by1 = _process0.apply_transport_fee_by1
 
-logger = app_logger()
+logger = get_module_logger(__name__)
 
 
 # ------------------------------ Options Computation ------------------------------
@@ -147,10 +148,19 @@ def execute_initial_step(df_formatted: Dict[str, Any]) -> Tuple[Dict[str, Any], 
         try:
             _df_dbg = df_formatted.get("shipment")
             if isinstance(_df_dbg, pd.DataFrame):
-                logger.debug(f"[DEBUG] initial_step shipment columns: {list(_df_dbg.columns)}")
-                logger.debug(f"[DEBUG] initial_step shipment head: {_df_dbg.head(3).to_dict()}")
+                logger.debug(
+                    "initial_step shipmentデータ",
+                    extra=create_log_context(
+                        operation="initial_block_unit_price",
+                        columns=list(_df_dbg.columns),
+                        head=_df_dbg.head(3).to_dict()
+                    )
+                )
         except Exception as _e:
-            logger.debug(f"[DEBUG] failed to dump incoming shipment: {_e}")
+            logger.debug(
+                "shipmentダンプ失敗",
+                extra=create_log_context(operation="initialize_block_unit_price", error=str(_e))
+            )
 
         session_id = make_session_id()
 
@@ -250,6 +260,22 @@ def execute_initial_step(df_formatted: Dict[str, Any]) -> Tuple[Dict[str, Any], 
             "rows": rows_payload,
         }
 
+        # entry_idのデバッグログ
+        if "entry_id" in df_shipment.columns:
+            entry_id_info = {
+                "total_rows": len(df_shipment),
+                "entry_id_count": df_shipment["entry_id"].notna().sum(),
+                "entry_id_dtype": str(df_shipment["entry_id"].dtype),
+                "entry_id_sample": df_shipment["entry_id"].dropna().head(5).tolist()
+            }
+            logger.info(
+                "INITIAL entry_id info",
+                extra=create_log_context(
+                    operation="initial_block_unit_price",
+                    **entry_id_info
+                )
+            )
+
         logger.debug(
             f"INITIAL OK: df_shipment {fmt_cols(df_shipment)} | "
             f"transport_cost {fmt_cols(df_transport_cost)} | rows={len(rows_payload)}"
@@ -258,13 +284,15 @@ def execute_initial_step(df_formatted: Dict[str, Any]) -> Tuple[Dict[str, Any], 
         return state, payload
 
     except Exception as e:
-        tb = traceback.format_exc(limit=3)
-        logger.error(f"Step 0 error: {type(e).__name__}: {e} | tb={tb}")
-        # エラー時は空の状態辞書を返す
-        return {}, {
-            "status": "error",
-            "code": "STEP0_EXCEPTION",
-            "detail": str(e),
-            "step": 0,
-            "extra": {"traceback": tb}
-        }
+        # 共通エラーハンドリングを使用
+        context = {}
+        try:
+            if 'df_shipment' in locals():
+                context["df_shipment_shape"] = locals()["df_shipment"].shape
+            if 'rows_payload' in locals():
+                context["rows_count"] = len(locals()["rows_payload"])
+        except Exception:
+            pass
+        
+        _, error_payload_dict = handle_step_error("initial", 0, e, context)
+        return {}, error_payload_dict

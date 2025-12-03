@@ -2,7 +2,6 @@
 
 # 📄 CSVファイル関連パス
 csv:
-    receive_header_definition: 'infra/data_sources/master/receive_header_definition.csv' # 種別判定用ヘッダー
     unit_price_table: 'infra/data_sources/master/costs/unit_price_table.csv'
     transport_costs: 'infra/data_sources/master/costs/transport_costs.csv'
 
@@ -19,9 +18,3 @@ logs:
     app: 'logs/app.log'
     error: 'logs/error.log'
     debug: 'logs/debug.log'
-
-# yamlパス
-config_files:
-    expected_dtypes: 'config/expected_import_csv_dtypes.yaml'
-    templates_config: 'config/templates_config.yaml'
-    required_columns_definition: 'config/required_columns_definition.yaml'

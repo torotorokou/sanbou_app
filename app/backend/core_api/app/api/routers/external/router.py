@@ -9,8 +9,8 @@ For short synchronous calls only. Heavy jobs should be queued.
 """
 from fastapi import APIRouter, Depends
 import httpx
-import logging
 
+from backend_shared.application.logging import get_module_logger
 from app.config.di_providers import (
     get_ask_rag_uc,
     get_list_manuals_uc,
@@ -29,7 +29,7 @@ from app.api.schemas import RAGAskRequest, RAGAskResponse, ManualListResponse
 from backend_shared.core.domain.exceptions import ExternalServiceError, NotFoundError
 
 router = APIRouter(prefix="/external", tags=["external"])
-logger = logging.getLogger(__name__)
+logger = get_module_logger(__name__)
 
 
 @router.post("/rag/ask", response_model=RAGAskResponse, summary="RAGに質問する")
@@ -57,7 +57,14 @@ async def ask_rag(
             status_code=504
         )
     except httpx.HTTPStatusError as e:
-        logger.error(f"RAG API エラー: {e.response.status_code}", extra={"query": req.query})
+        logger.error(
+            "RAG API エラー",
+            extra=create_log_context(
+                operation="proxy_rag_search",
+                status_code=e.response.status_code,
+                query=req.query
+            )
+        )
         raise ExternalServiceError(
             service_name="rag_api",
             message=f"RAG APIでエラーが発生しました: {e.response.status_code}",
@@ -93,7 +100,13 @@ async def list_manuals(
             status_code=504
         )
     except httpx.HTTPStatusError as e:
-        logger.error(f"Manual API エラー: {e.response.status_code}")
+        logger.error(
+            "Manual API エラー",
+            extra=create_log_context(
+                operation="proxy_manual_search",
+                status_code=e.response.status_code
+            )
+        )
         raise ExternalServiceError(
             service_name="manual_api",
             message=f"Manual APIでエラーが発生しました: {e.response.status_code}",
@@ -158,7 +171,14 @@ async def generate_report(
             status_code=504
         )
     except httpx.HTTPStatusError as e:
-        logger.error(f"Ledger API エラー: {e.response.status_code}", extra={"report_type": report_type})
+        logger.error(
+            "Ledger API エラー",
+            extra=create_log_context(
+                operation="proxy_ledger_report",
+                status_code=e.response.status_code,
+                report_type=report_type
+            )
+        )
         raise ExternalServiceError(
             service_name="ledger_api",
             message=f"Ledger APIでエラーが発生しました: {e.response.status_code}",
@@ -191,7 +211,13 @@ async def classify_text(
             status_code=504
         )
     except httpx.HTTPStatusError as e:
-        logger.error(f"AI API エラー: {e.response.status_code}")
+        logger.error(
+            "AI API エラー",
+            extra=create_log_context(
+                operation="proxy_ai_classify",
+                status_code=e.response.status_code
+            )
+        )
         raise ExternalServiceError(
             service_name="ai_api",
             message=f"AI APIでエラーが発生しました: {e.response.status_code}",

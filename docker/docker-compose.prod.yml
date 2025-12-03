@@ -21,11 +21,11 @@ services:
     env_file:
       - ../env/.env.common
       - ../env/.env.vm_prod
+    volumes:
+      - ../app/backend/core_api/migrations:/backend/migrations:rw
+      - ../app/config:/backend/config
     environment:
       - TZ=Asia/Tokyo
-      - RAG_API_BASE=http://rag_api:8000
-      - LEDGER_API_BASE=http://ledger_api:8000
-      - MANUAL_API_BASE=http://manual_api:8000
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/api/healthz"]
@@ -76,6 +76,10 @@ services:
     env_file:
       - ../env/.env.common
       - ../env/.env.vm_prod
+    volumes:
+      - ../app/config:/backend/config
+    environment:
+      - TZ=Asia/Tokyo
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
@@ -96,17 +100,19 @@ services:
       context: ../app/backend
       dockerfile: ledger_api/Dockerfile
       target: prod
+    user: "0:0"
     networks: [app-net, data-net]
     depends_on:
       - db
     env_file:
       - ../env/.env.common
       - ../env/.env.vm_prod
-    environment:
-      - TZ=Asia/Tokyo
-      - STRICT_STARTUP=true
     volumes:
-      - ../secrets:/backend/secrets:ro
+      - ../app/config:/backend/config
+    environment:
+      REPORT_ARTIFACT_URL_PREFIX: "/reports/artifacts"
+      STRICT_STARTUP: "true"
+      TZ: "Asia/Tokyo"
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
@@ -133,10 +139,11 @@ services:
     env_file:
       - ../env/.env.common
       - ../env/.env.vm_prod
-    environment:
-      - TZ=Asia/Tokyo
     volumes:
-      - ../secrets:/backend/secrets:ro
+      - ../app/config:/backend/config
+    environment:
+      CATEGORY_QUESTION_TEMPLATES_WITH_TAGS: /backend/config/category_question_templates_with_tags.yaml
+      TZ: "Asia/Tokyo"
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
@@ -162,7 +169,8 @@ services:
       - ../env/.env.common
       - ../env/.env.vm_prod
     environment:
-      - TZ=Asia/Tokyo
+      MANUAL_FRONTEND_BASE_URL: ${MANUAL_FRONTEND_BASE_URL:-http://localhost:5173}
+      TZ: "Asia/Tokyo"
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]

@@ -24,8 +24,9 @@ from app.core.usecases.dashboard.dto import BuildTargetCardInput
 from app.core.usecases.dashboard.build_target_card_uc import BuildTargetCardUseCase
 from app.api.schemas import TargetMetricsResponse
 from backend_shared.core.domain.exceptions import NotFoundError
+from backend_shared.application.logging import create_log_context, get_module_logger
 
-logger = logging.getLogger(__name__)
+logger = get_module_logger(__name__)
 router = APIRouter(prefix="/dashboard", tags=["dashboard"])
 
 
@@ -81,13 +82,23 @@ def get_target_metrics(
     
     # 3. データが見つからない場合はNotFoundErrorを発生
     if not output.found or output.data is None:
-        logger.warning(f"No target card data found for date={date}, mode={mode}")
+        logger.warning(
+            "No target card data found",
+            extra=create_log_context(
+                operation="get_target_card",
+                date=date,
+                mode=mode
+            )
+        )
         raise NotFoundError(
             resource_type="Target card data",
             identifier=f"{date} (mode={mode})"
         )
     
-    logger.info(f"GET /dashboard/target: success, date={date}, mode={mode}")
+    logger.info(
+        "GET /dashboard/target: success",
+        extra=create_log_context(operation="get_target_card", date=date, mode=mode)
+    )
     
     # 4. Output DTO → Response 変換
     return TargetMetricsResponse(**output.data)

@@ -1,15 +1,15 @@
 """
 Factory Report - 工場日報生成エンドポイント
 """
-import logging
 import os
 from fastapi import APIRouter, Request
 import httpx
 
+from backend_shared.application.logging import create_log_context, get_module_logger
 from backend_shared.core.domain.exceptions import ExternalServiceError
 from app.shared.utils import rewrite_artifact_urls_to_bff
 
-logger = logging.getLogger(__name__)
+logger = get_module_logger(__name__)
 
 router = APIRouter()
 
@@ -22,7 +22,13 @@ async def proxy_factory_report(request: Request):
     工場日報生成（ledger_apiへフォワード）
     FormDataをそのまま転送
     """
-    logger.info(f"Proxying factory_report request (FormData) from {request.client}")
+    logger.info(
+        "Proxying factory_report request (FormData)",
+        extra=create_log_context(
+            operation="proxy_factory_report",
+            client=str(request.client)
+        )
+    )
     logger.info(f"Request headers: {dict(request.headers)}")
     try:
         # FormDataをそのまま読み取り

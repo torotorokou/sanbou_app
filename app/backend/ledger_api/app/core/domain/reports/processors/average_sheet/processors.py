@@ -1,9 +1,11 @@
 import pandas as pd
-from app.infra.report_utils import app_logger
-from app.infra.report_utils import clean_na_strings
+from backend_shared.application.logging import get_module_logger, create_log_context
+from backend_shared.utils.dataframe_utils import clean_na_strings
 from app.infra.report_utils.formatters import set_value_fast_safe
 from app.infra.report_utils.formatters import get_weekday_japanese
 from app.infra.report_utils.formatters import round_value_column_generic
+
+logger = get_module_logger(__name__)
 
 
 def tikan(df):
@@ -13,7 +15,6 @@ def tikan(df):
 def aggregate_vehicle_data(
     df_receive: pd.DataFrame, master_csv: pd.DataFrame, master_columns_keys: list
 ) -> pd.DataFrame:
-    logger = app_logger()
     abc_to_cd = {"A": 1, "B": 2, "C": 3, "D": 4, "E": 5, "F": 6}
 
     for abc_label, item_cd in abc_to_cd.items():
@@ -43,7 +44,6 @@ def aggregate_vehicle_data(
 def calculate_item_summary(
     df_receive: pd.DataFrame, master_csv: pd.DataFrame, master_columns_keys
 ) -> pd.DataFrame:
-    logger = app_logger()
     unit_name = "kg"
     voucher_type = "売上"
 
@@ -76,7 +76,10 @@ def calculate_item_summary(
             )
 
             if total_weight == 0:
-                logger.warning(f"⚠️ {abc_key}・{item_name} の重量が0のため単価が0になります。")
+                logger.warning(
+                    "ABC重量0のため単価が0",
+                    extra=create_log_context(operation="calculate_abc_unit_prices", abc_key=abc_key, item_name=item_name)
+                )
 
     return master_csv
 
@@ -203,7 +206,6 @@ def calculate_final_totals(
 def set_report_date_info(
     df_receive: pd.DataFrame, master_csv: pd.DataFrame, master_columns_keys
 ) -> pd.DataFrame:
-    logger = app_logger()
     today = pd.to_datetime(df_receive["伝票日付"].dropna().iloc[0])
     weekday = get_weekday_japanese(today)
     formatted_date = today.strftime("%m/%d")
@@ -215,7 +217,10 @@ def set_report_date_info(
         master_csv, master_columns_keys, ["曜日", None, None], weekday
     )
 
-    logger.info(f"日付: {formatted_date}（{weekday}）")
+    logger.info(
+        "日付設定完了",
+        extra=create_log_context(operation="apply_date_and_weekday", date=formatted_date, weekday=weekday)
+    )
     return master_csv
 
 

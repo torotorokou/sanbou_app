@@ -4,6 +4,7 @@ import { getApiEndpoint, REPORT_KEYS } from '@features/report/shared/config';
 import type { ReportKey } from '@features/report/shared/config';
 import type { CsvFiles } from '@features/report/shared/types/report.types';
 import { coreApi } from '@features/report/shared/infrastructure/http.adapter';
+import { generateJapaneseFilename } from '@features/report/shared/lib/reportKeyTranslation';
 
 export type ReportArtifactResponse = {
     status?: string;
@@ -57,6 +58,9 @@ export const useReportArtifact = () => {
     const [isReady, setIsReady] = useState<boolean>(false);
 
     const applyArtifactResponse = useCallback((response: ReportArtifactResponse | null) => {
+        // デバッグ: レスポンス全体をログ出力
+        console.info('[useReportArtifact] applyArtifactResponse - 受信したレスポンス:', JSON.stringify(response, null, 2));
+        
         if (!response || typeof response !== 'object') {
             setState((prev) => ({
                 ...prev,
@@ -78,6 +82,14 @@ export const useReportArtifact = () => {
             : null;
         const reportKey = typeof response.report_key === 'string' ? response.report_key : null;
         const reportDate = typeof response.report_date === 'string' ? response.report_date : null;
+
+        console.info('[useReportArtifact] 抽出した値:', {
+            reportKey,
+            reportDate,
+            excelUrl,
+            pdfUrl,
+            artifactBlock
+        });
 
         setExcelFileName(deriveFileName(reportKey, reportDate, '.xlsx'));
         setPdfFileName(deriveFileName(reportKey, reportDate, '.pdf'));
@@ -171,13 +183,58 @@ export const useReportArtifact = () => {
         [applyArtifactResponse]
     );
 
-    const downloadExcel = useCallback(() => {
-        if (state.excelUrl) {
-            window.open(state.excelUrl, '_blank', 'noopener');
-        } else {
+    const downloadExcel = useCallback(async () => {
+        if (!state.excelUrl) {
             notifyInfo('ダウンロード不可', 'Excel ダウンロード URL がありません。');
+            return;
         }
-    }, [state.excelUrl]);
+
+        // デバッグ: ダウンロード時の状態確認
+        console.info('[downloadExcel] ダウンロード開始:', {
+            reportKey: state.reportKey,
+            reportDate: state.reportDate,
+            excelUrl: state.excelUrl
+        });
+
+        try {
+            // URLからファイルをダウンロード
+            const response = await fetch(state.excelUrl);
+            if (!response.ok) throw new Error('ダウンロードに失敗しました');
+            
+            const blob = await response.blob();
+            
+            // report_keyから日本語ファイル名を生成
+            let filename = 'report.xlsx';
+            if (state.reportKey && state.reportDate) {
+                filename = generateJapaneseFilename(state.reportKey, state.reportDate, '.xlsx');
+                console.info('[downloadExcel] 日本語ファイル名生成成功:', filename);
+            } else {
+                console.warn('[downloadExcel] reportKey または reportDate が未設定 - デフォルト名を使用:', {
+                    reportKey: state.reportKey,
+                    reportDate: state.reportDate,
+                    defaultFilename: filename
+                });
+            }
+            
+            // Blob URLを作成してダウンロード
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
+            
+            console.info('[downloadExcel] ダウンロード完了:', filename);
+        } catch (error) {
+            console.error('[downloadExcel] エラー:', error);
+            notifyError(
+                'ダウンロード失敗',
+                error instanceof Error ? error.message : 'Excelのダウンロードに失敗しました'
+            );
+        }
+    }, [state.excelUrl, state.reportKey, state.reportDate]);
 
     const getPdfPreviewUrl = useCallback(() => {
         return state.pdfUrl;

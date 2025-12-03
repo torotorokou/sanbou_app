@@ -1,25 +1,26 @@
 """Generate Block Unit Price UseCase."""
-import logging
 import time
 from datetime import date
 from io import BytesIO
-from pathlib import Path
-import tempfile
 from typing import Optional
 from fastapi import UploadFile
 from fastapi.responses import JSONResponse
 from app.core.ports.inbound import CsvGateway, ReportRepository
 from app.core.domain.reports.block_unit_price import BlockUnitPrice
 from backend_shared.infra.adapters.fastapi.error_handlers import DomainError
+from backend_shared.application.logging import get_module_logger, create_log_context
 from backend_shared.utils.date_filter_utils import filter_by_period_from_max_date as shared_filter_by_period_from_max_date
 from app.core.usecases.reports.interactive.block_unit_price_initial import execute_initial_step
-from app.infra.report_utils import write_values_to_template, get_template_config
-from app.infra.utils.pdf_conversion import convert_excel_to_pdf
+from app.application.usecases.reports.report_generation_utils import (
+    generate_pdf_from_excel,
+    generate_excel_from_dataframe,
+)
 
-logger = logging.getLogger(__name__)
+logger = get_module_logger(__name__)
 
 
 class GenerateBlockUnitPriceUseCase:
+    REPORT_KEY = "block_unit_price"
     def __init__(self, csv_gateway: CsvGateway, report_repository: ReportRepository):
         self.csv_gateway, self.report_repository = csv_gateway, report_repository
 
@@ -159,6 +160,7 @@ class GenerateBlockUnitPriceUseCase:
                 status_code=200,
                 content={
                     "message": "ブロック単価表の生成が完了しました",
+                    "report_key": "block_unit_price",
                     "report_date": block_unit_price.report_date.isoformat(),
                     "artifact": {
                         "excel_download_url": artifact_dict["excel_url"],
@@ -181,18 +183,11 @@ class GenerateBlockUnitPriceUseCase:
             raise DomainError("INTERNAL_ERROR", 500, "ブロック単価表の生成中に予期しないエラーが発生しました", "内部エラー") from ex
 
     def _generate_excel(self, result_df, report_date: date) -> BytesIO:
-        config = get_template_config()["block_unit_price"]
-        extracted_date = report_date.strftime("%Y年%m月%d日")
-        buffer = write_values_to_template(result_df, config["template_excel_path"], extracted_date)
-        return buffer
+        return generate_excel_from_dataframe(
+            result_df=result_df,
+            report_key=self.REPORT_KEY,
+            report_date=report_date,
+        )
 
     def _generate_pdf(self, excel_bytes: BytesIO) -> BytesIO:
-        with tempfile.NamedTemporaryFile(suffix=".xlsx", delete=False) as tmp:
-            tmp.write(excel_bytes.getvalue())
-            tmp_path = Path(tmp.name)
-        try:
-            pdf_bytes_raw = convert_excel_to_pdf(tmp_path)
-            return BytesIO(pdf_bytes_raw)
-        finally:
-            if tmp_path.exists():
-                tmp_path.unlink()
+        return generate_pdf_from_excel(excel_bytes)

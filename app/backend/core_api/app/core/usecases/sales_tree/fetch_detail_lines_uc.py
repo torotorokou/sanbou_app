@@ -6,8 +6,9 @@ UseCase: FetchSalesTreeDetailLines
 import logging
 from app.core.domain.sales_tree_detail import DetailLinesRequest, DetailLinesResponse
 from app.core.ports.sales_tree_port import ISalesTreeQuery
+from backend_shared.application.logging import create_log_context, get_module_logger
 
-logger = logging.getLogger(__name__)
+logger = get_module_logger(__name__)
 
 
 class FetchSalesTreeDetailLinesUseCase:
@@ -33,11 +34,22 @@ class FetchSalesTreeDetailLinesUseCase:
         """
         try:
             logger.info(
-                f"FetchSalesTreeDetailLinesUseCase: last_group_by={req.last_group_by}, "
-                f"date_from={req.date_from}, date_to={req.date_to}, "
-                f"rep_id={req.rep_id}, customer_id={req.customer_id}, item_id={req.item_id}"
+                "FetchSalesTreeDetailLines実行",
+                extra=create_log_context(
+                    operation="fetch_detail_lines",
+                    last_group_by=req.last_group_by,
+                    date_from=str(req.date_from),
+                    date_to=str(req.date_to),
+                    rep_id=req.rep_id,
+                    customer_id=req.customer_id,
+                    item_id=req.item_id
+                )
             )
             return self._query.fetch_detail_lines(req)
         except Exception as e:
-            logger.error(f"Error in FetchSalesTreeDetailLinesUseCase: {str(e)}", exc_info=True)
+            logger.error(
+                "FetchSalesTreeDetailLinesエラー",
+                extra=create_log_context(operation="fetch_detail_lines", error=str(e)),
+                exc_info=True
+            )
             raise
