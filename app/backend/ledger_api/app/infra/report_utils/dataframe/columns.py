@@ -1,6 +1,8 @@
 import pandas as pd
-from app.infra.report_utils import app_logger
+from backend_shared.application.logging import get_module_logger
 from app.infra.report_utils.formatters.summary import safe_merge_by_keys
+
+logger = get_module_logger(__name__)
 
 
 def clean_na_strings(val):
@@ -49,7 +51,6 @@ def apply_column_addition_by_keys(
     value_col_to_add: str = "加算",
     update_target_col: str = "単価",
 ) -> pd.DataFrame:
-    logger = app_logger()
     logger.info(
         f"▶️ カラム加算処理（重複除外）: キー={join_keys}, 加算列={value_col_to_add} ➕ 対象列={update_target_col}"
     )

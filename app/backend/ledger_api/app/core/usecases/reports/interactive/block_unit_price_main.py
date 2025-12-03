@@ -11,7 +11,7 @@ import pandas as pd
 from app.core.usecases.reports.base_generators import (
     BaseInteractiveReportGenerator,
 )
-from app.infra.report_utils import app_logger
+from backend_shared.application.logging import get_module_logger
 
 # 分離したモジュールをインポート
 from .block_unit_price_initial import execute_initial_step
@@ -23,7 +23,7 @@ from .block_unit_price_utils import (
     canonical_sort_labels,
 )
 
-logger = app_logger()
+logger = get_module_logger(__name__)
 
 
 class BlockUnitPriceInteractive(BaseInteractiveReportGenerator):

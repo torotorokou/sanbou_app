@@ -8,7 +8,7 @@ Block Unit Price Interactive - Finalize Step Handler
 from typing import Any, Dict, Optional, cast
 import traceback
 import pandas as pd
-from backend_shared.application.logging import create_log_context
+from backend_shared.application.logging import get_module_logger, create_log_context
 
 from app.core.domain.reports.processors.block_unit_price.process2 import (
     apply_transport_fee_by_vendor,
@@ -22,7 +22,6 @@ from app.infra.report_utils.domain import ReadTransportDiscount
 from app.infra.report_utils import (
     MainPath,
     get_template_config,
-    app_logger,
     load_master_and_template,
 )
 
@@ -34,7 +33,7 @@ from .block_unit_price_utils import (
     log_checkpoint,
 )
 
-logger = app_logger()
+logger = get_module_logger(__name__)
 
 
 # ------------------------------ Selection Merge ------------------------------

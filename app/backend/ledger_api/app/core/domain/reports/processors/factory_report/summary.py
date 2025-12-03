@@ -1,10 +1,11 @@
 import pandas as pd
-from app.infra.report_utils import app_logger
-from backend_shared.application.logging import create_log_context
+from backend_shared.application.logging import get_module_logger, create_log_context
 from app.infra.report_utils.formatters import (
     safe_merge_by_keys,
     summary_update_column_if_notna,
 )
+
+logger = get_module_logger(__name__)
 
 
 def apply_negation_filters(
@@ -82,7 +83,6 @@ def summary_apply_by_sheet(
     master_csv の key_level によるフィルタ、および `Not値` による not検索をサポート。
     `Not値` を含む列はマージキーから除外する。
     """
-    logger = app_logger()
     logger.info(
         "シート集計開始",
         extra=create_log_context(operation="summary_apply_by_sheet", sheet_name=sheet_name, key_cols=key_cols, source_col=source_col)
