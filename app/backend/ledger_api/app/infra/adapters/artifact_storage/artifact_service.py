@@ -20,6 +20,7 @@ from typing import Dict, Optional
 from urllib.parse import quote, unquote
 
 from app.settings import settings
+from backend_shared.config import ReportTemplateConfigLoader
 
 
 def _sanitize_segment(value: str) -> str:
@@ -102,10 +103,22 @@ class ReportArtifactStorage:
     def __init__(self, root_dir: Path, signer: UrlSigner) -> None:
         self.root_dir = root_dir
         self.signer = signer
+        self._config_loader = ReportTemplateConfigLoader()
+
+    def _get_japanese_label(self, report_key: str) -> str:
+        """帳票キーから日本語ラベルを取得する。存在しない場合はreport_keyをそのまま返す。"""
+        try:
+            return self._config_loader.get_label(report_key)
+        except (KeyError, Exception):
+            # フォールバック: report_keyをそのまま使用
+            return report_key
 
     def allocate(self, report_key: str, report_date: str) -> ArtifactLocation:
-        token = f"{time.strftime('%Y%m%d_%H%M%S')}-{secrets.token_hex(4)}"
-        file_base = _sanitize_segment(f"{report_key}-{report_date}")
+        # 帳簿作成日付をトークンに使用（時刻部分のみ現在時刻）
+        token = f"{report_date.replace('-', '')}_{time.strftime('%H%M%S')}-{secrets.token_hex(4)}"
+        # 日本語ラベルを取得してファイル名に使用
+        japanese_label = self._get_japanese_label(report_key)
+        file_base = _sanitize_segment(f"{japanese_label}-{report_date}")
         location = ArtifactLocation(self.root_dir, report_key, report_date, token, file_base)
         location.directory.mkdir(parents=True, exist_ok=True)
         return location
