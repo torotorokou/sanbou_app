@@ -9,7 +9,7 @@ logger = get_module_logger(__name__)
 
 
 def apply_negation_filters(
-    df: pd.DataFrame, match_df: pd.DataFrame, key_cols: list[str], logger=None
+    df: pd.DataFrame, match_df: pd.DataFrame, key_cols: list[str]
 ) -> pd.DataFrame:
     """
     match_df の key_cols に `Not値` または `NOT値` があれば、その値を除外するフィルタを df に適用。
@@ -17,11 +17,10 @@ def apply_negation_filters(
     filter_conditions = {}
     for col in key_cols:
         if col not in df.columns:
-            if logger:
-                logger.warning(
-                    "データに列が存在せず",
-                    extra=create_log_context(operation="process_sheet_partition", column=col)
-                )
+            logger.warning(
+                "データに列が存在せず",
+                extra=create_log_context(operation="process_sheet_partition", column=col)
+            )
             continue
 
         unique_vals = match_df[col].dropna().unique()
@@ -32,10 +31,9 @@ def apply_negation_filters(
         ]
         if neg_vals:
             filter_conditions[col] = neg_vals
-            if logger:
-                logger.info(
-                    f"🚫 '{col}' に対して否定フィルタ: {', '.join(neg_vals)} を適用しました"
-                )
+            logger.info(
+                f"🚫 '{col}' に対して否定フィルタ: {', '.join(neg_vals)} を適用しました"
+            )
 
     for col, ng_values in filter_conditions.items():
         df = df[~df[col].isin(ng_values)]
@@ -44,7 +42,7 @@ def apply_negation_filters(
 
 
 def process_sheet_partition(
-    master_csv: pd.DataFrame, sheet_name: str, expected_level: int, logger=None
+    master_csv: pd.DataFrame, sheet_name: str, expected_level: int
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     """
     指定シートから key_level 一致行と不一致行を分離。
@@ -52,8 +50,7 @@ def process_sheet_partition(
     sheet_df = master_csv[master_csv["CSVシート名"] == sheet_name].copy()
 
     if "key_level" not in sheet_df.columns:
-        if logger:
-            logger.warning("❌ key_level列が存在しません。スキップします。")
+        logger.warning("❌ key_level列が存在しません。スキップします。")
         return pd.DataFrame(), pd.DataFrame()
 
     try:
@@ -61,12 +58,11 @@ def process_sheet_partition(
         remain_df = sheet_df[sheet_df["key_level"].astype(int) != expected_level].copy()
         return match_df, remain_df
     except Exception as e:
-        if logger:
-            logger.error(
-                "key_level変換エラー",
-                extra=create_log_context(operation="process_sheet_partition", error=str(e)),
-                exc_info=True
-            )
+        logger.error(
+            "key_level変換エラー",
+            extra=create_log_context(operation="process_sheet_partition", error=str(e)),
+            exc_info=True
+        )
         return pd.DataFrame(), pd.DataFrame()
 
 
@@ -91,7 +87,7 @@ def summary_apply_by_sheet(
     # --- 該当シートの key_level フィルタ ---
     expected_level = len(key_cols)
     match_df, remain_df = process_sheet_partition(
-        master_csv, sheet_name, expected_level, logger
+        master_csv, sheet_name, expected_level
     )
 
     if match_df.empty:
@@ -102,7 +98,7 @@ def summary_apply_by_sheet(
 
     # --- not検索を適用（Not値のある行を除外） ---
     filtered_data_df = apply_negation_filters(
-        data_df.copy(), match_df, key_cols, logger
+        data_df.copy(), match_df, key_cols
     )
 
     # --- マージ用 key を再定義（Not〇〇を含む列を除外） ---
