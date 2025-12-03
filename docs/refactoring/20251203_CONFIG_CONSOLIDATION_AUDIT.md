@@ -887,3 +887,152 @@ git commit -m "chore: 未使用のheader_mappingsディレクトリを削除
 
 **更新日**: 2025年12月3日  
 **次のアクション**: `header_mappings/`ディレクトリの削除確認
+
+---
+
+## 🎉 追加実装完了: ledger_api専用設定のbackend_shared移行
+
+**実施日**: 2025年12月3日  
+**実施内容**: ShogunCsvConfigLoaderを活用してledger_api専用YAMLを削除
+
+### 実施した変更
+
+#### 1. ✅ 新しいヘルパー関数を追加
+
+**ファイル**: `app/backend/ledger_api/app/infra/report_utils/template_config.py`
+
+**追加した関数**:
+```python
+def get_required_columns_from_shogun(template_name: str) -> dict:
+    """ShogunCsvConfigLoaderを使用して、テンプレートに必要なカラムを取得"""
+    # shogun_csv_masters.yamlから全カラム情報を取得
+    
+def get_expected_dtypes_from_shogun() -> dict:
+    """ShogunCsvConfigLoaderを使用して、全テンプレートの型定義を取得"""
+    # shogun_csv_masters.yamlから型情報を取得
+```
+
+#### 2. ✅ 既存関数を新実装に置き換え
+
+**変更前**:
+```python
+def get_required_columns_definition(template_name: str) -> dict:
+    all_defs = load_yaml("required_columns_definition", section="config_files")
+    return all_defs.get(template_name, {})
+
+def get_expected_dtypes() -> dict:
+    raw_yaml = load_yaml("expected_dtypes", section="config_files")
+    # ... 複雑な処理 ...
+```
+
+**変更後**:
+```python
+def get_required_columns_definition(template_name: str) -> dict:
+    """ShogunCsvConfigLoaderを使用（shogun_csv_masters.yamlから取得）"""
+    return get_required_columns_from_shogun(template_name)
+
+def get_expected_dtypes() -> dict:
+    """ShogunCsvConfigLoaderを使用（shogun_csv_masters.yamlから取得）"""
+    return get_expected_dtypes_from_shogun()
+```
+
+#### 3. ✅ ledger_api専用YAMLファイルを削除
+
+**削除したファイル**:
+- `app/backend/ledger_api/app/config/required_columns_definition.yaml`
+- `app/backend/ledger_api/app/config/expected_import_csv_dtypes.yaml`
+
+#### 4. ✅ `main_paths.yaml`から参照を削除
+
+**削除したセクション**:
+```yaml
+# yamlパス
+config_files:
+    expected_dtypes: 'config/expected_import_csv_dtypes.yaml'
+    required_columns_definition: 'config/required_columns_definition.yaml'
+```
+
+#### 5. ✅ エクスポートの追加
+
+`__init__.py`に`get_expected_dtypes`を追加してエクスポート。
+
+### 動作確認結果
+
+#### ✅ get_required_columns_definition テスト
+```bash
+$ docker exec ledger_api python -c "from app.infra.report_utils import get_required_columns_definition; ..."
+✅ factory_report: ['yard', 'shipment']
+   shipment columns: 18
+```
+
+#### ✅ get_expected_dtypes テスト
+```bash
+$ docker exec ledger_api python -c "from app.infra.report_utils import get_expected_dtypes; ..."
+✅ Templates: 6 templates
+   factory_report types: ['yard', 'shipment']
+```
+
+#### ✅ Pythonエラーチェック
+```bash
+$ get_errors app/backend/ledger_api
+No errors found.
+```
+
+#### ✅ コンテナ状態
+```bash
+$ docker compose ps ledger_api
+STATUS: Up About an hour (healthy)
+```
+
+### 変更ファイル一覧
+
+1. **修正**:
+   - `app/backend/ledger_api/app/infra/report_utils/template_config.py` - 新実装追加、既存関数を置き換え
+   - `app/backend/ledger_api/app/infra/report_utils/__init__.py` - エクスポート追加
+   - `app/backend/ledger_api/app/config/main_paths.yaml` - 参照削除
+
+2. **削除**:
+   - `app/backend/ledger_api/app/config/required_columns_definition.yaml`
+   - `app/backend/ledger_api/app/config/expected_import_csv_dtypes.yaml`
+
+### 効果
+
+✅ **YAML削減**: ledger_api専用の設定ファイル2つを削除  
+✅ **backend_shared統一**: `shogun_csv_masters.yaml`が唯一の情報源  
+✅ **重複排除**: カラム定義と型定義が一元管理される  
+✅ **メンテナンス性向上**: 設定変更が1ファイルで完結  
+✅ **エラーなし**: 全ての動作確認でエラーなし  
+
+### アーキテクチャの改善
+
+**Before（変更前）**:
+```
+ledger_api専用YAML
+  ├── required_columns_definition.yaml  （カラムリスト）
+  └── expected_import_csv_dtypes.yaml   （型定義）
+
+shogun_csv_masters.yaml（全サービス共有）
+  └── カラム定義 + 型定義 + その他メタ情報
+```
+
+**After（変更後）**:
+```
+shogun_csv_masters.yaml（全サービス共有）
+  └── カラム定義 + 型定義 + その他メタ情報
+      ↓ ShogunCsvConfigLoaderで読み込み
+      ↓ ledger_apiのtemplate_config.pyで活用
+      └── レポート生成で使用
+```
+
+### 今後の作業
+
+次のステップ（優先度順）:
+
+1. ✅ ~~header_mappingsディレクトリの削除確認~~ **完了**
+2. ✅ ~~ledger_api専用設定のbackend_shared移行~~ **完了**
+3. **優先度：低** - `main_paths.yaml`のリファクタリング（将来の課題）
+
+---
+
+**実装者**: GitHub Copilot  
+**レビュー**: 動作確認済み・エラーなし

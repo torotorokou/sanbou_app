@@ -2,7 +2,7 @@ import yaml
 import pandas as pd
 from typing import Optional, Union
 from backend_shared.utils.dataframe_utils import clean_na_strings
-from backend_shared.config.config_loader import ReportTemplateConfigLoader
+from backend_shared.config.config_loader import ReportTemplateConfigLoader, ShogunCsvConfigLoader
 from .main_path import MainPath
 
 
@@ -44,39 +44,16 @@ def load_yaml(key_or_path: str, section: Optional[str] = None) -> dict:
 
 
 def get_expected_dtypes() -> dict:
-    """main_paths.yaml 経由で expected_dtypes.yaml を読み込み、型を解決する"""
-    raw_yaml = load_yaml("expected_dtypes", section="config_files")
-
-    resolved = {}
-
-    for template_key, file_map in raw_yaml.items():
-        resolved[template_key] = {}
-
-        for file_key, dtype_map in file_map.items():
-            flattened = {}
-
-            # --- ✅ dict（通常の形式）の場合
-            if isinstance(dtype_map, dict):
-                flattened = {
-                    col: resolve_dtype(dtype_str)
-                    for col, dtype_str in dtype_map.items()
-                }
-
-            # --- ✅ list（アンカー＋追加型）の場合
-            elif isinstance(dtype_map, list):
-                for item in dtype_map:
-                    if isinstance(item, dict):
-                        for col, dtype_str in item.items():
-                            flattened[col] = resolve_dtype(dtype_str)
-                    else:
-                        raise TypeError(f"unexpected format in expected_dtypes: {item}")
-
-            else:
-                raise TypeError(f"unexpected format for {file_key}: {dtype_map}")
-
-            resolved[template_key][file_key] = flattened
-
-    return resolved
+    """
+    全テンプレートの型定義を取得
+    
+    ShogunCsvConfigLoaderを使用してshogun_csv_masters.yamlから
+    型情報を取得します。
+    
+    Returns:
+        dict: テンプレートごと、CSV種別ごとの型定義
+    """
+    return get_expected_dtypes_from_shogun()
 
 
 def get_template_config() -> dict:
@@ -206,5 +183,91 @@ def get_expected_dtypes_by_template(template_key: str) -> dict:
 
 
 def get_required_columns_definition(template_name: str) -> dict:
-    all_defs = load_yaml("required_columns_definition", section="config_files")
-    return all_defs.get(template_name, {})
+    """
+    テンプレートに必要なカラムを取得
+    
+    ShogunCsvConfigLoaderを使用してshogun_csv_masters.yamlから
+    カラム情報を取得します。
+    
+    Args:
+        template_name (str): テンプレート名（factory_report, balance_sheetなど）
+    
+    Returns:
+        dict: CSV種別ごとの日本語カラム名リスト
+              例: {'shipment': ['伝票日付', '品名', ...], 'yard': [...]}
+    """
+    return get_required_columns_from_shogun(template_name)
+
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# 新実装: ShogunCsvConfigLoaderを使用（YAML削除後に有効化）
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+def get_required_columns_from_shogun(template_name: str) -> dict:
+    """
+    ShogunCsvConfigLoaderを使用して、テンプレートに必要なカラムを取得
+    
+    shogun_csv_masters.yamlからカラム情報を取得するため、
+    required_columns_definition.yamlは不要になります。
+    
+    Args:
+        template_name (str): テンプレート名（factory_report, balance_sheetなど）
+    
+    Returns:
+        dict: CSV種別ごとの日本語カラム名リスト
+              例: {'shipment': ['伝票日付', '品名', ...], 'yard': [...]}
+    """
+    # テンプレート設定から必要なCSV種別を取得
+    template_config = get_template_config().get(template_name, {})
+    required_files = template_config.get("required_files", [])
+    optional_files = template_config.get("optional_files", [])
+    all_files = required_files + optional_files
+    
+    # ShogunCsvConfigLoaderを使用して全カラムを取得
+    loader = ShogunCsvConfigLoader()
+    result = {}
+    
+    for csv_type in all_files:
+        # 全カラムの日本語名を取得
+        columns = loader.get_columns(csv_type)
+        result[csv_type] = list(columns.keys())
+    
+    return result
+
+
+def get_expected_dtypes_from_shogun() -> dict:
+    """
+    ShogunCsvConfigLoaderを使用して、全テンプレートの型定義を取得
+    
+    shogun_csv_masters.yamlから型情報を取得するため、
+    expected_import_csv_dtypes.yamlは不要になります。
+    
+    Returns:
+        dict: テンプレートごと、CSV種別ごとの型定義
+              例: {
+                  'factory_report': {
+                      'shipment': {'伝票日付': 'datetime64[ns]', '品名': str, ...}
+                  }
+              }
+    """
+    loader = ShogunCsvConfigLoader()
+    all_templates = get_template_config()
+    result = {}
+    
+    for template_name, template_config in all_templates.items():
+        required_files = template_config.get("required_files", [])
+        optional_files = template_config.get("optional_files", [])
+        all_files = required_files + optional_files
+        
+        result[template_name] = {}
+        
+        for csv_type in all_files:
+            # ShogunCsvConfigLoaderから型マップを取得
+            type_map = loader.get_type_map(csv_type)
+            # 型文字列をpandas dtypeに変換
+            result[template_name][csv_type] = {
+                col: resolve_dtype(dtype_str)
+                for col, dtype_str in type_map.items()
+            }
+    
+    return result
