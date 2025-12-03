@@ -60,11 +60,24 @@ logger = get_module_logger(__name__)
 # ==========================================
 # root_path: リバースプロキシ(nginx)経由でのパスプレフィックス対応
 # 例: https://example.com/core_api/* → 本アプリケーションにルーティング
+
+# DEBUG モード判定
+DEBUG = os.getenv("DEBUG", "false").lower() == "true"
+
 app = FastAPI(
     title="Core API",
     description="BFF/Facade API for frontend - handles sync calls and job queuing",
     version="1.0.0",
     root_path="/core_api",  # リバースプロキシ対応: /core_api/* でアクセス可能
+    # 本番環境（DEBUG=False）では /docs と /redoc を無効化
+    docs_url="/docs" if DEBUG else None,
+    redoc_url="/redoc" if DEBUG else None,
+    openapi_url="/openapi.json" if DEBUG else None,
+)
+
+logger.info(
+    f"Core API initialized (DEBUG={DEBUG}, docs_enabled={DEBUG})",
+    extra={"operation": "app_init", "debug": DEBUG}
 )
 
 # ==========================================

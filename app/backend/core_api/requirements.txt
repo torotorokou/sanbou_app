@@ -5,6 +5,9 @@ pydantic==2.9.0
 pydantic-settings==2.5.2
 python-multipart==0.0.9
 
+# Authentication & Security
+google-auth==2.35.0
+
 # Database
 sqlalchemy==2.0.35
 psycopg[binary]==3.2.1

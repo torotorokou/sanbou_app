@@ -3,25 +3,28 @@ IAP Auth Provider - Google Cloud IAP 認証プロバイダ
 
 【概要】
 Google Cloud Identity-Aware Proxy (IAP) が付与するヘッダーから
-ユーザー情報を抽出する認証プロバイダ。
+ユーザー情報を抽出し、JWT署名を検証する認証プロバイダ。
 
 【使用場面】
 - Google Cloud Run / App Engine で IAP を有効化した環境
 - Load Balancer + IAP 構成の本番環境
 
 【設計方針】
-- X-Goog-Authenticated-User-Email ヘッダーを読み取り
+- X-Goog-IAP-JWT-Assertion ヘッダーのJWT署名を検証
 - honest-recycle.co.jp ドメインのみを許可（ホワイトリスト方式）
 - ヘッダー不在時は 401 Unauthorized を返す
-- TODO コメントで本番環境での検証が必要なことを明示
+- 署名検証失敗時は 401 Unauthorized を返す
 
 【注意事項】
 - IAP を有効化する前は、このプロバイダは使用できません
-- 実際のヘッダー形式は IAP 有効化後に確認・微調整が必要です
-- ログ出力を活用して実際のヘッダー内容を確認してください
+- IAP_AUDIENCE 環境変数に正しい audience 値を設定してください
+- audience は /projects/PROJECT_NUMBER/global/backendServices/SERVICE_ID 形式
 """
 
+import os
 from fastapi import Request, HTTPException, status
+from google.auth.transport import requests
+from google.oauth2 import id_token
 from backend_shared.application.logging import create_log_context, get_module_logger
 from app.core.domain.auth.entities import AuthUser
 from app.core.ports.auth.auth_provider import IAuthProvider
@@ -33,45 +36,49 @@ class IapAuthProvider(IAuthProvider):
     """
     Google Cloud IAP 認証プロバイダ
     
-    IAP が付与する認証ヘッダーからユーザー情報を抽出します。
-    本番環境で IAP を有効化した際に使用します。
+    IAP が付与する JWT トークンを検証してユーザー情報を抽出します。
     
-    IAP Header Format:
-        X-Goog-Authenticated-User-Email: accounts.google.com:user@honest-recycle.co.jp
-        または
-        X-Goog-Authenticated-User-Email: user@honest-recycle.co.jp
+    JWT Header: X-Goog-IAP-JWT-Assertion
+    Email Header: X-Goog-Authenticated-User-Email (フォールバック用)
     
     Attributes:
         _allowed_domain: 許可するメールドメイン（ホワイトリスト）
+        _iap_audience: IAP の audience 値（JWT 検証用）
     
     Examples:
         >>> provider = IapAuthProvider()
-        >>> # IAP ヘッダーが存在する場合
         >>> user = await provider.get_current_user(request)
         >>> user.email
         'user@honest-recycle.co.jp'
-        
-        >>> # IAP ヘッダーが存在しない場合
-        >>> user = await provider.get_current_user(request)
-        HTTPException: 401 Unauthorized
     """
     
-    def __init__(self, allowed_domain: str = "honest-recycle.co.jp") -> None:
+    def __init__(
+        self, 
+        allowed_domain: str = "honest-recycle.co.jp",
+        iap_audience: str | None = None
+    ) -> None:
         """
         IAP 認証プロバイダを初期化
         
         Args:
             allowed_domain: 許可するメールドメイン（デフォルト: honest-recycle.co.jp）
+            iap_audience: IAP の audience 値（環境変数 IAP_AUDIENCE から取得）
         """
         self._allowed_domain = allowed_domain
+        self._iap_audience = iap_audience or os.getenv("IAP_AUDIENCE", "")
+        
         logger.info(
             "IapAuthProvider initialized",
-            extra=create_log_context(operation="iap_auth_init", allowed_domain=allowed_domain)
+            extra=create_log_context(
+                operation="iap_auth_init", 
+                allowed_domain=allowed_domain,
+                has_audience=bool(self._iap_audience)
+            )
         )
     
     async def get_current_user(self, request: Request) -> AuthUser:
         """
-        IAP ヘッダーからユーザー情報を抽出
+        IAP ヘッダーからユーザー情報を抽出し、JWT 署名を検証
         
         Args:
             request: FastAPI Request オブジェクト
@@ -81,72 +88,153 @@ class IapAuthProvider(IAuthProvider):
             
         Raises:
             HTTPException: 
-                - 401: IAP ヘッダーが存在しない
+                - 401: IAP ヘッダーが存在しない、または JWT 検証失敗
                 - 403: 許可されていないドメインのユーザー
-        
-        Note:
-            TODO: IAP 有効化後、実際のヘッダー形式を確認して微調整すること
-            ログ出力を有効化して、ヘッダー内容を確認してください。
         """
-        # TODO: IAP 有効化後、実際のヘッダー名とフォーマットを確認すること
-        #       - X-Goog-Authenticated-User-Email
-        #       - X-Goog-IAP-JWT-Assertion (JWT 検証が必要な場合)
+        # JWT トークンを取得
+        jwt_token = request.headers.get("X-Goog-IAP-JWT-Assertion")
         
+        if not jwt_token:
+            # フォールバック: X-Goog-Authenticated-User-Email ヘッダーを確認
+            # （開発環境やIAP設定によってはJWTが無い場合がある）
+            return await self._authenticate_from_email_header(request)
+        
+        # JWT 署名を検証
+        try:
+            if not self._iap_audience:
+                logger.warning(
+                    "IAP_AUDIENCE not configured, skipping JWT verification",
+                    extra=create_log_context(operation="get_current_user")
+                )
+                # audience が未設定の場合はメールヘッダーから取得
+                return await self._authenticate_from_email_header(request)
+            
+            # JWT を検証（Google の公開鍵で署名を検証）
+            decoded_token = id_token.verify_oauth2_token(
+                jwt_token,
+                requests.Request(),
+                audience=self._iap_audience
+            )
+            
+            # トークンから email を取得
+            email = decoded_token.get("email")
+            if not email:
+                logger.error(
+                    "Email not found in JWT token",
+                    extra=create_log_context(operation="get_current_user")
+                )
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Invalid IAP token: email not found",
+                )
+            
+            # ドメインチェック
+            if not email.endswith(f"@{self._allowed_domain}"):
+                logger.warning(
+                    "Unauthorized domain",
+                    extra=create_log_context(
+                        operation="get_current_user", 
+                        email=email, 
+                        allowed_domain=self._allowed_domain
+                    )
+                )
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail=f"Access denied: Only @{self._allowed_domain} users are allowed",
+                )
+            
+            # ユーザー情報を構築
+            display_name = email.split("@")[0]
+            user_id = decoded_token.get("sub", f"iap_{display_name}")
+            
+            logger.info(
+                "IAP JWT authentication successful",
+                extra=create_log_context(
+                    operation="get_current_user", 
+                    email=email, 
+                    user_id=user_id
+                )
+            )
+            
+            return AuthUser(
+                email=email,
+                display_name=display_name,
+                user_id=user_id,
+                role="user",  # デフォルトロール
+            )
+            
+        except ValueError as e:
+            # JWT 検証失敗
+            logger.error(
+                "IAP JWT verification failed",
+                extra=create_log_context(operation="get_current_user", error=str(e))
+            )
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail=f"Invalid IAP token: {str(e)}",
+            )
+    
+    async def _authenticate_from_email_header(self, request: Request) -> AuthUser:
+        """
+        X-Goog-Authenticated-User-Email ヘッダーからユーザー情報を抽出
+        （JWT が利用できない場合のフォールバック）
+        
+        Args:
+            request: FastAPI Request オブジェクト
+            
+        Returns:
+            AuthUser: 認証済みユーザー情報
+            
+        Raises:
+            HTTPException: ヘッダーが存在しない、または許可されていないドメイン
+        """
         raw_header = request.headers.get("X-Goog-Authenticated-User-Email")
         
         if not raw_header:
-            # IAP ヘッダーが存在しない場合は認証失敗
             logger.warning(
-                "IAP header not found",
+                "IAP headers not found",
                 extra=create_log_context(operation="get_current_user")
             )
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Authentication required (IAP header not found)",
+                detail="Authentication required (IAP headers not found)",
             )
         
-        # ヘッダー形式を確認（開発時のデバッグ用）
-        # 本番環境では個人情報ログに注意すること
-        logger.debug(
-            "IAP header received",
-            extra=create_log_context(operation="get_current_user", header_value=raw_header)
-        )
-        
-        # IAP ヘッダーの形式: "accounts.google.com:user@domain.com"
-        # または単純に "user@domain.com" の場合もある
+        # ヘッダー形式: "accounts.google.com:user@domain.com"
         email = raw_header
         if ":" in raw_header:
-            # "accounts.google.com:user@domain.com" 形式の場合
             _, email = raw_header.split(":", 1)
         
-        # ドメインチェック（ホワイトリスト方式）
+        # ドメインチェック
         if not email.endswith(f"@{self._allowed_domain}"):
             logger.warning(
                 "Unauthorized domain",
-                extra=create_log_context(operation="get_current_user", email=email, allowed_domain=self._allowed_domain)
+                extra=create_log_context(
+                    operation="get_current_user", 
+                    email=email, 
+                    allowed_domain=self._allowed_domain
+                )
             )
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail=f"Access denied: Only @{self._allowed_domain} users are allowed",
             )
         
-        # 表示名はメールアドレスのローカル部分を使用
-        # 例: "yamada.taro@honest-recycle.co.jp" -> "yamada.taro"
         display_name = email.split("@")[0]
-        
-        # TODO: 実際のユーザーIDとロールはデータベースから取得する
-        # 現在は仮のIDとデフォルトロールを設定
-        user_id = f"iap_{email.split('@')[0]}"
-        role = "user"  # デフォルトロール
+        user_id = f"iap_{display_name}"
         
         logger.info(
-            "IAP authentication successful",
-            extra=create_log_context(operation="get_current_user", email=email, user_id=user_id, role=role)
+            "IAP email authentication successful",
+            extra=create_log_context(
+                operation="get_current_user", 
+                email=email, 
+                user_id=user_id
+            )
         )
         
         return AuthUser(
             email=email,
             display_name=display_name,
             user_id=user_id,
-            role=role,
+            role="user",
         )

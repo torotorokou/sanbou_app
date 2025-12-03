@@ -31,11 +31,26 @@ from backend_shared.core.domain.exceptions import (
 # 環境変数 LOG_LEVEL で制御可能（DEBUG/INFO/WARNING/ERROR/CRITICAL）
 setup_logging()
 
+from backend_shared.application.logging import get_module_logger
+logger = get_module_logger(__name__)
+
+# DEBUG モード判定
+DEBUG = os.getenv("DEBUG", "false").lower() == "true"
+
 app = FastAPI(
     title=os.getenv("API_TITLE", "MANUAL_API"),
     version=os.getenv("API_VERSION", "1.0.0"),
     # DIP: manual_apiは/core_apiの存在を知らない。内部論理パスで公開。
     root_path=os.getenv("API_ROOT_PATH", ""),
+    # 本番環境（DEBUG=False）では /docs と /redoc を無効化
+    docs_url="/docs" if DEBUG else None,
+    redoc_url="/redoc" if DEBUG else None,
+    openapi_url="/openapi.json" if DEBUG else None,
+)
+
+logger.info(
+    f"Manual API initialized (DEBUG={DEBUG}, docs_enabled={DEBUG})",
+    extra={"operation": "app_init", "debug": DEBUG}
 )
 
 # --- ミドルウェア: Request ID追跡 ----------------------------------------------
