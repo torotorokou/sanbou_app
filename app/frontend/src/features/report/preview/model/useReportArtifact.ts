@@ -4,6 +4,7 @@ import { getApiEndpoint, REPORT_KEYS } from '@features/report/shared/config';
 import type { ReportKey } from '@features/report/shared/config';
 import type { CsvFiles } from '@features/report/shared/types/report.types';
 import { coreApi } from '@features/report/shared/infrastructure/http.adapter';
+import { generateJapaneseFilename } from '@features/report/shared/lib/reportKeyTranslation';
 
 export type ReportArtifactResponse = {
     status?: string;
@@ -171,13 +172,41 @@ export const useReportArtifact = () => {
         [applyArtifactResponse]
     );
 
-    const downloadExcel = useCallback(() => {
-        if (state.excelUrl) {
-            window.open(state.excelUrl, '_blank', 'noopener');
-        } else {
+    const downloadExcel = useCallback(async () => {
+        if (!state.excelUrl) {
             notifyInfo('ダウンロード不可', 'Excel ダウンロード URL がありません。');
+            return;
         }
-    }, [state.excelUrl]);
+
+        try {
+            // URLからファイルをダウンロード
+            const response = await fetch(state.excelUrl);
+            if (!response.ok) throw new Error('ダウンロードに失敗しました');
+            
+            const blob = await response.blob();
+            
+            // report_keyから日本語ファイル名を生成
+            let filename = 'report.xlsx';
+            if (state.reportKey && state.reportDate) {
+                filename = generateJapaneseFilename(state.reportKey, state.reportDate, '.xlsx');
+            }
+            
+            // Blob URLを作成してダウンロード
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
+        } catch (error) {
+            notifyError(
+                'ダウンロード失敗',
+                error instanceof Error ? error.message : 'Excelのダウンロードに失敗しました'
+            );
+        }
+    }, [state.excelUrl, state.reportKey, state.reportDate]);
 
     const getPdfPreviewUrl = useCallback(() => {
         return state.pdfUrl;
