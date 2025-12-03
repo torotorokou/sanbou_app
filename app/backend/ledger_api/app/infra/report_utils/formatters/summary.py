@@ -1,28 +1,9 @@
 import pandas as pd
+from backend_shared.application.logging import get_module_logger
+from backend_shared.utils.dataframe_utils import clean_na_strings
 from .value_setter import set_value_fast_safe
-from ..logger import app_logger
 
-
-def clean_na_strings(val):
-    """
-    <NA>等の文字列や空文字列をNoneに変換する共通関数
-    """
-    if isinstance(val, str) and (
-        val
-        in [
-            "<NA>",
-            "NaN",
-            "nan",
-            "None",
-            "NULL",
-            "null",
-            "#N/A",
-            "#NA",
-        ]
-        or val.strip() == ""
-    ):
-        return None
-    return val
+logger = get_module_logger(__name__)
 
 
 def write_sum_to_target_cell(
@@ -104,7 +85,6 @@ def summary_apply(
     """
     インポートCSVをgroupby＆sumし、マスターCSVにマージ＆更新する汎用関数（シート名なし版）。
     """
-    logger = app_logger()
     logger.info(
         f"▶️ マスター更新処理: キー={key_cols}, 集計列={source_col} ➡ 書き込み列={target_col}"
     )

@@ -8,11 +8,11 @@ from typing import Any, Dict
 import pandas as pd
 
 from app.infra.report_utils import (
-    app_logger,
     get_template_config,
     load_all_filtered_dataframes,
     load_master_and_template,
 )
+from backend_shared.application.logging import get_module_logger, create_log_context
 from app.core.domain.reports.processors.management_sheet.factory_report import (
     update_from_factory_report,
 )
@@ -31,7 +31,7 @@ from app.core.domain.reports.processors.management_sheet.manage_etc import (
 
 
 def process(dfs: Dict[str, Any]) -> pd.DataFrame:
-    logger = app_logger()
+    logger = get_module_logger(__name__)
 
     config = get_template_config()["management_sheet"]
     master_path = config["master_csv_path"]["management_sheet"]
@@ -41,7 +41,10 @@ def process(dfs: Dict[str, Any]) -> pd.DataFrame:
     template_config = get_template_config()[template_key]
     template_name = template_config["key"]
     csv_keys = template_config["required_files"]
-    logger.info(f"[テンプレート設定読込] key={template_key}, files={csv_keys}")
+    logger.info(
+        "テンプレート設定読込",
+        extra=create_log_context(operation="generate_management_sheet", template_key=template_key, files=csv_keys)
+    )
 
     df_dict = load_all_filtered_dataframes(dfs, csv_keys, template_name)
     df_receive = df_dict.get("receive")

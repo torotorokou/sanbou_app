@@ -12,6 +12,7 @@ from backend_shared.utils.dataframe_utils import (
 type_formatting_map = {
     "datetime": remove_weekday_parentheses,
     "int": remove_commas_and_convert_numeric,
+    "Int64": remove_commas_and_convert_numeric,  # pandasのnullable int型
     "float": remove_commas_and_convert_numeric,
     "str": parse_str_column,
 }

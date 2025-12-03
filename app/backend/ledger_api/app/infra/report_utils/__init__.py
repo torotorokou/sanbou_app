@@ -5,7 +5,7 @@ from .template_config import (
     get_template_config,
     get_unit_price_table_csv,
     get_required_columns_definition,
-    clean_na_strings,
+    get_expected_dtypes,
 )
 from .logger import app_logger
 from .main_path import MainPath
@@ -21,7 +21,7 @@ __all__ = [
     "get_template_config",
     "get_unit_price_table_csv",
     "get_required_columns_definition",
-    "clean_na_strings",
+    "get_expected_dtypes",
     "app_logger",
     "MainPath",
     "load_master_and_template",

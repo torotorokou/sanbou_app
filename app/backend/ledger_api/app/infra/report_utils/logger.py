@@ -1,48 +1,42 @@
-"""Internal logger utility for report services."""
+"""Internal logger utility for report services.
+
+【廃止予定】このモジュールは後方互換性のために残されています。
+新しいコードでは backend_shared.application.logging を直接使用してください。
+
+ Migration Guide:
+   OLD: from app.infra.report_utils import app_logger
+        logger = app_logger()
+   
+   NEW: from backend_shared.application.logging import get_module_logger
+        logger = get_module_logger(__name__)
+"""
 import logging
-import os
-import socket
-import getpass
-import time
-from pathlib import Path
+import warnings
+from backend_shared.application.logging import get_module_logger
 
-
-def jst_time(*args):
-    """日本時間に変換する関数（UTC + 9時間）"""
-    return time.localtime(time.time() + 9 * 60 * 60)
+# 非推奨警告を発行
+warnings.warn(
+    "app_logger() is deprecated. Use backend_shared.application.logging.get_module_logger() instead.",
+    DeprecationWarning,
+    stacklevel=2
+)
 
 
 def app_logger(to_console=True) -> logging.Logger:
-    """Report services用のロガーを取得"""
-    # ログディレクトリを確保（環境変数で設定可能）
-    log_dir = Path(os.getenv("REPORT_LOG_DIR", "/tmp/report_logs"))
-    log_dir.mkdir(parents=True, exist_ok=True)
-    log_path = log_dir / "app.log"
-
-    logger = logging.getLogger("report_app_logger")
-    logger.setLevel(logging.DEBUG)
-
-    # 重複して出力されないように既存のハンドラを削除
-    if logger.hasHandlers():
-        logger.handlers.clear()
-
-    hostname = socket.gethostname()
-    username = getpass.getuser()
-
-    formatter = logging.Formatter(
-        f"%(asctime)s [%(levelname)s] (%(filename)s:%(lineno)d) [{hostname}/{username}] %(message)s"
-    )
-    formatter.converter = jst_time
-
-    # ファイル出力設定
-    file_handler = logging.FileHandler(log_path, encoding="utf-8")
-    file_handler.setFormatter(formatter)
-    logger.addHandler(file_handler)
-
-    # コンソール出力
-    if to_console:
-        stream_handler = logging.StreamHandler()
-        stream_handler.setFormatter(formatter)
-        logger.addHandler(stream_handler)
-
-    return logger
+    """Report services用のロガーを取得
+    
+    【廃止予定】このロガーはbackend_sharedの統一ログ基盤に移行されました。
+    後方互換性のためにラッパーとして残されています。
+    
+    Args:
+        to_console: 使用されません（互換性のためのダミー引数）
+        
+    Returns:
+        logging.Logger: backend_sharedの標準ロガー
+        
+    Deprecated:
+        代わりに get_module_logger(__name__) を使用してください。
+    """
+    # backend_sharedの統一ログ基盤を使用
+    # setup_logging()は既にmain.pyで実行されているため、ここでは呼ばない
+    return get_module_logger("ledger_api.report")

@@ -6,7 +6,15 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+
+# ==========================================
+# 統一ロギング設定のインポート（backend_shared）
+# ==========================================
+from backend_shared.application.logging import setup_logging
 from backend_shared.infra.frameworks.logging_utils import setup_uvicorn_access_filter
+from backend_shared.infra.adapters.middleware import RequestIdMiddleware
+from backend_shared.config.env_utils import is_debug_mode
+
 from backend_shared.core.domain.exceptions import ValidationError, NotFoundError, InfrastructureError
 from fastapi.responses import JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -21,6 +29,13 @@ load_dotenv(dotenv_path=CONFIG_ENV)
 _secrets_file = load_env_and_secrets()
 print(f"[DEBUG] secrets loaded from: {_secrets_file}")
 
+# ==========================================
+# 統一ロギング設定の初期化
+# ==========================================
+# テクニカルログ基盤: JSON形式、Request ID付与、Uvicorn統合
+# 環境変数 LOG_LEVEL で制御可能（DEBUG/INFO/WARNING/ERROR/CRITICAL）
+setup_logging()
+
 # --- PYTHONPATH 追加（任意） ---------------------------------------------------
 py_path = os.getenv("PYTHONPATH")
 if py_path:
@@ -29,14 +44,32 @@ if py_path:
         sys.path.append(str(full_path))
 
 # --- FastAPI アプリ作成（root_path は本番の reverse proxy 下でのみ設定） -----
+# DEBUG モード判定（共通ユーティリティ使用）
+DEBUG = is_debug_mode()
+
 app = FastAPI(
     title=os.getenv("API_TITLE", "RAG_API"),
     version=os.getenv("API_VERSION", "1.0.0"),
+    description="オブジェクト廃棄物マニュアルQA & 全文検索システム",
     # 直叩きで 404 を避けるためデフォルトは空文字。Nginx配下では .env で /rag_api を指定
     root_path=os.getenv("API_ROOT_PATH", "/rag_api"),
-    docs_url=os.getenv("API_DOCS_URL", "/docs"),
-    openapi_url=os.getenv("API_OPENAPI_URL", "/openapi.json"),
+    # 本番環境（DEBUG=False）では /docs と /redoc を無効化
+    docs_url="/docs" if DEBUG else None,
+    redoc_url="/redoc" if DEBUG else None,
+    openapi_url="/openapi.json" if DEBUG else None,
 )
+
+from backend_shared.application.logging import get_module_logger
+logger = get_module_logger(__name__)
+logger.info(
+    f"RAG API initialized (DEBUG={DEBUG}, docs_enabled={DEBUG})",
+    extra={"operation": "app_init", "debug": DEBUG}
+)
+
+# --- ミドルウェア: Request ID追跡 ----------------------------------------------
+# 統一ロギング基盤: HTTPリクエストごとに一意のrequest_idを割り当て、ContextVarで管理
+# 全ログ出力にrequest_idが付与され、分散トレーシングが可能になる
+app.add_middleware(RequestIdMiddleware)
 
 # --- 静的配信: /pdfs ----------------------------------------------------------
 PDF_DIR = Path("/backend/static/pdfs")

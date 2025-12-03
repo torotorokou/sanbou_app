@@ -5,8 +5,13 @@
     python scripts/download_master_data.py
 
 前提条件:
-    - GOOGLE_APPLICATION_CREDENTIALS環境変数が設定されている
+    - ローカル環境: gcloud auth application-default login を実行済み
+    - GCE環境: VMに適切な権限を持つサービスアカウントがアタッチされている
     - google-cloud-storageがインストールされている
+    
+認証方式:
+    Application Default Credentials (ADC) を使用します。
+    JSONキーファイルは不要です。
 """
 import os
 from pathlib import Path
@@ -30,23 +35,25 @@ TARGET_SUBDIRS = ["master", "templates"]
 
 
 def download_from_gcs():
-    """GCSからマスターデータとテンプレートをダウンロード"""
+    """GCSからマスターデータとテンプレートをダウンロード
     
-    # 認証確認
-    cred_path = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
-    if not cred_path or not Path(cred_path).exists():
-        print(f"ERROR: GOOGLE_APPLICATION_CREDENTIALS が設定されていないか、ファイルが存在しません: {cred_path}")
-        exit(1)
+    ADC (Application Default Credentials) を使用してGCSに接続します。
     
-    print(f"✓ 認証ファイル: {cred_path}")
+    前提条件:
+        - ローカル: gcloud auth application-default login を実行済み
+        - GCE: VMにサービスアカウントがアタッチされている
+    """
     
-    # GCSクライアント初期化
+    # GCSクライアント初期化（ADCを使用）
     try:
         client = storage.Client()
         bucket = client.bucket(BUCKET_NAME)
-        print(f"✓ バケット接続: gs://{BUCKET_NAME}")
+        print(f"✓ バケット接続（ADC使用）: gs://{BUCKET_NAME}")
     except Exception as e:
         print(f"ERROR: バケット接続失敗: {e}")
+        print("\nヒント:")
+        print("  - ローカル: gcloud auth application-default login を実行してください")
+        print("  - GCE: VMに適切な権限を持つサービスアカウントがアタッチされているか確認してください")
         exit(1)
     
     # 各サブディレクトリをダウンロード
@@ -94,6 +101,8 @@ def download_from_gcs():
     print("  1. ファイルを確認: ls -la app/backend/ledger_api/app/infra/data_sources/master/")
     print("  2. Git に追加: git add app/backend/ledger_api/app/infra/data_sources/")
     print("  3. コミット: git commit -m 'chore: Add master data and templates from GCS'")
+    print("\n認証情報:")
+    print("  - ADC (Application Default Credentials) を使用しました")
 
 
 if __name__ == "__main__":

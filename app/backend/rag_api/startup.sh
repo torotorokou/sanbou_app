@@ -3,18 +3,27 @@
 set -euo pipefail
 IFS=$'\n\t'
 
+# =============================================================================
+# RAG API スタートアップスクリプト - ADC (Application Default Credentials) 対応版
+# =============================================================================
+# 
+# 認証方式:
+#   - ローカル開発環境: gcloud auth application-default login による ADC
+#   - GCE (stg/prod): VM にアタッチされたサービスアカウントによる ADC
+#   - JSON キーファイルは使用しません
+#
+# =============================================================================
+
 # --- 設定値（環境変数で上書き可能） ---
-# 優先: RAG_GCS_URI=gs://<bucket>/<prefix>/ 形式（末尾/は任意）
-# 互換: GCS_BUCKET_NAME + GCS_DATA_PREFIX
 RAG_GCS_URI="${RAG_GCS_URI:-}"
 GCS_BUCKET_NAME="${GCS_BUCKET_NAME:-object_haikibutu}"
 GCS_DATA_PREFIX="${GCS_DATA_PREFIX:-master}"
-# APP_ROOT_DIR (新) -> APP_BASE_DIR (旧) -> /backend の順で基底パス決定
 _BASE_DIR="${APP_ROOT_DIR:-${APP_BASE_DIR:-/backend}}"
-# /backend が書き込み不可な場合はホームへフォールバック
 TARGET_DIR_DEFAULT="${_BASE_DIR}/local_data/master"
 TARGET_DIR="${TARGET_DIR:-$TARGET_DIR_DEFAULT}"
-# root 権限で作成し所有権付与 (コンテナは appuser 実行)
+STAGE=${STAGE:-dev}
+
+# ターゲットディレクトリ作成
 if mkdir -p "${TARGET_DIR%/master}" 2>/dev/null; then
   :
 else
@@ -25,37 +34,9 @@ fi
 if command -v chown >/dev/null 2>&1; then
   chown -R appuser:appuser "${TARGET_DIR%/master}" 2>/dev/null || true
 fi
-# --- GCP 認証ファイル探索（ledger_api と同等方針）---
-# 1) 明示指定 GOOGLE_APPLICATION_CREDENTIALS があれば尊重（読めない場合はフォールバック）
-# 2) /run/secrets/rag_gcs_key.json（compose で単一ファイルマウント）
-# 3) /backend/secrets/${STAGE}_key.json（新命名）
-# 4) /backend/secrets/${STAGE}-key.json（旧命名互換）
-# 5) /backend/secrets/key.json（共通）
 
-STAGE=${STAGE:-dev}
-
-pick_credential_path() {
-  local p
-  for p in \
-    "${GOOGLE_APPLICATION_CREDENTIALS:-}" \
-    "/run/secrets/rag_gcs_key.json" \
-    "/backend/secrets/${STAGE}_key.json" \
-    "/backend/secrets/${STAGE}-key.json" \
-    "/backend/secrets/key.json" \
-    "/root/.config/gcloud/application_default_credentials.json"; do
-    if [ -n "$p" ] && [ -r "$p" ]; then
-      echo "$p"
-      return 0
-    fi
-  done
-  echo "" # 見つからない
-}
-
-GOOGLE_APPLICATION_CREDENTIALS=$(pick_credential_path)
-if [ -n "$GOOGLE_APPLICATION_CREDENTIALS" ]; then
-  export GOOGLE_APPLICATION_CREDENTIALS
-fi
-echo "[INFO] STAGE=$STAGE GOOGLE_APPLICATION_CREDENTIALS=${GOOGLE_APPLICATION_CREDENTIALS:-<none>}"
+echo "[INFO] STAGE=$STAGE (ADC認証を使用)"
+echo "[INFO] TARGET_DIR=$TARGET_DIR"
 
 # --- 関数化：GCSからデータ取得 ---
 download_gcs_data() {
@@ -88,7 +69,7 @@ download_gcs_data() {
   fi
 }
 
-# --- GCP認証 (スキップ条件付き) ---
+# --- GCP認証確認 (ADC使用) ---
 SKIP_GCS="${SKIP_GCS:-0}"
 if [[ "$SKIP_GCS" == "1" ]]; then
   echo "⚠️  SKIP_GCS=1 が指定されたため GCS 処理をスキップします。"
@@ -96,18 +77,14 @@ else
   if ! command -v gcloud >/dev/null 2>&1 || ! command -v gsutil >/dev/null 2>&1; then
     echo "⚠️  gcloud/gsutil が見つからないため GCS 処理をスキップします。" >&2
     SKIP_GCS=1
-  elif [[ ! -f "$GOOGLE_APPLICATION_CREDENTIALS" ]]; then
-    echo "⚠️  認証ファイル $GOOGLE_APPLICATION_CREDENTIALS が無いため GCS 処理をスキップします。" >&2
-    SKIP_GCS=1
-  fi
-  if [[ "$SKIP_GCS" != "1" ]]; then
-    if gcloud auth activate-service-account --key-file="$GOOGLE_APPLICATION_CREDENTIALS"; then
-      echo "✅ Authenticated with service account."
-    # サービスアカウント確認
-    SA_EMAIL=$(grep -o '"client_email" *: *"[^"]\+"' "$GOOGLE_APPLICATION_CREDENTIALS" | cut -d'"' -f4 || true)
-    echo "Using service account: ${SA_EMAIL}"
+  else
+    # ADCを使用してgcloudを初期化（JSONキー不要）
+    echo "🔑 ADC (Application Default Credentials) を使用してGCPに接続します"
+    if gcloud config list 2>/dev/null; then
+      echo "✅ GCP ADC認証確認完了"
     else
-      echo "⚠️  サービスアカウント認証に失敗。GCS 処理をスキップします。" >&2
+      echo "⚠️  ADC認証が設定されていません。GCS処理をスキップします。" >&2
+      echo "ヒント: ローカル開発の場合は 'gcloud auth application-default login' を実行してください" >&2
       SKIP_GCS=1
     fi
   fi
@@ -122,7 +99,9 @@ else
   else
     if ! download_gcs_data "$GCS_BUCKET_NAME" "$GCS_DATA_PREFIX" "$TARGET_DIR" "$RAG_GCS_URI"; then
       echo "⚠️  ダウンロード失敗しましたが起動は継続します。" >&2
-      echo "ヒント: サービスアカウントに 'storage.objects.list' と 'storage.objects.get' 権限 (Storage Object Viewer など) が付与されているか確認してください。" >&2
+      echo "ヒント:" >&2
+      echo "  - ローカル: gcloud auth application-default login を実行してください" >&2
+      echo "  - GCE: VM のサービスアカウントに Storage Object Viewer ロールが必要です" >&2
     fi
   fi
 fi

@@ -12,13 +12,14 @@ UseCase: Get Inbound Daily Data
 """
 import logging
 
+from backend_shared.application.logging import get_module_logger
 from app.core.usecases.inbound.dto import (
     GetInboundDailyInput,
     GetInboundDailyOutput,
 )
 from app.core.ports.inbound_repository_port import InboundRepository
 
-logger = logging.getLogger(__name__)
+logger = get_module_logger(__name__)
 
 
 class GetInboundDailyUseCase:
@@ -60,6 +61,18 @@ class GetInboundDailyUseCase:
             ValueError: Input DTOのバリデーションエラー
             InfrastructureError: DB接続エラー等（Repository層から伝播）
         """
+        # 開始ログ
+        logger.info(
+            "Inbound daily data query started",
+            extra={
+                "operation": "get_inbound_daily",
+                "start": input_dto.start,
+                "end": input_dto.end,
+                "segment": input_dto.segment,
+                "cum_scope": input_dto.cum_scope,
+            }
+        )
+        
         # 1. バリデーション
         input_dto.validate()
         
@@ -71,10 +84,17 @@ class GetInboundDailyUseCase:
             cum_scope=input_dto.cum_scope,
         )
         
+        # 完了ログ
         logger.info(
-            f"GetInboundDailyUseCase: fetched {len(data)} rows, "
-            f"start={input_dto.start}, end={input_dto.end}, "
-            f"segment={input_dto.segment}, cum_scope={input_dto.cum_scope}"
+            "Inbound daily data query completed",
+            extra={
+                "operation": "get_inbound_daily",
+                "start": input_dto.start,
+                "end": input_dto.end,
+                "segment": input_dto.segment,
+                "cum_scope": input_dto.cum_scope,
+                "row_count": len(data),
+            }
         )
         
         # 3. Output DTOに変換

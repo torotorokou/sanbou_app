@@ -6,11 +6,11 @@ CSVアップロードカレンダー取得と削除エンドポイント
   - GET /database/upload-calendar: 年月指定でアップロードカレンダー取得
   - DELETE /database/upload-calendar/{upload_file_id}: 特定日付・CSV種別のデータを論理削除
 """
-import logging
 from typing import Optional
 from datetime import date
 from fastapi import APIRouter, Depends, Query
 
+from backend_shared.application.logging import get_module_logger
 from app.config.di_providers import (
     get_upload_calendar_detail_uc,
     get_delete_upload_scope_uc,
@@ -19,7 +19,7 @@ from app.core.usecases.upload.get_upload_calendar_detail_uc import GetUploadCale
 from app.core.usecases.upload.delete_upload_scope_uc import DeleteUploadScopeUseCase
 from backend_shared.core.domain.exceptions import ValidationError, InfrastructureError, NotFoundError
 
-logger = logging.getLogger(__name__)
+logger = get_module_logger(__name__)
 
 router = APIRouter()
 
@@ -58,7 +58,11 @@ def get_upload_calendar(
     try:
         return uc.execute(year=year, month=month)
     except Exception as e:
-        logger.error(f"Failed to fetch upload calendar: {e}", exc_info=True)
+        logger.error(
+            "Failed to fetch upload calendar",
+            extra=create_log_context(operation="get_upload_calendar", error=str(e)),
+            exc_info=True
+        )
         raise InfrastructureError(message=f"Calendar query failed: {str(e)}", cause=e)
 
 
@@ -122,11 +126,18 @@ def delete_upload_scope(
         }
         
     except ValueError as e:
-        logger.warning(f"Validation error: {e}")
+        logger.warning(
+            "Validation error",
+            extra=create_log_context(operation="delete_upload_scope", error=str(e))
+        )
         raise ValidationError(message=str(e), field="csv_kind")
         
     except NotFoundError:
         raise
     except Exception as e:
-        logger.error(f"Failed to delete upload scope: {e}", exc_info=True)
+        logger.error(
+            "Failed to delete upload scope",
+            extra=create_log_context(operation="delete_upload_scope", error=str(e)),
+            exc_info=True
+        )
         raise InfrastructureError(message=f"Delete operation failed: {str(e)}", cause=e)

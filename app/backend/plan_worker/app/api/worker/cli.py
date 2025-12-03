@@ -1,7 +1,7 @@
 from __future__ import annotations
 import argparse
 from datetime import date
-from app.shared.logging.logger import get_logger
+from backend_shared.application.logging import get_module_logger as get_logger
 from app.infra.db.pg_repositories import PgActualsRepository, PgRatiosRepository
 from app.core.usecases.rebuild_daytype_ratios import rebuild_daytype_ratios
 

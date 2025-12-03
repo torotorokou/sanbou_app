@@ -1,7 +1,6 @@
 import pandas as pd
 
 from app.infra.report_utils import (
-    app_logger,
     get_template_config,
     load_master_and_template,
 )
@@ -11,10 +10,12 @@ from app.infra.report_utils.formatters import (
 from app.core.domain.reports.processors.factory_report.summary import (
     summary_apply_by_sheet,
 )
+from backend_shared.application.logging import get_module_logger
+
+logger = get_module_logger(__name__)
 
 
 def process_yuuka(df_yard: pd.DataFrame, df_shipment: pd.DataFrame) -> pd.DataFrame:
-    logger = app_logger()
 
     # --- ① マスターCSVの読み込み ---
     config = get_template_config()["factory_report"]

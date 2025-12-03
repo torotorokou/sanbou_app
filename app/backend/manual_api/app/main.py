@@ -5,6 +5,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import JSONResponse
 
+# ==========================================
+# 統一ロギング設定のインポート（backend_shared）
+# ==========================================
+from backend_shared.application.logging import setup_logging
+from backend_shared.infra.frameworks.logging_utils import setup_uvicorn_access_filter
+from backend_shared.infra.adapters.middleware import RequestIdMiddleware
+from backend_shared.config.env_utils import is_debug_mode
+
 from app.api.routers.manuals import router as manuals_router
 from backend_shared.core.domain.exceptions import (
     DomainException,
@@ -17,12 +25,39 @@ from backend_shared.core.domain.exceptions import (
     ExternalServiceError,
 )
 
+# ==========================================
+# 統一ロギング設定の初期化
+# ==========================================
+# テクニカルログ基盤: JSON形式、Request ID付与、Uvicorn統合
+# 環境変数 LOG_LEVEL で制御可能（DEBUG/INFO/WARNING/ERROR/CRITICAL）
+setup_logging()
+
+from backend_shared.application.logging import get_module_logger
+logger = get_module_logger(__name__)
+
+# DEBUG モード判定（共通ユーティリティ使用）
+DEBUG = is_debug_mode()
+
 app = FastAPI(
     title=os.getenv("API_TITLE", "MANUAL_API"),
     version=os.getenv("API_VERSION", "1.0.0"),
     # DIP: manual_apiは/core_apiの存在を知らない。内部論理パスで公開。
     root_path=os.getenv("API_ROOT_PATH", ""),
+    # 本番環境（DEBUG=False）では /docs と /redoc を無効化
+    docs_url="/docs" if DEBUG else None,
+    redoc_url="/redoc" if DEBUG else None,
+    openapi_url="/openapi.json" if DEBUG else None,
 )
+
+logger.info(
+    f"Manual API initialized (DEBUG={DEBUG}, docs_enabled={DEBUG})",
+    extra={"operation": "app_init", "debug": DEBUG}
+)
+
+# --- ミドルウェア: Request ID追跡 ----------------------------------------------
+# 統一ロギング基盤: HTTPリクエストごとに一意のrequest_idを割り当て、ContextVarで管理
+# 全ログ出力にrequest_idが付与され、分散トレーシングが可能になる
+app.add_middleware(RequestIdMiddleware)
 
 # Exception handlers for backend_shared exceptions
 @app.exception_handler(NotFoundError)

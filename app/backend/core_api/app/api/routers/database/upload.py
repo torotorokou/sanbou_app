@@ -7,15 +7,15 @@ Database Upload Router - CSV upload endpoints
   - POST /database/upload/shogun_csv_final: 最終版CSVアップロード
   - POST /database/upload/shogun_csv_flash: 速報版CSVアップロード
 """
-import logging
 from typing import Optional
 from fastapi import APIRouter, UploadFile, File, Depends, BackgroundTasks
 
+from backend_shared.application.logging import get_module_logger
 from backend_shared.infra.adapters.presentation import ErrorApiResponse
 from app.config.di_providers import get_uc_default, get_uc_flash, get_uc_stg_final
 from app.core.usecases.upload.upload_shogun_csv_uc import UploadShogunCsvUseCase
 
-logger = logging.getLogger(__name__)
+logger = get_module_logger(__name__)
 
 router = APIRouter()
 
@@ -29,15 +29,15 @@ async def upload_shogun_csv(
     uc: UploadShogunCsvUseCase = Depends(get_uc_default),
 ):
     """
-    将軍CSVアップロード（stg schema, shogun_flash_* tables）- 非同期版
+    将軍CSVアップロード（デフォルト：最終版）- 非同期版
     
     3種類のCSV（受入一覧・ヤード一覧・出荷一覧）を受け取り、
     軽いバリデーション後に受付完了レスポンスを即座に返します。
     重い処理（CSV解析・DB保存・ETL）はバックグラウンドで実行されます。
     
     保存先:
-    - raw層: raw.receive_raw / raw.yard_raw / raw.shipment_raw
-    - stg層: stg.shogun_flash_receive / stg.shogun_flash_yard / stg.shogun_flash_shipment
+    - raw層: raw.shogun_final_receive / raw.shogun_final_yard / raw.shogun_final_shipment
+    - stg層: stg.shogun_final_receive / stg.shogun_final_yard / stg.shogun_final_shipment
     
     Args:
         background_tasks: FastAPI BackgroundTasks

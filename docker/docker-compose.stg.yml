@@ -13,23 +13,28 @@ services:
       context: ../app/backend
       dockerfile: core_api/Dockerfile
       target: prod
-    networks: [app-net]
+    networks: [app-net, data-net]
     depends_on:
       - db
     env_file:
       - ../env/.env.common
       - ../env/.env.${STG_ENV_FILE}
+    volumes:
+      - ../app/backend/core_api/migrations:/backend/migrations:rw
+      - ../app/config:/backend/config
     environment:
       - TZ=Asia/Tokyo
-      - RAG_API_BASE=http://rag_api:8000
-      - LEDGER_API_BASE=http://ledger_api:8000
-      - MANUAL_API_BASE=http://manual_api:8000
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/healthz"]
       interval: 30s
       timeout: 5s
       retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   # ===========================================================================
   # Plan Worker
@@ -39,7 +44,7 @@ services:
       context: ../app/backend
       dockerfile: plan_worker/Dockerfile
       target: prod
-    networks: [app-net]
+    networks: [data-net]
     depends_on:
       - db
     env_file:
@@ -49,6 +54,11 @@ services:
       TZ: "Asia/Tokyo"
       POLL_INTERVAL: "10"
     restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   # ===========================================================================
   # AI API
@@ -64,12 +74,21 @@ services:
     env_file:
       - ../env/.env.common
       - ../env/.env.${STG_ENV_FILE}
+    volumes:
+      - ../app/config:/backend/config
+    environment:
+      - TZ=Asia/Tokyo
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
       timeout: 5s
       retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   # ===========================================================================
   # Ledger API
@@ -79,24 +98,30 @@ services:
       context: ../app/backend
       dockerfile: ledger_api/Dockerfile
       target: prod
-    networks: [app-net]
+    user: "0:0"
+    networks: [app-net, data-net]
     depends_on:
       - db
     env_file:
       - ../env/.env.common
       - ../env/.env.${STG_ENV_FILE}
-    environment:
-      GOOGLE_APPLICATION_CREDENTIALS: /run/secrets/ledger_gcs_key.json
-      STRICT_STARTUP: "true"
     volumes:
-      - ../secrets:/backend/secrets:ro
-      - ../secrets/stg_key.json:/run/secrets/ledger_gcs_key.json:ro
+      - ../app/config:/backend/config
+    environment:
+      REPORT_ARTIFACT_URL_PREFIX: "/reports/artifacts"
+      STRICT_STARTUP: "true"
+      TZ: "Asia/Tokyo"
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
       timeout: 5s
       retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   # ===========================================================================
   # RAG API
@@ -106,26 +131,28 @@ services:
       context: ../app/backend
       dockerfile: rag_api/Dockerfile
       target: prod
-    networks: [app-net]
+    networks: [app-net, data-net]
     depends_on:
       - db
     env_file:
       - ../env/.env.common
       - ../env/.env.${STG_ENV_FILE}
-    environment:
-      GOOGLE_APPLICATION_CREDENTIALS: /run/secrets/rag_gcs_key.json
-      RAG_GCS_URI: ${RAG_GCS_URI}
-      GCS_BUCKET_NAME: object_haikibutu
-      GCS_DATA_PREFIX: master
     volumes:
-      - ../secrets:/backend/secrets:ro
-      - ../secrets/stg_key.json:/run/secrets/rag_gcs_key.json:ro
+      - ../app/config:/backend/config
+    environment:
+      CATEGORY_QUESTION_TEMPLATES_WITH_TAGS: /backend/config/category_question_templates_with_tags.yaml
+      TZ: "Asia/Tokyo"
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
       timeout: 5s
       retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   # ===========================================================================
   # Manual API
@@ -140,13 +167,19 @@ services:
       - ../env/.env.common
       - ../env/.env.${STG_ENV_FILE}
     environment:
-      - TZ=Asia/Tokyo
+      MANUAL_FRONTEND_BASE_URL: ${MANUAL_FRONTEND_BASE_URL:-http://localhost:5173}
+      TZ: "Asia/Tokyo"
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
       timeout: 5s
       retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   # ===========================================================================
   # nginx (stg)
@@ -163,37 +196,68 @@ services:
       - rag_api
       - manual_api
     networks:
+      - edge-net
       - app-net
     ports:
       - "${STG_NGINX_HTTP_PORT:-8080}:80"
       - "${STG_NGINX_HTTPS_PORT:-8443}:443"
+    environment:
+      - TZ=Asia/Tokyo
     volumes:
       - ../app/nginx/conf.d:/etc/nginx/conf.d:ro
       - ../app/nginx/certs:/etc/nginx/certs:ro
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   # ===========================================================================
   # PostgreSQL Database
   # ===========================================================================
   db:
     image: postgres:17-alpine
-    networks: [app-net]
+    networks: [data-net]
     environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
+      - TZ=Asia/Tokyo
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
     volumes:
       - db_data:/var/lib/postgresql/data
+    restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 10s
       timeout: 5s
       retries: 5
-    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
+# =============================================================================
+# Networks (3-tier isolation)
+# =============================================================================
 networks:
+  edge-net:
+    driver: bridge
+    name: sanbou_stg_edge
   app-net:
     driver: bridge
+    name: sanbou_stg_app
+    internal: false
+  data-net:
+    driver: bridge
+    name: sanbou_stg_data
+    internal: true
 
 volumes:
   db_data:

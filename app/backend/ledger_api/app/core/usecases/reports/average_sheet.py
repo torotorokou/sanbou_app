@@ -8,11 +8,11 @@ from typing import Any, Dict
 import pandas as pd
 
 from app.infra.report_utils import (
-    app_logger,
     get_template_config,
     load_all_filtered_dataframes,
     load_master_and_template,
 )
+from backend_shared.application.logging import get_module_logger, create_log_context
 from app.core.domain.reports.processors.average_sheet.processors import (
     tikan,
     aggregate_vehicle_data,
@@ -25,17 +25,23 @@ from app.core.domain.reports.processors.average_sheet.processors import (
 
 
 def process(dfs: Dict[str, Any]) -> pd.DataFrame:
-    logger = app_logger()
+    logger = get_module_logger(__name__)
     template_name = get_template_config()["average_sheet"]["key"]
 
     csv_name = get_template_config()["average_sheet"]["required_files"]
-    logger.info(f"Processの処理に入る。{csv_name}")
+    logger.info(
+        "average_sheet process開始",
+        extra=create_log_context(operation="generate_average_sheet", csv_name=csv_name)
+    )
     df_dict = load_all_filtered_dataframes(dfs, csv_name, template_name)
 
     df_receive = df_dict.get(csv_name[0])
 
     master_path = get_template_config()[template_name]["master_csv_path"]
-    logger.info(f"[DEBUG] Loading master from: {master_path}")
+    logger.info(
+        "マスターCSV読込",
+        extra=create_log_context(operation="generate_average_sheet", master_path=master_path)
+    )
     master_csv = load_master_and_template(master_path)
     logger.info(
         f"[DEBUG] master_csv loaded with shape={getattr(master_csv, 'shape', None)} and columns={list(master_csv.columns) if hasattr(master_csv, 'columns') else 'N/A'}"
@@ -90,8 +96,11 @@ def process(dfs: Dict[str, Any]) -> pd.DataFrame:
         # 各STEPのいずれかで失敗した箇所を特定するための詳細ログ
         import traceback as _tb
 
-        logger.error(f"[ERROR] average_sheet processing failed at step: {ex}")
-        logger.error("[ERROR] Traceback:\n" + _tb.format_exc())
+        logger.error(
+            "average_sheet処理失敗",
+            extra=create_log_context(operation="generate_average_sheet", error=str(ex), traceback=_tb.format_exc()),
+            exc_info=True
+        )
         raise
 
     master_csv = tikan(master_csv)

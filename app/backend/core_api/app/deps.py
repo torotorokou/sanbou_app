@@ -80,7 +80,106 @@ def get_request_id(request: Request) -> str:
     '''リクエストIDを取得または生成'''
     return request.headers.get("X-Request-ID", str(uuid.uuid4()))
 ```
+```
 """
+import os
+from fastapi import Request, Depends
 from app.infra.db.db import get_db  # noqa: F401
+from app.core.domain.auth.entities import AuthUser
+from app.core.ports.auth.auth_provider import IAuthProvider
+from app.infra.adapters.auth.dev_auth_provider import DevAuthProvider
+from app.infra.adapters.auth.iap_auth_provider import IapAuthProvider
 
-__all__ = ["get_db"]
+# ==========================================
+# 認証プロバイダーのファクトリー
+# ==========================================
+
+def get_auth_provider() -> IAuthProvider:
+    """
+    環境変数に基づいて適切な認証プロバイダーを返す
+    
+    - IAP_ENABLED=true: IapAuthProvider（本番・ステージング）
+    - IAP_ENABLED=false: DevAuthProvider（開発環境）
+    
+    Returns:
+        IAuthProvider: 認証プロバイダーのインスタンス
+    """
+    iap_enabled = os.getenv("IAP_ENABLED", "false").lower() == "true"
+    
+    if iap_enabled:
+        return IapAuthProvider()
+    else:
+        return DevAuthProvider()
+
+
+# ==========================================
+# 認証依存関係
+# ==========================================
+
+async def get_current_user(
+    request: Request,
+    auth_provider: IAuthProvider = Depends(get_auth_provider)
+) -> AuthUser:
+    """
+    現在のログインユーザーを取得
+    
+    全ての保護されたエンドポイントで使用する依存関係。
+    IAP が有効な場合は JWT 検証を行い、開発環境では固定ユーザーを返す。
+    
+    Args:
+        request: FastAPI Request オブジェクト
+        auth_provider: 認証プロバイダー（自動注入）
+    
+    Returns:
+        AuthUser: 認証済みユーザー情報
+    
+    Raises:
+        HTTPException: 認証失敗時（401, 403）
+    
+    Usage:
+        ```python
+        @router.get("/protected")
+        async def protected_endpoint(
+            current_user: AuthUser = Depends(get_current_user)
+        ):
+            return {"email": current_user.email}
+        ```
+    """
+    return await auth_provider.get_current_user(request)
+
+
+async def get_optional_user(
+    request: Request,
+    auth_provider: IAuthProvider = Depends(get_auth_provider)
+) -> AuthUser | None:
+    """
+    現在のユーザーを取得（オプショナル）
+    
+    認証は試みるが、失敗しても例外を投げない。
+    公開エンドポイントで「ログイン済みなら追加情報を返す」ような用途に使用。
+    
+    Args:
+        request: FastAPI Request オブジェクト
+        auth_provider: 認証プロバイダー（自動注入）
+    
+    Returns:
+        AuthUser | None: 認証済みユーザー情報、または None
+    
+    Usage:
+        ```python
+        @router.get("/public-but-personalized")
+        async def public_endpoint(
+            current_user: AuthUser | None = Depends(get_optional_user)
+        ):
+            if current_user:
+                return {"message": f"Welcome back, {current_user.email}"}
+            return {"message": "Welcome, guest"}
+        ```
+    """
+    try:
+        return await auth_provider.get_current_user(request)
+    except Exception:
+        return None
+
+
+__all__ = ["get_db", "get_current_user", "get_optional_user", "get_auth_provider"]

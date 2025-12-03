@@ -1,15 +1,15 @@
 """
 Management Sheet - 管理表生成エンドポイント
 """
-import logging
 import os
 from fastapi import APIRouter, Request
 import httpx
 
 from backend_shared.core.domain.exceptions import ExternalServiceError
+from backend_shared.application.logging import create_log_context, get_module_logger
 from app.shared.utils import rewrite_artifact_urls_to_bff
 
-logger = logging.getLogger(__name__)
+logger = get_module_logger(__name__)
 
 router = APIRouter()
 
@@ -19,10 +19,22 @@ LEDGER_API_BASE = os.getenv("LEDGER_API_BASE", "http://ledger_api:8000")
 @router.post("/management_sheet/")
 async def proxy_management_sheet(request: Request):
     """管理表生成（ledger_apiへフォワード）- FormData対応"""
-    logger.info(f"Proxying management_sheet request (FormData) from {request.client}")
+    logger.info(
+        "Proxying management_sheet request (FormData)",
+        extra=create_log_context(
+            operation="proxy_management_sheet",
+            client=str(request.client)
+        )
+    )
     try:
         form = await request.form()
-        logger.info(f"Received form keys: {list(form.keys())}")
+        logger.info(
+            "Received form keys",
+            extra=create_log_context(
+                operation="proxy_management_sheet",
+                form_keys=list(form.keys())
+            )
+        )
         
         files = {}
         data = {}

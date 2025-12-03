@@ -6,8 +6,9 @@ UseCase: FetchSalesTreePivot
 import logging
 from app.core.domain.sales_tree import PivotRequest, CursorPage
 from app.core.ports.sales_tree_port import ISalesTreeQuery
+from backend_shared.application.logging import create_log_context, get_module_logger
 
-logger = logging.getLogger(__name__)
+logger = get_module_logger(__name__)
 
 
 class FetchSalesTreePivotUseCase:
@@ -31,8 +32,20 @@ class FetchSalesTreePivotUseCase:
             CursorPage: ページネーション結果
         """
         try:
-            logger.info(f"FetchSalesTreePivotUseCase: base={req.base_axis}:{req.base_id}, target={req.target_axis}")
+            logger.info(
+                "FetchSalesTreePivot実行",
+                extra=create_log_context(
+                    operation="fetch_pivot",
+                    base_axis=req.base_axis,
+                    base_id=req.base_id,
+                    target_axis=req.target_axis
+                )
+            )
             return self._query.fetch_pivot(req)
         except Exception as e:
-            logger.error(f"Error in FetchSalesTreePivotUseCase: {str(e)}", exc_info=True)
+            logger.error(
+                "FetchSalesTreePivotエラー",
+                extra=create_log_context(operation="fetch_pivot", error=str(e)),
+                exc_info=True
+            )
             raise

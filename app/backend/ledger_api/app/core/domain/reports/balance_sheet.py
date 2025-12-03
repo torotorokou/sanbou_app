@@ -70,75 +70,22 @@ class BalanceSheet:
         Returns:
             BalanceSheet: 搬出入収支表エンティティ
         """
-        from app.core.domain.reports.factory_report import ShipmentItem, YardItem
+        from app.core.domain.reports.report_utils import (
+            extract_report_date,
+            convert_to_shipment_items,
+            convert_to_yard_items,
+            convert_to_receive_items,
+        )
         
-        receive_items: List[ReceiveItem] = []
-        shipment_items: List[ShipmentItem] = []
-        yard_items: List[YardItem] = []
-        report_date = date.today()
-
-        # 日付の抽出（出荷→受入の優先順）
-        if df_shipment is not None and not df_shipment.empty:
-            if "伝票日付" in df_shipment.columns and not df_shipment["伝票日付"].isna().all():
-                first_date = df_shipment["伝票日付"].iloc[0]
-                if pd.notna(first_date):
-                    report_date = pd.to_datetime(first_date).date()
-        elif df_receive is not None and not df_receive.empty:
-            if "伝票日付" in df_receive.columns and not df_receive["伝票日付"].isna().all():
-                first_date = df_receive["伝票日付"].iloc[0]
-                if pd.notna(first_date):
-                    report_date = pd.to_datetime(first_date).date()
-
-        # 受入データの変換
-        if df_receive is not None and not df_receive.empty:
-            for _, row in df_receive.iterrows():
-                try:
-                    slip_date = report_date
-                    if "伝票日付" in row and pd.notna(row["伝票日付"]):
-                        slip_date = pd.to_datetime(row["伝票日付"]).date()
-                    
-                    receive_items.append(
-                        ReceiveItem(
-                            slip_date=slip_date,
-                            site_name=str(row.get("現場名", "")),
-                            net_weight=float(row.get("正味重量", 0.0)),
-                            volume=float(row["体積"]) if "体積" in row and pd.notna(row["体積"]) else None,
-                            item_name=str(row["品名"]) if "品名" in row and pd.notna(row["品名"]) else None,
-                        )
-                    )
-                except (ValueError, TypeError):
-                    continue
-
-        # 出荷データの変換（factory_reportパターン再利用）
-        if df_shipment is not None and not df_shipment.empty:
-            for _, row in df_shipment.iterrows():
-                try:
-                    shipment_items.append(
-                        ShipmentItem(
-                            vendor_code=str(row.get("業者CD", "")),
-                            vendor_name=str(row.get("業者名", "")),
-                            item_name=str(row.get("品名", "")),
-                            net_weight=float(row.get("正味重量", 0.0)),
-                            site_name=str(row.get("現場名", "")) if pd.notna(row.get("現場名")) else None,
-                        )
-                    )
-                except (ValueError, TypeError):
-                    continue
-
-        # ヤードデータの変換
-        if df_yard is not None and not df_yard.empty:
-            for _, row in df_yard.iterrows():
-                try:
-                    yard_items.append(
-                        YardItem(
-                            item_group=str(row.get("品目名", "")),
-                            category_name=str(row.get("種類名", "")),
-                            item_name=str(row.get("品名", "")),
-                            net_weight=float(row.get("正味重量", 0.0)),
-                        )
-                    )
-                except (ValueError, TypeError):
-                    continue
+        # 共通ユーティリティを使用して日付抽出とデータ変換
+        report_date = extract_report_date(
+            (df_shipment, "伝票日付"),
+            (df_receive, "伝票日付"),
+        )
+        
+        receive_items = convert_to_receive_items(df_receive, report_date)
+        shipment_items = convert_to_shipment_items(df_shipment)
+        yard_items = convert_to_yard_items(df_yard)
 
         return cls(
             report_date=report_date,

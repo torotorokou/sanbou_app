@@ -10,14 +10,14 @@ Design:
 """
 from fastapi import APIRouter, Query, Depends
 from typing import List, Dict, Any
-import logging
 
+from backend_shared.application.logging import get_module_logger
 from app.core.usecases.calendar.get_calendar_month_uc import GetCalendarMonthUseCase
 from app.core.usecases.calendar.dto import GetCalendarMonthInput
 from app.config.di_providers import get_calendar_month_uc
 from backend_shared.core.domain.exceptions import ValidationError, InfrastructureError
 
-logger = logging.getLogger(__name__)
+logger = get_module_logger(__name__)
 
 router = APIRouter(prefix="/calendar", tags=["calendar"])
 

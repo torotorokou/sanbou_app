@@ -19,10 +19,11 @@ from datetime import datetime, date
 import pandas as pd
 from sqlalchemy.orm import Session
 from sqlalchemy import text, Table, MetaData, Column, Integer, BigInteger, Text, String, DateTime, Boolean, ForeignKey
+from backend_shared.application.logging import create_log_context, get_module_logger
 
 from app.core.domain.csv import CsvKind
 
-logger = logging.getLogger(__name__)
+logger = get_module_logger(__name__)
 
 
 # csv_kind から stg テーブル名へのマッピング（CsvKind Enum を使用）
@@ -233,11 +234,23 @@ class RawDataRepository:
             )
             file_id = result.scalar_one()
             self.db.commit()
-            logger.info(f"Created upload_file record: id={file_id}, csv_type={csv_type}, hash={file_hash[:8]}...")
+            logger.info(
+                "upload_fileレコード作成",
+                extra=create_log_context(
+                    operation="create_upload_file",
+                    file_id=file_id,
+                    csv_type=csv_type,
+                    hash_prefix=file_hash[:8]
+                )
+            )
             return file_id
         except Exception as e:
             self.db.rollback()
-            logger.error(f"Failed to create upload_file: {e}")
+            logger.error(
+                "upload_file作成失敗",
+                extra=create_log_context(operation="create_upload_file", error=str(e)),
+                exc_info=True
+            )
             raise
     
     def check_duplicate_upload(
@@ -279,7 +292,15 @@ class RawDataRepository:
         ).fetchone()
         
         if result:
-            logger.info(f"Duplicate detected (hash match): csv_type={csv_type}, hash={file_hash[:8]}..., existing_id={result.id}")
+            logger.info(
+                "重複検出(hash一致)",
+                extra=create_log_context(
+                    operation="check_duplicate_upload",
+                    csv_type=csv_type,
+                    hash_prefix=file_hash[:8],
+                    existing_id=result.id
+                )
+            )
             return {
                 "id": result.id,
                 "file_name": result.file_name,
@@ -302,7 +323,15 @@ class RawDataRepository:
             ).fetchone()
             
             if result:
-                logger.info(f"Duplicate detected (fallback match): csv_type={csv_type}, name={file_name}, existing_id={result.id}")
+                logger.info(
+                    "重複検出(fallback一致)",
+                    extra=create_log_context(
+                        operation="check_duplicate_upload",
+                        csv_type=csv_type,
+                        file_name=file_name,
+                        existing_id=result.id
+                    )
+                )
                 return {
                     "id": result.id,
                     "file_name": result.file_name,
@@ -363,10 +392,17 @@ class RawDataRepository:
                 .values(**values)
             )
             self.db.commit()
-            logger.info(f"Updated upload_file {file_id} status to {status}")
+            logger.info(
+                "upload_fileステータス更新",
+                extra=create_log_context(operation="update_upload_status", file_id=file_id, status=status)
+            )
         except Exception as e:
             self.db.rollback()
-            logger.error(f"Failed to update upload_file status: {e}")
+            logger.error(
+                "upload_fileステータス更新失敗",
+                extra=create_log_context(operation="update_upload_status", error=str(e)),
+                exc_info=True
+            )
             raise
     
     def soft_delete_upload_file(
@@ -392,10 +428,17 @@ class RawDataRepository:
                 )
             )
             self.db.commit()
-            logger.info(f"Soft deleted upload_file {file_id} by {deleted_by}")
+            logger.info(
+                "upload_file論理削除",
+                extra=create_log_context(operation="soft_delete_upload_file", file_id=file_id, deleted_by=deleted_by)
+            )
         except Exception as e:
             self.db.rollback()
-            logger.error(f"Failed to soft delete upload_file: {e}")
+            logger.error(
+                "upload_file論理削除失敗",
+                extra=create_log_context(operation="soft_delete_upload_file", error=str(e)),
+                exc_info=True
+            )
             raise
     
     def soft_delete_scope_by_dates(
@@ -434,7 +477,10 @@ class RawDataRepository:
         # dates が空の場合は何もしない
         dates_list = list(dates)
         if not dates_list:
-            logger.debug(f"No dates provided for soft_delete_scope_by_dates (csv_kind={csv_kind})")
+            logger.debug(
+                "削除対象日付なし",
+                extra=create_log_context(operation="delete_shogun_data_for_dates", csv_kind=csv_kind)
+            )
             return 0
         
         # dates を date 型のリストに変換(datetime.date または pd.Timestamp.date())
@@ -602,13 +648,22 @@ class RawDataRepository:
             is_duplicate = result is not None
             if is_duplicate:
                 logger.warning(
-                    f"Recent duplicate detected: csv_type={csv_type}, "
-                    f"hash={file_hash[:8]}..., uploaded_by={uploaded_by}"
+                    "直近重複検出",
+                    extra=create_log_context(
+                        operation="check_duplicate_upload",
+                        csv_type=csv_type,
+                        hash_prefix=file_hash[:8],
+                        uploaded_by=uploaded_by
+                    )
                 )
             return is_duplicate
             
         except Exception as e:
-            logger.error(f"Failed to check recent duplicate: {e}", exc_info=True)
+            logger.error(
+                "直近重複チェック失敗",
+                extra=create_log_context(operation="check_duplicate_upload", error=str(e)),
+                exc_info=True
+            )
             # エラー時は安全側に倒して False を返す（処理は継続させる）
             return False
 
@@ -841,7 +896,11 @@ class RawDataRepository:
             return upload_info
             
         except Exception as e:
-            logger.error(f"Failed to get upload status: upload_file_id={upload_file_id}, error={e}", exc_info=True)
+            logger.error(
+                "upload_status取得失敗",
+                extra=create_log_context(operation="get_upload_status", upload_file_id=upload_file_id, error=str(e)),
+                exc_info=True
+            )
             raise
     
     def get_upload_calendar(self, year: int, month: int) -> list[Dict[str, Any]]:

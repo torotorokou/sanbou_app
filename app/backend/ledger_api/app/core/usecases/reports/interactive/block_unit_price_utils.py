@@ -14,9 +14,9 @@ import re
 import pandas as pd
 from pandas.api.types import is_datetime64_any_dtype as _is_dt
 
-from app.infra.report_utils import app_logger
+from backend_shared.application.logging import get_module_logger, create_log_context
 
-logger = app_logger()
+logger = get_module_logger(__name__)
 
 
 # ------------------------------ dataclasses ------------------------------
@@ -161,14 +161,20 @@ def ensure_datetime_col(df: Optional[pd.DataFrame], col: str = "伝票日付") -
             else:
                 unit = "s"
             
-            logger.debug(f"date normalize: detected epoch '{col}', unit={unit}")
+            logger.debug(
+                "epoch形式検出",
+                extra=create_log_context(operation="normalize_datetime_columns", column=col, unit=unit)
+            )
             df[col] = pd.to_datetime(ser, unit=unit, errors="coerce")
             return df
         
         df[col] = pd.to_datetime(s, errors="coerce")
         return df
     except Exception as e:
-        logger.warning(f"date normalize failed for '{col}': {type(e).__name__}: {e}")
+        logger.warning(
+            "日付正規化失敗",
+            extra=create_log_context(operation="normalize_datetime_columns", column=col, error_type=type(e).__name__, error=str(e))
+        )
         return df
 
 
@@ -196,6 +202,57 @@ def error_payload(
 def missing_cols(df: pd.DataFrame, required: List[str]) -> List[str]:
     """必須カラムの不足をチェック"""
     return [c for c in required if c not in df.columns]
+
+
+def handle_step_error(
+    step_name: str,
+    step_number: int,
+    error: Exception,
+    context: Optional[Dict[str, Any]] = None
+) -> Tuple[pd.DataFrame, Dict[str, Any]]:
+    """ステップエラーを統一的に処理
+    
+    Args:
+        step_name: ステップ名（例: "initial", "finalize"）
+        step_number: ステップ番号
+        error: 発生した例外
+        context: 追加コンテキスト情報
+    
+    Returns:
+        エラーペイロード
+    """
+    import traceback
+    
+    tb = traceback.format_exc(limit=5)
+    error_type = type(error).__name__
+    error_msg = str(error)
+    
+    extra_data: Dict[str, Any] = {
+        "err_type": error_type,
+        "err": error_msg,
+        "traceback": tb,
+    }
+    
+    if context:
+        extra_data.update(context)
+    
+    logger.error(
+        f"{step_name} step error",
+        extra=create_log_context(
+            operation=f"block_unit_price_{step_name}",
+            step=step_number,
+            error_type=error_type,
+            error_msg=error_msg,
+            **extra_data
+        )
+    )
+    
+    return error_payload(
+        code=f"STEP{step_number}_EXCEPTION",
+        detail=error_msg,
+        step=step_number,
+        extra=extra_data
+    )
 
 
 # ------------------------------ Debug Helpers ------------------------------

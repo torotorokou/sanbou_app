@@ -18,6 +18,7 @@
 
 import React, { useEffect } from 'react';
 import { Space, App } from 'antd';
+import dayjs from 'dayjs';
 import type {
   Mode,
   SortKey,
@@ -237,6 +238,29 @@ const SalesTreePage: React.FC = () => {
   // Mode switch
   const { switchMode } = useEventHandlers({ setMode, setFilterIds });
 
+  // Reset handler - すべての条件を初期状態に戻す
+  const handleReset = () => {
+    // 期間をリセット
+    setGranularity('month');
+    setPeriodMode('single');
+    setMonth(dayjs().startOf('month'));
+    setRange(null);
+    setSingleDate(dayjs());
+    setDateRange(null);
+    
+    // フィルターをリセット
+    setMode('customer');
+    setFilterTopN('all');
+    setFilterSortBy('amount');
+    setFilterOrder('desc');
+    setRepIds([]);
+    setFilterIds([]);
+    setTableSortBy('amount');
+    setTableOrder('desc');
+    
+    // カテゴリ種別はリセットしない（ユーザーの意図的な選択なので保持）
+  };
+
   const isDrawerOpen = (d: DrawerState): d is Extract<DrawerState, { open: true }> => d.open;
 
   useEffect(() => {
@@ -303,6 +327,7 @@ const SalesTreePage: React.FC = () => {
         onFilterIdsChange={setFilterIds}
         categoryKind={categoryKind}
         onCategoryKindChange={setCategoryKind}
+        onReset={handleReset}
       />
 
       {/* KPI */}

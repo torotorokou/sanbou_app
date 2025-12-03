@@ -26,7 +26,8 @@ import httpx
 from typing import Optional
 import logging
 
-logger = logging.getLogger(__name__)
+from backend_shared.application.logging import get_module_logger, create_log_context
+logger = get_module_logger(__name__)
 
 RAG_API_BASE = os.getenv("RAG_API_BASE", "http://rag_api:8000")
 # OpenAIの応答待ち時間を考慮してタイムアウトを長めに設定

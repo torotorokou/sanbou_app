@@ -99,13 +99,12 @@ export const UploadGuide: React.FC<UploadGuideProps> = ({ datasetKey, files }) =
               </span>
             ),
             children: (
-              <ol style={{ margin: 0, paddingLeft: 20, lineHeight: 1.8 }}>
+              <ol style={{ margin: 0, paddingLeft: 20, lineHeight: 1.8, fontSize: 14 }}>
                 <li>
-                  データセットを選択（現在：<strong>{datasetKey}</strong>）
+                  データセットを選択（現在: <strong>{datasetKey}</strong>）
                 </li>
                 <li>各カードに CSV をドラッグ＆ドロップ（またはクリック）</li>
                 <li>自動検証（ヘッダ/型）を待つ</li>
-                <li>プレビューで内容を確認</li>
                 <li>「アップロードする」を押下</li>
               </ol>
             ),
@@ -125,10 +124,10 @@ export const UploadGuide: React.FC<UploadGuideProps> = ({ datasetKey, files }) =
                 renderItem={(r) => (
                   <List.Item style={{ paddingLeft: 0 }}>
                     <Tag color="blue">{r.label}</Tag>
-                    <Text type="secondary">（必須）</Text>
+                    <Text type="secondary" style={{ fontSize: 14 }}>(必須)</Text>
                     {Array.isArray(r.filenameHints) && r.filenameHints.length > 0 && (
-                      <span style={{ marginLeft: 8, fontSize: 12, color: '#888' }}>
-                        受入ファイル名例: {r.filenameHints.join(' / ')}
+                      <span style={{ marginLeft: 8, fontSize: 14, color: '#888' }}>
+                        ファイル名例: {r.filenameHints.join(' / ')}
                       </span>
                     )}
                   </List.Item>
@@ -152,7 +151,7 @@ export const UploadGuide: React.FC<UploadGuideProps> = ({ datasetKey, files }) =
                       dataSource={dataset.notes}
                       renderItem={(note) => (
                         <List.Item style={{ paddingLeft: 0 }}>
-                          <Text>{note}</Text>
+                          <Text style={{ fontSize: 14 }}>{note}</Text>
                         </List.Item>
                       )}
                     />
