@@ -20,7 +20,7 @@ from typing import Dict, Optional
 from urllib.parse import quote, unquote
 
 from app.settings import settings
-from backend_shared.config import ReportTemplateConfigLoader
+from backend_shared.config.config_loader import ReportTemplateConfigLoader
 
 
 def _sanitize_segment(value: str) -> str:
