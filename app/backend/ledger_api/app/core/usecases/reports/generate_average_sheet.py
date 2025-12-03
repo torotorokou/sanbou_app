@@ -188,6 +188,7 @@ class GenerateAverageSheetUseCase:
                 status_code=200,
                 content={
                     "message": "単価平均表の生成が完了しました",
+                    "report_key": "average_sheet",
                     "report_date": average_sheet.report_date.isoformat(),
                     "artifact": {
                         "excel_download_url": artifact_dict["excel_url"],

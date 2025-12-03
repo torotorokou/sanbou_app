@@ -159,6 +159,7 @@ class GenerateManagementSheetUseCase:
                 status_code=200,
                 content={
                     "message": "経営管理表の生成が完了しました",
+                    "report_key": "management_sheet",
                     "report_date": management_sheet.report_date.isoformat(),
                     "artifact": {
                         "excel_download_url": artifact_dict["excel_url"],
