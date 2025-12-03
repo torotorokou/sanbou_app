@@ -1,30 +1,9 @@
 import pandas as pd
-from .value_setter import set_value_fast_safe
 from backend_shared.application.logging import get_module_logger
+from backend_shared.utils.dataframe_utils import clean_na_strings
+from .value_setter import set_value_fast_safe
 
 logger = get_module_logger(__name__)
-
-
-def clean_na_strings(val):
-    """
-    <NA>等の文字列や空文字列をNoneに変換する共通関数
-    """
-    if isinstance(val, str) and (
-        val
-        in [
-            "<NA>",
-            "NaN",
-            "nan",
-            "None",
-            "NULL",
-            "null",
-            "#N/A",
-            "#NA",
-        ]
-        or val.strip() == ""
-    ):
-        return None
-    return val
 
 
 def write_sum_to_target_cell(
