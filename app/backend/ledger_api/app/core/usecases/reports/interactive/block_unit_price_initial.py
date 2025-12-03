@@ -29,6 +29,7 @@ from .block_unit_price_utils import (
     stable_entry_id,
     normalize_df_index,
     fmt_cols,
+    handle_step_error,
 )
 
 # Legacy exports for compatibility
@@ -283,13 +284,15 @@ def execute_initial_step(df_formatted: Dict[str, Any]) -> Tuple[Dict[str, Any], 
         return state, payload
 
     except Exception as e:
-        tb = traceback.format_exc(limit=3)
-        logger.error(f"Step 0 error: {type(e).__name__}: {e} | tb={tb}")
-        # エラー時は空の状態辞書を返す
-        return {}, {
-            "status": "error",
-            "code": "STEP0_EXCEPTION",
-            "detail": str(e),
-            "step": 0,
-            "extra": {"traceback": tb}
-        }
+        # 共通エラーハンドリングを使用
+        context = {}
+        try:
+            if 'df_shipment' in locals():
+                context["df_shipment_shape"] = locals()["df_shipment"].shape
+            if 'rows_payload' in locals():
+                context["rows_count"] = len(locals()["rows_payload"])
+        except Exception:
+            pass
+        
+        _, error_payload_dict = handle_step_error("initial", 0, e, context)
+        return {}, error_payload_dict
