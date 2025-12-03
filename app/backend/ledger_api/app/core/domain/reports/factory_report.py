@@ -116,17 +116,20 @@ class FactoryReport:
         yard_items: List[YardItem] = []
         report_date = date.today()  # デフォルト値
 
+        # 日付の抽出（出荷→ヤードの優先順、他の帳票と同じパターン）
+        if df_shipment is not None and not df_shipment.empty:
+            if "伝票日付" in df_shipment.columns and not df_shipment["伝票日付"].isna().all():
+                first_date = df_shipment["伝票日付"].iloc[0]
+                if pd.notna(first_date):
+                    report_date = pd.to_datetime(first_date).date()
+        elif df_yard is not None and not df_yard.empty:
+            if "伝票日付" in df_yard.columns and not df_yard["伝票日付"].isna().all():
+                first_date = df_yard["伝票日付"].iloc[0]
+                if pd.notna(first_date):
+                    report_date = pd.to_datetime(first_date).date()
+
         # 出荷データの変換
         if df_shipment is not None and not df_shipment.empty:
-            # 日付の抽出（最初の行から取得）
-            if "受入日" in df_shipment.columns and not df_shipment["受入日"].isna().all():
-                first_date = df_shipment["受入日"].iloc[0]
-                if pd.notna(first_date):
-                    if isinstance(first_date, pd.Timestamp):
-                        report_date = first_date.date()
-                    elif isinstance(first_date, date):
-                        report_date = first_date
-
             for _, row in df_shipment.iterrows():
                 try:
                     shipment_items.append(
