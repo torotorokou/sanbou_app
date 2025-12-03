@@ -88,6 +88,14 @@ logger.info(
 from backend_shared.infra.adapters.middleware.request_id import RequestIdMiddleware
 app.add_middleware(RequestIdMiddleware)
 
+# Authentication Middleware: IAP 認証を強制（本番環境のみ）
+# IAP_ENABLED=true の場合、全てのリクエストで認証を実施
+from app.api.middleware.auth_middleware import AuthenticationMiddleware
+app.add_middleware(
+    AuthenticationMiddleware,
+    excluded_paths=["/health", "/healthz", "/", "/docs", "/redoc", "/openapi.json"]
+)
+
 # ==========================================
 # CORS設定 (開発モード用)
 # ==========================================
