@@ -8,12 +8,11 @@ from typing import Any, Dict
 import pandas as pd
 
 from app.infra.report_utils import (
-    app_logger,
     get_template_config,
     load_all_filtered_dataframes,
     load_master_and_template,
 )
-from backend_shared.application.logging import create_log_context
+from backend_shared.application.logging import get_module_logger, create_log_context
 from app.core.domain.reports.processors.management_sheet.factory_report import (
     update_from_factory_report,
 )
@@ -32,7 +31,7 @@ from app.core.domain.reports.processors.management_sheet.manage_etc import (
 
 
 def process(dfs: Dict[str, Any]) -> pd.DataFrame:
-    logger = app_logger()
+    logger = get_module_logger(__name__)
 
     config = get_template_config()["management_sheet"]
     master_path = config["master_csv_path"]["management_sheet"]

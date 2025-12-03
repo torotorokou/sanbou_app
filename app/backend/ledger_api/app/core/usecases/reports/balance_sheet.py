@@ -7,12 +7,11 @@ from typing import Any, Dict
 import pandas as pd
 
 from app.infra.report_utils import (
-    app_logger,
     get_template_config,
     load_all_filtered_dataframes,
     load_master_and_template,
 )
-from backend_shared.application.logging import create_log_context
+from backend_shared.application.logging import get_module_logger, create_log_context
 from app.core.domain.reports.processors.balance_sheet.balance_sheet_fact import (
     process_factory_report,
 )
@@ -41,7 +40,7 @@ from app.core.domain.reports.processors.balance_sheet.balance_sheet_etc import (
 
 def process(dfs: Dict[str, Any]) -> pd.DataFrame:
     """CSV群を統合し搬出入帳票の最終DataFrameを返す。"""
-    logger = app_logger()
+    logger = get_module_logger(__name__)
 
     config = get_template_config()["balance_sheet"]
     master_path = config["master_csv_path"]["factory"]
