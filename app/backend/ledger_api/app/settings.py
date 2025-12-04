@@ -127,7 +127,19 @@ def load_settings() -> Settings:
         report_artifact_url_ttl = int(report_artifact_url_ttl_raw)
     except ValueError:
         report_artifact_url_ttl = 900
-    report_artifact_secret = os.getenv("REPORT_ARTIFACT_SECRET", "change-me-in-production")
+    
+    # REPORT_ARTIFACT_SECRET: PDF生成署名用のシークレットキー
+    # 注意: 本番環境では必ず強力なランダム文字列を設定すること
+    report_artifact_secret = os.getenv("REPORT_ARTIFACT_SECRET")
+    if not report_artifact_secret:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.warning(
+            "REPORT_ARTIFACT_SECRET not set - using insecure default. "
+            "This MUST be set in production!"
+        )
+        report_artifact_secret = "change-me-in-production"
+    
     return Settings(
         stage=stage,
         strict_startup=strict_startup,

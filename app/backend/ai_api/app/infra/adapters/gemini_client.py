@@ -1,3 +1,4 @@
+import os
 import requests
 from backend_shared.core.domain.exceptions import ExternalServiceError
 from backend_shared.application.logging import get_module_logger
@@ -10,10 +11,12 @@ class GeminiClient:
     def generate_content(self, prompt: str) -> str:
         logger.info("Generating content with Gemini API", extra={"prompt_length": len(prompt)})
         try:
-            url = (
-                f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
-                f"?key={GEMINI_API_KEY}"
+            # 環境変数から Gemini API URL を取得（デフォルト値付き）
+            gemini_api_url = os.getenv(
+                "GEMINI_API_URL",
+                "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
             )
+            url = f"{gemini_api_url}?key={GEMINI_API_KEY}"
             response = requests.post(
                 url,
                 headers={"Content-Type": "application/json"},
