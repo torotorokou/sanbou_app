@@ -278,12 +278,15 @@ def get_api_base_url(service_name: str, default_port: int = 8000) -> str:
     return get_str_env(env_key, default=default_url)
 
 
-def get_database_url(default: str = "postgresql://myuser:mypassword@db:5432/sanbou_dev") -> str:
+def get_database_url(default: str | None = None) -> str:
     """
     データベース接続URLを取得
     
+    環境変数 DATABASE_URL が設定されていない場合は、
+    POSTGRES_* 環境変数から動的に構築します。
+    
     Args:
-        default: デフォルトのデータベースURL
+        default: デフォルトのデータベースURL（非推奨：環境変数を使用してください）
         
     Returns:
         str: データベース接続URL
@@ -293,7 +296,26 @@ def get_database_url(default: str = "postgresql://myuser:mypassword@db:5432/sanb
         >>> get_database_url()
         'postgresql://user:pass@localhost:5432/mydb'
     """
-    return get_str_env("DATABASE_URL", default=default)
+    database_url = os.getenv("DATABASE_URL")
+    if database_url:
+        return database_url.strip()
+    
+    # DATABASE_URL が未設定の場合、POSTGRES_* 環境変数から構築
+    user = os.getenv("POSTGRES_USER", "")
+    password = os.getenv("POSTGRES_PASSWORD", "")
+    host = os.getenv("POSTGRES_HOST", "db")
+    port = os.getenv("POSTGRES_PORT", "5432")
+    database = os.getenv("POSTGRES_DB", "")
+    
+    if not user or not password or not database:
+        if default:
+            return default
+        raise ValueError(
+            "DATABASE_URL is not set and POSTGRES_USER, POSTGRES_PASSWORD, or POSTGRES_DB is missing. "
+            "Please set DATABASE_URL or all required POSTGRES_* environment variables."
+        )
+    
+    return f"postgresql://{user}:{password}@{host}:{port}/{database}"
 
 
 def get_log_level(default: str = "INFO") -> str:

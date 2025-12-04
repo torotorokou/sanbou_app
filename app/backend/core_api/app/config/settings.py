@@ -45,15 +45,35 @@ class Settings(BaseSettings):
     # データベース設定
     # ========================================
     
-    DATABASE_URL: str = os.getenv(
-        "DATABASE_URL",
-        "postgresql://myuser:mypassword@db:5432/sanbou_dev"
-    )
+    @staticmethod
+    def _build_database_url() -> str:
+        """環境変数からDATABASE_URLを構築"""
+        database_url = os.getenv("DATABASE_URL")
+        if database_url:
+            return database_url.strip()
+        
+        # DATABASE_URL が未設定の場合、POSTGRES_* 環境変数から構築
+        user = os.getenv("POSTGRES_USER", "")
+        password = os.getenv("POSTGRES_PASSWORD", "")
+        host = os.getenv("POSTGRES_HOST", "db")
+        port = os.getenv("POSTGRES_PORT", "5432")
+        database = os.getenv("POSTGRES_DB", "")
+        
+        if not user or not password or not database:
+            raise ValueError(
+                "DATABASE_URL is not set and POSTGRES_USER, POSTGRES_PASSWORD, or POSTGRES_DB is missing. "
+                "Please set DATABASE_URL or all required POSTGRES_* environment variables."
+            )
+        
+        return f"postgresql://{user}:{password}@{host}:{port}/{database}"
+    
+    DATABASE_URL: str = _build_database_url.__func__()
     """
     PostgreSQL接続URL
     
     形式: postgresql://user:password@host:port/database
     環境変数 DATABASE_URL で上書き可能
+    環境変数が未設定の場合は POSTGRES_* 環境変数から動的に構築
     """
     
     # ========================================

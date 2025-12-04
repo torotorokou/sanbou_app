@@ -23,11 +23,20 @@ def _dsn() -> str:
     dsn = os.getenv("DATABASE_URL")
     if dsn and dsn.strip():
         return dsn.strip()
+    
+    # DATABASE_URL が未設定の場合、POSTGRES_* 環境変数から構築
     host = os.getenv("DB_HOST") or os.getenv("POSTGRES_HOST", "db")
     port = os.getenv("DB_PORT") or os.getenv("POSTGRES_PORT", "5432")
-    user = os.getenv("DB_USER") or os.getenv("POSTGRES_USER", "myuser")
-    pwd = os.getenv("DB_PASSWORD") or os.getenv("POSTGRES_PASSWORD", "mypassword")
-    name = os.getenv("DB_NAME") or os.getenv("POSTGRES_DB", "sanbou_dev")
+    user = os.getenv("DB_USER") or os.getenv("POSTGRES_USER", "")
+    pwd = os.getenv("DB_PASSWORD") or os.getenv("POSTGRES_PASSWORD", "")
+    name = os.getenv("DB_NAME") or os.getenv("POSTGRES_DB", "")
+    
+    if not user or not pwd or not name:
+        raise ValueError(
+            "DATABASE_URL is not set and DB_USER/POSTGRES_USER, DB_PASSWORD/POSTGRES_PASSWORD, "
+            "or DB_NAME/POSTGRES_DB is missing. Please set DATABASE_URL or all required environment variables."
+        )
+    
     return f"postgresql://{user}:{pwd}@{host}:{port}/{name}"
 
 
