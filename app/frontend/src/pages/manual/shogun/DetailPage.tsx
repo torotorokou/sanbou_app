@@ -2,12 +2,13 @@
  * 将軍マニュアル詳細ページ
  * FSD: ページ層は組み立てのみ + パフォーマンス最適化
  */
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Breadcrumb, Button, Col, Layout, Row, Space, Spin, Typography } from 'antd';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useShogunCatalog } from '@features/manual';
 import { FlowPane } from '@features/manual/ui/components/FlowPane';
 import { VideoPane } from '@features/manual/ui/components/VideoPane';
+import { UnimplementedModal } from '@features/shared';
 import styles from './ShogunDetail.module.css';
 
 const { Title, Paragraph } = Typography;
@@ -15,6 +16,7 @@ const { Title, Paragraph } = Typography;
 const ShogunManualDetailPage: React.FC = () => {
   const { id } = useParams();
   const nav = useNavigate();
+  const [showUnimplementedModal, setShowUnimplementedModal] = useState(false);
   
   // カタログから該当アイテムを取得
   const { sections, loading } = useShogunCatalog();
@@ -25,6 +27,11 @@ const ShogunManualDetailPage: React.FC = () => {
     }
     return null;
   }, [sections, id]);
+
+  useEffect(() => {
+    // ページ読み込み時にモーダルを表示
+    setShowUnimplementedModal(true);
+  }, []);
 
   // ページ遷移を即座に行い、ローディングインジケーターを表示
   const showSkeleton = loading || !item;
@@ -97,6 +104,14 @@ const ShogunManualDetailPage: React.FC = () => {
             </div>
           </div>
         )}
+
+        {/* 未実装モーダル */}
+        <UnimplementedModal
+          visible={showUnimplementedModal}
+          onClose={() => setShowUnimplementedModal(false)}
+          featureName="環境将軍マニュアル"
+          description="環境将軍マニュアル機能は現在開発中です。完成まで今しばらくお待ちください。リリース後は、環境将軍システムの詳細な操作方法や業務フローをご確認いただけます。"
+        />
       </Layout.Content>
     </Layout>
   );
