@@ -19,7 +19,6 @@ except Exception:  # if not available, inject stub module
 
 import os
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
 
 # ==========================================
 # 統一ロギング設定のインポート（backend_shared）
@@ -73,15 +72,9 @@ logger.info(
 # ミドルウェア: Request ID（traceId）の付与
 app.add_middleware(RequestIdMiddleware)
 
-# CORS設定 - すべてのオリジンからのアクセスを許可
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # 本番環境では適切なオリジンを指定すること
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-    expose_headers=["X-Request-ID"],  # X-Request-ID をフロントエンドに公開
-)
+# CORS設定
+from backend_shared.infra.frameworks.cors_config import setup_cors
+setup_cors(app)
 
 # エラーハンドラの登録（ProblemDetails統一）
 register_error_handlers(app)
