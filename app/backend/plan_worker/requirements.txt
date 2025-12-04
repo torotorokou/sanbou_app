@@ -1,6 +1,6 @@
 # Plan Worker dependencies (minimal)
-pydantic==2.9.0
-psycopg[binary]==3.1.12
+pydantic==2.10.3
+psycopg[binary]==3.2.3
 python-dotenv==1.0.1
 
 # backend_shared は Dockerfile でインストールされます
