@@ -7,7 +7,6 @@ from .template_config import (
     get_required_columns_definition,
     get_expected_dtypes,
 )
-from .logger import app_logger
 from .main_path import MainPath
 from .template_loader import load_master_and_template
 from .csv_loader import load_all_filtered_dataframes
@@ -22,7 +21,6 @@ __all__ = [
     "get_unit_price_table_csv",
     "get_required_columns_definition",
     "get_expected_dtypes",
-    "app_logger",
     "MainPath",
     "load_master_and_template",
     "load_all_filtered_dataframes",
