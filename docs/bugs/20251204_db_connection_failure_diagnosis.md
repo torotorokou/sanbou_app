@@ -18,9 +18,9 @@ FATAL: password authentication failed for user "myuser"
 
 | 場所 | パスワード設定 | 状態 |
 |------|--------------|------|
-| **実際のDB (PostgreSQL)** | `mypassword` | 変更されていない |
-| **secrets/.env.local_dev.secrets** | `fOb1TYnB9pu64uRKx7QWEB6kByWgM098Lrhsy0HWG6g=` | 新しいパスワードに変更済み |
-| **env/.env.local_dev (DATABASE_URL)** | `mypassword` | **ハードコードされたまま** |
+| **実際のDB (PostgreSQL)** | `mypassword` (例) | 変更されていない |
+| **secrets/.env.local_dev.secrets** | `fOb1***[マスク済み]` (例) | 新しいパスワードに変更済み |
+| **env/.env.local_dev (DATABASE_URL)** | `mypassword` (例) | **ハードコードされたまま** |
 | **env/.env.common** | `__SET_IN_ENV_SPECIFIC_FILE__` | プレースホルダー |
 
 ### 2.2 問題の構造
@@ -33,15 +33,15 @@ graph TD
     B --> E[3. secrets/.env.local_dev.secrets]
     
     C --> F[POSTGRES_PASSWORD=__SET_IN_ENV_SPECIFIC_FILE__]
-    D --> G[DATABASE_URL=postgresql://myuser:mypassword@db:5432/sanbou_dev]
-    E --> H[POSTGRES_PASSWORD=fOb1TYnB9pu64uRKx7QWEB6kByWgM098Lrhsy0HWG6g=]
+    D --> G[DATABASE_URL=postgresql://myuser:<OLD_PASSWORD>@db:5432/sanbou_dev]
+    E --> H[POSTGRES_PASSWORD=<NEW_PASSWORD>]
     
     H --> I[DBコンテナ: 新パスワードで環境変数設定]
     I --> J{既存DBデータ存在?}
-    J -->|Yes| K[既存のパスワード mypassword を使用]
+    J -->|Yes| K[既存のパスワード <OLD_PASSWORD> を使用]
     J -->|No| L[新パスワードで初期化]
     
-    K --> M[実際のDBパスワード: mypassword]
+    K --> M[実際のDBパスワード: <OLD_PASSWORD>]
     
     G --> N[アプリケーションコンテナ: DATABASE_URLを使用]
     N --> O[接続試行: mypassword]
@@ -70,7 +70,7 @@ db-1  | 2025-12-04 02:00:31.123 UTC [41] FATAL:  password authentication failed 
 
 **認証失敗が継続的に発生していたが、現在は接続できている理由:**
 
-`env/.env.local_dev` の `DATABASE_URL=postgresql://myuser:mypassword@db:5432/sanbou_dev` がそのまま残っているため、この接続文字列が優先されて接続に成功していた。
+`env/.env.local_dev` の `DATABASE_URL=postgresql://myuser:<OLD_PASSWORD>@db:5432/sanbou_dev` (例) がそのまま残っているため、この接続文字列が優先されて接続に成功していた。
 
 ### 3.2 現在のコンテナ状態
 
@@ -96,8 +96,8 @@ local_dev-plan_worker-1   local_dev-plan_worker   Up 4 minutes (unhealthy)
  sanbou_app_dev |
 ```
 
-- `myuser`: スーパーユーザー、パスワードは `mypassword` のまま
-- `sanbou_app_dev`: 環境別ユーザーが既に作成されている（パスワード未設定の可能性）
+- `myuser`: スーパーユーザー、パスワードは `<OLD_PASSWORD>` (例) のまま
+- `sanbou_app_dev`: 環境別ユーザーが既に作成されている(パスワード未設定の可能性)
 
 ## 4. なぜ現在は接続できているのか
 
@@ -106,19 +106,19 @@ local_dev-plan_worker-1   local_dev-plan_worker   Up 4 minutes (unhealthy)
 Docker Composeの`env_file`は以下の順序で読み込まれますが、**後から読み込まれた値が前の値を上書き**します:
 
 1. `../env/.env.common` - `POSTGRES_PASSWORD=__SET_IN_ENV_SPECIFIC_FILE__`
-2. `../env/.env.local_dev` - `DATABASE_URL=postgresql://myuser:mypassword@db:5432/sanbou_dev`
-3. `../secrets/.env.local_dev.secrets` - `POSTGRES_PASSWORD=fOb1TYnB9pu64uRKx7QWEB6kByWgM098Lrhsy0HWG6g=`
+2. `../env/.env.local_dev` - `DATABASE_URL=postgresql://myuser:<OLD_PASSWORD>@db:5432/sanbou_dev` (例)
+3. `../secrets/.env.local_dev.secrets` - `POSTGRES_PASSWORD=<NEW_PASSWORD>` (例、マスク済み)
 
 ### 4.2 実際の動作
 
 1. **DBコンテナ**: PostgreSQLイメージは起動時に既存のDBデータディレクトリを検出
    - `PostgreSQL Database directory appears to contain a database; Skipping initialization`
-   - **既存のパスワード (`mypassword`) をそのまま使用**
+   - **既存のパスワード (`<OLD_PASSWORD>` 例) をそのまま使用**
    - `POSTGRES_PASSWORD` 環境変数は既存DBには影響しない
 
 2. **アプリケーションコンテナ**: 
    - `DATABASE_URL` 環境変数が明示的に接続文字列を指定
-   - この中に `mypassword` がハードコードされている
+   - この中に `<OLD_PASSWORD>` (例) がハードコードされている
    - 個別の `POSTGRES_PASSWORD` 環境変数より `DATABASE_URL` が優先される
    - 結果: **古いパスワードで接続成功**
 
@@ -127,8 +127,8 @@ Docker Composeの`env_file`は以下の順序で読み込まれますが、**後
 ### 5.1 DATABASE_URLのハードコード
 
 ```dotenv
-# env/.env.local_dev (問題あり)
-DATABASE_URL=postgresql://myuser:mypassword@db:5432/sanbou_dev
+# env/.env.local_dev (問題あり - 例)
+DATABASE_URL=postgresql://myuser:<PASSWORD>@db:5432/sanbou_dev
 ```
 
 **問題点:**
@@ -200,16 +200,16 @@ healthcheck:
 
 **Option A-1: 既存パスワードを使い続ける（最も安全）**
 ```bash
-# secrets/.env.local_dev.secrets でパスワードを戻す
-POSTGRES_PASSWORD=mypassword
+# secrets/.env.local_dev.secrets でパスワードを戻す (例)
+POSTGRES_PASSWORD=<YOUR_CURRENT_PASSWORD>
 ```
 
 **Option A-2: 新パスワードへ移行（データ保持）**
 ```bash
-# 1. SQLでパスワード変更
+# 1. SQLでパスワード変更 (例: 実際のパスワードに置き換えてください)
 docker compose -f docker/docker-compose.dev.yml -p local_dev exec -T db \
   psql -U myuser -d sanbou_dev -c \
-  "ALTER USER myuser WITH PASSWORD 'fOb1TYnB9pu64uRKx7QWEB6kByWgM098Lrhsy0HWG6g=';"
+  "ALTER USER myuser WITH PASSWORD '<YOUR_NEW_PASSWORD>';"
 
 # 2. secrets/.env.local_dev.secrets は変更済み
 # 3. サービスを再起動
@@ -230,9 +230,9 @@ docker compose -f docker/docker-compose.dev.yml -p local_dev up -d
 
 ### オプション B: 一時的な修正（推奨しない）
 
-`secrets/.env.local_dev.secrets` を元のパスワードに戻す:
+`secrets/.env.local_dev.secrets` を元のパスワードに戻す (例):
 ```dotenv
-POSTGRES_PASSWORD=mypassword
+POSTGRES_PASSWORD=<YOUR_CURRENT_PASSWORD>
 ```
 
 この方法は**根本的な設計問題を放置**するため推奨しません。

@@ -5,7 +5,6 @@ from dotenv import load_dotenv
 
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.exceptions import RequestValidationError
-from fastapi.middleware.cors import CORSMiddleware
 
 # ==========================================
 # 統一ロギング設定のインポート（backend_shared）
@@ -13,6 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from backend_shared.application.logging import setup_logging
 from backend_shared.infra.frameworks.logging_utils import setup_uvicorn_access_filter
 from backend_shared.infra.adapters.middleware import RequestIdMiddleware
+from backend_shared.infra.frameworks.cors_config import setup_cors
 from backend_shared.config.env_utils import is_debug_mode
 
 from backend_shared.core.domain.exceptions import ValidationError, NotFoundError, InfrastructureError
@@ -137,16 +137,8 @@ async def handle_infrastructure_error(request: Request, exc: InfrastructureError
 
 
 # --- CORS 設定 -----------------------------------------------------------------
-# デフォルトで Vite (5173) を許可。必要に応じて .env の CORS_ORIGINS で上書き
-default_origins = "http://localhost:5173,http://127.0.0.1:5173"
-origins = os.getenv("CORS_ORIGINS", default_origins).split(",")
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[o.strip() for o in origins if o.strip()],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# --- CORS設定 (backend_shared統一版) -----------------------------------------
+setup_cors(app)
 
 # アクセスログ: /health のアクセスのみ抑制（uvicorn.access フィルター）
 setup_uvicorn_access_filter(excluded_paths=("/health",))

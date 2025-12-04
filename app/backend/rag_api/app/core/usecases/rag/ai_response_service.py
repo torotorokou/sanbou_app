@@ -26,10 +26,9 @@ generate-answerエンドポイント用のAI回答生成を担当するサービ
 """
 
 import os
-from datetime import datetime
-from zoneinfo import ZoneInfo
 from typing import List, Dict, Any
 from backend_shared.application.logging import get_module_logger
+from backend_shared.utils.datetime_utils import now_in_app_timezone
 from app.shared.file_utils import PDF_PATH
 from app.config.paths import get_pdf_url_prefix
 from app.core.ports.rag.pdf_service_port import PDFServiceBase
@@ -157,8 +156,7 @@ class AIResponseService:
                 pdf_url = None
             else:
                 # PDF結合（ユーザー向けは本体ディレクトリに保存）
-                jst = ZoneInfo("Asia/Tokyo")
-                timestamp = datetime.now(jst).strftime("%Y%m%d_%H%M%S")
+                timestamp = now_in_app_timezone().strftime("%Y%m%d_%H%M%S")
                 merged_pdf_name = f"merged_response_{timestamp}.pdf"
                 merged_pdf_path = os.path.join(static_dir, merged_pdf_name)
                 pdf_file_paths = [

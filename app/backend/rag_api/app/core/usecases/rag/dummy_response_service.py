@@ -29,9 +29,8 @@ test-answerエンドポイント用のダミーデータ生成を担当するサ
 """
 
 import os
-from datetime import datetime
-from zoneinfo import ZoneInfo
 from typing import Dict, Any
+from backend_shared.utils.datetime_utils import now_in_app_timezone
 from app.config.paths import get_pdf_url_prefix
 from app.core.ports.rag.pdf_service_port import PDFServiceBase
 
@@ -90,8 +89,7 @@ class DummyResponseService:
             debug_file_paths.append(src_path)  # 元ファイルパスを使用
         
         # PDF結合処理（ユーザー向けは本体ディレクトリに保存）
-        jst = ZoneInfo('Asia/Tokyo')
-        timestamp = datetime.now(jst).strftime("%Y%m%d_%H%M%S")
+        timestamp = now_in_app_timezone().strftime("%Y%m%d_%H%M%S")
         merged_pdf_name = f"merged_response_{timestamp}.pdf"
         merged_pdf_path = os.path.join(pdfs_dir, merged_pdf_name)
         pdf_file_paths = debug_file_paths  # 元ファイルから結合

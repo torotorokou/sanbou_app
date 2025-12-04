@@ -216,7 +216,7 @@ secrets/
 | `APP_TAG` | `local_demo` | 環境識別子 |
 | `STAGE` | `demo` | ステージ名 |
 | `POSTGRES_DB` | `sanbou_demo` | データベース名 |
-| `DATABASE_URL` | `postgresql://myuser:mypassword@db:5432/sanbou_demo` | DB接続URL |
+| `DATABASE_URL` | `postgresql://<USER>:<PASSWORD>@db:5432/sanbou_demo` | DB接続URL (secrets で設定) |
 | `PUBLIC_BASE_URL` | `http://localhost:5174` | フロントエンドURL |
 | `DEV_FRONTEND_PORT` | `5174` | フロントエンドポート |
 | `DEV_CORE_API_PORT` | `8013` | Core API ポート |
