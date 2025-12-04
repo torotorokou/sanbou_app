@@ -19,9 +19,7 @@ Core API - BFF/Facade for frontend
   - Presentation層: HTTPエンドポイント、リクエスト/レスポンス変換
 """
 import logging
-import os
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
 
 # ==========================================
 # 統一ロギング設定のインポート（backend_shared）
@@ -100,17 +98,8 @@ app.add_middleware(
 # ==========================================
 # CORS設定 (開発モード用)
 # ==========================================
-# 開発環境でフロントエンドが別ドメイン(localhost:5173等)で動作する場合に必要。
-# 本番環境ではnginxでCORS設定を行うため、通常は無効化する。
-# 環境変数 ENABLE_CORS=true で有効化される。
-if os.getenv("ENABLE_CORS", "false").lower() == "true":
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=["*"],  # 開発用: すべてのオリジンを許可(本番では制限すること)
-        allow_credentials=True,  # Cookie/認証ヘッダーの送信を許可
-        allow_methods=["*"],  # すべてのHTTPメソッドを許可
-        allow_headers=["*"],  # すべてのカスタムヘッダーを許可
-    )
+from backend_shared.infra.frameworks.cors_config import setup_cors
+setup_cors(app)
 
 # ==========================================
 # ルーター登録
@@ -141,9 +130,9 @@ app.include_router(database_router)           # BFF: sql_api データベース�
 app.include_router(calendar_router)    # カレンダー: 営業日情報等
 
 # ==========================================
-# 統一エラーハンドリング登録
+# 統一エラーハンドリング登録（backend_shared）
 # ==========================================
-from app.api.middleware.error_handler import register_exception_handlers
+from backend_shared.infra.frameworks.exception_handlers import register_exception_handlers
 register_exception_handlers(app)
 
 

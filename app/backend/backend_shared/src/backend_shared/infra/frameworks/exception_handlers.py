@@ -1,9 +1,11 @@
 """
-Error Handler Middleware - 統一エラーハンドリング
+Exception Handler Middleware - 統一エラーハンドリング
 
 アプリケーション全体で一貫したエラーレスポンスを提供します。
 カスタム例外を HTTP ステータスコードにマッピングし、
 構造化されたエラーレスポンスを返します。
+
+このモジュールは backend_shared に配置され、全てのサービスで共通利用されます。
 """
 from fastapi import Request, status
 from fastapi.responses import JSONResponse
