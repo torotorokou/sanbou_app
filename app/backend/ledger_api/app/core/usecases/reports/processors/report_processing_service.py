@@ -10,6 +10,9 @@ import traceback
 # pandas はこのモジュールでは未使用
 from fastapi import UploadFile
 from fastapi.responses import JSONResponse, Response
+from backend_shared.application.logging import get_module_logger
+
+logger = get_module_logger(__name__)
 
 from app.core.usecases.reports.base_generators import BaseReportGenerator
 from backend_shared.infra.adapters.presentation.response_error import NoFilesUploadedResponse
@@ -53,10 +56,10 @@ class ReportProcessingService:
     ) -> Tuple[Optional[Dict[str, Any]], Optional[Any]]:
         """CSV読込のみを担当。空チェックも含む。"""
         if not files:
-            print("No files uploaded.")
+            logger.warning("No files uploaded")
             return None, NoFilesUploadedResponse()
 
-        print(f"Uploaded files: {list(files.keys())}")
+        logger.debug("Processing uploaded files", extra={"file_keys": list(files.keys())})
 
         dfs, error = read_csv_files(files)
         if error:
@@ -80,61 +83,69 @@ class ReportProcessingService:
             # Step 2: 検証（ジェネレーター定義）
             validation_error = generator.validate(dfs, files)
             if validation_error:
-                print(f"Validation error: {validation_error}")
+                logger.warning("Validation failed", extra={"error": str(validation_error)})
                 return validation_error.to_json_response()
 
             # Step 2.5: 帳簿ごとの期間指定があれば、最小伝票日付から日/週/月でフィルタ
             period_type = getattr(generator, "period_type", None)
             if period_type:
-                print(
-                    "\n==================== CSV日付フィルタ デバッグ開始 ===================="
-                )
-                print("[DEBUG] DataFrame shapes BEFORE filtering:")
+                logger.debug("Starting CSV date filtering", extra={"period_type": period_type})
+                logger.debug("DataFrame shapes BEFORE filtering")
                 for csv_type, df in dfs.items():
                     try:
                         shape = getattr(df, "shape", None)
-                        print(f"[DEBUG] Original {csv_type}: shape={shape}")
-                        print(f"[DEBUG] Columns in {csv_type}: {list(df.columns)}")
+                        columns = list(df.columns)
                         candidates = ["伝票日付", "日付", "date", "Date"]
                         found = [c for c in candidates if c in df.columns]
-                        print(
-                            f"[DEBUG] Candidate date columns found in {csv_type}: {found}"
+                        samples = {col: df[col].head(3).tolist() for col in found}
+                        logger.debug(
+                            "DataFrame info before filtering",
+                            extra={
+                                "csv_type": csv_type,
+                                "shape": shape,
+                                "columns": columns,
+                                "date_columns_found": found,
+                                "sample_values": samples
+                            }
                         )
-                        for col in found:
-                            vals = df[col].head(3).tolist()
-                            print(f"[DEBUG] Sample values for {col} in {csv_type}: {vals}")
                     except Exception as ex:
-                        print(
-                            f"[DEBUG] Original {csv_type}: shape=Unknown (not a DataFrame), error={ex}"
+                        logger.debug(
+                            "DataFrame info unavailable",
+                            extra={"csv_type": csv_type, "error": str(ex)}
                         )
 
                 try:
                     dfs = shared_filter_by_period_from_max_date(dfs, period_type)
-                    print(f"Applied date filtering by period: {period_type}")
-                    print("[DEBUG] DataFrame shapes AFTER filtering:")
+                    logger.info("Applied date filtering", extra={"period_type": period_type})
+                    logger.debug("DataFrame shapes AFTER filtering")
                     for csv_type, df in dfs.items():
                         try:
                             shape = getattr(df, "shape", None)
-                            print(f"[DEBUG] Filtered {csv_type}: shape={shape}")
+                            logger.debug(
+                                "DataFrame shape after filtering",
+                                extra={"csv_type": csv_type, "shape": shape}
+                            )
                         except Exception:
-                            print(
-                                f"[DEBUG] Filtered {csv_type}: shape=Unknown (not a DataFrame)"
+                            logger.debug(
+                                "DataFrame shape unavailable after filtering",
+                                extra={"csv_type": csv_type}
                             )
                 except Exception as e:
-                    print(f"[WARN] Date filtering skipped due to error: {e}")
-                print(
-                    "==================== CSV日付フィルタ デバッグ終了 ====================\n"
-                )
+                    logger.warning(
+                        "Date filtering skipped due to error",
+                        extra={"error": str(e)}, exc_info=True
+                    )
+                logger.debug("Completed CSV date filtering")
 
             # Step 3: 整形（ジェネレーター定義）
-            print("Formatting DataFrames...")
+            logger.debug("Formatting DataFrames")
             try:
                 df_formatted = generator.format(dfs)
             except DomainError:
                 # 既にDomainErrorの場合はそのまま再raise
                 raise
             except Exception as ex:
-                print(f"[ERROR] format() failed: {ex}")
+                logger.error("format() failed", extra={"error": str(ex)}, exc_info=True)
                 raise DomainError(
                     code="REPORT_FORMAT_ERROR",
                     status=500,
@@ -145,22 +156,30 @@ class ReportProcessingService:
             for csv_type, df in df_formatted.items():
                 try:
                     shape = getattr(df, "shape", None)
-                    print(f"Formatted {csv_type}: shape={shape}")
+                    logger.debug(
+                        "Formatted DataFrame",
+                        extra={"csv_type": csv_type, "shape": shape}
+                    )
                 except Exception:
                     pass
 
             # Step 4: メイン処理（ジェネレーター定義）
-            print("Running main_process...")
+            logger.debug("Running main_process")
             try:
                 df_result = generator.main_process(df_formatted)
             except DomainError:
                 # 既にDomainErrorの場合はそのまま再raise
                 raise
             except Exception as ex:
-                print("[DEBUG] main_process raised an exception:")
-                print(f"[DEBUG] Exception type: {type(ex).__name__}, message: {ex}")
-                tb = traceback.format_exc()
-                print("[DEBUG] Traceback:\n" + tb)
+                logger.error(
+                    "main_process raised an exception",
+                    extra={
+                        "exception_type": type(ex).__name__,
+                        "message": str(ex),
+                        "traceback": traceback.format_exc()
+                    },
+                    exc_info=True
+                )
                 # DomainErrorに変換して詳細なエラーメッセージを提供
                 raise DomainError(
                     code="REPORT_PROCESSING_ERROR",
@@ -170,7 +189,7 @@ class ReportProcessingService:
                 ) from ex
 
             # Step 5: 帳票日付作成（共通: 整形後データから）
-            print("Making report date...")
+            logger.debug("Making report date")
             report_date = generator.make_report_date(df_formatted)
 
             # Step 6: Excel/PDF を保存し JSON で URL を返す
@@ -180,11 +199,11 @@ class ReportProcessingService:
             # DomainErrorはそのまま再raiseしてFastAPIのエラーハンドラに任せる
             raise
         except Exception as e:  # 予期せぬ例外をDomainErrorに変換
-            print(f"[ERROR] report processing failed: {e}")
-            try:
-                print("[ERROR] Traceback (most recent call last):\n" + traceback.format_exc())
-            except Exception:
-                pass
+            logger.error(
+                "Report processing failed",
+                extra={"error": str(e), "traceback": traceback.format_exc()},
+                exc_info=True
+            )
             
             # DomainErrorとして再raiseし、エラーハンドラでProblemDetails化
             raise DomainError(
