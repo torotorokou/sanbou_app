@@ -64,7 +64,7 @@ class LedgerApiSettings(BaseAppSettings):
     report_artifact_root_dir: Path = Path("/backend/data/report_artifacts")
     report_artifact_url_prefix: str = "/api/report_artifacts"
     report_artifact_url_ttl: int = 900
-    report_artifact_secret: str = ""
+    report_artifact_secret: str = "change-me-in-production"  # デフォルトは insecure (環境変数で上書き必須)
     
     class Config:
         env_file = ".env"
@@ -152,19 +152,7 @@ def load_settings() -> LedgerApiSettings:
     except ValueError:
         report_artifact_url_ttl = 900
     
-    # REPORT_ARTIFACT_SECRET: PDF生成署名用のシークレットキー
-    # 注意: 本番環境では必ず強力なランダム文字列を設定すること
-    report_artifact_secret = os.getenv("REPORT_ARTIFACT_SECRET")
-    if not report_artifact_secret:
-        import logging
-        logger = logging.getLogger(__name__)
-        logger.warning(
-            "REPORT_ARTIFACT_SECRET not set - using insecure default. "
-            "This MUST be set in production!"
-        )
-        report_artifact_secret = "change-me-in-production"
-    
-    return LedgerApiSettings(
+    _settings = LedgerApiSettings(
         stage=stage,
         strict_startup=strict_startup,
         startup_download_enable_raw=startup_download_enable_raw,
@@ -177,8 +165,30 @@ def load_settings() -> LedgerApiSettings:
         report_artifact_root_dir=report_artifact_root_dir,
         report_artifact_url_prefix=report_artifact_url_prefix,
         report_artifact_url_ttl=report_artifact_url_ttl,
-        report_artifact_secret=report_artifact_secret,
+        # report_artifact_secret は環境変数から自動読み込み (Pydantic BaseSettings)
     )
+    
+    # セキュリティチェック: insecure なデフォルト値のまま起動していないか確認
+    if _settings.report_artifact_secret in ("", "change-me-in-production"):
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        if stage in {"stg", "prod"}:
+            # 本番/ステージング環境では ERROR レベル
+            logger.error(
+                "🔴 SECURITY RISK: REPORT_ARTIFACT_SECRET is using insecure default value! "
+                "PDF signature security is compromised. Set a strong random secret immediately!",
+                extra={
+                    "operation": "load_settings",
+                    "stage": stage,
+                    "security_risk": "critical"
+                }
+            )
+        else:
+            # 開発環境では簡易警告
+            print("REPORT_ARTIFACT_SECRET not set - using insecure default. This MUST be set in production!")
+    
+    return _settings
 
 
 settings = load_settings()
