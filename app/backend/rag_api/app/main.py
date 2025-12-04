@@ -28,7 +28,6 @@ from app.api.routers import query, manuals  # ← query.py に router を定義
 # --- .env + secrets 読み込み --------------------------------------------------
 load_dotenv(dotenv_path=CONFIG_ENV)
 _secrets_file = load_env_and_secrets()
-print(f"[DEBUG] secrets loaded from: {_secrets_file}")
 
 # ==========================================
 # 統一ロギング設定の初期化
@@ -75,13 +74,11 @@ register_exception_handlers(app)
 # --- 静的配信: /pdfs ----------------------------------------------------------
 PDF_DIR = Path("/backend/static/pdfs")
 PDF_DIR.mkdir(parents=True, exist_ok=True)
-print(f"[DEBUG] FastAPI公開ディレクトリ: {PDF_DIR}")
 app.mount("/pdfs", StaticFiles(directory=str(PDF_DIR)), name="pdfs")
 
 # （任意）テスト用ディレクトリ /test_pdfs も配信
 TEST_PDF_DIR = Path("/backend/static/test_pdfs")
 TEST_PDF_DIR.mkdir(parents=True, exist_ok=True)
-print(f"[DEBUG] FastAPI公開ディレクトリ: {TEST_PDF_DIR}")
 app.mount("/test_pdfs", StaticFiles(directory=str(TEST_PDF_DIR)), name="test_pdfs")
 
 
