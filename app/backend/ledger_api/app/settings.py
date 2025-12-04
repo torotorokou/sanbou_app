@@ -169,24 +169,45 @@ def load_settings() -> LedgerApiSettings:
     )
     
     # セキュリティチェック: insecure なデフォルト値のまま起動していないか確認
-    if _settings.report_artifact_secret in ("", "change-me-in-production"):
+    secret = _settings.report_artifact_secret
+    is_insecure = secret in ("", "change-me-in-production")
+    is_weak = len(secret) < 32
+    
+    if stage in {"stg", "prod"}:
+        # 本番/ステージング環境では強制チェック（起動を停止）
+        if is_insecure:
+            raise ValueError(
+                "🔴 SECURITY ERROR: REPORT_ARTIFACT_SECRET is using insecure default value!\n"
+                "PDF signature security is compromised.\n"
+                "Generate a strong secret: openssl rand -base64 32\n"
+                f"Set it in: secrets/.env.{stage}.secrets"
+            )
+        if is_weak:
+            raise ValueError(
+                "🔴 SECURITY ERROR: REPORT_ARTIFACT_SECRET must be at least 32 characters!\n"
+                f"Current length: {len(secret)}\n"
+                "Generate a strong secret: openssl rand -base64 32\n"
+                f"Set it in: secrets/.env.{stage}.secrets"
+            )
+        
         import logging
         logger = logging.getLogger(__name__)
-        
-        if stage in {"stg", "prod"}:
-            # 本番/ステージング環境では ERROR レベル
-            logger.error(
-                "🔴 SECURITY RISK: REPORT_ARTIFACT_SECRET is using insecure default value! "
-                "PDF signature security is compromised. Set a strong random secret immediately!",
-                extra={
-                    "operation": "load_settings",
-                    "stage": stage,
-                    "security_risk": "critical"
-                }
+        logger.info(
+            "✅ REPORT_ARTIFACT_SECRET validated successfully",
+            extra={
+                "operation": "load_settings",
+                "stage": stage,
+                "secret_length": len(secret)
+            }
+        )
+    else:
+        # 開発環境では警告のみ
+        if is_insecure or is_weak:
+            print(
+                f"⚠️  WARNING: REPORT_ARTIFACT_SECRET is weak (length: {len(secret)})\n"
+                "   This is OK for development, but MUST be set in production!\n"
+                "   Generate: openssl rand -base64 32"
             )
-        else:
-            # 開発環境では簡易警告
-            print("REPORT_ARTIFACT_SECRET not set - using insecure default. This MUST be set in production!")
     
     return _settings
 
