@@ -48,24 +48,8 @@ class Settings(BaseSettings):
     @staticmethod
     def _build_database_url() -> str:
         """環境変数からDATABASE_URLを構築"""
-        database_url = os.getenv("DATABASE_URL")
-        if database_url:
-            return database_url.strip()
-        
-        # DATABASE_URL が未設定の場合、POSTGRES_* 環境変数から構築
-        user = os.getenv("POSTGRES_USER", "")
-        password = os.getenv("POSTGRES_PASSWORD", "")
-        host = os.getenv("POSTGRES_HOST", "db")
-        port = os.getenv("POSTGRES_PORT", "5432")
-        database = os.getenv("POSTGRES_DB", "")
-        
-        if not user or not password or not database:
-            raise ValueError(
-                "DATABASE_URL is not set and POSTGRES_USER, POSTGRES_PASSWORD, or POSTGRES_DB is missing. "
-                "Please set DATABASE_URL or all required POSTGRES_* environment variables."
-            )
-        
-        return f"postgresql://{user}:{password}@{host}:{port}/{database}"
+        from backend_shared.infra.db.url_builder import build_database_url
+        return build_database_url(driver=None, raise_on_missing=True)
     
     DATABASE_URL: str = _build_database_url.__func__()
     """
