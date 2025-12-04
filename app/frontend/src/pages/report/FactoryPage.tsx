@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { ReportBase, ReportHeader } from '@features/report';
 import { useReportManager } from '@features/report';
+import { UnimplementedModal } from '@features/shared';
 import styles from './ReportPage.module.css';
 
 /**
@@ -22,9 +23,21 @@ import styles from './ReportPage.module.css';
 const FactoryPage: React.FC = () => {
     const reportManager = useReportManager('factory_report2');
     const reportBaseProps = reportManager.getReportBaseProps();
+    const [showUnimplementedModal, setShowUnimplementedModal] = useState(false);
+
+    useEffect(() => {
+        // ページ読み込み時にモーダルを表示
+        setShowUnimplementedModal(true);
+    }, []);
 
     return (
         <div className={styles.pageContainer}>
+            <UnimplementedModal
+                visible={showUnimplementedModal}
+                onClose={() => setShowUnimplementedModal(false)}
+                featureName="工場帳簿"
+                description="工場帳簿機能は現在開発中です。完成まで今しばらくお待ちください。リリース後は、工場別の詳細な在庫管理や生産実績の確認が可能になります。"
+            />
             <ReportHeader
                 reportKey={reportManager.selectedReport}
                 onChangeReportKey={reportManager.changeReport}

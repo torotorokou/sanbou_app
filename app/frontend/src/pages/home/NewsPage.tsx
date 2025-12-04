@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { List, Tag, Typography } from "antd";
+import { UnimplementedModal } from '@features/shared';
 
 const { Title, Paragraph } = Typography;
 
@@ -35,6 +36,12 @@ const initialNotices: Notice[] = [
 
 const NoticeList: React.FC = () => {
   const [notices, setNotices] = useState<Notice[]>(initialNotices);
+  const [showUnimplementedModal, setShowUnimplementedModal] = useState(false);
+
+  useEffect(() => {
+    // ページ読み込み時にモーダルを表示
+    setShowUnimplementedModal(true);
+  }, []);
 
   const markAsRead = (id: number) => {
     setNotices((prev) =>
@@ -44,6 +51,12 @@ const NoticeList: React.FC = () => {
 
   return (
     <div style={{ padding: 24 }}>
+      <UnimplementedModal
+        visible={showUnimplementedModal}
+        onClose={() => setShowUnimplementedModal(false)}
+        featureName="お知らせ"
+        description="お知らせ機能は現在開発中です。完成まで今しばらくお待ちください。リリース後は、システムの更新情報や重要なお知らせをリアルタイムで受け取ることができます。"
+      />
       <Title level={2}>お知らせ一覧</Title>
 
       <List
