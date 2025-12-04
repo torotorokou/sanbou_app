@@ -1,7 +1,9 @@
 ## =============================================================
-## docker-compose.local_demo.yml (デモ環境)
-## - local_dev と完全に独立した環境
-## - ポート・DB・データディレクトリがすべて分離
+## docker-compose.local_demo.yml (ローカルデモ環境 - ENV=local_demo 用)
+## - Makefile 経由で起動: make up ENV=local_demo
+## - 使用する env ファイル: env/.env.common + env/.env.local_demo + secrets/.env.local_demo.secrets
+## - 特徴: local_dev と完全分離、独立したポート・DB・データディレクトリ
+## - backend サービスは標準化された Dockerfile (target: dev) を利用
 ## =============================================================
 services:
   # ===========================================================================
@@ -51,6 +53,7 @@ services:
       - ../app/config:/backend/config
     environment:
       - WATCHFILES_FORCE_POLLING=1
+      - TZ=Asia/Tokyo
     depends_on:
       - db
     networks:
@@ -82,6 +85,7 @@ services:
     environment:
       WATCHFILES_FORCE_POLLING: "1"
       REPORT_ARTIFACT_URL_PREFIX: "/reports/artifacts"
+      TZ: "Asia/Tokyo"
     depends_on:
       - db
     networks:
@@ -112,6 +116,7 @@ services:
       - ../app/config:/backend/config
     environment:
       - WATCHFILES_FORCE_POLLING=1
+      - TZ=Asia/Tokyo
     depends_on:
       - db
     networks:
@@ -136,6 +141,7 @@ services:
       - ../app/backend/backend_shared:/opt/backend_shared:rw
     environment:
       WATCHFILES_FORCE_POLLING: "1"
+      TZ: "Asia/Tokyo"
     depends_on:
       - db
     networks:
@@ -167,6 +173,7 @@ services:
       LOCAL_DATA_DIR: /backend/local_data/master
       RAG_GCS_URI: gs://sanbouapp-dev/rag_api/object_haikibutu/master/
       WATCHFILES_FORCE_POLLING: "1"
+      TZ: "Asia/Tokyo"
     depends_on:
       - db
     networks:
@@ -192,6 +199,7 @@ services:
       - ../app/backend/backend_shared:/opt/backend_shared:rw
     environment:
       MANUAL_FRONTEND_BASE_URL: ${MANUAL_FRONTEND_BASE_URL:-http://localhost:5174}
+      TZ: "Asia/Tokyo"
     networks:
       - app-net
 
@@ -209,7 +217,7 @@ services:
     volumes:
       - ../data/local_demo/postgres:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U myuser -d sanbou_demo"]
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 10s
       timeout: 5s
       retries: 5
