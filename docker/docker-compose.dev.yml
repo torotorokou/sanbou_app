@@ -15,6 +15,7 @@ services:
     env_file:
       - ../env/.env.common
       - ../env/.env.local_dev
+      # - ../secrets/.env.local_dev.secrets
     command: ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
     ports:
       - "${DEV_FRONTEND_PORT:-5173}:5173"
@@ -40,6 +41,7 @@ services:
     env_file:
       - ../env/.env.common
       - ../env/.env.local_dev
+      - ../secrets/.env.local_dev.secrets
     command: >
       uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
       --reload-dir /backend/app
@@ -50,6 +52,7 @@ services:
       - ../app/backend/ai_api/app:/backend/app:rw
       - ../app/backend/backend_shared:/opt/backend_shared:rw
       - ../app/config:/backend/config
+      - ../secrets:/backend/secrets:ro
       # - ~/.config/gcloud:/home/appuser/.config/gcloud
     environment:
       - WATCHFILES_FORCE_POLLING=1
@@ -71,6 +74,7 @@ services:
     env_file:
       - ../env/.env.common
       - ../env/.env.local_dev
+      # - ../secrets/.env.local_dev.secrets
     user: "0:0"
     command: >
       uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
@@ -82,6 +86,7 @@ services:
       - ../app/backend/ledger_api/app:/backend/app:rw
       - ../app/backend/backend_shared:/opt/backend_shared:rw
       - ../app/config:/backend/config
+      # - ../secrets:/backend/secrets:ro
       # - ~/.config/gcloud:/home/appuser/.config/gcloud
     environment:
       WATCHFILES_FORCE_POLLING: "1"
@@ -104,6 +109,7 @@ services:
     env_file:
       - ../env/.env.common
       - ../env/.env.local_dev
+      - ../secrets/.env.local_dev.secrets
     command: >
       uvicorn app.app:app --host 0.0.0.0 --port 8000 --reload
       --reload-dir /backend/app
@@ -115,6 +121,7 @@ services:
       - ../app/backend/core_api/migrations:/backend/migrations:rw
       - ../app/backend/backend_shared:/opt/backend_shared:rw
       - ../app/config:/backend/config
+      - ../secrets:/backend/secrets:ro
       - ~/.config/gcloud:/home/appuser/.config/gcloud
     environment:
       - WATCHFILES_FORCE_POLLING=1
@@ -136,11 +143,13 @@ services:
     env_file:
       - ../env/.env.common
       - ../env/.env.local_dev
+      - ../secrets/.env.local_dev.secrets
     command: ["python", "-m", "app.main"]
     volumes:
       - ../app/backend/plan_worker/app:/backend/app:rw
       - ../app/backend/plan_worker/test:/backend/test:rw
       - ../app/backend/backend_shared:/opt/backend_shared:rw
+      # - ../secrets:/backend/secrets:ro
       # - ~/.config/gcloud:/home/appuser/.config/gcloud
     environment:
       WATCHFILES_FORCE_POLLING: "1"
@@ -163,6 +172,7 @@ services:
     env_file:
       - ../env/.env.common
       - ../env/.env.local_dev
+      - ../secrets/.env.local_dev.secrets
     command: ["bash", "startup.sh"]
     ports:
       - "${DEV_RAG_API_PORT:-8004}:8000"
@@ -170,6 +180,7 @@ services:
       - ../app/backend/rag_api/app:/backend/app:rw
       - ../app/backend/backend_shared:/opt/backend_shared:rw
       - ../app/config:/backend/config
+      - ../secrets:/backend/secrets:ro
       # GCS からダウンロードしたデータを書き込みたいので dev では read-write にする
       - ../app/backend/rag_api/local_data/master:/backend/local_data/master
       - ~/.config/gcloud:/home/appuser/.config/gcloud
@@ -197,12 +208,14 @@ services:
     env_file:
       - ../env/.env.common
       - ../env/.env.local_dev
+      # - ../secrets/.env.local_dev.secrets
     command: ["bash", "startup.sh"]
     ports:
       - "${DEV_MANUAL_API_PORT:-8005}:8000"
     volumes:
       - ../app/backend/manual_api/app:/backend/app:rw
       - ../app/backend/backend_shared:/opt/backend_shared:rw
+      - ../secrets:/backend/secrets:ro
       - ~/.config/gcloud:/home/appuser/.config/gcloud
     environment:
       MANUAL_FRONTEND_BASE_URL: ${MANUAL_FRONTEND_BASE_URL:-http://localhost:5173}
@@ -218,6 +231,7 @@ services:
     env_file:
       - ../env/.env.common
       - ../env/.env.local_dev
+      # - ../secrets/.env.local_dev.secrets
     ports:
       - "${DEV_DB_PORT:-5432}:5432"
     volumes:
