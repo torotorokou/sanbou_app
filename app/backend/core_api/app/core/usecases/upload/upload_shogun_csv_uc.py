@@ -79,11 +79,12 @@ class UploadShogunCsvUseCase:
         
         処理フロー:
           1. ファイルタイプバリデーション（拡張子、MIME type）
-          2. 重複チェック + log.upload_file への登録（pending状態）
+          2. ファイルサイズバリデーション（10MB以下）
+          3. 重複チェック + log.upload_file への登録（pending状態）
              - ファイルハッシュ計算により、同一ファイルの連続アップロードを検知
              - 3分以内の重複は409エラーで拒否（UX向上）
-          3. ファイル内容をメモリに読み込み、バックグラウンドタスクに登録
-          4. 即座に受付完了レスポンスを返す（upload_file_ids を含む）
+          4. ファイル内容をメモリに読み込み、バックグラウンドタスクに登録
+          5. 即座に受付完了レスポンスを返す（upload_file_ids を含む）
         
         バックグラウンド処理:
           - CSV読込 → バリデーション → フォーマット → DB保存（raw/stg層）
@@ -130,7 +131,29 @@ class UploadShogunCsvUseCase:
         if validation_error:
             return validation_error
         
-        # 2. 重複チェック＋log.upload_fileへの登録（pending状態）
+        # 2. ファイルサイズバリデーション（10MB以下）
+        MAX_FILE_SIZE_MB = 10
+        MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024
+        oversized_files = []
+        for csv_type, uf in uploaded_files.items():
+            # UploadFile.size は利用可能な場合のみ存在（Content-Length ヘッダーから取得）
+            # 存在しない場合は実際に読み込んでサイズを確認
+            if hasattr(uf, 'size') and uf.size is not None:
+                if uf.size > MAX_FILE_SIZE_BYTES:
+                    oversized_files.append(f"{csv_type} ({uf.size / 1024 / 1024:.1f}MB)")
+        
+        if oversized_files:
+            logger.warning(
+                f"CSV upload rejected: file size exceeds {MAX_FILE_SIZE_MB}MB limit",
+                extra={"oversized_files": oversized_files}
+            )
+            return ErrorApiResponse(
+                code="FILE_TOO_LARGE",
+                detail=f"ファイルサイズが制限({MAX_FILE_SIZE_MB}MB)を超えています: {', '.join(oversized_files)}",
+                status_code=413,
+            )
+        
+        # 3. 重複チェック＋log.upload_fileへの登録（pending状態）
         upload_file_ids: Dict[str, int] = {}
         duplicate_files: Dict[str, Dict[str, Any]] = {}
         recent_duplicate_files: Dict[str, Dict[str, Any]] = {}

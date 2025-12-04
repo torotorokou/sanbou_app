@@ -10,7 +10,7 @@ import zipfile
 from typing import Any, List, Tuple
 
 import PyPDF2
-from fastapi import APIRouter, Body, Request, Depends
+from fastapi import APIRouter, Body, Request, Depends, HTTPException
 from fastapi.responses import FileResponse, StreamingResponse, JSONResponse
 from pydantic import BaseModel
 
@@ -313,7 +313,20 @@ def get_question_options():
 # --- 環境デバッグ（キー存在確認・マスク表示） ---
 @router.get("/debug-keys", tags=["debug"])
 def debug_keys() -> JSONResponse:
+    """
+    デバッグ用エンドポイント（開発環境のみ）
+    本番環境・ステージング環境では無効化されます。
+    """
     import os
+    stage = os.environ.get("STAGE", "").lower()
+    
+    # 本番・ステージング環境では404を返す
+    if stage in ("prod", "stg"):
+        raise HTTPException(
+            status_code=404,
+            detail="Not found"
+        )
+    
     k = os.environ.get("OPENAI_API_KEY")
     masked = f"***{k[-4:]}" if k and len(k) > 8 else ("set" if k else "missing")
     payload = {
