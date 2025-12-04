@@ -94,6 +94,11 @@ export const client = axios.create({
 client.interceptors.response.use(
     (response) => response,
     (error: AxiosError) => {
+        // リクエストキャンセルの場合はエラー通知を表示しない
+        if (axios.isCancel(error) || error.code === 'ERR_CANCELED') {
+            throw error;
+        }
+        
         const apiError = ApiError.fromAxiosError(error);
         
         // プロダクション環境でグローバルエラー通知を表示
@@ -179,6 +184,10 @@ export async function apiGet<T>(url: string, config?: AxiosRequestConfig): Promi
         }
         return d as unknown as T;
     } catch (error) {
+        // キャンセルエラーはそのまま throw（通知を表示しない）
+        if (axios.isCancel(error) || (error as AxiosError).code === 'ERR_CANCELED') {
+            throw error;
+        }
         // ApiError はそのまま throw
         if (error instanceof ApiError) throw error;
         // その他のエラーは変換
@@ -214,6 +223,10 @@ export async function apiPost<T, B = unknown>(
         }
         return d as unknown as T;
     } catch (error) {
+        // キャンセルエラーはそのまま throw（通知を表示しない）
+        if (axios.isCancel(error) || (error as AxiosError).code === 'ERR_CANCELED') {
+            throw error;
+        }
         // ApiError はそのまま throw
         if (error instanceof ApiError) throw error;
         // その他のエラーは変換

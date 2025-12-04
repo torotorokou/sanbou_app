@@ -2,7 +2,7 @@
  * 将軍マニュアル一覧ページ
  * FSD: ページ層はレイアウト・検索・状態管理を統合
  */
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Anchor,
   Badge,
@@ -19,6 +19,7 @@ import { useResponsive } from '@/shared'; // responsive: flags
 import { useShogunCatalog } from '@features/manual';
 import { SectionBlock } from '@features/manual/ui/components/SectionBlock';
 import { ManualModal } from '@features/manual/ui/components/ShogunModal';
+import { UnimplementedModal } from '@features/shared';
 import type { ManualItem } from '@features/manual';
 import styles from './ShogunList.module.css';
 
@@ -29,11 +30,17 @@ const ShogunManualListPage: React.FC = () => {
   const [query, setQuery] = useState('');
   const [activeItem, setActiveItem] = useState<ManualItem | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [showUnimplementedModal, setShowUnimplementedModal] = useState(false);
   const contentScrollRef = useRef<HTMLDivElement | null>(null);
   
   const { sections, loading } = useShogunCatalog();
   // responsive: useResponsive(flags)
   const { flags } = useResponsive();
+
+  useEffect(() => {
+    // ページ読み込み時にモーダルを表示
+    setShowUnimplementedModal(true);
+  }, []);
 
   // responsive: pickByDevice helper
   const pickByDevice = <T,>(mobile: T, tablet: T, laptop: T, desktop: T): T => {
@@ -182,6 +189,14 @@ const ShogunManualListPage: React.FC = () => {
         paneFrameClassName={styles.paneFrame}
         paneImgClassName={styles.paneImg}
         paneVideoClassName={styles.paneVideo}
+      />
+
+      {/* 未実装モーダル */}
+      <UnimplementedModal
+        visible={showUnimplementedModal}
+        onClose={() => setShowUnimplementedModal(false)}
+        featureName="環境将軍マニュアル"
+        description="環境将軍マニュアル機能は現在開発中です。完成まで今しばらくお待ちください。リリース後は、環境将軍システムの詳細な操作方法や業務フローをご確認いただけます。"
       />
     </Layout>
   );
