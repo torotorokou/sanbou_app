@@ -46,9 +46,15 @@ const TestPage = lazy(() => import('@/pages/utils').then(m => ({ default: m.Test
 // Settings pages - using public API
 const SettingsPage = lazy(() => import('@/pages/settings').then(m => ({ default: m.SettingsPage })));
 
+// Error pages
+const NotFoundPage = lazy(() => import('@/pages/error/NotFoundPage'));
+
 const AppRoutes: React.FC = () => {
     const location = useLocation();
     const state = location.state as { backgroundLocation?: Location } | undefined;
+    
+    // 本番環境ではテストページへのアクセスを404に
+    const isProduction = import.meta.env.MODE === 'production';
 
     return (
     <>
@@ -57,8 +63,8 @@ const AppRoutes: React.FC = () => {
         {/* ポータル(トップ) - 最初に定義して優先度を高める */}
         <Route path={ROUTER_PATHS.PORTAL} element={<PortalPage />} />
         
-        {/* テスト用ルート */}
-        <Route path='/test' element={<TestPage />} />
+        {/* テスト用ルート - 開発環境のみ */}
+        {!isProduction && <Route path='/test' element={<TestPage />} />}
 
         {/* ダッシュボード */}
         <Route path={ROUTER_PATHS.DASHBOARD_UKEIRE} element={<InboundForecastDashboardPage />} />
@@ -111,7 +117,7 @@ const AppRoutes: React.FC = () => {
     {/* お知らせ */}
     <Route path={ROUTER_PATHS.NEWS} element={<NewsPage />} />
         {/* その他/404 */}
-                <Route path='*' element={<div>ページが見つかりません</div>} />
+                <Route path='*' element={<NotFoundPage />} />
         </Routes>
     </Suspense>
 
