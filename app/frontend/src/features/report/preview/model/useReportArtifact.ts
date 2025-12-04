@@ -166,7 +166,7 @@ export const useReportArtifact = () => {
 
                 // status フィールドが 'success' または artifact が存在する場合は成功とみなす
                 if (json.status === 'success' || (json.artifact && (json.artifact.excel_download_url || json.artifact.pdf_preview_url))) {
-                    notifySuccess('レポート作成成功', 'Excel/PDF の URL を取得しました。');
+                    notifySuccess('レポート作成成功', '帳簿の生成に成功しました。');
                 } else if (json.status && json.status !== 'success') {
                     // status が明示的に success 以外の場合のみ情報通知
                     notifyInfo('レポート情報', 'レスポンスを確認してください。');
