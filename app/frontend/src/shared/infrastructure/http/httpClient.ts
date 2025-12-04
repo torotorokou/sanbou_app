@@ -4,6 +4,7 @@
 import axios, { type AxiosRequestConfig, type AxiosError } from 'axios';
 import type { ApiResponse } from '@shared/types';
 import type { ProblemDetails } from '@features/notification/domain/types/contract';
+import { message } from 'antd';
 
 /**
  * ApiError クラス（RFC 7807 ProblemDetails 準拠）
@@ -89,11 +90,25 @@ export const client = axios.create({
     timeout: 60000, // 60秒タイムアウト
 });
 
-// レスポンスインターセプター: エラーを ApiError に変換
+// レスポンスインターセプター: エラーを ApiError に変換 + グローバルエラー通知
 client.interceptors.response.use(
     (response) => response,
     (error: AxiosError) => {
-        throw ApiError.fromAxiosError(error);
+        const apiError = ApiError.fromAxiosError(error);
+        
+        // プロダクション環境でグローバルエラー通知を表示
+        // 500系エラーと401/403認証エラーのみ通知（400系は各コンポーネントで処理）
+        if (apiError.status >= 500 || apiError.status === 401 || apiError.status === 403) {
+            const errorMessage = 
+                apiError.status === 401 ? '認証エラー: ログインしてください' :
+                apiError.status === 403 ? 'アクセス権限がありません' :
+                apiError.status >= 500 ? `サーバーエラー: ${apiError.userMessage}` :
+                apiError.userMessage;
+            
+            message.error(errorMessage, 5); // 5秒間表示
+        }
+        
+        throw apiError;
     }
 );
 

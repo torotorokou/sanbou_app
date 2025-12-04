@@ -15,7 +15,7 @@ from fastapi import Depends
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from backend_shared.application.logging import get_module_logger
+from backend_shared.application.logging import get_module_logger, create_log_context
 from app.deps import get_db
 from app.infra.adapters.upload.shogun_csv_repository import ShogunCsvRepository
 from app.infra.adapters.upload.raw_data_repository import RawDataRepository
@@ -523,27 +523,88 @@ def get_auth_provider() -> IAuthProvider:
     """
     認証プロバイダを取得
     
-    環境変数 AUTH_MODE に応じて適切なプロバイダを返します。
-    - "dev": DevAuthProvider（開発用固定ユーザー）
-    - "iap": IapAuthProvider（Google Cloud IAP）
-    - デフォルト: DevAuthProvider
+    環境変数 IAP_ENABLED に応じて適切なプロバイダを返します。
+    - IAP_ENABLED=true: IapAuthProvider（Google Cloud IAP）
+    - IAP_ENABLED=false: DevAuthProvider（開発用固定ユーザー）
+    
+    本番環境（STAGE=prod）では以下のバリデーションを実施：
+    - IAP_ENABLED=true 必須
+    - IAP_AUDIENCE 設定必須
+    - 設定不備の場合は起動時にエラー
     
     Returns:
         IAuthProvider: 認証プロバイダ実装
     
+    Raises:
+        ValueError: 本番環境でIAP設定が不完全な場合
+    
     Note:
-        本番環境では必ず AUTH_MODE=iap を設定してください。
-        開発・ステージング環境では AUTH_MODE=dev を使用します。
+        本番環境では必ず IAP_ENABLED=true かつ IAP_AUDIENCE を設定してください。
+        開発・ステージング環境では IAP_ENABLED=false を使用できます。
     """
-    auth_mode = os.getenv("AUTH_MODE", "dev").lower()
+    from app.config.settings import get_settings
+    settings = get_settings()
     
-    if auth_mode == "iap":
-        logger.info("Using IapAuthProvider (Google Cloud IAP)")
-        return IapAuthProvider()
+    # 本番環境でのIAP必須チェック
+    if settings.STAGE == "prod":
+        if not settings.IAP_ENABLED:
+            raise ValueError(
+                "🔴 SECURITY ERROR: IAP_ENABLED must be 'true' in production! "
+                "Set IAP_ENABLED=true in secrets/.env.vm_prod.secrets"
+            )
+        if not settings.IAP_AUDIENCE:
+            raise ValueError(
+                "🔴 SECURITY ERROR: IAP_AUDIENCE must be set in production! "
+                "Get the audience value from GCP Console:\n"
+                "  1. Go to: Security > Identity-Aware Proxy\n"
+                "  2. Find your backend service\n"
+                "  3. Copy the audience value (format: /projects/PROJECT_NUMBER/global/backendServices/SERVICE_ID)\n"
+                "  4. Set IAP_AUDIENCE in secrets/.env.vm_prod.secrets"
+            )
     
-    # デフォルトは開発用
-    logger.info("Using DevAuthProvider (development mode)")
-    return DevAuthProvider()
+    if settings.IAP_ENABLED:
+        # ステージング環境でもIAP_AUDIENCE必須
+        if not settings.IAP_AUDIENCE:
+            logger.error(
+                "IAP_ENABLED=true but IAP_AUDIENCE is not set",
+                extra=create_log_context(
+                    operation="get_auth_provider",
+                    stage=settings.STAGE
+                )
+            )
+            raise ValueError(
+                "IAP_ENABLED=true requires IAP_AUDIENCE to be set. "
+                "Get it from GCP Console: "
+                "Security > Identity-Aware Proxy > Backend Service"
+            )
+        
+        logger.info(
+            "🔒 Using IapAuthProvider (Google Cloud IAP)",
+            extra=create_log_context(
+                operation="get_auth_provider",
+                stage=settings.STAGE,
+                allowed_domain=settings.ALLOWED_EMAIL_DOMAIN
+            )
+        )
+        return IapAuthProvider(
+            allowed_domain=settings.ALLOWED_EMAIL_DOMAIN,
+            iap_audience=settings.IAP_AUDIENCE
+        )
+    else:
+        # 開発環境のみ許可
+        if settings.STAGE == "prod":
+            # 上記でチェック済みだが、念のため
+            raise ValueError("DevAuthProvider cannot be used in production")
+        
+        logger.warning(
+            "🔓 Using DevAuthProvider - IAP is disabled. "
+            "This MUST be enabled in production!",
+            extra=create_log_context(
+                operation="get_auth_provider",
+                stage=settings.STAGE
+            )
+        )
+        return DevAuthProvider()
 
 
 def get_get_current_user_usecase(

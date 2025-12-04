@@ -152,6 +152,35 @@ class CoreApiSettings(BaseAppSettings):
     """
     
     # ========================================
+    # 認証設定（IAP: Identity-Aware Proxy）
+    # ========================================
+    
+    IAP_ENABLED: bool = os.getenv("IAP_ENABLED", "false").lower() == "true"
+    """
+    Google Cloud IAP認証の有効/無効
+    
+    本番環境では必ずTrueに設定してください。
+    環境変数 IAP_ENABLED=true で有効化
+    """
+    
+    IAP_AUDIENCE: str | None = os.getenv("IAP_AUDIENCE")
+    """
+    Google Cloud IAP オーディエンス
+    
+    GCP Console > Security > Identity-Aware Proxy から取得
+    形式: /projects/PROJECT_NUMBER/global/backendServices/SERVICE_ID
+    本番環境では必須
+    """
+    
+    ALLOWED_EMAIL_DOMAIN: str = os.getenv("ALLOWED_EMAIL_DOMAIN", "example.com")
+    """
+    許可するメールドメイン
+    
+    IAP認証で許可するGoogleアカウントのドメイン
+    例: "yourcompany.com"
+    """
+    
+    # ========================================
     # Pydantic設定
     # ========================================
     

@@ -366,6 +366,7 @@ class BaseReportUseCase(ABC):
         return JSONResponse(
             status_code=200,
             content={
+                "status": "success",
                 "message": f"{self.report_name}の生成が完了しました",
                 "report_key": self.report_key,
                 "report_date": report_date.isoformat(),
