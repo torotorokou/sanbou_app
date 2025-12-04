@@ -34,16 +34,16 @@ async def answer_api(
     dummy_service=Depends(get_dummy_response_service),
 ) -> JSONResponse:
     try:
-        print("[DEBUG][/test-answer] request:", req.dict())
+        logger.debug("Test answer request", extra={"request": req.dict()})
         result = dummy_service.generate_dummy_response(req.query, req.category)
-        print("[DEBUG][/test-answer] result keys:", list(result.keys()))
+        logger.debug("Test answer result", extra={"result_keys": list(result.keys())})
         return SuccessApiResponse(
             code="S200",
             detail="ダミーAI回答生成成功",
             result=result,
         ).to_json_response()
     except Exception as e:
-        print("[DEBUG][/test-answer] ERROR:", repr(e))
+        logger.error("Test answer exception", extra={"error": repr(e)}, exc_info=True)
         return api_response(
             status_code=500,
             status_str="error",
@@ -61,23 +61,23 @@ async def generate_answer(
 ) -> JSONResponse:
     logger.info("Generate answer request", extra={"query": request.query, "category": request.category, "tags": request.tags})
     try:
-        print(
-            "[DEBUG][/generate-answer] request:",
-            {
+        logger.debug(
+            "Generate answer request details",
+            extra={
                 "query": request.query,
                 "category": request.category,
-                "tags": request.tags,
-            },
+                "tags": request.tags
+            }
         )
         result = ai_service.generate_ai_response(request.query, request.category, request.tags)
-        print("[DEBUG][/generate-answer] result keys:", list(result.keys()))
+        logger.debug("Generate answer result", extra={"result_keys": list(result.keys())})
         
         # エラーコードの存在をチェック
         if "error_code" in result:
             error_code = result.get("error_code", "OPENAI_ERROR")
             error_detail = result.get("error_detail", "AI回答の生成に失敗しました。")
             logger.error("Generate answer failed", extra={"error_code": error_code, "error_detail": error_detail})
-            print(f"[DEBUG][/generate-answer] error detected: code={error_code}")
+            logger.debug("Error detected in result", extra={"error_code": error_code})
             
             # エラーコードに応じたヒントメッセージ
             if error_code == "OPENAI_INSUFFICIENT_QUOTA":
@@ -95,8 +95,13 @@ async def generate_answer(
             ).to_json_response()
         
         # 正常系の処理
-        print("[DEBUG][/generate-answer] pdf_url:", result.get("pdf_url"))
-        print("[DEBUG][/generate-answer] sources count:", len(result.get("sources", [])))
+        logger.debug(
+            "Generate answer success details",
+            extra={
+                "pdf_url": result.get("pdf_url"),
+                "sources_count": len(result.get("sources", []))
+            }
+        )
 
         answer_ok = bool(result.get("answer"))
         pdf_ok = bool(result.get("pdf_url"))
@@ -130,7 +135,6 @@ async def generate_answer(
     except ValueError as e:
         # 予期したValueErrorはanswerが空のケースとして扱い、ErrorApiResponse
         logger.error("Generate answer ValueError", exc_info=True, extra={"error": str(e)})
-        print("[DEBUG][/generate-answer] ValueError:", repr(e))
         return ErrorApiResponse(
             code="E400",
             detail="回答生成に失敗しました。",
@@ -140,7 +144,6 @@ async def generate_answer(
         ).to_json_response()
     except Exception as e:
         logger.error("Generate answer exception", exc_info=True, extra={"error": str(e)})
-        print("[DEBUG][/generate-answer] ERROR:", repr(e))
         return api_response(
             status_code=500,
             status_str="error",
@@ -160,7 +163,10 @@ async def download_report(request: Request, pages: list = Body(..., embed=True))
         from app.shared.file_utils import PDF_PATH
 
         pdf_path = str(PDF_PATH)
-        print("[DEBUG][/download-report] pages:", pages, "pdf_path:", pdf_path)
+        logger.debug(
+            "Download report request",
+            extra={"pages": pages, "pdf_path": pdf_path}
+        )
         if not pages or not isinstance(pages, list):
             return api_response(
                 status_code=422,
@@ -190,7 +196,7 @@ async def download_report(request: Request, pages: list = Body(..., embed=True))
                     writer.write(tmpf)
                     tmpf.flush()
                     filename = tmpf.name
-            print("[DEBUG][/download-report] single page generated:", filename)
+            logger.debug("Single page generated", extra={"filename": filename})
             headers = {"Content-Disposition": f"inline; filename=page_{page_num}.pdf"}
             return FileResponse(filename, media_type="application/pdf", headers=headers)
 
@@ -214,11 +220,11 @@ async def download_report(request: Request, pages: list = Body(..., embed=True))
                     pdf_bytes.close()
                     os.unlink(pdf_bytes.name)
         buf.flush()
-        print("[DEBUG][/download-report] zip generated:", buf.name)
+        logger.debug("ZIP generated", extra={"zip_path": buf.name})
         headers = {"Content-Disposition": "attachment; filename=pages.zip"}
         return FileResponse(buf.name, media_type="application/zip", headers=headers)
     except Exception as e:
-        print("[DEBUG][/download-report] ERROR:", repr(e))
+        logger.error("Download report exception", extra={"error": repr(e)}, exc_info=True)
         return api_response(
             status_code=500,
             status_str="error",
@@ -238,7 +244,10 @@ def pdf_page(page_num: str):
     from app.shared.file_utils import PDF_PATH
 
     pdf_path = str(PDF_PATH)
-    print("[DEBUG][/pdf-page] page_num:", page_num, "pdf_path:", pdf_path)
+    logger.debug(
+        "PDF page request",
+        extra={"page_num": page_num, "pdf_path": pdf_path}
+    )
     if "-" in page_num:
         start, end = page_num.split("-")
         start = int(start)
