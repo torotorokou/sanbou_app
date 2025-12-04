@@ -11,8 +11,8 @@ from backend_shared.application.logging import setup_logging
 from backend_shared.infra.frameworks.logging_utils import setup_uvicorn_access_filter
 from backend_shared.infra.adapters.middleware import RequestIdMiddleware
 from backend_shared.infra.frameworks.cors_config import setup_cors
-from backend_shared.config.env_utils import is_debug_mode
 
+from app.config.settings import settings
 from app.api.routers.manuals import router as manuals_router
 from backend_shared.core.domain.exceptions import (
     DomainException,
@@ -35,23 +35,20 @@ setup_logging()
 from backend_shared.application.logging import get_module_logger
 logger = get_module_logger(__name__)
 
-# DEBUG モード判定（共通ユーティリティ使用）
-DEBUG = is_debug_mode()
-
 app = FastAPI(
-    title=os.getenv("API_TITLE", "MANUAL_API"),
-    version=os.getenv("API_VERSION", "1.0.0"),
+    title=settings.API_TITLE,
+    version=settings.API_VERSION,
     # DIP: manual_apiは/core_apiの存在を知らない。内部論理パスで公開。
-    root_path=os.getenv("API_ROOT_PATH", ""),
+    root_path=settings.API_ROOT_PATH,
     # 本番環境（DEBUG=False）では /docs と /redoc を無効化
-    docs_url="/docs" if DEBUG else None,
-    redoc_url="/redoc" if DEBUG else None,
-    openapi_url="/openapi.json" if DEBUG else None,
+    docs_url="/docs" if settings.DEBUG else None,
+    redoc_url="/redoc" if settings.DEBUG else None,
+    openapi_url="/openapi.json" if settings.DEBUG else None,
 )
 
 logger.info(
-    f"Manual API initialized (DEBUG={DEBUG}, docs_enabled={DEBUG})",
-    extra={"operation": "app_init", "debug": DEBUG}
+    f"Manual API initialized (DEBUG={settings.DEBUG}, docs_enabled={settings.DEBUG})",
+    extra={"operation": "app_init", "debug": settings.DEBUG}
 )
 
 # --- ミドルウェア: Request ID追跡 ----------------------------------------------
