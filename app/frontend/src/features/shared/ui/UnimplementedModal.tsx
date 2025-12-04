@@ -1,6 +1,7 @@
 import React from 'react';
 import { Modal, Typography } from 'antd';
 import { ExclamationCircleOutlined } from '@ant-design/icons';
+import { useNavigate } from 'react-router-dom';
 
 const { Title, Paragraph } = Typography;
 
@@ -17,6 +18,7 @@ interface UnimplementedModalProps {
  * 🎯 目的：
  * - まだ実装されていない機能に対してユーザーに通知
  * - 統一されたUIで未実装状態を表示
+ * - 了解ボタンでポータルページに自動遷移
  * 
  * 📝 使用例：
  * ```tsx
@@ -34,17 +36,26 @@ const UnimplementedModal: React.FC<UnimplementedModalProps> = ({
     featureName,
     description = 'この機能は現在開発中です。近日中にリリース予定ですので、今しばらくお待ちください。',
 }) => {
+    const navigate = useNavigate();
+
+    const handleOk = () => {
+        onClose();
+        navigate('/portal');
+    };
+
     return (
         <Modal
             open={visible}
-            onCancel={onClose}
-            onOk={onClose}
+            onCancel={null}
+            closable={false}
+            maskClosable={false}
+            keyboard={false}
             centered
             width={500}
             footer={[
                 <button
                     key="ok"
-                    onClick={onClose}
+                    onClick={handleOk}
                     style={{
                         padding: '8px 24px',
                         backgroundColor: '#1890ff',
