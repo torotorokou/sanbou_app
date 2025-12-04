@@ -94,9 +94,14 @@ fi
 if [[ "$SKIP_GCS" == "1" ]]; then
   echo "⏩ [GCS] スキップ指定のためダウンロード無しで続行します。"
 else
-  if [ -n "$(ls -A "$TARGET_DIR" 2>/dev/null || true)" ]; then
-    echo "⏩ [1/2] Local data already exists. Skipping GCS download."
+  # 実際のデータファイル（CSV/JSON/Parquet等）が存在するかチェック
+  # readme.md や .gitkeep などのドキュメントファイルのみの場合はダウンロードを実行
+  DATA_FILE_COUNT=$(find "$TARGET_DIR" -type f \( -name "*.csv" -o -name "*.json" -o -name "*.parquet" -o -name "*.jsonl" \) 2>/dev/null | wc -l)
+  
+  if [ "$DATA_FILE_COUNT" -gt 0 ]; then
+    echo "⏩ [1/2] Local data already exists ($DATA_FILE_COUNT data files found). Skipping GCS download."
   else
+    echo "📥 [1/2] No data files found in $TARGET_DIR. Downloading from GCS..."
     if ! download_gcs_data "$GCS_BUCKET_NAME" "$GCS_DATA_PREFIX" "$TARGET_DIR" "$RAG_GCS_URI"; then
       echo "⚠️  ダウンロード失敗しましたが起動は継続します。" >&2
       echo "ヒント:" >&2
