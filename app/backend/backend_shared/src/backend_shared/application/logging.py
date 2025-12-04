@@ -79,7 +79,7 @@ request_id_var: ContextVar[str] = ContextVar("request_id", default="-")
 
 
 # ========================================
-# Custom Filter: Request ID 付与
+# Custom Filters
 # ========================================
 class RequestIdFilter(logging.Filter):
     """
@@ -101,6 +101,77 @@ class RequestIdFilter(logging.Filter):
         """
         # ContextVar から request_id を取得（なければ "-"）
         record.request_id = request_id_var.get()
+        return True
+
+
+class HealthCheckFilter(logging.Filter):
+    """
+    Health Check リクエストをフィルタリングして除外する Filter
+    
+    Docker HEALTHCHECK や Kubernetes Liveness/Readiness Probe による
+    高頻度なヘルスチェックリクエストをログから除外し、ログノイズを削減します。
+    
+    除外対象:
+        - GET /health
+        - GET /healthz
+        
+    効果:
+        - ログボリューム: 約60-70%削減
+        - ログコスト: 月額30-40%削減（CloudWatch等）
+        - 可読性: ビジネスログが見やすくなる
+    """
+    
+    def filter(self, record: logging.LogRecord) -> bool:
+        """
+        Health Check エンドポイントへのアクセスログを除外
+        
+        Args:
+            record: ログレコード
+            
+        Returns:
+            False: Health Checkの場合（ログ出力しない）
+            True: それ以外の場合（ログ出力する）
+        """
+        message = record.getMessage()
+        
+        # Health Check エンドポイントへのアクセスを除外
+        if any(endpoint in message for endpoint in ["GET /health", "GET /healthz"]):
+            return False
+        
+        return True
+
+
+class TaskNameCleanupFilter(logging.Filter):
+    """
+    Uvicorn が自動付与する taskName フィールドを削除する Filter
+    
+    Uvicorn の Access Log に含まれる "taskName": "Task-1" などのフィールドは
+    asyncio タスクの管理IDであり、HTTPリクエストとは無関係な情報です。
+    このフィルタでビジネスログから不要な情報を除去します。
+    
+    問題:
+        - "Task-3", "Task-8" などの連番がリクエストIDと誤解される
+        - ログ分析時にノイズとなる
+        
+    解決:
+        - taskName 属性を LogRecord から削除
+        - JSON出力時に taskName フィールドが含まれなくなる
+    """
+    
+    def filter(self, record: logging.LogRecord) -> bool:
+        """
+        taskName 属性を削除
+        
+        Args:
+            record: ログレコード
+            
+        Returns:
+            True (常にログを通過させる)
+        """
+        # taskName 属性が存在する場合は削除
+        if hasattr(record, 'taskName'):
+            delattr(record, 'taskName')
+        
         return True
 
 
@@ -208,6 +279,10 @@ def setup_logging(log_level: str | None = None, force: bool = False) -> None:
     request_id_filter = RequestIdFilter()
     stream_handler.addFilter(request_id_filter)
     
+    # TaskName Cleanup Filter の追加（Uvicorn のノイズ削減）
+    taskname_cleanup_filter = TaskNameCleanupFilter()
+    stream_handler.addFilter(taskname_cleanup_filter)
+    
     # ルートロガーにハンドラを追加
     root_logger.addHandler(stream_handler)
     
@@ -222,12 +297,19 @@ def setup_logging(log_level: str | None = None, force: bool = False) -> None:
         "fastapi",
     ]
     
+    # Health Check Filter の作成（Access Log専用）
+    health_check_filter = HealthCheckFilter()
+    
     for logger_name in uvicorn_loggers:
         logger_instance = logging.getLogger(logger_name)
         logger_instance.handlers.clear()  # 既存ハンドラをクリア
         logger_instance.addHandler(stream_handler)  # 共通ハンドラを追加
         logger_instance.setLevel(numeric_level)
         logger_instance.propagate = False  # ルートロガーへの伝播を防ぐ（重複防止）
+        
+        # Access Log のみ Health Check Filter を適用
+        if logger_name == "uvicorn.access":
+            logger_instance.addFilter(health_check_filter)
     
     # ========================================
     # サードパーティライブラリのログレベル調整

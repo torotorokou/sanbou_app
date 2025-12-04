@@ -18,7 +18,7 @@ const styleTag = document.createElement('style');
 styleTag.innerHTML = cssVars;
 document.head.appendChild(styleTag);
 
-// ③ Ant DesignのConfigProviderにも customTokens を渡しておく（推奨）
+// ③ Ant DesignのConfigProviderにも customTokens を渡しておく(推奨)
 ReactDOM.createRoot(document.getElementById('root')!).render(
     <React.StrictMode>
         <ThemeProvider>
