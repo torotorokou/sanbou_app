@@ -6,6 +6,9 @@ from io import BytesIO
 from typing import Any, Dict, Optional
 
 import pandas as pd
+from backend_shared.application.logging import get_module_logger
+
+logger = get_module_logger(__name__)
 
 # CSV処理サービス（application/usecases/csvから参照）
 from app.infra.adapters.csv import CsvFormatterService, CsvValidatorService
@@ -39,10 +42,10 @@ class BaseReportGenerator(ABC):
         self._formatter = CsvFormatterService()
 
     def print_start_report_key(self):
-        print(f"[DEBUG] report_key: {self.report_key}開始")
+        logger.debug(f"Starting report generation", extra={"report_key": self.report_key})
 
     def print_finish_report_key(self):
-        print(f"[DEBUG] report_key: {self.report_key}終了")
+        logger.debug(f"Finished report generation", extra={"report_key": self.report_key})
 
     def preprocess(self, report_key: Optional[str] = None):
         if report_key is None:
@@ -50,7 +53,10 @@ class BaseReportGenerator(ABC):
         required = self.config_loader_report.get_required_files(report_key)
         optional = self.config_loader_report.get_optional_files(report_key)
         check_csv_files(self.files, required, optional)
-        print(f"[INFO] 必須ファイルチェックOK: {required} がすべて揃っています。")
+        logger.info(
+            "Required file check passed",
+            extra={"required_files": required}
+        )
         return self.files
 
     # --- 新インターフェース: validate / format / main_process ---
@@ -63,7 +69,7 @@ class BaseReportGenerator(ABC):
         try:
             return self._validator.validate(dfs, file_inputs)
         except Exception as e:
-            print(f"[ERROR] validate failed: {e}")
+            logger.error("Validation failed", extra={"error": str(e)}, exc_info=True)
             raise
 
     def format(self, dfs: Dict[str, Any]) -> Dict[str, Any]:
@@ -71,7 +77,7 @@ class BaseReportGenerator(ABC):
         try:
             return self._formatter.format(dfs)
         except Exception as e:
-            print(f"[ERROR] format failed: {e}")
+            logger.error("Formatting failed", extra={"error": str(e)}, exc_info=True)
             raise
 
     def make_report_date(self, df_formatted: Dict[str, Any]) -> str:

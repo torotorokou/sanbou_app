@@ -1,7 +1,5 @@
 import os
-from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
-from fastapi.middleware.cors import CORSMiddleware
+from fastapi import FastAPI
 
 # ==========================================
 # 統一ロギング設定のインポート（backend_shared）
@@ -9,10 +7,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from backend_shared.application.logging import setup_logging, get_module_logger
 from backend_shared.infra.frameworks.logging_utils import setup_uvicorn_access_filter
 from backend_shared.infra.adapters.middleware import RequestIdMiddleware
-from backend_shared.config.env_utils import is_debug_mode
-
-from backend_shared.core.domain.exceptions import ExternalServiceError, InfrastructureError
+from backend_shared.infra.frameworks.cors_config import setup_cors
+from backend_shared.infra.frameworks.exception_handlers import register_exception_handlers
 from app.api.routers import chat
+from app.config.settings import settings
 
 # ==========================================
 # 統一ロギング設定の初期化
@@ -22,23 +20,20 @@ from app.api.routers import chat
 setup_logging()
 logger = get_module_logger(__name__)
 
-# DEBUG モード判定（共通ユーティリティ使用）
-DEBUG = is_debug_mode()
-
 app = FastAPI(
-    title="AI 応答API",
+    title=settings.API_TITLE,
     description="PDF連動のAI応答や自然言語処理を提供するAPI群です。",
-    version="1.0.0",
+    version=settings.API_VERSION,
     root_path="/ai_api",  # ベースパスを統一
     # 本番環境（DEBUG=False）では /docs と /redoc を無効化
-    docs_url="/docs" if DEBUG else None,
-    redoc_url="/redoc" if DEBUG else None,
-    openapi_url="/openapi.json" if DEBUG else None,
+    docs_url="/docs" if settings.DEBUG else None,
+    redoc_url="/redoc" if settings.DEBUG else None,
+    openapi_url="/openapi.json" if settings.DEBUG else None,
 )
 
 logger.info(
-    f"AI API initialized (DEBUG={DEBUG}, docs_enabled={DEBUG})",
-    extra={"operation": "app_init", "debug": DEBUG}
+    f"AI API initialized (DEBUG={settings.DEBUG}, docs_enabled={settings.DEBUG})",
+    extra={"operation": "app_init", "debug": settings.DEBUG}
 )
 
 # --- ミドルウェア: Request ID追跡 ----------------------------------------------
@@ -46,42 +41,11 @@ logger.info(
 # 全ログ出力にrequest_idが付与され、分散トレーシングが可能になる
 app.add_middleware(RequestIdMiddleware)
 
-# Exception handlers for backend_shared exceptions
-@app.exception_handler(ExternalServiceError)
-async def handle_external_service_error(request: Request, exc: ExternalServiceError):
-    status_code = 502 if exc.status_code is None else (504 if exc.status_code >= 500 else 502)
-    return JSONResponse(
-        status_code=status_code,
-        content={
-            "error": {
-                "code": "EXTERNAL_SERVICE_ERROR",
-                "message": f"{exc.service_name}: {exc.message}",
-                "service": exc.service_name,
-                "status_code": exc.status_code,
-            }
-        },
-    )
+# --- エラーハンドラ登録 (backend_shared統一版) ---------------------------------
+register_exception_handlers(app)
 
-@app.exception_handler(InfrastructureError)
-async def handle_infrastructure_error(request: Request, exc: InfrastructureError):
-    return JSONResponse(
-        status_code=503,
-        content={
-            "error": {
-                "code": "INFRASTRUCTURE_ERROR",
-                "message": exc.message,
-            }
-        },
-    )
-
-# CORS設定
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# --- CORS設定 (backend_shared統一版) -----------------------------------------
+setup_cors(app)
 
 # ログ設定: /health のアクセスログのみ抑制（エラーは従来通り出力）
 setup_uvicorn_access_filter(excluded_paths=("/health",))

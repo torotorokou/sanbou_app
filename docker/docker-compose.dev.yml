@@ -15,7 +15,7 @@ services:
     env_file:
       - ../env/.env.common
       - ../env/.env.local_dev
-      # - ../secrets/.env.local_dev.secrets
+      - ../secrets/.env.local_dev.secrets
     command: ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
     ports:
       - "${DEV_FRONTEND_PORT:-5173}:5173"
@@ -74,7 +74,7 @@ services:
     env_file:
       - ../env/.env.common
       - ../env/.env.local_dev
-      # - ../secrets/.env.local_dev.secrets
+      - ../secrets/.env.local_dev.secrets
     user: "0:0"
     command: >
       uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
@@ -208,7 +208,7 @@ services:
     env_file:
       - ../env/.env.common
       - ../env/.env.local_dev
-      # - ../secrets/.env.local_dev.secrets
+      - ../secrets/.env.local_dev.secrets
     command: ["bash", "startup.sh"]
     ports:
       - "${DEV_MANUAL_API_PORT:-8005}:8000"
@@ -231,13 +231,13 @@ services:
     env_file:
       - ../env/.env.common
       - ../env/.env.local_dev
-      # - ../secrets/.env.local_dev.secrets
+      - ../secrets/.env.local_dev.secrets
     ports:
       - "${DEV_DB_PORT:-5432}:5432"
     volumes:
       - ../data/postgres_v17:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U myuser -d sanbou_dev"]
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 10s
       timeout: 5s
       retries: 5

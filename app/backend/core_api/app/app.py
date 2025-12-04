@@ -19,16 +19,14 @@ Core API - BFF/Facade for frontend
   - Presentation層: HTTPエンドポイント、リクエスト/レスポンス変換
 """
 import logging
-import os
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
 
 # ==========================================
 # 統一ロギング設定のインポート（backend_shared）
 # ==========================================
 from backend_shared.application.logging import setup_logging
-from backend_shared.config.env_utils import is_debug_mode
 
+from app.config.settings import settings
 from app.api.routers.ingest.router import router as ingest_router
 from app.api.routers.forecast.router import router as forecast_router
 from app.api.routers.kpi.router import router as kpi_router
@@ -62,23 +60,20 @@ logger = get_module_logger(__name__)
 # root_path: リバースプロキシ(nginx)経由でのパスプレフィックス対応
 # 例: https://example.com/core_api/* → 本アプリケーションにルーティング
 
-# DEBUG モード判定（共通ユーティリティ使用）
-DEBUG = is_debug_mode()
-
 app = FastAPI(
-    title="Core API",
+    title=settings.API_TITLE,
     description="BFF/Facade API for frontend - handles sync calls and job queuing",
-    version="1.0.0",
+    version=settings.API_VERSION,
     root_path="/core_api",  # リバースプロキシ対応: /core_api/* でアクセス可能
     # 本番環境（DEBUG=False）では /docs と /redoc を無効化
-    docs_url="/docs" if DEBUG else None,
-    redoc_url="/redoc" if DEBUG else None,
-    openapi_url="/openapi.json" if DEBUG else None,
+    docs_url="/docs" if settings.DEBUG else None,
+    redoc_url="/redoc" if settings.DEBUG else None,
+    openapi_url="/openapi.json" if settings.DEBUG else None,
 )
 
 logger.info(
-    f"Core API initialized (DEBUG={DEBUG}, docs_enabled={DEBUG})",
-    extra={"operation": "app_init", "debug": DEBUG}
+    f"Core API initialized (DEBUG={settings.DEBUG}, docs_enabled={settings.DEBUG})",
+    extra={"operation": "app_init", "debug": settings.DEBUG}
 )
 
 # ==========================================
@@ -100,17 +95,8 @@ app.add_middleware(
 # ==========================================
 # CORS設定 (開発モード用)
 # ==========================================
-# 開発環境でフロントエンドが別ドメイン(localhost:5173等)で動作する場合に必要。
-# 本番環境ではnginxでCORS設定を行うため、通常は無効化する。
-# 環境変数 ENABLE_CORS=true で有効化される。
-if os.getenv("ENABLE_CORS", "false").lower() == "true":
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=["*"],  # 開発用: すべてのオリジンを許可(本番では制限すること)
-        allow_credentials=True,  # Cookie/認証ヘッダーの送信を許可
-        allow_methods=["*"],  # すべてのHTTPメソッドを許可
-        allow_headers=["*"],  # すべてのカスタムヘッダーを許可
-    )
+from backend_shared.infra.frameworks.cors_config import setup_cors
+setup_cors(app)
 
 # ==========================================
 # ルーター登録
@@ -141,9 +127,9 @@ app.include_router(database_router)           # BFF: sql_api データベース�
 app.include_router(calendar_router)    # カレンダー: 営業日情報等
 
 # ==========================================
-# 統一エラーハンドリング登録
+# 統一エラーハンドリング登録（backend_shared）
 # ==========================================
-from app.api.middleware.error_handler import register_exception_handlers
+from backend_shared.infra.frameworks.exception_handlers import register_exception_handlers
 register_exception_handlers(app)
 
 
