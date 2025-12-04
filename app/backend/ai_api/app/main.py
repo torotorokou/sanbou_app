@@ -1,7 +1,6 @@
 import os
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
-from fastapi.middleware.cors import CORSMiddleware
 
 # ==========================================
 # 統一ロギング設定のインポート（backend_shared）
@@ -9,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from backend_shared.application.logging import setup_logging, get_module_logger
 from backend_shared.infra.frameworks.logging_utils import setup_uvicorn_access_filter
 from backend_shared.infra.adapters.middleware import RequestIdMiddleware
+from backend_shared.infra.frameworks.cors_config import setup_cors
 from backend_shared.config.env_utils import is_debug_mode
 
 from backend_shared.core.domain.exceptions import ExternalServiceError, InfrastructureError
@@ -74,14 +74,8 @@ async def handle_infrastructure_error(request: Request, exc: InfrastructureError
         },
     )
 
-# CORS設定
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# --- CORS設定 (backend_shared統一版) -----------------------------------------
+setup_cors(app)
 
 # ログ設定: /health のアクセスログのみ抑制（エラーは従来通り出力）
 setup_uvicorn_access_filter(excluded_paths=("/health",))

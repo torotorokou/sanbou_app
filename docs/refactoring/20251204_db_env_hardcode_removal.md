@@ -14,13 +14,13 @@
 以下のファイルでパスワードやDB接続情報がハードコードされていました:
 
 ```python
-# 修正前: ハードコードされたパスワード
-def get_database_url(default: str = "postgresql://myuser:mypassword@db:5432/sanbou_dev") -> str:
+# 修正前: ハードコードされたパスワード (例: 実際にはこのような弱いパスワードが使われていた)
+def get_database_url(default: str = "postgresql://myuser:<WEAK_PASSWORD>@db:5432/sanbou_dev") -> str:
     return get_str_env("DATABASE_URL", default=default)
 ```
 
 **問題:**
-- パスワード `mypassword` がコードに直接記載
+- パスワードが平文でコードに直接記載
 - デフォルト値がフォールバックとして使用される可能性
 - Git履歴に機密情報が残る
 - 環境ごとの設定変更が困難
@@ -51,10 +51,10 @@ def get_database_url(default: str = "postgresql://myuser:mypassword@db:5432/sanb
 
 **修正前:**
 ```python
-# 危険: パスワードがハードコード
-user = os.getenv("POSTGRES_USER", "myuser")
-pwd = os.getenv("POSTGRES_PASSWORD", "mypassword")
-db = os.getenv("POSTGRES_DB", "sanbou_dev")
+# 危険: パスワードがハードコード (例)
+user = os.getenv("POSTGRES_USER", "<DEFAULT_USER>")  # ハードコードされたデフォルト値
+pwd = os.getenv("POSTGRES_PASSWORD", "<WEAK_PASSWORD>")  # 危険！
+db = os.getenv("POSTGRES_DB", "<DEFAULT_DB>")
 return f"postgresql://{user}:{pwd}@{host}:{port}/{db}"
 ```
 

@@ -1,7 +1,6 @@
 import os
 from pathlib import Path
 from fastapi import FastAPI, Request
-from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import JSONResponse
 
@@ -11,6 +10,7 @@ from fastapi.responses import JSONResponse
 from backend_shared.application.logging import setup_logging
 from backend_shared.infra.frameworks.logging_utils import setup_uvicorn_access_filter
 from backend_shared.infra.adapters.middleware import RequestIdMiddleware
+from backend_shared.infra.frameworks.cors_config import setup_cors
 from backend_shared.config.env_utils import is_debug_mode
 
 from app.api.routers.manuals import router as manuals_router
@@ -128,14 +128,8 @@ async def handle_external_service_error(request: Request, exc: ExternalServiceEr
         },
     )
 
-origins = os.getenv("CORS_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173").split(",")
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[o.strip() for o in origins if o.strip()],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# --- CORS設定 (backend_shared統一版) -----------------------------------------
+setup_cors(app)
 
 data_dir = Path(__file__).resolve().parent.parent / "data"
 if data_dir.exists():

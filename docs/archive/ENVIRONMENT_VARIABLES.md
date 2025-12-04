@@ -30,11 +30,13 @@ Docker Composeは以下の順序で環境変数を読み込みます：
 ### データベース関連 (`.env.common`)
 
 ```bash
-POSTGRES_USER=myuser
-POSTGRES_PASSWORD=mypassword
+POSTGRES_USER=__SET_IN_ENV_SPECIFIC_FILE__
+POSTGRES_PASSWORD=__SET_IN_SECRETS__
 POSTGRES_HOST=db
 POSTGRES_PORT=5432
 ```
+
+> **注意**: 実際のユーザー名とパスワードは `secrets/.env.*.secrets` で設定してください。
 
 ### 各環境での設定 (`.env.{環境名}`)
 
@@ -43,7 +45,9 @@ POSTGRES_DB=sanbou_dev               # local_dev
 POSTGRES_DB=sanbou_stg               # local_stg, vm_stg
 POSTGRES_DB=sanbou_prod              # vm_prod
 
-DATABASE_URL=postgresql://myuser:mypassword@db:5432/<DB_NAME>
+# DATABASE_URL は secrets/.env.*.secrets で設定
+# 形式: postgresql://<USER>:<PASSWORD>@db:5432/<DB_NAME>
+DATABASE_URL=__SET_IN_SECRETS__
 ```
 
 ### Pythonパス (`.env.common`)

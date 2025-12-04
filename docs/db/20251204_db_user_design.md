@@ -252,11 +252,11 @@ openssl rand -base64 32
 
 環境変数 `DATABASE_URL` を環境別ユーザーを使うように変更するだけで、アプリケーションコードの変更は不要です：
 
-**変更前（`.env.common`）:**
+**変更前（`.env.common` - 例）:**
 ```env
-POSTGRES_USER=myuser
-POSTGRES_PASSWORD=mypassword
-DATABASE_URL=postgresql://myuser:mypassword@db:5432/sanbou_dev
+POSTGRES_USER=myuser  # 全環境で共通のスーパーユーザー（問題）
+POSTGRES_PASSWORD=<WEAK_PASSWORD>  # 弱いパスワード（問題）
+DATABASE_URL=postgresql://myuser:<WEAK_PASSWORD>@db:5432/sanbou_dev
 ```
 
 **変更後（環境別ファイル + secrets）:**
