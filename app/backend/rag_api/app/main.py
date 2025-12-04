@@ -3,8 +3,9 @@ import sys
 from pathlib import Path
 from dotenv import load_dotenv
 
-from fastapi import FastAPI, Request, HTTPException
-from fastapi.exceptions import RequestValidationError
+from fastapi import FastAPI, HTTPException
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
 # ==========================================
 # 統一ロギング設定のインポート（backend_shared）
@@ -13,10 +14,10 @@ from backend_shared.application.logging import setup_logging
 from backend_shared.infra.frameworks.logging_utils import setup_uvicorn_access_filter
 from backend_shared.infra.adapters.middleware import RequestIdMiddleware
 from backend_shared.infra.frameworks.cors_config import setup_cors
+from backend_shared.infra.frameworks.exception_handlers import register_exception_handlers
 
 from app.config.settings import settings
-from backend_shared.core.domain.exceptions import ValidationError, NotFoundError, InfrastructureError
-from fastapi.responses import JSONResponse, FileResponse
+from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.config.paths import CONFIG_ENV
@@ -68,6 +69,9 @@ logger.info(
 # 全ログ出力にrequest_idが付与され、分散トレーシングが可能になる
 app.add_middleware(RequestIdMiddleware)
 
+# --- エラーハンドラ登録 (backend_shared統一版) ---------------------------------
+register_exception_handlers(app)
+
 # --- 静的配信: /pdfs ----------------------------------------------------------
 PDF_DIR = Path("/backend/static/pdfs")
 PDF_DIR.mkdir(parents=True, exist_ok=True)
@@ -79,58 +83,6 @@ TEST_PDF_DIR = Path("/backend/static/test_pdfs")
 TEST_PDF_DIR.mkdir(parents=True, exist_ok=True)
 print(f"[DEBUG] FastAPI公開ディレクトリ: {TEST_PDF_DIR}")
 app.mount("/test_pdfs", StaticFiles(directory=str(TEST_PDF_DIR)), name="test_pdfs")
-
-
-# --- バリデーションエラー時のカスタムレスポンス -------------------------------
-@app.exception_handler(RequestValidationError)
-async def validation_exception_handler(request: Request, exc: RequestValidationError):
-    return JSONResponse(
-        status_code=422,
-        content={
-            "error": "リクエストの形式が正しくありません。",
-            "detail": exc.errors(),
-        },
-    )
-
-# --- backend_shared exception handlers -----------------------------------------
-@app.exception_handler(ValidationError)
-async def handle_validation_error(request: Request, exc: ValidationError):
-    return JSONResponse(
-        status_code=400,
-        content={
-            "error": {
-                "code": "VALIDATION_ERROR",
-                "message": exc.message,
-                "field": exc.field,
-            }
-        },
-    )
-
-@app.exception_handler(NotFoundError)
-async def handle_not_found_error(request: Request, exc: NotFoundError):
-    return JSONResponse(
-        status_code=404,
-        content={
-            "error": {
-                "code": "NOT_FOUND",
-                "message": exc.message,
-                "entity": exc.entity,
-                "entity_id": str(exc.entity_id),
-            }
-        },
-    )
-
-@app.exception_handler(InfrastructureError)
-async def handle_infrastructure_error(request: Request, exc: InfrastructureError):
-    return JSONResponse(
-        status_code=503,
-        content={
-            "error": {
-                "code": "INFRASTRUCTURE_ERROR",
-                "message": exc.message,
-            }
-        },
-    )
 
 
 # --- CORS 設定 -----------------------------------------------------------------
