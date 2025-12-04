@@ -69,10 +69,13 @@ export function useShogunCatalog() {
         setLoading(false);
       })
       .catch((err) => {
-        if (err.name !== 'AbortError') {
-          setError(err);
-          setLoading(false);
+        // AbortError またはキャンセルエラーは無視
+        if (err.name === 'AbortError' || err.name === 'CanceledError' || err.code === 'ERR_CANCELED') {
+          return;
         }
+        console.error('[useShogunCatalog] Error:', err);
+        setError(err);
+        setLoading(false);
       });
 
     return () => ctrl.abort();
