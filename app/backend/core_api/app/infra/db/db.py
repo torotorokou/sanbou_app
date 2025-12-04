@@ -47,10 +47,31 @@ import os
 # 環境変数の読み込み
 # ========================================
 
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://user:pass@localhost:5432/db")
+def _build_database_url() -> str:
+    """環境変数からDATABASE_URLを構築"""
+    database_url = os.getenv("DATABASE_URL")
+    if database_url:
+        return database_url.strip()
+    
+    # DATABASE_URL が未設定の場合、POSTGRES_* 環境変数から構築
+    user = os.getenv("POSTGRES_USER", "")
+    password = os.getenv("POSTGRES_PASSWORD", "")
+    host = os.getenv("POSTGRES_HOST", "db")
+    port = os.getenv("POSTGRES_PORT", "5432")
+    database = os.getenv("POSTGRES_DB", "")
+    
+    if not user or not password or not database:
+        raise ValueError(
+            "DATABASE_URL is not set and POSTGRES_USER, POSTGRES_PASSWORD, or POSTGRES_DB is missing. "
+            "Please set DATABASE_URL or all required POSTGRES_* environment variables."
+        )
+    
+    return f"postgresql://{user}:{password}@{host}:{port}/{database}"
+
+DATABASE_URL = _build_database_url()
 """
 データベース接続URL
-環境変数 DATABASE_URL から取得。未設定時はデフォルト値を使用
+環境変数 DATABASE_URL から取得。未設定時は POSTGRES_* 環境変数から構築
 """
 
 # ========================================
