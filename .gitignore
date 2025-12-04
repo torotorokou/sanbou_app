@@ -59,10 +59,11 @@ pip-delete-this-directory.txt
 .Python
 .python-version
 
-# 仮想環境
+# 仮想環境（Python venv）
+# 注意: env/ は環境変数ディレクトリとして使用するため、
+#       仮想環境は .venv/ を使用してください
 .env/
 .venv/
-env/
 venv/
 ENV/
 
@@ -75,21 +76,23 @@ ENV/
 # ============================
 # 環境変数・Secrets
 # ============================
-# すべての .env 系は除外し例のみ許可
-*.env
-*.env.*
-!.env.example
-env/.env.*
+# env/ ディレクトリ: 実ファイル除外、example / template のみ許可
+env/*
 !env/.env.example
+!env/*.template
+!env/README*
 
-# secrets ディレクトリ: 実ファイル除外、テンプレ / example のみ許可
+# secrets/ ディレクトリ: 実ファイル除外、テンプレ / example のみ許可
 secrets/*
 !secrets/*.template
 !secrets/*example*
 !secrets/*_example.*
 !secrets/README*
 
-# 既存個別（追跡不要）: .env.stg.secrets / .env.prod.secrets は上記で除外済
+# ルートの .env ファイルも除外（念のため）
+/.env
+/.env.*
+!/.env.example
 
 # ============================
 # Docker / Compose
@@ -249,12 +252,10 @@ app/nginx/certs/*
 
 *.mp4
 
-
 # Exclude specific local config templates (tracked config allowed elsewhere)
 # These files contain local or sensitive content and should not be committed
 category_question_templates_with_tags.yaml
 category_question_templates.yaml
-
 
 !*notifications.openapi.yaml
 

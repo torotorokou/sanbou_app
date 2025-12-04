@@ -1,7 +1,9 @@
 ## =============================================================
-## docker-compose.dev.yml (開発環境)
-## - Makefile が env_file を渡す前提
-## - backend サービスは標準化された Dockerfile (wheelbuilder/dev/prod) を利用
+## docker-compose.dev.yml (ローカル開発環境 - ENV=local_dev 用)
+## - Makefile 経由で起動: make up ENV=local_dev
+## - 使用する env ファイル: env/.env.common + env/.env.local_dev + secrets/.env.local_dev.secrets
+## - 特徴: ホットリロード有効、開発用ポート使用、ボリュームマウント
+## - backend サービスは標準化された Dockerfile (target: dev) を利用
 ## =============================================================
 services:
   # ===========================================================================

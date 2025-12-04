@@ -24,7 +24,31 @@ BUILDKIT ?= 1
 PROGRESS ?= plain
 
 ## =============================================================
-## 環境マッピング
+## 環境マッピング (Environment Mapping)
+## =============================================================
+## ENV 値と対応する .env ファイル・docker-compose.yml の関係:
+##
+## ENV=local_dev  → docker/docker-compose.dev.yml
+##                → env/.env.common + env/.env.local_dev + secrets/.env.local_dev.secrets
+##                → ローカル開発環境（ホットリロード有効）
+##
+## ENV=local_demo → docker/docker-compose.local_demo.yml
+##                → env/.env.common + env/.env.local_demo + secrets/.env.local_demo.secrets
+##                → ローカルデモ環境（local_dev と完全分離）
+##
+## ENV=local_stg  → docker/docker-compose.stg.yml (STG_ENV_FILE=local_stg)
+##                → env/.env.common + env/.env.local_stg + secrets/.env.local_stg.secrets
+##                → ローカルSTG検証環境（本番近似構成、nginx 経由）
+##
+## ENV=vm_stg     → docker/docker-compose.stg.yml (STG_ENV_FILE=vm_stg)
+##                → env/.env.common + env/.env.vm_stg + secrets/.env.vm_stg.secrets
+##                → GCP VM ステージング環境
+##
+## ENV=vm_prod    → docker/docker-compose.prod.yml
+##                → env/.env.common + env/.env.vm_prod + secrets/.env.vm_prod.secrets
+##                → GCP VM 本番環境
+##
+## 注意: 環境変数スキーマの基準（Source of Truth）は env/.env.local_dev です
 ## =============================================================
 ENV_CANON := $(ENV)
 

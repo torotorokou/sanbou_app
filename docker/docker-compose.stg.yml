@@ -1,8 +1,12 @@
 ## =============================================================
-## docker-compose.stg.yml (ステージング環境)
+## docker-compose.stg.yml (ステージング環境 - ENV=local_stg / ENV=vm_stg 用)
+## - Makefile 経由で起動:
+##   * ローカルSTG: make up ENV=local_stg (env/.env.local_stg 使用)
+##   * GCP VM STG: make up ENV=vm_stg (env/.env.vm_stg 使用)
 ## - Makefile が STG_ENV_FILE 変数経由で env_file を解決
-## - backend サービスは標準化された Dockerfile (wheelbuilder/dev/prod) を利用
-## - target: prod を明示
+## - 使用する env ファイル: env/.env.common + env/.env.${STG_ENV_FILE}
+## - 特徴: 本番近似構成、nginx 経由、3層ネットワーク分離
+## - backend サービスは標準化された Dockerfile (target: prod) を利用
 ## =============================================================
 services:
   # ===========================================================================
@@ -19,6 +23,7 @@ services:
     env_file:
       - ../env/.env.common
       - ../env/.env.${STG_ENV_FILE}
+      - ../secrets/.env.${STG_ENV_FILE}.secrets
     volumes:
       - ../app/backend/core_api/migrations:/backend/migrations:rw
       - ../app/config:/backend/config
@@ -50,6 +55,7 @@ services:
     env_file:
       - ../env/.env.common
       - ../env/.env.${STG_ENV_FILE}
+      - ../secrets/.env.${STG_ENV_FILE}.secrets
     environment:
       TZ: "Asia/Tokyo"
       POLL_INTERVAL: "10"
@@ -74,6 +80,7 @@ services:
     env_file:
       - ../env/.env.common
       - ../env/.env.${STG_ENV_FILE}
+      - ../secrets/.env.${STG_ENV_FILE}.secrets
     volumes:
       - ../app/config:/backend/config
     environment:
@@ -105,6 +112,7 @@ services:
     env_file:
       - ../env/.env.common
       - ../env/.env.${STG_ENV_FILE}
+      - ../secrets/.env.${STG_ENV_FILE}.secrets
     volumes:
       - ../app/config:/backend/config
     environment:
@@ -137,6 +145,7 @@ services:
     env_file:
       - ../env/.env.common
       - ../env/.env.${STG_ENV_FILE}
+      - ../secrets/.env.${STG_ENV_FILE}.secrets
     volumes:
       - ../app/config:/backend/config
     environment:
@@ -166,6 +175,7 @@ services:
     env_file:
       - ../env/.env.common
       - ../env/.env.${STG_ENV_FILE}
+      - ../secrets/.env.${STG_ENV_FILE}.secrets
     environment:
       MANUAL_FRONTEND_BASE_URL: ${MANUAL_FRONTEND_BASE_URL:-http://localhost:5173}
       TZ: "Asia/Tokyo"
