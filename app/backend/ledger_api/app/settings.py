@@ -1,7 +1,8 @@
 """Settings loader for ledger_api.
 
+backend_shared の BaseAppSettings を継承し、ledger_api 固有の設定を追加します。
 環境変数を一箇所で管理/変換し、他モジュールは `from app.settings import settings`
-経由で参照する。依存ライブラリを増やさないため pydantic などは未使用。
+経由で参照する。
 
 主な環境変数:
   STAGE=dev|stg|prod
@@ -10,16 +11,18 @@
   GCS_LEDGER_BUCKET=<gs://...> (全環境 override)
   GCS_LEDGER_BUCKET_STG=<gs://...>
   GCS_LEDGER_BUCKET_PROD=<gs://...>
-    GCS_LEDGER_BUCKET_DEV=<gs://...>
+  GCS_LEDGER_BUCKET_DEV=<gs://...>
   BASE_API_DIR=/backend/app/api (data/logs 配下算出に利用)
   LEDGER_SYNC_SUBDIRS=master,templates (カンマ区切り)
+  REPORT_ARTIFACT_SECRET=<secret-key> (PDF署名用)
 """
 from __future__ import annotations
 
-from dataclasses import dataclass
 import os
+from functools import lru_cache
 from pathlib import Path
 from typing import List, Optional
+from backend_shared.config.base_settings import BaseAppSettings
 
 
 TRUE_SET = {"1", "true", "yes", "on"}
@@ -31,21 +34,42 @@ def _as_bool(val: Optional[str], default: bool = False) -> bool:
     return val.lower() in TRUE_SET
 
 
-@dataclass(slots=True)
-class Settings:
-    stage: str
-    strict_startup: bool
-    startup_download_enable_raw: Optional[str]
-    base_api_dir: Path
-    gcs_ledger_bucket_override: Optional[str]
-    gcs_ledger_bucket_dev: Optional[str]
-    gcs_ledger_bucket_stg: Optional[str]
-    gcs_ledger_bucket_prod: Optional[str]
-    ledger_sync_subdirs: List[str]
-    report_artifact_root_dir: Path
-    report_artifact_url_prefix: str
-    report_artifact_url_ttl: int
-    report_artifact_secret: str
+class LedgerApiSettings(BaseAppSettings):
+    """
+    Ledger API 設定クラス
+    
+    BaseAppSettings を継承し、Ledger API 固有の設定を追加します。
+    """
+    
+    # ========================================
+    # API基本情報
+    # ========================================
+    
+    API_TITLE: str = "帳票・日報API"
+    API_VERSION: str = "1.0.0"
+    
+    # ========================================
+    # Ledger API 固有設定
+    # ========================================
+    
+    stage: str = ""
+    strict_startup: bool = False
+    startup_download_enable_raw: Optional[str] = None
+    base_api_dir: Path = Path("/backend/app/api")
+    gcs_ledger_bucket_override: Optional[str] = None
+    gcs_ledger_bucket_dev: Optional[str] = None
+    gcs_ledger_bucket_stg: Optional[str] = None
+    gcs_ledger_bucket_prod: Optional[str] = None
+    ledger_sync_subdirs: List[str] = []
+    report_artifact_root_dir: Path = Path("/backend/data/report_artifacts")
+    report_artifact_url_prefix: str = "/api/report_artifacts"
+    report_artifact_url_ttl: int = 900
+    report_artifact_secret: str = "change-me-in-production"  # デフォルトは insecure (環境変数で上書き必須)
+    
+    class Config:
+        env_file = ".env"
+        case_sensitive = True
+        extra = "allow"
 
     def bucket_base(self) -> Optional[str]:
         if self.gcs_ledger_bucket_override:
@@ -87,7 +111,7 @@ class Settings:
         return f"stage={self.stage} default policy -> {self.stage in {'stg','prod'}}"
 
 
-def load_settings() -> Settings:
+def load_settings() -> LedgerApiSettings:
     stage = os.getenv("STAGE", "dev").lower()
     strict_startup = _as_bool(os.getenv("STRICT_STARTUP"), False)
     startup_download_enable_raw = os.getenv("STARTUP_DOWNLOAD_ENABLE")
@@ -127,8 +151,8 @@ def load_settings() -> Settings:
         report_artifact_url_ttl = int(report_artifact_url_ttl_raw)
     except ValueError:
         report_artifact_url_ttl = 900
-    report_artifact_secret = os.getenv("REPORT_ARTIFACT_SECRET", "change-me-in-production")
-    return Settings(
+    
+    _settings = LedgerApiSettings(
         stage=stage,
         strict_startup=strict_startup,
         startup_download_enable_raw=startup_download_enable_raw,
@@ -141,10 +165,32 @@ def load_settings() -> Settings:
         report_artifact_root_dir=report_artifact_root_dir,
         report_artifact_url_prefix=report_artifact_url_prefix,
         report_artifact_url_ttl=report_artifact_url_ttl,
-        report_artifact_secret=report_artifact_secret,
+        # report_artifact_secret は環境変数から自動読み込み (Pydantic BaseSettings)
     )
+    
+    # セキュリティチェック: insecure なデフォルト値のまま起動していないか確認
+    if _settings.report_artifact_secret in ("", "change-me-in-production"):
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        if stage in {"stg", "prod"}:
+            # 本番/ステージング環境では ERROR レベル
+            logger.error(
+                "🔴 SECURITY RISK: REPORT_ARTIFACT_SECRET is using insecure default value! "
+                "PDF signature security is compromised. Set a strong random secret immediately!",
+                extra={
+                    "operation": "load_settings",
+                    "stage": stage,
+                    "security_risk": "critical"
+                }
+            )
+        else:
+            # 開発環境では簡易警告
+            print("REPORT_ARTIFACT_SECRET not set - using insecure default. This MUST be set in production!")
+    
+    return _settings
 
 
 settings = load_settings()
 
-__all__ = ["settings", "Settings"]
+__all__ = ["settings", "LedgerApiSettings"]

@@ -278,12 +278,19 @@ def get_api_base_url(service_name: str, default_port: int = 8000) -> str:
     return get_str_env(env_key, default=default_url)
 
 
-def get_database_url(default: str = "postgresql://myuser:mypassword@db:5432/sanbou_dev") -> str:
+def get_database_url(default: str | None = None) -> str:
     """
     データベース接続URLを取得
     
+    環境変数 DATABASE_URL が設定されていない場合は、
+    POSTGRES_* 環境変数から動的に構築します。
+    
+    Note:
+        この関数は backend_shared.infra.db.url_builder.build_database_url() の
+        ラッパーです。新しいコードでは直接 build_database_url() を使用してください。
+    
     Args:
-        default: デフォルトのデータベースURL
+        default: デフォルトのデータベースURL（非推奨：環境変数を使用してください）
         
     Returns:
         str: データベース接続URL
@@ -293,7 +300,14 @@ def get_database_url(default: str = "postgresql://myuser:mypassword@db:5432/sanb
         >>> get_database_url()
         'postgresql://user:pass@localhost:5432/mydb'
     """
-    return get_str_env("DATABASE_URL", default=default)
+    from backend_shared.infra.db.url_builder import build_database_url
+    
+    try:
+        return build_database_url(driver=None, raise_on_missing=True)
+    except ValueError:
+        if default:
+            return default
+        raise
 
 
 def get_log_level(default: str = "INFO") -> str:

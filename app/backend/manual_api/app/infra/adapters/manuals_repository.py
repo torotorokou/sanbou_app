@@ -22,7 +22,8 @@ logger = get_module_logger(__name__)
 
 class InMemoryManualRepository(ManualsRepository):
     def __init__(self, base_url: Optional[str] = None) -> None:
-        resolved_base_url = base_url or os.getenv("MANUAL_FRONTEND_BASE_URL", "http://localhost:5173")
+        from app.config.settings import settings
+        resolved_base_url = base_url or settings.MANUAL_FRONTEND_BASE_URL
         logger.info("Initializing InMemoryManualRepository", extra={"base_url": resolved_base_url})
         self._items: Dict[str, ManualDetail] = {}
         self._seed(resolved_base_url)

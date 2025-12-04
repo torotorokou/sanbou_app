@@ -26,10 +26,9 @@ generate-answerエンドポイント用のAI回答生成を担当するサービ
 """
 
 import os
-from datetime import datetime
-from zoneinfo import ZoneInfo
 from typing import List, Dict, Any
 from backend_shared.application.logging import get_module_logger
+from backend_shared.utils.datetime_utils import now_in_app_timezone
 from app.shared.file_utils import PDF_PATH
 from app.config.paths import get_pdf_url_prefix
 from app.core.ports.rag.pdf_service_port import PDFServiceBase
@@ -62,11 +61,6 @@ class AIResponseService:
             AIレスポンスデータ（answer, sources, pdf_url）
         """
         logger.info("Generating AI response", extra={"query": query, "category": category, "tags": tags})
-        # AI回答生成
-        print(
-            "[DEBUG][AIResponseService] input:",
-            {"query": query, "category": category, "tags": tags},
-        )
         answer = None
         sources: list[Any] = []
         pages = None
@@ -82,9 +76,7 @@ class AIResponseService:
             if "error" in result:
                 error_msg = result.get("error", "不明なエラー")
                 error_code = result.get("error_code", "OPENAI_ERROR")
-                logger.error("AI loader returned error", extra={"error_msg": error_msg, "error_code": error_code})
-                print("[DEBUG][AIResponseService] ai_loader returned error:", error_msg)
-                print("[DEBUG][AIResponseService] error_code:", error_code)
+                logger.warning("AI loader returned error", extra={"error_msg": error_msg, "error_code": error_code})
                 
                 # エラーコードに応じたメッセージ生成
                 if error_code == "OPENAI_INSUFFICIENT_QUOTA":
@@ -114,11 +106,9 @@ class AIResponseService:
                 sources = result.get("sources", [])
                 pages = result.get("pages")
                 logger.info("AI loader succeeded", extra={"pages": pages, "sources_count": len(sources)})
-                print("[DEBUG][AIResponseService] ai_loader result pages:", pages)
         except Exception as ae:
             # 予期しない例外：汎用エラーとして扱う
             logger.error("AI loader failed with exception", exc_info=True, extra={"error": str(ae)})
-            print("[DEBUG][AIResponseService] ai_loader failed:", repr(ae))
             return {
                 "answer": None,
                 "sources": [],
@@ -137,7 +127,6 @@ class AIResponseService:
         # ページリスト正規化
         page_list = self._normalize_pages(pages)
         logger.debug("Normalized page list", extra={"page_list": page_list})
-        print("[DEBUG][AIResponseService] normalized pages:", page_list)
 
         # 個別PDF生成（デバッグ用ディレクトリに保存）
         pdf_url: str | None = None
@@ -150,15 +139,13 @@ class AIResponseService:
                 url_prefix=f"{get_pdf_url_prefix()}/debug",  # デバッグ用URL
             )
             logger.info("PDF pages saved", extra={"pdf_count": len(pdf_urls)})
-            print("[DEBUG][AIResponseService] per-page pdf URLs:", pdf_urls)
 
             # ページが無い、または保存できたPDFが無い場合は結合をスキップ
             if not pdf_urls:
                 pdf_url = None
             else:
                 # PDF結合（ユーザー向けは本体ディレクトリに保存）
-                jst = ZoneInfo("Asia/Tokyo")
-                timestamp = datetime.now(jst).strftime("%Y%m%d_%H%M%S")
+                timestamp = now_in_app_timezone().strftime("%Y%m%d_%H%M%S")
                 merged_pdf_name = f"merged_response_{timestamp}.pdf"
                 merged_pdf_path = os.path.join(static_dir, merged_pdf_name)
                 pdf_file_paths = [
@@ -167,16 +154,13 @@ class AIResponseService:
                 try:
                     self.pdf_service.merge_pdfs(pdf_file_paths, merged_pdf_path)
                     logger.info("PDFs merged successfully", extra={"merged_pdf_path": merged_pdf_path})
-                    print("[DEBUG][AIResponseService] merged pdf:", merged_pdf_path)
                     pdf_url = f"{get_pdf_url_prefix()}/{merged_pdf_name}"
                 except Exception as me:
                     logger.error("PDF merge failed", exc_info=True, extra={"error": str(me)})
-                    print("[DEBUG][AIResponseService] merge failed:", repr(me))
                     pdf_url = None
         except Exception as se:
             # PDF保存段階での失敗もanswerは返す
             logger.error("PDF save failed", exc_info=True, extra={"error": str(se)})
-            print("[DEBUG][AIResponseService] save pages failed:", repr(se))
             pdf_url = None
 
         return {"answer": answer, "sources": sources, "pdf_url": pdf_url}
@@ -191,7 +175,7 @@ class AIResponseService:
         normalized: List[int] = []
 
         def debug_skip(token: object, reason: str) -> None:
-            print(f"[DEBUG][normalize_pages] skip token={token!r} reason={reason}")
+            logger.debug(f"Skip token in normalize_pages", extra={"token": repr(token), "reason": reason})
 
         def add_if_positive(n: int) -> None:
             if isinstance(n, int) and n > 0:
@@ -228,7 +212,7 @@ class AIResponseService:
 
         # None → []
         if pages is None:
-            print(f"[DEBUG][normalize_pages] before={before_repr}, after=[]")
+            logger.debug("Normalize pages: None input", extra={"before": before_repr})
             return []
 
         # 単一の整数
@@ -251,5 +235,5 @@ class AIResponseService:
             debug_skip(type(pages).__name__, "unsupported_type")
 
         after = sorted(set(normalized))
-        print(f"[DEBUG][normalize_pages] before={before_repr}, after={after}")
+        logger.debug("Normalize pages completed", extra={"before": before_repr, "after": after})
         return after

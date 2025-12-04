@@ -47,23 +47,19 @@ import os
 # 環境変数の読み込み
 # ========================================
 
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://user:pass@localhost:5432/db")
+from backend_shared.infra.db.url_builder import build_database_url_with_driver
+
+DATABASE_URL = build_database_url_with_driver(driver="psycopg")
 """
-データベース接続URL
-環境変数 DATABASE_URL から取得。未設定時はデフォルト値を使用
+データベース接続URL (SQLAlchemy 2.x + psycopg3 形式)
+環境変数 DATABASE_URL から取得。未設定時は POSTGRES_* 環境変数から構築
 """
 
 # ========================================
 # SQLAlchemy 2.x + psycopg3 対応
 # ========================================
-
-# Convert postgresql:// to postgresql+psycopg:// for SQLAlchemy 2.x + psycopg3
-if DATABASE_URL.startswith("postgresql://"):
-    DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+psycopg://", 1)
-    """
-    SQLAlchemy 2.x では psycopg3 を使用するため、
-    接続URLを 'postgresql+psycopg://' に変換します
-    """
+# Note: build_database_url_with_driver() が既に postgresql+psycopg:// 形式で返すため
+#       明示的な変換は不要
 
 
 @lru_cache(maxsize=1)
