@@ -1,6 +1,5 @@
 import os
-from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
+from fastapi import FastAPI
 
 # ==========================================
 # 統一ロギング設定のインポート（backend_shared）
@@ -9,8 +8,7 @@ from backend_shared.application.logging import setup_logging, get_module_logger
 from backend_shared.infra.frameworks.logging_utils import setup_uvicorn_access_filter
 from backend_shared.infra.adapters.middleware import RequestIdMiddleware
 from backend_shared.infra.frameworks.cors_config import setup_cors
-
-from backend_shared.core.domain.exceptions import ExternalServiceError, InfrastructureError
+from backend_shared.infra.frameworks.exception_handlers import register_exception_handlers
 from app.api.routers import chat
 from app.config.settings import settings
 
@@ -43,33 +41,8 @@ logger.info(
 # 全ログ出力にrequest_idが付与され、分散トレーシングが可能になる
 app.add_middleware(RequestIdMiddleware)
 
-# Exception handlers for backend_shared exceptions
-@app.exception_handler(ExternalServiceError)
-async def handle_external_service_error(request: Request, exc: ExternalServiceError):
-    status_code = 502 if exc.status_code is None else (504 if exc.status_code >= 500 else 502)
-    return JSONResponse(
-        status_code=status_code,
-        content={
-            "error": {
-                "code": "EXTERNAL_SERVICE_ERROR",
-                "message": f"{exc.service_name}: {exc.message}",
-                "service": exc.service_name,
-                "status_code": exc.status_code,
-            }
-        },
-    )
-
-@app.exception_handler(InfrastructureError)
-async def handle_infrastructure_error(request: Request, exc: InfrastructureError):
-    return JSONResponse(
-        status_code=503,
-        content={
-            "error": {
-                "code": "INFRASTRUCTURE_ERROR",
-                "message": exc.message,
-            }
-        },
-    )
+# --- エラーハンドラ登録 (backend_shared統一版) ---------------------------------
+register_exception_handlers(app)
 
 # --- CORS設定 (backend_shared統一版) -----------------------------------------
 setup_cors(app)
