@@ -13,6 +13,7 @@ from datetime import datetime, timezone
 from typing import Any, Dict, Optional, Tuple
 
 from fastapi.responses import StreamingResponse
+from backend_shared.utils.datetime_utils import now_in_app_timezone, format_datetime_iso
 
 # LibreOffice filter options crafted to embed CJK fonts and keep fidelity.
 # See https://wiki.documentfoundation.org/Development/Filter/List_of_FilterOptions
@@ -157,15 +158,13 @@ def create_zip_with_excel_and_pdf(
 		)
 		archive.writestr(f"{base}.xlsx", excel_bytes)
 
-		manifest: Dict[str, Any] = {
-			"report_key": report_key,
-			"report_date": report_date,
-			"pdf_generated": bool(pdf_payload),
-			"engine": "libreoffice-cli",
-			"generated_at": datetime.now(timezone.utc).isoformat(),
-		}
-
-		if pdf_payload is not None:
+	manifest: Dict[str, Any] = {
+		"report_key": report_key,
+		"report_date": report_date,
+		"pdf_generated": bool(pdf_payload),
+		"engine": "libreoffice-cli",
+		"generated_at": format_datetime_iso(now_in_app_timezone()),
+	}		if pdf_payload is not None:
 			header_ok = pdf_payload.startswith(b"%PDF-")
 			_log(
 				"create_zip_with_excel_and_pdf: writing PDF | "
