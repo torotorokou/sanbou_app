@@ -40,7 +40,7 @@ const UnimplementedModal: React.FC<UnimplementedModalProps> = ({
 
     const handleOk = () => {
         onClose();
-        navigate('/portal');
+        navigate('/');
     };
 
     return (
