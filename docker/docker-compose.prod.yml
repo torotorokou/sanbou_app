@@ -1,10 +1,10 @@
 ## =============================================================
-## docker-compose.prod.yml (本番環境)
-## - 外部公開は nginx のみ (80/443)
+## docker-compose.prod.yml (本番環境 - ENV=vm_prod 用)
+## - Makefile 経由で起動: make up ENV=vm_prod
+## - 使用する env ファイル: env/.env.common + env/.env.vm_prod + secrets/.env.vm_prod.secrets
+## - 特徴: 外部公開は nginx のみ (80/443)、3層ネットワーク分離、IAP 必須
 ## - frontend/backend は内部ネットワークのみ
-## - 3層ネットワーク分離: edge-net / app-net / data-net
-## - backend サービスは標準化された Dockerfile (wheelbuilder/dev/prod) を利用
-## - target: prod を明示
+## - backend サービスは標準化された Dockerfile (target: prod) を利用
 ## =============================================================
 services:
   # ===========================================================================
@@ -21,6 +21,7 @@ services:
     env_file:
       - ../env/.env.common
       - ../env/.env.vm_prod
+      - ../secrets/.env.vm_prod.secrets
     volumes:
       - ../app/backend/core_api/migrations:/backend/migrations:rw
       - ../app/config:/backend/config
@@ -52,6 +53,7 @@ services:
     env_file:
       - ../env/.env.common
       - ../env/.env.vm_prod
+      - ../secrets/.env.vm_prod.secrets
     environment:
       TZ: "Asia/Tokyo"
       POLL_INTERVAL: "10"
@@ -76,6 +78,7 @@ services:
     env_file:
       - ../env/.env.common
       - ../env/.env.vm_prod
+      - ../secrets/.env.vm_prod.secrets
     volumes:
       - ../app/config:/backend/config
     environment:
@@ -107,6 +110,7 @@ services:
     env_file:
       - ../env/.env.common
       - ../env/.env.vm_prod
+      - ../secrets/.env.vm_prod.secrets
     volumes:
       - ../app/config:/backend/config
     environment:
@@ -139,6 +143,7 @@ services:
     env_file:
       - ../env/.env.common
       - ../env/.env.vm_prod
+      - ../secrets/.env.vm_prod.secrets
     volumes:
       - ../app/config:/backend/config
     environment:
@@ -168,6 +173,7 @@ services:
     env_file:
       - ../env/.env.common
       - ../env/.env.vm_prod
+      - ../secrets/.env.vm_prod.secrets
     environment:
       MANUAL_FRONTEND_BASE_URL: ${MANUAL_FRONTEND_BASE_URL:-http://localhost:5173}
       TZ: "Asia/Tokyo"
