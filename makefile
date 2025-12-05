@@ -11,6 +11,7 @@
 ##   make restore-from-dump ENV=local_dev DUMP=backups/sanbou_dev_2025-12-03.dump
 ##   make restore-from-sql  ENV=local_demo SQL=backups/pg_all_2025-12-03.sql
 ##   make al-up / al-rev-auto / al-dump-schema-current / al-init-from-schema
+##   make publish-stg-images IMAGE_TAG=stg-YYYYMMDD  # STG 用イメージ build+push
 ## =============================================================
 
 SHELL := /bin/bash
@@ -277,3 +278,90 @@ al-init-from-schema:
 	  exec -T db psql -U myuser -d sanbou_dev \
 	  < app/backend/core_api/migrations/alembic/sql_current/schema_head.sql
 	@echo "[ok] Schema initialized. Now run: make al-stamp REV=<HEAD_REVISION>"
+
+## =============================================================
+## Artifact Registry (Docker イメージ用)
+##  - ローカルPCで build/push するための設定
+## =============================================================
+# 実際のリージョンに合わせる
+REGION        ?= asia-northeast1
+# 実際の GCP Project ID に合わせる
+PROJECT_ID    ?= sanbou-app
+# Artifact Registry のリポジトリ名
+ARTIFACT_REPO ?= sanbou-app
+
+IMAGE_REGISTRY := $(REGION)-docker.pkg.dev/$(PROJECT_ID)/$(ARTIFACT_REPO)
+
+# デフォルトのタグ（必要に応じて IMAGE_TAG=stg-YYYYMMDD で上書き）
+IMAGE_TAG ?= stg-latest
+
+## =============================================================
+## STG 用 Docker イメージ build & push
+##  - ローカルPCで実行する前提
+##  - VM では build せず pull + up だけにする
+## =============================================================
+.PHONY: gcloud-auth-docker build-stg-images push-stg-images publish-stg-images
+
+gcloud-auth-docker:
+	@gcloud auth configure-docker $(REGION)-docker.pkg.dev
+
+build-stg-images:
+	@echo ">>> Build STG images (tag=$(IMAGE_TAG))"
+	# core_api
+	docker build \
+	  -t $(IMAGE_REGISTRY)/core_api:$(IMAGE_TAG) \
+	  -f app/backend/core_api/Dockerfile \
+	  --target prod \
+	  app/backend
+
+	# plan_worker
+	docker build \
+	  -t $(IMAGE_REGISTRY)/plan_worker:$(IMAGE_TAG) \
+	  -f app/backend/plan_worker/Dockerfile \
+	  --target prod \
+	  app/backend
+
+	# ai_api
+	docker build \
+	  -t $(IMAGE_REGISTRY)/ai_api:$(IMAGE_TAG) \
+	  -f app/backend/ai_api/Dockerfile \
+	  --target prod \
+	  app/backend
+
+	# ledger_api
+	docker build \
+	  -t $(IMAGE_REGISTRY)/ledger_api:$(IMAGE_TAG) \
+	  -f app/backend/ledger_api/Dockerfile \
+	  --target prod \
+	  app/backend
+
+	# rag_api
+	docker build \
+	  -t $(IMAGE_REGISTRY)/rag_api:$(IMAGE_TAG) \
+	  -f app/backend/rag_api/Dockerfile \
+	  --target prod \
+	  app/backend
+
+	# manual_api
+	docker build \
+	  -t $(IMAGE_REGISTRY)/manual_api:$(IMAGE_TAG) \
+	  -f app/backend/manual_api/Dockerfile \
+	  --target prod \
+	  app/backend
+
+	# nginx (frontend runtime)
+	docker build \
+	  -t $(IMAGE_REGISTRY)/nginx:$(IMAGE_TAG) \
+	  -f app/frontend/Dockerfile \
+	  --target runtime \
+	  app/frontend
+
+push-stg-images:
+	@echo ">>> Push STG images (tag=$(IMAGE_TAG))"
+	@for svc in core_api plan_worker ai_api ledger_api rag_api manual_api nginx; do \
+	  echo "  -> push $(IMAGE_REGISTRY)/$$svc:$(IMAGE_TAG)"; \
+	  docker push $(IMAGE_REGISTRY)/$$svc:$(IMAGE_TAG); \
+	done
+
+publish-stg-images: build-stg-images push-stg-images
+	@echo "[ok] STG images built & pushed (tag=$(IMAGE_TAG))"
