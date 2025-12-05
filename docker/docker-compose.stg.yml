@@ -2,21 +2,19 @@
 ## docker-compose.stg.yml (ステージング環境 - ENV=local_stg / ENV=vm_stg 用)
 ## - Makefile 経由で起動:
 ##   * ローカルSTG: make up ENV=local_stg (env/.env.local_stg 使用)
-##   * GCP VM STG: make up ENV=vm_stg (env/.env.vm_stg 使用)
+##   * GCP VM STG:  make up ENV=vm_stg     (env/.env.vm_stg 使用)
 ## - Makefile が STG_ENV_FILE 変数経由で env_file を解決
 ## - 使用する env ファイル: env/.env.common + env/.env.${STG_ENV_FILE}
 ## - 特徴: 本番近似構成、nginx 経由、3層ネットワーク分離
-## - backend サービスは標準化された Dockerfile (target: prod) を利用
+## - backend / nginx は Artifact Registry のイメージを利用
+##   asia-northeast1-docker.pkg.dev/sanbou-app/sanbou-app/*:stg-latest
 ## =============================================================
 services:
   # ===========================================================================
   # Core API (BFF)
   # ===========================================================================
   core_api:
-    build:
-      context: ../app/backend
-      dockerfile: core_api/Dockerfile
-      target: prod
+    image: asia-northeast1-docker.pkg.dev/sanbou-app/sanbou-app/core_api:stg-latest
     networks: [app-net, data-net]
     depends_on:
       - db
@@ -45,10 +43,7 @@ services:
   # Plan Worker
   # ===========================================================================
   plan_worker:
-    build:
-      context: ../app/backend
-      dockerfile: plan_worker/Dockerfile
-      target: prod
+    image: asia-northeast1-docker.pkg.dev/sanbou-app/sanbou-app/plan_worker:stg-latest
     networks: [data-net]
     depends_on:
       - db
@@ -70,10 +65,7 @@ services:
   # AI API
   # ===========================================================================
   ai_api:
-    build:
-      context: ../app/backend
-      dockerfile: ai_api/Dockerfile
-      target: prod
+    image: asia-northeast1-docker.pkg.dev/sanbou-app/sanbou-app/ai_api:stg-latest
     networks: [app-net]
     depends_on:
       - db
@@ -101,10 +93,7 @@ services:
   # Ledger API
   # ===========================================================================
   ledger_api:
-    build:
-      context: ../app/backend
-      dockerfile: ledger_api/Dockerfile
-      target: prod
+    image: asia-northeast1-docker.pkg.dev/sanbou-app/sanbou-app/ledger_api:stg-latest
     user: "0:0"
     networks: [app-net, data-net]
     depends_on:
@@ -135,10 +124,7 @@ services:
   # RAG API
   # ===========================================================================
   rag_api:
-    build:
-      context: ../app/backend
-      dockerfile: rag_api/Dockerfile
-      target: prod
+    image: asia-northeast1-docker.pkg.dev/sanbou-app/sanbou-app/rag_api:stg-latest
     networks: [app-net, data-net]
     depends_on:
       - db
@@ -167,10 +153,7 @@ services:
   # Manual API
   # ===========================================================================
   manual_api:
-    build:
-      context: ../app/backend
-      dockerfile: manual_api/Dockerfile
-      target: prod
+    image: asia-northeast1-docker.pkg.dev/sanbou-app/sanbou-app/manual_api:stg-latest
     networks: [app-net]
     env_file:
       - ../env/.env.common
@@ -195,10 +178,7 @@ services:
   # nginx (stg)
   # ===========================================================================
   nginx:
-    build:
-      context: ../app/frontend
-      dockerfile: Dockerfile
-      target: runtime
+    image: asia-northeast1-docker.pkg.dev/sanbou-app/sanbou-app/nginx:stg-latest
     depends_on:
       - core_api
       - ai_api
