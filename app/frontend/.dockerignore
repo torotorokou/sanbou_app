@@ -20,8 +20,14 @@ yarn-error.log*
 # Tests / coverage
 coverage/
 __tests__/
+tests/
 *.spec.*
 *.test.*
+vitest.config.*
+*.spec.ts
+*.spec.tsx
+*.test.ts
+*.test.tsx
 
 # Misc
 Dockerfile*
