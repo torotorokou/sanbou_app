@@ -97,6 +97,15 @@ else
 	$(error Unsupported ENV: $(ENV))
 endif
 
+# STG/PROD だけは --build なしで up する
+ifeq ($(ENV_CANON),vm_stg)
+	UP_BUILD_FLAGS :=
+else ifeq ($(ENV_CANON),vm_prod)
+	UP_BUILD_FLAGS :=
+else
+	UP_BUILD_FLAGS := --build
+endif
+
 SECRETS_FILE      := secrets/.env.$(ENV).secrets
 # secrets ファイルは存在する場合のみ --env-file に載せる
 COMPOSE_ENV_ARGS  := --env-file $(ENV_FILE_COMMON) --env-file $(ENV_FILE) \
@@ -121,7 +130,7 @@ check:
 up: check
 	@echo "[info] UP (ENV=$(ENV))"
 	DOCKER_BUILDKIT=$(BUILDKIT) BUILDKIT_PROGRESS=$(PROGRESS) \
-	$(DC_FULL) up -d --build --remove-orphans
+	$(DC_FULL) up -d $(UP_BUILD_FLAGS) --remove-orphans
 	@echo "[ok] up done"
 
 down:
