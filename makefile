@@ -295,7 +295,7 @@ al-init-from-schema:
 # 実際のリージョンに合わせる
 REGION        ?= asia-northeast1
 # 実際の GCP Project ID に合わせる
-PROJECT_ID    ?= sanbou-app
+PROJECT_ID    ?= honest-sanbou-app-stg
 # Artifact Registry のリポジトリ名
 ARTIFACT_REPO ?= sanbou-app
 
