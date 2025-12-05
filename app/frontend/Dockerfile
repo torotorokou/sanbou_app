@@ -15,7 +15,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certifi
     && rm -rf /var/lib/apt/lists/*
 RUN npm ci
 
-# ソースコピー（テスト等は .dockerignore で除外）
+# ソースコピー（test関連は .dockerignore で除外: tests/, *.spec.*, *.test.*, vitest.config.* など）
 COPY . .
 
 # Vite ビルド（環境変数は compose 側で注入想定）
