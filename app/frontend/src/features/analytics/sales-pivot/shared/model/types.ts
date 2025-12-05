@@ -507,6 +507,8 @@ export interface ExportQuery extends SummaryQuery {
  * @property baseName - 固定エンティティの表示名（例: '顧客アルファ'）
  * @property month - 単月指定（monthRange と排他的）
  * @property monthRange - 期間指定（month と排他的）
+ * @property dateFrom - 開始日（YYYY-MM-DD形式）
+ * @property dateTo - 終了日（YYYY-MM-DD形式）
  * @property repIds - 対象営業ID配列
  * @property targets - 展開可能な軸の配列（例: [{ axis: 'item', label: '品名' }]）
  * @property activeAxis - 現在選択されている展開軸（タブ切り替え用）
