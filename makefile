@@ -173,7 +173,7 @@ config: check
 ## バックアップ / リストア（よく使う最小構成）
 ## =============================================================
 DATE        := $(shell date +%F_%H%M%S)
-BACKUP_DIR  ?= backups
+BACKUP_DIR  ?= /mnt/c/Users/synth/Desktop/backups
 PG_SERVICE  ?= db
 PGUSER      ?= myuser
 # デフォルト: sanbou_dev（必要に応じて PGDB=... で上書き）
