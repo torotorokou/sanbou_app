@@ -26,7 +26,7 @@ RUN pip install --upgrade pip setuptools wheel && \
     pip wheel --no-deps . -w /wheels
 
 COPY ./plan_worker/requirements.txt /build/requirements.txt
-RUN pip wheel --no-deps -r /build/requirements.txt -w /wheels
+RUN pip wheel -r /build/requirements.txt -w /wheels
 
 # ──────────────────────────────────────────────────────────────
 # Stage: dev (ホットリロード対応)
@@ -66,7 +66,7 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
   CMD python -m app.scripts.db_healthcheck
 
-CMD ["watchfiles", "python -m app.worker", "/backend/app", "/opt/backend_shared/src"]
+CMD ["watchfiles", "python -m app.main", "/backend/app", "/opt/backend_shared/src"]
 
 # ──────────────────────────────────────────────────────────────
 # Stage: prod (wheel からインストール、イミュータブル)
@@ -100,4 +100,4 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
   CMD python -m app.scripts.db_healthcheck
 
-CMD ["python", "-m", "app.worker"]
+CMD ["python", "-m", "app.main"]

@@ -5,6 +5,7 @@ Provides functions to construct PostgreSQL database URLs from environment variab
 """
 
 import os
+from urllib.parse import quote_plus
 
 
 def build_database_url(
@@ -80,7 +81,11 @@ def build_database_url(
     if driver:
         protocol = f"postgresql+{driver}"
     
-    return f"{protocol}://{user}:{password}@{host}:{port}/{database}"
+    # ユーザー名とパスワードをURLエンコード（特殊文字対応）
+    encoded_user = quote_plus(user)
+    encoded_password = quote_plus(password)
+    
+    return f"{protocol}://{encoded_user}:{encoded_password}@{host}:{port}/{database}"
 
 
 def build_database_url_with_driver(driver: str = "psycopg") -> str:

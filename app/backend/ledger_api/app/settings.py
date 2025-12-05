@@ -152,6 +152,9 @@ def load_settings() -> LedgerApiSettings:
     except ValueError:
         report_artifact_url_ttl = 900
     
+    # PDF署名用のシークレットキーを環境変数から取得
+    report_artifact_secret = os.getenv("REPORT_ARTIFACT_SECRET", "change-me-in-production").strip()
+    
     _settings = LedgerApiSettings(
         stage=stage,
         strict_startup=strict_startup,
@@ -165,7 +168,7 @@ def load_settings() -> LedgerApiSettings:
         report_artifact_root_dir=report_artifact_root_dir,
         report_artifact_url_prefix=report_artifact_url_prefix,
         report_artifact_url_ttl=report_artifact_url_ttl,
-        # report_artifact_secret は環境変数から自動読み込み (Pydantic BaseSettings)
+        report_artifact_secret=report_artifact_secret,
     )
     
     # セキュリティチェック: insecure なデフォルト値のまま起動していないか確認
