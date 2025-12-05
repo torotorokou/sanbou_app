@@ -7,14 +7,14 @@
 ## - 使用する env ファイル: env/.env.common + env/.env.${STG_ENV_FILE}
 ## - 特徴: 本番近似構成、nginx 経由、3層ネットワーク分離
 ## - backend / nginx は Artifact Registry のイメージを利用
-##   asia-northeast1-docker.pkg.dev/sanbou-app/sanbou-app/*:stg-latest
+##   asia-northeast1-docker.pkg.dev/honest-sanbou-app-stg/sanbou-app/*:stg-latest
 ## =============================================================
 services:
   # ===========================================================================
   # Core API (BFF)
   # ===========================================================================
   core_api:
-    image: asia-northeast1-docker.pkg.dev/sanbou-app/sanbou-app/core_api:stg-latest
+    image: asia-northeast1-docker.pkg.dev/honest-sanbou-app-stg/sanbou-app/core_api:stg-latest
     networks: [app-net, data-net]
     depends_on:
       - db
@@ -43,7 +43,7 @@ services:
   # Plan Worker
   # ===========================================================================
   plan_worker:
-    image: asia-northeast1-docker.pkg.dev/sanbou-app/sanbou-app/plan_worker:stg-latest
+    image: asia-northeast1-docker.pkg.dev/honest-sanbou-app-stg/sanbou-app/plan_worker:stg-latest
     networks: [data-net]
     depends_on:
       - db
@@ -65,7 +65,7 @@ services:
   # AI API
   # ===========================================================================
   ai_api:
-    image: asia-northeast1-docker.pkg.dev/sanbou-app/sanbou-app/ai_api:stg-latest
+    image: asia-northeast1-docker.pkg.dev/honest-sanbou-app-stg/sanbou-app/ai_api:stg-latest
     networks: [app-net]
     depends_on:
       - db
@@ -93,7 +93,7 @@ services:
   # Ledger API
   # ===========================================================================
   ledger_api:
-    image: asia-northeast1-docker.pkg.dev/sanbou-app/sanbou-app/ledger_api:stg-latest
+    image: asia-northeast1-docker.pkg.dev/honest-sanbou-app-stg/sanbou-app/ledger_api:stg-latest
     user: "0:0"
     networks: [app-net, data-net]
     depends_on:
@@ -124,7 +124,7 @@ services:
   # RAG API
   # ===========================================================================
   rag_api:
-    image: asia-northeast1-docker.pkg.dev/sanbou-app/sanbou-app/rag_api:stg-latest
+    image: asia-northeast1-docker.pkg.dev/honest-sanbou-app-stg/sanbou-app/rag_api:stg-latest
     networks: [app-net, data-net]
     depends_on:
       - db
@@ -153,7 +153,7 @@ services:
   # Manual API
   # ===========================================================================
   manual_api:
-    image: asia-northeast1-docker.pkg.dev/sanbou-app/sanbou-app/manual_api:stg-latest
+    image: asia-northeast1-docker.pkg.dev/honest-sanbou-app-stg/sanbou-app/manual_api:stg-latest
     networks: [app-net]
     env_file:
       - ../env/.env.common
@@ -178,7 +178,7 @@ services:
   # nginx (stg)
   # ===========================================================================
   nginx:
-    image: asia-northeast1-docker.pkg.dev/sanbou-app/sanbou-app/nginx:stg-latest
+    image: asia-northeast1-docker.pkg.dev/honest-sanbou-app-stg/sanbou-app/nginx:stg-latest
     depends_on:
       - core_api
       - ai_api
