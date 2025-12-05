@@ -28,6 +28,12 @@ import { coreApi } from '@/shared';
 export type ServiceStatus = 'healthy' | 'unhealthy' | 'timeout' | 'error' | 'unknown';
 export type OverallStatus = 'healthy' | 'degraded' | 'critical' | 'unknown';
 
+export interface ServiceHealth {
+    status: ServiceStatus;
+    response_time_ms?: number;
+    error_message?: string;
+}
+
 export interface UseSystemHealthOptions {
     /** 初回マウント時に自動実行するか（デフォルト: false） */
     autoCheckOnMount?: boolean;
@@ -39,15 +45,6 @@ export interface SystemHealthStatus {
     total_services: number;
     services: Record<string, ServiceHealth>;
     checked_at: string;
-}
-
-export interface UseSystemHealthOptions {
-    /** 自動チェックを有効にするか（デフォルト: true） */
-    enabled?: boolean;
-    /** チェック間隔（ミリ秒、デフォルト: 30秒） */
-    interval?: number;
-    /** 通知を表示するか（デフォルト: true） */
-    showNotifications?: boolean;
 }
 
 export interface UseSystemHealthReturn {
