@@ -1,5 +1,5 @@
 """
-Authentication Middleware - IAP 認証ミドルウェア
+Authentication Middleware - IAP 認証ミドルウェア（共通実装）
 
 【概要】
 全てのリクエストに対して IAP 認証を強制するミドルウェア。
@@ -13,56 +13,55 @@ Authentication Middleware - IAP 認証ミドルウェア
 
 【使用例】
 ```python
-from app.api.middleware.auth_middleware import AuthenticationMiddleware
+from backend_shared.infra.frameworks.auth_middleware import AuthenticationMiddleware
 
 app.add_middleware(
     AuthenticationMiddleware,
+    auth_provider_factory=lambda: get_auth_provider(),
     excluded_paths=["/health", "/healthz", "/"]
 )
 ```
 """
 
-import os
-from typing import List
-from fastapi import Request, Response
+from typing import Callable, List, Optional, Any
+from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import JSONResponse
 from backend_shared.application.logging import get_module_logger
-from backend_shared.config.env_utils import is_iap_enabled
-from app.deps import get_auth_provider
+from backend_shared.config.env_utils import is_iap_enabled, get_default_auth_excluded_paths
 
 logger = get_module_logger(__name__)
 
 
 class AuthenticationMiddleware(BaseHTTPMiddleware):
     """
-    IAP 認証を強制するミドルウェア
+    IAP 認証を強制するミドルウェア（共通実装）
     
     除外パスを除く全てのリクエストで認証を実施します。
     
     Attributes:
         excluded_paths: 認証を除外するパスのリスト
         iap_enabled: IAP が有効かどうか
+        auth_provider_factory: 認証プロバイダーを生成する関数
     """
     
-    def __init__(self, app, excluded_paths: List[str] = None):
+    def __init__(
+        self,
+        app,
+        auth_provider_factory: Optional[Callable[[], Any]] = None,
+        excluded_paths: Optional[List[str]] = None
+    ):
         """
         認証ミドルウェアを初期化
         
         Args:
             app: FastAPI アプリケーション
-            excluded_paths: 認証を除外するパスのリスト
+            auth_provider_factory: 認証プロバイダーを生成する関数
+            excluded_paths: 認証を除外するパスのリスト（Noneの場合はデフォルトを使用）
         """
         super().__init__(app)
-        self.excluded_paths = excluded_paths or [
-            "/health",
-            "/healthz",
-            "/api/healthz",
-            "/",
-            "/docs",
-            "/redoc",
-            "/openapi.json",
-        ]
+        self.auth_provider_factory = auth_provider_factory
+        self.excluded_paths = excluded_paths if excluded_paths is not None else get_default_auth_excluded_paths()
         self.iap_enabled = is_iap_enabled()
         
         logger.info(
@@ -89,12 +88,20 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
         if request.url.path in self.excluded_paths:
             return await call_next(request)
         
+        # 認証プロバイダーが設定されていない場合はスキップ
+        if not self.auth_provider_factory:
+            logger.debug(
+                "Auth provider not configured, skipping authentication",
+                extra={"operation": "authentication", "path": request.url.path}
+            )
+            return await call_next(request)
+        
         # IAP が無効の場合は認証をスキップ（開発環境）
         # ただし、DevAuthProvider を使用してユーザー情報は設定する
         if not self.iap_enabled:
             # 開発環境では request.state.user に固定ユーザーを設定
             try:
-                auth_provider = get_auth_provider()
+                auth_provider = self.auth_provider_factory()
                 user = await auth_provider.get_current_user(request)
                 request.state.user = user
             except Exception as e:
@@ -106,7 +113,7 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
         
         # IAP 認証を実施
         try:
-            auth_provider = get_auth_provider()
+            auth_provider = self.auth_provider_factory()
             user = await auth_provider.get_current_user(request)
             
             # 認証成功: request.state に user を保存

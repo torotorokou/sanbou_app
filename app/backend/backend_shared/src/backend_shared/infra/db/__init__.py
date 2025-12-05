@@ -8,6 +8,7 @@ This module provides common database utilities:
 """
 
 from backend_shared.infra.db.url_builder import (
+    build_postgres_dsn,
     build_database_url,
     build_database_url_with_driver,
 )
@@ -17,6 +18,7 @@ from backend_shared.infra.db.health import (
 )
 
 __all__ = [
+    "build_postgres_dsn",
     "build_database_url",
     "build_database_url_with_driver",
     "DbHealth",

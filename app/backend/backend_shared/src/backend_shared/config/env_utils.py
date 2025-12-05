@@ -328,3 +328,31 @@ def get_log_level(default: str = "INFO") -> str:
         'WARNING'
     """
     return get_str_env("LOG_LEVEL", default=default).upper()
+
+
+def get_default_auth_excluded_paths() -> list[str]:
+    """
+    認証除外パスのデフォルトリストを取得
+    
+    全サービスで共通の認証除外パスを返します。
+    各サービスで追加のパスを除外したい場合は、このリストに追加してください。
+    
+    Returns:
+        list[str]: 認証を除外するパスのリスト
+        
+    Examples:
+        >>> paths = get_default_auth_excluded_paths()
+        >>> "/health" in paths
+        True
+        >>> "/api/healthz" in paths
+        True
+    """
+    return [
+        "/health",
+        "/healthz",
+        "/api/healthz",
+        "/",
+        "/docs",
+        "/redoc",
+        "/openapi.json",
+    ]
