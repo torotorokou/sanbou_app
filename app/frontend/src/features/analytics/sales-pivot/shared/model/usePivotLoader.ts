@@ -41,19 +41,31 @@ export function usePivotLoader(params: PivotLoaderParams) {
       const drawerTopN = drawer.topN;
       const month = drawer.month;
       const monthRange = drawer.monthRange;
-      const dateFrom = drawer.dateFrom;
-      const dateTo = drawer.dateTo;
+      // オプショナルプロパティを明示的にundefinedとして扱う
+      const dateFrom: string | undefined = ('dateFrom' in drawer ? drawer.dateFrom : undefined) as string | undefined;
+      const dateTo: string | undefined = ('dateTo' in drawer ? drawer.dateTo : undefined) as string | undefined;
       
       const targetAxis = axis;
       if (targetAxis === baseAxis) return;
 
       setPivotLoading(true);
       try {
-        const periodParams = dateFrom && dateTo
-          ? { dateFrom, dateTo }
-          : monthRange
-          ? { monthRange }
-          : { month };
+        // 期間パラメータの構築
+        let periodParams: {
+          month?: string;
+          monthRange?: { from: string; to: string };
+          dateFrom?: string;
+          dateTo?: string;
+        } = {};
+        
+        if (dateFrom && dateTo) {
+          periodParams = { dateFrom, dateTo };
+        } else if (monthRange) {
+          periodParams = { monthRange };
+        } else if (month) {
+          periodParams = { month };
+        }
+        
         const page = await repository.fetchPivot({
           ...periodParams,
           baseAxis,
