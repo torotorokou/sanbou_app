@@ -46,7 +46,7 @@ const UnimplementedModal: React.FC<UnimplementedModalProps> = ({
     return (
         <Modal
             open={visible}
-            onCancel={null}
+            onCancel={undefined}
             closable={false}
             maskClosable={false}
             keyboard={false}
