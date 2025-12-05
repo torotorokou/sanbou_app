@@ -111,11 +111,19 @@ DC_FULL           := $(DC_ENV_PREFIX)$(DC) $(COMPOSE_ENV_ARGS) -p $(ENV) $(COMPO
 ## 基本操作
 ## =============================================================
 check:
-	@for f in $(COMPOSE_FILE_LIST); do \
-	  if [ ! -f "$$f" ]; then echo "[error] compose file $$f not found"; exit 1; fi; \
-	done
-	@if [ ! -f "$(ENV_FILE_COMMON)" ]; then echo "[error] $(ENV_FILE_COMMON) not found"; exit 1; fi
-	@if [ ! -f "$(ENV_FILE)" ]; then echo "[error] $(ENV_FILE) not found"; exit 1; fi
+    @for f in $(COMPOSE_FILE_LIST); do \
+      if [ ! -f "$$f" ]; then echo "[error] compose file $$f not found"; exit 1; fi; \
+    done
+    @if [ ! -f "$(ENV_FILE_COMMON)" ]; then echo "[error] $(ENV_FILE_COMMON) not found"; exit 1; fi
+    @if [ ! -f "$(ENV_FILE)" ]; then echo "[error] $(ENV_FILE) not found"; exit 1; fi
+    @# test 環境チェックは stg/prod 環境では無視
+    @if [ "$(ENV_CANON)" != "vm_stg" ] && [ "$(ENV_CANON)" != "vm_prod" ]; then \
+      if [ -d "test" ] && [ ! -z "$$(find test -name '*.py' 2>/dev/null)" ]; then \
+        echo "[info] test directory found - checking test dependencies"; \
+      fi; \
+    else \
+      echo "[info] skipping test environment checks for $(ENV_CANON)"; \
+    fi
 
 up: check
 	@echo "[info] UP (ENV=$(ENV))"
