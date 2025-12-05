@@ -95,7 +95,7 @@ client.interceptors.response.use(
     (response) => response,
     (error: AxiosError) => {
         // リクエストキャンセルの場合はエラー通知を表示しない
-        if (axios.isCancel(error) || error.code === 'ERR_CANCELED') {
+        if (axios.isCancel(error) || (error as any).code === 'ERR_CANCELED') {
             throw error;
         }
         
