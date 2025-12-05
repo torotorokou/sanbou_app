@@ -160,14 +160,15 @@ function shouldLogConsoleError(status: number, url: string): boolean {
 // レスポンスインターセプター: エラーを ApiError に変換 + グローバルエラー通知
 client.interceptors.response.use(
     (response) => response,
-    (error: AxiosError) => {
+    (error: unknown) => {
         // リクエストキャンセルの場合はエラー通知を表示しない
         if (axios.isCancel(error) || (error as any).code === 'ERR_CANCELED') {
             throw error;
         }
         
-        const apiError = ApiError.fromAxiosError(error);
-        const url = error.config?.url || 'unknown';
+        const axiosError = error as AxiosError;
+        const apiError = ApiError.fromAxiosError(axiosError);
+        const url = axiosError.config?.url || 'unknown';
         
         // コンソールエラーの重複排除（開発用）
         if (shouldLogConsoleError(apiError.status, url)) {
