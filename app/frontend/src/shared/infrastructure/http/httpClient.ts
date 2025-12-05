@@ -90,6 +90,73 @@ export const client = axios.create({
     timeout: 60000, // 60秒タイムアウト
 });
 
+/**
+ * エラー通知の重複排除用キャッシュ
+ * 同じエラーを短時間に複数回通知しないようにする
+ */
+const recentErrorNotifications = new Map<string, number>();
+const ERROR_NOTIFICATION_COOLDOWN = 3000; // 3秒間は同じエラーを通知しない
+
+/**
+ * コンソールログの重複排除用キャッシュ
+ */
+const recentConsoleErrors = new Map<string, number>();
+const CONSOLE_ERROR_COOLDOWN = 1000; // 1秒間は同じエラーをコンソールに出力しない
+
+/**
+ * エラーを通知すべきかチェック（重複排除）
+ */
+function shouldNotifyError(status: number, message: string): boolean {
+    const key = `${status}:${message}`;
+    const now = Date.now();
+    const lastNotification = recentErrorNotifications.get(key);
+    
+    if (lastNotification && now - lastNotification < ERROR_NOTIFICATION_COOLDOWN) {
+        return false; // クールダウン期間中は通知しない
+    }
+    
+    recentErrorNotifications.set(key, now);
+    
+    // 古いエントリをクリーンアップ（メモリリーク防止）
+    if (recentErrorNotifications.size > 50) {
+        const threshold = now - ERROR_NOTIFICATION_COOLDOWN;
+        for (const [k, timestamp] of recentErrorNotifications.entries()) {
+            if (timestamp < threshold) {
+                recentErrorNotifications.delete(k);
+            }
+        }
+    }
+    
+    return true;
+}
+
+/**
+ * コンソールエラーを出力すべきかチェック（重複排除）
+ */
+function shouldLogConsoleError(status: number, url: string): boolean {
+    const key = `${status}:${url}`;
+    const now = Date.now();
+    const lastLog = recentConsoleErrors.get(key);
+    
+    if (lastLog && now - lastLog < CONSOLE_ERROR_COOLDOWN) {
+        return false; // クールダウン期間中はログを出力しない
+    }
+    
+    recentConsoleErrors.set(key, now);
+    
+    // 古いエントリをクリーンアップ
+    if (recentConsoleErrors.size > 100) {
+        const threshold = now - CONSOLE_ERROR_COOLDOWN;
+        for (const [k, timestamp] of recentConsoleErrors.entries()) {
+            if (timestamp < threshold) {
+                recentConsoleErrors.delete(k);
+            }
+        }
+    }
+    
+    return true;
+}
+
 // レスポンスインターセプター: エラーを ApiError に変換 + グローバルエラー通知
 client.interceptors.response.use(
     (response) => response,
@@ -100,6 +167,12 @@ client.interceptors.response.use(
         }
         
         const apiError = ApiError.fromAxiosError(error);
+        const url = error.config?.url || 'unknown';
+        
+        // コンソールエラーの重複排除（開発用）
+        if (shouldLogConsoleError(apiError.status, url)) {
+            console.error(`API Error [${apiError.status}] ${url}:`, apiError.userMessage);
+        }
         
         // プロダクション環境でグローバルエラー通知を表示
         // 500系エラーと401/403認証エラーのみ通知（400系は各コンポーネントで処理）
@@ -110,7 +183,10 @@ client.interceptors.response.use(
                 apiError.status >= 500 ? `サーバーエラー: ${apiError.userMessage}` :
                 apiError.userMessage;
             
-            message.error(errorMessage, 5); // 5秒間表示
+            // 重複排除: 同じエラーを短時間に複数回通知しない
+            if (shouldNotifyError(apiError.status, errorMessage)) {
+                message.error(errorMessage, 5); // 5秒間表示
+            }
         }
         
         throw apiError;
