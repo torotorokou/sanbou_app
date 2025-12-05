@@ -201,7 +201,7 @@ restore-from-dump: check
 	$(DC_FULL) exec -T $(PG_SERVICE) bash -lc '\
 	  dropdb  -U $(PGUSER) --if-exists --force $(PGDB) && \
 	  createdb -U $(PGUSER) $(PGDB) && \
-	  pg_restore -U $(PGUSER) -d $(PGDB) /tmp/restore.dump \
+	  pg_restore -U $(PGUSER) -d $(PGDB) --no-owner --no-acl /tmp/restore.dump \
 	'
 	@$(DC_FULL) exec -T $(PG_SERVICE) rm -f /tmp/restore.dump || true
 	@echo "[ok] restore-from-dump completed"
