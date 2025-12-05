@@ -22,9 +22,6 @@ python-dateutil==2.9.0.post0
 # 日本語処理（必要に応じて）
 jaconv==0.4.0
 
-# 型ヒント補助（任意）
-typing-extensions==4.12.2
-
 # GCS からマスタ/テンプレート同期用
 google-cloud-storage==2.19.0
 
