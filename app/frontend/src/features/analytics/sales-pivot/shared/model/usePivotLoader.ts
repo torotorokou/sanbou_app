@@ -32,18 +32,18 @@ export function usePivotLoader(params: PivotLoaderParams) {
   const loadPivot = useCallback(
     async (axis: Mode, reset = false) => {
       if (!drawer.open) return;
-      const {
-        baseAxis,
-        baseId,
-        repIds: drawerRepIds,
-        sortBy: drawerSortBy,
-        order: drawerOrder,
-        topN: drawerTopN,
-        month,
-        monthRange,
-        dateFrom,
-        dateTo,
-      } = drawer;
+      
+      const baseAxis = drawer.baseAxis;
+      const baseId = drawer.baseId;
+      const drawerRepIds = drawer.repIds;
+      const drawerSortBy = drawer.sortBy;
+      const drawerOrder = drawer.order;
+      const drawerTopN = drawer.topN;
+      const month = drawer.month;
+      const monthRange = drawer.monthRange;
+      const dateFrom = drawer.dateFrom;
+      const dateTo = drawer.dateTo;
+      
       const targetAxis = axis;
       if (targetAxis === baseAxis) return;
 
