@@ -1,11 +1,73 @@
 """
 Database URL builder utility.
 
-Provides functions to construct PostgreSQL database URLs from environment variables.
+Provides functions to construct PostgreSQL database URLs from environment variables
+or explicit parameters.
 """
 
+from __future__ import annotations
 import os
 from urllib.parse import quote_plus
+
+
+def build_postgres_dsn(
+    *,
+    user: str,
+    password: str,
+    host: str,
+    port: int | str,
+    database: str,
+    driver: str = "psycopg",
+) -> str:
+    """
+    PostgreSQL用のSQLAlchemy DSNを安全に構築する共通関数
+    
+    ユーザー名とパスワードをURLエンコードするため、特殊文字（/, @, :など）が
+    含まれていても安全に接続できます。
+    
+    Args:
+        user: データベースユーザー名
+        password: データベースパスワード（特殊文字を含んでもOK）
+        host: データベースホスト名またはIPアドレス
+        port: ポート番号（int または str）
+        database: データベース名
+        driver: SQLAlchemyドライバー名（デフォルト: "psycopg"）
+                psycopg, asyncpg, psycopg2 など
+    
+    Returns:
+        str: SQLAlchemy用のDSN文字列
+        
+    Examples:
+        >>> # 通常のパスワード
+        >>> build_postgres_dsn(
+        ...     user="myuser",
+        ...     password="mypass",
+        ...     host="localhost",
+        ...     port=5432,
+        ...     database="mydb",
+        ...     driver="psycopg"
+        ... )
+        'postgresql+psycopg://myuser:mypass@localhost:5432/mydb'
+        
+        >>> # 特殊文字を含むパスワード
+        >>> build_postgres_dsn(
+        ...     user="app_user",
+        ...     password="p@ss/w:rd",
+        ...     host="db.example.com",
+        ...     port=5432,
+        ...     database="production",
+        ...     driver="asyncpg"
+        ... )
+        'postgresql+asyncpg://app_user:p%40ss%2Fw%3Ard@db.example.com:5432/production'
+    
+    Notes:
+        - この関数はインフラ層（DB接続管理）専用です
+        - ドメイン層やアプリケーション層から直接呼び出さないでください
+        - 環境変数から構築する場合は build_database_url() を使用してください
+    """
+    safe_user = quote_plus(user)
+    safe_password = quote_plus(password)
+    return f"postgresql+{driver}://{safe_user}:{safe_password}@{host}:{port}/{database}"
 
 
 def build_database_url(
@@ -76,16 +138,21 @@ def build_database_url(
             )
         return ""
     
-    # 4. URL構築
-    protocol = "postgresql"
+    # 4. build_postgres_dsn を使用してURL構築（URLエンコード含む）
     if driver:
-        protocol = f"postgresql+{driver}"
-    
-    # ユーザー名とパスワードをURLエンコード（特殊文字対応）
-    encoded_user = quote_plus(user)
-    encoded_password = quote_plus(password)
-    
-    return f"{protocol}://{encoded_user}:{encoded_password}@{host}:{port}/{database}"
+        return build_postgres_dsn(
+            user=user,
+            password=password,
+            host=host,
+            port=port,
+            database=database,
+            driver=driver,
+        )
+    else:
+        # driver 指定なしの場合は "postgresql://" のみ
+        safe_user = quote_plus(user)
+        safe_password = quote_plus(password)
+        return f"postgresql://{safe_user}:{safe_password}@{host}:{port}/{database}"
 
 
 def build_database_url_with_driver(driver: str = "psycopg") -> str:

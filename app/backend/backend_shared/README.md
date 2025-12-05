@@ -36,6 +36,41 @@ backend_shared/
 
 ## 使い方（各サービス側）
 
+### データベースURL構築
+
+特殊文字を含むパスワードでも安全に接続できるよう、URLエンコードを自動で行います。
+
+#### パターン1: 環境変数から自動構築（推奨）
+
+```python
+from backend_shared.infra.db import build_database_url_with_driver
+
+# 環境変数 DATABASE_URL または POSTGRES_* から自動構築
+DATABASE_URL = build_database_url_with_driver(driver="psycopg")
+# => "postgresql+psycopg://user:encoded_password@host:5432/db"
+```
+
+#### パターン2: 明示的なパラメータ指定
+
+```python
+from backend_shared.infra.db import build_postgres_dsn
+
+# パスワードに特殊文字（/, @, : など）が含まれても安全
+DATABASE_URL = build_postgres_dsn(
+    user="myuser",
+    password="p@ss/w:rd",  # 自動的にURLエンコード
+    host="localhost",
+    port=5432,
+    database="mydb",
+    driver="psycopg"  # または "asyncpg", "psycopg2"
+)
+# => "postgresql+psycopg://myuser:p%40ss%2Fw%3Ard@localhost:5432/mydb"
+```
+
+**注意事項:**
+- パスワードに `/`, `@`, `:` などが含まれる場合、自動的にURLエンコードされます
+- 手動での文字列連結は避けてください（接続エラーの原因になります）
+
 ### DB セッション管理
 
 ```python
