@@ -80,10 +80,16 @@ ENV/
 # テンプレートファイルのみ許可し、実際の設定ファイルは全て Git 管理外とする
 
 # env/ ディレクトリ: 全ファイル除外
-env/
+/env/
+!env/.env.example
+!env/*.template
+!env/README.md
 
 # secrets/ ディレクトリ: 全ファイル除外
-secrets/
+/secrets/
+!secrets/.env.secrets.template
+!secrets/*.template
+!secrets/README.md
 
 # ルートの .env ファイルも除外（念のため）
 /.env
