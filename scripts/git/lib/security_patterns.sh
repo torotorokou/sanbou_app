@@ -136,9 +136,12 @@ contains_sensitive_content() {
     local found=1  # 初期値: なし
     
     for pattern in "${SENSITIVE_CONTENT_PATTERNS[@]}"; do
+        # パターンが空の場合はスキップ
+        [ -z "$pattern" ] && continue
+        
         # パターンに一致する行を取得
         local matched_lines
-        matched_lines=$(echo "$content" | grep -E "$pattern" || true)
+        matched_lines=$(echo "$content" | grep -E -- "$pattern" 2>/dev/null || true)
         
         if [ -z "$matched_lines" ]; then
             continue
@@ -147,7 +150,8 @@ contains_sensitive_content() {
         # 除外パターンでフィルタリング
         local filtered_lines="$matched_lines"
         for exclusion in "${CONTENT_EXCLUSION_PATTERNS[@]}"; do
-            filtered_lines=$(echo "$filtered_lines" | grep -vE "$exclusion" || true)
+            [ -z "$exclusion" ] && continue
+            filtered_lines=$(echo "$filtered_lines" | grep -vE -- "$exclusion" 2>/dev/null || true)
         done
         
         # フィルタリング後も残っている行があれば機密情報あり
