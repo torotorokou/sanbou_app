@@ -1,7 +1,11 @@
 # =========================
 # Frontend (React/Vite) Multi-stage
-# builder: node:20-slim で依存取得+ビルド
-# runtime: nginx:alpine に dist のみ配置 (Welcome ページ完全除去)
+# Target stages:
+#   - builder: node:20-slim で依存取得+ビルド
+#   - base: nginx:alpine に dist のみ配置（共通ベース）
+#   - stg: ステージング環境用（base継承）
+#   - prod: 本番環境用（base継承）
+#   - dev: ローカル開発用（ホットリロード）
 # =========================
 
 FROM node:20-slim AS builder
@@ -21,11 +25,11 @@ COPY . .
 # Vite ビルド（環境変数は compose 側で注入想定）
 RUN npm run build
 
-FROM nginx:1.27-alpine AS runtime
+FROM nginx:1.27-alpine AS base
 LABEL org.opencontainers.image.source="https://example.local/sanbou_app" \
-            org.opencontainers.image.description="Sanbou frontend runtime (nginx)"
+            org.opencontainers.image.description="Sanbou frontend base (nginx)"
 
-# runtime は root のまま (公式 entrypoint が /var/cache/nginx/* を作成するため必要)
+# base は root のまま (公式 entrypoint が /var/cache/nginx/* を作成するため必要)
 USER root
 WORKDIR /usr/share/nginx/html
 RUN rm -rf ./*
@@ -40,6 +44,25 @@ RUN chown -R nginx:nginx /usr/share/nginx/html
 EXPOSE 80
 HEALTHCHECK --interval=30s --timeout=3s --retries=3 CMD wget -q -O /dev/null http://localhost/ || exit 1
 CMD ["nginx", "-g", "daemon off;"]
+
+# =========================
+# Stage: stg (ステージング環境用 - VPN 経由アクセス)
+# =========================
+FROM base AS stg
+# ステージング環境固有の設定（必要に応じて追加）
+ENV APP_ENV=stg
+
+# =========================
+# Stage: prod (本番環境用 - LB + IAP 経由)
+# =========================
+FROM base AS prod
+# 本番環境固有の設定（必要に応じて追加）
+ENV APP_ENV=prod
+
+# =========================
+# Alias: runtime (後方互換性のため base を参照)
+# =========================
+FROM base AS runtime
 
 # =========================
 # Dev stage (ホットリロード用)

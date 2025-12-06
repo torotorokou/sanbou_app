@@ -76,18 +76,14 @@ ENV/
 # ============================
 # 環境変数・Secrets
 # ============================
-# env/ ディレクトリ: 実ファイル除外、example / template のみ許可
-env/*
-!env/.env.example
-!env/*.template
-!env/README*
+# 【重要】env/ と secrets/ ディレクトリ内の全ファイルを除外
+# テンプレートファイルのみ許可し、実際の設定ファイルは全て Git 管理外とする
 
-# secrets/ ディレクトリ: 実ファイル除外、テンプレ / example のみ許可
-secrets/*
-!secrets/*.template
-!secrets/*example*
-!secrets/*_example.*
-!secrets/README*
+# env/ ディレクトリ: 全ファイル除外
+env/
+
+# secrets/ ディレクトリ: 全ファイル除外
+secrets/
 
 # ルートの .env ファイルも除外（念のため）
 /.env

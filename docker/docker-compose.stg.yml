@@ -1,245 +1,239 @@
 ## =============================================================
-## docker-compose.stg.yml (ステージング環境 - ENV=local_stg / ENV=vm_stg 用)
-## - Makefile 経由で起動:
-##   * ローカルSTG: make up ENV=local_stg (env/.env.local_stg 使用)
-##   * GCP VM STG:  make up ENV=vm_stg     (env/.env.vm_stg 使用)
-## - Makefile が STG_ENV_FILE 変数経由で env_file を解決
-## - 使用する env ファイル: env/.env.common + env/.env.${STG_ENV_FILE}
-## - 特徴: 本番近似構成、nginx 経由、3層ネットワーク分離
-## - backend / nginx は Artifact Registry のイメージを利用
-##   asia-northeast1-docker.pkg.dev/honest-sanbou-app-stg/sanbou-app/*:stg-latest
+## docker-compose.stg.yml (GCP VM ステージング環境 - ENV=vm_stg 用)
+## - Makefile 経由で起動: make up ENV=vm_stg
+## - 使用する env ファイル: env/.env.common + env/.env.vm_stg + secrets/.env.vm_stg.secrets
+## - 特徴:
+##   * VPN / Tailscale 経由でのアクセス（IAP なし）
+##   * AUTH_MODE=vpn_dummy (固定ユーザーでのダミー認証)
+##   * Artifact Registry のイメージを利用（pull のみ、build なし)
+##   * 3層ネットワーク分離（edge/app/data）
+## - イメージ: asia-northeast1-docker.pkg.dev/honest-sanbou-app-stg/sanbou-app/*:stg-latest
 ## =============================================================
+
+# =============================================================================
+# YAML アンカー定義（共通設定の再利用）
+# =============================================================================
+x-common-env: &common-env-files
+  - ../env/.env.common
+  - ../env/.env.vm_stg
+  - ../secrets/.env.vm_stg.secrets
+
+x-common-logging: &common-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+x-common-healthcheck: &common-healthcheck
+  interval: 30s
+  timeout: 5s
+  retries: 3
+
+x-tz-env: &tz-environment
+  TZ: "Asia/Tokyo"
+
 services:
-  # ===========================================================================
-  # Core API (BFF)
-  # ===========================================================================
   core_api:
     image: asia-northeast1-docker.pkg.dev/honest-sanbou-app-stg/sanbou-app/core_api:stg-latest
-    networks: [app-net, data-net]
+    networks:
+    - app-net
+    - data-net
     depends_on:
-      - db
-    env_file:
-      - ../env/.env.common
-      - ../env/.env.${STG_ENV_FILE}
-      - ../secrets/.env.${STG_ENV_FILE}.secrets
+    - db
+    env_file: &id001
+    - ../env/.env.common
+    - ../env/.env.vm_stg
+    - ../secrets/.env.vm_stg.secrets
     volumes:
-      - ../app/backend/core_api/migrations:/backend/migrations:rw
-      - ../app/config:/backend/config
+    - ../app/backend/core_api/migrations:/backend/migrations:rw
+    - ../app/config:/backend/config
     environment:
-      - TZ=Asia/Tokyo
+      TZ: Asia/Tokyo
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8000/health
       interval: 30s
       timeout: 5s
       retries: 3
     logging:
       driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "3"
-
-  # ===========================================================================
-  # Plan Worker
-  # ===========================================================================
+      options: &id002
+        max-size: 10m
+        max-file: '3'
   plan_worker:
     image: asia-northeast1-docker.pkg.dev/honest-sanbou-app-stg/sanbou-app/plan_worker:stg-latest
-    networks: [data-net]
+    networks:
+    - data-net
     depends_on:
-      - db
-    env_file:
-      - ../env/.env.common
-      - ../env/.env.${STG_ENV_FILE}
-      - ../secrets/.env.${STG_ENV_FILE}.secrets
+    - db
+    env_file: *id001
     environment:
-      TZ: "Asia/Tokyo"
-      POLL_INTERVAL: "10"
+      TZ: Asia/Tokyo
+      POLL_INTERVAL: '10'
     restart: unless-stopped
     logging:
       driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "3"
-
-  # ===========================================================================
-  # AI API
-  # ===========================================================================
+      options: *id002
   ai_api:
     image: asia-northeast1-docker.pkg.dev/honest-sanbou-app-stg/sanbou-app/ai_api:stg-latest
-    networks: [app-net]
+    networks:
+    - app-net
     depends_on:
-      - db
-    env_file:
-      - ../env/.env.common
-      - ../env/.env.${STG_ENV_FILE}
-      - ../secrets/.env.${STG_ENV_FILE}.secrets
+    - db
+    env_file: *id001
     volumes:
-      - ../app/config:/backend/config
+    - ../app/config:/backend/config
     environment:
-      - TZ=Asia/Tokyo
+      TZ: Asia/Tokyo
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8000/health
       interval: 30s
       timeout: 5s
       retries: 3
     logging:
       driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "3"
-
-  # ===========================================================================
-  # Ledger API
-  # ===========================================================================
+      options: *id002
   ledger_api:
     image: asia-northeast1-docker.pkg.dev/honest-sanbou-app-stg/sanbou-app/ledger_api:stg-latest
-    user: "0:0"
-    networks: [app-net, data-net]
+    user: 0:0
+    networks:
+    - app-net
+    - data-net
     depends_on:
-      - db
-    env_file:
-      - ../env/.env.common
-      - ../env/.env.${STG_ENV_FILE}
-      - ../secrets/.env.${STG_ENV_FILE}.secrets
+    - db
+    env_file: *id001
     volumes:
-      - ../app/config:/backend/config
+    - ../app/config:/backend/config
     environment:
-      REPORT_ARTIFACT_URL_PREFIX: "/reports/artifacts"
-      STRICT_STARTUP: "true"
-      TZ: "Asia/Tokyo"
+      REPORT_ARTIFACT_URL_PREFIX: /reports/artifacts
+      STRICT_STARTUP: 'true'
+      TZ: Asia/Tokyo
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8000/health
       interval: 30s
       timeout: 5s
       retries: 3
     logging:
       driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "3"
-
-  # ===========================================================================
-  # RAG API
-  # ===========================================================================
+      options: *id002
   rag_api:
     image: asia-northeast1-docker.pkg.dev/honest-sanbou-app-stg/sanbou-app/rag_api:stg-latest
-    networks: [app-net, data-net]
+    networks:
+    - app-net
+    - data-net
     depends_on:
-      - db
-    env_file:
-      - ../env/.env.common
-      - ../env/.env.${STG_ENV_FILE}
-      - ../secrets/.env.${STG_ENV_FILE}.secrets
+    - db
+    env_file: *id001
     volumes:
-      - ../app/config:/backend/config
+    - ../app/config:/backend/config
     environment:
       CATEGORY_QUESTION_TEMPLATES_WITH_TAGS: /backend/config/category_question_templates_with_tags.yaml
-      TZ: "Asia/Tokyo"
+      TZ: Asia/Tokyo
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8000/health
       interval: 30s
       timeout: 5s
       retries: 3
     logging:
       driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "3"
-
-  # ===========================================================================
-  # Manual API
-  # ===========================================================================
+      options: *id002
   manual_api:
     image: asia-northeast1-docker.pkg.dev/honest-sanbou-app-stg/sanbou-app/manual_api:stg-latest
-    networks: [app-net]
-    env_file:
-      - ../env/.env.common
-      - ../env/.env.${STG_ENV_FILE}
-      - ../secrets/.env.${STG_ENV_FILE}.secrets
+    networks:
+    - app-net
+    env_file: *id001
     environment:
       MANUAL_FRONTEND_BASE_URL: ${MANUAL_FRONTEND_BASE_URL:-http://localhost:5173}
-      TZ: "Asia/Tokyo"
+      TZ: Asia/Tokyo
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8000/health
       interval: 30s
       timeout: 5s
       retries: 3
     logging:
       driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "3"
-
-  # ===========================================================================
-  # nginx (stg)
-  # ===========================================================================
+      options: *id002
   nginx:
     image: asia-northeast1-docker.pkg.dev/honest-sanbou-app-stg/sanbou-app/nginx:stg-latest
     depends_on:
-      - core_api
-      - ai_api
-      - ledger_api
-      - rag_api
-      - manual_api
+    - core_api
+    - ai_api
+    - ledger_api
+    - rag_api
+    - manual_api
     networks:
-      - edge-net
-      - app-net
+    - edge-net
+    - app-net
     ports:
-      - "${STG_NGINX_HTTP_PORT:-8080}:80"
-      - "${STG_NGINX_HTTPS_PORT:-8443}:443"
+    - ${STG_NGINX_HTTP_PORT:-8080}:80
+    - ${STG_NGINX_HTTPS_PORT:-8443}:443
     environment:
-      - TZ=Asia/Tokyo
+      TZ: Asia/Tokyo
     volumes:
-      - ../app/nginx/conf.d:/etc/nginx/conf.d:ro
-      - ../app/nginx/certs:/etc/nginx/certs:ro
+    - ../app/nginx/conf.d:/etc/nginx/conf.d:ro
+    - ../app/nginx/certs:/etc/nginx/certs:ro
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:80/health
       interval: 30s
       timeout: 5s
       retries: 3
     logging:
       driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "3"
-
-  # ===========================================================================
-  # PostgreSQL Database
-  # ===========================================================================
+      options: *id002
   db:
     image: postgres:17-alpine
     networks:
-      - data-net
-      - default
+    - data-net
+    - default
     environment:
-      - TZ=Asia/Tokyo
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_DB=${POSTGRES_DB}
+      TZ: Asia/Tokyo
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     volumes:
-      - db_data:/var/lib/postgresql/data
+    - db_data:/var/lib/postgresql/data
     ports:
-      - "5432:5432"
+    - 5432:5432
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      test:
+      - CMD-SHELL
+      - pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}
       interval: 10s
       timeout: 5s
       retries: 5
     logging:
       driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "3"
-
-# =============================================================================
-# Networks (3-tier isolation)
-# =============================================================================
+      options: *id002
 networks:
   edge-net:
     driver: bridge
@@ -252,7 +246,6 @@ networks:
     driver: bridge
     name: sanbou_stg_data
     internal: true
-
 volumes:
   db_data:
     driver: local

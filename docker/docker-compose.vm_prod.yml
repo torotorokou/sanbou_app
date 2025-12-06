@@ -1,0 +1,258 @@
+## =============================================================
+## docker-compose.vm_prod.yml (GCP VM 本番環境 - ENV=vm_prod 用)
+## - Makefile 経由で起動: make up ENV=vm_prod
+## - 使用する env ファイル: env/.env.common + env/.env.vm_prod + secrets/.env.vm_prod.secrets
+## - 特徴:
+##   * LB + IAP 経由での外部公開（80/443）
+##   * 3層ネットワーク分離
+##   * Artifact Registry のイメージを利用（pull のみ、build なし）
+##   * AUTH_MODE=iap による IAP ヘッダ検証
+## - イメージ: asia-northeast1-docker.pkg.dev/honest-sanbou-app-prod/sanbou-app/*:prod-latest
+## =============================================================
+services:
+  # ===========================================================================
+  # Core API (BFF) - All frontend requests go through this
+  # ===========================================================================
+  core_api:
+    image: asia-northeast1-docker.pkg.dev/honest-sanbou-app-prod/sanbou-app/core_api:prod-latest
+    networks: [app-net, data-net]
+    depends_on:
+      - db
+    env_file:
+      - ../env/.env.common
+      - ../env/.env.vm_prod
+      - ../secrets/.env.vm_prod.secrets
+    volumes:
+      - ../app/backend/core_api/migrations:/backend/migrations:rw
+      - ../app/config:/backend/config
+    environment:
+      - TZ=Asia/Tokyo
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ===========================================================================
+  # Plan Worker - Background job execution
+  # ===========================================================================
+  plan_worker:
+    image: asia-northeast1-docker.pkg.dev/honest-sanbou-app-prod/sanbou-app/plan_worker:prod-latest
+    networks: [data-net]
+    depends_on:
+      - db
+    env_file:
+      - ../env/.env.common
+      - ../env/.env.vm_prod
+      - ../secrets/.env.vm_prod.secrets
+    environment:
+      TZ: "Asia/Tokyo"
+      POLL_INTERVAL: "10"
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ===========================================================================
+  # AI API
+  # ===========================================================================
+  ai_api:
+    image: asia-northeast1-docker.pkg.dev/honest-sanbou-app-prod/sanbou-app/ai_api:prod-latest
+    networks: [app-net]
+    depends_on:
+      - db
+    env_file:
+      - ../env/.env.common
+      - ../env/.env.vm_prod
+      - ../secrets/.env.vm_prod.secrets
+    volumes:
+      - ../app/config:/backend/config
+    environment:
+      - TZ=Asia/Tokyo
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ===========================================================================
+  # Ledger API
+  # ===========================================================================
+  ledger_api:
+    image: asia-northeast1-docker.pkg.dev/honest-sanbou-app-prod/sanbou-app/ledger_api:prod-latest
+    user: "0:0"
+    networks: [app-net, data-net]
+    depends_on:
+      - db
+    env_file:
+      - ../env/.env.common
+      - ../env/.env.vm_prod
+      - ../secrets/.env.vm_prod.secrets
+    volumes:
+      - ../app/config:/backend/config
+    environment:
+      REPORT_ARTIFACT_URL_PREFIX: "/reports/artifacts"
+      STRICT_STARTUP: "true"
+      TZ: "Asia/Tokyo"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ===========================================================================
+  # RAG API
+  # ===========================================================================
+  rag_api:
+    image: asia-northeast1-docker.pkg.dev/honest-sanbou-app-prod/sanbou-app/rag_api:prod-latest
+    networks: [app-net, data-net]
+    depends_on:
+      - db
+    env_file:
+      - ../env/.env.common
+      - ../env/.env.vm_prod
+      - ../secrets/.env.vm_prod.secrets
+    volumes:
+      - ../app/config:/backend/config
+    environment:
+      CATEGORY_QUESTION_TEMPLATES_WITH_TAGS: /backend/config/category_question_templates_with_tags.yaml
+      TZ: "Asia/Tokyo"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ===========================================================================
+  # Manual API
+  # ===========================================================================
+  manual_api:
+    image: asia-northeast1-docker.pkg.dev/honest-sanbou-app-prod/sanbou-app/manual_api:prod-latest
+    networks: [app-net]
+    env_file:
+      - ../env/.env.common
+      - ../env/.env.vm_prod
+      - ../secrets/.env.vm_prod.secrets
+    environment:
+      MANUAL_FRONTEND_BASE_URL: ${MANUAL_FRONTEND_BASE_URL:-http://localhost:5173}
+      TZ: "Asia/Tokyo"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ===========================================================================
+  # nginx (prod)
+  # ===========================================================================
+  nginx:
+    image: asia-northeast1-docker.pkg.dev/honest-sanbou-app-prod/sanbou-app/nginx:prod-latest
+    depends_on:
+      - core_api
+      - ai_api
+      - ledger_api
+      - rag_api
+      - manual_api
+    networks:
+      - edge-net
+      - app-net
+    ports:
+      - "80:80"
+    environment:
+      - TZ=Asia/Tokyo
+    volumes:
+      # vm_prod 専用の nginx 設定をマウント
+      - ../app/nginx/conf.d/app.conf:/etc/nginx/conf.d/app.conf:ro
+      - ../app/nginx/conf.d/vm_prod.conf:/etc/nginx/conf.d/default.conf:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ===========================================================================
+  # PostgreSQL Database (Internal only, accessible from data-net)
+  # ===========================================================================
+  db:
+    image: postgres:17-alpine
+    networks:
+      - data-net
+      - default
+    environment:
+      - TZ=Asia/Tokyo
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:5432:5432"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+# =============================================================================
+# Networks (3-tier isolation)
+# =============================================================================
+networks:
+  edge-net:
+    driver: bridge
+    name: sanbou_edge
+  app-net:
+    driver: bridge
+    name: sanbou_app
+    internal: false
+  data-net:
+    driver: bridge
+    name: sanbou_data
+    internal: true
+
+volumes:
+  db_data:
+    driver: local

@@ -1,6 +1,13 @@
 # =========================
-# ledger_api Dockerfile (multi-stage: wheelbuilder/dev/prod)
+# ledger_api Dockerfile (multi-stage: wheelbuilder/base/dev/stg/prod)
 # Context: app/backend
+# 
+# Target stages:
+#   - wheelbuilder: Python 依存パッケージをビルド (wheel 生成)
+#   - base: 共通ランタイムベース (wheelインストール + アプリコード配置)
+#   - dev: ローカル開発用 (ホットリロード有効、editable install)
+#   - stg: ステージング環境用 (base継承、AUTH_MODE=vpn_dummy 等の環境変数)
+#   - prod: 本番環境用 (base継承、AUTH_MODE=iap 等の環境変数)
 # =========================
 
 # ──────────────────────────────────────────────────────────────
@@ -80,9 +87,9 @@ CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", \
      "--reload", "--reload-dir", "/backend/app", "--reload-dir", "/opt/backend_shared/src"]
 
 # ──────────────────────────────────────────────────────────────
-# Stage: prod (wheel からインストール、イミュータブル)
+# Stage: base (wheel からインストール、イミュータブル)
 # ──────────────────────────────────────────────────────────────
-FROM python:3.12-slim AS prod
+FROM python:3.12-slim AS base
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PYTHONPATH=/backend \
@@ -121,3 +128,15 @@ HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
 
 ENTRYPOINT ["/backend/startup.sh"]
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+
+# ──────────────────────────────────────────────────────────────
+# Stage: stg (ステージング環境用 - VPN 経由アクセス)
+# ──────────────────────────────────────────────────────────────
+FROM base AS stg
+ENV APP_ENV=stg
+
+# ──────────────────────────────────────────────────────────────
+# Stage: prod (本番環境用 - LB + IAP 経由)
+# ──────────────────────────────────────────────────────────────
+FROM base AS prod
+ENV APP_ENV=prod

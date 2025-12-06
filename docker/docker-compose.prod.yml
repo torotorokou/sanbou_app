@@ -1,263 +1,261 @@
 ## =============================================================
-## docker-compose.prod.yml (本番環境 - ENV=vm_prod 用)
+## docker-compose.prod.yml (GCP VM 本番環境 - ENV=vm_prod 用)
 ## - Makefile 経由で起動: make up ENV=vm_prod
 ## - 使用する env ファイル: env/.env.common + env/.env.vm_prod + secrets/.env.vm_prod.secrets
-## - 特徴: 外部公開は nginx のみ (80/443)、3層ネットワーク分離、IAP 必須
-## - frontend/backend は内部ネットワークのみ
-## - backend サービスは標準化された Dockerfile (target: prod) を利用
+## - 特徴:
+##   * LB + IAP 経由での外部公開（HTTPS → HTTP）
+##   * AUTH_MODE=iap (IAP ヘッダ検証必須)
+##   * Artifact Registry のイメージを利用（pull のみ、build なし）
+##   * 3層ネットワーク分離（edge/app/data）
+##   * nginx のみ外部公開（80/443）、backend は内部ネットワークのみ
+## - イメージ: asia-northeast1-docker.pkg.dev/honest-sanbou-app-prod/sanbou-app/*:prod-latest
 ## =============================================================
+
+# =============================================================================
+# YAML アンカー定義（共通設定の再利用）
+# =============================================================================
+x-common-env: &common-env-files
+  - ../env/.env.common
+  - ../env/.env.vm_prod
+  - ../secrets/.env.vm_prod.secrets
+
+x-common-logging: &common-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+x-common-healthcheck: &common-healthcheck
+  interval: 30s
+  timeout: 5s
+  retries: 3
+
+x-tz-env: &tz-environment
+  TZ: "Asia/Tokyo"
+
 services:
-  # ===========================================================================
-  # Core API (BFF) - All frontend requests go through this
-  # ===========================================================================
   core_api:
     build:
       context: ../app/backend
       dockerfile: core_api/Dockerfile
       target: prod
-    networks: [app-net, data-net]
+    networks:
+    - app-net
+    - data-net
     depends_on:
-      - db
-    env_file:
-      - ../env/.env.common
-      - ../env/.env.vm_prod
-      - ../secrets/.env.vm_prod.secrets
+    - db
+    env_file: &id001
+    - ../env/.env.common
+    - ../env/.env.vm_prod
+    - ../secrets/.env.vm_prod.secrets
     volumes:
-      - ../app/backend/core_api/migrations:/backend/migrations:rw
-      - ../app/config:/backend/config
+    - ../app/backend/core_api/migrations:/backend/migrations:rw
+    - ../app/config:/backend/config
     environment:
-      - TZ=Asia/Tokyo
+      TZ: Asia/Tokyo
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/api/healthz"]
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8000/api/healthz
       interval: 30s
       timeout: 5s
       retries: 3
     logging:
       driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "3"
-
-  # ===========================================================================
-  # Plan Worker - Background job execution
-  # ===========================================================================
+      options: &id002
+        max-size: 10m
+        max-file: '3'
   plan_worker:
     build:
       context: ../app/backend
       dockerfile: plan_worker/Dockerfile
       target: prod
-    networks: [data-net]
+    networks:
+    - data-net
     depends_on:
-      - db
-    env_file:
-      - ../env/.env.common
-      - ../env/.env.vm_prod
-      - ../secrets/.env.vm_prod.secrets
+    - db
+    env_file: *id001
     environment:
-      TZ: "Asia/Tokyo"
-      POLL_INTERVAL: "10"
+      TZ: Asia/Tokyo
+      POLL_INTERVAL: '10'
     restart: unless-stopped
     logging:
       driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "3"
-
-  # ===========================================================================
-  # AI API
-  # ===========================================================================
+      options: *id002
   ai_api:
     build:
       context: ../app/backend
       dockerfile: ai_api/Dockerfile
       target: prod
-    networks: [app-net]
+    networks:
+    - app-net
     depends_on:
-      - db
-    env_file:
-      - ../env/.env.common
-      - ../env/.env.vm_prod
-      - ../secrets/.env.vm_prod.secrets
+    - db
+    env_file: *id001
     volumes:
-      - ../app/config:/backend/config
+    - ../app/config:/backend/config
     environment:
-      - TZ=Asia/Tokyo
+      TZ: Asia/Tokyo
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8000/health
       interval: 30s
       timeout: 5s
       retries: 3
     logging:
       driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "3"
-
-  # ===========================================================================
-  # Ledger API
-  # ===========================================================================
+      options: *id002
   ledger_api:
     build:
       context: ../app/backend
       dockerfile: ledger_api/Dockerfile
       target: prod
-    user: "0:0"
-    networks: [app-net, data-net]
+    user: 0:0
+    networks:
+    - app-net
+    - data-net
     depends_on:
-      - db
-    env_file:
-      - ../env/.env.common
-      - ../env/.env.vm_prod
-      - ../secrets/.env.vm_prod.secrets
+    - db
+    env_file: *id001
     volumes:
-      - ../app/config:/backend/config
+    - ../app/config:/backend/config
     environment:
-      REPORT_ARTIFACT_URL_PREFIX: "/reports/artifacts"
-      STRICT_STARTUP: "true"
-      TZ: "Asia/Tokyo"
+      REPORT_ARTIFACT_URL_PREFIX: /reports/artifacts
+      STRICT_STARTUP: 'true'
+      TZ: Asia/Tokyo
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8000/health
       interval: 30s
       timeout: 5s
       retries: 3
     logging:
       driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "3"
-
-  # ===========================================================================
-  # RAG API
-  # ===========================================================================
+      options: *id002
   rag_api:
     build:
       context: ../app/backend
       dockerfile: rag_api/Dockerfile
       target: prod
-    networks: [app-net, data-net]
+    networks:
+    - app-net
+    - data-net
     depends_on:
-      - db
-    env_file:
-      - ../env/.env.common
-      - ../env/.env.vm_prod
-      - ../secrets/.env.vm_prod.secrets
+    - db
+    env_file: *id001
     volumes:
-      - ../app/config:/backend/config
+    - ../app/config:/backend/config
     environment:
       CATEGORY_QUESTION_TEMPLATES_WITH_TAGS: /backend/config/category_question_templates_with_tags.yaml
-      TZ: "Asia/Tokyo"
+      TZ: Asia/Tokyo
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8000/health
       interval: 30s
       timeout: 5s
       retries: 3
     logging:
       driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "3"
-
-  # ===========================================================================
-  # Manual API
-  # ===========================================================================
+      options: *id002
   manual_api:
     build:
       context: ../app/backend
       dockerfile: manual_api/Dockerfile
       target: prod
-    networks: [app-net]
-    env_file:
-      - ../env/.env.common
-      - ../env/.env.vm_prod
-      - ../secrets/.env.vm_prod.secrets
+    networks:
+    - app-net
+    env_file: *id001
     environment:
       MANUAL_FRONTEND_BASE_URL: ${MANUAL_FRONTEND_BASE_URL:-http://localhost:5173}
-      TZ: "Asia/Tokyo"
+      TZ: Asia/Tokyo
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8000/health
       interval: 30s
       timeout: 5s
       retries: 3
     logging:
       driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "3"
-
-  # ===========================================================================
-  # nginx (prod)
-  # ===========================================================================
+      options: *id002
   nginx:
     build:
       context: ../app/frontend
       dockerfile: Dockerfile
       target: runtime
     depends_on:
-      - core_api
-      - ai_api
-      - ledger_api
-      - rag_api
-      - manual_api
+    - core_api
+    - ai_api
+    - ledger_api
+    - rag_api
+    - manual_api
     networks:
-      - edge-net
-      - app-net
+    - edge-net
+    - app-net
     ports:
-      - "80:80"
-      - "443:443"
+    - 80:80
+    - 443:443
     environment:
-      - TZ=Asia/Tokyo
+      TZ: Asia/Tokyo
     volumes:
-      - ../app/nginx/conf.d:/etc/nginx/conf.d:ro
-      - ../app/nginx/certs:/etc/nginx/certs:ro
+    - ../app/nginx/conf.d:/etc/nginx/conf.d:ro
+    - ../app/nginx/certs:/etc/nginx/certs:ro
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:80/health
       interval: 30s
       timeout: 5s
       retries: 3
     logging:
       driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "3"
-
-  # ===========================================================================
-  # PostgreSQL Database (Internal only, accessible from data-net)
-  # ===========================================================================
+      options: *id002
   db:
     image: postgres:17-alpine
     networks:
-      - data-net
-      - default
+    - data-net
+    - default
     environment:
-      - TZ=Asia/Tokyo
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_DB=${POSTGRES_DB}
+      TZ: Asia/Tokyo
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     volumes:
-      - db_data:/var/lib/postgresql/data
+    - db_data:/var/lib/postgresql/data
     ports:
-      - "127.0.0.1:5432:5432"
+    - 127.0.0.1:5432:5432
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      test:
+      - CMD-SHELL
+      - pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}
       interval: 10s
       timeout: 5s
       retries: 5
     logging:
       driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "3"
-
-# =============================================================================
-# Networks (3-tier isolation)
-# =============================================================================
+      options: *id002
 networks:
   edge-net:
     driver: bridge
@@ -270,7 +268,6 @@ networks:
     driver: bridge
     name: sanbou_data
     internal: true
-
 volumes:
   db_data:
     driver: local
