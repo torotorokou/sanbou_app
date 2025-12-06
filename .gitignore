@@ -92,9 +92,21 @@ ENV/
 !secrets/README.md
 
 # ルートの .env ファイルも除外（念のため）
-/.env
-/.env.*
-!/.env.example
+.env
+.env.*
+!.env.example
+
+# 証明書と秘密鍵（全階層）
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+
+# SSH 鍵
+id_rsa
+id_ed25519
+*.pem.key
 
 # ============================
 # Docker / Compose
