@@ -52,7 +52,7 @@
    - 実際のパスワード `fOb1TYnB9...` を `fOb1***[マスク済み]` に変更
 
 2. `docs/archive/ENVIRONMENT_VARIABLES.md`
-   - `POSTGRES_PASSWORD=mypassword` → `__SET_IN_SECRETS__`
+   - `POSTGRES_PASSWORD (実際の値)` → `__SET_IN_SECRETS__`
    - `DATABASE_URL` 例を `postgresql://<USER>:<PASSWORD>@...` に置換
 
 3. `docs/db/20251204_db_user_design.md`

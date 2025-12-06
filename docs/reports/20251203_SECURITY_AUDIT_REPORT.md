@@ -60,7 +60,7 @@ app.add_middleware(
 
 #### 3. **データベースパスワードの平文保存**
 **現状の問題:**
-- `env/.env.common` に `POSTGRES_PASSWORD=mypassword`
+- `env/.env.common` に `POSTGRES_PASSWORD (実際の値は隠蔽)`
 - 簡単なパスワードが使用されている
 
 **推奨対応:**

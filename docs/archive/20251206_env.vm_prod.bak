@@ -14,7 +14,7 @@ DEBUG=false
 IAP_ENABLED=true
 # IAP_AUDIENCE は GCP プロジェクト設定後に設定
 # 例: /projects/PROJECT_NUMBER/global/backendServices/SERVICE_ID
-IAP_AUDIENCE=
+# IAP_AUDIENCE: 値は環境により設定
 
 # === DB ===
 # 【DB ユーザー分離対応】

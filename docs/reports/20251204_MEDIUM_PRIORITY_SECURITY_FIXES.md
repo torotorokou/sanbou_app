@@ -271,7 +271,7 @@ ledger_api-1  | [INFO] Ledger API initialized (DEBUG=True, docs_enabled=True)
 ```bash
 # IAP認証（必須）
 IAP_ENABLED=true
-IAP_AUDIENCE=<YOUR_IAP_CLIENT_ID>
+IAP_AUDIENCE: <YOUR_IAP_CLIENT_ID>
 
 # PDF署名シークレット（32文字以上）
 REPORT_ARTIFACT_SECRET=$(openssl rand -base64 32)

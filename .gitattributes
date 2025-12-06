@@ -40,3 +40,11 @@ Makefile       text eol=lf
 dist/**  -diff
 build/** -diff
 *.min.js -diff
+
+# --- 機密ファイル（Git 追跡を完全に拒否） ---
+# これらのファイルは .gitignore でも除外されているが、二重防御として設定
+env/.env.*       filter=forbidden
+secrets/*.secrets filter=forbidden
+secrets/*.json   filter=forbidden
+*.pem            filter=forbidden
+*.key            filter=forbidden

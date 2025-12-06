@@ -24,7 +24,7 @@ Google Cloud Identity-Aware Proxy (IAP) を使用した認証基盤を実装し�
 # === Security / Authentication ===
 DEBUG=false                    # デバッグモード (本番は false 必須)
 IAP_ENABLED=false              # IAP 有効化フラグ
-IAP_AUDIENCE=                  # IAP の audience 値（JWT 検証用）
+# IAP_AUDIENCE: IAP の audience 値（JWT 検証用）
 ```
 
 **環境別設定:**
@@ -189,7 +189,7 @@ proxy_set_header X-Goog-IAP-JWT-Assertion $http_x_goog_iap_jwt_assertion;
 4. `.env.vm_stg` と `.env.vm_prod` に設定：
 
 ```bash
-IAP_AUDIENCE=/projects/123456789/global/backendServices/987654321
+# IAP_AUDIENCE=/projects/123456789/global/backendServices/987654321  # 例
 ```
 
 ### Step 6: デプロイと検証

@@ -15,7 +15,7 @@ PUBLIC_BASE_URL=http://localhost:5173
 # 開発環境では IAP 無効、DEBUG モード有効
 DEBUG=true
 IAP_ENABLED=false
-IAP_AUDIENCE=
+# IAP_AUDIENCE: 値は環境により設定
 
 # === DB (開発ローカル) ===
 # 【DB ユーザー分離対応】

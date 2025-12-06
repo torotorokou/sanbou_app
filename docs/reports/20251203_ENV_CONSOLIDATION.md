@@ -108,7 +108,7 @@ POSTGRES_DB=sanbou_stg  # 明示的に追加
 # デモ環境では IAP 無効、DEBUG モード有効
 DEBUG=true
 IAP_ENABLED=false
-IAP_AUDIENCE=
+# IAP_AUDIENCE: IAP無効時は設定不要
 ```
 
 **`.env.local_stg`**:
@@ -117,7 +117,7 @@ IAP_AUDIENCE=
 # ローカルSTG疑似環境では IAP 無効、DEBUG 無効（本番に近い設定）
 DEBUG=false
 IAP_ENABLED=false
-IAP_AUDIENCE=
+# IAP_AUDIENCE: IAP無効時は設定不要
 ```
 
 #### 3.4 環境別 `POLL_INTERVAL` の設定

@@ -89,7 +89,7 @@ ab307d2d (2025-12-04 10:20) - feat(security): DBユーザー分離・パスワ�
 # 過去の commit を確認:
 $ git show 618116b9:env/.env.vm_prod | grep POSTGRES
 # IAP_AUDIENCE は GCP プロジェクト設定後に設定
-IAP_AUDIENCE=
+# IAP_AUDIENCE: 設定不要（空の場合）
 # POSTGRES_PASSWORD は secrets/.env.vm_prod.secrets に記載してください
 ```
 
@@ -335,7 +335,7 @@ nano env/.env.vm_prod
 # POSTGRES_USER=sanbou_prod_user
 
 nano secrets/.env.vm_prod.secrets
-# POSTGRES_PASSWORD=新しいパスワード
+# POSTGRES_PASSWORD: 新しいパスワードを設定
 
 # サービス再起動
 docker compose -f docker/docker-compose.prod.yml restart

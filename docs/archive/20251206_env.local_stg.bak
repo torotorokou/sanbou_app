@@ -13,7 +13,7 @@ PUBLIC_BASE_URL=http://stg.local
 # ローカルSTG疑似環境では IAP 無効、DEBUG 無効（本番に近い設定）
 DEBUG=false
 IAP_ENABLED=false
-IAP_AUDIENCE=
+# IAP_AUDIENCE: 値は環境により設定
 
 # === DB (stg と同一スキーマ名でパリティ) ===
 # 【DB ユーザー分離対応】

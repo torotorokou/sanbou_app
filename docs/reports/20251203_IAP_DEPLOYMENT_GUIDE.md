@@ -93,7 +93,7 @@ gcloud compute backend-services describe <BACKEND_SERVICE_NAME> \
 ```bash
 # env/.env.vm_stg
 IAP_ENABLED=true
-IAP_AUDIENCE=/projects/123456789/global/backendServices/987654321
+# IAP_AUDIENCE=/projects/123456789/global/backendServices/987654321  # 例
 ```
 
 #### 3-2. 本番環境（`env/.env.vm_prod`）
@@ -101,7 +101,7 @@ IAP_AUDIENCE=/projects/123456789/global/backendServices/987654321
 ```bash
 # env/.env.vm_prod
 IAP_ENABLED=true
-IAP_AUDIENCE=/projects/123456789/global/backendServices/987654321
+# IAP_AUDIENCE=/projects/123456789/global/backendServices/987654321  # 例
 ```
 
 **注意：** `IAP_AUDIENCE` は環境ごとに異なる可能性があります。必ず各環境の値を確認してください。
@@ -116,7 +116,7 @@ docker-compose -f docker/docker-compose.prod.yml down
 docker-compose -f docker/docker-compose.prod.yml up -d
 
 # または Cloud Run の場合
-gcloud run deploy core-api --set-env-vars IAP_ENABLED=true,IAP_AUDIENCE=<AUDIENCE>
+gcloud run deploy core-api --set-env-vars IAP_ENABLED=true,IAP_AUDIENCE_VAR=<AUDIENCE>
 ```
 
 ### 5. 動作確認

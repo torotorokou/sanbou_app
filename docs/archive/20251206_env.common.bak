@@ -10,7 +10,7 @@
 # 注意: これは DB ユーザー分離・パスワード強化対応の一環です
 # POSTGRES_USER と POSTGRES_PASSWORD は環境別に secrets/.env.*.secrets で設定してください
 POSTGRES_USER=__SET_IN_ENV_SPECIFIC_FILE__
-POSTGRES_PASSWORD=__SET_IN_ENV_SPECIFIC_FILE__
+# POSTGRES_PASSWORD は secrets/.env.*.secrets で設定
 POSTGRES_HOST=db
 POSTGRES_PORT=5432
 
@@ -39,7 +39,7 @@ GEMINI_API_KEY=
 DEBUG=false
 # IAP 設定は各環境ファイルで上書き
 IAP_ENABLED=false
-IAP_AUDIENCE=
+# IAP_AUDIENCE: 値は環境により設定
 # 許可するメールドメイン (IAP認証時のホワイトリスト)
 ALLOWED_EMAIL_DOMAIN=honest-recycle.co.jp
 # IAP公開鍵URL (通常は変更不要)

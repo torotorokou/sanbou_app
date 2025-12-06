@@ -43,10 +43,10 @@ ALTER USER myuser WITH PASSWORD '新しい強力なパスワード_32文字以�
 
 # env と secrets ファイルを更新
 nano env/.env.vm_prod
-# POSTGRES_PASSWORD=新しいパスワード
+# POSTGRES_PASSWORD: 新しいパスワードを設定
 
 nano secrets/.env.vm_prod.secrets
-# POSTGRES_PASSWORD=新しいパスワード
+# POSTGRES_PASSWORD: 新しいパスワードを設定
 
 # サービス再起動
 docker compose -f docker/docker-compose.prod.yml restart
@@ -263,7 +263,7 @@ def get_secret(secret_id: str) -> str:
     return response.payload.data.decode("UTF-8")
 
 # 使用例
-POSTGRES_PASSWORD = get_secret("postgres-prod-password")
+# POSTGRES_PASSWORD = get_secret("postgres-prod-password")  # 例
 ```
 
 **所要時間**: 4時間  

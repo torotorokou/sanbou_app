@@ -17,14 +17,14 @@
 
 **NG例:**
 ```bash
-POSTGRES_PASSWORD=mypassword123
-DATABASE_URL=postgresql://user:secretpass@host:5432/db
-GEMINI_API_KEY=AIzaSyD1234567890abcdefghijklmnopqrstuvwxyz
+# POSTGRES_PASSWORD: 実際のパスワードを直接書かない
+# DATABASE_URL: postgresql://user:<実際のパスワード>@host:5432/db  # ← NG
+# GEMINI_API_KEY: 実際のAPIキーを直接書かない
 ```
 
 **OK例:**
 ```bash
-POSTGRES_PASSWORD=__SET_IN_SECRETS__
+# POSTGRES_PASSWORD は secrets/ ファイルに設定
 DATABASE_URL=postgresql://<USER>:<PASSWORD>@<HOST>:5432/<DB>
 GEMINI_API_KEY=<YOUR_API_KEY>
 ```
@@ -34,15 +34,15 @@ GEMINI_API_KEY=<YOUR_API_KEY>
 **NG例:**
 ```yaml
 environment:
-  DATABASE_URL: postgresql://prod_user:RealP@ssw0rd!@prod-db.example.com:5432/production
+  # DATABASE_URL: postgresql://prod_user:<実際のパスワード>@prod-db.example.com:5432/production  # ← NG
 ```
 
 **OK例:**
 ```yaml
 environment:
   DATABASE_URL: ${DATABASE_URL}  # secrets/ で設定
-  # または
-  DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:5432/${POSTGRES_DB}
+  # または環境変数を使用
+  # DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:5432/${POSTGRES_DB}
 ```
 
 ### 3. GCP サービスアカウントキーの内容を記載しない
@@ -64,7 +64,7 @@ environment:
 ```bash
 # 環境変数の例
 POSTGRES_USER=<YOUR_USERNAME>
-POSTGRES_PASSWORD=<STRONG_PASSWORD>
+# POSTGRES_PASSWORD: secrets/ファイルに設定
 API_KEY=<YOUR_API_KEY>
 ```
 
@@ -72,7 +72,7 @@ API_KEY=<YOUR_API_KEY>
 
 ```bash
 # 以下を secrets/.env.local_dev.secrets に設定してください:
-# POSTGRES_PASSWORD=<32文字以上のランダム文字列>
+# パスワードは32文字以上のランダム文字列を使用
 # 
 # 生成方法:
 # openssl rand -base64 32
@@ -84,7 +84,7 @@ API_KEY=<YOUR_API_KEY>
 **パスワード設定例:**
 ```bash
 # 例: 以下は実際の値ではありません
-POSTGRES_PASSWORD=Ex@mpl3P@ssw0rd  # ← 実際にはもっと強力なものを
+# POSTGRES_PASSWORD: 実際には32文字以上のランダム文字列を使用
 ```
 ```
 

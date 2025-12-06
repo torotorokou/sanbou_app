@@ -255,7 +255,7 @@ openssl rand -base64 32
 **変更前（`.env.common` - 例）:**
 ```env
 POSTGRES_USER=myuser  # 全環境で共通のスーパーユーザー（問題）
-POSTGRES_PASSWORD=<WEAK_PASSWORD>  # 弱いパスワード（問題）
+# POSTGRES_PASSWORD: 弱いパスワード（問題）
 DATABASE_URL=postgresql://myuser:<WEAK_PASSWORD>@db:5432/sanbou_dev
 ```
 
@@ -266,7 +266,7 @@ POSTGRES_USER=sanbou_app_dev
 POSTGRES_DB=sanbou_dev
 
 # secrets/.env.local_dev.secrets
-POSTGRES_PASSWORD=<STRONG_PASSWORD>
+# POSTGRES_PASSWORD: secretsファイルに設定
 DATABASE_URL=postgresql://sanbou_app_dev:<STRONG_PASSWORD>@db:5432/sanbou_dev
 ```
 
@@ -278,7 +278,7 @@ DATABASE_URL=postgresql://sanbou_app_dev:<STRONG_PASSWORD>@db:5432/sanbou_dev
 # docker-compose で myuser を使ってマイグレーション実行
 docker compose -f docker/docker-compose.dev.yml exec \
   -e POSTGRES_USER=myuser \
-  -e POSTGRES_PASSWORD=<MYUSER_NEW_PASSWORD> \
+  -e POSTGRES_PASSWORD_MYUSER=<VALUE_FROM_SECRETS> \
   core_api alembic -c /backend/migrations/alembic.ini upgrade head
 ```
 

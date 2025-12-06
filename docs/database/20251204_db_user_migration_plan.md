@@ -180,7 +180,7 @@ vim secrets/.env.local_dev.secrets
 
 # 以下の内容に変更:
 # POSTGRES_USER=sanbou_app_dev
-# POSTGRES_PASSWORD=<ステップ1-1で生成したDEVパスワード>
+# POSTGRES_PASSWORD: ステップ1-1で生成したDEVパスワードを使用
 # DATABASE_URL=postgresql://sanbou_app_dev:<DEVパスワード>@db:5432/sanbou_dev
 # OPENAI_API_KEY=<既存の値>
 # GEMINI_API_KEY=<既存の値>
@@ -212,7 +212,7 @@ docker compose -f docker/docker-compose.dev.yml -p local_dev logs core_api | gre
 vim secrets/.env.local_stg.secrets
 
 # POSTGRES_USER=sanbou_app_stg
-# POSTGRES_PASSWORD=<ステップ1-1で生成したSTGパスワード>
+# POSTGRES_PASSWORD: ステップ1-1で生成したSTGパスワードを使用
 # DATABASE_URL=postgresql://sanbou_app_stg:<STGパスワード>@db:5432/sanbou_stg
 
 # 2. 再起動・確認
@@ -229,7 +229,7 @@ ssh user@stg-server
 vim /path/to/sanbou_app/secrets/.env.vm_stg.secrets
 
 # POSTGRES_USER=sanbou_app_stg
-# POSTGRES_PASSWORD=<ステップ1-1で生成したSTGパスワード>
+# POSTGRES_PASSWORD: ステップ1-1で生成したSTGパスワードを使用
 # DATABASE_URL=postgresql://sanbou_app_stg:<STGパスワード>@db:5432/sanbou_stg
 
 # 2. コンテナ再起動
@@ -259,7 +259,7 @@ docker compose -f docker/docker-compose.prod.yml exec db \
 vim /path/to/sanbou_app/secrets/.env.vm_prod.secrets
 
 # POSTGRES_USER=sanbou_app_prod
-# POSTGRES_PASSWORD=<ステップ1-1で生成したPRODパスワード>
+# POSTGRES_PASSWORD: ステップ1-1で生成したPRODパスワードを設定
 # DATABASE_URL=postgresql://sanbou_app_prod:<PRODパスワード>@db:5432/sanbou_prod
 
 # 3. コンテナ再起動
@@ -303,7 +303,7 @@ GRANT ALL PRIVILEGES ON DATABASE sanbou_prod TO myuser;
 # 1. secrets ファイルを元に戻す
 vim secrets/.env.<env>.secrets
 # POSTGRES_USER=myuser
-# POSTGRES_PASSWORD=<強化後のmyuserパスワード>
+# POSTGRES_PASSWORD: 強化後のmyuserパスワードを設定
 # DATABASE_URL=postgresql://myuser:<強化後のmyuserパスワード>@db:5432/sanbou_<env>
 
 # 2. アプリケーション再起動
@@ -363,7 +363,7 @@ cat secrets/.env.<env>.secrets | grep DATABASE_URL
 # マイグレーションは myuser で実行する必要があります
 docker compose exec \
   -e POSTGRES_USER=myuser \
-  -e POSTGRES_PASSWORD=<myuserの新パスワード> \
+  -e POSTGRES_PASSWORD_VAR=<myuserの新パスワード> \
   core_api alembic -c /backend/migrations/alembic.ini upgrade head
 ```
 

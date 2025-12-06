@@ -31,7 +31,7 @@ Docker Composeは以下の順序で環境変数を読み込みます：
 
 ```bash
 POSTGRES_USER=__SET_IN_ENV_SPECIFIC_FILE__
-POSTGRES_PASSWORD=__SET_IN_SECRETS__
+# POSTGRES_PASSWORD は secrets/.env.*.secrets で設定
 POSTGRES_HOST=db
 POSTGRES_PORT=5432
 ```
