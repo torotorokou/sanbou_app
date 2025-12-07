@@ -20,13 +20,16 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /build
 
+# Security: Update OS packages to patch vulnerabilities
 RUN apt-get update && \
+    apt-get upgrade -y && \
     apt-get install -y --no-install-recommends \
       curl gnupg lsb-release ca-certificates build-essential && \
     curl -sSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | gpg --dearmor -o /usr/share/keyrings/cloud.google.gpg && \
     echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] http://packages.cloud.google.com/apt cloud-sdk main" > /etc/apt/sources.list.d/google-cloud-sdk.list && \
     apt-get update && \
     apt-get install -y --no-install-recommends google-cloud-sdk && \
+    apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
 # ──────────────────────────────────────────────────────────────
@@ -34,7 +37,8 @@ RUN apt-get update && \
 # ──────────────────────────────────────────────────────────────
 FROM gcloud AS wheelbuilder
 COPY ./backend_shared /build/backend_shared
-RUN pip install --upgrade pip setuptools wheel && \
+# Security: Upgrade pip to latest version to fix CVE-2025-8869
+RUN python -m pip install --upgrade pip setuptools wheel && \
     cd /build/backend_shared && \
     pip wheel --no-deps . -w /wheels
 
@@ -51,12 +55,15 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /backend
 
+# Security: Update OS packages to patch vulnerabilities
 RUN apt-get update && \
+    apt-get upgrade -y && \
     apt-get install -y --no-install-recommends \
       curl \
       ca-certificates \
       build-essential \
       git && \
+    apt-get clean && \
     rm -rf /var/lib/apt/lists/* && \
     useradd -m -u 1000 -s /bin/bash appuser
 
@@ -65,7 +72,9 @@ COPY --from=gcloud /usr/lib/google-cloud-sdk /usr/lib/google-cloud-sdk
 ENV PATH="/usr/lib/google-cloud-sdk/bin:${PATH}"
 
 COPY ./rag_api/requirements.txt /backend/requirements.txt
-RUN pip install --no-cache-dir -r /backend/requirements.txt watchfiles
+# Security: Upgrade pip to latest version to fix CVE-2025-8869
+RUN python -m pip install --upgrade pip && \
+    pip install --no-cache-dir -r /backend/requirements.txt watchfiles
 
 # backend_shared を editable モードでインストール
 RUN mkdir -p /opt/backend_shared
@@ -97,10 +106,13 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /backend
 
+# Security: Update OS packages to patch vulnerabilities
 RUN apt-get update && \
+    apt-get upgrade -y && \
     apt-get install -y --no-install-recommends \
       curl \
       ca-certificates && \
+    apt-get clean && \
     rm -rf /var/lib/apt/lists/* && \
     useradd -m -u 1000 -s /bin/bash appuser
 
@@ -109,7 +121,9 @@ COPY --from=gcloud /usr/lib/google-cloud-sdk /usr/lib/google-cloud-sdk
 ENV PATH="/usr/lib/google-cloud-sdk/bin:${PATH}"
 
 COPY --from=wheelbuilder /wheels /wheels
-RUN pip install --no-cache-dir /wheels/*.whl && \
+# Security: Upgrade pip to latest version to fix CVE-2025-8869
+RUN python -m pip install --upgrade pip && \
+    pip install --no-cache-dir /wheels/*.whl && \
     rm -rf /wheels
 
 # USER 切替前に必要ディレクトリを作成・chown

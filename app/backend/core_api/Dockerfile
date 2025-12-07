@@ -20,16 +20,20 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /build
 
+# Security: Update OS packages to patch vulnerabilities (glibc, systemd, etc.)
+# Security: Upgrade pip to latest version to fix CVE-2025-8869
 RUN apt-get update && \
+    apt-get upgrade -y && \
     apt-get install -y --no-install-recommends \
       build-essential \
       ca-certificates \
       curl \
       libpq-dev && \
+    apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
 COPY ./backend_shared /build/backend_shared
-RUN pip install --upgrade pip setuptools wheel && \
+RUN python -m pip install --upgrade pip setuptools wheel && \
     cd /build/backend_shared && \
     pip wheel --no-deps . -w /wheels
 
@@ -46,19 +50,24 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /backend
 
+# Security: Update OS packages to patch vulnerabilities
 RUN apt-get update && \
+    apt-get upgrade -y && \
     apt-get install -y --no-install-recommends \
       curl \
       ca-certificates \
       build-essential \
       git \
       libpq5 && \
+    apt-get clean && \
     rm -rf /var/lib/apt/lists/* && \
     useradd -m -u 1000 -s /bin/bash appuser
 
 COPY ./core_api/requirements.txt /backend/requirements.txt
 COPY ./core_api/requirements-dev.txt /backend/requirements-dev.txt
-RUN pip install --no-cache-dir -r /backend/requirements.txt watchfiles
+# Security: Upgrade pip to latest version to fix CVE-2025-8869
+RUN python -m pip install --upgrade pip && \
+    pip install --no-cache-dir -r /backend/requirements.txt watchfiles
 
 # backend_shared を editable モードでインストール
 RUN mkdir -p /opt/backend_shared
@@ -90,16 +99,21 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /backend
 
+# Security: Update OS packages to patch vulnerabilities
 RUN apt-get update && \
+    apt-get upgrade -y && \
     apt-get install -y --no-install-recommends \
       curl \
       ca-certificates \
       libpq5 && \
+    apt-get clean && \
     rm -rf /var/lib/apt/lists/* && \
     useradd -m -u 1000 -s /bin/bash appuser
 
 COPY --from=wheelbuilder /wheels /wheels
-RUN pip install --no-cache-dir /wheels/*.whl && \
+# Security: Upgrade pip to latest version to fix CVE-2025-8869
+RUN python -m pip install --upgrade pip && \
+    pip install --no-cache-dir /wheels/*.whl && \
     rm -rf /wheels
 
 # USER 切替前に必要ディレクトリを作成・chown
