@@ -3,6 +3,9 @@
 本リポジトリは、Vite + React、複数の FastAPI サービス、PostgreSQL、Nginx を
 Docker Compose でまとめて起動する Web アプリです。
 
+> **🔒 セキュリティアップデート（2025-12-08）**  
+> CVE脆弱性に対応しました。詳細は [docs/security/CVE-2025-fixes-summary.md](docs/security/CVE-2025-fixes-summary.md) を参照してください。
+
 ## 環境構成（2025-12-06 更新）
 
 プロジェクトは以下の **3つの主要環境** で運用されます：
