@@ -22,6 +22,7 @@ Dev Auth Provider - 開発用認証プロバイダ
    deps.py で起動時にバリデーションを実施しています
 """
 
+import os
 import logging
 from fastapi import Request
 from app.core.domain.auth.entities import AuthUser
