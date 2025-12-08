@@ -3,9 +3,13 @@
 """
 Block Unit Price Interactive - Main Entry Point
 インタラクティブブロック単価計算のメインエントリポイント
+
+最適化履歴:
+- Step 1 (2025-12-08): 処理フローの可視化とタイミングログ追加
 """
 
 from typing import Any, Callable, Dict, Optional, Tuple, Union
+import time
 import pandas as pd
 
 from app.core.usecases.reports.base_generators import (
@@ -27,7 +31,32 @@ logger = get_module_logger(__name__)
 
 
 class BlockUnitPriceInteractive(BaseInteractiveReportGenerator):
-    """ブロック単価インタラクティブレポート生成クラス"""
+    """
+    ブロック単価インタラクティブレポート生成クラス
+    
+    処理フロー:
+    ----------------------------------------
+    Step 0 (initial_step): 初期処理
+      - 出荷データの読み込みとフィルタリング
+      - 運搬業者選択肢の生成
+      - セッション状態の初期化
+    
+    Step 1 (select_transport): 運搬業者選択
+      - ユーザーの選択内容を受信
+      - 選択内容の妥当性検証
+      - state更新
+    
+    Step 2 (finalize): 最終計算
+      - ブロック単価計算
+      - 運搬費用計算
+      - 帳票生成とZIPファイル化
+    
+    最適化ポイント:
+      - 各ステップの処理時間を計測
+      - copy()操作の最小化
+      - ベクトル化による高速化
+    ----------------------------------------
+    """
     
     def __init__(self, files: Optional[Dict[str, Any]] = None):
         super().__init__(report_key="block_unit_price", files=files or {})
@@ -37,8 +66,26 @@ class BlockUnitPriceInteractive(BaseInteractiveReportGenerator):
         self.date_filter_strategy = "max"
 
     def initial_step(self, df_formatted: Dict[str, Any]):  # type: ignore[override]
-        """初期ステップ: 運搬業者選択肢を生成"""
-        return execute_initial_step(df_formatted)
+        """
+        初期ステップ: 運搬業者選択肢を生成
+        
+        処理内容:
+        1. 出荷データの読み込み
+        2. 運搬業者マスタの取得
+        3. 選択肢の生成
+        4. セッション状態の作成
+        """
+        step_start = time.time()
+        self.logger.info("Step 0: 初期処理開始（運搬業者選択肢生成）")
+        
+        result = execute_initial_step(df_formatted)
+        
+        elapsed_ms = round((time.time() - step_start) * 1000, 2)
+        self.logger.info(
+            "Step 0: 初期処理完了",
+            extra={"elapsed_ms": elapsed_ms}
+        )
+        return result
 
     def get_step_handlers(self) -> Dict[str, Callable[[Dict[str, Any], Dict[str, Any]], Tuple[Dict[str, Any], Dict[str, Any]]]]:  # type: ignore[override]
         """ステップハンドラーを返す"""
@@ -90,26 +137,45 @@ class BlockUnitPriceInteractive(BaseInteractiveReportGenerator):
                 normalized_options = canonical_sort_labels(options)
             
             if isinstance(value, int) and normalized_options:
-                idx_choice = value if 0 <= value < len(normalized_options) else 0
-                label = normalized_options[idx_choice]
-            else:
-                label = str(value)
-                if normalized_options and label not in normalized_options:
-                    self.logger.warning(
-                        f"指定ラベルが候補に無い: entry_id={entry_id}, label={label}"
-                    )
-                    label = normalized_options[0] if normalized_options else label
-            
-            resolved_entry_map[entry_id] = label
-        
-        state["selections"] = resolved_entry_map
-        self.logger.debug(
-            f"selections resolved: count={len(resolved_entry_map)}"
-        )
-        return resolved_entry_map
-
     def _handle_select_transport(
         self, 
+        state: Dict[str, Any], 
+        user_input: Dict[str, Any]
+    ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+        """
+        運搬業者選択ハンドラー
+        
+        処理内容:
+        1. ユーザー選択内容の取得
+        2. 選択内容の解決と検証
+        3. state更新
+        """
+        step_start = time.time()
+        self.logger.info("Step 1: 運搬業者選択処理開始")
+        
+        selections: Dict[str, Union[int, str]] = (
+            user_input.get("selections", {}) or {}
+        )
+        resolved_entry_map = self._resolve_and_apply_selections(state, selections)
+        selection_summary = self._create_selection_summary(resolved_entry_map)
+        
+        elapsed_ms = round((time.time() - step_start) * 1000, 2)
+        self.logger.info(
+            "Step 1: 運搬業者選択処理完了",
+            extra={
+                "selections_count": len(resolved_entry_map),
+                "elapsed_ms": elapsed_ms
+            }
+        )
+        
+        payload = {
+            "selection_summary": selection_summary,
+            "message": "運搬業者選択を受け取りました",
+            "step": 1,
+            "action": "select_transport",
+            "session_id": state.get("session_id"),
+        }
+        return state, payload
         state: Dict[str, Any], 
         user_input: Dict[str, Any]
     ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
@@ -118,9 +184,27 @@ class BlockUnitPriceInteractive(BaseInteractiveReportGenerator):
             user_input.get("selections", {}) or {}
         )
         resolved_entry_map = self._resolve_and_apply_selections(state, selections)
-        selection_summary = self._create_selection_summary(resolved_entry_map)
+    def finalize_step(self, state: Dict[str, Any]):  # type: ignore[override]
+        """
+        最終ステップ: ブロック単価計算を実行
         
-        payload = {
+        処理内容:
+        1. ブロック単価計算
+        2. 運搬費用計算
+        3. 帳票生成
+        4. ZIPファイル化
+        """
+        step_start = time.time()
+        self.logger.info("Step 2: 最終計算処理開始（ブロック単価計算）")
+        
+        result = execute_finalize_step(state)
+        
+        elapsed_ms = round((time.time() - step_start) * 1000, 2)
+        self.logger.info(
+            "Step 2: 最終計算処理完了",
+            extra={"elapsed_ms": elapsed_ms}
+        )
+        return result
             "selection_summary": selection_summary,
             "message": "運搬業者選択を受け取りました",
             "step": 1,
