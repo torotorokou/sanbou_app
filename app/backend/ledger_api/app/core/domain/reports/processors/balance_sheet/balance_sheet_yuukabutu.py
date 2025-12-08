@@ -9,11 +9,20 @@ from app.infra.report_utils.formatters.summary_optimized import summary_apply_op
 def calculate_total_valuable_material_cost(
     df_yard: pd.DataFrame,
     df_shipment: pd.DataFrame,
+    unit_price_table: pd.DataFrame,
 ) -> int:
+    """
+    有価物の合計を計算する。
+    
+    Args:
+        df_yard: ヤードデータ
+        df_shipment: 出荷データ
+        unit_price_table: 単価テーブル（外部から受け取り、I/O削減）
+    """
     shipment_summary_df = aggregate_valuable_material_by_vendor(df_shipment)
     sum_shipment = shipment_summary_df["値"].sum()
 
-    yard_summary_df = calculate_valuable_material_cost_by_item(df_yard)
+    yard_summary_df = calculate_valuable_material_cost_by_item(df_yard, unit_price_table)
     sum_yard = yard_summary_df["値"].sum()
 
     total_value = int(sum_shipment + sum_yard)
@@ -36,13 +45,17 @@ def aggregate_valuable_material_by_vendor(shipment_df: pd.DataFrame) -> pd.DataF
     return aggregated_df
 
 
-def calculate_valuable_material_cost_by_item(df_yard: pd.DataFrame) -> pd.DataFrame:
+def calculate_valuable_material_cost_by_item(
+    df_yard: pd.DataFrame,
+    unit_price_table: pd.DataFrame,
+) -> pd.DataFrame:
     """
     ヤードの有価物を品名別に計算（数量×単価）。
     
     最適化版を使用:
     - summary_apply_optimized: master_csvのcopy()を1回だけ実行
     - multiply_columns_optimized: 不要なcopy()を削減
+    - unit_price_tableを外部から受け取り、I/O削減
     """
     config = get_template_config()["balance_sheet"]
     master_path = config["master_csv_path"]["yuka_yard"]
@@ -57,9 +70,8 @@ def calculate_valuable_material_cost_by_item(df_yard: pd.DataFrame) -> pd.DataFr
         target_col="数量",
     )
 
-    # ② 単価テーブルから有価物の単価を取得
-    unit_price_df = get_unit_price_table_csv()
-    unit_price_df = unit_price_df[unit_price_df["必要項目"] == "有価物"]
+    # ② 単価テーブルから有価物の単価を取得（外部から受け取る）
+    unit_price_df = unit_price_table[unit_price_table["必要項目"] == "有価物"]
 
     # ③ 単価をマージ
     master_with_price = summary_apply_optimized(

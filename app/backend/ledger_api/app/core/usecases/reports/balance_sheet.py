@@ -172,11 +172,12 @@ def process(dfs: Dict[str, Any]) -> pd.DataFrame:
     # ========================================
     # Step 4: ドメイン計算処理
     # ========================================
-    # 注: base_dataから取得したDataFrameを使用
-    # （型変換済み・単価テーブルは後続で共有）
+    # 注: base_dataから取得したDataFrameと単価テーブルを使用
+    # （型変換済み・単価テーブルは1回だけ読み込み済み）
     df_receive = base_data.df_receive
     df_shipment = base_data.df_shipment
     df_yard = base_data.df_yard
+    unit_price_table = base_data.unit_price_table  # 🔥 最適化: 1回だけ読み込み
     
     # Step 4a: 搬出量データ処理（工場日報）
     step_start = time.time()
@@ -195,7 +196,7 @@ def process(dfs: Dict[str, Any]) -> pd.DataFrame:
     logger.info("Step 4b: 処分費データ処理開始")
     if df_yard is not None and df_shipment is not None:
         master_csv.loc[master_csv["大項目"] == "処分費", "値"] = (
-            calculate_total_disposal_cost(df_yard, df_shipment)
+            calculate_total_disposal_cost(df_yard, df_shipment, unit_price_table)
         )
     logger.info(
         "Step 4b: 処分費データ処理完了",
@@ -207,7 +208,7 @@ def process(dfs: Dict[str, Any]) -> pd.DataFrame:
     logger.info("Step 4c: 有価物データ処理開始")
     if df_yard is not None and df_shipment is not None:
         master_csv.loc[master_csv["大項目"] == "有価物", "値"] = (
-            calculate_total_valuable_material_cost(df_yard, df_shipment)
+            calculate_total_valuable_material_cost(df_yard, df_shipment, unit_price_table)
         )
     logger.info(
         "Step 4c: 有価物データ処理完了",
@@ -256,7 +257,7 @@ def process(dfs: Dict[str, Any]) -> pd.DataFrame:
         step_start = time.time()
         logger.info("Step 4g: 有価買取データ処理開始")
         master_csv.loc[master_csv["大項目"] == "有価買取", "値"] = (
-            calculate_purchase_value_of_valuable_items(df_receive)
+            calculate_purchase_value_of_valuable_items(df_receive, unit_price_table)
         )
         logger.info(
             "Step 4g: 有価買取データ処理完了",

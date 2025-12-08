@@ -9,10 +9,19 @@ from app.infra.report_utils.formatters.summary_optimized import summary_apply_op
 def calculate_total_disposal_cost(
     df_yard: pd.DataFrame,
     df_shipment: pd.DataFrame,
+    unit_price_table: pd.DataFrame,
 ) -> int:
+    """
+    処分費の合計を計算する。
+    
+    Args:
+        df_yard: ヤードデータ
+        df_shipment: 出荷データ
+        unit_price_table: 単価テーブル（外部から受け取り、I/O削減）
+    """
     cost_by_vendor = int(calculate_disposal_costs(df_shipment)["値"].sum())
-    cost_safe_shipment = int(calculate_safe_disposal_costs(df_shipment)["値"].sum())
-    cost_safe_yard = int(calculate_yard_disposal_costs(df_yard)["値"].sum())
+    cost_safe_shipment = int(calculate_safe_disposal_costs(df_shipment, unit_price_table)["値"].sum())
+    cost_safe_yard = int(calculate_yard_disposal_costs(df_yard, unit_price_table)["値"].sum())
     total_cost = cost_by_vendor + cost_safe_shipment + cost_safe_yard
     return total_cost
 
@@ -38,13 +47,17 @@ def calculate_disposal_costs(df_shipment: pd.DataFrame) -> pd.DataFrame:
     return master_csv_cost
 
 
-def calculate_safe_disposal_costs(df_shipment: pd.DataFrame) -> pd.DataFrame:
+def calculate_safe_disposal_costs(
+    df_shipment: pd.DataFrame,
+    unit_price_table: pd.DataFrame,
+) -> pd.DataFrame:
     """
     金庫品の処分費を計算（業者名×品名でグループ化）。
     
     最適化版を使用:
     - summary_apply_optimized: master_csvのcopy()を1回だけ実行
     - multiply_columns_optimized: 不要なcopy()を削減
+    - unit_price_tableを外部から受け取り、I/O削減
     """
     config = get_template_config()["balance_sheet"]
     master_path = config["master_csv_path"]["syobun_cost_kinko"]
@@ -60,10 +73,10 @@ def calculate_safe_disposal_costs(df_shipment: pd.DataFrame) -> pd.DataFrame:
         target_col="正味重量",
     )
 
-    unit_price_df = get_unit_price_table_csv()
+    # 単価テーブルを外部から受け取る（I/O削減）
     master_with_price = summary_apply_optimized(
         master_with_weight,
-        unit_price_df,
+        unit_price_table,
         key_cols=key_cols,
         source_col="設定単価",
         target_col="設定単価",
@@ -76,13 +89,17 @@ def calculate_safe_disposal_costs(df_shipment: pd.DataFrame) -> pd.DataFrame:
     return master_csv_kinko
 
 
-def calculate_yard_disposal_costs(yard_df: pd.DataFrame) -> pd.DataFrame:
+def calculate_yard_disposal_costs(
+    yard_df: pd.DataFrame,
+    unit_price_table: pd.DataFrame,
+) -> pd.DataFrame:
     """
     ヤードの処分費を計算（種類名×品名でグループ化）。
     
     最適化版を使用:
     - summary_apply_optimized: master_csvのcopy()を1回だけ実行
     - multiply_columns_optimized: 不要なcopy()を削減
+    - unit_price_tableを外部から受け取り、I/O削減
     """
     config = get_template_config()["balance_sheet"]
     master_path = config["master_csv_path"]["syobun_cost_kinko_yard"]
@@ -97,10 +114,10 @@ def calculate_yard_disposal_costs(yard_df: pd.DataFrame) -> pd.DataFrame:
         target_col="正味重量",
     )
 
-    unit_price_df = get_unit_price_table_csv()
+    # 単価テーブルを外部から受け取る（I/O削減）
     master_with_price = summary_apply_optimized(
         master_with_weight,
-        unit_price_df,
+        unit_price_table,
         key_cols=key_cols,
         source_col="設定単価",
         target_col="設定単価",
