@@ -32,7 +32,7 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 COPY ./backend_shared /build/backend_shared
-RUN python -m pip install --upgrade pip setuptools wheel && \
+RUN python -m pip install --upgrade "pip>=25.3,<26.0" setuptools wheel && \
     cd /build/backend_shared && \
     pip wheel --no-deps . -w /wheels
 
@@ -69,8 +69,8 @@ ENV PATH="/usr/lib/libreoffice/program:${PATH}"
 
 COPY ./ledger_api/requirements.txt /backend/requirements.txt
 COPY ./ledger_api/requirements-dev.txt /backend/requirements-dev.txt
-# Security: Upgrade pip to latest version to fix CVE-2025-8869
-RUN python -m pip install --upgrade pip && \
+# Security: Upgrade pip to >=25.3 to fix CVE-2025-8869
+RUN python -m pip install --upgrade "pip>=25.3,<26.0" && \
     pip install --no-cache-dir -r /backend/requirements.txt watchfiles
 
 # backend_shared を editable モードでインストール
@@ -122,8 +122,8 @@ RUN apt-get update && \
 ENV PATH="/usr/lib/libreoffice/program:${PATH}"
 
 COPY --from=wheelbuilder /wheels /wheels
-# Security: Upgrade pip to latest version to fix CVE-2025-8869
-RUN python -m pip install --upgrade pip && \
+# Security: Upgrade pip to >=25.3 to fix CVE-2025-8869
+RUN python -m pip install --upgrade "pip>=25.3,<26.0" && \
     pip install --no-cache-dir /wheels/*.whl && \
     rm -rf /wheels
 

@@ -16,8 +16,8 @@ langchain-core>=1.0.0
 # langchain-text-splitters >=0.3.4 fixes CVE-2025-6985
 langchain-text-splitters>=0.3.4
 Pillow==11.0.0
-# PyPDF2 is deprecated; consider migrating to pypdf (not pypdf2)
-# However, CVE-2023-36464 affects pypdf2 only; PyPDF2 v3.0.1 is the new library
-PyPDF2==3.0.1
+# Security: Migrated from PyPDF2 to pypdf to avoid CVE-2023-36464
+# pypdf is the maintained successor to PyPDF2
+pypdf>=3.9.0,<5.0.0
 
 # backend_shared は Dockerfile でインストールされます
