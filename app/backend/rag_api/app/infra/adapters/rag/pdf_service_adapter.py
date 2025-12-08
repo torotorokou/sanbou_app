@@ -1,7 +1,7 @@
 import os
 import re
 import hashlib
-import PyPDF2
+import pypdf
 from backend_shared.application.logging import get_module_logger
 from app.core.ports.rag.pdf_service_port import PDFServiceBase
 from backend_shared.core.domain.exceptions import ValidationError
@@ -27,7 +27,7 @@ class PDFService(PDFServiceBase):
         pdf_urls = []
         try:
             with open(pdf_path, "rb") as f:
-                reader = PyPDF2.PdfReader(f)
+                reader = pypdf.PdfReader(f)
                 total = len(reader.pages)
 
                 for p in pages:
@@ -39,7 +39,7 @@ class PDFService(PDFServiceBase):
                     dummy_pdf_path = os.path.join(
                         save_dir, f"answer_{safe_name}_{p_int}.pdf"
                     )
-                    writer = PyPDF2.PdfWriter()
+                    writer = pypdf.PdfWriter()
                     try:
                         # 1-based の場合
                         if 1 <= p_int <= total:
@@ -68,7 +68,7 @@ class PDFService(PDFServiceBase):
                     save_dir, f"answer_{safe_name}_{p_int}.pdf"
                 )
                 if not os.path.exists(dummy_pdf_path):
-                    writer = PyPDF2.PdfWriter()
+                    writer = pypdf.PdfWriter()
                     writer.add_blank_page(width=595, height=842)
                     with open(dummy_pdf_path, "wb") as out_f:
                         writer.write(out_f)
@@ -78,12 +78,12 @@ class PDFService(PDFServiceBase):
 
     def merge_pdfs(self, pdf_file_paths, output_path):
         logger.info("Merging PDFs", extra={"file_count": len(pdf_file_paths), "output_path": output_path})
-        writer = PyPDF2.PdfWriter()
+        writer = pypdf.PdfWriter()
         added = 0
         for fpath in pdf_file_paths:
             try:
                 with open(fpath, "rb") as f:
-                    reader = PyPDF2.PdfReader(f)
+                    reader = pypdf.PdfReader(f)
                     for page in reader.pages:
                         writer.add_page(page)
                         added += 1

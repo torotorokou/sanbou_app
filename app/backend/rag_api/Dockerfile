@@ -37,8 +37,8 @@ RUN apt-get update && \
 # ──────────────────────────────────────────────────────────────
 FROM gcloud AS wheelbuilder
 COPY ./backend_shared /build/backend_shared
-# Security: Upgrade pip to latest version to fix CVE-2025-8869
-RUN python -m pip install --upgrade pip setuptools wheel && \
+# Security: Upgrade pip to >=25.3 to fix CVE-2025-8869
+RUN python -m pip install --upgrade "pip>=25.3,<26.0" setuptools wheel && \
     cd /build/backend_shared && \
     pip wheel --no-deps . -w /wheels
 
@@ -72,8 +72,8 @@ COPY --from=gcloud /usr/lib/google-cloud-sdk /usr/lib/google-cloud-sdk
 ENV PATH="/usr/lib/google-cloud-sdk/bin:${PATH}"
 
 COPY ./rag_api/requirements.txt /backend/requirements.txt
-# Security: Upgrade pip to latest version to fix CVE-2025-8869
-RUN python -m pip install --upgrade pip && \
+# Security: Upgrade pip to >=25.3 to fix CVE-2025-8869
+RUN python -m pip install --upgrade "pip>=25.3,<26.0" && \
     pip install --no-cache-dir -r /backend/requirements.txt watchfiles
 
 # backend_shared を editable モードでインストール
@@ -121,8 +121,8 @@ COPY --from=gcloud /usr/lib/google-cloud-sdk /usr/lib/google-cloud-sdk
 ENV PATH="/usr/lib/google-cloud-sdk/bin:${PATH}"
 
 COPY --from=wheelbuilder /wheels /wheels
-# Security: Upgrade pip to latest version to fix CVE-2025-8869
-RUN python -m pip install --upgrade pip && \
+# Security: Upgrade pip to >=25.3 to fix CVE-2025-8869
+RUN python -m pip install --upgrade "pip>=25.3,<26.0" && \
     pip install --no-cache-dir /wheels/*.whl && \
     rm -rf /wheels
 

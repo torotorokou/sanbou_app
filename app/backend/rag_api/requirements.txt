@@ -1,22 +1,23 @@
 # FastAPI >=0.115.7 uses Starlette >=0.49.1 (fixes CVE-2025-62727, CVE-2025-54121)
 fastapi>=0.115.7,<0.200.0
-uvicorn[standard]==0.32.1
-pydantic==2.10.3
+uvicorn[standard]==0.33.0
+pydantic==2.10.6
 python-dotenv==1.0.1
-PyMuPDF==1.24.14
+PyMuPDF==1.25.3
 faiss-cpu==1.9.0.post1
 PyYAML==6.0.2
 # langchain-community >=0.3.14 fixes CVE-2025-6984
-langchain-community>=0.3.14
-# langchain-openai >=0.2.13 (keep current)
-langchain-openai==0.2.13
-# langchain-core >=0.3.28 fixes CVE-2025-65106
-langchain-core>=0.3.28
+# 0.4.1 requires langchain-core>=1.0.1 and langchain-openai needs updating
+langchain-community>=0.4.0
+# langchain-openai needs to be compatible with langchain-core>=1.0
+langchain-openai>=0.3.0
+# langchain-core >=0.3.28 fixes CVE-2025-65106, >=1.0 for community 0.4+
+langchain-core>=1.0.0
 # langchain-text-splitters >=0.3.4 fixes CVE-2025-6985
 langchain-text-splitters>=0.3.4
-Pillow==11.0.0
-# PyPDF2 is deprecated; consider migrating to pypdf (not pypdf2)
-# However, CVE-2023-36464 affects pypdf2 only; PyPDF2 v3.0.1 is the new library
-PyPDF2==3.0.1
+Pillow==11.1.0
+# Security: Migrated from PyPDF2 to pypdf to avoid CVE-2023-36464
+# pypdf is the maintained successor to PyPDF2
+pypdf>=3.9.0,<5.0.0
 
 # backend_shared は Dockerfile でインストールされます

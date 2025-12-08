@@ -9,7 +9,7 @@ import tempfile
 import zipfile
 from typing import Any, List, Tuple
 
-import PyPDF2
+import pypdf
 from fastapi import APIRouter, Body, Request, Depends, HTTPException
 from fastapi.responses import FileResponse, StreamingResponse, JSONResponse
 from pydantic import BaseModel
@@ -189,8 +189,8 @@ async def download_report(request: Request, pages: list = Body(..., embed=True))
                     hint="pagesの値を確認してください。",
                 )
             with open(pdf_path, "rb") as f:
-                reader = PyPDF2.PdfReader(f)
-                writer = PyPDF2.PdfWriter()
+                reader = pypdf.PdfReader(f)
+                writer = pypdf.PdfWriter()
                 writer.add_page(reader.pages[page_num - 1])
                 with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmpf:
                     writer.write(tmpf)
@@ -203,14 +203,14 @@ async def download_report(request: Request, pages: list = Body(..., embed=True))
         # 複数ページの場合: ZIPで返却
         buf = tempfile.NamedTemporaryFile(delete=False, suffix=".zip")
         with open(pdf_path, "rb") as f:
-            reader = PyPDF2.PdfReader(f)
+            reader = pypdf.PdfReader(f)
             with zipfile.ZipFile(buf, "w") as zipf:
                 for p in pages:
                     try:
                         page_num = int(str(p).split("-")[0])
                     except Exception:
                         continue
-                    writer = PyPDF2.PdfWriter()
+                    writer = pypdf.PdfWriter()
                     writer.add_page(reader.pages[page_num - 1])
                     pdf_bytes = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
                     writer.write(pdf_bytes)

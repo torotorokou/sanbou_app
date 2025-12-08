@@ -1,5 +1,5 @@
 # Plan Worker dependencies (minimal)
-pydantic==2.10.3
+pydantic==2.10.6
 psycopg[binary]==3.2.3
 python-dotenv==1.0.1
 

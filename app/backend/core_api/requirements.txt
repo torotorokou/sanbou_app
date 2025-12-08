@@ -1,9 +1,9 @@
 # Core FastAPI & Web
 # FastAPI >=0.115.7 uses Starlette >=0.49.1 (fixes CVE-2025-62727, CVE-2025-54121)
 fastapi>=0.115.7,<0.200.0
-uvicorn[standard]==0.32.1
-pydantic==2.10.3
-pydantic-settings==2.6.1
+uvicorn[standard]==0.33.0
+pydantic==2.10.6
+pydantic-settings==2.10.1
 python-multipart==0.0.20
 
 # Authentication & Security
@@ -12,7 +12,7 @@ google-auth==2.37.0
 requests>=2.32.4
 
 # Database
-sqlalchemy==2.0.36
+sqlalchemy==2.0.44
 psycopg[binary]==3.2.3
 alembic==1.14.0
 
