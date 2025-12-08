@@ -66,7 +66,8 @@ def create_transport_selection_form(
         st.session_state.block_unit_price_transport_map = {}
 
     # 運搬社数が1以外の行を抽出
-    target_rows = df_after[df_after["運搬社数"] != 1].copy()
+    # 最適化: copy()を削減（UI表示のため読み取り専用）
+    target_rows = df_after[df_after["運搬社数"] != 1]
 
     # UI表示
     st.title("運搬業者の選択")
