@@ -57,9 +57,15 @@ def process_shobun(df_shipment: pd.DataFrame) -> pd.DataFrame:
 def apply_shobun_weight(
     master_csv: pd.DataFrame, df_shipment: pd.DataFrame
 ) -> pd.DataFrame:
+    """
+    処分重量を業者別に加算する。
+    
+    Note:
+        df_shipmentは呼び出し元（factory_report_base）で既にcopy()済みで、
+        業者CDも文字列化済みのため、ここでは追加処理は不要。
+    """
     # --- 初期処理 ---
-    df_shipment = df_shipment.copy()
-    df_shipment["業者CD"] = df_shipment["業者CD"].astype(str)
+    # df_shipmentは既にcopy()済み、業者CDも文字列化済み
     marugen_num = "8327"
 
     # --- 丸源処理 ---

@@ -33,6 +33,9 @@ from app.core.domain.reports.processors.factory_report.etc import (
     generate_summary_dataframe,
     date_format,
 )
+from app.core.usecases.reports.factory_report_base import (
+    build_factory_report_base_data,
+)
 
 
 def process(dfs: Dict[str, Any]) -> pd.DataFrame:
@@ -116,8 +119,24 @@ def process(dfs: Dict[str, Any]) -> pd.DataFrame:
     )
 
     # ========================================
+    # Step 2b: ベースDataFrame構築（型変換）
+    # ========================================
+    # 🔥 最適化ポイント: 
+    #   - 業者CDの型変換を一度だけ実行（従来は各関数内で重複実行）
+    #   - DataFrameのcopy()を最小限に
+    step_start = time.time()
+    base_data = build_factory_report_base_data(df_dict)
+    logger.info(
+        "Step 2b: ベースDataFrame構築完了",
+        extra={"elapsed_ms": round((time.time() - step_start) * 1000, 2)}
+    )
+
+    # ========================================
     # Step 3: DataFrame存在確認
     # ========================================
+    # base_dataから前処理済みDataFrameを取得
+    df_shipment = base_data.df_shipment
+    df_yard = base_data.df_yard
     # ========================================
     # Step 3: DataFrame存在確認
     # ========================================
