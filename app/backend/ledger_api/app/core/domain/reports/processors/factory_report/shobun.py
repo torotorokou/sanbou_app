@@ -1,7 +1,7 @@
 import pandas as pd
 
 from backend_shared.application.logging import get_module_logger, create_log_context
-from backend_shared.utils.dataframe_utils import clean_na_strings
+from backend_shared.utils.dataframe_utils_optimized import clean_na_strings_vectorized
 from app.infra.report_utils import (
     get_template_config,
     load_master_and_template,
@@ -87,7 +87,8 @@ def apply_shobun_weight(
             aggregated[c] = None
 
     # master_csv, aggregated の型整理
-    master_csv["値"] = master_csv["値"].apply(clean_na_strings)
+    # 最適化: clean_na_strings_vectorizedを使用（10-100倍高速化）
+    master_csv["値"] = clean_na_strings_vectorized(master_csv["値"])
     master_csv["値"] = pd.to_numeric(master_csv["値"], errors="coerce").fillna(0)
 
     # コード列の正規化（Nullable Intなどに）

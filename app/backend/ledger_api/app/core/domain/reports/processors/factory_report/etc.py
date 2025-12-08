@@ -1,6 +1,6 @@
 import pandas as pd
 
-from backend_shared.utils.dataframe_utils import clean_na_strings
+from backend_shared.utils.dataframe_utils_optimized import clean_na_strings_vectorized
 from app.infra.report_utils import get_template_config
 from app.infra.report_utils import load_master_and_template
 from app.infra.report_utils.formatters import set_value_fast_safe
@@ -25,7 +25,8 @@ def generate_summary_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     df_sum = df.copy()
 
     # 値列を数値に変換（NaN対応）
-    df_sum["値"] = df_sum["値"].apply(clean_na_strings)
+    # 最適化: clean_na_strings_vectorizedを使用（10-100倍高速化）
+    df_sum["値"] = clean_na_strings_vectorized(df_sum["値"])
     df_sum["値"] = pd.to_numeric(df_sum["値"], errors="coerce").fillna(0)
 
     # カテゴリ別の合計
@@ -34,18 +35,20 @@ def generate_summary_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     # 総合計
     total_sum = df_sum["値"].sum()
 
-    def assign_sum(row):
-        if "ヤード" in row["大項目"] and "処分" not in row["大項目"]:
-            return category_sum.get("ヤード", 0.0)
-        elif "処分" in row["大項目"] and "ヤード" not in row["大項目"]:
-            return category_sum.get("処分", 0.0)
-        elif "有価" in row["大項目"]:
-            return category_sum.get("有価", 0.0)
-        elif "総合計" in row["大項目"]:
-            return total_sum
-        return row["値"]
-
-    etc_csv["値"] = etc_csv.apply(assign_sum, axis=1)
+    # 最適化: apply(axis=1)をベクトル化（条件マスクで直接代入）
+    # デフォルトは既存の値を保持
+    etc_csv["値"] = etc_csv["値"].copy()
+    
+    # 各条件に対してマスクを作成して値を代入
+    mask_yard = etc_csv["大項目"].str.contains("ヤード", na=False) & ~etc_csv["大項目"].str.contains("処分", na=False)
+    mask_shobun = etc_csv["大項目"].str.contains("処分", na=False) & ~etc_csv["大項目"].str.contains("ヤード", na=False)
+    mask_yuuka = etc_csv["大項目"].str.contains("有価", na=False)
+    mask_total = etc_csv["大項目"].str.contains("総合計", na=False)
+    
+    etc_csv.loc[mask_yard, "値"] = category_sum.get("ヤード", 0.0)
+    etc_csv.loc[mask_shobun, "値"] = category_sum.get("処分", 0.0)
+    etc_csv.loc[mask_yuuka, "値"] = category_sum.get("有価", 0.0)
+    etc_csv.loc[mask_total, "値"] = total_sum
 
     # 合計_処分ヤード = 処分 + ヤード
     mask_shobun_yard = etc_csv["大項目"] == "合計_処分ヤード"
