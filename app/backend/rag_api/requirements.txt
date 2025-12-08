@@ -7,11 +7,12 @@ PyMuPDF==1.24.14
 faiss-cpu==1.9.0.post1
 PyYAML==6.0.2
 # langchain-community >=0.3.14 fixes CVE-2025-6984
-langchain-community>=0.3.14
-# langchain-openai >=0.2.13 (keep current)
-langchain-openai==0.2.13
-# langchain-core >=0.3.28 fixes CVE-2025-65106
-langchain-core>=0.3.28
+# 0.4.1 requires langchain-core>=1.0.1 and langchain-openai needs updating
+langchain-community>=0.4.0
+# langchain-openai needs to be compatible with langchain-core>=1.0
+langchain-openai>=0.3.0
+# langchain-core >=0.3.28 fixes CVE-2025-65106, >=1.0 for community 0.4+
+langchain-core>=1.0.0
 # langchain-text-splitters >=0.3.4 fixes CVE-2025-6985
 langchain-text-splitters>=0.3.4
 Pillow==11.0.0
