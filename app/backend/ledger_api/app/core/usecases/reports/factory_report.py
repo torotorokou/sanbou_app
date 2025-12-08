@@ -152,10 +152,11 @@ def process(dfs: Dict[str, Any]) -> pd.DataFrame:
     # Step 4: 個別ドメイン処理
     # ========================================
     # Step 4a: 処分データ処理
+    # 🔥 最適化ポイント: master_csvを引数で渡すことでI/O削減（従来は関数内で読み込み）
     step_start = time.time()
     logger.info("Step 4a: 出荷処分データ処理開始")
     if has_shipment and df_shipment is not None:
-        master_csv_shobun = process_shobun(df_shipment)
+        master_csv_shobun = process_shobun(df_shipment, base_data.master_csv_shobun)
         logger.info(
             "Step 4a: 処分データ処理完了",
             extra={"elapsed_ms": round((time.time() - step_start) * 1000, 2)}
@@ -168,7 +169,7 @@ def process(dfs: Dict[str, Any]) -> pd.DataFrame:
     step_start = time.time()
     logger.info("Step 4b: 出荷有価データ処理開始")
     if has_yard and has_shipment and df_yard is not None and df_shipment is not None:
-        master_csv_yuka = process_yuuka(df_yard, df_shipment)
+        master_csv_yuka = process_yuuka(df_yard, df_shipment, base_data.master_csv_yuuka)
         logger.info(
             "Step 4b: 有価データ処理完了",
             extra={"elapsed_ms": round((time.time() - step_start) * 1000, 2)}
@@ -181,7 +182,7 @@ def process(dfs: Dict[str, Any]) -> pd.DataFrame:
     step_start = time.time()
     logger.info("Step 4c: 出荷ヤードデータ処理開始")
     if has_yard and has_shipment and df_yard is not None and df_shipment is not None:
-        master_csv_yard = process_yard(df_yard, df_shipment)
+        master_csv_yard = process_yard(df_yard, df_shipment, base_data.master_csv_yard)
         logger.info(
             "Step 4c: ヤードデータ処理完了",
             extra={"elapsed_ms": round((time.time() - step_start) * 1000, 2)}
@@ -206,7 +207,8 @@ def process(dfs: Dict[str, Any]) -> pd.DataFrame:
     combined_df = make_label(combined_df)
 
     # --- 合計・総合計行の追加/更新 ---
-    combined_df = generate_summary_dataframe(combined_df)
+    # 🔥 最適化ポイント: master_csv_etcを引数で渡すことでI/O削減（従来は関数内で読み込み）
+    combined_df = generate_summary_dataframe(combined_df, base_data.master_csv_etc)
 
     # 日付の挿入
     combined_df = date_format(combined_df, df_shipment)

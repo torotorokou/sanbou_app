@@ -2,42 +2,35 @@ import pandas as pd
 
 from backend_shared.application.logging import get_module_logger, create_log_context
 from backend_shared.utils.dataframe_utils_optimized import clean_na_strings_vectorized
-from app.infra.report_utils import (
-    get_template_config,
-    load_master_and_template,
-)
 from app.infra.report_utils.dataframe.cleaning import clean_cd_column as _clean_cd_column
 
 logger = get_module_logger(__name__)
 
 
-def process_shobun(df_shipment: pd.DataFrame) -> pd.DataFrame:
+def process_shobun(df_shipment: pd.DataFrame, master_csv: pd.DataFrame = None) -> pd.DataFrame:
     """
     出荷データ（処分）を処理して、マスターCSVに加算・ラベル挿入・整形を行う。
 
     Parameters:
         df_shipment : pd.DataFrame
             出荷データ（処分）CSV
+        master_csv : pd.DataFrame, optional
+            処分マスターCSV（事前読み込み済み）。Noneの場合は空データを返す。
 
     Returns:
         pd.DataFrame
             整形済みの出荷処分帳票
+            
+    Notes:
+        - Step 5最適化: master_csvを引数で受け取ることでI/O削減
     """
 
-    # --- ① マスターCSVの読み込み ---
-    logger.info("Loading template config...")
-    config = get_template_config()["factory_report"]
-    master_path = config["master_csv_path"]["shobun"]
-    logger.info(
-        "マスターCSVパス取得",
-        extra=create_log_context(operation="process_shobun", master_path=master_path)
-    )
+    # --- ① マスターCSVの確認 ---
+    logger.info("マスターCSV確認", extra=create_log_context(operation="process_shobun"))
 
-    try:
-        master_csv = load_master_and_template(master_path)
-    except Exception as e:
+    if master_csv is None or master_csv.empty:
         logger.warning(
-            f"マスターCSVの読み込みに失敗しました（処分）。パス: {master_path}。理由: {e}。空データで継続します。"
+            "マスターCSVが提供されていません（処分）。空データで継続します。"
         )
         # 下流で期待される最小列を用意して空で返す
         empty_cols = ["業者名", "セル", "値", "セルロック", "順番", "業者CD", "品名"]

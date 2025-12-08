@@ -1,8 +1,6 @@
 import pandas as pd
 
 from backend_shared.utils.dataframe_utils_optimized import clean_na_strings_vectorized
-from app.infra.report_utils import get_template_config
-from app.infra.report_utils import load_master_and_template
 from app.infra.report_utils.formatters import set_value_fast_safe
 from app.infra.report_utils.formatters import (
     to_japanese_era,
@@ -10,17 +8,28 @@ from app.infra.report_utils.formatters import (
 )
 
 
-def generate_summary_dataframe(df: pd.DataFrame) -> pd.DataFrame:
-    config = get_template_config()["factory_report"]
-    etc_path = config["master_csv_path"].get("etc")
-    try:
-        etc_csv = load_master_and_template(etc_path)
-    except Exception as e:
+def generate_summary_dataframe(df: pd.DataFrame, master_csv_etc: pd.DataFrame = None) -> pd.DataFrame:
+    """
+    合計行を追加する。
+    
+    Args:
+        df: 処理対象のDataFrame
+        master_csv_etc: etc合計行マスターCSV（事前読み込み済み）。Noneの場合は合計行なしでそのまま返す。
+    
+    Returns:
+        pd.DataFrame: 合計行追加済みのDataFrame
+    
+    Notes:
+        - Step 5最適化: master_csv_etcを引数で受け取ることでI/O削減
+    """
+    if master_csv_etc is None or master_csv_etc.empty:
         # etc テンプレートが無い場合は加算行なしでそのまま返す
         print(
-            f"[WARN] etcマスターCSVの読み込みに失敗: {etc_path} reason={e}. 合計行の追加をスキップします。"
+            "[WARN] etcマスターCSVが提供されていません。合計行の追加をスキップします。"
         )
         return df.copy()
+    
+    etc_csv = master_csv_etc
 
     df_sum = df.copy()
 
