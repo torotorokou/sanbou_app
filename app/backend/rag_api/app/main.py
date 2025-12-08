@@ -63,6 +63,15 @@ logger.info(
     extra={"operation": "app_init", "debug": settings.DEBUG}
 )
 
+# --- GCP認証・権限デバッグ（起動時1回のみ実行） ---------------------------------
+if settings.STAGE in ("stg", "prod") and settings.PERMISSION_DEBUG:
+    logger.info("🔍 PERMISSION_DEBUG=1 が有効なため、GCP認証デバッグを実行します")
+    from app.infra.adapters.gcp import debug_log_gcp_adc_and_permissions
+    debug_log_gcp_adc_and_permissions(
+        bucket_name=settings.GCS_BUCKET_NAME,
+        object_prefix=settings.GCS_DATA_PREFIX
+    )
+
 # --- ミドルウェア: Request ID追跡 ----------------------------------------------
 # 統一ロギング基盤: HTTPリクエストごとに一意のrequest_idを割り当て、ContextVarで管理
 # 全ログ出力にrequest_idが付与され、分散トレーシングが可能になる
