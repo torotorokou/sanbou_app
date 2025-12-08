@@ -2,7 +2,8 @@ import pandas as pd
 from app.infra.report_utils import get_template_config, load_master_and_template
 from app.infra.report_utils import get_unit_price_table_csv
 from app.infra.report_utils.formatters import summary_apply
-from app.infra.report_utils.formatters import multiply_columns
+from app.infra.report_utils.formatters.multiply_optimized import multiply_columns_optimized
+from app.infra.report_utils.formatters.summary_optimized import summary_apply_optimized
 
 
 def calculate_total_valuable_material_cost(
@@ -36,12 +37,19 @@ def aggregate_valuable_material_by_vendor(shipment_df: pd.DataFrame) -> pd.DataF
 
 
 def calculate_valuable_material_cost_by_item(df_yard: pd.DataFrame) -> pd.DataFrame:
+    """
+    ヤードの有価物を品名別に計算（数量×単価）。
+    
+    最適化版を使用:
+    - summary_apply_optimized: master_csvのcopy()を1回だけ実行
+    - multiply_columns_optimized: 不要なcopy()を削減
+    """
     config = get_template_config()["balance_sheet"]
     master_path = config["master_csv_path"]["yuka_yard"]
-    master_df = load_master_and_template(master_path)
+    master_df = load_master_and_template(master_path).copy()  # ここで1回だけcopy
 
     # ① ヤードデータから品名別に数量を集計
-    master_with_quantity = summary_apply(
+    master_with_quantity = summary_apply_optimized(
         master_df,
         df_yard,
         key_cols=["品名"],
@@ -54,7 +62,7 @@ def calculate_valuable_material_cost_by_item(df_yard: pd.DataFrame) -> pd.DataFr
     unit_price_df = unit_price_df[unit_price_df["必要項目"] == "有価物"]
 
     # ③ 単価をマージ
-    master_with_price = summary_apply(
+    master_with_price = summary_apply_optimized(
         master_with_quantity,
         unit_price_df,
         key_cols=["品名"],
@@ -63,7 +71,7 @@ def calculate_valuable_material_cost_by_item(df_yard: pd.DataFrame) -> pd.DataFr
     )
 
     # ④ 数量 × 単価 = 金額（値）
-    result_df = multiply_columns(
+    result_df = multiply_columns_optimized(
         master_with_price, col1="設定単価", col2="数量", result_col="値"
     )
     
