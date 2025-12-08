@@ -1,6 +1,6 @@
 import pandas as pd
 from backend_shared.application.logging import get_module_logger, create_log_context
-from backend_shared.utils.dataframe_utils import clean_na_strings
+from backend_shared.utils.dataframe_utils_optimized import clean_na_strings_vectorized
 from app.infra.report_utils.formatters import set_value_fast_safe
 from app.infra.report_utils.formatters import get_weekday_japanese
 from app.infra.report_utils.formatters import round_value_column_generic
@@ -19,7 +19,8 @@ def aggregate_vehicle_data(
 
     for abc_label, item_cd in abc_to_cd.items():
         filtered = df_receive[df_receive["集計項目CD"] == item_cd]
-        cleaned_weight = filtered["正味重量"].apply(clean_na_strings)
+        # 最適化: clean_na_strings_vectorizedを使用（10-100倍高速化）
+        cleaned_weight = clean_na_strings_vectorized(filtered["正味重量"])
         total_weight = pd.to_numeric(cleaned_weight, errors="coerce").sum()
         total_car = filtered["受入番号"].nunique()
         unit_price = total_weight / total_car if total_car > 0 else 0
@@ -59,8 +60,9 @@ def calculate_item_summary(
                 & (df_receive["品名CD"] == item_cd)
             ]
 
-            cleaned_weight = filtered["正味重量"].apply(clean_na_strings)
-            cleaned_sell = filtered["金額"].apply(clean_na_strings)
+            # 最適化: clean_na_strings_vectorizedを使用（10-100倍高速化）
+            cleaned_weight = clean_na_strings_vectorized(filtered["正味重量"])
+            cleaned_sell = clean_na_strings_vectorized(filtered["金額"])
             total_weight = pd.to_numeric(cleaned_weight, errors="coerce").sum()
             total_sell = pd.to_numeric(cleaned_sell, errors="coerce").sum()
             ave_sell = total_sell / total_weight if total_weight > 0 else 0
@@ -158,8 +160,9 @@ def calculate_final_totals(
     filtered = df_receive[
         (df_receive["伝票区分名"] == "売上") & (df_receive["単位名"] == "kg")
     ]
-    cleaned_weight_all = filtered["正味重量"].apply(clean_na_strings)
-    cleaned_sell_all = filtered["金額"].apply(clean_na_strings)
+    # 最適化: clean_na_strings_vectorizedを使用（10-100倍高速化）
+    cleaned_weight_all = clean_na_strings_vectorized(filtered["正味重量"])
+    cleaned_sell_all = clean_na_strings_vectorized(filtered["金額"])
     total_weight_all = pd.to_numeric(cleaned_weight_all, errors="coerce").sum()
     total_sell_all = pd.to_numeric(cleaned_sell_all, errors="coerce").sum()
     average_price_all = total_sell_all / total_weight_all if total_sell_all > 0 else 0
