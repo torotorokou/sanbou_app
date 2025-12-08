@@ -5,7 +5,7 @@ IFS=$'\n\t'
 
 # =============================================================================
 # RAG API スタートアップスクリプト - ADC (Application Default Credentials) 対応版
-# Last Modified: 2025-12-08 15:40 JST
+# Last Modified: 2025-12-08 16:05 JST
 # =============================================================================
 # 
 # 認証方式:
@@ -141,9 +141,10 @@ if [[ "$SKIP_GCS" == "1" ]]; then
 else
   # 実際のデータファイル（CSV/JSON/Parquet等）が存在するかチェック
   # readme.md や .gitkeep などのドキュメントファイルのみの場合はダウンロードを実行
-  DATA_FILE_COUNT=$(find "$TARGET_DIR" -type f \( -name "*.csv" -o -name "*.json" -o -name "*.parquet" -o -name "*.jsonl" \) 2>/dev/null | wc -l)
-  # 空白と改行を削除
-  DATA_FILE_COUNT=$(echo "$DATA_FILE_COUNT" | xargs)
+  DATA_FILE_COUNT=$(find "$TARGET_DIR" -type f \( -name "*.csv" -o -name "*.json" -o -name "*.parquet" -o -name "*.jsonl" \) 2>/dev/null | wc -l) || DATA_FILE_COUNT=0
+  # 空白を削除(bashの変数展開で実現)
+  DATA_FILE_COUNT="${DATA_FILE_COUNT// /}"
+  DATA_FILE_COUNT="${DATA_FILE_COUNT:-0}"
   
   if [ "$DATA_FILE_COUNT" -gt 0 ]; then
     echo "⏩ [1/2] Local data already exists ($DATA_FILE_COUNT data files found). Skipping GCS download."
