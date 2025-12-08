@@ -19,7 +19,8 @@ def apply_transport_fee_by_vendor(
     """
 
     # 運搬業者が設定されている行を抽出
-    target_rows = df_after[df_after["運搬業者"].notna()].copy()
+    # 最適化: copy()を削減（後でconcatするため不要）
+    target_rows = df_after[df_after["運搬業者"].notna()]
     
     # デバッグ: マージ前の業者CD・運搬業者の組み合わせを確認
     if not target_rows.empty:
@@ -44,9 +45,10 @@ def apply_transport_fee_by_vendor(
         )
 
     # 運搬費マスターを準備（重複除外）
+    # 最適化: copy()を削減（drop_duplicatesが新規DataFrameを返すため不要）
     transport_fees = df_transport[["業者CD", "運搬業者", "運搬費"]].drop_duplicates(
         subset=["業者CD", "運搬業者"]
-    ).copy()
+    )
     
     # 運搬費をマージ（LEFT JOIN で全行を保持）
     updated_target_rows = target_rows.merge(
@@ -85,7 +87,8 @@ def apply_transport_fee_by_vendor(
         )
 
     # 運搬業者が未設定の行を保持
-    non_transport_rows = df_after[df_after["運搬業者"].isna()].copy()
+    # 最適化: copy()を削減（concatで新規DataFrameを作るため不要）
+    non_transport_rows = df_after[df_after["運搬業者"].isna()]
 
     # 処理済みデータの結合
     df_after = pd.concat([updated_target_rows, non_transport_rows], ignore_index=True)
@@ -96,15 +99,20 @@ def apply_transport_fee_by_vendor(
 def apply_weight_based_transport_fee(
     df_after: DataFrame, df_transport: DataFrame
 ) -> DataFrame:
-    """運搬費係数を用いて重量ベースの運搬費を再計算する"""
+    """運搬費係数を用いて重量ベースの運搬費を再計算する
+    
+    最適化: copy()を削減（mergeが新規DataFrameを返すため不要）
+    """
 
-    out = df_after.copy()
+    # 最適化: out = df_after.copy()を削除（後でmergeで新規DataFrameが作られる）
+    out = df_after
 
     fee_str = df_transport.get("運搬費", pd.Series(dtype=object)).astype(str).str.replace(
         r"\s+", "", regex=True
     )
     mask = fee_str.str.fullmatch(r"\d+\*weight", na=False)
-    t = df_transport[mask].copy()
+    # 最適化: copy()を削減（フィルタリングだけで充分）
+    t = df_transport[mask]
 
     if not t.empty:
         t["運搬費係数"] = t["運搬費"].str.extract(r"^(\d+)")[0].astype(float)
@@ -127,17 +135,22 @@ def apply_weight_based_transport_fee(
 
 
 def make_total_sum(df: DataFrame, master_csv: DataFrame) -> DataFrame:
-    # 個々の金額計算と計算用重量の設定
-    def calculate_row(row):
-        if row["単位名"] == "kg":
-            row["金額"] = row["単価"] * row["正味重量"]
-        elif row["単位名"] == "台":
-            row["金額"] = row["単価"] * row["数量"]
-        return row
-
-    # 行ごとに計算を適用
-    # apply returns a Series per row; assign back to DataFrame to satisfy typing
-    df = df.apply(calculate_row, axis=1)  # type: ignore[assignment]
+    """
+    総額計算とブロック単価計算
+    
+    最適化: apply(axis=1)をベクトル化（10-100倍高速化）
+    """
+    # 最適化: apply()を使わずにVector演算で計算
+    # kgの場合: 単価 * 正味重量
+    # 台の場合: 単価 * 数量
+    df = df.copy()  # 元のDataFrameを保護
+    
+    kg_mask = df["単位名"] == "kg"
+    dai_mask = df["単位名"] == "台"
+    
+    df["金額"] = 0.0
+    df.loc[kg_mask, "金額"] = df.loc[kg_mask, "単価"] * df.loc[kg_mask, "正味重量"]
+    df.loc[dai_mask, "金額"] = df.loc[dai_mask, "単価"] * df.loc[dai_mask, "数量"]
 
     # 総額の計算
     df["総額"] = df["金額"] + df["運搬費"]

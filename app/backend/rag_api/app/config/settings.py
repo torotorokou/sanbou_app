@@ -27,6 +27,13 @@ class RagApiSettings(BaseAppSettings):
     # Secrets directory (backend_shared統一)
     SECRETS_DIR: str = os.getenv("SECRETS_DIR", "/backend/secrets")
     
+    # GCP関連設定
+    GCS_BUCKET_NAME: str = os.getenv("GCS_BUCKET_NAME", "object_haikibutu")
+    GCS_DATA_PREFIX: str = os.getenv("GCS_DATA_PREFIX", "master")
+    
+    # デバッグ設定
+    PERMISSION_DEBUG: bool = os.getenv("PERMISSION_DEBUG", "0") == "1"
+    
     class Config:
         env_file = ".env"
         case_sensitive = True

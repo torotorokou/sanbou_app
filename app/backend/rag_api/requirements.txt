@@ -20,4 +20,8 @@ Pillow==11.1.0
 # pypdf is the maintained successor to PyPDF2
 pypdf>=3.9.0,<5.0.0
 
+# GCP SDK for authentication and Cloud Storage
+google-auth>=2.27.0
+google-cloud-storage>=2.14.0
+
 # backend_shared は Dockerfile でインストールされます

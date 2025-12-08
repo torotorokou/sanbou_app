@@ -15,8 +15,11 @@ def make_df_shipment_after_use(
     """
 
     def _filter_by_vendor_code(df: pd.DataFrame) -> pd.DataFrame:
-        """マスターCSVの業者CDでフィルタリング"""
-        return df[df["業者CD"].isin(master_csv["業者CD"])].copy()
+        """マスターCSVの業者CDでフィルタリング
+        
+        最適化: copy()を削減（フィルタリングだけで充分）
+        """
+        return df[df["業者CD"].isin(master_csv["業者CD"])]
 
     def _filter_by_item_name(df: pd.DataFrame) -> pd.DataFrame:
         """丸源のフィルタリング"""
@@ -118,9 +121,13 @@ def apply_transport_fee_by1(
     def _extract_single_transport_rows(
         df: pd.DataFrame,
     ) -> tuple[pd.DataFrame, pd.DataFrame]:
-        """① 運搬社数 = 1 の行とそれ以外の行を分離"""
-        single_transport = df[df["運搬社数"] == 1].copy()
-        other_transport = df[df["運搬社数"] != 1].copy()
+        """
+        ① 運搬社数 = 1 の行とそれ以外の行を分離
+        
+        最適化: copy()を削減（concatで新規DataFrameを作るため不要）
+        """
+        single_transport = df[df["運搬社数"] == 1]
+        other_transport = df[df["運搬社数"] != 1]
         return single_transport, other_transport
 
     def _apply_transport_fee(target_df: pd.DataFrame) -> pd.DataFrame:

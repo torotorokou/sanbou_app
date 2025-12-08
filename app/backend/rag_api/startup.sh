@@ -5,6 +5,7 @@ IFS=$'\n\t'
 
 # =============================================================================
 # RAG API スタートアップスクリプト - ADC (Application Default Credentials) 対応版
+# Last Modified: 2025-12-08 16:05 JST
 # =============================================================================
 # 
 # 認証方式:
@@ -50,20 +51,52 @@ download_gcs_data() {
     # 正規化: 末尾のスラッシュを除去
     local norm_uri="${uri%/}"
     echo "🌀 [GCS] Downloading ${norm_uri}/* → $target_dir"
-    if gsutil -m cp -r "${norm_uri}/*" "$target_dir/"; then
+    if gsutil -m cp -r "${norm_uri}/*" "$target_dir/" 2>&1; then
       echo "✅ [GCS] Download complete."
       return 0
     else
+      local exit_code=$?
       echo "❌ [GCS] データ取得に失敗しました (${norm_uri}/*)" >&2
+      echo "   終了コード: $exit_code" >&2
+      
+      # エラーの種類を推測
+      if [ $exit_code -eq 1 ]; then
+        echo "   🛑 可能性: 認証エラー、または権限不足 (403 Forbidden)" >&2
+        echo "      - ADC認証が正しく設定されているか確認してください" >&2
+        echo "      - サービスアカウントに 'Storage Object Viewer' ロールが付与されているか確認してください" >&2
+      elif [ $exit_code -eq 3 ]; then
+        echo "   🛑 可能性: バケットまたはオブジェクトが存在しない (404 NotFound)" >&2
+        echo "      - バケット名やオブジェクトパスが正しいか確認してください" >&2
+      else
+        echo "   🛑 可能性: ネットワークエラー、またはその他のエラー" >&2
+      fi
+      
       return 1
     fi
   else
     echo "🌀 [GCS] Downloading gs://$bucket/$prefix/* → $target_dir"
-    if gsutil -m cp -r "gs://$bucket/$prefix/*" "$target_dir/"; then
+    if gsutil -m cp -r "gs://$bucket/$prefix/*" "$target_dir/" 2>&1; then
       echo "✅ [GCS] Download complete."
       return 0
     else
+      local exit_code=$?
       echo "❌ [GCS] データ取得に失敗しました (gs://$bucket/$prefix/*)" >&2
+      echo "   終了コード: $exit_code" >&2
+      
+      # エラーの種類を推測
+      if [ $exit_code -eq 1 ]; then
+        echo "   🛑 可能性: 認証エラー、または権限不足 (403 Forbidden)" >&2
+        echo "      - ADC認証が正しく設定されているか確認してください" >&2
+        echo "      - サービスアカウントに 'Storage Object Viewer' ロールが付与されているか確認してください" >&2
+        echo "      - STAGE=$STAGE, BUCKET=$bucket, PREFIX=$prefix" >&2
+      elif [ $exit_code -eq 3 ]; then
+        echo "   🛑 可能性: バケットまたはオブジェクトが存在しない (404 NotFound)" >&2
+        echo "      - バケット名やオブジェクトパスが正しいか確認してください" >&2
+        echo "      - BUCKET=$bucket, PREFIX=$prefix" >&2
+      else
+        echo "   🛑 可能性: ネットワークエラー、またはその他のエラー" >&2
+      fi
+      
       return 1
     fi
   fi
@@ -80,11 +113,23 @@ else
   else
     # ADCを使用してgcloudを初期化（JSONキー不要）
     echo "🔑 ADC (Application Default Credentials) を使用してGCPに接続します"
-    if gcloud config list 2>/dev/null; then
-      echo "✅ GCP ADC認証確認完了"
+    echo "   STAGE=$STAGE"
+    echo "   TARGET_DIR=$TARGET_DIR"
+    
+    # gcloud config list で認証状態を確認
+    if gcloud config list 2>/dev/null | grep -q "account"; then
+      echo "✅ GCP ADC認証確認完了 - gcloud config list にアカウント情報が存在"
+      
+      # 可能であればアカウント情報を表示
+      if gcloud config list account 2>/dev/null; then
+        echo "   使用中のアカウント情報を確認できました"
+      fi
     else
-      echo "⚠️  ADC認証が設定されていません。GCS処理をスキップします。" >&2
+      echo "⚠️  ADC認証が設定されていない可能性があります。GCS処理をスキップします。" >&2
+      echo "   gcloud config list の出力を確認してください:" >&2
+      gcloud config list 2>&1 | head -10 >&2
       echo "ヒント: ローカル開発の場合は 'gcloud auth application-default login' を実行してください" >&2
+      echo "       GCE/Cloud Run の場合は、サービスアカウントがVMにアタッチされているか確認してください" >&2
       SKIP_GCS=1
     fi
   fi
@@ -96,7 +141,10 @@ if [[ "$SKIP_GCS" == "1" ]]; then
 else
   # 実際のデータファイル（CSV/JSON/Parquet等）が存在するかチェック
   # readme.md や .gitkeep などのドキュメントファイルのみの場合はダウンロードを実行
-  DATA_FILE_COUNT=$(find "$TARGET_DIR" -type f \( -name "*.csv" -o -name "*.json" -o -name "*.parquet" -o -name "*.jsonl" \) 2>/dev/null | wc -l)
+  DATA_FILE_COUNT=$(find "$TARGET_DIR" -type f \( -name "*.csv" -o -name "*.json" -o -name "*.parquet" -o -name "*.jsonl" \) 2>/dev/null | wc -l) || DATA_FILE_COUNT=0
+  # 空白を削除(bashの変数展開で実現)
+  DATA_FILE_COUNT="${DATA_FILE_COUNT// /}"
+  DATA_FILE_COUNT="${DATA_FILE_COUNT:-0}"
   
   if [ "$DATA_FILE_COUNT" -gt 0 ]; then
     echo "⏩ [1/2] Local data already exists ($DATA_FILE_COUNT data files found). Skipping GCS download."

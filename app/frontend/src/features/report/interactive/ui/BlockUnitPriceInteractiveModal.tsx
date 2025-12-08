@@ -126,7 +126,9 @@ const BlockUnitPriceInteractiveModal: React.FC<BlockUnitPriceInteractiveModalPro
         }
 
         const selectionPayloadMap = buildSelectionPayload(items, selections);
-        if (Object.keys(selectionPayloadMap).length === 0) {
+        
+        // 選択肢がない場合（items.length === 0）は空の選択で処理を進める
+        if (Object.keys(selectionPayloadMap).length === 0 && items.length > 0) {
             notifyError('エラー', '選択内容がありません。');
             setCurrentStep(1);
             return;
@@ -181,13 +183,18 @@ const BlockUnitPriceInteractiveModal: React.FC<BlockUnitPriceInteractiveModalPro
 
     const handleNext = useCallback(() => {
         if (currentStep === 0) {
-            const preview = buildLocalSelectionPreview();
-            setSelectionPreview(preview);
-            setCurrentStep(1);
+            // 選択肢がない場合は確認ステップをスキップして直接最終処理へ
+            if (items.length === 0) {
+                handleApplySelectionsAndFinalize();
+            } else {
+                const preview = buildLocalSelectionPreview();
+                setSelectionPreview(preview);
+                setCurrentStep(1);
+            }
         } else if (currentStep === 1) {
             handleApplySelectionsAndFinalize();
         }
-    }, [currentStep, buildLocalSelectionPreview, handleApplySelectionsAndFinalize]);
+    }, [currentStep, items.length, buildLocalSelectionPreview, handleApplySelectionsAndFinalize]);
 
     const handleClose = useCallback(() => {
         setCurrentStep(0);
@@ -411,6 +418,15 @@ const BlockUnitPriceInteractiveModal: React.FC<BlockUnitPriceInteractiveModalPro
                             disabled={items.some((item) => !selections[item.id])}
                         >
                             確認へ
+                        </Button>
+                    )}
+
+                    {currentStep === 0 && !processing && items.length === 0 && (
+                        <Button
+                            type="primary"
+                            onClick={handleNext}
+                        >
+                            次へ進む
                         </Button>
                     )}
 
