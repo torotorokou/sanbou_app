@@ -116,33 +116,15 @@ def debug_log_gcp_adc_and_permissions(
         logger.info("=" * 80)
         return False
     
-    # ステップ2: Cloud Storage クライアントの作成と一覧取得
-    logger.info("📦 ステップ2: Cloud Storage クライアント作成 & バケット一覧取得")
+    # ステップ2: Cloud Storage クライアントの作成
+    logger.info("📦 ステップ2: Cloud Storage クライアント作成")
     try:
         storage_client = storage.Client(project=project_id)
         logger.info("✅ Storage クライアントを作成しました")
         
-        # バケット一覧の取得（権限確認）
-        try:
-            buckets = list(storage_client.list_buckets(max_results=1))
-            logger.info("✅ バケット一覧の取得に成功しました（Storage権限OK）")
-        except gcp_exceptions.Forbidden as e:
-            logger.error(
-                "🛑 認証は通りましたが、バケット一覧取得で権限不足 (403 Forbidden)",
-                extra={
-                    "operation": "gcp_debug",
-                    "status": "permission_denied",
-                    "resource": "buckets",
-                    "error": str(e),
-                    "error_type": "Forbidden"
-                }
-            )
-            logger.error(f"   エラー詳細: {e}")
-            logger.error("   ヒント:")
-            logger.error(f"   - サービスアカウント '{service_account_email or '(不明)'}' に")
-            logger.error("     'Storage Object Viewer' または 'Storage Admin' ロールを付与してください")
-            logger.info("=" * 80)
-            return False
+        # 注: list_buckets() は storage.buckets.list 権限が必要なため、
+        # オブジェクトアクセスのみの権限では失敗します。
+        # 代わりに対象バケットの存在確認で権限チェックを行います。
         
     except Exception as e:
         logger.error(

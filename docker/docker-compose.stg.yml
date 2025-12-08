@@ -131,6 +131,11 @@ services:
       driver: json-file
       options: *id002
   rag_api:
+    # 一時的にローカルビルドを有効化（デバッグ用）
+    build:
+      context: ../app/backend
+      dockerfile: rag_api/Dockerfile
+      target: base
     image: asia-northeast1-docker.pkg.dev/honest-sanbou-app-stg/sanbou-app/rag_api:stg-latest
     networks:
     - app-net
