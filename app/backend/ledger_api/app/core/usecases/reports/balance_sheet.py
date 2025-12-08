@@ -37,6 +37,9 @@ from app.core.domain.reports.processors.balance_sheet.balance_sheet_yuka_kaitori
 from app.core.domain.reports.processors.balance_sheet.balance_sheet_etc import (
     calculate_misc_summary_rows,
 )
+from app.core.usecases.reports.balance_sheet_base import (
+    build_balance_sheet_base_data,
+)
 
 
 def process(dfs: Dict[str, Any]) -> pd.DataFrame:
@@ -128,21 +131,36 @@ def process(dfs: Dict[str, Any]) -> pd.DataFrame:
     )
 
     # ========================================
-    # Step 3: 対象日決定
+    # Step 2b: ベースDataFrame構築（型変換・単価テーブル読み込み）
+    # ========================================
+    # 🔥 最適化ポイント: 
+    #   - 単価テーブルの読み込みを1回に集約（従来は3回読み込んでいた）
+    #   - 型変換を一度だけ実行（業者CDの文字列化など）
+    #   - DataFrameのcopy()を最小限に
+    step_start = time.time()
+    base_data = build_balance_sheet_base_data(df_dict)
+    logger.info(
+        "Step 2b: ベースDataFrame構築完了",
+        extra={"elapsed_ms": round((time.time() - step_start) * 1000, 2)}
+    )
+
+    # ========================================
+    # Step 3: 対象日決定（base_dataから取得）
     # ========================================
     step_start = time.time()
+    target_day = base_data.target_day
 
     # ========================================
     # Step 3: 対象日決定
     # ========================================
     step_start = time.time()
 
-    if df_shipment is not None and not df_shipment.empty and "伝票日付" in df_shipment.columns:
-        target_day = pd.to_datetime(df_shipment["伝票日付"].dropna().iloc[0])
-    elif df_receive is not None and not df_receive.empty and "伝票日付" in df_receive.columns:
-        target_day = pd.to_datetime(df_receive["伝票日付"].dropna().iloc[0])
-    else:
-        target_day = pd.Timestamp.today()
+    # ========================================
+    # Step 3: 対象日決定（base_dataから取得）
+    # ========================================
+    step_start = time.time()
+    target_day = base_data.target_day
+
     logger.info(
         "Step 3: 対象日決定完了",
         extra={
@@ -154,6 +172,12 @@ def process(dfs: Dict[str, Any]) -> pd.DataFrame:
     # ========================================
     # Step 4: ドメイン計算処理
     # ========================================
+    # 注: base_dataから取得したDataFrameを使用
+    # （型変換済み・単価テーブルは後続で共有）
+    df_receive = base_data.df_receive
+    df_shipment = base_data.df_shipment
+    df_yard = base_data.df_yard
+    
     # Step 4a: 搬出量データ処理（工場日報）
     step_start = time.time()
     logger.info("Step 4a: 搬出量データ処理開始")
