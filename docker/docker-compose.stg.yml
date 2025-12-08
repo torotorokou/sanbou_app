@@ -5,9 +5,10 @@
 ## - 特徴:
 ##   * VPN / Tailscale 経由でのアクセス（IAP なし）
 ##   * AUTH_MODE=vpn_dummy (固定ユーザーでのダミー認証)
-##   * Artifact Registry のイメージを利用（pull のみ、build なし)
+##   * Artifact Registry のイメージを利用（pull のみ、build なし）
 ##   * 3層ネットワーク分離（edge/app/data）
 ## - イメージ: asia-northeast1-docker.pkg.dev/honest-sanbou-app-stg/sanbou-app/*:stg-latest
+## - CI/CD でビルド、本番では pull のみ
 ## =============================================================
 
 # =============================================================================
@@ -73,7 +74,6 @@ services:
     env_file: *id001
     environment:
       TZ: Asia/Tokyo
-      POLL_INTERVAL: '10'
     restart: unless-stopped
     logging:
       driver: json-file

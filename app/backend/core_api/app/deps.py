@@ -118,12 +118,31 @@ def get_auth_provider() -> IAuthProvider:
         IAuthProvider: 認証プロバイダーのインスタンス
     
     Raises:
-        ValueError: AUTH_MODE が不正な値の場合
+        ValueError: AUTH_MODE が不正な値、または本番環境で安全性チェック失敗の場合
     """
     global _auth_provider_instance
     
     if _auth_provider_instance is None:
         auth_mode = os.getenv("AUTH_MODE", "dummy").lower()
+        stage = os.getenv("STAGE", "dev")
+        
+        # 本番環境での安全性チェック
+        if stage == "prod":
+            if auth_mode != "iap":
+                raise ValueError(
+                    f"🔴 SECURITY ERROR: Production must use AUTH_MODE=iap, got '{auth_mode}'. "
+                    f"Set AUTH_MODE=iap in env/.env.vm_prod"
+                )
+            iap_audience = os.getenv("IAP_AUDIENCE", "")
+            if not iap_audience:
+                raise ValueError(
+                    "🔴 SECURITY ERROR: IAP_AUDIENCE must be set in production! "
+                    "Get the audience value from GCP Console:\n"
+                    "  1. Go to: Security > Identity-Aware Proxy\n"
+                    "  2. Find your backend service\n"
+                    "  3. Copy the audience value (format: /projects/PROJECT_NUMBER/global/backendServices/SERVICE_ID)\n"
+                    "  4. Set IAP_AUDIENCE in secrets/.env.vm_prod.secrets"
+                )
         
         if auth_mode == "dummy":
             _auth_provider_instance = DevAuthProvider()

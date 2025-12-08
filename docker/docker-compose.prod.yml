@@ -9,6 +9,7 @@
 ##   * 3層ネットワーク分離（edge/app/data）
 ##   * nginx のみ外部公開（80/443）、backend は内部ネットワークのみ
 ## - イメージ: asia-northeast1-docker.pkg.dev/honest-sanbou-app-prod/sanbou-app/*:prod-latest
+## - CI/CD でビルド、本番では pull のみ
 ## =============================================================
 
 # =============================================================================
@@ -35,10 +36,7 @@ x-tz-env: &tz-environment
 
 services:
   core_api:
-    build:
-      context: ../app/backend
-      dockerfile: core_api/Dockerfile
-      target: prod
+    image: asia-northeast1-docker.pkg.dev/honest-sanbou-app-prod/sanbou-app/core_api:prod-latest
     networks:
     - app-net
     - data-net
@@ -59,7 +57,7 @@ services:
       - CMD
       - curl
       - -f
-      - http://localhost:8000/api/healthz
+      - http://localhost:8000/health
       interval: 30s
       timeout: 5s
       retries: 3
@@ -69,10 +67,7 @@ services:
         max-size: 10m
         max-file: '3'
   plan_worker:
-    build:
-      context: ../app/backend
-      dockerfile: plan_worker/Dockerfile
-      target: prod
+    image: asia-northeast1-docker.pkg.dev/honest-sanbou-app-prod/sanbou-app/plan_worker:prod-latest
     networks:
     - data-net
     depends_on:
@@ -80,16 +75,12 @@ services:
     env_file: *id001
     environment:
       TZ: Asia/Tokyo
-      POLL_INTERVAL: '10'
     restart: unless-stopped
     logging:
       driver: json-file
       options: *id002
   ai_api:
-    build:
-      context: ../app/backend
-      dockerfile: ai_api/Dockerfile
-      target: prod
+    image: asia-northeast1-docker.pkg.dev/honest-sanbou-app-prod/sanbou-app/ai_api:prod-latest
     networks:
     - app-net
     depends_on:
@@ -113,10 +104,7 @@ services:
       driver: json-file
       options: *id002
   ledger_api:
-    build:
-      context: ../app/backend
-      dockerfile: ledger_api/Dockerfile
-      target: prod
+    image: asia-northeast1-docker.pkg.dev/honest-sanbou-app-prod/sanbou-app/ledger_api:prod-latest
     user: 0:0
     networks:
     - app-net
@@ -144,10 +132,7 @@ services:
       driver: json-file
       options: *id002
   rag_api:
-    build:
-      context: ../app/backend
-      dockerfile: rag_api/Dockerfile
-      target: prod
+    image: asia-northeast1-docker.pkg.dev/honest-sanbou-app-prod/sanbou-app/rag_api:prod-latest
     networks:
     - app-net
     - data-net
@@ -173,10 +158,7 @@ services:
       driver: json-file
       options: *id002
   manual_api:
-    build:
-      context: ../app/backend
-      dockerfile: manual_api/Dockerfile
-      target: prod
+    image: asia-northeast1-docker.pkg.dev/honest-sanbou-app-prod/sanbou-app/manual_api:prod-latest
     networks:
     - app-net
     env_file: *id001
@@ -197,10 +179,7 @@ services:
       driver: json-file
       options: *id002
   nginx:
-    build:
-      context: ../app/frontend
-      dockerfile: Dockerfile
-      target: runtime
+    image: asia-northeast1-docker.pkg.dev/honest-sanbou-app-prod/sanbou-app/nginx:prod-latest
     depends_on:
     - core_api
     - ai_api

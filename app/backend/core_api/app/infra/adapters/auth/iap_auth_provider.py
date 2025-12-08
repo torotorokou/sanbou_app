@@ -9,11 +9,22 @@ Google Cloud Identity-Aware Proxy (IAP) が付与するヘッダーから
 - Google Cloud Run / App Engine で IAP を有効化した環境
 - Load Balancer + IAP 構成の本番環境
 
+【環境設定】
+- AUTH_MODE=iap
+- 使用環境: vm_prod（本番環境）
+- 必須環境変数:
+  - IAP_AUDIENCE: IAP の audience 値（/projects/PROJECT_NUMBER/global/backendServices/SERVICE_ID 形式）
+  - ALLOWED_EMAIL_DOMAIN: 許可するメールドメイン（デフォルト: honest-recycle.co.jp）
+
 【設計方針】
 - X-Goog-IAP-JWT-Assertion ヘッダーのJWT署名を検証（IAP公式仕様準拠）
 - honest-recycle.co.jp ドメインのみを許可（ホワイトリスト方式）
 - 本番環境ではJWT検証必須、ヘッダー不在時は即401
 - dev環境のみ、メールヘッダーからのフォールバック認証を許可
+
+【セキュリティ要件】
+✅ 本番環境（STAGE=prod）では必須の認証プロバイダです
+   deps.py で起動時に AUTH_MODE=iap と IAP_AUDIENCE の設定を強制します
 
 【注意事項】
 - IAP を有効化する前は、このプロバイダは使用できません

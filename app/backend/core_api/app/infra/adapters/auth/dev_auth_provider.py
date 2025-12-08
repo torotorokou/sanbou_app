@@ -5,14 +5,21 @@ Dev Auth Provider - 開発用認証プロバイダ
 開発・ステージング環境で使用する固定ユーザーを返すプロバイダ。
 
 【使用場面】
-- ローカル開発環境
-- ステージング環境（IAP 未設定時）
+- ローカル開発環境（local_dev, local_demo）
 - テスト実行時
+
+【環境設定】
+- AUTH_MODE=dummy
+- 使用環境: local_dev, local_demo
 
 【設計方針】
 - 認証チェックなしで常に固定ユーザーを返す
 - 本番環境では使用しない（環境変数で切り替え）
-- TODO コメントで本番対応が必要なことを明示
+- deps.py の get_auth_provider() で STAGE=prod の場合は使用不可
+
+【セキュリティ要件】
+⚠️ 本番環境（STAGE=prod）では絶対に使用しないでください
+   deps.py で起動時にバリデーションを実施しています
 """
 
 import logging
@@ -46,21 +53,36 @@ class DevAuthProvider(IAuthProvider):
         """
         開発用プロバイダを初期化
         
-        固定ユーザー情報を設定します。
-        必要に応じて環境変数からユーザー情報をカスタマイズすることも可能。
+        環境変数からユーザー情報を読み込みます。
+        未設定の場合はデフォルト値を使用します。
+        
+        Environment Variables:
+            DEV_USER_EMAIL: 開発ユーザーのメールアドレス
+            DEV_USER_NAME: 開発ユーザーの表示名
+            DEV_USER_ID: 開発ユーザーのID
+            DEV_USER_ROLE: 開発ユーザーのロール
         """
+        dev_email = os.getenv("DEV_USER_EMAIL", "dev-user@honest-recycle.co.jp")
+        dev_name = os.getenv("DEV_USER_NAME", "開発ユーザー")
+        dev_id = os.getenv("DEV_USER_ID", "dev_001")
+        dev_role = os.getenv("DEV_USER_ROLE", "admin")
+        
         self._dev_user = AuthUser(
-            email="dev-user@honest-recycle.co.jp",
-            display_name="開発ユーザー",
-            user_id="dev_001",
-            role="admin",
+            email=dev_email,
+            display_name=dev_name,
+            user_id=dev_id,
+            role=dev_role,
         )
         logger.info(
             "DevAuthProvider initialized",
             extra=create_log_context(
                 operation="dev_auth_init",
                 user_email=self._dev_user.email,
-                user_role=self._dev_user.role
+                user_role=self._dev_user.role,
+                metadata={
+                    "source": "environment_variables",
+                    "user_id": dev_id,
+                }
             )
         )
     
