@@ -6,7 +6,7 @@ multiply_columns の最適化版。
 
 従来版（multiply.py）との違い:
 - copy()を削除（呼び出し元で管理）
-- clean_na_stringsとto_numericをスキップ（前処理済みを前提）
+- clean_na_stringsをベクトル化版に置き換え
 - 純粋な掛け算のみ実行
 
 使用条件:
@@ -15,6 +15,7 @@ multiply_columns の最適化版。
 """
 import pandas as pd
 from backend_shared.application.logging import get_module_logger
+from backend_shared.utils.dataframe_utils_optimized import to_numeric_vectorized
 
 logger = get_module_logger(__name__)
 
@@ -54,13 +55,9 @@ def multiply_columns_optimized(
     - パフォーマンス重視の設計
     """
     if not skip_type_conversion:
-        # 従来と同じ型変換処理（互換性のため残す）
-        from backend_shared.utils.dataframe_utils import clean_na_strings
-        
-        df[col1] = df[col1].apply(clean_na_strings)
-        df[col2] = df[col2].apply(clean_na_strings)
-        df[col1] = pd.to_numeric(df[col1], errors="coerce")
-        df[col2] = pd.to_numeric(df[col2], errors="coerce")
+        # ベクトル化版を使用（従来のapply(clean_na_strings)より高速）
+        df[col1] = to_numeric_vectorized(df[col1])
+        df[col2] = to_numeric_vectorized(df[col2])
     
     # 掛け算実行（inplace更新）
     df[result_col] = df[col1] * df[col2]

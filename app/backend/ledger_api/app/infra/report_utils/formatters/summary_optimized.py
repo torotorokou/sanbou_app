@@ -3,9 +3,11 @@ summary_optimized.py
 
 summary_apply の最適化版。
 master_csvのcopy()を呼び出し元に委譲し、不要な中間copy()を削減する。
+また、clean_na_stringsをベクトル化版に置き換えて高速化。
 
 従来版（summary.py）との違い:
 - summary_apply内でのmaster_csv.copy()を削除
+- clean_na_strings.apply()をベクトル化版に置き換え
 - 呼び出し元がcopy()を管理することを前提とする
 
 使用条件:
@@ -13,7 +15,7 @@ master_csvのcopy()を呼び出し元に委譲し、不要な中間copy()を削�
 """
 import pandas as pd
 from backend_shared.application.logging import get_module_logger
-from backend_shared.utils.dataframe_utils import clean_na_strings
+from backend_shared.utils.dataframe_utils_optimized import clean_na_strings_vectorized
 
 logger = get_module_logger(__name__)
 
