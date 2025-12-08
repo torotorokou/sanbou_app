@@ -197,7 +197,7 @@ services:
     - ../app/nginx/conf.d/default.conf:/etc/nginx/conf.d/default.conf:ro
     - ../app/nginx/conf.d/stg.conf:/etc/nginx/conf.d/stg.conf:ro
     - ../app/nginx/conf.d/_proxy_common.conf:/etc/nginx/conf.d/_proxy_common.conf:ro
-    - ../app/nginx/conf.d/_proxy_headers.conf.disabled:/etc/nginx/conf.d/_proxy_headers.conf:ro
+    - ../app/nginx/conf.d/_proxy_ws.conf:/etc/nginx/conf.d/_proxy_ws.conf:ro
     - ../app/nginx/certs:/etc/nginx/certs:ro
     restart: unless-stopped
     healthcheck:
