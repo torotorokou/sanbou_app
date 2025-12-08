@@ -46,16 +46,18 @@ def process_sheet_partition(
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     """
     指定シートから key_level 一致行と不一致行を分離。
+    
+    最適化: copy()を削減（呼び出し元が必要に応じてcopyする）
     """
-    sheet_df = master_csv[master_csv["CSVシート名"] == sheet_name].copy()
+    sheet_df = master_csv[master_csv["CSVシート名"] == sheet_name]
 
     if "key_level" not in sheet_df.columns:
         logger.warning("❌ key_level列が存在しません。スキップします。")
         return pd.DataFrame(), pd.DataFrame()
 
     try:
-        match_df = sheet_df[sheet_df["key_level"].astype(int) == expected_level].copy()
-        remain_df = sheet_df[sheet_df["key_level"].astype(int) != expected_level].copy()
+        match_df = sheet_df[sheet_df["key_level"].astype(int) == expected_level]
+        remain_df = sheet_df[sheet_df["key_level"].astype(int) != expected_level]
         return match_df, remain_df
     except Exception as e:
         logger.error(
@@ -97,8 +99,9 @@ def summary_apply_by_sheet(
         return master_csv
 
     # --- not検索を適用（Not値のある行を除外） ---
+    # 最適化: data_dfのcopy()を削減（apply_negation_filtersで書き換えがないため不要）
     filtered_data_df = apply_negation_filters(
-        data_df.copy(), match_df, key_cols
+        data_df, match_df, key_cols
     )
 
     # --- マージ用 key を再定義（Not〇〇を含む列を除外） ---

@@ -45,6 +45,9 @@ def process_yuuka(df_yard: pd.DataFrame, df_shipment: pd.DataFrame) -> pd.DataFr
 
 
 def apply_yuuka_summary(master_csv, df_yard, df_shipment):
+    """
+    最適化: master_csvのcopy()を削減（summary_apply_by_sheetが新しいDataFrameを返すため不要）
+    """
     df_map = {"ヤード": df_yard, "出荷": df_shipment}
 
     sheet_key_pairs = [
@@ -54,7 +57,7 @@ def apply_yuuka_summary(master_csv, df_yard, df_shipment):
         ("出荷", ["現場名", "業者名", "品名"]),
     ]
 
-    master_csv_updated = master_csv.copy()
+    master_csv_updated = master_csv
 
     for sheet_name, key_cols in sheet_key_pairs:
         data_df = df_map[sheet_name]
