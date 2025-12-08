@@ -1,0 +1,97 @@
+name: Security Check - Prevent Secrets Leak
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+    branches: ['**']
+
+jobs:
+  security-scan:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # 全履歴を取得
+      
+      - name: Check for forbidden files
+        run: |
+          echo "🔍 機密ファイルのチェック..."
+          
+          # Git 追跡対象に機密ファイルがないかチェック
+          FORBIDDEN_FILES=$(git ls-tree -r HEAD --name-only | grep -E '^(env/\.env\.|secrets/\.env\..*\.secrets$|secrets/gcp-sa.*\.json$|.*\.pem$|.*\.key$)' | grep -v -E '\.(example|template)$' || true)
+          
+          if [ -n "$FORBIDDEN_FILES" ]; then
+            echo "❌ エラー: 機密ファイルが検出されました"
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo "$FORBIDDEN_FILES"
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            exit 1
+          fi
+          
+          echo "✅ 機密ファイルは検出されませんでした"
+      
+      - name: Check for secrets in code
+        run: |
+          echo "🔍 機密情報パターンのチェック..."
+          
+          # パスワードや API キーのパターンを検索
+          if git grep -E 'POSTGRES_PASSWORD\s*=\s*['\''"][^$][^'\''"]+['\''"]' HEAD -- '*.py' '*.sh' '*.yml' '*.yaml' '*.json' '*.ts' '*.js' 2>/dev/null; then
+            echo "❌ エラー: パスワードが検出されました"
+            exit 1
+          fi
+          
+          if git grep -E '-----BEGIN.*PRIVATE KEY-----' HEAD 2>/dev/null; then
+            echo "❌ エラー: 秘密鍵が検出されました"
+            exit 1
+          fi
+          
+          if git grep -E '(api|secret|token).*[kK]ey\s*[:=]\s*['\''"][A-Za-z0-9+/]{40,}' HEAD -- '*.py' '*.sh' '*.yml' '*.yaml' '*.json' '*.ts' '*.js' 2>/dev/null; then
+            echo "❌ エラー: API キーが検出されました"
+            exit 1
+          fi
+          
+          echo "✅ 機密情報パターンは検出されませんでした"
+      
+      - name: Verify .gitignore
+        run: |
+          echo "🔍 .gitignore の検証..."
+          
+          if ! grep -q '^/env/' .gitignore; then
+            echo "❌ エラー: .gitignore に '/env/' が含まれていません"
+            exit 1
+          fi
+          
+          if ! grep -q '^/secrets/' .gitignore; then
+            echo "❌ エラー: .gitignore に '/secrets/' が含まれていません"
+            exit 1
+          fi
+          
+          echo "✅ .gitignore は正常です"
+      
+      - name: Check Git history
+        if: github.event_name == 'push'
+        run: |
+          echo "🔍 Git 履歴のチェック..."
+          
+          # 直近のコミットで機密ファイルが追加されていないかチェック
+          if [ "${{ github.event.before }}" != "0000000000000000000000000000000000000000" ]; then
+            CHANGED_FILES=$(git diff --name-only ${{ github.event.before }}..${{ github.sha }} | grep -E '^(env/\.env\.|secrets/)' | grep -v -E '\.(example|template)$' || true)
+            
+            if [ -n "$CHANGED_FILES" ]; then
+              echo "❌ 警告: 機密ファイルが変更されています"
+              echo "$CHANGED_FILES"
+              exit 1
+            fi
+          fi
+          
+          echo "✅ 履歴チェック完了"
+      
+      - name: Security summary
+        if: success()
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "✅ すべてのセキュリティチェックに合格しました"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"

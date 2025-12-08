@@ -515,102 +515,22 @@ def get_create_reservation_uc(
 # ========================================================================
 from app.core.usecases.auth.get_current_user import GetCurrentUserUseCase
 from app.core.ports.auth.auth_provider import IAuthProvider
-from app.infra.adapters.auth.dev_auth_provider import DevAuthProvider
-from app.infra.adapters.auth.iap_auth_provider import IapAuthProvider
-
-
-def get_auth_provider() -> IAuthProvider:
-    """
-    認証プロバイダを取得
-    
-    環境変数 IAP_ENABLED に応じて適切なプロバイダを返します。
-    - IAP_ENABLED=true: IapAuthProvider（Google Cloud IAP）
-    - IAP_ENABLED=false: DevAuthProvider（開発用固定ユーザー）
-    
-    本番環境（STAGE=prod）では以下のバリデーションを実施：
-    - IAP_ENABLED=true 必須
-    - IAP_AUDIENCE 設定必須
-    - 設定不備の場合は起動時にエラー
-    
-    Returns:
-        IAuthProvider: 認証プロバイダ実装
-    
-    Raises:
-        ValueError: 本番環境でIAP設定が不完全な場合
-    
-    Note:
-        本番環境では必ず IAP_ENABLED=true かつ IAP_AUDIENCE を設定してください。
-        開発・ステージング環境では IAP_ENABLED=false を使用できます。
-    """
-    from app.config.settings import get_settings
-    settings = get_settings()
-    
-    # 本番環境でのIAP必須チェック
-    if settings.STAGE == "prod":
-        if not settings.IAP_ENABLED:
-            raise ValueError(
-                "🔴 SECURITY ERROR: IAP_ENABLED must be 'true' in production! "
-                "Set IAP_ENABLED=true in secrets/.env.vm_prod.secrets"
-            )
-        if not settings.IAP_AUDIENCE:
-            raise ValueError(
-                "🔴 SECURITY ERROR: IAP_AUDIENCE must be set in production! "
-                "Get the audience value from GCP Console:\n"
-                "  1. Go to: Security > Identity-Aware Proxy\n"
-                "  2. Find your backend service\n"
-                "  3. Copy the audience value (format: /projects/PROJECT_NUMBER/global/backendServices/SERVICE_ID)\n"
-                "  4. Set IAP_AUDIENCE in secrets/.env.vm_prod.secrets"
-            )
-    
-    if settings.IAP_ENABLED:
-        # ステージング環境でもIAP_AUDIENCE必須
-        if not settings.IAP_AUDIENCE:
-            logger.error(
-                "IAP_ENABLED=true but IAP_AUDIENCE is not set",
-                extra=create_log_context(
-                    operation="get_auth_provider",
-                    stage=settings.STAGE
-                )
-            )
-            raise ValueError(
-                "IAP_ENABLED=true requires IAP_AUDIENCE to be set. "
-                "Get it from GCP Console: "
-                "Security > Identity-Aware Proxy > Backend Service"
-            )
-        
-        logger.info(
-            "🔒 Using IapAuthProvider (Google Cloud IAP)",
-            extra=create_log_context(
-                operation="get_auth_provider",
-                stage=settings.STAGE,
-                allowed_domain=settings.ALLOWED_EMAIL_DOMAIN
-            )
-        )
-        return IapAuthProvider(
-            allowed_domain=settings.ALLOWED_EMAIL_DOMAIN,
-            iap_audience=settings.IAP_AUDIENCE
-        )
-    else:
-        # 開発環境のみ許可
-        if settings.STAGE == "prod":
-            # 上記でチェック済みだが、念のため
-            raise ValueError("DevAuthProvider cannot be used in production")
-        
-        logger.warning(
-            "🔓 Using DevAuthProvider - IAP is disabled. "
-            "This MUST be enabled in production!",
-            extra=create_log_context(
-                operation="get_auth_provider",
-                stage=settings.STAGE
-            )
-        )
-        return DevAuthProvider()
+# 認証プロバイダーは app.deps.get_auth_provider() を使用（AUTH_MODE ベース）
+from app.deps import get_auth_provider
 
 
 def get_get_current_user_usecase(
     auth_provider: IAuthProvider = Depends(get_auth_provider)
 ) -> GetCurrentUserUseCase:
-    """GetCurrentUserUseCase提供"""
+    """
+    GetCurrentUserUseCase提供
+    
+    認証プロバイダーは app.deps.get_auth_provider() 経由で取得します。
+    AUTH_MODE 環境変数に基づいて適切なプロバイダーを使用します：
+    - AUTH_MODE=dummy: DevAuthProvider（開発環境）
+    - AUTH_MODE=vpn_dummy: VpnAuthProvider（ステージング環境）
+    - AUTH_MODE=iap: IapAuthProvider（本番環境）
+    """
     return GetCurrentUserUseCase(auth_provider=auth_provider)
 
 

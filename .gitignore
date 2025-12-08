@@ -76,23 +76,37 @@ ENV/
 # ============================
 # 環境変数・Secrets
 # ============================
-# env/ ディレクトリ: 実ファイル除外、example / template のみ許可
-env/*
+# 【重要】env/ と secrets/ ディレクトリ内の全ファイルを除外
+# テンプレートファイルのみ許可し、実際の設定ファイルは全て Git 管理外とする
+
+# env/ ディレクトリ: 全ファイル除外
+/env/
 !env/.env.example
 !env/*.template
-!env/README*
+!env/README.md
 
-# secrets/ ディレクトリ: 実ファイル除外、テンプレ / example のみ許可
-secrets/*
+# secrets/ ディレクトリ: 全ファイル除外
+/secrets/
+!secrets/.env.secrets.template
 !secrets/*.template
-!secrets/*example*
-!secrets/*_example.*
-!secrets/README*
+!secrets/README.md
 
 # ルートの .env ファイルも除外（念のため）
-/.env
-/.env.*
-!/.env.example
+.env
+.env.*
+!.env.example
+
+# 証明書と秘密鍵（全階層）
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+
+# SSH 鍵
+id_rsa
+id_ed25519
+*.pem.key
 
 # ============================
 # Docker / Compose
