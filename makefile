@@ -11,6 +11,9 @@
 ##   - make restore-from-dump ENV=local_dev DUMP=backups/xxx.dump
 ##   - make restore-from-sql  ENV=local_demo SQL=backups/xxx.sql
 ##
+## ★開発環境：nginx 付き起動（本番に近い構成）
+##   - make dev-with-nginx    # nginx 経由で http://localhost:8080
+##
 ## ★コンテナイメージの build & push(Artifact Registry)
 ##   - STG:  make publish-stg-images  STG_IMAGE_TAG=stg-YYYYMMDD
 ##   - PROD: make publish-prod-images PROD_IMAGE_TAG=prod-YYYYMMDD
@@ -120,7 +123,7 @@ COMPOSE_FILE_LIST := $(strip $(subst -f ,,$(COMPOSE_FILES)))
 DC_FULL           := $(DC) $(COMPOSE_ENV_ARGS) -p $(ENV) $(COMPOSE_FILES)
 
 .PHONY: check up down logs ps restart rebuild health config \
-        backup restore-from-dump restore-from-sql
+        backup restore-from-dump restore-from-sql dev-with-nginx
 
 ## ============================================================
 ## 基本操作 (docker compose up / down など)
@@ -181,6 +184,30 @@ health:
 
 config: check
 	$(DC_FULL) config
+
+## ============================================================
+## 開発環境：nginx 付き起動 (本番に近い構成での開発・検証)
+## ============================================================
+## 使い方:
+##   make dev-with-nginx        # nginx 付きで起動
+##   make down ENV=local_dev    # 停止
+##
+## アクセス:
+##   http://localhost:8080      # nginx 経由 (本番と同様のルーティング)
+##   http://localhost:5173      # フロントエンド直接
+##   http://localhost:8001      # ai_api 直接
+##   http://localhost:8002      # core_api 直接
+## ============================================================
+dev-with-nginx:
+	@echo "[info] Starting local_dev with nginx (profile: with-nginx)"
+	@echo "[info] Access via: http://localhost:8080 (nginx)"
+	DOCKER_BUILDKIT=$(BUILDKIT) BUILDKIT_PROGRESS=$(PROGRESS) \
+	docker compose -f docker/docker-compose.dev.yml -p local_dev \
+	  --env-file env/.env.common --env-file env/.env.local_dev \
+	  $(if $(wildcard secrets/.env.local_dev.secrets),--env-file secrets/.env.local_dev.secrets,) \
+	  --profile with-nginx up -d --build --remove-orphans
+	@echo "[ok] Dev environment with nginx started"
+	@echo "[info] Check health: curl http://localhost:8080/health"
 
 ## ============================================================
 ## バックアップ / リストア（よく使う最小構成）
