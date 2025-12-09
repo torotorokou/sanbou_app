@@ -1,9 +1,10 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useState } from "react";
 import { MapContainer, TileLayer, Circle, Tooltip, Marker, Popup, GeoJSON } from "react-leaflet";
+import type { FeatureCollection } from "geojson";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { Card, Table, Statistic, Row, Col } from "antd";
+import type { ColumnsType } from "antd/es/table";
 import { customerAnalysisColors } from '@shared/theme';
 
 // 会社マーカー
@@ -72,8 +73,8 @@ const getRadius = (sales: number) => Math.sqrt(sales) * 400;
 
 // ---- Table等は省略せず維持 ----
 const sortedCustomers = [...customers].sort((a, b) => b.sales - a.sales);
-const columns = [
-    { title: "順位", key: "rank", render: (_: any, _r: any, i: number) => i + 1, width: 60 },
+const columns: ColumnsType<Customer> = [
+    { title: "順位", key: "rank", render: (_value, _record, index: number) => index + 1, width: 60 },
     { title: "顧客名", dataIndex: "name", key: "name" },
     { title: "売上", dataIndex: "sales", key: "sales", render: (v: number) => `${v} 万円` },
 ];
@@ -91,17 +92,25 @@ const prefColorMap: Record<string, string> = {
 function getPrefColor(name: string): string {
     return prefColorMap[name] || "#ffffff";
 }
-function getCenterOfGeometry(feature: any): [number, number] {
-    let coords: any = feature.geometry.coordinates;
-    if (feature.geometry.type === "MultiPolygon") {
-        coords = coords[0][0];
-    } else if (feature.geometry.type === "Polygon") {
-        coords = coords[0];
+function getCenterOfGeometry(feature: FeatureCollection['features'][0]): [number, number] {
+    const { geometry } = feature;
+    
+    if (!('coordinates' in geometry)) {
+        return [0, 0];
+    }
+    
+    // MultiPolygon/Polygonのネストした座標配列を扱う
+    let coords: unknown = geometry.coordinates;
+    if (geometry.type === "MultiPolygon") {
+        coords = (coords as number[][][][])[0][0];
+    } else if (geometry.type === "Polygon") {
+        coords = (coords as number[][][])[0];
     } else {
         return [0, 0];
     }
+    
     let lat = 0, lng = 0, count = 0;
-    coords.forEach((point: number[]) => {
+    (coords as number[][]).forEach((point: number[]) => {
         lat += point[1];
         lng += point[0];
         count++;
@@ -111,7 +120,7 @@ function getCenterOfGeometry(feature: any): [number, number] {
 }
 
 const CustomerListDashboard: React.FC = () => {
-    const [prefGeoJson, setPrefGeoJson] = useState<any>(null);
+    const [prefGeoJson, setPrefGeoJson] = useState<FeatureCollection | null>(null);
 
     useEffect(() => {
         fetch(GEOJSON_URL)
@@ -166,9 +175,9 @@ const CustomerListDashboard: React.FC = () => {
                             )}
                             {/* ラベル */}
                             {prefGeoJson &&
-                                prefGeoJson.features.map((feature: any, i: number) => {
+                                prefGeoJson.features.map((feature, i: number) => {
                                     const prop = feature.properties;
-                                    const label = prop.name ?? "不明";
+                                    const label = prop?.name ?? "不明";
                                     const [lat, lng] = getCenterOfGeometry(feature);
                                     return (
                                         <Marker

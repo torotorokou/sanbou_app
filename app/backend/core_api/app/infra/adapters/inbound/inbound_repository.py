@@ -10,14 +10,15 @@ import logging
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from app.domain.ports.inbound_repository_port import InboundRepository
-from app.domain.inbound import InboundDailyRow, CumScope
+from backend_shared.application.logging import get_module_logger, create_log_context
+from app.core.ports.inbound_repository_port import InboundRepository
+from app.core.domain.inbound import InboundDailyRow, CumScope
 from app.infra.db.sql_loader import load_sql
 
 # 👇 SQL識別子は1か所で管理（定数化）
 from app.infra.db.sql_names import V_RECEIVE_DAILY, V_CALENDAR
 
-logger = logging.getLogger(__name__)
+logger = get_module_logger(__name__)
 
 ALLOWED_CUM_SCOPES = {"none", "range", "month", "week"}
 

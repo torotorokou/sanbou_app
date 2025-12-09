@@ -72,7 +72,7 @@ async def get_current_user(
 def require_admin(current_user: User = Depends(get_current_user)) -> User:
     '''管理者権限が必要なエンドポイント用'''
     if not current_user.is_admin:
-        raise HTTPException(status_code=403, detail="Admin access required")
+        raise ForbiddenError(message="Admin access required")
     return current_user
 
 # ログコンテキストの依存関係（実装予定）
@@ -80,7 +80,153 @@ def get_request_id(request: Request) -> str:
     '''リクエストIDを取得または生成'''
     return request.headers.get("X-Request-ID", str(uuid.uuid4()))
 ```
+```
 """
+import os
+from fastapi import Request, Depends
 from app.infra.db.db import get_db  # noqa: F401
+from app.core.domain.auth.entities import AuthUser
+from app.core.ports.auth.auth_provider import IAuthProvider
+from app.infra.adapters.auth.dev_auth_provider import DevAuthProvider
+from app.infra.adapters.auth.vpn_auth_provider import VpnAuthProvider
+from app.infra.adapters.auth.iap_auth_provider import IapAuthProvider
 
-__all__ = ["get_db"]
+# ==========================================
+# 認証プロバイダーのファクトリー（シングルトン）
+# ==========================================
+
+_auth_provider_instance: IAuthProvider | None = None
+
+def get_auth_provider() -> IAuthProvider:
+    """
+    環境変数 AUTH_MODE に基づいて適切な認証プロバイダーを返す（シングルトン）
+    
+    AUTH_MODE の値:
+    - "dummy": DevAuthProvider（ローカル開発環境、認証なし）
+    - "vpn_dummy": VpnAuthProvider（VPN/Tailscale 経由、固定ユーザー）
+    - "iap": IapAuthProvider（本番環境、IAP ヘッダ検証）
+    
+    プロバイダーは初回呼び出し時に一度だけ作成され、以降は同じインスタンスを再利用する。
+    これにより、初期化ログが大量に出力されることを防ぐ。
+    
+    環境別推奨設定:
+    - local_dev: AUTH_MODE=dummy
+    - vm_stg: AUTH_MODE=vpn_dummy (VPN_USER_EMAIL, VPN_USER_NAME 設定推奨)
+    - vm_prod: AUTH_MODE=iap (IAP_AUDIENCE, IAP_PUBLIC_KEY_URL 必須)
+    
+    Returns:
+        IAuthProvider: 認証プロバイダーのインスタンス
+    
+    Raises:
+        ValueError: AUTH_MODE が不正な値、または本番環境で安全性チェック失敗の場合
+    """
+    global _auth_provider_instance
+    
+    if _auth_provider_instance is None:
+        auth_mode = os.getenv("AUTH_MODE", "dummy").lower()
+        stage = os.getenv("STAGE", "dev")
+        
+        # 本番環境での安全性チェック
+        if stage == "prod":
+            if auth_mode != "iap":
+                raise ValueError(
+                    f"🔴 SECURITY ERROR: Production must use AUTH_MODE=iap, got '{auth_mode}'. "
+                    f"Set AUTH_MODE=iap in env/.env.vm_prod"
+                )
+            iap_audience = os.getenv("IAP_AUDIENCE", "")
+            if not iap_audience:
+                raise ValueError(
+                    "🔴 SECURITY ERROR: IAP_AUDIENCE must be set in production! "
+                    "Get the audience value from GCP Console:\n"
+                    "  1. Go to: Security > Identity-Aware Proxy\n"
+                    "  2. Find your backend service\n"
+                    "  3. Copy the audience value (format: /projects/PROJECT_NUMBER/global/backendServices/SERVICE_ID)\n"
+                    "  4. Set IAP_AUDIENCE in secrets/.env.vm_prod.secrets"
+                )
+        
+        if auth_mode == "dummy":
+            _auth_provider_instance = DevAuthProvider()
+        elif auth_mode == "vpn_dummy":
+            _auth_provider_instance = VpnAuthProvider()
+        elif auth_mode == "iap":
+            _auth_provider_instance = IapAuthProvider()
+        else:
+            raise ValueError(
+                f"Invalid AUTH_MODE: {auth_mode}. "
+                f"Supported values: dummy, vpn_dummy, iap"
+            )
+    
+    return _auth_provider_instance
+
+
+# ==========================================
+# 認証依存関係
+# ==========================================
+
+async def get_current_user(
+    request: Request,
+    auth_provider: IAuthProvider = Depends(get_auth_provider)
+) -> AuthUser:
+    """
+    現在のログインユーザーを取得
+    
+    全ての保護されたエンドポイントで使用する依存関係。
+    IAP が有効な場合は JWT 検証を行い、開発環境では固定ユーザーを返す。
+    
+    Args:
+        request: FastAPI Request オブジェクト
+        auth_provider: 認証プロバイダー（自動注入）
+    
+    Returns:
+        AuthUser: 認証済みユーザー情報
+    
+    Raises:
+        HTTPException: 認証失敗時（401, 403）
+    
+    Usage:
+        ```python
+        @router.get("/protected")
+        async def protected_endpoint(
+            current_user: AuthUser = Depends(get_current_user)
+        ):
+            return {"email": current_user.email}
+        ```
+    """
+    return await auth_provider.get_current_user(request)
+
+
+async def get_optional_user(
+    request: Request,
+    auth_provider: IAuthProvider = Depends(get_auth_provider)
+) -> AuthUser | None:
+    """
+    現在のユーザーを取得（オプショナル）
+    
+    認証は試みるが、失敗しても例外を投げない。
+    公開エンドポイントで「ログイン済みなら追加情報を返す」ような用途に使用。
+    
+    Args:
+        request: FastAPI Request オブジェクト
+        auth_provider: 認証プロバイダー（自動注入）
+    
+    Returns:
+        AuthUser | None: 認証済みユーザー情報、または None
+    
+    Usage:
+        ```python
+        @router.get("/public-but-personalized")
+        async def public_endpoint(
+            current_user: AuthUser | None = Depends(get_optional_user)
+        ):
+            if current_user:
+                return {"message": f"Welcome back, {current_user.email}"}
+            return {"message": "Welcome, guest"}
+        ```
+    """
+    try:
+        return await auth_provider.get_current_user(request)
+    except Exception:
+        return None
+
+
+__all__ = ["get_db", "get_current_user", "get_optional_user", "get_auth_provider"]

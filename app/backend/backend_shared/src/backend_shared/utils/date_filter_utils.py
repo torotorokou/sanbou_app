@@ -131,3 +131,89 @@ def filter_by_period_from_min_date(
         f"[INFO] Date filter applied from {min_date.date()} to {end_date.date()} (period={p})"
     )
     return filtered
+
+
+def filter_by_period_from_max_date(
+    dfs: Dict[str, Any],
+    period_type: str,
+    date_candidates: Optional[List[str]] = None,
+) -> Dict[str, Any]:
+    """
+    各CSVの最大日付を起点に、指定期間（過去方向）で各DataFrameをフィルタ。
+
+    Args:
+        dfs: CSV名 -> DataFrame の辞書
+        period_type: "oneday" | "oneweek" | "onemonth" | "all" | "none"
+        date_candidates: 日付列名の候補（未指定時は DEFAULT_DATE_CANDIDATES）
+
+    Returns:
+        フィルタ済みの DataFrame 辞書
+    """
+    if not date_candidates:
+        date_candidates = DEFAULT_DATE_CANDIDATES
+
+    # 事前に曜日括弧を除去
+    for name, df in dfs.items():
+        if not hasattr(df, "columns"):
+            continue
+        for col in date_candidates:
+            if col in getattr(df, "columns", []):
+                try:
+                    dfs[name] = remove_weekday_parentheses(df, col)
+                except Exception:
+                    pass
+
+    # 最大日付の決定
+    max_date = None
+    for name, df in dfs.items():
+        if not hasattr(df, "__dataframe__") and not hasattr(df, "columns"):
+            continue
+        col = find_date_column(df, date_candidates)
+        if not col:
+            continue
+        sr = pd.to_datetime(df[col], errors="coerce")
+        local_max = sr.max()
+        if pd.isna(local_max):
+            continue
+        max_date = local_max if max_date is None else max(max_date, local_max)
+
+    if max_date is None:
+        print("[INFO] No date column found across CSVs. Skipping date filtering (max).")
+        return dfs
+
+    max_date = pd.to_datetime(max_date).normalize()
+
+    # 期間始点（過去へ遡る）
+    p = (period_type or "all").lower()
+    if p in ("all", "none"):
+        return dfs
+    elif p == "oneday":
+        start_date = max_date
+    elif p == "oneweek":
+        start_date = max_date - pd.Timedelta(days=6)
+    elif p == "onemonth":
+        start_date = (max_date - pd.DateOffset(months=1)) + pd.Timedelta(days=1)
+    else:
+        raise ValueError(f"Unknown period_type: {period_type}")
+
+    filtered: Dict[str, Any] = {}
+    for name, df in dfs.items():
+        if not hasattr(df, "columns"):
+            filtered[name] = df
+            continue
+        col = find_date_column(df, date_candidates)
+        if not col:
+            filtered[name] = df
+            continue
+        sr = pd.to_datetime(df[col], errors="coerce").dt.normalize()
+        mask = (sr >= start_date) & (sr <= max_date)
+        try:
+            filtered_df = df.loc[mask].copy()
+        except Exception:
+            filtered_df = df
+        filtered[name] = filtered_df
+
+    print(
+        f"[INFO] Date filter (max) applied from {start_date.date()} to {max_date.date()} (period={p})"
+    )
+    return filtered

@@ -3,16 +3,16 @@ Core API Settings - アプリケーション設定管理
 
 【概要】
 環境変数とアプリケーション設定を一元管理するモジュール。
-Pydantic Settings を使用した型安全な設定管理を提供します。
+backend_shared の BaseAppSettings を継承し、Core API固有の設定を追加します。
 
 【主な機能】
 1. データベース接続設定
 2. CSV アップロード関連設定
 3. Shogun CSV マッピング（CSV種別 → DBテーブル）
 4. 外部APIエンドポイント設定
-5. CORS設定
 
 【設計方針】
+- BaseAppSettings により共通設定を継承
 - 12 Factor App に基づく環境変数ベース設定
 - デフォルト値の提供により開発環境でも動作
 - 型安全性（Pydantic による検証）
@@ -30,30 +30,41 @@ table_name = settings.get_table_name('receive')
 
 import os
 from functools import lru_cache
-from pydantic_settings import BaseSettings
+from backend_shared.config.base_settings import BaseAppSettings
 
 
-class Settings(BaseSettings):
+class CoreApiSettings(BaseAppSettings):
     """
-    アプリケーション設定クラス
+    Core API 設定クラス
     
+    BaseAppSettings を継承し、Core API 固有の設定を追加します。
     環境変数から自動的に値を読み込み、型変換・検証を行います。
-    環境変数が未設定の場合はデフォルト値を使用します。
     """
+    
+    # ========================================
+    # API基本情報
+    # ========================================
+    
+    API_TITLE: str = "CORE_API"
+    API_VERSION: str = "1.0.0"
     
     # ========================================
     # データベース設定
     # ========================================
     
-    DATABASE_URL: str = os.getenv(
-        "DATABASE_URL",
-        "postgresql://myuser:mypassword@db:5432/sanbou_dev"
-    )
+    @staticmethod
+    def _build_database_url() -> str:
+        """環境変数からDATABASE_URLを構築"""
+        from backend_shared.infra.db.url_builder import build_database_url
+        return build_database_url(driver=None, raise_on_missing=True)
+    
+    DATABASE_URL: str = _build_database_url.__func__()
     """
     PostgreSQL接続URL
     
     形式: postgresql://user:password@host:port/database
     環境変数 DATABASE_URL で上書き可能
+    環境変数が未設定の場合は POSTGRES_* 環境変数から動的に構築
     """
     
     # ========================================
@@ -141,19 +152,32 @@ class Settings(BaseSettings):
     """
     
     # ========================================
-    # CORS設定（開発環境用）
+    # 認証設定（IAP: Identity-Aware Proxy）
     # ========================================
     
-    CORS_ORIGINS: list[str] = [
-        "http://localhost:5173",   # Vite開発サーバー
-        "http://localhost:3000",   # 代替ポート
-        "http://frontend:5173",    # Docker Compose内フロントエンド
-    ]
+    IAP_ENABLED: bool = os.getenv("IAP_ENABLED", "false").lower() == "true"
     """
-    CORS許可オリジンリスト
+    Google Cloud IAP認証の有効/無効
     
-    開発環境でフロントエンドが別ドメインで動作する場合に使用
-    本番環境ではnginxでCORS制御を行うため、通常は使用しない
+    本番環境では必ずTrueに設定してください。
+    環境変数 IAP_ENABLED=true で有効化
+    """
+    
+    IAP_AUDIENCE: str | None = os.getenv("IAP_AUDIENCE")
+    """
+    Google Cloud IAP オーディエンス
+    
+    GCP Console > Security > Identity-Aware Proxy から取得
+    形式: /projects/PROJECT_NUMBER/global/backendServices/SERVICE_ID
+    本番環境では必須
+    """
+    
+    ALLOWED_EMAIL_DOMAIN: str = os.getenv("ALLOWED_EMAIL_DOMAIN", "example.com")
+    """
+    許可するメールドメイン
+    
+    IAP認証で許可するGoogleアカウントのドメイン
+    例: "yourcompany.com"
     """
     
     # ========================================
@@ -164,6 +188,7 @@ class Settings(BaseSettings):
         case_sensitive = True
         env_file = ".env"
         env_file_encoding = "utf-8"
+        extra = "allow"
     
     # ========================================
     # ヘルパーメソッド
@@ -218,12 +243,12 @@ class Settings(BaseSettings):
 
 
 @lru_cache()
-def get_settings() -> Settings:
+def get_settings() -> CoreApiSettings:
     """
     設定のシングルトンインスタンスを取得
     
     Returns:
-        Settings: アプリケーション設定インスタンス
+        CoreApiSettings: Core API設定インスタンス
         
     Description:
         @lru_cache() により、アプリケーション全体で1つのインスタンスのみを共有します。
@@ -234,4 +259,11 @@ def get_settings() -> Settings:
         >>> settings = get_settings()
         >>> print(settings.DATABASE_URL)
     """
-    return Settings()
+    return CoreApiSettings()
+
+
+# シングルトンインスタンス
+settings = get_settings()
+
+__all__ = ['settings', 'CoreApiSettings', 'get_settings']
+

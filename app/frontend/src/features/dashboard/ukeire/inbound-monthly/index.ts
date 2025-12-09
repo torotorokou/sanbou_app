@@ -3,9 +3,9 @@
  * 月次の受入実績データの表示
  */
 
-// Application
-export { useInboundMonthlyVM } from "./application/useInboundMonthlyVM";
-export type { UseInboundMonthlyVMParams, UseInboundMonthlyVMResult } from "./application/useInboundMonthlyVM";
+// Model (ViewModel)
+export { useInboundMonthlyVM } from "./model/useInboundMonthlyVM";
+export type { UseInboundMonthlyVMParams, UseInboundMonthlyVMResult } from "./model/useInboundMonthlyVM";
 
 // Infrastructure
 export { HttpInboundDailyRepository } from "./infrastructure/HttpInboundDailyRepository";

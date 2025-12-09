@@ -177,8 +177,8 @@ export const PivotTable: React.FC<PivotTableProps> = ({
                 </Tooltip>
               </Space>
             ),
-            dataIndex: 'unit_price',
-            key: 'unit_price',
+            dataIndex: 'unitPrice',
+            key: 'unitPrice',
             align: 'right',
             width: 170,
             sorter: true,

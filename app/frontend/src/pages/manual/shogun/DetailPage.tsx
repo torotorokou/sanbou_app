@@ -1,13 +1,14 @@
 /**
  * 将軍マニュアル詳細ページ
- * FSD: ページ層は組み立てのみ
+ * FSD: ページ層は組み立てのみ + パフォーマンス最適化
  */
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Breadcrumb, Button, Col, Layout, Row, Space, Spin, Typography } from 'antd';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useShogunCatalog } from '@features/manual';
 import { FlowPane } from '@features/manual/ui/components/FlowPane';
 import { VideoPane } from '@features/manual/ui/components/VideoPane';
+import { UnimplementedModal } from '@features/shared';
 import styles from './ShogunDetail.module.css';
 
 const { Title, Paragraph } = Typography;
@@ -15,6 +16,7 @@ const { Title, Paragraph } = Typography;
 const ShogunManualDetailPage: React.FC = () => {
   const { id } = useParams();
   const nav = useNavigate();
+  const [showUnimplementedModal, setShowUnimplementedModal] = useState(false);
   
   // カタログから該当アイテムを取得
   const { sections, loading } = useShogunCatalog();
@@ -26,6 +28,14 @@ const ShogunManualDetailPage: React.FC = () => {
     return null;
   }, [sections, id]);
 
+  useEffect(() => {
+    // ページ読み込み時にモーダルを表示
+    setShowUnimplementedModal(true);
+  }, []);
+
+  // ページ遷移を即座に行い、ローディングインジケーターを表示
+  const showSkeleton = loading || !item;
+
   return (
     <Layout className={styles.detailLayout}>
       <Layout.Content className={styles.detailContent}>
@@ -33,19 +43,17 @@ const ShogunManualDetailPage: React.FC = () => {
           <Breadcrumb items={[
             { title: <a onClick={() => nav('/manuals')} className={styles.detailLink}>マニュアル</a> },
             { title: <a onClick={() => nav('/manuals/shogun')} className={styles.detailLink}>将軍</a> },
-            { title: item?.title || '' }
+            { title: item?.title || '読み込み中...' }
           ]} />
           <div className={styles.detailTitleBar}>
-            <Title level={3} className={styles.detailTitle}>{item?.title || '読み込み中...'}</Title>
+            <Title level={3} className={styles.detailTitle}>
+              {showSkeleton ? '読み込み中...' : item.title}
+            </Title>
           </div>
         </Space>
 
-        {loading ? (
-          <div className={styles.detailLoadingContainer}><Spin size='large' /></div>
-        ) : !item ? (
-          <div style={{ padding: 24, textAlign: 'center' }}>
-            <Typography.Text type="secondary">マニュアルが見つかりません</Typography.Text>
-          </div>
+        {showSkeleton ? (
+          <div className={styles.detailLoadingContainer}><Spin size='large' tip="データを読み込んでいます..." /></div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16, padding: 16 }}>
             {/* 概要 */}
@@ -55,7 +63,7 @@ const ShogunManualDetailPage: React.FC = () => {
               </Paragraph>
             </div>
 
-            {/* フロー・動画 */}
+            {/* フロー・動画（遅延ロード） */}
             <Row gutter={[16, 16]}>
               <Col xs={24} md={7}>
                 <Title level={5} style={{ marginTop: 0 }}>
@@ -67,6 +75,7 @@ const ShogunManualDetailPage: React.FC = () => {
                     title={item.title ?? 'flow'}
                     frameClassName={styles.paneFrame}
                     imgClassName={styles.paneImg}
+                    lazy={true}
                   />
                 </div>
               </Col>
@@ -81,6 +90,7 @@ const ShogunManualDetailPage: React.FC = () => {
                     title={item.title ?? 'video'}
                     frameClassName={styles.paneFrame}
                     videoClassName={styles.paneVideo}
+                    lazy={true}
                   />
                 </div>
               </Col>
@@ -94,6 +104,14 @@ const ShogunManualDetailPage: React.FC = () => {
             </div>
           </div>
         )}
+
+        {/* 未実装モーダル */}
+        <UnimplementedModal
+          visible={showUnimplementedModal}
+          onClose={() => setShowUnimplementedModal(false)}
+          featureName="環境将軍マニュアル"
+          description="環境将軍マニュアル機能は現在開発中です。完成まで今しばらくお待ちください。リリース後は、環境将軍システムの詳細な操作方法や業務フローをご確認いただけます。"
+        />
       </Layout.Content>
     </Layout>
   );

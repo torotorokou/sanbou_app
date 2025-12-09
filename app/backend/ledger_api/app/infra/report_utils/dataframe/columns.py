@@ -1,28 +1,9 @@
 import pandas as pd
-from app.infra.report_utils import app_logger
+from backend_shared.application.logging import get_module_logger
+from backend_shared.utils.dataframe_utils import clean_na_strings
 from app.infra.report_utils.formatters.summary import safe_merge_by_keys
 
-
-def clean_na_strings(val):
-    """
-    <NA>等の文字列や空文字列をNoneに変換する共通関数
-    """
-    if isinstance(val, str) and (
-        val
-        in [
-            "<NA>",
-            "NaN",
-            "nan",
-            "None",
-            "NULL",
-            "null",
-            "#N/A",
-            "#NA",
-        ]
-        or val.strip() == ""
-    ):
-        return None
-    return val
+logger = get_module_logger(__name__)
 
 
 def summary_add_column_if_notna(
@@ -49,7 +30,6 @@ def apply_column_addition_by_keys(
     value_col_to_add: str = "加算",
     update_target_col: str = "単価",
 ) -> pd.DataFrame:
-    logger = app_logger()
     logger.info(
         f"▶️ カラム加算処理（重複除外）: キー={join_keys}, 加算列={value_col_to_add} ➕ 対象列={update_target_col}"
     )

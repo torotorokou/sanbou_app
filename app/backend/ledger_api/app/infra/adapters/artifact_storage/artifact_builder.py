@@ -5,11 +5,14 @@ Excel/PDF の生成・保存と、署名付きURLの JSON ペイロード組み�
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, TYPE_CHECKING
 
 from fastapi.responses import JSONResponse
+from backend_shared.utils.datetime_utils import now_in_app_timezone, format_datetime_iso
 
-from app.application.usecases.reports.base_generators import BaseReportGenerator
+if TYPE_CHECKING:
+    from app.core.usecases.reports.base_generators import BaseReportGenerator
+
 from app.infra.adapters.artifact_storage.artifact_service import get_report_artifact_storage
 from app.infra.adapters.file_processing.pdf_conversion import PdfConversionError, convert_excel_to_pdf
 
@@ -65,7 +68,7 @@ class ArtifactResponseBuilder:
 
             artifact_payload = storage.build_payload(location, excel_exists=True, pdf_exists=pdf_exists)
             metadata: Dict[str, Any] = {
-                "generated_at": datetime.now(timezone.utc).isoformat(),
+                "generated_at": format_datetime_iso(now_in_app_timezone()),
                 "pdf_status": "available" if pdf_exists else "unavailable",
             }
             if pdf_error:

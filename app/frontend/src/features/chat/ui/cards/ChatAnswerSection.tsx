@@ -1,6 +1,6 @@
 import React from 'react';
 import { Typography } from 'antd';
-import AnswerViewer from '../components/AnswerViewer';
+import { AnswerViewer } from '../components/AnswerViewer';
 
 type Props = {
     answer: string;

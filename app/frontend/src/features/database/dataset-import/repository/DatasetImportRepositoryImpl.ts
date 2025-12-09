@@ -8,7 +8,7 @@
  */
 
 import type { DatasetImportRepository } from './DatasetImportRepository';
-import { DatasetImportClient } from '../api/client';
+import { DatasetImportClient } from '../infrastructure/client';
 import { buildFormData } from '../../shared/upload/buildFormData';
 import { DEFAULT_UPLOAD_TIMEOUT } from '../../shared/constants';
 import type { UploadResponseShape } from '../../shared/types/common';

@@ -2,9 +2,9 @@
 import pytest
 from datetime import date, datetime
 
-from app.application.usecases.upload.get_upload_status_uc import GetUploadStatusUseCase
-from app.application.usecases.upload.get_upload_calendar_uc import GetUploadCalendarUseCase
-from app.application.usecases.upload.delete_upload_scope_uc import DeleteUploadScopeUseCase
+from app.core.usecases.upload.get_upload_status_uc import GetUploadStatusUseCase
+from app.core.usecases.upload.get_upload_calendar_uc import GetUploadCalendarUseCase
+from app.core.usecases.upload.delete_upload_scope_uc import DeleteUploadScopeUseCase
 
 from tests.unit.application.fakes.fake_ports import FakeUploadStatusQuery
 

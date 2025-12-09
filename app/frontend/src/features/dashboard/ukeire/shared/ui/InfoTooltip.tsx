@@ -4,7 +4,7 @@ import { InfoCircleOutlined } from "@ant-design/icons";
 
 export type InfoTooltipProps = {
   title?: React.ReactNode;
-  placement?: "top" | "left" | "right" | "bottom" | string;
+  placement?: "top" | "left" | "right" | "bottom" | "topLeft" | "topRight" | "bottomLeft" | "bottomRight" | "leftTop" | "leftBottom" | "rightTop" | "rightBottom";
   className?: string;
 };
 
@@ -22,5 +22,3 @@ export const InfoTooltip: React.FC<InfoTooltipProps> = ({ title = defaultTitle, 
     </Tooltip>
   );
 };
-
-export default InfoTooltip;

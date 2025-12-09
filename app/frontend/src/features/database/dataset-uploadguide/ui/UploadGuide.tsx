@@ -9,7 +9,7 @@ import React, { useEffect } from 'react';
 import { Collapse, List, Tag, Typography } from 'antd';
 import { InfoCircleOutlined } from '@ant-design/icons';
 import type { FileState } from '../model/types';
-import { DATASET_RULES } from '@features/database/config/rules';
+import { DATASETS } from '@features/database/config/datasets';
 import { notifyError } from '@features/notification';
 import type { DatasetKey } from '@features/database/config';
 
@@ -23,8 +23,8 @@ export interface UploadGuideProps {
 }
 
 export const UploadGuide: React.FC<UploadGuideProps> = ({ datasetKey, files }) => {
-  const rule = DATASET_RULES?.[datasetKey];
-  const reqList = rule?.requiredCsv ?? [];
+  const dataset = DATASETS?.[datasetKey];
+  const reqList = dataset?.csv ?? [];
   const reqTotal = reqList.length;
 
   // 未完了（必須 & valid でない）
@@ -99,13 +99,12 @@ export const UploadGuide: React.FC<UploadGuideProps> = ({ datasetKey, files }) =
               </span>
             ),
             children: (
-              <ol style={{ margin: 0, paddingLeft: 20, lineHeight: 1.8 }}>
+              <ol style={{ margin: 0, paddingLeft: 20, lineHeight: 1.8, fontSize: 14 }}>
                 <li>
-                  データセットを選択（現在：<strong>{datasetKey}</strong>）
+                  データセットを選択（現在: <strong>{datasetKey}</strong>）
                 </li>
                 <li>各カードに CSV をドラッグ＆ドロップ（またはクリック）</li>
                 <li>自動検証（ヘッダ/型）を待つ</li>
-                <li>プレビューで内容を確認</li>
                 <li>「アップロードする」を押下</li>
               </ol>
             ),
@@ -125,28 +124,18 @@ export const UploadGuide: React.FC<UploadGuideProps> = ({ datasetKey, files }) =
                 renderItem={(r) => (
                   <List.Item style={{ paddingLeft: 0 }}>
                     <Tag color="blue">{r.label}</Tag>
-                    <Text type="secondary">（必須）</Text>
+                    <Text type="secondary" style={{ fontSize: 14 }}>(必須)</Text>
                     {Array.isArray(r.filenameHints) && r.filenameHints.length > 0 && (
-                      <span style={{ marginLeft: 8, fontSize: 12, color: '#888' }}>
-                        受入ファイル名例: {r.filenameHints.join(' / ')}
+                      <span style={{ marginLeft: 8, fontSize: 14, color: '#888' }}>
+                        ファイル名例: {r.filenameHints.join(' / ')}
                       </span>
-                    )}
-                    {r.sampleUrl && (
-                      <a
-                        style={{ marginLeft: 8, fontSize: 12 }}
-                        href={r.sampleUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        サンプル
-                      </a>
                     )}
                   </List.Item>
                 )}
               />
             ),
           },
-          ...(Array.isArray(rule?.globalNotes) && rule.globalNotes.length > 0
+          ...(Array.isArray(dataset?.notes) && dataset.notes.length > 0
             ? [
                 {
                   key: 'notes',
@@ -159,10 +148,10 @@ export const UploadGuide: React.FC<UploadGuideProps> = ({ datasetKey, files }) =
                   children: (
                     <List
                       size="small"
-                      dataSource={rule.globalNotes}
+                      dataSource={dataset.notes}
                       renderItem={(note) => (
                         <List.Item style={{ paddingLeft: 0 }}>
-                          <Text>{note}</Text>
+                          <Text style={{ fontSize: 14 }}>{note}</Text>
                         </List.Item>
                       )}
                     />

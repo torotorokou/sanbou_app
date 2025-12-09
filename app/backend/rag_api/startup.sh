@@ -3,18 +3,28 @@
 set -euo pipefail
 IFS=$'\n\t'
 
+# =============================================================================
+# RAG API スタートアップスクリプト - ADC (Application Default Credentials) 対応版
+# Last Modified: 2025-12-08 16:05 JST
+# =============================================================================
+# 
+# 認証方式:
+#   - ローカル開発環境: gcloud auth application-default login による ADC
+#   - GCE (stg/prod): VM にアタッチされたサービスアカウントによる ADC
+#   - JSON キーファイルは使用しません
+#
+# =============================================================================
+
 # --- 設定値（環境変数で上書き可能） ---
-# 優先: RAG_GCS_URI=gs://<bucket>/<prefix>/ 形式（末尾/は任意）
-# 互換: GCS_BUCKET_NAME + GCS_DATA_PREFIX
 RAG_GCS_URI="${RAG_GCS_URI:-}"
 GCS_BUCKET_NAME="${GCS_BUCKET_NAME:-object_haikibutu}"
 GCS_DATA_PREFIX="${GCS_DATA_PREFIX:-master}"
-# APP_ROOT_DIR (新) -> APP_BASE_DIR (旧) -> /backend の順で基底パス決定
 _BASE_DIR="${APP_ROOT_DIR:-${APP_BASE_DIR:-/backend}}"
-# /backend が書き込み不可な場合はホームへフォールバック
 TARGET_DIR_DEFAULT="${_BASE_DIR}/local_data/master"
 TARGET_DIR="${TARGET_DIR:-$TARGET_DIR_DEFAULT}"
-# root 権限で作成し所有権付与 (コンテナは appuser 実行)
+STAGE=${STAGE:-dev}
+
+# ターゲットディレクトリ作成
 if mkdir -p "${TARGET_DIR%/master}" 2>/dev/null; then
   :
 else
@@ -25,37 +35,9 @@ fi
 if command -v chown >/dev/null 2>&1; then
   chown -R appuser:appuser "${TARGET_DIR%/master}" 2>/dev/null || true
 fi
-# --- GCP 認証ファイル探索（ledger_api と同等方針）---
-# 1) 明示指定 GOOGLE_APPLICATION_CREDENTIALS があれば尊重（読めない場合はフォールバック）
-# 2) /run/secrets/rag_gcs_key.json（compose で単一ファイルマウント）
-# 3) /backend/secrets/${STAGE}_key.json（新命名）
-# 4) /backend/secrets/${STAGE}-key.json（旧命名互換）
-# 5) /backend/secrets/key.json（共通）
 
-STAGE=${STAGE:-dev}
-
-pick_credential_path() {
-  local p
-  for p in \
-    "${GOOGLE_APPLICATION_CREDENTIALS:-}" \
-    "/run/secrets/rag_gcs_key.json" \
-    "/backend/secrets/${STAGE}_key.json" \
-    "/backend/secrets/${STAGE}-key.json" \
-    "/backend/secrets/key.json" \
-    "/root/.config/gcloud/application_default_credentials.json"; do
-    if [ -n "$p" ] && [ -r "$p" ]; then
-      echo "$p"
-      return 0
-    fi
-  done
-  echo "" # 見つからない
-}
-
-GOOGLE_APPLICATION_CREDENTIALS=$(pick_credential_path)
-if [ -n "$GOOGLE_APPLICATION_CREDENTIALS" ]; then
-  export GOOGLE_APPLICATION_CREDENTIALS
-fi
-echo "[INFO] STAGE=$STAGE GOOGLE_APPLICATION_CREDENTIALS=${GOOGLE_APPLICATION_CREDENTIALS:-<none>}"
+echo "[INFO] STAGE=$STAGE (ADC認証を使用)"
+echo "[INFO] TARGET_DIR=$TARGET_DIR"
 
 # --- 関数化：GCSからデータ取得 ---
 download_gcs_data() {
@@ -69,26 +51,58 @@ download_gcs_data() {
     # 正規化: 末尾のスラッシュを除去
     local norm_uri="${uri%/}"
     echo "🌀 [GCS] Downloading ${norm_uri}/* → $target_dir"
-    if gsutil -m cp -r "${norm_uri}/*" "$target_dir/"; then
+    if gsutil -m cp -r "${norm_uri}/*" "$target_dir/" 2>&1; then
       echo "✅ [GCS] Download complete."
       return 0
     else
+      local exit_code=$?
       echo "❌ [GCS] データ取得に失敗しました (${norm_uri}/*)" >&2
+      echo "   終了コード: $exit_code" >&2
+      
+      # エラーの種類を推測
+      if [ $exit_code -eq 1 ]; then
+        echo "   🛑 可能性: 認証エラー、または権限不足 (403 Forbidden)" >&2
+        echo "      - ADC認証が正しく設定されているか確認してください" >&2
+        echo "      - サービスアカウントに 'Storage Object Viewer' ロールが付与されているか確認してください" >&2
+      elif [ $exit_code -eq 3 ]; then
+        echo "   🛑 可能性: バケットまたはオブジェクトが存在しない (404 NotFound)" >&2
+        echo "      - バケット名やオブジェクトパスが正しいか確認してください" >&2
+      else
+        echo "   🛑 可能性: ネットワークエラー、またはその他のエラー" >&2
+      fi
+      
       return 1
     fi
   else
     echo "🌀 [GCS] Downloading gs://$bucket/$prefix/* → $target_dir"
-    if gsutil -m cp -r "gs://$bucket/$prefix/*" "$target_dir/"; then
+    if gsutil -m cp -r "gs://$bucket/$prefix/*" "$target_dir/" 2>&1; then
       echo "✅ [GCS] Download complete."
       return 0
     else
+      local exit_code=$?
       echo "❌ [GCS] データ取得に失敗しました (gs://$bucket/$prefix/*)" >&2
+      echo "   終了コード: $exit_code" >&2
+      
+      # エラーの種類を推測
+      if [ $exit_code -eq 1 ]; then
+        echo "   🛑 可能性: 認証エラー、または権限不足 (403 Forbidden)" >&2
+        echo "      - ADC認証が正しく設定されているか確認してください" >&2
+        echo "      - サービスアカウントに 'Storage Object Viewer' ロールが付与されているか確認してください" >&2
+        echo "      - STAGE=$STAGE, BUCKET=$bucket, PREFIX=$prefix" >&2
+      elif [ $exit_code -eq 3 ]; then
+        echo "   🛑 可能性: バケットまたはオブジェクトが存在しない (404 NotFound)" >&2
+        echo "      - バケット名やオブジェクトパスが正しいか確認してください" >&2
+        echo "      - BUCKET=$bucket, PREFIX=$prefix" >&2
+      else
+        echo "   🛑 可能性: ネットワークエラー、またはその他のエラー" >&2
+      fi
+      
       return 1
     fi
   fi
 }
 
-# --- GCP認証 (スキップ条件付き) ---
+# --- GCP認証確認 (ADC使用) ---
 SKIP_GCS="${SKIP_GCS:-0}"
 if [[ "$SKIP_GCS" == "1" ]]; then
   echo "⚠️  SKIP_GCS=1 が指定されたため GCS 処理をスキップします。"
@@ -96,18 +110,26 @@ else
   if ! command -v gcloud >/dev/null 2>&1 || ! command -v gsutil >/dev/null 2>&1; then
     echo "⚠️  gcloud/gsutil が見つからないため GCS 処理をスキップします。" >&2
     SKIP_GCS=1
-  elif [[ ! -f "$GOOGLE_APPLICATION_CREDENTIALS" ]]; then
-    echo "⚠️  認証ファイル $GOOGLE_APPLICATION_CREDENTIALS が無いため GCS 処理をスキップします。" >&2
-    SKIP_GCS=1
-  fi
-  if [[ "$SKIP_GCS" != "1" ]]; then
-    if gcloud auth activate-service-account --key-file="$GOOGLE_APPLICATION_CREDENTIALS"; then
-      echo "✅ Authenticated with service account."
-    # サービスアカウント確認
-    SA_EMAIL=$(grep -o '"client_email" *: *"[^"]\+"' "$GOOGLE_APPLICATION_CREDENTIALS" | cut -d'"' -f4 || true)
-    echo "Using service account: ${SA_EMAIL}"
+  else
+    # ADCを使用してgcloudを初期化（JSONキー不要）
+    echo "🔑 ADC (Application Default Credentials) を使用してGCPに接続します"
+    echo "   STAGE=$STAGE"
+    echo "   TARGET_DIR=$TARGET_DIR"
+    
+    # gcloud config list で認証状態を確認
+    if gcloud config list 2>/dev/null | grep -q "account"; then
+      echo "✅ GCP ADC認証確認完了 - gcloud config list にアカウント情報が存在"
+      
+      # 可能であればアカウント情報を表示
+      if gcloud config list account 2>/dev/null; then
+        echo "   使用中のアカウント情報を確認できました"
+      fi
     else
-      echo "⚠️  サービスアカウント認証に失敗。GCS 処理をスキップします。" >&2
+      echo "⚠️  ADC認証が設定されていない可能性があります。GCS処理をスキップします。" >&2
+      echo "   gcloud config list の出力を確認してください:" >&2
+      gcloud config list 2>&1 | head -10 >&2
+      echo "ヒント: ローカル開発の場合は 'gcloud auth application-default login' を実行してください" >&2
+      echo "       GCE/Cloud Run の場合は、サービスアカウントがVMにアタッチされているか確認してください" >&2
       SKIP_GCS=1
     fi
   fi
@@ -117,12 +139,22 @@ fi
 if [[ "$SKIP_GCS" == "1" ]]; then
   echo "⏩ [GCS] スキップ指定のためダウンロード無しで続行します。"
 else
-  if [ -n "$(ls -A "$TARGET_DIR" 2>/dev/null || true)" ]; then
-    echo "⏩ [1/2] Local data already exists. Skipping GCS download."
+  # 実際のデータファイル（CSV/JSON/Parquet等）が存在するかチェック
+  # readme.md や .gitkeep などのドキュメントファイルのみの場合はダウンロードを実行
+  DATA_FILE_COUNT=$(find "$TARGET_DIR" -type f \( -name "*.csv" -o -name "*.json" -o -name "*.parquet" -o -name "*.jsonl" \) 2>/dev/null | wc -l) || DATA_FILE_COUNT=0
+  # 空白を削除(bashの変数展開で実現)
+  DATA_FILE_COUNT="${DATA_FILE_COUNT// /}"
+  DATA_FILE_COUNT="${DATA_FILE_COUNT:-0}"
+  
+  if [ "$DATA_FILE_COUNT" -gt 0 ]; then
+    echo "⏩ [1/2] Local data already exists ($DATA_FILE_COUNT data files found). Skipping GCS download."
   else
+    echo "📥 [1/2] No data files found in $TARGET_DIR. Downloading from GCS..."
     if ! download_gcs_data "$GCS_BUCKET_NAME" "$GCS_DATA_PREFIX" "$TARGET_DIR" "$RAG_GCS_URI"; then
       echo "⚠️  ダウンロード失敗しましたが起動は継続します。" >&2
-      echo "ヒント: サービスアカウントに 'storage.objects.list' と 'storage.objects.get' 権限 (Storage Object Viewer など) が付与されているか確認してください。" >&2
+      echo "ヒント:" >&2
+      echo "  - ローカル: gcloud auth application-default login を実行してください" >&2
+      echo "  - GCE: VM のサービスアカウントに Storage Object Viewer ロールが必要です" >&2
     fi
   fi
 fi

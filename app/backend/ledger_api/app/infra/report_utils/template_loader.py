@@ -1,28 +1,7 @@
 from pathlib import Path
 import pandas as pd
 import os
-
-
-def clean_na_strings(val):
-    """
-    <NA>等の文字列や空文字列をNoneに変換する共通関数
-    """
-    if isinstance(val, str) and (
-        val
-        in [
-            "<NA>",
-            "NaN",
-            "nan",
-            "None",
-            "NULL",
-            "null",
-            "#N/A",
-            "#NA",
-        ]
-        or val.strip() == ""
-    ):
-        return None
-    return val
+from backend_shared.utils.dataframe_utils import clean_na_strings
 
 
 def load_master_and_template(master_path: str | Path) -> pd.DataFrame:

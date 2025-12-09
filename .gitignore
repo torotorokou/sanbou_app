@@ -59,10 +59,11 @@ pip-delete-this-directory.txt
 .Python
 .python-version
 
-# 仮想環境
+# 仮想環境（Python venv）
+# 注意: env/ は環境変数ディレクトリとして使用するため、
+#       仮想環境は .venv/ を使用してください
 .env/
 .venv/
-env/
 venv/
 ENV/
 
@@ -75,21 +76,37 @@ ENV/
 # ============================
 # 環境変数・Secrets
 # ============================
-# すべての .env 系は除外し例のみ許可
-*.env
-*.env.*
-!.env.example
-env/.env.*
+# 【重要】env/ と secrets/ ディレクトリ内の全ファイルを除外
+# テンプレートファイルのみ許可し、実際の設定ファイルは全て Git 管理外とする
+
+# env/ ディレクトリ: 全ファイル除外
+/env/
 !env/.env.example
+!env/*.template
+!env/README.md
 
-# secrets ディレクトリ: 実ファイル除外、テンプレ / example のみ許可
-secrets/*
+# secrets/ ディレクトリ: 全ファイル除外
+/secrets/
+!secrets/.env.secrets.template
 !secrets/*.template
-!secrets/*example*
-!secrets/*_example.*
-!secrets/README*
+!secrets/README.md
 
-# 既存個別（追跡不要）: .env.stg.secrets / .env.prod.secrets は上記で除外済
+# ルートの .env ファイルも除外（念のため）
+.env
+.env.*
+!.env.example
+
+# 証明書と秘密鍵（全階層）
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+
+# SSH 鍵
+id_rsa
+id_ed25519
+*.pem.key
 
 # ============================
 # Docker / Compose
@@ -148,6 +165,7 @@ coverage/
 *.pptx
 *.xlsx
 *.Identifier
+*:Zone.Identifier
 
 # ============================
 # Nginx
@@ -160,18 +178,24 @@ nginx/cache/
 # ============================
 # YAML / JSON / CSV 管理方針
 # ============================
-# 原則: 設定ファイルは tracking したいので config 以下は許可。
-# まず一括で拡張子除外 → config のみ許可 (例: my-project/config, backend/*/config 等)
-# *.json
+# 原則: 設定・マスター・テンプレートファイルは追跡、生成データは除外
+
+# --- グローバル除外（生成ファイル・ランタイムデータ） ---
 *.yaml
 # *.yml
-# CSV は生成データ混在の可能性があるため必要ならここで一括除外し、config 配下は allow
-*.csv
+# *.json
+# *.csv (まず除外、後で明示許可)
 
+# 大きなディレクトリを先に除外
+data/
+**/data/
+/app/frontend/src/data/
 
-data
+# --- 明示除外: テストデータ（masterより先に） ---
+test/**/*.csv
+**/test/**/*.csv
 
-# --- allow Node.js package manifests & lock files (were excluded by *.json / *.yaml) ---
+# --- 明示許可: Node.js / Docker / Config ---
 !package.json
 !**/package.json
 !package-lock.json
@@ -181,19 +205,14 @@ data
 !yarn.lock
 !**/yarn.lock
 
-# --- allow docker compose files (needed for environment provisioning) ---
 !docker/docker-compose.yml
 !docker/docker-compose.dev.yml
 !docker/docker-compose.stg.yml
 !docker/docker-compose.prod.yml
 
+# --- 明示許可: config ディレクトリ（設定ファイル） ---
 !config/**
 !**/config/**
-!**/config.example.json
-!**/config.example.yaml
-!**/config.example.yml
-
-# config 配下 CSV / JSON / YAML を明示許可 (二重許可だが将来の順序変更安全策)
 !config/**/*.json
 !config/**/*.yaml
 !config/**/*.yml
@@ -202,6 +221,29 @@ data
 !**/config/**/*.yaml
 !**/config/**/*.yml
 !**/config/**/*.csv
+
+# --- 明示許可: master ディレクトリ（マスターデータ） ---
+!**/master/**
+!**/master/**/*.csv
+!**/master/**/*.json
+!**/master/**/*.yaml
+!**/master/**/*.yml
+
+# --- 明示許可: templates ディレクトリ（テンプレートファイル） ---
+!**/templates/**
+!**/templates/**/*.xlsx
+!**/templates/**/*.csv
+!**/templates/**/*.json
+
+# --- 明示除外: テストデータ・動的生成・大容量データ ---
+test/**/*.csv
+**/test/**/*.csv
+
+# data配下は除外済みだが、local_data/master内の設定のみ許可
+**/local_data/
+!**/local_data/master/**/*.yaml
+!**/local_data/master/**/*.yml
+!**/local_data/master/**/*.json
 
 # ============================
 # RAG / ベクターストア（将来）
@@ -224,13 +266,13 @@ app/nginx/certs/*
 
 *.mp4
 
-
 # Exclude specific local config templates (tracked config allowed elsewhere)
 # These files contain local or sensitive content and should not be committed
 category_question_templates_with_tags.yaml
 category_question_templates.yaml
 
-
 !*notifications.openapi.yaml
 
 recovery
+
+*/backend/manual_api/data/

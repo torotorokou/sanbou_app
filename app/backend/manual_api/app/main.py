@@ -1,26 +1,56 @@
 import os
 from pathlib import Path
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from app.routers import router as manuals_router
+# ==========================================
+# 統一ロギング設定のインポート（backend_shared）
+# ==========================================
+from backend_shared.application.logging import setup_logging
+from backend_shared.infra.frameworks.logging_utils import setup_uvicorn_access_filter
+from backend_shared.infra.adapters.middleware import RequestIdMiddleware
+from backend_shared.infra.frameworks.cors_config import setup_cors
+from backend_shared.infra.frameworks.exception_handlers import register_exception_handlers
+
+from app.config.settings import settings
+from app.api.routers.manuals import router as manuals_router
+
+# ==========================================
+# 統一ロギング設定の初期化
+# ==========================================
+# テクニカルログ基盤: JSON形式、Request ID付与、Uvicorn統合
+# 環境変数 LOG_LEVEL で制御可能（DEBUG/INFO/WARNING/ERROR/CRITICAL）
+setup_logging()
+
+from backend_shared.application.logging import get_module_logger
+logger = get_module_logger(__name__)
 
 app = FastAPI(
-    title=os.getenv("API_TITLE", "MANUAL_API"),
-    version=os.getenv("API_VERSION", "1.0.0"),
+    title=settings.API_TITLE,
+    version=settings.API_VERSION,
     # DIP: manual_apiは/core_apiの存在を知らない。内部論理パスで公開。
-    root_path=os.getenv("API_ROOT_PATH", ""),
+    root_path=settings.API_ROOT_PATH,
+    # 本番環境（DEBUG=False）では /docs と /redoc を無効化
+    docs_url="/docs" if settings.DEBUG else None,
+    redoc_url="/redoc" if settings.DEBUG else None,
+    openapi_url="/openapi.json" if settings.DEBUG else None,
 )
 
-origins = os.getenv("CORS_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173").split(",")
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[o.strip() for o in origins if o.strip()],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+logger.info(
+    f"Manual API initialized (DEBUG={settings.DEBUG}, docs_enabled={settings.DEBUG})",
+    extra={"operation": "app_init", "debug": settings.DEBUG}
 )
+
+# --- ミドルウェア: Request ID追跡 ----------------------------------------------
+# 統一ロギング基盤: HTTPリクエストごとに一意のrequest_idを割り当て、ContextVarで管理
+# 全ログ出力にrequest_idが付与され、分散トレーシングが可能になる
+app.add_middleware(RequestIdMiddleware)
+
+# --- エラーハンドラ登録 (backend_shared統一版) ---------------------------------
+register_exception_handlers(app)
+
+# --- CORS設定 (backend_shared統一版) -----------------------------------------
+setup_cors(app)
 
 data_dir = Path(__file__).resolve().parent.parent / "data"
 if data_dir.exists():

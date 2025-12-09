@@ -104,7 +104,9 @@ class ReportArtifactStorage:
         self.signer = signer
 
     def allocate(self, report_key: str, report_date: str) -> ArtifactLocation:
-        token = f"{time.strftime('%Y%m%d_%H%M%S')}-{secrets.token_hex(4)}"
+        # 帳簿作成日付をトークンに使用（時刻部分のみ現在時刻）
+        token = f"{report_date.replace('-', '')}_{time.strftime('%H%M%S')}-{secrets.token_hex(4)}"
+        # 英語キーをそのまま使用（ASCII安全、フロントエンドで日本語変換）
         file_base = _sanitize_segment(f"{report_key}-{report_date}")
         location = ArtifactLocation(self.root_dir, report_key, report_date, token, file_base)
         location.directory.mkdir(parents=True, exist_ok=True)

@@ -1,17 +1,18 @@
-fastapi==0.111.0
-uvicorn[standard]==0.30.1
-pydantic==2.7.1
-pyyaml==6.0.1
-python-multipart==0.0.9  # ファイルアップロード用（必要なら）
+# FastAPI >=0.115.7 uses Starlette >=0.49.1 (fixes CVE-2025-62727, CVE-2025-54121)
+fastapi>=0.115.7,<0.200.0
+uvicorn[standard]==0.33.0
+pydantic==2.10.6
+pyyaml==6.0.2
+python-multipart==0.0.20
 
 # データ加工・解析
-pandas==2.2.2
+pandas==2.2.3
 
 # Excel出力（pandasのto_excel依存）
-openpyxl==3.1.2
+openpyxl==3.1.5
 
 # PDF出力（必要に応じて。レポート帳票にPDF化）
-reportlab==4.1.0
+reportlab==4.2.5
 
 # CSV高速パース（任意）
 python-csv==0.0.14
@@ -20,10 +21,9 @@ python-csv==0.0.14
 python-dateutil==2.9.0.post0
 
 # 日本語処理（必要に応じて）
-jaconv==0.3.4   # 半角全角変換など
-
-# 型ヒント補助（任意）
-typing-extensions==4.11.0
+jaconv==0.4.0
 
 # GCS からマスタ/テンプレート同期用
-google-cloud-storage==2.18.2
+google-cloud-storage==2.19.0
+
+# backend_shared は Dockerfile でインストールされます

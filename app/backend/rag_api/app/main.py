@@ -3,22 +3,38 @@ import sys
 from pathlib import Path
 from dotenv import load_dotenv
 
-from fastapi import FastAPI, Request, HTTPException
-from fastapi.exceptions import RequestValidationError
-from fastapi.middleware.cors import CORSMiddleware
-from backend_shared.infrastructure.logging_utils import setup_uvicorn_access_filter
-from fastapi.responses import JSONResponse, FileResponse
+from fastapi import FastAPI, HTTPException
+from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from app.paths import CONFIG_ENV
-from app.utils.env_loader import load_env_and_secrets
-from app.api.endpoints import query  # ← query.py に router を定義
+# ==========================================
+# 統一ロギング設定のインポート（backend_shared）
+# ==========================================
+from backend_shared.application.logging import setup_logging
+from backend_shared.infra.frameworks.logging_utils import setup_uvicorn_access_filter
+from backend_shared.infra.adapters.middleware import RequestIdMiddleware
+from backend_shared.infra.frameworks.cors_config import setup_cors
+from backend_shared.infra.frameworks.exception_handlers import register_exception_handlers
+
+from app.config.settings import settings
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
+
+from app.config.paths import CONFIG_ENV
+from app.shared.env_loader import load_env_and_secrets
+from app.api.routers import query, manuals  # ← query.py に router を定義
 
 
 # --- .env + secrets 読み込み --------------------------------------------------
 load_dotenv(dotenv_path=CONFIG_ENV)
 _secrets_file = load_env_and_secrets()
-print(f"[DEBUG] secrets loaded from: {_secrets_file}")
+
+# ==========================================
+# 統一ロギング設定の初期化
+# ==========================================
+# テクニカルログ基盤: JSON形式、Request ID付与、Uvicorn統合
+# 環境変数 LOG_LEVEL で制御可能（DEBUG/INFO/WARNING/ERROR/CRITICAL）
+setup_logging()
 
 # --- PYTHONPATH 追加（任意） ---------------------------------------------------
 py_path = os.getenv("PYTHONPATH")
@@ -29,50 +45,55 @@ if py_path:
 
 # --- FastAPI アプリ作成（root_path は本番の reverse proxy 下でのみ設定） -----
 app = FastAPI(
-    title=os.getenv("API_TITLE", "RAG_API"),
-    version=os.getenv("API_VERSION", "1.0.0"),
+    title=settings.API_TITLE,
+    version=settings.API_VERSION,
+    description="オブジェクト廃棄物マニュアルQA & 全文検索システム",
     # 直叩きで 404 を避けるためデフォルトは空文字。Nginx配下では .env で /rag_api を指定
-    root_path=os.getenv("API_ROOT_PATH", "/rag_api"),
-    docs_url=os.getenv("API_DOCS_URL", "/docs"),
-    openapi_url=os.getenv("API_OPENAPI_URL", "/openapi.json"),
+    root_path=settings.API_ROOT_PATH,
+    # 本番環境（DEBUG=False）では /docs と /redoc を無効化
+    docs_url="/docs" if settings.DEBUG else None,
+    redoc_url="/redoc" if settings.DEBUG else None,
+    openapi_url="/openapi.json" if settings.DEBUG else None,
 )
+
+from backend_shared.application.logging import get_module_logger
+logger = get_module_logger(__name__)
+logger.info(
+    f"RAG API initialized (DEBUG={settings.DEBUG}, docs_enabled={settings.DEBUG})",
+    extra={"operation": "app_init", "debug": settings.DEBUG}
+)
+
+# --- GCP認証・権限デバッグ（起動時1回のみ実行） ---------------------------------
+if settings.STAGE in ("stg", "prod") and settings.PERMISSION_DEBUG:
+    logger.info("🔍 PERMISSION_DEBUG=1 が有効なため、GCP認証デバッグを実行します")
+    from app.infra.adapters.gcp import debug_log_gcp_adc_and_permissions
+    debug_log_gcp_adc_and_permissions(
+        bucket_name=settings.GCS_BUCKET_NAME,
+        object_prefix=settings.GCS_DATA_PREFIX
+    )
+
+# --- ミドルウェア: Request ID追跡 ----------------------------------------------
+# 統一ロギング基盤: HTTPリクエストごとに一意のrequest_idを割り当て、ContextVarで管理
+# 全ログ出力にrequest_idが付与され、分散トレーシングが可能になる
+app.add_middleware(RequestIdMiddleware)
+
+# --- エラーハンドラ登録 (backend_shared統一版) ---------------------------------
+register_exception_handlers(app)
 
 # --- 静的配信: /pdfs ----------------------------------------------------------
 PDF_DIR = Path("/backend/static/pdfs")
 PDF_DIR.mkdir(parents=True, exist_ok=True)
-print(f"[DEBUG] FastAPI公開ディレクトリ: {PDF_DIR}")
 app.mount("/pdfs", StaticFiles(directory=str(PDF_DIR)), name="pdfs")
 
 # （任意）テスト用ディレクトリ /test_pdfs も配信
 TEST_PDF_DIR = Path("/backend/static/test_pdfs")
 TEST_PDF_DIR.mkdir(parents=True, exist_ok=True)
-print(f"[DEBUG] FastAPI公開ディレクトリ: {TEST_PDF_DIR}")
 app.mount("/test_pdfs", StaticFiles(directory=str(TEST_PDF_DIR)), name="test_pdfs")
 
 
-# --- バリデーションエラー時のカスタムレスポンス -------------------------------
-@app.exception_handler(RequestValidationError)
-async def validation_exception_handler(request: Request, exc: RequestValidationError):
-    return JSONResponse(
-        status_code=422,
-        content={
-            "error": "リクエストの形式が正しくありません。",
-            "detail": exc.errors(),
-        },
-    )
-
-
 # --- CORS 設定 -----------------------------------------------------------------
-# デフォルトで Vite (5173) を許可。必要に応じて .env の CORS_ORIGINS で上書き
-default_origins = "http://localhost:5173,http://127.0.0.1:5173"
-origins = os.getenv("CORS_ORIGINS", default_origins).split(",")
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[o.strip() for o in origins if o.strip()],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# --- CORS設定 (backend_shared統一版) -----------------------------------------
+setup_cors(app)
 
 # アクセスログ: /health のアクセスのみ抑制（uvicorn.access フィルター）
 setup_uvicorn_access_filter(excluded_paths=("/health",))
@@ -80,6 +101,7 @@ setup_uvicorn_access_filter(excluded_paths=("/health",))
 # --- ルーター登録（mount より後に置かないと競合しない） -----------------------
 routers = [
     (query.router, "/api"),
+    (manuals.router, "/api"),
     # 追加ルーターがあればここに追記
 ]
 for router, prefix in routers:

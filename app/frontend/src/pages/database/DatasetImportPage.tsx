@@ -6,7 +6,7 @@
  * プレビュー: DatasetPreviewScreen に委譲
  */
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Typography, Col, Row, Button, Modal, Spin, Empty, Select, Space, Badge } from 'antd';
 import styles from './DatasetImportPage.module.css';
 
@@ -17,6 +17,7 @@ import {
 import { UploadGuide, toFileStates } from '@features/database/dataset-uploadguide';
 import { getAllDatasets, collectTypesForDataset, type DatasetKey } from '@features/database/config';
 import { UploadCalendar } from '@features/database/upload-calendar';
+import { DatasetFinalWarningModal } from '@features/database/dataset-final-warning';
 
 const { Text } = Typography;
 
@@ -24,11 +25,21 @@ const DatasetImportPage: React.FC = () => {
   // ===== データセット選択 =====
   const [datasetKey, setDatasetKey] = useState<DatasetKey>('shogun_flash');
   
+  // 将軍最終版の注意モーダル
+  const [showFinalWarning, setShowFinalWarning] = useState(false);
+  
   // データセット一覧
   const datasets = getAllDatasets();
   
   // カレンダーリロード用のref
   const calendarReloadRef = useRef<(() => void) | null>(null);
+  
+  // 将軍最終版が選択されたときにモーダルを表示
+  useEffect(() => {
+    if (datasetKey === 'shogun_final') {
+      setShowFinalWarning(true);
+    }
+  }, [datasetKey]);
   
   // ===== ViewModel（状態管理・ロジック） =====
   const activeTypes = collectTypesForDataset(datasetKey);
@@ -164,6 +175,12 @@ const DatasetImportPage: React.FC = () => {
           </div>
         </div>
       </Modal>
+
+      {/* 将軍最終版の注意モーダル */}
+      <DatasetFinalWarningModal
+        open={showFinalWarning}
+        onClose={() => setShowFinalWarning(false)}
+      />
     </>
   );
 };

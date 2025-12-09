@@ -1,0 +1,22 @@
+.
+├── CLEANUP_COMPLETE.md
+├── ERROR_HANDLING_GUIDE.md
+├── README.md
+├── REFACTORING_SUMMARY.md
+├── docs
+│   ├── README.md
+│   └── REFACTORING_REPORT_20251128.md
+├── pyproject.toml
+├── src
+│   └── backend_shared
+│       ├── __init__.py
+│       ├── config
+│       ├── core
+│       ├── infra
+│       └── utils
+├── tests
+│   └── test_smoke.py
+├── tree.txt
+└── tree_final.txt
+
+9 directories, 11 files

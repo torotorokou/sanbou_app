@@ -6,6 +6,7 @@ import { useLocation } from 'react-router-dom';
 import { SIDEBAR_MENU } from '@app/navigation/sidebarMenu';
 import { customTokens, useSidebar, useResponsive, ANT } from '@/shared';
 import { type MenuItem, filterMenuItems } from '@features/navi';
+import { UserInfoChip } from '@features/authStatus';
 
 const { Sider } = Layout;
 
@@ -70,6 +71,11 @@ const Sidebar: React.FC = () => {
                         body: { padding: 0 },
                     }}
                 >
+                    {/* ユーザー情報表示（Drawer版） */}
+                    <div style={{ padding: '16px', borderBottom: '1px solid #f0f0f0' }}>
+                        <UserInfoChip />
+                    </div>
+
                     <Menu
                         mode="inline"
                         selectedKeys={[location.pathname]}
@@ -136,6 +142,16 @@ const Sidebar: React.FC = () => {
                 />
             </div>
 
+            {/* ユーザー情報表示（デスクトップ版・折りたたみ時非表示） */}
+            {!collapsed && (
+                <div style={{
+                    padding: '12px 16px',
+                    borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+                }}>
+                    <UserInfoChip />
+                </div>
+            )}
+
             <Menu
                 theme='dark'
                 mode='inline'
@@ -144,8 +160,8 @@ const Sidebar: React.FC = () => {
                 openKeys={openKeys}
                 onOpenChange={(keys: string[]) => setOpenKeys(keys)}
                 style={{
-                    // Sider を viewport 高さにしているため、ヘッダ分を差し引く
-                    height: 'calc(100dvh - 64px)',
+                    // Sider を viewport 高さにしているため、ヘッダ分 + ユーザー情報分を差し引く
+                    height: collapsed ? 'calc(100dvh - 64px)' : 'calc(100dvh - 64px - 60px)',
                     borderRight: 0,
                     backgroundColor: 'transparent',
                 }}

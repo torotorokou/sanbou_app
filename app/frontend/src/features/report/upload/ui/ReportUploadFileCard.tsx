@@ -8,6 +8,7 @@ import React, { useRef } from 'react';
 import { Typography, Button } from 'antd';
 import { DeleteOutlined, UploadOutlined } from '@ant-design/icons';
 import type { UploadProps } from 'antd';
+import type { RcFile } from 'antd/es/upload';
 import { CsvValidationBadge, mapLegacyToCsvStatus } from '@features/csv-validation';
 
 const { Text } = Typography;
@@ -65,9 +66,15 @@ export const ReportUploadFileCard: React.FC<ReportUploadFileCardProps> = ({
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (selectedFile && uploadProps.beforeUpload) {
-      // beforeUpload は (file: RcFile, FileList: RcFile[]) => ... の型を期待
-      // File を RcFile として扱う（互換性あり）
-      uploadProps.beforeUpload(selectedFile as File & { uid: string }, [selectedFile] as (File & { uid: string })[]);
+      // beforeUpload に File オブジェクトをそのまま渡す
+      // antd の Upload コンポーネントは内部的に File を RcFile として扱える
+      // RcFile に必要なプロパティを追加（読み取り専用プロパティを避けて新しいオブジェクトを作成）
+      const rcFile = new File([selectedFile], selectedFile.name, {
+        type: selectedFile.type,
+        lastModified: selectedFile.lastModified
+      }) as RcFile;
+      rcFile.uid = selectedFile.name + Date.now();
+      uploadProps.beforeUpload(rcFile, [rcFile]);
       // input をリセットして同じファイルを再選択可能に
       e.target.value = '';
     }

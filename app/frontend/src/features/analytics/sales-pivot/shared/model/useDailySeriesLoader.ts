@@ -5,7 +5,7 @@
 
 import { useCallback } from 'react';
 import type { ID, SummaryQuery, DailyPoint } from './types';
-import type { HttpSalesPivotRepository } from '../api/salesPivot.repository';
+import type { HttpSalesPivotRepository } from '../infrastructure/salesPivot.repository';
 
 interface DailySeriesLoaderParams {
   repository: HttpSalesPivotRepository;

@@ -27,7 +27,8 @@ import httpx
 from typing import Optional, Any
 import logging
 
-logger = logging.getLogger(__name__)
+from backend_shared.application.logging import get_module_logger, create_log_context
+logger = get_module_logger(__name__)
 
 LEDGER_API_BASE = os.getenv("LEDGER_API_BASE", "http://ledger_api:8000")
 TIMEOUT = httpx.Timeout(connect=1.0, read=5.0, write=5.0, pool=1.0)
@@ -55,7 +56,14 @@ class LedgerClient:
             httpx.HTTPStatusError: If Ledger API returns error status
         """
         async with httpx.AsyncClient(timeout=TIMEOUT) as client:
-            logger.info(f"Calling Ledger API: {self.base_url}/reports/{report_type}", extra={"params": params})
+            logger.info(
+                "Calling Ledger API",
+                extra=create_log_context(
+                    operation="call_ledger_api",
+                    url=f"{self.base_url}/reports/{report_type}",
+                    params=params
+                )
+            )
             response = await client.post(
                 f"{self.base_url}/reports/{report_type}",
                 json=params,

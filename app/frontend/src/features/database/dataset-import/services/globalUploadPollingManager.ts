@@ -9,7 +9,7 @@
  *   - エラー/タイムアウト: sticky（手動クローズのみ）
  */
 
-import { DatasetImportClient } from '../api/client';
+import { DatasetImportClient } from '../infrastructure/client';
 import { useNotificationStore } from '@features/notification/domain/services/notificationStore';
 
 interface PollingJob {

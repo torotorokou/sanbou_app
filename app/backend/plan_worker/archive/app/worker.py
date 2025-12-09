@@ -4,6 +4,7 @@ Plan worker: simple background worker template.
 import logging
 import time
 import os
+from backend_shared.application.logging import create_log_context
 
 # Simple logging setup
 logging.basicConfig(
@@ -34,7 +35,11 @@ def main():
         try:
             process_task()
         except Exception as e:
-            logger.error(f"Error processing task: {e}")
+            logger.error(
+                "Task processing error",
+                extra=create_log_context(operation="process_task", error=str(e)),
+                exc_info=True
+            )
         
         time.sleep(POLL_INTERVAL)
 

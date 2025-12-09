@@ -1,7 +1,7 @@
 # Breakpoints Usage Report
 
-**Generated:** 2025-10-23 (Updated)  
-**Scope:** `src/` directory (`.css`, `.less`, `.scss`, `.sass`, `.ts`, `.tsx`, `.jsx`)  
+**Generated:** 2025-12-01 (Updated)  
+**Scope:** `app/frontend/src/` directory (`.css`, `.less`, `.scss`, `.sass`, `.ts`, `.tsx`, `.jsx`)  
 **Purpose:** レスポンシブデザインの実装状況を可視化し、統一化・保守性向上のための改善指針を示す  
 **Status:** ✅ **Tailwind CSS準拠の新bp値体系への移行完了**
 
@@ -192,6 +192,141 @@ npm run build
 
 ---
 
+## 9. レスポンシブ対応ファイルの配置
+
+### 📁 コアファイル構成
+
+#### 🔧 定義・設定ファイル
+| ファイルパス | 役割 | 説明 |
+|-------------|------|------|
+| `src/shared/constants/breakpoints.ts` | **SSOT** | ブレークポイント定義の単一ソース（bp, mq, match, BP） |
+| `src/shared/constants/tests/breakpoints.spec.ts` | テスト | ブレークポイント定義のユニットテスト |
+| `src/plugins/vite-plugin-custom-media.ts` | 自動生成 | カスタムメディアトークンを自動生成するViteプラグイン |
+| `src/shared/styles/custom-media.css` | 自動生成CSS | 6本のカスタムメディアトークン定義（--lt-md, --ge-md, --ge-lg, --ge-xl, --md-only, --lg-only） |
+| `src/shared/theme/cssVars.ts` | CSS変数 | ブレークポイントをCSS変数として出力 |
+
+#### 🎣 Hooks・ユーティリティ
+| ファイルパス | 役割 | 説明 |
+|-------------|------|------|
+| `src/shared/hooks/ui/useResponsive.ts` | **メインHook** | ビューポート幅に基づくレスポンシブ判定の統一Hook |
+| `src/shared/hooks/ui/useElementResponsive.ts` | 要素Hook | 特定DOM要素のサイズに基づくレスポンシブ判定 |
+| `src/shared/hooks/ui/useSidebar.ts` | サイドバー | サイドバーの折りたたみ状態管理（useResponsive使用） |
+| `src/shared/utils/responsiveTest.ts` | テストユーティリティ | レスポンシブテスト用のヘルパー関数 |
+
+#### 🎨 スタイルファイル
+| ファイルパス | 役割 | 説明 |
+|-------------|------|------|
+| `src/shared/styles/base.css` | ベーススタイル | グローバルスタイル定義 |
+| `src/shared/styles/tokens.css` | デザイントークン | カラー、スペーシングなどのトークン定義 |
+| `src/shared/styles/custom-media.css` | カスタムメディア | 自動生成されたメディアクエリトークン |
+
+---
+
+## 10. useResponsive の使用例
+
+### 📱 基本的な使い方
+
+```tsx
+import { useResponsive } from '@/shared';
+
+const MyComponent = () => {
+  // パターン1: フラグで判定
+  const { isMobile, isTablet, isDesktop } = useResponsive();
+  
+  if (isMobile) {
+    return <MobileView />;
+  }
+  
+  // パターン2: 詳細フラグで判定
+  const { flags } = useResponsive();
+  if (flags.isXs || flags.isSm) {
+    return <SmallScreenView />;
+  }
+  
+  // パターン3: 幅・高さを直接使用
+  const { width, height } = useResponsive();
+  const columnCount = width < 768 ? 1 : width < 1024 ? 2 : 3;
+  
+  return <ResponsiveGrid columns={columnCount} />;
+};
+```
+
+### 🎯 主な使用ファイル
+
+#### レポート機能（report feature）
+- `src/features/report/viewer/ui/ReportSampleThumbnail.tsx` — サムネイル表示
+- `src/features/report/viewer/ui/PDFViewer.tsx` — PDF表示
+- `src/features/report/preview/ui/PreviewSection.tsx` — プレビュー
+- `src/features/report/base/ui/ReportHeader.tsx` — ヘッダー
+- `src/features/report/manage/ui/ReportManagePageLayout.tsx` — 管理ページ
+- `src/features/report/selector/ui/ReportStepIndicator.tsx` — ステップ表示
+- `src/features/report/modal/ui/ReportStepperModal.tsx` — モーダル
+- `src/features/report/selector/model/useReportLayoutStyles.ts` — レイアウトスタイル
+- `src/features/report/upload/ui/CsvUploadSection.tsx` — CSVアップロード
+
+#### ダッシュボード機能（dashboard feature）
+- `src/features/dashboard/ukeire/shared/model/useResponsiveLayout.ts` — 受入ダッシュボード専用レイアウトHook
+
+#### 共通UI（shared UI）
+- `src/shared/ui/ReportStepIndicator.tsx` — ステップインジケーター
+- `src/shared/ui/VerticalActionButton.tsx` — 縦型アクションボタン
+
+---
+
+## 11. ブレークポイント体系の詳細
+
+### 🎨 bp オブジェクト（TypeScript）
+```typescript
+export const bp = {
+  xs: 0,     // 最小（0px〜）
+  sm: 640,   // 小型デバイス（640px〜）Tailwind準拠
+  md: 768,   // タブレット開始（768px〜）
+  lg: 1024,  // 大型タブレット/小型ノートPC（1024px〜）Tailwind準拠
+  xl: 1280,  // デスクトップ開始（1280px〜）Tailwind準拠
+} as const;
+```
+
+### 🎨 カスタムメディアトークン（CSS）
+```css
+@custom-media --lt-md (max-width: 767px);   /* ≤767 (mobile) */
+@custom-media --ge-md (min-width: 768px);   /* ≥768 (tablet+) */
+@custom-media --ge-lg (min-width: 1024px);  /* ≥1024 (desktop-sm+) */
+@custom-media --ge-xl (min-width: 1280px);  /* ≥1280 (desktop-xl) */
+@custom-media --md-only (min-width: 768px) and (max-width: 1023px); /* tablet only */
+@custom-media --lg-only (min-width: 1024px) and (max-width: 1279px); /* desktop-sm only */
+```
+
+### 📐 Lean-3 実運用体系（BP）
+```typescript
+export const BP = {
+  mobileMax: 767,    // mobile ≤767px
+  tabletMin: 768,    // tablet 768–1279px
+  desktopMin: 1280,  // desktop ≥1280px
+} as const;
+```
+
+### 🔍 ResponsiveFlags（useResponsive返り値）
+```typescript
+type ResponsiveFlags = {
+  // 5段階詳細（Tailwind準拠）
+  isXs: boolean;      // < 640
+  isSm: boolean;      // 640–767
+  isMd: boolean;      // 768–1023
+  isLg: boolean;      // 1024–1279
+  isXl: boolean;      // ≥1280
+  tier: Tier;         // "xs" | "sm" | "md" | "lg" | "xl"
+  
+  // グルーピング（Lean-3互換）
+  isMobile: boolean;  // xs or sm (≤767)
+  isTablet: boolean;  // md (768–1023)
+  isLaptop: boolean;  // lg (1024–1279)
+  isDesktop: boolean; // xl (≥1280)
+  isNarrow: boolean;  // <1280
+};
+```
+
+---
+
 ## 8. 結論
 
 ### 🎉 移行完了
@@ -203,6 +338,13 @@ Tailwind CSS準拠の新bp値体系への移行が完了しました。
 - ✅ **カスタムメディア拡充**: 4段階 + 2種の範囲指定（6本体制）
 - ✅ **保守性向上**: 将来的な拡張・調整が容易
 - ✅ **破壊的変更の回避**: 型チェック・ビルド成功
+- ✅ **統一Hook提供**: `useResponsive` で一元管理
+
+**ファイル構成の明確化**:
+- 📁 **SSOT**: `src/shared/constants/breakpoints.ts`
+- 🎣 **メインHook**: `src/shared/hooks/ui/useResponsive.ts`
+- 🔧 **自動生成**: `src/plugins/vite-plugin-custom-media.ts` → `src/shared/styles/custom-media.css`
+- 📱 **広範な使用**: 20以上のコンポーネントで採用済み
 
 **次のステップ**:
 1. 📱 デバイス実機でのUI確認
@@ -212,7 +354,8 @@ Tailwind CSS準拠の新bp値体系への移行が完了しました。
 
 ---
 
-**Report Updated:** 2025-10-23  
+**Report Updated:** 2025-12-01  
 **Migration Status:** ✅ **Complete**  
 **Build Status:** ✅ **Passing**  
-**UI Compatibility:** ⚠️ **Manual QA Required**
+**UI Compatibility:** ⚠️ **Manual QA Required**  
+**File Structure:** ✅ **Documented**

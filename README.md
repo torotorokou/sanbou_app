@@ -1,456 +1,298 @@
+# sanbou_app Web アプリケーション
 
-# sanbou_app
+本リポジトリは、Vite + React、複数の FastAPI サービス、PostgreSQL、Nginx を
+Docker Compose でまとめて起動する Web アプリです。
 
-## 4 環境構成 (unified names)
+> **🔒 セキュリティアップデート（2025-12-08）**  
+> CVE脆弱性に対応しました。詳細は [docs/security/CVE-2025-fixes-summary.md](docs/security/CVE-2025-fixes-summary.md) を参照してください。
 
-| ENV      | 目的 | .env ファイル        | Compose ファイル                | Health URL                         | 備考 |
-|----------|------|----------------------|---------------------------------|------------------------------------|------|
-| ENV       | 用途 | .env | compose | Health | 備考 |
-|-----------|------|------|---------|--------|------|
-| local_dev | 開発 (ホットリロード) | .env.local_dev | docker-compose.dev.yml | http://localhost:8001/health | Vite+uvicorn reload / nginx 無し |
-| local_stg | ローカル STG 模擬 | .env.local_stg | docker-compose.stg.yml | http://stg.local/health | hosts に 127.0.0.1 stg.local |
-| vm_stg    | VM STG | .env.vm_stg | docker-compose.stg.yml | http://stg.sanbou-app.jp/health | 8080/8443 / 将来 TLS |
-| vm_prod   | 本番 | .env.vm_prod | docker-compose.prod.yml | https://sanbou-app.jp/health | 80/443 公開 |
+## 環境構成（2025-12-06 更新）
 
-統一 Nginx 設定: `app/nginx/conf.d/stg.conf` を local_stg / vm_stg で共用し、`server_name` をコメント切替。TLS はコメントアウト済みセクションを有効化して利用。
+プロジェクトは以下の **3つの主要環境** で運用されます：
 
-### 基本コマンド
+1. **local_dev** - ローカル開発環境（ホットリロード有効）
+2. **vm_stg** - GCP VM ステージング環境（VPN/Tailscale 経由）
+3. **vm_prod** - GCP VM 本番環境（LB + IAP 経由）
 
-```
-make rebuild ENV=local_dev|local_stg|vm_stg|vm_prod   # config → down → build --pull --no-cache → up → health
-make up ENV=local_stg                        # 起動 (build あり)
-make down ENV=vm_stg                         # 停止
-make logs ENV=prod S=nginx                   # ログ (サービス指定可)
-make restart ENV=dev                         # 再起動
-make health ENV=local_stg                    # ヘルスチェック (curl/wget)
-```
-
-### local_stg 利用時の hosts 設定
-
-```
-sudo sh -c 'echo "127.0.0.1 stg.local" >> /etc/hosts'
-```
-
-### 典型的な検証手順
-
-1. 必要な `.env` 作成 (例): cp env/.env.example env/.env.local_stg し値調整（他: local_dev / vm_stg / vm_prod も同様）
-2. `make rebuild ENV=local_stg`
-3. `curl -I http://stg.local/health` (ない場合は `make logs ENV=local_stg S=nginx` で確認)
-4. ブラウザで http://stg.local/ を開く
-
-他環境も同様に `ENV=` を差し替え
-
-### ロールバック手順 (今回拡張を取り消す場合)
-
-1. 追加ファイル削除:
-  - env/.env.local_dev
-  - env/.env.local_stg
-  - env/.env.vm_stg
-  - env/.env.vm_prod
-  - env/.env.example
-  - app/nginx/conf.d/stg.conf
-2. `docker/docker-compose.stg.yml` の `nginx` サービス volume を 元の `../app/nginx/conf.d.stg:/etc/nginx/conf.d` へ戻す
-3. Makefile を Git 履歴で前の版に戻す (`git checkout <old_commit> -- makefile` もしくは `git revert`)
-4. README の本節を削除
-5. `make rebuild ENV=stg` / `make up ENV=dev` で従来フロー確認
-
-最小差分化のため既存サービス名・ポート・ボリュームは変更していません。`dev` 環境ヘルスチェックは実際の公開ポート (ai_api:8001) に合わせて `http://localhost:8001/health` としています (既存構成では 8000 未公開のため)。
-
-
-フロントエンド（Vite + React）と複数のFastAPIサービス、PostgreSQL、NginxをDocker Composeで統合したWebアプリです。
-
-2025-09 更新: 環境分離を明確化
-- dev: Vite dev サーバ + FastAPI (uvicorn --reload) を直接公開。Nginx コンテナは起動しない。
-- stg/prod: Nginx (edge プロファイル) が React ビルド成果物を配信し、FastAPI 群をリバースプロキシ。
-- DB(PostgreSQL) を共通サービス `db` として追加。
+詳細は [環境構成マトリクス](docs/20251206_ENV_MATRIX.md) を参照してください。
 
 ---
 
-## Quick Start (local_dev)
+## 1. ローカルで動かす（local_dev）
 
-前提（ローカル開発・Linux想定）
-
-- Docker / Docker Compose v2 がインストール済み
-- make が利用可能
-
-手順（開発環境: dev）
-
-1) 環境変数ファイルを用意
-
-  - 必須: env/.env.local_dev を作成
-   - 例（必要に応じて調整）:
-
-     ```env
-     POSTGRES_USER=postgres
-     POSTGRES_PASSWORD=postgres
-     POSTGRES_DB=sanbou
-     POSTGRES_PORT=5432
-
-     # 開発用ポート（衝突時は変更可）
-     FRONTEND_PORT=5173
-     AI_API_PORT=8001
-     LEDGER_API_PORT=8002
-     SQL_API_PORT=8003
-     RAG_API_PORT=8004
-     ```
-
-   - GCP を使う場合はサービスアカウント鍵を `secrets/gcs-key.json` に配置（devは任意、stg/prodは必須）
-
-2) コンテナを起動
-
-   - コマンド:
-
-     ```bash
-  make up ENV=local_dev
-     ```
-
-3) アクセス (dev)
-
-  - Frontend: http://localhost:5173
-  - AI API: http://localhost:8001/docs
-  - Ledger API: http://localhost:8002/docs
-  - SQL API: http://localhost:8003/docs
-  - RAG API: http://localhost:8004/docs
-  - Postgres: localhost:5432 (HOST 側からは `psql -h localhost -U myuser myapp`)
-
-4) 停止・ログ・再ビルド
-
-  - 停止: make down ENV=local_dev
-  - ログ: make logs ENV=local_dev
-  - 再ビルド: make rebuild ENV=local_dev
-
----
-
-## Database Migration (Alembic)
-
-本プロジェクトでは [Alembic](https://alembic.sqlalchemy.org/) を使用して PostgreSQL のスキーマ管理を行っています。
-
-### クイックコマンド
+### 1-1. リポジトリ取得
 
 ```bash
-# マイグレーション実行（最新版に更新）
-make al-up
-
-# 現在のリビジョン確認
-make al-cur
-
-# マイグレーション履歴表示
-make al-hist
-
-# 新規リビジョン作成（手動）
-make al-rev MSG="add column xxx to table yyy"
-
-# 新規リビジョン作成（自動検出）
-make al-rev-auto MSG="add column xxx to table yyy"
-
-# 最新スキーマをダンプ（sql_current/schema_head.sql に出力）
-make al-dump-schema-current
-
-# 1つ前にロールバック
-make al-down
+git clone <REPO_URL>
+cd sanbou_app
 ```
 
-### 詳細ドキュメント
-
-- **[DB Migration Policy](docs/db_migration_policy.md)** - 運用ルール・新規環境構築手順・トラブルシューティング
-- **[外部SQL参照調査結果](docs/ALEMBIC_SQL_REFERENCE_SURVEY_20251126.md)** - 既存リビジョンの外部SQLファイル依存状況
-- **[sql_current/ README](app/backend/core_api/migrations/alembic/sql_current/README.md)** - 最新版スキーマスナップショットの管理方法
-
-### ディレクトリ構成
-
-```
-app/backend/core_api/migrations/
-├── alembic.ini              # Alembic 設定
-├── alembic/
-│   ├── env.py              # 環境設定（DSN、複数スキーマ対応）
-│   ├── versions/           # マイグレーション履歴（70+ revisions）
-│   ├── sql/                # 既存revisionが参照するSQLファイル（互換性維持）
-│   └── sql_current/        # 最新版スキーマスナップショット
-│       ├── README.md
-│       └── schema_head.sql # pg_dump --schema-only の出力
-```
-
-### 新規環境のセットアップ
-
-**パターンA: スキーマダンプから高速初期化（推奨）**
+### 1-2. env ファイルの準備
 
 ```bash
-# 1. DB起動
+# 開発環境用の env をコピー
+cp env/.env.example env/.env.local_dev
+cp secrets/.env.secrets.template secrets/.env.local_dev.secrets
+```
+
+最低限必要な設定（`env/.env.local_dev`）:
+
+```env
+# 認証モード
+AUTH_MODE=dummy
+
+# DB 設定
+POSTGRES_USER=sanbou_app_dev
+POSTGRES_DB=sanbou_dev
+# POSTGRES_PASSWORD は secrets/.env.local_dev.secrets に記載
+
+# デバッグモード
+DEBUG=true
+```
+
+secrets ファイル（`secrets/.env.local_dev.secrets`）:
+
+```env
+POSTGRES_PASSWORD=your_secure_password
+OPENAI_API_KEY=sk-...
+GEMINI_API_KEY=...
+```
+
+### 1-3. コンテナ起動
+
+```bash
 make up ENV=local_dev
+```
 
-# 2. スキーマ一括投入
+アクセス先:
+
+- Frontend: http://localhost:5173
+- AI API:  http://localhost:8001/docs
+- Ledger:  http://localhost:8002/docs
+- Core API: http://localhost:8003/docs
+- RAG:     http://localhost:8004/docs
+- Manual:  http://localhost:8005/docs
+
+よく使うコマンド:
+
+```bash
+make down ENV=local_dev      # 停止
+make logs ENV=local_dev      # ログ確認
+make restart ENV=local_dev   # 再起動
+make rebuild ENV=local_dev   # 再ビルド＋再起動
+make health ENV=local_dev    # ヘルスチェック
+```
+
+### 1-4. DB 初期化（ローカル）
+
+バックアップから復元:
+
+```bash
+make restore-from-dump ENV=local_dev DUMP=backups/sanbou_dev_2025-12-05.dump
+```
+
+スキーマだけ欲しい場合（空 DB で OK なとき）:
+
+```bash
+# DB 起動済みで実行
 make al-init-from-schema
-
-# 3. Alembic履歴をHEADにマーク
-make al-cur  # HEAD revision IDを確認
-make al-stamp REV=<HEAD_REVISION_ID>
-```
-
-**パターンB: マイグレーション履歴から順次適用**
-
-```bash
-# 1. DB起動
-make up ENV=local_dev
-
-# 2. 全マイグレーション実行
+# または
 make al-up
 ```
 
-### 新規リビジョン作成のベストプラクティス
-
-- ✅ **推奨**: SQLを revision ファイル内にべた書き（`op.execute("""...""")`）
-- ❌ **非推奨**: 外部SQLファイルを読み込む（`Path(...).read_text()`）
-- 詳細は [DB Migration Policy](docs/db_migration_policy.md) を参照
-
 ---
 
-## STG / 本番 (vm_stg / vm_prod)
+## 2. GCP VM で動かす（vm_stg / vm_prod）
 
-1) 環境変数ファイルを用意
+### 2-0. 前提
 
-- env/.env.vm_stg または env/.env.vm_prod を作成
-- 初回の `make up` 実行時、`OPENAI_API_KEY` と `GEMINI_API_KEY` を対話入力すると `secrets/.env.<ENV>.secrets` に安全に保存されます
-- GCP利用時は `secrets/gcs-key.json` を必ず配置
+- GCE VM が作成済み（Linux、Docker / Docker Compose v2 / make インストール済み）
+- **vm_stg**: VPN/Tailscale 経由でアクセス可能
+- **vm_prod**: GCP Load Balancer + IAP が設定済み
+- サービスアカウントなど GCP 側の権限設定は別途完了済み
 
-2) 起動 (Nginx を有効化する edge プロファイルを利用)
+### 2-1. VM 上でリポジトリ取得
+
+VM に SSH してから:
 
 ```bash
-COMPOSE_PROFILES=edge make up ENV=vm_stg
-# 本番
-COMPOSE_PROFILES=edge make up ENV=vm_prod
+cd ~
+git clone <REPO_URL>
+cd sanbou_app
+git checkout main  # または特定のタグ/ブランチ
 ```
 
-3) Nginx（エッジ）
+### 2-2. env ファイルの準備
 
-- stg/prod は Nginx プロファイル（edge）で起動し、80/443 を公開
-- 証明書と設定を配置:
-  - `app/nginx/certs/*`（鍵/証明書）
-  - `app/nginx/conf.d/*.conf`（仮想ホスト設定）
-
----
-
-## よくあるエラーと対処
-
-- envファイルが見つからない
-  - `env/.env.dev`（または `.env.stg`/`.env.prod`）を作成してから `make up ENV=<env>` を実行
-- ポート競合
-  - `env/.env.<env>` の `FRONTEND_PORT`, `AI_API_PORT` などを空いている番号に変更
-  - (stg) Nginx で 8080/8443 衝突時は一時的に環境変数指定: `STG_NGINX_HTTP_PORT=18080 STG_NGINX_HTTPS_PORT=18443 make up ENV=stg`
-  - 恒久対応するなら `.env.stg` に `STG_NGINX_HTTP_PORT=18080` / `STG_NGINX_HTTPS_PORT=18443` を追記
-  - 8080 を占有しているプロセス調査: `ss -ltnp | grep :8080` または `lsof -iTCP:8080 -sTCP:LISTEN`
-  - 不要な systemd サービスなら: `sudo systemctl disable --now <service>` （停止前に影響調査）
-- `secrets/gcs-key.json not found`
-  - GCP連携が必須の環境（stg/prod）ではファイルを配置。devでは警告のみ
-
----
-
-## プロジェクト構成（簡略）
-****
-- `app/frontend`: フロントエンド（Vite + React）
-- `app/backend/*_api`: 各FastAPIサービス（ai/ledger/sql/rag）
-- `app/nginx`: 逆プロキシ設定と証明書
-- `config`: CSV/レポート等の設定群
-- `dbdata`: PostgreSQLデータ永続化用ボリューム
-- `docker-compose.yml`: 本番相当のベース設定
-- `docker-compose.override.yml`: 開発用の上書き設定（ホットリロードなど）
-- `makefile`: 起動/停止/再ビルドなどの補助
-
----
-
-## 補足（開発の進め方）
-
-- 日常操作は `make up|down|logs|rebuild ENV=dev` が基本
-- 各サービスの詳細は `app/backend/*/README.md` や `frontend/README.md`（存在する場合）を参照
-- 機密情報（APIキー・鍵ファイル・DBデータ）は必ず git 管理外（`.gitignore` 済）
-
----
-
-## 環境分割 (dev / stg / prod) の仕組み
-
-本リポジトリでは以下の方針で 3 環境を docker compose の override で切り替えます。
-
-### ファイル構成
-
-```
-docker-compose.yml            # 共通土台 (サービス定義)
-docker-compose.dev.yml        # dev 専用 (ホットリロード, ポート直接公開)
-docker-compose.stg.yml        # stg 専用 (prod と同等, ポート 8080/8443)
-docker-compose.prod.yml       # prod 専用 (nginx の 80/443 のみ公開)
-env/
-  ├─ .env.dev                 # 開発用環境変数 (ホットリロード前提)
-  ├─ .env.stg                 # ステージング用 (本番に近い値)
-  └─ .env.prod                # 本番用 (Secrets は別途 vault / 環境変数注入)
-frontend/                     # React(TypeScript) SPA (Vite)
-backend/                      # FastAPI (例: ai_api を backend として利用)
-nginx/                        # リバースプロキシ (設定 / 証明書)
-```
-
-### サービス概要
-
-| サービス | 役割 | dev | stg | prod |
-|----------|------|-----|-----|------|
-| frontend | React/Vite SPA | npm run dev (port 5173) | nginx runtime (内部) | nginx runtime (内部) |
-| backend  | FastAPI | uvicorn --reload (port 8000) | 標準 uvicorn (内部) | 標準 uvicorn (内部) |
-| nginx    | Reverse Proxy & Static | (未起動) | 8080/8443 公開 (COMPOSE_PROFILES=edge) | 80/443 公開 (COMPOSE_PROFILES=edge) |
-
-### 起動例
-
-```
-make up                    # dev (ホットリロード, nginx 無し)
-COMPOSE_PROFILES=edge make up ENV=stg   # stg (nginx 有効)
-COMPOSE_PROFILES=edge make up ENV=prod  # prod (nginx 有効)
-make logs ENV=dev S=ledger_api
-COMPOSE_PROFILES=edge make rebuild ENV=stg
-```
-
-### なぜ override 方式か
-
-- 共有設定 (依存関係 / ネットワーク / ビルド) を `docker-compose.yml` に集約し重複を削減
-- 環境差分 (ポート公開 / コマンド / ボリュームマウント) のみ小さい override に記述
-- 将来サービス追加時は共通に 1 箇所追加 + dev 用マウント追記のみで済む
-
-### 初心者向けメモ
-
-1. dev 環境ではコードを編集すると即座に反映されます (Vite + uvicorn --reload)
-2. stg/prod ではコンテナ内にビルド成果物のみ含み、ホットリロードは無効です
-3. stg/prod で nginx を動かすには `COMPOSE_PROFILES=edge` を付与 (付けない場合は内部検証用として API 群のみ起動)
-4. 本番では `frontend` ビルド成果物は nginx イメージ内に含まれ、`frontend` 開発用コンテナは起動しません
-4. 秘密情報(APIキー等)は `.env.prod` に直書きせず安全な仕組み(Secrets Manager, 環境変数注入)を利用してください
-
----
-
----
-
-## サポート
-
-不明点や要望があれば、プロジェクト管理者まで連絡してください。
-
----
-
-## Docker 最適化 (2025-08)
-
-本リポジトリはコンテナイメージサイズ削減 / セキュリティ向上 / ビルド時間短縮を目的に以下の改善を実施しました。
-
-### 変更概要
-
-- ベースイメージ統一
-  - Frontend: `node:20-slim` (builder) + `nginx:alpine` (runtime)
-  - Backend (FastAPI 各種): `python:3.11-slim` multi-stage (builder: wheel 生成 / runtime: 非root)
-- Multi-stage build 導入
-  - `pip wheel` による依存レイヤーキャッシュ化
-  - runtime へは wheel インストール済み最小セットのみコピー
-  - frontend は dist のみ nginx へ配置
-- キャッシュ最適化
-  - BuildKit 対応 `--mount=type=cache` を pip / npm へ適用
-  - lockfile (`package-lock.json` / `requirements.txt`) ベースの再現性
-- .dockerignore 強化
-  - `node_modules`, `dist`, `tests`, `__pycache__`, `.env*`, logs などを除外し context 軽量化
-- セキュリティ
-  - 全 FastAPI サービス / frontend runtime を非 root 実行 (appuser / nginx)
-  - `--no-install-recommends` / apt キャッシュ削除の徹底
-  - Python 環境: `PYTHONDONTWRITEBYTECODE=1`, `PYTHONUNBUFFERED=1`
-- HEALTHCHECK 追加 (各 API / frontend)
-- Compose での image 命名方針: `${REGISTRY:-local}/sanbou-<service>:<tag>`
-
-### 期待効果 (目安)
-
-- Frontend runtime イメージ: 50–80MB 台 (nginx:alpine + dist のみ)
-- API runtime イメージ: 180–250MB 以内 (依存状況により変動 / LibreOffice を含む ledger_api は上限付近の可能性)
-- 2回目以降のビルドは wheel / npm ci キャッシュで高速化
-
-### ビルド方法
-
-例: (REGISTRY 未指定ローカルビルド)
+#### STG（vm_stg）
 
 ```bash
-docker build -t local/sanbou-frontend:dev -f app/frontend/Dockerfile app/frontend
-docker build -t local/sanbou-ai-api:dev -f app/backend/ai_api/Dockerfile app/backend/ai_api
+cp env/.env.example env/.env.vm_stg
+cp secrets/.env.secrets.template secrets/.env.vm_stg.secrets
 ```
 
-複数サービス並列ビルド (GNU make + BuildKit 利用例):
+重要な設定（`env/.env.vm_stg`）:
+
+```env
+# 認証モード（VPN 経由固定ユーザー）
+AUTH_MODE=vpn_dummy
+VPN_USER_EMAIL=stg-admin@honest-recycle.co.jp
+VPN_USER_NAME=STG Administrator
+
+# DB 設定
+POSTGRES_USER=sanbou_app_stg
+POSTGRES_DB=sanbou_stg
+
+# デバッグモード
+DEBUG=false
+IAP_ENABLED=false
+
+# PUBLIC_BASE_URL は VPN 内 IP または FQDN
+PUBLIC_BASE_URL=http://100.64.0.1
+```
+
+#### PROD（vm_prod）
 
 ```bash
-DOCKER_BUILDKIT=1 docker compose build --parallel
+cp env/.env.example env/.env.vm_prod
+cp secrets/.env.secrets.template secrets/.env.vm_prod.secrets
 ```
 
-### 実行 (開発)
+重要な設定（`env/.env.vm_prod`）:
 
-従来通り:
+```env
+# 認証モード（IAP ヘッダ検証）
+AUTH_MODE=iap
+IAP_ENABLED=true
+IAP_AUDIENCE=/projects/PROJECT_NUMBER/global/backendServices/SERVICE_ID
+
+# DB 設定
+POSTGRES_USER=sanbou_app_prod
+POSTGRES_DB=sanbou_prod
+
+# デバッグモード（必ず false）
+DEBUG=false
+
+# PUBLIC_BASE_URL は本番ドメイン
+PUBLIC_BASE_URL=https://sanbou-app.jp
+```
+
+### 2-3. Docker イメージの準備
+
+VM では **Artifact Registry からイメージを pull** します。
+
+ローカル PC で事前にイメージをビルド & push:
 
 ```bash
-make up ENV=dev
+# STG イメージ
+make publish-stg-images STG_IMAGE_TAG=stg-20251206
+
+# PROD イメージ
+make publish-prod-images PROD_IMAGE_TAG=prod-20251206
 ```
 
-### ロールバック手順
-
-1. Git でこの変更コミットを revert (`git revert <commit-hash>`) する
-2. 旧 Dockerfile / .dockerignore / README 状態へ戻る
-3. `docker compose build --no-cache` で再ビルドし挙動確認
-
-もしくは一時的に特定サービスだけ旧版を使いたい場合:
+VM 側で gcloud 認証:
 
 ```bash
-docker build -t local/sanbou-ai-api:rollback -f app/backend/ai_api/Dockerfile.prev app/backend/ai_api
+gcloud auth configure-docker asia-northeast1-docker.pkg.dev
 ```
-(
-旧 Dockerfile を `Dockerfile.prev` として保管している想定。無い場合は Git 履歴から復元)
 
-### 今後の追加改善候補
+### 2-4. コンテナ起動
 
-- Slim LibreOffice / unoconv 代替の検証 (ledger_api サイズさらなる削減)
-- `requirements.txt` を `pip-tools` で lock 化
-- マルチプラットフォーム (linux/amd64, arm64) ビルド対応
-- Trivy / Grype を用いた CI の脆弱性スキャン
+#### STG 環境（vm_stg）
+
+```bash
+make up ENV=vm_stg
+```
+
+アクセス: VPN 経由で `http://100.x.x.x/`（Tailscale IP）
+
+#### PROD 環境（vm_prod）
+
+```bash
+make up ENV=vm_prod
+```
+
+### 2-5. ヘルスチェック
+
+```bash
+make health ENV=vm_stg   # STG
+make health ENV=vm_prod  # PROD
+```
+
+動かない場合のログ確認:
+
+```bash
+make logs ENV=vm_stg S=nginx     # nginx ログ
+make logs ENV=vm_stg S=core_api  # core_api ログ
+```
+
+### 2-6. DB 初期化（GCP VM 上）
+
+VM 内のコンテナで DB を動かす場合は、ローカルと同じコマンドで ENV だけ変更:
+
+```bash
+# STG の DB にダンプを流す
+make restore-from-dump ENV=vm_stg DUMP=backups/sanbou_stg_2025-12-05.dump
+
+# PROD の DB にダンプを流す
+make restore-from-dump ENV=vm_prod DUMP=backups/sanbou_prod_2025-12-05.dump
+```
 
 ---
 
-## GitHub Environments の Secrets を一括登録する
+## 3. よくある質問
 
-`.env.common` をリポジトリに含めず、GitHub Environments の Secrets に分離して管理するためのツールを用意しています。
+### Q: local_stg / local_prod はどこ?
 
-前提
-- GitHub CLI `gh` がインストール・ログイン済み（dry-run は未インストールでも可）
-- JSON 形式の import の場合は `jq` が必要
-- リポジトリ管理者権限（環境作成・Secrets登録）
+A: **2025-12-06 に廃止されました**。vm_stg / vm_prod で十分に検証可能なため、ローカルでの本番近似構成は不要と判断しました。
 
-スクリプト
-- `scripts/gh_env_secrets_sync.sh`
-  - .env / JSON / CSV から、dev / stg / prod などの環境に「同名キーで値だけ切替」を適用
-  - 無い Environment は自動作成
-  - `--dry-run` で差分確認のみ
+### Q: 認証モード（AUTH_MODE）とは?
 
-使い方（例）
-1) 単一環境に .env を取り込む（例: stg）
-```bash
-./scripts/gh_env_secrets_sync.sh \
-  --repo <owner>/<repo> \
-  --env stg \
-  --file env/.env.common
-```
+A: 環境ごとに異なる認証方式を切り替えるための設定です：
 
-2) 複数環境を JSON で一括
-```bash
-./scripts/gh_env_secrets_sync.sh \
-  --repo <owner>/<repo> \
-  --json scripts/examples/secrets.json
-```
+- `dummy` - 開発用固定ユーザー（local_dev / local_demo）
+- `vpn_dummy` - VPN 経由固定ユーザー（vm_stg）
+- `iap` - IAP ヘッダ検証（vm_prod）
 
-3) 複数環境を CSV で一括
-```bash
-./scripts/gh_env_secrets_sync.sh \
-  --repo <owner>/<repo> \
-  --csv scripts/examples/secrets.csv
-```
+詳細は [環境構成マトリクス](docs/20251206_ENV_MATRIX.md) を参照。
 
-オプション
-- `--prefix APP_` ですべてのキーに接頭辞を付与
-- `--dry-run` で実際の登録を行わずプレビュー
+### Q: Docker イメージのビルドとデプロイの流れは?
 
-入力フォーマット
-- .env: `KEY=VALUE` 形式（コメント・空行可）
-- JSON（推奨）: `{ "dev": {"KEY":"VAL"}, "stg": {...}, "prod": {...} }`
-- CSV: `env,key,value`（カンマを含む値は JSON の使用を推奨）
+A:
 
-サンプル
-- `scripts/examples/secrets.json`
-- `scripts/examples/secrets.csv`
+1. ローカル PC で `make publish-stg-images` または `make publish-prod-images`
+2. Artifact Registry にイメージが push される
+3. VM で `make up ENV=vm_stg` または `make up ENV=vm_prod`
+4. VM が Artifact Registry からイメージを pull して起動
+
+### Q: Dockerfile の --target とは?
+
+A: マルチステージビルドのターゲットステージ指定です：
+
+- `--target dev` - ホットリロード対応（local_dev / local_demo）
+- `--target stg` - STG 用ランタイム（vm_stg）
+- `--target prod` - PROD 用ランタイム（vm_prod）
+
+詳細は各 Dockerfile のコメントを参照。
+
+---
+
+## 4. 参考資料
+
+- [環境構成マトリクス](docs/20251206_ENV_MATRIX.md) - 環境別の詳細設定
+- [Makefile](makefile) - コマンド定義と環境マッピング
+- [IAP 認証実装](docs/20251203_IAP_AUTHENTICATION_IMPLEMENTATION.md)
+- [backend_shared 統合ログ](docs/20251202_LOGGING_INTEGRATION_SUMMARY.md)
+
+---
+
+## 更新履歴
+
+- **2025-12-06**: 環境構成を 3 区分に統一（local_dev / vm_stg / vm_prod）
+  - local_stg / local_prod を廃止
+  - AUTH_MODE 導入
+  - VPN 認証プロバイダー実装
+  - docker-compose / Nginx 設定の整理
+- **2025-12-03**: IAP 認証実装、env ファイル整理
+- **2025-11-27**: backend_shared 統合ログ導入

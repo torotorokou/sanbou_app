@@ -1,5 +1,7 @@
 from .template_config import get_required_columns_definition
-from .logger import app_logger
+from backend_shared.application.logging import get_module_logger, create_log_context
+
+logger = get_module_logger(__name__)
 
 
 def load_filtered_dataframe(dfs, key, target_columns):
@@ -16,7 +18,6 @@ def load_filtered_dataframe(dfs, key, target_columns):
     Returns:
         pd.DataFrame: 指定されたカラムのみを持つDataFrame（フィルタ済み）
     """
-    logger = app_logger()
 
     if key not in dfs:
         raise KeyError(f"{key} はdfsに存在しません。")
@@ -37,7 +38,10 @@ def load_filtered_dataframe(dfs, key, target_columns):
 
     missing_cols = [col for col in target_columns if col not in df.columns]
     if missing_cols:
-        logger.error(f"{key} に必要なカラムが不足しています: {missing_cols}")
+        logger.error(
+            "必要カラム不足",
+            extra=create_log_context(operation="load_all_filtered_dataframes", key=key, missing_cols=missing_cols)
+        )
         raise ValueError(f"{key} に次のカラムが存在しません: {missing_cols}")
 
     return df[target_columns]

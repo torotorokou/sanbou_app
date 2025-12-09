@@ -3,6 +3,7 @@ Sales Tree Repository - mart.v_sales_tree_detail_base からのデータ取得
 
 売上ツリー分析用のリポジトリ実装
 データソース: mart.v_sales_tree_detail_base (明細レベルの事実テーブルビュー)
+  → stg.v_active_shogun_final_receive (確定受入データ、is_deleted=falseのみ) ※2025-12-01より変更
 """
 import logging
 import csv
@@ -11,7 +12,8 @@ from typing import Optional
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from app.domain.sales_tree import (
+from backend_shared.application.logging import create_log_context, get_module_logger, get_module_logger
+from app.core.domain.sales_tree import (
     SummaryRequest,
     SummaryRow,
     MetricEntry,
@@ -23,14 +25,14 @@ from app.domain.sales_tree import (
     AxisMode,
     CategoryKind,
 )
-from app.domain.sales_tree_detail import (
+from app.core.domain.sales_tree_detail import (
     DetailLinesRequest,
     DetailLinesResponse,
     DetailLine,
 )
 from app.infra.db.db import get_engine
 
-logger = logging.getLogger(__name__)
+logger = get_module_logger(__name__)
 
 
 class SalesTreeRepository:
@@ -77,7 +79,17 @@ class SalesTreeRepository:
             list[SummaryRow]: 営業ごとのサマリーデータ（metrics に TOP-N 集計を格納）
         """
         try:
-            logger.info(f"fetch_summary: mode={req.mode}, date_from={req.date_from}, date_to={req.date_to}, rep_ids={req.rep_ids}, category_kind={req.category_kind}")
+            logger.info(
+                "fetch_summary開始",
+                extra=create_log_context(
+                    operation="fetch_summary",
+                    mode=req.mode,
+                    date_from=str(req.date_from),
+                    date_to=str(req.date_to),
+                    rep_ids=req.rep_ids,
+                    category_kind=req.category_kind
+                )
+            )
             
             # 軸カラムの決定
             axis_id_col, axis_name_col = self._get_axis_columns(req.mode)
@@ -204,11 +216,18 @@ ORDER BY rep_id, rn
                 summary_dict[rep_id].metrics.append(metric)
             
             result_list = list(summary_dict.values())
-            logger.info(f"fetch_summary: returned {len(result_list)} reps")
+            logger.info(
+                "fetch_summary完了",
+                extra=create_log_context(operation="fetch_summary", reps_count=len(result_list))
+            )
             return result_list
         
         except Exception as e:
-            logger.error(f"Error in fetch_summary: {str(e)}", exc_info=True)
+            logger.error(
+                "fetch_summaryエラー",
+                extra=create_log_context(operation="fetch_summary", error=str(e)),
+                exc_info=True
+            )
             raise
     
     def fetch_daily_series(self, req: DailySeriesRequest) -> list[DailyPoint]:
@@ -218,7 +237,17 @@ ORDER BY rep_id, rn
         指定条件（営業/顧客/品目）での日別集計を返す
         """
         try:
-            logger.info(f"fetch_daily_series: date_from={req.date_from}, date_to={req.date_to}, rep_id={req.rep_id}, customer_id={req.customer_id}, item_id={req.item_id}")
+            logger.info(
+                "fetch_daily_series開始",
+                extra=create_log_context(
+                    operation="fetch_daily_series",
+                    date_from=str(req.date_from),
+                    date_to=str(req.date_to),
+                    rep_id=req.rep_id,
+                    customer_id=req.customer_id,
+                    item_id=req.item_id
+                )
+            )
             
             where_clauses = [
                 "sales_date BETWEEN :date_from AND :date_to",
@@ -277,11 +306,18 @@ ORDER BY sales_date
                 for row in result
             ]
             
-            logger.info(f"fetch_daily_series: returned {len(points)} points")
+            logger.info(
+                "fetch_daily_series完了",
+                extra=create_log_context(operation="fetch_daily_series", points_count=len(points))
+            )
             return points
         
         except Exception as e:
-            logger.error(f"Error in fetch_daily_series: {str(e)}", exc_info=True)
+            logger.error(
+                "fetch_daily_seriesエラー",
+                extra=create_log_context(operation="fetch_daily_series", error=str(e)),
+                exc_info=True
+            )
             raise
     
     def fetch_pivot(self, req: PivotRequest) -> CursorPage:
@@ -297,7 +333,19 @@ ORDER BY sales_date
         3. ソート・TOP-N・ページネーション適用
         """
         try:
-            logger.info(f"fetch_pivot: base={req.base_axis}:{req.base_id}, target={req.target_axis}, date_from={req.date_from}, date_to={req.date_to}, rep_ids={req.rep_ids}, category_kind={req.category_kind}")
+            logger.info(
+                "fetch_pivot開始",
+                extra=create_log_context(
+                    operation="fetch_pivot",
+                    base_axis=req.base_axis,
+                    base_id=str(req.base_id),
+                    target_axis=req.target_axis,
+                    date_from=str(req.date_from),
+                    date_to=str(req.date_to),
+                    rep_ids=req.rep_ids,
+                    category_kind=req.category_kind
+                )
+            )
             
             # 軸カラムの決定
             base_id_col, _ = self._get_axis_columns(req.base_axis)
@@ -384,8 +432,10 @@ LIMIT :page_size OFFSET :offset
             params["page_size"] = page_size
             params["offset"] = offset
             
-            logger.info(f"fetch_pivot SQL WHERE: {where_sql}")
-            logger.info(f"fetch_pivot SQL params: {params}")
+            logger.info(
+                "fetch_pivot SQL実行",
+                extra=create_log_context(operation="fetch_pivot", where_sql=where_sql, params=str(params))
+            )
             
             with self._engine.begin() as conn:
                 result = conn.execute(text(sql), params).mappings().all()
@@ -420,11 +470,18 @@ LIMIT :page_size OFFSET :offset
             if len(rows) == page_size:
                 next_cursor = str(offset + page_size)
             
-            logger.info(f"fetch_pivot: returned {len(rows)} rows, next_cursor={next_cursor}")
+            logger.info(
+                "fetch_pivot完了",
+                extra=create_log_context(operation="fetch_pivot", rows_count=len(rows), next_cursor=next_cursor)
+            )
             return CursorPage(rows=rows, next_cursor=next_cursor)
         
         except Exception as e:
-            logger.error(f"Error in fetch_pivot: {str(e)}", exc_info=True)
+            logger.error(
+                "fetch_pivotエラー",
+                extra=create_log_context(operation="fetch_pivot", error=str(e)),
+                exc_info=True
+            )
             raise
     
     @staticmethod

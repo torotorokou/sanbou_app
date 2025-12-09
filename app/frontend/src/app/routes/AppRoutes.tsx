@@ -30,6 +30,7 @@ const GlobalManualSearchPage = lazy(() => import('@/pages/manual').then(m => ({ 
 const ShogunManualListPage = lazy(() => import('@/pages/manual').then(m => ({ default: m.ShogunManualListPage })));
 const ManualDetailPage = lazy(() => import('@/pages/manual').then(m => ({ default: m.ManualDetailPage })));
 const ManualDetailRouteComponent = lazy(() => import('@/features/manual').then(m => ({ default: m.ManualDetailRoute })));
+const VendorMasterPage = lazy(() => import('@/pages/manual').then(m => ({ default: m.VendorMasterPage })));
 
 // Chat pages - using public API
 const SolvestNaviPage = lazy(() => import('@/pages/navi').then(m => ({ default: m.SolvestNaviPage })));
@@ -42,19 +43,28 @@ const NewsPage = lazy(() => import('@/pages/home').then(m => ({ default: m.NewsP
 const TokenPreviewPage = lazy(() => import('@/pages/utils').then(m => ({ default: m.TokenPreviewPage })));
 const TestPage = lazy(() => import('@/pages/utils').then(m => ({ default: m.TestPage })));
 
+// Settings pages - using public API
+const SettingsPage = lazy(() => import('@/pages/settings').then(m => ({ default: m.SettingsPage })));
+
+// Error pages
+const NotFoundPage = lazy(() => import('@/pages/error/NotFoundPage'));
+
 const AppRoutes: React.FC = () => {
     const location = useLocation();
     const state = location.state as { backgroundLocation?: Location } | undefined;
+    
+    // 本番環境ではテストページへのアクセスを404に
+    const isProduction = import.meta.env.MODE === 'production';
 
     return (
     <>
     <Suspense fallback={<div style={{padding:16}}><Spin /></div>}>
     <Routes location={state?.backgroundLocation || location}>
-        {/* テスト用ルート */}
-        <Route path='/test' element={<TestPage />} />
-
-    {/* ポータル(トップ) */}
-    <Route path={ROUTER_PATHS.PORTAL} element={<PortalPage />} />
+        {/* ポータル(トップ) - 最初に定義して優先度を高める */}
+        <Route path={ROUTER_PATHS.PORTAL} element={<PortalPage />} />
+        
+        {/* テスト用ルート - 開発環境のみ */}
+        {!isProduction && <Route path='/test' element={<TestPage />} />}
 
         {/* ダッシュボード */}
         <Route path={ROUTER_PATHS.DASHBOARD_UKEIRE} element={<InboundForecastDashboardPage />} />
@@ -86,6 +96,8 @@ const AppRoutes: React.FC = () => {
     <Route path='/manuals/shogun' element={<ShogunManualListPage />} />
         {/* 単独ページ（正ルート） */}
         <Route path='/manuals/shogun/:id' element={<ManualDetailPage />} />
+        {/* マスター - 業者ページ */}
+        <Route path='/manual/master/vendor' element={<VendorMasterPage />} />
 
 
     {/* データベース関連 */}
@@ -99,10 +111,13 @@ const AppRoutes: React.FC = () => {
             element={<TokenPreviewPage />}
         />
 
+        {/* 設定 */}
+        <Route path={ROUTER_PATHS.SETTINGS} element={<SettingsPage />} />
+
     {/* お知らせ */}
     <Route path={ROUTER_PATHS.NEWS} element={<NewsPage />} />
         {/* その他/404 */}
-                <Route path='*' element={<div>ページが見つかりません</div>} />
+                <Route path='*' element={<NotFoundPage />} />
         </Routes>
     </Suspense>
 

@@ -1,10 +1,11 @@
 import React, { useState, useCallback } from 'react';
-import { Modal, Button, Steps, Spin, message } from 'antd';
+import { Modal, Button, Steps, Spin } from 'antd';
 import { CheckCircleOutlined } from '@ant-design/icons';
+import { notifyError, notifySuccess } from '@features/notification';
 import { getApiEndpoint } from '@features/report/shared/config';
 import type { ReportKey } from '@features/report/shared/config';
 import type { ReportArtifactResponse } from '@features/report/preview/model/useReportArtifact';
-import { coreApi } from '@features/report/shared/api/http.adapter';
+import { coreApi } from '@features/report/shared/infrastructure/http.adapter';
 import type {
     InteractiveItem,
     InitialApiResponse,
@@ -120,13 +121,15 @@ const BlockUnitPriceInteractiveModal: React.FC<BlockUnitPriceInteractiveModalPro
     const handleApplySelectionsAndFinalize = useCallback(async () => {
         const sessionId = sessionData?.session_id;
         if (!sessionId) {
-            message.error('セッション情報が見つかりません。');
+            notifyError('エラー', 'セッション情報が見つかりません。');
             return;
         }
 
         const selectionPayloadMap = buildSelectionPayload(items, selections);
-        if (Object.keys(selectionPayloadMap).length === 0) {
-            message.error('選択内容がありません。');
+        
+        // 選択肢がない場合（items.length === 0）は空の選択で処理を進める
+        if (Object.keys(selectionPayloadMap).length === 0 && items.length > 0) {
+            notifyError('エラー', '選択内容がありません。');
             setCurrentStep(1);
             return;
         }
@@ -159,7 +162,7 @@ const BlockUnitPriceInteractiveModal: React.FC<BlockUnitPriceInteractiveModalPro
             console.log('[BlockUnitPrice] finalize response (artifact):', finalizeJson);
 
             setCurrentStep(3);
-            message.success('帳簿生成が完了しました');
+            notifySuccess('生成完了', '帳簿生成が完了しました');
             onSuccess(finalizeJson);
 
             setTimeout(() => {
@@ -167,7 +170,7 @@ const BlockUnitPriceInteractiveModal: React.FC<BlockUnitPriceInteractiveModalPro
             }, 1200);
         } catch (error) {
             console.error('Finalize flow failed:', error);
-            message.error('帳簿生成に失敗しました');
+            notifyError('エラー', '帳簿生成に失敗しました');
             setCurrentStep(1);
         } finally {
             setProcessing(false);
@@ -180,13 +183,18 @@ const BlockUnitPriceInteractiveModal: React.FC<BlockUnitPriceInteractiveModalPro
 
     const handleNext = useCallback(() => {
         if (currentStep === 0) {
-            const preview = buildLocalSelectionPreview();
-            setSelectionPreview(preview);
-            setCurrentStep(1);
+            // 選択肢がない場合は確認ステップをスキップして直接最終処理へ
+            if (items.length === 0) {
+                handleApplySelectionsAndFinalize();
+            } else {
+                const preview = buildLocalSelectionPreview();
+                setSelectionPreview(preview);
+                setCurrentStep(1);
+            }
         } else if (currentStep === 1) {
             handleApplySelectionsAndFinalize();
         }
-    }, [currentStep, buildLocalSelectionPreview, handleApplySelectionsAndFinalize]);
+    }, [currentStep, items.length, buildLocalSelectionPreview, handleApplySelectionsAndFinalize]);
 
     const handleClose = useCallback(() => {
         setCurrentStep(0);
@@ -263,6 +271,7 @@ const BlockUnitPriceInteractiveModal: React.FC<BlockUnitPriceInteractiveModalPro
             onCancel={handleClose}
             width={800}
             footer={null}
+            maskClosable={false}
             styles={{
                 body: {
                     maxHeight: '70vh',
@@ -409,6 +418,15 @@ const BlockUnitPriceInteractiveModal: React.FC<BlockUnitPriceInteractiveModalPro
                             disabled={items.some((item) => !selections[item.id])}
                         >
                             確認へ
+                        </Button>
+                    )}
+
+                    {currentStep === 0 && !processing && items.length === 0 && (
+                        <Button
+                            type="primary"
+                            onClick={handleNext}
+                        >
+                            次へ進む
                         </Button>
                     )}
 
