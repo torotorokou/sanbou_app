@@ -1,68 +1,62 @@
 ## =============================================================
-## Makefile (simple): dev / stg / prod / demo 用 docker compose ヘルパ
+## Makefile : dev / stg / prod / demo 用 docker compose ヘルパ
 ## -------------------------------------------------------------
-## 主なターゲット:
-##   make up        ENV=local_dev|vm_stg|vm_prod|local_demo
-##   make down      ENV=...
-##   make logs      ENV=... S=ai_api
-##   make rebuild   ENV=...
-##   make health    ENV=...
-##   make backup    ENV=local_dev
-##   make restore-from-dump ENV=local_dev DUMP=backups/sanbou_dev_2025-12-03.dump
-##   make restore-from-sql  ENV=local_demo SQL=backups/pg_all_2025-12-03.sql
-##   make al-up / al-rev-auto / al-dump-schema-current / al-init-from-schema
-##   make publish-stg-images STG_IMAGE_TAG=stg-YYYYMMDD  # STG 用イメージ build+push
-## =============================================================
+## ★よく使うターゲット
+##   - make up        ENV=local_dev|vm_stg|vm_prod|local_demo
+##   - make down      ENV=...
+##   - make rebuild   ENV=...
+##   - make logs      ENV=... S=ai_api
+##   - make health    ENV=...
+##   - make backup    ENV=local_dev
+##   - make restore-from-dump ENV=local_dev DUMP=backups/xxx.dump
+##   - make restore-from-sql  ENV=local_demo SQL=backups/xxx.sql
+##
+## ★コンテナイメージの build & push（Artifact Registry）
+##   - STG:  make publish-stg-images  STG_IMAGE_TAG=stg-YYYYMMDD
+##   - PROD: make publish-prod-images PROD_IMAGE_TAG=prod-YYYYMMDD
+##   - 事前に一度だけ: make gcloud-auth-docker
+##
+## ENV の意味（ざっくり）
+##   - local_dev  : ローカル開発（ホットリロードあり・buildあり）
+##   - local_demo : ローカルのデモ環境（dev とは別 compose）
+##   - vm_stg     : GCP VM ステージング（VPN/Tailscale、Artifact Registry から pull）
+##   - vm_prod    : GCP VM 本番（LB+IAP 経由、Artifact Registry から pull）
+## ============================================================
 
 SHELL := /bin/bash
 .ONESHELL:
 .SHELLFLAGS := -eu -o pipefail -c
 
+## -------------------------------------------------------------
+## グローバル環境変数
+## -------------------------------------------------------------
 ENV ?= local_dev
 ENV := $(strip $(ENV))
 DC  := docker compose
 BUILDKIT ?= 1
 PROGRESS ?= plain
 
-## =============================================================
+## ============================================================
 ## 環境マッピング (Environment Mapping)
-## =============================================================
-## ENV 値と対応する .env ファイル・docker-compose.yml の関係:
-##
-## ENV=local_dev  → docker/docker-compose.dev.yml
-##                → env/.env.common + env/.env.local_dev + secrets/.env.local_dev.secrets
-##                → ローカル開発環境（ホットリロード有効、build あり）
-##
-## ENV=local_demo → docker/docker-compose.local_demo.yml
-##                → env/.env.common + env/.env.local_demo + secrets/.env.local_demo.secrets
-##                → ローカルデモ環境（local_dev と完全分離）
-##
-## ENV=vm_stg     → docker/docker-compose.stg.yml
-##                → env/.env.common + env/.env.vm_stg + secrets/.env.vm_stg.secrets
-##                → GCP VM ステージング環境（VPN/Tailscale 経由、Artifact Registry から pull）
-##                → 認証: AUTH_MODE=vpn_dummy (VPN 内簡易認証)
-##
-## ENV=vm_prod    → docker/docker-compose.prod.yml
-##                → env/.env.common + env/.env.vm_prod + secrets/.env.vm_prod.secrets
-##                → GCP VM 本番環境（LB + IAP 経由、Artifact Registry から pull）
-##                → 認証: AUTH_MODE=iap (IAP ヘッダ検証)
-##
-## 注意: 環境変数スキーマの基準（Source of Truth）は env/.env.local_dev です
-## 注意: local_stg / local_prod は廃止されました（2025-12-06）
-## =============================================================
+##   - ENV に応じて:
+##     - 使用する docker-compose.yml
+##     - 使用する .env ファイル
+##     - health check URL
+##     - build 有無
+## ============================================================
 ENV_CANON := $(ENV)
 
 # 後方互換性のための警告と自動変換
 ifeq ($(ENV),dev)
-	$(warning [compat] ENV=dev は非推奨。ENV=local_dev を使用してください)
+	$(warning [compat] ENV=dev は非推奨です。ENV=local_dev を使用してください)
 	ENV_CANON := local_dev
 endif
 ifeq ($(ENV),stg)
-	$(warning [compat] ENV=stg は非推奨。ENV=vm_stg を使用してください)
+	$(warning [compat] ENV=stg は非推奨です。ENV=vm_stg を使用してください)
 	ENV_CANON := vm_stg
 endif
 ifeq ($(ENV),prod)
-	$(warning [compat] ENV=prod は非推奨。ENV=vm_prod を使用してください)
+	$(warning [compat] ENV=prod は非推奨です。ENV=vm_prod を使用してください)
 	ENV_CANON := vm_prod
 endif
 # local_stg / local_prod は廃止済み
@@ -73,9 +67,12 @@ ifeq ($(ENV),local_prod)
 	$(error ENV=local_prod は廃止されました。ENV=vm_prod を使用してください)
 endif
 
+# 共通 .env は常にこれ
 ENV_FILE_COMMON := env/.env.common
+# ENV 個別（後で ENV_CANON によって上書き）
 ENV_FILE        := env/.env.$(ENV)
 
+# ENV ごとの compose / env / health
 ifeq ($(ENV_CANON),local_dev)
 	ENV_FILE      := env/.env.local_dev
 	COMPOSE_FILES := -f docker/docker-compose.dev.yml
@@ -115,9 +112,9 @@ DC_FULL           := $(DC) $(COMPOSE_ENV_ARGS) -p $(ENV) $(COMPOSE_FILES)
 .PHONY: check up down logs ps restart rebuild health config \
         backup restore-from-dump restore-from-sql
 
-## =============================================================
-## 基本操作
-## =============================================================
+## ============================================================
+## 基本操作 (docker compose up / down など)
+## ============================================================
 check:
 	@for f in $(COMPOSE_FILE_LIST); do \
 	  if [ ! -f "$$f" ]; then echo "[error] compose file $$f not found"; exit 1; fi; \
@@ -169,9 +166,9 @@ health:
 config: check
 	$(DC_FULL) config
 
-## =============================================================
+## ============================================================
 ## バックアップ / リストア（よく使う最小構成）
-## =============================================================
+## ============================================================
 DATE        := $(shell date +%F_%H%M%S)
 BACKUP_DIR  ?= /mnt/c/Users/synth/Desktop/backups
 PG_SERVICE  ?= db
@@ -229,9 +226,9 @@ restore-from-sql: check
 	  psql -U $(PGUSER) -d $(PGDB)
 	@echo "[ok] restore-from-sql completed"
 
-## =============================================================
+## ============================================================
 ## Alembic（開発環境 local_dev 前提）
-## =============================================================
+## ============================================================
 .PHONY: al-rev al-rev-auto al-up al-down al-cur al-hist al-heads al-stamp \
         al-dump-schema-current al-init-from-schema
 
@@ -270,9 +267,9 @@ al-heads:
 al-stamp:
 	$(ALEMBIC) stamp $(REV)
 
-## =============================================================
+## ============================================================
 ## Alembic: Schema Dump & Init (local_dev 前提)
-## =============================================================
+## ============================================================
 al-dump-schema-current:
 	@echo "[info] Dumping current schema to sql_current/schema_head.sql"
 	@bash scripts/db/dump_schema_current.sh
@@ -288,46 +285,54 @@ al-init-from-schema:
 	  < app/backend/core_api/migrations/alembic/sql_current/schema_head.sql
 	@echo "[ok] Schema initialized. Now run: make al-stamp REV=<HEAD_REVISION>"
 
-## =============================================================
-## Artifact Registry (Docker イメージ用)
-##  - ローカルPCで build/push するための設定
-##  - STG: --target stg でビルド → asia-northeast1-docker.pkg.dev/honest-sanbou-app-stg/sanbou-app/*:stg-*
-##  - PROD: --target prod でビルド → asia-northeast1-docker.pkg.dev/honest-sanbou-app-prod/sanbou-app/*:prod-*
-## =============================================================
+## ============================================================
+## Artifact Registry 設定 (STG / PROD 共通)
+##   - ローカルPCで build / push するための設定
+##   - STG: --target stg でビルド
+##   - PROD: --target prod でビルド
+## ============================================================
+
 # STG 設定
-STG_REGION        ?= asia-northeast1
-STG_PROJECT_ID    ?= honest-sanbou-app-stg
-STG_ARTIFACT_REPO ?= sanbou-app
+STG_REGION         ?= asia-northeast1
+STG_PROJECT_ID     ?= honest-sanbou-app-stg
+STG_ARTIFACT_REPO  ?= sanbou-app
 STG_IMAGE_REGISTRY := $(STG_REGION)-docker.pkg.dev/$(STG_PROJECT_ID)/$(STG_ARTIFACT_REPO)
-STG_IMAGE_TAG     ?= stg-latest
-# 後方互換: 昔のドキュメントで IMAGE_TAG を使っている場合に対応
+STG_IMAGE_TAG      ?= stg-latest
+# 後方互換: 昔のドキュメントで IMAGE_TAG を使っている場合に対応（STG 側）
 ifdef IMAGE_TAG
   STG_IMAGE_TAG := $(IMAGE_TAG)
 endif
 
 # PROD 設定
-PROD_REGION        ?= asia-northeast1
-PROD_PROJECT_ID    ?= honest-sanbou-app-prod
-PROD_ARTIFACT_REPO ?= sanbou-app
-PROD_IMAGE_REGISTRY := $(PROD_REGION)-docker.pkg.dev/$(PROD_PROJECT_ID)/$(PROD_ARTIFACT_REPO)
-PROD_IMAGE_TAG     ?= prod-latest
+PROD_REGION         ?= asia-northeast1
+PROD_PROJECT_ID     ?= honest-sanbou-app-prod
+PROD_ARTIFACT_REPO  ?= sanbou-app
+PROD_IMAGE_REGISTRY := $(PROD_REGION)-docker.pkg.dev/(PROD_PROJECT_ID)/$(PROD_ARTIFACT_REPO)
+PROD_IMAGE_TAG      ?= prod-latest
+# 後方互換: IMAGE_TAG を指定したら PROD 側にも反映（必要に応じて使う）
 ifdef IMAGE_TAG
   PROD_IMAGE_TAG := $(IMAGE_TAG)
 endif
 
-## =============================================================
-## STG 用 Docker イメージ build & push
-##  - ローカルPCで実行する前提
-##  - VM では build せず pull + up だけにする
-##  - 使い方:
-##      make publish-stg-images STG_IMAGE_TAG=stg-20251208
-##      NO_CACHE=1 PULL=1 make publish-stg-images STG_IMAGE_TAG=stg-20251208  # フルビルドしたい場合
-## =============================================================
-.PHONY: gcloud-auth-docker build-stg-images push-stg-images publish-stg-images
-
+## ------------------------------------------------------------
+## gcloud 認証（STG / PROD 共通）
+##   - 一度だけ実行しておけば OK
+##   - gcloud auth login / config set project は事前に実施しておくこと
+## ------------------------------------------------------------
+.PHONY: gcloud-auth-docker
 gcloud-auth-docker:
 	@gcloud auth configure-docker $(STG_REGION)-docker.pkg.dev
 	@gcloud auth configure-docker $(PROD_REGION)-docker.pkg.dev
+
+## ============================================================
+## STG 用 Docker イメージ build & push
+##  - ローカルPCで実行する前提
+##  - VM (vm_stg) では build せず pull + up だけ
+##  - 使い方:
+##      make publish-stg-images STG_IMAGE_TAG=stg-20251208
+##      NO_CACHE=1 PULL=1 make publish-stg-images STG_IMAGE_TAG=stg-20251208
+## ============================================================
+.PHONY: build-stg-images push-stg-images publish-stg-images
 
 build-stg-images:
 	@echo ">>> Build STG images (tag=$(STG_IMAGE_TAG), target=stg)"
@@ -363,14 +368,14 @@ push-stg-images:
 publish-stg-images: build-stg-images push-stg-images
 	@echo "[ok] STG images built & pushed (tag=$(STG_IMAGE_TAG))"
 
-## =============================================================
+## ============================================================
 ## PROD 用 Docker イメージ build & push
 ##  - ローカルPCで実行する前提
-##  - VM では build せず pull + up だけにする
+##  - VM (vm_prod) では build せず pull + up だけ
 ##  - 使い方:
-##      make publish-prod-images PROD_IMAGE_TAG=prod-20251206
-##      NO_CACHE=1 PULL=1 make publish-prod-images PROD_IMAGE_TAG=prod-20251206
-## =============================================================
+##      make publish-prod-images PROD_IMAGE_TAG=prod-20251209
+##      NO_CACHE=1 PULL=1 make publish-prod-images PROD_IMAGE_TAG=prod-20251209
+## ============================================================
 .PHONY: build-prod-images push-prod-images publish-prod-images
 
 build-prod-images:
