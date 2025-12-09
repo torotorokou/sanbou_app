@@ -124,6 +124,11 @@ check:
 
 up: check
 	@echo "[info] UP (ENV=$(ENV))"
+	@echo "[debug] ENV=$(ENV) ENV_CANON=$(ENV_CANON)"
+	@echo "[debug] COMPOSE_FILES=$(COMPOSE_FILES)"
+	@echo "[debug] ENV_FILE=$(ENV_FILE)"
+	@echo "[debug] UP_BUILD_FLAGS=$(UP_BUILD_FLAGS)"
+	@echo "[debug] DC_FULL=$(DC_FULL)"
 	DOCKER_BUILDKIT=$(BUILDKIT) BUILDKIT_PROGRESS=$(PROGRESS) \
 	$(DC_FULL) up -d $(UP_BUILD_FLAGS) --remove-orphans
 	@echo "[ok] up done"
@@ -411,3 +416,24 @@ push-prod-images:
 
 publish-prod-images: build-prod-images push-prod-images
 	@echo "[ok] PROD images built & pushed (tag=$(PROD_IMAGE_TAG))"
+
+## ============================================================
+## イメージ存在確認（デバッグ用）
+## ============================================================
+.PHONY: check-stg-images check-prod-images
+
+check-stg-images:
+	@echo "[info] Checking STG images (tag=$(STG_IMAGE_TAG))"
+	@for svc in core_api plan_worker ai_api ledger_api rag_api manual_api nginx; do \
+	  echo "  -> checking $(STG_IMAGE_REGISTRY)/$$svc:$(STG_IMAGE_TAG)"; \
+	  gcloud artifacts docker images list $(STG_REGION)-docker.pkg.dev/$(STG_PROJECT_ID)/$(STG_ARTIFACT_REPO) \
+	    --filter="package=$$svc AND tags:$(STG_IMAGE_TAG)" --format="table(package,tags)" || true; \
+	done
+
+check-prod-images:
+	@echo "[info] Checking PROD images (tag=$(PROD_IMAGE_TAG))"
+	@for svc in core_api plan_worker ai_api ledger_api rag_api manual_api nginx; do \
+	  echo "  -> checking $(PROD_IMAGE_REGISTRY)/$$svc:$(PROD_IMAGE_TAG)"; \
+	  gcloud artifacts docker images list $(PROD_REGION)-docker.pkg.dev/$(PROD_PROJECT_ID)/$(PROD_ARTIFACT_REPO) \
+	    --filter="package=$$svc AND tags:$(PROD_IMAGE_TAG)" --format="table(package,tags)" || true; \
+	done
