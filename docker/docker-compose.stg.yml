@@ -3,12 +3,15 @@
 ## - Makefile 経由で起動: make up ENV=vm_stg
 ## - 使用する env ファイル: env/.env.common + env/.env.vm_stg + secrets/.env.vm_stg.secrets
 ## - 特徴:
-##   * VPN / Tailscale 経由でのアクセス（IAP なし）
+##   * VPN / Tailscale 経由でのアクセス(IAP なし)
 ##   * AUTH_MODE=vpn_dummy (固定ユーザーでのダミー認証)
-##   * Artifact Registry のイメージを利用（pull のみ、build なし）
-##   * 3層ネットワーク分離（edge/app/data）
+##   * Artifact Registry のイメージを利用(pull のみ、build なし)
+##   * 3層ネットワーク分離(edge/app/data)
 ## - イメージ: asia-northeast1-docker.pkg.dev/honest-sanbou-app-stg/sanbou-app/*:stg-latest
 ## - CI/CD でビルド、本番では pull のみ
+##
+## ★ 重要: 1台の VM で vm_stg / vm_prod を同時起動しないこと
+##   - 80番ポートは両者とも "80:80" を使用するため、片方を down してから起動すること
 ## =============================================================
 
 # =============================================================================
@@ -178,6 +181,10 @@ services:
       driver: json-file
       options: *id002
   nginx:
+    # ★ 注意: nginx イメージは app/nginx/Dockerfile でビルドされたものを使用
+    #   - ビルド時に stg.conf がイメージにコピー済み
+    #   - volume マウントで実行時に上書き可能
+    #   - HTTP(80) のみで応答、HTTPS リダイレクトなし
     image: ${IMAGE_REGISTRY}/nginx:${IMAGE_TAG}
     depends_on:
     - core_api

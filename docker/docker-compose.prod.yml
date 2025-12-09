@@ -3,13 +3,16 @@
 ## - Makefile 経由で起動: make up ENV=vm_prod
 ## - 使用する env ファイル: env/.env.common + env/.env.vm_prod + secrets/.env.vm_prod.secrets
 ## - 特徴:
-##   * LB + IAP 経由での外部公開（HTTPS → HTTP）
+##   * LB + IAP 経由での外部公開(HTTPS → HTTP)
 ##   * AUTH_MODE=iap (IAP ヘッダ検証必須)
-##   * Artifact Registry のイメージを利用（pull のみ、build なし）
-##   * 3層ネットワーク分離（edge/app/data）
-##   * nginx のみ外部公開（80/443）、backend は内部ネットワークのみ
+##   * Artifact Registry のイメージを利用(pull のみ、build なし)
+##   * 3層ネットワーク分離(edge/app/data)
+##   * nginx のみ外部公開(80/443)、backend は内部ネットワークのみ
 ## - イメージ: asia-northeast1-docker.pkg.dev/honest-sanbou-app-prod/sanbou-app/*:prod-latest
 ## - CI/CD でビルド、本番では pull のみ
+##
+## ★ 重要: 1台の VM で vm_stg / vm_prod を同時起動しないこと
+##   - 80番ポートは両者とも "80:80" を使用するため、片方を down してから起動すること
 ## =============================================================
 
 # =============================================================================
@@ -179,6 +182,11 @@ services:
       driver: json-file
       options: *id002
   nginx:
+    # ★ 注意: nginx イメージは app/nginx/Dockerfile でビルドされたものを使用
+    #   - ビルド時に prod.conf がイメージにコピー済み
+    #   - volume マウントで実行時に上書き可能
+    #   - HTTP(80) のみで応答、HTTPS リダイレクトなし
+    #   - TLS/ドメイン/IAP は GCP LB 側で終端
     image: ${IMAGE_REGISTRY}/nginx:${IMAGE_TAG}
     depends_on:
     - core_api
