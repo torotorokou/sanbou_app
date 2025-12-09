@@ -11,7 +11,7 @@
 ##   make restore-from-dump ENV=local_dev DUMP=backups/sanbou_dev_2025-12-03.dump
 ##   make restore-from-sql  ENV=local_demo SQL=backups/pg_all_2025-12-03.sql
 ##   make al-up / al-rev-auto / al-dump-schema-current / al-init-from-schema
-##   make publish-stg-images IMAGE_TAG=stg-YYYYMMDD  # STG 用イメージ build+push
+##   make publish-stg-images STG_IMAGE_TAG=stg-YYYYMMDD  # STG 用イメージ build+push
 ## =============================================================
 
 SHELL := /bin/bash
@@ -150,6 +150,8 @@ restart:
 
 PULL ?= 0
 BUILD_PULL_FLAG := $(if $(filter 1,$(PULL)),--pull,)
+NO_CACHE ?= 0
+BUILD_NO_CACHE_FLAG := $(if $(filter 1,$(NO_CACHE)),--no-cache,)
 
 rebuild: check
 	@echo "[info] rebuild ENV=$(ENV)"
@@ -298,6 +300,10 @@ STG_PROJECT_ID    ?= honest-sanbou-app-stg
 STG_ARTIFACT_REPO ?= sanbou-app
 STG_IMAGE_REGISTRY := $(STG_REGION)-docker.pkg.dev/$(STG_PROJECT_ID)/$(STG_ARTIFACT_REPO)
 STG_IMAGE_TAG     ?= stg-latest
+# 後方互換: 昔のドキュメントで IMAGE_TAG を使っている場合に対応
+ifdef IMAGE_TAG
+  STG_IMAGE_TAG := $(IMAGE_TAG)
+endif
 
 # PROD 設定
 PROD_REGION        ?= asia-northeast1
@@ -305,12 +311,17 @@ PROD_PROJECT_ID    ?= honest-sanbou-app-prod
 PROD_ARTIFACT_REPO ?= sanbou-app
 PROD_IMAGE_REGISTRY := $(PROD_REGION)-docker.pkg.dev/$(PROD_PROJECT_ID)/$(PROD_ARTIFACT_REPO)
 PROD_IMAGE_TAG     ?= prod-latest
+ifdef IMAGE_TAG
+  PROD_IMAGE_TAG := $(IMAGE_TAG)
+endif
 
 ## =============================================================
 ## STG 用 Docker イメージ build & push
 ##  - ローカルPCで実行する前提
 ##  - VM では build せず pull + up だけにする
-##  - 使い方: make publish-stg-images STG_IMAGE_TAG=stg-20251206
+##  - 使い方:
+##      make publish-stg-images STG_IMAGE_TAG=stg-20251208
+##      NO_CACHE=1 PULL=1 make publish-stg-images STG_IMAGE_TAG=stg-20251208  # フルビルドしたい場合
 ## =============================================================
 .PHONY: gcloud-auth-docker build-stg-images push-stg-images publish-stg-images
 
@@ -320,19 +331,26 @@ gcloud-auth-docker:
 
 build-stg-images:
 	@echo ">>> Build STG images (tag=$(STG_IMAGE_TAG), target=stg)"
-	docker build -t $(STG_IMAGE_REGISTRY)/core_api:$(STG_IMAGE_TAG) \
+	docker build $(BUILD_PULL_FLAG) $(BUILD_NO_CACHE_FLAG) \
+	  -t $(STG_IMAGE_REGISTRY)/core_api:$(STG_IMAGE_TAG) \
 	  -f app/backend/core_api/Dockerfile --target stg app/backend
-	docker build -t $(STG_IMAGE_REGISTRY)/plan_worker:$(STG_IMAGE_TAG) \
+	docker build $(BUILD_PULL_FLAG) $(BUILD_NO_CACHE_FLAG) \
+	  -t $(STG_IMAGE_REGISTRY)/plan_worker:$(STG_IMAGE_TAG) \
 	  -f app/backend/plan_worker/Dockerfile --target stg app/backend
-	docker build -t $(STG_IMAGE_REGISTRY)/ai_api:$(STG_IMAGE_TAG) \
+	docker build $(BUILD_PULL_FLAG) $(BUILD_NO_CACHE_FLAG) \
+	  -t $(STG_IMAGE_REGISTRY)/ai_api:$(STG_IMAGE_TAG) \
 	  -f app/backend/ai_api/Dockerfile --target stg app/backend
-	docker build -t $(STG_IMAGE_REGISTRY)/ledger_api:$(STG_IMAGE_TAG) \
+	docker build $(BUILD_PULL_FLAG) $(BUILD_NO_CACHE_FLAG) \
+	  -t $(STG_IMAGE_REGISTRY)/ledger_api:$(STG_IMAGE_TAG) \
 	  -f app/backend/ledger_api/Dockerfile --target stg app/backend
-	docker build -t $(STG_IMAGE_REGISTRY)/rag_api:$(STG_IMAGE_TAG) \
+	docker build $(BUILD_PULL_FLAG) $(BUILD_NO_CACHE_FLAG) \
+	  -t $(STG_IMAGE_REGISTRY)/rag_api:$(STG_IMAGE_TAG) \
 	  -f app/backend/rag_api/Dockerfile --target stg app/backend
-	docker build -t $(STG_IMAGE_REGISTRY)/manual_api:$(STG_IMAGE_TAG) \
+	docker build $(BUILD_PULL_FLAG) $(BUILD_NO_CACHE_FLAG) \
+	  -t $(STG_IMAGE_REGISTRY)/manual_api:$(STG_IMAGE_TAG) \
 	  -f app/backend/manual_api/Dockerfile --target stg app/backend
-	docker build -t $(STG_IMAGE_REGISTRY)/nginx:$(STG_IMAGE_TAG) \
+	docker build $(BUILD_PULL_FLAG) $(BUILD_NO_CACHE_FLAG) \
+	  -t $(STG_IMAGE_REGISTRY)/nginx:$(STG_IMAGE_TAG) \
 	  -f app/frontend/Dockerfile --target stg app/frontend
 
 push-stg-images:
@@ -349,25 +367,34 @@ publish-stg-images: build-stg-images push-stg-images
 ## PROD 用 Docker イメージ build & push
 ##  - ローカルPCで実行する前提
 ##  - VM では build せず pull + up だけにする
-##  - 使い方: make publish-prod-images PROD_IMAGE_TAG=prod-20251206
+##  - 使い方:
+##      make publish-prod-images PROD_IMAGE_TAG=prod-20251206
+##      NO_CACHE=1 PULL=1 make publish-prod-images PROD_IMAGE_TAG=prod-20251206
 ## =============================================================
 .PHONY: build-prod-images push-prod-images publish-prod-images
 
 build-prod-images:
 	@echo ">>> Build PROD images (tag=$(PROD_IMAGE_TAG), target=prod)"
-	docker build -t $(PROD_IMAGE_REGISTRY)/core_api:$(PROD_IMAGE_TAG) \
+	docker build $(BUILD_PULL_FLAG) $(BUILD_NO_CACHE_FLAG) \
+	  -t $(PROD_IMAGE_REGISTRY)/core_api:$(PROD_IMAGE_TAG) \
 	  -f app/backend/core_api/Dockerfile --target prod app/backend
-	docker build -t $(PROD_IMAGE_REGISTRY)/plan_worker:$(PROD_IMAGE_TAG) \
+	docker build $(BUILD_PULL_FLAG) $(BUILD_NO_CACHE_FLAG) \
+	  -t $(PROD_IMAGE_REGISTRY)/plan_worker:$(PROD_IMAGE_TAG) \
 	  -f app/backend/plan_worker/Dockerfile --target prod app/backend
-	docker build -t $(PROD_IMAGE_REGISTRY)/ai_api:$(PROD_IMAGE_TAG) \
+	docker build $(BUILD_PULL_FLAG) $(BUILD_NO_CACHE_FLAG) \
+	  -t $(PROD_IMAGE_REGISTRY)/ai_api:$(PROD_IMAGE_TAG) \
 	  -f app/backend/ai_api/Dockerfile --target prod app/backend
-	docker build -t $(PROD_IMAGE_REGISTRY)/ledger_api:$(PROD_IMAGE_TAG) \
+	docker build $(BUILD_PULL_FLAG) $(BUILD_NO_CACHE_FLAG) \
+	  -t $(PROD_IMAGE_REGISTRY)/ledger_api:$(PROD_IMAGE_TAG) \
 	  -f app/backend/ledger_api/Dockerfile --target prod app/backend
-	docker build -t $(PROD_IMAGE_REGISTRY)/rag_api:$(PROD_IMAGE_TAG) \
+	docker build $(BUILD_PULL_FLAG) $(BUILD_NO_CACHE_FLAG) \
+	  -t $(PROD_IMAGE_REGISTRY)/rag_api:$(PROD_IMAGE_TAG) \
 	  -f app/backend/rag_api/Dockerfile --target prod app/backend
-	docker build -t $(PROD_IMAGE_REGISTRY)/manual_api:$(PROD_IMAGE_TAG) \
+	docker build $(BUILD_PULL_FLAG) $(BUILD_NO_CACHE_FLAG) \
+	  -t $(PROD_IMAGE_REGISTRY)/manual_api:$(PROD_IMAGE_TAG) \
 	  -f app/backend/manual_api/Dockerfile --target prod app/backend
-	docker build -t $(PROD_IMAGE_REGISTRY)/nginx:$(PROD_IMAGE_TAG) \
+	docker build $(BUILD_PULL_FLAG) $(BUILD_NO_CACHE_FLAG) \
+	  -t $(PROD_IMAGE_REGISTRY)/nginx:$(PROD_IMAGE_TAG) \
 	  -f app/frontend/Dockerfile --target prod app/frontend
 
 push-prod-images:
