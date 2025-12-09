@@ -36,7 +36,7 @@ x-tz-env: &tz-environment
 
 services:
   core_api:
-    image: asia-northeast1-docker.pkg.dev/honest-sanbou-app-prod/sanbou-app/core_api:prod-latest
+    image: ${IMAGE_REGISTRY}/core_api:${IMAGE_TAG}
     networks:
     - app-net
     - data-net
@@ -67,7 +67,7 @@ services:
         max-size: 10m
         max-file: '3'
   plan_worker:
-    image: asia-northeast1-docker.pkg.dev/honest-sanbou-app-prod/sanbou-app/plan_worker:prod-latest
+    image: ${IMAGE_REGISTRY}/plan_worker:${IMAGE_TAG}
     networks:
     - data-net
     depends_on:
@@ -80,7 +80,7 @@ services:
       driver: json-file
       options: *id002
   ai_api:
-    image: asia-northeast1-docker.pkg.dev/honest-sanbou-app-prod/sanbou-app/ai_api:prod-latest
+    image: ${IMAGE_REGISTRY}/ai_api:${IMAGE_TAG}
     networks:
     - app-net
     depends_on:
@@ -104,7 +104,7 @@ services:
       driver: json-file
       options: *id002
   ledger_api:
-    image: asia-northeast1-docker.pkg.dev/honest-sanbou-app-prod/sanbou-app/ledger_api:prod-latest
+    image: ${IMAGE_REGISTRY}/ledger_api:${IMAGE_TAG}
     user: 0:0
     networks:
     - app-net
@@ -132,7 +132,7 @@ services:
       driver: json-file
       options: *id002
   rag_api:
-    image: asia-northeast1-docker.pkg.dev/honest-sanbou-app-prod/sanbou-app/rag_api:prod-latest
+    image: ${IMAGE_REGISTRY}/rag_api:${IMAGE_TAG}
     networks:
     - app-net
     - data-net
@@ -158,7 +158,7 @@ services:
       driver: json-file
       options: *id002
   manual_api:
-    image: asia-northeast1-docker.pkg.dev/honest-sanbou-app-prod/sanbou-app/manual_api:prod-latest
+    image: ${IMAGE_REGISTRY}/manual_api:${IMAGE_TAG}
     networks:
     - app-net
     env_file: *id001
@@ -179,7 +179,7 @@ services:
       driver: json-file
       options: *id002
   nginx:
-    image: asia-northeast1-docker.pkg.dev/honest-sanbou-app-prod/sanbou-app/nginx:prod-latest
+    image: ${IMAGE_REGISTRY}/nginx:${IMAGE_TAG}
     depends_on:
     - core_api
     - ai_api
