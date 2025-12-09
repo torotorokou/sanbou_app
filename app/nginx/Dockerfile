@@ -1,5 +1,16 @@
+## =============================================================================
 ## Multi-stage build: Build React (Vite) then serve with Nginx
 ## For STG/PROD environments
+## =============================================================================
+## nginx 設定ファイルのマッピング:
+##   - STG: conf.d/stg.conf → /etc/nginx/conf.d/ にコピー
+##   - PROD: conf.d/prod.conf → /etc/nginx/conf.d/ にコピー
+##   - 実行時は docker-compose.{stg,prod}.yml の volumes で上書き可能
+##
+## ★ 重要: VM 側 nginx は HTTP(80) のみで応答する構成
+##   - HTTPS へのリダイレクトは行いません
+##   - ドメイン・TLS は GCP LB + IAP 側で終端します
+## =============================================================================
 
 # =============================================================================
 # Stage 1: Build React application

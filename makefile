@@ -19,6 +19,10 @@
 ##   - PROD: make publish-prod-images PROD_IMAGE_TAG=prod-YYYYMMDD
 ##   - 事前に一度だけ: make gcloud-auth-docker
 ##
+## ★STG → PROD へのイメージ昇格（別プロジェクト間コピー）
+##   - make promote-stg-to-prod PROMOTE_SRC_TAG=stg-YYYYMMDD PROMOTE_DST_TAG=prod-YYYYMMDD
+##     ※ STG_PROJECT_ID の Artifact Registry から PROD_PROJECT_ID へ docker pull/tag/push でコピー
+##
 ## ★STG/PROD デプロイフロー
 ##   【STG】
 ##   1) ローカル: make publish-stg-images STG_IMAGE_TAG=stg-20251209
@@ -56,6 +60,25 @@ PROGRESS ?= plain
 ##     - 使用する .env ファイル
 ##     - health check URL
 ##     - build 有無
+##
+## ★ nginx 動作確認（HTTP リダイレクト修正後の確認手順）:
+##
+##   【vm_stg での確認】
+##   VM 内で:
+##     curl -I http://localhost/health    # → HTTP/1.1 200 OK
+##     curl -I http://localhost/          # → HTTP/1.1 200 OK, Content-Type: text/html
+##                                        #    ※ Location: https://... が含まれないこと
+##   ローカル PC から (Tailscale 経由):
+##     http://100.119.243.45/             # → React 画面が表示され、https へのリダイレクトなし
+##
+##   【vm_prod での確認】
+##   VM 内で:
+##     curl -I http://localhost/health    # → HTTP/1.1 200 OK
+##     curl -I http://localhost/          # → HTTP/1.1 200 OK, Content-Type: text/html
+##                                        #    ※ Location: https://localhost/ が含まれないこと
+##   GCP LB + IAP 経由:
+##     https://sanbou-app.jp/             # → React 画面が表示されること
+##                                        #    ※ HTTPS は LB 側で終端、VM は HTTP(80) のみ
 ## ============================================================
 ENV_CANON := $(ENV)
 
@@ -357,6 +380,10 @@ ifdef IMAGE_TAG
   PROD_IMAGE_TAG := $(IMAGE_TAG)
 endif
 
+## STG → PROD 昇格用タグ（デフォルトは stg-latest → prod-latest）
+PROMOTE_SRC_TAG ?= stg-latest
+PROMOTE_DST_TAG ?= prod-latest
+
 ## ------------------------------------------------------------
 ## gcloud 認証（STG / PROD 共通）
 ##   - 一度だけ実行しておけば OK
@@ -454,6 +481,31 @@ push-prod-images:
 
 publish-prod-images: build-prod-images push-prod-images
 	@echo "[ok] PROD images built & pushed (tag=$(PROD_IMAGE_TAG))"
+
+## ============================================================
+## STG → PROD イメージ昇格（別プロジェクト Artifact Registry コピー）
+##   使い方:
+##     make promote-stg-to-prod PROMOTE_SRC_TAG=stg-20251209 PROMOTE_DST_TAG=prod-20251209
+##   実装:
+##     docker pull (STG) → docker tag (PROD名) → docker push (PROD)
+## ============================================================
+.PHONY: promote-stg-to-prod
+
+promote-stg-to-prod:
+	@echo "[info] Promote images from STG to PROD (docker pull/tag/push)"
+	@echo "[info]   STG:  $(STG_IMAGE_REGISTRY):$(PROMOTE_SRC_TAG)"
+	@echo "[info]   PROD: $(PROD_IMAGE_REGISTRY):$(PROMOTE_DST_TAG)"
+	@for svc in core_api plan_worker ai_api ledger_api rag_api manual_api nginx; do \
+	  SRC_IMG="$(STG_IMAGE_REGISTRY)/$$svc:$(PROMOTE_SRC_TAG)"; \
+	  DST_IMG="$(PROD_IMAGE_REGISTRY)/$$svc:$(PROMOTE_DST_TAG)"; \
+	  echo "  -> copy $$svc: $(PROMOTE_SRC_TAG) -> $(PROMOTE_DST_TAG)"; \
+	  echo "     SRC=$$SRC_IMG"; \
+	  echo "     DST=$$DST_IMG"; \
+	  docker pull $$SRC_IMG; \
+	  docker tag  $$SRC_IMG $$DST_IMG; \
+	  docker push $$DST_IMG; \
+	done
+	@echo "[ok] promoted STG tag '$(PROMOTE_SRC_TAG)' to PROD tag '$(PROMOTE_DST_TAG)' (via docker)"
 
 ## ============================================================
 ## イメージ存在確認（デバッグ用）
