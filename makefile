@@ -33,11 +33,35 @@
 ##   2) env/.env.vm_prod の IMAGE_TAG=prod-20251209 に更新
 ##   3) vm_prod で: make up ENV=vm_prod
 ##
-## ENV の意味（ざっくり）
-##   - local_dev  : ローカル開発（ホットリロードあり・buildあり）
-##   - local_demo : ローカルのデモ環境（dev とは別 compose）
-##   - vm_stg     : GCP VM ステージング（VPN/Tailscale、Artifact Registry から pull）
-##   - vm_prod    : GCP VM 本番（LB+IAP 経由、Artifact Registry から pull）
+## ENV の意味(ざっくり)
+##   - local_dev  : ローカル開発(ホットリロードあり・buildあり)
+##   - local_demo : ローカルのデモ環境(dev とは別 compose)
+##   - vm_stg     : GCP VM ステージング(VPN/Tailscale、Artifact Registry から pull)
+##   - vm_prod    : GCP VM 本番(LB+IAP 経由、Artifact Registry から pull)
+##
+## ============================================================
+## VM 上での暫定運用ルール(vm_stg / vm_prod)
+## ------------------------------------------------------------
+## ★ 重要: この VM では、vm_stg と vm_prod を「同時には起動しない」前提です
+##   - 80番ポートはどちらの compose でも "80:80" を使うため、
+##     必ず片方を down してからもう片方を up すること
+##
+## 例:
+##   # STG を試すとき
+##   make down ENV=vm_prod
+##   make up   ENV=vm_stg
+##
+##   # PROD を試すとき
+##   make down ENV=vm_stg
+##   make up   ENV=vm_prod
+##
+## ★ nginx 動作確認(vm_stg / vm_prod 共通):
+##   VM 内で:
+##     curl -I http://localhost/health    # → HTTP/1.1 200 OK
+##     curl -I http://localhost/          # → HTTP/1.1 200 OK, text/html
+##                                        #    ※ Location: https://... が含まれないこと
+##   Tailscale 経由:
+##     http://<tailscale IP>/             # → React 画面が表示される
 ## ============================================================
 
 SHELL := /bin/bash
