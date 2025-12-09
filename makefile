@@ -307,7 +307,7 @@ endif
 PROD_REGION         ?= asia-northeast1
 PROD_PROJECT_ID     ?= honest-sanbou-app-prod
 PROD_ARTIFACT_REPO  ?= sanbou-app
-PROD_IMAGE_REGISTRY := $(PROD_REGION)-docker.pkg.dev/(PROD_PROJECT_ID)/$(PROD_ARTIFACT_REPO)
+PROD_IMAGE_REGISTRY := $(PROD_REGION)-docker.pkg.dev/$(PROD_PROJECT_ID)/$(PROD_ARTIFACT_REPO)
 PROD_IMAGE_TAG      ?= prod-latest
 # 後方互換: IMAGE_TAG を指定したら PROD 側にも反映（必要に応じて使う）
 ifdef IMAGE_TAG
