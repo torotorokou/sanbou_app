@@ -43,6 +43,7 @@ from app.api.routers.inbound.router import router as inbound_router
 from app.api.routers.sales_tree import router as sales_tree_router
 from app.api.routers.auth import router as auth_router
 from app.api.routers.health import router as health_router
+from app.api.routers.debug_iap import router as debug_iap_router
 
 # ==========================================
 # 統一ロギング設定の初期化
@@ -110,6 +111,7 @@ setup_cors(app)
 # --- Core機能 ---
 app.include_router(health_router)      # ヘルスチェック: サービス稼働状態監視
 app.include_router(auth_router)        # 認証: ユーザー情報取得
+app.include_router(debug_iap_router)   # デバッグ: IAP ヘッダ確認（開発/検証用）
 app.include_router(ingest_router)      # データ取り込み: CSV アップロード、予約登録
 app.include_router(forecast_router)    # 予測機能: ジョブ作成、ステータス確認、結果取得
 app.include_router(kpi_router)         # KPI集計: ダッシュボード用メトリクス

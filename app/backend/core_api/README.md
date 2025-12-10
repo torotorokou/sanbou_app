@@ -210,3 +210,108 @@ curl "http://localhost:8003/api/forecast/predictions?from=2025-01-01&to=2025-01-
 - **rag_api**: RAG query service
 - **ledger_api**: Ledger and document generation
 - **manual_api**: Manual/documentation service
+
+## IAP (Identity-Aware Proxy) デバッグ
+
+### 概要
+
+GCP IAP 経由でのリクエストが FastAPI まで正しく到達し、IAP が付与するヘッダが適切に転送されているかを確認するためのデバッグエンドポイントを提供しています。
+
+### エンドポイント
+
+```
+GET /core_api/debug/iap-headers
+```
+
+### IAP が付与する主要ヘッダ
+
+- **X-Goog-Authenticated-User-Email**: ログインユーザーのメールアドレス  
+  形式: `accounts.google.com:user@example.com`
+  
+- **X-Goog-Authenticated-User-Id**: ログインユーザーの内部 ID  
+  形式: `accounts.google.com:123456789012345678901`
+  
+- **X-Goog-IAP-JWT-Assertion**: IAP が発行した JWT トークン（署名付き）
+
+### テスト手順（PROD 環境）
+
+1. **環境の準備**
+   ```bash
+   # PROD 環境で docker / nginx を起動・再起動
+   cd /path/to/sanbou_app
+   make prod-up   # または docker-compose -f docker/docker-compose.prod.yml up -d
+   ```
+
+2. **ブラウザからアクセス**
+   ```
+   https://<IAP付きのPRODドメイン>/core_api/debug/iap-headers
+   ```
+
+3. **IAP ログイン**
+   - GCP IAP のログイン画面が表示されたら、許可された Google アカウントでログイン
+
+4. **レスポンスの確認**
+   
+   以下のような JSON が返されることを確認:
+   ```json
+   {
+     "x_goog_authenticated_user_email": "accounts.google.com:user@example.com",
+     "x_goog_authenticated_user_id": "accounts.google.com:123456789012345678901",
+     "x_goog_iap_jwt_assertion_exists": true,
+     "x_goog_iap_jwt_assertion_preview": "eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IjBvZD...",
+     "all_headers": {
+       "host": "your-domain.com",
+       "x-goog-authenticated-user-email": "accounts.google.com:user@example.com",
+       ...
+     }
+   }
+   ```
+
+5. **確認項目**
+   - ✅ `x_goog_authenticated_user_email` に正しいメールアドレスが含まれているか
+   - ✅ `x_goog_authenticated_user_id` に ID が含まれているか
+   - ✅ `x_goog_iap_jwt_assertion_exists` が `true` であるか
+   - ✅ `all_headers` に IAP 関連ヘッダが含まれているか
+
+### トラブルシューティング
+
+#### ヘッダが `null` または存在しない場合
+
+1. **Nginx 設定の確認**
+   - `app/nginx/conf.d/prod.conf` が `_proxy_headers.conf` をインクルードしているか確認
+   - `_proxy_headers.conf` に以下の設定があるか確認:
+     ```nginx
+     proxy_set_header X-Goog-Authenticated-User-Email $http_x_goog_authenticated_user_email;
+     proxy_set_header X-Goog-Authenticated-User-Id $http_x_goog_authenticated_user_id;
+     proxy_set_header X-Goog-IAP-JWT-Assertion $http_x_goog_iap_jwt_assertion;
+     ```
+
+2. **GCP Load Balancer + IAP の設定確認**
+   - GCP コンソールで IAP が有効になっているか確認
+   - バックエンドサービスに IAP が適用されているか確認
+   - 使用している Google アカウントが IAP のアクセス許可リストに含まれているか確認
+
+3. **ログの確認**
+   ```bash
+   # Core API のログを確認
+   docker logs -f core_api
+   
+   # Nginx のログを確認
+   docker logs -f nginx
+   ```
+
+### 次のステップ
+
+このデバッグエンドポイントで IAP ヘッダが正しく受信できることを確認したら、次のステップに進みます:
+
+1. **JWT 検証の実装**: `X-Goog-IAP-JWT-Assertion` の署名検証
+2. **ユーザー情報の DB 連携**: `auth_users` テーブルとの紐付け
+3. **認証ミドルウェアの統合**: 全エンドポイントでの自動認証
+4. **デバッグエンドポイントの無効化**: 本番環境でのアクセス制限
+
+### 注意事項
+
+- このデバッグエンドポイントは **開発/検証用途** です
+- `all_headers` には機密情報が含まれる可能性があります
+- 本番環境では適切なアクセス制限を設けるか、無効化することを推奨します
+- JWT の検証は行っていません（ヘッダの受信確認のみ）
