@@ -83,6 +83,12 @@ RUN mkdir -p /backend/app /backend/app/infra/data_sources/input /backend/app/inf
              /backend/app/api/logs /backend/test && \
     chown -R appuser:appuser /backend /opt/backend_shared
 
+# Security: LibreOffice を appuser で実行可能にする (root権限不要)
+RUN chown -R appuser:appuser /usr/lib/libreoffice && \
+    chmod -R 755 /usr/lib/libreoffice && \
+    mkdir -p /tmp/libreoffice && \
+    chown appuser:appuser /tmp/libreoffice
+
 USER appuser
 COPY --chown=appuser:appuser ./ledger_api/app /backend/app
 COPY --chown=appuser:appuser --chmod=0755 ./ledger_api/startup.sh /backend/startup.sh

@@ -55,10 +55,11 @@ services:
       - ../app/backend/backend_shared:/opt/backend_shared:rw
       - ../app/config:/backend/config
       - ../secrets:/backend/secrets:ro
-      # - ~/.config/gcloud:/home/appuser/.config/gcloud
     environment:
       - WATCHFILES_FORCE_POLLING=1
       - TZ=Asia/Tokyo
+      # Security: Use service account key instead of mounting ~/.config/gcloud
+      - GOOGLE_APPLICATION_CREDENTIALS=/backend/secrets/gcs-key-dev.json
     depends_on:
       db:
         condition: service_healthy
@@ -77,7 +78,7 @@ services:
       - ../env/.env.common
       - ../env/.env.local_dev
       - ../secrets/.env.local_dev.secrets
-    user: "0:0"
+    # Security: Run as non-root user (appuser defined in Dockerfile)
     command: >
       uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
       --reload-dir /backend/app
@@ -88,7 +89,7 @@ services:
       - ../app/backend/ledger_api/app:/backend/app:rw
       - ../app/backend/backend_shared:/opt/backend_shared:rw
       - ../app/config:/backend/config
-      # - ../secrets:/backend/secrets:ro
+      - ../secrets:/backend/secrets:ro
       # - ~/.config/gcloud:/home/appuser/.config/gcloud
     environment:
       WATCHFILES_FORCE_POLLING: "1"
@@ -124,10 +125,11 @@ services:
       - ../app/backend/backend_shared:/opt/backend_shared:rw
       - ../app/config:/backend/config
       - ../secrets:/backend/secrets:ro
-      - ~/.config/gcloud:/home/appuser/.config/gcloud
     environment:
       - WATCHFILES_FORCE_POLLING=1
       - TZ=Asia/Tokyo
+      # Security: Use service account key instead of mounting ~/.config/gcloud
+      - GOOGLE_APPLICATION_CREDENTIALS=/backend/secrets/gcs-key-dev.json
     depends_on:
       db:
         condition: service_healthy
@@ -151,7 +153,7 @@ services:
       - ../app/backend/plan_worker/app:/backend/app:rw
       - ../app/backend/plan_worker/test:/backend/test:rw
       - ../app/backend/backend_shared:/opt/backend_shared:rw
-      # - ../secrets:/backend/secrets:ro
+      - ../secrets:/backend/secrets:ro
       # - ~/.config/gcloud:/home/appuser/.config/gcloud
     environment:
       WATCHFILES_FORCE_POLLING: "1"
@@ -185,7 +187,6 @@ services:
       - ../secrets:/backend/secrets:ro
       # GCS からダウンロードしたデータを書き込みたいので dev では read-write にする
       - ../app/backend/rag_api/local_data/master:/backend/local_data/master
-      - ~/.config/gcloud:/home/appuser/.config/gcloud
     environment:
       CATEGORY_QUESTION_TEMPLATES_WITH_TAGS: /backend/config/category_question_templates_with_tags.yaml
       DEV_RELOAD: "1"
@@ -193,6 +194,8 @@ services:
       RAG_GCS_URI: gs://sanbouapp-dev/rag_api/object_haikibutu/master/
       WATCHFILES_FORCE_POLLING: "1"
       TZ: "Asia/Tokyo"
+      # Security: Use service account key instead of mounting ~/.config/gcloud
+      GOOGLE_APPLICATION_CREDENTIALS: /backend/secrets/gcs-key-dev.json
     depends_on:
       db:
         condition: service_healthy
@@ -218,10 +221,11 @@ services:
       - ../app/backend/manual_api/app:/backend/app:rw
       - ../app/backend/backend_shared:/opt/backend_shared:rw
       - ../secrets:/backend/secrets:ro
-      - ~/.config/gcloud:/home/appuser/.config/gcloud
     environment:
       MANUAL_FRONTEND_BASE_URL: ${MANUAL_FRONTEND_BASE_URL:-http://localhost:5173}
       TZ: "Asia/Tokyo"
+      # Security: Use service account key instead of mounting ~/.config/gcloud
+      GOOGLE_APPLICATION_CREDENTIALS: /backend/secrets/gcs-key-dev.json
     networks:
       - app-net
 
