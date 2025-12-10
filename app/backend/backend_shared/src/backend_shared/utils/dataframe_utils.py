@@ -1,5 +1,8 @@
 import pandas as pd
 
+# 共通の特殊値リスト（欠損値として扱う文字列）
+NA_STRING_VALUES = ["<NA>", "nan", "None", "NaN", "NULL", "null", "#N/A", "#NA", ""]
+
 
 def combine_date_and_time(
     df: pd.DataFrame, date_col: str, time_col: str
@@ -69,7 +72,7 @@ def parse_str_column(df: pd.DataFrame, col: str) -> pd.DataFrame:
     cleaned = df[col].copy()
 
     # '<NA>' などの特殊な値をNaNに変換
-    cleaned = cleaned.replace(["<NA>", "nan", "None", "NaN"], pd.NA)
+    cleaned = cleaned.replace(NA_STRING_VALUES, pd.NA)
 
     # 非欠損値だけに str.strip() を適用（NaN は触らない）
     cleaned = cleaned.where(cleaned.isna(), cleaned.astype(str).str.strip())
@@ -96,7 +99,7 @@ def normalize_code_column(df: pd.DataFrame, col: str) -> pd.DataFrame:
     cleaned = df[col].copy()
     
     # '<NA>' などの特殊な値をNaNに変換
-    cleaned = cleaned.replace(["<NA>", "nan", "None", "NaN"], pd.NA)
+    cleaned = cleaned.replace(NA_STRING_VALUES, pd.NA)
     
     # 非欠損値に対して先頭ゼロを除去
     # lstrip('0')を使用（例: "000123" → "123", "00123X" → "123X"）
@@ -122,7 +125,7 @@ def remove_commas_and_convert_numeric(df: pd.DataFrame, column: str) -> pd.DataF
     """
     # カンマを除去し、特殊値や空文字をNaNに変換してからfloat変換
     cleaned = df[column].astype(str).str.replace(",", "")
-    cleaned = cleaned.replace(["<NA>", "nan", "None", "NaN", ""], pd.NA)
+    cleaned = cleaned.replace(NA_STRING_VALUES, pd.NA)
     df[column] = pd.to_numeric(cleaned, errors="coerce")
     return df
 
@@ -174,7 +177,7 @@ def common_cleaning(df: pd.DataFrame) -> pd.DataFrame:
         cleaned = df[col].copy()
 
         # '<NA>' などの特殊な値をNaNに変換
-        cleaned = cleaned.replace(["<NA>", "nan", "None", "NaN"], pd.NA)
+        cleaned = cleaned.replace(NA_STRING_VALUES, pd.NA)
 
         cleaned = cleaned.where(
             cleaned.notna(),  # 非欠損値だけ変換を適用
