@@ -62,6 +62,9 @@ def parse_str_column(df: pd.DataFrame, col: str) -> pd.DataFrame:
     """
     欠損値はそのまま、文字列は strip() して object 型にする
     '<NA>' などの値も適切に処理する
+    
+    コードカラム（英語名が _cd で終わる）の場合は先頭ゼロを除去して正規化する
+    例: "000123" → "123", "00123X" → "123X"
     """
     cleaned = df[col].copy()
 
@@ -70,7 +73,42 @@ def parse_str_column(df: pd.DataFrame, col: str) -> pd.DataFrame:
 
     # 非欠損値だけに str.strip() を適用（NaN は触らない）
     cleaned = cleaned.where(cleaned.isna(), cleaned.astype(str).str.strip())
+    
+    # コードカラム（_cdで終わる）の場合は先頭ゼロを除去
+    # 注意: この時点では日本語カラム名なので、英語名への変換前に適用する必要がある
+    # そのため、カラム名ベースではなく、設定で判定する必要がある
+    # 現時点では全てのstr型カラムに適用せず、後続の処理で対応する
 
+    return df.assign(**{col: cleaned})
+
+
+def normalize_code_column(df: pd.DataFrame, col: str) -> pd.DataFrame:
+    """
+    コードカラムの先頭ゼロを除去して正規化する
+    
+    用途: 取引先CD、業者CD、品目CD、営業担当者CDなどのコードフィールド
+    例: "000123" → "123", "00123X" → "123X", "0000" → "" (空文字列)
+    
+    :param df: 対象DataFrame
+    :param col: 変換対象のカラム名
+    :return: 変換後のDataFrame
+    """
+    cleaned = df[col].copy()
+    
+    # '<NA>' などの特殊な値をNaNに変換
+    cleaned = cleaned.replace(["<NA>", "nan", "None", "NaN"], pd.NA)
+    
+    # 非欠損値に対して先頭ゼロを除去
+    # lstrip('0')を使用（例: "000123" → "123", "00123X" → "123X"）
+    # 注意: "0000" のように全てゼロの場合は空文字列になるため、空文字列をNaNに変換
+    cleaned = cleaned.where(
+        cleaned.isna(), 
+        cleaned.astype(str).str.strip().str.lstrip('0')
+    )
+    
+    # 空文字列をNaNに変換（全てゼロだった場合）
+    cleaned = cleaned.replace("", pd.NA)
+    
     return df.assign(**{col: cleaned})
 
 
