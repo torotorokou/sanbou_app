@@ -78,7 +78,7 @@ receive:
     荷降現場名: { en_name: unload_site_name, type: str,   agg: first }
     運搬業者CD: { en_name: transport_vendor_cd,   type: Int64, agg: first }
     運搬業者名: { en_name: transport_vendor_name, type: str,   agg: first }
-    取引先CD:   { en_name: client_cd,   type: str, agg: first }   # 先頭ゼロ保持
+    取引先CD:   { en_name: client_cd,   type: code, agg: first }   # コード型：先頭ゼロを除去して正規化
     取引先名:   { en_name: client_name, type: str, agg: first }
     マニ種類CD: { en_name: manifest_type_cd,   type: Int64, agg: first }
     マニ種類名: { en_name: manifest_type_name, type: str,   agg: first }
@@ -124,7 +124,7 @@ payable:
         - 出金額
         - 税抜支払金額
     columns:
-        取引先CD: { en_name: client_cd, type: str, agg: first }
+        取引先CD: { en_name: client_cd, type: code, agg: first }
         取引先名: { en_name: client_name, type: str, agg: first }
         繰越残高: { en_name: carried_balance, type: float, agg: sum }
         出金額: { en_name: payment_amount, type: float, agg: sum }
@@ -137,6 +137,6 @@ sales_summary:
         - 取引先名
         - 金額
     columns:
-        取引先CD: { en_name: client_cd, type: str, agg: first }
+        取引先CD: { en_name: client_cd, type: code, agg: first }
         取引先名: { en_name: client_name, type: str, agg: first }
         金額: { en_name: amount, type: float, agg: sum }

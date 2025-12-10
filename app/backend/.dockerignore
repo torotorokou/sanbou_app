@@ -1,35 +1,81 @@
-# 共通除外
+# ============================
+# Backend Build Context Optimization
+# context: ../app/backend (docker-compose.dev.yml)
+# ============================
+
+# VCS / IDE
 .git
+.gitignore
+.github
+.vscode
+.idea
+**/.DS_Store
+
+# Python cache
 **/__pycache__/
 **/*.pyc
 **/*.pyo
 **/*.pyd
 **/.venv/
-**/*.log
-**/.DS_Store
+**/.pytest_cache/
+**/.mypy_cache/
+**/.ruff_cache/
+**/.coverage
+**/.tox/
 
+# Env / Secrets (handled by compose env_file)
 **/.env*
 **/*.env
+
+# === Security: Prevent secrets from being copied into images ===
+secrets/
+**/secrets/
+*.pem
+*.key
+*.p12
+*.pfx
+id_rsa
+id_ed25519
+*.pem.key
+# GCS & Service Account keys
+**/*-sa-key.json
+**/gcs-key*.json
+**/*-credentials.json
+# SSH config
+**/.ssh/
+
+# Build artifacts
 **/*.sqlite
 **/dist/
 **/build/
+
+# Documentation
 **/*.md
-
-# backend_shared の README.md は pyproject.toml で必要なので含める
+# backend_sharedのREADME.mdはpyproject.tomlで必要なので含める
 !backend_shared/README.md
+!backend_shared/pyproject.toml
 
-# 開発専用除外
+# Tests / Coverage
 **/tests/
 **/test/
+**/__tests__/
 **/coverage/
-**/local_data/
+**/*.test.py
+**/*.spec.py
 
-# 実行時生成ファイル（ビルドに含めない）
+# Generated / Runtime files
+**/local_data/
+**/logs/
+**/report_artifacts/
 ledger_api/app/api/report_artifacts/
 ledger_api/app/api/logs/
 ledger_api/app/st_app/logs/
 ledger_api/app/st_app/report_artifacts/
 
-# 各APIの不要ファイル
+# Node artifacts (if any)
 **/node_modules/
-**/.pytest_cache/
+
+# Other temp files
+**/*.log
+**/*.tmp
+**/*.bak

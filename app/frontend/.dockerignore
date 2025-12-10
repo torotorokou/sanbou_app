@@ -1,23 +1,45 @@
-## Node build context optimization
+# ============================
+# Frontend Build Context Optimization
+# context: ../app/frontend
+# ============================
+
+# Node build artifacts
 node_modules/
 dist/
 build/
+.cache/
+.vite/
+.turbo/
 *.log
 npm-debug.log*
 yarn-error.log*
+pnpm-debug.log*
 .pnpm-store/
-.turbo/
 
-# Env / secrets
+# Env / Secrets (handled by compose env_file)
 .env*
+!.env.example
+
+# === Security: Prevent secrets from being copied into images ===
+secrets/
+*.pem
+*.key
+*.p12
+*.pfx
+*-sa-key.json
+gcs-key*.json
+*-credentials.json
 
 # VCS / IDE
 .git
 .gitignore
+.github
 .vscode
 .idea
+.DS_Store
+Thumbs.db
 
-# Tests / coverage
+# Tests / Coverage
 coverage/
 __tests__/
 tests/
@@ -29,6 +51,20 @@ vitest.config.*
 *.test.ts
 *.test.tsx
 
-# Misc
-Dockerfile*
+# Documentation
 *.md
+!README.md
+DOCS.md
+Audit.md
+DELETE_PLAN.txt
+
+# Docker / CI files
+Dockerfile*
+!Dockerfile
+docker-compose*.yml
+.dockerignore
+
+# Misc
+scripts/
+*.bak
+*.tmp

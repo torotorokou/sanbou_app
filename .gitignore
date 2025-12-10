@@ -12,6 +12,7 @@ Thumbs.db
 *.sln
 *.sw?
 
+
 # JetBrains 等派生
 .fleet/
 
@@ -41,6 +42,7 @@ __pycache__/
 *.py[cod]
 *.pyo
 *.pyd
+*.pyc
 *.egg
 *.egg-info/
 .eggs/
@@ -114,6 +116,12 @@ id_ed25519
 *.local
 docker-compose.override.yml
 docker-compose.local.yml
+
+# Docker build cache
+.docker/
+
+# Docker volumes
+docker-volumes/
  
 
 # ============================
@@ -123,10 +131,13 @@ docker-compose.local.yml
 dbdata/
 pg_data/
 postgres_data/
+data/postgres/
+data/postgres_v17/
 *.pgsql
 *.psql
 *.dump
 *.backup
+*.sql.gz
 
 **/local_data/
 # **/data/
@@ -141,12 +152,16 @@ postgres_data/
 # 必要に応じて PDF など大きなバイナリを追跡したい場合は以下のコメント解除
 # !**/local_data/master/**/*.pdf
 
+# Backup files
+backups/
 *.bak
+*.backup.*
 *.tmp
 *.out
 *.pid
 *.pid.lock
 *.zip
+*.tar.gz
 
 # ============================
 # ログ / レポート / カバレッジ
@@ -156,6 +171,12 @@ logs/
 coverage/
 # reports/
 *.report.*
+
+# API specific generated files
+**/report_artifacts/
+**/api/logs/
+**/st_app/logs/
+**/st_app/report_artifacts/
 
 # ============================
 # ドキュメント系バイナリ
@@ -246,12 +267,17 @@ test/**/*.csv
 !**/local_data/master/**/*.json
 
 # ============================
-# RAG / ベクターストア（将来）
+# RAG / ベクターストア / AI
 # ============================
 *.faiss
 *.ann
 vector_store/
 cache_embeddings/
+
+# AI/ML model cache
+**/.cache/
+**/model_cache/
+**/embeddings_cache/
 
 # ============================
 # 追加で無視したいものがあればこの下に

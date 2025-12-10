@@ -146,6 +146,11 @@ def dedupe_and_aggregate(
         print("[WARN] No valid aggregation functions found. Skipping deduplication.")
         return df
     
+    # DataFrameが空の場合はそのまま返す
+    if len(df) == 0:
+        print("[INFO] DataFrame is empty. Skipping deduplication.")
+        return df
+    
     # グループIDを全行に付与
     df["_dup_group_id"] = pd.factorize(
         df[unique_keys].astype(str).agg("-".join, axis=1)
