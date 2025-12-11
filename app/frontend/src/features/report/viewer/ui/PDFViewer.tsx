@@ -50,7 +50,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ pdfUrl, pdfStatus = "idle", heigh
                 >
                     PDFプレビュー生成中...
                     <br />
-                    エクセルのダウンロードは可能です。
+                    （エクセルのダウンロードは可能です）
                 </Typography.Text>
             </div>
         );

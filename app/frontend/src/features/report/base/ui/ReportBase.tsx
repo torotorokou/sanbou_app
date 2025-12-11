@@ -99,6 +99,7 @@ const ReportBase: React.FC<ReportBaseProps> = ({
             () => { }, // onStart
             () => {   // onComplete
                 loading.setLoading(false);
+                step.setCurrentStep(1); // 「完了」ステップに進める
                 setTimeout(() => {
                     modal.setModalOpen(false);
                 }, 1000);
