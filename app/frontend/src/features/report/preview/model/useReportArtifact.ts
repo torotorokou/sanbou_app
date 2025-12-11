@@ -100,7 +100,7 @@ export const useReportArtifact = () => {
                 });
                 
                 const response = await coreApi.get<PdfStatusResponse>(
-                    `/reports/pdf-status?${params.toString()}`
+                    `/core_api/ledger_api/reports/pdf-status?${params.toString()}`
                 );
                 
                 if (pollingCancelledRef.current) return;
