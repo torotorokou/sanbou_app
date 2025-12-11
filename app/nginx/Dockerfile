@@ -45,6 +45,7 @@ RUN rm -f /etc/nginx/conf.d/default.conf
 
 # Copy nginx configuration files for STG
 COPY nginx/conf.d/_proxy_common.conf /etc/nginx/conf.d/
+COPY nginx/conf.d/_security_headers.conf /etc/nginx/conf.d/
 COPY nginx/conf.d/stg.conf /etc/nginx/conf.d/
 
 # Copy React build artifacts
@@ -67,6 +68,7 @@ RUN rm -f /etc/nginx/conf.d/default.conf
 
 # Copy nginx configuration files for PROD
 COPY nginx/conf.d/_proxy_headers.conf /etc/nginx/conf.d/
+COPY nginx/conf.d/_security_headers.conf /etc/nginx/conf.d/
 COPY nginx/conf.d/prod.conf /etc/nginx/conf.d/
 
 # Copy React build artifacts
