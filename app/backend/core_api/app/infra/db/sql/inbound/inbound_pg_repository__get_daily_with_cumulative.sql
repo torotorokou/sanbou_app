@@ -19,7 +19,7 @@ WITH d AS (
     c.is_business,
     COALESCE(r.receive_net_ton, 0)::numeric AS ton
   FROM mart.v_calendar AS c
-  LEFT JOIN mart.v_receive_daily AS r
+  LEFT JOIN mart.mv_receive_daily AS r
     ON r.ddate = c.ddate
   WHERE c.ddate BETWEEN :start AND :end
 )

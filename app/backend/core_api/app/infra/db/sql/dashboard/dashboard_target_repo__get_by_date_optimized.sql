@@ -110,14 +110,14 @@ week_target_total AS (
 -- 選択月内のみを対象とする
 month_actual_to_date AS (
   SELECT COALESCE(SUM(r.receive_net_ton), 0)::numeric AS month_actual_to_date_ton
-  FROM mart.v_receive_daily r
+  FROM mart.mv_receive_daily r
   WHERE r.ddate BETWEEN (SELECT month_start FROM bounds) AND (SELECT cumulative_end_date FROM cumulative_end_date)
 ),
 -- Calculate week cumulative actual (sum of receive_net_ton from week_start to cumulative_end_date, same iso_year/iso_week)
 -- 選択月内かつ同一週のみを対象とする
 week_actual_to_date AS (
   SELECT COALESCE(SUM(r.receive_net_ton), 0)::numeric AS week_actual_to_date_ton
-  FROM mart.v_receive_daily r, base b
+  FROM mart.mv_receive_daily r, base b
   WHERE r.iso_year = b.iso_year
     AND r.iso_week = b.iso_week
     AND r.ddate >= (SELECT month_start FROM bounds)
