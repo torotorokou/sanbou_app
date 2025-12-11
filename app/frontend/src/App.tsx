@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter } from 'react-router-dom';
 import { App as AntdApp } from 'antd';
 import MainLayout from '@app/layout/MainLayout';
+import { ErrorBoundary } from '@/shared';
 
 /**
  * アプリケーションルート
@@ -14,11 +15,13 @@ import MainLayout from '@app/layout/MainLayout';
  */
 const App: React.FC = () => {
     return (
-        <AntdApp>
-            <BrowserRouter>
-                <MainLayout />
-            </BrowserRouter>
-        </AntdApp>
+        <ErrorBoundary>
+            <AntdApp>
+                <BrowserRouter>
+                    <MainLayout />
+                </BrowserRouter>
+            </AntdApp>
+        </ErrorBoundary>
     );
 };
 

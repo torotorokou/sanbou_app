@@ -65,9 +65,13 @@ export interface UseSystemHealthReturn {
  * 
  * オンデマンドでバックエンドサービスの状態を確認する。
  * 自動実行は行わず、管理者が明示的に実行する設計。
+ * 
+ * @param _options - 将来的な拡張用オプション（現在は未使用）
  */
-export function useSystemHealth(options: UseSystemHealthOptions = {}): UseSystemHealthReturn {
-    const { autoCheckOnMount = false } = options;
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export function useSystemHealth(_options: UseSystemHealthOptions = {}): UseSystemHealthReturn {
+    // Note: autoCheckOnMount is intentionally not used. 
+    // Health checks are manual-only by design.
 
     const [status, setStatus] = useState<SystemHealthStatus | null>(null);
     const [isChecking, setIsChecking] = useState(false);
