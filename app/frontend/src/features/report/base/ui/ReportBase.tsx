@@ -95,17 +95,39 @@ const ReportBase: React.FC<ReportBaseProps> = ({
         modal.setModalOpen(true);
         loading.setLoading(true);
 
+        // 非同期処理の完了フラグを外部で管理
+        const processState = { completed: false, success: false };
+        
         business.handleGenerateReport(
-            () => { }, // onStart
-            () => {   // onComplete
-                loading.setLoading(false);
-                step.setCurrentStep(1); // 「完了」ステップに進める
-                setTimeout(() => {
-                    modal.setModalOpen(false);
-                }, 1000);
+            () => { 
+                console.log('[ReportBase] onStart: レポート生成開始');
             },
-            () => {   // onSuccess  
+            () => {   // onComplete（成功・失敗に関わらず実行）
+                console.log('[ReportBase] onComplete: 処理完了', { success: processState.success });
+                loading.setLoading(false);
+                processState.completed = true;
+                
+                // onSuccessの後に実行されるため、少し遅延させて判定
+                setTimeout(() => {
+                    if (!processState.success) {
+                        console.log('[ReportBase] 失敗のためモーダルを閉じる');
+                        // 失敗時: 即座にモーダルを閉じる
+                        modal.setModalOpen(false);
+                    }
+                }, 100);
+            },
+            () => {   // onSuccess（成功時のみ実行）
+                console.log('[ReportBase] onSuccess: 成功 - ステップ1へ進む');
+                processState.success = true;
                 finalized.setFinalized(true);
+                // 成功時のみ「完了」ステップに進める
+                step.setCurrentStep(1);
+                // 完了メッセージを2秒間表示してからモーダルを閉じる
+                setTimeout(() => {
+                    console.log('[ReportBase] 2秒後: モーダルを閉じる');
+                    modal.setModalOpen(false);
+                    step.setCurrentStep(0); // 次回のために初期化
+                }, 2000);
             }
         );
     };
