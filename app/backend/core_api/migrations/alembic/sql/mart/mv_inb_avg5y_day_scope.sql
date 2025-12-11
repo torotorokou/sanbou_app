@@ -13,7 +13,7 @@ CREATE MATERIALIZED VIEW mart.mv_inb_avg5y_day_scope AS
             r.is_business,
             r.is_holiday,
             (r.receive_net_ton)::numeric AS y
-           FROM mart.v_receive_daily r
+           FROM mart.mv_receive_daily r
           WHERE ((r.ddate >= (CURRENT_DATE - '5 years'::interval)) AND (r.receive_net_ton IS NOT NULL))
         ), scoped AS (
          SELECT 'all'::text AS scope,

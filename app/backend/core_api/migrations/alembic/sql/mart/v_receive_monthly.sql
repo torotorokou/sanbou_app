@@ -11,7 +11,7 @@ CREATE OR REPLACE VIEW mart.v_receive_monthly AS
             r.receive_net_ton,
             r.receive_vehicle_count,
             r.sales_yen
-           FROM mart.v_receive_daily r
+           FROM mart.mv_receive_daily r
         )
  SELECT make_date(y, m, 1) AS month_date,
     to_char((make_date(y, m, 1))::timestamp with time zone, 'YYYY-MM'::text) AS month,

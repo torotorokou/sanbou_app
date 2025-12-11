@@ -11,12 +11,10 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from backend_shared.application.logging import get_module_logger, create_log_context
+from backend_shared.db.names import SCHEMA_REF, SCHEMA_MART, MV_RECEIVE_DAILY, V_CALENDAR_CLASSIFIED, fq
 from app.core.ports.inbound_repository_port import InboundRepository
 from app.core.domain.inbound import InboundDailyRow, CumScope
 from app.infra.db.sql_loader import load_sql
-
-# 👇 SQL識別子は1か所で管理（定数化）
-from app.infra.db.sql_names import V_RECEIVE_DAILY, V_CALENDAR
 
 logger = get_module_logger(__name__)
 
@@ -32,16 +30,34 @@ class InboundRepositoryImpl(InboundRepository):
     def __init__(self, db: Session):
         self.db = db
         # Pre-load SQL for get_daily_with_cumulative (legacy, kept for compatibility)
-        self._daily_cumulative_sql_template = load_sql(
+        template = load_sql(
             "inbound/inbound_pg_repository__get_daily_with_cumulative.sql"
         )
+        self._daily_cumulative_sql = text(
+            template.format(
+                v_calendar=fq(SCHEMA_REF, V_CALENDAR_CLASSIFIED),
+                mv_receive_daily=fq(SCHEMA_MART, MV_RECEIVE_DAILY)
+            )
+        )
         # Pre-load SQL for get_daily_with_comparisons (new: includes prev_month/prev_year)
-        self._daily_comparisons_sql_template = load_sql(
+        template = load_sql(
             "inbound/inbound_pg_repository__get_daily_with_comparisons.sql"
         )
+        self._daily_comparisons_sql = text(
+            template.format(
+                v_calendar=fq(SCHEMA_REF, V_CALENDAR_CLASSIFIED),
+                mv_receive_daily=fq(SCHEMA_MART, MV_RECEIVE_DAILY)
+            )
+        )
         # 案6: Simplified query without comparisons (for performance)
-        self._daily_simple_sql_template = load_sql(
+        template = load_sql(
             "inbound/inbound_pg_repository__get_daily_simple.sql"
+        )
+        self._daily_simple_sql = text(
+            template.format(
+                v_calendar=fq(SCHEMA_REF, V_CALENDAR_CLASSIFIED),
+                mv_receive_daily=fq(SCHEMA_MART, MV_RECEIVE_DAILY)
+            )
         )
 
     def fetch_daily(
@@ -82,25 +98,19 @@ class InboundRepositoryImpl(InboundRepository):
                 f"Invalid cum_scope: {cum_scope}. Must be one of {sorted(ALLOWED_CUM_SCOPES)}"
             )
 
-        # 現時点のv_receive_dailyにはsegment列がないため、受け取っても無視（将来対応用）
+        # 現時点のmv_receive_dailyにはsegment列がないため、受け取っても無視（将来対応用）
         if segment is not None:
             logger.warning("segment filter is not supported on %s; ignoring segment=%r",
-                           V_RECEIVE_DAILY, segment)
+                           fq(SCHEMA_MART, MV_RECEIVE_DAILY), segment)
 
         # --- SQL with CTE + window function (loaded from external file) ---
         # Use the new SQL that includes comparison data (prev_month/prev_year)
-        # 案1: v_receive_daily → mv_receive_daily (MATERIALIZED VIEW) に変更
-        # テーブル名は動的に差し込む必要があるため、f-stringで置換
-        sql_str = self._daily_comparisons_sql_template.replace(
-            "mart.v_calendar", V_CALENDAR
-        ).replace(
-            "mart.v_receive_daily", "mart.mv_receive_daily"  # 案1: MV に変更
-        )
-        sql = text(sql_str)
+        # MATERIALIZED VIEW (mv_receive_daily) を使用してクエリパフォーマンス最適化
+        # テーブル名は backend_shared.db.names の定数で置換済み（__init__で実行）
 
         try:
             result = self.db.execute(
-                sql,
+                self._daily_comparisons_sql,
                 {
                     "start": start,
                     "end": end,
@@ -187,18 +197,14 @@ class InboundRepositoryImpl(InboundRepository):
 
         if segment is not None:
             logger.warning("segment filter is not supported on %s; ignoring segment=%r",
-                           V_RECEIVE_DAILY, segment)
+                           fq(SCHEMA_MART, MV_RECEIVE_DAILY), segment)
 
         # --- SQL with simple query (no comparisons) ---
-        sql_str = self._daily_simple_sql_template.replace(
-            "mart.v_calendar", V_CALENDAR
-        ).replace(
-            "mart.mv_receive_daily", "mart.mv_receive_daily"  # Already using MV
-        )
-        sql = text(sql_str)
+        # backend_shared.db.names の定数で置換済み（__init__で実行）
 
         try:
             result = self.db.execute(
+                self._daily_simple_sql,
                 sql,
                 {
                     "start": start,

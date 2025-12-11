@@ -130,6 +130,9 @@ services:
       - TZ=Asia/Tokyo
       # Security: Use service account key instead of mounting ~/.config/gcloud
       - GOOGLE_APPLICATION_CREDENTIALS=/backend/secrets/gcs-key-dev.json
+      # Alembic: DB connection string (uses myuser for DDL operations)
+      # PASSWORD MOVED TO: secrets/.env.local_dev.secrets (DB_ALEMBIC_PASSWORD)
+      - ALEMBIC_DB_USER=myuser
     depends_on:
       db:
         condition: service_healthy
