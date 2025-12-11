@@ -1,10 +1,13 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { notifySuccess, notifyError, notifyInfo } from '@features/notification';
 import { getApiEndpoint, REPORT_KEYS } from '@features/report/shared/config';
 import type { ReportKey } from '@features/report/shared/config';
 import type { CsvFiles } from '@features/report/shared/types/report.types';
 import { coreApi } from '@features/report/shared/infrastructure/http.adapter';
 import { generateJapaneseFilename } from '@features/report/shared/lib/reportKeyTranslation';
+
+// PDFステータスの型定義
+export type PdfStatus = "idle" | "pending" | "ready" | "error";
 
 export type ReportArtifactResponse = {
     status?: string;
@@ -15,9 +18,21 @@ export type ReportArtifactResponse = {
         pdf_preview_url?: string | null;
         report_token?: string | null;
     } | null;
+    metadata?: {
+        pdf_status?: PdfStatus;
+        [key: string]: unknown;
+    } | null;
     summary?: unknown;
-    metadata?: unknown;
     [key: string]: unknown;
+};
+
+// PDFステータスAPIのレスポンス型
+type PdfStatusResponse = {
+    report_key: string;
+    report_token: string;
+    status: "pending" | "ready" | "error";
+    pdf_url?: string | null;
+    message?: string | null;
 };
 
 export type ReportArtifactState = {
@@ -29,6 +44,7 @@ export type ReportArtifactState = {
     summary: unknown;
     metadata: unknown;
     lastResponse: ReportArtifactResponse | null;
+    pdfStatus: PdfStatus;
 };
 
 const deriveFileName = (reportKey: string | null, reportDate: string | null, suffix: string) => {
@@ -40,7 +56,9 @@ const deriveFileName = (reportKey: string | null, reportDate: string | null, suf
 
 /**
  * URL 返却方式のレポート生成を扱うフック。
- * 以前の ZIP 解凍ロジックを廃止し、Excel/PDF の署名付き URL をそのまま扱います。
+ * 🔄 リファクタリング: Excel同期 + PDF非同期ポーリングに対応
+ * - Excel URL は即座に返却
+ * - PDFは非同期生成。pdf_status をポーリングして完了を確認
  */
 export const useReportArtifact = () => {
     const [state, setState] = useState<ReportArtifactState>({
@@ -52,10 +70,90 @@ export const useReportArtifact = () => {
         summary: null,
         metadata: null,
         lastResponse: null,
+        pdfStatus: "idle",
     });
     const [excelFileName, setExcelFileName] = useState<string>(() => deriveFileName(null, null, '.xlsx'));
     const [pdfFileName, setPdfFileName] = useState<string>(() => deriveFileName(null, null, '.pdf'));
     const [isReady, setIsReady] = useState<boolean>(false);
+    
+    // ポーリング用のキャンセルフラグ
+    const pollingCancelledRef = useRef<boolean>(false);
+
+    // PDFステータスをポーリングで確認
+    const pollPdfStatus = useCallback(async () => {
+        const { reportKey, reportDate, reportToken, pdfStatus } = state;
+        
+        if (!reportKey || !reportDate || !reportToken || pdfStatus !== "pending") {
+            return;
+        }
+        
+        pollingCancelledRef.current = false;
+        
+        const poll = async () => {
+            if (pollingCancelledRef.current) return;
+            
+            try {
+                const params = new URLSearchParams({
+                    report_key: reportKey,
+                    report_date: reportDate,
+                    report_token: reportToken,
+                });
+                
+                const response = await coreApi.get<PdfStatusResponse>(
+                    `/reports/pdf-status?${params.toString()}`
+                );
+                
+                if (pollingCancelledRef.current) return;
+                
+                console.info('[useReportArtifact] PDFステータス確認:', response);
+                
+                if (response.status === "ready" && response.pdf_url) {
+                    setState(prev => ({
+                        ...prev,
+                        pdfStatus: "ready",
+                        pdfUrl: response.pdf_url ?? null,
+                    }));
+                    notifySuccess('PDF生成完了', 'PDFプレビューが利用可能になりました。');
+                    return;
+                }
+                
+                if (response.status === "error") {
+                    setState(prev => ({
+                        ...prev,
+                        pdfStatus: "error",
+                    }));
+                    notifyError('PDF生成失敗', response.message || 'PDFの生成に失敗しました。');
+                    return;
+                }
+                
+                // pending の場合は5秒後に再度ポーリング
+                if (!pollingCancelledRef.current) {
+                    setTimeout(poll, 5000);
+                }
+            } catch (error) {
+                if (!pollingCancelledRef.current) {
+                    console.error('[useReportArtifact] PDFステータス確認エラー:', error);
+                    setState(prev => ({
+                        ...prev,
+                        pdfStatus: "error",
+                    }));
+                }
+            }
+        };
+        
+        poll();
+    }, [state]);
+    
+    // pdfStatus が pending になったらポーリング開始
+    useEffect(() => {
+        if (state.pdfStatus === "pending" && state.reportToken) {
+            pollPdfStatus();
+        }
+        
+        return () => {
+            pollingCancelledRef.current = true;
+        };
+    }, [state.pdfStatus, state.reportToken, pollPdfStatus]);
 
     const applyArtifactResponse = useCallback((response: ReportArtifactResponse | null) => {
         // デバッグ: レスポンス全体をログ出力
@@ -68,12 +166,14 @@ export const useReportArtifact = () => {
                 pdfUrl: null,
                 reportToken: null,
                 lastResponse: response,
+                pdfStatus: "idle",
             }));
             setIsReady(false);
             return;
         }
 
         const artifactBlock = response.artifact ?? {};
+        const metadataBlock = response.metadata ?? {};
         const excelUrl = typeof artifactBlock?.excel_download_url === 'string' && artifactBlock.excel_download_url.length > 0
             ? artifactBlock.excel_download_url
             : null;
@@ -82,12 +182,26 @@ export const useReportArtifact = () => {
             : null;
         const reportKey = typeof response.report_key === 'string' ? response.report_key : null;
         const reportDate = typeof response.report_date === 'string' ? response.report_date : null;
+        const reportToken = typeof artifactBlock?.report_token === 'string' ? artifactBlock.report_token : null;
+        
+        // PDFステータスの判定
+        // - metadata.pdf_status が "pending" なら pending
+        // - pdfUrl があれば ready
+        // - それ以外は idle
+        let pdfStatus: PdfStatus = "idle";
+        if (metadataBlock.pdf_status === "pending") {
+            pdfStatus = "pending";
+        } else if (pdfUrl) {
+            pdfStatus = "ready";
+        }
 
         console.info('[useReportArtifact] 抽出した値:', {
             reportKey,
             reportDate,
             excelUrl,
             pdfUrl,
+            reportToken,
+            pdfStatus,
             artifactBlock
         });
 
@@ -97,17 +211,25 @@ export const useReportArtifact = () => {
         setState({
             excelUrl,
             pdfUrl,
-            reportToken: typeof artifactBlock?.report_token === 'string' ? artifactBlock.report_token : null,
+            reportToken,
             reportKey,
             reportDate,
             summary: response.summary ?? null,
             metadata: response.metadata ?? null,
             lastResponse: response,
+            pdfStatus,
         });
-        setIsReady(Boolean(excelUrl || pdfUrl));
+        
+        // Excelがあれば即座にダウンロード開始
+        if (excelUrl) {
+            setIsReady(true);
+        } else {
+            setIsReady(Boolean(pdfUrl));
+        }
+        
         // 開発者向けログ: 受信したアーティファクト URL を表示
         try {
-            console.info('[useReportArtifact] applyArtifactResponse: excelUrl=', excelUrl, 'pdfUrl=', pdfUrl, 'reportToken=', artifactBlock?.report_token);
+            console.info('[useReportArtifact] applyArtifactResponse: excelUrl=', excelUrl, 'pdfUrl=', pdfUrl, 'reportToken=', reportToken, 'pdfStatus=', pdfStatus);
             // full response for debugging
             console.debug('[useReportArtifact] full response:', response);
         } catch {
@@ -254,6 +376,7 @@ export const useReportArtifact = () => {
     }, [state.pdfUrl]);
 
     const cleanup = useCallback(() => {
+        pollingCancelledRef.current = true;
         setState({
             excelUrl: null,
             pdfUrl: null,
@@ -263,6 +386,7 @@ export const useReportArtifact = () => {
             summary: null,
             metadata: null,
             lastResponse: null,
+            pdfStatus: "idle",
         });
         setIsReady(false);
     }, []);
@@ -270,6 +394,7 @@ export const useReportArtifact = () => {
     return {
         excelUrl: state.excelUrl,
         pdfUrl: state.pdfUrl,
+        pdfStatus: state.pdfStatus,
         excelFileName,
         pdfFileName,
         summary: state.summary,

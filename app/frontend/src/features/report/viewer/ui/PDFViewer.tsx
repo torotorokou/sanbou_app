@@ -1,15 +1,20 @@
 import React, { useEffect, useState } from 'react';
-import { Typography, Alert } from 'antd';
+import { Typography, Alert, Spin } from 'antd';
+import { LoadingOutlined } from '@ant-design/icons';
 import { useResponsive, ensurePdfJsWorkerLoaded } from '@/shared';
 import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
 import 'react-pdf/dist/esm/Page/TextLayer.css';
 
+// PDFステータスの型定義
+type PdfStatus = "idle" | "pending" | "ready" | "error";
+
 type PDFViewerProps = {
     pdfUrl?: string | null;
+    pdfStatus?: PdfStatus;  // 🔄 PDF非同期生成ステータス
     height?: string;
 };
 
-const PDFViewer: React.FC<PDFViewerProps> = ({ pdfUrl, height }) => {
+const PDFViewer: React.FC<PDFViewerProps> = ({ pdfUrl, pdfStatus = "idle", height }) => {
     const { isMobile } = useResponsive();
     const [hasError, setHasError] = useState(false);
 
@@ -17,6 +22,59 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ pdfUrl, height }) => {
         if (!pdfUrl) return;
         ensurePdfJsWorkerLoaded().catch(() => void 0);
     }, [pdfUrl]);
+
+    // PDF生成中（pending）の場合はスピナー表示
+    if (pdfStatus === "pending") {
+        return (
+            <div style={{
+                width: '100%',
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                alignItems: 'center',
+                minHeight: isMobile ? '300px' : '400px',
+                padding: isMobile ? '12px' : '16px',
+                gap: '16px',
+            }}>
+                <Spin
+                    indicator={<LoadingOutlined style={{ fontSize: isMobile ? 32 : 48 }} spin />}
+                    size="large"
+                />
+                <Typography.Text
+                    type='secondary'
+                    style={{
+                        textAlign: 'center',
+                        fontSize: isMobile ? '14px' : '16px',
+                    }}
+                >
+                    PDFを生成中です...
+                </Typography.Text>
+            </div>
+        );
+    }
+
+    // PDF生成エラーの場合
+    if (pdfStatus === "error") {
+        return (
+            <div style={{
+                width: '100%',
+                height: '100%',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                minHeight: isMobile ? '300px' : '400px',
+                padding: isMobile ? '12px' : '16px',
+            }}>
+                <Alert
+                    message="PDF生成エラー"
+                    description="PDFの生成に失敗しました。再度帳簿作成を試してください。"
+                    type="error"
+                    showIcon
+                />
+            </div>
+        );
+    }
 
     if (!pdfUrl) {
         return (

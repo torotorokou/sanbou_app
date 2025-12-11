@@ -47,7 +47,7 @@ const ReportBase: React.FC<ReportBaseProps> = ({
     );
     const [interactiveInitialResponse, setInteractiveInitialResponse] = useState<InitialApiResponse | null>(null);
     const [interactiveSessionData, setInteractiveSessionData] = useState<SessionData | null>(null);
-    const { cleanup, pdfPreviewUrl } = business;
+    const { cleanup, pdfPreviewUrl, pdfStatus } = business;
     const { previewUrl, setPreviewUrl } = preview;
     const { setFinalized } = finalized;
     const { setModalOpen } = modal;
@@ -315,7 +315,7 @@ const ReportBase: React.FC<ReportBaseProps> = ({
                 header={undefined}
             >
                 <Suspense fallback={null}>
-            <PDFViewer pdfUrl={previewUrl} />
+            <PDFViewer pdfUrl={previewUrl} pdfStatus={pdfStatus} />
                 </Suspense>
             </ReportManagePageLayout>
         </>

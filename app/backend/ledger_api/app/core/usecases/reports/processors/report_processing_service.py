@@ -2,13 +2,15 @@
 - CSV 読込
 - ジェネレーターの validate/format/main_process 呼び出し
 - Excel/PDF をファイルとして保存し、署名付き URL を返却
+
+🔄 リファクタリング: Excel同期 + PDF非同期の2段階構成に対応
 """
 
 from typing import Any, Dict, Optional, Tuple
 import traceback
 
 # pandas はこのモジュールでは未使用
-from fastapi import UploadFile
+from fastapi import BackgroundTasks, UploadFile
 from fastapi.responses import JSONResponse, Response
 from backend_shared.application.logging import get_module_logger
 
@@ -67,10 +69,20 @@ class ReportProcessingService:
         return dfs, None
 
     def run(
-        self, generator: BaseReportGenerator, files: Dict[str, UploadFile]
+        self,
+        generator: BaseReportGenerator,
+        files: Dict[str, UploadFile],
+        background_tasks: Optional[BackgroundTasks] = None,
+        async_pdf: bool = True,
     ) -> Response:
         """
         完全な帳票処理フローを実行（Factory不要・各エンドポイントがGeneratorを生成）
+        
+        Args:
+            generator: レポートジェネレーター
+            files: アップロードされたCSVファイル
+            background_tasks: FastAPIのBackgroundTasks（PDF非同期生成用）
+            async_pdf: True=PDF非同期生成, False=同期生成（従来互換）
         """
         try:
             # Step 1: CSV読込
@@ -193,7 +205,13 @@ class ReportProcessingService:
             report_date = generator.make_report_date(df_formatted)
 
             # Step 6: Excel/PDF を保存し JSON で URL を返す
-            return self.create_response(generator, df_result, report_date)
+            return self.create_response(
+                generator,
+                df_result,
+                report_date,
+                background_tasks=background_tasks,
+                async_pdf=async_pdf,
+            )
 
         except DomainError:
             # DomainErrorはそのまま再raiseしてFastAPIのエラーハンドラに任せる
@@ -225,16 +243,59 @@ class ReportProcessingService:
         report_date: str,
         *,
         extra_payload: Optional[Dict[str, Any]] = None,
+        background_tasks: Optional[BackgroundTasks] = None,
+        async_pdf: bool = True,
     ) -> JSONResponse:
-        """Excel/PDF を保存し、署名付き URL を含む JSON を返却する。"""
+        """Excel/PDF を保存し、署名付き URL を含む JSON を返却する。
+        
+        Args:
+            generator: レポートジェネレーター
+            df_result: 処理結果DataFrame
+            report_date: レポート日付
+            extra_payload: 追加のペイロード
+            background_tasks: FastAPIのBackgroundTasks（PDF非同期生成用）
+            async_pdf: True=PDF非同期生成, False=同期生成
+        """
         from app.infra.adapters.artifact_storage import ArtifactResponseBuilder
+        from app.infra.adapters.artifact_storage.artifact_builder import generate_pdf_background
         
         builder = ArtifactResponseBuilder()
-        return builder.build(
+        response = builder.build(
             generator,
             df_result,
             report_date,
             extra_payload=extra_payload,
+            async_pdf=async_pdf,
         )
+        
+        # PDF非同期生成の場合、BackgroundTasksにタスクを登録
+        if async_pdf and background_tasks is not None:
+            # レスポンスからメタデータを取得
+            import json
+            response_body = json.loads(response.body.decode())
+            metadata = response_body.get("metadata", {})
+            excel_path = metadata.get("excel_path")
+            artifact = response_body.get("artifact", {})
+            report_token = artifact.get("report_token")
+            report_key = response_body.get("report_key")
+            
+            if excel_path and report_token:
+                background_tasks.add_task(
+                    generate_pdf_background,
+                    report_key=report_key,
+                    report_date=report_date,
+                    report_token=report_token,
+                    excel_path_str=excel_path,
+                )
+                logger.info(
+                    "PDF生成タスクをバックグラウンドに登録",
+                    extra={
+                        "report_key": report_key,
+                        "report_date": report_date,
+                        "report_token": report_token,
+                    },
+                )
+        
+        return response
 
     # 旧APIは撤廃（Factory廃止に伴い使用不可）

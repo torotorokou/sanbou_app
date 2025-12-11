@@ -3,6 +3,8 @@ Base Report UseCase.
 
 全レポート生成UseCaseの共通処理を提供する基底クラス。
 各レポート固有のロジックは抽象メソッドとして定義し、サブクラスで実装する。
+
+🔄 リファクタリング: Excel同期 + PDF非同期の2段階構成に対応
 """
 
 import time
@@ -11,7 +13,7 @@ from datetime import date
 from io import BytesIO
 from typing import Any, Dict, Optional
 
-from fastapi import UploadFile
+from fastapi import BackgroundTasks, UploadFile
 from fastapi.responses import JSONResponse
 
 from app.core.ports.inbound import CsvGateway, ReportRepository
@@ -108,6 +110,8 @@ class BaseReportUseCase(ABC):
         yard: Optional[UploadFile] = None,
         receive: Optional[UploadFile] = None,
         period_type: Optional[str] = None,
+        background_tasks: Optional[BackgroundTasks] = None,
+        async_pdf: bool = True,
     ) -> JSONResponse:
         """
         レポート生成の共通実行フロー。
@@ -117,6 +121,8 @@ class BaseReportUseCase(ABC):
             yard: ヤードデータCSVファイル
             receive: 受入データCSVファイル
             period_type: 期間フィルタ ("oneday" | "oneweek" | "onemonth")
+            background_tasks: FastAPIのBackgroundTasks（PDF非同期生成用）
+            async_pdf: True=PDF非同期生成（デフォルト）, False=同期生成（従来互換）
             
         Returns:
             JSONResponse: 署名付きURLを含むレスポンス
@@ -133,6 +139,7 @@ class BaseReportUseCase(ABC):
                 "usecase": self.report_key,
                 "file_keys": file_keys,
                 "period_type": period_type,
+                "async_pdf": async_pdf,
             },
         )
         
@@ -156,18 +163,28 @@ class BaseReportUseCase(ABC):
             # Step 6: Excel生成（サブクラス実装）
             excel_bytes = self._generate_excel_with_logging(result_df, domain_model.report_date)
             
-            # Step 7: PDF生成
-            pdf_bytes = self._generate_pdf_with_logging(excel_bytes)
-            
-            # Step 8: 保存とURL生成
-            artifact_urls = self._save_report_with_logging(
-                domain_model.report_date,
-                excel_bytes,
-                pdf_bytes,
-            )
-            
-            # Step 9: レスポンス返却
-            return self._create_response(artifact_urls, domain_model.report_date, start_time)
+            if async_pdf and background_tasks is not None:
+                # 非同期モード: Excelのみ保存し、PDFはバックグラウンドで生成
+                return self._save_and_respond_async(
+                    domain_model.report_date,
+                    excel_bytes,
+                    background_tasks,
+                    start_time,
+                )
+            else:
+                # 同期モード（従来互換）: PDF も同時に生成
+                # Step 7: PDF生成
+                pdf_bytes = self._generate_pdf_with_logging(excel_bytes)
+                
+                # Step 8: 保存とURL生成
+                artifact_urls = self._save_report_with_logging(
+                    domain_model.report_date,
+                    excel_bytes,
+                    pdf_bytes,
+                )
+                
+                # Step 9: レスポンス返却
+                return self._create_response(artifact_urls, domain_model.report_date, start_time)
             
         except DomainError:
             raise
@@ -373,6 +390,102 @@ class BaseReportUseCase(ABC):
                 "artifact": {
                     "excel_download_url": artifact_dict["excel_url"],
                     "pdf_preview_url": artifact_dict["pdf_url"],
+                },
+            },
+        )
+
+    def _save_and_respond_async(
+        self,
+        report_date: date,
+        excel_bytes: BytesIO,
+        background_tasks: BackgroundTasks,
+        start_time: float,
+    ) -> JSONResponse:
+        """Excel同期保存 + PDF非同期生成のレスポンス処理。
+        
+        Args:
+            report_date: レポート日付
+            excel_bytes: Excelバイトストリーム
+            background_tasks: FastAPIのBackgroundTasks
+            start_time: 処理開始時間
+            
+        Returns:
+            JSONResponse: Excel URL + pdf_status="pending" を含むレスポンス
+        """
+        from app.infra.adapters.artifact_storage.artifact_service import (
+            get_report_artifact_storage,
+        )
+        from app.infra.adapters.artifact_storage.artifact_builder import (
+            generate_pdf_background,
+        )
+        
+        step_start = time.time()
+        logger.debug("Step 7-8 (async): Excel保存開始")
+        
+        # Excelを保存
+        storage = get_report_artifact_storage()
+        location = storage.allocate(self.report_key, report_date.isoformat())
+        
+        excel_path = storage.save_excel(location, excel_bytes.getvalue())
+        
+        # Excel URLを生成
+        excel_filename = f"{location.file_base}.xlsx"
+        excel_url = storage.signer.create_url(
+            location.relative_path(excel_filename),
+            disposition="attachment",
+        )
+        
+        logger.debug(
+            "Step 7-8 (async): Excel保存完了",
+            extra={
+                "elapsed_seconds": round(time.time() - step_start, 3),
+                "report_token": location.token,
+            },
+        )
+        
+        # PDF生成をバックグラウンドタスクに登録
+        background_tasks.add_task(
+            generate_pdf_background,
+            report_key=self.report_key,
+            report_date=report_date.isoformat(),
+            report_token=location.token,
+            excel_path_str=str(excel_path),
+        )
+        
+        logger.info(
+            "PDF生成タスクをバックグラウンドに登録",
+            extra={
+                "report_key": self.report_key,
+                "report_date": report_date.isoformat(),
+                "report_token": location.token,
+            },
+        )
+        
+        total_elapsed = time.time() - start_time
+        logger.info(
+            f"{self.report_name}生成完了（PDF非同期）",
+            extra={
+                "usecase": self.report_key,
+                "report_date": report_date.isoformat(),
+                "total_elapsed_seconds": round(total_elapsed, 3),
+                "pdf_status": "pending",
+            },
+        )
+        
+        return JSONResponse(
+            status_code=200,
+            content={
+                "status": "success",
+                "message": f"{self.report_name}のExcel生成が完了しました。PDFは生成中です。",
+                "report_key": self.report_key,
+                "report_date": report_date.isoformat(),
+                "artifact": {
+                    "excel_download_url": excel_url,
+                    "pdf_preview_url": None,  # 非同期生成中のため未定
+                    "report_token": location.token,
+                },
+                "metadata": {
+                    "pdf_status": "pending",
                 },
             },
         )
