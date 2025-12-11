@@ -64,12 +64,14 @@ const ReportBase: React.FC<ReportBaseProps> = ({
     // PDFプレビューURLが生成されたら設定
     useEffect(() => {
         if (pdfPreviewUrl && pdfPreviewUrl !== previewUrl) {
+            console.log('[ReportBase] useEffect: pdfPreviewUrl変更', { pdfPreviewUrl, previewUrl });
             setPreviewUrl(pdfPreviewUrl);
         }
     }, [pdfPreviewUrl, previewUrl, setPreviewUrl]);
 
     // 帳簿切り替え時にプレビューや内部状態をリセット
     useEffect(() => {
+        console.log('[ReportBase] useEffect: 帳簿切り替え - リセット実行', { reportKey });
         cleanup();
         setPreviewUrl(null);
         setInteractiveInitialResponse(null);
@@ -83,53 +85,46 @@ const ReportBase: React.FC<ReportBaseProps> = ({
      * 通常帳簿のレポート生成処理
      */
     const handleNormalGenerate = () => {
-        // リジェネレーション時でもモーダルが「帳簿作成中」から始まるように
-        // finalized フラグをリセットし、モーダル内部の currentStep を 0 に戻す
+        console.log('=== [ReportBase] handleNormalGenerate 開始 ===');
+        console.log('[ReportBase] 現在のモーダル状態:', modal.modalOpen);
+        console.log('[ReportBase] Call Stack:', new Error().stack);
+        
+        // 状態をリセット
         setFinalized(false);
         try {
             step.setCurrentStep(0);
+            console.log('[ReportBase] ステップを0にリセット');
         } catch {
-            // step が未定義なケースを保険的に無視
+            console.warn('[ReportBase] ステップリセット失敗（未定義）');
         }
 
+        console.log('[ReportBase] モーダルを開く');
         modal.setModalOpen(true);
         loading.setLoading(true);
 
-        // 非同期処理の完了フラグを外部で管理
-        const processState = { completed: false, success: false };
-        
         business.handleGenerateReport(
             () => { 
                 console.log('[ReportBase] onStart: レポート生成開始');
             },
-            () => {   // onComplete（成功・失敗に関わらず実行）
-                console.log('[ReportBase] onComplete: 処理完了', { success: processState.success });
+            () => {   // onComplete（成功・失敗共通）
+                console.log('[ReportBase] onComplete: 処理完了');
                 loading.setLoading(false);
-                processState.completed = true;
-                
-                // onSuccessの後に実行されるため、少し遅延させて判定
+                // Excel同期処理完了時点でモーダルを閉じる（PDFは非同期で続行）
+                console.log('[ReportBase] 0.5秒後にモーダルを閉じる予定');
                 setTimeout(() => {
-                    if (!processState.success) {
-                        console.log('[ReportBase] 失敗のためモーダルを閉じる');
-                        // 失敗時: 即座にモーダルを閉じる
-                        modal.setModalOpen(false);
-                    }
-                }, 100);
-            },
-            () => {   // onSuccess（成功時のみ実行）
-                console.log('[ReportBase] onSuccess: 成功 - ステップ1へ進む');
-                processState.success = true;
-                finalized.setFinalized(true);
-                // 成功時のみ「完了」ステップに進める
-                step.setCurrentStep(1);
-                // 完了メッセージを2秒間表示してからモーダルを閉じる
-                setTimeout(() => {
-                    console.log('[ReportBase] 2秒後: モーダルを閉じる');
+                    console.log('[ReportBase] モーダルを閉じる（onComplete timeout）');
                     modal.setModalOpen(false);
-                    step.setCurrentStep(0); // 次回のために初期化
-                }, 2000);
+                    step.setCurrentStep(0);
+                }, 500);
+            },
+            () => {   // onSuccess（成功時のみ）
+                console.log('[ReportBase] onSuccess: 成功');
+                finalized.setFinalized(true);
+                step.setCurrentStep(1);
+                console.log('[ReportBase] 完了ステップ(1)に進む');
             }
         );
+        console.log('=== [ReportBase] handleNormalGenerate 終了 ===');
     };
 
     /**
@@ -284,6 +279,15 @@ const ReportBase: React.FC<ReportBaseProps> = ({
 
     // レポート生成処理を帳簿タイプに応じて選択
     const handleGenerate = isInteractive ? handleInteractiveGenerate : handleNormalGenerate;
+    
+    // ラップして呼び出し元をログ
+    const handleGenerateWithLog = () => {
+        console.log('>>> [ReportBase] handleGenerate 呼び出し <<<');
+        console.log('[ReportBase] isInteractive:', isInteractive);
+        console.log('[ReportBase] reportKey:', reportKey);
+        console.trace('[ReportBase] 呼び出しスタック');
+        handleGenerate();
+    };
 
     // モーダル設定
     const steps = modalStepsMap[reportKey].map(step => step.label);
@@ -324,7 +328,7 @@ const ReportBase: React.FC<ReportBaseProps> = ({
 
             {/* メインレイアウト */}
             <ReportManagePageLayout
-                onGenerate={handleGenerate}
+                onGenerate={handleGenerateWithLog}
                 onDownloadExcel={business.downloadExcel}
                 onPrintPdf={business.printPdf}
                 uploadFiles={business.uploadFileConfigs}
