@@ -205,7 +205,8 @@ services:
     volumes:
     - ../app/nginx/conf.d/default.conf:/etc/nginx/conf.d/default.conf:ro
     - ../app/nginx/conf.d/prod.conf:/etc/nginx/conf.d/prod.conf:ro
-    - ../app/nginx/conf.d/_proxy_headers.conf:/etc/nginx/conf.d/_proxy_headers.conf:ro
+    - ../app/nginx/conf.d/_proxy_headers_prod.conf:/etc/nginx/conf.d/_proxy_headers_prod.conf:ro
+    - ../app/nginx/conf.d/_security_headers.conf:/etc/nginx/conf.d/_security_headers.conf:ro
     - ../app/nginx/certs:/etc/nginx/certs:ro
     restart: unless-stopped
     healthcheck:
