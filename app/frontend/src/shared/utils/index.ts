@@ -15,3 +15,6 @@ export * from './pdf/workerLoader';
 
 // レスポンシブテスト
 export * from './responsiveTest';
+
+// ロガー（本番環境ではdebug/info/logを抑制）
+export { logger } from './logger';

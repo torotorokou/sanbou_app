@@ -1,9 +1,15 @@
 {
-  "name": "my-dashboard-app",
+  "name": "sanbou-frontend",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
+  "description": "Sanbou Application Frontend",
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  },
   "scripts": {
+    "start": "vite preview --host 0.0.0.0 --port 5173",
     "dev": "vite --host 0.0.0.0 --port 5173",
     "build": "tsc -b && vite build",
     "typecheck": "tsc --noEmit -p tsconfig.json",

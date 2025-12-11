@@ -1,0 +1,121 @@
+# .gcloudignore
+# GCP Cloud Build / Cloud Run デプロイ時に除外するファイル
+# 参考: https://cloud.google.com/sdk/gcloud/reference/topic/gcloudignore
+
+# ===============================
+# Git 関連
+# ===============================
+.git/
+.gitignore
+.github/
+
+# ===============================
+# 環境変数・シークレット（絶対に含めない）
+# ===============================
+.env
+.env.*
+!.env.example
+env/
+secrets/
+
+# ===============================
+# Node.js / Frontend
+# ===============================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm/
+.yarn/
+
+# ===============================
+# Python
+# ===============================
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg
+*.egg-info/
+.eggs/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.venv/
+venv/
+
+# ===============================
+# ビルド成果物（ローカル）
+# ===============================
+dist/
+build/
+*.local
+
+# ===============================
+# ドキュメント・テスト
+# ===============================
+docs/
+test/
+tests/
+*.test.*
+*.spec.*
+vitest.config.*
+coverage/
+
+# ===============================
+# エディタ・IDE
+# ===============================
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# ===============================
+# ログ・一時ファイル
+# ===============================
+*.log
+*.tmp
+*.temp
+*.bak
+*.backup
+
+# ===============================
+# バックアップ・アーカイブ
+# ===============================
+backups/
+archive/
+*.dump
+*.sql
+
+# ===============================
+# データ（ローカル開発用）
+# ===============================
+data/
+*.csv
+*.xlsx
+
+# ===============================
+# Docker 関連（ローカル）
+# ===============================
+docker-compose*.yml
+docker-compose*.yaml
+*.dockerfile
+Dockerfile.*
+!Dockerfile
+
+# ===============================
+# その他
+# ===============================
+README.md
+CHANGELOG.md
+LICENSE
+Makefile
+makefile
+*.md
+scripts/

@@ -13,7 +13,7 @@
 
 import type { FC } from "react";
 import { useAuthStatusViewModel } from "../model/useAuthStatusViewModel";
-import { customTokens } from "@/shared/theme/tokens";
+import { customTokens } from "@/shared";
 
 export const UserInfoChip: FC = () => {
   const { user, isLoading, error } = useAuthStatusViewModel();
