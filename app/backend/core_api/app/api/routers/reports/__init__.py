@@ -24,6 +24,7 @@ from .average_sheet import router as average_sheet_router
 from .management_sheet import router as management_sheet_router
 from .artifacts import router as artifacts_router
 from .jobs import router as jobs_router
+from .pdf_status import router as pdf_status_router
 
 # メインルーター
 router = APIRouter(prefix="/reports", tags=["reports"])
@@ -35,3 +36,4 @@ router.include_router(average_sheet_router)
 router.include_router(management_sheet_router)
 router.include_router(artifacts_router)
 router.include_router(jobs_router)
+router.include_router(pdf_status_router)

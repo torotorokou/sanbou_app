@@ -49,4 +49,13 @@ def rewrite_artifact_urls_to_bff(
             "[BFF] Rewritten artifact URLs with prefix",
             extra=create_log_context(operation="rewrite_artifact_urls", base_prefix=base_prefix)
         )
+    
+    # PDFステータスレスポンスの pdf_url フィールドも変換
+    if "pdf_url" in response_data and response_data["pdf_url"]:
+        response_data["pdf_url"] = f"{base_prefix}{response_data['pdf_url']}"
+        logger.debug(
+            "[BFF] Rewritten pdf_url with prefix",
+            extra=create_log_context(operation="rewrite_pdf_url", base_prefix=base_prefix)
+        )
+    
     return response_data

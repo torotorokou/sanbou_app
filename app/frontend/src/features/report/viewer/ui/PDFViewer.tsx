@@ -48,7 +48,9 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ pdfUrl, pdfStatus = "idle", heigh
                         fontSize: isMobile ? '14px' : '16px',
                     }}
                 >
-                    PDFを生成中です...
+                    PDFプレビュー生成中...
+                    <br />
+                    エクセルのダウンロードは可能です。
                 </Typography.Text>
             </div>
         );
@@ -68,7 +70,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ pdfUrl, pdfStatus = "idle", heigh
             }}>
                 <Alert
                     message="PDF生成エラー"
-                    description="PDFの生成に失敗しました。再度帳簿作成を試してください。"
+                    description="PDFの生成に失敗しましたがエクセルのダウンロードは可能です。"
                     type="error"
                     showIcon
                 />
