@@ -28,8 +28,11 @@ def _build_targets() -> list[str]:
     ]
 
 
-def convert_excel_to_pdf(excel_path: Path, *, output_dir: Optional[Path] = None, profile_dir: Optional[Path] = None, timeout: int = 120) -> bytes:
-    """Excel ファイルを LibreOffice で PDF に変換してバイト列を返す。"""
+def convert_excel_to_pdf(excel_path: Path, *, output_dir: Optional[Path] = None, profile_dir: Optional[Path] = None, timeout: int = 60) -> bytes:
+    """Excel ファイルを LibreOffice で PDF に変換してバイト列を返す。
+    
+    🚀 高速化: タイムアウト60秒、起動オプション最適化
+    """
     if not excel_path.exists():
         raise PdfConversionError(f"Excel file not found: {excel_path}")
 
@@ -50,6 +53,7 @@ def convert_excel_to_pdf(excel_path: Path, *, output_dir: Optional[Path] = None,
             "--nodefault",
             "--norestore",
             "--nolockcheck",
+            "--nofirststartwizard",  # 初回起動ウィザードをスキップ（高速化）
             "--convert-to",
             target,
             f"-env:UserInstallation=file://{profile_dir.as_posix()}",

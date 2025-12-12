@@ -22,10 +22,12 @@ from app.core.domain.services import target_card
 logger = get_module_logger(__name__)
 
 # Optional TTL cache for repeated requests
+# 案9: TTL を 60秒 → 3600秒（1時間）に延長
+# 理由: 目標値は日次でしか変わらないため、キャッシュヒット率を向上
 try:
     from cachetools import TTLCache
-    _CACHE: TTLCache = TTLCache(maxsize=256, ttl=60)  # 60 seconds TTL
-    logger.info("TTL cache enabled for BuildTargetCardUseCase", extra=create_log_context(operation="init_cache", ttl=60, maxsize=256))
+    _CACHE: TTLCache = TTLCache(maxsize=512, ttl=3600)  # 1 hour TTL (was 60s)
+    logger.info("TTL cache enabled for BuildTargetCardUseCase", extra=create_log_context(operation="init_cache", ttl=3600, maxsize=512))
 except ImportError:
     _CACHE = None  # type: ignore
     logger.info("cachetools not installed, running without TTL cache")

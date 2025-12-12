@@ -1,8 +1,8 @@
 """normalize_customer_id
 
-Revision ID: 1d84cbab2c95
+Revision ID: 20251210_130000000
 Revises: 20251202_100000000
-Create Date: 2025-12-10 13:24:31.943685
+Create Date: 2025-12-10 13:00:00.000000
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '1d84cbab2c95'
+revision = '20251210_130000000'
 down_revision = '20251202_100000000'
 branch_labels = None
 depends_on = None

@@ -1,9 +1,10 @@
 """
-Sales Tree Repository - mart.v_sales_tree_detail_base からのデータ取得
+Sales Tree Repository - {fq(SCHEMA_MART, V_SALES_TREE_DETAIL_BASE)} からのデータ取得
 
 売上ツリー分析用のリポジトリ実装
-データソース: mart.v_sales_tree_detail_base (明細レベルの事実テーブルビュー)
+データソース: {fq(SCHEMA_MART, V_SALES_TREE_DETAIL_BASE)} (明細レベルの事実テーブルビュー)
   → stg.v_active_shogun_final_receive (確定受入データ、is_deleted=falseのみ) ※2025-12-01より変更
+  → backend_shared.db.names の定数を使用してDBオブジェクト参照
 """
 import logging
 import csv
@@ -12,7 +13,8 @@ from typing import Optional
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from backend_shared.application.logging import create_log_context, get_module_logger, get_module_logger
+from backend_shared.application.logging import create_log_context, get_module_logger
+from backend_shared.db.names import SCHEMA_MART, SCHEMA_STG, V_SALES_TREE_DETAIL_BASE, V_ACTIVE_SHOGUN_FINAL_RECEIVE
 from app.core.domain.sales_tree import (
     SummaryRequest,
     SummaryRow,
@@ -31,6 +33,7 @@ from app.core.domain.sales_tree_detail import (
     DetailLine,
 )
 from app.infra.db.db import get_engine
+from app.infra.db.sql_loader import load_sql
 
 logger = get_module_logger(__name__)
 
@@ -48,6 +51,35 @@ class SalesTreeRepository:
     def __init__(self, db: Session):
         self.db = db
         self._engine = get_engine()
+        # Pre-load SQL templates
+        self._fetch_summary_sql_template = load_sql("sales_tree/sales_tree_repo__fetch_summary.sql")
+        self._fetch_daily_series_sql_template = load_sql("sales_tree/sales_tree_repo__fetch_daily_series.sql")
+        self._fetch_pivot_sql_template = load_sql("sales_tree/sales_tree_repo__fetch_pivot.sql")
+        self._export_csv_sql_template = load_sql("sales_tree/sales_tree_repo__export_csv.sql")
+        self._fetch_detail_lines_item_sql_template = load_sql("sales_tree/sales_tree_repo__fetch_detail_lines_item.sql")
+        self._fetch_detail_lines_slip_sql_template = load_sql("sales_tree/sales_tree_repo__fetch_detail_lines_slip.sql")
+        # Pre-load and format static SQL queries (simple SELECT DISTINCT)
+        template_reps = load_sql("sales_tree/sales_tree_repo__get_sales_reps.sql")
+        self._get_sales_reps_sql = text(
+            template_reps.format(
+                schema_mart=SCHEMA_MART,
+                v_sales_tree_detail_base=V_SALES_TREE_DETAIL_BASE,
+            )
+        )
+        template_customers = load_sql("sales_tree/sales_tree_repo__get_customers.sql")
+        self._get_customers_sql = text(
+            template_customers.format(
+                schema_mart=SCHEMA_MART,
+                v_sales_tree_detail_base=V_SALES_TREE_DETAIL_BASE,
+            )
+        )
+        template_items = load_sql("sales_tree/sales_tree_repo__get_items.sql")
+        self._get_items_sql = text(
+            template_items.format(
+                schema_mart=SCHEMA_MART,
+                v_sales_tree_detail_base=V_SALES_TREE_DETAIL_BASE,
+            )
+        )
     
     def fetch_summary(self, req: SummaryRequest) -> list[SummaryRow]:
         """
@@ -59,7 +91,7 @@ class SalesTreeRepository:
           - フィルタ: rep_ids, filter_ids（軸IDの絞り込み）
         
         処理フロー:
-          1. mart.v_sales_tree_detail_base から期間・営業でフィルタ
+          1. {fq(SCHEMA_MART, V_SALES_TREE_DETAIL_BASE)} から期間・営業でフィルタ
           2. mode に応じて GROUP BY 軸を切り替え
              - customer: customer_id, customer_name
              - item: item_id, item_name
@@ -70,7 +102,7 @@ class SalesTreeRepository:
         
         パフォーマンス最適化:
           - Window FunctionでDB側でTOP-N抽出（Pythonループより高速）
-          - mart.v_sales_tree_detail_base は明細レベルの事実テーブル
+          - {fq(SCHEMA_MART, V_SALES_TREE_DETAIL_BASE)} は明細レベルの事実テーブル
         
         Args:
             req: SummaryRequest（date_from, date_to, mode, rep_ids, filter_ids, top_n, sort_by, order）
@@ -131,55 +163,21 @@ class SalesTreeRepository:
             sort_col = self._get_sort_column(req.sort_by)
             order_dir = req.order.upper()
             
-            # TOP-N制限
-            limit_sql = "" if req.top_n == 0 else f"LIMIT {req.top_n}"
-            
-            # SQL構築（営業ごとにWINDOW関数でランキング）
-            # mart.v_sales_tree_detail_base から line_count と slip_count の両方を計算
-            sql = f"""
-WITH aggregated AS (
-    SELECT
-        rep_id,
-        rep_name,
-        {axis_id_col} AS axis_id,
-        {axis_name_col} AS axis_name,
-        SUM(amount_yen) AS amount,
-        SUM(qty_kg) AS qty,
-        COUNT(*) AS line_count,
-        COUNT(DISTINCT slip_no) AS slip_count,
-        CASE
-            WHEN SUM(qty_kg) > 0 THEN SUM(amount_yen) / SUM(qty_kg)
-            ELSE NULL
-        END AS unit_price
-    FROM mart.v_sales_tree_detail_base
-    WHERE {where_sql}
-    GROUP BY rep_id, rep_name, {axis_id_col}, {axis_name_col}
-),
-ranked AS (
-    SELECT
-        *,
-        ROW_NUMBER() OVER (PARTITION BY rep_id ORDER BY {sort_col} {order_dir}) AS rn
-    FROM aggregated
-)
-SELECT
-    rep_id,
-    rep_name,
-    axis_id,
-    axis_name,
-    amount,
-    qty,
-    line_count,
-    slip_count,
-    unit_price
-FROM ranked
-WHERE rn <= :top_n OR :top_n = 0
-ORDER BY rep_id, rn
-            """
+            # SQL テンプレートに置換（外部ファイルから読み込み済み）
+            sql_str = self._fetch_summary_sql_template.format(
+                schema_mart=SCHEMA_MART,
+                v_sales_tree_detail_base=V_SALES_TREE_DETAIL_BASE,
+                axis_id_col=axis_id_col,
+                axis_name_col=axis_name_col,
+                where_sql=where_sql,
+                sort_col=sort_col,
+                order_dir=order_dir,
+            )
             
             params["top_n"] = req.top_n if req.top_n > 0 else 999999
             
             with self._engine.begin() as conn:
-                result = conn.execute(text(sql), params).mappings().all()
+                result = conn.execute(text(sql_str), params).mappings().all()
             
             # 営業ごとにグルーピング
             summary_dict: dict[int, SummaryRow] = {}
@@ -273,25 +271,15 @@ ORDER BY rep_id, rn
             
             where_sql = " AND ".join(where_clauses)
             
-            sql = f"""
-SELECT
-    sales_date AS date,
-    SUM(amount_yen) AS amount,
-    SUM(qty_kg) AS qty,
-    COUNT(*) AS line_count,
-    COUNT(DISTINCT slip_no) AS slip_count,
-    CASE
-        WHEN SUM(qty_kg) > 0 THEN SUM(amount_yen) / SUM(qty_kg)
-        ELSE NULL
-    END AS unit_price
-FROM mart.v_sales_tree_detail_base
-WHERE {where_sql}
-GROUP BY sales_date
-ORDER BY sales_date
-            """
+            # SQL テンプレートに置換（外部ファイルから読み込み済み）
+            sql_str = self._fetch_daily_series_sql_template.format(
+                schema_mart=SCHEMA_MART,
+                v_sales_tree_detail_base=V_SALES_TREE_DETAIL_BASE,
+                where_sql=where_sql,
+            )
             
             with self._engine.begin() as conn:
-                result = conn.execute(text(sql), params).mappings().all()
+                result = conn.execute(text(sql_str), params).mappings().all()
             
             points = [
                 DailyPoint(
@@ -390,43 +378,16 @@ ORDER BY sales_date
             page_size = 30  # 固定ページサイズ
             limit = req.top_n if req.top_n > 0 else 999999
             
-            # SQL構築
-            sql = f"""
-WITH aggregated AS (
-    SELECT
-        {target_id_col} AS target_id,
-        {target_name_col} AS target_name,
-        SUM(amount_yen) AS amount,
-        SUM(qty_kg) AS qty,
-        COUNT(*) AS line_count,
-        COUNT(DISTINCT slip_no) AS slip_count,
-        CASE
-            WHEN SUM(qty_kg) > 0 THEN SUM(amount_yen) / SUM(qty_kg)
-            ELSE NULL
-        END AS unit_price
-    FROM mart.v_sales_tree_detail_base
-    WHERE {where_sql}
-    GROUP BY {target_id_col}, {target_name_col}
-),
-ranked AS (
-    SELECT
-        *,
-        ROW_NUMBER() OVER (ORDER BY {sort_col} {order_dir}) AS rn
-    FROM aggregated
-)
-SELECT
-    target_id,
-    target_name,
-    amount,
-    qty,
-    line_count,
-    slip_count,
-    unit_price
-FROM ranked
-WHERE rn <= :limit
-ORDER BY rn
-LIMIT :page_size OFFSET :offset
-            """
+            # SQL テンプレートに置換（外部ファイルから読み込み済み）
+            sql_str = self._fetch_pivot_sql_template.format(
+                schema_mart=SCHEMA_MART,
+                v_sales_tree_detail_base=V_SALES_TREE_DETAIL_BASE,
+                target_id_col=target_id_col,
+                target_name_col=target_name_col,
+                where_sql=where_sql,
+                sort_col=sort_col,
+                order_dir=order_dir,
+            )
             
             params["limit"] = limit
             params["page_size"] = page_size
@@ -438,7 +399,7 @@ LIMIT :page_size OFFSET :offset
             )
             
             with self._engine.begin() as conn:
-                result = conn.execute(text(sql), params).mappings().all()
+                result = conn.execute(text(sql_str), params).mappings().all()
             
             # MetricEntry作成
             rows = []
@@ -526,7 +487,7 @@ LIMIT :page_size OFFSET :offset
         【SalesTree分析専用】営業フィルタ候補を取得
         
         NOTE: これは「営業マスタAPI」ではありません。
-        mart.v_sales_tree_detail_base から SELECT DISTINCT で動的に取得します。
+        {fq(SCHEMA_MART, V_SALES_TREE_DETAIL_BASE)} から SELECT DISTINCT で動的に取得します。
         
         Args:
             category_kind: カテゴリ種別（'waste' or 'valuable'）
@@ -536,18 +497,10 @@ LIMIT :page_size OFFSET :offset
         """
         try:
             category_cd = self._category_kind_to_cd(category_kind)
-            sql = """
-SELECT DISTINCT
-    rep_id,
-    rep_name
-FROM mart.v_sales_tree_detail_base
-WHERE rep_id IS NOT NULL AND rep_name IS NOT NULL
-  AND category_cd = :category_cd
-ORDER BY rep_id
-            """
+            # SQL は __init__ で読み込み済み
             logger.info(f"Executing get_sales_reps SQL with category_kind={category_kind}, category_cd={category_cd}")
             with self._engine.begin() as conn:
-                result = conn.execute(text(sql), {"category_cd": category_cd}).mappings().all()
+                result = conn.execute(self._get_sales_reps_sql, {"category_cd": category_cd}).mappings().all()
             
             reps = [
                 {"rep_id": row["rep_id"], "rep_name": row["rep_name"]}
@@ -557,7 +510,7 @@ ORDER BY rep_id
             if reps:
                 logger.info(f"First rep: {reps[0]}")
             else:
-                logger.warning("No sales reps found in mart.v_sales_tree_detail_base")
+                logger.warning("No sales reps found in {fq(SCHEMA_MART, V_SALES_TREE_DETAIL_BASE)}")
             return reps
         except Exception as e:
             logger.error(f"Error in get_sales_reps: {str(e)}", exc_info=True)
@@ -568,7 +521,7 @@ ORDER BY rep_id
         【SalesTree分析専用】顧客フィルタ候補を取得
         
         NOTE: これは「顧客マスタAPI」ではありません。
-        mart.v_sales_tree_detail_base から SELECT DISTINCT で動的に取得します。
+        {fq(SCHEMA_MART, V_SALES_TREE_DETAIL_BASE)} から SELECT DISTINCT で動的に取得します。
         
         Args:
             category_kind: カテゴリ種別（'waste' or 'valuable'）
@@ -578,18 +531,10 @@ ORDER BY rep_id
         """
         try:
             category_cd = self._category_kind_to_cd(category_kind)
-            sql = """
-SELECT DISTINCT
-    customer_id,
-    customer_name
-FROM mart.v_sales_tree_detail_base
-WHERE customer_id IS NOT NULL AND customer_name IS NOT NULL
-  AND category_cd = :category_cd
-ORDER BY customer_id
-            """
+            # SQL は __init__ で読み込み済み
             logger.info(f"Executing get_customers SQL with category_kind={category_kind}, category_cd={category_cd}")
             with self._engine.begin() as conn:
-                result = conn.execute(text(sql), {"category_cd": category_cd}).mappings().all()
+                result = conn.execute(self._get_customers_sql, {"category_cd": category_cd}).mappings().all()
             
             customers = [
                 {"customer_id": row["customer_id"], "customer_name": row["customer_name"]}
@@ -597,7 +542,7 @@ ORDER BY customer_id
             ]
             logger.info(f"get_customers: Retrieved {len(customers)} customers from mart.v_sales_tree_detail_base")
             if not customers:
-                logger.warning("No customers found in mart.v_sales_tree_detail_base")
+                logger.warning("No customers found in {fq(SCHEMA_MART, V_SALES_TREE_DETAIL_BASE)}")
             return customers
         except Exception as e:
             logger.error(f"Error in get_customers: {str(e)}", exc_info=True)
@@ -608,7 +553,7 @@ ORDER BY customer_id
         【SalesTree分析専用】商品フィルタ候補を取得
         
         NOTE: これは「商品マスタAPI」ではありません。
-        mart.v_sales_tree_detail_base から SELECT DISTINCT で動的に取得します。
+        {fq(SCHEMA_MART, V_SALES_TREE_DETAIL_BASE)} から SELECT DISTINCT で動的に取得します。
         
         Args:
             category_kind: カテゴリ種別（'waste' or 'valuable'）
@@ -618,18 +563,10 @@ ORDER BY customer_id
         """
         try:
             category_cd = self._category_kind_to_cd(category_kind)
-            sql = """
-SELECT DISTINCT
-    item_id,
-    item_name
-FROM mart.v_sales_tree_detail_base
-WHERE item_id IS NOT NULL AND item_name IS NOT NULL
-  AND category_cd = :category_cd
-ORDER BY item_id
-            """
+            # SQL は __init__ で読み込み済み
             logger.info(f"Executing get_items SQL with category_kind={category_kind}, category_cd={category_cd}")
             with self._engine.begin() as conn:
-                result = conn.execute(text(sql), {"category_cd": category_cd}).mappings().all()
+                result = conn.execute(self._get_items_sql, {"category_cd": category_cd}).mappings().all()
             
             items = [
                 {"item_id": row["item_id"], "item_name": row["item_name"]}
@@ -637,7 +574,7 @@ ORDER BY item_id
             ]
             logger.info(f"get_items: Retrieved {len(items)} items from mart.v_sales_tree_detail_base")
             if not items:
-                logger.warning("No items found in mart.v_sales_tree_detail_base")
+                logger.warning("No items found in {fq(SCHEMA_MART, V_SALES_TREE_DETAIL_BASE)}")
             return items
         except Exception as e:
             logger.error(f"Error in get_items: {str(e)}", exc_info=True)
@@ -687,42 +624,19 @@ ORDER BY item_id
             sort_col = self._get_sort_column(req.sort_by)
             order_dir = req.order.upper()
             
-            # SQL構築
-            sql = f"""
-WITH aggregated AS (
-    SELECT
-        rep_id,
-        rep_name,
-        {axis_id_col} AS axis_id,
-        {axis_name_col} AS axis_name,
-        SUM(amount_yen) AS amount,
-        SUM(qty_kg) AS qty,
-        COUNT(*) AS line_count,
-        COUNT(DISTINCT slip_no) AS slip_count,
-        CASE
-            WHEN SUM(qty_kg) > 0 THEN SUM(amount_yen) / SUM(qty_kg)
-            ELSE NULL
-        END AS unit_price
-    FROM mart.v_sales_tree_detail_base
-    WHERE {where_sql}
-    GROUP BY rep_id, rep_name, {axis_id_col}, {axis_name_col}
-)
-SELECT
-    rep_id,
-    rep_name,
-    axis_id,
-    axis_name,
-    amount,
-    qty,
-    line_count,
-    slip_count,
-    unit_price
-FROM aggregated
-ORDER BY rep_id, {sort_col} {order_dir}
-            """
+            # SQL テンプレートに置換（外部ファイルから読み込み済み）
+            sql_str = self._export_csv_sql_template.format(
+                schema_mart=SCHEMA_MART,
+                v_sales_tree_detail_base=V_SALES_TREE_DETAIL_BASE,
+                axis_id_col=axis_id_col,
+                axis_name_col=axis_name_col,
+                where_sql=where_sql,
+                sort_col=sort_col,
+                order_dir=order_dir,
+            )
             
             with self._engine.begin() as conn:
-                result = conn.execute(text(sql), params).mappings().all()
+                result = conn.execute(text(sql_str), params).mappings().all()
             
             # CSV生成
             output = io.StringIO()
@@ -775,7 +689,7 @@ ORDER BY rep_id, {sort_col} {order_dir}
         
         最後の集計軸に応じて粒度を切り替える:
         - last_group_by が 'item' の場合:
-            → mart.v_sales_tree_detail_base の明細行（GROUP BY なし）
+            → {fq(SCHEMA_MART, V_SALES_TREE_DETAIL_BASE)} の明細行（GROUP BY なし）
         - それ以外の場合:
             → sales_date, slip_no で GROUP BY した伝票単位のサマリ
         
@@ -820,50 +734,24 @@ ORDER BY rep_id, {sort_col} {order_dir}
             
             # モード判定とSQL構築
             if req.last_group_by == "item":
-                # 品名で終わる → 明細行そのまま
+                # 品名で終わる → 明細行そのまま（外部ファイルから読み込み済み）
                 mode = "item_lines"
-                sql = f"""
-SELECT
-    sales_date,
-    slip_no,
-    rep_name,
-    customer_name,
-    item_id,
-    item_name,
-    qty_kg,
-    amount_yen
-FROM mart.v_sales_tree_detail_base
-WHERE {where_sql}
-ORDER BY
-    sales_date,
-    slip_no,
-    item_id
-                """
+                sql_str = self._fetch_detail_lines_item_sql_template.format(
+                    schema_mart=SCHEMA_MART,
+                    v_sales_tree_detail_base=V_SALES_TREE_DETAIL_BASE,
+                    where_sql=where_sql,
+                )
             else:
-                # それ以外 → 伝票単位で集約
+                # それ以外 → 伝票単位で集約（外部ファイルから読み込み済み）
                 mode = "slip_summary"
-                sql = f"""
-SELECT
-    sales_date,
-    slip_no,
-    MAX(rep_name) AS rep_name,
-    MAX(customer_name) AS customer_name,
-    STRING_AGG(DISTINCT item_name, ', ' ORDER BY item_name) AS item_name,
-    COUNT(*) AS line_count,
-    SUM(qty_kg) AS qty_kg,
-    SUM(amount_yen) AS amount_yen
-FROM mart.v_sales_tree_detail_base
-WHERE {where_sql}
-GROUP BY
-    sales_date,
-    slip_no
-ORDER BY
-    sales_date,
-    slip_no
-                """
+                sql_str = self._fetch_detail_lines_slip_sql_template.format(
+                    schema_mart=SCHEMA_MART,
+                    v_sales_tree_detail_base=V_SALES_TREE_DETAIL_BASE,
+                    where_sql=where_sql,
+                )
             
             with self._engine.begin() as conn:
-                result = conn.execute(text(sql), params).mappings().all()
+                result = conn.execute(text(sql_str), params).mappings().all()
             
             # レスポンス構築
             rows: list[DetailLine] = []

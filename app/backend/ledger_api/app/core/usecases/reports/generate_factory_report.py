@@ -2,13 +2,15 @@
 Generate Factory Report UseCase.
 
 工場日報生成のアプリケーションロジックを提供します。
+
+🔄 リファクタリング: Excel同期 + PDF非同期の2段階構成に対応
 """
 
 from datetime import date
 from io import BytesIO
 from typing import Any, Dict, Optional
 
-from fastapi import UploadFile
+from fastapi import BackgroundTasks, UploadFile
 from fastapi.responses import JSONResponse
 
 from app.core.ports.inbound import CsvGateway, ReportRepository
@@ -35,6 +37,8 @@ class GenerateFactoryReportUseCase(BaseReportUseCase):
         self,
         files: Dict[str, UploadFile],
         period_type: Optional[str] = None,
+        background_tasks: Optional[BackgroundTasks] = None,
+        async_pdf: bool = True,
     ) -> JSONResponse:
         """
         工場日報生成の実行（filesパラメータを受け取る独自実装）。
@@ -42,6 +46,8 @@ class GenerateFactoryReportUseCase(BaseReportUseCase):
         Args:
             files: アップロードされたCSVファイル辞書
             period_type: 期間指定
+            background_tasks: FastAPIのBackgroundTasks（PDF非同期生成用）
+            async_pdf: True=PDF非同期生成（デフォルト）, False=同期生成（従来互換）
             
         Returns:
             JSONResponse: 署名付きURLを含むレスポンス
@@ -52,6 +58,8 @@ class GenerateFactoryReportUseCase(BaseReportUseCase):
             yard=files.get("yard"),
             receive=files.get("receive"),
             period_type=period_type,
+            background_tasks=background_tasks,
+            async_pdf=async_pdf,
         )
 
     def create_domain_model(self, df_formatted: Dict[str, Any]) -> FactoryReport:

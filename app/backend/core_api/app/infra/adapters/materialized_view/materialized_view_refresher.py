@@ -18,6 +18,12 @@ from typing import List, Optional
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 from backend_shared.application.logging import create_log_context, get_module_logger
+from backend_shared.db.names import (
+    SCHEMA_MART,
+    MV_RECEIVE_DAILY,
+    MV_TARGET_CARD_PER_DAY,
+    fq,
+)
 
 logger = get_module_logger(__name__)
 
@@ -27,9 +33,11 @@ class MaterializedViewRefresher:
     
     # 更新対象のマテリアライズドビュー定義
     # csv_type ごとに更新すべき MV のリスト
+    # backend_shared.db.names の定数を使用してタイポ防止
     MV_MAPPINGS = {
         "receive": [
-            "mart.mv_target_card_per_day",
+            fq(SCHEMA_MART, MV_RECEIVE_DAILY),  # 日次受入集計MV（基礎データ）
+            fq(SCHEMA_MART, MV_TARGET_CARD_PER_DAY),  # 目標カードMV（mv_receive_dailyに依存）
             # 将来的に追加する受入関連MVをここに列挙
         ],
         "shipment": [

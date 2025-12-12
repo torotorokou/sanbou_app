@@ -19,8 +19,8 @@ WITH d AS (
     c.iso_dow,
     c.is_business,
     COALESCE(r.receive_net_ton, 0)::numeric AS ton
-  FROM mart.v_calendar AS c
-  LEFT JOIN mart.v_receive_daily AS r
+  FROM {v_calendar} AS c
+  LEFT JOIN {mv_receive_daily} AS r
     ON r.ddate = c.ddate
   WHERE c.ddate BETWEEN :start AND :end
 ),
@@ -29,8 +29,8 @@ prev_month AS (
   SELECT
     c.ddate + INTERVAL '28 days' AS target_ddate,
     COALESCE(r.receive_net_ton, 0)::numeric AS pm_ton
-  FROM mart.v_calendar AS c
-  LEFT JOIN mart.v_receive_daily AS r
+  FROM {v_calendar} AS c
+  LEFT JOIN {mv_receive_daily} AS r
     ON r.ddate = c.ddate
   WHERE c.ddate BETWEEN (:start - INTERVAL '28 days') AND (:end - INTERVAL '28 days')
 ),
@@ -39,12 +39,12 @@ prev_year AS (
   SELECT
     c_curr.ddate AS target_ddate,
     COALESCE(r_prev.receive_net_ton, 0)::numeric AS py_ton
-  FROM mart.v_calendar AS c_curr
-  LEFT JOIN mart.v_calendar AS c_prev
+  FROM {v_calendar} AS c_curr
+  LEFT JOIN {v_calendar} AS c_prev
     ON c_prev.iso_year = c_curr.iso_year - 1
     AND c_prev.iso_week = c_curr.iso_week
     AND c_prev.iso_dow = c_curr.iso_dow
-  LEFT JOIN mart.v_receive_daily AS r_prev
+  LEFT JOIN {mv_receive_daily} AS r_prev
     ON r_prev.ddate = c_prev.ddate
   WHERE c_curr.ddate BETWEEN :start AND :end
 ),

@@ -8,6 +8,7 @@ from typing import List, Dict, Any
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 from backend_shared.application.logging import create_log_context, get_module_logger
+from backend_shared.db.names import SCHEMA_REF, V_CALENDAR_CLASSIFIED, fq
 
 logger = get_module_logger(__name__)
 
@@ -40,11 +41,11 @@ class CalendarRepository:
         Raises:
             Exception: SQLエラー時
         """
-        sql = text("""
+        sql = text(f"""
         SELECT ddate, y, m, iso_year, iso_week, iso_dow,
                is_holiday, is_second_sunday, is_company_closed,
                day_type, is_business
-        FROM ref.v_calendar_classified
+        FROM {fq(SCHEMA_REF, V_CALENDAR_CLASSIFIED)}
         WHERE y = :year AND m = :month
         ORDER BY ddate
         """)

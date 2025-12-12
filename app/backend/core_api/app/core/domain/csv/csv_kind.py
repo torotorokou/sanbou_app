@@ -14,6 +14,7 @@ CsvKind Enum
   - フロントエンドの CsvKind 型
 """
 from enum import Enum
+from backend_shared.db.names import SCHEMA_STG
 
 
 class CsvKind(str, Enum):
@@ -57,4 +58,4 @@ class CsvKind(str, Enum):
     @property
     def table_name(self) -> str:
         """対応するstgテーブル名を取得 (例: 'stg.shogun_flash_receive')"""
-        return f"stg.{self.value}"
+        return f"{SCHEMA_STG}.{self.value}"

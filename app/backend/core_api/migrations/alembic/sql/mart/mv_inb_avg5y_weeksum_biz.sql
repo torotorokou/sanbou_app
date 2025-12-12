@@ -10,7 +10,7 @@ CREATE MATERIALIZED VIEW mart.mv_inb_avg5y_weeksum_biz AS
          SELECT receive_daily.iso_year,
             receive_daily.iso_week,
             sum(receive_daily.receive_net_ton) AS week_sum_biz
-           FROM mart.v_receive_daily AS receive_daily
+           FROM mart.mv_receive_daily AS receive_daily
           WHERE ((receive_daily.ddate >= (CURRENT_DATE - '5 years'::interval)) AND (receive_daily.is_business = true) AND (receive_daily.is_holiday = false) AND ((receive_daily.iso_dow >= 1) AND (receive_daily.iso_dow <= 6)) AND (receive_daily.receive_net_ton IS NOT NULL))
           GROUP BY receive_daily.iso_year, receive_daily.iso_week
         ), agg AS (

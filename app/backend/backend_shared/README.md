@@ -36,6 +36,88 @@ backend_shared/
 
 ## 使い方（各サービス側）
 
+### データベースオブジェクト名定数
+
+すべてのDBスキーマ・テーブル・ビュー・MVの名前は `backend_shared.db.names` で定数管理されています。
+
+#### 基本的な使い方
+
+```python
+from backend_shared.db.names import (
+    SCHEMA_MART,
+    SCHEMA_STG,
+    MV_RECEIVE_DAILY,
+    T_SHOGUN_FINAL_RECEIVE,
+    fq  # fully-qualified identifier 生成関数
+)
+
+# ✅ 推奨: 定数を使用
+sql = f"SELECT * FROM {fq(SCHEMA_MART, MV_RECEIVE_DAILY)} WHERE ddate = :date"
+
+# ❌ 非推奨: ハードコード（タイポのリスク）
+sql = "SELECT * FROM mart.mv_receive_daily WHERE ddate = :date"
+```
+
+#### SQLファイルでの使用（テンプレートパターン）
+
+**SQLファイル** (`app/infra/db/sql/example/query.sql`):
+```sql
+-- プレースホルダーを使用
+SELECT *
+FROM {mv_receive_daily}
+WHERE ddate BETWEEN :start AND :end
+```
+
+**Pythonコード**:
+```python
+from backend_shared.db.names import SCHEMA_MART, MV_RECEIVE_DAILY, fq
+from app.infra.db.sql_loader import load_sql
+from sqlalchemy import text
+
+class MyRepository:
+    def __init__(self, db: Session):
+        self.db = db
+        # __init__ で SQL をロード・フォーマット・コンパイル（1回のみ）
+        template = load_sql("example/query.sql")
+        self._query_sql = text(
+            template.format(
+                mv_receive_daily=fq(SCHEMA_MART, MV_RECEIVE_DAILY)
+            )
+        )
+    
+    def fetch_data(self, start: date, end: date):
+        # バインドパラメータでユーザー入力を安全に渡す
+        result = self.db.execute(
+            self._query_sql,
+            {"start": start, "end": end}
+        )
+        return result.fetchall()
+```
+
+**重要**: 
+- `.format()` は**定数のみ**に使用（スキーマ名、テーブル名）
+- ユーザー入力は**必ずバインドパラメータ**（`:param_name`）で渡す
+- これによりSQLインジェクションを防止
+
+#### 利用可能な定数
+
+**スキーマ** (6個):
+- `SCHEMA_REF`, `SCHEMA_STG`, `SCHEMA_MART`, `SCHEMA_KPI`, `SCHEMA_RAW`, `SCHEMA_LOG`
+
+**主要オブジェクト**:
+- MV: `MV_RECEIVE_DAILY`, `MV_TARGET_CARD_PER_DAY` など
+- テーブル: `T_SHOGUN_FINAL_RECEIVE`, `T_UPLOAD_FILE` など
+- ビュー: `V_CALENDAR_CLASSIFIED`, `V_SALES_TREE_DETAIL_BASE` など
+
+**コレクション**:
+- `AUTO_REFRESH_MVS`: 自動更新対象のMV（2個）
+- `SHOGUN_FINAL_TABLES`: 将軍確定データテーブル（3個）
+- `SHOGUN_FLASH_TABLES`: 将軍速報データテーブル（3個）
+
+完全なリストは `backend_shared/db/names.py` を参照してください。
+
+---
+
 ### データベースURL構築
 
 特殊文字を含むパスワードでも安全に接続できるよう、URLエンコードを自動で行います。
