@@ -12,7 +12,7 @@ from typing import Any, Dict
 from app.core.ports.inbound import CsvGateway, ReportRepository
 from app.core.domain.reports.balance_sheet import BalanceSheet
 from app.core.usecases.reports.base_report_usecase import BaseReportUseCase
-from app.core.usecases.reports.balance_sheet import process as balance_sheet_process
+from app.core.usecases.reports.balance_sheet_processor import process as balance_sheet_process
 from app.infra.report_utils.excel_writer import write_values_to_template
 from app.infra.report_utils.template_config import get_template_config
 

@@ -26,7 +26,8 @@ const ManagePage: React.FC = () => {
     // responsive: flagsベースの段階スイッチ
     const { flags } = useResponsive();
     const reportManager = useReportManager('factory_report');
-    const reportBaseProps = reportManager.getReportBaseProps();
+    // useMemoでメモ化されたprops（関数ではなくオブジェクト）
+    const reportBaseProps = reportManager.getReportBaseProps;
 
     // responsive: 段階的な値決定（Mobile→Tablet→Laptop→Desktop）
     const pickByDevice = <T,>(mobile: T, tablet: T, laptop: T, desktop: T): T => {

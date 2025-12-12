@@ -6,7 +6,7 @@ from typing import Any, Dict
 from app.core.ports.inbound import CsvGateway, ReportRepository
 from app.core.domain.reports.management_sheet import ManagementSheet
 from app.core.usecases.reports.base_report_usecase import BaseReportUseCase
-from app.core.usecases.reports.management_sheet import process as management_sheet_process
+from app.core.usecases.reports.management_sheet_processor import process as management_sheet_process
 from app.application.usecases.reports.report_generation_utils import (
     generate_excel_from_dataframe,
 )

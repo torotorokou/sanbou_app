@@ -2,12 +2,18 @@
 Delete Upload Scope UseCase - アップロードスコープ削除ユースケース
 
 指定されたアップロードファイルの特定日付・CSV種別のデータを論理削除します。
+
+更新履歴:
+  - 2025-12-12: CSV削除時のマテリアライズドビュー自動更新機能を追加
+    将軍速報/最終版の受入CSV削除時にMV更新を実行
 """
 import logging
 from typing import Optional
 from datetime import date
+from sqlalchemy.orm import Session
 
-from app.core.ports.upload_status_port import IUploadStatusQuery
+from app.core.ports.upload_status_port import IUploadCalendarQuery
+from app.infra.adapters.materialized_view import MaterializedViewRefresher
 from backend_shared.application.logging import log_usecase_execution, get_module_logger
 
 logger = get_module_logger(__name__)
@@ -21,14 +27,17 @@ class DeleteUploadScopeUseCase:
       - パラメータのバリデーション
       - 論理削除の実行（Port経由）
       - 削除結果の記録
+      - CSV削除時のマテリアライズドビュー自動更新（受入CSVのみ）
     """
     
-    def __init__(self, query: IUploadStatusQuery):
+    def __init__(self, query: IUploadCalendarQuery, db: Session):
         """
         Args:
-            query: アップロードステータス管理の抽象インターフェース
+            query: アップロードカレンダー管理の抽象インターフェース
+            db: SQLAlchemy Session (MV更新用)
         """
         self.query = query
+        self.db = db
     
     @log_usecase_execution(usecase_name="DeleteUploadScope")
     def execute(
@@ -84,4 +93,29 @@ class DeleteUploadScopeUseCase:
                 f"date={target_date}, csv_kind={csv_kind}"
             )
         
+        # CSV削除後のマテリアライズドビュー自動更新
+        # 将軍速報/最終版の受入CSVのみ対応（receive関連のMVを更新）
+        self._refresh_materialized_views_if_needed(csv_kind)
+        
         return affected_rows
+    
+    def _refresh_materialized_views_if_needed(self, csv_kind: str) -> None:
+        """
+        CSV削除後、必要に応じてマテリアライズドビューを更新
+        
+        Args:
+            csv_kind: 削除されたCSV種別
+                     例: 'shogun_flash_receive', 'shogun_final_receive'
+        
+        Note:
+            受入CSV（receive）の場合のみMV更新を実行します。
+            将軍速報版でも最終版でもMVは同じデータソースを参照するため、
+            どちらが削除されてもMV更新が必要です。
+            
+            MaterializedViewRefresherが全てのロジックを統一的に処理します。
+        """
+        mv_refresher = MaterializedViewRefresher(self.db)
+        mv_refresher.refresh_for_csv_kind(
+            csv_kind=csv_kind,
+            operation_name="mv_refresh_after_delete"
+        )

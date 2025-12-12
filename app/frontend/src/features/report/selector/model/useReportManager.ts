@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { reportConfigMap, modalStepsMap } from '@features/report/shared/config';
 import type { ReportKey } from '@features/report/shared/config';
 
@@ -82,37 +82,13 @@ export const useReportManager = (
             .every((entry) => csvFiles[entry.config.label]);
     }, [selectedConfig.csvConfigs, csvFiles]);
 
-    /**
-     * ステップを自動的に更新する
-     */
-    useEffect(() => {
-        // CSV未アップロード時はcurrentStep制御不要（モーダル非表示）
-        if (!areRequiredCsvsUploaded()) return;
+    // ℹ️ ステップ管理はReportBase側で行う
+    // このhookでは自動ステップ遷移を行わない（ReportBaseとの競合を防ぐ）
+    // - ReportBase: Excel完了 → step(1) → 1.2秒後にモーダルクローズ
+    // - このhookは状態を保持するのみ
 
-        // 帳簿作成完了（isFinalized && previewUrl）で完了ステップへ
-        if (isFinalized && previewUrl) {
-            setCurrentStep(1); // 完了
-        } else {
-            setCurrentStep(0); // 帳簿作成中
-        }
-    }, [
-        selectedReport,
-        csvFiles,
-        areRequiredCsvsUploaded,
-        isFinalized,
-        previewUrl,
-    ]);
-
-    // 完了ステップ到達時は2秒後に自動でモーダルを閉じる
-    useEffect(() => {
-        const stepCount = modalStepsMap[selectedReport].length;
-        if (currentStep === stepCount - 1 && isModalOpen) {
-            const timer = setTimeout(() => {
-                setIsModalOpen(false);
-            }, 2000);
-            return () => clearTimeout(timer);
-        }
-    }, [currentStep, selectedReport, isModalOpen]);
+    // ℹ️ モーダルの自動クローズはReportBase.tsx側で管理
+    // タイマー競合を防ぐため、ここでは何もしない
 
     return {
         // 状態
@@ -137,8 +113,9 @@ export const useReportManager = (
         // 計算されたプロパティ
         areRequiredCsvsUploaded: areRequiredCsvsUploaded(),
 
-        // ヘルパー関数：ReportBaseコンポーネント用のpropsを生成
-        getReportBaseProps: () => ({
+        // メモ化されたReportBase用props
+        // useMemoで安定した参照を提供（不要な再レンダリングを防止）
+        getReportBaseProps: useMemo(() => ({
             step: {
                 steps: selectedConfig.steps,
                 currentStep,
@@ -166,6 +143,22 @@ export const useReportManager = (
                 setLoading: setIsLoading,
             },
             reportKey: selectedReport,
-        }),
+        }), [
+            selectedConfig.steps,
+            selectedConfig.csvConfigs,
+            currentStep,
+            previewUrl,
+            isModalOpen,
+            isFinalized,
+            isLoading,
+            selectedReport,
+            getCurrentCsvFiles,
+            uploadCsvFile,
+            setCurrentStep,
+            setPreviewUrl,
+            setIsModalOpen,
+            setIsFinalized,
+            setIsLoading,
+        ]),
     };
 };

@@ -22,7 +22,8 @@ import styles from './ReportPage.module.css';
 
 const FactoryPage: React.FC = () => {
     const reportManager = useReportManager('factory_report2');
-    const reportBaseProps = reportManager.getReportBaseProps();
+    // useMemoでメモ化されたprops（関数ではなくオブジェクト）
+    const reportBaseProps = reportManager.getReportBaseProps;
     const [showUnimplementedModal, setShowUnimplementedModal] = useState(false);
 
     useEffect(() => {

@@ -10,7 +10,7 @@ from typing import Any, Dict
 from app.core.ports.inbound import CsvGateway, ReportRepository
 from app.core.domain.reports.average_sheet import AverageSheet
 from app.core.usecases.reports.base_report_usecase import BaseReportUseCase
-from app.core.usecases.reports.average_sheet import process as average_sheet_process
+from app.core.usecases.reports.average_sheet_processor import process as average_sheet_process
 from app.application.usecases.reports.report_generation_utils import (
     generate_excel_from_dataframe,
 )

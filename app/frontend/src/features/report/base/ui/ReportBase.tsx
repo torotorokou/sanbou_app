@@ -32,7 +32,7 @@ import { coreApi } from '@features/report/shared/infrastructure/http.adapter';
 const ReportBase: React.FC<ReportBaseProps> = ({
     step,
     file,
-    preview,
+    preview: _preview, // eslint-disable-line @typescript-eslint/no-unused-vars -- 将来の拡張用に保持
     modal,
     finalized,
     loading,
@@ -51,17 +51,17 @@ const ReportBase: React.FC<ReportBaseProps> = ({
     
     // モーダル表示タイマーの管理（Excel生成完了後のモーダル表示時間）
     const modalTimerRef = useRef<NodeJS.Timeout | null>(null);
-    const { previewUrl, setPreviewUrl } = preview;
     const { setFinalized } = finalized;
     const { setModalOpen } = modal;
-    const { setLoading } = loading;
 
     // インタラクティブ帳簿かどうか判定
     const isInteractive = isInteractiveReport(reportKey);
 
     const resetInteractiveState = () => {
-        // タイマークリア
+        console.log('[ReportBase] resetInteractiveState 呼び出し');
+        // モーダルタイマークリア
         if (modalTimerRef.current) {
+            console.log('[ReportBase] モーダルタイマークリア');
             clearTimeout(modalTimerRef.current);
             modalTimerRef.current = null;
         }
@@ -69,69 +69,90 @@ const ReportBase: React.FC<ReportBaseProps> = ({
         setInteractiveSessionData(null);
     };
 
-    // 📄 PDFプレビューURLが生成されたら設定（モーダルとは独立）
-    useEffect(() => {
-        if (pdfPreviewUrl && pdfPreviewUrl !== previewUrl) {
-            setPreviewUrl(pdfPreviewUrl);
-        }
-    }, [pdfPreviewUrl, previewUrl, setPreviewUrl]);
+    // 📄 PDFプレビューはモーダルとは完全に独立
+    // business.pdfPreviewUrl が変更されても、モーダルには影響しない
+    // PDFはバックグラウンドで生成され、PDFViewerが直接参照する
 
     // 📑 帳簿切り替え時にプレビューや内部状態をリセット（タブ遷移時のPDFクリア）
     useEffect(() => {
-        // タイマークリア
+        console.log('[ReportBase] 帳簿切り替え検知:', reportKey);
+        // モーダルタイマークリア
         if (modalTimerRef.current) {
+            console.log('[ReportBase] モーダルタイマークリア (reportKey変更)');
             clearTimeout(modalTimerRef.current);
             modalTimerRef.current = null;
         }
         // プレビューと状態をリセット
         cleanup();
-        setPreviewUrl(null);
         setFinalized(false);
         setModalOpen(false);
         
         return () => {
-            // アンマウント時のクリーンアップ
+            console.log('[ReportBase] アンマウント/クリーンアップ');
+            // モーダルタイマークリア
             if (modalTimerRef.current) {
+                console.log('[ReportBase] モーダルタイマークリア (アンマウント)');
                 clearTimeout(modalTimerRef.current);
                 modalTimerRef.current = null;
             }
             cleanup();
-            setPreviewUrl(null);
             setFinalized(false);
             setModalOpen(false);
         };
-    }, [reportKey, cleanup, setFinalized, setModalOpen, setPreviewUrl]);
+    }, [reportKey]); // ⚠️ reportKeyのみに依存させる
 
     /**
-     * 📊 通常帳簿のレポート生成処理（Excel生成完了でモーダル表示）
-     * PDF生成は非同期でバックグラウンド処理され、モーダルには影響しない
+     * 📊 通常帳簿のレポート生成処理 - Excel完了ベースのシンプルフロー
+     * 
+     * 🎯 フロー:
+     * 1. モーダル表示 (作成中)
+     * 2. API呼び出し (CSVアップロード)
+     * 3. Excel生成完了 → 完了ステップ表示
+     * 4. 1.2秒後にモーダル自動クローズ
+     * 
+     * ⚠️ PDFはバックグラウンドで生成され、モーダルの動作には一切関与しません
      */
     const handleNormalGenerate = () => {
-        // 状態リセットとタイマークリア
+        console.log('[ReportBase] === Excel生成フロー開始 ===');
+        
+        // タイマークリア
         if (modalTimerRef.current) {
+            console.log('[ReportBase] 既存タイマーをクリア');
             clearTimeout(modalTimerRef.current);
             modalTimerRef.current = null;
         }
+        
+        // 初期状態設定
+        console.log('[ReportBase] モーダル表示: 作成中ステップ');
         setFinalized(false);
         step.setCurrentStep(0);
         modal.setModalOpen(true);
         loading.setLoading(true);
 
         business.handleGenerateReport(
-            () => {},  // onStart
-            () => {    // onComplete（API呼び出し完了）
+            () => {}, // onStart
+            () => {
+                // onComplete: API呼び出し完了
+                console.log('[ReportBase] API呼び出し完了');
                 loading.setLoading(false);
             },
-            () => {    // onSuccess（Excel生成成功）
-                // Excel生成完了を表示（PDFは非同期でバックグラウンド生成中）
+            () => {
+                // onSuccess: Excel生成完了 (モーダルの核心イベント)
+                console.log('[ReportBase] ✅ Excel生成完了');
+                
+                // 完了ステップへ移行
                 finalized.setFinalized(true);
                 step.setCurrentStep(1);
+                notifySuccess('生成完了', '帳簿生成が完了しました');
                 
-                // 2.5秒後にモーダルを閉じる（Excel生成完了の視認性確保）
+                // 1.2秒後にモーダルを自動クローズ
+                console.log('[ReportBase] 1.2秒後にモーダルをクローズするタイマー設定');
                 modalTimerRef.current = setTimeout(() => {
+                    console.log('[ReportBase] 🚪 モーダルをクローズ');
                     modal.setModalOpen(false);
                     step.setCurrentStep(0);
-                }, 2500);
+                    console.log('[ReportBase] === Excel生成フロー完了 ===');
+                }, 1200);
             }
         );
     };
@@ -262,10 +283,8 @@ const ReportBase: React.FC<ReportBaseProps> = ({
      */
     const handleInteractiveSuccess = (response: ReportArtifactResponse) => {
         try {
+            // PDFプレビューはapplyArtifactResponse内で処理される
             business.applyArtifactResponse(response);
-            if (response?.artifact?.pdf_preview_url) {
-                setPreviewUrl(response.artifact.pdf_preview_url);
-            }
 
             if (response?.status === 'success') {
                 finalized.setFinalized(true);
@@ -345,17 +364,19 @@ const ReportBase: React.FC<ReportBaseProps> = ({
                 finalized={finalized.finalized}
                 readyToCreate={business.isReadyToCreate}
                 sampleImageUrl={pdfPreviewMap[reportKey]}
-                pdfUrl={previewUrl}
+                pdfUrl={pdfPreviewUrl}
                 excelReady={business.hasExcel}
                 pdfReady={business.hasPdf}
                 header={undefined}
             >
                 <Suspense fallback={null}>
-            <PDFViewer pdfUrl={previewUrl} pdfStatus={pdfStatus} />
+                    {/* PDFViewerはbusiness.pdfPreviewUrlを直接参照（親に影響しない） */}
+                    <PDFViewer pdfUrl={pdfPreviewUrl} pdfStatus={pdfStatus} />
                 </Suspense>
             </ReportManagePageLayout>
         </>
     );
 };
 
-export default ReportBase;
+// PDFViewerをメモ化してパフォーマンス最適化
+export default React.memo(ReportBase);

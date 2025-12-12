@@ -1026,6 +1026,9 @@ class UploadShogunCsvUseCase:
             - ログに記録して処理を継続
             - csv_type='receive' の場合、将軍速報CSV（flash）と将軍最終CSV（final）の両方に対応
               MVは自動的にfinal版を優先し、なければflash版のデータを使用する
+            
+            MaterializedViewRefresherを使用してMV更新を実行します。
+            共通エラーハンドリングはRefresher側で実装済み。
         """
         if not self.mv_refresher:
             logger.warning(
