@@ -126,12 +126,14 @@ const ReportBase: React.FC<ReportBaseProps> = ({
                 // Excel生成完了を表示（PDFは非同期でバックグラウンド生成中）
                 finalized.setFinalized(true);
                 step.setCurrentStep(1);
+                notifySuccess('生成完了', '帳簿生成が完了しました');
                 
-                // 2.5秒後にモーダルを閉じる（Excel生成完了の視認性確保）
+                // 1.2秒後にモーダルを閉じる（Excel生成完了の視認性確保）
+                // ブロック単価帳簿と同じタイミングに統一
                 modalTimerRef.current = setTimeout(() => {
                     modal.setModalOpen(false);
                     step.setCurrentStep(0);
-                }, 2500);
+                }, 1200);
             }
         );
     };
