@@ -13,6 +13,18 @@ Clean Architecture の Infra 層に配置。
   - 単一責任の原則（SRP）: MV更新のみに特化
   - 疎結合: UseCase から DI 経由で注入
   - 拡張性: 新しい MV を容易に追加可能
+
+CSV種別とMV更新の対応:
+  - "receive": 将軍速報CSV（flash）と将軍最終CSV（final）の両方に対応
+    - mv_receive_daily: final優先、なければflashを使用
+    - mv_target_card_per_day: mv_receive_dailyに依存
+  - "yard": 将軍ヤードCSV（flash/final）に対応（将来実装）
+  - "shipment": 将軍出荷CSV（flash/final）に対応（将来実装）
+
+注意事項:
+  - REFRESH CONCURRENTLY には UNIQUE INDEX が必要
+  - 既存のデータがない場合、初回更新は CONCURRENTLY を使わない
+  - 更新エラーはログに記録するが、アップロード処理全体は失敗させない
 """
 from typing import List, Optional
 from sqlalchemy import text
@@ -64,6 +76,10 @@ class MaterializedViewRefresher:
             
         Raises:
             Exception: MV更新に失敗した場合（呼び出し側でハンドリング推奨）
+            
+        Note:
+            - csv_type='receive' の場合、将軍速報CSV（flash）と将軍最終CSV（final）の両方に対応
+            - MVは自動的にfinal版を優先し、なければflash版のデータを使用する
         """
         mv_list = self.MV_MAPPINGS.get(csv_type, [])
         
@@ -75,22 +91,49 @@ class MaterializedViewRefresher:
             return
         
         logger.info(
-            "Starting MV refresh",
+            f"[MV_REFRESH] Starting refresh for csv_type='{csv_type}'",
             extra=create_log_context(operation="refresh_views", csv_type=csv_type, mv_count=len(mv_list), mv_list=mv_list)
         )
+        
+        success_count = 0
+        failed_mvs = []
         
         for mv_name in mv_list:
             try:
                 self._refresh_single_mv(mv_name)
+                success_count += 1
             except Exception as e:
+                failed_mvs.append(mv_name)
                 logger.error(
-                    "MV refresh failed",
+                    f"[MV_REFRESH] MV refresh failed: {mv_name}",
                     extra=create_log_context(operation="refresh_views", mv_name=mv_name, error=str(e)),
                     exc_info=True
                 )
                 # 個別MVの失敗は記録するが、全体処理は継続
                 # 呼び出し側で必要に応じて再 raise を判断
                 raise
+        
+        # 全体の結果サマリーをログ出力
+        if failed_mvs:
+            logger.warning(
+                f"[MV_REFRESH] ⚠️ Refresh completed with errors for csv_type='{csv_type}': {success_count}/{len(mv_list)} succeeded",
+                extra=create_log_context(
+                    operation="refresh_views",
+                    csv_type=csv_type,
+                    success_count=success_count,
+                    failed_count=len(failed_mvs),
+                    failed_mvs=failed_mvs
+                )
+            )
+        else:
+            logger.info(
+                f"[MV_REFRESH] ✅ All MVs refreshed successfully for csv_type='{csv_type}' ({success_count}/{len(mv_list)})",
+                extra=create_log_context(
+                    operation="refresh_views",
+                    csv_type=csv_type,
+                    success_count=success_count
+                )
+            )
     
     def _refresh_single_mv(self, mv_name: str) -> None:
         """
@@ -102,10 +145,16 @@ class MaterializedViewRefresher:
         Note:
             CONCURRENTLY オプションを使用してロックを最小化
             （UNIQUE INDEX が必要）
+            
+        Raises:
+            Exception: 更新に失敗した場合
+              - UNIQUE INDEX が存在しない場合
+              - MVが存在しない場合
+              - その他のDB エラー
         """
         try:
             logger.info(
-                "Refreshing MV",
+                f"[MV_REFRESH] Refreshing MV: {mv_name}",
                 extra=create_log_context(operation="refresh_single_mv", mv_name=mv_name)
             )
             
@@ -117,16 +166,35 @@ class MaterializedViewRefresher:
             self.db.execute(sql)
             self.db.commit()
             
+            # 更新後の行数を取得（確認用）
+            count_sql = text(f"SELECT COUNT(*) FROM {mv_name};")
+            result = self.db.execute(count_sql)
+            row_count = result.scalar()
+            
             logger.info(
-                "MV refresh successful",
-                extra=create_log_context(operation="refresh_single_mv", mv_name=mv_name)
+                f"[MV_REFRESH] ✅ MV refresh successful: {mv_name} ({row_count} rows)",
+                extra=create_log_context(operation="refresh_single_mv", mv_name=mv_name, row_count=row_count)
             )
             
         except Exception as e:
             self.db.rollback()
+            
+            # エラーの種類を特定
+            error_msg = str(e).lower()
+            if "unique index" in error_msg or "index" in error_msg:
+                error_detail = (
+                    f"UNIQUE INDEX が存在しない可能性があります。"
+                    f"CONCURRENTLY オプションには UNIQUE INDEX が必要です。"
+                    f"migration を確認してください。"
+                )
+            elif "does not exist" in error_msg:
+                error_detail = f"マテリアライズドビュー '{mv_name}' が存在しません。"
+            else:
+                error_detail = f"予期しないエラー: {str(e)}"
+            
             logger.error(
-                "MV refresh error",
-                extra=create_log_context(operation="refresh_single_mv", mv_name=mv_name, error=str(e)),
+                f"[MV_REFRESH] ❌ MV refresh failed: {mv_name} - {error_detail}",
+                extra=create_log_context(operation="refresh_single_mv", mv_name=mv_name, error=str(e), error_detail=error_detail),
                 exc_info=True
             )
             raise
