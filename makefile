@@ -1,99 +1,31 @@
 ## =============================================================
-## Makefile : dev / stg / prod / demo 用 docker compose ヘルパ
-## -------------------------------------------------------------
-## ★よく使うターゲット
-##   - make up        ENV=local_dev|vm_stg|vm_prod|local_demo
-##   - make down      ENV=...
-##   - make rebuild   ENV=...
-##   - make logs      ENV=... S=ai_api
-##   - make health    ENV=...
-##   - make backup    ENV=local_dev
-##   - make restore-from-dump ENV=local_dev DUMP=backups/xxx.dump
-##   - make restore-from-sql  ENV=local_demo SQL=backups/xxx.sql
+## Makefile : sanbou_app 全環境統合管理ツール
+## =============================================================
 ##
-## ★開発環境：nginx 付き起動（本番に近い構成）
-##   - make dev-with-nginx    # nginx 経由で http://localhost:8080
+## 📚 ドキュメント
+##    MAKEFILE_QUICKREF.md           - クイックリファレンス
+##    docs/infrastructure/MAKEFILE_GUIDE.md - 詳細ガイド
 ##
-## ★コンテナイメージの build & push(Artifact Registry)
-##   - STG:  make publish-stg-images  STG_IMAGE_TAG=stg-YYYYMMDD
-##   - PROD: make publish-prod-images PROD_IMAGE_TAG=prod-YYYYMMDD
-##   - 事前に一度だけ: make gcloud-auth-docker
+## 🚀 よく使うコマンド
+##    make up ENV=local_dev          - 環境起動
+##    make down ENV=local_dev        - 環境停止
+##    make logs ENV=local_dev S=xxx  - ログ確認
+##    make al-up-env ENV=local_dev   - DBマイグレーション
+##    make backup ENV=local_dev      - バックアップ
 ##
-## ★STG → PROD へのイメージ昇格（別プロジェクト間コピー）
-##   - make promote-stg-to-prod PROMOTE_SRC_TAG=stg-YYYYMMDD PROMOTE_DST_TAG=prod-YYYYMMDD
-##     ※ STG_PROJECT_ID の Artifact Registry から PROD_PROJECT_ID へ docker pull/tag/push でコピー
+## 🌍 環境 (ENV)
+##    local_dev  - ローカル開発（自動ビルド）
+##    local_demo - ローカルデモ
+##    vm_stg     - GCP VM ステージング（Artifact Registry）
+##    vm_prod    - GCP VM 本番（Artifact Registry）
 ##
-## ★STG/PROD デプロイフロー
-##   【STG】
-##   1) ローカル: make publish-stg-images STG_IMAGE_TAG=stg-20251209
-##   2) env/.env.vm_stg の IMAGE_TAG=stg-20251209 に更新
-##   3) vm_stg で: make up ENV=vm_stg
-##   【PROD】
-##   1) ローカル: make publish-prod-images PROD_IMAGE_TAG=prod-20251209
-##   2) env/.env.vm_prod の IMAGE_TAG=prod-20251209 に更新
-##   3) vm_prod で: make up ENV=vm_prod
+## ⚠️ VM環境での注意
+##    - vm_stg と vm_prod は同時起動不可（ポート80競合）
+##    - VM環境ではローカルでイメージビルド後 pull して使用
+##    - 本番マイグレーション前に必ずバックアップ取得
 ##
-## ENV の意味(ざっくり)
-##   - local_dev  : ローカル開発(ホットリロードあり・buildあり)
-##   - local_demo : ローカルのデモ環境(dev とは別 compose)
-##   - vm_stg     : GCP VM ステージング(VPN/Tailscale、Artifact Registry から pull)
-##   - vm_prod    : GCP VM 本番(LB+IAP 経由、Artifact Registry から pull)
-##
-## -------------------------------------------------------------
-## ★DB Bootstrap（ロール・権限の冪等セットアップ）
-##   - app_readonly ロールと基本権限を冪等的にセットアップします
-##   - Alembic マイグレーション前に必要（al-up/al-up-env は自動実行）
-##   - 手動実行する場合:
-##       make db-bootstrap-roles-env ENV=local_dev
-##       make db-bootstrap-roles-env ENV=vm_stg
-##       make db-bootstrap-roles-env ENV=vm_prod
-##   - 冪等なので何度実行しても安全です
-##
-## -------------------------------------------------------------
-## ★Alembic（DBマイグレーション）適用の考え方
-##   - 既存ターゲット(al-up/al-cur等)は「local_dev固定」で動きます（従来通り）
-##   - 追加ターゲット(al-up-env 等)は「ENV に追従」して適用できます:
-##       make al-up-env  ENV=vm_stg
-##       make al-cur-env ENV=vm_stg
-##       make al-up-env  ENV=vm_prod
-##   - al-up/al-up-env 実行時は自動的に db-bootstrap-roles-env が先に実行されます
-##   - 注意:
-##       * 対象ENVは先に `make up ENV=...` で起動しておくこと
-##       * core_api コンテナ内で alembic を実行するため、
-##         “migrationsファイルが含まれるイメージ” に更新されていること
-## ============================================================
+## =============================================================
 
-
-## ============================================================
-## VM 上での暫定運用ルール(vm_stg / vm_prod)
-## ------------------------------------------------------------
-## ★ 重要: この VM では、vm_stg と vm_prod を「同時には起動しない」前提です
-##   - 80番ポートはどちらの compose でも "80:80" を使うため、
-##     必ず片方を down してからもう片方を up すること
-##
-## 例:
-##   # STG を試すとき
-##   make down ENV=vm_prod
-##   make up   ENV=vm_stg
-##
-##   # PROD を試すとき
-##   make down ENV=vm_stg
-##   make up   ENV=vm_prod
-##
-## ★ nginx 動作確認(vm_stg / vm_prod 共通):
-##   VM 内で:
-##     curl -I http://localhost/health    # → HTTP/1.1 200 OK
-##     curl -I http://localhost/          # → HTTP/1.1 200 OK, text/html
-##                                        #    ※ Location: https://... が含まれないこと
-##   Tailscale 経由:
-##     http://<tailscale IP>/             # → React 画面が表示される
-## ============================================================
-
-SHELL := /bin/bash
-.ONESHELL:
-.SHELLFLAGS := -eu -o pipefail -c
-
-## -------------------------------------------------------------
 ## グローバル環境変数
 ## -------------------------------------------------------------
 ENV ?= local_dev
