@@ -89,9 +89,32 @@ core/domain/reports/
 - [x] UseCases を先頭に、process関数を後ろに整理
 - [x] `__all__` 定義を追加
 
-### Step 4: 不要ファイルの削除 (次のステップ)
-- [ ] 使用されていない旧版ファイルを特定
-- [ ] 削除候補の精査
+### Step 4: テストファイルの更新 ✅ 完了
+- [x] `test_api_readiness.py` のインポートパスを現在の構造に更新
+- [x] UseCaseクラスのテストを追加
+- [x] 旧版Generatorクラスのテストを (legacy) マークで保持
+
+### Step 5: 使用状況の精査結果 ✅ 完了
+
+| クラス/ファイル | 本番コード | テストコード | 状態 |
+|----------------|----------|-------------|------|
+| `GenerateFactoryReportUseCase` | ✅ | ✅ | **推奨** |
+| `GenerateBalanceSheetUseCase` | ✅ | ✅ | **推奨** |
+| `GenerateAverageSheetUseCase` | ✅ | ✅ | **推奨** |
+| `GenerateManagementSheetUseCase` | ✅ | ✅ | **推奨** |
+| `FactoryReportGenerator` (旧版) | ❌ | ✅ | 互換性維持 |
+| `BalanceSheetGenerator` (旧版) | ❌ | ✅ | 互換性維持 |
+| `AverageSheetGenerator` (旧版) | ❌ | ✅ | 互換性維持 |
+| `ManagementSheetGenerator` (旧版) | ❌ | ✅ | 互換性維持 |
+| `BlockUnitPriceGenerator` (旧版) | ❌ | ❌ | 削除候補 |
+| `BaseReportGenerator` | ✅（親クラス） | ✅ | 保持 |
+| `InteractiveReportProcessingService` | ✅ | ✅ | 保持 |
+| `balance_sheet_base.py` | ✅ | ✅ | 保持 |
+| `factory_report_base.py` | ✅ | ❌ | 保持 |
+
+### 次のステップ（オプション）
+- [ ] `BlockUnitPriceGenerator` クラスの削除（未使用）
+- [ ] 将来的に旧版Generatorを完全廃止する際のマイグレーション計画
 
 ---
 
