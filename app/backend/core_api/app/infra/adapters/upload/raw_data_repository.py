@@ -262,7 +262,7 @@ class RawDataRepository:
                 ).returning(self.upload_file_table.c.id)
             )
             file_id = result.scalar_one()
-            self.db.commit()
+            # NOTE: commit()はUseCaseレイヤーで実行（トランザクション境界の統一）
             logger.info(
                 "upload_fileレコード作成",
                 extra=create_log_context(
@@ -274,7 +274,7 @@ class RawDataRepository:
             )
             return file_id
         except Exception as e:
-            self.db.rollback()
+            # NOTE: rollback()もUseCaseレイヤーで実行（例外は再raiseのみ）
             logger.error(
                 "upload_file作成失敗",
                 extra=create_log_context(operation="create_upload_file", error=str(e)),
@@ -420,13 +420,13 @@ class RawDataRepository:
                 .where(self.upload_file_table.c.id == file_id)
                 .values(**values)
             )
-            self.db.commit()
+            # NOTE: commit()はUseCaseレイヤーで実行
             logger.info(
                 "upload_fileステータス更新",
                 extra=create_log_context(operation="update_upload_status", file_id=file_id, status=status)
             )
         except Exception as e:
-            self.db.rollback()
+            # NOTE: rollback()もUseCaseレイヤーで実行
             logger.error(
                 "upload_fileステータス更新失敗",
                 extra=create_log_context(operation="update_upload_status", error=str(e)),
@@ -548,7 +548,7 @@ class RawDataRepository:
                 "deleted_by": deleted_by,
             })
             affected_rows = result.rowcount
-            self.db.commit()
+            # NOTE: commit()はUseCaseレイヤーで実行
             
             logger.info(
                 f"[SOFT_DELETE] ✅ soft_delete_scope_by_dates: table={table_name}, csv_kind={csv_kind}, "
@@ -558,7 +558,7 @@ class RawDataRepository:
             return affected_rows
             
         except Exception as e:
-            self.db.rollback()
+            # NOTE: rollback()もUseCaseレイヤーで実行
             logger.error(
                 f"Failed to soft delete scope by dates: csv_kind={csv_kind}, "
                 f"table={table_name}, dates={normalized_dates[:5]}, error={e}",
@@ -738,13 +738,13 @@ class RawDataRepository:
             
             # バルクインサート
             self.db.execute(self.receive_raw_table.insert(), records)
-            self.db.commit()
+            # NOTE: commit()はUseCaseレイヤーで実行
             
             logger.info(f"Saved {len(records)} rows to raw.receive_raw (file_id={file_id})")
             return len(records)
             
         except Exception as e:
-            self.db.rollback()
+            # NOTE: rollback()もUseCaseレイヤーで実行
             logger.error(f"Failed to save raw data: {e}")
             raise
     
