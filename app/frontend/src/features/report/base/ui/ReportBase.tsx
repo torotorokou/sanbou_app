@@ -60,8 +60,10 @@ const ReportBase: React.FC<ReportBaseProps> = ({
     const isInteractive = isInteractiveReport(reportKey);
 
     const resetInteractiveState = () => {
+        console.log('[ReportBase] resetInteractiveState 呼び出し');
         // タイマークリア
         if (modalTimerRef.current) {
+            console.log('[ReportBase] タイマークリア (resetInteractiveState)');
             clearTimeout(modalTimerRef.current);
             modalTimerRef.current = null;
         }
@@ -72,14 +74,26 @@ const ReportBase: React.FC<ReportBaseProps> = ({
     // 📄 PDFプレビューURLが生成されたら設定（モーダルとは独立）
     useEffect(() => {
         if (pdfPreviewUrl && pdfPreviewUrl !== previewUrl) {
-            setPreviewUrl(pdfPreviewUrl);
+            console.log('[ReportBase] PDFプレビューURL更新:', {
+                pdfPreviewUrl,
+                previewUrl,
+                modalOpen: modal.modalOpen,
+                currentStep: step.currentStep
+            });
+            // モーダルが閉じている場合のみプレビューを更新
+            // モーダル表示中の更新を防ぎ、完了ステップの表示を維持
+            if (!modal.modalOpen) {
+                setPreviewUrl(pdfPreviewUrl);
+            }
         }
-    }, [pdfPreviewUrl, previewUrl, setPreviewUrl]);
+    }, [pdfPreviewUrl, previewUrl, setPreviewUrl, modal.modalOpen, step.currentStep]);
 
     // 📑 帳簿切り替え時にプレビューや内部状態をリセット（タブ遷移時のPDFクリア）
     useEffect(() => {
+        console.log('[ReportBase] 帳簿切り替え検知:', reportKey);
         // タイマークリア
         if (modalTimerRef.current) {
+            console.log('[ReportBase] タイマークリア (reportKey変更)');
             clearTimeout(modalTimerRef.current);
             modalTimerRef.current = null;
         }
@@ -90,8 +104,10 @@ const ReportBase: React.FC<ReportBaseProps> = ({
         setModalOpen(false);
         
         return () => {
+            console.log('[ReportBase] アンマウント/クリーンアップ');
             // アンマウント時のクリーンアップ
             if (modalTimerRef.current) {
+                console.log('[ReportBase] タイマークリア (アンマウント)');
                 clearTimeout(modalTimerRef.current);
                 modalTimerRef.current = null;
             }
@@ -100,18 +116,21 @@ const ReportBase: React.FC<ReportBaseProps> = ({
             setFinalized(false);
             setModalOpen(false);
         };
-    }, [reportKey, cleanup, setFinalized, setModalOpen, setPreviewUrl]);
+    }, [reportKey, cleanup, setFinalized, setModalOpen]);
 
     /**
      * 📊 通常帳簿のレポート生成処理（Excel生成完了でモーダル表示）
      * PDF生成は非同期でバックグラウンド処理され、モーダルには影響しない
      */
     const handleNormalGenerate = () => {
+        console.log('[ReportBase] handleNormalGenerate 開始');
         // 状態リセットとタイマークリア
         if (modalTimerRef.current) {
+            console.log('[ReportBase] タイマークリア (generate開始)');
             clearTimeout(modalTimerRef.current);
             modalTimerRef.current = null;
         }
+        console.log('[ReportBase] 初期状態設定: finalized=false, step=0, modal=true');
         setFinalized(false);
         step.setCurrentStep(0);
         modal.setModalOpen(true);
@@ -120,19 +139,29 @@ const ReportBase: React.FC<ReportBaseProps> = ({
         business.handleGenerateReport(
             () => {},  // onStart
             () => {    // onComplete（API呼び出し完了）
+                console.log('[ReportBase] API呼び出し完了 (onComplete)');
                 loading.setLoading(false);
             },
             () => {    // onSuccess（Excel生成成功）
+                console.log('[ReportBase] Excel生成成功 (onSuccess)');
                 // Excel生成完了を表示（PDFは非同期でバックグラウンド生成中）
+                console.log('[ReportBase] 完了状態設定: finalized=true, step=1');
                 finalized.setFinalized(true);
                 step.setCurrentStep(1);
                 notifySuccess('生成完了', '帳簿生成が完了しました');
                 
                 // 1.2秒後にモーダルを閉じる（Excel生成完了の視認性確保）
                 // ブロック単価帳簿と同じタイミングに統一
+                console.log('[ReportBase] 1.2秒後にモーダルを閉じるタイマーを設定');
                 modalTimerRef.current = setTimeout(() => {
+                    console.log('[ReportBase] タイマー実行: モーダルを閉じる');
                     modal.setModalOpen(false);
                     step.setCurrentStep(0);
+                    // モーダルを閉じた後、PDFプレビューを更新
+                    if (pdfPreviewUrl) {
+                        console.log('[ReportBase] モーダル閉じ後、PDFプレビュー更新');
+                        setPreviewUrl(pdfPreviewUrl);
+                    }
                 }, 1200);
             }
         );
