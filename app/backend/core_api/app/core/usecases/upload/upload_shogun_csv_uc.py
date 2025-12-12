@@ -988,8 +988,17 @@ class UploadShogunCsvUseCase:
                     
                     # ★ 受入CSVの成功時のみマテビュー更新リストに追加
                     # （現状、MVが定義されているのは receive のみ）
+                    # 注: flash版もfinal版も同じMVを更新（MVはfinal優先、なければflashを使用）
                     if csv_type == "receive":
                         mv_refresh_needed.append(csv_type)
+                        logger.info(
+                            f"[MV_REFRESH] Scheduled MV refresh for csv_type='{csv_type}'",
+                            extra=create_log_context(
+                                operation="schedule_mv_refresh",
+                                csv_type=csv_type,
+                                file_id=file_id
+                            )
+                        )
                 else:
                     # 失敗: エラーメッセージを記録
                     error_detail = result_info.get("detail", "Unknown error")
@@ -1015,24 +1024,47 @@ class UploadShogunCsvUseCase:
         Note:
             - エラーが発生してもアップロード処理全体は失敗させない
             - ログに記録して処理を継続
+            - csv_type='receive' の場合、将軍速報CSV（flash）と将軍最終CSV（final）の両方に対応
+              MVは自動的にfinal版を優先し、なければflash版のデータを使用する
         """
         if not self.mv_refresher:
-            logger.debug("MaterializedViewRefresher not injected, skipping MV refresh")
+            logger.warning(
+                "[MV_REFRESH] ⚠️ MaterializedViewRefresher not injected, skipping MV refresh. "
+                "Check DI configuration.",
+                extra=create_log_context(operation="mv_refresh_check")
+            )
             return
         
         if not csv_types:
             logger.debug("No csv_types provided for MV refresh")
             return
         
+        logger.info(
+            f"[MV_REFRESH] Starting MV refresh for {len(csv_types)} csv_type(s): {csv_types}",
+            extra=create_log_context(operation="mv_refresh_batch", csv_types=csv_types)
+        )
+        
         for csv_type in csv_types:
             try:
-                logger.info(f"Starting materialized view refresh for csv_type='{csv_type}'")
+                logger.info(
+                    f"[MV_REFRESH] Processing csv_type='{csv_type}'",
+                    extra=create_log_context(operation="mv_refresh_single", csv_type=csv_type)
+                )
                 self.mv_refresher.refresh_for_csv_type(csv_type)
-                logger.info(f"Successfully refreshed materialized views for csv_type='{csv_type}'")
+                logger.info(
+                    f"[MV_REFRESH] ✅ Successfully refreshed MVs for csv_type='{csv_type}'",
+                    extra=create_log_context(operation="mv_refresh_single", csv_type=csv_type, status="success")
+                )
             except Exception as e:
                 # マテビュー更新失敗はログに記録するが、アップロード処理は成功扱い
                 logger.error(
-                    f"Failed to refresh materialized views for csv_type='{csv_type}': {e}",
+                    f"[MV_REFRESH] ❌ Failed to refresh MVs for csv_type='{csv_type}': {e}",
+                    extra=create_log_context(
+                        operation="mv_refresh_single",
+                        csv_type=csv_type,
+                        status="error",
+                        error=str(e)
+                    ),
                     exc_info=True
                 )
                 # 呼び出し側には影響を与えない（アップロード自体は成功している）
