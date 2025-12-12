@@ -67,6 +67,7 @@ make restore-from-dump ENV=local_dev DUMP=backups/xxx.dump
 make db-bootstrap-roles-env ENV=local_dev
 
 # マイグレーション適用（自動的にbootstrapも実行）
+# ※ migrations_v2 を使用（legacy migrations/ は削除済み）
 make al-up-env ENV=local_dev
 
 # マイグレーション状態確認
