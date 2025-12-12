@@ -22,7 +22,29 @@ BASE = Path("/backend/migrations/alembic/sql/ref")
 def _read_sql(fname: str) -> str:
     return (BASE / fname).read_text(encoding="utf-8")
 
+def _table_exists(schema: str, table: str) -> bool:
+    """Check if a table exists"""
+    conn = op.get_bind()
+    result = conn.execute(
+        sa.text("SELECT to_regclass(:qualified) IS NOT NULL"),
+        {"qualified": f"{schema}.{table}"}
+    ).scalar()
+    return bool(result)
+
 def upgrade():
+    # Check if required tables exist before creating views
+    required_tables = [
+        ("ref", "calendar_day"),
+        ("ref", "holiday_jp"),
+    ]
+    
+    all_tables_exist = all(_table_exists(schema, table) for schema, table in required_tables)
+    
+    if not all_tables_exist:
+        print("⚠️  Skipping ref view creation - required ref tables do not exist yet")
+        print("   Views will be created by later migrations")
+        return
+    
     # 依存の浅い順に実行したい場合は明示順で。
     # 今回はどちらもテーブル参照のみなので順不同でもOK。
     for fname in sorted(p.name for p in BASE.glob("*.sql")):

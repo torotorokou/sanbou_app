@@ -21,7 +21,30 @@ depends_on = None
 BASE = Path("/backend/migrations/alembic/sql/mart")
 def _sql(name: str) -> str: return (BASE / name).read_text(encoding="utf-8")
 
+def _table_exists(schema: str, table: str) -> bool:
+    """Check if a table exists"""
+    conn = op.get_bind()
+    result = conn.execute(
+        sa.text("SELECT to_regclass(:qualified) IS NOT NULL"),
+        {"qualified": f"{schema}.{table}"}
+    ).scalar()
+    return bool(result)
+
 def upgrade():
+    # Check if required tables exist before creating views
+    required_tables = [
+        ("stg", "receive_shogun_final"),
+        ("stg", "receive_shogun_flash"),
+        ("stg", "receive_king_final"),
+    ]
+    
+    all_tables_exist = all(_table_exists(schema, table) for schema, table in required_tables)
+    
+    if not all_tables_exist:
+        print("⚠️  Skipping view creation - required stg tables do not exist yet")
+        print("   Views will be created by later migrations")
+        return
+    
     op.execute(_sql("receive_daily.sql"))
     op.execute(_sql("receive_weekly.sql"))
     op.execute(_sql("receive_monthly.sql"))

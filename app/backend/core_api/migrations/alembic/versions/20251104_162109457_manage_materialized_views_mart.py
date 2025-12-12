@@ -63,6 +63,17 @@ def _ensure_mv(name: str, create_sql_name: str, indexes: list[str]) -> None:
 
 def upgrade() -> None:
     # 依存する通常VIEW（mart.receive_daily 等）が事前リビジョンで定義済みである前提
+    # Note: Later migrations will replace v_receive_daily with mv_receive_daily
+    # Skip if neither exists yet
+    
+    # Check if v_receive_daily or mv_receive_daily exists
+    has_v_receive_daily = _exists("mart.v_receive_daily")
+    has_mv_receive_daily = _exists("mart.mv_receive_daily")
+    
+    if not (has_v_receive_daily or has_mv_receive_daily):
+        print("⚠️  Skipping MVs creation - neither v_receive_daily nor mv_receive_daily exists yet")
+        print("   MVs will be created by later migrations")
+        return
 
     _ensure_mv(
         "mart.mv_inb5y_week_profile_min",

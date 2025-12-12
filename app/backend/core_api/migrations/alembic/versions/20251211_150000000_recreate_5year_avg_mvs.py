@@ -45,6 +45,15 @@ def _read_sql(name: str) -> str:
         return f.read()
 
 
+def _mv_receive_daily_exists() -> bool:
+    """Check if mart.mv_receive_daily exists"""
+    conn = op.get_bind()
+    result = conn.execute(
+        text("SELECT to_regclass('mart.mv_receive_daily') IS NOT NULL")
+    ).scalar()
+    return bool(result)
+
+
 def _check_mv_exists() -> None:
     """
     Check if mart.mv_receive_daily exists before creating dependent MVs.
@@ -73,6 +82,12 @@ def upgrade() -> None:
     - Verifies mart.mv_receive_daily exists (dependency from 20251211_120000000)
     """
     print("[mart] Checking dependencies...")
+    
+    if not _mv_receive_daily_exists():
+        print("⚠️  Skipping 5-year average MVs creation - mart.mv_receive_daily does not exist yet")
+        print("   MVs will be created by later migrations after mv_receive_daily is available")
+        return
+    
     _check_mv_exists()
     
     # 1. mv_inb5y_week_profile_min

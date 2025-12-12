@@ -16,6 +16,12 @@ depends_on = None
 
 
 def upgrade() -> None:
+    # Create schemas if not exists
+    op.execute("CREATE SCHEMA IF NOT EXISTS mart")
+    op.execute("CREATE SCHEMA IF NOT EXISTS stg")
+    op.execute("CREATE SCHEMA IF NOT EXISTS raw")
+    op.execute("CREATE SCHEMA IF NOT EXISTS ref")
+    
     # --- mart.daily_target_plan ---
     # 現状：
     #   ddate       : timestamp without time zone (NULL)

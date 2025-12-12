@@ -274,6 +274,108 @@ restore-from-sql: check
 	@echo "[ok] restore-from-sql completed"
 
 ## ============================================================
+## DB Reset: 完全初期化（危険操作）
+## ============================================================
+## 目的:
+##   - vm_stg / local_dev / local_demo のDBを完全にクリアして作り直す
+##   - Alembicマイグレーションを最初から適用するための準備
+##
+## 使い方:
+##   make db-reset-volume-env ENV=vm_stg      # volume削除（完全クリア）
+##   make db-reset-db-env ENV=vm_stg          # DROP/CREATE（volumeは残す）
+##
+## ⚠️ 安全装置:
+##   - vm_prod への実行は FORCE=1 が無い限りエラーで停止
+##   - データが完全に失われるため要注意
+## ============================================================
+.PHONY: db-reset-volume-env db-reset-db-env
+
+# 誤爆防止ガード（vm_prodは原則禁止）
+define check_reset_safety
+	@if [ "$(ENV_CANON)" = "vm_prod" ] && [ "$(FORCE)" != "1" ]; then \
+	  echo ""; \
+	  echo "❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌"; \
+	  echo "❌  ERROR: DB reset on vm_prod is BLOCKED"; \
+	  echo "❌"; \
+	  echo "❌  This operation will DESTROY production database!"; \
+	  echo "❌"; \
+	  echo "❌  If you really need to reset vm_prod (extremely rare),"; \
+	  echo "❌  add FORCE=1 to the command:"; \
+	  echo "❌    make db-reset-volume-env ENV=vm_prod FORCE=1"; \
+	  echo "❌"; \
+	  echo "❌  ⚠️  Make sure you have a backup before proceeding!"; \
+	  echo "❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌"; \
+	  echo ""; \
+	  exit 1; \
+	fi
+	@if [ "$(ENV_CANON)" != "vm_stg" ] && [ "$(ENV_CANON)" != "local_dev" ] && [ "$(ENV_CANON)" != "local_demo" ] && [ "$(ENV_CANON)" != "vm_prod" ]; then \
+	  echo "[error] DB reset is only allowed for: vm_stg, local_dev, local_demo"; \
+	  echo "[error] Current ENV=$(ENV) (ENV_CANON=$(ENV_CANON))"; \
+	  exit 1; \
+	fi
+	@echo "[warn] ⚠️  DB reset for ENV=$(ENV) - all data will be lost!"
+	@echo "[warn] Press Ctrl+C within 5 seconds to cancel..."
+	@sleep 5
+endef
+
+# 方法1: volume削除による完全初期化（推奨）
+db-reset-volume-env: check
+	$(check_reset_safety)
+	@echo "[info] Stopping containers and removing volumes (ENV=$(ENV))..."
+	$(DC_FULL) down -v --remove-orphans
+	@echo "[ok] DB reset (volume) completed for ENV=$(ENV)"
+	@echo "[next] Run: make up ENV=$(ENV)"
+
+# 方法2: DROP/CREATE による初期化（volumeは残す）
+db-reset-db-env: check
+	$(check_reset_safety)
+	@echo "[info] Resetting database via DROP/CREATE (ENV=$(ENV))..."
+	@echo "[info] Terminating existing connections..."
+	$(DC_FULL) exec -T $(PG_SERVICE) sh -c '\
+	  psql -U "$$POSTGRES_USER" -d postgres -c "\
+	    SELECT pg_terminate_backend(pid) \
+	    FROM pg_stat_activity \
+	    WHERE datname = '\''$$POSTGRES_DB'\'' AND pid <> pg_backend_pid();" \
+	'
+	@echo "[info] Dropping database..."
+	$(DC_FULL) exec -T $(PG_SERVICE) sh -c '\
+	  psql -U "$$POSTGRES_USER" -d postgres -c "DROP DATABASE IF EXISTS \"$$POSTGRES_DB\";" \
+	'
+	@echo "[info] Creating database..."
+	$(DC_FULL) exec -T $(PG_SERVICE) sh -c '\
+	  psql -U "$$POSTGRES_USER" -d postgres -c "CREATE DATABASE \"$$POSTGRES_DB\";" \
+	'
+	@echo "[ok] DB reset (drop/create) completed for ENV=$(ENV)"
+	@echo "[next] Run: make db-bootstrap-roles-env ENV=$(ENV)"
+
+## ============================================================
+## DB Schema Dump (schema-only)
+## ============================================================
+## 目的:
+##   - スキーマ構造のみをダンプして比較可能にする
+##   - local_dev と vm_stg の差分確認に使用
+##
+## 使い方:
+##   make db-dump-schema-env ENV=local_dev OUT=backups/schema_local.sql
+##   make db-dump-schema-env ENV=vm_stg OUT=backups/schema_stg.sql
+##   diff -u backups/schema_local.sql backups/schema_stg.sql | head
+## ============================================================
+.PHONY: db-dump-schema-env
+
+OUT ?= backups/schema_$(ENV).sql
+
+db-dump-schema-env: check
+	@echo "[info] Dumping schema-only for ENV=$(ENV) to $(OUT)"
+	@mkdir -p "$(dir $(OUT))"
+	$(DC_FULL) exec -T $(PG_SERVICE) sh -c '\
+	  pg_dump -U "$$POSTGRES_USER" -d "$$POSTGRES_DB" \
+	    --schema-only --no-owner --no-acl \
+	' > "$(OUT)"
+	@echo "[ok] Schema dump saved to: $(OUT)"
+	@echo "[info] To compare with another env:"
+	@echo "       diff -u backups/schema_local_dev.sql backups/schema_vm_stg.sql | head"
+
+## ============================================================
 ## DB Bootstrap: Roles & Permissions (冪等セットアップ)
 ## ============================================================
 ## 目的:
