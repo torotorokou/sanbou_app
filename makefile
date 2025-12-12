@@ -407,6 +407,137 @@ al-init-from-schema:
 	@echo "[ok] Schema initialized. Now run: make al-stamp REV=<HEAD_REVISION>"
 
 ## ============================================================
+## Alembic v2: Baseline-first Migration Management
+## ============================================================
+## 目的:
+##   - 既存Alembic履歴をlegacyとし、現状スキーマを起点とした新管理（v2）を開始
+##   - vm_stg / vm_prod はスナップショットSQLからDBを構築し、v2で運用
+##
+## 使い方（新規環境構築）:
+##   1. make db-apply-snapshot-v2-env ENV=vm_stg
+##   2. make db-bootstrap-roles-env ENV=vm_stg
+##   3. make al-stamp-v2-env ENV=vm_stg REV=0001_baseline
+##   4. make al-up-v2-env ENV=vm_stg
+##
+## 使い方（local_dev から移行）:
+##   1. make al-stamp-v2-env ENV=local_dev REV=0001_baseline
+##   2. make al-up-v2-env ENV=local_dev
+##
+## 注意:
+##   - vm_prod の初期化には FORCE=1 が必須（誤操作防止）
+##   - legacy Alembic は migrations_legacy/ に退避済み
+## ============================================================
+
+ALEMBIC_V2_INI ?= /backend/migrations_v2/alembic.ini
+ALEMBIC_V2_ENV := $(DC_FULL) exec core_api alembic -c $(ALEMBIC_V2_INI)
+BASELINE_SQL   := app/backend/core_api/migrations_v2/sql/schema_baseline.sql
+
+.PHONY: al-up-v2-env al-down-v2-env al-cur-v2-env al-hist-v2-env al-heads-v2-env al-stamp-v2-env \
+        db-apply-snapshot-v2-env db-init-from-snapshot-v2-env db-reset-volume-v2-env \
+        al-up-env-legacy al-down-env-legacy al-cur-env-legacy
+
+## v2 Alembic コマンド（ENV追従）
+al-up-v2-env: check
+	@echo "[info] Running DB bootstrap before Alembic v2 migration..."
+	@$(MAKE) db-bootstrap-roles-env ENV=$(ENV)
+	@echo "[info] Starting Alembic v2 migration..."
+	$(ALEMBIC_V2_ENV) upgrade head
+
+al-down-v2-env: check
+	$(ALEMBIC_V2_ENV) downgrade -1
+
+al-cur-v2-env: check
+	$(ALEMBIC_V2_ENV) current
+
+al-hist-v2-env: check
+	$(ALEMBIC_V2_ENV) history
+
+al-heads-v2-env: check
+	$(ALEMBIC_V2_ENV) heads
+
+al-stamp-v2-env: check
+	@if [ -z "$(REV)" ]; then \
+	  echo "[error] REV is required. Usage: make al-stamp-v2-env ENV=vm_stg REV=0001_baseline"; \
+	  exit 1; \
+	fi
+	$(ALEMBIC_V2_ENV) stamp $(REV)
+	@echo "[ok] Stamped $(ENV) database with revision $(REV)"
+
+## スナップショット適用（ENV追従、危険操作ガード付き）
+db-apply-snapshot-v2-env: check
+	@if [ "$(ENV_CANON)" = "vm_prod" ] && [ "$(FORCE)" != "1" ]; then \
+	  echo "[error] ❌ vm_prod への snapshot 適用には FORCE=1 が必須です"; \
+	  echo "[error]    例: make db-apply-snapshot-v2-env ENV=vm_prod FORCE=1"; \
+	  exit 1; \
+	fi
+	@if [ ! -f "$(BASELINE_SQL)" ]; then \
+	  echo "[error] ❌ Baseline SQL not found: $(BASELINE_SQL)"; \
+	  echo "[error]    Run: ./scripts/db/export_schema_baseline_local_dev.sh"; \
+	  exit 1; \
+	fi
+	@echo "[info] Applying schema baseline to $(ENV) ($(ENV_CANON))..."
+	@echo "[info] Copying SQL to container..."
+	$(DC_FULL) cp $(BASELINE_SQL) db:/tmp/schema_baseline.sql
+	@echo "[info] Executing baseline SQL..."
+	$(DC_FULL) exec -T db sh -c '\
+	  psql -U "$$POSTGRES_USER" -d "$${POSTGRES_DB:-postgres}" \
+	       -v ON_ERROR_STOP=1 \
+	       -f /tmp/schema_baseline.sql'
+	@echo "[info] Cleaning up temporary file..."
+	$(DC_FULL) exec -T db rm -f /tmp/schema_baseline.sql
+	@echo "[ok] Schema baseline applied successfully to $(ENV)"
+
+## まとめターゲット: DB初期化 → snapshot適用 → roles bootstrap → stamp
+db-init-from-snapshot-v2-env: check
+	@if [ "$(ENV_CANON)" = "vm_prod" ] && [ "$(FORCE)" != "1" ]; then \
+	  echo "[error] ❌ vm_prod の初期化には FORCE=1 が必須です"; \
+	  echo "[error]    例: make db-init-from-snapshot-v2-env ENV=vm_prod FORCE=1"; \
+	  exit 1; \
+	fi
+	@echo "[info] ========================================"
+	@echo "[info] DB初期化フロー開始 (ENV=$(ENV))"
+	@echo "[info] ========================================"
+	@echo "[info] Step 1/5: 環境停止..."
+	@$(MAKE) down ENV=$(ENV)
+	@echo "[info] Step 2/5: DBボリューム削除..."
+	@$(MAKE) db-reset-volume-v2-env ENV=$(ENV) FORCE=$(FORCE)
+	@echo "[info] Step 3/5: 環境起動..."
+	@$(MAKE) up ENV=$(ENV)
+	@echo "[info] Step 4/5: スナップショット適用..."
+	@$(MAKE) db-apply-snapshot-v2-env ENV=$(ENV) FORCE=$(FORCE)
+	@echo "[info] Step 5/5: Roles bootstrap..."
+	@$(MAKE) db-bootstrap-roles-env ENV=$(ENV)
+	@echo "[ok] ========================================"
+	@echo "[ok] DB初期化完了。次のコマンドを実行してください:"
+	@echo "[ok]   make al-stamp-v2-env ENV=$(ENV) REV=0001_baseline"
+	@echo "[ok]   make al-up-v2-env ENV=$(ENV)"
+	@echo "[ok] ========================================"
+
+## 危険操作: DBボリューム削除（vm_prodはFORCE必須）
+db-reset-volume-v2-env:
+	@if [ "$(ENV_CANON)" = "vm_prod" ] && [ "$(FORCE)" != "1" ]; then \
+	  echo "[error] ❌ vm_prod のボリューム削除には FORCE=1 が必須です"; \
+	  echo "[error]    例: make db-reset-volume-v2-env ENV=vm_prod FORCE=1"; \
+	  exit 1; \
+	fi
+	@echo "[warning] ⚠️  Removing postgres volume for $(ENV)..."
+	docker volume rm $(ENV)_postgres_data || true
+	@echo "[ok] Volume removed (if it existed)"
+
+## Legacy Alembic コマンド（参照用、通常は使用しない）
+al-up-env-legacy: check
+	@echo "[info] Running DB bootstrap before Legacy Alembic migration..."
+	@$(MAKE) db-bootstrap-roles-env ENV=$(ENV)
+	@echo "[info] Starting Legacy Alembic migration..."
+	$(ALEMBIC_ENV) upgrade head
+
+al-down-env-legacy: check
+	$(ALEMBIC_ENV) downgrade -1
+
+al-cur-env-legacy: check
+	$(ALEMBIC_ENV) current
+
+## ============================================================
 ## Artifact Registry 設定 (STG / PROD 共通)
 ##   - ローカルPCで build / push するための設定
 ##   - STG: --target stg でビルド

@@ -122,6 +122,8 @@ services:
     volumes:
       - ../app/backend/core_api/app:/backend/app:rw
       - ../app/backend/core_api/migrations:/backend/migrations:rw
+      - ../app/backend/core_api/migrations_v2:/backend/migrations_v2:rw
+      - ../app/backend/core_api/migrations_legacy:/backend/migrations_legacy:rw
       - ../app/backend/backend_shared:/opt/backend_shared:rw
       - ../app/config:/backend/config
       - ../secrets:/backend/secrets:ro
