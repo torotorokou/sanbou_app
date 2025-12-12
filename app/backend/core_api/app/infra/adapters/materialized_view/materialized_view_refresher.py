@@ -35,7 +35,6 @@ from backend_shared.db.names import (
     SCHEMA_MART,
     MV_RECEIVE_DAILY,
     MV_TARGET_CARD_PER_DAY,
-    fq,
 )
 
 logger = get_module_logger(__name__)
@@ -53,11 +52,11 @@ class MaterializedViewRefresher:
     
     # 更新対象のマテリアライズドビュー定義
     # csv_type ごとに更新すべき MV のリスト
-    # backend_shared.db.names の定数を使用してタイポ防止
+    # Note: クォートなしの形式を使用（PostgreSQL標準）
     MV_MAPPINGS = {
         "receive": [
-            fq(SCHEMA_MART, MV_RECEIVE_DAILY),  # 日次受入集計MV（基礎データ）
-            fq(SCHEMA_MART, MV_TARGET_CARD_PER_DAY),  # 目標カードMV（mv_receive_dailyに依存）
+            f"{SCHEMA_MART}.{MV_RECEIVE_DAILY}",  # 日次受入集計MV（基礎データ）
+            f"{SCHEMA_MART}.{MV_TARGET_CARD_PER_DAY}",  # 目標カードMV（mv_receive_dailyに依存）
             # 将来的に追加する受入関連MVをここに列挙
         ],
         "shipment": [
@@ -144,18 +143,19 @@ class MaterializedViewRefresher:
         Note:
             - csv_type='receive' の場合、将軍速報CSV（flash）と将軍最終CSV（final）の両方に対応
             - MVは自動的にfinal版を優先し、なければflash版のデータを使用する
+            - MV更新は依存関係の順序で実行（例: mv_receive_daily → mv_target_card_per_day）
         """
         mv_list = self.MV_MAPPINGS.get(csv_type, [])
         
         if not mv_list:
             logger.info(
-                "No MV defined, skipping refresh",
+                "No MV defined for csv_type, skipping refresh",
                 extra=create_log_context(operation="refresh_views", csv_type=csv_type)
             )
             return
         
         logger.info(
-            f"[MV_REFRESH] Starting refresh for csv_type='{csv_type}'",
+            f"[MV_REFRESH] Starting refresh for csv_type='{csv_type}' with {len(mv_list)} MV(s)",
             extra=create_log_context(operation="refresh_views", csv_type=csv_type, mv_count=len(mv_list), mv_list=mv_list)
         )
         
@@ -407,8 +407,7 @@ class MaterializedViewRefresher:
         try:
             self.refresh_for_csv_type(csv_type)
             logger.info(
-                f"[MV_REFRESH] ✅ Successfully refreshed MVs after CSV operation "
-                f"(csv_kind={csv_kind})",
+                f"[MV_REFRESH] ✅ Successfully refreshed all MVs after CSV operation (csv_kind={csv_kind}, csv_type={csv_type})",
                 extra=create_log_context(operation=operation_name, csv_kind=csv_kind, csv_type=csv_type)
             )
         except Exception as e:
