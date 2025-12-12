@@ -75,12 +75,12 @@ COPY ./backend_shared /opt/backend_shared
 RUN pip install -e /opt/backend_shared
 
 # USER 切替前に必要ディレクトリを作成・chown
-RUN mkdir -p /backend/app /backend/app/data /backend/test /backend/migrations && \
+RUN mkdir -p /backend/app /backend/app/data /backend/test /backend/migrations_v2 && \
     chown -R appuser:appuser /backend /opt/backend_shared
 
 USER appuser
 COPY --chown=appuser:appuser ./core_api/app /backend/app
-COPY --chown=appuser:appuser ./core_api/migrations /backend/migrations
+COPY --chown=appuser:appuser ./core_api/migrations_v2 /backend/migrations_v2
 
 EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
@@ -117,12 +117,12 @@ RUN python -m pip install --upgrade "pip>=25.3,<26.0" && \
     rm -rf /wheels
 
 # USER 切替前に必要ディレクトリを作成・chown
-RUN mkdir -p /backend/app /backend/app/data /backend/test /backend/migrations && \
+RUN mkdir -p /backend/app /backend/app/data /backend/test /backend/migrations_v2 && \
     chown -R appuser:appuser /backend
 
 USER appuser
 COPY --chown=appuser:appuser ./core_api/app /backend/app
-COPY --chown=appuser:appuser ./core_api/migrations /backend/migrations
+COPY --chown=appuser:appuser ./core_api/migrations_v2 /backend/migrations_v2
 
 EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=5s --retries=3 \

@@ -119,6 +119,40 @@ class TestMaterializedViewRefresher:
         assert "No materialized views defined" in log_message
     
     @patch('app.infra.adapters.materialized_view.materialized_view_refresher.logger')
+    def test_refresh_for_csv_type_partial_failure(self, mock_logger):
+        """複数MV更新時に一部失敗しても処理が継続することを確認"""
+        mock_db = Mock(spec=Session)
+        
+        # 1回目のexecuteは成功、2回目は失敗するようにモック
+        execute_count = [0]
+        def execute_side_effect(*args, **kwargs):
+            execute_count[0] += 1
+            if execute_count[0] == 2:  # 2回目のMV更新で失敗
+                raise Exception("MV update error")
+            return MagicMock()
+        
+        mock_db.execute = MagicMock(side_effect=execute_side_effect)
+        mock_db.commit = MagicMock()
+        mock_db.rollback = MagicMock()
+        
+        refresher = MaterializedViewRefresher(mock_db)
+        
+        # エラーなく実行完了することを確認（例外が外部に伝播しない）
+        refresher.refresh_for_csv_type("receive")
+        
+        # 2つのMV更新が試みられたことを確認
+        # - 1つ目: mv_receive_daily（成功）
+        # - 2つ目: mv_target_card_per_day（失敗するがエラーログのみ）
+        assert mock_db.execute.call_count >= 2
+        
+        # rollback が呼ばれたか確認（失敗したMVのため）
+        assert mock_db.rollback.call_count >= 1
+        
+        # エラーログと警告ログが出力されたか確認
+        assert mock_logger.error.call_count >= 1
+        assert mock_logger.warning.call_count >= 1
+    
+    @patch('app.infra.adapters.materialized_view.materialized_view_refresher.logger')
     def test_refresh_all_receive_mvs(self, mock_logger):
         """refresh_all_receive_mvs のテスト"""
         mock_db = Mock(spec=Session)

@@ -25,6 +25,7 @@ CSV種別とMV更新の対応:
   - REFRESH CONCURRENTLY には UNIQUE INDEX が必要
   - 既存のデータがない場合、初回更新は CONCURRENTLY を使わない
   - 更新エラーはログに記録するが、アップロード処理全体は失敗させない
+  - 複数MV更新時、1つのMV更新が失敗しても残りのMVの更新を継続（2025-12-12修正）
 """
 from typing import List, Optional
 from sqlalchemy import text
@@ -173,8 +174,7 @@ class MaterializedViewRefresher:
                     exc_info=True
                 )
                 # 個別MVの失敗は記録するが、全体処理は継続
-                # 呼び出し側で必要に応じて再 raise を判断
-                raise
+                # 次のMVの更新を試みる
         
         # 全体の結果サマリーをログ出力
         if failed_mvs:

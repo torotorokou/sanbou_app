@@ -106,6 +106,25 @@ Alembic migration を実行して MV を作成してください。
 MV更新に失敗してもCSVアップロード処理自体は成功扱いになります。
 エラーはログに記録され、次回のアップロード時に再試行されます。
 
+### 複数MV更新時の部分失敗
+
+**動作仕様（2025-12-12修正）:**
+- 複数のMVを更新する際、1つのMV更新が失敗しても、残りのMVの更新を継続します
+- 例: `mv_receive_daily` の更新に失敗しても、`mv_target_card_per_day` の更新を試みます
+- 各MVの成功/失敗はログに個別に記録されます
+
+**ログ例（部分失敗時）:**
+```
+[MV_REFRESH] Starting refresh for csv_type='receive'
+[MV_REFRESH] Refreshing MV: mart.mv_receive_daily
+[MV_REFRESH] ❌ MV refresh failed: mart.mv_receive_daily - UNIQUE INDEX が存在しない...
+[MV_REFRESH] Refreshing MV: mart.mv_target_card_per_day
+[MV_REFRESH] ✅ MV refresh successful: mart.mv_target_card_per_day (730 rows)
+[MV_REFRESH] ⚠️ Refresh completed with errors for csv_type='receive': 1/2 succeeded
+```
+
+この仕様により、依存関係のないMV間で障害が伝播することを防ぎます。
+
 ## ログ出力
 
 ### 成功時
