@@ -79,7 +79,7 @@ export const useReportArtifact = () => {
     // ポーリング用のキャンセルフラグ
     const pollingCancelledRef = useRef<boolean>(false);
 
-    // PDFステータスをポーリングで確認
+    // PDFステータスをポーリングで確認（🚀 高速化: 1.5秒間隔）
     const pollPdfStatus = useCallback(async () => {
         const { reportKey, reportDate, reportToken, pdfStatus } = state;
         
@@ -122,13 +122,13 @@ export const useReportArtifact = () => {
                         ...prev,
                         pdfStatus: "error",
                     }));
-                    notifyError('PDF生成失敗', response.message || 'PDFの生成に失敗しました。');
+                    notifyError('PDF生成失敗', response.message || 'PDFの生成に失敗しました。', 0);
                     return;
                 }
                 
-                // pending の場合は5秒後に再度ポーリング
+                // pending の場合は1.5秒後に再度ポーリング（高速化）
                 if (!pollingCancelledRef.current) {
-                    setTimeout(poll, 5000);
+                    setTimeout(poll, 1500);
                 }
             } catch (error) {
                 if (!pollingCancelledRef.current) {
@@ -297,7 +297,8 @@ export const useReportArtifact = () => {
             } catch (error) {
                 notifyError(
                     'レポート作成失敗',
-                    error instanceof Error ? error.message : 'レポート生成中にエラーが発生しました。'
+                    error instanceof Error ? error.message : 'レポート生成中にエラーが発生しました。',
+                    0  // 自動削除しない（手動クローズのみ）
                 );
                 return false;
             } finally {

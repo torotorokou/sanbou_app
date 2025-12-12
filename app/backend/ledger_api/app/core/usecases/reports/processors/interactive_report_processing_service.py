@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, Optional, Tuple, Union
 
-from fastapi import UploadFile
+from fastapi import BackgroundTasks, UploadFile
 from fastapi.responses import JSONResponse
 
 from backend_shared.infra.adapters.fastapi.error_handlers import DomainError
@@ -277,6 +277,7 @@ class InteractiveReportProcessingService(ReportProcessingService):
         generator: BaseInteractiveReportGenerator,
         session_data: Union[Dict[str, Any], str],
         user_input: Optional[Dict[str, Any]] = None,
+        background_tasks: Optional[BackgroundTasks] = None,
     ) -> JSONResponse:
         state_payload, session_id = self._resolve_session(session_data)
         if state_payload is None:
@@ -331,6 +332,8 @@ class InteractiveReportProcessingService(ReportProcessingService):
             final_df,
             report_date,
             extra_payload=extra_payload if isinstance(extra_payload, dict) else None,
+            background_tasks=background_tasks,  # 🔄 BackgroundTasksを渡す
+            async_pdf=True,  # 🔄 PDF非同期生成を有効化
         )
         summary = payload.get("summary")
         if isinstance(summary, dict):

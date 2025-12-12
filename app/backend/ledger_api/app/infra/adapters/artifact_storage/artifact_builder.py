@@ -165,6 +165,7 @@ def generate_pdf_background(
     """バックグラウンドでPDFを生成する関数。
     
     FastAPIのBackgroundTasksから呼び出される。
+    🚀 高速化: 即座に実行開始してレスポンス待機なし
     
     Args:
         report_key: レポートキー

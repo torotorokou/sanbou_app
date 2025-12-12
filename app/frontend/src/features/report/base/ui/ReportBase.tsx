@@ -1,4 +1,4 @@
-import React, { Suspense, useEffect, useState } from 'react';
+import React, { Suspense, useEffect, useState, useRef } from 'react';
 import ReportManagePageLayout from '@features/report/manage/ui/ReportManagePageLayout';
 import ReportStepperModal from '@features/report/modal/ui/ReportStepperModal';
 import BlockUnitPriceInteractiveModal from '@features/report/interactive/ui/BlockUnitPriceInteractiveModal';
@@ -48,6 +48,9 @@ const ReportBase: React.FC<ReportBaseProps> = ({
     const [interactiveInitialResponse, setInteractiveInitialResponse] = useState<InitialApiResponse | null>(null);
     const [interactiveSessionData, setInteractiveSessionData] = useState<SessionData | null>(null);
     const { cleanup, pdfPreviewUrl, pdfStatus } = business;
+    
+    // モーダル表示タイマーの管理（Excel生成完了後のモーダル表示時間）
+    const modalTimerRef = useRef<NodeJS.Timeout | null>(null);
     const { previewUrl, setPreviewUrl } = preview;
     const { setFinalized } = finalized;
     const { setModalOpen } = modal;
@@ -57,74 +60,80 @@ const ReportBase: React.FC<ReportBaseProps> = ({
     const isInteractive = isInteractiveReport(reportKey);
 
     const resetInteractiveState = () => {
+        // タイマークリア
+        if (modalTimerRef.current) {
+            clearTimeout(modalTimerRef.current);
+            modalTimerRef.current = null;
+        }
         setInteractiveInitialResponse(null);
         setInteractiveSessionData(null);
     };
 
-    // PDFプレビューURLが生成されたら設定
+    // 📄 PDFプレビューURLが生成されたら設定（モーダルとは独立）
     useEffect(() => {
         if (pdfPreviewUrl && pdfPreviewUrl !== previewUrl) {
-            console.log('[ReportBase] useEffect: pdfPreviewUrl変更', { pdfPreviewUrl, previewUrl });
             setPreviewUrl(pdfPreviewUrl);
         }
     }, [pdfPreviewUrl, previewUrl, setPreviewUrl]);
 
-    // 帳簿切り替え時にプレビューや内部状態をリセット
+    // 📑 帳簿切り替え時にプレビューや内部状態をリセット（タブ遷移時のPDFクリア）
     useEffect(() => {
-        console.log('[ReportBase] useEffect: 帳簿切り替え - リセット実行', { reportKey });
+        // タイマークリア
+        if (modalTimerRef.current) {
+            clearTimeout(modalTimerRef.current);
+            modalTimerRef.current = null;
+        }
+        // プレビューと状態をリセット
         cleanup();
         setPreviewUrl(null);
-        setInteractiveInitialResponse(null);
-        setInteractiveSessionData(null);
         setFinalized(false);
         setModalOpen(false);
-        setLoading(false);
-    }, [cleanup, reportKey, setFinalized, setLoading, setModalOpen, setPreviewUrl]);
+        
+        return () => {
+            // アンマウント時のクリーンアップ
+            if (modalTimerRef.current) {
+                clearTimeout(modalTimerRef.current);
+                modalTimerRef.current = null;
+            }
+            cleanup();
+            setPreviewUrl(null);
+            setFinalized(false);
+            setModalOpen(false);
+        };
+    }, [reportKey, cleanup, setFinalized, setModalOpen, setPreviewUrl]);
 
     /**
-     * 通常帳簿のレポート生成処理
+     * 📊 通常帳簿のレポート生成処理（Excel生成完了でモーダル表示）
+     * PDF生成は非同期でバックグラウンド処理され、モーダルには影響しない
      */
     const handleNormalGenerate = () => {
-        console.log('=== [ReportBase] handleNormalGenerate 開始 ===');
-        console.log('[ReportBase] 現在のモーダル状態:', modal.modalOpen);
-        console.log('[ReportBase] Call Stack:', new Error().stack);
-        
-        // 状態をリセット
-        setFinalized(false);
-        try {
-            step.setCurrentStep(0);
-            console.log('[ReportBase] ステップを0にリセット');
-        } catch {
-            console.warn('[ReportBase] ステップリセット失敗（未定義）');
+        // 状態リセットとタイマークリア
+        if (modalTimerRef.current) {
+            clearTimeout(modalTimerRef.current);
+            modalTimerRef.current = null;
         }
-
-        console.log('[ReportBase] モーダルを開く');
+        setFinalized(false);
+        step.setCurrentStep(0);
         modal.setModalOpen(true);
         loading.setLoading(true);
 
         business.handleGenerateReport(
-            () => { 
-                console.log('[ReportBase] onStart: レポート生成開始');
-            },
-            () => {   // onComplete（成功・失敗共通）
-                console.log('[ReportBase] onComplete: 処理完了');
+            () => {},  // onStart
+            () => {    // onComplete（API呼び出し完了）
                 loading.setLoading(false);
-                // Excel同期処理完了時点でモーダルを閉じる（PDFは非同期で続行）
-                console.log('[ReportBase] 0.5秒後にモーダルを閉じる予定');
-                setTimeout(() => {
-                    console.log('[ReportBase] モーダルを閉じる（onComplete timeout）');
-                    modal.setModalOpen(false);
-                    step.setCurrentStep(0);
-                }, 500);
             },
-            () => {   // onSuccess（成功時のみ）
-                console.log('[ReportBase] onSuccess: 成功');
+            () => {    // onSuccess（Excel生成成功）
+                // Excel生成完了を表示（PDFは非同期でバックグラウンド生成中）
                 finalized.setFinalized(true);
                 step.setCurrentStep(1);
-                console.log('[ReportBase] 完了ステップ(1)に進む');
+                
+                // 2.5秒後にモーダルを閉じる（Excel生成完了の視認性確保）
+                modalTimerRef.current = setTimeout(() => {
+                    modal.setModalOpen(false);
+                    step.setCurrentStep(0);
+                }, 2500);
             }
         );
-        console.log('=== [ReportBase] handleNormalGenerate 終了 ===');
     };
 
     /**
