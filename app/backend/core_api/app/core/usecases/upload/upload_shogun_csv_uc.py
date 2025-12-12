@@ -1028,8 +1028,8 @@ class UploadShogunCsvUseCase:
             - csv_type='receive' の場合、将軍速報CSV（flash）と将軍最終CSV（final）の両方に対応
               MVは自動的にfinal版を優先し、なければflash版のデータを使用する
             
-            共通ヘルパー（MaterializedViewRefreshHelper）を使用して、
-            MV更新ロジックを統一的に処理します。
+            MaterializedViewRefresherを使用してMV更新を実行します。
+            共通エラーハンドリングはRefresher側で実装済み。
         """
         if not self.mv_refresher:
             logger.warning(
@@ -1039,12 +1039,39 @@ class UploadShogunCsvUseCase:
             )
             return
         
-        # 共通ヘルパーを使用してMV更新を実行
-        MaterializedViewRefreshHelper.refresh_mv_for_csv_types(
-            db=self.db,
-            csv_types=csv_types,
-            operation_name="mv_refresh_after_upload"
+        if not csv_types:
+            logger.debug("No csv_types provided for MV refresh")
+            return
+        
+        logger.info(
+            f"[MV_REFRESH] Starting MV refresh for {len(csv_types)} csv_type(s): {csv_types}",
+            extra=create_log_context(operation="mv_refresh_batch", csv_types=csv_types)
         )
+        
+        for csv_type in csv_types:
+            try:
+                logger.info(
+                    f"[MV_REFRESH] Processing csv_type='{csv_type}'",
+                    extra=create_log_context(operation="mv_refresh_single", csv_type=csv_type)
+                )
+                self.mv_refresher.refresh_for_csv_type(csv_type)
+                logger.info(
+                    f"[MV_REFRESH] ✅ Successfully refreshed MVs for csv_type='{csv_type}'",
+                    extra=create_log_context(operation="mv_refresh_single", csv_type=csv_type, status="success")
+                )
+            except Exception as e:
+                # マテビュー更新失敗はログに記録するが、アップロード処理は成功扱い
+                logger.error(
+                    f"[MV_REFRESH] ❌ Failed to refresh MVs for csv_type='{csv_type}': {e}",
+                    extra=create_log_context(
+                        operation="mv_refresh_single",
+                        csv_type=csv_type,
+                        status="error",
+                        error=str(e)
+                    ),
+                    exc_info=True
+                )
+                # 呼び出し側には影響を与えない（アップロード自体は成功している）
     
     def _generate_response(
         self, raw_result: Dict[str, dict], stg_result: Dict[str, dict]
