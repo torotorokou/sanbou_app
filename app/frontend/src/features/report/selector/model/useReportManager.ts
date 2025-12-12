@@ -103,16 +103,8 @@ export const useReportManager = (
         previewUrl,
     ]);
 
-    // 完了ステップ到達時は2秒後に自動でモーダルを閉じる
-    useEffect(() => {
-        const stepCount = modalStepsMap[selectedReport].length;
-        if (currentStep === stepCount - 1 && isModalOpen) {
-            const timer = setTimeout(() => {
-                setIsModalOpen(false);
-            }, 2000);
-            return () => clearTimeout(timer);
-        }
-    }, [currentStep, selectedReport, isModalOpen]);
+    // ℹ️ モーダルの自動クローズはReportBase.tsx側で管理
+    // タイマー競合を防ぐため、ここでは何もしない
 
     return {
         // 状態

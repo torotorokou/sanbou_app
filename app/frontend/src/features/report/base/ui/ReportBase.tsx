@@ -51,8 +51,6 @@ const ReportBase: React.FC<ReportBaseProps> = ({
     
     // モーダル表示タイマーの管理（Excel生成完了後のモーダル表示時間）
     const modalTimerRef = useRef<NodeJS.Timeout | null>(null);
-    // PDFプレビュー更新用タイマー（モーダルと完全に分離）
-    const pdfUpdateTimerRef = useRef<NodeJS.Timeout | null>(null);
     const { previewUrl, setPreviewUrl } = preview;
     const { setFinalized } = finalized;
     const { setModalOpen } = modal;
@@ -63,60 +61,28 @@ const ReportBase: React.FC<ReportBaseProps> = ({
 
     const resetInteractiveState = () => {
         console.log('[ReportBase] resetInteractiveState 呼び出し');
-        // タイマークリア
+        // モーダルタイマークリア
         if (modalTimerRef.current) {
             console.log('[ReportBase] モーダルタイマークリア');
             clearTimeout(modalTimerRef.current);
             modalTimerRef.current = null;
         }
-        if (pdfUpdateTimerRef.current) {
-            console.log('[ReportBase] PDF更新タイマークリア');
-            clearTimeout(pdfUpdateTimerRef.current);
-            pdfUpdateTimerRef.current = null;
-        }
         setInteractiveInitialResponse(null);
         setInteractiveSessionData(null);
     };
 
-    // 📄 PDFプレビューURLが生成されたら設定（モーダルとは完全に独立）
-    // ⚠️ 重要: モーダル表示中はPDF更新を遅延し、モーダルが閉じてから適用
-    useEffect(() => {
-        if (pdfPreviewUrl && pdfPreviewUrl !== previewUrl) {
-            // 既存のPDF更新タイマーをクリア
-            if (pdfUpdateTimerRef.current) {
-                clearTimeout(pdfUpdateTimerRef.current);
-            }
-            
-            // モーダルが開いている場合は遅延更新
-            if (modal.modalOpen) {
-                console.log('[ReportBase] PDF完成検知、モーダルクローズ後に更新予定');
-                // モーダルが閉じるまで待つ（2秒後に更新）
-                pdfUpdateTimerRef.current = setTimeout(() => {
-                    console.log('[ReportBase] PDFプレビュー更新 (遅延)');
-                    setPreviewUrl(pdfPreviewUrl);
-                    pdfUpdateTimerRef.current = null;
-                }, 2000);
-            } else {
-                // モーダルが閉じていれば即座に更新
-                console.log('[ReportBase] PDFプレビュー更新 (即座)');
-                setPreviewUrl(pdfPreviewUrl);
-            }
-        }
-    }, [pdfPreviewUrl, previewUrl, setPreviewUrl, modal.modalOpen]);
+    // 📄 PDFプレビューはモーダルとは完全に独立
+    // business.pdfPreviewUrl が変更されても、モーダルには影響しない
+    // PDFはバックグラウンドで生成され、PDFViewerが直接参照する
 
     // 📑 帳簿切り替え時にプレビューや内部状態をリセット（タブ遷移時のPDFクリア）
     useEffect(() => {
         console.log('[ReportBase] 帳簿切り替え検知:', reportKey);
-        // 全タイマークリア
+        // モーダルタイマークリア
         if (modalTimerRef.current) {
             console.log('[ReportBase] モーダルタイマークリア (reportKey変更)');
             clearTimeout(modalTimerRef.current);
             modalTimerRef.current = null;
-        }
-        if (pdfUpdateTimerRef.current) {
-            console.log('[ReportBase] PDF更新タイマークリア (reportKey変更)');
-            clearTimeout(pdfUpdateTimerRef.current);
-            pdfUpdateTimerRef.current = null;
         }
         // プレビューと状態をリセット
         cleanup();
@@ -126,16 +92,11 @@ const ReportBase: React.FC<ReportBaseProps> = ({
         
         return () => {
             console.log('[ReportBase] アンマウント/クリーンアップ');
-            // アンマウント時のクリーンアップ
+            // モーダルタイマークリア
             if (modalTimerRef.current) {
                 console.log('[ReportBase] モーダルタイマークリア (アンマウント)');
                 clearTimeout(modalTimerRef.current);
                 modalTimerRef.current = null;
-            }
-            if (pdfUpdateTimerRef.current) {
-                console.log('[ReportBase] PDF更新タイマークリア (アンマウント)');
-                clearTimeout(pdfUpdateTimerRef.current);
-                pdfUpdateTimerRef.current = null;
             }
             cleanup();
             setPreviewUrl(null);
@@ -409,14 +370,14 @@ const ReportBase: React.FC<ReportBaseProps> = ({
                 finalized={finalized.finalized}
                 readyToCreate={business.isReadyToCreate}
                 sampleImageUrl={pdfPreviewMap[reportKey]}
-                pdfUrl={previewUrl}
+                pdfUrl={pdfPreviewUrl}
                 excelReady={business.hasExcel}
                 pdfReady={business.hasPdf}
                 header={undefined}
             >
                 <Suspense fallback={null}>
-                    {/* PDFViewerはメモ化されており、pdfStatusの変更がモーダルに影響しない */}
-                    <PDFViewer pdfUrl={previewUrl} pdfStatus={pdfStatus} />
+                    {/* PDFViewerはbusiness.pdfPreviewUrlを直接参照（親に影響しない） */}
+                    <PDFViewer pdfUrl={pdfPreviewUrl} pdfStatus={pdfStatus} />
                 </Suspense>
             </ReportManagePageLayout>
         </>
