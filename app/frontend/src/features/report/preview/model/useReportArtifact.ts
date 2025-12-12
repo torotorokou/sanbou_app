@@ -105,9 +105,9 @@ export const useReportArtifact = () => {
                 
                 if (pollingCancelledRef.current) return;
                 
-                console.info('[useReportArtifact] PDFステータス確認:', response);
-                
+                // PDF生成完了
                 if (response.status === "ready" && response.pdf_url) {
+                    console.info('[PDFバックグラウンド] ✅ 生成完了');
                     setState(prev => ({
                         ...prev,
                         pdfStatus: "ready",
@@ -117,7 +117,9 @@ export const useReportArtifact = () => {
                     return;
                 }
                 
+                // PDF生成失敗
                 if (response.status === "error") {
+                    console.error('[PDFバックグラウンド] ❌ 生成失敗');
                     setState(prev => ({
                         ...prev,
                         pdfStatus: "error",
@@ -126,7 +128,7 @@ export const useReportArtifact = () => {
                     return;
                 }
                 
-                // pending の場合は1.5秒後に再度ポーリング（高速化）
+                // pending: 1.5秒後に再ポーリング (バックグラウンド処理)
                 if (!pollingCancelledRef.current) {
                     setTimeout(poll, 1500);
                 }
@@ -147,6 +149,7 @@ export const useReportArtifact = () => {
     // pdfStatus が pending になったらポーリング開始
     useEffect(() => {
         if (state.pdfStatus === "pending" && state.reportToken) {
+            console.info('[PDFバックグラウンド] ポーリング開始');
             pollPdfStatus();
         }
         
@@ -156,8 +159,12 @@ export const useReportArtifact = () => {
     }, [state.pdfStatus, state.reportToken, pollPdfStatus]);
 
     const applyArtifactResponse = useCallback((response: ReportArtifactResponse | null) => {
-        // デバッグ: レスポンス全体をログ出力
-        console.info('[useReportArtifact] applyArtifactResponse - 受信したレスポンス:', JSON.stringify(response, null, 2));
+        console.info('[useReportArtifact] APIレスポンス受信:', {
+            status: response?.status,
+            report_key: response?.report_key,
+            has_excel: Boolean(response?.artifact?.excel_download_url),
+            pdf_status: response?.metadata?.pdf_status || 'none'
+        });
         
         if (!response || typeof response !== 'object') {
             setState((prev) => ({
@@ -195,14 +202,9 @@ export const useReportArtifact = () => {
             pdfStatus = "ready";
         }
 
-        console.info('[useReportArtifact] 抽出した値:', {
-            reportKey,
-            reportDate,
-            excelUrl,
-            pdfUrl,
-            reportToken,
-            pdfStatus,
-            artifactBlock
+        console.info('[useReportArtifact] アーティファクト:', {
+            excel: excelUrl ? '✅ あり' : '❌ なし',
+            pdf: pdfUrl ? '✅ あり' : pdfStatus === 'pending' ? '⏳ 生成中' : '❌ なし'
         });
 
         setExcelFileName(deriveFileName(reportKey, reportDate, '.xlsx'));
@@ -227,14 +229,6 @@ export const useReportArtifact = () => {
             setIsReady(Boolean(pdfUrl));
         }
         
-        // 開発者向けログ: 受信したアーティファクト URL を表示
-        try {
-            console.info('[useReportArtifact] applyArtifactResponse: excelUrl=', excelUrl, 'pdfUrl=', pdfUrl, 'reportToken=', reportToken, 'pdfStatus=', pdfStatus);
-            // full response for debugging
-            console.debug('[useReportArtifact] full response:', response);
-        } catch {
-            // ログ失敗は致命的ではないので無視
-        }
     }, []);
 
     const generateReport = useCallback(
@@ -278,13 +272,6 @@ export const useReportArtifact = () => {
                     { timeout: 60000 }
                 );
                 applyArtifactResponse(json);
-                // 開発者向けログ: API レスポンス確認
-                try {
-                    console.info('[useReportArtifact] generateReport response status=', json.status);
-                    console.debug('[useReportArtifact] generateReport artifact block=', json.artifact);
-                } catch {
-                    // ignore logging errors
-                }
 
                 // status フィールドが 'success' または artifact が存在する場合は成功とみなす
                 if (json.status === 'success' || (json.artifact && (json.artifact.excel_download_url || json.artifact.pdf_preview_url))) {

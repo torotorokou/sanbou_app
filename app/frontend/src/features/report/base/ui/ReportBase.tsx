@@ -71,22 +71,14 @@ const ReportBase: React.FC<ReportBaseProps> = ({
         setInteractiveSessionData(null);
     };
 
-    // 📄 PDFプレビューURLが生成されたら設定（モーダルとは独立）
+    // 📄 PDFプレビューURLが生成されたら設定（モーダルとは完全に独立）
+    // PDFはバックグラウンドで生成され、モーダルの動作には一切関与しない
     useEffect(() => {
         if (pdfPreviewUrl && pdfPreviewUrl !== previewUrl) {
-            console.log('[ReportBase] PDFプレビューURL更新:', {
-                pdfPreviewUrl,
-                previewUrl,
-                modalOpen: modal.modalOpen,
-                currentStep: step.currentStep
-            });
-            // モーダルが閉じている場合のみプレビューを更新
-            // モーダル表示中の更新を防ぎ、完了ステップの表示を維持
-            if (!modal.modalOpen) {
-                setPreviewUrl(pdfPreviewUrl);
-            }
+            console.log('[ReportBase] PDFプレビューURL更新 (バックグラウンド):', pdfPreviewUrl);
+            setPreviewUrl(pdfPreviewUrl);
         }
-    }, [pdfPreviewUrl, previewUrl, setPreviewUrl, modal.modalOpen, step.currentStep]);
+    }, [pdfPreviewUrl, previewUrl, setPreviewUrl]);
 
     // 📑 帳簿切り替え時にプレビューや内部状態をリセット（タブ遷移時のPDFクリア）
     useEffect(() => {
@@ -119,49 +111,56 @@ const ReportBase: React.FC<ReportBaseProps> = ({
     }, [reportKey, cleanup, setFinalized, setModalOpen]);
 
     /**
-     * 📊 通常帳簿のレポート生成処理（Excel生成完了でモーダル表示）
-     * PDF生成は非同期でバックグラウンド処理され、モーダルには影響しない
+     * 📊 通常帳簿のレポート生成処理 - Excel完了ベースのシンプルフロー
+     * 
+     * 🎯 フロー:
+     * 1. モーダル表示 (作成中)
+     * 2. API呼び出し (CSVアップロード)
+     * 3. Excel生成完了 → 完了ステップ表示
+     * 4. 1.2秒後にモーダル自動クローズ
+     * 
+     * ⚠️ PDFはバックグラウンドで生成され、モーダルの動作には一切関与しません
      */
     const handleNormalGenerate = () => {
-        console.log('[ReportBase] handleNormalGenerate 開始');
-        // 状態リセットとタイマークリア
+        console.log('[ReportBase] === Excel生成フロー開始 ===');
+        
+        // タイマークリア
         if (modalTimerRef.current) {
-            console.log('[ReportBase] タイマークリア (generate開始)');
+            console.log('[ReportBase] 既存タイマーをクリア');
             clearTimeout(modalTimerRef.current);
             modalTimerRef.current = null;
         }
-        console.log('[ReportBase] 初期状態設定: finalized=false, step=0, modal=true');
+        
+        // 初期状態設定
+        console.log('[ReportBase] モーダル表示: 作成中ステップ');
         setFinalized(false);
         step.setCurrentStep(0);
         modal.setModalOpen(true);
         loading.setLoading(true);
 
         business.handleGenerateReport(
-            () => {},  // onStart
-            () => {    // onComplete（API呼び出し完了）
-                console.log('[ReportBase] API呼び出し完了 (onComplete)');
+            () => {}, // onStart
+            () => {
+                // onComplete: API呼び出し完了
+                console.log('[ReportBase] API呼び出し完了');
                 loading.setLoading(false);
             },
-            () => {    // onSuccess（Excel生成成功）
-                console.log('[ReportBase] Excel生成成功 (onSuccess)');
-                // Excel生成完了を表示（PDFは非同期でバックグラウンド生成中）
-                console.log('[ReportBase] 完了状態設定: finalized=true, step=1');
+            () => {
+                // onSuccess: Excel生成完了 (モーダルの核心イベント)
+                console.log('[ReportBase] ✅ Excel生成完了');
+                
+                // 完了ステップへ移行
                 finalized.setFinalized(true);
                 step.setCurrentStep(1);
                 notifySuccess('生成完了', '帳簿生成が完了しました');
                 
-                // 1.2秒後にモーダルを閉じる（Excel生成完了の視認性確保）
-                // ブロック単価帳簿と同じタイミングに統一
-                console.log('[ReportBase] 1.2秒後にモーダルを閉じるタイマーを設定');
+                // 1.2秒後にモーダルを自動クローズ
+                console.log('[ReportBase] 1.2秒後にモーダルをクローズするタイマー設定');
                 modalTimerRef.current = setTimeout(() => {
-                    console.log('[ReportBase] タイマー実行: モーダルを閉じる');
+                    console.log('[ReportBase] 🚪 モーダルをクローズ');
                     modal.setModalOpen(false);
                     step.setCurrentStep(0);
-                    // モーダルを閉じた後、PDFプレビューを更新
-                    if (pdfPreviewUrl) {
-                        console.log('[ReportBase] モーダル閉じ後、PDFプレビュー更新');
-                        setPreviewUrl(pdfPreviewUrl);
-                    }
+                    console.log('[ReportBase] === Excel生成フロー完了 ===');
                 }, 1200);
             }
         );
