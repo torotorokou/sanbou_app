@@ -2,12 +2,18 @@
 Delete Upload Scope UseCase - アップロードスコープ削除ユースケース
 
 指定されたアップロードファイルの特定日付・CSV種別のデータを論理削除します。
+
+更新履歴:
+  - 2025-12-12: CSV削除時のマテリアライズドビュー自動更新機能を追加
+    将軍速報/最終版の受入CSV削除時にMV更新を実行
 """
 import logging
 from typing import Optional
 from datetime import date
+from sqlalchemy.orm import Session
 
-from app.core.ports.upload_status_port import IUploadStatusQuery
+from app.core.ports.upload_status_port import IUploadCalendarQuery
+from app.infra.adapters.materialized_view import MaterializedViewRefresher
 from backend_shared.application.logging import log_usecase_execution, get_module_logger
 
 logger = get_module_logger(__name__)
@@ -21,14 +27,17 @@ class DeleteUploadScopeUseCase:
       - パラメータのバリデーション
       - 論理削除の実行（Port経由）
       - 削除結果の記録
+      - CSV削除時のマテリアライズドビュー自動更新（受入CSVのみ）
     """
     
-    def __init__(self, query: IUploadStatusQuery):
+    def __init__(self, query: IUploadCalendarQuery, db: Session):
         """
         Args:
-            query: アップロードステータス管理の抽象インターフェース
+            query: アップロードカレンダー管理の抽象インターフェース
+            db: SQLAlchemy Session (MV更新用)
         """
         self.query = query
+        self.db = db
     
     @log_usecase_execution(usecase_name="DeleteUploadScope")
     def execute(
@@ -84,4 +93,61 @@ class DeleteUploadScopeUseCase:
                 f"date={target_date}, csv_kind={csv_kind}"
             )
         
+        # CSV削除後のマテリアライズドビュー自動更新
+        # 将軍速報/最終版の受入CSVのみ対応（receive関連のMVを更新）
+        self._refresh_materialized_views_if_needed(csv_kind)
+        
         return affected_rows
+    
+    def _refresh_materialized_views_if_needed(self, csv_kind: str) -> None:
+        """
+        CSV削除後、必要に応じてマテリアライズドビューを更新
+        
+        Args:
+            csv_kind: 削除されたCSV種別
+                     例: 'shogun_flash_receive', 'shogun_final_receive'
+        
+        Note:
+            受入CSV（receive）の場合のみMV更新を実行します。
+            将軍速報版でも最終版でもMVは同じデータソースを参照するため、
+            どちらが削除されてもMV更新が必要です。
+        """
+        # csv_kind から csv_type（方向）を抽出
+        # 例: 'shogun_flash_receive' -> 'receive'
+        #     'shogun_final_receive' -> 'receive'
+        parts = csv_kind.split('_')
+        if len(parts) >= 3:
+            csv_type = parts[2]  # receive / yard / shipment
+        else:
+            logger.warning(
+                f"[MV_REFRESH] Unexpected csv_kind format: {csv_kind}, "
+                f"skipping MV refresh"
+            )
+            return
+        
+        # 受入CSV以外はMV更新不要（まだ実装されていない）
+        if csv_type != 'receive':
+            logger.debug(
+                f"[MV_REFRESH] csv_type='{csv_type}' does not require MV refresh, skipping"
+            )
+            return
+        
+        logger.info(
+            f"[MV_REFRESH] CSV deleted for csv_type='{csv_type}', "
+            f"refreshing materialized views..."
+        )
+        
+        try:
+            mv_refresher = MaterializedViewRefresher(self.db)
+            mv_refresher.refresh_for_csv_type(csv_type)
+            logger.info(
+                f"[MV_REFRESH] ✅ Successfully refreshed MVs after CSV deletion "
+                f"(csv_kind={csv_kind})"
+            )
+        except Exception as e:
+            # MV更新の失敗は警告のみ（削除処理自体は成功として扱う）
+            logger.error(
+                f"[MV_REFRESH] ⚠️ Failed to refresh MVs after CSV deletion: {e}",
+                exc_info=True
+            )
+            # 削除処理自体は成功しているため、例外は再raiseしない

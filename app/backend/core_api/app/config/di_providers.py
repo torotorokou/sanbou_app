@@ -482,10 +482,11 @@ def get_upload_calendar_detail_uc(
 
 
 def get_delete_upload_scope_uc(
-    repo: RawDataRepository = Depends(get_raw_data_repo)
+    repo: RawDataRepository = Depends(get_raw_data_repo),
+    db: Session = Depends(get_db)
 ) -> DeleteUploadScopeUseCase:
-    """DeleteUploadScopeUseCase提供"""
-    return DeleteUploadScopeUseCase(query=repo)
+    """DeleteUploadScopeUseCase提供（MV更新機能付き）"""
+    return DeleteUploadScopeUseCase(query=repo, db=db)
 
 
 # ========================================================================
