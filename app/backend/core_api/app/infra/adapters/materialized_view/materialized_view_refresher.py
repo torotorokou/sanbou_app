@@ -143,12 +143,12 @@ class MaterializedViewRefresher:
             mv_name: マテリアライズドビュー名（例: 'mart.mv_target_card_per_day'）
             
         Note:
-            CONCURRENTLY オプションを使用してロックを最小化
-            （UNIQUE INDEX が必要）
+            まずCONCURRENTLYで更新を試み、権限エラーの場合は通常のREFRESHにフォールバック。
+            CONCURRENTLY: ロックを最小化（SELECT は可能、UPDATE は待機）、UNIQUE INDEX が必要
+            通常のREFRESH: ACCESS EXCLUSIVEロック（短時間のロック、SELECT も待機）
             
         Raises:
             Exception: 更新に失敗した場合
-              - UNIQUE INDEX が存在しない場合
               - MVが存在しない場合
               - その他のDB エラー
         """
@@ -158,13 +158,29 @@ class MaterializedViewRefresher:
                 extra=create_log_context(operation="refresh_single_mv", mv_name=mv_name)
             )
             
-            # REFRESH MATERIALIZED VIEW CONCURRENTLY を実行
-            # CONCURRENTLY: ロックを最小化（SELECT は可能、UPDATE は待機）
-            # UNIQUE INDEX が必要（既に migration で作成済み）
-            sql = text(f"REFRESH MATERIALIZED VIEW CONCURRENTLY {mv_name};")
-            
-            self.db.execute(sql)
-            self.db.commit()
+            # まずCONCURRENTLYで試す
+            try:
+                sql = text(f"REFRESH MATERIALIZED VIEW CONCURRENTLY {mv_name};")
+                self.db.execute(sql)
+                self.db.commit()
+                logger.debug(f"[MV_REFRESH] Used CONCURRENTLY for {mv_name}")
+            except Exception as concurrent_error:
+                # CONCURRENTLYで失敗した場合（権限エラーなど）、通常のREFRESHにフォールバック
+                error_msg = str(concurrent_error).lower()
+                if "permission denied" in error_msg or "insufficient privilege" in error_msg:
+                    logger.warning(
+                        f"[MV_REFRESH] CONCURRENTLY failed due to permission, falling back to normal REFRESH for {mv_name}",
+                        extra=create_log_context(operation="refresh_single_mv", mv_name=mv_name, fallback_reason="permission")
+                    )
+                    self.db.rollback()
+                    # 通常のREFRESH（短時間ロック）
+                    sql = text(f"REFRESH MATERIALIZED VIEW {mv_name};")
+                    self.db.execute(sql)
+                    self.db.commit()
+                    logger.debug(f"[MV_REFRESH] Used normal REFRESH for {mv_name}")
+                else:
+                    # その他のエラーは再raise
+                    raise
             
             # 更新後の行数を取得（確認用）
             count_sql = text(f"SELECT COUNT(*) FROM {mv_name};")

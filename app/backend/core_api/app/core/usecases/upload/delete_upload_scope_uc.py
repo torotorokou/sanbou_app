@@ -13,7 +13,7 @@ from datetime import date
 from sqlalchemy.orm import Session
 
 from app.core.ports.upload_status_port import IUploadCalendarQuery
-from app.infra.adapters.materialized_view import MaterializedViewRefresher
+from app.core.usecases.upload.mv_refresh_helper import MaterializedViewRefreshHelper
 from backend_shared.application.logging import log_usecase_execution, get_module_logger
 
 logger = get_module_logger(__name__)
@@ -111,43 +111,12 @@ class DeleteUploadScopeUseCase:
             受入CSV（receive）の場合のみMV更新を実行します。
             将軍速報版でも最終版でもMVは同じデータソースを参照するため、
             どちらが削除されてもMV更新が必要です。
+            
+            共通ヘルパー（MaterializedViewRefreshHelper）を使用して、
+            MV更新ロジックを統一的に処理します。
         """
-        # csv_kind から csv_type（方向）を抽出
-        # 例: 'shogun_flash_receive' -> 'receive'
-        #     'shogun_final_receive' -> 'receive'
-        parts = csv_kind.split('_')
-        if len(parts) >= 3:
-            csv_type = parts[2]  # receive / yard / shipment
-        else:
-            logger.warning(
-                f"[MV_REFRESH] Unexpected csv_kind format: {csv_kind}, "
-                f"skipping MV refresh"
-            )
-            return
-        
-        # 受入CSV以外はMV更新不要（まだ実装されていない）
-        if csv_type != 'receive':
-            logger.debug(
-                f"[MV_REFRESH] csv_type='{csv_type}' does not require MV refresh, skipping"
-            )
-            return
-        
-        logger.info(
-            f"[MV_REFRESH] CSV deleted for csv_type='{csv_type}', "
-            f"refreshing materialized views..."
+        MaterializedViewRefreshHelper.refresh_mv_for_csv_kind(
+            db=self.db,
+            csv_kind=csv_kind,
+            operation_name="mv_refresh_after_delete"
         )
-        
-        try:
-            mv_refresher = MaterializedViewRefresher(self.db)
-            mv_refresher.refresh_for_csv_type(csv_type)
-            logger.info(
-                f"[MV_REFRESH] ✅ Successfully refreshed MVs after CSV deletion "
-                f"(csv_kind={csv_kind})"
-            )
-        except Exception as e:
-            # MV更新の失敗は警告のみ（削除処理自体は成功として扱う）
-            logger.error(
-                f"[MV_REFRESH] ⚠️ Failed to refresh MVs after CSV deletion: {e}",
-                exc_info=True
-            )
-            # 削除処理自体は成功しているため、例外は再raiseしない
