@@ -39,6 +39,31 @@
 ##   - vm_stg     : GCP VM ステージング(VPN/Tailscale、Artifact Registry から pull)
 ##   - vm_prod    : GCP VM 本番(LB+IAP 経由、Artifact Registry から pull)
 ##
+## -------------------------------------------------------------
+## ★DB Bootstrap（ロール・権限の冪等セットアップ）
+##   - app_readonly ロールと基本権限を冪等的にセットアップします
+##   - Alembic マイグレーション前に必要（al-up/al-up-env は自動実行）
+##   - 手動実行する場合:
+##       make db-bootstrap-roles-env ENV=local_dev
+##       make db-bootstrap-roles-env ENV=vm_stg
+##       make db-bootstrap-roles-env ENV=vm_prod
+##   - 冪等なので何度実行しても安全です
+##
+## -------------------------------------------------------------
+## ★Alembic（DBマイグレーション）適用の考え方
+##   - 既存ターゲット(al-up/al-cur等)は「local_dev固定」で動きます（従来通り）
+##   - 追加ターゲット(al-up-env 等)は「ENV に追従」して適用できます:
+##       make al-up-env  ENV=vm_stg
+##       make al-cur-env ENV=vm_stg
+##       make al-up-env  ENV=vm_prod
+##   - al-up/al-up-env 実行時は自動的に db-bootstrap-roles-env が先に実行されます
+##   - 注意:
+##       * 対象ENVは先に `make up ENV=...` で起動しておくこと
+##       * core_api コンテナ内で alembic を実行するため、
+##         “migrationsファイルが含まれるイメージ” に更新されていること
+## ============================================================
+
+
 ## ============================================================
 ## VM 上での暫定運用ルール(vm_stg / vm_prod)
 ## ------------------------------------------------------------
@@ -317,12 +342,50 @@ restore-from-sql: check
 	@echo "[ok] restore-from-sql completed"
 
 ## ============================================================
+## DB Bootstrap: Roles & Permissions (冪等セットアップ)
+## ============================================================
+## 目的:
+##   - app_readonly ロールと基本権限を冪等的にセットアップ
+##   - Alembic マイグレーション実行前に毎回実行可能（冪等なので安全）
+##
+## 使い方:
+##   make db-bootstrap-roles-env ENV=local_dev
+##   make db-bootstrap-roles-env ENV=vm_stg
+##   make db-bootstrap-roles-env ENV=vm_prod
+##
+## 注意:
+##   - 対象ENVは先に `make up ENV=...` で起動しておくこと
+##   - VM上で実行する場合、DBコンテナ内の環境変数を使用するため
+##     ホスト側の環境変数には依存しない
+## ============================================================
+.PHONY: db-bootstrap-roles-env
+
+BOOTSTRAP_ROLES_SQL ?= scripts/db/bootstrap_roles.sql
+
+db-bootstrap-roles-env: check
+	@echo "[info] Bootstrap DB roles and permissions (ENV=$(ENV))"
+	@if [ ! -f "$(BOOTSTRAP_ROLES_SQL)" ]; then \
+	  echo "[error] $(BOOTSTRAP_ROLES_SQL) not found"; exit 1; \
+	fi
+	@echo "[info] Copying SQL to container..."
+	$(DC_FULL) cp $(BOOTSTRAP_ROLES_SQL) $(PG_SERVICE):/tmp/bootstrap_roles.sql
+	@echo "[info] Executing bootstrap SQL..."
+	$(DC_FULL) exec -T $(PG_SERVICE) sh -c '\
+	  psql -U "$$POSTGRES_USER" -d "$${POSTGRES_DB:-postgres}" \
+	       -v ON_ERROR_STOP=0 \
+	       -f /tmp/bootstrap_roles.sql'
+	@echo "[info] Cleaning up temporary file..."
+	-$(DC_FULL) exec -T $(PG_SERVICE) rm -f /tmp/bootstrap_roles.sql
+	@echo "[ok] db-bootstrap-roles-env completed"
+
+## ============================================================
 ## Alembic（開発環境 local_dev 前提）
 ## ============================================================
 .PHONY: al-rev al-rev-auto al-up al-down al-cur al-hist al-heads al-stamp \
-        al-dump-schema-current al-init-from-schema
+        al-dump-schema-current al-init-from-schema \
+        al-up-env al-down-env al-cur-env al-hist-env al-heads-env al-stamp-env
 
-# Alembic は基本 local_dev で実行する想定
+# Alembic は基本 local_dev で実行する想定（従来どおり固定）
 ALEMBIC_DC := docker compose -f docker/docker-compose.dev.yml -p local_dev
 ALEMBIC    := $(ALEMBIC_DC) exec core_api alembic -c /backend/migrations/alembic.ini
 
@@ -338,6 +401,9 @@ al-rev-auto:
 	$(ALEMBIC) revision --autogenerate -m "$(MSG)" --rev-id $(REV_ID)
 
 al-up:
+	@echo "[info] Running DB bootstrap before Alembic migration (local_dev)..."
+	@$(MAKE) db-bootstrap-roles-env ENV=local_dev
+	@echo "[info] Starting Alembic migration..."
 	$(ALEMBIC) upgrade head
 
 al-down:
@@ -356,6 +422,39 @@ al-heads:
 # 使い方: make al-stamp REV=20251104_153045123
 al-stamp:
 	$(ALEMBIC) stamp $(REV)
+
+## ------------------------------------------------------------
+## Alembic（ENVに追従して適用する版：vm_stg / vm_prod でも使える）
+## 使い方:
+##   make al-cur-env ENV=vm_stg
+##   make al-up-env  ENV=vm_stg
+##   make al-up-env  ENV=vm_prod
+## ------------------------------------------------------------
+ALEMBIC_INI ?= /backend/migrations/alembic.ini
+ALEMBIC_ENV := $(DC_FULL) exec core_api alembic -c $(ALEMBIC_INI)
+
+al-up-env: check
+	@echo "[info] Running DB bootstrap before Alembic migration..."
+	@$(MAKE) db-bootstrap-roles-env ENV=$(ENV)
+	@echo "[info] Starting Alembic migration..."
+	$(ALEMBIC_ENV) upgrade head
+
+al-down-env: check
+	$(ALEMBIC_ENV) downgrade -1
+
+al-cur-env: check
+	$(ALEMBIC_ENV) current
+
+al-hist-env: check
+	$(ALEMBIC_ENV) history
+
+al-heads-env: check
+	$(ALEMBIC_ENV) heads
+
+# 既存 DB に「適用済み印」を付ける（ENV追従）
+# 使い方: make al-stamp-env ENV=vm_prod REV=<HEAD_REVISION>
+al-stamp-env: check
+	$(ALEMBIC_ENV) stamp $(REV)
 
 ## ============================================================
 ## Alembic: Schema Dump & Init (local_dev 前提)
@@ -555,7 +654,8 @@ check-prod-images:
 ## ============================================================
 ## セキュリティスキャン（Trivy）
 ## ============================================================
-.PHONY: scan-images scan-local-images install-trivy security-check
+.PHONY: scan-images scan-local-images install-trivy security-check \
+        scan-stg-images scan-prod-images
 
 # Trivy インストール確認・インストール
 install-trivy:
@@ -634,4 +734,3 @@ security-check: scan-local-images
 	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 	@echo "✅ Security checks completed successfully"
 	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-
