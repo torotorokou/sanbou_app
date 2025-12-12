@@ -1,74 +1,31 @@
 ## =============================================================
-## Makefile : dev / stg / prod / demo 用 docker compose ヘルパ
-## -------------------------------------------------------------
-## ★よく使うターゲット
-##   - make up        ENV=local_dev|vm_stg|vm_prod|local_demo
-##   - make down      ENV=...
-##   - make rebuild   ENV=...
-##   - make logs      ENV=... S=ai_api
-##   - make health    ENV=...
-##   - make backup    ENV=local_dev
-##   - make restore-from-dump ENV=local_dev DUMP=backups/xxx.dump
-##   - make restore-from-sql  ENV=local_demo SQL=backups/xxx.sql
+## Makefile : sanbou_app 全環境統合管理ツール
+## =============================================================
 ##
-## ★開発環境：nginx 付き起動（本番に近い構成）
-##   - make dev-with-nginx    # nginx 経由で http://localhost:8080
+## 📚 ドキュメント
+##    MAKEFILE_QUICKREF.md           - クイックリファレンス
+##    docs/infrastructure/MAKEFILE_GUIDE.md - 詳細ガイド
 ##
-## ★コンテナイメージの build & push(Artifact Registry)
-##   - STG:  make publish-stg-images  STG_IMAGE_TAG=stg-YYYYMMDD
-##   - PROD: make publish-prod-images PROD_IMAGE_TAG=prod-YYYYMMDD
-##   - 事前に一度だけ: make gcloud-auth-docker
+## 🚀 よく使うコマンド
+##    make up ENV=local_dev          - 環境起動
+##    make down ENV=local_dev        - 環境停止
+##    make logs ENV=local_dev S=xxx  - ログ確認
+##    make al-up-env ENV=local_dev   - DBマイグレーション
+##    make backup ENV=local_dev      - バックアップ
 ##
-## ★STG → PROD へのイメージ昇格（別プロジェクト間コピー）
-##   - make promote-stg-to-prod PROMOTE_SRC_TAG=stg-YYYYMMDD PROMOTE_DST_TAG=prod-YYYYMMDD
-##     ※ STG_PROJECT_ID の Artifact Registry から PROD_PROJECT_ID へ docker pull/tag/push でコピー
+## 🌍 環境 (ENV)
+##    local_dev  - ローカル開発（自動ビルド）
+##    local_demo - ローカルデモ
+##    vm_stg     - GCP VM ステージング（Artifact Registry）
+##    vm_prod    - GCP VM 本番（Artifact Registry）
 ##
-## ★STG/PROD デプロイフロー
-##   【STG】
-##   1) ローカル: make publish-stg-images STG_IMAGE_TAG=stg-20251209
-##   2) env/.env.vm_stg の IMAGE_TAG=stg-20251209 に更新
-##   3) vm_stg で: make up ENV=vm_stg
-##   【PROD】
-##   1) ローカル: make publish-prod-images PROD_IMAGE_TAG=prod-20251209
-##   2) env/.env.vm_prod の IMAGE_TAG=prod-20251209 に更新
-##   3) vm_prod で: make up ENV=vm_prod
+## ⚠️ VM環境での注意
+##    - vm_stg と vm_prod は同時起動不可（ポート80競合）
+##    - VM環境ではローカルでイメージビルド後 pull して使用
+##    - 本番マイグレーション前に必ずバックアップ取得
 ##
-## ENV の意味(ざっくり)
-##   - local_dev  : ローカル開発(ホットリロードあり・buildあり)
-##   - local_demo : ローカルのデモ環境(dev とは別 compose)
-##   - vm_stg     : GCP VM ステージング(VPN/Tailscale、Artifact Registry から pull)
-##   - vm_prod    : GCP VM 本番(LB+IAP 経由、Artifact Registry から pull)
-##
-## ============================================================
-## VM 上での暫定運用ルール(vm_stg / vm_prod)
-## ------------------------------------------------------------
-## ★ 重要: この VM では、vm_stg と vm_prod を「同時には起動しない」前提です
-##   - 80番ポートはどちらの compose でも "80:80" を使うため、
-##     必ず片方を down してからもう片方を up すること
-##
-## 例:
-##   # STG を試すとき
-##   make down ENV=vm_prod
-##   make up   ENV=vm_stg
-##
-##   # PROD を試すとき
-##   make down ENV=vm_stg
-##   make up   ENV=vm_prod
-##
-## ★ nginx 動作確認(vm_stg / vm_prod 共通):
-##   VM 内で:
-##     curl -I http://localhost/health    # → HTTP/1.1 200 OK
-##     curl -I http://localhost/          # → HTTP/1.1 200 OK, text/html
-##                                        #    ※ Location: https://... が含まれないこと
-##   Tailscale 経由:
-##     http://<tailscale IP>/             # → React 画面が表示される
-## ============================================================
+## =============================================================
 
-SHELL := /bin/bash
-.ONESHELL:
-.SHELLFLAGS := -eu -o pipefail -c
-
-## -------------------------------------------------------------
 ## グローバル環境変数
 ## -------------------------------------------------------------
 ENV ?= local_dev
@@ -317,12 +274,50 @@ restore-from-sql: check
 	@echo "[ok] restore-from-sql completed"
 
 ## ============================================================
+## DB Bootstrap: Roles & Permissions (冪等セットアップ)
+## ============================================================
+## 目的:
+##   - app_readonly ロールと基本権限を冪等的にセットアップ
+##   - Alembic マイグレーション実行前に毎回実行可能（冪等なので安全）
+##
+## 使い方:
+##   make db-bootstrap-roles-env ENV=local_dev
+##   make db-bootstrap-roles-env ENV=vm_stg
+##   make db-bootstrap-roles-env ENV=vm_prod
+##
+## 注意:
+##   - 対象ENVは先に `make up ENV=...` で起動しておくこと
+##   - VM上で実行する場合、DBコンテナ内の環境変数を使用するため
+##     ホスト側の環境変数には依存しない
+## ============================================================
+.PHONY: db-bootstrap-roles-env
+
+BOOTSTRAP_ROLES_SQL ?= scripts/db/bootstrap_roles.sql
+
+db-bootstrap-roles-env: check
+	@echo "[info] Bootstrap DB roles and permissions (ENV=$(ENV))"
+	@if [ ! -f "$(BOOTSTRAP_ROLES_SQL)" ]; then \
+	  echo "[error] $(BOOTSTRAP_ROLES_SQL) not found"; exit 1; \
+	fi
+	@echo "[info] Copying SQL to container..."
+	$(DC_FULL) cp $(BOOTSTRAP_ROLES_SQL) $(PG_SERVICE):/tmp/bootstrap_roles.sql
+	@echo "[info] Executing bootstrap SQL..."
+	$(DC_FULL) exec -T $(PG_SERVICE) sh -c '\
+	  psql -U "$$POSTGRES_USER" -d "$${POSTGRES_DB:-postgres}" \
+	       -v ON_ERROR_STOP=0 \
+	       -f /tmp/bootstrap_roles.sql'
+	@echo "[info] Cleaning up temporary file..."
+	-$(DC_FULL) exec -T $(PG_SERVICE) rm -f /tmp/bootstrap_roles.sql
+	@echo "[ok] db-bootstrap-roles-env completed"
+
+## ============================================================
 ## Alembic（開発環境 local_dev 前提）
 ## ============================================================
 .PHONY: al-rev al-rev-auto al-up al-down al-cur al-hist al-heads al-stamp \
-        al-dump-schema-current al-init-from-schema
+        al-dump-schema-current al-init-from-schema \
+        al-up-env al-down-env al-cur-env al-hist-env al-heads-env al-stamp-env
 
-# Alembic は基本 local_dev で実行する想定
+# Alembic は基本 local_dev で実行する想定（従来どおり固定）
 ALEMBIC_DC := docker compose -f docker/docker-compose.dev.yml -p local_dev
 ALEMBIC    := $(ALEMBIC_DC) exec core_api alembic -c /backend/migrations/alembic.ini
 
@@ -338,6 +333,9 @@ al-rev-auto:
 	$(ALEMBIC) revision --autogenerate -m "$(MSG)" --rev-id $(REV_ID)
 
 al-up:
+	@echo "[info] Running DB bootstrap before Alembic migration (local_dev)..."
+	@$(MAKE) db-bootstrap-roles-env ENV=local_dev
+	@echo "[info] Starting Alembic migration..."
 	$(ALEMBIC) upgrade head
 
 al-down:
@@ -356,6 +354,39 @@ al-heads:
 # 使い方: make al-stamp REV=20251104_153045123
 al-stamp:
 	$(ALEMBIC) stamp $(REV)
+
+## ------------------------------------------------------------
+## Alembic（ENVに追従して適用する版：vm_stg / vm_prod でも使える）
+## 使い方:
+##   make al-cur-env ENV=vm_stg
+##   make al-up-env  ENV=vm_stg
+##   make al-up-env  ENV=vm_prod
+## ------------------------------------------------------------
+ALEMBIC_INI ?= /backend/migrations/alembic.ini
+ALEMBIC_ENV := $(DC_FULL) exec core_api alembic -c $(ALEMBIC_INI)
+
+al-up-env: check
+	@echo "[info] Running DB bootstrap before Alembic migration..."
+	@$(MAKE) db-bootstrap-roles-env ENV=$(ENV)
+	@echo "[info] Starting Alembic migration..."
+	$(ALEMBIC_ENV) upgrade head
+
+al-down-env: check
+	$(ALEMBIC_ENV) downgrade -1
+
+al-cur-env: check
+	$(ALEMBIC_ENV) current
+
+al-hist-env: check
+	$(ALEMBIC_ENV) history
+
+al-heads-env: check
+	$(ALEMBIC_ENV) heads
+
+# 既存 DB に「適用済み印」を付ける（ENV追従）
+# 使い方: make al-stamp-env ENV=vm_prod REV=<HEAD_REVISION>
+al-stamp-env: check
+	$(ALEMBIC_ENV) stamp $(REV)
 
 ## ============================================================
 ## Alembic: Schema Dump & Init (local_dev 前提)
@@ -555,7 +586,8 @@ check-prod-images:
 ## ============================================================
 ## セキュリティスキャン（Trivy）
 ## ============================================================
-.PHONY: scan-images scan-local-images install-trivy security-check
+.PHONY: scan-images scan-local-images install-trivy security-check \
+        scan-stg-images scan-prod-images
 
 # Trivy インストール確認・インストール
 install-trivy:
@@ -634,4 +666,3 @@ security-check: scan-local-images
 	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 	@echo "✅ Security checks completed successfully"
 	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-

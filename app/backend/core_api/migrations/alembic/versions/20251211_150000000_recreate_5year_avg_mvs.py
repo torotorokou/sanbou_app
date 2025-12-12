@@ -24,6 +24,7 @@ Create Date: 2025-12-11 15:00:00.000000
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import text
 from pathlib import Path
 
 
@@ -44,10 +45,36 @@ def _read_sql(name: str) -> str:
         return f.read()
 
 
+def _check_mv_exists() -> None:
+    """
+    Check if mart.mv_receive_daily exists before creating dependent MVs.
+    
+    Raises:
+        RuntimeError: If mart.mv_receive_daily does not exist
+    """
+    conn = op.get_bind()
+    result = conn.execute(text("SELECT to_regclass('mart.mv_receive_daily')")).scalar()
+    
+    if result is None:
+        raise RuntimeError(
+            "❌ mart.mv_receive_daily is missing before creating 5-year average MVs.\n"
+            "   This migration depends on 20251211_120000000_create_mv_receive_daily.\n"
+            "   Please ensure that migration completed successfully."
+        )
+    
+    print(f"  ✓ Verified mart.mv_receive_daily exists (oid: {result})")
+
+
 def upgrade() -> None:
     """
     Recreate 5-year average materialized views with UNIQUE indexes
+    
+    Pre-condition check:
+    - Verifies mart.mv_receive_daily exists (dependency from 20251211_120000000)
     """
+    print("[mart] Checking dependencies...")
+    _check_mv_exists()
+    
     # 1. mv_inb5y_week_profile_min
     print("[mart] Recreating mv_inb5y_week_profile_min...")
     op.execute(_read_sql("mv_inb5y_week_profile_min.sql"))
