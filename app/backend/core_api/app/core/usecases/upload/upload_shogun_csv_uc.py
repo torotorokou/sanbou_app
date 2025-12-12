@@ -417,9 +417,10 @@ class UploadShogunCsvUseCase:
             
             # ★ トランザクションコミット（全処理が成功した場合のみ）
             # バックグラウンドタスクのため、明示的にコミットが必要
+            # 注: MV更新は既に各MVごとにcommit済み（auto_commit=True）
             if self.raw_data_repo and hasattr(self.raw_data_repo, 'db'):
                 self.raw_data_repo.db.commit()
-                logger.info("[TRANSACTION] Committed all changes (CSV save + MV refresh)")
+                logger.info("[TRANSACTION] Committed final changes (CSV save already committed during MV refresh)")
             
             # 完了ログ: 処理時間、件数を記録
             duration_ms = int((time.time() - start_time) * 1000)
@@ -1071,7 +1072,8 @@ class UploadShogunCsvUseCase:
                     f"[MV_REFRESH] Processing csv_type='{csv_type}'",
                     extra=create_log_context(operation="mv_refresh_single", csv_type=csv_type)
                 )
-                self.mv_refresher.refresh_for_csv_type(csv_type)
+                # auto_commit=Trueで各MV更新後にcommit()し、依存関係のあるMVが最新データを参照できるようにする
+                self.mv_refresher.refresh_for_csv_type(csv_type, auto_commit=True)
                 logger.info(
                     f"[MV_REFRESH] ✅ Successfully refreshed MVs for csv_type='{csv_type}'",
                     extra=create_log_context(operation="mv_refresh_single", csv_type=csv_type, status="success")

@@ -130,12 +130,15 @@ class MaterializedViewRefresher:
         
         return True
     
-    def refresh_for_csv_type(self, csv_type: str) -> None:
+    def refresh_for_csv_type(self, csv_type: str, auto_commit: bool = True) -> None:
         """
         指定された csv_type に関連するマテリアライズドビューを更新
         
         Args:
             csv_type: 'receive' / 'yard' / 'shipment'
+            auto_commit: 各MV更新後に自動的にcommit()するか（デフォルト: True）
+                        Trueの場合、依存関係のあるMVが最新データを確実に参照できる
+                        Falseの場合、呼び出し側でトランザクション管理を行う必要がある
             
         Raises:
             Exception: MV更新に失敗した場合（呼び出し側でハンドリング推奨）
@@ -144,6 +147,7 @@ class MaterializedViewRefresher:
             - csv_type='receive' の場合、将軍速報CSV（flash）と将軍最終CSV（final）の両方に対応
             - MVは自動的にfinal版を優先し、なければflash版のデータを使用する
             - MV更新は依存関係の順序で実行（例: mv_receive_daily → mv_target_card_per_day）
+            - auto_commit=Trueの場合、各MV更新後にcommit()して次のMVが最新データを参照できるようにする
         """
         mv_list = self.MV_MAPPINGS.get(csv_type, [])
         
@@ -165,14 +169,16 @@ class MaterializedViewRefresher:
         for mv_name in mv_list:
             try:
                 self._refresh_single_mv(mv_name)
-                # 各MV更新後にcommitして、次のMVが最新データを参照できるようにする
-                # これにより、依存関係のあるMV（例: mv_target_card_per_day）が
-                # 更新済みの基礎MV（例: mv_receive_daily）のデータを確実に参照できる
-                self.db.commit()
-                logger.debug(
-                    f"[MV_REFRESH] Committed after refreshing {mv_name}",
-                    extra=create_log_context(operation="refresh_views", mv_name=mv_name)
-                )
+                
+                # auto_commit=Trueの場合、各MV更新後にcommitして、
+                # 次のMVが最新データを参照できるようにする
+                if auto_commit:
+                    self.db.commit()
+                    logger.debug(
+                        f"[MV_REFRESH] Committed after refreshing {mv_name}",
+                        extra=create_log_context(operation="refresh_views", mv_name=mv_name)
+                    )
+                
                 success_count += 1
             except Exception as e:
                 failed_mvs.append(mv_name)
@@ -181,8 +187,9 @@ class MaterializedViewRefresher:
                     extra=create_log_context(operation="refresh_views", mv_name=mv_name, error=str(e)),
                     exc_info=True
                 )
-                # エラー時はロールバックして次のMVの更新を試みる
-                self.db.rollback()
+                # エラー時、auto_commit=Trueならロールバックして次のMVの更新を試みる
+                if auto_commit:
+                    self.db.rollback()
                 # 個別MVの失敗は記録するが、全体処理は継続
                 # 次のMVの更新を試みる
         

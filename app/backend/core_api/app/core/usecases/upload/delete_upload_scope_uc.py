@@ -102,9 +102,11 @@ class DeleteUploadScopeUseCase:
             
             # CSV削除後のマテリアライズドビュー自動更新
             # 将軍速報/最終版の受入CSVのみ対応（receive関連のMVを更新）
+            # auto_commit=Trueで各MV更新後にcommit()し、依存関係のあるMVが最新データを参照できるようにする
             self._refresh_materialized_views_if_needed(csv_kind)
             
             # 正常終了時はFastAPIのget_db()が自動的にcommit()
+            # ただし、MV更新は既に各MVごとにcommit済み
             return affected_rows
             
         except Exception as e:
