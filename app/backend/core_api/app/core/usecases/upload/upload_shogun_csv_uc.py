@@ -300,6 +300,13 @@ class UploadShogunCsvUseCase:
             upload_file_ids: csv_type -> upload_file.id
             file_type: 'FLASH' or 'FINAL'
             uploaded_by: アップロードユーザー名
+            
+        Note:
+            トランザクション管理:
+            - CSV保存、既存データ削除、MV更新を同一トランザクション内で実行
+            - すべて成功した場合のみコミット
+            - 途中でエラーが発生した場合はロールバック
+            - バックグラウンドタスクのため、明示的にトランザクション管理が必要
         """
         import time
         start_time = time.time()
@@ -408,6 +415,13 @@ class UploadShogunCsvUseCase:
             # ステータス更新
             self._update_upload_logs(upload_file_ids, formatted_dfs, stg_result)
             
+            # ★ トランザクションコミット（全処理が成功した場合のみ）
+            # バックグラウンドタスクのため、明示的にコミットが必要
+            # 注: MV更新は既に各MVごとにcommit済み（auto_commit=True）
+            if self.raw_data_repo and hasattr(self.raw_data_repo, 'db'):
+                self.raw_data_repo.db.commit()
+                logger.info("[TRANSACTION] Committed final changes (CSV save already committed during MV refresh)")
+            
             # 完了ログ: 処理時間、件数を記録
             duration_ms = int((time.time() - start_time) * 1000)
             total_rows = sum(len(df) for df in formatted_dfs.values())
@@ -425,6 +439,11 @@ class UploadShogunCsvUseCase:
             )
             
         except Exception as e:
+            # ★ トランザクションロールバック（エラー発生時）
+            if self.raw_data_repo and hasattr(self.raw_data_repo, 'db'):
+                self.raw_data_repo.db.rollback()
+                logger.error("[TRANSACTION] Rolled back all changes due to error")
+            
             logger.exception(
                 "CSV background processing failed",
                 extra={
@@ -1053,7 +1072,8 @@ class UploadShogunCsvUseCase:
                     f"[MV_REFRESH] Processing csv_type='{csv_type}'",
                     extra=create_log_context(operation="mv_refresh_single", csv_type=csv_type)
                 )
-                self.mv_refresher.refresh_for_csv_type(csv_type)
+                # auto_commit=Trueで各MV更新後にcommit()し、依存関係のあるMVが最新データを参照できるようにする
+                self.mv_refresher.refresh_for_csv_type(csv_type, auto_commit=True)
                 logger.info(
                     f"[MV_REFRESH] ✅ Successfully refreshed MVs for csv_type='{csv_type}'",
                     extra=create_log_context(operation="mv_refresh_single", csv_type=csv_type, status="success")

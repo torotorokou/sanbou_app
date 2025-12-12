@@ -31,13 +31,14 @@ export interface TargetMetricsDTO {
 }
 
 // Simple in-memory cache with 60-second TTL
+// キャッシュを一時的に無効化（デバッグ用）
 interface CacheEntry {
   data: TargetMetricsDTO;
   timestamp: number;
 }
 
 const cache = new Map<string, CacheEntry>();
-const CACHE_TTL = 60 * 1000; // 60 seconds
+const CACHE_TTL = 0; // 60 * 1000; // キャッシュ無効化（0秒）
 
 // In-flight request tracker to prevent duplicate concurrent requests
 const inflightRequests = new Map<string, Promise<TargetMetricsDTO>>();
@@ -56,12 +57,13 @@ export async function fetchTargetMetrics(
 ): Promise<TargetMetricsDTO> {
   const cacheKey = `${date}-${mode}`;
   
-  // Check cache first
+  // Check cache first (currently disabled)
   const cached = cache.get(cacheKey);
-  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
-    // キャッシュヒットのログは冗長なため削除（必要に応じてコメント解除）
-    // console.log(`[fetchTargetMetrics] Cache hit for ${cacheKey}`);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL && CACHE_TTL > 0) {
+    console.log(`[fetchTargetMetrics] Cache hit for ${cacheKey} (cache is currently disabled)`);
     return cached.data;
+  } else if (CACHE_TTL === 0) {
+    console.log(`[fetchTargetMetrics] Cache disabled, fetching fresh data for ${cacheKey}`);
   }
   
   // Check if there's already an in-flight request for this key

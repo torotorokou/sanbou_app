@@ -7,6 +7,35 @@
 CSVアップロード成功時に、関連するマテリアライズドビューを自動的に更新します。
 Clean Architectureに従い、Infra層に配置されています。
 
+## トランザクション設計（2025-12-12更新）
+
+### 原則
+
+**トランザクション境界はUseCaseレベルで管理**します。Repository層では`commit()`や`rollback()`を呼びません。
+
+### CSV削除時のトランザクション
+
+```python
+# DeleteUploadScopeUseCase の実行フロー:
+try:
+    # 1. CSV削除（RawDataRepository）
+    affected_rows = repository.soft_delete_by_date_and_kind(...)
+    
+    # 2. MV更新（MaterializedViewRefresher）
+    mv_refresher.refresh_for_csv_kind(csv_kind)
+    
+    # 3. 正常終了時: FastAPIのget_db()が自動的にcommit()
+except Exception:
+    # 4. エラー時: FastAPIのget_db()が自動的にrollback()
+    raise
+```
+
+### メリット
+
+1. **原子性の保証**: CSV削除とMV更新が同一トランザクション内で実行され、両方成功するか両方失敗するかのどちらか
+2. **データ整合性**: 片方だけ成功してデータ不整合になることを防止
+3. **責務の明確化**: Repository層はデータ操作のみ、トランザクション管理はUseCase/API層
+
 ## 対応CSV種別
 
 ### receive（受入CSV）
@@ -22,6 +51,12 @@ Clean Architectureに従い、Infra層に配置されています。
 
 2. **`mart.mv_target_card_per_day`** - 目標カードMV
    - `mv_receive_daily` に依存
+   - 依存関係の順序で更新されます（mv_receive_daily → mv_target_card_per_day）
+   - **各MV更新後にcommit()を実行**し、次のMVが最新データを確実に参照できるようにします
+
+**注意**: 
+- MV名はクォートなしの標準PostgreSQL形式を使用（`mart.mv_receive_daily`）
+- 依存関係のあるMVは、基礎MVの更新とコミット後に更新されます
 
 #### データの優先順位
 
@@ -105,6 +140,25 @@ Alembic migration を実行して MV を作成してください。
 
 MV更新に失敗してもCSVアップロード処理自体は成功扱いになります。
 エラーはログに記録され、次回のアップロード時に再試行されます。
+
+### 複数MV更新時の部分失敗
+
+**動作仕様（2025-12-12修正）:**
+- 複数のMVを更新する際、1つのMV更新が失敗しても、残りのMVの更新を継続します
+- 例: `mv_receive_daily` の更新に失敗しても、`mv_target_card_per_day` の更新を試みます
+- 各MVの成功/失敗はログに個別に記録されます
+
+**ログ例（部分失敗時）:**
+```
+[MV_REFRESH] Starting refresh for csv_type='receive'
+[MV_REFRESH] Refreshing MV: mart.mv_receive_daily
+[MV_REFRESH] ❌ MV refresh failed: mart.mv_receive_daily - UNIQUE INDEX が存在しない...
+[MV_REFRESH] Refreshing MV: mart.mv_target_card_per_day
+[MV_REFRESH] ✅ MV refresh successful: mart.mv_target_card_per_day (730 rows)
+[MV_REFRESH] ⚠️ Refresh completed with errors for csv_type='receive': 1/2 succeeded
+```
+
+この仕様により、依存関係のないMV間で障害が伝播することを防ぎます。
 
 ## ログ出力
 

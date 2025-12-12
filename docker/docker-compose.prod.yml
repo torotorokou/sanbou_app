@@ -50,9 +50,7 @@ services:
     - ../env/.env.vm_prod
     - ../secrets/.env.vm_prod.secrets
     volumes:
-    - ../app/backend/core_api/migrations:/backend/migrations:rw
     - ../app/backend/core_api/migrations_v2:/backend/migrations_v2:rw
-    - ../app/backend/core_api/migrations_legacy:/backend/migrations_legacy:rw
     - ../app/config:/backend/config
     environment:
       TZ: Asia/Tokyo

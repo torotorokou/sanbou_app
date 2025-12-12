@@ -1,6 +1,7 @@
 """Unit Tests for Upload UseCases"""
 import pytest
 from datetime import date, datetime
+from unittest.mock import Mock
 
 from app.core.usecases.upload.get_upload_status_uc import GetUploadStatusUseCase
 from app.core.usecases.upload.get_upload_calendar_uc import GetUploadCalendarUseCase
@@ -124,7 +125,8 @@ class TestDeleteUploadScopeUseCase:
         """Test deleting upload scope with valid date and kind"""
         # Arrange
         fake_port = FakeUploadStatusQuery()
-        uc = DeleteUploadScopeUseCase(query=fake_port)
+        mock_db = Mock()
+        uc = DeleteUploadScopeUseCase(query=fake_port, db=mock_db)
         
         # Act
         result = uc.execute(upload_file_id=1, target_date=date(2025, 11, 1), csv_kind="receive")
@@ -139,7 +141,8 @@ class TestDeleteUploadScopeUseCase:
         """Test validation error with empty csv_kind"""
         # Arrange
         fake_port = FakeUploadStatusQuery()
-        uc = DeleteUploadScopeUseCase(query=fake_port)
+        mock_db = Mock()
+        uc = DeleteUploadScopeUseCase(query=fake_port, db=mock_db)
         
         # Act & Assert
         with pytest.raises(ValueError) as exc_info:
@@ -151,7 +154,8 @@ class TestDeleteUploadScopeUseCase:
         """Test delete with 'receive' kind"""
         # Arrange
         fake_port = FakeUploadStatusQuery()
-        uc = DeleteUploadScopeUseCase(query=fake_port)
+        mock_db = Mock()
+        uc = DeleteUploadScopeUseCase(query=fake_port, db=mock_db)
         
         # Act
         result = uc.execute(upload_file_id=1, target_date=date(2025, 11, 15), csv_kind="receive")
@@ -164,7 +168,8 @@ class TestDeleteUploadScopeUseCase:
         """Test delete with 'yard' kind"""
         # Arrange
         fake_port = FakeUploadStatusQuery()
-        uc = DeleteUploadScopeUseCase(query=fake_port)
+        mock_db = Mock()
+        uc = DeleteUploadScopeUseCase(query=fake_port, db=mock_db)
         
         # Act
         result = uc.execute(upload_file_id=1, target_date=date(2025, 11, 15), csv_kind="yard")
@@ -177,7 +182,8 @@ class TestDeleteUploadScopeUseCase:
         """Test delete with 'shipment' kind"""
         # Arrange
         fake_port = FakeUploadStatusQuery()
-        uc = DeleteUploadScopeUseCase(query=fake_port)
+        mock_db = Mock()
+        uc = DeleteUploadScopeUseCase(query=fake_port, db=mock_db)
         
         # Act
         result = uc.execute(upload_file_id=1, target_date=date(2025, 11, 15), csv_kind="shipment")
@@ -190,7 +196,8 @@ class TestDeleteUploadScopeUseCase:
         """Test delete with 'shogun_flash' kind"""
         # Arrange
         fake_port = FakeUploadStatusQuery()
-        uc = DeleteUploadScopeUseCase(query=fake_port)
+        mock_db = Mock()
+        uc = DeleteUploadScopeUseCase(query=fake_port, db=mock_db)
         
         # Act
         result = uc.execute(upload_file_id=1, target_date=date(2025, 11, 15), csv_kind="shogun_flash")
