@@ -32,7 +32,7 @@ import { coreApi } from '@features/report/shared/infrastructure/http.adapter';
 const ReportBase: React.FC<ReportBaseProps> = ({
     step,
     file,
-    preview,
+    preview: _preview, // eslint-disable-line @typescript-eslint/no-unused-vars -- 将来の拡張用に保持
     modal,
     finalized,
     loading,
@@ -51,10 +51,8 @@ const ReportBase: React.FC<ReportBaseProps> = ({
     
     // モーダル表示タイマーの管理（Excel生成完了後のモーダル表示時間）
     const modalTimerRef = useRef<NodeJS.Timeout | null>(null);
-    // previewはインタラクティブ帳簿のみで使用される可能性があるため保持
     const { setFinalized } = finalized;
     const { setModalOpen } = modal;
-    const { setLoading } = loading;
 
     // インタラクティブ帳簿かどうか判定
     const isInteractive = isInteractiveReport(reportKey);
@@ -76,7 +74,6 @@ const ReportBase: React.FC<ReportBaseProps> = ({
     // PDFはバックグラウンドで生成され、PDFViewerが直接参照する
 
     // 📑 帳簿切り替え時にプレビューや内部状態をリセット（タブ遷移時のPDFクリア）
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => {
         console.log('[ReportBase] 帳簿切り替え検知:', reportKey);
         // モーダルタイマークリア
