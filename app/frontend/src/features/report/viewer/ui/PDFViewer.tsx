@@ -136,4 +136,5 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ pdfUrl, pdfStatus = "idle", heigh
     );
 };
 
-export default PDFViewer;
+// PDFViewerをメモ化してpdfStatus変更による不要な再レンダリングを防ぐ
+export default React.memo(PDFViewer);

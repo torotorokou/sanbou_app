@@ -51,6 +51,8 @@ const ReportBase: React.FC<ReportBaseProps> = ({
     
     // モーダル表示タイマーの管理（Excel生成完了後のモーダル表示時間）
     const modalTimerRef = useRef<NodeJS.Timeout | null>(null);
+    // PDFプレビュー更新用タイマー（モーダルと完全に分離）
+    const pdfUpdateTimerRef = useRef<NodeJS.Timeout | null>(null);
     const { previewUrl, setPreviewUrl } = preview;
     const { setFinalized } = finalized;
     const { setModalOpen } = modal;
@@ -63,31 +65,58 @@ const ReportBase: React.FC<ReportBaseProps> = ({
         console.log('[ReportBase] resetInteractiveState 呼び出し');
         // タイマークリア
         if (modalTimerRef.current) {
-            console.log('[ReportBase] タイマークリア (resetInteractiveState)');
+            console.log('[ReportBase] モーダルタイマークリア');
             clearTimeout(modalTimerRef.current);
             modalTimerRef.current = null;
+        }
+        if (pdfUpdateTimerRef.current) {
+            console.log('[ReportBase] PDF更新タイマークリア');
+            clearTimeout(pdfUpdateTimerRef.current);
+            pdfUpdateTimerRef.current = null;
         }
         setInteractiveInitialResponse(null);
         setInteractiveSessionData(null);
     };
 
     // 📄 PDFプレビューURLが生成されたら設定（モーダルとは完全に独立）
-    // PDFはバックグラウンドで生成され、モーダルの動作には一切関与しない
+    // ⚠️ 重要: モーダル表示中はPDF更新を遅延し、モーダルが閉じてから適用
     useEffect(() => {
         if (pdfPreviewUrl && pdfPreviewUrl !== previewUrl) {
-            console.log('[ReportBase] PDFプレビューURL更新 (バックグラウンド):', pdfPreviewUrl);
-            setPreviewUrl(pdfPreviewUrl);
+            // 既存のPDF更新タイマーをクリア
+            if (pdfUpdateTimerRef.current) {
+                clearTimeout(pdfUpdateTimerRef.current);
+            }
+            
+            // モーダルが開いている場合は遅延更新
+            if (modal.modalOpen) {
+                console.log('[ReportBase] PDF完成検知、モーダルクローズ後に更新予定');
+                // モーダルが閉じるまで待つ（2秒後に更新）
+                pdfUpdateTimerRef.current = setTimeout(() => {
+                    console.log('[ReportBase] PDFプレビュー更新 (遅延)');
+                    setPreviewUrl(pdfPreviewUrl);
+                    pdfUpdateTimerRef.current = null;
+                }, 2000);
+            } else {
+                // モーダルが閉じていれば即座に更新
+                console.log('[ReportBase] PDFプレビュー更新 (即座)');
+                setPreviewUrl(pdfPreviewUrl);
+            }
         }
-    }, [pdfPreviewUrl, previewUrl, setPreviewUrl]);
+    }, [pdfPreviewUrl, previewUrl, setPreviewUrl, modal.modalOpen]);
 
     // 📑 帳簿切り替え時にプレビューや内部状態をリセット（タブ遷移時のPDFクリア）
     useEffect(() => {
         console.log('[ReportBase] 帳簿切り替え検知:', reportKey);
-        // タイマークリア
+        // 全タイマークリア
         if (modalTimerRef.current) {
-            console.log('[ReportBase] タイマークリア (reportKey変更)');
+            console.log('[ReportBase] モーダルタイマークリア (reportKey変更)');
             clearTimeout(modalTimerRef.current);
             modalTimerRef.current = null;
+        }
+        if (pdfUpdateTimerRef.current) {
+            console.log('[ReportBase] PDF更新タイマークリア (reportKey変更)');
+            clearTimeout(pdfUpdateTimerRef.current);
+            pdfUpdateTimerRef.current = null;
         }
         // プレビューと状態をリセット
         cleanup();
@@ -99,9 +128,14 @@ const ReportBase: React.FC<ReportBaseProps> = ({
             console.log('[ReportBase] アンマウント/クリーンアップ');
             // アンマウント時のクリーンアップ
             if (modalTimerRef.current) {
-                console.log('[ReportBase] タイマークリア (アンマウント)');
+                console.log('[ReportBase] モーダルタイマークリア (アンマウント)');
                 clearTimeout(modalTimerRef.current);
                 modalTimerRef.current = null;
+            }
+            if (pdfUpdateTimerRef.current) {
+                console.log('[ReportBase] PDF更新タイマークリア (アンマウント)');
+                clearTimeout(pdfUpdateTimerRef.current);
+                pdfUpdateTimerRef.current = null;
             }
             cleanup();
             setPreviewUrl(null);
@@ -381,11 +415,13 @@ const ReportBase: React.FC<ReportBaseProps> = ({
                 header={undefined}
             >
                 <Suspense fallback={null}>
-            <PDFViewer pdfUrl={previewUrl} pdfStatus={pdfStatus} />
+                    {/* PDFViewerはメモ化されており、pdfStatusの変更がモーダルに影響しない */}
+                    <PDFViewer pdfUrl={previewUrl} pdfStatus={pdfStatus} />
                 </Suspense>
             </ReportManagePageLayout>
         </>
     );
 };
 
-export default ReportBase;
+// PDFViewerをメモ化してパフォーマンス最適化
+export default React.memo(ReportBase);
