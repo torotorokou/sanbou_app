@@ -14,7 +14,7 @@ def reflect_total_from_factory(master_csv, df_factory):
 
 def process_factory_report(dfs, master_csv):
     """services 側の factory_report 処理結果を反映して master_csv を返す。"""
-    from app.core.usecases.reports.factory_report import (
+    from app.core.usecases.reports.factory_report_processor import (
         process as _process_factory_report,
     )
 

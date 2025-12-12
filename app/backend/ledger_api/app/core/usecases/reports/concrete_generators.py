@@ -4,10 +4,10 @@ from typing import Any, Dict
 
 import pandas as pd
 
-from app.core.usecases.reports.average_sheet import process as process_average_sheet
-from app.core.usecases.reports.balance_sheet import process as process_balance_sheet
-from app.core.usecases.reports.factory_report import process as process_factory_report
-from app.core.usecases.reports.management_sheet import (
+from app.core.usecases.reports.average_sheet_processor import process as process_average_sheet
+from app.core.usecases.reports.balance_sheet_processor import process as process_balance_sheet
+from app.core.usecases.reports.factory_report_processor import process as process_factory_report
+from app.core.usecases.reports.management_sheet_processor import (
     process as process_management_sheet,
 )
 

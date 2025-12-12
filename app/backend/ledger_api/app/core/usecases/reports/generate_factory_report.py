@@ -16,7 +16,7 @@ from fastapi.responses import JSONResponse
 from app.core.ports.inbound import CsvGateway, ReportRepository
 from app.core.domain.reports.factory_report import FactoryReport
 from app.core.usecases.reports.base_report_usecase import BaseReportUseCase
-from app.core.usecases.reports.factory_report import process as factory_report_process
+from app.core.usecases.reports.factory_report_processor import process as factory_report_process
 from app.application.usecases.reports.report_generation_utils import (
     generate_excel_from_dataframe,
 )
