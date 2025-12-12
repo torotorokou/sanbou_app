@@ -7,6 +7,35 @@
 CSVアップロード成功時に、関連するマテリアライズドビューを自動的に更新します。
 Clean Architectureに従い、Infra層に配置されています。
 
+## トランザクション設計（2025-12-12更新）
+
+### 原則
+
+**トランザクション境界はUseCaseレベルで管理**します。Repository層では`commit()`や`rollback()`を呼びません。
+
+### CSV削除時のトランザクション
+
+```python
+# DeleteUploadScopeUseCase の実行フロー:
+try:
+    # 1. CSV削除（RawDataRepository）
+    affected_rows = repository.soft_delete_by_date_and_kind(...)
+    
+    # 2. MV更新（MaterializedViewRefresher）
+    mv_refresher.refresh_for_csv_kind(csv_kind)
+    
+    # 3. 正常終了時: FastAPIのget_db()が自動的にcommit()
+except Exception:
+    # 4. エラー時: FastAPIのget_db()が自動的にrollback()
+    raise
+```
+
+### メリット
+
+1. **原子性の保証**: CSV削除とMV更新が同一トランザクション内で実行され、両方成功するか両方失敗するかのどちらか
+2. **データ整合性**: 片方だけ成功してデータ不整合になることを防止
+3. **責務の明確化**: Repository層はデータ操作のみ、トランザクション管理はUseCase/API層
+
 ## 対応CSV種別
 
 ### receive（受入CSV）

@@ -132,8 +132,6 @@ class TestMaterializedViewRefresher:
             return MagicMock()
         
         mock_db.execute = MagicMock(side_effect=execute_side_effect)
-        mock_db.commit = MagicMock()
-        mock_db.rollback = MagicMock()
         
         refresher = MaterializedViewRefresher(mock_db)
         
@@ -145,8 +143,8 @@ class TestMaterializedViewRefresher:
         # - 2つ目: mv_target_card_per_day（失敗するがエラーログのみ）
         assert mock_db.execute.call_count >= 2
         
-        # rollback が呼ばれたか確認（失敗したMVのため）
-        assert mock_db.rollback.call_count >= 1
+        # NOTE: トランザクション管理はUseCaseレイヤーに移動したため、
+        # Repository層ではcommit/rollbackを呼ばない
         
         # エラーログと警告ログが出力されたか確認
         assert mock_logger.error.call_count >= 1

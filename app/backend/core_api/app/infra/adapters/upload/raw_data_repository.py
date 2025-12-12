@@ -615,7 +615,7 @@ class RawDataRepository:
                 "deleted_by": deleted_by,
             })
             affected_rows = result.rowcount
-            self.db.commit()
+            # NOTE: commit()はUseCaseレイヤーで実行（トランザクション境界の統一）
             
             logger.info(
                 f"Soft deleted {affected_rows} rows from {table_name} "
@@ -625,7 +625,7 @@ class RawDataRepository:
             return affected_rows
             
         except Exception as e:
-            self.db.rollback()
+            # NOTE: rollback()もUseCaseレイヤーで実行（例外は再raiseのみ）
             logger.error(
                 f"Failed to soft delete by date and kind: "
                 f"upload_file_id={upload_file_id}, date={target_date}, "

@@ -62,6 +62,12 @@ class DeleteUploadScopeUseCase:
         Raises:
             ValueError: パラメータが不正な場合
             Exception: データベースエラー
+            
+        Note:
+            トランザクション管理:
+            - CSV削除とMV更新を同一トランザクション内で実行
+            - 両方成功した場合のみコミット（FastAPIのget_db()経由）
+            - どちらか失敗した場合はロールバック
         """
         # バリデーション
         if upload_file_id <= 0:
@@ -74,30 +80,42 @@ class DeleteUploadScopeUseCase:
             f"date={target_date}, csv_kind={csv_kind}, deleted_by={deleted_by}"
         )
         
-        # 論理削除の実行（Port経由）
-        affected_rows = self.query.soft_delete_by_date_and_kind(
-            upload_file_id=upload_file_id,
-            target_date=target_date,
-            csv_kind=csv_kind,
-            deleted_by=deleted_by,
-        )
-        
-        if affected_rows == 0:
-            logger.warning(
-                f"No rows affected for upload_file_id={upload_file_id}, "
-                f"date={target_date}, csv_kind={csv_kind}"
+        try:
+            # 論理削除の実行（Port経由）
+            affected_rows = self.query.soft_delete_by_date_and_kind(
+                upload_file_id=upload_file_id,
+                target_date=target_date,
+                csv_kind=csv_kind,
+                deleted_by=deleted_by,
             )
-        else:
-            logger.info(
-                f"Successfully deleted {affected_rows} rows for upload_file_id={upload_file_id}, "
-                f"date={target_date}, csv_kind={csv_kind}"
+            
+            if affected_rows == 0:
+                logger.warning(
+                    f"No rows affected for upload_file_id={upload_file_id}, "
+                    f"date={target_date}, csv_kind={csv_kind}"
+                )
+            else:
+                logger.info(
+                    f"Successfully deleted {affected_rows} rows for upload_file_id={upload_file_id}, "
+                    f"date={target_date}, csv_kind={csv_kind}"
+                )
+            
+            # CSV削除後のマテリアライズドビュー自動更新
+            # 将軍速報/最終版の受入CSVのみ対応（receive関連のMVを更新）
+            self._refresh_materialized_views_if_needed(csv_kind)
+            
+            # 正常終了時はFastAPIのget_db()が自動的にcommit()
+            return affected_rows
+            
+        except Exception as e:
+            # エラー時はFastAPIのget_db()が自動的にrollback()
+            logger.error(
+                f"Transaction failed during delete operation: "
+                f"upload_file_id={upload_file_id}, date={target_date}, "
+                f"csv_kind={csv_kind}, error={e}",
+                exc_info=True
             )
-        
-        # CSV削除後のマテリアライズドビュー自動更新
-        # 将軍速報/最終版の受入CSVのみ対応（receive関連のMVを更新）
-        self._refresh_materialized_views_if_needed(csv_kind)
-        
-        return affected_rows
+            raise
     
     def _refresh_materialized_views_if_needed(self, csv_kind: str) -> None:
         """

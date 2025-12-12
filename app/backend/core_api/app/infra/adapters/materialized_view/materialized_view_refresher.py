@@ -225,7 +225,7 @@ class MaterializedViewRefresher:
             try:
                 sql = text(f"REFRESH MATERIALIZED VIEW CONCURRENTLY {mv_name};")
                 self.db.execute(sql)
-                self.db.commit()
+                # NOTE: commit()はUseCaseレイヤーで実行（トランザクション境界の統一）
                 logger.debug(f"[MV_REFRESH] Used CONCURRENTLY for {mv_name}")
             except Exception as concurrent_error:
                 # CONCURRENTLYで失敗した場合（権限エラーなど）、通常のREFRESHにフォールバック
@@ -235,11 +235,10 @@ class MaterializedViewRefresher:
                         f"[MV_REFRESH] CONCURRENTLY failed due to permission, falling back to normal REFRESH for {mv_name}",
                         extra=create_log_context(operation="refresh_single_mv", mv_name=mv_name, fallback_reason="permission")
                     )
-                    self.db.rollback()
                     # 通常のREFRESH（短時間ロック）
                     sql = text(f"REFRESH MATERIALIZED VIEW {mv_name};")
                     self.db.execute(sql)
-                    self.db.commit()
+                    # NOTE: commit()はUseCaseレイヤーで実行
                     logger.debug(f"[MV_REFRESH] Used normal REFRESH for {mv_name}")
                 else:
                     # その他のエラーは再raise
@@ -256,7 +255,7 @@ class MaterializedViewRefresher:
             )
             
         except Exception as e:
-            self.db.rollback()
+            # NOTE: rollback()はUseCaseレイヤーで実行（例外は再raiseのみ）
             
             # エラーの種類を特定
             error_msg = str(e).lower()
