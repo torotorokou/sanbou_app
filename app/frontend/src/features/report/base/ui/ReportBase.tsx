@@ -51,7 +51,7 @@ const ReportBase: React.FC<ReportBaseProps> = ({
     
     // モーダル表示タイマーの管理（Excel生成完了後のモーダル表示時間）
     const modalTimerRef = useRef<NodeJS.Timeout | null>(null);
-    const { previewUrl, setPreviewUrl } = preview;
+    // previewはインタラクティブ帳簿のみで使用される可能性があるため保持
     const { setFinalized } = finalized;
     const { setModalOpen } = modal;
     const { setLoading } = loading;
@@ -76,6 +76,7 @@ const ReportBase: React.FC<ReportBaseProps> = ({
     // PDFはバックグラウンドで生成され、PDFViewerが直接参照する
 
     // 📑 帳簿切り替え時にプレビューや内部状態をリセット（タブ遷移時のPDFクリア）
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => {
         console.log('[ReportBase] 帳簿切り替え検知:', reportKey);
         // モーダルタイマークリア
@@ -86,7 +87,6 @@ const ReportBase: React.FC<ReportBaseProps> = ({
         }
         // プレビューと状態をリセット
         cleanup();
-        setPreviewUrl(null);
         setFinalized(false);
         setModalOpen(false);
         
@@ -99,11 +99,10 @@ const ReportBase: React.FC<ReportBaseProps> = ({
                 modalTimerRef.current = null;
             }
             cleanup();
-            setPreviewUrl(null);
             setFinalized(false);
             setModalOpen(false);
         };
-    }, [reportKey, cleanup, setFinalized, setModalOpen]);
+    }, [reportKey]); // ⚠️ reportKeyのみに依存させる
 
     /**
      * 📊 通常帳簿のレポート生成処理 - Excel完了ベースのシンプルフロー
@@ -287,10 +286,8 @@ const ReportBase: React.FC<ReportBaseProps> = ({
      */
     const handleInteractiveSuccess = (response: ReportArtifactResponse) => {
         try {
+            // PDFプレビューはapplyArtifactResponse内で処理される
             business.applyArtifactResponse(response);
-            if (response?.artifact?.pdf_preview_url) {
-                setPreviewUrl(response.artifact.pdf_preview_url);
-            }
 
             if (response?.status === 'success') {
                 finalized.setFinalized(true);

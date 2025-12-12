@@ -80,13 +80,12 @@ export const useReportArtifact = () => {
     const pollingCancelledRef = useRef<boolean>(false);
 
     // PDFステータスをポーリングで確認（🚀 高速化: 1.5秒間隔）
-    const pollPdfStatus = useCallback(async () => {
-        const { reportKey, reportDate, reportToken, pdfStatus } = state;
-        
-        if (!reportKey || !reportDate || !reportToken || pdfStatus !== "pending") {
-            return;
-        }
-        
+    // ⚠️ 重要: このポーリングはモーダルに影響しないように設計
+    const pollPdfStatus = useCallback(async (
+        reportKey: string,
+        reportDate: string,
+        reportToken: string
+    ) => {
         pollingCancelledRef.current = false;
         
         const poll = async () => {
@@ -144,19 +143,19 @@ export const useReportArtifact = () => {
         };
         
         poll();
-    }, [state]);
+    }, []); // 依存配列を空にして再生成を防止
     
     // pdfStatus が pending になったらポーリング開始
     useEffect(() => {
-        if (state.pdfStatus === "pending" && state.reportToken) {
+        if (state.pdfStatus === "pending" && state.reportToken && state.reportKey && state.reportDate) {
             console.info('[PDFバックグラウンド] ポーリング開始');
-            pollPdfStatus();
+            pollPdfStatus(state.reportKey, state.reportDate, state.reportToken);
         }
         
         return () => {
             pollingCancelledRef.current = true;
         };
-    }, [state.pdfStatus, state.reportToken, pollPdfStatus]);
+    }, [state.pdfStatus, state.reportToken, state.reportKey, state.reportDate, pollPdfStatus]);
 
     const applyArtifactResponse = useCallback((response: ReportArtifactResponse | null) => {
         console.info('[useReportArtifact] APIレスポンス受信:', {
