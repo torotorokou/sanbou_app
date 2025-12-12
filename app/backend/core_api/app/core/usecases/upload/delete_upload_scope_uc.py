@@ -13,7 +13,7 @@ from datetime import date
 from sqlalchemy.orm import Session
 
 from app.core.ports.upload_status_port import IUploadCalendarQuery
-from app.core.usecases.upload.mv_refresh_helper import MaterializedViewRefreshHelper
+from app.infra.adapters.materialized_view import MaterializedViewRefresher
 from backend_shared.application.logging import log_usecase_execution, get_module_logger
 
 logger = get_module_logger(__name__)
@@ -112,11 +112,10 @@ class DeleteUploadScopeUseCase:
             将軍速報版でも最終版でもMVは同じデータソースを参照するため、
             どちらが削除されてもMV更新が必要です。
             
-            共通ヘルパー（MaterializedViewRefreshHelper）を使用して、
-            MV更新ロジックを統一的に処理します。
+            MaterializedViewRefresherが全てのロジックを統一的に処理します。
         """
-        MaterializedViewRefreshHelper.refresh_mv_for_csv_kind(
-            db=self.db,
+        mv_refresher = MaterializedViewRefresher(self.db)
+        mv_refresher.refresh_for_csv_kind(
             csv_kind=csv_kind,
             operation_name="mv_refresh_after_delete"
         )

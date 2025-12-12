@@ -41,7 +41,14 @@ logger = get_module_logger(__name__)
 
 
 class MaterializedViewRefresher:
-    """マテリアライズドビュー更新専用リポジトリ"""
+    """
+    マテリアライズドビュー更新専用リポジトリ
+    
+    UseCase層から利用される統一インターフェースを提供：
+    - refresh_for_csv_type(): csv_type指定でMV更新
+    - refresh_for_csv_kind(): csv_kind指定でMV更新（csv_type自動抽出）
+    - refresh_for_csv_types(): 複数csv_typeのバッチ更新
+    """
     
     # 更新対象のマテリアライズドビュー定義
     # csv_type ごとに更新すべき MV のリスト
@@ -66,6 +73,62 @@ class MaterializedViewRefresher:
             db: SQLAlchemy Session
         """
         self.db = db
+    
+    @staticmethod
+    def extract_csv_type_from_csv_kind(csv_kind: str) -> Optional[str]:
+        """
+        csv_kind から csv_type（データ方向）を抽出
+        
+        Args:
+            csv_kind: CSV種別（例: 'shogun_flash_receive', 'shogun_final_yard'）
+            
+        Returns:
+            csv_type: データ方向（'receive', 'yard', 'shipment'）、抽出できない場合はNone
+        
+        Examples:
+            >>> MaterializedViewRefresher.extract_csv_type_from_csv_kind('shogun_flash_receive')
+            'receive'
+            >>> MaterializedViewRefresher.extract_csv_type_from_csv_kind('shogun_final_shipment')
+            'shipment'
+        """
+        parts = csv_kind.split('_')
+        if len(parts) >= 3:
+            csv_type = parts[2]  # receive / yard / shipment
+            if csv_type in ['receive', 'yard', 'shipment']:
+                return csv_type
+        
+        logger.warning(
+            f"[MV_REFRESH] Unexpected csv_kind format: '{csv_kind}', "
+            f"expected format: 'shogun_(flash|final)_(receive|yard|shipment)'",
+            extra=create_log_context(operation="extract_csv_type", csv_kind=csv_kind)
+        )
+        return None
+    
+    @staticmethod
+    def should_refresh_mv_for_csv_type(csv_type: str) -> bool:
+        """
+        指定された csv_type に対してMV更新が必要かを判定
+        
+        Args:
+            csv_type: データ方向（'receive', 'yard', 'shipment'）
+            
+        Returns:
+            True: MV更新が必要、False: MV更新不要
+        
+        Note:
+            現在は 'receive' のみMV更新対応済み
+        """
+        supported_types = ['receive']
+        
+        if csv_type not in supported_types:
+            logger.debug(
+                f"[MV_REFRESH] csv_type='{csv_type}' does not require MV refresh "
+                f"(supported: {supported_types})",
+                extra=create_log_context(operation="check_mv_support", csv_type=csv_type)
+            )
+            return False
+        
+        return True
     
     def refresh_for_csv_type(self, csv_type: str) -> None:
         """
@@ -241,3 +304,119 @@ class MaterializedViewRefresher:
         for mvs in self.MV_MAPPINGS.values():
             all_mvs.extend(mvs)
         return all_mvs
+    
+    def refresh_for_csv_types(
+        self,
+        csv_types: List[str],
+        operation_name: str = "mv_refresh_batch"
+    ) -> None:
+        """
+        複数の csv_type に対してMV更新を一括実行
+        
+        Args:
+            csv_types: 更新対象の csv_type リスト（例: ['receive', 'shipment']）
+            operation_name: ログ用の操作名
+        
+        Note:
+            - 各csv_typeごとに独立して処理（1つ失敗しても他は継続）
+            - エラーはログに記録するが、例外は再raiseしない
+        """
+        if not csv_types:
+            logger.debug(
+                "[MV_REFRESH] No csv_types provided, skipping MV refresh",
+                extra=create_log_context(operation=operation_name)
+            )
+            return
+        
+        logger.info(
+            f"[MV_REFRESH] Starting MV refresh for {len(csv_types)} csv_type(s): {csv_types}",
+            extra=create_log_context(operation=operation_name, csv_types=csv_types)
+        )
+        
+        for csv_type in csv_types:
+            try:
+                logger.info(
+                    f"[MV_REFRESH] Processing csv_type='{csv_type}'",
+                    extra=create_log_context(operation=operation_name, csv_type=csv_type)
+                )
+                
+                self.refresh_for_csv_type(csv_type)
+                
+                logger.info(
+                    f"[MV_REFRESH] ✅ Successfully refreshed MVs for csv_type='{csv_type}'",
+                    extra=create_log_context(
+                        operation=operation_name,
+                        csv_type=csv_type,
+                        status="success"
+                    )
+                )
+            except Exception as e:
+                # MV更新失敗はログに記録するが、呼び出し元の処理は継続
+                logger.error(
+                    f"[MV_REFRESH] ⚠️ Failed to refresh MVs for csv_type='{csv_type}': {e}",
+                    extra=create_log_context(
+                        operation=operation_name,
+                        csv_type=csv_type,
+                        status="error",
+                        error=str(e)
+                    ),
+                    exc_info=True
+                )
+                # 例外は再raiseしない（親処理の成功を維持）
+    
+    def refresh_for_csv_kind(
+        self,
+        csv_kind: str,
+        operation_name: str = "mv_refresh_after_delete"
+    ) -> None:
+        """
+        CSV種別（csv_kind）からcsvタイプを自動抽出してMV更新
+        
+        Args:
+            csv_kind: CSV種別（例: 'shogun_flash_receive', 'shogun_final_receive'）
+            operation_name: ログ用の操作名
+        
+        Note:
+            CSV削除時など、csv_kindしか分からない状況で使用。
+            内部でcsv_typeを自動抽出し、MV更新必要性を判定します。
+        """
+        # csv_kind から csv_type を抽出
+        csv_type = self.extract_csv_type_from_csv_kind(csv_kind)
+        if not csv_type:
+            logger.warning(
+                f"[MV_REFRESH] Could not extract csv_type from csv_kind='{csv_kind}', "
+                f"skipping MV refresh",
+                extra=create_log_context(operation=operation_name, csv_kind=csv_kind)
+            )
+            return
+        
+        # MV更新が必要かチェック
+        if not self.should_refresh_mv_for_csv_type(csv_type):
+            return
+        
+        logger.info(
+            f"[MV_REFRESH] CSV operation for csv_kind='{csv_kind}' (csv_type='{csv_type}'), "
+            f"refreshing materialized views...",
+            extra=create_log_context(
+                operation=operation_name,
+                csv_kind=csv_kind,
+                csv_type=csv_type
+            )
+        )
+        
+        # MV更新実行（エラーハンドリング込み）
+        try:
+            self.refresh_for_csv_type(csv_type)
+            logger.info(
+                f"[MV_REFRESH] ✅ Successfully refreshed MVs after CSV operation "
+                f"(csv_kind={csv_kind})",
+                extra=create_log_context(operation=operation_name, csv_kind=csv_kind, csv_type=csv_type)
+            )
+        except Exception as e:
+            # MV更新の失敗は警告のみ（親処理自体は成功として扱う）
+            logger.error(
+                f"[MV_REFRESH] ⚠️ Failed to refresh MVs after CSV operation: {e}",
+                extra=create_log_context(operation=operation_name, csv_kind=csv_kind, csv_type=csv_type, error=str(e)),
+                exc_info=True
+            )
+            # 例外は再raiseしない

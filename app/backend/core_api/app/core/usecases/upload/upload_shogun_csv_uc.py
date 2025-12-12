@@ -33,7 +33,6 @@ from backend_shared.application.logging import create_log_context, get_module_lo
 from app.core.ports.csv_writer_port import IShogunCsvWriter
 from app.infra.adapters.upload.raw_data_repository import RawDataRepository
 from app.infra.adapters.materialized_view.materialized_view_refresher import MaterializedViewRefresher
-from app.core.usecases.upload.mv_refresh_helper import MaterializedViewRefreshHelper
 
 logger = get_module_logger(__name__)
 
