@@ -52,8 +52,11 @@ except Exception:
 2. **`mart.mv_target_card_per_day`** - 目標カードMV
    - `mv_receive_daily` に依存
    - 依存関係の順序で更新されます（mv_receive_daily → mv_target_card_per_day）
+   - **各MV更新後にcommit()を実行**し、次のMVが最新データを確実に参照できるようにします
 
-**注意**: MV名はクォートなしの標準PostgreSQL形式を使用（`mart.mv_receive_daily`）
+**注意**: 
+- MV名はクォートなしの標準PostgreSQL形式を使用（`mart.mv_receive_daily`）
+- 依存関係のあるMVは、基礎MVの更新とコミット後に更新されます
 
 #### データの優先順位
 

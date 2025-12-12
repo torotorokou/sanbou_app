@@ -165,6 +165,14 @@ class MaterializedViewRefresher:
         for mv_name in mv_list:
             try:
                 self._refresh_single_mv(mv_name)
+                # 各MV更新後にcommitして、次のMVが最新データを参照できるようにする
+                # これにより、依存関係のあるMV（例: mv_target_card_per_day）が
+                # 更新済みの基礎MV（例: mv_receive_daily）のデータを確実に参照できる
+                self.db.commit()
+                logger.debug(
+                    f"[MV_REFRESH] Committed after refreshing {mv_name}",
+                    extra=create_log_context(operation="refresh_views", mv_name=mv_name)
+                )
                 success_count += 1
             except Exception as e:
                 failed_mvs.append(mv_name)
@@ -173,6 +181,8 @@ class MaterializedViewRefresher:
                     extra=create_log_context(operation="refresh_views", mv_name=mv_name, error=str(e)),
                     exc_info=True
                 )
+                # エラー時はロールバックして次のMVの更新を試みる
+                self.db.rollback()
                 # 個別MVの失敗は記録するが、全体処理は継続
                 # 次のMVの更新を試みる
         
@@ -208,6 +218,9 @@ class MaterializedViewRefresher:
         Note:
             まずCONCURRENTLYで更新を試み、権限エラーの場合は通常のREFRESHにフォールバック。
             CONCURRENTLY: ロックを最小化（SELECT は可能、UPDATE は待機）、UNIQUE INDEX が必要
+            
+            ⚠️ 重要: このメソッドはcommit()を呼びません。呼び出し側（refresh_for_csv_type）で
+            各MV更新後にcommit()を呼び、依存関係のあるMVが最新データを参照できるようにします。
             通常のREFRESH: ACCESS EXCLUSIVEロック（短時間のロック、SELECT も待機）
             
         Raises:
