@@ -11,7 +11,7 @@ UseCase: CreateForecastJobUseCase
 from typing import Optional, List
 from datetime import date as date_type
 
-from app.core.domain.models import ForecastJobCreate, ForecastJobResponse, PredictionDTO
+from app.core.domain.forecast.entities import ForecastJobCreate, ForecastJobResponse, PredictionDTO
 from app.core.ports.forecast_port import IForecastJobRepository, IForecastQueryRepository
 from app.core.domain.services import forecasting
 

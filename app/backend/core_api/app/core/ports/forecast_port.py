@@ -6,7 +6,7 @@ Port: IForecastJobRepository
 from typing import Protocol, Optional, List, Any
 from datetime import date as date_type, datetime
 
-from app.core.domain.models import PredictionDTO
+from app.core.domain.forecast.entities import PredictionDTO
 
 
 class IForecastJobRepository(Protocol):

@@ -15,7 +15,7 @@ from datetime import date as date_type
 from sqlalchemy.orm import Session
 
 from app.infra.db.orm_models import PredictionDaily
-from app.core.domain.models import PredictionDTO
+from app.core.domain.forecast.entities import PredictionDTO
 
 
 class ForecastQueryRepository:
