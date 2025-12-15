@@ -194,7 +194,7 @@ curl http://localhost/api/v1/health
 
 - GCP VMインスタンスが作成済み
 - Cloud Load Balancer + IAP設定済み
-- ドメイン（sanbou-app.jp）がLBに向いている
+- ドメイン（example.com）がLBに向いている
 - Docker & Docker Composeがインストール済み
 
 #### **Step 1: ローカルPCでイメージをビルド・プッシュ**
@@ -225,7 +225,7 @@ IMAGE_TAG=prod-20251212
 
 ```bash
 # VM にログイン
-gcloud compute ssh vm-prod --project=honest-sanbou-app-prod
+gcloud compute ssh vm-prod --project=your-project-id
 
 # リポジトリをclone（初回のみ）
 git clone <リポジトリURL> ~/sanbou_app
@@ -276,7 +276,7 @@ curl http://localhost/
 curl http://localhost/api/v1/health
 
 # 外部から（LB + IAP経由）
-# https://sanbou-app.jp/
+# https://example.com/
 ```
 
 ---
@@ -520,7 +520,7 @@ make config ENV=vm_stg
 docker compose -p vm_stg exec core_api bash
 
 # DBに直接接続
-docker compose -p vm_stg exec db psql -U myuser -d sanbou_stg
+docker compose -p vm_stg exec db psql -U dbuser -d sanbou_stg
 
 # ネットワーク確認
 docker compose -p vm_stg exec nginx curl http://core_api:8000/health

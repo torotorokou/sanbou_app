@@ -375,7 +375,7 @@ IAP_ENABLED=true
 DEBUG=false
 
 # secrets/.env.vm_prod.secrets
-IAP_AUDIENCE=/projects/PROJECT_NUMBER/global/backendServices/SERVICE_ID
+IAP_AUDIENCE=/projects/YOUR_PROJECT_NUMBER/global/backendServices/YOUR_SERVICE_ID
 ```
 
 ---

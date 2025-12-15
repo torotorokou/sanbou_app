@@ -40,7 +40,7 @@ IAP_ENABLED=false              # IAP 有効化フラグ
 - JWT 署名検証機能を追加（`google-auth` ライブラリ使用）
 - `X-Goog-IAP-JWT-Assertion` ヘッダーの検証
 - フォールバック: `X-Goog-Authenticated-User-Email` ヘッダー対応
-- ドメインホワイトリスト（`@honest-recycle.co.jp`）による認可
+- ドメインホワイトリスト（`@example.com`）による認可
 - 詳細なロギングとエラーハンドリング
 
 **JWT 検証フロー:**
@@ -49,7 +49,7 @@ IAP_ENABLED=false              # IAP 有効化フラグ
 2. Google の公開鍵で署名を検証
 3. audience 値を環境変数 IAP_AUDIENCE と照合
 4. JWT から email を抽出
-5. ドメインチェック (@honest-recycle.co.jp)
+5. ドメインチェック (@example.com)
 6. AuthUser オブジェクトを返却
 ```
 
@@ -176,8 +176,8 @@ proxy_set_header X-Goog-IAP-JWT-Assertion $http_x_goog_iap_jwt_assertion;
 1. IAP ページでバックエンドサービスを選択
 2. **Add Principal** をクリック
 3. **New principals**: 
-   - 個別ユーザー: `user@honest-recycle.co.jp`
-   - グループ: `developers@honest-recycle.co.jp`
+   - 個別ユーザー: `user@example.com`
+   - グループ: `developers@example.com`
 4. **Role**: `IAP-secured Web App User`
 5. **Save**
 
@@ -185,11 +185,11 @@ proxy_set_header X-Goog-IAP-JWT-Assertion $http_x_goog_iap_jwt_assertion;
 
 1. **Security** → **Identity-Aware Proxy**
 2. バックエンドサービスの **⋮** → **Edit OAuth Client**
-3. **Audience** 値をコピー（形式: `/projects/PROJECT_NUMBER/global/backendServices/SERVICE_ID`）
+3. **Audience** 値をコピー（形式: `/projects/YOUR_PROJECT_NUMBER/global/backendServices/YOUR_SERVICE_ID`）
 4. `.env.vm_stg` と `.env.vm_prod` に設定：
 
 ```bash
-# IAP_AUDIENCE=/projects/123456789/global/backendServices/987654321  # 例
+# IAP_AUDIENCE=/projects/YOUR_PROJECT_NUMBER/global/backendServices/YOUR_SERVICE_ID  # 例
 ```
 
 ### Step 6: デプロイと検証
@@ -235,7 +235,7 @@ curl http://localhost:8003/api/kpi/overview
 
 ```bash
 # IAP ヘッダーなしでアクセス → 401
-curl https://stg.sanbou-app.jp/api/kpi/overview
+curl https://stg.example.com/api/kpi/overview
 # => {"error":{"code":"AUTHENTICATION_REQUIRED","message":"Authentication required"}}
 
 # IAP ヘッダーありでアクセス（GCP Load Balancer 経由）→ 200
