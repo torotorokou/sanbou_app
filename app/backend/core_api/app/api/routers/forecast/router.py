@@ -30,12 +30,14 @@ from app.config.di_providers import (
     get_create_forecast_job_uc,
     get_forecast_job_status_uc,
     get_predictions_uc,
+    get_run_inbound_forecast_job_uc,
 )
 from app.core.usecases.forecast.forecast_job_uc import (
     CreateForecastJobUseCase,
     GetForecastJobStatusUseCase,
     GetPredictionsUseCase,
 )
+from app.core.usecases.forecast.run_inbound_forecast_job_uc import RunInboundForecastJobUseCase
 from app.api.schemas import ForecastJobCreate, ForecastJobResponse, PredictionDTO
 from backend_shared.core.domain.exceptions import NotFoundError
 
@@ -66,6 +68,25 @@ def get_job_status(
     if not job:
         raise NotFoundError(entity="ForecastJob", entity_id=job_id)
     return job
+
+
+@router.post("/jobs/{job_id}/execute", response_model=ForecastJobResponse, summary="Execute forecast job immediately")
+def execute_forecast_job(
+    job_id: int,
+    uc: RunInboundForecastJobUseCase = Depends(get_run_inbound_forecast_job_uc),
+):
+    """
+    Execute a specific forecast job immediately (synchronous).
+    
+    This endpoint is for manual triggering from the UI.
+    For batch processing, use the worker instead.
+    
+    Note: This is a long-running operation (may take several seconds).
+    """
+    result = uc.execute(job_id)
+    if not result:
+        raise NotFoundError(entity="ForecastJob", entity_id=job_id)
+    return result
 
 
 @router.get("/predictions", response_model=list[PredictionDTO], summary="Get predictions")
