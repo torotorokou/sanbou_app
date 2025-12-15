@@ -290,12 +290,19 @@ services:
       - ../app/backend/inbound_forecast_api/models:/backend/models:rw
       - ../app/backend/inbound_forecast_api/output:/backend/output:rw
       - ../app/backend/inbound_forecast_api/worker:/backend/worker:rw
+      - ../app/backend/inbound_forecast_api/app:/backend/app:rw
       - ../secrets:/backend/secrets:ro
     environment:
       TZ: "Asia/Tokyo"
       PYTHONPATH: /backend
+      # DB接続設定（env/.env.local_devとsecretsから読み込み）
+      POSTGRES_HOST: "db"
+      POSTGRES_PORT: "5432"
     networks:
       - app-net
+    depends_on:
+      db:
+        condition: service_healthy
     # 通常起動では立ち上がらない（profile指定時のみ）
     profiles:
       - jobs

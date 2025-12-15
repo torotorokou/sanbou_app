@@ -54,9 +54,40 @@ class ForecastWorker:
     def __init__(self, config: ForecastWorkerConfig):
         self.config = config
         
+        # DB接続文字列を環境変数から取得
+        db_connection_string = self._build_db_connection_string()
+        
         # Dependency Injection: UseCase を構築
-        prediction_executor = ScriptBasedPredictionExecutor(self.config.scripts_dir)
+        prediction_executor = ScriptBasedPredictionExecutor(
+            scripts_dir=self.config.scripts_dir,
+            db_connection_string=db_connection_string,
+            enable_db_save=True,
+        )
         self.forecast_usecase = ExecuteDailyForecastUseCase(prediction_executor)
+    
+    def _build_db_connection_string(self) -> Optional[str]:
+        """
+        環境変数からDB接続文字列を構築
+        
+        Returns:
+            DB接続文字列（postgresql://...）
+        """
+        import urllib.parse
+        
+        host = os.getenv("POSTGRES_HOST", "db")
+        port = os.getenv("POSTGRES_PORT", "5432")
+        user = os.getenv("POSTGRES_USER", "myuser")
+        password = os.getenv("POSTGRES_PASSWORD", "")
+        database = os.getenv("POSTGRES_DB", "sanbou_dev")
+        
+        if not password:
+            logger.warning("POSTGRES_PASSWORD not set. DB save will be disabled.")
+            return None
+        
+        # パスワードをURLエンコード
+        encoded_password = urllib.parse.quote_plus(password)
+        
+        return f"postgresql://{user}:{encoded_password}@{host}:{port}/{database}"
         
     def run_daily_forecast(
         self,

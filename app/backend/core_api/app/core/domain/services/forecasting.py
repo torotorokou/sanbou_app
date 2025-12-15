@@ -18,8 +18,9 @@ def validate_forecast_date_range(from_date: date_type, to_date: date_type) -> tu
     Validate forecast date range with business rules.
     
     ビジネスルール:
-      - 開始日は終了日より前でなければならない
+      - 開始日は終了日以前でなければならない（同じ日付も許可）
       - 予測期間は1日以上、90日以内でなければならない
+      - 同じ日付の場合は1日分の予測として扱う
       - 過去日付は許可（履歴データ分析用）
     
     Args:
@@ -34,7 +35,8 @@ def validate_forecast_date_range(from_date: date_type, to_date: date_type) -> tu
     if from_date > to_date:
         return False, f"開始日（{from_date}）は終了日（{to_date}）より前でなければなりません"
     
-    delta_days = (to_date - from_date).days
+    # 日数計算: 同じ日付の場合は1日分として扱う（両端含む）
+    delta_days = (to_date - from_date).days + 1
     
     if delta_days < MIN_FORECAST_DAYS:
         return False, f"予測期間は最低{MIN_FORECAST_DAYS}日必要です（指定: {delta_days}日）"
