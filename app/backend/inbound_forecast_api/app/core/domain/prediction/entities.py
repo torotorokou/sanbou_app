@@ -2,7 +2,7 @@
 Prediction domain entities.
 予測リクエストと予測結果のドメインモデル
 """
-from datetime import date
+from datetime import date as date_type
 from typing import Optional
 from pydantic import BaseModel, Field, ConfigDict
 
@@ -25,7 +25,7 @@ class DailyForecastRequest(BaseModel):
             model_version="v1_daily_tplus1"
         )
     """
-    target_date: Optional[date] = Field(
+    target_date: Optional[date_type] = Field(
         default=None,
         description="予測対象日（Noneの場合は明日）"
     )
@@ -36,6 +36,7 @@ class DailyForecastRequest(BaseModel):
     
     model_config = ConfigDict(
         frozen=True,  # イミュータブル
+        protected_namespaces=(),  # model_ プレフィックスを許可
         json_schema_extra={
             "example": {
                 "target_date": "2025-01-22",
@@ -52,7 +53,7 @@ class PredictionResult(BaseModel):
     機械学習モデルによる日次予測値と信頼区間を表現します。
     
     Attributes:
-        date: 予測対象日
+        prediction_date: 予測対象日
         y_hat: 予測値（point forecast）- 搬入量トン数
         y_lo: 信頼区間の下限（lower bound）
         y_hi: 信頼区間の上限（upper bound）
@@ -62,7 +63,7 @@ class PredictionResult(BaseModel):
         - y_lo, y_hi は信頼区間（例: 95%信頼区間）
         - model_version でモデルのトラッキングが可能
     """
-    date: date = Field(description="予測対象日")
+    prediction_date: date_type = Field(description="予測対象日")
     y_hat: float = Field(description="予測値（搬入量トン数）", ge=0)
     y_lo: Optional[float] = Field(
         default=None,
@@ -81,9 +82,10 @@ class PredictionResult(BaseModel):
     
     model_config = ConfigDict(
         frozen=True,  # イミュータブル
+        protected_namespaces=(),  # model_ プレフィックスを許可
         json_schema_extra={
             "example": {
-                "date": "2025-01-22",
+                "prediction_date": "2025-01-22",
                 "y_hat": 91384.19,
                 "y_lo": 80155.54,
                 "y_hi": 102612.84,
@@ -119,7 +121,7 @@ class PredictionOutput(BaseModel):
                 "csv_path": "/backend/output/tplus1_pred_20251215_142253.csv",
                 "predictions": [
                     {
-                        "date": "2025-01-22",
+                        "prediction_date": "2025-01-22",
                         "y_hat": 91384.19,
                         "y_lo": 80155.54,
                         "y_hi": 102612.84,
