@@ -22,7 +22,8 @@ import styles from './ReportPage.module.css';
 const LedgerBookPage: React.FC = () => {
     // 帳簿専用の初期設定でuseReportManagerを使用
     const reportManager = useReportManager('ledger_book');
-    const reportBaseProps = reportManager.getReportBaseProps();
+    // useMemoでメモ化されたprops（関数ではなくオブジェクト）
+    const reportBaseProps = reportManager.getReportBaseProps;
 
     return (
         <div className={styles.pageContainer}>

@@ -12,6 +12,7 @@ from sqlalchemy import text
 
 from app.core.domain.entities.customer_churn import LostCustomer
 from backend_shared.application.logging import create_log_context, get_module_logger
+from backend_shared.db.names import SCHEMA_MART, V_CUSTOMER_SALES_DAILY, fq
 
 logger = get_module_logger(__name__)
 
@@ -21,6 +22,7 @@ class CustomerChurnQueryAdapter:
     顧客離脱分析クエリのAdapter（CustomerChurnQueryPort実装）
     
     mart.v_customer_sales_daily を使用して離脱顧客を検索する。
+    backend_shared.db.names の定数を使用。
     """
 
     def __init__(self, db: Session):
@@ -56,7 +58,7 @@ class CustomerChurnQueryAdapter:
             list[LostCustomer]: 離脱顧客のリスト（last_visit_date降順）
         """
         # SQL: previous期間（過去の基準）には存在するがcurrent期間（最新）には存在しない顧客を抽出
-        sql = text("""
+        sql = text(f"""
             WITH prev AS (
                 -- 比較基準期間（previous）の顧客を集計
                 SELECT
@@ -68,14 +70,14 @@ class CustomerChurnQueryAdapter:
                     MAX(customer_name)          AS customer_name,
                     MAX(rep_id)           AS rep_id,
                     MAX(rep_name)         AS rep_name
-                FROM mart.v_customer_sales_daily
+                FROM {fq(SCHEMA_MART, V_CUSTOMER_SALES_DAILY)}
                 WHERE sales_date BETWEEN :previous_start AND :previous_end
                 GROUP BY customer_id
             ),
             curr AS (
                 -- 対象期間（current）の顧客リスト
                 SELECT DISTINCT customer_id
-                FROM mart.v_customer_sales_daily
+                FROM {fq(SCHEMA_MART, V_CUSTOMER_SALES_DAILY)}
                 WHERE sales_date BETWEEN :current_start AND :current_end
             )
             SELECT

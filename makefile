@@ -1,33 +1,32 @@
 ## =============================================================
-## Makefile : dev / stg / prod / demo 用 docker compose ヘルパ
-## -------------------------------------------------------------
-## ★よく使うターゲット
-##   - make up        ENV=local_dev|vm_stg|vm_prod|local_demo
-##   - make down      ENV=...
-##   - make rebuild   ENV=...
-##   - make logs      ENV=... S=ai_api
-##   - make health    ENV=...
-##   - make backup    ENV=local_dev
-##   - make restore-from-dump ENV=local_dev DUMP=backups/xxx.dump
-##   - make restore-from-sql  ENV=local_demo SQL=backups/xxx.sql
+## Makefile : sanbou_app 全環境統合管理ツール
+## =============================================================
 ##
-## ★コンテナイメージの build & push（Artifact Registry）
-##   - STG:  make publish-stg-images  STG_IMAGE_TAG=stg-YYYYMMDD
-##   - PROD: make publish-prod-images PROD_IMAGE_TAG=prod-YYYYMMDD
-##   - 事前に一度だけ: make gcloud-auth-docker
+## 📚 ドキュメント
+##    MAKEFILE_QUICKREF.md           - クイックリファレンス
+##    docs/infrastructure/MAKEFILE_GUIDE.md - 詳細ガイド
 ##
-## ENV の意味（ざっくり）
-##   - local_dev  : ローカル開発（ホットリロードあり・buildあり）
-##   - local_demo : ローカルのデモ環境（dev とは別 compose）
-##   - vm_stg     : GCP VM ステージング（VPN/Tailscale、Artifact Registry から pull）
-##   - vm_prod    : GCP VM 本番（LB+IAP 経由、Artifact Registry から pull）
-## ============================================================
+## 🚀 よく使うコマンド
+##    make up ENV=local_dev          - 環境起動
+##    make down ENV=local_dev        - 環境停止
+##    make logs ENV=local_dev S=xxx  - ログ確認
+##    make al-up-env ENV=local_dev   - DBマイグレーション
+##    make backup ENV=local_dev      - バックアップ（環境別ユーザー自動対応）
+##    make restore-from-dump ENV=vm_stg DUMP=backups/xxx.dump - リストア（環境別自動対応）
+##
+## 🌍 環境 (ENV)
+##    local_dev  - ローカル開発（自動ビルド）
+##    local_demo - ローカルデモ
+##    vm_stg     - GCP VM ステージング（Artifact Registry）
+##    vm_prod    - GCP VM 本番（Artifact Registry）
+##
+## ⚠️ VM環境での注意
+##    - vm_stg と vm_prod は同時起動不可（ポート80競合）
+##    - VM環境ではローカルでイメージビルド後 pull して使用
+##    - 本番マイグレーション前に必ずバックアップ取得
+##
+## =============================================================
 
-SHELL := /bin/bash
-.ONESHELL:
-.SHELLFLAGS := -eu -o pipefail -c
-
-## -------------------------------------------------------------
 ## グローバル環境変数
 ## -------------------------------------------------------------
 ENV ?= local_dev
@@ -43,6 +42,25 @@ PROGRESS ?= plain
 ##     - 使用する .env ファイル
 ##     - health check URL
 ##     - build 有無
+##
+## ★ nginx 動作確認（HTTP リダイレクト修正後の確認手順）:
+##
+##   【vm_stg での確認】
+##   VM 内で:
+##     curl -I http://localhost/health    # → HTTP/1.1 200 OK
+##     curl -I http://localhost/          # → HTTP/1.1 200 OK, Content-Type: text/html
+##                                        #    ※ Location: https://... が含まれないこと
+##   ローカル PC から (Tailscale 経由):
+##     http://100.119.243.45/             # → React 画面が表示され、https へのリダイレクトなし
+##
+##   【vm_prod での確認】
+##   VM 内で:
+##     curl -I http://localhost/health    # → HTTP/1.1 200 OK
+##     curl -I http://localhost/          # → HTTP/1.1 200 OK, Content-Type: text/html
+##                                        #    ※ Location: https://localhost/ が含まれないこと
+##   GCP LB + IAP 経由:
+##     https://sanbou-app.jp/             # → React 画面が表示されること
+##                                        #    ※ HTTPS は LB 側で終端、VM は HTTP(80) のみ
 ## ============================================================
 ENV_CANON := $(ENV)
 
@@ -110,7 +128,7 @@ COMPOSE_FILE_LIST := $(strip $(subst -f ,,$(COMPOSE_FILES)))
 DC_FULL           := $(DC) $(COMPOSE_ENV_ARGS) -p $(ENV) $(COMPOSE_FILES)
 
 .PHONY: check up down logs ps restart rebuild health config \
-        backup restore-from-dump restore-from-sql
+        backup restore-from-dump restore-from-sql dev-with-nginx
 
 ## ============================================================
 ## 基本操作 (docker compose up / down など)
@@ -124,6 +142,12 @@ check:
 
 up: check
 	@echo "[info] UP (ENV=$(ENV))"
+	@echo "[debug] ENV=$(ENV) ENV_CANON=$(ENV_CANON)"
+	@echo "[debug] COMPOSE_FILES=$(COMPOSE_FILES)"
+	@echo "[debug] ENV_FILE=$(ENV_FILE)"
+	@echo "[debug] COMPOSE_ENV_ARGS=$(COMPOSE_ENV_ARGS)"
+	@echo "[debug] UP_BUILD_FLAGS=$(UP_BUILD_FLAGS)"
+	@echo "[debug] DC_FULL=$(DC_FULL)"
 	DOCKER_BUILDKIT=$(BUILDKIT) BUILDKIT_PROGRESS=$(PROGRESS) \
 	$(DC_FULL) up -d $(UP_BUILD_FLAGS) --remove-orphans
 	@echo "[ok] up done"
@@ -167,24 +191,52 @@ config: check
 	$(DC_FULL) config
 
 ## ============================================================
-## バックアップ / リストア（よく使う最小構成）
+## 開発環境：nginx 付き起動 (本番に近い構成での開発・検証)
+## ============================================================
+## 使い方:
+##   make dev-with-nginx        # nginx 付きで起動
+##   make down ENV=local_dev    # 停止
+##
+## アクセス:
+##   http://localhost:8080      # nginx 経由 (本番と同様のルーティング)
+##   http://localhost:5173      # フロントエンド直接
+##   http://localhost:8001      # ai_api 直接
+##   http://localhost:8002      # core_api 直接
+## ============================================================
+dev-with-nginx:
+	@echo "[info] Starting local_dev with nginx (profile: with-nginx)"
+	@echo "[info] Access via: http://localhost:8080 (nginx)"
+	DOCKER_BUILDKIT=$(BUILDKIT) BUILDKIT_PROGRESS=$(PROGRESS) \
+	docker compose -f docker/docker-compose.dev.yml -p local_dev \
+	  --env-file env/.env.common --env-file env/.env.local_dev \
+	  $(if $(wildcard secrets/.env.local_dev.secrets),--env-file secrets/.env.local_dev.secrets,) \
+	  --profile with-nginx up -d --build --remove-orphans
+	@echo "[ok] Dev environment with nginx started"
+	@echo "[info] Check health: curl http://localhost:8080/health"
+
+## ============================================================
+## バックアップ / リストア（環境別自動対応）
+## ============================================================
+## 注意:
+##   - POSTGRES_USER と POSTGRES_DB は各環境の .env ファイルから自動取得
+##   - local_dev: myuser / sanbou_dev
+##   - vm_stg: sanbou_app_stg / sanbou_stg
+##   - vm_prod: sanbou_app_prod / sanbou_prod
 ## ============================================================
 DATE        := $(shell date +%F_%H%M%S)
 BACKUP_DIR  ?= /mnt/c/Users/synth/Desktop/backups
 PG_SERVICE  ?= db
-PGUSER      ?= myuser
-# デフォルト: sanbou_dev（必要に応じて PGDB=... で上書き）
-PGDB        ?= sanbou_dev
 
 backup:
 	@echo "[info] logical backup (pg_dump) ENV=$(ENV)"
 	@mkdir -p "$(BACKUP_DIR)"
-	$(DC_FULL) exec -T $(PG_SERVICE) pg_dump -U $(PGUSER) -d $(PGDB) \
-	  --format=custom --file=/tmp/$(PGDB).dump
-	$(DC_FULL) cp $(PG_SERVICE):/tmp/$(PGDB).dump \
-	  "$(BACKUP_DIR)/$(PGDB)_$(ENV)_$(DATE).dump"
-	@$(DC_FULL) exec -T $(PG_SERVICE) rm -f /tmp/$(PGDB).dump || true
-	@echo "[ok] backup -> $(BACKUP_DIR)/$(PGDB)_$(ENV)_$(DATE).dump"
+	$(DC_FULL) exec -T $(PG_SERVICE) sh -c '\
+	  pg_dump -U "$$POSTGRES_USER" -d "$${POSTGRES_DB:-postgres}" \
+	    --format=custom --file=/tmp/backup.dump'
+	$(DC_FULL) cp $(PG_SERVICE):/tmp/backup.dump \
+	  "$(BACKUP_DIR)/$(ENV)_$(DATE).dump"
+	@$(DC_FULL) exec -T $(PG_SERVICE) rm -f /tmp/backup.dump || true
+	@echo "[ok] backup -> $(BACKUP_DIR)/$(ENV)_$(DATE).dump"
 
 .PHONY: restore-from-dump
 DUMP ?= backups/sanbou_dev_2025-12-03.dump
@@ -193,12 +245,13 @@ restore-from-dump: check
 	@if [ ! -f "$(DUMP)" ]; then \
 	  echo "[error] dump file not found: $(DUMP)"; exit 1; \
 	fi
-	@echo "[info] Restoring $(DUMP) into DB=$(PGDB) (ENV=$(ENV))"
+	@echo "[info] Restoring $(DUMP) (ENV=$(ENV))"
+	@echo "[info] Using container's POSTGRES_USER and POSTGRES_DB environment variables"
 	$(DC_FULL) cp "$(DUMP)" $(PG_SERVICE):/tmp/restore.dump
-	$(DC_FULL) exec -T $(PG_SERVICE) bash -lc '\
-	  dropdb  -U $(PGUSER) --if-exists --force $(PGDB) && \
-	  createdb -U $(PGUSER) $(PGDB) && \
-	  pg_restore -U $(PGUSER) -d $(PGDB) --no-owner --no-acl /tmp/restore.dump \
+	$(DC_FULL) exec -T $(PG_SERVICE) sh -c '\
+	  dropdb  -U "$$POSTGRES_USER" --if-exists --force "$${POSTGRES_DB:-postgres}" && \
+	  createdb -U "$$POSTGRES_USER" "$${POSTGRES_DB:-postgres}" && \
+	  pg_restore -U "$$POSTGRES_USER" -d "$${POSTGRES_DB:-postgres}" --no-owner --no-acl /tmp/restore.dump \
 	'
 	@$(DC_FULL) exec -T $(PG_SERVICE) rm -f /tmp/restore.dump || true
 	@echo "[ok] restore-from-dump completed"
@@ -221,18 +274,57 @@ restore-from-sql: check
 	@if [ ! -f "$(SQL)" ]; then \
 	  echo "[error] SQL file not found: $(SQL)"; exit 1; \
 	fi
-	@echo "[info] Restoring SQL $(SQL) into DB=$(PGDB) (ENV=$(ENV))"
-	@cat "$(SQL)" | $(DC_FULL) exec -T $(PG_SERVICE) \
-	  psql -U $(PGUSER) -d $(PGDB)
+	@echo "[info] Restoring SQL $(SQL) (ENV=$(ENV))"
+	@echo "[info] Using container's POSTGRES_USER and POSTGRES_DB environment variables"
+	@cat "$(SQL)" | $(DC_FULL) exec -T $(PG_SERVICE) sh -c '\
+	  psql -U "$$POSTGRES_USER" -d "$${POSTGRES_DB:-postgres}"'
 	@echo "[ok] restore-from-sql completed"
+
+## ============================================================
+## DB Bootstrap: Roles & Permissions (冪等セットアップ)
+## ============================================================
+## 目的:
+##   - app_readonly ロールと基本権限を冪等的にセットアップ
+##   - Alembic マイグレーション実行前に毎回実行可能（冪等なので安全）
+##
+## 使い方:
+##   make db-bootstrap-roles-env ENV=local_dev
+##   make db-bootstrap-roles-env ENV=vm_stg
+##   make db-bootstrap-roles-env ENV=vm_prod
+##
+## 注意:
+##   - 対象ENVは先に `make up ENV=...` で起動しておくこと
+##   - VM上で実行する場合、DBコンテナ内の環境変数を使用するため
+##     ホスト側の環境変数には依存しない
+## ============================================================
+.PHONY: db-bootstrap-roles-env
+
+BOOTSTRAP_ROLES_SQL ?= scripts/db/bootstrap_roles.sql
+
+db-bootstrap-roles-env: check
+	@echo "[info] Bootstrap DB roles and permissions (ENV=$(ENV))"
+	@if [ ! -f "$(BOOTSTRAP_ROLES_SQL)" ]; then \
+	  echo "[error] $(BOOTSTRAP_ROLES_SQL) not found"; exit 1; \
+	fi
+	@echo "[info] Copying SQL to container..."
+	$(DC_FULL) cp $(BOOTSTRAP_ROLES_SQL) $(PG_SERVICE):/tmp/bootstrap_roles.sql
+	@echo "[info] Executing bootstrap SQL..."
+	$(DC_FULL) exec -T $(PG_SERVICE) sh -c '\
+	  psql -U "$$POSTGRES_USER" -d "$${POSTGRES_DB:-postgres}" \
+	       -v ON_ERROR_STOP=0 \
+	       -f /tmp/bootstrap_roles.sql'
+	@echo "[info] Cleaning up temporary file..."
+	-$(DC_FULL) exec -T $(PG_SERVICE) rm -f /tmp/bootstrap_roles.sql
+	@echo "[ok] db-bootstrap-roles-env completed"
 
 ## ============================================================
 ## Alembic（開発環境 local_dev 前提）
 ## ============================================================
 .PHONY: al-rev al-rev-auto al-up al-down al-cur al-hist al-heads al-stamp \
-        al-dump-schema-current al-init-from-schema
+        al-dump-schema-current al-init-from-schema \
+        al-up-env al-down-env al-cur-env al-hist-env al-heads-env al-stamp-env
 
-# Alembic は基本 local_dev で実行する想定
+# Alembic は基本 local_dev で実行する想定（従来どおり固定）
 ALEMBIC_DC := docker compose -f docker/docker-compose.dev.yml -p local_dev
 ALEMBIC    := $(ALEMBIC_DC) exec core_api alembic -c /backend/migrations/alembic.ini
 
@@ -248,6 +340,9 @@ al-rev-auto:
 	$(ALEMBIC) revision --autogenerate -m "$(MSG)" --rev-id $(REV_ID)
 
 al-up:
+	@echo "[info] Running DB bootstrap before Alembic migration (local_dev)..."
+	@$(MAKE) db-bootstrap-roles-env ENV=local_dev
+	@echo "[info] Starting Alembic migration..."
 	$(ALEMBIC) upgrade head
 
 al-down:
@@ -267,8 +362,43 @@ al-heads:
 al-stamp:
 	$(ALEMBIC) stamp $(REV)
 
+## ------------------------------------------------------------
+## Alembic（ENVに追従して適用する版：vm_stg / vm_prod でも使える）
+## ※ migrations_v2 を使用（legacy migrations/ は削除済み）
+## 使い方:
+##   make al-cur-env ENV=vm_stg
+##   make al-up-env  ENV=vm_stg
+##   make al-up-env  ENV=vm_prod
+## ------------------------------------------------------------
+ALEMBIC_INI ?= /backend/migrations_v2/alembic.ini
+ALEMBIC_ENV := $(DC_FULL) exec core_api alembic -c $(ALEMBIC_INI)
+
+al-up-env: check
+	@echo "[info] Running DB bootstrap before Alembic migration..."
+	@$(MAKE) db-bootstrap-roles-env ENV=$(ENV)
+	@echo "[info] Starting Alembic migration..."
+	$(ALEMBIC_ENV) upgrade head
+
+al-down-env: check
+	$(ALEMBIC_ENV) downgrade -1
+
+al-cur-env: check
+	$(ALEMBIC_ENV) current
+
+al-hist-env: check
+	$(ALEMBIC_ENV) history
+
+al-heads-env: check
+	$(ALEMBIC_ENV) heads
+
+# 既存 DB に「適用済み印」を付ける（ENV追従）
+# 使い方: make al-stamp-env ENV=vm_prod REV=<HEAD_REVISION>
+al-stamp-env: check
+	$(ALEMBIC_ENV) stamp $(REV)
+
 ## ============================================================
 ## Alembic: Schema Dump & Init (local_dev 前提)
+## ※ migrations_v2 を使用（legacy migrations/ は削除済み）
 ## ============================================================
 al-dump-schema-current:
 	@echo "[info] Dumping current schema to sql_current/schema_head.sql"
@@ -284,6 +414,146 @@ al-init-from-schema:
 	  exec -T db psql -U myuser -d sanbou_dev \
 	  < app/backend/core_api/migrations/alembic/sql_current/schema_head.sql
 	@echo "[ok] Schema initialized. Now run: make al-stamp REV=<HEAD_REVISION>"
+
+## ============================================================
+## Alembic v2: Advanced DB Management (Baseline-first)
+## ============================================================
+## ⚠️ 注意:
+##   - migrations_v2 が標準になりました（legacy migrations/ は削除済み）
+##   - 通常のマイグレーションには al-up-env / al-cur-env などを使用
+##   - このセクションは特殊操作（スナップショット適用など）のみ
+##
+## 新規環境構築（スナップショットから）:
+##   1. make db-apply-snapshot-v2-env ENV=vm_stg
+##   2. make db-bootstrap-roles-env ENV=vm_stg
+##   3. make al-stamp-v2-env ENV=vm_stg REV=0001_baseline
+##   4. make al-up-v2-env ENV=vm_stg
+##
+## 通常のマイグレーション:
+##   make al-up-env ENV=local_dev   # migrations_v2 を使用
+##   make al-cur-env ENV=vm_stg     # migrations_v2 を使用
+##
+## 注意:
+##   - vm_prod の初期化には FORCE=1 が必須（誤操作防止）
+## ============================================================
+
+ALEMBIC_V2_INI ?= /backend/migrations_v2/alembic.ini
+ALEMBIC_V2_ENV := $(DC_FULL) exec core_api alembic -c $(ALEMBIC_V2_INI)
+BASELINE_SQL   := app/backend/core_api/migrations_v2/sql/schema_baseline.sql
+
+.PHONY: al-up-v2-env al-down-v2-env al-cur-v2-env al-hist-v2-env al-heads-v2-env al-stamp-v2-env \
+        db-apply-snapshot-v2-env db-init-from-snapshot-v2-env db-reset-volume-v2-env \
+        al-up-env-legacy al-down-env-legacy al-cur-env-legacy
+
+## v2 Alembic コマンド（後方互換性のため残存、標準コマンドへのエイリアス）
+al-up-v2-env: al-up-env
+	@echo "[非推奨] al-up-v2-env は非推奨です。make al-up-env ENV=$(ENV) を使用してください"
+
+al-down-v2-env: al-down-env
+	@echo "[非推奨] al-down-v2-env は非推奨です。make al-down-env ENV=$(ENV) を使用してください"
+
+al-cur-v2-env: al-cur-env
+	@echo "[非推奨] al-cur-v2-env は非推奨です。make al-cur-env ENV=$(ENV) を使用してください"
+
+al-hist-v2-env: al-hist-env
+	@echo "[非推奨] al-hist-v2-env は非推奨です。make al-hist-env ENV=$(ENV) を使用してください"
+
+al-heads-v2-env: al-heads-env
+	@echo "[非推奨] al-heads-v2-env は非推奨です。make al-heads-env ENV=$(ENV) を使用してください"
+
+al-stamp-v2-env: check
+	@echo "[非推奨] al-stamp-v2-env は非推奨です。make al-stamp-env ENV=$(ENV) REV=$(REV) を使用してください"
+	@if [ -z "$(REV)" ]; then \
+	  echo "[error] REV is required. Usage: make al-stamp-env ENV=$(ENV) REV=0001_baseline"; \
+	  exit 1; \
+	fi
+	$(ALEMBIC_ENV) stamp $(REV)
+	@echo "[ok] Stamped $(ENV) database with revision $(REV)"
+
+## スナップショット適用（ENV追従、危険操作ガード付き）
+db-apply-snapshot-v2-env: check
+	@if [ "$(ENV_CANON)" = "vm_prod" ] && [ "$(FORCE)" != "1" ]; then \
+	  echo "[error] ❌ vm_prod への snapshot 適用には FORCE=1 が必須です"; \
+	  echo "[error]    例: make db-apply-snapshot-v2-env ENV=vm_prod FORCE=1"; \
+	  exit 1; \
+	fi
+	@if [ ! -f "$(BASELINE_SQL)" ]; then \
+	  echo "[error] ❌ Baseline SQL not found: $(BASELINE_SQL)"; \
+	  echo "[error]    Run: ./scripts/db/export_schema_baseline_local_dev.sh"; \
+	  exit 1; \
+	fi
+	@echo "[info] Applying schema baseline to $(ENV) ($(ENV_CANON))..."
+	@echo "[info] Copying SQL to container..."
+	$(DC_FULL) cp $(BASELINE_SQL) db:/tmp/schema_baseline.sql
+	@echo "[info] Executing baseline SQL..."
+	$(DC_FULL) exec -T db sh -c '\
+	  psql -U "$$POSTGRES_USER" -d "$${POSTGRES_DB:-postgres}" \
+	       -v ON_ERROR_STOP=1 \
+	       -f /tmp/schema_baseline.sql'
+	@echo "[info] Cleaning up temporary file..."
+	$(DC_FULL) exec -T db rm -f /tmp/schema_baseline.sql
+	@echo "[ok] Schema baseline applied successfully to $(ENV)"
+
+## まとめターゲット: DB初期化 → snapshot適用 → roles bootstrap → stamp
+db-init-from-snapshot-v2-env: check
+	@if [ "$(ENV_CANON)" = "vm_prod" ] && [ "$(FORCE)" != "1" ]; then \
+	  echo "[error] ❌ vm_prod の初期化には FORCE=1 が必須です"; \
+	  echo "[error]    例: make db-init-from-snapshot-v2-env ENV=vm_prod FORCE=1"; \
+	  exit 1; \
+	fi
+	@echo "[info] ========================================"
+	@echo "[info] DB初期化フロー開始 (ENV=$(ENV))"
+	@echo "[info] ========================================"
+	@echo "[info] Step 1/5: 環境停止..."
+	@$(MAKE) down ENV=$(ENV)
+	@echo "[info] Step 2/5: DBボリューム削除..."
+	@$(MAKE) db-reset-volume-v2-env ENV=$(ENV) FORCE=$(FORCE)
+	@echo "[info] Step 3/5: 環境起動..."
+	@$(MAKE) up ENV=$(ENV)
+	@echo "[info] Step 4/5: スナップショット適用..."
+	@$(MAKE) db-apply-snapshot-v2-env ENV=$(ENV) FORCE=$(FORCE)
+	@echo "[info] Step 5/5: Roles bootstrap..."
+	@$(MAKE) db-bootstrap-roles-env ENV=$(ENV)
+	@echo "[ok] ========================================"
+	@echo "[ok] DB初期化完了。次のコマンドを実行してください:"
+	@echo "[ok]   make al-stamp-v2-env ENV=$(ENV) REV=0001_baseline"
+	@echo "[ok]   make al-up-v2-env ENV=$(ENV)"
+	@echo "[ok] ========================================"
+
+## 危険操作: DBボリューム削除（vm_prodはFORCE必須）
+db-reset-volume-v2-env:
+	@if [ "$(ENV_CANON)" = "vm_prod" ] && [ "$(FORCE)" != "1" ]; then \
+	  echo "[error] ❌ vm_prod のボリューム削除には FORCE=1 が必須です"; \
+	  echo "[error]    例: make db-reset-volume-v2-env ENV=vm_prod FORCE=1"; \
+	  exit 1; \
+	fi
+	@echo "[warning] ⚠️  Removing postgres volume for $(ENV)..."
+	docker volume rm $(ENV)_postgres_data || true
+	@echo "[ok] Volume removed (if it existed)"
+
+## ============================================================
+## Legacy Alembic Commands（削除済み migrations/ への参照）
+## ============================================================
+## 注意:
+##   - legacy migrations/ フォルダは完全に削除されました
+##   - これらのコマンドはエラーメッセージを表示するのみです
+##   - 標準コマンド（al-*-env）が migrations_v2 を使用します
+## ============================================================
+
+al-up-env-legacy:
+	@echo "❌ [ERROR] legacy migrations/ フォルダは削除されました" && \
+	echo "   migrations_v2 を使用してください: make al-up-env ENV=$(ENV)" && \
+	exit 1
+
+al-down-env-legacy:
+	@echo "❌ [ERROR] legacy migrations/ フォルダは削除されました" && \
+	echo "   migrations_v2 を使用してください: make al-down-env ENV=$(ENV)" && \
+	exit 1
+
+al-cur-env-legacy:
+	@echo "❌ [ERROR] legacy migrations/ フォルダは削除されました" && \
+	echo "   migrations_v2 を使用してください: make al-cur-env ENV=$(ENV)" && \
+	exit 1
 
 ## ============================================================
 ## Artifact Registry 設定 (STG / PROD 共通)
@@ -313,6 +583,10 @@ PROD_IMAGE_TAG      ?= prod-latest
 ifdef IMAGE_TAG
   PROD_IMAGE_TAG := $(IMAGE_TAG)
 endif
+
+## STG → PROD 昇格用タグ（デフォルトは stg-latest → prod-latest）
+PROMOTE_SRC_TAG ?= stg-latest
+PROMOTE_DST_TAG ?= prod-latest
 
 ## ------------------------------------------------------------
 ## gcloud 認証（STG / PROD 共通）
@@ -411,3 +685,133 @@ push-prod-images:
 
 publish-prod-images: build-prod-images push-prod-images
 	@echo "[ok] PROD images built & pushed (tag=$(PROD_IMAGE_TAG))"
+
+## ============================================================
+## STG → PROD イメージ昇格（別プロジェクト Artifact Registry コピー）
+##   使い方:
+##     make promote-stg-to-prod PROMOTE_SRC_TAG=stg-20251209 PROMOTE_DST_TAG=prod-20251209
+##   実装:
+##     docker pull (STG) → docker tag (PROD名) → docker push (PROD)
+## ============================================================
+.PHONY: promote-stg-to-prod
+
+promote-stg-to-prod:
+	@echo "[info] Promote images from STG to PROD (docker pull/tag/push)"
+	@echo "[info]   STG:  $(STG_IMAGE_REGISTRY):$(PROMOTE_SRC_TAG)"
+	@echo "[info]   PROD: $(PROD_IMAGE_REGISTRY):$(PROMOTE_DST_TAG)"
+	@for svc in core_api plan_worker ai_api ledger_api rag_api manual_api nginx; do \
+	  SRC_IMG="$(STG_IMAGE_REGISTRY)/$$svc:$(PROMOTE_SRC_TAG)"; \
+	  DST_IMG="$(PROD_IMAGE_REGISTRY)/$$svc:$(PROMOTE_DST_TAG)"; \
+	  echo "  -> copy $$svc: $(PROMOTE_SRC_TAG) -> $(PROMOTE_DST_TAG)"; \
+	  echo "     SRC=$$SRC_IMG"; \
+	  echo "     DST=$$DST_IMG"; \
+	  docker pull $$SRC_IMG; \
+	  docker tag  $$SRC_IMG $$DST_IMG; \
+	  docker push $$DST_IMG; \
+	done
+	@echo "[ok] promoted STG tag '$(PROMOTE_SRC_TAG)' to PROD tag '$(PROMOTE_DST_TAG)' (via docker)"
+
+## ============================================================
+## イメージ存在確認（デバッグ用）
+## ============================================================
+.PHONY: check-stg-images check-prod-images
+
+check-stg-images:
+	@echo "[info] Checking STG images (tag=$(STG_IMAGE_TAG))"
+	@for svc in core_api plan_worker ai_api ledger_api rag_api manual_api nginx; do \
+	  echo "  -> checking $(STG_IMAGE_REGISTRY)/$$svc:$(STG_IMAGE_TAG)"; \
+	  gcloud artifacts docker images list $(STG_REGION)-docker.pkg.dev/$(STG_PROJECT_ID)/$(STG_ARTIFACT_REPO) \
+	    --filter="package=$$svc AND tags:$(STG_IMAGE_TAG)" --format="table(package,tags)" || true; \
+	done
+
+check-prod-images:
+	@echo "[info] Checking PROD images (tag=$(PROD_IMAGE_TAG))"
+	@for svc in core_api plan_worker ai_api ledger_api rag_api manual_api nginx; do \
+	  echo "  -> checking $(PROD_IMAGE_REGISTRY)/$$svc:$(PROD_IMAGE_TAG)"; \
+	  gcloud artifacts docker images list $(PROD_REGION)-docker.pkg.dev/$(PROD_PROJECT_ID)/$(PROD_ARTIFACT_REPO) \
+	    --filter="package=$$svc AND tags:$(PROD_IMAGE_TAG)" --format="table(package,tags)" || true; \
+	done
+
+## ============================================================
+## セキュリティスキャン（Trivy）
+## ============================================================
+.PHONY: scan-images scan-local-images install-trivy security-check \
+        scan-stg-images scan-prod-images
+
+# Trivy インストール確認・インストール
+install-trivy:
+	@echo "=== Checking Trivy installation ==="
+	@if ! command -v trivy &> /dev/null; then \
+	  echo "Trivy not found. Installing..."; \
+	  if [ "$$(uname)" = "Darwin" ]; then \
+	    brew install aquasecurity/trivy/trivy; \
+	  elif [ "$$(uname)" = "Linux" ]; then \
+	    wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-key add -; \
+	    echo "deb https://aquasecurity.github.io/trivy-repo/deb $$(lsb_release -sc) main" | sudo tee -a /etc/apt/sources.list.d/trivy.list; \
+	    sudo apt-get update && sudo apt-get install trivy; \
+	  else \
+	    echo "Unsupported OS. Please install Trivy manually: https://aquasecurity.github.io/trivy/"; \
+	    exit 1; \
+	  fi; \
+	else \
+	  echo "✅ Trivy is already installed ($$(trivy --version))"; \
+	fi
+
+# ローカルビルド済みイメージをスキャン
+scan-local-images: install-trivy
+	@echo "=== Scanning local Docker images for vulnerabilities ==="
+	@SERVICES="frontend core_api ai_api ledger_api rag_api manual_api plan_worker"; \
+	for svc in $$SERVICES; do \
+	  IMAGE_NAME="local_dev-$$svc"; \
+	  if docker images | grep -q "$$IMAGE_NAME"; then \
+	    echo ""; \
+	    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"; \
+	    echo "Scanning: $$IMAGE_NAME"; \
+	    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"; \
+	    trivy image --severity HIGH,CRITICAL --exit-code 0 $$IMAGE_NAME || true; \
+	  else \
+	    echo "⚠️  Image not found: $$IMAGE_NAME (skipping)"; \
+	  fi; \
+	done
+	@echo ""
+	@echo "✅ Scan completed. Review HIGH/CRITICAL vulnerabilities above."
+
+# Artifact Registry のイメージをスキャン（STG）
+scan-stg-images: install-trivy
+	@echo "=== Scanning STG images in Artifact Registry ==="
+	@SERVICES="core_api plan_worker ai_api ledger_api rag_api manual_api nginx"; \
+	for svc in $$SERVICES; do \
+	  IMAGE="$(STG_IMAGE_REGISTRY)/$$svc:$(STG_IMAGE_TAG)"; \
+	  echo ""; \
+	  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"; \
+	  echo "Scanning: $$IMAGE"; \
+	  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"; \
+	  trivy image --severity HIGH,CRITICAL --exit-code 1 $$IMAGE || \
+	    (echo "❌ Vulnerabilities found in $$IMAGE"; exit 1); \
+	done
+	@echo "✅ All STG images passed security scan"
+
+# Artifact Registry のイメージをスキャン（PROD）
+scan-prod-images: install-trivy
+	@echo "=== Scanning PROD images in Artifact Registry ==="
+	@SERVICES="core_api plan_worker ai_api ledger_api rag_api manual_api nginx"; \
+	for svc in $$SERVICES; do \
+	  IMAGE="$(PROD_IMAGE_REGISTRY)/$$svc:$(PROD_IMAGE_TAG)"; \
+	  echo ""; \
+	  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"; \
+	  echo "Scanning: $$IMAGE"; \
+	  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"; \
+	  trivy image --severity HIGH,CRITICAL --exit-code 1 $$IMAGE || \
+	    (echo "❌ Vulnerabilities found in $$IMAGE"; exit 1); \
+	done
+	@echo "✅ All PROD images passed security scan"
+
+# エイリアス（デフォルトはローカルスキャン）
+scan-images: scan-local-images
+
+# CI/CD パイプライン用の総合セキュリティチェック
+security-check: scan-local-images
+	@echo ""
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@echo "✅ Security checks completed successfully"
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"

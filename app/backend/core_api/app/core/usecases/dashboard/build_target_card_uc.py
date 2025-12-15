@@ -22,10 +22,13 @@ from app.core.domain.services import target_card
 logger = get_module_logger(__name__)
 
 # Optional TTL cache for repeated requests
+# キャッシュを一時的に無効化（デバッグ用）
+# 理由: CSV更新後にフロントエンドが古いデータを表示する問題を解決
+# TODO: CSV更新後にキャッシュクリアを自動実行する仕組みを実装後、再度有効化
 try:
     from cachetools import TTLCache
-    _CACHE: TTLCache = TTLCache(maxsize=256, ttl=60)  # 60 seconds TTL
-    logger.info("TTL cache enabled for BuildTargetCardUseCase", extra=create_log_context(operation="init_cache", ttl=60, maxsize=256))
+    _CACHE: TTLCache = None  # TTLCache(maxsize=512, ttl=3600)  # 一時的に無効化
+    logger.info("TTL cache DISABLED for BuildTargetCardUseCase (debugging)", extra=create_log_context(operation="init_cache", cache_enabled=False))
 except ImportError:
     _CACHE = None  # type: ignore
     logger.info("cachetools not installed, running without TTL cache")

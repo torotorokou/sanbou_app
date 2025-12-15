@@ -3,12 +3,15 @@
 ## - Makefile 経由で起動: make up ENV=vm_stg
 ## - 使用する env ファイル: env/.env.common + env/.env.vm_stg + secrets/.env.vm_stg.secrets
 ## - 特徴:
-##   * VPN / Tailscale 経由でのアクセス（IAP なし）
+##   * VPN / Tailscale 経由でのアクセス(IAP なし)
 ##   * AUTH_MODE=vpn_dummy (固定ユーザーでのダミー認証)
-##   * Artifact Registry のイメージを利用（pull のみ、build なし）
-##   * 3層ネットワーク分離（edge/app/data）
+##   * Artifact Registry のイメージを利用(pull のみ、build なし)
+##   * 3層ネットワーク分離(edge/app/data)
 ## - イメージ: asia-northeast1-docker.pkg.dev/honest-sanbou-app-stg/sanbou-app/*:stg-latest
 ## - CI/CD でビルド、本番では pull のみ
+##
+## ★ 重要: 1台の VM で vm_stg / vm_prod を同時起動しないこと
+##   - 80番ポートは両者とも "80:80" を使用するため、片方を down してから起動すること
 ## =============================================================
 
 # =============================================================================
@@ -35,7 +38,7 @@ x-tz-env: &tz-environment
 
 services:
   core_api:
-    image: asia-northeast1-docker.pkg.dev/honest-sanbou-app-stg/sanbou-app/core_api:stg-latest
+    image: ${IMAGE_REGISTRY}/core_api:${IMAGE_TAG}
     networks:
     - app-net
     - data-net
@@ -46,7 +49,7 @@ services:
     - ../env/.env.vm_stg
     - ../secrets/.env.vm_stg.secrets
     volumes:
-    - ../app/backend/core_api/migrations:/backend/migrations:rw
+    - ../app/backend/core_api/migrations_v2:/backend/migrations_v2:rw
     - ../app/config:/backend/config
     environment:
       TZ: Asia/Tokyo
@@ -66,7 +69,7 @@ services:
         max-size: 10m
         max-file: '3'
   plan_worker:
-    image: asia-northeast1-docker.pkg.dev/honest-sanbou-app-stg/sanbou-app/plan_worker:stg-latest
+    image: ${IMAGE_REGISTRY}/plan_worker:${IMAGE_TAG}
     networks:
     - data-net
     depends_on:
@@ -79,7 +82,7 @@ services:
       driver: json-file
       options: *id002
   ai_api:
-    image: asia-northeast1-docker.pkg.dev/honest-sanbou-app-stg/sanbou-app/ai_api:stg-latest
+    image: ${IMAGE_REGISTRY}/ai_api:${IMAGE_TAG}
     networks:
     - app-net
     depends_on:
@@ -103,7 +106,7 @@ services:
       driver: json-file
       options: *id002
   ledger_api:
-    image: asia-northeast1-docker.pkg.dev/honest-sanbou-app-stg/sanbou-app/ledger_api:stg-latest
+    image: ${IMAGE_REGISTRY}/ledger_api:${IMAGE_TAG}
     user: 0:0
     networks:
     - app-net
@@ -131,7 +134,7 @@ services:
       driver: json-file
       options: *id002
   rag_api:
-    image: asia-northeast1-docker.pkg.dev/honest-sanbou-app-stg/sanbou-app/rag_api:stg-latest
+    image: ${IMAGE_REGISTRY}/rag_api:${IMAGE_TAG}
     networks:
     - app-net
     - data-net
@@ -157,7 +160,7 @@ services:
       driver: json-file
       options: *id002
   manual_api:
-    image: asia-northeast1-docker.pkg.dev/honest-sanbou-app-stg/sanbou-app/manual_api:stg-latest
+    image: ${IMAGE_REGISTRY}/manual_api:${IMAGE_TAG}
     networks:
     - app-net
     env_file: *id001
@@ -178,7 +181,11 @@ services:
       driver: json-file
       options: *id002
   nginx:
-    image: asia-northeast1-docker.pkg.dev/honest-sanbou-app-stg/sanbou-app/nginx:stg-latest
+    # ★ 注意: nginx イメージは app/nginx/Dockerfile でビルドされたものを使用
+    #   - ビルド時に stg.conf がイメージにコピー済み
+    #   - volume マウントで実行時に上書き可能
+    #   - HTTP(80) のみで応答、HTTPS リダイレクトなし
+    image: ${IMAGE_REGISTRY}/nginx:${IMAGE_TAG}
     depends_on:
     - core_api
     - ai_api
@@ -196,8 +203,8 @@ services:
     volumes:
     - ../app/nginx/conf.d/default.conf:/etc/nginx/conf.d/default.conf:ro
     - ../app/nginx/conf.d/stg.conf:/etc/nginx/conf.d/stg.conf:ro
-    - ../app/nginx/conf.d/_proxy_common.conf:/etc/nginx/conf.d/_proxy_common.conf:ro
-    - ../app/nginx/conf.d/_proxy_ws.conf:/etc/nginx/conf.d/_proxy_ws.conf:ro
+    - ../app/nginx/conf.d/_proxy_headers_dev_stg.conf:/etc/nginx/conf.d/_proxy_headers_dev_stg.conf:ro
+    - ../app/nginx/conf.d/_security_headers.conf:/etc/nginx/conf.d/_security_headers.conf:ro
     - ../app/nginx/certs:/etc/nginx/certs:ro
     restart: unless-stopped
     healthcheck:

@@ -175,14 +175,15 @@ export const useReportBaseBusiness = (
         // 状態
         validationResults: csvValidation.validationResults,
 
-        // ZIP関連
+        // Excel/PDF関連
         excelUrl: artifact.excelUrl,
         pdfUrl: artifact.pdfUrl,
+        pdfStatus: artifact.pdfStatus,  // 🔄 PDF非同期生成ステータス
         excelFileName: artifact.excelFileName,
         pdfFileName: artifact.pdfFileName,
         hasExcel: Boolean(artifact.excelUrl),
-    hasPdf: Boolean(artifact.pdfUrl),
-    pdfPreviewUrl: artifact.pdfUrl,
+        hasPdf: Boolean(artifact.pdfUrl),
+        pdfPreviewUrl: artifact.pdfUrl,
         reportToken: artifact.reportToken,
         reportDate: artifact.reportDate,
         reportKey: artifact.reportKey,

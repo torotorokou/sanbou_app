@@ -31,6 +31,13 @@ table_name = settings.get_table_name('receive')
 import os
 from functools import lru_cache
 from backend_shared.config.base_settings import BaseAppSettings
+from backend_shared.db.names import (
+    SCHEMA_STG,
+    T_SHOGUN_FLASH_RECEIVE,
+    T_SHOGUN_FLASH_YARD,
+    T_SHOGUN_FLASH_SHIPMENT,
+    schema_qualified,
+)
 
 
 class CoreApiSettings(BaseAppSettings):
@@ -92,9 +99,9 @@ class CoreApiSettings(BaseAppSettings):
     # ========================================
     
     CSV_TABLE_MAPPING: dict[str, str] = {
-        "receive": "stg.shogun_flash_receive",    # 受入一覧
-        "yard": "stg.shogun_flash_yard",          # ヤード一覧
-        "shipment": "stg.shogun_flash_shipment",  # 出荷一覧
+        "receive": schema_qualified(SCHEMA_STG, T_SHOGUN_FLASH_RECEIVE),    # 受入一覧
+        "yard": schema_qualified(SCHEMA_STG, T_SHOGUN_FLASH_YARD),          # ヤード一覧
+        "shipment": schema_qualified(SCHEMA_STG, T_SHOGUN_FLASH_SHIPMENT),  # 出荷一覧
     }
     """
     CSVタイプ → DBテーブル名のマッピング

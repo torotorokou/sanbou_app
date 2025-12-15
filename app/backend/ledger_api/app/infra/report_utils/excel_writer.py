@@ -1,5 +1,6 @@
 from openpyxl import load_workbook
 from io import BytesIO
+import logging
 import pandas as pd
 import numpy as np
 from openpyxl.cell.cell import Cell, MergedCell
@@ -14,6 +15,9 @@ import re
 from backend_shared.application.logging import get_module_logger, create_log_context
 
 logger = get_module_logger(__name__)
+
+# A1形式のセル参照（例: "A1", "BC23"）を判定するためのコンパイル済みパターン
+CELL_REF_PATTERN = re.compile(r"^[A-Za-z]+[0-9]+$")
 
 
 def safe_excel_value(value):
@@ -138,6 +142,8 @@ def normalize_workbook_fonts(wb: Workbook) -> None:
 
 
 def write_dataframe_to_worksheet(df: pd.DataFrame, ws: Worksheet):
+    debug_enabled = logger.isEnabledFor(logging.DEBUG)
+    
     for idx, row in df.iterrows():
         cell_ref = row.get("セル")
         value = safe_excel_value(row.get("値"))
@@ -147,12 +153,31 @@ def write_dataframe_to_worksheet(df: pd.DataFrame, ws: Worksheet):
         if (
             pd.isna(cell_ref)
             or cell_ref_str in ["", "未設定"]
-            or not re.match(r"^[A-Za-z]+[0-9]+$", cell_ref_str)
+            or not CELL_REF_PATTERN.match(cell_ref_str)
         ):
-            logger.info(
-                "セルスキップ",
-                extra=create_log_context(operation="write_dataframe_to_worksheet", row=idx, reason="empty_or_unset")
-            )
+            if debug_enabled:
+                logger.debug(
+                    "セルスキップ",
+                    extra=create_log_context(
+                        operation="write_dataframe_to_worksheet",
+                        row=idx,
+                        reason="empty_or_unset",
+                    ),
+                )
+            continue
+
+        # 値が空（None / NaN / 空文字）の場合は、テンプレのセルをそのまま残す
+        if value is None or value == "" or (isinstance(value, float) and np.isnan(value)):
+            if debug_enabled:
+                logger.debug(
+                    "値が空のためセル書き込みをスキップ",
+                    extra=create_log_context(
+                        operation="write_dataframe_to_worksheet",
+                        row=idx,
+                        cell_ref=cell_ref_str,
+                        reason="empty_value",
+                    ),
+                )
             continue
 
         try:

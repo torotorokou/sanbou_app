@@ -46,6 +46,26 @@ export default defineConfig(({ mode }) => {
                 '@pages': path.resolve(__dirname, 'src/pages'),
             },
         },
+        // ビルド最適化設定
+        build: {
+            // 出力ディレクトリ
+            outDir: 'dist',
+            // ソースマップ（本番では無効化）
+            sourcemap: mode !== 'production',
+            // チャンク分割設定
+            rollupOptions: {
+                output: {
+                    manualChunks: {
+                        // ベンダーライブラリを分割
+                        'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+                        'vendor-antd': ['antd', '@ant-design/icons'],
+                        'vendor-charts': ['recharts'],
+                    },
+                },
+            },
+            // チャンクサイズ警告閾値
+            chunkSizeWarningLimit: 1000,
+        },
         server: {
             host: '0.0.0.0',
             port: DEV_PORT,

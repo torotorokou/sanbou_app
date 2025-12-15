@@ -25,6 +25,8 @@ bounds AS (
 anchor AS (
   SELECT CASE
     -- Current month: use today (or month_end if today exceeds it)
+    -- Note: day_actual_ton_prevは「ddate - 1 day」の実績を参照するため、
+    --       今日の行を取得すれば「今日の目標 vs 昨日の実績」が得られる
     WHEN date_trunc('month', CAST(:req AS DATE)) = date_trunc('month', (SELECT today FROM today))
       THEN LEAST((SELECT today FROM today), (SELECT month_end FROM bounds))
     -- Past month: use month_end
@@ -33,7 +35,7 @@ anchor AS (
     -- Future month: use first business day (or month_start if none)
     ELSE COALESCE(
       (SELECT MIN(v.ddate)::date
-       FROM mart.mv_target_card_per_day v
+       FROM mart.mv_receive_daily v
        WHERE v.ddate BETWEEN (SELECT month_start FROM bounds) AND (SELECT month_end FROM bounds)
          AND v.is_business = true),
       (SELECT month_start FROM bounds)
@@ -44,6 +46,8 @@ base AS (
   SELECT
     v.ddate,
     v.day_target_ton, v.week_target_ton, v.month_target_ton,
+    -- day_actual_ton_prevは「ddate - 1 day」の実績を参照
+    -- 例: ddate=2025-12-12の場合、day_actual_ton_prev=2025-12-11の実績
     v.day_actual_ton_prev, v.week_actual_ton, v.month_actual_ton,
     v.iso_year, v.iso_week, v.iso_dow, v.day_type, v.is_business
   FROM mart.mv_target_card_per_day v
@@ -110,14 +114,14 @@ week_target_total AS (
 -- 選択月内のみを対象とする
 month_actual_to_date AS (
   SELECT COALESCE(SUM(r.receive_net_ton), 0)::numeric AS month_actual_to_date_ton
-  FROM mart.v_receive_daily r
+  FROM mart.mv_receive_daily r
   WHERE r.ddate BETWEEN (SELECT month_start FROM bounds) AND (SELECT cumulative_end_date FROM cumulative_end_date)
 ),
 -- Calculate week cumulative actual (sum of receive_net_ton from week_start to cumulative_end_date, same iso_year/iso_week)
 -- 選択月内かつ同一週のみを対象とする
 week_actual_to_date AS (
   SELECT COALESCE(SUM(r.receive_net_ton), 0)::numeric AS week_actual_to_date_ton
-  FROM mart.v_receive_daily r, base b
+  FROM mart.mv_receive_daily r, base b
   WHERE r.iso_year = b.iso_year
     AND r.iso_week = b.iso_week
     AND r.ddate >= (SELECT month_start FROM bounds)

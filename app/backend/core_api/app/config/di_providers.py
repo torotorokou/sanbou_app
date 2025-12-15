@@ -16,6 +16,11 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from backend_shared.application.logging import get_module_logger, create_log_context
+from backend_shared.db.names import (
+    T_SHOGUN_FINAL_RECEIVE,
+    T_SHOGUN_FINAL_YARD,
+    T_SHOGUN_FINAL_SHIPMENT,
+)
 from app.deps import get_db
 from app.infra.adapters.upload.shogun_csv_repository import ShogunCsvRepository
 from app.infra.adapters.upload.raw_data_repository import RawDataRepository
@@ -73,9 +78,9 @@ def get_repo_stg_final(db: Session = Depends(get_db)) -> ShogunCsvRepository:
         db,
         schema="stg",
         table_map={
-            "receive": "shogun_final_receive",
-            "yard": "shogun_final_yard",
-            "shipment": "shogun_final_shipment",
+            "receive": T_SHOGUN_FINAL_RECEIVE,
+            "yard": T_SHOGUN_FINAL_YARD,
+            "shipment": T_SHOGUN_FINAL_SHIPMENT,
         },
     )
 
@@ -88,9 +93,9 @@ def get_repo_raw_final(db: Session = Depends(get_db)) -> ShogunCsvRepository:
         db,
         schema="raw",
         table_map={
-            "receive": "shogun_final_receive",
-            "yard": "shogun_final_yard",
-            "shipment": "shogun_final_shipment",
+            "receive": T_SHOGUN_FINAL_RECEIVE,
+            "yard": T_SHOGUN_FINAL_YARD,
+            "shipment": T_SHOGUN_FINAL_SHIPMENT,
         },
     )
 
@@ -477,10 +482,11 @@ def get_upload_calendar_detail_uc(
 
 
 def get_delete_upload_scope_uc(
-    repo: RawDataRepository = Depends(get_raw_data_repo)
+    repo: RawDataRepository = Depends(get_raw_data_repo),
+    db: Session = Depends(get_db)
 ) -> DeleteUploadScopeUseCase:
-    """DeleteUploadScopeUseCase提供"""
-    return DeleteUploadScopeUseCase(query=repo)
+    """DeleteUploadScopeUseCase提供（MV更新機能付き）"""
+    return DeleteUploadScopeUseCase(query=repo, db=db)
 
 
 # ========================================================================

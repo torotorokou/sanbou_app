@@ -9,6 +9,7 @@ from . import (
     balance_sheet,
     factory_report,
     management_sheet,
+    pdf_status,
 )
 
 # 帳票系APIの統合ルーター
@@ -35,6 +36,11 @@ reports_router.include_router(
 
 reports_router.include_router(
     management_sheet.router, prefix="/management_sheet", tags=["Management Sheet"]
+)
+
+# PDFステータス確認API（Excel同期+PDF非同期構成のポーリング用）
+reports_router.include_router(
+    pdf_status.router, prefix="", tags=["PDF Status"]
 )
 
 # 必要に応じて他の帳票エンドポイントも追加

@@ -1,4 +1,4 @@
-from app.core.usecases.reports.factory_report import process as process_fact
+from app.core.usecases.reports.factory_report_processor import process as process_fact
 from app.infra.report_utils.dataframe.operations import apply_summary_all_items
 
 

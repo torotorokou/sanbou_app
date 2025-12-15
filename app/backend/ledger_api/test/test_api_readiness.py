@@ -23,18 +23,15 @@ def test_imports():
     print()
     
     test_cases = [
-        ("api.endpoints.block_unit_price_interactive", "block_unit_price_interactive エンドポイント"),
-        ("api.endpoints.reports.average_sheet", "average_sheet エンドポイント"),
-        ("api.endpoints.reports.balance_sheet", "balance_sheet エンドポイント"),
-        ("api.endpoints.reports.factory_report", "factory_report エンドポイント"),
-        ("api.endpoints.reports.management_sheet", "management_sheet エンドポイント"),
-        ("api.endpoints.report_artifacts", "report_artifacts エンドポイント"),
-        ("api.services.report.report_processing_service", "ReportProcessingService"),
-        ("api.services.report.interactive_report_processing_service", "InteractiveReportProcessingService"),
-        ("api.services.report.concrete_generators", "レポート生成器"),
-        ("api.services.report.ledger.interactive", "インタラクティブレポート"),
-        ("api.services.csv_formatter_service", "CSV フォーマッター"),
-        ("api.services.csv_validator_facade", "CSV バリデーター"),
+        ("api.routers.reports.average_sheet", "average_sheet エンドポイント"),
+        ("api.routers.reports.balance_sheet", "balance_sheet エンドポイント"),
+        ("api.routers.reports.factory_report", "factory_report エンドポイント"),
+        ("api.routers.reports.management_sheet", "management_sheet エンドポイント"),
+        ("api.routers.reports.block_unit_price_interactive", "block_unit_price_interactive エンドポイント"),
+        ("api.routers.report_artifacts", "report_artifacts エンドポイント"),
+        ("core.usecases.reports", "レポートUseCases"),
+        ("core.usecases.reports.processors", "レポート処理サービス"),
+        ("infra.adapters.csv", "CSV アダプター"),
     ]
     
     success_count = 0
@@ -82,8 +79,27 @@ def test_class_instantiation():
     success_count = 0
     failed_tests = []
     
+    # UseCaseクラスのテスト（推奨アーキテクチャ）
     try:
-        from app.api.services.report.core.concrete_generators import (
+        from app.core.usecases.reports import (
+            GenerateFactoryReportUseCase,
+            GenerateBalanceSheetUseCase,
+            GenerateAverageSheetUseCase,
+            GenerateManagementSheetUseCase,
+        )
+        # UseCaseはDI経由でインスタンス化されるため、クラス存在確認のみ
+        test_cases.extend([
+            (lambda: GenerateFactoryReportUseCase, "GenerateFactoryReportUseCase (class check)"),
+            (lambda: GenerateBalanceSheetUseCase, "GenerateBalanceSheetUseCase (class check)"),
+            (lambda: GenerateAverageSheetUseCase, "GenerateAverageSheetUseCase (class check)"),
+            (lambda: GenerateManagementSheetUseCase, "GenerateManagementSheetUseCase (class check)"),
+        ])
+    except ImportError as e:
+        print(f"⚠️  UseCaseのインポートに失敗: {e}")
+    
+    # 旧版Generatorクラス（互換性維持用、将来的に廃止予定）
+    try:
+        from app.core.usecases.reports.concrete_generators import (
             AverageSheetGenerator,
             BalanceSheetGenerator,
             FactoryReportGenerator,
@@ -91,16 +107,16 @@ def test_class_instantiation():
         )
         # 各生成器は report_key と files を必要とする
         test_cases.extend([
-            (lambda: AverageSheetGenerator(report_key="average_sheet", files={}), "AverageSheetGenerator"),
-            (lambda: BalanceSheetGenerator(report_key="balance_sheet", files={}), "BalanceSheetGenerator"),
-            (lambda: FactoryReportGenerator(report_key="factory_report", files={}), "FactoryReportGenerator"),
-            (lambda: ManagementSheetGenerator(report_key="management_sheet", files={}), "ManagementSheetGenerator"),
+            (lambda: AverageSheetGenerator(report_key="average_sheet", files={}), "AverageSheetGenerator (legacy)"),
+            (lambda: BalanceSheetGenerator(report_key="balance_sheet", files={}), "BalanceSheetGenerator (legacy)"),
+            (lambda: FactoryReportGenerator(report_key="factory_report", files={}), "FactoryReportGenerator (legacy)"),
+            (lambda: ManagementSheetGenerator(report_key="management_sheet", files={}), "ManagementSheetGenerator (legacy)"),
         ])
     except ImportError as e:
-        print(f"⚠️  生成器のインポートに失敗: {e}")
+        print(f"⚠️  旧版生成器のインポートに失敗: {e}")
     
     try:
-        from app.api.services.report.ledger.interactive import BlockUnitPriceInteractive
+        from app.core.usecases.reports.interactive import BlockUnitPriceInteractive
         test_cases.append(
             (lambda: BlockUnitPriceInteractive(), "BlockUnitPriceInteractive")
         )
@@ -108,7 +124,7 @@ def test_class_instantiation():
         print(f"⚠️  BlockUnitPriceInteractive のインポートに失敗: {e}")
     
     try:
-        from app.api.services.report.core.processors import ReportProcessingService
+        from app.core.usecases.reports.processors import ReportProcessingService
         test_cases.append(
             (lambda: ReportProcessingService(), "ReportProcessingService")
         )
@@ -116,7 +132,7 @@ def test_class_instantiation():
         print(f"⚠️  ReportProcessingService のインポートに失敗: {e}")
     
     try:
-        from app.api.services.report.core.processors import InteractiveReportProcessingService
+        from app.core.usecases.reports.processors import InteractiveReportProcessingService
         test_cases.append(
             (lambda: InteractiveReportProcessingService(), "InteractiveReportProcessingService")
         )

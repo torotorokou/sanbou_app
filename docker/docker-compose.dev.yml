@@ -55,10 +55,11 @@ services:
       - ../app/backend/backend_shared:/opt/backend_shared:rw
       - ../app/config:/backend/config
       - ../secrets:/backend/secrets:ro
-      # - ~/.config/gcloud:/home/appuser/.config/gcloud
     environment:
       - WATCHFILES_FORCE_POLLING=1
       - TZ=Asia/Tokyo
+      # Security: Use service account key instead of mounting ~/.config/gcloud
+      - GOOGLE_APPLICATION_CREDENTIALS=/backend/secrets/gcs-key-dev.json
     depends_on:
       db:
         condition: service_healthy
@@ -77,7 +78,7 @@ services:
       - ../env/.env.common
       - ../env/.env.local_dev
       - ../secrets/.env.local_dev.secrets
-    user: "0:0"
+    # Security: Run as non-root user (appuser defined in Dockerfile)
     command: >
       uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
       --reload-dir /backend/app
@@ -88,7 +89,7 @@ services:
       - ../app/backend/ledger_api/app:/backend/app:rw
       - ../app/backend/backend_shared:/opt/backend_shared:rw
       - ../app/config:/backend/config
-      # - ../secrets:/backend/secrets:ro
+      - ../secrets:/backend/secrets:ro
       # - ~/.config/gcloud:/home/appuser/.config/gcloud
     environment:
       WATCHFILES_FORCE_POLLING: "1"
@@ -120,14 +121,19 @@ services:
       - "${DEV_CORE_API_PORT:-8003}:8000"
     volumes:
       - ../app/backend/core_api/app:/backend/app:rw
-      - ../app/backend/core_api/migrations:/backend/migrations:rw
+      - ../app/backend/core_api/migrations_v2:/backend/migrations_v2:rw
+      - ../app/backend/core_api/migrations_legacy:/backend/migrations_legacy:rw
       - ../app/backend/backend_shared:/opt/backend_shared:rw
       - ../app/config:/backend/config
       - ../secrets:/backend/secrets:ro
-      - ~/.config/gcloud:/home/appuser/.config/gcloud
     environment:
       - WATCHFILES_FORCE_POLLING=1
       - TZ=Asia/Tokyo
+      # Security: Use service account key instead of mounting ~/.config/gcloud
+      - GOOGLE_APPLICATION_CREDENTIALS=/backend/secrets/gcs-key-dev.json
+      # Alembic: DB connection string (uses myuser for DDL operations)
+      # PASSWORD MOVED TO: secrets/.env.local_dev.secrets (DB_ALEMBIC_PASSWORD)
+      - ALEMBIC_DB_USER=myuser
     depends_on:
       db:
         condition: service_healthy
@@ -151,7 +157,7 @@ services:
       - ../app/backend/plan_worker/app:/backend/app:rw
       - ../app/backend/plan_worker/test:/backend/test:rw
       - ../app/backend/backend_shared:/opt/backend_shared:rw
-      # - ../secrets:/backend/secrets:ro
+      - ../secrets:/backend/secrets:ro
       # - ~/.config/gcloud:/home/appuser/.config/gcloud
     environment:
       WATCHFILES_FORCE_POLLING: "1"
@@ -185,7 +191,6 @@ services:
       - ../secrets:/backend/secrets:ro
       # GCS からダウンロードしたデータを書き込みたいので dev では read-write にする
       - ../app/backend/rag_api/local_data/master:/backend/local_data/master
-      - ~/.config/gcloud:/home/appuser/.config/gcloud
     environment:
       CATEGORY_QUESTION_TEMPLATES_WITH_TAGS: /backend/config/category_question_templates_with_tags.yaml
       DEV_RELOAD: "1"
@@ -193,6 +198,8 @@ services:
       RAG_GCS_URI: gs://sanbouapp-dev/rag_api/object_haikibutu/master/
       WATCHFILES_FORCE_POLLING: "1"
       TZ: "Asia/Tokyo"
+      # Security: Use service account key instead of mounting ~/.config/gcloud
+      GOOGLE_APPLICATION_CREDENTIALS: /backend/secrets/gcs-key-dev.json
     depends_on:
       db:
         condition: service_healthy
@@ -218,12 +225,46 @@ services:
       - ../app/backend/manual_api/app:/backend/app:rw
       - ../app/backend/backend_shared:/opt/backend_shared:rw
       - ../secrets:/backend/secrets:ro
-      - ~/.config/gcloud:/home/appuser/.config/gcloud
     environment:
       MANUAL_FRONTEND_BASE_URL: ${MANUAL_FRONTEND_BASE_URL:-http://localhost:5173}
       TZ: "Asia/Tokyo"
+      # Security: Use service account key instead of mounting ~/.config/gcloud
+      GOOGLE_APPLICATION_CREDENTIALS: /backend/secrets/gcs-key-dev.json
     networks:
       - app-net
+
+  # ===========================================================================
+  # Nginx (Optional - for testing prod-like routing)
+  # ===========================================================================
+  # 使い方: docker compose -f docker/docker-compose.dev.yml -p local_dev up -d nginx
+  # アクセス: http://localhost:8080
+  nginx:
+    image: nginx:1.27-alpine
+    depends_on:
+      - core_api
+      - ai_api
+      - ledger_api
+      - rag_api
+      - manual_api
+      - frontend
+    ports:
+      - "${DEV_NGINX_PORT:-8080}:80"
+    volumes:
+      - ../app/nginx/conf.d/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ../app/nginx/conf.d/dev.conf:/etc/nginx/conf.d/dev.conf:ro
+      - ../app/nginx/conf.d/_proxy_headers_dev_stg.conf:/etc/nginx/conf.d/_proxy_headers_dev_stg.conf:ro
+      - ../app/nginx/conf.d/_security_headers.conf:/etc/nginx/conf.d/_security_headers.conf:ro
+    environment:
+      - TZ=Asia/Tokyo
+    networks:
+      - app-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    profiles:
+      - with-nginx
 
   # ===========================================================================
   # PostgreSQL Database

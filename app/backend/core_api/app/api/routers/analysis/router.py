@@ -9,6 +9,7 @@ from sqlalchemy import text
 import httpx
 
 from backend_shared.application.logging import create_log_context, get_module_logger
+from backend_shared.db.names import SCHEMA_REF, V_SALES_REP, fq
 from app.api.schemas import (
     CustomerChurnAnalyzeRequest,
     CustomerChurnAnalyzeResponse,
@@ -44,7 +45,7 @@ def get_sales_reps(db: Session = Depends(get_db)):
     """
     logger.info("Fetching sales rep list")
     
-    sql = text("SELECT rep_id, rep_name FROM ref.v_sales_rep ORDER BY rep_id")
+    sql = text(f"SELECT rep_id, rep_name FROM {fq(SCHEMA_REF, V_SALES_REP)} ORDER BY rep_id")
     result = db.execute(sql)
     rows = result.fetchall()
     

@@ -30,6 +30,8 @@ export const UploadDetailModal: React.FC<UploadDetailModalProps> = ({
   onDelete,
 }) => {
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  // 削除済みIDのセット（削除後に即座にボタンを無効化するため）
+  const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set());
 
   const handleDelete = async (upload: UploadCalendarItem) => {
     const confirmed = window.confirm(`データ数: ${upload.rowCount.toLocaleString()}行 を削除しますか？`);
@@ -47,6 +49,10 @@ export const UploadDetailModal: React.FC<UploadDetailModalProps> = ({
         date: upload.date,
         csvKind: upload.kind,
       });
+      
+      // 削除成功したらIDをセットに追加（即座にボタンを無効化）
+      setDeletedIds(prev => new Set(prev).add(upload.id));
+      
       notifySuccess('削除完了', '削除しました');
       // 削除後、アップロードが0件になった場合はモーダルを閉じる
       if (uploads.length <= 1) {
@@ -108,17 +114,21 @@ export const UploadDetailModal: React.FC<UploadDetailModalProps> = ({
       title: '操作',
       key: 'action',
       width: '25%',
-      render: (_: unknown, record: UploadCalendarItem) => (
-        <Button
-          type="text"
-          danger
-          icon={<DeleteOutlined />}
-          loading={deletingId === record.id}
-          onClick={() => void handleDelete(record)}
-        >
-          削除
-        </Button>
-      ),
+      render: (_: unknown, record: UploadCalendarItem) => {
+        const isDeleted = record.deleted || deletedIds.has(record.id);
+        return (
+          <Button
+            type="text"
+            danger
+            icon={<DeleteOutlined />}
+            loading={deletingId === record.id}
+            disabled={isDeleted}
+            onClick={() => void handleDelete(record)}
+          >
+            {isDeleted ? '削除済み' : '削除'}
+          </Button>
+        );
+      },
     },
   ];
 

@@ -6,6 +6,11 @@
 #   - stg: ステージング環境用（base継承）
 #   - prod: 本番環境用（base継承）
 #   - dev: ローカル開発用（ホットリロード）
+#
+# ★ 注意: このイメージは nginx ベースですが、nginx 設定は含まれていません
+#   - nginx 設定は別途 app/nginx/Dockerfile でビルドされます
+#   - stg/prod 用の nginx イメージは app/nginx/Dockerfile → docker/docker-compose.{stg,prod}.yml で使用
+#   - このイメージは主にローカル開発(dev stage)で使用されます
 # =========================
 
 FROM node:20-slim AS builder

@@ -7,7 +7,7 @@
 
 import type { AuthRepository } from "../ports/AuthRepository";
 import type { AuthUser } from "../domain/authUser";
-import { coreApi } from "@/shared/infrastructure/http/coreApi";
+import { coreApi } from "@/shared";
 
 /**
  * バックエンドからのレスポンス型

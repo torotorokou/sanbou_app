@@ -10,6 +10,18 @@ from sqlalchemy.orm import Session
 from sqlalchemy import text
 
 from backend_shared.application.logging import get_module_logger
+from backend_shared.db.names import (
+    SCHEMA_LOG,
+    SCHEMA_STG,
+    T_UPLOAD_FILE,
+    V_ACTIVE_SHOGUN_FLASH_RECEIVE,
+    V_ACTIVE_SHOGUN_FLASH_YARD,
+    V_ACTIVE_SHOGUN_FLASH_SHIPMENT,
+    V_ACTIVE_SHOGUN_FINAL_RECEIVE,
+    V_ACTIVE_SHOGUN_FINAL_SHIPMENT,
+    V_ACTIVE_SHOGUN_FINAL_YARD,
+)
+from app.infra.db.sql_loader import load_sql
 
 logger = get_module_logger(__name__)
 
@@ -19,6 +31,21 @@ class UploadCalendarQueryAdapter:
 
     def __init__(self, db: Session):
         self.db = db
+        # Pre-load SQL with table/schema name substitution
+        template = load_sql("upload/upload_calendar__fetch_upload_calendar.sql")
+        self._fetch_upload_calendar_sql = text(
+            template.format(
+                schema_log=SCHEMA_LOG,
+                schema_stg=SCHEMA_STG,
+                t_upload_file=T_UPLOAD_FILE,
+                v_active_shogun_flash_receive=V_ACTIVE_SHOGUN_FLASH_RECEIVE,
+                v_active_shogun_flash_yard=V_ACTIVE_SHOGUN_FLASH_YARD,
+                v_active_shogun_flash_shipment=V_ACTIVE_SHOGUN_FLASH_SHIPMENT,
+                v_active_shogun_final_receive=V_ACTIVE_SHOGUN_FINAL_RECEIVE,
+                v_active_shogun_final_shipment=V_ACTIVE_SHOGUN_FINAL_SHIPMENT,
+                v_active_shogun_final_yard=V_ACTIVE_SHOGUN_FINAL_YARD,
+            )
+        )
 
     def fetch_upload_calendar(
         self, start_date: date_type, end_date: date_type
@@ -36,115 +63,8 @@ class UploadCalendarQueryAdapter:
         Returns:
             カレンダーアイテムのリスト
         """
-        sql = text("""
-            WITH upload_data AS (
-                -- 将軍速報版 受入
-                SELECT 
-                    uf.id AS upload_file_id,
-                    s.slip_date AS data_date,
-                    'shogun_flash_receive'::text AS csv_kind,
-                    COUNT(*) AS row_count
-                FROM log.upload_file uf
-                JOIN stg.shogun_flash_receive s ON s.upload_file_id = uf.id
-                WHERE uf.is_deleted = false
-                  AND s.is_deleted = false
-                  AND s.slip_date IS NOT NULL
-                  AND s.slip_date >= :start_date
-                  AND s.slip_date <= :end_date
-                GROUP BY uf.id, s.slip_date
-                
-                UNION ALL
-                
-                -- 将軍速報版 ヤード
-                SELECT 
-                    uf.id AS upload_file_id,
-                    s.slip_date AS data_date,
-                    'shogun_flash_yard'::text AS csv_kind,
-                    COUNT(*) AS row_count
-                FROM log.upload_file uf
-                JOIN stg.shogun_flash_yard s ON s.upload_file_id = uf.id
-                WHERE uf.is_deleted = false
-                  AND s.is_deleted = false
-                  AND s.slip_date IS NOT NULL
-                  AND s.slip_date >= :start_date
-                  AND s.slip_date <= :end_date
-                GROUP BY uf.id, s.slip_date
-                
-                UNION ALL
-                
-                -- 将軍速報版 出荷
-                SELECT 
-                    uf.id AS upload_file_id,
-                    s.slip_date AS data_date,
-                    'shogun_flash_shipment'::text AS csv_kind,
-                    COUNT(*) AS row_count
-                FROM log.upload_file uf
-                JOIN stg.shogun_flash_shipment s ON s.upload_file_id = uf.id
-                WHERE uf.is_deleted = false
-                  AND s.is_deleted = false
-                  AND s.slip_date IS NOT NULL
-                  AND s.slip_date >= :start_date
-                  AND s.slip_date <= :end_date
-                GROUP BY uf.id, s.slip_date
-                
-                UNION ALL
-                
-                -- 将軍最終版 受入
-                SELECT 
-                    uf.id AS upload_file_id,
-                    s.slip_date AS data_date,
-                    'shogun_final_receive'::text AS csv_kind,
-                    COUNT(*) AS row_count
-                FROM log.upload_file uf
-                JOIN stg.v_active_shogun_final_receive s ON s.upload_file_id = uf.id
-                WHERE uf.is_deleted = false
-                  AND s.slip_date IS NOT NULL
-                  AND s.slip_date >= :start_date
-                  AND s.slip_date <= :end_date
-                GROUP BY uf.id, s.slip_date
-                
-                UNION ALL
-                
-                -- 将軍最終版 出荷
-                SELECT 
-                    uf.id AS upload_file_id,
-                    s.slip_date AS data_date,
-                    'shogun_final_shipment'::text AS csv_kind,
-                    COUNT(*) AS row_count
-                FROM log.upload_file uf
-                JOIN stg.v_active_shogun_final_shipment s ON s.upload_file_id = uf.id
-                WHERE uf.is_deleted = false
-                  AND s.slip_date IS NOT NULL
-                  AND s.slip_date >= :start_date
-                  AND s.slip_date <= :end_date
-                GROUP BY uf.id, s.slip_date
-                
-                UNION ALL
-                
-                -- 将軍最終版 ヤード
-                SELECT 
-                    uf.id AS upload_file_id,
-                    s.slip_date AS data_date,
-                    'shogun_final_yard'::text AS csv_kind,
-                    COUNT(*) AS row_count
-                FROM log.upload_file uf
-                JOIN stg.v_active_shogun_final_yard s ON s.upload_file_id = uf.id
-                WHERE uf.is_deleted = false
-                  AND s.slip_date IS NOT NULL
-                  AND s.slip_date >= :start_date
-                  AND s.slip_date <= :end_date
-                GROUP BY uf.id, s.slip_date
-            )
-            SELECT 
-                upload_file_id,
-                data_date,
-                csv_kind,
-                row_count
-            FROM upload_data
-            ORDER BY data_date, csv_kind, upload_file_id
-        """)
-
-        result = self.db.execute(sql, {"start_date": start_date, "end_date": end_date})
+        # SQL は外部ファイルから読み込み済み（__init__で定数置換済み）
+        result = self.db.execute(self._fetch_upload_calendar_sql, {"start_date": start_date, "end_date": end_date})
         rows = result.fetchall()
 
         return [

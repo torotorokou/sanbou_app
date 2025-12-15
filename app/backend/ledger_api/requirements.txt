@@ -5,6 +5,11 @@ pydantic==2.10.6
 pyyaml==6.0.2
 python-multipart==0.0.20
 
+# Authentication & Security
+# PyJWT with cryptography for ES256 algorithm support (IAP JWT verification)
+PyJWT[crypto]==2.10.1
+cryptography==44.0.0
+
 # データ加工・解析
 pandas==2.2.3
 

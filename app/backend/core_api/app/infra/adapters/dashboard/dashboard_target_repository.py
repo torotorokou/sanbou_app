@@ -8,6 +8,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 import logging
 from backend_shared.application.logging import create_log_context, get_module_logger
+from backend_shared.db.names import SCHEMA_MART, MV_TARGET_CARD_PER_DAY, fq
 
 from app.infra.db.db import get_engine
 from app.infra.db.sql_loader import load_sql
@@ -20,8 +21,8 @@ class DashboardTargetRepository:
     
     Performance Note:
     - Switched from VIEW to MATERIALIZED VIEW for faster response times
-    - MV is refreshed daily via `make refresh-mv` (see Makefile)
-    - Rollback: Change all queries back to mart.v_target_card_per_day if needed
+    - MV is refreshed daily via MaterializedViewRefresher on CSV upload
+    - Uses backend_shared.db.names constants for DB object references
     """
 
     def __init__(self, db: Session):
@@ -30,6 +31,28 @@ class DashboardTargetRepository:
         # Pre-load and compile SQL queries for performance
         self._get_by_date_optimized_sql = text(
             load_sql("dashboard/dashboard_target_repo__get_by_date_optimized.sql")
+        )
+        # Load other SQL queries with schema/table name substitution
+        template_get_by_date = load_sql("dashboard/dashboard_target_repo__get_by_date.sql")
+        self._get_by_date_sql = text(
+            template_get_by_date.format(
+                schema_mart=SCHEMA_MART,
+                mv_target_card_per_day=MV_TARGET_CARD_PER_DAY,
+            )
+        )
+        template_first_business = load_sql("dashboard/dashboard_target_repo__get_first_business_day.sql")
+        self._get_first_business_day_sql = text(
+            template_first_business.format(
+                schema_mart=SCHEMA_MART,
+                mv_target_card_per_day=MV_TARGET_CARD_PER_DAY,
+            )
+        )
+        template_metrics = load_sql("dashboard/dashboard_target_repo__get_target_card_metrics.sql")
+        self._get_target_card_metrics_sql = text(
+            template_metrics.format(
+                schema_mart=SCHEMA_MART,
+                mv_target_card_per_day=MV_TARGET_CARD_PER_DAY,
+            )
         )
 
     def get_by_date_optimized(self, target_date: date_type, mode: str = "daily") -> Optional[Dict[str, Any]]:
@@ -130,7 +153,7 @@ class DashboardTargetRepository:
         Get target and actual metrics for a specific date.
         
         Returns:
-            Dict with all columns from mart.v_target_card_per_day including:
+            Dict with all columns from mart.mv_target_card_per_day including:
                 - month_target_ton, week_target_ton, day_target_ton
                 - month_actual_ton, week_actual_ton, day_actual_ton_prev
                 - iso_year, iso_week, iso_dow
@@ -138,31 +161,12 @@ class DashboardTargetRepository:
                 - ddate
         """
         try:
-            # ★ MV参照に変更（VIEW→MV）for faster response
-            query = text("""
-                SELECT 
-                    ddate,
-                    month_target_ton,
-                    week_target_ton,
-                    day_target_ton,
-                    month_actual_ton,
-                    week_actual_ton,
-                    day_actual_ton_prev,
-                    iso_year,
-                    iso_week,
-                    iso_dow,
-                    day_type,
-                    is_business
-                FROM mart.mv_target_card_per_day  -- ★ VIEW→MV変更
-                WHERE ddate = CAST(:target_date AS DATE)
-                LIMIT 1
-            """)
-            
+            # MATERIALIZED VIEWを使用して高速クエリ（SQL は外部ファイルから読み込み）
             logger.info(
                 "target cardデータ取得開始(get_by_date)",
                 extra=create_log_context(operation="get_by_date", date=str(target_date))
             )
-            result = self.db.execute(query, {"target_date": target_date}).fetchone()
+            result = self.db.execute(self._get_by_date_sql, {"target_date": target_date}).fetchone()
             
             if not result:
                 logger.warning(
@@ -209,17 +213,8 @@ class DashboardTargetRepository:
             The first business day in the month, or None if not found
         """
         try:
-            # ★ MV参照に変更（VIEW→MV）
-            query = text("""
-                SELECT ddate
-                FROM mart.mv_target_card_per_day  -- ★ VIEW→MV変更
-                WHERE ddate BETWEEN CAST(:month_start AS DATE) AND CAST(:month_end AS DATE)
-                  AND is_business = true
-                ORDER BY ddate ASC
-                LIMIT 1
-            """)
-            
-            result = self.db.execute(query, {"month_start": month_start, "month_end": month_end}).fetchone()
+            # MATERIALIZED VIEWを使用（SQL は外部ファイルから読み込み）
+            result = self.db.execute(self._get_first_business_day_sql, {"month_start": month_start, "month_end": month_end}).fetchone()
             return result[0] if result else None
         except Exception as e:
             logger.error(
@@ -266,30 +261,15 @@ class DashboardTargetRepository:
             view_exists = self.db.execute(check_view).scalar()
             
             if not view_exists:
-                logger.error("Materialized View mart.mv_target_card_per_day does not exist!")
-                raise ValueError("Materialized View mart.mv_target_card_per_day does not exist. Please run migration first.")
+                logger.error(f"Materialized View {fq(SCHEMA_MART, MV_TARGET_CARD_PER_DAY)} does not exist!")
+                raise ValueError(f"Materialized View {fq(SCHEMA_MART, MV_TARGET_CARD_PER_DAY)} does not exist. Please run migration first.")
             
-            # ★ MV参照に変更（VIEW→MV）
-            query = text("""
-                SELECT 
-                    month_target_ton,
-                    week_target_ton,
-                    day_target_ton,
-                    month_actual_ton,
-                    week_actual_ton,
-                    day_actual_ton_prev,
-                    ddate
-                FROM mart.mv_target_card_per_day  -- ★ VIEW→MV変更
-                WHERE date_trunc('month', ddate) = date_trunc('month', CAST(:target_date AS DATE))
-                ORDER BY ddate DESC
-                LIMIT 1
-            """)
-            
+            # MATERIALIZED VIEWを使用（SQL は外部ファイルから読み込み）
             logger.info(
                 "target card metrics取得開始",
                 extra=create_log_context(operation="get_target_card_metrics", date=str(target_date))
             )
-            result = self.db.execute(query, {"target_date": target_date}).fetchone()
+            result = self.db.execute(self._get_target_card_metrics_sql, {"target_date": target_date}).fetchone()
             
             if not result:
                 logger.warning(

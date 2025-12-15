@@ -216,7 +216,7 @@ class ShogunCsvRepository:
                 chunksize=1000,
                 dtype=dtype_spec
             )
-            self.db.commit()
+            # NOTE: commit()はUseCaseレイヤーで実行（トランザクション境界の統一）
             
             logger.info(
                 "CSVデータ保存完了",
@@ -231,7 +231,7 @@ class ShogunCsvRepository:
             return len(payloads)
             
         except Exception as e:
-            self.db.rollback()
+            # NOTE: rollback()もUseCaseレイヤーで実行（例外は再raiseのみ）
             logger.error(
                 "CSVデータ保存失敗",
                 extra=create_log_context(
@@ -271,6 +271,8 @@ class ShogunCsvRepository:
         try:
             # TRUNCATE実行
             self.db.execute(text(f"TRUNCATE TABLE {table_name} RESTART IDENTITY CASCADE"))
+            # NOTE: commit()はUseCase/API層で実行（テスト用途なのでここではコミット）
+            # 開発・テスト用のため、この関数だけは例外的にcommit()を残す
             self.db.commit()
             logger.info(
                 "テーブルtruncate完了",

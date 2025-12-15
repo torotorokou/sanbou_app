@@ -8,7 +8,7 @@
 
 from typing import Any, Dict, Optional, Union
 
-from fastapi import APIRouter, File, UploadFile
+from fastapi import APIRouter, BackgroundTasks, File, UploadFile
 from pydantic import BaseModel
 
 from backend_shared.infra.adapters.fastapi.error_handlers import DomainError
@@ -190,11 +190,16 @@ async def apply_transport_selection(request: TransportSelectionRequest):
 
 
 @router.post("/finalize", tags=[tag_name])
-async def finalize_calculation(request: FinalizeRequest) -> Any:
+async def finalize_calculation(
+    request: FinalizeRequest,
+    background_tasks: BackgroundTasks
+) -> Any:
     """
     最終計算処理 (Step 2)
     - 一本化運用：{session_id, selections} を同送 → 選択適用→最終計算を一括実行
     - 互換運用   ：selections 無し → 既存の選択状態で最終計算のみ実行
+    
+    🔄 PDF非同期生成: BackgroundTasksでPDFをバックグラウンド生成
     """
     logger.info(
         "ブロック単価最終計算開始",
@@ -223,7 +228,12 @@ async def finalize_calculation(request: FinalizeRequest) -> Any:
         }
 
         # selections があれば finalize 内で適用し、そのまま共通の ZIP レスポンスを返す
-        response = service.finalize(generator, request.session_id, user_input)  # type: ignore[arg-type]
+        response = service.finalize(
+            generator, 
+            request.session_id, 
+            user_input,
+            background_tasks=background_tasks  # 🔄 BackgroundTasksを渡す
+        )
         
         logger.info(
             "ブロック単価最終計算完了",

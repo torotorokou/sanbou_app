@@ -20,6 +20,19 @@ import pandas as pd
 from sqlalchemy.orm import Session
 from sqlalchemy import text, Table, MetaData, Column, Integer, BigInteger, Text, String, DateTime, Boolean, ForeignKey
 from backend_shared.application.logging import create_log_context, get_module_logger
+from backend_shared.db.names import (
+    SCHEMA_LOG,
+    SCHEMA_STG,
+    T_UPLOAD_FILE,
+    V_ACTIVE_SHOGUN_FLASH_RECEIVE,
+    V_ACTIVE_SHOGUN_FLASH_YARD,
+    V_ACTIVE_SHOGUN_FLASH_SHIPMENT,
+    V_ACTIVE_SHOGUN_FINAL_RECEIVE,
+    V_ACTIVE_SHOGUN_FINAL_SHIPMENT,
+    V_ACTIVE_SHOGUN_FINAL_YARD,
+    fq,
+)
+from app.infra.db.sql_loader import load_sql
 
 from app.core.domain.csv import CsvKind
 
@@ -43,6 +56,22 @@ class RawDataRepository:
         """
         self.db = db
         self.metadata = MetaData()
+        
+        # Pre-load SQL query for get_upload_calendar (same as UploadCalendarQueryAdapter)
+        template = load_sql("upload/upload_calendar__fetch_upload_calendar.sql")
+        self._get_upload_calendar_sql = text(
+            template.format(
+                schema_log=SCHEMA_LOG,
+                schema_stg=SCHEMA_STG,
+                t_upload_file=T_UPLOAD_FILE,
+                v_active_shogun_flash_receive=V_ACTIVE_SHOGUN_FLASH_RECEIVE,
+                v_active_shogun_flash_yard=V_ACTIVE_SHOGUN_FLASH_YARD,
+                v_active_shogun_flash_shipment=V_ACTIVE_SHOGUN_FLASH_SHIPMENT,
+                v_active_shogun_final_receive=V_ACTIVE_SHOGUN_FINAL_RECEIVE,
+                v_active_shogun_final_shipment=V_ACTIVE_SHOGUN_FINAL_SHIPMENT,
+                v_active_shogun_final_yard=V_ACTIVE_SHOGUN_FINAL_YARD,
+            )
+        )
         
         # upload_file テーブル定義（共通アップロードログ、log スキーマ）
         # シンプル構成：必要最小限のカラムのみ定義
@@ -233,7 +262,7 @@ class RawDataRepository:
                 ).returning(self.upload_file_table.c.id)
             )
             file_id = result.scalar_one()
-            self.db.commit()
+            # NOTE: commit()はUseCaseレイヤーで実行（トランザクション境界の統一）
             logger.info(
                 "upload_fileレコード作成",
                 extra=create_log_context(
@@ -245,7 +274,7 @@ class RawDataRepository:
             )
             return file_id
         except Exception as e:
-            self.db.rollback()
+            # NOTE: rollback()もUseCaseレイヤーで実行（例外は再raiseのみ）
             logger.error(
                 "upload_file作成失敗",
                 extra=create_log_context(operation="create_upload_file", error=str(e)),
@@ -391,13 +420,13 @@ class RawDataRepository:
                 .where(self.upload_file_table.c.id == file_id)
                 .values(**values)
             )
-            self.db.commit()
+            # NOTE: commit()はUseCaseレイヤーで実行
             logger.info(
                 "upload_fileステータス更新",
                 extra=create_log_context(operation="update_upload_status", file_id=file_id, status=status)
             )
         except Exception as e:
-            self.db.rollback()
+            # NOTE: rollback()もUseCaseレイヤーで実行
             logger.error(
                 "upload_fileステータス更新失敗",
                 extra=create_log_context(operation="update_upload_status", error=str(e)),
@@ -519,7 +548,7 @@ class RawDataRepository:
                 "deleted_by": deleted_by,
             })
             affected_rows = result.rowcount
-            self.db.commit()
+            # NOTE: commit()はUseCaseレイヤーで実行
             
             logger.info(
                 f"[SOFT_DELETE] ✅ soft_delete_scope_by_dates: table={table_name}, csv_kind={csv_kind}, "
@@ -529,7 +558,7 @@ class RawDataRepository:
             return affected_rows
             
         except Exception as e:
-            self.db.rollback()
+            # NOTE: rollback()もUseCaseレイヤーで実行
             logger.error(
                 f"Failed to soft delete scope by dates: csv_kind={csv_kind}, "
                 f"table={table_name}, dates={normalized_dates[:5]}, error={e}",
@@ -586,7 +615,7 @@ class RawDataRepository:
                 "deleted_by": deleted_by,
             })
             affected_rows = result.rowcount
-            self.db.commit()
+            # NOTE: commit()はUseCaseレイヤーで実行（トランザクション境界の統一）
             
             logger.info(
                 f"Soft deleted {affected_rows} rows from {table_name} "
@@ -596,7 +625,7 @@ class RawDataRepository:
             return affected_rows
             
         except Exception as e:
-            self.db.rollback()
+            # NOTE: rollback()もUseCaseレイヤーで実行（例外は再raiseのみ）
             logger.error(
                 f"Failed to soft delete by date and kind: "
                 f"upload_file_id={upload_file_id}, date={target_date}, "
@@ -628,9 +657,9 @@ class RawDataRepository:
             bool: 直近に同一ファイルが存在すれば True
         """
         try:
-            sql = text("""
+            sql = text(f"""
                 SELECT 1
-                FROM log.upload_file
+                FROM {fq(SCHEMA_LOG, T_UPLOAD_FILE)}
                 WHERE file_hash = :file_hash
                   AND csv_type = :csv_type
                   AND uploaded_by = :uploaded_by
@@ -709,13 +738,13 @@ class RawDataRepository:
             
             # バルクインサート
             self.db.execute(self.receive_raw_table.insert(), records)
-            self.db.commit()
+            # NOTE: commit()はUseCaseレイヤーで実行
             
             logger.info(f"Saved {len(records)} rows to raw.receive_raw (file_id={file_id})")
             return len(records)
             
         except Exception as e:
-            self.db.rollback()
+            # NOTE: rollback()もUseCaseレイヤーで実行
             logger.error(f"Failed to save raw data: {e}")
             raise
     
@@ -923,63 +952,9 @@ class RawDataRepository:
             start_date = date(year, month, 1)
             end_date = date(year, month, last_day)
             
-            # 各 stg テーブルから upload_file_id, slip_date, csv_kind, row_count を取得
-            # 論理削除されていないデータのみ
-            sql = text("""
-            WITH upload_data AS (
-                SELECT 
-                    uf.id as upload_file_id,
-                    r.slip_date as data_date,
-                    'shogun_flash_receive' as csv_kind,
-                    COUNT(*) as row_count
-                FROM log.upload_file uf
-                JOIN stg.shogun_flash_receive r ON r.upload_file_id = uf.id
-                WHERE r.is_deleted = false
-                  AND r.slip_date IS NOT NULL
-                  AND r.slip_date >= :start_date
-                  AND r.slip_date <= :end_date
-                GROUP BY uf.id, r.slip_date
-                
-                UNION ALL
-                
-                SELECT 
-                    uf.id,
-                    y.slip_date,
-                    'shogun_flash_yard' as csv_kind,
-                    COUNT(*) as row_count
-                FROM log.upload_file uf
-                JOIN stg.shogun_flash_yard y ON y.upload_file_id = uf.id
-                WHERE y.is_deleted = false
-                  AND y.slip_date IS NOT NULL
-                  AND y.slip_date >= :start_date
-                  AND y.slip_date <= :end_date
-                GROUP BY uf.id, y.slip_date
-                
-                UNION ALL
-                
-                SELECT 
-                    uf.id,
-                    s.slip_date,
-                    'shogun_flash_shipment' as csv_kind,
-                    COUNT(*) as row_count
-                FROM log.upload_file uf
-                JOIN stg.shogun_flash_shipment s ON s.upload_file_id = uf.id
-                WHERE s.is_deleted = false
-                  AND s.slip_date IS NOT NULL
-                  AND s.slip_date >= :start_date
-                  AND s.slip_date <= :end_date
-                GROUP BY uf.id, s.slip_date
-            )
-            SELECT 
-                upload_file_id,
-                data_date,
-                csv_kind,
-                row_count
-            FROM upload_data
-            ORDER BY data_date, csv_kind, upload_file_id
-            """)
+            # SQL は __init__ で読み込み済み（UploadCalendarQueryAdapter と同じ）
             
-            result = self.db.execute(sql, {
+            result = self.db.execute(self._get_upload_calendar_sql, {
                 "start_date": start_date,
                 "end_date": end_date
             })
