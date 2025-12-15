@@ -11,7 +11,8 @@
 ##    make down ENV=local_dev        - 環境停止
 ##    make logs ENV=local_dev S=xxx  - ログ確認
 ##    make al-up-env ENV=local_dev   - DBマイグレーション
-##    make backup ENV=local_dev      - バックアップ
+##    make backup ENV=local_dev      - バックアップ（環境別ユーザー自動対応）
+##    make restore-from-dump ENV=vm_stg DUMP=backups/xxx.dump - リストア（環境別自動対応）
 ##
 ## 🌍 環境 (ENV)
 ##    local_dev  - ローカル開発（自動ビルド）
@@ -214,24 +215,28 @@ dev-with-nginx:
 	@echo "[info] Check health: curl http://localhost:8080/health"
 
 ## ============================================================
-## バックアップ / リストア（よく使う最小構成）
+## バックアップ / リストア（環境別自動対応）
+## ============================================================
+## 注意:
+##   - POSTGRES_USER と POSTGRES_DB は各環境の .env ファイルから自動取得
+##   - local_dev: myuser / sanbou_dev
+##   - vm_stg: sanbou_app_stg / sanbou_stg
+##   - vm_prod: sanbou_app_prod / sanbou_prod
 ## ============================================================
 DATE        := $(shell date +%F_%H%M%S)
 BACKUP_DIR  ?= /mnt/c/Users/synth/Desktop/backups
 PG_SERVICE  ?= db
-PGUSER      ?= myuser
-# デフォルト: sanbou_dev（必要に応じて PGDB=... で上書き）
-PGDB        ?= sanbou_dev
 
 backup:
 	@echo "[info] logical backup (pg_dump) ENV=$(ENV)"
 	@mkdir -p "$(BACKUP_DIR)"
-	$(DC_FULL) exec -T $(PG_SERVICE) pg_dump -U $(PGUSER) -d $(PGDB) \
-	  --format=custom --file=/tmp/$(PGDB).dump
-	$(DC_FULL) cp $(PG_SERVICE):/tmp/$(PGDB).dump \
-	  "$(BACKUP_DIR)/$(PGDB)_$(ENV)_$(DATE).dump"
-	@$(DC_FULL) exec -T $(PG_SERVICE) rm -f /tmp/$(PGDB).dump || true
-	@echo "[ok] backup -> $(BACKUP_DIR)/$(PGDB)_$(ENV)_$(DATE).dump"
+	$(DC_FULL) exec -T $(PG_SERVICE) sh -c '\
+	  pg_dump -U "$$POSTGRES_USER" -d "$${POSTGRES_DB:-postgres}" \
+	    --format=custom --file=/tmp/backup.dump'
+	$(DC_FULL) cp $(PG_SERVICE):/tmp/backup.dump \
+	  "$(BACKUP_DIR)/$(ENV)_$(DATE).dump"
+	@$(DC_FULL) exec -T $(PG_SERVICE) rm -f /tmp/backup.dump || true
+	@echo "[ok] backup -> $(BACKUP_DIR)/$(ENV)_$(DATE).dump"
 
 .PHONY: restore-from-dump
 DUMP ?= backups/sanbou_dev_2025-12-03.dump
@@ -240,12 +245,13 @@ restore-from-dump: check
 	@if [ ! -f "$(DUMP)" ]; then \
 	  echo "[error] dump file not found: $(DUMP)"; exit 1; \
 	fi
-	@echo "[info] Restoring $(DUMP) into DB=$(PGDB) (ENV=$(ENV))"
+	@echo "[info] Restoring $(DUMP) (ENV=$(ENV))"
+	@echo "[info] Using container's POSTGRES_USER and POSTGRES_DB environment variables"
 	$(DC_FULL) cp "$(DUMP)" $(PG_SERVICE):/tmp/restore.dump
-	$(DC_FULL) exec -T $(PG_SERVICE) bash -lc '\
-	  dropdb  -U $(PGUSER) --if-exists --force $(PGDB) && \
-	  createdb -U $(PGUSER) $(PGDB) && \
-	  pg_restore -U $(PGUSER) -d $(PGDB) --no-owner --no-acl /tmp/restore.dump \
+	$(DC_FULL) exec -T $(PG_SERVICE) sh -c '\
+	  dropdb  -U "$$POSTGRES_USER" --if-exists --force "$${POSTGRES_DB:-postgres}" && \
+	  createdb -U "$$POSTGRES_USER" "$${POSTGRES_DB:-postgres}" && \
+	  pg_restore -U "$$POSTGRES_USER" -d "$${POSTGRES_DB:-postgres}" --no-owner --no-acl /tmp/restore.dump \
 	'
 	@$(DC_FULL) exec -T $(PG_SERVICE) rm -f /tmp/restore.dump || true
 	@echo "[ok] restore-from-dump completed"
@@ -268,9 +274,10 @@ restore-from-sql: check
 	@if [ ! -f "$(SQL)" ]; then \
 	  echo "[error] SQL file not found: $(SQL)"; exit 1; \
 	fi
-	@echo "[info] Restoring SQL $(SQL) into DB=$(PGDB) (ENV=$(ENV))"
-	@cat "$(SQL)" | $(DC_FULL) exec -T $(PG_SERVICE) \
-	  psql -U $(PGUSER) -d $(PGDB)
+	@echo "[info] Restoring SQL $(SQL) (ENV=$(ENV))"
+	@echo "[info] Using container's POSTGRES_USER and POSTGRES_DB environment variables"
+	@cat "$(SQL)" | $(DC_FULL) exec -T $(PG_SERVICE) sh -c '\
+	  psql -U "$$POSTGRES_USER" -d "$${POSTGRES_DB:-postgres}"'
 	@echo "[ok] restore-from-sql completed"
 
 ## ============================================================
