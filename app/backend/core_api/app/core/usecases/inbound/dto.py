@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from datetime import date as date_type
 from typing import List, Optional
 
-from app.core.domain.inbound import InboundDailyRow, CumScope
+from app.core.domain.inbound.entities import InboundDailyRow, CumScope
 
 
 # ========================================================================

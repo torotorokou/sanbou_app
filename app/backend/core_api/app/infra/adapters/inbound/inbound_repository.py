@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 from backend_shared.application.logging import get_module_logger, create_log_context
 from backend_shared.db.names import SCHEMA_REF, SCHEMA_MART, MV_RECEIVE_DAILY, V_CALENDAR_CLASSIFIED, fq
 from app.core.ports.inbound_repository_port import InboundRepository
-from app.core.domain.inbound import InboundDailyRow, CumScope
+from app.core.domain.inbound.entities import InboundDailyRow, CumScope
 from app.infra.db.sql_loader import load_sql
 
 logger = get_module_logger(__name__)
