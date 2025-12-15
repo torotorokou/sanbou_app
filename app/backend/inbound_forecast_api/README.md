@@ -1,9 +1,39 @@
-このフォルダは上席提出用の“最小構成”リリースです。
+# Inbound Forecast API
 
-## 目的
+需要予測サービス - 日次/週次/月次の予測を提供するFastAPIアプリケーション。
 
-- 日次 / 週次 / 月次（Gamma + ブレンド）/ 月次着地モデルの **再学習・評価・将来予測** を、
-   `submission_release_20251027` フォルダ単体で完結させること。
+## ディレクトリ構造
+
+Clean Architecture / Hexagonal Architecture に準拠した構造：
+
+```
+app/
+  main.py              # アプリケーションエントリーポイント
+  api/                 # API層（FastAPI）
+    routers/           # FastAPIルーター
+      prediction.py    # 予測関連エンドポイント
+    schemas/           # リクエスト/レスポンスモデル
+      prediction.py    # Pydanticモデル
+  core/                # コアビジネスロジック
+    domain/            # ドメインエンティティ
+      prediction/      # 予測関連ドメイン
+    ports/             # 抽象インターフェース
+      prediction_port.py
+    usecases/          # アプリケーションロジック
+      execute_daily_forecast_uc.py
+  infra/               # インフラ層
+    adapters/          # ポートの具体実装
+      prediction/      # 予測実行アダプター
+        script_executor.py
+    scripts/           # 実行スクリプト（既存）
+      daily_tplus1_predict.py
+      train_daily_model.py
+      retrain_and_eval.py
+      ...
+  config/              # 設定・DI
+    di_providers.py    # DIコンテナ
+  shared/              # ローカル共通処理
+```
 
 ## 構成概要
 
