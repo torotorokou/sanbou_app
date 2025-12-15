@@ -139,13 +139,13 @@ const DatasetImportPage: React.FC = () => {
             )}
           </Space>
           
-          {!canUpload && panelFiles.length > 0 && !uploadSuccess && (
+          {/* {!canUpload && panelFiles.length > 0 && !uploadSuccess && (
             <div className={styles.hint}>
               <Text type="secondary">
                 ※ 必須CSVをすべて選択＆検証OKにするとアップロード可能
               </Text>
             </div>
-          )}
+          )} */}
         </Col>
 
         {/* 右カラム：カレンダー */}
