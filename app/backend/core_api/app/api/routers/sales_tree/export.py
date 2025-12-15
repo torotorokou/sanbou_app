@@ -11,7 +11,7 @@ from fastapi.responses import Response
 from backend_shared.application.logging import get_module_logger
 from app.config.di_providers import get_export_sales_tree_csv_uc
 from app.core.usecases.sales_tree.export_csv_uc import ExportSalesTreeCSVUseCase
-from app.core.domain.sales_tree import ExportRequest
+from app.core.domain.sales_tree.entities import ExportRequest
 from backend_shared.core.domain.exceptions import InfrastructureError
 
 logger = get_module_logger(__name__)

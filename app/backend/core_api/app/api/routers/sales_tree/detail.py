@@ -10,7 +10,7 @@ from fastapi import APIRouter, Depends
 from backend_shared.application.logging import get_module_logger
 from app.config.di_providers import get_fetch_sales_tree_detail_lines_uc
 from app.core.usecases.sales_tree.fetch_detail_lines_uc import FetchSalesTreeDetailLinesUseCase
-from app.core.domain.sales_tree_detail import (
+from app.core.domain.sales_tree.detail import (
     DetailLinesRequest,
     DetailLinesResponse,
 )

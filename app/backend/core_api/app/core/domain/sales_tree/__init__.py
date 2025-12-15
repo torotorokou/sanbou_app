@@ -1,21 +1,8 @@
 """
-Backward compatibility wrapper for sales_tree domain models.
-
-DEPRECATED: This module is deprecated. Please use:
-    from app.core.domain.sales_tree.entities import ...
-
-This wrapper will be removed in a future version.
+Sales Tree domain package.
+売上ツリー分析ドメインモデル
 """
-import warnings
-
-warnings.warn(
-    "Importing from app.core.domain.sales_tree is deprecated. "
-    "Use app.core.domain.sales_tree.entities instead.",
-    DeprecationWarning,
-    stacklevel=2
-)
-
-# Re-export for backward compatibility
+# Main sales tree entities
 from app.core.domain.sales_tree.entities import (
     AxisMode,
     SortKey,
@@ -31,7 +18,17 @@ from app.core.domain.sales_tree.entities import (
     ExportRequest,
 )
 
+# Detail entities
+from app.core.domain.sales_tree.detail import (
+    DetailMode,
+    GroupBy,
+    DetailLinesRequest,
+    DetailLine,
+    DetailLinesResponse,
+)
+
 __all__ = [
+    # Main entities
     "AxisMode",
     "SortKey",
     "SortOrder",
@@ -44,4 +41,10 @@ __all__ = [
     "PivotRequest",
     "CursorPage",
     "ExportRequest",
+    # Detail entities
+    "DetailMode",
+    "GroupBy",
+    "DetailLinesRequest",
+    "DetailLine",
+    "DetailLinesResponse",
 ]

@@ -5,7 +5,7 @@ UseCase: FetchSalesTreeDailySeries
 """
 import logging
 from backend_shared.application.logging import log_usecase_execution, get_module_logger
-from app.core.domain.sales_tree import DailySeriesRequest, DailyPoint
+from app.core.domain.sales_tree.entities import DailySeriesRequest, DailyPoint
 from app.core.ports.sales_tree_port import ISalesTreeQuery
 
 logger = get_module_logger(__name__)

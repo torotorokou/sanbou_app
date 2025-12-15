@@ -4,7 +4,7 @@ UseCase: FetchSalesTreeDetailLines
 売上ツリーの詳細明細行取得UseCase
 """
 import logging
-from app.core.domain.sales_tree_detail import DetailLinesRequest, DetailLinesResponse
+from app.core.domain.sales_tree.detail import DetailLinesRequest, DetailLinesResponse
 from app.core.ports.sales_tree_port import ISalesTreeQuery
 from backend_shared.application.logging import create_log_context, get_module_logger
 

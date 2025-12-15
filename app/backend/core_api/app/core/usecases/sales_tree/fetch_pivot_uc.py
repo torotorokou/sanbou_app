@@ -4,7 +4,7 @@ UseCase: FetchSalesTreePivot
 売上ツリーのPivotデータ取得UseCase（詳細ドリルダウン）
 """
 import logging
-from app.core.domain.sales_tree import PivotRequest, CursorPage
+from app.core.domain.sales_tree.entities import PivotRequest, CursorPage
 from app.core.ports.sales_tree_port import ISalesTreeQuery
 from backend_shared.application.logging import create_log_context, get_module_logger
 

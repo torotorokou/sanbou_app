@@ -4,7 +4,7 @@ Port: ISalesTreeQuery
 売上ツリー分析のクエリ抽象インターフェース
 """
 from typing import Protocol
-from app.core.domain.sales_tree import (
+from app.core.domain.sales_tree.entities import (
     SummaryRequest, 
     SummaryRow, 
     DailySeriesRequest, 
@@ -14,7 +14,7 @@ from app.core.domain.sales_tree import (
     MetricEntry,
     ExportRequest
 )
-from app.core.domain.sales_tree_detail import (
+from app.core.domain.sales_tree.detail import (
     DetailLinesRequest,
     DetailLinesResponse
 )

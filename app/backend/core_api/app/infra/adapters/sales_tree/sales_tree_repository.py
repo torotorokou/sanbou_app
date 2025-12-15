@@ -15,7 +15,7 @@ from sqlalchemy.orm import Session
 
 from backend_shared.application.logging import create_log_context, get_module_logger
 from backend_shared.db.names import SCHEMA_MART, SCHEMA_STG, V_SALES_TREE_DETAIL_BASE, V_ACTIVE_SHOGUN_FINAL_RECEIVE
-from app.core.domain.sales_tree import (
+from app.core.domain.sales_tree.entities import (
     SummaryRequest,
     SummaryRow,
     MetricEntry,
@@ -27,7 +27,7 @@ from app.core.domain.sales_tree import (
     AxisMode,
     CategoryKind,
 )
-from app.core.domain.sales_tree_detail import (
+from app.core.domain.sales_tree.detail import (
     DetailLinesRequest,
     DetailLinesResponse,
     DetailLine,

@@ -4,7 +4,7 @@ UseCase: ExportSalesTreeCSV
 売上ツリーのCSV Export UseCase
 """
 import logging
-from app.core.domain.sales_tree import ExportRequest
+from app.core.domain.sales_tree.entities import ExportRequest
 from app.core.ports.sales_tree_port import ISalesTreeQuery
 from backend_shared.application.logging import create_log_context, get_module_logger
 
