@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo } from 'react';
-import { reportConfigMap, modalStepsMap } from '@features/report/shared/config';
+import { reportConfigMap } from '@features/report/shared/config';
 import type { ReportKey } from '@features/report/shared/config';
 
 // CSVファイルの型定義

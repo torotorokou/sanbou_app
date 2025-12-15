@@ -21,6 +21,9 @@ export default defineConfig([
             'scripts/**',
             'package.json',
             'package-lock.json',
+            '**/*.css',
+            '**/*.scss',
+            '**/*.less',
         ],
     },
     // JS/TS/JSX/TSX 共通（アプリコードに限定）
