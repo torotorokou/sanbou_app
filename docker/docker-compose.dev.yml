@@ -234,6 +234,42 @@ services:
       - app-net
 
   # ===========================================================================
+  # Inbound Forecast API (需要予測サービス)
+  # ===========================================================================
+  inbound_forecast_api:
+    build:
+      context: ../app/backend/inbound_forecast_api
+      dockerfile: Dockerfile
+      target: dev
+    env_file:
+      - ../env/.env.common
+      - ../env/.env.local_dev
+      - ../secrets/.env.local_dev.secrets
+    command: >
+      uvicorn scripts.api_server:app
+      --host 0.0.0.0 --port 8000 --reload
+      --reload-dir /backend/scripts
+    ports:
+      - "${DEV_INBOUND_FORECAST_API_PORT:-8006}:8000"
+    volumes:
+      - ../app/backend/inbound_forecast_api/scripts:/backend/scripts:rw
+      - ../app/backend/inbound_forecast_api/data:/backend/data:rw
+      - ../app/backend/inbound_forecast_api/models:/backend/models:rw
+      - ../app/backend/inbound_forecast_api/output:/backend/output:rw
+      - ../secrets:/backend/secrets:ro
+    environment:
+      WATCHFILES_FORCE_POLLING: "1"
+      TZ: "Asia/Tokyo"
+      # 必要に応じてDB接続を追加（現時点では不要と判断）
+      # GOOGLE_APPLICATION_CREDENTIALS: /backend/secrets/gcs-key-dev.json
+    networks:
+      - app-net
+    # DB依存は現時点で不要（独立した推論サービスとして動作）
+    # depends_on:
+    #   db:
+    #     condition: service_healthy
+
+  # ===========================================================================
   # Nginx (Optional - for testing prod-like routing)
   # ===========================================================================
   # 使い方: docker compose -f docker/docker-compose.dev.yml -p local_dev up -d nginx

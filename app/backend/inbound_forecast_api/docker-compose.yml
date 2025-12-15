@@ -1,0 +1,32 @@
+version: "3.8"
+services:
+  app:
+    build: .
+    container_name: morioka-infer
+    working_dir: /app
+    tty: true
+    volumes:
+      - ./:/app
+    command: bash -lc "python --version && echo 'Use: docker compose run --rm daily_tplus1 | weekly_short'"
+
+  daily_tplus1:
+    build: .
+    working_dir: /app
+    volumes:
+      - ./:/app
+    command: >
+      bash -lc "python scripts/daily_tplus1_predict.py
+      --bundle data/output/final_fast_balanced/model_bundle.joblib
+      --res-walk-csv data/output/final_fast_balanced/res_walkforward.csv
+      --out-csv data/output/tplus1_pred.csv"
+
+  weekly_short:
+    build: .
+    working_dir: /app
+    volumes:
+      - ./:/app
+    command: >
+      bash -lc "python scripts/morioka/hybrid_weekly_forecast.py
+      --input-csv data/input/20240501-20250422.csv
+      --out-dir data/output/hybrid_weekly_short_only_demo
+      --weeks 10 --short-only"
