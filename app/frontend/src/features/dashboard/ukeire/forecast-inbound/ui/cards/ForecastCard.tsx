@@ -12,7 +12,7 @@ import { ChartFrame } from "@/features/dashboard/ukeire/shared/ui/ChartFrame";
 import { SingleLineLegend } from "@/features/dashboard/ukeire/shared/ui/SingleLineLegend";
 import { clamp } from "@/features/dashboard/ukeire/domain/valueObjects";
 import { useInstallTabsFillCSS } from "@/features/dashboard/ukeire/shared/styles/useInstallTabsFillCSS";
-import { WipNotice } from "./WipNotice";
+import { WipNotice } from "@/features/wip-notice";
 import dayjs from "dayjs";
 import isoWeekPlugin from "dayjs/plugin/isoWeek";
 // レスポンシブ判定は Page 側へ移譲したため、ここではフックを使わない

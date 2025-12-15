@@ -309,7 +309,7 @@ const InboundForecastDashboardPage: React.FC = () => {
               <>
                 <Col span={24}>
                   <div style={{ height: layout.heights.forecast.mobile }}>
-                    {vm.forecastCardProps && <ForecastCard {...vm.forecastCardProps} isGeMd={false} />}
+                    {vm.forecastCardProps && <ForecastCard {...vm.forecastCardProps} isGeMd={false} showWipNotice={true} />}
                   </div>
                 </Col>
                 <Col span={24}>
@@ -337,7 +337,7 @@ const InboundForecastDashboardPage: React.FC = () => {
               // Desktop/LaptopOrBelow: 予測のみ
               <Col span={24} style={{ height: layout.mode === "desktop" ? "100%" : "auto" }}>
                 <div style={{ height: layout.mode === "desktop" ? layout.heights.forecast.desktop : layout.heights.forecast.laptopOrBelow }}>
-                  {vm.forecastCardProps && <ForecastCard {...vm.forecastCardProps} isGeMd={true} />}
+                  {vm.forecastCardProps && <ForecastCard {...vm.forecastCardProps} isGeMd={true} showWipNotice={true} />}
                 </div>
               </Col>
             )}
