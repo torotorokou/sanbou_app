@@ -40,7 +40,15 @@ class ForecastWorkerConfig:
     """Worker設定"""
     def __init__(self):
         self.backend_root = Path("/backend")
-        self.scripts_dir = self.backend_root / "scripts"
+        # 新しいパス: app/infra/scripts/
+        self.scripts_dir = self.backend_root / "app" / "infra" / "scripts"
+        
+        # 後方互換性: 旧パスもチェック
+        if not self.scripts_dir.exists():
+            old_scripts_dir = self.backend_root / "scripts"
+            if old_scripts_dir.exists():
+                logger.warning(f"Using legacy scripts directory: {old_scripts_dir}")
+                self.scripts_dir = old_scripts_dir
         
     def validate(self) -> tuple[bool, Optional[str]]:
         """設定の妥当性検証"""

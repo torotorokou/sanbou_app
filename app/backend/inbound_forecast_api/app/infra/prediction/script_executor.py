@@ -51,6 +51,15 @@ class ScriptBasedPredictionExecutor:
         self.db_connection_string = db_connection_string
         self.enable_db_save = enable_db_save
         
+        # 後方互換性: 旧パスが指定された場合は警告
+        if not self.predict_script.exists():
+            logger.warning(f"Script not found at {self.predict_script}")
+            # 新しいパスを試行
+            new_script_path = Path(__file__).parent.parent / "scripts" / "daily_tplus1_predict.py"
+            if new_script_path.exists():
+                logger.info(f"Using new script location: {new_script_path}")
+                self.predict_script = new_script_path
+        
         # 既存のモデルパス（既存worker/main.pyと同じ）
         backend_root = Path("/backend")
         self.model_bundle = backend_root / "data/output/final_fast_balanced/model_bundle.joblib"
