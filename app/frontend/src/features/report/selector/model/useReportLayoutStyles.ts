@@ -43,7 +43,9 @@ export const useReportLayoutStyles = () => {
   
   const rightPanelOrder = pickByDevice(1, 1, 3, 3);
   const rightPanelMinWidth = pickByDevice(0, 0, bp.xs, 600);
+  // responsive: rightPanelはflexで残りの横幅を使用、maxWidthでサイドバーの幅を考慮して画面外はみ出しを防止
   const rightPanelFlex = pickByDevice<'1 1 auto'>('1 1 auto', '1 1 auto', '1 1 auto', '1 1 auto');
+  const rightPanelMaxWidth = pickByDevice<string | undefined>('100%', '100%', undefined, undefined);
   
   const previewGap = pickByDevice(8, 10, 12, 16);
   const previewHeight = pickByDevice('50vh', '55vh', '100%', '100%');
@@ -77,6 +79,7 @@ export const useReportLayoutStyles = () => {
         minHeight: 0,
         overflow: 'hidden' as const,
         width: "100%",
+        maxWidth: "100%",
         minWidth: 0,
         boxSizing: "border-box" as const,
       },
@@ -121,7 +124,7 @@ export const useReportLayoutStyles = () => {
       },
       rightPanel: {
         width: flags.isMobile || flags.isTablet ? '100%' : undefined,
-        maxWidth: flags.isMobile || flags.isTablet ? '100%' : undefined,
+        maxWidth: rightPanelMaxWidth,
         flex: rightPanelFlex,
         minWidth: rightPanelMinWidth,
         display: "flex",
@@ -129,6 +132,7 @@ export const useReportLayoutStyles = () => {
         order: rightPanelOrder,
         overflow: 'hidden' as const,
         overflowX: ("hidden" as unknown) as "visible" | "hidden" | "clip" | "scroll" | "auto",
+        boxSizing: "border-box" as const,
       },
       previewContainer: {
         display: "flex",
@@ -137,6 +141,10 @@ export const useReportLayoutStyles = () => {
         alignItems: "stretch",
         flexDirection: previewDirection,
         minHeight: 0,
+        minWidth: 0,
+        maxWidth: "100%",
+        overflow: "hidden" as const,
+        boxSizing: "border-box" as const,
       },
       previewArea: {
         flex: 1,
@@ -182,6 +190,7 @@ export const useReportLayoutStyles = () => {
       centerPanelMinHeight,
       rightPanelOrder,
       rightPanelMinWidth,
+      rightPanelMaxWidth,
       rightPanelFlex,
       previewGap,
       previewHeight,
