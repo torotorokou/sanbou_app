@@ -171,12 +171,35 @@ class ExecuteDailyForecastUseCase:
 ### コミット履歴
 - `ba9204e5`: Domain層作成（entities.py）
 - `651bc014`: UseCase, Port, Adapter, Worker更新
+- `6560b7dd`: Pydanticフィールド名の衝突解決（date → prediction_date）
+- `b62e1360`: script_executor.pyのインポート修正
+
+### テスト結果
+```bash
+# 実行コマンド
+docker compose -f docker/docker-compose.dev.yml -p local_dev exec inbound_forecast_api \
+  python -m worker.main --target-date 2025-01-22
+
+# 結果
+✅ CSV generated: /backend/output/tplus1_pred_20251215_152205.csv
+✅ Saved prediction to DB: date=2025-01-22, y_hat=91384.19
+✅ Job completed successfully
+```
 
 ### 次のステップ（将来実装）
 1. CSV→PredictionResultの変換実装（script_executor.py内のTODO）
 2. バリデーションロジックの強化
 3. エラーハンドリングの改善
 4. テストケースの追加
+
+---
+
+## リファクタリング完了 ✅
+
+inbound_forecast_apiのClean Architecture移行が完了しました。
+- ドメインエンティティによる型安全性の向上
+- 既存スクリプトとの互換性維持
+- E2Eテスト成功
 
 ---
 
