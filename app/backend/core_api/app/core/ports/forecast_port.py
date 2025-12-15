@@ -32,6 +32,18 @@ class IForecastJobRepository(Protocol):
     def get_job_by_id(self, job_id: int) -> Optional[Any]:
         """ジョブIDでジョブを取得"""
         ...
+    
+    def mark_running(self, job_id: int) -> None:
+        """ジョブをRUNNING状態に更新"""
+        ...
+    
+    def mark_done(self, job_id: int) -> None:
+        """ジョブをDONE状態に更新"""
+        ...
+    
+    def mark_failed(self, job_id: int, error_message: str) -> None:
+        """ジョブをFAILED状態に更新"""
+        ...
 
 
 class IForecastQueryRepository(Protocol):

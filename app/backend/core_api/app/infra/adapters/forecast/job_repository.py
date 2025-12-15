@@ -96,6 +96,14 @@ class JobRepository:
         self.db.commit()  # トランザクションを即座にコミット(他ワーカーに可視化)
         return result[0] if result else None
 
+    def mark_running(self, job_id: int) -> None:
+        """Mark job as running."""
+        job = self.db.query(ForecastJob).filter(ForecastJob.id == job_id).first()
+        if job:
+            job.status = "running"
+            job.updated_at = datetime.utcnow()
+            self.db.commit()
+
     def mark_done(self, job_id: int) -> None:
         """Mark job as done."""
         job = self.db.query(ForecastJob).filter(ForecastJob.id == job_id).first()
