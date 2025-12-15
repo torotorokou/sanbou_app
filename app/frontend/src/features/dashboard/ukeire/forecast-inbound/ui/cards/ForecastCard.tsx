@@ -12,6 +12,7 @@ import { ChartFrame } from "@/features/dashboard/ukeire/shared/ui/ChartFrame";
 import { SingleLineLegend } from "@/features/dashboard/ukeire/shared/ui/SingleLineLegend";
 import { clamp } from "@/features/dashboard/ukeire/domain/valueObjects";
 import { useInstallTabsFillCSS } from "@/features/dashboard/ukeire/shared/styles/useInstallTabsFillCSS";
+import { WipNotice } from "@/features/wip-notice";
 import dayjs from "dayjs";
 import isoWeekPlugin from "dayjs/plugin/isoWeek";
 // レスポンシブ判定は Page 側へ移譲したため、ここではフックを使わない
@@ -50,6 +51,11 @@ export type ForecastCardProps = {
   isGeMd?: boolean;
   // 将来的にはバックグラウンドから取得する想定
   isoWeek?: number;
+  /**
+   * 未完成機能の警告バナーを表示するかどうか
+   * true = 表示、false または undefined = 非表示
+   */
+  showWipNotice?: boolean;
 };
 
 const KPIBlock: React.FC<KPIBlockProps> = ({ title, p50, p10, p90, target, actual, isoWeek }) => {
@@ -207,7 +213,7 @@ const CumTooltip: React.FC<{ active?: boolean; payload?: unknown; label?: string
   );
 };
 
-export const ForecastCard: React.FC<ForecastCardProps> = ({ kpis, chartData, cumData, oddDayTicks, isGeMd, isoWeek }) => {
+export const ForecastCard: React.FC<ForecastCardProps> = ({ kpis, chartData, cumData, oddDayTicks, isGeMd, isoWeek, showWipNotice = false }) => {
   const tabsClass = useInstallTabsFillCSS();
   const [showActual, setShowActual] = useState(true);
   const [showForward, setShowForward] = useState(true);
@@ -245,6 +251,9 @@ export const ForecastCard: React.FC<ForecastCardProps> = ({ kpis, chartData, cum
       style={{ height: "100%", display: "flex", flexDirection: "column" }}
       styles={{ body: { padding: cardPadding, display: "flex", flexDirection: "column", gap: cardGap, flex: 1, minHeight: 0 } }}
     >
+      {/* 未完成機能の警告バナー */}
+      <WipNotice show={showWipNotice} />
+
       <Space align="baseline" style={{ justifyContent: "space-between", width: "100%" }}>
         <Typography.Title level={5} style={{ margin: 0 }}>
           搬入量予測（P50 / P10–P90）

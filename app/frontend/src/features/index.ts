@@ -2,6 +2,9 @@
  * Features - Public API
  */
 
+// WipNotice - 開発中機能警告バナー
+export { WipNotice, type WipNoticeProps } from './wip-notice';
+
 // CSV Validation - 個別エクスポートで重複を回避
 export {
   // Types
