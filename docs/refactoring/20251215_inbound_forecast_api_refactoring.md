@@ -168,11 +168,18 @@ class ExecuteDailyForecastUseCase:
    - DB保存ロジックは変更なし
    - 段階的移行を可能にする設計
 
-### コミット履歴
+### コミット履歴（Phase 1: Domain層とClean Architecture）
 - `ba9204e5`: Domain層作成（entities.py）
 - `651bc014`: UseCase, Port, Adapter, Worker更新
 - `6560b7dd`: Pydanticフィールド名の衝突解決（date → prediction_date）
 - `b62e1360`: script_executor.pyのインポート修正
+- `3e708599`: ドキュメント更新
+
+### コミット履歴（Phase 2: Scriptsディレクトリのリファクタリング）
+- `196d8489`: Step 1 - app/infra/scripts/作成、後方互換性実装
+- `032d4e46`: Step 2 - 全スクリプト移動（18ファイル）
+- `f45d9504`: Step 3 - 古いscriptsディレクトリ削除
+- `a049f9ee`: Step 4 - Dockerfile修正
 
 ### テスト結果
 ```bash
@@ -196,10 +203,50 @@ docker compose -f docker/docker-compose.dev.yml -p local_dev exec inbound_foreca
 
 ## リファクタリング完了 ✅
 
-inbound_forecast_apiのClean Architecture移行が完了しました。
+### Phase 1: Clean Architecture移行（完了）
 - ドメインエンティティによる型安全性の向上
 - 既存スクリプトとの互換性維持
 - E2Eテスト成功
+
+### Phase 2: Scriptsディレクトリリファクタリング（完了）
+- scripts/ → app/infra/scripts/ に移動
+- 18ファイル全てを安全に移行
+- Dockerfile、worker/main.py を更新
+- ベイビーステップで段階的に実施
+
+### 新しいディレクトリ構造
+```
+app/backend/inbound_forecast_api/
+  app/
+    core/
+      domain/
+        prediction/
+          entities.py  # Domain層
+      ports/
+        prediction_port.py  # Port
+      usecases/
+        execute_daily_forecast_uc.py  # UseCase
+    infra/
+      prediction/
+        script_executor.py  # Adapter
+      scripts/  # ★ 新配置
+        daily_tplus1_predict.py
+        serve_predict_model_v4_2_4.py
+        api_server.py
+        train_daily_model.py
+        update_daily_clean.py
+        retrain_and_eval.py
+        run_all_fast.sh
+        gamma_recency_model/
+        monthly_landing_gamma_poisson/
+        reserve_forecast/
+        weekly_allocation/
+  worker/
+    main.py  # エントリーポイント
+  data/
+  models/
+  output/
+```
 
 ---
 

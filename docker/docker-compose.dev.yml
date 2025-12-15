@@ -246,13 +246,13 @@ services:
       - ../env/.env.local_dev
       - ../secrets/.env.local_dev.secrets
     command: >
-      uvicorn scripts.api_server:app
+      uvicorn app.infra.scripts.api_server:app
       --host 0.0.0.0 --port 8000 --reload
-      --reload-dir /backend/scripts
+      --reload-dir /backend/app
     ports:
       - "${DEV_INBOUND_FORECAST_API_PORT:-8006}:8000"
     volumes:
-      - ../app/backend/inbound_forecast_api/scripts:/backend/scripts:rw
+      - ../app/backend/inbound_forecast_api/app:/backend/app:rw
       - ../app/backend/inbound_forecast_api/data:/backend/data:rw
       - ../app/backend/inbound_forecast_api/models:/backend/models:rw
       - ../app/backend/inbound_forecast_api/output:/backend/output:rw
@@ -285,7 +285,7 @@ services:
     command: ["python", "-m", "worker.main", "--help"]
     # ポート公開なし（バックグラウンドジョブ実行のみ）
     volumes:
-      - ../app/backend/inbound_forecast_api/scripts:/backend/scripts:rw
+      - ../app/backend/inbound_forecast_api/app:/backend/app:rw
       - ../app/backend/inbound_forecast_api/data:/backend/data:rw
       - ../app/backend/inbound_forecast_api/models:/backend/models:rw
       - ../app/backend/inbound_forecast_api/output:/backend/output:rw
