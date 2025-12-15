@@ -10,7 +10,7 @@ Create Reservation UseCase
 from datetime import datetime
 
 from app.core.ports.ingest_port import IngestPort
-from app.core.domain.models import ReservationCreate, ReservationResponse
+from app.core.domain.ingest.entities import ReservationCreate, ReservationResponse
 
 
 class CreateReservationUseCase:
