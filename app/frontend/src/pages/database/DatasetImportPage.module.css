@@ -15,7 +15,7 @@
 
 .leftCol {
   padding: 16px;
-  gap: 12px;
+  gap: 6px; /* 12pxから6pxに縮小 */
 }
 
 .rightCol {
@@ -28,6 +28,15 @@
   min-height: 0;
   overflow-y: auto;
   padding-right: 4px;
+}
+
+/* xl以上(1280px~)で3つ程度のアップロードならスクロールなし */
+@media (min-width: 1280px) {
+  .uploadSection {
+    flex: 0 1 auto; /* flexをautoに変更して自然な高さに */
+    max-height: none; /* 制限を解除 */
+    min-height: 200px; /* 最小高さは確保 */
+  }
 }
 
 .hint {

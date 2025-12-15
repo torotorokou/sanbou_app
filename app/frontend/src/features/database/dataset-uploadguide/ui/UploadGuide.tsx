@@ -12,6 +12,7 @@ import type { FileState } from '../model/types';
 import { DATASETS } from '@features/database/config/datasets';
 import { notifyError } from '@features/notification';
 import type { DatasetKey } from '@features/database/config';
+import styles from './UploadGuide.module.css';
 
 const { Text } = Typography;
 
@@ -47,6 +48,7 @@ export const UploadGuide: React.FC<UploadGuideProps> = ({ datasetKey, files }) =
       {missing.length > 0 && (
         <Collapse
           defaultActiveKey={[]}
+          className={styles.compactCollapse}
           style={{
             marginBottom: 8,
             backgroundColor: '#fffbe6',
@@ -83,6 +85,7 @@ export const UploadGuide: React.FC<UploadGuideProps> = ({ datasetKey, files }) =
       {/* 手順・必要ファイル・注意事項（Collapse） */}
       <Collapse
         defaultActiveKey={[]}
+        className={styles.compactCollapse}
         style={{
           backgroundColor: '#f6ffed',
           border: '1px solid #b7eb8f',
@@ -99,7 +102,7 @@ export const UploadGuide: React.FC<UploadGuideProps> = ({ datasetKey, files }) =
               </span>
             ),
             children: (
-              <ol style={{ margin: 0, paddingLeft: 20, lineHeight: 1.8, fontSize: 14 }}>
+              <ol className={styles.compactList}>
                 <li>
                   データセットを選択（現在: <strong>{datasetKey}</strong>）
                 </li>
@@ -124,9 +127,9 @@ export const UploadGuide: React.FC<UploadGuideProps> = ({ datasetKey, files }) =
                 renderItem={(r) => (
                   <List.Item style={{ paddingLeft: 0 }}>
                     <Tag color="blue">{r.label}</Tag>
-                    <Text type="secondary" style={{ fontSize: 14 }}>(必須)</Text>
+                    <Text type="secondary" style={{ fontSize: 12 }}>(必須)</Text>
                     {Array.isArray(r.filenameHints) && r.filenameHints.length > 0 && (
-                      <span style={{ marginLeft: 8, fontSize: 14, color: '#888' }}>
+                      <span style={{ marginLeft: 8, fontSize: 12, color: '#888' }}>
                         ファイル名例: {r.filenameHints.join(' / ')}
                       </span>
                     )}
@@ -151,7 +154,7 @@ export const UploadGuide: React.FC<UploadGuideProps> = ({ datasetKey, files }) =
                       dataSource={dataset.notes}
                       renderItem={(note) => (
                         <List.Item style={{ paddingLeft: 0 }}>
-                          <Text style={{ fontSize: 14 }}>{note}</Text>
+                          <Text style={{ fontSize: 13 }}>{note}</Text>
                         </List.Item>
                       )}
                     />
