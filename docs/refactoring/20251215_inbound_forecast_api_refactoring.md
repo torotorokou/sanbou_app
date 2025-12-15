@@ -117,27 +117,66 @@ class ExecuteDailyForecastUseCase:
 
 ## 3. 実装ステップ（ベイビーステップ）
 
-### Step 1: Domain層の作成
-1. `core/domain/prediction/` ディレクトリ作成
-2. `entities.py` 作成（DailyForecastRequest, PredictionResult）
-3. `__init__.py` 作成（re-export）
+### Step 1: Domain層の作成 ✅ COMPLETED (ba9204e5)
+- `app/core/domain/prediction/entities.py` 作成
+- DailyForecastRequest: target_date, model_version
+- PredictionResult: date, y_hat, y_lo, y_hi, model_version (全てvalidation付き)
+- PredictionOutput: csv_path, predictions (Optional)
+- Pydantic v2使用、frozen=True（イミュータブル）
 
-### Step 2: UseCaseの更新
-1. UseCaseをDailyForecastRequestを受け取るように修正
-2. 戻り値の型を明確化
-3. 動作確認
+### Step 2: UseCase更新 ✅ COMPLETED (651bc014)
+- `execute_daily_forecast_uc.py` 更新
+- DailyForecastRequestを受け取り
+- PredictionOutputを返却
+- 型ヒントと詳細ドキュメント追加
 
-### Step 3: Portの更新
-1. IPredictionExecutor の型シグネチャ更新
-2. 動作確認
+### Step 3: Port更新 ✅ COMPLETED (651bc014)
+- `prediction_port.py` 更新
+- IPredictionExecutor Protocolにドメインエンティティ適用
+- execute_daily_forecast: DailyForecastRequest → PredictionOutput
+- 詳細なDocstringと例を追加
 
-### Step 4: Adapterの更新
-1. ScriptBasedPredictionExecutor の型対応
-2. 動作確認
+### Step 4: Adapter更新 ✅ COMPLETED (651bc014)
+- `script_executor.py` 更新
+- DailyForecastRequestからパラメータ取得
+- PredictionOutput生成（csv_pathと将来のpredictions）
+- 既存スクリプト（daily_tplus1_predict.py）との互換性維持
+- DB保存処理は既存のまま維持
 
-### Step 5: Worker統合
-1. worker/main.py の更新
-2. E2Eテスト
+### Step 5: Worker更新 ✅ COMPLETED (651bc014)
+- `worker/main.py` 更新
+- DailyForecastRequest構築
+- PredictionOutput処理
+- ログ出力の改善
+
+---
+
+## 4. 実装完了サマリー
+
+### 達成した改善
+1. **型安全性の向上**
+   - プリミティブ型（Optional[date], str）→ドメインエンティティ（DailyForecastRequest, PredictionOutput）
+   - Pydanticによる自動バリデーション
+   - IDEによる型チェックサポート
+
+2. **ドメインモデルの明確化**
+   - 予測リクエスト、結果の構造を明示的に定義
+   - ビジネスロジックとインフラ層の分離
+
+3. **既存コードとの互換性**
+   - subprocess経由のスクリプト実行を維持
+   - DB保存ロジックは変更なし
+   - 段階的移行を可能にする設計
+
+### コミット履歴
+- `ba9204e5`: Domain層作成（entities.py）
+- `651bc014`: UseCase, Port, Adapter, Worker更新
+
+### 次のステップ（将来実装）
+1. CSV→PredictionResultの変換実装（script_executor.py内のTODO）
+2. バリデーションロジックの強化
+3. エラーハンドリングの改善
+4. テストケースの追加
 
 ---
 
@@ -160,18 +199,21 @@ docker compose -f docker/docker-compose.dev.yml -p local_dev exec inbound_foreca
 
 ## 5. 実装優先度
 
-### 高優先度（今回実施）
-- [x] Step 1: Domain層の作成
-- [ ] Step 2: UseCaseの更新
-- [ ] Step 3: Portの更新
-- [ ] Step 4: Adapterの更新
+### 高優先度（✅ 完了）
+- [x] Step 1: Domain層の作成 (ba9204e5)
+- [x] Step 2: UseCaseの更新 (651bc014)
+- [x] Step 3: Portの更新 (651bc014)
+- [x] Step 4: Adapterの更新 (651bc014)
+- [x] Step 5: Worker更新 (651bc014)
 
 ### 中優先度（今後実施）
+- [ ] CSV→PredictionResult変換の実装
 - [ ] バリデーションロジックの追加
 - [ ] エラーハンドリングの改善
 - [ ] ログ記録の統一
 
 ### 低優先度（将来実施）
+- [ ] 単体テストの追加
 - [ ] メトリクス収集
 - [ ] リトライロジック
 - [ ] 非同期実行対応
