@@ -40,6 +40,7 @@ export { HttpInboundForecastRepository } from "./forecast-inbound/infrastructure
 export { MockInboundForecastRepository } from "./forecast-inbound/infrastructure/inboundForecast.mock.repository";
 export { useInboundForecastVM, type InboundForecastViewModel } from "./forecast-inbound/model/useInboundForecastVM";
 export { ForecastCard, type ForecastCardProps, type KPIBlockProps } from "./forecast-inbound/ui/cards/ForecastCard";
+export { WipNotice, type WipNoticeProps } from "./forecast-inbound/ui/cards/WipNotice";
 
 // ========== Inbound Monthly ==========
 export { DailyActualsCard } from "./inbound-monthly/ui/cards/DailyActualsCard";
