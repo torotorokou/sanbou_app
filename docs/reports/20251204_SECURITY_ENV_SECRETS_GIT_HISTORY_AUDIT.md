@@ -2,7 +2,7 @@
 
 **作成日**: 2025年12月4日  
 **監査対象**: `env/` および `secrets/` ディレクトリのGit管理履歴  
-**リポジトリ**: https://github.com/torotorokou/sanbou_app.git  
+**リポジトリ**: https://github.com/your-username/your-repo.git  
 **現在のブランチ**: refactor/env-and-compose-sync
 
 ---
@@ -42,18 +42,18 @@
 
 ```bash
 # env/.env.local_dev に含まれていた内容
-DATABASE_URL=postgresql://myuser:mypassword@db:5432/sanbou_dev
+DATABASE_URL=postgresql://dbuser:dbpassword@db:5432/sanbou_dev
 ```
 
 ```bash
 # env/.env.vm_stg に含まれていた内容
-DATABASE_URL=postgresql://myuser:mypassword@db:5432/sanbou_stg
+DATABASE_URL=postgresql://dbuser:dbpassword@db:5432/sanbou_stg
 ```
 
 **リスク評価**: 🟡 **中リスク（軽減済み）**
 
 **理由**:
-- ✅ `myuser:mypassword` はデフォルトの開発用認証情報
+- ✅ `dbuser:dbpassword` はデフォルトの開発用認証情報
 - ✅ 本番環境用のパスワードは含まれていない（プレースホルダー形式）
 - ✅ 同日中（コミット `c52bbc8c`, `348e2616`）に削除・修正済み
 - ⚠️ ただし、過去にこれらの認証情報が実際に使用されていた場合、攻撃者が履歴から取得可能
@@ -62,10 +62,10 @@ DATABASE_URL=postgresql://myuser:mypassword@db:5432/sanbou_stg
 
 #### 露出した情報
 ```bash
-GCS_LEDGER_BUCKET_DEV=gs://sanbouapp-dev/ledger_api/st_app
-GCS_LEDGER_BUCKET_STG=gs://sanbouapp-stg/ledger_api/st_app
-GCS_LEDGER_BUCKET_PROD=gs://sanbouapp-prod/ledger_api/st_app
-RAG_GCS_URI=gs://sanbouapp-stg/rag_api/object_haikibutu/master/
+GCS_LEDGER_BUCKET_DEV=gs://your-project-dev/ledger_api/st_app
+GCS_LEDGER_BUCKET_STG=gs://your-project-stg/ledger_api/st_app
+GCS_LEDGER_BUCKET_PROD=gs://your-project-prod/ledger_api/st_app
+RAG_GCS_URI=gs://your-project-stg/rag_api/object_haikibutu/master/
 ```
 
 **リスク評価**: 🟢 **低リスク**
@@ -89,7 +89,7 @@ RAG_GCS_URI=gs://sanbouapp-stg/rag_api/object_haikibutu/master/
 #### 露出した情報
 ```bash
 # env/.env.vm_prod
-PUBLIC_BASE_URL=https://sanbou-app.jp
+PUBLIC_BASE_URL=https://example.com
 POSTGRES_DB=sanbou_prod
 DATABASE_URL=postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
 ```

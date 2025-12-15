@@ -9,7 +9,7 @@
 ユーザーが `secrets/.env.local_dev.secrets` のパスワードを変更したことにより、以下のエラーが発生:
 
 ```
-FATAL: password authentication failed for user "myuser"
+FATAL: password authentication failed for user "dbuser"
 ```
 
 ## 2. 根本原因の特定
@@ -18,9 +18,9 @@ FATAL: password authentication failed for user "myuser"
 
 | 場所 | パスワード設定 | 状態 |
 |------|--------------|------|
-| **実際のDB (PostgreSQL)** | `mypassword` (例) | 変更されていない |
-| **secrets/.env.local_dev.secrets** | `fOb1***[マスク済み]` (例) | 新しいパスワードに変更済み |
-| **env/.env.local_dev (DATABASE_URL)** | `mypassword` (例) | **ハードコードされたまま** |
+| **実際のDB (PostgreSQL)** | `dbpassword` (例) | 変更されていない |
+| **secrets/.env.local_dev.secrets** | `newpassword***[マスク済み]` (例) | 新しいパスワードに変更済み |
+| **env/.env.local_dev (DATABASE_URL)** | `dbpassword` (例) | **ハードコードされたまま** |
 | **env/.env.common** | `__SET_IN_ENV_SPECIFIC_FILE__` | プレースホルダー |
 
 ### 2.2 問題の構造
@@ -33,7 +33,7 @@ graph TD
     B --> E[3. secrets/.env.local_dev.secrets]
     
     C --> F[POSTGRES_PASSWORD=__SET_IN_ENV_SPECIFIC_FILE__]
-    D --> G[DATABASE_URL=postgresql://myuser:<OLD_PASSWORD>@db:5432/sanbou_dev]
+    D --> G[DATABASE_URL=postgresql://dbuser:<OLD_PASSWORD>@db:5432/sanbou_dev]
     E --> H[POSTGRES_PASSWORD=<NEW_PASSWORD>]
     
     H --> I[DBコンテナ: 新パスワードで環境変数設定]
@@ -44,14 +44,14 @@ graph TD
     K --> M[実際のDBパスワード: <OLD_PASSWORD>]
     
     G --> N[アプリケーションコンテナ: DATABASE_URLを使用]
-    N --> O[接続試行: mypassword]
+    N --> O[接続試行: dbpassword]
     
     H --> P[アプリケーションコンテナ: POSTGRES_PASSWORDも設定]
     P --> Q[衝突: 2つの異なるパスワード設定]
     
     O --> R[成功するはずだが...]
     Q --> S[DATABASE_URLが優先される]
-    S --> T[結果的に mypassword で接続成功]
+    S --> T[結果的に dbpassword で接続成功]
     
     style K fill:#f96
     style H fill:#fc6
@@ -65,12 +65,12 @@ graph TD
 
 ```
 db-1  | 2025-12-04 02:00:14.906 UTC [1] LOG:  database system is ready to accept connections
-db-1  | 2025-12-04 02:00:31.123 UTC [41] FATAL:  password authentication failed for user "myuser"
+db-1  | 2025-12-04 02:00:31.123 UTC [41] FATAL:  password authentication failed for user "dbuser"
 ```
 
 **認証失敗が継続的に発生していたが、現在は接続できている理由:**
 
-`env/.env.local_dev` の `DATABASE_URL=postgresql://myuser:<OLD_PASSWORD>@db:5432/sanbou_dev` (例) がそのまま残っているため、この接続文字列が優先されて接続に成功していた。
+`env/.env.local_dev` の `DATABASE_URL=postgresql://dbuser:<OLD_PASSWORD>@db:5432/sanbou_dev` (例) がそのまま残っているため、この接続文字列が優先されて接続に成功していた。
 
 ### 3.2 現在のコンテナ状態
 
@@ -92,11 +92,11 @@ local_dev-plan_worker-1   local_dev-plan_worker   Up 4 minutes (unhealthy)
    Role name    |                         Attributes                         
 ----------------+------------------------------------------------------------
  app_readonly   | Cannot login
- myuser         | Superuser, Create role, Create DB, Replication, Bypass RLS
+ dbuser         | Superuser, Create role, Create DB, Replication, Bypass RLS
  sanbou_app_dev |
 ```
 
-- `myuser`: スーパーユーザー、パスワードは `<OLD_PASSWORD>` (例) のまま
+- `dbuser`: スーパーユーザー、パスワードは `<OLD_PASSWORD>` (例) のまま
 - `sanbou_app_dev`: 環境別ユーザーが既に作成されている(パスワード未設定の可能性)
 
 ## 4. なぜ現在は接続できているのか
@@ -106,7 +106,7 @@ local_dev-plan_worker-1   local_dev-plan_worker   Up 4 minutes (unhealthy)
 Docker Composeの`env_file`は以下の順序で読み込まれますが、**後から読み込まれた値が前の値を上書き**します:
 
 1. `../env/.env.common` - `POSTGRES_PASSWORD=__SET_IN_ENV_SPECIFIC_FILE__`
-2. `../env/.env.local_dev` - `DATABASE_URL=postgresql://myuser:<OLD_PASSWORD>@db:5432/sanbou_dev` (例)
+2. `../env/.env.local_dev` - `DATABASE_URL=postgresql://dbuser:<OLD_PASSWORD>@db:5432/sanbou_dev` (例)
 3. `../secrets/.env.local_dev.secrets` - `POSTGRES_PASSWORD=<NEW_PASSWORD>` (例、マスク済み)
 
 ### 4.2 実際の動作
@@ -128,7 +128,7 @@ Docker Composeの`env_file`は以下の順序で読み込まれますが、**後
 
 ```dotenv
 # env/.env.local_dev (問題あり - 例)
-DATABASE_URL=postgresql://myuser:<PASSWORD>@db:5432/sanbou_dev
+DATABASE_URL=postgresql://dbuser:<PASSWORD>@db:5432/sanbou_dev
 ```
 
 **問題点:**
@@ -141,11 +141,11 @@ DATABASE_URL=postgresql://myuser:<PASSWORD>@db:5432/sanbou_dev
 ```yaml
 # docker/docker-compose.dev.yml (改善必要)
 healthcheck:
-  test: ["CMD-SHELL", "pg_isready -U myuser -d sanbou_dev"]
+  test: ["CMD-SHELL", "pg_isready -U dbuser -d sanbou_dev"]
 ```
 
 **問題点:**
-- ユーザー名 `myuser` がハードコード
+- ユーザー名 `dbuser` がハードコード
 - 環境変数を使用していない
 
 ### 5.3 PostgreSQLの初期化メカニズム
@@ -167,7 +167,7 @@ PostgreSQLコンテナは以下の動作をします:
 `env/.env.local_dev`:
 ```dotenv
 # ❌ 削除
-# DATABASE_URL=postgresql://myuser:mypassword@db:5432/sanbou_dev
+# DATABASE_URL=postgresql://dbuser:dbpassword@db:5432/sanbou_dev
 
 # ✅ 代わりに DATABASE_URL を構築しない（各サービスで組み立てる）
 POSTGRES_DB=sanbou_dev
@@ -175,9 +175,9 @@ POSTGRES_DB=sanbou_dev
 
 `secrets/.env.local_dev.secrets`:
 ```dotenv
-POSTGRES_USER=myuser
-POSTGRES_PASSWORD=mypassword  # 既存のパスワードに戻す
-DATABASE_URL=postgresql://myuser:mypassword@db:5432/sanbou_dev
+POSTGRES_USER=dbuser
+POSTGRES_PASSWORD=dbpassword  # 既存のパスワードに戻す
+DATABASE_URL=postgresql://dbuser:dbpassword@db:5432/sanbou_dev
 ```
 
 または、アプリケーションコード側で環境変数から動的に構築:

@@ -194,7 +194,7 @@ curl http://localhost/api/v1/health
 
 - GCP VMインスタンスが作成済み
 - Cloud Load Balancer + IAP設定済み
-- ドメイン（sanbou-app.jp）がLBに向いている
+- ドメイン（example.com）がLBに向いている
 - Docker & Docker Composeがインストール済み
 
 #### **Step 1: ローカルPCでイメージをビルド・プッシュ**
@@ -225,7 +225,7 @@ IMAGE_TAG=prod-20251212
 
 ```bash
 # VM にログイン
-gcloud compute ssh vm-prod --project=honest-sanbou-app-prod
+gcloud compute ssh vm-prod --project=your-project-id
 
 # リポジトリをclone（初回のみ）
 git clone <リポジトリURL> ~/sanbou_app
@@ -276,7 +276,7 @@ curl http://localhost/
 curl http://localhost/api/v1/health
 
 # 外部から（LB + IAP経由）
-# https://sanbou-app.jp/
+# https://example.com/
 ```
 
 ---
@@ -311,16 +311,38 @@ make al-down ENV=local_dev
 make al-down-env ENV=vm_stg
 ```
 
-### DB Bootstrap（自動実行）
+### 新規環境での自動構築（推奨）
 
-`al-up` および `al-up-env` を実行すると、自動的に以下が実行されます：
+`al-up-env` を実行すると、新規環境では自動的に以下の順序で実行されます：
 
-1. **db-bootstrap-roles-env**: app_readonly ロールと権限の設定（冪等）
-2. **alembic upgrade head**: スキーママイグレーション
+1. **db-ensure-baseline-env**: スキーマ・テーブル構造の適用（初回のみ、冪等）
+   - marker table (`public.schema_baseline_meta`) で適用済み判定
+   - `app/backend/core_api/migrations_v2/sql/schema_baseline.sql` を使用
+   - vm_prod では `FORCE=1` 必須（誤操作防止）
+2. **db-bootstrap-roles-env**: app_readonly ロールと権限の設定（冪等）
+3. **alembic upgrade head**: 差分マイグレーション
+
+**使用例**:
+
+```bash
+# 新規環境（自動で器まで作成）
+make al-up-env ENV=vm_stg
+
+# 本番環境（初回のみFORCE=1必須）
+make al-up-env ENV=vm_prod FORCE=1
+
+# 既存環境（baselineスキップ、差分だけ適用）
+make al-up-env ENV=local_dev
+```
+
+**注意事項**:
+- baseline適用後は `stg`, `mart`, `ref`, `kpi`, `tmp` 等のスキーマ・テーブルが作成されます
+- 中途半端な状態（stgだけ存在等）では明示的にボリューム削除が必要です
 
 手動実行する場合：
 
 ```bash
+make db-ensure-baseline-env ENV=vm_stg
 make db-bootstrap-roles-env ENV=local_dev
 make db-bootstrap-roles-env ENV=vm_stg
 make db-bootstrap-roles-env ENV=vm_prod
@@ -520,7 +542,7 @@ make config ENV=vm_stg
 docker compose -p vm_stg exec core_api bash
 
 # DBに直接接続
-docker compose -p vm_stg exec db psql -U myuser -d sanbou_stg
+docker compose -p vm_stg exec db psql -U dbuser -d sanbou_stg
 
 # ネットワーク確認
 docker compose -p vm_stg exec nginx curl http://core_api:8000/health

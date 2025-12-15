@@ -20,7 +20,7 @@ permission denied for schema mart
 **PostgreSQLのスキーマ権限が不足**していた。
 
 ### 詳細
-1. DBスキーマの所有者: `myuser`
+1. DBスキーマの所有者: `dbuser`
 2. アプリケーションのDBユーザー: `sanbou_app_dev`
 3. `sanbou_app_dev`ユーザーが以下のスキーマにアクセスできなかった:
    - `ref` (カレンダーマスタデータ)
@@ -28,7 +28,7 @@ permission denied for schema mart
    - その他のスキーマ(`app_auth`, `forecast`, `kpi`, `log`, `raw`, `stg`, `sandbox`)
 
 ### なぜ発生したか
-- データベース初期化時に`myuser`でスキーマを作成
+- データベース初期化時に`dbuser`でスキーマを作成
 - アプリケーション用ユーザー`sanbou_app_dev`への権限付与が漏れていた
 - `DATABASE_URL`は`sanbou_app_dev`を使用していたが、権限が未設定
 
@@ -58,14 +58,14 @@ GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA <schema_name> TO sanbou_app_dev;
 
 #### デフォルト権限（将来のオブジェクト用）
 ```sql
-ALTER DEFAULT PRIVILEGES FOR ROLE myuser IN SCHEMA <schema_name>
+ALTER DEFAULT PRIVILEGES FOR ROLE dbuser IN SCHEMA <schema_name>
   GRANT SELECT ON TABLES TO sanbou_app_dev;
 ```
 
 ### 2. 実行コマンド
 ```bash
 docker compose -f docker/docker-compose.dev.yml -p local_dev \
-  exec -T db psql -U myuser -d sanbou_dev \
+  exec -T db psql -U dbuser -d sanbou_dev \
   -f - < scripts/db/fix_schema_permissions.sql
 ```
 

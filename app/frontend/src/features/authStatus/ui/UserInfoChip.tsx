@@ -5,18 +5,21 @@
  * サイドバーやヘッダーに配置して、ユーザーに認証状態を伝えます。
  * 
  * 【表示内容】
- * - ローディング中: "ユーザー情報取得中..."
+ * - ローディング中: "ユーザー情報取得中..."（AuthProviderで初期化済みなので通常は表示されない）
  * - エラー時: エラーメッセージ（赤色）
  * - 未ログイン: "未ログイン"
  * - ログイン中: "ログイン中：{表示名 or メールアドレス}"
+ * 
+ * 【変更履歴】
+ * - AuthProviderを使用してグローバルな認証状態を参照
  */
 
 import type { FC } from "react";
-import { useAuthStatusViewModel } from "../model/useAuthStatusViewModel";
+import { useAuth } from "@app/providers/AuthProvider";
 import { customTokens } from "@/shared";
 
 export const UserInfoChip: FC = () => {
-  const { user, isLoading, error } = useAuthStatusViewModel();
+  const { user, isInitializing: isLoading, error } = useAuth();
 
   // ローディング中の表示
   if (isLoading) {

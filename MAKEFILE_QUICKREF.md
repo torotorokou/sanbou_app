@@ -158,7 +158,7 @@ make al-up-env ENV=vm_prod
 7. **VM**: `make down ENV=vm_stg` （必要に応じて）
 8. **VM**: `make up ENV=vm_prod`
 9. **VM**: `make al-up-env ENV=vm_prod`
-10. **動作確認**: `curl https://sanbou-app.jp/health`
+10. **動作確認**: `curl https://example.com/health`
 
 ## ⚠️ 重要な注意事項
 

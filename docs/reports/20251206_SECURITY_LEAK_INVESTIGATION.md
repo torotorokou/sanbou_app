@@ -72,14 +72,14 @@ ab307d2d (2025-12-04 10:20) - feat(security): DBユーザー分離・パスワ�
 - POSTGRES_HOST=db                    # 機密度: 低（Docker 内部）
 - POSTGRES_PORT=5432                  # 機密度: 低
 - POSTGRES_DB=sanbou_prod            # 機密度: 低
-- GCP_PROJECT_ID=honest-sanbou-app-prod  # 機密度: 中
+- GCP_PROJECT_ID=your-project-id     # 機密度: 中
 - FRONTEND_URL=https://...           # 機密度: 低（公開情報）
 - AUTH_MODE=iap                      # 機密度: 低
 - IAP_AUDIENCE=                      # 機密度: 高（空の場合は安全）
 
 ❌ 含まれていなかった情報（確認済み）:
 - POSTGRES_PASSWORD                   # secrets/ に分離されていた ✅
-- POSTGRES_USER                       # 一部の commit で "myuser" 程度 ⚠️
+- POSTGRES_USER                       # 一部の commit で "dbuser" 程度 ⚠️
 - GCP_SERVICE_ACCOUNT_KEY             # secrets/ に分離 ✅
 - API キー                            # 含まれず ✅
 ```
@@ -213,7 +213,7 @@ nothing to commit, working tree clean
 
 #### 1. GCP_PROJECT_ID の流出
 ```
-流出情報: GCP_PROJECT_ID=honest-sanbou-app-prod
+流出情報: GCP_PROJECT_ID=your-project-id
 リスク: プロジェクト名が判明 → 攻撃対象の特定
 対策: 
   ✅ IAP で保護済み（外部からアクセス不可）
@@ -224,7 +224,7 @@ nothing to commit, working tree clean
 
 #### 2. POSTGRES_USER の流出（一部の commit）
 ```
-流出情報: POSTGRES_USER=myuser
+流出情報: POSTGRES_USER=dbuser
 リスク: DB ユーザー名が判明 → ブルートフォース攻撃の対象
 対策:
   ✅ DB は内部ネットワークのみ（外部からアクセス不可）

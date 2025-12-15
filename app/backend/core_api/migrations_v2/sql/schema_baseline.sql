@@ -1071,15 +1071,6 @@ CREATE VIEW mart.v_receive_weekly AS
 
 
 --
--- Name: alembic_version; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.alembic_version (
-    version_num character varying(32) NOT NULL
-);
-
-
---
 -- Name: shogun_final_receive; Type: TABLE; Schema: raw; Owner: -
 --
 
@@ -1919,14 +1910,6 @@ ALTER TABLE ONLY log.upload_file
 
 ALTER TABLE ONLY mart.inb_profile_smooth_test
     ADD CONSTRAINT inb_profile_smooth_test_pkey PRIMARY KEY (scope, iso_week, iso_dow);
-
-
---
--- Name: alembic_version alembic_version_pkc; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.alembic_version
-    ADD CONSTRAINT alembic_version_pkc PRIMARY KEY (version_num);
 
 
 --
