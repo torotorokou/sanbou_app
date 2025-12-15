@@ -1,0 +1,2 @@
+# 予測結果CSVは除外
+output/*.csv

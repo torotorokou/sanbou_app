@@ -37,10 +37,15 @@ FROM base AS dev
 RUN pip install --no-cache-dir watchfiles
 
 # Copy application code (will be mounted as volume in dev)
+COPY ./app ./app
 COPY ./scripts ./scripts
 COPY ./data ./data
 COPY ./models ./models
 COPY ./output ./output
+COPY ./worker ./worker
+
+# Set PYTHONPATH for Clean Architecture
+ENV PYTHONPATH=/backend
 
 # Non-root user for security
 RUN useradd -m -u 1000 appuser && \
@@ -58,10 +63,15 @@ CMD ["uvicorn", "scripts.api_server:app", "--host", "0.0.0.0", "--port", "8000"]
 FROM base AS prod
 
 # Copy application code
+COPY ./app ./app
 COPY ./scripts ./scripts
 COPY ./data ./data
 COPY ./models ./models
 COPY ./output ./output
+COPY ./worker ./worker
+
+# Set PYTHONPATH for Clean Architecture
+ENV PYTHONPATH=/backend
 
 # Non-root user
 RUN useradd -m -u 1000 appuser && \

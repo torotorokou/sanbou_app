@@ -238,7 +238,7 @@ def get_forecast_job_status_uc(
     return GetForecastJobStatusUseCase(job_repo=job_repo)
 
 def get_run_inbound_forecast_job_uc(
-    job_repo: JobRepository = Depends(get_forecast_job_repo),
+    job_repo: JobRepository = Depends(get_job_repo),
 ) -> RunInboundForecastJobUseCase:
     """RunInboundForecastJobUseCase提供"""
     return RunInboundForecastJobUseCase(job_repo=job_repo)
