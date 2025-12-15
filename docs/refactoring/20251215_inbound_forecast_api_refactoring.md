@@ -178,19 +178,41 @@ class ExecuteDailyForecastUseCase:
 ### コミット履歴（Phase 2: Scriptsディレクトリのリファクタリング）
 - `196d8489`: Step 1 - app/infra/scripts/作成、後方互換性実装
 - `032d4e46`: Step 2 - 全スクリプト移動（18ファイル）
-- `f45d9504`: Step 3 - 古いscriptsディレクトリ削除
-- `a049f9ee`: Step 4 - Dockerfile修正
+- `f45d9504`: Step 3 - 古いscriptsディレクトリ削除、クリーンアップ
+- `4e40ffdc`: Step 4 - Docker設定修正（scriptsマウント削除、appマウント統一）
 
-### テスト結果
+### テスト結果（Phase 2完了後）
 ```bash
 # 実行コマンド
 docker compose -f docker/docker-compose.dev.yml -p local_dev exec inbound_forecast_api \
-  python -m worker.main --target-date 2025-01-22
+  python -m worker.main --target-date 2025-01-27
 
 # 結果
-✅ CSV generated: /backend/output/tplus1_pred_20251215_152205.csv
-✅ Saved prediction to DB: date=2025-01-22, y_hat=91384.19
+✅ CSV generated: /backend/output/tplus1_pred_20251215_153652.csv
+✅ Saved prediction to DB: date=2025-01-27, y_hat=91384.19
 ✅ Job completed successfully
+
+# ディレクトリ構造確認
+$ docker exec local_dev-inbound_forecast_api-1 ls -la /backend/
+drwxr-xr-x 4 appuser appuser 4096 Dec 15 13:53 app         # ✅ appディレクトリのみ
+drwxr-xr-x 4 appuser appuser 4096 Dec 15 13:14 data
+drwxr-xr-x 2 appuser appuser 4096 Dec 15 13:15 models
+drwxr-xr-x 2 appuser appuser 4096 Dec 15 15:36 output
+drwxr-xr-x 2 appuser appuser 4096 Dec 15 13:42 worker
+# ❌ scriptsディレクトリは存在しない（不要な空ディレクトリが作成されない）
+
+$ docker exec local_dev-inbound_forecast_api-1 ls /backend/app/infra/scripts/
+api_server.py                      # ✅ 全スクリプトが正しい場所に配置
+daily_tplus1_predict.py
+gamma_recency_model/
+monthly_landing_gamma_poisson/
+reserve_forecast/
+retrain_and_eval.py
+run_all_fast.sh
+serve_predict_model_v4_2_4.py
+train_daily_model.py
+update_daily_clean.py
+weekly_allocation/
 ```
 
 ### 次のステップ（将来実装）
@@ -210,11 +232,12 @@ docker compose -f docker/docker-compose.dev.yml -p local_dev exec inbound_foreca
 
 ### Phase 2: Scriptsディレクトリリファクタリング（完了）
 - scripts/ → app/infra/scripts/ に移動
-- 18ファイル全てを安全に移行
-- Dockerfile、worker/main.py を更新
-- ベイビーステップで段階的に実施
+- 18ファイル全てを安全に移行（daily_tplus1_predict.py、serve_predict_model_v4_2_4.py等）
+- Dockerfile、docker-compose.dev.yml、worker/main.py を更新
+- ベイビーステップで段階的に実施（4コミット）
+- 不要な空scriptsディレクトリが作成されなくなった
 
-### 新しいディレクトリ構造
+### 最終的なディレクトリ構造
 ```
 app/backend/inbound_forecast_api/
   app/
