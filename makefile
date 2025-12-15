@@ -815,3 +815,54 @@ security-check: scan-local-images
 	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 	@echo "✅ Security checks completed successfully"
 	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+## ============================================================
+## Inbound Forecast Worker（需要予測ジョブ実行）
+## ============================================================
+## 概要:
+##   - run-to-completion型のワーカー（1回実行→終了）
+##   - 既存APIサービス（inbound_forecast_api）とは独立して動作
+##   - profiles: jobs, forecast で分離（通常起動に影響なし）
+##
+## 使い方:
+##   make forecast-help ENV=local_dev             # ヘルプ表示
+##   make forecast-dryrun ENV=local_dev           # 設定検証のみ
+##   make forecast-run ENV=local_dev              # 日次予測実行（明日）
+##   make forecast-run ENV=local_dev TARGET_DATE=2025-12-20  # 指定日予測
+##
+## 注意:
+##   - 初回実行前にビルドが必要: make forecast-build ENV=local_dev
+##   - 実行には約1-5分かかります（タイムアウト: 5分）
+##   - 失敗時は終了コード非0で報告されます
+## ============================================================
+.PHONY: forecast-build forecast-help forecast-dryrun forecast-run
+
+TARGET_DATE ?=
+FORECAST_WORKER_SVC := inbound_forecast_worker
+FORECAST_DC := $(DC_FULL) --profile forecast
+
+forecast-build: check
+	@echo "[info] Building forecast worker (ENV=$(ENV))"
+	$(FORECAST_DC) build $(FORECAST_WORKER_SVC)
+	@echo "[ok] Forecast worker built"
+
+forecast-help: check
+	@echo "[info] Forecast worker help (ENV=$(ENV))"
+	$(FORECAST_DC) run --rm $(FORECAST_WORKER_SVC) python -m worker.main --help
+
+forecast-dryrun: check
+	@echo "[info] Forecast worker dry-run (ENV=$(ENV))"
+	$(FORECAST_DC) run --rm $(FORECAST_WORKER_SVC) python -m worker.main --dry-run
+
+forecast-run: check
+	@echo "[info] Running forecast job (ENV=$(ENV))"
+	@if [ -n "$(TARGET_DATE)" ]; then \
+	  echo "[info] Target date: $(TARGET_DATE)"; \
+	  $(FORECAST_DC) run --rm $(FORECAST_WORKER_SVC) \
+	    python -m worker.main --job-type daily --target-date $(TARGET_DATE); \
+	else \
+	  echo "[info] Target date: tomorrow (default)"; \
+	  $(FORECAST_DC) run --rm $(FORECAST_WORKER_SVC) \
+	    python -m worker.main --job-type daily; \
+	fi
+	@echo "[ok] Forecast job completed"
