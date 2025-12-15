@@ -256,6 +256,7 @@ services:
       - ../app/backend/inbound_forecast_api/data:/backend/data:rw
       - ../app/backend/inbound_forecast_api/models:/backend/models:rw
       - ../app/backend/inbound_forecast_api/output:/backend/output:rw
+      - ../app/backend/inbound_forecast_api/worker:/backend/worker:rw
       - ../secrets:/backend/secrets:ro
     environment:
       WATCHFILES_FORCE_POLLING: "1"
@@ -268,6 +269,37 @@ services:
     # depends_on:
     #   db:
     #     condition: service_healthy
+
+  # ===========================================================================
+  # Inbound Forecast Worker (需要予測ジョブ実行 - run-to-completion)
+  # ===========================================================================
+  inbound_forecast_worker:
+    build:
+      context: ../app/backend/inbound_forecast_api
+      dockerfile: Dockerfile
+      target: dev
+    env_file:
+      - ../env/.env.common
+      - ../env/.env.local_dev
+      - ../secrets/.env.local_dev.secrets
+    command: ["python", "-m", "worker.main", "--help"]
+    # ポート公開なし（バックグラウンドジョブ実行のみ）
+    volumes:
+      - ../app/backend/inbound_forecast_api/scripts:/backend/scripts:rw
+      - ../app/backend/inbound_forecast_api/data:/backend/data:rw
+      - ../app/backend/inbound_forecast_api/models:/backend/models:rw
+      - ../app/backend/inbound_forecast_api/output:/backend/output:rw
+      - ../app/backend/inbound_forecast_api/worker:/backend/worker:rw
+      - ../secrets:/backend/secrets:ro
+    environment:
+      TZ: "Asia/Tokyo"
+      PYTHONPATH: /backend
+    networks:
+      - app-net
+    # 通常起動では立ち上がらない（profile指定時のみ）
+    profiles:
+      - jobs
+      - forecast
 
   # ===========================================================================
   # Nginx (Optional - for testing prod-like routing)
