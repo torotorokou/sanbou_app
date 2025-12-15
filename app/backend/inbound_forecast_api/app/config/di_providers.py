@@ -9,8 +9,10 @@ from pathlib import Path
 from typing import Optional, Union
 
 from app.core.usecases.execute_daily_forecast_uc import ExecuteDailyForecastUseCase
+from app.core.usecases.get_forecast_result_uc import GetForecastResultUseCase
 from app.infra.adapters.prediction.script_executor import ScriptBasedPredictionExecutor
 from app.infra.adapters.prediction.service_executor import ServiceBasedPredictionExecutor
+from app.infra.adapters.forecast_result import CsvForecastResultRepository
 
 
 def get_model_bundle_path() -> Path:
@@ -117,6 +119,18 @@ def get_prediction_executor() -> Union[ScriptBasedPredictionExecutor, ServiceBas
         )
 
 
+def get_gamma_output_dir() -> Path:
+    """
+    Gammaモデル出力ディレクトリのパスを取得。
+    
+    Returns:
+        Path: Gammaモデル出力ディレクトリのパス
+    """
+    # 環境変数から取得、デフォルトは /backend/data/output/gamma_recency_model
+    gamma_dir = os.getenv("GAMMA_OUTPUT_DIR", "/backend/data/output/gamma_recency_model")
+    return Path(gamma_dir)
+
+
 def get_execute_daily_forecast_usecase() -> ExecuteDailyForecastUseCase:
     """
     ExecuteDailyForecastUseCaseを取得。
@@ -126,3 +140,22 @@ def get_execute_daily_forecast_usecase() -> ExecuteDailyForecastUseCase:
     """
     prediction_executor = get_prediction_executor()
     return ExecuteDailyForecastUseCase(prediction_executor=prediction_executor)
+
+
+def get_forecast_result_usecase() -> GetForecastResultUseCase:
+    """
+    GetForecastResultUseCaseを取得（Phase 1: 結果閲覧のみ）
+    
+    Returns:
+        GetForecastResultUseCase: 予測結果取得UseCaseのインスタンス
+    """
+    output_dir = get_output_dir()
+    gamma_output_dir = get_gamma_output_dir()
+    
+    # CSVリポジトリの初期化
+    repository = CsvForecastResultRepository(
+        output_dir=output_dir,
+        gamma_output_dir=gamma_output_dir,
+    )
+    
+    return GetForecastResultUseCase(repository=repository)

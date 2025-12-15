@@ -7,7 +7,7 @@ import logging
 
 from fastapi import FastAPI
 
-from app.api.routers import prediction
+from app.api.routers import prediction, forecast_results
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -29,6 +29,7 @@ def create_app() -> FastAPI:
     
     # ルーターを登録
     app.include_router(prediction.router, tags=["prediction"])
+    app.include_router(forecast_results.router)  # Phase 1: Results viewing
     
     # Startup/Shutdown イベント
     @app.on_event("startup")
