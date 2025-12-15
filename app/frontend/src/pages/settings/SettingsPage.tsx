@@ -3,17 +3,20 @@
  * 
  * ユーザーの設定情報を表示・管理するページ。
  * 現在は認証情報（ID、ログイン名、メールアドレス、ロール）を表示。
+ * 
+ * 【変更履歴】
+ * - AuthProviderを使用してグローバルな認証状態を参照
  */
 
 import React from 'react';
 import { Card, Descriptions, Spin, Alert, Typography, Space } from 'antd';
 import { UserOutlined, MailOutlined, IdcardOutlined, SafetyOutlined } from '@ant-design/icons';
-import { useAuthStatusViewModel } from '@features/authStatus';
+import { useAuth } from '@app/providers/AuthProvider';
 
 const { Title } = Typography;
 
 export const SettingsPage: React.FC = () => {
-  const { user, isLoading, error } = useAuthStatusViewModel();
+  const { user, isInitializing: isLoading, error } = useAuth();
 
   if (isLoading) {
     return (
