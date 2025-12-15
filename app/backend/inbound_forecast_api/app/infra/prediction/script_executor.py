@@ -2,15 +2,25 @@
 Script-Based Prediction Executor
 
 既存の daily_tplus1_predict.py を subprocess で実行する Adapter。
+
+設計方針:
+- ドメインエンティティ（DailyForecastRequest, PredictionOutput）を使用
+- 既存スクリプトとの互換性を維持
+- 型安全性とバリデーションを提供
 """
 import subprocess
 import os
 import logging
 from datetime import datetime
-from datetime import date
 from typing import Optional
 from pathlib import Path
 import pandas as pd
+
+from app.core.domain.prediction import (
+    DailyForecastRequest,
+    PredictionOutput,
+    PredictionResult,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +33,11 @@ class ScriptBasedPredictionExecutor:
     1. subprocess 実行（現在）
     2. スクリプトをモジュール化して import
     3. ライブラリ化して直接呼び出し
+    
+    Implementation Details:
+    - DailyForecastRequestを受け取り、PredictionOutputを返す
+    - 既存スクリプト（daily_tplus1_predict.py）をsubprocessで実行
+    - CSVファイルとDB保存の両方に対応
     """
     
     def __init__(
@@ -42,17 +57,20 @@ class ScriptBasedPredictionExecutor:
         self.res_walk_csv = backend_root / "data/output/final_fast_balanced/res_walkforward.csv"
         self.output_dir = backend_root / "output"
         
-    def execute_daily_forecast(self, target_date: Optional[date] = None) -> str:
+    def execute_daily_forecast(self, request: DailyForecastRequest) -> PredictionOutput:
         """
         日次予測を実行。
         
         Args:
-            target_date: 予測対象日（Noneの場合は明日）
+            request: 予測リクエスト（DailyForecastRequest）
             
         Returns:
-            生成されたCSVファイルのパス
+            PredictionOutput: 予測実行の結果
+                - csv_path: 生成されたCSVファイルのパス
+                - predictions: 予測結果のリスト（オプション、将来実装）
             
         Raises:
+            FileNotFoundError: 必要なファイルが見つからない
             RuntimeError: 予測実行に失敗
         """
         if not self.predict_script.exists():
@@ -66,6 +84,7 @@ class ScriptBasedPredictionExecutor:
         output_csv = self.output_dir / f"tplus1_pred_{timestamp}.csv"
         self.output_dir.mkdir(parents=True, exist_ok=True)
         
+        # コマンド構築
         cmd = [
             "python",
             str(self.predict_script),
@@ -74,8 +93,9 @@ class ScriptBasedPredictionExecutor:
             "--out-csv", str(output_csv),
         ]
         
-        if target_date:
-            cmd.extend(["--start-date", target_date.isoformat()])
+        # リクエストからパラメータを取得
+        if request.target_date:
+            cmd.extend(["--start-date", request.target_date.isoformat()])
         
         try:
             result = subprocess.run(
@@ -92,15 +112,22 @@ class ScriptBasedPredictionExecutor:
             if not output_csv.exists():
                 raise RuntimeError(f"Output CSV not generated: {output_csv}")
             
+            logger.info(f"✅ CSV generated: {output_csv}")
+            
             # DB保存（有効な場合）
             if self.enable_db_save and self.db_connection_string:
                 try:
-                    self._save_predictions_to_db(output_csv, target_date)
+                    self._save_predictions_to_db(output_csv, request.target_date)
                 except Exception as e:
                     logger.error(f"Failed to save predictions to DB: {e}", exc_info=True)
                     # DB保存失敗してもCSVは生成済みなので続行
             
-            return str(output_csv)
+            # PredictionOutputを生成して返却
+            # TODO: CSVを読み込んでPredictionResultのリストを生成
+            return PredictionOutput(
+                csv_path=str(output_csv),
+                predictions=None  # 将来実装: CSV読み込み → PredictionResult変換
+            )
             
         except subprocess.CalledProcessError as e:
             raise RuntimeError(

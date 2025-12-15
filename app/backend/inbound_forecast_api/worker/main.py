@@ -24,6 +24,7 @@ from pathlib import Path
 from typing import Optional
 
 # Clean Architecture layers
+from app.core.domain.prediction.entities import DailyForecastRequest, PredictionOutput
 from app.core.usecases.execute_daily_forecast_uc import ExecuteDailyForecastUseCase
 from app.infra.prediction.script_executor import ScriptBasedPredictionExecutor
 
@@ -107,11 +108,17 @@ class ForecastWorker:
         logger.info(f"Starting daily forecast: target_date={target_date}, future_days={future_days}")
         
         try:
-            # UseCase経由で予測実行
-            csv_path = self.forecast_usecase.execute(target_date)
+            # ドメインエンティティを構築
+            request = DailyForecastRequest(target_date=target_date)
             
-            logger.info(f"Forecast completed successfully: {csv_path}")
-            return True, f"Forecast completed: {csv_path}"
+            # UseCase経由で予測実行
+            output: PredictionOutput = self.forecast_usecase.execute(request)
+            
+            logger.info(f"Forecast completed successfully: {output.csv_path}")
+            if output.predictions:
+                logger.info(f"Generated {len(output.predictions)} prediction results")
+            
+            return True, f"Forecast completed: {output.csv_path}"
             
         except Exception as e:
             logger.error(f"Forecast failed: {e}", exc_info=True)
