@@ -11,7 +11,7 @@ Script-Based Prediction Executor
 import subprocess
 import os
 import logging
-from datetime import datetime
+from datetime import datetime, date
 from typing import Optional
 from pathlib import Path
 import pandas as pd
