@@ -37,8 +37,8 @@ FROM base AS dev
 RUN pip install --no-cache-dir watchfiles
 
 # Copy application code (will be mounted as volume in dev)
+# Note: scripts/ は app/infra/scripts/ に移動済み
 COPY ./app ./app
-COPY ./scripts ./scripts
 COPY ./data ./data
 COPY ./models ./models
 COPY ./output ./output
@@ -57,14 +57,14 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
   CMD curl -f http://localhost:8000/health || exit 1
 
 # Default: Start FastAPI server (can be overridden in compose)
-CMD ["uvicorn", "scripts.api_server:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "app.infra.scripts.api_server:app", "--host", "0.0.0.0", "--port", "8000"]
 
 # === Stage 3: Production ===
 FROM base AS prod
 
 # Copy application code
+# Note: scripts/ は app/infra/scripts/ に移動済み
 COPY ./app ./app
-COPY ./scripts ./scripts
 COPY ./data ./data
 COPY ./models ./models
 COPY ./output ./output
@@ -83,4 +83,4 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
   CMD curl -f http://localhost:8000/health || exit 1
 
 # Production command
-CMD ["uvicorn", "scripts.api_server:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "2"]
+CMD ["uvicorn", "app.infra.scripts.api_server:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "2"]
