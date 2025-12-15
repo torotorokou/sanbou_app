@@ -12,6 +12,7 @@ import { UploadDetailModal } from './UploadDetailModal';
 import { UploadCalendarLegend } from './UploadCalendarLegend';
 import { getKindsByDatasetKey, getMasterByDatasetKey, type CsvUploadKind } from '../model/types';
 import type { CalendarDay } from '../model/types';
+import styles from './UploadCalendar.module.css';
 
 const { Title, Text } = Typography;
 
@@ -157,8 +158,8 @@ export const UploadCalendar: React.FC<UploadCalendarProps> = ({
                   <div
                     key={day.date}
                     onClick={() => handleDayClick(day)}
+                    className={styles.dayCell}
                     style={{
-                      minHeight: 96,
                       border: '1px solid #d9d9d9',
                       borderRadius: 4,
                       padding: 6,
@@ -194,6 +195,7 @@ export const UploadCalendar: React.FC<UploadCalendarProps> = ({
                   >
                     {/* 日付 */}
                     <div
+                      className={styles.dateNumber}
                       style={{
                         fontSize: 16,
                         color: !day.isCurrentMonth
@@ -214,7 +216,7 @@ export const UploadCalendar: React.FC<UploadCalendarProps> = ({
 
                     {/* アップロード状況ドット */}
                         {/* 凡例と合わせた丸（アップロード未実施は点線の透明丸） */}
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                        <div className={styles.dotWrapper} style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                           {masters.map((master) => {
                             // この日の該当種別アップロード有無を判定
                             const items = day.uploadsByKind[master.kind];
