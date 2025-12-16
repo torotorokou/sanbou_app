@@ -10,6 +10,10 @@
 pandas==2.2.3
 pyyaml==6.0.2
 
+# ==== Database Driver ====
+# psycopg (v3) - PostgreSQL adapter for SQLAlchemy
+psycopg[binary]>=3.1.0
+
 # ==== 機械学習・科学計算（backend_shared以外） ====
 scikit-learn>=1.5.0
 scipy>=1.14.0
