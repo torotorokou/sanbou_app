@@ -155,11 +155,11 @@ export const ReservationHistoryCalendar: React.FC<ReservationHistoryCalendarProp
                       <div style={{ fontSize: 12, lineHeight: '16px' }}>
                         <div>
                           <TruckOutlined style={{ marginRight: 4, color: '#1890ff' }} />
-                          <span style={{ fontSize: 12 }}>{data.reserve_trucks}台</span>
+                          <span style={{ fontSize: 12 }}>合計：{data.reserve_trucks}台</span>
                         </div>
                         <div style={{ color: '#52c41a', marginTop: 3 }}>
                           <TeamOutlined style={{ marginRight: 4 }} />
-                          固定: {data.reserve_fixed_trucks}
+                          固定：{data.reserve_fixed_trucks}台
                         </div>
                       </div>
                     )}

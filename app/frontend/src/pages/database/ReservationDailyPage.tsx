@@ -18,7 +18,8 @@ import { useReservationInputVM, ReservationInputForm } from '@features/reservati
 import { 
   useReservationCalendarVM, 
   ReservationHistoryCalendar,
-  ReservationMonthlyStats 
+  ReservationMonthlyStats,
+  ReservationMonthlyChart
 } from '@features/reservation/reservation-calendar';
 
 const { Title } = Typography;
@@ -81,8 +82,14 @@ const ReservationDailyPage: React.FC = () => {
           isLoadingHistory={calendarVM.isLoadingHistory}
         />
         
-        {/* 月次統計グラフ */}
+        {/* 月次統計 */}
         <ReservationMonthlyStats
+          data={calendarVM.historyData}
+          isLoading={calendarVM.isLoadingHistory}
+        />
+        
+        {/* 日別予約推移グラフ */}
+        <ReservationMonthlyChart
           data={calendarVM.historyData}
           isLoading={calendarVM.isLoadingHistory}
         />
