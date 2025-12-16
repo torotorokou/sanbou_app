@@ -169,6 +169,11 @@ export const SIDEBAR_MENU = [
                 label: <Link to={ROUTER_PATHS.RECORD_LIST}>レコード一覧</Link>,
                 hidden: true,
             },
+            {
+                key: ROUTER_PATHS.RESERVATION_DAILY,
+                icon: <FileTextOutlined />,
+                label: <Link to={ROUTER_PATHS.RESERVATION_DAILY}>予約表</Link>,
+            },
         ],
     },
 
