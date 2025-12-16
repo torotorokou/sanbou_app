@@ -58,7 +58,7 @@ const ConditionPanel: React.FC<Props> = ({
         variant="borderless"
         style={{
             boxShadow: '0 4px 24px rgba(0,0,0,0.08)',
-            marginBottom: 24,
+            marginBottom: 16,
             borderRadius: 16,
         }}
         styles={{
@@ -70,6 +70,12 @@ const ConditionPanel: React.FC<Props> = ({
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
+                fontSize: 'clamp(13px, 0.9vw, 16px)',
+                padding: 'clamp(12px, 1vw, 16px) clamp(16px, 1.2vw, 24px)',
+            },
+            body: {
+                fontSize: 'clamp(12px, 0.85vw, 14px)',
+                padding: 'clamp(16px, 1.2vw, 24px)',
             },
         }}
         extra={
@@ -96,8 +102,8 @@ const ConditionPanel: React.FC<Props> = ({
             setPreviousEnd={setPreviousEnd}
         />
         
-        <div style={{ marginTop: 24 }}>
-            <div style={{ marginBottom: 8, fontWeight: 600, fontSize: 14 }}>
+        <div style={{ marginTop: 'clamp(16px, 1.2vw, 24px)' }}>
+            <div style={{ marginBottom: 8, fontWeight: 600, fontSize: 'clamp(12px, 0.85vw, 14px)' }}>
                 営業担当者フィルター
             </div>
             <SalesRepFilter
