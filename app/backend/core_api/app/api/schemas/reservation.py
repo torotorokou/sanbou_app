@@ -3,7 +3,7 @@ Reservation Schemas - 予約関連のスキーマ定義
 
 Presentation Layer: HTTP Request/Response schemas
 """
-from datetime import date as date_type
+from datetime import date as date_type, datetime
 from typing import Optional, Literal
 from pydantic import BaseModel, Field, ConfigDict
 
@@ -30,8 +30,8 @@ class ReservationManualResponse(BaseModel):
     note: Optional[str] = None
     created_by: Optional[str] = None
     updated_by: Optional[str] = None
-    created_at: Optional[str] = None
-    updated_at: Optional[str] = None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -76,7 +76,7 @@ class ReservationCustomerDailyResponse(BaseModel):
     planned_trucks: int
     is_fixed_customer: bool
     note: Optional[str] = None
-    created_at: Optional[str] = None
-    updated_at: Optional[str] = None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
 
     model_config = ConfigDict(from_attributes=True)

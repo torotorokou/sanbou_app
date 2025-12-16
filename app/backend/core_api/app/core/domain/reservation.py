@@ -2,7 +2,7 @@
 Reservation domain entities.
 予約データのドメインエンティティ
 """
-from datetime import date as date_type
+from datetime import date as date_type, datetime
 from typing import Optional, Literal
 from pydantic import BaseModel, Field
 
@@ -27,8 +27,8 @@ class ReservationManualRow(BaseModel):
     note: Optional[str] = Field(None, description="メモ")
     created_by: Optional[str] = Field(None, description="作成者")
     updated_by: Optional[str] = Field(None, description="更新者")
-    created_at: Optional[str] = Field(None, description="作成日時")
-    updated_at: Optional[str] = Field(None, description="更新日時")
+    created_at: Optional[datetime] = Field(None, description="作成日時")
+    updated_at: Optional[datetime] = Field(None, description="更新日時")
 
     class Config:
         from_attributes = True
@@ -79,8 +79,8 @@ class ReservationCustomerRow(BaseModel):
     planned_trucks: int = Field(..., ge=0, description="予定台数")
     is_fixed_customer: bool = Field(..., description="固定客フラグ")
     note: Optional[str] = Field(None, description="メモ")
-    created_at: Optional[str] = Field(None, description="作成日時")
-    updated_at: Optional[str] = Field(None, description="更新日時")
+    created_at: Optional[datetime] = Field(None, description="作成日時")
+    updated_at: Optional[datetime] = Field(None, description="更新日時")
 
     class Config:
         from_attributes = True
