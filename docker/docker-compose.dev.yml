@@ -170,6 +170,35 @@ services:
     restart: unless-stopped
 
   # ===========================================================================
+  # Inbound Forecast Worker
+  # ===========================================================================
+  inbound_forecast_worker:
+    build:
+      context: ../app/backend
+      dockerfile: inbound_forecast_worker/Dockerfile
+      target: dev
+    env_file:
+      - ../env/.env.common
+      - ../env/.env.local_dev
+      - ../secrets/.env.local_dev.secrets
+    command: ["python", "-m", "app.main"]
+    volumes:
+      - ../app/backend/inbound_forecast_worker/app:/backend/app:rw
+      - ../app/backend/inbound_forecast_worker/scripts:/backend/scripts:rw
+      - ../app/backend/inbound_forecast_worker/models:/backend/models:rw
+      - ../app/backend/backend_shared:/opt/backend_shared:rw
+      - ../secrets:/backend/secrets:ro
+    environment:
+      WATCHFILES_FORCE_POLLING: "1"
+      TZ: "Asia/Tokyo"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - app-net
+    restart: unless-stopped
+
+  # ===========================================================================
   # RAG API
   # ===========================================================================
   rag_api:

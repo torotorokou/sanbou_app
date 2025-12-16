@@ -82,6 +82,19 @@ services:
     logging:
       driver: json-file
       options: *id002
+  inbound_forecast_worker:
+    image: ${IMAGE_REGISTRY}/inbound_forecast_worker:${IMAGE_TAG}
+    networks:
+    - data-net
+    depends_on:
+    - db
+    env_file: *id001
+    environment:
+      TZ: Asia/Tokyo
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options: *id002
   ai_api:
     image: ${IMAGE_REGISTRY}/ai_api:${IMAGE_TAG}
     networks:

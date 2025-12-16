@@ -212,6 +212,37 @@ config: check
 	$(DC_FULL) config
 
 ## ============================================================
+## Worker 管理（個別起動・停止・ログ確認）
+## ============================================================
+## 使い方:
+##   make worker-up ENV=local_dev WORKER=inbound_forecast_worker
+##   make worker-logs ENV=local_dev WORKER=inbound_forecast_worker
+##   make worker-restart ENV=local_dev WORKER=inbound_forecast_worker
+##   make worker-down ENV=local_dev WORKER=inbound_forecast_worker
+## ============================================================
+WORKER ?= inbound_forecast_worker
+
+worker-up: check
+	@echo "[info] Starting $(WORKER) in $(ENV_CANON)..."
+	DOCKER_BUILDKIT=$(BUILDKIT) BUILDKIT_PROGRESS=$(PROGRESS) \
+	$(DC_FULL) up -d $(UP_BUILD_FLAGS) $(WORKER)
+	@echo "[ok] $(WORKER) started"
+
+worker-down: check
+	@echo "[info] Stopping $(WORKER) in $(ENV_CANON)..."
+	$(DC_FULL) stop $(WORKER)
+	$(DC_FULL) rm -f $(WORKER)
+	@echo "[ok] $(WORKER) stopped"
+
+worker-logs: check
+	$(DC_FULL) logs -f --tail=100 $(WORKER)
+
+worker-restart: check
+	@echo "[info] Restarting $(WORKER) in $(ENV_CANON)..."
+	$(DC_FULL) restart $(WORKER)
+	@echo "[ok] $(WORKER) restarted"
+
+## ============================================================
 ## 開発環境：nginx 付き起動 (本番に近い構成での開発・検証)
 ## ============================================================
 ## 使い方:
@@ -715,6 +746,9 @@ build-stg-images:
 	  -t $(STG_IMAGE_REGISTRY)/plan_worker:$(STG_IMAGE_TAG) \
 	  -f app/backend/plan_worker/Dockerfile --target stg app/backend
 	docker build $(BUILD_PULL_FLAG) $(BUILD_NO_CACHE_FLAG) \
+	  -t $(STG_IMAGE_REGISTRY)/inbound_forecast_worker:$(STG_IMAGE_TAG) \
+	  -f app/backend/inbound_forecast_worker/Dockerfile --target stg app/backend
+	docker build $(BUILD_PULL_FLAG) $(BUILD_NO_CACHE_FLAG) \
 	  -t $(STG_IMAGE_REGISTRY)/ai_api:$(STG_IMAGE_TAG) \
 	  -f app/backend/ai_api/Dockerfile --target stg app/backend
 	docker build $(BUILD_PULL_FLAG) $(BUILD_NO_CACHE_FLAG) \
@@ -729,7 +763,7 @@ build-stg-images:
 	docker build $(BUILD_PULL_FLAG) $(BUILD_NO_CACHE_FLAG) \
 	  -t $(STG_IMAGE_REGISTRY)/nginx:$(STG_IMAGE_TAG) \
 	  -f app/frontend/Dockerfile --target stg app/frontend
-
+inbound_forecast_worker 
 push-stg-images:
 	@echo ">>> Push STG images (tag=$(STG_IMAGE_TAG))"
 	@for svc in core_api plan_worker ai_api ledger_api rag_api manual_api nginx; do \
@@ -759,6 +793,9 @@ build-prod-images:
 	  -t $(PROD_IMAGE_REGISTRY)/plan_worker:$(PROD_IMAGE_TAG) \
 	  -f app/backend/plan_worker/Dockerfile --target prod app/backend
 	docker build $(BUILD_PULL_FLAG) $(BUILD_NO_CACHE_FLAG) \
+	  -t $(PROD_IMAGE_REGISTRY)/inbound_forecast_worker:$(PROD_IMAGE_TAG) \
+	  -f app/backend/inbound_forecast_worker/Dockerfile --target prod app/backend
+	docker build $(BUILD_PULL_FLAG) $(BUILD_NO_CACHE_FLAG) \
 	  -t $(PROD_IMAGE_REGISTRY)/ai_api:$(PROD_IMAGE_TAG) \
 	  -f app/backend/ai_api/Dockerfile --target prod app/backend
 	docker build $(BUILD_PULL_FLAG) $(BUILD_NO_CACHE_FLAG) \
@@ -776,7 +813,7 @@ build-prod-images:
 
 push-prod-images:
 	@echo ">>> Push PROD images (tag=$(PROD_IMAGE_TAG))"
-	@for svc in core_api plan_worker ai_api ledger_api rag_api manual_api nginx; do \
+	@for svc in core_api plan_worker inbound_forecast_worker ai_api ledger_api rag_api manual_api nginx; do \
 	  echo "  -> push $(PROD_IMAGE_REGISTRY)/$$svc:$(PROD_IMAGE_TAG)"; \
 	  docker push $(PROD_IMAGE_REGISTRY)/$$svc:$(PROD_IMAGE_TAG); \
 	done
@@ -797,7 +834,7 @@ promote-stg-to-prod:
 	@echo "[info] Promote images from STG to PROD (docker pull/tag/push)"
 	@echo "[info]   STG:  $(STG_IMAGE_REGISTRY):$(PROMOTE_SRC_TAG)"
 	@echo "[info]   PROD: $(PROD_IMAGE_REGISTRY):$(PROMOTE_DST_TAG)"
-	@for svc in core_api plan_worker ai_api ledger_api rag_api manual_api nginx; do \
+	@for svc in core_api plan_worker inbound_forecast_worker ai_api ledger_api rag_api manual_api nginx; do \
 	  SRC_IMG="$(STG_IMAGE_REGISTRY)/$$svc:$(PROMOTE_SRC_TAG)"; \
 	  DST_IMG="$(PROD_IMAGE_REGISTRY)/$$svc:$(PROMOTE_DST_TAG)"; \
 	  echo "  -> copy $$svc: $(PROMOTE_SRC_TAG) -> $(PROMOTE_DST_TAG)"; \
