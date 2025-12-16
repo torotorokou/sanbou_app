@@ -3,16 +3,15 @@ Inbound Forecast Worker Entry Point
 ====================================
 Purpose: 搬入量予測ジョブの非同期実行基盤
 
-Phase 2 (Current): ジョブポーリング実装
+Phase 3 (Current): ジョブ実行実装完了
 - 5秒ごとに forecast.forecast_jobs テーブルをポーリング
 - SELECT ... FOR UPDATE SKIP LOCKED でジョブをクレーム
 - ステータスを 'queued' → 'running' に更新
-- ジョブ実行（Phase 3で実装予定）
-
-Phase 3 (Next): ジョブ実行実装
 - job_type に応じた予測スクリプト実行
-- subprocess でのホワイトリスト検証
-- 結果の DB 保存
+  * daily_tplus1: scripts/daily_tplus1_predict.py を subprocess 実行
+  * ホワイトリスト検証（許可されたジョブタイプのみ実行）
+  * タイムアウト設定（30分）
+- 実行結果に応じてステータス更新（succeeded/failed）
 """
 from __future__ import annotations
 
@@ -30,6 +29,7 @@ from backend_shared.application.logging import get_module_logger, setup_logging
 # Worker モジュール
 # ==========================================
 from .db import get_db_session
+from .job_executor import JobExecutionError, execute_job
 from .job_poller import claim_next_job, mark_job_failed, mark_job_succeeded
 
 # ==========================================
@@ -60,19 +60,16 @@ def signal_handler(signum: int, frame) -> None:
 
 def worker_loop() -> NoReturn:
     """
-    Worker メインループ（Phase 2: ジョブポーリング実装）
+    Worker メインループ（Phase 3: ジョブ実行実装完了）
     
     処理フロー:
     1. 5秒ごとに forecast.forecast_jobs テーブルをポーリング
     2. queued ジョブを1件クレーム（SELECT FOR UPDATE SKIP LOCKED）
-    3. ジョブ実行（Phase 3で実装予定、現在はスタブ）
-    4. 結果をDBに記録
-    
-    Phase 3（次回実装）:
-        - job_type に応じた予測スクリプト実行
-        - subprocess でのホワイトリスト検証
+    3. ジョブ実行（job_type に応じた予測スクリプト実行）
+    4. 実行結果に応じてステータス更新（succeeded/failed）
+    5. エラー時はリトライ（attempt < max_attempt の場合）
     """
-    logger.info("🚀 Inbound forecast worker started (Phase 2: Job polling)")
+    logger.info("🚀 Inbound forecast worker started (Phase 3: Job execution)")
     logger.info("Polling interval: 5 seconds")
     
     poll_counter = 0
@@ -103,15 +100,53 @@ def worker_loop() -> NoReturn:
                         }
                     )
                     
-                    # Phase 3 で実装: ジョブ実行
-                    # 現在はスタブ（すぐに成功としてマーク）
-                    logger.warning(
-                        "⚠️ Job execution not implemented yet (Phase 3)",
-                        extra={"job_id": str(job["id"])}
-                    )
-                    
-                    # 一旦成功としてマーク（Phase 3で実際の実行結果に応じて変更）
-                    mark_job_succeeded(db, job["id"])
+                    # Phase 3: ジョブ実行
+                    try:
+                        output_path = execute_job(
+                            job_type=job["job_type"],
+                            target_date=job["target_date"],
+                            input_snapshot=job["input_snapshot"],
+                            timeout=1800  # 30分
+                        )
+                        
+                        logger.info(
+                            f"✅ Job execution succeeded",
+                            extra={
+                                "job_id": str(job["id"]),
+                                "output_path": output_path
+                            }
+                        )
+                        
+                        mark_job_succeeded(db, job["id"])
+                        
+                    except JobExecutionError as e:
+                        # 実行エラー
+                        error_msg = str(e)
+                        logger.error(
+                            f"❌ Job execution failed",
+                            exc_info=True,
+                            extra={
+                                "job_id": str(job["id"]),
+                                "job_type": job["job_type"],
+                                "error": error_msg
+                            }
+                        )
+                        
+                        mark_job_failed(db, job["id"], error_msg, increment_attempt=True)
+                        
+                    except Exception as e:
+                        # 予期しないエラー
+                        error_msg = f"Unexpected error: {str(e)}"
+                        logger.error(
+                            f"❌ Unexpected error during job execution",
+                            exc_info=True,
+                            extra={
+                                "job_id": str(job["id"]),
+                                "error": error_msg
+                            }
+                        )
+                        
+                        mark_job_failed(db, job["id"], error_msg, increment_attempt=True)
                     
         except Exception as e:
             logger.error(
