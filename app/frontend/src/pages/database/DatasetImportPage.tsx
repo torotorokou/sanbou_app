@@ -13,11 +13,11 @@ import styles from './DatasetImportPage.module.css';
 import {
   SimpleUploadPanel,
   useDatasetImportVM,
-} from '@features/database/dataset-import';
-import { UploadGuide, toFileStates } from '@features/database/dataset-uploadguide';
-import { getAllDatasets, collectTypesForDataset, type DatasetKey } from '@features/database/config';
-import { UploadCalendar } from '@features/database/upload-calendar';
-import { DatasetFinalWarningModal } from '@features/database/dataset-final-warning';
+} from '@features/dataset/dataset-import';
+import { UploadGuide, toFileStates } from '@features/dataset/dataset-uploadguide';
+import { getAllDatasets, collectTypesForDataset, type DatasetKey } from '@features/dataset/config';
+import { UploadCalendar } from '@features/dataset/upload-calendar';
+import { DatasetFinalWarningModal } from '@features/dataset/dataset-final-warning';
 
 const { Text } = Typography;
 

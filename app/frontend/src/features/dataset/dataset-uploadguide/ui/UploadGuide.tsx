@@ -9,9 +9,9 @@ import React, { useEffect } from 'react';
 import { Collapse, List, Tag, Typography } from 'antd';
 import { InfoCircleOutlined } from '@ant-design/icons';
 import type { FileState } from '../model/types';
-import { DATASETS } from '@features/database/config/datasets';
+import { DATASETS } from '@features/dataset/config/datasets';
 import { notifyError } from '@features/notification';
-import type { DatasetKey } from '@features/database/config';
+import type { DatasetKey } from '@features/dataset/config';
 import styles from './UploadGuide.module.css';
 
 const { Text } = Typography;

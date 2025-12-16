@@ -2,6 +2,7 @@
  * ReservationDailyHttpRepository - HTTP実装
  * 
  * Infrastructure (外部システムとの通信実装)
+ * 規約: Repository抽象の実装、共通HTTPクライアント(coreApi)を使用
  */
 
 import type {
