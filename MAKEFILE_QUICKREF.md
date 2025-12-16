@@ -4,6 +4,13 @@
 
 ## 🚀 基本コマンド
 
+
+# イメージを事前に pull して起動（VM環境向け）
+# ※ `vm_stg` / `vm_prod` では `make up` 実行時にデフォルトで `pull` が実行されます。
+#    これを無効化するには `PULL=0` を指定します: `make up ENV=vm_stg PULL=0`
+
+# pull のみ実行
+make pull ENV=local_dev
 ### 環境起動・停止
 
 ```bash
@@ -22,6 +29,9 @@ make rebuild ENV=local_dev
 
 ### ログ・状態確認
 
+make pull ENV=vm_stg
+# 補足: `vm_stg` はデフォルトで `make up` 時に `docker compose pull` されます。
+# 事前に手動で pull する場合は: `make pull ENV=vm_stg`
 ```bash
 # ログ確認（全サービス）
 make logs ENV=local_dev
@@ -32,6 +42,9 @@ make logs ENV=local_dev S=core_api
 # コンテナ一覧
 make ps ENV=local_dev
 
+make pull ENV=vm_prod
+# 補足: `vm_prod` はデフォルトで `make up` 時に `docker compose pull` されます。
+# 事前に手動で pull する場合は: `make pull ENV=vm_prod`
 # ヘルスチェック
 make health ENV=local_dev
 ```

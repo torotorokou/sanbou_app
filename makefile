@@ -131,7 +131,7 @@ COMPOSE_FILE_LIST := $(strip $(subst -f ,,$(COMPOSE_FILES)))
 DC_FULL           := $(DC) $(COMPOSE_ENV_ARGS) -p $(ENV) $(COMPOSE_FILES)
 
 .PHONY: check up down logs ps restart rebuild health config \
-        backup restore-from-dump restore-from-sql dev-with-nginx
+	backup restore-from-dump restore-from-sql dev-with-nginx pull
 
 ## ============================================================
 ## 基本操作 (docker compose up / down など)
@@ -151,6 +151,12 @@ up: check
 	@echo "[debug] COMPOSE_ENV_ARGS=$(COMPOSE_ENV_ARGS)"
 	@echo "[debug] UP_BUILD_FLAGS=$(UP_BUILD_FLAGS)"
 	@echo "[debug] DC_FULL=$(DC_FULL)"
+	@if [ "$(PULL)" = "1" ]; then \
+		if [ "$(ENV_CANON)" = "vm_stg" ] || [ "$(ENV_CANON)" = "vm_prod" ]; then \
+			echo "[info] PULL=1 and ENV_CANON=$(ENV_CANON) -> pulling images before up"; \
+			$(DC_FULL) pull; \
+		fi; \
+	fi; \
 	DOCKER_BUILDKIT=$(BUILDKIT) BUILDKIT_PROGRESS=$(PROGRESS) \
 	$(DC_FULL) up -d $(UP_BUILD_FLAGS) --remove-orphans
 	@echo "[ok] up done"
@@ -172,7 +178,15 @@ restart:
 	$(MAKE) down ENV=$(ENV)
 	$(MAKE) up   ENV=$(ENV)
 
+## PULL: control whether to run `docker compose pull` before `up`
+## Default depends on ENV_CANON (use ?= so user-specified value takes precedence)
+ifeq ($(ENV_CANON),vm_stg)
+PULL ?= 1
+else ifeq ($(ENV_CANON),vm_prod)
+PULL ?= 1
+else
 PULL ?= 0
+endif
 BUILD_PULL_FLAG := $(if $(filter 1,$(PULL)),--pull,)
 NO_CACHE ?= 0
 BUILD_NO_CACHE_FLAG := $(if $(filter 1,$(NO_CACHE)),--no-cache,)
@@ -185,6 +199,10 @@ rebuild: check
 	DOCKER_BUILDKIT=$(BUILDKIT) BUILDKIT_PROGRESS=$(PROGRESS) \
 	$(DC_FULL) up -d --remove-orphans
 	@echo "[ok] rebuild done"
+
+pull: check
+	@echo "[info] Pulling images (ENV=$(ENV))"
+	$(DC_FULL) pull
 
 health:
 	@echo "[info] health check -> $(HEALTH_URL)"
