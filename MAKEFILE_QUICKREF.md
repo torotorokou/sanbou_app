@@ -85,8 +85,7 @@ make al-hist-env ENV=local_dev
 # 【ローカルPC】イメージビルド・プッシュ
 make publish-stg-images STG_IMAGE_TAG=stg-20251212
 
-# キャッシュを使わずに再ビルドして push する場合（イメージを強制的に最新で取得）
-NO_CACHE=1 PULL=1 make publish-stg-images STG_IMAGE_TAG=stg-latest
+
 
 # env/.env.vm_stg を更新
 # IMAGE_TAG=stg-20251212
@@ -108,7 +107,8 @@ make promote-stg-to-prod \
 make promote-stg-to-prod PROMOTE_SRC_TAG=stg-latest PROMOTE_DST_TAG=prod-v1.2.3
 
 # または直接ビルド
-make publish-prod-images PROD_IMAGE_TAG=prod-20251212
+make publish-prod-images PROD_IMAGE_TAG=prod-latest
+NO_CACHE=1 PULL=1 make publish-stg-images STG_IMAGE_TAG=stg-latest
 
 # env/.env.vm_prod を更新
 # IMAGE_TAG=prod-20251212
