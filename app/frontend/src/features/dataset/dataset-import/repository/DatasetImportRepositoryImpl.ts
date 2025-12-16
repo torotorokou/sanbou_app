@@ -10,7 +10,7 @@
 import type { DatasetImportRepository } from './DatasetImportRepository';
 import { DatasetImportClient } from '../infrastructure/client';
 import { buildFormData } from '../../shared/upload/buildFormData';
-import { DEFAULT_UPLOAD_TIMEOUT } from '../../shared/constants';
+import { DEFAULT_UPLOAD_TIMEOUT } from '../../shared/types/constants';
 import type { UploadResponseShape } from '../../shared/types/common';
 
 export class DatasetImportRepositoryImpl implements DatasetImportRepository {

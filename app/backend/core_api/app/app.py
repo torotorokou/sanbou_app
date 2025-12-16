@@ -44,6 +44,7 @@ from app.api.routers.sales_tree import router as sales_tree_router
 from app.api.routers.auth import router as auth_router
 from app.api.routers.health import router as health_router
 from app.api.routers.debug_iap import router as debug_iap_router
+from app.api.routers.reservation import router as reservation_router
 
 # ==========================================
 # 統一ロギング設定の初期化
@@ -118,6 +119,7 @@ app.include_router(kpi_router)         # KPI集計: ダッシュボード用メ�
 app.include_router(dashboard_router)   # ダッシュボード: ターゲット/実績データ
 app.include_router(inbound_router)     # 搬入データ: 日次データ取得(累積計算対応)
 app.include_router(sales_tree_router)  # 売上ツリー分析: サマリー/日次推移データ
+app.include_router(reservation_router) # 予約データ: 手入力予約/予測用ビュー
 
 # --- 外部サービスプロキシ (BFF) ---
 app.include_router(external_router)           # 外部API統合エンドポイント
