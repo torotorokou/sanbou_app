@@ -6,6 +6,7 @@
 
 // UI Components
 export { ReservationHistoryCalendar } from './ui/ReservationHistoryCalendar';
+export { ReservationMonthlyStats } from './ui/ReservationMonthlyStats';
 
 // ViewModel
 export { useReservationCalendarVM } from './model/useReservationCalendarVM';

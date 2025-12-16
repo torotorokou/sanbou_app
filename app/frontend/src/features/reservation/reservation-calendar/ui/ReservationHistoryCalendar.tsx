@@ -7,8 +7,8 @@
  */
 
 import React from 'react';
-import { Card, Button, Space, Typography, Badge, Spin } from 'antd';
-import { LeftOutlined, RightOutlined } from '@ant-design/icons';
+import { Card, Button, Space, Typography, Spin } from 'antd';
+import { LeftOutlined, RightOutlined, TruckOutlined, TeamOutlined } from '@ant-design/icons';
 import type { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
 import type { ReservationForecastDaily } from '../../shared';
@@ -105,14 +105,6 @@ export const ReservationHistoryCalendar: React.FC<ReservationHistoryCalendarProp
         </div>
       </div>
 
-      {/* 凡例 */}
-      <div style={{ marginBottom: 12, fontSize: 13, color: '#666' }}>
-        <Space size={16}>
-          <span><Badge status="success" /> 手入力</span>
-          <span><Badge status="processing" /> 集計</span>
-        </Space>
-      </div>
-
       {/* カレンダー本体 */}
       <Spin spinning={isLoadingHistory}>
         <div style={{ opacity: isLoadingHistory ? 0.5 : 1 }}>
@@ -162,10 +154,11 @@ export const ReservationHistoryCalendar: React.FC<ReservationHistoryCalendarProp
                     {data && (
                       <div style={{ fontSize: 12, lineHeight: '16px' }}>
                         <div>
-                          <Badge status={data.source === 'manual' ? 'success' : 'processing'} />
-                          <span style={{ fontSize: 12 }}>合計: {data.reserve_trucks}</span>
+                          <TruckOutlined style={{ marginRight: 4, color: '#1890ff' }} />
+                          <span style={{ fontSize: 12 }}>{data.reserve_trucks}台</span>
                         </div>
-                        <div style={{ color: '#666', marginTop: 3 }}>
+                        <div style={{ color: '#52c41a', marginTop: 3 }}>
+                          <TeamOutlined style={{ marginRight: 4 }} />
                           固定: {data.reserve_fixed_trucks}
                         </div>
                       </div>

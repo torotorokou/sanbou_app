@@ -15,7 +15,11 @@ import React from 'react';
 import { Typography, Col, Row } from 'antd';
 import styles from './DatasetImportPage.module.css';
 import { useReservationInputVM, ReservationInputForm } from '@features/reservation/reservation-input';
-import { useReservationCalendarVM, ReservationHistoryCalendar } from '@features/reservation/reservation-calendar';
+import { 
+  useReservationCalendarVM, 
+  ReservationHistoryCalendar,
+  ReservationMonthlyStats 
+} from '@features/reservation/reservation-calendar';
 
 const { Title } = Typography;
 
@@ -75,6 +79,12 @@ const ReservationDailyPage: React.FC = () => {
           historyData={calendarVM.historyData}
           onChangeHistoryMonth={calendarVM.onChangeHistoryMonth}
           isLoadingHistory={calendarVM.isLoadingHistory}
+        />
+        
+        {/* 月次統計グラフ */}
+        <ReservationMonthlyStats
+          data={calendarVM.historyData}
+          isLoading={calendarVM.isLoadingHistory}
         />
       </Col>
     </Row>
