@@ -40,20 +40,21 @@ const PeriodSelectorForm: React.FC<Props> = ({
     setPreviousEnd,
 }) => (
     <>
-        <Title level={5} style={{ marginBottom: 8 }}>
+        <Title level={5} style={{ marginBottom: 6, fontSize: 'clamp(13px, 0.9vw, 16px)', lineHeight: 1.3 }}>
             対象期間<br/>「（この期間に取引なし：離脱」）
         </Title>
-        <Typography.Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 12 }}>
+        <Typography.Text type="secondary" style={{ fontSize: 'clamp(11px, 0.75vw, 12px)', display: 'block', marginBottom: 8, lineHeight: 1.4 }}>
             最近の期間を指定してください<br/>「（例：2025-01〜2025-11）
         </Typography.Text>
-        <div style={{ marginBottom: 8 }}>
-            <div style={{ marginBottom: 8 }}>
+        <div style={{ marginBottom: 8, fontSize: 'clamp(12px, 0.85vw, 14px)' }}>
+            <div style={{ marginBottom: 6 }}>
                 開始月：
                 <DatePicker
                     picker='month'
                     value={currentStart}
                     onChange={setCurrentStart}
                     style={{ width: 120, marginLeft: 8 }}
+                    size="small"
                 />
             </div>
             <div>
@@ -68,18 +69,19 @@ const PeriodSelectorForm: React.FC<Props> = ({
                             : false
                     }
                     style={{ width: 120, marginLeft: 8 }}
+                    size="small"
                 />
             </div>
         </div>
-        <Title level={5} style={{ margin: '24px 0 8px 0' }}>
+        <Title level={5} style={{ margin: 'clamp(16px, 1.2vw, 24px) 0 6px 0', fontSize: 'clamp(13px, 0.9vw, 16px)', lineHeight: 1.3 }}>
             比較期間（過去の基準期間）
         </Title>
-        <Typography.Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 12 }}>
+        <Typography.Text type="secondary" style={{ fontSize: 'clamp(11px, 0.75vw, 12px)', display: 'block', marginBottom: 8, lineHeight: 1.4 }}>
             過去の基準期間を指定してください<br/>「（例：2024-01〜2024-12）<br/>
             ※この期間に取引があり、対象期間に取引がない顧客を「離脱」として抽出
         </Typography.Text>
-        <div style={{ marginBottom: 8 }}>
-            <div style={{ marginBottom: 8 }}>
+        <div style={{ marginBottom: 8, fontSize: 'clamp(12px, 0.85vw, 14px)' }}>
+            <div style={{ marginBottom: 6 }}>
                 開始月：
                 <DatePicker
                     picker='month'
@@ -96,6 +98,7 @@ const PeriodSelectorForm: React.FC<Props> = ({
                     }}
                     style={{ width: 120, marginLeft: 8 }}
                     placeholder={!currentStart || !currentEnd ? '今期を先に選択' : undefined}
+                    size="small"
                 />
             </div>
             <div>
@@ -116,6 +119,7 @@ const PeriodSelectorForm: React.FC<Props> = ({
                     }}
                     style={{ width: 120, marginLeft: 8 }}
                     placeholder={!previousStart ? '開始月を先に選択' : undefined}
+                    size="small"
                 />
             </div>
         </div>
