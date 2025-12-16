@@ -36,10 +36,11 @@ class ReservationRepositoryImpl(ReservationRepository):
     # ========================================
 
     def get_manual(self, reserve_date: date_type) -> Optional[ReservationManualRow]:
-        """指定日の手入力予約データを取得"""
+        """指定日の手入力予約データを取得（論理削除を除外）"""
         try:
             stmt = select(ReserveDailyManual).where(
-                ReserveDailyManual.reserve_date == reserve_date
+                ReserveDailyManual.reserve_date == reserve_date,
+                ReserveDailyManual.deleted_at == None  # 論理削除を除外
             )
             result = self.db.execute(stmt).scalar_one_or_none()
             
@@ -53,17 +54,43 @@ class ReservationRepositoryImpl(ReservationRepository):
             raise
 
     def upsert_manual(self, data: ReservationManualRow) -> ReservationManualRow:
-        """手入力予約データを登録・更新"""
+        """手入力予約データを登録・更新（論理削除を除外）"""
         try:
-            # Check if exists
+            # Check if exists (論理削除を除外)
             existing = self.db.execute(
                 select(ReserveDailyManual).where(
-                    ReserveDailyManual.reserve_date == data.reserve_date
+                    ReserveDailyManual.reserve_date == data.reserve_date,
+                    ReserveDailyManual.deleted_at == None
+                )
+            ).scalar_one_or_none()
+            
+            # 削除済みデータがあるか確認（復活用）
+            deleted_existing = self.db.execute(
+                select(ReserveDailyManual).where(
+                    ReserveDailyManual.reserve_date == data.reserve_date,
+                    ReserveDailyManual.deleted_at != None
                 )
             ).scalar_one_or_none()
 
             if existing:
-                # Update
+                # Update (active record)
+                stmt = (
+                    update(ReserveDailyManual)
+                    .where(
+                        ReserveDailyManual.reserve_date == data.reserve_date,
+                        ReserveDailyManual.deleted_at == None
+                    )
+                    .values(
+                        total_trucks=data.total_trucks,
+                        fixed_trucks=data.fixed_trucks,
+                        note=data.note,
+                        updated_by=data.updated_by,
+                    )
+                    .returning(ReserveDailyManual)
+                )
+                result = self.db.execute(stmt).scalar_one()
+            elif deleted_existing:
+                # 削除済みデータを復活
                 stmt = (
                     update(ReserveDailyManual)
                     .where(ReserveDailyManual.reserve_date == data.reserve_date)
@@ -72,6 +99,8 @@ class ReservationRepositoryImpl(ReservationRepository):
                         fixed_trucks=data.fixed_trucks,
                         note=data.note,
                         updated_by=data.updated_by,
+                        deleted_at=None,  # 復活
+                        deleted_by=None,
                     )
                     .returning(ReserveDailyManual)
                 )
@@ -99,17 +128,28 @@ class ReservationRepositoryImpl(ReservationRepository):
             raise
 
     def delete_manual(self, reserve_date: date_type) -> bool:
-        """指定日の手入力予約データを削除"""
+        """指定日の手入力予約データを論理削除"""
         try:
-            stmt = delete(ReserveDailyManual).where(
-                ReserveDailyManual.reserve_date == reserve_date
+            from datetime import datetime, timezone
+            
+            # 論理削除: deleted_atを設定
+            stmt = (
+                update(ReserveDailyManual)
+                .where(
+                    ReserveDailyManual.reserve_date == reserve_date,
+                    ReserveDailyManual.deleted_at == None  # 既に削除済みは除外
+                )
+                .values(
+                    deleted_at=datetime.now(timezone.utc),
+                    deleted_by="system"  # TODO: Get from auth context
+                )
             )
             result = self.db.execute(stmt)
             self.db.commit()
             return result.rowcount > 0
         except Exception as e:
             self.db.rollback()
-            logger.error(f"Failed to delete manual reservation: {e}", exc_info=True)
+            logger.error(f"Failed to soft-delete manual reservation: {e}", exc_info=True)
             raise
 
     # ========================================

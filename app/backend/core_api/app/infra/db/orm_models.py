@@ -98,6 +98,8 @@ class ReserveDailyManual(Base):
     updated_by = Column(Text, nullable=True)
     created_at = Column(TIMESTAMP(timezone=True), nullable=False, default=func.now())
     updated_at = Column(TIMESTAMP(timezone=True), nullable=False, default=func.now(), onupdate=func.now())
+    deleted_at = Column(TIMESTAMP(timezone=True), nullable=True)
+    deleted_by = Column(Text, nullable=True)
 
 
 class ReserveCustomerDaily(Base):

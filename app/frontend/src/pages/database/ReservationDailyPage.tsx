@@ -12,8 +12,8 @@
  */
 
 import React from 'react';
-import { Typography, Col, Row } from 'antd';
-import styles from './DatasetImportPage.module.css';
+import { Typography, Col, Row, Collapse, Card } from 'antd';
+import styles from './ReservationDailyPage.module.css';
 import { useReservationInputVM, ReservationInputForm } from '@features/reservation/reservation-input';
 import { 
   useReservationCalendarVM, 
@@ -34,12 +34,36 @@ const ReservationDailyPage: React.FC = () => {
   });
 
   return (
-    <Row className={styles.pageContainer}>
-      {/* 左カラム：手入力フォーム */}
-      <Col span={10} className={styles.leftCol}>
-        <Title level={4} style={{ margin: '0 0 12px 0' }}>
-          予約表（手入力）
-        </Title>
+    <>
+      <Title level={4} style={{ margin: '0 0 8px 0', textAlign: 'center' }}>
+        予約表
+      </Title>
+      
+      <Row className={styles.pageContainer}>
+        {/* 左カラム：手入力フォーム */}
+        <Col span={10} className={styles.leftCol}>
+          <Collapse
+          size="small"
+          style={{ marginBottom: 8 }}
+          items={[
+            {
+              key: '1',
+              label: <strong>📖 使い方</strong>,
+              children: (
+                <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+                  1. 下のカレンダーから日付を選択<br />
+                  2. 合計台数・固定客台数を入力して保存<br />
+                  3. 右の履歴カレンダーに即反映されます<br />
+                  <br />
+                  <strong>注意:</strong><br />
+                  ・ 備考欄は任意（空欄OK）<br />
+                  ・ 固定客台数は合計台数以下である必要があります<br />
+                  ・ 右のカレンダーの任意の日付をクリックで削除できます
+                </Typography.Text>
+              ),
+            },
+          ]}
+        />
 
         <ReservationInputForm
           selectedDate={inputVM.selectedDate}
@@ -57,20 +81,22 @@ const ReservationDailyPage: React.FC = () => {
           hasManualData={inputVM.hasManualData}
         />
 
-        <div style={{ 
-          padding: '12px', 
-          background: '#f5f5f5', 
-          borderRadius: 4,
-          fontSize: 13,
-        }}>
-          <Typography.Text type="secondary">
-            <strong>使い方</strong><br />
-            1. 上のカレンダーから日付を選択<br />
-            2. 合計台数・固定客台数を入力して保存<br />
-            3. 右の履歴カレンダーに即反映されます<br />
-            ※ 備考欄は任意（空欄OK）
-          </Typography.Text>
-        </div>
+        {/* 月次統計と日別予約推移 */}
+        <Card
+          size="small"
+          style={{ marginTop: 8 }}
+          styles={{ body: { padding: '8px 12px' } }}
+        >
+          <ReservationMonthlyStats
+            data={calendarVM.historyData}
+            isLoading={calendarVM.isLoadingHistory}
+          />
+          
+          <ReservationMonthlyChart
+            data={calendarVM.historyData}
+            isLoading={calendarVM.isLoadingHistory}
+          />
+        </Card>
       </Col>
 
       {/* 右カラム：履歴カレンダー（ログ表示専用） */}
@@ -79,22 +105,14 @@ const ReservationDailyPage: React.FC = () => {
           historyMonth={calendarVM.historyMonth}
           historyData={calendarVM.historyData}
           onChangeHistoryMonth={calendarVM.onChangeHistoryMonth}
+          onDeleteDate={calendarVM.onDeleteDate}
+          goToCurrentMonth={calendarVM.goToCurrentMonth}
           isLoadingHistory={calendarVM.isLoadingHistory}
-        />
-        
-        {/* 月次統計 */}
-        <ReservationMonthlyStats
-          data={calendarVM.historyData}
-          isLoading={calendarVM.isLoadingHistory}
-        />
-        
-        {/* 日別予約推移グラフ */}
-        <ReservationMonthlyChart
-          data={calendarVM.historyData}
-          isLoading={calendarVM.isLoadingHistory}
+          isDeletingDate={calendarVM.isDeletingDate}
         />
       </Col>
     </Row>
+    </>
   );
 };
 

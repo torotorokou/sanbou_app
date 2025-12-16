@@ -100,7 +100,13 @@ export const useReservationInputVM = (
 
       await repository.upsertManual(payload);
       message.success('保存しました');
-      setHasManualData(true);
+      
+      // フォームをリセット
+      setSelectedDate(null);
+      setTotalTrucks(null);
+      setFixedTrucks(null);
+      setNote('');
+      setHasManualData(false);
       
       // 親コンポーネントに変更を通知
       if (onDataChanged) {

@@ -1,7 +1,15 @@
+/* CSVインポートページ専用スタイル */
+
 .pageContainer {
   height: calc(100dvh - (var(--page-padding, 0px) * 2));
   min-height: 600px;
   overflow: hidden;
+  /* 横幅最大1500px、中央寄せ（親のpaddingを考慮） */
+  max-width: min(1500px, calc(100vw - var(--page-padding, 24px) * 2));
+  width: 100%;
+  margin: 24px auto;
+  padding: 0;
+  box-sizing: border-box;
 }
 
 .leftCol,

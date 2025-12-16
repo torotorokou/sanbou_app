@@ -8,6 +8,7 @@
  */
 
 import { useState, useCallback, useEffect } from 'react';
+import { message } from 'antd';
 import dayjs from 'dayjs';
 import type { Dayjs } from 'dayjs';
 import type {
@@ -21,9 +22,12 @@ export interface ReservationCalendarViewModel {
   historyMonth: Dayjs;
   historyData: ReservationForecastDaily[];
   isLoadingHistory: boolean;
+  isDeletingDate: string | null;
 
   // Events
   onChangeHistoryMonth: (month: Dayjs) => void;
+  onDeleteDate: (date: string) => Promise<void>;
+  goToCurrentMonth: () => void;
   refreshData: () => void;
 }
 
@@ -33,6 +37,7 @@ export const useReservationCalendarVM = (
   const [historyMonth, setHistoryMonth] = useState<Dayjs>(dayjs());
   const [historyData, setHistoryData] = useState<ReservationForecastDaily[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState<boolean>(false);
+  const [isDeletingDate, setIsDeletingDate] = useState<string | null>(null);
 
   const fetchHistoryData = useCallback(async (month: Dayjs) => {
     setIsLoadingHistory(true);
@@ -58,6 +63,28 @@ export const useReservationCalendarVM = (
     fetchHistoryData(historyMonth);
   }, [historyMonth, fetchHistoryData]);
 
+  const onDeleteDate = useCallback(async (date: string) => {
+    setIsDeletingDate(date);
+    try {
+      await repository.deleteManual(date);
+      message.success('削除しました');
+      // データを再取得
+      await fetchHistoryData(historyMonth);
+    } catch (err: unknown) {
+      console.error('Failed to delete manual data:', err);
+      const errorMessage = err instanceof Error ? err.message : '不明なエラー';
+      message.error(`削除に失敗しました: ${errorMessage}`);
+    } finally {
+      setIsDeletingDate(null);
+    }
+  }, [repository, historyMonth, fetchHistoryData]);
+
+  const goToCurrentMonth = useCallback(() => {
+    const currentMonth = dayjs();
+    setHistoryMonth(currentMonth);
+    fetchHistoryData(currentMonth);
+  }, [fetchHistoryData]);
+
   // 初回データ取得
   useEffect(() => {
     fetchHistoryData(historyMonth);
@@ -67,7 +94,10 @@ export const useReservationCalendarVM = (
     historyMonth,
     historyData,
     isLoadingHistory,
+    isDeletingDate,
     onChangeHistoryMonth,
+    onDeleteDate,
+    goToCurrentMonth,
     refreshData,
   };
 };
