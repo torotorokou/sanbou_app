@@ -8,14 +8,9 @@
 import React from 'react';
 import { Row, Col, Statistic, Typography } from 'antd';
 import { TruckOutlined, TeamOutlined } from '@ant-design/icons';
-import type { ReservationForecastDaily } from '../../shared';
+import type { ReservationMonthlyStatsProps } from '../model/types';
 
 const { Text } = Typography;
-
-interface ReservationMonthlyStatsProps {
-  data: ReservationForecastDaily[];
-  isLoading?: boolean;
-}
 
 export const ReservationMonthlyStats: React.FC<ReservationMonthlyStatsProps> = ({
   data,
@@ -30,6 +25,10 @@ export const ReservationMonthlyStats: React.FC<ReservationMonthlyStatsProps> = (
   return (
     <>
       <style>{`
+        .monthly-stats-container {
+          flex-shrink: 0;
+        }
+        
         .monthly-stats .ant-statistic-title {
           white-space: nowrap;
           overflow: hidden;
@@ -67,11 +66,12 @@ export const ReservationMonthlyStats: React.FC<ReservationMonthlyStatsProps> = (
         }
       `}</style>
       
-      <div style={{ marginBottom: 6 }}>
-        <Text strong style={{ fontSize: 13 }}>📊 月次統計</Text>
-      </div>
+      <div className="monthly-stats-container">
+        <div style={{ marginBottom: 6 }}>
+          <Text strong style={{ fontSize: 13 }}>📊 月次統計</Text>
+        </div>
 
-      <Row gutter={12} className="monthly-stats">
+        <Row gutter={12} className="monthly-stats">
         <Col span={6}>
           <Statistic
             title="合計予約台数"
@@ -116,6 +116,7 @@ export const ReservationMonthlyStats: React.FC<ReservationMonthlyStatsProps> = (
         marginTop: 20, 
         borderBottom: '1px solid #e8e8e8' 
       }} />
+      </div>
     </>
   );
 };

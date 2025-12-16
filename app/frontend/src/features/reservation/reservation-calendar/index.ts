@@ -12,3 +12,10 @@ export { ReservationMonthlyChart } from './ui/ReservationMonthlyChart';
 // ViewModel
 export { useReservationCalendarVM } from './model/useReservationCalendarVM';
 export type { ReservationCalendarViewModel } from './model/useReservationCalendarVM';
+
+// Types
+export type {
+  ReservationHistoryCalendarProps,
+  ReservationMonthlyStatsProps,
+  ReservationMonthlyChartProps,
+} from './model/types';

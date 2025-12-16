@@ -10,3 +10,6 @@ export { ReservationInputForm } from './ui/ReservationInputForm';
 // ViewModel
 export { useReservationInputVM } from './model/useReservationInputVM';
 export type { ReservationInputViewModel } from './model/useReservationInputVM';
+
+// Types
+export type { ReservationInputFormProps } from './model/types';

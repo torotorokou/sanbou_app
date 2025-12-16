@@ -7,25 +7,16 @@
  */
 
 import React, { useState } from 'react';
-import { Card, Button, Space, Typography, Spin, Modal, Popconfirm } from 'antd';
+import { Card, Button, Space, Typography, Spin, Modal } from 'antd';
 import { LeftOutlined, RightOutlined, TruckOutlined, TeamOutlined, CalendarOutlined, DeleteOutlined } from '@ant-design/icons';
 import type { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
 import type { ReservationForecastDaily } from '../../shared';
+import type { ReservationHistoryCalendarProps } from '../model/types';
 
 const { Title, Text } = Typography;
 
 const WEEKDAYS = ['月', '火', '水', '木', '金', '土', '日'];
-
-interface ReservationHistoryCalendarProps {
-  historyMonth: Dayjs;
-  historyData: ReservationForecastDaily[];
-  onChangeHistoryMonth: (month: Dayjs) => void;
-  onDeleteDate?: (date: string) => Promise<void>;
-  goToCurrentMonth?: () => void;
-  isLoadingHistory?: boolean;
-  isDeletingDate?: string | null;
-}
 
 export const ReservationHistoryCalendar: React.FC<ReservationHistoryCalendarProps> = ({
   historyMonth,
@@ -36,14 +27,20 @@ export const ReservationHistoryCalendar: React.FC<ReservationHistoryCalendarProp
   isLoadingHistory = false,
   isDeletingDate = null,
 }) => {
-  const [selectedDateForDelete, setSelectedDateForDelete] = useState<string | null>(null);
+  const [selectedDateForDetail, setSelectedDateForDetail] = useState<string | null>(null);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
 
-  const handleDeleteClick = async () => {
-    if (onDeleteDate && selectedDateForDelete) {
-      await onDeleteDate(selectedDateForDelete);
+  const handleDeleteClick = () => {
+    setDeleteConfirmOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (onDeleteDate && selectedDateForDetail) {
+      await onDeleteDate(selectedDateForDetail);
+      setDeleteConfirmOpen(false);
       setDetailModalOpen(false);
-      setSelectedDateForDelete(null);
+      setSelectedDateForDetail(null);
     }
   };
 
@@ -254,7 +251,7 @@ export const ReservationHistoryCalendar: React.FC<ReservationHistoryCalendarProp
 
                 const handleCellClick = () => {
                   if (data && onDeleteDate) {
-                    setSelectedDateForDelete(dateStr);
+                    setSelectedDateForDetail(dateStr);
                     setDetailModalOpen(true);
                   }
                 };
@@ -275,7 +272,7 @@ export const ReservationHistoryCalendar: React.FC<ReservationHistoryCalendarProp
                       transition: 'all 0.2s',
                     }}
                     onClick={handleCellClick}
-                    title={data ? `クリックで削除可能 - 合計: ${data.reserve_trucks}台, 固定: ${data.reserve_fixed_trucks}台` : undefined}
+                    title={data ? `クリックで詳細確認 - 合計: ${data.reserve_trucks}台, 固定: ${data.reserve_fixed_trucks}台` : undefined}
                   >
                     <div className="calendar-date" style={{ fontSize: 14, fontWeight: isToday ? 'bold' : 'normal', marginBottom: 4 }}>
                       {date.date()}
@@ -301,19 +298,61 @@ export const ReservationHistoryCalendar: React.FC<ReservationHistoryCalendarProp
         </div>
       </Spin>
       
-      {/* 削除確認モーダル */}
+      {/* 詳細確認モーダル */}
       <Modal
-        title="予約データの削除"
+        title="予約データの詳細確認"
         open={detailModalOpen}
         onCancel={() => {
           setDetailModalOpen(false);
-          setSelectedDateForDelete(null);
+          setSelectedDateForDetail(null);
         }}
         footer={[
           <Button key="cancel" onClick={() => {
             setDetailModalOpen(false);
-            setSelectedDateForDelete(null);
+            setSelectedDateForDetail(null);
           }}>
+            閉じる
+          </Button>,
+          <Button
+            key="delete"
+            type="primary"
+            danger
+            icon={<DeleteOutlined />}
+            onClick={handleDeleteClick}
+          >
+            削除する
+          </Button>,
+        ]}
+      >
+        {selectedDateForDetail && (() => {
+          const data = historyData.find(d => d.date === selectedDateForDetail);
+          return (
+            <div>
+              <div style={{ background: '#f5f5f5', padding: 12, borderRadius: 4 }}>
+                <p style={{ margin: '4px 0' }}><strong>日付:</strong> {dayjs(selectedDateForDetail).format('YYYY年MM月DD日 (dd)')}</p>
+                {data && (
+                  <>
+                    <p style={{ margin: '4px 0' }}><strong>合計台数:</strong> {data.reserve_trucks}台</p>
+                    <p style={{ margin: '4px 0' }}><strong>固定客台数:</strong> {data.reserve_fixed_trucks}台</p>
+                    <p style={{ margin: '8px 0 4px 0' }}>
+                      <strong>備考:</strong><br />
+                      <span style={{ whiteSpace: 'pre-wrap' }}>{data.note || '（なし）'}</span>
+                    </p>
+                  </>
+                )}
+              </div>
+            </div>
+          );
+        })()}
+      </Modal>
+
+      {/* 削除最終確認モーダル */}
+      <Modal
+        title="削除の最終確認"
+        open={deleteConfirmOpen}
+        onCancel={() => setDeleteConfirmOpen(false)}
+        footer={[
+          <Button key="cancel" onClick={() => setDeleteConfirmOpen(false)}>
             キャンセル
           </Button>,
           <Button
@@ -321,24 +360,28 @@ export const ReservationHistoryCalendar: React.FC<ReservationHistoryCalendarProp
             type="primary"
             danger
             icon={<DeleteOutlined />}
-            loading={isDeletingDate === selectedDateForDelete}
-            onClick={handleDeleteClick}
+            loading={isDeletingDate === selectedDateForDetail}
+            onClick={handleConfirmDelete}
           >
             削除する
           </Button>,
         ]}
       >
-        {selectedDateForDelete && (() => {
-          const data = historyData.find(d => d.date === selectedDateForDelete);
+        {selectedDateForDetail && (() => {
+          const data = historyData.find(d => d.date === selectedDateForDetail);
           return (
             <div>
               <p>以下の手入力データを削除してもよろしいですか？</p>
               <div style={{ background: '#f5f5f5', padding: 12, borderRadius: 4, marginTop: 12 }}>
-                <p style={{ margin: '4px 0' }}><strong>日付:</strong> {dayjs(selectedDateForDelete).format('YYYY年MM月DD日 (dd)')}</p>
+                <p style={{ margin: '4px 0' }}><strong>日付:</strong> {dayjs(selectedDateForDetail).format('YYYY年MM月DD日 (dd)')}</p>
                 {data && (
                   <>
                     <p style={{ margin: '4px 0' }}><strong>合計台数:</strong> {data.reserve_trucks}台</p>
                     <p style={{ margin: '4px 0' }}><strong>固定客台数:</strong> {data.reserve_fixed_trucks}台</p>
+                    <p style={{ margin: '8px 0 4px 0' }}>
+                      <strong>備考:</strong><br />
+                      <span style={{ whiteSpace: 'pre-wrap' }}>{data.note || '（なし）'}</span>
+                    </p>
                   </>
                 )}
               </div>

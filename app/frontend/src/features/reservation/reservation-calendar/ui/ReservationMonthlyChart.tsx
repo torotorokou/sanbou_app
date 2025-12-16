@@ -6,12 +6,7 @@
  */
 
 import React, { useMemo } from 'react';
-import type { ReservationForecastDaily } from '../../shared';
-
-interface ReservationMonthlyChartProps {
-  data: ReservationForecastDaily[];
-  isLoading?: boolean;
-}
+import type { ReservationMonthlyChartProps } from '../model/types';
 
 export const ReservationMonthlyChart: React.FC<ReservationMonthlyChartProps> = ({
   data,
@@ -55,10 +50,17 @@ export const ReservationMonthlyChart: React.FC<ReservationMonthlyChartProps> = (
   }, [data]);
 
   return (
-    <div style={{ marginTop: 20 }}>
+    <div style={{ marginTop: 20, flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
       <style>{`
         .chart-bar:hover .chart-value {
           opacity: 1 !important;
+        }
+        
+        .chart-container {
+          flex: 1;
+          min-height: 150px;
+          display: flex;
+          flex-direction: column;
         }
       `}</style>
       {isLoading ? (
@@ -70,19 +72,21 @@ export const ReservationMonthlyChart: React.FC<ReservationMonthlyChartProps> = (
           データがありません
         </div>
       ) : (
-        <div style={{ 
-          display: 'flex', 
-          alignItems: 'flex-end', 
-          height: 100, 
-          gap: 2,
-          padding: '5px 0',
-          borderBottom: '2px solid #e0e0e0'
-        }}>
+        <div className="chart-container">
+          {/* 棒グラフエリア */}
+          <div style={{ 
+            display: 'flex', 
+            alignItems: 'flex-end', 
+            flex: 1,
+            gap: 2,
+            padding: '5px 0 0 0',
+            borderBottom: '2px solid #e0e0e0',
+            minHeight: 0,
+            position: 'relative'
+          }}>
           {fullMonthData.map((item) => {
-            const date = new Date(item.date);
-            const day = date.getDate();
-            const totalHeight = (item.reserve_trucks / maxValue) * 90;
-            const fixedHeight = (item.reserve_fixed_trucks / maxValue) * 90;
+            const heightPercent = maxValue > 0 ? (item.reserve_trucks / maxValue) * 100 : 0;
+            const fixedPercent = item.reserve_trucks > 0 ? (item.reserve_fixed_trucks / item.reserve_trucks) * 100 : 0;
 
             return (
               <div
@@ -94,6 +98,7 @@ export const ReservationMonthlyChart: React.FC<ReservationMonthlyChartProps> = (
                   alignItems: 'center',
                   minWidth: 0,
                   position: 'relative',
+                  height: '100%',
                 }}
               >
                 {/* 棒グラフ */}
@@ -101,16 +106,19 @@ export const ReservationMonthlyChart: React.FC<ReservationMonthlyChartProps> = (
                   className="chart-bar"
                   style={{
                     width: '100%',
-                    height: totalHeight,
-                    background: `linear-gradient(to top, #52c41a ${(fixedHeight / totalHeight) * 100}%, #1890ff ${(fixedHeight / totalHeight) * 100}%)`,
+                    height: `${heightPercent}%`,
+                    background: `linear-gradient(to top, #52c41a ${fixedPercent}%, #1890ff ${fixedPercent}%)`,
                     borderRadius: '2px 2px 0 0',
-                    position: 'relative',
+                    position: 'absolute',
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
                     minHeight: item.reserve_trucks > 0 ? 5 : 0,
                     cursor: 'pointer',
                   }}
                 >
                   {/* 値表示（ホバー時のみ） */}
-                  {totalHeight > 0 && (
+                  {heightPercent > 0 && (
                     <div
                       className="chart-value"
                       style={{
@@ -131,34 +139,49 @@ export const ReservationMonthlyChart: React.FC<ReservationMonthlyChartProps> = (
                     </div>
                   )}
                 </div>
-
-                {/* 日付ラベル */}
-                <div
-                  style={{
-                    fontSize: 10,
-                    color: '#666',
-                    marginTop: 4,
-                    textAlign: 'center',
-                  }}
-                >
-                  {day}
-                </div>
               </div>
             );
           })}
-        </div>
-      )}
-
-      {/* 凡例 */}
-      {fullMonthData.length > 0 && (
-        <div style={{ marginTop: 12, display: 'flex', justifyContent: 'center', gap: 16, fontSize: 12 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            <div style={{ width: 16, height: 16, background: '#1890ff', borderRadius: 2 }} />
-            <span>予約台数</span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            <div style={{ width: 16, height: 16, background: '#52c41a', borderRadius: 2 }} />
-            <span>固定客台数</span>
+          
+          {/* 日付ラベル */}
+          <div style={{ 
+            display: 'flex', 
+            gap: 2,
+            marginTop: 4,
+            flexShrink: 0
+          }}>
+          {fullMonthData.map((item) => {
+            const date = new Date(item.date);
+            const day = date.getDate();
+            
+            return (
+              <div
+                key={`label-${item.date}`}
+                style={{
+                  flex: 1,
+                  fontSize: 10,
+                  color: '#666',
+                  textAlign: 'center',
+                  minWidth: 0,
+                }}
+              >
+                {day}
+              </div>
+            );
+          })}
+          </div>
+
+          {/* 凡例 */}
+          <div style={{ marginTop: 12, display: 'flex', justifyContent: 'center', gap: 16, fontSize: 12, flexShrink: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+              <div style={{ width: 16, height: 16, background: '#1890ff', borderRadius: 2 }} />
+              <span>予約台数</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+              <div style={{ width: 16, height: 16, background: '#52c41a', borderRadius: 2 }} />
+              <span>固定客台数</span>
+            </div>
           </div>
         </div>
       )}

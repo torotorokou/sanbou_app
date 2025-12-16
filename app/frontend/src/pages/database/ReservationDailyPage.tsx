@@ -1,14 +1,21 @@
 /**
  * ReservationDailyPage - 予約表（手入力）画面
  * 
- * 責務: レイアウト・配置のみ
- * ロジック: ViewModel に委譲
+ * Controller (ページコンポーネント)
+ * 
+ * 責務:
+ * - レイアウト・配置のみ
+ * - 複数のfeatureを組み合わせて画面を構成
+ * - ViewModelの初期化と画面間の連携
  * 
  * 構成:
  * - 左カラム: 日付選択カレンダー + 手入力フォーム（独立した入力UI）
  * - 右カラム: 履歴カレンダー（ログ表示専用、左と連動しない）
  * 
- * 規約: 機能ごとに分割されたfeatureを組み合わせて使用
+ * 規約:
+ * - Feature-Sliced Design (FSD) に準拠
+ * - ビジネスロジックは ViewModel に委譲
+ * - 明示的な Named Export を使用
  */
 
 import React from 'react';
@@ -84,8 +91,8 @@ const ReservationDailyPage: React.FC = () => {
         {/* 月次統計と日別予約推移 */}
         <Card
           size="small"
-          style={{ marginTop: 8 }}
-          styles={{ body: { padding: '8px 12px' } }}
+          className={styles.statsCard}
+          styles={{ body: { padding: '8px 12px', height: '100%', display: 'flex', flexDirection: 'column', overflow: 'auto' } }}
         >
           <ReservationMonthlyStats
             data={calendarVM.historyData}

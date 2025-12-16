@@ -30,3 +30,11 @@
   /* 履歴カレンダー用 */
   padding: 0;
 }
+
+.statsCard {
+  flex: 1; /* 残りのスペースを埋める */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  margin-top: 8px;
+}

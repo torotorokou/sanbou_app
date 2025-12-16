@@ -8,26 +8,10 @@
 import React, { useState } from 'react';
 import { Form, InputNumber, Input, Button, Space, Alert, Typography, Card, DatePicker, message, Modal } from 'antd';
 import { SaveOutlined, CalendarOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
-import type { Dayjs } from 'dayjs';
+import type { ReservationInputFormProps } from '../model/types';
 
 const { Title } = Typography;
 const { TextArea } = Input;
-
-interface ReservationInputFormProps {
-  selectedDate: Dayjs | null;
-  totalTrucks: number | null;
-  fixedTrucks: number | null;
-  note: string;
-  onSelectDate: (date: Dayjs | null) => void;
-  onChangeTotalTrucks: (value: number | null) => void;
-  onChangeFixedTrucks: (value: number | null) => void;
-  onChangeNote: (value: string) => void;
-  onSubmit: () => void;
-  onDelete: () => void;
-  isSaving: boolean;
-  error: string | null;
-  hasManualData: boolean;
-}
 
 export const ReservationInputForm: React.FC<ReservationInputFormProps> = ({
   selectedDate,
