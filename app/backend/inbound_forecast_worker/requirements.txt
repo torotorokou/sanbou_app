@@ -1,29 +1,29 @@
 # ==================================================================
-# inbound_forecast_worker requirements
+# inbound_forecast_worker requirements (ML/Forecast specific only)
 # ==================================================================
-# Note: Core dependencies (fastapi, pydantic, sqlalchemy, pandas, numpy)
-#       are provided by backend_shared. Only specify additional ML/forecast
-#       dependencies here to avoid version conflicts.
+# ⚠️ CRITICAL: backend_shared provides:
+#    - fastapi, pydantic, sqlalchemy
+#    - pandas==2.2.3, numpy
 # ==================================================================
 
-# ==== 機械学習・科学計算（backend_shared以外の追加ライブラリ） ====
-scikit-learn==1.6.1
-jpholiday==1.0.2
+# ==== Core依存（backend_sharedとバージョン統一） ====
+pandas==2.2.3
 pyyaml==6.0.2
-matplotlib==3.10.3
-Pillow==11.2.1
-scipy>=1.6.0
-joblib>=1.4.2
 
-# ==== 追加モデル (スタッキング/アンサンブルで利用) ====
-lightgbm
-xgboost
-catboost
+# ==== 機械学習・科学計算（backend_shared以外） ====
+scikit-learn>=1.5.0
+scipy>=1.14.0
+jpholiday>=1.0.2
+
+# ==== グラフ描画（開発・デバッグ用） ====
+matplotlib>=3.8.0
+Pillow>=10.0.0
+
+# ==== 追加モデル（アンサンブル用） ====
+lightgbm>=4.0.0
+xgboost>=2.0.0
+catboost>=1.2.0
 
 # ==== Notebook（開発用、オプショナル） ====
 ipython>=8.0
-jupyterlab
-
-# ==== （必要に応じて）推論高速化 / オプション ====
-# orjson  # 高速JSON (FastAPIで使用するならコメント解除)
-# numpy==2.2.6 は上で指定済み
+jupyterlab>=4.0.0

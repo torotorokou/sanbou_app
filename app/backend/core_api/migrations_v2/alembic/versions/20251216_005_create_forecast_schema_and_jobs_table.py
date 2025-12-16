@@ -180,11 +180,34 @@ def upgrade() -> None:
         '最後のエラーメッセージ（失敗時にセット）';
     """)
     
-    # 7. app_user, app_readonly への権限付与（ロールが存在する場合のみ）
-    # DO ブロックでロール存在チェックを行い、存在する場合のみGRANT実行
+    # 7. 環境別ユーザーへの権限付与（ロールが存在する場合のみ）
+    # 各環境で使用される可能性のあるすべてのユーザーに権限を付与
+    # - sanbou_app_dev (local_dev)
+    # - sanbou_app_stg (vm_stg)
+    # - sanbou_app_prod (vm_prod)
+    # - app_user, app_readonly (旧ロール、互換性維持)
     op.execute("""
         DO $$
         BEGIN
+            -- local_dev 環境用
+            IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'sanbou_app_dev') THEN
+                GRANT USAGE ON SCHEMA forecast TO sanbou_app_dev;
+                GRANT SELECT, INSERT, UPDATE, DELETE ON forecast.forecast_jobs TO sanbou_app_dev;
+            END IF;
+            
+            -- vm_stg 環境用
+            IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'sanbou_app_stg') THEN
+                GRANT USAGE ON SCHEMA forecast TO sanbou_app_stg;
+                GRANT SELECT, INSERT, UPDATE, DELETE ON forecast.forecast_jobs TO sanbou_app_stg;
+            END IF;
+            
+            -- vm_prod 環境用
+            IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'sanbou_app_prod') THEN
+                GRANT USAGE ON SCHEMA forecast TO sanbou_app_prod;
+                GRANT SELECT, INSERT, UPDATE, DELETE ON forecast.forecast_jobs TO sanbou_app_prod;
+            END IF;
+            
+            -- 旧ロール（互換性維持）
             IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'app_user') THEN
                 GRANT USAGE ON SCHEMA forecast TO app_user;
                 GRANT SELECT, INSERT, UPDATE, DELETE ON forecast.forecast_jobs TO app_user;
