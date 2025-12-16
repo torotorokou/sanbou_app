@@ -1,28 +1,28 @@
-# 推論・学習共通
-pandas>=1.5.0
-numpy==2.2.6
+# ==================================================================
+# inbound_forecast_worker requirements
+# ==================================================================
+# Note: Core dependencies (fastapi, pydantic, sqlalchemy, pandas, numpy)
+#       are provided by backend_shared. Only specify additional ML/forecast
+#       dependencies here to avoid version conflicts.
+# ==================================================================
+
+# ==== 機械学習・科学計算（backend_shared以外の追加ライブラリ） ====
 scikit-learn==1.6.1
 jpholiday==1.0.2
-SQLAlchemy==2.0.41
 pyyaml==6.0.2
 matplotlib==3.10.3
 Pillow==11.2.1
-# 祝日 / 追加特徴量
-requests
-# Notebook
-ipython>=8.0
-jupyterlab
-
-# ==== API / Serving ====
-fastapi==0.115.0
-uvicorn[standard]==0.30.1
-pydantic==2.9.2
+scipy>=1.6.0
 joblib>=1.4.2
 
 # ==== 追加モデル (スタッキング/アンサンブルで利用) ====
 lightgbm
 xgboost
 catboost
+
+# ==== Notebook（開発用、オプショナル） ====
+ipython>=8.0
+jupyterlab
 
 # ==== （必要に応じて）推論高速化 / オプション ====
 # orjson  # 高速JSON (FastAPIで使用するならコメント解除)

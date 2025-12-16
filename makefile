@@ -763,7 +763,7 @@ build-stg-images:
 	docker build $(BUILD_PULL_FLAG) $(BUILD_NO_CACHE_FLAG) \
 	  -t $(STG_IMAGE_REGISTRY)/nginx:$(STG_IMAGE_TAG) \
 	  -f app/frontend/Dockerfile --target stg app/frontend
-inbound_forecast_worker 
+
 push-stg-images:
 	@echo ">>> Push STG images (tag=$(STG_IMAGE_TAG))"
 	@for svc in core_api plan_worker ai_api ledger_api rag_api manual_api nginx; do \
