@@ -40,11 +40,11 @@ export const TargetCard: React.FC<TargetCardProps> = ({
 }) => {
   // isoWeek プラグインを拡張
   dayjs.extend(isoWeekPlugin);
-  // Mobile モードでは clamp を使って動的にフォントサイズを調整
-  const headerFontSize = isMobile ? "clamp(12px, 3.5vw, 16px)" : "16px";
-  const labelFontSize = isMobile ? "clamp(10px, 2.5vw, 12px)" : "12px";
-  const valueFontSize = isMobile ? "clamp(14px, 4vw, 18px)" : "18px";
-  const pctFontSize = isMobile ? "clamp(10px, 2.5vw, 12px)" : "12px";
+  // 画面サイズに応じて動的にフォントサイズを調整（xl: 1280px付近では小さめ）
+  const headerFontSize = isMobile ? "clamp(12px, 3.5vw, 16px)" : "clamp(13px, 0.9vw, 16px)";
+  const labelFontSize = isMobile ? "clamp(10px, 2.5vw, 12px)" : "clamp(10px, 0.7vw, 13px)";
+  const valueFontSize = isMobile ? "clamp(14px, 4vw, 18px)" : "clamp(14px, 1.1vw, 20px)";
+  const pctFontSize = isMobile ? "clamp(12px, 3vw, 16px)" : "clamp(14px, 1vw, 18px)";
   
   // Mobile モードでは行の高さを詰める
   const minRowHeight = isMobile ? 32 : 44;
@@ -58,33 +58,33 @@ export const TargetCard: React.FC<TargetCardProps> = ({
       styles={{ body: { padding: 12, display: "flex", flexDirection: "column", gap: 8, flex: 1, minHeight: 0 } }}
     >
       {/* ヘッダー: タイトル・ツールチップ・モード切り替え */}
-      <Space direction="vertical" size={8} style={{ width: "100%" }}>
-        <Space align="baseline" style={{ justifyContent: "space-between", width: "100%" }}>
-          <Space align="baseline">
-            <Typography.Title level={5} style={{ margin: 0 }}>
-              目標カード
-            </Typography.Title>
-            <Tooltip title="週目標は当月の営業日配分で按分。日目標は平日/土/日祝の重みで配分。">
-              <InfoCircleOutlined style={{ color: "#8c8c8c" }} />
-            </Tooltip>
-          </Space>
-          
-          {/* 達成率モード切り替え（親のコールバックを呼び出す） - 右寄せ */}
-            {onModeChange && (
-              <Segmented
-                className="customSegmented"
-                value={achievementMode}
-                onChange={(value) => onModeChange(value as AchievementMode)}
-                options={[
-                  { label: isMobile ? "累計" : "昨日まで", value: "toDate" },
-                  { label: isMobile ? "期末" : "月末・週末", value: "toEnd" },
-                ]}
-                size={isMobile ? "small" : "middle"}
-                style={{ width: isMobile ? "auto" : "auto" }}
-              />
-            )}
+      <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 4 }}>
+        <Space align="baseline">
+          <Typography.Title level={5} style={{ margin: 0 }}>
+            目標カード
+          </Typography.Title>
+          <Tooltip title="週目標は当月の営業日配分で按分。日目標は平日/土/日祝の重みで配分。">
+            <InfoCircleOutlined style={{ color: "#8c8c8c" }} />
+          </Tooltip>
         </Space>
-      </Space>
+        
+        {/* 達成率モード切り替え（親のコールバックを呼び出す） */}
+        {onModeChange && (
+          <div style={{ display: "flex", justifyContent: isMobile ? "flex-start" : "flex-end" }}>
+            <Segmented
+              className="customSegmented"
+              value={achievementMode}
+              onChange={(value) => onModeChange(value as AchievementMode)}
+              options={[
+                { label: isMobile ? "累計" : "昨日まで", value: "toDate" },
+                { label: isMobile ? "期末" : "月末・週末", value: "toEnd" },
+              ]}
+              size={isMobile ? "small" : "small"}
+              style={{ width: isMobile ? "auto" : "auto" }}
+            />
+          </div>
+        )}
+      </div>
 
       <div
         style={{
