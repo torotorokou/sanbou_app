@@ -14,7 +14,7 @@ import type {
   ReservationDailyRepository,
   ReservationForecastDaily,
 } from '../../shared';
-import { reservationDailyMockRepository } from '../../shared';
+import { reservationDailyRepository } from '../../shared';
 
 export interface ReservationCalendarViewModel {
   // State
@@ -28,7 +28,7 @@ export interface ReservationCalendarViewModel {
 }
 
 export const useReservationCalendarVM = (
-  repository: ReservationDailyRepository = reservationDailyMockRepository
+  repository: ReservationDailyRepository = reservationDailyRepository
 ): ReservationCalendarViewModel => {
   const [historyMonth, setHistoryMonth] = useState<Dayjs>(dayjs());
   const [historyData, setHistoryData] = useState<ReservationForecastDaily[]>([]);

@@ -82,6 +82,43 @@ class InboundReservation(Base):
 
 
 # ========================================
+# stg schema (reservation data)
+# ========================================
+
+class ReserveDailyManual(Base):
+    """stg.reserve_daily_manual table: 手入力の日次予約合計"""
+    __tablename__ = "reserve_daily_manual"
+    __table_args__ = {"schema": "stg"}
+
+    reserve_date = Column(Date, primary_key=True)
+    total_trucks = Column(Integer, nullable=False, default=0)
+    fixed_trucks = Column(Integer, nullable=False, default=0)
+    note = Column(Text, nullable=True)
+    created_by = Column(Text, nullable=True)
+    updated_by = Column(Text, nullable=True)
+    created_at = Column(TIMESTAMP(timezone=True), nullable=False, default=func.now())
+    updated_at = Column(TIMESTAMP(timezone=True), nullable=False, default=func.now(), onupdate=func.now())
+
+
+class ReserveCustomerDaily(Base):
+    """stg.reserve_customer_daily table: 顧客ごとの予約一覧"""
+    __tablename__ = "reserve_customer_daily"
+    __table_args__ = {"schema": "stg"}
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    reserve_date = Column(Date, nullable=False)
+    customer_cd = Column(Text, nullable=False)
+    customer_name = Column(Text, nullable=True)
+    planned_trucks = Column(Integer, nullable=False, default=0)
+    is_fixed_customer = Column(Integer, nullable=False, default=False)  # Boolean stored as int
+    note = Column(Text, nullable=True)
+    created_by = Column(Text, nullable=True)
+    updated_by = Column(Text, nullable=True)
+    created_at = Column(TIMESTAMP(timezone=True), nullable=False, default=func.now())
+    updated_at = Column(TIMESTAMP(timezone=True), nullable=False, default=func.now(), onupdate=func.now())
+
+
+# ========================================
 # raw schema (shogun CSV data)
 # YAMLから動的に生成されるモデル
 # ========================================
@@ -101,6 +138,8 @@ __all__ = [
     'PredictionDaily',
     'InboundActual',
     'InboundReservation',
+    'ReserveDailyManual',
+    'ReserveCustomerDaily',
     'ReceiveShogunFlash',
     'YardShogunFlash',
     'ShipmentShogunFlash',

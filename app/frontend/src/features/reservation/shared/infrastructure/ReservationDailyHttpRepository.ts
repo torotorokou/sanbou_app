@@ -18,38 +18,34 @@ export class ReservationDailyHttpRepository implements ReservationDailyRepositor
   /**
    * 予測用日次予約データを取得
    * 
-   * 仮エンドポイント: GET /core_api/reservations/forecast-daily?from=...&to=...
-   * ※ バックエンド実装後に調整
+   * エンドポイント: GET /reservation/forecast/{year}/{month}
+   * from/toから年月を抽出して取得
    */
   async getForecastDaily(from: string, to: string): Promise<ReservationForecastDaily[]> {
+    // from の年月を抽出（YYYY-MM-DD形式想定）
+    const [year, month] = from.split('-');
+    
     return await coreApi.get<ReservationForecastDaily[]>(
-      '/core_api/reservations/forecast-daily',
-      {
-        params: { from, to },
-      }
+      `/reservation/forecast/${year}/${month}`
     );
   }
 
   /**
    * 手入力データを保存/更新
    * 
-   * 仮エンドポイント: POST /core_api/reservations/daily-manual
-   * ※ バックエンド実装後に調整
+   * エンドポイント: POST /reservation/manual
    */
   async upsertManual(payload: ReservationManualInput): Promise<void> {
-    await coreApi.post('/core_api/reservations/daily-manual', payload);
+    await coreApi.post('/reservation/manual', payload);
   }
 
   /**
    * 手入力データを削除
    * 
-   * 仮エンドポイント: DELETE /core_api/reservations/daily-manual?date=...
-   * ※ バックエンド実装後に調整
+   * エンドポイント: DELETE /reservation/manual/{date}
    */
   async deleteManual(date: string): Promise<void> {
-    await coreApi.delete('/core_api/reservations/daily-manual', {
-      params: { date },
-    });
+    await coreApi.delete(`/reservation/manual/${date}`);
   }
 }
 

@@ -14,7 +14,7 @@ import type {
   ReservationDailyRepository,
   ReservationManualInput,
 } from '../../shared';
-import { reservationDailyMockRepository } from '../../shared';
+import { reservationDailyRepository } from '../../shared';
 
 export interface ReservationInputViewModel {
   // State
@@ -37,7 +37,7 @@ export interface ReservationInputViewModel {
 }
 
 export const useReservationInputVM = (
-  repository: ReservationDailyRepository = reservationDailyMockRepository,
+  repository: ReservationDailyRepository = reservationDailyRepository,
   onDataChanged?: () => void
 ): ReservationInputViewModel => {
   const [selectedDate, setSelectedDate] = useState<Dayjs | null>(null);
