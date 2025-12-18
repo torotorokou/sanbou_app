@@ -104,6 +104,7 @@ V_RECEIVE_DAILY = "v_receive_daily"
 V_RECEIVE_WEEKLY = "v_receive_weekly"
 V_RECEIVE_MONTHLY = "v_receive_monthly"
 V_DAILY_TARGET_WITH_CALENDAR = "v_daily_target_with_calendar"
+V_RESERVE_DAILY_FOR_FORECAST = "v_reserve_daily_for_forecast"  # 予測用予約データ
 
 # Views (SQL定義ファイルなし)
 V_CUSTOMER_SALES_DAILY = "v_customer_sales_daily"

@@ -32,6 +32,9 @@ Backend Shared Package
   # Configuration & DI
   - backend_shared.config.config_loader
   - backend_shared.config.di_providers
+  
+  # Database (DB関連全機能)
+  - backend_shared.db (names, url_builder, health, shogun)
 
 📐 依存関係のルール:
   - core は他のどの層にも依存しない
@@ -39,6 +42,6 @@ Backend Shared Package
   - config で依存関係を組み立てる
 """
 
-__version__ = "0.2.0"  # Clean Architecture リファクタリング完了
+__version__ = "0.2.1"  # 将軍データセット取得クラス追加
 
 __all__: list[str] = ["__version__"]

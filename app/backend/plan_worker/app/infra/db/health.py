@@ -6,7 +6,7 @@ Note:
 """
 from __future__ import annotations
 
-from backend_shared.infra.db.health import DbHealth, ping_database
+from backend_shared.db.health import DbHealth, ping_database
 
 
 def ping_db(timeout_sec: int = 2) -> DbHealth:

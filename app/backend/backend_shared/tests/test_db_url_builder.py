@@ -7,7 +7,7 @@ especially with special characters in passwords.
 
 from __future__ import annotations
 import pytest
-from backend_shared.infra.db.url_builder import build_postgres_dsn
+from backend_shared.db.url_builder import build_postgres_dsn
 
 
 class TestBuildPostgresDsn:

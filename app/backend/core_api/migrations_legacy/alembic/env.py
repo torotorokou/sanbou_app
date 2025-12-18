@@ -43,7 +43,7 @@ from app.infra.db.orm_models import Base  # noqa: E402
 
 # backend_shared の DB URL 構築ユーティリティを import
 try:
-    from backend_shared.infra.db.url_builder import build_database_url_with_driver
+    from backend_shared.db.url_builder import build_database_url_with_driver
 except ImportError:
     # フォールバック: backend_shared が利用できない場合
     build_database_url_with_driver = None

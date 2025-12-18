@@ -47,7 +47,7 @@ import os
 # 環境変数の読み込み
 # ========================================
 
-from backend_shared.infra.db.url_builder import build_database_url_with_driver
+from backend_shared.db.url_builder import build_database_url_with_driver
 
 DATABASE_URL = build_database_url_with_driver(driver="psycopg")
 """
