@@ -88,6 +88,25 @@ class ShogunDatasetKey(str, Enum):
             str: master.yamlのキー（例: "receive", "shipment", "yard"）
         """
         return self.data_type
+    
+    def get_table_name(self, schema: str = "stg") -> str:
+        """
+        対応するDBテーブル名を取得（スキーマ修飾あり）
+        
+        Args:
+            schema: スキーマ名（デフォルト: "stg"）
+        
+        Returns:
+            str: テーブル名（例: "stg.shogun_final_receive"）
+        
+        Examples:
+            >>> key = ShogunDatasetKey.SHOGUN_FINAL_RECEIVE
+            >>> key.get_table_name()
+            'stg.shogun_final_receive'
+            >>> key.get_table_name(schema="raw")
+            'raw.shogun_final_receive'
+        """
+        return f"{schema}.{self.value}"
 
 
 # Type alias for type hints
