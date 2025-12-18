@@ -33,13 +33,42 @@ key.get_view_name() # => "v_active_shogun_final_receive"
 key.get_master_key()# => "receive"
 ```
 
-### 2. ShogunMasterNameMapper（master_name_mapper.py）
+### 2. ShogunMasterNameMapper（master_name_mapper.py）⚠️ 非推奨
+
+**⚠️ このクラスは後方互換性のために残されています。新規コードでは `ShogunCsvConfigLoader` を使用してください。**
 
 master.yaml（shogun_csv_masters.yaml）を使って、DB英語名⇔日本語名の変換を行います。
 
-```python
-from backend_shared.shogun import ShogunMasterNameMapper
+#### 推奨される新しい方法
 
+```python
+from backend_shared.config.config_loader import ShogunCsvConfigLoader
+
+loader = ShogunCsvConfigLoader()
+
+# データセット名の日本語表示
+label = loader.get_dataset_label("shogun_final_receive")
+# => "受入一覧"
+
+# カラム名変換（英→日）
+ja_name = loader.get_ja_column_name("receive", "slip_date")
+# => "伝票日付"
+
+# カラム名変換（日→英）
+en_name = loader.get_en_column_name("receive", "伝票日付")
+# => "slip_date"
+
+# マッピング辞書の一括取得
+en_to_ja = loader.get_en_to_ja_map("receive")
+ja_to_en = loader.get_ja_to_en_map("receive")
+```
+
+#### 旧実装（非推奨）
+
+```python
+from backend_shared.db.shogun import ShogunMasterNameMapper
+
+# ⚠️ 非推奨: DeprecationWarning が表示されます
 mapper = ShogunMasterNameMapper()
 
 # データセット名の日本語表示

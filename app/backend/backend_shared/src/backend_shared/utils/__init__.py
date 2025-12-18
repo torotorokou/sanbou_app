@@ -2,6 +2,8 @@
 
 from .dataframe_utils import (
     clean_na_strings,
+    clean_na_strings_vectorized,
+    to_numeric_vectorized,
     combine_date_and_time,
     remove_weekday_parentheses,
     parse_str_column,
@@ -25,6 +27,8 @@ from .datetime_utils import (
 __all__ = [
     # DataFrame utilities
     "clean_na_strings",
+    "clean_na_strings_vectorized",
+    "to_numeric_vectorized",
     "combine_date_and_time",
     "remove_weekday_parentheses",
     "parse_str_column",

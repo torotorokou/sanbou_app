@@ -21,12 +21,15 @@ UseCase / Repository 実装 / DB セッションを組み立てる。
 """
 
 from typing import Optional
+from sqlalchemy.orm import Session
 from backend_shared.infra.frameworks.database import DatabaseSessionManager
 from backend_shared.config.config_loader import ShogunCsvConfigLoader
 from backend_shared.core.usecases.csv_formatter.formatter_config import (
     build_formatter_config,
 )
 from backend_shared.core.usecases.csv_formatter.formatter_factory import CSVFormatterFactory
+from backend_shared.core.domain.reserve.repositories import ReserveRepository
+from backend_shared.infra.adapters.reserve import PostgreSQLReserveRepository
 
 
 def provide_database_session_manager(
@@ -75,8 +78,22 @@ def provide_csv_formatter(csv_type: str, config_loader: Optional[ShogunCsvConfig
     return formatter
 
 
+def get_reserve_repository(session: Session) -> ReserveRepository:
+    """
+    ReserveRepository を提供する
+    
+    Args:
+        session: SQLAlchemy セッション
+        
+    Returns:
+        ReserveRepository インスタンス
+    """
+    return PostgreSQLReserveRepository(session)
+
+
 __all__ = [
     "provide_database_session_manager",
     "provide_csv_config_loader",
     "provide_csv_formatter",
+    "get_reserve_repository",
 ]

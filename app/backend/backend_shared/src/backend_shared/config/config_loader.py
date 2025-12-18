@@ -15,6 +15,12 @@ class ShogunCsvConfigLoader:
 
     統合型CSV定義ファイル（YAML）を読み込み、CSV処理に必要な
     カラム定義、型情報、一意キーなどの設定情報を提供します。
+    
+    機能:
+    - データセット名の日本語表示（shogun_final_receive → "受入一覧"）
+    - カラム名の英語→日本語変換（slip_date → "伝票日付"）
+    - カラム名の日本語→英語変換（"伝票日付" → slip_date）
+    - 型情報、一意キー、集約関数などの設定取得
     """
 
     def __init__(self, config_path: str = SHOGUNCSV_DEF_PATH):
@@ -152,6 +158,187 @@ class ShogunCsvConfigLoader:
             for jp, meta in self.get_columns(sheet_type).items()
             if "agg" in meta
         }
+
+    def get_dataset_label(self, dataset_key: str) -> str:
+        """
+        データセットキーから日本語ラベルを取得
+        
+        Args:
+            dataset_key: データセットキー（例: "shogun_final_receive"）
+        
+        Returns:
+            str: 日本語ラベル（例: "受入一覧"）
+                 定義がない場合はdataset_keyをそのまま返す
+        
+        例:
+            get_dataset_label("shogun_final_receive") => "受入一覧"
+            get_dataset_label("shogun_flash_shipment") => "出荷一覧"
+        """
+        # dataset_key から master_key を抽出
+        master_key = self._extract_master_key(dataset_key)
+        
+        if not master_key:
+            return dataset_key
+        
+        try:
+            config = self.config.get(master_key, {})
+            label = config.get("label", dataset_key)
+            return label
+        except Exception:
+            return dataset_key
+
+    def get_ja_column_name(self, master_key: str, en_name: str) -> str:
+        """
+        英語カラム名から日本語カラム名を取得
+        
+        Args:
+            master_key: master.yamlのキー（例: "receive", "shipment", "yard"）
+            en_name: 英語カラム名（例: "slip_date"）
+        
+        Returns:
+            str: 日本語カラム名（例: "伝票日付"）
+                 定義がない場合は en_name をそのまま返す
+        
+        例:
+            get_ja_column_name("receive", "slip_date") => "伝票日付"
+            get_ja_column_name("shipment", "vendor_name") => "業者名"
+        """
+        try:
+            columns = self.get_columns(master_key)
+            # columns: {日本語名: {en_name: ..., type: ...}, ...}
+            # 逆引き: en_name から日本語名を探す
+            for ja_name, meta in columns.items():
+                if meta.get("en_name") == en_name:
+                    return ja_name
+            return en_name
+        except Exception:
+            return en_name
+
+    def get_en_column_name(self, master_key: str, ja_name: str) -> str:
+        """
+        日本語カラム名から英語カラム名を取得
+        
+        Args:
+            master_key: master.yamlのキー（例: "receive", "shipment", "yard"）
+            ja_name: 日本語カラム名（例: "伝票日付"）
+        
+        Returns:
+            str: 英語カラム名（例: "slip_date"）
+                 定義がない場合は ja_name をそのまま返す
+        
+        例:
+            get_en_column_name("receive", "伝票日付") => "slip_date"
+            get_en_column_name("shipment", "業者名") => "vendor_name"
+        """
+        try:
+            meta = self.get_column_meta(master_key, ja_name)
+            en_name = meta.get("en_name", ja_name)
+            return en_name
+        except Exception:
+            return ja_name
+
+    def get_all_columns(self, master_key: str) -> dict:
+        """
+        指定したmaster_keyの全カラム定義を取得
+        
+        Args:
+            master_key: master.yamlのキー（例: "receive", "shipment", "yard"）
+        
+        Returns:
+            dict: カラム定義辞書 {日本語名: {en_name: ..., type: ...}, ...}
+        
+        例:
+            get_all_columns("receive")
+            => {
+                "伝票日付": {"en_name": "slip_date", "type": "datetime", "agg": "first"},
+                "業者CD": {"en_name": "vendor_cd", "type": "Int64", "agg": "first"},
+                ...
+            }
+        """
+        try:
+            return self.get_columns(master_key)
+        except Exception:
+            return {}
+
+    def get_en_to_ja_map(self, master_key: str) -> dict:
+        """
+        英語名→日本語名のマッピング辞書を取得
+        
+        Args:
+            master_key: master.yamlのキー（例: "receive", "shipment", "yard"）
+        
+        Returns:
+            dict: {英語名: 日本語名} の辞書
+        
+        例:
+            get_en_to_ja_map("receive")
+            => {
+                "slip_date": "伝票日付",
+                "vendor_cd": "業者CD",
+                ...
+            }
+        """
+        try:
+            columns = self.get_columns(master_key)
+            return {
+                meta["en_name"]: ja_name
+                for ja_name, meta in columns.items()
+                if "en_name" in meta
+            }
+        except Exception:
+            return {}
+
+    def get_ja_to_en_map(self, master_key: str) -> dict:
+        """
+        日本語名→英語名のマッピング辞書を取得
+        
+        Args:
+            master_key: master.yamlのキー（例: "receive", "shipment", "yard"）
+        
+        Returns:
+            dict: {日本語名: 英語名} の辞書
+        
+        例:
+            get_ja_to_en_map("receive")
+            => {
+                "伝票日付": "slip_date",
+                "業者CD": "vendor_cd",
+                ...
+            }
+        """
+        try:
+            columns = self.get_columns(master_key)
+            return {
+                ja_name: meta["en_name"]
+                for ja_name, meta in columns.items()
+                if "en_name" in meta
+            }
+        except Exception:
+            return {}
+
+    @staticmethod
+    def _extract_master_key(dataset_key: str) -> str:
+        """
+        データセットキーから master_key を抽出
+        
+        Args:
+            dataset_key: データセットキー（例: "shogun_final_receive"）
+        
+        Returns:
+            str: master_keyまたは空文字列（抽出できない場合）
+        
+        内部ロジック:
+            shogun_final_receive -> receive
+            shogun_flash_shipment -> shipment
+            shogun_final_yard -> yard
+        """
+        if "receive" in dataset_key:
+            return "receive"
+        elif "shipment" in dataset_key:
+            return "shipment"
+        elif "yard" in dataset_key:
+            return "yard"
+        return ""
 
 
 class ReportTemplateConfigLoader:

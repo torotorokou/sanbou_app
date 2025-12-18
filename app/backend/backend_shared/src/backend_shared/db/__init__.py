@@ -47,6 +47,12 @@ from backend_shared.db.shogun import (
     ShogunMasterNameMapper,
 )
 
+# Session Management
+from backend_shared.db.session import (
+    DatabaseSessionManager,
+    SyncDatabaseSessionManager,
+)
+
 __all__ = [
     # Schemas
     "SCHEMA_REF",
@@ -75,4 +81,7 @@ __all__ = [
     "ShogunDatasetKey",
     "ShogunDatasetFetcher",
     "ShogunMasterNameMapper",
+    # Session management
+    "DatabaseSessionManager",
+    "SyncDatabaseSessionManager",
 ]
