@@ -40,6 +40,7 @@ class RunDailyTplus1ForecastWithTrainingUseCase:
         inbound_actuals_exporter,  # InboundActualsExportPort
         reserve_exporter,  # ReserveExportPort
         forecast_result_repo,  # DailyForecastResultRepositoryPort
+        model_metrics_repo,  # ModelMetricsRepositoryPort
         retrain_script_path: Path,
         timeout: int = 1800,
     ):
@@ -47,6 +48,7 @@ class RunDailyTplus1ForecastWithTrainingUseCase:
         self._inbound_actuals_exporter = inbound_actuals_exporter
         self._reserve_exporter = reserve_exporter
         self._forecast_result_repo = forecast_result_repo
+        self._model_metrics_repo = model_metrics_repo
         self._retrain_script_path = retrain_script_path
         self._timeout = timeout
     
@@ -236,23 +238,25 @@ class RunDailyTplus1ForecastWithTrainingUseCase:
                 raise ValueError(f"Required column 'p50' or 'total_pred' not found. Columns: {pred_df.columns.tolist()}")
             
             # p10/p90も取得（存在する場合）
-            # 注意: CSV列は異なる意味を持つ
-            #   - "p50", "p90": quantile回帰による50%/90%分位点
-            #   - "total_pred_low_1sigma", "total_pred_high_1sigma": total_pred ± 1σ
-            # DBには本来のquantile値を保存すべき
+            # 統計的定義（Phase 2）:
+            #   - "p50" → median: 50%分位点（Quantile回帰 alpha=0.5）
+            #   - "p90" → upper_quantile_90: 90%分位点（Quantile回帰 alpha=0.9）
+            #   - "p10" → lower_1sigma: median - 1.28σ（正規分布仮定、真の10%分位点ではない）
+            # CSVの"total_pred_low_1sigma", "total_pred_high_1sigma"も同じ意味（total_pred ± 1σ）
             p10 = None
             p90 = None
             
             # quantile回帰の値を優先使用
             if "p50" in pred_df.columns and "p90" in pred_df.columns:
-                # p90からσを逆算してp10を推定 (p90 = p50 + 1.28σ と仮定)
+                # p90（upper_quantile_90）からσを逆算してp10（lower_1sigma）を推定
+                # 計算式: p90 = p50 + 1.28σ → σ = (p90 - p50) / 1.28 → p10 = p50 - 1.28σ
                 p90_raw = float(first_row["p90"])
                 if p90_raw > p50:
-                    z90 = 1.2815515655446004  # 80%分位点のz値
+                    z90 = 1.2815515655446004  # 正規分布の80%点（片側）のz値
                     sigma = (p90_raw - p50) / z90
-                    z10 = -1.2815515655446004  # 20%分位点のz値
-                    p10 = max(0.0, p50 + z10 * sigma)
-                    p90 = p90_raw
+                    z10 = -1.2815515655446004  # 正規分布の10%点（片側）のz値
+                    p10 = max(0.0, p50 + z10 * sigma)  # lower_1sigma（非負制約）
+                    p90 = p90_raw  # upper_quantile_90
                 else:
                     # p90がp50以下の場合 (zero_cap等でキャップされた場合)
                     # σベースの値を使用
@@ -307,6 +311,21 @@ class RunDailyTplus1ForecastWithTrainingUseCase:
                     "p50": p50
                 }
             )
+            
+            # 6. モデル精度指標をDBに保存
+            # train_daily_model.py が scores_walkforward.json を出力しているため読み取り
+            scores_file = out_dir / "scores_walkforward.json"
+            if scores_file.exists():
+                self._save_model_metrics(
+                    job_id=job_id,
+                    scores_file=scores_file,
+                    actuals_start=actuals_start,
+                    actuals_end=actuals_end
+                )
+            else:
+                logger.warning(
+                    f"⚠️ Model metrics file not found: {scores_file}. Skipping metrics save."
+                )
         
         except Exception as e:
             logger.error(
@@ -320,3 +339,71 @@ class RunDailyTplus1ForecastWithTrainingUseCase:
                 }
             )
             raise
+    
+    def _save_model_metrics(
+        self,
+        job_id: UUID,
+        scores_file: Path,
+        actuals_start: date,
+        actuals_end: date
+    ) -> None:
+        """
+        モデル精度指標をDBに保存
+        
+        Args:
+            job_id: 予測ジョブID
+            scores_file: scores_walkforward.json のパス
+            actuals_start: 学習開始日
+            actuals_end: 学習終了日
+        """
+        import json
+        from app.ports.model_metrics_repository import ModelMetrics
+        
+        try:
+            with open(scores_file, "r") as f:
+                scores = json.load(f)
+            
+            # train_daily_model.py L773-783 で出力されるメトリクス
+            # {"R2_total": 0.605, "MAE_total": 13.56, "R2_sum_only": 0.611, "MAE_sum_only": 13.44, 
+            #  "n_days": 245, "config": {...}}
+            
+            metrics = ModelMetrics(
+                job_id=job_id,
+                model_name="daily_tplus1",
+                model_version="final_fast_balanced",
+                train_window_start=actuals_start,
+                train_window_end=actuals_end,
+                eval_method="walk_forward",
+                mae=scores.get("MAE_total"),
+                r2=scores.get("R2_total"),
+                n_samples=scores.get("n_days", 0),
+                rmse=None,  # train_daily_model.py では計算していない
+                mape=None,  # train_daily_model.py では計算していない
+                mae_sum_only=scores.get("MAE_sum_only"),
+                r2_sum_only=scores.get("R2_sum_only"),
+                unit="ton",
+                metadata=scores.get("config")
+            )
+            
+            metrics_id = self._model_metrics_repo.save_metrics(metrics)
+            
+            logger.info(
+                f"✅ Saved model metrics to DB",
+                extra={
+                    "metrics_id": str(metrics_id),
+                    "job_id": str(job_id),
+                    "mae": metrics.mae,
+                    "r2": metrics.r2,
+                    "n_samples": metrics.n_samples
+                }
+            )
+        except Exception as e:
+            logger.error(
+                f"❌ Failed to save model metrics",
+                exc_info=True,
+                extra={
+                    "job_id": str(job_id),
+                    "scores_file": str(scores_file),
+                    "error": str(e)
+                }
+            )

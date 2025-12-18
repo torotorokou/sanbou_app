@@ -112,11 +112,13 @@ def execute_daily_tplus1(
         from .adapters.forecast.inbound_actuals_exporter import InboundActualsExporter
         from .adapters.forecast.reserve_exporter import ReserveExporter
         from .adapters.forecast.daily_forecast_result_repository import DailyForecastResultRepository
+        from .adapters.forecast.model_metrics_repository import PostgreSQLModelMetricsRepository
         
         # Adapters作成
         inbound_actuals_exporter = InboundActualsExporter(db_session)
         reserve_exporter = ReserveExporter(db_session)
         forecast_result_repo = DailyForecastResultRepository(db_session)
+        model_metrics_repo = PostgreSQLModelMetricsRepository(db_session)
         
         # retrain_and_eval.py のパス
         retrain_script = SCRIPTS_DIR / "retrain_and_eval.py"
@@ -129,6 +131,7 @@ def execute_daily_tplus1(
             inbound_actuals_exporter=inbound_actuals_exporter,
             reserve_exporter=reserve_exporter,
             forecast_result_repo=forecast_result_repo,
+            model_metrics_repo=model_metrics_repo,
             retrain_script_path=retrain_script,
             timeout=timeout,
         )

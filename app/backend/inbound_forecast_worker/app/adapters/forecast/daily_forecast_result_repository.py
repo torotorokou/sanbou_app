@@ -38,9 +38,9 @@ class DailyForecastResultRepository:
         Args:
             target_date: 予測対象日（t+1）
             job_id: forecast.forecast_jobs.id
-            p50: 中央値予測（メイン）
-            p10: 10パーセンタイル（下側予測）
-            p90: 90パーセンタイル（上側予測）
+            p50: 中央値（50%分位点）= Quantile回帰 alpha=0.5 → median
+            p10: 下側区間（median - 1.28σ）= 正規分布仮定、真の10%分位点ではない → lower_1sigma
+            p90: 上側90%分位点 = Quantile回帰 alpha=0.9 → upper_quantile_90
             unit: 単位（'ton' or 'kg'）
             input_snapshot: 入力データ詳細
         
@@ -49,11 +49,24 @@ class DailyForecastResultRepository:
         
         Raises:
             IntegrityError: UNIQUE制約違反
+        
+        Note:
+            Phase 2: 新カラム（median, lower_1sigma, upper_quantile_90）と
+                     旧カラム（p10, p50, p90）の両方に保存（互換性維持）。
+                     新カラムは統計的に正確な命名。
+                     
+        See Also:
+            データ契約: docs/development/forecast_interval_data_contract.md
         """
         sql = text("""
             INSERT INTO forecast.daily_forecast_results (
                 target_date,
                 job_id,
+                -- 新カラム（Phase 1で追加、統計的に正確な命名）
+                median,
+                lower_1sigma,
+                upper_quantile_90,
+                -- 旧カラム（互換性維持、Phase 3で削除予定）
                 p50,
                 p10,
                 p90,
@@ -62,6 +75,11 @@ class DailyForecastResultRepository:
             ) VALUES (
                 :target_date,
                 :job_id,
+                -- 新カラムに保存
+                :median,
+                :lower_1sigma,
+                :upper_quantile_90,
+                -- 旧カラムにも同じ値を保存（互換性）
                 :p50,
                 :p10,
                 :p90,
@@ -76,6 +94,11 @@ class DailyForecastResultRepository:
             {
                 "target_date": target_date,
                 "job_id": str(job_id),
+                # 新カラムに保存
+                "median": p50,
+                "lower_1sigma": p10,
+                "upper_quantile_90": p90,
+                # 旧カラムに保存（互換性）
                 "p50": p50,
                 "p10": p10,
                 "p90": p90,
