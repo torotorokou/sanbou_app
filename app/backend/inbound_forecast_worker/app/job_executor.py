@@ -31,6 +31,7 @@ from .adapters.inbound_actual_repository import PostgreSQLInboundActualRepositor
 from .adapters.reserve_daily_repository import PostgreSQLReserveDailyRepository
 from .adapters.forecast_result_repository import PostgreSQLForecastResultRepository
 from .application.run_daily_tplus1_forecast import RunDailyTplus1ForecastUseCase
+from .application.run_daily_tplus1_forecast_with_training import RunDailyTplus1ForecastWithTrainingUseCase
 
 logger = get_module_logger(__name__)
 
@@ -85,75 +86,135 @@ def execute_daily_tplus1(
     db_session: Session,
     target_date: date,
     job_id: UUID,
-    timeout: Optional[int] = None
+    timeout: Optional[int] = None,
+    use_training: bool = True,  # Phase 4: デフォルトで学習込み
 ) -> None:
     """
-    日次予測 t+1 を実行（DB版）
+    日次予測 t+1 を実行
     
     Args:
         db_session: SQLAlchemy Session
         target_date: 予測対象日
         job_id: ジョブID
         timeout: タイムアウト（秒）
+        use_training: True=学習込み（retrain_and_eval）, False=推論のみ
     
     Raises:
         JobExecutionError: 実行エラー
     """
     timeout = timeout or DEFAULT_TIMEOUT
     
-    # モデルファイルパス
-    model_bundle = MODELS_DIR / "final_fast_balanced" / "model_bundle.joblib"
-    res_walk_csv = MODELS_DIR / "final_fast_balanced" / "res_walkforward.csv"
-    script_path = SCRIPTS_DIR / "daily_tplus1_predict.py"
-    
-    # ファイル存在確認
-    if not model_bundle.exists():
-        raise JobExecutionError(f"Model bundle not found: {model_bundle}")
-    if not res_walk_csv.exists():
-        raise JobExecutionError(f"Walk-forward results not found: {res_walk_csv}")
-    if not script_path.exists():
-        raise JobExecutionError(f"Script not found: {script_path}")
-    
-    # Repositories を作成
-    inbound_actual_repo = PostgreSQLInboundActualRepository(db_session)
-    reserve_daily_repo = PostgreSQLReserveDailyRepository(db_session)
-    forecast_result_repo = PostgreSQLForecastResultRepository(db_session)
-    
-    # UseCase を作成
-    use_case = RunDailyTplus1ForecastUseCase(
-        inbound_actual_repo=inbound_actual_repo,
-        reserve_daily_repo=reserve_daily_repo,
-        forecast_result_repo=forecast_result_repo,
-        model_bundle_path=model_bundle,
-        res_walk_csv_path=res_walk_csv,
-        script_path=script_path,
-        timeout=timeout,
-    )
-    
-    # 実行
-    try:
-        use_case.execute(target_date, job_id)
-        db_session.commit()
+    if use_training:
+        # Phase 4: DB→学習→予測の完全フロー
+        logger.info(f"🔄 Using training mode (retrain_and_eval --quick)")
         
-        logger.info(
-            f"✅ Daily t+1 forecast completed and committed",
-            extra={
-                "target_date": str(target_date),
-                "job_id": str(job_id)
-            }
+        # Adapters をインポート（worker内にコピー済み）
+        from .adapters.forecast.inbound_actuals_exporter import InboundActualsExporter
+        from .adapters.forecast.reserve_exporter import ReserveExporter
+        from .adapters.forecast.daily_forecast_result_repository import DailyForecastResultRepository
+        
+        # Adapters作成
+        inbound_actuals_exporter = InboundActualsExporter(db_session)
+        reserve_exporter = ReserveExporter(db_session)
+        forecast_result_repo = DailyForecastResultRepository(db_session)
+        
+        # retrain_and_eval.py のパス
+        retrain_script = SCRIPTS_DIR / "retrain_and_eval.py"
+        if not retrain_script.exists():
+            raise JobExecutionError(f"retrain_and_eval.py not found: {retrain_script}")
+        
+        # UseCase作成
+        use_case = RunDailyTplus1ForecastWithTrainingUseCase(
+            db_session=db_session,
+            inbound_actuals_exporter=inbound_actuals_exporter,
+            reserve_exporter=reserve_exporter,
+            forecast_result_repo=forecast_result_repo,
+            retrain_script_path=retrain_script,
+            timeout=timeout,
         )
-    except Exception as e:
-        db_session.rollback()
-        logger.error(
-            f"❌ Daily t+1 forecast failed",
-            exc_info=True,
-            extra={
-                "target_date": str(target_date),
-                "job_id": str(job_id),
-                "error": str(e)
-            }
+        
+        # 実行
+        try:
+            use_case.execute(target_date, job_id)
+            db_session.commit()
+            
+            logger.info(
+                f"✅ Daily t+1 forecast (with training) completed and committed",
+                extra={
+                    "target_date": str(target_date),
+                    "job_id": str(job_id)
+                }
+            )
+        except Exception as e:
+            db_session.rollback()
+            logger.error(
+                f"❌ Daily t+1 forecast (with training) failed",
+                exc_info=True,
+                extra={
+                    "target_date": str(target_date),
+                    "job_id": str(job_id),
+                    "error": str(e)
+                }
+            )
+            raise JobExecutionError(f"UseCase execution failed: {str(e)}") from e
+    
+    else:
+        # Phase 3: 推論のみ（既存実装）
+        logger.info(f"🔍 Using inference-only mode (existing model)")
+        
+        # モデルファイルパス
+        model_bundle = MODELS_DIR / "final_fast_balanced" / "model_bundle.joblib"
+        res_walk_csv = MODELS_DIR / "final_fast_balanced" / "res_walkforward.csv"
+        script_path = SCRIPTS_DIR / "daily_tplus1_predict.py"
+        
+        # ファイル存在確認
+        if not model_bundle.exists():
+            raise JobExecutionError(f"Model bundle not found: {model_bundle}")
+        if not res_walk_csv.exists():
+            raise JobExecutionError(f"Walk-forward results not found: {res_walk_csv}")
+        if not script_path.exists():
+            raise JobExecutionError(f"Script not found: {script_path}")
+        
+        # Repositories を作成
+        inbound_actual_repo = PostgreSQLInboundActualRepository(db_session)
+        reserve_daily_repo = PostgreSQLReserveDailyRepository(db_session)
+        forecast_result_repo = PostgreSQLForecastResultRepository(db_session)
+        
+        # UseCase を作成
+        use_case = RunDailyTplus1ForecastUseCase(
+            inbound_actual_repo=inbound_actual_repo,
+            reserve_daily_repo=reserve_daily_repo,
+            forecast_result_repo=forecast_result_repo,
+            model_bundle_path=model_bundle,
+            res_walk_csv_path=res_walk_csv,
+            script_path=script_path,
+            timeout=timeout,
         )
-        raise JobExecutionError(f"UseCase execution failed: {str(e)}") from e
+        
+        # 実行
+        try:
+            use_case.execute(target_date, job_id)
+            db_session.commit()
+            
+            logger.info(
+                f"✅ Daily t+1 forecast (inference-only) completed and committed",
+                extra={
+                    "target_date": str(target_date),
+                    "job_id": str(job_id)
+                }
+            )
+        except Exception as e:
+            db_session.rollback()
+            logger.error(
+                f"❌ Daily t+1 forecast (inference-only) failed",
+                exc_info=True,
+                extra={
+                    "target_date": str(target_date),
+                    "job_id": str(job_id),
+                    "error": str(e)
+                }
+            )
+            raise JobExecutionError(f"UseCase execution failed: {str(e)}") from e
 
 
 def execute_job(

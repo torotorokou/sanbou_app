@@ -60,6 +60,12 @@ def main():
     ap.add_argument('--bootstrap-iters', type=int, default=None)
     ap.add_argument('--n-jobs', type=int, default=1)
     ap.add_argument('--log', type=str, default=None)
+    # 新規: パス制御用引数（worker実行に対応）
+    ap.add_argument('--raw-csv', type=str, default=None, help='Path to raw item-level CSV (伝票日付,品名,正味重量)')
+    ap.add_argument('--reserve-csv', type=str, default=None, help='Path to reserve CSV (予約日,台数,固定客)')
+    ap.add_argument('--out-dir', type=str, default=None, help='Output directory for model bundle and walkforward results')
+    ap.add_argument('--pred-out-csv', type=str, default=None, help='Path to save t+1 prediction CSV')
+    ap.add_argument('--start-date', type=str, default=None, help='Prediction start date (YYYY-MM-DD) for t+1')
     args = ap.parse_args()
 
     # ログファイルのパス設定
@@ -74,32 +80,50 @@ def main():
     if not os.path.exists(train_script):
         print(f'Training script not found: {train_script}'); sys.exit(1)
 
-    # 入力データの準備
-    # 優先: 20240501-20250422.csv (明細データ)
-    # 次点: 01_daily_clean.csv (合計データ) -> ダミー変換
+    # 入力データの準備（引数優先、未指定時はデフォルト）
+    # 優先: --raw-csv引数
+    # 次点: 20240501-20250422.csv (明細データ)
+    # 最終: 01_daily_clean.csv (合計データ) -> ダミー変換
     
-    detail_csv_path = os.path.join(DATA_DIR, 'input', '20240501-20250422.csv')
-    raw_csv_path = os.path.join(DATA_DIR, 'input', '01_daily_clean.csv')
-    dummy_csv_path = os.path.join(DATA_DIR, 'input', '01_daily_clean_dummy_item.csv')
-    
-    if os.path.exists(detail_csv_path):
-        print(f"Using detail data: {detail_csv_path}")
-        target_csv = detail_csv_path
+    if args.raw_csv:
+        print(f"Using raw-csv from argument: {args.raw_csv}")
+        target_csv = args.raw_csv
     else:
-        print(f"Using aggregate data (converting to dummy): {raw_csv_path}")
-        prepare_dummy_daily_data(raw_csv_path, dummy_csv_path)
-        target_csv = dummy_csv_path
+        detail_csv_path = os.path.join(DATA_DIR, 'input', '20240501-20250422.csv')
+        raw_csv_path = os.path.join(DATA_DIR, 'input', '01_daily_clean.csv')
+        dummy_csv_path = os.path.join(DATA_DIR, 'input', '01_daily_clean_dummy_item.csv')
+        
+        if os.path.exists(detail_csv_path):
+            print(f"Using detail data: {detail_csv_path}")
+            target_csv = detail_csv_path
+        else:
+            print(f"Using aggregate data (converting to dummy): {raw_csv_path}")
+            prepare_dummy_daily_data(raw_csv_path, dummy_csv_path)
+            target_csv = dummy_csv_path
 
+    # reserve CSV（引数優先、未指定時はデフォルト）
+    if args.reserve_csv:
+        reserve_csv = args.reserve_csv
+    else:
+        reserve_csv = os.path.join(DATA_DIR, 'input', 'yoyaku_data.csv')
+    
+    # 出力ディレクトリ（引数優先、未指定時はデフォルト）
+    if args.out_dir:
+        out_dir = args.out_dir
+        os.makedirs(out_dir, exist_ok=True)
+    else:
+        out_dir = OUT_DIR
+    
     # build command
     # READMEの推奨コマンドをベースに構築
     cmd_train = [
         sys.executable, train_script,
         '--raw-csv', target_csv,
-        '--reserve-csv', os.path.join(DATA_DIR, 'input', 'yoyaku_data.csv'),
+        '--reserve-csv', reserve_csv,
         '--raw-date-col', '伝票日付', '--raw-item-col', '品名', '--raw-weight-col', '正味重量',
         '--reserve-date-col', '予約日', '--reserve-count-col', '台数', '--reserve-fixed-col', '固定客',
-        '--out-dir', OUT_DIR,
-        '--save-bundle', os.path.join(OUT_DIR, 'model_bundle.joblib'),
+        '--out-dir', out_dir,
+        '--save-bundle', os.path.join(out_dir, 'model_bundle.joblib'),
         '--n-jobs', str(args.n_jobs),
         '--no-plots'
     ]
@@ -121,13 +145,26 @@ def main():
     # 推論 (t+1)
     predict_script = os.path.join(SCRIPTS_DIR, 'daily_tplus1_predict.py')
     if os.path.exists(predict_script):
+        # 予測出力先（引数優先、未指定時はデフォルト）
+        if args.pred_out_csv:
+            pred_out_csv = args.pred_out_csv
+        else:
+            pred_out_csv = os.path.join(DATA_DIR, 'output', 'tplus1_pred.csv')
+        
+        os.makedirs(os.path.dirname(pred_out_csv), exist_ok=True)
+        
         cmd_pred = [
             sys.executable, predict_script,
-            '--bundle', os.path.join(OUT_DIR, 'model_bundle.joblib'),
-            '--res-walk-csv', os.path.join(OUT_DIR, 'res_walkforward.csv'),
-            '--reserve-csv', os.path.join(DATA_DIR, 'input', 'yoyaku_data.csv'),
-            '--out-csv', os.path.join(DATA_DIR, 'output', 'tplus1_pred.csv')
+            '--bundle', os.path.join(out_dir, 'model_bundle.joblib'),
+            '--res-walk-csv', os.path.join(out_dir, 'res_walkforward.csv'),
+            '--reserve-csv', reserve_csv,
+            '--out-csv', pred_out_csv
         ]
+        
+        # --start-date が指定されていれば追加
+        if args.start_date:
+            cmd_pred.extend(['--start-date', args.start_date])
+        
         print("Starting prediction...")
         run(cmd_pred, fout=log_path)
         print("Prediction completed.")

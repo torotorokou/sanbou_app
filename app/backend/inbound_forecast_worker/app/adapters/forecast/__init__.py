@@ -1,0 +1,1 @@
+"""Forecast adapters - worker version"""
