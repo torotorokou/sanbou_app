@@ -100,11 +100,13 @@ def worker_loop() -> NoReturn:
                         }
                     )
                     
-                    # Phase 3: ジョブ実行
+                    # Phase 3: ジョブ実行（DB版）
                     try:
-                        output_path = execute_job(
+                        execute_job(
+                            db_session=db,
                             job_type=job["job_type"],
                             target_date=job["target_date"],
+                            job_id=job["id"],
                             input_snapshot=job["input_snapshot"],
                             timeout=1800  # 30分
                         )
@@ -113,7 +115,7 @@ def worker_loop() -> NoReturn:
                             f"✅ Job execution succeeded",
                             extra={
                                 "job_id": str(job["id"]),
-                                "output_path": output_path
+                                "job_type": job["job_type"]
                             }
                         )
                         
