@@ -66,6 +66,16 @@ def main():
     ap.add_argument('--out-dir', type=str, default=None, help='Output directory for model bundle and walkforward results')
     ap.add_argument('--pred-out-csv', type=str, default=None, help='Path to save t+1 prediction CSV')
     ap.add_argument('--start-date', type=str, default=None, help='Prediction start date (YYYY-MM-DD) for t+1')
+    ap.add_argument('--end-date', type=str, default=None, help='Prediction end date (YYYY-MM-DD) for t+1')
+    
+    # DB直接取得モード（CSV廃止）
+    ap.add_argument('--use-db', action='store_true', help='DBから直接データ取得（CSVを使わない）')
+    ap.add_argument('--db-connection-string', type=str, default=None, help='PostgreSQL接続文字列')
+    ap.add_argument('--actuals-start-date', type=str, default=None, help='実績データ開始日（YYYY-MM-DD）')
+    ap.add_argument('--actuals-end-date', type=str, default=None, help='実績データ終了日（YYYY-MM-DD）')
+    ap.add_argument('--reserve-start-date', type=str, default=None, help='予約データ開始日（YYYY-MM-DD）')
+    ap.add_argument('--reserve-end-date', type=str, default=None, help='予約データ終了日（YYYY-MM-DD）')
+    
     args = ap.parse_args()
 
     # ログファイルのパス設定
@@ -80,15 +90,30 @@ def main():
     if not os.path.exists(train_script):
         print(f'Training script not found: {train_script}'); sys.exit(1)
 
-    # 入力データの準備（引数優先、未指定時はデフォルト）
-    # 優先: --raw-csv引数
+    # 入力データの準備（DB直接モードではCSVを準備しない）
+    # 優先: --use-db（DB直接取得モード）
+    # 次点: --raw-csv引数
     # 次点: 20240501-20250422.csv (明細データ)
     # 最終: 01_daily_clean.csv (合計データ) -> ダミー変換
     
-    if args.raw_csv:
+    target_csv = None
+    reserve_csv = None
+    
+    if args.use_db:
+        # DB直接取得モード: CSVファイルを準備しない
+        print("Using DB direct access mode (--use-db)")
+        target_csv = None  # CSVは使わない
+        reserve_csv = None  # CSVは使わない
+    elif args.raw_csv:
         print(f"Using raw-csv from argument: {args.raw_csv}")
         target_csv = args.raw_csv
+        # reserve CSV（引数優先、未指定時はデフォルト）
+        if args.reserve_csv:
+            reserve_csv = args.reserve_csv
+        else:
+            reserve_csv = os.path.join(DATA_DIR, 'input', 'yoyaku_data.csv')
     else:
+        # CSV従来モード（デフォルト）
         detail_csv_path = os.path.join(DATA_DIR, 'input', '20240501-20250422.csv')
         raw_csv_path = os.path.join(DATA_DIR, 'input', '01_daily_clean.csv')
         dummy_csv_path = os.path.join(DATA_DIR, 'input', '01_daily_clean_dummy_item.csv')
@@ -100,12 +125,12 @@ def main():
             print(f"Using aggregate data (converting to dummy): {raw_csv_path}")
             prepare_dummy_daily_data(raw_csv_path, dummy_csv_path)
             target_csv = dummy_csv_path
-
-    # reserve CSV（引数優先、未指定時はデフォルト）
-    if args.reserve_csv:
-        reserve_csv = args.reserve_csv
-    else:
-        reserve_csv = os.path.join(DATA_DIR, 'input', 'yoyaku_data.csv')
+        
+        # reserve CSV（引数優先、未指定時はデフォルト）
+        if args.reserve_csv:
+            reserve_csv = args.reserve_csv
+        else:
+            reserve_csv = os.path.join(DATA_DIR, 'input', 'yoyaku_data.csv')
     
     # 出力ディレクトリ（引数優先、未指定時はデフォルト）
     if args.out_dir:
@@ -118,15 +143,37 @@ def main():
     # READMEの推奨コマンドをベースに構築
     cmd_train = [
         sys.executable, train_script,
-        '--raw-csv', target_csv,
-        '--reserve-csv', reserve_csv,
-        '--raw-date-col', '伝票日付', '--raw-item-col', '品名', '--raw-weight-col', '正味重量',
-        '--reserve-date-col', '予約日', '--reserve-count-col', '台数', '--reserve-fixed-col', '固定客',
         '--out-dir', out_dir,
         '--save-bundle', os.path.join(out_dir, 'model_bundle.joblib'),
         '--n-jobs', str(args.n_jobs),
         '--no-plots'
     ]
+    
+    # DB直接取得モードまたはCSVモード
+    if args.use_db:
+        cmd_train.extend(['--use-db'])
+        if args.db_connection_string:
+            cmd_train.extend(['--db-connection-string', args.db_connection_string])
+        if args.actuals_start_date:
+            cmd_train.extend(['--actuals-start-date', args.actuals_start_date])
+        if args.actuals_end_date:
+            cmd_train.extend(['--actuals-end-date', args.actuals_end_date])
+        if args.reserve_start_date:
+            cmd_train.extend(['--reserve-start-date', args.reserve_start_date])
+        if args.reserve_end_date:
+            cmd_train.extend(['--reserve-end-date', args.reserve_end_date])
+    else:
+        # CSV従来モード
+        cmd_train.extend([
+            '--raw-csv', target_csv,
+            '--reserve-csv', reserve_csv,
+        ])
+    
+    # 列名指定（共通）
+    cmd_train.extend([
+        '--raw-date-col', '伝票日付', '--raw-item-col', '品名', '--raw-weight-col', '正味重量',
+        '--reserve-date-col', '予約日', '--reserve-count-col', '台数', '--reserve-fixed-col', '固定客',
+    ])
 
     if args.quick:
         # クイックモード: 分割数を減らし、木の本数を減らす
@@ -157,13 +204,27 @@ def main():
             sys.executable, predict_script,
             '--bundle', os.path.join(out_dir, 'model_bundle.joblib'),
             '--res-walk-csv', os.path.join(out_dir, 'res_walkforward.csv'),
-            '--reserve-csv', reserve_csv,
             '--out-csv', pred_out_csv
         ]
         
-        # --start-date が指定されていれば追加
+        # DB直接取得モードまたはCSVモード
+        if args.use_db:
+            cmd_pred.extend(['--use-db'])
+            if args.db_connection_string:
+                cmd_pred.extend(['--db-connection-string', args.db_connection_string])
+            if args.reserve_start_date:
+                cmd_pred.extend(['--reserve-start-date', args.reserve_start_date])
+            if args.reserve_end_date:
+                cmd_pred.extend(['--reserve-end-date', args.reserve_end_date])
+        else:
+            # CSV従来モード
+            cmd_pred.extend(['--reserve-csv', reserve_csv])
+        
+        # --start-date / --end-date が指定されていれば追加
         if args.start_date:
             cmd_pred.extend(['--start-date', args.start_date])
+        if args.end_date:
+            cmd_pred.extend(['--end-date', args.end_date])
         
         print("Starting prediction...")
         run(cmd_pred, fout=log_path)

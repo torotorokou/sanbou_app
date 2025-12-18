@@ -66,7 +66,7 @@ class DailyForecastResultRepository:
                 :p10,
                 :p90,
                 :unit,
-                :input_snapshot::jsonb
+                CAST(:input_snapshot AS jsonb)
             )
             RETURNING id
         """)
@@ -87,4 +87,8 @@ class DailyForecastResultRepository:
         row = result.fetchone()
         self.db.commit()
         
-        return UUID(row[0])
+        # row[0] is already UUID type from PostgreSQL
+        result_id = row[0]
+        if isinstance(result_id, str):
+            return UUID(result_id)
+        return result_id

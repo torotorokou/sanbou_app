@@ -100,53 +100,86 @@ class RunDailyTplus1ForecastWithTrainingUseCase:
                     f"No actuals found between {actuals_start} and {actuals_end}"
                 )
             
-            # raw.csv保存（日本語ヘッダ）
-            raw_csv_path = workspace / "raw.csv"
-            actuals_df.to_csv(raw_csv_path, index=False, encoding="utf-8")
+            # 実績データの検証
+            actuals_max_date = actuals_df["伝票日付"].max()
+            avg_weight = actuals_df["正味重量"].mean()
+            
+            if actuals_max_date != actuals_end:
+                logger.warning(
+                    f"⚠️ Actuals max date mismatch: expected {actuals_end}, got {actuals_max_date}"
+                )
+            
+            if avg_weight < 0.01 or avg_weight > 50:
+                logger.error(
+                    f"❌ Suspicious average weight: {avg_weight:.3f} ton (expected 0.5～5.0)"
+                )
+                raise ValueError(f"Invalid average weight: {avg_weight:.3f} ton")
             
             logger.info(
-                f"✅ Exported {len(actuals_df)} actuals to {raw_csv_path}",
+                f"✅ Actuals data prepared: {len(actuals_df)} records",
                 extra={
                     "actuals_count": len(actuals_df),
-                    "actuals_max_date": str(actuals_df["伝票日付"].max())
+                    "actuals_max_date": str(actuals_max_date),
+                    "avg_weight_ton": round(avg_weight, 3)
                 }
             )
             
-            # 3. DBから予約データ取得（過去60日+未来7日）
-            reserve_start = target_date - timedelta(days=60)
-            reserve_end = target_date + timedelta(days=7)
+            # 3. DBから予約データ取得（過去360日、target_date当日まで）
+            # 注意: 学習に必要な期間を確保（train_daily_model.pyで使用）
+            reserve_start = target_date - timedelta(days=360)
+            reserve_end = target_date  # target_date当日まで（予測に使用）
             
             logger.info(
-                f"📅 Exporting reserve: {reserve_start} to {reserve_end}"
+                f"📅 Preparing reserve data range: {reserve_start} to {reserve_end}"
             )
             
+            # 予約データの検証ログのみ出力（CSV保存は廃止）
             reserve_df = self._reserve_exporter.export_daily_reserve(
                 start_date=reserve_start,
                 end_date=reserve_end
             )
             
-            # reserve.csv保存（日本語ヘッダ）
-            reserve_csv_path = workspace / "reserve.csv"
-            reserve_df.to_csv(reserve_csv_path, index=False, encoding="utf-8")
+            if not reserve_df.empty:
+                reserve_dates = pd.to_datetime(reserve_df["予約日"]).dt.date
+                target_date_exists = target_date in reserve_dates.values
+                if not target_date_exists:
+                    logger.warning(
+                        f"⚠️ Reserve data for target_date {target_date} does not exist. "
+                        f"Max reserve date: {reserve_dates.max()}"
+                    )
+            else:
+                logger.warning("⚠️ Reserve data is empty")
             
             logger.info(
-                f"✅ Exported {len(reserve_df)} reserve records to {reserve_csv_path}",
-                extra={"reserve_count": len(reserve_df)}
+                f"✅ Reserve data prepared: {len(reserve_df)} records",
+                extra={
+                    "reserve_count": len(reserve_df),
+                    "reserve_max_date": str(reserve_df["予約日"].max()) if not reserve_df.empty else "N/A"
+                }
             )
             
-            # 4. retrain_and_eval.py --quick で学習→予測
+            # 4. retrain_and_eval.py --quick で学習→予測（DB直接取得モード）
             pred_out_csv = workspace / "tplus1_pred.csv"
             log_file = workspace / "run.log"
+            
+            # DB接続文字列の取得（backend_sharedのurl_builderを使用）
+            from backend_shared.db.url_builder import build_database_url
+            db_url = build_database_url(driver="psycopg", raise_on_missing=True)
             
             cmd = [
                 "python3",
                 str(self._retrain_script_path),
                 "--quick",
-                "--raw-csv", str(raw_csv_path),
-                "--reserve-csv", str(reserve_csv_path),
+                "--use-db",  # CSV廃止：DB直接取得モード
+                "--db-connection-string", db_url,
+                "--actuals-start-date", str(actuals_start),
+                "--actuals-end-date", str(actuals_end),
+                "--reserve-start-date", str(reserve_start),
+                "--reserve-end-date", str(reserve_end),
                 "--out-dir", str(out_dir),
                 "--pred-out-csv", str(pred_out_csv),
                 "--start-date", str(target_date),
+                "--end-date", str(target_date),  # 1日のみ予測（必須）
                 "--log", str(log_file),
             ]
             
@@ -193,12 +226,50 @@ class RunDailyTplus1ForecastWithTrainingUseCase:
             if pred_df.empty:
                 raise ValueError("Prediction CSV is empty")
             
-            # CSVから予測値を取得（retrain_and_evalの出力形式に依存）
-            # 想定: date, y_pred 等のカラム
-            # とりあえず最初の行を取得
-            p50 = float(pred_df.iloc[0].get("y_pred", pred_df.iloc[0].iloc[-1]))
-            p10 = None  # retrain_and_evalが区間予測を出力していれば取得
+            # CSVから予測値を取得（p50列を優先、なければtotal_pred）
+            first_row = pred_df.iloc[0]
+            if "p50" in pred_df.columns:
+                p50 = float(first_row["p50"])
+            elif "total_pred" in pred_df.columns:
+                p50 = float(first_row["total_pred"])
+            else:
+                raise ValueError(f"Required column 'p50' or 'total_pred' not found. Columns: {pred_df.columns.tolist()}")
+            
+            # p10/p90も取得（存在する場合）
+            # 注意: CSV列は異なる意味を持つ
+            #   - "p50", "p90": quantile回帰による50%/90%分位点
+            #   - "total_pred_low_1sigma", "total_pred_high_1sigma": total_pred ± 1σ
+            # DBには本来のquantile値を保存すべき
+            p10 = None
             p90 = None
+            
+            # quantile回帰の値を優先使用
+            if "p50" in pred_df.columns and "p90" in pred_df.columns:
+                # p90からσを逆算してp10を推定 (p90 = p50 + 1.28σ と仮定)
+                p90_raw = float(first_row["p90"])
+                if p90_raw > p50:
+                    z90 = 1.2815515655446004  # 80%分位点のz値
+                    sigma = (p90_raw - p50) / z90
+                    z10 = -1.2815515655446004  # 20%分位点のz値
+                    p10 = max(0.0, p50 + z10 * sigma)
+                    p90 = p90_raw
+                else:
+                    # p90がp50以下の場合 (zero_cap等でキャップされた場合)
+                    # σベースの値を使用
+                    if "total_pred_low_1sigma" in pred_df.columns and "total_pred_high_1sigma" in pred_df.columns:
+                        p10 = float(first_row["total_pred_low_1sigma"])
+                        p90 = float(first_row["total_pred_high_1sigma"])
+            elif "total_pred_low_1sigma" in pred_df.columns and "total_pred_high_1sigma" in pred_df.columns:
+                # quantile値がない場合はσベースの値を使用（互換性のため）
+                p10 = float(first_row["total_pred_low_1sigma"])
+                p90 = float(first_row["total_pred_high_1sigma"])
+            
+            # 異常値チェック
+            if p50 < 1.0 or p50 > 200.0:
+                logger.warning(
+                    f"⚠️ Prediction value out of reasonable range: p50={p50:.3f} ton",
+                    extra={"p50": p50, "min_expected": 1.0, "max_expected": 200.0}
+                )
             
             logger.info(
                 f"📈 Prediction result: p50={p50:.3f}",

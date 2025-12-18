@@ -54,16 +54,29 @@ BEGIN
 END
 $$;
 
--- データベース接続権限
+-- データベース接続権限（開発環境：sanbou_app_dev のみ）
 \c sanbou_dev
 GRANT CONNECT ON DATABASE sanbou_dev TO sanbou_app_dev;
 
--- スキーマ使用権限（public のみ）
+-- スキーマ使用権限（sanbou_app_dev のみ）
 GRANT USAGE ON SCHEMA public TO sanbou_app_dev;
+GRANT USAGE ON SCHEMA forecast TO sanbou_app_dev;
+GRANT USAGE ON SCHEMA raw TO sanbou_app_dev;
+GRANT USAGE ON SCHEMA stg TO sanbou_app_dev;
+GRANT USAGE ON SCHEMA mart TO sanbou_app_dev;
 
--- CRUD 権限
+-- CRUD 権限（全スキーマ）
 GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO sanbou_app_dev;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA forecast TO sanbou_app_dev;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA raw TO sanbou_app_dev;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA stg TO sanbou_app_dev;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA mart TO sanbou_app_dev;
+
 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO sanbou_app_dev;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA forecast TO sanbou_app_dev;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA raw TO sanbou_app_dev;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA stg TO sanbou_app_dev;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA mart TO sanbou_app_dev;
 
 -- DDL 権限（開発環境のみ：テーブル作成を許可）
 GRANT CREATE ON SCHEMA public TO sanbou_app_dev;
@@ -72,7 +85,22 @@ GRANT CREATE ON SCHEMA public TO sanbou_app_dev;
 ALTER DEFAULT PRIVILEGES IN SCHEMA public 
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO sanbou_app_dev;
 
+ALTER DEFAULT PRIVILEGES IN SCHEMA forecast
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO sanbou_app_dev;
+
+ALTER DEFAULT PRIVILEGES IN SCHEMA raw
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO sanbou_app_dev;
+
+ALTER DEFAULT PRIVILEGES IN SCHEMA stg
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO sanbou_app_dev;
+
+ALTER DEFAULT PRIVILEGES IN SCHEMA mart
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO sanbou_app_dev;
+
 ALTER DEFAULT PRIVILEGES IN SCHEMA public 
+GRANT USAGE, SELECT ON SEQUENCES TO sanbou_app_dev;
+
+ALTER DEFAULT PRIVILEGES IN SCHEMA forecast
 GRANT USAGE, SELECT ON SEQUENCES TO sanbou_app_dev;
 
 \echo '✓ 開発環境ユーザーの設定完了'
@@ -98,22 +126,48 @@ BEGIN
 END
 $$;
 
--- データベース接続権限
+-- データベース接続権限（ステージング環境：sanbou_app_stg のみ）
 \c sanbou_stg
 GRANT CONNECT ON DATABASE sanbou_stg TO sanbou_app_stg;
 
--- スキーマ使用権限（public のみ）
+-- スキーマ使用権限（sanbou_app_stg のみ）
 GRANT USAGE ON SCHEMA public TO sanbou_app_stg;
+GRANT USAGE ON SCHEMA forecast TO sanbou_app_stg;
+GRANT USAGE ON SCHEMA raw TO sanbou_app_stg;
+GRANT USAGE ON SCHEMA stg TO sanbou_app_stg;
+GRANT USAGE ON SCHEMA mart TO sanbou_app_stg;
 
 -- CRUD 権限のみ（DDL は不可）
 GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO sanbou_app_stg;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA forecast TO sanbou_app_stg;
+GRANT INSERT ON ALL TABLES IN SCHEMA raw TO sanbou_app_stg;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA stg TO sanbou_app_stg;
+GRANT SELECT ON ALL TABLES IN SCHEMA mart TO sanbou_app_stg;
+
 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO sanbou_app_stg;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA forecast TO sanbou_app_stg;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA stg TO sanbou_app_stg;
 
 -- 今後追加されるテーブルにも自動で権限付与
 ALTER DEFAULT PRIVILEGES IN SCHEMA public 
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO sanbou_app_stg;
 
+ALTER DEFAULT PRIVILEGES IN SCHEMA forecast
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO sanbou_app_stg;
+
+ALTER DEFAULT PRIVILEGES IN SCHEMA raw
+GRANT INSERT ON TABLES TO sanbou_app_stg;
+
+ALTER DEFAULT PRIVILEGES IN SCHEMA stg
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO sanbou_app_stg;
+
+ALTER DEFAULT PRIVILEGES IN SCHEMA mart
+GRANT SELECT ON TABLES TO sanbou_app_stg;
+
 ALTER DEFAULT PRIVILEGES IN SCHEMA public 
+GRANT USAGE, SELECT ON SEQUENCES TO sanbou_app_stg;
+
+ALTER DEFAULT PRIVILEGES IN SCHEMA forecast
 GRANT USAGE, SELECT ON SEQUENCES TO sanbou_app_stg;
 
 \echo '✓ ステージング環境ユーザーの設定完了'
@@ -139,22 +193,48 @@ BEGIN
 END
 $$;
 
--- データベース接続権限
+-- データベース接続権限（本番環境：sanbou_app_prod のみ）
 \c sanbou_prod
 GRANT CONNECT ON DATABASE sanbou_prod TO sanbou_app_prod;
 
--- スキーマ使用権限（public のみ）
+-- スキーマ使用権限（sanbou_app_prod のみ）
 GRANT USAGE ON SCHEMA public TO sanbou_app_prod;
+GRANT USAGE ON SCHEMA forecast TO sanbou_app_prod;
+GRANT USAGE ON SCHEMA raw TO sanbou_app_prod;
+GRANT USAGE ON SCHEMA stg TO sanbou_app_prod;
+GRANT USAGE ON SCHEMA mart TO sanbou_app_prod;
 
 -- CRUD 権限のみ（DDL は完全に禁止）
 GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO sanbou_app_prod;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA forecast TO sanbou_app_prod;
+GRANT INSERT ON ALL TABLES IN SCHEMA raw TO sanbou_app_prod;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA stg TO sanbou_app_prod;
+GRANT SELECT ON ALL TABLES IN SCHEMA mart TO sanbou_app_prod;
+
 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO sanbou_app_prod;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA forecast TO sanbou_app_prod;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA stg TO sanbou_app_prod;
 
 -- 今後追加されるテーブルにも自動で権限付与
 ALTER DEFAULT PRIVILEGES IN SCHEMA public 
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO sanbou_app_prod;
 
+ALTER DEFAULT PRIVILEGES IN SCHEMA forecast
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO sanbou_app_prod;
+
+ALTER DEFAULT PRIVILEGES IN SCHEMA raw
+GRANT INSERT ON TABLES TO sanbou_app_prod;
+
+ALTER DEFAULT PRIVILEGES IN SCHEMA stg
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO sanbou_app_prod;
+
+ALTER DEFAULT PRIVILEGES IN SCHEMA mart
+GRANT SELECT ON TABLES TO sanbou_app_prod;
+
 ALTER DEFAULT PRIVILEGES IN SCHEMA public 
+GRANT USAGE, SELECT ON SEQUENCES TO sanbou_app_prod;
+
+ALTER DEFAULT PRIVILEGES IN SCHEMA forecast
 GRANT USAGE, SELECT ON SEQUENCES TO sanbou_app_prod;
 
 \echo '✓ 本番環境ユーザーの設定完了'

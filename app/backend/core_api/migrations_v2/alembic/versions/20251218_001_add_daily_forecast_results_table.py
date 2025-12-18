@@ -147,6 +147,39 @@ def upgrade() -> None:
         COMMENT ON COLUMN forecast.daily_forecast_results.input_snapshot IS 
         '入力データの詳細（実績の期間、予約の有無等）をJSON形式で記録';
     """)
+    
+    # 5. 環境別アプリケーションユーザーへの権限付与
+    # 現在のデータベース名に対応するユーザーのみに権限付与
+    # sanbou_dev → sanbou_app_dev のみ
+    # sanbou_stg → sanbou_app_stg のみ
+    # sanbou_prod → sanbou_app_prod のみ
+    op.execute("""
+        DO $$
+        DECLARE
+            current_db text;
+            target_user text;
+        BEGIN
+            -- 現在のデータベース名を取得
+            SELECT current_database() INTO current_db;
+            
+            -- データベース名に応じたユーザー名を決定
+            CASE current_db
+                WHEN 'sanbou_dev' THEN target_user := 'sanbou_app_dev';
+                WHEN 'sanbou_stg' THEN target_user := 'sanbou_app_stg';
+                WHEN 'sanbou_prod' THEN target_user := 'sanbou_app_prod';
+                ELSE target_user := NULL;
+            END CASE;
+            
+            -- 対応するユーザーが存在する場合のみ権限付与
+            IF target_user IS NOT NULL AND EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = target_user) THEN
+                EXECUTE format('GRANT SELECT, INSERT, UPDATE, DELETE ON forecast.daily_forecast_results TO %I', target_user);
+                RAISE NOTICE 'Granted permissions to % for database %', target_user, current_db;
+            ELSE
+                RAISE NOTICE 'No matching user found for database %', current_db;
+            END IF;
+        END
+        $$;
+    """)
 
 
 def downgrade() -> None:

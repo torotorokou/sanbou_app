@@ -1363,6 +1363,16 @@ def main():
     ap.add_argument("--reserve-date-col", type=str, default="予約日")
     ap.add_argument("--reserve-count-col", type=str, default="台数")
     ap.add_argument("--reserve-fixed-col", type=str, default="固定客")
+    
+    # DB直接取得モード（CSV廃止）
+    ap.add_argument("--use-db", action="store_true",
+                    help="DBから予約データを直接取得（--reserve-csvの代わり）")
+    ap.add_argument("--db-connection-string", type=str, default=None,
+                    help="PostgreSQL接続文字列（--use-db時に指定、未指定時は環境変数DATABASE_URL）")
+    ap.add_argument("--reserve-start-date", type=str, default=None,
+                    help="予約データ開始日（YYYY-MM-DD形式、--use-db時に使用）")
+    ap.add_argument("--reserve-end-date", type=str, default=None,
+                    help="予約データ終了日（YYYY-MM-DD形式、--use-db時に使用）")
     ap.add_argument("--mode", type=str, default="base", choices=["base","tuned"], help="推論ロジックの構成（base: 従来, tuned: 追加調整を有効化）")
     ap.add_argument("--weekly-bundle", type=str, default=None, help="週次用バンドル（weekly_stage2 または w+calib を含む joblib）")
     ap.add_argument("--weekly-meta-bundle", type=str, default=None, help="週合計を直接予測する weekly_meta バンドル(joblib) 週内に比例配分して置換")
@@ -1398,9 +1408,56 @@ def main():
     ap.add_argument("--zero-cap-quantile", type=float, default=None, help="ゼロ予約キャップの分位（0-1）を上書き")
 
     args = ap.parse_args()
+    
+    # DB直接取得モード
+    reserve_csv_arg = args.reserve_csv
+    if args.use_db:
+        from datetime import datetime
+        from db_loader import load_reserve_from_db
+        import tempfile
+        
+        # 日付範囲の決定（start-date/end-date または future-daysから）
+        if args.start_date and args.end_date:
+            reserve_start = datetime.strptime(args.start_date, "%Y-%m-%d").date()
+            reserve_end = datetime.strptime(args.end_date, "%Y-%m-%d").date()
+        elif args.reserve_start_date and args.reserve_end_date:
+            reserve_start = datetime.strptime(args.reserve_start_date, "%Y-%m-%d").date()
+            reserve_end = datetime.strptime(args.reserve_end_date, "%Y-%m-%d").date()
+        else:
+            # バンドルの history_tail から last_date を推定（簡易版）
+            import joblib
+            bundle = joblib.load(args.bundle)
+            from datetime import timedelta
+            if bundle.get("history_tail") is not None and len(bundle["history_tail"]) > 0:
+                last_date_str = bundle["history_tail"]["date"].max()
+                last_date = datetime.strptime(str(last_date_str)[:10], "%Y-%m-%d").date()
+                reserve_start = last_date - timedelta(days=args.future_days + 60)
+                reserve_end = last_date + timedelta(days=args.future_days)
+            else:
+                raise ValueError(
+                    "--use-db requires --start-date/--end-date or --reserve-start-date/--reserve-end-date"
+                )
+        
+        print(f"[DB MODE] Loading reserve from DB: {reserve_start} to {reserve_end}")
+        reserve_df = load_reserve_from_db(
+            start_date=reserve_start,
+            end_date=reserve_end,
+            date_col=args.reserve_date_col,
+            count_col=args.reserve_count_col,
+            fixed_col=args.reserve_fixed_col,
+            connection_string=args.db_connection_string,
+        )
+        print(f"[DB MODE] Loaded {len(reserve_df)} reserve records from DB")
+        
+        # 一時CSVに保存（run_inference が reserve_csv を要求するため）
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.csv', delete=False, encoding='utf-8') as f:
+            reserve_df.to_csv(f, index=False)
+            reserve_csv_arg = f.name
+            print(f"[DB MODE] Saved reserve to temporary CSV: {reserve_csv_arg}")
+    
     run_inference(bundle_path=args.bundle,
                   res_walk_csv=args.res_walk_csv,
-                  reserve_csv=args.reserve_csv,
+                  reserve_csv=reserve_csv_arg,
                   reserve_date_col=args.reserve_date_col,
                   reserve_count_col=args.reserve_count_col,
                   reserve_fixed_col=args.reserve_fixed_col,
