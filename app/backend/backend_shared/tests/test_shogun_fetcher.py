@@ -6,8 +6,8 @@ DBなしでテスト可能な部分を中心に実装
 """
 import pytest
 from datetime import date
-from backend_shared.shogun.dataset_keys import ShogunDatasetKey
-from backend_shared.shogun.master_name_mapper import ShogunMasterNameMapper
+from backend_shared.db.shogun.dataset_keys import ShogunDatasetKey
+from backend_shared.db.shogun.master_name_mapper import ShogunMasterNameMapper
 
 
 class TestShogunDatasetKey:
