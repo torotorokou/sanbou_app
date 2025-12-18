@@ -1,13 +1,19 @@
 """
-将軍データセット取得モジュール
+Shogun dataset access module.
 
-将軍システムの6種類のデータセット（flash/final × receive/shipment/yard）を
-DBから取得するための機能を提供します。
+DEPRECATED: This module has been moved to backend_shared.db.shogun
+Please update your imports:
+    from backend_shared.shogun import ... → from backend_shared.db.shogun import ...
+
+This compatibility layer will be removed in a future version.
 """
 
-from .dataset_keys import ShogunDatasetKey
-from .fetcher import ShogunDatasetFetcher
-from .master_name_mapper import ShogunMasterNameMapper
+# Re-export from new location for backward compatibility
+from backend_shared.db.shogun import (
+    ShogunDatasetKey,
+    ShogunDatasetFetcher,
+    ShogunMasterNameMapper,
+)
 
 __all__ = [
     "ShogunDatasetKey",

@@ -60,7 +60,7 @@ class ShogunDatasetKey(str, Enum):
         Note:
             db/names.py で定義された定数を参照（Single Source of Truth）
         """
-        from backend_shared.db.names import (
+        from ..names import (
             V_ACTIVE_SHOGUN_FINAL_RECEIVE,
             V_ACTIVE_SHOGUN_FINAL_SHIPMENT,
             V_ACTIVE_SHOGUN_FINAL_YARD,

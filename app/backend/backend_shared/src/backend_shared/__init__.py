@@ -33,8 +33,8 @@ Backend Shared Package
   - backend_shared.config.config_loader
   - backend_shared.config.di_providers
   
-  # Shogun Dataset (将軍データ取得)
-  - backend_shared.shogun
+  # Database (DB関連全機能)
+  - backend_shared.db (names, url_builder, health, shogun)
 
 📐 依存関係のルール:
   - core は他のどの層にも依存しない

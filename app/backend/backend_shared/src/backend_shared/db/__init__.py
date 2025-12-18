@@ -5,6 +5,7 @@ This module consolidates all database-related functionality:
 - Object name constants (names.py)
 - Database URL construction (url_builder.py)
 - Health check utilities (health.py)
+- Shogun dataset access (shogun/)
 """
 
 # DB Object Names
@@ -39,6 +40,13 @@ from backend_shared.db.health import (
     ping_database,
 )
 
+# Shogun Dataset Access
+from backend_shared.db.shogun import (
+    ShogunDatasetKey,
+    ShogunDatasetFetcher,
+    ShogunMasterNameMapper,
+)
+
 __all__ = [
     # Schemas
     "SCHEMA_REF",
@@ -63,4 +71,8 @@ __all__ = [
     "build_database_url_with_driver",
     "DbHealth",
     "ping_database",
+    # Shogun dataset access
+    "ShogunDatasetKey",
+    "ShogunDatasetFetcher",
+    "ShogunMasterNameMapper",
 ]

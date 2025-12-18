@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 # backend_shared をインポート可能にする
 sys.path.insert(0, '/backend/backend_shared/src')
 
-from backend_shared.shogun import (
+from backend_shared.db.shogun import (
     ShogunDatasetFetcher,
     ShogunDatasetKey,
     ShogunMasterNameMapper,

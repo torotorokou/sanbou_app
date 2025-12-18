@@ -19,7 +19,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from backend_shared.application.logging import get_module_logger
-from backend_shared.db.names import (
+from ..names import (
     V_ACTIVE_SHOGUN_FINAL_RECEIVE,
     V_ACTIVE_SHOGUN_FINAL_SHIPMENT,
     V_ACTIVE_SHOGUN_FINAL_YARD,
