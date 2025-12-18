@@ -62,7 +62,7 @@ class CoreApiSettings(BaseAppSettings):
     @staticmethod
     def _build_database_url() -> str:
         """環境変数からDATABASE_URLを構築"""
-        from backend_shared.infra.db.url_builder import build_database_url
+        from backend_shared.db.url_builder import build_database_url
         return build_database_url(driver=None, raise_on_missing=True)
     
     DATABASE_URL: str = _build_database_url.__func__()

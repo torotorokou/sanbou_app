@@ -43,7 +43,7 @@ def get_database_url() -> str:
     """
     # 方法1: backend_shared の url_builder を使用（推奨）
     try:
-        from backend_shared.infra.db.url_builder import build_database_url_with_driver
+        from backend_shared.db.url_builder import build_database_url_with_driver
         db_url = build_database_url_with_driver(driver="psycopg")
         logger.debug("Database URL built from POSTGRES_* env vars")
         return db_url

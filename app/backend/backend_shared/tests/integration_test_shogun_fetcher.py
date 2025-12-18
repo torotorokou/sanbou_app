@@ -16,7 +16,7 @@ from backend_shared.shogun import (
     ShogunDatasetKey,
     ShogunMasterNameMapper,
 )
-from backend_shared.infra.db.url_builder import build_database_url_with_driver
+from backend_shared.db.url_builder import build_database_url_with_driver
 
 
 def test_all_datasets():

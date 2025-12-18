@@ -300,7 +300,7 @@ def get_database_url(default: str | None = None) -> str:
         >>> get_database_url()
         'postgresql://user:pass@localhost:5432/mydb'
     """
-    from backend_shared.infra.db.url_builder import build_database_url
+    from backend_shared.db.url_builder import build_database_url
     
     try:
         return build_database_url(driver=None, raise_on_missing=True)

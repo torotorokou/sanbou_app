@@ -8,7 +8,7 @@ import os
 from functools import lru_cache
 from pydantic import Field
 from backend_shared.config.base_settings import BaseAppSettings
-from backend_shared.infra.db.url_builder import build_database_url_with_driver
+from backend_shared.db.url_builder import build_database_url_with_driver
 
 
 def _build_database_url() -> str:

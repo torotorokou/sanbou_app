@@ -1,5 +1,13 @@
-"""Database module - DB object name constants and utilities."""
+"""
+Database module - DB object name constants and utilities.
 
+This module consolidates all database-related functionality:
+- Object name constants (names.py)
+- Database URL construction (url_builder.py)
+- Health check utilities (health.py)
+"""
+
+# DB Object Names
 from backend_shared.db.names import (
     # Schemas
     SCHEMA_REF,
@@ -20,6 +28,17 @@ from backend_shared.db.names import (
     SHOGUN_ACTIVE_VIEWS,
 )
 
+# DB Connection Utilities
+from backend_shared.db.url_builder import (
+    build_postgres_dsn,
+    build_database_url,
+    build_database_url_with_driver,
+)
+from backend_shared.db.health import (
+    DbHealth,
+    ping_database,
+)
+
 __all__ = [
     # Schemas
     "SCHEMA_REF",
@@ -38,4 +57,10 @@ __all__ = [
     "SHOGUN_FINAL_TABLES",
     "SHOGUN_FLASH_TABLES",
     "SHOGUN_ACTIVE_VIEWS",
+    # Connection utilities
+    "build_postgres_dsn",
+    "build_database_url",
+    "build_database_url_with_driver",
+    "DbHealth",
+    "ping_database",
 ]

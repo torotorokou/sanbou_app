@@ -3,7 +3,7 @@ import os, json, math, datetime as dt
 import numpy as np
 import pandas as pd
 import psycopg
-from backend_shared.infra.db.url_builder import build_database_url
+from backend_shared.db.url_builder import build_database_url
 
 def _dsn() -> str:
     """データベース接続URLを取得（テスト用）"""

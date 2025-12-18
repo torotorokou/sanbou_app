@@ -16,7 +16,7 @@ try:
 except ImportError:
     PSYCOPG_AVAILABLE = False
 
-from backend_shared.infra.db.url_builder import build_database_url
+from backend_shared.db.url_builder import build_database_url
 
 
 @dataclass
