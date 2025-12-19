@@ -68,22 +68,6 @@ def _read_csv_any(path: str) -> Optional[pd.DataFrame]:
         return None
 
 def preprocess_reserve(df: Optional[pd.DataFrame], date_col: str, count_col: str, fixed_col: str) -> pd.DataFrame:
-    """
-    予約データを日次集計形式に変換する。
-    
-    入力形式は2種類をサポート:
-    1. CSVモード（旧形式）: 1行1予約（予約日, 予約得意先名, 固定客, 台数）
-       - groupbyで日次集計が必要
-       - reserve_count = 予約件数（企業数）
-       - reserve_sum = 台数合計
-       - fixed_ratio = 固定客件数 / 総件数
-    
-    2. DBモード（新形式）: 1行1日（既に日次集計済み）
-       - total_customer_count列の存在で判定
-       - reserve_count = total_customer_count（企業数）
-       - reserve_sum = reserve_trucks（台数）
-       - fixed_ratio = fixed_customer_count / total_customer_count
-    """
     if df is None or len(df)==0: return pd.DataFrame()
     dd = df.copy()
     # 自動列マッピング（緩やか）
@@ -108,83 +92,23 @@ def preprocess_reserve(df: Optional[pd.DataFrame], date_col: str, count_col: str
     cmap = _auto(dd, {
         "date": [date_col, "予約日", "日付", "伝票日付"],
         "count":[count_col, "台数", "予約台数", "件数"],
-        "fixed": [fixed_col, "固定客", "固定", "fixed_customer_count"],
-        "customer_count": ["total_customer_count", "企業数", "社数"]
+        "fixed": [fixed_col, "固定客", "固定"]
     })
     if cmap["date"] is None:
         raise ValueError("予約データの日付列が見つかりません。")
     dd[cmap["date"]] = _parse_date_series(dd[cmap["date"]])
-    
-    # DBモード判定: total_customer_count列が存在すれば既に日次集計済み
-    is_db_mode = cmap.get("customer_count") and cmap["customer_count"] in dd.columns
-    
-    # count列（台数）の処理
     if cmap["count"] in dd.columns:
-        if pd.api.types.is_numeric_dtype(dd[cmap["count"]]):
-            dd[cmap["count"]] = pd.to_numeric(dd[cmap["count"]], errors="coerce")
-        else:
-            dd[cmap["count"]] = pd.to_numeric(dd[cmap["count"]].astype(str).str.replace(",","", regex=False), errors="coerce")
-    
-    # customer_count列（企業数）の処理
-    if is_db_mode:
-        if pd.api.types.is_numeric_dtype(dd[cmap["customer_count"]]):
-            dd[cmap["customer_count"]] = pd.to_numeric(dd[cmap["customer_count"]], errors="coerce")
-        else:
-            dd[cmap["customer_count"]] = pd.to_numeric(dd[cmap["customer_count"]].astype(str).str.replace(",","", regex=False), errors="coerce")
-    
-    # fixed列（固定客企業数/フラグ）の処理
+        dd[cmap["count"]] = pd.to_numeric(dd[cmap["count"]].astype(str).str.replace(",","", regex=False), errors="coerce")
     if cmap["fixed"] in dd.columns:
-        if pd.api.types.is_numeric_dtype(dd[cmap["fixed"]]):
-            dd[cmap["fixed"]] = pd.to_numeric(dd[cmap["fixed"]], errors="coerce")
-        else:
-            # CSVモードでは文字列フラグ（TRUE/FALSE）を0/1に変換
-            dd[cmap["fixed"]] = dd[cmap["fixed"]].astype(str).str.lower().isin(["1","true","yes","固定","固定客"]).astype(int)
-    
-    if is_db_mode:
-        # DBモード: 既に日次集計済みなのでgroupby不要
-        # 日付をインデックスに設定してそのまま値を使用
-        dd = dd.set_index(cmap["date"])
-        
-        # reserve_count: 企業数（total_customer_count）
-        reserve_count_values = dd[cmap["customer_count"]]
-        
-        # reserve_sum: 台数（count列 = 台数）
-        reserve_sum_values = dd[cmap["count"]] if cmap["count"] in dd.columns else dd[cmap["customer_count"]]
-        
-        # fixed_ratio: 固定客企業数 / 総企業数
-        if cmap["fixed"] in dd.columns:
-            fixed_ratio_values = (dd[cmap["fixed"]] / dd[cmap["customer_count"]]).fillna(0.0)
-        else:
-            fixed_ratio_values = 0.0
-        
-        out = pd.DataFrame({
-            "reserve_count": reserve_count_values.astype(float),
-            "reserve_sum": reserve_sum_values.astype(float),
-            "fixed_ratio": fixed_ratio_values
-        })
-    else:
-        # CSVモード（旧形式）: 1行1予約なのでgroupbyで日次集計が必要
-        grp = dd.groupby(cmap["date"]) if len(dd)>0 else None
-        if grp is None or grp.size().sum()==0:
-            return pd.DataFrame()
-        
-        # reserve_count: 予約件数（= 企業数 ≈ 行数）
-        reserve_count_values = grp.size()
-        
-        # reserve_sum: 台数合計
-        reserve_sum_values = grp[cmap["count"]].sum() if cmap["count"] in dd.columns else grp.size()
-        
-        # fixed_ratio: 固定客の割合（件数ベース）
-        if cmap["fixed"] in dd.columns:
-            fixed_ratio_values = grp[cmap["fixed"]].mean()
-        else:
-            fixed_ratio_values = 0.0
-        
-        out = pd.DataFrame({
-            "reserve_count": reserve_count_values.astype(float),
-            "reserve_sum": reserve_sum_values.astype(float),
-            "fixed_ratio": fixed_ratio_values
-        })
+        dd[cmap["fixed"]] = dd[cmap["fixed"]].astype(str).str.lower().isin(["1","true","yes","固定","固定客"]).astype(int)
+    grp = dd.groupby(cmap["date"]) if len(dd)>0 else None
+    if grp is None or grp.size().sum()==0:
+        return pd.DataFrame()
+    out = pd.DataFrame({
+        "reserve_count": grp.size().astype(float),
+        "reserve_sum": (grp[cmap["count"]].sum() if cmap["count"] in dd.columns else grp.size()).astype(float),
+        "fixed_ratio": (grp[cmap["fixed"]].mean() if cmap["fixed"] in dd.columns else 0.0)
+    })
     return out
 
 def build_calendar_features(index: pd.DatetimeIndex) -> pd.DataFrame:
@@ -1439,16 +1363,6 @@ def main():
     ap.add_argument("--reserve-date-col", type=str, default="予約日")
     ap.add_argument("--reserve-count-col", type=str, default="台数")
     ap.add_argument("--reserve-fixed-col", type=str, default="固定客")
-    
-    # DB直接取得モード（CSV廃止）
-    ap.add_argument("--use-db", action="store_true",
-                    help="DBから予約データを直接取得（--reserve-csvの代わり）")
-    ap.add_argument("--db-connection-string", type=str, default=None,
-                    help="PostgreSQL接続文字列（--use-db時に指定、未指定時は環境変数DATABASE_URL）")
-    ap.add_argument("--reserve-start-date", type=str, default=None,
-                    help="予約データ開始日（YYYY-MM-DD形式、--use-db時に使用）")
-    ap.add_argument("--reserve-end-date", type=str, default=None,
-                    help="予約データ終了日（YYYY-MM-DD形式、--use-db時に使用）")
     ap.add_argument("--mode", type=str, default="base", choices=["base","tuned"], help="推論ロジックの構成（base: 従来, tuned: 追加調整を有効化）")
     ap.add_argument("--weekly-bundle", type=str, default=None, help="週次用バンドル（weekly_stage2 または w+calib を含む joblib）")
     ap.add_argument("--weekly-meta-bundle", type=str, default=None, help="週合計を直接予測する weekly_meta バンドル(joblib) 週内に比例配分して置換")
@@ -1484,56 +1398,9 @@ def main():
     ap.add_argument("--zero-cap-quantile", type=float, default=None, help="ゼロ予約キャップの分位（0-1）を上書き")
 
     args = ap.parse_args()
-    
-    # DB直接取得モード
-    reserve_csv_arg = args.reserve_csv
-    if args.use_db:
-        from datetime import datetime
-        from db_loader import load_reserve_from_db
-        import tempfile
-        
-        # 日付範囲の決定（start-date/end-date または future-daysから）
-        if args.start_date and args.end_date:
-            reserve_start = datetime.strptime(args.start_date, "%Y-%m-%d").date()
-            reserve_end = datetime.strptime(args.end_date, "%Y-%m-%d").date()
-        elif args.reserve_start_date and args.reserve_end_date:
-            reserve_start = datetime.strptime(args.reserve_start_date, "%Y-%m-%d").date()
-            reserve_end = datetime.strptime(args.reserve_end_date, "%Y-%m-%d").date()
-        else:
-            # バンドルの history_tail から last_date を推定（簡易版）
-            import joblib
-            bundle = joblib.load(args.bundle)
-            from datetime import timedelta
-            if bundle.get("history_tail") is not None and len(bundle["history_tail"]) > 0:
-                last_date_str = bundle["history_tail"]["date"].max()
-                last_date = datetime.strptime(str(last_date_str)[:10], "%Y-%m-%d").date()
-                reserve_start = last_date - timedelta(days=args.future_days + 60)
-                reserve_end = last_date + timedelta(days=args.future_days)
-            else:
-                raise ValueError(
-                    "--use-db requires --start-date/--end-date or --reserve-start-date/--reserve-end-date"
-                )
-        
-        print(f"[DB MODE] Loading reserve from DB: {reserve_start} to {reserve_end}")
-        reserve_df = load_reserve_from_db(
-            start_date=reserve_start,
-            end_date=reserve_end,
-            date_col=args.reserve_date_col,
-            count_col=args.reserve_count_col,
-            fixed_col=args.reserve_fixed_col,
-            connection_string=args.db_connection_string,
-        )
-        print(f"[DB MODE] Loaded {len(reserve_df)} reserve records from DB")
-        
-        # 一時CSVに保存（run_inference が reserve_csv を要求するため）
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.csv', delete=False, encoding='utf-8') as f:
-            reserve_df.to_csv(f, index=False)
-            reserve_csv_arg = f.name
-            print(f"[DB MODE] Saved reserve to temporary CSV: {reserve_csv_arg}")
-    
     run_inference(bundle_path=args.bundle,
                   res_walk_csv=args.res_walk_csv,
-                  reserve_csv=reserve_csv_arg,
+                  reserve_csv=args.reserve_csv,
                   reserve_date_col=args.reserve_date_col,
                   reserve_count_col=args.reserve_count_col,
                   reserve_fixed_col=args.reserve_fixed_col,

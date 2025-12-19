@@ -158,10 +158,14 @@ def main():
             cmd_train.extend(['--actuals-start-date', args.actuals_start_date])
         if args.actuals_end_date:
             cmd_train.extend(['--actuals-end-date', args.actuals_end_date])
-        if args.reserve_start_date:
-            cmd_train.extend(['--reserve-start-date', args.reserve_start_date])
-        if args.reserve_end_date:
-            cmd_train.extend(['--reserve-end-date', args.reserve_end_date])
+        
+        # 予約データの日付範囲（未指定時は実績データと同じ範囲を使用）
+        reserve_start = args.reserve_start_date or args.actuals_start_date
+        reserve_end = args.reserve_end_date or args.actuals_end_date
+        if reserve_start:
+            cmd_train.extend(['--reserve-start-date', reserve_start])
+        if reserve_end:
+            cmd_train.extend(['--reserve-end-date', reserve_end])
     else:
         # CSV従来モード
         cmd_train.extend([
@@ -212,19 +216,25 @@ def main():
             cmd_pred.extend(['--use-db'])
             if args.db_connection_string:
                 cmd_pred.extend(['--db-connection-string', args.db_connection_string])
+            # --use-dbの場合、--start-date/--end-dateまたは--reserve-start-date/--reserve-end-dateは必須
+            # まず--reserve-start-date/--reserve-end-dateを追加
             if args.reserve_start_date:
                 cmd_pred.extend(['--reserve-start-date', args.reserve_start_date])
             if args.reserve_end_date:
                 cmd_pred.extend(['--reserve-end-date', args.reserve_end_date])
+            # 予測期間として--start-date/--end-dateを追加（serve_predict_model_v4_2_4.pyで必須）
+            if args.start_date:
+                cmd_pred.extend(['--start-date', args.start_date])
+            if args.end_date:
+                cmd_pred.extend(['--end-date', args.end_date])
         else:
             # CSV従来モード
             cmd_pred.extend(['--reserve-csv', reserve_csv])
-        
-        # --start-date / --end-date が指定されていれば追加
-        if args.start_date:
-            cmd_pred.extend(['--start-date', args.start_date])
-        if args.end_date:
-            cmd_pred.extend(['--end-date', args.end_date])
+            # CSV従来モードでも--start-date/--end-dateが必要な場合は追加
+            if args.start_date:
+                cmd_pred.extend(['--start-date', args.start_date])
+            if args.end_date:
+                cmd_pred.extend(['--end-date', args.end_date])
         
         print("Starting prediction...")
         run(cmd_pred, fout=log_path)
