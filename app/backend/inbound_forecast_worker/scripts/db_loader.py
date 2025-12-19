@@ -158,10 +158,12 @@ def load_reserve_from_db(
             "Set --db-connection-string or DATABASE_URL environment variable."
         )
     
-    # SQLクエリ
+    # SQLクエリ（customer_count列を優先的に使用）
     sql = text("""
         SELECT 
             date,
+            total_customer_count,
+            fixed_customer_count,
             reserve_trucks,
             reserve_fixed_trucks
         FROM mart.v_reserve_daily_features
@@ -181,21 +183,31 @@ def load_reserve_from_db(
             rows = result.fetchall()
         
         # DataFrameに変換（英語列名）
-        df = pd.DataFrame(rows, columns=["date", "reserve_trucks", "reserve_fixed_trucks"])
+        df = pd.DataFrame(rows, columns=[
+            "date", "total_customer_count", "fixed_customer_count",
+            "reserve_trucks", "reserve_fixed_trucks"
+        ])
         
         # 日付型変換
         df["date"] = pd.to_datetime(df["date"]).dt.normalize()
         
         # 数値列を明示的に数値型に変換
+        df["total_customer_count"] = pd.to_numeric(df["total_customer_count"], errors="coerce")
+        df["fixed_customer_count"] = pd.to_numeric(df["fixed_customer_count"], errors="coerce")
         df["reserve_trucks"] = pd.to_numeric(df["reserve_trucks"], errors="coerce")
         df["reserve_fixed_trucks"] = pd.to_numeric(df["reserve_fixed_trucks"], errors="coerce")
         
         # 列名を日本語にリネーム（学習側の想定に合わせる）
+        # count_col: 企業数（total_customer_count）を使用
+        # fixed_col: 固定客企業数（fixed_customer_count）をbool化して使用
         df = df.rename(columns={
             "date": date_col,
-            "reserve_trucks": count_col,
-            "reserve_fixed_trucks": fixed_col,
+            "total_customer_count": count_col,
+            "fixed_customer_count": fixed_col,
         })
+        
+        # 不要な列を削除（reserve_trucks, reserve_fixed_trucksは使わない）
+        df = df[[date_col, count_col, fixed_col]]
         
         return df
     

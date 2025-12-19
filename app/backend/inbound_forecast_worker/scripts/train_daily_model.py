@@ -262,25 +262,34 @@ def preprocess_reserve(df: Optional[pd.DataFrame], date_col: str, count_col: str
 
     cmap = _auto_map_columns2(dd, {
         "date":[date_col, "予約日", "日付"],
-        "count":[count_col, "台数", "予約台数", "件数"],
-        "fixed":[fixed_col, "固定客", "固定"]
+        "count":[count_col, "台数", "予約台数", "件数", "企業数", "total_customer_count"],
+        "fixed":[fixed_col, "固定客", "固定", "fixed_customer_count"]
     })
     if cmap["date"] is None:
         raise ValueError("予約データの日付列が見つかりません。")
     dd[cmap["date"]] = _parse_date_series(dd[cmap["date"]])
     if cmap["count"] in dd.columns:
-        # 台数列の型チェック：文字列なら","除去、数値ならそのまま
+        # count列（企業数または台数）の型チェック：文字列なら","除去、数値ならそのまま
         if pd.api.types.is_numeric_dtype(dd[cmap["count"]]):
             dd[cmap["count"]] = pd.to_numeric(dd[cmap["count"]], errors="coerce")
         else:
             dd[cmap["count"]] = pd.to_numeric(dd[cmap["count"]].astype(str).str.replace(",","",regex=False), errors="coerce")
     if cmap["fixed"] in dd.columns:
-        dd[cmap["fixed"]] = dd[cmap["fixed"]].astype(str).str.lower().isin(["1","true","yes","固定","固定客"]).astype(int)
+        # fixed列（固定客企業数）を数値に変換
+        if pd.api.types.is_numeric_dtype(dd[cmap["fixed"]]):
+            dd[cmap["fixed"]] = pd.to_numeric(dd[cmap["fixed"]], errors="coerce")
+        else:
+            # 文字列の場合はboolフラグとして処理
+            dd[cmap["fixed"]] = dd[cmap["fixed"]].astype(str).str.lower().isin(["1","true","yes","固定","固定客"]).astype(int)
     grp = dd.groupby(cmap["date"])
     out = pd.DataFrame({
-        "reserve_count": grp.size().astype(float),
+        "reserve_count": (grp[cmap["count"]].sum() if cmap["count"] in dd.columns else grp.size()).astype(float),
         "reserve_sum": (grp[cmap["count"]].sum() if cmap["count"] in dd.columns else grp.size()).astype(float),
-        "fixed_ratio": (grp[cmap["fixed"]].mean() if cmap["fixed"] in dd.columns else 0.0)
+        "fixed_ratio": (
+            (grp[cmap["fixed"]].sum() / grp[cmap["count"]].sum()).fillna(0.0) 
+            if (cmap["fixed"] in dd.columns and cmap["count"] in dd.columns) 
+            else 0.0
+        )
     })
     return out
 
