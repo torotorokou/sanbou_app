@@ -40,7 +40,7 @@ class ModelMetrics:
     r2_sum_only: Optional[Decimal] = None  # 品目合計のみのR²
     
     # メタデータ
-    unit: str = "ton"  # 精度指標の単位
+    unit: str = "kg"  # 精度指標の単位
     metadata: Optional[Dict] = None  # ハイパーパラメータ等
 
 

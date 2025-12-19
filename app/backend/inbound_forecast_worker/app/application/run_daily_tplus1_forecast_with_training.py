@@ -43,6 +43,7 @@ class RunDailyTplus1ForecastWithTrainingUseCase:
         model_metrics_repo,  # ModelMetricsRepositoryPort
         retrain_script_path: Path,
         timeout: int = 1800,
+        actuals_lookback_days: int = 540,
     ):
         self._db = db_session
         self._inbound_actuals_exporter = inbound_actuals_exporter
@@ -51,6 +52,7 @@ class RunDailyTplus1ForecastWithTrainingUseCase:
         self._model_metrics_repo = model_metrics_repo
         self._retrain_script_path = retrain_script_path
         self._timeout = timeout
+        self._actuals_lookback_days = actuals_lookback_days
     
     def execute(
         self,
@@ -84,8 +86,8 @@ class RunDailyTplus1ForecastWithTrainingUseCase:
         logger.info(f"📁 Created workspace: {workspace}")
         
         try:
-            # 2. DBから実績データ取得（品目別、過去365日）
-            actuals_start = target_date - timedelta(days=365)
+            # 2. DBから実績データ取得（品目別）
+            actuals_start = target_date - timedelta(days=self._actuals_lookback_days)
             actuals_end = target_date - timedelta(days=1)  # 昨日まで
             
             logger.info(
@@ -111,18 +113,19 @@ class RunDailyTplus1ForecastWithTrainingUseCase:
                     f"⚠️ Actuals max date mismatch: expected {actuals_end}, got {actuals_max_date}"
                 )
             
-            if avg_weight < 0.01 or avg_weight > 50:
+            # kg単位の検証（10 kg ～ 50,000 kg）
+            if avg_weight < 10 or avg_weight > 50000:
                 logger.error(
-                    f"❌ Suspicious average weight: {avg_weight:.3f} ton (expected 0.5～5.0)"
+                    f"❌ Suspicious average weight: {avg_weight:.3f} kg (expected 300～1000 kg)"
                 )
-                raise ValueError(f"Invalid average weight: {avg_weight:.3f} ton")
+                raise ValueError(f"Invalid average weight: {avg_weight:.3f} kg")
             
             logger.info(
                 f"✅ Actuals data prepared: {len(actuals_df)} records",
                 extra={
                     "actuals_count": len(actuals_df),
                     "actuals_max_date": str(actuals_max_date),
-                    "avg_weight_ton": round(avg_weight, 3)
+                    "avg_weight_kg": round(avg_weight, 3)
                 }
             )
             
@@ -268,15 +271,15 @@ class RunDailyTplus1ForecastWithTrainingUseCase:
                 p10 = float(first_row["total_pred_low_1sigma"])
                 p90 = float(first_row["total_pred_high_1sigma"])
             
-            # 異常値チェック
-            if p50 < 1.0 or p50 > 200.0:
+            # 異常値チェック（kg単位）
+            if p50 < 1000.0 or p50 > 200000.0:
                 logger.warning(
-                    f"⚠️ Prediction value out of reasonable range: p50={p50:.3f} ton",
-                    extra={"p50": p50, "min_expected": 1.0, "max_expected": 200.0}
+                    f"⚠️ Prediction value out of reasonable range: p50={p50:.3f} kg",
+                    extra={"p50": p50, "min_expected": 1000.0, "max_expected": 200000.0}
                 )
             
             logger.info(
-                f"📈 Prediction result: p50={p50:.3f}",
+                f"📈 Prediction result: p50={p50:.3f} kg",
                 extra={"p50": p50, "p10": p10, "p90": p90}
             )
             
@@ -299,7 +302,7 @@ class RunDailyTplus1ForecastWithTrainingUseCase:
                 p50=p50,
                 p10=p10,
                 p90=p90,
-                unit="ton",
+                unit="kg",
                 input_snapshot=input_snapshot
             )
             
@@ -381,7 +384,7 @@ class RunDailyTplus1ForecastWithTrainingUseCase:
                 mape=None,  # train_daily_model.py では計算していない
                 mae_sum_only=scores.get("MAE_sum_only"),
                 r2_sum_only=scores.get("R2_sum_only"),
-                unit="ton",
+                unit="kg",
                 metadata=scores.get("config")
             )
             

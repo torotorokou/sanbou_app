@@ -34,23 +34,21 @@ class InboundActualsExporter:
         
         Returns:
             DataFrame with columns: [伝票日付, 品名, 正味重量]
-            正味重量は ton 単位
+            正味重量は kg 単位
         
         Notes:
-            - stg.shogun_final_receive から取得
-            - kg → ton 変換済み
-            - is_deleted=false のみ
+            - stg.v_active_shogun_flash_receive から取得（is_deleted=falseのみ）
+            - kg 単位（変換なし）
             - net_weight IS NOT NULL のみ
         """
         sql = text("""
             SELECT 
                 slip_date AS "伝票日付",
                 item_name AS "品名",
-                net_weight / 1000.0 AS "正味重量"
-            FROM stg.shogun_final_receive
+                net_weight AS "正味重量"
+            FROM stg.v_active_shogun_flash_receive
             WHERE slip_date >= :start_date 
               AND slip_date <= :end_date
-              AND is_deleted = false
               AND net_weight IS NOT NULL
               AND item_name IS NOT NULL
             ORDER BY slip_date, item_name

@@ -32,7 +32,7 @@ class DailyForecastResult:
     p50: Decimal  # median: 中央値（50%分位点）
     p10: Optional[Decimal] = None  # lower_1sigma: median - 1.28σ（正規分布仮定）
     p90: Optional[Decimal] = None  # upper_quantile_90: 90%分位点
-    unit: str = "ton"
+    unit: str = "kg"
     input_snapshot: Optional[Dict] = None
 
 

@@ -52,10 +52,12 @@ class RunDailyTplus1ForecastUseCase:
         res_walk_csv_path: Path,
         script_path: Path,
         timeout: int = 1800,
+        actuals_lookback_days: int = 540,
     ):
         self._inbound_actual_repo = inbound_actual_repo
         self._reserve_daily_repo = reserve_daily_repo
         self._forecast_result_repo = forecast_result_repo
+        self._actuals_lookback_days = actuals_lookback_days
         self._model_bundle_path = model_bundle_path
         self._res_walk_csv_path = res_walk_csv_path
         self._script_path = script_path
@@ -83,8 +85,8 @@ class RunDailyTplus1ForecastUseCase:
             f"Starting daily t+1 forecast: target_date={target_date}, job_id={job_id}"
         )
         
-        # 1. DBから実績データ取得（過去365日）
-        from_date = target_date - timedelta(days=365)
+        # 1. DBから実績データ取得
+        from_date = target_date - timedelta(days=self._actuals_lookback_days)
         to_date = target_date - timedelta(days=1)  # 昨日まで
         
         logger.info(f"Fetching inbound actuals: {from_date} to {to_date}")
@@ -212,7 +214,7 @@ class RunDailyTplus1ForecastUseCase:
             p50=p50,
             p10=p10,
             p90=p90,
-            unit="ton",
+            unit="kg",
             input_snapshot=input_snapshot,
         )
         

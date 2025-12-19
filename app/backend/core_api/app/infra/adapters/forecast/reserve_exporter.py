@@ -63,3 +63,48 @@ class ReserveExporter(ReserveExportPort):
             rows,
             columns=["予約日", "台数", "固定客"]
         )
+    
+    def export_daily_reserve_with_customer_count(
+        self,
+        start_date: date,
+        end_date: date
+    ) -> pd.DataFrame:
+        """
+        指定期間の日次予約データを取得（固定客数含む）
+        
+        Args:
+            start_date: 開始日（この日を含む）
+            end_date: 終了日（この日を含む）
+        
+        Returns:
+            DataFrame with columns: [予約日, 台数, 固定客台数, 固定客数]
+        
+        Notes:
+            - mart.v_reserve_daily_features から取得
+            - 固定客台数: 固定客企業の予約台数合計
+            - 固定客数: 固定客企業の社数
+            - 予約日でソート
+        """
+        sql = text("""
+            SELECT 
+                date AS "予約日",
+                reserve_trucks AS "台数",
+                reserve_fixed_trucks AS "固定客台数",
+                fixed_customer_count AS "固定客数"
+            FROM mart.v_reserve_daily_features
+            WHERE date >= :start_date 
+              AND date <= :end_date
+            ORDER BY date
+        """)
+        
+        result = self.db.execute(
+            sql,
+            {"start_date": start_date, "end_date": end_date}
+        )
+        
+        rows = result.fetchall()
+        
+        return pd.DataFrame(
+            rows,
+            columns=["予約日", "台数", "固定客台数", "固定客数"]
+        )

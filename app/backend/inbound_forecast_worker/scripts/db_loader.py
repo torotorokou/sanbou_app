@@ -8,7 +8,7 @@ db_loader.py - DB直接データ取得ユーティリティ
 - 列名は学習側の想定（日本語）に合わせる
 
 使用テーブル:
-- 実績: stg.shogun_final_receive (品目別)
+- 実績: stg.v_active_shogun_flash_receive (品目別、is_deleted=falseのみ)
 - 予約: mart.v_reserve_daily_for_forecast (日次集計)
 """
 from __future__ import annotations
@@ -29,7 +29,7 @@ def load_raw_from_db(
     connection_string: Optional[str] = None,
 ) -> pd.DataFrame:
     """
-    stg.shogun_final_receive から品目別実績を取得
+    stg.v_active_shogun_flash_receive から品目別実績を取得（is_deleted=falseのみ）
     
     Args:
         start_date: 開始日（この日を含む）
@@ -41,15 +41,15 @@ def load_raw_from_db(
     
     Returns:
         DataFrame with columns: [date_col, item_col, weight_col]
-        weight_col は ton 単位
+        weight_col は kg 単位
         
     Raises:
         ValueError: 接続文字列が指定されていない
         RuntimeError: DB接続エラー
     
     Notes:
-        - net_weight は kg → ton 変換（/ 1000.0）
-        - is_deleted=false のみ
+        - net_weight は kg 単位（変換なし）
+        - v_active_* ビューは is_deleted=false でフィルタ済み
         - net_weight IS NOT NULL
         - item_name IS NOT NULL
     """
@@ -71,7 +71,7 @@ def load_raw_from_db(
         SELECT 
             slip_date,
             item_name,
-            net_weight / 1000.0 AS weight_ton
+            net_weight AS weight_kg
         FROM stg.v_active_shogun_flash_receive
         WHERE slip_date >= :start_date 
           AND slip_date <= :end_date
@@ -91,19 +91,19 @@ def load_raw_from_db(
             rows = result.fetchall()
         
         # DataFrameに変換（英語列名）
-        df = pd.DataFrame(rows, columns=["slip_date", "item_name", "weight_ton"])
+        df = pd.DataFrame(rows, columns=["slip_date", "item_name", "weight_kg"])
         
         # 日付型変換
         df["slip_date"] = pd.to_datetime(df["slip_date"]).dt.normalize()
         
         # 重量をfloat型に変換（PostgreSQLのnumeric型はDecimalオブジェクトになるため）
-        df["weight_ton"] = pd.to_numeric(df["weight_ton"], errors="coerce")
+        df["weight_kg"] = pd.to_numeric(df["weight_kg"], errors="coerce")
         
         # 列名を日本語にリネーム（学習側の想定に合わせる）
         df = df.rename(columns={
             "slip_date": date_col,
             "item_name": item_col,
-            "weight_ton": weight_col,
+            "weight_kg": weight_col,
         })
         
         return df
