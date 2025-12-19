@@ -9,7 +9,7 @@ db_loader.py - DB直接データ取得ユーティリティ
 
 使用テーブル:
 - 実績: stg.v_active_shogun_flash_receive (品目別、is_deleted=falseのみ)
-- 予約: mart.v_reserve_daily_for_forecast (日次集計)
+- 予約: mart.v_reserve_daily_features (日次集計、customer_count含む)
 """
 from __future__ import annotations
 
@@ -124,7 +124,7 @@ def load_reserve_from_db(
     connection_string: Optional[str] = None,
 ) -> pd.DataFrame:
     """
-    mart.v_reserve_daily_for_forecast から予約データを取得
+    mart.v_reserve_daily_features から予約データを取得
     
     Args:
         start_date: 開始日（この日を含む）
@@ -164,7 +164,7 @@ def load_reserve_from_db(
             date,
             reserve_trucks,
             reserve_fixed_trucks
-        FROM mart.v_reserve_daily_for_forecast
+        FROM mart.v_reserve_daily_features
         WHERE date >= :start_date 
           AND date <= :end_date
         ORDER BY date

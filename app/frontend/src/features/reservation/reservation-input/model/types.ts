@@ -13,11 +13,13 @@ import type { Dayjs } from 'dayjs';
 export interface ReservationInputFormProps {
   selectedDate: Dayjs | null;
   totalTrucks: number | null;
-  fixedTrucks: number | null;
+  totalCustomerCount: number | null;
+  fixedCustomerCount: number | null;
   note: string;
   onSelectDate: (date: Dayjs | null) => void;
   onChangeTotalTrucks: (value: number | null) => void;
-  onChangeFixedTrucks: (value: number | null) => void;
+  onChangeTotalCustomerCount: (value: number | null) => void;
+  onChangeFixedCustomerCount: (value: number | null) => void;
   onChangeNote: (value: string) => void;
   onSubmit: () => void;
   onDelete: () => void;

@@ -79,11 +79,15 @@ def upsert_manual_reservation(
     Returns:
         ReservationManualResponse: 登録・更新されたデータ
     """
+    logger.info(f"Received manual reservation data: {data.model_dump()}")
+    
     # Convert Pydantic schema to domain entity
     domain_data = ReservationManualRow(
         reserve_date=data.reserve_date,
         total_trucks=data.total_trucks,
-        fixed_trucks=data.fixed_trucks,
+        total_customer_count=data.total_customer_count,
+        fixed_customer_count=data.fixed_customer_count,
+        fixed_trucks=data.fixed_trucks or 0,  # デフォルト0（後方互換性のため保持）
         note=data.note,
         created_by="system",  # TODO: Get from auth context
         updated_by="system",
@@ -91,8 +95,10 @@ def upsert_manual_reservation(
         updated_at=None,  # DBで自動設定
     )
     
+    logger.info(f"Converting to domain data: total_customer_count={domain_data.total_customer_count}, fixed_customer_count={domain_data.fixed_customer_count}")
+    
     result = repo.upsert_manual(domain_data)
-    logger.info(f"Upserted manual reservation for {data.reserve_date}")
+    logger.info(f"Upserted manual reservation for {data.reserve_date}: total_customer_count={result.total_customer_count}, fixed_customer_count={result.fixed_customer_count}")
     
     return ReservationManualResponse.model_validate(result)
 

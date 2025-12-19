@@ -16,7 +16,9 @@ class ReservationManualInput(BaseModel):
     """手入力の予約データ (Upsert用)"""
     reserve_date: date_type = Field(description="予約日")
     total_trucks: int = Field(ge=0, description="合計台数")
-    fixed_trucks: int = Field(ge=0, description="固定客台数")
+    total_customer_count: Optional[int] = Field(default=None, ge=0, description="予約企業数（総数）")
+    fixed_customer_count: Optional[int] = Field(default=None, ge=0, description="固定客企業数")
+    fixed_trucks: Optional[int] = Field(default=0, ge=0, description="固定客台数（非推奨、後方互換性のため残存）")
     note: Optional[str] = Field(default=None, description="メモ")
 
     model_config = ConfigDict(from_attributes=True)
@@ -27,6 +29,8 @@ class ReservationManualResponse(BaseModel):
     reserve_date: date_type
     total_trucks: int
     fixed_trucks: int
+    total_customer_count: Optional[int] = None
+    fixed_customer_count: Optional[int] = None
     note: Optional[str] = None
     created_by: Optional[str] = None
     updated_by: Optional[str] = None
@@ -41,9 +45,11 @@ class ReservationManualResponse(BaseModel):
 # ========================================
 
 class ReservationForecastDaily(BaseModel):
-    """予測用の日次予約データ (mart.v_reserve_daily_for_forecast)"""
+    """予測用の日次予約データ (mart.v_reserve_daily_features)"""
     date: date_type = Field(description="予約日")
     reserve_trucks: int = Field(description="予約台数合計")
+    total_customer_count: Optional[int] = Field(default=None, description="予約企業数（総数）")
+    fixed_customer_count: Optional[int] = Field(default=None, description="固定客企業数")
     reserve_fixed_trucks: int = Field(description="固定客台数")
     reserve_fixed_ratio: float = Field(description="固定客比率")
     source: Literal["manual", "customer_agg"] = Field(description="データソース")

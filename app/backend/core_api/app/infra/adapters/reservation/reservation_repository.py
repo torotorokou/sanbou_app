@@ -83,6 +83,8 @@ class ReservationRepositoryImpl(ReservationRepository):
                     .values(
                         total_trucks=data.total_trucks,
                         fixed_trucks=data.fixed_trucks,
+                        total_customer_count=data.total_customer_count,
+                        fixed_customer_count=data.fixed_customer_count,
                         note=data.note,
                         updated_by=data.updated_by,
                     )
@@ -97,6 +99,8 @@ class ReservationRepositoryImpl(ReservationRepository):
                     .values(
                         total_trucks=data.total_trucks,
                         fixed_trucks=data.fixed_trucks,
+                        total_customer_count=data.total_customer_count,
+                        fixed_customer_count=data.fixed_customer_count,
                         note=data.note,
                         updated_by=data.updated_by,
                         deleted_at=None,  # 復活
@@ -111,6 +115,8 @@ class ReservationRepositoryImpl(ReservationRepository):
                     reserve_date=data.reserve_date,
                     total_trucks=data.total_trucks,
                     fixed_trucks=data.fixed_trucks,
+                    total_customer_count=data.total_customer_count,
+                    fixed_customer_count=data.fixed_customer_count,
                     note=data.note,
                     created_by=data.created_by,
                     updated_by=data.updated_by,
@@ -166,15 +172,17 @@ class ReservationRepositoryImpl(ReservationRepository):
             start_date = date_type(year, month, 1)
             end_date = date_type(year, month, last_day)
 
-            # Query mart.v_reserve_daily_for_forecast view
+            # Query mart.v_reserve_daily_features view
             sql = text("""
                 SELECT 
                     date,
                     reserve_trucks,
+                    total_customer_count,
+                    fixed_customer_count,
                     reserve_fixed_trucks,
-                    reserve_fixed_ratio,
+                    reserve_fixed_trucks_ratio,
                     source
-                FROM mart.v_reserve_daily_for_forecast
+                FROM mart.v_reserve_daily_features
                 WHERE date >= :start_date AND date <= :end_date
                 ORDER BY date
             """)
@@ -189,8 +197,10 @@ class ReservationRepositoryImpl(ReservationRepository):
                     ReservationForecastRow(
                         date=row.date,
                         reserve_trucks=row.reserve_trucks,
+                        total_customer_count=row.total_customer_count,
+                        fixed_customer_count=row.fixed_customer_count,
                         reserve_fixed_trucks=row.reserve_fixed_trucks,
-                        reserve_fixed_ratio=float(row.reserve_fixed_ratio),
+                        reserve_fixed_ratio=float(row.reserve_fixed_trucks_ratio),
                         source=row.source,
                     )
                 )

@@ -17,6 +17,8 @@ class ReserveDailyForForecast:
     """予約データ（1日分）"""
     date: date
     reserve_trucks: int  # 予約台数合計
+    total_customer_count: int  # 予約企業数（総数）
+    fixed_customer_count: int  # 固定客企業数
     reserve_fixed_trucks: int  # 固定客台数
     reserve_fixed_ratio: Decimal  # 固定客比率 (0.0～1.0)
     source: str  # 'manual' or 'customer_agg'

@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 
 
 class ReserveExporter(ReserveExportPort):
-    """日次予約エクスポーター（mart.v_reserve_daily_for_forecast）"""
+    """日次予約エクスポーター（mart.v_reserve_daily_features）"""
     
     def __init__(self, db: "Session"):
         self.db = db
@@ -38,7 +38,7 @@ class ReserveExporter(ReserveExportPort):
             DataFrame with columns: [予約日, 台数, 固定客]
         
         Notes:
-            - mart.v_reserve_daily_for_forecast から取得
+            - mart.v_reserve_daily_features から取得
             - 予約日でソート
         """
         sql = text("""
@@ -46,7 +46,7 @@ class ReserveExporter(ReserveExportPort):
                 date AS "予約日",
                 reserve_trucks AS "台数",
                 reserve_fixed_trucks AS "固定客"
-            FROM mart.v_reserve_daily_for_forecast
+            FROM mart.v_reserve_daily_features
             WHERE date >= :start_date 
               AND date <= :end_date
             ORDER BY date

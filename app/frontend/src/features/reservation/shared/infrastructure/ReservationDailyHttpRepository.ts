@@ -36,7 +36,9 @@ export class ReservationDailyHttpRepository implements ReservationDailyRepositor
    * エンドポイント: POST /core_api/reservation/manual
    */
   async upsertManual(payload: ReservationManualInput): Promise<void> {
-    await coreApi.post('/core_api/reservation/manual', payload);
+    console.log('[ReservationDailyHttpRepository] Sending upsertManual request with payload:', payload);
+    const response = await coreApi.post('/core_api/reservation/manual', payload);
+    console.log('[ReservationDailyHttpRepository] upsertManual response:', response);
   }
 
   /**

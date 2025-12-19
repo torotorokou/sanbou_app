@@ -1,7 +1,7 @@
 """
 PostgreSQLReserveDailyRepository: 予約データの取得（DB実装）
 ==========================================================
-mart.v_reserve_daily_for_forecast から予約データを取得
+mart.v_reserve_daily_features から予約データを取得（customer_count含む）
 """
 from __future__ import annotations
 
@@ -33,7 +33,7 @@ class PostgreSQLReserveDailyRepository(ReserveDailyRepositoryPort):
         to_date: date,
     ) -> List[ReserveDailyForForecast]:
         """
-        mart.v_reserve_daily_for_forecast から予約データを取得
+        mart.v_reserve_daily_features から予約データを取得
         
         Args:
             from_date: 開始日（この日を含む）
@@ -46,10 +46,12 @@ class PostgreSQLReserveDailyRepository(ReserveDailyRepositoryPort):
             SELECT
                 date,
                 reserve_trucks,
+                total_customer_count,
+                fixed_customer_count,
                 reserve_fixed_trucks,
-                reserve_fixed_ratio,
+                reserve_fixed_trucks_ratio,
                 source
-            FROM mart.v_reserve_daily_for_forecast
+            FROM mart.v_reserve_daily_features
             WHERE date BETWEEN :from_date AND :to_date
             ORDER BY date
         """)
@@ -66,15 +68,17 @@ class PostgreSQLReserveDailyRepository(ReserveDailyRepositoryPort):
         rows = result.fetchall()
         
         logger.info(
-            f"Fetched {len(rows)} reserve records from mart.v_reserve_daily_for_forecast"
+            f"Fetched {len(rows)} reserve records from mart.v_reserve_daily_features"
         )
         
         return [
             ReserveDailyForForecast(
                 date=row.date,
                 reserve_trucks=int(row.reserve_trucks or 0),
+                total_customer_count=int(row.total_customer_count or 0),
+                fixed_customer_count=int(row.fixed_customer_count or 0),
                 reserve_fixed_trucks=int(row.reserve_fixed_trucks or 0),
-                reserve_fixed_ratio=Decimal(str(row.reserve_fixed_ratio)) if row.reserve_fixed_ratio is not None else Decimal("0"),
+                reserve_fixed_ratio=Decimal(str(row.reserve_fixed_trucks_ratio)) if row.reserve_fixed_trucks_ratio is not None else Decimal("0"),
                 source=str(row.source),
             )
             for row in rows

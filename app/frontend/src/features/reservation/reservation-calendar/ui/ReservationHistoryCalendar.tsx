@@ -101,7 +101,7 @@ export const ReservationHistoryCalendar: React.FC<ReservationHistoryCalendarProp
             font-size: 13px !important;
           }
           .calendar-responsive .calendar-cell {
-            min-height: 65px !important;
+            min-height: 70px !important;
             padding: 4px !important;
           }
         }
@@ -121,7 +121,7 @@ export const ReservationHistoryCalendar: React.FC<ReservationHistoryCalendarProp
             font-size: 14px !important;
           }
           .calendar-responsive .calendar-cell {
-            min-height: 70px !important;
+            min-height: 75px !important;
             padding: 5px !important;
           }
         }
@@ -141,7 +141,7 @@ export const ReservationHistoryCalendar: React.FC<ReservationHistoryCalendarProp
             font-size: 15px !important;
           }
           .calendar-responsive .calendar-cell {
-            min-height: 75px !important;
+            min-height: 80px !important;
             padding: 6px !important;
           }
         }
@@ -206,15 +206,20 @@ export const ReservationHistoryCalendar: React.FC<ReservationHistoryCalendarProp
         padding: '8px',
         background: '#f5f5f5',
         borderRadius: 4,
-        fontSize: 13
+        fontSize: 12,
+        flexWrap: 'wrap'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-          <TruckOutlined style={{ color: '#1890ff', fontSize: 14 }} />
-          <span>合計台数</span>
+          <TruckOutlined style={{ color: '#1890ff', fontSize: 13 }} />
+          <span>台数</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-          <TeamOutlined style={{ color: '#52c41a', fontSize: 14 }} />
-          <span>固定客数</span>
+          <TeamOutlined style={{ color: '#52c41a', fontSize: 13 }} />
+          <span>企業数</span>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          <TeamOutlined style={{ color: '#fa8c16', fontSize: 13 }} />
+          <span>固定客企業数</span>
         </div>
       </div>
 
@@ -261,7 +266,7 @@ export const ReservationHistoryCalendar: React.FC<ReservationHistoryCalendarProp
                     key={dayIdx}
                     className="calendar-cell"
                     style={{
-                      minHeight: 75,
+                      minHeight: 80,
                       padding: 6,
                       border: '1px solid #f0f0f0',
                       borderRadius: 4,
@@ -272,22 +277,25 @@ export const ReservationHistoryCalendar: React.FC<ReservationHistoryCalendarProp
                       transition: 'all 0.2s',
                     }}
                     onClick={handleCellClick}
-                    title={data ? `クリックで詳細確認 - 合計: ${data.reserve_trucks}台, 固定: ${data.reserve_fixed_trucks}台` : undefined}
+                    title={data ? `クリックで詳細確認 - 台数: ${data.reserve_trucks}, 企業数: ${data.total_customer_count ?? 0}, 固定客: ${data.fixed_customer_count ?? 0}` : undefined}
                   >
-                    <div className="calendar-date" style={{ fontSize: 14, fontWeight: isToday ? 'bold' : 'normal', marginBottom: 4 }}>
+                    <div className="calendar-date" style={{ fontSize: 14, fontWeight: isToday ? 'bold' : 'normal', marginBottom: 2 }}>
                       {date.date()}
                     </div>
                     {data && (
-                      <div style={{ fontSize: 12 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', marginBottom: 4 }}>
-                          <TruckOutlined className="calendar-icon" style={{ fontSize: 14, color: '#1890ff', marginRight: 4 }} />
-                          <span className="calendar-value-large" style={{ fontSize: 18, fontWeight: 'bold', color: '#000' }}>{data.reserve_trucks}</span>
+                      <div style={{ fontSize: 11, lineHeight: 1.3 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', marginBottom: 2 }}>
+                          <TruckOutlined className="calendar-icon" style={{ fontSize: 12, color: '#1890ff', marginRight: 3 }} />
+                          <span className="calendar-value-large" style={{ fontSize: 16, fontWeight: 'bold', color: '#000' }}>{data.reserve_trucks}</span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', marginBottom: 2 }}>
+                          <TeamOutlined className="calendar-icon" style={{ fontSize: 11, color: '#52c41a', marginRight: 3 }} />
+                          <span className="calendar-value-small" style={{ fontSize: 13, fontWeight: '500', color: '#000' }}>{data.total_customer_count ?? 0}</span>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center' }}>
-                          <TeamOutlined className="calendar-icon" style={{ fontSize: 14, color: '#52c41a', marginRight: 4 }} />
-                          <span className="calendar-value-small" style={{ fontSize: 15, fontWeight: '500', color: '#000' }}>{data.reserve_fixed_trucks}</span>
+                          <TeamOutlined className="calendar-icon" style={{ fontSize: 11, color: '#fa8c16', marginRight: 3 }} />
+                          <span className="calendar-value-small" style={{ fontSize: 13, fontWeight: '500', color: '#000' }}>{data.fixed_customer_count ?? 0}</span>
                         </div>
-
                       </div>
                     )}
                   </div>
@@ -333,7 +341,8 @@ export const ReservationHistoryCalendar: React.FC<ReservationHistoryCalendarProp
                 {data && (
                   <>
                     <p style={{ margin: '4px 0' }}><strong>合計台数:</strong> {data.reserve_trucks}台</p>
-                    <p style={{ margin: '4px 0' }}><strong>固定客台数:</strong> {data.reserve_fixed_trucks}台</p>
+                    <p style={{ margin: '4px 0' }}><strong>予約企業数（総数）:</strong> {data.total_customer_count ?? 0}社</p>
+                    <p style={{ margin: '4px 0' }}><strong>固定客企業数:</strong> {data.fixed_customer_count ?? 0}社</p>
                     <p style={{ margin: '8px 0 4px 0' }}>
                       <strong>備考:</strong><br />
                       <span style={{ whiteSpace: 'pre-wrap' }}>{data.note || '（なし）'}</span>
@@ -377,7 +386,8 @@ export const ReservationHistoryCalendar: React.FC<ReservationHistoryCalendarProp
                 {data && (
                   <>
                     <p style={{ margin: '4px 0' }}><strong>合計台数:</strong> {data.reserve_trucks}台</p>
-                    <p style={{ margin: '4px 0' }}><strong>固定客台数:</strong> {data.reserve_fixed_trucks}台</p>
+                    <p style={{ margin: '4px 0' }}><strong>予約企業数（総数）:</strong> {data.total_customer_count ?? 0}社</p>
+                    <p style={{ margin: '4px 0' }}><strong>固定客企業数:</strong> {data.fixed_customer_count ?? 0}社</p>
                     <p style={{ margin: '8px 0 4px 0' }}>
                       <strong>備考:</strong><br />
                       <span style={{ whiteSpace: 'pre-wrap' }}>{data.note || '（なし）'}</span>
