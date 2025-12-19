@@ -198,16 +198,17 @@ def load_reserve_from_db(
         df["reserve_fixed_trucks"] = pd.to_numeric(df["reserve_fixed_trucks"], errors="coerce")
         
         # 列名を日本語にリネーム（学習側の想定に合わせる）
-        # count_col: 企業数（total_customer_count）を使用
-        # fixed_col: 固定客企業数（fixed_customer_count）をbool化して使用
+        # count_col: 台数（reserve_trucks）を使用 <- reserve_sumに使われる
+        # fixed_col: 固定客企業数（fixed_customer_count）を使用
+        # total_customer_count: そのまま残す <- reserve_countに使われる
         df = df.rename(columns={
             "date": date_col,
-            "total_customer_count": count_col,
+            "reserve_trucks": count_col,
             "fixed_customer_count": fixed_col,
         })
         
-        # 不要な列を削除（reserve_trucks, reserve_fixed_trucksは使わない）
-        df = df[[date_col, count_col, fixed_col]]
+        # 必要な列のみ残す
+        df = df[[date_col, count_col, fixed_col, "total_customer_count"]]
         
         return df
     

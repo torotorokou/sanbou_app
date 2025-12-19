@@ -91,32 +91,57 @@ def preprocess_reserve(df: Optional[pd.DataFrame], date_col: str, count_col: str
         return out
     cmap = _auto(dd, {
         "date": [date_col, "予約日", "日付", "伝票日付"],
-        "count":[count_col, "台数", "予約台数", "件数", "企業数", "total_customer_count"],
-        "fixed": [fixed_col, "固定客", "固定", "fixed_customer_count"]
+        "count":[count_col, "台数", "予約台数", "件数"],
+        "fixed": [fixed_col, "固定客", "固定", "fixed_customer_count"],
+        "customer_count": ["total_customer_count", "企業数", "社数"]
     })
     if cmap["date"] is None:
         raise ValueError("予約データの日付列が見つかりません。")
     dd[cmap["date"]] = _parse_date_series(dd[cmap["date"]])
+    
+    # count列（台数）の処理
     if cmap["count"] in dd.columns:
         dd[cmap["count"]] = pd.to_numeric(dd[cmap["count"]].astype(str).str.replace(",","", regex=False), errors="coerce")
+    
+    # customer_count列（企業数）の処理
+    if cmap.get("customer_count") and cmap["customer_count"] in dd.columns:
+        dd[cmap["customer_count"]] = pd.to_numeric(dd[cmap["customer_count"]].astype(str).str.replace(",","", regex=False), errors="coerce")
+    
+    # fixed列（固定客企業数）の処理
     if cmap["fixed"] in dd.columns:
-        # fixed列（固定客企業数）を数値に変換
         if pd.api.types.is_numeric_dtype(dd[cmap["fixed"]]):
             dd[cmap["fixed"]] = pd.to_numeric(dd[cmap["fixed"]], errors="coerce")
         else:
-            # 文字列の場合はboolフラグとして処理
             dd[cmap["fixed"]] = dd[cmap["fixed"]].astype(str).str.lower().isin(["1","true","yes","固定","固定客"]).astype(int)
+    
     grp = dd.groupby(cmap["date"]) if len(dd)>0 else None
     if grp is None or grp.size().sum()==0:
         return pd.DataFrame()
+    
+    # reserve_count: 企業数（total_customer_countがあればそれを、なければcount列）
+    if cmap.get("customer_count") and cmap["customer_count"] in dd.columns:
+        reserve_count_values = grp[cmap["customer_count"]].sum()
+    elif cmap["count"] in dd.columns:
+        reserve_count_values = grp[cmap["count"]].sum()
+    else:
+        reserve_count_values = grp.size()
+    
+    # reserve_sum: 台数（count列）
+    reserve_sum_values = grp[cmap["count"]].sum() if cmap["count"] in dd.columns else grp.size()
+    
+    # fixed_ratio: 固定客企業数 / 総企業数
+    if cmap["fixed"] in dd.columns:
+        if cmap.get("customer_count") and cmap["customer_count"] in dd.columns:
+            fixed_ratio_values = (grp[cmap["fixed"]].sum() / grp[cmap["customer_count"]].sum()).fillna(0.0)
+        else:
+            fixed_ratio_values = (grp[cmap["fixed"]].sum() / grp[cmap["count"]].sum()).fillna(0.0) if cmap["count"] in dd.columns else 0.0
+    else:
+        fixed_ratio_values = 0.0
+    
     out = pd.DataFrame({
-        "reserve_count": (grp[cmap["count"]].sum() if cmap["count"] in dd.columns else grp.size()).astype(float),
-        "reserve_sum": (grp[cmap["count"]].sum() if cmap["count"] in dd.columns else grp.size()).astype(float),
-        "fixed_ratio": (
-            (grp[cmap["fixed"]].sum() / grp[cmap["count"]].sum()).fillna(0.0) 
-            if (cmap["fixed"] in dd.columns and cmap["count"] in dd.columns) 
-            else 0.0
-        )
+        "reserve_count": reserve_count_values.astype(float),
+        "reserve_sum": reserve_sum_values.astype(float),
+        "fixed_ratio": fixed_ratio_values
     })
     return out
 
