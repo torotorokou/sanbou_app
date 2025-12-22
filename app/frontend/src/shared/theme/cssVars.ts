@@ -58,10 +58,10 @@ export function generateCssVars(): string {
       --sidebar-transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       --content-transition: padding 0.3s ease-in-out;
       
-  /* ブレークポイント（単一ソース: src/shared/constants/breakpoints.ts） */
+  /* ブレークポイント（単一ソース: src/shared/constants/breakpoints.ts）★2025-12-22更新 */
   --breakpoint-mobile: ${ANT.md - 1}px; /* ≤767 */
-  --breakpoint-tablet: ${ANT.xl - 1}px; /* 768–1279 の max */
-  --breakpoint-auto-collapse: ${ANT.xl}px; /* 1280 */
+  --breakpoint-tablet-max: ${ANT.xl}px; /* 768–1280 の max ★更新 */
+  --breakpoint-auto-collapse: ${ANT.xl + 1}px; /* 1281 ★更新: Desktop開始 */
     }
   `;
 }

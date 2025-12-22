@@ -42,18 +42,17 @@ const ShogunManualListPage: React.FC = () => {
     setShowUnimplementedModal(true);
   }, []);
 
-  // responsive: pickByDevice helper
-  const pickByDevice = <T,>(mobile: T, tablet: T, laptop: T, desktop: T): T => {
-    if (flags.isMobile) return mobile;
-    if (flags.isTablet) return tablet;
-    if (flags.isLaptop) return laptop;
-    return desktop;
+  // responsive: pickByDevice helper (3-tier unified)
+  const pickByDevice = <T,>(mobile: T, tablet: T, desktop: T): T => {
+    if (flags.isMobile) return mobile;      // ≤767px
+    if (flags.isTablet) return tablet;      // 768-1280px
+    return desktop;                         // ≥1281px
   };
 
-  // responsive: showSider logic (Tablet以上)
-  const showSider = flags.isTablet || flags.isLaptop || flags.isDesktop;
-  // responsive: showHeaderSearch logic (Tablet以上)
-  const showHeaderSearch = flags.isTablet || flags.isLaptop || flags.isDesktop;
+  // responsive: showSider logic (Tablet以上 = ≥768px)
+  const showSider = !flags.isMobile;
+  // responsive: showHeaderSearch logic (Tablet以上 = ≥768px)
+  const showHeaderSearch = !flags.isMobile;
 
   // フィルタリング
   const filtered = useMemo(() => {
@@ -105,7 +104,7 @@ const ShogunManualListPage: React.FC = () => {
                   placeholder="キーワードで検索…（例：E票、見積、台帳）"
                   className={styles.headerSearchInput}
                   // responsive: width
-                  style={{ width: pickByDevice(240, 360, 360, 360) }}
+                  style={{ width: pickByDevice(240, 360, 360) }}
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                 />
