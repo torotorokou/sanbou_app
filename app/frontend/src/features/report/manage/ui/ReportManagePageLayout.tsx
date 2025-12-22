@@ -107,8 +107,8 @@ const ReportManagePageLayout: React.FC<Props> = ({
                 {isExtraSmallLayout ? (
                     <>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 12, width: '100%', minHeight: 0, flexGrow: 1, flexShrink: 1, flexBasis: 0 }}>
-                            {/* データセット（上） */}
-                            <div style={{ flexGrow: 0, flexShrink: 0, flexBasis: 'auto', minHeight: 200 }}>
+                            {/* 1. データセット（上） */}
+                            <div style={{ flexGrow: 0, flexShrink: 0, flexBasis: 'auto' }}>
                                 <CsvUploadSection
                                     uploadFiles={convertToCsvFileType(mappedUploadFiles ?? [])}
                                     makeUploadProps={(label: string) =>
@@ -117,27 +117,27 @@ const ReportManagePageLayout: React.FC<Props> = ({
                                 />
                             </div>
 
-                            {/* プレビュー（下） */}
-                            <div style={{ flexGrow: 1, flexShrink: 1, flexBasis: 'auto', minHeight: 300 }}>
+                            {/* 2. レポート生成ボタン（中） */}
+                            <div style={{ flexGrow: 0, flexShrink: 0, flexBasis: 'auto' }}>
+                                <ActionsSection
+                                    onGenerate={onGenerate ?? (() => {})}
+                                    readyToCreate={!!readyToCreate}
+                                    finalized={!!finalized}
+                                    onDownloadExcel={onDownloadExcel ?? (() => {})}
+                                    onPrintPdf={onPrintPdf}
+                                    pdfUrl={pdfUrl ?? null}
+                                    excelReady={!!excelReady}
+                                    pdfReady={!!pdfReady}
+                                    compactMode={true}
+                                />
+                            </div>
+
+                            {/* 3. プレビュー（下・スクロール可能） */}
+                            <div style={{ flexGrow: 1, flexShrink: 1, flexBasis: 'auto', minHeight: 300, overflow: 'auto' }}>
                                 <div style={styles.previewContainer}>
                                     <PreviewSection>{children}</PreviewSection>
                                 </div>
                             </div>
-                        </div>
-
-                        {/* アクションボタン（最下部） */}
-                        <div style={{ width: '100%', marginTop: 12 }}>
-                            <ActionsSection
-                                onGenerate={onGenerate ?? (() => {})}
-                                readyToCreate={!!readyToCreate}
-                                finalized={!!finalized}
-                                onDownloadExcel={onDownloadExcel ?? (() => {})}
-                                onPrintPdf={onPrintPdf}
-                                pdfUrl={pdfUrl ?? null}
-                                excelReady={!!excelReady}
-                                pdfReady={!!pdfReady}
-                                compactMode={true}
-                            />
                         </div>
                     </>
                 ) : isCompactLayout ? (
