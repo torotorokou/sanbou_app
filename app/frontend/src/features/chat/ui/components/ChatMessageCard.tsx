@@ -1,4 +1,4 @@
-import { ANT } from '@/shared';
+import { useResponsive } from '@/shared';
 import React from 'react';
 import { Card, Typography, Button, Tag, Space } from 'antd';
 import { UserOutlined, RobotOutlined, BookOutlined } from '@ant-design/icons';
@@ -8,7 +8,6 @@ import type { ChatMessage } from '@features/chat/domain/types';
 type Props = {
     msg: ChatMessage;
     index: number;
-    windowWidth: number;
     isLastBotMessage?: boolean;
     onSelectCategory?: (cat: string) => void;
     onOpenPdf?: (pdfName: string) => void;
@@ -39,21 +38,22 @@ const roleMeta = {
 
 const ChatMessageCard: React.FC<Props> = ({
     msg,
-    windowWidth,
     isLastBotMessage,
     onSelectCategory,
     onOpenPdf,
 }) => {
-    // 右カラム内幅を基準に調整。レスポンシブ考慮。
+    const { flags } = useResponsive();
+
+    // 右カラム内幅を基準に調整。3段階レスポンシブ。
     const getCardStyle = () => {
         // デフォルトは右カラム内の「ほぼ最大幅」
         let width = '96%';
-        if (windowWidth >= 1024) {
-            width = '85%'; // デスクトップ時に若干余白を持たせる
-        } else if (windowWidth >= ANT.md) {
-            width = '92%'; // タブレット
-        } else {
-            width = '100%'; // スマホ
+        if (flags.isDesktop) {        // ≥1280px
+            width = '85%';
+        } else if (flags.isTablet) {  // 768-1279px (includes 1024-1279)
+            width = '92%';
+        } else {                      // ≤767px (Mobile)
+            width = '100%';
         }
         return {
             width,

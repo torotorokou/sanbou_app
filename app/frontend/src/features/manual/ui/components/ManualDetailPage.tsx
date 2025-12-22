@@ -1,4 +1,4 @@
-import { isMobile as isMobileWidth, ensureSectionAnchors, smoothScrollToAnchor } from '@/shared';
+import { ensureSectionAnchors, smoothScrollToAnchor, useResponsive } from '@/shared';
 import React, { useEffect, useRef, useState } from 'react';
 import { Modal, Typography, Spin, Anchor, Row, Col } from 'antd';
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
@@ -16,8 +16,9 @@ const ManualDetailPage: React.FC = () => {
   const nav = useNavigate();
   const loc = useLocation();
   const [params] = useSearchParams();
+  const { flags } = useResponsive();
 
-  const isMobile = (typeof window !== 'undefined') && isMobileWidth(window.innerWidth);
+  const isMobile = flags.isMobile;
   const forceFull = params.get('full') === '1';
 
   useEffect(() => {
