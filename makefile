@@ -785,6 +785,74 @@ publish-prod-images: build-prod-images push-prod-images
 	@echo "[ok] PROD images built & pushed (tag=$(PROD_IMAGE_TAG))"
 
 ## ============================================================
+## Git ref (tag/commit) から checkout せずに build & push する
+##   - git worktree を一時作成して、その中で既存ターゲットを実行
+##   - 使い方（例）:
+##       NO_CACHE=1 PULL=1 make publish-stg-images-from-ref GIT_REF=v1.2.3
+##       NO_CACHE=1 PULL=1 make publish-stg-images-from-ref GIT_REF=3ef33710 STG_IMAGE_TAG=stg-latest
+##       NO_CACHE=1 PULL=1 make publish-prod-images-from-ref GIT_REF=v1.2.3
+## ============================================================
+
+.PHONY: publish-stg-images-from-ref publish-prod-images-from-ref
+
+# 一時worktreeの親ディレクトリ（必要に応じて変更）
+WORKTREE_TMP_BASE ?= /tmp/sanbou_worktree
+
+publish-stg-images-from-ref:
+	@if [ -z "$(GIT_REF)" ]; then \
+	  echo "[error] GIT_REF is required. e.g. make $@ GIT_REF=v1.2.3"; \
+	  exit 1; \
+	fi
+	@set -euo pipefail; \
+	mkdir -p "$(WORKTREE_TMP_BASE)"; \
+	WT_DIR="$$(mktemp -d $(WORKTREE_TMP_BASE)/stg_build_XXXXXX)"; \
+	cleanup() { \
+	  echo "[info] cleanup worktree $$WT_DIR"; \
+	  git -C "$(CURDIR)" worktree remove -f "$$WT_DIR" >/dev/null 2>&1 || true; \
+	  rm -rf "$$WT_DIR" >/dev/null 2>&1 || true; \
+	}; \
+	trap cleanup EXIT; \
+	echo "[info] fetch tags..."; \
+	git -C "$(CURDIR)" fetch --tags --prune; \
+	echo "[info] create worktree: ref=$(GIT_REF) dir=$$WT_DIR"; \
+	git -C "$(CURDIR)" worktree add --detach "$$WT_DIR" "$(GIT_REF)"; \
+	DEFAULT_TAG="stg-$$(echo "$(GIT_REF)" | tr '/:@' '---')"; \
+	TAG_TO_USE="$${STG_IMAGE_TAG:-$$DEFAULT_TAG}"; \
+	echo "[info] build&push STG from ref=$(GIT_REF) tag=$$TAG_TO_USE"; \
+	( cd "$$WT_DIR" && \
+	  NO_CACHE="$(NO_CACHE)" PULL="$(PULL)" \
+	  $(MAKE) --no-print-directory publish-stg-images STG_IMAGE_TAG="$$TAG_TO_USE" \
+	); \
+	echo "[ok] publish-stg-images-from-ref done (ref=$(GIT_REF), tag=$$TAG_TO_USE)"
+
+publish-prod-images-from-ref:
+	@if [ -z "$(GIT_REF)" ]; then \
+	  echo "[error] GIT_REF is required. e.g. make $@ GIT_REF=v1.2.3"; \
+	  exit 1; \
+	fi
+	@set -euo pipefail; \
+	mkdir -p "$(WORKTREE_TMP_BASE)"; \
+	WT_DIR="$$(mktemp -d $(WORKTREE_TMP_BASE)/prod_build_XXXXXX)"; \
+	cleanup() { \
+	  echo "[info] cleanup worktree $$WT_DIR"; \
+	  git -C "$(CURDIR)" worktree remove -f "$$WT_DIR" >/dev/null 2>&1 || true; \
+	  rm -rf "$$WT_DIR" >/dev/null 2>&1 || true; \
+	}; \
+	trap cleanup EXIT; \
+	echo "[info] fetch tags..."; \
+	git -C "$(CURDIR)" fetch --tags --prune; \
+	echo "[info] create worktree: ref=$(GIT_REF) dir=$$WT_DIR"; \
+	git -C "$(CURDIR)" worktree add --detach "$$WT_DIR" "$(GIT_REF)"; \
+	DEFAULT_TAG="prod-$$(echo "$(GIT_REF)" | tr '/:@' '---')"; \
+	TAG_TO_USE="$${PROD_IMAGE_TAG:-$$DEFAULT_TAG}"; \
+	echo "[info] build&push PROD from ref=$(GIT_REF) tag=$$TAG_TO_USE"; \
+	( cd "$$WT_DIR" && \
+	  NO_CACHE="$(NO_CACHE)" PULL="$(PULL)" \
+	  $(MAKE) --no-print-directory publish-prod-images PROD_IMAGE_TAG="$$TAG_TO_USE" \
+	); \
+	echo "[ok] publish-prod-images-from-ref done (ref=$(GIT_REF), tag=$$TAG_TO_USE)"
+
+## ============================================================
 ## STG → PROD イメージ昇格（別プロジェクト Artifact Registry コピー）
 ##   使い方:
 ##     make promote-stg-to-prod PROMOTE_SRC_TAG=stg-20251209 PROMOTE_DST_TAG=prod-20251209
