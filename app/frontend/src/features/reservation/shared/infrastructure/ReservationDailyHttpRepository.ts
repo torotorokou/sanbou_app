@@ -21,8 +21,9 @@ export class ReservationDailyHttpRepository implements ReservationDailyRepositor
    * エンドポイント: GET /core_api/reservation/forecast/{year}/{month}
    * from/toから年月を抽出して取得
    */
-  async getForecastDaily(from: string, to: string): Promise<ReservationForecastDaily[]> {
+  async getForecastDaily(from: string): Promise<ReservationForecastDaily[]> {
     // from の年月を抽出（YYYY-MM-DD形式想定）
+    // Note: to パラメータは現在未使用（APIが月単位で返却するため）
     const [year, month] = from.split('-');
     
     return await coreApi.get<ReservationForecastDaily[]>(
