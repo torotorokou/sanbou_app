@@ -8,7 +8,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useShogunCatalog } from '@features/manual';
 import { FlowPane } from '@features/manual/ui/components/FlowPane';
 import { VideoPane } from '@features/manual/ui/components/VideoPane';
-import { UnimplementedModal } from '@features/shared';
+import { UnimplementedModal } from '@features/unimplemented-feature';
 import styles from './ShogunDetail.module.css';
 
 const { Title, Paragraph } = Typography;
