@@ -23,7 +23,14 @@ export * from './dataset-final-warning';
 export * from './upload-calendar';
 
 // Config (個別エクスポートで重複を回避)
-export { DATASETS, getDatasetConfig, getAllDatasets, getDatasetColor } from './config';
+export { 
+  DATASETS, 
+  getDatasetConfig, 
+  getAllDatasets, 
+  getCsvColor,
+  getCsvLabel,
+  getDatasetLabel,
+} from './config';
 
 // Shared utilities (個別エクスポートで重複を回避)
 export type { CsvKind, CsvDefinition, ValidationStatus } from './shared';
