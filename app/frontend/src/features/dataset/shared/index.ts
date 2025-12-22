@@ -12,6 +12,3 @@ export * from './csv/parseCsv';
 
 // Upload utilities
 export * from './upload/buildFormData';
-
-// Constants
-export { DATASETS } from './types/common';

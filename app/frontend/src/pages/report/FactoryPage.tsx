@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { ReportBase, ReportHeader } from '@features/report';
 import { useReportManager } from '@features/report';
-import { UnimplementedModal } from '@features/shared';
+import { UnimplementedModal } from '@features/unimplemented-feature';
 import styles from './ReportPage.module.css';
 
 /**

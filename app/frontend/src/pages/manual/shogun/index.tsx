@@ -19,7 +19,7 @@ import { useResponsive } from '@/shared'; // responsive: flags
 import { useShogunCatalog } from '@features/manual';
 import { SectionBlock } from '@features/manual/ui/components/SectionBlock';
 import { ManualModal } from '@features/manual/ui/components/ShogunModal';
-import { UnimplementedModal } from '@features/shared';
+import { UnimplementedModal } from '@features/unimplemented-feature';
 import type { ManualItem } from '@features/manual';
 import styles from './ShogunList.module.css';
 

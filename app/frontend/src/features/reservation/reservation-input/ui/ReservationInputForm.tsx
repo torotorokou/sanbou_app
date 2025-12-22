@@ -6,7 +6,7 @@
  */
 
 import React, { useState } from 'react';
-import { Form, InputNumber, Input, Button, Space, Alert, Typography, Card, DatePicker, message, Modal } from 'antd';
+import { Form, InputNumber, Input, Button, Alert, Typography, Card, DatePicker, message, Modal } from 'antd';
 import { SaveOutlined, CalendarOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import type { Dayjs } from 'dayjs';
 import type { ReservationInputFormProps } from '../model/types';
@@ -26,10 +26,9 @@ export const ReservationInputForm: React.FC<ReservationInputFormProps> = ({
   onChangeFixedCustomerCount,
   onChangeNote,
   onSubmit,
-  onDelete,
   isSaving,
   error,
-  hasManualData,
+  // onDelete, hasManualData are intentionally not destructured (reserved for future use)
 }) => {
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
 

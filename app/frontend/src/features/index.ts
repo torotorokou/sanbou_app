@@ -27,5 +27,5 @@ export {
   type CsvFileValidatorOptions,
 } from './csv-validation';
 
-// Database (includes dataset-import, dataset-submit, dataset-preview, etc.)
-export * from './database';
+// Dataset (includes dataset-import, dataset-submit, dataset-preview, etc.)
+export * from './dataset';
