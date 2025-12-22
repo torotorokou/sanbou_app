@@ -41,6 +41,7 @@ export function useSidebar(
   style: React.CSSProperties;
 } {
   const { isMobile, isTablet, isDesktop } = useResponsive();
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { respectUserToggleUntilBreakpointChange = false } = options;
 
   // デバイスタイプに応じた設定を決定
@@ -82,6 +83,7 @@ export function useSidebar(
   });
 
   // ユーザーがトグルしたかどうかを追跡
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [userToggled, setUserToggled] = useState(false);
   
   // 前回のブレークポイントを保持

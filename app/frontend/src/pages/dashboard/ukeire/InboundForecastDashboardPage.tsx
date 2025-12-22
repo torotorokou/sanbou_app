@@ -177,11 +177,11 @@ const InboundForecastDashboardPage: React.FC = () => {
                   )}
                 </div>
               </Col>
-            ) : layout.mode === "laptopOrBelow" ? (
-              // LaptopOrBelow: 上段2列（目標/カレンダー）、中段1列（日次）
+            ) : layout.mode === "tablet" ? (
+              // Tablet: 上段2列（目標/カレンダー）、中段1列（日次）
               <>
                 <Col span={layout.spans.target}>
-                  <div style={{ height: layout.heights.target.laptopOrBelow }}>
+                  <div style={{ height: layout.heights.target.tablet }}>
                     {targetError ? (
                       <Alert
                         message="目標データ取得エラー"
@@ -207,7 +207,7 @@ const InboundForecastDashboardPage: React.FC = () => {
                   </div>
                 </Col>
                 <Col span={layout.spans.cal}>
-                  <div style={{ height: layout.heights.calendar.laptopOrBelow }}>
+                  <div style={{ height: layout.heights.calendar.tablet }}>
                     {(() => {
                       if (!vm.month) return null;
                       const [year, month] = vm.month.split("-").map(Number);
@@ -217,7 +217,7 @@ const InboundForecastDashboardPage: React.FC = () => {
                   </div>
                 </Col>
                 <Col span={layout.spans.daily}>
-                  <div style={{ height: layout.heights.daily.laptopOrBelow }}>
+                  <div style={{ height: layout.heights.daily.tablet }}>
                     {dailyVM.loading ? (
                       <Skeleton active paragraph={{ rows: 4 }} />
                     ) : dailyVM.error ? (
@@ -334,9 +334,9 @@ const InboundForecastDashboardPage: React.FC = () => {
                 </Col>
               </>
             ) : (
-              // Desktop/LaptopOrBelow: 予測のみ
+              // Desktop/Tablet: 予測のみ
               <Col span={24} style={{ height: layout.mode === "desktop" ? "100%" : "auto" }}>
-                <div style={{ height: layout.mode === "desktop" ? layout.heights.forecast.desktop : layout.heights.forecast.laptopOrBelow }}>
+                <div style={{ height: layout.mode === "desktop" ? layout.heights.forecast.desktop : layout.heights.forecast.tablet }}>
                   {vm.forecastCardProps && <ForecastCard {...vm.forecastCardProps} isGeMd={true} showWipNotice={true} />}
                 </div>
               </Col>

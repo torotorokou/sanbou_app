@@ -7,11 +7,11 @@ import { useResponsive, customTokens, bp } from "@/shared";
  * 🎯 目的：
  * - window.innerWidth、isTabletOrHalf、ANT直参照を全廃
  * - useResponsive(flags)のpickByDevice方式に統一
- * - 4段階レスポンシブ（Mobile/Tablet/Laptop/Desktop）
+ * - 3段階レスポンシブ（Mobile/Tablet/Desktop）
  * - 値の決定はフック先頭で一元管理
  *
  * 🔄 リファクタリング内容：
- * - 複雑なブレークポイントを4段階に統一
+ * - 複雑なブレークポイントを3段階に統一
  * - レスポンシブデザインの一元管理をより簡潔に
  * - 保守性を向上させるためのシンプルなサイズ体系
  */
@@ -23,7 +23,7 @@ export const useReportLayoutStyles = () => {
   const pickByDevice = <T,>(mobile: T, tablet: T, desktop: T): T => {
     if (flags.isMobile) return mobile;       // ≤767px
     if (flags.isTablet) return tablet;       // 768-1280px
-    return desktop;                          // ≥1280px
+    return desktop;                          // ≥1281px
   };
 
   // responsive: 各種スタイル値を3段階で定義
@@ -32,31 +32,31 @@ export const useReportLayoutStyles = () => {
   const gapSmall = pickByDevice(8, 12, 12);
   const leftPanelWidth = pickByDevice<string | number>('100%', '100%', 300);
   const leftPanelMinWidth = pickByDevice<string | number>('auto', 'auto', 300);
-  const leftPanelMaxWidth = pickByDevice<string | number>('100%', '100%', 260, 300);
-  const leftPanelFlex = pickByDevice<'1 1 auto' | '0 0 260px' | '0 0 300px'>('1 1 auto', '1 1 auto', '0 0 260px', '0 0 300px');
-  const leftPanelOrder = pickByDevice(3, 3, 1, 1);
+  const leftPanelMaxWidth = pickByDevice<string | number>('100%', '100%', 300);
+  const leftPanelFlex = pickByDevice<'1 1 auto' | '0 0 300px'>('1 1 auto', '1 1 auto', '0 0 300px');
+  const leftPanelOrder = pickByDevice(3, 3, 1);
   
-  const centerPanelDisplay = pickByDevice<'none' | 'flex'>('none', 'none', 'flex', 'flex');
-  const centerPanelWidth = pickByDevice(48, 48, 48, 60);
-  const centerPanelMinHeight = pickByDevice(320, 320, 320, 400);
+  const centerPanelDisplay = pickByDevice<'none' | 'flex'>('none', 'none', 'flex');
+  const centerPanelWidth = pickByDevice(48, 48, 60);
+  const centerPanelMinHeight = pickByDevice(320, 320, 400);
   
-  const rightPanelOrder = pickByDevice(1, 1, 3, 3);
-  const rightPanelMinWidth = pickByDevice(0, 0, bp.xs, 600);
+  const rightPanelOrder = pickByDevice(1, 1, 3);
+  const rightPanelMinWidth = pickByDevice(0, 0, 600);
   // responsive: rightPanelはflexで残りの横幅を使用、maxWidthでサイドバーの幅を考慮して画面外はみ出しを防止
-  const rightPanelFlex = pickByDevice<'1 1 auto'>('1 1 auto', '1 1 auto', '1 1 auto', '1 1 auto');
-  const rightPanelMaxWidth = pickByDevice<string | undefined>('100%', '100%', undefined, undefined);
+  const rightPanelFlex = pickByDevice<'1 1 auto'>('1 1 auto', '1 1 auto', '1 1 auto');
+  const rightPanelMaxWidth = pickByDevice<string | undefined>('100%', '100%', undefined);
   
-  const previewGap = pickByDevice(8, 10, 12, 16);
-  const previewHeight = pickByDevice('50vh', '55vh', '100%', '100%');
-  const previewWidth = pickByDevice('100%', '100%', 'auto', 'auto');
+  const previewGap = pickByDevice(8, 10, 16);
+  const previewHeight = pickByDevice('50vh', '55vh', '100%');
+  const previewWidth = pickByDevice('100%', '100%', 'auto');
   
-  const downloadWidth = pickByDevice<string | number>('100%', '100%', 100, 120);
-  const downloadMarginTop = pickByDevice(12, 12, 0, 0);
+  const downloadWidth = pickByDevice<string | number>('100%', '100%', 120);
+  const downloadMarginTop = pickByDevice(12, 12, 0);
 
-  // responsive: レイアウト方向（Mobile/Tablet=縦、Laptop/Desktop=横）
-  const mainLayoutDirection = pickByDevice<'column' | 'row'>('column', 'column', 'row', 'row');
-  const previewDirection = pickByDevice<'column' | 'row'>('column', 'column', 'row', 'row');
-  const downloadDirection = pickByDevice<'row' | 'column'>('row', 'row', 'column', 'column');
+  // responsive: レイアウト方向（Mobile/Tablet=縦、Desktop=横）
+  const mainLayoutDirection = pickByDevice<'column' | 'row'>('column', 'column', 'row');
+  const previewDirection = pickByDevice<'column' | 'row'>('column', 'column', 'row');
+  const downloadDirection = pickByDevice<'row' | 'column'>('row', 'row', 'column');
 
   const styles = useMemo(
     () => ({
@@ -74,7 +74,7 @@ export const useReportLayoutStyles = () => {
         gap,
         alignItems: "stretch",
         flex: 1,
-        marginTop: pickByDevice(8, 10, 12, 12),
+        marginTop: pickByDevice(8, 10, 12),
         minHeight: 0,
         overflow: 'hidden' as const,
         width: "100%",
@@ -114,10 +114,10 @@ export const useReportLayoutStyles = () => {
       mobileActionsPanel: {
         display: flags.isMobile || flags.isTablet ? "flex" : "none",
         width: "100%",
-        padding: pickByDevice(12, 14, 16, 16),
+        padding: pickByDevice(12, 14, 16),
         backgroundColor: customTokens.colorBgCard,
         borderRadius: 8,
-        marginBottom: pickByDevice(12, 14, 16, 16),
+        marginBottom: pickByDevice(12, 14, 16),
         boxShadow: `0 2px 8px ${customTokens.shadowLight}`,
         order: 3,
       },

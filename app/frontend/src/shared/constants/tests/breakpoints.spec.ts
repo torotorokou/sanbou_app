@@ -1,6 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { isMobile, isTabletOrHalf, isDesktop, ANT, tierOf } from '@/shared';
-import { makeFlags } from '@/shared/hooks/ui/useResponsive';
+import { isMobile, isTabletOrHalf, isDesktop, ANT, tierOf, makeFlags } from '@/shared';
 
 describe('breakpoints predicates', () => {
   it('mobile boundary', () => {

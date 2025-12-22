@@ -45,8 +45,8 @@ const ShogunManualListPage: React.FC = () => {
   // responsive: pickByDevice helper (3-tier unified)
   const pickByDevice = <T,>(mobile: T, tablet: T, desktop: T): T => {
     if (flags.isMobile) return mobile;      // ≤767px
-    if (flags.isTablet) return tablet;      // 768-1280px (includes 1024-1279)
-    return desktop;                         // ≥1280px
+    if (flags.isTablet) return tablet;      // 768-1280px
+    return desktop;                         // ≥1281px
   };
 
   // responsive: showSider logic (Tablet以上 = ≥768px)

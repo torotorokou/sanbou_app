@@ -15,7 +15,7 @@
 import { useEffect } from "react";
 import { useResponsive } from "@/shared";
 
-export type LayoutMode = "mobile" | "laptopOrBelow" | "desktop";
+export type LayoutMode = "mobile" | "tablet" | "desktop";
 
 export type ResponsiveLayoutConfig = {
   /** レイアウトモード */
@@ -34,22 +34,22 @@ export type ResponsiveLayoutConfig = {
   heights: {
     target: {
       mobile: number;
-      laptopOrBelow: number;
+      tablet: number;
       desktop: string | number;
     };
     daily: {
       mobile: number;
-      laptopOrBelow: number;
+      tablet: number;
       desktop: string | number;
     };
     calendar: {
       mobile: number;
-      laptopOrBelow: number;
+      tablet: number;
       desktop: string | number;
     };
     forecast: {
       mobile: number;
-      laptopOrBelow: number;
+      tablet: number;
       desktop: string | number;
     };
   };
@@ -71,31 +71,31 @@ export const useResponsiveLayout = (): ResponsiveLayoutConfig => {
 
   // カラムspan定義
   const spans = {
-    mobile: { target: 24, daily: 24, cal: 24 },           // 全て1列
-    laptopOrBelow: { target: 12, daily: 24, cal: 12 },    // 上段2列、中段1列
-    desktop: { target: 7, daily: 12, cal: 5 }             // 上段3列
+    mobile: { target: 24, daily: 24, cal: 24 },  // 全て1列
+    tablet: { target: 12, daily: 24, cal: 12 },  // 上段2列、中段1列
+    desktop: { target: 7, daily: 12, cal: 5 }    // 上段3列
   }[mode];
 
   // カードの高さ設定
   const heights = {
     target: {
       mobile: 220,
-      laptopOrBelow: 320,
+      tablet: 320,
       desktop: "100%"
     },
     daily: {
       mobile: 280,
-      laptopOrBelow: 400,
+      tablet: 400,
       desktop: "100%"
     },
     calendar: {
       mobile: 0, // モバイルでは非表示
-      laptopOrBelow: 320,
+      tablet: 320,
       desktop: "100%"
     },
     forecast: {
       mobile: 480,
-      laptopOrBelow: 420,
+      tablet: 420,
       desktop: "100%"
     }
   };

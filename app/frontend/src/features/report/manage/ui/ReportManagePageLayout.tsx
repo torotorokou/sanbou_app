@@ -16,7 +16,7 @@ import type { CsvUploadFileType as CsvFileType } from './types';
  * 🔄 リファクタリング内容：
  * - isTabletOrHalf、window.innerWidth直参照を全廃
  * - useResponsive(flags)のpickByDevice方式に統一
- * - 4段階レスポンシブ（Mobile/Tablet/Laptop/Desktop）
+ * - 3段階レスポンシブ（Mobile/Tablet/Desktop）
  */
 
 // Convert UploadFileConfig validation result to CsvFileType format
@@ -74,8 +74,8 @@ const ReportManagePageLayout: React.FC<Props> = ({
     // responsive: 3段階の値決定（Mobile→Tablet→Desktop）
     const pickByDevice = <T,>(mobile: T, tablet: T, desktop: T): T => {
         if (flags.isMobile) return mobile;      // ≤767px
-        if (flags.isTablet) return tablet;      // 768-1280px (includes 1024-1279)
-        return desktop;                         // ≥1280px
+        if (flags.isTablet) return tablet;      // 768-1280px
+        return desktop;                         // ≥1281px
     };
 
     // responsive: レイアウト切り替え

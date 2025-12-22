@@ -429,7 +429,7 @@ export const PortalPage: React.FC = () => {
   // responsive: 3段階判定ヘルパー（Mobile/Tablet/Desktop）
   const pickByDevice = <T,>(mobile: T, tablet: T, desktop: T): T => {
     if (flags.isMobile) return mobile;    // ≤767px
-    if (flags.isTablet) return tablet;    // 768-1280px（1024-1279を含む）
+    if (flags.isTablet) return tablet;    // 768-1280px
     return desktop;                        // ≥1281px
   };
 
@@ -553,7 +553,7 @@ export const PortalPage: React.FC = () => {
                 // Use minmax(..., auto) so rows can grow if a card becomes taller (prevents overlap)
                 // Lower the mobile minimum so cards sit closer vertically.
                 gridAutoRows: `minmax(${Math.round(pickByDevice(64, 120, CARD_HEIGHT) * cardScale)}px, auto)`,
-                // responsive: gridTemplateColumns (Mobile: 1col, Tablet: auto-fit, Desktop: max 3col)
+                // responsive: gridTemplateColumns (Mobile: 1col, Tablet: 2-3col auto-fit, Desktop: max 3col)
                 gridTemplateColumns: flags.isMobile
                   ? 'repeat(1, 1fr)'
                   : flags.isDesktop  // ≥1281px: 最大3列に制限
