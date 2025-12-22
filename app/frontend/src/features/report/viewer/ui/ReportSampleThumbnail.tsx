@@ -39,7 +39,7 @@ const ReportSampleThumbnail: React.FC<Props> = ({
     // responsive: 3段階ヘルパー（Mobile/Tablet/Desktop）
     const pickByDevice = <T,>(mobile: T, tablet: T, desktop: T): T => {
         if (flags.isMobile) return mobile;     // ≤767px
-        if (flags.isTablet) return tablet;     // 768-1279px
+        if (flags.isTablet) return tablet;     // 768-1280px
         return desktop;                        // ≥1280px
     };
 

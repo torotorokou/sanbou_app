@@ -1,21 +1,21 @@
 /**
- * useResponsive - レスポンシブ判定の統一Hook
+ * useResponsive - レスポンシブ判定の統一Hook（2025-12-22更新）
  * 
  * 【役割】
  * - window幅に基づくブレークポイント判定を提供
  * - useScreen と useWindowSize を統合（Single Source of Truth）
  * - SSR安全、requestAnimationFrame スロットル
  * 
- * 【運用3段階】
+ * 【運用3段階】★2025-12-22境界値変更
  * - isMobile: ≤767px
- * - isTablet: 768-1279px（★1024-1279を含む）
- * - isDesktop: ≥1280px
+ * - isTablet: 768-1280px（★1280を含む）
+ * - isDesktop: ≥1281px（★1280は含まない）
  * 
  * 【使用例】
  * ```tsx
  * const { flags } = useResponsive();
  * if (flags.isMobile) return <MobileView />;
- * if (flags.isTablet) return <TabletView />;  // 768-1279px
+ * if (flags.isTablet) return <TabletView />;  // 768-1280px
  * return <DesktopView />;
  * ```
  */
@@ -33,12 +33,12 @@ export type ResponsiveFlags = {
   isLg: boolean;  // 1024–1279
   isXl: boolean;  // ≥1280
   tier: Tier;
-  // 運用3段階（主要な判定に使用）
+  // 運用3段階（主要な判定に使用）★2025-12-22境界値変更
   isMobile: boolean;   // ≤767 (xs or sm)
-  isTablet: boolean;   // 768–1279 (md or lg) ★統一: 1024-1279を含む
+  isTablet: boolean;   // 768–1280 (md or lg, xl含む) ★統一: 1280を含む
   isLaptop: boolean;   // 1024–1279 (lg) - 詳細判定用、運用分岐では非推奨
-  isDesktop: boolean;  // ≥1280 (xl)
-  isNarrow: boolean;   // <1280 (= isMobile || isTablet)
+  isDesktop: boolean;  // ≥1281 (xl+1以上) ★変更: 1280は含まない
+  isNarrow: boolean;   // ≤1280 (= isMobile || isTablet) ★変更
 };
 
 export type ResponsiveState = {
@@ -68,10 +68,10 @@ export function makeFlags(w: number): ResponsiveFlags {
   return {
     isXs, isSm, isMd, isLg, isXl, tier,
     isMobile: isXs || isSm,
-    isTablet: isMd || isLg,  // ★修正: 768-1279px（1024-1279を含む）
-    isLaptop: isLg,          // 詳細判定用に残す（運用分岐では非推奨）
-    isDesktop: isXl,
-    isNarrow: w < bp.xl,
+    isTablet: isMd || isLg || (w === bp.xl),  // ★修正: 768-1280px（1280を含む）
+    isLaptop: isLg,                          // 詳細判定用に残す（運用分岐では非推奨）
+    isDesktop: w >= bp.xl + 1,               // ★修正: ≥1281（1280は含まない）
+    isNarrow: w <= bp.xl,                    // ★修正: ≤1280
   };
 }
 

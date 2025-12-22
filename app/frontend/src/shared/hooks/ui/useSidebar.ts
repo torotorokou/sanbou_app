@@ -22,12 +22,12 @@ export interface UseSidebarOptions {
 }
 
 /**
- * useSidebar — サイドバーの状態・設定・アニメーションを一元管理
+ * useSidebar — サイドバーの状態・設定・アニメーションを一元管理（2025-12-22更新）
  * 
- * 【動作】
+ * 【動作】★境界値変更
  * - モバイル（≤767px）: Drawerモード、強制的に閉じる
- * - タブレット（768-1279px）: デフォルトで閉じる（ユーザーが開ける）★1024-1279を含む
- * - デスクトップ（≥1280px）: デフォルトで開く（ユーザーが閉じられる）
+ * - タブレット（768-1280px）: デフォルトで閉じる（ユーザーが開ける）★1280を含む
+ * - デスクトップ（≥1281px）: デフォルトで開く（ユーザーが閉じられる）★1280は含まない
  * 
  * 【ブレークポイント間の移動】
  * - ブレークポイントが変わると、新しいブレークポイントのデフォルト状態にリセット
@@ -60,12 +60,12 @@ export function useSidebar(
         width: 230,
         collapsedWidth: 60,
         breakpoint: "md",
-        defaultCollapsed: true, // タブレット（768-1279px）はデフォルトで閉じる
+        defaultCollapsed: true, // タブレット（768-1280px）はデフォルトで閉じる ★更新
         forceCollapse: false,
         drawerMode: false,
       };
     }
-    // デスクトップ（≥1280px）
+    // デスクトップ（≥1281px）★更新
     return {
       width: 250,
       collapsedWidth: 80,

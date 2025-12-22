@@ -32,8 +32,8 @@ const ManagePage: React.FC = () => {
     // responsive: 3段階ヘルパー（Mobile/Tablet/Desktop）
     const pickByDevice = <T,>(mobile: T, tablet: T, desktop: T): T => {
         if (flags.isMobile) return mobile;     // ≤767px
-        if (flags.isTablet) return tablet;     // 768-1279px（1024-1279を含む）
-        return desktop;                        // ≥1280px
+        if (flags.isTablet) return tablet;     // 768-1280px（1024-1279を含む）
+        return desktop;                        // ≥1281px
     };
 
     // responsive: ページ全体のパディング（Mobile: 8px → Tablet: 12px → Desktop: 20px）

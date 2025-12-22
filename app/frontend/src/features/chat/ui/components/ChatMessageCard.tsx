@@ -50,7 +50,7 @@ const ChatMessageCard: React.FC<Props> = ({
         let width = '96%';
         if (flags.isDesktop) {        // ≥1280px
             width = '85%';
-        } else if (flags.isTablet) {  // 768-1279px (includes 1024-1279)
+        } else if (flags.isTablet) {  // 768-1280px (includes 1024-1279)
             width = '92%';
         } else {                      // ≤767px (Mobile)
             width = '100%';

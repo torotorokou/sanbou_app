@@ -429,8 +429,8 @@ export const PortalPage: React.FC = () => {
   // responsive: 3段階判定ヘルパー（Mobile/Tablet/Desktop）
   const pickByDevice = <T,>(mobile: T, tablet: T, desktop: T): T => {
     if (flags.isMobile) return mobile;    // ≤767px
-    if (flags.isTablet) return tablet;    // 768-1279px（1024-1279を含む）
-    return desktop;                        // ≥1280px
+    if (flags.isTablet) return tablet;    // 768-1280px（1024-1279を含む）
+    return desktop;                        // ≥1281px
   };
 
   // responsive: isCompact logic (Mobile | Tablet)
@@ -556,9 +556,9 @@ export const PortalPage: React.FC = () => {
                 // responsive: gridTemplateColumns (Mobile: 1col, Tablet: auto-fit, Desktop: max 3col)
                 gridTemplateColumns: flags.isMobile
                   ? 'repeat(1, 1fr)'
-                  : flags.isDesktop  // ≥1280px: 最大3列に制限
+                  : flags.isDesktop  // ≥1281px: 最大3列に制限
                   ? `repeat(auto-fit, minmax(${Math.round(CARD_WIDTH * cardScale)}px, calc(100% / 3 - ${CARD_COLUMN_GAP}px)))`
-                  : `repeat(auto-fit, minmax(${Math.round(CARD_WIDTH * cardScale)}px, 1fr))`,  // 768-1279px: auto-fit
+                  : `repeat(auto-fit, minmax(${Math.round(CARD_WIDTH * cardScale)}px, 1fr))`,  // 768-1280px: auto-fit
               justifyContent: 'center',
               alignItems: 'stretch',
             }}

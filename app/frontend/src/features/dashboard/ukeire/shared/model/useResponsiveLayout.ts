@@ -8,7 +8,7 @@
  * 
  * レイアウトモード:
  * - mobile: ≤767px - 全て1列（縦積み）
- * - laptopOrBelow: 768-1279px - 上段2列（目標/カレンダー）、中段1列（日次）、下段1列（予測）
+ * - laptopOrBelow: 768-1280px - 上段2列（目標/カレンダー）、中段1列（日次）、下段1列（予測）
  * - desktop: ≥1280px - 上段3列（目標/日次/カレンダー）、下段1列（予測）
  */
 
@@ -62,7 +62,7 @@ export const useResponsiveLayout = (): ResponsiveLayoutConfig => {
   const mode: LayoutMode = flags.isMobile 
     ? "mobile"      // ≤767px: 1列縦並び
     : flags.isTablet
-      ? "tablet"    // 768-1279px: 上2列+下1列（1024-1279を含む）
+      ? "tablet"    // 768-1280px: 上2列+下1列（1024-1279を含む）
       : "desktop";  // ≥1280px: 上3列+下1列
 
   // ガッター・パディング（3段階統一）
