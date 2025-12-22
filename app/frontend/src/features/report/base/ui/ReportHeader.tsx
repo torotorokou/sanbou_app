@@ -33,25 +33,24 @@ const ReportHeader: React.FC<ReportHeaderProps> = ({
     isFinalized,
     pageGroup,
 }) => {
-    // responsive: flagsベースの段階スイッチ
+    // responsive: flagsベースの3段階スイッチ（統一体系）
     const { flags } = useResponsive();
 
-    // responsive: 段階的な値決定（Mobile→Tablet→Laptop→Desktop）
-    const pickByDevice = <T,>(mobile: T, tablet: T, laptop: T, desktop: T): T => {
-        if (flags.isMobile) return mobile;
-        if (flags.isTablet) return tablet;
-        if (flags.isLaptop) return laptop;
-        return desktop; // isDesktop
+    // responsive: 3段階の値決定（Mobile→Tablet→Desktop）
+    const pickByDevice = <T,>(mobile: T, tablet: T, desktop: T): T => {
+        if (flags.isMobile) return mobile;      // ≤767px
+        if (flags.isTablet) return tablet;      // 768-1279px (includes 1024-1279)
+        return desktop;                         // ≥1280px
     };
 
-    // responsive: 各種スタイル値を4段階で定義
-    const gap = pickByDevice(12, 16, 20, 24);
-    const marginBottom = pickByDevice(12, 16, 20, 24);
-    const padding = pickByDevice('8px 12px', '10px 16px', '12px 20px', '12px 24px');
-    const selectorWidth = pickByDevice<string | number>('auto', 'auto', 260, 300);
+    // responsive: 各種スタイル値を3段階で定義
+    const gap = pickByDevice(12, 20, 24);
+    const marginBottom = pickByDevice(12, 20, 24);
+    const padding = pickByDevice('8px 12px', '12px 20px', '12px 24px');
+    const selectorWidth = pickByDevice<string | number>('auto', 260, 300);
     const borderRadius = 12;
-    const minimizeSteps = pickByDevice(true, true, false, false); // Mobile/TabletはSteps最小化
-    const stepsMinWidth = pickByDevice(0, 0, bp.xs, bp.sm);
+    const minimizeSteps = pickByDevice(true, false, false); // Mobileのみ最小化
+    const stepsMinWidth = pickByDevice(0, bp.xs, bp.sm);
 
     // responsive: レイアウト方向（Mobile/Tablet=縦、Laptop/Desktop=横）
     const flexDirection = pickByDevice<'column' | 'row'>('column', 'column', 'row', 'row');

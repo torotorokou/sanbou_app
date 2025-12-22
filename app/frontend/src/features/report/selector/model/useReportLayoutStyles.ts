@@ -174,7 +174,6 @@ export const useReportLayoutStyles = () => {
     [
       flags.isMobile,
       flags.isTablet,
-      flags.isLaptop,
       flags.isDesktop,
       padding,
       gap,
