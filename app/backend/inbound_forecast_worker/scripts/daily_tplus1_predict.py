@@ -41,6 +41,14 @@ def main():
     ap.add_argument('--reserve-default-sum', type=float, default=0.0)
     ap.add_argument('--reserve-default-fixed', type=float, default=0.0)
     ap.add_argument('--start-date', default=None, help='予測開始日（省略時は履歴の翌日をt+1として使用）')
+    ap.add_argument('--end-date', default=None, help='予測終了日（start-dateと併用して日付範囲を指定）')
+    
+    # DB直接取得モード（CSV廃止）
+    ap.add_argument('--use-db', action='store_true', help='DBから予約データを直接取得')
+    ap.add_argument('--db-connection-string', default=None, help='PostgreSQL接続文字列')
+    ap.add_argument('--reserve-start-date', default=None, help='予約データ開始日（YYYY-MM-DD）')
+    ap.add_argument('--reserve-end-date', default=None, help='予約データ終了日（YYYY-MM-DD）')
+    
     args = ap.parse_args()
 
     os.makedirs(os.path.dirname(args.out_csv) or '.', exist_ok=True)
@@ -70,6 +78,18 @@ def main():
         cmd += ['--reserve-default-fixed', str(args.reserve_default_fixed)]
     if args.start_date:
         cmd += ['--start-date', args.start_date]
+    if args.end_date:
+        cmd += ['--end-date', args.end_date]
+    
+    # DB直接取得モード
+    if args.use_db:
+        cmd += ['--use-db']
+        if args.db_connection_string:
+            cmd += ['--db-connection-string', args.db_connection_string]
+        if args.reserve_start_date:
+            cmd += ['--reserve-start-date', args.reserve_start_date]
+        if args.reserve_end_date:
+            cmd += ['--reserve-end-date', args.reserve_end_date]
 
     print('[INFO] launching serve script:', ' '.join(cmd))
     proc = subprocess.run(cmd, capture_output=True, text=True)

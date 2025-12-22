@@ -15,6 +15,8 @@ class ReservationManualRow(BaseModel):
         reserve_date: 予約日 (PK)
         total_trucks: 合計台数
         fixed_trucks: 固定客台数
+        total_customer_count: 予約企業数（総数、オプション）
+        fixed_customer_count: 固定客企業数（オプション）
         note: メモ（オプション）
         created_by: 作成者（オプション）
         updated_by: 更新者（オプション）
@@ -23,7 +25,9 @@ class ReservationManualRow(BaseModel):
     """
     reserve_date: date_type = Field(..., description="予約日")
     total_trucks: int = Field(..., ge=0, description="合計台数")
-    fixed_trucks: int = Field(..., ge=0, description="固定客台数")
+    total_customer_count: Optional[int] = Field(None, ge=0, description="予約企業数（総数）")
+    fixed_customer_count: Optional[int] = Field(None, ge=0, description="固定客企業数")
+    fixed_trucks: int = Field(default=0, ge=0, description="固定客台数（非推奨、後方互換性のため残存）")
     note: Optional[str] = Field(None, description="メモ")
     created_by: Optional[str] = Field(None, description="作成者")
     updated_by: Optional[str] = Field(None, description="更新者")
@@ -36,19 +40,23 @@ class ReservationManualRow(BaseModel):
 
 class ReservationForecastRow(BaseModel):
     """
-    予測用の日次予約データ (mart.v_reserve_daily_for_forecast)
+    予測用の日次予約データ (mart.v_reserve_daily_features)
     
     manual優先、なければcustomer集計
     
     Fields:
         date: 予約日
         reserve_trucks: 予約台数合計
+        total_customer_count: 予約企業数（総数）
+        fixed_customer_count: 固定客企業数
         reserve_fixed_trucks: 固定客台数
         reserve_fixed_ratio: 固定客比率
         source: データソース ('manual' | 'customer_agg')
     """
     date: date_type = Field(..., description="予約日")
     reserve_trucks: int = Field(..., description="予約台数合計")
+    total_customer_count: Optional[int] = Field(None, description="予約企業数（総数）")
+    fixed_customer_count: Optional[int] = Field(None, description="固定客企業数")
     reserve_fixed_trucks: int = Field(..., description="固定客台数")
     reserve_fixed_ratio: float = Field(..., description="固定客比率")
     source: Literal["manual", "customer_agg"] = Field(..., description="データソース")

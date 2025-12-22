@@ -8,6 +8,7 @@
 import React, { useState } from 'react';
 import { Form, InputNumber, Input, Button, Space, Alert, Typography, Card, DatePicker, message, Modal } from 'antd';
 import { SaveOutlined, CalendarOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
+import type { Dayjs } from 'dayjs';
 import type { ReservationInputFormProps } from '../model/types';
 
 const { Title } = Typography;
@@ -16,11 +17,13 @@ const { TextArea } = Input;
 export const ReservationInputForm: React.FC<ReservationInputFormProps> = ({
   selectedDate,
   totalTrucks,
-  fixedTrucks,
+  totalCustomerCount,
+  fixedCustomerCount,
   note,
   onSelectDate,
   onChangeTotalTrucks,
-  onChangeFixedTrucks,
+  onChangeTotalCustomerCount,
+  onChangeFixedCustomerCount,
   onChangeNote,
   onSubmit,
   onDelete,
@@ -44,10 +47,15 @@ export const ReservationInputForm: React.FC<ReservationInputFormProps> = ({
       message.error('総台数を入力してください');
       return;
     }
-    if (fixedTrucks === null || fixedTrucks === undefined) {
-      message.error('固定客数を入力してください');
-      return;
-    }
+    // customer_countはオプショナル（バリデーション不要）
+    
+    console.log('[ReservationInputForm] Opening confirmation modal with values:', {
+      selectedDate: selectedDate?.format('YYYY-MM-DD'),
+      totalTrucks,
+      totalCustomerCount,
+      fixedCustomerCount,
+      note
+    });
     
     // 確認モーダルを表示
     setIsConfirmModalOpen(true);
@@ -108,23 +116,36 @@ export const ReservationInputForm: React.FC<ReservationInputFormProps> = ({
             min={0}
             disabled={isFormDisabled}
             style={{ width: '100%' }}
-            placeholder="例: 12"
+            placeholder="例: 100"
           />
         </Form.Item>
 
         <Form.Item 
-          label="固定客台数" 
-          required
+          label="予約企業数（総数）" 
           style={{ marginBottom: 6 }}
         >
           <InputNumber
-            value={fixedTrucks}
-            onChange={onChangeFixedTrucks}
+            value={totalCustomerCount}
+            onChange={onChangeTotalCustomerCount}
             min={0}
-            max={totalTrucks ?? undefined}
             disabled={isFormDisabled}
             style={{ width: '100%' }}
-            placeholder="例: 3"
+            placeholder="例: 35"
+          />
+        </Form.Item>
+
+        <Form.Item 
+          label="固定客企業数" 
+          style={{ marginBottom: 6 }}
+        >
+          <InputNumber
+            value={fixedCustomerCount}
+            onChange={onChangeFixedCustomerCount}
+            min={0}
+            max={totalCustomerCount ?? undefined}
+            disabled={isFormDisabled}
+            style={{ width: '100%' }}
+            placeholder="例: 20"
           />
         </Form.Item>
 
@@ -174,7 +195,12 @@ export const ReservationInputForm: React.FC<ReservationInputFormProps> = ({
         <div style={{ background: '#f5f5f5', padding: 12, borderRadius: 4, marginTop: 12 }}>
           <p style={{ margin: '4px 0' }}><strong>日付:</strong> {selectedDate?.format('YYYY年MM月DD日 (dd)')}</p>
           <p style={{ margin: '4px 0' }}><strong>合計台数:</strong> {totalTrucks}台</p>
-          <p style={{ margin: '4px 0' }}><strong>固定客台数:</strong> {fixedTrucks}台</p>
+          <p style={{ margin: '4px 0' }}>
+            <strong>予約企業数（総数）:</strong> {totalCustomerCount !== null && totalCustomerCount !== undefined ? `${totalCustomerCount}社` : '未入力'}
+          </p>
+          <p style={{ margin: '4px 0' }}>
+            <strong>固定客企業数:</strong> {fixedCustomerCount !== null && fixedCustomerCount !== undefined ? `${fixedCustomerCount}社` : '未入力'}
+          </p>
           {note && <p style={{ margin: '4px 0' }}><strong>備考:</strong> {note}</p>}
         </div>
       </Modal>

@@ -93,6 +93,8 @@ class ReserveDailyManual(Base):
     reserve_date = Column(Date, primary_key=True)
     total_trucks = Column(Integer, nullable=False, default=0)
     fixed_trucks = Column(Integer, nullable=False, default=0)
+    total_customer_count = Column(Integer, nullable=True)
+    fixed_customer_count = Column(Integer, nullable=True)
     note = Column(Text, nullable=True)
     created_by = Column(Text, nullable=True)
     updated_by = Column(Text, nullable=True)

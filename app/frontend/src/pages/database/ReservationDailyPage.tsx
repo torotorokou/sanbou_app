@@ -59,12 +59,12 @@ const ReservationDailyPage: React.FC = () => {
               children: (
                 <Typography.Text type="secondary" style={{ fontSize: 12 }}>
                   1. 下のカレンダーから日付を選択<br />
-                  2. 合計台数・固定客台数を入力して保存<br />
+                  2. 合計台数・企業数を入力して保存<br />
                   3. 右の履歴カレンダーに即反映されます<br />
                   <br />
                   <strong>注意:</strong><br />
-                  ・ 備考欄は任意（空欄OK）<br />
-                  ・ 固定客台数は合計台数以下である必要があります<br />
+                  ・ 備考欄と企業数は任意（空欄OK）<br />
+                  ・ 固定客企業数は予約企業数以下である必要があります<br />
                   ・ 右のカレンダーの任意の日付をクリックで削除できます
                 </Typography.Text>
               ),
@@ -75,11 +75,13 @@ const ReservationDailyPage: React.FC = () => {
         <ReservationInputForm
           selectedDate={inputVM.selectedDate}
           totalTrucks={inputVM.totalTrucks}
-          fixedTrucks={inputVM.fixedTrucks}
+          totalCustomerCount={inputVM.totalCustomerCount}
+          fixedCustomerCount={inputVM.fixedCustomerCount}
           note={inputVM.note}
           onSelectDate={inputVM.onSelectDate}
           onChangeTotalTrucks={inputVM.onChangeTotalTrucks}
-          onChangeFixedTrucks={inputVM.onChangeFixedTrucks}
+          onChangeTotalCustomerCount={inputVM.onChangeTotalCustomerCount}
+          onChangeFixedCustomerCount={inputVM.onChangeFixedCustomerCount}
           onChangeNote={inputVM.onChangeNote}
           onSubmit={inputVM.onSubmit}
           onDelete={inputVM.onDelete}

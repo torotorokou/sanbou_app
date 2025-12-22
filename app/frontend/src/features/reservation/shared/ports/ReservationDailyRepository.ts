@@ -8,6 +8,8 @@
 export interface ReservationForecastDaily {
   date: string; // YYYY-MM-DD
   reserve_trucks: number;
+  total_customer_count?: number; // 予約企業数（総数）
+  fixed_customer_count?: number; // 固定客企業数
   reserve_fixed_trucks: number;
   reserve_fixed_ratio: number;
   source: 'manual' | 'customer_agg';
@@ -16,7 +18,9 @@ export interface ReservationForecastDaily {
 export interface ReservationManualInput {
   reserve_date: string; // YYYY-MM-DD
   total_trucks: number;
-  fixed_trucks: number;
+  total_customer_count?: number | null;
+  fixed_customer_count?: number | null;
+  fixed_trucks?: number; // 非推奨、後方互換性のため残存
   note?: string;
 }
 

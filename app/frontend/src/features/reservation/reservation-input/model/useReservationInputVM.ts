@@ -20,7 +20,8 @@ export interface ReservationInputViewModel {
   // State
   selectedDate: Dayjs | null;
   totalTrucks: number | null;
-  fixedTrucks: number | null;
+  totalCustomerCount: number | null;
+  fixedCustomerCount: number | null;
   note: string;
   isSaving: boolean;
   error: string | null;
@@ -29,7 +30,8 @@ export interface ReservationInputViewModel {
   // Events
   onSelectDate: (date: Dayjs | null) => void;
   onChangeTotalTrucks: (value: number | null) => void;
-  onChangeFixedTrucks: (value: number | null) => void;
+  onChangeTotalCustomerCount: (value: number | null) => void;
+  onChangeFixedCustomerCount: (value: number | null) => void;
   onChangeNote: (value: string) => void;
   onSubmit: () => Promise<void>;
   onDelete: () => Promise<void>;
@@ -42,7 +44,8 @@ export const useReservationInputVM = (
 ): ReservationInputViewModel => {
   const [selectedDate, setSelectedDate] = useState<Dayjs | null>(null);
   const [totalTrucks, setTotalTrucks] = useState<number | null>(null);
-  const [fixedTrucks, setFixedTrucks] = useState<number | null>(null);
+  const [totalCustomerCount, setTotalCustomerCount] = useState<number | null>(null);
+  const [fixedCustomerCount, setFixedCustomerCount] = useState<number | null>(null);
   const [note, setNote] = useState<string>('');
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -64,8 +67,15 @@ export const useReservationInputVM = (
     clearMessages();
   }, [clearMessages]);
 
-  const onChangeFixedTrucks = useCallback((value: number | null) => {
-    setFixedTrucks(value);
+  const onChangeTotalCustomerCount = useCallback((value: number | null) => {
+    console.log('[ReservationInputVM] totalCustomerCount changed:', value);
+    setTotalCustomerCount(value);
+    clearMessages();
+  }, [clearMessages]);
+
+  const onChangeFixedCustomerCount = useCallback((value: number | null) => {
+    console.log('[ReservationInputVM] fixedCustomerCount changed:', value);
+    setFixedCustomerCount(value);
     clearMessages();
   }, [clearMessages]);
 
@@ -82,10 +92,7 @@ export const useReservationInputVM = (
       setError('総台数を入力してください');
       return;
     }
-    if (fixedTrucks === null || fixedTrucks === undefined) {
-      setError('固定客数を入力してください');
-      return;
-    }
+    // customer_countはオプショナル（バリデーション不要）
 
     setIsSaving(true);
     setError(null);
@@ -94,17 +101,21 @@ export const useReservationInputVM = (
       const payload: ReservationManualInput = {
         reserve_date: selectedDate.format('YYYY-MM-DD'),
         total_trucks: totalTrucks,
-        fixed_trucks: fixedTrucks,
+        total_customer_count: totalCustomerCount,
+        fixed_customer_count: fixedCustomerCount,
         note: note || undefined,
       };
 
+      console.log('[ReservationInputVM] Submitting payload:', payload);
       await repository.upsertManual(payload);
+      console.log('[ReservationInputVM] Save successful');
       message.success('保存しました');
       
       // フォームをリセット
       setSelectedDate(null);
       setTotalTrucks(null);
-      setFixedTrucks(null);
+      setTotalCustomerCount(null);
+      setFixedCustomerCount(null);
       setNote('');
       setHasManualData(false);
       
@@ -119,7 +130,7 @@ export const useReservationInputVM = (
     } finally {
       setIsSaving(false);
     }
-  }, [selectedDate, totalTrucks, fixedTrucks, note, repository, onDataChanged]);
+  }, [selectedDate, totalTrucks, totalCustomerCount, fixedCustomerCount, note, repository, onDataChanged]);
 
   const onDelete = useCallback(async () => {
     if (!selectedDate) return;
@@ -131,7 +142,8 @@ export const useReservationInputVM = (
       await repository.deleteManual(selectedDate.format('YYYY-MM-DD'));
       message.success('削除しました');
       setTotalTrucks(null);
-      setFixedTrucks(null);
+      setTotalCustomerCount(null);
+      setFixedCustomerCount(null);
       setNote('');
       setHasManualData(false);
       
@@ -151,14 +163,16 @@ export const useReservationInputVM = (
   return {
     selectedDate,
     totalTrucks,
-    fixedTrucks,
+    totalCustomerCount,
+    fixedCustomerCount,
     note,
     isSaving,
     error,
     hasManualData,
     onSelectDate,
     onChangeTotalTrucks,
-    onChangeFixedTrucks,
+    onChangeTotalCustomerCount,
+    onChangeFixedCustomerCount,
     onChangeNote,
     onSubmit,
     onDelete,

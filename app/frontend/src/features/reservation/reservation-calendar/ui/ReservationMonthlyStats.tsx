@@ -19,8 +19,11 @@ export const ReservationMonthlyStats: React.FC<ReservationMonthlyStatsProps> = (
   // 月次合計を計算
   const totalTrucks = data.reduce((sum, d) => sum + d.reserve_trucks, 0);
   const totalFixed = data.reduce((sum, d) => sum + d.reserve_fixed_trucks, 0);
+  const totalCustomers = data.reduce((sum, d) => sum + (d.total_customer_count ?? 0), 0);
+  const totalFixedCustomers = data.reduce((sum, d) => sum + (d.fixed_customer_count ?? 0), 0);
   const avgTrucks = data.length > 0 ? Math.round(totalTrucks / data.length) : 0;
   const fixedRatio = totalTrucks > 0 ? ((totalFixed / totalTrucks) * 100).toFixed(1) : '0.0';
+  const fixedCustomerRatio = totalCustomers > 0 ? ((totalFixedCustomers / totalCustomers) * 100).toFixed(1) : '0.0';
 
   return (
     <>
@@ -72,7 +75,7 @@ export const ReservationMonthlyStats: React.FC<ReservationMonthlyStatsProps> = (
         </div>
 
         <Row gutter={12} className="monthly-stats">
-        <Col span={6}>
+        <Col span={12}>
           <Statistic
             title="合計予約台数"
             value={totalTrucks}
@@ -82,17 +85,7 @@ export const ReservationMonthlyStats: React.FC<ReservationMonthlyStatsProps> = (
             loading={isLoading}
           />
         </Col>
-        <Col span={6}>
-          <Statistic
-            title="合計固定客台数"
-            value={totalFixed}
-            prefix={<TeamOutlined style={{ fontSize: 14 }} />}
-            suffix="台"
-            valueStyle={{ fontSize: 16, color: '#52c41a' }}
-            loading={isLoading}
-          />
-        </Col>
-        <Col span={6}>
+        <Col span={12}>
           <Statistic
             title="1日平均予約"
             value={avgTrucks}
@@ -101,13 +94,35 @@ export const ReservationMonthlyStats: React.FC<ReservationMonthlyStatsProps> = (
             loading={isLoading}
           />
         </Col>
-        <Col span={6}>
+      </Row>
+      <Row gutter={12} className="monthly-stats" style={{ marginTop: 12 }}>
+        <Col span={8}>
+          <Statistic
+            title="予約企業数（総数）"
+            value={totalCustomers}
+            prefix={<TeamOutlined style={{ fontSize: 14 }} />}
+            suffix="社"
+            valueStyle={{ fontSize: 16, color: '#52c41a' }}
+            loading={isLoading}
+          />
+        </Col>
+        <Col span={8}>
+          <Statistic
+            title="固定客企業数"
+            value={totalFixedCustomers}
+            prefix={<TeamOutlined style={{ fontSize: 14 }} />}
+            suffix="社"
+            valueStyle={{ fontSize: 16, color: '#fa8c16' }}
+            loading={isLoading}
+          />
+        </Col>
+        <Col span={8}>
           <Statistic
             title="固定客比率"
-            value={fixedRatio}
+            value={fixedCustomerRatio}
             suffix="%"
             precision={1}
-            valueStyle={{ fontSize: 16, color: '#1890ff' }}
+            valueStyle={{ fontSize: 16, color: '#722ed1' }}
             loading={isLoading}
           />
         </Col>

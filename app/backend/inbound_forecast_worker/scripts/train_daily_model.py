@@ -204,7 +204,11 @@ def preprocess_raw(df: pd.DataFrame, date_col: str, item_col: str, weight_col: s
     dd = df[[cmap["date"], cmap["item"], cmap["weight"]]].copy()
     dd.columns = ["__date__", "__item__", "__weight__"]
     dd["__date__"] = _parse_date_series(dd["__date__"])
-    dd["__weight__"] = pd.to_numeric(dd["__weight__"].str.replace(",", "", regex=False), errors="coerce")
+    # 重量列の型チェック：文字列なら","除去、数値ならそのまま
+    if pd.api.types.is_numeric_dtype(dd["__weight__"]):
+        dd["__weight__"] = pd.to_numeric(dd["__weight__"], errors="coerce")
+    else:
+        dd["__weight__"] = pd.to_numeric(dd["__weight__"].astype(str).str.replace(",", "", regex=False), errors="coerce")
     dd = dd.dropna(subset=["__date__", "__weight__"])
     if len(dd) == 0:
         _emit_preprocess_diagnostics(df, date_col, item_col, weight_col, out_dir, stage="raw->clean")
@@ -231,6 +235,22 @@ def _emit_preprocess_diagnostics(df: pd.DataFrame, date_col: str, item_col: str,
         print(f"[WARN] 診断書き出しに失敗: {e}")
 
 def preprocess_reserve(df: Optional[pd.DataFrame], date_col: str, count_col: str, fixed_col: str) -> pd.DataFrame:
+    """
+    予約データを日次集計形式に変換する。
+    
+    入力形式は2種類をサポート:
+    1. CSVモード（旧形式）: 1行1予約（予約日, 予約得意先名, 固定客, 台数）
+       - groupbyで日次集計が必要
+       - reserve_count = 予約件数（企業数）
+       - reserve_sum = 台数合計
+       - fixed_ratio = 固定客件数 / 総件数
+    
+    2. DBモード（新形式）: 1行1日（既に日次集計済み）
+       - total_customer_count列の存在で判定
+       - reserve_count = total_customer_count（企業数）
+       - reserve_sum = reserve_trucks（台数）
+       - fixed_ratio = fixed_customer_count / total_customer_count
+    """
     if df is None or len(df) == 0:
         return pd.DataFrame()
     dd = df.copy()
@@ -259,21 +279,98 @@ def preprocess_reserve(df: Optional[pd.DataFrame], date_col: str, count_col: str
     cmap = _auto_map_columns2(dd, {
         "date":[date_col, "予約日", "日付"],
         "count":[count_col, "台数", "予約台数", "件数"],
-        "fixed":[fixed_col, "固定客", "固定"]
+        "fixed":[fixed_col, "固定客", "固定", "fixed_customer_count"],
+        "customer_count":["total_customer_count", "企業数", "社数"]
     })
     if cmap["date"] is None:
         raise ValueError("予約データの日付列が見つかりません。")
     dd[cmap["date"]] = _parse_date_series(dd[cmap["date"]])
+    
+    # DBモード判定: total_customer_count列が存在すれば既に日次集計済み
+    is_db_mode = cmap.get("customer_count") and cmap["customer_count"] in dd.columns
+    
+    print(f"[DEBUG preprocess_reserve] is_db_mode={is_db_mode} (total_customer_count列の有無で判定)")
+    
+    # count列（台数）の処理
     if cmap["count"] in dd.columns:
-        dd[cmap["count"]] = pd.to_numeric(dd[cmap["count"]].str.replace(",","",regex=False), errors="coerce")
+        if pd.api.types.is_numeric_dtype(dd[cmap["count"]]):
+            dd[cmap["count"]] = pd.to_numeric(dd[cmap["count"]], errors="coerce")
+        else:
+            dd[cmap["count"]] = pd.to_numeric(dd[cmap["count"]].astype(str).str.replace(",","",regex=False), errors="coerce")
+    
+    # customer_count列（企業数）の処理
+    if is_db_mode:
+        if pd.api.types.is_numeric_dtype(dd[cmap["customer_count"]]):
+            dd[cmap["customer_count"]] = pd.to_numeric(dd[cmap["customer_count"]], errors="coerce")
+        else:
+            dd[cmap["customer_count"]] = pd.to_numeric(dd[cmap["customer_count"]].astype(str).str.replace(",","",regex=False), errors="coerce")
+    
+    # fixed列（固定客企業数/フラグ）の処理
     if cmap["fixed"] in dd.columns:
-        dd[cmap["fixed"]] = dd[cmap["fixed"]].astype(str).str.lower().isin(["1","true","yes","固定","固定客"]).astype(int)
-    grp = dd.groupby(cmap["date"])
-    out = pd.DataFrame({
-        "reserve_count": grp.size().astype(float),
-        "reserve_sum": (grp[cmap["count"]].sum() if cmap["count"] in dd.columns else grp.size()).astype(float),
-        "fixed_ratio": (grp[cmap["fixed"]].mean() if cmap["fixed"] in dd.columns else 0.0)
-    })
+        if pd.api.types.is_numeric_dtype(dd[cmap["fixed"]]):
+            dd[cmap["fixed"]] = pd.to_numeric(dd[cmap["fixed"]], errors="coerce")
+        else:
+            # CSVモードでは文字列フラグ（TRUE/FALSE）を0/1に変換
+            dd[cmap["fixed"]] = dd[cmap["fixed"]].astype(str).str.lower().isin(["1","true","yes","固定","固定客"]).astype(int)
+    
+    # デバッグ: 列マッピングと最初の数行を出力
+    print(f"[DEBUG preprocess_reserve] Column mapping: {cmap}")
+    print(f"[DEBUG preprocess_reserve] Columns in dd: {dd.columns.tolist()}")
+    print(f"[DEBUG preprocess_reserve] First 3 rows:")
+    print(dd.head(3))
+    
+    if is_db_mode:
+        # DBモード: 既に日次集計済みなのでgroupby不要
+        # 日付をインデックスに設定してそのまま値を使用
+        dd = dd.set_index(cmap["date"])
+        
+        # reserve_count: 企業数（total_customer_count）
+        reserve_count_values = dd[cmap["customer_count"]]
+        
+        # reserve_sum: 台数（count列 = 台数）
+        reserve_sum_values = dd[cmap["count"]] if cmap["count"] in dd.columns else dd[cmap["customer_count"]]
+        
+        # fixed_ratio: 固定客企業数 / 総企業数
+        if cmap["fixed"] in dd.columns:
+            fixed_ratio_values = (dd[cmap["fixed"]] / dd[cmap["customer_count"]]).fillna(0.0)
+        else:
+            fixed_ratio_values = 0.0
+        
+        out = pd.DataFrame({
+            "reserve_count": reserve_count_values.astype(float),
+            "reserve_sum": reserve_sum_values.astype(float),
+            "fixed_ratio": fixed_ratio_values
+        })
+        
+        print(f"[DEBUG preprocess_reserve] DBモード処理完了")
+        print(f"[DEBUG preprocess_reserve] Sample output (first 3 rows):")
+        print(out.head(3))
+    else:
+        # CSVモード（旧形式）: 1行1予約なのでgroupbyで日次集計が必要
+        grp = dd.groupby(cmap["date"])
+        
+        # reserve_count: 予約件数（= 企業数 ≈ 行数）
+        reserve_count_values = grp.size()
+        
+        # reserve_sum: 台数合計
+        reserve_sum_values = grp[cmap["count"]].sum() if cmap["count"] in dd.columns else grp.size()
+        
+        # fixed_ratio: 固定客の割合（件数ベース）
+        if cmap["fixed"] in dd.columns:
+            fixed_ratio_values = grp[cmap["fixed"]].mean()
+        else:
+            fixed_ratio_values = 0.0
+        
+        out = pd.DataFrame({
+            "reserve_count": reserve_count_values.astype(float),
+            "reserve_sum": reserve_sum_values.astype(float),
+            "fixed_ratio": fixed_ratio_values
+        })
+        
+        print(f"[DEBUG preprocess_reserve] CSVモード処理完了")
+        print(f"[DEBUG preprocess_reserve] Sample output (first 3 rows):")
+        print(out.head(3))
+    
     return out
 
 # =========================
@@ -525,10 +622,15 @@ def run_walkforward(df_raw: pd.DataFrame,
 
     # --- Safety: ensure input data do not contain future dates (basic leakage guard) ---
     try:
-        now_dt = pd.Timestamp.utcnow().normalize()
+        # Use tz-naive timestamp for comparison
+        now_dt = pd.Timestamp.utcnow().tz_localize(None).normalize()
         # raw data
         if len(df_raw) > 0:
-            dmax = pd.to_datetime(df_raw[date_col], errors="coerce").max()
+            # Convert to tz-naive for comparison
+            df_raw_dates = pd.to_datetime(df_raw[date_col], errors="coerce")
+            if pd.api.types.is_datetime64tz_dtype(df_raw_dates):
+                df_raw_dates = df_raw_dates.dt.tz_localize(None)
+            dmax = df_raw_dates.max()
             if pd.notna(dmax):
                 try:
                     # compare dates (avoid tz-aware vs tz-naive issues)
@@ -537,13 +639,17 @@ def run_walkforward(df_raw: pd.DataFrame,
                             raise RuntimeError(f"[LEAK] raw data contains future dates (max={pd.to_datetime(dmax).date()}); --enforce-no-leak aborting.")
                         msg = f"[WARN] raw data contains future dates (max={pd.to_datetime(dmax).date()}); trimming to today ({now_dt.date()})."
                         print(msg)
-                        df_raw = df_raw[pd.to_datetime(df_raw[date_col], errors="coerce").dt.normalize() <= now_dt]
+                        df_raw = df_raw[df_raw_dates.dt.normalize() <= now_dt]
                 except Exception:
                     # fallback: if any unexpected issue, re-raise to surface
                     raise
         # reserve data
         if isinstance(df_reserve, pd.DataFrame) and len(df_reserve) > 0:
-            rmax = pd.to_datetime(df_reserve[reserve_date_col], errors="coerce").max()
+            # Convert to tz-naive for comparison
+            df_reserve_dates = pd.to_datetime(df_reserve[reserve_date_col], errors="coerce")
+            if pd.api.types.is_datetime64tz_dtype(df_reserve_dates):
+                df_reserve_dates = df_reserve_dates.dt.tz_localize(None)
+            rmax = df_reserve_dates.max()
             if pd.notna(rmax):
                 try:
                     if pd.to_datetime(rmax).normalize().date() > now_dt.date():
@@ -551,7 +657,7 @@ def run_walkforward(df_raw: pd.DataFrame,
                             raise RuntimeError(f"[LEAK] reserve data contains future dates (max={pd.to_datetime(rmax).date()}); --enforce-no-leak aborting.")
                         msg = f"[WARN] reserve data contains future dates (max={pd.to_datetime(rmax).date()}); trimming to today ({now_dt.date()})."
                         print(msg)
-                        df_reserve = df_reserve[pd.to_datetime(df_reserve[reserve_date_col], errors="coerce").dt.normalize() <= now_dt]
+                        df_reserve = df_reserve[df_reserve_dates.dt.normalize() <= now_dt]
                 except Exception:
                     raise
     except Exception:
@@ -1171,6 +1277,20 @@ def main():
     ap.add_argument("--reserve-count-col", type=str, default="台数")
     ap.add_argument("--reserve-fixed-col", type=str, default="固定客")
     ap.add_argument("--out-dir", type=str, required=True)
+    
+    # DB直接取得モード（CSV廃止）
+    ap.add_argument("--use-db", action="store_true",
+                    help="DBから直接データ取得（CSVを使わない）")
+    ap.add_argument("--db-connection-string", type=str, default=None,
+                    help="PostgreSQL接続文字列（--use-db時に指定、未指定時は環境変数DATABASE_URL）")
+    ap.add_argument("--actuals-start-date", type=str, default=None,
+                    help="実績データ開始日（YYYY-MM-DD形式、--use-db時に必須）")
+    ap.add_argument("--actuals-end-date", type=str, default=None,
+                    help="実績データ終了日（YYYY-MM-DD形式、--use-db時に必須）")
+    ap.add_argument("--reserve-start-date", type=str, default=None,
+                    help="予約データ開始日（YYYY-MM-DD形式、--use-db時）")
+    ap.add_argument("--reserve-end-date", type=str, default=None,
+                    help="予約データ終了日（YYYY-MM-DD形式、--use-db時）")
 
     # 既存系
     ap.add_argument("--top-n", type=int, default=6)
@@ -1229,10 +1349,53 @@ def main():
         return
 
     # 通常モード（従来互換）
-    df_raw = _read_csv(args.raw_csv)
-    if df_raw is None or len(df_raw) == 0:
-        raise FileNotFoundError(f"raw-csv 読み込み失敗: {args.raw_csv}")
-    df_res = _read_csv(args.reserve_csv) if args.reserve_csv else None
+    if args.use_db:
+        # DB直接取得モード
+        from datetime import datetime
+        from db_loader import load_raw_from_db, load_reserve_from_db
+        
+        # 日付引数の検証
+        if not args.actuals_start_date or not args.actuals_end_date:
+            raise ValueError(
+                "--use-db requires --actuals-start-date and --actuals-end-date"
+            )
+        
+        actuals_start = datetime.strptime(args.actuals_start_date, "%Y-%m-%d").date()
+        actuals_end = datetime.strptime(args.actuals_end_date, "%Y-%m-%d").date()
+        
+        print(f"[DB MODE] Loading actuals from DB: {actuals_start} to {actuals_end}")
+        df_raw = load_raw_from_db(
+            start_date=actuals_start,
+            end_date=actuals_end,
+            date_col=args.raw_date_col,
+            item_col=args.raw_item_col,
+            weight_col=args.raw_weight_col,
+            connection_string=args.db_connection_string,
+        )
+        print(f"[DB MODE] Loaded {len(df_raw)} actuals records from DB")
+        
+        # 予約データの取得（オプション）
+        df_res = None
+        if args.reserve_start_date and args.reserve_end_date:
+            reserve_start = datetime.strptime(args.reserve_start_date, "%Y-%m-%d").date()
+            reserve_end = datetime.strptime(args.reserve_end_date, "%Y-%m-%d").date()
+            
+            print(f"[DB MODE] Loading reserve from DB: {reserve_start} to {reserve_end}")
+            df_res = load_reserve_from_db(
+                start_date=reserve_start,
+                end_date=reserve_end,
+                date_col=args.reserve_date_col,
+                count_col=args.reserve_count_col,
+                fixed_col=args.reserve_fixed_col,
+                connection_string=args.db_connection_string,
+            )
+            print(f"[DB MODE] Loaded {len(df_res)} reserve records from DB")
+    else:
+        # CSV読み込みモード（従来通り）
+        df_raw = _read_csv(args.raw_csv)
+        if df_raw is None or len(df_raw) == 0:
+            raise FileNotFoundError(f"raw-csv 読み込み失敗: {args.raw_csv}")
+        df_res = _read_csv(args.reserve_csv) if args.reserve_csv else None
 
     cfg = Config(
         top_n=args.top_n,
