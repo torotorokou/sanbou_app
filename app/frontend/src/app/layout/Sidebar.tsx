@@ -4,7 +4,7 @@ import { Layout, Menu, Button, Drawer } from 'antd';
 import { MenuFoldOutlined, MenuUnfoldOutlined } from '@ant-design/icons';
 import { useLocation } from 'react-router-dom';
 import { SIDEBAR_MENU } from '@app/navigation/sidebarMenu';
-import { customTokens, useSidebar, useResponsive, ANT } from '@/shared';
+import { customTokens, useSidebar, useResponsive } from '@/shared';
 import { type MenuItem, filterMenuItems } from '@features/navi';
 import { UserInfoChip } from '@features/authStatus';
 
@@ -14,15 +14,8 @@ const { Sider } = Layout;
 const Sidebar: React.FC = () => {
     const location = useLocation();
     const { collapsed, setCollapsed, config: sidebarConfig, style: animationStyles } = useSidebar();
-    const { isTablet, width: windowWidth } = useResponsive();
+    const { isTablet } = useResponsive();
 
-    // 'xl以下' のときは幅を 0.9 倍にする（ANT.xl (1200px) を閾値として使用）
-    const effectiveWidth = React.useMemo(() => {
-        if (typeof windowWidth === 'number' && windowWidth < ANT.xl) {
-            return Math.round(sidebarConfig.width * 0.9);
-        }
-        return sidebarConfig.width;
-    }, [windowWidth, sidebarConfig.width]);
     // openKeys を管理して、サイドバーが開いているときは子メニューを展開する
     const [openKeys, setOpenKeys] = React.useState<string[]>([]);
 
@@ -66,7 +59,7 @@ const Sidebar: React.FC = () => {
                     placement="left"
                     open={!collapsed}
                     onClose={() => setCollapsed(true)}
-                        width={effectiveWidth}
+                    width={sidebarConfig.width}
                     styles={{
                         body: { padding: 0 },
                     }}
@@ -94,7 +87,7 @@ const Sidebar: React.FC = () => {
 
     return (
         <Sider
-            width={effectiveWidth}
+            width={sidebarConfig.width}
             collapsible
             collapsed={collapsed}
             trigger={null}
@@ -105,10 +98,10 @@ const Sidebar: React.FC = () => {
                 position: 'sticky',
                 top: 0,
                 // ビューポートの高さいっぱいに表示する（100dvh でモバイルのアドレスバー揺れを回避）
-                            height: '100dvh',
+                height: '100dvh',
                 overflow: 'auto',
                 // 幅が他要因で縮まないように明示
-                minWidth: collapsed ? sidebarConfig.collapsedWidth : effectiveWidth,
+                minWidth: collapsed ? sidebarConfig.collapsedWidth : sidebarConfig.width,
                 flex: '0 0 auto',
                 ...animationStyles,
             }}
