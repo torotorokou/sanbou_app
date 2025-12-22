@@ -803,7 +803,7 @@ publish-stg-images-from-ref:
 	  echo "[error] GIT_REF is required. e.g. make $@ GIT_REF=v1.2.3"; \
 	  exit 1; \
 	fi
-	@set -euo pipefail; \
+	@bash -c 'set -euo pipefail; \
 	mkdir -p "$(WORKTREE_TMP_BASE)"; \
 	WT_DIR="$$(mktemp -d $(WORKTREE_TMP_BASE)/stg_build_XXXXXX)"; \
 	cleanup() { \
@@ -816,21 +816,21 @@ publish-stg-images-from-ref:
 	git -C "$(CURDIR)" fetch --tags --prune; \
 	echo "[info] create worktree: ref=$(GIT_REF) dir=$$WT_DIR"; \
 	git -C "$(CURDIR)" worktree add --detach "$$WT_DIR" "$(GIT_REF)"; \
-	DEFAULT_TAG="stg-$$(echo "$(GIT_REF)" | tr '/:@' '---')"; \
+	DEFAULT_TAG="stg-$$(echo "$(GIT_REF)" | tr "/:@" "---")"; \
 	TAG_TO_USE="$${STG_IMAGE_TAG:-$$DEFAULT_TAG}"; \
 	echo "[info] build&push STG from ref=$(GIT_REF) tag=$$TAG_TO_USE"; \
 	( cd "$$WT_DIR" && \
 	  NO_CACHE="$(NO_CACHE)" PULL="$(PULL)" \
 	  $(MAKE) --no-print-directory publish-stg-images STG_IMAGE_TAG="$$TAG_TO_USE" \
 	); \
-	echo "[ok] publish-stg-images-from-ref done (ref=$(GIT_REF), tag=$$TAG_TO_USE)"
+	echo "[ok] publish-stg-images-from-ref done (ref=$(GIT_REF), tag=$$TAG_TO_USE)"'
 
 publish-prod-images-from-ref:
 	@if [ -z "$(GIT_REF)" ]; then \
 	  echo "[error] GIT_REF is required. e.g. make $@ GIT_REF=v1.2.3"; \
 	  exit 1; \
 	fi
-	@set -euo pipefail; \
+	@bash -c 'set -euo pipefail; \
 	mkdir -p "$(WORKTREE_TMP_BASE)"; \
 	WT_DIR="$$(mktemp -d $(WORKTREE_TMP_BASE)/prod_build_XXXXXX)"; \
 	cleanup() { \
@@ -843,14 +843,14 @@ publish-prod-images-from-ref:
 	git -C "$(CURDIR)" fetch --tags --prune; \
 	echo "[info] create worktree: ref=$(GIT_REF) dir=$$WT_DIR"; \
 	git -C "$(CURDIR)" worktree add --detach "$$WT_DIR" "$(GIT_REF)"; \
-	DEFAULT_TAG="prod-$$(echo "$(GIT_REF)" | tr '/:@' '---')"; \
+	DEFAULT_TAG="prod-$$(echo "$(GIT_REF)" | tr "/:@" "---")"; \
 	TAG_TO_USE="$${PROD_IMAGE_TAG:-$$DEFAULT_TAG}"; \
 	echo "[info] build&push PROD from ref=$(GIT_REF) tag=$$TAG_TO_USE"; \
 	( cd "$$WT_DIR" && \
 	  NO_CACHE="$(NO_CACHE)" PULL="$(PULL)" \
 	  $(MAKE) --no-print-directory publish-prod-images PROD_IMAGE_TAG="$$TAG_TO_USE" \
 	); \
-	echo "[ok] publish-prod-images-from-ref done (ref=$(GIT_REF), tag=$$TAG_TO_USE)"
+	echo "[ok] publish-prod-images-from-ref done (ref=$(GIT_REF), tag=$$TAG_TO_USE)"'
 
 ## ============================================================
 ## STG → PROD イメージ昇格（別プロジェクト Artifact Registry コピー）
