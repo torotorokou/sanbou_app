@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { List, Tag, Typography } from "antd";
-import { UnimplementedModal } from '@features/shared';
+import { UnimplementedModal } from '@features/unimplemented-feature';
 
 const { Title, Paragraph } = Typography;
 

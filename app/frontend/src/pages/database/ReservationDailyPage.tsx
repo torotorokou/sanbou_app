@@ -18,7 +18,7 @@
  * - 明示的な Named Export を使用
  */
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Typography, Col, Row, Collapse, Card } from 'antd';
 import styles from './ReservationDailyPage.module.css';
 import { useReservationInputVM, ReservationInputForm } from '@features/reservation/reservation-input';
@@ -28,10 +28,19 @@ import {
   ReservationMonthlyStats,
   ReservationMonthlyChart
 } from '@features/reservation/reservation-calendar';
+import { UnimplementedModal } from '@features/unimplemented-feature';
 
 const { Title } = Typography;
 
 const ReservationDailyPage: React.FC = () => {
+  // 未実装モーダル用の状態
+  const [showUnimplementedModal, setShowUnimplementedModal] = useState(false);
+
+  // ページ読み込み時にモーダルを表示（テスト用）
+  useEffect(() => {
+    setShowUnimplementedModal(true);
+  }, []);
+  
   // カレンダー表示用ViewModel
   const calendarVM = useReservationCalendarVM();
   
@@ -119,6 +128,14 @@ const ReservationDailyPage: React.FC = () => {
         />
       </Col>
     </Row>
+    
+    {/* 未実装モーダル */}
+    <UnimplementedModal
+      visible={showUnimplementedModal}
+      onClose={() => setShowUnimplementedModal(false)}
+      featureName="予約表"
+      description="この機能は現在開発中です。近日中にリリース予定ですので、今しばらくお待ちください。"
+    />
     </>
   );
 };
