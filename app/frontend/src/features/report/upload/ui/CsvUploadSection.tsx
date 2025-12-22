@@ -15,22 +15,21 @@ import { ReportUploadFileCard } from './ReportUploadFileCard';
  * - dataset-import のデザインに合わせた見た目（スキップ機能なし）
  */
 const CsvUploadSection: React.FC<CsvUploadSectionProps> = ({ uploadFiles, makeUploadProps }) => {
-    // responsive: flagsベースの段階スイッチ
+    // responsive: 3段階判定（Mobile/Tablet/Desktop）
     const { flags } = useResponsive();
 
-    // responsive: 段階的な値決定（Mobile→Tablet→Laptop→Desktop）
-    const pickByDevice = <T,>(mobile: T, tablet: T, laptop: T, desktop: T): T => {
-        if (flags.isMobile) return mobile;
-        if (flags.isTablet) return tablet;
-        if (flags.isLaptop) return laptop;
-        return desktop; // isDesktop
+    // responsive: 3段階ヘルパー
+    const pickByDevice = <T,>(mobile: T, tablet: T, desktop: T): T => {
+        if (flags.isMobile) return mobile;     // ≤767px
+        if (flags.isTablet) return tablet;     // 768-1279px
+        return desktop;                        // ≥1280px
     };
 
     // responsive: タイトルのレベルとスタイル
-    const titleLevel = pickByDevice<5 | 4>(5, 4, 4, 4);
-    const marginBottom = pickByDevice(4, 6, 8, 8);
-    const fontSize = pickByDevice('14px', '15px', '16px', '16px');
-    const itemGap = pickByDevice(6, 8, 10, 10);
+    const titleLevel = pickByDevice<5 | 4>(5, 4, 4);
+    const marginBottom = pickByDevice(4, 8, 8);
+    const fontSize = pickByDevice('14px', '15px', '16px');
+    const itemGap = pickByDevice(6, 10, 10);
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', minHeight: 0 }}>

@@ -58,16 +58,16 @@ export type ResponsiveLayoutConfig = {
 export const useResponsiveLayout = (): ResponsiveLayoutConfig => {
   const { flags } = useResponsive();
 
-  // レイアウトモード判定
+  // レイアウトモード判定（3段階統一）
   const mode: LayoutMode = flags.isMobile 
-    ? "mobile" 
-    : (flags.isTablet || flags.isLaptop) 
-      ? "laptopOrBelow" 
-      : "desktop";
+    ? "mobile"      // ≤767px: 1列縦並び
+    : flags.isTablet
+      ? "tablet"    // 768-1279px: 上2列+下1列（1024-1279を含む）
+      : "desktop";  // ≥1280px: 上3列+下1列
 
-  // ガッター・パディング（段階的）
-  const gutter = flags.isMobile ? 8 : flags.isTablet ? 12 : flags.isLaptop ? 16 : 20;
-  const padding = flags.isMobile ? 8 : flags.isTablet ? 12 : flags.isLaptop ? 16 : 16;
+  // ガッター・パディング（3段階統一）
+  const gutter = flags.isMobile ? 8 : flags.isTablet ? 16 : 20;
+  const padding = flags.isMobile ? 8 : flags.isTablet ? 16 : 16;
 
   // カラムspan定義
   const spans = {

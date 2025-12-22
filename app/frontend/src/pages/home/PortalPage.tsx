@@ -426,12 +426,11 @@ export const PortalPage: React.FC = () => {
   const { flags } = useResponsive();
   const { token } = theme.useToken();
 
-  // responsive: pickByDevice helper
-  const pickByDevice = <T,>(mobile: T, tablet: T, laptop: T, desktop: T): T => {
-    if (flags.isMobile) return mobile;
-    if (flags.isTablet) return tablet;
-    if (flags.isLaptop) return laptop;
-    return desktop;
+  // responsive: 3段階判定ヘルパー（Mobile/Tablet/Desktop）
+  const pickByDevice = <T,>(mobile: T, tablet: T, desktop: T): T => {
+    if (flags.isMobile) return mobile;    // ≤767px
+    if (flags.isTablet) return tablet;    // 768-1279px（1024-1279を含む）
+    return desktop;                        // ≥1280px
   };
 
   // responsive: isCompact logic (Mobile | Tablet)
@@ -443,19 +442,19 @@ export const PortalPage: React.FC = () => {
   // responsive: isXs (width < 640px)
   const isXs = flags.isXs;
 
-  // responsive: isLg (width >= 1024px)
+  // responsive: isLg (width >= 1024px) - 詳細判定用
   const isLg = flags.isLaptop || flags.isDesktop;
 
   // responsive: カードスケール
-  const cardScale = pickByDevice(0.9, 0.9, 0.9, 1);
+  const cardScale = pickByDevice(0.9, 0.9, 1);
 
   // レスポンシブに関係なく全カードで同じボタン幅に統一する
   const unifiedButtonWidth = BUTTON_WIDTH;
 
   // カード間のギャップ（行間・列間）を一元管理
-  // さらに縮小：モバイルは2px、それ以外は4px
-  const CARD_COLUMN_GAP = pickByDevice(2, 4, 4, 4);
-  const CARD_ROW_GAP = pickByDevice(2, 4, 4, 4);
+  // モバイルは2px、Tablet/Desktopは4px
+  const CARD_COLUMN_GAP = pickByDevice(2, 4, 4);
+  const CARD_ROW_GAP = pickByDevice(2, 4, 4);
 
   const introText = isCompact
     ? '社内ポータルです。必要な機能を選択してください。'
@@ -556,7 +555,7 @@ export const PortalPage: React.FC = () => {
                 // responsive: gridAutoRows
                 // Use minmax(..., auto) so rows can grow if a card becomes taller (prevents overlap)
                 // Lower the mobile minimum so cards sit closer vertically.
-                gridAutoRows: `minmax(${Math.round(pickByDevice(64, 120, CARD_HEIGHT, CARD_HEIGHT) * cardScale)}px, auto)`,
+                gridAutoRows: `minmax(${Math.round(pickByDevice(64, 120, CARD_HEIGHT) * cardScale)}px, auto)`,
                 // responsive: gridTemplateColumns (Mobile: 1col, Tablet+: auto-fit)
                 // lg以上では最大3列に制限して画面内に収める
                 gridTemplateColumns: flags.isMobile

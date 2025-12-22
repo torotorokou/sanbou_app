@@ -36,17 +36,16 @@ const ReportSampleThumbnail: React.FC<Props> = ({
         setImgSize({ width: naturalWidth, height: naturalHeight });
     };
 
-    // responsive: 段階的な値決定（Mobile→Tablet→Laptop→Desktop）
-    const pickByDevice = <T,>(mobile: T, tablet: T, laptop: T, desktop: T): T => {
-        if (flags.isMobile) return mobile;
-        if (flags.isTablet) return tablet;
-        if (flags.isLaptop) return laptop;
-        return desktop; // isDesktop
+    // responsive: 3段階ヘルパー（Mobile/Tablet/Desktop）
+    const pickByDevice = <T,>(mobile: T, tablet: T, desktop: T): T => {
+        if (flags.isMobile) return mobile;     // ≤767px
+        if (flags.isTablet) return tablet;     // 768-1279px
+        return desktop;                        // ≥1280px
     };
 
     // responsive: モーダルの最大サイズ率（画面比）
-    const modalHeightRatio = pickByDevice(0.85, 0.88, 0.90, 0.90);
-    const modalWidthRatio = pickByDevice(0.90, 0.92, 0.95, 0.95);
+    const modalHeightRatio = pickByDevice(0.85, 0.90, 0.90);
+    const modalWidthRatio = pickByDevice(0.90, 0.95, 0.95);
 
     // モーダルの最大サイズ
     const MAX_MODAL_HEIGHT = Math.floor(viewportHeight * modalHeightRatio);

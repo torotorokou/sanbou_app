@@ -16,23 +16,22 @@ import { useResponsive, customTokens, bp } from "@/shared";
  * - 保守性を向上させるためのシンプルなサイズ体系
  */
 export const useReportLayoutStyles = () => {
-  // responsive: flagsベースの段階スイッチ
+  // responsive: 3段階判定（Mobile/Tablet/Desktop）
   const { flags } = useResponsive();
 
-  // responsive: 段階的な値決定（Mobile→Tablet→Laptop→Desktop）
-  const pickByDevice = <T,>(mobile: T, tablet: T, laptop: T, desktop: T): T => {
-    if (flags.isMobile) return mobile;
-    if (flags.isTablet) return tablet;
-    if (flags.isLaptop) return laptop;
-    return desktop; // isDesktop
+  // responsive: 3段階ヘルパー
+  const pickByDevice = <T,>(mobile: T, tablet: T, desktop: T): T => {
+    if (flags.isMobile) return mobile;       // ≤767px
+    if (flags.isTablet) return tablet;       // 768-1279px
+    return desktop;                          // ≥1280px
   };
 
-  // responsive: 各種スタイル値を4段階で定義
-  const padding = pickByDevice(12, 16, 18, 20);
-  const gap = pickByDevice(12, 16, 20, 24);
-  const gapSmall = pickByDevice(8, 10, 12, 12);
-  const leftPanelWidth = pickByDevice<string | number>('100%', '100%', 260, 300);
-  const leftPanelMinWidth = pickByDevice<string | number>('auto', 'auto', 260, 300);
+  // responsive: 各種スタイル値を3段階で定義
+  const padding = pickByDevice(12, 18, 20);
+  const gap = pickByDevice(12, 20, 24);
+  const gapSmall = pickByDevice(8, 12, 12);
+  const leftPanelWidth = pickByDevice<string | number>('100%', '100%', 300);
+  const leftPanelMinWidth = pickByDevice<string | number>('auto', 'auto', 300);
   const leftPanelMaxWidth = pickByDevice<string | number>('100%', '100%', 260, 300);
   const leftPanelFlex = pickByDevice<'1 1 auto' | '0 0 260px' | '0 0 300px'>('1 1 auto', '1 1 auto', '0 0 260px', '0 0 300px');
   const leftPanelOrder = pickByDevice(3, 3, 1, 1);

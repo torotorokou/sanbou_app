@@ -23,25 +23,24 @@ import styles from './ReportPage.module.css';
  */
 
 const ManagePage: React.FC = () => {
-    // responsive: flagsベースの段階スイッチ
+    // responsive: 3段階判定（Mobile/Tablet/Desktop）
     const { flags } = useResponsive();
     const reportManager = useReportManager('factory_report');
     // useMemoでメモ化されたprops（関数ではなくオブジェクト）
     const reportBaseProps = reportManager.getReportBaseProps;
 
-    // responsive: 段階的な値決定（Mobile→Tablet→Laptop→Desktop）
-    const pickByDevice = <T,>(mobile: T, tablet: T, laptop: T, desktop: T): T => {
-        if (flags.isMobile) return mobile;
-        if (flags.isTablet) return tablet;
-        if (flags.isLaptop) return laptop;
-        return desktop; // isDesktop
+    // responsive: 3段階ヘルパー（Mobile/Tablet/Desktop）
+    const pickByDevice = <T,>(mobile: T, tablet: T, desktop: T): T => {
+        if (flags.isMobile) return mobile;     // ≤767px
+        if (flags.isTablet) return tablet;     // 768-1279px（1024-1279を含む）
+        return desktop;                        // ≥1280px
     };
 
-    // responsive: ページ全体のパディング（Mobile: 8px → Tablet: 12px → Laptop: 16px → Desktop: 20px）
-    const pagePadding = pickByDevice(8, 12, 16, 20);
+    // responsive: ページ全体のパディング（Mobile: 8px → Tablet: 12px → Desktop: 20px）
+    const pagePadding = pickByDevice(8, 12, 20);
 
     // responsive: コンテンツエリアの余白調整
-    const contentGap = pickByDevice(8, 10, 12, 16);
+    const contentGap = pickByDevice(8, 12, 16);
 
     return (
         <div 
