@@ -950,3 +950,45 @@ security-check: scan-local-images
 	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 	@echo "✅ Security checks completed successfully"
 	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+## ============================================================
+## 日次予測: Lookback期間別精度比較実験
+## ============================================================
+## 使い方:
+##   make forecast-lookback-sweep END=2025-12-17
+##   make forecast-lookback-sweep END=2025-12-17 QUICK=1
+##   make forecast-lookback-sweep END=2025-12-17 LOOKBACKS=90,180,360
+##
+## オプション:
+##   END       - 評価基準日（必須、YYYY-MM-DD形式）
+##   LOOKBACKS - カンマ区切りのlookback日数（デフォルト: 60,90,120,180,270,360）
+##   QUICK     - 1を指定すると軽量モード
+##   EVAL_DAYS - 評価期間日数（デフォルト: 90）
+##
+## 出力:
+##   tmp/experiments/lookback/results.csv - 結果CSV
+##   tmp/experiments/lookback/report.md   - レポート
+## ============================================================
+END ?=
+LOOKBACKS ?= 60,90,120,180,270,360
+QUICK ?=
+EVAL_DAYS ?= 90
+
+forecast-lookback-sweep:
+ifndef END
+	@echo "[error] END is required. Usage: make forecast-lookback-sweep END=2025-12-17"
+	@exit 1
+endif
+	@echo "=== Running Lookback Sweep Experiment ==="
+	@echo "END_DATE: $(END)"
+	@echo "LOOKBACKS: $(LOOKBACKS)"
+	@echo "QUICK: $(if $(QUICK),Yes,No)"
+	$(DC_FULL) exec inbound_forecast_worker python3 /backend/scripts/experiments/run_lookback_sweep.py \
+		--end-date $(END) \
+		--lookbacks $(LOOKBACKS) \
+		--eval-days $(EVAL_DAYS) \
+		$(if $(QUICK),--quick,) \
+		--db-connection-string "postgresql+psycopg://sanbou_app_dev:rwT8ovWmhwLctRNuPynH4jOoYSwXvVvc2czeGC0Zos4=@db:5432/sanbou_dev"
+	@echo "=== Experiment Completed ==="
+	@echo "Results: tmp/experiments/lookback/results.csv"
+	@echo "Report: tmp/experiments/lookback/report.md"
