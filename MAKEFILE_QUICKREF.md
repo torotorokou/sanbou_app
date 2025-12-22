@@ -120,7 +120,7 @@ make promote-stg-to-prod \
 make promote-stg-to-prod PROMOTE_SRC_TAG=stg-latest PROMOTE_DST_TAG=prod-v1.2.3
 
 # または直接ビルド
-make publish-prod-images PROD_IMAGE_TAG=prod-latest
+# make publish-prod-images PROD_IMAGE_TAG=prod-latest
 NO_CACHE=1 PULL=1 make publish-stg-images-from-ref GIT_REF=v1.2.3-stg.4
 # NO_CACHE=1 PULL=1 make publish-stg-images STG_IMAGE_TAG=stg-latest
 

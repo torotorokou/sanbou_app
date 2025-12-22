@@ -8,6 +8,7 @@
 import React, { useState } from 'react';
 import { Form, InputNumber, Input, Button, Space, Alert, Typography, Card, DatePicker, message, Modal } from 'antd';
 import { SaveOutlined, CalendarOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
+import type { Dayjs } from 'dayjs';
 import type { ReservationInputFormProps } from '../model/types';
 
 const { Title } = Typography;
