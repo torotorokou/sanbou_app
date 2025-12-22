@@ -11,6 +11,7 @@ export interface ReservationForecastDaily {
   reserve_fixed_trucks: number;
   reserve_fixed_ratio: number;
   source: 'manual' | 'customer_agg';
+  note?: string;
 }
 
 export interface ReservationManualInput {
