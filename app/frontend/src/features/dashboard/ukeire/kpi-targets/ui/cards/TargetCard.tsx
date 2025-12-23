@@ -47,9 +47,9 @@ export const TargetCard: React.FC<TargetCardProps> = ({
   const pctFontSize = isMobile ? "clamp(12px, 3vw, 16px)" : "clamp(14px, 1vw, 18px)";
   
   // Mobile モードでは行の高さを詰める
-  const minRowHeight = isMobile ? 32 : 44;
+  const minRowHeight = isMobile ? 40 : 44;
   const gridPadding = isMobile ? 6 : 8;
-  const rowGap = isMobile ? 4 : 6;
+  const rowGap = isMobile ? 6 : 6;
 
   return (
     <Card
@@ -94,14 +94,13 @@ export const TargetCard: React.FC<TargetCardProps> = ({
           padding: gridPadding,
           display: "grid",
           gridTemplateColumns: "auto auto auto 1fr",
-          gridTemplateRows: `repeat(${1 + rows.length}, minmax(${minRowHeight}px, 1fr))`,
+          gridTemplateRows: `repeat(${1 + rows.length}, minmax(${minRowHeight}px, auto))`,
           columnGap: isMobile ? 8 : 12,
           rowGap: rowGap,
           alignItems: "center",
           boxSizing: "border-box",
           flex: 1,
           minHeight: 0,
-          overflow: "hidden",
         }}
       >
         {/* ヘッダ行 */}
@@ -210,7 +209,7 @@ export const TargetCard: React.FC<TargetCardProps> = ({
                   </div>
                 )}
               </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 4, minHeight: 0, overflow: "hidden" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 4, minWidth: 0 }}>
                 {hasValidData ? (
                   <>
                     <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "baseline" }}>
