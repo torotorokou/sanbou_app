@@ -23,18 +23,19 @@ export const AnnouncementListItem: React.FC<AnnouncementListItemProps> = ({
 }) => {
   return (
     <Card
-      hoverable
       onClick={() => onOpen(item.id)}
       style={{
         marginBottom: 12,
         borderRadius: 8,
         cursor: 'pointer',
+        backgroundColor: '#fafafa',
         borderLeft: item.isUnread ? '4px solid #1890ff' : '4px solid transparent',
         transition: 'all 0.2s',
       }}
       styles={{
         body: {
           padding: '16px 20px',
+          backgroundColor: '#fafafa',
         },
       }}
     >
