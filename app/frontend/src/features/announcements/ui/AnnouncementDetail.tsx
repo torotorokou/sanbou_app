@@ -7,8 +7,17 @@
 
 import React from 'react';
 import { Card, Tag, Typography, Divider, Space } from 'antd';
-import { CalendarOutlined } from '@ant-design/icons';
-import type { Announcement } from '../domain/announcement';
+import {
+  CalendarOutlined,
+  PaperClipOutlined,
+  FilePdfOutlined,
+  LinkOutlined,
+  BellOutlined,
+  MailOutlined,
+  MessageOutlined,
+  MobileOutlined,
+} from '@ant-design/icons';
+import type { Announcement, NotificationChannel } from '../domain/announcement';
 
 const { Title, Text } = Typography;
 
@@ -61,6 +70,20 @@ function formatDate(isoString: string): string {
     month: '2-digit',
     day: '2-digit',
   });
+}
+
+/**
+ * 通知チャネルのラベルとアイコンを取得
+ */
+function getChannelDisplay(channel: NotificationChannel): { label: string; icon: React.ReactNode } {
+  switch (channel) {
+    case 'inApp':
+      return { label: 'アプリ内', icon: <MobileOutlined /> };
+    case 'email':
+      return { label: 'メール', icon: <MailOutlined /> };
+    case 'line':
+      return { label: 'LINE', icon: <MessageOutlined /> };
+  }
 }
 
 /**
@@ -192,6 +215,99 @@ export const AnnouncementDetail: React.FC<AnnouncementDetailProps> = ({
       {/* 本文 */}
       <div style={{ fontSize: isMobile ? 14 : 15, color: '#262626' }}>
         {renderMarkdownSimple(announcement.bodyMd)}
+      </div>
+
+      {/* 添付ファイルセクション */}
+      {announcement.attachments && announcement.attachments.length > 0 && (
+        <>
+          <Divider style={{ margin: isMobile ? '16px 0' : '20px 0' }} />
+          <div>
+            <Title level={5} style={{ margin: 0, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <PaperClipOutlined />
+              添付ファイル
+            </Title>
+            <Space direction="vertical" size={8} style={{ width: '100%' }}>
+              {announcement.attachments.map((attachment, index) => (
+                <a
+                  key={index}
+                  href={attachment.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    padding: '8px 12px',
+                    backgroundColor: '#f5f5f5',
+                    borderRadius: 6,
+                    textDecoration: 'none',
+                    color: '#1890ff',
+                    transition: 'background-color 0.2s',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = '#e6f7ff';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = '#f5f5f5';
+                  }}
+                >
+                  {attachment.kind === 'pdf' ? (
+                    <FilePdfOutlined style={{ fontSize: 16, color: '#cf1322' }} />
+                  ) : (
+                    <LinkOutlined style={{ fontSize: 16 }} />
+                  )}
+                  <span style={{ flex: 1 }}>{attachment.label}</span>
+                  {attachment.kind === 'pdf' && (
+                    <Tag color="red" style={{ margin: 0, fontSize: 10 }}>PDF</Tag>
+                  )}
+                </a>
+              ))}
+            </Space>
+          </div>
+        </>
+      )}
+
+      {/* 通知設定セクション */}
+      <Divider style={{ margin: isMobile ? '16px 0' : '20px 0' }} />
+      <div>
+        <Title level={5} style={{ margin: 0, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
+          <BellOutlined />
+          通知設定
+        </Title>
+        <div style={{ backgroundColor: '#fafafa', padding: '12px 16px', borderRadius: 6 }}>
+          {(() => {
+            const notification = announcement.notification;
+            const channels = notification?.channels ?? ['inApp'];
+            
+            return (
+              <Space direction="vertical" size={8} style={{ width: '100%' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <Text type="secondary" style={{ fontSize: 12, width: 80 }}>配信方法:</Text>
+                  <Space size={4}>
+                    {channels.map((channel) => {
+                      const { label, icon } = getChannelDisplay(channel);
+                      return (
+                        <Tag key={channel} icon={icon} style={{ margin: 0, fontSize: 11 }}>
+                          {label}
+                        </Tag>
+                      );
+                    })}
+                  </Space>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <Text type="secondary" style={{ fontSize: 12, width: 80 }}>配信タイミング:</Text>
+                  <Text style={{ fontSize: 13 }}>
+                    {notification?.scheduledAt
+                      ? `${formatDate(notification.scheduledAt)} に配信予定`
+                      : notification?.sendOnPublish
+                        ? '公開時に配信'
+                        : '即時配信'}
+                  </Text>
+                </div>
+              </Space>
+            );
+          })()}
+        </div>
       </div>
     </Card>
   );

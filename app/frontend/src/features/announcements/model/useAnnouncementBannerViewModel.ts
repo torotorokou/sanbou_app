@@ -4,16 +4,25 @@
  * トップページに表示する重要通知バナーのロジック。
  * - pinned かつ severity が warn/critical のお知らせを対象
  * - 未確認（未ack）のもののうち1件を選択
+ * - 期限切れ・対象外は除外
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import type { Announcement } from '../domain/announcement';
-import { isBannerTarget } from '../domain/announcement';
+import type { Announcement, Audience } from '../domain/announcement';
+import { isBannerTarget, isVisibleForAudience } from '../domain/announcement';
 import { announcementRepository } from '../infrastructure/LocalAnnouncementRepository';
 import {
   isAcknowledged,
   markAsAcknowledged,
 } from '../infrastructure/announcementUserStateStorage';
+
+/**
+ * 現在のユーザーオーディエンス
+ * 
+ * TODO: 将来的にはユーザープロファイル（認証情報/ユーザー設定）から取得する
+ * 現在はデモ用に 'site:narita' を設定
+ */
+const CURRENT_AUDIENCE: Audience = 'site:narita';
 
 interface UseAnnouncementBannerViewModelResult {
   /** 表示すべきお知らせ（なければnull） */
@@ -41,11 +50,19 @@ export function useAnnouncementBannerViewModel(
     const fetchBannerAnnouncement = async () => {
       try {
         const all = await announcementRepository.list();
-        // バナー対象 かつ 未確認 のものを抽出
+        // バナー対象 かつ 対象audience かつ 未確認 のものを抽出
         const bannerCandidates = all.filter(
-          (ann) => isBannerTarget(ann) && !isAcknowledged(userKey, ann.id)
+          (ann) =>
+            isBannerTarget(ann) &&
+            isVisibleForAudience(ann, CURRENT_AUDIENCE) &&
+            !isAcknowledged(userKey, ann.id)
         );
-        // 最初の1件を選択（優先度が必要なら後で拡張）
+        // critical を優先、その後 warn
+        bannerCandidates.sort((a, b) => {
+          if (a.severity === 'critical' && b.severity !== 'critical') return -1;
+          if (a.severity !== 'critical' && b.severity === 'critical') return 1;
+          return 0;
+        });
         if (!cancelled) {
           setAnnouncement(bannerCandidates[0] ?? null);
         }

@@ -7,7 +7,7 @@
 
 import React from 'react';
 import { Card, Tag, Space } from 'antd';
-import { RightOutlined } from '@ant-design/icons';
+import { RightOutlined, PaperClipOutlined } from '@ant-design/icons';
 import type { AnnouncementDisplayItem } from '../model/useAnnouncementsListViewModel';
 
 interface AnnouncementListItemProps {
@@ -63,7 +63,7 @@ export const AnnouncementListItem: React.FC<AnnouncementListItemProps> = ({
         {/* 中央：コンテンツ */}
         <div style={{ flex: 1, minWidth: 0 }}>
           {isMobile ? (
-            // モバイル：タイトルと日付を2行に分ける、タグは非表示
+            // モバイル：タイトルと日付を2行に分ける
             <>
               <h4
                 style={{
@@ -80,19 +80,29 @@ export const AnnouncementListItem: React.FC<AnnouncementListItemProps> = ({
               >
                 {item.title}
               </h4>
-              <span
+              <div
                 style={{
-                  display: 'block',
-                  fontSize: 11,
-                  color: '#8c8c8c',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
                   marginBottom: 6,
                 }}
               >
-                {item.publishedLabel}
-              </span>
+                <span
+                  style={{
+                    fontSize: 11,
+                    color: '#8c8c8c',
+                  }}
+                >
+                  {item.publishedLabel}
+                </span>
+                {item.hasAttachments && (
+                  <PaperClipOutlined style={{ fontSize: 12, color: '#8c8c8c' }} />
+                )}
+              </div>
             </>
           ) : (
-            // デスクトップ：既存のレイアウト（タイトル + バッジ + 公開日を1行）
+            // デスクトップ：既存のレイアウト（タイトル + バッジ + タグ + 添付 + 公開日を1行）
             <div
               style={{
                 display: 'flex',
@@ -118,6 +128,7 @@ export const AnnouncementListItem: React.FC<AnnouncementListItemProps> = ({
                 >
                   {item.title}
                 </h4>
+                {/* 重要度バッジ */}
                 {item.badges.length > 0 && (
                   <Space size={4} style={{ flexShrink: 0 }}>
                     {item.badges.slice(0, 2).map((badge, index) => (
@@ -130,6 +141,28 @@ export const AnnouncementListItem: React.FC<AnnouncementListItemProps> = ({
                       </Tag>
                     ))}
                   </Space>
+                )}
+                {/* タグ（最大3個） */}
+                {item.tags.length > 0 && (
+                  <Space size={4} style={{ flexShrink: 0 }}>
+                    {item.tags.map((tag, index) => (
+                      <Tag
+                        key={`tag-${index}`}
+                        style={{ margin: 0, fontSize: 10, backgroundColor: '#f0f0f0', borderColor: '#d9d9d9' }}
+                      >
+                        {tag}
+                      </Tag>
+                    ))}
+                  </Space>
+                )}
+                {/* 添付ありバッジ */}
+                {item.hasAttachments && (
+                  <Tag
+                    icon={<PaperClipOutlined />}
+                    style={{ margin: 0, fontSize: 10, backgroundColor: '#e6f7ff', borderColor: '#91d5ff' }}
+                  >
+                    添付
+                  </Tag>
                 )}
               </div>
               <span

@@ -3,6 +3,11 @@
  * 
  * シードデータからお知らせを取得するローカル実装。
  * 後で HttpAnnouncementRepository に差し替え可能。
+ * 
+ * 【Repository の責務】
+ * - アクティブ（公開期間内）なお知らせのみを返す
+ * - 対象（audience）フィルタは ViewModel 側で行う
+ *   （将来 API 化の際はサーバー側でユーザー属性に基づきフィルタ）
  */
 
 import type { Announcement } from '../domain/announcement';
@@ -16,6 +21,8 @@ import { ANNOUNCEMENT_SEEDS } from './seed';
 export class LocalAnnouncementRepository implements AnnouncementRepository {
   /**
    * アクティブなお知らせ一覧を取得
+   * 
+   * 注意: audience フィルタは適用しない（ViewModel で行う）
    */
   async list(): Promise<Announcement[]> {
     const now = new Date();

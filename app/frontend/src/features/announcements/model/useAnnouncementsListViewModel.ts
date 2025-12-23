@@ -5,10 +5,12 @@
  * - 一覧取得
  * - 詳細表示の開閉
  * - 詳細を開いたら既読にする
+ * - 期限・対象フィルタ適用
  */
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import type { Announcement, AnnouncementSeverity } from '../domain/announcement';
+import type { Announcement, AnnouncementSeverity, Audience } from '../domain/announcement';
+import { isAnnouncementActive, isVisibleForAudience } from '../domain/announcement';
 import { announcementRepository } from '../infrastructure/LocalAnnouncementRepository';
 import {
   isRead,
@@ -16,6 +18,14 @@ import {
   loadUserState,
 } from '../infrastructure/announcementUserStateStorage';
 import { stripMarkdownForSnippet } from '../domain/stripMarkdownForSnippet';
+
+/**
+ * 現在のユーザーオーディエンス
+ * 
+ * TODO: 将来的にはユーザープロファイル（認証情報/ユーザー設定）から取得する
+ * 現在はデモ用に 'site:narita' を設定
+ */
+const CURRENT_AUDIENCE: Audience = 'site:narita';
 
 /**
  * フィルタタブの種類
@@ -42,6 +52,10 @@ export interface AnnouncementDisplayItem {
   isUnread: boolean;
   isPinned: boolean;
   severity: AnnouncementSeverity;
+  /** タグ（最大3個表示） */
+  tags: string[];
+  /** 添付があるかどうか */
+  hasAttachments: boolean;
 }
 
 interface UseAnnouncementsListViewModelResult {
@@ -146,14 +160,28 @@ export function useAnnouncementsListViewModel(
     // stateVersion に依存させることで再計算を促す
     void stateVersion;
     const state = loadUserState(userKey);
-    return announcements.filter((ann) => !state.readAtById[ann.id]).length;
+    // 対象フィルタ適用後のお知らせで未読数を計算
+    const visibleAnnouncements = announcements.filter((ann) =>
+      isVisibleForAudience(ann, CURRENT_AUDIENCE)
+    );
+    return visibleAnnouncements.filter((ann) => !state.readAtById[ann.id]).length;
   }, [announcements, userKey, stateVersion]);
 
   /**
+   * 対象フィルタ適用済みのお知らせ
+   */
+  const visibleAnnouncements = useMemo(() => {
+    return announcements.filter((ann) =>
+      isVisibleForAudience(ann, CURRENT_AUDIENCE)
+    );
+  }, [announcements]);
+
+  /**
    * 表示用に整形されたアイテムを生成
+   * 対象フィルタ適用済み
    */
   const displayItems = useMemo<AnnouncementDisplayItem[]>(() => {
-    return announcements.map((ann) => {
+    return visibleAnnouncements.map((ann) => {
       // 公開日をフォーマット
       const publishedDate = new Date(ann.publishFrom);
       const publishedLabel = publishedDate.toLocaleDateString('ja-JP', {
@@ -181,6 +209,12 @@ export function useAnnouncementsListViewModel(
           break;
       }
 
+      // タグ（最大3個）
+      const tags = ann.tags?.slice(0, 3) ?? [];
+
+      // 添付有無
+      const hasAttachments = (ann.attachments?.length ?? 0) > 0;
+
       return {
         id: ann.id,
         title: ann.title,
@@ -190,9 +224,11 @@ export function useAnnouncementsListViewModel(
         isUnread: isUnread(ann.id),
         isPinned: false,
         severity: ann.severity,
+        tags,
+        hasAttachments,
       };
     });
-  }, [announcements, isUnread]);
+  }, [visibleAnnouncements, isUnread]);
 
   /**
    * 重要・注意アイツム（warn/critical、タブフィルタ適用済み）

@@ -15,9 +15,14 @@
 export type {
   Announcement,
   AnnouncementSeverity,
+  Audience,
+  Attachment,
+  NotificationChannel,
+  NotificationPlan,
 } from './domain/announcement';
 export {
   isAnnouncementActive,
+  isVisibleForAudience,
   isBannerTarget,
 } from './domain/announcement';
 

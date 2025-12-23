@@ -3,11 +3,22 @@
  * 
  * サイドバー用の軽量ViewModel。
  * 未読のお知らせ数を返す。
+ * 対象フィルタ（audience）適用済み。
  */
 
 import { useState, useEffect, useCallback } from 'react';
+import type { Audience } from '../domain/announcement';
+import { isVisibleForAudience } from '../domain/announcement';
 import { announcementRepository } from '../infrastructure/LocalAnnouncementRepository';
 import { getUnreadCount } from '../infrastructure/announcementUserStateStorage';
+
+/**
+ * 現在のユーザーオーディエンス
+ * 
+ * TODO: 将来的にはユーザープロファイル（認証情報/ユーザー設定）から取得する
+ * 現在はデモ用に 'site:narita' を設定
+ */
+const CURRENT_AUDIENCE: Audience = 'site:narita';
 
 interface UseUnreadAnnouncementCountViewModelResult {
   /** 未読数 */
@@ -37,10 +48,12 @@ export function useUnreadAnnouncementCountViewModel(
       try {
         setIsLoading(true);
         const all = await announcementRepository.list();
-        const ids = all.map((ann) => ann.id);
+        // 対象フィルタ適用
+        const visible = all.filter((ann) =>
+          isVisibleForAudience(ann, CURRENT_AUDIENCE)
+        );
+        const ids = visible.map((ann) => ann.id);
         const count = getUnreadCount(userKey, ids);
-        // デバッグログ
-        console.log('[useUnreadAnnouncementCountViewModel] all:', all.length, 'ids:', ids, 'count:', count, 'userKey:', userKey);
         if (!cancelled) {
           setUnreadCount(count);
         }
