@@ -82,16 +82,9 @@ export const AnnouncementBanner: React.FC<AnnouncementBannerProps> = ({
       showIcon
       message={
         isMobile ? (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, width: '100%' }}>
-            <span style={{ fontSize: '13px', fontWeight: 600, flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {announcement.title}
-            </span>
-            {onNavigateToDetail && navigateFn && (
-              <Button type="primary" size="small" onClick={handleClick} style={{ flexShrink: 0, fontSize: '12px', height: '24px', padding: '0 8px' }}>
-                詳細
-              </Button>
-            )}
-          </div>
+          <span style={{ fontSize: '13px', fontWeight: 600 }}>
+            {announcement.title}
+          </span>
         ) : (
           <span style={{ fontSize: '15px' }}>
             {announcement.title}
@@ -99,26 +92,42 @@ export const AnnouncementBanner: React.FC<AnnouncementBannerProps> = ({
         )
       }
       description={
-        !isMobile && onNavigateToDetail && navigateFn ? (
-          <Space direction="vertical" style={{ width: '100%' }}>
-            <span style={{ fontSize: '14px' }}>
-              {stripMarkdownForSnippet(announcement.bodyMd, 100)}
-            </span>
-            <Button type="primary" size="small" onClick={handleClick}>
-              詳細を見る
+        !isMobile ? (
+          <span style={{ fontSize: '14px' }}>
+            {stripMarkdownForSnippet(announcement.bodyMd, 100)}
+          </span>
+        ) : undefined
+      }
+      action={
+        onNavigateToDetail && navigateFn ? (
+          <Space size={8} style={{ marginRight: isMobile ? 0 : 8 }}>
+            <Button 
+              type="primary" 
+              size={isMobile ? 'small' : 'middle'}
+              onClick={handleClick}
+              style={isMobile ? { fontSize: '12px', height: '24px', padding: '0 8px' } : undefined}
+            >
+              {isMobile ? '詳細' : '詳細を見る'}
             </Button>
+            <Button
+              type="text"
+              size={isMobile ? 'small' : 'middle'}
+              icon={<CloseOutlined />}
+              onClick={onClose}
+              style={{ color: 'inherit' }}
+            />
           </Space>
         ) : (
-          !isMobile ? (
-            <span style={{ fontSize: '14px' }}>
-              {stripMarkdownForSnippet(announcement.bodyMd, 100)}
-            </span>
-          ) : undefined
+          <Button
+            type="text"
+            size={isMobile ? 'small' : 'middle'}
+            icon={<CloseOutlined />}
+            onClick={onClose}
+            style={{ color: 'inherit' }}
+          />
         )
       }
-      closable
-      closeIcon={<CloseOutlined />}
-      onClose={onClose}
+      closable={false}
       style={{ marginBottom: isMobile ? 4 : 16 }}
     />
   );

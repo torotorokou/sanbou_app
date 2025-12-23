@@ -12,12 +12,8 @@ import {
   PaperClipOutlined,
   FilePdfOutlined,
   LinkOutlined,
-  BellOutlined,
-  MailOutlined,
-  MessageOutlined,
-  MobileOutlined,
 } from '@ant-design/icons';
-import type { Announcement, NotificationChannel } from '../domain/announcement';
+import type { Announcement } from '../domain/announcement';
 
 const { Title, Text } = Typography;
 
@@ -70,20 +66,6 @@ function formatDate(isoString: string): string {
     month: '2-digit',
     day: '2-digit',
   });
-}
-
-/**
- * 通知チャネルのラベルとアイコンを取得
- */
-function getChannelDisplay(channel: NotificationChannel): { label: string; icon: React.ReactNode } {
-  switch (channel) {
-    case 'inApp':
-      return { label: 'アプリ内', icon: <MobileOutlined /> };
-    case 'email':
-      return { label: 'メール', icon: <MailOutlined /> };
-    case 'line':
-      return { label: 'LINE', icon: <MessageOutlined /> };
-  }
 }
 
 /**

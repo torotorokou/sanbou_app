@@ -9,6 +9,7 @@ import React from 'react';
 import { Card, Tag, Space } from 'antd';
 import { RightOutlined, PaperClipOutlined } from '@ant-design/icons';
 import type { AnnouncementDisplayItem } from '../model/useAnnouncementsListViewModel';
+import type { AnnouncementSeverity } from '../domain/announcement';
 
 interface AnnouncementListItemProps {
   /** 表示用に整形されたアイテム */
@@ -19,13 +20,44 @@ interface AnnouncementListItemProps {
   isMobile?: boolean;
 }
 
+/**
+ * 重要度に応じた色を返す
+ */
+function getSeverityColor(severity: AnnouncementSeverity): string {
+  switch (severity) {
+    case 'critical':
+      return '#ff4d4f'; // 赤（重要）
+    case 'warn':
+      return '#faad14'; // オレンジ（注意）
+    case 'info':
+    default:
+      return '#1890ff'; // 青（情報）
+  }
+}
+
+/**
+ * 重要度に応じた背景色を返す（未読時）
+ */
+function getSeverityBgColor(severity: AnnouncementSeverity): string {
+  switch (severity) {
+    case 'critical':
+      return '#fff1f0'; // 淡い赤
+    case 'warn':
+      return '#fffbf0'; // 淡い黄
+    case 'info':
+    default:
+      return '#e6f7ff'; // 淡い青
+  }
+}
+
 export const AnnouncementListItem: React.FC<AnnouncementListItemProps> = ({
   item,
   onOpen,
   isMobile = false,
 }) => {
-  // 未読の識別色（黄色）
-  const unreadColor = '#faad14';
+  // 未読の識別色をseverityに応じて設定
+  const unreadColor = getSeverityColor(item.severity);
+  const unreadBgColor = getSeverityBgColor(item.severity);
   
   return (
     <Card
@@ -34,14 +66,14 @@ export const AnnouncementListItem: React.FC<AnnouncementListItemProps> = ({
         marginBottom: 8,
         borderRadius: 8,
         cursor: 'pointer',
-        backgroundColor: item.isUnread ? '#fffbf0' : '#fafafa',
+        backgroundColor: item.isUnread ? unreadBgColor : '#fafafa',
         borderLeft: item.isUnread ? `4px solid ${unreadColor}` : '4px solid transparent',
         transition: 'all 0.2s',
       }}
       styles={{
         body: {
           padding: isMobile ? '12px 16px' : '16px 20px',
-          backgroundColor: item.isUnread ? '#fffbf0' : '#fafafa',
+          backgroundColor: item.isUnread ? unreadBgColor : '#fafafa',
         },
       }}
     >
