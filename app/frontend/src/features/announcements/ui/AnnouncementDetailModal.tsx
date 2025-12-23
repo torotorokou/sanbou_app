@@ -9,7 +9,7 @@ import React from 'react';
 import { Modal, Tag, Typography, Divider } from 'antd';
 import type { Announcement } from '../domain/announcement';
 
-const { Title, Paragraph, Text } = Typography;
+const { Title, Text } = Typography;
 
 interface AnnouncementDetailModalProps {
   /** 表示するお知らせ（nullの場合は表示しない） */
@@ -93,7 +93,6 @@ function renderMarkdownSimple(md: string): React.ReactNode {
         <div
           key={index}
           style={{ marginBottom: 4, paddingLeft: 16 }}
-          // eslint-disable-next-line react/no-danger
           dangerouslySetInnerHTML={{
             __html: `• ${boldReplaced.replace('- ', '')}`,
           }}
@@ -105,7 +104,6 @@ function renderMarkdownSimple(md: string): React.ReactNode {
         <div
           key={index}
           style={{ marginBottom: 4, paddingLeft: 16 }}
-          // eslint-disable-next-line react/no-danger
           dangerouslySetInnerHTML={{ __html: boldReplaced }}
         />
       );
@@ -119,7 +117,6 @@ function renderMarkdownSimple(md: string): React.ReactNode {
       <div
         key={index}
         style={{ marginBottom: 4 }}
-        // eslint-disable-next-line react/no-danger
         dangerouslySetInnerHTML={{ __html: boldReplaced }}
       />
     );

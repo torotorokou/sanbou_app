@@ -29,7 +29,6 @@ export const ANNOUNCEMENT_SEEDS: Announcement[] = [
 
 ご不便をおかけしますが、ご理解のほどよろしくお願いいたします。`,
     severity: 'warn',
-    pinned: true,
     publishFrom: '2024-12-01T00:00:00Z',
     publishTo: '2025-12-31T23:59:59Z',
   },
@@ -51,7 +50,6 @@ export const ANNOUNCEMENT_SEEDS: Announcement[] = [
 
 ぜひご活用ください！`,
     severity: 'info',
-    pinned: false,
     publishFrom: '2024-12-01T00:00:00Z',
     publishTo: null,
   },
@@ -73,8 +71,150 @@ export const ANNOUNCEMENT_SEEDS: Announcement[] = [
 
 セキュリティ向上にご協力をお願いいたします。`,
     severity: 'critical',
-    pinned: true,
     publishFrom: '2024-12-01T00:00:00Z',
     publishTo: '2025-12-31T23:59:59Z',
+  },
+  {
+    id: 'ann-004',
+    title: '年末年始の営業時間のお知らせ',
+    bodyMd: `## 年末年始の営業時間について
+
+年末年始の営業時間をお知らせいたします。
+
+### 営業日時
+- 12月29日（金）まで: 通常営業
+- 12月30日（土）〜1月3日（水）: 休業
+- 1月4日（木）より: 通常営業
+
+緊急のお問い合わせは緊急連絡先までご連絡ください。`,
+    severity: 'info',
+    publishFrom: '2024-12-01T00:00:00Z',
+    publishTo: null,
+  },
+  {
+    id: 'ann-005',
+    title: 'サーバー増強作業完了のお知らせ',
+    bodyMd: `## サーバー増強作業完了
+
+サーバー増強作業が完了しました。
+
+### 改善内容
+- レスポンス速度が約30%向上
+- 同時接続数の上限を拡大
+- データ処理性能の向上
+
+快適にご利用いただけるようになりました。`,
+    severity: 'info',
+    publishFrom: '2024-12-01T00:00:00Z',
+    publishTo: null,
+  },
+  {
+    id: 'ann-006',
+    title: '【注意】不正アクセスに関する注意喚起',
+    bodyMd: `## 不正アクセスに関する注意喚起
+
+最近、フィッシング詐欺が増加しています。
+
+### 注意点
+- 不審なメールのリンクをクリックしない
+- パスワードを他人に教えない
+- 定期的なパスワード変更を実施
+
+セキュリティ意識を高めてご利用ください。`,
+    severity: 'warn',
+    publishFrom: '2024-12-01T00:00:00Z',
+    publishTo: null,
+  },
+  {
+    id: 'ann-007',
+    title: 'ヘルプドキュメント更新のお知らせ',
+    bodyMd: `## ヘルプドキュメント更新
+
+マニュアルとFAQを更新しました。
+
+新機能の使い方や、よくある質問への回答を追加しています。
+ぜひご参照ください。`,
+    severity: 'info',
+    publishFrom: '2024-12-01T00:00:00Z',
+    publishTo: null,
+  },
+  {
+    id: 'ann-008',
+    title: 'ユーザー満足度調査のお願い',
+    bodyMd: `## ユーザー満足度調査のお願い
+
+より良いサービス提供のため、アンケートへのご協力をお願いします。
+
+所要時間: 約3分
+回答期限: 12月31日まで
+
+ご協力をお願いいたします。`,
+    severity: 'info',
+    publishFrom: '2024-12-01T00:00:00Z',
+    publishTo: null,
+  },
+  {
+    id: 'ann-009',
+    title: 'バックアップ機能追加のお知らせ',
+    bodyMd: `## バックアップ機能追加
+
+データの自動バックアップ機能を追加しました。
+
+### 機能
+- 毎日自動バックアップ
+- 過去30日分のデータ保持
+- ワンクリックで復元可能
+
+安心してご利用ください。`,
+    severity: 'info',
+    publishFrom: '2024-12-01T00:00:00Z',
+    publishTo: null,
+  },
+  {
+    id: 'ann-010',
+    title: 'モバイルアプリ対応予定のお知らせ',
+    bodyMd: `## モバイルアプリ対応予定
+
+来年1月にモバイルアプリをリリース予定です。
+
+### 機能
+- スマートフォン最適化UI
+- プッシュ通知機能
+- オフライン対応
+
+続報をお待ちください。`,
+    severity: 'info',
+    publishFrom: '2024-12-01T00:00:00Z',
+    publishTo: null,
+  },
+  {
+    id: 'ann-011',
+    title: 'データエクスポート機能改善のお知らせ',
+    bodyMd: `## データエクスポート機能改善
+
+CSV/Excel形式でのデータエクスポート機能を改善しました。
+
+### 改善点
+- エクスポート速度向上
+- 大容量データ対応
+- カスタム項目選択機能
+
+ぜひご活用ください。`,
+    severity: 'info',
+    publishFrom: '2024-12-01T00:00:00Z',
+    publishTo: null,
+  },
+  {
+    id: 'ann-012',
+    title: 'APIドキュメント公開のお知らせ',
+    bodyMd: `## APIドキュメント公開
+
+外部連携用のAPIドキュメントを公開しました。
+
+開発者向けの詳細な仕様書をご覧いただけます。
+詳細はマニュアルページをご確認ください。`,
+    severity: 'info',
+    publishFrom: '2024-12-01T00:00:00Z',
+    publishTo: null,
   },
 ];

@@ -10,6 +10,7 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RTooltip, Lege
 import { COLORS, FONT } from "@/features/dashboard/ukeire/domain/constants";
 import { ChartFrame } from "@/features/dashboard/ukeire/shared/ui/ChartFrame";
 import { SingleLineLegend } from "@/features/dashboard/ukeire/shared/ui/SingleLineLegend";
+import dayjs from "dayjs";
 
 export type DailyCumulativeCardProps = {
   cumData: {
@@ -54,6 +55,10 @@ export const DailyCumulativeCard: React.FC<DailyCumulativeCardProps> = ({ cumDat
       return `(${sign}${absPct}%)`;
     };
 
+    const weekday = data?.yyyyMMdd ? ["日", "月", "火", "水", "木", "金", "土"][dayjs(data.yyyyMMdd).day()] : null;
+    const baseLabel = label ? `${label}日` : "";
+    const labelText = baseLabel ? `${baseLabel}${weekday ? ` (${weekday})` : ""}` : "";
+
     return (
       <div
         style={{
@@ -64,7 +69,7 @@ export const DailyCumulativeCard: React.FC<DailyCumulativeCardProps> = ({ cumDat
           borderRadius: 4,
         }}
       >
-        <div style={{ fontWeight: 600, marginBottom: 4, color: "#262626" }}>{label}</div>
+        <div style={{ fontWeight: 600, marginBottom: 4, color: "#262626" }}>{labelText}</div>
         <div style={{ color: COLORS.actual, marginBottom: 2 }}>
           累積実績: {actual.toFixed(1)}t
         </div>

@@ -10,12 +10,7 @@ import { Badge } from 'antd';
 import { ROUTER_PATHS } from '@app/routes/routes';
 import { useUnreadCount } from './useUnreadCount';
 
-interface NewsMenuLabelProps {
-  /** サイドバーが閉じているかどうか */
-  collapsed?: boolean;
-}
-
-export const NewsMenuLabel: React.FC<NewsMenuLabelProps> = ({ collapsed = false }) => {
+export const NewsMenuLabel: React.FC = () => {
   const unreadCount = useUnreadCount();
 
   // 常にバッジを表示（サイドバーの開閉状態に関わらず）

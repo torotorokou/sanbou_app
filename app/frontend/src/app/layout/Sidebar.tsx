@@ -1,6 +1,6 @@
 // src/layout/Sidebar.tsx
 import React from 'react';
-import { Layout, Menu, Button, Drawer, Badge } from 'antd';
+import { Layout, Menu, Button, Drawer } from 'antd';
 import { MenuFoldOutlined, MenuUnfoldOutlined, HomeOutlined } from '@ant-design/icons';
 import { useLocation } from 'react-router-dom';
 import { SIDEBAR_MENU } from '@app/navigation/sidebarMenu';
@@ -15,8 +15,7 @@ const { Sider } = Layout;
 
 /** メニューアイテムにアナウンス関連のアイコン/ラベルを追加 */
 const useEnhancedMenu = (
-    isSidebarOpen: boolean, // サイドバーが開いているか（未読数表示判定用）
-    unreadCount: number
+    isSidebarOpen: boolean // サイドバーが開いているか（未読数表示判定用）
 ): MenuItem[] => {
     return React.useMemo<MenuItem[]>(() => {
         const filtered = filterMenuItems(SIDEBAR_MENU as MenuItem[]);
@@ -44,7 +43,7 @@ const useEnhancedMenu = (
             }
             return item;
         });
-    }, [isSidebarOpen, unreadCount]);
+    }, [isSidebarOpen]);
 };
 
 /** メニューの親キー（子を持つ項目）を抽出 */
@@ -127,7 +126,7 @@ const Sidebar: React.FC = () => {
     // サイドバーが開いているかの判定（未読数表示用）
     const isSidebarOpen = isMobile ? drawerOpen : !collapsed;
     
-    const visibleMenu = useEnhancedMenu(isSidebarOpen, unreadCount);
+    const visibleMenu = useEnhancedMenu(isSidebarOpen);
     const parentKeys = React.useMemo(() => extractParentKeys(visibleMenu), [visibleMenu]);
     
     const [openKeys, setOpenKeys] = React.useState<string[]>([]);

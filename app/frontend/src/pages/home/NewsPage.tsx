@@ -24,7 +24,7 @@ const NewsPage: React.FC = () => {
   const { user } = useAuth();
   const userKey = user?.userId ?? 'local';
   const navigate = useNavigate();
-  const { isMobile, isTablet, isDesktop } = useResponsive();
+  const { isMobile, isTablet } = useResponsive();
 
   const {
     selectedTab,
@@ -35,7 +35,6 @@ const NewsPage: React.FC = () => {
     isLoading,
     selectedAnnouncement,
     isDetailOpen,
-    openDetail,
     closeDetail,
   } = useAnnouncementsListViewModel(userKey);
 
@@ -66,8 +65,8 @@ const NewsPage: React.FC = () => {
 
   return (
     <div className={`${containerClass} ${maxWidthClass} mx-auto`}>
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-        <Title level={isMobile ? 3 : 2} style={{ margin: 0, textAlign: 'center' }}>お知らせ一覧</Title>
+      <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12, marginBottom: 16 }}>
+        <Title level={isMobile ? 3 : 2} style={{ margin: 0 }}>お知らせ一覧</Title>
         {unreadCount > 0 && (
           <Badge
             count={`未読 ${unreadCount}`}

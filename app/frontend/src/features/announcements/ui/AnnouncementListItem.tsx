@@ -68,14 +68,14 @@ export const AnnouncementListItem: React.FC<AnnouncementListItemProps> = ({
               <h4
                 style={{
                   margin: 0,
-                  marginBottom: 8,
-                  fontSize: 16,
+                  marginBottom: 6,
+                  fontSize: 14,
                   fontWeight: item.isUnread ? 700 : 600,
                   color: item.isUnread ? '#262626' : '#404040',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap',
-                  letterSpacing: '0.3px',
+                  letterSpacing: '0.2px',
                 }}
               >
                 {item.title}
@@ -83,9 +83,9 @@ export const AnnouncementListItem: React.FC<AnnouncementListItemProps> = ({
               <span
                 style={{
                   display: 'block',
-                  fontSize: 12,
+                  fontSize: 11,
                   color: '#8c8c8c',
-                  marginBottom: 8,
+                  marginBottom: 6,
                 }}
               >
                 {item.publishedLabel}

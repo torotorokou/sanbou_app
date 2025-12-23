@@ -17,8 +17,6 @@ interface AnnouncementBannerProps {
   announcement: Announcement;
   /** 閉じる（確認済みにする）コールバック */
   onClose: () => void;
-  /** 「理解した」ボタンのコールバック（onCloseと同じ挙動でも可） */
-  onAcknowledge: () => void;
   /** 詳細ページへの遷移コールバック */
   onNavigateToDetail?: () => void;
 }
@@ -58,7 +56,6 @@ function getSeverityIcon(severity: Announcement['severity']): React.ReactNode {
 export const AnnouncementBanner: React.FC<AnnouncementBannerProps> = ({
   announcement,
   onClose,
-  onAcknowledge,
   onNavigateToDetail,
 }) => {
   const { isMobile } = useResponsive();

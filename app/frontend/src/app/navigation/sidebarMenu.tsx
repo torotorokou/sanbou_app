@@ -11,7 +11,6 @@ import {
     FileTextOutlined, // 文書
     DatabaseOutlined, // データベース
     SettingOutlined, // 設定
-    NotificationOutlined, // お知らせ
     SolutionOutlined, // ソリューション
     TeamOutlined, // チーム・顧客
     CompassOutlined, // ナビゲーション
@@ -30,20 +29,7 @@ import {
 // ルーティング
 import { Link } from 'react-router-dom';
 import { ROUTER_PATHS } from '@app/routes/routes';
-import { NewsMenuLabel, NewsMenuIcon, useUnreadCount } from '@features/announcements';
-import { Badge } from 'antd';
-
-// ホームアイコン（サイドバー閉じている時に未読ドット表示）
-const HomeIconWithBadge = ({ collapsed }: { collapsed?: boolean }) => {
-  const unreadCount = useUnreadCount();
-  const showDot = collapsed && unreadCount > 0;
-  
-  return (
-    <Badge dot={showDot} offset={[4, 4]}>
-      <HomeOutlined />
-    </Badge>
-  );
-};
+import { NewsMenuLabel, NewsMenuIcon } from '@features/announcements';
 
 // サイドバーのメニュー定義
 export const SIDEBAR_MENU = [

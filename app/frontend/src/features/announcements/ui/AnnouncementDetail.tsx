@@ -99,7 +99,6 @@ function renderMarkdownSimple(md: string): React.ReactNode {
         <div
           key={index}
           style={{ marginBottom: 8, paddingLeft: 16 }}
-          // eslint-disable-next-line react/no-danger
           dangerouslySetInnerHTML={{
             __html: `• ${boldReplaced.replace('- ', '')}`,
           }}
@@ -111,7 +110,6 @@ function renderMarkdownSimple(md: string): React.ReactNode {
         <div
           key={index}
           style={{ marginBottom: 8, paddingLeft: 16 }}
-          // eslint-disable-next-line react/no-danger
           dangerouslySetInnerHTML={{ __html: boldReplaced }}
         />
       );
@@ -125,7 +123,6 @@ function renderMarkdownSimple(md: string): React.ReactNode {
       <div
         key={index}
         style={{ marginBottom: 8, lineHeight: '1.6' }}
-        // eslint-disable-next-line react/no-danger
         dangerouslySetInnerHTML={{ __html: boldReplaced }}
       />
     );

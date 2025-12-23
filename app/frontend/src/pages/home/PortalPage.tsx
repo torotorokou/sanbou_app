@@ -537,7 +537,6 @@ export const PortalPage: React.FC = () => {
             <AnnouncementBanner
               announcement={bannerAnnouncement}
               onClose={onBannerAcknowledge}
-              onAcknowledge={onBannerAcknowledge}
               onNavigateToDetail={() => navigate(`/news/${bannerAnnouncement.id}`)}
             />
           </div>
