@@ -15,12 +15,56 @@ import { HomeOutlined } from '@ant-design/icons';
 
 const { Sider } = Layout;
 
+// モバイル用メニューボタン（Portalでbodyに直接レンダリング）
+const MobileMenuButton: React.FC<{ onClick: () => void }> = ({ onClick }) => {
+    const [mounted, setMounted] = React.useState(false);
+    
+    React.useEffect(() => {
+        setMounted(true);
+        console.log('[MobileMenuButton] mounted');
+    }, []);
+    
+    console.log('[MobileMenuButton] render, mounted:', mounted);
+    
+    if (!mounted) return null;
+    
+    return ReactDOM.createPortal(
+        <Button
+            type="primary"
+            icon={<MenuUnfoldOutlined />}
+            onClick={() => {
+                console.log('[MobileMenuButton] clicked');
+                onClick();
+            }}
+            style={{
+                position: 'fixed',
+                top: 16,
+                left: 16,
+                zIndex: 10000,
+                boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+                pointerEvents: 'auto',
+                width: 48,
+                height: 48,
+                backgroundColor: '#1890ff',
+                border: '3px solid #ff0000', // デバッグ用: 赤枠で視認性確保
+            }}
+            size="large"
+        />,
+        document.body
+    );
+};
+
 // UIは開閉ロジックを持たず、カスタムフックに委譲（MVCのV）
 const Sidebar: React.FC = () => {
     const location = useLocation();
     const { collapsed, setCollapsed, config: sidebarConfig, style: animationStyles } = useSidebar();
-    const { isTablet } = useResponsive();
+    const { isTablet, isMobile } = useResponsive();
     const unreadCount = useUnreadCount();
+    
+    // デバッグログ
+    React.useEffect(() => {
+        console.log('[Sidebar] drawerMode:', sidebarConfig.drawerMode, 'collapsed:', collapsed, 'isMobile:', isMobile);
+    }, [sidebarConfig.drawerMode, collapsed, isMobile]);
 
     // openKeys を管理して、サイドバーが開いているときは子メニューを展開する
     const [openKeys, setOpenKeys] = React.useState<string[]>([]);
@@ -77,23 +121,7 @@ const Sidebar: React.FC = () => {
     if (sidebarConfig.drawerMode) {
         return (
             <>
-                {collapsed && typeof document !== 'undefined' && ReactDOM.createPortal(
-                    <Button
-                        type="primary"
-                        icon={<MenuUnfoldOutlined />}
-                        onClick={() => setCollapsed(false)}
-                        style={{
-                            position: 'fixed',
-                            top: 16,
-                            left: 16,
-                            zIndex: 10000,
-                            boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
-                            pointerEvents: 'auto',
-                        }}
-                        size="large"
-                    />,
-                    document.body
-                )}
+                {collapsed && <MobileMenuButton onClick={() => setCollapsed(false)} />}
                 <Drawer
                     title="メニュー"
                     placement="left"

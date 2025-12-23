@@ -52,7 +52,7 @@ export function useSidebar(
         collapsedWidth: 0,
         breakpoint: "xs",
         defaultCollapsed: true,
-        forceCollapse: true, // モバイルでは強制的に閉じる
+        forceCollapse: false, // Drawerモードではユーザーが開閉可能
         drawerMode: true,
       };
     }
