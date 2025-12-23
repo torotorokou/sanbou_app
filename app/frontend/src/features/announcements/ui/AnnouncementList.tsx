@@ -20,12 +20,15 @@ interface AnnouncementListProps {
   otherItems: AnnouncementDisplayItem[];
   /** 詳細を開くコールバック */
   onOpen: (id: string) => void;
+  /** モバイルモード */
+  isMobile?: boolean;
 }
 
 export const AnnouncementList: React.FC<AnnouncementListProps> = ({
   importantItems,
   otherItems,
   onOpen,
+  isMobile = false,
 }) => {
   // 空状態
   if (importantItems.length === 0 && otherItems.length === 0) {
@@ -46,7 +49,7 @@ export const AnnouncementList: React.FC<AnnouncementListProps> = ({
             重要なお知らせ（{importantItems.length}）
           </Title>
           {importantItems.map((item) => (
-            <AnnouncementListItem key={item.id} item={item} onOpen={onOpen} />
+            <AnnouncementListItem key={item.id} item={item} onOpen={onOpen} isMobile={isMobile} />
           ))}
         </div>
       )}
@@ -58,7 +61,7 @@ export const AnnouncementList: React.FC<AnnouncementListProps> = ({
             一般のお知らせ（{otherItems.length}）
           </Title>
           {otherItems.map((item) => (
-            <AnnouncementListItem key={item.id} item={item} onOpen={onOpen} />
+            <AnnouncementListItem key={item.id} item={item} onOpen={onOpen} isMobile={isMobile} />
           ))}
         </div>
       )}

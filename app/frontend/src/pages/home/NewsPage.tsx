@@ -9,6 +9,7 @@ import React from 'react';
 import { Typography, Spin, Card, Badge } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@features/authStatus';
+import { useResponsive } from '@/shared';
 import {
   useAnnouncementsListViewModel,
   AnnouncementList,
@@ -23,6 +24,7 @@ const NewsPage: React.FC = () => {
   const { user } = useAuth();
   const userKey = user?.userId ?? 'local';
   const navigate = useNavigate();
+  const { isMobile, isTablet, isDesktop } = useResponsive();
 
   const {
     selectedTab,
@@ -43,14 +45,27 @@ const NewsPage: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div style={{ padding: 24, textAlign: 'center' }}>
+      <div className={`text-center ${isMobile ? 'p-4' : 'p-6'}`}>
         <Spin size="large" />
       </div>
     );
   }
 
+  // レスポンシブコンテナスタイル
+  const containerClass = isMobile 
+    ? 'px-3 py-4' 
+    : isTablet 
+    ? 'px-6 py-5' 
+    : 'px-8 py-6';
+  
+  const maxWidthClass = isMobile
+    ? 'max-w-full'
+    : isTablet
+    ? 'max-w-4xl'
+    : 'max-w-5xl';
+
   return (
-    <div style={{ padding: 24 }}>
+    <div className={`${containerClass} ${maxWidthClass} mx-auto`}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
         <Title level={2} style={{ margin: 0 }}>お知らせ一覧</Title>
         {unreadCount > 0 && (
@@ -77,6 +92,7 @@ const NewsPage: React.FC = () => {
           importantItems={importantItems}
           otherItems={otherItems}
           onOpen={handleOpenDetail}
+          isMobile={isMobile}
         />
       </Card>
 

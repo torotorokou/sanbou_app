@@ -15,12 +15,18 @@ interface AnnouncementListItemProps {
   item: AnnouncementDisplayItem;
   /** クリックコールバック */
   onOpen: (id: string) => void;
+  /** モバイルモード（スニペットを短くする） */
+  isMobile?: boolean;
 }
 
 export const AnnouncementListItem: React.FC<AnnouncementListItemProps> = ({
   item,
   onOpen,
+  isMobile = false,
 }) => {
+  // 未読の識別色（黄色）
+  const unreadColor = '#faad14';
+  
   return (
     <Card
       onClick={() => onOpen(item.id)}
@@ -28,14 +34,14 @@ export const AnnouncementListItem: React.FC<AnnouncementListItemProps> = ({
         marginBottom: 8,
         borderRadius: 8,
         cursor: 'pointer',
-        backgroundColor: '#fafafa',
-        borderLeft: item.isUnread ? '4px solid #1890ff' : '4px solid transparent',
+        backgroundColor: item.isUnread ? '#fffbf0' : '#fafafa',
+        borderLeft: item.isUnread ? `4px solid ${unreadColor}` : '4px solid transparent',
         transition: 'all 0.2s',
       }}
       styles={{
         body: {
-          padding: '16px 20px',
-          backgroundColor: '#fafafa',
+          padding: isMobile ? '12px 16px' : '16px 20px',
+          backgroundColor: item.isUnread ? '#fffbf0' : '#fafafa',
         },
       }}
     >
@@ -48,7 +54,7 @@ export const AnnouncementListItem: React.FC<AnnouncementListItemProps> = ({
                 width: 8,
                 height: 8,
                 borderRadius: '50%',
-                backgroundColor: '#1890ff',
+                backgroundColor: unreadColor,
               }}
             />
           )}
@@ -107,15 +113,15 @@ export const AnnouncementListItem: React.FC<AnnouncementListItemProps> = ({
             </span>
           </div>
 
-          {/* 2行目：本文スニペット（2行表示） */}
+          {/* 2行目：本文スニペット */}
           <p
             style={{
               margin: 0,
-              fontSize: 14,
+              fontSize: isMobile ? 13 : 14,
               color: item.isUnread ? '#595959' : '#8c8c8c',
               lineHeight: '1.5',
               display: '-webkit-box',
-              WebkitLineClamp: 2,
+              WebkitLineClamp: isMobile ? 1 : 2,
               WebkitBoxOrient: 'vertical',
               overflow: 'hidden',
               textOverflow: 'ellipsis',
