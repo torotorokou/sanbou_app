@@ -56,34 +56,51 @@ export const AnnouncementListItem: React.FC<AnnouncementListItemProps> = ({
 
         {/* 中央：コンテンツ */}
         <div style={{ flex: 1, minWidth: 0 }}>
-          {/* 1行目：タイトル + 公開日 */}
+          {/* 1行目：タイトル + バッジ + 公開日 */}
           <div
             style={{
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
-              marginBottom: 8,
-              gap: 12,
+              marginBottom: 6,
+              gap: 8,
             }}
           >
-            <h4
-              style={{
-                margin: 0,
-                fontSize: 16,
-                fontWeight: item.isUnread ? 600 : 400,
-                color: item.isUnread ? '#262626' : '#595959',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              {item.title}
-            </h4>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 1, minWidth: 0 }}>
+              <h4
+                style={{
+                  margin: 0,
+                  fontSize: 16,
+                  fontWeight: item.isUnread ? 600 : 400,
+                  color: item.isUnread ? '#262626' : '#595959',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  flex: '0 1 auto',
+                }}
+              >
+                {item.title}
+              </h4>
+              {item.badges.length > 0 && (
+                <Space size={4} style={{ flexShrink: 0 }}>
+                  {item.badges.slice(0, 2).map((badge, index) => (
+                    <Tag
+                      key={index}
+                      color={badge.color}
+                      style={{ margin: 0, fontSize: 11 }}
+                    >
+                      {badge.label}
+                    </Tag>
+                  ))}
+                </Space>
+              )}
+            </div>
             <span
               style={{
                 fontSize: 12,
                 color: '#8c8c8c',
                 whiteSpace: 'nowrap',
+                flexShrink: 0,
               }}
             >
               {item.publishedLabel}
@@ -93,7 +110,7 @@ export const AnnouncementListItem: React.FC<AnnouncementListItemProps> = ({
           {/* 2行目：本文スニペット（2行表示） */}
           <p
             style={{
-              margin: '0 0 8px 0',
+              margin: 0,
               fontSize: 14,
               color: item.isUnread ? '#595959' : '#8c8c8c',
               lineHeight: '1.5',
@@ -106,21 +123,6 @@ export const AnnouncementListItem: React.FC<AnnouncementListItemProps> = ({
           >
             {item.snippet}
           </p>
-
-          {/* 3行目：バッジ（最大3つ） */}
-          {item.badges.length > 0 && (
-            <Space size={4} wrap>
-              {item.badges.slice(0, 3).map((badge, index) => (
-                <Tag
-                  key={index}
-                  color={badge.color}
-                  style={{ margin: 0, fontSize: 12 }}
-                >
-                  {badge.label}
-                </Tag>
-              ))}
-            </Space>
-          )}
         </div>
 
         {/* 右側：誘導記号 */}
