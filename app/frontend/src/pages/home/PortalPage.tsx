@@ -441,6 +441,7 @@ export const PortalPage: React.FC = () => {
   const {
     announcement: bannerAnnouncement,
     onAcknowledge: onBannerAcknowledge,
+    onNavigateToDetail: onBannerNavigateToDetail,
   } = useAnnouncementBannerViewModel(userKey);
 
   // responsive: 3段階判定ヘルパー（Mobile/Tablet/Desktop）
@@ -537,7 +538,8 @@ export const PortalPage: React.FC = () => {
             <AnnouncementBanner
               announcement={bannerAnnouncement}
               onClose={onBannerAcknowledge}
-              onNavigateToDetail={() => navigate(`/news/${bannerAnnouncement.id}`)}
+              onNavigateToDetail={onBannerNavigateToDetail}
+              navigateFn={() => navigate(`/news/${bannerAnnouncement.id}`)}
             />
           </div>
         )}

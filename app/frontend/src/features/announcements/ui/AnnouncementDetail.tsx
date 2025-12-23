@@ -267,48 +267,6 @@ export const AnnouncementDetail: React.FC<AnnouncementDetailProps> = ({
         </>
       )}
 
-      {/* 通知設定セクション */}
-      <Divider style={{ margin: isMobile ? '16px 0' : '20px 0' }} />
-      <div>
-        <Title level={5} style={{ margin: 0, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
-          <BellOutlined />
-          通知設定
-        </Title>
-        <div style={{ backgroundColor: '#fafafa', padding: '12px 16px', borderRadius: 6 }}>
-          {(() => {
-            const notification = announcement.notification;
-            const channels = notification?.channels ?? ['inApp'];
-            
-            return (
-              <Space direction="vertical" size={8} style={{ width: '100%' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <Text type="secondary" style={{ fontSize: 12, width: 80 }}>配信方法:</Text>
-                  <Space size={4}>
-                    {channels.map((channel) => {
-                      const { label, icon } = getChannelDisplay(channel);
-                      return (
-                        <Tag key={channel} icon={icon} style={{ margin: 0, fontSize: 11 }}>
-                          {label}
-                        </Tag>
-                      );
-                    })}
-                  </Space>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <Text type="secondary" style={{ fontSize: 12, width: 80 }}>配信タイミング:</Text>
-                  <Text style={{ fontSize: 13 }}>
-                    {notification?.scheduledAt
-                      ? `${formatDate(notification.scheduledAt)} に配信予定`
-                      : notification?.sendOnPublish
-                        ? '公開時に配信'
-                        : '即時配信'}
-                  </Text>
-                </div>
-              </Space>
-            );
-          })()}
-        </div>
-      </div>
     </Card>
   );
 };

@@ -15,10 +15,12 @@ import { stripMarkdownForSnippet } from '../domain/stripMarkdownForSnippet';
 interface AnnouncementBannerProps {
   /** 表示するお知らせ */
   announcement: Announcement;
-  /** 閉じる（確認済みにする）コールバック */
+  /** 閉じる（既読にする）コールバック */
   onClose: () => void;
-  /** 詳細ページへの遷移コールバック */
-  onNavigateToDetail?: () => void;
+  /** 詳細ページへの遷移コールバック（既読にして遷移） */
+  onNavigateToDetail?: (navigateFn: () => void) => void;
+  /** 実際の遷移処理 */
+  navigateFn?: () => void;
 }
 
 /**
@@ -57,14 +59,19 @@ export const AnnouncementBanner: React.FC<AnnouncementBannerProps> = ({
   announcement,
   onClose,
   onNavigateToDetail,
+  navigateFn,
 }) => {
   const { isMobile } = useResponsive();
   const alertType = getSeverityType(announcement.severity);
   const icon = getSeverityIcon(announcement.severity);
 
   const handleClick = () => {
-    if (onNavigateToDetail) {
-      onNavigateToDetail();
+    if (onNavigateToDetail && navigateFn) {
+      // 既読にしてから遷移
+      onNavigateToDetail(navigateFn);
+    } else if (navigateFn) {
+      // フォールバック
+      navigateFn();
     }
   };
 
@@ -79,7 +86,7 @@ export const AnnouncementBanner: React.FC<AnnouncementBannerProps> = ({
             <span style={{ fontSize: '13px', fontWeight: 600, flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {announcement.title}
             </span>
-            {onNavigateToDetail && (
+            {onNavigateToDetail && navigateFn && (
               <Button type="primary" size="small" onClick={handleClick} style={{ flexShrink: 0, fontSize: '12px', height: '24px', padding: '0 8px' }}>
                 詳細
               </Button>
@@ -92,7 +99,7 @@ export const AnnouncementBanner: React.FC<AnnouncementBannerProps> = ({
         )
       }
       description={
-        !isMobile && onNavigateToDetail ? (
+        !isMobile && onNavigateToDetail && navigateFn ? (
           <Space direction="vertical" style={{ width: '100%' }}>
             <span style={{ fontSize: '14px' }}>
               {stripMarkdownForSnippet(announcement.bodyMd, 100)}

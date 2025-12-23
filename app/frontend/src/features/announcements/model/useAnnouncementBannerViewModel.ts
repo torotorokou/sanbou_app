@@ -3,7 +3,7 @@
  * 
  * トップページに表示する重要通知バナーのロジック。
  * - pinned かつ severity が warn/critical のお知らせを対象
- * - 未確認（未ack）のもののうち1件を選択
+ * - 未読のもののうち1件を選択（お知らせ一覧と既読状態を共有）
  * - 期限切れ・対象外は除外
  */
 
@@ -12,8 +12,8 @@ import type { Announcement, Audience } from '../domain/announcement';
 import { isBannerTarget, isVisibleForAudience } from '../domain/announcement';
 import { announcementRepository } from '../infrastructure/LocalAnnouncementRepository';
 import {
-  isAcknowledged,
-  markAsAcknowledged,
+  isRead,
+  markAsRead,
 } from '../infrastructure/announcementUserStateStorage';
 
 /**
@@ -29,8 +29,10 @@ interface UseAnnouncementBannerViewModelResult {
   announcement: Announcement | null;
   /** ローディング中かどうか */
   isLoading: boolean;
-  /** 確認済みにする関数 */
+  /** 既読にする（バナーを閉じる）関数 */
   onAcknowledge: () => void;
+  /** 詳細ページへ遷移する関数（既読にして遷移） */
+  onNavigateToDetail: (navigateFn: () => void) => void;
 }
 
 /**
@@ -50,12 +52,12 @@ export function useAnnouncementBannerViewModel(
     const fetchBannerAnnouncement = async () => {
       try {
         const all = await announcementRepository.list();
-        // バナー対象 かつ 対象audience かつ 未確認 のものを抽出
+        // バナー対象 かつ 対象audience かつ 未読 のものを抽出
         const bannerCandidates = all.filter(
           (ann) =>
             isBannerTarget(ann) &&
             isVisibleForAudience(ann, CURRENT_AUDIENCE) &&
-            !isAcknowledged(userKey, ann.id)
+            !isRead(userKey, ann.id)
         );
         // critical を優先、その後 warn
         bannerCandidates.sort((a, b) => {
@@ -82,8 +84,18 @@ export function useAnnouncementBannerViewModel(
 
   const onAcknowledge = useCallback(() => {
     if (announcement) {
-      markAsAcknowledged(userKey, announcement.id);
+      // 既読にしてバナーを閉じる（お知らせ一覧と状態を共有）
+      markAsRead(userKey, announcement.id);
       setAnnouncement(null);
+    }
+  }, [announcement, userKey]);
+
+  const onNavigateToDetail = useCallback((navigateFn: () => void) => {
+    if (announcement) {
+      // 既読にしてから詳細ページへ遷移
+      markAsRead(userKey, announcement.id);
+      setAnnouncement(null);
+      navigateFn();
     }
   }, [announcement, userKey]);
 
@@ -91,5 +103,6 @@ export function useAnnouncementBannerViewModel(
     announcement,
     isLoading,
     onAcknowledge,
+    onNavigateToDetail,
   };
 }
