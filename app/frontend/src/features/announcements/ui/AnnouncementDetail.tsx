@@ -17,6 +17,9 @@ import {
   MessageOutlined,
   MobileOutlined,
 } from '@ant-design/icons';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import rehypeSanitize from 'rehype-sanitize';
 import type { Announcement, NotificationChannel } from '../domain/announcement';
 
 const { Title, Text } = Typography;
@@ -87,70 +90,182 @@ function getChannelDisplay(channel: NotificationChannel): { label: string; icon:
 }
 
 /**
- * 簡易的なMarkdown→HTMLレンダリング
+ * Markdownレンダリング用のスタイル
  */
-function renderMarkdownSimple(md: string): React.ReactNode {
-  const lines = md.split('\n');
-  let firstH2Found = false; // 最初の ## 見出しをスキップするためのフラグ
-  
-  return lines.map((line, index) => {
-    // 見出し
-    if (line.startsWith('## ')) {
-      // 最初の ## 見出しはスキップ（タイトルと重複するため）
-      if (!firstH2Found) {
-        firstH2Found = true;
-        return null;
-      }
-      return (
-        <Title level={4} key={index} style={{ marginTop: 24, marginBottom: 12 }}>
-          {line.replace('## ', '')}
-        </Title>
-      );
-    }
-    if (line.startsWith('### ')) {
-      return (
-        <Title level={5} key={index} style={{ marginTop: 16, marginBottom: 8 }}>
-          {line.replace('### ', '')}
-        </Title>
-      );
-    }
-    // 強調（**text**）
-    const boldReplaced = line.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-    // リスト
-    if (line.startsWith('- ')) {
-      return (
-        <div
-          key={index}
-          style={{ marginBottom: 8, paddingLeft: 16 }}
-          dangerouslySetInnerHTML={{
-            __html: `• ${boldReplaced.replace('- ', '')}`,
-          }}
-        />
-      );
-    }
-    if (line.match(/^\d+\. /)) {
-      return (
-        <div
-          key={index}
-          style={{ marginBottom: 8, paddingLeft: 16 }}
-          dangerouslySetInnerHTML={{ __html: boldReplaced }}
-        />
-      );
-    }
-    // 空行
-    if (line.trim() === '') {
-      return <div key={index} style={{ height: 12 }} />;
-    }
-    // 通常行
-    return (
-      <div
-        key={index}
-        style={{ marginBottom: 8, lineHeight: '1.6' }}
-        dangerouslySetInnerHTML={{ __html: boldReplaced }}
-      />
+const markdownStyles: React.CSSProperties = {
+  lineHeight: '1.8',
+  fontSize: 'inherit',
+  color: 'inherit',
+};
+
+/**
+ * Markdownレンダリング用のカスタムコンポーネントを生成
+ */
+const createMarkdownComponents = (isMobile: boolean) => ({
+  // 見出し
+  h1: ({ children, ...props }: React.HTMLAttributes<HTMLHeadingElement>) => (
+    <Title level={isMobile ? 3 : 2} style={{ marginTop: isMobile ? 16 : 24, marginBottom: isMobile ? 12 : 16 }} {...props}>
+      {children}
+    </Title>
+  ),
+  h2: ({ children, ...props }: React.HTMLAttributes<HTMLHeadingElement>) => (
+    <Title level={isMobile ? 4 : 3} style={{ marginTop: isMobile ? 14 : 20, marginBottom: isMobile ? 10 : 12 }} {...props}>
+      {children}
+    </Title>
+  ),
+  h3: ({ children, ...props }: React.HTMLAttributes<HTMLHeadingElement>) => (
+    <Title level={isMobile ? 5 : 4} style={{ marginTop: isMobile ? 12 : 16, marginBottom: isMobile ? 8 : 10 }} {...props}>
+      {children}
+    </Title>
+  ),
+  h4: ({ children, ...props }: React.HTMLAttributes<HTMLHeadingElement>) => (
+    <Title level={5} style={{ marginTop: isMobile ? 10 : 14, marginBottom: isMobile ? 6 : 8 }} {...props}>
+      {children}
+    </Title>
+  ),
+  // 段落
+  p: ({ children, ...props }: React.HTMLAttributes<HTMLParagraphElement>) => (
+    <p style={{ marginBottom: isMobile ? 10 : 12, lineHeight: '1.8' }} {...props}>
+      {children}
+    </p>
+  ),
+  // リンク
+  a: ({ children, href, ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement>) => (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      style={{ color: '#1890ff', textDecoration: 'underline' }}
+      {...props}
+    >
+      {children}
+    </a>
+  ),
+  // リスト
+  ul: ({ children, ...props }: React.HTMLAttributes<HTMLUListElement>) => (
+    <ul style={{ marginBottom: isMobile ? 10 : 12, paddingLeft: isMobile ? 20 : 24 }} {...props}>
+      {children}
+    </ul>
+  ),
+  ol: ({ children, ...props }: React.HTMLAttributes<HTMLOListElement>) => (
+    <ol style={{ marginBottom: isMobile ? 10 : 12, paddingLeft: isMobile ? 20 : 24 }} {...props}>
+      {children}
+    </ol>
+  ),
+  li: ({ children, ...props }: React.HTMLAttributes<HTMLLIElement>) => (
+    <li style={{ marginBottom: 6, lineHeight: '1.6' }} {...props}>
+      {children}
+    </li>
+  ),
+  // コードブロック
+  code: ({ children, className, ...props }: React.HTMLAttributes<HTMLElement> & { className?: string }) => {
+    const isInline = !className;
+    return isInline ? (
+      <code
+        style={{
+          backgroundColor: '#f5f5f5',
+          padding: '2px 6px',
+          borderRadius: 3,
+          fontSize: isMobile ? '0.85em' : '0.9em',
+          fontFamily: 'Monaco, Consolas, "Courier New", monospace',
+        }}
+        {...props}
+      >
+        {children}
+      </code>
+    ) : (
+      <code
+        style={{
+          display: 'block',
+          backgroundColor: '#f5f5f5',
+          padding: isMobile ? 8 : 12,
+          borderRadius: 6,
+          fontSize: isMobile ? '0.85em' : '0.9em',
+          fontFamily: 'Monaco, Consolas, "Courier New", monospace',
+          overflowX: 'auto',
+          marginBottom: isMobile ? 10 : 12,
+        }}
+        {...props}
+      >
+        {children}
+      </code>
     );
-  });
-}
+  },
+  // 引用
+  blockquote: ({ children, ...props }: React.HTMLAttributes<HTMLQuoteElement>) => (
+    <blockquote
+      style={{
+        borderLeft: '4px solid #d9d9d9',
+        paddingLeft: isMobile ? 12 : 16,
+        marginLeft: 0,
+        marginBottom: isMobile ? 10 : 12,
+        color: '#595959',
+        fontStyle: 'italic',
+      }}
+      {...props}
+    >
+      {children}
+    </blockquote>
+  ),
+  // 水平線
+  hr: ({ ...props }: React.HTMLAttributes<HTMLHRElement>) => (
+    <Divider style={{ margin: isMobile ? '12px 0' : '16px 0' }} {...props} />
+  ),
+  // テーブル
+  table: ({ children, ...props }: React.HTMLAttributes<HTMLTableElement>) => (
+    <div style={{ overflowX: 'auto', marginBottom: isMobile ? 12 : 16 }}>
+      <table
+        style={{
+          width: '100%',
+          borderCollapse: 'collapse',
+          fontSize: isMobile ? '0.85em' : '0.95em',
+        }}
+        {...props}
+      >
+        {children}
+      </table>
+    </div>
+  ),
+  th: ({ children, ...props }: React.HTMLAttributes<HTMLTableCellElement>) => (
+    <th
+      style={{
+        backgroundColor: '#fafafa',
+        border: '1px solid #d9d9d9',
+        padding: isMobile ? '6px 8px' : '8px 12px',
+        textAlign: 'left',
+        fontWeight: 600,
+      }}
+      {...props}
+    >
+      {children}
+    </th>
+  ),
+  td: ({ children, ...props }: React.HTMLAttributes<HTMLTableCellElement>) => (
+    <td
+      style={{
+        border: '1px solid #d9d9d9',
+        padding: isMobile ? '6px 8px' : '8px 12px',
+      }}
+      {...props}
+    >
+      {children}
+    </td>
+  ),
+  // 画像
+  img: ({ src, alt, ...props }: React.ImgHTMLAttributes<HTMLImageElement>) => (
+    <img
+      src={src}
+      alt={alt}
+      style={{
+        maxWidth: '100%',
+        height: 'auto',
+        borderRadius: 6,
+        marginBottom: isMobile ? 10 : 12,
+      }}
+      {...props}
+    />
+  ),
+});
 
 export const AnnouncementDetail: React.FC<AnnouncementDetailProps> = ({
   announcement,
@@ -213,8 +328,14 @@ export const AnnouncementDetail: React.FC<AnnouncementDetailProps> = ({
       <Divider style={{ margin: isMobile ? '16px 0' : '20px 0' }} />
 
       {/* 本文 */}
-      <div style={{ fontSize: isMobile ? 14 : 15, color: '#262626' }}>
-        {renderMarkdownSimple(announcement.bodyMd)}
+      <div style={{ fontSize: isMobile ? 14 : 15, color: '#262626', ...markdownStyles }}>
+        <ReactMarkdown
+          remarkPlugins={[remarkGfm]}
+          rehypePlugins={[rehypeSanitize]}
+          components={createMarkdownComponents(isMobile)}
+        >
+          {announcement.bodyMd}
+        </ReactMarkdown>
       </div>
 
       {/* 添付ファイルセクション */}

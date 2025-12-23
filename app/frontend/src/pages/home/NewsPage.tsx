@@ -15,6 +15,7 @@ import {
   AnnouncementList,
   AnnouncementDetailModal,
   AnnouncementFilterTabs,
+  AnnouncementSortSelector,
 } from '@features/announcements';
 
 const { Title } = Typography;
@@ -29,6 +30,8 @@ const NewsPage: React.FC = () => {
   const {
     selectedTab,
     setSelectedTab,
+    sortType,
+    setSortType,
     importantItems,
     otherItems,
     unreadCount,
@@ -82,11 +85,18 @@ const NewsPage: React.FC = () => {
       </div>
 
       <Card className="no-hover">
-        <AnnouncementFilterTabs
-          selected={selectedTab}
-          onChange={setSelectedTab}
-          unreadCount={unreadCount}
-        />
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+          <AnnouncementFilterTabs
+            selected={selectedTab}
+            onChange={setSelectedTab}
+            unreadCount={unreadCount}
+          />
+          <AnnouncementSortSelector
+            selected={sortType}
+            onChange={setSortType}
+            isMobile={isMobile}
+          />
+        </div>
         <AnnouncementList
           importantItems={importantItems}
           otherItems={otherItems}

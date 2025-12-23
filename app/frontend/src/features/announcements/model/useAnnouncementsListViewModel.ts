@@ -33,6 +33,11 @@ const CURRENT_AUDIENCE: Audience = 'site:narita';
 export type AnnouncementFilterTab = 'all' | 'unread';
 
 /**
+ * ソート種類
+ */
+export type AnnouncementSortType = 'date-desc' | 'date-asc' | 'severity';
+
+/**
  * バッジ表示用データ
  */
 export interface AnnouncementBadge {
@@ -65,6 +70,10 @@ interface UseAnnouncementsListViewModelResult {
   selectedTab: AnnouncementFilterTab;
   /** タブ切替 */
   setSelectedTab: (tab: AnnouncementFilterTab) => void;
+  /** 選択中のソート種類 */
+  sortType: AnnouncementSortType;
+  /** ソート種類切替 */
+  setSortType: (sort: AnnouncementSortType) => void;
   /** 重要・注意アイテム（warn/critical、タブフィルタ適用済み） */
   importantItems: AnnouncementDisplayItem[];
   /** その他アイテム（info等、タブフィルタ適用済み） */
@@ -104,6 +113,8 @@ export function useAnnouncementsListViewModel(
   const [stateVersion, setStateVersion] = useState(0);
   // タブ状態
   const [selectedTab, setSelectedTab] = useState<AnnouncementFilterTab>('all');
+  // ソート状態
+  const [sortType, setSortType] = useState<AnnouncementSortType>('date-desc');
 
   useEffect(() => {
     let cancelled = false;
@@ -123,8 +134,25 @@ export function useAnnouncementsListViewModel(
 
     fetchAnnouncements();
 
+    // localStorage変更を検知して既読状態を再計算
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key && e.key.startsWith('announcements.v1.')) {
+        setStateVersion((v) => v + 1);
+      }
+    };
+
+    // 同一タブ内での変更検知用カスタムイベント
+    const handleCustomStorageChange = () => {
+      setStateVersion((v) => v + 1);
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('announcement-storage-change', handleCustomStorageChange);
+
     return () => {
       cancelled = true;
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('announcement-storage-change', handleCustomStorageChange);
     };
   }, []);
 
@@ -231,35 +259,70 @@ export function useAnnouncementsListViewModel(
   }, [visibleAnnouncements, isUnread]);
 
   /**
-   * 重要・注意アイツム（warn/critical、タブフィルタ適用済み）
+   * ソート関数
+   */
+  const sortItems = useCallback((items: AnnouncementDisplayItem[]): AnnouncementDisplayItem[] => {
+    const sorted = [...items];
+    
+    switch (sortType) {
+      case 'date-desc':
+        // 日付降順（新しい順）
+        sorted.sort((a, b) => {
+          const dateA = new Date(visibleAnnouncements.find(ann => ann.id === a.id)?.publishFrom || 0);
+          const dateB = new Date(visibleAnnouncements.find(ann => ann.id === b.id)?.publishFrom || 0);
+          return dateB.getTime() - dateA.getTime();
+        });
+        break;
+      case 'date-asc':
+        // 日付昇順（古い順）
+        sorted.sort((a, b) => {
+          const dateA = new Date(visibleAnnouncements.find(ann => ann.id === a.id)?.publishFrom || 0);
+          const dateB = new Date(visibleAnnouncements.find(ann => ann.id === b.id)?.publishFrom || 0);
+          return dateA.getTime() - dateB.getTime();
+        });
+        break;
+      case 'severity':
+        // 重要度順（critical→warn→info）
+        const severityOrder = { critical: 0, warn: 1, info: 2 };
+        sorted.sort((a, b) => severityOrder[a.severity] - severityOrder[b.severity]);
+        break;
+    }
+    
+    return sorted;
+  }, [sortType, visibleAnnouncements]);
+
+  /**
+   * 重要・注意アイツム（warn/critical、タブフィルタ・ソート適用済み）
    */
   const importantItems = useMemo<AnnouncementDisplayItem[]>(() => {
     const important = displayItems.filter(
       (item) => item.severity === 'warn' || item.severity === 'critical'
     );
-    if (selectedTab === 'unread') {
-      return important.filter((item) => item.isUnread);
-    }
-    return important;
-  }, [displayItems, selectedTab]);
+    const filtered = selectedTab === 'unread' 
+      ? important.filter((item) => item.isUnread)
+      : important;
+    return sortItems(filtered);
+  }, [displayItems, selectedTab, sortItems]);
 
   /**
-   * その他アイテム（info等、タブフィルタ適用済み）
+   * その他アイテム（info等、タブフィルタ・ソート適用済み）
    */
   const otherItems = useMemo<AnnouncementDisplayItem[]>(() => {
     const other = displayItems.filter(
       (item) => item.severity !== 'warn' && item.severity !== 'critical'
     );
-    if (selectedTab === 'unread') {
-      return other.filter((item) => item.isUnread);
-    }
-    return other;
-  }, [displayItems, selectedTab]);
+    const filtered = selectedTab === 'unread'
+      ? other.filter((item) => item.isUnread)
+      : other;
+    return sortItems(filtered);
+  }, [displayItems, selectedTab, sortItems]);
 
   return {
     announcements,
     selectedTab,
     setSelectedTab,
+    sortType,
+    setSortType,
     importantItems,
     otherItems,
     displayItems,

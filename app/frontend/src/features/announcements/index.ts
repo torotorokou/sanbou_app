@@ -45,7 +45,7 @@ export type { AnnouncementUserState } from './infrastructure/announcementUserSta
 // ViewModel (Step Bで追加)
 export { useAnnouncementBannerViewModel } from './model/useAnnouncementBannerViewModel';
 export { useAnnouncementsListViewModel } from './model/useAnnouncementsListViewModel';
-export type { AnnouncementDisplayItem, AnnouncementBadge, AnnouncementFilterTab } from './model/useAnnouncementsListViewModel';
+export type { AnnouncementDisplayItem, AnnouncementBadge, AnnouncementFilterTab, AnnouncementSortType } from './model/useAnnouncementsListViewModel';
 export { useUnreadAnnouncementCountViewModel } from './model/useUnreadAnnouncementCountViewModel';
 export { useAnnouncementDetailViewModel } from './model/useAnnouncementDetailViewModel';
 
@@ -58,6 +58,7 @@ export { NewsMenuLabel } from './ui/NewsMenuLabel';
 export { NewsMenuIcon } from './ui/NewsMenuIcon';
 export { useUnreadCount } from './ui/useUnreadCount';
 export { AnnouncementFilterTabs } from './ui/AnnouncementFilterTabs';
+export { AnnouncementSortSelector } from './ui/AnnouncementSortSelector';
 export { AnnouncementDetail } from './ui/AnnouncementDetail';
 export { ResponsiveNotice } from './ui/ResponsiveNotice';
 export type { ResponsiveNoticeProps } from './ui/ResponsiveNotice';
