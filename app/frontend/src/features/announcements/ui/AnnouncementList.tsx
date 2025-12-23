@@ -41,9 +41,9 @@ export const AnnouncementList: React.FC<AnnouncementListProps> = ({
     <div>
       {/* 重要・注意セクション */}
       {importantItems.length > 0 && (
-        <div style={{ marginBottom: 24 }}>
-          <Title level={5} style={{ marginBottom: 12, color: '#8c8c8c' }}>
-            重要・注意（{importantItems.length}）
+        <div style={{ marginBottom: 16 }}>
+          <Title level={5} style={{ marginBottom: 10, color: '#8c8c8c' }}>
+            重要なお知らせ（{importantItems.length}）
           </Title>
           {importantItems.map((item) => (
             <AnnouncementListItem key={item.id} item={item} onOpen={onOpen} />
@@ -54,8 +54,8 @@ export const AnnouncementList: React.FC<AnnouncementListProps> = ({
       {/* その他セクション */}
       {otherItems.length > 0 && (
         <div>
-          <Title level={5} style={{ marginBottom: 12, color: '#8c8c8c' }}>
-            その他（{otherItems.length}）
+          <Title level={5} style={{ marginBottom: 10, color: '#8c8c8c' }}>
+            一般のお知らせ（{otherItems.length}）
           </Title>
           {otherItems.map((item) => (
             <AnnouncementListItem key={item.id} item={item} onOpen={onOpen} />

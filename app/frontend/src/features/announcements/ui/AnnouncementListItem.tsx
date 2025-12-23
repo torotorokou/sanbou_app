@@ -25,7 +25,7 @@ export const AnnouncementListItem: React.FC<AnnouncementListItemProps> = ({
     <Card
       onClick={() => onOpen(item.id)}
       style={{
-        marginBottom: 12,
+        marginBottom: 8,
         borderRadius: 8,
         cursor: 'pointer',
         backgroundColor: '#fafafa',
