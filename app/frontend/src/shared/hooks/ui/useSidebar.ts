@@ -22,21 +22,27 @@ export interface UseSidebarOptions {
 }
 
 /**
- * useSidebar — サイドバーの状態・設定・アニメーションを一元管理（2025-12-22更新）
+ * useSidebar — サイドバーの状態・設定・アニメーションを一元管理（2025-12-23更新）
  * 
- * 【動作】★境界値変更
- * - モバイル（≤767px）: Drawerモード、強制的に閉じる
- * - タブレット（768-1280px）: デフォルトで閉じる（ユーザーが開ける）★1280を含む
- * - デスクトップ（≥1281px）: デフォルトで開く（ユーザーが閉じられる）★1280は含まない
+ * 【動作】
+ * - モバイル（≤767px）: Drawerモード、drawerOpenで開閉
+ * - タブレット（768-1280px）: collapsedで開閉
+ * - デスクトップ（≥1281px）: collapsedで開閉
  * 
- * 【ブレークポイント間の移動】
- * - ブレークポイントが変わると、新しいブレークポイントのデフォルト状態にリセット
+ * 【状態分離】
+ * - collapsed: デスクトップ/タブレット用の開閉状態
+ * - drawerOpen: モバイルDrawer用の開閉状態
+ * - ブレークポイント変更時に状態を正規化（モバイル強制値を保存しない）
  */
 export function useSidebar(
   options: UseSidebarOptions = {}
 ): {
+  isMobile: boolean;
   collapsed: boolean;
-  setCollapsed: (v: boolean) => void;
+  drawerOpen: boolean;
+  openDrawer: () => void;
+  closeDrawer: () => void;
+  toggleCollapsed: () => void;
   config: SidebarConfig;
   style: React.CSSProperties;
 } {
@@ -52,7 +58,7 @@ export function useSidebar(
         collapsedWidth: 0,
         breakpoint: "xs",
         defaultCollapsed: true,
-        forceCollapse: false, // Drawerモードではユーザーが開閉可能
+        forceCollapse: false,
         drawerMode: true,
       };
     }
@@ -61,31 +67,30 @@ export function useSidebar(
         width: 230,
         collapsedWidth: 60,
         breakpoint: "md",
-        defaultCollapsed: true, // タブレット（768-1280px）はデフォルトで閉じる ★更新
+        defaultCollapsed: true,
         forceCollapse: false,
         drawerMode: false,
       };
     }
-    // デスクトップ（≥1281px）★更新
+    // デスクトップ（≥1281px）
     return {
       width: 250,
       collapsedWidth: 80,
       breakpoint: "xl",
-      defaultCollapsed: false, // デスクトップはデフォルトで開く
+      defaultCollapsed: false,
       forceCollapse: false,
       drawerMode: false,
     };
   }, [isMobile, isTablet, isDesktop]);
 
-  // 初期状態を設定の defaultCollapsed または forceCollapse に基づいて決定
+  // Desktop/Tablet用の折りたたみ状態
   const [collapsed, setCollapsed] = useState<boolean>(() => {
-    return config.forceCollapse || config.defaultCollapsed;
+    return config.defaultCollapsed;
   });
 
-  // ユーザーがトグルしたかどうかを追跡
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [userToggled, setUserToggled] = useState(false);
-  
+  // Mobile用のDrawer開閉状態
+  const [drawerOpen, setDrawerOpen] = useState<boolean>(false);
+
   // 前回のブレークポイントを保持
   const [prevBreakpoint, setPrevBreakpoint] = useState(config.breakpoint);
 
@@ -93,28 +98,25 @@ export function useSidebar(
   useEffect(() => {
     if (config.breakpoint !== prevBreakpoint) {
       setPrevBreakpoint(config.breakpoint);
-      setUserToggled(false);
       
-      // 強制折りたたみまたはデフォルト状態に設定
-      const newCollapsed = config.forceCollapse || config.defaultCollapsed;
-      setCollapsed(newCollapsed);
+      if (isMobile) {
+        // モバイルに移行: collapsedを強制的にtrueにし、drawerは閉じる
+        setCollapsed(true);
+        setDrawerOpen(false);
+      } else {
+        // デスクトップ/タブレットに移行: drawerを閉じ、collapsedはdefaultに戻す
+        setDrawerOpen(false);
+        setCollapsed(config.defaultCollapsed);
+      }
     }
-  }, [config.breakpoint, config.forceCollapse, config.defaultCollapsed, prevBreakpoint]);
+  }, [config.breakpoint, config.defaultCollapsed, prevBreakpoint, isMobile]);
 
-  // 強制折りたたみの場合は常に閉じる
-  useEffect(() => {
-    if (config.forceCollapse) {
-      setCollapsed(true);
-    }
-  }, [config.forceCollapse]);
+  // モバイルDrawer操作
+  const openDrawer = () => setDrawerOpen(true);
+  const closeDrawer = () => setDrawerOpen(false);
 
-  // ユーザートグルをラップして追跡
-  const handleSetCollapsed = (value: boolean) => {
-    if (!config.forceCollapse) {
-      setUserToggled(true);
-      setCollapsed(value);
-    }
-  };
+  // Desktop/Tablet折りたたみ操作
+  const toggleCollapsed = () => setCollapsed(prev => !prev);
 
   const style = useMemo<React.CSSProperties>(
     () => ({
@@ -125,8 +127,12 @@ export function useSidebar(
   );
 
   return { 
+    isMobile,
     collapsed, 
-    setCollapsed: handleSetCollapsed, 
+    drawerOpen,
+    openDrawer,
+    closeDrawer,
+    toggleCollapsed,
     config, 
     style 
   };

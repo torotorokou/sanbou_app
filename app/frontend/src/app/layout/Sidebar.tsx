@@ -1,6 +1,5 @@
 // src/layout/Sidebar.tsx
 import React from 'react';
-import ReactDOM from 'react-dom';
 import { Layout, Menu, Button, Drawer, Badge } from 'antd';
 import { MenuFoldOutlined, MenuUnfoldOutlined, HomeOutlined } from '@ant-design/icons';
 import { useLocation } from 'react-router-dom';
@@ -10,64 +9,15 @@ import { customTokens, useSidebar, useResponsive } from '@/shared';
 import { type MenuItem, filterMenuItems } from '@features/navi';
 import { UserInfoChip } from '@features/authStatus';
 import { useUnreadCount, NewsMenuLabel, NewsMenuIcon } from '@features/announcements';
+import { SidebarRail } from './SidebarRail';
 
 const { Sider } = Layout;
 
-// モバイル用メニューボタンのスタイル定数
-const MOBILE_BUTTON_STYLE = {
-    position: 'fixed' as const,
-    top: 16,
-    left: 16,
-    zIndex: 10000,
-    boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
-    transition: 'opacity 0.3s ease',
-};
-
-const SCROLL_THRESHOLD = 50; // スクロール検出の閾値（px）
-
-/** スクロール位置を監視するカスタムフック */
-const useScrollVisible = (threshold: number) => {
-    const [visible, setVisible] = React.useState(false);
-    
-    React.useEffect(() => {
-        const handleScroll = () => setVisible(window.scrollY > threshold);
-        handleScroll(); // 初回チェック
-        window.addEventListener('scroll', handleScroll, { passive: true });
-        return () => window.removeEventListener('scroll', handleScroll);
-    }, [threshold]);
-    
-    return visible;
-};
-
-/** クライアントサイドマウント状態を管理するフック */
-const useClientMounted = () => {
-    const [mounted, setMounted] = React.useState(false);
-    React.useEffect(() => setMounted(true), []);
-    return mounted;
-};
-
-/** モバイル用メニューボタン（Portalでbodyに直接レンダリング） */
-const MobileMenuButton: React.FC<{ onClick: () => void }> = ({ onClick }) => {
-    const mounted = useClientMounted();
-    const visible = useScrollVisible(SCROLL_THRESHOLD);
-    
-    if (!mounted || !visible) return null;
-    
-    return ReactDOM.createPortal(
-        <Button
-            type="primary"
-            icon={<MenuUnfoldOutlined />}
-            onClick={onClick}
-            style={{ ...MOBILE_BUTTON_STYLE, opacity: visible ? 1 : 0 }}
-            size="large"
-            aria-label="メニューを開く"
-        />,
-        document.body
-    );
-};
-
 /** メニューアイテムにアナウンス関連のアイコン/ラベルを追加 */
-const useEnhancedMenu = (collapsed: boolean, unreadCount: number): MenuItem[] => {
+const useEnhancedMenu = (
+    isSidebarOpen: boolean, // サイドバーが開いているか（未読数表示判定用）
+    unreadCount: number
+): MenuItem[] => {
     return React.useMemo<MenuItem[]>(() => {
         const filtered = filterMenuItems(SIDEBAR_MENU as MenuItem[]);
         
@@ -75,17 +25,18 @@ const useEnhancedMenu = (collapsed: boolean, unreadCount: number): MenuItem[] =>
             if (item.key === 'home') {
                 return {
                     ...item,
-                    icon: (
-                        <Badge dot={collapsed && unreadCount > 0} offset={[4, 4]}>
-                            <HomeOutlined />
-                        </Badge>
-                    ),
+                    icon: <HomeOutlined />,
                     children: item.children?.map(child =>
                         child.key === ROUTER_PATHS.NEWS
                             ? {
                                 ...child,
                                 icon: <NewsMenuIcon />,
-                                label: <NewsMenuLabel collapsed={collapsed} />,
+                                // サイドバーが開いている時だけ未読数を表示
+                                label: isSidebarOpen ? (
+                                    <NewsMenuLabel collapsed={false} />
+                                ) : (
+                                    'お知らせ'
+                                ),
                             }
                             : child
                     ),
@@ -93,7 +44,7 @@ const useEnhancedMenu = (collapsed: boolean, unreadCount: number): MenuItem[] =>
             }
             return item;
         });
-    }, [collapsed, unreadCount]);
+    }, [isSidebarOpen, unreadCount]);
 };
 
 /** メニューの親キー（子を持つ項目）を抽出 */
@@ -156,14 +107,27 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({
     );
 };
 
-/** メインSidebarコンポーネント */
+/** メインSidebarコンポーネント（2分岐構造） */
 const Sidebar: React.FC = () => {
     const location = useLocation();
-    const { collapsed, setCollapsed, config: sidebarConfig, style: animationStyles } = useSidebar();
+    const {
+        isMobile,
+        collapsed,
+        drawerOpen,
+        openDrawer,
+        closeDrawer,
+        toggleCollapsed,
+        config: sidebarConfig,
+        style: animationStyles,
+    } = useSidebar();
     const { isTablet } = useResponsive();
     const unreadCount = useUnreadCount();
+    const hasUnread = unreadCount > 0;
 
-    const visibleMenu = useEnhancedMenu(collapsed, unreadCount);
+    // サイドバーが開いているかの判定（未読数表示用）
+    const isSidebarOpen = isMobile ? drawerOpen : !collapsed;
+    
+    const visibleMenu = useEnhancedMenu(isSidebarOpen, unreadCount);
     const parentKeys = React.useMemo(() => extractParentKeys(visibleMenu), [visibleMenu]);
     
     const [openKeys, setOpenKeys] = React.useState<string[]>([]);
@@ -173,16 +137,24 @@ const Sidebar: React.FC = () => {
         setOpenKeys(collapsed ? [] : parentKeys);
     }, [collapsed, parentKeys]);
 
-    // モバイル: Drawerモード
-    if (sidebarConfig.drawerMode) {
+    // ===== モバイル: Drawerモード =====
+    if (isMobile) {
         return (
             <>
-                {collapsed && <MobileMenuButton onClick={() => setCollapsed(false)} />}
+                {/* レール: drawerが閉じている時に常時表示 */}
+                {!drawerOpen && (
+                    <SidebarRail
+                        hasUnread={hasUnread}
+                        onClick={openDrawer}
+                    />
+                )}
+                
+                {/* Drawer */}
                 <Drawer
                     title="メニュー"
                     placement="left"
-                    open={!collapsed}
-                    onClose={() => setCollapsed(true)}
+                    open={drawerOpen}
+                    onClose={closeDrawer}
                     width={sidebarConfig.width}
                     zIndex={9999}
                     styles={{ body: { padding: 0 } }}
@@ -199,63 +171,73 @@ const Sidebar: React.FC = () => {
         );
     }
 
-    // デスクトップ/タブレット: Siderモード
+    // ===== デスクトップ/タブレット: Siderモード =====
     return (
-        <Sider
-            width={sidebarConfig.width}
-            collapsible
-            collapsed={collapsed}
-            trigger={null}
-            style={{
-                backgroundColor: customTokens.colorSiderBg,
-                borderRight: `1px solid ${customTokens.colorBorderSecondary}`,
-                position: 'sticky',
-                top: 0,
-                height: '100dvh',
-                overflow: 'auto',
-                minWidth: collapsed ? sidebarConfig.collapsedWidth : sidebarConfig.width,
-                flex: '0 0 auto',
-                ...animationStyles,
-            }}
-            breakpoint={sidebarConfig.breakpoint}
-            collapsedWidth={sidebarConfig.collapsedWidth}
-        >
-            {/* トグルボタン */}
-            <div
+        <>
+            {/* レール: collapsedの時に表示 */}
+            {collapsed && (
+                <SidebarRail
+                    hasUnread={hasUnread}
+                    onClick={toggleCollapsed}
+                />
+            )}
+            
+            <Sider
+                width={sidebarConfig.width}
+                collapsible
+                collapsed={collapsed}
+                trigger={null}
                 style={{
-                    display: 'flex',
-                    justifyContent: collapsed ? 'center' : 'flex-end',
-                    alignItems: 'center',
-                    height: 64,
-                    paddingRight: collapsed ? 0 : (isTablet ? 12 : 16),
+                    backgroundColor: customTokens.colorSiderBg,
+                    borderRight: `1px solid ${customTokens.colorBorderSecondary}`,
+                    position: 'sticky',
+                    top: 0,
+                    height: '100dvh',
+                    overflow: 'auto',
+                    minWidth: collapsed ? sidebarConfig.collapsedWidth : sidebarConfig.width,
+                    flex: '0 0 auto',
                     ...animationStyles,
                 }}
+                breakpoint={sidebarConfig.breakpoint}
+                collapsedWidth={sidebarConfig.collapsedWidth}
             >
-                <Button
-                    type="text"
-                    icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
-                    onClick={() => setCollapsed(!collapsed)}
+                {/* トグルボタン */}
+                <div
                     style={{
-                        fontSize: isTablet ? 16 : 18,
-                        color: customTokens.colorSiderText,
+                        display: 'flex',
+                        justifyContent: collapsed ? 'center' : 'flex-end',
+                        alignItems: 'center',
+                        height: 64,
+                        paddingRight: collapsed ? 0 : (isTablet ? 12 : 16),
+                        ...animationStyles,
                     }}
-                    aria-label={collapsed ? 'サイドバーを開く' : 'サイドバーを閉じる'}
+                >
+                    <Button
+                        type="text"
+                        icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+                        onClick={toggleCollapsed}
+                        style={{
+                            fontSize: isTablet ? 16 : 18,
+                            color: customTokens.colorSiderText,
+                        }}
+                        aria-label={collapsed ? 'サイドバーを開く' : 'サイドバーを閉じる'}
+                    />
+                </div>
+
+                {/* ユーザー情報（デスクトップ版） */}
+                {!collapsed && <UserInfoArea variant="desktop" />}
+
+                {/* メニュー */}
+                <SidebarMenu
+                    visibleMenu={visibleMenu}
+                    openKeys={openKeys}
+                    onOpenChange={setOpenKeys}
+                    selectedPath={location.pathname}
+                    theme="dark"
+                    collapsed={collapsed}
                 />
-            </div>
-
-            {/* ユーザー情報（デスクトップ版） */}
-            {!collapsed && <UserInfoArea variant="desktop" />}
-
-            {/* メニュー */}
-            <SidebarMenu
-                visibleMenu={visibleMenu}
-                openKeys={openKeys}
-                onOpenChange={setOpenKeys}
-                selectedPath={location.pathname}
-                theme="dark"
-                collapsed={collapsed}
-            />
-        </Sider>
+            </Sider>
+        </>
     );
 };
 
