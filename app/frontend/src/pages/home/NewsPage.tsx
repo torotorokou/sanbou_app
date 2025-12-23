@@ -42,7 +42,7 @@ const NewsPage: React.FC = () => {
     <div style={{ padding: 24 }}>
       <Title level={2}>お知らせ一覧</Title>
 
-      <Card>
+      <Card className="no-hover">
         <AnnouncementList
           items={displayItems}
           onOpen={openDetail}
