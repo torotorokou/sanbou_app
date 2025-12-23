@@ -15,6 +15,8 @@ const { Title, Text } = Typography;
 interface AnnouncementDetailProps {
   /** 表示するお知らせ */
   announcement: Announcement;
+  /** モバイルモード */
+  isMobile?: boolean;
 }
 
 /**
@@ -130,21 +132,30 @@ function renderMarkdownSimple(md: string): React.ReactNode {
 
 export const AnnouncementDetail: React.FC<AnnouncementDetailProps> = ({
   announcement,
+  isMobile = false,
 }) => {
   return (
-    <Card className="no-hover" style={{ margin: '0 auto' }}>
+    <Card 
+      className="no-hover" 
+      style={{ margin: '0 auto' }}
+      styles={{
+        body: {
+          padding: isMobile ? '16px' : '24px',
+        },
+      }}
+    >
       {/* ヘッダー */}
-      <Space direction="vertical" size={12} style={{ width: '100%' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-          <Title level={2} style={{ margin: 0, flex: 1 }}>
+      <Space direction="vertical" size={isMobile ? 8 : 12} style={{ width: '100%' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 8 : 12, flexWrap: 'wrap' }}>
+          <Title level={isMobile ? 3 : 2} style={{ margin: 0, flex: 1 }}>
             {announcement.title}
           </Title>
           <Space>
-            <Tag color={getSeverityTagColor(announcement.severity)} style={{ fontSize: 13 }}>
+            <Tag color={getSeverityTagColor(announcement.severity)} style={{ fontSize: isMobile ? 11 : 13 }}>
               {getSeverityLabel(announcement.severity)}
             </Tag>
             {announcement.pinned && (
-              <Tag color="purple" style={{ fontSize: 13 }}>
+              <Tag color="purple" style={{ fontSize: isMobile ? 11 : 13 }}>
                 ピン留め
               </Tag>
             )}
@@ -152,8 +163,8 @@ export const AnnouncementDetail: React.FC<AnnouncementDetailProps> = ({
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <CalendarOutlined style={{ color: '#8c8c8c' }} />
-          <Text type="secondary" style={{ fontSize: 13 }}>
+          <CalendarOutlined style={{ color: '#8c8c8c', fontSize: isMobile ? 12 : 14 }} />
+          <Text type="secondary" style={{ fontSize: isMobile ? 12 : 13 }}>
             公開日: {formatDate(announcement.publishFrom)}
             {announcement.publishTo && (
               <> 〜 {formatDate(announcement.publishTo)}</>
@@ -162,10 +173,10 @@ export const AnnouncementDetail: React.FC<AnnouncementDetailProps> = ({
         </div>
       </Space>
 
-      <Divider style={{ margin: '20px 0' }} />
+      <Divider style={{ margin: isMobile ? '16px 0' : '20px 0' }} />
 
       {/* 本文 */}
-      <div style={{ fontSize: 15, color: '#262626' }}>
+      <div style={{ fontSize: isMobile ? 14 : 15, color: '#262626' }}>
         {renderMarkdownSimple(announcement.bodyMd)}
       </div>
     </Card>

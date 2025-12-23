@@ -1,5 +1,6 @@
 // src/layout/Sidebar.tsx
 import React from 'react';
+import ReactDOM from 'react-dom';
 import { Layout, Menu, Button, Drawer, Badge } from 'antd';
 import { MenuFoldOutlined, MenuUnfoldOutlined } from '@ant-design/icons';
 import { useLocation } from 'react-router-dom';
@@ -76,24 +77,30 @@ const Sidebar: React.FC = () => {
     if (sidebarConfig.drawerMode) {
         return (
             <>
-                <Button
-                    type="primary"
-                    icon={<MenuUnfoldOutlined />}
-                    onClick={() => setCollapsed(false)}
-                    style={{
-                        position: 'fixed',
-                        top: 16,
-                        left: 16,
-                        zIndex: 1000,
-                        display: collapsed ? 'block' : 'none',
-                    }}
-                />
+                {collapsed && typeof document !== 'undefined' && ReactDOM.createPortal(
+                    <Button
+                        type="primary"
+                        icon={<MenuUnfoldOutlined />}
+                        onClick={() => setCollapsed(false)}
+                        style={{
+                            position: 'fixed',
+                            top: 16,
+                            left: 16,
+                            zIndex: 10000,
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+                            pointerEvents: 'auto',
+                        }}
+                        size="large"
+                    />,
+                    document.body
+                )}
                 <Drawer
                     title="メニュー"
                     placement="left"
                     open={!collapsed}
                     onClose={() => setCollapsed(true)}
                     width={sidebarConfig.width}
+                    zIndex={9999}
                     styles={{
                         body: { padding: 0 },
                     }}

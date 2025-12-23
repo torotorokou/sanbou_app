@@ -10,6 +10,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Button, Spin, Result } from 'antd';
 import { ArrowLeftOutlined } from '@ant-design/icons';
 import { useAuth } from '@features/authStatus';
+import { useResponsive } from '@/shared';
 import { useAnnouncementDetailViewModel, AnnouncementDetail } from '@features/announcements';
 
 const AnnouncementDetailPage: React.FC = () => {
@@ -17,15 +18,29 @@ const AnnouncementDetailPage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const userKey = user?.userId ?? 'local';
+  const { isMobile, isTablet } = useResponsive();
 
   const { announcement, isLoading, notFound } = useAnnouncementDetailViewModel(
     id ?? '',
     userKey
   );
 
+  // レスポンシブコンテナスタイル
+  const containerClass = isMobile 
+    ? 'px-3 pb-4 pt-20' // モバイルではサイドバーボタンと重ならないよう上部余白を増やす
+    : isTablet 
+    ? 'px-6 py-5' 
+    : 'px-8 py-6';
+  
+  const maxWidthClass = isMobile
+    ? 'max-w-full'
+    : isTablet
+    ? 'max-w-4xl'
+    : 'max-w-5xl';
+
   if (isLoading) {
     return (
-      <div style={{ padding: 48, textAlign: 'center' }}>
+      <div className={`text-center ${isMobile ? 'p-4' : 'p-6'}`}>
         <Spin size="large" />
       </div>
     );
@@ -33,7 +48,7 @@ const AnnouncementDetailPage: React.FC = () => {
 
   if (notFound || !announcement) {
     return (
-      <div style={{ padding: 48 }}>
+      <div className={`${containerClass} ${maxWidthClass} mx-auto`}>
         <Result
           status="404"
           title="お知らせが見つかりません"
@@ -49,15 +64,17 @@ const AnnouncementDetailPage: React.FC = () => {
   }
 
   return (
-    <div style={{ padding: 24 }}>
-      <Button
-        icon={<ArrowLeftOutlined />}
-        onClick={() => navigate('/news')}
-        style={{ marginBottom: 16 }}
-      >
-        お知らせ一覧へ戻る
-      </Button>
-      <AnnouncementDetail announcement={announcement} />
+    <div className={`${containerClass} ${maxWidthClass} mx-auto`}>
+      <AnnouncementDetail announcement={announcement} isMobile={isMobile} />
+      <div className="flex justify-center mt-8 mb-4">
+        <Button
+          icon={<ArrowLeftOutlined />}
+          onClick={() => navigate('/news')}
+          size={isMobile ? 'middle' : 'large'}
+        >
+          お知らせ一覧へ戻る
+        </Button>
+      </div>
     </div>
   );
 };

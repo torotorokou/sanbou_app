@@ -53,7 +53,7 @@ const NewsPage: React.FC = () => {
 
   // レスポンシブコンテナスタイル
   const containerClass = isMobile 
-    ? 'px-3 py-4' 
+    ? 'px-3 pb-4 pt-20' // モバイルではサイドバーボタンと重ならないよう上部余白
     : isTablet 
     ? 'px-6 py-5' 
     : 'px-8 py-6';
