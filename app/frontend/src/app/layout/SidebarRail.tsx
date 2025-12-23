@@ -27,26 +27,30 @@ export const SidebarRail: React.FC<SidebarRailProps> = ({
   onClick,
 }) => {
   return (
-    <Badge 
-      dot={hasUnread} 
-      offset={[0, 4]}
-      color="#ff4d4f"
-      status={hasUnread ? "error" : undefined}
+    <div
+      style={{
+        position: 'fixed',
+        left: 16,
+        top: 16,
+        zIndex: 9998,
+      }}
     >
-      <Button
-        type="primary"
-        icon={<MenuUnfoldOutlined />}
-        onClick={onClick}
-        size="large"
-        aria-label="サイドバーを開く"
-        style={{
-          position: 'fixed',
-          left: 16,
-          top: 16,
-          zIndex: 9998,
-          boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
-        }}
-      />
-    </Badge>
+      <Badge 
+        dot={hasUnread} 
+        offset={[-4, 4]}
+        color="#ff4d4f"
+      >
+        <Button
+          type="primary"
+          icon={<MenuUnfoldOutlined />}
+          onClick={onClick}
+          size="large"
+          aria-label="サイドバーを開く"
+          style={{
+            boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+          }}
+        />
+      </Badge>
+    </div>
   );
 };
