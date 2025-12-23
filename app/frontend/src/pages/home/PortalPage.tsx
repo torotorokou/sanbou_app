@@ -19,6 +19,11 @@ import { useNavigate } from 'react-router-dom';
 import { ROUTER_PATHS } from '@app/routes/routes';
 import { useResponsive } from '@/shared'; // responsive: flags
 import ResponsiveNotice from '@/features/notice/ui/ResponsiveNotice';
+import { useAuth } from '@features/authStatus';
+import {
+  useAnnouncementBannerViewModel,
+  AnnouncementBanner,
+} from '@features/announcements';
 import './PortalPage.css';
 
 const { Title, Paragraph, Text } = Typography;
@@ -426,6 +431,16 @@ export const PortalPage: React.FC = () => {
   const { flags } = useResponsive();
   const { token } = theme.useToken();
 
+  // ユーザーキーを取得（未ログイン時は"local"）
+  const { user } = useAuth();
+  const userKey = user?.userId ?? 'local';
+
+  // お知らせバナー用ViewModel
+  const {
+    announcement: bannerAnnouncement,
+    onAcknowledge: onBannerAcknowledge,
+  } = useAnnouncementBannerViewModel(userKey);
+
   // responsive: 3段階判定ヘルパー（Mobile/Tablet/Desktop）
   const pickByDevice = <T,>(mobile: T, tablet: T, desktop: T): T => {
     if (flags.isMobile) return mobile;    // ≤767px
@@ -507,13 +522,23 @@ export const PortalPage: React.FC = () => {
     <div className="portal-page" style={{ minHeight: '100%' }}>
       <section className="portal-hero" style={heroVars}>
         <Title level={2} className="portal-title">
-          社内ポータル
+          参謀くん-社内ポータル
         </Title>
   {!isXs && <Text className="portal-subtitle">{introText}</Text>}
       </section>
 
       {/* 2カラムレイアウト: 左=カード群, 右=ウィジェット群 */}
       <main style={{ width: '100%', maxWidth: 'none', margin: 0 }}>
+        {/* お知らせバナー（重要通知） */}
+        {bannerAnnouncement && (
+          <div style={{ width: '100%', margin: '0 0 16px 0', padding: '0 16px' }}>
+            <AnnouncementBanner
+              announcement={bannerAnnouncement}
+              onClose={onBannerAcknowledge}
+              onAcknowledge={onBannerAcknowledge}
+            />
+          </div>
+        )}
         {/* 重要通知バナー */}
         {noticeVisible && notices.length > 0 && (
           <div style={{ width: '100%', margin: '0 0 24px 0' }}>

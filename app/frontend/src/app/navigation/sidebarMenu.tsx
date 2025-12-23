@@ -30,6 +30,7 @@ import {
 // ルーティング
 import { Link } from 'react-router-dom';
 import { ROUTER_PATHS } from '@app/routes/routes';
+import { NewsMenuLabel } from '@features/announcements';
 
 // サイドバーのメニュー定義
 export const SIDEBAR_MENU = [
@@ -47,7 +48,7 @@ export const SIDEBAR_MENU = [
             {
                 key: ROUTER_PATHS.NEWS,
                 icon: <NotificationOutlined />,
-                label: <Link to={ROUTER_PATHS.NEWS}>お知らせ</Link>,
+                label: <NewsMenuLabel />,
             },
         ],
     },

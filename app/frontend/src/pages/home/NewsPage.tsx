@@ -1,98 +1,63 @@
-import React, { useState, useEffect } from "react";
-import { List, Tag, Typography } from "antd";
-import { UnimplementedModal } from '@features/unimplemented-feature';
+/**
+ * NewsPage - お知らせ一覧ページ
+ * 
+ * お知らせ機能のメインページ。
+ * ViewModelを使用して一覧取得・詳細表示を行う。
+ */
 
-const { Title, Paragraph } = Typography;
+import React from 'react';
+import { Typography, Spin, Card } from 'antd';
+import { useAuth } from '@features/authStatus';
+import {
+  useAnnouncementsListViewModel,
+  AnnouncementList,
+  AnnouncementDetailModal,
+} from '@features/announcements';
 
-interface Notice {
-  id: number;
-  title: string;
-  content: string;
-  isRead: boolean;
-  isImportant?: boolean;
-}
+const { Title } = Typography;
 
-const initialNotices: Notice[] = [
-  {
-    id: 1,
-    title: "新機能リリースのお知らせ",
-    content: "9月20日に新しい帳票機能を追加しました。",
-    isRead: false,
-    isImportant: true,
-  },
-  {
-    id: 2,
-    title: "システムメンテナンス",
-    content: "9月25日 2:00-5:00 にシステムメンテナンスを実施予定です。",
-    isRead: false,
-  },
-  {
-    id: 3,
-    title: "定期バックアップ完了",
-    content: "9月10日のバックアップが正常に完了しました。",
-    isRead: true,
-  },
-];
+const NewsPage: React.FC = () => {
+  // ユーザーキーを取得（未ログイン時は"local"）
+  const { user } = useAuth();
+  const userKey = user?.userId ?? 'local';
 
-const NoticeList: React.FC = () => {
-  const [notices, setNotices] = useState<Notice[]>(initialNotices);
-  const [showUnimplementedModal, setShowUnimplementedModal] = useState(false);
+  const {
+    announcements,
+    isLoading,
+    selectedAnnouncement,
+    isDetailOpen,
+    openDetail,
+    closeDetail,
+    isUnread,
+  } = useAnnouncementsListViewModel(userKey);
 
-  useEffect(() => {
-    // ページ読み込み時にモーダルを表示
-    setShowUnimplementedModal(true);
-  }, []);
-
-  const markAsRead = (id: number) => {
-    setNotices((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, isRead: true } : n))
+  if (isLoading) {
+    return (
+      <div style={{ padding: 24, textAlign: 'center' }}>
+        <Spin size="large" />
+      </div>
     );
-  };
+  }
 
   return (
     <div style={{ padding: 24 }}>
-      <UnimplementedModal
-        visible={showUnimplementedModal}
-        onClose={() => setShowUnimplementedModal(false)}
-        featureName="お知らせ"
-        description="お知らせ機能は現在開発中です。完成まで今しばらくお待ちください。リリース後は、システムの更新情報や重要なお知らせをリアルタイムで受け取ることができます。"
-      />
       <Title level={2}>お知らせ一覧</Title>
 
-      <List
-        itemLayout="vertical"
-        dataSource={notices}
-        renderItem={(item) => (
-          <List.Item
-            key={item.id}
-            style={{
-              background: item.isRead ? "#fff" : "#f0f8ff",
-              borderLeft: item.isRead ? "none" : "4px solid #1890ff",
-              cursor: "pointer",
-              marginBottom: 12,
-              borderRadius: 4,
-              padding: 16,
-            }}
-            onClick={() => markAsRead(item.id)}
-          >
-            <List.Item.Meta
-              title={
-                <span style={{ fontWeight: item.isRead ? "normal" : "bold" }}>
-                  {item.title}{" "}
-                  {item.isImportant && (
-                    <Tag color="red" style={{ marginLeft: 8 }}>
-                      重要
-                    </Tag>
-                  )}
-                </span>
-              }
-              description={<Paragraph>{item.content}</Paragraph>}
-            />
-          </List.Item>
-        )}
+      <Card>
+        <AnnouncementList
+          items={announcements}
+          onOpen={openDetail}
+          isUnread={isUnread}
+        />
+      </Card>
+
+      <AnnouncementDetailModal
+        announcement={selectedAnnouncement}
+        open={isDetailOpen}
+        onClose={closeDetail}
       />
     </div>
   );
 };
 
-export default NoticeList;
+export default NewsPage;
