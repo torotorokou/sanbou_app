@@ -41,15 +41,15 @@ export const TargetCard: React.FC<TargetCardProps> = ({
   // isoWeek プラグインを拡張
   dayjs.extend(isoWeekPlugin);
   // 画面サイズに応じて動的にフォントサイズを調整（xl: 1280px付近では小さめ）
-  const headerFontSize = isMobile ? "clamp(12px, 3.5vw, 16px)" : "clamp(13px, 0.9vw, 16px)";
-  const labelFontSize = isMobile ? "clamp(10px, 2.5vw, 12px)" : "clamp(10px, 0.7vw, 13px)";
-  const valueFontSize = isMobile ? "clamp(14px, 4vw, 18px)" : "clamp(14px, 1.1vw, 20px)";
-  const pctFontSize = isMobile ? "clamp(12px, 3vw, 16px)" : "clamp(14px, 1vw, 18px)";
+  const headerFontSize = isMobile ? "clamp(11px, 3.2vw, 14px)" : "clamp(13px, 0.9vw, 16px)";
+  const labelFontSize = isMobile ? "clamp(11px, 2.8vw, 13px)" : "clamp(10px, 0.7vw, 13px)";
+  const valueFontSize = isMobile ? "clamp(13px, 3.5vw, 16px)" : "clamp(14px, 1.1vw, 20px)";
+  const pctFontSize = isMobile ? "clamp(11px, 2.8vw, 14px)" : "clamp(14px, 1vw, 18px)";
   
-  // Mobile モードでは行の高さを詰める
-  const minRowHeight = isMobile ? 40 : 44;
-  const gridPadding = isMobile ? 6 : 8;
-  const rowGap = isMobile ? 6 : 6;
+  // Mobile モードでは行の高さを確保（複数行ラベル対応）
+  const minRowHeight = isMobile ? 56 : 44;
+  const gridPadding = isMobile ? 8 : 8;
+  const rowGap = isMobile ? 8 : 6;
 
   return (
     <Card
@@ -93,11 +93,11 @@ export const TargetCard: React.FC<TargetCardProps> = ({
           background: "#fff",
           padding: gridPadding,
           display: "grid",
-          gridTemplateColumns: "auto auto auto 1fr",
+          gridTemplateColumns: isMobile ? "1fr auto auto 1.2fr" : "auto auto auto 1fr",
           gridTemplateRows: `repeat(${1 + rows.length}, minmax(${minRowHeight}px, auto))`,
-          columnGap: isMobile ? 8 : 12,
+          columnGap: isMobile ? 6 : 12,
           rowGap: rowGap,
-          alignItems: "center",
+          alignItems: isMobile ? "start" : "center",
           boxSizing: "border-box",
           flex: 1,
           minHeight: 0,
@@ -132,7 +132,15 @@ export const TargetCard: React.FC<TargetCardProps> = ({
 
           return (
             <React.Fragment key={r.key}>
-              <div style={{ color: "#595959", fontSize: labelFontSize, fontWeight: 800, lineHeight: 1 }}>
+              <div style={{ 
+                color: "#595959", 
+                fontSize: labelFontSize, 
+                fontWeight: 800, 
+                lineHeight: isMobile ? 1.3 : 1.2,
+                paddingTop: isMobile ? 4 : 0,
+                minWidth: 0,
+                wordBreak: "break-word",
+              }}>
                 {/* 今週のラベルにはW##を表示 */}
                 {(() => {
                   const label = r.label ?? "";
@@ -143,14 +151,15 @@ export const TargetCard: React.FC<TargetCardProps> = ({
                   if (isThisWeekLabel && typeof isoWeekToShow === "number") {
                     const w = String(isoWeekToShow).padStart(2, "0");
                     if (isMobile) {
-                      // Mobile: 1行で表示（ラベルを短縮してW##を強調）。もし改行があれば先頭のみ表示。
+                      // Mobile: 縦並びで全て表示（途切れないように）
                       return (
-                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                          <div style={{ display: "flex", flexDirection: "column", lineHeight: 1 }}>
-                            <span>{lines[0]}</span>
-                            {lines[1] ? <span style={{ fontSize: "0.75em", color: "#8c8c8c" }}>{lines[1]}</span> : null}
-                          </div>
-                          <span style={{ color: "#1890ff", fontWeight: 700, fontSize: "0.95em" }}>{`W${w}`}</span>
+                        <div style={{ display: "flex", flexDirection: "column", gap: 2, lineHeight: 1.3 }}>
+                          {lines.map((ln, idx) => (
+                            <span key={idx} style={{ fontSize: idx > 0 ? "0.85em" : "1em", color: idx > 0 ? "#8c8c8c" : "inherit" }}>
+                              {ln}
+                            </span>
+                          ))}
+                          <span style={{ color: "#1890ff", fontWeight: 700, fontSize: "0.9em" }}>{`W${w}`}</span>
                         </div>
                       );
                     }
@@ -181,7 +190,7 @@ export const TargetCard: React.FC<TargetCardProps> = ({
                   return <>{label}</>;
                 })()}
               </div>
-              <div>
+              <div style={{ paddingTop: isMobile ? 4 : 0 }}>
                 {r.target !== null ? (
                   <Statistic
                     value={Math.round(r.target)}
@@ -195,7 +204,7 @@ export const TargetCard: React.FC<TargetCardProps> = ({
                   </div>
                 )}
               </div>
-              <div>
+              <div style={{ paddingTop: isMobile ? 4 : 0 }}>
                 {r.actual !== null ? (
                   <Statistic
                     value={Math.round(r.actual)}
@@ -209,7 +218,7 @@ export const TargetCard: React.FC<TargetCardProps> = ({
                   </div>
                 )}
               </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 4, minWidth: 0 }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 4, minWidth: 0, paddingTop: isMobile ? 4 : 0 }}>
                 {hasValidData ? (
                   <>
                     <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "baseline" }}>
