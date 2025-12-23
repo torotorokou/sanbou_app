@@ -157,11 +157,6 @@ export const AnnouncementDetail: React.FC<AnnouncementDetailProps> = ({
                 <Tag color={getSeverityTagColor(announcement.severity)} style={{ fontSize: 11 }}>
                   {getSeverityLabel(announcement.severity)}
                 </Tag>
-                {announcement.pinned && (
-                  <Tag color="purple" style={{ fontSize: 11 }}>
-                    ピン留め
-                  </Tag>
-                )}
               </div>
             )}
           </>
@@ -176,11 +171,6 @@ export const AnnouncementDetail: React.FC<AnnouncementDetailProps> = ({
                 <Tag color={getSeverityTagColor(announcement.severity)} style={{ fontSize: 13 }}>
                   {getSeverityLabel(announcement.severity)}
                 </Tag>
-                {announcement.pinned && (
-                  <Tag color="purple" style={{ fontSize: 13 }}>
-                    ピン留め
-                  </Tag>
-                )}
               </Space>
             )}
           </div>

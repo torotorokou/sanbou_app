@@ -54,3 +54,5 @@ export { NewsMenuIcon } from './ui/NewsMenuIcon';
 export { useUnreadCount } from './ui/useUnreadCount';
 export { AnnouncementFilterTabs } from './ui/AnnouncementFilterTabs';
 export { AnnouncementDetail } from './ui/AnnouncementDetail';
+export { ResponsiveNotice } from './ui/ResponsiveNotice';
+export type { ResponsiveNoticeProps } from './ui/ResponsiveNotice';

@@ -33,7 +33,7 @@ export type ResponsiveLayoutConfig = {
   /** カードの高さ設定 */
   heights: {
     target: {
-      mobile: number;
+      mobile: string | number;
       tablet: number;
       desktop: string | number;
     };

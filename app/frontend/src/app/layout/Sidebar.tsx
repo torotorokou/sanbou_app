@@ -32,7 +32,7 @@ const useEnhancedMenu = (
                                 icon: <NewsMenuIcon />,
                                 // サイドバーが開いている時だけ未読数を表示
                                 label: isSidebarOpen ? (
-                                    <NewsMenuLabel collapsed={false} />
+                                    <NewsMenuLabel />
                                 ) : (
                                     'お知らせ'
                                 ),

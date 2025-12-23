@@ -113,9 +113,6 @@ export const AnnouncementBanner: React.FC<AnnouncementBannerProps> = ({
       closeIcon={<CloseOutlined />}
       onClose={onClose}
       style={{ marginBottom: isMobile ? 4 : 16 }}
-      styles={{
-        message: { padding: isMobile ? 0 : undefined },
-      }}
     />
   );
 };

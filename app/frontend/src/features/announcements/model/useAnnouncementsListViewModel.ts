@@ -181,11 +181,6 @@ export function useAnnouncementsListViewModel(
           break;
       }
 
-      // ピン留めバッジ
-      if (ann.pinned) {
-        badges.push({ label: 'ピン留め', color: 'purple' });
-      }
-
       return {
         id: ann.id,
         title: ann.title,
@@ -193,7 +188,7 @@ export function useAnnouncementsListViewModel(
         snippet,
         badges,
         isUnread: isUnread(ann.id),
-        isPinned: ann.pinned,
+        isPinned: false,
         severity: ann.severity,
       };
     });

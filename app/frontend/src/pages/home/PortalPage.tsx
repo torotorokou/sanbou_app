@@ -18,7 +18,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { ROUTER_PATHS } from '@app/routes/routes';
 import { useResponsive } from '@/shared'; // responsive: flags
-import ResponsiveNotice from '@/features/announcement-banner/ui/ResponsiveNotice';
+import { ResponsiveNotice } from '@features/announcements';
 import { useAuth } from '@features/authStatus';
 import {
   useAnnouncementBannerViewModel,

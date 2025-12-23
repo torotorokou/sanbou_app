@@ -1,4 +1,4 @@
-// src/features/notice/ui/ResponsiveNotice.tsx
+// src/features/announcements/ui/ResponsiveNotice.tsx
 // スマホで大きすぎる通知を「1行バナー＋詳細Drawer」に置換（React+TypeScript, AntD）
 
 import React, { useState } from 'react';
@@ -122,5 +122,3 @@ export const ResponsiveNotice: React.FC<ResponsiveNoticeProps> = ({
     </>
   );
 };
-
-export default ResponsiveNotice;

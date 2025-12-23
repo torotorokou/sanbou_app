@@ -34,6 +34,7 @@ export const DailyCumulativeCard: React.FC<DailyCumulativeCardProps> = ({ cumDat
     // payloadから各値を取得
     const data = payload[0]?.payload as {
       label: string;
+      yyyyMMdd?: string;
       actualCumulative?: number;
       prevMonthCumulative?: number;
       prevYearCumulative?: number;

@@ -21,8 +21,6 @@ export interface Announcement {
   bodyMd: string;
   /** 重要度 */
   severity: AnnouncementSeverity;
-  /** ピン留め（トップページバナー対象） */
-  pinned: boolean;
   /** 公開開始日時（ISO8601） */
   publishFrom: string;
   /** 公開終了日時（ISO8601、null=無期限） */
@@ -51,14 +49,13 @@ export function isAnnouncementActive(
 /**
  * バナー表示対象かどうかを判定
  * 
- * ピン留め かつ 重要度が warn または critical のお知らせがバナー対象
+ * 重要度が warn または critical のお知らせがバナー対象
  * 
  * @param announcement - 判定対象のお知らせ
  * @returns バナー対象ならtrue
  */
 export function isBannerTarget(announcement: Announcement): boolean {
   return (
-    announcement.pinned &&
-    (announcement.severity === 'warn' || announcement.severity === 'critical')
+    announcement.severity === 'warn' || announcement.severity === 'critical'
   );
 }
