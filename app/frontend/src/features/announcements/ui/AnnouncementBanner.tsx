@@ -9,6 +9,7 @@ import React from 'react';
 import { Alert, Button, Space } from 'antd';
 import { CloseOutlined, ExclamationCircleOutlined, WarningOutlined } from '@ant-design/icons';
 import type { Announcement } from '../domain/announcement';
+import { stripMarkdownForSnippet } from '../domain/stripMarkdownForSnippet';
 
 interface AnnouncementBannerProps {
   /** 表示するお知らせ */
@@ -76,23 +77,14 @@ export const AnnouncementBanner: React.FC<AnnouncementBannerProps> = ({
       message={announcement.title}
       description={
         <Space direction="vertical" style={{ width: '100%' }}>
-          <span
-            style={{ cursor: onNavigateToDetail ? 'pointer' : 'default' }}
-            onClick={handleClick}
-          >
-            {announcement.bodyMd.substring(0, 100)}
-            {announcement.bodyMd.length > 100 ? '...' : ''}
+          <span>
+            {stripMarkdownForSnippet(announcement.bodyMd, 100)}
           </span>
-          <Space>
-            {onNavigateToDetail && (
-              <Button size="small" onClick={handleClick}>
-                詳細を見る
-              </Button>
-            )}
-            <Button type="primary" size="small" onClick={onAcknowledge}>
-              理解しました
+          {onNavigateToDetail && (
+            <Button type="primary" size="small" onClick={handleClick}>
+              詳細を見る
             </Button>
-          </Space>
+          )}
         </Space>
       }
       closable

@@ -79,6 +79,8 @@ export function saveUserState(
   try {
     const key = getStorageKey(userKey);
     localStorage.setItem(key, JSON.stringify(state));
+    // 同一タブ内での変更通知用カスタムイベント
+    window.dispatchEvent(new Event('announcement-storage-change'));
   } catch {
     // ストレージフル等 → 無視（最悪リロードで状態が消えるだけ）
     console.warn('[announcements] Failed to save user state');

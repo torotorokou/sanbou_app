@@ -30,7 +30,20 @@ import {
 // ルーティング
 import { Link } from 'react-router-dom';
 import { ROUTER_PATHS } from '@app/routes/routes';
-import { NewsMenuLabel } from '@features/announcements';
+import { NewsMenuLabel, NewsMenuIcon, useUnreadCount } from '@features/announcements';
+import { Badge } from 'antd';
+
+// ホームアイコン（サイドバー閉じている時に未読ドット表示）
+const HomeIconWithBadge = ({ collapsed }: { collapsed?: boolean }) => {
+  const unreadCount = useUnreadCount();
+  const showDot = collapsed && unreadCount > 0;
+  
+  return (
+    <Badge dot={showDot} offset={[4, 4]}>
+      <HomeOutlined />
+    </Badge>
+  );
+};
 
 // サイドバーのメニュー定義
 export const SIDEBAR_MENU = [
@@ -47,7 +60,7 @@ export const SIDEBAR_MENU = [
             },
             {
                 key: ROUTER_PATHS.NEWS,
-                icon: <NotificationOutlined />,
+                icon: <NewsMenuIcon />,
                 label: <NewsMenuLabel />,
             },
         ],

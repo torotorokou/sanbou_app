@@ -64,9 +64,16 @@ function formatDate(isoString: string): string {
  */
 function renderMarkdownSimple(md: string): React.ReactNode {
   const lines = md.split('\n');
+  let firstH2Found = false; // 最初の ## 見出しをスキップするためのフラグ
+  
   return lines.map((line, index) => {
     // 見出し
     if (line.startsWith('## ')) {
+      // 最初の ## 見出しはスキップ（タイトルと重複するため）
+      if (!firstH2Found) {
+        firstH2Found = true;
+        return null;
+      }
       return (
         <Title level={4} key={index} style={{ marginTop: 24, marginBottom: 12 }}>
           {line.replace('## ', '')}
@@ -125,7 +132,7 @@ export const AnnouncementDetail: React.FC<AnnouncementDetailProps> = ({
   announcement,
 }) => {
   return (
-    <Card style={{ maxWidth: 900, margin: '0 auto' }}>
+    <Card className="no-hover" style={{ margin: '0 auto' }}>
       {/* ヘッダー */}
       <Space direction="vertical" size={12} style={{ width: '100%' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>

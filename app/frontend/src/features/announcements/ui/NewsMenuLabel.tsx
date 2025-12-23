@@ -8,21 +8,24 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Badge } from 'antd';
 import { ROUTER_PATHS } from '@app/routes/routes';
-import { useAuth } from '@features/authStatus';
-import { useUnreadAnnouncementCountViewModel } from '@features/announcements';
+import { useUnreadCount } from './useUnreadCount';
 
-export const NewsMenuLabel: React.FC = () => {
-  // ユーザーキーを取得（未ログイン時は"local"）
-  const { user } = useAuth();
-  const userKey = user?.userId ?? 'local';
+interface NewsMenuLabelProps {
+  /** サイドバーが閉じているかどうか */
+  collapsed?: boolean;
+}
 
-  const { unreadCount } = useUnreadAnnouncementCountViewModel(userKey);
+export const NewsMenuLabel: React.FC<NewsMenuLabelProps> = ({ collapsed = false }) => {
+  const unreadCount = useUnreadCount();
+
+  // 常にバッジを表示（サイドバーの開閉状態に関わらず）
+  const showBadge = unreadCount > 0;
 
   return (
     <Link to={ROUTER_PATHS.NEWS}>
       <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
         お知らせ
-        {unreadCount > 0 && (
+        {showBadge && (
           <Badge
             count={unreadCount}
             size="small"

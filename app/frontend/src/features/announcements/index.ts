@@ -50,5 +50,7 @@ export { AnnouncementList } from './ui/AnnouncementList';
 export { AnnouncementListItem } from './ui/AnnouncementListItem';
 export { AnnouncementDetailModal } from './ui/AnnouncementDetailModal';
 export { NewsMenuLabel } from './ui/NewsMenuLabel';
+export { NewsMenuIcon } from './ui/NewsMenuIcon';
+export { useUnreadCount } from './ui/useUnreadCount';
 export { AnnouncementFilterTabs } from './ui/AnnouncementFilterTabs';
 export { AnnouncementDetail } from './ui/AnnouncementDetail';

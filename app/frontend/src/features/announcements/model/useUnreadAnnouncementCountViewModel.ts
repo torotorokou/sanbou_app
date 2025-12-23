@@ -51,8 +51,25 @@ export function useUnreadAnnouncementCountViewModel(
 
     fetchUnreadCount();
 
+    // localStorage変更を検知して自動再読み込み
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key && e.key.startsWith('announcements.v1.')) {
+        fetchUnreadCount();
+      }
+    };
+
+    // 同一タブ内での変更検知用カスタムイベント
+    const handleCustomStorageChange = () => {
+      fetchUnreadCount();
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('announcement-storage-change', handleCustomStorageChange);
+
     return () => {
       cancelled = true;
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('announcement-storage-change', handleCustomStorageChange);
     };
   }, [userKey, fetchTrigger]);
 

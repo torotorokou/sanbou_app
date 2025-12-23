@@ -1,12 +1,16 @@
 // src/layout/Sidebar.tsx
 import React from 'react';
-import { Layout, Menu, Button, Drawer } from 'antd';
+import { Layout, Menu, Button, Drawer, Badge } from 'antd';
 import { MenuFoldOutlined, MenuUnfoldOutlined } from '@ant-design/icons';
 import { useLocation } from 'react-router-dom';
 import { SIDEBAR_MENU } from '@app/navigation/sidebarMenu';
+import { ROUTER_PATHS } from '@app/routes/routes';
 import { customTokens, useSidebar, useResponsive } from '@/shared';
 import { type MenuItem, filterMenuItems } from '@features/navi';
 import { UserInfoChip } from '@features/authStatus';
+import { useAuth } from '@features/authStatus';
+import { useUnreadCount, NewsMenuLabel, NewsMenuIcon } from '@features/announcements';
+import { HomeOutlined } from '@ant-design/icons';
 
 const { Sider } = Layout;
 
@@ -15,12 +19,42 @@ const Sidebar: React.FC = () => {
     const location = useLocation();
     const { collapsed, setCollapsed, config: sidebarConfig, style: animationStyles } = useSidebar();
     const { isTablet } = useResponsive();
+    const unreadCount = useUnreadCount();
 
     // openKeys を管理して、サイドバーが開いているときは子メニューを展開する
     const [openKeys, setOpenKeys] = React.useState<string[]>([]);
 
     // visibleMenu は hidden フラグを除外したメニュー（親キーの決定にも使う）
-    const visibleMenu = React.useMemo<MenuItem[]>(() => filterMenuItems(SIDEBAR_MENU as MenuItem[]), []);
+    const visibleMenu = React.useMemo<MenuItem[]>(() => {
+        const filtered = filterMenuItems(SIDEBAR_MENU as MenuItem[]);
+        // NewsMenuLabel, NewsMenuIcon, HomeIcon に collapsed を渡すためにメニューを変換
+        return filtered.map(item => {
+            if (item.key === 'home') {
+                const homeItem = {
+                    ...item,
+                    icon: (
+                        <Badge dot={collapsed && unreadCount > 0} offset={[4, 4]}>
+                            <HomeOutlined />
+                        </Badge>
+                    ),
+                };
+                if (item.children) {
+                    homeItem.children = item.children.map(child => {
+                        if (child.key === ROUTER_PATHS.NEWS) {
+                            return {
+                                ...child,
+                                icon: <NewsMenuIcon />,
+                                label: <NewsMenuLabel collapsed={collapsed} />,
+                            };
+                        }
+                        return child;
+                    });
+                }
+                return homeItem;
+            }
+            return item;
+        });
+    }, [collapsed, unreadCount]);
 
     // visibleMenu から子を持つ親キーを収集
     const parentKeys = React.useMemo(() => {
