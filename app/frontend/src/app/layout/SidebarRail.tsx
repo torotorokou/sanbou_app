@@ -27,7 +27,12 @@ export const SidebarRail: React.FC<SidebarRailProps> = ({
   onClick,
 }) => {
   return (
-    <Badge dot={hasUnread} offset={[0, 4]}>
+    <Badge 
+      dot={hasUnread} 
+      offset={[0, 4]}
+      color="#ff4d4f"
+      status={hasUnread ? "error" : undefined}
+    >
       <Button
         type="primary"
         icon={<MenuUnfoldOutlined />}
