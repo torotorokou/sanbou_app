@@ -122,6 +122,8 @@ const Sidebar: React.FC = () => {
     const { isTablet } = useResponsive();
     const unreadCount = useUnreadCount();
     const hasUnread = unreadCount > 0;
+    // デバッグログ
+    console.log('[Sidebar] unreadCount:', unreadCount, 'hasUnread:', hasUnread);
 
     // サイドバーが開いているかの判定（未読数表示用）
     const isSidebarOpen = isMobile ? drawerOpen : !collapsed;

@@ -39,6 +39,8 @@ export function useUnreadAnnouncementCountViewModel(
         const all = await announcementRepository.list();
         const ids = all.map((ann) => ann.id);
         const count = getUnreadCount(userKey, ids);
+        // デバッグログ
+        console.log('[useUnreadAnnouncementCountViewModel] all:', all.length, 'ids:', ids, 'count:', count, 'userKey:', userKey);
         if (!cancelled) {
           setUnreadCount(count);
         }
