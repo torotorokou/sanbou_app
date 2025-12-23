@@ -176,7 +176,8 @@ const PortalCard: React.FC<PortalCardProps> = ({
         style={{
           width: '100%', // follow grid cell width
           height: finalCardHeight,
-          borderRadius: 16,
+          borderRadius: compactLayout ? 6 : 16,
+          margin: compactLayout ? 0 : undefined,
           // 上辺にアクセントライン（sm未満では太く表示）
           boxShadow: hideButton ? `inset 0 4px 0 0 ${accent}` : `inset 0 2px 0 0 ${accent}`,
           transition: 'transform 200ms ease, box-shadow 200ms ease',
