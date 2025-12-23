@@ -25,8 +25,8 @@ const NewsPage: React.FC = () => {
   const {
     selectedTab,
     setSelectedTab,
-    pinnedItems,
-    normalItems,
+    importantItems,
+    otherItems,
     unreadCount,
     isLoading,
     selectedAnnouncement,
@@ -68,8 +68,8 @@ const NewsPage: React.FC = () => {
           unreadCount={unreadCount}
         />
         <AnnouncementList
-          pinnedItems={pinnedItems}
-          normalItems={normalItems}
+          importantItems={importantItems}
+          otherItems={otherItems}
           onOpen={openDetail}
         />
       </Card>

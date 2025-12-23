@@ -8,7 +8,7 @@
  */
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import type { Announcement } from '../domain/announcement';
+import type { Announcement, AnnouncementSeverity } from '../domain/announcement';
 import { announcementRepository } from '../infrastructure/LocalAnnouncementRepository';
 import {
   isRead,
@@ -41,6 +41,7 @@ export interface AnnouncementDisplayItem {
   badges: AnnouncementBadge[];
   isUnread: boolean;
   isPinned: boolean;
+  severity: AnnouncementSeverity;
 }
 
 interface UseAnnouncementsListViewModelResult {
@@ -50,10 +51,10 @@ interface UseAnnouncementsListViewModelResult {
   selectedTab: AnnouncementFilterTab;
   /** タブ切替 */
   setSelectedTab: (tab: AnnouncementFilterTab) => void;
-  /** ピン留めアイテム（タブフィルタ適用済み） */
-  pinnedItems: AnnouncementDisplayItem[];
-  /** 通常アイテム（タブフィルタ適用済み） */
-  normalItems: AnnouncementDisplayItem[];
+  /** 重要・注意アイテム（warn/critical、タブフィルタ適用済み） */
+  importantItems: AnnouncementDisplayItem[];
+  /** その他アイテム（info等、タブフィルタ適用済み） */
+  otherItems: AnnouncementDisplayItem[];
   /** 表示用に整形されたお知らせ一覧（全件） */
   displayItems: AnnouncementDisplayItem[];
   /** ローディング中かどうか */
@@ -193,38 +194,43 @@ export function useAnnouncementsListViewModel(
         badges,
         isUnread: isUnread(ann.id),
         isPinned: ann.pinned,
+        severity: ann.severity,
       };
     });
   }, [announcements, isUnread]);
 
   /**
-   * ピン留めアイテム（最大3件、タブフィルタ適用済み）
+   * 重要・注意アイツム（warn/critical、タブフィルタ適用済み）
    */
-  const pinnedItems = useMemo<AnnouncementDisplayItem[]>(() => {
-    const pinned = displayItems.filter((item) => item.isPinned).slice(0, 3);
+  const importantItems = useMemo<AnnouncementDisplayItem[]>(() => {
+    const important = displayItems.filter(
+      (item) => item.severity === 'warn' || item.severity === 'critical'
+    );
     if (selectedTab === 'unread') {
-      return pinned.filter((item) => item.isUnread);
+      return important.filter((item) => item.isUnread);
     }
-    return pinned;
+    return important;
   }, [displayItems, selectedTab]);
 
   /**
-   * 通常アイテム（ピン留め以外、タブフィルタ適用済み）
+   * その他アイテム（info等、タブフィルタ適用済み）
    */
-  const normalItems = useMemo<AnnouncementDisplayItem[]>(() => {
-    const normal = displayItems.filter((item) => !item.isPinned);
+  const otherItems = useMemo<AnnouncementDisplayItem[]>(() => {
+    const other = displayItems.filter(
+      (item) => item.severity !== 'warn' && item.severity !== 'critical'
+    );
     if (selectedTab === 'unread') {
-      return normal.filter((item) => item.isUnread);
+      return other.filter((item) => item.isUnread);
     }
-    return normal;
+    return other;
   }, [displayItems, selectedTab]);
 
   return {
     announcements,
     selectedTab,
     setSelectedTab,
-    pinnedItems,
-    normalItems,
+    importantItems,
+    otherItems,
     displayItems,
     isLoading,
     selectedAnnouncement,
