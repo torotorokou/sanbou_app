@@ -41,30 +41,40 @@ export const TargetCard: React.FC<TargetCardProps> = ({
   // isoWeek プラグインを拡張
   dayjs.extend(isoWeekPlugin);
   // 画面サイズに応じて動的にフォントサイズを調整（xl: 1280px付近では小さめ）
-  const headerFontSize = isMobile ? "clamp(11px, 3.2vw, 14px)" : "clamp(13px, 0.9vw, 16px)";
-  const labelFontSize = isMobile ? "clamp(11px, 2.8vw, 13px)" : "clamp(10px, 0.7vw, 13px)";
-  const valueFontSize = isMobile ? "clamp(13px, 3.5vw, 16px)" : "clamp(14px, 1.1vw, 20px)";
-  const pctFontSize = isMobile ? "clamp(11px, 2.8vw, 14px)" : "clamp(14px, 1vw, 18px)";
+  const headerFontSize = isMobile ? "clamp(10px, 2.8vw, 12px)" : "clamp(13px, 0.9vw, 16px)";
+  const labelFontSize = isMobile ? "clamp(10px, 2.5vw, 12px)" : "clamp(10px, 0.7vw, 13px)";
+  const valueFontSize = isMobile ? "clamp(12px, 3.2vw, 15px)" : "clamp(14px, 1.1vw, 20px)";
+  const pctFontSize = isMobile ? "clamp(10px, 2.5vw, 13px)" : "clamp(14px, 1vw, 18px)";
   
   // Mobile モードでは行の高さを確保（複数行ラベル対応）
-  const minRowHeight = isMobile ? 56 : 44;
-  const gridPadding = isMobile ? 8 : 8;
-  const rowGap = isMobile ? 8 : 6;
+  const minRowHeight = isMobile ? 44 : 44;
+  const gridPadding = isMobile ? 6 : 8;
+  const rowGap = isMobile ? 4 : 6;
 
   return (
     <Card
       variant="outlined"
       style={{ height: "100%", display: "flex", flexDirection: "column", ...style }}
-      styles={{ body: { padding: 12, display: "flex", flexDirection: "column", gap: 8, flex: 1, minHeight: 0 } }}
+      styles={{ 
+        body: { 
+          padding: isMobile ? 8 : 12, 
+          display: "flex", 
+          flexDirection: "column", 
+          gap: isMobile ? 4 : 8, 
+          flex: 1, 
+          minHeight: 0,
+          overflow: "visible",
+        } 
+      }}
     >
       {/* ヘッダー: タイトル・ツールチップ・モード切り替え */}
-      <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 4 }}>
-        <Space align="baseline">
-          <Typography.Title level={5} style={{ margin: 0 }}>
+      <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: isMobile ? 2 : 4 }}>
+        <Space align="baseline" size={isMobile ? 4 : 8}>
+          <Typography.Title level={5} style={{ margin: 0, fontSize: isMobile ? "14px" : "16px" }}>
             目標カード
           </Typography.Title>
           <Tooltip title="週目標は当月の営業日配分で按分。日目標は平日/土/日祝の重みで配分。">
-            <InfoCircleOutlined style={{ color: "#8c8c8c" }} />
+            <InfoCircleOutlined style={{ color: "#8c8c8c", fontSize: isMobile ? "12px" : "14px" }} />
           </Tooltip>
         </Space>
         
@@ -100,7 +110,7 @@ export const TargetCard: React.FC<TargetCardProps> = ({
           alignItems: isMobile ? "start" : "center",
           boxSizing: "border-box",
           flex: 1,
-          minHeight: 0,
+          overflow: "visible",
         }}
       >
         {/* ヘッダ行 */}
@@ -136,8 +146,7 @@ export const TargetCard: React.FC<TargetCardProps> = ({
                 color: "#595959", 
                 fontSize: labelFontSize, 
                 fontWeight: 800, 
-                lineHeight: isMobile ? 1.3 : 1.2,
-                paddingTop: isMobile ? 4 : 0,
+                lineHeight: isMobile ? 1.2 : 1.2,
                 minWidth: 0,
                 wordBreak: "break-word",
               }}>
@@ -153,13 +162,13 @@ export const TargetCard: React.FC<TargetCardProps> = ({
                     if (isMobile) {
                       // Mobile: 縦並びで全て表示（途切れないように）
                       return (
-                        <div style={{ display: "flex", flexDirection: "column", gap: 2, lineHeight: 1.3 }}>
+                        <div style={{ display: "flex", flexDirection: "column", gap: 1, lineHeight: 1.2 }}>
                           {lines.map((ln, idx) => (
                             <span key={idx} style={{ fontSize: idx > 0 ? "0.85em" : "1em", color: idx > 0 ? "#8c8c8c" : "inherit" }}>
                               {ln}
                             </span>
                           ))}
-                          <span style={{ color: "#1890ff", fontWeight: 700, fontSize: "0.9em" }}>{`W${w}`}</span>
+                          <span style={{ color: "#1890ff", fontWeight: 700, fontSize: "0.85em" }}>{`W${w}`}</span>
                         </div>
                       );
                     }
@@ -190,7 +199,7 @@ export const TargetCard: React.FC<TargetCardProps> = ({
                   return <>{label}</>;
                 })()}
               </div>
-              <div style={{ paddingTop: isMobile ? 4 : 0 }}>
+              <div>
                 {r.target !== null ? (
                   <Statistic
                     value={Math.round(r.target)}
@@ -204,7 +213,7 @@ export const TargetCard: React.FC<TargetCardProps> = ({
                   </div>
                 )}
               </div>
-              <div style={{ paddingTop: isMobile ? 4 : 0 }}>
+              <div>
                 {r.actual !== null ? (
                   <Statistic
                     value={Math.round(r.actual)}
@@ -218,7 +227,7 @@ export const TargetCard: React.FC<TargetCardProps> = ({
                   </div>
                 )}
               </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 4, minWidth: 0, paddingTop: isMobile ? 4 : 0 }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 2, minWidth: 0 }}>
                 {hasValidData ? (
                   <>
                     <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "baseline" }}>

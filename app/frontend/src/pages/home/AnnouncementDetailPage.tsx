@@ -27,7 +27,7 @@ const AnnouncementDetailPage: React.FC = () => {
 
   // レスポンシブコンテナスタイル
   const containerClass = isMobile 
-    ? 'px-3 pb-4 pt-20' // モバイルではサイドバーボタンと重ならないよう上部余白を増やす
+    ? 'px-3 pb-4 pt-4' // モバイルでは上部余白を最小化
     : isTablet 
     ? 'px-6 py-5' 
     : 'px-8 py-6';
@@ -65,8 +65,10 @@ const AnnouncementDetailPage: React.FC = () => {
 
   return (
     <div className={`${containerClass} ${maxWidthClass} mx-auto`}>
-      <AnnouncementDetail announcement={announcement} isMobile={isMobile} />
-      <div className="flex justify-center mt-8 mb-4">
+      <div style={{ marginTop: isMobile ? 48 : 0 }}>
+        <AnnouncementDetail announcement={announcement} isMobile={isMobile} showTags={!isMobile} />
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'center', marginTop: 32, marginBottom: 16 }}>
         <Button
           icon={<ArrowLeftOutlined />}
           onClick={() => navigate('/news')}

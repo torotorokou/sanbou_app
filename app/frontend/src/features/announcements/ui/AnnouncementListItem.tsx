@@ -62,56 +62,88 @@ export const AnnouncementListItem: React.FC<AnnouncementListItemProps> = ({
 
         {/* 中央：コンテンツ */}
         <div style={{ flex: 1, minWidth: 0 }}>
-          {/* 1行目：タイトル + バッジ + 公開日 */}
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: 6,
-              gap: 8,
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 1, minWidth: 0 }}>
+          {isMobile ? (
+            // モバイル：タイトルと日付を2行に分ける、タグは非表示
+            <>
               <h4
                 style={{
                   margin: 0,
+                  marginBottom: 8,
                   fontSize: 16,
-                  fontWeight: item.isUnread ? 600 : 400,
-                  color: item.isUnread ? '#262626' : '#595959',
+                  fontWeight: item.isUnread ? 700 : 600,
+                  color: item.isUnread ? '#262626' : '#404040',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap',
-                  flex: '0 1 auto',
+                  letterSpacing: '0.3px',
                 }}
               >
                 {item.title}
               </h4>
-              {item.badges.length > 0 && (
-                <Space size={4} style={{ flexShrink: 0 }}>
-                  {item.badges.slice(0, 2).map((badge, index) => (
-                    <Tag
-                      key={index}
-                      color={badge.color}
-                      style={{ margin: 0, fontSize: 11 }}
-                    >
-                      {badge.label}
-                    </Tag>
-                  ))}
-                </Space>
-              )}
-            </div>
-            <span
+              <span
+                style={{
+                  display: 'block',
+                  fontSize: 12,
+                  color: '#8c8c8c',
+                  marginBottom: 8,
+                }}
+              >
+                {item.publishedLabel}
+              </span>
+            </>
+          ) : (
+            // デスクトップ：既存のレイアウト（タイトル + バッジ + 公開日を1行）
+            <div
               style={{
-                fontSize: 12,
-                color: '#8c8c8c',
-                whiteSpace: 'nowrap',
-                flexShrink: 0,
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: 6,
+                gap: 8,
               }}
             >
-              {item.publishedLabel}
-            </span>
-          </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 1, minWidth: 0 }}>
+                <h4
+                  style={{
+                    margin: 0,
+                    fontSize: 17,
+                    fontWeight: item.isUnread ? 700 : 600,
+                    color: item.isUnread ? '#262626' : '#404040',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                    flex: '0 1 auto',
+                    letterSpacing: '0.3px',
+                  }}
+                >
+                  {item.title}
+                </h4>
+                {item.badges.length > 0 && (
+                  <Space size={4} style={{ flexShrink: 0 }}>
+                    {item.badges.slice(0, 2).map((badge, index) => (
+                      <Tag
+                        key={index}
+                        color={badge.color}
+                        style={{ margin: 0, fontSize: 11 }}
+                      >
+                        {badge.label}
+                      </Tag>
+                    ))}
+                  </Space>
+                )}
+              </div>
+              <span
+                style={{
+                  fontSize: 12,
+                  color: '#8c8c8c',
+                  whiteSpace: 'nowrap',
+                  flexShrink: 0,
+                }}
+              >
+                {item.publishedLabel}
+              </span>
+            </div>
+          )}
 
           {/* 2行目：本文スニペット */}
           <p

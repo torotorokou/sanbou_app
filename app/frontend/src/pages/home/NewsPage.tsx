@@ -66,8 +66,8 @@ const NewsPage: React.FC = () => {
 
   return (
     <div className={`${containerClass} ${maxWidthClass} mx-auto`}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-        <Title level={2} style={{ margin: 0 }}>お知らせ一覧</Title>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+        <Title level={isMobile ? 3 : 2} style={{ margin: 0, textAlign: 'center' }}>お知らせ一覧</Title>
         {unreadCount > 0 && (
           <Badge
             count={`未読 ${unreadCount}`}

@@ -8,6 +8,7 @@
 import React from 'react';
 import { Alert, Button, Space } from 'antd';
 import { CloseOutlined, ExclamationCircleOutlined, WarningOutlined } from '@ant-design/icons';
+import { useResponsive } from '@/shared';
 import type { Announcement } from '../domain/announcement';
 import { stripMarkdownForSnippet } from '../domain/stripMarkdownForSnippet';
 
@@ -60,6 +61,7 @@ export const AnnouncementBanner: React.FC<AnnouncementBannerProps> = ({
   onAcknowledge,
   onNavigateToDetail,
 }) => {
+  const { isMobile } = useResponsive();
   const alertType = getSeverityType(announcement.severity);
   const icon = getSeverityIcon(announcement.severity);
 
@@ -74,23 +76,49 @@ export const AnnouncementBanner: React.FC<AnnouncementBannerProps> = ({
       type={alertType}
       icon={icon}
       showIcon
-      message={announcement.title}
-      description={
-        <Space direction="vertical" style={{ width: '100%' }}>
-          <span>
-            {stripMarkdownForSnippet(announcement.bodyMd, 100)}
+      message={
+        isMobile ? (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, width: '100%' }}>
+            <span style={{ fontSize: '13px', fontWeight: 600, flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {announcement.title}
+            </span>
+            {onNavigateToDetail && (
+              <Button type="primary" size="small" onClick={handleClick} style={{ flexShrink: 0, fontSize: '12px', height: '24px', padding: '0 8px' }}>
+                詳細
+              </Button>
+            )}
+          </div>
+        ) : (
+          <span style={{ fontSize: '15px' }}>
+            {announcement.title}
           </span>
-          {onNavigateToDetail && (
+        )
+      }
+      description={
+        !isMobile && onNavigateToDetail ? (
+          <Space direction="vertical" style={{ width: '100%' }}>
+            <span style={{ fontSize: '14px' }}>
+              {stripMarkdownForSnippet(announcement.bodyMd, 100)}
+            </span>
             <Button type="primary" size="small" onClick={handleClick}>
               詳細を見る
             </Button>
-          )}
-        </Space>
+          </Space>
+        ) : (
+          !isMobile ? (
+            <span style={{ fontSize: '14px' }}>
+              {stripMarkdownForSnippet(announcement.bodyMd, 100)}
+            </span>
+          ) : undefined
+        )
       }
       closable
       closeIcon={<CloseOutlined />}
       onClose={onClose}
-      style={{ marginBottom: 16 }}
+      style={{ marginBottom: isMobile ? 4 : 16 }}
+      styles={{
+        message: { padding: isMobile ? 0 : undefined },
+      }}
     />
   );
 };

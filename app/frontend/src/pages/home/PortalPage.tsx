@@ -18,7 +18,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { ROUTER_PATHS } from '@app/routes/routes';
 import { useResponsive } from '@/shared'; // responsive: flags
-import ResponsiveNotice from '@/features/notice/ui/ResponsiveNotice';
+import ResponsiveNotice from '@/features/announcement-banner/ui/ResponsiveNotice';
 import { useAuth } from '@features/authStatus';
 import {
   useAnnouncementBannerViewModel,
@@ -184,8 +184,8 @@ const PortalCard: React.FC<PortalCardProps> = ({
         styles={{
           body: {
             height: '100%',
-            // Keep internal card padding unchanged per request
-            padding: compactLayout ? '2px 2px' : 20,
+            // モバイルではパディングを大幅に削減
+            padding: compactLayout ? '1px 1px' : (isButtonHidden ? '8px 12px' : '12px 12px'),
             display: 'flex',
             // For small-screen cases (either smallButton or button-hidden), use horizontal layout
             flexDirection: (isButtonHidden || isSmallButton) ? 'row' : (compactLayout ? 'row' : 'column'),
@@ -193,7 +193,7 @@ const PortalCard: React.FC<PortalCardProps> = ({
             alignItems: 'center',
             // when we have a small button on the right, space-between ensures it sits to the far right
             justifyContent: isSmallButton ? 'space-between' : (isButtonHidden ? 'flex-start' : (compactLayout ? 'space-between' : 'center')),
-            gap: compactLayout ? 12 * scale : 12 * scale,
+            gap: compactLayout ? 6 * scale : 8 * scale,
             // text should be left-aligned when it's to the right of the icon
             textAlign: isButtonHidden ? 'left' : (compactLayout ? 'left' : 'center'),
           },
@@ -465,9 +465,9 @@ export const PortalPage: React.FC = () => {
   const unifiedButtonWidth = BUTTON_WIDTH;
 
   // カード間のギャップ（行間・列間）を一元管理
-  // モバイルは2px、Tablet/Desktopは4px
-  const CARD_COLUMN_GAP = pickByDevice(2, 4, 4);
-  const CARD_ROW_GAP = pickByDevice(2, 4, 4);
+  // モバイルは0px、Tablet/Desktopは1px
+  const CARD_COLUMN_GAP = pickByDevice(0, 1, 1);
+  const CARD_ROW_GAP = pickByDevice(0, 1, 1);
 
   const introText = isCompact
     ? '社内ポータルです。必要な機能を選択してください。'

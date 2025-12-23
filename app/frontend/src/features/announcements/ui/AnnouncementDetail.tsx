@@ -17,6 +17,8 @@ interface AnnouncementDetailProps {
   announcement: Announcement;
   /** モバイルモード */
   isMobile?: boolean;
+  /** タグを表示するかどうか */
+  showTags?: boolean;
 }
 
 /**
@@ -133,6 +135,7 @@ function renderMarkdownSimple(md: string): React.ReactNode {
 export const AnnouncementDetail: React.FC<AnnouncementDetailProps> = ({
   announcement,
   isMobile = false,
+  showTags = true,
 }) => {
   return (
     <Card 
@@ -146,21 +149,45 @@ export const AnnouncementDetail: React.FC<AnnouncementDetailProps> = ({
     >
       {/* ヘッダー */}
       <Space direction="vertical" size={isMobile ? 8 : 12} style={{ width: '100%' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 8 : 12, flexWrap: 'wrap' }}>
-          <Title level={isMobile ? 3 : 2} style={{ margin: 0, flex: 1 }}>
-            {announcement.title}
-          </Title>
-          <Space>
-            <Tag color={getSeverityTagColor(announcement.severity)} style={{ fontSize: isMobile ? 11 : 13 }}>
-              {getSeverityLabel(announcement.severity)}
-            </Tag>
-            {announcement.pinned && (
-              <Tag color="purple" style={{ fontSize: isMobile ? 11 : 13 }}>
-                ピン留め
-              </Tag>
+        {isMobile ? (
+          // モバイル：センター表示
+          <>
+            <Title level={3} style={{ margin: 0, textAlign: 'center' }}>
+              {announcement.title}
+            </Title>
+            {showTags && (
+              <div style={{ display: 'flex', justifyContent: 'center', gap: 8, flexWrap: 'wrap' }}>
+                <Tag color={getSeverityTagColor(announcement.severity)} style={{ fontSize: 11 }}>
+                  {getSeverityLabel(announcement.severity)}
+                </Tag>
+                {announcement.pinned && (
+                  <Tag color="purple" style={{ fontSize: 11 }}>
+                    ピン留め
+                  </Tag>
+                )}
+              </div>
             )}
-          </Space>
-        </div>
+          </>
+        ) : (
+          // デスクトップ：横並び
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+            <Title level={2} style={{ margin: 0, flex: 1 }}>
+              {announcement.title}
+            </Title>
+            {showTags && (
+              <Space>
+                <Tag color={getSeverityTagColor(announcement.severity)} style={{ fontSize: 13 }}>
+                  {getSeverityLabel(announcement.severity)}
+                </Tag>
+                {announcement.pinned && (
+                  <Tag color="purple" style={{ fontSize: 13 }}>
+                    ピン留め
+                  </Tag>
+                )}
+              </Space>
+            )}
+          </div>
+        )}
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <CalendarOutlined style={{ color: '#8c8c8c', fontSize: isMobile ? 12 : 14 }} />
