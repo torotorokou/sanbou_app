@@ -16,9 +16,31 @@ import {
   loadUserState,
 } from '../infrastructure/announcementUserStateStorage';
 
+/**
+ * バッジ表示用データ
+ */
+export interface AnnouncementBadge {
+  label: string;
+  color: string;
+}
+
+/**
+ * 表示用に整形されたお知らせアイテム
+ */
+export interface AnnouncementDisplayItem {
+  id: string;
+  title: string;
+  publishedLabel: string;
+  snippet: string;
+  badges: AnnouncementBadge[];
+  isUnread: boolean;
+}
+
 interface UseAnnouncementsListViewModelResult {
-  /** お知らせ一覧 */
+  /** お知らせ一覧（生データ） */
   announcements: Announcement[];
+  /** 表示用に整形されたお知らせ一覧 */
+  displayItems: AnnouncementDisplayItem[];
   /** ローディング中かどうか */
   isLoading: boolean;
   /** 詳細表示中のお知らせ（なければnull） */
@@ -109,8 +131,61 @@ export function useAnnouncementsListViewModel(
     return announcements.filter((ann) => !state.readAtById[ann.id]).length;
   }, [announcements, userKey, stateVersion]);
 
+  /**
+   * 表示用に整形されたアイテムを生成
+   */
+  const displayItems = useMemo<AnnouncementDisplayItem[]>(() => {
+    return announcements.map((ann) => {
+      // 公開日をフォーマット
+      const publishedDate = new Date(ann.publishFrom);
+      const publishedLabel = publishedDate.toLocaleDateString('ja-JP', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      });
+
+      // 本文スニペット（先頭80文字、改行除去）
+      const snippet = ann.bodyMd
+        .replace(/\n/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .substring(0, 80) + (ann.bodyMd.length > 80 ? '...' : '');
+
+      // バッジを生成
+      const badges: AnnouncementBadge[] = [];
+
+      // 重要度バッジ
+      switch (ann.severity) {
+        case 'critical':
+          badges.push({ label: '重要', color: 'red' });
+          break;
+        case 'warn':
+          badges.push({ label: '注意', color: 'orange' });
+          break;
+        case 'info':
+          badges.push({ label: '情報', color: 'blue' });
+          break;
+      }
+
+      // ピン留めバッジ
+      if (ann.pinned) {
+        badges.push({ label: 'ピン留め', color: 'purple' });
+      }
+
+      return {
+        id: ann.id,
+        title: ann.title,
+        publishedLabel,
+        snippet,
+        badges,
+        isUnread: isUnread(ann.id),
+      };
+    });
+  }, [announcements, isUnread]);
+
   return {
     announcements,
+    displayItems,
     isLoading,
     selectedAnnouncement,
     isDetailOpen,

@@ -22,13 +22,12 @@ const NewsPage: React.FC = () => {
   const userKey = user?.userId ?? 'local';
 
   const {
-    announcements,
+    displayItems,
     isLoading,
     selectedAnnouncement,
     isDetailOpen,
     openDetail,
     closeDetail,
-    isUnread,
   } = useAnnouncementsListViewModel(userKey);
 
   if (isLoading) {
@@ -45,9 +44,8 @@ const NewsPage: React.FC = () => {
 
       <Card>
         <AnnouncementList
-          items={announcements}
+          items={displayItems}
           onOpen={openDetail}
-          isUnread={isUnread}
         />
       </Card>
 
