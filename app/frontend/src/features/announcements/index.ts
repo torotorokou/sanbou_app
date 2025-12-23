@@ -40,7 +40,7 @@ export type { AnnouncementUserState } from './infrastructure/announcementUserSta
 // ViewModel (Step Bで追加)
 export { useAnnouncementBannerViewModel } from './model/useAnnouncementBannerViewModel';
 export { useAnnouncementsListViewModel } from './model/useAnnouncementsListViewModel';
-export type { AnnouncementDisplayItem, AnnouncementBadge } from './model/useAnnouncementsListViewModel';
+export type { AnnouncementDisplayItem, AnnouncementBadge, AnnouncementFilterTab } from './model/useAnnouncementsListViewModel';
 export { useUnreadAnnouncementCountViewModel } from './model/useUnreadAnnouncementCountViewModel';
 
 // UI (Step Cで追加)
@@ -49,3 +49,4 @@ export { AnnouncementList } from './ui/AnnouncementList';
 export { AnnouncementListItem } from './ui/AnnouncementListItem';
 export { AnnouncementDetailModal } from './ui/AnnouncementDetailModal';
 export { NewsMenuLabel } from './ui/NewsMenuLabel';
+export { AnnouncementFilterTabs } from './ui/AnnouncementFilterTabs';

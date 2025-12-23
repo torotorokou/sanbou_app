@@ -18,6 +18,11 @@ import {
 import { stripMarkdownForSnippet } from '../domain/stripMarkdownForSnippet';
 
 /**
+ * フィルタタブの種類
+ */
+export type AnnouncementFilterTab = 'all' | 'unread';
+
+/**
  * バッジ表示用データ
  */
 export interface AnnouncementBadge {
@@ -41,9 +46,13 @@ export interface AnnouncementDisplayItem {
 interface UseAnnouncementsListViewModelResult {
   /** お知らせ一覧（生データ） */
   announcements: Announcement[];
-  /** ピン留めアイテム（最大3件） */
+  /** 選択中のタブ */
+  selectedTab: AnnouncementFilterTab;
+  /** タブ切替 */
+  setSelectedTab: (tab: AnnouncementFilterTab) => void;
+  /** ピン留めアイテム（タブフィルタ適用済み） */
   pinnedItems: AnnouncementDisplayItem[];
-  /** 通常アイテム */
+  /** 通常アイテム（タブフィルタ適用済み） */
   normalItems: AnnouncementDisplayItem[];
   /** 表示用に整形されたお知らせ一覧（全件） */
   displayItems: AnnouncementDisplayItem[];
@@ -78,6 +87,8 @@ export function useAnnouncementsListViewModel(
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   // 既読状態の変更を検知するためのカウンター
   const [stateVersion, setStateVersion] = useState(0);
+  // タブ状態
+  const [selectedTab, setSelectedTab] = useState<AnnouncementFilterTab>('all');
 
   useEffect(() => {
     let cancelled = false;
@@ -187,21 +198,31 @@ export function useAnnouncementsListViewModel(
   }, [announcements, isUnread]);
 
   /**
-   * ピン留めアイテム（最大3件）
+   * ピン留めアイテム（最大3件、タブフィルタ適用済み）
    */
   const pinnedItems = useMemo<AnnouncementDisplayItem[]>(() => {
-    return displayItems.filter((item) => item.isPinned).slice(0, 3);
-  }, [displayItems]);
+    const pinned = displayItems.filter((item) => item.isPinned).slice(0, 3);
+    if (selectedTab === 'unread') {
+      return pinned.filter((item) => item.isUnread);
+    }
+    return pinned;
+  }, [displayItems, selectedTab]);
 
   /**
-   * 通常アイテム（ピン留め以外）
+   * 通常アイテム（ピン留め以外、タブフィルタ適用済み）
    */
   const normalItems = useMemo<AnnouncementDisplayItem[]>(() => {
-    return displayItems.filter((item) => !item.isPinned);
-  }, [displayItems]);
+    const normal = displayItems.filter((item) => !item.isPinned);
+    if (selectedTab === 'unread') {
+      return normal.filter((item) => item.isUnread);
+    }
+    return normal;
+  }, [displayItems, selectedTab]);
 
   return {
     announcements,
+    selectedTab,
+    setSelectedTab,
     pinnedItems,
     normalItems,
     displayItems,

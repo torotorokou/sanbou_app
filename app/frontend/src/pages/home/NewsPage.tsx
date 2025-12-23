@@ -6,12 +6,13 @@
  */
 
 import React from 'react';
-import { Typography, Spin, Card } from 'antd';
+import { Typography, Spin, Card, Badge } from 'antd';
 import { useAuth } from '@features/authStatus';
 import {
   useAnnouncementsListViewModel,
   AnnouncementList,
   AnnouncementDetailModal,
+  AnnouncementFilterTabs,
 } from '@features/announcements';
 
 const { Title } = Typography;
@@ -22,8 +23,11 @@ const NewsPage: React.FC = () => {
   const userKey = user?.userId ?? 'local';
 
   const {
+    selectedTab,
+    setSelectedTab,
     pinnedItems,
     normalItems,
+    unreadCount,
     isLoading,
     selectedAnnouncement,
     isDetailOpen,
@@ -41,9 +45,28 @@ const NewsPage: React.FC = () => {
 
   return (
     <div style={{ padding: 24 }}>
-      <Title level={2}>お知らせ一覧</Title>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+        <Title level={2} style={{ margin: 0 }}>お知らせ一覧</Title>
+        {unreadCount > 0 && (
+          <Badge
+            count={`未読 ${unreadCount}`}
+            style={{
+              backgroundColor: '#1890ff',
+              fontSize: 12,
+              height: 22,
+              lineHeight: '22px',
+              borderRadius: 11,
+            }}
+          />
+        )}
+      </div>
 
       <Card className="no-hover">
+        <AnnouncementFilterTabs
+          selected={selectedTab}
+          onChange={setSelectedTab}
+          unreadCount={unreadCount}
+        />
         <AnnouncementList
           pinnedItems={pinnedItems}
           normalItems={normalItems}
