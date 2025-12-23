@@ -90,7 +90,7 @@ function renderMarkdownSimple(md: string): React.ReactNode {
     // リスト
     if (line.startsWith('- ')) {
       return (
-        <Paragraph
+        <div
           key={index}
           style={{ marginBottom: 4, paddingLeft: 16 }}
           // eslint-disable-next-line react/no-danger
@@ -102,7 +102,7 @@ function renderMarkdownSimple(md: string): React.ReactNode {
     }
     if (line.match(/^\d+\. /)) {
       return (
-        <Paragraph
+        <div
           key={index}
           style={{ marginBottom: 4, paddingLeft: 16 }}
           // eslint-disable-next-line react/no-danger
@@ -116,7 +116,7 @@ function renderMarkdownSimple(md: string): React.ReactNode {
     }
     // 通常行
     return (
-      <Paragraph
+      <div
         key={index}
         style={{ marginBottom: 4 }}
         // eslint-disable-next-line react/no-danger
