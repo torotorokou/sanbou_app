@@ -71,7 +71,7 @@ export const AnnouncementListItem: React.FC<AnnouncementListItemProps> = ({
                 margin: 0,
                 fontSize: 16,
                 fontWeight: item.isUnread ? 600 : 400,
-                color: '#262626',
+                color: item.isUnread ? '#262626' : '#595959',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
                 whiteSpace: 'nowrap',
@@ -90,15 +90,18 @@ export const AnnouncementListItem: React.FC<AnnouncementListItemProps> = ({
             </span>
           </div>
 
-          {/* 2行目：本文スニペット */}
+          {/* 2行目：本文スニペット（2行表示） */}
           <p
             style={{
               margin: '0 0 8px 0',
               fontSize: 14,
-              color: '#595959',
+              color: item.isUnread ? '#595959' : '#8c8c8c',
+              lineHeight: '1.5',
+              display: '-webkit-box',
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: 'vertical',
               overflow: 'hidden',
               textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
             }}
           >
             {item.snippet}

@@ -22,7 +22,8 @@ const NewsPage: React.FC = () => {
   const userKey = user?.userId ?? 'local';
 
   const {
-    displayItems,
+    pinnedItems,
+    normalItems,
     isLoading,
     selectedAnnouncement,
     isDetailOpen,
@@ -44,7 +45,8 @@ const NewsPage: React.FC = () => {
 
       <Card className="no-hover">
         <AnnouncementList
-          items={displayItems}
+          pinnedItems={pinnedItems}
+          normalItems={normalItems}
           onOpen={openDetail}
         />
       </Card>

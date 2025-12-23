@@ -2,27 +2,33 @@
  * AnnouncementList - お知らせ一覧UI
  * 
  * お知らせ一覧を表示するコンポーネント（カード型）。
+ * ピン留めセクションと通常セクションに分けて表示。
  * 状態レス：propsのみで動作。
  */
 
 import React from 'react';
-import { Empty } from 'antd';
+import { Empty, Typography } from 'antd';
 import type { AnnouncementDisplayItem } from '../model/useAnnouncementsListViewModel';
 import { AnnouncementListItem } from './AnnouncementListItem';
 
+const { Title } = Typography;
+
 interface AnnouncementListProps {
-  /** 表示用に整形されたお知らせ一覧 */
-  items: AnnouncementDisplayItem[];
+  /** ピン留めアイテム */
+  pinnedItems: AnnouncementDisplayItem[];
+  /** 通常アイテム */
+  normalItems: AnnouncementDisplayItem[];
   /** 詳細を開くコールバック */
   onOpen: (id: string) => void;
 }
 
 export const AnnouncementList: React.FC<AnnouncementListProps> = ({
-  items,
+  pinnedItems,
+  normalItems,
   onOpen,
 }) => {
   // 空状態
-  if (items.length === 0) {
+  if (pinnedItems.length === 0 && normalItems.length === 0) {
     return (
       <Empty
         description="お知らせはありません"
@@ -33,9 +39,29 @@ export const AnnouncementList: React.FC<AnnouncementListProps> = ({
 
   return (
     <div>
-      {items.map((item) => (
-        <AnnouncementListItem key={item.id} item={item} onOpen={onOpen} />
-      ))}
+      {/* ピン留めセクション */}
+      {pinnedItems.length > 0 && (
+        <div style={{ marginBottom: 24 }}>
+          <Title level={5} style={{ marginBottom: 12, color: '#8c8c8c' }}>
+            ピン留め
+          </Title>
+          {pinnedItems.map((item) => (
+            <AnnouncementListItem key={item.id} item={item} onOpen={onOpen} />
+          ))}
+        </div>
+      )}
+
+      {/* すべてセクション */}
+      {normalItems.length > 0 && (
+        <div>
+          <Title level={5} style={{ marginBottom: 12, color: '#8c8c8c' }}>
+            すべて
+          </Title>
+          {normalItems.map((item) => (
+            <AnnouncementListItem key={item.id} item={item} onOpen={onOpen} />
+          ))}
+        </div>
+      )}
     </div>
   );
 };

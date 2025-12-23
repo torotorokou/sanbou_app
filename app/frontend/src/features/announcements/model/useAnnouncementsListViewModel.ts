@@ -15,6 +15,7 @@ import {
   markAsRead,
   loadUserState,
 } from '../infrastructure/announcementUserStateStorage';
+import { stripMarkdownForSnippet } from '../domain/stripMarkdownForSnippet';
 
 /**
  * バッジ表示用データ
@@ -34,12 +35,17 @@ export interface AnnouncementDisplayItem {
   snippet: string;
   badges: AnnouncementBadge[];
   isUnread: boolean;
+  isPinned: boolean;
 }
 
 interface UseAnnouncementsListViewModelResult {
   /** お知らせ一覧（生データ） */
   announcements: Announcement[];
-  /** 表示用に整形されたお知らせ一覧 */
+  /** ピン留めアイテム（最大3件） */
+  pinnedItems: AnnouncementDisplayItem[];
+  /** 通常アイテム */
+  normalItems: AnnouncementDisplayItem[];
+  /** 表示用に整形されたお知らせ一覧（全件） */
   displayItems: AnnouncementDisplayItem[];
   /** ローディング中かどうか */
   isLoading: boolean;
@@ -144,12 +150,8 @@ export function useAnnouncementsListViewModel(
         day: '2-digit',
       });
 
-      // 本文スニペット（先頭80文字、改行除去）
-      const snippet = ann.bodyMd
-        .replace(/\n/g, ' ')
-        .replace(/\s+/g, ' ')
-        .trim()
-        .substring(0, 80) + (ann.bodyMd.length > 80 ? '...' : '');
+      // 本文スニペット（Markdown記号除去）
+      const snippet = stripMarkdownForSnippet(ann.bodyMd, 120);
 
       // バッジを生成
       const badges: AnnouncementBadge[] = [];
@@ -179,12 +181,29 @@ export function useAnnouncementsListViewModel(
         snippet,
         badges,
         isUnread: isUnread(ann.id),
+        isPinned: ann.pinned,
       };
     });
   }, [announcements, isUnread]);
 
+  /**
+   * ピン留めアイテム（最大3件）
+   */
+  const pinnedItems = useMemo<AnnouncementDisplayItem[]>(() => {
+    return displayItems.filter((item) => item.isPinned).slice(0, 3);
+  }, [displayItems]);
+
+  /**
+   * 通常アイテム（ピン留め以外）
+   */
+  const normalItems = useMemo<AnnouncementDisplayItem[]>(() => {
+    return displayItems.filter((item) => !item.isPinned);
+  }, [displayItems]);
+
   return {
     announcements,
+    pinnedItems,
+    normalItems,
     displayItems,
     isLoading,
     selectedAnnouncement,
