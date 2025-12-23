@@ -82,7 +82,7 @@ export const AnnouncementBanner: React.FC<AnnouncementBannerProps> = ({
       showIcon
       message={
         isMobile ? (
-          <span style={{ fontSize: '13px', fontWeight: 600 }}>
+          <span style={{ fontSize: '13px', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {announcement.title}
           </span>
         ) : (
@@ -100,34 +100,14 @@ export const AnnouncementBanner: React.FC<AnnouncementBannerProps> = ({
       }
       action={
         onNavigateToDetail && navigateFn ? (
-          <Space size={8} style={{ marginRight: isMobile ? 0 : 8 }}>
-            <Button 
-              type="primary" 
-              size={isMobile ? 'small' : 'middle'}
-              onClick={handleClick}
-              style={isMobile ? { fontSize: '12px', height: '24px', padding: '0 8px' } : undefined}
-            >
-              {isMobile ? '詳細' : '詳細を見る'}
-            </Button>
-            <Button
-              type="text"
-              size={isMobile ? 'small' : 'middle'}
-              icon={<CloseOutlined />}
-              onClick={onClose}
-              style={{ color: 'inherit' }}
-            />
-          </Space>
-        ) : (
-          <Button
-            type="text"
-            size={isMobile ? 'small' : 'middle'}
-            icon={<CloseOutlined />}
-            onClick={onClose}
-            style={{ color: 'inherit' }}
-          />
-        )
+          <Button type="primary" size="small" onClick={handleClick} style={isMobile ? { fontSize: '12px', height: '24px', padding: '0 8px' } : undefined}>
+            {isMobile ? '詳細' : '詳細を見る'}
+          </Button>
+        ) : undefined
       }
-      closable={false}
+      closable
+      closeIcon={<CloseOutlined />}
+      onClose={onClose}
       style={{ marginBottom: isMobile ? 4 : 16 }}
     />
   );

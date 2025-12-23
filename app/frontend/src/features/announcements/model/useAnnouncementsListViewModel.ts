@@ -10,7 +10,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import type { Announcement, AnnouncementSeverity, Audience } from '../domain/announcement';
-import { isVisibleForAudience } from '../domain/announcement';
+import { isAnnouncementActive, isVisibleForAudience } from '../domain/announcement';
 import { announcementRepository } from '../infrastructure/LocalAnnouncementRepository';
 import {
   isRead,

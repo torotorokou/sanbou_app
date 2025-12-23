@@ -582,12 +582,12 @@ export const PortalPage: React.FC = () => {
                 // Use minmax(..., auto) so rows can grow if a card becomes taller (prevents overlap)
                 // Lower the mobile minimum so cards sit closer vertically.
                 gridAutoRows: `minmax(${Math.round(pickByDevice(64, 120, CARD_HEIGHT) * cardScale)}px, auto)`,
-                // responsive: gridTemplateColumns (Mobile: 1col, Tablet: 2-3col auto-fit, XL+: 常に3列)
+                // responsive: gridTemplateColumns (Mobile: 1col, Tablet: 2-3col auto-fit, Desktop: 常に3列)
                 gridTemplateColumns: flags.isMobile
                   ? 'repeat(1, 1fr)'
-                  : flags.isXl  // ≥1280px: 常に3列に固定
+                  : flags.isDesktop  // ≥1281px: 常に3列表示
                   ? 'repeat(3, 1fr)'
-                  : `repeat(auto-fit, minmax(${Math.round(CARD_WIDTH * cardScale)}px, 1fr))`,  // 768-1279px: auto-fit
+                  : `repeat(auto-fit, minmax(${Math.round(CARD_WIDTH * cardScale)}px, 1fr))`,  // 768-1280px: auto-fit
               justifyContent: 'center',
               alignItems: 'stretch',
             }}
