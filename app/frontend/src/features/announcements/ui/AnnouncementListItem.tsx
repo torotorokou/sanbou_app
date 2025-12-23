@@ -24,8 +24,32 @@ export const AnnouncementListItem: React.FC<AnnouncementListItemProps> = ({
   onOpen,
   isMobile = false,
 }) => {
-  // 未読の識別色（黄色）
-  const unreadColor = '#faad14';
+  // 重要度に応じた色を取得
+  const getSeverityColors = () => {
+    switch (item.severity) {
+      case 'critical':
+        return {
+          bgColor: item.isUnread ? '#fff1f0' : '#fafafa', // 薄赤
+          borderColor: '#ff4d4f', // 赤
+          dotColor: '#ff4d4f',
+        };
+      case 'warn':
+        return {
+          bgColor: item.isUnread ? '#fff7e6' : '#fafafa', // 薄オレンジ
+          borderColor: '#fa8c16', // オレンジ
+          dotColor: '#fa8c16',
+        };
+      case 'info':
+      default:
+        return {
+          bgColor: item.isUnread ? '#e6f7ff' : '#fafafa', // 薄青
+          borderColor: '#1890ff', // 青
+          dotColor: '#1890ff',
+        };
+    }
+  };
+
+  const colors = getSeverityColors();
   
   return (
     <Card
@@ -34,14 +58,14 @@ export const AnnouncementListItem: React.FC<AnnouncementListItemProps> = ({
         marginBottom: 8,
         borderRadius: 8,
         cursor: 'pointer',
-        backgroundColor: item.isUnread ? '#fffbf0' : '#fafafa',
-        borderLeft: item.isUnread ? `4px solid ${unreadColor}` : '4px solid transparent',
+        backgroundColor: colors.bgColor,
+        borderLeft: item.isUnread ? `4px solid ${colors.borderColor}` : '4px solid transparent',
         transition: 'all 0.2s',
       }}
       styles={{
         body: {
           padding: isMobile ? '12px 16px' : '16px 20px',
-          backgroundColor: item.isUnread ? '#fffbf0' : '#fafafa',
+          backgroundColor: colors.bgColor,
         },
       }}
     >
@@ -54,7 +78,7 @@ export const AnnouncementListItem: React.FC<AnnouncementListItemProps> = ({
                 width: 8,
                 height: 8,
                 borderRadius: '50%',
-                backgroundColor: unreadColor,
+                backgroundColor: colors.dotColor,
               }}
             />
           )}
