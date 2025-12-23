@@ -17,6 +17,8 @@ interface AnnouncementBannerProps {
   onClose: () => void;
   /** 「理解した」ボタンのコールバック（onCloseと同じ挙動でも可） */
   onAcknowledge: () => void;
+  /** 詳細ページへの遷移コールバック */
+  onNavigateToDetail?: () => void;
 }
 
 /**
@@ -55,9 +57,16 @@ export const AnnouncementBanner: React.FC<AnnouncementBannerProps> = ({
   announcement,
   onClose,
   onAcknowledge,
+  onNavigateToDetail,
 }) => {
   const alertType = getSeverityType(announcement.severity);
   const icon = getSeverityIcon(announcement.severity);
+
+  const handleClick = () => {
+    if (onNavigateToDetail) {
+      onNavigateToDetail();
+    }
+  };
 
   return (
     <Alert
@@ -67,13 +76,23 @@ export const AnnouncementBanner: React.FC<AnnouncementBannerProps> = ({
       message={announcement.title}
       description={
         <Space direction="vertical" style={{ width: '100%' }}>
-          <span>
+          <span
+            style={{ cursor: onNavigateToDetail ? 'pointer' : 'default' }}
+            onClick={handleClick}
+          >
             {announcement.bodyMd.substring(0, 100)}
             {announcement.bodyMd.length > 100 ? '...' : ''}
           </span>
-          <Button type="primary" size="small" onClick={onAcknowledge}>
-            理解しました
-          </Button>
+          <Space>
+            {onNavigateToDetail && (
+              <Button size="small" onClick={handleClick}>
+                詳細を見る
+              </Button>
+            )}
+            <Button type="primary" size="small" onClick={onAcknowledge}>
+              理解しました
+            </Button>
+          </Space>
         </Space>
       }
       closable

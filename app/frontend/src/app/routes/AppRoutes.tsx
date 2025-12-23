@@ -39,6 +39,7 @@ const SolvestNaviPage = lazy(() => import('@/pages/navi').then(m => ({ default: 
 // Home pages - using public API
 const PortalPage = lazy(() => import('@/pages/home').then(m => ({ default: m.PortalPage })));
 const NewsPage = lazy(() => import('@/pages/home').then(m => ({ default: m.NewsPage })));
+const AnnouncementDetailPage = lazy(() => import('@/pages/home').then(m => ({ default: m.AnnouncementDetailPage })));
 
 // Utility pages - using public API
 const TokenPreviewPage = lazy(() => import('@/pages/utils').then(m => ({ default: m.TokenPreviewPage })));
@@ -118,6 +119,7 @@ const AppRoutes: React.FC = () => {
 
     {/* お知らせ */}
     <Route path={ROUTER_PATHS.NEWS} element={<NewsPage />} />
+    <Route path={ROUTER_PATHS.NEWS_DETAIL} element={<AnnouncementDetailPage />} />
         {/* その他/404 */}
                 <Route path='*' element={<NotFoundPage />} />
         </Routes>

@@ -42,6 +42,7 @@ export { useAnnouncementBannerViewModel } from './model/useAnnouncementBannerVie
 export { useAnnouncementsListViewModel } from './model/useAnnouncementsListViewModel';
 export type { AnnouncementDisplayItem, AnnouncementBadge, AnnouncementFilterTab } from './model/useAnnouncementsListViewModel';
 export { useUnreadAnnouncementCountViewModel } from './model/useUnreadAnnouncementCountViewModel';
+export { useAnnouncementDetailViewModel } from './model/useAnnouncementDetailViewModel';
 
 // UI (Step Cで追加)
 export { AnnouncementBanner } from './ui/AnnouncementBanner';
@@ -50,3 +51,4 @@ export { AnnouncementListItem } from './ui/AnnouncementListItem';
 export { AnnouncementDetailModal } from './ui/AnnouncementDetailModal';
 export { NewsMenuLabel } from './ui/NewsMenuLabel';
 export { AnnouncementFilterTabs } from './ui/AnnouncementFilterTabs';
+export { AnnouncementDetail } from './ui/AnnouncementDetail';

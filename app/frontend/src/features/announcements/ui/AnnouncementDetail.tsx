@@ -1,23 +1,20 @@
 /**
- * AnnouncementDetailModal - お知らせ詳細モーダルUI
+ * AnnouncementDetail - お知らせ詳細UI
  * 
- * お知らせの詳細を表示するモーダル。
+ * お知らせの詳細を表示するコンポーネント。
  * 状態レス：propsのみで動作。
  */
 
 import React from 'react';
-import { Modal, Tag, Typography, Divider } from 'antd';
+import { Card, Tag, Typography, Divider, Space } from 'antd';
+import { CalendarOutlined } from '@ant-design/icons';
 import type { Announcement } from '../domain/announcement';
 
-const { Title, Paragraph, Text } = Typography;
+const { Title, Text } = Typography;
 
-interface AnnouncementDetailModalProps {
-  /** 表示するお知らせ（nullの場合は表示しない） */
-  announcement: Announcement | null;
-  /** モーダルが開いているかどうか */
-  open: boolean;
-  /** 閉じるコールバック */
-  onClose: () => void;
+interface AnnouncementDetailProps {
+  /** 表示するお知らせ */
+  announcement: Announcement;
 }
 
 /**
@@ -63,24 +60,22 @@ function formatDate(isoString: string): string {
 }
 
 /**
- * 簡易的なMarkdown→プレーンテキスト変換
- * 本格的なレンダリングが必要な場合は react-markdown 等を使用
+ * 簡易的なMarkdown→HTMLレンダリング
  */
 function renderMarkdownSimple(md: string): React.ReactNode {
-  // 見出し、リスト、強調を簡易的に処理
   const lines = md.split('\n');
   return lines.map((line, index) => {
     // 見出し
     if (line.startsWith('## ')) {
       return (
-        <Title level={4} key={index} style={{ marginTop: 16, marginBottom: 8 }}>
+        <Title level={4} key={index} style={{ marginTop: 24, marginBottom: 12 }}>
           {line.replace('## ', '')}
         </Title>
       );
     }
     if (line.startsWith('### ')) {
       return (
-        <Title level={5} key={index} style={{ marginTop: 12, marginBottom: 8 }}>
+        <Title level={5} key={index} style={{ marginTop: 16, marginBottom: 8 }}>
           {line.replace('### ', '')}
         </Title>
       );
@@ -92,7 +87,7 @@ function renderMarkdownSimple(md: string): React.ReactNode {
       return (
         <div
           key={index}
-          style={{ marginBottom: 4, paddingLeft: 16 }}
+          style={{ marginBottom: 8, paddingLeft: 16 }}
           // eslint-disable-next-line react/no-danger
           dangerouslySetInnerHTML={{
             __html: `• ${boldReplaced.replace('- ', '')}`,
@@ -104,7 +99,7 @@ function renderMarkdownSimple(md: string): React.ReactNode {
       return (
         <div
           key={index}
-          style={{ marginBottom: 4, paddingLeft: 16 }}
+          style={{ marginBottom: 8, paddingLeft: 16 }}
           // eslint-disable-next-line react/no-danger
           dangerouslySetInnerHTML={{ __html: boldReplaced }}
         />
@@ -112,13 +107,13 @@ function renderMarkdownSimple(md: string): React.ReactNode {
     }
     // 空行
     if (line.trim() === '') {
-      return <br key={index} />;
+      return <div key={index} style={{ height: 12 }} />;
     }
     // 通常行
     return (
       <div
         key={index}
-        style={{ marginBottom: 4 }}
+        style={{ marginBottom: 8, lineHeight: '1.6' }}
         // eslint-disable-next-line react/no-danger
         dangerouslySetInnerHTML={{ __html: boldReplaced }}
       />
@@ -126,50 +121,46 @@ function renderMarkdownSimple(md: string): React.ReactNode {
   });
 }
 
-export const AnnouncementDetailModal: React.FC<AnnouncementDetailModalProps> = ({
+export const AnnouncementDetail: React.FC<AnnouncementDetailProps> = ({
   announcement,
-  open,
-  onClose,
 }) => {
-  if (!announcement) {
-    return null;
-  }
-
   return (
-    <Modal
-      title={
-        <span>
-          {announcement.title}
-          <Tag
-            color={getSeverityTagColor(announcement.severity)}
-            style={{ marginLeft: 8 }}
-          >
-            {getSeverityLabel(announcement.severity)}
-          </Tag>
-        </span>
-      }
-      open={open}
-      onCancel={onClose}
-      footer={null}
-      width="95vw"
-      style={{ maxWidth: 900 }}
-      styles={{
-        body: {
-          maxHeight: '90vh',
-          overflowY: 'auto',
-        },
-      }}
-    >
-      <Text type="secondary" style={{ fontSize: 12 }}>
-        公開日: {formatDate(announcement.publishFrom)}
-        {announcement.publishTo && (
-          <> 〜 {formatDate(announcement.publishTo)}</>
-        )}
-      </Text>
-      <Divider style={{ margin: '12px 0' }} />
-      <div>
+    <Card style={{ maxWidth: 900, margin: '0 auto' }}>
+      {/* ヘッダー */}
+      <Space direction="vertical" size={12} style={{ width: '100%' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+          <Title level={2} style={{ margin: 0, flex: 1 }}>
+            {announcement.title}
+          </Title>
+          <Space>
+            <Tag color={getSeverityTagColor(announcement.severity)} style={{ fontSize: 13 }}>
+              {getSeverityLabel(announcement.severity)}
+            </Tag>
+            {announcement.pinned && (
+              <Tag color="purple" style={{ fontSize: 13 }}>
+                ピン留め
+              </Tag>
+            )}
+          </Space>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <CalendarOutlined style={{ color: '#8c8c8c' }} />
+          <Text type="secondary" style={{ fontSize: 13 }}>
+            公開日: {formatDate(announcement.publishFrom)}
+            {announcement.publishTo && (
+              <> 〜 {formatDate(announcement.publishTo)}</>
+            )}
+          </Text>
+        </div>
+      </Space>
+
+      <Divider style={{ margin: '20px 0' }} />
+
+      {/* 本文 */}
+      <div style={{ fontSize: 15, color: '#262626' }}>
         {renderMarkdownSimple(announcement.bodyMd)}
       </div>
-    </Modal>
+    </Card>
   );
 };

@@ -430,6 +430,7 @@ export const PortalPage: React.FC = () => {
   // responsive: useResponsive(flags)
   const { flags } = useResponsive();
   const { token } = theme.useToken();
+  const navigate = useNavigate();
 
   // ユーザーキーを取得（未ログイン時は"local"）
   const { user } = useAuth();
@@ -536,6 +537,7 @@ export const PortalPage: React.FC = () => {
               announcement={bannerAnnouncement}
               onClose={onBannerAcknowledge}
               onAcknowledge={onBannerAcknowledge}
+              onNavigateToDetail={() => navigate(`/news/${bannerAnnouncement.id}`)}
             />
           </div>
         )}

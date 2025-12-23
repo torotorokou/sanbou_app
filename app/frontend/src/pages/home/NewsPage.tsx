@@ -7,6 +7,7 @@
 
 import React from 'react';
 import { Typography, Spin, Card, Badge } from 'antd';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@features/authStatus';
 import {
   useAnnouncementsListViewModel,
@@ -21,6 +22,7 @@ const NewsPage: React.FC = () => {
   // ユーザーキーを取得（未ログイン時は"local"）
   const { user } = useAuth();
   const userKey = user?.userId ?? 'local';
+  const navigate = useNavigate();
 
   const {
     selectedTab,
@@ -34,6 +36,10 @@ const NewsPage: React.FC = () => {
     openDetail,
     closeDetail,
   } = useAnnouncementsListViewModel(userKey);
+
+  const handleOpenDetail = (id: string) => {
+    navigate(`/news/${id}`);
+  };
 
   if (isLoading) {
     return (
@@ -70,7 +76,7 @@ const NewsPage: React.FC = () => {
         <AnnouncementList
           importantItems={importantItems}
           otherItems={otherItems}
-          onOpen={openDetail}
+          onOpen={handleOpenDetail}
         />
       </Card>
 
