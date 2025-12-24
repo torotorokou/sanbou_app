@@ -120,7 +120,7 @@ export const PortalPage: React.FC = () => {
         {!isXs && <Text className="portal-subtitle">{introText}</Text>}
       </section>
 
-      <main style={{ width: '100%', maxWidth: 'none', margin: 0 }}>
+      <main style={{ width: '100%', maxWidth: '1280px', margin: '0 auto' }}>
         {/* お知らせバナー（重要通知） */}
         {bannerAnnouncement && (
           <div style={{ width: '100%', margin: '0 0 16px 0', padding: '0 16px' }}>
@@ -135,7 +135,7 @@ export const PortalPage: React.FC = () => {
 
         {/* 重要通知バナー */}
         {noticeVisible && notices.length > 0 && (
-          <div style={{ width: '100%', margin: '0 0 24px 0' }}>
+          <div style={{ width: '100%', margin: '0 0 24px 0', padding: '0 16px' }}>
             <ResponsiveNotice
               title={notices[0].title}
               description={notices[0].summary}
@@ -154,7 +154,7 @@ export const PortalPage: React.FC = () => {
         )}
 
         {/* ポータルカード */}
-        <div style={{ display: 'flex', gap: CARD_COLUMN_GAP, alignItems: 'flex-start' }}>
+        <div style={{ display: 'flex', gap: CARD_COLUMN_GAP, alignItems: 'flex-start', padding: '0 16px' }}>
           <div style={{ flex: '1 1 0', display: 'flex', flexDirection: 'column', gap: CARD_ROW_GAP }}>
             <div
               aria-label="ポータルメニュー一覧"
