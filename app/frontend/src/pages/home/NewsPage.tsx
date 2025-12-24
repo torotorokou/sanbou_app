@@ -1,98 +1,117 @@
-import React, { useState, useEffect } from "react";
-import { List, Tag, Typography } from "antd";
-import { UnimplementedModal } from '@features/unimplemented-feature';
+/**
+ * NewsPage - お知らせ一覧ページ
+ * 
+ * お知らせ機能のメインページ。
+ * ViewModelを使用して一覧取得・詳細表示を行う。
+ */
 
-const { Title, Paragraph } = Typography;
+import React from 'react';
+import { Typography, Spin, Card, Badge } from 'antd';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@features/authStatus';
+import { useResponsive } from '@/shared';
+import {
+  useAnnouncementsListViewModel,
+  AnnouncementList,
+  AnnouncementDetailModal,
+  AnnouncementFilterTabs,
+  AnnouncementSortSelector,
+} from '@features/announcements';
 
-interface Notice {
-  id: number;
-  title: string;
-  content: string;
-  isRead: boolean;
-  isImportant?: boolean;
-}
+const { Title } = Typography;
 
-const initialNotices: Notice[] = [
-  {
-    id: 1,
-    title: "新機能リリースのお知らせ",
-    content: "9月20日に新しい帳票機能を追加しました。",
-    isRead: false,
-    isImportant: true,
-  },
-  {
-    id: 2,
-    title: "システムメンテナンス",
-    content: "9月25日 2:00-5:00 にシステムメンテナンスを実施予定です。",
-    isRead: false,
-  },
-  {
-    id: 3,
-    title: "定期バックアップ完了",
-    content: "9月10日のバックアップが正常に完了しました。",
-    isRead: true,
-  },
-];
+const NewsPage: React.FC = () => {
+  // ユーザーキーを取得（未ログイン時は"local"）
+  const { user } = useAuth();
+  const userKey = user?.userId ?? 'local';
+  const navigate = useNavigate();
+  const { isMobile, isTablet } = useResponsive();
 
-const NoticeList: React.FC = () => {
-  const [notices, setNotices] = useState<Notice[]>(initialNotices);
-  const [showUnimplementedModal, setShowUnimplementedModal] = useState(false);
+  const {
+    selectedTab,
+    setSelectedTab,
+    sortType,
+    setSortType,
+    importantItems,
+    otherItems,
+    unreadCount,
+    isLoading,
+    selectedAnnouncement,
+    isDetailOpen,
+    closeDetail,
+  } = useAnnouncementsListViewModel(userKey);
 
-  useEffect(() => {
-    // ページ読み込み時にモーダルを表示
-    setShowUnimplementedModal(true);
-  }, []);
-
-  const markAsRead = (id: number) => {
-    setNotices((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, isRead: true } : n))
-    );
+  const handleOpenDetail = (id: string) => {
+    navigate(`/news/${id}`);
   };
 
-  return (
-    <div style={{ padding: 24 }}>
-      <UnimplementedModal
-        visible={showUnimplementedModal}
-        onClose={() => setShowUnimplementedModal(false)}
-        featureName="お知らせ"
-        description="お知らせ機能は現在開発中です。完成まで今しばらくお待ちください。リリース後は、システムの更新情報や重要なお知らせをリアルタイムで受け取ることができます。"
-      />
-      <Title level={2}>お知らせ一覧</Title>
+  if (isLoading) {
+    return (
+      <div className={`text-center ${isMobile ? 'p-4' : 'p-6'}`}>
+        <Spin size="large" />
+      </div>
+    );
+  }
 
-      <List
-        itemLayout="vertical"
-        dataSource={notices}
-        renderItem={(item) => (
-          <List.Item
-            key={item.id}
+  // レスポンシブコンテナスタイル
+  const containerClass = isMobile 
+    ? 'px-3 pb-4 pt-20' // モバイルではサイドバーボタンと重ならないよう上部余白
+    : isTablet 
+    ? 'px-6 py-5' 
+    : 'px-8 py-6';
+  
+  const maxWidthClass = isMobile
+    ? 'max-w-full'
+    : isTablet
+    ? 'max-w-4xl'
+    : 'max-w-5xl';
+
+  return (
+    <div className={`${containerClass} ${maxWidthClass} mx-auto`}>
+      <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12, marginBottom: 16 }}>
+        <Title level={isMobile ? 3 : 2} style={{ margin: 0 }}>お知らせ一覧</Title>
+        {unreadCount > 0 && (
+          <Badge
+            count={`未読 ${unreadCount}`}
             style={{
-              background: item.isRead ? "#fff" : "#f0f8ff",
-              borderLeft: item.isRead ? "none" : "4px solid #1890ff",
-              cursor: "pointer",
-              marginBottom: 12,
-              borderRadius: 4,
-              padding: 16,
+              backgroundColor: '#1890ff',
+              fontSize: 12,
+              height: 22,
+              lineHeight: '22px',
+              borderRadius: 11,
             }}
-            onClick={() => markAsRead(item.id)}
-          >
-            <List.Item.Meta
-              title={
-                <span style={{ fontWeight: item.isRead ? "normal" : "bold" }}>
-                  {item.title}{" "}
-                  {item.isImportant && (
-                    <Tag color="red" style={{ marginLeft: 8 }}>
-                      重要
-                    </Tag>
-                  )}
-                </span>
-              }
-              description={<Paragraph>{item.content}</Paragraph>}
-            />
-          </List.Item>
+          />
         )}
+      </div>
+
+      <Card className="no-hover">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+          <AnnouncementFilterTabs
+            selected={selectedTab}
+            onChange={setSelectedTab}
+            unreadCount={unreadCount}
+          />
+          <AnnouncementSortSelector
+            selected={sortType}
+            onChange={setSortType}
+            isMobile={isMobile}
+          />
+        </div>
+        <AnnouncementList
+          importantItems={importantItems}
+          otherItems={otherItems}
+          onOpen={handleOpenDetail}
+          isMobile={isMobile}
+        />
+      </Card>
+
+      <AnnouncementDetailModal
+        announcement={selectedAnnouncement}
+        open={isDetailOpen}
+        onClose={closeDetail}
       />
     </div>
   );
 };
 
-export default NoticeList;
+export default NewsPage;
