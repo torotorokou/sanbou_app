@@ -83,13 +83,91 @@ def get_request_id(request: Request) -> str:
 ```
 """
 import os
+from typing import Generator
 from fastapi import Request, Depends
+from sqlalchemy.orm import Session
 from app.infra.db.db import get_db  # noqa: F401
+from app.infra.db.db import get_engine
 from app.core.domain.auth.entities import AuthUser
 from app.core.ports.auth.auth_provider import IAuthProvider
 from app.infra.adapters.auth.dev_auth_provider import DevAuthProvider
 from app.infra.adapters.auth.vpn_auth_provider import VpnAuthProvider
 from app.infra.adapters.auth.iap_auth_provider import IapAuthProvider
+
+# ==========================================
+# データベースセッション（将来のマイグレーション用接続分離対応）
+# ==========================================
+
+def get_db_session_app() -> Generator[Session, None, None]:
+    """
+    アプリケーション実行用のDBセッションを提供
+    
+    通常のアプリケーション実行時に使用。
+    将来的には DB_USER / DB_PASSWORD で接続する専用ユーザーに変更予定。
+    
+    現在は get_db() と同等（後方互換性）。
+    
+    Yields:
+        Session: SQLAlchemyセッション
+        
+    Example:
+        ```python
+        @router.get("/users")
+        def get_users(db: Session = Depends(get_db_session_app)):
+            return db.query(User).all()
+        ```
+    """
+    # 現在は通常の get_db と同じ
+    # 将来: DB_USER / DB_PASSWORD による専用接続
+    db = next(get_db())
+    try:
+        yield db
+    finally:
+        db.close()
+
+
+def get_db_session_migrator() -> Generator[Session, None, None]:
+    """
+    マイグレーション用のDBセッションを提供（DDL操作用）
+    
+    Alembic等のマイグレーションツールから使用。
+    将来的には DB_MIGRATOR_USER / DB_MIGRATOR_PASSWORD で接続する
+    DDL権限を持つ専用ユーザーに変更予定。
+    
+    現在は get_db() と同等だが、将来の分離に備えたインターフェース。
+    DB_MIGRATOR_USER が未設定の場合は app と同じユーザーを使用（フォールバック）。
+    
+    Yields:
+        Session: SQLAlchemyセッション
+        
+    Example:
+        ```python
+        # Alembic env.py での使用例
+        from app.deps import get_db_session_migrator
+        
+        def run_migrations():
+            db = next(get_db_session_migrator())
+            try:
+                # migration operations
+                pass
+            finally:
+                db.close()
+        ```
+        
+    Notes:
+        - 通常のアプリケーションコードからは使用しない
+        - マイグレーションツール専用
+        - CREATE / ALTER / DROP 等のDDL権限が必要
+    """
+    # 現在は通常の get_db と同じ（フォールバック）
+    # 将来: DB_MIGRATOR_USER / DB_MIGRATOR_PASSWORD による専用接続
+    #       未設定時は app ユーザーにフォールバック
+    db = next(get_db())
+    try:
+        yield db
+    finally:
+        db.close()
+
 
 # ==========================================
 # 認証プロバイダーのファクトリー（シングルトン）

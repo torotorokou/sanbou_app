@@ -508,8 +508,9 @@ al-init-from-schema:
 	  echo "[error] schema_head.sql not found. Run 'make al-dump-schema-current' first."; \
 	  exit 1; \
 	fi
+	@echo "[info] Using container's POSTGRES_USER environment variable"
 	docker compose -f docker/docker-compose.dev.yml -p local_dev \
-	  exec -T db psql -U myuser -d sanbou_dev \
+	  exec -T db sh -c 'psql -U "$$POSTGRES_USER" -d "$${POSTGRES_DB:-sanbou_dev}"' \
 	  < app/backend/core_api/migrations/alembic/sql_current/schema_head.sql
 	@echo "[ok] Schema initialized. Now run: make al-stamp REV=<HEAD_REVISION>"
 
