@@ -31,7 +31,7 @@ rag_api/
 ## 2. 環境変数例（envs/.env.rag_api）
 
 ```
-OPENAI_API_KEY=sk-...
+OPENAI_API_KEY=your-openai-api-key
 GOOGLE_APPLICATION_CREDENTIALS=/root/.config/gcloud/application_default_credentials.json
 ```
 

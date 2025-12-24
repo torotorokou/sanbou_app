@@ -16,7 +16,7 @@ import type { CsvUploadFileType as CsvFileType } from './types';
  * 🔄 リファクタリング内容：
  * - isTabletOrHalf、window.innerWidth直参照を全廃
  * - useResponsive(flags)のpickByDevice方式に統一
- * - 4段階レスポンシブ（Mobile/Tablet/Laptop/Desktop）
+ * - 3段階レスポンシブ（Mobile/Tablet/Desktop）
  */
 
 // Convert UploadFileConfig validation result to CsvFileType format
@@ -68,25 +68,24 @@ const ReportManagePageLayout: React.FC<Props> = ({
 }) => {
     const styles = useReportLayoutStyles();
     
-    // responsive: flagsベースの段階スイッチ
+    // responsive: flagsベースの3段階スイッチ（統一体系）
     const { flags } = useResponsive();
 
-    // responsive: 段階的な値決定（Mobile→Tablet→Laptop→Desktop）
-    const pickByDevice = <T,>(mobile: T, tablet: T, laptop: T, desktop: T): T => {
-        if (flags.isMobile) return mobile;
-        if (flags.isTablet) return tablet;
-        if (flags.isLaptop) return laptop;
-        return desktop; // isDesktop
+    // responsive: 3段階の値決定（Mobile→Tablet→Desktop）
+    const pickByDevice = <T,>(mobile: T, tablet: T, desktop: T): T => {
+        if (flags.isMobile) return mobile;      // ≤767px
+        if (flags.isTablet) return tablet;      // 768-1280px
+        return desktop;                         // ≥1281px
     };
 
     // responsive: レイアウト切り替え
     // - isXs: 1列（データセット上、プレビュー下）
     // - isSm/isTablet: 2列簡易レイアウト
-    // - Laptop以上: フルレイアウト
+    // - Desktop: フルレイアウト
     const isExtraSmallLayout = flags.isXs; // < 640px: 1列縦並び
-    const isCompactLayout = flags.isSm || flags.isTablet; // 640-1023px: 2列横並び
-    const gap = pickByDevice(8, 12, 16, 16);
-    const headerJustify = pickByDevice<'center' | 'flex-start'>('center', 'center', 'flex-start', 'flex-start');
+    const isCompactLayout = flags.isSm || flags.isTablet; // 640-1279px: 2列横並び
+    const gap = pickByDevice(8, 16, 16);
+    const headerJustify = pickByDevice<'center' | 'flex-start'>('center', 'center', 'flex-start');
 
     return (
         <div style={styles.container}>
@@ -108,8 +107,8 @@ const ReportManagePageLayout: React.FC<Props> = ({
                 {isExtraSmallLayout ? (
                     <>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 12, width: '100%', minHeight: 0, flexGrow: 1, flexShrink: 1, flexBasis: 0 }}>
-                            {/* データセット（上） */}
-                            <div style={{ flexGrow: 0, flexShrink: 0, flexBasis: 'auto', minHeight: 200 }}>
+                            {/* 1. データセット（上） */}
+                            <div style={{ flexGrow: 0, flexShrink: 0, flexBasis: 'auto' }}>
                                 <CsvUploadSection
                                     uploadFiles={convertToCsvFileType(mappedUploadFiles ?? [])}
                                     makeUploadProps={(label: string) =>
@@ -118,27 +117,27 @@ const ReportManagePageLayout: React.FC<Props> = ({
                                 />
                             </div>
 
-                            {/* プレビュー（下） */}
-                            <div style={{ flexGrow: 1, flexShrink: 1, flexBasis: 'auto', minHeight: 300 }}>
+                            {/* 2. レポート生成ボタン（中） */}
+                            <div style={{ flexGrow: 0, flexShrink: 0, flexBasis: 'auto' }}>
+                                <ActionsSection
+                                    onGenerate={onGenerate ?? (() => {})}
+                                    readyToCreate={!!readyToCreate}
+                                    finalized={!!finalized}
+                                    onDownloadExcel={onDownloadExcel ?? (() => {})}
+                                    onPrintPdf={onPrintPdf}
+                                    pdfUrl={pdfUrl ?? null}
+                                    excelReady={!!excelReady}
+                                    pdfReady={!!pdfReady}
+                                    compactMode={true}
+                                />
+                            </div>
+
+                            {/* 3. プレビュー（下・スクロール可能） */}
+                            <div style={{ flexGrow: 1, flexShrink: 1, flexBasis: 'auto', minHeight: 300, overflow: 'auto' }}>
                                 <div style={styles.previewContainer}>
                                     <PreviewSection>{children}</PreviewSection>
                                 </div>
                             </div>
-                        </div>
-
-                        {/* アクションボタン（最下部） */}
-                        <div style={{ width: '100%', marginTop: 12 }}>
-                            <ActionsSection
-                                onGenerate={onGenerate ?? (() => {})}
-                                readyToCreate={!!readyToCreate}
-                                finalized={!!finalized}
-                                onDownloadExcel={onDownloadExcel ?? (() => {})}
-                                onPrintPdf={onPrintPdf}
-                                pdfUrl={pdfUrl ?? null}
-                                excelReady={!!excelReady}
-                                pdfReady={!!pdfReady}
-                                compactMode={true}
-                            />
                         </div>
                     </>
                 ) : isCompactLayout ? (

@@ -857,7 +857,7 @@ CREATE MATERIALIZED VIEW mart.mv_receive_daily AS
     p.source AS source_system
    FROM (ref.v_calendar_classified cal
      LEFT JOIN r_pick p ON ((p.ddate = cal.ddate)))
-  WHERE (cal.ddate <= (((now() AT TIME ZONE 'Asia/Tokyo'::text))::date - 1))
+    WHERE (cal.ddate <= ((now() AT TIME ZONE 'Asia/Tokyo'::text))::date)
   ORDER BY cal.ddate
   WITH NO DATA;
 
@@ -1068,15 +1068,6 @@ CREATE VIEW mart.v_receive_weekly AS
    FROM mart.mv_receive_daily
   GROUP BY iso_year, iso_week
   ORDER BY iso_year, iso_week;
-
-
---
--- Name: alembic_version; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.alembic_version (
-    version_num character varying(32) NOT NULL
-);
 
 
 --
@@ -1919,14 +1910,6 @@ ALTER TABLE ONLY log.upload_file
 
 ALTER TABLE ONLY mart.inb_profile_smooth_test
     ADD CONSTRAINT inb_profile_smooth_test_pkey PRIMARY KEY (scope, iso_week, iso_dow);
-
-
---
--- Name: alembic_version alembic_version_pkc; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.alembic_version
-    ADD CONSTRAINT alembic_version_pkc PRIMARY KEY (version_num);
 
 
 --

@@ -37,15 +37,16 @@ const CustomerListAnalysis: React.FC = () => {
                         display: 'flex',
                         flexDirection: 'column',
                         height: '100%',
-                        padding: '40px 24px',
+                        padding: 'clamp(24px, 2vw, 40px) clamp(16px, 1.5vw, 24px)',
                         background: '#f8fcfa',
+                        overflow: 'auto',
                     }}
                 >
                     <div
                         style={{
                             display: 'flex',
                             flexDirection: 'column',
-                            gap: 32,
+                            gap: 'clamp(20px, 2vw, 32px)',
                             height: '100%',
                             justifyContent: 'flex-start',
                             alignItems: 'stretch',

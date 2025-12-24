@@ -24,6 +24,7 @@ const LedgerBookPage = lazy(() => import('@/pages/report').then(m => ({ default:
 const RecordListPage = lazy(() => import('@/pages/database').then(m => ({ default: m.RecordListPage })));
 const DatasetImportPage = lazy(() => import('@/pages/database').then(m => ({ default: m.DatasetImportPage })));
 const RecordManagerPage = lazy(() => import('@/pages/database').then(m => ({ default: m.RecordManagerPage })));
+const ReservationDailyPage = lazy(() => import('@/pages/database').then(m => ({ default: m.ReservationDailyPage })));
 
 // Manual pages - using public API
 const GlobalManualSearchPage = lazy(() => import('@/pages/manual').then(m => ({ default: m.GlobalManualSearchPage })));
@@ -38,6 +39,7 @@ const SolvestNaviPage = lazy(() => import('@/pages/navi').then(m => ({ default: 
 // Home pages - using public API
 const PortalPage = lazy(() => import('@/pages/home').then(m => ({ default: m.PortalPage })));
 const NewsPage = lazy(() => import('@/pages/home').then(m => ({ default: m.NewsPage })));
+const AnnouncementDetailPage = lazy(() => import('@/pages/home').then(m => ({ default: m.AnnouncementDetailPage })));
 
 // Utility pages - using public API
 const TokenPreviewPage = lazy(() => import('@/pages/utils').then(m => ({ default: m.TokenPreviewPage })));
@@ -104,6 +106,7 @@ const AppRoutes: React.FC = () => {
         <Route path={ROUTER_PATHS.RECORD_LIST} element={<RecordListPage />} />
         <Route path={ROUTER_PATHS.DATASET_IMPORT} element={<DatasetImportPage />} />
         <Route path={ROUTER_PATHS.RECORD_MANAGER} element={<RecordManagerPage />} />
+        <Route path={ROUTER_PATHS.RESERVATION_DAILY} element={<ReservationDailyPage />} />
 
         {/* トークンプレビュー */}
         <Route
@@ -116,6 +119,7 @@ const AppRoutes: React.FC = () => {
 
     {/* お知らせ */}
     <Route path={ROUTER_PATHS.NEWS} element={<NewsPage />} />
+    <Route path={ROUTER_PATHS.NEWS_DETAIL} element={<AnnouncementDetailPage />} />
         {/* その他/404 */}
                 <Route path='*' element={<NotFoundPage />} />
         </Routes>

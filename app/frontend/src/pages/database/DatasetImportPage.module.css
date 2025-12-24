@@ -1,7 +1,15 @@
+/* CSVインポートページ専用スタイル */
+
 .pageContainer {
   height: calc(100dvh - (var(--page-padding, 0px) * 2));
   min-height: 600px;
   overflow: hidden;
+  /* 横幅最大1500px、中央寄せ（親のpaddingを考慮） */
+  max-width: min(1500px, calc(100vw - var(--page-padding, 24px) * 2));
+  width: 100%;
+  margin: 24px auto;
+  padding: 0;
+  box-sizing: border-box;
 }
 
 .leftCol,
@@ -15,7 +23,7 @@
 
 .leftCol {
   padding: 16px;
-  gap: 12px;
+  gap: 6px; /* 12pxから6pxに縮小 */
 }
 
 .rightCol {
@@ -28,6 +36,15 @@
   min-height: 0;
   overflow-y: auto;
   padding-right: 4px;
+}
+
+/* xl以上(1280px~)で3つ程度のアップロードならスクロールなし */
+@media (min-width: 1280px) {
+  .uploadSection {
+    flex: 0 1 auto; /* flexをautoに変更して自然な高さに */
+    max-height: none; /* 制限を解除 */
+    min-height: 200px; /* 最小高さは確保 */
+  }
 }
 
 .hint {

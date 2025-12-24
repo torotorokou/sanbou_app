@@ -33,39 +33,37 @@ const ReportHeader: React.FC<ReportHeaderProps> = ({
     isFinalized,
     pageGroup,
 }) => {
-    // responsive: flagsベースの段階スイッチ
+    // responsive: flagsベースの3段階スイッチ（統一体系）
     const { flags } = useResponsive();
 
-    // responsive: 段階的な値決定（Mobile→Tablet→Laptop→Desktop）
-    const pickByDevice = <T,>(mobile: T, tablet: T, laptop: T, desktop: T): T => {
-        if (flags.isMobile) return mobile;
-        if (flags.isTablet) return tablet;
-        if (flags.isLaptop) return laptop;
-        return desktop; // isDesktop
+    // responsive: 3段階の値決定（Mobile→Tablet→Desktop）
+    const pickByDevice = <T,>(mobile: T, tablet: T, desktop: T): T => {
+        if (flags.isMobile) return mobile;      // ≤767px
+        if (flags.isTablet) return tablet;      // 768-1280px (includes 1024-1279)
+        return desktop;                         // ≥1280px
     };
 
-    // responsive: 各種スタイル値を4段階で定義
-    const gap = pickByDevice(12, 16, 20, 24);
-    const marginBottom = pickByDevice(12, 16, 20, 24);
-    const padding = pickByDevice('8px 12px', '10px 16px', '12px 20px', '12px 24px');
-    const selectorWidth = pickByDevice<string | number>('auto', 'auto', 260, 300);
+    // responsive: 各種スタイル値を3段階で定義
+    const gap = pickByDevice(12, 20, 24);
+    const marginBottom = pickByDevice(12, 20, 24);
+    const padding = pickByDevice('8px 12px', '12px 20px', '12px 24px');
+    const selectorWidth = pickByDevice<string | number>('auto', 'auto', 300); // Tabletもautoに変更
     const borderRadius = 12;
-    const minimizeSteps = pickByDevice(true, true, false, false); // Mobile/TabletはSteps最小化
-    const stepsMinWidth = pickByDevice(0, 0, bp.xs, bp.sm);
+    const minimizeSteps = pickByDevice(true, false, false); // Mobileのみ最小化
+    const stepsMinWidth = pickByDevice(0, bp.xs, bp.sm);
 
-    // responsive: レイアウト方向（Mobile/Tablet=縦、Laptop/Desktop=横）
-    const flexDirection = pickByDevice<'column' | 'row'>('column', 'column', 'row', 'row');
-    const alignItems = pickByDevice<'stretch' | 'flex-start'>('stretch', 'stretch', 'flex-start', 'flex-start');
+    // responsive: レイアウト方向（Mobile/Tablet=縦、Desktop=横）
+    const flexDirection = pickByDevice<'column' | 'row'>('column', 'column', 'row');
+    const alignItems = pickByDevice<'stretch' | 'flex-start'>('stretch', 'stretch', 'flex-start');
 
-    // responsive: セレクター表示制御（Tablet以下は中央寄せ、Laptop以上は左寄せ）
-    const selectorDisplay = pickByDevice<'flex' | undefined>('flex', 'flex', undefined, undefined);
-    const selectorJustify = pickByDevice<'center' | undefined>('center', 'center', undefined, undefined);
+    // responsive: セレクター表示制御（Tablet以下は中央寄せ、Desktopは左寄せ）
+    const selectorDisplay = pickByDevice<'flex' | undefined>('flex', 'flex', undefined);
+    const selectorJustify = pickByDevice<'center' | undefined>('center', 'center', undefined);
 
     // responsive: セレクターのタイトル風スタイル（Tablet以下）
     const selectorTitleStyle = pickByDevice<React.CSSProperties | undefined>(
         { fontSize: 16, fontWeight: 700, width: 'auto', minWidth: 180, textAlign: 'center' },
         { fontSize: 17, fontWeight: 700, width: 'auto', minWidth: 200, textAlign: 'center' },
-        undefined,
         undefined
     );
 
@@ -82,8 +80,9 @@ const ReportHeader: React.FC<ReportHeaderProps> = ({
         background: '#fff',
         borderRadius,
         boxShadow: '0 2px 6px rgba(0,0,0,0.06)',
-        width: selectorWidth,
+        width: flags.isMobile || flags.isTablet ? '100%' : selectorWidth,
         flex: flags.isMobile || flags.isTablet ? undefined : '0 0 auto',
+        alignSelf: 'flex-start', // 高さが伸びないように修正
         display: selectorDisplay,
         justifyContent: selectorJustify,
     };
@@ -123,8 +122,8 @@ const ReportHeader: React.FC<ReportHeaderProps> = ({
         <div style={containerStyle}>
             {/* 📘 セレクトボックスラッパー */}
             <div style={selectorWrapperStyle}>
-                {/* responsive: セレクター内部も中央寄せ（Laptop以下） */}
-                <div style={selectorDisplay === 'flex' ? { display: 'flex', alignItems: 'center', justifyContent: 'center' } : undefined}>
+                {/* responsive: セレクター内部も中央寄せ（Mobile/Tablet） */}
+                <div style={flags.isMobile || flags.isTablet ? { display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%' } : undefined}>
                     <ReportSelector
                         reportKey={reportKey}
                         onChange={onChangeReportKey}

@@ -58,11 +58,11 @@
 /* sm 未満: 更に余白を詰める（カード間・ページ余白の最小化） */
 @media (--lt-sm) {
   .portal-page {
-    padding: 10px 10px 14px;
+    padding: 4px 4px 8px;
   }
   .portal-hero {
-    /* sm 未満は更に詰める（12px -> 約10px） */
-    padding: 10px 10px;
-    margin-bottom: 10px;
+    /* sm 未満は更に詰める（12px -> 約4px） */
+    padding: 6px 8px;
+    margin-bottom: 4px;
   }
 }

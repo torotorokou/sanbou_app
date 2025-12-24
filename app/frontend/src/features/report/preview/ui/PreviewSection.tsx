@@ -25,6 +25,7 @@ const PreviewSection: React.FC<PreviewSectionProps> = ({
         flex: 1,
         height: '100%',
         width: '100%',
+        maxWidth: '100%',
         border: `1px solid ${customTokens.colorBorder}`,
         borderRadius: 8,
         boxShadow: `0 2px 8px ${customTokens.shadowLight}`,
@@ -33,6 +34,7 @@ const PreviewSection: React.FC<PreviewSectionProps> = ({
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
+        boxSizing: 'border-box' as const,
     };
 
     return (
@@ -41,8 +43,12 @@ const PreviewSection: React.FC<PreviewSectionProps> = ({
             flexDirection: 'column',
             height: '100%',
             width: '100%',
+            maxWidth: '100%',
             minHeight: 0,
-            gap: 8
+            minWidth: 0,
+            gap: 8,
+            overflow: 'hidden',
+            boxSizing: 'border-box' as const,
         }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <Typography.Title level={4} style={{ marginBottom: 0 }}>

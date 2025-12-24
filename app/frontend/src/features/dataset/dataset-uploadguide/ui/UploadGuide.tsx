@@ -1,0 +1,169 @@
+/**
+ * UploadGuide - データセットアップロードガイド UI
+ * 
+ * データセット別の必要ファイル・注意事項・手順を表示
+ * Alert で未完了・エラーを強調
+ */
+
+import React, { useEffect } from 'react';
+import { Collapse, List, Tag, Typography } from 'antd';
+import { InfoCircleOutlined } from '@ant-design/icons';
+import type { FileState } from '../model/types';
+import { DATASETS } from '@features/dataset/config/datasets';
+import { notifyError } from '@features/notification';
+import type { DatasetKey } from '@features/dataset/config';
+import styles from './UploadGuide.module.css';
+
+const { Text } = Typography;
+
+export interface UploadGuideProps {
+  /** 現在選択されているデータセット */
+  datasetKey: DatasetKey;
+  /** アップロード対象のファイル状態リスト */
+  files: FileState[];
+}
+
+export const UploadGuide: React.FC<UploadGuideProps> = ({ datasetKey, files }) => {
+  const dataset = DATASETS?.[datasetKey];
+  const reqList = dataset?.csv ?? [];
+  const reqTotal = reqList.length;
+
+  // 未完了（必須 & valid でない）
+  const missing = files.filter((f) => f.required && f.status !== 'valid');
+  // エラー（invalid）
+  const invalid = files.filter((f) => f.status === 'invalid');
+
+  // 検証エラーがある場合、右上に通知を表示
+  useEffect(() => {
+    if (invalid.length > 0) {
+      const errorFiles = invalid.map((f) => f.label).join('、');
+      // プロジェクト共通の通知機構に差し替え
+      notifyError('検証エラー', `${errorFiles} に問題があります`);
+    }
+  }, [invalid.length]); // invalid.length が変わった場合のみ再実行
+
+  return (
+    <div style={{ marginBottom: 16 }}>
+      {/* 状況の要約（未完了） - 折り畳み式 */}
+      {missing.length > 0 && (
+        <Collapse
+          defaultActiveKey={[]}
+          className={styles.compactCollapse}
+          style={{
+            marginBottom: 8,
+            backgroundColor: '#fffbe6',
+            border: '1px solid #ffe58f',
+            borderRadius: 6,
+          }}
+          expandIconPosition="start"
+          items={[
+            {
+              key: 'missing',
+              label: (
+                <span style={{ fontWeight: 'bold', color: '#faad14' }}>
+                  ⚠️ 未完了: 必須 {missing.length}/{reqTotal}
+                </span>
+              ),
+              children: (
+                <List
+                  size="small"
+                  dataSource={missing}
+                  renderItem={(it) => (
+                    <List.Item style={{ paddingLeft: 0 }}>
+                      <Tag color="red">{it.label}</Tag>
+                      <Text type="secondary">を選択/検証OKにしてください</Text>
+                    </List.Item>
+                  )}
+                />
+              ),
+            },
+          ]}
+        />
+      )}
+
+
+      {/* 手順・必要ファイル・注意事項（Collapse） */}
+      <Collapse
+        defaultActiveKey={[]}
+        className={styles.compactCollapse}
+        style={{
+          backgroundColor: '#f6ffed',
+          border: '1px solid #b7eb8f',
+          borderRadius: 6,
+        }}
+        expandIconPosition="start"
+        items={[
+          {
+            key: 'howto',
+            label: (
+              <span style={{ fontWeight: 'bold' }}>
+                <InfoCircleOutlined style={{ marginRight: 8, color: '#52c41a' }} />
+                アップロード手順
+              </span>
+            ),
+            children: (
+              <ol className={styles.compactList}>
+                <li>
+                  データセットを選択（現在: <strong>{datasetKey}</strong>）
+                </li>
+                <li>各カードに CSV をドラッグ＆ドロップ（またはクリック）</li>
+                <li>自動検証（ヘッダ/型）を待つ</li>
+                <li>「アップロードする」を押下</li>
+              </ol>
+            ),
+          },
+          {
+            key: 'req',
+            label: (
+              <span style={{ fontWeight: 'bold' }}>
+                <InfoCircleOutlined style={{ marginRight: 8, color: '#52c41a' }} />
+                必要ファイル
+              </span>
+            ),
+            children: (
+              <List
+                size="small"
+                dataSource={reqList}
+                renderItem={(r) => (
+                  <List.Item style={{ paddingLeft: 0 }}>
+                    <Tag color="blue">{r.label}</Tag>
+                    <Text type="secondary" style={{ fontSize: 12 }}>(必須)</Text>
+                    {Array.isArray(r.filenameHints) && r.filenameHints.length > 0 && (
+                      <span style={{ marginLeft: 8, fontSize: 12, color: '#888' }}>
+                        ファイル名例: {r.filenameHints.join(' / ')}
+                      </span>
+                    )}
+                  </List.Item>
+                )}
+              />
+            ),
+          },
+          ...(Array.isArray(dataset?.notes) && dataset.notes.length > 0
+            ? [
+                {
+                  key: 'notes',
+                  label: (
+                    <span style={{ fontWeight: 'bold' }}>
+                      <InfoCircleOutlined style={{ marginRight: 8, color: '#52c41a' }} />
+                      注意事項
+                    </span>
+                  ),
+                  children: (
+                    <List
+                      size="small"
+                      dataSource={dataset.notes}
+                      renderItem={(note) => (
+                        <List.Item style={{ paddingLeft: 0 }}>
+                          <Text style={{ fontSize: 13 }}>{note}</Text>
+                        </List.Item>
+                      )}
+                    />
+                  ),
+                },
+              ]
+            : []),
+        ]}
+      />
+    </div>
+  );
+};

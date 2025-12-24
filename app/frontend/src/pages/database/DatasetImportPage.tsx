@@ -13,11 +13,11 @@ import styles from './DatasetImportPage.module.css';
 import {
   SimpleUploadPanel,
   useDatasetImportVM,
-} from '@features/database/dataset-import';
-import { UploadGuide, toFileStates } from '@features/database/dataset-uploadguide';
-import { getAllDatasets, collectTypesForDataset, type DatasetKey } from '@features/database/config';
-import { UploadCalendar } from '@features/database/upload-calendar';
-import { DatasetFinalWarningModal } from '@features/database/dataset-final-warning';
+} from '@features/dataset/dataset-import';
+import { UploadGuide, toFileStates } from '@features/dataset/dataset-uploadguide';
+import { getAllDatasets, collectTypesForDataset, type DatasetKey } from '@features/dataset/config';
+import { UploadCalendar } from '@features/dataset/upload-calendar';
+import { DatasetFinalWarningModal } from '@features/dataset/dataset-final-warning';
 
 const { Text } = Typography;
 
@@ -98,7 +98,7 @@ const DatasetImportPage: React.FC = () => {
           <UploadGuide datasetKey={datasetKey} files={fileStates} />
 
           {/* CSVアップロードタイトル（固定） */}
-          <Typography.Title level={5} style={{ margin: '12px 0 8px 0', fontSize: 13 }}>
+          <Typography.Title level={5} style={{ margin: '6px 0 4px 0', fontSize: 13 }}>
             📂 CSVアップロード
           </Typography.Title>
 
@@ -118,7 +118,7 @@ const DatasetImportPage: React.FC = () => {
             )}
           </div>
 
-          <Space direction="vertical" style={{ width: '100%' }}>
+          <Space direction="vertical" size={4} style={{ width: '100%' }}>
             <Button
               type="primary"
               disabled={!canUpload || panelFiles.length === 0 || uploading || isProcessing}
@@ -139,13 +139,13 @@ const DatasetImportPage: React.FC = () => {
             )}
           </Space>
           
-          {!canUpload && panelFiles.length > 0 && !uploadSuccess && (
+          {/* {!canUpload && panelFiles.length > 0 && !uploadSuccess && (
             <div className={styles.hint}>
               <Text type="secondary">
                 ※ 必須CSVをすべて選択＆検証OKにするとアップロード可能
               </Text>
             </div>
-          )}
+          )} */}
         </Col>
 
         {/* 右カラム：カレンダー */}

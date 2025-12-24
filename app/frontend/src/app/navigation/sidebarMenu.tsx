@@ -11,7 +11,6 @@ import {
     FileTextOutlined, // 文書
     DatabaseOutlined, // データベース
     SettingOutlined, // 設定
-    NotificationOutlined, // お知らせ
     SolutionOutlined, // ソリューション
     TeamOutlined, // チーム・顧客
     CompassOutlined, // ナビゲーション
@@ -30,6 +29,7 @@ import {
 // ルーティング
 import { Link } from 'react-router-dom';
 import { ROUTER_PATHS } from '@app/routes/routes';
+import { NewsMenuLabel, NewsMenuIcon } from '@features/announcements';
 
 // サイドバーのメニュー定義
 export const SIDEBAR_MENU = [
@@ -46,8 +46,8 @@ export const SIDEBAR_MENU = [
             },
             {
                 key: ROUTER_PATHS.NEWS,
-                icon: <NotificationOutlined />,
-                label: <Link to={ROUTER_PATHS.NEWS}>お知らせ</Link>,
+                icon: <NewsMenuIcon />,
+                label: <NewsMenuLabel />,
             },
         ],
     },
@@ -168,6 +168,11 @@ export const SIDEBAR_MENU = [
                 icon: <UnorderedListOutlined />,
                 label: <Link to={ROUTER_PATHS.RECORD_LIST}>レコード一覧</Link>,
                 hidden: true,
+            },
+            {
+                key: ROUTER_PATHS.RESERVATION_DAILY,
+                icon: <FileTextOutlined />,
+                label: <Link to={ROUTER_PATHS.RESERVATION_DAILY}>予約表</Link>,
             },
         ],
     },

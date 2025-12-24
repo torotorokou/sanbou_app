@@ -39,9 +39,11 @@ export const ROUTER_PATHS = {
     RECORD_LIST: '/database/records',
     DATASET_IMPORT: '/database/dataset-import',
     RECORD_MANAGER: '/database/record-manager',
+    RESERVATION_DAILY: '/database/reservation-daily',
 
     // その他
     TOKEN_PREVIEW: '/token-preview',
     // お知らせ
     NEWS: '/news',
+    NEWS_DETAIL: '/news/:id',
 };

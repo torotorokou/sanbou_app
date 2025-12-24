@@ -40,14 +40,14 @@ export const TargetCard: React.FC<TargetCardProps> = ({
 }) => {
   // isoWeek プラグインを拡張
   dayjs.extend(isoWeekPlugin);
-  // Mobile モードでは clamp を使って動的にフォントサイズを調整
-  const headerFontSize = isMobile ? "clamp(12px, 3.5vw, 16px)" : "16px";
-  const labelFontSize = isMobile ? "clamp(10px, 2.5vw, 12px)" : "12px";
-  const valueFontSize = isMobile ? "clamp(14px, 4vw, 18px)" : "18px";
-  const pctFontSize = isMobile ? "clamp(10px, 2.5vw, 12px)" : "12px";
+  // 画面サイズに応じて動的にフォントサイズを調整（xl: 1280px付近では小さめ）
+  const headerFontSize = isMobile ? "clamp(10px, 2.8vw, 12px)" : "clamp(13px, 0.9vw, 16px)";
+  const labelFontSize = isMobile ? "clamp(10px, 2.5vw, 12px)" : "clamp(10px, 0.7vw, 13px)";
+  const valueFontSize = isMobile ? "clamp(12px, 3.2vw, 15px)" : "clamp(14px, 1.1vw, 20px)";
+  const pctFontSize = isMobile ? "clamp(10px, 2.5vw, 13px)" : "clamp(14px, 1vw, 18px)";
   
-  // Mobile モードでは行の高さを詰める
-  const minRowHeight = isMobile ? 32 : 44;
+  // Mobile モードでは行の高さを確保（複数行ラベル対応）
+  const minRowHeight = isMobile ? 44 : 44;
   const gridPadding = isMobile ? 6 : 8;
   const rowGap = isMobile ? 4 : 6;
 
@@ -55,36 +55,46 @@ export const TargetCard: React.FC<TargetCardProps> = ({
     <Card
       variant="outlined"
       style={{ height: "100%", display: "flex", flexDirection: "column", ...style }}
-      styles={{ body: { padding: 12, display: "flex", flexDirection: "column", gap: 8, flex: 1, minHeight: 0 } }}
+      styles={{ 
+        body: { 
+          padding: isMobile ? 8 : 12, 
+          display: "flex", 
+          flexDirection: "column", 
+          gap: isMobile ? 4 : 8, 
+          flex: 1, 
+          minHeight: 0,
+          overflow: "visible",
+        } 
+      }}
     >
       {/* ヘッダー: タイトル・ツールチップ・モード切り替え */}
-      <Space direction="vertical" size={8} style={{ width: "100%" }}>
-        <Space align="baseline" style={{ justifyContent: "space-between", width: "100%" }}>
-          <Space align="baseline">
-            <Typography.Title level={5} style={{ margin: 0 }}>
-              目標カード
-            </Typography.Title>
-            <Tooltip title="週目標は当月の営業日配分で按分。日目標は平日/土/日祝の重みで配分。">
-              <InfoCircleOutlined style={{ color: "#8c8c8c" }} />
-            </Tooltip>
-          </Space>
-          
-          {/* 達成率モード切り替え（親のコールバックを呼び出す） - 右寄せ */}
-            {onModeChange && (
-              <Segmented
-                className="customSegmented"
-                value={achievementMode}
-                onChange={(value) => onModeChange(value as AchievementMode)}
-                options={[
-                  { label: isMobile ? "累計" : "昨日まで", value: "toDate" },
-                  { label: isMobile ? "期末" : "月末・週末", value: "toEnd" },
-                ]}
-                size={isMobile ? "small" : "middle"}
-                style={{ width: isMobile ? "auto" : "auto" }}
-              />
-            )}
+      <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: isMobile ? 2 : 4 }}>
+        <Space align="baseline" size={isMobile ? 4 : 8}>
+          <Typography.Title level={5} style={{ margin: 0, fontSize: isMobile ? "14px" : "16px" }}>
+            目標カード
+          </Typography.Title>
+          <Tooltip title="週目標は当月の営業日配分で按分。日目標は平日/土/日祝の重みで配分。">
+            <InfoCircleOutlined style={{ color: "#8c8c8c", fontSize: isMobile ? "12px" : "14px" }} />
+          </Tooltip>
         </Space>
-      </Space>
+        
+        {/* 達成率モード切り替え（親のコールバックを呼び出す） */}
+        {onModeChange && (
+          <div style={{ display: "flex", justifyContent: isMobile ? "flex-start" : "flex-end" }}>
+            <Segmented
+              className="customSegmented"
+              value={achievementMode}
+              onChange={(value) => onModeChange(value as AchievementMode)}
+              options={[
+                { label: isMobile ? "累計" : "昨日まで", value: "toDate" },
+                { label: isMobile ? "期末" : "月末・週末", value: "toEnd" },
+              ]}
+              size={isMobile ? "small" : "small"}
+              style={{ width: isMobile ? "auto" : "auto" }}
+            />
+          </div>
+        )}
+      </div>
 
       <div
         style={{
@@ -93,15 +103,14 @@ export const TargetCard: React.FC<TargetCardProps> = ({
           background: "#fff",
           padding: gridPadding,
           display: "grid",
-          gridTemplateColumns: "auto auto auto 1fr",
-          gridTemplateRows: `repeat(${1 + rows.length}, minmax(${minRowHeight}px, 1fr))`,
-          columnGap: isMobile ? 8 : 12,
+          gridTemplateColumns: isMobile ? "1fr auto auto 1.2fr" : "auto auto auto 1fr",
+          gridTemplateRows: `repeat(${1 + rows.length}, minmax(${minRowHeight}px, auto))`,
+          columnGap: isMobile ? 6 : 12,
           rowGap: rowGap,
-          alignItems: "center",
+          alignItems: isMobile ? "start" : "center",
           boxSizing: "border-box",
           flex: 1,
-          minHeight: 0,
-          overflow: "hidden",
+          overflow: "visible",
         }}
       >
         {/* ヘッダ行 */}
@@ -133,7 +142,14 @@ export const TargetCard: React.FC<TargetCardProps> = ({
 
           return (
             <React.Fragment key={r.key}>
-              <div style={{ color: "#595959", fontSize: labelFontSize, fontWeight: 800, lineHeight: 1 }}>
+              <div style={{ 
+                color: "#595959", 
+                fontSize: labelFontSize, 
+                fontWeight: 800, 
+                lineHeight: isMobile ? 1.2 : 1.2,
+                minWidth: 0,
+                wordBreak: "break-word",
+              }}>
                 {/* 今週のラベルにはW##を表示 */}
                 {(() => {
                   const label = r.label ?? "";
@@ -144,14 +160,15 @@ export const TargetCard: React.FC<TargetCardProps> = ({
                   if (isThisWeekLabel && typeof isoWeekToShow === "number") {
                     const w = String(isoWeekToShow).padStart(2, "0");
                     if (isMobile) {
-                      // Mobile: 1行で表示（ラベルを短縮してW##を強調）。もし改行があれば先頭のみ表示。
+                      // Mobile: 縦並びで全て表示（途切れないように）
                       return (
-                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                          <div style={{ display: "flex", flexDirection: "column", lineHeight: 1 }}>
-                            <span>{lines[0]}</span>
-                            {lines[1] ? <span style={{ fontSize: "0.75em", color: "#8c8c8c" }}>{lines[1]}</span> : null}
-                          </div>
-                          <span style={{ color: "#1890ff", fontWeight: 700, fontSize: "0.95em" }}>{`W${w}`}</span>
+                        <div style={{ display: "flex", flexDirection: "column", gap: 1, lineHeight: 1.2 }}>
+                          {lines.map((ln, idx) => (
+                            <span key={idx} style={{ fontSize: idx > 0 ? "0.85em" : "1em", color: idx > 0 ? "#8c8c8c" : "inherit" }}>
+                              {ln}
+                            </span>
+                          ))}
+                          <span style={{ color: "#1890ff", fontWeight: 700, fontSize: "0.85em" }}>{`W${w}`}</span>
                         </div>
                       );
                     }
@@ -210,7 +227,7 @@ export const TargetCard: React.FC<TargetCardProps> = ({
                   </div>
                 )}
               </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 4, minHeight: 0, overflow: "hidden" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 2, minWidth: 0 }}>
                 {hasValidData ? (
                   <>
                     <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "baseline" }}>

@@ -25,8 +25,8 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 COMPOSE_FILE="docker/docker-compose.dev.yml"
 PROJECT_NAME="local_dev"
 DB_SERVICE="db"
-PGUSER="myuser"
-PGDB="sanbou_dev"
+# PGUSER and PGDB are determined from container environment variables
+# No hardcoding - use container's POSTGRES_USER and POSTGRES_DB
 
 OUTPUT_FILE="app/backend/core_api/migrations_v2/sql/schema_baseline.sql"
 
@@ -34,23 +34,23 @@ echo "========================================"
 echo "Schema Baseline Export (local_dev)"
 echo "========================================"
 echo ""
-echo "Source DB: $PGDB"
 echo "Output: $OUTPUT_FILE"
+echo "Note: Using container's POSTGRES_USER and POSTGRES_DB environment variables"
 echo ""
 
 # 出力先ディレクトリ作成（存在しない場合）
 mkdir -p "$(dirname "$REPO_ROOT/$OUTPUT_FILE")"
 
-# pg_dump 実行
+# pg_dump 実行（コンテナの環境変数を使用）
 echo "[1/2] Dumping schema (--schema-only, no ownership/privileges)..."
 docker compose -f "$REPO_ROOT/$COMPOSE_FILE" -p "$PROJECT_NAME" exec -T "$DB_SERVICE" \
-  pg_dump -U "$PGUSER" -d "$PGDB" \
+  sh -c 'pg_dump -U "$POSTGRES_USER" -d "${POSTGRES_DB:-postgres}" \
     --schema-only \
     --no-owner \
     --no-privileges \
     --no-tablespaces \
     --no-security-labels \
-    --no-comments \
+    --no-comments' \
   > "$REPO_ROOT/$OUTPUT_FILE"
 
 echo "[2/2] Schema exported successfully!"

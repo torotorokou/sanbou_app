@@ -24,7 +24,7 @@ const ReportStepIndicator: React.FC<ReportStepIndicatorProps> = ({
     // ポリシー: custom-media.css に合わせて（Lean-3 ブレークポイント）
     // - モバイル（≤767）: 上位と同じ横・通常サイズ（縦に伸ばさない）
     // - タブレット（768–1279）: 横・小・タイトルのみ（コンパクト）
-    // - デスクトップ（≥1280）: 横・通常・タイトル+説明
+    // - デスクトップ（≥1281）: 横・通常・タイトル+説明
     const compactItems = useMemo(() => {
         return isTablet ? items.map((it) => ({ title: it.title })) : items;
     }, [isTablet, items]);

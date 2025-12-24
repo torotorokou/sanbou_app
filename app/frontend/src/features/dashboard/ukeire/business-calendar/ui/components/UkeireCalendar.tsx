@@ -149,9 +149,9 @@ export const UkeireCalendar: React.FC<UkeireCalendarProps> = ({
           data-ukeire-legend
           style={{
             display: "flex",
-            gap: 12,
+            gap: 6,
             justifyContent: "center",
-            marginBottom: 8,
+            marginBottom: 4,
             flexWrap: "wrap",
             flexShrink: 0,
           }}
@@ -181,7 +181,7 @@ export const UkeireCalendar: React.FC<UkeireCalendarProps> = ({
               return (
                 <span key={key} style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
                   <i style={{ width: 12, height: 12, borderRadius: 3, background: color }} />
-                  <span style={{ color: "#595959", fontSize: 12, fontWeight: 600 }}>
+                  <span style={{ color: "#595959", fontSize: "clamp(12px, 0.7vw, 13px)", fontWeight: 600 }}>
                     {total}日 ({remaining})
                   </span>
                 </span>
@@ -214,7 +214,7 @@ export const UkeireCalendar: React.FC<UkeireCalendarProps> = ({
                   borderRadius: 6,
                   background: bg ?? "transparent",
                   color: fg,
-                  fontSize: 12,
+                  fontSize: "clamp(10px, 0.7vw, 13px)",
                   fontWeight: 700,
                   display: "flex",
                   alignItems: "center",

@@ -44,6 +44,8 @@ from app.api.routers.sales_tree import router as sales_tree_router
 from app.api.routers.auth import router as auth_router
 from app.api.routers.health import router as health_router
 from app.api.routers.debug_iap import router as debug_iap_router
+from app.api.routers.reservation import router as reservation_router
+from app.api.routers.announcements import router as announcements_router
 
 # ==========================================
 # 統一ロギング設定の初期化
@@ -118,6 +120,8 @@ app.include_router(kpi_router)         # KPI集計: ダッシュボード用メ�
 app.include_router(dashboard_router)   # ダッシュボード: ターゲット/実績データ
 app.include_router(inbound_router)     # 搬入データ: 日次データ取得(累積計算対応)
 app.include_router(sales_tree_router)  # 売上ツリー分析: サマリー/日次推移データ
+app.include_router(reservation_router) # 予約データ: 手入力予約/予測用ビュー
+app.include_router(announcements_router) # お知らせ: アナウンスメント表示/既読管理
 
 # --- 外部サービスプロキシ (BFF) ---
 app.include_router(external_router)           # 外部API統合エンドポイント
@@ -136,6 +140,36 @@ app.include_router(calendar_router)    # カレンダー: 営業日情報等
 # ==========================================
 from backend_shared.infra.frameworks.exception_handlers import register_exception_handlers
 register_exception_handlers(app)
+
+
+# ==========================================
+# Notification Scheduler (Startup/Shutdown)
+# ==========================================
+from app.scheduler.notification_dispatcher import (
+    start_notification_scheduler,
+    stop_notification_scheduler,
+)
+
+@app.on_event("startup")
+async def startup_event():
+    """
+    アプリケーション起動時の処理
+    - 通知ディスパッチャースケジューラーの開始
+    """
+    logger.info("Application startup: initializing components")
+    start_notification_scheduler()
+    logger.info("Application startup complete")
+
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """
+    アプリケーションシャットダウン時の処理
+    - 通知ディスパッチャースケジューラーの停止
+    """
+    logger.info("Application shutdown: cleaning up components")
+    stop_notification_scheduler()
+    logger.info("Application shutdown complete")
 
 
 @app.get("/healthz", include_in_schema=False, tags=["health"])

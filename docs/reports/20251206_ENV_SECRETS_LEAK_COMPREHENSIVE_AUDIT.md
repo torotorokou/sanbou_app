@@ -309,11 +309,11 @@ ALTER USER myuser WITH PASSWORD '新しい強力なパスワード';
 ```bash
 # 既存の鍵を無効化
 gcloud iam service-accounts keys delete <KEY_ID> \
-  --iam-account=sanbou-app-sa@honest-sanbou-app-prod.iam.gserviceaccount.com
+  --iam-account=your-service-account@your-project-id.iam.gserviceaccount.com
 
 # 新しい鍵を生成
 gcloud iam service-accounts keys create ~/new-key.json \
-  --iam-account=sanbou-app-sa@honest-sanbou-app-prod.iam.gserviceaccount.com
+  --iam-account=your-service-account@your-project-id.iam.gserviceaccount.com
 ```
 
 **優先度**: 🔴 最高  
