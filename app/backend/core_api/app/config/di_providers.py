@@ -33,6 +33,7 @@ from app.infra.clients.ledger_client import LedgerClient
 from app.infra.clients.manual_client import ManualClient
 from app.infra.clients.ai_client import AIClient
 from app.infra.adapters.notification.in_memory_outbox_adapter import InMemoryNotificationOutboxAdapter
+from app.infra.adapters.notification.db_outbox_adapter import DbNotificationOutboxAdapter
 from app.infra.adapters.notification.noop_sender_adapter import NoopNotificationSenderAdapter
 from app.core.ports.notification_port import NotificationOutboxPort, NotificationSenderPort
 from app.core.usecases.notification.enqueue_notifications_uc import EnqueueNotificationsUseCase
@@ -573,12 +574,25 @@ _notification_outbox_adapter: InMemoryNotificationOutboxAdapter | None = None
 _notification_sender_adapter: NoopNotificationSenderAdapter | None = None
 
 
-def get_notification_outbox_port() -> NotificationOutboxPort:
-    """通知 Outbox Port 提供（InMemory実装）"""
-    global _notification_outbox_adapter
-    if _notification_outbox_adapter is None:
-        _notification_outbox_adapter = InMemoryNotificationOutboxAdapter()
-    return _notification_outbox_adapter
+# ========================================================================
+# Notification Providers - 環境変数で切り替え可能
+# ========================================================================
+# USE_DB_NOTIFICATION_OUTBOX=true → DB-backed (本番)
+# USE_DB_NOTIFICATION_OUTBOX=false or 未設定 → InMemory (開発/テスト)
+
+def get_notification_outbox_port(db: Session = Depends(get_db)) -> NotificationOutboxPort:
+    """通知 Outbox Port 提供（環境変数で切り替え）"""
+    use_db = os.getenv("USE_DB_NOTIFICATION_OUTBOX", "false").lower() == "true"
+    
+    if use_db:
+        # DB-backed adapter (production)
+        return DbNotificationOutboxAdapter(db)
+    else:
+        # InMemory adapter (development/test)
+        global _notification_outbox_adapter
+        if _notification_outbox_adapter is None:
+            _notification_outbox_adapter = InMemoryNotificationOutboxAdapter()
+        return _notification_outbox_adapter
 
 
 def get_notification_sender_port() -> NotificationSenderPort:

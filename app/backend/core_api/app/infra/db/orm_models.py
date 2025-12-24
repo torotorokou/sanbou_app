@@ -5,7 +5,9 @@ Schemas: core, jobs, forecast, raw, app
 raw スキーマのモデルは shogun_csv_masters.yaml から動的に生成されます。
 """
 from datetime import datetime, date as date_type
+from uuid import UUID
 from sqlalchemy import Column, Integer, String, Date, Numeric, Text, TIMESTAMP, JSON, ForeignKey, func
+from sqlalchemy.dialects.postgresql import UUID as PG_UUID, JSONB
 from sqlalchemy.orm import declarative_base, relationship
 
 Base = declarative_base()
@@ -166,6 +168,31 @@ class ReserveCustomerDaily(Base):
 
 
 # ========================================
+# app schema - Notifications
+# ========================================
+
+class NotificationOutboxORM(Base):
+    """app.notification_outbox table - 通知Outbox"""
+    __tablename__ = "notification_outbox"
+    __table_args__ = {"schema": "app"}
+
+    id = Column(PG_UUID(as_uuid=True), primary_key=True)
+    channel = Column(String(50), nullable=False)
+    status = Column(String(50), nullable=False)
+    recipient_key = Column(String(255), nullable=False)
+    title = Column(String(500), nullable=False)
+    body = Column(Text, nullable=False)
+    url = Column(String(1000), nullable=True)
+    meta = Column(JSONB, nullable=True)
+    scheduled_at = Column(TIMESTAMP(timezone=True), nullable=True)
+    created_at = Column(TIMESTAMP(timezone=True), nullable=False)
+    sent_at = Column(TIMESTAMP(timezone=True), nullable=True)
+    retry_count = Column(Integer, nullable=False, default=0)
+    next_retry_at = Column(TIMESTAMP(timezone=True), nullable=True)
+    last_error = Column(Text, nullable=True)
+
+
+# ========================================
 # raw schema (shogun CSV data)
 # YAMLから動的に生成されるモデル
 # ========================================
@@ -189,6 +216,7 @@ __all__ = [
     'AnnouncementUserStateORM',
     'ReserveDailyManual',
     'ReserveCustomerDaily',
+    'NotificationOutboxORM',
     'ReceiveShogunFlash',
     'YardShogunFlash',
     'ShipmentShogunFlash',

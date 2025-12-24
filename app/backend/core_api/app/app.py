@@ -142,6 +142,36 @@ from backend_shared.infra.frameworks.exception_handlers import register_exceptio
 register_exception_handlers(app)
 
 
+# ==========================================
+# Notification Scheduler (Startup/Shutdown)
+# ==========================================
+from app.scheduler.notification_dispatcher import (
+    start_notification_scheduler,
+    stop_notification_scheduler,
+)
+
+@app.on_event("startup")
+async def startup_event():
+    """
+    アプリケーション起動時の処理
+    - 通知ディスパッチャースケジューラーの開始
+    """
+    logger.info("Application startup: initializing components")
+    start_notification_scheduler()
+    logger.info("Application startup complete")
+
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """
+    アプリケーションシャットダウン時の処理
+    - 通知ディスパッチャースケジューラーの停止
+    """
+    logger.info("Application shutdown: cleaning up components")
+    stop_notification_scheduler()
+    logger.info("Application shutdown complete")
+
+
 @app.get("/healthz", include_in_schema=False, tags=["health"])
 @app.get("/health", include_in_schema=False, tags=["health"])
 def healthz():
