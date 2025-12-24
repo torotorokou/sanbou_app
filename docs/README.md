@@ -37,7 +37,10 @@ docs/
 │   └── README.md
 ├── backend/                      # バックエンド実装ドキュメント (空)
 ├── frontend/                     # フロントエンド実装ドキュメント (空)
-├── infrastructure/               # インフラ・デプロイドキュメント (空)
+├── infrastructure/               # インフラ・デプロイドキュメント
+│   ├── MAINTENANCE_MODE.md      # メンテナンスモード運用ガイド（詳細版）
+│   ├── MAINTENANCE_QUICKREF.md  # メンテナンスモードクイックリファレンス
+│   └── MAKEFILE_GUIDE.md        # Makefile全体ガイド
 ├── env_templates/                # 環境変数テンプレート
 │   └── README.md
 └── archive/                      # アーカイブ (過去のドキュメント)
@@ -122,6 +125,21 @@ docs/
 - `20251127_LOCAL_DEMO_ENVIRONMENT_SETUP.md`
 - `20251119_CSV_CALENDAR_IMPLEMENTATION.md`
 - `20251117_ACHIEVEMENT_MODE_IMPLEMENTATION.md`
+
+### 🏗️ infrastructure/
+インフラストラクチャ、デプロイ、運用ドキュメント。
+
+**主なドキュメント:**
+- `MAINTENANCE_MODE.md` - メンテナンスモード運用ガイド（詳細版）
+  - Cloud Runベースのメンテナンスページ
+  - LB切替手順（計画/緊急）
+  - トラブルシューティング
+  - コスト管理
+- `MAINTENANCE_QUICKREF.md` - クイックリファレンス
+  - 緊急時の即座対応
+  - よく使うコマンド集
+  - チェックリスト
+- `MAKEFILE_GUIDE.md` - Makefile全体ガイド
 
 ### 📦 archive/
 過去のドキュメント、初期実装記録、参考資料。
