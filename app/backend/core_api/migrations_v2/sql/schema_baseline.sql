@@ -857,7 +857,7 @@ CREATE MATERIALIZED VIEW mart.mv_receive_daily AS
     p.source AS source_system
    FROM (ref.v_calendar_classified cal
      LEFT JOIN r_pick p ON ((p.ddate = cal.ddate)))
-  WHERE (cal.ddate <= (((now() AT TIME ZONE 'Asia/Tokyo'::text))::date - 1))
+    WHERE (cal.ddate <= ((now() AT TIME ZONE 'Asia/Tokyo'::text))::date)
   ORDER BY cal.ddate
   WITH NO DATA;
 
