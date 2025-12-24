@@ -3,7 +3,7 @@
  * Pivotドロワーのデータ読み込みロジック
  */
 
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 import type { Mode, MetricEntry } from './types';
 import type { DrawerState } from './usePivotDrawerState';
 import type { HttpSalesPivotRepository } from '../infrastructure/salesPivot.repository';
@@ -29,6 +29,11 @@ export function usePivotLoader(params: PivotLoaderParams) {
     setPivotLoading,
   } = params;
 
+  // pivotCursorをRefで保持して、useCallbackの依存配列から除外
+  // これにより、loadPivotの再生成を防ぎつつ最新のカーソル値を参照できる
+  const pivotCursorRef = useRef(pivotCursor);
+  pivotCursorRef.current = pivotCursor;
+
   const loadPivot = useCallback(
     async (axis: Mode, reset = false) => {
       if (!drawer.open) return;
@@ -47,6 +52,12 @@ export function usePivotLoader(params: PivotLoaderParams) {
       
       const targetAxis = axis;
       if (targetAxis === baseAxis) return;
+
+      // リセット時は先に全軸のデータとカーソルをクリア（増殖防止）
+      if (reset) {
+        setPivotData({ customer: [], item: [], date: [] });
+        setPivotCursor({ customer: null, item: null, date: null });
+      }
 
       setPivotLoading(true);
       try {
@@ -76,7 +87,8 @@ export function usePivotLoader(params: PivotLoaderParams) {
           sortBy: drawerSortBy,
           order: drawerOrder,
           topN: drawerTopN,
-          cursor: reset ? null : pivotCursor[targetAxis],
+          // リセット時はカーソルをnullに、追加読み込み時はRefから最新値を取得
+          cursor: reset ? null : pivotCursorRef.current[targetAxis],
         });
         setPivotData((prev) => ({
           ...prev,
@@ -87,7 +99,9 @@ export function usePivotLoader(params: PivotLoaderParams) {
         setPivotLoading(false);
       }
     },
-    [drawer, pivotCursor, categoryKind, repository, setPivotData, setPivotCursor, setPivotLoading]
+    // pivotCursorを依存から除外して無限ループを防止
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [drawer, categoryKind, repository, setPivotData, setPivotCursor, setPivotLoading]
   );
 
   return { loadPivot };

@@ -177,9 +177,12 @@ export const ExpandedRow: React.FC<ExpandedRowProps> = ({
     if (s && 'field' in s && s.field) {
       const f = String(s.field);
       let key: SortKey = sortBy as SortKey;
+      // dataIndex から SortKey へのマッピング
       if (f === 'name') key = mode === 'date' ? 'date' : 'name';
-      else if ((['amount', 'qty', 'count', 'unit_price'] as string[]).includes(f))
-        key = f as SortKey;
+      else if (f === 'amount') key = 'amount';
+      else if (f === 'qty') key = 'qty';
+      else if (f === 'count') key = 'count';
+      else if (f === 'unitPrice') key = 'unit_price';  // camelCase -> snake_case
       const ord: SortOrder = s.order === 'ascend' ? 'asc' : 'desc';
       onSortChange(key, ord);
     }
@@ -208,7 +211,7 @@ export const ExpandedRow: React.FC<ExpandedRowProps> = ({
             label: '表',
             children: (
               <Table<MetricEntry>
-                rowKey="id"
+                rowKey={(record, index) => `${record.id}-${index}`}
                 size="small"
                 columns={childCols}
                 dataSource={data}
