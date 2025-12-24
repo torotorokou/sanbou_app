@@ -10,13 +10,8 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import type { Announcement, AnnouncementSeverity, Audience } from '../domain/announcement';
-import { isAnnouncementActive, isVisibleForAudience } from '../domain/announcement';
-import { announcementRepository } from '../infrastructure/LocalAnnouncementRepository';
-import {
-  isRead,
-  markAsRead,
-  loadUserState,
-} from '../infrastructure/announcementUserStateStorage';
+import { isVisibleForAudience } from '../domain/announcement';
+import { announcementRepository } from '../infrastructure';
 import { stripMarkdownForSnippet } from '../domain/stripMarkdownForSnippet';
 
 /**
@@ -99,18 +94,21 @@ interface UseAnnouncementsListViewModelResult {
 /**
  * 一覧用ViewModel
  * 
- * @param userKey - ユーザー識別子（未ログイン時は"local"）
+ * @param userKey - ユーザー識別子（未ログイン時は"local"）※現在は未使用
  */
 export function useAnnouncementsListViewModel(
   userKey: string = 'local'
 ): UseAnnouncementsListViewModelResult {
+  // userKey は将来のユーザー認証対応時に使用予定
+  void userKey;
+
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedAnnouncement, setSelectedAnnouncement] =
     useState<Announcement | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
-  // 既読状態の変更を検知するためのカウンター
-  const [stateVersion, setStateVersion] = useState(0);
+  // 既読状態マップ（API or localStorage から取得）
+  const [readAtMap, setReadAtMap] = useState<Record<string, string | null>>({});
   // タブ状態
   const [selectedTab, setSelectedTab] = useState<AnnouncementFilterTab>('all');
   // ソート状態
@@ -124,6 +122,10 @@ export function useAnnouncementsListViewModel(
         const result = await announcementRepository.list();
         if (!cancelled) {
           setAnnouncements(result.announcements);
+          // 既読状態マップをセット（APIから取得）
+          if (result.readAtMap) {
+            setReadAtMap(result.readAtMap);
+          }
         }
       } finally {
         if (!cancelled) {
@@ -134,40 +136,27 @@ export function useAnnouncementsListViewModel(
 
     fetchAnnouncements();
 
-    // localStorage変更を検知して既読状態を再計算
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key && e.key.startsWith('announcements.v1.')) {
-        setStateVersion((v) => v + 1);
-      }
-    };
-
-    // 同一タブ内での変更検知用カスタムイベント
-    const handleCustomStorageChange = () => {
-      setStateVersion((v) => v + 1);
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    window.addEventListener('announcement-storage-change', handleCustomStorageChange);
-
     return () => {
       cancelled = true;
-      window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('announcement-storage-change', handleCustomStorageChange);
     };
   }, []);
 
   const openDetail = useCallback(
-    (id: string) => {
+    async (id: string) => {
       const ann = announcements.find((a) => a.id === id);
       if (ann) {
-        // 既読にする
-        markAsRead(userKey, id);
-        setStateVersion((v) => v + 1);
+        // 既読にする（API経由）
+        await announcementRepository.markRead(id);
+        // ローカル状態を即座に更新
+        setReadAtMap((prev) => ({
+          ...prev,
+          [id]: new Date().toISOString(),
+        }));
         setSelectedAnnouncement(ann);
         setIsDetailOpen(true);
       }
     },
-    [announcements, userKey]
+    [announcements]
   );
 
   const closeDetail = useCallback(() => {
@@ -177,23 +166,21 @@ export function useAnnouncementsListViewModel(
 
   const isUnread = useCallback(
     (id: string): boolean => {
-      // stateVersion に依存させることで再計算を促す
-      void stateVersion;
-      return !isRead(userKey, id);
+      // readAtMap から既読状態を判定
+      return readAtMap[id] === null || readAtMap[id] === undefined;
     },
-    [userKey, stateVersion]
+    [readAtMap]
   );
 
   const unreadCount = useMemo(() => {
-    // stateVersion に依存させることで再計算を促す
-    void stateVersion;
-    const state = loadUserState(userKey);
     // 対象フィルタ適用後のお知らせで未読数を計算
-    const visibleAnnouncements = announcements.filter((ann) =>
+    const filteredAnnouncements = announcements.filter((ann) =>
       isVisibleForAudience(ann, CURRENT_AUDIENCE)
     );
-    return visibleAnnouncements.filter((ann) => !state.readAtById[ann.id]).length;
-  }, [announcements, userKey, stateVersion]);
+    return filteredAnnouncements.filter((ann) => 
+      readAtMap[ann.id] === null || readAtMap[ann.id] === undefined
+    ).length;
+  }, [announcements, readAtMap]);
 
   /**
    * 対象フィルタ適用済みのお知らせ

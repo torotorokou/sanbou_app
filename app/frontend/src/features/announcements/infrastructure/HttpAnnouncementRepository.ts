@@ -11,7 +11,7 @@
  */
 
 import type { Announcement, AnnouncementSeverity, Audience, Attachment } from '../domain/announcement';
-import type { AnnouncementRepository, AnnouncementListResponse } from '../ports/AnnouncementRepository';
+import type { AnnouncementRepository, AnnouncementListResponse, AnnouncementReadStateMap } from '../ports/AnnouncementRepository';
 import { coreApi } from '@/shared';
 
 // ==============================================
@@ -126,10 +126,17 @@ export class HttpAnnouncementRepository implements AnnouncementRepository {
 
     const announcements = response.announcements.map(toAnnouncementFromListItem);
 
+    // 既読状態マップを構築
+    const readAtMap: AnnouncementReadStateMap = {};
+    for (const item of response.announcements) {
+      readAtMap[String(item.id)] = item.read_at;
+    }
+
     return {
       announcements,
       total: response.total,
       unreadCount: response.unread_count,
+      readAtMap,
     };
   }
 

@@ -14,7 +14,7 @@ import type { Announcement } from '../domain/announcement';
 import { isAnnouncementActive } from '../domain/announcement';
 import type { AnnouncementRepository, AnnouncementListResponse } from '../ports/AnnouncementRepository';
 import { ANNOUNCEMENT_SEEDS } from './seed';
-import { loadUserState, markAsRead, markAsAcknowledged, getUnreadCount } from './announcementUserStateStorage';
+import { markAsRead, markAsAcknowledged, getUnreadCount } from './announcementUserStateStorage';
 
 /** デフォルトのユーザーキー（ローカル環境用） */
 const DEFAULT_USER_KEY = 'local';

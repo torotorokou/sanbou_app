@@ -9,12 +9,22 @@
 import type { Announcement } from '../domain/announcement';
 
 /**
+ * ユーザーごとのお知らせ状態マップ
+ * key: お知らせID, value: 既読日時（ISO8601）
+ */
+export interface AnnouncementReadStateMap {
+  [announcementId: string]: string | null;
+}
+
+/**
  * お知らせ一覧レスポンス（API連携用）
  */
 export interface AnnouncementListResponse {
   announcements: Announcement[];
   total: number;
   unreadCount: number;
+  /** 既読状態マップ（オプション、APIから取得時に使用） */
+  readAtMap?: AnnouncementReadStateMap;
 }
 
 /**

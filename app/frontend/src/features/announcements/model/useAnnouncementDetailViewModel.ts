@@ -8,8 +8,7 @@
 
 import { useState, useEffect } from 'react';
 import type { Announcement } from '../domain/announcement';
-import { announcementRepository } from '../infrastructure/LocalAnnouncementRepository';
-import { markAsRead } from '../infrastructure/announcementUserStateStorage';
+import { announcementRepository } from '../infrastructure';
 
 interface UseAnnouncementDetailViewModelResult {
   /** お知らせデータ */
@@ -24,12 +23,15 @@ interface UseAnnouncementDetailViewModelResult {
  * 詳細ページ用ViewModel
  * 
  * @param id - お知らせID
- * @param userKey - ユーザー識別子（未ログイン時は"local"）
+ * @param userKey - ユーザー識別子（未ログイン時は"local"）※現在は未使用
  */
 export function useAnnouncementDetailViewModel(
   id: string,
   userKey: string = 'local'
 ): UseAnnouncementDetailViewModelResult {
+  // userKey は将来のユーザー認証対応時に使用予定
+  void userKey;
+
   const [announcement, setAnnouncement] = useState<Announcement | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
@@ -47,8 +49,8 @@ export function useAnnouncementDetailViewModel(
         if (!cancelled) {
           if (data) {
             setAnnouncement(data);
-            // 詳細ページ表示時に既読化
-            markAsRead(userKey, id);
+            // 詳細ページ表示時に既読化（API経由）
+            await announcementRepository.markRead(id);
           } else {
             setNotFound(true);
           }
@@ -70,7 +72,7 @@ export function useAnnouncementDetailViewModel(
     return () => {
       cancelled = true;
     };
-  }, [id, userKey]);
+  }, [id]);
 
   return {
     announcement,
