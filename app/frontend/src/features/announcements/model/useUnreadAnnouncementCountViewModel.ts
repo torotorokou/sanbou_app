@@ -47,9 +47,9 @@ export function useUnreadAnnouncementCountViewModel(
     const fetchUnreadCount = async () => {
       try {
         setIsLoading(true);
-        const all = await announcementRepository.list();
+        const result = await announcementRepository.list();
         // 対象フィルタ適用
-        const visible = all.filter((ann) =>
+        const visible = result.announcements.filter((ann) =>
           isVisibleForAudience(ann, CURRENT_AUDIENCE)
         );
         const ids = visible.map((ann) => ann.id);

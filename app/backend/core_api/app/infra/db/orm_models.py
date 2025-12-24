@@ -1,12 +1,12 @@
 """
 SQLAlchemy ORM models for database tables.
-Schemas: core, jobs, forecast, raw
+Schemas: core, jobs, forecast, raw, app
 
 raw スキーマのモデルは shogun_csv_masters.yaml から動的に生成されます。
 """
 from datetime import datetime, date as date_type
-from sqlalchemy import Column, Integer, String, Date, Numeric, Text, TIMESTAMP, JSON, func
-from sqlalchemy.orm import declarative_base
+from sqlalchemy import Column, Integer, String, Date, Numeric, Text, TIMESTAMP, JSON, ForeignKey, func
+from sqlalchemy.orm import declarative_base, relationship
 
 Base = declarative_base()
 
@@ -82,6 +82,51 @@ class InboundReservation(Base):
 
 
 # ========================================
+# app schema (announcements)
+# ========================================
+
+class AnnouncementORM(Base):
+    """app.announcements table: システムのお知らせ"""
+    __tablename__ = "announcements"
+    __table_args__ = {"schema": "app"}
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    title = Column(String(255), nullable=False)
+    body_md = Column(Text, nullable=False)
+    severity = Column(String(20), nullable=False, default="info")
+    tags = Column(JSON, nullable=True, default=list)
+    publish_from = Column(TIMESTAMP(timezone=True), nullable=False, default=func.now())
+    publish_to = Column(TIMESTAMP(timezone=True), nullable=True)
+    audience = Column(String(50), nullable=False, default="all")
+    attachments = Column(JSON, nullable=True, default=list)
+    notification_plan = Column(JSON, nullable=True)
+    created_at = Column(TIMESTAMP(timezone=True), nullable=False, default=func.now())
+    updated_at = Column(TIMESTAMP(timezone=True), nullable=False, default=func.now(), onupdate=func.now())
+    deleted_at = Column(TIMESTAMP(timezone=True), nullable=True)
+    deleted_by = Column(Text, nullable=True)
+
+    # Relationship
+    user_states = relationship("AnnouncementUserStateORM", back_populates="announcement", cascade="all, delete-orphan")
+
+
+class AnnouncementUserStateORM(Base):
+    """app.announcement_user_states table: ユーザーごとのお知らせ既読・確認状態"""
+    __tablename__ = "announcement_user_states"
+    __table_args__ = {"schema": "app"}
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(Text, nullable=False)
+    announcement_id = Column(Integer, ForeignKey("app.announcements.id", ondelete="CASCADE"), nullable=False)
+    read_at = Column(TIMESTAMP(timezone=True), nullable=True)
+    ack_at = Column(TIMESTAMP(timezone=True), nullable=True)
+    created_at = Column(TIMESTAMP(timezone=True), nullable=False, default=func.now())
+    updated_at = Column(TIMESTAMP(timezone=True), nullable=False, default=func.now(), onupdate=func.now())
+
+    # Relationship
+    announcement = relationship("AnnouncementORM", back_populates="user_states")
+
+
+# ========================================
 # stg schema (reservation data)
 # ========================================
 
@@ -140,6 +185,8 @@ __all__ = [
     'PredictionDaily',
     'InboundActual',
     'InboundReservation',
+    'AnnouncementORM',
+    'AnnouncementUserStateORM',
     'ReserveDailyManual',
     'ReserveCustomerDaily',
     'ReceiveShogunFlash',

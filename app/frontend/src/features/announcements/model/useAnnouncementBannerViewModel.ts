@@ -51,9 +51,9 @@ export function useAnnouncementBannerViewModel(
 
     const fetchBannerAnnouncement = async () => {
       try {
-        const all = await announcementRepository.list();
+        const result = await announcementRepository.list();
         // バナー対象 かつ 対象audience かつ 未読 のものを抽出
-        const bannerCandidates = all.filter(
+        const bannerCandidates = result.announcements.filter(
           (ann) =>
             isBannerTarget(ann) &&
             isVisibleForAudience(ann, CURRENT_AUDIENCE) &&

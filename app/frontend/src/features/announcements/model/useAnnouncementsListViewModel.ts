@@ -121,9 +121,9 @@ export function useAnnouncementsListViewModel(
 
     const fetchAnnouncements = async () => {
       try {
-        const all = await announcementRepository.list();
+        const result = await announcementRepository.list();
         if (!cancelled) {
-          setAnnouncements(all);
+          setAnnouncements(result.announcements);
         }
       } finally {
         if (!cancelled) {
