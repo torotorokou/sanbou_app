@@ -47,22 +47,35 @@ declare -a ALLOWED_FILE_PATTERNS=(
 # =============================================================================
 declare -a SENSITIVE_CONTENT_PATTERNS=(
     # データベースパスワード（実際の値のみ、変数参照除外）
-    "POSTGRES_PASSWORD\s*=\s*['\"][^\$][^'\"]{3,}['\"]"
+    "POSTGRES_PASSWORD[[:space:]]*=[[:space:]]*['\"][^\$][^'\"]{3,}['\"]"
+    
+    # データベース DSN（接続文字列）
+    # PostgreSQL/Postgres DSN (password >= 8 chars)
+    "postgresql://[^:]+:[^@[:space:]]{8,}@"
+    "postgres://[^:]+:[^@[:space:]]{8,}@"
+    # MySQL DSN (password >= 8 chars)
+    "mysql://[^:]+:[^@[:space:]]{8,}@"
+    # Redis DSN (password >= 8 chars)
+    "redis://:[^@[:space:]]{8,}@"
+    # docker-compose environment variables with DSN
+    "DB_DSN[[:space:]]*[:=][[:space:]]*['\"]?[^'\"[:space:]]*://[^:]+:[^@[:space:]]{8,}@"
+    "DATABASE_URL[[:space:]]*[:=][[:space:]]*['\"]?[^'\"[:space:]]*://[^:]+:[^@[:space:]]{8,}@"
+    
     # GCP 秘密鍵
     "BEGIN PRIVATE KEY"
     "BEGIN RSA PRIVATE KEY"
     # API キー（長い英数字文字列）
-    "[aA][pP][iI][-_]?[kK][eE][yY]\s*[:=]\s*['\"][A-Za-z0-9+/]{20,}['\"]"
+    "[aA][pP][iI][-_]?[kK][eE][yY][[:space:]]*[:=][[:space:]]*['\"][A-Za-z0-9+/]{20,}['\"]"
     # シークレットトークン
-    "[sS][eE][cC][rR][eE][tT][-_]?[tT][oO][kK][eE][nN]\s*[:=]\s*['\"][A-Za-z0-9+/]{20,}['\"]"
+    "[sS][eE][cC][rR][eE][tT][-_]?[tT][oO][kK][eE][nN][[:space:]]*[:=][[:space:]]*['\"][A-Za-z0-9+/]{20,}['\"]"
     # IAP Audience（実際の値のみ）
-    "IAP_AUDIENCE\s*=\s*['\"][^\$][^'\"]{20,}['\"]"
+    "IAP_AUDIENCE[[:space:]]*=[[:space:]]*['\"][^\$][^'\"]{20,}['\"]"
     # GCP Service Account Key（JSON形式）
-    "\"type\"\s*:\s*\"service_account\""
+    "\"type\"[[:space:]]*:[[:space:]]*\"service_account\""
     # AWS アクセスキー
-    "AWS_ACCESS_KEY_ID\s*=\s*['\"]AKIA[A-Z0-9]{16}['\"]"
+    "AWS_ACCESS_KEY_ID[[:space:]]*=[[:space:]]*['\"]AKIA[A-Z0-9]{16}['\"]"
     # JWT シークレット
-    "JWT_SECRET\s*=\s*['\"][^'\"]{20,}['\"]"
+    "JWT_SECRET[[:space:]]*=[[:space:]]*['\"][^'\"]{20,}['\"]"
 )
 
 # =============================================================================
@@ -79,17 +92,16 @@ declare -a CONTENT_EXCLUSION_PATTERNS=(
     "git log -S"
     "git show"
     # コメント行
-    "^\+\s*#"
-    "^\s*#"
+    "^\+[[:space:]]*#"
+    "^[[:space:]]*#"
     # シェル変数参照
     "^\+\$"
-    '=\s*\$'
+    '=[[:space:]]*\$'
     # 空の値
-    "=\s*$"
-    "=\s*#"
-    # ドキュメント内のコード例（バッククォート）
-    '\`.*\`'
-    '- \`'
+    "=[[:space:]]*$"
+    "=[[:space:]]*#"
+    # ドキュメント内のコード例（バッククォート） - POSIX準拠
+    '\`[^\`]+\`'
     # マークダウンのコードブロック
     '^\+.*```'
     # 説明文
@@ -97,6 +109,14 @@ declare -a CONTENT_EXCLUSION_PATTERNS=(
     "Example:"
     "検出対象:"
     "パターン:"
+    # DSN内のプレースホルダー
+    '\$\{[^}]+\}'  # ${VAR}
+    '\$\([^)]+\)'  # $(VAR)
+    '<[^>]+>'      # <password>
+    '\*\*\*+'      # ****
+    'example'      # example_pass
+    'your_'        # your_password
+    'placeholder'  # placeholder
     # BEGIN PRIVATE KEY を含むログやドキュメント
     "^\+[0-9]+\."
 )
@@ -141,7 +161,7 @@ contains_sensitive_content() {
         
         # パターンに一致する行を取得
         local matched_lines
-        matched_lines=$(echo "$content" | grep -E -- "$pattern" 2>/dev/null || true)
+        matched_lines=$(echo "$content" | grep -E "$pattern" 2>/dev/null || true)
         
         if [ -z "$matched_lines" ]; then
             continue
@@ -151,7 +171,7 @@ contains_sensitive_content() {
         local filtered_lines="$matched_lines"
         for exclusion in "${CONTENT_EXCLUSION_PATTERNS[@]}"; do
             [ -z "$exclusion" ] && continue
-            filtered_lines=$(echo "$filtered_lines" | grep -vE -- "$exclusion" 2>/dev/null || true)
+            filtered_lines=$(echo "$filtered_lines" | grep -vE "$exclusion" 2>/dev/null || true)
         done
         
         # フィルタリング後も残っている行があれば機密情報あり
