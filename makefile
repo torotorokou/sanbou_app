@@ -899,6 +899,112 @@ check-prod-images:
 	done
 
 ## ============================================================
+## メンテナンスページ（Cloud Run）の運用
+## ============================================================
+## 注意:
+##   - 既存の本番アプリ（VM + Docker Compose）には影響なし
+##   - Cloud Run はメンテナンス表示専用サービス
+##   - LB 切り替えは手動またはコンソールから実施
+##
+## 使い方:
+##   make deploy-maintenance-cloudrun PROJECT_ID=honest-sanbou-app-prod
+##   make test-maintenance-cloudrun PROJECT_ID=honest-sanbou-app-prod
+##   make setup-maintenance-iap PROJECT_ID=honest-sanbou-app-prod
+## ============================================================
+
+# メンテナンスページ用の設定
+MAINTENANCE_DIR := ops/maintenance/cloudrun
+MAINTENANCE_SERVICE_NAME ?= maintenance-page
+MAINTENANCE_REGION ?= asia-northeast1
+MAINTENANCE_PROJECT_ID ?= $(PROJECT_ID)
+
+.PHONY: deploy-maintenance-cloudrun test-maintenance-cloudrun check-maintenance-cloudrun setup-maintenance-iap
+
+deploy-maintenance-cloudrun:
+	@if [ -z "$(MAINTENANCE_PROJECT_ID)" ]; then \
+	  echo "[error] PROJECT_ID is required. Usage: make deploy-maintenance-cloudrun PROJECT_ID=your-project-id"; \
+	  exit 1; \
+	fi
+	@echo "[info] Deploying maintenance page to Cloud Run"
+	@echo "       Project: $(MAINTENANCE_PROJECT_ID)"
+	@echo "       Region: $(MAINTENANCE_REGION)"
+	@echo "       Service: $(MAINTENANCE_SERVICE_NAME)"
+	cd $(MAINTENANCE_DIR) && \
+	gcloud run deploy $(MAINTENANCE_SERVICE_NAME) \
+	  --source . \
+	  --platform managed \
+	  --region $(MAINTENANCE_REGION) \
+	  --project $(MAINTENANCE_PROJECT_ID) \
+	  --no-allow-unauthenticated \
+	  --min-instances 0 \
+	  --max-instances 10 \
+	  --cpu 1 \
+	  --memory 256Mi \
+	  --timeout 10s \
+	  --concurrency 80 \
+	  --ingress internal-and-cloud-load-balancing
+	@echo "[ok] Deployment completed"
+	@echo "[info] Next steps:"
+	@echo "  1. Configure IAP Service Agent: make setup-maintenance-iap PROJECT_ID=$(MAINTENANCE_PROJECT_ID)"
+	@echo "  2. Create Serverless NEG and add to LB backend"
+	@echo "  3. Switch LB default backend to enable maintenance mode"
+
+test-maintenance-cloudrun:
+	@if [ -z "$(MAINTENANCE_PROJECT_ID)" ]; then \
+	  echo "[error] PROJECT_ID is required. Usage: make test-maintenance-cloudrun PROJECT_ID=your-project-id"; \
+	  exit 1; \
+	fi
+	@echo "[info] Testing maintenance page (authenticated request)"
+	@SERVICE_URL=$$(gcloud run services describe $(MAINTENANCE_SERVICE_NAME) \
+	  --region $(MAINTENANCE_REGION) \
+	  --project $(MAINTENANCE_PROJECT_ID) \
+	  --format="value(status.url)" 2>/dev/null); \
+	if [ -z "$$SERVICE_URL" ]; then \
+	  echo "[error] Service not found. Deploy first: make deploy-maintenance-cloudrun PROJECT_ID=$(MAINTENANCE_PROJECT_ID)"; \
+	  exit 1; \
+	fi; \
+	TOKEN=$$(gcloud auth print-identity-token 2>/dev/null); \
+	if [ -z "$$TOKEN" ]; then \
+	  echo "[error] Failed to get identity token. Run: gcloud auth login"; \
+	  exit 1; \
+	fi; \
+	echo "[info] Requesting: $$SERVICE_URL"; \
+	curl -i -H "Authorization: Bearer $$TOKEN" "$$SERVICE_URL" || true
+
+check-maintenance-cloudrun:
+	@if [ -z "$(MAINTENANCE_PROJECT_ID)" ]; then \
+	  echo "[error] PROJECT_ID is required. Usage: make check-maintenance-cloudrun PROJECT_ID=your-project-id"; \
+	  exit 1; \
+	fi
+	@echo "[info] Checking Cloud Run service status"
+	gcloud run services describe $(MAINTENANCE_SERVICE_NAME) \
+	  --region $(MAINTENANCE_REGION) \
+	  --project $(MAINTENANCE_PROJECT_ID) \
+	  --format="table(status.url,status.conditions[0].status,status.conditions[0].type)" || \
+	  echo "[warn] Service not deployed yet"
+
+setup-maintenance-iap:
+	@if [ -z "$(MAINTENANCE_PROJECT_ID)" ]; then \
+	  echo "[error] PROJECT_ID is required. Usage: make setup-maintenance-iap PROJECT_ID=your-project-id"; \
+	  exit 1; \
+	fi
+	@echo "[info] Setting up IAP Service Agent for Cloud Run invoker"
+	@echo "[info] Step 1: Create IAP service identity"
+	gcloud beta services identity create \
+	  --service=iap.googleapis.com \
+	  --project=$(MAINTENANCE_PROJECT_ID) || echo "[info] Identity may already exist"
+	@echo "[info] Step 2: Get project number"
+	@PROJECT_NUMBER=$$(gcloud projects describe $(MAINTENANCE_PROJECT_ID) --format="value(projectNumber)"); \
+	echo "[info] Project Number: $$PROJECT_NUMBER"; \
+	echo "[info] Step 3: Grant roles/run.invoker to IAP Service Agent"; \
+	gcloud run services add-iam-policy-binding $(MAINTENANCE_SERVICE_NAME) \
+	  --region=$(MAINTENANCE_REGION) \
+	  --project=$(MAINTENANCE_PROJECT_ID) \
+	  --member="serviceAccount:service-$$PROJECT_NUMBER@gcp-sa-iap.iam.gserviceaccount.com" \
+	  --role="roles/run.invoker"
+	@echo "[ok] IAP setup completed"
+
+## ============================================================
 ## セキュリティスキャン（Trivy）
 ## ============================================================
 .PHONY: scan-images scan-local-images install-trivy security-check \
