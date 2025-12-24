@@ -592,6 +592,19 @@ export const salesPivotRepository: SalesPivotRepository = new MockSalesPivotRepo
 import { coreApi } from '@/shared';
 
 /**
+ * フロントエンドのSortKeyからバックエンドのSortKeyへのマッピング
+ * フロントエンド: count, unit_price
+ * バックエンド:   slip_count, unit_price
+ */
+function mapSortKeyToBackend(sortBy: string): string {
+  const mapping: Record<string, string> = {
+    'count': 'slip_count',
+    // 他のキーはそのまま渡す
+  };
+  return mapping[sortBy] ?? sortBy;
+}
+
+/**
  * HTTP Repository 実装
  * バックエンド /core_api/analytics/sales-tree/* と連携
  */
@@ -681,7 +694,7 @@ export class HttpSalesPivotRepository implements SalesPivotRepository {
       rep_ids: q.repIds.map(id => parseInt(id, 10)),
       filter_ids: q.filterIds,
       top_n: q.topN === 'all' ? 0 : q.topN,
-      sort_by: q.sortBy,
+      sort_by: mapSortKeyToBackend(q.sortBy),
       order: q.order,
     };
 
@@ -749,7 +762,7 @@ export class HttpSalesPivotRepository implements SalesPivotRepository {
       rep_ids: params.repIds.map(id => parseInt(id, 10)),
       target_axis: params.targetAxis,
       top_n: params.topN === 'all' ? 0 : params.topN,
-      sort_by: params.sortBy,
+      sort_by: mapSortKeyToBackend(params.sortBy),
       order: params.order,
       cursor: params.cursor,
     };
@@ -863,7 +876,7 @@ export class HttpSalesPivotRepository implements SalesPivotRepository {
       category_kind: query.categoryKind,
       rep_ids: query.targetRepIds.map(id => parseInt(id, 10)),
       filter_ids: query.filterIds,
-      sort_by: query.sortBy,
+      sort_by: mapSortKeyToBackend(query.sortBy),
       order: query.order,
     };
 
