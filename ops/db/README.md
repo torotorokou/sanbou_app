@@ -278,7 +278,8 @@ GRANT sanbou_owner TO sanbou_app_dev;
 - Makefile: [makefile](../../makefile)
 - 環境変数: [env/](../../env/)
 - Secrets: [secrets/](../../secrets/)
-- Bootstrap SQL: [scripts/db/bootstrap_roles.sql](../../scripts/db/bootstrap_roles.sql)
+- Legacy Scripts: [ops/db/legacy/](legacy/) - 旧スクリプト（参照用）
+- Development Tools: [scripts/db/](../../scripts/db/) - 開発用ツール（ダンプ等）
 
 ---
 
