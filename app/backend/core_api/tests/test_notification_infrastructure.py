@@ -269,3 +269,31 @@ class TestDispatchPendingNotificationsUseCase:
         assert len(pending) == 1
         assert pending[0].retry_count == 1
         assert "RuntimeError" in pending[0].last_error
+
+    def test_dispatch_with_scheduled_at_future(self, dispatch_uc, outbox):
+        """Case3: scheduled_at が未来の場合、dispatch しても送られない（pending のまま）"""
+        now = datetime.now()
+        future = now + timedelta(hours=1)
+        payload = NotificationPayload(title="Future Title", body="Future Body")
+        item = NotificationOutboxItem.create_pending(
+            channel="email",
+            payload=payload,
+            recipient_key="user_123",
+            now=now,
+            scheduled_at=future,  # 未来にスケジュール
+        )
+        outbox.enqueue([item])
+
+        # 現在時刻で dispatch を実行
+        sent_count = dispatch_uc.execute(now=now)
+        assert sent_count == 0  # 送信されない
+
+        # 現在時刻では pending に含まれない（scheduled_at が未来）
+        pending = outbox.list_pending(now=now)
+        assert len(pending) == 0
+
+        # 未来時刻では pending に含まれる
+        pending_future = outbox.list_pending(now=future)
+        assert len(pending_future) == 1
+        assert pending_future[0].status == NotificationStatus.PENDING
+        assert pending_future[0].sent_at is None
