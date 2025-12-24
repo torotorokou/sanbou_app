@@ -90,6 +90,32 @@ make al-cur-env ENV=local_dev
 make al-hist-env ENV=local_dev
 ```
 
+### DB 権限管理
+
+```bash
+# 権限リファクタリング実行（全ステップ）
+make db-fix-ownership ENV=local_dev
+
+# 段階的実行
+make db-fix-ownership ENV=local_dev STEP=1  # ロール作成
+make db-fix-ownership ENV=local_dev STEP=2  # owner 移管
+make db-fix-ownership ENV=local_dev STEP=3  # 権限付与
+make db-fix-ownership ENV=local_dev STEP=4  # デフォルト権限設定
+
+# 検証実行
+make db-verify-ownership ENV=local_dev
+```
+
+**目的**: 「permission denied for sequence」等の権限エラーを根絶
+
+**実行内容**:
+- `sanbou_owner` (NOLOGIN) ロール作成
+- 全スキーマ・テーブル・シーケンスの owner を統一
+- RW/RO スキーマごとの適切な権限付与
+- DEFAULT PRIVILEGES 設定（新規オブジェクトへの自動権限付与）
+
+詳細: [ops/db/README.md](./ops/db/README.md)
+
 ## 🏗️ イメージビルド・デプロイ
 
 ### ステージング
