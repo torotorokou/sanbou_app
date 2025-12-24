@@ -73,14 +73,40 @@ make backup ENV=local_dev
 make restore-from-dump ENV=local_dev DUMP=backups/xxx.dump
 ```
 
-### マイグレーション
+### 初回環境構築（DB 権限システムのセットアップ）
+
+**⚠️ 新規環境または権限エラーが頻発する場合のみ実行**
 
 ```bash
-# DB Bootstrap（権限設定、冪等）
-make db-bootstrap-roles-env ENV=local_dev
+# 1. バックアップ取得（既存環境の場合）
+make backup ENV=local_dev
 
-# マイグレーション適用（自動的にbootstrapも実行）
-# ※ migrations_v2 を使用（legacy migrations/ は削除済み）
+# 2. DB 権限システム構築（全ステップ一括）
+make db-fix-ownership ENV=local_dev
+
+# 3. 検証
+make db-verify-ownership ENV=local_dev
+
+# 4. マイグレーション適用
+make al-up-env ENV=local_dev
+```
+
+**実行内容**:
+- `sanbou_owner` (NOLOGIN) ロール作成
+- 全スキーマ・テーブル・シーケンスの owner を統一
+- RW/RO スキーマごとの適切な権限付与
+- DEFAULT PRIVILEGES 設定（新規オブジェクトへの自動権限付与）
+
+**目的**: 「permission denied for sequence」等の権限エラーを根絶
+
+詳細: [ops/db/README.md](./ops/db/README.md)
+
+### 通常運用（マイグレーション）
+
+**⚠️ 初回構築後は、通常これだけ実行すればOK**
+
+```bash
+# マイグレーション適用（DB Bootstrap を自動実行）
 make al-up-env ENV=local_dev
 
 # マイグレーション状態確認
@@ -90,31 +116,21 @@ make al-cur-env ENV=local_dev
 make al-hist-env ENV=local_dev
 ```
 
-### DB 権限管理
+### トラブルシューティング（DB 権限）
 
 ```bash
-# 権限リファクタリング実行（全ステップ）
-make db-fix-ownership ENV=local_dev
-
-# 段階的実行
+# 段階的に権限を修正（問題箇所のみ再実行）
 make db-fix-ownership ENV=local_dev STEP=1  # ロール作成
 make db-fix-ownership ENV=local_dev STEP=2  # owner 移管
 make db-fix-ownership ENV=local_dev STEP=3  # 権限付与
 make db-fix-ownership ENV=local_dev STEP=4  # デフォルト権限設定
 
-# 検証実行
+# 権限状態の詳細確認
 make db-verify-ownership ENV=local_dev
+
+# Legacy Bootstrap（通常は不要、al-up-env が自動実行）
+make db-bootstrap-roles-env ENV=local_dev
 ```
-
-**目的**: 「permission denied for sequence」等の権限エラーを根絶
-
-**実行内容**:
-- `sanbou_owner` (NOLOGIN) ロール作成
-- 全スキーマ・テーブル・シーケンスの owner を統一
-- RW/RO スキーマごとの適切な権限付与
-- DEFAULT PRIVILEGES 設定（新規オブジェクトへの自動権限付与）
-
-詳細: [ops/db/README.md](./ops/db/README.md)
 
 ## 🏗️ イメージビルド・デプロイ
 
@@ -197,14 +213,22 @@ make al-up-env ENV=vm_prod
 
 1. **ステージング**: 十分なテスト実施
 2. **本番DB**: バックアップ取得（必須）
-3. **ローカルPC**: イメージ昇格または直接ビルド
-4. **ローカルPC**: env/.env.vm_prod の IMAGE_TAG 更新
-5. **ローカルPC**: Git commit & push
-6. **VM**: `git pull origin main`
-7. **VM**: `make down ENV=vm_stg` （必要に応じて）
-8. **VM**: `make up ENV=vm_prod`
-9. **VM**: `make al-up-env ENV=vm_prod`
-10. **動作確認**: `curl https://example.com/health`
+   ```bash
+   make backup ENV=vm_prod
+   ```
+3. **初回のみ**: DB 権限システム構築
+   ```bash
+   make db-fix-ownership ENV=vm_prod
+   make db-verify-ownership ENV=vm_prod
+   ```
+4. **ローカルPC**: イメージ昇格または直接ビルド
+5. **ローカルPC**: env/.env.vm_prod の IMAGE_TAG 更新
+6. **ローカルPC**: Git commit & push
+7. **VM**: `git pull origin main`
+8. **VM**: `make down ENV=vm_stg` （必要に応じて）
+9. **VM**: `make up ENV=vm_prod`
+10. **VM**: `make al-up-env ENV=vm_prod`
+11. **動作確認**: `curl https://example.com/health`
 
 ## ⚠️ 重要な注意事項
 
@@ -225,9 +249,18 @@ make al-up-env ENV=vm_prod
 
 ### トラブルシューティング
 
+#### `permission denied for sequence` または権限エラー
+
+```bash
+# DB 権限システムを再構築
+make db-fix-ownership ENV=vm_stg
+make db-verify-ownership ENV=vm_stg
+```
+
 #### `role "app_readonly" does not exist`
 
 ```bash
+# Legacy Bootstrap を手動実行（通常は al-up-env が自動実行）
 make db-bootstrap-roles-env ENV=vm_stg
 make al-up-env ENV=vm_stg
 ```
