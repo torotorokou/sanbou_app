@@ -25,4 +25,5 @@ USER appuser
 # - port=$PORT: Cloud Run が設定するポートを使用
 # - workers=1: 最小構成（Cloud Run のオートスケールに依存）
 # - timeout-keep-alive=5: 短いキープアライブ（コスト削減）
-CMD exec uvicorn main:app --host 0.0.0.0 --port $PORT --workers 1 --timeout-keep-alive 5
+CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${PORT:-8080} --workers 1 --timeout-keep-alive 5"]
+
