@@ -6,9 +6,10 @@
  * - 初回表示時に既読化
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import type { Announcement } from '../domain/announcement';
 import { announcementRepository } from '../infrastructure';
+import { useAnnouncementState } from './AnnouncementStateContext';
 
 interface UseAnnouncementDetailViewModelResult {
   /** お知らせデータ */
@@ -36,6 +37,9 @@ export function useAnnouncementDetailViewModel(
   const [isLoading, setIsLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
+  // 既読状態の変更を通知するための関数を取得
+  const { notifyReadStateChanged } = useAnnouncementState();
+
   useEffect(() => {
     let cancelled = false;
 
@@ -51,6 +55,8 @@ export function useAnnouncementDetailViewModel(
             setAnnouncement(data);
             // 詳細ページ表示時に既読化（API経由）
             await announcementRepository.markRead(id);
+            // 既読状態の変更を通知
+            notifyReadStateChanged();
           } else {
             setNotFound(true);
           }
@@ -72,7 +78,7 @@ export function useAnnouncementDetailViewModel(
     return () => {
       cancelled = true;
     };
-  }, [id]);
+  }, [id, notifyReadStateChanged]);
 
   return {
     announcement,

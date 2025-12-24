@@ -13,6 +13,7 @@ import type { Announcement, AnnouncementSeverity, Audience } from '../domain/ann
 import { isVisibleForAudience } from '../domain/announcement';
 import { announcementRepository } from '../infrastructure';
 import { stripMarkdownForSnippet } from '../domain/stripMarkdownForSnippet';
+import { useAnnouncementState } from './AnnouncementStateContext';
 
 /**
  * 現在のユーザーオーディエンス
@@ -102,6 +103,9 @@ export function useAnnouncementsListViewModel(
   // userKey は将来のユーザー認証対応時に使用予定
   void userKey;
 
+  // 既読状態の変更を通知するための関数を取得
+  const { notifyReadStateChanged } = useAnnouncementState();
+
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedAnnouncement, setSelectedAnnouncement] =
@@ -152,11 +156,13 @@ export function useAnnouncementsListViewModel(
           ...prev,
           [id]: new Date().toISOString(),
         }));
+        // 既読状態の変更を通知
+        notifyReadStateChanged();
         setSelectedAnnouncement(ann);
         setIsDetailOpen(true);
       }
     },
-    [announcements]
+    [announcements, notifyReadStateChanged]
   );
 
   const closeDetail = useCallback(() => {

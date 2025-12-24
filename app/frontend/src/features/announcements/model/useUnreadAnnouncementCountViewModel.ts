@@ -8,6 +8,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { announcementRepository } from '../infrastructure';
+import { useAnnouncementState } from './AnnouncementStateContext';
 
 interface UseUnreadAnnouncementCountViewModelResult {
   /** 未読数 */
@@ -32,6 +33,9 @@ export function useUnreadAnnouncementCountViewModel(
   const [unreadCount, setUnreadCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [fetchTrigger, setFetchTrigger] = useState(0);
+  
+  // 既読状態の変更を検知
+  const { readStateVersion } = useAnnouncementState();
 
   useEffect(() => {
     let cancelled = false;
@@ -56,7 +60,7 @@ export function useUnreadAnnouncementCountViewModel(
     return () => {
       cancelled = true;
     };
-  }, [fetchTrigger]);
+  }, [fetchTrigger, readStateVersion]); // readStateVersionを依存配列に追加
 
   const refetch = useCallback(() => {
     setFetchTrigger((v) => v + 1);

@@ -49,6 +49,9 @@ export type { AnnouncementDisplayItem, AnnouncementBadge, AnnouncementFilterTab,
 export { useUnreadAnnouncementCountViewModel } from './model/useUnreadAnnouncementCountViewModel';
 export { useAnnouncementDetailViewModel } from './model/useAnnouncementDetailViewModel';
 
+// Context (状態同期用)
+export { AnnouncementStateProvider, useAnnouncementState } from './model/AnnouncementStateContext';
+
 // UI (Step Cで追加)
 export { AnnouncementBanner } from './ui/AnnouncementBanner';
 export { AnnouncementList } from './ui/AnnouncementList';

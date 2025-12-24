@@ -4,6 +4,7 @@ import { App as AntdApp } from 'antd';
 import MainLayout from '@app/layout/MainLayout';
 import { ErrorBoundary } from '@/shared';
 import { AuthProvider } from '@app/providers/AuthProvider';
+import { AnnouncementStateProvider } from '@features/announcements';
 
 /**
  * アプリケーションルート
@@ -18,6 +19,10 @@ import { AuthProvider } from '@app/providers/AuthProvider';
  * - AuthProviderでアプリケーション起動時に認証情報を取得
  * - 認証完了までローディング画面を表示し、ブックマークからの直接アクセスにも対応
  * - 認証エラー時は専用のエラー画面を表示
+ * 
+ * お知らせ状態管理:
+ * - AnnouncementStateProviderで既読状態の変更を全体で同期
+ * - バナーやリストで既読にした際、未読数も即座に更新される
  */
 const App: React.FC = () => {
     return (
@@ -25,7 +30,9 @@ const App: React.FC = () => {
             <AntdApp>
                 <BrowserRouter>
                     <AuthProvider>
-                        <MainLayout />
+                        <AnnouncementStateProvider>
+                            <MainLayout />
+                        </AnnouncementStateProvider>
                     </AuthProvider>
                 </BrowserRouter>
             </AntdApp>
