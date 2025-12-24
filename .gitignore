@@ -98,6 +98,10 @@ ENV/
 .env.*
 !.env.example
 
+# ops/maintenance/ の .env ファイル（メンテナンスページ設定）
+/ops/maintenance/.env
+!/ops/maintenance/.env.example
+
 # 証明書と秘密鍵（全階層）
 *.pem
 *.key

@@ -911,10 +911,15 @@ check-prod-images:
 ## ルートから実行する場合（ラッパー）:
 ##   make maintenance-deploy PROJECT_ID=xxx
 ##   make maintenance-test PROJECT_ID=xxx
+##   make maintenance-setup-build PROJECT_ID=xxx
+##   make maintenance-enable-apis PROJECT_ID=xxx
 ## ============================================================
 
 .PHONY: maintenance-deploy maintenance-test maintenance-check maintenance-setup-iap \
-        maintenance-setup-cloudbuild maintenance-clean maintenance-help
+        maintenance-setup-build maintenance-setup-cloudbuild maintenance-enable-apis \
+        maintenance-test-direct maintenance-build-log maintenance-deploy-local \
+        maintenance-on maintenance-off maintenance-status \
+        maintenance-clean maintenance-help
 
 maintenance-help:
 	@echo "[info] メンテナンス運用コマンド"
@@ -922,14 +927,40 @@ maintenance-help:
 	@echo ""
 	@$(MAKE) -C ops/maintenance help
 
-maintenance-setup-cloudbuild:
-	@$(MAKE) -C ops/maintenance setup-cloudbuild-permissions PROJECT_ID=$(PROJECT_ID)
+maintenance-enable-apis:
+	@$(MAKE) -C ops/maintenance enable-apis PROJECT_ID=$(PROJECT_ID)
+
+maintenance-setup-build:
+	@$(MAKE) -C ops/maintenance setup-build-permissions PROJECT_ID=$(PROJECT_ID)
+
+# 後方互換性のための alias（非推奨）
+maintenance-setup-cloudbuild: maintenance-setup-build
+	@echo "[warn] ⚠️  'maintenance-setup-cloudbuild' is deprecated."
+	@echo "[warn] Please use 'maintenance-setup-build' instead."
 
 maintenance-deploy:
 	@$(MAKE) -C ops/maintenance deploy PROJECT_ID=$(PROJECT_ID)
 
+maintenance-deploy-local:
+	@$(MAKE) -C ops/maintenance deploy-local PROJECT_ID=$(PROJECT_ID)
+
 maintenance-test:
 	@$(MAKE) -C ops/maintenance test PROJECT_ID=$(PROJECT_ID)
+
+maintenance-test-direct:
+	@$(MAKE) -C ops/maintenance test-direct PROJECT_ID=$(PROJECT_ID)
+
+maintenance-build-log:
+	@$(MAKE) -C ops/maintenance check-build-log PROJECT_ID=$(PROJECT_ID) BUILD_ID=$(BUILD_ID)
+
+maintenance-on:
+	@$(MAKE) -C ops/maintenance maintenance-on PROJECT_ID=$(PROJECT_ID)
+
+maintenance-off:
+	@$(MAKE) -C ops/maintenance maintenance-off PROJECT_ID=$(PROJECT_ID)
+
+maintenance-status:
+	@$(MAKE) -C ops/maintenance maintenance-status PROJECT_ID=$(PROJECT_ID)
 
 maintenance-check:
 	@$(MAKE) -C ops/maintenance check PROJECT_ID=$(PROJECT_ID)
