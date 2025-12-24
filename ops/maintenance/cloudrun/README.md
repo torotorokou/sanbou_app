@@ -39,9 +39,64 @@
 - `roles/iam.serviceAccountUser` - サービスアカウントの使用
 - `roles/storage.admin` または `roles/artifactregistry.writer` - イメージの push（Cloud Build 使用時は不要）
 
+### 重要：初回デプロイ前の準備
+
+**初めて Cloud Run にデプロイする場合、Cloud Build のサービスアカウントに権限を付与する必要があります。**
+
+```bash
+# Makefile を使う場合（推奨）
+make setup-maintenance-cloudbuild-permissions PROJECT_ID=honest-sanbou-app-prod
+
+# または手動で設定する場合（下記の「Cloud Build 権限設定」セクションを参照）
+```
+
 ---
 
 ## デプロイ手順
+
+### 0. Cloud Build 権限設定（初回のみ）
+
+**最初のデプロイ前に必ず実行してください。**
+
+#### 方法A: メンテナンス専用 Makefile を使用（推奨）
+
+```bash
+# ops/maintenance/ ディレクトリに移動
+cd ops/maintenance
+
+# 権限設定
+make setup-cloudbuild-permissions PROJECT_ID=honest-sanbou-app-prod
+
+# または、ルートディレクトリから
+make maintenance-setup-cloudbuild PROJECT_ID=honest-sanbou-app-prod
+```
+
+#### 方法B: 手動設定
+
+```bash
+# プロジェクト番号を取得
+export PROJECT_ID="honest-sanbou-app-prod"
+export PROJECT_NUMBER=$(gcloud projects describe $PROJECT_ID --format="value(projectNumber)")
+
+echo "Project Number: $PROJECT_NUMBER"
+
+# Compute Engine デフォルトサービスアカウントに Storage Admin を付与
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+  --member="serviceAccount:${PROJECT_NUMBER}-compute@developer.gserviceaccount.com" \
+  --role="roles/storage.admin"
+
+# Cloud Build サービスアカウントに Cloud Run Admin を付与
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+  --member="serviceAccount:${PROJECT_NUMBER}@cloudbuild.gserviceaccount.com" \
+  --role="roles/run.admin"
+
+# Cloud Build サービスアカウントに Service Account User を付与
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+  --member="serviceAccount:${PROJECT_NUMBER}@cloudbuild.gserviceaccount.com" \
+  --role="roles/iam.serviceAccountUser"
+```
+
+**注意**: 権限の反映には数分かかる場合があります。
 
 ### 1. 環境変数の設定
 
@@ -58,7 +113,36 @@ gcloud config set run/region $REGION
 
 ### 2. Cloud Run へのデプロイ
 
-#### 方法A: Cloud Build を使用（推奨）
+#### 方法A: メンテナンス専用 Makefile を使用（推奨）
+
+```bash
+# ops/maintenance/ ディレクトリに移動
+cd ops/maintenance
+
+# 初回デプロイ前に権限設定（一度だけ実行）
+make setup-cloudbuild-permissions PROJECT_ID=honest-sanbou-app-prod
+
+# デプロイ実行
+make deploy PROJECT_ID=honest-sanbou-app-prod
+
+# または、ルートディレクトリから
+make maintenance-deploy PROJECT_ID=honest-sanbou-app-prod
+```
+
+**利用可能なコマンド**:
+```bash
+cd ops/maintenance
+
+make deploy PROJECT_ID=xxx              # Cloud Run にデプロイ
+make test PROJECT_ID=xxx                # 動作確認
+make check PROJECT_ID=xxx               # サービス状態確認
+make setup-iap PROJECT_ID=xxx           # IAP Service Agent 設定
+make setup-cloudbuild-permissions PROJECT_ID=xxx  # Cloud Build 権限設定
+make clean PROJECT_ID=xxx               # サービス削除
+make help                                # ヘルプ表示
+```
+
+#### 方法B: Cloud Build を直接使用
 
 ```bash
 cd ops/maintenance/cloudrun
@@ -81,9 +165,9 @@ gcloud run deploy $SERVICE_NAME \
 **注意**: 
 - `--no-allow-unauthenticated` を必ず指定（公開アクセス禁止）
 - `--ingress internal-and-cloud-load-balancing` で LB 経由のみ許可
-- サービスアカウントは事前に作成しておく（下記参照）
+- 初回デプロイ時は API 有効化と Artifact Registry 作成の確認が表示されます（Y で承認）
 
-#### 方法B: ローカルビルド + Artifact Registry
+#### 方法C: ローカルビルド + Artifact Registry
 
 ```bash
 cd ops/maintenance/cloudrun
@@ -110,20 +194,9 @@ gcloud run deploy $SERVICE_NAME \
   --service-account maintenance-page@${PROJECT_ID}.iam.gserviceaccount.com
 ```
 
-### 3. サービスアカウントの作成（初回のみ）
+**注意**: サービスアカウントは任意です。指定しない場合はデフォルトの Compute Engine サービスアカウントが使用されます。
 
-```bash
-# サービスアカウント作成
-gcloud iam service-accounts create maintenance-page \
-  --display-name "Maintenance Page Service Account" \
-  --project $PROJECT_ID
-
-# 必要に応じて権限を付与（現在は最小権限）
-# 例: Cloud Logging への書き込み
-gcloud projects add-iam-policy-binding $PROJECT_ID \
-  --member="serviceAccount:maintenance-page@${PROJECT_ID}.iam.gserviceaccount.com" \
-  --role="roles/logging.logWriter"
-```
+### 3. デプロイの確認
 
 ---
 
@@ -298,6 +371,27 @@ curl -I https://sanbou-app.jp/
 ---
 
 ## トラブルシューティング
+
+### Cloud Build 権限エラー
+
+エラー例:
+```
+ERROR: Build failed because the default service account is missing required IAM permissions.
+PERMISSION_DENIED: IAM permission denied for service account xxx-compute@developer.gserviceaccount.com
+```
+
+**解決方法**:
+```bash
+# ops/maintenance/ ディレクトリから
+cd ops/maintenance
+make setup-cloudbuild-permissions PROJECT_ID=honest-sanbou-app-prod
+
+# または、ルートディレクトリから
+make maintenance-setup-cloudbuild PROJECT_ID=honest-sanbou-app-prod
+
+# 数分待ってから再デプロイ
+make deploy PROJECT_ID=honest-sanbou-app-prod
+```
 
 ### 503 以外のエラーが返る
 
