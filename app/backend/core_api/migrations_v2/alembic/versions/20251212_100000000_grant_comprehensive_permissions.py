@@ -42,8 +42,14 @@ def upgrade():
     """
     Grant comprehensive permissions to the current environment's user ONLY
     """
-    # Get the current environment's database user from POSTGRES_USER env var
-    current_user = os.environ.get('POSTGRES_USER', 'myuser')
+    # Get the current environment's database user from DB_USER or POSTGRES_USER env var
+    # Prioritize DB_USER, fall back to POSTGRES_USER for backward compatibility
+    current_user = os.environ.get('DB_USER') or os.environ.get('POSTGRES_USER')
+    if not current_user:
+        raise ValueError(
+            "Database user not specified. Please set DB_USER or POSTGRES_USER environment variable.\n"
+            "Example: DB_USER=sanbou_app_dev or POSTGRES_USER=sanbou_app_dev"
+        )
     
     print(f"[PERMISSIONS] Environment-specific permission grant")
     print(f"[PERMISSIONS] Target user: {current_user}")
@@ -170,8 +176,12 @@ def downgrade():
     Note: This is a partial downgrade as we cannot fully revert to unknown previous state.
     We revoke the granted permissions but don't restore any previous specific grants.
     """
-    # Get the current environment's database user from POSTGRES_USER env var
-    current_user = os.environ.get('POSTGRES_USER', 'myuser')
+    # Get the current environment's database user from DB_USER or POSTGRES_USER env var
+    current_user = os.environ.get('DB_USER') or os.environ.get('POSTGRES_USER')
+    if not current_user:
+        raise ValueError(
+            "Database user not specified. Please set DB_USER or POSTGRES_USER environment variable."
+        )
     
     print(f"[PERMISSIONS] Revoking comprehensive permissions from environment user: {current_user}")
     

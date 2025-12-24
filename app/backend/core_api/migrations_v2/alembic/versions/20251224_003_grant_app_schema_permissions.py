@@ -32,8 +32,14 @@ def upgrade():
     """
     Grant permissions on app schema to current environment's user
     """
-    # Get the current environment's database user from POSTGRES_USER env var
-    current_user = os.environ.get('POSTGRES_USER', 'myuser')
+    # Get the current environment's database user from DB_USER or POSTGRES_USER env var
+    # Prioritize DB_USER, fall back to POSTGRES_USER for backward compatibility
+    current_user = os.environ.get('DB_USER') or os.environ.get('POSTGRES_USER')
+    if not current_user:
+        raise ValueError(
+            "Database user not specified. Please set DB_USER or POSTGRES_USER environment variable.\n"
+            "Example: DB_USER=sanbou_app_dev or POSTGRES_USER=sanbou_app_dev"
+        )
     schema = 'app'
     
     print(f"[PERMISSIONS] Granting permissions on schema {schema} to user {current_user}")
@@ -74,7 +80,12 @@ def downgrade():
     """
     Revoke permissions on app schema (typically not done in practice)
     """
-    current_user = os.environ.get('POSTGRES_USER', 'myuser')
+    # Get the current environment's database user from DB_USER or POSTGRES_USER env var
+    current_user = os.environ.get('DB_USER') or os.environ.get('POSTGRES_USER')
+    if not current_user:
+        raise ValueError(
+            "Database user not specified. Please set DB_USER or POSTGRES_USER environment variable."
+        )
     schema = 'app'
     
     revoke_sql = f"""

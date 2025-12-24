@@ -10,7 +10,7 @@
 --   make db-bootstrap-roles-env ENV=vm_prod
 --
 -- 直接実行する場合:
---   psql -U myuser -d sanbou_dev -v ON_ERROR_STOP=0 -f bootstrap_roles.sql
+--   psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=0 -f bootstrap_roles.sql
 --
 -- 注意:
 --   - 冪等性を確保するため IF NOT EXISTS / IF EXISTS を使用

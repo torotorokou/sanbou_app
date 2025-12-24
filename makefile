@@ -240,9 +240,8 @@ dev-with-nginx:
 ## ============================================================
 ## 注意:
 ##   - POSTGRES_USER と POSTGRES_DB は各環境の .env ファイルから自動取得
-##   - local_dev: myuser / sanbou_dev
-##   - vm_stg: sanbou_app_stg / sanbou_stg
-##   - vm_prod: sanbou_app_prod / sanbou_prod
+##   - 環境変数から動的に取得されるため、ユーザー名はハードコードされていません
+##   - 各環境の .env ファイルで POSTGRES_USER と POSTGRES_DB を設定してください
 ## ============================================================
 DATE        := $(shell date +%F_%H%M%S)
 BACKUP_DIR  ?= /mnt/c/Users/synth/Desktop/backups
@@ -420,9 +419,9 @@ db-bootstrap-roles-env: check
         al-dump-schema-current al-init-from-schema \
         al-up-env al-down-env al-cur-env al-hist-env al-heads-env al-stamp-env
 
-# Alembic は基本 local_dev で実行する想定（従来どおり固定）
+# Alembic は基本 local_dev で実行する想定（migrations_v2 を使用）
 ALEMBIC_DC := docker compose -f docker/docker-compose.dev.yml -p local_dev
-ALEMBIC    := $(ALEMBIC_DC) exec core_api alembic -c /backend/migrations/alembic.ini
+ALEMBIC    := $(ALEMBIC_DC) exec core_api alembic -c /backend/migrations_v2/alembic.ini
 
 MSG    ?= update schema
 REV_ID ?= $(shell date +%Y%m%d_%H%M%S%3N)  # 例: 20251104_153045123
