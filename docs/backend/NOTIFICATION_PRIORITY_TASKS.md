@@ -7,131 +7,110 @@
 
 ## 📋 現状
 
-### ✅ 完了済み
+### ✅ Phase 1完了（2024-12-24）
 - Domain層: NotificationChannel, NotificationStatus, NotificationPayload, NotificationOutboxItem
 - Ports: NotificationOutboxPort, NotificationSenderPort
 - UseCases: EnqueueNotificationsUseCase, DispatchPendingNotificationsUseCase
-- Adapters: InMemoryNotificationOutboxAdapter, NoopNotificationSenderAdapter
-- DI: config/di_providers.py
-- Tests: 12件のユニットテスト
+- Adapters: 
+  - InMemoryNotificationOutboxAdapter（開発/テスト用）
+  - **DbNotificationOutboxAdapter（本番用、PostgreSQL）** ← NEW
+  - NoopNotificationSenderAdapter（Phase 2で実Email送信に置き換え予定）
+- DI: config/di_providers.py（環境変数による切替）
+- Tests: 12件のユニットテスト + DB統合テスト
+- **DB永続化**: notification_outboxテーブル（UUID PK、JSONB meta、retry logic）← NEW
+- **定期実行**: APScheduler統合（1分間隔、FastAPI lifecycle管理）← NEW
 
 ### ⚠️ 制限事項（現状）
-- Outboxがプロセス内メモリ（再起動で消失）
-- 通知送信がNoop（実際に送信されない）
-- 定期実行の仕組みなし（手動実行のみ）
-- ビジネスロジックからの呼び出しなし
+- 通知送信がNoop（実際に送信されない）← Phase 2で解決予定
+- ビジネスロジックからの呼び出しなし ← Phase 2で統合予定
+- 開発環境でuvicorn --reloadによるscheduler干渉（本番環境では問題なし）
 
 ---
 
 ## 🎯 優先実装タスク
 
-### 1. 🔴 DB永続化（最優先）
-**優先度**: 🔴 HIGH  
-**理由**: InMemoryでは本番運用不可、プロセス再起動で通知が消失  
-**期間**: 1-2日
+### ✅ Phase 1: DB永続化 + 定期実行（完了）
+**完了日**: 2024年12月24日  
+**所要期間**: 2日
 
-**実装内容**:
-- Alembic migration でOutboxテーブル作成
-- DbNotificationOutboxAdapter 実装（SQLAlchemy ORM）
-- DI設定の切り替え（InMemory → DB）
-- 既存テストの実行確認
+#### 実装内容
+1. **DB永続化**
+   - ✅ Alembic migration: `20251224_005_create_notification_outbox_table.py`
+   - ✅ NotificationOutboxORM model（UUID PK、JSONB meta、retry logic）
+   - ✅ DbNotificationOutboxAdapter実装（enqueue, list_pending, mark_sent, mark_failed）
+   - ✅ DI設定: 環境変数`USE_DB_NOTIFICATION_OUTBOX`による切替
+   - ✅ Indexes: status, next_retry_at（conditional）, created_at DESC
 
-**テーブル設計**:
+2. **定期実行（APScheduler）**
+   - ✅ APScheduler==3.10.4 追加
+   - ✅ notification_dispatcher.py: BackgroundScheduler統合
+   - ✅ FastAPI startup/shutdown events: スケジューラーライフサイクル管理
+   - ✅ 環境変数: `ENABLE_NOTIFICATION_SCHEDULER=true`、`NOTIFICATION_DISPATCH_INTERVAL_MINUTES=1`
+   - ✅ エラーハンドリング、ログ出力
+
+#### テスト結果
+- ✅ 10件の通知を正常にenqueue → dispatch → sent
+- ✅ Retry logic動作確認（exponential backoff: 1min → 5min → 30min → 60min）
+- ✅ 手動dispatch実行: 正常動作
+- ⚠️ 開発環境（uvicorn --reload）: scheduler "missed run" warnings（本番環境では問題なし）
+
+#### 実装ファイル
+- `migrations_v2/alembic/versions/20251224_005_create_notification_outbox_table.py`
+- `app/infra/db/orm_models.py`: NotificationOutboxORM追加
+- `app/infra/adapters/notification/db_outbox_adapter.py`: DB実装
+- `app/scheduler/notification_dispatcher.py`: スケジューラー統合
+- `app/app.py`: startup/shutdown events
+- `app/config/di_providers.py`: 環境変数ベースDI
+- `requirements.txt`: APScheduler追加
+
+#### ドキュメント
+- `docs/database/DB_USER_MIGRATION_MYUSER_TO_SANBOU_APP_DEV.md`: DB権限問題解決記録
+
+---
+
+### 📌 Phase 1の技術的知見
+
+#### DB Ownership問題の解決
+**問題**: PostgreSQLで`myuser`（superuser）がschema ownerになっており、`sanbou_app_dev`（application user）との権限衝突が発生
+
+**解決策**:
 ```sql
-CREATE TABLE notification_outbox (
-    id UUID PRIMARY KEY,
-    channel VARCHAR(50) NOT NULL,
-    status VARCHAR(50) NOT NULL,
-    recipient_key VARCHAR(255) NOT NULL,
-    title VARCHAR(500) NOT NULL,
-    body TEXT NOT NULL,
-    url VARCHAR(1000),
-    meta JSONB,
-    scheduled_at TIMESTAMP,
-    created_at TIMESTAMP NOT NULL,
-    sent_at TIMESTAMP,
-    retry_count INTEGER DEFAULT 0,
-    next_retry_at TIMESTAMP,
-    last_error TEXT
-);
-
-CREATE INDEX idx_notification_outbox_status ON notification_outbox(status);
-CREATE INDEX idx_notification_outbox_next_retry ON notification_outbox(next_retry_at);
+ALTER SCHEMA app OWNER TO sanbou_app_dev;
+ALTER TABLE app.notification_outbox OWNER TO sanbou_app_dev;
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA app TO sanbou_app_dev;
 ```
 
-**実装ファイル**:
-- `app/backend/core_api/migrations_v2/versions/YYYYMMDD_HHMMSS_create_notification_outbox.py`
-- `app/backend/core_api/app/infra/adapters/notification/db_outbox_adapter.py`
-- `app/backend/core_api/app/config/di_providers.py` (修正)
+**教訓**: 
+- 常に環境変数の`POSTGRES_USER`を使用
+- `myuser`をハードコードしない
+- スキーマ/テーブル作成時にownerを明示
+
+#### APScheduler + uvicorn --reload
+**問題**: 開発環境でschedulerが"missed run"警告を出す
+
+**原因**: uvicorn --reloadがコード変更検知で頻繁に再起動
+
+**解決策**:
+- 開発: 警告を許容、または手動実行で検証
+- 本番: `--reload`なしで起動、schedulerは正常動作
 
 ---
 
-### 2. 🟡 定期実行の仕組み
-**優先度**: 🟡 HIGH  
-**理由**: Dispatchを定期的に実行しないと通知が送られない  
-**期間**: 0.5-1日
-
-**選択肢**:
-1. **APScheduler** (推奨: 既存コードベースに統合しやすい)
-2. Celery Beat (重量級、既にCeleryがあれば)
-3. Cron + CLI コマンド (シンプル)
-
-**実装内容（APScheduler案）**:
-- FastAPI起動時にスケジューラー開始
-- 1分ごとにDispatchPendingNotificationsUseCaseを実行
-- エラーハンドリングとログ出力
-- ENV=production のみ有効化
-
-**実装ファイル**:
-- `app/backend/core_api/app/scheduler/notification_dispatcher.py`
-- `app/backend/core_api/app/app.py` (スケジューラー起動)
-- `requirements.txt` (APScheduler追加)
-
-**実装例**:
-```python
-from apscheduler.schedulers.background import BackgroundScheduler
-from datetime import datetime
-
-scheduler = BackgroundScheduler()
-
-def dispatch_notifications():
-    """定期的に通知を送信"""
-    try:
-        uc = get_dispatch_pending_notifications_usecase()
-        sent_count = uc.execute(now=datetime.now(), limit=100)
-        logger.info(f"Dispatched {sent_count} notifications")
-    except Exception as e:
-        logger.error(f"Failed to dispatch notifications: {e}")
-
-# 1分ごとに実行
-scheduler.add_job(dispatch_notifications, 'interval', minutes=1)
-scheduler.start()
-```
-
 ---
 
-### 3. 🟢 実送信実装（Email）
-**優先度**: 🟢 MEDIUM  
-**理由**: 実際に通知を届けるため（ただし送信先実装は段階的でOK）  
-**期間**: 1-2日
+### 🔄 Phase 2: 実Email送信 + ビジネスロジック統合（次のフェーズ）
+**優先度**: 🟡 MEDIUM  
+**予定期間**: 2-3日
 
-**実装順序**:
-1. Emailから開始（最も汎用的）
-2. LINE（必要に応じて）
-3. その他（Webhook/Push等）
-
-**Email実装内容**:
-- SMTP / SendGrid / AWS SES のいずれかを選択
-- EmailNotificationSenderAdapter 実装
-- 環境変数で送信設定（SMTP_HOST, SMTP_PORT等）
+#### 2-1. 実Email送信実装
+**実装内容**:
+- EmailNotificationSenderAdapterの実装（SendGrid or AWS SES推奨）
+- 環境変数で送信設定（API key / SMTP credentials）
+- エラーハンドリング、送信失敗時のリトライ
+- DI設定: NoopNotificationSenderAdapter → EmailNotificationSenderAdapter
 - HTMLテンプレート対応（オプション）
 
-**実装ファイル**:
-- `app/backend/core_api/app/infra/adapters/notification/email_sender_adapter.py`
-- `app/backend/core_api/app/config/di_providers.py` (Senderの切り替え)
-- `.env.example` (SMTP設定追加)
-
-**SendGrid例**:
+**SendGrid実装例**:
 ```python
 import sendgrid
 from sendgrid.helpers.mail import Mail
@@ -155,18 +134,17 @@ class SendGridNotificationSenderAdapter(NotificationSenderPort):
         self._client.send(message)
 ```
 
----
+#### 2-2. ビジネスロジック統合
+**実装内容**:
+- 既存UseCaseから通知を発行
+- 統合ポイント例:
+  - 受注確定時 → メール通知
+  - 在庫アラート → LINE通知
+  - レポート生成完了 → メール通知
+  - エラー発生時 → 管理者通知
 
-### 4. 🟢 ユースケース統合
-**優先度**: 🟢 MEDIUM  
-**理由**: 実際のビジネスロジックから通知を発行  
-**期間**: 0.5-1日
-
-**統合ポイント（例）**:
-- 受注確定時 → メール通知
-- 在庫アラート → LINE通知
-- レポート生成完了 → メール通知
-- エラー発生時 → 管理者通知
+**実装ファイル**:
+- 各ビジネスUseCase（EnqueueNotificationsUseCaseを呼び出し）
 
 **実装例**:
 ```python
@@ -201,27 +179,44 @@ class ConfirmOrderUseCase:
 
 ---
 
-## 📊 実装順序と優先度
+## 📊 実装進捗状況
 
-### フェーズ1: 本番運用準備（必須）
-1. 🔴 **DB永続化** (1-2日)
-2. 🟡 **定期実行** (0.5-1日)
+### ✅ Phase 1: 本番運用準備（完了 - 2024-12-24）
+1. ✅ **DB永続化** (完了)
+   - Alembic migration、ORM model、DbNotificationOutboxAdapter
+   - UUID PK、JSONB meta、retry logic with exponential backoff
+   - DI configuration with environment variable switching
+   
+2. ✅ **定期実行（APScheduler）** (完了)
+   - BackgroundScheduler統合、FastAPI lifecycle管理
+   - 1分間隔での自動dispatch
+   - エラーハンドリング、構造化ログ出力
 
-**判断基準**: これが完了すれば最小限の本番運用が可能
+**成果**: 最小限の本番運用が可能な状態に到達 ✅
 
-### フェーズ2: 実用化（推奨）
-3. 🟢 **Email実装** (1-2日)
-4. 🟢 **ユースケース統合** (0.5-1日)
+---
 
-**判断基準**: 実際にユーザーに通知が届く
+### 🔄 Phase 2: 実用化（次のステップ）
+3. ⏳ **実Email送信** (未実装)
+   - EmailNotificationSenderAdapter（SendGrid or AWS SES）
+   - API key管理、エラーハンドリング
+   - HTMLテンプレート対応（オプション）
+   
+4. ⏳ **ビジネスロジック統合** (未実装)
+   - 既存UseCaseからの通知発行
+   - 受注確定、レポート生成、エラー通知等
 
-### フェーズ3: 機能拡張（任意）
-- LINE実装
+**目標**: 実際にユーザーに通知が届く状態にする
+
+---
+
+### 🌟 Phase 3: 機能拡張（将来的）
+- LINE通知実装
 - Webhook実装
 - Push通知実装
-- 通知テンプレート管理
-- 送信履歴の可視化
-- 管理画面
+- 通知テンプレート管理UI
+- 送信履歴の可視化・検索
+- 管理画面（通知送信、ステータス確認）
 
 ---
 
