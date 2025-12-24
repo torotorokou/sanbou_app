@@ -48,6 +48,21 @@ export const PivotTable: React.FC<PivotTableProps> = ({
   const amountLabel = categoryKind === 'waste' ? '売上' : '仕入';
 
   /**
+   * dataIndex（camelCase）からSortKey（snake_case）へのマッピング
+   */
+  const mapFieldToSortKey = (field: string): SortKey => {
+    const mapping: Record<string, SortKey> = {
+      'unitPrice': 'unit_price',
+      'amount': 'amount',
+      'qty': 'qty',
+      'count': 'count',
+      'name': 'name',
+      'date': 'date',
+    };
+    return mapping[field] ?? (field as SortKey);
+  };
+
+  /**
    * テーブルソート変更ハンドラ
    */
   const handleTableChange: TableProps<MetricEntry>['onChange'] = (
@@ -56,7 +71,8 @@ export const PivotTable: React.FC<PivotTableProps> = ({
     sorter
   ) => {
     if (!Array.isArray(sorter) && sorter.field && sorter.order) {
-      onSortByChange(sorter.field as SortKey);
+      const sortKey = mapFieldToSortKey(String(sorter.field));
+      onSortByChange(sortKey);
       onOrderChange(sorter.order === 'ascend' ? 'asc' : 'desc');
     }
   };
