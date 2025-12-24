@@ -151,7 +151,7 @@ const InboundForecastDashboardPage: React.FC = () => {
             {layout.mode === "mobile" ? (
               // Mobile: 目標カードのみ（予測と日次は下段へ）
               <Col span={layout.spans.target}>
-                <div style={{ height: layout.heights.target.mobile }}>
+                <div>
                   {targetError ? (
                     <Alert
                       message="目標データ取得エラー"
@@ -305,13 +305,8 @@ const InboundForecastDashboardPage: React.FC = () => {
         <div style={{ flex: layout.mode === "desktop" ? "1" : "0 0 auto", minHeight: 0, display: "flex", flexDirection: "column" }}>
           <Row gutter={[layout.gutter, layout.gutter]} style={{ height: layout.mode === "desktop" ? "100%" : "auto", flex: layout.mode === "desktop" ? 1 : "none" }}>
             {layout.mode === "mobile" ? (
-              // Mobile: 予測 → 日次の順
+              // Mobile: 日次 → 予測の順
               <>
-                <Col span={24}>
-                  <div style={{ height: layout.heights.forecast.mobile }}>
-                    {vm.forecastCardProps && <ForecastCard {...vm.forecastCardProps} isGeMd={false} showWipNotice={true} />}
-                  </div>
-                </Col>
                 <Col span={24}>
                   <div style={{ height: layout.heights.daily.mobile }}>
                     {dailyVM.loading ? (
@@ -330,6 +325,11 @@ const InboundForecastDashboardPage: React.FC = () => {
                         cumulativeProps={dailyVM.cumulativeProps} 
                       />
                     ) : null}
+                  </div>
+                </Col>
+                <Col span={24}>
+                  <div style={{ height: layout.heights.forecast.mobile }}>
+                    {vm.forecastCardProps && <ForecastCard {...vm.forecastCardProps} isGeMd={false} showWipNotice={true} />}
                   </div>
                 </Col>
               </>

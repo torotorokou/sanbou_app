@@ -1,4 +1,4 @@
-// src/features/notice/ui/ResponsiveNotice.tsx
+// src/features/announcements/ui/ResponsiveNotice.tsx
 // スマホで大きすぎる通知を「1行バナー＋詳細Drawer」に置換（React+TypeScript, AntD）
 
 import React, { useState } from 'react';
@@ -30,15 +30,16 @@ export const ResponsiveNotice: React.FC<ResponsiveNoticeProps> = ({
     display: 'flex',
     alignItems: 'center',
     gap: 8,
-    fontSize: 'clamp(13px, 3.2vw, 16px)',
-    lineHeight: 1.3,
-    whiteSpace: 'nowrap',
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
+    fontSize: isMobile ? '14px' : 'clamp(13px, 3.2vw, 16px)',
+    lineHeight: 1.4,
+    whiteSpace: isMobile ? 'normal' : 'nowrap',
+    overflow: isMobile ? 'visible' : 'hidden',
+    textOverflow: isMobile ? 'clip' : 'ellipsis',
+    fontWeight: isMobile ? 600 : 'normal',
   };
 
   const containerStyle: React.CSSProperties = {
-    padding: 'clamp(8px, 2.4vw, 16px)',
+    padding: isMobile ? '12px 12px' : 'clamp(8px, 2.4vw, 16px)',
   };
 
   // Action button: remove the small arrow icon to avoid proximity to the close mark.
@@ -121,5 +122,3 @@ export const ResponsiveNotice: React.FC<ResponsiveNoticeProps> = ({
     </>
   );
 };
-
-export default ResponsiveNotice;

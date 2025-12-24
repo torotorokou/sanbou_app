@@ -33,7 +33,7 @@ export type ResponsiveLayoutConfig = {
   /** カードの高さ設定 */
   heights: {
     target: {
-      mobile: number;
+      mobile: string | number;
       tablet: number;
       desktop: string | number;
     };
@@ -66,7 +66,7 @@ export const useResponsiveLayout = (): ResponsiveLayoutConfig => {
       : "desktop";  // ≥1280px: 上3列+下1列
 
   // ガッター・パディング（3段階統一）
-  const gutter = flags.isMobile ? 8 : flags.isTablet ? 16 : 20;
+  const gutter = flags.isMobile ? 4 : flags.isTablet ? 8 : 12;
   const padding = flags.isMobile ? 8 : flags.isTablet ? 16 : 16;
 
   // カラムspan定義
@@ -76,11 +76,11 @@ export const useResponsiveLayout = (): ResponsiveLayoutConfig => {
     desktop: { target: 7, daily: 12, cal: 5 }    // 上段3列
   }[mode];
 
-  // カードの高さ設定
+  // カードの高さ設定（目標カードは内容量に応じて可変）
   const heights = {
     target: {
-      mobile: 220,
-      tablet: 320,
+      mobile: "auto",  // 内容に応じて可変（最小320px程度確保）
+      tablet: 380,
       desktop: "100%"
     },
     daily: {

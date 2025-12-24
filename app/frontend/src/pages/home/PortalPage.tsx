@@ -18,7 +18,12 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { ROUTER_PATHS } from '@app/routes/routes';
 import { useResponsive } from '@/shared'; // responsive: flags
-import ResponsiveNotice from '@/features/notice/ui/ResponsiveNotice';
+import { ResponsiveNotice } from '@features/announcements';
+import { useAuth } from '@features/authStatus';
+import {
+  useAnnouncementBannerViewModel,
+  AnnouncementBanner,
+} from '@features/announcements';
 import './PortalPage.css';
 
 const { Title, Paragraph, Text } = Typography;
@@ -171,7 +176,8 @@ const PortalCard: React.FC<PortalCardProps> = ({
         style={{
           width: '100%', // follow grid cell width
           height: finalCardHeight,
-          borderRadius: 16,
+          borderRadius: compactLayout ? 6 : 16,
+          margin: compactLayout ? 0 : undefined,
           // 上辺にアクセントライン（sm未満では太く表示）
           boxShadow: hideButton ? `inset 0 4px 0 0 ${accent}` : `inset 0 2px 0 0 ${accent}`,
           transition: 'transform 200ms ease, box-shadow 200ms ease',
@@ -179,8 +185,8 @@ const PortalCard: React.FC<PortalCardProps> = ({
         styles={{
           body: {
             height: '100%',
-            // Keep internal card padding unchanged per request
-            padding: compactLayout ? '2px 2px' : 20,
+            // モバイルではパディングを大幅に削減
+            padding: compactLayout ? '1px 1px' : (isButtonHidden ? '8px 12px' : '12px 12px'),
             display: 'flex',
             // For small-screen cases (either smallButton or button-hidden), use horizontal layout
             flexDirection: (isButtonHidden || isSmallButton) ? 'row' : (compactLayout ? 'row' : 'column'),
@@ -188,7 +194,7 @@ const PortalCard: React.FC<PortalCardProps> = ({
             alignItems: 'center',
             // when we have a small button on the right, space-between ensures it sits to the far right
             justifyContent: isSmallButton ? 'space-between' : (isButtonHidden ? 'flex-start' : (compactLayout ? 'space-between' : 'center')),
-            gap: compactLayout ? 12 * scale : 12 * scale,
+            gap: compactLayout ? 6 * scale : 8 * scale,
             // text should be left-aligned when it's to the right of the icon
             textAlign: isButtonHidden ? 'left' : (compactLayout ? 'left' : 'center'),
           },
@@ -425,6 +431,18 @@ export const PortalPage: React.FC = () => {
   // responsive: useResponsive(flags)
   const { flags } = useResponsive();
   const { token } = theme.useToken();
+  const navigate = useNavigate();
+
+  // ユーザーキーを取得（未ログイン時は"local"）
+  const { user } = useAuth();
+  const userKey = user?.userId ?? 'local';
+
+  // お知らせバナー用ViewModel
+  const {
+    announcement: bannerAnnouncement,
+    onAcknowledge: onBannerAcknowledge,
+    onNavigateToDetail: onBannerNavigateToDetail,
+  } = useAnnouncementBannerViewModel(userKey);
 
   // responsive: 3段階判定ヘルパー（Mobile/Tablet/Desktop）
   const pickByDevice = <T,>(mobile: T, tablet: T, desktop: T): T => {
@@ -449,9 +467,9 @@ export const PortalPage: React.FC = () => {
   const unifiedButtonWidth = BUTTON_WIDTH;
 
   // カード間のギャップ（行間・列間）を一元管理
-  // モバイルは2px、Tablet/Desktopは4px
-  const CARD_COLUMN_GAP = pickByDevice(2, 4, 4);
-  const CARD_ROW_GAP = pickByDevice(2, 4, 4);
+  // モバイルは0px、Tablet/Desktopは1px
+  const CARD_COLUMN_GAP = pickByDevice(0, 1, 1);
+  const CARD_ROW_GAP = pickByDevice(0, 1, 1);
 
   const introText = isCompact
     ? '社内ポータルです。必要な機能を選択してください。'
@@ -507,13 +525,24 @@ export const PortalPage: React.FC = () => {
     <div className="portal-page" style={{ minHeight: '100%' }}>
       <section className="portal-hero" style={heroVars}>
         <Title level={2} className="portal-title">
-          社内ポータル
+          参謀くん-社内ポータル
         </Title>
   {!isXs && <Text className="portal-subtitle">{introText}</Text>}
       </section>
 
       {/* 2カラムレイアウト: 左=カード群, 右=ウィジェット群 */}
       <main style={{ width: '100%', maxWidth: 'none', margin: 0 }}>
+        {/* お知らせバナー（重要通知） */}
+        {bannerAnnouncement && (
+          <div style={{ width: '100%', margin: '0 0 16px 0', padding: '0 16px' }}>
+            <AnnouncementBanner
+              announcement={bannerAnnouncement}
+              onClose={onBannerAcknowledge}
+              onNavigateToDetail={onBannerNavigateToDetail}
+              navigateFn={() => navigate(`/news/${bannerAnnouncement.id}`)}
+            />
+          </div>
+        )}
         {/* 重要通知バナー */}
         {noticeVisible && notices.length > 0 && (
           <div style={{ width: '100%', margin: '0 0 24px 0' }}>
@@ -553,11 +582,11 @@ export const PortalPage: React.FC = () => {
                 // Use minmax(..., auto) so rows can grow if a card becomes taller (prevents overlap)
                 // Lower the mobile minimum so cards sit closer vertically.
                 gridAutoRows: `minmax(${Math.round(pickByDevice(64, 120, CARD_HEIGHT) * cardScale)}px, auto)`,
-                // responsive: gridTemplateColumns (Mobile: 1col, Tablet: 2-3col auto-fit, Desktop: max 3col)
+                // responsive: gridTemplateColumns (Mobile: 1col, Tablet: 2-3col auto-fit, Desktop: 常に3列)
                 gridTemplateColumns: flags.isMobile
                   ? 'repeat(1, 1fr)'
-                  : flags.isDesktop  // ≥1281px: 最大3列に制限
-                  ? `repeat(auto-fit, minmax(${Math.round(CARD_WIDTH * cardScale)}px, calc(100% / 3 - ${CARD_COLUMN_GAP}px)))`
+                  : flags.isDesktop  // ≥1281px: 常に3列表示
+                  ? 'repeat(3, 1fr)'
                   : `repeat(auto-fit, minmax(${Math.round(CARD_WIDTH * cardScale)}px, 1fr))`,  // 768-1280px: auto-fit
               justifyContent: 'center',
               alignItems: 'stretch',

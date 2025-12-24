@@ -143,6 +143,11 @@ export const DailyActualsCard: React.FC<DailyActualsCardProps> = ({ chartData, v
                 
                 const items: { label: string; value: string; color: string }[] = [];
                 const payload = props.payload[0]?.payload;
+                const weekday =
+                  payload && typeof payload === "object" && "dateFull" in payload
+                    ? ["日", "月", "火", "水", "木", "金", "土"][dayjs(String((payload as { dateFull?: string }).dateFull)).day()]
+                    : null;
+                const labelText = props.label != null ? `${props.label}日${weekday ? ` (${weekday})` : ""}` : "";
                 
                 // 通常のデータ項目を追加
                 props.payload.forEach((item) => {
@@ -203,9 +208,7 @@ export const DailyActualsCard: React.FC<DailyActualsCardProps> = ({ chartData, v
                     borderRadius: "4px",
                     fontSize: FONT.size,
                   }}>
-                    <div style={{ marginBottom: 4, fontWeight: "bold" }}>
-                      {props.label}日
-                    </div>
+                    <div style={{ marginBottom: 4, fontWeight: "bold" }}>{labelText}</div>
                     {items.map((item, idx) => (
                       <div key={idx} style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4 }}>
                         <span style={{

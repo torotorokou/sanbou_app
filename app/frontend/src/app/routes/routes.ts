@@ -45,4 +45,5 @@ export const ROUTER_PATHS = {
     TOKEN_PREVIEW: '/token-preview',
     // お知らせ
     NEWS: '/news',
+    NEWS_DETAIL: '/news/:id',
 };

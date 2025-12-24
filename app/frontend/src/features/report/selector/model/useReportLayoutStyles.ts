@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { useResponsive, customTokens, bp } from "@/shared";
+import { useResponsive, customTokens } from "@/shared";
 
 /**
  * レイアウトとスタイリングのロジックを管理するフック - useResponsive(flags)統合版
