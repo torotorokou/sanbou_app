@@ -32,6 +32,11 @@ from app.infra.clients.rag_client import RAGClient
 from app.infra.clients.ledger_client import LedgerClient
 from app.infra.clients.manual_client import ManualClient
 from app.infra.clients.ai_client import AIClient
+from app.infra.adapters.notification.in_memory_outbox_adapter import InMemoryNotificationOutboxAdapter
+from app.infra.adapters.notification.noop_sender_adapter import NoopNotificationSenderAdapter
+from app.core.ports.notification_port import NotificationOutboxPort, NotificationSenderPort
+from app.core.usecases.notification.enqueue_notifications_uc import EnqueueNotificationsUseCase
+from app.core.usecases.notification.dispatch_pending_notifications_uc import DispatchPendingNotificationsUseCase
 
 logger = get_module_logger(__name__)
 
@@ -560,3 +565,40 @@ def get_health_check_usecase() -> HealthCheckUseCase:
     )
 
 
+# ========================================================================
+# Notification Infrastructure (InMemory/Noop)
+# ========================================================================
+# シングルトンで保持（プロセス内で共有）
+_notification_outbox_adapter: InMemoryNotificationOutboxAdapter | None = None
+_notification_sender_adapter: NoopNotificationSenderAdapter | None = None
+
+
+def get_notification_outbox_port() -> NotificationOutboxPort:
+    """通知 Outbox Port 提供（InMemory実装）"""
+    global _notification_outbox_adapter
+    if _notification_outbox_adapter is None:
+        _notification_outbox_adapter = InMemoryNotificationOutboxAdapter()
+    return _notification_outbox_adapter
+
+
+def get_notification_sender_port() -> NotificationSenderPort:
+    """通知 Sender Port 提供（Noop実装）"""
+    global _notification_sender_adapter
+    if _notification_sender_adapter is None:
+        _notification_sender_adapter = NoopNotificationSenderAdapter()
+    return _notification_sender_adapter
+
+
+def get_enqueue_notifications_usecase(
+    outbox: NotificationOutboxPort = Depends(get_notification_outbox_port),
+) -> EnqueueNotificationsUseCase:
+    """通知登録 UseCase 提供"""
+    return EnqueueNotificationsUseCase(outbox=outbox)
+
+
+def get_dispatch_pending_notifications_usecase(
+    outbox: NotificationOutboxPort = Depends(get_notification_outbox_port),
+    sender: NotificationSenderPort = Depends(get_notification_sender_port),
+) -> DispatchPendingNotificationsUseCase:
+    """通知送信 UseCase 提供"""
+    return DispatchPendingNotificationsUseCase(outbox=outbox, sender=sender)

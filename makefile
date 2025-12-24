@@ -989,7 +989,7 @@ install-trivy:
 	    echo "deb https://aquasecurity.github.io/trivy-repo/deb $$(lsb_release -sc) main" | sudo tee -a /etc/apt/sources.list.d/trivy.list; \
 	    sudo apt-get update && sudo apt-get install trivy; \
 	  else \
-	    echo "Unsupported OS. Please install Trivy manually: https://aquasecurity.github.io/trivy/"; \
+	    echo "Unsupported OS. Please install Trivy man	ually: https://aquasecurity.github.io/trivy/"; \
 	    exit 1; \
 	  fi; \
 	else \
