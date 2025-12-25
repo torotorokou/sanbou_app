@@ -115,7 +115,7 @@ class AnnouncementRepositoryImpl(AnnouncementRepositoryPort):
                 .where(and_(*conditions))
                 .where(
                     # Not expired: publish_to is NULL or > now
-                    (AnnouncementORM.publish_to is None)
+                    (AnnouncementORM.publish_to.is_(None))
                     | (AnnouncementORM.publish_to > now)
                 )
                 .order_by(AnnouncementORM.publish_from.desc())
