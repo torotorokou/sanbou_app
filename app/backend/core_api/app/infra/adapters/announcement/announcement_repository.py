@@ -314,9 +314,9 @@ class AnnouncementRepositoryImpl(AnnouncementRepositoryPort):
 
             # Base conditions: active and not read
             conditions = [
-                AnnouncementORM.deleted_at is None,
+                AnnouncementORM.deleted_at.is_(None),
                 AnnouncementORM.publish_from <= now,
-                (AnnouncementORM.publish_to is None) | (AnnouncementORM.publish_to > now),
+                (AnnouncementORM.publish_to.is_(None)) | (AnnouncementORM.publish_to > now),
                 AnnouncementORM.id.notin_(select(user_state_subq.c.announcement_id)),
             ]
 

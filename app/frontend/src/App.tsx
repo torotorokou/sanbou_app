@@ -1,10 +1,11 @@
-import React from 'react';
-import { BrowserRouter } from 'react-router-dom';
-import { App as AntdApp } from 'antd';
-import MainLayout from '@app/layout/MainLayout';
-import { ErrorBoundary } from '@/shared';
-import { AuthProvider } from '@app/providers/AuthProvider';
-import { AnnouncementStateProvider } from '@features/announcements';
+import React, { useEffect } from "react";
+import { BrowserRouter } from "react-router-dom";
+import { App as AntdApp } from "antd";
+import MainLayout from "@app/layout/MainLayout";
+import { ErrorBoundary } from "@/shared";
+import { AuthProvider } from "@app/providers/AuthProvider";
+import { AnnouncementStateProvider } from "@features/announcements";
+import { setMessageInstance } from "@shared/infrastructure/http/httpClient";
 
 /**
  * アプリケーションルート
@@ -24,17 +25,30 @@ import { AnnouncementStateProvider } from '@features/announcements';
  * - AnnouncementStateProviderで既読状態の変更を全体で同期
  * - バナーやリストで既読にした際、未読数も即座に更新される
  */
+
+const AppContent: React.FC = () => {
+  const { message } = AntdApp.useApp();
+
+  useEffect(() => {
+    setMessageInstance(message);
+  }, [message]);
+
+  return (
+    <BrowserRouter>
+      <AuthProvider>
+        <AnnouncementStateProvider>
+          <MainLayout />
+        </AnnouncementStateProvider>
+      </AuthProvider>
+    </BrowserRouter>
+  );
+};
+
 const App: React.FC = () => {
   return (
     <ErrorBoundary>
       <AntdApp>
-        <BrowserRouter>
-          <AuthProvider>
-            <AnnouncementStateProvider>
-              <MainLayout />
-            </AnnouncementStateProvider>
-          </AuthProvider>
-        </BrowserRouter>
+        <AppContent />
       </AntdApp>
     </ErrorBoundary>
   );
