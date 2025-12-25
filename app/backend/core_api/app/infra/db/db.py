@@ -41,10 +41,9 @@ import os
 from collections.abc import Generator
 from functools import lru_cache
 
+from backend_shared.infra.db.url_builder import build_database_url_with_driver
 from sqlalchemy import Engine, create_engine
 from sqlalchemy.orm import Session, declarative_base, sessionmaker
-
-from backend_shared.infra.db.url_builder import build_database_url_with_driver
 
 # ========================================
 # 環境変数の読み込み

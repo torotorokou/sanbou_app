@@ -13,6 +13,11 @@ from __future__ import annotations
 
 from typing import Any
 
+from app.core.usecases.reports.base_generators import BaseInteractiveReportGenerator
+from app.core.usecases.reports.processors.report_processing_service import (
+    ReportProcessingService,
+)
+from app.infra.adapters.session import session_store
 from backend_shared.application.logging import create_log_context, get_module_logger
 from backend_shared.infra.adapters.fastapi.error_handlers import DomainError
 
@@ -25,12 +30,6 @@ from backend_shared.utils.date_filter_utils import (
 )
 from fastapi import BackgroundTasks, UploadFile
 from fastapi.responses import JSONResponse
-
-from app.core.usecases.reports.base_generators import BaseInteractiveReportGenerator
-from app.core.usecases.reports.processors.report_processing_service import (
-    ReportProcessingService,
-)
-from app.infra.adapters.session import session_store
 
 logger = get_module_logger(__name__)
 

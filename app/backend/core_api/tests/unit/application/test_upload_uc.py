@@ -4,7 +4,6 @@ from datetime import date, datetime
 from unittest.mock import Mock
 
 import pytest
-
 from app.core.usecases.upload.delete_upload_scope_uc import DeleteUploadScopeUseCase
 from app.core.usecases.upload.get_upload_calendar_uc import GetUploadCalendarUseCase
 from app.core.usecases.upload.get_upload_status_uc import GetUploadStatusUseCase

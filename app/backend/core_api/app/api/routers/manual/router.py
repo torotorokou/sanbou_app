@@ -6,11 +6,10 @@ Manual API Router - BFF for manual_api endpoints
 import os
 
 import httpx
-from fastapi import APIRouter, Request
-from fastapi.responses import JSONResponse, StreamingResponse
-
 from backend_shared.application.logging import create_log_context, get_module_logger
 from backend_shared.core.domain.exceptions import ExternalServiceError, ValidationError
+from fastapi import APIRouter, Request
+from fastapi.responses import JSONResponse, StreamingResponse
 
 logger = get_module_logger(__name__)
 

@@ -32,15 +32,14 @@ Google Cloud Identity-Aware Proxy (IAP) が付与するヘッダーから
 - audience は /projects/PROJECT_NUMBER/global/backendServices/SERVICE_ID 形式
 """
 
-from fastapi import HTTPException, Request, status
-from google.auth.transport import requests
-from google.oauth2 import id_token
-from starlette.concurrency import run_in_threadpool
-
 from app.core.domain.auth.entities import AuthUser
 from app.core.ports.auth.auth_provider import IAuthProvider
 from backend_shared.application.logging import create_log_context, get_module_logger
 from backend_shared.config.env_utils import get_iap_audience, get_stage
+from fastapi import HTTPException, Request, status
+from google.auth.transport import requests
+from google.oauth2 import id_token
+from starlette.concurrency import run_in_threadpool
 
 logger = get_module_logger(__name__)
 

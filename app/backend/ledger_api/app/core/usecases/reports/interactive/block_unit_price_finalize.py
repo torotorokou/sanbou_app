@@ -6,8 +6,6 @@ Block Unit Price Interactive - Finalize Step Handler
 from typing import Any, cast
 
 import pandas as pd
-from backend_shared.application.logging import create_log_context, get_module_logger
-
 from app.core.domain.reports.processors.block_unit_price.process2 import (
     apply_transport_fee_by_vendor,
     apply_weight_based_transport_fee,
@@ -22,6 +20,7 @@ from app.infra.report_utils import (
     load_master_and_template,
 )
 from app.infra.report_utils.domain import ReadTransportDiscount
+from backend_shared.application.logging import create_log_context, get_module_logger
 
 from .block_unit_price_utils import (
     ensure_datetime_col,

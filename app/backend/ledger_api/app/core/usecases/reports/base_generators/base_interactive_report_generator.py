@@ -36,7 +36,6 @@ from io import StringIO
 from typing import Any
 
 import pandas as pd
-
 from app.core.usecases.reports.base_generators.base_report_generator import (
     BaseReportGenerator,
 )

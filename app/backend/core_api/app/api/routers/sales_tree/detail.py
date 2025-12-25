@@ -6,8 +6,6 @@ Sales Tree Detail Router - Detail lines endpoint
   - POST /analytics/sales-tree/detail-lines: 詳細明細行取得
 """
 
-from fastapi import APIRouter, Depends
-
 from app.config.di_providers import get_fetch_sales_tree_detail_lines_uc
 from app.core.domain.sales_tree_detail import DetailLinesRequest, DetailLinesResponse
 from app.core.usecases.sales_tree.fetch_detail_lines_uc import (
@@ -15,6 +13,7 @@ from app.core.usecases.sales_tree.fetch_detail_lines_uc import (
 )
 from backend_shared.application.logging import get_module_logger
 from backend_shared.core.domain.exceptions import InfrastructureError
+from fastapi import APIRouter, Depends
 
 logger = get_module_logger(__name__)
 router = APIRouter()

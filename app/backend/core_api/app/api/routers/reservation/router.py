@@ -11,9 +11,6 @@ Reservation Router - 予約データ取得・更新エンドポイント
 
 from datetime import date as date_type
 
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
-
 from app.api.schemas.reservation import (
     ReservationForecastDaily,
     ReservationManualInput,
@@ -23,6 +20,8 @@ from app.core.domain.reservation import ReservationManualRow
 from app.deps import get_db
 from app.infra.adapters.reservation import ReservationRepositoryImpl
 from backend_shared.application.logging import get_module_logger
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
 
 logger = get_module_logger(__name__)
 
