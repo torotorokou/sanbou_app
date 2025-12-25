@@ -10,6 +10,7 @@ DI Providers - Dependency Injection Container
   - 環境差分（debug/raw、flash/final）をここで吸収
   - SET LOCAL search_path によるスキーマ切替を活用
 """
+
 import os
 
 from app.core.ports.notification_port import (
@@ -171,7 +172,7 @@ def get_uc_default(
     raw_repo: ShogunCsvRepository = Depends(get_repo_raw_final),
     stg_repo: ShogunCsvRepository = Depends(get_repo_stg_final),
     raw_data_repo: RawDataRepository = Depends(get_raw_data_repo),
-    mv_refresher: MaterializedViewRefresher = Depends(get_mv_refresher)
+    mv_refresher: MaterializedViewRefresher = Depends(get_mv_refresher),
 ) -> UploadShogunCsvUseCase:
     """デフォルト用のUploadShogunCsvUseCase (raw.shogun_final_receive + stg.shogun_final_receive)"""
     return UploadShogunCsvUseCase(
@@ -188,7 +189,7 @@ def get_uc_flash(
     raw_repo: ShogunCsvRepository = Depends(get_repo_raw_flash),
     stg_repo: ShogunCsvRepository = Depends(get_repo_stg_flash),
     raw_data_repo: RawDataRepository = Depends(get_raw_data_repo),
-    mv_refresher: MaterializedViewRefresher = Depends(get_mv_refresher)
+    mv_refresher: MaterializedViewRefresher = Depends(get_mv_refresher),
 ) -> UploadShogunCsvUseCase:
     """Flash用のUploadShogunCsvUseCase (raw.shogun_flash_receive + stg.shogun_flash_receive)"""
     return UploadShogunCsvUseCase(
@@ -205,7 +206,7 @@ def get_uc_stg_final(
     raw_repo: ShogunCsvRepository = Depends(get_repo_raw_final),
     stg_repo: ShogunCsvRepository = Depends(get_repo_stg_final),
     raw_data_repo: RawDataRepository = Depends(get_raw_data_repo),
-    mv_refresher: MaterializedViewRefresher = Depends(get_mv_refresher)
+    mv_refresher: MaterializedViewRefresher = Depends(get_mv_refresher),
 ) -> UploadShogunCsvUseCase:
     """Final用のUploadShogunCsvUseCase (raw.*_shogun_final + stg.*_shogun_final)"""
     return UploadShogunCsvUseCase(
@@ -224,13 +225,15 @@ def get_uc_stg_final(
 from app.core.usecases.dashboard.build_target_card_uc import BuildTargetCardUseCase
 
 
-def get_dashboard_target_repo(db: Session = Depends(get_db)) -> DashboardTargetRepository:
+def get_dashboard_target_repo(
+    db: Session = Depends(get_db),
+) -> DashboardTargetRepository:
     """DashboardTargetRepository提供"""
     return DashboardTargetRepository(db)
 
 
 def get_build_target_card_uc(
-    repo: DashboardTargetRepository = Depends(get_dashboard_target_repo)
+    repo: DashboardTargetRepository = Depends(get_dashboard_target_repo),
 ) -> BuildTargetCardUseCase:
     """BuildTargetCardUseCase提供"""
     return BuildTargetCardUseCase(query=repo)
@@ -257,21 +260,21 @@ def get_forecast_query_repo(db: Session = Depends(get_db)) -> ForecastQueryRepos
 
 
 def get_create_forecast_job_uc(
-    job_repo: JobRepository = Depends(get_job_repo)
+    job_repo: JobRepository = Depends(get_job_repo),
 ) -> CreateForecastJobUseCase:
     """CreateForecastJobUseCase提供"""
     return CreateForecastJobUseCase(job_repo=job_repo)
 
 
 def get_forecast_job_status_uc(
-    job_repo: JobRepository = Depends(get_job_repo)
+    job_repo: JobRepository = Depends(get_job_repo),
 ) -> GetForecastJobStatusUseCase:
     """GetForecastJobStatusUseCase提供"""
     return GetForecastJobStatusUseCase(job_repo=job_repo)
 
 
 def get_predictions_uc(
-    query_repo: ForecastQueryRepository = Depends(get_forecast_query_repo)
+    query_repo: ForecastQueryRepository = Depends(get_forecast_query_repo),
 ) -> GetPredictionsUseCase:
     """GetPredictionsUseCase提供"""
     return GetPredictionsUseCase(query_repo=query_repo)
@@ -316,34 +319,36 @@ def get_ask_rag_uc(client: RAGClient = Depends(get_rag_client)) -> AskRAGUseCase
 
 
 def get_ledger_report_uc(
-    client: LedgerClient = Depends(get_ledger_client)
+    client: LedgerClient = Depends(get_ledger_client),
 ) -> GenerateLedgerReportUseCase:
     """GenerateLedgerReportUseCase提供"""
     return GenerateLedgerReportUseCase(ledger_client=client)
 
 
 def get_list_manuals_uc(
-    client: ManualClient = Depends(get_manual_client)
+    client: ManualClient = Depends(get_manual_client),
 ) -> ListManualsUseCase:
     """ListManualsUseCase提供"""
     return ListManualsUseCase(manual_client=client)
 
 
 def get_get_manual_uc(
-    client: ManualClient = Depends(get_manual_client)
+    client: ManualClient = Depends(get_manual_client),
 ) -> GetManualUseCase:
     """GetManualUseCase提供"""
     return GetManualUseCase(manual_client=client)
 
 
 def get_generate_report_uc(
-    client: LedgerClient = Depends(get_ledger_client)
+    client: LedgerClient = Depends(get_ledger_client),
 ) -> GenerateReportUseCase:
     """GenerateReportUseCase提供"""
     return GenerateReportUseCase(ledger_client=client)
 
 
-def get_classify_text_uc(client: AIClient = Depends(get_ai_client)) -> ClassifyTextUseCase:
+def get_classify_text_uc(
+    client: AIClient = Depends(get_ai_client),
+) -> ClassifyTextUseCase:
     """ClassifyTextUseCase提供"""
     return ClassifyTextUseCase(ai_client=client)
 
@@ -363,7 +368,7 @@ def get_inbound_repo(db: Session = Depends(get_db)) -> InboundRepository:
 
 
 def get_inbound_daily_uc(
-    repo: InboundRepository = Depends(get_inbound_repo)
+    repo: InboundRepository = Depends(get_inbound_repo),
 ) -> GetInboundDailyUseCase:
     """GetInboundDailyUseCase提供"""
     return GetInboundDailyUseCase(query=repo)
@@ -382,7 +387,7 @@ def get_kpi_query_adapter(db: Session = Depends(get_db)) -> KPIQueryAdapter:
 
 
 def get_kpi_uc(
-    kpi_query: KPIQueryAdapter = Depends(get_kpi_query_adapter)
+    kpi_query: KPIQueryAdapter = Depends(get_kpi_query_adapter),
 ) -> KPIUseCase:
     """KPIUseCase提供"""
     return KPIUseCase(kpi_query=kpi_query)
@@ -395,13 +400,17 @@ from app.core.usecases.customer_churn import AnalyzeCustomerChurnUseCase
 from app.infra.adapters.customer_churn import CustomerChurnQueryAdapter
 
 
-def get_customer_churn_query_adapter(db: Session = Depends(get_db)) -> CustomerChurnQueryAdapter:
+def get_customer_churn_query_adapter(
+    db: Session = Depends(get_db),
+) -> CustomerChurnQueryAdapter:
     """CustomerChurnQueryAdapter提供"""
     return CustomerChurnQueryAdapter(db)
 
 
 def get_analyze_customer_churn_uc(
-    query_adapter: CustomerChurnQueryAdapter = Depends(get_customer_churn_query_adapter)
+    query_adapter: CustomerChurnQueryAdapter = Depends(
+        get_customer_churn_query_adapter
+    ),
 ) -> AnalyzeCustomerChurnUseCase:
     """AnalyzeCustomerChurnUseCase提供"""
     return AnalyzeCustomerChurnUseCase(query_port=query_adapter)
@@ -429,35 +438,35 @@ def get_sales_tree_repo(db: Session = Depends(get_db)) -> SalesTreeRepository:
 
 
 def get_fetch_sales_tree_summary_uc(
-    repo: SalesTreeRepository = Depends(get_sales_tree_repo)
+    repo: SalesTreeRepository = Depends(get_sales_tree_repo),
 ) -> FetchSalesTreeSummaryUseCase:
     """FetchSalesTreeSummaryUseCase提供"""
     return FetchSalesTreeSummaryUseCase(query=repo)
 
 
 def get_fetch_sales_tree_daily_series_uc(
-    repo: SalesTreeRepository = Depends(get_sales_tree_repo)
+    repo: SalesTreeRepository = Depends(get_sales_tree_repo),
 ) -> FetchSalesTreeDailySeriesUseCase:
     """FetchSalesTreeDailySeriesUseCase提供"""
     return FetchSalesTreeDailySeriesUseCase(query=repo)
 
 
 def get_fetch_sales_tree_pivot_uc(
-    repo: SalesTreeRepository = Depends(get_sales_tree_repo)
+    repo: SalesTreeRepository = Depends(get_sales_tree_repo),
 ) -> FetchSalesTreePivotUseCase:
     """FetchSalesTreePivotUseCase提供"""
     return FetchSalesTreePivotUseCase(query=repo)
 
 
 def get_export_sales_tree_csv_uc(
-    repo: SalesTreeRepository = Depends(get_sales_tree_repo)
+    repo: SalesTreeRepository = Depends(get_sales_tree_repo),
 ) -> ExportSalesTreeCSVUseCase:
     """ExportSalesTreeCSVUseCase提供"""
     return ExportSalesTreeCSVUseCase(query=repo)
 
 
 def get_fetch_sales_tree_detail_lines_uc(
-    repo: SalesTreeRepository = Depends(get_sales_tree_repo)
+    repo: SalesTreeRepository = Depends(get_sales_tree_repo),
 ) -> FetchSalesTreeDetailLinesUseCase:
     """FetchSalesTreeDetailLinesUseCase提供"""
     return FetchSalesTreeDetailLinesUseCase(query=repo)
@@ -476,7 +485,7 @@ def get_calendar_repo(db: Session = Depends(get_db)) -> CalendarRepository:
 
 
 def get_calendar_month_uc(
-    repo: CalendarRepository = Depends(get_calendar_repo)
+    repo: CalendarRepository = Depends(get_calendar_repo),
 ) -> GetCalendarMonthUseCase:
     """GetCalendarMonthUseCase提供"""
     return GetCalendarMonthUseCase(query=repo)
@@ -500,35 +509,36 @@ from app.infra.adapters.upload.upload_calendar_query_adapter import (
 # get_raw_data_repo() は既に定義済み（上部参照）
 
 
-def get_upload_calendar_query_adapter(db: Session = Depends(get_db)) -> UploadCalendarQueryAdapter:
+def get_upload_calendar_query_adapter(
+    db: Session = Depends(get_db),
+) -> UploadCalendarQueryAdapter:
     """UploadCalendarQueryAdapter提供"""
     return UploadCalendarQueryAdapter(db)
 
 
 def get_upload_status_uc(
-    repo: RawDataRepository = Depends(get_raw_data_repo)
+    repo: RawDataRepository = Depends(get_raw_data_repo),
 ) -> GetUploadStatusUseCase:
     """GetUploadStatusUseCase提供"""
     return GetUploadStatusUseCase(query=repo)
 
 
 def get_upload_calendar_uc(
-    repo: RawDataRepository = Depends(get_raw_data_repo)
+    repo: RawDataRepository = Depends(get_raw_data_repo),
 ) -> GetUploadCalendarUseCase:
     """GetUploadCalendarUseCase提供"""
     return GetUploadCalendarUseCase(query=repo)
 
 
 def get_upload_calendar_detail_uc(
-    query: UploadCalendarQueryAdapter = Depends(get_upload_calendar_query_adapter)
+    query: UploadCalendarQueryAdapter = Depends(get_upload_calendar_query_adapter),
 ) -> GetUploadCalendarDetailUseCase:
     """GetUploadCalendarDetailUseCase提供"""
     return GetUploadCalendarDetailUseCase(query=query)
 
 
 def get_delete_upload_scope_uc(
-    repo: RawDataRepository = Depends(get_raw_data_repo),
-    db: Session = Depends(get_db)
+    repo: RawDataRepository = Depends(get_raw_data_repo), db: Session = Depends(get_db)
 ) -> DeleteUploadScopeUseCase:
     """DeleteUploadScopeUseCase提供（MV更新機能付き）"""
     return DeleteUploadScopeUseCase(query=repo, db=db)
@@ -549,14 +559,14 @@ def get_ingest_repo(db: Session = Depends(get_db)) -> IngestRepository:
 
 
 def get_upload_ingest_csv_uc(
-    repo: IngestRepository = Depends(get_ingest_repo)
+    repo: IngestRepository = Depends(get_ingest_repo),
 ) -> UploadIngestCsvUseCase:
     """UploadIngestCsvUseCase提供"""
     return UploadIngestCsvUseCase(ingest_repo=repo)
 
 
 def get_create_reservation_uc(
-    repo: IngestRepository = Depends(get_ingest_repo)
+    repo: IngestRepository = Depends(get_ingest_repo),
 ) -> CreateReservationUseCase:
     """CreateReservationUseCase提供"""
     return CreateReservationUseCase(ingest_repo=repo)
@@ -574,7 +584,7 @@ from app.deps import get_auth_provider
 
 
 def get_get_current_user_usecase(
-    auth_provider: IAuthProvider = Depends(get_auth_provider)
+    auth_provider: IAuthProvider = Depends(get_auth_provider),
 ) -> GetCurrentUserUseCase:
     """
     GetCurrentUserUseCase提供
@@ -630,7 +640,9 @@ _notification_preference_adapter: InMemoryNotificationPreferenceAdapter | None =
 _recipient_resolver_adapter: DummyRecipientResolverAdapter | None = None
 
 
-def get_notification_outbox_port(db: Session = Depends(get_db)) -> NotificationOutboxPort:
+def get_notification_outbox_port(
+    db: Session = Depends(get_db),
+) -> NotificationOutboxPort:
     """通知 Outbox Port 提供（環境変数で切り替え）"""
     use_db = os.getenv("USE_DB_NOTIFICATION_OUTBOX", "false").lower() == "true"
 
@@ -663,16 +675,9 @@ def get_notification_preference_port() -> NotificationPreferencePort:
 
 def get_recipient_resolver_port() -> RecipientResolverPort:
     """recipient resolver Port 提供（Dummy実装）"""
-    preference: NotificationPreferencePort = Depends(get_notification_preference_port),
-    resolver: RecipientResolverPort = Depends(get_recipient_resolver_port),
-) -> DispatchPendingNotificationsUseCase:
-    """通知送信 UseCase 提供"""
-    return DispatchPendingNotificationsUseCase(
-        outbox=outbox,
-        sender=sender,
-        preference=preference,
-        resolver=resolver,
-
+    global _recipient_resolver_adapter
+    if _recipient_resolver_adapter is None:
+        _recipient_resolver_adapter = DummyRecipientResolverAdapter()
     return _recipient_resolver_adapter
 
 
@@ -686,6 +691,13 @@ def get_enqueue_notifications_usecase(
 def get_dispatch_pending_notifications_usecase(
     outbox: NotificationOutboxPort = Depends(get_notification_outbox_port),
     sender: NotificationSenderPort = Depends(get_notification_sender_port),
+    preference: NotificationPreferencePort = Depends(get_notification_preference_port),
+    resolver: RecipientResolverPort = Depends(get_recipient_resolver_port),
 ) -> DispatchPendingNotificationsUseCase:
     """通知送信 UseCase 提供"""
-    return DispatchPendingNotificationsUseCase(outbox=outbox, sender=sender)
+    return DispatchPendingNotificationsUseCase(
+        outbox=outbox,
+        sender=sender,
+        preference=preference,
+        resolver=resolver,
+    )
