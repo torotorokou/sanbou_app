@@ -8,6 +8,7 @@ CSVデータのフォーマット処理を行う基底クラスと共通フォ�
 from abc import ABC, abstractmethod
 
 import pandas as pd
+
 from backend_shared.core.usecases.csv_formatter.formatter_config import FormatterConfig
 from backend_shared.core.usecases.csv_formatter.formatter_core import (
     apply_column_cleaning,

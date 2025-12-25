@@ -1,10 +1,7 @@
-import React from "react";
-import { Modal, Steps } from "antd";
-import {
-  modalStepsMap,
-  isInteractiveReport,
-} from "@features/report/shared/config";
-import type { ReportKey } from "@features/report/shared/config";
+import React from 'react';
+import { Modal, Steps } from 'antd';
+import { modalStepsMap, isInteractiveReport } from '@features/report/shared/config';
+import type { ReportKey } from '@features/report/shared/config';
 
 /**
  * インタラクティブ帳簿専用モーダルコンポーネント
@@ -47,19 +44,19 @@ const InteractiveReportModal: React.FC<InteractiveReportModalProps> = ({
    */
   const renderInteractiveComponent = () => {
     // 帳簿キーの文字列比較で分岐
-    if (reportKey.includes("block_unit_price")) {
+    if (reportKey.includes('block_unit_price')) {
       return (
-        <div style={{ padding: "20px", textAlign: "center" }}>
+        <div style={{ padding: '20px', textAlign: 'center' }}>
           <h3>ブロック単価表</h3>
           <p>BlockUnitPriceInteractiveModal を直接使用してください</p>
         </div>
       );
     }
 
-    if (reportKey.includes("transport_cost")) {
+    if (reportKey.includes('transport_cost')) {
       // 将来的に追加される運送費用インタラクティブコンポーネント
       return (
-        <div style={{ padding: "20px", textAlign: "center" }}>
+        <div style={{ padding: '20px', textAlign: 'center' }}>
           <h3>運送費用インタラクティブ帳簿</h3>
           <p>準備中...</p>
         </div>
@@ -67,7 +64,7 @@ const InteractiveReportModal: React.FC<InteractiveReportModalProps> = ({
     }
 
     return (
-      <div style={{ padding: "20px", textAlign: "center" }}>
+      <div style={{ padding: '20px', textAlign: 'center' }}>
         <p>サポートされていないインタラクティブ帳簿: {reportKey}</p>
       </div>
     );
@@ -91,14 +88,14 @@ const InteractiveReportModal: React.FC<InteractiveReportModalProps> = ({
             size="small"
             items={steps.map((step) => ({
               title: step.label,
-              description: step.content ? "インタラクティブ処理" : "",
+              description: step.content ? 'インタラクティブ処理' : '',
             }))}
           />
         </div>
       )}
 
       {/* インタラクティブコンポーネント */}
-      <div style={{ minHeight: "400px" }}>{renderInteractiveComponent()}</div>
+      <div style={{ minHeight: '400px' }}>{renderInteractiveComponent()}</div>
     </Modal>
   );
 };

@@ -8,11 +8,13 @@ PDF生成が非同期で行われる場合に、生成完了をポーリング�
 
 from typing import Literal
 
-from app.infra.adapters.artifact_storage.artifact_builder import get_pdf_status
-from backend_shared.application.logging import get_module_logger
 from fastapi import APIRouter, Query
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
+
+from app.infra.adapters.artifact_storage.artifact_builder import get_pdf_status
+from backend_shared.application.logging import get_module_logger
+
 
 logger = get_module_logger(__name__)
 
@@ -33,9 +35,7 @@ class PdfStatusResponse(BaseModel):
 async def check_pdf_status(
     report_key: str = Query(..., description="レポートキー（例: factory_report）"),
     report_date: str = Query(..., description="レポート日付（例: 2025-12-11）"),
-    report_token: str = Query(
-        ..., description="レポートトークン（帳簿作成時に返却されたもの）"
-    ),
+    report_token: str = Query(..., description="レポートトークン（帳簿作成時に返却されたもの）"),
 ) -> JSONResponse:
     """
     PDFの生成ステータスを確認する。

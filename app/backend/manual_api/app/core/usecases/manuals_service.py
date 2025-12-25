@@ -8,6 +8,7 @@ from app.core.domain.manual_entity import (
 from app.core.ports.manuals_repository import ManualsRepository
 from backend_shared.application.logging import get_module_logger
 
+
 logger = get_module_logger(__name__)
 
 
@@ -34,9 +35,7 @@ class ManualsService:
                 "size": size,
             },
         )
-        return self.repo.list(
-            query=query, tag=tag, category=category, page=page, size=size
-        )
+        return self.repo.list(query=query, tag=tag, category=category, page=page, size=size)
 
     def get(self, manual_id: str) -> ManualDetail | None:
         logger.info("Get manual", extra={"manual_id": manual_id})

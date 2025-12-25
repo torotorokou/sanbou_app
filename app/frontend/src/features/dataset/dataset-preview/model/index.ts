@@ -2,4 +2,4 @@
  * hooks barrel
  */
 
-export * from "./useDatasetPreviewVM";
+export * from './useDatasetPreviewVM';

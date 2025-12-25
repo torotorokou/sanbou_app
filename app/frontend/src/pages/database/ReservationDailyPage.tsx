@@ -18,20 +18,20 @@
  * - 明示的な Named Export を使用
  */
 
-import React, { useState, useEffect } from "react";
-import { Typography, Col, Row, Collapse, Card } from "antd";
-import styles from "./ReservationDailyPage.module.css";
+import React, { useState, useEffect } from 'react';
+import { Typography, Col, Row, Collapse, Card } from 'antd';
+import styles from './ReservationDailyPage.module.css';
 import {
   useReservationInputVM,
   ReservationInputForm,
-} from "@features/reservation/reservation-input";
+} from '@features/reservation/reservation-input';
 import {
   useReservationCalendarVM,
   ReservationHistoryCalendar,
   ReservationMonthlyStats,
   ReservationMonthlyChart,
-} from "@features/reservation/reservation-calendar";
-import { UnimplementedModal } from "@features/unimplemented-feature";
+} from '@features/reservation/reservation-calendar';
+import { UnimplementedModal } from '@features/unimplemented-feature';
 
 const { Title } = Typography;
 
@@ -54,7 +54,7 @@ const ReservationDailyPage: React.FC = () => {
 
   return (
     <>
-      <Title level={4} style={{ margin: "0 0 8px 0", textAlign: "center" }}>
+      <Title level={4} style={{ margin: '0 0 8px 0', textAlign: 'center' }}>
         予約表
       </Title>
 
@@ -66,7 +66,7 @@ const ReservationDailyPage: React.FC = () => {
             style={{ marginBottom: 8 }}
             items={[
               {
-                key: "1",
+                key: '1',
                 label: <strong>📖 使い方</strong>,
                 children: (
                   <Typography.Text type="secondary" style={{ fontSize: 12 }}>
@@ -111,11 +111,11 @@ const ReservationDailyPage: React.FC = () => {
             className={styles.statsCard}
             styles={{
               body: {
-                padding: "8px 12px",
-                height: "100%",
-                display: "flex",
-                flexDirection: "column",
-                overflow: "auto",
+                padding: '8px 12px',
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                overflow: 'auto',
               },
             }}
           >

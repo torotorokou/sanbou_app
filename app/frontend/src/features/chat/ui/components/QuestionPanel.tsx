@@ -1,7 +1,7 @@
-import React, { useEffect, useMemo } from "react";
-import { Card, Select, Input, Typography, Button } from "antd";
-import { ReloadOutlined } from "@ant-design/icons";
-import "./QuestionPanel.css";
+import React, { useEffect, useMemo } from 'react';
+import { Card, Select, Input, Typography, Button } from 'antd';
+import { ReloadOutlined } from '@ant-design/icons';
+import './QuestionPanel.css';
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -33,7 +33,7 @@ const QuestionPanel: React.FC<Props> = ({
   // 選択肢をYAMLから動的生成
   const categoryOptions = useMemo(
     () => (categoryData ? Object.keys(categoryData) : []),
-    [categoryData],
+    [categoryData]
   );
   // タグ候補は「カテゴリ配下の全テンプレートに付随するタグの集合」
   const tagOptions = useMemo(() => {
@@ -50,15 +50,13 @@ const QuestionPanel: React.FC<Props> = ({
     if (!category || !categoryData) return [] as string[];
     const items = categoryData[category] || [];
     if (!tags || tags.length === 0) return items.map((it) => it.title);
-    return items
-      .filter((it) => (it.tag || []).some((t) => tags.includes(t)))
-      .map((it) => it.title);
+    return items.filter((it) => (it.tag || []).some((t) => tags.includes(t))).map((it) => it.title);
   }, [category, tags, categoryData]);
 
   // 依存関係の変更により、カテゴリ/タグ変更で現在のテンプレートが不正になったらリセット
   useEffect(() => {
-    if (template !== "自由入力" && !templateOptions.includes(template)) {
-      setTemplate("自由入力");
+    if (template !== '自由入力' && !templateOptions.includes(template)) {
+      setTemplate('自由入力');
     }
   }, [category, tags, templateOptions, template, setTemplate]);
 
@@ -69,7 +67,7 @@ const QuestionPanel: React.FC<Props> = ({
     // カテゴリ変更でタグ候補が変わるため、選択済みタグは一旦クリア
     setTag([]);
     // ついでに質問文も空にする
-    setQuestion("");
+    setQuestion('');
   }, [category]);
 
   // タグ候補(tagOptions)が変わった場合、候補に存在しないタグは除外して整合性を保つ
@@ -85,9 +83,9 @@ const QuestionPanel: React.FC<Props> = ({
     <div style={{ marginBottom: 16 /* ←狭く */ }}>
       <div
         style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
           marginBottom: 4,
         }}
       >
@@ -99,17 +97,12 @@ const QuestionPanel: React.FC<Props> = ({
           type="text"
           icon={<ReloadOutlined />}
           onClick={() => {
-            setCategory("");
+            setCategory('');
             setTag([]);
-            setTemplate("自由入力");
-            setQuestion("");
+            setTemplate('自由入力');
+            setQuestion('');
           }}
-          disabled={
-            !category &&
-            tags.length === 0 &&
-            template === "自由入力" &&
-            !question
-          }
+          disabled={!category && tags.length === 0 && template === '自由入力' && !question}
           title="カテゴリ・タグ・テンプレート・質問文をすべて初期化"
         >
           すべてリセット
@@ -120,11 +113,11 @@ const QuestionPanel: React.FC<Props> = ({
         className="no-hover"
         style={{
           borderRadius: 16,
-          boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
+          boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
           padding: 16, // ←狭く
           minHeight: 0, // ←または削除
-          display: "flex",
-          flexDirection: "column",
+          display: 'flex',
+          flexDirection: 'column',
         }}
       >
         <div style={{ marginBottom: 14 }}>
@@ -133,7 +126,7 @@ const QuestionPanel: React.FC<Props> = ({
             placeholder="カテゴリを選択"
             value={category || undefined}
             onChange={setCategory}
-            style={{ width: "100%", marginTop: 4 /* ←狭く */ }}
+            style={{ width: '100%', marginTop: 4 /* ←狭く */ }}
           >
             {categoryOptions.map((cat) => (
               <Option key={cat} value={cat}>
@@ -147,13 +140,13 @@ const QuestionPanel: React.FC<Props> = ({
         <div style={{ marginBottom: 12 }}>
           <Typography.Text strong>タグ（最大3つまで）</Typography.Text>
           <Select
-            key={category || "no-category"}
+            key={category || 'no-category'}
             mode="multiple"
             placeholder="タグを選択（必須）"
             value={tags}
             onChange={(vals) => setTag(Array.from(new Set(vals)))}
             allowClear
-            style={{ width: "100%", marginTop: 4 }}
+            style={{ width: '100%', marginTop: 4 }}
             disabled={!category}
             className="question-select question-select--tags"
             listHeight={360}
@@ -172,24 +165,24 @@ const QuestionPanel: React.FC<Props> = ({
             value={template}
             onChange={(val) => {
               setTemplate(val);
-              if (val !== "自由入力") {
+              if (val !== '自由入力') {
                 // setTemplate と競合してテンプレートがリセットされるケースを避けるため
                 // setQuestion は次のイベントループで実行する
                 setTimeout(() => setQuestion(val), 0);
               }
             }}
-            style={{ width: "100%", marginTop: 4 }}
+            style={{ width: '100%', marginTop: 4 }}
             disabled={!category || tags.length === 0}
-            classNames={{ popup: { root: "template-select-dropdown" } }}
+            classNames={{ popup: { root: 'template-select-dropdown' } }}
             className="template-select question-select question-select--template"
             listHeight={360}
           >
             <Option value="自由入力">
               <div
                 style={{
-                  whiteSpace: "normal",
-                  wordBreak: "break-word",
-                  overflowWrap: "anywhere",
+                  whiteSpace: 'normal',
+                  wordBreak: 'break-word',
+                  overflowWrap: 'anywhere',
                   lineHeight: 1.4,
                 }}
               >
@@ -200,9 +193,9 @@ const QuestionPanel: React.FC<Props> = ({
               <Option key={t} value={t}>
                 <div
                   style={{
-                    whiteSpace: "normal",
-                    wordBreak: "break-word",
-                    overflowWrap: "anywhere",
+                    whiteSpace: 'normal',
+                    wordBreak: 'break-word',
+                    overflowWrap: 'anywhere',
                     lineHeight: 1.4,
                   }}
                 >

@@ -21,6 +21,9 @@ UseCase: UploadShogunCsvUseCase
 from typing import Any
 
 import pandas as pd
+from fastapi import BackgroundTasks, UploadFile
+from fastapi.concurrency import run_in_threadpool
+
 from app.core.ports.csv_writer_port import IShogunCsvWriter
 from app.infra.adapters.materialized_view.materialized_view_refresher import (
     MaterializedViewRefresher,
@@ -41,8 +44,6 @@ from backend_shared.infra.adapters.presentation import (
     ErrorApiResponse,
     SuccessApiResponse,
 )
-from fastapi import BackgroundTasks, UploadFile
-from fastapi.concurrency import run_in_threadpool
 
 logger = get_module_logger(__name__)
 
@@ -158,9 +159,7 @@ class UploadShogunCsvUseCase:
             # 存在しない場合は実際に読み込んでサイズを確認
             if hasattr(uf, "size") and uf.size is not None:
                 if uf.size > MAX_FILE_SIZE_BYTES:
-                    oversized_files.append(
-                        f"{csv_type} ({uf.size / 1024 / 1024:.1f}MB)"
-                    )
+                    oversized_files.append(f"{csv_type} ({uf.size / 1024 / 1024:.1f}MB)")
 
         if oversized_files:
             logger.warning(
@@ -175,7 +174,6 @@ class UploadShogunCsvUseCase:
 
         # 3. 重複チェック＋log.upload_fileへの登録（pending状態）
         upload_file_ids: dict[str, int] = {}
-        duplicate_files: dict[str, dict[str, Any]] = {}
         recent_duplicate_files: dict[str, dict[str, Any]] = {}
 
         if self.raw_data_repo:
@@ -347,10 +345,8 @@ class UploadShogunCsvUseCase:
 
             # ステータスを processing に更新
             if self.raw_data_repo:
-                for csv_type, file_id in upload_file_ids.items():
-                    self.raw_data_repo.update_upload_status(
-                        file_id=file_id, status="processing"
-                    )
+                for _csv_type, file_id in upload_file_ids.items():
+                    self.raw_data_repo.update_upload_status(file_id=file_id, status="processing")
 
             # CSV読込
             import io
@@ -381,9 +377,7 @@ class UploadShogunCsvUseCase:
                         ),
                         exc_info=True,
                     )
-                    self._mark_all_as_failed(
-                        upload_file_ids, f"CSV parse error: {csv_type}"
-                    )
+                    self._mark_all_as_failed(upload_file_ids, f"CSV parse error: {csv_type}")
                     return
 
             # バリデーション（ファイル名用のダミーUploadFile作成）
@@ -416,7 +410,7 @@ class UploadShogunCsvUseCase:
 
             # raw層保存
             raw_cleaned_dfs = await self._clean_empty_rows(dfs_with_row_no)
-            raw_result = await self._save_data(
+            await self._save_data(
                 self.raw_writer, raw_cleaned_dfs, dummy_files, "raw", upload_file_ids
             )
 
@@ -431,17 +425,13 @@ class UploadShogunCsvUseCase:
                         phase="format",
                     ),
                 )
-                self._mark_all_as_failed(
-                    upload_file_ids, f"Format error: {format_error.detail}"
-                )
+                self._mark_all_as_failed(upload_file_ids, f"Format error: {format_error.detail}")
                 return
 
             # ★ stg層保存前に既存有効データを論理削除（パターンA: 同一日付＋種別は最後のアップロードだけ有効）
             if self.raw_data_repo:
                 deleted_by = uploaded_by or "system_auto_replace"
-                self._soft_delete_existing_data_by_dates(
-                    formatted_dfs, file_type, deleted_by
-                )
+                self._soft_delete_existing_data_by_dates(formatted_dfs, file_type, deleted_by)
 
             # stg層保存
             stg_result = await self._save_data(
@@ -564,9 +554,7 @@ class UploadShogunCsvUseCase:
                         "csv_type": csv_type,
                         "file_name": info["file_name"],
                         "uploaded_at": (
-                            info["uploaded_at"].isoformat()
-                            if info.get("uploaded_at")
-                            else None
+                            info["uploaded_at"].isoformat() if info.get("uploaded_at") else None
                         ),
                         "uploaded_by": info.get("uploaded_by"),
                         "match_type": info["match_type"],
@@ -598,9 +586,7 @@ class UploadShogunCsvUseCase:
                         uploaded_by=uploaded_by,
                     )
                     upload_file_ids[csv_type] = file_id
-                    logger.info(
-                        f"Created log.upload_file entry for {csv_type}: id={file_id}"
-                    )
+                    logger.info(f"Created log.upload_file entry for {csv_type}: id={file_id}")
                 except Exception as e:
                     logger.error(f"Failed to create upload log for {csv_type}: {e}")
                     # ログ作成失敗でも処理は継続（ログは補助的なもの）
@@ -647,9 +633,7 @@ class UploadShogunCsvUseCase:
         # 7. stg層保存前に既存有効データを論理削除（パターンA: 同一日付＋種別は最後のアップロードだけ有効）
         if self.raw_data_repo:
             deleted_by = uploaded_by or "system_auto_replace"
-            self._soft_delete_existing_data_by_dates(
-                formatted_dfs, file_type, deleted_by
-            )
+            self._soft_delete_existing_data_by_dates(formatted_dfs, file_type, deleted_by)
 
         # 8. stg層への保存（フォーマット済みデータ = 英語カラム名、型変換済み）
         stg_result = await self._save_data(
@@ -672,10 +656,7 @@ class UploadShogunCsvUseCase:
             if not f.filename:
                 continue
             name = f.filename.lower()
-            if not (
-                name.endswith(".csv")
-                or (f.content_type and f.content_type in ALLOWED_CT)
-            ):
+            if not (name.endswith(".csv") or (f.content_type and f.content_type in ALLOWED_CT)):
                 return ErrorApiResponse(
                     code="INVALID_FILE_TYPE",
                     detail=f"{k}: CSVファイルではありません（拡張子またはMIMEタイプを確認）",
@@ -702,9 +683,7 @@ class UploadShogunCsvUseCase:
             try:
                 df = await _read_one(uf)
                 dfs[csv_type] = df
-                logger.info(
-                    f"Loaded {csv_type} CSV: {len(df)} rows, {len(df.columns)} cols"
-                )
+                logger.info(f"Loaded {csv_type} CSV: {len(df)} rows, {len(df.columns)} cols")
             except Exception as e:
                 logger.error(f"Failed to parse {csv_type} CSV: {e}")
                 return {}, ErrorApiResponse(
@@ -715,9 +694,7 @@ class UploadShogunCsvUseCase:
 
         return dfs, None
 
-    def _add_source_row_numbers(
-        self, dfs: dict[str, pd.DataFrame]
-    ) -> dict[str, pd.DataFrame]:
+    def _add_source_row_numbers(self, dfs: dict[str, pd.DataFrame]) -> dict[str, pd.DataFrame]:
         """
         各DataFrameに source_row_no カラムを追加（1-indexed）
 
@@ -747,25 +724,19 @@ class UploadShogunCsvUseCase:
             return validation_error
 
         # 日付存在チェック
-        date_exists_error = self.validator.validate_denpyou_date_exists(
-            dfs, uploaded_files
-        )
+        date_exists_error = self.validator.validate_denpyou_date_exists(dfs, uploaded_files)
         if date_exists_error:
             return date_exists_error
 
         # 複数ファイルの場合、日付一貫性チェック
         if len(dfs) > 1:
-            date_consistency_error = self.validator.validate_denpyou_date_consistency(
-                dfs
-            )
+            date_consistency_error = self.validator.validate_denpyou_date_consistency(dfs)
             if date_consistency_error:
                 return date_consistency_error
 
         return None
 
-    async def _clean_empty_rows(
-        self, dfs: dict[str, pd.DataFrame]
-    ) -> dict[str, pd.DataFrame]:
+    async def _clean_empty_rows(self, dfs: dict[str, pd.DataFrame]) -> dict[str, pd.DataFrame]:
         """
         空行除去のみ（raw層保存用）
         日本語カラム名のまま、型変換なし
@@ -778,9 +749,7 @@ class UploadShogunCsvUseCase:
             empty_rows_removed = original_row_count - len(df_cleaned)
 
             if empty_rows_removed > 0:
-                logger.info(
-                    f"[raw] Removed {empty_rows_removed} empty rows from {csv_type} CSV"
-                )
+                logger.info(f"[raw] Removed {empty_rows_removed} empty rows from {csv_type} CSV")
 
             cleaned_dfs[csv_type] = df_cleaned
 
@@ -860,9 +829,7 @@ class UploadShogunCsvUseCase:
 
                 formatted_dfs[csv_type] = formatted_df
                 logger.info(f"[stg] Formatted {csv_type}: {len(formatted_df)} rows")
-                logger.info(
-                    f"[DEBUG] Final columns for {csv_type}: {list(formatted_df.columns)}"
-                )
+                logger.info(f"[DEBUG] Final columns for {csv_type}: {list(formatted_df.columns)}")
                 logger.info(
                     f"[DEBUG] Has upload_file_id: {'upload_file_id' in formatted_df.columns}, Has source_row_no: {'source_row_no' in formatted_df.columns}"
                 )
@@ -922,17 +889,13 @@ class UploadShogunCsvUseCase:
                     f"[DEBUG] Sample row for {csv_type}: {df_to_save.head(1).to_dict('records')}"
                 )
 
-                saved_count = await run_in_threadpool(
-                    writer.save_csv_by_type, csv_type, df_to_save
-                )
+                saved_count = await run_in_threadpool(writer.save_csv_by_type, csv_type, df_to_save)
                 result[csv_type] = {
                     "filename": uploaded_files[csv_type].filename,
                     "status": "success",
                     "rows_saved": saved_count,
                 }
-                logger.info(
-                    f"Saved {csv_type} to {layer_name} layer: {saved_count} rows"
-                )
+                logger.info(f"Saved {csv_type} to {layer_name} layer: {saved_count} rows")
             except Exception as e:
                 logger.error(
                     f"Failed to save {csv_type} to {layer_name} layer: {e}",
@@ -946,9 +909,7 @@ class UploadShogunCsvUseCase:
 
         return result
 
-    def _mark_all_as_failed(
-        self, upload_file_ids: dict[str, int], error_msg: str
-    ) -> None:
+    def _mark_all_as_failed(self, upload_file_ids: dict[str, int], error_msg: str) -> None:
         """全アップロードログを失敗としてマーク"""
         if not self.raw_data_repo:
             return
@@ -980,9 +941,7 @@ class UploadShogunCsvUseCase:
             deleted_by: 削除実行者（例: 'system_auto_replace' またはユーザー名）
         """
         if not self.raw_data_repo:
-            logger.warning(
-                "[SOFT_DELETE] ⚠️ RawDataRepository not available, skipping soft delete"
-            )
+            logger.warning("[SOFT_DELETE] ⚠️ RawDataRepository not available, skipping soft delete")
             return
 
         logger.info(
@@ -1007,12 +966,8 @@ class UploadShogunCsvUseCase:
                     continue
 
                 # 日本語カラム名と英語カラム名の両方をチェック
-                date_col_ja = csv_config.get(
-                    "soft_delete_date_column"
-                )  # 例: "伝票日付"
-                date_col_en = csv_config.get(
-                    "soft_delete_date_column_en"
-                )  # 例: "slip_date"
+                date_col_ja = csv_config.get("soft_delete_date_column")  # 例: "伝票日付"
+                date_col_en = csv_config.get("soft_delete_date_column_en")  # 例: "slip_date"
 
                 slip_date_col = None
                 if date_col_en and date_col_en in df.columns:
@@ -1032,21 +987,17 @@ class UploadShogunCsvUseCase:
                 dates = set(df[slip_date_col].dropna().dt.date.unique())
 
                 if not dates:
-                    logger.info(
-                        f"No valid dates found in {csv_type}, skipping soft delete"
-                    )
+                    logger.info(f"No valid dates found in {csv_type}, skipping soft delete")
                     continue
 
                 # csv_kind を決定
                 csv_kind = csv_type_to_kind_map.get(csv_type)
                 if not csv_kind:
-                    logger.warning(
-                        f"Unknown csv_type: {csv_type}, skipping soft delete"
-                    )
+                    logger.warning(f"Unknown csv_type: {csv_type}, skipping soft delete")
                     continue
 
                 # デバッグ: dates の中身と型を確認
-                dates_list_for_log = sorted(list(dates))
+                dates_list_for_log = sorted(dates)
                 logger.info(
                     f"[PRE-INSERT] 📋 About to soft delete: csv_type={csv_type}, csv_kind={csv_kind}, "
                     f"dates_count={len(dates)}, dates_type={type(dates)}, "
@@ -1112,17 +1063,13 @@ class UploadShogunCsvUseCase:
 
                 if is_success:
                     # 成功: row_count を実際の行数で更新
-                    row_count = result_info.get(
-                        "rows_saved", len(formatted_dfs.get(csv_type, []))
-                    )
+                    row_count = result_info.get("rows_saved", len(formatted_dfs.get(csv_type, [])))
                     self.raw_data_repo.update_upload_status(
                         file_id=file_id,
                         status="success",
                         row_count=row_count,
                     )
-                    logger.info(
-                        f"Marked {csv_type} upload as success: {row_count} rows"
-                    )
+                    logger.info(f"Marked {csv_type} upload as success: {row_count} rows")
 
                     # ★ 受入CSVの成功時のみマテビュー更新リストに追加
                     # （現状、MVが定義されているのは receive のみ）
@@ -1145,9 +1092,7 @@ class UploadShogunCsvUseCase:
                         status="failed",
                         error_message=error_detail,
                     )
-                    logger.warning(
-                        f"Marked {csv_type} upload as failed: {error_detail}"
-                    )
+                    logger.warning(f"Marked {csv_type} upload as failed: {error_detail}")
             except Exception as e:
                 logger.error(f"Failed to update upload log for {csv_type}: {e}")
 
@@ -1191,9 +1136,7 @@ class UploadShogunCsvUseCase:
             try:
                 logger.info(
                     f"[MV_REFRESH] Processing csv_type='{csv_type}'",
-                    extra=create_log_context(
-                        operation="mv_refresh_single", csv_type=csv_type
-                    ),
+                    extra=create_log_context(operation="mv_refresh_single", csv_type=csv_type),
                 )
                 # auto_commit=Trueで各MV更新後にcommit()し、依存関係のあるMVが最新データを参照できるようにする
                 self.mv_refresher.refresh_for_csv_type(csv_type, auto_commit=True)
@@ -1244,9 +1187,7 @@ class UploadShogunCsvUseCase:
             }
 
         if all_stg_success:
-            total_rows = sum(
-                r["rows_saved"] for r in stg_result.values() if "rows_saved" in r
-            )
+            total_rows = sum(r["rows_saved"] for r in stg_result.values() if "rows_saved" in r)
             return SuccessApiResponse(
                 code="UPLOAD_SUCCESS",
                 detail=f"アップロード成功: 合計 {total_rows} 行を保存しました（raw層 + stg層）",

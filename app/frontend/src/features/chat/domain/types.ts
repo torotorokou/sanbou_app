@@ -1,5 +1,5 @@
 export interface ChatMessage {
-  role: "user" | "bot";
+  role: 'user' | 'bot';
   content: string;
   timestamp?: number;
   type?: string;

@@ -19,7 +19,7 @@ export async function ensurePdfJsWorkerLoaded(): Promise<void> {
   // If already configured, exit
   const alreadySet = Boolean(
     pdfjs.GlobalWorkerOptions.workerSrc &&
-      typeof pdfjs.GlobalWorkerOptions.workerSrc === "string",
+    typeof pdfjs.GlobalWorkerOptions.workerSrc === "string",
   );
   if (alreadySet) return;
 

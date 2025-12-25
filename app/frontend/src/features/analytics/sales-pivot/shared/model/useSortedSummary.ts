@@ -3,8 +3,8 @@
  * テーブル表示用のクライアント側ソート処理
  */
 
-import { useMemo } from "react";
-import type { SummaryRow, SortKey, SortOrder } from "./types";
+import { useMemo } from 'react';
+import type { SummaryRow, SortKey, SortOrder } from './types';
 
 /**
  * サマリーデータをテーブルソート条件でソート
@@ -15,7 +15,7 @@ import type { SummaryRow, SortKey, SortOrder } from "./types";
 export function useSortedSummary(
   rawSummary: SummaryRow[],
   tableSortBy: SortKey,
-  tableOrder: SortOrder,
+  tableOrder: SortOrder
 ): SummaryRow[] {
   return useMemo(() => {
     // API取得結果に対してテーブルのソートのみ適用
@@ -25,27 +25,27 @@ export function useSortedSummary(
         let bVal: number | string;
 
         switch (tableSortBy) {
-          case "amount":
+          case 'amount':
             aVal = a.amount;
             bVal = b.amount;
             break;
-          case "qty":
+          case 'qty':
             aVal = a.qty;
             bVal = b.qty;
             break;
-          case "count":
+          case 'count':
             aVal = a.count;
             bVal = b.count;
             break;
-          case "unit_price":
+          case 'unit_price':
             aVal = a.qty > 0 ? a.amount / a.qty : 0;
             bVal = b.qty > 0 ? b.amount / b.qty : 0;
             break;
-          case "name":
+          case 'name':
             aVal = a.name;
             bVal = b.name;
             break;
-          case "date":
+          case 'date':
             aVal = a.name;
             bVal = b.name;
             break;
@@ -54,12 +54,10 @@ export function useSortedSummary(
             bVal = b.amount;
         }
 
-        if (typeof aVal === "string" && typeof bVal === "string") {
-          return tableOrder === "asc"
-            ? aVal.localeCompare(bVal)
-            : bVal.localeCompare(aVal);
+        if (typeof aVal === 'string' && typeof bVal === 'string') {
+          return tableOrder === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
         }
-        return tableOrder === "asc"
+        return tableOrder === 'asc'
           ? (aVal as number) - (bVal as number)
           : (bVal as number) - (aVal as number);
       });

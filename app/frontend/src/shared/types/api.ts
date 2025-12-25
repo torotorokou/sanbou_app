@@ -40,7 +40,7 @@
  */
 export type ApiResponse<T> = {
   /** レスポンスステータス：'success' or 'error' */
-  status: "success" | "error";
+  status: 'success' | 'error';
   /** エラーコード（大文字スネークケース） */
   code: string;
   /** ユーザー向け詳細メッセージ（日本語） */
@@ -112,10 +112,10 @@ export class ApiError extends Error {
     httpStatus: number,
     userMessage: string,
     title?: string,
-    traceId?: string,
+    traceId?: string
   ) {
     super(userMessage);
-    this.name = "ApiError";
+    this.name = 'ApiError';
     this.code = code;
     this.httpStatus = httpStatus;
     this.userMessage = userMessage;

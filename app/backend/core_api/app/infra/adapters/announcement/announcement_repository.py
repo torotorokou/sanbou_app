@@ -5,6 +5,9 @@ Announcement repository implementation with PostgreSQL.
 
 from datetime import UTC, datetime
 
+from sqlalchemy import and_, func, select
+from sqlalchemy.orm import Session
+
 from app.core.domain.announcement import (
     Announcement,
     AnnouncementUserState,
@@ -15,8 +18,6 @@ from app.core.domain.announcement import (
 from app.core.ports.announcement_repository_port import AnnouncementRepositoryPort
 from app.infra.db.orm_models import AnnouncementORM, AnnouncementUserStateORM
 from backend_shared.application.logging import get_module_logger
-from sqlalchemy import and_, func, select
-from sqlalchemy.orm import Session
 
 logger = get_module_logger(__name__)
 
@@ -80,7 +81,7 @@ class AnnouncementRepositoryImpl(AnnouncementRepositoryPort):
         try:
             # Base query: active (not deleted) and published
             conditions = [
-                AnnouncementORM.deleted_at == None,
+                AnnouncementORM.deleted_at is None,
                 AnnouncementORM.publish_from <= now,
             ]
 
@@ -114,7 +115,7 @@ class AnnouncementRepositoryImpl(AnnouncementRepositoryPort):
                 .where(and_(*conditions))
                 .where(
                     # Not expired: publish_to is NULL or > now
-                    (AnnouncementORM.publish_to == None)
+                    (AnnouncementORM.publish_to is None)
                     | (AnnouncementORM.publish_to > now)
                 )
                 .order_by(AnnouncementORM.publish_from.desc())
@@ -174,7 +175,7 @@ class AnnouncementRepositoryImpl(AnnouncementRepositoryPort):
                 .where(
                     and_(
                         AnnouncementORM.id == announcement_id,
-                        AnnouncementORM.deleted_at == None,
+                        AnnouncementORM.deleted_at is None,
                     )
                 )
             )
@@ -285,9 +286,7 @@ class AnnouncementRepositoryImpl(AnnouncementRepositoryPort):
                 return _state_orm_to_domain(new_state)
 
         except Exception as e:
-            logger.error(
-                f"Failed to mark announcement as acknowledged: {e}", exc_info=True
-            )
+            logger.error(f"Failed to mark announcement as acknowledged: {e}", exc_info=True)
             raise
 
     def get_unread_count(
@@ -307,7 +306,7 @@ class AnnouncementRepositoryImpl(AnnouncementRepositoryPort):
                 .where(
                     and_(
                         AnnouncementUserStateORM.user_id == user_id,
-                        AnnouncementUserStateORM.read_at != None,
+                        AnnouncementUserStateORM.read_at is not None,
                     )
                 )
                 .subquery()
@@ -315,10 +314,9 @@ class AnnouncementRepositoryImpl(AnnouncementRepositoryPort):
 
             # Base conditions: active and not read
             conditions = [
-                AnnouncementORM.deleted_at == None,
+                AnnouncementORM.deleted_at is None,
                 AnnouncementORM.publish_from <= now,
-                (AnnouncementORM.publish_to == None)
-                | (AnnouncementORM.publish_to > now),
+                (AnnouncementORM.publish_to is None) | (AnnouncementORM.publish_to > now),
                 AnnouncementORM.id.notin_(select(user_state_subq.c.announcement_id)),
             ]
 
@@ -326,11 +324,7 @@ class AnnouncementRepositoryImpl(AnnouncementRepositoryPort):
             if audience and audience != "all":
                 conditions.append(AnnouncementORM.audience.in_([audience, "all"]))
 
-            stmt = (
-                select(func.count())
-                .select_from(AnnouncementORM)
-                .where(and_(*conditions))
-            )
+            stmt = select(func.count()).select_from(AnnouncementORM).where(and_(*conditions))
 
             result = self.db.execute(stmt).scalar()
             return result or 0

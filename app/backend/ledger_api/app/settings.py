@@ -24,6 +24,7 @@ from pathlib import Path
 
 from backend_shared.config.base_settings import BaseAppSettings
 
+
 TRUE_SET = {"1", "true", "yes", "on"}
 
 
@@ -160,9 +161,7 @@ def load_settings() -> LedgerApiSettings:
         report_artifact_url_ttl = 900
 
     # PDF署名用のシークレットキーを環境変数から取得
-    report_artifact_secret = os.getenv(
-        "REPORT_ARTIFACT_SECRET", "change-me-in-production"
-    ).strip()
+    report_artifact_secret = os.getenv("REPORT_ARTIFACT_SECRET", "change-me-in-production").strip()
 
     _settings = LedgerApiSettings(
         stage=stage,

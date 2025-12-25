@@ -39,12 +39,8 @@ class InboundDailyRow(BaseModel):
     segment: str | None = Field(None, description="セグメント")
     ton: float = Field(..., ge=0, description="日次搬入量トン数")
     cum_ton: float | None = Field(None, ge=0, description="累積搬入量トン数")
-    prev_month_ton: float | None = Field(
-        None, ge=0, description="先月（4週前）の同曜日の搬入量"
-    )
-    prev_year_ton: float | None = Field(
-        None, ge=0, description="前年の同ISO週・同曜日の搬入量"
-    )
+    prev_month_ton: float | None = Field(None, ge=0, description="先月（4週前）の同曜日の搬入量")
+    prev_year_ton: float | None = Field(None, ge=0, description="前年の同ISO週・同曜日の搬入量")
     prev_month_cum_ton: float | None = Field(None, ge=0, description="先月の累積搬入量")
     prev_year_cum_ton: float | None = Field(None, ge=0, description="前年の累積搬入量")
 

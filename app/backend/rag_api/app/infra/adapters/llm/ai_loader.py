@@ -5,10 +5,11 @@ OpenAIクライアント・ベクトルストア・JSONデータを組み合わ�
 
 import os
 
+from openai import RateLimitError
+
 from app.core.usecases.rag.file_ingest_service import get_resource_paths, load_json_data
 from app.infra.adapters.llm.openai_client import generate_answer
 from app.shared.chunk_utils import load_faiss_vectorstore
-from openai import RateLimitError
 
 
 def get_answer(

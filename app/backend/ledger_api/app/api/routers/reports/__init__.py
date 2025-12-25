@@ -4,6 +4,7 @@ from fastapi import APIRouter
 
 from . import average_sheet, balance_sheet, factory_report, management_sheet, pdf_status
 
+
 # from ........__archive__ import block_unit_price
 
 
@@ -15,13 +16,9 @@ reports_router.include_router(
     factory_report.router, prefix="/factory_report", tags=["Factory Report"]
 )
 
-reports_router.include_router(
-    balance_sheet.router, prefix="/balance_sheet", tags=["Balance Sheet"]
-)
+reports_router.include_router(balance_sheet.router, prefix="/balance_sheet", tags=["Balance Sheet"])
 
-reports_router.include_router(
-    average_sheet.router, prefix="/average_sheet", tags=["Average Sheet"]
-)
+reports_router.include_router(average_sheet.router, prefix="/average_sheet", tags=["Average Sheet"])
 
 
 # reports_router.include_router(

@@ -75,9 +75,7 @@ def upgrade() -> None:
     """
     )
 
-    print(
-        "[mart.v_sales_tree_detail_base] Category mapping updated: waste=1, valuable=3"
-    )
+    print("[mart.v_sales_tree_detail_base] Category mapping updated: waste=1, valuable=3")
 
 
 def downgrade() -> None:

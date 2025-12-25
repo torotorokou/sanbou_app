@@ -13,6 +13,9 @@ from __future__ import annotations
 
 from typing import Any
 
+from fastapi import BackgroundTasks, UploadFile
+from fastapi.responses import JSONResponse
+
 from app.core.usecases.reports.base_generators import BaseInteractiveReportGenerator
 from app.core.usecases.reports.processors.report_processing_service import (
     ReportProcessingService,
@@ -28,8 +31,7 @@ from backend_shared.utils.date_filter_utils import (
 from backend_shared.utils.date_filter_utils import (
     filter_by_period_from_min_date as shared_filter_by_period_from_min_date,
 )
-from fastapi import BackgroundTasks, UploadFile
-from fastapi.responses import JSONResponse
+
 
 logger = get_module_logger(__name__)
 
@@ -119,9 +121,7 @@ class InteractiveReportProcessingService(ReportProcessingService):
                 except Exception as e:
                     logger.warning(
                         "期間フィルタスキップ",
-                        extra=create_log_context(
-                            operation="interactive_initial", error=str(e)
-                        ),
+                        extra=create_log_context(operation="interactive_initial", error=str(e)),
                     )
 
             df_formatted = generator.format(dfs)
@@ -130,9 +130,7 @@ class InteractiveReportProcessingService(ReportProcessingService):
 
             # セッションID処理
             preferred_session_id: str | None = None
-            state_session_id = (
-                state.get("session_id") if isinstance(state, dict) else None
-            )
+            state_session_id = state.get("session_id") if isinstance(state, dict) else None
             if isinstance(state_session_id, str) and state_session_id:
                 preferred_session_id = state_session_id
             else:
@@ -143,9 +141,7 @@ class InteractiveReportProcessingService(ReportProcessingService):
                     preferred_session_id = payload_session_id
 
             session_data = generator.serialize_state(state)
-            session_id = session_store.save(
-                session_data, session_id=preferred_session_id
-            )
+            session_id = session_store.save(session_data, session_id=preferred_session_id)
 
             if session_id != preferred_session_id:
                 if isinstance(state, dict):
@@ -232,9 +228,7 @@ class InteractiveReportProcessingService(ReportProcessingService):
                         generator,
                         final_df,
                         report_date,
-                        extra_payload=(
-                            extra_payload if isinstance(extra_payload, dict) else None
-                        ),
+                        extra_payload=(extra_payload if isinstance(extra_payload, dict) else None),
                     )
                     summary = finalize_payload.get("summary")
                     if isinstance(summary, dict):
@@ -387,9 +381,7 @@ class InteractiveReportProcessingService(ReportProcessingService):
         """
 
         if isinstance(session_payload, dict):
-            if "session_id" in session_payload and isinstance(
-                session_payload["session_id"], str
-            ):
+            if "session_id" in session_payload and isinstance(session_payload["session_id"], str):
                 session_id = session_payload["session_id"]
                 stored = session_store.load(session_id)
                 return stored, session_id

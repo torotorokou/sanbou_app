@@ -26,6 +26,7 @@ Ledger API Client - 元帳サービス内部HTTPクライアント
 import os
 
 import httpx
+
 from backend_shared.application.logging import create_log_context, get_module_logger
 
 logger = get_module_logger(__name__)
@@ -70,9 +71,7 @@ class LedgerClient:
             )
             response.raise_for_status()
             data = response.json()
-            logger.info(
-                "Ledger API response received", extra={"report_type": report_type}
-            )
+            logger.info("Ledger API response received", extra={"report_type": report_type})
             return data
 
     async def get_health(self) -> dict:

@@ -15,8 +15,10 @@ multiply_columns の最適化版。
 """
 
 import pandas as pd
+
 from backend_shared.application.logging import get_module_logger
 from backend_shared.utils.dataframe_utils_optimized import to_numeric_vectorized
+
 
 logger = get_module_logger(__name__)
 

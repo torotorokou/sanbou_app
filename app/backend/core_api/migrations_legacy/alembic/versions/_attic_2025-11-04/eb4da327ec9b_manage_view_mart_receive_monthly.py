@@ -63,9 +63,7 @@ def upgrade():
             op.execute(f"GRANT SELECT ON {v} TO {qrole};")
 
         # 以後 mart スキーマで作成されるテーブル/ビューにも自動付与
-        op.execute(
-            f"ALTER DEFAULT PRIVILEGES IN SCHEMA mart GRANT SELECT ON TABLES TO {qrole};"
-        )
+        op.execute(f"ALTER DEFAULT PRIVILEGES IN SCHEMA mart GRANT SELECT ON TABLES TO {qrole};")
     else:
         # 役割が無い環境ではNOTICEだけ出して安全にスキップ
         role_lit = role.replace("'", "''")
@@ -90,6 +88,4 @@ def downgrade():
             "mart.v_receive_monthly",
         ):
             op.execute(f"REVOKE SELECT ON {v} FROM {qrole};")
-        op.execute(
-            f"ALTER DEFAULT PRIVILEGES IN SCHEMA mart REVOKE SELECT ON TABLES FROM {qrole};"
-        )
+        op.execute(f"ALTER DEFAULT PRIVILEGES IN SCHEMA mart REVOKE SELECT ON TABLES FROM {qrole};")

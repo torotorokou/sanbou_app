@@ -64,7 +64,5 @@ class AverageSheet:
     def has_any_data(self) -> bool:
         """いずれかのデータが存在するか確認"""
         return (
-            len(self.shipment_items) > 0
-            or len(self.yard_items) > 0
-            or len(self.receive_items) > 0
+            len(self.shipment_items) > 0 or len(self.yard_items) > 0 or len(self.receive_items) > 0
         )

@@ -11,24 +11,21 @@ Note: これは「マスタAPI」ではなく、SalesTree分析画面のプル�
       mart.v_sales_tree_detail_base から SELECT DISTINCT で動的に取得します。
 """
 
+from fastapi import APIRouter, Depends, Query
+
 from app.config.di_providers import get_sales_tree_repo
 from app.core.domain.sales_tree import CategoryKind
 from app.infra.adapters.sales_tree.sales_tree_repository import SalesTreeRepository
 from backend_shared.application.logging import get_module_logger
 from backend_shared.core.domain.exceptions import InfrastructureError
-from fastapi import APIRouter, Depends, Query
 
 logger = get_module_logger(__name__)
 router = APIRouter()
 
 
-@router.get(
-    "/masters/reps", summary="Get sales reps filter options for SalesTree analysis"
-)
+@router.get("/masters/reps", summary="Get sales reps filter options for SalesTree analysis")
 def get_sales_reps_master(
-    category_kind: CategoryKind = Query(
-        "waste", description="カテゴリ種別: waste, valuable"
-    ),
+    category_kind: CategoryKind = Query("waste", description="カテゴリ種別: waste, valuable"),
     repo: SalesTreeRepository = Depends(get_sales_tree_repo),
 ):
     """
@@ -66,13 +63,9 @@ def get_sales_reps_master(
         )
 
 
-@router.get(
-    "/masters/customers", summary="Get customer filter options for SalesTree analysis"
-)
+@router.get("/masters/customers", summary="Get customer filter options for SalesTree analysis")
 def get_customers_master(
-    category_kind: CategoryKind = Query(
-        "waste", description="カテゴリ種別: waste, valuable"
-    ),
+    category_kind: CategoryKind = Query("waste", description="カテゴリ種別: waste, valuable"),
     repo: SalesTreeRepository = Depends(get_sales_tree_repo),
 ):
     """
@@ -103,9 +96,7 @@ def get_customers_master(
 
 @router.get("/masters/items", summary="Get item filter options for SalesTree analysis")
 def get_items_master(
-    category_kind: CategoryKind = Query(
-        "waste", description="カテゴリ種別: waste, valuable"
-    ),
+    category_kind: CategoryKind = Query("waste", description="カテゴリ種別: waste, valuable"),
     repo: SalesTreeRepository = Depends(get_sales_tree_repo),
 ):
     """

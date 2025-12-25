@@ -9,14 +9,12 @@ import type {
   ReservationDailyRepository,
   ReservationForecastDaily,
   ReservationManualInput,
-} from "../ports/ReservationDailyRepository";
+} from '../ports/ReservationDailyRepository';
 
 // 既存のAPIクライアントを参照（coreApi統一クライアント）
-import { coreApi } from "@/shared";
+import { coreApi } from '@/shared';
 
-export class ReservationDailyHttpRepository
-  implements ReservationDailyRepository
-{
+export class ReservationDailyHttpRepository implements ReservationDailyRepository {
   /**
    * 予測用日次予約データを取得
    *
@@ -26,10 +24,10 @@ export class ReservationDailyHttpRepository
   async getForecastDaily(from: string): Promise<ReservationForecastDaily[]> {
     // from の年月を抽出（YYYY-MM-DD形式想定）
     // Note: to パラメータは現在未使用（APIが月単位で返却するため）
-    const [year, month] = from.split("-");
+    const [year, month] = from.split('-');
 
     return await coreApi.get<ReservationForecastDaily[]>(
-      `/core_api/reservation/forecast/${year}/${month}`,
+      `/core_api/reservation/forecast/${year}/${month}`
     );
   }
 
@@ -39,7 +37,7 @@ export class ReservationDailyHttpRepository
    * エンドポイント: POST /core_api/reservation/manual
    */
   async upsertManual(payload: ReservationManualInput): Promise<void> {
-    await coreApi.post("/core_api/reservation/manual", payload);
+    await coreApi.post('/core_api/reservation/manual', payload);
   }
 
   /**

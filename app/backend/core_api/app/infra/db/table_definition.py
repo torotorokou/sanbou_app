@@ -232,9 +232,7 @@ class TableDefinitionGenerator:
 
         # 共通カラム
         sql_parts.append("    raw_data_json JSONB NULL, -- 元データJSON")
-        sql_parts.append(
-            "    uploaded_at TIMESTAMP NOT NULL DEFAULT NOW(), -- アップロード日時"
-        )
+        sql_parts.append("    uploaded_at TIMESTAMP NOT NULL DEFAULT NOW(), -- アップロード日時")
         sql_parts.append("    created_at TIMESTAMP NOT NULL DEFAULT NOW() -- 作成日時")
         sql_parts.append(");")
 

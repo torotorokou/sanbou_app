@@ -34,6 +34,7 @@ from app.shared.file_utils import PDF_PATH
 from backend_shared.application.logging import get_module_logger
 from backend_shared.utils.datetime_utils import now_in_app_timezone
 
+
 logger = get_module_logger(__name__)
 
 
@@ -47,9 +48,7 @@ class AIResponseService:
     def __init__(self, pdf_service: PDFServiceBase):
         self.pdf_service = pdf_service
 
-    def generate_ai_response(
-        self, query: str, category: str, tags: list[str]
-    ) -> dict[str, Any]:
+    def generate_ai_response(self, query: str, category: str, tags: list[str]) -> dict[str, Any]:
         """
         AI回答とPDFを生成
 
@@ -159,9 +158,7 @@ class AIResponseService:
                 timestamp = now_in_app_timezone().strftime("%Y%m%d_%H%M%S")
                 merged_pdf_name = f"merged_response_{timestamp}.pdf"
                 merged_pdf_path = os.path.join(static_dir, merged_pdf_name)
-                pdf_file_paths = [
-                    os.path.join(debug_dir, url.split("/")[-1]) for url in pdf_urls
-                ]
+                pdf_file_paths = [os.path.join(debug_dir, url.split("/")[-1]) for url in pdf_urls]
                 try:
                     self.pdf_service.merge_pdfs(pdf_file_paths, merged_pdf_path)
                     logger.info(
@@ -170,9 +167,7 @@ class AIResponseService:
                     )
                     pdf_url = f"{get_pdf_url_prefix()}/{merged_pdf_name}"
                 except Exception as me:
-                    logger.error(
-                        "PDF merge failed", exc_info=True, extra={"error": str(me)}
-                    )
+                    logger.error("PDF merge failed", exc_info=True, extra={"error": str(me)})
                     pdf_url = None
         except Exception as se:
             # PDF保存段階での失敗もanswerは返す
@@ -254,7 +249,5 @@ class AIResponseService:
             debug_skip(type(pages).__name__, "unsupported_type")
 
         after = sorted(set(normalized))
-        logger.debug(
-            "Normalize pages completed", extra={"before": before_repr, "after": after}
-        )
+        logger.debug("Normalize pages completed", extra={"before": before_repr, "after": after})
         return after

@@ -6,6 +6,7 @@ balance_sheet_base.pyの動作確認テスト。
 """
 
 import pandas as pd
+
 from app.core.usecases.reports.balance_sheet_base import build_balance_sheet_base_data
 
 

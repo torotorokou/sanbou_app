@@ -4,4 +4,4 @@
  */
 
 // features/calendar の ICalendarRepository を再エクスポート
-export type { ICalendarRepository } from "@/features/calendar/ports/repository";
+export type { ICalendarRepository } from '@/features/calendar/ports/repository';

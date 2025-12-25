@@ -87,9 +87,7 @@ def downgrade():
             "FROM stg.v_king_receive_clean_min k", "FROM stg.v_king_receive_clean k"
         )
         with op.get_context().autocommit_block():
-            op.execute(
-                sa.text(f"CREATE OR REPLACE VIEW mart.v_receive_daily AS {vdef};")
-            )
+            op.execute(sa.text(f"CREATE OR REPLACE VIEW mart.v_receive_daily AS {vdef};"))
 
     # 軽量ビューを削除
     with op.get_context().autocommit_block():

@@ -34,18 +34,12 @@ def upgrade() -> None:
     # raw スキーマ (TEXT型)
     for table in ["shipment_shogun_flash", "shipment_shogun_final"]:
         op.execute(f"ALTER TABLE raw.{table} ADD COLUMN IF NOT EXISTS category_cd TEXT")
-        op.execute(
-            f"ALTER TABLE raw.{table} ADD COLUMN IF NOT EXISTS category_name TEXT"
-        )
+        op.execute(f"ALTER TABLE raw.{table} ADD COLUMN IF NOT EXISTS category_name TEXT")
 
     # stg スキーマ (型付き)
     for table in ["shipment_shogun_flash", "shipment_shogun_final"]:
-        op.execute(
-            f"ALTER TABLE stg.{table} ADD COLUMN IF NOT EXISTS category_cd INTEGER"
-        )
-        op.execute(
-            f"ALTER TABLE stg.{table} ADD COLUMN IF NOT EXISTS category_name VARCHAR"
-        )
+        op.execute(f"ALTER TABLE stg.{table} ADD COLUMN IF NOT EXISTS category_cd INTEGER")
+        op.execute(f"ALTER TABLE stg.{table} ADD COLUMN IF NOT EXISTS category_name VARCHAR")
 
     print("✅ Added category_cd and category_name columns to shipment tables")
 

@@ -20,14 +20,15 @@ CSV種別とMV更新の対応:
   - 各MV更新後にセッションをflushして変更を確定
 """
 
+from sqlalchemy import text
+from sqlalchemy.orm import Session
+
 from backend_shared.application.logging import create_log_context, get_module_logger
 from backend_shared.db.names import (
     MV_RECEIVE_DAILY,
     MV_TARGET_CARD_PER_DAY,
     SCHEMA_MART,
 )
-from sqlalchemy import text
-from sqlalchemy.orm import Session
 
 logger = get_module_logger(__name__)
 
@@ -97,9 +98,7 @@ class MaterializedViewRefresher:
 
         for i, mv_name in enumerate(mv_list, 1):
             try:
-                logger.info(
-                    f"[MV_REFRESH] [{i}/{len(mv_list)}] Processing {mv_name}..."
-                )
+                logger.info(f"[MV_REFRESH] [{i}/{len(mv_list)}] Processing {mv_name}...")
                 self._refresh_mv(mv_name)
 
                 # 各MV更新後にcommitして、依存MVが最新データを参照できるようにする
@@ -108,9 +107,7 @@ class MaterializedViewRefresher:
                         f"[MV_REFRESH] [{i}/{len(mv_list)}] Committing transaction for {mv_name}..."
                     )
                     self.db.commit()
-                    logger.info(
-                        f"[MV_REFRESH] [{i}/{len(mv_list)}] ✅ Committed: {mv_name}"
-                    )
+                    logger.info(f"[MV_REFRESH] [{i}/{len(mv_list)}] ✅ Committed: {mv_name}")
 
                 success_count += 1
             except Exception as e:
@@ -206,10 +203,7 @@ class MaterializedViewRefresher:
                 ),
             )
             # 権限エラーまたはUNIQUE INDEXなしの場合、通常のREFRESHにフォールバック
-            if any(
-                x in error_str
-                for x in ["permission", "privilege", "unique", "concurrent"]
-            ):
+            if any(x in error_str for x in ["permission", "privilege", "unique", "concurrent"]):
                 refresh_method = "NORMAL"
                 logger.info(
                     f"[MV_REFRESH] Falling back to normal REFRESH for {mv_name}",
@@ -280,9 +274,7 @@ class MaterializedViewRefresher:
             # MV更新失敗はログに記録するが、呼び出し元の処理は失敗させない
             logger.error(
                 f"[MV_REFRESH] ❌ MV refresh failed for csv_kind='{csv_kind}': {e}",
-                extra=create_log_context(
-                    operation=operation_name, csv_kind=csv_kind, error=str(e)
-                ),
+                extra=create_log_context(operation=operation_name, csv_kind=csv_kind, error=str(e)),
                 exc_info=True,
             )
 

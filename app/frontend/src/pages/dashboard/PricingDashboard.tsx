@@ -1,12 +1,12 @@
-import React from "react";
-import { Row, Col, Card, Typography } from "antd";
+import React from 'react';
+import { Row, Col, Card, Typography } from 'antd';
 import {
   DollarCircleOutlined,
   UserOutlined,
   ShoppingCartOutlined,
   TeamOutlined,
   BarChartOutlined,
-} from "@ant-design/icons";
+} from '@ant-design/icons';
 
 const { Title, Text } = Typography;
 
@@ -57,9 +57,7 @@ const PricingDashboard: React.FC = () => {
           <Card title="商品×営業別単価" extra={<BarChartOutlined />} hoverable>
             <Text>戦略・スキルの違いによる単価差を分析</Text>
             <br />
-            <Text type="secondary">
-              営業A × 商品B：¥10 / 営業B × 商品B：¥8.5
-            </Text>
+            <Text type="secondary">営業A × 商品B：¥10 / 営業B × 商品B：¥8.5</Text>
           </Card>
         </Col>
       </Row>

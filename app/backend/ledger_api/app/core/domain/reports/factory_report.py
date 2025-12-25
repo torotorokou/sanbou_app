@@ -147,9 +147,7 @@ class FactoryReport:
             pd.DataFrame: レポートの最終形式DataFrame
         """
         if not self.cells:
-            return pd.DataFrame(
-                columns=["カテゴリ", "大項目", "セル", "値", "セルロック", "順番"]
-            )
+            return pd.DataFrame(columns=["カテゴリ", "大項目", "セル", "値", "セルロック", "順番"])
 
         data = [
             {

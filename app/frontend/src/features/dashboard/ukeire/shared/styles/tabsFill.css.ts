@@ -3,7 +3,7 @@
  * TabsコンポーネントをFlex高さ100%で描画するためのスタイル
  */
 
-export const TABS_FILL_CLASS = "tabs-fill-100";
+export const TABS_FILL_CLASS = 'tabs-fill-100';
 
 export const tabsFillCSS = `
 .${TABS_FILL_CLASS} { height:100%; display:flex; flex-direction:column; min-height:0; }

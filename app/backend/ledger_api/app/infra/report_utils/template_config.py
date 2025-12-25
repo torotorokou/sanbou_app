@@ -1,5 +1,6 @@
 import pandas as pd
 import yaml
+
 from backend_shared.config.config_loader import (
     ReportTemplateConfigLoader,
     ShogunCsvConfigLoader,
@@ -77,9 +78,7 @@ def get_unit_price_table_csv() -> pd.DataFrame:
 
     # <NA>文字列をfloat変換エラーから守るため、na_valuesを指定
     na_values = ["<NA>", "NaN", "nan", "None", "NULL", "null", "#N/A", "#NA"]
-    df = pd.read_csv(
-        csv_path, encoding="utf-8-sig", na_values=na_values, keep_default_na=False
-    )
+    df = pd.read_csv(csv_path, encoding="utf-8-sig", na_values=na_values, keep_default_na=False)
 
     # 全カラムに対してNA文字列をクリーンアップ
     for col in df.columns:

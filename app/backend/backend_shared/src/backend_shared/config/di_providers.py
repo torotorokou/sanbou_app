@@ -57,9 +57,7 @@ def provide_csv_config_loader() -> ShogunCsvConfigLoader:
     return ShogunCsvConfigLoader()
 
 
-def provide_csv_formatter(
-    csv_type: str, config_loader: ShogunCsvConfigLoader | None = None
-):
+def provide_csv_formatter(csv_type: str, config_loader: ShogunCsvConfigLoader | None = None):
     """
     CSV フォーマッターを提供する
 

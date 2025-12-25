@@ -1,10 +1,10 @@
 // features/navi/repository/NaviRepositoryImpl.ts
 // Repository実装（API→Domain変換）
 
-import type { NaviRepository } from "../ports/repository";
-import { NaviApiClient } from "./navi.client";
-import type { CategoryDataMap, ChatAnswer } from "../domain/types/types";
-import type { ChatQuestionRequestDto } from "../domain/types/dto";
+import type { NaviRepository } from '../ports/repository';
+import { NaviApiClient } from './navi.client';
+import type { CategoryDataMap, ChatAnswer } from '../domain/types/types';
+import type { ChatQuestionRequestDto } from '../domain/types/dto';
 
 /**
  * Navi機能のリポジトリ実装
@@ -25,21 +25,21 @@ export class NaviRepositoryImpl implements NaviRepository {
   async generateAnswer(request: ChatQuestionRequestDto): Promise<ChatAnswer> {
     const dto = await NaviApiClient.generateAnswer(request);
 
-    console.log("[NaviRepository] Raw DTO from API:", dto);
+    console.log('[NaviRepository] Raw DTO from API:', dto);
 
     // エラーレスポンスのチェック
-    if (dto.status === "error") {
-      const { RagChatError } = await import("../domain/types/types");
+    if (dto.status === 'error') {
+      const { RagChatError } = await import('../domain/types/types');
       throw new RagChatError(
-        dto.code || "UNKNOWN_ERROR",
-        dto.detail || "エラーが発生しました",
-        dto.hint,
+        dto.code || 'UNKNOWN_ERROR',
+        dto.detail || 'エラーが発生しました',
+        dto.hint
       );
     }
 
     // DTOからDomainモデルへの変換
     return {
-      answer: dto.answer || "",
+      answer: dto.answer || '',
       pdfUrl: dto.merged_pdf_url ?? dto.pdf_url ?? null,
     };
   }

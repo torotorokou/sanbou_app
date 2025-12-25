@@ -1,13 +1,13 @@
-import React from "react";
-import { Typography } from "antd";
-import "./ManagementDashboard.css";
+import React from 'react';
+import { Typography } from 'antd';
+import './ManagementDashboard.css';
 import {
   SummaryPanel,
   CustomerAnalysis,
   RevenuePanel,
   BlockCountPanel,
   ProcessVolumePanel,
-} from "@features/dashboard";
+} from '@features/dashboard';
 
 const { Title } = Typography;
 const ManagementDashboard: React.FC = () => {

@@ -3,7 +3,7 @@
  * データ取得層の抽象
  */
 
-import type { IsoMonth, MonthPayloadDTO } from "./types";
+import type { IsoMonth, MonthPayloadDTO } from './types';
 
 type MonthISO = string; // "YYYY-MM"
 

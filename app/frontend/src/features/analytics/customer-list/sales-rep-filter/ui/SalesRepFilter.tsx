@@ -1,6 +1,6 @@
-import React from "react";
-import { Select } from "antd";
-import type { SalesRep } from "../../shared/domain/types";
+import React from 'react';
+import { Select } from 'antd';
+import type { SalesRep } from '../../shared/domain/types';
 
 type Props = {
   salesReps: SalesRep[];
@@ -26,11 +26,11 @@ const SalesRepFilter: React.FC<Props> = ({
     value={selectedSalesRepIds}
     onChange={onChange}
     disabled={disabled}
-    style={{ width: "100%" }}
+    style={{ width: '100%' }}
     allowClear
     showSearch
     filterOption={(input, option) =>
-      (option?.label ?? "").toLowerCase().includes(input.toLowerCase())
+      (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
     }
     options={salesReps.map((rep) => ({
       value: rep.salesRepId,

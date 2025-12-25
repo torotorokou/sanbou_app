@@ -6,6 +6,7 @@ from typing import Generic, Protocol, TypeVar
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+
 T = TypeVar("T")
 
 

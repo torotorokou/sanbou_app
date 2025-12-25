@@ -23,9 +23,7 @@ def _get_read_role() -> str:
 
 def _role_exists(conn, name: str) -> bool:
     """Check if a PostgreSQL role exists."""
-    return bool(
-        conn.scalar(sa.text("SELECT 1 FROM pg_roles WHERE rolname=:n"), {"n": name})
-    )
+    return bool(conn.scalar(sa.text("SELECT 1 FROM pg_roles WHERE rolname=:n"), {"n": name}))
 
 
 def upgrade():
@@ -36,9 +34,7 @@ def upgrade():
 
     # オフライン(--sql)はコメントだけ出して終了（GRANTはオンライン環境で実行）
     if context.is_offline_mode():
-        op.execute(
-            f"-- NOTICE: Skipping grants in offline mode (target role: {safe_role_str})"
-        )
+        op.execute(f"-- NOTICE: Skipping grants in offline mode (target role: {safe_role_str})")
         return
 
     conn = op.get_bind()

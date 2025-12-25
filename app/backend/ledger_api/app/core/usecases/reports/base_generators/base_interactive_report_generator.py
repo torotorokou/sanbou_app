@@ -36,9 +36,11 @@ from io import StringIO
 from typing import Any
 
 import pandas as pd
+
 from app.core.usecases.reports.base_generators.base_report_generator import (
     BaseReportGenerator,
 )
+
 
 SerializedState = dict[str, Any]
 
@@ -51,9 +53,7 @@ class BaseInteractiveReportGenerator(BaseReportGenerator):
 
     # ------- 抽象ステップメソッド -------
     @abstractmethod
-    def initial_step(
-        self, df_formatted: dict[str, Any]
-    ) -> tuple[dict[str, Any], dict[str, Any]]:
+    def initial_step(self, df_formatted: dict[str, Any]) -> tuple[dict[str, Any], dict[str, Any]]:
         """初期ステップ。state, payload を返す。"""
         raise NotImplementedError
 
@@ -90,16 +90,12 @@ class BaseInteractiveReportGenerator(BaseReportGenerator):
         self,
     ) -> dict[
         str,
-        Callable[
-            [dict[str, Any], dict[str, Any]], tuple[dict[str, Any], dict[str, Any]]
-        ],
+        Callable[[dict[str, Any], dict[str, Any]], tuple[dict[str, Any], dict[str, Any]]],
     ]:  # noqa: E501
         return {}
 
     @abstractmethod
-    def finalize_step(
-        self, state: dict[str, Any]
-    ) -> tuple[pd.DataFrame, dict[str, Any]]:
+    def finalize_step(self, state: dict[str, Any]) -> tuple[pd.DataFrame, dict[str, Any]]:
         """最終ステップ。帳票最終 DataFrame と追加情報 payload を返す。"""
         raise NotImplementedError
 

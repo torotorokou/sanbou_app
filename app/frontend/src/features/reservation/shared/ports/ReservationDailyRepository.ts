@@ -10,7 +10,7 @@ export interface ReservationForecastDaily {
   reserve_trucks: number;
   reserve_fixed_trucks: number;
   reserve_fixed_ratio: number;
-  source: "manual" | "customer_agg";
+  source: 'manual' | 'customer_agg';
   note?: string;
 }
 
@@ -27,10 +27,7 @@ export interface ReservationDailyRepository {
    * @param from 開始日 (YYYY-MM-DD)
    * @param to 終了日 (YYYY-MM-DD)
    */
-  getForecastDaily(
-    from: string,
-    to: string,
-  ): Promise<ReservationForecastDaily[]>;
+  getForecastDaily(from: string, to: string): Promise<ReservationForecastDaily[]>;
 
   /**
    * 手入力データを保存/更新

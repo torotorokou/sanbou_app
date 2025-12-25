@@ -1,7 +1,7 @@
-import React from "react";
-import { Row, Col } from "antd";
-import { RepFilterSelector } from "../RepFilterSelector";
-import type { Mode, ID, SalesRep } from "../../../../shared/model/types";
+import React from 'react';
+import { Row, Col } from 'antd';
+import { RepFilterSelector } from '../RepFilterSelector';
+import type { Mode, ID, SalesRep } from '../../../../shared/model/types';
 
 interface RepFilterSectionProps {
   gutter: [number, number];

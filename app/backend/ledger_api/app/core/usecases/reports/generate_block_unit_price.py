@@ -4,6 +4,9 @@ import time
 from datetime import date
 from io import BytesIO
 
+from fastapi import UploadFile
+from fastapi.responses import JSONResponse
+
 from app.application.usecases.reports.report_generation_utils import (
     generate_excel_from_dataframe,
     generate_pdf_from_excel,
@@ -18,8 +21,7 @@ from backend_shared.infra.adapters.fastapi.error_handlers import DomainError
 from backend_shared.utils.date_filter_utils import (
     filter_by_period_from_max_date as shared_filter_by_period_from_max_date,
 )
-from fastapi import UploadFile
-from fastapi.responses import JSONResponse
+
 
 logger = get_module_logger(__name__)
 
@@ -39,9 +41,7 @@ class GenerateBlockUnitPriceUseCase:
     ) -> JSONResponse:
         start_time = time.time()
         file_keys = [
-            k
-            for k, v in {"shipment": shipment, "yard": yard, "receive": receive}.items()
-            if v
+            k for k, v in {"shipment": shipment, "yard": yard, "receive": receive}.items() if v
         ]
 
         logger.info(
@@ -84,9 +84,7 @@ class GenerateBlockUnitPriceUseCase:
             # Step 2: 期間フィルタ（オプション）
             if period_type:
                 step_start = time.time()
-                logger.debug(
-                    "Step 2: 期間フィルタ適用開始", extra={"period_type": period_type}
-                )
+                logger.debug("Step 2: 期間フィルタ適用開始", extra={"period_type": period_type})
 
                 try:
                     dfs = shared_filter_by_period_from_max_date(dfs, period_type)

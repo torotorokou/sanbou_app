@@ -8,25 +8,18 @@ import type {
   ManualSearchResult,
   ManualTocItem,
   ManualCategory,
-} from "../domain/types/manual.types";
+} from '../domain/types/manual.types';
 
 export interface ManualRepository {
   /**
    * マニュアルを検索
    */
-  search(
-    query: ManualSearchQuery,
-    signal?: AbortSignal,
-  ): Promise<ManualSearchResult>;
+  search(query: ManualSearchQuery, signal?: AbortSignal): Promise<ManualSearchResult>;
 
   /**
    * ドキュメントURLを取得
    */
-  getDocUrl(
-    docId: string,
-    filename: string,
-    query?: Record<string, string>,
-  ): string;
+  getDocUrl(docId: string, filename: string, query?: Record<string, string>): string;
 
   /**
    * マニュアル目次を取得

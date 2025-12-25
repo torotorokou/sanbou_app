@@ -6,6 +6,7 @@ YAML形式の設定ファイルを読み込み、CSV処理や帳票生成に必�
 """
 
 import yaml
+
 from backend_shared.config.paths import MANAGER_CSV_DEF_PATH, SHOGUNCSV_DEF_PATH
 
 
@@ -102,9 +103,7 @@ class ShogunCsvConfigLoader:
             dict: 日本語名→型のマッピング辞書（例: {'伝票日付': 'datetime', ...}）
         """
         return {
-            jp: meta["type"]
-            for jp, meta in self.get_columns(sheet_type).items()
-            if "type" in meta
+            jp: meta["type"] for jp, meta in self.get_columns(sheet_type).items() if "type" in meta
         }
 
     def get_unique_keys(self, sheet_type: str) -> list[list[str]]:
@@ -148,9 +147,7 @@ class ShogunCsvConfigLoader:
             dict: 集約関数マッピング辞書（例: {'金額': 'sum', '数量': 'sum', ...}）
         """
         return {
-            jp: meta["agg"]
-            for jp, meta in self.get_columns(sheet_type).items()
-            if "agg" in meta
+            jp: meta["agg"] for jp, meta in self.get_columns(sheet_type).items() if "agg" in meta
         }
 
 

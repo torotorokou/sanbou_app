@@ -1,7 +1,7 @@
-import { useMemo } from "react";
-import { useCalendarVM } from "@/features/calendar/model/useCalendarVM";
-import { decorateCalendarCells } from "./decorators";
-import type { ICalendarRepository } from "@/features/calendar/ports/repository";
+import { useMemo } from 'react';
+import { useCalendarVM } from '@/features/calendar/model/useCalendarVM';
+import { decorateCalendarCells } from './decorators';
+import type { ICalendarRepository } from '@/features/calendar/ports/repository';
 
 type Params = { year: number; month: number; repository: ICalendarRepository };
 
@@ -11,9 +11,6 @@ type Params = { year: number; month: number; repository: ICalendarRepository };
  */
 export function useBusinessCalendarVM({ year, month, repository }: Params) {
   const base = useCalendarVM({ year, month, repository });
-  const decorated = useMemo(
-    () => decorateCalendarCells(base.grid),
-    [base.grid],
-  );
+  const decorated = useMemo(() => decorateCalendarCells(base.grid), [base.grid]);
   return { ...base, grid: decorated };
 }

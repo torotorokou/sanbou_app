@@ -98,23 +98,15 @@ def upgrade() -> None:
     op.execute("COMMENT ON COLUMN app.announcements.id IS 'お知らせID（PK）';")
     op.execute("COMMENT ON COLUMN app.announcements.title IS 'タイトル';")
     op.execute("COMMENT ON COLUMN app.announcements.body_md IS '本文（Markdown形式）';")
-    op.execute(
-        "COMMENT ON COLUMN app.announcements.severity IS '重要度（info/warn/critical）';"
-    )
+    op.execute("COMMENT ON COLUMN app.announcements.severity IS '重要度（info/warn/critical）';")
     op.execute("COMMENT ON COLUMN app.announcements.tags IS 'タグ配列（JSONB）';")
     op.execute("COMMENT ON COLUMN app.announcements.publish_from IS '公開開始日時';")
-    op.execute(
-        "COMMENT ON COLUMN app.announcements.publish_to IS '公開終了日時（NULL=無期限）';"
-    )
+    op.execute("COMMENT ON COLUMN app.announcements.publish_to IS '公開終了日時（NULL=無期限）';")
     op.execute(
         "COMMENT ON COLUMN app.announcements.audience IS '対象（all/internal/site:narita/site:shinkiba）';"
     )
-    op.execute(
-        "COMMENT ON COLUMN app.announcements.attachments IS '添付ファイル配列（JSONB）';"
-    )
-    op.execute(
-        "COMMENT ON COLUMN app.announcements.notification_plan IS '通知設定（JSONB）';"
-    )
+    op.execute("COMMENT ON COLUMN app.announcements.attachments IS '添付ファイル配列（JSONB）';")
+    op.execute("COMMENT ON COLUMN app.announcements.notification_plan IS '通知設定（JSONB）';")
 
 
 def downgrade() -> None:

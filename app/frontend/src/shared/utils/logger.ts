@@ -19,7 +19,7 @@
  * 注意: error/warn は本番環境でも出力（重要なエラー情報を失わないため）
  */
 
-const isDevelopment = import.meta.env.MODE === "development";
+const isDevelopment = import.meta.env.MODE === 'development';
 
 /**
  * Application Logger

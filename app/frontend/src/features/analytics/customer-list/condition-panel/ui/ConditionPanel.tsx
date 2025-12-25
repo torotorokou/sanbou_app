@@ -4,13 +4,13 @@
  * 条件指定パネル（期間選択 + 営業担当者フィルター）
  */
 
-import React from "react";
-import { Card, Button } from "antd";
-import { ReloadOutlined } from "@ant-design/icons";
-import type { Dayjs } from "dayjs";
-import type { SalesRep } from "../../shared/domain/types";
-import { PeriodSelectorForm } from "../../period-selector";
-import { SalesRepFilter } from "../../sales-rep-filter";
+import React from 'react';
+import { Card, Button } from 'antd';
+import { ReloadOutlined } from '@ant-design/icons';
+import type { Dayjs } from 'dayjs';
+import type { SalesRep } from '../../shared/domain/types';
+import { PeriodSelectorForm } from '../../period-selector';
+import { SalesRepFilter } from '../../sales-rep-filter';
 
 type Props = {
   // Period Selection
@@ -57,25 +57,25 @@ const ConditionPanel: React.FC<Props> = ({
     title="条件指定"
     variant="borderless"
     style={{
-      boxShadow: "0 4px 24px rgba(0,0,0,0.08)",
+      boxShadow: '0 4px 24px rgba(0,0,0,0.08)',
       marginBottom: 16,
       borderRadius: 16,
     }}
     styles={{
       header: {
-        background: "#f0f5ff",
+        background: '#f0f5ff',
         fontWeight: 600,
         borderTopLeftRadius: 16,
         borderTopRightRadius: 16,
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        fontSize: "clamp(13px, 0.9vw, 16px)",
-        padding: "clamp(12px, 1vw, 16px) clamp(16px, 1.2vw, 24px)",
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        fontSize: 'clamp(13px, 0.9vw, 16px)',
+        padding: 'clamp(12px, 1vw, 16px) clamp(16px, 1.2vw, 24px)',
       },
       body: {
-        fontSize: "clamp(12px, 0.85vw, 14px)",
-        padding: "clamp(16px, 1.2vw, 24px)",
+        fontSize: 'clamp(12px, 0.85vw, 14px)',
+        padding: 'clamp(16px, 1.2vw, 24px)',
       },
     }}
     extra={
@@ -102,12 +102,12 @@ const ConditionPanel: React.FC<Props> = ({
       setPreviousEnd={setPreviousEnd}
     />
 
-    <div style={{ marginTop: "clamp(16px, 1.2vw, 24px)" }}>
+    <div style={{ marginTop: 'clamp(16px, 1.2vw, 24px)' }}>
       <div
         style={{
           marginBottom: 8,
           fontWeight: 600,
-          fontSize: "clamp(12px, 0.85vw, 14px)",
+          fontSize: 'clamp(12px, 0.85vw, 14px)',
         }}
       >
         営業担当者フィルター

@@ -6,10 +6,11 @@ Manual API Router - BFF for manual_api endpoints
 import os
 
 import httpx
-from backend_shared.application.logging import create_log_context, get_module_logger
-from backend_shared.core.domain.exceptions import ExternalServiceError, ValidationError
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse, StreamingResponse
+
+from backend_shared.application.logging import create_log_context, get_module_logger
+from backend_shared.core.domain.exceptions import ExternalServiceError, ValidationError
 
 logger = get_module_logger(__name__)
 
@@ -102,9 +103,7 @@ async def proxy_manual_doc(doc_id: str, filename: str, request: Request):
                     iter_bytes(),
                     status_code=resp.status_code,
                     headers=res_headers,
-                    media_type=resp.headers.get(
-                        "content-type", "application/octet-stream"
-                    ),
+                    media_type=resp.headers.get("content-type", "application/octet-stream"),
                 )
 
     except httpx.TimeoutException as e:
@@ -175,9 +174,7 @@ async def proxy_manual_search(request: Request):
 
             logger.info(
                 "[BFF Manual] Search success",
-                extra=create_log_context(
-                    operation="proxy_search", status_code=r.status_code
-                ),
+                extra=create_log_context(operation="proxy_search", status_code=r.status_code),
             )
             return JSONResponse(status_code=r.status_code, content=r.json())
 
@@ -211,9 +208,7 @@ async def proxy_manual_toc():
             r.raise_for_status()
             logger.info(
                 "[BFF Manual] TOC success",
-                extra=create_log_context(
-                    operation="proxy_manual_toc", status_code=r.status_code
-                ),
+                extra=create_log_context(operation="proxy_manual_toc", status_code=r.status_code),
             )
             return r.json()
 
@@ -246,9 +241,7 @@ async def proxy_manual_categories():
     upstream = f"{MANUAL_API_BASE}/manual/categories"
     logger.info(
         "[BFF Manual] Proxying categories request",
-        extra=create_log_context(
-            operation="proxy_manual_categories", upstream=upstream
-        ),
+        extra=create_log_context(operation="proxy_manual_categories", upstream=upstream),
     )
 
     try:
@@ -264,9 +257,7 @@ async def proxy_manual_categories():
             return r.json()
 
     except httpx.HTTPStatusError as e:
-        logger.error(
-            f"[BFF Manual] Categories error: {e.response.status_code}", exc_info=True
-        )
+        logger.error(f"[BFF Manual] Categories error: {e.response.status_code}", exc_info=True)
         raise ExternalServiceError(
             service_name="manual_api",
             message="Categories retrieval failed",
@@ -307,16 +298,12 @@ async def proxy_list_manuals(request: Request):
             r.raise_for_status()
             logger.info(
                 "[BFF Manual] List manuals success",
-                extra=create_log_context(
-                    operation="proxy_list_manuals", status_code=r.status_code
-                ),
+                extra=create_log_context(operation="proxy_list_manuals", status_code=r.status_code),
             )
             return r.json()
 
     except httpx.HTTPStatusError as e:
-        logger.error(
-            f"[BFF Manual] List manuals error: {e.response.status_code}", exc_info=True
-        )
+        logger.error(f"[BFF Manual] List manuals error: {e.response.status_code}", exc_info=True)
         raise ExternalServiceError(
             service_name="manual_api",
             message="List manuals failed",
@@ -354,9 +341,7 @@ async def proxy_manual_catalog(request: Request):
             return r.json()
 
     except httpx.HTTPStatusError as e:
-        logger.error(
-            f"[BFF Manual] Catalog error: {e.response.status_code}", exc_info=True
-        )
+        logger.error(f"[BFF Manual] Catalog error: {e.response.status_code}", exc_info=True)
         raise ExternalServiceError(
             service_name="manual_api",
             message="Catalog retrieval failed",
@@ -389,9 +374,7 @@ async def proxy_manual_detail(manual_id: str):
             return r.json()
 
     except httpx.HTTPStatusError as e:
-        logger.error(
-            f"[BFF Manual] Manual detail error: {e.response.status_code}", exc_info=True
-        )
+        logger.error(f"[BFF Manual] Manual detail error: {e.response.status_code}", exc_info=True)
         raise ExternalServiceError(
             service_name="manual_api",
             message="Manual detail retrieval failed",

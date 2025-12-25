@@ -6,9 +6,9 @@
  * 対象フィルタ（audience）はAPI側で適用済み。
  */
 
-import { useState, useEffect, useCallback } from "react";
-import { announcementRepository } from "../infrastructure";
-import { useAnnouncementState } from "./AnnouncementStateContext";
+import { useState, useEffect, useCallback } from 'react';
+import { announcementRepository } from '../infrastructure';
+import { useAnnouncementState } from './AnnouncementStateContext';
 
 interface UseUnreadAnnouncementCountViewModelResult {
   /** 未読数 */
@@ -25,7 +25,7 @@ interface UseUnreadAnnouncementCountViewModelResult {
  * @param userKey - ユーザー識別子（未ログイン時は"local"）※現在は未使用
  */
 export function useUnreadAnnouncementCountViewModel(
-  userKey: string = "local",
+  userKey: string = 'local'
 ): UseUnreadAnnouncementCountViewModelResult {
   // userKey は将来のユーザー認証対応時に使用予定
   void userKey;

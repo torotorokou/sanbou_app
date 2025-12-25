@@ -3,7 +3,7 @@
  * Pivotドロワー機能のViewModel
  */
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from 'react';
 import type {
   Mode,
   SortKey,
@@ -12,8 +12,8 @@ import type {
   MetricEntry,
   DrawerState,
   SummaryQuery,
-} from "../../shared/model/types";
-import type { SalesPivotRepository } from "../../shared/infrastructure/salesPivot.repository";
+} from '../../shared/model/types';
+import type { SalesPivotRepository } from '../../shared/infrastructure/salesPivot.repository';
 
 export interface UsePivotViewModelParams {
   repository: SalesPivotRepository;
@@ -32,11 +32,11 @@ export interface UsePivotViewModelResult {
     repIds: ID[],
     sortBy: SortKey,
     order: SortOrder,
-    topN: 10 | 20 | 50 | "all",
+    topN: 10 | 20 | 50 | 'all'
   ) => void;
   closeDrawer: () => void;
   setDrawerActiveAxis: (axis: Mode) => void;
-  setDrawerTopN: (topN: 10 | 20 | 50 | "all") => void;
+  setDrawerTopN: (topN: 10 | 20 | 50 | 'all') => void;
   setDrawerSortBy: (sortBy: SortKey) => void;
   setDrawerOrder: (order: SortOrder) => void;
   loadPivot: (axis: Mode, reset?: boolean) => Promise<void>;
@@ -45,9 +45,7 @@ export interface UsePivotViewModelResult {
 /**
  * Pivot ViewModel Hook
  */
-export function usePivotViewModel(
-  params: UsePivotViewModelParams,
-): UsePivotViewModelResult {
+export function usePivotViewModel(params: UsePivotViewModelParams): UsePivotViewModelResult {
   const { repository, query } = params;
 
   const [drawer, setDrawer] = useState<DrawerState>({ open: false });
@@ -71,14 +69,12 @@ export function usePivotViewModel(
       repIds: ID[],
       sortBy: SortKey,
       order: SortOrder,
-      topN: 10 | 20 | 50 | "all",
+      topN: 10 | 20 | 50 | 'all'
     ) => {
-      const others = (["customer", "item", "date"] as Mode[]).filter(
-        (ax) => ax !== mode,
-      );
+      const others = (['customer', 'item', 'date'] as Mode[]).filter((ax) => ax !== mode);
       const targets: { axis: Mode; label: string }[] = others.map((ax) => ({
         axis: ax,
-        label: ax === "customer" ? "顧客" : ax === "item" ? "品名" : "日付",
+        label: ax === 'customer' ? '顧客' : ax === 'item' ? '品名' : '日付',
       }));
       const firstTarget = targets[0];
 
@@ -93,16 +89,14 @@ export function usePivotViewModel(
         sortBy,
         order,
         topN,
-        ...(query.monthRange
-          ? { monthRange: query.monthRange }
-          : { month: query.month }),
+        ...(query.monthRange ? { monthRange: query.monthRange } : { month: query.month }),
       };
 
       setDrawer(drawerState);
       setPivotData({ customer: [], item: [], date: [] });
       setPivotCursor({ customer: null, item: null, date: null });
     },
-    [query],
+    [query]
   );
 
   const closeDrawer = useCallback(() => {
@@ -113,7 +107,7 @@ export function usePivotViewModel(
     setDrawer((prev) => (prev.open ? { ...prev, activeAxis: axis } : prev));
   }, []);
 
-  const setDrawerTopN = useCallback((topN: 10 | 20 | 50 | "all") => {
+  const setDrawerTopN = useCallback((topN: 10 | 20 | 50 | 'all') => {
     setDrawer((prev) => (prev.open ? { ...prev, topN } : prev));
   }, []);
 
@@ -150,7 +144,7 @@ export function usePivotViewModel(
           ...periodParams,
           baseAxis,
           baseId,
-          categoryKind: "waste",
+          categoryKind: 'waste',
           repIds: drawerRepIds,
           targetAxis,
           sortBy: drawerSortBy,
@@ -164,12 +158,12 @@ export function usePivotViewModel(
         }));
         setPivotCursor((prev) => ({ ...prev, [targetAxis]: page.nextCursor }));
       } catch (error) {
-        console.error("Failed to fetch pivot:", error);
+        console.error('Failed to fetch pivot:', error);
       } finally {
         setPivotLoading(false);
       }
     },
-    [repository, drawer, pivotCursor],
+    [repository, drawer, pivotCursor]
   );
 
   // Auto-reload on drawer params change

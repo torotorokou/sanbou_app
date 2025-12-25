@@ -25,9 +25,7 @@ def _exists(qualified: str) -> bool:
         return False
     conn = op.get_bind()
     return bool(
-        conn.execute(
-            sa.text("SELECT to_regclass(:q) IS NOT NULL"), {"q": qualified}
-        ).scalar()
+        conn.execute(sa.text("SELECT to_regclass(:q) IS NOT NULL"), {"q": qualified}).scalar()
     )
 
 
@@ -59,9 +57,7 @@ def upgrade():
             ),
             sa.Column("note", sa.Text(), nullable=True),
             # 制約名は実DBと完全一致させる
-            sa.UniqueConstraint(
-                "month_date", "segment", "metric", name="uq_monthly_targets"
-            ),
+            sa.UniqueConstraint("month_date", "segment", "metric", name="uq_monthly_targets"),
             sa.CheckConstraint(
                 # 実DBのCHECK式（timestamptz を介した月初判定）に合わせる
                 "month_date = date_trunc('month', month_date::timestamptz)::date",

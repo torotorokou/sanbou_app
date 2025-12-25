@@ -3,12 +3,12 @@
  * ミニバーグラフコンポーネント
  */
 
-import React from "react";
+import React from 'react';
 
 export interface MiniBarChartProps {
   value: number;
   maxValue: number;
-  color: "blue" | "green" | "gold";
+  color: 'blue' | 'green' | 'gold';
   label: string | number;
   width?: number;
 }
@@ -28,18 +28,15 @@ export const MiniBarChart: React.FC<MiniBarChartProps> = ({
   return (
     <div
       style={{
-        display: "flex",
-        alignItems: "center",
+        display: 'flex',
+        alignItems: 'center',
         gap: 8,
-        justifyContent: "flex-end",
+        justifyContent: 'flex-end',
       }}
     >
-      <span style={{ minWidth: width, textAlign: "right" }}>{label}</span>
+      <span style={{ minWidth: width, textAlign: 'right' }}>{label}</span>
       <div className="mini-bar-bg">
-        <div
-          className={`mini-bar mini-bar-${color}`}
-          style={{ width: `${percentage}%` }}
-        />
+        <div className={`mini-bar mini-bar-${color}`} style={{ width: `${percentage}%` }} />
       </div>
     </div>
   );

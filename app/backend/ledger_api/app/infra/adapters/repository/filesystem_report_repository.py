@@ -14,6 +14,7 @@ from app.core.ports.inbound.report_repository import ArtifactUrls
 from app.infra.adapters.artifact_storage import get_report_artifact_storage
 from backend_shared.application.logging import get_module_logger
 
+
 logger = get_module_logger(__name__)
 
 
@@ -69,14 +70,10 @@ class FileSystemReportRepository(ReportRepository):
 
             # Excel と PDF のバイトデータを取得
             excel_content = (
-                excel_bytes.getvalue()
-                if hasattr(excel_bytes, "getvalue")
-                else excel_bytes.read()
+                excel_bytes.getvalue() if hasattr(excel_bytes, "getvalue") else excel_bytes.read()
             )
             pdf_content = (
-                pdf_bytes.getvalue()
-                if hasattr(pdf_bytes, "getvalue")
-                else pdf_bytes.read()
+                pdf_bytes.getvalue() if hasattr(pdf_bytes, "getvalue") else pdf_bytes.read()
             )
 
             excel_size = len(excel_content)
@@ -107,9 +104,7 @@ class FileSystemReportRepository(ReportRepository):
             )
 
             # 署名付き URL を生成
-            payload = self._storage.build_payload(
-                location, excel_exists=True, pdf_exists=True
-            )
+            payload = self._storage.build_payload(location, excel_exists=True, pdf_exists=True)
 
             urls = ArtifactUrls(
                 excel_url=payload["excel_download_url"],

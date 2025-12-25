@@ -135,15 +135,11 @@ def test_class_instantiation():
                     "BalanceSheetGenerator (legacy)",
                 ),
                 (
-                    lambda: FactoryReportGenerator(
-                        report_key="factory_report", files={}
-                    ),
+                    lambda: FactoryReportGenerator(report_key="factory_report", files={}),
                     "FactoryReportGenerator (legacy)",
                 ),
                 (
-                    lambda: ManagementSheetGenerator(
-                        report_key="management_sheet", files={}
-                    ),
+                    lambda: ManagementSheetGenerator(report_key="management_sheet", files={}),
                     "ManagementSheetGenerator (legacy)",
                 ),
             ]
@@ -154,18 +150,14 @@ def test_class_instantiation():
     try:
         from app.core.usecases.reports.interactive import BlockUnitPriceInteractive
 
-        test_cases.append(
-            (lambda: BlockUnitPriceInteractive(), "BlockUnitPriceInteractive")
-        )
+        test_cases.append((lambda: BlockUnitPriceInteractive(), "BlockUnitPriceInteractive"))
     except ImportError as e:
         print(f"⚠️  BlockUnitPriceInteractive のインポートに失敗: {e}")
 
     try:
         from app.core.usecases.reports.processors import ReportProcessingService
 
-        test_cases.append(
-            (lambda: ReportProcessingService(), "ReportProcessingService")
-        )
+        test_cases.append((lambda: ReportProcessingService(), "ReportProcessingService"))
     except ImportError as e:
         print(f"⚠️  ReportProcessingService のインポートに失敗: {e}")
 
@@ -240,9 +232,7 @@ def test_no_st_app_imports():
                 for line_num, line in enumerate(content.splitlines(), 1):
                     if "import" in line and "st_app" in line:
                         relative_path = py_file.relative_to(project_root)
-                        st_app_imports.append(
-                            (str(relative_path), line_num, line.strip())
-                        )
+                        st_app_imports.append((str(relative_path), line_num, line.strip()))
         except Exception as e:
             print(f"⚠️  {py_file} の読み込みに失敗: {e}")
 
@@ -383,9 +373,7 @@ def main():
         print("st_app を安全に削除できます。")
         print()
         print("削除コマンド:")
-        print(
-            "  cd /home/koujiro/work_env/22.Work_React/sanbou_app/app/backend/ledger_api"
-        )
+        print("  cd /home/koujiro/work_env/22.Work_React/sanbou_app/app/backend/ledger_api")
         print("  mv app/st_app app/st_app.backup_$(date +%Y%m%d)")
         print()
         return 0

@@ -3,8 +3,8 @@
  * モックデータ生成によるRepository実装
  */
 
-import dayjs from "dayjs";
-import type { IInboundForecastRepository } from "../../domain/repository";
+import dayjs from 'dayjs';
+import type { IInboundForecastRepository } from '../../domain/repository';
 import type {
   IsoMonth,
   IsoDate,
@@ -16,30 +16,21 @@ import type {
   ForecastDTO,
   DailyCurveDTO,
   WeekRowDTO,
-} from "../../domain/types";
-import {
-  toDate,
-  ymd,
-  mondayOf,
-  addDays,
-  sum,
-  todayInMonth,
-} from "../../domain/valueObjects";
+} from '../../domain/types';
+import { toDate, ymd, mondayOf, addDays, sum, todayInMonth } from '../../domain/valueObjects';
 
-export class MockInboundForecastRepository
-  implements IInboundForecastRepository
-{
+export class MockInboundForecastRepository implements IInboundForecastRepository {
   async fetchMonthPayload(month: IsoMonth): Promise<MonthPayloadDTO> {
     // モック遅延
     await new Promise((resolve) => setTimeout(resolve, 300));
 
-    const first = dayjs(month + "-01");
-    const last = first.endOf("month");
+    const first = dayjs(month + '-01');
+    const last = first.endOf('month');
     const days: CalendarDay[] = [];
     let d = first;
 
-    while (d.isBefore(last) || d.isSame(last, "day")) {
-      const date = d.format("YYYY-MM-DD");
+    while (d.isBefore(last) || d.isSame(last, 'day')) {
+      const date = d.format('YYYY-MM-DD');
       const dow = d.day();
       const is_business_day = dow === 0 ? 0 : 1;
       const is_holiday = dow === 0 ? 1 : 0;
@@ -49,7 +40,7 @@ export class MockInboundForecastRepository
         is_holiday,
         week_id: ymd(mondayOf(d.toDate())),
       });
-      d = d.add(1, "day");
+      d = d.add(1, 'day');
     }
 
     const wWeekday = 1.0,
@@ -68,9 +59,7 @@ export class MockInboundForecastRepository
       return wWeekday;
     };
 
-    const bizWeights = days.map((x) =>
-      x.is_business_day ? weightOf(x.date) : 0,
-    );
+    const bizWeights = days.map((x) => (x.is_business_day ? weightOf(x.date) : 0));
     const monthTarget = Math.round(sum(bizWeights) * 110);
 
     const weekMap = new Map<
@@ -109,9 +98,7 @@ export class MockInboundForecastRepository
       const dow = toDate(x.date).getDay();
       const adj = dow === 6 ? 10 : 0;
       const noise = (Math.random() - 0.5) * 12;
-      const ton = x.is_business_day
-        ? Math.max(35, Math.round(base + adj + noise))
-        : 0;
+      const ton = x.is_business_day ? Math.max(35, Math.round(base + adj + noise)) : 0;
       syntheticDailyTon[x.date] = ton;
     });
 
@@ -124,9 +111,7 @@ export class MockInboundForecastRepository
       }
     }
 
-    const weekEntries = [...weekMap.entries()].sort((a, b) =>
-      a[0] < b[0] ? -1 : 1,
-    );
+    const weekEntries = [...weekMap.entries()].sort((a, b) => (a[0] < b[0] ? -1 : 1));
     let idx = 0;
     const weekRows: WeekRowDTO[] = [];
     for (const [, v] of weekEntries) {
@@ -145,17 +130,17 @@ export class MockInboundForecastRepository
             vs_prev_week: {
               delta_ton: null,
               delta_pct: null,
-              align_note: "prev business week",
+              align_note: 'prev business week',
             },
             vs_prev_month_same_idx: {
               delta_ton: null,
               delta_pct: null,
-              align_note: "same idx",
+              align_note: 'same idx',
             },
             vs_prev_year_same_idx: {
               delta_ton: null,
               delta_pct: null,
-              align_note: "same idx",
+              align_note: 'same idx',
             },
           },
         });
@@ -170,15 +155,11 @@ export class MockInboundForecastRepository
 
     const today = todayInMonth(month);
     const mtdActual = sum(
-      days.filter((x) => x.date <= today).map((x) => syntheticDailyTon[x.date]),
+      days.filter((x) => x.date <= today).map((x) => syntheticDailyTon[x.date])
     );
-    const remainingBiz = days.filter(
-      (x) => x.date > today && x.is_business_day,
-    ).length;
+    const remainingBiz = days.filter((x) => x.date > today && x.is_business_day).length;
 
-    const futureTon = sum(
-      days.filter((x) => x.date > today).map((x) => syntheticDailyTon[x.date]),
-    );
+    const futureTon = sum(days.filter((x) => x.date > today).map((x) => syntheticDailyTon[x.date]));
     const monthP50 = mtdActual + futureTon;
     const pBand = Math.max(80, Math.round(monthP50 * 0.06));
     const forecast: ForecastDTO = {
@@ -194,10 +175,10 @@ export class MockInboundForecastRepository
               .filter(
                 (x) =>
                   toDate(x.date) >= mondayOf(toDate(today)) &&
-                  toDate(x.date) <= addDays(mondayOf(toDate(today)), 6),
+                  toDate(x.date) <= addDays(mondayOf(toDate(today)), 6)
               )
-              .map((x) => syntheticDailyTon[x.date]),
-          ),
+              .map((x) => syntheticDailyTon[x.date])
+          )
         ),
         p10: 0,
         p90: 0,
@@ -213,25 +194,18 @@ export class MockInboundForecastRepository
     const daily_curve: DailyCurveDTO[] = days.map((x, i) => {
       const dow = toDate(x.date).getDay();
       const backIdx = Math.max(0, i - 7);
-      const near = days
-        .slice(backIdx, i)
-        .filter((d) => toDate(d.date).getDay() === dow);
+      const near = days.slice(backIdx, i).filter((d) => toDate(d.date).getDay() === dow);
       const avg = near.length
-        ? Math.round(
-            sum(near.map((d) => syntheticDailyTon[d.date])) / near.length,
-          )
+        ? Math.round(sum(near.map((d) => syntheticDailyTon[d.date])) / near.length)
         : syntheticDailyTon[x.date];
       const wAll = sum(
-        days.map((d) =>
-          toDate(d.date).getDay() === 0 ? 0 : dayWeightForBShare(d.date),
-        ),
+        days.map((d) => (toDate(d.date).getDay() === 0 ? 0 : dayWeightForBShare(d.date)))
       );
-      const wMe =
-        toDate(x.date).getDay() === 0 ? 0 : dayWeightForBShare(x.date);
+      const wMe = toDate(x.date).getDay() === 0 ? 0 : dayWeightForBShare(x.date);
       const fromMonthShare = wAll ? Math.round(monthTarget * (wMe / wAll)) : 0;
       const bookings = Math.max(
         0,
-        Math.round(Math.random() * 6 - (toDate(x.date).getDay() === 0 ? 6 : 0)),
+        Math.round(Math.random() * 6 - (toDate(x.date).getDay() === 0 ? 6 : 0))
       );
       return {
         date: x.date,
@@ -245,27 +219,25 @@ export class MockInboundForecastRepository
     // 先月・前年ダミー
     const prevMonthDays: Record<IsoDate, number> = {};
     const prevYearDays: Record<IsoDate, number> = {};
-    const pmFirst = dayjs(month + "-01").subtract(1, "month");
-    const pmLast = pmFirst.endOf("month");
+    const pmFirst = dayjs(month + '-01').subtract(1, 'month');
+    const pmLast = pmFirst.endOf('month');
     let pd = pmFirst;
-    while (pd.isBefore(pmLast) || pd.isSame(pmLast, "day")) {
-      const k = pd.format("YYYY-MM-DD");
-      const corresponding = dayjs(k).add(1, "month").format("YYYY-MM-DD");
-      const base =
-        daily_curve.find((r) => r.date === corresponding)?.actual ?? 80;
+    while (pd.isBefore(pmLast) || pd.isSame(pmLast, 'day')) {
+      const k = pd.format('YYYY-MM-DD');
+      const corresponding = dayjs(k).add(1, 'month').format('YYYY-MM-DD');
+      const base = daily_curve.find((r) => r.date === corresponding)?.actual ?? 80;
       prevMonthDays[k] = Math.max(0, Math.round(base * 0.98));
-      pd = pd.add(1, "day");
+      pd = pd.add(1, 'day');
     }
-    const pyFirst = dayjs(month + "-01").subtract(1, "year");
-    const pyLast = pyFirst.endOf("month");
+    const pyFirst = dayjs(month + '-01').subtract(1, 'year');
+    const pyLast = pyFirst.endOf('month');
     let yd = pyFirst;
-    while (yd.isBefore(pyLast) || yd.isSame(pyLast, "day")) {
-      const k = yd.format("YYYY-MM-DD");
-      const corresponding = dayjs(k).add(1, "year").format("YYYY-MM-DD");
-      const base =
-        daily_curve.find((r) => r.date === corresponding)?.actual ?? 80;
+    while (yd.isBefore(pyLast) || yd.isSame(pyLast, 'day')) {
+      const k = yd.format('YYYY-MM-DD');
+      const corresponding = dayjs(k).add(1, 'year').format('YYYY-MM-DD');
+      const base = daily_curve.find((r) => r.date === corresponding)?.actual ?? 80;
       prevYearDays[k] = Math.max(0, Math.round(base * 0.95));
-      yd = yd.add(1, "day");
+      yd = yd.add(1, 'day');
     }
 
     const targets: TargetsDTO = {
@@ -282,20 +254,15 @@ export class MockInboundForecastRepository
       business_days: {
         total: days.filter((x) => x.is_business_day).length,
         mon_sat: days.filter(
-          (x) =>
-            x.is_business_day &&
-            toDate(x.date).getDay() <= 6 &&
-            toDate(x.date).getDay() !== 0,
+          (x) => x.is_business_day && toDate(x.date).getDay() <= 6 && toDate(x.date).getDay() !== 0
         ).length,
-        sun_holiday: days.filter(
-          (x) => x.is_business_day && toDate(x.date).getDay() === 0,
-        ).length,
+        sun_holiday: days.filter((x) => x.is_business_day && toDate(x.date).getDay() === 0).length,
         non_business: days.filter((x) => !x.is_business_day).length,
       },
       rules: {
-        week_def: "ISO Monday-based",
-        week_to_month: "partial-weeks included by day",
-        alignment: "business-day",
+        week_def: 'ISO Monday-based',
+        week_to_month: 'partial-weeks included by day',
+        alignment: 'business-day',
       },
     };
 
@@ -313,7 +280,7 @@ export class MockInboundForecastRepository
       daily_curve,
       weeks: weekRows,
       history: {
-        m_vs_prev_month: { delta_ton: 0, delta_pct: 0, align_note: "mock" },
+        m_vs_prev_month: { delta_ton: 0, delta_pct: 0, align_note: 'mock' },
         m_vs_prev_year: { delta_ton: 0, delta_pct: 0 },
         m_vs_3yr_avg: { delta_ton: 0, delta_pct: 0 },
       },

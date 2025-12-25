@@ -60,9 +60,7 @@ def upgrade() -> None:
             nullable=False,
             comment="認証プロバイダ内のユーザー識別子（sub claim）",
         ),
-        sa.Column(
-            "email", sa.Text(), nullable=False, comment="メールアドレス（ログイン用）"
-        ),
+        sa.Column("email", sa.Text(), nullable=False, comment="メールアドレス（ログイン用）"),
         sa.Column("display_name", sa.Text(), nullable=False, comment="表示名"),
         sa.Column(
             "roles",
@@ -93,21 +91,15 @@ def upgrade() -> None:
         ),
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("email", name="uq_users_email"),
-        sa.UniqueConstraint(
-            "auth_provider", "auth_subject", name="uq_users_provider_subject"
-        ),
+        sa.UniqueConstraint("auth_provider", "auth_subject", name="uq_users_provider_subject"),
         schema="app_auth",
         comment="認証ユーザーマスタ",
     )
 
     # 3. インデックス作成
-    op.create_index(
-        "ix_users_email", "users", ["email"], schema="app_auth", unique=False
-    )
+    op.create_index("ix_users_email", "users", ["email"], schema="app_auth", unique=False)
 
-    op.create_index(
-        "ix_users_is_active", "users", ["is_active"], schema="app_auth", unique=False
-    )
+    op.create_index("ix_users_is_active", "users", ["is_active"], schema="app_auth", unique=False)
 
 
 def downgrade() -> None:

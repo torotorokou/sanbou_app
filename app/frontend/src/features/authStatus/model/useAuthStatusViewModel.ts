@@ -10,10 +10,10 @@
  * - アンマウント時のクリーンアップ
  */
 
-import { useEffect, useState } from "react";
-import type { AuthUser } from "../domain/authUser";
-import type { AuthRepository } from "../ports/AuthRepository";
-import { AuthHttpRepository } from "../infrastructure/AuthHttpRepository";
+import { useEffect, useState } from 'react';
+import type { AuthUser } from '../domain/authUser';
+import type { AuthRepository } from '../ports/AuthRepository';
+import { AuthHttpRepository } from '../infrastructure/AuthHttpRepository';
 
 /**
  * ViewModel の状態型
@@ -92,8 +92,7 @@ export const useAuthStatusViewModel = () => {
         if (cancelled) return;
 
         // エラーメッセージの抽出
-        const errorMessage =
-          e instanceof Error ? e.message : "ユーザー情報の取得に失敗しました";
+        const errorMessage = e instanceof Error ? e.message : 'ユーザー情報の取得に失敗しました';
 
         setState({
           user: null,

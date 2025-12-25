@@ -26,9 +26,11 @@ setup_cors(app)  # 環境変数から自動取得
 
 import os
 
-from backend_shared.application.logging import get_module_logger
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
+from backend_shared.application.logging import get_module_logger
+
 
 logger = get_module_logger(__name__)
 
@@ -144,9 +146,7 @@ def setup_cors(
             "origins_count": len(origins),
             "allow_credentials": allow_credentials,
             "origins": (
-                origins
-                if len(origins) <= 5
-                else f"{origins[:5]}... (total: {len(origins)})"
+                origins if len(origins) <= 5 else f"{origins[:5]}... (total: {len(origins)})"
             ),
         },
     )

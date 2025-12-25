@@ -3,31 +3,24 @@
  * ManualClientを使用した実装
  */
 
-import type { ManualRepository } from "../ports/repository";
-import { ManualClient } from "./manual.client";
+import type { ManualRepository } from '../ports/repository';
+import { ManualClient } from './manual.client';
 import type {
   ManualSearchQuery,
   ManualSearchResult,
   ManualTocItem,
   ManualCategory,
-} from "../domain/types/manual.types";
+} from '../domain/types/manual.types';
 
 export class ManualRepositoryImpl implements ManualRepository {
-  async search(
-    query: ManualSearchQuery,
-    signal?: AbortSignal,
-  ): Promise<ManualSearchResult> {
+  async search(query: ManualSearchQuery, signal?: AbortSignal): Promise<ManualSearchResult> {
     const raw = await ManualClient.search(query, signal);
     // API レスポンスを Domain モデルに変換
     // 必要に応じてDTO→Domainの変換ロジックをここに実装
     return raw as ManualSearchResult;
   }
 
-  getDocUrl(
-    docId: string,
-    filename: string,
-    query?: Record<string, string>,
-  ): string {
+  getDocUrl(docId: string, filename: string, query?: Record<string, string>): string {
     return ManualClient.docUrl(docId, filename, query);
   }
 

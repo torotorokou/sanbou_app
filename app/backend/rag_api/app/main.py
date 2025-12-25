@@ -2,6 +2,11 @@ import os
 import sys
 from pathlib import Path
 
+from dotenv import load_dotenv
+from fastapi import FastAPI, HTTPException
+from fastapi.responses import FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
+
 from app.api.routers import manuals, query  # ← query.py に router を定義
 from app.config.paths import CONFIG_ENV
 from app.config.settings import settings
@@ -17,10 +22,7 @@ from backend_shared.infra.frameworks.exception_handlers import (
     register_exception_handlers,
 )
 from backend_shared.infra.frameworks.logging_utils import setup_uvicorn_access_filter
-from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse, JSONResponse
-from fastapi.staticfiles import StaticFiles
+
 
 # --- .env + secrets 読み込み --------------------------------------------------
 load_dotenv(dotenv_path=CONFIG_ENV)
@@ -54,6 +56,7 @@ app = FastAPI(
 )
 
 from backend_shared.application.logging import get_module_logger
+
 
 logger = get_module_logger(__name__)
 logger.info(

@@ -1,5 +1,5 @@
-import { useResponsive } from "@/shared";
-import { FILTER_GRID } from "../config/layout.config";
+import { useResponsive } from '@/shared';
+import { FILTER_GRID } from '../config/layout.config';
 
 /**
  * FilterPanelのレイアウト設定を管理するカスタムフック
@@ -40,9 +40,7 @@ export const useFilterLayout = () => {
      * TopN・ソートコントロールのグリッド設定
      * デスクトップ: 種別・モードと同じ行、モバイル: 2行目右側
      */
-    topNSortGrid: isDesktop
-      ? FILTER_GRID.topNSortDesktop
-      : FILTER_GRID.topNSortMobile,
+    topNSortGrid: isDesktop ? FILTER_GRID.topNSortDesktop : FILTER_GRID.topNSortMobile,
 
     /**
      * 期間セレクターのグリッド設定

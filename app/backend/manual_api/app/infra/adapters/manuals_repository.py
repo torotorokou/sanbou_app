@@ -16,6 +16,7 @@ from app.core.ports.manuals_repository import ManualsRepository
 from app.infra.adapters.catalog_data import sections as CATALOG_SECTIONS
 from backend_shared.application.logging import get_module_logger
 
+
 logger = get_module_logger(__name__)
 
 

@@ -10,10 +10,11 @@ Delete Upload Scope UseCase - アップロードスコープ削除ユースケ�
 
 from datetime import date
 
+from sqlalchemy.orm import Session
+
 from app.core.ports.upload_status_port import IUploadCalendarQuery
 from app.infra.adapters.materialized_view import MaterializedViewRefresher
 from backend_shared.application.logging import get_module_logger, log_usecase_execution
-from sqlalchemy.orm import Session
 
 logger = get_module_logger(__name__)
 

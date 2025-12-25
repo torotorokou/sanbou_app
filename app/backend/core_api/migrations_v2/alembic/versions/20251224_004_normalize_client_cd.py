@@ -120,9 +120,7 @@ def upgrade() -> None:
     )
 
     # 件数確認
-    result_flash = op.get_bind().execute(
-        sa.text(f"SELECT COUNT(*) FROM stg.{backup_table_flash};")
-    )
+    result_flash = op.get_bind().execute(sa.text(f"SELECT COUNT(*) FROM stg.{backup_table_flash};"))
     flash_backup_count = result_flash.scalar()
     print(f"    ✓ stg.{backup_table_flash}: {flash_backup_count} 件")
 
@@ -137,9 +135,7 @@ def upgrade() -> None:
     )
 
     # 件数確認
-    result_final = op.get_bind().execute(
-        sa.text(f"SELECT COUNT(*) FROM stg.{backup_table_final};")
-    )
+    result_final = op.get_bind().execute(sa.text(f"SELECT COUNT(*) FROM stg.{backup_table_final};"))
     final_backup_count = result_final.scalar()
     print(f"    ✓ stg.{backup_table_final}: {final_backup_count} 件")
 

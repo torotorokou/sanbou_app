@@ -9,6 +9,7 @@ from datetime import datetime
 from typing import Any
 
 import httpx
+
 from backend_shared.application.logging import get_module_logger
 
 logger = get_module_logger(__name__)
@@ -119,10 +120,7 @@ class HealthCheckUseCase:
         """
         async with httpx.AsyncClient(timeout=self.timeout) as client:
             # 並行実行
-            tasks = [
-                self._check_service(name, url, client)
-                for name, url in self.services.items()
-            ]
+            tasks = [self._check_service(name, url, client) for name, url in self.services.items()]
             results = await asyncio.gather(*tasks, return_exceptions=False)
 
         # 結果を集計

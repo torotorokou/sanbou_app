@@ -3,20 +3,18 @@
  * エクスポートオプション状態管理用カスタムフック
  */
 
-import { useState, useEffect } from "react";
-import type { ExportOptions } from "./types";
-import { DEFAULT_EXPORT_OPTIONS } from "../lib/utils";
+import { useState, useEffect } from 'react';
+import type { ExportOptions } from './types';
+import { DEFAULT_EXPORT_OPTIONS } from '../lib/utils';
 
-const STORAGE_KEY = "exportOptions_v1";
+const STORAGE_KEY = 'exportOptions_v1';
 
 /**
  * エクスポートオプション状態管理の戻り値
  */
 export interface ExportOptionsState {
   exportOptions: ExportOptions;
-  setExportOptions: (
-    options: ExportOptions | ((prev: ExportOptions) => ExportOptions),
-  ) => void;
+  setExportOptions: (options: ExportOptions | ((prev: ExportOptions) => ExportOptions)) => void;
 }
 
 /**

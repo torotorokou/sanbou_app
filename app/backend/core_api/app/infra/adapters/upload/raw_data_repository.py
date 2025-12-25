@@ -18,6 +18,21 @@ from datetime import date, datetime
 from typing import Any
 
 import pandas as pd
+from sqlalchemy import (
+    BigInteger,
+    Boolean,
+    Column,
+    DateTime,
+    ForeignKey,
+    Integer,
+    MetaData,
+    String,
+    Table,
+    Text,
+    text,
+)
+from sqlalchemy.orm import Session
+
 from app.core.domain.csv import CsvKind
 from app.infra.db.sql_loader import load_sql
 from backend_shared.application.logging import create_log_context, get_module_logger
@@ -33,20 +48,6 @@ from backend_shared.db.names import (
     V_ACTIVE_SHOGUN_FLASH_YARD,
     fq,
 )
-from sqlalchemy import (
-    BigInteger,
-    Boolean,
-    Column,
-    DateTime,
-    ForeignKey,
-    Integer,
-    MetaData,
-    String,
-    Table,
-    Text,
-    text,
-)
-from sqlalchemy.orm import Session
 
 logger = get_module_logger(__name__)
 
@@ -88,9 +89,7 @@ class RawDataRepository:
             "upload_file",
             self.metadata,
             Column("id", Integer, primary_key=True, autoincrement=True),
-            Column(
-                "csv_type", String(32), nullable=False
-            ),  # 'receive', 'yard', 'shipment', etc.
+            Column("csv_type", String(32), nullable=False),  # 'receive', 'yard', 'shipment', etc.
             Column("file_name", Text, nullable=False),
             Column("file_hash", String(64), nullable=False),
             Column("file_type", String(20), nullable=False),  # 'FLASH' / 'FINAL'
@@ -124,9 +123,7 @@ class RawDataRepository:
             "receive_raw",
             self.metadata,
             Column("id", BigInteger, primary_key=True, autoincrement=True),
-            Column(
-                "file_id", Integer, ForeignKey("log.upload_file.id"), nullable=False
-            ),
+            Column("file_id", Integer, ForeignKey("log.upload_file.id"), nullable=False),
             Column("row_number", Integer, nullable=False),
             # 受入CSV の各カラム（TEXT 型、英語カラム名）
             Column("slip_date_text", Text, nullable=True),
@@ -181,9 +178,7 @@ class RawDataRepository:
             "yard_raw",
             self.metadata,
             Column("id", BigInteger, primary_key=True, autoincrement=True),
-            Column(
-                "file_id", Integer, ForeignKey("log.upload_file.id"), nullable=False
-            ),
+            Column("file_id", Integer, ForeignKey("log.upload_file.id"), nullable=False),
             Column("row_number", Integer, nullable=False),
             # ヤードCSV の各カラム（TEXT 型、英語カラム名）
             Column("slip_date_text", Text, nullable=True),
@@ -214,9 +209,7 @@ class RawDataRepository:
             "shipment_raw",
             self.metadata,
             Column("id", BigInteger, primary_key=True, autoincrement=True),
-            Column(
-                "file_id", Integer, ForeignKey("log.upload_file.id"), nullable=False
-            ),
+            Column("file_id", Integer, ForeignKey("log.upload_file.id"), nullable=False),
             Column("row_number", Integer, nullable=False),
             # 出荷CSV の各カラム（TEXT 型、英語カラム名）
             Column("slip_date_text", Text, nullable=True),
@@ -360,8 +353,7 @@ class RawDataRepository:
                 self.upload_file_table.c.file_hash == file_hash,
                 self.upload_file_table.c.file_type == file_type,
                 self.upload_file_table.c.processing_status == "success",
-                self.upload_file_table.c.is_deleted
-                == False,  # 論理削除されていないレコードのみ
+                self.upload_file_table.c.is_deleted is False,  # 論理削除されていないレコードのみ
             )
             .order_by(self.upload_file_table.c.uploaded_at.desc())
         ).fetchone()
@@ -395,7 +387,7 @@ class RawDataRepository:
                     self.upload_file_table.c.row_count == row_count,
                     self.upload_file_table.c.processing_status == "success",
                     self.upload_file_table.c.is_deleted
-                    == False,  # 論理削除されていないレコードのみ
+                    is False,  # 論理削除されていないレコードのみ
                 )
                 .order_by(self.upload_file_table.c.uploaded_at.desc())
             ).fetchone()
@@ -480,9 +472,7 @@ class RawDataRepository:
             # NOTE: rollback()もUseCaseレイヤーで実行
             logger.error(
                 "upload_fileステータス更新失敗",
-                extra=create_log_context(
-                    operation="update_upload_status", error=str(e)
-                ),
+                extra=create_log_context(operation="update_upload_status", error=str(e)),
                 exc_info=True,
             )
             raise
@@ -522,9 +512,7 @@ class RawDataRepository:
             self.db.rollback()
             logger.error(
                 "upload_file論理削除失敗",
-                extra=create_log_context(
-                    operation="soft_delete_upload_file", error=str(e)
-                ),
+                extra=create_log_context(operation="soft_delete_upload_file", error=str(e)),
                 exc_info=True,
             )
             raise
@@ -766,9 +754,7 @@ class RawDataRepository:
         except Exception as e:
             logger.error(
                 "直近重複チェック失敗",
-                extra=create_log_context(
-                    operation="check_duplicate_upload", error=str(e)
-                ),
+                extra=create_log_context(operation="check_duplicate_upload", error=str(e)),
                 exc_info=True,
             )
             # エラー時は安全側に倒して False を返す（処理は継続させる）
@@ -796,7 +782,7 @@ class RawDataRepository:
         try:
             # 行番号を付与
             records = []
-            for row_idx, (idx, row) in enumerate(df.iterrows(), start=1):
+            for row_idx, (_idx, row) in enumerate(df.iterrows(), start=1):
                 record: dict[str, Any] = {
                     "file_id": file_id,
                     "row_number": row_idx,  # 1-indexed
@@ -817,9 +803,7 @@ class RawDataRepository:
             self.db.execute(self.receive_raw_table.insert(), records)
             # NOTE: commit()はUseCaseレイヤーで実行
 
-            logger.info(
-                f"Saved {len(records)} rows to raw.receive_raw (file_id={file_id})"
-            )
+            logger.info(f"Saved {len(records)} rows to raw.receive_raw (file_id={file_id})")
             return len(records)
 
         except Exception as e:
@@ -868,7 +852,7 @@ class RawDataRepository:
 
             # 行番号を付与してレコード作成
             records = []
-            for row_idx, (idx, row) in enumerate(df.iterrows(), start=1):
+            for row_idx, (_idx, row) in enumerate(df.iterrows(), start=1):
                 record: dict[str, Any] = {
                     "file_id": file_id,
                     "row_number": row_idx,
@@ -885,9 +869,7 @@ class RawDataRepository:
             self.db.execute(self.yard_raw_table.insert(), records)
             self.db.commit()
 
-            logger.info(
-                f"Saved {len(records)} rows to raw.yard_raw (file_id={file_id})"
-            )
+            logger.info(f"Saved {len(records)} rows to raw.yard_raw (file_id={file_id})")
             return len(records)
 
         except Exception as e:
@@ -939,7 +921,7 @@ class RawDataRepository:
 
             # 行番号を付与してレコード作成
             records = []
-            for row_idx, (idx, row) in enumerate(df.iterrows(), start=1):
+            for row_idx, (_idx, row) in enumerate(df.iterrows(), start=1):
                 record: dict[str, Any] = {
                     "file_id": file_id,
                     "row_number": row_idx,
@@ -956,9 +938,7 @@ class RawDataRepository:
             self.db.execute(self.shipment_raw_table.insert(), records)
             self.db.commit()
 
-            logger.info(
-                f"Saved {len(records)} rows to raw.shipment_raw (file_id={file_id})"
-            )
+            logger.info(f"Saved {len(records)} rows to raw.shipment_raw (file_id={file_id})")
             return len(records)
 
         except Exception as e:
@@ -984,9 +964,7 @@ class RawDataRepository:
 
         try:
             result = self.db.execute(
-                select(self.upload_file_table).where(
-                    self.upload_file_table.c.id == upload_file_id
-                )
+                select(self.upload_file_table).where(self.upload_file_table.c.id == upload_file_id)
             ).first()
 
             if not result:
@@ -999,9 +977,7 @@ class RawDataRepository:
                 "file_name": result.file_name,
                 "file_type": result.file_type,
                 "processing_status": result.processing_status,
-                "uploaded_at": (
-                    result.uploaded_at.isoformat() if result.uploaded_at else None
-                ),
+                "uploaded_at": (result.uploaded_at.isoformat() if result.uploaded_at else None),
                 "uploaded_by": result.uploaded_by,
                 "row_count": result.row_count,
                 "error_message": result.error_message,
@@ -1059,9 +1035,7 @@ class RawDataRepository:
                 for row in rows
             ]
 
-            logger.debug(
-                f"Fetched upload calendar for {year}-{month:02d}: {len(items)} items"
-            )
+            logger.debug(f"Fetched upload calendar for {year}-{month:02d}: {len(items)} items")
             return items
 
         except Exception as e:

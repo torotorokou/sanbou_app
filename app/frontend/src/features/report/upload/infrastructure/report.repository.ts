@@ -63,7 +63,10 @@ export async function generateFactoryReport(
 ): Promise<ReportArtifactResponse> {
   return coreApi.post<ReportArtifactResponse>(
     "/core_api/reports/factory_report/",
-    { date, factory_id },
+    {
+      date,
+      factory_id,
+    },
   );
 }
 
@@ -76,7 +79,10 @@ export async function generateBalanceSheet(
 ): Promise<ReportArtifactResponse> {
   return coreApi.post<ReportArtifactResponse>(
     "/core_api/reports/balance_sheet/",
-    { date, factory_id },
+    {
+      date,
+      factory_id,
+    },
   );
 }
 
@@ -89,7 +95,10 @@ export async function generateAverageSheet(
 ): Promise<ReportArtifactResponse> {
   return coreApi.post<ReportArtifactResponse>(
     "/core_api/reports/average_sheet/",
-    { date, factory_id },
+    {
+      date,
+      factory_id,
+    },
   );
 }
 
@@ -102,7 +111,10 @@ export async function generateManagementSheet(
 ): Promise<ReportArtifactResponse> {
   return coreApi.post<ReportArtifactResponse>(
     "/core_api/reports/management_sheet/",
-    { date, factory_id },
+    {
+      date,
+      factory_id,
+    },
   );
 }
 

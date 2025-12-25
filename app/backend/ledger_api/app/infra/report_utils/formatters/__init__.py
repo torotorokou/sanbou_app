@@ -22,6 +22,7 @@ from .summary import (
 )
 from .value_setter import set_value_fast_safe
 
+
 __all__ = [
     # Dates
     "get_weekday_japanese",

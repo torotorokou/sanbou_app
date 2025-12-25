@@ -37,6 +37,7 @@ from contextvars import ContextVar
 from datetime import datetime
 from typing import Any, Optional
 
+
 # pythonjsonlogger は optional: なければ通常のフォーマッタを使用
 try:
     from pythonjsonlogger import jsonlogger
@@ -233,9 +234,7 @@ def create_json_formatter() -> logging.Formatter:
         )
     else:
         # テキスト形式（fallback）
-        log_format = (
-            "[%(asctime)s] [%(levelname)s] [%(name)s] [%(request_id)s] %(message)s"
-        )
+        log_format = "[%(asctime)s] [%(levelname)s] [%(name)s] [%(request_id)s] %(message)s"
         formatter = logging.Formatter(log_format, datefmt="%Y-%m-%d %H:%M:%S")
 
     return formatter
@@ -637,9 +636,7 @@ def log_usecase_execution(
                 # 位置引数を記録（self を除外）
                 if args and len(args) > 1:
                     # args[0] は self なのでスキップ、残りを記録
-                    positional_args = [
-                        repr(arg)[:100] for arg in args[1:]
-                    ]  # 最大100文字
+                    positional_args = [repr(arg)[:100] for arg in args[1:]]  # 最大100文字
                     if positional_args:
                         log_data["positional_args"] = positional_args
 
@@ -648,9 +645,7 @@ def log_usecase_execution(
                     safe_kwargs = {
                         k: v
                         for k, v in kwargs.items()
-                        if not any(
-                            sensitive in k.lower() for sensitive in SENSITIVE_KEYWORDS
-                        )
+                        if not any(sensitive in k.lower() for sensitive in SENSITIVE_KEYWORDS)
                     }
                     if safe_kwargs:
                         log_data["keyword_args"] = safe_kwargs
@@ -670,9 +665,7 @@ def log_usecase_execution(
                 log_data.update(
                     {
                         "event": "success",
-                        "elapsed_ms": (
-                            round(elapsed_time * 1000, 2) if elapsed_time else None
-                        ),
+                        "elapsed_ms": (round(elapsed_time * 1000, 2) if elapsed_time else None),
                     }
                 )
 
@@ -696,15 +689,11 @@ def log_usecase_execution(
                         "event": "error",
                         "error_type": type(e).__name__,
                         "error_message": str(e),
-                        "elapsed_ms": (
-                            round(elapsed_time * 1000, 2) if elapsed_time else None
-                        ),
+                        "elapsed_ms": (round(elapsed_time * 1000, 2) if elapsed_time else None),
                     }
                 )
 
-                logger.error(
-                    f"[UseCase] {uc_name} failed", extra=log_data, exc_info=True
-                )
+                logger.error(f"[UseCase] {uc_name} failed", extra=log_data, exc_info=True)
 
                 raise
 

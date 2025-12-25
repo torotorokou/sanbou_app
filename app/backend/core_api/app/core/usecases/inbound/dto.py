@@ -39,9 +39,7 @@ class GetInboundDailyInput:
             ValueError: バリデーションエラー
         """
         if self.start > self.end:
-            raise ValueError(
-                f"start date ({self.start}) must be <= end date ({self.end})"
-            )
+            raise ValueError(f"start date ({self.start}) must be <= end date ({self.end})")
 
         delta_days = (self.end - self.start).days + 1
         if delta_days > 366:

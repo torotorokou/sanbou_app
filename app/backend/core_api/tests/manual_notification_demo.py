@@ -67,9 +67,7 @@ def main():
     pending = outbox.list_pending(now=now)
     print(f"✓ pending 通知: {len(pending)}件")
     for item in pending:
-        print(
-            f"  - [{item.channel}] {item.payload.title} (recipient: {item.recipient_key})"
-        )
+        print(f"  - [{item.channel}] {item.payload.title} (recipient: {item.recipient_key})")
     print()
 
     # Step 3: 通知を送信（Noop）

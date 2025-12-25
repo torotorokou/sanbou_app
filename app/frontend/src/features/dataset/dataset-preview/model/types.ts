@@ -2,7 +2,7 @@
  * dataset-preview 型定義
  */
 
-import type { DatasetKey } from "../../config";
+import type { DatasetKey } from '../../config';
 
 export type { DatasetKey };
 
@@ -11,30 +11,30 @@ export interface CsvPreviewData {
   rows: string[][];
 }
 
-export type ValidationStatus = "valid" | "invalid" | "unknown";
+export type ValidationStatus = 'valid' | 'invalid' | 'unknown';
 
-export type FallbackMode = "empty" | "schema" | "sample";
+export type FallbackMode = 'empty' | 'schema' | 'sample';
 
 export type PreviewSource =
   | {
-      kind: "files";
+      kind: 'files';
       datasetKey: DatasetKey;
       files: Record<string, File | null>;
       fallbackMode?: FallbackMode;
     }
   | {
-      kind: "uploadId";
+      kind: 'uploadId';
       datasetKey: DatasetKey;
       uploadId: string;
       fallbackMode?: FallbackMode;
     }
   | {
-      kind: "previews";
+      kind: 'previews';
       datasetKey: DatasetKey;
       data: Record<string, CsvPreviewData>;
       fallbackMode?: FallbackMode;
     }
-  | { kind: "fallback"; datasetKey: DatasetKey; mode: FallbackMode };
+  | { kind: 'fallback'; datasetKey: DatasetKey; mode: FallbackMode };
 
 export type TabDef = {
   key: string; // typeKey

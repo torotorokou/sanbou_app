@@ -2,8 +2,8 @@
  * dataset-preview exports
  */
 
-export * from "./ui/CsvPreviewCard";
-export * from "./model/types";
-export * from "./screen/DatasetPreviewScreen";
-export * from "./model";
-export * from "./repository";
+export * from './ui/CsvPreviewCard';
+export * from './model/types';
+export * from './screen/DatasetPreviewScreen';
+export * from './model';
+export * from './repository';

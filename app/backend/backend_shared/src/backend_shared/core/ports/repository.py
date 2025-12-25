@@ -6,6 +6,7 @@ Repository Port
 
 from typing import Generic, Protocol, TypeVar
 
+
 T = TypeVar("T")
 
 

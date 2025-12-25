@@ -59,8 +59,7 @@ def upgrade() -> None:
         for table in ["shipment_shogun_flash", "shipment_shogun_final"]:
             for old_name, new_name in shipment_renames:
                 op.execute(
-                    f"ALTER TABLE {schema}.{table} "
-                    f"RENAME COLUMN {old_name} TO {new_name}"
+                    f"ALTER TABLE {schema}.{table} " f"RENAME COLUMN {old_name} TO {new_name}"
                 )
 
     # ========================================
@@ -79,8 +78,7 @@ def upgrade() -> None:
         for table in ["yard_shogun_flash", "yard_shogun_final"]:
             for old_name, new_name in yard_renames:
                 op.execute(
-                    f"ALTER TABLE {schema}.{table} "
-                    f"RENAME COLUMN {old_name} TO {new_name}"
+                    f"ALTER TABLE {schema}.{table} " f"RENAME COLUMN {old_name} TO {new_name}"
                 )
 
     print("✅ All _en_ suffix columns renamed successfully")
@@ -108,8 +106,7 @@ def downgrade() -> None:
         for table in ["shipment_shogun_flash", "shipment_shogun_final"]:
             for old_name, new_name in shipment_renames_reverse:
                 op.execute(
-                    f"ALTER TABLE {schema}.{table} "
-                    f"RENAME COLUMN {old_name} TO {new_name}"
+                    f"ALTER TABLE {schema}.{table} " f"RENAME COLUMN {old_name} TO {new_name}"
                 )
 
     # ========================================
@@ -128,8 +125,7 @@ def downgrade() -> None:
         for table in ["yard_shogun_flash", "yard_shogun_final"]:
             for old_name, new_name in yard_renames_reverse:
                 op.execute(
-                    f"ALTER TABLE {schema}.{table} "
-                    f"RENAME COLUMN {old_name} TO {new_name}"
+                    f"ALTER TABLE {schema}.{table} " f"RENAME COLUMN {old_name} TO {new_name}"
                 )
 
     print("⏪ All columns reverted to _en_ suffix naming")

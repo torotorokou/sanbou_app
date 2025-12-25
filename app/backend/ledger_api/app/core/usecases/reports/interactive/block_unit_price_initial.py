@@ -32,6 +32,7 @@ from .block_unit_price_utils import (
     stable_entry_id,
 )
 
+
 apply_unit_price_addition = _process0.apply_unit_price_addition
 apply_transport_fee_by1 = _process0.apply_transport_fee_by1
 
@@ -59,9 +60,7 @@ def compute_options_and_initial(
         opts_df = opts_df.assign(業者CD=opts_df["業者CD"].astype(str))
 
     options_series = opts_df[opts_df.get("業者CD") == gyousha_cd_str]
-    options = (
-        options_series.get("運搬業者", pd.Series(dtype=object)).astype(str).tolist()
-    )
+    options = options_series.get("運搬業者", pd.Series(dtype=object)).astype(str).tolist()
     normalized_options = canonical_sort_labels(options)
 
     if not normalized_options:
@@ -164,9 +163,7 @@ def execute_initial_step(
         except Exception as _e:
             logger.debug(
                 "shipmentダンプ失敗",
-                extra=create_log_context(
-                    operation="initialize_block_unit_price", error=str(_e)
-                ),
+                extra=create_log_context(operation="initialize_block_unit_price", error=str(_e)),
             )
 
         session_id = make_session_id()
@@ -213,9 +210,7 @@ def execute_initial_step(
 
         # 選択対象行（運搬社数 != 1）の抽出
         carriers = df_shipment.get("運搬社数")
-        target_rows = (
-            df_shipment if carriers is None else df_shipment[carriers.fillna(0) != 1]
-        )
+        target_rows = df_shipment if carriers is None else df_shipment[carriers.fillna(0) != 1]
 
         rows_payload: list[dict[str, Any]] = []
         entry_index_map: dict[str, int | str] = {}
@@ -225,8 +220,8 @@ def execute_initial_step(
             df_idx = normalize_df_index(idx)
 
             # オプションと初期選択の計算
-            normalized_options, initial_index, gyousha_cd_str, _, _ = (
-                compute_options_and_initial(row, df_transport_cost)
+            normalized_options, initial_index, gyousha_cd_str, _, _ = compute_options_and_initial(
+                row, df_transport_cost
             )
 
             # エントリIDの生成（row_numを渡して一意性を保証）
@@ -284,9 +279,7 @@ def execute_initial_step(
             }
             logger.info(
                 "INITIAL entry_id info",
-                extra=create_log_context(
-                    operation="initial_block_unit_price", **entry_id_info
-                ),
+                extra=create_log_context(operation="initial_block_unit_price", **entry_id_info),
             )
 
         logger.debug(

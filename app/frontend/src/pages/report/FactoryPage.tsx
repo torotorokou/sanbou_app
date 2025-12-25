@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from "react";
-import { ReportBase, ReportHeader } from "@features/report";
-import { useReportManager } from "@features/report";
-import { UnimplementedModal } from "@features/unimplemented-feature";
-import styles from "./ReportPage.module.css";
+import React, { useEffect, useState } from 'react';
+import { ReportBase, ReportHeader } from '@features/report';
+import { useReportManager } from '@features/report';
+import { UnimplementedModal } from '@features/unimplemented-feature';
+import styles from './ReportPage.module.css';
 
 /**
  * 工場帳簿ページ - 新しい分割アーキテクチャ対応
@@ -21,7 +21,7 @@ import styles from "./ReportPage.module.css";
  */
 
 const FactoryPage: React.FC = () => {
-  const reportManager = useReportManager("factory_report2");
+  const reportManager = useReportManager('factory_report2');
   // useMemoでメモ化されたprops（関数ではなくオブジェクト）
   const reportBaseProps = reportManager.getReportBaseProps;
   const [showUnimplementedModal, setShowUnimplementedModal] = useState(false);

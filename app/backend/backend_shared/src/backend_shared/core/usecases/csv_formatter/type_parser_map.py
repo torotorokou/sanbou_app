@@ -57,9 +57,7 @@ type_parser_map = {
             )
         }
     ),
-    "datetime": lambda df, col: df.assign(
-        **{col: pd.to_datetime(df[col], errors="coerce")}
-    ),
+    "datetime": lambda df, col: df.assign(**{col: pd.to_datetime(df[col], errors="coerce")}),
     "str": lambda df, col: df,  # 追加：str は型変換しない
     "code": normalize_code_column,  # コード型：先頭ゼロを除去して正規化
 }

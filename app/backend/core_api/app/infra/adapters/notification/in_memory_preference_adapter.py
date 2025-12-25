@@ -61,7 +61,5 @@ class InMemoryNotificationPreferenceAdapter(NotificationPreferencePort):
                 },
             )
         else:
-            logger.debug(
-                f"[Preference] No preference for {recipient_key} (default: all enabled)"
-            )
+            logger.debug(f"[Preference] No preference for {recipient_key} (default: all enabled)")
         return pref

@@ -12,6 +12,7 @@ from pydantic import BaseModel, Field
 
 from .contract import ProblemDetails
 
+
 JobStatusType = Literal["pending", "running", "completed", "failed", "cancelled"]
 
 

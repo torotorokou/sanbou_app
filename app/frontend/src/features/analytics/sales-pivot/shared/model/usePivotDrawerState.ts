@@ -3,16 +3,8 @@
  * ピボットドロワーの状態管理（drawer, pivotData, pivotCursor, pivotLoading, repSeriesCache）
  */
 
-import { useState } from "react";
-import type {
-  Mode,
-  ID,
-  YYYYMM,
-  SortKey,
-  SortOrder,
-  MetricEntry,
-  DailyPoint,
-} from "./types";
+import { useState } from 'react';
+import type { Mode, ID, YYYYMM, SortKey, SortOrder, MetricEntry, DailyPoint } from './types';
 
 export type DrawerState =
   | { open: false }
@@ -28,33 +20,29 @@ export type DrawerState =
       activeAxis: Mode;
       sortBy: SortKey;
       order: SortOrder;
-      topN: 10 | 20 | 50 | "all";
+      topN: 10 | 20 | 50 | 'all';
     };
 
 export interface PivotDrawerState {
   drawer: DrawerState;
-  setDrawer: (
-    drawer: DrawerState | ((prev: DrawerState) => DrawerState),
-  ) => void;
+  setDrawer: (drawer: DrawerState | ((prev: DrawerState) => DrawerState)) => void;
   pivotData: Record<Mode, MetricEntry[]>;
   setPivotData: (
     data:
       | Record<Mode, MetricEntry[]>
-      | ((prev: Record<Mode, MetricEntry[]>) => Record<Mode, MetricEntry[]>),
+      | ((prev: Record<Mode, MetricEntry[]>) => Record<Mode, MetricEntry[]>)
   ) => void;
   pivotCursor: Record<Mode, string | null>;
   setPivotCursor: (
     cursor:
       | Record<Mode, string | null>
-      | ((prev: Record<Mode, string | null>) => Record<Mode, string | null>),
+      | ((prev: Record<Mode, string | null>) => Record<Mode, string | null>)
   ) => void;
   pivotLoading: boolean;
   setPivotLoading: (loading: boolean) => void;
   repSeriesCache: Record<ID, DailyPoint[]>;
   setRepSeriesCache: (
-    cache:
-      | Record<ID, DailyPoint[]>
-      | ((prev: Record<ID, DailyPoint[]>) => Record<ID, DailyPoint[]>),
+    cache: Record<ID, DailyPoint[]> | ((prev: Record<ID, DailyPoint[]>) => Record<ID, DailyPoint[]>)
   ) => void;
 }
 
@@ -78,9 +66,7 @@ export function usePivotDrawerState(): PivotDrawerState {
 
   const [pivotLoading, setPivotLoading] = useState<boolean>(false);
 
-  const [repSeriesCache, setRepSeriesCache] = useState<
-    Record<ID, DailyPoint[]>
-  >({});
+  const [repSeriesCache, setRepSeriesCache] = useState<Record<ID, DailyPoint[]>>({});
 
   return {
     drawer,

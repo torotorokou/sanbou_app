@@ -31,9 +31,7 @@ def _exists(qualified: str) -> bool:
         return False
     conn = op.get_bind()
     return bool(
-        conn.execute(
-            sa.text("SELECT to_regclass(:q) IS NOT NULL"), {"q": qualified}
-        ).scalar()
+        conn.execute(sa.text("SELECT to_regclass(:q) IS NOT NULL"), {"q": qualified}).scalar()
     )
 
 
@@ -79,9 +77,7 @@ def upgrade() -> None:
     else:
         # If already exists, just refresh
         print("[mart.mv_target_card_per_day] Already exists, refreshing...")
-        op.execute(
-            "REFRESH MATERIALIZED VIEW CONCURRENTLY mart.mv_target_card_per_day;"
-        )
+        op.execute("REFRESH MATERIALIZED VIEW CONCURRENTLY mart.mv_target_card_per_day;")
 
     print("[mart.mv_target_card_per_day] ✅ Successfully recreated")
 

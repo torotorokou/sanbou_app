@@ -10,7 +10,7 @@
  * - 型安全性を確保（as const）
  */
 
-import { bp } from "@shared";
+import { bp } from '@shared';
 
 /**
  * Ant Design Grid型定義
@@ -37,7 +37,7 @@ export const GRID_GUTTER = {
  */
 export const MARGINS = {
   sectionTop: 16,
-  divider: "16px 0",
+  divider: '16px 0',
 } as const;
 
 /**
@@ -145,11 +145,10 @@ export const FILTER_GRID = {
 /**
  * レイアウトモード
  */
-export type LayoutMode = "desktop" | "mobile";
+export type LayoutMode = 'desktop' | 'mobile';
 
 /**
  * レイアウトモードの判定
  * xl以上（1280px~）をデスクトップとみなす
  */
-export const getLayoutMode = (isDesktop: boolean): LayoutMode =>
-  isDesktop ? "desktop" : "mobile";
+export const getLayoutMode = (isDesktop: boolean): LayoutMode => (isDesktop ? 'desktop' : 'mobile');

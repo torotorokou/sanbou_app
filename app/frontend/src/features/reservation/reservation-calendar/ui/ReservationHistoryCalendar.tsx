@@ -6,8 +6,8 @@
  * 規約: Named Export を使用
  */
 
-import React, { useState } from "react";
-import { Card, Button, Space, Typography, Spin, Modal } from "antd";
+import React, { useState } from 'react';
+import { Card, Button, Space, Typography, Spin, Modal } from 'antd';
 import {
   LeftOutlined,
   RightOutlined,
@@ -15,19 +15,17 @@ import {
   TeamOutlined,
   CalendarOutlined,
   DeleteOutlined,
-} from "@ant-design/icons";
-import type { Dayjs } from "dayjs";
-import dayjs from "dayjs";
-import type { ReservationForecastDaily } from "../../shared";
-import type { ReservationHistoryCalendarProps } from "../model/types";
+} from '@ant-design/icons';
+import type { Dayjs } from 'dayjs';
+import dayjs from 'dayjs';
+import type { ReservationForecastDaily } from '../../shared';
+import type { ReservationHistoryCalendarProps } from '../model/types';
 
 const { Title, Text } = Typography;
 
-const WEEKDAYS = ["月", "火", "水", "木", "金", "土", "日"];
+const WEEKDAYS = ['月', '火', '水', '木', '金', '土', '日'];
 
-export const ReservationHistoryCalendar: React.FC<
-  ReservationHistoryCalendarProps
-> = ({
+export const ReservationHistoryCalendar: React.FC<ReservationHistoryCalendarProps> = ({
   historyMonth,
   historyData,
   onChangeHistoryMonth,
@@ -36,9 +34,7 @@ export const ReservationHistoryCalendar: React.FC<
   isLoadingHistory = false,
   isDeletingDate = null,
 }) => {
-  const [selectedDateForDetail, setSelectedDateForDetail] = useState<
-    string | null
-  >(null);
+  const [selectedDateForDetail, setSelectedDateForDetail] = useState<string | null>(null);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
 
@@ -57,22 +53,22 @@ export const ReservationHistoryCalendar: React.FC<
 
   // 月の週データを生成
   const generateWeeks = (month: Dayjs) => {
-    const firstDay = month.startOf("month");
-    const lastDay = month.endOf("month");
-    const startDate = firstDay.startOf("week").add(1, "day"); // 月曜始まり
-    const endDate = lastDay.endOf("week").add(1, "day");
+    const firstDay = month.startOf('month');
+    const lastDay = month.endOf('month');
+    const startDate = firstDay.startOf('week').add(1, 'day'); // 月曜始まり
+    const endDate = lastDay.endOf('week').add(1, 'day');
 
     const weeks: Dayjs[][] = [];
     let currentWeek: Dayjs[] = [];
     let current = startDate;
 
-    while (current.isBefore(endDate) || current.isSame(endDate, "day")) {
+    while (current.isBefore(endDate) || current.isSame(endDate, 'day')) {
       currentWeek.push(current);
       if (currentWeek.length === 7) {
         weeks.push(currentWeek);
         currentWeek = [];
       }
-      current = current.add(1, "day");
+      current = current.add(1, 'day');
     }
 
     return weeks;
@@ -81,16 +77,16 @@ export const ReservationHistoryCalendar: React.FC<
   const weeks = generateWeeks(historyMonth);
 
   const goPrevMonth = () => {
-    onChangeHistoryMonth(historyMonth.subtract(1, "month"));
+    onChangeHistoryMonth(historyMonth.subtract(1, 'month'));
   };
 
   const goNextMonth = () => {
-    onChangeHistoryMonth(historyMonth.add(1, "month"));
+    onChangeHistoryMonth(historyMonth.add(1, 'month'));
   };
 
   // 日付のデータを取得
   const getDataForDate = (date: Dayjs): ReservationForecastDaily | null => {
-    const dateStr = date.format("YYYY-MM-DD");
+    const dateStr = date.format('YYYY-MM-DD');
     return historyData.find((d) => d.date === dateStr) || null;
   };
 
@@ -161,7 +157,7 @@ export const ReservationHistoryCalendar: React.FC<
       <Card
         className="calendar-responsive"
         title={
-          <Space direction="vertical" size={0} style={{ width: "100%" }}>
+          <Space direction="vertical" size={0} style={{ width: '100%' }}>
             <Title level={5} style={{ margin: 0, fontSize: 16 }}>
               📅 予約履歴カレンダー
             </Title>
@@ -169,26 +165,26 @@ export const ReservationHistoryCalendar: React.FC<
         }
         size="small"
         style={{
-          height: "100%",
-          width: "100%",
-          display: "flex",
-          flexDirection: "column",
+          height: '100%',
+          width: '100%',
+          display: 'flex',
+          flexDirection: 'column',
         }}
         styles={{
-          body: { flex: 1, overflow: "auto", padding: "12px", width: "100%" },
+          body: { flex: 1, overflow: 'auto', padding: '12px', width: '100%' },
         }}
       >
         {/* 月移動ヘッダー */}
         <div
           style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
             marginBottom: 12,
           }}
         >
           <div style={{ width: 80 }}>
-            {goToCurrentMonth && !historyMonth.isSame(dayjs(), "month") && (
+            {goToCurrentMonth && !historyMonth.isSame(dayjs(), 'month') && (
               <Button
                 type="default"
                 icon={<CalendarOutlined />}
@@ -200,7 +196,7 @@ export const ReservationHistoryCalendar: React.FC<
               </Button>
             )}
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <Button
               type="text"
               icon={<LeftOutlined />}
@@ -208,11 +204,8 @@ export const ReservationHistoryCalendar: React.FC<
               size="small"
               disabled={isLoadingHistory}
             />
-            <Text
-              strong
-              style={{ fontSize: 20, minWidth: 180, textAlign: "center" }}
-            >
-              {historyMonth.format("YYYY年MM月")}
+            <Text strong style={{ fontSize: 20, minWidth: 180, textAlign: 'center' }}>
+              {historyMonth.format('YYYY年MM月')}
             </Text>
             <Button
               type="text"
@@ -228,22 +221,22 @@ export const ReservationHistoryCalendar: React.FC<
         {/* 凡例 */}
         <div
           style={{
-            display: "flex",
-            justifyContent: "center",
+            display: 'flex',
+            justifyContent: 'center',
             gap: 16,
             marginBottom: 12,
-            padding: "8px",
-            background: "#f5f5f5",
+            padding: '8px',
+            background: '#f5f5f5',
             borderRadius: 4,
             fontSize: 13,
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-            <TruckOutlined style={{ color: "#1890ff", fontSize: 14 }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <TruckOutlined style={{ color: '#1890ff', fontSize: 14 }} />
             <span>合計台数</span>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-            <TeamOutlined style={{ color: "#52c41a", fontSize: 14 }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <TeamOutlined style={{ color: '#52c41a', fontSize: 14 }} />
             <span>固定客数</span>
           </div>
         </div>
@@ -254,8 +247,8 @@ export const ReservationHistoryCalendar: React.FC<
             {/* 曜日ヘッダー */}
             <div
               style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(7, 1fr)",
+                display: 'grid',
+                gridTemplateColumns: 'repeat(7, 1fr)',
                 gap: 2,
                 marginBottom: 4,
               }}
@@ -264,12 +257,11 @@ export const ReservationHistoryCalendar: React.FC<
                 <div
                   key={idx}
                   style={{
-                    textAlign: "center",
+                    textAlign: 'center',
                     fontSize: 13,
-                    fontWeight: "bold",
-                    color:
-                      idx === 5 ? "#1890ff" : idx === 6 ? "#f5222d" : "#666",
-                    padding: "6px 0",
+                    fontWeight: 'bold',
+                    color: idx === 5 ? '#1890ff' : idx === 6 ? '#f5222d' : '#666',
+                    padding: '6px 0',
                   }}
                 >
                   {day}
@@ -282,17 +274,17 @@ export const ReservationHistoryCalendar: React.FC<
               <div
                 key={weekIdx}
                 style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(7, 1fr)",
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(7, 1fr)',
                   gap: 2,
                   marginBottom: 2,
                 }}
               >
                 {week.map((date, dayIdx) => {
                   const isCurrentMonth = date.month() === historyMonth.month();
-                  const isToday = date.isSame(dayjs(), "day");
+                  const isToday = date.isSame(dayjs(), 'day');
                   const data = getDataForDate(date);
-                  const dateStr = date.format("YYYY-MM-DD");
+                  const dateStr = date.format('YYYY-MM-DD');
                   const isDeleting = isDeletingDate === dateStr;
 
                   const handleCellClick = () => {
@@ -309,17 +301,13 @@ export const ReservationHistoryCalendar: React.FC<
                       style={{
                         minHeight: 75,
                         padding: 6,
-                        border: "1px solid #f0f0f0",
+                        border: '1px solid #f0f0f0',
                         borderRadius: 4,
-                        background: isToday
-                          ? "#e6f7ff"
-                          : isCurrentMonth
-                            ? "#fff"
-                            : "#fafafa",
+                        background: isToday ? '#e6f7ff' : isCurrentMonth ? '#fff' : '#fafafa',
                         opacity: isCurrentMonth ? (isDeleting ? 0.5 : 1) : 0.4,
-                        cursor: data ? "pointer" : "default",
-                        position: "relative",
-                        transition: "all 0.2s",
+                        cursor: data ? 'pointer' : 'default',
+                        position: 'relative',
+                        transition: 'all 0.2s',
                       }}
                       onClick={handleCellClick}
                       title={
@@ -332,7 +320,7 @@ export const ReservationHistoryCalendar: React.FC<
                         className="calendar-date"
                         style={{
                           fontSize: 14,
-                          fontWeight: isToday ? "bold" : "normal",
+                          fontWeight: isToday ? 'bold' : 'normal',
                           marginBottom: 4,
                         }}
                       >
@@ -342,8 +330,8 @@ export const ReservationHistoryCalendar: React.FC<
                         <div style={{ fontSize: 12 }}>
                           <div
                             style={{
-                              display: "flex",
-                              alignItems: "center",
+                              display: 'flex',
+                              alignItems: 'center',
                               marginBottom: 4,
                             }}
                           >
@@ -351,7 +339,7 @@ export const ReservationHistoryCalendar: React.FC<
                               className="calendar-icon"
                               style={{
                                 fontSize: 14,
-                                color: "#1890ff",
+                                color: '#1890ff',
                                 marginRight: 4,
                               }}
                             />
@@ -359,21 +347,19 @@ export const ReservationHistoryCalendar: React.FC<
                               className="calendar-value-large"
                               style={{
                                 fontSize: 18,
-                                fontWeight: "bold",
-                                color: "#000",
+                                fontWeight: 'bold',
+                                color: '#000',
                               }}
                             >
                               {data.reserve_trucks}
                             </span>
                           </div>
-                          <div
-                            style={{ display: "flex", alignItems: "center" }}
-                          >
+                          <div style={{ display: 'flex', alignItems: 'center' }}>
                             <TeamOutlined
                               className="calendar-icon"
                               style={{
                                 fontSize: 14,
-                                color: "#52c41a",
+                                color: '#52c41a',
                                 marginRight: 4,
                               }}
                             />
@@ -381,8 +367,8 @@ export const ReservationHistoryCalendar: React.FC<
                               className="calendar-value-small"
                               style={{
                                 fontSize: 15,
-                                fontWeight: "500",
-                                color: "#000",
+                                fontWeight: '500',
+                                color: '#000',
                               }}
                             >
                               {data.reserve_fixed_trucks}
@@ -429,39 +415,32 @@ export const ReservationHistoryCalendar: React.FC<
         >
           {selectedDateForDetail &&
             (() => {
-              const data = historyData.find(
-                (d) => d.date === selectedDateForDetail,
-              );
+              const data = historyData.find((d) => d.date === selectedDateForDetail);
               return (
                 <div>
                   <div
                     style={{
-                      background: "#f5f5f5",
+                      background: '#f5f5f5',
                       padding: 12,
                       borderRadius: 4,
                     }}
                   >
-                    <p style={{ margin: "4px 0" }}>
-                      <strong>日付:</strong>{" "}
-                      {dayjs(selectedDateForDetail).format(
-                        "YYYY年MM月DD日 (dd)",
-                      )}
+                    <p style={{ margin: '4px 0' }}>
+                      <strong>日付:</strong>{' '}
+                      {dayjs(selectedDateForDetail).format('YYYY年MM月DD日 (dd)')}
                     </p>
                     {data && (
                       <>
-                        <p style={{ margin: "4px 0" }}>
+                        <p style={{ margin: '4px 0' }}>
                           <strong>合計台数:</strong> {data.reserve_trucks}台
                         </p>
-                        <p style={{ margin: "4px 0" }}>
-                          <strong>固定客台数:</strong>{" "}
-                          {data.reserve_fixed_trucks}台
+                        <p style={{ margin: '4px 0' }}>
+                          <strong>固定客台数:</strong> {data.reserve_fixed_trucks}台
                         </p>
-                        <p style={{ margin: "8px 0 4px 0" }}>
+                        <p style={{ margin: '8px 0 4px 0' }}>
                           <strong>備考:</strong>
                           <br />
-                          <span style={{ whiteSpace: "pre-wrap" }}>
-                            {data.note || "（なし）"}
-                          </span>
+                          <span style={{ whiteSpace: 'pre-wrap' }}>{data.note || '（なし）'}</span>
                         </p>
                       </>
                     )}
@@ -494,46 +473,39 @@ export const ReservationHistoryCalendar: React.FC<
         >
           {selectedDateForDetail &&
             (() => {
-              const data = historyData.find(
-                (d) => d.date === selectedDateForDetail,
-              );
+              const data = historyData.find((d) => d.date === selectedDateForDetail);
               return (
                 <div>
                   <p>以下の手入力データを削除してもよろしいですか？</p>
                   <div
                     style={{
-                      background: "#f5f5f5",
+                      background: '#f5f5f5',
                       padding: 12,
                       borderRadius: 4,
                       marginTop: 12,
                     }}
                   >
-                    <p style={{ margin: "4px 0" }}>
-                      <strong>日付:</strong>{" "}
-                      {dayjs(selectedDateForDetail).format(
-                        "YYYY年MM月DD日 (dd)",
-                      )}
+                    <p style={{ margin: '4px 0' }}>
+                      <strong>日付:</strong>{' '}
+                      {dayjs(selectedDateForDetail).format('YYYY年MM月DD日 (dd)')}
                     </p>
                     {data && (
                       <>
-                        <p style={{ margin: "4px 0" }}>
+                        <p style={{ margin: '4px 0' }}>
                           <strong>合計台数:</strong> {data.reserve_trucks}台
                         </p>
-                        <p style={{ margin: "4px 0" }}>
-                          <strong>固定客台数:</strong>{" "}
-                          {data.reserve_fixed_trucks}台
+                        <p style={{ margin: '4px 0' }}>
+                          <strong>固定客台数:</strong> {data.reserve_fixed_trucks}台
                         </p>
-                        <p style={{ margin: "8px 0 4px 0" }}>
+                        <p style={{ margin: '8px 0 4px 0' }}>
                           <strong>備考:</strong>
                           <br />
-                          <span style={{ whiteSpace: "pre-wrap" }}>
-                            {data.note || "（なし）"}
-                          </span>
+                          <span style={{ whiteSpace: 'pre-wrap' }}>{data.note || '（なし）'}</span>
                         </p>
                       </>
                     )}
                   </div>
-                  <p style={{ marginTop: 12, color: "#ff4d4f" }}>
+                  <p style={{ marginTop: 12, color: '#ff4d4f' }}>
                     <strong>注意:</strong> この操作は取り消せません。
                   </p>
                 </div>

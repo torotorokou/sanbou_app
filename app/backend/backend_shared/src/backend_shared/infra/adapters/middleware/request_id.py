@@ -39,6 +39,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
 
+
 # backend_shared.application.logging から set_request_id をインポート
 try:
     from backend_shared.application.logging import set_request_id

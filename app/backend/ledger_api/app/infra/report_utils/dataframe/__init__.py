@@ -8,6 +8,7 @@ from app.infra.report_utils.dataframe.cleaning import clean_cd_column
 from app.infra.report_utils.dataframe.columns import apply_column_addition_by_keys
 from app.infra.report_utils.dataframe.operations import apply_summary_all_items
 
+
 __all__ = [
     # Operations
     "apply_summary_all_items",

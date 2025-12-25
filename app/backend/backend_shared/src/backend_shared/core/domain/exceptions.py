@@ -131,9 +131,7 @@ class ForbiddenError(DomainException):
     HTTP Status: 403 Forbidden
     """
 
-    def __init__(
-        self, message: str = "Access forbidden", required_permission: str | None = None
-    ):
+    def __init__(self, message: str = "Access forbidden", required_permission: str | None = None):
         self.message = message
         self.required_permission = required_permission
         super().__init__(message)

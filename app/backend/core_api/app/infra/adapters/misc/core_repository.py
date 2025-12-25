@@ -5,9 +5,10 @@ Core repository: operations on core schema (inbound_actuals, inbound_reservation
 from datetime import date as date_type
 from datetime import datetime
 
-from app.infra.db.orm_models import InboundActual, InboundReservation
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.orm import Session
+
+from app.infra.db.orm_models import InboundActual, InboundReservation
 
 
 class CoreRepository:
@@ -50,8 +51,4 @@ class CoreRepository:
         self.db.flush()
 
         # Return the created/updated record
-        return (
-            self.db.query(InboundReservation)
-            .filter(InboundReservation.date == date)
-            .first()
-        )
+        return self.db.query(InboundReservation).filter(InboundReservation.date == date).first()

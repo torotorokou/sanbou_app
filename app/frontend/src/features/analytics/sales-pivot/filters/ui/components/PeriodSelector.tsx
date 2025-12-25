@@ -1,28 +1,28 @@
-import { Space, Segmented, DatePicker, Typography } from "antd";
-import type { Dayjs } from "dayjs";
-import dayjs from "dayjs";
-import updateLocale from "dayjs/plugin/updateLocale";
-import locale from "antd/es/date-picker/locale/ja_JP";
-import "dayjs/locale/ja";
+import { Space, Segmented, DatePicker, Typography } from 'antd';
+import type { Dayjs } from 'dayjs';
+import dayjs from 'dayjs';
+import updateLocale from 'dayjs/plugin/updateLocale';
+import locale from 'antd/es/date-picker/locale/ja_JP';
+import 'dayjs/locale/ja';
 
 // updateLocaleプラグインを有効化
 dayjs.extend(updateLocale);
 
 // dayjsのロケールを日本語に設定し、月曜始まりに変更
-dayjs.locale("ja");
-dayjs.updateLocale("ja", {
+dayjs.locale('ja');
+dayjs.updateLocale('ja', {
   weekStart: 1, // 月曜始まり
 });
 
 interface PeriodSelectorProps {
-  granularity: "month" | "date";
-  periodMode: "single" | "range";
+  granularity: 'month' | 'date';
+  periodMode: 'single' | 'range';
   month: Dayjs | null;
   range: [Dayjs, Dayjs] | null;
   singleDate: Dayjs | null;
   dateRange: [Dayjs, Dayjs] | null;
-  onGranularityChange: (value: "month" | "date") => void;
-  onPeriodModeChange: (value: "single" | "range") => void;
+  onGranularityChange: (value: 'month' | 'date') => void;
+  onPeriodModeChange: (value: 'single' | 'range') => void;
   onMonthChange: (value: Dayjs) => void;
   onRangeChange: (value: [Dayjs, Dayjs]) => void;
   onSingleDateChange: (value: Dayjs) => void;
@@ -44,40 +44,34 @@ export const PeriodSelector: React.FC<PeriodSelectorProps> = ({
   onDateRangeChange,
 }) => {
   return (
-    <Space direction="vertical" size={2} style={{ width: "100%" }}>
+    <Space direction="vertical" size={2} style={{ width: '100%' }}>
       <Typography.Text type="secondary">対象（月次 / 日次）</Typography.Text>
       <Space wrap>
         {/* 粒度選択 */}
         <Segmented
           options={[
-            { label: "月次", value: "month" },
-            { label: "日次", value: "date" },
+            { label: '月次', value: 'month' },
+            { label: '日次', value: 'date' },
           ]}
           value={granularity}
-          onChange={(v: string | number) =>
-            onGranularityChange(v as "month" | "date")
-          }
+          onChange={(v: string | number) => onGranularityChange(v as 'month' | 'date')}
         />
         {/* 単一/期間選択 */}
         <Segmented
           options={[
-            { label: "単一", value: "single" },
-            { label: "期間", value: "range" },
+            { label: '単一', value: 'single' },
+            { label: '期間', value: 'range' },
           ]}
           value={periodMode}
-          onChange={(v: string | number) =>
-            onPeriodModeChange(v as "single" | "range")
-          }
+          onChange={(v: string | number) => onPeriodModeChange(v as 'single' | 'range')}
         />
         {/* 日付/月の選択 */}
-        {granularity === "month" ? (
-          periodMode === "single" ? (
+        {granularity === 'month' ? (
+          periodMode === 'single' ? (
             <DatePicker
               picker="month"
               value={month}
-              onChange={(d: Dayjs | null) =>
-                d && onMonthChange(d.startOf("month"))
-              }
+              onChange={(d: Dayjs | null) => d && onMonthChange(d.startOf('month'))}
               allowClear={false}
               placeholder="対象月"
             />
@@ -87,16 +81,13 @@ export const PeriodSelector: React.FC<PeriodSelectorProps> = ({
               value={range}
               onChange={(vals: [Dayjs | null, Dayjs | null] | null) => {
                 if (vals && vals[0] && vals[1])
-                  onRangeChange([
-                    vals[0].startOf("month"),
-                    vals[1].startOf("month"),
-                  ]);
+                  onRangeChange([vals[0].startOf('month'), vals[1].startOf('month')]);
               }}
               allowEmpty={[false, false]}
-              placeholder={["開始月", "終了月"]}
+              placeholder={['開始月', '終了月']}
             />
           )
-        ) : periodMode === "single" ? (
+        ) : periodMode === 'single' ? (
           <DatePicker
             value={singleDate}
             onChange={(d: Dayjs | null) => d && onSingleDateChange(d)}
@@ -114,7 +105,7 @@ export const PeriodSelector: React.FC<PeriodSelectorProps> = ({
                 onDateRangeChange(null);
               }
             }}
-            placeholder={["開始日", "終了日"]}
+            placeholder={['開始日', '終了日']}
             locale={locale}
           />
         )}

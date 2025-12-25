@@ -53,9 +53,7 @@ class Announcement(BaseModel):
     publish_from: datetime = Field(..., description="公開開始日時")
     publish_to: datetime | None = Field(None, description="公開終了日時")
     audience: Audience = Field("all", description="対象")
-    attachments: list[Attachment] = Field(
-        default_factory=list, description="添付ファイル配列"
-    )
+    attachments: list[Attachment] = Field(default_factory=list, description="添付ファイル配列")
     notification_plan: NotificationPlan | None = Field(None, description="通知設定")
     created_at: datetime = Field(..., description="作成日時")
     updated_at: datetime = Field(..., description="更新日時")

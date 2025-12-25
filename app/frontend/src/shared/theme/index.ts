@@ -1,5 +1,5 @@
-import type { ThemeConfig } from "antd";
-import { customTokens } from "./tokens";
+import type { ThemeConfig } from 'antd';
+import { customTokens } from './tokens';
 
 export const appTheme: ThemeConfig = {
   token: {
@@ -8,6 +8,6 @@ export const appTheme: ThemeConfig = {
 };
 
 // テーマ関連のすべてのエクスポート
-export { customTokens } from "./tokens";
-export * from "./colorMaps";
-export { generateCssVars } from "./cssVars";
+export { customTokens } from './tokens';
+export * from './colorMaps';
+export { generateCssVars } from './cssVars';

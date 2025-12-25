@@ -5,6 +5,7 @@ Interactive report generators package
 
 from .block_unit_price_main import BlockUnitPriceInteractive
 
+
 __all__ = [
     "BlockUnitPriceInteractive",
 ]

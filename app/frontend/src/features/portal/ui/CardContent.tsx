@@ -1,8 +1,8 @@
 /**
  * PortalCardのコンテンツ部分（タイトル・説明）のコンポーネント
  */
-import React from "react";
-import { Typography, theme } from "antd";
+import React from 'react';
+import { Typography, theme } from 'antd';
 
 const { Title, Paragraph } = Typography;
 
@@ -30,20 +30,11 @@ export const CardContent: React.FC<CardContentProps> = ({
   return (
     <div
       style={{
-        display: "flex",
-        flexDirection: "column",
+        display: 'flex',
+        flexDirection: 'column',
         alignItems:
-          isButtonHidden || isSmallButton
-            ? "flex-start"
-            : compactLayout
-              ? "flex-start"
-              : "center",
-        flex:
-          isButtonHidden || isSmallButton
-            ? "1 1 auto"
-            : isButtonHidden
-              ? 1.4
-              : 1,
+          isButtonHidden || isSmallButton ? 'flex-start' : compactLayout ? 'flex-start' : 'center',
+        flex: isButtonHidden || isSmallButton ? '1 1 auto' : isButtonHidden ? 1.4 : 1,
       }}
     >
       <div style={{ maxWidth: isSmallButton ? 180 : 260 }}>
@@ -52,7 +43,7 @@ export const CardContent: React.FC<CardContentProps> = ({
           style={{
             margin: 0,
             lineHeight: 1.2,
-            textAlign: isButtonHidden ? "left" : undefined,
+            textAlign: isButtonHidden ? 'left' : undefined,
             fontSize: titleFontSize,
             fontWeight: isButtonHidden || isSmallButton ? 600 : undefined,
           }}
@@ -65,14 +56,14 @@ export const CardContent: React.FC<CardContentProps> = ({
         <Paragraph
           style={{
             margin: 0,
-            maxWidth: isButtonHidden ? "100%" : 260,
-            display: "-webkit-box",
+            maxWidth: isButtonHidden ? '100%' : 260,
+            display: '-webkit-box',
             WebkitLineClamp: compactLayout ? 1 : 2,
-            WebkitBoxOrient: "vertical",
-            overflow: "hidden",
-            minHeight: compactLayout ? "1.4em" : "2.8em",
+            WebkitBoxOrient: 'vertical',
+            overflow: 'hidden',
+            minHeight: compactLayout ? '1.4em' : '2.8em',
             color: token.colorTextSecondary,
-            textAlign: isButtonHidden ? "left" : undefined,
+            textAlign: isButtonHidden ? 'left' : undefined,
             fontSize: descriptionFontSize,
           }}
           title={description}

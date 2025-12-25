@@ -9,13 +9,13 @@
  * - 営業カレンダーデータの統合
  */
 
-import { useMemo, useState, useCallback, useEffect } from "react";
-import dayjs from "dayjs";
-import type { DailyActualsCardProps } from "../ui/cards/DailyActualsCard";
-import type { DailyCumulativeCardProps } from "../ui/cards/DailyCumulativeCard";
-import type { InboundDailyRepository } from "../ports/InboundDailyRepository";
-import type { ICalendarRepository } from "@/features/calendar/ports/repository";
-import type { CalendarDayDTO } from "@/features/calendar/domain/types";
+import { useMemo, useState, useCallback, useEffect } from 'react';
+import dayjs from 'dayjs';
+import type { DailyActualsCardProps } from '../ui/cards/DailyActualsCard';
+import type { DailyCumulativeCardProps } from '../ui/cards/DailyCumulativeCard';
+import type { InboundDailyRepository } from '../ports/InboundDailyRepository';
+import type { ICalendarRepository } from '@/features/calendar/ports/repository';
+import type { CalendarDayDTO } from '@/features/calendar/domain/types';
 
 export type UseInboundMonthlyVMParams = {
   repository: InboundDailyRepository;
@@ -36,17 +36,15 @@ export type UseInboundMonthlyVMResult = {
 /**
  * day_type から status を判定（営業カレンダーと統一）
  */
-function mapDayTypeToStatus(
-  dayType: string,
-): "business" | "holiday" | "closed" {
+function mapDayTypeToStatus(dayType: string): 'business' | 'holiday' | 'closed' {
   switch (dayType) {
-    case "CLOSED":
-      return "closed";
-    case "RESERVATION":
-      return "holiday";
-    case "NORMAL":
+    case 'CLOSED':
+      return 'closed';
+    case 'RESERVATION':
+      return 'holiday';
+    case 'NORMAL':
     default:
-      return "business";
+      return 'business';
   }
 }
 
@@ -58,26 +56,21 @@ function mapDayTypeToStatus(
  * - データ整形してDailyActualsCard/DailyCumulativeCardに渡す
  * - 営業カレンダーのステータスを統合
  */
-export function useInboundMonthlyVM(
-  params: UseInboundMonthlyVMParams,
-): UseInboundMonthlyVMResult {
+export function useInboundMonthlyVM(params: UseInboundMonthlyVMParams): UseInboundMonthlyVMResult {
   const { repository, calendarRepository, month } = params;
 
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
-  const [dailyProps, setDailyProps] = useState<DailyActualsCardProps | null>(
-    null,
-  );
-  const [cumulativeProps, setCumulativeProps] =
-    useState<DailyCumulativeCardProps | null>(null);
+  const [dailyProps, setDailyProps] = useState<DailyActualsCardProps | null>(null);
+  const [cumulativeProps, setCumulativeProps] = useState<DailyCumulativeCardProps | null>(null);
 
   // 月の範囲計算（start=月初、end=月末）
   const { start, end, year, monthNum } = useMemo(() => {
-    const monthStart = dayjs(month, "YYYY-MM").startOf("month");
-    const monthEnd = monthStart.endOf("month");
+    const monthStart = dayjs(month, 'YYYY-MM').startOf('month');
+    const monthEnd = monthStart.endOf('month');
     return {
-      start: monthStart.format("YYYY-MM-DD"),
-      end: monthEnd.format("YYYY-MM-DD"),
+      start: monthStart.format('YYYY-MM-DD'),
+      end: monthEnd.format('YYYY-MM-DD'),
       year: monthStart.year(),
       monthNum: monthStart.month() + 1,
     };
@@ -98,8 +91,8 @@ export function useInboundMonthlyVM(
           calendarMap = new Map(calendarData.map((d) => [d.ddate, d]));
         } catch (calErr) {
           console.warn(
-            "営業カレンダーデータの取得に失敗しました（フォールバックロジックを使用）:",
-            calErr,
+            '営業カレンダーデータの取得に失敗しました（フォールバックロジックを使用）:',
+            calErr
           );
         }
       }
@@ -109,18 +102,16 @@ export function useInboundMonthlyVM(
         start,
         end,
         segment: null,
-        cum_scope: "month",
+        cum_scope: 'month',
       });
 
       // 日次実績データ整形（営業カレンダーのステータスを統合）
       const dailyChartData = data.map((row) => {
         const calendarDay = calendarMap?.get(row.ddate);
-        const status = calendarDay
-          ? mapDayTypeToStatus(calendarDay.day_type)
-          : undefined;
+        const status = calendarDay ? mapDayTypeToStatus(calendarDay.day_type) : undefined;
 
         return {
-          label: dayjs(row.ddate).format("DD"),
+          label: dayjs(row.ddate).format('DD'),
           actual: row.ton,
           dateFull: row.ddate,
           prevMonth: row.prev_month_ton ?? null, // 先月（4週前）の同曜日データ
@@ -133,8 +124,8 @@ export function useInboundMonthlyVM(
       const cumulativeChartData = [
         // 0日目の初期値（月初前日=0t）
         {
-          label: "0",
-          yyyyMMdd: dayjs(start).subtract(1, "day").format("YYYY-MM-DD"),
+          label: '0',
+          yyyyMMdd: dayjs(start).subtract(1, 'day').format('YYYY-MM-DD'),
           actualCumulative: 0,
           prevMonthCumulative: 0,
           prevYearCumulative: 0,

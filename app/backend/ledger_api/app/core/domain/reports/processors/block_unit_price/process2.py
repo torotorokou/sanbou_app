@@ -1,13 +1,13 @@
 import pandas as pd
-from backend_shared.application.logging import create_log_context, get_module_logger
 from pandas import DataFrame
+
+from backend_shared.application.logging import create_log_context, get_module_logger
+
 
 logger = get_module_logger(__name__)
 
 
-def apply_transport_fee_by_vendor(
-    df_after: DataFrame, df_transport: DataFrame
-) -> DataFrame:
+def apply_transport_fee_by_vendor(df_after: DataFrame, df_transport: DataFrame) -> DataFrame:
     """運搬業者ごとの運搬費を適用する関数
 
     Args:
@@ -72,9 +72,7 @@ def apply_transport_fee_by_vendor(
     # デバッグ: マージ後の運搬費を確認
     if not updated_target_rows.empty and "運搬費" in updated_target_rows.columns:
         transport_fee_stats = updated_target_rows["運搬費"].describe().to_dict()
-        vendor_fee_summary = (
-            updated_target_rows.groupby("運搬業者")["運搬費"].first().to_dict()
-        )
+        vendor_fee_summary = updated_target_rows.groupby("運搬業者")["運搬費"].first().to_dict()
         logger.info(
             f"Transport fee applied - Vendor fees: {vendor_fee_summary}",
             extra=create_log_context(
@@ -95,9 +93,7 @@ def apply_transport_fee_by_vendor(
     return df_after
 
 
-def apply_weight_based_transport_fee(
-    df_after: DataFrame, df_transport: DataFrame
-) -> DataFrame:
+def apply_weight_based_transport_fee(df_after: DataFrame, df_transport: DataFrame) -> DataFrame:
     """運搬費係数を用いて重量ベースの運搬費を再計算する
 
     最適化: copy()を削減（mergeが新規DataFrameを返すため不要）
@@ -117,21 +113,13 @@ def apply_weight_based_transport_fee(
 
     if not t.empty:
         t["運搬費係数"] = t["運搬費"].str.extract(r"^(\d+)")[0].astype(float)
-        t = t.drop_duplicates(subset=["業者CD", "運搬業者"])[
-            ["業者CD", "運搬業者", "運搬費係数"]
-        ]
+        t = t.drop_duplicates(subset=["業者CD", "運搬業者"])[["業者CD", "運搬業者", "運搬費係数"]]
 
-        out = out.merge(
-            t, on=["業者CD", "運搬業者"], how="left", suffixes=("", "_formula")
-        )
+        out = out.merge(t, on=["業者CD", "運搬業者"], how="left", suffixes=("", "_formula"))
 
         has_coef = out["運搬費係数"].notna()
-        weight = pd.to_numeric(
-            out.get("正味重量", pd.Series(dtype="float64")), errors="coerce"
-        )
-        coef = pd.to_numeric(
-            out.get("運搬費係数", pd.Series(dtype="float64")), errors="coerce"
-        )
+        weight = pd.to_numeric(out.get("正味重量", pd.Series(dtype="float64")), errors="coerce")
+        coef = pd.to_numeric(out.get("運搬費係数", pd.Series(dtype="float64")), errors="coerce")
         out.loc[has_coef, "運搬費"] = (coef[has_coef] * weight[has_coef]).astype(float)
 
     return out
@@ -273,9 +261,7 @@ def create_cell_mapping(df: DataFrame) -> DataFrame:
     for i, (_, row) in enumerate(df.iterrows()):
         for column, cell_letter in column_to_cell.items():
             cell_position = f"{cell_letter}{start_row + i}"
-            cell_mappings.append(
-                {"大項目": column, "セル": cell_position, "値": row[column]}
-            )
+            cell_mappings.append({"大項目": column, "セル": cell_position, "値": row[column]})
 
     return pd.DataFrame(cell_mappings)
 

@@ -1,4 +1,5 @@
 import pandas as pd
+
 from app.infra.report_utils import (
     get_template_config,
     load_master_and_template,
@@ -27,9 +28,7 @@ def calculate_total_disposal_cost(
     cost_safe_shipment = int(
         calculate_safe_disposal_costs(df_shipment, unit_price_table)["値"].sum()
     )
-    cost_safe_yard = int(
-        calculate_yard_disposal_costs(df_yard, unit_price_table)["値"].sum()
-    )
+    cost_safe_yard = int(calculate_yard_disposal_costs(df_yard, unit_price_table)["値"].sum())
     total_cost = cost_by_vendor + cost_safe_shipment + cost_safe_yard
     return total_cost
 

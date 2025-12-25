@@ -5,4 +5,4 @@
  */
 
 // API Endpoints
-export * from "./apiEndpoints";
+export * from './apiEndpoints';

@@ -58,9 +58,7 @@ def clean_na_strings_vectorized(series: pd.Series) -> pd.Series:
     return result
 
 
-def apply_clean_na_strings_optimized(
-    df: pd.DataFrame, columns: list[str]
-) -> pd.DataFrame:
+def apply_clean_na_strings_optimized(df: pd.DataFrame, columns: list[str]) -> pd.DataFrame:
     """
     複数列に対してclean_na_strings_vectorizedを適用する。
 

@@ -6,14 +6,15 @@ from io import BytesIO
 from typing import Any
 
 import pandas as pd
+
 from backend_shared.application.logging import get_module_logger
+
 
 logger = get_module_logger(__name__)
 
+# CSV処理サービス（application/usecases/csvから参照）
 from app.infra.adapters.csv import CsvFormatterService, CsvValidatorService
 from app.infra.report_utils import get_template_config, write_values_to_template
-
-# CSV処理サービス（application/usecases/csvから参照）
 from backend_shared.config.config_loader import ReportTemplateConfigLoader
 from backend_shared.core.usecases.report_checker.check_csv_files import check_csv_files
 
@@ -43,14 +44,10 @@ class BaseReportGenerator(ABC):
         self._formatter = CsvFormatterService()
 
     def print_start_report_key(self):
-        logger.debug(
-            "Starting report generation", extra={"report_key": self.report_key}
-        )
+        logger.debug("Starting report generation", extra={"report_key": self.report_key})
 
     def print_finish_report_key(self):
-        logger.debug(
-            "Finished report generation", extra={"report_key": self.report_key}
-        )
+        logger.debug("Finished report generation", extra={"report_key": self.report_key})
 
     def preprocess(self, report_key: str | None = None):
         if report_key is None:
@@ -105,9 +102,7 @@ class BaseReportGenerator(ABC):
                         # 正規化
                         if isinstance(first, str):
                             try:
-                                dt = datetime.fromisoformat(
-                                    first[:19].replace("/", "-")
-                                )
+                                dt = datetime.fromisoformat(first[:19].replace("/", "-"))
                                 return dt.date().isoformat()
                             except Exception:
                                 try:

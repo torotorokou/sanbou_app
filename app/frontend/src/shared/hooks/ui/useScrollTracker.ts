@@ -1,9 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react';
 
-export function useScrollTracker(
-  ref: React.RefObject<HTMLElement>,
-  deps: unknown[],
-) {
+export function useScrollTracker(ref: React.RefObject<HTMLElement>, deps: unknown[]) {
   const [isAtBottom, setIsAtBottom] = useState(true);
   const [hasNewMessage, setHasNewMessage] = useState(false);
 
@@ -22,9 +19,9 @@ export function useScrollTracker(
     const el = ref.current;
     if (!el) return;
 
-    el.addEventListener("scroll", handleScroll);
+    el.addEventListener('scroll', handleScroll);
     return () => {
-      el.removeEventListener("scroll", handleScroll);
+      el.removeEventListener('scroll', handleScroll);
     };
   }, [ref]);
 

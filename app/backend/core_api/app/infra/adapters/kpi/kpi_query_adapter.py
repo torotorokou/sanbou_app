@@ -6,9 +6,10 @@ KPIQueryPortの実装。PostgreSQL/SQLAlchemyを使用してKPI集計データ�
 
 from datetime import date as date_type
 
-from app.infra.db.orm_models import ForecastJob, PredictionDaily
 from sqlalchemy import func
 from sqlalchemy.orm import Session
+
+from app.infra.db.orm_models import ForecastJob, PredictionDaily
 
 
 class KPIQueryAdapter:
@@ -39,9 +40,7 @@ class KPIQueryAdapter:
 
         # 完了ジョブ数をカウント(status='done')
         completed = (
-            self.db.query(func.count(ForecastJob.id))
-            .filter(ForecastJob.status == "done")
-            .scalar()
+            self.db.query(func.count(ForecastJob.id)).filter(ForecastJob.status == "done").scalar()
             or 0
         )
 

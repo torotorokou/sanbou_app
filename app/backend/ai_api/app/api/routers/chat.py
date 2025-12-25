@@ -1,7 +1,9 @@
+from fastapi import APIRouter
+
 from app.api.schemas.chat import ChatRequest
 from app.infra.adapters.gemini_client import GeminiClient
 from backend_shared.application.logging import get_module_logger
-from fastapi import APIRouter
+
 
 logger = get_module_logger(__name__)
 router = APIRouter()

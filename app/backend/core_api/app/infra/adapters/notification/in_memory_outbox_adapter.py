@@ -47,9 +47,7 @@ class InMemoryNotificationOutboxAdapter(NotificationOutboxPort):
                     },
                 )
 
-    def list_pending(
-        self, now: datetime, limit: int = 100
-    ) -> list[NotificationOutboxItem]:
+    def list_pending(self, now: datetime, limit: int = 100) -> list[NotificationOutboxItem]:
         """送信対象の pending アイテムを取得"""
         with self._lock:
             pending = []
@@ -90,9 +88,7 @@ class InMemoryNotificationOutboxAdapter(NotificationOutboxPort):
                 extra={"notification_id": str(id), "sent_at": sent_at.isoformat()},
             )
 
-    def mark_failed(
-        self, id: UUID, error: str, failure_type: FailureType, now: datetime
-    ) -> None:
+    def mark_failed(self, id: UUID, error: str, failure_type: FailureType, now: datetime) -> None:
         """送信失敗をマーク（TEMP/PERM対応）"""
         with self._lock:
             if id not in self._items:

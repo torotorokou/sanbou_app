@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 from functools import lru_cache
 
+
 DEFAULT_ASSET_ROUTE = "/core_api/manual/assets"
 
 

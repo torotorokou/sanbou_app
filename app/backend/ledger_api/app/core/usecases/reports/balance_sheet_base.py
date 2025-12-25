@@ -19,8 +19,10 @@ from dataclasses import dataclass
 from typing import Any
 
 import pandas as pd
+
 from app.infra.report_utils import get_unit_price_table_csv
 from backend_shared.application.logging import get_module_logger
+
 
 logger = get_module_logger(__name__)
 
@@ -106,17 +108,9 @@ def build_balance_sheet_base_data(df_dict: dict[str, Any]) -> BalanceSheetBaseDa
     # ========================================
     # 対象日決定
     # ========================================
-    if (
-        df_shipment is not None
-        and not df_shipment.empty
-        and "伝票日付" in df_shipment.columns
-    ):
+    if df_shipment is not None and not df_shipment.empty and "伝票日付" in df_shipment.columns:
         target_day = pd.to_datetime(df_shipment["伝票日付"].dropna().iloc[0])
-    elif (
-        df_receive is not None
-        and not df_receive.empty
-        and "伝票日付" in df_receive.columns
-    ):
+    elif df_receive is not None and not df_receive.empty and "伝票日付" in df_receive.columns:
         target_day = pd.to_datetime(df_receive["伝票日付"].dropna().iloc[0])
     else:
         target_day = pd.Timestamp.today()

@@ -1,8 +1,8 @@
-import React from "react";
-import { ReportBase, ReportHeader } from "@features/report";
-import { useReportManager } from "@features/report";
-import { useResponsive } from "@/shared";
-import styles from "./ReportPage.module.css";
+import React from 'react';
+import { ReportBase, ReportHeader } from '@features/report';
+import { useReportManager } from '@features/report';
+import { useResponsive } from '@/shared';
+import styles from './ReportPage.module.css';
 
 /**
  * レポート管理ページ - シンプルで保守しやすい設計
@@ -25,7 +25,7 @@ import styles from "./ReportPage.module.css";
 const ManagePage: React.FC = () => {
   // responsive: 3段階判定（Mobile/Tablet/Desktop）
   const { flags } = useResponsive();
-  const reportManager = useReportManager("factory_report");
+  const reportManager = useReportManager('factory_report');
   // useMemoでメモ化されたprops（関数ではなくオブジェクト）
   const reportBaseProps = reportManager.getReportBaseProps;
 
@@ -47,7 +47,7 @@ const ManagePage: React.FC = () => {
       className={styles.pageContainer}
       style={{
         // responsive: CSS変数でパディングを段階的に制御
-        ["--page-padding" as string]: `${pagePadding}px`,
+        ['--page-padding' as string]: `${pagePadding}px`,
         gap: `${contentGap}px`,
       }}
     >

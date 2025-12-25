@@ -7,6 +7,9 @@ import calendar
 from datetime import UTC
 from datetime import date as date_type
 
+from sqlalchemy import select, text, update
+from sqlalchemy.orm import Session
+
 from app.core.domain.reservation import (
     ReservationForecastRow,
     ReservationManualRow,
@@ -14,8 +17,6 @@ from app.core.domain.reservation import (
 from app.core.ports.reservation_repository_port import ReservationRepository
 from app.infra.db.orm_models import ReserveDailyManual
 from backend_shared.application.logging import get_module_logger
-from sqlalchemy import select, text, update
-from sqlalchemy.orm import Session
 
 logger = get_module_logger(__name__)
 
@@ -37,7 +38,7 @@ class ReservationRepositoryImpl(ReservationRepository):
         try:
             stmt = select(ReserveDailyManual).where(
                 ReserveDailyManual.reserve_date == reserve_date,
-                ReserveDailyManual.deleted_at == None,  # 論理削除を除外
+                ReserveDailyManual.deleted_at is None,  # 論理削除を除外
             )
             result = self.db.execute(stmt).scalar_one_or_none()
 
@@ -57,7 +58,7 @@ class ReservationRepositoryImpl(ReservationRepository):
             existing = self.db.execute(
                 select(ReserveDailyManual).where(
                     ReserveDailyManual.reserve_date == data.reserve_date,
-                    ReserveDailyManual.deleted_at == None,
+                    ReserveDailyManual.deleted_at is None,
                 )
             ).scalar_one_or_none()
 
@@ -65,7 +66,7 @@ class ReservationRepositoryImpl(ReservationRepository):
             deleted_existing = self.db.execute(
                 select(ReserveDailyManual).where(
                     ReserveDailyManual.reserve_date == data.reserve_date,
-                    ReserveDailyManual.deleted_at != None,
+                    ReserveDailyManual.deleted_at is not None,
                 )
             ).scalar_one_or_none()
 
@@ -75,7 +76,7 @@ class ReservationRepositoryImpl(ReservationRepository):
                     update(ReserveDailyManual)
                     .where(
                         ReserveDailyManual.reserve_date == data.reserve_date,
-                        ReserveDailyManual.deleted_at == None,
+                        ReserveDailyManual.deleted_at is None,
                     )
                     .values(
                         total_trucks=data.total_trucks,
@@ -134,7 +135,7 @@ class ReservationRepositoryImpl(ReservationRepository):
                 update(ReserveDailyManual)
                 .where(
                     ReserveDailyManual.reserve_date == reserve_date,
-                    ReserveDailyManual.deleted_at == None,  # 既に削除済みは除外
+                    ReserveDailyManual.deleted_at is None,  # 既に削除済みは除外
                 )
                 .values(
                     deleted_at=datetime.now(UTC),
@@ -146,9 +147,7 @@ class ReservationRepositoryImpl(ReservationRepository):
             return result.rowcount > 0
         except Exception as e:
             self.db.rollback()
-            logger.error(
-                f"Failed to soft-delete manual reservation: {e}", exc_info=True
-            )
+            logger.error(f"Failed to soft-delete manual reservation: {e}", exc_info=True)
             raise
 
     # ========================================
@@ -178,9 +177,7 @@ class ReservationRepositoryImpl(ReservationRepository):
             """
             )
 
-            result = self.db.execute(
-                sql, {"start_date": start_date, "end_date": end_date}
-            )
+            result = self.db.execute(sql, {"start_date": start_date, "end_date": end_date})
 
             rows = []
             for row in result:

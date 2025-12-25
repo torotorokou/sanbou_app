@@ -8,6 +8,9 @@
 
 from typing import Any
 
+from fastapi import APIRouter, BackgroundTasks, File, UploadFile
+from pydantic import BaseModel
+
 # 移行済みの実装ファイルからインポート
 from app.core.usecases.reports.interactive import BlockUnitPriceInteractive
 from app.core.usecases.reports.processors.interactive_report_processing_service import (
@@ -15,8 +18,7 @@ from app.core.usecases.reports.processors.interactive_report_processing_service 
 )
 from backend_shared.application.logging import create_log_context, get_module_logger
 from backend_shared.infra.adapters.fastapi.error_handlers import DomainError
-from fastapi import APIRouter, BackgroundTasks, File, UploadFile
-from pydantic import BaseModel
+
 
 router = APIRouter()
 tag_name = "Block Unit Price"
@@ -45,9 +47,7 @@ def _raise_if_error_payload(result: Any) -> None:
     if isinstance(result, dict) and result.get("status") == "error":
         code = result.get("code", "PROCESSING_ERROR")
         detail = result.get("detail") or result.get("message") or "処理に失敗しました"
-        raise DomainError(
-            code=code, status=422, user_message=detail, title="処理エラー"
-        )
+        raise DomainError(code=code, status=422, user_message=detail, title="処理エラー")
 
 
 @router.post("/initial", tags=[tag_name])
@@ -183,9 +183,7 @@ async def apply_transport_selection(request: TransportSelectionRequest):
 
 
 @router.post("/finalize", tags=[tag_name])
-async def finalize_calculation(
-    request: FinalizeRequest, background_tasks: BackgroundTasks
-) -> Any:
+async def finalize_calculation(request: FinalizeRequest, background_tasks: BackgroundTasks) -> Any:
     """
     最終計算処理 (Step 2)
     - 一本化運用：{session_id, selections} を同送 → 選択適用→最終計算を一括実行

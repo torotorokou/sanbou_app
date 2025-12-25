@@ -1,4 +1,5 @@
 import pandas as pd
+
 from app.infra.report_utils import MainPath
 from backend_shared.utils.dataframe_utils import clean_na_strings
 

@@ -3,4 +3,4 @@
  * 開発中機能の警告バナーコンポーネント
  */
 
-export { WipNotice, type WipNoticeProps } from "./ui/WipNotice";
+export { WipNotice, type WipNoticeProps } from './ui/WipNotice';

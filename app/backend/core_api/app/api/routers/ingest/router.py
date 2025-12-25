@@ -15,13 +15,14 @@ Ingest Router - CSVアップロードと予約登録エンドポイント
 import io
 
 import pandas as pd
+from fastapi import APIRouter, Depends, File, UploadFile
+
 from app.api.schemas import ReservationCreate, ReservationResponse
 from app.config.di_providers import get_create_reservation_uc, get_upload_ingest_csv_uc
 from app.core.usecases.ingest.create_reservation_uc import CreateReservationUseCase
 from app.core.usecases.ingest.upload_ingest_csv_uc import UploadIngestCsvUseCase
-from backend_shared.application.logging import get_module_logger
+from backend_shared.application.logging import create_log_context, get_module_logger
 from backend_shared.core.domain.exceptions import InfrastructureError, ValidationError
-from fastapi import APIRouter, Depends, File, UploadFile
 
 router = APIRouter(prefix="/ingest", tags=["ingest"])
 logger = get_module_logger(__name__)
@@ -87,9 +88,7 @@ async def upload_csv(
         raise InfrastructureError("Failed to process CSV", cause=e)
 
 
-@router.post(
-    "/reserve", response_model=ReservationResponse, summary="Create truck reservation"
-)
+@router.post("/reserve", response_model=ReservationResponse, summary="Create truck reservation")
 def create_reservation(
     req: ReservationCreate,
     uc: CreateReservationUseCase = Depends(get_create_reservation_uc),

@@ -12,33 +12,67 @@
 /* IMPORTANT: このCSSのメディアクエリ閾値は `src/shared/constants/breakpoints.ts` と同期させること。
   Lean-3: mobile ≤767, tablet 768–1279, desktop ≥1280 */
 
-html, body, #root { height: 100%; }
+html,
+body,
+#root {
+  height: 100%;
+}
 
-body { line-height: 1.6; overflow-x: clip; }
+body {
+  line-height: 1.6;
+  overflow-x: clip;
+}
 
-.ant-layout { min-height: 100vh; }
+.ant-layout {
+  min-height: 100vh;
+}
 @supports (min-height: 100dvh) {
-  .ant-layout { min-height: 100dvh; }
+  .ant-layout {
+    min-height: 100dvh;
+  }
 }
 
 /* Media elements only */
-img, video, canvas, svg { max-width: 100%; height: auto; }
+img,
+video,
+canvas,
+svg {
+  max-width: 100%;
+  height: auto;
+}
 
 /* Horizontal scroll utility for wide content (e.g., tables) */
-.responsive-x { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.responsive-x {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
 
 /* mobile: ≤ 767px (md未満) */
 @media (--lt-md) {
-  .ant-card { margin: 8px 0; border-radius: 8px; }
-  .ant-layout-content { padding: 12px; }
-  .ant-table { font-size: 12px; }
+  .ant-card {
+    margin: 8px 0;
+    border-radius: 8px;
+  }
+  .ant-layout-content {
+    padding: 12px;
+  }
+  .ant-table {
+    font-size: 12px;
+  }
 }
 
 /* tablet+: ≥768px (タブレット以上) */
 @media (--ge-md) {
-  .ant-card { margin: 12px 0; border-radius: 10px; }
-  .ant-layout-content { padding: 16px; }
-  .ant-table { font-size: 13px; }
+  .ant-card {
+    margin: 12px 0;
+    border-radius: 10px;
+  }
+  .ant-layout-content {
+    padding: 16px;
+  }
+  .ant-table {
+    font-size: 13px;
+  }
   /* mdでサイドバーを常時表示するための調整 */
   .ant-layout-sider {
     display: block !important;
@@ -54,8 +88,13 @@ img, video, canvas, svg { max-width: 100%; height: auto; }
 
 /* desktop: ≥ 1280px */
 @media (--ge-xl) {
-  .ant-card { margin: 16px 0; border-radius: 12px; }
-  .ant-layout-content { padding: 24px; }
+  .ant-card {
+    margin: 16px 0;
+    border-radius: 12px;
+  }
+  .ant-layout-content {
+    padding: 24px;
+  }
 }
 
 /* Dashboard specific adjustments */
@@ -71,17 +110,31 @@ img, video, canvas, svg { max-width: 100%; height: auto; }
 }
 
 @media (--lt-md) {
-  .inbound-forecast-grid { grid-template-rows: auto auto auto; }
-  .dashboard-month-picker { width: 100px; }
+  .inbound-forecast-grid {
+    grid-template-rows: auto auto auto;
+  }
+  .dashboard-month-picker {
+    width: 100px;
+  }
 }
 
 /* md+: タブレット・デスクトップでの調整 */
 @media (--ge-md) {
-  .inbound-forecast-grid { grid-template-rows: auto 1fr 1fr; }
-  .dashboard-month-picker { width: 120px; }
+  .inbound-forecast-grid {
+    grid-template-rows: auto 1fr 1fr;
+  }
+  .dashboard-month-picker {
+    width: 120px;
+  }
 }
 
 @media print {
-  .ant-layout-sider, .ant-drawer { display: none !important; }
-  .ant-layout-content { margin: 0 !important; padding: 0 !important; }
+  .ant-layout-sider,
+  .ant-drawer {
+    display: none !important;
+  }
+  .ant-layout-content {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
 }

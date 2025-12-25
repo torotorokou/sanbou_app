@@ -46,9 +46,7 @@ class ForecastJob(Base):
     payload_json = Column(JSON, nullable=True)
     error_message = Column(Text, nullable=True)
     created_at = Column(TIMESTAMP, nullable=False, default=func.now())
-    updated_at = Column(
-        TIMESTAMP, nullable=False, default=func.now(), onupdate=func.now()
-    )
+    updated_at = Column(TIMESTAMP, nullable=False, default=func.now(), onupdate=func.now())
 
 
 # ========================================
@@ -100,9 +98,7 @@ class InboundReservation(Base):
     date = Column(Date, primary_key=True)
     trucks = Column(Integer, nullable=False)
     created_at = Column(TIMESTAMP, nullable=False, default=func.now())
-    updated_at = Column(
-        TIMESTAMP, nullable=False, default=func.now(), onupdate=func.now()
-    )
+    updated_at = Column(TIMESTAMP, nullable=False, default=func.now(), onupdate=func.now())
 
 
 # ========================================
@@ -208,9 +204,7 @@ class ReserveCustomerDaily(Base):
     customer_cd = Column(Text, nullable=False)
     customer_name = Column(Text, nullable=True)
     planned_trucks = Column(Integer, nullable=False, default=0)
-    is_fixed_customer = Column(
-        Integer, nullable=False, default=False
-    )  # Boolean stored as int
+    is_fixed_customer = Column(Integer, nullable=False, default=False)  # Boolean stored as int
     note = Column(Text, nullable=True)
     created_by = Column(Text, nullable=True)
     updated_by = Column(Text, nullable=True)
@@ -257,7 +251,7 @@ class NotificationOutboxORM(Base):
 # ========================================
 
 # 動的モデルをインポート
-from app.infra.db.dynamic_models import (
+from app.infra.db.dynamic_models import (  # noqa: E402
     ReceiveShogunFlash,
     ShipmentShogunFlash,
     YardShogunFlash,

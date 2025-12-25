@@ -22,16 +22,11 @@
  * ```
  */
 
-import { useState, useCallback, useRef } from "react";
-import { coreApi } from "@/shared";
+import { useState, useCallback, useRef } from 'react';
+import { coreApi } from '@/shared';
 
-export type ServiceStatus =
-  | "healthy"
-  | "unhealthy"
-  | "timeout"
-  | "error"
-  | "unknown";
-export type OverallStatus = "healthy" | "degraded" | "critical" | "unknown";
+export type ServiceStatus = 'healthy' | 'unhealthy' | 'timeout' | 'error' | 'unknown';
+export type OverallStatus = 'healthy' | 'degraded' | 'critical' | 'unknown';
 
 export interface ServiceHealth {
   status: ServiceStatus;
@@ -74,9 +69,7 @@ export interface UseSystemHealthReturn {
  * @param _options - 将来的な拡張用オプション（現在は未使用）
  */
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-export function useSystemHealth(
-  _options: UseSystemHealthOptions = {},
-): UseSystemHealthReturn {
+export function useSystemHealth(_options: UseSystemHealthOptions = {}): UseSystemHealthReturn {
   // Note: autoCheckOnMount is intentionally not used.
   // Health checks are manual-only by design.
 
@@ -88,7 +81,7 @@ export function useSystemHealth(
 
   const checkHealth = useCallback(async () => {
     if (isCheckingRef.current) {
-      console.warn("[useSystemHealth] Health check already in progress");
+      console.warn('[useSystemHealth] Health check already in progress');
       return;
     }
 
@@ -97,15 +90,13 @@ export function useSystemHealth(
     setError(null);
 
     try {
-      const result = await coreApi.get<SystemHealthStatus>(
-        "/core_api/health/services",
-      );
+      const result = await coreApi.get<SystemHealthStatus>('/core_api/health/services');
       setStatus(result);
       setLastChecked(new Date());
     } catch (err) {
-      const errorObj = err instanceof Error ? err : new Error("Unknown error");
+      const errorObj = err instanceof Error ? err : new Error('Unknown error');
       setError(errorObj);
-      console.error("[useSystemHealth] Health check failed:", errorObj);
+      console.error('[useSystemHealth] Health check failed:', errorObj);
     } finally {
       setIsChecking(false);
       isCheckingRef.current = false;

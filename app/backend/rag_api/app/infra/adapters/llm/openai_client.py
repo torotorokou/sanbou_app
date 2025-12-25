@@ -4,12 +4,14 @@ OpenAI APIを用いたAI回答生成クライアント。
 
 import os
 
+from dotenv import load_dotenv
+from openai import OpenAI
+
 from app.config.constants import build_prompt
 from app.config.paths import CONFIG_ENV
 from app.shared.chunk_utils import search_documents_with_category
 from app.shared.env_loader import load_env_and_secrets
-from dotenv import load_dotenv
-from openai import OpenAI
+
 
 print(f"[DEBUG] .env path: {CONFIG_ENV}")
 load_dotenv(dotenv_path=str(CONFIG_ENV))
@@ -41,9 +43,7 @@ def generate_answer(
     Returns:
         dict: 回答、参照元、ページ情報
     """
-    retrieved = search_documents_with_category(
-        query, category, json_data, vectorstore, tags=tags
-    )
+    retrieved = search_documents_with_category(query, category, json_data, vectorstore, tags=tags)
     try:
         print(
             "[DEBUG][openai_client] retrieved count:",
@@ -70,10 +70,7 @@ def generate_answer(
         if isinstance(r, dict):
             source = r.get("source")
             page_num = (
-                r.get("page")
-                or r.get("PAGE")
-                or r.get("page_number")
-                or r.get("PAGE_NUMBER")
+                r.get("page") or r.get("PAGE") or r.get("page_number") or r.get("PAGE_NUMBER")
             )
         elif isinstance(r, (list, tuple)) and len(r) > 2 and isinstance(r[2], dict):
             source = r[0]

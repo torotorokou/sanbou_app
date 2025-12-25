@@ -25,9 +25,7 @@ def _table_exists(schema: str, table: str) -> bool:
         return False
     conn = op.get_bind()
     qualified = f"{schema}.{table}"
-    return bool(
-        conn.scalar(sa.text("SELECT to_regclass(:q) IS NOT NULL"), {"q": qualified})
-    )
+    return bool(conn.scalar(sa.text("SELECT to_regclass(:q) IS NOT NULL"), {"q": qualified}))
 
 
 def upgrade():
@@ -155,9 +153,7 @@ def upgrade():
         )
 
         # インデックス作成
-        op.create_index(
-            "idx_shipment_raw_file_id", "shipment_raw", ["file_id"], schema="raw"
-        )
+        op.create_index("idx_shipment_raw_file_id", "shipment_raw", ["file_id"], schema="raw")
         op.create_index(
             "idx_shipment_raw_file_row",
             "shipment_raw",

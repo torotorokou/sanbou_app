@@ -5,10 +5,11 @@ Artifacts - レポートアーティファクト(Excel/PDF)ストリーミング
 import os
 
 import httpx
-from backend_shared.application.logging import create_log_context, get_module_logger
-from backend_shared.core.domain.exceptions import ExternalServiceError
 from fastapi import APIRouter, Request
 from fastapi.responses import StreamingResponse
+
+from backend_shared.application.logging import create_log_context, get_module_logger
+from backend_shared.core.domain.exceptions import ExternalServiceError
 
 logger = get_module_logger(__name__)
 
@@ -18,9 +19,7 @@ LEDGER_API_BASE = os.getenv("LEDGER_API_BASE", "http://ledger_api:8000")
 
 
 @router.get("/artifacts/{report_key}/{date}/{token}/{filename}")
-async def proxy_artifact(
-    report_key: str, date: str, token: str, filename: str, request: Request
-):
+async def proxy_artifact(report_key: str, date: str, token: str, filename: str, request: Request):
     """
     レポートアーティファクト（Excel/PDF）の取得をledger_apiにプロキシ
 
@@ -54,9 +53,7 @@ async def proxy_artifact(
 
     logger.info(
         "[BFF] Proxying artifact request",
-        extra=create_log_context(
-            operation="proxy_report_artifact", upstream_url=upstream_url
-        ),
+        extra=create_log_context(operation="proxy_report_artifact", upstream_url=upstream_url),
     )
 
     # Range, ETag, キャッシュ関連ヘッダーを透過
@@ -109,9 +106,7 @@ async def proxy_artifact(
                 "content-range",  # Range request の場合
             ]:
                 if header_name in upstream_response.headers:
-                    passthrough_res_headers[header_name] = upstream_response.headers[
-                        header_name
-                    ]
+                    passthrough_res_headers[header_name] = upstream_response.headers[header_name]
 
             logger.info(
                 f"[BFF] Streaming artifact: {filename}, "
@@ -121,9 +116,7 @@ async def proxy_artifact(
 
             # ストリーミングレスポンス（メモリ効率的）
             async def iter_stream():
-                async for chunk in upstream_response.aiter_bytes(
-                    chunk_size=65536
-                ):  # 64KB chunks
+                async for chunk in upstream_response.aiter_bytes(chunk_size=65536):  # 64KB chunks
                     yield chunk
 
             return StreamingResponse(

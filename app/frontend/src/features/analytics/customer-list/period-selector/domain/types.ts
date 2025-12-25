@@ -4,7 +4,7 @@
  * 期間選択機能を独立したサブフィーチャーとして実装
  */
 
-import type { Dayjs } from "dayjs";
+import type { Dayjs } from 'dayjs';
 
 /**
  * 期間範囲

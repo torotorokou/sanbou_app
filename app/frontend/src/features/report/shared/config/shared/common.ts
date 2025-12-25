@@ -1,9 +1,9 @@
 // /app/src/constants/reportConfig/shared/common.ts
-import React from "react";
-import { Spin } from "antd";
-import { CheckCircleOutlined } from "@ant-design/icons";
-import type { CsvConfigGroup, ModalStepConfig, ReportConfig } from "./types";
-import { REPORT_ENDPOINTS, getReportEndpoint } from "@shared";
+import React from 'react';
+import { Spin } from 'antd';
+import { CheckCircleOutlined } from '@ant-design/icons';
+import type { CsvConfigGroup, ModalStepConfig, ReportConfig } from './types';
+import { REPORT_ENDPOINTS, getReportEndpoint } from '@shared';
 
 // ==============================
 // 🌐 共通定数・設定
@@ -54,13 +54,13 @@ export const getApiEndpoint = getReportEndpoint;
  */
 export const INTERACTIVE_REPORTS = {
   block_unit_price: {
-    modalComponent: "BlockUnitPriceInteractiveModal",
+    modalComponent: 'BlockUnitPriceInteractiveModal',
     multiStep: true,
     requiresUserInput: true,
   },
   // 将来的な追加用
   custom_pricing: {
-    modalComponent: "CustomPricingModal",
+    modalComponent: 'CustomPricingModal',
     multiStep: true,
     requiresUserInput: true,
   },
@@ -69,25 +69,25 @@ export const INTERACTIVE_REPORTS = {
 // 共通のシンプルなモーダルステップ（作成中 -> 完了）
 export const SIMPLE_CREATE_AND_DONE_STEPS: ModalStepConfig[] = [
   {
-    label: "帳簿作成中",
+    label: '帳簿作成中',
     content: React.createElement(
-      "div",
-      { style: { textAlign: "center", padding: 24 } },
-      React.createElement(Spin, { size: "large" }),
+      'div',
+      { style: { textAlign: 'center', padding: 24 } },
+      React.createElement(Spin, { size: 'large' })
     ),
     showNext: false,
     showClose: false,
   },
   {
-    label: "完了",
+    label: '完了',
     content: React.createElement(
-      "div",
-      { style: { textAlign: "center", padding: 40 } },
+      'div',
+      { style: { textAlign: 'center', padding: 40 } },
       React.createElement(CheckCircleOutlined, {
-        style: { fontSize: 48, color: "#52c41a" },
+        style: { fontSize: 48, color: '#52c41a' },
       }),
-      React.createElement("h3", { style: { marginTop: 16 } }, "完了しました！"),
-      React.createElement("p", {}, "帳簿が正常に生成されました。"),
+      React.createElement('h3', { style: { marginTop: 16 } }, '完了しました！'),
+      React.createElement('p', {}, '帳簿が正常に生成されました。')
     ),
     showNext: false,
     showClose: true,
@@ -107,19 +107,17 @@ export const isInteractiveReport = (reportKey: string): boolean => {
 export const createReportConfig = <T extends string>(
   csvConfigMap: Record<T, CsvConfigGroup>,
   modalStepsMap: Record<T, ModalStepConfig[]>,
-  pdfPreviewMap: Record<T, string>,
+  pdfPreviewMap: Record<T, string>
 ): Record<T, ReportConfig> => {
   return Object.fromEntries(
     Object.keys(csvConfigMap).map((key) => [
       key,
       {
         csvConfigs: csvConfigMap[key as T],
-        steps: modalStepsMap[key as T].map(
-          (step: ModalStepConfig) => step.label,
-        ),
+        steps: modalStepsMap[key as T].map((step: ModalStepConfig) => step.label),
         previewImage: pdfPreviewMap[key as T],
         modalSteps: modalStepsMap[key as T],
       },
-    ]),
+    ])
   ) as Record<T, ReportConfig>;
 };

@@ -3,12 +3,12 @@
  * 特定の日付のアップロード一覧を表示し、削除操作を提供
  */
 
-import React, { useState } from "react";
-import { Modal, Table, Button, Space } from "antd";
-import { DeleteOutlined } from "@ant-design/icons";
-import { notifyError, notifySuccess } from "@features/notification";
-import type { UploadCalendarItem } from "../model/types";
-import { getCsvUploadKindMaster } from "../model/types";
+import React, { useState } from 'react';
+import { Modal, Table, Button, Space } from 'antd';
+import { DeleteOutlined } from '@ant-design/icons';
+import { notifyError, notifySuccess } from '@features/notification';
+import type { UploadCalendarItem } from '../model/types';
+import { getCsvUploadKindMaster } from '../model/types';
 
 interface UploadDetailModalProps {
   date: string; // 'YYYY-MM-DD'
@@ -18,7 +18,7 @@ interface UploadDetailModalProps {
   onDelete: (params: {
     uploadFileId: number;
     date: string;
-    csvKind: UploadCalendarItem["kind"];
+    csvKind: UploadCalendarItem['kind'];
   }) => Promise<void>;
 }
 
@@ -35,12 +35,12 @@ export const UploadDetailModal: React.FC<UploadDetailModalProps> = ({
 
   const handleDelete = async (upload: UploadCalendarItem) => {
     const confirmed = window.confirm(
-      `データ数: ${upload.rowCount.toLocaleString()}行 を削除しますか？`,
+      `データ数: ${upload.rowCount.toLocaleString()}行 を削除しますか？`
     );
     if (!confirmed) return;
 
     if (!upload.uploadFileId) {
-      notifyError("エラー", "uploadFileIdが見つかりません");
+      notifyError('エラー', 'uploadFileIdが見つかりません');
       return;
     }
 
@@ -55,14 +55,14 @@ export const UploadDetailModal: React.FC<UploadDetailModalProps> = ({
       // 削除成功したらIDをセットに追加（即座にボタンを無効化）
       setDeletedIds((prev) => new Set(prev).add(upload.id));
 
-      notifySuccess("削除完了", "削除しました");
+      notifySuccess('削除完了', '削除しました');
       // 削除後、アップロードが0件になった場合はモーダルを閉じる
       if (uploads.length <= 1) {
         onClose();
       }
     } catch (error) {
-      console.error("Failed to delete upload:", error);
-      notifyError("エラー", "削除に失敗しました");
+      console.error('Failed to delete upload:', error);
+      notifyError('エラー', '削除に失敗しました');
     } finally {
       setDeletingId(null);
     }
@@ -70,23 +70,21 @@ export const UploadDetailModal: React.FC<UploadDetailModalProps> = ({
 
   const columns = [
     {
-      title: "カテゴリ",
-      dataIndex: "kind",
-      key: "category",
-      width: "25%",
+      title: 'カテゴリ',
+      dataIndex: 'kind',
+      key: 'category',
+      width: '25%',
       render: (kind: string) => {
-        const master = getCsvUploadKindMaster(
-          kind as UploadCalendarItem["kind"],
-        );
+        const master = getCsvUploadKindMaster(kind as UploadCalendarItem['kind']);
         return (
           <Space>
             <span
               style={{
-                display: "inline-block",
+                display: 'inline-block',
                 width: 10,
                 height: 10,
-                borderRadius: "50%",
-                backgroundColor: master?.color || "#d9d9d9",
+                borderRadius: '50%',
+                backgroundColor: master?.color || '#d9d9d9',
               }}
             />
             <span>{master?.category || kind}</span>
@@ -95,31 +93,29 @@ export const UploadDetailModal: React.FC<UploadDetailModalProps> = ({
       },
     },
     {
-      title: "CSV種別",
-      dataIndex: "kind",
-      key: "kind",
-      width: "25%",
+      title: 'CSV種別',
+      dataIndex: 'kind',
+      key: 'kind',
+      width: '25%',
       render: (kind: string) => {
-        const master = getCsvUploadKindMaster(
-          kind as UploadCalendarItem["kind"],
-        );
+        const master = getCsvUploadKindMaster(kind as UploadCalendarItem['kind']);
         // ラベルから「将軍速報版 」などのプレフィックスを除いた部分を表示
         const label = master?.label || kind;
-        const parts = label.split(" ");
-        return parts.length > 1 ? parts.slice(1).join(" ") : label;
+        const parts = label.split(' ');
+        return parts.length > 1 ? parts.slice(1).join(' ') : label;
       },
     },
     {
-      title: "データ数",
-      dataIndex: "rowCount",
-      key: "rowCount",
-      width: "25%",
+      title: 'データ数',
+      dataIndex: 'rowCount',
+      key: 'rowCount',
+      width: '25%',
       render: (count: number) => `${count.toLocaleString()}行`,
     },
     {
-      title: "操作",
-      key: "action",
-      width: "25%",
+      title: '操作',
+      key: 'action',
+      width: '25%',
       render: (_: unknown, record: UploadCalendarItem) => {
         const isDeleted = record.deleted || deletedIds.has(record.id);
         return (
@@ -131,7 +127,7 @@ export const UploadDetailModal: React.FC<UploadDetailModalProps> = ({
             disabled={isDeleted}
             onClick={() => void handleDelete(record)}
           >
-            {isDeleted ? "削除済み" : "削除"}
+            {isDeleted ? '削除済み' : '削除'}
           </Button>
         );
       },
@@ -146,13 +142,7 @@ export const UploadDetailModal: React.FC<UploadDetailModalProps> = ({
       footer={null}
       width={700}
     >
-      <Table
-        dataSource={uploads}
-        columns={columns}
-        rowKey="id"
-        pagination={false}
-        size="small"
-      />
+      <Table dataSource={uploads} columns={columns} rowKey="id" pagination={false} size="small" />
     </Modal>
   );
 };

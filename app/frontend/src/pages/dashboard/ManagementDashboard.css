@@ -1,5 +1,5 @@
 /* Responsive dashboard layout for ManagementDashboard */
-@import "@/shared/styles/custom-media.css";
+@import '@/shared/styles/custom-media.css';
 
 .dashboard-root {
   padding: 16px;
@@ -131,7 +131,8 @@
   }
 
   /* 左右カラムを等幅にする */
-  .left-column, .right-column {
+  .left-column,
+  .right-column {
     flex: 1 1 50%;
     display: flex;
     flex-direction: column;

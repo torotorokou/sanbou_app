@@ -13,7 +13,7 @@ export {
   CSV_DEFINITIONS,
   type CsvDefinition,
   type CsvType,
-} from "./model/useCsvToolsVM";
+} from './model/useCsvToolsVM';
 
 // Ports
-export type { ICsvRepository } from "./ports/repository";
+export type { ICsvRepository } from './ports/repository';

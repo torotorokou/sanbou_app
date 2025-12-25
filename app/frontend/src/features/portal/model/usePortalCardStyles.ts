@@ -1,15 +1,10 @@
 /**
  * PortalCardのスタイル計算ロジックを集約するカスタムフック
  */
-import { useMemo } from "react";
-import { theme } from "antd";
-import { getGradient, getReadableTextColor } from "./colorUtils";
-import {
-  CARD_HEIGHT,
-  BUTTON_WIDTH,
-  BUTTON_HEIGHT,
-  BUTTON_FONT_SIZE,
-} from "../domain/constants";
+import { useMemo } from 'react';
+import { theme } from 'antd';
+import { getGradient, getReadableTextColor } from './colorUtils';
+import { CARD_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, BUTTON_FONT_SIZE } from '../domain/constants';
 
 interface PortalCardStyleConfig {
   color?: string;
@@ -43,7 +38,7 @@ export const usePortalCardStyles = (config: PortalCardStyleConfig) => {
     // コンパクトレイアウト時の高さ
     const COMPACT_CARD_HEIGHT = 100;
     const appliedCardHeight = Math.round(
-      (compactLayout ? COMPACT_CARD_HEIGHT : CARD_HEIGHT) * scale,
+      (compactLayout ? COMPACT_CARD_HEIGHT : CARD_HEIGHT) * scale
     );
     const appliedButtonHeight = Math.round(BUTTON_HEIGHT * scale);
     const appliedButtonFontSize = Math.round(BUTTON_FONT_SIZE * scale);
@@ -53,24 +48,15 @@ export const usePortalCardStyles = (config: PortalCardStyleConfig) => {
 
     // 小画面用のスケール
     const isSmallButton = !!smallButton;
-    const SMALL_SCREEN_SCALE =
-      hideButton && !isSmallButton ? 0.7 : isSmallButton ? 0.82 : 1;
+    const SMALL_SCREEN_SCALE = hideButton && !isSmallButton ? 0.7 : isSmallButton ? 0.82 : 1;
     const hs = heightScale;
 
     // 最終的なサイズ計算
-    const finalCardHeight = Math.round(
-      appliedCardHeight * SMALL_SCREEN_SCALE * hs,
-    );
+    const finalCardHeight = Math.round(appliedCardHeight * SMALL_SCREEN_SCALE * hs);
     const finalIconSize = Math.round(appliedIconSize * SMALL_SCREEN_SCALE);
-    const finalIconFontSize = Math.round(
-      appliedIconFontSize * SMALL_SCREEN_SCALE,
-    );
-    const finalButtonHeight = Math.round(
-      appliedButtonHeight * SMALL_SCREEN_SCALE,
-    );
-    const finalButtonWidth = Math.round(
-      appliedButtonWidthScaled * SMALL_SCREEN_SCALE,
-    );
+    const finalIconFontSize = Math.round(appliedIconFontSize * SMALL_SCREEN_SCALE);
+    const finalButtonHeight = Math.round(appliedButtonHeight * SMALL_SCREEN_SCALE);
+    const finalButtonWidth = Math.round(appliedButtonWidthScaled * SMALL_SCREEN_SCALE);
 
     const isButtonHidden = !!hideButton && !isSmallButton;
 
@@ -78,7 +64,7 @@ export const usePortalCardStyles = (config: PortalCardStyleConfig) => {
     const titleFontSize = isSmallButton
       ? `clamp(14px, 3.6vw, 18px)`
       : hideButton
-        ? "18px"
+        ? '18px'
         : compactLayout
           ? `clamp(${Math.max(12, Math.round(appliedButtonFontSize * SMALL_SCREEN_SCALE))}px, 3.2vw, ${Math.round(appliedButtonFontSize * SMALL_SCREEN_SCALE) + 6}px)`
           : `clamp(${Math.max(12, Math.round((appliedButtonFontSize + 2) * SMALL_SCREEN_SCALE))}px, 2.4vw, ${Math.round((appliedButtonFontSize + 6) * SMALL_SCREEN_SCALE)}px)`;
@@ -90,7 +76,7 @@ export const usePortalCardStyles = (config: PortalCardStyleConfig) => {
 
     // ボタンフォントサイズの計算
     const buttonFontSize = isSmallButton
-      ? "12px"
+      ? '12px'
       : `clamp(${Math.max(10, Math.round((appliedButtonFontSize - 2) * SMALL_SCREEN_SCALE))}px, 1.6vw, ${Math.round(appliedButtonFontSize * SMALL_SCREEN_SCALE)}px)`;
 
     return {
@@ -110,14 +96,5 @@ export const usePortalCardStyles = (config: PortalCardStyleConfig) => {
       scale,
       token,
     };
-  }, [
-    color,
-    buttonWidth,
-    cardScale,
-    compactLayout,
-    hideButton,
-    smallButton,
-    heightScale,
-    token,
-  ]);
+  }, [color, buttonWidth, cardScale, compactLayout, hideButton, smallButton, heightScale, token]);
 };

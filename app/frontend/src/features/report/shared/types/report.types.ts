@@ -1,6 +1,6 @@
-import type { UploadProps } from "antd/es/upload";
-import type { ReportKey } from "@features/report/shared/config";
-import type { CsvDefinition } from "./CsvDefinition";
+import type { UploadProps } from 'antd/es/upload';
+import type { ReportKey } from '@features/report/shared/config';
+import type { CsvDefinition } from './CsvDefinition';
 
 /**
  * ReportBase関連の型定義を整理
@@ -20,7 +20,7 @@ export type CsvConfigEntry = {
 
 export type CsvFiles = { [csvLabel: string]: File | null };
 
-export type ValidationResult = "valid" | "invalid" | "unknown";
+export type ValidationResult = 'valid' | 'invalid' | 'unknown';
 
 export type StepProps = {
   steps: string[];

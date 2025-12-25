@@ -1,17 +1,17 @@
 // features/navi/ui/NaviLayout.tsx
 // Naviページのレイアウトコンポーネント（状態を持たない純粋UI）
 
-import React from "react";
-import { Spin } from "antd";
-import { ReportStepIndicator } from "@shared/ui";
+import React from 'react';
+import { Spin } from 'antd';
+import { ReportStepIndicator } from '@shared/ui';
 import {
   ChatQuestionSection,
   ChatSendButtonSection,
   ChatAnswerSection,
   PdfPreviewModal,
-} from "@features/chat";
-import { useResponsive, ANT, isTabletOrHalf } from "@/shared";
-import type { CategoryDataMap, StepItem } from "../../domain/types/types";
+} from '@features/chat';
+import { useResponsive, ANT, isTabletOrHalf } from '@/shared';
+import type { CategoryDataMap, StepItem } from '../../domain/types/types';
 
 interface NaviLayoutProps {
   // 状態
@@ -64,45 +64,44 @@ export const NaviLayout: React.FC<NaviLayoutProps> = ({
   stepItems,
 }) => {
   const { width } = useResponsive();
-  const isNarrow = typeof width === "number" ? isTabletOrHalf(width) : false;
-  const isMd =
-    typeof width === "number" ? width >= ANT.md && width < ANT.xl : false;
+  const isNarrow = typeof width === 'number' ? isTabletOrHalf(width) : false;
+  const isMd = typeof width === 'number' ? width >= ANT.md && width < ANT.xl : false;
 
   return (
     <div
       className="navi-page"
       style={{
-        height: "100%",
-        display: "flex",
-        flexDirection: "column",
-        overflow: "hidden",
-        position: "relative",
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
+        position: 'relative',
       }}
     >
       {loading && <Spin tip="AIが回答中です..." size="large" fullscreen />}
 
-      <div style={{ padding: "12px 24px" }}>
+      <div style={{ padding: '12px 24px' }}>
         <ReportStepIndicator currentStep={currentStep} items={stepItems} />
       </div>
 
       <div
         style={{
-          display: "flex",
+          display: 'flex',
           flex: 1,
-          overflow: "hidden",
+          overflow: 'hidden',
           minHeight: 0,
-          height: "100%",
+          height: '100%',
         }}
       >
         {isNarrow ? (
           <>
             <div
               style={{
-                display: "flex",
-                flex: isMd ? "1 1 50%" : "1 1 40%",
-                flexDirection: "column",
+                display: 'flex',
+                flex: isMd ? '1 1 50%' : '1 1 40%',
+                flexDirection: 'column',
                 minHeight: 0,
-                overflow: "hidden",
+                overflow: 'hidden',
               }}
             >
               <ChatQuestionSection
@@ -111,14 +110,14 @@ export const NaviLayout: React.FC<NaviLayoutProps> = ({
                   setCategory(val);
                   setCurrentStep(1);
                   setTags([]);
-                  setTemplate("自由入力");
+                  setTemplate('自由入力');
                 }}
                 tags={tags}
                 setTag={setTags}
                 template={template}
                 setTemplate={(val) => {
                   setTemplate(val);
-                  if (val !== "自由入力") {
+                  if (val !== '自由入力') {
                     setQuestion(val);
                     setCurrentStep(2);
                   }
@@ -133,9 +132,9 @@ export const NaviLayout: React.FC<NaviLayoutProps> = ({
 
               <div
                 style={{
-                  padding: "8px 8px",
-                  display: "flex",
-                  justifyContent: "center",
+                  padding: '8px 8px',
+                  display: 'flex',
+                  justifyContent: 'center',
                   marginTop: 8,
                 }}
               >
@@ -149,10 +148,10 @@ export const NaviLayout: React.FC<NaviLayoutProps> = ({
             {/* 右カラム（回答） */}
             <div
               style={{
-                flex: isMd ? "1 1 50%" : "1 1 60%",
+                flex: isMd ? '1 1 50%' : '1 1 60%',
                 minHeight: 0,
-                height: "100%",
-                overflow: "hidden",
+                height: '100%',
+                overflow: 'hidden',
                 width: 0,
                 minWidth: 0,
               }}
@@ -160,12 +159,12 @@ export const NaviLayout: React.FC<NaviLayoutProps> = ({
               <div
                 className="navi-scroll-area"
                 style={{
-                  height: "100%",
+                  height: '100%',
                   minHeight: 0,
-                  overflowY: "auto",
-                  WebkitOverflowScrolling: "touch" as unknown as undefined,
-                  width: "100%",
-                  maxWidth: "100%",
+                  overflowY: 'auto',
+                  WebkitOverflowScrolling: 'touch' as unknown as undefined,
+                  width: '100%',
+                  maxWidth: '100%',
                 }}
               >
                 <ChatAnswerSection answer={answer} />
@@ -178,11 +177,11 @@ export const NaviLayout: React.FC<NaviLayoutProps> = ({
             {/* 左カラム */}
             <div
               style={{
-                display: "flex",
-                flexDirection: "column",
+                display: 'flex',
+                flexDirection: 'column',
                 minHeight: 0,
-                overflow: "hidden",
-                flex: "0 1 auto",
+                overflow: 'hidden',
+                flex: '0 1 auto',
               }}
             >
               <ChatQuestionSection
@@ -191,14 +190,14 @@ export const NaviLayout: React.FC<NaviLayoutProps> = ({
                   setCategory(val);
                   setCurrentStep(1);
                   setTags([]);
-                  setTemplate("自由入力");
+                  setTemplate('自由入力');
                 }}
                 tags={tags}
                 setTag={setTags}
                 template={template}
                 setTemplate={(val) => {
                   setTemplate(val);
-                  if (val !== "自由入力") {
+                  if (val !== '自由入力') {
                     setQuestion(val);
                     setCurrentStep(2);
                   }
@@ -222,9 +221,9 @@ export const NaviLayout: React.FC<NaviLayoutProps> = ({
             <div
               style={{
                 minHeight: 0,
-                height: "100%",
-                flex: "1 1 auto",
-                overflow: "hidden",
+                height: '100%',
+                flex: '1 1 auto',
+                overflow: 'hidden',
                 width: 0,
                 minWidth: 0,
               }}
@@ -232,12 +231,12 @@ export const NaviLayout: React.FC<NaviLayoutProps> = ({
               <div
                 className="navi-scroll-area"
                 style={{
-                  height: "100%",
+                  height: '100%',
                   minHeight: 0,
-                  overflowY: "auto",
-                  WebkitOverflowScrolling: "touch" as unknown as undefined,
-                  width: "100%",
-                  maxWidth: "100%",
+                  overflowY: 'auto',
+                  WebkitOverflowScrolling: 'touch' as unknown as undefined,
+                  width: '100%',
+                  maxWidth: '100%',
                 }}
               >
                 <ChatAnswerSection answer={answer} />

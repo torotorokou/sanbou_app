@@ -1,11 +1,10 @@
 import os
 
+
 # --- 共通設定 ---
 
 # アプリのベースディレクトリ
-BASE_DIR = os.path.dirname(
-    os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-)  # /backend/
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))  # /backend/
 
 # よく使うパス
 CONFIG_DIR = os.path.join(BASE_DIR, "config")

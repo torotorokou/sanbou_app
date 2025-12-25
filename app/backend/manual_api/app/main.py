@@ -1,5 +1,8 @@
 from pathlib import Path
 
+from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
+
 from app.api.routers.manuals import router as manuals_router
 from app.config.settings import settings
 
@@ -12,8 +15,7 @@ from backend_shared.infra.frameworks.cors_config import setup_cors
 from backend_shared.infra.frameworks.exception_handlers import (
     register_exception_handlers,
 )
-from fastapi import FastAPI
-from fastapi.staticfiles import StaticFiles
+
 
 # ==========================================
 # 統一ロギング設定の初期化
@@ -23,6 +25,7 @@ from fastapi.staticfiles import StaticFiles
 setup_logging()
 
 from backend_shared.application.logging import get_module_logger
+
 
 logger = get_module_logger(__name__)
 

@@ -5,17 +5,14 @@
 
 export async function detectEncoding(
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  _file: File,
+  _file: File
 ): Promise<string> {
   // 基本実装: UTF-8を返す
   // 必要に応じてencoding-japanese等のライブラリを導入
-  return "utf-8";
+  return 'utf-8';
 }
 
-export async function readFileAsText(
-  file: File,
-  encoding: string = "utf-8",
-): Promise<string> {
+export async function readFileAsText(file: File, encoding: string = 'utf-8'): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -23,7 +20,7 @@ export async function readFileAsText(
       resolve(text);
     };
     reader.onerror = () => {
-      reject(new Error("ファイルの読み取りに失敗しました"));
+      reject(new Error('ファイルの読み取りに失敗しました'));
     };
     reader.readAsText(file, encoding);
   });

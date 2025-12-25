@@ -4,10 +4,10 @@
  * 期間選択の状態管理Hook
  */
 
-import { useState } from "react";
-import type { Dayjs } from "dayjs";
-import type { ComparisonPeriods } from "../domain/types";
-import { isValidPeriodRange } from "./utils";
+import { useState } from 'react';
+import type { Dayjs } from 'dayjs';
+import type { ComparisonPeriods } from '../domain/types';
+import { isValidPeriodRange } from './utils';
 
 export interface PeriodSelectorViewModel {
   currentStart: Dayjs | null;

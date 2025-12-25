@@ -10,19 +10,14 @@
  * notification feature の一部として管理することで依存関係が明確になります。
  */
 
-import { notifyApiError, notifySuccess } from "../infrastructure/notify";
-import { apiGet } from "@/shared";
-import type { ProblemDetails } from "../domain/types/contract";
+import { notifyApiError, notifySuccess } from '../infrastructure/notify';
+import { apiGet } from '@/shared';
+import type { ProblemDetails } from '../domain/types/contract';
 
 /**
  * ジョブステータス型
  */
-export type JobStatusType =
-  | "pending"
-  | "running"
-  | "completed"
-  | "failed"
-  | "cancelled";
+export type JobStatusType = 'pending' | 'running' | 'completed' | 'failed' | 'cancelled';
 
 /**
  * ジョブステータスDTO
@@ -51,7 +46,7 @@ export async function pollJob<T = unknown>(
   jobId: string,
   onProgress?: (progress: number, message?: string) => void,
   intervalMs = 1000,
-  maxAttempts = 60,
+  maxAttempts = 60
 ): Promise<T> {
   let attempts = 0;
 
@@ -65,43 +60,43 @@ export async function pollJob<T = unknown>(
       }
 
       // 完了
-      if (job.status === "completed") {
-        notifySuccess("処理が完了しました", job.message);
+      if (job.status === 'completed') {
+        notifySuccess('処理が完了しました', job.message);
         return job.result as T;
       }
 
       // 失敗
-      if (job.status === "failed") {
+      if (job.status === 'failed') {
         if (job.error) {
-          notifyApiError(job.error, "処理に失敗しました");
+          notifyApiError(job.error, '処理に失敗しました');
         } else {
           notifyApiError(
             {
-              code: "JOB_FAILED",
+              code: 'JOB_FAILED',
               status: 500,
-              userMessage: "処理に失敗しました",
+              userMessage: '処理に失敗しました',
             },
-            "処理に失敗しました",
+            '処理に失敗しました'
           );
         }
-        throw new Error("JOB_FAILED");
+        throw new Error('JOB_FAILED');
       }
 
       // キャンセル
-      if (job.status === "cancelled") {
+      if (job.status === 'cancelled') {
         if (job.error) {
-          notifyApiError(job.error, "処理がキャンセルされました");
+          notifyApiError(job.error, '処理がキャンセルされました');
         } else {
           notifyApiError(
             {
-              code: "JOB_CANCELLED",
+              code: 'JOB_CANCELLED',
               status: 400,
-              userMessage: "処理がキャンセルされました",
+              userMessage: '処理がキャンセルされました',
             },
-            "処理がキャンセルされました",
+            '処理がキャンセルされました'
           );
         }
-        throw new Error("JOB_CANCELLED");
+        throw new Error('JOB_CANCELLED');
       }
 
       // 待機
@@ -111,12 +106,12 @@ export async function pollJob<T = unknown>(
       // エラーが JOB_FAILED/JOB_CANCELLED の場合はそのまま throw
       if (
         error instanceof Error &&
-        (error.message === "JOB_FAILED" || error.message === "JOB_CANCELLED")
+        (error.message === 'JOB_FAILED' || error.message === 'JOB_CANCELLED')
       ) {
         throw error;
       }
       // その他のエラーは notifyApiError で通知
-      notifyApiError(error, "ジョブの取得に失敗しました");
+      notifyApiError(error, 'ジョブの取得に失敗しました');
       throw error;
     }
   }
@@ -124,13 +119,13 @@ export async function pollJob<T = unknown>(
   // タイムアウト
   notifyApiError(
     {
-      code: "TIMEOUT",
+      code: 'TIMEOUT',
       status: 408,
-      userMessage: "ジョブの完了待機がタイムアウトしました",
+      userMessage: 'ジョブの完了待機がタイムアウトしました',
     },
-    "タイムアウトしました",
+    'タイムアウトしました'
   );
-  throw new Error("POLL_TIMEOUT");
+  throw new Error('POLL_TIMEOUT');
 }
 
 /**
@@ -144,7 +139,7 @@ export async function pollJob<T = unknown>(
 export async function createAndPollJob<T = unknown>(
   endpoint: string,
   body: unknown,
-  onProgress?: (progress: number, message?: string) => void,
+  onProgress?: (progress: number, message?: string) => void
 ): Promise<T> {
   try {
     // ジョブを作成
@@ -153,7 +148,7 @@ export async function createAndPollJob<T = unknown>(
     // ポーリング開始
     return await pollJob<T>(job.id, onProgress);
   } catch (error) {
-    notifyApiError(error, "ジョブの作成に失敗しました");
+    notifyApiError(error, 'ジョブの作成に失敗しました');
     throw error;
   }
 }

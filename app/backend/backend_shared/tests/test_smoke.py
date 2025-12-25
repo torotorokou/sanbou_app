@@ -77,9 +77,7 @@ def test_module_structure():
     # src layout が正しく機能していることを確認
     pkg_path = backend_shared.__file__
     assert pkg_path is not None
-    assert (
-        "src/backend_shared" in pkg_path or "site-packages/backend_shared" in pkg_path
-    )
+    assert "src/backend_shared" in pkg_path or "site-packages/backend_shared" in pkg_path
 
     # パッケージのルートディレクトリを取得
     pkg_dir = os.path.dirname(pkg_path)

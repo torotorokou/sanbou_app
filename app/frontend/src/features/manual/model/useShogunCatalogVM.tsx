@@ -2,7 +2,7 @@
  * Shogun Catalog Hook
  * 将軍マニュアルのカタログ一覧を取得
  */
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState } from 'react';
 import {
   FileDoneOutlined,
   FolderOpenOutlined,
@@ -12,9 +12,9 @@ import {
   CloudUploadOutlined,
   DollarOutlined,
   FileSyncOutlined,
-} from "@ant-design/icons";
-import type { ManualSection } from "../domain/types/shogun.types";
-import { ShogunClient } from "../infrastructure/shogun.client";
+} from '@ant-design/icons';
+import type { ManualSection } from '../domain/types/shogun.types';
+import { ShogunClient } from '../infrastructure/shogun.client';
 
 // アイコンマッピング
 const iconMap: Record<string, React.ReactNode> = {
@@ -40,16 +40,12 @@ export function useShogunCatalog() {
     ShogunClient.catalog(ctrl.signal)
       .then((data) => {
         // Debug: Log raw catalog response to verify item.id presence
-        console.log("[useShogunCatalog] Raw catalog response:", data);
+        console.log('[useShogunCatalog] Raw catalog response:', data);
 
         const mapped = data.sections.map((sec) => ({
           id: sec.id,
           title: sec.title,
-          icon: sec.icon ? (
-            iconMap[sec.icon] || <FileDoneOutlined />
-          ) : (
-            <FileDoneOutlined />
-          ),
+          icon: sec.icon ? iconMap[sec.icon] || <FileDoneOutlined /> : <FileDoneOutlined />,
           items: sec.items.map((item) => ({
             id: item.id,
             title: item.title,
@@ -63,11 +59,11 @@ export function useShogunCatalog() {
 
         // Debug: Log mapped items to verify id mapping
         console.log(
-          "[useShogunCatalog] Mapped sections with item ids:",
+          '[useShogunCatalog] Mapped sections with item ids:',
           mapped.map((s) => ({
             section: s.title,
             items: s.items.map((i) => ({ id: i.id, title: i.title })),
-          })),
+          }))
         );
 
         setSections(mapped);
@@ -76,13 +72,13 @@ export function useShogunCatalog() {
       .catch((err) => {
         // AbortError またはキャンセルエラーは無視
         if (
-          err.name === "AbortError" ||
-          err.name === "CanceledError" ||
-          err.code === "ERR_CANCELED"
+          err.name === 'AbortError' ||
+          err.name === 'CanceledError' ||
+          err.code === 'ERR_CANCELED'
         ) {
           return;
         }
-        console.error("[useShogunCatalog] Error:", err);
+        console.error('[useShogunCatalog] Error:', err);
         setError(err);
         setLoading(false);
       });

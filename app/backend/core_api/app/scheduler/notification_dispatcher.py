@@ -10,6 +10,7 @@ from datetime import UTC
 
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
+
 from backend_shared.application.logging import get_module_logger
 
 logger = get_module_logger(__name__)
@@ -80,9 +81,7 @@ def start_notification_scheduler():
     # 環境変数チェック
     enabled = os.getenv("ENABLE_NOTIFICATION_SCHEDULER", "false").lower() == "true"
     if not enabled:
-        logger.info(
-            "Notification scheduler is disabled (ENABLE_NOTIFICATION_SCHEDULER=false)"
-        )
+        logger.info("Notification scheduler is disabled (ENABLE_NOTIFICATION_SCHEDULER=false)")
         return
 
     if _scheduler is not None:
@@ -143,9 +142,7 @@ def get_scheduler_status() -> dict:
             {
                 "id": job.id,
                 "name": job.name,
-                "next_run_time": (
-                    job.next_run_time.isoformat() if job.next_run_time else None
-                ),
+                "next_run_time": (job.next_run_time.isoformat() if job.next_run_time else None),
             }
             for job in _scheduler.get_jobs()
         ],

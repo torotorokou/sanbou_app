@@ -3,12 +3,12 @@
  * Optimized with minimal re-renders and previous data retention
  */
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from 'react';
 import {
   fetchTargetMetrics,
   type TargetMetricsDTO,
   type FetchMode,
-} from "../infrastructure/targetMetrics.api";
+} from '../infrastructure/targetMetrics.api';
 
 export interface UseTargetMetricsResult {
   data: TargetMetricsDTO | null;
@@ -25,7 +25,7 @@ export interface UseTargetMetricsResult {
  */
 export function useTargetMetrics(
   date: string,
-  mode: FetchMode = "monthly",
+  mode: FetchMode = 'monthly'
 ): UseTargetMetricsResult {
   const [data, setData] = useState<TargetMetricsDTO | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -51,7 +51,7 @@ export function useTargetMetrics(
         }
       } catch (err) {
         if (isMounted) {
-          setError(err instanceof Error ? err : new Error("Unknown error"));
+          setError(err instanceof Error ? err : new Error('Unknown error'));
           // Keep previous data on error to avoid blank state
           if (previousDataRef.current) {
             setData(previousDataRef.current);

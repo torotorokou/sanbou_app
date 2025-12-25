@@ -1,15 +1,10 @@
-import React from "react";
-import { Row, Col } from "antd";
-import { CategorySelector } from "../CategorySelector";
-import { ModeSelector } from "../ModeSelector";
-import { TopNSortControls } from "../TopNSortControls";
-import type {
-  Mode,
-  SortKey,
-  SortOrder,
-  CategoryKind,
-} from "../../../../shared/model/types";
-import type { FilterLayoutResult } from "../../hooks/useFilterLayout";
+import React from 'react';
+import { Row, Col } from 'antd';
+import { CategorySelector } from '../CategorySelector';
+import { ModeSelector } from '../ModeSelector';
+import { TopNSortControls } from '../TopNSortControls';
+import type { Mode, SortKey, SortOrder, CategoryKind } from '../../../../shared/model/types';
+import type { FilterLayoutResult } from '../../hooks/useFilterLayout';
 
 interface CategoryModeSectionProps {
   // Layout
@@ -25,11 +20,11 @@ interface CategoryModeSectionProps {
   onModeChange: (mode: Mode) => void;
 
   // TopN & Sort
-  topN: 10 | 20 | 50 | "all";
+  topN: 10 | 20 | 50 | 'all';
   sortBy: SortKey;
   order: SortOrder;
   sortKeyOptions: Array<{ label: string; value: SortKey }>;
-  onTopNChange: (topN: 10 | 20 | 50 | "all") => void;
+  onTopNChange: (topN: 10 | 20 | 50 | 'all') => void;
   onSortByChange: (sortBy: SortKey) => void;
   onOrderChange: (order: SortOrder) => void;
 }
@@ -79,10 +74,7 @@ export const CategoryModeSection: React.FC<CategoryModeSectionProps> = ({
       {/* 1行目: 種別 + (デスクトップのみ)モード+TopN */}
       <Row gutter={gutter} align="middle">
         <Col {...layout.categoryGrid}>
-          <CategorySelector
-            value={categoryKind}
-            onChange={onCategoryKindChange}
-          />
+          <CategorySelector value={categoryKind} onChange={onCategoryKindChange} />
         </Col>
 
         {layout.isDesktop && modeTopNControls}

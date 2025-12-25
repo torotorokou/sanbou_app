@@ -24,18 +24,12 @@ def _parse_month(s: str) -> date:
 
 
 def _first_day_next_month(d: date) -> date:
-    return date(
-        d.year + (1 if d.month == 12 else 0), 1 if d.month == 12 else d.month + 1, 1
-    )
+    return date(d.year + (1 if d.month == 12 else 0), 1 if d.month == 12 else d.month + 1, 1)
 
 
 def _engine_url(dsn: str) -> str:
     prefix = "postgresql://"
-    return (
-        ("postgresql+psycopg" + dsn[len("postgresql") :])
-        if dsn.startswith(prefix)
-        else dsn
-    )
+    return ("postgresql+psycopg" + dsn[len("postgresql") :]) if dsn.startswith(prefix) else dsn
 
 
 def main():
@@ -77,9 +71,7 @@ def main():
         """,
         eng,
     )
-    prof_biz = prof[prof["scope"] == "biz"].rename(
-        columns={"day_mean_smooth": "day_mean_biz"}
-    )
+    prof_biz = prof[prof["scope"] == "biz"].rename(columns={"day_mean_smooth": "day_mean_biz"})
     prof_all_sun = prof[(prof["scope"] == "all") & (prof["iso_dow"] == 7)][
         ["iso_week", "day_mean_smooth"]
     ].rename(columns={"day_mean_smooth": "day_mean_all_sun"})
@@ -96,9 +88,7 @@ def main():
         eng,
         params={"mfrom": m_from, "mto": m_to_excl},
     )
-    kpi["month_date"] = (
-        pd.to_datetime(kpi["month_date"]).dt.to_period("M").dt.to_timestamp()
-    )
+    kpi["month_date"] = pd.to_datetime(kpi["month_date"]).dt.to_period("M").dt.to_timestamp()
 
     # 区分
     is_closed = (~cal["is_business"]) | (cal["day_type"] == "CLOSED")
@@ -115,9 +105,7 @@ def main():
     base["day_mean_all_sun"] = base["day_mean_all_sun"].fillna(0.0)
     base["day_mean"] = 0.0
     base.loc[use_biz, "day_mean"] = base.loc[use_biz, "day_mean_biz"]
-    base.loc[use_sun | use_hol, "day_mean"] = base.loc[
-        use_sun | use_hol, "day_mean_all_sun"
-    ]
+    base.loc[use_sun | use_hol, "day_mean"] = base.loc[use_sun | use_hol, "day_mean_all_sun"]
 
     base["scope_used"] = np.select(
         [is_closed, use_sun, use_hol, use_biz],
@@ -137,9 +125,7 @@ def main():
     week_mass = week_mass.merge(
         kpi[["month_date", "month_target_ton"]], on="month_date", how="left"
     )
-    week_mass["week_target_ton_in_month"] = (
-        week_mass["w_week"] * week_mass["month_target_ton"]
-    )
+    week_mass["week_target_ton_in_month"] = week_mass["w_week"] * week_mass["month_target_ton"]
 
     base = base.merge(
         week_mass[["month_date", "iso_year", "iso_week", "week_target_ton_in_month"]],
@@ -208,9 +194,7 @@ def main():
             g["target_ton"] *= target / cur
         return g
 
-    daily = daily.groupby("month_date", group_keys=False).apply(
-        _renorm_month, include_groups=True
-    )
+    daily = daily.groupby("month_date", group_keys=False).apply(_renorm_month, include_groups=True)
 
     # 出力
     daily.to_csv(OUT / "daily_plan_smooth_final.csv", index=False)

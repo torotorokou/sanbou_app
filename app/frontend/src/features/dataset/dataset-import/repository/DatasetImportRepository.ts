@@ -2,7 +2,7 @@
  * データセットインポート Repository インターフェース
  */
 
-import type { UploadResponseShape } from "../../shared/types/common";
+import type { UploadResponseShape } from '../../shared/types/common';
 
 export interface DatasetImportRepository {
   /**
@@ -15,6 +15,6 @@ export interface DatasetImportRepository {
   upload(
     filesByType: Record<string, File>,
     uploadPath: string,
-    signal?: AbortSignal,
+    signal?: AbortSignal
   ): Promise<UploadResponseShape>;
 }

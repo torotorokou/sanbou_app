@@ -8,6 +8,11 @@ Exception Handler Middleware - 統一エラーハンドリング
 このモジュールは backend_shared に配置され、全てのサービスで共通利用されます。
 """
 
+from fastapi import Request, status
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
+from starlette.exceptions import HTTPException as StarletteHTTPException
+
 from backend_shared.application.logging import create_log_context, get_module_logger
 from backend_shared.core.domain.exceptions import (
     BusinessRuleViolation,
@@ -19,17 +24,12 @@ from backend_shared.core.domain.exceptions import (
     UnauthorizedError,
     ValidationError,
 )
-from fastapi import Request, status
-from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
-from starlette.exceptions import HTTPException as StarletteHTTPException
+
 
 logger = get_module_logger(__name__)
 
 
-async def domain_exception_handler(
-    request: Request, exc: DomainException
-) -> JSONResponse:
+async def domain_exception_handler(request: Request, exc: DomainException) -> JSONResponse:
     """
     ドメイン例外のハンドラー
 
@@ -168,9 +168,7 @@ async def external_service_exception_handler(
     """
     # ステータスコードの決定: タイムアウトなら504、それ以外は502
     if exc.status_code:
-        status_code = (
-            exc.status_code if exc.status_code >= 500 else status.HTTP_502_BAD_GATEWAY
-        )
+        status_code = exc.status_code if exc.status_code >= 500 else status.HTTP_502_BAD_GATEWAY
     else:
         status_code = status.HTTP_502_BAD_GATEWAY
 
@@ -230,9 +228,7 @@ async def validation_exception_handler(
     """
     logger.warning(
         "Request validation error",
-        extra=create_log_context(
-            operation="validation_exception_handler", errors=exc.errors()
-        ),
+        extra=create_log_context(operation="validation_exception_handler", errors=exc.errors()),
     )
     return JSONResponse(
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -246,9 +242,7 @@ async def validation_exception_handler(
     )
 
 
-async def http_exception_handler(
-    request: Request, exc: StarletteHTTPException
-) -> JSONResponse:
+async def http_exception_handler(request: Request, exc: StarletteHTTPException) -> JSONResponse:
     """
     HTTP 例外のハンドラー
 

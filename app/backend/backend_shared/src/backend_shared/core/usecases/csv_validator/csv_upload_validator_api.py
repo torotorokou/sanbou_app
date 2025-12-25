@@ -1,5 +1,7 @@
 # --- import ---
 import pandas as pd
+from fastapi import UploadFile
+
 from backend_shared.core.usecases.csv_formatter.dataframe import serialize_dates_info
 from backend_shared.infra.adapters.presentation.response_error import (
     DateMismatchResponse,
@@ -12,7 +14,6 @@ from backend_shared.utils.dataframe_validator import (
     check_missing_file,
     check_required_columns,
 )
-from fastapi import UploadFile
 
 
 class CSVValidationResponder:
@@ -24,9 +25,7 @@ class CSVValidationResponder:
     def __init__(self, required_columns: dict):
         self.required_columns = required_columns
 
-    def check_missing_file(
-        self, file_inputs: dict[str, UploadFile | None]
-    ) -> str | None:
+    def check_missing_file(self, file_inputs: dict[str, UploadFile | None]) -> str | None:
         """
         アップロードされていないファイルがあるかをチェック。
         :return: 欠けているcsv_type（NoneならOK）

@@ -5,14 +5,14 @@
 // CSV_DEFINITIONS から expectedHeaders を取得して
 // text（CSVの中身）の1行目と比較することで、どのCSVテンプレートに当てはまるか判定する
 
-import { CSV_DEFINITIONS } from "@/features/csv-schemas/domain/config/CsvDefinition";
+import { CSV_DEFINITIONS } from '@/features/csv-schemas/domain/config/CsvDefinition';
 
 /**
  * CSVの先頭行（ヘッダー）を抽出
  */
 function extractCsvHeader(csvText: string): string[] {
   const lines = csvText.trim().split(/\r?\n/);
-  return lines.length > 0 ? lines[0].split(",").map((h) => h.trim()) : [];
+  return lines.length > 0 ? lines[0].split(',').map((h) => h.trim()) : [];
 }
 
 /**
@@ -21,7 +21,7 @@ function extractCsvHeader(csvText: string): string[] {
 function matchCsvHeaders(
   actual: string[],
   expected: string[],
-  maxColumnsToCheck: number = expected.length,
+  maxColumnsToCheck: number = expected.length
 ): boolean {
   for (let i = 0; i < maxColumnsToCheck; i++) {
     if (actual[i] !== expected[i]) return false;
@@ -62,7 +62,7 @@ export function identifyCsvType(csvText: string): {
  */
 export function isCsvMatch(
   result: ReturnType<typeof identifyCsvType>,
-  expectedLabel: string,
+  expectedLabel: string
 ): boolean {
   return result.matched && result.matchedType === expectedLabel;
 }

@@ -26,10 +26,10 @@
  * ```
  */
 
-import { useState, useEffect, useCallback } from "react";
-import type { ExportOptions, SummaryQuery, ID } from "../../shared/model/types";
-import { DEFAULT_EXPORT_OPTIONS } from "../../shared/model/types";
-import type { SalesPivotRepository } from "../../shared/infrastructure/salesPivot.repository";
+import { useState, useEffect, useCallback } from 'react';
+import type { ExportOptions, SummaryQuery, ID } from '../../shared/model/types';
+import { DEFAULT_EXPORT_OPTIONS } from '../../shared/model/types';
+import type { SalesPivotRepository } from '../../shared/infrastructure/salesPivot.repository';
 
 /**
  * ヘッダーViewModel入力パラメータ
@@ -56,9 +56,7 @@ export interface UseHeaderViewModelParams {
  */
 export interface UseHeaderViewModelResult {
   exportOptions: ExportOptions;
-  setExportOptions: (
-    options: ExportOptions | ((prev: ExportOptions) => ExportOptions),
-  ) => void;
+  setExportOptions: (options: ExportOptions | ((prev: ExportOptions) => ExportOptions)) => void;
   handleExport: () => Promise<Blob>;
   canExport: boolean;
 }
@@ -73,9 +71,7 @@ export interface UseHeaderViewModelResult {
  * - Export options の状態管理とlocalStorage永続化
  * - CSV出力処理の実行
  */
-export function useHeaderViewModel(
-  params: UseHeaderViewModelParams,
-): UseHeaderViewModelResult {
+export function useHeaderViewModel(params: UseHeaderViewModelParams): UseHeaderViewModelResult {
   const { repository, query, repIds } = params;
 
   // ========================================
@@ -90,7 +86,7 @@ export function useHeaderViewModel(
    */
   const [exportOptions, setExportOptions] = useState<ExportOptions>(() => {
     try {
-      const raw = localStorage.getItem("exportOptions_v1");
+      const raw = localStorage.getItem('exportOptions_v1');
       return raw ? (JSON.parse(raw) as ExportOptions) : DEFAULT_EXPORT_OPTIONS;
     } catch {
       // JSON パースエラー時もデフォルト値で継続
@@ -104,7 +100,7 @@ export function useHeaderViewModel(
    * ユーザーの設定を次回起動時にも引き継ぐ
    */
   useEffect(() => {
-    localStorage.setItem("exportOptions_v1", JSON.stringify(exportOptions));
+    localStorage.setItem('exportOptions_v1', JSON.stringify(exportOptions));
   }, [exportOptions]);
 
   // ========================================

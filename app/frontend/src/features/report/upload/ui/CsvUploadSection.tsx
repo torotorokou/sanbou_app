@@ -1,8 +1,8 @@
-import React from "react";
-import { Typography } from "antd";
-import { useResponsive } from "@/shared";
-import type { CsvUploadSectionProps } from "./types";
-import { ReportUploadFileCard } from "./ReportUploadFileCard";
+import React from 'react';
+import { Typography } from 'antd';
+import { useResponsive } from '@/shared';
+import type { CsvUploadSectionProps } from './types';
+import { ReportUploadFileCard } from './ReportUploadFileCard';
 
 /**
  * CSVアップロードセクション - useResponsive(flags)統合版
@@ -14,10 +14,7 @@ import { ReportUploadFileCard } from "./ReportUploadFileCard";
  * - uploadFiles と makeUploadProps を使用してアップロード機能を実装
  * - dataset-import のデザインに合わせた見た目（スキップ機能なし）
  */
-const CsvUploadSection: React.FC<CsvUploadSectionProps> = ({
-  uploadFiles,
-  makeUploadProps,
-}) => {
+const CsvUploadSection: React.FC<CsvUploadSectionProps> = ({ uploadFiles, makeUploadProps }) => {
   // responsive: 3段階判定（Mobile/Tablet/Desktop）
   const { flags } = useResponsive();
 
@@ -31,11 +28,11 @@ const CsvUploadSection: React.FC<CsvUploadSectionProps> = ({
   // responsive: タイトルのレベルとスタイル
   const titleLevel = pickByDevice<5 | 4>(5, 4, 4);
   const marginBottom = pickByDevice(4, 8, 8);
-  const fontSize = pickByDevice("14px", "15px", "16px");
+  const fontSize = pickByDevice('14px', '15px', '16px');
   const itemGap = pickByDevice(6, 10, 10);
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", minHeight: 0 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: 0 }}>
       <Typography.Title
         level={titleLevel}
         style={{
@@ -46,8 +43,8 @@ const CsvUploadSection: React.FC<CsvUploadSectionProps> = ({
       >
         📂 データセット（CSV）の準備
       </Typography.Title>
-      <div style={{ flex: 1, minHeight: 0, overflowY: "auto" }}>
-        <div style={{ display: "flex", flexDirection: "column", gap: itemGap }}>
+      <div style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: itemGap }}>
           {uploadFiles.map((uploadFile) => {
             // makeUploadPropsは1引数のみを受け取る
             const uploadProps = makeUploadProps(uploadFile.label);

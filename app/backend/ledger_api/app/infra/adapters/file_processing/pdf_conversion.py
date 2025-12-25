@@ -68,17 +68,11 @@ def convert_excel_to_pdf(
         ]
 
         try:
-            result = subprocess.run(
-                cmd, capture_output=True, text=True, timeout=timeout
-            )
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
         except FileNotFoundError as exc:  # LibreOffice がインストールされていないケース
-            raise PdfConversionError(
-                "LibreOffice (soffice) が見つかりません。"
-            ) from exc
+            raise PdfConversionError("LibreOffice (soffice) が見つかりません。") from exc
         except subprocess.TimeoutExpired as exc:
-            raise PdfConversionError(
-                "LibreOffice 変換がタイムアウトしました。"
-            ) from exc
+            raise PdfConversionError("LibreOffice 変換がタイムアウトしました。") from exc
 
         if result.returncode != 0:
             last_error = result.stderr or result.stdout

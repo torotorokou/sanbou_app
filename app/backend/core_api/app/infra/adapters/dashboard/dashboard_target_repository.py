@@ -6,12 +6,13 @@ Optimized with single-query anchor resolution and NULL masking.
 from datetime import date as date_type
 from typing import Any
 
+from sqlalchemy import text
+from sqlalchemy.orm import Session
+
 from app.infra.db.db import get_engine
 from app.infra.db.sql_loader import load_sql
 from backend_shared.application.logging import create_log_context, get_module_logger
 from backend_shared.db.names import MV_TARGET_CARD_PER_DAY, SCHEMA_MART, fq
-from sqlalchemy import text
-from sqlalchemy.orm import Session
 
 logger = get_module_logger(__name__)
 
@@ -33,9 +34,7 @@ class DashboardTargetRepository:
             load_sql("dashboard/dashboard_target_repo__get_by_date_optimized.sql")
         )
         # Load other SQL queries with schema/table name substitution
-        template_get_by_date = load_sql(
-            "dashboard/dashboard_target_repo__get_by_date.sql"
-        )
+        template_get_by_date = load_sql("dashboard/dashboard_target_repo__get_by_date.sql")
         self._get_by_date_sql = text(
             template_get_by_date.format(
                 schema_mart=SCHEMA_MART,
@@ -51,9 +50,7 @@ class DashboardTargetRepository:
                 mv_target_card_per_day=MV_TARGET_CARD_PER_DAY,
             )
         )
-        template_metrics = load_sql(
-            "dashboard/dashboard_target_repo__get_target_card_metrics.sql"
-        )
+        template_metrics = load_sql("dashboard/dashboard_target_repo__get_target_card_metrics.sql")
         self._get_target_card_metrics_sql = text(
             template_metrics.format(
                 schema_mart=SCHEMA_MART,
@@ -132,9 +129,7 @@ class DashboardTargetRepository:
 
             logger.info(
                 "target cardデータ取得成功",
-                extra=create_log_context(
-                    operation="get_by_date_optimized", date=str(target_date)
-                ),
+                extra=create_log_context(operation="get_by_date_optimized", date=str(target_date)),
             )
             return {
                 "ddate": result["ddate"],
@@ -233,28 +228,20 @@ class DashboardTargetRepository:
             # MATERIALIZED VIEWを使用して高速クエリ（SQL は外部ファイルから読み込み）
             logger.info(
                 "target cardデータ取得開始(get_by_date)",
-                extra=create_log_context(
-                    operation="get_by_date", date=str(target_date)
-                ),
+                extra=create_log_context(operation="get_by_date", date=str(target_date)),
             )
-            result = self.db.execute(
-                self._get_by_date_sql, {"target_date": target_date}
-            ).fetchone()
+            result = self.db.execute(self._get_by_date_sql, {"target_date": target_date}).fetchone()
 
             if not result:
                 logger.warning(
                     "mv_target_card_per_dayにデータ未検出",
-                    extra=create_log_context(
-                        operation="get_by_date", date=str(target_date)
-                    ),
+                    extra=create_log_context(operation="get_by_date", date=str(target_date)),
                 )
                 return None
 
             logger.info(
                 "target cardデータ取得成功(get_by_date)",
-                extra=create_log_context(
-                    operation="get_by_date", date=str(target_date)
-                ),
+                extra=create_log_context(operation="get_by_date", date=str(target_date)),
             )
             return {
                 "ddate": result[0],
@@ -263,9 +250,7 @@ class DashboardTargetRepository:
                 "day_target_ton": float(result[3]) if result[3] is not None else None,
                 "month_actual_ton": float(result[4]) if result[4] is not None else None,
                 "week_actual_ton": float(result[5]) if result[5] is not None else None,
-                "day_actual_ton_prev": (
-                    float(result[6]) if result[6] is not None else None
-                ),
+                "day_actual_ton_prev": (float(result[6]) if result[6] is not None else None),
                 "iso_year": result[7],
                 "iso_week": result[8],
                 "iso_dow": result[9],
@@ -388,9 +373,7 @@ class DashboardTargetRepository:
                 "day_target_ton": float(result[2]) if result[2] is not None else None,
                 "month_actual_ton": float(result[3]) if result[3] is not None else None,
                 "week_actual_ton": float(result[4]) if result[4] is not None else None,
-                "day_actual_ton_prev": (
-                    float(result[5]) if result[5] is not None else None
-                ),
+                "day_actual_ton_prev": (float(result[5]) if result[5] is not None else None),
             }
         except Exception as e:
             logger.error(

@@ -211,9 +211,7 @@ def upgrade() -> None:
     print("  - stg.shogun_final_receive → stg.v_active_shogun_final_receive")
     print("  - stg.shogun_flash_receive → stg.v_active_shogun_flash_receive")
     print("  - Automatic is_deleted=false filtering via views")
-    print(
-        "  - Dependent views recreated: v_receive_daily, v_receive_weekly, v_receive_monthly"
-    )
+    print("  - Dependent views recreated: v_receive_daily, v_receive_weekly, v_receive_monthly")
 
 
 def downgrade() -> None:

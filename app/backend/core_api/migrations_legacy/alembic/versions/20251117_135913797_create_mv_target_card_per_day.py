@@ -53,9 +53,7 @@ def _exists(qualified: str) -> bool:
         return False
     conn = op.get_bind()
     return bool(
-        conn.execute(
-            sa.text("SELECT to_regclass(:q) IS NOT NULL"), {"q": qualified}
-        ).scalar()
+        conn.execute(sa.text("SELECT to_regclass(:q) IS NOT NULL"), {"q": qualified}).scalar()
     )
 
 

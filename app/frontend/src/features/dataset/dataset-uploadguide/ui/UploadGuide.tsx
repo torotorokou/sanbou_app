@@ -5,14 +5,14 @@
  * Alert で未完了・エラーを強調
  */
 
-import React, { useEffect } from "react";
-import { Collapse, List, Tag, Typography } from "antd";
-import { InfoCircleOutlined } from "@ant-design/icons";
-import type { FileState } from "../model/types";
-import { DATASETS } from "@features/dataset/config/datasets";
-import { notifyError } from "@features/notification";
-import type { DatasetKey } from "@features/dataset/config";
-import styles from "./UploadGuide.module.css";
+import React, { useEffect } from 'react';
+import { Collapse, List, Tag, Typography } from 'antd';
+import { InfoCircleOutlined } from '@ant-design/icons';
+import type { FileState } from '../model/types';
+import { DATASETS } from '@features/dataset/config/datasets';
+import { notifyError } from '@features/notification';
+import type { DatasetKey } from '@features/dataset/config';
+import styles from './UploadGuide.module.css';
 
 const { Text } = Typography;
 
@@ -23,25 +23,22 @@ export interface UploadGuideProps {
   files: FileState[];
 }
 
-export const UploadGuide: React.FC<UploadGuideProps> = ({
-  datasetKey,
-  files,
-}) => {
+export const UploadGuide: React.FC<UploadGuideProps> = ({ datasetKey, files }) => {
   const dataset = DATASETS?.[datasetKey];
   const reqList = dataset?.csv ?? [];
   const reqTotal = reqList.length;
 
   // 未完了（必須 & valid でない）
-  const missing = files.filter((f) => f.required && f.status !== "valid");
+  const missing = files.filter((f) => f.required && f.status !== 'valid');
   // エラー（invalid）
-  const invalid = files.filter((f) => f.status === "invalid");
+  const invalid = files.filter((f) => f.status === 'invalid');
 
   // 検証エラーがある場合、右上に通知を表示
   useEffect(() => {
     if (invalid.length > 0) {
-      const errorFiles = invalid.map((f) => f.label).join("、");
+      const errorFiles = invalid.map((f) => f.label).join('、');
       // プロジェクト共通の通知機構に差し替え
-      notifyError("検証エラー", `${errorFiles} に問題があります`);
+      notifyError('検証エラー', `${errorFiles} に問題があります`);
     }
   }, [invalid.length]); // invalid.length が変わった場合のみ再実行
 
@@ -54,16 +51,16 @@ export const UploadGuide: React.FC<UploadGuideProps> = ({
           className={styles.compactCollapse}
           style={{
             marginBottom: 8,
-            backgroundColor: "#fffbe6",
-            border: "1px solid #ffe58f",
+            backgroundColor: '#fffbe6',
+            border: '1px solid #ffe58f',
             borderRadius: 6,
           }}
           expandIconPosition="start"
           items={[
             {
-              key: "missing",
+              key: 'missing',
               label: (
-                <span style={{ fontWeight: "bold", color: "#faad14" }}>
+                <span style={{ fontWeight: 'bold', color: '#faad14' }}>
                   ⚠️ 未完了: 必須 {missing.length}/{reqTotal}
                 </span>
               ),
@@ -89,19 +86,17 @@ export const UploadGuide: React.FC<UploadGuideProps> = ({
         defaultActiveKey={[]}
         className={styles.compactCollapse}
         style={{
-          backgroundColor: "#f6ffed",
-          border: "1px solid #b7eb8f",
+          backgroundColor: '#f6ffed',
+          border: '1px solid #b7eb8f',
           borderRadius: 6,
         }}
         expandIconPosition="start"
         items={[
           {
-            key: "howto",
+            key: 'howto',
             label: (
-              <span style={{ fontWeight: "bold" }}>
-                <InfoCircleOutlined
-                  style={{ marginRight: 8, color: "#52c41a" }}
-                />
+              <span style={{ fontWeight: 'bold' }}>
+                <InfoCircleOutlined style={{ marginRight: 8, color: '#52c41a' }} />
                 アップロード手順
               </span>
             ),
@@ -117,12 +112,10 @@ export const UploadGuide: React.FC<UploadGuideProps> = ({
             ),
           },
           {
-            key: "req",
+            key: 'req',
             label: (
-              <span style={{ fontWeight: "bold" }}>
-                <InfoCircleOutlined
-                  style={{ marginRight: 8, color: "#52c41a" }}
-                />
+              <span style={{ fontWeight: 'bold' }}>
+                <InfoCircleOutlined style={{ marginRight: 8, color: '#52c41a' }} />
                 必要ファイル
               </span>
             ),
@@ -136,14 +129,11 @@ export const UploadGuide: React.FC<UploadGuideProps> = ({
                     <Text type="secondary" style={{ fontSize: 12 }}>
                       (必須)
                     </Text>
-                    {Array.isArray(r.filenameHints) &&
-                      r.filenameHints.length > 0 && (
-                        <span
-                          style={{ marginLeft: 8, fontSize: 12, color: "#888" }}
-                        >
-                          ファイル名例: {r.filenameHints.join(" / ")}
-                        </span>
-                      )}
+                    {Array.isArray(r.filenameHints) && r.filenameHints.length > 0 && (
+                      <span style={{ marginLeft: 8, fontSize: 12, color: '#888' }}>
+                        ファイル名例: {r.filenameHints.join(' / ')}
+                      </span>
+                    )}
                   </List.Item>
                 )}
               />
@@ -152,12 +142,10 @@ export const UploadGuide: React.FC<UploadGuideProps> = ({
           ...(Array.isArray(dataset?.notes) && dataset.notes.length > 0
             ? [
                 {
-                  key: "notes",
+                  key: 'notes',
                   label: (
-                    <span style={{ fontWeight: "bold" }}>
-                      <InfoCircleOutlined
-                        style={{ marginRight: 8, color: "#52c41a" }}
-                      />
+                    <span style={{ fontWeight: 'bold' }}>
+                      <InfoCircleOutlined style={{ marginRight: 8, color: '#52c41a' }} />
                       注意事項
                     </span>
                   ),

@@ -1,4 +1,5 @@
 import pandas as pd
+
 from app.infra.report_utils import get_template_config, load_master_and_template
 from app.infra.report_utils.formatters.multiply_optimized import (
     multiply_columns_optimized,

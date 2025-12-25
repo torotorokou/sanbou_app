@@ -1,6 +1,6 @@
-import React from "react";
-import { Result, Button } from "antd";
-import { useNavigate } from "react-router-dom";
+import React from 'react';
+import { Result, Button } from 'antd';
+import { useNavigate } from 'react-router-dom';
 
 /**
  * 404 Not Found ページ
@@ -20,11 +20,11 @@ export const NotFoundPage: React.FC = () => {
   return (
     <div
       style={{
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        minHeight: "100vh",
-        padding: "24px",
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        minHeight: '100vh',
+        padding: '24px',
       }}
     >
       <Result
@@ -32,7 +32,7 @@ export const NotFoundPage: React.FC = () => {
         title="404"
         subTitle="お探しのページが見つかりません"
         extra={
-          <Button type="primary" onClick={() => navigate("/")}>
+          <Button type="primary" onClick={() => navigate('/')}>
             ホームに戻る
           </Button>
         }

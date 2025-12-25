@@ -3,8 +3,8 @@
  * マニュアル検索結果リスト表示
  */
 
-import React, { memo } from "react";
-import type { ManualDoc } from "../../domain/types/manual.types";
+import React, { memo } from 'react';
+import type { ManualDoc } from '../../domain/types/manual.types';
 
 interface ManualResultListProps {
   results: ManualDoc[];
@@ -14,12 +14,7 @@ interface ManualResultListProps {
 }
 
 export const ManualResultList = memo(
-  ({
-    results,
-    isLoading = false,
-    error = null,
-    onSelect,
-  }: ManualResultListProps) => {
+  ({ results, isLoading = false, error = null, onSelect }: ManualResultListProps) => {
     if (isLoading) {
       return <div className="text-center py-8 text-gray-500">検索中...</div>;
     }
@@ -33,9 +28,7 @@ export const ManualResultList = memo(
     }
 
     if (results.length === 0) {
-      return (
-        <div className="text-center py-8 text-gray-500">結果がありません</div>
-      );
+      return <div className="text-center py-8 text-gray-500">結果がありません</div>;
     }
 
     return (
@@ -55,24 +48,20 @@ export const ManualResultList = memo(
             {doc.tags && doc.tags.length > 0 && (
               <div className="mt-2 flex gap-1 flex-wrap">
                 {doc.tags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded"
-                  >
+                  <span key={tag} className="px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded">
                     {tag}
                   </span>
                 ))}
               </div>
             )}
             <div className="mt-2 text-sm text-gray-600">
-              {doc.mimeType}{" "}
-              {doc.size && `• ${(doc.size / 1024).toFixed(1)} KB`}
+              {doc.mimeType} {doc.size && `• ${(doc.size / 1024).toFixed(1)} KB`}
             </div>
           </li>
         ))}
       </ul>
     );
-  },
+  }
 );
 
-ManualResultList.displayName = "ManualResultList";
+ManualResultList.displayName = 'ManualResultList';

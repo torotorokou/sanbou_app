@@ -86,14 +86,15 @@ def get_request_id(request: Request) -> str:
 import os
 from collections.abc import Generator
 
+from fastapi import Depends, Request
+from sqlalchemy.orm import Session
+
 from app.core.domain.auth.entities import AuthUser
 from app.core.ports.auth.auth_provider import IAuthProvider
 from app.infra.adapters.auth.dev_auth_provider import DevAuthProvider
 from app.infra.adapters.auth.iap_auth_provider import IapAuthProvider
 from app.infra.adapters.auth.vpn_auth_provider import VpnAuthProvider
 from app.infra.db.db import get_db  # noqa: F401
-from fastapi import Depends, Request
-from sqlalchemy.orm import Session
 
 # ==========================================
 # データベースセッション（将来のマイグレーション用接続分離対応）
@@ -233,8 +234,7 @@ def get_auth_provider() -> IAuthProvider:
             _auth_provider_instance = IapAuthProvider()
         else:
             raise ValueError(
-                f"Invalid AUTH_MODE: {auth_mode}. "
-                f"Supported values: dummy, vpn_dummy, iap"
+                f"Invalid AUTH_MODE: {auth_mode}. " f"Supported values: dummy, vpn_dummy, iap"
             )
 
     return _auth_provider_instance

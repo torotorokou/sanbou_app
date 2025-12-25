@@ -41,9 +41,7 @@ class EnqueueNotificationsUseCase:
     def __init__(self, outbox: NotificationOutboxPort):
         self._outbox = outbox
 
-    def execute(
-        self, requests: list[EnqueueNotificationRequest], now: datetime
-    ) -> None:
+    def execute(self, requests: list[EnqueueNotificationRequest], now: datetime) -> None:
         """
         通知を Outbox に登録
 

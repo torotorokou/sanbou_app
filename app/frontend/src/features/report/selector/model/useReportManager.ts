@@ -1,6 +1,6 @@
-import { useState, useCallback, useMemo } from "react";
-import { reportConfigMap } from "@features/report/shared/config";
-import type { ReportKey } from "@features/report/shared/config";
+import { useState, useCallback, useMemo } from 'react';
+import { reportConfigMap } from '@features/report/shared/config';
+import type { ReportKey } from '@features/report/shared/config';
 
 // CSVファイルの型定義
 type CsvFiles = { [csvLabel: string]: File | null };
@@ -22,12 +22,9 @@ type CsvFiles = { [csvLabel: string]: File | null };
  * @param initialReportKey 初期レポートタイプ（デフォルト: 'factory_report'）
  * @returns レポート管理に必要な状態とアクション
  */
-export const useReportManager = (
-  initialReportKey: ReportKey = "factory_report",
-) => {
+export const useReportManager = (initialReportKey: ReportKey = 'factory_report') => {
   // 基本状態
-  const [selectedReport, setSelectedReport] =
-    useState<ReportKey>(initialReportKey);
+  const [selectedReport, setSelectedReport] = useState<ReportKey>(initialReportKey);
   const [csvFiles, setCsvFiles] = useState<CsvFiles>({});
   const [currentStep, setCurrentStep] = useState(0);
 
@@ -161,7 +158,7 @@ export const useReportManager = (
         setIsModalOpen,
         setIsFinalized,
         setIsLoading,
-      ],
+      ]
     ),
   };
 };

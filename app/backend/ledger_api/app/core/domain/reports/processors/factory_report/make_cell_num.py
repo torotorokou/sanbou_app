@@ -33,9 +33,7 @@ def make_cell_num_cal(
         cat_key = str(category)
         start_cell = start_cells.get(cat_key)
         if not start_cell:
-            raise ValueError(
-                f"[カテゴリ: {category}] に対する開始セルが指定されていません。"
-            )
+            raise ValueError(f"[カテゴリ: {category}] に対する開始セルが指定されていません。")
 
         match = re.match(r"([A-Z]+)(\d+)", start_cell)
         if not match:

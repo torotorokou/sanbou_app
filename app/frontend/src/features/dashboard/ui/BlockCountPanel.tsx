@@ -1,14 +1,14 @@
-import React from "react";
-import { Card, Row, Col } from "antd";
-import { StatisticCard } from "@shared/ui";
+import React from 'react';
+import { Card, Row, Col } from 'antd';
+import { StatisticCard } from '@shared/ui';
 
 const BlockCountPanel: React.FC = () => {
   const blockData = [
-    { title: "廃プラ", value: 48, diff: 5 },
-    { title: "焼却", value: 32, diff: -3 },
-    { title: "破砕", value: 27, diff: 0 },
-    { title: "安定", value: 19, diff: 2 },
-    { title: "B", value: 12, diff: -1 },
+    { title: '廃プラ', value: 48, diff: 5 },
+    { title: '焼却', value: 32, diff: -3 },
+    { title: '破砕', value: 27, diff: 0 },
+    { title: '安定', value: 19, diff: 2 },
+    { title: 'B', value: 12, diff: -1 },
   ];
 
   return (

@@ -1,27 +1,19 @@
-import React, { useEffect, useState } from "react";
-import {
-  MapContainer,
-  TileLayer,
-  Circle,
-  Tooltip,
-  Marker,
-  Popup,
-  GeoJSON,
-} from "react-leaflet";
-import type { FeatureCollection } from "geojson";
-import L from "leaflet";
-import "leaflet/dist/leaflet.css";
-import { Card, Table, Statistic, Row, Col } from "antd";
-import type { ColumnsType } from "antd/es/table";
-import { customerAnalysisColors } from "@shared/theme";
+import React, { useEffect, useState } from 'react';
+import { MapContainer, TileLayer, Circle, Tooltip, Marker, Popup, GeoJSON } from 'react-leaflet';
+import type { FeatureCollection } from 'geojson';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+import { Card, Table, Statistic, Row, Col } from 'antd';
+import type { ColumnsType } from 'antd/es/table';
+import { customerAnalysisColors } from '@shared/theme';
 
 // 会社マーカー
 const companyIcon = new L.Icon({
-  iconUrl: "/marker-icon-red.png",
+  iconUrl: '/marker-icon-red.png',
   iconSize: [25, 41],
   iconAnchor: [12, 41],
   popupAnchor: [1, -34],
-  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
   shadowSize: [41, 41],
 });
 
@@ -46,33 +38,33 @@ type Customer = {
 
 const customers: Customer[] = Array.from({ length: 50 }, (_, i) => {
   const areas = [
-    { pref: "東京", lat: 35.7, lng: 139.7 },
-    { pref: "神奈川", lat: 35.4, lng: 139.6 },
-    { pref: "埼玉", lat: 35.9, lng: 139.6 },
-    { pref: "千葉", lat: 35.6, lng: 140.1 },
-    { pref: "横浜", lat: 35.5, lng: 139.6 },
-    { pref: "川崎", lat: 35.5, lng: 139.7 },
-    { pref: "船橋", lat: 35.7, lng: 139.98 },
-    { pref: "大宮", lat: 35.9, lng: 139.62 },
-    { pref: "立川", lat: 35.7, lng: 139.41 },
-    { pref: "町田", lat: 35.5, lng: 139.45 },
+    { pref: '東京', lat: 35.7, lng: 139.7 },
+    { pref: '神奈川', lat: 35.4, lng: 139.6 },
+    { pref: '埼玉', lat: 35.9, lng: 139.6 },
+    { pref: '千葉', lat: 35.6, lng: 140.1 },
+    { pref: '横浜', lat: 35.5, lng: 139.6 },
+    { pref: '川崎', lat: 35.5, lng: 139.7 },
+    { pref: '船橋', lat: 35.7, lng: 139.98 },
+    { pref: '大宮', lat: 35.9, lng: 139.62 },
+    { pref: '立川', lat: 35.7, lng: 139.41 },
+    { pref: '町田', lat: 35.5, lng: 139.45 },
   ];
   const companies = [
-    "商事",
-    "産業",
-    "エンタープライズ",
-    "メタル",
-    "トレーディング",
-    "電材",
-    "物流",
-    "サービス",
-    "工業",
-    "リサイクル",
-    "工務店",
-    "企画",
-    "建設",
-    "技研",
-    "ファクトリー",
+    '商事',
+    '産業',
+    'エンタープライズ',
+    'メタル',
+    'トレーディング',
+    '電材',
+    '物流',
+    'サービス',
+    '工業',
+    'リサイクル',
+    '工務店',
+    '企画',
+    '建設',
+    '技研',
+    'ファクトリー',
   ];
   const area = areas[Math.floor(Math.random() * areas.length)];
   const comp = companies[Math.floor(Math.random() * companies.length)];
@@ -96,16 +88,16 @@ const getRadius = (sales: number) => Math.sqrt(sales) * 400;
 const sortedCustomers = [...customers].sort((a, b) => b.sales - a.sales);
 const columns: ColumnsType<Customer> = [
   {
-    title: "順位",
-    key: "rank",
+    title: '順位',
+    key: 'rank',
     render: (_value, _record, index: number) => index + 1,
     width: 60,
   },
-  { title: "顧客名", dataIndex: "name", key: "name" },
+  { title: '顧客名', dataIndex: 'name', key: 'name' },
   {
-    title: "売上",
-    dataIndex: "sales",
-    key: "sales",
+    title: '売上',
+    dataIndex: 'sales',
+    key: 'sales',
     render: (v: number) => `${v} 万円`,
   },
 ];
@@ -113,30 +105,28 @@ const totalSales = customers.reduce((sum, c) => sum + c.sales, 0);
 const MAP_HEIGHT = 600;
 const HQ_POSITION: [number, number] = [35.644975673671276, 139.83649644682137];
 
-const GEOJSON_URL = "/prefectures.geojson";
+const GEOJSON_URL = '/prefectures.geojson';
 const prefColorMap: Record<string, string> = {
-  東京都: "#f88181ff",
-  神奈川県: "#ffda74ff",
-  埼玉県: "#11ff61ff",
-  千葉県: "#bc9bffff",
+  東京都: '#f88181ff',
+  神奈川県: '#ffda74ff',
+  埼玉県: '#11ff61ff',
+  千葉県: '#bc9bffff',
 };
 function getPrefColor(name: string): string {
-  return prefColorMap[name] || "#ffffff";
+  return prefColorMap[name] || '#ffffff';
 }
-function getCenterOfGeometry(
-  feature: FeatureCollection["features"][0],
-): [number, number] {
+function getCenterOfGeometry(feature: FeatureCollection['features'][0]): [number, number] {
   const { geometry } = feature;
 
-  if (!("coordinates" in geometry)) {
+  if (!('coordinates' in geometry)) {
     return [0, 0];
   }
 
   // MultiPolygon/Polygonのネストした座標配列を扱う
   let coords: unknown = geometry.coordinates;
-  if (geometry.type === "MultiPolygon") {
+  if (geometry.type === 'MultiPolygon') {
     coords = (coords as number[][][][])[0][0];
-  } else if (geometry.type === "Polygon") {
+  } else if (geometry.type === 'Polygon') {
     coords = (coords as number[][][])[0];
   } else {
     return [0, 0];
@@ -155,9 +145,7 @@ function getCenterOfGeometry(
 }
 
 const CustomerListDashboard: React.FC = () => {
-  const [prefGeoJson, setPrefGeoJson] = useState<FeatureCollection | null>(
-    null,
-  );
+  const [prefGeoJson, setPrefGeoJson] = useState<FeatureCollection | null>(null);
 
   useEffect(() => {
     fetch(GEOJSON_URL)
@@ -168,10 +156,10 @@ const CustomerListDashboard: React.FC = () => {
   return (
     <div
       style={{
-        minHeight: "100%",
-        display: "flex",
-        flexDirection: "column",
-        background: "#f7f8fa",
+        minHeight: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        background: '#f7f8fa',
       }}
     >
       <div style={{ padding: 24 }}>
@@ -195,10 +183,10 @@ const CustomerListDashboard: React.FC = () => {
       <div
         style={{
           flex: 1,
-          display: "flex",
-          flexDirection: "row",
+          display: 'flex',
+          flexDirection: 'row',
           gap: 24,
-          alignItems: "stretch",
+          alignItems: 'stretch',
           padding: 24,
           paddingTop: 0,
         }}
@@ -208,26 +196,26 @@ const CustomerListDashboard: React.FC = () => {
           style={{
             flex: 2.5,
             minWidth: 320,
-            height: "auto",
+            height: 'auto',
             minHeight: 360,
-            display: "flex",
-            flexDirection: "column",
+            display: 'flex',
+            flexDirection: 'column',
           }}
           styles={{
             body: {
               height: MAP_HEIGHT,
-              display: "flex",
-              flexDirection: "column",
+              display: 'flex',
+              flexDirection: 'column',
               padding: 0,
             },
           }}
         >
-          <h3 style={{ margin: "16px" }}>地図上の売上分布（関東一都三県）</h3>
+          <h3 style={{ margin: '16px' }}>地図上の売上分布（関東一都三県）</h3>
           <div style={{ flex: 1, height: MAP_HEIGHT }}>
             <MapContainer
               center={[35.7, 139.7]}
               zoom={9}
-              style={{ height: MAP_HEIGHT, width: "100%" }}
+              style={{ height: MAP_HEIGHT, width: '100%' }}
             >
               <TileLayer
                 url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png"
@@ -238,9 +226,9 @@ const CustomerListDashboard: React.FC = () => {
                 <GeoJSON
                   data={prefGeoJson}
                   style={(feature) => ({
-                    color: "#222",
+                    color: '#222',
                     weight: 1,
-                    fillColor: getPrefColor(feature?.properties?.name || ""),
+                    fillColor: getPrefColor(feature?.properties?.name || ''),
                     fillOpacity: 0.1,
                   })}
                 />
@@ -249,14 +237,14 @@ const CustomerListDashboard: React.FC = () => {
               {prefGeoJson &&
                 prefGeoJson.features.map((feature, i: number) => {
                   const prop = feature.properties;
-                  const label = prop?.name ?? "不明";
+                  const label = prop?.name ?? '不明';
                   const [lat, lng] = getCenterOfGeometry(feature);
                   return (
                     <Marker
                       key={label + i}
                       position={[lat, lng]}
                       icon={L.divIcon({
-                        className: "pref-label",
+                        className: 'pref-label',
                         html: `<span style="
                                                     font-size:18px;
                                                     font-weight:bold;
@@ -303,15 +291,15 @@ const CustomerListDashboard: React.FC = () => {
           <div
             style={{
               marginTop: 16,
-              background: "rgba(255,255,255,0.9)",
+              background: 'rgba(255,255,255,0.9)',
               borderRadius: 8,
-              padding: "8px 16px",
-              boxShadow: "0 1px 6px #ddd",
-              display: "flex",
-              alignItems: "center",
+              padding: '8px 16px',
+              boxShadow: '0 1px 6px #ddd',
+              display: 'flex',
+              alignItems: 'center',
             }}
           >
-            <span style={{ fontWeight: "bold", fontSize: 15, marginRight: 8 }}>
+            <span style={{ fontWeight: 'bold', fontSize: 15, marginRight: 8 }}>
               ■ バブル色凡例：
             </span>
             {colorScale.map((item) => (
@@ -319,19 +307,19 @@ const CustomerListDashboard: React.FC = () => {
                 key={item.label}
                 style={{
                   marginRight: 20,
-                  display: "inline-flex",
-                  alignItems: "center",
+                  display: 'inline-flex',
+                  alignItems: 'center',
                 }}
               >
                 <span
                   style={{
-                    display: "inline-block",
+                    display: 'inline-block',
                     width: 18,
                     height: 18,
-                    borderRadius: "50%",
+                    borderRadius: '50%',
                     backgroundColor: item.color,
                     marginRight: 5,
-                    border: "1.5px solid #888",
+                    border: '1.5px solid #888',
                   }}
                 />
                 <span style={{ fontSize: 15 }}>{item.label}</span>
@@ -345,32 +333,29 @@ const CustomerListDashboard: React.FC = () => {
             flex: 1,
             minWidth: 260,
             maxWidth: 420,
-            height: "auto",
+            height: 'auto',
             minHeight: 360,
-            display: "flex",
-            flexDirection: "column",
+            display: 'flex',
+            flexDirection: 'column',
           }}
           styles={{
             body: {
               height: MAP_HEIGHT,
-              display: "flex",
-              flexDirection: "column",
+              display: 'flex',
+              flexDirection: 'column',
               padding: 0,
             },
           }}
         >
-          <h3 style={{ margin: "16px" }}>顧客ランキング</h3>
-          <div
-            className="responsive-x"
-            style={{ flex: 1, margin: "0 16px 16px 16px" }}
-          >
+          <h3 style={{ margin: '16px' }}>顧客ランキング</h3>
+          <div className="responsive-x" style={{ flex: 1, margin: '0 16px 16px 16px' }}>
             <Table
               dataSource={sortedCustomers}
               columns={columns}
               size="small"
               rowKey="id"
               pagination={false}
-              scroll={{ y: MAP_HEIGHT - 90, x: "max-content" }}
+              scroll={{ y: MAP_HEIGHT - 90, x: 'max-content' }}
             />
           </div>
         </Card>

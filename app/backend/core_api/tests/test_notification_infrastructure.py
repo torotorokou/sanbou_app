@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 from unittest.mock import Mock
 
 import pytest
+
 from app.core.domain.notification import (
     FailureType,
     NotificationOutboxItem,
@@ -333,9 +334,7 @@ class TestDispatchPendingNotificationsUseCase:
 class TestNotificationLineFoundation:
     """LINE通知基盤の拡張テスト（preference/resolver/failure分類）"""
 
-    def test_preference_disabled_skips_notification(
-        self, outbox, sender, preference, resolver
-    ):
+    def test_preference_disabled_skips_notification(self, outbox, sender, preference, resolver):
         """Test Case 1: Preference で無効化された通知は skipped"""
         now = datetime.now()
         # user:2 は LINE disabled（test data）
@@ -366,9 +365,7 @@ class TestNotificationLineFoundation:
         assert item_in_outbox.status == NotificationStatus.SKIPPED
         assert "LINE notification disabled" in item_in_outbox.last_error
 
-    def test_resolver_returns_none_skips_notification(
-        self, outbox, sender, preference, resolver
-    ):
+    def test_resolver_returns_none_skips_notification(self, outbox, sender, preference, resolver):
         """Test Case 2: Resolver が None を返す場合 skipped（PERMANENT）"""
         now = datetime.now()
         # user:1 for LINE → Resolver returns None (未連携)

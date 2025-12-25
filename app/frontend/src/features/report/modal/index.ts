@@ -5,5 +5,5 @@
  */
 
 // UI
-export { default as ReportStepperModal } from "./ui/ReportStepperModal";
-export type { ReportStepperModalProps } from "./ui/ReportStepperModal";
+export { default as ReportStepperModal } from './ui/ReportStepperModal';
+export type { ReportStepperModalProps } from './ui/ReportStepperModal';

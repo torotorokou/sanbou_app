@@ -1,4 +1,5 @@
 import pandas as pd
+
 from app.infra.report_utils.formatters import (
     set_value_fast_safe,
     to_japanese_era,
@@ -25,9 +26,7 @@ def generate_summary_dataframe(
     """
     if master_csv_etc is None or master_csv_etc.empty:
         # etc テンプレートが無い場合は加算行なしでそのまま返す
-        print(
-            "[WARN] etcマスターCSVが提供されていません。合計行の追加をスキップします。"
-        )
+        print("[WARN] etcマスターCSVが提供されていません。合計行の追加をスキップします。")
         return df.copy()
 
     etc_csv = master_csv_etc
@@ -100,11 +99,7 @@ def upsert_summary_row(
 
 def date_format(master_csv, df_shipment):
     try:
-        if (
-            df_shipment is None
-            or df_shipment.empty
-            or "伝票日付" not in df_shipment.columns
-        ):
+        if df_shipment is None or df_shipment.empty or "伝票日付" not in df_shipment.columns:
             raise ValueError("shipment日付が取得できません")
         today = pd.to_datetime(df_shipment["伝票日付"].dropna().iloc[0])
     except Exception:
@@ -112,9 +107,7 @@ def date_format(master_csv, df_shipment):
 
     match_columns = ["大項目"]
     match_value = ["和暦"]
-    master_csv = set_value_fast_safe(
-        master_csv, match_columns, match_value, to_japanese_era(today)
-    )
+    master_csv = set_value_fast_safe(master_csv, match_columns, match_value, to_japanese_era(today))
 
     match_columns = ["大項目"]
     match_value = ["月日"]

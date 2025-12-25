@@ -25,7 +25,7 @@
 /**
  * 重要度レベル
  */
-export type AnnouncementSeverity = "info" | "warn" | "critical";
+export type AnnouncementSeverity = 'info' | 'warn' | 'critical';
 
 /**
  * 対象オーディエンス
@@ -34,7 +34,7 @@ export type AnnouncementSeverity = "info" | "warn" | "critical";
  * - 'site:narita': 成田拠点のユーザー
  * - 'site:shinkiba': 新木場拠点のユーザー
  */
-export type Audience = "all" | "internal" | "site:narita" | "site:shinkiba";
+export type Audience = 'all' | 'internal' | 'site:narita' | 'site:shinkiba';
 
 /**
  * 添付ファイル
@@ -45,13 +45,13 @@ export interface Attachment {
   /** URL */
   url: string;
   /** ファイル種別 */
-  kind?: "pdf" | "link";
+  kind?: 'pdf' | 'link';
 }
 
 /**
  * 通知チャネル
  */
-export type NotificationChannel = "inApp" | "email" | "line";
+export type NotificationChannel = 'inApp' | 'email' | 'line';
 
 /**
  * 通知設定
@@ -103,14 +103,9 @@ export interface Announcement {
  * @param now - 現在日時（デフォルト: 現在時刻）
  * @returns アクティブならtrue
  */
-export function isAnnouncementActive(
-  announcement: Announcement,
-  now: Date = new Date(),
-): boolean {
+export function isAnnouncementActive(announcement: Announcement, now: Date = new Date()): boolean {
   const publishFrom = new Date(announcement.publishFrom);
-  const publishTo = announcement.publishTo
-    ? new Date(announcement.publishTo)
-    : null;
+  const publishTo = announcement.publishTo ? new Date(announcement.publishTo) : null;
 
   return publishFrom <= now && (publishTo === null || now <= publishTo);
 }
@@ -126,12 +121,12 @@ export function isAnnouncementActive(
  */
 export function isVisibleForAudience(
   announcement: Announcement,
-  currentAudience: Audience,
+  currentAudience: Audience
 ): boolean {
   const { audience } = announcement;
 
   // 'all' と 'internal' は全員に表示（今は同じ扱い）
-  if (audience === "all" || audience === "internal") {
+  if (audience === 'all' || audience === 'internal') {
     return true;
   }
 
@@ -148,7 +143,5 @@ export function isVisibleForAudience(
  * @returns バナー対象ならtrue
  */
 export function isBannerTarget(announcement: Announcement): boolean {
-  return (
-    announcement.severity === "warn" || announcement.severity === "critical"
-  );
+  return announcement.severity === 'warn' || announcement.severity === 'critical';
 }

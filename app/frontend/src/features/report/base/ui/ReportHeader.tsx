@@ -1,8 +1,8 @@
-import React from "react";
-import { Steps } from "antd";
-import { useResponsive, bp } from "@/shared";
-import ReportSelector from "@features/report/selector/ui/ReportSelector";
-import type { PageGroupKey } from "@features/report/shared/config";
+import React from 'react';
+import { Steps } from 'antd';
+import { useResponsive, bp } from '@/shared';
+import ReportSelector from '@features/report/selector/ui/ReportSelector';
+import type { PageGroupKey } from '@features/report/shared/config';
 
 type ReportHeaderProps = {
   reportKey: string;
@@ -46,57 +46,41 @@ const ReportHeader: React.FC<ReportHeaderProps> = ({
   // responsive: 各種スタイル値を3段階で定義
   const gap = pickByDevice(12, 20, 24);
   const marginBottom = pickByDevice(12, 20, 24);
-  const padding = pickByDevice("8px 12px", "12px 20px", "12px 24px");
-  const selectorWidth = pickByDevice<string | number>("auto", "auto", 300); // Tabletもautoに変更
+  const padding = pickByDevice('8px 12px', '12px 20px', '12px 24px');
+  const selectorWidth = pickByDevice<string | number>('auto', 'auto', 300); // Tabletもautoに変更
   const borderRadius = 12;
   const minimizeSteps = pickByDevice(true, false, false); // Mobileのみ最小化
   const stepsMinWidth = pickByDevice(0, bp.xs, bp.sm);
 
   // responsive: レイアウト方向（Mobile/Tablet=縦、Desktop=横）
-  const flexDirection = pickByDevice<"column" | "row">(
-    "column",
-    "column",
-    "row",
-  );
-  const alignItems = pickByDevice<"stretch" | "flex-start">(
-    "stretch",
-    "stretch",
-    "flex-start",
-  );
+  const flexDirection = pickByDevice<'column' | 'row'>('column', 'column', 'row');
+  const alignItems = pickByDevice<'stretch' | 'flex-start'>('stretch', 'stretch', 'flex-start');
 
   // responsive: セレクター表示制御（Tablet以下は中央寄せ、Desktopは左寄せ）
-  const selectorDisplay = pickByDevice<"flex" | undefined>(
-    "flex",
-    "flex",
-    undefined,
-  );
-  const selectorJustify = pickByDevice<"center" | undefined>(
-    "center",
-    "center",
-    undefined,
-  );
+  const selectorDisplay = pickByDevice<'flex' | undefined>('flex', 'flex', undefined);
+  const selectorJustify = pickByDevice<'center' | undefined>('center', 'center', undefined);
 
   // responsive: セレクターのタイトル風スタイル（Tablet以下）
   const selectorTitleStyle = pickByDevice<React.CSSProperties | undefined>(
     {
       fontSize: 16,
       fontWeight: 700,
-      width: "auto",
+      width: 'auto',
       minWidth: 180,
-      textAlign: "center",
+      textAlign: 'center',
     },
     {
       fontSize: 17,
       fontWeight: 700,
-      width: "auto",
+      width: 'auto',
       minWidth: 200,
-      textAlign: "center",
+      textAlign: 'center',
     },
-    undefined,
+    undefined
   );
 
   const containerStyle: React.CSSProperties = {
-    display: "flex",
+    display: 'flex',
     alignItems,
     gap,
     marginBottom,
@@ -105,12 +89,12 @@ const ReportHeader: React.FC<ReportHeaderProps> = ({
 
   const selectorWrapperStyle: React.CSSProperties = {
     padding,
-    background: "#fff",
+    background: '#fff',
     borderRadius,
-    boxShadow: "0 2px 6px rgba(0,0,0,0.06)",
-    width: flags.isMobile || flags.isTablet ? "100%" : selectorWidth,
-    flex: flags.isMobile || flags.isTablet ? undefined : "0 0 auto",
-    alignSelf: "flex-start", // 高さが伸びないように修正
+    boxShadow: '0 2px 6px rgba(0,0,0,0.06)',
+    width: flags.isMobile || flags.isTablet ? '100%' : selectorWidth,
+    flex: flags.isMobile || flags.isTablet ? undefined : '0 0 auto',
+    alignSelf: 'flex-start', // 高さが伸びないように修正
     display: selectorDisplay,
     justifyContent: selectorJustify,
   };
@@ -118,38 +102,35 @@ const ReportHeader: React.FC<ReportHeaderProps> = ({
   const stepsWrapperStyle: React.CSSProperties = {
     flex: 1,
     padding,
-    background: "#f9f9f9",
+    background: '#f9f9f9',
     borderRadius,
-    boxShadow: "0 2px 6px rgba(0,0,0,0.04)",
-    overflowX: "auto",
+    boxShadow: '0 2px 6px rgba(0,0,0,0.04)',
+    overflowX: 'auto',
     minWidth: stepsMinWidth,
     // responsive: 狭い画面でも横並びを維持
-    WebkitOverflowScrolling: "touch", // iOS用スムーズスクロール
+    WebkitOverflowScrolling: 'touch', // iOS用スムーズスクロール
   };
 
   // responsive: ステップアイテムの説明文（Mobile=非表示、それ以外で段階的表示）
   const showDescription = !flags.isMobile && !minimizeSteps;
   const stepItems = [
     {
-      title: "データセットの準備",
-      description: showDescription ? "CSVアップロード" : undefined,
+      title: 'データセットの準備',
+      description: showDescription ? 'CSVアップロード' : undefined,
     },
     {
-      title: "帳簿作成",
-      description: showDescription ? "ボタンをクリック" : undefined,
+      title: '帳簿作成',
+      description: showDescription ? 'ボタンをクリック' : undefined,
     },
     {
-      title: "ダウンロード",
-      description: showDescription ? "保存できます" : undefined,
+      title: 'ダウンロード',
+      description: showDescription ? '保存できます' : undefined,
     },
   ];
 
   // Derive header index from upload/finish flags when available. Falls back to passed currentStep.
   const deriveHeaderIndex = () => {
-    if (
-      typeof areRequiredCsvsUploaded === "boolean" &&
-      typeof isFinalized === "boolean"
-    ) {
+    if (typeof areRequiredCsvsUploaded === 'boolean' && typeof isFinalized === 'boolean') {
       if (!areRequiredCsvsUploaded) return 0; // データセットの準備
       if (areRequiredCsvsUploaded && !isFinalized) return 1; // 帳簿作成
       if (isFinalized) return 2; // ダウンロード
@@ -167,10 +148,10 @@ const ReportHeader: React.FC<ReportHeaderProps> = ({
           style={
             flags.isMobile || flags.isTablet
               ? {
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  width: "100%",
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: '100%',
                 }
               : undefined
           }
@@ -187,13 +168,11 @@ const ReportHeader: React.FC<ReportHeaderProps> = ({
 
       {/* ✅ ステップ表示ラッパー */}
       <div style={stepsWrapperStyle}>
-        <div style={{ minWidth: flags.isXs ? 480 : flags.isSm ? 540 : "auto" }}>
+        <div style={{ minWidth: flags.isXs ? 480 : flags.isSm ? 540 : 'auto' }}>
           <Steps
             current={headerIndex}
             responsive={false}
-            size={
-              minimizeSteps ? "small" : flags.isMobile ? "small" : undefined
-            }
+            size={minimizeSteps ? 'small' : flags.isMobile ? 'small' : undefined}
             items={stepItems}
           />
         </div>

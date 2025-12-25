@@ -11,8 +11,10 @@ from datetime import datetime
 from typing import Any
 
 import pandas as pd
-from backend_shared.application.logging import create_log_context, get_module_logger
 from pandas.api.types import is_datetime64_any_dtype as _is_dt
+
+from backend_shared.application.logging import create_log_context, get_module_logger
+
 
 logger = get_module_logger(__name__)
 
@@ -138,9 +140,7 @@ def canonical_sort_labels(labels: list[str]) -> list[str]:
 # ------------------------------ Date Handling ------------------------------
 
 
-def ensure_datetime_col(
-    df: pd.DataFrame | None, col: str = "伝票日付"
-) -> pd.DataFrame | None:
+def ensure_datetime_col(df: pd.DataFrame | None, col: str = "伝票日付") -> pd.DataFrame | None:
     """指定列をdatetimeに変換"""
     if df is None or col not in df.columns:
         return df
@@ -299,9 +299,7 @@ def series_sample(df: pd.DataFrame | None, col: str, k: int = 5) -> list[Any]:
         return []
 
 
-def log_checkpoint(
-    tag: str, df_a: pd.DataFrame | None, df_b: pd.DataFrame | None = None
-) -> None:
+def log_checkpoint(tag: str, df_a: pd.DataFrame | None, df_b: pd.DataFrame | None = None) -> None:
     """チェックポイントログを出力"""
     msg = f"DBG checkpoint[{tag}] A({fmt_cols(df_a)})"
     if df_b is not None:

@@ -48,9 +48,7 @@ async def debug_iap_headers(request: Request) -> dict[str, Any]:
     headers = request.headers
 
     return {
-        "x_goog_authenticated_user_email": headers.get(
-            "x-goog-authenticated-user-email"
-        ),
+        "x_goog_authenticated_user_email": headers.get("x-goog-authenticated-user-email"),
         "x_goog_authenticated_user_id": headers.get("x-goog-authenticated-user-id"),
         "x_goog_iap_jwt_assertion_exists": "x-goog-iap-jwt-assertion" in headers,
         "x_goog_iap_jwt_assertion_preview": (

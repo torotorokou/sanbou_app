@@ -61,9 +61,7 @@ class IUploadCalendarQuery(Protocol):
     stg テーブルからデータ日付と行数を集計してカレンダー表示用データを提供します。
     """
 
-    def fetch_upload_calendar(
-        self, start_date: date, end_date: date
-    ) -> list[dict[str, Any]]:
+    def fetch_upload_calendar(self, start_date: date, end_date: date) -> list[dict[str, Any]]:
         """
         指定期間のアップロードカレンダーデータを取得
 
@@ -86,7 +84,7 @@ class IUploadCalendarQuery(Protocol):
         upload_file_id: int,
         target_date: date,
         csv_kind: str,
-        deleted_by: str | None = None
+        deleted_by: str | None = None,
     ) -> int:
         """
         指定されたアップロードスコープを論理削除

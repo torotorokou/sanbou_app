@@ -24,9 +24,7 @@ def upgrade():
 
 def downgrade():
     # 互換レイヤ（必要になったら復活できる）
-    op.execute(
-        "CREATE OR REPLACE VIEW mart.receive_daily   AS SELECT * FROM mart.v_receive_daily;"
-    )
+    op.execute("CREATE OR REPLACE VIEW mart.receive_daily   AS SELECT * FROM mart.v_receive_daily;")
     op.execute(
         "CREATE OR REPLACE VIEW mart.receive_weekly  AS SELECT * FROM mart.v_receive_weekly;"
     )

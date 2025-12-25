@@ -7,15 +7,15 @@
  * - 軽量なバリデーションのみ実施
  */
 
-import { useEffect, useMemo, useState, useCallback, useRef } from "react";
-import { useValidateOnPick } from "@/features/csv-validation/model/useValidateOnPick";
-import { useSubmitVM } from "../../dataset-submit/model/useSubmitVM";
-import { globalUploadPollingManager } from "../services/globalUploadPollingManager";
-import { findCsv, getDatasetConfig } from "../../config";
-import type { PanelFileItem, DatasetImportVMOptions } from "../model/types";
-import type { CsvValidationStatus } from "@features/csv-validation";
-import type { CsvPreviewData } from "../../dataset-preview/model/types";
-import type { DatasetKey, CsvTypeKey } from "../../config";
+import { useEffect, useMemo, useState, useCallback, useRef } from 'react';
+import { useValidateOnPick } from '@/features/csv-validation/model/useValidateOnPick';
+import { useSubmitVM } from '../../dataset-submit/model/useSubmitVM';
+import { globalUploadPollingManager } from '../services/globalUploadPollingManager';
+import { findCsv, getDatasetConfig } from '../../config';
+import type { PanelFileItem, DatasetImportVMOptions } from '../model/types';
+import type { CsvValidationStatus } from '@features/csv-validation';
+import type { CsvPreviewData } from '../../dataset-preview/model/types';
+import type { DatasetKey, CsvTypeKey } from '../../config';
 
 export function useDatasetImportVM(opts?: DatasetImportVMOptions) {
   const datasetKey = opts?.datasetKey;
@@ -23,13 +23,9 @@ export function useDatasetImportVM(opts?: DatasetImportVMOptions) {
 
   const [files, setFiles] = useState<Record<string, File | null>>({});
   const [status, setStatus] = useState<Record<string, CsvValidationStatus>>({});
-  const [previews, setPreviews] = useState<
-    Record<string, CsvPreviewData | null>
-  >({});
+  const [previews, setPreviews] = useState<Record<string, CsvPreviewData | null>>({});
   const [skipped, setSkipped] = useState<Record<string, boolean>>({});
-  const [uploadFileIds, setUploadFileIds] = useState<
-    Record<string, number> | undefined
-  >();
+  const [uploadFileIds, setUploadFileIds] = useState<Record<string, number> | undefined>();
   const uploadFileIdsRef = useRef<Record<string, number> | undefined>();
   const isProcessingRef = useRef(false);
   const resetUploadStateRef = useRef<(() => void) | null>(null);
@@ -43,7 +39,7 @@ export function useDatasetImportVM(opts?: DatasetImportVMOptions) {
 
     activeTypes.forEach((t) => {
       newFiles[t] = null;
-      newStatus[t] = "unknown";
+      newStatus[t] = 'unknown';
       newPreviews[t] = null;
       newSkipped[t] = false;
     });
@@ -60,8 +56,7 @@ export function useDatasetImportVM(opts?: DatasetImportVMOptions) {
     return csv?.validate.requiredHeaders;
   };
   const validateOnPick = useValidateOnPick(getRequired);
-  const { uploading, uploadSuccess, doUpload, resetUploadState } =
-    useSubmitVM();
+  const { uploading, uploadSuccess, doUpload, resetUploadState } = useSubmitVM();
 
   // resetUploadStateをrefに保存（最新の関数を保持）
   useEffect(() => {
@@ -87,7 +82,7 @@ export function useDatasetImportVM(opts?: DatasetImportVMOptions) {
       resetUploadState();
     }
     setFiles((prev) => ({ ...prev, [typeKey]: null }));
-    setStatus((prev) => ({ ...prev, [typeKey]: "unknown" }));
+    setStatus((prev) => ({ ...prev, [typeKey]: 'unknown' }));
     setPreviews((prev) => ({ ...prev, [typeKey]: null }));
     setSkipped((prev) => ({ ...prev, [typeKey]: false }));
   };
@@ -110,19 +105,18 @@ export function useDatasetImportVM(opts?: DatasetImportVMOptions) {
           label: csv?.label ?? typeKey,
           required: csv?.required ?? false,
           file: files[typeKey] ?? null,
-          status: status[typeKey] ?? "unknown",
+          status: status[typeKey] ?? 'unknown',
           preview: previews[typeKey] ?? null,
           skipped: skipped[typeKey] ?? false,
         };
       }),
-    [files, status, previews, skipped, activeTypes, datasetKey],
+    [files, status, previews, skipped, activeTypes, datasetKey]
   );
 
   // uploadFileIdsをrefに同期
   useEffect(() => {
     uploadFileIdsRef.current = uploadFileIds;
-    isProcessingRef.current =
-      !!uploadFileIds && Object.keys(uploadFileIds).length > 0;
+    isProcessingRef.current = !!uploadFileIds && Object.keys(uploadFileIds).length > 0;
   }, [uploadFileIds]);
 
   // バックグラウンド処理中かどうか（状態に基づいて計算）
@@ -133,57 +127,49 @@ export function useDatasetImportVM(opts?: DatasetImportVMOptions) {
   // グローバルポーリングマネージャーの完了を監視（マウント時に1度だけ登録）
   useEffect(() => {
     // 完了コールバックを登録
-    const unsubscribe = globalUploadPollingManager.onCompletion(
-      (completedFileIds, allSuccess) => {
-        console.log("[useDatasetImportVM] Processing complete:", {
-          completedFileIds,
-          allSuccess,
-        });
+    const unsubscribe = globalUploadPollingManager.onCompletion((completedFileIds, allSuccess) => {
+      console.log('[useDatasetImportVM] Processing complete:', {
+        completedFileIds,
+        allSuccess,
+      });
 
-        // 現在のuploadFileIdsのいずれかが完了した場合（refから取得）
-        const currentUploadFileIds = uploadFileIdsRef.current;
-        if (!currentUploadFileIds) return;
+      // 現在のuploadFileIdsのいずれかが完了した場合（refから取得）
+      const currentUploadFileIds = uploadFileIdsRef.current;
+      if (!currentUploadFileIds) return;
 
-        const currentFileIds = Object.values(currentUploadFileIds);
-        const isOurBatch = completedFileIds.some((id) =>
-          currentFileIds.includes(id),
-        );
+      const currentFileIds = Object.values(currentUploadFileIds);
+      const isOurBatch = completedFileIds.some((id) => currentFileIds.includes(id));
 
-        if (isOurBatch) {
-          console.log(
-            "[useDatasetImportVM] Our batch completed. Resetting state...",
-          );
+      if (isOurBatch) {
+        console.log('[useDatasetImportVM] Our batch completed. Resetting state...');
 
-          // 即座にref更新
-          uploadFileIdsRef.current = undefined;
-          isProcessingRef.current = false;
+        // 即座にref更新
+        uploadFileIdsRef.current = undefined;
+        isProcessingRef.current = false;
 
-          // 状態更新
-          setUploadFileIds(undefined);
+        // 状態更新
+        setUploadFileIds(undefined);
 
-          // uploadSuccessもリセット（refから取得して実行）
-          if (resetUploadStateRef.current) {
-            resetUploadStateRef.current();
-          }
+        // uploadSuccessもリセット（refから取得して実行）
+        if (resetUploadStateRef.current) {
+          resetUploadStateRef.current();
+        }
 
-          if (allSuccess) {
-            // すべて成功した場合のみファイルをクリア
-            setFiles({});
-            setStatus({});
-            setPreviews({});
-            setSkipped({});
+        if (allSuccess) {
+          // すべて成功した場合のみファイルをクリア
+          setFiles({});
+          setStatus({});
+          setPreviews({});
+          setSkipped({});
 
-            // アップロード完了コールバックを呼び出し
-            if (opts?.onUploadComplete) {
-              console.log(
-                "[useDatasetImportVM] Calling onUploadComplete callback",
-              );
-              opts.onUploadComplete();
-            }
+          // アップロード完了コールバックを呼び出し
+          if (opts?.onUploadComplete) {
+            console.log('[useDatasetImportVM] Calling onUploadComplete callback');
+            opts.onUploadComplete();
           }
         }
-      },
-    );
+      }
+    });
 
     // クリーンアップ（アンマウント時のみ）
     return () => {
@@ -203,10 +189,10 @@ export function useDatasetImportVM(opts?: DatasetImportVMOptions) {
     if (!requiredKeys.length) return false;
 
     const requiredOkay = requiredKeys.every(
-      (t) => skipped[t] || (!!files[t] && status[t] === "valid"),
+      (t) => skipped[t] || (!!files[t] && status[t] === 'valid')
     );
     const hasUploadTargets = activeTypes.some(
-      (t) => !skipped[t] && !!files[t] && status[t] === "valid",
+      (t) => !skipped[t] && !!files[t] && status[t] === 'valid'
     );
 
     return requiredOkay && hasUploadTargets;
@@ -224,7 +210,7 @@ export function useDatasetImportVM(opts?: DatasetImportVMOptions) {
 
   const handleUpload = useCallback(async () => {
     if (!datasetKey) {
-      console.error("datasetKey が指定されていません");
+      console.error('datasetKey が指定されていません');
       return;
     }
 
@@ -238,23 +224,15 @@ export function useDatasetImportVM(opts?: DatasetImportVMOptions) {
       const result = await doUpload(filesForUpload, dataset.upload.path);
 
       if (result.success) {
-        console.log(
-          "Upload accepted. Starting global status polling...",
-          result.uploadFileIds,
-        );
+        console.log('Upload accepted. Starting global status polling...', result.uploadFileIds);
 
         // グローバルポーリングマネージャーに登録
-        if (
-          result.uploadFileIds &&
-          Object.keys(result.uploadFileIds).length > 0
-        ) {
+        if (result.uploadFileIds && Object.keys(result.uploadFileIds).length > 0) {
           setUploadFileIds(result.uploadFileIds);
           globalUploadPollingManager.addJobs(result.uploadFileIds);
         } else {
           // upload_file_idsがない場合は即座にクリア（旧API対応）
-          console.warn(
-            "No upload_file_ids returned. Clearing files immediately.",
-          );
+          console.warn('No upload_file_ids returned. Clearing files immediately.');
           setFiles({});
           setStatus({});
           setPreviews({});
@@ -262,14 +240,14 @@ export function useDatasetImportVM(opts?: DatasetImportVMOptions) {
         }
       }
     } catch (error) {
-      console.error("[handleUpload] Upload failed:", error);
+      console.error('[handleUpload] Upload failed:', error);
       // エラーが発生してもUIをブロックしない
       // エラー通知はuseSubmitVMで既に表示されている
     }
   }, [datasetKey, filesForUpload, doUpload]);
 
   const onResetAll = useCallback(() => {
-    console.log("[onResetAll] Clearing all files.");
+    console.log('[onResetAll] Clearing all files.');
     if (uploadSuccess) {
       resetUploadState();
     }

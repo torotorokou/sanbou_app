@@ -8,45 +8,41 @@
  * - アクションハンドラーの統合
  */
 
-import { useCallback } from "react";
-import { App } from "antd";
-import dayjs from "dayjs";
+import { useCallback } from 'react';
+import { App } from 'antd';
+import dayjs from 'dayjs';
 
-import type {
-  Mode,
-  SortKey,
-  SortOrder,
-} from "@/features/analytics/sales-pivot/shared/model/types";
+import type { Mode, SortKey, SortOrder } from '@/features/analytics/sales-pivot/shared/model/types';
 
 // State Hooks
-import { useCategoryKindState } from "@/features/analytics/sales-pivot/shared/model/useCategoryKindState";
-import { useRepository } from "@/features/analytics/sales-pivot/shared/model/useRepository";
-import { usePeriodState } from "@/features/analytics/sales-pivot/shared/model/usePeriodState";
-import { useFilterState } from "@/features/analytics/sales-pivot/shared/model/useFilterState";
-import { useExportOptions } from "@/features/analytics/sales-pivot/shared/model/useExportOptions";
-import { usePivotDrawerState } from "@/features/analytics/sales-pivot/shared/model/usePivotDrawerState";
-import { useDetailDrawerState } from "@/features/analytics/sales-pivot/shared/model/useDetailDrawerState";
+import { useCategoryKindState } from '@/features/analytics/sales-pivot/shared/model/useCategoryKindState';
+import { useRepository } from '@/features/analytics/sales-pivot/shared/model/useRepository';
+import { usePeriodState } from '@/features/analytics/sales-pivot/shared/model/usePeriodState';
+import { useFilterState } from '@/features/analytics/sales-pivot/shared/model/useFilterState';
+import { useExportOptions } from '@/features/analytics/sales-pivot/shared/model/useExportOptions';
+import { usePivotDrawerState } from '@/features/analytics/sales-pivot/shared/model/usePivotDrawerState';
+import { useDetailDrawerState } from '@/features/analytics/sales-pivot/shared/model/useDetailDrawerState';
 
 // Data Hooks
-import { useMasterData } from "@/features/analytics/sales-pivot/shared/model/useMasterData";
-import { useDataLoading } from "@/features/analytics/sales-pivot/shared/model/useDataLoading";
-import { useQueryBuilder } from "@/features/analytics/sales-pivot/shared/model/useQueryBuilder";
+import { useMasterData } from '@/features/analytics/sales-pivot/shared/model/useMasterData';
+import { useDataLoading } from '@/features/analytics/sales-pivot/shared/model/useDataLoading';
+import { useQueryBuilder } from '@/features/analytics/sales-pivot/shared/model/useQueryBuilder';
 
 // Computed Hooks
-import { useSortedSummary } from "@/features/analytics/sales-pivot/shared/model/useSortedSummary";
-import { useFilterOptions } from "@/features/analytics/sales-pivot/shared/model/useFilterOptions";
-import { useComputedLabels } from "@/features/analytics/sales-pivot/shared/model/useComputedLabels";
-import { useAxesFromMode } from "@/features/analytics/sales-pivot/shared/model/useAxesFromMode";
-import { useSortKeyOptions } from "@/features/analytics/sales-pivot/shared/model/useSortKeyOptions";
+import { useSortedSummary } from '@/features/analytics/sales-pivot/shared/model/useSortedSummary';
+import { useFilterOptions } from '@/features/analytics/sales-pivot/shared/model/useFilterOptions';
+import { useComputedLabels } from '@/features/analytics/sales-pivot/shared/model/useComputedLabels';
+import { useAxesFromMode } from '@/features/analytics/sales-pivot/shared/model/useAxesFromMode';
+import { useSortKeyOptions } from '@/features/analytics/sales-pivot/shared/model/useSortKeyOptions';
 
 // Action Hooks
-import { useEventHandlers } from "@/features/analytics/sales-pivot/shared/model/useEventHandlers";
-import { useDetailDrawerLoader } from "@/features/analytics/sales-pivot/shared/model/useDetailDrawerLoader";
-import { usePivotLoader } from "@/features/analytics/sales-pivot/shared/model/usePivotLoader";
-import { useOpenPivot } from "@/features/analytics/sales-pivot/shared/model/useOpenPivot";
-import { useExportHandler } from "@/features/analytics/sales-pivot/shared/model/useExportHandler";
-import { useDailySeriesLoader } from "@/features/analytics/sales-pivot/shared/model/useDailySeriesLoader";
-import { usePivotRowClickHandler } from "@/features/analytics/sales-pivot/shared/model/usePivotRowClickHandler";
+import { useEventHandlers } from '@/features/analytics/sales-pivot/shared/model/useEventHandlers';
+import { useDetailDrawerLoader } from '@/features/analytics/sales-pivot/shared/model/useDetailDrawerLoader';
+import { usePivotLoader } from '@/features/analytics/sales-pivot/shared/model/usePivotLoader';
+import { useOpenPivot } from '@/features/analytics/sales-pivot/shared/model/useOpenPivot';
+import { useExportHandler } from '@/features/analytics/sales-pivot/shared/model/useExportHandler';
+import { useDailySeriesLoader } from '@/features/analytics/sales-pivot/shared/model/useDailySeriesLoader';
+import { usePivotRowClickHandler } from '@/features/analytics/sales-pivot/shared/model/usePivotRowClickHandler';
 
 /**
  * SalesTreePageの全状態・ロジックを統合するフック
@@ -58,7 +54,7 @@ export function useSalesTreePage() {
   // ========================================
   // Core State
   // ========================================
-  const { categoryKind, setCategoryKind } = useCategoryKindState("waste");
+  const { categoryKind, setCategoryKind } = useCategoryKindState('waste');
   const repository = useRepository(categoryKind);
   const periodState = usePeriodState();
   const filterState = useFilterState();
@@ -93,19 +89,11 @@ export function useSalesTreePage() {
   // Data Loading
   // ========================================
   const { rawSummary, loading } = useDataLoading(repository, query);
-  const summary = useSortedSummary(
-    rawSummary,
-    filterState.tableSortBy,
-    filterState.tableOrder,
-  );
+  const summary = useSortedSummary(rawSummary, filterState.tableSortBy, filterState.tableOrder);
 
-  const { reps, customers, items } = useMasterData(
-    repository,
-    categoryKind,
-    (msg) => {
-      message?.error?.(msg);
-    },
-  );
+  const { reps, customers, items } = useMasterData(repository, categoryKind, (msg) => {
+    message?.error?.(msg);
+  });
 
   // ========================================
   // Computed Values
@@ -115,7 +103,7 @@ export function useSalesTreePage() {
     query,
     reps,
     customers,
-    items,
+    items
   );
 
   const { periodLabel, headerTotals, selectedRepLabel } = useComputedLabels(
@@ -127,7 +115,7 @@ export function useSalesTreePage() {
     periodState.dateRange,
     summary,
     filterState.repIds,
-    reps,
+    reps
   );
 
   const { baseAx, axB, axC } = useAxesFromMode(filterState.mode);
@@ -203,22 +191,22 @@ export function useSalesTreePage() {
   // ========================================
   const handleReset = useCallback(() => {
     // 期間をリセット
-    periodState.setGranularity("month");
-    periodState.setPeriodMode("single");
-    periodState.setMonth(dayjs().startOf("month"));
+    periodState.setGranularity('month');
+    periodState.setPeriodMode('single');
+    periodState.setMonth(dayjs().startOf('month'));
     periodState.setRange(null);
     periodState.setSingleDate(dayjs());
     periodState.setDateRange(null);
 
     // フィルターをリセット
-    filterState.setMode("customer");
-    filterState.setFilterTopN("all");
-    filterState.setFilterSortBy("amount");
-    filterState.setFilterOrder("desc");
+    filterState.setMode('customer');
+    filterState.setFilterTopN('all');
+    filterState.setFilterSortBy('amount');
+    filterState.setFilterOrder('desc');
     filterState.setRepIds([]);
     filterState.setFilterIds([]);
-    filterState.setTableSortBy("amount");
-    filterState.setTableOrder("desc");
+    filterState.setTableSortBy('amount');
+    filterState.setTableOrder('desc');
   }, [periodState, filterState]);
 
   // ========================================
@@ -229,7 +217,7 @@ export function useSalesTreePage() {
       filterState.setTableSortBy(sortBy as SortKey);
       filterState.setTableOrder(order);
     },
-    [filterState],
+    [filterState]
   );
 
   // ========================================
@@ -241,38 +229,30 @@ export function useSalesTreePage() {
 
   const handleActiveAxisChange = useCallback(
     (axis: Mode) => {
-      pivotDrawerState.setDrawer((prev) =>
-        prev.open ? { ...prev, activeAxis: axis } : prev,
-      );
+      pivotDrawerState.setDrawer((prev) => (prev.open ? { ...prev, activeAxis: axis } : prev));
     },
-    [pivotDrawerState],
+    [pivotDrawerState]
   );
 
   const handlePivotTopNChange = useCallback(
-    (topN: 10 | 20 | 50 | "all") => {
-      pivotDrawerState.setDrawer((prev) =>
-        prev.open ? { ...prev, topN } : prev,
-      );
+    (topN: 10 | 20 | 50 | 'all') => {
+      pivotDrawerState.setDrawer((prev) => (prev.open ? { ...prev, topN } : prev));
     },
-    [pivotDrawerState],
+    [pivotDrawerState]
   );
 
   const handlePivotSortByChange = useCallback(
     (sortBy: SortKey) => {
-      pivotDrawerState.setDrawer((prev) =>
-        prev.open ? { ...prev, sortBy } : prev,
-      );
+      pivotDrawerState.setDrawer((prev) => (prev.open ? { ...prev, sortBy } : prev));
     },
-    [pivotDrawerState],
+    [pivotDrawerState]
   );
 
   const handlePivotOrderChange = useCallback(
     (order: SortOrder) => {
-      pivotDrawerState.setDrawer((prev) =>
-        prev.open ? { ...prev, order } : prev,
-      );
+      pivotDrawerState.setDrawer((prev) => (prev.open ? { ...prev, order } : prev));
     },
-    [pivotDrawerState],
+    [pivotDrawerState]
   );
 
   const handleDetailDrawerClose = useCallback(() => {

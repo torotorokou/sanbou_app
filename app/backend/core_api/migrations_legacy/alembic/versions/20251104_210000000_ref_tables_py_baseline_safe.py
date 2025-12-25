@@ -34,9 +34,7 @@ def _exists(qualified: str) -> bool:
         return False
     conn = op.get_bind()
     return bool(
-        conn.execute(
-            sa.text("SELECT to_regclass(:q) IS NOT NULL"), {"q": qualified}
-        ).scalar()
+        conn.execute(sa.text("SELECT to_regclass(:q) IS NOT NULL"), {"q": qualified}).scalar()
     )
 
 
@@ -122,9 +120,7 @@ def upgrade():
             sa.Column("end_date", sa.Date(), nullable=False),
             sa.Column("closure_name", sa.Text(), nullable=False),
             sa.CheckConstraint("start_date <= end_date", name="closure_periods_check"),
-            sa.PrimaryKeyConstraint(
-                "start_date", "end_date", name="closure_periods_pkey"
-            ),
+            sa.PrimaryKeyConstraint("start_date", "end_date", name="closure_periods_pkey"),
             schema="ref",
         )
 
@@ -137,9 +133,7 @@ def upgrade():
             sa.Column("hdate", sa.Date(), nullable=False),
             sa.Column("name", sa.Text(), nullable=False),
             sa.PrimaryKeyConstraint("hdate", name="holiday_jp_pkey"),
-            sa.ForeignKeyConstraint(
-                ["hdate"], ["ref.calendar_day.ddate"], name="fk_holiday_day"
-            ),
+            sa.ForeignKeyConstraint(["hdate"], ["ref.calendar_day.ddate"], name="fk_holiday_day"),
             schema="ref",
         )
 
@@ -192,9 +186,7 @@ def upgrade():
             sa.Column("end_date", sa.Date(), nullable=False),
             sa.Column("closure_name", sa.Text(), nullable=False),
             sa.PrimaryKeyConstraint("ddate", name="closure_membership_pkey"),
-            sa.ForeignKeyConstraint(
-                ["ddate"], ["ref.calendar_day.ddate"], name="fk_cm_day"
-            ),
+            sa.ForeignKeyConstraint(["ddate"], ["ref.calendar_day.ddate"], name="fk_cm_day"),
             sa.ForeignKeyConstraint(
                 ["start_date", "end_date"],
                 ["ref.closure_periods.start_date", "ref.closure_periods.end_date"],

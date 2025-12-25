@@ -13,9 +13,9 @@
  *   - 他機能との結合度を低く保つ
  */
 
-import type { CsvValidationStatus } from "@features/csv-validation";
-import type { TypeKey } from "../../shared/types/common";
-import type { CsvPreviewData } from "../../dataset-preview/model/types";
+import type { CsvValidationStatus } from '@features/csv-validation';
+import type { TypeKey } from '../../shared/types/common';
+import type { CsvPreviewData } from '../../dataset-preview/model/types';
 
 /**
  * 左パネルに表示するファイルアイテム

@@ -7,10 +7,10 @@
  * - ISO週番号はバックエンドから取得したデータをそのまま表示
  */
 
-import React from "react";
-import dayjs from "dayjs";
-import styles from "./calendar.module.css";
-import type { CalendarCell } from "../../domain/types";
+import React from 'react';
+import dayjs from 'dayjs';
+import styles from './calendar.module.css';
+import type { CalendarCell } from '../../domain/types';
 
 export interface CalendarCoreProps<T extends CalendarCell = CalendarCell> {
   month: string; // "YYYY-MM"
@@ -23,7 +23,7 @@ export interface CalendarCoreProps<T extends CalendarCell = CalendarCell> {
 }
 
 // ISO 8601標準: 月曜日始まり
-const DOW = ["月", "火", "水", "木", "金", "土", "日"];
+const DOW = ['月', '火', '水', '木', '金', '土', '日'];
 
 /**
  * 月曜日始まりのカレンダーグリッド用セル生成
@@ -31,7 +31,7 @@ const DOW = ["月", "火", "水", "木", "金", "土", "日"];
  * @returns グリッド配置用のセル配列（月曜日始まり）
  */
 function buildCells<T extends CalendarCell>(month: string): T[] {
-  const first = dayjs(month + "-01");
+  const first = dayjs(month + '-01');
   // dayjs.day(): 0=日曜, 1=月曜, ..., 6=土曜
   // 月曜始まりに変換: (day + 6) % 7 => 0=月曜, 1=火曜, ..., 6=日曜
   const startDow = (first.day() + 6) % 7;
@@ -41,10 +41,10 @@ function buildCells<T extends CalendarCell>(month: string): T[] {
 
   const cells: T[] = [];
   for (let i = 0; i < total; i++) {
-    const d = first.add(i - startDow, "day");
+    const d = first.add(i - startDow, 'day');
     const inMonth = d.month() === first.month();
     cells.push({
-      date: d.format("YYYY-MM-DD"),
+      date: d.format('YYYY-MM-DD'),
       inMonth,
     } as T);
   }
@@ -62,7 +62,7 @@ export function CalendarCore<T extends CalendarCell = CalendarCell>({
 }: CalendarCoreProps<T>): React.ReactElement {
   const cells = externalCells ?? buildCells<T>(month);
 
-  const first = dayjs(month + "-01");
+  const first = dayjs(month + '-01');
   // 月曜始まりに変換
   const startDow = (first.day() + 6) % 7;
   const daysInMonth = first.daysInMonth();
@@ -118,9 +118,9 @@ export function CalendarCore<T extends CalendarCell = CalendarCell>({
     <div
       className={className}
       style={{
-        display: "flex",
-        flexDirection: "column",
-        height: "100%",
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100%',
         minHeight: 0,
         ...style,
       }}
@@ -129,10 +129,10 @@ export function CalendarCore<T extends CalendarCell = CalendarCell>({
       <div
         className={styles.headerRow}
         style={{
-          ...({ ["--row-h"]: `${rowHeight}px` } as React.CSSProperties),
+          ...({ ['--row-h']: `${rowHeight}px` } as React.CSSProperties),
         }}
       >
-        {["W", ...DOW].map((label, idx) => (
+        {['W', ...DOW].map((label, idx) => (
           <div key={idx} className={styles.headerCell}>
             {label}
           </div>
@@ -143,7 +143,7 @@ export function CalendarCore<T extends CalendarCell = CalendarCell>({
       <div
         className={styles.gridWrapper}
         style={{
-          ...({ ["--row-h"]: `${rowHeight}px` } as React.CSSProperties),
+          ...({ ['--row-h']: `${rowHeight}px` } as React.CSSProperties),
         }}
       >
         <div className={styles.weekCol}>
@@ -160,7 +160,7 @@ export function CalendarCore<T extends CalendarCell = CalendarCell>({
               key={i}
               className={styles.cell}
               onClick={onCellClick ? () => onCellClick(cell) : undefined}
-              style={{ cursor: onCellClick ? "pointer" : "default" }}
+              style={{ cursor: onCellClick ? 'pointer' : 'default' }}
             >
               {renderCell(cell)}
             </div>

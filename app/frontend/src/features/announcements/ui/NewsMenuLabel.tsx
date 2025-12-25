@@ -4,11 +4,11 @@
  * サイドバーのお知らせメニューに未読数バッジを表示するコンポーネント。
  */
 
-import React from "react";
-import { Link } from "react-router-dom";
-import { Badge } from "antd";
-import { ROUTER_PATHS } from "@app/routes/routes";
-import { useUnreadCount } from "./useUnreadCount";
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { Badge } from 'antd';
+import { ROUTER_PATHS } from '@app/routes/routes';
+import { useUnreadCount } from './useUnreadCount';
 
 export const NewsMenuLabel: React.FC = () => {
   const unreadCount = useUnreadCount();
@@ -18,11 +18,9 @@ export const NewsMenuLabel: React.FC = () => {
 
   return (
     <Link to={ROUTER_PATHS.NEWS}>
-      <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
         お知らせ
-        {showBadge && (
-          <Badge count={unreadCount} size="small" style={{ marginLeft: 4 }} />
-        )}
+        {showBadge && <Badge count={unreadCount} size="small" style={{ marginLeft: 4 }} />}
       </span>
     </Link>
   );

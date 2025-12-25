@@ -1,21 +1,12 @@
-import {
-  ensureSectionAnchors,
-  smoothScrollToAnchor,
-  useResponsive,
-} from "@/shared";
-import React, { useEffect, useRef, useState } from "react";
-import { Modal, Typography, Spin, Anchor, Row, Col } from "antd";
-import {
-  useLocation,
-  useNavigate,
-  useParams,
-  useSearchParams,
-} from "react-router-dom";
+import { ensureSectionAnchors, smoothScrollToAnchor, useResponsive } from '@/shared';
+import React, { useEffect, useRef, useState } from 'react';
+import { Modal, Typography, Spin, Anchor, Row, Col } from 'antd';
+import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
   ShogunClientDefault as ShogunClient,
   type ManualSummary,
   type ManualDetail,
-} from "@features/manual";
+} from '@features/manual';
 
 const { Title } = Typography;
 
@@ -32,7 +23,7 @@ const ManualDetailPage: React.FC = () => {
   const { flags } = useResponsive();
 
   const isMobile = flags.isMobile;
-  const forceFull = params.get("full") === "1";
+  const forceFull = params.get('full') === '1';
 
   useEffect(() => {
     let alive = true;
@@ -40,7 +31,7 @@ const ManualDetailPage: React.FC = () => {
       try {
         const [d, l] = await Promise.all([
           ShogunClient.get(id!),
-          ShogunClient.list({ category: "shogun" }),
+          ShogunClient.list({ category: 'shogun' }),
         ]);
         if (!alive) return;
         setData(d);
@@ -66,7 +57,7 @@ const ManualDetailPage: React.FC = () => {
   useEffect(() => {
     if (forceFull || isMobile || !loc.state?.backgroundLocation) {
       // 単独ページにリプレース
-      nav(`/manuals/shogun/${id}?full=1${window.location.hash || ""}`, {
+      nav(`/manuals/shogun/${id}?full=1${window.location.hash || ''}`, {
         replace: true,
       });
     }
@@ -74,15 +65,15 @@ const ManualDetailPage: React.FC = () => {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
+      if (e.key === 'Escape') {
         handleClose();
         return;
       }
-      if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
+      if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
         if (!id || list.length === 0) return;
         const idx = list.findIndex((x) => x.id === id);
         if (idx < 0) return;
-        const nextIdx = e.key === "ArrowLeft" ? idx - 1 : idx + 1;
+        const nextIdx = e.key === 'ArrowLeft' ? idx - 1 : idx + 1;
         if (nextIdx < 0 || nextIdx >= list.length) return;
         const nextId = list[nextIdx].id;
         nav(`/manuals/shogun/${nextId}`, {
@@ -90,15 +81,15 @@ const ManualDetailPage: React.FC = () => {
         });
       }
     };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
   }, [id, list, nav, loc]);
 
   const handleClose = () => {
     if (loc.state?.backgroundLocation) {
       nav(-1);
     } else {
-      nav("/manuals");
+      nav('/manuals');
     }
   };
 
@@ -108,11 +99,11 @@ const ManualDetailPage: React.FC = () => {
       onCancel={handleClose}
       onOk={handleClose}
       okText="閉じる"
-      cancelButtonProps={{ style: { display: "none" } }}
-      title={data?.title || "読み込み中…"}
+      cancelButtonProps={{ style: { display: 'none' } }}
+      title={data?.title || '読み込み中…'}
       width="80vw"
       centered
-      styles={{ body: { height: "80vh", overflow: "hidden", paddingTop: 8 } }}
+      styles={{ body: { height: '80vh', overflow: 'hidden', paddingTop: 8 } }}
       afterOpenChange={(open) => {
         if (open) firstFocusable.current?.focus();
       }}
@@ -120,9 +111,9 @@ const ManualDetailPage: React.FC = () => {
       {loading ? (
         <Spin />
       ) : (
-        <div style={{ height: "100%" }}>
-          <Row gutter={[16, 16]} style={{ height: "100%" }}>
-            <Col xs={24} md={6} style={{ height: "100%", overflow: "auto" }}>
+        <div style={{ height: '100%' }}>
+          <Row gutter={[16, 16]} style={{ height: '100%' }}>
+            <Col xs={24} md={6} style={{ height: '100%', overflow: 'auto' }}>
               <Anchor
                 targetOffset={16}
                 getContainer={() => ref.current as HTMLElement}
@@ -134,23 +125,17 @@ const ManualDetailPage: React.FC = () => {
                 onClick={(e, link) => {
                   e.preventDefault();
                   if (!ref.current) return;
-                  smoothScrollToAnchor(
-                    ref.current,
-                    link.href.replace(/^.*#/, "#"),
-                  );
+                  smoothScrollToAnchor(ref.current, link.href.replace(/^.*#/, '#'));
                 }}
               />
             </Col>
             <Col xs={24} md={18}>
-              <div ref={ref} style={{ height: "100%", overflow: "auto" }}>
+              <div ref={ref} style={{ height: '100%', overflow: 'auto' }}>
                 <Title level={5} tabIndex={-1} ref={firstFocusable}>
                   概要
                 </Title>
                 {data?.sections?.map((s) => (
-                  <div
-                    key={s.anchor}
-                    dangerouslySetInnerHTML={{ __html: s.html || "" }}
-                  />
+                  <div key={s.anchor} dangerouslySetInnerHTML={{ __html: s.html || '' }} />
                 ))}
               </div>
             </Col>

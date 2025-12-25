@@ -9,6 +9,7 @@ import time
 from typing import Any
 
 import pandas as pd
+
 from app.core.domain.reports.processors.factory_report.etc import (
     date_format,
     generate_summary_dataframe,
@@ -157,9 +158,7 @@ def process(dfs: dict[str, Any]) -> pd.DataFrame:
     step_start = time.time()
     logger.info("Step 4b: 出荷有価データ処理開始")
     if has_yard and has_shipment and df_yard is not None and df_shipment is not None:
-        master_csv_yuka = process_yuuka(
-            df_yard, df_shipment, base_data.master_csv_yuuka
-        )
+        master_csv_yuka = process_yuuka(df_yard, df_shipment, base_data.master_csv_yuuka)
         logger.info(
             "Step 4b: 有価データ処理完了",
             extra={"elapsed_ms": round((time.time() - step_start) * 1000, 2)},
@@ -215,9 +214,7 @@ def process(dfs: dict[str, Any]) -> pd.DataFrame:
     # 処理完了
     # ========================================
     total_elapsed = time.time() - start_time
-    logger.info(
-        "工場日報処理完了", extra={"total_elapsed_sec": round(total_elapsed, 3)}
-    )
+    logger.info("工場日報処理完了", extra={"total_elapsed_sec": round(total_elapsed, 3)})
 
     # --- インデックスをリセットして返す ---
     return combined_df.reset_index(drop=True)

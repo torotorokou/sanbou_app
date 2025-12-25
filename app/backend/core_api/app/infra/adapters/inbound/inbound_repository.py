@@ -5,6 +5,9 @@ Inbound repository implementation with PostgreSQL.
 
 from datetime import date as date_type
 
+from sqlalchemy import text
+from sqlalchemy.orm import Session
+
 from app.core.domain.inbound import CumScope, InboundDailyRow
 from app.core.ports.inbound_repository_port import InboundRepository
 from app.infra.db.sql_loader import load_sql
@@ -16,8 +19,6 @@ from backend_shared.db.names import (
     V_CALENDAR_CLASSIFIED,
     fq,
 )
-from sqlalchemy import text
-from sqlalchemy.orm import Session
 
 logger = get_module_logger(__name__)
 
@@ -33,9 +34,7 @@ class InboundRepositoryImpl(InboundRepository):
     def __init__(self, db: Session):
         self.db = db
         # Pre-load SQL for get_daily_with_cumulative (legacy, kept for compatibility)
-        template = load_sql(
-            "inbound/inbound_pg_repository__get_daily_with_cumulative.sql"
-        )
+        template = load_sql("inbound/inbound_pg_repository__get_daily_with_cumulative.sql")
         self._daily_cumulative_sql = text(
             template.format(
                 v_calendar=fq(SCHEMA_REF, V_CALENDAR_CLASSIFIED),
@@ -43,9 +42,7 @@ class InboundRepositoryImpl(InboundRepository):
             )
         )
         # Pre-load SQL for get_daily_with_comparisons (new: includes prev_month/prev_year)
-        template = load_sql(
-            "inbound/inbound_pg_repository__get_daily_with_comparisons.sql"
-        )
+        template = load_sql("inbound/inbound_pg_repository__get_daily_with_comparisons.sql")
         self._daily_comparisons_sql = text(
             template.format(
                 v_calendar=fq(SCHEMA_REF, V_CALENDAR_CLASSIFIED),
@@ -220,7 +217,6 @@ class InboundRepositoryImpl(InboundRepository):
         try:
             result = self.db.execute(
                 self._daily_simple_sql,
-                sql,
                 {
                     "start": start,
                     "end": end,
@@ -238,9 +234,7 @@ class InboundRepositoryImpl(InboundRepository):
                 iso_dow = r[3]
                 is_business = r[4]
                 day_ton = float(r[5]) if r[5] is not None else 0.0
-                week_ton = float(r[6]) if r[6] is not None else None
                 month_cum = float(r[7]) if r[7] is not None else None
-                week_cum = float(r[8]) if r[8] is not None else None
 
                 data.append(
                     InboundDailyRow(

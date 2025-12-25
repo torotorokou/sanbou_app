@@ -5,10 +5,11 @@ Average Sheet - 平均表生成エンドポイント
 import os
 
 import httpx
+from fastapi import APIRouter, Request
+
 from app.shared.utils import rewrite_artifact_urls_to_bff
 from backend_shared.application.logging import create_log_context, get_module_logger
 from backend_shared.core.domain.exceptions import ExternalServiceError
-from fastapi import APIRouter, Request
 
 logger = get_module_logger(__name__)
 
@@ -22,9 +23,7 @@ async def proxy_average_sheet(request: Request):
     """平均表生成（ledger_apiへフォワード）- FormData対応"""
     logger.info(
         "Proxying average_sheet request (FormData)",
-        extra=create_log_context(
-            operation="proxy_average_sheet", client=str(request.client)
-        ),
+        extra=create_log_context(operation="proxy_average_sheet", client=str(request.client)),
     )
     try:
         form = await request.form()
@@ -39,9 +38,7 @@ async def proxy_average_sheet(request: Request):
                 if isinstance(value, UploadFile):
                     content = await value.read()
                     files[key] = (value.filename, content, value.content_type)
-                    logger.info(
-                        f"File '{key}': {value.filename} ({len(content)} bytes)"
-                    )
+                    logger.info(f"File '{key}': {value.filename} ({len(content)} bytes)")
             else:
                 data[key] = value
                 logger.info(f"Data '{key}': {value}")

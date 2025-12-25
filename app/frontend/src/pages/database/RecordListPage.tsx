@@ -1,6 +1,6 @@
-import React, { useMemo, useState } from "react";
-import { Table, DatePicker, Select, Space, Button, Pagination } from "antd";
-import { dayjs, type Dayjs, isInRange } from "@shared";
+import React, { useMemo, useState } from 'react';
+import { Table, DatePicker, Select, Space, Button, Pagination } from 'antd';
+import { dayjs, type Dayjs, isInRange } from '@shared';
 import {
   useReactTable,
   getCoreRowModel,
@@ -10,35 +10,32 @@ import {
   type ColumnDef,
   type ColumnFiltersState,
   type SortingState,
-} from "@tanstack/react-table";
+} from '@tanstack/react-table';
 
 const { MonthPicker, RangePicker } = DatePicker;
 
 type RecordType = { [key: string]: string | number | null };
-import dummyData from "./受入一覧_20250501_clean.json";
+import dummyData from './受入一覧_20250501_clean.json';
 
 // ユニークキーに使用するカラム
-const unique_keys = ["伝票日付", "業者名", "品名", "受入番号", "正味重量"];
+const unique_keys = ['伝票日付', '業者名', '品名', '受入番号', '正味重量'];
 
 const visibleColumns = [
-  { key: "受入番号", width: 100, type: "int" as const },
-  { key: "伝票日付", width: 110, type: "date" as const },
-  { key: "業者名", width: 160, type: "string" as const },
-  { key: "品名", width: 120, type: "string" as const },
-  { key: "正味重量", width: 90, type: "float" as const },
-  { key: "金額", width: 90, type: "int" as const },
-  { key: "単価", width: 80, type: "float" as const },
-  { key: "種類名", width: 90, type: "string" as const },
-  { key: "運搬業者名", width: 110, type: "string" as const },
-  { key: "営業担当者名", width: 100, type: "string" as const },
+  { key: '受入番号', width: 100, type: 'int' as const },
+  { key: '伝票日付', width: 110, type: 'date' as const },
+  { key: '業者名', width: 160, type: 'string' as const },
+  { key: '品名', width: 120, type: 'string' as const },
+  { key: '正味重量', width: 90, type: 'float' as const },
+  { key: '金額', width: 90, type: 'int' as const },
+  { key: '単価', width: 80, type: 'float' as const },
+  { key: '種類名', width: 90, type: 'string' as const },
+  { key: '運搬業者名', width: 110, type: 'string' as const },
+  { key: '営業担当者名', width: 100, type: 'string' as const },
 ] as const;
 
 const RecordListPage: React.FC = () => {
-  const [month, setMonth] = useState<Dayjs>(dayjs("2025-07"));
-  const [dateRange, setDateRange] = useState<[Dayjs | null, Dayjs | null]>([
-    null,
-    null,
-  ]);
+  const [month, setMonth] = useState<Dayjs>(dayjs('2025-07'));
+  const [dateRange, setDateRange] = useState<[Dayjs | null, Dayjs | null]>([null, null]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [sorting, setSorting] = useState<SortingState>([]);
   const [pageIndex, setPageIndex] = useState(0);
@@ -46,10 +43,10 @@ const RecordListPage: React.FC = () => {
 
   // フィルタ適用データ
   const filteredData = useMemo(() => {
-    const selectedMonth = month.format("YYYY-MM");
+    const selectedMonth = month.format('YYYY-MM');
     const strFilters: { [key: string]: string[] } = {};
     visibleColumns.forEach((col) => {
-      if (col.type === "string") {
+      if (col.type === 'string') {
         const val = columnFilters.find((f) => f.id === col.key)?.value;
         if (Array.isArray(val) && val.length > 0) {
           strFilters[col.key] = val as string[];
@@ -58,11 +55,10 @@ const RecordListPage: React.FC = () => {
     });
     return dummyData.filter((record: RecordType) => {
       // 月フィルター
-      const rawDate = record["伝票日付"];
-      if (typeof rawDate !== "string") return false;
-      const parsed = dayjs(rawDate, "YYYY/MM/DD");
-      if (!parsed.isValid() || parsed.format("YYYY-MM") !== selectedMonth)
-        return false;
+      const rawDate = record['伝票日付'];
+      if (typeof rawDate !== 'string') return false;
+      const parsed = dayjs(rawDate, 'YYYY/MM/DD');
+      if (!parsed.isValid() || parsed.format('YYYY-MM') !== selectedMonth) return false;
 
       // 伝票日付範囲フィルター
       if (dateRange[0] && dateRange[1]) {
@@ -92,7 +88,7 @@ const RecordListPage: React.FC = () => {
         header: col.key,
         cell: (info) => info.getValue(),
       })),
-    [],
+    []
   );
 
   // TanStack Tableインスタンス
@@ -107,11 +103,11 @@ const RecordListPage: React.FC = () => {
     onColumnFiltersChange: setColumnFilters,
     onSortingChange: setSorting,
     onPaginationChange: (updater) => {
-      if (typeof updater === "function") {
+      if (typeof updater === 'function') {
         const newState = updater({ pageIndex, pageSize });
         setPageIndex(newState.pageIndex);
         setPageSize(newState.pageSize);
-      } else if (typeof updater === "object") {
+      } else if (typeof updater === 'object') {
         setPageIndex(updater.pageIndex ?? pageIndex);
         setPageSize(updater.pageSize ?? pageSize);
       }
@@ -128,28 +124,20 @@ const RecordListPage: React.FC = () => {
   const dynamicOptionsMap = useMemo(() => {
     const map: { [key: string]: string[] } = {};
     visibleColumns.forEach((col) => {
-      if (col.type === "string") {
+      if (col.type === 'string') {
         let filtered = filteredData;
         for (const key of visibleColumns
-          .filter((v) => v.type === "string" && v.key !== col.key)
+          .filter((v) => v.type === 'string' && v.key !== col.key)
           .map((v) => v.key)) {
-          const selected = columnFilters.find((f) => f.id === key)?.value as
-            | string[]
-            | undefined;
+          const selected = columnFilters.find((f) => f.id === key)?.value as string[] | undefined;
           if (selected && selected.length > 0) {
-            filtered = filtered.filter((row) =>
-              selected.includes(String(row[key] ?? "")),
-            );
+            filtered = filtered.filter((row) => selected.includes(String(row[key] ?? '')));
           }
         }
         const values = Array.from(
-          new Set(
-            filtered
-              .map((row) => String(row[col.key] ?? ""))
-              .filter((v) => v !== ""),
-          ),
+          new Set(filtered.map((row) => String(row[col.key] ?? '')).filter((v) => v !== ''))
         );
-        map[col.key] = values.sort((a, b) => a.localeCompare(b, "ja"));
+        map[col.key] = values.sort((a, b) => a.localeCompare(b, 'ja'));
       }
     });
     return map;
@@ -160,26 +148,20 @@ const RecordListPage: React.FC = () => {
     () =>
       visibleColumns.map((col) => {
         let filterUI: React.ReactNode = null;
-        if (col.type === "string") {
+        if (col.type === 'string') {
           filterUI = (
             <Select
               allowClear
               mode="multiple"
               placeholder="全て"
               style={{ width: col.width - 8, fontSize: 12 }}
-              value={
-                (columnFilters.find((f) => f.id === col.key)
-                  ?.value as string[]) ?? []
-              }
+              value={(columnFilters.find((f) => f.id === col.key)?.value as string[]) ?? []}
               onChange={(v) => {
                 table.setPageIndex(0);
                 setColumnFilters((old) =>
                   v && v.length > 0
-                    ? [
-                        ...old.filter((f) => f.id !== col.key),
-                        { id: col.key, value: v },
-                      ]
-                    : old.filter((f) => f.id !== col.key),
+                    ? [...old.filter((f) => f.id !== col.key), { id: col.key, value: v }]
+                    : old.filter((f) => f.id !== col.key)
                 );
               }}
               size="small"
@@ -217,7 +199,7 @@ const RecordListPage: React.FC = () => {
           ),
         };
       }),
-    [columnFilters, dynamicOptionsMap, table],
+    [columnFilters, dynamicOptionsMap, table]
   );
 
   return (
@@ -232,9 +214,7 @@ const RecordListPage: React.FC = () => {
             }
         `}
       </style>
-      <h2>
-        受入一覧（月・日付範囲・TanStackページネーション・str型フィルター対応）
-      </h2>
+      <h2>受入一覧（月・日付範囲・TanStackページネーション・str型フィルター対応）</h2>
       <div style={{ marginBottom: 16 }}>
         <Space>
           <span>
@@ -250,7 +230,7 @@ const RecordListPage: React.FC = () => {
             />
           </span>
           <span>
-            <label style={{ margin: "0 8px 0 16px" }}>伝票日付範囲:</label>
+            <label style={{ margin: '0 8px 0 16px' }}>伝票日付範囲:</label>
             <RangePicker
               value={dateRange}
               onChange={(dates) => {
@@ -262,12 +242,9 @@ const RecordListPage: React.FC = () => {
               style={{ width: 260 }}
               disabledDate={(current) => {
                 if (!month) return false;
-                const startOfMonth = month.startOf("month");
-                const endOfMonth = month.endOf("month");
-                return (
-                  current < startOfMonth.startOf("day") ||
-                  current > endOfMonth.endOf("day")
-                );
+                const startOfMonth = month.startOf('month');
+                const endOfMonth = month.endOf('month');
+                return current < startOfMonth.startOf('day') || current > endOfMonth.endOf('day');
               }}
             />
             <Button
@@ -287,23 +264,19 @@ const RecordListPage: React.FC = () => {
         <Table
           columns={antColumns}
           dataSource={table.getRowModel().rows.map((row) => row.original)}
-          rowKey={(record) =>
-            unique_keys.map((key) => String(record[key])).join("_")
-          }
-          scroll={{ x: "max-content", y: 600 }}
+          rowKey={(record) => unique_keys.map((key) => String(record[key])).join('_')}
+          scroll={{ x: 'max-content', y: 600 }}
           pagination={false}
-          rowClassName={(_, idx) =>
-            idx % 2 === 0 ? "table-row-even" : "table-row-odd"
-          }
+          rowClassName={(_, idx) => (idx % 2 === 0 ? 'table-row-even' : 'table-row-odd')}
         />
       </div>
-      <div style={{ textAlign: "right", marginTop: 10 }}>
+      <div style={{ textAlign: 'right', marginTop: 10 }}>
         <Pagination
           current={table.getState().pagination.pageIndex + 1}
           pageSize={table.getState().pagination.pageSize}
           total={table.getFilteredRowModel().rows.length}
           showSizeChanger
-          pageSizeOptions={["10", "20", "50", "100"]}
+          pageSizeOptions={['10', '20', '50', '100']}
           onChange={(page, pageSize) => {
             table.setPageIndex(page - 1);
             table.setPageSize(pageSize || 10);

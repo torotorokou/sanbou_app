@@ -29,9 +29,7 @@ def upgrade() -> None:
     部分ユニークインデックスを削除し、アプリケーション側でチェックに移行
     """
 
-    print(
-        "[log.upload_file] Removing partial unique index for time-based duplicate check..."
-    )
+    print("[log.upload_file] Removing partial unique index for time-based duplicate check...")
 
     # 部分ユニークインデックスを削除（存在する場合のみ）
     op.execute("DROP INDEX IF EXISTS log.ux_upload_file_hash_type_csv_status_active;")
@@ -59,9 +57,7 @@ def downgrade() -> None:
     print("[log.upload_file] Restoring partial unique index...")
 
     # 検索用インデックスを削除
-    op.drop_index(
-        "ix_upload_file_hash_csv_time", table_name="upload_file", schema="log"
-    )
+    op.drop_index("ix_upload_file_hash_csv_time", table_name="upload_file", schema="log")
     print("✓ Dropped search index: ix_upload_file_hash_csv_time")
 
     # 部分ユニークインデックスを復元

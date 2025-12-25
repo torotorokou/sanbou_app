@@ -115,9 +115,7 @@ class BalanceSheet:
 
     def calculate_total_receive_volume(self) -> float:
         """受入データの総体積を計算"""
-        return sum(
-            item.volume for item in self.receive_items if item.volume is not None
-        )
+        return sum(item.volume for item in self.receive_items if item.volume is not None)
 
     def count_receive_trucks(self) -> int:
         """受入台数をカウント（簡易実装: 受入件数）"""

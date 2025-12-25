@@ -36,9 +36,7 @@ def _table_exists(schema: str, table: str) -> bool:
         return False
     conn = op.get_bind()
     qualified = f"{schema}.{table}"
-    return bool(
-        conn.scalar(sa.text("SELECT to_regclass(:q) IS NOT NULL"), {"q": qualified})
-    )
+    return bool(conn.scalar(sa.text("SELECT to_regclass(:q) IS NOT NULL"), {"q": qualified}))
 
 
 def upgrade():
@@ -56,12 +54,8 @@ def upgrade():
             "upload_file",
             sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
             sa.Column("file_name", sa.Text(), nullable=False, comment="元のファイル名"),
-            sa.Column(
-                "file_hash", sa.String(64), nullable=False, comment="SHA-256 ハッシュ"
-            ),
-            sa.Column(
-                "file_type", sa.String(20), nullable=False, comment="FLASH / FINAL"
-            ),
+            sa.Column("file_hash", sa.String(64), nullable=False, comment="SHA-256 ハッシュ"),
+            sa.Column("file_type", sa.String(20), nullable=False, comment="FLASH / FINAL"),
             sa.Column(
                 "csv_type",
                 sa.String(20),
@@ -99,9 +93,7 @@ def upgrade():
                 nullable=False,
                 comment="pending / processing / completed / failed",
             ),
-            sa.Column(
-                "error_message", sa.Text(), nullable=True, comment="エラーメッセージ"
-            ),
+            sa.Column("error_message", sa.Text(), nullable=True, comment="エラーメッセージ"),
             sa.Column("metadata", JSONB(), nullable=True, comment="その他のメタ情報"),
             sa.PrimaryKeyConstraint("id"),
             schema="raw",
@@ -117,9 +109,7 @@ def upgrade():
         )
 
         # インデックス作成
-        op.create_index(
-            "idx_upload_file_uploaded_at", "upload_file", ["uploaded_at"], schema="raw"
-        )
+        op.create_index("idx_upload_file_uploaded_at", "upload_file", ["uploaded_at"], schema="raw")
         op.create_index(
             "idx_upload_file_status", "upload_file", ["processing_status"], schema="raw"
         )
@@ -205,9 +195,7 @@ def upgrade():
         )
 
         # インデックス作成
-        op.create_index(
-            "idx_receive_raw_file_id", "receive_raw", ["file_id"], schema="raw"
-        )
+        op.create_index("idx_receive_raw_file_id", "receive_raw", ["file_id"], schema="raw")
         op.create_index(
             "idx_receive_raw_file_row",
             "receive_raw",

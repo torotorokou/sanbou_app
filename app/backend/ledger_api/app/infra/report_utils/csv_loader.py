@@ -2,6 +2,7 @@ from backend_shared.application.logging import create_log_context, get_module_lo
 
 from .template_config import get_required_columns_definition
 
+
 logger = get_module_logger(__name__)
 
 
@@ -30,11 +31,7 @@ def load_filtered_dataframe(dfs, key, target_columns):
         target_columns = list(target_columns.keys())
 
     # --- listの中身がさらにlistなら flatten（[[...]] → [...]）
-    if (
-        isinstance(target_columns, list)
-        and target_columns
-        and isinstance(target_columns[0], list)
-    ):
+    if isinstance(target_columns, list) and target_columns and isinstance(target_columns[0], list):
         target_columns = target_columns[0]
 
     missing_cols = [col for col in target_columns if col not in df.columns]

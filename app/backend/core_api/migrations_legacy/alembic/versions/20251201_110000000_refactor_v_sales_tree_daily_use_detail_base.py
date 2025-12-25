@@ -39,9 +39,7 @@ def upgrade():
     2. mart.v_sales_tree_detail_base の変更が自動的に反映される
     3. 保守性が向上（データソース変更時の修正箇所が減る）
     """
-    print(
-        "[mart.v_sales_tree_daily] Refactoring to use mart.v_sales_tree_detail_base..."
-    )
+    print("[mart.v_sales_tree_daily] Refactoring to use mart.v_sales_tree_detail_base...")
 
     # 1) 既存ビューをDROP
     op.execute(
@@ -72,9 +70,7 @@ def upgrade():
     """
     )
 
-    print(
-        "[mart.v_sales_tree_daily] VIEW refactored - now using mart.v_sales_tree_detail_base."
-    )
+    print("[mart.v_sales_tree_daily] VIEW refactored - now using mart.v_sales_tree_detail_base.")
 
     # 3) app_readonly に SELECT 権限を付与
     print("[mart.v_sales_tree_daily] Granting SELECT to app_readonly...")

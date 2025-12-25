@@ -54,9 +54,7 @@ class GetUploadStatusUseCase:
 
         logger.info(
             "アップロードステータス取得開始",
-            extra=create_log_context(
-                operation="get_upload_status", upload_file_id=upload_file_id
-            ),
+            extra=create_log_context(operation="get_upload_status", upload_file_id=upload_file_id),
         )
 
         # データ取得（Port経由）

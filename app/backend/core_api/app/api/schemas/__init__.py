@@ -23,9 +23,7 @@ class ForecastJobCreate(BaseModel):
     target_from: date_type = Field(description="Start date of forecast range")
     target_to: date_type = Field(description="End date of forecast range")
     actor: str | None = Field(default="system", description="User or system actor")
-    payload_json: dict | None = Field(
-        default=None, description="Additional job parameters"
-    )
+    payload_json: dict | None = Field(default=None, description="Additional job parameters")
 
 
 class ForecastJobResponse(BaseModel):
@@ -60,9 +58,7 @@ class PredictionDTO(BaseModel):
     y_lo: float | None = Field(default=None, description="Lower bound")
     y_hi: float | None = Field(default=None, description="Upper bound")
     model_version: str | None = Field(default=None, description="Model version used")
-    generated_at: datetime | None = Field(
-        default=None, description="When prediction was generated"
-    )
+    generated_at: datetime | None = Field(default=None, description="When prediction was generated")
 
     model_config = ConfigDict(from_attributes=True, protected_namespaces=())
 
@@ -131,9 +127,7 @@ class RAGAskResponse(BaseModel):
 class ManualListResponse(BaseModel):
     """Response from Manual API /list endpoint."""
 
-    manuals: list[
-        dict
-    ]  # TODO: define proper schema when manual_api contract is clarified
+    manuals: list[dict]  # TODO: define proper schema when manual_api contract is clarified
 
 
 # ========================================
@@ -144,13 +138,9 @@ class ManualListResponse(BaseModel):
 class CustomerChurnAnalyzeRequest(BaseModel):
     """Request to analyze customer churn."""
 
-    current_start: date_type = Field(
-        description="Current period start date (YYYY-MM-DD)"
-    )
+    current_start: date_type = Field(description="Current period start date (YYYY-MM-DD)")
     current_end: date_type = Field(description="Current period end date (YYYY-MM-DD)")
-    previous_start: date_type = Field(
-        description="Previous period start date (YYYY-MM-DD)"
-    )
+    previous_start: date_type = Field(description="Previous period start date (YYYY-MM-DD)")
     previous_end: date_type = Field(description="Previous period end date (YYYY-MM-DD)")
 
 
@@ -163,12 +153,8 @@ class LostCustomerDTO(BaseModel):
     rep_name: str | None = Field(default=None, description="Sales representative name")
     last_visit_date: date_type = Field(description="Last visit date in previous period")
     prev_visit_days: int = Field(description="Number of visit days in previous period")
-    prev_total_amount_yen: float = Field(
-        description="Total amount in yen for previous period"
-    )
-    prev_total_qty_kg: float = Field(
-        description="Total quantity in kg for previous period"
-    )
+    prev_total_amount_yen: float = Field(description="Total amount in yen for previous period")
+    prev_total_qty_kg: float = Field(description="Total quantity in kg for previous period")
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -208,32 +194,18 @@ class TargetMetricsResponse(BaseModel):
     """Response for dashboard target metrics with actuals."""
 
     ddate: date_type | None = Field(default=None, description="Data date")
-    month_target_ton: float | None = Field(
-        default=None, description="Monthly target in tons"
-    )
-    week_target_ton: float | None = Field(
-        default=None, description="Weekly target in tons"
-    )
-    day_target_ton: float | None = Field(
-        default=None, description="Daily target in tons"
-    )
-    month_actual_ton: float | None = Field(
-        default=None, description="Monthly actual in tons"
-    )
-    week_actual_ton: float | None = Field(
-        default=None, description="Weekly actual in tons"
-    )
+    month_target_ton: float | None = Field(default=None, description="Monthly target in tons")
+    week_target_ton: float | None = Field(default=None, description="Weekly target in tons")
+    day_target_ton: float | None = Field(default=None, description="Daily target in tons")
+    month_actual_ton: float | None = Field(default=None, description="Monthly actual in tons")
+    week_actual_ton: float | None = Field(default=None, description="Weekly actual in tons")
     day_actual_ton_prev: float | None = Field(
         default=None, description="Previous day actual in tons"
     )
     iso_year: int | None = Field(default=None, description="ISO year")
     iso_week: int | None = Field(default=None, description="ISO week number")
-    iso_dow: int | None = Field(
-        default=None, description="ISO day of week (1=Monday, 7=Sunday)"
-    )
-    day_type: str | None = Field(
-        default=None, description="Day type (weekday/sat/sun_hol)"
-    )
+    iso_dow: int | None = Field(default=None, description="ISO day of week (1=Monday, 7=Sunday)")
+    day_type: str | None = Field(default=None, description="Day type (weekday/sat/sun_hol)")
     is_business: bool | None = Field(default=None, description="Is business day")
     # New fields for achievement mode calculation (cumulative to yesterday vs. total at period end)
     month_target_to_date_ton: float | None = Field(

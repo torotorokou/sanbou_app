@@ -1,7 +1,7 @@
 // features/navi/model/types.ts
 // ナビ機能のDomain型定義
 
-import type { ReactNode } from "react";
+import type { ReactNode } from 'react';
 
 /**
  * サイドバーメニュー項目の型定義
@@ -89,9 +89,9 @@ export class RagChatError extends Error {
   constructor(
     public code: string,
     public detail: string,
-    public hint?: string,
+    public hint?: string
   ) {
     super(detail);
-    this.name = "RagChatError";
+    this.name = 'RagChatError';
   }
 }

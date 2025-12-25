@@ -56,9 +56,7 @@ def upgrade() -> None:
 
     print("[mart.mv_receive_daily] ✅ Indexes created")
 
-    print(
-        "[mart.mv_target_card_per_day] Creating UNIQUE index for REFRESH CONCURRENTLY..."
-    )
+    print("[mart.mv_target_card_per_day] Creating UNIQUE index for REFRESH CONCURRENTLY...")
 
     # UNIQUE index on mv_target_card_per_day (primary key: ddate)
     op.execute(

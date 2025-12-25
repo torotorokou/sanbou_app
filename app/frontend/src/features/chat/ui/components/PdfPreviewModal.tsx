@@ -1,7 +1,7 @@
 // src/components/chat/PdfPreviewModal.tsx
-import React from "react";
-import { Modal, Empty } from "antd";
-import { ensurePdfJsWorkerLoaded, useResponsive, ANT } from "@/shared";
+import React from 'react';
+import { Modal, Empty } from 'antd';
+import { ensurePdfJsWorkerLoaded, useResponsive, ANT } from '@/shared';
 
 type Props = {
   visible: boolean;
@@ -12,7 +12,7 @@ type Props = {
 const PdfPreviewModal: React.FC<Props> = ({ visible, onClose, pdfUrl }) => {
   const { width } = useResponsive();
   // ANT.xl 未満では高さを大きめにして、下部の余白を埋める
-  const bodyHeight = width < ANT.xl ? "95vh" : "80vh";
+  const bodyHeight = width < ANT.xl ? '95vh' : '80vh';
 
   React.useEffect(() => {
     if (!visible) return;
@@ -33,7 +33,7 @@ const PdfPreviewModal: React.FC<Props> = ({ visible, onClose, pdfUrl }) => {
         body: {
           height: bodyHeight,
           padding: 0,
-          overflow: "hidden",
+          overflow: 'hidden',
         },
       }}
     >
@@ -44,7 +44,7 @@ const PdfPreviewModal: React.FC<Props> = ({ visible, onClose, pdfUrl }) => {
           title="PDF Preview"
           width="100%"
           height="100%"
-          style={{ border: "none", display: "block" }}
+          style={{ border: 'none', display: 'block' }}
         />
       ) : (
         <Empty description="PDFが読み込まれていません" />

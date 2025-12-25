@@ -21,6 +21,7 @@ import uuid
 from dataclasses import dataclass
 from typing import Any
 
+
 DEFAULT_SESSION_TTL_SECONDS = int(os.getenv("INTERACTIVE_SESSION_TTL", "3600"))
 
 try:  # pragma: no cover - optional dependency
@@ -42,9 +43,7 @@ class _InMemorySessionBackend:
         self._store: dict[str, _SessionEntry] = {}
         self._lock = threading.Lock()
 
-    def save(
-        self, data: dict[str, Any], ttl: int, session_id: str | None = None
-    ) -> str:
+    def save(self, data: dict[str, Any], ttl: int, session_id: str | None = None) -> str:
         sid = session_id or str(uuid.uuid4())
         entry = _SessionEntry(value=data, expires_at=time.time() + ttl)
         with self._lock:
@@ -80,9 +79,7 @@ class _RedisSessionBackend:
             raise RuntimeError("redis package is not installed")
         self._client = redis.Redis.from_url(url, decode_responses=True)
 
-    def save(
-        self, data: dict[str, Any], ttl: int, session_id: str | None = None
-    ) -> str:
+    def save(self, data: dict[str, Any], ttl: int, session_id: str | None = None) -> str:
         sid = session_id or str(uuid.uuid4())
         payload = json.dumps(data)
         # setex overwrites existing keys and sets TTL atomically

@@ -5,4 +5,4 @@ export {
   RevenuePanel,
   BlockCountPanel,
   ProcessVolumePanel,
-} from "./ui";
+} from './ui';

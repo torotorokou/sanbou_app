@@ -1,0 +1,81 @@
+# ==========================================
+# Python Code Quality Tools
+# ==========================================
+# black = formatter（唯一の真実）
+# ruff = linter + import sorting（blackと競合しない設定）
+
+[tool.black]
+line-length = 100
+target-version = ['py310']
+extend-exclude = '''
+/(
+    migrations
+  | alembic
+  | __pycache__
+  | \.venv
+  | venv
+  | data
+  | backups
+  | test
+)/
+'''
+
+[tool.ruff]
+line-length = 100  # blackと統一
+target-version = "py310"
+
+# 除外ディレクトリ
+extend-exclude = [
+    "migrations",
+    "alembic",
+    "__pycache__",
+    ".venv",
+    "venv",
+    "data",
+    "backups",
+    "test",
+    "migrations_legacy",
+    "migrations_v2",
+]
+
+[tool.ruff.lint]
+# 有効化するルール群
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort（import整形）
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "UP",  # pyupgrade
+]
+
+# blackとの競合を回避するため無効化
+ignore = [
+    "E203",  # Whitespace before ':' (black互換性)
+    "E501",  # Line too long (blackに任せる)
+    "B008",  # Do not perform function calls in argument defaults (FastAPI Depends)
+    "B904",  # Use `raise from` within exception handler (noisy in existing code)
+    "E402",  # Module level import not at top of file (FastAPI pattern)
+    "B905",  # zip() without explicit strict parameter (Python 3.10+ feature)
+    "UP007", # Use X | Y for type annotations (Python 3.10+ feature)
+    "UP045", # Use X | Y for Union type annotations (Python 3.10+ feature)
+    "C416",  # Unnecessary dict/list comprehension (rewrite using dict()/list())
+    "N806",  # Variable in function should be lowercase (TYPE_MAPPING等)
+]
+
+# import整形の設定（isortの代替）
+[tool.ruff.lint.isort]
+known-first-party = ["app", "backend_shared"]
+lines-after-imports = 2
+section-order = ["future", "standard-library", "third-party", "first-party", "local-folder"]
+
+# ファイル別の例外設定
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]  # 未使用importを許可
+"**/migrations/**/*.py" = ["ALL"]
+"**/migrations_legacy/**/*.py" = ["ALL"]
+"**/migrations_v2/**/*.py" = ["ALL"]
+"**/alembic/**/*.py" = ["ALL"]
+"**/test/**/*.py" = ["ALL"]
+"**/*_test.py" = ["ALL"]

@@ -16,15 +16,9 @@ depends_on = None
 
 
 def upgrade():
-    op.execute(
-        "COMMENT ON VIEW mart.receive_daily   IS 'DEPRECATED: use mart.v_receive_daily';"
-    )
-    op.execute(
-        "COMMENT ON VIEW mart.receive_weekly  IS 'DEPRECATED: use mart.v_receive_weekly';"
-    )
-    op.execute(
-        "COMMENT ON VIEW mart.receive_monthly IS 'DEPRECATED: use mart.v_receive_monthly';"
-    )
+    op.execute("COMMENT ON VIEW mart.receive_daily   IS 'DEPRECATED: use mart.v_receive_daily';")
+    op.execute("COMMENT ON VIEW mart.receive_weekly  IS 'DEPRECATED: use mart.v_receive_weekly';")
+    op.execute("COMMENT ON VIEW mart.receive_monthly IS 'DEPRECATED: use mart.v_receive_monthly';")
 
 
 def downgrade():

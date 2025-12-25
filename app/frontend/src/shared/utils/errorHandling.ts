@@ -8,7 +8,7 @@
  * @module shared/utils/errorHandling
  */
 
-import { notifyApiError, notifyError } from "@features/notification";
+import { notifyApiError, notifyError } from '@features/notification';
 
 /**
  * APIエラー型
@@ -60,7 +60,7 @@ export interface ApiError {
  */
 export async function handleApiCall<T>(
   apiCall: () => Promise<T>,
-  operationName: string,
+  operationName: string
 ): Promise<T | null> {
   try {
     return await apiCall();
@@ -95,17 +95,14 @@ export async function handleApiCall<T>(
 export async function handleApiCallWithRetry<T>(
   apiCall: () => Promise<T>,
   operationName: string,
-  maxRetries = 3,
+  maxRetries = 3
 ): Promise<T | null> {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
       return await apiCall();
     } catch (error) {
       if (attempt === maxRetries) {
-        notifyApiError(
-          error,
-          `${operationName}に失敗しました（${maxRetries}回試行）`,
-        );
+        notifyApiError(error, `${operationName}に失敗しました（${maxRetries}回試行）`);
         console.error(`[${operationName}] Final attempt failed:`, error);
         return null;
       }
@@ -138,13 +135,12 @@ export async function handleApiCallWithRetry<T>(
  */
 export async function handleOperation<T>(
   operation: () => Promise<T>,
-  operationName: string,
+  operationName: string
 ): Promise<T | null> {
   try {
     return await operation();
   } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "不明なエラー";
+    const errorMessage = error instanceof Error ? error.message : '不明なエラー';
     notifyError(`${operationName}に失敗しました: ${errorMessage}`);
     console.error(`[${operationName}] Error:`, error);
     return null;
@@ -183,22 +179,22 @@ export const ERROR_CODE_CONVENTIONS = {
   /**
    * 命名規則
    */
-  naming: "UPPER_SNAKE_CASE" as const,
+  naming: 'UPPER_SNAKE_CASE' as const,
 
   /**
    * カテゴリプレフィックス
    * 各カテゴリはエラーの種類を表します
    */
   categories: [
-    "INPUT_*", // 入力エラー（フォーム、パラメータなど）
-    "VALIDATION_*", // バリデーションエラー
-    "AUTH_*", // 認証・認可エラー
-    "*_NOT_FOUND", // リソース未発見
-    "PROCESSING_*", // 処理エラー（計算、変換など）
-    "TIMEOUT", // タイムアウト
-    "JOB_*", // ジョブエラー（バックグラウンド処理）
-    "NETWORK_*", // ネットワークエラー
-    "DATABASE_*", // データベースエラー
+    'INPUT_*', // 入力エラー（フォーム、パラメータなど）
+    'VALIDATION_*', // バリデーションエラー
+    'AUTH_*', // 認証・認可エラー
+    '*_NOT_FOUND', // リソース未発見
+    'PROCESSING_*', // 処理エラー（計算、変換など）
+    'TIMEOUT', // タイムアウト
+    'JOB_*', // ジョブエラー（バックグラウンド処理）
+    'NETWORK_*', // ネットワークエラー
+    'DATABASE_*', // データベースエラー
   ] as const,
 
   /**
@@ -207,23 +203,23 @@ export const ERROR_CODE_CONVENTIONS = {
   examples: {
     /** 推奨される命名 */
     good: [
-      "INPUT_INVALID",
-      "VALIDATION_ERROR",
-      "USER_NOT_FOUND",
-      "PROCESSING_TIMEOUT",
-      "JOB_FAILED",
-      "AUTH_REQUIRED",
-      "NETWORK_ERROR",
-      "DATABASE_CONNECTION_FAILED",
+      'INPUT_INVALID',
+      'VALIDATION_ERROR',
+      'USER_NOT_FOUND',
+      'PROCESSING_TIMEOUT',
+      'JOB_FAILED',
+      'AUTH_REQUIRED',
+      'NETWORK_ERROR',
+      'DATABASE_CONNECTION_FAILED',
     ],
     /** 避けるべき命名 */
     bad: [
-      "error", // 小文字
-      "Error", // PascalCase
-      "validation-error", // kebab-case
-      "userNotFound", // camelCase
-      "err", // 省略形
-      "failed", // 抽象的すぎる
+      'error', // 小文字
+      'Error', // PascalCase
+      'validation-error', // kebab-case
+      'userNotFound', // camelCase
+      'err', // 省略形
+      'failed', // 抽象的すぎる
     ],
   },
 
@@ -231,11 +227,11 @@ export const ERROR_CODE_CONVENTIONS = {
    * エラーコード追加時のチェックリスト
    */
   checklist: [
-    "[ ] UPPER_SNAKE_CASE で命名されている",
-    "[ ] カテゴリプレフィックスを使用している",
-    "[ ] 既存のエラーコードと重複していない",
-    "[ ] エラーの原因と種類が明確に分かる",
-    "[ ] ドキュメント（features/notification/domain/config.ts）に追加済み",
+    '[ ] UPPER_SNAKE_CASE で命名されている',
+    '[ ] カテゴリプレフィックスを使用している',
+    '[ ] 既存のエラーコードと重複していない',
+    '[ ] エラーの原因と種類が明確に分かる',
+    '[ ] ドキュメント（features/notification/domain/config.ts）に追加済み',
   ],
 } as const;
 
@@ -251,21 +247,19 @@ export function validateErrorCode(errorCode: string): boolean {
   const isUpperSnakeCase = /^[A-Z][A-Z0-9]*(_[A-Z0-9]+)*$/.test(errorCode);
 
   if (!isUpperSnakeCase) {
-    console.warn(
-      `[Error Code] "${errorCode}" は UPPER_SNAKE_CASE ではありません`,
-    );
+    console.warn(`[Error Code] "${errorCode}" は UPPER_SNAKE_CASE ではありません`);
     return false;
   }
 
   // カテゴリプレフィックスチェック（推奨）
   const hasKnownCategory = ERROR_CODE_CONVENTIONS.categories.some((pattern) => {
-    const regex = pattern.replace("*", ".*");
+    const regex = pattern.replace('*', '.*');
     return new RegExp(`^${regex}$`).test(errorCode);
   });
 
   if (!hasKnownCategory) {
     console.info(
-      `[Error Code] "${errorCode}" は既知のカテゴリに該当しません（新規カテゴリの可能性）`,
+      `[Error Code] "${errorCode}" は既知のカテゴリに該当しません（新規カテゴリの可能性）`
     );
   }
 

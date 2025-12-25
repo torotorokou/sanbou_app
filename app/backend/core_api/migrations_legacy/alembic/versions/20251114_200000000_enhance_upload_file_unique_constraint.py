@@ -32,9 +32,7 @@ def upgrade() -> None:
     print("[log.upload_file] Enhancing UNIQUE constraint with processing_status...")
 
     # 既存の制約を削除
-    op.drop_constraint(
-        "uq_upload_file_hash_type_csv", "upload_file", schema="log", type_="unique"
-    )
+    op.drop_constraint("uq_upload_file_hash_type_csv", "upload_file", schema="log", type_="unique")
 
     # 新しい制約を追加（processing_status を含む）
     op.create_unique_constraint(

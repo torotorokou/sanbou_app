@@ -59,9 +59,7 @@ class DummyResponseService:
             ダミーレスポンスデータ（answer, sources, pdf_url）
         """
         # PDF保存先ディレクトリ
-        pdfs_dir = os.path.abspath(
-            os.path.join(os.path.dirname(__file__), "../../static/pdfs")
-        )
+        pdfs_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../static/pdfs"))
         debug_dir = os.path.join(pdfs_dir, "debug")
         os.makedirs(pdfs_dir, exist_ok=True)
         os.makedirs(debug_dir, exist_ok=True)

@@ -100,9 +100,7 @@ def upgrade() -> None:
         index_columns = generator.generate_index_columns(csv_type)
         for idx_col in index_columns:
             index_name = f"ix_raw_{csv_type}_{idx_col}"
-            op.create_index(
-                index_name, table_name, [idx_col], unique=False, schema="raw"
-            )
+            op.create_index(index_name, table_name, [idx_col], unique=False, schema="raw")
 
 
 def downgrade() -> None:

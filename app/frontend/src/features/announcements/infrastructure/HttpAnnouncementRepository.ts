@@ -15,13 +15,13 @@ import type {
   AnnouncementSeverity,
   Audience,
   Attachment,
-} from "../domain/announcement";
+} from '../domain/announcement';
 import type {
   AnnouncementRepository,
   AnnouncementListResponse,
   AnnouncementReadStateMap,
-} from "../ports/AnnouncementRepository";
-import { coreApi } from "@/shared";
+} from '../ports/AnnouncementRepository';
+import { coreApi } from '@/shared';
 
 // ==============================================
 // API Response Types
@@ -74,13 +74,11 @@ interface ApiUnreadCountResponse {
 /**
  * API一覧アイテムをドメインモデルに変換
  */
-function toAnnouncementFromListItem(
-  item: ApiAnnouncementListItem,
-): Announcement {
+function toAnnouncementFromListItem(item: ApiAnnouncementListItem): Announcement {
   return {
     id: String(item.id),
     title: item.title,
-    bodyMd: "", // 一覧では本文なし
+    bodyMd: '', // 一覧では本文なし
     severity: item.severity,
     tags: item.tags,
     publishFrom: item.publish_from,
@@ -112,7 +110,7 @@ function toAnnouncementFromDetail(detail: ApiAnnouncementDetail): Announcement {
     attachments,
     notification: detail.notification_plan
       ? {
-          channels: ["inApp"],
+          channels: ['inApp'],
           sendOnPublish: detail.notification_plan.in_app,
         }
       : undefined,
@@ -131,13 +129,9 @@ export class HttpAnnouncementRepository implements AnnouncementRepository {
    * アクティブなお知らせ一覧を取得
    */
   async list(): Promise<AnnouncementListResponse> {
-    const response = await coreApi.get<ApiAnnouncementListResponse>(
-      "/core_api/announcements",
-    );
+    const response = await coreApi.get<ApiAnnouncementListResponse>('/core_api/announcements');
 
-    const announcements = response.announcements.map(
-      toAnnouncementFromListItem,
-    );
+    const announcements = response.announcements.map(toAnnouncementFromListItem);
 
     // 既読状態マップを構築
     const readAtMap: AnnouncementReadStateMap = {};
@@ -158,13 +152,11 @@ export class HttpAnnouncementRepository implements AnnouncementRepository {
    */
   async get(id: string): Promise<Announcement | null> {
     try {
-      const response = await coreApi.get<ApiAnnouncementDetail>(
-        `/core_api/announcements/${id}`,
-      );
+      const response = await coreApi.get<ApiAnnouncementDetail>(`/core_api/announcements/${id}`);
       return toAnnouncementFromDetail(response);
     } catch (error: unknown) {
       // 404 の場合は null を返す
-      if (error && typeof error === "object" && "response" in error) {
+      if (error && typeof error === 'object' && 'response' in error) {
         const axiosError = error as { response?: { status?: number } };
         if (axiosError.response?.status === 404) {
           return null;
@@ -193,7 +185,7 @@ export class HttpAnnouncementRepository implements AnnouncementRepository {
    */
   async getUnreadCount(): Promise<number> {
     const response = await coreApi.get<ApiUnreadCountResponse>(
-      "/core_api/announcements/unread-count",
+      '/core_api/announcements/unread-count'
     );
     return response.unread_count;
   }

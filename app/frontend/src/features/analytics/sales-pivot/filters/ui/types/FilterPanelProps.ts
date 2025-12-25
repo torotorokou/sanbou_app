@@ -4,7 +4,7 @@
  * 各責務ごとに型を分離し、型安全性と可読性を向上させます。
  */
 
-import type { Dayjs } from "dayjs";
+import type { Dayjs } from 'dayjs';
 import type {
   Mode,
   SortKey,
@@ -12,20 +12,20 @@ import type {
   ID,
   SalesRep,
   CategoryKind,
-} from "../../../shared/model/types";
+} from '../../../shared/model/types';
 
 /**
  * 期間選択関連のProps
  */
 export interface PeriodProps {
-  granularity: "month" | "date";
-  periodMode: "single" | "range";
+  granularity: 'month' | 'date';
+  periodMode: 'single' | 'range';
   month: Dayjs;
   range: [Dayjs, Dayjs] | null;
   singleDate: Dayjs;
   dateRange: [Dayjs, Dayjs] | null;
-  onGranularityChange: (granularity: "month" | "date") => void;
-  onPeriodModeChange: (mode: "single" | "range") => void;
+  onGranularityChange: (granularity: 'month' | 'date') => void;
+  onPeriodModeChange: (mode: 'single' | 'range') => void;
   onMonthChange: (month: Dayjs) => void;
   onRangeChange: (range: [Dayjs, Dayjs] | null) => void;
   onSingleDateChange: (date: Dayjs) => void;
@@ -45,12 +45,12 @@ export interface CategoryProps {
  */
 export interface ModeControlProps {
   mode: Mode;
-  topN: 10 | 20 | 50 | "all";
+  topN: 10 | 20 | 50 | 'all';
   sortBy: SortKey;
   order: SortOrder;
   sortKeyOptions: Array<{ label: string; value: SortKey }>;
   onModeChange: (mode: Mode) => void;
-  onTopNChange: (topN: 10 | 20 | 50 | "all") => void;
+  onTopNChange: (topN: 10 | 20 | 50 | 'all') => void;
   onSortByChange: (sortBy: SortKey) => void;
   onOrderChange: (order: SortOrder) => void;
 }

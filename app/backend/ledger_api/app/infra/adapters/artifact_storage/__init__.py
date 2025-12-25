@@ -14,6 +14,7 @@ from app.infra.adapters.artifact_storage.artifact_service import (
     get_report_artifact_storage,
 )
 
+
 __all__ = [
     "get_report_artifact_storage",
     "ReportArtifactStorage",

@@ -2,12 +2,12 @@
  * DatasetPreviewRepository - インターフェース
  */
 
-import type { DatasetKey, CsvPreviewData } from "../model/types";
+import type { DatasetKey, CsvPreviewData } from '../model/types';
 
 export interface DatasetPreviewRepository {
   getPreviewsByUploadId(
     dataset: DatasetKey,
     uploadId: string,
-    signal?: AbortSignal,
+    signal?: AbortSignal
   ): Promise<Record<string, CsvPreviewData>>;
 }

@@ -11,9 +11,11 @@ import json
 import uuid
 from datetime import datetime
 
-from backend_shared.core.domain import NotificationEvent
 from fastapi import APIRouter, Request
 from fastapi.responses import StreamingResponse
+
+from backend_shared.core.domain import NotificationEvent
+
 
 router = APIRouter(prefix="/notifications", tags=["Notifications"])
 

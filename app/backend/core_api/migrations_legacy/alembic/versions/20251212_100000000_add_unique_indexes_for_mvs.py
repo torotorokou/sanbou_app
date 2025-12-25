@@ -76,9 +76,7 @@ def upgrade() -> None:
 
     print("[mart.mv_receive_daily] ✅ Indexes created")
 
-    print(
-        "[mart.mv_target_card_per_day] Creating UNIQUE index for REFRESH CONCURRENTLY..."
-    )
+    print("[mart.mv_target_card_per_day] Creating UNIQUE index for REFRESH CONCURRENTLY...")
 
     # UNIQUE index on mv_target_card_per_day (primary key: ddate)
     op.execute(
@@ -101,9 +99,7 @@ def upgrade() -> None:
     current_db = os.environ.get("POSTGRES_DB") or op.get_bind().engine.url.database
 
     if not target_user:
-        print(
-            "  ⚠️  POSTGRES_USER environment variable not set, skipping permission grant"
-        )
+        print("  ⚠️  POSTGRES_USER environment variable not set, skipping permission grant")
         print("  💡 Set POSTGRES_USER=<app_user> to grant permissions automatically")
         print("  Example: POSTGRES_USER=sanbou_app_dev")
     else:
@@ -128,9 +124,7 @@ def upgrade() -> None:
                 END $$;
             """
             )
-            print(
-                f"  ✅ Granted SELECT permissions to {target_user} for DB {current_db}"
-            )
+            print(f"  ✅ Granted SELECT permissions to {target_user} for DB {current_db}")
         except Exception as e:
             # Log but don't fail - user might not exist in this environment
             print(f"  ⚠️  Could not grant to {target_user}: {e}")
@@ -171,9 +165,7 @@ def downgrade() -> None:
                 END $$;
             """
             )
-            print(
-                f"  ✅ Revoked SELECT permissions from {target_user} for DB {current_db}"
-            )
+            print(f"  ✅ Revoked SELECT permissions from {target_user} for DB {current_db}")
         except Exception as e:
             print(f"  ⚠️  Could not revoke from {target_user}: {e}")
 

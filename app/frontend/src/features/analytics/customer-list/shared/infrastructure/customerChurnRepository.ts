@@ -4,13 +4,9 @@
  * CustomerChurnRepositoryの実装（HTTP経由でバックエンドAPIを呼び出し）
  */
 
-import type { CustomerChurnRepository } from "../ports/customerChurnRepository";
-import type {
-  LostCustomer,
-  CustomerChurnAnalyzeParams,
-  SalesRep,
-} from "../domain/types";
-import { coreApi } from "@/shared";
+import type { CustomerChurnRepository } from '../ports/customerChurnRepository';
+import type { LostCustomer, CustomerChurnAnalyzeParams, SalesRep } from '../domain/types';
+import { coreApi } from '@/shared';
 
 /**
  * HTTP経由の顧客離脱分析Repository実装
@@ -25,7 +21,7 @@ export class CustomerChurnHttpRepository implements CustomerChurnRepository {
         rep_id: string;
         rep_name: string;
       }>;
-    }>("/core_api/analysis/sales-reps");
+    }>('/core_api/analysis/sales-reps');
 
     return response.sales_reps.map((rep) => ({
       salesRepId: rep.rep_id,
@@ -51,7 +47,7 @@ export class CustomerChurnHttpRepository implements CustomerChurnRepository {
         prev_total_amount_yen: number;
         prev_total_qty_kg: number;
       }>;
-    }>("/core_api/analysis/customer-churn/analyze", {
+    }>('/core_api/analysis/customer-churn/analyze', {
       current_start: params.currentStart,
       current_end: params.currentEnd,
       previous_start: params.previousStart,

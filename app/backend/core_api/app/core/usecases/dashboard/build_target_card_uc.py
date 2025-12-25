@@ -90,9 +90,7 @@ class BuildTargetCardUseCase:
         if _CACHE is not None and cache_key in _CACHE:
             logger.debug(
                 "Cache hit",
-                extra=create_log_context(
-                    operation="build_target_card", cache_key=str(cache_key)
-                ),
+                extra=create_log_context(operation="build_target_card", cache_key=str(cache_key)),
             )
             return BuildTargetCardOutput.from_domain(_CACHE[cache_key])
 
@@ -112,9 +110,7 @@ class BuildTargetCardUseCase:
             _CACHE[cache_key] = transformed_row
             logger.debug(
                 "Cached result",
-                extra=create_log_context(
-                    operation="build_target_card", cache_key=str(cache_key)
-                ),
+                extra=create_log_context(operation="build_target_card", cache_key=str(cache_key)),
             )
 
         # 7. Output DTOに変換

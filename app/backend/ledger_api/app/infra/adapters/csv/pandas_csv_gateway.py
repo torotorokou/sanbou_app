@@ -8,6 +8,8 @@ Pandas CSV Gateway (pandas を使った CSV 読み込み実装).
 import time
 from typing import Any
 
+from fastapi import UploadFile
+
 from app.core.ports.inbound import CsvGateway
 from app.infra.adapters.csv.formatter_service import CsvFormatterService
 from app.infra.adapters.csv.validator_service import CsvValidatorService
@@ -17,7 +19,7 @@ from backend_shared.infra.adapters.presentation.response_error import (
     NoFilesUploadedResponse,
 )
 from backend_shared.utils.csv_reader import read_csv_files
-from fastapi import UploadFile
+
 
 logger = get_module_logger(__name__)
 

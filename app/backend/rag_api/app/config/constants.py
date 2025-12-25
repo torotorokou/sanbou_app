@@ -1,4 +1,4 @@
-def build_prompt(query_input):
+def build_category_prompt(query_input):
     return f"""
     以下は、日本の産業廃棄物処理に関する教育用AIシステムで使われるカテゴリの一覧です：
     - 処理工程

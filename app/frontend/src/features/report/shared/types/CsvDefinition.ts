@@ -1,5 +1,5 @@
 // 型定義を直接定義
-export type CsvType = "shipment" | "receive" | "yard";
+export type CsvType = 'shipment' | 'receive' | 'yard';
 // | 'payable'
 // | 'sales_summary';
 
@@ -16,26 +16,26 @@ import {
   parseYardCSV,
   // parsePayableCSV,
   // parseSalesSummaryCSV,
-} from "@/features/csv-schemas/domain/services/csvParserService";
+} from '@/features/csv-schemas/domain/services/csvParserService';
 
 // 直接定義で簡素化（正しいヘッダーを設定）
 export const CSV_DEFINITIONS: Record<CsvType, CsvDefinition> = {
   shipment: {
-    type: "shipment",
-    label: "出荷一覧",
-    expectedHeaders: ["伝票日付", "出荷番号", "取引先名", "業者CD", "業者名"],
+    type: 'shipment',
+    label: '出荷一覧',
+    expectedHeaders: ['伝票日付', '出荷番号', '取引先名', '業者CD', '業者名'],
     onParse: parseShipmentCSV,
   },
   receive: {
-    type: "receive",
-    label: "受入一覧",
-    expectedHeaders: ["伝票日付", "売上日付", "支払日付", "業者CD", "業者名"],
+    type: 'receive',
+    label: '受入一覧',
+    expectedHeaders: ['伝票日付', '売上日付', '支払日付', '業者CD', '業者名'],
     onParse: parseReceiveCSV,
   },
   yard: {
-    type: "yard",
-    label: "ヤード一覧",
-    expectedHeaders: ["伝票日付", "取引先名", "品名", "正味重量", "数量"],
+    type: 'yard',
+    label: 'ヤード一覧',
+    expectedHeaders: ['伝票日付', '取引先名', '品名', '正味重量', '数量'],
     onParse: parseYardCSV,
   },
   // payable: {

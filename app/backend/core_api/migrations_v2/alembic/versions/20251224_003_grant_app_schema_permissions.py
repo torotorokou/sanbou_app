@@ -43,9 +43,7 @@ def upgrade():
         )
     schema = "app"
 
-    print(
-        f"[PERMISSIONS] Granting permissions on schema {schema} to user {current_user}"
-    )
+    print(f"[PERMISSIONS] Granting permissions on schema {schema} to user {current_user}")
 
     grant_sql = f"""
         DO $$

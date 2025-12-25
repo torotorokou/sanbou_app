@@ -37,13 +37,10 @@ export const mq = {
  */
 export const match = {
   up: (k: BpKey) =>
-    typeof window !== "undefined" &&
-    window.matchMedia(`(min-width: ${bp[k]}px)`).matches,
+    typeof window !== 'undefined' && window.matchMedia(`(min-width: ${bp[k]}px)`).matches,
   between: (a: BpKey, b: BpKey) =>
-    typeof window !== "undefined" &&
-    window.matchMedia(
-      `(min-width: ${bp[a]}px) and (max-width: ${bp[b] - 0.02}px)`,
-    ).matches,
+    typeof window !== 'undefined' &&
+    window.matchMedia(`(min-width: ${bp[a]}px) and (max-width: ${bp[b] - 0.02}px)`).matches,
 } as const;
 
 // ===================================================
@@ -69,12 +66,11 @@ export const BP = {
   desktopMin: bp.xl + 1, // 1281 ★変更：1280→1281
 } as const;
 
-export type ViewportTier = "mobile" | "tabletHalf" | "desktop";
+export type ViewportTier = 'mobile' | 'tabletHalf' | 'desktop';
 
 export const tierOf = (w: number): ViewportTier =>
-  w <= BP.mobileMax ? "mobile" : w < BP.desktopMin ? "tabletHalf" : "desktop";
+  w <= BP.mobileMax ? 'mobile' : w < BP.desktopMin ? 'tabletHalf' : 'desktop';
 
 export const isMobile = (w: number) => w <= BP.mobileMax; // ≤767
-export const isTabletOrHalf = (w: number) =>
-  w >= BP.tabletMin && w <= BP.tabletMax; // 768–1280 ★変更
+export const isTabletOrHalf = (w: number) => w >= BP.tabletMin && w <= BP.tabletMax; // 768–1280 ★変更
 export const isDesktop = (w: number) => w >= BP.desktopMin; // ≥1281 ★変更

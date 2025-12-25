@@ -8,16 +8,17 @@
   docker compose -f docker/docker-compose.dev.yml -p local_dev exec core_api \
     python /test/verify_balance_sheet_fix.py
 """
-import sys
 import os
+import sys
+
 import pandas as pd
 
 # Dockerコンテナ内で実行されることを想定
 try:
     from app.infra.report_utils import get_unit_price_table_csv
-    from app.infra.report_utils.formatters import summary_apply, multiply_columns
-    from app.infra.report_utils.template_loader import load_master_and_template
+    from app.infra.report_utils.formatters import multiply_columns, summary_apply
     from app.infra.report_utils.template_config import get_template_config
+    from app.infra.report_utils.template_loader import load_master_and_template
 except ImportError:
     print("❌ このスクリプトはDockerコンテナ内で実行する必要があります")
     print("実行方法:")
@@ -33,11 +34,11 @@ def load_test_data():
 
     # ヤード一覧を読み込み
     yard_path = os.path.join(base_path, "ヤード一覧_20251202_093735.csv")
-    df_yard = pd.read_csv(yard_path, encoding='utf-8-sig')
+    df_yard = pd.read_csv(yard_path, encoding="utf-8-sig")
 
     # 出荷一覧を読み込み
     shipment_path = os.path.join(base_path, "出荷一覧_20251202_093724.csv")
-    df_shipment = pd.read_csv(shipment_path, encoding='utf-8-sig')
+    df_shipment = pd.read_csv(shipment_path, encoding="utf-8-sig")
 
     print("✅ テストデータ読み込み完了")
     print(f"   - ヤード: {len(df_yard)}行")
@@ -82,10 +83,7 @@ def verify_yard_valuable_material(df_yard):
 
     # ③ 単価をマージ
     yard_with_price = pd.merge(
-        yard_summary,
-        unit_price_valuable[["品名", "設定単価"]],
-        on="品名",
-        how="left"
+        yard_summary, unit_price_valuable[["品名", "設定単価"]], on="品名", how="left"
     )
     print("【ステップ5】数量+単価マージ")
     print(yard_with_price)
@@ -125,7 +123,9 @@ def verify_shipment_valuable_material(df_shipment):
     print()
 
     # 金額文字列をクリーニング
-    df_shipment_valuable["金額"] = df_shipment_valuable["金額"].astype(str).str.replace(',', '').astype(float)
+    df_shipment_valuable["金額"] = (
+        df_shipment_valuable["金額"].astype(str).str.replace(",", "").astype(float)
+    )
 
     # 業者別に金額を集計
     shipment_summary = df_shipment_valuable.groupby("業者名", as_index=False)["金額"].sum()
@@ -177,6 +177,7 @@ def main():
     except Exception as e:
         print(f"❌ エラーが発生しました: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
 

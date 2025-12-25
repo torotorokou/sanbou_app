@@ -14,9 +14,9 @@
  * - AuthProviderを使用してグローバルな認証状態を参照
  */
 
-import type { FC } from "react";
-import { useAuth } from "@app/providers/AuthProvider";
-import { customTokens } from "@/shared";
+import type { FC } from 'react';
+import { useAuth } from '@app/providers/AuthProvider';
+import { customTokens } from '@/shared';
 
 export const UserInfoChip: FC = () => {
   const { user, isInitializing: isLoading, error } = useAuth();
@@ -26,7 +26,7 @@ export const UserInfoChip: FC = () => {
     return (
       <span
         style={{
-          fontSize: "12px",
+          fontSize: '12px',
           color: customTokens.colorTextSecondary,
         }}
       >
@@ -40,7 +40,7 @@ export const UserInfoChip: FC = () => {
     return (
       <span
         style={{
-          fontSize: "12px",
+          fontSize: '12px',
           color: customTokens.colorError,
         }}
         title={error}
@@ -55,7 +55,7 @@ export const UserInfoChip: FC = () => {
     return (
       <span
         style={{
-          fontSize: "12px",
+          fontSize: '12px',
           color: customTokens.colorTextSecondary,
         }}
       >
@@ -71,14 +71,14 @@ export const UserInfoChip: FC = () => {
   return (
     <div
       style={{
-        display: "inline-flex",
-        alignItems: "center",
-        gap: "8px",
-        borderRadius: "16px",
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '8px',
+        borderRadius: '16px',
         border: `1px solid ${customTokens.colorBorderSecondary}`,
-        backgroundColor: "rgba(255, 255, 255, 0.1)",
-        padding: "6px 12px",
-        fontSize: "13px",
+        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+        padding: '6px 12px',
+        fontSize: '13px',
       }}
     >
       <span

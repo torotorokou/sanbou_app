@@ -185,36 +185,28 @@ def downgrade() -> None:
     # ========================================================================
     # raw.receive_shogun_flash
     # ========================================================================
-    op.drop_index(
-        "idx_receive_shogun_flash_upload_file_id", "receive_shogun_flash", schema="raw"
-    )
+    op.drop_index("idx_receive_shogun_flash_upload_file_id", "receive_shogun_flash", schema="raw")
     op.drop_column("receive_shogun_flash", "source_row_no", schema="raw")
     op.drop_column("receive_shogun_flash", "upload_file_id", schema="raw")
 
     # ========================================================================
     # raw.receive_shogun_final
     # ========================================================================
-    op.drop_index(
-        "idx_receive_shogun_final_upload_file_id", "receive_shogun_final", schema="raw"
-    )
+    op.drop_index("idx_receive_shogun_final_upload_file_id", "receive_shogun_final", schema="raw")
     op.drop_column("receive_shogun_final", "source_row_no", schema="raw")
     op.drop_column("receive_shogun_final", "upload_file_id", schema="raw")
 
     # ========================================================================
     # raw.yard_shogun_flash
     # ========================================================================
-    op.drop_index(
-        "idx_yard_shogun_flash_upload_file_id", "yard_shogun_flash", schema="raw"
-    )
+    op.drop_index("idx_yard_shogun_flash_upload_file_id", "yard_shogun_flash", schema="raw")
     op.drop_column("yard_shogun_flash", "source_row_no", schema="raw")
     op.drop_column("yard_shogun_flash", "upload_file_id", schema="raw")
 
     # ========================================================================
     # raw.yard_shogun_final
     # ========================================================================
-    op.drop_index(
-        "idx_yard_shogun_final_upload_file_id", "yard_shogun_final", schema="raw"
-    )
+    op.drop_index("idx_yard_shogun_final_upload_file_id", "yard_shogun_final", schema="raw")
     op.drop_column("yard_shogun_final", "source_row_no", schema="raw")
     op.drop_column("yard_shogun_final", "upload_file_id", schema="raw")
 

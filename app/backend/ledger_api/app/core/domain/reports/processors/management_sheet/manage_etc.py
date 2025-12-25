@@ -1,4 +1,5 @@
 import pandas as pd
+
 from app.infra.report_utils import get_template_config, load_master_and_template
 from app.infra.report_utils.formatters import get_title_from_date, set_value_fast_safe
 

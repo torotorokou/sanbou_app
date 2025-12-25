@@ -30,9 +30,7 @@ def upgrade():
     _run("v_receive_monthly.sql")
 
     # 2) 旧名は互換ラッパー（パススルー）
-    op.execute(
-        "CREATE OR REPLACE VIEW mart.receive_daily   AS SELECT * FROM mart.v_receive_daily;"
-    )
+    op.execute("CREATE OR REPLACE VIEW mart.receive_daily   AS SELECT * FROM mart.v_receive_daily;")
     op.execute(
         "CREATE OR REPLACE VIEW mart.receive_weekly  AS SELECT * FROM mart.v_receive_weekly;"
     )

@@ -3,8 +3,8 @@
  * Detail-chart UI公開API
  */
 
-export { TopNBarChart } from "./TopNBarChart";
-export type { TopNBarChartProps } from "./TopNBarChart";
+export { TopNBarChart } from './TopNBarChart';
+export type { TopNBarChartProps } from './TopNBarChart';
 
-export { DailySeriesChart } from "./DailySeriesChart";
-export type { DailySeriesChartProps } from "./DailySeriesChart";
+export { DailySeriesChart } from './DailySeriesChart';
+export type { DailySeriesChartProps } from './DailySeriesChart';

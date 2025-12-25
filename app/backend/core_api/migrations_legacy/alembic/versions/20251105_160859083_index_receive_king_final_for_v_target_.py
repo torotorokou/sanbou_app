@@ -23,11 +23,7 @@ def upgrade():
     exists = bind.execute(sa.text(f"SELECT to_regclass('{TARGET_REL}')")).scalar()
     if exists is None:
         with op.get_context().autocommit_block():
-            op.execute(
-                sa.text(
-                    f"DO $$ BEGIN RAISE NOTICE 'skip: {TARGET_REL} not found'; END $$;"
-                )
-            )
+            op.execute(sa.text(f"DO $$ BEGIN RAISE NOTICE 'skip: {TARGET_REL} not found'; END $$;"))
         return
 
     # IMMUTABLE な式: make_date(split_part(replace(...)))

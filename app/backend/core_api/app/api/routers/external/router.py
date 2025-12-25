@@ -9,6 +9,8 @@ For short synchronous calls only. Heavy jobs should be queued.
 """
 
 import httpx
+from fastapi import APIRouter, Depends
+
 from app.api.schemas import ManualListResponse, RAGAskRequest, RAGAskResponse
 from app.config.di_providers import (
     get_ask_rag_uc,
@@ -24,9 +26,8 @@ from app.core.usecases.external.external_api_uc import (
     GetManualUseCase,
     ListManualsUseCase,
 )
-from backend_shared.application.logging import get_module_logger
+from backend_shared.application.logging import create_log_context, get_module_logger
 from backend_shared.core.domain.exceptions import ExternalServiceError, NotFoundError
-from fastapi import APIRouter, Depends
 
 router = APIRouter(prefix="/external", tags=["external"])
 logger = get_module_logger(__name__)
@@ -80,9 +81,7 @@ async def ask_rag(
         )
 
 
-@router.get(
-    "/manual/list", response_model=ManualListResponse, summary="マニュアル一覧を取得"
-)
+@router.get("/manual/list", response_model=ManualListResponse, summary="マニュアル一覧を取得")
 async def list_manuals(
     uc: ListManualsUseCase = Depends(get_list_manuals_uc),
 ):

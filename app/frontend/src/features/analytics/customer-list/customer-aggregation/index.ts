@@ -2,4 +2,4 @@
  * Customer Aggregation Sub-Feature - Public API
  */
 
-export { aggregateCustomers } from "./model/aggregation";
+export { aggregateCustomers } from './model/aggregation';

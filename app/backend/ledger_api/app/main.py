@@ -18,6 +18,11 @@ except Exception:  # if not available, inject stub module
         pass
 
 
+# ==========================================
+# 統一ロギング設定のインポート（backend_shared）
+# ==========================================
+from fastapi import FastAPI
+
 from app.api.routers.jobs import router as jobs_router
 from app.api.routers.notifications import router as notifications_router
 from app.api.routers.report_artifacts import router as report_artifact_router
@@ -26,16 +31,12 @@ from app.api.routers.reports.block_unit_price_interactive import (
     router as block_unit_price_router,
 )
 from app.settings import settings
-
-# ==========================================
-# 統一ロギング設定のインポート（backend_shared）
-# ==========================================
 from backend_shared.application.logging import get_module_logger, setup_logging
 from backend_shared.config.env_utils import is_debug_mode
 from backend_shared.infra.adapters.fastapi import register_error_handlers
 from backend_shared.infra.adapters.middleware import RequestIdMiddleware
 from backend_shared.infra.frameworks.logging_utils import setup_uvicorn_access_filter
-from fastapi import FastAPI
+
 
 # ==========================================
 # 統一ロギング設定の初期化
@@ -74,6 +75,7 @@ app.add_middleware(RequestIdMiddleware)
 # CORS設定
 from backend_shared.infra.frameworks.cors_config import setup_cors
 
+
 setup_cors(app)
 
 # エラーハンドラの登録（ProblemDetails統一）
@@ -90,9 +92,7 @@ app.include_router(jobs_router, prefix="")  # /api/jobs
 app.include_router(notifications_router, prefix="")  # /notifications
 
 
-artifact_prefix = (
-    settings.report_artifact_url_prefix.rstrip("/") or "/reports/artifacts"
-)
+artifact_prefix = settings.report_artifact_url_prefix.rstrip("/") or "/reports/artifacts"
 if not artifact_prefix.startswith("/"):
     artifact_prefix = f"/{artifact_prefix}"
 app.include_router(

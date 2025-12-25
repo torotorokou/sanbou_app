@@ -11,9 +11,9 @@
  * return <div ref={ref}>{flags.flags.isMobile ? 'Mobile' : 'Desktop'}</div>;
  * ```
  */
-import { useMemo } from "react";
-import useContainerSize from "./useContainerSize";
-import { makeFlags, type ResponsiveFlags } from "./useResponsive";
+import { useMemo } from 'react';
+import useContainerSize from './useContainerSize';
+import { makeFlags, type ResponsiveFlags } from './useResponsive';
 
 export function useElementResponsive<T extends HTMLElement>(): {
   ref: React.RefObject<T>;

@@ -8,22 +8,14 @@ export type {
   NotificationType,
   Notification,
   CreateNotificationData,
-} from "./domain/types/notification.types";
+} from './domain/types/notification.types';
 
-export type {
-  Severity,
-  ProblemDetails,
-  NotificationEvent,
-} from "./domain/types/contract";
+export type { Severity, ProblemDetails, NotificationEvent } from './domain/types/contract';
 
-export {
-  NOTIFY_DEFAULTS,
-  codeCatalog,
-  getNotificationConfig,
-} from "./domain/config";
+export { NOTIFY_DEFAULTS, codeCatalog, getNotificationConfig } from './domain/config';
 
 // Ports
-export type { INotificationRepository } from "./ports/repository";
+export type { INotificationRepository } from './ports/repository';
 
 // Model (Store & ViewModel)
 export {
@@ -36,15 +28,11 @@ export {
   notifyWarning,
   notifyInfo,
   notifyApiError,
-} from "./model/useNotificationVM";
+} from './model/useNotificationVM';
 
 // Infrastructure - Job Service
-export {
-  pollJob,
-  type JobStatusType,
-  type JobStatus,
-} from "./infrastructure/jobService";
+export { pollJob, type JobStatusType, type JobStatus } from './infrastructure/jobService';
 
 // UI Components
-export { default as NotificationCenter } from "./ui/components/NotificationCenter";
-export { default as NotificationCenterAntd } from "./ui/components/NotificationCenterAntd";
+export { default as NotificationCenter } from './ui/components/NotificationCenter';
+export { default as NotificationCenterAntd } from './ui/components/NotificationCenterAntd';

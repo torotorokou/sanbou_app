@@ -1,7 +1,7 @@
 // components/AnimatedStatistic.tsx
-import React from "react";
-import { Statistic } from "antd";
-import CountUp from "react-countup";
+import React from 'react';
+import { Statistic } from 'antd';
+import CountUp from 'react-countup';
 
 interface AnimatedStatisticProps {
   title: React.ReactNode;
@@ -16,7 +16,7 @@ const AnimatedStatistic: React.FC<AnimatedStatisticProps> = ({
   value,
   suffix,
   prefix,
-  color = "black",
+  color = 'black',
 }) => {
   return (
     <Statistic
@@ -25,7 +25,7 @@ const AnimatedStatistic: React.FC<AnimatedStatisticProps> = ({
       suffix={suffix}
       value={value}
       valueRender={() => <CountUp end={value} duration={1.2} separator="," />}
-      valueStyle={{ fontSize: "1.5rem", color }}
+      valueStyle={{ fontSize: '1.5rem', color }}
     />
   );
 };

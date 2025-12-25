@@ -20,7 +20,7 @@ import {
   dayjs,
   type IsoMonth,
   type IsoDate,
-} from "@shared";
+} from '@shared';
 
 // ========================================
 // Re-export from shared/utils/dateUtils
@@ -84,10 +84,8 @@ export { todayInMonth };
  */
 export const getActualCutoffIso = (m: IsoMonth): IsoDate => {
   const now = dayjs();
-  const monthStart = dayjs(m + "-01");
-  if (monthStart.isSame(now, "month"))
-    return now.subtract(1, "day").format("YYYY-MM-DD");
-  if (monthStart.isBefore(now, "month"))
-    return monthStart.endOf("month").format("YYYY-MM-DD");
-  return monthStart.startOf("month").subtract(1, "day").format("YYYY-MM-DD");
+  const monthStart = dayjs(m + '-01');
+  if (monthStart.isSame(now, 'month')) return now.subtract(1, 'day').format('YYYY-MM-DD');
+  if (monthStart.isBefore(now, 'month')) return monthStart.endOf('month').format('YYYY-MM-DD');
+  return monthStart.startOf('month').subtract(1, 'day').format('YYYY-MM-DD');
 };

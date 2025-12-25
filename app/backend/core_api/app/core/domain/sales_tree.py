@@ -51,15 +51,9 @@ class SummaryRequest(BaseModel):
     date_from: date_type = Field(..., description="集計開始日")
     date_to: date_type = Field(..., description="集計終了日")
     mode: AxisMode = Field(..., description="集計軸: customer, item, date")
-    category_kind: CategoryKind = Field(
-        "waste", description="カテゴリ種別: waste, valuable"
-    )
-    rep_ids: list[int] = Field(
-        default_factory=list, description="営業IDフィルタ（空=全営業）"
-    )
-    filter_ids: list[str] = Field(
-        default_factory=list, description="軸IDフィルタ（空=全データ）"
-    )
+    category_kind: CategoryKind = Field("waste", description="カテゴリ種別: waste, valuable")
+    rep_ids: list[int] = Field(default_factory=list, description="営業IDフィルタ（空=全営業）")
+    filter_ids: list[str] = Field(default_factory=list, description="軸IDフィルタ（空=全データ）")
     top_n: int = Field(50, description="TOP-N件数（0=全件）")
     sort_by: SortKey = Field("amount", description="ソート項目")
     order: SortOrder = Field("desc", description="ソート順")
@@ -74,9 +68,7 @@ class DailySeriesRequest(BaseModel):
 
     date_from: date_type = Field(..., description="取得開始日")
     date_to: date_type = Field(..., description="取得終了日")
-    category_kind: CategoryKind = Field(
-        "waste", description="カテゴリ種別: waste, valuable"
-    )
+    category_kind: CategoryKind = Field("waste", description="カテゴリ種別: waste, valuable")
     rep_id: int | None = Field(None, description="営業IDフィルタ")
     customer_id: str | None = Field(None, description="顧客IDフィルタ")
     item_id: int | None = Field(None, description="品目IDフィルタ")
@@ -94,19 +86,13 @@ class PivotRequest(BaseModel):
     date_to: date_type = Field(..., description="集計終了日")
     base_axis: AxisMode = Field(..., description="固定軸: customer, item, date")
     base_id: str = Field(..., description="固定値ID（顧客ID/品目ID/日付文字列）")
-    category_kind: CategoryKind = Field(
-        "waste", description="カテゴリ種別: waste, valuable"
-    )
-    rep_ids: list[int] = Field(
-        default_factory=list, description="営業IDフィルタ（空=全営業）"
-    )
+    category_kind: CategoryKind = Field("waste", description="カテゴリ種別: waste, valuable")
+    rep_ids: list[int] = Field(default_factory=list, description="営業IDフィルタ（空=全営業）")
     target_axis: AxisMode = Field(..., description="展開軸: customer, item, date")
     top_n: int = Field(50, description="TOP-N件数（0=全件）")
     sort_by: SortKey = Field("amount", description="ソート項目")
     order: SortOrder = Field("desc", description="ソート順")
-    cursor: str | None = Field(
-        None, description="ページネーションカーソル（オフセット値）"
-    )
+    cursor: str | None = Field(None, description="ページネーションカーソル（オフセット値）")
 
 
 # ========================================
@@ -207,14 +193,8 @@ class ExportRequest(BaseModel):
     date_from: date_type = Field(..., description="集計開始日")
     date_to: date_type = Field(..., description="集計終了日")
     mode: AxisMode = Field(..., description="集計軸: customer, item, date")
-    category_kind: CategoryKind = Field(
-        "waste", description="カテゴリ種別: waste, valuable"
-    )
-    rep_ids: list[int] = Field(
-        default_factory=list, description="営業IDフィルタ（空=全営業）"
-    )
-    filter_ids: list[str] = Field(
-        default_factory=list, description="軸IDフィルタ（空=全データ）"
-    )
+    category_kind: CategoryKind = Field("waste", description="カテゴリ種別: waste, valuable")
+    rep_ids: list[int] = Field(default_factory=list, description="営業IDフィルタ（空=全営業）")
+    filter_ids: list[str] = Field(default_factory=list, description="軸IDフィルタ（空=全データ）")
     sort_by: SortKey = Field("amount", description="ソート項目")
     order: SortOrder = Field("desc", description="ソート順")

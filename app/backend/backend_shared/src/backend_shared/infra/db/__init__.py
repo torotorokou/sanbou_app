@@ -19,6 +19,7 @@ from backend_shared.infra.db.url_builder import (
     build_postgres_dsn,
 )
 
+
 __all__ = [
     "build_postgres_dsn",
     "build_database_url",

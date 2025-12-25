@@ -75,15 +75,11 @@ def upgrade() -> None:
     """
     )
     op.execute("COMMENT ON COLUMN app.announcement_user_states.id IS '状態ID（PK）';")
-    op.execute(
-        "COMMENT ON COLUMN app.announcement_user_states.user_id IS 'ユーザー識別子';"
-    )
+    op.execute("COMMENT ON COLUMN app.announcement_user_states.user_id IS 'ユーザー識別子';")
     op.execute(
         "COMMENT ON COLUMN app.announcement_user_states.announcement_id IS 'お知らせID（FK）';"
     )
-    op.execute(
-        "COMMENT ON COLUMN app.announcement_user_states.read_at IS '既読日時（NULL=未読）';"
-    )
+    op.execute("COMMENT ON COLUMN app.announcement_user_states.read_at IS '既読日時（NULL=未読）';")
     op.execute(
         "COMMENT ON COLUMN app.announcement_user_states.ack_at IS '確認日時（NULL=未確認、criticalお知らせ用）';"
     )

@@ -162,9 +162,7 @@ class GetPredictionsUseCase:
         raw_predictions = self._query_repo.get_predictions_in_range(from_, to_)
 
         # Domain Serviceでビジネスルール適用
-        adjusted_predictions = forecasting.apply_business_rules_to_predictions(
-            raw_predictions
-        )
+        adjusted_predictions = forecasting.apply_business_rules_to_predictions(raw_predictions)
 
         # DTOに変換
         return [PredictionDTO(**p) for p in adjusted_predictions]

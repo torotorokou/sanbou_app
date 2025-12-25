@@ -10,9 +10,11 @@ from io import BytesIO
 from pathlib import Path
 
 import pandas as pd
+
 from app.infra.report_utils import get_template_config, write_values_to_template
 from app.infra.utils.pdf_conversion import convert_excel_to_pdf
 from backend_shared.application.logging import get_module_logger
+
 
 logger = get_module_logger(__name__)
 

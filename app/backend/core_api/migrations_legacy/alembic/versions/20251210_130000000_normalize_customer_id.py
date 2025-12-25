@@ -107,9 +107,7 @@ def upgrade() -> None:
     # ============================================================
     # 1.6. mart.v_customer_sales_daily の再作成 (v_sales_tree_daily を参照)
     # ============================================================
-    print(
-        "[mart.v_customer_sales_daily] Recreating view (references v_sales_tree_daily)..."
-    )
+    print("[mart.v_customer_sales_daily] Recreating view (references v_sales_tree_daily)...")
 
     op.execute(
         """

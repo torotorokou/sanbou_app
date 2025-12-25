@@ -27,18 +27,12 @@ def _parse_month(s: str) -> date:
 
 
 def _first_day_next_month(d: date) -> date:
-    return date(
-        d.year + (1 if d.month == 12 else 0), 1 if d.month == 12 else d.month + 1, 1
-    )
+    return date(d.year + (1 if d.month == 12 else 0), 1 if d.month == 12 else d.month + 1, 1)
 
 
 def _engine_url(dsn: str) -> str:
     prefix = "postgresql://"
-    return (
-        ("postgresql+psycopg" + dsn[len("postgresql") :])
-        if dsn.startswith(prefix)
-        else dsn
-    )
+    return ("postgresql+psycopg" + dsn[len("postgresql") :]) if dsn.startswith(prefix) else dsn
 
 
 def _ensure_odd(n: int) -> int:
@@ -108,9 +102,7 @@ def main():
     )
 
     prof_biz = (
-        prof[prof["scope"] == "biz"]
-        .copy()
-        .rename(columns={"day_mean_smooth": "day_mean_biz"})
+        prof[prof["scope"] == "biz"].copy().rename(columns={"day_mean_smooth": "day_mean_biz"})
     )
     prof_all_sun = prof[(prof["scope"] == "all") & (prof["iso_dow"] == 7)][
         ["iso_week", "day_mean_smooth"]
@@ -129,9 +121,7 @@ def main():
         eng,
         params={"mfrom": m_from, "mto": m_to_excl},
     )
-    kpi["month_date"] = (
-        pd.to_datetime(kpi["month_date"]).dt.to_period("M").dt.to_timestamp()
-    )
+    kpi["month_date"] = pd.to_datetime(kpi["month_date"]).dt.to_period("M").dt.to_timestamp()
 
     # --------------------------------------------------------
     # Base join
@@ -150,9 +140,7 @@ def main():
     base["day_mean_all_sun"] = base["day_mean_all_sun"].fillna(0.0)
     base["day_mean"] = 0.0
     base.loc[use_biz, "day_mean"] = base.loc[use_biz, "day_mean_biz"]
-    base.loc[use_sun | use_hol, "day_mean"] = base.loc[
-        use_sun | use_hol, "day_mean_all_sun"
-    ]
+    base.loc[use_sun | use_hol, "day_mean"] = base.loc[use_sun | use_hol, "day_mean_all_sun"]
     base["scope_used"] = np.select(
         [is_closed, use_sun, use_hol, use_biz],
         ["closed", "sun", "hol", "biz"],
@@ -182,9 +170,7 @@ def main():
             float(args.nonbiz_share_cap) if args.nonbiz_share_cap is not None else None
         ),
         per_day_share_cap=(
-            float(args.per_day_share_cap)
-            if args.per_day_share_cap is not None
-            else None
+            float(args.per_day_share_cap) if args.per_day_share_cap is not None else None
         ),
         bridge_smooth_enabled=not args.no_bridge,
         bridge_smooth_window=int(args.bridge_window),
@@ -209,9 +195,7 @@ def main():
     )
 
     # 日別の初期目標値
-    base = base.merge(
-        kpi[["month_date", "month_target_ton"]], on="month_date", how="left"
-    )
+    base = base.merge(kpi[["month_date", "month_target_ton"]], on="month_date", how="left")
     base["target_ton"] = base["w_day_in_week"] * base["month_target_ton"]
 
     # --------------------------------------------------------
@@ -238,9 +222,7 @@ def main():
 
     # 平日のみ指数移動平均 (EWM)
     ewm_smoothed = (
-        daily.loc[is_biz, "target_ton"]
-        .ewm(span=smooth_span, adjust=False, min_periods=1)
-        .mean()
+        daily.loc[is_biz, "target_ton"].ewm(span=smooth_span, adjust=False, min_periods=1).mean()
     )
     daily.loc[is_biz, "target_ton"] = ewm_smoothed
 

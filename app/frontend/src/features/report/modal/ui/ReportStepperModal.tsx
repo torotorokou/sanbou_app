@@ -1,11 +1,11 @@
-import React from "react";
-import { Modal, Steps, Button } from "antd";
-import type { ReactNode } from "react";
-import { useResponsive } from "@/shared";
+import React from 'react';
+import { Modal, Steps, Button } from 'antd';
+import type { ReactNode } from 'react';
+import { useResponsive } from '@/shared';
 
 const { Step } = Steps;
 
-import type { ModalStepConfig } from "@features/report/shared/config/shared/types";
+import type { ModalStepConfig } from '@features/report/shared/config/shared/types';
 
 export type ReportStepperModalProps = {
   open: boolean;
@@ -27,7 +27,7 @@ const ReportStepperModal: React.FC<ReportStepperModalProps> = ({
   stepConfigs,
 }) => {
   const { isMobile, isTablet } = useResponsive();
-  const modalWidth = isMobile ? "95vw" : isTablet ? 640 : 720;
+  const modalWidth = isMobile ? '95vw' : isTablet ? 640 : 720;
   // stepConfigsが未定義や空の場合、currentStepが範囲外の場合は何も表示しない
   if (
     !stepConfigs ||
@@ -56,7 +56,7 @@ const ReportStepperModal: React.FC<ReportStepperModalProps> = ({
 
       <div style={{ minHeight: 240 }}>{children}</div>
 
-      <div style={{ textAlign: "right", marginTop: 24 }}>
+      <div style={{ textAlign: 'right', marginTop: 24 }}>
         {config.showNext && (
           <Button type="primary" onClick={onNext} style={{ marginRight: 8 }}>
             次へ

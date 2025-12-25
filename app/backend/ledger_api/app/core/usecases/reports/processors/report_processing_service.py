@@ -9,11 +9,12 @@
 import traceback
 from typing import Any
 
-from backend_shared.application.logging import get_module_logger
-
 # pandas はこのモジュールでは未使用
 from fastapi import BackgroundTasks, UploadFile
 from fastapi.responses import JSONResponse, Response
+
+from backend_shared.application.logging import get_module_logger
+
 
 logger = get_module_logger(__name__)
 
@@ -64,9 +65,7 @@ class ReportProcessingService:
             logger.warning("No files uploaded")
             return None, NoFilesUploadedResponse()
 
-        logger.debug(
-            "Processing uploaded files", extra={"file_keys": list(files.keys())}
-        )
+        logger.debug("Processing uploaded files", extra={"file_keys": list(files.keys())})
 
         dfs, error = read_csv_files(files)
         if error:
@@ -100,17 +99,13 @@ class ReportProcessingService:
             # Step 2: 検証（ジェネレーター定義）
             validation_error = generator.validate(dfs, files)
             if validation_error:
-                logger.warning(
-                    "Validation failed", extra={"error": str(validation_error)}
-                )
+                logger.warning("Validation failed", extra={"error": str(validation_error)})
                 return validation_error.to_json_response()
 
             # Step 2.5: 帳簿ごとの期間指定があれば、最小伝票日付から日/週/月でフィルタ
             period_type = getattr(generator, "period_type", None)
             if period_type:
-                logger.debug(
-                    "Starting CSV date filtering", extra={"period_type": period_type}
-                )
+                logger.debug("Starting CSV date filtering", extra={"period_type": period_type})
                 logger.debug("DataFrame shapes BEFORE filtering")
                 for csv_type, df in dfs.items():
                     try:
@@ -137,9 +132,7 @@ class ReportProcessingService:
 
                 try:
                     dfs = shared_filter_by_period_from_max_date(dfs, period_type)
-                    logger.info(
-                        "Applied date filtering", extra={"period_type": period_type}
-                    )
+                    logger.info("Applied date filtering", extra={"period_type": period_type})
                     logger.debug("DataFrame shapes AFTER filtering")
                     for csv_type, df in dfs.items():
                         try:

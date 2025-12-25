@@ -42,6 +42,7 @@
 ##   - mk/80_registry.mk  : Artifact Registry
 ##   - mk/90_maintenance.mk : maintenance operations
 ##   - mk/95_security.mk  : security scanning
+##   - mk/96_format.mk    : formatting & linting
 ## ============================================================
 
 MK_DIR := mk
@@ -49,6 +50,15 @@ MK_DIR := mk
 include $(MK_DIR)/00_core.mk
 include $(MK_DIR)/10_env.mk
 include $(MK_DIR)/20_docker.mk
+include $(MK_DIR)/30_backup.mk
+include $(MK_DIR)/40_db_baseline.mk
+include $(MK_DIR)/50_db_roles.mk
+include $(MK_DIR)/60_alembic.mk
+include $(MK_DIR)/70_db_ownership.mk
+include $(MK_DIR)/80_registry.mk
+include $(MK_DIR)/90_maintenance.mk
+include $(MK_DIR)/95_security.mk
+include $(MK_DIR)/96_format.mk
 include $(MK_DIR)/30_backup.mk
 include $(MK_DIR)/40_db_baseline.mk
 include $(MK_DIR)/50_db_roles.mk

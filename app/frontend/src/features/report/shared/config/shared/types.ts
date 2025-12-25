@@ -1,6 +1,6 @@
 // /app/src/constants/reportConfig/shared/types.ts
-import type React from "react";
-import type { CsvDefinition } from "@features/report/shared/types/CsvDefinition";
+import type React from 'react';
+import type { CsvDefinition } from '@features/report/shared/types/CsvDefinition';
 
 // ==============================
 // 🎯 共通型定義
@@ -45,4 +45,4 @@ export interface PageReportConfig<T extends BaseReportKey> {
 }
 
 // 帳簿期間タイプ（共通定義）
-export type PeriodType = "oneday" | "oneweek" | "onemonth";
+export type PeriodType = 'oneday' | 'oneweek' | 'onemonth';

@@ -108,9 +108,7 @@ def test_finalize_success_from_initial_state_with_fixed_frontend_selections():
     if df_transport_cost is not None:
         print("[DBG test] transport_cost columns:", list(df_transport_cost.columns))
         try:
-            print(
-                "[DBG test] transport_cost head:", df_transport_cost.head(3).to_dict()
-            )
+            print("[DBG test] transport_cost head:", df_transport_cost.head(3).to_dict())
         except Exception:
             pass
 
@@ -129,9 +127,7 @@ def test_finalize_success_from_initial_state_with_fixed_frontend_selections():
             if "運搬費" in t.columns:
                 t["運搬費"] = _pd.to_numeric(t["運搬費"], errors="coerce").fillna(0)
             lookup = {
-                (str(r.get("業者CD")), str(r.get("運搬業者"))): float(
-                    r.get("運搬費", 0) or 0
-                )
+                (str(r.get("業者CD")), str(r.get("運搬業者"))): float(r.get("運搬費", 0) or 0)
                 for _, r in t.iterrows()
             }
 
@@ -196,9 +192,7 @@ def test_state_passed_to_finalize_matches_saved_serialized_state(
         assert loaded == serialized_expected
         return loaded
 
-    monkeypatch.setattr(
-        "app.api.services.report.session_store.session_store.load", _spy_load
-    )
+    monkeypatch.setattr("app.api.services.report.session_store.session_store.load", _spy_load)
 
     # /finalize エンドポイントを叩く（StreamingResponse だが 200 のみ確認）
     resp = client.post(

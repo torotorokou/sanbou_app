@@ -10,10 +10,11 @@ Chat Router - BFF for rag_api chat endpoints
 import os
 
 import httpx
-from backend_shared.application.logging import get_module_logger
-from backend_shared.core.domain.exceptions import ExternalServiceError
 from fastapi import APIRouter, Request
 from fastapi.responses import Response
+
+from backend_shared.application.logging import get_module_logger
+from backend_shared.core.domain.exceptions import ExternalServiceError
 
 logger = get_module_logger(__name__)
 
@@ -36,9 +37,7 @@ async def proxy_question_options():
             r.raise_for_status()
             return r.json()
     except httpx.HTTPStatusError as e:
-        logger.error(
-            f"RAG API returned error: {e.response.status_code} - {e.response.text}"
-        )
+        logger.error(f"RAG API returned error: {e.response.status_code} - {e.response.text}")
         raise ExternalServiceError(
             service_name="rag_api",
             message=f"Question options fetch failed: {e.response.text[:200]}",
@@ -73,9 +72,7 @@ async def proxy_generate_answer(request: Request):
             # SuccessApiResponse形式の場合、resultフィールドを展開
             if "result" in rag_response and rag_response.get("status") == "success":
                 result_data = rag_response["result"]
-                logger.info(
-                    f"Extracting from result field. Keys: {list(result_data.keys())}"
-                )
+                logger.info(f"Extracting from result field. Keys: {list(result_data.keys())}")
 
                 # PDF URLをcore_api経由のURLに変換
                 pdf_url = result_data.get("pdf_url")
@@ -105,9 +102,7 @@ async def proxy_generate_answer(request: Request):
             # 既に期待される形式の場合はそのまま返す
             return rag_response
     except httpx.HTTPStatusError as e:
-        logger.error(
-            f"RAG API returned error: {e.response.status_code} - {e.response.text}"
-        )
+        logger.error(f"RAG API returned error: {e.response.status_code} - {e.response.text}")
         raise ExternalServiceError(
             service_name="rag_api",
             message=f"Answer generation failed: {e.response.text[:200]}",
@@ -177,9 +172,7 @@ async def proxy_test_answer(request: Request):
             r.raise_for_status()
             return r.json()
     except httpx.HTTPStatusError as e:
-        logger.error(
-            f"RAG API returned error: {e.response.status_code} - {e.response.text}"
-        )
+        logger.error(f"RAG API returned error: {e.response.status_code} - {e.response.text}")
         raise ExternalServiceError(
             service_name="rag_api",
             message=f"Test answer generation failed: {e.response.text[:200]}",

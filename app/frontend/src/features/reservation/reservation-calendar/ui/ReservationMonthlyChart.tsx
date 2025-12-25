@@ -5,12 +5,13 @@
  * 日別の予約台数を棒グラフで表示
  */
 
-import React, { useMemo } from "react";
-import type { ReservationMonthlyChartProps } from "../model/types";
+import React, { useMemo } from 'react';
+import type { ReservationMonthlyChartProps } from '../model/types';
 
-export const ReservationMonthlyChart: React.FC<
-  ReservationMonthlyChartProps
-> = ({ data, isLoading = false }) => {
+export const ReservationMonthlyChart: React.FC<ReservationMonthlyChartProps> = ({
+  data,
+  isLoading = false,
+}) => {
   // 月の全日データを生成（データがない日は0で補完）
   const fullMonthData = useMemo(() => {
     if (data.length === 0) return [];
@@ -29,7 +30,7 @@ export const ReservationMonthlyChart: React.FC<
     // 1日から最終日までの配列を生成
     const fullData = [];
     for (let day = 1; day <= lastDay; day++) {
-      const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+      const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
       const existingData = dataMap.get(dateStr);
 
       fullData.push(
@@ -37,7 +38,7 @@ export const ReservationMonthlyChart: React.FC<
           date: dateStr,
           reserve_trucks: 0,
           reserve_fixed_trucks: 0,
-        },
+        }
       );
     }
 
@@ -55,8 +56,8 @@ export const ReservationMonthlyChart: React.FC<
       style={{
         marginTop: 20,
         flex: 1,
-        display: "flex",
-        flexDirection: "column",
+        display: 'flex',
+        flexDirection: 'column',
         minHeight: 0,
       }}
     >
@@ -73,11 +74,9 @@ export const ReservationMonthlyChart: React.FC<
         }
       `}</style>
       {isLoading ? (
-        <div style={{ textAlign: "center", padding: "40px 0", color: "#999" }}>
-          読み込み中...
-        </div>
+        <div style={{ textAlign: 'center', padding: '40px 0', color: '#999' }}>読み込み中...</div>
       ) : fullMonthData.length === 0 ? (
-        <div style={{ textAlign: "center", padding: "40px 0", color: "#999" }}>
+        <div style={{ textAlign: 'center', padding: '40px 0', color: '#999' }}>
           データがありません
         </div>
       ) : (
@@ -85,19 +84,18 @@ export const ReservationMonthlyChart: React.FC<
           {/* 棒グラフエリア */}
           <div
             style={{
-              display: "flex",
-              alignItems: "flex-end",
+              display: 'flex',
+              alignItems: 'flex-end',
               flex: 1,
               gap: 2,
-              padding: "5px 0 0 0",
-              borderBottom: "2px solid #e0e0e0",
+              padding: '5px 0 0 0',
+              borderBottom: '2px solid #e0e0e0',
               minHeight: 0,
-              position: "relative",
+              position: 'relative',
             }}
           >
             {fullMonthData.map((item) => {
-              const heightPercent =
-                maxValue > 0 ? (item.reserve_trucks / maxValue) * 100 : 0;
+              const heightPercent = maxValue > 0 ? (item.reserve_trucks / maxValue) * 100 : 0;
               const fixedPercent =
                 item.reserve_trucks > 0
                   ? (item.reserve_fixed_trucks / item.reserve_trucks) * 100
@@ -108,28 +106,28 @@ export const ReservationMonthlyChart: React.FC<
                   key={item.date}
                   style={{
                     flex: 1,
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
                     minWidth: 0,
-                    position: "relative",
-                    height: "100%",
+                    position: 'relative',
+                    height: '100%',
                   }}
                 >
                   {/* 棒グラフ */}
                   <div
                     className="chart-bar"
                     style={{
-                      width: "100%",
+                      width: '100%',
                       height: `${heightPercent}%`,
                       background: `linear-gradient(to top, #52c41a ${fixedPercent}%, #1890ff ${fixedPercent}%)`,
-                      borderRadius: "2px 2px 0 0",
-                      position: "absolute",
+                      borderRadius: '2px 2px 0 0',
+                      position: 'absolute',
                       bottom: 0,
                       left: 0,
                       right: 0,
                       minHeight: item.reserve_trucks > 0 ? 5 : 0,
-                      cursor: "pointer",
+                      cursor: 'pointer',
                     }}
                   >
                     {/* 値表示（ホバー時のみ） */}
@@ -137,17 +135,17 @@ export const ReservationMonthlyChart: React.FC<
                       <div
                         className="chart-value"
                         style={{
-                          position: "absolute",
+                          position: 'absolute',
                           top: -20,
-                          left: "50%",
-                          transform: "translateX(-50%)",
+                          left: '50%',
+                          transform: 'translateX(-50%)',
                           fontSize: 10,
-                          fontWeight: "bold",
-                          color: "#333",
-                          whiteSpace: "nowrap",
+                          fontWeight: 'bold',
+                          color: '#333',
+                          whiteSpace: 'nowrap',
                           opacity: 0,
-                          transition: "opacity 0.2s",
-                          pointerEvents: "none",
+                          transition: 'opacity 0.2s',
+                          pointerEvents: 'none',
                         }}
                       >
                         {item.reserve_trucks}
@@ -162,7 +160,7 @@ export const ReservationMonthlyChart: React.FC<
           {/* 日付ラベル */}
           <div
             style={{
-              display: "flex",
+              display: 'flex',
               gap: 2,
               marginTop: 4,
               flexShrink: 0,
@@ -178,8 +176,8 @@ export const ReservationMonthlyChart: React.FC<
                   style={{
                     flex: 1,
                     fontSize: 10,
-                    color: "#666",
-                    textAlign: "center",
+                    color: '#666',
+                    textAlign: 'center',
                     minWidth: 0,
                   }}
                 >
@@ -193,30 +191,30 @@ export const ReservationMonthlyChart: React.FC<
           <div
             style={{
               marginTop: 12,
-              display: "flex",
-              justifyContent: "center",
+              display: 'flex',
+              justifyContent: 'center',
               gap: 16,
               fontSize: 12,
               flexShrink: 0,
             }}
           >
-            <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
               <div
                 style={{
                   width: 16,
                   height: 16,
-                  background: "#1890ff",
+                  background: '#1890ff',
                   borderRadius: 2,
                 }}
               />
               <span>予約台数</span>
             </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
               <div
                 style={{
                   width: 16,
                   height: 16,
-                  background: "#52c41a",
+                  background: '#52c41a',
                   borderRadius: 2,
                 }}
               />

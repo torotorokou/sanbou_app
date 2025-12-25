@@ -113,12 +113,10 @@ def apply_intraweek_pipeline(
 
     if scope_col:
         biz_mask = g[scope_col].isin(cfg.intraweek_smooth_scope_values)
-        nonbiz_mask = g[scope_col].isin(cfg.non_biz_scopes)
         sun_mask = g[scope_col] == "sun"
         hol_mask = g[scope_col] == "hol"
     else:
         biz_mask = pd.Series(True, index=g.index)
-        nonbiz_mask = pd.Series(False, index=g.index)
         sun_mask = hol_mask = pd.Series(False, index=g.index)
 
     # 1) 平日open日が少ない週（フォールバック：開いている日に均等→非平日キャップ→平日に再配分）

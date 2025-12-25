@@ -1,4 +1,5 @@
 import pandas as pd
+
 from app.infra.report_utils import (
     get_template_config,
     load_master_and_template,
@@ -26,9 +27,7 @@ def calculate_total_valuable_material_cost(
     shipment_summary_df = aggregate_valuable_material_by_vendor(df_shipment)
     sum_shipment = shipment_summary_df["値"].sum()
 
-    yard_summary_df = calculate_valuable_material_cost_by_item(
-        df_yard, unit_price_table
-    )
+    yard_summary_df = calculate_valuable_material_cost_by_item(df_yard, unit_price_table)
     sum_yard = yard_summary_df["値"].sum()
 
     total_value = int(sum_shipment + sum_yard)

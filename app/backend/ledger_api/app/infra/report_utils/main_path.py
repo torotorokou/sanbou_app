@@ -3,6 +3,7 @@ from pathlib import Path
 
 import yaml
 
+
 # 設定ファイルのパスをapp/configに変更
 MAIN_PATHS = "/backend/app/config/main_paths.yaml"
 BASE_DIR_PATH = "/backend/app"
@@ -63,6 +64,4 @@ class MainPathResolver:
         if isinstance(target, (str, os.PathLike)):
             return self.base_dir / Path(target)
         # 予期せぬ型（dict など）が来た場合は明示的にエラー
-        raise TypeError(
-            f"無効なパス型: {type(target)!r} for key '{'.'.join(keys)}'. 値={target!r}"
-        )
+        raise TypeError(f"無効なパス型: {type(target)!r} for key '{'.'.join(keys)}'. 値={target!r}")

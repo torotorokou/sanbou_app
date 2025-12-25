@@ -146,9 +146,7 @@ class DependencyAnalyzer:
                 for imp in imports:
                     print(f"     └─ {imp}")
                 print()
-            print(
-                f"❌ 合計 {len(self.api_to_st_app)} ファイルが st_app に依存しています"
-            )
+            print(f"❌ 合計 {len(self.api_to_st_app)} ファイルが st_app に依存しています")
         else:
             print("✅ app/api は st_app に依存していません")
         print()
@@ -164,9 +162,7 @@ class DependencyAnalyzer:
                 for imp in imports:
                     print(f"     └─ {imp}")
                 print()
-            print(
-                f"❌ 合計 {len(self.st_app_to_api)} ファイルが app.api に依存しています"
-            )
+            print(f"❌ 合計 {len(self.st_app_to_api)} ファイルが app.api に依存しています")
             print("   これらのファイルは循環依存を引き起こしています")
         else:
             print("✅ st_app は app.api に依存していません")
@@ -191,9 +187,7 @@ class DependencyAnalyzer:
         can_delete = True
 
         if self.api_to_st_app:
-            print(
-                "❌ app/api が st_app に依存しています → 依存を解消する必要があります"
-            )
+            print("❌ app/api が st_app に依存しています → 依存を解消する必要があります")
             can_delete = False
         else:
             print("✅ app/api は st_app に依存していません")

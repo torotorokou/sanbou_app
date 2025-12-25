@@ -18,6 +18,7 @@ Cloud Storage アクセス権限のデバッグログ出力を行います。
 import logging
 import os
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -48,9 +49,7 @@ def debug_log_gcp_adc_and_permissions(
         object_prefix = os.getenv("GCS_DATA_PREFIX", "master")
 
     stage = os.getenv("STAGE", "dev")
-    logger.info(
-        f"📋 環境情報: STAGE={stage}, BUCKET={bucket_name}, PREFIX={object_prefix}"
-    )
+    logger.info(f"📋 環境情報: STAGE={stage}, BUCKET={bucket_name}, PREFIX={object_prefix}")
 
     # google-auth と google-cloud-storage のインポート確認
     try:
@@ -63,9 +62,7 @@ def debug_log_gcp_adc_and_permissions(
             f"🔴 GCP SDKのインポートに失敗しました: {e}",
             extra={"operation": "gcp_debug", "status": "import_error", "error": str(e)},
         )
-        logger.error(
-            "ヒント: google-auth と google-cloud-storage をインストールしてください"
-        )
+        logger.error("ヒント: google-auth と google-cloud-storage をインストールしてください")
         logger.info("=" * 80)
         return False
 
@@ -96,15 +93,9 @@ def debug_log_gcp_adc_and_permissions(
         )
         logger.error(f"   エラー詳細: {e}")
         logger.error("   ヒント:")
-        logger.error(
-            "   - ローカル開発: 'gcloud auth application-default login' を実行"
-        )
-        logger.error(
-            "   - GCE/Cloud Run: サービスアカウントがVMにアタッチされているか確認"
-        )
-        logger.error(
-            "   - 環境変数: GOOGLE_APPLICATION_CREDENTIALS が正しく設定されているか確認"
-        )
+        logger.error("   - ローカル開発: 'gcloud auth application-default login' を実行")
+        logger.error("   - GCE/Cloud Run: サービスアカウントがVMにアタッチされているか確認")
+        logger.error("   - 環境変数: GOOGLE_APPLICATION_CREDENTIALS が正しく設定されているか確認")
         logger.info("=" * 80)
         return False
     except Exception as e:
@@ -214,15 +205,11 @@ def debug_log_gcp_adc_and_permissions(
 
     # ステップ4: オブジェクトプレフィックスの確認（オプション）
     if object_prefix:
-        logger.info(
-            f"📄 ステップ4: オブジェクトプレフィックス '{object_prefix}' の確認"
-        )
+        logger.info(f"📄 ステップ4: オブジェクトプレフィックス '{object_prefix}' の確認")
         try:
             blobs = list(bucket.list_blobs(prefix=object_prefix, max_results=1))
             if blobs:
-                logger.info(
-                    f"✅ プレフィックス '{object_prefix}' 配下にオブジェクトが存在します"
-                )
+                logger.info(f"✅ プレフィックス '{object_prefix}' 配下にオブジェクトが存在します")
                 logger.info(f"   - 最初のオブジェクト例: {blobs[0].name}")
             else:
                 logger.warning(

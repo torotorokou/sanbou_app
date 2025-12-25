@@ -1,14 +1,14 @@
-import { useCallback, useEffect } from "react";
-import type { UploadProps } from "antd/es/upload";
-import { useCsvFileValidator } from "@features/csv-validation";
-import { useReportArtifact } from "@features/report/preview/model/useReportArtifact";
+import { useCallback, useEffect } from 'react';
+import type { UploadProps } from 'antd/es/upload';
+import { useCsvFileValidator } from '@features/csv-validation';
+import { useReportArtifact } from '@features/report/preview/model/useReportArtifact';
 import type {
   CsvFiles,
   CsvConfigEntry,
   UploadFileConfig,
   MakeUploadPropsFn,
-} from "@features/report/shared/types/report.types";
-import type { ReportKey } from "@features/report/shared/config";
+} from '@features/report/shared/types/report.types';
+import type { ReportKey } from '@features/report/shared/config';
 
 /**
  * ReportBaseのビジネスロジックを統合管理するフック
@@ -25,7 +25,7 @@ export const useReportBaseBusiness = (
   csvConfigs: CsvConfigEntry[],
   csvFiles: CsvFiles,
   onUploadFile: (label: string, file: File | null) => void,
-  reportKey: ReportKey,
+  reportKey: ReportKey
 ) => {
   // 共通のCSV検証フックを使用
   const csvValidation = useCsvFileValidator({
@@ -49,7 +49,7 @@ export const useReportBaseBusiness = (
       onUploadFile(label, null);
       csvValidation.resetValidation(label);
     },
-    [onUploadFile, csvValidation],
+    [onUploadFile, csvValidation]
   );
 
   /**
@@ -57,7 +57,7 @@ export const useReportBaseBusiness = (
    */
   const makeUploadProps = useCallback(
     (label: string, parser: (csvText: string) => void): UploadProps => ({
-      accept: ".csv",
+      accept: '.csv',
       showUploadList: false,
       beforeUpload: async (fileObj) => {
         onUploadFile(label, fileObj);
@@ -82,7 +82,7 @@ export const useReportBaseBusiness = (
         return false;
       },
     }),
-    [onUploadFile, csvValidation],
+    [onUploadFile, csvValidation]
   );
 
   /**
@@ -95,7 +95,7 @@ export const useReportBaseBusiness = (
       const validation = csvValidation.getValidationResult(label);
 
       if (fileObj) {
-        return validation === "valid";
+        return validation === 'valid';
       } else {
         return !entry.required;
       }
@@ -152,23 +152,14 @@ export const useReportBaseBusiness = (
    * レポート生成処理（ZIP形式）
    */
   const handleGenerateReport = useCallback(
-    async (
-      onStart: () => void,
-      onComplete: () => void,
-      onSuccess: () => void,
-    ) => {
-      const success = await artifact.generateReport(
-        csvFiles,
-        reportKey,
-        onStart,
-        onComplete,
-      );
+    async (onStart: () => void, onComplete: () => void, onSuccess: () => void) => {
+      const success = await artifact.generateReport(csvFiles, reportKey, onStart, onComplete);
 
       if (success) {
         onSuccess();
       }
     },
-    [artifact, csvFiles, reportKey],
+    [artifact, csvFiles, reportKey]
   );
 
   return {

@@ -12,10 +12,10 @@
  * - desktop: ≥1280px - 上段3列（目標/日次/カレンダー）、下段1列（予測）
  */
 
-import { useEffect } from "react";
-import { useResponsive } from "@/shared";
+import { useEffect } from 'react';
+import { useResponsive } from '@/shared';
 
-export type LayoutMode = "mobile" | "tablet" | "desktop";
+export type LayoutMode = 'mobile' | 'tablet' | 'desktop';
 
 export type ResponsiveLayoutConfig = {
   /** レイアウトモード */
@@ -60,10 +60,10 @@ export const useResponsiveLayout = (): ResponsiveLayoutConfig => {
 
   // レイアウトモード判定（3段階統一）
   const mode: LayoutMode = flags.isMobile
-    ? "mobile" // ≤767px: 1列縦並び
+    ? 'mobile' // ≤767px: 1列縦並び
     : flags.isTablet
-      ? "tablet" // 768-1280px: 上2列+下1列（1024-1279を含む）
-      : "desktop"; // ≥1280px: 上3列+下1列
+      ? 'tablet' // 768-1280px: 上2列+下1列（1024-1279を含む）
+      : 'desktop'; // ≥1280px: 上3列+下1列
 
   // ガッター・パディング（3段階統一）
   const gutter = flags.isMobile ? 4 : flags.isTablet ? 8 : 12;
@@ -79,31 +79,31 @@ export const useResponsiveLayout = (): ResponsiveLayoutConfig => {
   // カードの高さ設定（目標カードは内容量に応じて可変）
   const heights = {
     target: {
-      mobile: "auto", // 内容に応じて可変（最小320px程度確保）
+      mobile: 'auto', // 内容に応じて可変（最小320px程度確保）
       tablet: 380,
-      desktop: "100%",
+      desktop: '100%',
     },
     daily: {
       mobile: 280,
       tablet: 400,
-      desktop: "100%",
+      desktop: '100%',
     },
     calendar: {
       mobile: 0, // モバイルでは非表示
       tablet: 320,
-      desktop: "100%",
+      desktop: '100%',
     },
     forecast: {
       mobile: 480,
       tablet: 420,
-      desktop: "100%",
+      desktop: '100%',
     },
   };
 
   // レイアウトモード変更時にresizeイベントを発火（Recharts再描画用）
   useEffect(() => {
     const id = setTimeout(() => {
-      window.dispatchEvent(new Event("resize"));
+      window.dispatchEvent(new Event('resize'));
     }, 0);
     return () => clearTimeout(id);
   }, [mode]);

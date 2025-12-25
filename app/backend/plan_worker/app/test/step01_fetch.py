@@ -19,9 +19,7 @@ def _parse_month(s: str) -> date:
 
 
 def _first_day_next_month(d: date) -> date:
-    return date(
-        d.year + (1 if d.month == 12 else 0), 1 if d.month == 12 else d.month + 1, 1
-    )
+    return date(d.year + (1 if d.month == 12 else 0), 1 if d.month == 12 else d.month + 1, 1)
 
 
 def main():
@@ -91,9 +89,7 @@ def main():
     print(f"[range] months: {m_from} .. (excl) {m_to_excl}")
     print("[mv] rows:", len(mv), "scopes:", mv["scope"].unique().tolist())
     print("[mv] null ave:", mv["ave"].isna().sum(), "n<=0:", (mv["n"] <= 0).sum())
-    print(
-        "[cal] range:", cal["ddate"].min(), "…", cal["ddate"].max(), "rows:", len(cal)
-    )
+    print("[cal] range:", cal["ddate"].min(), "…", cal["ddate"].max(), "rows:", len(cal))
     print("[kpi] rows:", len(kpi), "months:", kpi["month_date"].nunique())
 
 

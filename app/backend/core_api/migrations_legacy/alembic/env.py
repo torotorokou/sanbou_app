@@ -112,11 +112,7 @@ def _get_url() -> str:
     url = os.getenv("DB_DSN")
     if url:
         # psycopg3 を明示
-        if (
-            url.startswith("postgresql://")
-            and "+psycopg" not in url
-            and "+psycopg2" not in url
-        ):
+        if url.startswith("postgresql://") and "+psycopg" not in url and "+psycopg2" not in url:
             url = url.replace("postgresql://", "postgresql+psycopg://", 1)
         return url
 
@@ -124,11 +120,7 @@ def _get_url() -> str:
     url = os.getenv("DATABASE_URL")
     if url:
         # psycopg3 を明示
-        if (
-            url.startswith("postgresql://")
-            and "+psycopg" not in url
-            and "+psycopg2" not in url
-        ):
+        if url.startswith("postgresql://") and "+psycopg" not in url and "+psycopg2" not in url:
             url = url.replace("postgresql://", "postgresql+psycopg://", 1)
         return url
 

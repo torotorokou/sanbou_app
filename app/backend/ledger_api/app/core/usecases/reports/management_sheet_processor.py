@@ -8,6 +8,7 @@ st_app依存を排し、services側のprocessors/utilsを利用する。
 from typing import Any
 
 import pandas as pd
+
 from app.core.domain.reports.processors.management_sheet.average_sheet import (
     update_from_average_sheet,
 )

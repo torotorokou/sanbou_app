@@ -11,20 +11,18 @@
  * - 保守性: 既存のREPORT_KEYS設定から自動生成（単一の情報源）
  */
 
-import { REPORT_KEYS } from "@features/report/shared/config";
+import { REPORT_KEYS } from '@features/report/shared/config';
 
 /**
  * 帳票キーから日本語ラベルへの変換マップ
  * REPORT_KEYSから自動生成されるため、設定の重複なし
  */
-export const REPORT_KEY_TO_JAPANESE: Record<string, string> = Object.entries(
-  REPORT_KEYS,
-).reduce(
+export const REPORT_KEY_TO_JAPANESE: Record<string, string> = Object.entries(REPORT_KEYS).reduce(
   (acc, [key, config]) => {
     acc[key] = config.label;
     return acc;
   },
-  {} as Record<string, string>,
+  {} as Record<string, string>
 );
 
 /**
@@ -59,7 +57,7 @@ export const translateReportKeyToJapanese = (reportKey: string): string => {
 export const generateJapaneseFilename = (
   reportKey: string,
   reportDate: string,
-  extension: string = ".xlsx",
+  extension: string = '.xlsx'
 ): string => {
   const japaneseLabel = translateReportKeyToJapanese(reportKey);
   return `${japaneseLabel}-${reportDate}${extension}`;

@@ -5,11 +5,7 @@
  * FSD + Repository パターンに準拠
  */
 
-import type {
-  LostCustomer,
-  CustomerChurnAnalyzeParams,
-  SalesRep,
-} from "../domain/types";
+import type { LostCustomer, CustomerChurnAnalyzeParams, SalesRep } from '../domain/types';
 
 /**
  * 顧客離脱分析Repository

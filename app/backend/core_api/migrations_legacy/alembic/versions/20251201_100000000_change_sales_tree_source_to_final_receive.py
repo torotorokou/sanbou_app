@@ -32,9 +32,7 @@ def upgrade():
     1. 既存の mart.v_sales_tree_detail_base を DROP
     2. stg.shogun_final_receive をソースとする新しいビューを作成
     """
-    print(
-        "[mart.v_sales_tree_detail_base] Changing data source to stg.shogun_final_receive..."
-    )
+    print("[mart.v_sales_tree_detail_base] Changing data source to stg.shogun_final_receive...")
 
     # 1) 既存ビューをDROP
     op.execute(

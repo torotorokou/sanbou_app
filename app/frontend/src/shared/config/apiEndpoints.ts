@@ -13,7 +13,7 @@
  * Core API ベースパス（BFF統一）
  * すべてのAPI呼び出しは /core_api を経由してバックエンドにルーティングされる
  */
-export const CORE_API_BASE = "/core_api";
+export const CORE_API_BASE = '/core_api';
 
 /**
  * レポート系API

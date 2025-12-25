@@ -1,15 +1,15 @@
 // src/shared/infrastructure/http/coreApi.ts
 // /core_api 専用のHTTPクライアント（axios ベース）
 
-import type { AxiosRequestConfig } from "axios";
-import { client } from "./httpClient";
+import type { AxiosRequestConfig } from 'axios';
+import { client } from './httpClient';
 
 /**
  * パスを正規化し、/core_api/* であることを保証
  */
 function normalize(path: string): string {
-  const p = path.startsWith("/") ? path : `/${path}`;
-  if (!p.startsWith("/core_api/")) {
+  const p = path.startsWith('/') ? path : `/${path}`;
+  if (!p.startsWith('/core_api/')) {
     throw new Error(`coreApi must target "/core_api/**" but got "${p}"`);
   }
   return p;
@@ -25,29 +25,17 @@ export const coreApi = {
     return res.data as T;
   },
 
-  async post<T, B = unknown>(
-    path: string,
-    body?: B,
-    config?: AxiosRequestConfig,
-  ): Promise<T> {
+  async post<T, B = unknown>(path: string, body?: B, config?: AxiosRequestConfig): Promise<T> {
     const res = await client.post<T>(normalize(path), body, config);
     return res.data as T;
   },
 
-  async put<T, B = unknown>(
-    path: string,
-    body?: B,
-    config?: AxiosRequestConfig,
-  ): Promise<T> {
+  async put<T, B = unknown>(path: string, body?: B, config?: AxiosRequestConfig): Promise<T> {
     const res = await client.put<T>(normalize(path), body, config);
     return res.data as T;
   },
 
-  async patch<T, B = unknown>(
-    path: string,
-    body?: B,
-    config?: AxiosRequestConfig,
-  ): Promise<T> {
+  async patch<T, B = unknown>(path: string, body?: B, config?: AxiosRequestConfig): Promise<T> {
     const res = await client.patch<T>(normalize(path), body, config);
     return res.data as T;
   },
@@ -69,7 +57,7 @@ export const coreApi = {
   async uploadForm<T>(
     path: string,
     form: FormData,
-    config?: AxiosRequestConfig & { onProgress?: (pct?: number) => void },
+    config?: AxiosRequestConfig & { onProgress?: (pct?: number) => void }
   ): Promise<T> {
     const res = await client.post<T>(normalize(path), form, {
       ...config,
@@ -77,9 +65,7 @@ export const coreApi = {
       headers: { ...(config?.headers ?? {}) },
       onUploadProgress: (e) => {
         if (config?.onProgress) {
-          const pct = e.total
-            ? Math.round((e.loaded * 100) / e.total)
-            : undefined;
+          const pct = e.total ? Math.round((e.loaded * 100) / e.total) : undefined;
           config.onProgress(pct);
         }
       },

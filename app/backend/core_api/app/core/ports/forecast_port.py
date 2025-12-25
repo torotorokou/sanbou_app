@@ -20,7 +20,7 @@ class IForecastJobRepository(Protocol):
         target_from: date_type,
         target_to: date_type,
         actor: str = "system",
-        payload_json: dict | None = None
+        payload_json: dict | None = None,
     ) -> int:
         """
         予測ジョブをキューに登録

@@ -53,7 +53,9 @@ def download_from_gcs():
         print(f"ERROR: バケット接続失敗: {e}")
         print("\nヒント:")
         print("  - ローカル: gcloud auth application-default login を実行してください")
-        print("  - GCE: VMに適切な権限を持つサービスアカウントがアタッチされているか確認してください")
+        print(
+            "  - GCE: VMに適切な権限を持つサービスアカウントがアタッチされているか確認してください"
+        )
         exit(1)
 
     # 各サブディレクトリをダウンロード
@@ -82,7 +84,7 @@ def download_from_gcs():
         downloaded_count = 0
         for blob in blobs:
             # プレフィックスからの相対パスを取得
-            rel_path = blob.name[len(prefix):]
+            rel_path = blob.name[len(prefix) :]
             if not rel_path:  # ディレクトリのみのケース
                 continue
 

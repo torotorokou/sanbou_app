@@ -13,9 +13,7 @@ class DatabaseSessionManager:
     - get_session(): FastAPI Depends 用のラッパ
     """
 
-    def __init__(
-        self, db_url: str, *, echo: bool = False, pool_pre_ping: bool = True
-    ) -> None:
+    def __init__(self, db_url: str, *, echo: bool = False, pool_pre_ping: bool = True) -> None:
         self.db_url = db_url
         self.engine = create_async_engine(
             db_url, echo=echo, pool_pre_ping=pool_pre_ping, future=True

@@ -13,9 +13,11 @@
 import uuid
 from datetime import datetime
 
+from fastapi import APIRouter, HTTPException, Request
+
 from backend_shared.core.domain import JobCreate, JobStatus, ProblemDetails
 from backend_shared.infra.adapters.fastapi import DomainError
-from fastapi import APIRouter, HTTPException, Request
+
 
 router = APIRouter(prefix="/api/jobs", tags=["Jobs"])
 

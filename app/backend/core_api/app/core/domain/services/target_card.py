@@ -14,9 +14,7 @@ ACHIEVEMENT_RATE_PRECISION = 1  # 達成率の小数点以下桁数
 PERCENTAGE_MULTIPLIER = 100  # パーセンテージ変換用
 
 
-def validate_target_card_date(
-    requested_date: date_type, mode: Mode
-) -> tuple[bool, str]:
+def validate_target_card_date(requested_date: date_type, mode: Mode) -> tuple[bool, str]:
     """
     Validate if the requested date is appropriate for the given mode.
 

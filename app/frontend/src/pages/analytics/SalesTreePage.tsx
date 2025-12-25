@@ -10,33 +10,31 @@
  * ビジネスロジックは useSalesTreePage フックに統合済み
  */
 
-import React, { useEffect } from "react";
-import { Space } from "antd";
+import React, { useEffect } from 'react';
+import { Space } from 'antd';
 
 // Types
-import type { Mode } from "@/features/analytics/sales-pivot/shared/model/types";
-import type { DrawerState } from "@/features/analytics/sales-pivot/shared/model/usePivotDrawerState";
+import type { Mode } from '@/features/analytics/sales-pivot/shared/model/types';
+import type { DrawerState } from '@/features/analytics/sales-pivot/shared/model/usePivotDrawerState';
 
 // Custom Hook
-import { useSalesTreePage } from "./useSalesTreePage";
+import { useSalesTreePage } from './useSalesTreePage';
 
 // UI Components
-import { SalesPivotHeader } from "@/features/analytics/sales-pivot/header/ui/SalesPivotHeader";
-import { FilterPanel } from "@/features/analytics/sales-pivot/filters/ui/FilterPanel";
-import { KpiCards } from "@/features/analytics/sales-pivot/kpi/ui/KpiCards";
-import { SummaryTable } from "@/features/analytics/sales-pivot/summary-table/ui/SummaryTable";
-import { PivotDrawer } from "@/features/analytics/sales-pivot/pivot-drawer/ui/PivotDrawer";
-import { DetailDrawer } from "@/features/analytics/sales-pivot/detail-drawer/ui/DetailDrawer";
+import { SalesPivotHeader } from '@/features/analytics/sales-pivot/header/ui/SalesPivotHeader';
+import { FilterPanel } from '@/features/analytics/sales-pivot/filters/ui/FilterPanel';
+import { KpiCards } from '@/features/analytics/sales-pivot/kpi/ui/KpiCards';
+import { SummaryTable } from '@/features/analytics/sales-pivot/summary-table/ui/SummaryTable';
+import { PivotDrawer } from '@/features/analytics/sales-pivot/pivot-drawer/ui/PivotDrawer';
+import { DetailDrawer } from '@/features/analytics/sales-pivot/detail-drawer/ui/DetailDrawer';
 
 // Styles
-import "./SalesTreePage.css";
+import './SalesTreePage.css';
 
 /**
  * DrawerStateがopenかどうかを判定する型ガード
  */
-const isDrawerOpen = (
-  d: DrawerState,
-): d is Extract<DrawerState, { open: true }> => d.open;
+const isDrawerOpen = (d: DrawerState): d is Extract<DrawerState, { open: true }> => d.open;
 
 /**
  * 売上ツリーページ
@@ -151,8 +149,8 @@ const SalesTreePage: React.FC = () => {
     <Space
       direction="vertical"
       size="large"
-      style={{ display: "block" }}
-      className={`sales-tree-page ${categoryKind === "valuable" ? "valuable-mode" : ""}`}
+      style={{ display: 'block' }}
+      className={`sales-tree-page ${categoryKind === 'valuable' ? 'valuable-mode' : ''}`}
     >
       {/* Header */}
       <SalesPivotHeader

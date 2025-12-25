@@ -1,4 +1,5 @@
 import pandas as pd
+
 from app.infra.report_utils.formatters import (
     get_weekday_japanese,
     round_value_column_generic,
@@ -6,6 +7,7 @@ from app.infra.report_utils.formatters import (
 )
 from backend_shared.application.logging import create_log_context, get_module_logger
 from backend_shared.utils.dataframe_utils_optimized import clean_na_strings_vectorized
+
 
 logger = get_module_logger(__name__)
 
@@ -101,9 +103,7 @@ def calculate_item_summary(
     return master_csv
 
 
-def summarize_item_and_abc_totals(
-    master_csv: pd.DataFrame, master_columns_keys
-) -> pd.DataFrame:
+def summarize_item_and_abc_totals(master_csv: pd.DataFrame, master_columns_keys) -> pd.DataFrame:
     item_to_cd = {"混合廃棄物A": 1, "混合廃棄物B": 2, "混合廃棄物(焼却物)": 4}
     for item_name in item_to_cd.keys():
         filtered = master_csv[master_csv["品目_台数他"] == item_name]
@@ -175,9 +175,7 @@ def calculate_final_totals(
         master_csv, master_columns_keys, ["合計", None, "台数単価"], unit_price
     )
 
-    filtered = df_receive[
-        (df_receive["伝票区分名"] == "売上") & (df_receive["単位名"] == "kg")
-    ]
+    filtered = df_receive[(df_receive["伝票区分名"] == "売上") & (df_receive["単位名"] == "kg")]
     # 最適化: clean_na_strings_vectorizedを使用（10-100倍高速化）
     cleaned_weight_all = clean_na_strings_vectorized(filtered["正味重量"])
     cleaned_sell_all = clean_na_strings_vectorized(filtered["金額"])
@@ -240,9 +238,7 @@ def set_report_date_info(
     master_csv = set_value_fast_safe(
         master_csv, master_columns_keys, ["日付", None, None], formatted_date
     )
-    master_csv = set_value_fast_safe(
-        master_csv, master_columns_keys, ["曜日", None, None], weekday
-    )
+    master_csv = set_value_fast_safe(master_csv, master_columns_keys, ["曜日", None, None], weekday)
 
     logger.info(
         "日付設定完了",

@@ -61,9 +61,7 @@ def upgrade():
 
 def downgrade():
     # 非破壊ポリシー: 復旧用の簡易ラッパー（v_ に依存）
-    op.execute(
-        "CREATE OR REPLACE VIEW mart.receive_daily   AS SELECT * FROM mart.v_receive_daily;"
-    )
+    op.execute("CREATE OR REPLACE VIEW mart.receive_daily   AS SELECT * FROM mart.v_receive_daily;")
     op.execute(
         "CREATE OR REPLACE VIEW mart.receive_weekly  AS SELECT * FROM mart.v_receive_weekly;"
     )

@@ -19,10 +19,10 @@
  * return <DesktopView />;
  * ```
  */
-import { useEffect, useRef, useState } from "react";
-import { bp } from "@/shared/constants";
+import { useEffect, useRef, useState } from 'react';
+import { bp } from '@/shared/constants';
 
-export type Tier = "xs" | "sm" | "md" | "lg" | "xl";
+export type Tier = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
 export type ResponsiveFlags = {
   // 5段階詳細（Tailwind準拠）
@@ -63,15 +63,7 @@ export function makeFlags(w: number): ResponsiveFlags {
   const isLg = w >= bp.lg && w < bp.xl;
   const isXl = w >= bp.xl;
 
-  const tier: Tier = isXs
-    ? "xs"
-    : isSm
-      ? "sm"
-      : isMd
-        ? "md"
-        : isLg
-          ? "lg"
-          : "xl";
+  const tier: Tier = isXs ? 'xs' : isSm ? 'sm' : isMd ? 'md' : isLg ? 'lg' : 'xl';
   return {
     isXs,
     isSm,
@@ -94,7 +86,7 @@ export function makeFlags(w: number): ResponsiveFlags {
  */
 export function useResponsive(): ResponsiveState {
   const getInitial = (): ResponsiveState => {
-    const hasWindow = typeof window !== "undefined";
+    const hasWindow = typeof window !== 'undefined';
     const width = hasWindow ? window.innerWidth : bp.md;
     const height = hasWindow ? window.innerHeight : 0;
     const flags = makeFlags(width);
@@ -105,7 +97,7 @@ export function useResponsive(): ResponsiveState {
   const frame = useRef<number | null>(null);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (typeof window === 'undefined') return;
 
     // 初回マウント時に即座に実際のサイズを設定
     const width = window.innerWidth;
@@ -123,12 +115,12 @@ export function useResponsive(): ResponsiveState {
         setState({ width, height, flags, ...flags });
       });
     };
-    window.addEventListener("resize", onResize, { passive: true });
-    window.addEventListener("orientationchange", onResize, { passive: true });
+    window.addEventListener('resize', onResize, { passive: true });
+    window.addEventListener('orientationchange', onResize, { passive: true });
     return () => {
       if (frame.current != null) window.cancelAnimationFrame(frame.current);
-      window.removeEventListener("resize", onResize);
-      window.removeEventListener("orientationchange", onResize);
+      window.removeEventListener('resize', onResize);
+      window.removeEventListener('orientationchange', onResize);
     };
   }, []);
 

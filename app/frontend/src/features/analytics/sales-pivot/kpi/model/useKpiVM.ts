@@ -21,8 +21,8 @@
  * ```
  */
 
-import { useMemo } from "react";
-import type { SummaryRow } from "../../shared/model/types";
+import { useMemo } from 'react';
+import type { SummaryRow } from '../../shared/model/types';
 
 /**
  * KPIViewModel入力パラメータ
@@ -60,9 +60,7 @@ export interface UseKpiViewModelResult {
  * - 平均単価は「総売上 ÷ 総数量」で算出
  * - 総数量が0の場合、平均単価はnull
  */
-export function useKpiViewModel(
-  params: UseKpiViewModelParams,
-): UseKpiViewModelResult {
+export function useKpiViewModel(params: UseKpiViewModelParams): UseKpiViewModelResult {
   const { summary } = params;
 
   const { totalAmount, totalQty, totalCount, avgUnitPrice } = useMemo(() => {

@@ -5,8 +5,8 @@ check_todos.py - TODO/FIXME コメントをチェック
 pre-push 時に実行され、TODO や FIXME コメントが含まれている場合に警告を出します。
 （実際にはブロックせず、情報提供のみ）
 """
-import sys
 import re
+import sys
 
 
 def check_todos(filenames):
@@ -19,12 +19,12 @@ def check_todos(filenames):
     Returns:
         0: 問題なし, 1: TODOが見つかった
     """
-    todo_pattern = re.compile(r'#\s*(TODO|FIXME|XXX|HACK)', re.IGNORECASE)
+    todo_pattern = re.compile(r"#\s*(TODO|FIXME|XXX|HACK)", re.IGNORECASE)
     found_todos = []
 
     for filename in filenames:
         try:
-            with open(filename, 'r', encoding='utf-8', errors='ignore') as f:
+            with open(filename, encoding="utf-8", errors="ignore") as f:
                 for line_num, line in enumerate(f, start=1):
                     if todo_pattern.search(line):
                         found_todos.append(f"{filename}:{line_num}: {line.strip()}")
@@ -55,5 +55,5 @@ def main():
     return check_todos(filenames)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main())

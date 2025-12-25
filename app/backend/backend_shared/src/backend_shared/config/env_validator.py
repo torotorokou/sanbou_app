@@ -125,9 +125,7 @@ class ServiceEndpointsConfig(BaseModel):
     MANUAL_API_BASE: str = Field(default="http://manual_api:8000")
     AI_API_BASE: str = Field(default="http://ai_api:8000")
 
-    @field_validator(
-        "RAG_API_BASE", "LEDGER_API_BASE", "MANUAL_API_BASE", "AI_API_BASE"
-    )
+    @field_validator("RAG_API_BASE", "LEDGER_API_BASE", "MANUAL_API_BASE", "AI_API_BASE")
     @classmethod
     def validate_url_format(cls, v: str) -> str:
         """URL形式の検証"""

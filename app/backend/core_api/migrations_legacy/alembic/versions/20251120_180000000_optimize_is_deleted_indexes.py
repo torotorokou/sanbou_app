@@ -82,9 +82,7 @@ def upgrade() -> None:
         null_count = result.scalar()
 
         if null_count > 0:
-            print(
-                f"  ⚠️  stg.{table_name}: {null_count} NULL rows found, updating to false..."
-            )
+            print(f"  ⚠️  stg.{table_name}: {null_count} NULL rows found, updating to false...")
             conn.execute(sa.text(update_sql))
         else:
             print(f"  ✓ stg.{table_name}: No NULL values (already clean)")
@@ -128,14 +126,10 @@ def upgrade() -> None:
     print("    - idx_{table}_is_deleted (全行対象、論理削除フラグの単純インデックス)")
     print("")
     print("  新規の部分インデックス:")
-    print(
-        "    - idx_{table}_active (is_deleted=false の行のみ、slip_date + upload_file_id)"
-    )
+    print("    - idx_{table}_active (is_deleted=false の行のみ、slip_date + upload_file_id)")
     print("")
     print("  使い分け:")
-    print(
-        "    - WHERE is_deleted = false のクエリ → 部分インデックスが使用される（高速）"
-    )
+    print("    - WHERE is_deleted = false のクエリ → 部分インデックスが使用される（高速）")
     print("    - WHERE is_deleted = true のクエリ → 既存の単純インデックスが使用される")
     print("    - 論理削除率が高くなるほど、部分インデックスの効果が大きい")
     print("")

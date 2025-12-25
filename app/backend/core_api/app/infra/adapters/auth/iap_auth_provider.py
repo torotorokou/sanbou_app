@@ -32,14 +32,15 @@ Google Cloud Identity-Aware Proxy (IAP) が付与するヘッダーから
 - audience は /projects/PROJECT_NUMBER/global/backendServices/SERVICE_ID 形式
 """
 
-from app.core.domain.auth.entities import AuthUser
-from app.core.ports.auth.auth_provider import IAuthProvider
-from backend_shared.application.logging import create_log_context, get_module_logger
-from backend_shared.config.env_utils import get_iap_audience, get_stage
 from fastapi import HTTPException, Request, status
 from google.auth.transport import requests
 from google.oauth2 import id_token
 from starlette.concurrency import run_in_threadpool
+
+from app.core.domain.auth.entities import AuthUser
+from app.core.ports.auth.auth_provider import IAuthProvider
+from backend_shared.application.logging import create_log_context, get_module_logger
+from backend_shared.config.env_utils import get_iap_audience, get_stage
 
 logger = get_module_logger(__name__)
 
@@ -211,9 +212,7 @@ class IapAuthProvider(IAuthProvider):
             # JWT 検証失敗（詳細はログのみ、クライアントには汎用メッセージ）
             logger.error(
                 "IAP JWT verification failed",
-                extra=create_log_context(
-                    operation="get_current_user", error=str(e), env=env
-                ),
+                extra=create_log_context(operation="get_current_user", error=str(e), env=env),
             )
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -271,9 +270,7 @@ class IapAuthProvider(IAuthProvider):
 
         logger.info(
             "IAP email authentication successful",
-            extra=create_log_context(
-                operation="get_current_user", email=email, user_id=user_id
-            ),
+            extra=create_log_context(operation="get_current_user", email=email, user_id=user_id),
         )
 
         return AuthUser(

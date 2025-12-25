@@ -8,6 +8,7 @@ import os
 from pathlib import Path
 
 import yaml
+
 from app.shared.file_utils import ENV_PATH, FAISS_PATH, JSON_PATH, PDF_PATH, YAML_PATH
 from backend_shared.core.domain.exceptions import InfrastructureError, NotFoundError
 
@@ -78,14 +79,7 @@ def load_question_templates() -> list[dict]:
     # 親ディレクトリを遡って repo 直下の config/ を探索（ローカル実行の救済）
     try:
         here = Path(__file__).resolve()
-        for parent in list(here.parents)[:6]:
-            for name in (
-                "category_question_templates_with_tags.yaml",
-                "category_question_templates.yaml",
-            ):
-                p = parent / ".." / ".." / ".." / ".." / ".."  # 安全のため更に遡る
-                # 上記は固定ではないので、実際には parent 直下から順に確認
-            # 正しくは parent 直下
+        # 正しくは parent 直下
         for parent in list(here.parents)[:6]:
             for rel in (
                 Path("config/category_question_templates_with_tags.yaml"),
@@ -169,7 +163,7 @@ def group_templates_by_category_and_tags(
                 result.extend(flatten_tags(t))
             return tuple(result)
         elif tags is None:
-            return tuple()
+            return ()
         else:
             return (str(tags),)
 

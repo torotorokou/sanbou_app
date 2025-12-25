@@ -7,6 +7,7 @@ from collections.abc import Callable
 from typing import Any
 
 import pandas as pd
+
 from app.core.usecases.reports.base_generators import BaseInteractiveReportGenerator
 from backend_shared.application.logging import get_module_logger
 
@@ -18,6 +19,7 @@ from .block_unit_price_finalize import (
 # 分離したモジュールをインポート
 from .block_unit_price_initial import execute_initial_step
 from .block_unit_price_utils import canonical_sort_labels
+
 
 logger = get_module_logger(__name__)
 
@@ -115,9 +117,7 @@ class BlockUnitPriceInteractive(BaseInteractiveReportGenerator):
         }
         return state, payload
 
-    def finalize_with_optional_selections(
-        self, state: dict[str, Any], user_input: dict[str, Any]
-    ):
+    def finalize_with_optional_selections(self, state: dict[str, Any], user_input: dict[str, Any]):
         """オプション選択付き最終処理"""
         return execute_finalize_with_optional_selections(state, user_input)
 
@@ -125,9 +125,7 @@ class BlockUnitPriceInteractive(BaseInteractiveReportGenerator):
         """最終ステップ: ブロック単価計算を実行"""
         return execute_finalize_step(state)
 
-    def _create_selection_summary(
-        self, resolved_entry_map: dict[str, str]
-    ) -> dict[str, Any]:
+    def _create_selection_summary(self, resolved_entry_map: dict[str, str]) -> dict[str, Any]:
         """選択サマリーを作成"""
         summary: dict[str, Any] = {"selections": {}, "affected_records": {}}
         for entry_id, label in resolved_entry_map.items():

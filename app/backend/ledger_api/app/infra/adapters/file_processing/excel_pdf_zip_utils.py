@@ -11,8 +11,10 @@ import tempfile
 import zipfile
 from typing import Any
 
-from backend_shared.utils.datetime_utils import format_datetime_iso, now_in_app_timezone
 from fastapi.responses import StreamingResponse
+
+from backend_shared.utils.datetime_utils import format_datetime_iso, now_in_app_timezone
+
 
 # LibreOffice filter options crafted to embed CJK fonts and keep fidelity.
 # See https://wiki.documentfoundation.org/Development/Filter/List_of_FilterOptions
@@ -100,13 +102,9 @@ def convert_excel_to_pdf(
                 f"{' '.join(cmd)} (attempt={attempt}, filter={'on' if attempt == 1 else 'fallback'})"
             )
             try:
-                result = subprocess.run(
-                    cmd, capture_output=True, text=True, timeout=120
-                )
+                result = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
             except FileNotFoundError:
-                _log(
-                    "[ERROR] soffice not found. Ensure LibreOffice is installed in the container."
-                )
+                _log("[ERROR] soffice not found. Ensure LibreOffice is installed in the container.")
                 return None, str(xlsx_path), None
             except Exception as exc:  # noqa: BLE001
                 _log(f"[ERROR] soffice execution raised {type(exc).__name__}: {exc}")
@@ -118,10 +116,7 @@ def convert_excel_to_pdf(
                 "returncode="
                 f"{result.returncode} | stderr={result.stderr!r} | stdout={result.stdout!r}"
             )
-            _log(
-                "[WARN] PDF conversion attempt failed | "
-                f"target={target} | {last_error}"
-            )
+            _log("[WARN] PDF conversion attempt failed | " f"target={target} | {last_error}")
         else:
             _log(
                 "[ERROR] PDF conversion failed after all attempts"
@@ -131,10 +126,7 @@ def convert_excel_to_pdf(
 
         pdf_bytes = pdf_path.read_bytes()
         header_ok = pdf_bytes.startswith(b"%PDF-")
-        _log(
-            "convert_excel_to_pdf: success | pdf_len="
-            f"{len(pdf_bytes)} | header_ok={header_ok}"
-        )
+        _log("convert_excel_to_pdf: success | pdf_len=" f"{len(pdf_bytes)} | header_ok={header_ok}")
         if not header_ok:
             _log("[WARN] PDF header mismatch – expected prefix '%PDF-'")
         return pdf_bytes, str(xlsx_path), str(pdf_path)
@@ -187,9 +179,7 @@ def create_zip_with_excel_and_pdf(
         manifest["reason"] = "conversion_failed_or_soffice_not_found"
         _log("create_zip_with_excel_and_pdf: PDF missing – recorded reason in manifest")
 
-    archive.writestr(
-        "manifest.json", json.dumps(manifest, ensure_ascii=False, indent=2)
-    )
+    archive.writestr("manifest.json", json.dumps(manifest, ensure_ascii=False, indent=2))
 
     zip_buffer.seek(0)
     _log("create_zip_with_excel_and_pdf: zip_buffer.seek(0) executed")
@@ -199,9 +189,7 @@ def create_zip_with_excel_and_pdf(
 def generate_excel_pdf_zip(
     excel_bytes: Any, report_key: str, report_date: str
 ) -> StreamingResponse:
-    excel_bytes_bytes = _ensure_bytes(
-        excel_bytes, "excel_bytes input to generate_excel_pdf_zip"
-    )
+    excel_bytes_bytes = _ensure_bytes(excel_bytes, "excel_bytes input to generate_excel_pdf_zip")
     _log(
         "generate_excel_pdf_zip: input normalised | "
         f"type={type(excel_bytes)} | len={len(excel_bytes_bytes)}"
@@ -215,9 +203,7 @@ def generate_excel_pdf_zip(
     )
 
     if pdf_bytes is not None and not pdf_bytes.startswith(b"%PDF-"):
-        _log(
-            "[WARN] PDF bytes returned without '%PDF-' prefix; investigate fonts/rendering"
-        )
+        _log("[WARN] PDF bytes returned without '%PDF-' prefix; investigate fonts/rendering")
 
     zip_buffer, content_disposition, manifest = create_zip_with_excel_and_pdf(
         excel_bytes=excel_bytes_bytes,
@@ -237,17 +223,13 @@ def generate_excel_pdf_zip(
         "X-Report-Pdf-Generated": "true" if pdf_generated else "false",
     }
 
-    response = StreamingResponse(
-        zip_buffer, media_type="application/zip", headers=headers
-    )
+    response = StreamingResponse(zip_buffer, media_type="application/zip", headers=headers)
     filename = (
         content_disposition.split("filename=", 1)[-1].strip('"')
         if "filename=" in content_disposition
         else "unknown.zip"
     )
     response.headers["X-Zip-Size"] = str(zip_size)
-    response.headers["X-Manifest-Pdf"] = str(
-        manifest.get("pdf_generated", False)
-    ).lower()
+    response.headers["X-Manifest-Pdf"] = str(manifest.get("pdf_generated", False)).lower()
     _log(f"generate_excel_pdf_zip: StreamingResponse prepared | filename={filename}")
     return response

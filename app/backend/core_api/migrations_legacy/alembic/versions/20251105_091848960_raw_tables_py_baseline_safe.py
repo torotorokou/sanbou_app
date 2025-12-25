@@ -24,9 +24,7 @@ def _exists(qualified: str) -> bool:
     if context.is_offline_mode():
         return False
     conn = op.get_bind()
-    return bool(
-        conn.scalar(sa.text("SELECT to_regclass(:q) IS NOT NULL"), {"q": qualified})
-    )
+    return bool(conn.scalar(sa.text("SELECT to_regclass(:q) IS NOT NULL"), {"q": qualified}))
 
 
 def upgrade():

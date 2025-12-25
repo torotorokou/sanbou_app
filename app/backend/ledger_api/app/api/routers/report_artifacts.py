@@ -7,6 +7,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from fastapi import APIRouter, HTTPException, Query
+from fastapi.responses import FileResponse
+
 from app.infra.adapters.artifact_storage import (
     ReportArtifactStorage,
     get_report_artifact_storage,
@@ -15,8 +18,7 @@ from app.infra.adapters.artifact_storage.artifact_service import (
     UrlSigner,
     get_url_signer,
 )
-from fastapi import APIRouter, HTTPException, Query
-from fastapi.responses import FileResponse
+
 
 router = APIRouter()
 
@@ -45,18 +47,14 @@ async def download_artifact(
     if not signer.verify(
         artifact_path, disposition=disposition, expires=expires, signature=signature
     ):
-        raise HTTPException(
-            status_code=403, detail="署名が無効、または有効期限切れです。"
-        )
+        raise HTTPException(status_code=403, detail="署名が無効、または有効期限切れです。")
 
     resolved_path: Path | None = storage.resolve(artifact_path)
     if resolved_path is None or not resolved_path.exists():
         raise HTTPException(status_code=404, detail="ファイルが見つかりません。")
 
     media_type = _guess_media_type(resolved_path)
-    response = FileResponse(
-        resolved_path, media_type=media_type, filename=resolved_path.name
-    )
+    response = FileResponse(resolved_path, media_type=media_type, filename=resolved_path.name)
 
     # バックエンドは英語キーのみ使用（ASCII安全）
     # フロントエンドで日本語ファイル名に変換してダウンロード

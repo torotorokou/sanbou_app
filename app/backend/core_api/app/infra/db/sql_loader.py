@@ -39,8 +39,6 @@ def load_sql(path: str) -> str:
     full_path = BASE_SQL_DIR / path
 
     if not full_path.exists():
-        raise FileNotFoundError(
-            f"SQL file not found: {full_path}\n" f"Expected path: {path}"
-        )
+        raise FileNotFoundError(f"SQL file not found: {full_path}\n" f"Expected path: {path}")
 
     return full_path.read_text(encoding="utf-8")

@@ -8,6 +8,7 @@ st_app依存を排し、services側のprocessors/utilsを利用する。
 from typing import Any
 
 import pandas as pd
+
 from app.core.domain.reports.processors.average_sheet.processors import (
     aggregate_vehicle_data,
     apply_rounding,
@@ -41,9 +42,7 @@ def process(dfs: dict[str, Any]) -> pd.DataFrame:
     master_path = get_template_config()[template_name]["master_csv_path"]
     logger.info(
         "マスターCSV読込",
-        extra=create_log_context(
-            operation="generate_average_sheet", master_path=master_path
-        ),
+        extra=create_log_context(operation="generate_average_sheet", master_path=master_path),
     )
     master_csv = load_master_and_template(master_path)
     logger.info(
@@ -73,9 +72,7 @@ def process(dfs: dict[str, Any]) -> pd.DataFrame:
 
         logger.info("[STEP] summarize_item_and_abc_totals start")
         master_csv = summarize_item_and_abc_totals(master_csv, master_columns_keys)
-        logger.info(
-            f"[STEP] summarize_item_and_abc_totals done: shape={master_csv.shape}"
-        )
+        logger.info(f"[STEP] summarize_item_and_abc_totals done: shape={master_csv.shape}")
 
         logger.info("[STEP] calculate_final_totals start")
         master_csv = calculate_final_totals(df_receive, master_csv, master_columns_keys)

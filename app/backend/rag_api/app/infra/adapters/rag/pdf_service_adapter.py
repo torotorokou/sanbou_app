@@ -3,9 +3,11 @@ import os
 import re
 
 import pypdf
+
 from app.core.ports.rag.pdf_service_port import PDFServiceBase
 from backend_shared.application.logging import get_module_logger
 from backend_shared.core.domain.exceptions import ValidationError
+
 
 logger = get_module_logger(__name__)
 
@@ -19,9 +21,7 @@ class PDFService(PDFServiceBase):
         h = hashlib.md5((s or "").encode("utf-8")).hexdigest()[:8]
         return f"q_{h}"
 
-    def save_pdf_pages_and_get_urls(
-        self, pdf_path, query_name, pages, save_dir, url_prefix
-    ):
+    def save_pdf_pages_and_get_urls(self, pdf_path, query_name, pages, save_dir, url_prefix):
         logger.info(
             "Saving PDF pages",
             extra={
@@ -44,9 +44,7 @@ class PDFService(PDFServiceBase):
                         p_int = int(str(p).strip())
                     except Exception:
                         continue
-                    dummy_pdf_path = os.path.join(
-                        save_dir, f"answer_{safe_name}_{p_int}.pdf"
-                    )
+                    dummy_pdf_path = os.path.join(save_dir, f"answer_{safe_name}_{p_int}.pdf")
                     writer = pypdf.PdfWriter()
                     try:
                         # 1-based の場合
@@ -76,18 +74,14 @@ class PDFService(PDFServiceBase):
                     p_int = int(str(p).strip())
                 except Exception:
                     continue
-                dummy_pdf_path = os.path.join(
-                    save_dir, f"answer_{safe_name}_{p_int}.pdf"
-                )
+                dummy_pdf_path = os.path.join(save_dir, f"answer_{safe_name}_{p_int}.pdf")
                 if not os.path.exists(dummy_pdf_path):
                     writer = pypdf.PdfWriter()
                     writer.add_blank_page(width=595, height=842)
                     with open(dummy_pdf_path, "wb") as out_f:
                         writer.write(out_f)
                 pdf_urls.append(f"{url_prefix}/answer_{safe_name}_{p_int}.pdf")
-        logger.info(
-            "PDF pages saved successfully", extra={"pdf_urls_count": len(pdf_urls)}
-        )
+        logger.info("PDF pages saved successfully", extra={"pdf_urls_count": len(pdf_urls)})
         return pdf_urls
 
     def merge_pdfs(self, pdf_file_paths, output_path):

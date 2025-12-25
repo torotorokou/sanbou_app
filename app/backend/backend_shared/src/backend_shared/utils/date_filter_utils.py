@@ -9,6 +9,7 @@ from typing import Any
 
 import pandas as pd
 
+
 try:
     # 既存ユーティリティ（曜日括弧除去）
     from backend_shared.utils.dataframe_utils import remove_weekday_parentheses
@@ -73,13 +74,11 @@ def filter_by_period_from_min_date(
                     dfs[name] = remove_weekday_parentheses(df, col)
                     print(f"[DEBUG] remove_weekday_parentheses applied to {name}.{col}")
                 except Exception as ex:
-                    print(
-                        f"[WARN] remove_weekday_parentheses failed for {name}.{col}: {ex}"
-                    )
+                    print(f"[WARN] remove_weekday_parentheses failed for {name}.{col}: {ex}")
 
     # 最小日付の決定
     min_date = None
-    for name, df in dfs.items():
+    for _name, df in dfs.items():
         if not hasattr(df, "__dataframe__") and not hasattr(df, "columns"):
             continue
         col = find_date_column(df, date_candidates)
@@ -127,9 +126,7 @@ def filter_by_period_from_min_date(
             filtered_df = df
         filtered[name] = filtered_df
 
-    print(
-        f"[INFO] Date filter applied from {min_date.date()} to {end_date.date()} (period={p})"
-    )
+    print(f"[INFO] Date filter applied from {min_date.date()} to {end_date.date()} (period={p})")
     return filtered
 
 
@@ -165,7 +162,7 @@ def filter_by_period_from_max_date(
 
     # 最大日付の決定
     max_date = None
-    for name, df in dfs.items():
+    for _name, df in dfs.items():
         if not hasattr(df, "__dataframe__") and not hasattr(df, "columns"):
             continue
         col = find_date_column(df, date_candidates)

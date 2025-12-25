@@ -10,6 +10,9 @@ Sales Tree Repository - {fq(SCHEMA_MART, V_SALES_TREE_DETAIL_BASE)} からのデ
 import csv
 import io
 
+from sqlalchemy import text
+from sqlalchemy.orm import Session
+
 from app.core.domain.sales_tree import (
     AxisMode,
     CategoryKind,
@@ -34,8 +37,6 @@ from backend_shared.db.names import (
     SCHEMA_MART,
     V_SALES_TREE_DETAIL_BASE,
 )
-from sqlalchemy import text
-from sqlalchemy.orm import Session
 
 logger = get_module_logger(__name__)
 
@@ -54,18 +55,12 @@ class SalesTreeRepository:
         self.db = db
         self._engine = get_engine()
         # Pre-load SQL templates
-        self._fetch_summary_sql_template = load_sql(
-            "sales_tree/sales_tree_repo__fetch_summary.sql"
-        )
+        self._fetch_summary_sql_template = load_sql("sales_tree/sales_tree_repo__fetch_summary.sql")
         self._fetch_daily_series_sql_template = load_sql(
             "sales_tree/sales_tree_repo__fetch_daily_series.sql"
         )
-        self._fetch_pivot_sql_template = load_sql(
-            "sales_tree/sales_tree_repo__fetch_pivot.sql"
-        )
-        self._export_csv_sql_template = load_sql(
-            "sales_tree/sales_tree_repo__export_csv.sql"
-        )
+        self._fetch_pivot_sql_template = load_sql("sales_tree/sales_tree_repo__fetch_pivot.sql")
+        self._export_csv_sql_template = load_sql("sales_tree/sales_tree_repo__export_csv.sql")
         self._fetch_detail_lines_item_sql_template = load_sql(
             "sales_tree/sales_tree_repo__fetch_detail_lines_item.sql"
         )
@@ -206,12 +201,8 @@ class SalesTreeRepository:
                 axis_id_str = str(row["axis_id"])
                 date_key = axis_id_str if req.mode == "date" else None
 
-                line_count = (
-                    int(row["line_count"]) if row["line_count"] is not None else 0
-                )
-                slip_count = (
-                    int(row["slip_count"]) if row["slip_count"] is not None else 0
-                )
+                line_count = int(row["line_count"]) if row["line_count"] is not None else 0
+                slip_count = int(row["slip_count"]) if row["slip_count"] is not None else 0
 
                 # ルール: 商品軸の場合は件数(line_count)、それ以外は台数(slip_count)
                 count = line_count if req.mode == "item" else slip_count
@@ -225,9 +216,7 @@ class SalesTreeRepository:
                     slip_count=slip_count,
                     count=count,
                     unit_price=(
-                        float(row["unit_price"])
-                        if row["unit_price"] is not None
-                        else None
+                        float(row["unit_price"]) if row["unit_price"] is not None else None
                     ),
                     date_key=date_key,
                 )
@@ -236,9 +225,7 @@ class SalesTreeRepository:
             result_list = list(summary_dict.values())
             logger.info(
                 "fetch_summary完了",
-                extra=create_log_context(
-                    operation="fetch_summary", reps_count=len(result_list)
-                ),
+                extra=create_log_context(operation="fetch_summary", reps_count=len(result_list)),
             )
             return result_list
 
@@ -308,19 +295,13 @@ class SalesTreeRepository:
                     date=row["date"],
                     amount=float(row["amount"]) if row["amount"] is not None else 0.0,
                     qty=float(row["qty"]) if row["qty"] is not None else 0.0,
-                    line_count=(
-                        int(row["line_count"]) if row["line_count"] is not None else 0
-                    ),
-                    slip_count=(
-                        int(row["slip_count"]) if row["slip_count"] is not None else 0
-                    ),
+                    line_count=(int(row["line_count"]) if row["line_count"] is not None else 0),
+                    slip_count=(int(row["slip_count"]) if row["slip_count"] is not None else 0),
                     count=(
                         int(row["slip_count"]) if row["slip_count"] is not None else 0
                     ),  # 日次推移は台数を使用
                     unit_price=(
-                        float(row["unit_price"])
-                        if row["unit_price"] is not None
-                        else None
+                        float(row["unit_price"]) if row["unit_price"] is not None else None
                     ),
                 )
                 for row in result
@@ -328,9 +309,7 @@ class SalesTreeRepository:
 
             logger.info(
                 "fetch_daily_series完了",
-                extra=create_log_context(
-                    operation="fetch_daily_series", points_count=len(points)
-                ),
+                extra=create_log_context(operation="fetch_daily_series", points_count=len(points)),
             )
             return points
 
@@ -443,12 +422,8 @@ class SalesTreeRepository:
                 target_id_str = str(row["target_id"])
                 date_key = target_id_str if req.target_axis == "date" else None
 
-                line_count = (
-                    int(row["line_count"]) if row["line_count"] is not None else 0
-                )
-                slip_count = (
-                    int(row["slip_count"]) if row["slip_count"] is not None else 0
-                )
+                line_count = int(row["line_count"]) if row["line_count"] is not None else 0
+                slip_count = int(row["slip_count"]) if row["slip_count"] is not None else 0
 
                 # ルール: target_axisが商品の場合は件数(line_count)、それ以外は台数(slip_count)
                 count = line_count if req.target_axis == "item" else slip_count
@@ -462,9 +437,7 @@ class SalesTreeRepository:
                     slip_count=slip_count,
                     count=count,
                     unit_price=(
-                        float(row["unit_price"])
-                        if row["unit_price"] is not None
-                        else None
+                        float(row["unit_price"]) if row["unit_price"] is not None else None
                     ),
                     date_key=date_key,
                 )
@@ -556,18 +529,14 @@ class SalesTreeRepository:
                     .all()
                 )
 
-            reps = [
-                {"rep_id": row["rep_id"], "rep_name": row["rep_name"]} for row in result
-            ]
+            reps = [{"rep_id": row["rep_id"], "rep_name": row["rep_name"]} for row in result]
             logger.info(
                 f"get_sales_reps: Retrieved {len(reps)} reps from mart.v_sales_tree_detail_base"
             )
             if reps:
                 logger.info(f"First rep: {reps[0]}")
             else:
-                logger.warning(
-                    "No sales reps found in {fq(SCHEMA_MART, V_SALES_TREE_DETAIL_BASE)}"
-                )
+                logger.warning("No sales reps found in {fq(SCHEMA_MART, V_SALES_TREE_DETAIL_BASE)}")
             return reps
         except Exception as e:
             logger.error(f"Error in get_sales_reps: {str(e)}", exc_info=True)
@@ -610,9 +579,7 @@ class SalesTreeRepository:
                 f"get_customers: Retrieved {len(customers)} customers from mart.v_sales_tree_detail_base"
             )
             if not customers:
-                logger.warning(
-                    "No customers found in {fq(SCHEMA_MART, V_SALES_TREE_DETAIL_BASE)}"
-                )
+                logger.warning("No customers found in {fq(SCHEMA_MART, V_SALES_TREE_DETAIL_BASE)}")
             return customers
         except Exception as e:
             logger.error(f"Error in get_customers: {str(e)}", exc_info=True)
@@ -639,22 +606,15 @@ class SalesTreeRepository:
             )
             with self._engine.begin() as conn:
                 result = (
-                    conn.execute(self._get_items_sql, {"category_cd": category_cd})
-                    .mappings()
-                    .all()
+                    conn.execute(self._get_items_sql, {"category_cd": category_cd}).mappings().all()
                 )
 
-            items = [
-                {"item_id": row["item_id"], "item_name": row["item_name"]}
-                for row in result
-            ]
+            items = [{"item_id": row["item_id"], "item_name": row["item_name"]} for row in result]
             logger.info(
                 f"get_items: Retrieved {len(items)} items from mart.v_sales_tree_detail_base"
             )
             if not items:
-                logger.warning(
-                    "No items found in {fq(SCHEMA_MART, V_SALES_TREE_DETAIL_BASE)}"
-                )
+                logger.warning("No items found in {fq(SCHEMA_MART, V_SALES_TREE_DETAIL_BASE)}")
             return items
         except Exception as e:
             logger.error(f"Error in get_items: {str(e)}", exc_info=True)
@@ -726,9 +686,7 @@ class SalesTreeRepository:
 
             # ヘッダー
             axis_label = (
-                "顧客"
-                if req.mode == "customer"
-                else "品目" if req.mode == "item" else "日付"
+                "顧客" if req.mode == "customer" else "品目" if req.mode == "item" else "日付"
             )
             count_label = "件数" if req.mode == "item" else "台数"
             writer.writerow(
@@ -747,9 +705,7 @@ class SalesTreeRepository:
             # データ行
             for row in result:
                 # ルール: 商品軸の場合は件数(line_count)、それ以外は台数(slip_count)
-                count_value = (
-                    row["line_count"] if req.mode == "item" else row["slip_count"]
-                )
+                count_value = row["line_count"] if req.mode == "item" else row["slip_count"]
 
                 writer.writerow(
                     [
@@ -862,9 +818,7 @@ class SalesTreeRepository:
                             slip_no=int(r["slip_no"]),
                             rep_name=r["rep_name"],
                             customer_name=r["customer_name"],
-                            item_id=(
-                                int(r["item_id"]) if r["item_id"] is not None else None
-                            ),
+                            item_id=(int(r["item_id"]) if r["item_id"] is not None else None),
                             item_name=r["item_name"],
                             line_count=None,
                             qty_kg=qty,

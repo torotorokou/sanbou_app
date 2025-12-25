@@ -6,10 +6,11 @@ Unit tests for Materialized View Refresh functionality
 
 from unittest.mock import MagicMock, Mock, patch
 
+from sqlalchemy.orm import Session
+
 from app.infra.adapters.materialized_view.materialized_view_refresher import (
     MaterializedViewRefresher,
 )
-from sqlalchemy.orm import Session
 
 
 class TestMaterializedViewRefresher:
@@ -177,36 +178,22 @@ class TestMaterializedViewRefresher:
     def test_extract_csv_type_from_csv_kind(self):
         """静的メソッドのテスト"""
         assert (
-            MaterializedViewRefresher.extract_csv_type_from_csv_kind(
-                "shogun_flash_receive"
-            )
+            MaterializedViewRefresher.extract_csv_type_from_csv_kind("shogun_flash_receive")
             == "receive"
         )
         assert (
-            MaterializedViewRefresher.extract_csv_type_from_csv_kind(
-                "shogun_final_shipment"
-            )
+            MaterializedViewRefresher.extract_csv_type_from_csv_kind("shogun_final_shipment")
             == "shipment"
         )
         assert (
-            MaterializedViewRefresher.extract_csv_type_from_csv_kind(
-                "shogun_flash_yard"
-            )
-            == "yard"
+            MaterializedViewRefresher.extract_csv_type_from_csv_kind("shogun_flash_yard") == "yard"
         )
-        assert (
-            MaterializedViewRefresher.extract_csv_type_from_csv_kind("invalid") is None
-        )
+        assert MaterializedViewRefresher.extract_csv_type_from_csv_kind("invalid") is None
 
     def test_should_refresh_mv_for_csv_type(self):
         """静的メソッドのテスト"""
-        assert (
-            MaterializedViewRefresher.should_refresh_mv_for_csv_type("receive") is True
-        )
-        assert (
-            MaterializedViewRefresher.should_refresh_mv_for_csv_type("shipment")
-            is False
-        )
+        assert MaterializedViewRefresher.should_refresh_mv_for_csv_type("receive") is True
+        assert MaterializedViewRefresher.should_refresh_mv_for_csv_type("shipment") is False
         assert MaterializedViewRefresher.should_refresh_mv_for_csv_type("yard") is False
 
     @patch("app.infra.adapters.materialized_view.materialized_view_refresher.logger")

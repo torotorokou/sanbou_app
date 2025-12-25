@@ -25,9 +25,7 @@ def _table_exists(schema: str, table: str) -> bool:
         return False
     conn = op.get_bind()
     qualified = f"{schema}.{table}"
-    return bool(
-        conn.scalar(sa.text("SELECT to_regclass(:q) IS NOT NULL"), {"q": qualified})
-    )
+    return bool(conn.scalar(sa.text("SELECT to_regclass(:q) IS NOT NULL"), {"q": qualified}))
 
 
 def upgrade():
@@ -55,9 +53,7 @@ def upgrade():
             sa.Column("unit_en_name", sa.Text(), nullable=True, comment="単位名"),
             sa.Column("unit_price", sa.Float(), nullable=True, comment="単価"),
             sa.Column("amount", sa.Float(), nullable=False, comment="金額"),
-            sa.Column(
-                "sales_staff_en_name", sa.Text(), nullable=True, comment="営業担当者名"
-            ),
+            sa.Column("sales_staff_en_name", sa.Text(), nullable=True, comment="営業担当者名"),
             sa.Column("vendor_cd", sa.Integer(), nullable=False, comment="業者CD"),
             sa.Column("vendor_en_name", sa.Text(), nullable=False, comment="業者名"),
             sa.Column("category_cd", sa.Integer(), nullable=True, comment="種類CD"),
@@ -112,9 +108,7 @@ def upgrade():
                 nullable=True,
                 comment="運搬業者名",
             ),
-            sa.Column(
-                "slip_type_en_name", sa.Text(), nullable=True, comment="伝票区分名"
-            ),
+            sa.Column("slip_type_en_name", sa.Text(), nullable=True, comment="伝票区分名"),
             sa.Column("detail_note", sa.Text(), nullable=True, comment="明細備考"),
             sa.Column(
                 "created_at",
@@ -128,12 +122,8 @@ def upgrade():
         )
 
         # インデックス作成
-        op.create_index(
-            "idx_shipment_slip_date", "shipment", ["slip_date"], schema="stg"
-        )
-        op.create_index(
-            "idx_shipment_vendor_cd", "shipment", ["vendor_cd"], schema="stg"
-        )
+        op.create_index("idx_shipment_slip_date", "shipment", ["slip_date"], schema="stg")
+        op.create_index("idx_shipment_vendor_cd", "shipment", ["vendor_cd"], schema="stg")
         op.create_index("idx_shipment_no", "shipment", ["shipment_no"], schema="stg")
 
         print("✓ Created stg.shipment")

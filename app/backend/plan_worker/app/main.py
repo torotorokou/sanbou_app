@@ -9,6 +9,7 @@ import sys
 # ==========================================
 from backend_shared.application.logging import get_module_logger, setup_logging
 
+
 # ==========================================
 # 統一ロギング設定の初期化
 # ==========================================

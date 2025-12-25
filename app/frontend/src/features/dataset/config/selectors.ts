@@ -5,8 +5,8 @@
  * DATASETS レジストリから必要な情報を取り出す関数群。
  */
 
-import { DATASETS } from "./datasets";
-import type { DatasetKey, CsvTypeKey, DatasetConfig, CsvConfig } from "./types";
+import { DATASETS } from './datasets';
+import type { DatasetKey, CsvTypeKey, DatasetConfig, CsvConfig } from './types';
 
 /**
  * データセット設定を取得（存在しない場合はエラー）
@@ -34,10 +34,7 @@ export function getCsvListSorted(key: DatasetKey): CsvConfig[] {
 /**
  * 特定のCSV種別の設定を取得
  */
-export function findCsv(
-  key: DatasetKey,
-  typeKey: CsvTypeKey,
-): CsvConfig | undefined {
+export function findCsv(key: DatasetKey, typeKey: CsvTypeKey): CsvConfig | undefined {
   return assertDataset(key).csv.find((c) => c.typeKey === typeKey);
 }
 
@@ -45,16 +42,13 @@ export function findCsv(
  * ファイル名からCSV種別を推定
  * 正規表現 → ヒント文字列の順で判定
  */
-export function guessCsvTypeByFilename(
-  key: DatasetKey,
-  fileName: string,
-): CsvTypeKey | null {
+export function guessCsvTypeByFilename(key: DatasetKey, fileName: string): CsvTypeKey | null {
   const name = fileName.toLowerCase();
   for (const c of assertDataset(key).csv) {
     // 正規表現による判定（優先）
     if (c.filenameRegex) {
       try {
-        const re = new RegExp(c.filenameRegex, "i");
+        const re = new RegExp(c.filenameRegex, 'i');
         if (re.test(fileName)) return c.typeKey;
       } catch {
         /* invalid regex - ignore */
@@ -110,10 +104,7 @@ export function getCsvLabel(key: DatasetKey, typeKey: CsvTypeKey): string {
 /**
  * CSV種別の色を取得
  */
-export function getCsvColor(
-  key: DatasetKey,
-  typeKey: CsvTypeKey,
-): string | undefined {
+export function getCsvColor(key: DatasetKey, typeKey: CsvTypeKey): string | undefined {
   const csv = findCsv(key, typeKey);
   return csv?.color;
 }

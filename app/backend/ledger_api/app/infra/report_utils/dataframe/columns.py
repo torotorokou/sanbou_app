@@ -1,14 +1,14 @@
 import pandas as pd
+
 from app.infra.report_utils.formatters.summary import safe_merge_by_keys
 from backend_shared.application.logging import get_module_logger
 from backend_shared.utils.dataframe_utils import clean_na_strings
 
+
 logger = get_module_logger(__name__)
 
 
-def summary_add_column_if_notna(
-    df: pd.DataFrame, from_col: str, to_col: str
-) -> pd.DataFrame:
+def summary_add_column_if_notna(df: pd.DataFrame, from_col: str, to_col: str) -> pd.DataFrame:
     if from_col not in df.columns or to_col not in df.columns:
         return df
 

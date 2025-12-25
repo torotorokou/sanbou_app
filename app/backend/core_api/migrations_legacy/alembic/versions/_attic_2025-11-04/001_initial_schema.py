@@ -39,9 +39,7 @@ def upgrade() -> None:
         sa.Column("attempts", sa.Integer(), nullable=False, server_default="0"),
         sa.Column("scheduled_for", sa.TIMESTAMP(), nullable=True),
         sa.Column("actor", sa.String(), nullable=True),
-        sa.Column(
-            "payload_json", postgresql.JSONB(astext_type=sa.Text()), nullable=True
-        ),
+        sa.Column("payload_json", postgresql.JSONB(astext_type=sa.Text()), nullable=True),
         sa.Column("error_message", sa.Text(), nullable=True),
         sa.Column(
             "created_at",

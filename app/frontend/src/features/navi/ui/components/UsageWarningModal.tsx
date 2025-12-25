@@ -1,5 +1,5 @@
-import React from "react";
-import { Modal, Button } from "antd";
+import React from 'react';
+import { Modal, Button } from 'antd';
 
 interface UsageWarningModalProps {
   open: boolean;
@@ -18,7 +18,7 @@ export const UsageWarningModal: React.FC<UsageWarningModalProps> = ({
       open={open}
       onCancel={onCancel}
       footer={
-        <div style={{ display: "flex", justifyContent: "space-between" }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
           <Button key="back" onClick={onCancel}>
             戻る
           </Button>

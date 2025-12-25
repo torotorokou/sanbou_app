@@ -5,7 +5,7 @@
  * 規約: Named Export を使用
  */
 
-import React, { useState } from "react";
+import React, { useState } from 'react';
 import {
   Form,
   InputNumber,
@@ -17,14 +17,10 @@ import {
   DatePicker,
   message,
   Modal,
-} from "antd";
-import {
-  SaveOutlined,
-  CalendarOutlined,
-  ExclamationCircleOutlined,
-} from "@ant-design/icons";
-import type { Dayjs } from "dayjs";
-import type { ReservationInputFormProps } from "../model/types";
+} from 'antd';
+import { SaveOutlined, CalendarOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
+import type { Dayjs } from 'dayjs';
+import type { ReservationInputFormProps } from '../model/types';
 
 const { Title } = Typography;
 const { TextArea } = Input;
@@ -52,15 +48,15 @@ export const ReservationInputForm: React.FC<ReservationInputFormProps> = ({
   const handleSaveClick = () => {
     // バリデーション（note以外が空欄の場合）
     if (!selectedDate) {
-      message.error("日付を選択してください");
+      message.error('日付を選択してください');
       return;
     }
     if (totalTrucks === null || totalTrucks === undefined) {
-      message.error("総台数を入力してください");
+      message.error('総台数を入力してください');
       return;
     }
     if (fixedTrucks === null || fixedTrucks === undefined) {
-      message.error("固定客数を入力してください");
+      message.error('固定客数を入力してください');
       return;
     }
 
@@ -76,23 +72,13 @@ export const ReservationInputForm: React.FC<ReservationInputFormProps> = ({
   const isFormDisabled = isSaving;
 
   return (
-    <Card
-      size="small"
-      style={{ marginBottom: 8 }}
-      styles={{ body: { padding: "8px 12px" } }}
-    >
-      <Title level={5} style={{ margin: "0 0 8px 0", fontSize: 16 }}>
+    <Card size="small" style={{ marginBottom: 8 }} styles={{ body: { padding: '8px 12px' } }}>
+      <Title level={5} style={{ margin: '0 0 8px 0', fontSize: 16 }}>
         📝 予約データ入力
       </Title>
 
       {error && (
-        <Alert
-          message={error}
-          type="error"
-          showIcon
-          closable
-          style={{ marginBottom: 8 }}
-        />
+        <Alert message={error} type="error" showIcon closable style={{ marginBottom: 8 }} />
       )}
 
       <Form layout="vertical" size="small">
@@ -102,8 +88,8 @@ export const ReservationInputForm: React.FC<ReservationInputFormProps> = ({
             onChange={handleDateChange}
             format="YYYY-MM-DD (dd)"
             placeholder="日付を選択"
-            style={{ width: "100%", fontSize: "16px" }}
-            suffixIcon={<CalendarOutlined style={{ fontSize: "18px" }} />}
+            style={{ width: '100%', fontSize: '16px' }}
+            suffixIcon={<CalendarOutlined style={{ fontSize: '18px' }} />}
             disabled={isFormDisabled}
           />
         </Form.Item>
@@ -114,7 +100,7 @@ export const ReservationInputForm: React.FC<ReservationInputFormProps> = ({
             onChange={onChangeTotalTrucks}
             min={0}
             disabled={isFormDisabled}
-            style={{ width: "100%" }}
+            style={{ width: '100%' }}
             placeholder="例: 12"
           />
         </Form.Item>
@@ -126,7 +112,7 @@ export const ReservationInputForm: React.FC<ReservationInputFormProps> = ({
             min={0}
             max={totalTrucks ?? undefined}
             disabled={isFormDisabled}
-            style={{ width: "100%" }}
+            style={{ width: '100%' }}
             placeholder="例: 3"
           />
         </Form.Item>
@@ -142,13 +128,7 @@ export const ReservationInputForm: React.FC<ReservationInputFormProps> = ({
         </Form.Item>
 
         {error && (
-          <Alert
-            message={error}
-            type="error"
-            showIcon
-            closable
-            style={{ marginBottom: 8 }}
-          />
+          <Alert message={error} type="error" showIcon closable style={{ marginBottom: 8 }} />
         )}
 
         <Button
@@ -167,9 +147,7 @@ export const ReservationInputForm: React.FC<ReservationInputFormProps> = ({
       <Modal
         title={
           <span>
-            <ExclamationCircleOutlined
-              style={{ color: "#faad14", marginRight: 8 }}
-            />
+            <ExclamationCircleOutlined style={{ color: '#faad14', marginRight: 8 }} />
             保存確認
           </span>
         }
@@ -183,23 +161,23 @@ export const ReservationInputForm: React.FC<ReservationInputFormProps> = ({
         <p>以下の内容で保存してもよろしいですか？</p>
         <div
           style={{
-            background: "#f5f5f5",
+            background: '#f5f5f5',
             padding: 12,
             borderRadius: 4,
             marginTop: 12,
           }}
         >
-          <p style={{ margin: "4px 0" }}>
-            <strong>日付:</strong> {selectedDate?.format("YYYY年MM月DD日 (dd)")}
+          <p style={{ margin: '4px 0' }}>
+            <strong>日付:</strong> {selectedDate?.format('YYYY年MM月DD日 (dd)')}
           </p>
-          <p style={{ margin: "4px 0" }}>
+          <p style={{ margin: '4px 0' }}>
             <strong>合計台数:</strong> {totalTrucks}台
           </p>
-          <p style={{ margin: "4px 0" }}>
+          <p style={{ margin: '4px 0' }}>
             <strong>固定客台数:</strong> {fixedTrucks}台
           </p>
           {note && (
-            <p style={{ margin: "4px 0" }}>
+            <p style={{ margin: '4px 0' }}>
               <strong>備考:</strong> {note}
             </p>
           )}

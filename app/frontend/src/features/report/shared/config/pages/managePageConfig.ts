@@ -1,16 +1,16 @@
 // features/report/model/config/pages/managePageConfig.ts
-import React from "react";
-import { Spin } from "antd";
-import { CSV_DEFINITIONS } from "@features/csv-schemas/domain/config/CsvDefinition";
+import React from 'react';
+import { Spin } from 'antd';
+import { CSV_DEFINITIONS } from '@features/csv-schemas/domain/config/CsvDefinition';
 import type {
   CsvConfigGroup,
   ModalStepConfig,
   PeriodType,
-} from "@features/report/shared/config/shared/types";
+} from '@features/report/shared/config/shared/types';
 import {
   createReportConfig,
   SIMPLE_CREATE_AND_DONE_STEPS,
-} from "@features/report/shared/config/shared/common";
+} from '@features/report/shared/config/shared/common';
 
 // ==============================
 // 📄 管理業務ページ専用設定
@@ -18,29 +18,29 @@ import {
 
 export const MANAGE_REPORT_KEYS = {
   factory_report: {
-    value: "factory_report",
-    label: "工場日報",
-    periodType: "oneday" as PeriodType,
+    value: 'factory_report',
+    label: '工場日報',
+    periodType: 'oneday' as PeriodType,
   },
   balance_sheet: {
-    value: "balance_sheet",
-    label: "工場搬出入収支表",
-    periodType: "oneday" as PeriodType,
+    value: 'balance_sheet',
+    label: '工場搬出入収支表',
+    periodType: 'oneday' as PeriodType,
   },
   average_sheet: {
-    value: "average_sheet",
-    label: "集計項目平均表",
-    periodType: "oneday" as PeriodType,
+    value: 'average_sheet',
+    label: '集計項目平均表',
+    periodType: 'oneday' as PeriodType,
   },
   block_unit_price: {
-    value: "block_unit_price",
-    label: "ブロック単価表",
-    periodType: "oneday" as PeriodType,
+    value: 'block_unit_price',
+    label: 'ブロック単価表',
+    periodType: 'oneday' as PeriodType,
   },
   management_sheet: {
-    value: "management_sheet",
-    label: "管理票",
-    periodType: "oneday" as PeriodType,
+    value: 'management_sheet',
+    label: '管理票',
+    periodType: 'oneday' as PeriodType,
   },
 } as const;
 
@@ -77,28 +77,28 @@ export const manageModalStepsMap: Record<ManageReportKey, ModalStepConfig[]> = {
   average_sheet: [...SIMPLE_CREATE_AND_DONE_STEPS],
   block_unit_price: [
     {
-      label: "帳簿作成中",
+      label: '帳簿作成中',
       content: React.createElement(
-        "div",
-        { style: { textAlign: "center", padding: 24 } },
-        React.createElement(Spin, { size: "large" }),
+        'div',
+        { style: { textAlign: 'center', padding: 24 } },
+        React.createElement(Spin, { size: 'large' })
       ),
       showNext: false,
       showClose: false,
     },
     {
-      label: "帳簿作成中",
+      label: '帳簿作成中',
       content: React.createElement(
-        "div",
-        { style: { textAlign: "center", padding: 24 } },
-        React.createElement(Spin, { size: "large" }),
+        'div',
+        { style: { textAlign: 'center', padding: 24 } },
+        React.createElement(Spin, { size: 'large' })
       ),
       showNext: false,
       showClose: false,
     },
     {
-      label: "完了",
-      content: React.createElement("div", {}, "完了しました"),
+      label: '完了',
+      content: React.createElement('div', {}, '完了しました'),
       showNext: false,
       showClose: true,
     },
@@ -108,16 +108,16 @@ export const manageModalStepsMap: Record<ManageReportKey, ModalStepConfig[]> = {
 
 // PDFプレビュー設定
 export const managePdfPreviewMap: Record<ManageReportKey, string> = {
-  factory_report: "/images/sampleViews/manage/factoryReport.png",
-  balance_sheet: "/images/sampleViews/manage/balanceSheet.png",
-  average_sheet: "/images/sampleViews/manage/averageSheet.png",
-  block_unit_price: "/images/sampleViews/manage/blockunitPrice.png",
-  management_sheet: "/images/sampleViews/manage/managementSheet.png",
+  factory_report: '/images/sampleViews/manage/factoryReport.png',
+  balance_sheet: '/images/sampleViews/manage/balanceSheet.png',
+  average_sheet: '/images/sampleViews/manage/averageSheet.png',
+  block_unit_price: '/images/sampleViews/manage/blockunitPrice.png',
+  management_sheet: '/images/sampleViews/manage/managementSheet.png',
 };
 
 // 統合設定
 export const manageReportConfigMap = createReportConfig(
   manageCsvConfigMap,
   manageModalStepsMap,
-  managePdfPreviewMap,
+  managePdfPreviewMap
 );

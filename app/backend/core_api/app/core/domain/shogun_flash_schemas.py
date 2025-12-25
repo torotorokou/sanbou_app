@@ -10,8 +10,9 @@ config_loader から YAML を読み込んで動的にモデルを生成します
 from datetime import datetime
 from typing import Any, Optional
 
-from backend_shared.config.config_loader import ShogunCsvConfigLoader
 from pydantic import BaseModel, ConfigDict, Field, create_model, field_validator
+
+from backend_shared.config.config_loader import ShogunCsvConfigLoader
 
 # 型マッピング: YAML の type 文字列 → Python 型
 TYPE_MAP = {
@@ -64,9 +65,7 @@ def create_flash_row_model(sheet_type: str) -> type[BaseModel]:
 
     # 必須カラムの英語名セットを作成
     required_en_names = {
-        en_name_map[jp_name]
-        for jp_name in expected_headers_jp
-        if jp_name in en_name_map
+        en_name_map[jp_name] for jp_name in expected_headers_jp if jp_name in en_name_map
     }
 
     # フィールド定義を構築
@@ -117,7 +116,7 @@ def create_flash_row_model(sheet_type: str) -> type[BaseModel]:
     if datetime_fields:
         # バリデータをデコレータとして追加
         for dt_field in datetime_fields:
-            validator_func = field_validator(dt_field, mode="before")(
+            _validator_func = field_validator(dt_field, mode="before")(
                 lambda cls, v, _field=dt_field: parse_datetime_field(v)
             )
             # モデルにバリデータを登録

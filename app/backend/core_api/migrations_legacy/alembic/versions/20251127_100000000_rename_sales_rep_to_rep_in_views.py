@@ -44,9 +44,7 @@ def upgrade() -> None:
     """
     )
 
-    print(
-        "[mart] Dropping and recreating v_customer_sales_daily view with rep_id, rep_name..."
-    )
+    print("[mart] Dropping and recreating v_customer_sales_daily view with rep_id, rep_name...")
     op.execute("DROP VIEW IF EXISTS mart.v_customer_sales_daily CASCADE")
     op.execute(
         """
@@ -92,9 +90,7 @@ def downgrade() -> None:
     """
     )
 
-    print(
-        "[ref] Dropping and recreating v_sales_rep view with sales_rep_id, sales_rep_name..."
-    )
+    print("[ref] Dropping and recreating v_sales_rep view with sales_rep_id, sales_rep_name...")
     op.execute("DROP VIEW IF EXISTS ref.v_sales_rep CASCADE")
     op.execute(
         """

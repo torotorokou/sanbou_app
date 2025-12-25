@@ -1,8 +1,8 @@
 // src/shared/hooks/ui/useSidebar.ts
-import { useEffect, useMemo, useState } from "react";
-import { useResponsive } from "./useResponsive";
+import { useEffect, useMemo, useState } from 'react';
+import { useResponsive } from './useResponsive';
 
-export type SidebarBreakpoint = "xs" | "md" | "xl";
+export type SidebarBreakpoint = 'xs' | 'md' | 'xl';
 
 export interface SidebarConfig {
   width: number;
@@ -54,7 +54,7 @@ export function useSidebar(options: UseSidebarOptions = {}): {
       return {
         width: 280,
         collapsedWidth: 0,
-        breakpoint: "xs",
+        breakpoint: 'xs',
         defaultCollapsed: true,
         forceCollapse: false,
         drawerMode: true,
@@ -64,7 +64,7 @@ export function useSidebar(options: UseSidebarOptions = {}): {
       return {
         width: 230,
         collapsedWidth: 60,
-        breakpoint: "md",
+        breakpoint: 'md',
         defaultCollapsed: true,
         forceCollapse: false,
         drawerMode: false,
@@ -74,7 +74,7 @@ export function useSidebar(options: UseSidebarOptions = {}): {
     return {
       width: 250,
       collapsedWidth: 80,
-      breakpoint: "xl",
+      breakpoint: 'xl',
       defaultCollapsed: false,
       forceCollapse: false,
       drawerMode: false,
@@ -118,10 +118,10 @@ export function useSidebar(options: UseSidebarOptions = {}): {
 
   const style = useMemo<React.CSSProperties>(
     () => ({
-      transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-      willChange: "width, transform",
+      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+      willChange: 'width, transform',
     }),
-    [],
+    []
   );
 
   return {

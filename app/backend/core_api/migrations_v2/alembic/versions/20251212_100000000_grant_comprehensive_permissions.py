@@ -171,9 +171,7 @@ def upgrade():
     print(f"   Environment user: {current_user}")
     print("   Schemas: stg, mart, ref, kpi, tmp")
     print("   Permissions: Full CRUD + Materialized View REFRESH")
-    print(
-        f"   Security: Environment isolation maintained (only {current_user} has access)"
-    )
+    print(f"   Security: Environment isolation maintained (only {current_user} has access)")
 
 
 def downgrade():
@@ -190,9 +188,7 @@ def downgrade():
             "Database user not specified. Please set DB_USER or POSTGRES_USER environment variable."
         )
 
-    print(
-        f"[PERMISSIONS] Revoking comprehensive permissions from environment user: {current_user}"
-    )
+    print(f"[PERMISSIONS] Revoking comprehensive permissions from environment user: {current_user}")
 
     schemas = ["stg", "mart", "ref", "kpi", "tmp"]
 

@@ -9,8 +9,8 @@
  *   - エラー/タイムアウト: sticky（手動クローズのみ）
  */
 
-import { DatasetImportClient } from "../infrastructure/client";
-import { useNotificationStore } from "@features/notification/domain/services/notificationStore";
+import { DatasetImportClient } from '../infrastructure/client';
+import { useNotificationStore } from '@features/notification/domain/services/notificationStore';
 
 interface PollingJob {
   csvType: string;
@@ -47,7 +47,7 @@ class GlobalUploadPollingManager {
    * 新しいアップロードジョブを追加
    */
   addJobs(uploadFileIds: Record<string, number>): void {
-    console.log("[GlobalPollingManager] Adding jobs:", uploadFileIds);
+    console.log('[GlobalPollingManager] Adding jobs:', uploadFileIds);
 
     const newFileIds: number[] = [];
     Object.entries(uploadFileIds).forEach(([csvType, fileId]) => {
@@ -76,7 +76,7 @@ class GlobalUploadPollingManager {
     if (this.isRunning) return;
 
     this.isRunning = true;
-    console.log("[GlobalPollingManager] Starting polling...");
+    console.log('[GlobalPollingManager] Starting polling...');
 
     // 初回は遅延させる
     setTimeout(() => this.checkAll(), INITIAL_DELAY);
@@ -94,9 +94,7 @@ class GlobalUploadPollingManager {
     const jobArray = Array.from(this.jobs.values());
     console.log(`[GlobalPollingManager] Checking ${jobArray.length} jobs...`);
 
-    const results = await Promise.all(
-      jobArray.map((job) => this.checkJob(job)),
-    );
+    const results = await Promise.all(jobArray.map((job) => this.checkJob(job)));
 
     // 完了したジョブを削除し、成功/失敗を記録
     const completedFileIds: number[] = [];
@@ -114,17 +112,12 @@ class GlobalUploadPollingManager {
 
     // 現在のバッチがすべて完了したかチェック
     if (completedFileIds.length > 0) {
-      const batchCompleted = this.currentBatchFileIds.every(
-        (id) => !this.jobs.has(id),
-      );
+      const batchCompleted = this.currentBatchFileIds.every((id) => !this.jobs.has(id));
 
       if (batchCompleted && this.currentBatchFileIds.length > 0) {
         // バッチ全体が完了した場合、コールバックを呼ぶ
         const allSuccess = !hasFailures;
-        console.log(
-          "[GlobalPollingManager] Batch completed. All success:",
-          allSuccess,
-        );
+        console.log('[GlobalPollingManager] Batch completed. All success:', allSuccess);
 
         this.completionCallbacks.forEach((callback) => {
           callback(this.currentBatchFileIds, allSuccess);
@@ -146,7 +139,7 @@ class GlobalUploadPollingManager {
    * 個別ジョブをチェック
    */
   private async checkJob(
-    job: PollingJob,
+    job: PollingJob
   ): Promise<{ fileId: number; completed: boolean; success: boolean }> {
     job.attemptCount += 1;
 
@@ -155,22 +148,21 @@ class GlobalUploadPollingManager {
       const status = response.result?.processing_status;
       const errorMessage = response.result?.error_message;
       const rowCount = response.result?.row_count;
-      const fileName =
-        response.result?.file_name || job.fileName || job.csvType;
+      const fileName = response.result?.file_name || job.fileName || job.csvType;
 
       console.log(
-        `[GlobalPollingManager] Job ${job.fileId} (${job.csvType}): ${status} (attempt ${job.attemptCount}/${DEFAULT_MAX_ATTEMPTS})`,
+        `[GlobalPollingManager] Job ${job.fileId} (${job.csvType}): ${status} (attempt ${job.attemptCount}/${DEFAULT_MAX_ATTEMPTS})`
       );
 
       // 処理中の場合は継続
-      if (status === "pending" || status === "processing") {
+      if (status === 'pending' || status === 'processing') {
         // タイムアウトチェック
         if (job.attemptCount >= DEFAULT_MAX_ATTEMPTS) {
           // sticky通知（手動クローズのみ）
           useNotificationStore.getState().warning(
-            "処理タイムアウト",
+            '処理タイムアウト',
             `${fileName} の処理が時間内に完了しませんでした。履歴画面で確認してください。`,
-            0, // sticky
+            0 // sticky
           );
           return { fileId: job.fileId, completed: true, success: false };
         }
@@ -178,45 +170,38 @@ class GlobalUploadPollingManager {
       }
 
       // 失敗
-      if (status === "failed") {
+      if (status === 'failed') {
         // sticky通知（手動クローズのみ）
         useNotificationStore.getState().error(
-          "処理失敗",
-          `【${fileName}】${errorMessage || "処理エラー"}`,
-          0, // sticky
+          '処理失敗',
+          `【${fileName}】${errorMessage || '処理エラー'}`,
+          0 // sticky
         );
         return { fileId: job.fileId, completed: true, success: false };
       }
 
       // 成功
-      if (status === "success") {
-        const rowInfo = rowCount ? `（${rowCount.toLocaleString()}行）` : "";
+      if (status === 'success') {
+        const rowInfo = rowCount ? `（${rowCount.toLocaleString()}行）` : '';
         // 5秒autoDismiss
         useNotificationStore
           .getState()
-          .success(
-            "処理完了",
-            `${fileName} の処理が完了しました。${rowInfo}`,
-            5000,
-          );
+          .success('処理完了', `${fileName} の処理が完了しました。${rowInfo}`, 5000);
         return { fileId: job.fileId, completed: true, success: true };
       }
 
       // 不明なステータスは完了扱い（失敗として）
       return { fileId: job.fileId, completed: true, success: false };
     } catch (error) {
-      console.warn(
-        `[GlobalPollingManager] API error for job ${job.fileId}, will retry:`,
-        error,
-      );
+      console.warn(`[GlobalPollingManager] API error for job ${job.fileId}, will retry:`, error);
 
       // API エラーはタイムアウトまで継続
       if (job.attemptCount >= DEFAULT_MAX_ATTEMPTS) {
         // sticky通知（手動クローズのみ）
         useNotificationStore.getState().error(
-          "ステータス確認エラー",
+          'ステータス確認エラー',
           `${job.fileName || job.csvType} の処理状況を確認できませんでした。履歴画面で確認してください。`,
-          0, // sticky
+          0 // sticky
         );
         return { fileId: job.fileId, completed: true, success: false };
       }
@@ -230,7 +215,7 @@ class GlobalUploadPollingManager {
    */
   private stop(): void {
     this.isRunning = false;
-    console.log("[GlobalPollingManager] Stopped polling.");
+    console.log('[GlobalPollingManager] Stopped polling.');
   }
 
   /**
@@ -239,7 +224,7 @@ class GlobalUploadPollingManager {
   clearAll(): void {
     this.jobs.clear();
     this.stop();
-    console.log("[GlobalPollingManager] All jobs cleared.");
+    console.log('[GlobalPollingManager] All jobs cleared.');
   }
 
   /**

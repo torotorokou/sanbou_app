@@ -3,10 +3,10 @@
  * マニュアルカテゴリ一覧取得のロジック
  */
 
-import { useState, useEffect, useMemo, useCallback } from "react";
-import type { ManualRepository } from "../ports/repository";
-import { ManualRepositoryImpl } from "../infrastructure/manual.repository";
-import type { ManualCategory } from "../domain/types/manual.types";
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import type { ManualRepository } from '../ports/repository';
+import { ManualRepositoryImpl } from '../infrastructure/manual.repository';
+import type { ManualCategory } from '../domain/types/manual.types';
 
 export function useManualCategories() {
   const repo: ManualRepository = useMemo(() => new ManualRepositoryImpl(), []);

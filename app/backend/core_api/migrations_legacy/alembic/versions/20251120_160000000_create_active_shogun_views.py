@@ -73,9 +73,7 @@ def upgrade() -> None:
     print("[stg.active_*] All active views created successfully")
     print("")
     print("📌 Next Steps:")
-    print(
-        "  1. Update mart views to use stg.active_* instead of stg.* where appropriate"
-    )
+    print("  1. Update mart views to use stg.active_* instead of stg.* where appropriate")
     print("  2. Refresh materialized views after updating their definitions")
     print("  3. Run regression tests to verify aggregation results")
 

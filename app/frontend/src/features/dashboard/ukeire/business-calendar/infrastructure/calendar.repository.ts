@@ -1,6 +1,6 @@
-import type { ICalendarRepository } from "@/features/calendar/ports/repository";
-import type { CalendarDayDTO } from "@/features/calendar/domain/types";
-import { coreApi, DASHBOARD_ENDPOINTS } from "@/shared";
+import type { ICalendarRepository } from '@/features/calendar/ports/repository';
+import type { CalendarDayDTO } from '@/features/calendar/domain/types';
+import { coreApi, DASHBOARD_ENDPOINTS } from '@/shared';
 
 type BackendCalendarDay = {
   ddate: string;
@@ -17,16 +17,10 @@ type BackendCalendarDay = {
 };
 
 export class CalendarRepositoryForUkeire implements ICalendarRepository {
-  async fetchMonth({
-    year,
-    month,
-  }: {
-    year: number;
-    month: number;
-  }): Promise<CalendarDayDTO[]> {
+  async fetchMonth({ year, month }: { year: number; month: number }): Promise<CalendarDayDTO[]> {
     // バックエンドAPIは /core_api/calendar/month?year=YYYY&month=MM の形式で配列を直接返す
     const data = await coreApi.get<BackendCalendarDay[]>(
-      `${DASHBOARD_ENDPOINTS.calendar}?year=${year}&month=${month}`,
+      `${DASHBOARD_ENDPOINTS.calendar}?year=${year}&month=${month}`
     );
     return (data ?? []).map(mapBackendDayToCalendarDTO);
   }

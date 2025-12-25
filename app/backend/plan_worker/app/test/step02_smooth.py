@@ -34,9 +34,7 @@ def triangular_kernel(h: int, gamma: float = 1.0) -> np.ndarray:
     return w / w.sum()
 
 
-def shrink_eb(
-    ave: np.ndarray, n: np.ndarray, cv: np.ndarray, mu_prior: float
-) -> np.ndarray:
+def shrink_eb(ave: np.ndarray, n: np.ndarray, cv: np.ndarray, mu_prior: float) -> np.ndarray:
     """Empirical Bayes 縮約（n と cv に応じて mu_prior へ引き寄せ）"""
     cv_eff = np.clip(np.nan_to_num(cv, nan=0.0), 0.0, CV_CAP)
     tau = TAU_BASE * (1.0 + LAMBDA * cv_eff)
@@ -94,25 +92,17 @@ def main():
     ap = argparse.ArgumentParser(
         description="Weekly smoothing with EB shrinkage + (non-)circular MA and alpha blending."
     )
-    ap.add_argument(
-        "--tau", type=float, default=TAU_BASE, help="EB base strength (TAU_BASE)"
-    )
-    ap.add_argument(
-        "--lam", type=float, default=LAMBDA, help="EB cv coefficient (LAMBDA)"
-    )
+    ap.add_argument("--tau", type=float, default=TAU_BASE, help="EB base strength (TAU_BASE)")
+    ap.add_argument("--lam", type=float, default=LAMBDA, help="EB cv coefficient (LAMBDA)")
     ap.add_argument("--cv-cap", type=float, default=CV_CAP, help="Cap for cv in EB")
-    ap.add_argument(
-        "--h", type=int, default=H, help="Half window size for MA (H=1 -> 3-point)"
-    )
+    ap.add_argument("--h", type=int, default=H, help="Half window size for MA (H=1 -> 3-point)")
     ap.add_argument(
         "--kernel-gamma",
         type=float,
         default=KERNEL_GAMMA,
         help="Kernel center emphasis (>1 → smoother weaker)",
     )
-    ap.add_argument(
-        "--alpha", type=float, default=ALPHA, help="Blend: alpha*smooth + (1-alpha)*EB"
-    )
+    ap.add_argument("--alpha", type=float, default=ALPHA, help="Blend: alpha*smooth + (1-alpha)*EB")
     ap.add_argument(
         "--circular",
         action="store_true",
@@ -170,11 +160,7 @@ def main():
         if H <= 0 or w.size == 1:
             sm_raw = mu_post.copy()
         else:
-            sm_raw = (
-                circ_ma53(mu_post, w)
-                if args.circular
-                else ma53_non_circular(mu_post, w)
-            )
+            sm_raw = circ_ma53(mu_post, w) if args.circular else ma53_non_circular(mu_post, w)
 
         # 過剰平滑の抑制：戻しブレンド
         sm = ALPHA * sm_raw + (1.0 - ALPHA) * mu_post
@@ -182,9 +168,7 @@ def main():
         for k in range(53):
             rows.append((str(scope), int(k + 1), int(dow), float(sm[k])))
 
-    out = pd.DataFrame(
-        rows, columns=["scope", "iso_week", "iso_dow", "day_mean_smooth"]
-    )
+    out = pd.DataFrame(rows, columns=["scope", "iso_week", "iso_dow", "day_mean_smooth"])
     out.to_csv(OUT / "smooth_preview.csv", index=False)
 
     # 簡易チェック＋ログ
@@ -193,9 +177,7 @@ def main():
     p95 = float(out["day_mean_smooth"].quantile(0.95))
     p05 = float(out["day_mean_smooth"].quantile(0.05))
     amp = p95 - p05
-    print(
-        f"[smooth] rows={len(out)} neg={neg} nan={nan} p05={p05:.3f} p95={p95:.3f} amp={amp:.3f}"
-    )
+    print(f"[smooth] rows={len(out)} neg={neg} nan={nan} p05={p05:.3f} p95={p95:.3f} amp={amp:.3f}")
     if nan > 0:
         raise SystemExit("NaN残あり。パラメータまたは元データ要確認")
     if neg > 0:

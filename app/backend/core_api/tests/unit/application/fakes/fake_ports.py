@@ -69,7 +69,7 @@ class FakeUploadStatusQuery(IUploadStatusQuery):
         upload_file_id: int,
         target_date: date_type,
         csv_kind: str,
-        deleted_by: str | None = None
+        deleted_by: str | None = None,
     ) -> int:
         """Mock soft delete operation"""
         self._deleted_count += 1
@@ -95,9 +95,7 @@ class FakeDashboardQueryPort:
     def __init__(self):
         self._data: dict[tuple, dict[str, Any] | None] = {}
 
-    def set_data(
-        self, requested_date: date_type, mode: str, data: dict[str, Any] | None
-    ):
+    def set_data(self, requested_date: date_type, mode: str, data: dict[str, Any] | None):
         """Set mock data for testing."""
         self._data[(requested_date, mode)] = data
 
@@ -181,8 +179,7 @@ class FakeInboundQueryPort:
         return [
             row
             for row in self._data
-            if start <= row.target_date <= end
-            and (segment is None or row.segment == segment)
+            if start <= row.target_date <= end and (segment is None or row.segment == segment)
         ]
 
 

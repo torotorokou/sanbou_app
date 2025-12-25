@@ -3,8 +3,8 @@
  * 空状態カードコンポーネント
  */
 
-import React from "react";
-import { Card, Typography } from "antd";
+import React from 'react';
+import { Card, Typography } from 'antd';
 
 export interface EmptyStateCardProps {
   message: string;
@@ -14,10 +14,7 @@ export interface EmptyStateCardProps {
 /**
  * 空状態を表示するカード
  */
-export const EmptyStateCard: React.FC<EmptyStateCardProps> = ({
-  message,
-  className,
-}) => (
+export const EmptyStateCard: React.FC<EmptyStateCardProps> = ({ message, className }) => (
   <Card className={className}>
     <div style={{ padding: 12 }}>
       <Typography.Text type="secondary">{message}</Typography.Text>

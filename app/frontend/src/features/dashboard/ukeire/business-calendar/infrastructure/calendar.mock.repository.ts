@@ -1,5 +1,5 @@
-import type { ICalendarRepository } from "@/features/calendar/ports/repository";
-import type { CalendarDayDTO } from "@/features/calendar/domain/types";
+import type { ICalendarRepository } from '@/features/calendar/ports/repository';
+import type { CalendarDayDTO } from '@/features/calendar/domain/types';
 
 /**
  * Mock Calendar Repository
@@ -11,19 +11,13 @@ import type { CalendarDayDTO } from "@/features/calendar/domain/types";
  * - day_type (NORMAL, RESERVATION, CLOSED), is_business
  */
 export class MockCalendarRepositoryForUkeire implements ICalendarRepository {
-  async fetchMonth({
-    year,
-    month,
-  }: {
-    year: number;
-    month: number;
-  }): Promise<CalendarDayDTO[]> {
-    const mm = String(month).padStart(2, "0");
+  async fetchMonth({ year, month }: { year: number; month: number }): Promise<CalendarDayDTO[]> {
+    const mm = String(month).padStart(2, '0');
     const daysInMonth = new Date(year, month, 0).getDate();
     const days: CalendarDayDTO[] = [];
 
     for (let day = 1; day <= daysInMonth; day++) {
-      const dd = String(day).padStart(2, "0");
+      const dd = String(day).padStart(2, '0');
       const date = `${year}-${mm}-${dd}`;
       const currentDate = new Date(year, month - 1, day);
       const dayOfWeek = currentDate.getDay(); // 0=日, 6=土
@@ -56,14 +50,14 @@ export class MockCalendarRepositoryForUkeire implements ICalendarRepository {
       // NORMAL: 通常営業日
       // RESERVATION: 予約営業日（日曜・祝日）
       // CLOSED: 休業日（第2日曜日など）
-      let dayType: "NORMAL" | "RESERVATION" | "CLOSED" = "NORMAL";
+      let dayType: 'NORMAL' | 'RESERVATION' | 'CLOSED' = 'NORMAL';
       if (isSecondSunday) {
-        dayType = "CLOSED";
+        dayType = 'CLOSED';
       } else if (isSunday || isHoliday) {
-        dayType = "RESERVATION";
+        dayType = 'RESERVATION';
       }
 
-      const isBusiness = dayType === "NORMAL";
+      const isBusiness = dayType === 'NORMAL';
 
       days.push({
         ddate: date,

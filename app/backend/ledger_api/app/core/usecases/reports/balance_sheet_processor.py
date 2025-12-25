@@ -8,6 +8,7 @@ import time
 from typing import Any
 
 import pandas as pd
+
 from app.core.domain.reports.processors.balance_sheet.balacne_sheet_inbound_weight import (
     inbound_weight,
 )
@@ -198,8 +199,8 @@ def process(dfs: dict[str, Any]) -> pd.DataFrame:
     step_start = time.time()
     logger.info("Step 4b: 処分費データ処理開始")
     if df_yard is not None and df_shipment is not None:
-        master_csv.loc[master_csv["大項目"] == "処分費", "値"] = (
-            calculate_total_disposal_cost(df_yard, df_shipment, unit_price_table)
+        master_csv.loc[master_csv["大項目"] == "処分費", "値"] = calculate_total_disposal_cost(
+            df_yard, df_shipment, unit_price_table
         )
     logger.info(
         "Step 4b: 処分費データ処理完了",
@@ -211,9 +212,7 @@ def process(dfs: dict[str, Any]) -> pd.DataFrame:
     logger.info("Step 4c: 有価物データ処理開始")
     if df_yard is not None and df_shipment is not None:
         master_csv.loc[master_csv["大項目"] == "有価物", "値"] = (
-            calculate_total_valuable_material_cost(
-                df_yard, df_shipment, unit_price_table
-            )
+            calculate_total_valuable_material_cost(df_yard, df_shipment, unit_price_table)
         )
     logger.info(
         "Step 4c: 有価物データ処理完了",
@@ -228,9 +227,7 @@ def process(dfs: dict[str, Any]) -> pd.DataFrame:
         # Step 4d: 搬入台数
         step_start = time.time()
         logger.info("Step 4d: 搬入台数データ処理開始")
-        master_csv.loc[master_csv["大項目"] == "搬入台数", "値"] = inbound_truck_count(
-            df_receive
-        )
+        master_csv.loc[master_csv["大項目"] == "搬入台数", "値"] = inbound_truck_count(df_receive)
         logger.info(
             "Step 4d: 搬入台数データ処理完了",
             extra={"elapsed_ms": round((time.time() - step_start) * 1000, 2)},
@@ -239,9 +236,7 @@ def process(dfs: dict[str, Any]) -> pd.DataFrame:
         # Step 4e: 搬入量
         step_start = time.time()
         logger.info("Step 4e: 搬入量データ処理開始")
-        master_csv.loc[master_csv["大項目"] == "搬入量", "値"] = inbound_weight(
-            df_receive
-        )
+        master_csv.loc[master_csv["大項目"] == "搬入量", "値"] = inbound_weight(df_receive)
         logger.info(
             "Step 4e: 搬入量データ処理完了",
             extra={"elapsed_ms": round((time.time() - step_start) * 1000, 2)},
@@ -290,8 +285,6 @@ def process(dfs: dict[str, Any]) -> pd.DataFrame:
     # 処理完了
     # ========================================
     total_elapsed = time.time() - start_time
-    logger.info(
-        "搬出入帳票処理完了", extra={"total_elapsed_sec": round(total_elapsed, 3)}
-    )
+    logger.info("搬出入帳票処理完了", extra={"total_elapsed_sec": round(total_elapsed, 3)})
 
     return master_csv

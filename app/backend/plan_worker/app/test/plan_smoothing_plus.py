@@ -123,9 +123,7 @@ def apply_intraweek_pipeline(
             .map(lambda v: float(cfg.scope_weight_multiplier.get(str(v), 1.0)))
             .astype(float)
         )
-        w_scaled = np.where(open_mask, g_proc[weight_raw_col] * factors, 0.0).astype(
-            float
-        )
+        w_scaled = np.where(open_mask, g_proc[weight_raw_col] * factors, 0.0).astype(float)
     else:
         w_scaled = g_proc[weight_raw_col].astype(float)
 
@@ -137,9 +135,7 @@ def apply_intraweek_pipeline(
         g_proc[weight_col] = np.where(open_mask, (w_small / s) if s > 0 else 0.0, 0.0)
     else:
         # 3) 平滑
-        w_for_roll = pd.Series(
-            np.where(open_mask, w_scaled, np.nan), index=g_proc.index
-        )
+        w_for_roll = pd.Series(np.where(open_mask, w_scaled, np.nan), index=g_proc.index)
         w_sm = rolling_smooth(
             w_for_roll, window=cfg.intraweek_window, method=cfg.intraweek_method
         ).fillna(0.0)

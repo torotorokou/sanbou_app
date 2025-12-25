@@ -1,8 +1,8 @@
 // src/components/ManagementDashboard/CustomerAnalysisPanel.tsx
-import React from "react";
-import { Card, Row, Col } from "antd";
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
-import { customTokens } from "@/shared";
+import React from 'react';
+import { Card, Row, Col } from 'antd';
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
+import { customTokens } from '@/shared';
 
 const COLORS = [
   customTokens.chartGreen,
@@ -14,12 +14,12 @@ const COLORS = [
 ];
 
 const CATEGORIES = [
-  "A客（事業系）",
-  "B客（移転・残置）",
-  "C客（解体）",
-  "D客（建設）",
-  "E客（中間・積保）",
-  "F客（その他）",
+  'A客（事業系）',
+  'B客（移転・残置）',
+  'C客（解体）',
+  'D客（建設）',
+  'E客（中間・積保）',
+  'F客（その他）',
 ];
 
 const weightData = [
@@ -46,8 +46,8 @@ const renderLegend = () => (
       <div
         key={index}
         style={{
-          display: "flex",
-          alignItems: "center",
+          display: 'flex',
+          alignItems: 'center',
           marginBottom: 8,
         }}
       >
@@ -57,7 +57,7 @@ const renderLegend = () => (
             height: 12,
             backgroundColor: COLORS[index % COLORS.length],
             marginRight: 8,
-            borderRadius: "50%",
+            borderRadius: '50%',
           }}
         />
         <span style={{ fontSize: 12 }}>{name}</span>
@@ -119,13 +119,7 @@ const renderPieChart = (data: PieDatum[]) => (
                 rx={6}
                 fill="rgba(255, 255, 255, 0.8)"
               />
-              <text
-                x={x}
-                y={y}
-                textAnchor="middle"
-                dominantBaseline="middle"
-                fontSize={fontSize}
-              >
+              <text x={x} y={y} textAnchor="middle" dominantBaseline="middle" fontSize={fontSize}>
                 {display}
               </text>
             </g>

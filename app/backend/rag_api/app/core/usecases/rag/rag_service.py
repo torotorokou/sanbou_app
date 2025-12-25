@@ -1,7 +1,8 @@
 import streamlit as st
+from components.custom_button import centered_button
+
 from app.core.usecases.rag.file_ingest_service import (
     load_config,
-    load_json_data,
     load_question_templates,
 )
 from app.infra.adapters.llm.ai_loader import OpenAIConfig, load_ai
@@ -12,12 +13,10 @@ from app.infra.adapters.pdf.pdf_loader import (
     render_pdf_pages,
 )
 from app.shared.chunk_utils import load_vectorstore
-from components.custom_button import centered_button
 
 
 def controller_education_gpt_page():
     FAISS_PATH, PDF_PATH, JSON_PATH = load_config()
-    json_data = load_json_data(JSON_PATH)
     templates = load_question_templates()
     categories = list(templates.keys())
 
@@ -36,17 +35,15 @@ def controller_education_gpt_page():
     category_template = templates.get(main_category, [])
 
     all_tags = sorted(
-        set(
+        {
             tag.strip(" []'\"")
             for t in category_template
             for tag in t.get("tag", [])
             if isinstance(tag, str)
-        )
+        }
     )
 
-    selected_tags = st.multiselect(
-        "次に、関心のあるトピック（タグ）を選択してください", all_tags
-    )
+    selected_tags = st.multiselect("次に、関心のあるトピック（タグ）を選択してください", all_tags)
 
     filtered_questions = (
         [
@@ -70,9 +67,7 @@ def controller_education_gpt_page():
 
     if centered_button("➡️ 送信") and query:
         with st.spinner("🤖 回答生成中..."):
-            answer, sources = generate_answer(
-                query, main_category, vectorstore, llm_client
-            )
+            answer, sources = generate_answer(query, main_category, vectorstore, llm_client)
             st.session_state.last_response = answer
             st.session_state.sources = sources
 
@@ -82,9 +77,7 @@ def controller_education_gpt_page():
 
     if "sources" in st.session_state:
         pages = {str(page) for _, page in st.session_state.sources}
-        st.markdown(
-            "📄 **出典ページ:** " + ", ".join([f"Page {p}" for p in sorted(pages)])
-        )
+        st.markdown("📄 **出典ページ:** " + ", ".join([f"Page {p}" for p in sorted(pages)]))
         render_pdf_pages(PDF_PATH, pages)
 
 

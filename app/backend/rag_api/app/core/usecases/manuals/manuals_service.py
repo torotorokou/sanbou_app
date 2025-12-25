@@ -17,9 +17,7 @@ class ManualsService:
         page: int,
         size: int,
     ) -> ManualListResponse:
-        return self.repo.list(
-            query=query, tag=tag, category=category, page=page, size=size
-        )
+        return self.repo.list(query=query, tag=tag, category=category, page=page, size=size)
 
     def get(self, manual_id: str) -> ManualDetail | None:
         return self.repo.get(manual_id)

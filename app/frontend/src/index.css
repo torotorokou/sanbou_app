@@ -8,17 +8,17 @@
  * 5. Utility Classes
  */
 
-@import "@/shared/styles/custom-media.css";
-@import "@/shared/styles/tokens.css";
-@import "@/styles/globals.css";
-@import "@/styles/antd-overrides.css";
-@import "@/styles/utilities.css";
+@import '@/shared/styles/custom-media.css';
+@import '@/shared/styles/tokens.css';
+@import '@/styles/globals.css';
+@import '@/styles/antd-overrides.css';
+@import '@/styles/utilities.css';
 
 /* ===================================================
  * Theme-specific Variables (App Colors)
  * ===================================================
  */
 body {
-    background-color: var(--color-bg-base);
-    color: var(--color-text);
+  background-color: var(--color-bg-base);
+  color: var(--color-text);
 }

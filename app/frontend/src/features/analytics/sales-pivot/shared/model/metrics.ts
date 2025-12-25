@@ -17,7 +17,7 @@
  * - テスタブル（単体テストが容易）
  */
 
-import { dayjs, formatCurrency } from "@shared";
+import { dayjs, formatCurrency } from '@shared';
 import type {
   Mode,
   SortKey,
@@ -26,7 +26,7 @@ import type {
   UniverseEntry,
   YYYYMM,
   SummaryQuery,
-} from "./types";
+} from './types';
 
 // ========================================
 // フォーマッタ関数群
@@ -52,7 +52,7 @@ export const fmtCurrency = formatCurrency;
  * fmtNumber(1234)   // "1,234"
  * fmtNumber(500.5)  // "500.5"
  */
-export const fmtNumber = (n: number): string => n.toLocaleString("ja-JP");
+export const fmtNumber = (n: number): string => n.toLocaleString('ja-JP');
 
 /**
  * 単価フォーマット（小数点2桁固定）
@@ -71,8 +71,8 @@ export const fmtNumber = (n: number): string => n.toLocaleString("ja-JP");
  */
 export const fmtUnitPrice = (v: number | null): string =>
   v == null
-    ? "—"
-    : `¥${v.toLocaleString("ja-JP", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    ? '—'
+    : `¥${v.toLocaleString('ja-JP', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 // ========================================
 // メトリクス値抽出・ソート関連
@@ -82,7 +82,7 @@ export const fmtUnitPrice = (v: number | null): string =>
  * 数値型ソートキー
  * @description 'date' と 'name' を除いた、数値として扱えるソートキー
  */
-type NumericSortKey = Exclude<SortKey, "date" | "name">;
+type NumericSortKey = Exclude<SortKey, 'date' | 'name'>;
 
 /**
  * メトリクスエントリから指定キーの値を取得
@@ -97,18 +97,15 @@ type NumericSortKey = Exclude<SortKey, "date" | "name">;
  * metricValue(entry, 'qty')     // 50
  * metricValue(entry, 'unit_price') // 20
  */
-export const metricValue = (
-  entry: MetricEntry,
-  key: NumericSortKey,
-): number | null => {
+export const metricValue = (entry: MetricEntry, key: NumericSortKey): number | null => {
   switch (key) {
-    case "amount":
+    case 'amount':
       return entry.amount;
-    case "qty":
+    case 'qty':
       return entry.qty;
-    case "count":
+    case 'count':
       return entry.count;
-    case "unit_price":
+    case 'unit_price':
       return entry.unitPrice;
     default:
       return null;
@@ -143,16 +140,12 @@ export const metricValue = (
  * sortMetrics(metrics, 'amount', 'desc');
  * // => [B(200), C(150), A(100)] の順にソート（破壊的）
  */
-export const sortMetrics = (
-  arr: MetricEntry[],
-  sortBy: SortKey,
-  order: SortOrder,
-): void => {
-  const dir = order === "asc" ? 1 : -1;
+export const sortMetrics = (arr: MetricEntry[], sortBy: SortKey, order: SortOrder): void => {
+  const dir = order === 'asc' ? 1 : -1;
 
   arr.sort((a, b) => {
     // ========== 日付ソート ==========
-    if (sortBy === "date") {
+    if (sortBy === 'date') {
       const av = a.dateKey ?? a.name;
       const bv = b.dateKey ?? b.name;
       if (av > bv) return 1 * dir;
@@ -161,12 +154,12 @@ export const sortMetrics = (
       // タイブレイク: 同じ日付なら amount → qty → name で比較
       if (a.amount !== b.amount) return (a.amount - b.amount) * dir;
       if (a.qty !== b.qty) return (a.qty - b.qty) * dir;
-      return a.name.localeCompare(b.name, "ja");
+      return a.name.localeCompare(b.name, 'ja');
     }
 
     // ========== 名称ソート ==========
-    if (sortBy === "name") {
-      const cmp = a.name.localeCompare(b.name, "ja");
+    if (sortBy === 'name') {
+      const cmp = a.name.localeCompare(b.name, 'ja');
       if (cmp !== 0) return cmp * dir;
 
       // タイブレイク: 同名なら amount → qty で比較
@@ -180,7 +173,7 @@ export const sortMetrics = (
     const bv = metricValue(b, sortBy);
 
     // 両方nullの場合は名前で比較
-    if (av == null && bv == null) return a.name.localeCompare(b.name, "ja");
+    if (av == null && bv == null) return a.name.localeCompare(b.name, 'ja');
 
     // nullは常に後ろ（大きい値扱い）
     if (av == null) return 1;
@@ -193,7 +186,7 @@ export const sortMetrics = (
     // タイブレイク: 同値なら amount → qty → name で比較
     if (a.amount !== b.amount) return (a.amount - b.amount) * dir;
     if (a.qty !== b.qty) return (a.qty - b.qty) * dir;
-    return a.name.localeCompare(b.name, "ja");
+    return a.name.localeCompare(b.name, 'ja');
   });
 };
 
@@ -220,12 +213,12 @@ export const sortMetrics = (
  * // ]
  */
 export const monthDays = (m: YYYYMM): UniverseEntry[] => {
-  const start = dayjs(m + "-01");
+  const start = dayjs(m + '-01');
   const days = start.daysInMonth();
   const list: UniverseEntry[] = [];
 
   for (let d = 1; d <= days; d++) {
-    const dateStr = start.date(d).format("YYYY-MM-DD");
+    const dateStr = start.date(d).format('YYYY-MM-DD');
     list.push({
       id: `d_${dateStr}`,
       name: dateStr,
@@ -255,12 +248,12 @@ export const monthDays = (m: YYYYMM): UniverseEntry[] => {
  */
 export const monthsBetween = (from: YYYYMM, to: YYYYMM): YYYYMM[] => {
   const res: YYYYMM[] = [];
-  let cur = dayjs(from + "-01");
-  const end = dayjs(to + "-01");
+  let cur = dayjs(from + '-01');
+  const end = dayjs(to + '-01');
 
   while (cur.isSame(end) || cur.isBefore(end)) {
-    res.push(cur.format("YYYY-MM"));
-    cur = cur.add(1, "month");
+    res.push(cur.format('YYYY-MM'));
+    cur = cur.add(1, 'month');
   }
 
   return res;
@@ -288,10 +281,7 @@ export const monthsBetween = (from: YYYYMM, to: YYYYMM): YYYYMM[] => {
  * //   { id: 'd_2025-02-28', name: '2025-02-28', dateKey: '2025-02-28' }
  * // ]
  */
-export const allDaysInRange = (range: {
-  from: YYYYMM;
-  to: YYYYMM;
-}): UniverseEntry[] =>
+export const allDaysInRange = (range: { from: YYYYMM; to: YYYYMM }): UniverseEntry[] =>
   monthsBetween(range.from, range.to).flatMap((m) => monthDays(m));
 
 // ========================================
@@ -314,12 +304,12 @@ export const allDaysInRange = (range: {
  */
 export const axisLabel = (ax: Mode): string => {
   switch (ax) {
-    case "customer":
-      return "顧客";
-    case "item":
-      return "品名";
-    case "date":
-      return "日付";
+    case 'customer':
+      return '顧客';
+    case 'item':
+      return '品名';
+    case 'date':
+      return '日付';
     default:
       return ax;
   }
@@ -342,9 +332,9 @@ export const axisLabel = (ax: Mode): string => {
  * axesFromMode('date')     // ['date', 'customer', 'item']
  */
 export const axesFromMode = (m: Mode): [Mode, Mode, Mode] => {
-  if (m === "customer") return ["customer", "item", "date"];
-  if (m === "item") return ["item", "customer", "date"];
-  return ["date", "customer", "item"];
+  if (m === 'customer') return ['customer', 'item', 'date'];
+  if (m === 'item') return ['item', 'customer', 'date'];
+  return ['date', 'customer', 'item'];
 };
 
 /**
@@ -378,22 +368,20 @@ export const universeOf = (
   ax: Mode,
   q: SummaryQuery,
   customers: UniverseEntry[],
-  items: UniverseEntry[],
+  items: UniverseEntry[]
 ): UniverseEntry[] => {
   // 顧客軸の場合
-  if (ax === "customer") {
+  if (ax === 'customer') {
     return customers.map((c) => ({ id: c.id, name: c.name }));
   }
 
   // 品名軸の場合
-  if (ax === "item") {
+  if (ax === 'item') {
     return items.map((i) => ({ id: i.id, name: i.name }));
   }
 
   // 日付軸の場合：クエリの期間設定に基づいて日付リストを生成
-  const days = q.monthRange
-    ? allDaysInRange(q.monthRange)
-    : monthDays(q.month!);
+  const days = q.monthRange ? allDaysInRange(q.monthRange) : monthDays(q.month!);
 
   return days.map((d) => ({
     id: d.id,

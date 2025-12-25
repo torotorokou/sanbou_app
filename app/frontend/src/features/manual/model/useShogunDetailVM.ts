@@ -4,14 +4,10 @@
  * - アンカー処理
  * - ローディング状態管理
  */
-import { useEffect, useRef, useState } from "react";
-import { ShogunClient } from "../infrastructure/shogun.client";
-import type { ManualDetail } from "../domain/types/shogun.types";
-import {
-  ensureSectionAnchors,
-  smoothScrollToAnchor,
-  type TocItem,
-} from "@/shared";
+import { useEffect, useRef, useState } from 'react';
+import { ShogunClient } from '../infrastructure/shogun.client';
+import type { ManualDetail } from '../domain/types/shogun.types';
+import { ensureSectionAnchors, smoothScrollToAnchor, type TocItem } from '@/shared';
 
 export interface UseShogunDetailResult {
   data: ManualDetail | null;
@@ -31,7 +27,7 @@ export function useShogunDetail(id: string | undefined): UseShogunDetailResult {
   // データ取得
   useEffect(() => {
     if (!id) {
-      setError(new Error("ID is required"));
+      setError(new Error('ID is required'));
       setLoading(false);
       return;
     }

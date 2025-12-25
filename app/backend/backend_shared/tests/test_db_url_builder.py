@@ -8,6 +8,7 @@ especially with special characters in passwords.
 from __future__ import annotations
 
 import pytest
+
 from backend_shared.infra.db.url_builder import build_postgres_dsn
 
 
@@ -38,10 +39,7 @@ class TestBuildPostgresDsn:
         )
         # / は %2F にエンコードされる
         assert "pass%2Fword" in result
-        assert (
-            result
-            == "postgresql+psycopg://app_user:pass%2Fword@db.example.com:5432/production"
-        )
+        assert result == "postgresql+psycopg://app_user:pass%2Fword@db.example.com:5432/production"
 
     def test_password_with_at_sign(self):
         """パスワードに @ を含む場合のテスト"""
@@ -55,9 +53,7 @@ class TestBuildPostgresDsn:
         )
         # @ は %40 にエンコードされる
         assert "p%40ssword" in result
-        assert (
-            result == "postgresql+psycopg://testuser:p%40ssword@localhost:5432/testdb"
-        )
+        assert result == "postgresql+psycopg://testuser:p%40ssword@localhost:5432/testdb"
 
     def test_password_with_colon(self):
         """パスワードに : を含む場合のテスト"""
@@ -84,9 +80,7 @@ class TestBuildPostgresDsn:
             driver="psycopg",
         )
         # すべての特殊文字が正しくエンコードされる
-        assert (
-            "@" not in result.split("//")[1].split("@")[0]
-        )  # ユーザー情報部に生の @ がない
+        assert "@" not in result.split("//")[1].split("@")[0]  # ユーザー情報部に生の @ がない
         assert (
             "/" not in result.split("//")[1].split("@")[0].split(":")[1]
         )  # パスワード部に生の / がない
@@ -105,10 +99,7 @@ class TestBuildPostgresDsn:
         )
         # ユーザー名の @ も正しくエンコードされる
         assert "user%40domain.com" in result
-        assert (
-            result
-            == "postgresql+psycopg://user%40domain.com:simple@localhost:5432/mydb"
-        )
+        assert result == "postgresql+psycopg://user%40domain.com:simple@localhost:5432/mydb"
 
     def test_different_drivers(self):
         """異なるドライバーでのテスト"""

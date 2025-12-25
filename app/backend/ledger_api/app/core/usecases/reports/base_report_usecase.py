@@ -13,6 +13,9 @@ from datetime import date
 from io import BytesIO
 from typing import Any
 
+from fastapi import BackgroundTasks, UploadFile
+from fastapi.responses import JSONResponse
+
 from app.application.usecases.reports.report_generation_utils import (
     generate_pdf_from_excel,
 )
@@ -22,8 +25,7 @@ from backend_shared.infra.adapters.fastapi.error_handlers import DomainError
 from backend_shared.utils.date_filter_utils import (
     filter_by_period_from_max_date as shared_filter_by_period_from_max_date,
 )
-from fastapi import BackgroundTasks, UploadFile
-from fastapi.responses import JSONResponse
+
 
 logger = get_module_logger(__name__)
 
@@ -161,9 +163,7 @@ class BaseReportUseCase(ABC):
             result_df = self._execute_domain_logic_with_logging(df_formatted)
 
             # Step 6: Excel生成（サブクラス実装）
-            excel_bytes = self._generate_excel_with_logging(
-                result_df, domain_model.report_date
-            )
+            excel_bytes = self._generate_excel_with_logging(result_df, domain_model.report_date)
 
             if async_pdf and background_tasks is not None:
                 # 非同期モード: Excelのみ保存し、PDFはバックグラウンドで生成
@@ -186,9 +186,7 @@ class BaseReportUseCase(ABC):
                 )
 
                 # Step 9: レスポンス返却
-                return self._create_response(
-                    artifact_urls, domain_model.report_date, start_time
-                )
+                return self._create_response(artifact_urls, domain_model.report_date, start_time)
 
         except DomainError:
             raise
@@ -310,9 +308,7 @@ class BaseReportUseCase(ABC):
         )
         return result_df
 
-    def _generate_excel_with_logging(
-        self, result_df: Any, report_date: date
-    ) -> BytesIO:
+    def _generate_excel_with_logging(self, result_df: Any, report_date: date) -> BytesIO:
         """Step 6: Excel生成（ログ付き）"""
         step_start = time.time()
         logger.debug("Step 6: Excel生成開始")

@@ -6,6 +6,8 @@ APIレスポンスに依存しない、純粋なバリデーションロジッ�
 """
 
 import pandas as pd
+from fastapi import UploadFile
+
 from backend_shared.core.usecases.csv_validator.validation_result import (
     ValidationError,
     ValidationErrorType,
@@ -17,7 +19,6 @@ from backend_shared.utils.dataframe_validator import (
     check_missing_file,
     check_required_columns,
 )
-from fastapi import UploadFile
 
 
 class PureCSVValidator:
@@ -37,9 +38,7 @@ class PureCSVValidator:
         """
         self.required_columns = required_columns
 
-    def validate_missing_files(
-        self, file_inputs: dict[str, UploadFile | None]
-    ) -> ValidationResult:
+    def validate_missing_files(self, file_inputs: dict[str, UploadFile | None]) -> ValidationResult:
         """
         アップロードされていないファイルがあるかをチェック
 
@@ -79,9 +78,7 @@ class PureCSVValidator:
         Returns:
             ValidationResult: バリデーション結果
         """
-        ok, csv_type, missing_columns = check_required_columns(
-            dfs, self.required_columns
-        )
+        ok, csv_type, missing_columns = check_required_columns(dfs, self.required_columns)
 
         if not ok:
             file = file_inputs[csv_type]
@@ -131,9 +128,7 @@ class PureCSVValidator:
 
         return ValidationResult.success()
 
-    def validate_denpyou_date_consistency(
-        self, dfs: dict[str, pd.DataFrame]
-    ) -> ValidationResult:
+    def validate_denpyou_date_consistency(self, dfs: dict[str, pd.DataFrame]) -> ValidationResult:
         """
         すべてのファイルの「伝票日付」が一致しているかをチェック
 
@@ -171,9 +166,7 @@ class PureCSVValidator:
             ValidationResult: 統合されたバリデーション結果
         """
         # ファイル入力をOptional型に変換
-        optional_file_inputs: dict[str, UploadFile | None] = {
-            k: v for k, v in file_inputs.items()
-        }
+        optional_file_inputs: dict[str, UploadFile | None] = {k: v for k, v in file_inputs.items()}
 
         # 順次バリデーションを実行し、最初のエラーで停止
         validation_methods = [

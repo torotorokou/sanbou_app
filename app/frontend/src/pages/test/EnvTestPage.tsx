@@ -3,8 +3,8 @@
  * 環境変数が正しく読み込まれているかテストするページ
  */
 
-import React from "react";
-import { Card, Typography, Descriptions } from "antd";
+import React from 'react';
+import { Card, Typography, Descriptions } from 'antd';
 
 const { Title, Text } = Typography;
 
@@ -36,18 +36,18 @@ export default function EnvTestPage() {
         </Title>
         <pre
           style={{
-            background: "#f5f5f5",
+            background: '#f5f5f5',
             padding: 16,
             borderRadius: 4,
-            overflow: "auto",
+            overflow: 'auto',
           }}
         >
           {JSON.stringify(
             Object.entries(import.meta.env)
-              .filter(([key]) => key.startsWith("VITE_"))
+              .filter(([key]) => key.startsWith('VITE_'))
               .reduce((acc, [key, value]) => ({ ...acc, [key]: value }), {}),
             null,
-            2,
+            2
           )}
         </pre>
       </Card>

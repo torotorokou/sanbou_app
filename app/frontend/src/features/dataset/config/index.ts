@@ -5,10 +5,10 @@
  */
 
 // Types
-export type { DatasetKey, CsvTypeKey, CsvConfig, DatasetConfig } from "./types";
+export type { DatasetKey, CsvTypeKey, CsvConfig, DatasetConfig } from './types';
 
 // Dataset Registry
-export { DATASETS } from "./datasets";
+export { DATASETS } from './datasets';
 
 // Selectors (Query Functions)
 export {
@@ -24,4 +24,4 @@ export {
   getCsvColor,
   getAllDatasets,
   getDatasetLabel,
-} from "./selectors";
+} from './selectors';

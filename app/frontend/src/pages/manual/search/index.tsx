@@ -2,17 +2,17 @@
  * マニュアル検索ページ
  * FSD: ページ層は組み立てのみ
  */
-import React, { useCallback, useState } from "react";
-import styles from "./SearchPage.module.css";
-import { useManualSearch } from "@features/manual";
-import { ManualSearchBox } from "@features/manual";
-import { ManualResultList } from "@features/manual";
-import { ManualViewer } from "@features/manual";
-import { useManualDoc } from "@features/manual";
-import type { ManualDoc } from "@features/manual";
+import React, { useCallback, useState } from 'react';
+import styles from './SearchPage.module.css';
+import { useManualSearch } from '@features/manual';
+import { ManualSearchBox } from '@features/manual';
+import { ManualResultList } from '@features/manual';
+import { ManualViewer } from '@features/manual';
+import { useManualDoc } from '@features/manual';
+import type { ManualDoc } from '@features/manual';
 
 const ManualSearchPage: React.FC = () => {
-  const { setQuery, data, loading, error } = useManualSearch({ q: "" });
+  const { setQuery, data, loading, error } = useManualSearch({ q: '' });
   const { getUrl } = useManualDoc();
   const [selectedDoc, setSelectedDoc] = useState<ManualDoc | null>(null);
 
@@ -21,7 +21,7 @@ const ManualSearchPage: React.FC = () => {
       setQuery(searchQuery);
       setSelectedDoc(null);
     },
-    [setQuery],
+    [setQuery]
   );
 
   const handleSelectDoc = useCallback((doc: ManualDoc) => {
@@ -81,9 +81,7 @@ const ManualSearchPage: React.FC = () => {
                   >
                     ✕
                   </button>
-                  <span className={styles.viewerTitle}>
-                    ドキュメントプレビュー
-                  </span>
+                  <span className={styles.viewerTitle}>ドキュメントプレビュー</span>
                 </div>
                 <div className={styles.viewerContent}>
                   <ManualViewer
@@ -97,9 +95,7 @@ const ManualSearchPage: React.FC = () => {
               <div className={styles.emptyViewer}>
                 <div className={styles.emptyContent}>
                   <div className={styles.emptyIcon}>📄</div>
-                  <p className={styles.emptyText}>
-                    ドキュメントを選択してください
-                  </p>
+                  <p className={styles.emptyText}>ドキュメントを選択してください</p>
                   <p className={styles.emptyHint}>
                     検索結果からドキュメントをクリックすると、
                     <br />

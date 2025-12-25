@@ -7,10 +7,10 @@
  * - レスポンシブ対応のボタンスタイル
  */
 
-import React from "react";
-import { Space, Typography, Radio } from "antd";
-import type { CategoryKind } from "../../../shared/model/types";
-import styles from "./CategorySelector.module.css";
+import React from 'react';
+import { Space, Typography, Radio } from 'antd';
+import type { CategoryKind } from '../../../shared/model/types';
+import styles from './CategorySelector.module.css';
 
 interface CategorySelectorProps {
   value: CategoryKind;
@@ -20,10 +20,7 @@ interface CategorySelectorProps {
 /**
  * 種別選択コンポーネント
  */
-export const CategorySelector: React.FC<CategorySelectorProps> = ({
-  value,
-  onChange,
-}) => (
+export const CategorySelector: React.FC<CategorySelectorProps> = ({ value, onChange }) => (
   <Space direction="vertical" size={2} className={styles.container}>
     <Typography.Text type="secondary">種別</Typography.Text>
     <Radio.Group

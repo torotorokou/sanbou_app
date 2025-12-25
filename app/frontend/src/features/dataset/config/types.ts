@@ -5,21 +5,17 @@
  * ファイル名ヒント、プレビュー設定、アップロード先など）を統一管理する。
  */
 
-import type { CsvKind } from "../shared/types/csvKind";
+import type { CsvKind } from '../shared/types/csvKind';
 
-export type DatasetKey =
-  | "shogun_flash_debug"
-  | "shogun_flash"
-  | "shogun_final"
-  | "manifest";
+export type DatasetKey = 'shogun_flash_debug' | 'shogun_flash' | 'shogun_final' | 'manifest';
 
 export type CsvTypeKey =
-  | "receive"
-  | "shipment"
-  | "yard"
+  | 'receive'
+  | 'shipment'
+  | 'yard'
   | CsvKind
-  | "manifest_primary"
-  | "manifest_secondary";
+  | 'manifest_primary'
+  | 'manifest_secondary';
 
 /**
  * CSV設定（個別CSV種別の定義）
@@ -41,8 +37,8 @@ export type CsvConfig = {
   filenameRegex?: string;
   /** パース設定 */
   parse: {
-    encoding: "utf8" | "sjis";
-    delimiter: "," | "\t" | ";";
+    encoding: 'utf8' | 'sjis';
+    delimiter: ',' | '\t' | ';';
   };
   /** プレビュー表示設定 */
   preview?: {
@@ -73,7 +69,7 @@ export type DatasetConfig = {
     /** アップロード先パス */
     path: string;
     /** ペイロード形式 */
-    payloadShape?: "formData" | "json";
+    payloadShape?: 'formData' | 'json';
     /** 最大ファイル数 */
     maxFiles?: number;
   };

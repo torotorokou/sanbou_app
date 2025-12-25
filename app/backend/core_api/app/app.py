@@ -19,6 +19,8 @@ Core API - BFF/Facade for frontend
   - Presentation層: HTTPエンドポイント、リクエスト/レスポンス変換
 """
 
+from fastapi import FastAPI
+
 from app.api.routers.analysis.router import router as analysis_router
 from app.api.routers.announcements import router as announcements_router
 from app.api.routers.auth import router as auth_router
@@ -44,7 +46,6 @@ from app.config.settings import settings
 # 統一ロギング設定のインポート（backend_shared）
 # ==========================================
 from backend_shared.application.logging import setup_logging
-from fastapi import FastAPI
 
 # ==========================================
 # 統一ロギング設定の初期化
@@ -133,9 +134,7 @@ app.include_router(block_unit_price_router)  # BFF: ledger_api ブロック単�
 app.include_router(manual_router)  # BFF: manual_api マニュアル参照プロキシ
 app.include_router(chat_router)  # BFF: rag_api チャット機能プロキシ
 app.include_router(analysis_router)  # BFF: ledger_api 分析機能プロキシ (TODO: 未実装)
-app.include_router(
-    database_router
-)  # BFF: sql_api データベース操作プロキシ (TODO: 未実装)
+app.include_router(database_router)  # BFF: sql_api データベース操作プロキシ (TODO: 未実装)
 
 # --- その他 ---
 app.include_router(calendar_router)  # カレンダー: 営業日情報等

@@ -10,9 +10,9 @@
  * - 開発時にシードデータを使う場合: USE_LOCAL_ANNOUNCEMENT_REPOSITORY = true
  */
 
-import type { AnnouncementRepository } from "../ports/AnnouncementRepository";
-import { LocalAnnouncementRepository } from "./LocalAnnouncementRepository";
-import { HttpAnnouncementRepository } from "./HttpAnnouncementRepository";
+import type { AnnouncementRepository } from '../ports/AnnouncementRepository';
+import { LocalAnnouncementRepository } from './LocalAnnouncementRepository';
+import { HttpAnnouncementRepository } from './HttpAnnouncementRepository';
 
 /**
  * ローカルリポジトリを使用するかどうかのフラグ
@@ -29,10 +29,9 @@ const USE_LOCAL_ANNOUNCEMENT_REPOSITORY = false;
  *
  * ViewModelからはこのインスタンスをインポートして使用する。
  */
-export const announcementRepository: AnnouncementRepository =
-  USE_LOCAL_ANNOUNCEMENT_REPOSITORY
-    ? new LocalAnnouncementRepository()
-    : new HttpAnnouncementRepository();
+export const announcementRepository: AnnouncementRepository = USE_LOCAL_ANNOUNCEMENT_REPOSITORY
+  ? new LocalAnnouncementRepository()
+  : new HttpAnnouncementRepository();
 
 /**
  * 開発モードかどうか

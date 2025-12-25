@@ -73,8 +73,14 @@
   border-bottom: 1px solid #f0f0f0;
 }
 
-.cell:nth-child(7n) { border-right: none; }
-.cell:nth-last-child(-n+7) { border-bottom: none; }
+.cell:nth-child(7n) {
+  border-right: none;
+}
+.cell:nth-last-child(-n + 7) {
+  border-bottom: none;
+}
 
 /* ensure last row's weekCell has no bottom border */
-.weekCol > .weekCell:nth-last-child(-n+1) { border-bottom: none; }
+.weekCol > .weekCell:nth-last-child(-n + 1) {
+  border-bottom: none;
+}

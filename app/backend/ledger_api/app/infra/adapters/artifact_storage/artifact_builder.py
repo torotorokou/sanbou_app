@@ -13,9 +13,11 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal
 
+from fastapi.responses import JSONResponse
+
 from backend_shared.application.logging import get_module_logger
 from backend_shared.utils.datetime_utils import format_datetime_iso, now_in_app_timezone
-from fastapi.responses import JSONResponse
+
 
 if TYPE_CHECKING:
     from app.core.usecases.reports.base_generators import BaseReportGenerator
@@ -28,6 +30,7 @@ from app.infra.adapters.file_processing.pdf_conversion import (
     PdfConversionError,
     convert_excel_to_pdf,
 )
+
 
 logger = get_module_logger(__name__)
 

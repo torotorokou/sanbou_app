@@ -28,9 +28,7 @@ def _view_exists(schema: str, view: str) -> bool:
         return False
     conn = op.get_bind()
     qualified = f"{schema}.{view}"
-    result = conn.scalar(
-        sa.text("SELECT to_regclass(:q) IS NOT NULL"), {"q": qualified}
-    )
+    result = conn.scalar(sa.text("SELECT to_regclass(:q) IS NOT NULL"), {"q": qualified})
     return bool(result)
 
 

@@ -5,6 +5,10 @@ Analysis Router - BFF for analysis endpoints
 
 import os
 
+from fastapi import APIRouter, Depends
+from sqlalchemy import text
+from sqlalchemy.orm import Session
+
 from app.api.schemas import (
     CustomerChurnAnalyzeRequest,
     CustomerChurnAnalyzeResponse,
@@ -16,9 +20,6 @@ from app.config.di_providers import get_analyze_customer_churn_uc, get_db
 from app.core.usecases.customer_churn import AnalyzeCustomerChurnUseCase
 from backend_shared.application.logging import create_log_context, get_module_logger
 from backend_shared.db.names import SCHEMA_REF, V_SALES_REP, fq
-from fastapi import APIRouter, Depends
-from sqlalchemy import text
-from sqlalchemy.orm import Session
 
 logger = get_module_logger(__name__)
 
@@ -46,9 +47,7 @@ def get_sales_reps(db: Session = Depends(get_db)):
     """
     logger.info("Fetching sales rep list")
 
-    sql = text(
-        f"SELECT rep_id, rep_name FROM {fq(SCHEMA_REF, V_SALES_REP)} ORDER BY rep_id"
-    )
+    sql = text(f"SELECT rep_id, rep_name FROM {fq(SCHEMA_REF, V_SALES_REP)} ORDER BY rep_id")
     result = db.execute(sql)
     rows = result.fetchall()
 
@@ -104,9 +103,7 @@ def analyze_customer_churn(
 
     logger.info(
         "Found lost customers",
-        extra=create_log_context(
-            operation="get_lost_customers", count=len(lost_customers)
-        ),
+        extra=create_log_context(operation="get_lost_customers", count=len(lost_customers)),
     )
 
     # Domain Entity -> DTO 変換

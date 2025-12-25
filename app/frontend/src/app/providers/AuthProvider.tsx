@@ -10,10 +10,10 @@
  * - 認証状態をContextで子コンポーネントに提供
  */
 
-import React, { createContext, useContext, useEffect, useState } from "react";
-import { Spin, Result, Button } from "antd";
-import type { AuthUser } from "@features/authStatus/domain/authUser";
-import { AuthHttpRepository } from "@features/authStatus/infrastructure/AuthHttpRepository";
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { Spin, Result, Button } from 'antd';
+import type { AuthUser } from '@features/authStatus/domain/authUser';
+import { AuthHttpRepository } from '@features/authStatus/infrastructure/AuthHttpRepository';
 
 /**
  * 認証コンテキストの型
@@ -37,7 +37,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider");
+    throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
 };
@@ -65,10 +65,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const fetchedUser = await repository.fetchCurrentUser();
       setUser(fetchedUser);
     } catch (e) {
-      const errorMessage =
-        e instanceof Error ? e.message : "ユーザー情報の取得に失敗しました";
+      const errorMessage = e instanceof Error ? e.message : 'ユーザー情報の取得に失敗しました';
       setError(errorMessage);
-      console.error("認証エラー:", e);
+      console.error('認証エラー:', e);
     } finally {
       setIsInitializing(false);
     }
@@ -83,16 +82,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return (
       <div
         style={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          height: "100vh",
-          flexDirection: "column",
-          gap: "16px",
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '100vh',
+          flexDirection: 'column',
+          gap: '16px',
         }}
       >
         <Spin size="large" />
-        <div style={{ color: "#666" }}>認証情報を確認しています...</div>
+        <div style={{ color: '#666' }}>認証情報を確認しています...</div>
       </div>
     );
   }
@@ -102,11 +101,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return (
       <div
         style={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          height: "100vh",
-          padding: "24px",
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '100vh',
+          padding: '24px',
         }}
       >
         <Result
@@ -130,7 +129,5 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     refetch: fetchUser,
   };
 
-  return (
-    <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>;
 };

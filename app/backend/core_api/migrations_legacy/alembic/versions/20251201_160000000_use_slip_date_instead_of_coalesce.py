@@ -122,16 +122,12 @@ def upgrade():
     """
     )
 
-    print(
-        "[mart.v_sales_tree_daily] Recreated - automatically uses slip_date via detail_base."
-    )
+    print("[mart.v_sales_tree_daily] Recreated - automatically uses slip_date via detail_base.")
 
     # ============================================================
     # 1.6. mart.v_customer_sales_daily の再作成 (v_sales_tree_daily を参照)
     # ============================================================
-    print(
-        "[mart.v_customer_sales_daily] Recreating view (references v_sales_tree_daily)..."
-    )
+    print("[mart.v_customer_sales_daily] Recreating view (references v_sales_tree_daily)...")
 
     op.execute(
         """
@@ -226,9 +222,7 @@ def upgrade():
     )
 
     print("[mart.mv_sales_tree_daily] Updated - now using slip_date only.")
-    print(
-        "[info] Run 'REFRESH MATERIALIZED VIEW mart.mv_sales_tree_daily;' to populate data."
-    )
+    print("[info] Run 'REFRESH MATERIALIZED VIEW mart.mv_sales_tree_daily;' to populate data.")
 
     # ============================================================
     # 3. sandbox.v_sales_tree_detail_base の更新
@@ -363,9 +357,7 @@ def downgrade():
     # ============================================================
     # 1. mart.v_sales_tree_detail_base を元に戻す
     # ============================================================
-    print(
-        "[mart.v_sales_tree_detail_base] Reverting to COALESCE(sales_date, slip_date)..."
-    )
+    print("[mart.v_sales_tree_detail_base] Reverting to COALESCE(sales_date, slip_date)...")
 
     op.execute(
         """
@@ -450,9 +442,7 @@ def downgrade():
     # ============================================================
     # 1.6. mart.v_customer_sales_daily の再作成
     # ============================================================
-    print(
-        "[mart.v_customer_sales_daily] Recreating view (references v_sales_tree_daily)..."
-    )
+    print("[mart.v_customer_sales_daily] Recreating view (references v_sales_tree_daily)...")
 
     op.execute(
         """
@@ -545,9 +535,7 @@ def downgrade():
     # ============================================================
     # 3. sandbox.v_sales_tree_detail_base を元に戻す
     # ============================================================
-    print(
-        "[sandbox.v_sales_tree_detail_base] Reverting to COALESCE(sales_date, slip_date)..."
-    )
+    print("[sandbox.v_sales_tree_detail_base] Reverting to COALESCE(sales_date, slip_date)...")
 
     op.execute(
         """

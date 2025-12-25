@@ -42,9 +42,7 @@ def upgrade() -> None:
     # 4. raw.*_raw テーブルの FK を log.upload_file.id に向け直し
     #    (receive_raw, yard_raw, shipment_raw が log.upload_file を参照するように変更)
 
-    op.drop_constraint(
-        "fk_receive_raw_file_id", "receive_raw", schema="raw", type_="foreignkey"
-    )
+    op.drop_constraint("fk_receive_raw_file_id", "receive_raw", schema="raw", type_="foreignkey")
     op.create_foreign_key(
         "fk_receive_raw_file_id",
         "receive_raw",
@@ -56,9 +54,7 @@ def upgrade() -> None:
         ondelete="CASCADE",
     )
 
-    op.drop_constraint(
-        "fk_yard_raw_file_id", "yard_raw", schema="raw", type_="foreignkey"
-    )
+    op.drop_constraint("fk_yard_raw_file_id", "yard_raw", schema="raw", type_="foreignkey")
     op.create_foreign_key(
         "fk_yard_raw_file_id",
         "yard_raw",
@@ -70,9 +66,7 @@ def upgrade() -> None:
         ondelete="CASCADE",
     )
 
-    op.drop_constraint(
-        "fk_shipment_raw_file_id", "shipment_raw", schema="raw", type_="foreignkey"
-    )
+    op.drop_constraint("fk_shipment_raw_file_id", "shipment_raw", schema="raw", type_="foreignkey")
     op.create_foreign_key(
         "fk_shipment_raw_file_id",
         "shipment_raw",
@@ -87,9 +81,7 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     # FK を raw.upload_file 参照に戻す
-    op.drop_constraint(
-        "fk_shipment_raw_file_id", "shipment_raw", schema="raw", type_="foreignkey"
-    )
+    op.drop_constraint("fk_shipment_raw_file_id", "shipment_raw", schema="raw", type_="foreignkey")
     op.create_foreign_key(
         "fk_shipment_raw_file_id",
         "shipment_raw",
@@ -101,9 +93,7 @@ def downgrade() -> None:
         ondelete="CASCADE",
     )
 
-    op.drop_constraint(
-        "fk_yard_raw_file_id", "yard_raw", schema="raw", type_="foreignkey"
-    )
+    op.drop_constraint("fk_yard_raw_file_id", "yard_raw", schema="raw", type_="foreignkey")
     op.create_foreign_key(
         "fk_yard_raw_file_id",
         "yard_raw",
@@ -115,9 +105,7 @@ def downgrade() -> None:
         ondelete="CASCADE",
     )
 
-    op.drop_constraint(
-        "fk_receive_raw_file_id", "receive_raw", schema="raw", type_="foreignkey"
-    )
+    op.drop_constraint("fk_receive_raw_file_id", "receive_raw", schema="raw", type_="foreignkey")
     op.create_foreign_key(
         "fk_receive_raw_file_id",
         "receive_raw",

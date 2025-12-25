@@ -10,8 +10,9 @@ IngestPortの実装。PostgreSQL/SQLAlchemyを使用してデータ永続化。
 
 from datetime import date as date_type
 
-from backend_shared.application.logging import create_log_context, get_module_logger
 from sqlalchemy.orm import Session
+
+from backend_shared.application.logging import create_log_context, get_module_logger
 
 logger = get_module_logger(__name__)
 
@@ -65,9 +66,7 @@ class IngestRepository:
         """
         logger.info(
             "insert_reservation (stub)",
-            extra=create_log_context(
-                operation="insert_reservation", date=str(date), trucks=trucks
-            ),
+            extra=create_log_context(operation="insert_reservation", date=str(date), trucks=trucks),
         )
         # TODO: 実際のDB操作実装
         return {"date": date, "trucks": trucks}

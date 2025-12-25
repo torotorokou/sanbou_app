@@ -11,7 +11,7 @@ export type FileState = {
   /** 必須ファイルか */
   required: boolean;
   /** 検証状態 */
-  status: "unknown" | "valid" | "invalid";
+  status: 'unknown' | 'valid' | 'invalid';
   /** 検証エラー時の欠落ヘッダ一覧（optional） */
   missingHeaders?: string[];
 };

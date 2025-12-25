@@ -13,9 +13,7 @@ MIN_FORECAST_DAYS = 1  # 予測可能な最小日数
 PREDICTION_PRECISION = 2  # 予測値の小数点以下桁数
 
 
-def validate_forecast_date_range(
-    from_date: date_type, to_date: date_type
-) -> tuple[bool, str]:
+def validate_forecast_date_range(from_date: date_type, to_date: date_type) -> tuple[bool, str]:
     """
     Validate forecast date range with business rules.
 

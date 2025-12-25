@@ -4,10 +4,10 @@
  * CalendarCore を使って日ごとの受入量データを表示
  */
 
-import React from "react";
-import dayjs from "dayjs";
-import { CalendarCore, useContainerSize } from "@/features/calendar";
-import type { CalendarCell } from "@/features/calendar/domain/types";
+import React from 'react';
+import dayjs from 'dayjs';
+import { CalendarCore, useContainerSize } from '@/features/calendar';
+import type { CalendarCell } from '@/features/calendar/domain/types';
 
 interface UkeireCell extends CalendarCell {
   value?: number;
@@ -60,20 +60,17 @@ export const UkeireCalendar: React.FC<UkeireCalendarProps> = ({
   style,
 }) => {
   // 日データをマップ化
-  const dayMap = React.useMemo(
-    () => new Map(days.map((d) => [d.date, d])),
-    [days],
-  );
+  const dayMap = React.useMemo(() => new Map(days.map((d) => [d.date, d])), [days]);
 
   // コンテナサイズ測定（動的行高さ用）
   const [rootRef, size] = useContainerSize();
-  const [computedRowHeight, setComputedRowHeight] = React.useState<
-    number | undefined
-  >(fixedRowHeight);
+  const [computedRowHeight, setComputedRowHeight] = React.useState<number | undefined>(
+    fixedRowHeight
+  );
 
   // 行高さ計算
   React.useEffect(() => {
-    if (typeof fixedRowHeight === "number") {
+    if (typeof fixedRowHeight === 'number') {
       setComputedRowHeight(fixedRowHeight);
       return;
     }
@@ -81,13 +78,11 @@ export const UkeireCalendar: React.FC<UkeireCalendarProps> = ({
     if (!size) return;
 
     // legend 要素の高さを取得
-    const legendEl = rootRef.current?.querySelector(
-      "[data-ukeire-legend]",
-    ) as HTMLElement | null;
+    const legendEl = rootRef.current?.querySelector('[data-ukeire-legend]') as HTMLElement | null;
     const legendH = legendEl ? legendEl.offsetHeight : 0;
 
     // 週数計算（月曜始まり）
-    const first = dayjs(month + "-01");
+    const first = dayjs(month + '-01');
     const startDow = (first.day() + 6) % 7; // 月曜始まりに変換
     const daysInMonth = first.daysInMonth();
     const weeks = Math.ceil((startDow + daysInMonth) / 7);
@@ -106,7 +101,7 @@ export const UkeireCalendar: React.FC<UkeireCalendarProps> = ({
    * グリッドに配置するだけのシンプルなロジック
    */
   const cells = React.useMemo(() => {
-    const first = dayjs(month + "-01");
+    const first = dayjs(month + '-01');
     // 月曜始まりに変換: (day + 6) % 7
     const startDow = (first.day() + 6) % 7;
     const daysInMonth = first.daysInMonth();
@@ -115,8 +110,8 @@ export const UkeireCalendar: React.FC<UkeireCalendarProps> = ({
 
     const result: UkeireCell[] = [];
     for (let i = 0; i < total; i++) {
-      const d = first.add(i - startDow, "day");
-      const iso = d.format("YYYY-MM-DD");
+      const d = first.add(i - startDow, 'day');
+      const iso = d.format('YYYY-MM-DD');
       const inMonth = d.month() === first.month();
       const dayInfo = dayMap.get(iso);
 
@@ -139,9 +134,9 @@ export const UkeireCalendar: React.FC<UkeireCalendarProps> = ({
       ref={rootRef}
       className={className}
       style={{
-        display: "flex",
-        flexDirection: "column",
-        height: "100%",
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100%',
         minHeight: 0,
         ...style,
       }}
@@ -151,53 +146,42 @@ export const UkeireCalendar: React.FC<UkeireCalendarProps> = ({
         <div
           data-ukeire-legend
           style={{
-            display: "flex",
+            display: 'flex',
             gap: 6,
-            justifyContent: "center",
+            justifyContent: 'center',
             marginBottom: 4,
-            flexWrap: "wrap",
+            flexWrap: 'wrap',
             flexShrink: 0,
           }}
         >
           {(() => {
-            const order: Array<"business" | "holiday" | "closed"> = [
-              "business",
-              "holiday",
-              "closed",
+            const order: Array<'business' | 'holiday' | 'closed'> = [
+              'business',
+              'holiday',
+              'closed',
             ];
-            const legendMap = new Map<
-              string,
-              { label: string; color?: string | null }
-            >();
-            legend.forEach((l) =>
-              legendMap.set(l.key, { label: l.label, color: l.color }),
-            );
-            const today = dayjs().format("YYYY-MM-DD");
+            const legendMap = new Map<string, { label: string; color?: string | null }>();
+            legend.forEach((l) => legendMap.set(l.key, { label: l.label, color: l.color }));
+            const today = dayjs().format('YYYY-MM-DD');
 
             return order.map((key) => {
               const info = legendMap.get(key);
               if (!info) return null;
 
-              const total = cells.filter(
-                (c) => c.status === key && c.inMonth,
-              ).length;
+              const total = cells.filter((c) => c.status === key && c.inMonth).length;
               const remaining = cells.filter(
-                (c) => c.status === key && c.inMonth && c.date >= today,
+                (c) => c.status === key && c.inMonth && c.date >= today
               ).length;
               const color =
                 info.color ??
-                (key === "business"
-                  ? "#52c41a"
-                  : key === "holiday"
-                    ? "#ff85c0"
-                    : "#cf1322");
+                (key === 'business' ? '#52c41a' : key === 'holiday' ? '#ff85c0' : '#cf1322');
 
               return (
                 <span
                   key={key}
                   style={{
-                    display: "inline-flex",
-                    alignItems: "center",
+                    display: 'inline-flex',
+                    alignItems: 'center',
                     gap: 6,
                   }}
                 >
@@ -211,8 +195,8 @@ export const UkeireCalendar: React.FC<UkeireCalendarProps> = ({
                   />
                   <span
                     style={{
-                      color: "#595959",
-                      fontSize: "clamp(12px, 0.7vw, 13px)",
+                      color: '#595959',
+                      fontSize: 'clamp(12px, 0.7vw, 13px)',
                       fontWeight: 600,
                     }}
                   >
@@ -229,8 +213,8 @@ export const UkeireCalendar: React.FC<UkeireCalendarProps> = ({
         style={{
           flex: 1,
           minHeight: 0,
-          display: "flex",
-          flexDirection: "column",
+          display: 'flex',
+          flexDirection: 'column',
         }}
       >
         <CalendarCore
@@ -239,11 +223,9 @@ export const UkeireCalendar: React.FC<UkeireCalendarProps> = ({
           cells={cells}
           renderCell={(cell: UkeireCell) => {
             const d = dayjs(cell.date);
-            const isToday = cell.date === dayjs().format("YYYY-MM-DD");
-            const bg = isToday
-              ? "#fadb14"
-              : (cell.color ?? defaultColorByStatus(cell.status));
-            const fg = isToday ? "#000" : bg ? "#fff" : "#333";
+            const isToday = cell.date === dayjs().format('YYYY-MM-DD');
+            const bg = isToday ? '#fadb14' : (cell.color ?? defaultColorByStatus(cell.status));
+            const fg = isToday ? '#000' : bg ? '#fff' : '#333';
             const dayNum = d.date();
 
             return (
@@ -253,13 +235,13 @@ export const UkeireCalendar: React.FC<UkeireCalendarProps> = ({
                   width: 22,
                   height: 22,
                   borderRadius: 6,
-                  background: bg ?? "transparent",
+                  background: bg ?? 'transparent',
                   color: fg,
-                  fontSize: "clamp(10px, 0.7vw, 13px)",
+                  fontSize: 'clamp(10px, 0.7vw, 13px)',
                   fontWeight: 700,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                   opacity: cell.inMonth ? 1 : 0.35,
                 }}
               >
@@ -275,9 +257,9 @@ export const UkeireCalendar: React.FC<UkeireCalendarProps> = ({
 };
 
 function defaultColorByStatus(status?: string): string | undefined {
-  if (status === "business") return "#52c41a";
-  if (status === "holiday") return "#ff85c0";
-  if (status === "closed") return "#cf1322";
+  if (status === 'business') return '#52c41a';
+  if (status === 'holiday') return '#ff85c0';
+  if (status === 'closed') return '#cf1322';
   return undefined;
 }
 

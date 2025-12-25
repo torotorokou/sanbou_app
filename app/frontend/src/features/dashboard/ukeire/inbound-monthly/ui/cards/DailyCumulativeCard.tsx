@@ -3,9 +3,9 @@
  * 日次累積搬入量を表示するカード
  */
 
-import React, { useState } from "react";
-import { Card, Typography, Space, Switch } from "antd";
-import { InfoTooltip } from "@/features/dashboard/ukeire/shared/ui/InfoTooltip";
+import React, { useState } from 'react';
+import { Card, Typography, Space, Switch } from 'antd';
+import { InfoTooltip } from '@/features/dashboard/ukeire/shared/ui/InfoTooltip';
 import {
   AreaChart,
   Area,
@@ -15,11 +15,11 @@ import {
   Tooltip as RTooltip,
   Legend,
   Line,
-} from "recharts";
-import { COLORS, FONT } from "@/features/dashboard/ukeire/domain/constants";
-import { ChartFrame } from "@/features/dashboard/ukeire/shared/ui/ChartFrame";
-import { SingleLineLegend } from "@/features/dashboard/ukeire/shared/ui/SingleLineLegend";
-import dayjs from "dayjs";
+} from 'recharts';
+import { COLORS, FONT } from '@/features/dashboard/ukeire/domain/constants';
+import { ChartFrame } from '@/features/dashboard/ukeire/shared/ui/ChartFrame';
+import { SingleLineLegend } from '@/features/dashboard/ukeire/shared/ui/SingleLineLegend';
+import dayjs from 'dayjs';
 
 export type DailyCumulativeCardProps = {
   cumData: {
@@ -29,12 +29,12 @@ export type DailyCumulativeCardProps = {
     prevMonthCumulative: number;
     prevYearCumulative: number;
   }[];
-  variant?: "standalone" | "embed";
+  variant?: 'standalone' | 'embed';
 };
 
 export const DailyCumulativeCard: React.FC<DailyCumulativeCardProps> = ({
   cumData,
-  variant = "standalone",
+  variant = 'standalone',
 }) => {
   const [showPrevMonth, setShowPrevMonth] = useState(false);
   const [showPrevYear, setShowPrevYear] = useState(false);
@@ -69,48 +69,40 @@ export const DailyCumulativeCard: React.FC<DailyCumulativeCardProps> = ({
     const prevYear = data.prevYearCumulative ?? 0;
 
     // 差分計算
-    const prevMonthDiff =
-      actual !== 0 ? ((prevMonth - actual) / actual) * 100 : 0;
-    const prevYearDiff =
-      actual !== 0 ? ((prevYear - actual) / actual) * 100 : 0;
+    const prevMonthDiff = actual !== 0 ? ((prevMonth - actual) / actual) * 100 : 0;
+    const prevYearDiff = actual !== 0 ? ((prevYear - actual) / actual) * 100 : 0;
 
     const formatDiff = (diff: number) => {
-      const sign = diff >= 0 ? "+" : "-";
+      const sign = diff >= 0 ? '+' : '-';
       const absPct = Math.abs(diff).toFixed(1);
       return `(${sign}${absPct}%)`;
     };
 
     const weekday = data?.yyyyMMdd
-      ? ["日", "月", "火", "水", "木", "金", "土"][dayjs(data.yyyyMMdd).day()]
+      ? ['日', '月', '火', '水', '木', '金', '土'][dayjs(data.yyyyMMdd).day()]
       : null;
-    const baseLabel = label ? `${label}日` : "";
-    const labelText = baseLabel
-      ? `${baseLabel}${weekday ? ` (${weekday})` : ""}`
-      : "";
+    const baseLabel = label ? `${label}日` : '';
+    const labelText = baseLabel ? `${baseLabel}${weekday ? ` (${weekday})` : ''}` : '';
 
     return (
       <div
         style={{
-          backgroundColor: "rgba(255, 255, 255, 0.96)",
-          border: "1px solid #ccc",
-          padding: "8px 10px",
+          backgroundColor: 'rgba(255, 255, 255, 0.96)',
+          border: '1px solid #ccc',
+          padding: '8px 10px',
           fontSize: FONT.size,
           borderRadius: 4,
         }}
       >
-        <div style={{ fontWeight: 600, marginBottom: 4, color: "#262626" }}>
-          {labelText}
-        </div>
-        <div style={{ color: COLORS.actual, marginBottom: 2 }}>
-          累積実績: {actual.toFixed(1)}t
-        </div>
+        <div style={{ fontWeight: 600, marginBottom: 4, color: '#262626' }}>{labelText}</div>
+        <div style={{ color: COLORS.actual, marginBottom: 2 }}>累積実績: {actual.toFixed(1)}t</div>
         {showPrevMonth && (
-          <div style={{ color: "#40a9ff", marginBottom: 2 }}>
+          <div style={{ color: '#40a9ff', marginBottom: 2 }}>
             先月: {prevMonth.toFixed(1)}t {formatDiff(prevMonthDiff)}
           </div>
         )}
         {showPrevYear && (
-          <div style={{ color: "#fa8c16" }}>
+          <div style={{ color: '#fa8c16' }}>
             前年: {prevYear.toFixed(1)}t {formatDiff(prevYearDiff)}
           </div>
         )}
@@ -121,48 +113,37 @@ export const DailyCumulativeCard: React.FC<DailyCumulativeCardProps> = ({
   const Inner = () => (
     <div
       style={{
-        display: "flex",
-        flexDirection: "column",
-        height: "100%",
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100%',
         minHeight: 0,
       }}
     >
       <Space
         align="baseline"
         style={{
-          justifyContent: "space-between",
-          width: "100%",
+          justifyContent: 'space-between',
+          width: '100%',
           paddingBottom: 4,
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <Typography.Title level={5} style={{ margin: 0, fontSize: 13 }}>
             日次累積搬入量
           </Typography.Title>
           <InfoTooltip />
         </div>
         <Space size="small">
-          <span style={{ color: "#8c8c8c" }}>先月</span>
-          <Switch
-            size="small"
-            checked={showPrevMonth}
-            onChange={setShowPrevMonth}
-          />
-          <span style={{ color: "#8c8c8c" }}>前年</span>
-          <Switch
-            size="small"
-            checked={showPrevYear}
-            onChange={setShowPrevYear}
-          />
+          <span style={{ color: '#8c8c8c' }}>先月</span>
+          <Switch size="small" checked={showPrevMonth} onChange={setShowPrevMonth} />
+          <span style={{ color: '#8c8c8c' }}>前年</span>
+          <Switch size="small" checked={showPrevYear} onChange={setShowPrevYear} />
         </Space>
       </Space>
 
       <div style={{ flex: 1, minHeight: 0 }}>
         <ChartFrame style={{ flex: 1, minHeight: 0 }}>
-          <AreaChart
-            data={cumData}
-            margin={{ left: 0, right: 8, top: 6, bottom: 12 }}
-          >
+          <AreaChart data={cumData} margin={{ left: 0, right: 8, top: 6, bottom: 12 }}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis
               dataKey="label"
@@ -170,11 +151,11 @@ export const DailyCumulativeCard: React.FC<DailyCumulativeCardProps> = ({
                 const n = Number(String(v));
                 if (Number.isNaN(n)) return String(v);
                 // 奇数のみ表示
-                return n % 2 === 1 ? String(v) : "";
+                return n % 2 === 1 ? String(v) : '';
               }}
               fontSize={FONT.size}
             />
-            <YAxis unit="t" domain={[0, "auto"]} fontSize={FONT.size} />
+            <YAxis unit="t" domain={[0, 'auto']} fontSize={FONT.size} />
             <RTooltip content={<CustomTooltip />} />
             <Area
               type="monotone"
@@ -206,9 +187,7 @@ export const DailyCumulativeCard: React.FC<DailyCumulativeCardProps> = ({
             )}
             <Legend
               content={(props: unknown) => (
-                <SingleLineLegend
-                  {...(props as Parameters<typeof SingleLineLegend>[0])}
-                />
+                <SingleLineLegend {...(props as Parameters<typeof SingleLineLegend>[0])} />
               )}
               verticalAlign="bottom"
             />
@@ -218,16 +197,16 @@ export const DailyCumulativeCard: React.FC<DailyCumulativeCardProps> = ({
     </div>
   );
 
-  if (variant === "embed") return <Inner />;
+  if (variant === 'embed') return <Inner />;
   return (
     <Card
       variant="outlined"
       styles={{
         body: {
           padding: 12,
-          height: "100%",
-          display: "flex",
-          flexDirection: "column",
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
           minHeight: 0,
         },
       }}

@@ -1,5 +1,5 @@
 // src/theme/colorMaps.ts
-import { customTokens } from "./tokens";
+import { customTokens } from './tokens';
 
 // CSV関連のカラーマップ
 export const csvTypeColors = {
@@ -27,9 +27,9 @@ export const revenueGradientMap = {
 
 // 顧客分析カラーマップ（売上レベル別）
 export const customerAnalysisColors = [
-  { threshold: 300, color: customTokens.chartRed, label: "300万円以上" },
-  { threshold: 100, color: customTokens.chartOrange, label: "100-300万円" },
-  { threshold: 0, color: customTokens.chartBlue, label: "100万円未満" },
+  { threshold: 300, color: customTokens.chartRed, label: '300万円以上' },
+  { threshold: 100, color: customTokens.chartOrange, label: '100-300万円' },
+  { threshold: 0, color: customTokens.chartBlue, label: '100万円未満' },
 ];
 
 // 検証結果カラーマップ

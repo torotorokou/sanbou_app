@@ -1,8 +1,10 @@
 import pandas as pd
+
 from backend_shared.application.logging import get_module_logger
 from backend_shared.utils.dataframe_utils import clean_na_strings
 
 from .value_setter import set_value_fast_safe
+
 
 logger = get_module_logger(__name__)
 
@@ -34,9 +36,7 @@ def write_sum_to_target_cell(
     cleaned_values = df[value_column].apply(clean_na_strings)
     total = pd.to_numeric(cleaned_values, errors="coerce").sum()
 
-    df = set_value_fast_safe(
-        df, target_keys, target_values, total, value_col=value_column
-    )
+    df = set_value_fast_safe(df, target_keys, target_values, total, value_col=value_column)
 
     return df
 
@@ -94,9 +94,7 @@ def summary_apply(
     agg_df = data_df.groupby(key_cols, as_index=False)[[source_col]].sum()
 
     # ② 安全にマージ
-    merged_df = safe_merge_by_keys(
-        master_df=master_csv.copy(), data_df=agg_df, key_cols=key_cols
-    )
+    merged_df = safe_merge_by_keys(master_df=master_csv.copy(), data_df=agg_df, key_cols=key_cols)
 
     # ③ 値を書き込み（NaN以外）
     updated_df = summary_update_column_if_notna(merged_df, source_col, target_col)
@@ -150,9 +148,7 @@ def safe_merge_by_keys(
     return final_df
 
 
-def summary_update_column_if_notna(
-    df, source_col: str, target_col: str
-) -> pd.DataFrame:
+def summary_update_column_if_notna(df, source_col: str, target_col: str) -> pd.DataFrame:
     mask = df[source_col].notna()
     df.loc[mask, target_col] = df.loc[mask, source_col]
     return df

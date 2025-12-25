@@ -1,6 +1,6 @@
-import React, { useState } from "react";
-import { Modal } from "antd";
-import { useResponsive } from "@/shared";
+import React, { useState } from 'react';
+import { Modal } from 'antd';
+import { useResponsive } from '@/shared';
 
 type Props = {
   url: string;
@@ -17,25 +17,15 @@ type Props = {
  * - モーダルサイズを段階的に決定（4段階レスポンシブ）
  */
 
-const ReportSampleThumbnail: React.FC<Props> = ({
-  url,
-  width = "100%",
-  height = "160px",
-}) => {
+const ReportSampleThumbnail: React.FC<Props> = ({ url, width = '100%', height = '160px' }) => {
   const [visible, setVisible] = useState(false);
   const [imgSize, setImgSize] = useState({ width: 0, height: 0 });
 
   // responsive: flagsベースの段階スイッチ
-  const {
-    width: viewportWidth,
-    height: viewportHeight,
-    flags,
-  } = useResponsive();
+  const { width: viewportWidth, height: viewportHeight, flags } = useResponsive();
 
   // 実画像サイズ取得
-  const handleImageLoad = (
-    e: React.SyntheticEvent<HTMLImageElement, Event>,
-  ) => {
+  const handleImageLoad = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
     const { naturalWidth, naturalHeight } = e.currentTarget;
     setImgSize({ width: naturalWidth, height: naturalHeight });
   };
@@ -77,22 +67,22 @@ const ReportSampleThumbnail: React.FC<Props> = ({
         style={{
           width,
           height,
-          overflow: "hidden",
+          overflow: 'hidden',
           borderRadius: 4,
-          background: "#f9f9f9",
-          border: "1px solid #ddd",
-          cursor: "pointer",
+          background: '#f9f9f9',
+          border: '1px solid #ddd',
+          cursor: 'pointer',
         }}
       >
         <img
           src={url}
           alt="帳票サンプル"
           style={{
-            width: "100%",
-            height: "100%",
-            objectFit: "cover",
-            objectPosition: "top",
-            display: "block",
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            objectPosition: 'top',
+            display: 'block',
           }}
         />
       </div>
@@ -109,11 +99,11 @@ const ReportSampleThumbnail: React.FC<Props> = ({
           body: {
             padding: 0,
             margin: 0,
-            background: "#fff",
+            background: '#fff',
             height: displayHeight,
-            overflow: "hidden",
-            position: "relative",
-            boxShadow: "0 4px 24px rgba(0,0,0,0.10)",
+            overflow: 'hidden',
+            position: 'relative',
+            boxShadow: '0 4px 24px rgba(0,0,0,0.10)',
           },
         }}
         maskClosable
@@ -123,10 +113,10 @@ const ReportSampleThumbnail: React.FC<Props> = ({
           style={{
             width: displayWidth,
             height: displayHeight,
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            background: "#fff",
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            background: '#fff',
           }}
         >
           <img
@@ -135,9 +125,9 @@ const ReportSampleThumbnail: React.FC<Props> = ({
             style={{
               width: displayWidth,
               height: displayHeight,
-              objectFit: "contain",
-              objectPosition: "center",
-              display: "block",
+              objectFit: 'contain',
+              objectPosition: 'center',
+              display: 'block',
             }}
             onLoad={handleImageLoad}
             draggable={false}

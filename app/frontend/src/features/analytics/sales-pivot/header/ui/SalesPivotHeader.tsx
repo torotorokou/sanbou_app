@@ -34,16 +34,12 @@
  * ```
  */
 
-import React from "react";
-import { Typography, Button, Dropdown, Switch, Select, Space } from "antd";
-import type { MenuProps } from "antd";
-import { DownloadOutlined, DownOutlined } from "@ant-design/icons";
-import type {
-  ExportOptions,
-  Mode,
-  CategoryKind,
-} from "../../shared/model/types";
-import { axisLabel } from "../../shared/model/metrics";
+import React from 'react';
+import { Typography, Button, Dropdown, Switch, Select, Space } from 'antd';
+import type { MenuProps } from 'antd';
+import { DownloadOutlined, DownOutlined } from '@ant-design/icons';
+import type { ExportOptions, Mode, CategoryKind } from '../../shared/model/types';
+import { axisLabel } from '../../shared/model/metrics';
 
 /**
  * SalesPivotHeader Props
@@ -63,7 +59,7 @@ interface SalesPivotHeaderProps {
   canExport: boolean;
   exportOptions: ExportOptions;
   onExportOptionsChange: (
-    options: ExportOptions | ((prev: ExportOptions) => ExportOptions),
+    options: ExportOptions | ((prev: ExportOptions) => ExportOptions)
   ) => void;
   onExport: () => Promise<void>;
   onExportSuccess?: () => void;
@@ -96,22 +92,20 @@ export const SalesPivotHeader: React.FC<SalesPivotHeaderProps> = ({
   categoryKind,
 }) => {
   // CSV出力メニュー
-  const exportMenu: MenuProps["items"] = [
-    { key: "title", label: <b>出力条件</b> },
-    { type: "divider" },
+  const exportMenu: MenuProps['items'] = [
+    { key: 'title', label: <b>出力条件</b> },
+    { type: 'divider' },
 
     // 追加カラム：残りモード1
     {
-      key: "addB",
+      key: 'addB',
       label: (
         <div onClick={(e) => e.stopPropagation()}>
           <Space>
             <Switch
               size="small"
               checked={exportOptions.addAxisB}
-              onChange={(v) =>
-                onExportOptionsChange((prev) => ({ ...prev, addAxisB: v }))
-              }
+              onChange={(v) => onExportOptionsChange((prev) => ({ ...prev, addAxisB: v }))}
             />
             <span>追加カラム：{axisLabel(axB)}</span>
           </Space>
@@ -121,16 +115,14 @@ export const SalesPivotHeader: React.FC<SalesPivotHeaderProps> = ({
 
     // 追加カラム：残りモード2
     {
-      key: "addC",
+      key: 'addC',
       label: (
         <div onClick={(e) => e.stopPropagation()}>
           <Space>
             <Switch
               size="small"
               checked={exportOptions.addAxisC}
-              onChange={(v) =>
-                onExportOptionsChange((prev) => ({ ...prev, addAxisC: v }))
-              }
+              onChange={(v) => onExportOptionsChange((prev) => ({ ...prev, addAxisC: v }))}
             />
             <span>追加カラム：{axisLabel(axC)}</span>
           </Space>
@@ -138,11 +130,11 @@ export const SalesPivotHeader: React.FC<SalesPivotHeaderProps> = ({
       ),
     },
 
-    { type: "divider" },
+    { type: 'divider' },
 
     // 0実績除外
     {
-      key: "opt-zero",
+      key: 'opt-zero',
       label: (
         <Space onClick={(e) => e.stopPropagation()}>
           <Switch
@@ -162,18 +154,18 @@ export const SalesPivotHeader: React.FC<SalesPivotHeaderProps> = ({
 
     // 分割出力
     {
-      key: "opt-split",
+      key: 'opt-split',
       label: (
         <Space onClick={(e) => e.stopPropagation()}>
           <Select
             size="small"
             value={exportOptions.splitBy}
-            onChange={(v: "none" | "rep") =>
+            onChange={(v: 'none' | 'rep') =>
               onExportOptionsChange((prev) => ({ ...prev, splitBy: v }))
             }
             options={[
-              { label: "分割しない", value: "none" },
-              { label: "営業ごとに分割", value: "rep" },
+              { label: '分割しない', value: 'none' },
+              { label: '営業ごとに分割', value: 'rep' },
             ]}
             style={{ width: 180 }}
           />
@@ -198,7 +190,7 @@ export const SalesPivotHeader: React.FC<SalesPivotHeaderProps> = ({
     <div className="sales-tree-header">
       <Typography.Title level={3} className="sales-tree-title">
         <span className="sales-tree-title-accent">
-          {categoryKind === "waste" ? "廃棄物ツリー" : "有価物ツリー"}
+          {categoryKind === 'waste' ? '廃棄物ツリー' : '有価物ツリー'}
         </span>
       </Typography.Title>
       <div className="sales-tree-header-actions">
@@ -218,18 +210,14 @@ export const SalesPivotHeader: React.FC<SalesPivotHeaderProps> = ({
               icon={<DownloadOutlined />}
               onClick={handleExportClick}
               title={`出力：選択営業 × ${axisLabel(baseAx)}${
-                exportOptions.addAxisB ? ` × ${axisLabel(axB)}` : ""
-              }${exportOptions.addAxisC ? ` × ${axisLabel(axC)}` : ""}（期間：${periodLabel}、0実績は${
-                exportOptions.excludeZero ? "除外" : "含む"
-              }、${exportOptions.splitBy === "rep" ? "営業別分割" : "単一ファイル"}）`}
+                exportOptions.addAxisB ? ` × ${axisLabel(axB)}` : ''
+              }${exportOptions.addAxisC ? ` × ${axisLabel(axC)}` : ''}（期間：${periodLabel}、0実績は${
+                exportOptions.excludeZero ? '除外' : '含む'
+              }、${exportOptions.splitBy === 'rep' ? '営業別分割' : '単一ファイル'}）`}
             >
               CSV出力
             </Button>
-            <Dropdown
-              menu={{ items: exportMenu }}
-              placement="bottomRight"
-              trigger={["click"]}
-            >
+            <Dropdown menu={{ items: exportMenu }} placement="bottomRight" trigger={['click']}>
               <Button type="default" icon={<DownOutlined />} />
             </Dropdown>
           </Space.Compact>

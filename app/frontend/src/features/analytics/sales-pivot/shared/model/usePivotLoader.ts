@@ -3,25 +3,25 @@
  * Pivotドロワーのデータ読み込みロジック
  */
 
-import { useCallback, useRef } from "react";
-import type { Mode, MetricEntry } from "./types";
-import type { DrawerState } from "./usePivotDrawerState";
-import type { HttpSalesPivotRepository } from "../infrastructure/salesPivot.repository";
+import { useCallback, useRef } from 'react';
+import type { Mode, MetricEntry } from './types';
+import type { DrawerState } from './usePivotDrawerState';
+import type { HttpSalesPivotRepository } from '../infrastructure/salesPivot.repository';
 
 interface PivotLoaderParams {
   drawer: DrawerState;
   pivotCursor: Record<Mode, string | null>;
-  categoryKind: "waste" | "valuable";
+  categoryKind: 'waste' | 'valuable';
   repository: HttpSalesPivotRepository;
   setPivotData: (
     data:
       | Record<Mode, MetricEntry[]>
-      | ((prev: Record<Mode, MetricEntry[]>) => Record<Mode, MetricEntry[]>),
+      | ((prev: Record<Mode, MetricEntry[]>) => Record<Mode, MetricEntry[]>)
   ) => void;
   setPivotCursor: (
     cursor:
       | Record<Mode, string | null>
-      | ((prev: Record<Mode, string | null>) => Record<Mode, string | null>),
+      | ((prev: Record<Mode, string | null>) => Record<Mode, string | null>)
   ) => void;
   setPivotLoading: (loading: boolean) => void;
 }
@@ -55,12 +55,12 @@ export function usePivotLoader(params: PivotLoaderParams) {
       const month = drawer.month;
       const monthRange = drawer.monthRange;
       // オプショナルプロパティを明示的にundefinedとして扱う
-      const dateFrom: string | undefined = (
-        "dateFrom" in drawer ? drawer.dateFrom : undefined
-      ) as string | undefined;
-      const dateTo: string | undefined = (
-        "dateTo" in drawer ? drawer.dateTo : undefined
-      ) as string | undefined;
+      const dateFrom: string | undefined = ('dateFrom' in drawer ? drawer.dateFrom : undefined) as
+        | string
+        | undefined;
+      const dateTo: string | undefined = ('dateTo' in drawer ? drawer.dateTo : undefined) as
+        | string
+        | undefined;
 
       const targetAxis = axis;
       if (targetAxis === baseAxis) return;
@@ -113,14 +113,7 @@ export function usePivotLoader(params: PivotLoaderParams) {
     },
     // pivotCursorを依存から除外して無限ループを防止
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [
-      drawer,
-      categoryKind,
-      repository,
-      setPivotData,
-      setPivotCursor,
-      setPivotLoading,
-    ],
+    [drawer, categoryKind, repository, setPivotData, setPivotCursor, setPivotLoading]
   );
 
   return { loadPivot };

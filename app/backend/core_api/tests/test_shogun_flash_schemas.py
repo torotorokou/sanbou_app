@@ -8,24 +8,25 @@ YAML から動的生成されたモデルが正しく動作するか検証しま
 import sys
 from pathlib import Path
 
+from pydantic import ValidationError
+
 # パスを追加（backend_shared と core_api をインポート可能にする）
 backend_path = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(backend_path / "backend_shared" / "src"))
 sys.path.insert(0, str(backend_path / "core_api"))
 
 # ローカル実行用にパスを上書き
-import backend_shared.infrastructure.config.paths as paths_module
+import backend_shared.infrastructure.config.paths as paths_module  # noqa: E402
 
 paths_module.SHOGUNCSV_DEF_PATH = str(
     backend_path.parent / "config" / "csv_config" / "shogun_csv_masters.yaml"
 )
 
-from app.core.domain.shogun_flash_schemas import (
+from app.core.domain.shogun_flash_schemas import (  # noqa: E402
     ReceiveFlashRow,
     ShipmentFlashRow,
     YardFlashRow,
 )
-from pydantic import ValidationError
 
 
 def test_receive_flash_row():

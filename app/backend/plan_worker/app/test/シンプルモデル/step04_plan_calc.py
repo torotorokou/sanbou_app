@@ -26,18 +26,12 @@ def _parse_month(s: str) -> date:
 
 
 def _first_day_next_month(d: date) -> date:
-    return date(
-        d.year + (1 if d.month == 12 else 0), 1 if d.month == 12 else d.month + 1, 1
-    )
+    return date(d.year + (1 if d.month == 12 else 0), 1 if d.month == 12 else d.month + 1, 1)
 
 
 def _engine_url(dsn: str) -> str:
     prefix = "postgresql://"
-    return (
-        ("postgresql+psycopg" + dsn[len("postgresql") :])
-        if dsn.startswith(prefix)
-        else dsn
-    )
+    return ("postgresql+psycopg" + dsn[len("postgresql") :]) if dsn.startswith(prefix) else dsn
 
 
 def _ensure_odd(n: int) -> int:
@@ -49,25 +43,19 @@ def _ensure_odd(n: int) -> int:
 # メイン
 # ------------------------------------------------------------
 def main():
-    ap = argparse.ArgumentParser(
-        description="月→週→日配分（最終出力は daily_plan.csv 1つ）"
-    )
+    ap = argparse.ArgumentParser(description="月→週→日配分（最終出力は daily_plan.csv 1つ）")
     ap.add_argument("--from-month", type=str, help="例: 2025-03")
     ap.add_argument("--to-month", type=str, help="例: 2026-02（この月まで含む）")
 
     # 週配分（既存）
-    ap.add_argument(
-        "--weekly-window", type=int, default=3, help="週の移動平均窓（奇数・中心付き）"
-    )
+    ap.add_argument("--weekly-window", type=int, default=3, help="週の移動平均窓（奇数・中心付き）")
     ap.add_argument(
         "--weekly-alpha",
         type=float,
         default=0.35,
         help="週配分の凸結合：raw(1-α)+MA(α)",
     )
-    ap.add_argument(
-        "--weekly-cap", type=float, default=1.30, help="週配分の上限（raw の何倍まで）"
-    )
+    ap.add_argument("--weekly-cap", type=float, default=1.30, help="週配分の上限（raw の何倍まで）")
 
     # 週内配分（強化）
     ap.add_argument(
@@ -76,9 +64,7 @@ def main():
         default=3,
         help="週内ロール窓（奇数・中央値→平均）",
     )
-    ap.add_argument(
-        "--within-week-relcap", type=float, default=1.6, help="週平均×倍率 まで上限"
-    )
+    ap.add_argument("--within-week-relcap", type=float, default=1.6, help="週平均×倍率 まで上限")
     ap.add_argument(
         "--min-open-days",
         type=int,
@@ -97,12 +83,8 @@ def main():
     )
 
     # 月またぎブリッジ平滑（既定ON / 平日のみ）
-    ap.add_argument(
-        "--no-bridge", action="store_true", help="ブリッジ平滑を無効化（既定は有効）"
-    )
-    ap.add_argument(
-        "--bridge-window", type=int, default=5, help="ブリッジのロール窓（奇数）"
-    )
+    ap.add_argument("--no-bridge", action="store_true", help="ブリッジ平滑を無効化（既定は有効）")
+    ap.add_argument("--bridge-window", type=int, default=5, help="ブリッジのロール窓（奇数）")
 
     # 検証CSV（週次/整合チェック）
     ap.add_argument("--debug", action="store_true", help="検証用CSVも出力")
@@ -158,9 +140,7 @@ def main():
             "[error] mart.inb_profile_smooth_test が空です。step03_save を先に実行してください。"
         )
     prof_biz = (
-        prof[prof["scope"] == "biz"]
-        .copy()
-        .rename(columns={"day_mean_smooth": "day_mean_biz"})
+        prof[prof["scope"] == "biz"].copy().rename(columns={"day_mean_smooth": "day_mean_biz"})
     )
     # 日曜・祝日は「all の日曜行」を流用
     prof_all_sun = prof[(prof["scope"] == "all") & (prof["iso_dow"] == 7)][
@@ -180,9 +160,7 @@ def main():
         eng,
         params={"mfrom": m_from, "mto": m_to_excl},
     )
-    kpi["month_date"] = (
-        pd.to_datetime(kpi["month_date"]).dt.to_period("M").dt.to_timestamp()
-    )
+    kpi["month_date"] = pd.to_datetime(kpi["month_date"]).dt.to_period("M").dt.to_timestamp()
     if kpi.empty:
         raise SystemExit(
             f"[error] 対象期間に inbound KPI がありません: {m_from}〜{m_to_excl}（排他）"
@@ -206,9 +184,7 @@ def main():
     base["day_mean"] = 0.0
     base.loc[use_biz, "day_mean"] = base.loc[use_biz, "day_mean_biz"]
     # ★ 日曜・祝日は all（日曜プロファイル）をそのまま使用
-    base.loc[use_sun | use_hol, "day_mean"] = base.loc[
-        use_sun | use_hol, "day_mean_all_sun"
-    ]
+    base.loc[use_sun | use_hol, "day_mean"] = base.loc[use_sun | use_hol, "day_mean_all_sun"]
 
     base["scope_used"] = np.select(
         [is_closed, use_sun, use_hol, use_biz],
@@ -225,7 +201,9 @@ def main():
                 f"select scope, weight_multiplier from {args.daytype_weight_table}", eng
             )
             if not wtbl.empty:
-                for k, v in zip(wtbl["scope"], wtbl["weight_multiplier"].astype(float)):
+                for k, v in zip(
+                    wtbl["scope"], wtbl["weight_multiplier"].astype(float), strict=True
+                ):
                     if str(k) in scope_mult:
                         scope_mult[str(k)] = float(v)
         except Exception:
@@ -277,9 +255,7 @@ def main():
         kpi[["month_date", "month_target_ton"]], on="month_date", how="left"
     )
     week_mass["month_target_ton"] = week_mass["month_target_ton"].astype(float)
-    week_mass["week_target_ton_in_month"] = (
-        week_mass["w_week"] * week_mass["month_target_ton"]
-    )
+    week_mass["week_target_ton_in_month"] = week_mass["w_week"] * week_mass["month_target_ton"]
 
     # ② 週→日（倍率→平滑→相対キャップ→正規化）
     base = base.merge(
@@ -360,9 +336,7 @@ def main():
     # 検証CSV（任意）
     if args.debug:
         weekly = (
-            daily.groupby(["month_date", "iso_year", "iso_week"], as_index=False)[
-                "target_ton"
-            ]
+            daily.groupby(["month_date", "iso_year", "iso_week"], as_index=False)["target_ton"]
             .sum()
             .rename(columns={"target_ton": "week_target_ton_in_month"})
         )
@@ -372,12 +346,8 @@ def main():
             .rename(columns={"target_ton": "sum_plan"})
             .merge(kpi[["month_date", "month_target_ton"]], on="month_date", how="left")
         )
-        chk_day_month["month_target_ton"] = chk_day_month["month_target_ton"].astype(
-            float
-        )
-        chk_day_month["diff"] = (
-            chk_day_month["sum_plan"] - chk_day_month["month_target_ton"]
-        )
+        chk_day_month["month_target_ton"] = chk_day_month["month_target_ton"].astype(float)
+        chk_day_month["diff"] = chk_day_month["sum_plan"] - chk_day_month["month_target_ton"]
 
         weekly.to_csv(OUT / "weekly_plan.csv", index=False)
         chk_day_month.to_csv(OUT / "plan_month_check.csv", index=False)

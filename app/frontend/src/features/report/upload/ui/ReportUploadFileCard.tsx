@@ -4,15 +4,12 @@
  * ファイル未選択時はカード全体がクリック可能エリアとなり、キーボード操作にも対応
  */
 
-import React, { useRef } from "react";
-import { Typography, Button } from "antd";
-import { DeleteOutlined, UploadOutlined } from "@ant-design/icons";
-import type { UploadProps } from "antd";
-import type { RcFile } from "antd/es/upload";
-import {
-  CsvValidationBadge,
-  mapLegacyToCsvStatus,
-} from "@features/csv-validation";
+import React, { useRef } from 'react';
+import { Typography, Button } from 'antd';
+import { DeleteOutlined, UploadOutlined } from '@ant-design/icons';
+import type { UploadProps } from 'antd';
+import type { RcFile } from 'antd/es/upload';
+import { CsvValidationBadge, mapLegacyToCsvStatus } from '@features/csv-validation';
 
 const { Text } = Typography;
 
@@ -20,11 +17,11 @@ export interface ReportUploadFileCardProps {
   label: string;
   file: File | null;
   required: boolean;
-  validationResult?: "ok" | "ng" | "unknown";
+  validationResult?: 'ok' | 'ng' | 'unknown';
   onRemove: () => void;
   uploadProps: UploadProps;
   /** カードの高さモード: 'compact' | 'normal' */
-  size?: "compact" | "normal";
+  size?: 'compact' | 'normal';
   /** バリデーションエラーメッセージ（オプション） */
   errorMessage?: string;
 }
@@ -33,13 +30,13 @@ export const ReportUploadFileCard: React.FC<ReportUploadFileCardProps> = ({
   label,
   file,
   required,
-  validationResult = "unknown",
+  validationResult = 'unknown',
   onRemove,
   uploadProps,
-  size = "compact",
+  size = 'compact',
   errorMessage,
 }) => {
-  const isCompact = size === "compact";
+  const isCompact = size === 'compact';
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // レガシーステータスをCSVバリデーションステータスに変換
@@ -47,9 +44,9 @@ export const ReportUploadFileCard: React.FC<ReportUploadFileCardProps> = ({
 
   // ステータスに応じたカードの背景色・ボーダー色
   const statusStyles = {
-    valid: { background: "#f6ffed", border: "1px solid #b7eb8f" },
-    invalid: { background: "#fff2f0", border: "1px solid #ffccc7" },
-    unknown: { background: "#fafafa", border: "1px solid #f0f0f0" },
+    valid: { background: '#f6ffed', border: '1px solid #b7eb8f' },
+    invalid: { background: '#fff2f0', border: '1px solid #ffccc7' },
+    unknown: { background: '#fafafa', border: '1px solid #f0f0f0' },
   } as const;
   const cardStyle = statusStyles[csvStatus];
 
@@ -60,7 +57,7 @@ export const ReportUploadFileCard: React.FC<ReportUploadFileCardProps> = ({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (!file && (e.key === "Enter" || e.key === " ")) {
+    if (!file && (e.key === 'Enter' || e.key === ' ')) {
       e.preventDefault();
       fileInputRef.current?.click();
     }
@@ -79,13 +76,13 @@ export const ReportUploadFileCard: React.FC<ReportUploadFileCardProps> = ({
       rcFile.uid = selectedFile.name + Date.now();
       uploadProps.beforeUpload(rcFile, [rcFile]);
       // input をリセットして同じファイルを再選択可能に
-      e.target.value = "";
+      e.target.value = '';
     }
   };
 
   return (
     <div
-      role={!file ? "button" : undefined}
+      role={!file ? 'button' : undefined}
       tabIndex={!file ? 0 : undefined}
       onClick={handleClick}
       onKeyDown={handleKeyDown}
@@ -94,41 +91,41 @@ export const ReportUploadFileCard: React.FC<ReportUploadFileCardProps> = ({
         borderRadius: 6,
         background: cardStyle.background,
         border: cardStyle.border,
-        cursor: !file ? "pointer" : "default",
-        transition: "background-color 0.2s, border-color 0.2s",
+        cursor: !file ? 'pointer' : 'default',
+        transition: 'background-color 0.2s, border-color 0.2s',
       }}
       onMouseEnter={(e) => {
         if (!file) {
           const current = e.currentTarget;
-          if (csvStatus === "valid") {
-            current.style.backgroundColor = "#f0ffe6";
-            current.style.borderColor = "#95de64";
-          } else if (csvStatus === "invalid") {
-            current.style.backgroundColor = "#ffe7e6";
-            current.style.borderColor = "#ff9c99";
+          if (csvStatus === 'valid') {
+            current.style.backgroundColor = '#f0ffe6';
+            current.style.borderColor = '#95de64';
+          } else if (csvStatus === 'invalid') {
+            current.style.backgroundColor = '#ffe7e6';
+            current.style.borderColor = '#ff9c99';
           } else {
-            current.style.backgroundColor = "#f0f0f0";
-            current.style.borderColor = "#d9d9d9";
+            current.style.backgroundColor = '#f0f0f0';
+            current.style.borderColor = '#d9d9d9';
           }
         }
       }}
       onMouseLeave={(e) => {
         if (!file) {
           e.currentTarget.style.backgroundColor = cardStyle.background;
-          e.currentTarget.style.borderColor = cardStyle.border.split(" ")[2];
+          e.currentTarget.style.borderColor = cardStyle.border.split(' ')[2];
         }
       }}
     >
       {/* ヘッダー: ラベル + バッジ */}
       <div
         style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
           marginBottom: isCompact ? 6 : 8,
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <Text strong style={{ fontSize: isCompact ? 14 : 16 }}>
             {label}
           </Text>
@@ -138,14 +135,11 @@ export const ReportUploadFileCard: React.FC<ReportUploadFileCardProps> = ({
             </Text>
           )}
         </div>
-        <CsvValidationBadge
-          status={csvStatus}
-          size={isCompact ? "small" : "default"}
-        />
+        <CsvValidationBadge status={csvStatus} size={isCompact ? 'small' : 'default'} />
       </div>
 
       {/* バリデーションエラーメッセージ */}
-      {csvStatus === "invalid" && errorMessage && (
+      {csvStatus === 'invalid' && errorMessage && (
         <div style={{ marginBottom: isCompact ? 6 : 8 }}>
           <Text type="danger" style={{ fontSize: isCompact ? 11 : 12 }}>
             ⚠️ {errorMessage}
@@ -159,34 +153,34 @@ export const ReportUploadFileCard: React.FC<ReportUploadFileCardProps> = ({
           <input
             ref={fileInputRef}
             type="file"
-            accept={uploadProps.accept || ".csv"}
+            accept={uploadProps.accept || '.csv'}
             onChange={handleFileChange}
-            style={{ display: "none" }}
+            style={{ display: 'none' }}
           />
           <div
             style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              padding: isCompact ? "12px 8px" : "16px 12px",
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: isCompact ? '12px 8px' : '16px 12px',
               borderRadius: 4,
-              border: "1px dashed #d9d9d9",
-              backgroundColor: "#fafafa",
+              border: '1px dashed #d9d9d9',
+              backgroundColor: '#fafafa',
             }}
           >
             <UploadOutlined
               style={{
                 fontSize: isCompact ? 20 : 24,
-                color: "#1890ff",
+                color: '#1890ff',
                 marginBottom: 4,
               }}
             />
             <div
               style={{
                 fontSize: isCompact ? 12 : 13,
-                color: "#666",
-                textAlign: "center",
+                color: '#666',
+                textAlign: 'center',
               }}
             >
               ここをクリックして CSV をアップロード
@@ -199,8 +193,8 @@ export const ReportUploadFileCard: React.FC<ReportUploadFileCardProps> = ({
       {file && (
         <div
           style={{
-            display: "flex",
-            alignItems: "center",
+            display: 'flex',
+            alignItems: 'center',
             gap: 6,
             marginTop: isCompact ? 6 : 8,
           }}
@@ -209,10 +203,10 @@ export const ReportUploadFileCard: React.FC<ReportUploadFileCardProps> = ({
             style={{
               flex: 1,
               fontSize: isCompact ? 11 : 12,
-              color: "#666",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
+              color: '#666',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
             }}
             title={file.name}
           >
@@ -225,7 +219,7 @@ export const ReportUploadFileCard: React.FC<ReportUploadFileCardProps> = ({
             onClick={onRemove}
             style={{
               height: isCompact ? 22 : 24,
-              padding: isCompact ? "0 6px" : "0 8px",
+              padding: isCompact ? '0 6px' : '0 8px',
               fontSize: isCompact ? 11 : 12,
             }}
           >

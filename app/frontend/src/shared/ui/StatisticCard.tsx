@@ -1,7 +1,7 @@
-import React from "react";
-import { Statistic } from "antd";
-import CountUp from "react-countup";
-import DiffIndicator from "./DiffIndicator";
+import React from 'react';
+import { Statistic } from 'antd';
+import CountUp from 'react-countup';
+import DiffIndicator from './DiffIndicator';
 
 type Props = {
   title: string | React.ReactNode;
@@ -17,9 +17,9 @@ const MetricCard: React.FC<Props> = ({
   title,
   value,
   diff,
-  suffix = "",
+  suffix = '',
   prefix,
-  color = "#000",
+  color = '#000',
   titleHeight = 40,
 }) => {
   return (
@@ -27,11 +27,11 @@ const MetricCard: React.FC<Props> = ({
       style={{
         height: 140,
         padding: 8,
-        border: "1px solid #eee",
+        border: '1px solid #eee',
         borderRadius: 4,
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center", // 横中央揃え
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center', // 横中央揃え
       }}
     >
       <Statistic
@@ -39,16 +39,16 @@ const MetricCard: React.FC<Props> = ({
           <div
             style={{
               minHeight: titleHeight,
-              textAlign: "center",
-              whiteSpace: "pre-line",
+              textAlign: 'center',
+              whiteSpace: 'pre-line',
             }}
           >
             {title}
           </div>
         }
         valueRender={() => (
-          <div style={{ textAlign: "center" }}>
-            <div style={{ fontSize: "1.5rem", color }}>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: '1.5rem', color }}>
               <CountUp end={value} duration={1} separator="," />
               {suffix}
             </div>

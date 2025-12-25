@@ -13,10 +13,10 @@
  * - タイムゾーンは日本時間（JST）を前提
  */
 
-import dayjs, { type Dayjs } from "dayjs";
-import isoWeek from "dayjs/plugin/isoWeek";
-import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
-import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
+import dayjs, { type Dayjs } from 'dayjs';
+import isoWeek from 'dayjs/plugin/isoWeek';
+import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
+import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
 
 // ========================================
 // プラグインの一括初期化
@@ -49,29 +49,29 @@ export type IsoDateTime = string;
 export const DATE_FORMATS = {
   // ISO標準
   /** ISO日付: YYYY-MM-DD */
-  isoDate: "YYYY-MM-DD",
+  isoDate: 'YYYY-MM-DD',
   /** ISO月: YYYY-MM */
-  isoMonth: "YYYY-MM",
+  isoMonth: 'YYYY-MM',
   /** ISO日時: YYYY-MM-DDTHH:mm:ss */
-  isoDateTime: "YYYY-MM-DDTHH:mm:ss",
+  isoDateTime: 'YYYY-MM-DDTHH:mm:ss',
 
   // 日本語表示
   /** 日本語日付: YYYY年MM月DD日 */
-  jpDate: "YYYY年MM月DD日",
+  jpDate: 'YYYY年MM月DD日',
   /** 日本語月: YYYY年MM月 */
-  jpMonth: "YYYY年MM月",
+  jpMonth: 'YYYY年MM月',
   /** 短縮日付: MM/DD */
-  jpShortDate: "MM/DD",
+  jpShortDate: 'MM/DD',
   /** 日時: YYYY/MM/DD HH:mm */
-  jpDateTime: "YYYY/MM/DD HH:mm",
+  jpDateTime: 'YYYY/MM/DD HH:mm',
   /** 完全日時: YYYY/MM/DD HH:mm:ss */
-  jpFullDateTime: "YYYY/MM/DD HH:mm:ss",
+  jpFullDateTime: 'YYYY/MM/DD HH:mm:ss',
 
   // API互換（コンパクト形式）
   /** コンパクト日付: YYYYMMDD */
-  compactDate: "YYYYMMDD",
+  compactDate: 'YYYYMMDD',
   /** コンパクト月: YYYYMM */
-  compactMonth: "YYYYMM",
+  compactMonth: 'YYYYMM',
 } as const;
 
 // ========================================
@@ -90,7 +90,7 @@ export const DATE_FORMATS = {
  * const date = toDate('2024-12-02');
  * ```
  */
-export const toDate = (s: string): Date => new Date(s + "T00:00:00");
+export const toDate = (s: string): Date => new Date(s + 'T00:00:00');
 
 /**
  * Date→ISO日付文字列
@@ -98,8 +98,7 @@ export const toDate = (s: string): Date => new Date(s + "T00:00:00");
  * @param d - Dateオブジェクト
  * @returns ISO日付文字列 (YYYY-MM-DD)
  */
-export const toIsoDate = (d: Date): IsoDate =>
-  dayjs(d).format(DATE_FORMATS.isoDate);
+export const toIsoDate = (d: Date): IsoDate => dayjs(d).format(DATE_FORMATS.isoDate);
 
 /**
  * Date→ISO月文字列
@@ -107,8 +106,7 @@ export const toIsoDate = (d: Date): IsoDate =>
  * @param d - Dateオブジェクト
  * @returns ISO月文字列 (YYYY-MM)
  */
-export const toIsoMonth = (d: Date): IsoMonth =>
-  dayjs(d).format(DATE_FORMATS.isoMonth);
+export const toIsoMonth = (d: Date): IsoMonth => dayjs(d).format(DATE_FORMATS.isoMonth);
 
 /**
  * Dayjs→ISO日付文字列
@@ -116,8 +114,7 @@ export const toIsoMonth = (d: Date): IsoMonth =>
  * @param d - Dayjsオブジェクト
  * @returns ISO日付文字列 (YYYY-MM-DD)
  */
-export const dayjsToIsoDate = (d: Dayjs): IsoDate =>
-  d.format(DATE_FORMATS.isoDate);
+export const dayjsToIsoDate = (d: Dayjs): IsoDate => d.format(DATE_FORMATS.isoDate);
 
 /**
  * Dayjs→ISO月文字列
@@ -125,8 +122,7 @@ export const dayjsToIsoDate = (d: Dayjs): IsoDate =>
  * @param d - Dayjsオブジェクト
  * @returns ISO月文字列 (YYYY-MM)
  */
-export const dayjsToIsoMonth = (d: Dayjs): IsoMonth =>
-  d.format(DATE_FORMATS.isoMonth);
+export const dayjsToIsoMonth = (d: Dayjs): IsoMonth => d.format(DATE_FORMATS.isoMonth);
 
 // ========================================
 // フォーマット関数
@@ -199,7 +195,7 @@ export const formatFullDateTime = (d: Date | Dayjs | string): string =>
  */
 export const getMondayOfWeek = (d: Date | Dayjs): Date => {
   const dj = dayjs(d);
-  return dj.startOf("isoWeek").toDate();
+  return dj.startOf('isoWeek').toDate();
 };
 
 /**
@@ -207,8 +203,7 @@ export const getMondayOfWeek = (d: Date | Dayjs): Date => {
  *
  * @returns 現在月のISO月文字列 (YYYY-MM)
  */
-export const getCurrentMonth = (): IsoMonth =>
-  dayjs().format(DATE_FORMATS.isoMonth);
+export const getCurrentMonth = (): IsoMonth => dayjs().format(DATE_FORMATS.isoMonth);
 
 /**
  * 翌月を取得
@@ -217,8 +212,8 @@ export const getCurrentMonth = (): IsoMonth =>
  * @returns 翌月のISO月文字列
  */
 export const getNextMonth = (m: IsoMonth): IsoMonth =>
-  dayjs(m + "-01")
-    .add(1, "month")
+  dayjs(m + '-01')
+    .add(1, 'month')
     .format(DATE_FORMATS.isoMonth);
 
 /**
@@ -228,8 +223,8 @@ export const getNextMonth = (m: IsoMonth): IsoMonth =>
  * @returns 前月のISO月文字列
  */
 export const getPreviousMonth = (m: IsoMonth): IsoMonth =>
-  dayjs(m + "-01")
-    .subtract(1, "month")
+  dayjs(m + '-01')
+    .subtract(1, 'month')
     .format(DATE_FORMATS.isoMonth);
 
 /**
@@ -239,8 +234,7 @@ export const getPreviousMonth = (m: IsoMonth): IsoMonth =>
  * @param n - 加算する日数
  * @returns n日後のDateオブジェクト
  */
-export const addDays = (d: Date, n: number): Date =>
-  dayjs(d).add(n, "day").toDate();
+export const addDays = (d: Date, n: number): Date => dayjs(d).add(n, 'day').toDate();
 
 /**
  * n日前のDateを取得
@@ -249,8 +243,7 @@ export const addDays = (d: Date, n: number): Date =>
  * @param n - 減算する日数
  * @returns n日前のDateオブジェクト
  */
-export const subtractDays = (d: Date, n: number): Date =>
-  dayjs(d).subtract(n, "day").toDate();
+export const subtractDays = (d: Date, n: number): Date => dayjs(d).subtract(n, 'day').toDate();
 
 /**
  * 指定月における「今日」を取得
@@ -265,14 +258,14 @@ export const todayInMonth = (m: IsoMonth): IsoDate => {
   const nowM = getCurrentMonth();
   if (m === nowM) return dayjs().format(DATE_FORMATS.isoDate);
 
-  const targetMonth = dayjs(m + "-01");
+  const targetMonth = dayjs(m + '-01');
   const now = dayjs();
 
-  if (targetMonth.isBefore(now, "month")) {
+  if (targetMonth.isBefore(now, 'month')) {
     // 過去月: 20日または月末
-    const last = targetMonth.endOf("month").date();
+    const last = targetMonth.endOf('month').date();
     const d = Math.min(20, last);
-    return `${m}-${String(d).padStart(2, "0")}`;
+    return `${m}-${String(d).padStart(2, '0')}`;
   } else {
     // 未来月: 1日
     return `${m}-01`;
@@ -290,10 +283,8 @@ export const todayInMonth = (m: IsoMonth): IsoDate => {
  * @param b - 比較先の日付
  * @returns 同じ日付ならtrue
  */
-export const isSameDate = (
-  a: Date | Dayjs | string,
-  b: Date | Dayjs | string,
-): boolean => dayjs(a).isSame(dayjs(b), "day");
+export const isSameDate = (a: Date | Dayjs | string, b: Date | Dayjs | string): boolean =>
+  dayjs(a).isSame(dayjs(b), 'day');
 
 /**
  * 日付が範囲内かチェック
@@ -306,12 +297,10 @@ export const isSameDate = (
 export const isInRange = (
   date: Date | Dayjs | string,
   start: Date | Dayjs | string,
-  end: Date | Dayjs | string,
+  end: Date | Dayjs | string
 ): boolean => {
   const d = dayjs(date);
-  return (
-    d.isSameOrAfter(dayjs(start), "day") && d.isSameOrBefore(dayjs(end), "day")
-  );
+  return d.isSameOrAfter(dayjs(start), 'day') && d.isSameOrBefore(dayjs(end), 'day');
 };
 
 /**
@@ -335,18 +324,15 @@ export const isValidDate = (s: string): boolean => dayjs(s).isValid();
  * // ['2024-01', '2024-02', '2024-03']
  * ```
  */
-export function getMonthRange(
-  start: Dayjs | null,
-  end: Dayjs | null,
-): IsoMonth[] {
+export function getMonthRange(start: Dayjs | null, end: Dayjs | null): IsoMonth[] {
   if (!start || !end) return [];
 
   const range: string[] = [];
-  let current = start.startOf("month");
+  let current = start.startOf('month');
 
-  while (current.isBefore(end.endOf("month")) || current.isSame(end, "month")) {
+  while (current.isBefore(end.endOf('month')) || current.isSame(end, 'month')) {
     range.push(current.format(DATE_FORMATS.isoMonth));
-    current = current.add(1, "month");
+    current = current.add(1, 'month');
     if (range.length > 24) break; // 安全弁: 最大24ヶ月
   }
 
@@ -360,12 +346,9 @@ export function getMonthRange(
  * @param end - 終了月
  * @returns 有効な範囲ならtrue
  */
-export function isValidPeriodRange(
-  start: Dayjs | null,
-  end: Dayjs | null,
-): boolean {
+export function isValidPeriodRange(start: Dayjs | null, end: Dayjs | null): boolean {
   if (!start || !end) return false;
-  return start.isSameOrBefore(end, "month");
+  return start.isSameOrBefore(end, 'month');
 }
 
 // ========================================
@@ -383,8 +366,7 @@ export function isValidPeriodRange(
  * formatCurrency(1234567); // "¥1,234,567"
  * ```
  */
-export const formatCurrency = (n: number): string =>
-  `¥${n.toLocaleString("ja-JP")}`;
+export const formatCurrency = (n: number): string => `¥${n.toLocaleString('ja-JP')}`;
 
 /**
  * パーセントフォーマット
@@ -398,8 +380,7 @@ export const formatCurrency = (n: number): string =>
  * formatPercent(45.678, 1); // "45.7%"
  * ```
  */
-export const formatPercent = (n: number, decimals = 1): string =>
-  `${n.toFixed(decimals)}%`;
+export const formatPercent = (n: number, decimals = 1): string => `${n.toFixed(decimals)}%`;
 
 /**
  * 数値を範囲内にクランプ
@@ -409,8 +390,7 @@ export const formatPercent = (n: number, decimals = 1): string =>
  * @param hi - 最大値
  * @returns クランプされた値
  */
-export const clamp = (v: number, lo: number, hi: number): number =>
-  Math.max(lo, Math.min(hi, v));
+export const clamp = (v: number, lo: number, hi: number): number => Math.max(lo, Math.min(hi, v));
 
 /**
  * 配列の合計
@@ -432,7 +412,7 @@ export const sum = (a: number[]): number => a.reduce((p, c) => p + c, 0);
  * ```
  */
 export const monthNameJP = (m: IsoMonth): string => {
-  const [y, mm] = m.split("-").map(Number);
+  const [y, mm] = m.split('-').map(Number);
   return `${y}年${mm}月`;
 };
 

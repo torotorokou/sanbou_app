@@ -10,10 +10,11 @@ Block Unit Price Router - BFF for ledger_api block_unit_price_interactive endpoi
 import os
 
 import httpx
+from fastapi import APIRouter, File, Request, UploadFile
+
 from app.shared.utils import rewrite_artifact_urls_to_bff
 from backend_shared.application.logging import get_module_logger
 from backend_shared.core.domain.exceptions import ExternalServiceError
-from fastapi import APIRouter, File, Request, UploadFile
 
 logger = get_module_logger(__name__)
 
@@ -33,9 +34,7 @@ async def proxy_block_unit_price_initial(
     フロントから /core_api/block_unit_price_interactive/initial へのリクエストを受け取る
     FormDataとして送信されたファイルを ledger_api に転送
     """
-    logger.info(
-        f"Proxying block_unit_price_interactive/initial request from {request.client}"
-    )
+    logger.info(f"Proxying block_unit_price_interactive/initial request from {request.client}")
     try:
         files = {}
 
@@ -43,9 +42,7 @@ async def proxy_block_unit_price_initial(
             # ファイルを読み込んで転送用に準備
             file_content = await shipment.read()
             files["shipment"] = (shipment.filename, file_content, shipment.content_type)
-            logger.info(
-                f"File 'shipment': {shipment.filename} ({len(file_content)} bytes)"
-            )
+            logger.info(f"File 'shipment': {shipment.filename} ({len(file_content)} bytes)")
         else:
             logger.warning("No shipment file provided")
 

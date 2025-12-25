@@ -11,14 +11,13 @@ from typing import TYPE_CHECKING
 
 import pandas as pd
 
+
 if TYPE_CHECKING:
     from app.core.domain.reports.balance_sheet import ReceiveItem
     from app.core.domain.reports.factory_report import ShipmentItem, YardItem
 
 
-def extract_report_date(
-    *dataframes_with_columns: tuple[pd.DataFrame | None, str]
-) -> date:
+def extract_report_date(*dataframes_with_columns: tuple[pd.DataFrame | None, str]) -> date:
     """
     複数のDataFrameから優先順位に従って日付を抽出する
 
@@ -80,11 +79,7 @@ def convert_to_shipment_items(
                     vendor_name=str(row.get("業者名", "")),
                     item_name=str(row.get("品名", "")),
                     net_weight=float(row.get("正味重量", 0.0)),
-                    site_name=(
-                        str(row.get("現場名", ""))
-                        if pd.notna(row.get("現場名"))
-                        else None
-                    ),
+                    site_name=(str(row.get("現場名", "")) if pd.notna(row.get("現場名")) else None),
                 )
             )
         except (ValueError, TypeError):
@@ -159,14 +154,10 @@ def convert_to_receive_items(
                     site_name=str(row.get("現場名", "")),
                     net_weight=float(row.get("正味重量", 0.0)),
                     volume=(
-                        float(row["体積"])
-                        if "体積" in row and pd.notna(row["体積"])
-                        else None
+                        float(row["体積"]) if "体積" in row and pd.notna(row["体積"]) else None
                     ),
                     item_name=(
-                        str(row["品名"])
-                        if "品名" in row and pd.notna(row["品名"])
-                        else None
+                        str(row["品名"]) if "品名" in row and pd.notna(row["品名"]) else None
                     ),
                 )
             )

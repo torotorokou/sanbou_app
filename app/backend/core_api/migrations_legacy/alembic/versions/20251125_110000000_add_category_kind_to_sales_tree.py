@@ -78,9 +78,7 @@ def upgrade() -> None:
     """
     )
 
-    print(
-        "[mart.v_sales_tree_detail_base] VIEW updated successfully with category_kind."
-    )
+    print("[mart.v_sales_tree_detail_base] VIEW updated successfully with category_kind.")
 
     # 3) app_readonly に SELECT 権限を付与
     print("[mart.v_sales_tree_detail_base] Granting SELECT to app_readonly...")

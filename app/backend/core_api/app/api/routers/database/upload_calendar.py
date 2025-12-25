@@ -9,6 +9,8 @@ CSVアップロードカレンダー取得と削除エンドポイント
 
 from datetime import date
 
+from fastapi import APIRouter, Depends, Query
+
 from app.config.di_providers import (
     get_delete_upload_scope_uc,
     get_upload_calendar_detail_uc,
@@ -17,13 +19,12 @@ from app.core.usecases.upload.delete_upload_scope_uc import DeleteUploadScopeUse
 from app.core.usecases.upload.get_upload_calendar_detail_uc import (
     GetUploadCalendarDetailUseCase,
 )
-from backend_shared.application.logging import get_module_logger
+from backend_shared.application.logging import create_log_context, get_module_logger
 from backend_shared.core.domain.exceptions import (
     InfrastructureError,
     NotFoundError,
     ValidationError,
 )
-from fastapi import APIRouter, Depends, Query
 
 logger = get_module_logger(__name__)
 

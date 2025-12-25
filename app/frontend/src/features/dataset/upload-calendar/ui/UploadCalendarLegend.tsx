@@ -3,9 +3,9 @@
  * CSV種別の色とラベルを表示
  */
 
-import React from "react";
-import { Space, Typography } from "antd";
-import { getMasterByDatasetKey } from "../model/types";
+import React from 'react';
+import { Space, Typography } from 'antd';
+import { getMasterByDatasetKey } from '../model/types';
 
 const { Text } = Typography;
 
@@ -14,7 +14,7 @@ interface UploadCalendarLegendProps {
 }
 
 export const UploadCalendarLegend: React.FC<UploadCalendarLegendProps> = ({
-  datasetKey = "shogun_flash",
+  datasetKey = 'shogun_flash',
 }) => {
   // 選択中のデータセットに応じたマスタのみを取得
   const filteredMaster = getMasterByDatasetKey(datasetKey);
@@ -23,11 +23,8 @@ export const UploadCalendarLegend: React.FC<UploadCalendarLegendProps> = ({
   const categories = Array.from(new Set(filteredMaster.map((m) => m.category)));
 
   return (
-    <div style={{ marginTop: 12, padding: "8px 0" }}>
-      <Text
-        type="secondary"
-        style={{ fontSize: 13, marginBottom: 6, display: "block" }}
-      >
+    <div style={{ marginTop: 12, padding: '8px 0' }}>
+      <Text type="secondary" style={{ fontSize: 13, marginBottom: 6, display: 'block' }}>
         凡例
       </Text>
       <Space direction="vertical" size={4}>
@@ -43,10 +40,10 @@ export const UploadCalendarLegend: React.FC<UploadCalendarLegendProps> = ({
                   <Space key={master.kind} size={8}>
                     <span
                       style={{
-                        display: "inline-block",
+                        display: 'inline-block',
                         width: 14,
                         height: 14,
-                        borderRadius: "50%",
+                        borderRadius: '50%',
                         backgroundColor: master.color,
                       }}
                     />

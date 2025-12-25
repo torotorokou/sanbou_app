@@ -9,11 +9,13 @@ from typing import Any, cast
 
 import numpy as np
 import pandas as pd
-from backend_shared.application.logging import create_log_context, get_module_logger
 from openpyxl import load_workbook
 from openpyxl.cell.cell import Cell, MergedCell
 from openpyxl.workbook.workbook import Workbook
 from openpyxl.worksheet.worksheet import Worksheet
+
+from backend_shared.application.logging import create_log_context, get_module_logger
+
 
 logger = get_module_logger(__name__)
 
@@ -143,9 +145,7 @@ def normalize_workbook_fonts(wb: Workbook) -> None:
         replacements = ", ".join(f"{src}→{dst}" for src, dst in sorted(tracker))
         logger.info(
             "Excelフォント置換完了",
-            extra=create_log_context(
-                operation="replace_fonts", replacements=replacements
-            ),
+            extra=create_log_context(operation="replace_fonts", replacements=replacements),
         )
 
 
@@ -175,11 +175,7 @@ def write_dataframe_to_worksheet(df: pd.DataFrame, ws: Worksheet):
             continue
 
         # 値が空（None / NaN / 空文字）の場合は、テンプレのセルをそのまま残す
-        if (
-            value is None
-            or value == ""
-            or (isinstance(value, float) and np.isnan(value))
-        ):
+        if value is None or value == "" or (isinstance(value, float) and np.isnan(value)):
             if debug_enabled:
                 logger.debug(
                     "値が空のためセル書き込みをスキップ",
@@ -256,9 +252,7 @@ def save_workbook_to_bytesio(wb: Workbook) -> BytesIO:
     return output
 
 
-def write_values_to_template(
-    df: pd.DataFrame, template_path: str, extracted_date: str
-) -> BytesIO:
+def write_values_to_template(df: pd.DataFrame, template_path: str, extracted_date: str) -> BytesIO:
     """
     単一責任原則に基づいて分割されたExcelテンプレート書き込み関数
     - テンプレ読み込み

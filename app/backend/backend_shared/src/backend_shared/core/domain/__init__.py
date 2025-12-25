@@ -22,6 +22,7 @@ from backend_shared.core.domain.job import (
     JobUpdate,
 )
 
+
 __all__ = [
     "ProblemDetails",
     "NotificationEvent",

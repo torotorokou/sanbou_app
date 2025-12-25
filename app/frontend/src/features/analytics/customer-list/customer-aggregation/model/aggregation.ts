@@ -4,7 +4,7 @@
  * 顧客データの集約ロジック
  */
 
-import type { CustomerData } from "../../shared/domain/types";
+import type { CustomerData } from '../../shared/domain/types';
 
 /**
  * 複数月の顧客データを集約する
@@ -15,7 +15,7 @@ import type { CustomerData } from "../../shared/domain/types";
  */
 export function aggregateCustomers(
   months: string[],
-  dataSource: Record<string, CustomerData[]>,
+  dataSource: Record<string, CustomerData[]>
 ): CustomerData[] {
   const map = new Map<string, CustomerData>();
 

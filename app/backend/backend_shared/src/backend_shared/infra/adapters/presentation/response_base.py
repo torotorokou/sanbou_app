@@ -20,6 +20,7 @@ from typing import Any, Generic, Literal, TypeVar
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel  # Pydantic v2 を前提に統一
 
+
 # --- 共通レスポンス契約（/docs に出す唯一のスキーマ） -------------------------
 T = TypeVar("T")
 
@@ -150,9 +151,7 @@ class BaseApiResponse:
         """
         # サブクラスで status がセットされている前提
         if self.status not in ("success", "error"):
-            raise ValueError(
-                "BaseApiResponse.status は 'success' か 'error' を指定してください。"
-            )
+            raise ValueError("BaseApiResponse.status は 'success' か 'error' を指定してください。")
 
         if self.status == "success":
             self.payload = ApiResponse.success(

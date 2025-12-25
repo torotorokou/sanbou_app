@@ -77,9 +77,7 @@ def upgrade() -> None:
     print("  ✓ Created ix_mv_receive_daily_iso_week")
 
     print("✅ mart.mv_receive_daily created successfully")
-    print(
-        "⚠️  Next step: Run 'REFRESH MATERIALIZED VIEW CONCURRENTLY mart.mv_receive_daily;'"
-    )
+    print("⚠️  Next step: Run 'REFRESH MATERIALIZED VIEW CONCURRENTLY mart.mv_receive_daily;'")
     print("⚠️  Repository を mv_receive_daily 参照に変更してください")
 
 

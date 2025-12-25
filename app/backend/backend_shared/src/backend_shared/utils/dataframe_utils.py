@@ -1,12 +1,11 @@
 import pandas as pd
 
+
 # 共通の特殊値リスト（欠損値として扱う文字列）
 NA_STRING_VALUES = ["<NA>", "nan", "None", "NaN", "NULL", "null", "#N/A", "#NA", ""]
 
 
-def combine_date_and_time(
-    df: pd.DataFrame, date_col: str, time_col: str
-) -> pd.DataFrame:
+def combine_date_and_time(df: pd.DataFrame, date_col: str, time_col: str) -> pd.DataFrame:
     """
     date_col（datetime64）と time_col（時刻文字列）を結合し、
     datetime64[ns] に変換して time_col に上書き。
@@ -26,9 +25,7 @@ def combine_date_and_time(
 
     # 結合して datetime 変換
     combined_str = date_str + " " + time_str
-    df[time_col] = pd.to_datetime(
-        combined_str, format="%Y/%m/%d %H:%M:%S", errors="coerce"
-    )
+    df[time_col] = pd.to_datetime(combined_str, format="%Y/%m/%d %H:%M:%S", errors="coerce")
 
     # デバッグ用
     # print(df[[date_col, time_col]].head())
@@ -49,10 +46,7 @@ def remove_weekday_parentheses(df: pd.DataFrame, column: str) -> pd.DataFrame:
 
     # 括弧がある行だけ除去処理
     df.loc[mask, column] = (
-        df.loc[mask, column]
-        .astype(str)
-        .str.replace(r"\([^)]+\)", "", regex=True)
-        .str.strip()
+        df.loc[mask, column].astype(str).str.replace(r"\([^)]+\)", "", regex=True).str.strip()
     )
 
     # 全体をdatetimeに変換（括弧がない行も含め）
@@ -104,9 +98,7 @@ def normalize_code_column(df: pd.DataFrame, col: str) -> pd.DataFrame:
     # 非欠損値に対して先頭ゼロを除去
     # lstrip('0')を使用（例: "000123" → "123", "00123X" → "123X"）
     # 注意: "0000" のように全てゼロの場合は空文字列になるため、空文字列をNaNに変換
-    cleaned = cleaned.where(
-        cleaned.isna(), cleaned.astype(str).str.strip().str.lstrip("0")
-    )
+    cleaned = cleaned.where(cleaned.isna(), cleaned.astype(str).str.strip().str.lstrip("0"))
 
     # 空文字列をNaNに変換（全てゼロだった場合）
     cleaned = cleaned.replace("", pd.NA)

@@ -1,12 +1,5 @@
-import React from "react";
-import {
-  AreaChart,
-  Area,
-  ResponsiveContainer,
-  Tooltip,
-  YAxis,
-  XAxis,
-} from "recharts";
+import React from 'react';
+import { AreaChart, Area, ResponsiveContainer, Tooltip, YAxis, XAxis } from 'recharts';
 
 type Props = {
   data: number[];
@@ -26,25 +19,19 @@ interface TrendPoint {
 interface TooltipEntry {
   payload?: TrendPoint;
 }
-const CustomTooltip = ({
-  active,
-  payload,
-}: {
-  active?: boolean;
-  payload?: TooltipEntry[];
-}) => {
+const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: TooltipEntry[] }) => {
   if (active && payload && payload.length > 0) {
     const index = payload[0]?.payload?.x ?? 0;
     const value = payload[0]?.payload?.y ?? 0;
     const total = payload[0]?.payload?.total ?? 0;
     const dayDiff = total - index - 1;
-    const labelText = dayDiff === 0 ? "今日" : `${dayDiff}日前`;
+    const labelText = dayDiff === 0 ? '今日' : `${dayDiff}日前`;
 
     return (
       <div
         style={{
-          background: "#fff",
-          border: "1px solid #ccc",
+          background: '#fff',
+          border: '1px solid #ccc',
           padding: 6,
         }}
       >
@@ -61,8 +48,8 @@ const CustomTooltip = ({
 const TrendChart: React.FC<Props> = ({
   data,
   height = 80,
-  strokeColor = "#40a9ff",
-  fillColor = "#40a9ff",
+  strokeColor = '#40a9ff',
+  fillColor = '#40a9ff',
   minY,
   maxY,
 }) => {
@@ -82,10 +69,7 @@ const TrendChart: React.FC<Props> = ({
           </linearGradient>
         </defs>
 
-        <YAxis
-          hide
-          domain={[minY ?? "dataMin - 500", maxY ?? "dataMax + 500"]}
-        />
+        <YAxis hide domain={[minY ?? 'dataMin - 500', maxY ?? 'dataMax + 500']} />
 
         <XAxis
           dataKey="x"
@@ -94,7 +78,7 @@ const TrendChart: React.FC<Props> = ({
           tick={{ fontSize: 10 }}
           tickFormatter={(x) => {
             const dayDiff = chartData.length - x - 1;
-            return dayDiff === 0 ? "今日" : `${dayDiff}日前`;
+            return dayDiff === 0 ? '今日' : `${dayDiff}日前`;
           }}
         />
 

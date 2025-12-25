@@ -9,6 +9,9 @@ import tempfile
 import zipfile
 
 import pypdf
+from fastapi import APIRouter, Body, Depends, HTTPException, Request
+from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
+
 from app.api.dependencies import get_ai_response_service, get_dummy_response_service
 from app.api.schemas.query_schema import QueryRequest
 from app.core.usecases.rag import file_ingest_service as loader
@@ -19,8 +22,7 @@ from backend_shared.infra.adapters.presentation.response_base import (
     SuccessApiResponse,
 )
 from backend_shared.infra.adapters.presentation.response_utils import api_response
-from fastapi import APIRouter, Body, Depends, HTTPException, Request
-from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
+
 
 logger = get_module_logger(__name__)
 router = APIRouter()
@@ -76,12 +78,8 @@ async def generate_answer(
                 "tags": request.tags,
             },
         )
-        result = ai_service.generate_ai_response(
-            request.query, request.category, request.tags
-        )
-        logger.debug(
-            "Generate answer result", extra={"result_keys": list(result.keys())}
-        )
+        result = ai_service.generate_ai_response(request.query, request.category, request.tags)
+        logger.debug("Generate answer result", extra={"result_keys": list(result.keys())})
 
         # エラーコードの存在をチェック
         if "error_code" in result:
@@ -95,11 +93,11 @@ async def generate_answer(
 
             # エラーコードに応じたヒントメッセージ
             if error_code == "OPENAI_INSUFFICIENT_QUOTA":
-                hint = "OpenAI APIの利用上限を超過しています。システム管理者にお問い合わせください。"
-            elif error_code == "OPENAI_RATE_LIMIT":
                 hint = (
-                    "一時的なレート制限です。しばらく時間をおいて再度お試しください。"
+                    "OpenAI APIの利用上限を超過しています。システム管理者にお問い合わせください。"
                 )
+            elif error_code == "OPENAI_RATE_LIMIT":
+                hint = "一時的なレート制限です。しばらく時間をおいて再度お試しください。"
             else:
                 hint = "エラーが継続する場合は管理者にお問い合わせください。"
 
@@ -156,9 +154,7 @@ async def generate_answer(
         ).to_json_response()
     except ValueError as e:
         # 予期したValueErrorはanswerが空のケースとして扱い、ErrorApiResponse
-        logger.error(
-            "Generate answer ValueError", exc_info=True, extra={"error": str(e)}
-        )
+        logger.error("Generate answer ValueError", exc_info=True, extra={"error": str(e)})
         return ErrorApiResponse(
             code="E400",
             detail="回答生成に失敗しました。",
@@ -167,9 +163,7 @@ async def generate_answer(
             status_code=500,
         ).to_json_response()
     except Exception as e:
-        logger.error(
-            "Generate answer exception", exc_info=True, extra={"error": str(e)}
-        )
+        logger.error("Generate answer exception", exc_info=True, extra={"error": str(e)})
         return api_response(
             status_code=500,
             status_str="error",
@@ -189,9 +183,7 @@ async def download_report(request: Request, pages: list = Body(..., embed=True))
         from app.shared.file_utils import PDF_PATH
 
         pdf_path = str(PDF_PATH)
-        logger.debug(
-            "Download report request", extra={"pages": pages, "pdf_path": pdf_path}
-        )
+        logger.debug("Download report request", extra={"pages": pages, "pdf_path": pdf_path})
         if not pages or not isinstance(pages, list):
             return api_response(
                 status_code=422,
@@ -249,9 +241,7 @@ async def download_report(request: Request, pages: list = Body(..., embed=True))
         headers = {"Content-Disposition": "attachment; filename=pages.zip"}
         return FileResponse(buf.name, media_type="application/zip", headers=headers)
     except Exception as e:
-        logger.error(
-            "Download report exception", extra={"error": repr(e)}, exc_info=True
-        )
+        logger.error("Download report exception", extra={"error": repr(e)}, exc_info=True)
         return api_response(
             status_code=500,
             status_str="error",
@@ -322,8 +312,8 @@ def get_question_options():
             if not category or not title:
                 continue
 
-            def _append(cat):
-                nested.setdefault(cat, []).append({"title": title, "tag": tags})
+            def _append(cat, current_title=title, current_tags=tags):
+                nested.setdefault(cat, []).append({"title": current_title, "tag": current_tags})
 
             if isinstance(category, list):
                 for cat in category:

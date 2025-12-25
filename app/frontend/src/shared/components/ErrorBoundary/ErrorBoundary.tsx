@@ -7,8 +7,8 @@
  * 本番環境ではスタックトレースを隠し、ユーザー向けメッセージを表示します。
  */
 
-import React, { Component, type ErrorInfo, type ReactNode } from "react";
-import { Button, Result, Typography } from "antd";
+import React, { Component, type ErrorInfo, type ReactNode } from 'react';
+import { Button, Result, Typography } from 'antd';
 
 const { Paragraph, Text } = Typography;
 
@@ -56,11 +56,11 @@ class ErrorBoundary extends Component<Props, State> {
 
     // エラーログ出力（本番環境では詳細なスタックトレースは非表示）
     if (!isProduction) {
-      console.error("ErrorBoundary caught an error:", error);
-      console.error("Error info:", errorInfo);
+      console.error('ErrorBoundary caught an error:', error);
+      console.error('Error info:', errorInfo);
     } else {
       // 本番環境: 最小限の情報のみログ
-      console.error("An error occurred in the application");
+      console.error('An error occurred in the application');
     }
 
     // カスタムエラーハンドラーを呼び出し
@@ -77,7 +77,7 @@ class ErrorBoundary extends Component<Props, State> {
   };
 
   private handleGoHome = (): void => {
-    window.location.href = "/";
+    window.location.href = '/';
   };
 
   public render(): ReactNode {
@@ -103,7 +103,7 @@ class ErrorBoundary extends Component<Props, State> {
           ]}
         >
           {!isProduction && this.state.error && (
-            <div style={{ textAlign: "left", marginTop: 24 }}>
+            <div style={{ textAlign: 'left', marginTop: 24 }}>
               <Paragraph>
                 <Text strong style={{ fontSize: 16 }}>
                   エラー詳細（開発環境のみ表示）:
@@ -112,10 +112,10 @@ class ErrorBoundary extends Component<Props, State> {
               <Paragraph>
                 <pre
                   style={{
-                    background: "#f5f5f5",
+                    background: '#f5f5f5',
                     padding: 16,
                     borderRadius: 4,
-                    overflow: "auto",
+                    overflow: 'auto',
                     maxHeight: 300,
                     fontSize: 12,
                   }}

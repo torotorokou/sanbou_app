@@ -42,16 +42,12 @@ def rewrite_artifact_urls_to_bff(
         artifact = response_data["artifact"]
         # excel_download_url と pdf_preview_url に base_prefix を追加
         if "excel_download_url" in artifact and artifact["excel_download_url"]:
-            artifact["excel_download_url"] = (
-                f"{base_prefix}{artifact['excel_download_url']}"
-            )
+            artifact["excel_download_url"] = f"{base_prefix}{artifact['excel_download_url']}"
         if "pdf_preview_url" in artifact and artifact["pdf_preview_url"]:
             artifact["pdf_preview_url"] = f"{base_prefix}{artifact['pdf_preview_url']}"
         logger.debug(
             "[BFF] Rewritten artifact URLs with prefix",
-            extra=create_log_context(
-                operation="rewrite_artifact_urls", base_prefix=base_prefix
-            ),
+            extra=create_log_context(operation="rewrite_artifact_urls", base_prefix=base_prefix),
         )
 
     # PDFステータスレスポンスの pdf_url フィールドも変換
@@ -59,9 +55,7 @@ def rewrite_artifact_urls_to_bff(
         response_data["pdf_url"] = f"{base_prefix}{response_data['pdf_url']}"
         logger.debug(
             "[BFF] Rewritten pdf_url with prefix",
-            extra=create_log_context(
-                operation="rewrite_pdf_url", base_prefix=base_prefix
-            ),
+            extra=create_log_context(operation="rewrite_pdf_url", base_prefix=base_prefix),
         )
 
     return response_data

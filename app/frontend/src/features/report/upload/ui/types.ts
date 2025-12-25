@@ -1,5 +1,5 @@
-import type { UploadProps } from "antd";
-import type { ValidationStatus } from "@/shared";
+import type { UploadProps } from 'antd';
+import type { ValidationStatus } from '@/shared';
 
 // CsvFileType 型定義（旧 features/database から移行）
 // Note: features/database からこの型は削除されました
@@ -7,7 +7,7 @@ export interface CsvUploadFileType {
   label: string;
   file: File | null;
   onChange: (file: File | null) => void;
-  validationResult?: "ok" | "ng" | "unknown"; // レガシー表記（互換性のため残す）
+  validationResult?: 'ok' | 'ng' | 'unknown'; // レガシー表記（互換性のため残す）
   required: boolean;
   onRemove?: () => void;
 }

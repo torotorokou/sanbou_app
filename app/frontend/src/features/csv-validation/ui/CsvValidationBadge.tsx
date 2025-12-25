@@ -14,9 +14,9 @@
  * ```
  */
 
-import React from "react";
-import { ValidationBadge } from "@/shared/ui";
-import type { CsvValidationStatus } from "../model/validationStatus";
+import React from 'react';
+import { ValidationBadge } from '@/shared/ui';
+import type { CsvValidationStatus } from '../model/validationStatus';
 
 export interface CsvValidationBadgeProps {
   /**
@@ -32,7 +32,7 @@ export interface CsvValidationBadgeProps {
    * - 'default': 通常表示（14px）
    * @default 'default'
    */
-  size?: "small" | "default";
+  size?: 'small' | 'default';
 }
 
 /**
@@ -43,7 +43,7 @@ export interface CsvValidationBadgeProps {
  */
 export const CsvValidationBadge: React.FC<CsvValidationBadgeProps> = ({
   status,
-  size = "default",
+  size = 'default',
 }) => {
   return <ValidationBadge status={status} size={size} />;
 };

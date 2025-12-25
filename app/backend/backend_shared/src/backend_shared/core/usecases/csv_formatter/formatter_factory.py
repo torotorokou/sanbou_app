@@ -13,6 +13,7 @@ from backend_shared.core.usecases.csv_formatter.formatter_impls import (
     YardFormatter,
 )
 
+
 # =========================
 # フォーマッターファクトリ
 # =========================

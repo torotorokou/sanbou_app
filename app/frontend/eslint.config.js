@@ -6,6 +6,7 @@ import { defineConfig } from "eslint/config";
 import pluginTs from "@typescript-eslint/eslint-plugin";
 import json from "@eslint/json";
 import boundaries from "eslint-plugin-boundaries";
+import eslintConfigPrettier from "eslint-config-prettier";
 
 export default defineConfig([
   // 除外パターン（Flat Config は .eslintignore 非対応のためここで指定）
@@ -188,4 +189,6 @@ export default defineConfig([
       "no-restricted-syntax": "off",
     },
   },
+  // Prettier競合回避（最後に配置）
+  eslintConfigPrettier,
 ]);

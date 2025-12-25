@@ -4,7 +4,7 @@
  * 顧客比較（離脱分析）ロジック
  */
 
-import type { CustomerData } from "../../shared/domain/types";
+import type { CustomerData } from '../../shared/domain/types';
 
 /**
  * 顧客比較結果

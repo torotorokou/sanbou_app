@@ -8,6 +8,9 @@ YAMLファイル(shogun_csv_masters.yaml)から動的にカラムマッピング
 
 import pandas as pd
 import sqlalchemy as sa
+from sqlalchemy import text
+from sqlalchemy.orm import Session
+
 from app.config.settings import get_settings
 from app.infra.db.dynamic_models import (
     create_shogun_model_class,
@@ -17,8 +20,6 @@ from app.infra.db.table_definition import get_table_definition_generator
 from backend_shared.application.logging import create_log_context, get_module_logger
 from backend_shared.infra.dataframe import filter_defined_columns, to_sql_ready_df
 from backend_shared.infra.json_utils import deep_jsonable
-from sqlalchemy import text
-from sqlalchemy.orm import Session
 
 logger = get_module_logger(__name__)
 
@@ -80,9 +81,7 @@ class ShogunCsvRepository:
         if df.empty:
             logger.warning(
                 "DataFrameが空のため保存スキップ",
-                extra=create_log_context(
-                    operation="save_dataframe_to_stg", csv_type=csv_type
-                ),
+                extra=create_log_context(operation="save_dataframe_to_stg", csv_type=csv_type),
             )
             return 0
 
@@ -157,9 +156,7 @@ class ShogunCsvRepository:
                 f"[DEBUG REPO] [stg] After to_sql_ready: {len(df_to_save.columns)} cols: {list(df_to_save.columns)[:15]}"
             )
 
-        model_class = create_shogun_model_class(
-            csv_type, table_name=table_name, schema=schema
-        )
+        model_class = create_shogun_model_class(csv_type, table_name=table_name, schema=schema)
 
         # [DEBUG] モデルクラスのカラム定義を確認
         model_columns = [c.name for c in model_class.__table__.columns]
@@ -171,9 +168,7 @@ class ShogunCsvRepository:
         records = df_to_save.to_dict("records")
         logger.info(f"[DEBUG REPO] Preparing bulk insert: {len(records)} records")
         if records:
-            logger.info(
-                f"[DEBUG REPO] First record keys: {list(records[0].keys())[:15]}"
-            )
+            logger.info(f"[DEBUG REPO] First record keys: {list(records[0].keys())[:15]}")
             logger.info(f"[DEBUG REPO] First record sample: {records[0]}")
 
         # Pandas特有の型をJSON互換型に変換（np.int64 → int, np.float64 → float等）
@@ -312,17 +307,13 @@ class ShogunCsvRepository:
 
         try:
             # TRUNCATE実行
-            self.db.execute(
-                text(f"TRUNCATE TABLE {table_name} RESTART IDENTITY CASCADE")
-            )
+            self.db.execute(text(f"TRUNCATE TABLE {table_name} RESTART IDENTITY CASCADE"))
             # NOTE: commit()はUseCase/API層で実行（テスト用途なのでここではコミット）
             # 開発・テスト用のため、この関数だけは例外的にcommit()を残す
             self.db.commit()
             logger.info(
                 "テーブルtruncate完了",
-                extra=create_log_context(
-                    operation="truncate_table", table_name=table_name
-                ),
+                extra=create_log_context(operation="truncate_table", table_name=table_name),
             )
         except Exception as e:
             self.db.rollback()

@@ -1,22 +1,22 @@
-import React from "react";
-import { Tooltip } from "antd";
-import { InfoCircleOutlined } from "@ant-design/icons";
+import React from 'react';
+import { Tooltip } from 'antd';
+import { InfoCircleOutlined } from '@ant-design/icons';
 
 export type InfoTooltipProps = {
   title?: React.ReactNode;
   placement?:
-    | "top"
-    | "left"
-    | "right"
-    | "bottom"
-    | "topLeft"
-    | "topRight"
-    | "bottomLeft"
-    | "bottomRight"
-    | "leftTop"
-    | "leftBottom"
-    | "rightTop"
-    | "rightBottom";
+    | 'top'
+    | 'left'
+    | 'right'
+    | 'bottom'
+    | 'topLeft'
+    | 'topRight'
+    | 'bottomLeft'
+    | 'bottomRight'
+    | 'leftTop'
+    | 'leftBottom'
+    | 'rightTop'
+    | 'rightBottom';
   className?: string;
 };
 
@@ -29,16 +29,12 @@ const defaultTitle = (
 
 export const InfoTooltip: React.FC<InfoTooltipProps> = ({
   title = defaultTitle,
-  placement = "top",
+  placement = 'top',
   className,
 }) => {
   return (
-    <Tooltip
-      title={title}
-      placement={placement}
-      classNames={{ root: className }}
-    >
-      <InfoCircleOutlined style={{ color: "#8c8c8c" }} />
+    <Tooltip title={title} placement={placement} classNames={{ root: className }}>
+      <InfoCircleOutlined style={{ color: '#8c8c8c' }} />
     </Tooltip>
   );
 };

@@ -2,20 +2,20 @@
  * Shogun Manual API Client
  * 将軍マニュアルのAPI クライアント
  */
-import { apiGet } from "@/shared";
+import { apiGet } from '@/shared';
 import type {
   ManualDetail,
   ManualListResponse,
   ManualCatalogResponse,
-} from "../domain/types/shogun.types";
+} from '../domain/types/shogun.types';
 
 export const ShogunClient = {
   /**
    * カタログ取得（将軍カテゴリ）
    */
   async catalog(signal?: AbortSignal): Promise<ManualCatalogResponse> {
-    return apiGet<ManualCatalogResponse>("/core_api/manual/manuals/catalog", {
-      params: { category: "shogun" },
+    return apiGet<ManualCatalogResponse>('/core_api/manual/manuals/catalog', {
+      params: { category: 'shogun' },
       signal,
     });
   },
@@ -30,9 +30,9 @@ export const ShogunClient = {
       category?: string;
       page?: number;
       size?: number;
-    } = {},
+    } = {}
   ): Promise<ManualListResponse> {
-    return apiGet<ManualListResponse>("/core_api/manual/manuals", { params });
+    return apiGet<ManualListResponse>('/core_api/manual/manuals', { params });
   },
 
   /**
@@ -45,10 +45,8 @@ export const ShogunClient = {
   /**
    * マニュアルセクション取得
    */
-  async sections(id: string): Promise<ManualDetail["sections"]> {
-    return apiGet<ManualDetail["sections"]>(
-      `/core_api/manual/manuals/${id}/sections`,
-    );
+  async sections(id: string): Promise<ManualDetail['sections']> {
+    return apiGet<ManualDetail['sections']>(`/core_api/manual/manuals/${id}/sections`);
   },
 };
 

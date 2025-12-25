@@ -22,12 +22,13 @@ Inbound Router - 搬入データ取得エンドポイント
 
 from datetime import date as date_type
 
+from fastapi import APIRouter, Depends, Query
+
 from app.config.di_providers import get_inbound_daily_uc
 from app.core.domain.inbound import CumScope, InboundDailyRow
 from app.core.usecases.inbound.dto import GetInboundDailyInput
 from app.core.usecases.inbound.get_inbound_daily_uc import GetInboundDailyUseCase
 from backend_shared.application.logging import get_module_logger
-from fastapi import APIRouter, Depends, Query
 
 logger = get_module_logger(__name__)
 
@@ -39,9 +40,7 @@ def get_inbound_daily(
     start: date_type = Query(..., description="開始日 (YYYY-MM-DD)"),
     end: date_type = Query(..., description="終了日 (YYYY-MM-DD)"),
     segment: str | None = Query(None, description="セグメントフィルタ（オプション）"),
-    cum_scope: CumScope = Query(
-        "none", description="累積計算スコープ（range|month|week|none）"
-    ),
+    cum_scope: CumScope = Query("none", description="累積計算スコープ（range|month|week|none）"),
     uc: GetInboundDailyUseCase = Depends(get_inbound_daily_uc),
 ) -> list[InboundDailyRow]:
     """

@@ -34,9 +34,7 @@ class NotificationOutboxPort(ABC):
         pass
 
     @abstractmethod
-    def list_pending(
-        self, now: datetime, limit: int = 100
-    ) -> list[NotificationOutboxItem]:
+    def list_pending(self, now: datetime, limit: int = 100) -> list[NotificationOutboxItem]:
         """
         送信対象の pending アイテムを取得
 
@@ -53,9 +51,7 @@ class NotificationOutboxPort(ABC):
         pass
 
     @abstractmethod
-    def mark_failed(
-        self, id: UUID, error: str, failure_type: FailureType, now: datetime
-    ) -> None:
+    def mark_failed(self, id: UUID, error: str, failure_type: FailureType, now: datetime) -> None:
         """
         通知送信失敗をマーク
 

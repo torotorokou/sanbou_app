@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
-import type { ICalendarRepository } from "@/features/calendar/ports/repository";
-import type { CalendarDayDTO } from "@/features/calendar/domain/types";
+import { useEffect, useMemo, useState } from 'react';
+import type { ICalendarRepository } from '@/features/calendar/ports/repository';
+import type { CalendarDayDTO } from '@/features/calendar/domain/types';
 
 type Params = { repository: ICalendarRepository; year: number; month: number };
 
@@ -18,7 +18,7 @@ export function useCalendarVM({ repository, year, month }: Params) {
         const days = await repository.fetchMonth({ year, month });
         if (!cancel) setData(days);
       } catch (e: unknown) {
-        if (!cancel) setError(e instanceof Error ? e.message : "unknown error");
+        if (!cancel) setError(e instanceof Error ? e.message : 'unknown error');
       } finally {
         if (!cancel) setLoading(false);
       }
@@ -46,7 +46,7 @@ function buildGrid(year: number, month: number, days: CalendarDayDTO[]) {
     // toISOString() uses UTC and can produce the previous day when the
     // runtime is in a positive offset timezone (e.g. Asia/Tokyo), which
     // causes a 1-day shift when matching server-provided date strings.
-    const pad = (n: number) => String(n).padStart(2, "0");
+    const pad = (n: number) => String(n).padStart(2, '0');
     const key = `${cur.getFullYear()}-${pad(cur.getMonth() + 1)}-${pad(cur.getDate())}`;
     const inMonth = cur >= first && cur <= last;
     const existing = map.get(key);
@@ -63,7 +63,7 @@ function buildGrid(year: number, month: number, days: CalendarDayDTO[]) {
       is_holiday: false,
       is_second_sunday: false,
       is_company_closed: false,
-      day_type: "NORMAL",
+      day_type: 'NORMAL',
       is_business: true,
       date: key,
       isHoliday: false,

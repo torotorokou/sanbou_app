@@ -57,7 +57,7 @@ export type ID = string;
  * mode = 'customer' の場合、各顧客の売上が集計され、
  * Pivotドロワーでは「顧客 → 品名」「顧客 → 日付」の内訳を展開できる
  */
-export type Mode = "customer" | "item" | "date";
+export type Mode = 'customer' | 'item' | 'date';
 
 /**
  * ソートキー
@@ -71,13 +71,7 @@ export type Mode = "customer" | "item" | "date";
  * - `date`: 日付でソート（date モード時のみ使用）
  * - `name`: 名称（顧客名/品名）でソート
  */
-export type SortKey =
-  | "amount"
-  | "qty"
-  | "count"
-  | "unit_price"
-  | "date"
-  | "name";
+export type SortKey = 'amount' | 'qty' | 'count' | 'unit_price' | 'date' | 'name';
 
 /**
  * ソート順
@@ -86,7 +80,7 @@ export type SortKey =
  * - `asc`: 昇順（小さい値から大きい値へ）
  * - `desc`: 降順（大きい値から小さい値へ）
  */
-export type SortOrder = "asc" | "desc";
+export type SortOrder = 'asc' | 'desc';
 
 /**
  * カテゴリ種別
@@ -95,7 +89,7 @@ export type SortOrder = "asc" | "desc";
  * - `waste`: 廃棄物
  * - `valuable`: 有価物
  */
-export type CategoryKind = "waste" | "valuable";
+export type CategoryKind = 'waste' | 'valuable';
 
 // ========================================
 // エンティティ型（マスタデータ）
@@ -279,7 +273,7 @@ export interface SummaryQuery {
   filterIds: ID[];
   sortBy: SortKey;
   order: SortOrder;
-  topN: 10 | 20 | 50 | "all";
+  topN: 10 | 20 | 50 | 'all';
 }
 
 /**
@@ -325,7 +319,7 @@ export interface PivotQuery {
   targetAxis: Mode;
   sortBy: SortKey;
   order: SortOrder;
-  topN: 10 | 20 | 50 | "all";
+  topN: 10 | 20 | 50 | 'all';
   cursor?: string | null;
 }
 
@@ -438,7 +432,7 @@ export interface DailyPoint {
  */
 export interface ExportOptions {
   excludeZero: boolean;
-  splitBy: "none" | "rep";
+  splitBy: 'none' | 'rep';
   addAxisB: boolean;
   addAxisC: boolean;
 }
@@ -453,7 +447,7 @@ export interface ExportOptions {
  */
 export const DEFAULT_EXPORT_OPTIONS: ExportOptions = {
   excludeZero: true,
-  splitBy: "none",
+  splitBy: 'none',
   addAxisB: false,
   addAxisC: false,
 };
@@ -536,7 +530,7 @@ export type DrawerState =
       activeAxis: Mode;
       sortBy: SortKey;
       order: SortOrder;
-      topN: 10 | 20 | 50 | "all";
+      topN: 10 | 20 | 50 | 'all';
     };
 
 // ========================================
@@ -550,7 +544,7 @@ export type DrawerState =
  * - `item_lines`: 品名明細行レベル（最後の軸が item の場合）
  * - `slip_summary`: 伝票単位サマリ（最後の軸が item 以外の場合）
  */
-export type DetailMode = "item_lines" | "slip_summary";
+export type DetailMode = 'item_lines' | 'slip_summary';
 
 /**
  * 集計軸種別
@@ -561,7 +555,7 @@ export type DetailMode = "item_lines" | "slip_summary";
  * - `date`: 日付
  * - `item`: 品名
  */
-export type GroupBy = "rep" | "customer" | "date" | "item";
+export type GroupBy = 'rep' | 'customer' | 'date' | 'item';
 
 /**
  * 詳細明細行（またはサマリ行）

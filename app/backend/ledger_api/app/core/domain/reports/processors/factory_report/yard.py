@@ -1,9 +1,11 @@
 import pandas as pd
+
 from app.core.domain.reports.processors.factory_report.summary import (
     summary_apply_by_sheet,
 )
 from app.infra.report_utils.formatters import summarize_value_by_cell_with_label
 from backend_shared.application.logging import get_module_logger
+
 
 logger = get_module_logger(__name__)
 
@@ -28,9 +30,7 @@ def process_yard(
 
     # --- ① マスターCSVの確認 ---
     if master_csv is None or master_csv.empty:
-        logger.warning(
-            "マスターCSVが提供されていません（ヤード）。空データで継続します。"
-        )
+        logger.warning("マスターCSVが提供されていません（ヤード）。空データで継続します。")
         return pd.DataFrame(
             columns=[
                 "大項目",

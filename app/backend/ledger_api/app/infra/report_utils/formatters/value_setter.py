@@ -1,9 +1,7 @@
 import pandas as pd
 
 
-def set_value(
-    master_csv, category_name: str, level1_name: str, level2_name: str, value
-):
+def set_value(master_csv, category_name: str, level1_name: str, level2_name: str, value):
     """
     指定された「大項目・小項目1・小項目2」の組み合わせに一致する行をマスターCSVから探し、
     該当する「値」列に指定の値を代入する。
@@ -54,14 +52,14 @@ def set_value_fast(df, match_columns, match_values, value, value_col="値"):
         raise ValueError("keysとvaluesの長さが一致していません")
 
     cond = pd.Series(True, index=df.index)
-    for col, val in zip(match_columns, match_values):
+    for col, val in zip(match_columns, match_values, strict=True):
         if val in [None, ""]:
             cond &= df[col].isna()
         else:
             cond &= df[col] == val
 
     if cond.sum() == 0:
-        print(f"⚠️ 該当行なし: {dict(zip(match_columns, match_values))}")
+        print(f"⚠️ 該当行なし: {dict(zip(match_columns, match_values, strict=True))}")
         return
 
     df.loc[cond, value_col] = value
@@ -100,14 +98,14 @@ def set_value_fast_safe(
 
     df_copy = df.copy()
     cond = pd.Series(True, index=df_copy.index)
-    for col, val in zip(match_columns, match_values):
+    for col, val in zip(match_columns, match_values, strict=True):
         if val in [None, ""]:
             cond &= df_copy[col].isna()
         else:
             cond &= df_copy[col] == val
 
     if cond.sum() == 0:
-        print(f"⚠️ 該当行なし: {dict(zip(match_columns, match_values))}")
+        print(f"⚠️ 該当行なし: {dict(zip(match_columns, match_values, strict=True))}")
         return df_copy
 
     # 値の型に応じて安全に代入できるよう、『値』列のdtypeを適宜アップキャスト

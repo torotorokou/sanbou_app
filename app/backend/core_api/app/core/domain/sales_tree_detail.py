@@ -50,20 +50,14 @@ class DetailLinesRequest(BaseModel):
 
     date_from: date_type = Field(..., description="集計開始日")
     date_to: date_type = Field(..., description="集計終了日")
-    last_group_by: GroupBy = Field(
-        ..., description="最後の集計軸: rep, customer, date, item"
-    )
-    category_kind: CategoryKind = Field(
-        "waste", description="カテゴリ種別: waste, valuable"
-    )
+    last_group_by: GroupBy = Field(..., description="最後の集計軸: rep, customer, date, item")
+    category_kind: CategoryKind = Field("waste", description="カテゴリ種別: waste, valuable")
 
     # フィルタ条件（集計パスを再現）
     rep_id: int | None = Field(None, description="営業IDフィルタ")
     customer_id: str | None = Field(None, description="顧客IDフィルタ")
     item_id: int | None = Field(None, description="品目IDフィルタ")
-    date_value: date_type | None = Field(
-        None, description="日付フィルタ（mode=dateの場合）"
-    )
+    date_value: date_type | None = Field(None, description="日付フィルタ（mode=dateの場合）")
 
 
 # ========================================
@@ -83,16 +77,10 @@ class DetailLine(BaseModel):
     mode: DetailMode = Field(
         ..., description="モード: item_lines, slip_summary", serialization_alias="mode"
     )
-    sales_date: date_type = Field(
-        ..., description="売上日", serialization_alias="salesDate"
-    )
-    slip_no: int = Field(
-        ..., description="伝票No（receive_no）", serialization_alias="slipNo"
-    )
+    sales_date: date_type = Field(..., description="売上日", serialization_alias="salesDate")
+    slip_no: int = Field(..., description="伝票No（receive_no）", serialization_alias="slipNo")
     rep_name: str = Field(..., description="営業名", serialization_alias="repName")
-    customer_name: str = Field(
-        ..., description="顧客名", serialization_alias="customerName"
-    )
+    customer_name: str = Field(..., description="顧客名", serialization_alias="customerName")
 
     # 品名情報（常に含む。slip_summaryの場合はカンマ区切り）
     item_id: int | None = Field(
@@ -114,9 +102,7 @@ class DetailLine(BaseModel):
     unit_price_yen_per_kg: float | None = Field(
         None, description="単価（円/kg）", serialization_alias="unitPriceYenPerKg"
     )
-    amount_yen: float = Field(
-        ..., description="金額（円）", serialization_alias="amountYen"
-    )
+    amount_yen: float = Field(..., description="金額（円）", serialization_alias="amountYen")
 
 
 class DetailLinesResponse(BaseModel):
@@ -126,6 +112,4 @@ class DetailLinesResponse(BaseModel):
 
     mode: DetailMode = Field(..., description="返却データのモード")
     rows: list[DetailLine] = Field(..., description="詳細明細行リスト")
-    total_count: int = Field(
-        ..., description="総行数", serialization_alias="totalCount"
-    )
+    total_count: int = Field(..., description="総行数", serialization_alias="totalCount")

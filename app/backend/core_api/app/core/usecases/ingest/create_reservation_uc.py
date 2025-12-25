@@ -56,7 +56,7 @@ class CreateReservationUseCase:
         # TODO: ビジネスルール適用
 
         # DB保存（Port経由）
-        result = self.ingest_repo.insert_reservation(
+        self.ingest_repo.insert_reservation(
             date=req.date,
             trucks=req.trucks,
         )

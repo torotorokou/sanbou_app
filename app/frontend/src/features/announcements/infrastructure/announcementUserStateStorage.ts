@@ -15,8 +15,8 @@ export interface AnnouncementUserState {
   ackAtById: Record<string, string>;
 }
 
-const STORAGE_VERSION = "v1";
-const STORAGE_KEY_PREFIX = "announcements";
+const STORAGE_VERSION = 'v1';
+const STORAGE_KEY_PREFIX = 'announcements';
 
 /**
  * ストレージキーを生成
@@ -51,10 +51,10 @@ export function loadUserState(userKey: string): AnnouncementUserState {
     const parsed = JSON.parse(raw) as unknown;
     // 型チェック
     if (
-      typeof parsed === "object" &&
+      typeof parsed === 'object' &&
       parsed !== null &&
-      "readAtById" in parsed &&
-      "ackAtById" in parsed
+      'readAtById' in parsed &&
+      'ackAtById' in parsed
     ) {
       return parsed as AnnouncementUserState;
     }
@@ -72,18 +72,15 @@ export function loadUserState(userKey: string): AnnouncementUserState {
  * @param userKey - ユーザー識別子
  * @param state - 保存する状態
  */
-export function saveUserState(
-  userKey: string,
-  state: AnnouncementUserState,
-): void {
+export function saveUserState(userKey: string, state: AnnouncementUserState): void {
   try {
     const key = getStorageKey(userKey);
     localStorage.setItem(key, JSON.stringify(state));
     // 同一タブ内での変更通知用カスタムイベント
-    window.dispatchEvent(new Event("announcement-storage-change"));
+    window.dispatchEvent(new Event('announcement-storage-change'));
   } catch {
     // ストレージフル等 → 無視（最悪リロードで状態が消えるだけ）
-    console.warn("[announcements] Failed to save user state");
+    console.warn('[announcements] Failed to save user state');
   }
 }
 
@@ -107,10 +104,7 @@ export function markAsRead(userKey: string, announcementId: string): void {
  * @param userKey - ユーザー識別子
  * @param announcementId - お知らせID
  */
-export function markAsAcknowledged(
-  userKey: string,
-  announcementId: string,
-): void {
+export function markAsAcknowledged(userKey: string, announcementId: string): void {
   const state = loadUserState(userKey);
   if (!state.ackAtById[announcementId]) {
     state.ackAtById[announcementId] = new Date().toISOString();
@@ -137,10 +131,7 @@ export function isRead(userKey: string, announcementId: string): boolean {
  * @param announcementId - お知らせID
  * @returns 確認済みならtrue
  */
-export function isAcknowledged(
-  userKey: string,
-  announcementId: string,
-): boolean {
+export function isAcknowledged(userKey: string, announcementId: string): boolean {
   const state = loadUserState(userKey);
   return !!state.ackAtById[announcementId];
 }
@@ -152,10 +143,7 @@ export function isAcknowledged(
  * @param announcementIds - 対象のお知らせID配列
  * @returns 未読数
  */
-export function getUnreadCount(
-  userKey: string,
-  announcementIds: string[],
-): number {
+export function getUnreadCount(userKey: string, announcementIds: string[]): number {
   const state = loadUserState(userKey);
   return announcementIds.filter((id) => !state.readAtById[id]).length;
 }

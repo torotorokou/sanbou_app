@@ -3,12 +3,12 @@
  * HTTP Repository Implementation (IChatRepository)
  */
 
-import { apiPost } from "@/shared";
-import type { ChatAnswerRequest, ChatAnswerResult } from "../domain/types";
+import { apiPost } from '@/shared';
+import type { ChatAnswerRequest, ChatAnswerResult } from '../domain/types';
 
 export class ChatRepository {
   async postChatAnswer(payload: ChatAnswerRequest): Promise<ChatAnswerResult> {
-    return apiPost<ChatAnswerResult>("/core_api/chat/test-answer", payload);
+    return apiPost<ChatAnswerResult>('/core_api/chat/test-answer', payload);
   }
 }
 

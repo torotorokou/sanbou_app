@@ -7,8 +7,9 @@ Retry-After ヘッダで再試行時間を通知します。
 本番環境では Cloud Run にデプロイし、IAP + LB 経由でアクセスさせます。
 """
 
-from fastapi import FastAPI, Request, Response
+from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
+
 
 app = FastAPI(title="Maintenance Page", docs_url=None, redoc_url=None)
 
@@ -119,7 +120,7 @@ async def maintenance_handler(request: Request, path: str):
             "Retry-After": "3600",  # 1時間後に再試行を推奨
             "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
             "Pragma": "no-cache",
-        }
+        },
     )
 
 
@@ -135,8 +136,9 @@ async def health_check():
 
 
 if __name__ == "__main__":
-    import uvicorn
     import os
+
+    import uvicorn
 
     port = int(os.environ.get("PORT", 8080))
     uvicorn.run(app, host="0.0.0.0", port=port)

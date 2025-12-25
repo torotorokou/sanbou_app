@@ -6,6 +6,7 @@ Block Unit Price Interactive - Finalize Step Handler
 from typing import Any, cast
 
 import pandas as pd
+
 from app.core.domain.reports.processors.block_unit_price.process2 import (
     apply_transport_fee_by_vendor,
     apply_weight_based_transport_fee,
@@ -29,6 +30,7 @@ from .block_unit_price_utils import (
     handle_step_error,
     log_checkpoint,
 )
+
 
 logger = get_module_logger(__name__)
 
@@ -78,9 +80,7 @@ def merge_selected_transport_vendors_with_df(
             ),
             selection_df_shape=selection_df.shape,
             selection_df_columns=list(selection_df.columns),
-            selection_df_head=(
-                selection_df.head(3).to_dict() if not selection_df.empty else {}
-            ),
+            selection_df_head=(selection_df.head(3).to_dict() if not selection_df.empty else {}),
         ),
     )
 
@@ -95,9 +95,7 @@ def merge_selected_transport_vendors_with_df(
     ]
     label_col = next((c for c in vendor_label_candidates if c in sel.columns), None)
     if not label_col:
-        logger.error(
-            f"selection_df にベンダ名の列が見つかりません。columns={list(sel.columns)}"
-        )
+        logger.error(f"selection_df にベンダ名の列が見つかりません。columns={list(sel.columns)}")
         raise ValueError(
             "selection_df にベンダ名の列が見つかりません"
             "（例: selected_vendor, vendor_label, 運搬業者 など）"
@@ -146,10 +144,7 @@ def merge_selected_transport_vendors_with_df(
         f"Selected vendors count: {selected_count}",
         extra=create_log_context(
             operation="merge_transport_vendors",
-            selected_vendors=merged["__selected_vendor"]
-            .dropna()
-            .unique()
-            .tolist()[:10],
+            selected_vendors=merged["__selected_vendor"].dropna().unique().tolist()[:10],
         ),
     )
 
@@ -234,9 +229,7 @@ def merge_selected_transport_vendors_copy(
             )
 
         except Exception as e:
-            logger.warning(
-                f"merge_copy: apply failed for {entry_id}: {type(e).__name__}: {e}"
-            )
+            logger.warning(f"merge_copy: apply failed for {entry_id}: {type(e).__name__}: {e}")
             continue
 
     # マッチしなかったentry_idをログ出力
@@ -310,9 +303,7 @@ def run_block_unit_price_pipeline(
     )
 
     df_after = apply_weight_based_transport_fee(df_after, df_transport_cost)
-    log_checkpoint(
-        "after_apply_weight_based_transport_fee", df_after, df_transport_cost
-    )
+    log_checkpoint("after_apply_weight_based_transport_fee", df_after, df_transport_cost)
     logger.debug(
         "運搬費(重量別)適用後",
         extra=create_log_context(
@@ -461,14 +452,10 @@ def execute_finalize_step(state: dict[str, Any]) -> tuple[pd.DataFrame, dict[str
                     method="merge_copy",
                     selections_count=len(state.get("selections") or {}),
                     has_selection_df=selection_df is not None,
-                    selection_df_empty=(
-                        selection_df.empty if selection_df is not None else None
-                    ),
+                    selection_df_empty=(selection_df.empty if selection_df is not None else None),
                 ),
             )
-            df_selected = merge_selected_transport_vendors_copy(
-                df_shipment_initial, state
-            )
+            df_selected = merge_selected_transport_vendors_copy(df_shipment_initial, state)
 
         _tmp_selected = ensure_datetime_col(df_selected, "伝票日付")
         assert isinstance(_tmp_selected, pd.DataFrame)
@@ -477,21 +464,15 @@ def execute_finalize_step(state: dict[str, Any]) -> tuple[pd.DataFrame, dict[str
         logger.debug(f"selected head: {fmt_head_rows(df_selected)}")
 
         # パイプライン処理
-        df_after = run_block_unit_price_pipeline(
-            df_selected, df_transport_cost, master_csv
-        )
+        df_after = run_block_unit_price_pipeline(df_selected, df_transport_cost, master_csv)
         # ensure DataFrame after pipeline
         assert isinstance(df_after, pd.DataFrame)
         log_checkpoint("after_pipeline", df_after)
 
         # サマリーの作成
         summary = {
-            "total_amount": float(
-                df_after.get("合計金額", pd.Series(dtype=float)).sum() or 0
-            ),
-            "total_transport_fee": float(
-                df_after.get("運搬費", pd.Series(dtype=float)).sum() or 0
-            ),
+            "total_amount": float(df_after.get("合計金額", pd.Series(dtype=float)).sum() or 0),
+            "total_transport_fee": float(df_after.get("運搬費", pd.Series(dtype=float)).sum() or 0),
             "processed_records": int(len(df_after)),
         }
 
@@ -531,10 +512,7 @@ def execute_finalize_step(state: dict[str, Any]) -> tuple[pd.DataFrame, dict[str
         # Fallback to df_after if shipment didn't provide a usable date
         if not report_date:
             try:
-                if (
-                    isinstance(df_after, pd.DataFrame)
-                    and "伝票日付" in df_after.columns
-                ):
+                if isinstance(df_after, pd.DataFrame) and "伝票日付" in df_after.columns:
                     ser = pd.to_datetime(df_after["伝票日付"], errors="coerce")
                     nonnull = ser.dropna()
                     if not nonnull.empty:
@@ -557,17 +535,13 @@ def execute_finalize_step(state: dict[str, Any]) -> tuple[pd.DataFrame, dict[str
         context: dict[str, Any] = {}
         try:
             if "df_selected" in locals():
-                context["df_selected_cols"] = list(
-                    getattr(locals()["df_selected"], "columns", [])
-                )
+                context["df_selected_cols"] = list(getattr(locals()["df_selected"], "columns", []))
                 context["df_selected_head"] = fmt_head_rows(locals()["df_selected"])
             if "df_transport_cost" in locals():
                 context["transport_cost_cols"] = list(
                     getattr(locals()["df_transport_cost"], "columns", [])
                 )
-                context["transport_cost_head"] = fmt_head_rows(
-                    locals()["df_transport_cost"]
-                )
+                context["transport_cost_head"] = fmt_head_rows(locals()["df_transport_cost"])
         except Exception:
             pass
 
@@ -589,11 +563,7 @@ def execute_finalize_with_optional_selections(
     """
     try:
         session_id_in = user_input.get("session_id")
-        if (
-            session_id_in
-            and state.get("session_id")
-            and session_id_in != state["session_id"]
-        ):
+        if session_id_in and state.get("session_id") and session_id_in != state["session_id"]:
             logger.warning(
                 f"session_id 不一致: finalize続行 | "
                 f"expected={state.get('session_id')}, got={session_id_in}"
@@ -611,9 +581,7 @@ def execute_finalize_with_optional_selections(
                     ),
                 )
             except Exception as e:
-                logger.warning(
-                    f"selection_rows の DataFrame 化に失敗: {type(e).__name__}: {e}"
-                )
+                logger.warning(f"selection_rows の DataFrame 化に失敗: {type(e).__name__}: {e}")
 
         # selections から正規化
         selections = user_input.get("selections") or {}
@@ -630,10 +598,7 @@ def execute_finalize_with_optional_selections(
 
             try:
                 sel_df = pd.DataFrame(
-                    [
-                        {"entry_id": str(k), "selected_vendor": str(v)}
-                        for k, v in selections.items()
-                    ]
+                    [{"entry_id": str(k), "selected_vendor": str(v)} for k, v in selections.items()]
                 )
                 state["selection_df"] = sel_df
                 logger.info(
@@ -643,9 +608,7 @@ def execute_finalize_with_optional_selections(
                     ),
                 )
             except Exception as e:
-                logger.warning(
-                    f"selections の DataFrame 化に失敗: {type(e).__name__}: {e}"
-                )
+                logger.warning(f"selections の DataFrame 化に失敗: {type(e).__name__}: {e}")
 
         return execute_finalize_step(state)
 

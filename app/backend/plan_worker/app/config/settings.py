@@ -8,9 +8,10 @@ Plan Worker 固有の設定を追加します。
 import os
 from functools import lru_cache
 
+from pydantic import Field
+
 from backend_shared.config.base_settings import BaseAppSettings
 from backend_shared.infra.db.url_builder import build_database_url_with_driver
-from pydantic import Field
 
 
 def _build_database_url() -> str:

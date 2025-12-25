@@ -243,12 +243,8 @@ def downgrade() -> None:
     op.execute(
         "CREATE TABLE raw.receive_shogun_final (LIKE stg.receive_shogun_final INCLUDING ALL);"
     )
-    op.execute(
-        "CREATE TABLE raw.yard_shogun_flash (LIKE stg.yard_shogun_flash INCLUDING ALL);"
-    )
-    op.execute(
-        "CREATE TABLE raw.yard_shogun_final (LIKE stg.yard_shogun_final INCLUDING ALL);"
-    )
+    op.execute("CREATE TABLE raw.yard_shogun_flash (LIKE stg.yard_shogun_flash INCLUDING ALL);")
+    op.execute("CREATE TABLE raw.yard_shogun_final (LIKE stg.yard_shogun_final INCLUDING ALL);")
     op.execute(
         "CREATE TABLE raw.shipment_shogun_flash (LIKE stg.shipment_shogun_flash INCLUDING ALL);"
     )

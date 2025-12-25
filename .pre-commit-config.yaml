@@ -153,32 +153,46 @@ repos:
   # ============================================================
   # Python フォーマット・リント
   # ============================================================
+  # black = Python formatter (唯一の整形ツール)
+  # ruff = Linter + Import sorter (isortは不要)
+  # ============================================================
   - repo: https://github.com/psf/black
     rev: 25.12.0
     hooks:
       - id: black
         name: Python コードフォーマット (black)
         language_version: python3
-        files: ^app/backend/.*\.py$
-
-  - repo: https://github.com/pycqa/isort
-    rev: 7.0.0
-    hooks:
-      - id: isort
-        name: Python importソート (isort)
-        args: ["--profile", "black"]
-        files: ^app/backend/.*\.py$
+        exclude: |
+          (?x)(
+              migrations/|
+              alembic/|
+              test/|
+              _test|
+              migrations_legacy/|
+              migrations_v2/
+          )
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.14.10
     hooks:
       - id: ruff
-        name: Python リント (ruff)
-        args: [--fix, --exit-zero]
-        files: ^app/backend/.*\.py$
+        name: Python リント + Import整形 (ruff)
+        args: [--fix]
+        exclude: |
+          (?x)(
+              migrations/|
+              alembic/|
+              test/|
+              _test|
+              migrations_legacy/|
+              migrations_v2/
+          )
 
   # ============================================================
   # Frontend (JavaScript/TypeScript)
+  # ============================================================
+  # prettier = Frontend formatter (唯一の整形ツール)
+  # eslint = Linter (prettier競合回避設定済み)
   # ============================================================
   - repo: https://github.com/pre-commit/mirrors-prettier
     rev: v4.0.0-alpha.8
@@ -186,6 +200,7 @@ repos:
       - id: prettier
         name: フロントエンドフォーマット (Prettier)
         types_or: [javascript, jsx, ts, tsx, json, yaml, markdown]
+        files: ^app/frontend/
         exclude: |
           (?x)^(
               package-lock\.json|
@@ -193,10 +208,13 @@ repos:
               yarn\.lock|
               .*\.lock|
               \.min\.(js|css)$|
-              \.hadolint\.yaml$
+              \.hadolint\.yaml$|
+              dist/|
+              build/|
+              node_modules/
           )
         additional_dependencies:
-          - prettier@3.3.3
+          - prettier@4.0.0-alpha.8
 
   - repo: https://github.com/pre-commit/mirrors-eslint
     rev: v10.0.0-beta.0
@@ -216,6 +234,7 @@ repos:
           - globals@^15.0.0
           - "@eslint/js@^9.0.0"
           - eslint-plugin-boundaries@^5.0.0
+          - eslint-config-prettier@^10.0.1
 
   # ============================================================
   # Docker・Dockerfileチェック

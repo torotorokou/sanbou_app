@@ -3,7 +3,7 @@
  * ブロック単価計算の対話的フロー
  */
 
-import { coreApi } from "@/shared";
+import { coreApi } from '@/shared';
 
 // =============================
 // Types
@@ -83,11 +83,11 @@ export interface FinalizePriceResponse {
  * セッション初期化
  */
 export async function initializeBlockUnitPrice(
-  params: BlockUnitPriceInitialRequest = {},
+  params: BlockUnitPriceInitialRequest = {}
 ): Promise<BlockUnitPriceInitialResponse> {
   return await coreApi.post<BlockUnitPriceInitialResponse>(
-    "/core_api/block_unit_price_interactive/initial",
-    params,
+    '/core_api/block_unit_price_interactive/initial',
+    params
   );
 }
 
@@ -95,11 +95,11 @@ export async function initializeBlockUnitPrice(
  * セッション開始
  */
 export async function startBlockUnitPrice(
-  params: BlockUnitPriceStartRequest,
+  params: BlockUnitPriceStartRequest
 ): Promise<BlockUnitPriceStartResponse> {
   return await coreApi.post<BlockUnitPriceStartResponse>(
-    "/core_api/block_unit_price_interactive/start",
-    params,
+    '/core_api/block_unit_price_interactive/start',
+    params
   );
 }
 
@@ -107,34 +107,30 @@ export async function startBlockUnitPrice(
  * 運送方法選択
  */
 export async function selectTransport(
-  params: SelectTransportRequest,
+  params: SelectTransportRequest
 ): Promise<SelectTransportResponse> {
   return await coreApi.post<SelectTransportResponse>(
-    "/core_api/block_unit_price_interactive/select-transport",
-    params,
+    '/core_api/block_unit_price_interactive/select-transport',
+    params
   );
 }
 
 /**
  * 価格適用プレビュー
  */
-export async function applyPrice(
-  params: ApplyPriceRequest,
-): Promise<ApplyPriceResponse> {
+export async function applyPrice(params: ApplyPriceRequest): Promise<ApplyPriceResponse> {
   return await coreApi.post<ApplyPriceResponse>(
-    "/core_api/block_unit_price_interactive/apply",
-    params,
+    '/core_api/block_unit_price_interactive/apply',
+    params
   );
 }
 
 /**
  * 価格確定
  */
-export async function finalizePrice(
-  params: FinalizePriceRequest,
-): Promise<FinalizePriceResponse> {
+export async function finalizePrice(params: FinalizePriceRequest): Promise<FinalizePriceResponse> {
   return await coreApi.post<FinalizePriceResponse>(
-    "/core_api/block_unit_price_interactive/finalize",
-    params,
+    '/core_api/block_unit_price_interactive/finalize',
+    params
   );
 }

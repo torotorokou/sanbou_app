@@ -1,5 +1,5 @@
 // TypewriterText.tsx
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState } from 'react';
 
 interface Props {
   text: string;
@@ -8,7 +8,7 @@ interface Props {
 }
 
 const TypewriterText: React.FC<Props> = ({ text, speed = 30, onDone }) => {
-  const [displayed, setDisplayed] = useState("");
+  const [displayed, setDisplayed] = useState('');
 
   useEffect(() => {
     let i = 0;

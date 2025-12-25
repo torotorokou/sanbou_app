@@ -20,9 +20,7 @@ depends_on = None
 
 def _swap_min_to_clean(sql: str) -> str:
     # 素直な置換（クオート/余白差異も想定して緩めに）
-    return re.sub(
-        r"stg\.v_king_receive_clean_min\b", "stg.v_king_receive_clean", sql, flags=re.I
-    )
+    return re.sub(r"stg\.v_king_receive_clean_min\b", "stg.v_king_receive_clean", sql, flags=re.I)
 
 
 def upgrade():
@@ -39,9 +37,7 @@ def upgrade():
         return
 
     with op.get_context().autocommit_block():
-        op.execute(
-            sa.text(f"CREATE OR REPLACE VIEW mart.v_receive_daily AS {new_sql};")
-        )
+        op.execute(sa.text(f"CREATE OR REPLACE VIEW mart.v_receive_daily AS {new_sql};"))
 
 
 def downgrade():
@@ -60,6 +56,4 @@ def downgrade():
     )
 
     with op.get_context().autocommit_block():
-        op.execute(
-            sa.text(f"CREATE OR REPLACE VIEW mart.v_receive_daily AS {back_sql};")
-        )
+        op.execute(sa.text(f"CREATE OR REPLACE VIEW mart.v_receive_daily AS {back_sql};"))

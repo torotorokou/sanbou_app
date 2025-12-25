@@ -6,9 +6,10 @@ Health Check Router
 
 from typing import Any
 
+from fastapi import APIRouter, Depends
+
 from app.config.di_providers import get_health_check_usecase
 from app.core.usecases.health_check_uc import HealthCheckUseCase
-from fastapi import APIRouter, Depends
 
 router = APIRouter(tags=["health"])
 

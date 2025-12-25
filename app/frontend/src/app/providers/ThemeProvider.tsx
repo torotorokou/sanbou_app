@@ -14,15 +14,10 @@
  *   - borderRadiusもレスポンシブに調整
  *   - useResponsive hookで画面幅を監視
  */
-import React from "react";
-import { ConfigProvider } from "antd";
-import jaJP from "antd/locale/ja_JP";
-import {
-  customTokens,
-  useResponsive,
-  isTabletOrHalf,
-  isDesktop,
-} from "@/shared";
+import React from 'react';
+import { ConfigProvider } from 'antd';
+import jaJP from 'antd/locale/ja_JP';
+import { customTokens, useResponsive, isTabletOrHalf, isDesktop } from '@/shared';
 
 /**
  * ThemeProviderコンポーネント
@@ -39,20 +34,18 @@ import {
  *   </BrowserRouter>
  * </ThemeProvider>
  */
-export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
-  children,
-}) => {
+export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // 画面幅を監視し、レスポンシブなサイズ調整を行う
   const { width } = useResponsive();
 
   // タブレット以上（md～xxl）かどうか
-  const isMd = typeof width === "number" ? isTabletOrHalf(width) : false;
+  const isMd = typeof width === 'number' ? isTabletOrHalf(width) : false;
 
   // デスクトップ（xl以上）かどうか
-  const isXlUp = typeof width === "number" ? isDesktop(width) : false;
+  const isXlUp = typeof width === 'number' ? isDesktop(width) : false;
 
   // コンポーネントサイズの決定
-  const componentSize = isXlUp ? "large" : isMd ? "middle" : "small";
+  const componentSize = isXlUp ? 'large' : isMd ? 'middle' : 'small';
 
   return (
     <ConfigProvider

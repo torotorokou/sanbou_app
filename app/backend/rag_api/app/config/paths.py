@@ -10,9 +10,7 @@ def _resolve_root() -> str:
         2. APP_BASE_DIR (旧)
         3. /backend (デフォルト)
     """
-    return (
-        os.environ.get("APP_ROOT_DIR") or os.environ.get("APP_BASE_DIR") or "/backend"
-    )
+    return os.environ.get("APP_ROOT_DIR") or os.environ.get("APP_BASE_DIR") or "/backend"
 
 
 BASE_DIR = Path(_resolve_root())
@@ -27,9 +25,7 @@ print(
 
 # 各種パス（環境変数で上書き可）
 CONFIG_ENV = os.environ.get("CONFIG_ENV", str(BASE_DIR / "config/.env"))
-LOCAL_DATA_DIR = Path(
-    os.environ.get("LOCAL_DATA_DIR", str(BASE_DIR / "local_data/master"))
-)
+LOCAL_DATA_DIR = Path(os.environ.get("LOCAL_DATA_DIR", str(BASE_DIR / "local_data/master")))
 
 # YAML: with_tags に統一。旧名は互換のため同一パスを指す。
 CATEGORY_QUESTION_TEMPLATES_WITH_TAGS = Path(
@@ -46,15 +42,11 @@ CATEGORY_QUESTION_TEMPLATES = Path(
 )
 SOLVEST_PDF = Path(os.environ.get("SOLVEST_PDF", str(LOCAL_DATA_DIR / "SOLVEST.pdf")))
 SOLVEST_PLAN_PDF = Path(
-    os.environ.get(
-        "SOLVEST_PLAN_PDF", str(LOCAL_DATA_DIR / "solvest_business_plan_20240305.pdf")
-    )
+    os.environ.get("SOLVEST_PLAN_PDF", str(LOCAL_DATA_DIR / "solvest_business_plan_20240305.pdf"))
 )
 
 # ベクトルストア
-VECTORSTORE_DIR = Path(
-    os.environ.get("VECTORSTORE_DIR", str(LOCAL_DATA_DIR / "vectorstore"))
-)
+VECTORSTORE_DIR = Path(os.environ.get("VECTORSTORE_DIR", str(LOCAL_DATA_DIR / "vectorstore")))
 SOLVEST_FAISS = Path(
     os.environ.get("SOLVEST_FAISS", str(VECTORSTORE_DIR / "solvest_faiss_with_tag"))
 )

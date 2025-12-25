@@ -33,9 +33,10 @@ from .generate_block_unit_price import GenerateBlockUnitPriceUseCase  # noqa: F4
 # ==============================================================================
 from .generate_factory_report import GenerateFactoryReportUseCase  # noqa: F401
 from .generate_management_sheet import GenerateManagementSheetUseCase  # noqa: F401
-from .management_sheet_processor import (  # noqa: F401
-    process as management_sheet_process,
+from .management_sheet_processor import (
+    process as management_sheet_process,  # noqa: F401
 )
+
 
 # ==============================================================================
 # __all__ 定義

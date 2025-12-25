@@ -7,32 +7,29 @@
  * - 通知は呼び出し元（useSubmitVM）で一元管理
  */
 
-import type { DatasetImportRepository } from "./DatasetImportRepository";
-import { DatasetImportClient } from "../infrastructure/client";
-import { buildFormData } from "../../shared/upload/buildFormData";
-import { DEFAULT_UPLOAD_TIMEOUT } from "../../shared/types/constants";
-import type { UploadResponseShape } from "../../shared/types/common";
+import type { DatasetImportRepository } from './DatasetImportRepository';
+import { DatasetImportClient } from '../infrastructure/client';
+import { buildFormData } from '../../shared/upload/buildFormData';
+import { DEFAULT_UPLOAD_TIMEOUT } from '../../shared/types/constants';
+import type { UploadResponseShape } from '../../shared/types/common';
 
 export class DatasetImportRepositoryImpl implements DatasetImportRepository {
   async upload(
     filesByType: Record<string, File>,
     uploadPath: string,
-    signal?: AbortSignal,
+    signal?: AbortSignal
   ): Promise<UploadResponseShape> {
     const form = buildFormData(filesByType);
 
-    const result: UploadResponseShape = await DatasetImportClient.post(
-      uploadPath,
-      form,
-      { timeout: DEFAULT_UPLOAD_TIMEOUT, signal },
-    );
+    const result: UploadResponseShape = await DatasetImportClient.post(uploadPath, form, {
+      timeout: DEFAULT_UPLOAD_TIMEOUT,
+      signal,
+    });
 
     // レスポンスのバリデーション
-    if (result.status !== "success") {
-      const error = new Error(
-        result?.detail ?? "アップロード中にエラーが発生しました。",
-      );
-      error.name = "UploadResponseError";
+    if (result.status !== 'success') {
+      const error = new Error(result?.detail ?? 'アップロード中にエラーが発生しました。');
+      error.name = 'UploadResponseError';
       throw error;
     }
 

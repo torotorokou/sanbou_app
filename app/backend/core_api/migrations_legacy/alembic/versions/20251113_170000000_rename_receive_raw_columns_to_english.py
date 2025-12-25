@@ -68,9 +68,7 @@ def upgrade():
     for jp_name, en_name in COLUMN_RENAME_MAP.items():
         try:
             # PostgreSQL では日本語カラム名はダブルクォートで囲む必要がある
-            op.execute(
-                f'ALTER TABLE raw.receive_raw RENAME COLUMN "{jp_name}" TO {en_name}'
-            )
+            op.execute(f'ALTER TABLE raw.receive_raw RENAME COLUMN "{jp_name}" TO {en_name}')
             print(f"  ✓ '{jp_name}' → '{en_name}'")
         except Exception as e:
             print(f"  ✗ Failed to rename '{jp_name}': {e}")
@@ -92,9 +90,7 @@ def downgrade():
 
     for en_name, jp_name in reverse_map.items():
         try:
-            op.execute(
-                f'ALTER TABLE raw.receive_raw RENAME COLUMN {en_name} TO "{jp_name}"'
-            )
+            op.execute(f'ALTER TABLE raw.receive_raw RENAME COLUMN {en_name} TO "{jp_name}"')
             print(f"  ✓ '{en_name}' → '{jp_name}'")
         except Exception as e:
             print(f"  ✗ Failed to rename '{en_name}': {e}")

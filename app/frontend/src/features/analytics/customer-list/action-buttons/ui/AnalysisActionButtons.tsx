@@ -4,9 +4,9 @@
  * 分析実行・CSVダウンロードボタン
  */
 
-import React from "react";
-import { Button } from "antd";
-import { DownloadOutlined } from "@ant-design/icons";
+import React from 'react';
+import { Button } from 'antd';
+import { DownloadOutlined } from '@ant-design/icons';
 
 type Props = {
   onAnalyze: () => void;
@@ -54,8 +54,8 @@ const AnalysisActionButtons: React.FC<Props> = ({
         fontWeight: 600,
         letterSpacing: 1,
         height: 48,
-        borderColor: "#f43f5e",
-        color: isDownloadDisabled ? undefined : "#f43f5e",
+        borderColor: '#f43f5e',
+        color: isDownloadDisabled ? undefined : '#f43f5e',
       }}
     >
       CSVダウンロード

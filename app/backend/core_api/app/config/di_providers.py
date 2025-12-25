@@ -13,6 +13,9 @@ DI Providers - Dependency Injection Container
 
 import os
 
+from fastapi import Depends
+from sqlalchemy.orm import Session
+
 from app.core.ports.notification_port import (
     NotificationOutboxPort,
     NotificationPreferencePort,
@@ -63,8 +66,6 @@ from backend_shared.db.names import (
     T_SHOGUN_FINAL_SHIPMENT,
     T_SHOGUN_FINAL_YARD,
 )
-from fastapi import Depends
-from sqlalchemy.orm import Session
 
 logger = get_module_logger(__name__)
 
@@ -133,10 +134,11 @@ def get_repo_raw_final(db: Session = Depends(get_db)) -> ShogunCsvRepository:
     )
 
 
+from app.core.usecases.upload.upload_shogun_csv_uc import UploadShogunCsvUseCase
+
 # ========================================================================
 # UseCase Providers
 # ========================================================================
-from app.core.usecases.upload.upload_shogun_csv_uc import UploadShogunCsvUseCase
 from backend_shared.config.config_loader import ShogunCsvConfigLoader
 from backend_shared.core.usecases.csv_validator.csv_upload_validator_api import (
     CSVValidationResponder,
@@ -407,9 +409,7 @@ def get_customer_churn_query_adapter(
 
 
 def get_analyze_customer_churn_uc(
-    query_adapter: CustomerChurnQueryAdapter = Depends(
-        get_customer_churn_query_adapter
-    ),
+    query_adapter: CustomerChurnQueryAdapter = Depends(get_customer_churn_query_adapter),
 ) -> AnalyzeCustomerChurnUseCase:
     """AnalyzeCustomerChurnUseCase提供"""
     return AnalyzeCustomerChurnUseCase(query_port=query_adapter)

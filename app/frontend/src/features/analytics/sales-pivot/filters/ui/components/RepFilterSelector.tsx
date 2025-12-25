@@ -1,6 +1,6 @@
-import { Row, Col, Space, Select, Button, Typography } from "antd";
-import type { Mode, ID, SalesRep } from "../../../shared/model/types";
-import { axisLabel } from "../../../shared/model/metrics";
+import { Row, Col, Space, Select, Button, Typography } from 'antd';
+import type { Mode, ID, SalesRep } from '../../../shared/model/types';
+import { axisLabel } from '../../../shared/model/metrics';
 
 interface RepFilterSelectorProps {
   mode: Mode;
@@ -27,9 +27,9 @@ export const RepFilterSelector: React.FC<RepFilterSelectorProps> = ({
     <Row gutter={[16, 16]}>
       {/* 営業選択 */}
       <Col xs={24} md={18}>
-        <Space direction="vertical" size={2} style={{ width: "100%" }}>
+        <Space direction="vertical" size={2} style={{ width: '100%' }}>
           <Typography.Text type="secondary">営業</Typography.Text>
-          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
             <Select
               mode="multiple"
               allowClear
@@ -61,10 +61,8 @@ export const RepFilterSelector: React.FC<RepFilterSelectorProps> = ({
 
       {/* 絞り込みフィルタ */}
       <Col xs={24} md={6}>
-        <Space direction="vertical" size={2} style={{ width: "100%" }}>
-          <Typography.Text type="secondary">
-            {axisLabel(mode)}で絞る
-          </Typography.Text>
+        <Space direction="vertical" size={2} style={{ width: '100%' }}>
+          <Typography.Text type="secondary">{axisLabel(mode)}で絞る</Typography.Text>
           <Select
             key={mode}
             mode="multiple"
@@ -73,7 +71,7 @@ export const RepFilterSelector: React.FC<RepFilterSelectorProps> = ({
             options={filterOptions}
             value={filterIds}
             onChange={onFilterIdsChange}
-            style={{ width: "100%" }}
+            style={{ width: '100%' }}
           />
         </Space>
       </Col>

@@ -2,4 +2,4 @@
  * factory barrel
  */
 
-export * from "./previewFactory";
+export * from './previewFactory';

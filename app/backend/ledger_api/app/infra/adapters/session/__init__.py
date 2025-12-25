@@ -9,6 +9,7 @@ Session management for interactive reports.
 
 from app.infra.adapters.session.session_store import SessionStore, session_store
 
+
 __all__ = [
     "session_store",
     "SessionStore",

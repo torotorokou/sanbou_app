@@ -1,3 +1,4 @@
+# ruff: noqa
 from __future__ import annotations
 
 import argparse
@@ -22,18 +23,12 @@ def _parse_month(s: str) -> date:
 
 
 def _first_day_next_month(d: date) -> date:
-    return date(
-        d.year + (1 if d.month == 12 else 0), 1 if d.month == 12 else d.month + 1, 1
-    )
+    return date(d.year + (1 if d.month == 12 else 0), 1 if d.month == 12 else d.month + 1, 1)
 
 
 def _engine_url(dsn: str) -> str:
     prefix = "postgresql://"
-    return (
-        ("postgresql+psycopg" + dsn[len("postgresql") :])
-        if dsn.startswith(prefix)
-        else dsn
-    )
+    return ("postgresql+psycopg" + dsn[len("postgresql") :]) if dsn.startswith(prefix) else dsn
 
 
 def _ensure_odd(n: int) -> int:
@@ -65,12 +60,10 @@ def main():
     # ▼ここから改良点▼
 
     # 週ブリッジ平滑（週配分）
-    week_mass["w_week"] = rolling_smooth(
-        week_mass["w_week"], window=3, method="median_then_mean"
+    week_mass["w_week"] = rolling_smooth(week_mass["w_week"], window=3, method="median_then_mean")
+    week_mass["w_week"] = week_mass["w_week"] / week_mass.groupby("month_date")["w_week"].transform(
+        "sum"
     )
-    week_mass["w_week"] = week_mass["w_week"] / week_mass.groupby("month_date")[
-        "w_week"
-    ].transform("sum")
 
     # 週→日 Bモード
     cfg = SmoothConfig(
@@ -113,17 +106,14 @@ def main():
         )
 
     # --- ④ 最終7日ロール ---
-    base["target_ton"] = rolling_smooth(
-        base["target_ton"], window=7, method="mean_only"
-    )
+    base["target_ton"] = rolling_smooth(base["target_ton"], window=7, method="mean_only")
 
     # 月内再正規化（KPI一致）
     month_tot = base.groupby("month_date")["target_ton"].transform("sum")
     kpi_map = dict(zip(kpi["month_date"], kpi["month_target_ton"]))
     base["target_ton"] = base.apply(
         lambda r: (
-            r["target_ton"]
-            * (kpi_map.get(r["month_date"], 0.0) / month_tot.loc[r.name])
+            r["target_ton"] * (kpi_map.get(r["month_date"], 0.0) / month_tot.loc[r.name])
             if month_tot.loc[r.name] > 0
             else 0.0
         ),
@@ -135,9 +125,7 @@ def main():
     print("[OK] daily_plan_smooth.csv written")
 
     if args.debug:
-        week_check = (
-            base.groupby(["month_date", "iso_week"])["target_ton"].sum().reset_index()
-        )
+        week_check = base.groupby(["month_date", "iso_week"])["target_ton"].sum().reset_index()
         week_check.to_csv(OUT / "weekly_check.csv", index=False)
 
     eng.dispose()

@@ -2,8 +2,8 @@
  * FlowPane UI Component
  * フローチャート表示（純粋UI）+ 遅延ロード対応
  */
-import React from "react";
-import { Empty } from "antd";
+import React from 'react';
+import { Empty } from 'antd';
 
 export interface FlowPaneProps {
   src?: string;
@@ -32,7 +32,7 @@ export const FlowPane: React.FC<FlowPaneProps> = ({
 
   if (!src) {
     return (
-      <div style={{ height: "100%" }}>
+      <div style={{ height: '100%' }}>
         <Empty description="フローチャート未設定" />
       </div>
     );
@@ -42,28 +42,24 @@ export const FlowPane: React.FC<FlowPaneProps> = ({
     return (
       <div
         style={{
-          height: "100%",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          background: "#f5f5f5",
+          height: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: '#f5f5f5',
         }}
       >
-        <span style={{ color: "#999" }}>読み込み中...</span>
+        <span style={{ color: '#999' }}>読み込み中...</span>
       </div>
     );
   }
 
   const lower = src.toLowerCase();
-  if (lower.endsWith(".pdf")) {
-    return (
-      <iframe title={`${title}-flow`} src={src} className={frameClassName} />
-    );
+  if (lower.endsWith('.pdf')) {
+    return <iframe title={`${title}-flow`} src={src} className={frameClassName} />;
   }
   if (/\.(png|jpg|jpeg|svg|webp)$/.test(lower)) {
     return <img src={src} alt={`${title}-flow`} className={imgClassName} />;
   }
-  return (
-    <iframe title={`${title}-flow`} src={src} className={frameClassName} />
-  );
+  return <iframe title={`${title}-flow`} src={src} className={frameClassName} />;
 };

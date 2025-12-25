@@ -17,6 +17,7 @@ from backend_shared.db.names import (  # Schemas; Helper functions; Object colle
     schema_qualified,
 )
 
+
 __all__ = [
     # Schemas
     "SCHEMA_REF",

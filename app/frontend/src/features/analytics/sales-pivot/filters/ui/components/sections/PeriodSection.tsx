@@ -1,22 +1,22 @@
-import React from "react";
-import { Row, Col } from "antd";
-import type { Dayjs } from "dayjs";
-import { PeriodSelector } from "../PeriodSelector";
-import type { GridConfig } from "../../config/layout.config";
+import React from 'react';
+import { Row, Col } from 'antd';
+import type { Dayjs } from 'dayjs';
+import { PeriodSelector } from '../PeriodSelector';
+import type { GridConfig } from '../../config/layout.config';
 
 interface PeriodSectionProps {
   gutter: [number, number];
   periodGrid: GridConfig;
   marginTop: number;
 
-  granularity: "month" | "date";
-  periodMode: "single" | "range";
+  granularity: 'month' | 'date';
+  periodMode: 'single' | 'range';
   month: Dayjs;
   range: [Dayjs, Dayjs] | null;
   singleDate: Dayjs;
   dateRange: [Dayjs, Dayjs] | null;
-  onGranularityChange: (granularity: "month" | "date") => void;
-  onPeriodModeChange: (mode: "single" | "range") => void;
+  onGranularityChange: (granularity: 'month' | 'date') => void;
+  onPeriodModeChange: (mode: 'single' | 'range') => void;
   onMonthChange: (month: Dayjs) => void;
   onRangeChange: (range: [Dayjs, Dayjs] | null) => void;
   onSingleDateChange: (date: Dayjs) => void;

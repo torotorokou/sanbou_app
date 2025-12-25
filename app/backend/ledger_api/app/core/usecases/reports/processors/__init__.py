@@ -15,6 +15,7 @@ from app.core.usecases.reports.processors.report_processing_service import (
     ReportProcessingService,
 )
 
+
 __all__ = [
     "ReportProcessingService",
     "InteractiveReportProcessingService",

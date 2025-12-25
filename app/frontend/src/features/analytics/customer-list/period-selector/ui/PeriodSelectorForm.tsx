@@ -1,6 +1,6 @@
-import React from "react";
-import { DatePicker, Typography } from "antd";
-import type { Dayjs } from "dayjs";
+import React from 'react';
+import { DatePicker, Typography } from 'antd';
+import type { Dayjs } from 'dayjs';
 const { Title } = Typography;
 
 type Props = {
@@ -44,7 +44,7 @@ const PeriodSelectorForm: React.FC<Props> = ({
       level={5}
       style={{
         marginBottom: 6,
-        fontSize: "clamp(13px, 0.9vw, 16px)",
+        fontSize: 'clamp(13px, 0.9vw, 16px)',
         lineHeight: 1.3,
       }}
     >
@@ -55,8 +55,8 @@ const PeriodSelectorForm: React.FC<Props> = ({
     <Typography.Text
       type="secondary"
       style={{
-        fontSize: "clamp(11px, 0.75vw, 12px)",
-        display: "block",
+        fontSize: 'clamp(11px, 0.75vw, 12px)',
+        display: 'block',
         marginBottom: 8,
         lineHeight: 1.4,
       }}
@@ -65,7 +65,7 @@ const PeriodSelectorForm: React.FC<Props> = ({
       <br />
       「（例：2025-01〜2025-11）
     </Typography.Text>
-    <div style={{ marginBottom: 8, fontSize: "clamp(12px, 0.85vw, 14px)" }}>
+    <div style={{ marginBottom: 8, fontSize: 'clamp(12px, 0.85vw, 14px)' }}>
       <div style={{ marginBottom: 6 }}>
         開始月：
         <DatePicker
@@ -83,9 +83,7 @@ const PeriodSelectorForm: React.FC<Props> = ({
           value={currentEnd}
           onChange={setCurrentEnd}
           disabledDate={(current) =>
-            currentStart
-              ? current && current.isBefore(currentStart, "month")
-              : false
+            currentStart ? current && current.isBefore(currentStart, 'month') : false
           }
           style={{ width: 120, marginLeft: 8 }}
           size="small"
@@ -95,8 +93,8 @@ const PeriodSelectorForm: React.FC<Props> = ({
     <Title
       level={5}
       style={{
-        margin: "clamp(16px, 1.2vw, 24px) 0 6px 0",
-        fontSize: "clamp(13px, 0.9vw, 16px)",
+        margin: 'clamp(16px, 1.2vw, 24px) 0 6px 0',
+        fontSize: 'clamp(13px, 0.9vw, 16px)',
         lineHeight: 1.3,
       }}
     >
@@ -105,8 +103,8 @@ const PeriodSelectorForm: React.FC<Props> = ({
     <Typography.Text
       type="secondary"
       style={{
-        fontSize: "clamp(11px, 0.75vw, 12px)",
-        display: "block",
+        fontSize: 'clamp(11px, 0.75vw, 12px)',
+        display: 'block',
         marginBottom: 8,
         lineHeight: 1.4,
       }}
@@ -117,7 +115,7 @@ const PeriodSelectorForm: React.FC<Props> = ({
       <br />
       ※この期間に取引があり、対象期間に取引がない顧客を「離脱」として抽出
     </Typography.Text>
-    <div style={{ marginBottom: 8, fontSize: "clamp(12px, 0.85vw, 14px)" }}>
+    <div style={{ marginBottom: 8, fontSize: 'clamp(12px, 0.85vw, 14px)' }}>
       <div style={{ marginBottom: 6 }}>
         開始月：
         <DatePicker
@@ -130,14 +128,12 @@ const PeriodSelectorForm: React.FC<Props> = ({
             // 今期の範囲と重複する月を無効化
             return (
               current &&
-              !current.isBefore(currentStart, "month") &&
-              !current.isAfter(currentEnd, "month")
+              !current.isBefore(currentStart, 'month') &&
+              !current.isAfter(currentEnd, 'month')
             );
           }}
           style={{ width: 120, marginLeft: 8 }}
-          placeholder={
-            !currentStart || !currentEnd ? "今期を先に選択" : undefined
-          }
+          placeholder={!currentStart || !currentEnd ? '今期を先に選択' : undefined}
           size="small"
         />
       </div>
@@ -153,13 +149,12 @@ const PeriodSelectorForm: React.FC<Props> = ({
             // 前期開始月より前、または今期と重複する月を無効化
             return (
               current &&
-              (current.isBefore(previousStart, "month") ||
-                (!current.isBefore(currentStart, "month") &&
-                  !current.isAfter(currentEnd, "month")))
+              (current.isBefore(previousStart, 'month') ||
+                (!current.isBefore(currentStart, 'month') && !current.isAfter(currentEnd, 'month')))
             );
           }}
           style={{ width: 120, marginLeft: 8 }}
-          placeholder={!previousStart ? "開始月を先に選択" : undefined}
+          placeholder={!previousStart ? '開始月を先に選択' : undefined}
           size="small"
         />
       </div>

@@ -5,9 +5,9 @@
  * 任意のページや機能で利用可能な共通コンポーネント
  */
 
-import React from "react";
-import { Alert } from "antd";
-import { ExclamationCircleOutlined } from "@ant-design/icons";
+import React from 'react';
+import { Alert } from 'antd';
+import { ExclamationCircleOutlined } from '@ant-design/icons';
 
 export type WipNoticeProps = {
   /**
@@ -27,7 +27,7 @@ export type WipNoticeProps = {
    * Alert type (オプション)
    * デフォルト: "warning"
    */
-  type?: "info" | "success" | "warning" | "error";
+  type?: 'info' | 'success' | 'warning' | 'error';
   /**
    * 閉じるボタンを表示するかどうか（オプション）
    * デフォルト: false
@@ -50,9 +50,9 @@ export type WipNoticeProps = {
  */
 export const WipNotice: React.FC<WipNoticeProps> = ({
   show = false,
-  message = "開発中の機能です",
-  description = "この機能は現在開発中であり、表示されているデータはダミーデータです。",
-  type = "warning",
+  message = '開発中の機能です',
+  description = 'この機能は現在開発中であり、表示されているデータはダミーデータです。',
+  type = 'warning',
   closable = false,
 }) => {
   if (!show) {

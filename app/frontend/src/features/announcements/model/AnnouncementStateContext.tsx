@@ -5,8 +5,8 @@
  * 既読にした際に未読数を再計算するトリガーを提供。
  */
 
-import React, { createContext, useContext, useState, useCallback } from "react";
-import type { ReactNode } from "react";
+import React, { createContext, useContext, useState, useCallback } from 'react';
+import type { ReactNode } from 'react';
 
 interface AnnouncementStateContextValue {
   /** 既読状態の変更カウンター（変更時にインクリメント） */
@@ -15,9 +15,9 @@ interface AnnouncementStateContextValue {
   notifyReadStateChanged: () => void;
 }
 
-const AnnouncementStateContext = createContext<
-  AnnouncementStateContextValue | undefined
->(undefined);
+const AnnouncementStateContext = createContext<AnnouncementStateContextValue | undefined>(
+  undefined
+);
 
 interface AnnouncementStateProviderProps {
   children: ReactNode;
@@ -26,9 +26,9 @@ interface AnnouncementStateProviderProps {
 /**
  * お知らせ状態プロバイダー
  */
-export const AnnouncementStateProvider: React.FC<
-  AnnouncementStateProviderProps
-> = ({ children }) => {
+export const AnnouncementStateProvider: React.FC<AnnouncementStateProviderProps> = ({
+  children,
+}) => {
   const [readStateVersion, setReadStateVersion] = useState(0);
 
   const notifyReadStateChanged = useCallback(() => {
@@ -36,9 +36,7 @@ export const AnnouncementStateProvider: React.FC<
   }, []);
 
   return (
-    <AnnouncementStateContext.Provider
-      value={{ readStateVersion, notifyReadStateChanged }}
-    >
+    <AnnouncementStateContext.Provider value={{ readStateVersion, notifyReadStateChanged }}>
       {children}
     </AnnouncementStateContext.Provider>
   );
@@ -50,9 +48,7 @@ export const AnnouncementStateProvider: React.FC<
 export const useAnnouncementState = (): AnnouncementStateContextValue => {
   const context = useContext(AnnouncementStateContext);
   if (!context) {
-    throw new Error(
-      "useAnnouncementState must be used within AnnouncementStateProvider",
-    );
+    throw new Error('useAnnouncementState must be used within AnnouncementStateProvider');
   }
   return context;
 };

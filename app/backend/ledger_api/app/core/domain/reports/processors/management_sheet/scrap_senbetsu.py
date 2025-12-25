@@ -1,4 +1,5 @@
 import pandas as pd
+
 from app.infra.report_utils import get_template_config, load_master_and_template
 from app.infra.report_utils.dataframe.operations import apply_summary_all_items
 from app.infra.report_utils.formatters import summary_apply

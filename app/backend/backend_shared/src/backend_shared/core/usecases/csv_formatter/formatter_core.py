@@ -1,13 +1,12 @@
 import pandas as pd
+
 from backend_shared.core.usecases.csv_formatter.type_parser_map import (
     type_formatting_map,
     type_parser_map,
 )
 
 
-def apply_column_cleaning(
-    df: pd.DataFrame, columns_def: dict[str, dict]
-) -> pd.DataFrame:
+def apply_column_cleaning(df: pd.DataFrame, columns_def: dict[str, dict]) -> pd.DataFrame:
     """
     各列に対して「値そのものの整形」を行う処理（型変換前の前処理）。
 
@@ -47,9 +46,7 @@ def apply_column_cleaning(
     return df
 
 
-def apply_column_type_parsing(
-    df: pd.DataFrame, columns_def: dict[str, dict]
-) -> pd.DataFrame:
+def apply_column_type_parsing(df: pd.DataFrame, columns_def: dict[str, dict]) -> pd.DataFrame:
     """
     各列に対して「pandasのデータ型変換（dtype変換）」を適用する処理（本番の型変換）。
 
@@ -95,9 +92,7 @@ def apply_column_type_parsing(
     return df
 
 
-def dedupe_and_aggregate(
-    df: pd.DataFrame, unique_keys: list, agg_map: dict
-) -> pd.DataFrame:
+def dedupe_and_aggregate(df: pd.DataFrame, unique_keys: list, agg_map: dict) -> pd.DataFrame:
     """
     unique_keys でグループ化し、agg_map で指定した方法（sum, mean, first など）で集計し重複を解消する。
 
@@ -164,9 +159,7 @@ def dedupe_and_aggregate(
         return df
 
     # グループIDを全行に付与
-    df["_dup_group_id"] = pd.factorize(
-        df[unique_keys].astype(str).agg("-".join, axis=1)
-    )[0]
+    df["_dup_group_id"] = pd.factorize(df[unique_keys].astype(str).agg("-".join, axis=1))[0]
 
     # _dup_group_idで集約
     grouped = df.groupby("_dup_group_id", dropna=False)

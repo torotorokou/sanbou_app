@@ -6,7 +6,7 @@
  * 代わりに @shared/constants/breakpoints からインポートしてください
  */
 
-import { bp } from "@shared";
+import { bp } from '@shared';
 
 /**
  * @deprecated 代わりに @shared から bp をインポートしてください

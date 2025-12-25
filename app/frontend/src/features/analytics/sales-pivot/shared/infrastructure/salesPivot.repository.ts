@@ -37,13 +37,8 @@ import type {
   UniverseEntry,
   DetailLinesFilter,
   DetailLinesResponse,
-} from "../model/types";
-import {
-  sortMetrics,
-  monthDays,
-  monthsBetween,
-  allDaysInRange,
-} from "../model/metrics";
+} from '../model/types';
+import { sortMetrics, monthDays, monthsBetween, allDaysInRange } from '../model/metrics';
 
 // ========================================
 // Repository インターフェース
@@ -169,10 +164,10 @@ export interface SalesPivotRepository {
  * 本番環境では FastAPI から取得
  */
 const MOCK_REPS: SalesRep[] = [
-  { id: "rep_a", name: "営業A" },
-  { id: "rep_b", name: "営業B" },
-  { id: "rep_c", name: "営業C" },
-  { id: "rep_d", name: "営業D" },
+  { id: 'rep_a', name: '営業A' },
+  { id: 'rep_b', name: '営業B' },
+  { id: 'rep_c', name: '営業C' },
+  { id: 'rep_d', name: '営業D' },
 ];
 
 /**
@@ -182,16 +177,16 @@ const MOCK_REPS: SalesRep[] = [
  * 本番環境では FastAPI から取得
  */
 const MOCK_CUSTOMERS: UniverseEntry[] = [
-  { id: "c_alpha", name: "顧客アルファ" },
-  { id: "c_bravo", name: "顧客ブラボー" },
-  { id: "c_charlie", name: "顧客チャーリー" },
-  { id: "c_delta", name: "顧客デルタ" },
-  { id: "c_echo", name: "顧客エコー" },
-  { id: "c_fox", name: "顧客フォックス" },
-  { id: "c_golf", name: "顧客ゴルフ" },
-  { id: "c_hotel", name: "顧客ホテル" },
-  { id: "c_india", name: "顧客インディア" },
-  { id: "c_juliet", name: "顧客ジュリエット" },
+  { id: 'c_alpha', name: '顧客アルファ' },
+  { id: 'c_bravo', name: '顧客ブラボー' },
+  { id: 'c_charlie', name: '顧客チャーリー' },
+  { id: 'c_delta', name: '顧客デルタ' },
+  { id: 'c_echo', name: '顧客エコー' },
+  { id: 'c_fox', name: '顧客フォックス' },
+  { id: 'c_golf', name: '顧客ゴルフ' },
+  { id: 'c_hotel', name: '顧客ホテル' },
+  { id: 'c_india', name: '顧客インディア' },
+  { id: 'c_juliet', name: '顧客ジュリエット' },
 ];
 
 /**
@@ -201,17 +196,17 @@ const MOCK_CUSTOMERS: UniverseEntry[] = [
  * 本番環境では FastAPI から取得
  */
 const MOCK_ITEMS: UniverseEntry[] = [
-  { id: "i_a", name: "商品A" },
-  { id: "i_b", name: "商品B" },
-  { id: "i_c", name: "商品C" },
-  { id: "i_d", name: "商品D" },
-  { id: "i_e", name: "商品E" },
-  { id: "i_f", name: "商品F" },
-  { id: "i_g", name: "商品G" },
-  { id: "i_h", name: "商品H" },
-  { id: "i_i", name: "商品I" },
-  { id: "i_j", name: "商品J" },
-  { id: "i_k", name: "商品K" },
+  { id: 'i_a', name: '商品A' },
+  { id: 'i_b', name: '商品B' },
+  { id: 'i_c', name: '商品C' },
+  { id: 'i_d', name: '商品D' },
+  { id: 'i_e', name: '商品E' },
+  { id: 'i_f', name: '商品F' },
+  { id: 'i_g', name: '商品G' },
+  { id: 'i_h', name: '商品H' },
+  { id: 'i_i', name: '商品I' },
+  { id: 'i_j', name: '商品J' },
+  { id: 'i_k', name: '商品K' },
 ];
 
 // ========================================
@@ -233,8 +228,7 @@ const delay = (ms = 180) => new Promise((r) => setTimeout(r, ms));
  * @param max - 最大値（含む）
  * @returns min以上max以下のランダムな整数
  */
-const rndInt = (min: number, max: number) =>
-  Math.floor(Math.random() * (max - min + 1)) + min;
+const rndInt = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min;
 
 /**
  * ランダムにメトリクスを生成（矛盾を極力避ける）
@@ -249,9 +243,7 @@ const rndInt = (min: number, max: number) =>
  * - 単価(unit_price)と数量から売上(amount)を逆算し、ランダム性を加える
  * - 数量0の場合は単価もnull（計算不可）
  */
-const makeMetric = (
-  weight = 1,
-): Pick<MetricEntry, "amount" | "qty" | "count" | "unitPrice"> => {
+const makeMetric = (weight = 1): Pick<MetricEntry, 'amount' | 'qty' | 'count' | 'unitPrice'> => {
   // 約83%の確率で実績あり、17%で0実績
   const has = Math.random() < 0.83;
 
@@ -267,9 +259,7 @@ const makeMetric = (
 
   // 売上金額: 数量 × 単価 × (0.7～1.3のランダム係数)
   // ランダム係数で取引ごとの価格変動を表現
-  const amount = has
-    ? Math.round(qty * price * (0.7 + Math.random() * 0.6))
-    : 0;
+  const amount = has ? Math.round(qty * price * (0.7 + Math.random() * 0.6)) : 0;
 
   // 実際の単価（逆算）: 売上 ÷ 数量（小数点2桁）
   const unitPrice = qty > 0 ? Math.round((amount / qty) * 100) / 100 : null;
@@ -294,7 +284,7 @@ const makeMetric = (
 function paginateWithCursor<T>(
   sorted: T[],
   cursor: string | null | undefined,
-  pageSize: number,
+  pageSize: number
 ): CursorPage<T> {
   const start = cursor ? Number(cursor) : 0;
   const end = Math.min(start + pageSize, sorted.length);
@@ -375,20 +365,16 @@ export class MockSalesPivotRepository implements SalesPivotRepository {
    */
   async fetchSummary(q: SummaryQuery): Promise<SummaryRow[]> {
     // 1. 対象営業を絞り込み
-    const reps = q.repIds.length
-      ? MOCK_REPS.filter((r) => q.repIds.includes(r.id))
-      : MOCK_REPS;
+    const reps = q.repIds.length ? MOCK_REPS.filter((r) => q.repIds.includes(r.id)) : MOCK_REPS;
 
     // 2. 期間から対象月を算出
-    const months = q.monthRange
-      ? monthsBetween(q.monthRange.from, q.monthRange.to)
-      : [q.month!];
+    const months = q.monthRange ? monthsBetween(q.monthRange.from, q.monthRange.to) : [q.month!];
 
     // 3. モードに応じたユニバース（全件リスト）を生成
     const universe: UniverseEntry[] =
-      q.mode === "customer"
+      q.mode === 'customer'
         ? MOCK_CUSTOMERS
-        : q.mode === "item"
+        : q.mode === 'item'
           ? MOCK_ITEMS
           : q.monthRange
             ? allDaysInRange(q.monthRange)
@@ -409,7 +395,7 @@ export class MockSalesPivotRepository implements SalesPivotRepository {
         const m = makeMetric(weight);
 
         // 期間が複数月の場合は月数分を乗算（単純化）
-        const mult = q.mode === "date" ? 1 : months.length;
+        const mult = q.mode === 'date' ? 1 : months.length;
         const amount = Math.round(m.amount * mult);
         const qty = Math.round(m.qty * mult);
         const count = Math.round(m.count * mult);
@@ -429,7 +415,7 @@ export class MockSalesPivotRepository implements SalesPivotRepository {
 
       // 6. ソート
       sortMetrics(pool, q.sortBy, q.order);
-      const top = q.topN === "all" ? pool : pool.slice(0, q.topN);
+      const top = q.topN === 'all' ? pool : pool.slice(0, q.topN);
       return { repId: rep.id, repName: rep.name, topN: top };
     });
 
@@ -443,9 +429,9 @@ export class MockSalesPivotRepository implements SalesPivotRepository {
       : [params.month!];
 
     const universe: UniverseEntry[] =
-      params.targetAxis === "customer"
+      params.targetAxis === 'customer'
         ? MOCK_CUSTOMERS
-        : params.targetAxis === "item"
+        : params.targetAxis === 'item'
           ? MOCK_ITEMS
           : params.monthRange
             ? allDaysInRange(params.monthRange)
@@ -453,17 +439,13 @@ export class MockSalesPivotRepository implements SalesPivotRepository {
 
     const rows: MetricEntry[] = universe.map((t) => {
       const repWeight =
-        (params.repIds.length
-          ? params.repIds
-          : MOCK_REPS.map((r) => r.id)
-        ).reduce(
+        (params.repIds.length ? params.repIds : MOCK_REPS.map((r) => r.id)).reduce(
           (acc, id) => acc + (1 + (id.charCodeAt(id.length - 1) % 3) * 0.1),
-          0,
+          0
         ) / Math.max(1, params.repIds.length || MOCK_REPS.length);
-      const baseWeight =
-        1 + (params.baseId.charCodeAt(params.baseId.length - 1) % 5) * 0.08;
+      const baseWeight = 1 + (params.baseId.charCodeAt(params.baseId.length - 1) % 5) * 0.08;
       const m = makeMetric(0.9 * repWeight * baseWeight);
-      const mult = params.targetAxis === "date" ? 1 : months.length;
+      const mult = params.targetAxis === 'date' ? 1 : months.length;
       const amount = Math.round(m.amount * mult);
       const qty = Math.round(m.qty * mult);
       const count = Math.round(m.count * mult);
@@ -482,7 +464,7 @@ export class MockSalesPivotRepository implements SalesPivotRepository {
 
     sortMetrics(rows, params.sortBy, params.order);
 
-    if (params.topN === "all") {
+    if (params.topN === 'all') {
       const page = paginateWithCursor(rows, params.cursor, 30);
       await delay();
       return page;
@@ -493,9 +475,7 @@ export class MockSalesPivotRepository implements SalesPivotRepository {
   }
 
   async fetchDailySeries(params: DailySeriesQuery): Promise<DailyPoint[]> {
-    const days = params.monthRange
-      ? allDaysInRange(params.monthRange)
-      : monthDays(params.month!);
+    const days = params.monthRange ? allDaysInRange(params.monthRange) : monthDays(params.month!);
     const series = days.map((d) => {
       const m = makeMetric(1);
       return {
@@ -505,8 +485,7 @@ export class MockSalesPivotRepository implements SalesPivotRepository {
         count: m.count,
         lineCount: m.count,
         slipCount: Math.max(1, Math.round(m.count * 0.7)),
-        unitPrice:
-          m.qty > 0 ? Math.round((m.amount / m.qty) * 100) / 100 : null,
+        unitPrice: m.qty > 0 ? Math.round((m.amount / m.qty) * 100) / 100 : null,
       };
     });
     await delay(120);
@@ -532,32 +511,30 @@ export class MockSalesPivotRepository implements SalesPivotRepository {
 
     const headers = Object.keys(rows[0] ?? {});
     const csv = [
-      headers.join(","),
-      ...rows.map((r) => headers.map((h) => r[h] ?? "").join(",")),
-    ].join("\r\n");
+      headers.join(','),
+      ...rows.map((r) => headers.map((h) => r[h] ?? '').join(',')),
+    ].join('\r\n');
 
-    const blob = new Blob(["\uFEFF", csv], { type: "text/csv;charset=utf-8;" });
+    const blob = new Blob(['\uFEFF', csv], { type: 'text/csv;charset=utf-8;' });
     await delay(500);
     return blob;
   }
 
-  async fetchDetailLines(
-    filter: DetailLinesFilter,
-  ): Promise<DetailLinesResponse> {
+  async fetchDetailLines(filter: DetailLinesFilter): Promise<DetailLinesResponse> {
     // モック実装: ダミーデータを返す
     await delay(300);
 
-    const mode = filter.lastGroupBy === "item" ? "item_lines" : "slip_summary";
+    const mode = filter.lastGroupBy === 'item' ? 'item_lines' : 'slip_summary';
     const rows = [];
 
     // サンプルデータ生成
     for (let i = 0; i < 20; i++) {
-      if (mode === "item_lines") {
+      if (mode === 'item_lines') {
         rows.push({
-          mode: "item_lines" as const,
-          salesDate: `${filter.dateFrom.substring(0, 8)}${String(i + 1).padStart(2, "0")}`,
+          mode: 'item_lines' as const,
+          salesDate: `${filter.dateFrom.substring(0, 8)}${String(i + 1).padStart(2, '0')}`,
           slipNo: 1000 + i,
-          slipTypeName: i % 2 === 0 ? "売上" : "仕入",
+          slipTypeName: i % 2 === 0 ? '売上' : '仕入',
           repName: `営業${(i % 3) + 1}`,
           customerName: `顧客${(i % 5) + 1}`,
           itemId: 100 + i,
@@ -569,10 +546,10 @@ export class MockSalesPivotRepository implements SalesPivotRepository {
         });
       } else {
         rows.push({
-          mode: "slip_summary" as const,
-          salesDate: `${filter.dateFrom.substring(0, 8)}${String(i + 1).padStart(2, "0")}`,
+          mode: 'slip_summary' as const,
+          salesDate: `${filter.dateFrom.substring(0, 8)}${String(i + 1).padStart(2, '0')}`,
           slipNo: 1000 + i,
-          slipTypeName: i % 2 === 0 ? "売上" : "仕入",
+          slipTypeName: i % 2 === 0 ? '売上' : '仕入',
           repName: `営業${(i % 3) + 1}`,
           customerName: `顧客${(i % 5) + 1}`,
           itemId: null,
@@ -597,14 +574,13 @@ export class MockSalesPivotRepository implements SalesPivotRepository {
  * デフォルトリポジトリインスタンス（モック）
  * 将来的に環境変数などで HTTP 実装に切り替え可能
  */
-export const salesPivotRepository: SalesPivotRepository =
-  new MockSalesPivotRepository();
+export const salesPivotRepository: SalesPivotRepository = new MockSalesPivotRepository();
 
 /* ========================================
  * HTTP実装（実API連携）
  * ======================================== */
 
-import { coreApi } from "@/shared";
+import { coreApi } from '@/shared';
 
 /**
  * フロントエンドのSortKeyからバックエンドのSortKeyへのマッピング
@@ -613,7 +589,7 @@ import { coreApi } from "@/shared";
  */
 function mapSortKeyToBackend(sortBy: string): string {
   const mapping: Record<string, string> = {
-    count: "slip_count",
+    count: 'slip_count',
     // 他のキーはそのまま渡す
   };
   return mapping[sortBy] ?? sortBy;
@@ -624,7 +600,7 @@ function mapSortKeyToBackend(sortBy: string): string {
  * バックエンド /core_api/analytics/sales-tree/* と連携
  */
 export class HttpSalesPivotRepository implements SalesPivotRepository {
-  private categoryKind: string = "waste"; // デフォルト値
+  private categoryKind: string = 'waste'; // デフォルト値
 
   setCategoryKind(categoryKind: string) {
     this.categoryKind = categoryKind;
@@ -637,7 +613,7 @@ export class HttpSalesPivotRepository implements SalesPivotRepository {
       rep_name: string;
     }
     const reps = await coreApi.get<ApiRep[]>(
-      `/core_api/analytics/sales-tree/masters/reps?category_kind=${this.categoryKind}`,
+      `/core_api/analytics/sales-tree/masters/reps?category_kind=${this.categoryKind}`
     );
     return reps.map((r) => ({
       id: String(r.rep_id),
@@ -652,7 +628,7 @@ export class HttpSalesPivotRepository implements SalesPivotRepository {
       customer_name: string;
     }
     const customers = await coreApi.get<ApiCustomer[]>(
-      `/core_api/analytics/sales-tree/masters/customers?category_kind=${this.categoryKind}`,
+      `/core_api/analytics/sales-tree/masters/customers?category_kind=${this.categoryKind}`
     );
     return customers.map((c) => ({
       id: c.customer_id,
@@ -667,7 +643,7 @@ export class HttpSalesPivotRepository implements SalesPivotRepository {
       item_name: string;
     }
     const items = await coreApi.get<ApiItem[]>(
-      `/core_api/analytics/sales-tree/masters/items?category_kind=${this.categoryKind}`,
+      `/core_api/analytics/sales-tree/masters/items?category_kind=${this.categoryKind}`
     );
     return items.map((i) => ({
       id: String(i.item_id),
@@ -696,7 +672,7 @@ export class HttpSalesPivotRepository implements SalesPivotRepository {
     } else {
       // フォールバック（通常はここには来ない）
       const now = new Date();
-      const yyyymm = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+      const yyyymm = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
       date_from = `${yyyymm}-01`;
       date_to = this._getMonthEndDate(yyyymm);
     }
@@ -708,7 +684,7 @@ export class HttpSalesPivotRepository implements SalesPivotRepository {
       category_kind: q.categoryKind,
       rep_ids: q.repIds.map((id) => parseInt(id, 10)),
       filter_ids: q.filterIds,
-      top_n: q.topN === "all" ? 0 : q.topN,
+      top_n: q.topN === 'all' ? 0 : q.topN,
       sort_by: mapSortKeyToBackend(q.sortBy),
       order: q.order,
     };
@@ -729,10 +705,7 @@ export class HttpSalesPivotRepository implements SalesPivotRepository {
       }>;
     }
 
-    const res = await coreApi.post<ApiSummaryRow[]>(
-      "/core_api/analytics/sales-tree/summary",
-      req,
-    );
+    const res = await coreApi.post<ApiSummaryRow[]>('/core_api/analytics/sales-tree/summary', req);
 
     // APIレスポンスをcamelCaseに変換
     return res.map((row) => ({
@@ -768,7 +741,7 @@ export class HttpSalesPivotRepository implements SalesPivotRepository {
       date_from = `${params.month}-01`;
       date_to = this._getMonthEndDate(params.month);
     } else {
-      throw new Error("month, monthRange, or dateFrom/dateTo is required");
+      throw new Error('month, monthRange, or dateFrom/dateTo is required');
     }
 
     const req = {
@@ -779,7 +752,7 @@ export class HttpSalesPivotRepository implements SalesPivotRepository {
       category_kind: params.categoryKind,
       rep_ids: params.repIds.map((id) => parseInt(id, 10)),
       target_axis: params.targetAxis,
-      top_n: params.topN === "all" ? 0 : params.topN,
+      top_n: params.topN === 'all' ? 0 : params.topN,
       sort_by: mapSortKeyToBackend(params.sortBy),
       order: params.order,
       cursor: params.cursor,
@@ -800,10 +773,7 @@ export class HttpSalesPivotRepository implements SalesPivotRepository {
       nextCursor: string | null;
     }
 
-    const res = await coreApi.post<ApiCursorPage>(
-      "/core_api/analytics/sales-tree/pivot",
-      req,
-    );
+    const res = await coreApi.post<ApiCursorPage>('/core_api/analytics/sales-tree/pivot', req);
 
     return {
       rows: res.rows.map((m) => ({
@@ -836,7 +806,7 @@ export class HttpSalesPivotRepository implements SalesPivotRepository {
       date_from = `${params.month}-01`;
       date_to = this._getMonthEndDate(params.month);
     } else {
-      throw new Error("month or monthRange is required");
+      throw new Error('month or monthRange is required');
     }
 
     const req = {
@@ -859,8 +829,8 @@ export class HttpSalesPivotRepository implements SalesPivotRepository {
     }
 
     const res = await coreApi.post<ApiDailyPoint[]>(
-      "/core_api/analytics/sales-tree/daily-series",
-      req,
+      '/core_api/analytics/sales-tree/daily-series',
+      req
     );
 
     return res.map((p) => ({
@@ -890,9 +860,7 @@ export class HttpSalesPivotRepository implements SalesPivotRepository {
       date_from = `${query.month}-01`;
       date_to = this._getMonthEndDate(query.month);
     } else {
-      throw new Error(
-        "month, monthRange, or dateFrom/dateTo is required for CSV export",
-      );
+      throw new Error('month, monthRange, or dateFrom/dateTo is required for CSV export');
     }
 
     const req = {
@@ -907,21 +875,15 @@ export class HttpSalesPivotRepository implements SalesPivotRepository {
     };
 
     // CSV Export APIを呼び出し (Blob返却)
-    const blob = await coreApi.post<Blob>(
-      "/core_api/analytics/sales-tree/export",
-      req,
-      {
-        headers: { "Content-Type": "application/json" },
-        responseType: "blob",
-      },
-    );
+    const blob = await coreApi.post<Blob>('/core_api/analytics/sales-tree/export', req, {
+      headers: { 'Content-Type': 'application/json' },
+      responseType: 'blob',
+    });
 
     return blob;
   }
 
-  async fetchDetailLines(
-    filter: DetailLinesFilter,
-  ): Promise<DetailLinesResponse> {
+  async fetchDetailLines(filter: DetailLinesFilter): Promise<DetailLinesResponse> {
     // APIリクエストボディを構築
     const req = {
       date_from: filter.dateFrom,
@@ -936,11 +898,11 @@ export class HttpSalesPivotRepository implements SalesPivotRepository {
 
     // Detail Lines APIを呼び出し
     const res = await coreApi.post<DetailLinesResponse>(
-      "/core_api/analytics/sales-tree/detail-lines",
+      '/core_api/analytics/sales-tree/detail-lines',
       req,
       {
-        headers: { "Content-Type": "application/json" },
-      },
+        headers: { 'Content-Type': 'application/json' },
+      }
     );
 
     return res;
@@ -950,10 +912,10 @@ export class HttpSalesPivotRepository implements SalesPivotRepository {
    * YYYY-MM から月末日を取得 (YYYY-MM-DD形式)
    */
   private _getMonthEndDate(yyyymm: string): string {
-    const [year, month] = yyyymm.split("-").map(Number);
+    const [year, month] = yyyymm.split('-').map(Number);
     const nextMonth = new Date(year, month, 1);
     const lastDay = new Date(nextMonth.getTime() - 86400000);
-    const dd = String(lastDay.getDate()).padStart(2, "0");
+    const dd = String(lastDay.getDate()).padStart(2, '0');
     return `${yyyymm}-${dd}`;
   }
 }

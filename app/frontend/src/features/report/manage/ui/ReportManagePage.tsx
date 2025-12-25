@@ -1,5 +1,5 @@
-import React from "react";
-import ReportManagePageLayout from "./ReportManagePageLayout";
+import React from 'react';
+import ReportManagePageLayout from './ReportManagePageLayout';
 
 /**
  * Report Management Page

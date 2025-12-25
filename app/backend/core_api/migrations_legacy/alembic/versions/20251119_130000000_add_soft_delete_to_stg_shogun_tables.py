@@ -118,9 +118,7 @@ def downgrade() -> None:
         print(f"  -> stg.{table_name}")
 
         # インデックス削除
-        op.drop_index(
-            f"ix_{table_name}_upload_slip_deleted", table_name=table_name, schema="stg"
-        )
+        op.drop_index(f"ix_{table_name}_upload_slip_deleted", table_name=table_name, schema="stg")
 
         # カラム削除（逆順で削除）
         op.drop_column(table_name, "deleted_by", schema="stg")

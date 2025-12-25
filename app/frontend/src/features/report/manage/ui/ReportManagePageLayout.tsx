@@ -1,14 +1,14 @@
-import React from "react";
-import type { ReactNode } from "react";
-import { useReportLayoutStyles } from "@features/report/selector/model/useReportLayoutStyles";
-import { useResponsive } from "@/shared";
-import SampleSection from "@features/report/base/ui/SampleSection";
-import CsvUploadSection from "@features/report/upload/ui/CsvUploadSection";
-import ActionsSection from "@features/report/actions/ui/ActionsSection";
-import PreviewSection from "@features/report/preview/ui/PreviewSection";
-import type { UploadProps } from "antd";
-import type { UploadFileConfig } from "@features/report/shared/types/report.types";
-import type { CsvUploadFileType as CsvFileType } from "./types";
+import React from 'react';
+import type { ReactNode } from 'react';
+import { useReportLayoutStyles } from '@features/report/selector/model/useReportLayoutStyles';
+import { useResponsive } from '@/shared';
+import SampleSection from '@features/report/base/ui/SampleSection';
+import CsvUploadSection from '@features/report/upload/ui/CsvUploadSection';
+import ActionsSection from '@features/report/actions/ui/ActionsSection';
+import PreviewSection from '@features/report/preview/ui/PreviewSection';
+import type { UploadProps } from 'antd';
+import type { UploadFileConfig } from '@features/report/shared/types/report.types';
+import type { CsvUploadFileType as CsvFileType } from './types';
 
 /**
  * レポート管理ページレイアウト - useResponsive(flags)統合版
@@ -21,19 +21,19 @@ import type { CsvUploadFileType as CsvFileType } from "./types";
 
 // Convert UploadFileConfig validation result to CsvFileType format
 const mapValidationResult = (
-  result?: "valid" | "invalid" | "unknown",
-): "ok" | "ng" | "unknown" | undefined => {
+  result?: 'valid' | 'invalid' | 'unknown'
+): 'ok' | 'ng' | 'unknown' | undefined => {
   if (!result) return undefined;
-  if (result === "valid") return "ok";
-  if (result === "invalid") return "ng";
-  return "unknown";
+  if (result === 'valid') return 'ok';
+  if (result === 'invalid') return 'ng';
+  return 'unknown';
 };
 
 const convertToCsvFileType = (files: UploadFileConfig[]): CsvFileType[] => {
   return files.map((f) => ({
     ...f,
     validationResult: mapValidationResult(
-      f.validationResult as "valid" | "invalid" | "unknown" | undefined,
+      f.validationResult as 'valid' | 'invalid' | 'unknown' | undefined
     ),
   }));
 };
@@ -89,11 +89,7 @@ const ReportManagePageLayout: React.FC<Props> = ({
   const isExtraSmallLayout = flags.isXs; // < 640px: 1列縦並び
   const isCompactLayout = flags.isSm || flags.isTablet; // 640-1279px: 2列横並び
   const gap = pickByDevice(8, 16, 16);
-  const headerJustify = pickByDevice<"center" | "flex-start">(
-    "center",
-    "center",
-    "flex-start",
-  );
+  const headerJustify = pickByDevice<'center' | 'flex-start'>('center', 'center', 'flex-start');
 
   return (
     <div style={styles.container}>
@@ -101,9 +97,9 @@ const ReportManagePageLayout: React.FC<Props> = ({
         <div
           style={{
             marginBottom: 8,
-            display: "flex",
+            display: 'flex',
             justifyContent: headerJustify,
-            width: "100%",
+            width: '100%',
           }}
         >
           {header}
@@ -116,10 +112,10 @@ const ReportManagePageLayout: React.FC<Props> = ({
           <>
             <div
               style={{
-                display: "flex",
-                flexDirection: "column",
+                display: 'flex',
+                flexDirection: 'column',
                 gap: 12,
-                width: "100%",
+                width: '100%',
                 minHeight: 0,
                 flexGrow: 1,
                 flexShrink: 1,
@@ -127,19 +123,17 @@ const ReportManagePageLayout: React.FC<Props> = ({
               }}
             >
               {/* 1. データセット（上） */}
-              <div style={{ flexGrow: 0, flexShrink: 0, flexBasis: "auto" }}>
+              <div style={{ flexGrow: 0, flexShrink: 0, flexBasis: 'auto' }}>
                 <CsvUploadSection
                   uploadFiles={convertToCsvFileType(mappedUploadFiles ?? [])}
                   makeUploadProps={(label: string) =>
-                    makeUploadProps
-                      ? makeUploadProps(label)
-                      : ({} as UploadProps)
+                    makeUploadProps ? makeUploadProps(label) : ({} as UploadProps)
                   }
                 />
               </div>
 
               {/* 2. レポート生成ボタン（中） */}
-              <div style={{ flexGrow: 0, flexShrink: 0, flexBasis: "auto" }}>
+              <div style={{ flexGrow: 0, flexShrink: 0, flexBasis: 'auto' }}>
                 <ActionsSection
                   onGenerate={onGenerate ?? (() => {})}
                   readyToCreate={!!readyToCreate}
@@ -158,9 +152,9 @@ const ReportManagePageLayout: React.FC<Props> = ({
                 style={{
                   flexGrow: 1,
                   flexShrink: 1,
-                  flexBasis: "auto",
+                  flexBasis: 'auto',
                   minHeight: 300,
-                  overflow: "auto",
+                  overflow: 'auto',
                 }}
               >
                 <div style={styles.previewContainer}>
@@ -174,9 +168,9 @@ const ReportManagePageLayout: React.FC<Props> = ({
             {/* isSm/Tablet (640-1023px) - 2列横並びレイアウト */}
             <div
               style={{
-                display: "flex",
+                display: 'flex',
                 gap,
-                width: "100%",
+                width: '100%',
                 minHeight: 0,
                 flexGrow: 1,
                 flexShrink: 1,
@@ -187,22 +181,20 @@ const ReportManagePageLayout: React.FC<Props> = ({
                 style={{
                   flexGrow: 1,
                   flexShrink: 1,
-                  flexBasis: "40%",
-                  display: "flex",
-                  flexDirection: "column",
+                  flexBasis: '40%',
+                  display: 'flex',
+                  flexDirection: 'column',
                   gap: 12,
                   minHeight: 0,
                 }}
               >
-                <div style={{ display: "none" }}>
+                <div style={{ display: 'none' }}>
                   <SampleSection sampleImageUrl={sampleImageUrl} />
                 </div>
                 <CsvUploadSection
                   uploadFiles={convertToCsvFileType(mappedUploadFiles ?? [])}
                   makeUploadProps={(label: string) =>
-                    makeUploadProps
-                      ? makeUploadProps(label)
-                      : ({} as UploadProps)
+                    makeUploadProps ? makeUploadProps(label) : ({} as UploadProps)
                   }
                 />
               </div>
@@ -211,8 +203,8 @@ const ReportManagePageLayout: React.FC<Props> = ({
                 style={{
                   flexGrow: 1,
                   flexShrink: 1,
-                  flexBasis: "60%",
-                  display: "flex",
+                  flexBasis: '60%',
+                  display: 'flex',
                   minHeight: 0,
                 }}
               >
@@ -222,7 +214,7 @@ const ReportManagePageLayout: React.FC<Props> = ({
               </div>
             </div>
 
-            <div style={{ width: "100%", marginTop: 12 }}>
+            <div style={{ width: '100%', marginTop: 12 }}>
               <ActionsSection
                 onGenerate={onGenerate ?? (() => {})}
                 readyToCreate={!!readyToCreate}

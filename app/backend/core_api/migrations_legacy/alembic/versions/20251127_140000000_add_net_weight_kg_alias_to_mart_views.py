@@ -115,9 +115,7 @@ def upgrade() -> None:
     """
     )
 
-    print(
-        "[ok] Views updated with net_weight_kg alias (qty_kg maintained for compatibility)"
-    )
+    print("[ok] Views updated with net_weight_kg alias (qty_kg maintained for compatibility)")
 
 
 def downgrade() -> None:

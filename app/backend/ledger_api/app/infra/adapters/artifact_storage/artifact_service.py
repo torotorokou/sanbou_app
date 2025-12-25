@@ -74,9 +74,7 @@ class UrlSigner:
     def __init__(self, secret: str, url_prefix: str, ttl_seconds: int) -> None:
         self._secret = secret.encode("utf-8")
         self._url_prefix = url_prefix.rstrip("/")
-        self._ttl_seconds = max(
-            30, ttl_seconds
-        )  # 👶 有効期限が極端に短すぎないようにします
+        self._ttl_seconds = max(30, ttl_seconds)  # 👶 有効期限が極端に短すぎないようにします
 
     def _sign(self, relative_path: str, disposition: str, expires: int) -> str:
         payload = f"{relative_path}|{disposition}|{expires}".encode()
@@ -89,9 +87,7 @@ class UrlSigner:
         safe_path = quote(relative_path, safe="/")
         return f"{self._url_prefix}/{safe_path}?expires={expires}&disposition={disposition}&signature={signature}"
 
-    def verify(
-        self, relative_path: str, *, disposition: str, expires: int, signature: str
-    ) -> bool:
+    def verify(self, relative_path: str, *, disposition: str, expires: int, signature: str) -> bool:
         if expires < int(time.time()):
             return False
         expected = self._sign(relative_path, disposition, expires)
@@ -114,9 +110,7 @@ class ReportArtifactStorage:
         token = f"{report_date.replace('-', '')}_{time.strftime('%H%M%S')}-{secrets.token_hex(4)}"
         # 英語キーをそのまま使用（ASCII安全、フロントエンドで日本語変換）
         file_base = _sanitize_segment(f"{report_key}-{report_date}")
-        location = ArtifactLocation(
-            self.root_dir, report_key, report_date, token, file_base
-        )
+        location = ArtifactLocation(self.root_dir, report_key, report_date, token, file_base)
         location.directory.mkdir(parents=True, exist_ok=True)
         return location
 

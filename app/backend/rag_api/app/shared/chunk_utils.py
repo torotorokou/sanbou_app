@@ -2,18 +2,18 @@ import ast
 import os
 from typing import Any
 
-from backend_shared.application.logging import get_module_logger
 from langchain_community.vectorstores import FAISS
 from langchain_openai import OpenAIEmbeddings
+
+from backend_shared.application.logging import get_module_logger
+
 
 logger = get_module_logger(__name__)
 
 
 def load_faiss_vectorstore(faiss_path: str) -> Any:
     embeddings = OpenAIEmbeddings()
-    return FAISS.load_local(
-        str(faiss_path), embeddings, allow_dangerous_deserialization=True
-    )
+    return FAISS.load_local(str(faiss_path), embeddings, allow_dangerous_deserialization=True)
 
 
 def safe_parse_tags(raw: Any) -> list[Any]:
@@ -248,9 +248,7 @@ def search_documents_with_category(
             else:
                 doc_categories = [_normalize_token(doc_category_raw)]
             if norm_category in doc_categories:
-                category_only.append(
-                    (meta.get("title", "Unknown"), doc.page_content, meta)
-                )
+                category_only.append((meta.get("title", "Unknown"), doc.page_content, meta))
         if category_only:
             logger.debug(
                 "Fallback: category-only hits",
@@ -264,9 +262,7 @@ def search_documents_with_category(
         for doc, _score in results:
             meta = doc.metadata
             raw_mapped.append((meta.get("title", "Unknown"), doc.page_content, meta))
-        logger.debug(
-            "Fallback: raw mapped hits", extra={"raw_mapped_hits": len(raw_mapped)}
-        )
+        logger.debug("Fallback: raw mapped hits", extra={"raw_mapped_hits": len(raw_mapped)})
         return raw_mapped
 
     return filtered

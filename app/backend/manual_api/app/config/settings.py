@@ -23,9 +23,7 @@ class ManualApiSettings(BaseAppSettings):
     API_VERSION: str = "1.0.0"
 
     # Manual API 固有設定
-    MANUAL_FRONTEND_BASE_URL: str = os.getenv(
-        "MANUAL_FRONTEND_BASE_URL", "http://localhost:5173"
-    )
+    MANUAL_FRONTEND_BASE_URL: str = os.getenv("MANUAL_FRONTEND_BASE_URL", "http://localhost:5173")
     """フロントエンドのベースURL（マニュアル用）"""
 
     MANUAL_ASSET_BASE_URL: str = os.getenv("MANUAL_ASSET_BASE_URL", "")

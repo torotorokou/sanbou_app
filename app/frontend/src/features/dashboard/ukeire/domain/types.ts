@@ -5,7 +5,7 @@
  * @deprecated IsoMonth, IsoDate型は @shared から使用してください
  */
 
-import type { IsoMonth, IsoDate } from "@shared";
+import type { IsoMonth, IsoDate } from '@shared';
 
 /**
  * @deprecated 代わりに @shared/utils/dateUtils の IsoMonth を使用してください

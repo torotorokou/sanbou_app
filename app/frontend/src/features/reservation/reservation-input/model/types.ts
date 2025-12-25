@@ -5,7 +5,7 @@
  * 規約: UI Componentのprops型をmodel層で一元管理
  */
 
-import type { Dayjs } from "dayjs";
+import type { Dayjs } from 'dayjs';
 
 /**
  * ReservationInputForm コンポーネントのProps
