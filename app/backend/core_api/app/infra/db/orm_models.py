@@ -190,6 +190,7 @@ class NotificationOutboxORM(Base):
     retry_count = Column(Integer, nullable=False, default=0)
     next_retry_at = Column(TIMESTAMP(timezone=True), nullable=True)
     last_error = Column(Text, nullable=True)
+    failure_type = Column(String(20), nullable=True)
 
 
 # ========================================

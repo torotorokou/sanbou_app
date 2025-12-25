@@ -10,6 +10,7 @@ from uuid import UUID, uuid4
 from sqlalchemy.orm import Session
 
 from app.core.domain.notification import (
+    FailureType,
     NotificationChannel,
     NotificationOutboxItem,
     NotificationStatus,
@@ -45,6 +46,7 @@ class DbNotificationOutboxAdapter(NotificationOutboxPort):
                 retry_count=item.retry_count,
                 next_retry_at=item.next_retry_at,
                 last_error=item.last_error,
+                failure_type=item.failure_type.value if item.failure_type else None,
             )
             self.db.add(orm_item)
         
@@ -83,36 +85,57 @@ class DbNotificationOutboxAdapter(NotificationOutboxPort):
         self.db.commit()
         logger.info(f"Marked notification {id} as sent")
 
-    def mark_failed(self, id: UUID, error: str, now: datetime) -> None:
-        """通知を失敗にマーク（リトライまたは最終失敗）"""
+    def mark_failed(self, id: UUID, error: str, failure_type: FailureType, now: datetime) -> None:
+        """通知を失敗にマーク（TEMPORARY: リトライ、PERMANENT: 即失敗）"""
         orm_item = self.db.query(NotificationOutboxORM).filter_by(id=id).first()
         if not orm_item:
             logger.warning(f"Notification {id} not found for mark_failed")
             return
 
-        orm_item.retry_count += 1
         orm_item.last_error = error
+        orm_item.failure_type = failure_type.value
 
-        # Exponential backoff: 1min, 5min, 30min, 1hour
-        backoff_minutes = [1, 5, 30, 60]
-        max_retries = len(backoff_minutes)
-
-        if orm_item.retry_count < max_retries:
-            orm_item.status = NotificationStatus.PENDING.value
-            delay_minutes = backoff_minutes[orm_item.retry_count - 1]
-            orm_item.next_retry_at = now + timedelta(minutes=delay_minutes)
-            logger.info(
-                f"Notification {id} failed (retry {orm_item.retry_count}/{max_retries}), "
-                f"will retry in {delay_minutes}min"
-            )
-        else:
+        if failure_type == FailureType.PERMANENT:
+            # PERMANENT: 即座に failed に遷移（リトライなし）
             orm_item.status = NotificationStatus.FAILED.value
             orm_item.next_retry_at = None
-            logger.error(
-                f"Notification {id} permanently failed after {max_retries} retries"
-            )
+            logger.error(f"Notification {id} permanently failed: {error}")
+        else:
+            # TEMPORARY: リトライ対象
+            orm_item.retry_count += 1
+
+            # Exponential backoff: 1min, 5min, 30min, 1hour
+            backoff_minutes = [1, 5, 30, 60]
+            max_retries = len(backoff_minutes)
+
+            if orm_item.retry_count < max_retries:
+                orm_item.status = NotificationStatus.PENDING.value
+                delay_minutes = backoff_minutes[orm_item.retry_count - 1]
+                orm_item.next_retry_at = now + timedelta(minutes=delay_minutes)
+                logger.info(
+                    f"Notification {id} failed temporarily (retry {orm_item.retry_count}/{max_retries}), "
+                    f"will retry in {delay_minutes}min"
+                )
+            else:
+                orm_item.status = NotificationStatus.FAILED.value
+                orm_item.next_retry_at = None
+                logger.error(
+                    f"Notification {id} permanently failed after {max_retries} retries"
+                )
 
         self.db.commit()
+
+    def mark_skipped(self, id: UUID, reason: str, now: datetime) -> None:
+        """通知をスキップにマーク（送信不要）"""
+        orm_item = self.db.query(NotificationOutboxORM).filter_by(id=id).first()
+        if not orm_item:
+            logger.warning(f"Notification {id} not found for mark_skipped")
+            return
+
+        orm_item.status = NotificationStatus.SKIPPED.value
+        orm_item.last_error = reason
+        self.db.commit()
+        logger.info(f"Skipped notification {id}: {reason}")
 
     def _to_domain(self, orm_item: NotificationOutboxORM) -> NotificationOutboxItem:
         """ORMモデルをドメインモデルに変換"""
@@ -134,4 +157,5 @@ class DbNotificationOutboxAdapter(NotificationOutboxPort):
             retry_count=orm_item.retry_count,
             next_retry_at=orm_item.next_retry_at,
             last_error=orm_item.last_error,
+            failure_type=FailureType(orm_item.failure_type) if orm_item.failure_type else None,
         )
