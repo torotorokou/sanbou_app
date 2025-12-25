@@ -166,7 +166,8 @@ repos:
               pnpm-lock\.yaml|
               yarn\.lock|
               .*\.lock|
-              \.min\.(js|css)$
+              \.min\.(js|css)$|
+              \.hadolint\.yaml$
           )
         additional_dependencies:
           - prettier@3.3.3
@@ -196,7 +197,7 @@ repos:
   - repo: https://github.com/hadolint/hadolint
     rev: v2.14.0
     hooks:
-      - id: hadolint
+      - id: hadolint-docker
         name: Dockerfile リント (hadolint)
         args: [--config, .hadolint.yaml]
 
