@@ -10,11 +10,10 @@ Chat Router - BFF for rag_api chat endpoints
 import os
 
 import httpx
-from fastapi import APIRouter, Request
-from fastapi.responses import Response
-
 from backend_shared.application.logging import get_module_logger
 from backend_shared.core.domain.exceptions import ExternalServiceError
+from fastapi import APIRouter, Request
+from fastapi.responses import Response
 
 logger = get_module_logger(__name__)
 

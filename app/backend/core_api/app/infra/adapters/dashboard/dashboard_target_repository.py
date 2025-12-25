@@ -6,13 +6,12 @@ Optimized with single-query anchor resolution and NULL masking.
 from datetime import date as date_type
 from typing import Any
 
-from sqlalchemy import text
-from sqlalchemy.orm import Session
-
 from app.infra.db.db import get_engine
 from app.infra.db.sql_loader import load_sql
 from backend_shared.application.logging import create_log_context, get_module_logger
 from backend_shared.db.names import MV_TARGET_CARD_PER_DAY, SCHEMA_MART, fq
+from sqlalchemy import text
+from sqlalchemy.orm import Session
 
 logger = get_module_logger(__name__)
 

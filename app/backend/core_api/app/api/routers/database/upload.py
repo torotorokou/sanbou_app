@@ -8,12 +8,11 @@ Database Upload Router - CSV upload endpoints
   - POST /database/upload/shogun_csv_flash: 速報版CSVアップロード
 """
 
-from fastapi import APIRouter, BackgroundTasks, Depends, File, UploadFile
-
 from app.config.di_providers import get_uc_default, get_uc_flash, get_uc_stg_final
 from app.core.usecases.upload.upload_shogun_csv_uc import UploadShogunCsvUseCase
 from backend_shared.application.logging import get_module_logger
 from backend_shared.infra.adapters.presentation import ErrorApiResponse
+from fastapi import APIRouter, BackgroundTasks, Depends, File, UploadFile
 
 logger = get_module_logger(__name__)
 

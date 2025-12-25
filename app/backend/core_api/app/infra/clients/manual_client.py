@@ -25,7 +25,6 @@ Manual API Client - マニュアル/ドキュメントサービス内部HTTPク�
 import os
 
 import httpx
-
 from backend_shared.application.logging import get_module_logger
 
 logger = get_module_logger(__name__)

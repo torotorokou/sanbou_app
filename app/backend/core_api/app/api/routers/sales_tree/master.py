@@ -11,13 +11,12 @@ Note: これは「マスタAPI」ではなく、SalesTree分析画面のプル�
       mart.v_sales_tree_detail_base から SELECT DISTINCT で動的に取得します。
 """
 
-from fastapi import APIRouter, Depends, Query
-
 from app.config.di_providers import get_sales_tree_repo
 from app.core.domain.sales_tree import CategoryKind
 from app.infra.adapters.sales_tree.sales_tree_repository import SalesTreeRepository
 from backend_shared.application.logging import get_module_logger
 from backend_shared.core.domain.exceptions import InfrastructureError
+from fastapi import APIRouter, Depends, Query
 
 logger = get_module_logger(__name__)
 router = APIRouter()

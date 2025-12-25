@@ -6,11 +6,10 @@ implements Port: ICalendarQuery
 
 from typing import Any
 
-from sqlalchemy import text
-from sqlalchemy.orm import Session
-
 from backend_shared.application.logging import create_log_context, get_module_logger
 from backend_shared.db.names import SCHEMA_REF, V_CALENDAR_CLASSIFIED, fq
+from sqlalchemy import text
+from sqlalchemy.orm import Session
 
 logger = get_module_logger(__name__)
 

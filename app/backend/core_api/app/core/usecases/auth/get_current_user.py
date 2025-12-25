@@ -14,10 +14,9 @@ Get Current User UseCase - 現在ユーザー取得ユースケース
 - 認証プロバイダの切り替えは DI で制御
 """
 
-from fastapi import Request
-
 from app.core.domain.auth.entities import AuthUser
 from app.core.ports.auth.auth_provider import IAuthProvider
+from fastapi import Request
 
 
 class GetCurrentUserUseCase:

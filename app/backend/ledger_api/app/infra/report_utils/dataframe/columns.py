@@ -1,8 +1,7 @@
 import pandas as pd
+from app.infra.report_utils.formatters.summary import safe_merge_by_keys
 from backend_shared.application.logging import get_module_logger
 from backend_shared.utils.dataframe_utils import clean_na_strings
-
-from app.infra.report_utils.formatters.summary import safe_merge_by_keys
 
 logger = get_module_logger(__name__)
 

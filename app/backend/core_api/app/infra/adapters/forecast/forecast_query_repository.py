@@ -13,10 +13,9 @@ forecast.predictions_dailyテーブルに対する読み取り専用操作。
 
 from datetime import date as date_type
 
-from sqlalchemy.orm import Session
-
 from app.core.domain.models import PredictionDTO
 from app.infra.db.orm_models import PredictionDaily
+from sqlalchemy.orm import Session
 
 
 class ForecastQueryRepository:

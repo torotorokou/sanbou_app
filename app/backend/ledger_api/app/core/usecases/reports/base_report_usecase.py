@@ -13,6 +13,10 @@ from datetime import date
 from io import BytesIO
 from typing import Any
 
+from app.application.usecases.reports.report_generation_utils import (
+    generate_pdf_from_excel,
+)
+from app.core.ports.inbound import CsvGateway, ReportRepository
 from backend_shared.application.logging import get_module_logger
 from backend_shared.infra.adapters.fastapi.error_handlers import DomainError
 from backend_shared.utils.date_filter_utils import (
@@ -20,11 +24,6 @@ from backend_shared.utils.date_filter_utils import (
 )
 from fastapi import BackgroundTasks, UploadFile
 from fastapi.responses import JSONResponse
-
-from app.application.usecases.reports.report_generation_utils import (
-    generate_pdf_from_excel,
-)
-from app.core.ports.inbound import CsvGateway, ReportRepository
 
 logger = get_module_logger(__name__)
 

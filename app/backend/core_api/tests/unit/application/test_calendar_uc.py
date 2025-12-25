@@ -3,7 +3,6 @@
 from datetime import date
 
 import pytest
-
 from app.core.usecases.calendar.get_calendar_month_uc import GetCalendarMonthUseCase
 from tests.unit.application.fakes.fake_ports import FakeCalendarQuery
 

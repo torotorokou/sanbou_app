@@ -1,5 +1,4 @@
 import pandas as pd
-
 from backend_shared.core.usecases.csv_formatter.formatter_base import CommonCSVFormatter
 from backend_shared.core.usecases.csv_formatter.formatter_config import FormatterConfig
 from backend_shared.utils.dataframe_utils import (

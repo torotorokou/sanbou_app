@@ -17,6 +17,7 @@ from fastapi.responses import JSONResponse, Response
 
 logger = get_module_logger(__name__)
 
+from app.core.usecases.reports.base_generators import BaseReportGenerator
 from backend_shared.infra.adapters.fastapi.error_handlers import DomainError
 from backend_shared.infra.adapters.presentation.response_error import (
     NoFilesUploadedResponse,
@@ -25,8 +26,6 @@ from backend_shared.utils.csv_reader import read_csv_files
 from backend_shared.utils.date_filter_utils import (
     filter_by_period_from_max_date as shared_filter_by_period_from_max_date,
 )
-
-from app.core.usecases.reports.base_generators import BaseReportGenerator
 
 
 def _ensure_bytes(value: Any, *, label: str) -> bytes:

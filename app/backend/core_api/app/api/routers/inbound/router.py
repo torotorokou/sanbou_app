@@ -22,13 +22,12 @@ Inbound Router - 搬入データ取得エンドポイント
 
 from datetime import date as date_type
 
-from fastapi import APIRouter, Depends, Query
-
 from app.config.di_providers import get_inbound_daily_uc
 from app.core.domain.inbound import CumScope, InboundDailyRow
 from app.core.usecases.inbound.dto import GetInboundDailyInput
 from app.core.usecases.inbound.get_inbound_daily_uc import GetInboundDailyUseCase
 from backend_shared.application.logging import get_module_logger
+from fastapi import APIRouter, Depends, Query
 
 logger = get_module_logger(__name__)
 

@@ -10,10 +10,9 @@
 - contracts/notifications.openapi.yaml の ProblemDetails に準拠
 """
 
+from backend_shared.core.domain.contract import ProblemDetails
 from fastapi import Request
 from fastapi.responses import JSONResponse
-
-from backend_shared.core.domain.contract import ProblemDetails
 
 
 class DomainError(Exception):

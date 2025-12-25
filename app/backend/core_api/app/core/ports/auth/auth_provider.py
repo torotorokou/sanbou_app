@@ -12,9 +12,8 @@ Auth Provider Port - 認証プロバイダ抽象インターフェース
 
 from abc import ABC, abstractmethod
 
-from fastapi import Request
-
 from app.core.domain.auth.entities import AuthUser
+from fastapi import Request
 
 
 class IAuthProvider(ABC):

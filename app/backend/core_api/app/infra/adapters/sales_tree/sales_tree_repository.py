@@ -10,9 +10,6 @@ Sales Tree Repository - {fq(SCHEMA_MART, V_SALES_TREE_DETAIL_BASE)} からのデ
 import csv
 import io
 
-from sqlalchemy import text
-from sqlalchemy.orm import Session
-
 from app.core.domain.sales_tree import (
     AxisMode,
     CategoryKind,
@@ -37,6 +34,8 @@ from backend_shared.db.names import (
     SCHEMA_MART,
     V_SALES_TREE_DETAIL_BASE,
 )
+from sqlalchemy import text
+from sqlalchemy.orm import Session
 
 logger = get_module_logger(__name__)
 
