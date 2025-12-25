@@ -6,7 +6,7 @@
  * - 初回表示時に既読化
  */
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import type { Announcement } from "../domain/announcement";
 import { announcementRepository } from "../infrastructure";
 import { useAnnouncementState } from "./AnnouncementStateContext";

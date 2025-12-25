@@ -5,12 +5,16 @@
  * 状態レス：propsのみで動作。
  */
 
-import React from 'react';
-import { Alert, Button, Space } from 'antd';
-import { CloseOutlined, ExclamationCircleOutlined, WarningOutlined } from '@ant-design/icons';
-import { useResponsive } from '@/shared';
-import type { Announcement } from '../domain/announcement';
-import { stripMarkdownForSnippet } from '../domain/stripMarkdownForSnippet';
+import React from "react";
+import { Alert, Button } from "antd";
+import {
+  CloseOutlined,
+  ExclamationCircleOutlined,
+  WarningOutlined,
+} from "@ant-design/icons";
+import { useResponsive } from "@/shared";
+import type { Announcement } from "../domain/announcement";
+import { stripMarkdownForSnippet } from "../domain/stripMarkdownForSnippet";
 
 interface AnnouncementBannerProps {
   /** 表示するお知らせ */
@@ -26,28 +30,30 @@ interface AnnouncementBannerProps {
 /**
  * 重要度に応じたアラートタイプを返す
  */
-function getSeverityType(severity: Announcement['severity']): 'warning' | 'error' | 'info' {
+function getSeverityType(
+  severity: Announcement["severity"],
+): "warning" | "error" | "info" {
   switch (severity) {
-    case 'critical':
-      return 'error';
-    case 'warn':
-      return 'warning';
-    case 'info':
+    case "critical":
+      return "error";
+    case "warn":
+      return "warning";
+    case "info":
     default:
-      return 'info';
+      return "info";
   }
 }
 
 /**
  * 重要度に応じたアイコンを返す
  */
-function getSeverityIcon(severity: Announcement['severity']): React.ReactNode {
+function getSeverityIcon(severity: Announcement["severity"]): React.ReactNode {
   switch (severity) {
-    case 'critical':
+    case "critical":
       return <ExclamationCircleOutlined />;
-    case 'warn':
+    case "warn":
       return <WarningOutlined />;
-    case 'info':
+    case "info":
     default:
       return null;
   }
@@ -82,22 +88,22 @@ export const AnnouncementBanner: React.FC<AnnouncementBannerProps> = ({
         isMobile ? (
           <span
             style={{
-              fontSize: '13px',
+              fontSize: "13px",
               fontWeight: 600,
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
             }}
           >
             {announcement.title}
           </span>
         ) : (
-          <span style={{ fontSize: '15px' }}>{announcement.title}</span>
+          <span style={{ fontSize: "15px" }}>{announcement.title}</span>
         )
       }
       description={
         !isMobile ? (
-          <span style={{ fontSize: '14px' }}>
+          <span style={{ fontSize: "14px" }}>
             {stripMarkdownForSnippet(announcement.bodyMd, 100)}
           </span>
         ) : undefined
@@ -108,9 +114,13 @@ export const AnnouncementBanner: React.FC<AnnouncementBannerProps> = ({
             type="primary"
             size="small"
             onClick={handleClick}
-            style={isMobile ? { fontSize: '12px', height: '24px', padding: '0 8px' } : undefined}
+            style={
+              isMobile
+                ? { fontSize: "12px", height: "24px", padding: "0 8px" }
+                : undefined
+            }
           >
-            {isMobile ? '詳細' : '詳細を見る'}
+            {isMobile ? "詳細" : "詳細を見る"}
           </Button>
         ) : undefined
       }

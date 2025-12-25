@@ -5,7 +5,7 @@
  * Infrastructure 層でこのインターフェースを実装します。
  */
 
-import type { AuthUser } from '../domain/authUser';
+import type { AuthUser } from "../domain/authUser";
 
 export interface AuthRepository {
   /**

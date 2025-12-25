@@ -10,46 +10,46 @@
  * - ビジネスロジック・状態管理・イベントハンドラは一切書かない
  */
 
-import React from 'react';
-import { Row, Col } from 'antd';
+import React from "react";
+import { Row, Col } from "antd";
 import {
   ConditionPanel,
   AnalysisActionButtons,
   ResultPanel,
   AnalysisProcessingModal,
   useCustomerChurnViewModel,
-} from '@features/analytics/customer-list';
+} from "@features/analytics/customer-list";
 
 const CustomerListAnalysis: React.FC = () => {
   // ViewModel を呼び出し（すべての状態・ロジック・イベントハンドラがここに集約）
   const vm = useCustomerChurnViewModel();
 
   return (
-    <div style={{ height: '100%', minHeight: 0 }}>
+    <div style={{ height: "100%", minHeight: 0 }}>
       {/* 分析中モーダル */}
       <AnalysisProcessingModal open={vm.isAnalyzing} />
 
-      <Row gutter={24} style={{ height: '100%', minHeight: 0 }}>
+      <Row gutter={24} style={{ height: "100%", minHeight: 0 }}>
         {/* 左カラム: 条件指定・実行ボタン */}
         <Col
           span={7}
           style={{
-            display: 'flex',
-            flexDirection: 'column',
-            height: '100%',
-            padding: 'clamp(24px, 2vw, 40px) clamp(16px, 1.5vw, 24px)',
-            background: '#f8fcfa',
-            overflow: 'auto',
+            display: "flex",
+            flexDirection: "column",
+            height: "100%",
+            padding: "clamp(24px, 2vw, 40px) clamp(16px, 1.5vw, 24px)",
+            background: "#f8fcfa",
+            overflow: "auto",
           }}
         >
           <div
             style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 'clamp(20px, 2vw, 32px)',
-              height: '100%',
-              justifyContent: 'flex-start',
-              alignItems: 'stretch',
+              display: "flex",
+              flexDirection: "column",
+              gap: "clamp(20px, 2vw, 32px)",
+              height: "100%",
+              justifyContent: "flex-start",
+              alignItems: "stretch",
             }}
           >
             <ConditionPanel
@@ -81,10 +81,10 @@ const CustomerListAnalysis: React.FC = () => {
         <Col
           span={17}
           style={{
-            height: '95%',
+            height: "95%",
             minHeight: 0,
-            display: 'flex',
-            flexDirection: 'column',
+            display: "flex",
+            flexDirection: "column",
           }}
         >
           <ResultPanel

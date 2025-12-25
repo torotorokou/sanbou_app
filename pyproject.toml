@@ -61,7 +61,8 @@ ignore = [
     "UP007", # Use X | Y for type annotations (Python 3.10+ feature)
     "UP045", # Use X | Y for Union type annotations (Python 3.10+ feature)
     "C416",  # Unnecessary dict/list comprehension (rewrite using dict()/list())
-    "N806",  # Variable in function should be lowercase (TYPE_MAPPING等)
+    "N806",  # Variable in function should be lowercase (TYPE_MAPPING等の定数パターン)
+    "B007",  # Loop control variable not used within loop body (辞書のキー取得時に頻出)
 ]
 
 # import整形の設定（isortの代替）

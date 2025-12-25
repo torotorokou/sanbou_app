@@ -5,25 +5,25 @@
  * ViewModelを使用して一覧取得・詳細表示を行う。
  */
 
-import React from 'react';
-import { Typography, Spin, Card, Badge } from 'antd';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@features/authStatus';
-import { useResponsive } from '@/shared';
+import React from "react";
+import { Typography, Spin, Card, Badge } from "antd";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@features/authStatus";
+import { useResponsive } from "@/shared";
 import {
   useAnnouncementsListViewModel,
   AnnouncementList,
   AnnouncementDetailModal,
   AnnouncementFilterTabs,
   AnnouncementSortSelector,
-} from '@features/announcements';
+} from "@features/announcements";
 
 const { Title } = Typography;
 
 const NewsPage: React.FC = () => {
   // ユーザーキーを取得（未ログイン時は"local"）
   const { user } = useAuth();
-  const userKey = user?.userId ?? 'local';
+  const userKey = user?.userId ?? "local";
   const navigate = useNavigate();
   const { isMobile, isTablet } = useResponsive();
 
@@ -47,7 +47,7 @@ const NewsPage: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className={`text-center ${isMobile ? 'p-4' : 'p-6'}`}>
+      <div className={`text-center ${isMobile ? "p-4" : "p-6"}`}>
         <Spin size="large" />
       </div>
     );
@@ -55,21 +55,25 @@ const NewsPage: React.FC = () => {
 
   // レスポンシブコンテナスタイル
   const containerClass = isMobile
-    ? 'px-3 pb-4 pt-20' // モバイルではサイドバーボタンと重ならないよう上部余白
+    ? "px-3 pb-4 pt-20" // モバイルではサイドバーボタンと重ならないよう上部余白
     : isTablet
-      ? 'px-6 py-5'
-      : 'px-8 py-6';
+      ? "px-6 py-5"
+      : "px-8 py-6";
 
-  const maxWidthClass = isMobile ? 'max-w-full' : isTablet ? 'max-w-4xl' : 'max-w-5xl';
+  const maxWidthClass = isMobile
+    ? "max-w-full"
+    : isTablet
+      ? "max-w-4xl"
+      : "max-w-5xl";
 
   return (
     <div className={`${containerClass} ${maxWidthClass} mx-auto`}>
       <div
         style={{
-          display: 'flex',
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'center',
+          display: "flex",
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "center",
           gap: 12,
           marginBottom: 16,
         }}
@@ -81,10 +85,10 @@ const NewsPage: React.FC = () => {
           <Badge
             count={`未読 ${unreadCount}`}
             style={{
-              backgroundColor: '#1890ff',
+              backgroundColor: "#1890ff",
               fontSize: 12,
               height: 22,
-              lineHeight: '22px',
+              lineHeight: "22px",
               borderRadius: 11,
             }}
           />
@@ -94,10 +98,10 @@ const NewsPage: React.FC = () => {
       <Card className="no-hover">
         <div
           style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            flexWrap: 'wrap',
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            flexWrap: "wrap",
             gap: 12,
           }}
         >

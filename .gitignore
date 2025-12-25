@@ -28,6 +28,9 @@ Thumbs.db
 # Secrets baseline（追跡する）
 !.secrets.baseline
 
+# Step-by-step formatting logs
+.tmp/
+
 # ============================
 # Node.js / Frontend Build
 # ============================

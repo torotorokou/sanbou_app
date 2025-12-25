@@ -1,7 +1,7 @@
 # ============================================================
 # Formatting & Linting (mk/96_format.mk)
 # ============================================================
-# 
+#
 # 初回一括整形とCI用のターゲットを提供
 # - 通常のコミット時は pre-commit（staged のみ）を使用
 # - 初回や全体整形時のみこのターゲットを使用
@@ -12,28 +12,17 @@
 #   make fmt-python          # Python のみ整形
 #   make fmt-frontend        # Frontend のみ整形
 #
-# WSL対策:
-#   - 全体スキャンの同時実行を避ける
-#   - nice コマンドでCPU優先度を下げる
-#   - 除外ディレクトリを明示的に指定
+# WSL対策（推奨）:
+#   make fmt-step-all        # scripts/format_step_by_step.sh を使用（CPU負荷軽減）
+#   make fmt-step-py-fix     # Python ruff のみ
+#   make fmt-step-py         # Python black のみ
+#   make fmt-step-fe         # Frontend prettier のみ
+#   make fmt-step-fe-fix     # Frontend eslint のみ
 #
 # ============================================================
 
 .PHONY: bootstrap-format fmt-python fmt-frontend check-format check-python check-frontend
-
-# ============================================================
-# 初回一括整形（推奨: 専用ブランチで1コミット）
-# ============================================================
-##@ 📝 Formatting
-bootstrap-format: ## 🚀 初回のみ: 全ファイルに整形・自動修正を適用（CPU負荷軽減のため順次実行）
-	@echo "============================================================"
-	@echo "🚀 初回一括整形を開始します"
-	@echo "============================================================"
-	@echo "⚠️  注意: この処理は時間がかかり、大量の変更が発生します"
-	@echo "   - 専用のブランチで作業することを推奨します"
-	@echo "   - 途中で止めた場合は、同じコマンドで再開できます"
-	@echo ""
-	@echo "📂 対象:"
+.PHONY: fmt-step-all fmt-step-py-fix fmt-step-py fmt-step-fe fmt-step-fe-fix fmt-step-check
 	@echo "   - Python: app/backend/ (migrations除外)"
 	@echo "   - Frontend: app/frontend/src/"
 	@echo ""
@@ -143,3 +132,27 @@ check-frontend: ## 💎 Frontend整形チェック（prettier + eslint）
 	@echo ""
 	@echo "▶️  Frontend eslint check..."
 	@cd app/frontend && npm run lint || echo "⚠️  eslint にエラーがあります"
+
+# ============================================================
+# Step-by-Step Formatting（WSL推奨）
+# ============================================================
+# scripts/format_step_by_step.sh を使用
+# pre-commit run --all-files を避けてCPU負荷を軽減
+# ============================================================
+fmt-step-all: ## 🚀 【WSL推奨】全処理をステップ実行（CPU負荷軽減）
+	@bash scripts/format_step_by_step.sh all
+
+fmt-step-py-fix: ## 🐍 Python ruff --fix のみ
+	@bash scripts/format_step_by_step.sh python-fix
+
+fmt-step-py: ## 🎨 Python black format のみ
+	@bash scripts/format_step_by_step.sh python-format
+
+fmt-step-fe: ## 💅 Frontend prettier --write のみ
+	@bash scripts/format_step_by_step.sh frontend-format
+
+fmt-step-fe-fix: ## 🔍 Frontend eslint --fix のみ
+	@bash scripts/format_step_by_step.sh frontend-fix
+
+fmt-step-check: ## 🔍 全チェック（修正なし、ステップ実行版）
+	@bash scripts/format_step_by_step.sh check
