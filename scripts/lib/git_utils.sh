@@ -23,7 +23,8 @@ declare -a GIT_HOOKS=(
 # Git フックが存在するかチェック
 check_hook_exists() {
     local hook_name="$1"
-    local repo_root=$(get_repo_root) || return 1
+    local repo_root
+    repo_root=$(get_repo_root) || return 1
     local hook_path="${repo_root}/.git/hooks/${hook_name}"
 
     [[ -f "$hook_path" ]] && [[ -x "$hook_path" ]]
@@ -31,7 +32,8 @@ check_hook_exists() {
 
 # 全ての Git フックをチェック
 check_all_hooks() {
-    local repo_root=$(get_repo_root) || return 1
+    local repo_root
+    repo_root=$(get_repo_root) || return 1
     local all_ok=0
 
     log_step "Git フックの状態を確認中..."
@@ -51,7 +53,8 @@ check_all_hooks() {
 # Git フックに実行権限を付与
 set_hook_executable() {
     local hook_name="$1"
-    local repo_root=$(get_repo_root) || return 1
+    local repo_root
+    repo_root=$(get_repo_root) || return 1
     local hook_path="${repo_root}/.git/hooks/${hook_name}"
 
     if [[ -f "$hook_path" ]]; then
@@ -66,7 +69,8 @@ set_hook_executable() {
 
 # 全ての Git フックに実行権限を付与
 set_all_hooks_executable() {
-    local repo_root=$(get_repo_root) || return 1
+    local repo_root
+    repo_root=$(get_repo_root) || return 1
 
     log_step "実行権限を設定中..."
 
@@ -114,7 +118,8 @@ check_git_filter() {
 
 # .gitignore に必要なパターンが含まれているかチェック
 verify_gitignore() {
-    local repo_root=$(get_repo_root) || return 1
+    local repo_root
+    repo_root=$(get_repo_root) || return 1
     local gitignore="${repo_root}/.gitignore"
 
     check_file_exists "$gitignore" || return 1
@@ -146,11 +151,13 @@ verify_gitignore() {
 
 # Git 追跡対象の機密ファイルを検出
 detect_tracked_secrets() {
-    local repo_root=$(get_repo_root) || return 1
+    local repo_root
+    repo_root=$(get_repo_root) || return 1
 
     log_step "Git 追跡対象の機密ファイルをチェック中..."
 
-    local forbidden_files=$(git ls-tree -r HEAD --name-only 2>/dev/null | \
+    local forbidden_files
+    forbidden_files=$(git ls-tree -r HEAD --name-only 2>/dev/null | \
         grep -E '^(env/\.env\.|secrets/\.env\..*\.secrets$|secrets/gcp-sa.*\.json$|.*\.pem$|.*\.key$)' | \
         grep -v -E '\.(example|template)$' || true)
 
@@ -168,11 +175,13 @@ detect_tracked_secrets() {
 
 # ステージング済みの機密ファイルを検出
 detect_staged_secrets() {
-    local repo_root=$(get_repo_root) || return 1
+    local repo_root
+    repo_root=$(get_repo_root) || return 1
 
     log_step "ステージング済みの機密ファイルをチェック中..."
 
-    local staged_files=$(git diff --cached --name-only 2>/dev/null | \
+    local staged_files
+    staged_files=$(git diff --cached --name-only 2>/dev/null | \
         grep -E '^(env/\.env\.|secrets/)' | \
         grep -v -E '\.(example|template)$' || true)
 
@@ -194,7 +203,8 @@ detect_staged_secrets() {
 
 # Git 履歴内の機密ファイルを検出
 detect_secrets_in_history() {
-    local repo_root=$(get_repo_root) || return 1
+    local repo_root
+    repo_root=$(get_repo_root) || return 1
 
     log_step "Git 履歴内の機密ファイルをチェック中..."
 
@@ -206,7 +216,8 @@ detect_secrets_in_history() {
     local found=0
 
     for pattern in "${patterns[@]}"; do
-        local count=$(git log --all --oneline --full-history -- "$pattern" 2>/dev/null | \
+        local count
+        count=$(git log --all --oneline --full-history -- "$pattern" 2>/dev/null | \
             grep -v -E '\.(example|template)' | wc -l || true)
 
         if [[ $count -gt 0 ]]; then
@@ -222,7 +233,8 @@ detect_secrets_in_history() {
 
 # Git 履歴内のパスワードパターンを検出
 detect_passwords_in_history() {
-    local repo_root=$(get_repo_root) || return 1
+    local repo_root
+    repo_root=$(get_repo_root) || return 1
 
     log_step "Git 履歴内のパスワードパターンをチェック中..."
 
@@ -295,7 +307,8 @@ restore_remote() {
 
 # 機密ファイル追加テスト
 test_secret_file_block() {
-    local repo_root=$(get_repo_root) || return 1
+    local repo_root
+    repo_root=$(get_repo_root) || return 1
     local test_file="env/.env.test_temp_$$"
 
     log_step "機密ファイル追加ブロックのテスト中..."
@@ -323,13 +336,15 @@ test_secret_file_block() {
 
 # .git ディレクトリのサイズを取得
 get_git_size() {
-    local repo_root=$(get_repo_root) || return 1
+    local repo_root
+    repo_root=$(get_repo_root) || return 1
     du -sh "${repo_root}/.git" 2>/dev/null | cut -f1
 }
 
 # Git サイズを表示
 show_git_size() {
-    local size=$(get_git_size)
+    local size
+    size=$(get_git_size)
     log_info "Git リポジトリサイズ: $size"
 }
 

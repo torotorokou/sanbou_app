@@ -288,7 +288,8 @@ get_env_var() {
         return 1
     }
 
-    local value=$(grep "^${var_name}=" "$env_file" | cut -d'=' -f2- | tr -d '"' | tr -d "'")
+    local value
+    value=$(grep "^${var_name}=" "$env_file" | cut -d'=' -f2- | tr -d '"' | tr -d "'")
     echo "${value:-$default_value}"
 }
 
@@ -328,6 +329,7 @@ handle_error() {
 # クリーンアップ関数の登録
 register_cleanup() {
     local cleanup_func="$1"
+    # shellcheck disable=SC2064
     trap "$cleanup_func" EXIT
 }
 

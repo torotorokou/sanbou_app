@@ -1,7 +1,7 @@
 #!/bin/bash
 # 簡易デバッグスクリプト
 
-cd /home/koujiro/work_env/22.Work_React/sanbou_app
+cd /home/koujiro/work_env/22.Work_React/sanbou_app || exit 1
 source scripts/git/lib/security_patterns.sh
 
 echo "=== パターン確認 ==="
