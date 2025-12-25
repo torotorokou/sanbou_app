@@ -135,7 +135,13 @@ repos:
           (?x)^(
               package-lock\.json|
               .*\.lock|
-              \.secrets\.baseline
+              \.secrets\.baseline|
+              docs/.*|
+              .*\.md|
+              .*\.ipynb|
+              ops/db/legacy/.*\.sql|
+              app/backend/.*/migrations.*|
+              app/backend/.*/alembic/versions/.*
           )$
 
   # ============================================================

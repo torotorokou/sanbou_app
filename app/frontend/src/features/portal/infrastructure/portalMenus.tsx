@@ -17,6 +17,15 @@ import type { PortalCardProps } from "../model/types";
 import { PALETTE } from "../domain/constants";
 
 export const portalMenus: PortalCardProps[] = [
+    {
+    title: "お知らせ",
+    description: "最新のお知らせ・更新情報を確認。",
+    detail:
+      "メンテナンス情報、リリースノート、社内イベント、法令改正などを掲載します。",
+    icon: <NotificationOutlined />,
+    link: ROUTER_PATHS.NEWS,
+    color: PALETTE.GRAY,
+  },
   {
     title: "ダッシュボード",
     description: "複数のダッシュボードをまとめて表示します。",
@@ -79,14 +88,5 @@ export const portalMenus: PortalCardProps[] = [
     icon: <SettingOutlined />,
     link: ROUTER_PATHS.SETTINGS,
     color: PALETTE.CYAN,
-  },
-  {
-    title: "お知らせ",
-    description: "最新のお知らせ・更新情報を確認。",
-    detail:
-      "メンテナンス情報、リリースノート、社内イベント、法令改正などを掲載します。",
-    icon: <NotificationOutlined />,
-    link: ROUTER_PATHS.NEWS,
-    color: PALETTE.GRAY,
-  },
+  }
 ];
