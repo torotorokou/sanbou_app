@@ -4,8 +4,6 @@
 
 set -e
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-
 echo "🔐 Granting database schema permissions..."
 
 docker compose -f docker/docker-compose.dev.yml -p local_dev exec -T db \

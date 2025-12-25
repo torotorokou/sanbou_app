@@ -22,7 +22,7 @@ main() {
     local repo_root
     repo_root=$(get_repo_root) || exit 1
 
-    cd "$repo_root"
+    cd "$repo_root" || exit 1
 
     log_info "セットアップ先: $repo_root"
     echo ""

@@ -196,7 +196,8 @@ require_commands() {
 # ディレクトリ/ファイルのバックアップを作成
 create_backup() {
     local target="$1"
-    local timestamp=$(date +%Y%m%d_%H%M%S)
+    local timestamp
+    timestamp=$(date +%Y%m%d_%H%M%S)
     local backup_name="${target}_backup_${timestamp}"
 
     if [[ -e "$target" ]]; then
@@ -213,7 +214,8 @@ create_backup() {
 # tar.gz バックアップを作成
 create_tar_backup() {
     local target="$1"
-    local timestamp=$(date +%Y%m%d_%H%M%S)
+    local timestamp
+    timestamp=$(date +%Y%m%d_%H%M%S)
     local backup_name="${target##*/}_backup_${timestamp}.tar.gz"
 
     if [[ -e "$target" ]]; then
@@ -271,6 +273,7 @@ load_env_file() {
 
         # エクスポート
         if [[ "$line" =~ ^[[:space:]]*([A-Za-z_][A-Za-z0-9_]*)= ]]; then
+            # shellcheck disable=SC2163
             export "$line"
             log_debug "  loaded: ${BASH_REMATCH[1]}"
         fi

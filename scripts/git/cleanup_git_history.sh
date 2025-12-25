@@ -43,7 +43,7 @@ main() {
     # Git リポジトリのルートを取得
     local repo_root
     repo_root=$(get_repo_root) || exit 1
-    cd "$repo_root"
+    cd "$repo_root" || exit 1
 
     # 確認
     log_warn "以下を確認してください:"
