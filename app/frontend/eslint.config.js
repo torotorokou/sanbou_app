@@ -2,6 +2,7 @@ import js from "@eslint/js";
 import globals from "globals";
 import tsParser from "@typescript-eslint/parser";
 import pluginReact from "eslint-plugin-react";
+import pluginReactHooks from "eslint-plugin-react-hooks";
 import { defineConfig } from "eslint/config";
 import pluginTs from "@typescript-eslint/eslint-plugin";
 import json from "@eslint/json";
@@ -42,6 +43,7 @@ export default defineConfig([
     plugins: {
       "@typescript-eslint": pluginTs,
       react: pluginReact,
+      "react-hooks": pluginReactHooks,
       boundaries,
     },
     settings: {
@@ -72,6 +74,7 @@ export default defineConfig([
     rules: {
       ...pluginTs.configs.recommended.rules,
       ...pluginReact.configs.recommended.rules,
+      ...pluginReactHooks.configs.recommended.rules,
       "@typescript-eslint/consistent-type-imports": "warn",
       // React 17+ では React インポート不要
       "react/react-in-jsx-scope": "off",
