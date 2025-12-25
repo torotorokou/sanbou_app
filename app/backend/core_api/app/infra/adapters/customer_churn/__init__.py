@@ -9,11 +9,12 @@ import logging
 from datetime import date as date_type
 from typing import Optional
 
+from sqlalchemy import text
+from sqlalchemy.orm import Session
+
 from app.core.domain.entities.customer_churn import LostCustomer
 from backend_shared.application.logging import create_log_context, get_module_logger
 from backend_shared.db.names import SCHEMA_MART, V_CUSTOMER_SALES_DAILY, fq
-from sqlalchemy import text
-from sqlalchemy.orm import Session
 
 logger = get_module_logger(__name__)
 

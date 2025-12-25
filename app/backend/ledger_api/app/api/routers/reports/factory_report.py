@@ -1,10 +1,11 @@
 # backend/app/api/endpoints/reports/factory_report.py
 
 
-from app.config.di_providers import get_factory_report_usecase
-from app.core.usecases.reports import GenerateFactoryReportUseCase
 from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, UploadFile
 from fastapi.responses import Response
+
+from app.config.di_providers import get_factory_report_usecase
+from app.core.usecases.reports import GenerateFactoryReportUseCase
 
 # APIルーターの初期化
 router = APIRouter()

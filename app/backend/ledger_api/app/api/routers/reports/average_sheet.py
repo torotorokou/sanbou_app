@@ -1,7 +1,8 @@
-from app.config.di_providers import get_average_sheet_usecase
-from app.core.usecases.reports.generate_average_sheet import GenerateAverageSheetUseCase
 from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, UploadFile
 from fastapi.responses import JSONResponse
+
+from app.config.di_providers import get_average_sheet_usecase
+from app.core.usecases.reports.generate_average_sheet import GenerateAverageSheetUseCase
 
 router = APIRouter()
 

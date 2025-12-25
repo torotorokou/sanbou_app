@@ -10,6 +10,7 @@ from datetime import UTC
 
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
+
 from backend_shared.application.logging import get_module_logger
 
 logger = get_module_logger(__name__)

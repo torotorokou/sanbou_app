@@ -21,6 +21,9 @@ UseCase: UploadShogunCsvUseCase
 from typing import Any
 
 import pandas as pd
+from fastapi import BackgroundTasks, UploadFile
+from fastapi.concurrency import run_in_threadpool
+
 from app.core.ports.csv_writer_port import IShogunCsvWriter
 from app.infra.adapters.materialized_view.materialized_view_refresher import (
     MaterializedViewRefresher,
@@ -41,8 +44,6 @@ from backend_shared.infra.adapters.presentation import (
     ErrorApiResponse,
     SuccessApiResponse,
 )
-from fastapi import BackgroundTasks, UploadFile
-from fastapi.concurrency import run_in_threadpool
 
 logger = get_module_logger(__name__)
 

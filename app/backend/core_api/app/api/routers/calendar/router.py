@@ -11,12 +11,13 @@ Design:
 
 from typing import Any
 
+from fastapi import APIRouter, Depends, Query
+
 from app.config.di_providers import get_calendar_month_uc
 from app.core.usecases.calendar.dto import GetCalendarMonthInput
 from app.core.usecases.calendar.get_calendar_month_uc import GetCalendarMonthUseCase
 from backend_shared.application.logging import get_module_logger
 from backend_shared.core.domain.exceptions import InfrastructureError, ValidationError
-from fastapi import APIRouter, Depends, Query
 
 logger = get_module_logger(__name__)
 

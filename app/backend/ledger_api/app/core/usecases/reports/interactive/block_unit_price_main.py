@@ -7,8 +7,9 @@ from collections.abc import Callable
 from typing import Any
 
 import pandas as pd
-from app.core.usecases.reports.base_generators import BaseInteractiveReportGenerator
 from backend_shared.application.logging import get_module_logger
+
+from app.core.usecases.reports.base_generators import BaseInteractiveReportGenerator
 
 from .block_unit_price_finalize import (
     execute_finalize_step,

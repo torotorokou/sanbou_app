@@ -8,6 +8,11 @@ Exception Handler Middleware - 統一エラーハンドリング
 このモジュールは backend_shared に配置され、全てのサービスで共通利用されます。
 """
 
+from fastapi import Request, status
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
+from starlette.exceptions import HTTPException as StarletteHTTPException
+
 from backend_shared.application.logging import create_log_context, get_module_logger
 from backend_shared.core.domain.exceptions import (
     BusinessRuleViolation,
@@ -19,10 +24,6 @@ from backend_shared.core.domain.exceptions import (
     UnauthorizedError,
     ValidationError,
 )
-from fastapi import Request, status
-from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
-from starlette.exceptions import HTTPException as StarletteHTTPException
 
 logger = get_module_logger(__name__)
 

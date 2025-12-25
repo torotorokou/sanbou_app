@@ -6,6 +6,8 @@ import logging
 from datetime import datetime, timedelta
 from uuid import UUID
 
+from sqlalchemy.orm import Session
+
 from app.core.domain.notification import (
     FailureType,
     NotificationOutboxItem,
@@ -14,7 +16,6 @@ from app.core.domain.notification import (
 )
 from app.core.ports.notification_port import NotificationOutboxPort
 from app.infra.db.orm_models import NotificationOutboxORM
-from sqlalchemy.orm import Session
 
 logger = logging.getLogger(__name__)
 

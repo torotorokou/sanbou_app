@@ -25,6 +25,7 @@ AIサービスと通信し、テキスト分類、感情分析、
 import os
 
 import httpx
+
 from backend_shared.application.logging import create_log_context, get_module_logger
 
 logger = get_module_logger(__name__)

@@ -1,5 +1,7 @@
 # --- import ---
 import pandas as pd
+from fastapi import UploadFile
+
 from backend_shared.core.usecases.csv_formatter.dataframe import serialize_dates_info
 from backend_shared.infra.adapters.presentation.response_error import (
     DateMismatchResponse,
@@ -12,7 +14,6 @@ from backend_shared.utils.dataframe_validator import (
     check_missing_file,
     check_required_columns,
 )
-from fastapi import UploadFile
 
 
 class CSVValidationResponder:

@@ -8,11 +8,12 @@ Design:
   - No business logic in this layer
 """
 
+from fastapi import APIRouter, Depends
+
 from app.api.schemas import KPIOverview
 from app.config.di_providers import get_kpi_uc
 from app.core.usecases.kpi.dto import GetKPIOverviewInput
 from app.core.usecases.kpi.kpi_uc import KPIUseCase
-from fastapi import APIRouter, Depends
 
 router = APIRouter(prefix="/kpi", tags=["kpi"])
 

@@ -4,6 +4,7 @@ DataFrameのバリデーション処理を行う関数群モジュール。
 """
 
 import pandas as pd
+
 from backend_shared.utils.dataframe_utils import (
     has_denpyou_date_column,
     remove_weekday_parentheses,

@@ -36,8 +36,9 @@ def get_settings() -> CoreApiSettings:
 import os
 from functools import lru_cache
 
-from backend_shared.config.env_utils import get_stage, is_debug_mode
 from pydantic_settings import BaseSettings
+
+from backend_shared.config.env_utils import get_stage, is_debug_mode
 
 
 class BaseAppSettings(BaseSettings):

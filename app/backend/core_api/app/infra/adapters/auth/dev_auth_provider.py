@@ -24,10 +24,11 @@ Dev Auth Provider - 開発用認証プロバイダ
 
 import os
 
+from fastapi import Request
+
 from app.core.domain.auth.entities import AuthUser
 from app.core.ports.auth.auth_provider import IAuthProvider
 from backend_shared.application.logging import create_log_context, get_module_logger
-from fastapi import Request
 
 logger = get_module_logger(__name__)
 

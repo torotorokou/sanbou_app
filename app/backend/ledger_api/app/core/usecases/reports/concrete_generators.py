@@ -15,6 +15,7 @@
 from typing import Any
 
 import pandas as pd
+
 from app.core.usecases.reports.average_sheet_processor import (
     process as process_average_sheet,
 )

@@ -3,9 +3,10 @@ from __future__ import annotations
 import argparse
 from datetime import date
 
+from backend_shared.application.logging import get_module_logger as get_logger
+
 from app.core.usecases.rebuild_daytype_ratios import rebuild_daytype_ratios
 from app.infra.db.pg_repositories import PgActualsRepository, PgRatiosRepository
-from backend_shared.application.logging import get_module_logger as get_logger
 
 logger = get_logger(__name__)
 

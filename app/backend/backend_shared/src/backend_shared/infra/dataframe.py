@@ -21,6 +21,7 @@ DataFrame を SQL データベースに挿入可能な形式に正規化する�
 from datetime import datetime
 
 import pandas as pd
+
 from backend_shared.application.logging import get_module_logger
 from backend_shared.infra.json_utils import deep_jsonable
 
