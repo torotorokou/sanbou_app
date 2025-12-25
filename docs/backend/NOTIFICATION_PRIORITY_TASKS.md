@@ -1,6 +1,7 @@
 # 通知基盤 - 優先実装タスク
 
 **作成日**: 2024年12月24日  
+**最終更新**: 2025年12月25日  
 **前提**: 通知基盤の基礎実装完了（InMemory/Noop）
 
 ---
@@ -14,15 +15,36 @@
 - Adapters: 
   - InMemoryNotificationOutboxAdapter（開発/テスト用）
   - **DbNotificationOutboxAdapter（本番用、PostgreSQL）** ← NEW
-  - NoopNotificationSenderAdapter（Phase 2で実Email送信に置き換え予定）
+  - NoopNotificationSenderAdapter（Phase 3で実Email/LINE送信に置き換え予定）
 - DI: config/di_providers.py（環境変数による切替）
 - Tests: 12件のユニットテスト + DB統合テスト
 - **DB永続化**: notification_outboxテーブル（UUID PK、JSONB meta、retry logic）← NEW
 - **定期実行**: APScheduler統合（1分間隔、FastAPI lifecycle管理）← NEW
 
+### ✅ Phase 2完了（2025-12-25）
+- **Domain層拡張**:
+  - FailureType enum（TEMPORARY / PERMANENT）
+  - RecipientRef dataclass（recipient_key解析: `user:123`, `email:addr`, `aud:site:code`）
+  - NotificationPreference dataclass（opt-in制御）
+- **Ports層拡張**:
+  - NotificationPreferencePort（通知許可管理）
+  - RecipientResolverPort（チャネル固有ID解決）
+  - mark_failed(failure_type), mark_skipped(reason)
+- **Adapters層拡張**:
+  - InMemoryNotificationPreferenceAdapter（テスト用）
+  - DummyRecipientResolverAdapter（テスト用、LINE常にNone→skipped）
+  - InMemoryOutboxAdapter TEMP/PERM対応
+  - DbOutboxAdapter failure_type対応
+- **UseCases層拡張**:
+  - DispatchPendingNotificationsUseCase: Preference判定→Resolver解決→送信→失敗分類
+- **DBマイグレーション**:
+  - `20251225_001_add_notification_outbox_failure_type.py`（failure_type VARCHAR(20)）
+- **テスト**: 16ケース全成功（既存13 + 新規3: Preference/Resolver/失敗分類）
+
 ### ⚠️ 制限事項（現状）
-- 通知送信がNoop（実際に送信されない）← Phase 2で解決予定
-- ビジネスロジックからの呼び出しなし ← Phase 2で統合予定
+- 通知送信がNoop（実際に送信されない）← **Phase 3で解決予定**
+- Resolver がDummy（LINE常にNone）← **Phase 3でDB実装予定**
+- ビジネスロジックからの呼び出しなし ← **Phase 3で統合予定**
 - 開発環境でuvicorn --reloadによるscheduler干渉（本番環境では問題なし）
 
 ---
@@ -48,106 +70,70 @@
    - ✅ 環境変数: `ENABLE_NOTIFICATION_SCHEDULER=true`、`NOTIFICATION_DISPATCH_INTERVAL_MINUTES=1`
    - ✅ エラーハンドリング、ログ出力
 
+---
+
+### ✅ Phase 2: LINE通知基盤準備（完了）
+**完了日**: 2025年12月25日  
+**所要期間**: 1日
+
+#### 実装内容
+
+1. **Recipient Key統一方針**
+   - ✅ `user:{id}` - ユーザーID（将来的にLINE userId等に解決）
+   - ✅ `email:{address}` - メールアドレス直接指定
+   - ✅ `aud:{site}:{code}` - 視聴者コード
+   - ✅ RecipientRef dataclass（parse/as_string）
+
+2. **失敗分類（TEMPORARY / PERMANENT）**
+   - ✅ FailureType enum追加
+   - ✅ TEMPORARY: タイムアウト等 → リトライ対象（1→5→30→60分）
+   - ✅ PERMANENT: ValidationError等 → 即failed、リトライなし
+   - ✅ DBマイグレーション: failure_type VARCHAR(20) カラム追加
+   - ✅ mark_failed(failure_type) シグネチャ更新
+
+3. **通知許可管理（Opt-in）**
+   - ✅ NotificationPreference dataclass（email_enabled, line_enabled）
+   - ✅ NotificationPreferencePort追加
+   - ✅ InMemoryPreferenceAdapter（テスト用: user:1,2,3）
+   - ✅ DispatchUseCase: Preference判定 → 無効化ならmark_skipped()
+
+4. **Recipient解決機構**
+   - ✅ RecipientResolverPort追加
+   - ✅ DummyResolverAdapter（テスト用: email→そのまま、LINE→None）
+   - ✅ DispatchUseCase: Resolver解決 → None ならmark_skipped()
+
+5. **mark_skipped ステータス**
+   - ✅ NotificationStatus.SKIPPED追加
+   - ✅ mark_skipped(reason) 実装（Outbox/DB両対応）
+   - ✅ 用途: Preference無効化、Resolver解決失敗
+
 #### テスト結果
-- ✅ 10件の通知を正常にenqueue → dispatch → sent
-- ✅ Retry logic動作確認（exponential backoff: 1min → 5min → 30min → 60min）
-- ✅ 手動dispatch実行: 正常動作
-- ⚠️ 開発環境（uvicorn --reload）: scheduler "missed run" warnings（本番環境では問題なし）
+- ✅ 16ケース全成功
+  - Preference無効化でskipped検証
+  - Resolver解決失敗でskipped検証
+  - ValueError→PERMANENT, RuntimeError→TEMPORARY検証
 
 #### 実装ファイル
-- `migrations_v2/alembic/versions/20251224_005_create_notification_outbox_table.py`
-- `app/infra/db/orm_models.py`: NotificationOutboxORM追加
-- `app/infra/adapters/notification/db_outbox_adapter.py`: DB実装
-- `app/scheduler/notification_dispatcher.py`: スケジューラー統合
-- `app/app.py`: startup/shutdown events
-- `app/config/di_providers.py`: 環境変数ベースDI
-- `requirements.txt`: APScheduler追加
+- `app/core/domain/notification.py`: FailureType, RecipientRef, NotificationPreference追加
+- `app/core/ports/notification_port.py`: PreferencePort, ResolverPort, mark_skipped追加
+- `app/infra/adapters/notification/in_memory_preference_adapter.py`: NEW
+- `app/infra/adapters/notification/dummy_resolver_adapter.py`: NEW
+- `app/infra/adapters/notification/db_outbox_adapter.py`: failure_type, mark_skipped対応
+- `app/core/usecases/notification/dispatch_pending_notifications_uc.py`: 拡張
+- `app/config/di_providers.py`: Preference/Resolver DI追加
+- `migrations_v2/alembic/versions/20251225_001_add_notification_outbox_failure_type.py`: NEW
+- `tests/test_notification_infrastructure.py`: 3ケース追加
 
 #### ドキュメント
-- `docs/database/DB_USER_MIGRATION_MYUSER_TO_SANBOU_APP_DEV.md`: DB権限問題解決記録
+- `docs/development/notification_line_foundation_COMPLETED.md`: 完了報告
+- `docs/backend/NOTIFICATION_SYSTEM_GUIDE.md`: 完全ガイド（NEW）
+- `docs/backend/NOTIFICATION_QUICKREF.md`: クイックリファレンス（NEW）
 
 ---
 
-### 📌 Phase 1の技術的知見
-
-#### DB Ownership問題の解決
-**問題**: PostgreSQLで`myuser`（superuser）がschema ownerになっており、`sanbou_app_dev`（application user）との権限衝突が発生
-
-**解決策**:
-```sql
-ALTER SCHEMA app OWNER TO sanbou_app_dev;
-ALTER TABLE app.notification_outbox OWNER TO sanbou_app_dev;
-GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA app TO sanbou_app_dev;
-```
-
-**教訓**: 
-- 常に環境変数の`POSTGRES_USER`を使用
-- `myuser`をハードコードしない
-- スキーマ/テーブル作成時にownerを明示
-
-#### APScheduler + uvicorn --reload
-**問題**: 開発環境でschedulerが"missed run"警告を出す
-
-**原因**: uvicorn --reloadがコード変更検知で頻繁に再起動
-
-**解決策**:
-- 開発: 警告を許容、または手動実行で検証
-- 本番: `--reload`なしで起動、schedulerは正常動作
-
----
-
----
-
-### 🔄 Phase 2: 実Email送信 + ビジネスロジック統合（次のフェーズ）
+### 🔄 Phase 3: 実Email/LINE送信 + ビジネスロジック統合（次のフェーズ）
 **優先度**: 🟡 MEDIUM  
-**予定期間**: 2-3日
-
-#### 2-1. 実Email送信実装
-**実装内容**:
-- EmailNotificationSenderAdapterの実装（SendGrid or AWS SES推奨）
-- 環境変数で送信設定（API key / SMTP credentials）
-- エラーハンドリング、送信失敗時のリトライ
-- DI設定: NoopNotificationSenderAdapter → EmailNotificationSenderAdapter
-- HTMLテンプレート対応（オプション）
-
-**SendGrid実装例**:
-```python
-import sendgrid
-from sendgrid.helpers.mail import Mail
-
-class SendGridNotificationSenderAdapter(NotificationSenderPort):
-    def __init__(self, api_key: str, from_email: str):
-        self._client = sendgrid.SendGridAPIClient(api_key)
-        self._from_email = from_email
-    
-    def send(self, channel, payload, recipient_key):
-        if channel != "email":
-            raise ValueError(f"Unsupported channel: {channel}")
-        
-        message = Mail(
-            from_email=self._from_email,
-            to_emails=recipient_key,  # recipient_keyはメールアドレス
-            subject=payload.title,
-            plain_text_content=payload.body
-        )
-        
-        self._client.send(message)
-```
-
-#### 2-2. ビジネスロジック統合
-**実装内容**:
-- 既存UseCaseから通知を発行
-- 統合ポイント例:
-  - 受注確定時 → メール通知
-  - 在庫アラート → LINE通知
-  - レポート生成完了 → メール通知
-  - エラー発生時 → 管理者通知
-
-**実装ファイル**:
-- 各ビジネスUseCase（EnqueueNotificationsUseCaseを呼び出し）
-
-**実装例**:
-```python
+**予定期間**: 3-5日
 # UseCaseから通知を登録
 class ConfirmOrderUseCase:
     def __init__(
