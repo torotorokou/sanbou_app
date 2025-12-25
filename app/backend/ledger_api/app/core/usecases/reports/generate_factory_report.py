@@ -10,9 +10,6 @@ from datetime import date
 from io import BytesIO
 from typing import Any
 
-from fastapi import BackgroundTasks, UploadFile
-from fastapi.responses import JSONResponse
-
 from app.application.usecases.reports.report_generation_utils import (
     generate_excel_from_dataframe,
 )
@@ -21,6 +18,8 @@ from app.core.usecases.reports.base_report_usecase import BaseReportUseCase
 from app.core.usecases.reports.factory_report_processor import (
     process as factory_report_process,
 )
+from fastapi import BackgroundTasks, UploadFile
+from fastapi.responses import JSONResponse
 
 
 class GenerateFactoryReportUseCase(BaseReportUseCase):

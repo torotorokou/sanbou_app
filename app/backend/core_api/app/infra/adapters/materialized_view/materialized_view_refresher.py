@@ -20,15 +20,14 @@ CSV種別とMV更新の対応:
   - 各MV更新後にセッションをflushして変更を確定
 """
 
-from sqlalchemy import text
-from sqlalchemy.orm import Session
-
 from backend_shared.application.logging import create_log_context, get_module_logger
 from backend_shared.db.names import (
     MV_RECEIVE_DAILY,
     MV_TARGET_CARD_PER_DAY,
     SCHEMA_MART,
 )
+from sqlalchemy import text
+from sqlalchemy.orm import Session
 
 logger = get_module_logger(__name__)
 

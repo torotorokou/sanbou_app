@@ -18,21 +18,6 @@ from datetime import date, datetime
 from typing import Any
 
 import pandas as pd
-from sqlalchemy import (
-    BigInteger,
-    Boolean,
-    Column,
-    DateTime,
-    ForeignKey,
-    Integer,
-    MetaData,
-    String,
-    Table,
-    Text,
-    text,
-)
-from sqlalchemy.orm import Session
-
 from app.core.domain.csv import CsvKind
 from app.infra.db.sql_loader import load_sql
 from backend_shared.application.logging import create_log_context, get_module_logger
@@ -48,6 +33,20 @@ from backend_shared.db.names import (
     V_ACTIVE_SHOGUN_FLASH_YARD,
     fq,
 )
+from sqlalchemy import (
+    BigInteger,
+    Boolean,
+    Column,
+    DateTime,
+    ForeignKey,
+    Integer,
+    MetaData,
+    String,
+    Table,
+    Text,
+    text,
+)
+from sqlalchemy.orm import Session
 
 logger = get_module_logger(__name__)
 

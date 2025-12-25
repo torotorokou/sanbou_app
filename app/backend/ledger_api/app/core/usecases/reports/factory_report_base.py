@@ -20,9 +20,8 @@ from dataclasses import dataclass
 from typing import Any
 
 import pandas as pd
-from backend_shared.application.logging import get_module_logger
-
 from app.infra.report_utils import get_template_config, load_master_and_template
+from backend_shared.application.logging import get_module_logger
 
 logger = get_module_logger(__name__)
 

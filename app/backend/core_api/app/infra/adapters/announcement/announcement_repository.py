@@ -5,9 +5,6 @@ Announcement repository implementation with PostgreSQL.
 
 from datetime import UTC, datetime
 
-from sqlalchemy import and_, func, select
-from sqlalchemy.orm import Session
-
 from app.core.domain.announcement import (
     Announcement,
     AnnouncementUserState,
@@ -18,6 +15,8 @@ from app.core.domain.announcement import (
 from app.core.ports.announcement_repository_port import AnnouncementRepositoryPort
 from app.infra.db.orm_models import AnnouncementORM, AnnouncementUserStateORM
 from backend_shared.application.logging import get_module_logger
+from sqlalchemy import and_, func, select
+from sqlalchemy.orm import Session
 
 logger = get_module_logger(__name__)
 

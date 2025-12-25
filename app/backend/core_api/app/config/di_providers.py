@@ -13,9 +13,6 @@ DI Providers - Dependency Injection Container
 
 import os
 
-from fastapi import Depends
-from sqlalchemy.orm import Session
-
 from app.core.ports.notification_port import (
     NotificationOutboxPort,
     NotificationPreferencePort,
@@ -66,6 +63,8 @@ from backend_shared.db.names import (
     T_SHOGUN_FINAL_SHIPMENT,
     T_SHOGUN_FINAL_YARD,
 )
+from fastapi import Depends
+from sqlalchemy.orm import Session
 
 logger = get_module_logger(__name__)
 

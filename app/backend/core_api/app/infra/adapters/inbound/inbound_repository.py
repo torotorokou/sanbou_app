@@ -5,9 +5,6 @@ Inbound repository implementation with PostgreSQL.
 
 from datetime import date as date_type
 
-from sqlalchemy import text
-from sqlalchemy.orm import Session
-
 from app.core.domain.inbound import CumScope, InboundDailyRow
 from app.core.ports.inbound_repository_port import InboundRepository
 from app.infra.db.sql_loader import load_sql
@@ -19,6 +16,8 @@ from backend_shared.db.names import (
     V_CALENDAR_CLASSIFIED,
     fq,
 )
+from sqlalchemy import text
+from sqlalchemy.orm import Session
 
 logger = get_module_logger(__name__)
 

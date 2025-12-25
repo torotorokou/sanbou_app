@@ -9,7 +9,6 @@ from datetime import datetime
 from typing import Any
 
 import httpx
-
 from backend_shared.application.logging import get_module_logger
 
 logger = get_module_logger(__name__)
