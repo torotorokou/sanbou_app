@@ -259,6 +259,9 @@ test/**/*.csv
 !**/config/**/*.yml
 !**/config/**/*.csv
 
+# --- 除外: config 内の __pycache__ ---
+**/config/__pycache__/
+
 # --- 明示許可: master ディレクトリ（マスターデータ） ---
 !**/master/**
 !**/master/**/*.csv
