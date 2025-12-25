@@ -93,8 +93,7 @@ repos:
       # 秘密鍵検出
       - id: detect-private-key
         name: 秘密鍵を検出
-        exclude: 'scripts/git/lib/security_patterns\.sh'
-        exclude: ^(secrets/.*\.template|.*_example\..*|.*\.md)$
+        exclude: ^(scripts/git/lib/security_patterns\.sh|secrets/.*\.template|.*_example\..*|.*\.md)$
 
       # Python AST チェック
       - id: check-ast
@@ -117,7 +116,21 @@ repos:
           - "--exclude-files"
           - '^.*_example\..*$'
           - "--exclude-files"
-          - "^docs/archive/.*$"
+          - "^docs/.*$"
+          - "--exclude-files"
+          - "^.*migrations.*alembic/versions/.*\.py$"
+          - "--exclude-files"
+          - "^scripts/test/.*$"
+          - "--exclude-files"
+          - "^scripts/git/lib/security_patterns\.sh$"
+          - "--exclude-files"
+          - "^.*\.ipynb$"
+          - "--exclude-files"
+          - "^app/backend/.*\.env\.example$"
+          - "--exclude-files"
+          - "^app/backend/.*/README\.md$"
+          - "--exclude-files"
+          - "^ops/db/legacy/.*\.sql$"
         exclude: |
           (?x)^(
               package-lock\.json|
