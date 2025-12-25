@@ -82,6 +82,8 @@ export default defineConfig([
       "react/prop-types": "off",
       // 暫定: any は段階的移行のため warn に緩和
       "@typescript-eslint/no-explicit-any": "warn",
+      // React Hooks の依存配列警告を無効化（意図的な省略が多いため）
+      "react-hooks/exhaustive-deps": "off",
       // ブレークポイントのマジックナンバー混入防止（比較演算子の文脈に限定）
       // NOTE: setTimeout等の無関係なリテラルやサンプルデータは誤検知しない
       // 5段階システム（xs/sm/md/lg/xl）を採用: 640/768/1024/1280

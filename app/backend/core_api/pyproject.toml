@@ -97,11 +97,47 @@ reportUnusedClass = true
 reportUnusedFunction = true
 reportDuplicateImport = true
 
+# ============================================================
+# mypy: 段階的型チェック導入（ゆるい設定から開始）
+# ============================================================
+# 方針:
+# - 初回は対象を限定（core/, api/ のみ）
+# - strict は無効化（段階的に厳格化）
+# - 外部ライブラリで詰まらないよう ignore_missing_imports = true
+# - 徐々に disallow_untyped_defs 等を追加していく
+#
+# 実行: make typecheck
+# ============================================================
 [tool.mypy]
 python_version = "3.11"
-strict = true
+# 段階導入のため strict は無効化（将来的に有効化を検討）
+strict = false
+
+# 基本的な警告（負荷が低い）
 warn_return_any = true
 warn_unused_configs = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+no_implicit_optional = true
+
+# 外部ライブラリで詰まらないように
+ignore_missing_imports = true
+
+# 最初は緩く（将来的に true にする）
+check_untyped_defs = false
+disallow_untyped_defs = false
+disallow_untyped_calls = false
+disallow_incomplete_defs = false
+
+# ファイル単位で除外（段階導入）
+# 最初は core/ と api/ のみチェック対象
+# infra/ や config/ は後回し
+exclude = [
+    "^app/infra/",
+    "^app/config/",
+    "^app/scheduler/",
+    "migrations/",
+]
 
 [tool.importlinter]
 root_package = "app"

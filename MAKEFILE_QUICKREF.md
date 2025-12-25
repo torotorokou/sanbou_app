@@ -79,6 +79,87 @@ make backup ENV=local_dev
 make restore-from-dump ENV=local_dev DUMP=backups/xxx.dump
 ```
 
+## 🎨 コード品質・整形
+
+### ⚠️ WSL2 フリーズ防止の重要事項
+
+**禁止事項**（フリーズの原因）:
+- ❌ `pre-commit run --all-files` → CPU 張り付き
+- ❌ `eslint .` （ルートから） → node_modules (564MB) をスキャン
+- ❌ `prettier .` （ルートから） → 全ファイルをスキャン
+
+**推奨する方法**:
+- ✅ `make fmt-step-all` → 直列・対象限定で安全に実行
+- ✅ `make check-light` → staged ファイルのみチェック
+- ✅ CI で全体チェック → GitHub Actions が自動実行
+
+📖 詳細: [docs/dev/SAFE_BOOTSTRAP_FORMAT.md](./docs/dev/SAFE_BOOTSTRAP_FORMAT.md)
+
+### フォーマット（整形）
+
+```bash
+# 【推奨】初回一括整形（WSL2安全）
+make fmt-step-all
+
+# 個別実行（WSL2安全）
+make fmt-step-py-fix    # Python ruff --fix のみ
+make fmt-step-py        # Python black のみ
+make fmt-step-fe        # Frontend prettier のみ
+make fmt-step-fe-fix    # Frontend eslint --fix のみ
+
+# 【非推奨】旧コマンド（並列実行、CPU負荷高）
+# make bootstrap-format  # フリーズの可能性あり
+# make fmt-python        # 並列実行
+# make fmt-frontend      # 並列実行
+```
+
+### 整形チェック（修正なし）
+
+```bash
+# 軽量チェック（staged のみ、WSL2安全）
+make check-light
+
+# 個別チェック（WSL2安全）
+make check-safe-python      # Python のみ
+make check-safe-frontend    # Frontend のみ
+make check-safe-typecheck   # 型チェック
+
+# 全体チェック（WSL2安全、直列実行）
+make fmt-step-check
+
+# 【CI専用】全体チェック（ローカルで実行しない）
+# make check-ci          # GitHub Actions で実行
+```
+
+### 型チェック（mypy）
+
+```bash
+# core層のみチェック（推奨）
+make typecheck
+
+# 個別実行
+make typecheck-core  # ドメイン/ユースケース層
+make typecheck-api   # API層
+
+# 全体チェック（将来用、現時点では非推奨）
+make typecheck-all
+```
+
+📖 詳細: [docs/dev/TYPECHECK.md](./docs/dev/TYPECHECK.md)
+
+### 安全なチェックスクリプト
+
+```bash
+# scripts/safe_check.sh を直接使用
+bash scripts/safe_check.sh staged       # staged のみ
+bash scripts/safe_check.sh python       # Python のみ
+bash scripts/safe_check.sh frontend     # Frontend のみ
+bash scripts/safe_check.sh typecheck    # 型チェック
+bash scripts/safe_check.sh help         # ヘルプ表示
+```
+
+## 🎨 コード品質・整形（続き）
+
 ### 初回環境構築（DB 権限システムのセットアップ）
 
 **⚠️ 新規環境または権限エラーが頻発する場合のみ実行**

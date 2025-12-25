@@ -40,6 +40,8 @@ jobs:
 
       - name: Run pre-commit on all files
         run: |
+          # CI では --all-files を実行（ローカルでは禁止）
+          # WSL2 環境ではなく Ubuntu なので安全
           pre-commit run --all-files --show-diff-on-failure
 
       - name: Upload pre-commit results
@@ -48,6 +50,10 @@ jobs:
         with:
           name: pre-commit-failure-log
           path: |
+            .pre-commit.log
+            **/*.diff
+          retention-days: 7
+
             .pre-commit.log
             **/*.diff
           retention-days: 7

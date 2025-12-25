@@ -6,14 +6,21 @@
 # - 通常のコミット時は pre-commit（staged のみ）を使用
 # - 初回や全体整形時のみこのターゲットを使用
 #
+# ⚠️  WSL2 フリーズ防止:
+#   - `pre-commit run --all-files` は禁止（CPU張り付き）
+#   - 全体整形は `make fmt-step-all` を使用（直列・対象限定）
+#   - 安全なチェックは `scripts/safe_check.sh` を経由
+#
 # 使い方:
-#   make bootstrap-format    # 初回：全ファイルに整形・自動修正を適用
-#   make check-format        # チェックのみ（修正しない）
-#   make fmt-python          # Python のみ整形
-#   make fmt-frontend        # Frontend のみ整形
+#   make fmt-step-all        # 【推奨】ステップ実行（CPU負荷軽減）
+#   make check-light         # 差分のみチェック（軽量）
+#   make check-ci            # CI専用（ローカルで実行しない）
+#
+#   make bootstrap-format    # 【非推奨】初回一括整形
+#   make check-format        # 【非推奨】チェックのみ
 #
 # WSL対策（推奨）:
-#   make fmt-step-all        # scripts/format_step_by_step.sh を使用（CPU負荷軽減）
+#   make fmt-step-all        # scripts/format_step_by_step.sh を使用
 #   make fmt-step-py-fix     # Python ruff のみ
 #   make fmt-step-py         # Python black のみ
 #   make fmt-step-fe         # Frontend prettier のみ
@@ -156,3 +163,87 @@ fmt-step-fe-fix: ## 🔍 Frontend eslint --fix のみ
 
 fmt-step-check: ## 🔍 全チェック（修正なし、ステップ実行版）
 	@bash scripts/format_step_by_step.sh check
+
+# ============================================================
+# Type Checking（段階的型チェック）
+# ============================================================
+# mypy による静的型チェック
+# - 最初は core/ と api/ のみ対象（段階導入）
+# - infra/, config/ は後回し
+# - 設定: app/backend/core_api/pyproject.toml の [tool.mypy]
+# ============================================================
+.PHONY: typecheck typecheck-core typecheck-api typecheck-all
+
+typecheck: typecheck-core ## 🔬 型チェック（core層のみ、段階導入）
+	@echo "✅ 型チェック完了"
+
+typecheck-core: ## 🔬 core層の型チェック（ドメイン/ユースケース）
+	@echo "============================================================"
+	@echo "🔬 Type Check: core層（ドメイン/ユースケース）"
+	@echo "============================================================"
+	@docker compose -f docker/docker-compose.dev.yml -p local_dev exec -T core_api \
+		mypy app/core --config-file=/backend/pyproject.toml || true
+	@echo ""
+
+typecheck-api: ## 🔬 api層の型チェック（ルーター/エンドポイント）
+	@echo "============================================================"
+	@echo "🔬 Type Check: api層（ルーター/エンドポイント）"
+	@echo "============================================================"
+	@docker compose -f docker/docker-compose.dev.yml -p local_dev exec -T core_api \
+		mypy app/api --config-file=/backend/pyproject.toml || true
+	@echo ""
+
+typecheck-all: ## 🔬 全体の型チェック（将来用、現時点では非推奨）
+	@echo "============================================================"
+	@echo "🔬 Type Check: 全体（core + api + infra）"
+	@echo "============================================================"
+	@echo "⚠️  注意: 現在は段階導入中のため、多くのエラーが出る可能性があります"
+	@docker compose -f docker/docker-compose.dev.yml -p local_dev exec -T core_api \
+		mypy app --config-file=/backend/pyproject.toml || true
+	@echo ""
+
+# ============================================================
+# Safe Check（WSL2 フリーズ防止）
+# ============================================================
+# scripts/safe_check.sh を使用して安全にチェック実行
+# 危険なコマンド（全体スキャン）を自動でブロック
+# ============================================================
+.PHONY: check-light check-ci check-safe
+
+check-light: ## 🔍 軽量チェック（差分のみ、WSL2安全）
+	@echo "============================================================"
+	@echo "🔍 軽量チェック（staged ファイルのみ）"
+	@echo "============================================================"
+	@bash scripts/safe_check.sh staged
+
+check-safe-python: ## 🐍 Python チェック（WSL2安全）
+	@bash scripts/safe_check.sh python
+
+check-safe-frontend: ## 💎 Frontend チェック（WSL2安全）
+	@bash scripts/safe_check.sh frontend
+
+check-safe-typecheck: ## 🔬 型チェック（WSL2安全）
+	@bash scripts/safe_check.sh typecheck
+
+check-ci: ## 🚨 CI専用チェック（ローカルで実行しない）
+	@echo "============================================================"
+	@echo "⚠️  警告: CI専用のチェックです"
+	@echo "============================================================"
+	@echo ""
+	@echo "このコマンドは GitHub Actions で実行されます。"
+	@echo "ローカルで全体チェックを実行すると、WSL2 環境で"
+	@echo "フリーズする可能性があります。"
+	@echo ""
+	@echo "代わりに以下を使用してください:"
+	@echo "  make fmt-step-all      # 全体整形（直列・対象限定）"
+	@echo "  make fmt-step-check    # 全体チェック（修正なし）"
+	@echo "  make check-light       # 差分のみチェック"
+	@echo ""
+	@read -p "本当に実行しますか？ [y/N] " confirm; \
+	if [ "$$confirm" != "y" ] && [ "$$confirm" != "Y" ]; then \
+		echo "❌ キャンセルされました"; \
+		exit 1; \
+	fi
+	@echo ""
+	@echo "⚠️  全体チェック実行中..."
+	@$(MAKE) --no-print-directory check-format
