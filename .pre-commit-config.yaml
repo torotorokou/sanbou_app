@@ -233,7 +233,7 @@ repos:
     hooks:
       - id: shellcheck
         name: シェルスクリプトチェック (shellcheck)
-        args: [--severity=warning]
+        args: [--severity=error]
 
   # ============================================================
   # カスタムチェック（repo: local）

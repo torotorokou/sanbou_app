@@ -68,7 +68,7 @@ def search_documents_with_category(
     logger.debug("Vector search completed", extra={"raw_hits": len(results)})
     filtered = []
     norm_category = _normalize_token(category)
-    norm_query_tags = set(_normalize_token(t) for t in (tags or []))
+    norm_query_tags = {_normalize_token(t) for t in (tags or [])}
     DEBUG_VERBOSE = os.environ.get("RAG_DEBUG_VERBOSE") == "1"
 
     # JSON データからタグを引くための簡易インデックス（title と chunk_id をキーに）
@@ -134,7 +134,7 @@ def search_documents_with_category(
                     "json_tags": json_tags,
                 },
             )
-        doc_tags_norm = set(_normalize_token(t) for t in combined_list)
+        doc_tags_norm = {_normalize_token(t) for t in combined_list}
 
         if DEBUG_VERBOSE:
             logger.debug(
