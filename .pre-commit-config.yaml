@@ -118,19 +118,19 @@ repos:
           - "--exclude-files"
           - "^docs/.*$"
           - "--exclude-files"
-          - "^.*migrations.*alembic/versions/.*\.py$"
+          - '^.*migrations.*alembic/versions/.*\.py$'
           - "--exclude-files"
           - "^scripts/test/.*$"
           - "--exclude-files"
-          - "^scripts/git/lib/security_patterns\.sh$"
+          - '^scripts/git/lib/security_patterns\.sh$'
           - "--exclude-files"
-          - "^.*\.ipynb$"
+          - '^.*\.ipynb$'
           - "--exclude-files"
-          - "^app/backend/.*\.env\.example$"
+          - '^app/backend/.*\.env\.example$'
           - "--exclude-files"
-          - "^app/backend/.*/README\.md$"
+          - '^app/backend/.*/README\.md$'
           - "--exclude-files"
-          - "^ops/db/legacy/.*\.sql$"
+          - '^ops/db/legacy/.*\.sql$'
         exclude: |
           (?x)^(
               package-lock\.json|

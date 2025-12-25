@@ -5,7 +5,6 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SQL_FILE="${SCRIPT_DIR}/grant_schema_permissions.sql"
 
 echo "🔐 Granting database schema permissions..."
 
