@@ -226,11 +226,53 @@ ENABLE_LINE_NOTIFICATION=false   # Noop実装
 ## コミット履歴
 
 ```
+b5967c2c feat(notification): Update DB adapter for failure_type support
+9134e5be feat(db): Add failure_type column to notification_outbox
+e7e4adb4 docs: LINE通知基盤の仕込み完了報告
 c7224bb0 feat: Step6 - テストケース追加(preference/resolver/failure分類)
 0f66830a feat: Step4&5 - UseCase+DI統合(preference→resolver→dispatch)
 18dd1c57 feat: Step3 - InMemory adapter実装(Preference/Resolver/Outbox拡張)
 f29e4f26 feat: Step2 - ports拡張(PreferencePort/ResolverPort/mark_skipped)
 0ca01e1b feat: Step1 - domain層追加(FailureType/RecipientRef/Preference)
+```
+
+## DBマイグレーション
+
+### 適用済みマイグレーション
+
+```bash
+$ make al-cur-env ENV=local_dev
+20251225_001 (head)
+```
+
+### マイグレーション内容
+
+**20251225_001_add_notification_outbox_failure_type.py**
+- `app.notification_outbox` テーブルに `failure_type VARCHAR(20)` カラムを追加
+- デフォルト値: NULL（pending/sent/skipped 時）
+- 既存の failed レコードには 'TEMPORARY' を自動設定（互換性維持）
+
+### テーブル構造
+
+```sql
+                              Table "app.notification_outbox"
+    Column     |           Type           | Nullable |         Default         
+---------------+--------------------------+----------+-------------------------
+ id            | uuid                     | not null | 
+ channel       | character varying(50)    | not null | 
+ status        | character varying(50)    | not null | 
+ recipient_key | character varying(255)   | not null | 
+ title         | character varying(500)   | not null | 
+ body          | text                     | not null | 
+ url           | character varying(1000)  |          | NULL
+ meta          | jsonb                    |          | 
+ scheduled_at  | timestamp with time zone |          | 
+ created_at    | timestamp with time zone | not null | 
+ sent_at       | timestamp with time zone |          | 
+ retry_count   | integer                  | not null | 0
+ next_retry_at | timestamp with time zone |          | 
+ last_error    | text                     |          | 
+ failure_type  | character varying(20)    |          | NULL  ← NEW!
 ```
 
 ## まとめ
