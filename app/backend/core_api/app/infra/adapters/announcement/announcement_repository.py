@@ -81,7 +81,7 @@ class AnnouncementRepositoryImpl(AnnouncementRepositoryPort):
         try:
             # Base query: active (not deleted) and published
             conditions = [
-                AnnouncementORM.deleted_at is None,
+                AnnouncementORM.deleted_at.is_(None),
                 AnnouncementORM.publish_from <= now,
             ]
 
@@ -175,7 +175,7 @@ class AnnouncementRepositoryImpl(AnnouncementRepositoryPort):
                 .where(
                     and_(
                         AnnouncementORM.id == announcement_id,
-                        AnnouncementORM.deleted_at is None,
+                        AnnouncementORM.deleted_at.is_(None),
                     )
                 )
             )
@@ -306,7 +306,7 @@ class AnnouncementRepositoryImpl(AnnouncementRepositoryPort):
                 .where(
                     and_(
                         AnnouncementUserStateORM.user_id == user_id,
-                        AnnouncementUserStateORM.read_at is not None,
+                        AnnouncementUserStateORM.read_at.is_not(None),
                     )
                 )
                 .subquery()

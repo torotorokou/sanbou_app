@@ -38,7 +38,7 @@ class ReservationRepositoryImpl(ReservationRepository):
         try:
             stmt = select(ReserveDailyManual).where(
                 ReserveDailyManual.reserve_date == reserve_date,
-                ReserveDailyManual.deleted_at is None,  # 論理削除を除外
+                ReserveDailyManual.deleted_at.is_(None),  # 論理削除を除外
             )
             result = self.db.execute(stmt).scalar_one_or_none()
 
@@ -58,7 +58,7 @@ class ReservationRepositoryImpl(ReservationRepository):
             existing = self.db.execute(
                 select(ReserveDailyManual).where(
                     ReserveDailyManual.reserve_date == data.reserve_date,
-                    ReserveDailyManual.deleted_at is None,
+                    ReserveDailyManual.deleted_at.is_(None),
                 )
             ).scalar_one_or_none()
 
@@ -66,7 +66,7 @@ class ReservationRepositoryImpl(ReservationRepository):
             deleted_existing = self.db.execute(
                 select(ReserveDailyManual).where(
                     ReserveDailyManual.reserve_date == data.reserve_date,
-                    ReserveDailyManual.deleted_at is not None,
+                    ReserveDailyManual.deleted_at.is_not(None),
                 )
             ).scalar_one_or_none()
 
@@ -76,7 +76,7 @@ class ReservationRepositoryImpl(ReservationRepository):
                     update(ReserveDailyManual)
                     .where(
                         ReserveDailyManual.reserve_date == data.reserve_date,
-                        ReserveDailyManual.deleted_at is None,
+                        ReserveDailyManual.deleted_at.is_(None),
                     )
                     .values(
                         total_trucks=data.total_trucks,
@@ -135,7 +135,7 @@ class ReservationRepositoryImpl(ReservationRepository):
                 update(ReserveDailyManual)
                 .where(
                     ReserveDailyManual.reserve_date == reserve_date,
-                    ReserveDailyManual.deleted_at is None,  # 既に削除済みは除外
+                    ReserveDailyManual.deleted_at.is_(None),  # 既に削除済みは除外
                 )
                 .values(
                     deleted_at=datetime.now(UTC),
