@@ -5,13 +5,14 @@ Sales Tree Export Router - CSV export endpoint
 エンドポイント:
   - POST /analytics/sales-tree/export: CSV出力
 """
+
 from fastapi import APIRouter, Depends
 from fastapi.responses import Response
 
-from backend_shared.application.logging import get_module_logger
 from app.config.di_providers import get_export_sales_tree_csv_uc
-from app.core.usecases.sales_tree.export_csv_uc import ExportSalesTreeCSVUseCase
 from app.core.domain.sales_tree import ExportRequest
+from app.core.usecases.sales_tree.export_csv_uc import ExportSalesTreeCSVUseCase
+from backend_shared.application.logging import get_module_logger
 from backend_shared.core.domain.exceptions import InfrastructureError
 
 logger = get_module_logger(__name__)
@@ -25,9 +26,9 @@ def export_csv(
 ):
     """
     売上ツリーデータをCSV出力
-    
+
     指定条件でサマリーデータをCSV形式で出力
-    
+
     **パラメータ:**
     - date_from: 集計開始日
     - date_to: 集計終了日
@@ -36,7 +37,7 @@ def export_csv(
     - filter_ids: 軸IDフィルタ（空=全データ）
     - sort_by: ソート項目（amount, qty, slip_count, unit_price, date, name）
     - order: ソート順（asc, desc）
-    
+
     **使用例:**
     ```json
     {
@@ -51,25 +52,24 @@ def export_csv(
     ```
     """
     try:
-        logger.info(f"POST /analytics/sales-tree/export: mode={req.mode}, date_from={req.date_from}, date_to={req.date_to}")
-        
+        logger.info(
+            f"POST /analytics/sales-tree/export: mode={req.mode}, date_from={req.date_from}, date_to={req.date_to}"
+        )
+
         csv_bytes = uc.execute(req)
-        
+
         # ファイル名生成
         filename = f"sales_tree_{req.mode}_{req.date_from}_{req.date_to}.csv"
-        
+
         logger.info(f"Successfully generated CSV: {filename}")
         return Response(
             content=csv_bytes,
             media_type="text/csv; charset=utf-8",
-            headers={
-                "Content-Disposition": f'attachment; filename="{filename}"'
-            }
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
         )
-        
+
     except Exception as e:
         logger.error(f"Error in export_csv: {str(e)}", exc_info=True)
         raise InfrastructureError(
-            message=f"Internal server error while exporting CSV: {str(e)}",
-            cause=e
+            message=f"Internal server error while exporting CSV: {str(e)}", cause=e
         )

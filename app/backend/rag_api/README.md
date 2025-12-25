@@ -1,6 +1,7 @@
 # RAG API（rag_api）
 
 ## 概要
+
 RAG APIは、産業廃棄物処理に関する構造化データ・AI・ベクトル検索を組み合わせて、ユーザーの質問に高精度な回答を返すAPIサービスです。
 
 - FastAPI + LangChain + OpenAI + GCS連携
@@ -24,6 +25,7 @@ rag_api/
 ```
 
 -- GCSサービスアカウントキー: `secrets/gcs-key.json`
+
 - OpenAI APIキー: `.env` または `envs/.env.rag_api` に `OPENAI_API_KEY=...`
 
 ---
@@ -31,7 +33,7 @@ rag_api/
 ## 2. 環境変数例（envs/.env.rag_api）
 
 ```
-OPENAI_API_KEY=sk-...
+OPENAI_API_KEY=your-openai-api-key
 GOOGLE_APPLICATION_CREDENTIALS=/root/.config/gcloud/application_default_credentials.json
 ```
 
@@ -64,6 +66,7 @@ docker run --env-file ../envs/.env.rag_api -v $(pwd)/secrets/gcs-key.json:/root/
 - 主要エンドポイント: `/api/generate-answer`（POST）
 
 ### リクエスト例
+
 ```json
 {
   "query": "比重差選別機ALCHEMIの選別精度は？",
@@ -73,6 +76,7 @@ docker run --env-file ../envs/.env.rag_api -v $(pwd)/secrets/gcs-key.json:/root/
 ```
 
 ### レスポンス例
+
 ```json
 {
   "answer": "...AIによる回答...",

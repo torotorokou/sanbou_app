@@ -1,4 +1,4 @@
-import { isMobile, isTabletOrHalf, isDesktop, ANT } from '@/shared';
+import { isMobile, isTabletOrHalf, isDesktop, ANT } from "@/shared";
 /**
  * レスポンシブデザインの動作確認用ユーティリティ
  *
@@ -9,21 +9,21 @@ import { isMobile, isTabletOrHalf, isDesktop, ANT } from '@/shared';
  */
 
 export const RESPONSIVE_TEST_SIZES = {
-    // スマートフォン
-    iPhone12Pro: { width: 390, height: 844 },
-    iPhoneSE: { width: 375, height: 667 },
-    AndroidSmall: { width: 360, height: 640 },
+  // スマートフォン
+  iPhone12Pro: { width: 390, height: 844 },
+  iPhoneSE: { width: 375, height: 667 },
+  AndroidSmall: { width: 360, height: 640 },
 
-    // タブレット
-    iPad: { width: ANT.md, height: 1024 },
-    iPadPro: { width: 1024, height: 1366 },
-    AndroidTablet: { width: 800, height: 1280 },
+  // タブレット
+  iPad: { width: ANT.md, height: 1024 },
+  iPadPro: { width: 1024, height: 1366 },
+  AndroidTablet: { width: 800, height: 1280 },
 
-    // デスクトップ
-    SmallLaptop: { width: 1024, height: ANT.md },
-    MediumDesktop: { width: 1366, height: ANT.md },
-    FullHD: { width: 1920, height: 1080 },
-    LargeScreen: { width: 2560, height: 1440 },
+  // デスクトップ
+  SmallLaptop: { width: 1024, height: ANT.md },
+  MediumDesktop: { width: 1366, height: ANT.md },
+  FullHD: { width: 1920, height: 1080 },
+  LargeScreen: { width: 2560, height: 1440 },
 };
 
 /**
@@ -56,29 +56,27 @@ export const RESPONSIVE_TEST_SIZES = {
 
 // ブラウザのコンソールで使用するヘルパー関数
 declare global {
-    interface Window {
-        testResponsive: (
-            deviceName: keyof typeof RESPONSIVE_TEST_SIZES
-        ) => void;
-        showCurrentBreakpoint: () => void;
-    }
+  interface Window {
+    testResponsive: (deviceName: keyof typeof RESPONSIVE_TEST_SIZES) => void;
+    showCurrentBreakpoint: () => void;
+  }
 }
 
-if (typeof window !== 'undefined') {
-    window.testResponsive = (deviceName) => {
-        const size = RESPONSIVE_TEST_SIZES[deviceName];
-        console.log(`📱 Testing ${deviceName}: ${size.width}x${size.height}`);
-        console.log(
-            '⚠️  Please use browser dev tools to set viewport size manually'
-        );
-    };
+if (typeof window !== "undefined") {
+  window.testResponsive = (deviceName) => {
+    const size = RESPONSIVE_TEST_SIZES[deviceName];
+    console.log(`📱 Testing ${deviceName}: ${size.width}x${size.height}`);
+    console.log(
+      "⚠️  Please use browser dev tools to set viewport size manually",
+    );
+  };
 
-    window.showCurrentBreakpoint = () => {
-        const width = window.innerWidth;
-        let breakpoint = '';
-        if (isMobile(width)) breakpoint = '📱 Mobile';
-        else if (isTabletOrHalf(width)) breakpoint = '📱 Tablet';
-        else if (isDesktop(width)) breakpoint = '🖥️ Desktop';
-        console.log(`Current viewport: ${width}px - ${breakpoint}`);
-    };
+  window.showCurrentBreakpoint = () => {
+    const width = window.innerWidth;
+    let breakpoint = "";
+    if (isMobile(width)) breakpoint = "📱 Mobile";
+    else if (isTabletOrHalf(width)) breakpoint = "📱 Tablet";
+    else if (isDesktop(width)) breakpoint = "🖥️ Desktop";
+    console.log(`Current viewport: ${width}px - ${breakpoint}`);
+  };
 }

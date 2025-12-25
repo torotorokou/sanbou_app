@@ -1,6 +1,9 @@
 # ============================
 # 基本ルール / OS / エディタ
 # ============================
+# Git 内部ディレクトリ（Explorer非表示推奨、必要なら一時的に表示）
+.git/
+
 .DS_Store
 Thumbs.db
 .vscode/
@@ -15,6 +18,18 @@ Thumbs.db
 
 # JetBrains 等派生
 .fleet/
+
+# ============================
+# Pre-commit / Git Hooks
+# ============================
+# Pre-commit キャッシュとログ
+.pre-commit.log
+
+# Secrets baseline（追跡する）
+!.secrets.baseline
+
+# Step-by-step formatting logs
+.tmp/
 
 # ============================
 # Node.js / Frontend Build
@@ -98,6 +113,10 @@ ENV/
 .env.*
 !.env.example
 
+# ops/maintenance/ の .env ファイル（メンテナンスページ設定）
+/ops/maintenance/.env
+!/ops/maintenance/.env.example
+
 # 証明書と秘密鍵（全階層）
 *.pem
 *.key
@@ -122,7 +141,7 @@ docker-compose.local.yml
 
 # Docker volumes
 docker-volumes/
- 
+
 
 # ============================
 # データ / バックアップ
@@ -207,6 +226,10 @@ nginx/cache/
 # *.json
 # *.csv (まず除外、後で明示許可)
 
+# 設定ファイルは例外
+!.hadolint.yaml
+!.pre-commit-config.yaml
+
 # 大きなディレクトリを先に除外
 data/
 **/data/
@@ -242,6 +265,9 @@ test/**/*.csv
 !**/config/**/*.yaml
 !**/config/**/*.yml
 !**/config/**/*.csv
+
+# --- 除外: config 内の __pycache__ ---
+**/config/__pycache__/
 
 # --- 明示許可: master ディレクトリ（マスターデータ） ---
 !**/master/**

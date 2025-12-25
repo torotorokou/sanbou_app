@@ -1,19 +1,21 @@
-import os
 from pathlib import Path
+
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
+
+from app.api.routers.manuals import router as manuals_router
+from app.config.settings import settings
 
 # ==========================================
 # 統一ロギング設定のインポート（backend_shared）
 # ==========================================
 from backend_shared.application.logging import setup_logging
-from backend_shared.infra.frameworks.logging_utils import setup_uvicorn_access_filter
 from backend_shared.infra.adapters.middleware import RequestIdMiddleware
 from backend_shared.infra.frameworks.cors_config import setup_cors
-from backend_shared.infra.frameworks.exception_handlers import register_exception_handlers
+from backend_shared.infra.frameworks.exception_handlers import (
+    register_exception_handlers,
+)
 
-from app.config.settings import settings
-from app.api.routers.manuals import router as manuals_router
 
 # ==========================================
 # 統一ロギング設定の初期化
@@ -23,6 +25,8 @@ from app.api.routers.manuals import router as manuals_router
 setup_logging()
 
 from backend_shared.application.logging import get_module_logger
+
+
 logger = get_module_logger(__name__)
 
 app = FastAPI(
@@ -38,7 +42,7 @@ app = FastAPI(
 
 logger.info(
     f"Manual API initialized (DEBUG={settings.DEBUG}, docs_enabled={settings.DEBUG})",
-    extra={"operation": "app_init", "debug": settings.DEBUG}
+    extra={"operation": "app_init", "debug": settings.DEBUG},
 )
 
 # --- ミドルウェア: Request ID追跡 ----------------------------------------------
@@ -59,6 +63,7 @@ if data_dir.exists():
     app.mount("/manual/assets", StaticFiles(directory=data_dir), name="manual-assets")
 
 app.include_router(manuals_router, prefix="/manual")
+
 
 @app.get("/__health")
 @app.get("/health")

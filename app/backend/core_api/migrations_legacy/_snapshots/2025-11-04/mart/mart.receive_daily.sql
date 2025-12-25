@@ -114,4 +114,3 @@ ALTER VIEW mart.receive_daily OWNER TO myuser;
 --
 
 \unrestrict HtICLgrzOMgMqniD703vSJCSvwSiONMAu3i3mWr9Duk78Ok1rIWmaGsbVVtgWTC
-

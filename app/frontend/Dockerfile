@@ -74,10 +74,14 @@ FROM base AS runtime
 # =========================
 FROM node:20-slim AS dev
 WORKDIR /app
+
+# 依存インストールスクリプトの作成
 COPY package.json package-lock.json* ./
 RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates \
     && rm -rf /var/lib/apt/lists/*
+
 RUN npm ci || true
+
 # エントリポイント: ボリュームで node_modules が空になる場合に備え起動時に依存を整える
 RUN printf '%s\n' \
     '#!/usr/bin/env bash' \
@@ -94,7 +98,9 @@ RUN printf '%s\n' \
     'exec "$@"' \
     > /usr/local/bin/dev-entrypoint.sh \
     && chmod +x /usr/local/bin/dev-entrypoint.sh
+
 ENTRYPOINT ["/usr/local/bin/dev-entrypoint.sh"]
 EXPOSE 5173
+
 # Simplify dev CMD: rely on package.json passing host/port to vite to avoid shell argument parsing issues
 CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "5173"]

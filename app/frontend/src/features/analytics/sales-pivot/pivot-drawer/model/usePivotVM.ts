@@ -25,8 +25,15 @@ export interface UsePivotViewModelResult {
   pivotData: Record<Mode, MetricEntry[]>;
   pivotCursor: Record<Mode, string | null>;
   pivotLoading: boolean;
-  
-  openPivot: (rec: MetricEntry, mode: Mode, repIds: ID[], sortBy: SortKey, order: SortOrder, topN: 10 | 20 | 50 | 'all') => void;
+
+  openPivot: (
+    rec: MetricEntry,
+    mode: Mode,
+    repIds: ID[],
+    sortBy: SortKey,
+    order: SortOrder,
+    topN: 10 | 20 | 50 | 'all'
+  ) => void;
   closeDrawer: () => void;
   setDrawerActiveAxis: (axis: Mode) => void;
   setDrawerTopN: (topN: 10 | 20 | 50 | 'all') => void;
@@ -56,7 +63,14 @@ export function usePivotViewModel(params: UsePivotViewModelParams): UsePivotView
 
   // Open pivot
   const openPivot = useCallback(
-    (rec: MetricEntry, mode: Mode, repIds: ID[], sortBy: SortKey, order: SortOrder, topN: 10 | 20 | 50 | 'all') => {
+    (
+      rec: MetricEntry,
+      mode: Mode,
+      repIds: ID[],
+      sortBy: SortKey,
+      order: SortOrder,
+      topN: 10 | 20 | 50 | 'all'
+    ) => {
       const others = (['customer', 'item', 'date'] as Mode[]).filter((ax) => ax !== mode);
       const targets: { axis: Mode; label: string }[] = others.map((ax) => ({
         axis: ax,

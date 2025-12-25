@@ -1,16 +1,16 @@
 /**
  * header/model/useHeaderVM.ts
  * ヘッダー機能のViewModel(CSV出力管理)
- * 
+ *
  * 【概要】
  * ヘッダー部分のビジネスロジックを管理するViewModel
  * MVVM パターンの ViewModel 層として、View(SalesPivotHeader)とModel(Repository)を橋渡し
- * 
+ *
  * 【責務】
  * 1. CSV出力オプションの状態管理
  * 2. localStorage への永続化
  * 3. CSV出力処理の実行
- * 
+ *
  * 【使用例】
  * ```typescript
  * const { exportOptions, setExportOptions, handleExport, canExport } = useHeaderViewModel({
@@ -19,7 +19,7 @@
  *   repIds: ['rep_a', 'rep_b'],
  *   periodLabel: '202511'
  * });
- * 
+ *
  * // CSV出力
  * const blob = await handleExport();
  * // ... ファイルダウンロード処理
@@ -33,7 +33,7 @@ import type { SalesPivotRepository } from '../../shared/infrastructure/salesPivo
 
 /**
  * ヘッダーViewModel入力パラメータ
- * 
+ *
  * @property repository - データアクセス用Repository
  * @property query - サマリクエリ（CSV出力条件のベース）
  * @property repIds - 対象営業ID配列
@@ -48,7 +48,7 @@ export interface UseHeaderViewModelParams {
 
 /**
  * ヘッダーViewModel出力
- * 
+ *
  * @property exportOptions - 現在のCSV出力オプション
  * @property setExportOptions - 出力オプション更新関数
  * @property handleExport - CSV出力実行関数
@@ -63,10 +63,10 @@ export interface UseHeaderViewModelResult {
 
 /**
  * ヘッダーViewModel Hook
- * 
+ *
  * @param params - ViewModel入力パラメータ
  * @returns ViewModel出力（状態と操作関数）
- * 
+ *
  * @description
  * - Export options の状態管理とlocalStorage永続化
  * - CSV出力処理の実行
@@ -77,10 +77,10 @@ export function useHeaderViewModel(params: UseHeaderViewModelParams): UseHeaderV
   // ========================================
   // Export options（localStorage永続化）
   // ========================================
-  
+
   /**
    * CSV出力オプション状態
-   * 
+   *
    * 初期化時にlocalStorageから復元を試みる
    * 復元失敗時（初回起動 or JSONパースエラー）はデフォルト値を使用
    */
@@ -96,7 +96,7 @@ export function useHeaderViewModel(params: UseHeaderViewModelParams): UseHeaderV
 
   /**
    * Export options が変更されたら localStorage に永続化
-   * 
+   *
    * ユーザーの設定を次回起動時にも引き継ぐ
    */
   useEffect(() => {
@@ -106,12 +106,12 @@ export function useHeaderViewModel(params: UseHeaderViewModelParams): UseHeaderV
   // ========================================
   // CSV出力処理
   // ========================================
-  
+
   /**
    * CSV出力実行
-   * 
+   *
    * @returns CSV形式のBlob（ファイルダウンロード用）
-   * 
+   *
    * @description
    * Repository に ExportQuery を渡してCSVデータを取得
    * 実際のファイルダウンロードはView側（SalesPivotHeader）で実行
@@ -127,7 +127,7 @@ export function useHeaderViewModel(params: UseHeaderViewModelParams): UseHeaderV
 
   /**
    * 出力可能かどうか
-   * 
+   *
    * 営業が1人以上選択されている場合のみ true
    * View側でボタンの disabled 制御に使用
    */

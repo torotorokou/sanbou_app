@@ -2,7 +2,7 @@
  * Shogun Manual Types
  * 将軍マニュアル機能の型定義
  */
-import type { ReactNode } from "react";
+import type { ReactNode } from 'react';
 
 // ============================================================================
 // Catalog / List Types (カタログ・一覧表示用)

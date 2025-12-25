@@ -1,11 +1,14 @@
 """Simple worker entry point"""
+
 from __future__ import annotations
+
 import sys
 
 # ==========================================
 # 統一ロギング設定のインポート（backend_shared）
 # ==========================================
-from backend_shared.application.logging import setup_logging, get_module_logger
+from backend_shared.application.logging import get_module_logger, setup_logging
+
 
 # ==========================================
 # 統一ロギング設定の初期化
@@ -15,16 +18,19 @@ from backend_shared.application.logging import setup_logging, get_module_logger
 setup_logging()
 logger = get_module_logger(__name__)
 
+
 def main():
     """Worker main entry point"""
     logger.info("Plan worker started")
     logger.info("Worker is in standby mode - waiting for implementation")
-    
+
     # Keep container running
     import time
+
     while True:
         time.sleep(60)
         logger.debug("Worker heartbeat")
+
 
 if __name__ == "__main__":
     try:

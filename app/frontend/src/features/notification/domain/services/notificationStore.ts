@@ -1,5 +1,8 @@
-import { create } from 'zustand';
-import type { Notification, CreateNotificationData } from '../types/notification.types';
+import { create } from "zustand";
+import type {
+  Notification,
+  CreateNotificationData,
+} from "../types/notification.types";
 
 const DEFAULT_DURATION_MS = 3000;
 const MAX_COUNT = 5;
@@ -9,10 +12,12 @@ const timeouts = new Map<string, ReturnType<typeof setTimeout>>();
 const lastKeyAt = new Map<string, number>();
 
 const newId = () =>
-  (globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`);
+  globalThis.crypto?.randomUUID?.() ??
+  `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 
-const dedupKey = (d: Pick<CreateNotificationData, 'type' | 'title' | 'message'>) =>
-  `${d.type}|${d.title}|${d.message}`;
+const dedupKey = (
+  d: Pick<CreateNotificationData, "type" | "title" | "message">,
+) => `${d.type}|${d.title}|${d.message}`;
 
 interface NotificationState {
   notifications: Notification[];
@@ -20,10 +25,18 @@ interface NotificationState {
   removeNotification: (id: string) => void;
   clearAllNotifications: () => void;
 
-  success: (title: string, message?: string, duration?: number | null) => string;
-  error:   (title: string, message?: string, duration?: number | null) => string;
-  info:    (title: string, message?: string, duration?: number | null) => string;
-  warning: (title: string, message?: string, duration?: number | null) => string;
+  success: (
+    title: string,
+    message?: string,
+    duration?: number | null,
+  ) => string;
+  error: (title: string, message?: string, duration?: number | null) => string;
+  info: (title: string, message?: string, duration?: number | null) => string;
+  warning: (
+    title: string,
+    message?: string,
+    duration?: number | null,
+  ) => string;
 }
 
 export const useNotificationStore = create<NotificationState>()((set, get) => ({
@@ -34,7 +47,7 @@ export const useNotificationStore = create<NotificationState>()((set, get) => ({
     const key = dedupKey(data);
     const last = lastKeyAt.get(key);
     if (last && now - last < DEDUP_WINDOW_MS) {
-      return '';
+      return "";
     }
     lastKeyAt.set(key, now);
 
@@ -83,13 +96,33 @@ export const useNotificationStore = create<NotificationState>()((set, get) => ({
   },
 
   success: (title, message, duration) =>
-    get().addNotification({ type: 'success', title, message: message ?? '', duration }),
+    get().addNotification({
+      type: "success",
+      title,
+      message: message ?? "",
+      duration,
+    }),
   error: (title, message, duration) =>
-    get().addNotification({ type: 'error', title, message: message ?? '', duration }),
+    get().addNotification({
+      type: "error",
+      title,
+      message: message ?? "",
+      duration,
+    }),
   info: (title, message, duration) =>
-    get().addNotification({ type: 'info', title, message: message ?? '', duration }),
+    get().addNotification({
+      type: "info",
+      title,
+      message: message ?? "",
+      duration,
+    }),
   warning: (title, message, duration) =>
-    get().addNotification({ type: 'warning', title, message: message ?? '', duration }),
+    get().addNotification({
+      type: "warning",
+      title,
+      message: message ?? "",
+      duration,
+    }),
 }));
 
 export type { NotificationState };

@@ -18,9 +18,8 @@ Revises: 20251104_164629413
 Create Date: 2025-11-04 21:00:00.000000
 """
 
-from alembic import op, context
 import sqlalchemy as sa
-from sqlalchemy.dialects import postgresql as pg
+from alembic import context, op
 
 # revision identifiers, used by Alembic.
 revision = "20251104_210000000"
@@ -35,17 +34,14 @@ def _exists(qualified: str) -> bool:
         return False
     conn = op.get_bind()
     return bool(
-        conn.execute(
-            sa.text("SELECT to_regclass(:q) IS NOT NULL"),
-            {"q": qualified}
-        ).scalar()
+        conn.execute(sa.text("SELECT to_regclass(:q) IS NOT NULL"), {"q": qualified}).scalar()
     )
 
 
 def upgrade():
     """
     Create ref schema tables with existence guards.
-    
+
     Order respects foreign key dependencies:
       1. calendar_day (no FK)
       2. closure_periods (no FK)
@@ -56,7 +52,7 @@ def upgrade():
     """
     # Ensure ref schema exists
     op.execute("CREATE SCHEMA IF NOT EXISTS ref;")
-    
+
     # =========================================================================
     # 1. calendar_day
     # =========================================================================
@@ -97,7 +93,7 @@ def upgrade():
             sa.PrimaryKeyConstraint("ddate", name="calendar_day_pkey"),
             schema="ref",
         )
-        
+
         # Indexes
         op.create_index(
             "ix_calendar_day_date",
@@ -113,7 +109,7 @@ def upgrade():
             unique=False,
             schema="ref",
         )
-    
+
     # =========================================================================
     # 2. closure_periods
     # =========================================================================
@@ -123,14 +119,11 @@ def upgrade():
             sa.Column("start_date", sa.Date(), nullable=False),
             sa.Column("end_date", sa.Date(), nullable=False),
             sa.Column("closure_name", sa.Text(), nullable=False),
-            sa.CheckConstraint(
-                "start_date <= end_date",
-                name="closure_periods_check"
-            ),
+            sa.CheckConstraint("start_date <= end_date", name="closure_periods_check"),
             sa.PrimaryKeyConstraint("start_date", "end_date", name="closure_periods_pkey"),
             schema="ref",
         )
-    
+
     # =========================================================================
     # 3. holiday_jp
     # =========================================================================
@@ -140,14 +133,10 @@ def upgrade():
             sa.Column("hdate", sa.Date(), nullable=False),
             sa.Column("name", sa.Text(), nullable=False),
             sa.PrimaryKeyConstraint("hdate", name="holiday_jp_pkey"),
-            sa.ForeignKeyConstraint(
-                ["hdate"],
-                ["ref.calendar_day.ddate"],
-                name="fk_holiday_day"
-            ),
+            sa.ForeignKeyConstraint(["hdate"], ["ref.calendar_day.ddate"], name="fk_holiday_day"),
             schema="ref",
         )
-    
+
     # =========================================================================
     # 4. calendar_month
     # =========================================================================
@@ -158,7 +147,7 @@ def upgrade():
             sa.PrimaryKeyConstraint("month_date", name="calendar_month_pkey"),
             schema="ref",
         )
-    
+
     # =========================================================================
     # 5. calendar_exception
     # =========================================================================
@@ -177,17 +166,15 @@ def upgrade():
             ),
             sa.CheckConstraint(
                 "override_type = ANY (ARRAY['FORCE_CLOSED'::text, 'FORCE_OPEN'::text, 'FORCE_RESERVATION'::text])",
-                name="calendar_exception_override_type_check"
+                name="calendar_exception_override_type_check",
             ),
             sa.PrimaryKeyConstraint("ddate", name="calendar_exception_pkey"),
             sa.ForeignKeyConstraint(
-                ["ddate"],
-                ["ref.calendar_day.ddate"],
-                name="fk_cal_exception_day"
+                ["ddate"], ["ref.calendar_day.ddate"], name="fk_cal_exception_day"
             ),
             schema="ref",
         )
-    
+
     # =========================================================================
     # 6. closure_membership
     # =========================================================================
@@ -199,15 +186,11 @@ def upgrade():
             sa.Column("end_date", sa.Date(), nullable=False),
             sa.Column("closure_name", sa.Text(), nullable=False),
             sa.PrimaryKeyConstraint("ddate", name="closure_membership_pkey"),
-            sa.ForeignKeyConstraint(
-                ["ddate"],
-                ["ref.calendar_day.ddate"],
-                name="fk_cm_day"
-            ),
+            sa.ForeignKeyConstraint(["ddate"], ["ref.calendar_day.ddate"], name="fk_cm_day"),
             sa.ForeignKeyConstraint(
                 ["start_date", "end_date"],
                 ["ref.closure_periods.start_date", "ref.closure_periods.end_date"],
-                name="fk_cm_span"
+                name="fk_cm_span",
             ),
             schema="ref",
         )
@@ -223,7 +206,7 @@ def downgrade():
     op.drop_table("calendar_month", schema="ref")
     op.drop_table("holiday_jp", schema="ref")
     op.drop_table("closure_periods", schema="ref")
-    
+
     # calendar_day: drop indexes then table
     op.drop_index("ix_calendar_day_ym", table_name="calendar_day", schema="ref")
     op.drop_index("ix_calendar_day_date", table_name="calendar_day", schema="ref")

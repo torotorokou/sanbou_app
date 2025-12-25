@@ -14,7 +14,7 @@ All parameters to fq() and schema_qualified() must be constants defined here.
 
 Usage:
     from backend_shared.db.names import SCHEMA_MART, MV_RECEIVE_DAILY, fq
-    
+
     sql = f"REFRESH MATERIALIZED VIEW {fq(SCHEMA_MART, MV_RECEIVE_DAILY)};"
 
 Generated from DB reality check on 2025-12-11.

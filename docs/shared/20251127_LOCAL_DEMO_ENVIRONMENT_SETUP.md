@@ -70,14 +70,14 @@ make demo-down
 
 ## 🔧 主要な Makefile コマンド
 
-| コマンド | 説明 |
-|---------|------|
-| `make demo-up` | demo 環境を起動（ビルド含む） |
-| `make demo-down` | demo 環境を停止 |
-| `make demo-restart` | demo 環境を再起動 |
-| `make demo-ps` | コンテナの状態を確認 |
-| `make demo-logs` | ログをリアルタイム表示 |
-| `make demo-db-shell` | PostgreSQL に接続 |
+| コマンド                      | 説明                               |
+| ----------------------------- | ---------------------------------- |
+| `make demo-up`                | demo 環境を起動（ビルド含む）      |
+| `make demo-down`              | demo 環境を停止                    |
+| `make demo-restart`           | demo 環境を再起動                  |
+| `make demo-ps`                | コンテナの状態を確認               |
+| `make demo-logs`              | ログをリアルタイム表示             |
+| `make demo-db-shell`          | PostgreSQL に接続                  |
 | `make demo-db-clone-from-dev` | local_dev の DB を demo にクローン |
 
 ---
@@ -86,15 +86,15 @@ make demo-down
 
 ### local_dev vs local_demo
 
-| サービス | local_dev | local_demo | 差分 |
-|---------|-----------|------------|------|
-| Frontend | 5173 | 5174 | +1 |
-| AI API | 8001 | 8011 | +10 |
-| Ledger API | 8002 | 8012 | +10 |
-| Core API (BFF) | 8003 | 8013 | +10 |
-| RAG API | 8004 | 8014 | +10 |
-| Manual API | 8005 | 8015 | +10 |
-| PostgreSQL | 5432 | 5433 | +1 |
+| サービス       | local_dev | local_demo | 差分 |
+| -------------- | --------- | ---------- | ---- |
+| Frontend       | 5173      | 5174       | +1   |
+| AI API         | 8001      | 8011       | +10  |
+| Ledger API     | 8002      | 8012       | +10  |
+| Core API (BFF) | 8003      | 8013       | +10  |
+| RAG API        | 8004      | 8014       | +10  |
+| Manual API     | 8005      | 8015       | +10  |
+| PostgreSQL     | 5432      | 5433       | +1   |
 
 ---
 
@@ -134,6 +134,7 @@ make demo-db-clone-from-dev
 ```
 
 **処理内容**:
+
 1. `local_dev` の `sanbou_dev` DB をダンプ
 2. ダンプファイルを `backup/dev_to_demo.dump` に保存
 3. `local_demo` の既存 `sanbou_demo` DB を削除
@@ -211,16 +212,16 @@ secrets/
 
 ### 主要な環境変数（.env.local_demo）
 
-| 変数名 | 値 | 説明 |
-|--------|-----|------|
-| `APP_TAG` | `local_demo` | 環境識別子 |
-| `STAGE` | `demo` | ステージ名 |
-| `POSTGRES_DB` | `sanbou_demo` | データベース名 |
-| `DATABASE_URL` | `postgresql://<USER>:<PASSWORD>@db:5432/sanbou_demo` | DB接続URL (secrets で設定) |
-| `PUBLIC_BASE_URL` | `http://localhost:5174` | フロントエンドURL |
-| `DEV_FRONTEND_PORT` | `5174` | フロントエンドポート |
-| `DEV_CORE_API_PORT` | `8013` | Core API ポート |
-| `DEV_DB_PORT` | `5433` | PostgreSQL ポート |
+| 変数名              | 値                                                   | 説明                       |
+| ------------------- | ---------------------------------------------------- | -------------------------- |
+| `APP_TAG`           | `local_demo`                                         | 環境識別子                 |
+| `STAGE`             | `demo`                                               | ステージ名                 |
+| `POSTGRES_DB`       | `sanbou_demo`                                        | データベース名             |
+| `DATABASE_URL`      | `postgresql://<USER>:<PASSWORD>@db:5432/sanbou_demo` | DB接続URL (secrets で設定) |
+| `PUBLIC_BASE_URL`   | `http://localhost:5174`                              | フロントエンドURL          |
+| `DEV_FRONTEND_PORT` | `5174`                                               | フロントエンドポート       |
+| `DEV_CORE_API_PORT` | `8013`                                               | Core API ポート            |
+| `DEV_DB_PORT`       | `5433`                                               | PostgreSQL ポート          |
 
 ---
 
@@ -257,6 +258,7 @@ sanbou_app/
 **原因**: 他のプロセスが demo のポートを使用している
 
 **解決方法**:
+
 ```bash
 # ポート使用状況を確認（Linux）
 sudo lsof -i :5174  # フロントエンド
@@ -273,6 +275,7 @@ make demo-up
 **症状**: `psql: connection refused` または `could not connect to server`
 
 **確認事項**:
+
 ```bash
 # DB コンテナが起動しているか
 make demo-ps | grep db
@@ -289,6 +292,7 @@ docker compose -f docker/docker-compose.local_demo.yml -p local_demo exec db pg_
 **症状**: サービスが `Exit 1` または `Restarting` 状態
 
 **解決方法**:
+
 ```bash
 # 詳細ログを確認
 make demo-logs S=<サービス名>
@@ -306,6 +310,7 @@ make demo-up
 **原因**: マイグレーションが未実行、または DB クローンが必要
 
 **解決方法**:
+
 ```bash
 # 1. local_dev からデータをクローン
 make demo-db-clone-from-dev
@@ -322,6 +327,7 @@ docker compose -f docker/docker-compose.local_demo.yml -p local_demo exec core_a
 **症状**: フロントエンドは開くが API エラーが発生
 
 **確認事項**:
+
 ```bash
 # Core API が起動しているか
 curl http://localhost:8013/health
@@ -460,8 +466,8 @@ demo-snapshot:
 
 ## 📝 変更履歴
 
-| 日付 | 内容 |
-|------|------|
+| 日付       | 内容                      |
+| ---------- | ------------------------- |
 | 2025-11-27 | local_demo 環境の初回構築 |
 
 ---
@@ -473,6 +479,6 @@ demo-snapshot:
 ✅ **完全独立**: コンテナ、ポート、DB、設定がすべて分離  
 ✅ **同時起動可能**: dev と demo を同時に実行できる  
 ✅ **簡単操作**: Makefile で `make demo-up` するだけ  
-✅ **データクローン**: dev の DB を簡単にコピーできる  
+✅ **データクローン**: dev の DB を簡単にコピーできる
 
 デモや新機能の検証、クライアントプレゼンテーションなど、様々な場面で活用してください！

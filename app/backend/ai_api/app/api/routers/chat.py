@@ -1,16 +1,21 @@
 from fastapi import APIRouter
-from typing import List
-from backend_shared.application.logging import get_module_logger
+
 from app.api.schemas.chat import ChatRequest
 from app.infra.adapters.gemini_client import GeminiClient
+from backend_shared.application.logging import get_module_logger
+
 
 logger = get_module_logger(__name__)
 router = APIRouter()
 ai_client = GeminiClient()
 
+
 @router.post("/chat")
 def chat(req: ChatRequest):
-    logger.info("Chat request received", extra={"query": req.query, "tags": req.tags, "pdf": req.pdf})
+    logger.info(
+        "Chat request received",
+        extra={"query": req.query, "tags": req.tags, "pdf": req.pdf},
+    )
     prompt = f"""
 以下はPDFに関連する質問です。
 
@@ -58,7 +63,7 @@ def ping():
 
 # 最小動作確認用: backend_shared のインポートテスト
 @router.post("/validate")
-def validate(rows: List[dict]):
+def validate(rows: list[dict]):
     """
     backend_shared パッケージの動作確認用エンドポイント。
     簡易的なバリデーションを実行して ok を返します。
@@ -66,10 +71,11 @@ def validate(rows: List[dict]):
     # 簡易チェック: rows が空でないか
     if not rows:
         return {"ok": False, "errors": ["No rows provided"]}
-    
+
     # backend_shared からのインポートテスト
     try:
-        from backend_shared.domain import JobStatus
+        from backend_shared.domain import JobStatus  # noqa: F401
+
         # 正常にインポートできれば成功
         return {"ok": True, "errors": [], "imported": "backend_shared.domain.JobStatus"}
     except ImportError as e:

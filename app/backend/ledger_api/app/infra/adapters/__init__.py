@@ -11,6 +11,7 @@ Hexagonal Architecture における「アダプター」を提供します。
 from app.infra.adapters.csv import PandasCsvGateway
 from app.infra.adapters.repository import FileSystemReportRepository
 
+
 __all__ = [
     "PandasCsvGateway",
     "FileSystemReportRepository",

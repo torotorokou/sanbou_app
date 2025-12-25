@@ -5,12 +5,12 @@
 export { coreApi } from './coreApi';
 
 // axios ベース（互換性のため残す）
-export { 
-    apiGet, 
-    apiPost, 
-    apiGetBlob, 
-    apiPostBlob,
-    fetchWithTimeout,
-    ApiError,
-    client,
+export {
+  apiGet,
+  apiPost,
+  apiGetBlob,
+  apiPostBlob,
+  fetchWithTimeout,
+  ApiError,
+  client,
 } from './httpClient';

@@ -48,6 +48,21 @@ export const PivotTable: React.FC<PivotTableProps> = ({
   const amountLabel = categoryKind === 'waste' ? '売上' : '仕入';
 
   /**
+   * dataIndex（camelCase）からSortKey（snake_case）へのマッピング
+   */
+  const mapFieldToSortKey = (field: string): SortKey => {
+    const mapping: Record<string, SortKey> = {
+      unitPrice: 'unit_price',
+      amount: 'amount',
+      qty: 'qty',
+      count: 'count',
+      name: 'name',
+      date: 'date',
+    };
+    return mapping[field] ?? (field as SortKey);
+  };
+
+  /**
    * テーブルソート変更ハンドラ
    */
   const handleTableChange: TableProps<MetricEntry>['onChange'] = (
@@ -56,7 +71,8 @@ export const PivotTable: React.FC<PivotTableProps> = ({
     sorter
   ) => {
     if (!Array.isArray(sorter) && sorter.field && sorter.order) {
-      onSortByChange(sorter.field as SortKey);
+      const sortKey = mapFieldToSortKey(String(sorter.field));
+      onSortByChange(sortKey);
       onOrderChange(sorter.order === 'ascend' ? 'asc' : 'desc');
     }
   };
@@ -71,7 +87,7 @@ export const PivotTable: React.FC<PivotTableProps> = ({
         const maxQ = Math.max(1, ...rows.map((x) => x.qty));
         const maxC = Math.max(1, ...rows.map((x) => x.count));
         const maxU = Math.max(1, ...rows.map((x) => x.unitPrice ?? 0));
-        
+
         // 件数/台数ラベルの動的切り替え
         const countLabel = target.axis === 'item' ? '件数' : '台数';
         const countSuffix = target.axis === 'item' ? '件' : '台';
@@ -100,9 +116,7 @@ export const PivotTable: React.FC<PivotTableProps> = ({
                   justifyContent: 'flex-end',
                 }}
               >
-                <span style={{ minWidth: 72, textAlign: 'right' }}>
-                  {fmtCurrency(v)}
-                </span>
+                <span style={{ minWidth: 72, textAlign: 'right' }}>{fmtCurrency(v)}</span>
                 <div className="sales-tree-mini-bar-bg">
                   <div
                     className="sales-tree-mini-bar sales-tree-mini-bar-blue"
@@ -128,9 +142,7 @@ export const PivotTable: React.FC<PivotTableProps> = ({
                   justifyContent: 'flex-end',
                 }}
               >
-                <span style={{ minWidth: 60, textAlign: 'right' }}>
-                  {fmtNumber(v)}
-                </span>
+                <span style={{ minWidth: 60, textAlign: 'right' }}>{fmtNumber(v)}</span>
                 <div className="sales-tree-mini-bar-bg">
                   <div
                     className="sales-tree-mini-bar sales-tree-mini-bar-green"
@@ -191,13 +203,13 @@ export const PivotTable: React.FC<PivotTableProps> = ({
                   justifyContent: 'flex-end',
                 }}
               >
-                <span style={{ minWidth: 64, textAlign: 'right' }}>
-                  {fmtUnitPrice(v)}
-                </span>
+                <span style={{ minWidth: 64, textAlign: 'right' }}>{fmtUnitPrice(v)}</span>
                 <div className="sales-tree-mini-bar-bg">
                   <div
                     className="sales-tree-mini-bar sales-tree-mini-bar-gold"
-                    style={{ width: `${v ? Math.round((v / maxU) * 100) : 0}%` }}
+                    style={{
+                      width: `${v ? Math.round((v / maxU) * 100) : 0}%`,
+                    }}
                   />
                 </div>
               </div>
@@ -242,13 +254,12 @@ export const PivotTable: React.FC<PivotTableProps> = ({
                   emptyText: pivotLoading ? '読込中...' : <Empty description="該当なし" />,
                 }}
                 scroll={{ x: 1060 }}
-                rowClassName={(_, idx) => (idx % 2 === 0 ? 'sales-tree-zebra-even' : 'sales-tree-zebra-odd')}
+                rowClassName={(_, idx) =>
+                  idx % 2 === 0 ? 'sales-tree-zebra-even' : 'sales-tree-zebra-odd'
+                }
               />
               <Space style={{ marginTop: 8 }}>
-                <Button
-                  icon={<ReloadOutlined />}
-                  onClick={() => onLoadMore(target.axis, true)}
-                >
+                <Button icon={<ReloadOutlined />} onClick={() => onLoadMore(target.axis, true)}>
                   再読込
                 </Button>
                 {topN === 'all' && pivotCursor[target.axis] && (

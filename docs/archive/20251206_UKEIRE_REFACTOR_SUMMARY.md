@@ -7,6 +7,7 @@
 ## 📊 実施内容
 
 ### Phase 1: 構造再編成（コミット: 96c15ec, 17c93b1）
+
 - ✅ 21ファイルを機能別ディレクトリに移動（`git mv`で履歴保持）
 - ✅ 5つの機能ディレクトリを新設
   - `shared/` - 共通UI・スタイル
@@ -19,6 +20,7 @@
 - ✅ 全importパスを修正（相対/絶対パス正規化）
 
 ### Phase 2: クリーンアップ（コミット: 9283023, 4f4820c, 1658631）
+
 - ✅ 未使用ファイル削除（`mockCalendar.repository.ts`）
 - ✅ 空ディレクトリ削除（`application/`, `ui/`, `infrastructure/`, `presentation/`）
 - ✅ README.md更新（新構造・使用例・履歴反映）
@@ -29,6 +31,7 @@
 ## 📈 変更統計
 
 ### ファイル変更
+
 ```
 合計: 29 files changed
 - 21ファイル移動（git mv）
@@ -38,12 +41,14 @@
 ```
 
 ### コード差分
+
 ```
 +1,158 insertions
 -182 deletions
 ```
 
 ### Gitコミット
+
 ```
 5コミット（2 Phase）
 1. 96c15ec - 機能別ディレクトリ構造に再編成
@@ -122,22 +127,26 @@ features/dashboard/ukeire/
 ## ✅ 品質保証
 
 ### 型チェック
+
 ```bash
 pnpm exec tsc --noEmit | grep "ukeire"
 ```
+
 **結果**: エラー0件 ✨
 
 ### 後方互換性
+
 ```tsx
 // 既存のimportはすべて動作
-import { 
+import {
   useUkeireForecastVM,
   TargetCard,
-  ForecastCard
-} from '@/features/dashboard/ukeire';
+  ForecastCard,
+} from "@/features/dashboard/ukeire";
 ```
 
 ### Git履歴保持
+
 - すべてのファイル移動で `git mv` を使用
 - Git blameで元ファイルの履歴を追跡可能
 
@@ -146,7 +155,9 @@ import {
 ## 📚 ドキュメント
 
 ### 作成したドキュメント
+
 1. **`UKEIRE_REFACTOR_REPORT.md`** - 完全な実施レポート
+
    - 変更プラン
    - git mv一覧
    - 主要差分
@@ -154,6 +165,7 @@ import {
    - Phase 3展望
 
 2. **`UKEIRE_REFACTOR_DELETION_CANDIDATES.md`** - 削除候補リスト
+
    - 削除対象ファイル・ディレクトリ
    - 参照ゼロ証跡
    - 削除コマンド例
@@ -168,23 +180,28 @@ import {
 ## 🎯 達成した設計目標
 
 ### 1. 機能ごとの明確な分離
+
 各機能が独立したディレクトリで管理され、責務が明確化
 
 ### 2. MVVM/SOLID原則の徹底
+
 - 各機能が3層構造（application, infrastructure, ui）
 - 依存性逆転の原則を維持
 - 単一責任の原則を強化
 
 ### 3. スケーラビリティ向上
+
 - 新機能追加は新ディレクトリを追加するだけ
 - 既存コードへの影響最小化
 
 ### 4. 保守性向上
+
 - ファイル配置が直感的
 - 関連コードが近接配置
 - importパスが明確
 
 ### 5. 後方互換性維持
+
 - 既存のimportパスは全て動作
 - ページ側の変更は最小限
 - 段階的な移行が可能
@@ -194,18 +211,23 @@ import {
 ## 🚀 次のステップ（Phase 3候補）
 
 ### 短期（次回リファクタ時）
+
 1. **targetServiceの移行**
+
    - `domain/services/targetService.ts` → `kpi-targets/domain/services/targetService.ts`
 
 2. **tabsFillのページ層移設**
    - `shared/styles/tabsFill.css.ts` → `pages/dashboard/ukeire/styles/`
 
 ### 中期（汎用化検討）
+
 3. **共通UIの汎用feature昇格**
+
    - `shared/ui/ChartFrame` → `features/shared/ui/charts/ChartFrame`
    - 他ダッシュボードでも利用可能に
 
 4. **カレンダー機能の独立**
+
    - `business-calendar/` → `features/calendar-business/`
    - ukeire外でも利用可能に
 
@@ -218,11 +240,13 @@ import {
 ## 👥 影響範囲
 
 ### 変更あり
+
 - ✅ `features/dashboard/ukeire/**/*` - 構造再編成
 - ✅ `pages/dashboard/ukeire/InboundForecastDashboardPage.tsx` - barrel経由import
 - ✅ `features/calendar/ui/CalendarCard.tsx` - UkeireCalendarの直接import
 
 ### 変更なし
+
 - ✅ 他の機能・ページ
 - ✅ ルーティング
 - ✅ API連携
@@ -233,12 +257,14 @@ import {
 ## 🎓 学んだこと
 
 ### 成功要因
+
 1. **段階的なアプローチ**: Phase 1（構造）→ Phase 2（クリーンアップ）
 2. **履歴保持の徹底**: `git mv`による完全な履歴保持
 3. **後方互換性の優先**: barrel経由のエクスポートで既存コード保護
 4. **型チェックの頻繁な実行**: 各ステップでの検証
 
 ### ベストプラクティス
+
 - ✅ 大規模リファクタは小さく分割
 - ✅ 各コミットは単一の責務
 - ✅ ドキュメントを同時に更新
@@ -249,6 +275,7 @@ import {
 ## 📞 サポート
 
 質問や追加の変更が必要な場合:
+
 - **レポート**: `UKEIRE_REFACTOR_REPORT.md`
 - **削除候補**: `UKEIRE_REFACTOR_DELETION_CANDIDATES.md`
 - **機能ドキュメント**: `app/frontend/src/features/dashboard/ukeire/README.md`
@@ -259,7 +286,7 @@ import {
 **ブランチ**: chore/calendar-slimming-and-ukeire-adapter  
 **実施日**: 2025-10-23  
 **最終コミット**: 1658631  
-**ステータス**: ✅ 完全完了  
+**ステータス**: ✅ 完全完了
 
 ---
 

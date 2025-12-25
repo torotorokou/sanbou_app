@@ -30,5 +30,5 @@ export { ManualViewer } from './ui/components/ManualViewer';
 export { ManualSearchBox } from './ui/components/ManualSearchBox';
 export { default as ManualDetailPage } from './ui/components/ManualDetailPage';
 export { default as ManualDetailRoute } from './ui/components/ManualDetailPage'; // Alias for routing
-export { ManualModal } from './ui/components/ShogunModal';  // ManualModal is the named export
+export { ManualModal } from './ui/components/ShogunModal'; // ManualModal is the named export
 export { DetailContent } from './ui/components/DetailContent';

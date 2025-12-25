@@ -1,8 +1,8 @@
 // ===================================================
 // Single Source of Truth: Breakpoints
 // ===================================================
-// Tailwind CSS準拠の4段階体系に移行完了
-// mobile ≤767, tablet 768-1023, desktop-sm 1024-1279, desktop-xl ≥1280
+// 運用3段階統一（2025-12-22更新）
+// mobile ≤767, tablet 768-1280（★1280含む）, desktop ≥1281
 
 /**
  * 統一ブレークポイント定義（Tailwind CSS準拠）
@@ -14,10 +14,10 @@
  */
 export const bp = {
   xs: 0,
-  sm: 640,   // 小型デバイス（Tailwind準拠）
-  md: 768,   // タブレット開始
-  lg: 1024,  // 大型タブレット/小型ノートPC
-  xl: 1280,  // デスクトップ開始
+  sm: 640, // 小型デバイス（Tailwind準拠）
+  md: 768, // タブレット開始
+  lg: 1024, // 大型タブレット/小型ノートPC
+  xl: 1280, // デスクトップ開始
 } as const;
 
 export type BpKey = keyof typeof bp;
@@ -37,9 +37,9 @@ export const mq = {
  */
 export const match = {
   up: (k: BpKey) =>
-    typeof window !== "undefined" && window.matchMedia(`(min-width: ${bp[k]}px)`).matches,
+    typeof window !== 'undefined' && window.matchMedia(`(min-width: ${bp[k]}px)`).matches,
   between: (a: BpKey, b: BpKey) =>
-    typeof window !== "undefined" &&
+    typeof window !== 'undefined' &&
     window.matchMedia(`(min-width: ${bp[a]}px) and (max-width: ${bp[b] - 0.02}px)`).matches,
 } as const;
 
@@ -54,15 +54,16 @@ export const ANT = bp;
 export type AntKey = BpKey;
 
 /**
- * 実運用の3段ブレークポイント（Lean-3）
+ * 実運用の3段ブレークポイント（Lean-3）★2025-12-22更新
  * - mobile:  ≤767px
- * - tablet:  768–1279px
- * - desktop: ≥1280px
+ * - tablet:  768–1280px（★1280を含む）
+ * - desktop: ≥1281px（★1280は含まない）
  */
 export const BP = {
-  mobileMax: bp.md - 1,  // 767
-  tabletMin: bp.md,      // 768
-  desktopMin: bp.xl,     // 1280
+  mobileMax: bp.md - 1, // 767
+  tabletMin: bp.md, // 768
+  tabletMax: bp.xl, // 1280 ★追加
+  desktopMin: bp.xl + 1, // 1281 ★変更：1280→1281
 } as const;
 
 export type ViewportTier = 'mobile' | 'tabletHalf' | 'desktop';
@@ -70,6 +71,6 @@ export type ViewportTier = 'mobile' | 'tabletHalf' | 'desktop';
 export const tierOf = (w: number): ViewportTier =>
   w <= BP.mobileMax ? 'mobile' : w < BP.desktopMin ? 'tabletHalf' : 'desktop';
 
-export const isMobile = (w: number) => w <= BP.mobileMax;                 // ≤767
-export const isTabletOrHalf = (w: number) => w >= BP.tabletMin && w < BP.desktopMin; // 768–1279
-export const isDesktop = (w: number) => w >= BP.desktopMin;               // ≥1280
+export const isMobile = (w: number) => w <= BP.mobileMax; // ≤767
+export const isTabletOrHalf = (w: number) => w >= BP.tabletMin && w <= BP.tabletMax; // 768–1280 ★変更
+export const isDesktop = (w: number) => w >= BP.desktopMin; // ≥1281 ★変更

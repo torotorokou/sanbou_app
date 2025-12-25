@@ -7,11 +7,7 @@
 export { useNotificationStore } from '../domain/services/notificationStore';
 
 // SSE Client
-export { 
-  startSSE, 
-  stopSSE, 
-  getSSEState 
-} from '../infrastructure/sse';
+export { startSSE, stopSSE, getSSEState } from '../infrastructure/sse';
 
 // Notify API
 export {

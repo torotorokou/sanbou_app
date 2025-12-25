@@ -4,6 +4,16 @@
 
 ## 🚀 基本コマンド
 
+# イメージを事前に pull して起動（VM環境向け）
+
+# ※ `vm_stg` / `vm_prod` では `make up` 実行時にデフォルトで `pull` が実行されます。
+
+# これを無効化するには `PULL=0` を指定します: `make up ENV=vm_stg PULL=0`
+
+# pull のみ実行
+
+make pull ENV=local_dev
+
 ### 環境起動・停止
 
 ```bash
@@ -22,6 +32,12 @@ make rebuild ENV=local_dev
 
 ### ログ・状態確認
 
+make pull ENV=vm_stg
+
+# 補足: `vm_stg` はデフォルトで `make up` 時に `docker compose pull` されます。
+
+# 事前に手動で pull する場合は: `make pull ENV=vm_stg`
+
 ```bash
 # ログ確認（全サービス）
 make logs ENV=local_dev
@@ -32,18 +48,21 @@ make logs ENV=local_dev S=core_api
 # コンテナ一覧
 make ps ENV=local_dev
 
+make pull ENV=vm_prod
+# 補足: `vm_prod` はデフォルトで `make up` 時に `docker compose pull` されます。
+# 事前に手動で pull する場合は: `make pull ENV=vm_prod`
 # ヘルスチェック
 make health ENV=local_dev
 ```
 
 ## 🌍 環境一覧
 
-| ENV | 説明 | ビルド | イメージソース |
-|-----|------|--------|----------------|
-| `local_dev` | ローカル開発 | ⭕ | ローカル |
-| `local_demo` | ローカルデモ | ⭕ | ローカル |
-| `vm_stg` | VMステージング | ❌ | Artifact Registry |
-| `vm_prod` | VM本番 | ❌ | Artifact Registry |
+| ENV          | 説明           | ビルド | イメージソース    |
+| ------------ | -------------- | ------ | ----------------- |
+| `local_dev`  | ローカル開発   | ⭕     | ローカル          |
+| `local_demo` | ローカルデモ   | ⭕     | ローカル          |
+| `vm_stg`     | VMステージング | ❌     | Artifact Registry |
+| `vm_prod`    | VM本番         | ❌     | Artifact Registry |
 
 ## 🗄️ データベース操作
 
@@ -60,14 +79,122 @@ make backup ENV=local_dev
 make restore-from-dump ENV=local_dev DUMP=backups/xxx.dump
 ```
 
-### マイグレーション
+## 🎨 コード品質・整形
+
+### ⚠️ WSL2 フリーズ防止の重要事項
+
+**禁止事項**（フリーズの原因）:
+- ❌ `pre-commit run --all-files` → CPU 張り付き
+- ❌ `eslint .` （ルートから） → node_modules (564MB) をスキャン
+- ❌ `prettier .` （ルートから） → 全ファイルをスキャン
+
+**推奨する方法**:
+- ✅ `make fmt-step-all` → 直列・対象限定で安全に実行
+- ✅ `make check-light` → staged ファイルのみチェック
+- ✅ CI で全体チェック → GitHub Actions が自動実行
+
+📖 詳細: [docs/dev/SAFE_BOOTSTRAP_FORMAT.md](./docs/dev/SAFE_BOOTSTRAP_FORMAT.md)
+
+### フォーマット（整形）
 
 ```bash
-# DB Bootstrap（権限設定、冪等）
-make db-bootstrap-roles-env ENV=local_dev
+# 【推奨】初回一括整形（WSL2安全）
+make fmt-step-all
 
-# マイグレーション適用（自動的にbootstrapも実行）
-# ※ migrations_v2 を使用（legacy migrations/ は削除済み）
+# 個別実行（WSL2安全）
+make fmt-step-py-fix    # Python ruff --fix のみ
+make fmt-step-py        # Python black のみ
+make fmt-step-fe        # Frontend prettier のみ
+make fmt-step-fe-fix    # Frontend eslint --fix のみ
+
+# 【非推奨】旧コマンド（並列実行、CPU負荷高）
+# make bootstrap-format  # フリーズの可能性あり
+# make fmt-python        # 並列実行
+# make fmt-frontend      # 並列実行
+```
+
+### 整形チェック（修正なし）
+
+```bash
+# 軽量チェック（staged のみ、WSL2安全）
+make check-light
+
+# 個別チェック（WSL2安全）
+make check-safe-python      # Python のみ
+make check-safe-frontend    # Frontend のみ
+make check-safe-typecheck   # 型チェック
+
+# 全体チェック（WSL2安全、直列実行）
+make fmt-step-check
+
+# 【CI専用】全体チェック（ローカルで実行しない）
+# make check-ci          # GitHub Actions で実行
+```
+
+### 型チェック（mypy）
+
+```bash
+# core層のみチェック（推奨）
+make typecheck
+
+# 個別実行
+make typecheck-core  # ドメイン/ユースケース層
+make typecheck-api   # API層
+
+# 全体チェック（将来用、現時点では非推奨）
+make typecheck-all
+```
+
+📖 詳細: [docs/dev/TYPECHECK.md](./docs/dev/TYPECHECK.md)
+
+### 安全なチェックスクリプト
+
+```bash
+# scripts/safe_check.sh を直接使用
+bash scripts/safe_check.sh staged       # staged のみ
+bash scripts/safe_check.sh python       # Python のみ
+bash scripts/safe_check.sh frontend     # Frontend のみ
+bash scripts/safe_check.sh typecheck    # 型チェック
+bash scripts/safe_check.sh help         # ヘルプ表示
+```
+
+## 🎨 コード品質・整形（続き）
+
+### 初回環境構築（DB 権限システムのセットアップ）
+
+**⚠️ 新規環境または権限エラーが頻発する場合のみ実行**
+
+```bash
+# 1. バックアップ取得（既存環境の場合）
+make backup ENV=local_dev
+
+# 2. DB 権限システム構築（全ステップ一括）
+make db-fix-ownership ENV=local_dev
+
+# 3. 検証
+make db-verify-ownership ENV=local_dev
+
+# 4. マイグレーション適用
+make al-up-env ENV=local_dev
+```
+
+**実行内容**:
+
+- `sanbou_owner` (NOLOGIN) ロール作成
+- 全スキーマ・テーブル・シーケンスの owner を統一
+- RW/RO スキーマごとの適切な権限付与
+- DEFAULT PRIVILEGES 設定（新規オブジェクトへの自動権限付与）
+
+**目的**: 「permission denied for sequence」等の権限エラーを根絶
+
+詳細: [ops/db/README.md](./ops/db/README.md)
+
+### 通常運用（マイグレーション）
+
+**⚠️ 初回構築後は、通常これだけ実行すればOK**
+
+```bash
+# マイグレーション適用（DB Bootstrap を自動実行）
 make al-up-env ENV=local_dev
 
 # マイグレーション状態確認
@@ -77,6 +204,22 @@ make al-cur-env ENV=local_dev
 make al-hist-env ENV=local_dev
 ```
 
+### トラブルシューティング（DB 権限）
+
+```bash
+# 段階的に権限を修正（問題箇所のみ再実行）
+make db-fix-ownership ENV=local_dev STEP=1  # ロール作成
+make db-fix-ownership ENV=local_dev STEP=2  # owner 移管
+make db-fix-ownership ENV=local_dev STEP=3  # 権限付与
+make db-fix-ownership ENV=local_dev STEP=4  # デフォルト権限設定
+
+# 権限状態の詳細確認
+make db-verify-ownership ENV=local_dev
+
+# Legacy Bootstrap（通常は不要、al-up-env が自動実行）
+make db-bootstrap-roles-env ENV=local_dev
+```
+
 ## 🏗️ イメージビルド・デプロイ
 
 ### ステージング
@@ -84,6 +227,8 @@ make al-hist-env ENV=local_dev
 ```bash
 # 【ローカルPC】イメージビルド・プッシュ
 make publish-stg-images STG_IMAGE_TAG=stg-20251212
+
+
 
 # env/.env.vm_stg を更新
 # IMAGE_TAG=stg-20251212
@@ -101,8 +246,13 @@ make promote-stg-to-prod \
   PROMOTE_SRC_TAG=stg-20251212 \
   PROMOTE_DST_TAG=prod-20251212
 
+# 例: STGの最新タグを PROD の特定バージョンへ昇格
+make promote-stg-to-prod PROMOTE_SRC_TAG=stg-latest PROMOTE_DST_TAG=prod-v1.2.3
+
 # または直接ビルド
-make publish-prod-images PROD_IMAGE_TAG=prod-20251212
+# make publish-prod-images PROD_IMAGE_TAG=prod-latest
+NO_CACHE=1 PULL=1 make publish-stg-images-from-ref GIT_REF=v1.2.3-stg.4
+# NO_CACHE=1 PULL=1 make publish-stg-images STG_IMAGE_TAG=stg-latest
 
 # env/.env.vm_prod を更新
 # IMAGE_TAG=prod-20251212
@@ -151,20 +301,29 @@ make al-up-env ENV=vm_prod
 
 1. **ステージング**: 十分なテスト実施
 2. **本番DB**: バックアップ取得（必須）
-3. **ローカルPC**: イメージ昇格または直接ビルド
-4. **ローカルPC**: env/.env.vm_prod の IMAGE_TAG 更新
-5. **ローカルPC**: Git commit & push
-6. **VM**: `git pull origin main`
-7. **VM**: `make down ENV=vm_stg` （必要に応じて）
-8. **VM**: `make up ENV=vm_prod`
-9. **VM**: `make al-up-env ENV=vm_prod`
-10. **動作確認**: `curl https://sanbou-app.jp/health`
+   ```bash
+   make backup ENV=vm_prod
+   ```
+3. **初回のみ**: DB 権限システム構築
+   ```bash
+   make db-fix-ownership ENV=vm_prod
+   make db-verify-ownership ENV=vm_prod
+   ```
+4. **ローカルPC**: イメージ昇格または直接ビルド
+5. **ローカルPC**: env/.env.vm_prod の IMAGE_TAG 更新
+6. **ローカルPC**: Git commit & push
+7. **VM**: `git pull origin main`
+8. **VM**: `make down ENV=vm_stg` （必要に応じて）
+9. **VM**: `make up ENV=vm_prod`
+10. **VM**: `make al-up-env ENV=vm_prod`
+11. **動作確認**: `curl https://example.com/health`
 
 ## ⚠️ 重要な注意事項
 
 ### VM環境の制約
 
 1. **ポート競合**: vm_stg と vm_prod は同時起動不可（ポート80競合）
+
    ```bash
    # STGを起動する前にPRODを停止
    make down ENV=vm_prod
@@ -179,9 +338,18 @@ make al-up-env ENV=vm_prod
 
 ### トラブルシューティング
 
+#### `permission denied for sequence` または権限エラー
+
+```bash
+# DB 権限システムを再構築
+make db-fix-ownership ENV=vm_stg
+make db-verify-ownership ENV=vm_stg
+```
+
 #### `role "app_readonly" does not exist`
 
 ```bash
+# Legacy Bootstrap を手動実行（通常は al-up-env が自動実行）
 make db-bootstrap-roles-env ENV=vm_stg
 make al-up-env ENV=vm_stg
 ```
@@ -208,8 +376,10 @@ make db-bootstrap-roles-env ENV=vm_stg
 ## 📚 詳細ドキュメント
 
 完全なドキュメント・移行ガイド:
+
 - [docs/infrastructure/MAKEFILE_GUIDE.md](./docs/infrastructure/MAKEFILE_GUIDE.md)
 
 関連ドキュメント:
+
 - [docs/development/ALEMBIC_GUIDE.md](./docs/development/ALEMBIC_GUIDE.md)
 - [docs/infrastructure/DEPLOYMENT.md](./docs/infrastructure/DEPLOYMENT.md)

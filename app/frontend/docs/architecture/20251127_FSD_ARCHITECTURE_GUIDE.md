@@ -52,6 +52,7 @@ src/
 ### 1. CSV検証機能の統合
 
 **Before:**
+
 ```
 shared/lib/csv-validation/
   ├── csvHeaderValidator.ts
@@ -60,6 +61,7 @@ shared/lib/csv-validation/
 ```
 
 **After:**
+
 ```
 features/csv-validation/
   ├── core/
@@ -76,11 +78,13 @@ features/csv-validation/
 ### 2. CsvKind型の移動
 
 **Before:**
+
 ```
 shared/types/csvKind.ts
 ```
 
 **After:**
+
 ```
 features/database/shared/types/csvKind.ts
 ```
@@ -92,11 +96,13 @@ features/database/shared/types/csvKind.ts
 ### 3. Job Serviceの再配置
 
 **Before:**
+
 ```
 shared/infrastructure/job/jobService.ts
 ```
 
 **After:**
+
 ```
 features/notification/infrastructure/jobService.ts
 ```
@@ -108,17 +114,20 @@ features/notification/infrastructure/jobService.ts
 ### 4. 循環参照の解消
 
 **Before:**
+
 ```
 features/csv-validation/adapters/     ← 削除
 features/csv-validation/model/rules.ts ← 移動
 ```
 
 **After:**
+
 ```
 features/database/config/rules.ts
 ```
 
-**理由**: 
+**理由**:
+
 - `csv-validation` → `database` の循環依存を解消
 - `rules.ts` は実質的にdatabase設定の一部
 
@@ -147,15 +156,17 @@ shared    ←─── 下位層は上位層に依存しない
 **原則**: Feature間の直接的な依存は最小限に
 
 **許可される依存**:
+
 ```typescript
 // OK: notification は汎用的
-import { notifyError } from '@features/notification';
+import { notifyError } from "@features/notification";
 
 // NG: 特定feature間の相互依存
-import { SomeComponent } from '@features/report';  // csv-validation から
+import { SomeComponent } from "@features/report"; // csv-validation から
 ```
 
 **推奨パターン**:
+
 - 共通ロジック → `shared` に配置
 - Feature固有だが再利用 → `feature/shared` サブディレクトリ
 - どうしても必要 → Dependency Injection パターン
@@ -207,11 +218,11 @@ shared/
 
 ```typescript
 // ✅ Good: barrel export経由
-import { useCsvFileValidator } from '@features/csv-validation';
-import { apiGet } from '@/shared';
+import { useCsvFileValidator } from "@features/csv-validation";
+import { apiGet } from "@/shared";
 
 // ❌ Bad: 内部実装を直接参照
-import { useCsvFileValidator } from '@features/csv-validation/hooks/useCsvFileValidator';
+import { useCsvFileValidator } from "@features/csv-validation/hooks/useCsvFileValidator";
 ```
 
 ### Alias設定
@@ -250,10 +261,12 @@ import { useCsvFileValidator } from '@features/csv-validation/hooks/useCsvFileVa
 ## 🚀 今後の改善提案
 
 1. **Entity層の導入検討**
+
    - `database/shared/types/csvKind.ts` → `entities/csv-kind`
    - 複数featureで使用されるエンティティの抽出
 
 2. **Dependency Injection強化**
+
    - Feature間の依存をインターフェース経由に
    - テスタビリティの向上
 

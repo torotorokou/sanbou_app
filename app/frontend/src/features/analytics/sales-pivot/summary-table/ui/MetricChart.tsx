@@ -47,7 +47,7 @@ export const MetricChart: React.FC<MetricChartProps> = ({
   // 件数/台数ラベルの動的切り替え
   const countLabel = mode === 'item' ? '件数' : '台数';
   const countSuffix = mode === 'item' ? '件' : '台';
-  
+
   const chartBarData = data.map((d: MetricEntry) => ({
     name: d.name,
     [amountLabel]: d.amount,
@@ -60,7 +60,9 @@ export const MetricChart: React.FC<MetricChartProps> = ({
     <Row gutter={[16, 16]}>
       {/* TopN棒グラフ */}
       <Col xs={24} xl={14}>
-        <div className="card-subtitle">TopN（{amountLabel}・数量・{countLabel}・単価）</div>
+        <div className="card-subtitle">
+          TopN（{amountLabel}・数量・{countLabel}・単価）
+        </div>
         <div style={{ width: '100%', height: 320 }}>
           <ResponsiveContainer>
             <BarChart data={chartBarData} margin={{ top: 8, right: 8, left: 8, bottom: 24 }}>

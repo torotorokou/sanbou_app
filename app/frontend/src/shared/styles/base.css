@@ -33,7 +33,10 @@
 }
 
 html,
-body { font-size: var(--font-base); line-height: var(--lh-base); }
+body {
+  font-size: var(--font-base);
+  line-height: var(--lh-base);
+}
 
 /* Fluid container: width is min(container-max, 92% of viewport) */
 .container {
@@ -46,7 +49,8 @@ body { font-size: var(--font-base); line-height: var(--lh-base); }
 
 /* Horizontal overflow utility (alias for backward compatibility) */
 .table-wrap,
-.responsive-x { /* prefer .responsive-x going forward */
+.responsive-x {
+  /* prefer .responsive-x going forward */
   width: 100%;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;

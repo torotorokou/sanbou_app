@@ -53,4 +53,3 @@ ALTER TABLE ONLY mart.inb_profile_smooth_test
 --
 
 \unrestrict zO0pogDTEOpG0oI9PnYt40PyQmdpTe8hAX9DnTCFGVsPHX1pgUw1MfLNkRDAVfH
-

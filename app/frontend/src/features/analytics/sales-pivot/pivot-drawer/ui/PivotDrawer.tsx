@@ -5,7 +5,14 @@
 
 import React from 'react';
 import { Drawer, Card, Space, Tag, Segmented } from 'antd';
-import type { DrawerState, Mode, SortKey, SortOrder, MetricEntry, CategoryKind } from '../../shared/model/types';
+import type {
+  DrawerState,
+  Mode,
+  SortKey,
+  SortOrder,
+  MetricEntry,
+  CategoryKind,
+} from '../../shared/model/types';
 import { axisLabel } from '../../shared/model/metrics';
 import { PivotTable } from './PivotTable';
 
@@ -88,7 +95,10 @@ export const PivotDrawer: React.FC<PivotDrawerProps> = ({
               options={[
                 { label: amountLabel, value: 'amount' },
                 { label: '数量', value: 'qty' },
-                { label: drawer.activeAxis === 'item' ? '件数' : '台数', value: 'count' },
+                {
+                  label: drawer.activeAxis === 'item' ? '件数' : '台数',
+                  value: 'count',
+                },
                 { label: '単価', value: 'unit_price' },
                 {
                   label: drawer.activeAxis === 'date' ? '日付' : '名称',

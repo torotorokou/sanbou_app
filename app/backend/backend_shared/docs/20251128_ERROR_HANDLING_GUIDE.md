@@ -11,11 +11,13 @@ ProblemDetails（RFC 7807）に準拠した統一エラーハンドリングと�
 すべてのリクエストに一意のトレースIDを付与します。
 
 **機能:**
+
 - `X-Request-ID` ヘッダーから読み取り、なければ自動生成
 - `request.state.trace_id` に保存
 - レスポンスヘッダーに `X-Request-ID` を追加
 
 **設定例:**
+
 ```python
 from backend_shared.src.middleware import RequestIdMiddleware
 
@@ -27,6 +29,7 @@ app.add_middleware(RequestIdMiddleware)
 すべてのエラーを ProblemDetails 形式で返します。
 
 **DomainError（ドメインエラー）:**
+
 ```python
 from backend_shared.src.api import DomainError
 
@@ -39,6 +42,7 @@ raise DomainError(
 ```
 
 **エラーハンドラの登録:**
+
 ```python
 from backend_shared.src.api import register_error_handlers
 
@@ -67,9 +71,11 @@ register_error_handlers(app)
 ### エンドポイント
 
 #### POST /api/jobs
+
 ジョブを作成
 
 **リクエスト:**
+
 ```json
 {
   "feature": "csv_upload",
@@ -80,6 +86,7 @@ register_error_handlers(app)
 ```
 
 **レスポンス:**
+
 ```json
 {
   "id": "job-123",
@@ -94,9 +101,11 @@ register_error_handlers(app)
 ```
 
 #### GET /api/jobs/{job_id}
+
 ジョブの状態を取得
 
 **成功時:**
+
 ```json
 {
   "id": "job-123",
@@ -113,6 +122,7 @@ register_error_handlers(app)
 ```
 
 **失敗時:**
+
 ```json
 {
   "id": "job-123",
@@ -151,7 +161,7 @@ async def upload_file(request: Request, file: UploadFile):
             user_message="CSVファイルのみアップロード可能です",
             title="ファイル形式エラー"
         )
-    
+
     # 処理...
     return {"status": "success"}
 ```
@@ -162,10 +172,10 @@ async def upload_file(request: Request, file: UploadFile):
 @router.post("/process")
 async def process_data(request: Request):
     trace_id = getattr(request.state, "trace_id", None)
-    
+
     # ログに traceId を記録
     logger.info(f"Processing started [traceId={trace_id}]")
-    
+
     # 処理...
 ```
 
@@ -189,7 +199,7 @@ async def process_async_job(job_id: str):
             title="処理エラー",
             traceId=trace_id
         )
-        
+
         job_store[job_id].status = "failed"
         job_store[job_id].error = error
         job_store[job_id].updatedAt = datetime.utcnow().isoformat()
@@ -213,9 +223,11 @@ app.add_middleware(
 ## テスト用エンドポイント
 
 ### POST /api/jobs/{job_id}/fail
+
 ジョブを強制的に失敗させる（テスト用）
 
 ### POST /api/jobs/{job_id}/raise-error
+
 DomainError を発生させる（エラーハンドラのテスト用）
 
 ## フロントエンドとの連携
@@ -223,21 +235,21 @@ DomainError を発生させる（エラーハンドラのテスト用）
 ### エラーレスポンスの処理
 
 ```typescript
-import type { ProblemDetails } from '@/features/notification/model/contract';
+import type { ProblemDetails } from "@/features/notification/model/contract";
 
 try {
-  const response = await fetch('/api/upload', {
-    method: 'POST',
+  const response = await fetch("/api/upload", {
+    method: "POST",
     body: formData,
   });
-  
+
   if (!response.ok) {
     const problem: ProblemDetails = await response.json();
-    console.error('Error:', problem.userMessage);
-    console.error('TraceId:', problem.traceId);
+    console.error("Error:", problem.userMessage);
+    console.error("TraceId:", problem.traceId);
   }
 } catch (error) {
-  console.error('Network error:', error);
+  console.error("Network error:", error);
 }
 ```
 
@@ -247,15 +259,15 @@ try {
 // リクエスト時に X-Request-ID を送信
 const requestId = crypto.randomUUID();
 
-const response = await fetch('/api/data', {
+const response = await fetch("/api/data", {
   headers: {
-    'X-Request-ID': requestId,
+    "X-Request-ID": requestId,
   },
 });
 
 // レスポンスから X-Request-ID を取得
-const responseRequestId = response.headers.get('X-Request-ID');
-console.log('TraceId:', responseRequestId);
+const responseRequestId = response.headers.get("X-Request-ID");
+console.log("TraceId:", responseRequestId);
 ```
 
 ## ベストプラクティス

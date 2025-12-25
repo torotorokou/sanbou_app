@@ -6,7 +6,7 @@
 
 import { coreApi } from '@/shared';
 
-export type FetchMode = "daily" | "monthly";
+export type FetchMode = 'daily' | 'monthly';
 
 export interface TargetMetricsDTO {
   ddate: string | null;
@@ -52,11 +52,11 @@ const inflightRequests = new Map<string, Promise<TargetMetricsDTO>>();
  * @returns Target and actual metrics (monthly, weekly, daily)
  */
 export async function fetchTargetMetrics(
-  date: string, 
-  mode: FetchMode = "monthly"
+  date: string,
+  mode: FetchMode = 'monthly'
 ): Promise<TargetMetricsDTO> {
   const cacheKey = `${date}-${mode}`;
-  
+
   // Check cache first (currently disabled)
   const cached = cache.get(cacheKey);
   if (cached && Date.now() - cached.timestamp < CACHE_TTL && CACHE_TTL > 0) {
@@ -65,14 +65,14 @@ export async function fetchTargetMetrics(
   } else if (CACHE_TTL === 0) {
     console.log(`[fetchTargetMetrics] Cache disabled, fetching fresh data for ${cacheKey}`);
   }
-  
+
   // Check if there's already an in-flight request for this key
   const existingRequest = inflightRequests.get(cacheKey);
   if (existingRequest) {
     console.log(`[fetchTargetMetrics] Reusing in-flight request for ${cacheKey}`);
     return existingRequest;
   }
-  
+
   // Create new request and track it
   const requestPromise = (async () => {
     try {
@@ -81,11 +81,11 @@ export async function fetchTargetMetrics(
       const data = await coreApi.get<TargetMetricsDTO>(
         `/core_api/dashboard/target?date=${date}&mode=${mode}`
       );
-      
+
       // Store in cache
       cache.set(cacheKey, { data, timestamp: Date.now() });
       console.log(`[fetchTargetMetrics] ✓ Fetched and cached ${cacheKey}`);
-      
+
       return data;
     } catch (error) {
       console.error(`[fetchTargetMetrics] ✗ Error fetching ${cacheKey}:`, error);
@@ -95,10 +95,10 @@ export async function fetchTargetMetrics(
       inflightRequests.delete(cacheKey);
     }
   })();
-  
+
   // Track the in-flight request
   inflightRequests.set(cacheKey, requestPromise);
-  
+
   return requestPromise;
 }
 
@@ -111,5 +111,3 @@ export function clearTargetMetricsCache(): void {
   inflightRequests.clear();
   console.log('[fetchTargetMetrics] Cache and in-flight requests cleared');
 }
-
-

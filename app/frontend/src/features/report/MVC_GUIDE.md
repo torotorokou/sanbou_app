@@ -35,41 +35,46 @@ features/report/
 ## 🎯 MVC + SOLID 原則
 
 ### API Layer (HTTP通信)
+
 - **責務**: HTTP通信の抽象化
 - **場所**: `api/reportApi.ts`
 - **使用**: `coreApi` クライアント経由で `/core_api/...` にリクエスト
 
 ```typescript
-import { generateFactoryReport } from '@features/report/api';
+import { generateFactoryReport } from "@features/report/api";
 
-const result = await generateFactoryReport('2025-01-15');
+const result = await generateFactoryReport("2025-01-15");
 ```
 
 ### Model Layer (データ・型・設定)
+
 - **責務**: データ構造、型定義、設定・定数
-- **場所**: 
+- **場所**:
   - `model/report.types.ts` - 型定義
   - `model/report-api.types.ts` - API型定義
   - `model/config/` - 設定・定数
 
 ```typescript
-import type { ReportBaseProps, ReportKey } from '@features/report';
-import { REPORT_API_ENDPOINTS } from '@features/report';
+import type { ReportBaseProps, ReportKey } from "@features/report";
+import { REPORT_API_ENDPOINTS } from "@features/report";
 ```
 
 ### Controller Layer (Hooks)
+
 - **責務**: UIロジック、状態管理、副作用
 - **場所**: `model/use*.ts`
 - **原則**: UIから分離、再利用可能
 
 ```typescript
-import { useReportManager, useReportBaseBusiness } from '@features/report';
+import { useReportManager, useReportBaseBusiness } from "@features/report";
 
-const { currentReport, csvFiles, setCurrentReport } = useReportManager(reportKey);
+const { currentReport, csvFiles, setCurrentReport } =
+  useReportManager(reportKey);
 const { makeUploadProps, artifact } = useReportBaseBusiness(/*...*/);
 ```
 
 ### View Layer (UIコンポーネント)
+
 - **責務**: 表示のみ、イベントハンドラー
 - **場所**: `ui/`
 - **原則**: ビジネスロジックを持たない、Controller Hooksに依存
@@ -101,17 +106,20 @@ View (re-render)
 ## ✅ 設計ルール
 
 1. **単一責任の原則 (SRP)**
+
    - API層: HTTP通信のみ
    - Model層: データ・型・設定のみ
    - Controller層: UIロジック・状態管理のみ
    - View層: 表示・イベントハンドリングのみ
 
 2. **依存性逆転の原則 (DIP)**
+
    - Viewは Controllerに依存
    - ControllerはAPI層に依存
    - 直接fetchは禁止
 
 3. **開放閉鎖の原則 (OCP)**
+
    - 新しいレポートタイプは設定追加のみ
    - 既存コードの変更を最小化
 
@@ -143,14 +151,14 @@ const MyReportPage = () => {
 ### API直接呼び出し
 
 ```typescript
-import { generateFactoryReport } from '@features/report/api';
+import { generateFactoryReport } from "@features/report/api";
 
 const handleGenerate = async () => {
   try {
-    const result = await generateFactoryReport('2025-01-15', 'factory_01');
-    console.log('Excel URL:', result.artifact?.excel_download_url);
+    const result = await generateFactoryReport("2025-01-15", "factory_01");
+    console.log("Excel URL:", result.artifact?.excel_download_url);
   } catch (error) {
-    console.error('Failed:', error);
+    console.error("Failed:", error);
   }
 };
 ```
@@ -163,7 +171,7 @@ const handleGenerate = async () => {
 // ❌ UI内で直接fetch
 const MyComponent = () => {
   const handleClick = async () => {
-    const res = await fetch('/core_api/reports/...'); // 禁止！
+    const res = await fetch("/core_api/reports/..."); // 禁止！
   };
 };
 
@@ -182,7 +190,7 @@ const MyComponent = () => {
 // ✅ Controller Hookを使用
 const MyComponent = () => {
   const { data, handleGenerate } = useReportManager('factory_report');
-  
+
   return <button onClick={handleGenerate}>Generate</button>;
 };
 

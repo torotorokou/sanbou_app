@@ -1,7 +1,7 @@
 import pandas as pd
+
 from app.infra.report_utils import get_template_config, load_master_and_template
-from app.infra.report_utils.formatters import to_reiwa_format
-from app.infra.report_utils.formatters import set_value_fast_safe
+from app.infra.report_utils.formatters import set_value_fast_safe, to_reiwa_format
 
 
 def calculate_misc_summary_rows(
@@ -32,24 +32,14 @@ def calculate_misc_summary_rows(
         value_col="値",
     )
 
-    honest_kg = safe_int(
-        master_csv.loc[master_csv["大項目"] == "オネストkg", "値"].values[0]
-    )
-    honest_m3 = safe_int(
-        master_csv.loc[master_csv["大項目"] == "オネストm3", "値"].values[0]
-    )
-    yuka_kaitori = safe_int(
-        master_csv.loc[master_csv["大項目"] == "有価買取", "値"].values[0]
-    )
+    honest_kg = safe_int(master_csv.loc[master_csv["大項目"] == "オネストkg", "値"].values[0])
+    honest_m3 = safe_int(master_csv.loc[master_csv["大項目"] == "オネストm3", "値"].values[0])
+    yuka_kaitori = safe_int(master_csv.loc[master_csv["大項目"] == "有価買取", "値"].values[0])
     sales_total = honest_kg + honest_m3 - yuka_kaitori
     etc_df = set_value_fast_safe(etc_df, ["大項目"], ["売上計"], sales_total, "値")
 
-    shobun_cost = safe_int(
-        master_csv.loc[master_csv["大項目"] == "処分費", "値"].values[0]
-    )
-    yuka_cost = safe_int(
-        master_csv.loc[master_csv["大項目"] == "有価物", "値"].values[0]
-    )
+    shobun_cost = safe_int(master_csv.loc[master_csv["大項目"] == "処分費", "値"].values[0])
+    yuka_cost = safe_int(master_csv.loc[master_csv["大項目"] == "有価物", "値"].values[0])
     cost_total = shobun_cost - yuka_cost
     etc_df = set_value_fast_safe(etc_df, ["大項目"], ["仕入計"], cost_total, "値")
 

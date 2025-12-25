@@ -6,9 +6,7 @@ def check_csv_files(files: dict, required: list[str], optional: list[str] = None
     optional = optional or []
     missing_required = set(required) - set(files.keys())
     if missing_required:
-        raise ValueError(
-            f"必要なCSVファイルが不足しています: {', '.join(missing_required)}"
-        )
+        raise ValueError(f"必要なCSVファイルが不足しています: {', '.join(missing_required)}")
 
     # 任意ファイルは何もせずOK
     # 利用時は files.get(name) でNoneなら「未提出」とみなせる

@@ -87,29 +87,27 @@ export const PeriodSelector: React.FC<PeriodSelectorProps> = ({
               placeholder={['開始月', '終了月']}
             />
           )
+        ) : periodMode === 'single' ? (
+          <DatePicker
+            value={singleDate}
+            onChange={(d: Dayjs | null) => d && onSingleDateChange(d)}
+            allowClear={false}
+            placeholder="対象日"
+            locale={locale}
+          />
         ) : (
-          periodMode === 'single' ? (
-            <DatePicker
-              value={singleDate}
-              onChange={(d: Dayjs | null) => d && onSingleDateChange(d)}
-              allowClear={false}
-              placeholder="対象日"
-              locale={locale}
-            />
-          ) : (
-            <DatePicker.RangePicker
-              value={dateRange}
-              onChange={(vals: [Dayjs | null, Dayjs | null] | null) => {
-                if (vals && vals[0] && vals[1]) {
-                  onDateRangeChange([vals[0], vals[1]]);
-                } else {
-                  onDateRangeChange(null);
-                }
-              }}
-              placeholder={['開始日', '終了日']}
-              locale={locale}
-            />
-          )
+          <DatePicker.RangePicker
+            value={dateRange}
+            onChange={(vals: [Dayjs | null, Dayjs | null] | null) => {
+              if (vals && vals[0] && vals[1]) {
+                onDateRangeChange([vals[0], vals[1]]);
+              } else {
+                onDateRangeChange(null);
+              }
+            }}
+            placeholder={['開始日', '終了日']}
+            locale={locale}
+          />
         )}
       </Space>
     </Space>

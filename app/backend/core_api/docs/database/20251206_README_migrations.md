@@ -7,11 +7,9 @@
 - **DDL は Alembic が唯一の真実**
   - すべてのスキーマ変更は Alembic リビジョンで管理
   - DBeaver は閲覧・検証専用（直接 DDL 実行は禁止）
-  
 - **ベースライン方式**
   - 現在の DB 状態を「ベースライン」として刻印（No-Op リビジョン）
   - 以降の変更は差分リビジョンで積み上げていく
-  
 - **破壊的変更は 3 段階で実施**
   1. 新カラム/テーブルを追加（NULL 許可）
   2. データをバックフィル（既存データの移行）
@@ -41,14 +39,14 @@ app/backend/core_api/migrations/
 
 以下のタスクは `.vscode/tasks.json` に定義されており、**ターミナル > タスクの実行** から選択できます。
 
-| タスク名 | 説明 |
-|---------|------|
-| `alembic: current` | 現在適用されているリビジョンを表示 |
-| `alembic: history` | リビジョン履歴を表示 |
-| `alembic: revision (autogenerate)` | ORM との差分から新規リビジョンを自動生成 |
-| `alembic: upgrade head` | 最新リビジョンまで適用 |
-| `alembic: downgrade -1` | 1つ前のリビジョンに戻す |
-| `db: show alembic_version` | DB の `alembic_version` テーブル内容を表示 |
+| タスク名                           | 説明                                       |
+| ---------------------------------- | ------------------------------------------ |
+| `alembic: current`                 | 現在適用されているリビジョンを表示         |
+| `alembic: history`                 | リビジョン履歴を表示                       |
+| `alembic: revision (autogenerate)` | ORM との差分から新規リビジョンを自動生成   |
+| `alembic: upgrade head`            | 最新リビジョンまで適用                     |
+| `alembic: downgrade -1`            | 1つ前のリビジョンに戻す                    |
+| `db: show alembic_version`         | DB の `alembic_version` テーブル内容を表示 |
 
 ## 初回セットアップ（ベースライン適用）
 
@@ -61,10 +59,12 @@ app/backend/core_api/migrations/
 ### 手順
 
 1. **ベースラインの適用**
+
    - VS Code タスク: `alembic: upgrade head`
    - 実行すると `public.alembic_version` が作成され、ベースライン ID (`9a092c4a1fcf`) が刻印される
 
 2. **適用確認**
+
    - VS Code タスク: `alembic: current`
    - 出力: `9a092c4a1fcf (head)` のように表示されれば成功
 
@@ -72,7 +72,7 @@ app/backend/core_api/migrations/
    - VS Code タスク: `db: show alembic_version`
    - 出力:
      ```
-      version_num  
+      version_num
      --------------
       9a092c4a1fcf
      (1 row)
@@ -124,7 +124,7 @@ down_revision = 'yyyy'
 def upgrade() -> None:
     op.execute("""
         CREATE OR REPLACE VIEW ref.sales_summary AS
-        SELECT 
+        SELECT
             product_id,
             SUM(quantity) as total_quantity
         FROM raw.sales
@@ -148,6 +148,7 @@ def downgrade() -> None:
 **原因**: Alembic がコンテナ内で実行されているが、`alembic.ini` が見つからない
 
 **対処**:
+
 - コマンドに `-c /backend/migrations/alembic.ini` を指定（タスクで既に設定済み）
 - コンテナ内のパスが正しいか確認
 
@@ -156,6 +157,7 @@ def downgrade() -> None:
 **原因**: ベースライン未適用
 
 **対処**:
+
 1. `alembic: upgrade head` でベースラインを適用
 2. `db: show alembic_version` で確認
 
@@ -164,6 +166,7 @@ def downgrade() -> None:
 **原因**: リビジョンチェーンが分岐している
 
 **対処**:
+
 1. `alembic: history` で確認
 2. 分岐を解消するマージリビジョンを作成:
    ```bash
@@ -174,11 +177,13 @@ def downgrade() -> None:
 
 ### Q4. Autogenerate が差分を検出しない
 
-**原因**: 
+**原因**:
+
 - メタデータが更新されていない（import 忘れ）
 - `env.py` の `target_metadata` が正しく設定されていない
 
 **対処**:
+
 1. `app/repositories/orm_models.py` で `Base` に正しくモデルが登録されているか確認
 2. `env.py` の `from app.repositories.orm_models import Base` が正しいか確認
 3. コンテナを再起動（`docker compose restart core_api`）
@@ -188,6 +193,7 @@ def downgrade() -> None:
 **原因**: DSN の形式が間違っている
 
 **対処**:
+
 - `env.py` は自動的に `postgresql://` → `postgresql+psycopg://` に変換している
 - 環境変数 `DB_DSN` または `DATABASE_URL` を確認
 - 例: `postgresql+psycopg://myuser:password@db:5432/sanbou_dev`
@@ -208,22 +214,25 @@ def upgrade():
 #### ✅ 安全な方法（3段階）
 
 **リビジョン 1: カラム追加（NULL 許可）**
+
 ```python
 def upgrade():
     op.add_column('users', sa.Column('email', sa.String(255), nullable=True))
 ```
 
 **リビジョン 2: データをバックフィル**
+
 ```python
 def upgrade():
     op.execute("""
-        UPDATE users 
-        SET email = username || '@example.com' 
+        UPDATE users
+        SET email = username || '@example.com'
         WHERE email IS NULL;
     """)
 ```
 
 **リビジョン 3: NOT NULL 制約を付与**
+
 ```python
 def upgrade():
     op.alter_column('users', 'email', nullable=False)

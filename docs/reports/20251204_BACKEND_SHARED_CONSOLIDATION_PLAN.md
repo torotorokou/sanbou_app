@@ -31,14 +31,14 @@ logger = get_module_logger(__name__)
 
 #### 現状の実装パターン
 
-| サービス | 実装状況 | コード量 | 備考 |
-|---------|---------|---------|------|
-| **ledger_api** | ✅ 統一版使用 | 0行（統一版利用） | `backend_shared.infra.frameworks.exception_handlers` を使用 |
-| **core_api** | ❌ 独自実装 | 254行 | `app/shared/exception_handlers.py` に独自実装 |
-| **ai_api** | ❌ 独自実装 | ~50行 | 基本的なハンドラのみ |
-| **manual_api** | ❌ 独自実装 | ~120行 | backend_shared例外に対応済み |
-| **rag_api** | ❌ 独自実装 | ~50行 | 基本的なハンドラのみ |
-| **plan_worker** | - | 0行 | FastAPI未使用のためN/A |
+| サービス        | 実装状況      | コード量          | 備考                                                        |
+| --------------- | ------------- | ----------------- | ----------------------------------------------------------- |
+| **ledger_api**  | ✅ 統一版使用 | 0行（統一版利用） | `backend_shared.infra.frameworks.exception_handlers` を使用 |
+| **core_api**    | ❌ 独自実装   | 254行             | `app/shared/exception_handlers.py` に独自実装               |
+| **ai_api**      | ❌ 独自実装   | ~50行             | 基本的なハンドラのみ                                        |
+| **manual_api**  | ❌ 独自実装   | ~120行            | backend_shared例外に対応済み                                |
+| **rag_api**     | ❌ 独自実装   | ~50行             | 基本的なハンドラのみ                                        |
+| **plan_worker** | -             | 0行               | FastAPI未使用のためN/A                                      |
 
 #### core_api の独自実装（254行）
 
@@ -89,11 +89,11 @@ register_exception_handlers(app)  # これだけで全ハンドラ登録完了
 
 #### 現状の実装パターン
 
-| サービス | 実装状況 | パターン | 備考 |
-|---------|---------|---------|------|
-| **rag_api** | ❌ 個別実装 | `ZoneInfo('Asia/Tokyo')` を都度作成 | `dummy_response_service.py`, `ai_response_service.py` |
-| **ledger_api** | ❌ 個別実装 | `datetime` の JST 変換を個別実装 | タイムゾーン処理が散在 |
-| **core_api** | ⚠️ 一部使用 | SQL内で `AT TIME ZONE 'Asia/Tokyo'` | DBクエリ内でタイムゾーン変換 |
+| サービス       | 実装状況    | パターン                            | 備考                                                  |
+| -------------- | ----------- | ----------------------------------- | ----------------------------------------------------- |
+| **rag_api**    | ❌ 個別実装 | `ZoneInfo('Asia/Tokyo')` を都度作成 | `dummy_response_service.py`, `ai_response_service.py` |
+| **ledger_api** | ❌ 個別実装 | `datetime` の JST 変換を個別実装    | タイムゾーン処理が散在                                |
+| **core_api**   | ⚠️ 一部使用 | SQL内で `AT TIME ZONE 'Asia/Tokyo'` | DBクエリ内でタイムゾーン変換                          |
 
 #### rag_api の実装例
 
@@ -131,12 +131,12 @@ from functools import lru_cache
 def get_app_timezone() -> ZoneInfo:
     """
     アプリケーションのタイムゾーンを取得（キャッシュ済み）
-    
+
     環境変数 APP_TIMEZONE で設定可能（デフォルト: Asia/Tokyo）
-    
+
     Returns:
         ZoneInfo: アプリケーションのタイムゾーン
-    
+
     Examples:
         >>> tz = get_app_timezone()
         >>> tz
@@ -149,10 +149,10 @@ def get_app_timezone() -> ZoneInfo:
 def now_in_app_timezone() -> datetime:
     """
     アプリケーションタイムゾーンでの現在時刻を取得
-    
+
     Returns:
         datetime: タイムゾーン付き現在時刻
-    
+
     Examples:
         >>> now = now_in_app_timezone()
         >>> now.tzinfo
@@ -164,13 +164,13 @@ def now_in_app_timezone() -> datetime:
 def to_app_timezone(dt: datetime) -> datetime:
     """
     datetime オブジェクトをアプリケーションタイムゾーンに変換
-    
+
     Args:
         dt: 変換元の datetime（naive または aware）
-    
+
     Returns:
         datetime: アプリケーションタイムゾーンに変換された datetime
-    
+
     Examples:
         >>> utc_time = datetime.now(timezone.utc)
         >>> jst_time = to_app_timezone(utc_time)
@@ -181,13 +181,13 @@ def to_app_timezone(dt: datetime) -> datetime:
 def format_datetime_jp(dt: datetime) -> str:
     """
     datetime を日本語形式にフォーマット
-    
+
     Args:
         dt: フォーマット対象の datetime
-    
+
     Returns:
         str: '2024年12月04日 15:30' 形式の文字列
-    
+
     Examples:
         >>> now = now_in_app_timezone()
         >>> format_datetime_jp(now)
@@ -199,13 +199,13 @@ def format_datetime_jp(dt: datetime) -> str:
 def format_date_jp(d: date) -> str:
     """
     date を日本語形式にフォーマット
-    
+
     Args:
         d: フォーマット対象の date
-    
+
     Returns:
         str: '2024年12月04日' 形式の文字列
-    
+
     Examples:
         >>> today = date.today()
         >>> format_date_jp(today)
@@ -231,13 +231,13 @@ timestamp = format_datetime_jp(now_in_app_timezone())
 
 #### 現状の実装パターン
 
-| サービス | CORS Origins | パターン |
-|---------|--------------|---------|
-| **core_api** | ✅ 環境変数 + デフォルト | `CORS_ORIGINS` 環境変数、複数オリジン対応 |
-| **ledger_api** | ✅ 環境変数 | `CORS_ORIGINS` 環境変数 |
+| サービス       | CORS Origins             | パターン                                        |
+| -------------- | ------------------------ | ----------------------------------------------- |
+| **core_api**   | ✅ 環境変数 + デフォルト | `CORS_ORIGINS` 環境変数、複数オリジン対応       |
+| **ledger_api** | ✅ 環境変数              | `CORS_ORIGINS` 環境変数                         |
 | **manual_api** | ✅ 環境変数 + デフォルト | `"http://localhost:5173,http://127.0.0.1:5173"` |
-| **ai_api** | ❌ ハードコード | `["*"]` 全許可（セキュリティリスク） |
-| **rag_api** | ❌ ハードコード | `["*"]` 全許可（セキュリティリスク） |
+| **ai_api**     | ❌ ハードコード          | `["*"]` 全許可（セキュリティリスク）            |
+| **rag_api**    | ❌ ハードコード          | `["*"]` 全許可（セキュリティリスク）            |
 
 #### 問題点
 
@@ -257,13 +257,13 @@ from fastapi.middleware.cors import CORSMiddleware
 def get_cors_origins() -> list[str]:
     """
     CORS許可オリジンのリストを環境変数から取得
-    
+
     環境変数 CORS_ORIGINS をカンマ区切りで読み込みます。
     未設定の場合はローカル開発用のデフォルト値を返します。
-    
+
     Returns:
         list[str]: CORS許可オリジンのリスト
-    
+
     Examples:
         >>> os.environ["CORS_ORIGINS"] = "http://example.com,http://localhost:3000"
         >>> get_cors_origins()
@@ -277,18 +277,18 @@ def get_cors_origins() -> list[str]:
 def setup_cors(app: FastAPI, origins: list[str] | None = None) -> None:
     """
     FastAPIアプリケーションにCORSミドルウェアを設定
-    
+
     Args:
         app: FastAPIアプリケーションインスタンス
         origins: 許可するオリジンのリスト（Noneの場合は環境変数から取得）
-    
+
     Examples:
         >>> app = FastAPI()
         >>> setup_cors(app)  # 環境変数から自動取得
     """
     if origins is None:
         origins = get_cors_origins()
-    
+
     app.add_middleware(
         CORSMiddleware,
         allow_origins=origins,
@@ -316,14 +316,14 @@ setup_cors(app)  # これだけでCORS設定完了
 
 #### 現状の実装パターン
 
-| サービス | Settings実装 | パターン |
-|---------|-------------|---------|
-| **core_api** | Pydantic BaseSettings | 242行、包括的な設定クラス |
-| **ledger_api** | dataclass | 149行、カスタムロジック |
-| **ai_api** | ✅ 直接 `os.getenv()` | 5行、シンプル |
-| **manual_api** | ❌ 直接 `os.getenv()` | ミドルウェア内で直接読み込み |
-| **rag_api** | ✅ 独自 `env_loader` | `load_env_and_secrets()` カスタム実装 |
-| **plan_worker** | Pydantic BaseSettings | シンプルな設定クラス |
+| サービス        | Settings実装          | パターン                              |
+| --------------- | --------------------- | ------------------------------------- |
+| **core_api**    | Pydantic BaseSettings | 242行、包括的な設定クラス             |
+| **ledger_api**  | dataclass             | 149行、カスタムロジック               |
+| **ai_api**      | ✅ 直接 `os.getenv()` | 5行、シンプル                         |
+| **manual_api**  | ❌ 直接 `os.getenv()` | ミドルウェア内で直接読み込み          |
+| **rag_api**     | ✅ 独自 `env_loader`  | `load_env_and_secrets()` カスタム実装 |
+| **plan_worker** | Pydantic BaseSettings | シンプルな設定クラス                  |
 
 #### backend_shared の既存ユーティリティ
 
@@ -354,36 +354,36 @@ from backend_shared.config.env_utils import get_stage
 class BaseAppSettings(BaseSettings):
     """
     全サービス共通の基本設定
-    
+
     各サービスはこのクラスを継承して独自設定を追加します。
     """
-    
+
     # === ステージ設定 ===
     STAGE: str = get_stage()
     """デプロイ環境（dev/stg/prod）"""
-    
+
     DEBUG: bool = False
     """デバッグモード（True で /docs 等を公開）"""
-    
+
     # === API基本情報 ===
     API_TITLE: str = "API Service"
     """API タイトル（各サービスで上書き）"""
-    
+
     API_VERSION: str = "1.0.0"
     """API バージョン"""
-    
+
     API_ROOT_PATH: str = ""
     """API ルートパス（BFF経由の場合は /core_api など）"""
-    
+
     # === CORS設定 ===
     CORS_ORIGINS: str = "http://localhost:5173,http://127.0.0.1:5173"
     """CORS許可オリジン（カンマ区切り）"""
-    
+
     @property
     def cors_origins_list(self) -> list[str]:
         """CORS許可オリジンをリストで取得"""
         return [o.strip() for o in self.CORS_ORIGINS.split(",") if o.strip()]
-    
+
     class Config:
         env_file = ".env"
         case_sensitive = True
@@ -403,10 +403,10 @@ from backend_shared.config.base_settings import BaseAppSettings
 
 class AiApiSettings(BaseAppSettings):
     API_TITLE: str = "AI_API"
-    
+
     GEMINI_API_KEY: str = ""
     """Gemini API キー（必須）"""
-    
+
     GEMINI_API_URL: str = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
     """Gemini API エンドポイント"""
 
@@ -466,13 +466,13 @@ backend_shared/src/backend_shared/
 
 ### モジュール別優先度
 
-| モジュール | 優先度 | 削減コード量 | 影響範囲 |
-|-----------|-------|-------------|---------|
-| `exception_handlers` 統一 | 🔥 高 | ~500行 | core_api, manual_api, ai_api, rag_api |
-| `datetime_utils` | 🔥 高 | ~50行 | rag_api, ledger_api |
-| `cors_config` | 🟡 中 | ~100行 | 全サービス |
-| `base_settings` | 🟡 中 | ~200行 | 全サービス |
-| **合計** | - | **~850行** | - |
+| モジュール                | 優先度 | 削減コード量 | 影響範囲                              |
+| ------------------------- | ------ | ------------ | ------------------------------------- |
+| `exception_handlers` 統一 | 🔥 高  | ~500行       | core_api, manual_api, ai_api, rag_api |
+| `datetime_utils`          | 🔥 高  | ~50行        | rag_api, ledger_api                   |
+| `cors_config`             | 🟡 中  | ~100行       | 全サービス                            |
+| `base_settings`           | 🟡 中  | ~200行       | 全サービス                            |
+| **合計**                  | -      | **~850行**   | -                                     |
 
 ---
 
@@ -553,6 +553,7 @@ timestamp = format_datetime_jp(now_in_app_timezone())  # シンプル＆効率�
 **目的**: 既存コードに影響を与えずに共通機能を準備
 
 **作業内容**:
+
 1. `backend_shared/src/backend_shared/utils/datetime_utils.py` を作成
 2. `backend_shared/src/backend_shared/infra/frameworks/cors_config.py` を作成
 3. `backend_shared/src/backend_shared/config/base_settings.py` を作成
@@ -560,6 +561,7 @@ timestamp = format_datetime_jp(now_in_app_timezone())  # シンプル＆効率�
 5. backend_shared のバージョンアップ（例: 0.2.0）
 
 **成果物**:
+
 - 新規モジュール3つ
 - ユニットテスト
 - README更新
@@ -573,6 +575,7 @@ timestamp = format_datetime_jp(now_in_app_timezone())  # シンプル＆効率�
 **目的**: 新規モジュールの動作確認とフィードバック収集
 
 **作業内容**:
+
 1. rag_api で `datetime_utils` を使用するようリファクタリング
    - `dummy_response_service.py` を修正
    - `ai_response_service.py` を修正
@@ -582,6 +585,7 @@ timestamp = format_datetime_jp(now_in_app_timezone())  # シンプル＆効率�
 4. テスト実行
 
 **成果物**:
+
 - rag_api リファクタリング完了
 - 動作確認レポート
 
@@ -594,20 +598,25 @@ timestamp = format_datetime_jp(now_in_app_timezone())  # シンプル＆効率�
 **目的**: 全サービスで共通モジュールを使用
 
 **作業内容**:
+
 1. **エラーハンドリング統一**:
+
    - core_api の `exception_handlers.py` (254行) を削除
    - manual_api のエラーハンドラを統一版に置き換え
    - ai_api, rag_api のエラーハンドラを統一版に置き換え
 
 2. **日付処理統一**:
+
    - ledger_api で `datetime_utils` を使用
 
 3. **CORS設定統一**:
+
    - ai_api, core_api, ledger_api, manual_api で `cors_config` を使用
 
 4. **各サービスで動作確認**
 
 **成果物**:
+
 - 全サービスでリファクタリング完了
 - 統合テスト完了
 
@@ -620,6 +629,7 @@ timestamp = format_datetime_jp(now_in_app_timezone())  # シンプル＆効率�
 **目的**: リファクタリング成果の定着と今後の方針策定
 
 **作業内容**:
+
 1. backend_shared の README を更新
    - 新規モジュールの使用方法を記載
    - サンプルコードを追加
@@ -629,6 +639,7 @@ timestamp = format_datetime_jp(now_in_app_timezone())  # シンプル＆効率�
 4. 今後の共通化候補を整理（IAP認証など）
 
 **成果物**:
+
 - 更新されたドキュメント
 - 継続的改善計画
 

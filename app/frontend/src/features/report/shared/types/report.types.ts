@@ -14,8 +14,8 @@ import type { CsvDefinition } from './CsvDefinition';
 export type CsvConfig = CsvDefinition;
 
 export type CsvConfigEntry = {
-    config: CsvConfig;
-    required: boolean;
+  config: CsvConfig;
+  required: boolean;
 };
 
 export type CsvFiles = { [csvLabel: string]: File | null };
@@ -23,59 +23,59 @@ export type CsvFiles = { [csvLabel: string]: File | null };
 export type ValidationResult = 'valid' | 'invalid' | 'unknown';
 
 export type StepProps = {
-    steps: string[];
-    currentStep: number;
-    setCurrentStep: (step: number) => void;
+  steps: string[];
+  currentStep: number;
+  setCurrentStep: (step: number) => void;
 };
 
 export type FileProps = {
-    csvConfigs: CsvConfigEntry[];  // CsvConfig[] → CsvConfigEntry[] に修正
-    files: CsvFiles;
-    onUploadFile: (label: string, file: File | null) => void;
+  csvConfigs: CsvConfigEntry[]; // CsvConfig[] → CsvConfigEntry[] に修正
+  files: CsvFiles;
+  onUploadFile: (label: string, file: File | null) => void;
 };
 
 export type PreviewProps = {
-    previewUrl: string | null;
-    setPreviewUrl: (url: string | null) => void;
+  previewUrl: string | null;
+  setPreviewUrl: (url: string | null) => void;
 };
 
 export type ModalProps = {
-    modalOpen: boolean;
-    setModalOpen: (b: boolean) => void;
+  modalOpen: boolean;
+  setModalOpen: (b: boolean) => void;
 };
 
 export type FinalizedProps = {
-    finalized: boolean;
-    setFinalized: (b: boolean) => void;
+  finalized: boolean;
+  setFinalized: (b: boolean) => void;
 };
 
 export type LoadingProps = {
-    loading: boolean;
-    setLoading: (b: boolean) => void;
+  loading: boolean;
+  setLoading: (b: boolean) => void;
 };
 
 // 帳簿期間タイプ
 export type ReportBaseProps = {
-    step: StepProps;
-    file: FileProps;
-    preview: PreviewProps;
-    modal: ModalProps;
-    finalized: FinalizedProps;
-    loading: LoadingProps;
-    reportKey: ReportKey;
+  step: StepProps;
+  file: FileProps;
+  preview: PreviewProps;
+  modal: ModalProps;
+  finalized: FinalizedProps;
+  loading: LoadingProps;
+  reportKey: ReportKey;
 };
 
 export type UploadFileConfig = {
-    label: string;
-    file: File | null;
-    onChange: (file: File | null) => void;
-    required: boolean;
-    validationResult: ValidationResult;
-    onRemove: () => void;
+  label: string;
+  file: File | null;
+  onChange: (file: File | null) => void;
+  required: boolean;
+  validationResult: ValidationResult;
+  onRemove: () => void;
 };
 
 export type MakeUploadPropsFn = (label: string) => UploadProps;
 
 export interface SampleSectionProps {
-    sampleImageUrl?: string;
+  sampleImageUrl?: string;
 }

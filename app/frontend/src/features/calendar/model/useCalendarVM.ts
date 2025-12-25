@@ -23,7 +23,9 @@ export function useCalendarVM({ repository, year, month }: Params) {
         if (!cancel) setLoading(false);
       }
     })();
-    return () => { cancel = true; };
+    return () => {
+      cancel = true;
+    };
   }, [repository, year, month]);
 
   // 7x6 グリッド（前月・翌月含む）に整形（簡易版）
@@ -32,7 +34,7 @@ export function useCalendarVM({ repository, year, month }: Params) {
 }
 
 function buildGrid(year: number, month: number, days: CalendarDayDTO[]) {
-  const map = new Map(days.map(d => [d.date, d]));
+  const map = new Map(days.map((d) => [d.date, d]));
   const first = new Date(year, month - 1, 1);
   const last = new Date(year, month, 0);
   const start = startOfIsoWeek(first);
@@ -48,7 +50,7 @@ function buildGrid(year: number, month: number, days: CalendarDayDTO[]) {
     const key = `${cur.getFullYear()}-${pad(cur.getMonth() + 1)}-${pad(cur.getDate())}`;
     const inMonth = cur >= first && cur <= last;
     const existing = map.get(key);
-    
+
     // バックエンドからデータがあればそれを優先使用
     // バックエンドにはiso_year, iso_week, iso_dowなど全て含まれている
     const base: CalendarDayDTO = existing ?? {
@@ -61,14 +63,14 @@ function buildGrid(year: number, month: number, days: CalendarDayDTO[]) {
       is_holiday: false,
       is_second_sunday: false,
       is_company_closed: false,
-      day_type: "NORMAL",
+      day_type: 'NORMAL',
       is_business: true,
       date: key,
       isHoliday: false,
     };
     cells.push({ ...base, inMonth });
   }
-  const rows: typeof cells[] = [];
+  const rows: (typeof cells)[] = [];
   for (let r = 0; r < 6; r++) rows.push(cells.slice(r * 7, r * 7 + 7));
   return rows;
 }

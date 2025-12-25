@@ -1,11 +1,11 @@
 /**
  * 受入ダッシュボード - Domain Types
  * DTO型定義（API/Repository層のコントラクト）
- * 
+ *
  * @deprecated IsoMonth, IsoDate型は @shared から使用してください
  */
 
-import type { IsoMonth, IsoDate } from "@shared";
+import type { IsoMonth, IsoDate } from '@shared';
 
 /**
  * @deprecated 代わりに @shared/utils/dateUtils の IsoMonth を使用してください
@@ -70,9 +70,21 @@ export type WeekRowDTO = {
   portion_in_month: number;
   targets: { week: number };
   comparisons: {
-    vs_prev_week: { delta_ton: number | null; delta_pct: number | null; align_note: string };
-    vs_prev_month_same_idx: { delta_ton: number | null; delta_pct: number | null; align_note: string };
-    vs_prev_year_same_idx: { delta_ton: number | null; delta_pct: number | null; align_note: string };
+    vs_prev_week: {
+      delta_ton: number | null;
+      delta_pct: number | null;
+      align_note: string;
+    };
+    vs_prev_month_same_idx: {
+      delta_ton: number | null;
+      delta_pct: number | null;
+      align_note: string;
+    };
+    vs_prev_year_same_idx: {
+      delta_ton: number | null;
+      delta_pct: number | null;
+      align_note: string;
+    };
   };
 };
 

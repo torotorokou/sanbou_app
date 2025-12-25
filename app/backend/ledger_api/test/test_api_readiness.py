@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 API エンドポイントの動作確認スクリプト
 
@@ -21,22 +20,25 @@ def test_imports():
     print("🔍 モジュールインポートテスト")
     print("=" * 80)
     print()
-    
+
     test_cases = [
         ("api.routers.reports.average_sheet", "average_sheet エンドポイント"),
         ("api.routers.reports.balance_sheet", "balance_sheet エンドポイント"),
         ("api.routers.reports.factory_report", "factory_report エンドポイント"),
         ("api.routers.reports.management_sheet", "management_sheet エンドポイント"),
-        ("api.routers.reports.block_unit_price_interactive", "block_unit_price_interactive エンドポイント"),
+        (
+            "api.routers.reports.block_unit_price_interactive",
+            "block_unit_price_interactive エンドポイント",
+        ),
         ("api.routers.report_artifacts", "report_artifacts エンドポイント"),
         ("core.usecases.reports", "レポートUseCases"),
         ("core.usecases.reports.processors", "レポート処理サービス"),
         ("infra.adapters.csv", "CSV アダプター"),
     ]
-    
+
     success_count = 0
     failed_imports = []
-    
+
     for module_path, description in test_cases:
         try:
             full_path = f"app.{module_path}"
@@ -46,10 +48,10 @@ def test_imports():
         except Exception as e:
             print(f"❌ {description:50s} FAILED")
             failed_imports.append((description, str(e)))
-    
+
     print()
     print(f"結果: {success_count}/{len(test_cases)} 成功")
-    
+
     if failed_imports:
         print()
         print("=" * 80)
@@ -59,7 +61,7 @@ def test_imports():
             print(f"\n{desc}:")
             print(f"  エラー: {error}")
         return False
-    
+
     print()
     print("=" * 80)
     print("✅ すべてのモジュールが正常にインポートできました")
@@ -74,29 +76,44 @@ def test_class_instantiation():
     print("🔍 クラスインスタンス化テスト")
     print("=" * 80)
     print()
-    
+
     test_cases = []
     success_count = 0
     failed_tests = []
-    
+
     # UseCaseクラスのテスト（推奨アーキテクチャ）
     try:
         from app.core.usecases.reports import (
-            GenerateFactoryReportUseCase,
-            GenerateBalanceSheetUseCase,
             GenerateAverageSheetUseCase,
+            GenerateBalanceSheetUseCase,
+            GenerateFactoryReportUseCase,
             GenerateManagementSheetUseCase,
         )
+
         # UseCaseはDI経由でインスタンス化されるため、クラス存在確認のみ
-        test_cases.extend([
-            (lambda: GenerateFactoryReportUseCase, "GenerateFactoryReportUseCase (class check)"),
-            (lambda: GenerateBalanceSheetUseCase, "GenerateBalanceSheetUseCase (class check)"),
-            (lambda: GenerateAverageSheetUseCase, "GenerateAverageSheetUseCase (class check)"),
-            (lambda: GenerateManagementSheetUseCase, "GenerateManagementSheetUseCase (class check)"),
-        ])
+        test_cases.extend(
+            [
+                (
+                    lambda: GenerateFactoryReportUseCase,
+                    "GenerateFactoryReportUseCase (class check)",
+                ),
+                (
+                    lambda: GenerateBalanceSheetUseCase,
+                    "GenerateBalanceSheetUseCase (class check)",
+                ),
+                (
+                    lambda: GenerateAverageSheetUseCase,
+                    "GenerateAverageSheetUseCase (class check)",
+                ),
+                (
+                    lambda: GenerateManagementSheetUseCase,
+                    "GenerateManagementSheetUseCase (class check)",
+                ),
+            ]
+        )
     except ImportError as e:
         print(f"⚠️  UseCaseのインポートに失敗: {e}")
-    
+
     # 旧版Generatorクラス（互換性維持用、将来的に廃止予定）
     try:
         from app.core.usecases.reports.concrete_generators import (
@@ -105,40 +122,59 @@ def test_class_instantiation():
             FactoryReportGenerator,
             ManagementSheetGenerator,
         )
+
         # 各生成器は report_key と files を必要とする
-        test_cases.extend([
-            (lambda: AverageSheetGenerator(report_key="average_sheet", files={}), "AverageSheetGenerator (legacy)"),
-            (lambda: BalanceSheetGenerator(report_key="balance_sheet", files={}), "BalanceSheetGenerator (legacy)"),
-            (lambda: FactoryReportGenerator(report_key="factory_report", files={}), "FactoryReportGenerator (legacy)"),
-            (lambda: ManagementSheetGenerator(report_key="management_sheet", files={}), "ManagementSheetGenerator (legacy)"),
-        ])
+        test_cases.extend(
+            [
+                (
+                    lambda: AverageSheetGenerator(report_key="average_sheet", files={}),
+                    "AverageSheetGenerator (legacy)",
+                ),
+                (
+                    lambda: BalanceSheetGenerator(report_key="balance_sheet", files={}),
+                    "BalanceSheetGenerator (legacy)",
+                ),
+                (
+                    lambda: FactoryReportGenerator(report_key="factory_report", files={}),
+                    "FactoryReportGenerator (legacy)",
+                ),
+                (
+                    lambda: ManagementSheetGenerator(report_key="management_sheet", files={}),
+                    "ManagementSheetGenerator (legacy)",
+                ),
+            ]
+        )
     except ImportError as e:
         print(f"⚠️  旧版生成器のインポートに失敗: {e}")
-    
+
     try:
         from app.core.usecases.reports.interactive import BlockUnitPriceInteractive
-        test_cases.append(
-            (lambda: BlockUnitPriceInteractive(), "BlockUnitPriceInteractive")
-        )
+
+        test_cases.append((lambda: BlockUnitPriceInteractive(), "BlockUnitPriceInteractive"))
     except ImportError as e:
         print(f"⚠️  BlockUnitPriceInteractive のインポートに失敗: {e}")
-    
+
     try:
         from app.core.usecases.reports.processors import ReportProcessingService
-        test_cases.append(
-            (lambda: ReportProcessingService(), "ReportProcessingService")
-        )
+
+        test_cases.append((lambda: ReportProcessingService(), "ReportProcessingService"))
     except ImportError as e:
         print(f"⚠️  ReportProcessingService のインポートに失敗: {e}")
-    
+
     try:
-        from app.core.usecases.reports.processors import InteractiveReportProcessingService
+        from app.core.usecases.reports.processors import (
+            InteractiveReportProcessingService,
+        )
+
         test_cases.append(
-            (lambda: InteractiveReportProcessingService(), "InteractiveReportProcessingService")
+            (
+                lambda: InteractiveReportProcessingService(),
+                "InteractiveReportProcessingService",
+            )
         )
     except ImportError as e:
         print(f"⚠️  InteractiveReportProcessingService のインポートに失敗: {e}")
-    
+
     for instantiate_func, class_name in test_cases:
         try:
             _ = instantiate_func()  # インスタンス化のみ確認
@@ -147,10 +183,10 @@ def test_class_instantiation():
         except Exception as e:
             print(f"❌ {class_name:50s} FAILED")
             failed_tests.append((class_name, str(e)))
-    
+
     print()
     print(f"結果: {success_count}/{len(test_cases)} 成功")
-    
+
     if failed_tests:
         print()
         print("=" * 80)
@@ -160,7 +196,7 @@ def test_class_instantiation():
             print(f"\n{class_name}:")
             print(f"  エラー: {error}")
         return False
-    
+
     print()
     print("=" * 80)
     print("✅ すべてのクラスが正常にインスタンス化できました")
@@ -175,31 +211,31 @@ def test_no_st_app_imports():
     print("🔍 st_app 依存チェック")
     print("=" * 80)
     print()
-    
+
     api_dir = project_root / "app" / "api"
     if not api_dir.exists():
         print(f"❌ {api_dir} が見つかりません")
         return False
-    
+
     st_app_imports = []
-    
+
     for py_file in api_dir.rglob("*.py"):
         if "__pycache__" in str(py_file):
             continue
-        
+
         try:
-            with open(py_file, 'r', encoding='utf-8') as f:
+            with open(py_file, encoding="utf-8") as f:
                 content = f.read()
-                
-            if 'st_app' in content or 'from app.st_app' in content:
+
+            if "st_app" in content or "from app.st_app" in content:
                 # 詳細チェック
                 for line_num, line in enumerate(content.splitlines(), 1):
-                    if 'import' in line and 'st_app' in line:
+                    if "import" in line and "st_app" in line:
                         relative_path = py_file.relative_to(project_root)
                         st_app_imports.append((str(relative_path), line_num, line.strip()))
         except Exception as e:
             print(f"⚠️  {py_file} の読み込みに失敗: {e}")
-    
+
     if st_app_imports:
         print("❌ app/api 内に st_app へのインポートが見つかりました:")
         print()
@@ -208,7 +244,7 @@ def test_no_st_app_imports():
             print(f"     {line}")
             print()
         return False
-    
+
     print("✅ app/api 内に st_app への依存はありません")
     print()
     print("=" * 80)
@@ -222,13 +258,14 @@ def test_utility_functions():
     print("🔍 ユーティリティ関数テスト")
     print("=" * 80)
     print()
-    
+
     success_count = 0
     failed_tests = []
-    
+
     # logger のテスト
     try:
         from app.api.services.report.utils.logging import app_logger
+
         logger = app_logger()
         logger.info("Test log message")
         print("✅ logger                                                  OK")
@@ -236,10 +273,11 @@ def test_utility_functions():
     except Exception as e:
         print("❌ logger                                                  FAILED")
         failed_tests.append(("logger", str(e)))
-    
+
     # config のテスト
     try:
         from app.infra.report_utils import get_template_config
+
         config = get_template_config()
         assert isinstance(config, dict), "config は辞書である必要があります"
         print("✅ get_template_config                                    OK")
@@ -247,21 +285,24 @@ def test_utility_functions():
     except Exception as e:
         print("❌ get_template_config                                    FAILED")
         failed_tests.append(("get_template_config", str(e)))
-    
+
     # MainPath のテスト
     try:
         from app.infra.report_utils import MainPath
+
         _ = MainPath()  # インスタンス化のみ確認
         print("✅ MainPath                                               OK")
         success_count += 1
     except Exception as e:
         print("❌ MainPath                                               FAILED")
         failed_tests.append(("MainPath", str(e)))
-    
+
     # date_tools のテスト
     try:
-        from app.infra.report_utils.formatters import get_weekday_japanese
         from datetime import date
+
+        from app.infra.report_utils.formatters import get_weekday_japanese
+
         weekday = get_weekday_japanese(date(2024, 1, 1))
         assert isinstance(weekday, str), "曜日は文字列である必要があります"
         print("✅ get_weekday_japanese                                   OK")
@@ -269,10 +310,10 @@ def test_utility_functions():
     except Exception as e:
         print("❌ get_weekday_japanese                                   FAILED")
         failed_tests.append(("get_weekday_japanese", str(e)))
-    
+
     print()
     print(f"結果: {success_count}/4 成功")
-    
+
     if failed_tests:
         print()
         print("=" * 80)
@@ -282,7 +323,7 @@ def test_utility_functions():
             print(f"\n{func_name}:")
             print(f"  エラー: {error}")
         return False
-    
+
     print()
     print("=" * 80)
     print("✅ すべてのユーティリティ関数が正常に動作しました")
@@ -300,32 +341,32 @@ def main():
     print("このスクリプトは、st_app を削除する前に")
     print("すべての API エンドポイントが正常に動作することを確認します。")
     print()
-    
+
     # テストの実行
     results = []
-    
+
     results.append(("モジュールインポート", test_imports()))
     results.append(("st_app 依存チェック", test_no_st_app_imports()))
     results.append(("クラスインスタンス化", test_class_instantiation()))
     results.append(("ユーティリティ関数", test_utility_functions()))
-    
+
     # 結果のサマリー
     print()
     print("=" * 80)
     print("📊 テスト結果サマリー")
     print("=" * 80)
     print()
-    
+
     all_passed = True
     for test_name, result in results:
         status = "✅ PASS" if result else "❌ FAIL"
         print(f"  {test_name:30s} {status}")
         if not result:
             all_passed = False
-    
+
     print()
     print("=" * 80)
-    
+
     if all_passed:
         print("✅ すべてのテストが成功しました！")
         print()

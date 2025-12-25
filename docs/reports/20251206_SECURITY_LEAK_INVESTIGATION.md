@@ -72,19 +72,20 @@ ab307d2d (2025-12-04 10:20) - feat(security): DBユーザー分離・パスワ�
 - POSTGRES_HOST=db                    # 機密度: 低（Docker 内部）
 - POSTGRES_PORT=5432                  # 機密度: 低
 - POSTGRES_DB=sanbou_prod            # 機密度: 低
-- GCP_PROJECT_ID=honest-sanbou-app-prod  # 機密度: 中
+- GCP_PROJECT_ID=your-project-id     # 機密度: 中
 - FRONTEND_URL=https://...           # 機密度: 低（公開情報）
 - AUTH_MODE=iap                      # 機密度: 低
 - IAP_AUDIENCE=                      # 機密度: 高（空の場合は安全）
 
 ❌ 含まれていなかった情報（確認済み）:
 - POSTGRES_PASSWORD                   # secrets/ に分離されていた ✅
-- POSTGRES_USER                       # 一部の commit で "myuser" 程度 ⚠️
+- POSTGRES_USER                       # 一部の commit で "dbuser" 程度 ⚠️
 - GCP_SERVICE_ACCOUNT_KEY             # secrets/ に分離 ✅
 - API キー                            # 含まれず ✅
 ```
 
 **重要な発見**:
+
 ```bash
 # 過去の commit を確認:
 $ git show 618116b9:env/.env.vm_prod | grep POSTGRES
@@ -179,12 +180,13 @@ secrets/.env.secrets.template
 
 1. **既に Git 管理から削除済み**: commit 65053574 で削除
 2. **.gitignore で除外設定済み**: `/env/` と `/secrets/` で除外
-3. **VSCode の仕様**: 
+3. **VSCode の仕様**:
    - 薄い灰色 = Git 管理されていないファイル
    - 通常の色 = .gitignore で除外されているファイル
    - 実際には問題なく動作しています
 
 **確認方法**:
+
 ```bash
 # VSCode のソース管理タブで確認:
 # - env/ と secrets/ のファイルが表示されない → 正常
@@ -204,6 +206,7 @@ nothing to commit, working tree clean
 ### 高リスク（即座に対応必要）
 
 #### ❌ なし
+
 - パスワード: 含まれず ✅
 - API キー: 含まれず ✅
 - GCP サービスアカウント鍵: 含まれず ✅
@@ -212,10 +215,11 @@ nothing to commit, working tree clean
 ### 中リスク（24時間以内に対応推奨）
 
 #### 1. GCP_PROJECT_ID の流出
+
 ```
-流出情報: GCP_PROJECT_ID=honest-sanbou-app-prod
+流出情報: GCP_PROJECT_ID=your-project-id
 リスク: プロジェクト名が判明 → 攻撃対象の特定
-対策: 
+対策:
   ✅ IAP で保護済み（外部からアクセス不可）
   ✅ Cloud Armor でファイアウォール設定
   ⚠️ プロジェクト名変更は現実的でない
@@ -223,8 +227,9 @@ nothing to commit, working tree clean
 ```
 
 #### 2. POSTGRES_USER の流出（一部の commit）
+
 ```
-流出情報: POSTGRES_USER=myuser
+流出情報: POSTGRES_USER=dbuser
 リスク: DB ユーザー名が判明 → ブルートフォース攻撃の対象
 対策:
   ✅ DB は内部ネットワークのみ（外部からアクセス不可）
@@ -235,6 +240,7 @@ nothing to commit, working tree clean
 ### 低リスク（情報として把握）
 
 #### 3. DB ホスト名・ポート番号
+
 ```
 流出情報: POSTGRES_HOST=db, POSTGRES_PORT=5432
 リスク: Docker 内部名のため、外部から意味なし
@@ -242,6 +248,7 @@ nothing to commit, working tree clean
 ```
 
 #### 4. DB 名
+
 ```
 流出情報: POSTGRES_DB=sanbou_prod
 リスク: データベース名が判明
@@ -253,6 +260,7 @@ nothing to commit, working tree clean
 ## 🛡️ 実施済み対策
 
 ### 1. Git 管理からの削除 ✅
+
 ```bash
 commit 65053574 (2025-12-06 11:27)
 - env/.env.common
@@ -263,18 +271,21 @@ commit 65053574 (2025-12-06 11:27)
 ```
 
 ### 2. .gitignore の強化 ✅
+
 ```gitignore
 /env/       # ディレクトリレベルで除外
 /secrets/   # ディレクトリレベルで除外
 ```
 
 ### 3. Pre-commit フック ✅
+
 ```bash
 場所: .git/hooks/pre-commit
 機能: 機密ファイルの commit を自動ブロック
 ```
 
 ### 4. Git 履歴削除スクリプト ✅
+
 ```bash
 場所: scripts/cleanup_git_history.sh
 機能: git-filter-repo で履歴から完全削除
@@ -288,11 +299,13 @@ commit 65053574 (2025-12-06 11:27)
 
 **現状**: env/ ファイルは Git 管理から削除されたが、履歴には残存
 
-**リスク**: 
+**リスク**:
+
 - 過去の commit から情報を取得可能
 - `git show 618116b9:env/.env.vm_prod` で閲覧可能
 
 **対策**:
+
 ```bash
 # 実行コマンド:
 cd /home/koujiro/work_env/22.Work_React/sanbou_app
@@ -315,6 +328,7 @@ git push origin --force --tags
 **理由**: POSTGRES_USER=myuser が一部の commit に含まれる
 
 **手順**:
+
 ```bash
 # 本番環境
 ssh k_tsuchida@34.180.102.141
@@ -349,6 +363,7 @@ docker compose -f docker/docker-compose.prod.yml restart
 ### Priority 3: リポジトリの可視性確認
 
 **確認事項**:
+
 ```bash
 # GitHub リポジトリの設定
 https://github.com/torotorokou/sanbou_app/settings
@@ -366,6 +381,7 @@ https://github.com/torotorokou/sanbou_app/settings
 ### Priority 4: GitHub Secret Scanning の有効化
 
 **設定**:
+
 ```bash
 # Settings → Security → Code security and analysis
 # ✅ Secret scanning
@@ -380,6 +396,7 @@ https://github.com/torotorokou/sanbou_app/settings
 ### Priority 5: モニタリング強化
 
 **設定**:
+
 ```bash
 # Cloud Logging でアラート作成:
 # 1. 本番 DB への不審な接続試行
@@ -398,22 +415,23 @@ https://github.com/torotorokou/sanbou_app/settings
 
 ### 流出状況まとめ
 
-| 項目 | 流出 | リスク | 対策状況 |
-|------|------|--------|----------|
-| POSTGRES_PASSWORD | ❌ なし | - | ✅ secrets/ で管理 |
-| GCP サービスアカウント鍵 | ❌ なし | - | ✅ secrets/ で管理 |
-| API キー | ❌ なし | - | ✅ secrets/ で管理 |
-| IAP_AUDIENCE | ⚠️ 空欄 | 低 | ✅ 問題なし |
-| GCP_PROJECT_ID | ✅ あり | 中 | ⚠️ モニタリング強化 |
-| POSTGRES_USER | ✅ あり | 中 | ⚠️ 変更推奨 |
-| DB ホスト・ポート | ✅ あり | 低 | ✅ 内部ネットワークのみ |
-| DB 名 | ✅ あり | 低 | ✅ 内部ネットワークのみ |
+| 項目                     | 流出    | リスク | 対策状況                |
+| ------------------------ | ------- | ------ | ----------------------- |
+| POSTGRES_PASSWORD        | ❌ なし | -      | ✅ secrets/ で管理      |
+| GCP サービスアカウント鍵 | ❌ なし | -      | ✅ secrets/ で管理      |
+| API キー                 | ❌ なし | -      | ✅ secrets/ で管理      |
+| IAP_AUDIENCE             | ⚠️ 空欄 | 低     | ✅ 問題なし             |
+| GCP_PROJECT_ID           | ✅ あり | 中     | ⚠️ モニタリング強化     |
+| POSTGRES_USER            | ✅ あり | 中     | ⚠️ 変更推奨             |
+| DB ホスト・ポート        | ✅ あり | 低     | ✅ 内部ネットワークのみ |
+| DB 名                    | ✅ あり | 低     | ✅ 内部ネットワークのみ |
 
 ### 総合評価
 
 **リスクレベル**: 🟡 中（即座の侵害リスクは低いが、履歴削除は必須）
 
 **理由**:
+
 1. ✅ パスワードや API キーは流出していない
 2. ✅ DB は内部ネットワークのみ（外部からアクセス不可）
 3. ✅ IAP で本番環境を保護
@@ -423,18 +441,14 @@ https://github.com/torotorokou/sanbou_app/settings
 ### 次のアクション
 
 **今すぐ実行**:
+
 1. ✅ .gitignore 設定完了（commit f7e579c8）
 2. ✅ Pre-commit フック導入完了
 3. 🔲 Git 履歴削除（`bash scripts/cleanup_git_history.sh`）
 
-**24時間以内**:
-4. 🔲 DB ユーザー名・パスワード変更
-5. 🔲 リポジトリ可視性確認
-6. 🔲 Secret Scanning 有効化
+**24時間以内**: 4. 🔲 DB ユーザー名・パスワード変更 5. 🔲 リポジトリ可視性確認 6. 🔲 Secret Scanning 有効化
 
-**1週間以内**:
-7. 🔲 モニタリング強化
-8. 🔲 定期ローテーション計画の策定
+**1週間以内**: 7. 🔲 モニタリング強化 8. 🔲 定期ローテーション計画の策定
 
 ---
 

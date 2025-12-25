@@ -1,4 +1,5 @@
 import re
+
 import pandas as pd
 
 
@@ -40,9 +41,7 @@ def create_label_rows_generic(
     df_label = df.copy()
 
     # セルをオフセット行だけずらす
-    df_label[cell_column] = df_label[cell_column].apply(
-        lambda x: shift_cell_row(x, offset)
-    )
+    df_label[cell_column] = df_label[cell_column].apply(lambda x: shift_cell_row(x, offset))
 
     # ラベル値を値列にコピー
     df_label[value_column] = df[label_source_col]
@@ -82,9 +81,7 @@ def sort_by_cell_row(df: pd.DataFrame, cell_col: str = "セル") -> pd.DataFrame
 
     df["_セル行"] = df[cell_col].apply(extract_row_number)
     df = (
-        df.sort_values("_セル行", na_position="last")
-        .drop(columns="_セル行")
-        .reset_index(drop=True)
+        df.sort_values("_セル行", na_position="last").drop(columns="_セル行").reset_index(drop=True)
     )
     return df
 

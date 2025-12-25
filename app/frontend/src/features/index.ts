@@ -2,6 +2,9 @@
  * Features - Public API
  */
 
+// Portal - ポータルページ関連コンポーネント
+export * from './portal';
+
 // WipNotice - 開発中機能警告バナー
 export { WipNotice, type WipNoticeProps } from './wip-notice';
 
@@ -27,5 +30,5 @@ export {
   type CsvFileValidatorOptions,
 } from './csv-validation';
 
-// Database (includes dataset-import, dataset-submit, dataset-preview, etc.)
-export * from './database';
+// Dataset (includes dataset-import, dataset-submit, dataset-preview, etc.)
+export * from './dataset';

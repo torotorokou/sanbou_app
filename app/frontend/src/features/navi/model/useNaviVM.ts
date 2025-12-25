@@ -22,8 +22,7 @@ function getErrorMessage(error: unknown): { title: string; message: string } {
       case 'OPENAI_RATE_LIMIT':
         return {
           title: 'レート制限',
-          message:
-            'OpenAI APIのレート制限に達しました。しばらく時間をおいて再度お試しください。',
+          message: 'OpenAI APIのレート制限に達しました。しばらく時間をおいて再度お試しください。',
         };
       case 'OPENAI_ERROR':
         return {
@@ -46,7 +45,6 @@ function getErrorMessage(error: unknown): { title: string; message: string } {
     message: errorMessage,
   };
 }
-
 
 /**
  * Naviチャット機能のViewModel Hook
@@ -94,10 +92,7 @@ export function useNaviChat() {
   }, [repo, addNotification]);
 
   // タグの一意化・空除去（送信用）
-  const tagsToSend = useMemo(
-    () => Array.from(new Set(tags)).filter(Boolean),
-    [tags]
-  );
+  const tagsToSend = useMemo(() => Array.from(new Set(tags)).filter(Boolean), [tags]);
 
   // タグは最大3件までに制限するハンドラ
   const handleSetTag = (val: string[] | ((prev: string[]) => string[])) => {
@@ -155,23 +150,21 @@ export function useNaviChat() {
       addNotification({
         type: 'success',
         title: 'AI応答を取得しました',
-        message: result.pdfUrl
-          ? '回答とPDFリンクを受信しました。'
-          : '回答を受信しました。',
+        message: result.pdfUrl ? '回答とPDFリンクを受信しました。' : '回答を受信しました。',
         duration: 2500,
       });
     } catch (err: unknown) {
       console.error('[API][ERROR]', err);
-      
+
       // エラーコードに応じたメッセージを取得
       const { title, message } = getErrorMessage(err);
-      
+
       // エラー詳細を回答欄に表示
       let displayMessage = message;
       if (err instanceof RagChatError && err.hint) {
         displayMessage += `\n\nヒント: ${err.hint}`;
       }
-      
+
       setAnswer(`❌ ${displayMessage}`);
       setPdfUrl(null);
 
@@ -179,7 +172,8 @@ export function useNaviChat() {
         type: 'error',
         title,
         message,
-        duration: err instanceof RagChatError && err.code === 'OPENAI_INSUFFICIENT_QUOTA' ? 8000 : 4000,
+        duration:
+          err instanceof RagChatError && err.code === 'OPENAI_INSUFFICIENT_QUOTA' ? 8000 : 4000,
       });
     } finally {
       setLoading(false);

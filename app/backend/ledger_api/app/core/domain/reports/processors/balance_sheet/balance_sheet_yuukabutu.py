@@ -1,8 +1,13 @@
 import pandas as pd
-from app.infra.report_utils import get_template_config, load_master_and_template
-from app.infra.report_utils import get_unit_price_table_csv
+
+from app.infra.report_utils import (
+    get_template_config,
+    load_master_and_template,
+)
 from app.infra.report_utils.formatters import summary_apply
-from app.infra.report_utils.formatters.multiply_optimized import multiply_columns_optimized
+from app.infra.report_utils.formatters.multiply_optimized import (
+    multiply_columns_optimized,
+)
 from app.infra.report_utils.formatters.summary_optimized import summary_apply_optimized
 
 
@@ -13,7 +18,7 @@ def calculate_total_valuable_material_cost(
 ) -> int:
     """
     有価物の合計を計算する。
-    
+
     Args:
         df_yard: ヤードデータ
         df_shipment: 出荷データ
@@ -51,7 +56,7 @@ def calculate_valuable_material_cost_by_item(
 ) -> pd.DataFrame:
     """
     ヤードの有価物を品名別に計算（数量×単価）。
-    
+
     最適化版を使用:
     - summary_apply_optimized: master_csvのcopy()を1回だけ実行
     - multiply_columns_optimized: 不要なcopy()を削減
@@ -86,6 +91,6 @@ def calculate_valuable_material_cost_by_item(
     result_df = multiply_columns_optimized(
         master_with_price, col1="設定単価", col2="数量", result_col="値"
     )
-    
+
     result_df = result_df.rename(columns={"品名": "大項目"})
     return result_df

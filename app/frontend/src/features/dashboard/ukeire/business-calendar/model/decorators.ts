@@ -1,8 +1,8 @@
-import type { CalendarDayDTO } from "@/features/calendar/domain/types";
+import type { CalendarDayDTO } from '@/features/calendar/domain/types';
 
 type DecoratedCell = CalendarDayDTO & {
   inMonth: boolean;
-  status?: "business" | "holiday" | "closed";
+  status?: 'business' | 'holiday' | 'closed';
   label?: string;
   color?: string;
 };
@@ -17,7 +17,7 @@ export function decorateCalendarCells(
 ): DecoratedCell[][] {
   return grid.map((row) =>
     row.map((cell) => {
-      let status: "business" | "holiday" | "closed";
+      let status: 'business' | 'holiday' | 'closed';
       let label: string | undefined;
       let color: string;
 
@@ -26,21 +26,21 @@ export function decorateCalendarCells(
       // RESERVATION: 予約営業日（ピンク）
       // CLOSED: 休業日（赤）
       switch (cell.day_type) {
-        case "CLOSED":
-          status = "closed";
-          label = "休業日";
-          color = "#cf1322"; // 赤
+        case 'CLOSED':
+          status = 'closed';
+          label = '休業日';
+          color = '#cf1322'; // 赤
           break;
-        case "RESERVATION":
-          status = "holiday";
-          label = cell.is_holiday ? "祝日" : "予約営業日";
-          color = "#ff85c0"; // ピンク
+        case 'RESERVATION':
+          status = 'holiday';
+          label = cell.is_holiday ? '祝日' : '予約営業日';
+          color = '#ff85c0'; // ピンク
           break;
-        case "NORMAL":
+        case 'NORMAL':
         default:
-          status = "business";
+          status = 'business';
           label = undefined;
-          color = "#52c41a"; // 緑
+          color = '#52c41a'; // 緑
           break;
       }
 

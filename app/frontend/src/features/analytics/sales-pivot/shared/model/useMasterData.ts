@@ -27,7 +27,7 @@ export function useMasterData(
   const [reps, setReps] = useState<Array<{ id: ID; name: string }>>([]);
   const [customers, setCustomers] = useState<Array<{ id: ID; name: string }>>([]);
   const [items, setItems] = useState<Array<{ id: ID; name: string }>>([]);
-  
+
   // onErrorの最新の参照を保持（依存配列に含めないため）
   const onErrorRef = useRef(onError);
   useEffect(() => {

@@ -31,17 +31,24 @@
 # [Service Name] Documentation
 
 ## 概要
+
 ## ディレクトリ構成
+
 ## 主な機能
+
 ## 技術スタック
+
 ## 開発ガイド
+
 ## 関連ドキュメント
+
 ## 今後の予定
 ```
 
 ## サービス別概要
 
 ### 1. AI API
+
 **パス**: `app/backend/ai_api/docs/`
 
 - OpenAI GPT APIとの連携
@@ -51,6 +58,7 @@
 **技術**: Python, FastAPI, OpenAI GPT API
 
 ### 2. Backend Shared
+
 **パス**: `app/backend/backend_shared/docs/`
 
 - 全サービス共通ライブラリ
@@ -59,6 +67,7 @@
 - エラーハンドリング、ログ管理
 
 **主要コンポーネント**:
+
 - adapters/ - FastAPI統合
 - db/ - データベース基底
 - usecases/ - 共通ユースケース
@@ -67,9 +76,11 @@
 **技術**: Python, SQLAlchemy, Pandas
 
 ### 3. Core API ✓
+
 **パス**: `app/backend/core_api/docs/`
 
 すでに詳細なドキュメント構造あり:
+
 - database/
 - csv-processing/
 - soft-delete/
@@ -78,14 +89,17 @@
 - reports/
 
 ### 4. Ledger API ✓
+
 **パス**: `app/backend/ledger_api/docs/`
 
 すでに詳細なドキュメント構造あり:
+
 - architecture/
 - refactoring/
 - migration/
 
 ### 5. Manual API
+
 **パス**: `app/backend/manual_api/docs/`
 
 - マニュアルカタログ管理
@@ -95,6 +109,7 @@
 **技術**: Python, FastAPI, ファイルシステム
 
 ### 6. Plan Worker
+
 **パス**: `app/backend/plan_worker/docs/`
 
 - 需要予測
@@ -103,6 +118,7 @@
 - バッチ処理
 
 **アルゴリズム**:
+
 - シンプルモデル
 - ゴーストなしモデル
 - 標準モデル（Plus）
@@ -110,6 +126,7 @@
 **技術**: Python, Pandas, NumPy, PostgreSQL, Click
 
 ### 7. RAG API
+
 **パス**: `app/backend/rag_api/docs/`
 
 - PDFドキュメント取り込み
@@ -184,16 +201,19 @@ app/backend/
 ## 次のステップ
 
 ### 優先度: 高
+
 - [ ] Core API: 既存ドキュメントの日付整理（完了済み）
 - [ ] Ledger API: 既存ドキュメントの日付整理（完了済み）
 - [ ] 各サービスのAPI仕様書作成
 
 ### 優先度: 中
+
 - [ ] アーキテクチャ図の追加（全サービス）
 - [ ] エンドポイント一覧の作成（API系）
 - [ ] 利用ガイド・サンプルコード追加
 
 ### 優先度: 低
+
 - [ ] パフォーマンスチューニングガイド
 - [ ] トラブルシューティングガイド
 - [ ] ベストプラクティス集

@@ -41,8 +41,16 @@ export function useQueryBuilder(params: QueryBuilderParams) {
   } = params;
 
   const query: SummaryQuery = useMemo(() => {
-    const base = { mode, categoryKind, repIds, filterIds, sortBy: filterSortBy, order: filterOrder, topN: filterTopN };
-    
+    const base = {
+      mode,
+      categoryKind,
+      repIds,
+      filterIds,
+      sortBy: filterSortBy,
+      order: filterOrder,
+      topN: filterTopN,
+    };
+
     if (granularity === 'date') {
       // 日次モード
       if (periodMode === 'range') {
@@ -68,14 +76,31 @@ export function useQueryBuilder(params: QueryBuilderParams) {
         const r = range || [month, month];
         return {
           ...base,
-          monthRange: { from: r[0].format('YYYY-MM'), to: r[1].format('YYYY-MM') },
+          monthRange: {
+            from: r[0].format('YYYY-MM'),
+            to: r[1].format('YYYY-MM'),
+          },
         };
       } else {
         // 単月
         return { ...base, month: month.format('YYYY-MM') };
       }
     }
-  }, [granularity, periodMode, month, range, singleDate, dateRange, mode, categoryKind, repIds, filterIds, filterSortBy, filterOrder, filterTopN]);
+  }, [
+    granularity,
+    periodMode,
+    month,
+    range,
+    singleDate,
+    dateRange,
+    mode,
+    categoryKind,
+    repIds,
+    filterIds,
+    filterSortBy,
+    filterOrder,
+    filterTopN,
+  ]);
 
   return query;
 }

@@ -3,18 +3,21 @@
 ## ✅ 完了済み対応
 
 ### 1. Git 管理からの削除 ✓
+
 - [x] env/ と secrets/ の実設定ファイルを Git 管理から削除
 - [x] .gitignore を修正してディレクトリレベルで除外
 - [x] テンプレートファイル (.example, .template) のみ Git 管理対象
 - [x] commit & push 済み (commit: 65053574)
 
 ### 2. Pre-commit フックの導入 ✓
+
 - [x] `.git/hooks/pre-commit` を作成
 - [x] 機密ファイルパターンの検出
 - [x] 機密情報（パスワード、API キー）の検出
 - [x] 実行権限付与済み
 
 ### 3. Git 履歴削除スクリプトの準備 ✓
+
 - [x] `scripts/cleanup_git_history.sh` を作成
 - [x] git-filter-repo を使用した安全な削除手順
 - [x] 実行権限付与済み
@@ -31,14 +34,14 @@
 
 ```bash
 # 本番 VM に SSH 接続
-ssh k_tsuchida@34.180.102.141
+ssh username@your.server.ip
 
 # PostgreSQL コンテナに入る
 cd ~/work_env/sanbou_app
 docker compose -f docker/docker-compose.prod.yml exec db psql -U postgres
 
 # パスワード変更
-ALTER USER myuser WITH PASSWORD '新しい強力なパスワード_32文字以上';
+ALTER USER dbuser WITH PASSWORD '新しい強力なパスワード_32文字以上';
 \q
 
 # env と secrets ファイルを更新
@@ -53,6 +56,7 @@ docker compose -f docker/docker-compose.prod.yml restart
 ```
 
 **検証**:
+
 ```bash
 # 接続テスト
 docker compose -f docker/docker-compose.prod.yml exec core_api curl http://localhost:8000/health
@@ -72,11 +76,11 @@ docker compose -f docker/docker-compose.prod.yml exec core_api curl http://local
 ```bash
 # 現在の鍵をリスト
 gcloud iam service-accounts keys list \
-  --iam-account=sanbou-app-sa@honest-sanbou-app-prod.iam.gserviceaccount.com
+  --iam-account=your-service-account@your-project.iam.gserviceaccount.com
 
 # 流出した鍵 ID を無効化（KEY_ID は上記コマンドの出力から）
 gcloud iam service-accounts keys delete <KEY_ID> \
-  --iam-account=sanbou-app-sa@honest-sanbou-app-prod.iam.gserviceaccount.com
+  --iam-account=your-service-account@your-project.iam.gserviceaccount.com
 ```
 
 #### 2.2 新しい鍵を発行
@@ -84,13 +88,13 @@ gcloud iam service-accounts keys delete <KEY_ID> \
 ```bash
 # 新しい鍵を生成
 gcloud iam service-accounts keys create ~/new-gcp-sa-key.json \
-  --iam-account=sanbou-app-sa@honest-sanbou-app-prod.iam.gserviceaccount.com
+  --iam-account=your-service-account@your-project.iam.gserviceaccount.com
 
 # 本番 VM に転送
-scp -i ~/.ssh/gcp_sanbou ~/new-gcp-sa-key.json k_tsuchida@34.180.102.141:~/work_env/sanbou_app/secrets/
+scp -i ~/.ssh/your-ssh-key ~/new-gcp-sa-key.json username@your.server.ip:~/work_env/sanbou_app/secrets/
 
 # VM 上で配置
-ssh k_tsuchida@34.180.102.141
+ssh username@your.server.ip
 cd ~/work_env/sanbou_app
 mv secrets/new-gcp-sa-key.json secrets/gcp-sa-prod.json
 chmod 600 secrets/gcp-sa-prod.json
@@ -104,6 +108,7 @@ docker compose -f docker/docker-compose.prod.yml restart
 ```
 
 **検証**:
+
 ```bash
 # GCS アクセステスト
 docker compose -f docker/docker-compose.prod.yml exec core_api \
@@ -213,12 +218,12 @@ Priority 1 と同じ手順を vm_stg 環境で実施
 
 ```bash
 # IAP OAuth クライアント ID の確認
-gcloud iap oauth-clients list --project=honest-sanbou-app-prod
+gcloud iap oauth-clients list --project=your-project-id
 
 # 必要に応じて新しいクライアント ID を作成
 gcloud iap oauth-clients create \
-  --display-name="Sanbou App IAP Client" \
-  --project=honest-sanbou-app-prod
+  --display-name="Your App IAP Client" \
+  --project=your-project-id
 ```
 
 **所要時間**: 10分  
@@ -236,17 +241,17 @@ gcloud iap oauth-clients create \
 # 本番 DB パスワード
 echo -n "your-new-password" | gcloud secrets create postgres-prod-password \
   --data-file=- \
-  --project=honest-sanbou-app-prod
+  --project=your-project-id
 
 # GCP サービスアカウント鍵（JSON ファイル全体）
 gcloud secrets create gcp-sa-prod-key \
   --data-file=secrets/gcp-sa-prod.json \
-  --project=honest-sanbou-app-prod
+  --project=your-project-id
 
 # IAP Audience
 echo -n "your-iap-audience" | gcloud secrets create iap-audience-prod \
   --data-file=- \
-  --project=honest-sanbou-app-prod
+  --project=your-project-id
 ```
 
 #### 7.2 アプリケーションコードの変更
@@ -346,6 +351,7 @@ gcloud alpha monitoring policies create \
 ### 1. Pre-commit フック ✅
 
 **機能**:
+
 - env/ と secrets/ の実設定ファイル検出
 - パスワード、API キーなど機密情報パターン検出
 - commit 前にブロック
@@ -353,6 +359,7 @@ gcloud alpha monitoring policies create \
 **場所**: `.git/hooks/pre-commit`
 
 **テスト**:
+
 ```bash
 # テスト用ファイルを作成
 echo "TEST" > env/.env.test
@@ -368,6 +375,7 @@ git commit -m "test"
 ### 2. Git 履歴削除スクリプト ✅
 
 **機能**:
+
 - git-filter-repo で安全に履歴削除
 - 削除前の確認プロンプト
 - リモート復元の自動化
@@ -375,6 +383,7 @@ git commit -m "test"
 **場所**: `scripts/cleanup_git_history.sh`
 
 **実行**:
+
 ```bash
 bash scripts/cleanup_git_history.sh
 ```
@@ -382,6 +391,7 @@ bash scripts/cleanup_git_history.sh
 ### 3. .gitignore の強化 ✅
 
 **変更内容**:
+
 ```gitignore
 # Before
 env/*                    # ファイルのみ除外（不十分）

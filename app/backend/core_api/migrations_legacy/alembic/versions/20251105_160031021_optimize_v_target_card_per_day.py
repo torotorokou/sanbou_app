@@ -5,19 +5,20 @@ Revises: 20251105_153337731
 Create Date: 2025-11-05 07:00:31.827595
 
 """
-from alembic import op
-import sqlalchemy as sa
 
+from alembic import op
 
 # revision identifiers, used by Alembic.
-revision = '20251105_160031021'
-down_revision = '20251105_153337731'
+revision = "20251105_160031021"
+down_revision = "20251105_153337731"
 branch_labels = None
 depends_on = None
 
+
 def upgrade():
     # 最適化版：v_receive_daily を1回だけ評価 + base範囲に限定
-    op.execute("""
+    op.execute(
+        """
     CREATE OR REPLACE VIEW mart.v_target_card_per_day AS
     WITH base AS (
         SELECT
@@ -96,11 +97,13 @@ def upgrade():
     LEFT JOIN r rprev
            ON rprev.ddate = (b.ddate - INTERVAL '1 day')
     ORDER BY b.ddate;
-    """)
+    """
+    )
 
     # （任意）基礎テーブルにインデックスを用意。存在すればスキップされます。
     # スキーマ名・テーブル名は実データに合わせてください。
-    op.execute("""
+    op.execute(
+        """
     DO $$
     BEGIN
         IF to_regclass('mart.receive_daily') IS NOT NULL THEN
@@ -111,12 +114,14 @@ def upgrade():
             EXECUTE 'CREATE INDEX IF NOT EXISTS idx_king_invoice_date_date ON mart.receive_king_final ((invoice_date::date))';
         END IF;
     END$$;
-    """)
+    """
+    )
 
 
 def downgrade():
     # 元の定義（あなたが提示したDDL）に戻します
-    op.execute("""
+    op.execute(
+        """
     CREATE OR REPLACE VIEW mart.v_target_card_per_day
     AS WITH base AS (
              SELECT v.ddate,
@@ -170,4 +175,5 @@ def downgrade():
          LEFT JOIN month_actual ma ON ma.month_key = date_trunc('month'::text, b.ddate::timestamp with time zone)::date
          LEFT JOIN mart.v_receive_daily rprev ON rprev.ddate = (b.ddate - '1 day'::interval)
       ORDER BY b.ddate;
-    """)
+    """
+    )

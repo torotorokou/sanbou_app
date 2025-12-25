@@ -27,13 +27,23 @@ export interface PivotDrawerState {
   drawer: DrawerState;
   setDrawer: (drawer: DrawerState | ((prev: DrawerState) => DrawerState)) => void;
   pivotData: Record<Mode, MetricEntry[]>;
-  setPivotData: (data: Record<Mode, MetricEntry[]> | ((prev: Record<Mode, MetricEntry[]>) => Record<Mode, MetricEntry[]>)) => void;
+  setPivotData: (
+    data:
+      | Record<Mode, MetricEntry[]>
+      | ((prev: Record<Mode, MetricEntry[]>) => Record<Mode, MetricEntry[]>)
+  ) => void;
   pivotCursor: Record<Mode, string | null>;
-  setPivotCursor: (cursor: Record<Mode, string | null> | ((prev: Record<Mode, string | null>) => Record<Mode, string | null>)) => void;
+  setPivotCursor: (
+    cursor:
+      | Record<Mode, string | null>
+      | ((prev: Record<Mode, string | null>) => Record<Mode, string | null>)
+  ) => void;
   pivotLoading: boolean;
   setPivotLoading: (loading: boolean) => void;
   repSeriesCache: Record<ID, DailyPoint[]>;
-  setRepSeriesCache: (cache: Record<ID, DailyPoint[]> | ((prev: Record<ID, DailyPoint[]>) => Record<ID, DailyPoint[]>)) => void;
+  setRepSeriesCache: (
+    cache: Record<ID, DailyPoint[]> | ((prev: Record<ID, DailyPoint[]>) => Record<ID, DailyPoint[]>)
+  ) => void;
 }
 
 /**

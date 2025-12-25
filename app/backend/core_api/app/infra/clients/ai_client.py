@@ -21,12 +21,13 @@ AIサービスと通信し、テキスト分類、感情分析、
     result = await client.classify("この製品は素晴らしいです")
     print(result['category'])  # 例: 'positive'
 """
-import os
-import httpx
-from typing import Optional
-import logging
 
-from backend_shared.application.logging import get_module_logger, create_log_context
+import os
+
+import httpx
+
+from backend_shared.application.logging import create_log_context, get_module_logger
+
 logger = get_module_logger(__name__)
 
 AI_API_BASE = os.getenv("AI_API_BASE", "http://ai_api:8000")
@@ -42,13 +43,13 @@ class AIClient:
     async def classify(self, text: str) -> dict:
         """
         Classify text using AI API.
-        
+
         Args:
             text: Input text to classify
-            
+
         Returns:
             dict with classification result
-            
+
         Raises:
             httpx.TimeoutException: If request times out
             httpx.HTTPStatusError: If AI API returns error status
@@ -59,8 +60,8 @@ class AIClient:
                 extra=create_log_context(
                     operation="classify_text",
                     url=f"{self.base_url}/classify",
-                    text_length=len(text)
-                )
+                    text_length=len(text),
+                ),
             )
             response = await client.post(
                 f"{self.base_url}/classify",
@@ -68,7 +69,10 @@ class AIClient:
             )
             response.raise_for_status()
             data = response.json()
-            logger.info("AI API response received", extra={"classification": data.get("category")})
+            logger.info(
+                "AI API response received",
+                extra={"classification": data.get("category")},
+            )
             return data
 
     async def get_health(self) -> dict:

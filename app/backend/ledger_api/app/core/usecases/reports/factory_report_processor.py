@@ -4,51 +4,40 @@ services.report.ledger.factory_report
 工場日報（factory_report）のサービス実装。
 st_app依存を排し、services側のprocessors/utilsを利用する。
 """
-from typing import Any, Dict
+
 import time
+from typing import Any
+
 import pandas as pd
 
-from app.infra.report_utils import (
-    get_template_config,
-    load_all_filtered_dataframes,
-)
-from app.infra.report_utils.excel import sort_by_cell_row
-from backend_shared.application.logging import get_module_logger, create_log_context
-from app.core.domain.reports.processors.factory_report.shobun import (
-    process_shobun,
-)
-from app.core.domain.reports.processors.factory_report.yuuka import (
-    process_yuuka,
-)
-from app.core.domain.reports.processors.factory_report.yard import (
-    process_yard,
+from app.core.domain.reports.processors.factory_report.etc import (
+    date_format,
+    generate_summary_dataframe,
 )
 from app.core.domain.reports.processors.factory_report.make_cell_num import (
     make_cell_num,
 )
-from app.core.domain.reports.processors.factory_report.make_label import (
-    make_label,
-)
-from app.core.domain.reports.processors.factory_report.etc import (
-    generate_summary_dataframe,
-    date_format,
-)
-from app.core.usecases.reports.factory_report_base import (
-    build_factory_report_base_data,
-)
+from app.core.domain.reports.processors.factory_report.make_label import make_label
+from app.core.domain.reports.processors.factory_report.shobun import process_shobun
+from app.core.domain.reports.processors.factory_report.yard import process_yard
+from app.core.domain.reports.processors.factory_report.yuuka import process_yuuka
+from app.core.usecases.reports.factory_report_base import build_factory_report_base_data
+from app.infra.report_utils import get_template_config, load_all_filtered_dataframes
+from app.infra.report_utils.excel import sort_by_cell_row
+from backend_shared.application.logging import create_log_context, get_module_logger
 
 
-def process(dfs: Dict[str, Any]) -> pd.DataFrame:
+def process(dfs: dict[str, Any]) -> pd.DataFrame:
     """
     工場日報テンプレート用のメイン処理関数。
-    
+
     処理フロー:
     ----------------------------------------
     入力:
       - dfs: Dict[str, pd.DataFrame]
         - shipment: 出荷データ（業者CD, 業者名, 品名, 金額, 正味重量 等）
         - yard: ヤードデータ（種類名, 品名, 数量, 正味重量 等）
-    
+
     処理ステップ:
       1. テンプレート設定読み込み（factory_report用）
       2. CSV群のフィルタリング（load_all_filtered_dataframes）
@@ -63,11 +52,11 @@ def process(dfs: Dict[str, Any]) -> pd.DataFrame:
          d. 合計・総合計行追加（generate_summary_dataframe）
          e. 日付挿入（date_format）
          f. セル行順ソート（sort_by_cell_row）
-    
+
     出力:
       - pd.DataFrame: 工場日報用DataFrame
         - カラム: ["セル", "ラベル", "値", "順番", ...（その他項目）]
-    
+
     パフォーマンスメモ:
       - 🔥 ホットスポット候補:
         * process_shobun, process_yuuka, process_yard（内部でsummary_apply多用）
@@ -99,11 +88,11 @@ def process(dfs: Dict[str, Any]) -> pd.DataFrame:
     logger.info(
         "Step 1: テンプレート設定読込完了",
         extra=create_log_context(
-            operation="generate_factory_report", 
-            template_key=template_key, 
+            operation="generate_factory_report",
+            template_key=template_key,
             files=csv_keys,
-            elapsed_ms=round((time.time() - step_start) * 1000, 2)
-        )
+            elapsed_ms=round((time.time() - step_start) * 1000, 2),
+        ),
     )
 
     # ========================================
@@ -115,20 +104,20 @@ def process(dfs: Dict[str, Any]) -> pd.DataFrame:
     df_yard = df_dict.get("yard")
     logger.info(
         "Step 2: CSV読み込み完了",
-        extra={"elapsed_ms": round((time.time() - step_start) * 1000, 2)}
+        extra={"elapsed_ms": round((time.time() - step_start) * 1000, 2)},
     )
 
     # ========================================
     # Step 2b: ベースDataFrame構築（型変換）
     # ========================================
-    # 🔥 最適化ポイント: 
+    # 🔥 最適化ポイント:
     #   - 業者CDの型変換を一度だけ実行（従来は各関数内で重複実行）
     #   - DataFrameのcopy()を最小限に
     step_start = time.time()
     base_data = build_factory_report_base_data(df_dict)
     logger.info(
         "Step 2b: ベースDataFrame構築完了",
-        extra={"elapsed_ms": round((time.time() - step_start) * 1000, 2)}
+        extra={"elapsed_ms": round((time.time() - step_start) * 1000, 2)},
     )
 
     # ========================================
@@ -159,7 +148,7 @@ def process(dfs: Dict[str, Any]) -> pd.DataFrame:
         master_csv_shobun = process_shobun(df_shipment, base_data.master_csv_shobun)
         logger.info(
             "Step 4a: 処分データ処理完了",
-            extra={"elapsed_ms": round((time.time() - step_start) * 1000, 2)}
+            extra={"elapsed_ms": round((time.time() - step_start) * 1000, 2)},
         )
     else:
         logger.warning("出荷データが無いため、処分データ処理をスキップします。")
@@ -172,7 +161,7 @@ def process(dfs: Dict[str, Any]) -> pd.DataFrame:
         master_csv_yuka = process_yuuka(df_yard, df_shipment, base_data.master_csv_yuuka)
         logger.info(
             "Step 4b: 有価データ処理完了",
-            extra={"elapsed_ms": round((time.time() - step_start) * 1000, 2)}
+            extra={"elapsed_ms": round((time.time() - step_start) * 1000, 2)},
         )
     else:
         logger.warning("必要データが不足のため、有価データ処理をスキップします。")
@@ -185,7 +174,7 @@ def process(dfs: Dict[str, Any]) -> pd.DataFrame:
         master_csv_yard = process_yard(df_yard, df_shipment, base_data.master_csv_yard)
         logger.info(
             "Step 4c: ヤードデータ処理完了",
-            extra={"elapsed_ms": round((time.time() - step_start) * 1000, 2)}
+            extra={"elapsed_ms": round((time.time() - step_start) * 1000, 2)},
         )
     else:
         logger.warning("必要データが不足のため、ヤードデータ処理をスキップします。")
@@ -218,17 +207,14 @@ def process(dfs: Dict[str, Any]) -> pd.DataFrame:
 
     logger.info(
         "Step 5: 結合・整形処理完了",
-        extra={"elapsed_ms": round((time.time() - step_start) * 1000, 2)}
+        extra={"elapsed_ms": round((time.time() - step_start) * 1000, 2)},
     )
 
     # ========================================
     # 処理完了
     # ========================================
     total_elapsed = time.time() - start_time
-    logger.info(
-        "工場日報処理完了",
-        extra={"total_elapsed_sec": round(total_elapsed, 3)}
-    )
+    logger.info("工場日報処理完了", extra={"total_elapsed_sec": round(total_elapsed, 3)})
 
     # --- インデックスをリセットして返す ---
     return combined_df.reset_index(drop=True)

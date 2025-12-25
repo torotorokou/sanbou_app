@@ -86,49 +86,49 @@ core_api/
 
 ### jobs.forecast_jobs
 
-| Column | Type | Description |
-|--------|------|-------------|
-| id | SERIAL | Primary key |
-| job_type | TEXT | Job type (e.g., 'daily') |
-| target_from | DATE | Start date |
-| target_to | DATE | End date |
-| status | TEXT | queued / running / done / failed |
-| attempts | INT | Retry count |
-| scheduled_for | TIMESTAMP | Scheduled execution time |
-| actor | TEXT | User or system actor |
-| payload_json | JSONB | Additional parameters |
-| error_message | TEXT | Error details |
-| created_at | TIMESTAMP | Created timestamp |
-| updated_at | TIMESTAMP | Updated timestamp |
+| Column        | Type      | Description                      |
+| ------------- | --------- | -------------------------------- |
+| id            | SERIAL    | Primary key                      |
+| job_type      | TEXT      | Job type (e.g., 'daily')         |
+| target_from   | DATE      | Start date                       |
+| target_to     | DATE      | End date                         |
+| status        | TEXT      | queued / running / done / failed |
+| attempts      | INT       | Retry count                      |
+| scheduled_for | TIMESTAMP | Scheduled execution time         |
+| actor         | TEXT      | User or system actor             |
+| payload_json  | JSONB     | Additional parameters            |
+| error_message | TEXT      | Error details                    |
+| created_at    | TIMESTAMP | Created timestamp                |
+| updated_at    | TIMESTAMP | Updated timestamp                |
 
 ### forecast.predictions_daily
 
-| Column | Type | Description |
-|--------|------|-------------|
-| date | DATE | Primary key |
-| y_hat | NUMERIC | Predicted value |
-| y_lo | NUMERIC | Lower bound |
-| y_hi | NUMERIC | Upper bound |
-| model_version | TEXT | Model version |
-| generated_at | TIMESTAMP | Generation timestamp |
+| Column        | Type      | Description          |
+| ------------- | --------- | -------------------- |
+| date          | DATE      | Primary key          |
+| y_hat         | NUMERIC   | Predicted value      |
+| y_lo          | NUMERIC   | Lower bound          |
+| y_hi          | NUMERIC   | Upper bound          |
+| model_version | TEXT      | Model version        |
+| generated_at  | TIMESTAMP | Generation timestamp |
 
 ### core.inbound_actuals
 
-| Column | Type | Description |
-|--------|------|-------------|
-| id | SERIAL | Primary key |
-| date | DATE | Data date |
-| data_json | JSONB | Flexible CSV data storage |
-| created_at | TIMESTAMP | Created timestamp |
+| Column     | Type      | Description               |
+| ---------- | --------- | ------------------------- |
+| id         | SERIAL    | Primary key               |
+| date       | DATE      | Data date                 |
+| data_json  | JSONB     | Flexible CSV data storage |
+| created_at | TIMESTAMP | Created timestamp         |
 
 TODO: Define proper columns based on CSV spec.
 
 ### core.inbound_reservations
 
-| Column | Type | Description |
-|--------|------|-------------|
-| date | DATE | Primary key |
-| trucks | INT | Number of trucks |
+| Column     | Type      | Description       |
+| ---------- | --------- | ----------------- |
+| date       | DATE      | Primary key       |
+| trucks     | INT       | Number of trucks  |
 | created_at | TIMESTAMP | Created timestamp |
 | updated_at | TIMESTAMP | Updated timestamp |
 
@@ -191,7 +191,7 @@ curl "http://localhost:8003/api/forecast/predictions?from=2025-01-01&to=2025-01-
 ✅ Internal HTTP calls (rag/ledger/manual) use 1s timeout, no retry  
 ✅ Database transactions are managed in Service layer  
 ✅ Structured JSON logging with important fields (job_id, status, error, actor, duration)  
-✅ SQLAlchemy 2.x synchronous mode with psycopg3  
+✅ SQLAlchemy 2.x synchronous mode with psycopg3
 
 ## TODO
 
@@ -227,15 +227,14 @@ GET /core_api/debug/iap-headers
 
 - **X-Goog-Authenticated-User-Email**: ログインユーザーのメールアドレス  
   形式: `accounts.google.com:user@example.com`
-  
 - **X-Goog-Authenticated-User-Id**: ログインユーザーの内部 ID  
   形式: `accounts.google.com:123456789012345678901`
-  
 - **X-Goog-IAP-JWT-Assertion**: IAP が発行した JWT トークン（署名付き）
 
 ### テスト手順（PROD 環境）
 
 1. **環境の準備**
+
    ```bash
    # PROD 環境で docker / nginx を起動・再起動
    cd /path/to/sanbou_app
@@ -243,16 +242,19 @@ GET /core_api/debug/iap-headers
    ```
 
 2. **ブラウザからアクセス**
+
    ```
    https://<IAP付きのPRODドメイン>/core_api/debug/iap-headers
    ```
 
 3. **IAP ログイン**
+
    - GCP IAP のログイン画面が表示されたら、許可された Google アカウントでログイン
 
 4. **レスポンスの確認**
-   
+
    以下のような JSON が返されることを確認:
+
    ```json
    {
      "x_goog_authenticated_user_email": "accounts.google.com:user@example.com",
@@ -278,6 +280,7 @@ GET /core_api/debug/iap-headers
 #### ヘッダが `null` または存在しない場合
 
 1. **Nginx 設定の確認**
+
    - `app/nginx/conf.d/prod.conf` が `_proxy_headers.conf` をインクルードしているか確認
    - `_proxy_headers.conf` に以下の設定があるか確認:
      ```nginx
@@ -287,15 +290,17 @@ GET /core_api/debug/iap-headers
      ```
 
 2. **GCP Load Balancer + IAP の設定確認**
+
    - GCP コンソールで IAP が有効になっているか確認
    - バックエンドサービスに IAP が適用されているか確認
    - 使用している Google アカウントが IAP のアクセス許可リストに含まれているか確認
 
 3. **ログの確認**
+
    ```bash
    # Core API のログを確認
    docker logs -f core_api
-   
+
    # Nginx のログを確認
    docker logs -f nginx
    ```

@@ -2,11 +2,11 @@ import pandas as pd
 
 # csv_type_parser_map.py
 from backend_shared.utils.dataframe_utils import (
-    remove_weekday_parentheses,
-    remove_commas_and_convert_numeric,
-    parse_str_column,
-    normalize_code_column,
     NA_STRING_VALUES,
+    normalize_code_column,
+    parse_str_column,
+    remove_commas_and_convert_numeric,
+    remove_weekday_parentheses,
 )
 
 
@@ -14,7 +14,7 @@ def parse_int64_column(df: pd.DataFrame, col: str) -> pd.DataFrame:
     """
     Int64型（pandasのnullable int型）に変換する共通関数
     先頭ゼロを除去して正規化（例: "000123" → 123）
-    
+
     :param df: 対象DataFrame
     :param col: 変換対象のカラム名
     :return: 変換後のDataFrame
@@ -52,17 +52,12 @@ type_parser_map = {
     "float": lambda df, col: df.assign(
         **{
             col: pd.to_numeric(
-                df[col]
-                .astype(str)
-                .str.replace(",", "")
-                .replace(NA_STRING_VALUES, ""),
+                df[col].astype(str).str.replace(",", "").replace(NA_STRING_VALUES, ""),
                 errors="coerce",
             )
         }
     ),
-    "datetime": lambda df, col: df.assign(
-        **{col: pd.to_datetime(df[col], errors="coerce")}
-    ),
+    "datetime": lambda df, col: df.assign(**{col: pd.to_datetime(df[col], errors="coerce")}),
     "str": lambda df, col: df,  # 追加：str は型変換しない
     "code": normalize_code_column,  # コード型：先頭ゼロを除去して正規化
 }

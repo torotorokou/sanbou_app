@@ -1,16 +1,18 @@
-import os
-from fastapi import FastAPI
-
 # ==========================================
 # 統一ロギング設定のインポート（backend_shared）
 # ==========================================
-from backend_shared.application.logging import setup_logging, get_module_logger
-from backend_shared.infra.frameworks.logging_utils import setup_uvicorn_access_filter
-from backend_shared.infra.adapters.middleware import RequestIdMiddleware
-from backend_shared.infra.frameworks.cors_config import setup_cors
-from backend_shared.infra.frameworks.exception_handlers import register_exception_handlers
+from fastapi import FastAPI
+
 from app.api.routers import chat
 from app.config.settings import settings
+from backend_shared.application.logging import get_module_logger, setup_logging
+from backend_shared.infra.adapters.middleware import RequestIdMiddleware
+from backend_shared.infra.frameworks.cors_config import setup_cors
+from backend_shared.infra.frameworks.exception_handlers import (
+    register_exception_handlers,
+)
+from backend_shared.infra.frameworks.logging_utils import setup_uvicorn_access_filter
+
 
 # ==========================================
 # 統一ロギング設定の初期化
@@ -33,7 +35,7 @@ app = FastAPI(
 
 logger.info(
     f"AI API initialized (DEBUG={settings.DEBUG}, docs_enabled={settings.DEBUG})",
-    extra={"operation": "app_init", "debug": settings.DEBUG}
+    extra={"operation": "app_init", "debug": settings.DEBUG},
 )
 
 # --- ミドルウェア: Request ID追跡 ----------------------------------------------
@@ -58,4 +60,3 @@ app.include_router(chat.router, prefix="")  # /ai_api直下に登録
 @app.get("/health", include_in_schema=False)
 def health():
     return {"status": "ok"}
-

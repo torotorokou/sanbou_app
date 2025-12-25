@@ -10,7 +10,11 @@ export function ensureSectionAnchors(root: HTMLElement): TocItem[] {
       count += 1;
       el.id = `s-${count}`;
     }
-    toc.push({ level: level as 2 | 3, title: el.textContent || '', anchor: el.id });
+    toc.push({
+      level: level as 2 | 3,
+      title: el.textContent || '',
+      anchor: el.id,
+    });
   });
   return toc;
 }
@@ -19,7 +23,9 @@ export function smoothScrollToAnchor(container: HTMLElement | Window, anchor: st
   const id = anchor.startsWith('#') ? anchor.slice(1) : anchor;
   const target = document.getElementById(id);
   if (!target) return;
-  const y = target.getBoundingClientRect().top + (container instanceof Window ? window.scrollY : (container as HTMLElement).scrollTop);
+  const y =
+    target.getBoundingClientRect().top +
+    (container instanceof Window ? window.scrollY : (container as HTMLElement).scrollTop);
   const top = y - 80; // ヘッダ分のオフセット
   if (container instanceof Window) {
     window.scrollTo({ top, behavior: 'smooth' });

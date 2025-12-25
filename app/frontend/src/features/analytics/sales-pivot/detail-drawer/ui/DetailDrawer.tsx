@@ -1,7 +1,7 @@
 /**
  * detail-drawer/ui/DetailDrawer.tsx
  * 詳細明細行表示用Drawer
- * 
+ *
  * PivotDrawerの行をクリックしたときに開き、
  * 最後の軸に応じて「明細行レベル」または「伝票単位サマリ」を表示
  */
@@ -37,7 +37,10 @@ const formatAmount = (value: number | null | undefined): string => {
  */
 const formatQty = (value: number | null | undefined): string => {
   if (value == null) return '-';
-  return value.toLocaleString('ja-JP', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return value.toLocaleString('ja-JP', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 };
 
 /**
@@ -45,7 +48,10 @@ const formatQty = (value: number | null | undefined): string => {
  */
 const formatUnitPrice = (value: number | null | undefined): string => {
   if (value == null) return '-';
-  return value.toLocaleString('ja-JP', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return value.toLocaleString('ja-JP', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 };
 
 export const DetailDrawer: React.FC<DetailDrawerProps> = ({
@@ -70,78 +76,82 @@ export const DetailDrawer: React.FC<DetailDrawerProps> = ({
   }, [open]);
 
   // カラム定義（モード関係なく統一）
-  const columns: ColumnsType<DetailLine> = React.useMemo(() => [
-    {
-      title: '日付',
-      dataIndex: 'salesDate',
-      key: 'salesDate',
-      width: 110,
-      fixed: 'left',
-    },
-    {
-      title: '伝票No',
-      dataIndex: 'slipNo',
-      key: 'slipNo',
-      width: 100,
-      fixed: 'left',
-    },
-    {
-      title: '営業名',
-      dataIndex: 'repName',
-      key: 'repName',
-      width: 100,
-      ellipsis: true,
-    },
-    {
-      title: '顧客名',
-      dataIndex: 'customerName',
-      key: 'customerName',
-      width: 200,
-      ellipsis: true,
-    },
-    {
-      title: '品目名',
-      dataIndex: 'itemName',
-      key: 'itemName',
-      width: 200,
-      ellipsis: true,
-    },
-    {
-      title: '明細件数',
-      dataIndex: 'lineCount',
-      key: 'lineCount',
-      width: 100,
-      align: 'right',
-      render: (value: number | null) => formatAmount(value ?? 1),
-    },
-    {
-      title: '数量(kg)',
-      dataIndex: 'qtyKg',
-      key: 'qtyKg',
-      width: 120,
-      align: 'right',
-      render: (value: number) => formatQty(value),
-    },
-    {
-      title: '単価(円/kg)',
-      dataIndex: 'unitPriceYenPerKg',
-      key: 'unitPriceYenPerKg',
-      width: 130,
-      align: 'right',
-      render: (value: number | null) => formatUnitPrice(value),
-    },
-    {
-      title: '金額(円)',
-      dataIndex: 'amountYen',
-      key: 'amountYen',
-      width: 140,
-      align: 'right',
-      render: (value: number) => formatAmount(value),
-    },
-  ], []);
+  const columns: ColumnsType<DetailLine> = React.useMemo(
+    () => [
+      {
+        title: '日付',
+        dataIndex: 'salesDate',
+        key: 'salesDate',
+        width: 110,
+        fixed: 'left',
+      },
+      {
+        title: '伝票No',
+        dataIndex: 'slipNo',
+        key: 'slipNo',
+        width: 100,
+        fixed: 'left',
+      },
+      {
+        title: '営業名',
+        dataIndex: 'repName',
+        key: 'repName',
+        width: 100,
+        ellipsis: true,
+      },
+      {
+        title: '顧客名',
+        dataIndex: 'customerName',
+        key: 'customerName',
+        width: 200,
+        ellipsis: true,
+      },
+      {
+        title: '品目名',
+        dataIndex: 'itemName',
+        key: 'itemName',
+        width: 200,
+        ellipsis: true,
+      },
+      {
+        title: '明細件数',
+        dataIndex: 'lineCount',
+        key: 'lineCount',
+        width: 100,
+        align: 'right',
+        render: (value: number | null) => formatAmount(value ?? 1),
+      },
+      {
+        title: '数量(kg)',
+        dataIndex: 'qtyKg',
+        key: 'qtyKg',
+        width: 120,
+        align: 'right',
+        render: (value: number) => formatQty(value),
+      },
+      {
+        title: '単価(円/kg)',
+        dataIndex: 'unitPriceYenPerKg',
+        key: 'unitPriceYenPerKg',
+        width: 130,
+        align: 'right',
+        render: (value: number | null) => formatUnitPrice(value),
+      },
+      {
+        title: '金額(円)',
+        dataIndex: 'amountYen',
+        key: 'amountYen',
+        width: 140,
+        align: 'right',
+        render: (value: number) => formatAmount(value),
+      },
+    ],
+    []
+  );
 
   // モード表示ラベル
-  const modeLabel = mode === 'item_lines' ? '明細行レベル' : mode === 'slip_summary' ? '伝票単位サマリ' : '';
+  const modeLabel =
+    mode === 'item_lines' ? '明細行レベル' : mode === 'slip_summary' ? '伝票単位サマリ' : '';
 
   return (
     <Drawer

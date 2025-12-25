@@ -20,9 +20,9 @@ document.head.appendChild(styleTag);
 
 // ③ Ant DesignのConfigProviderにも customTokens を渡しておく(推奨)
 ReactDOM.createRoot(document.getElementById('root')!).render(
-    <React.StrictMode>
-        <ThemeProvider>
-            <App />
-        </ThemeProvider>
-    </React.StrictMode>
+  <React.StrictMode>
+    <ThemeProvider>
+      <App />
+    </ThemeProvider>
+  </React.StrictMode>
 );

@@ -8,7 +8,7 @@ interface PeriodSectionProps {
   gutter: [number, number];
   periodGrid: GridConfig;
   marginTop: number;
-  
+
   granularity: 'month' | 'date';
   periodMode: 'single' | 'range';
   month: Dayjs;
@@ -25,7 +25,7 @@ interface PeriodSectionProps {
 
 /**
  * 期間選択セクション
- * 
+ *
  * 月次/日次、単一/期間の選択を行う
  */
 export const PeriodSection: React.FC<PeriodSectionProps> = ({

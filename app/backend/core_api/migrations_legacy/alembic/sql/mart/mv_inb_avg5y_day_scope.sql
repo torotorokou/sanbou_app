@@ -52,11 +52,3 @@ CREATE MATERIALIZED VIEW mart.mv_inb_avg5y_day_scope AS
     CURRENT_TIMESTAMP AS updated_at
    FROM agg
   WITH NO DATA;
-
-
-
-
-
-
-
-

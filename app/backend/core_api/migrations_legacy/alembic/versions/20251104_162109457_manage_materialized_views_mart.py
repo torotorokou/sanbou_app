@@ -9,9 +9,10 @@ Revision ID: 20251104_162109457
 Revises: 20251104_160703155
 """
 
-from alembic import op, context
-import sqlalchemy as sa
 from pathlib import Path
+
+import sqlalchemy as sa
+from alembic import context, op
 
 # .sql 正本の配置ディレクトリ（MV本体）
 BASE = Path("/backend/migrations/alembic/sql/mart")
@@ -39,7 +40,7 @@ def _exists(qualified: str) -> bool:
 
 def _read_sql(name_wo_ext: str) -> str:
     p = BASE / f"{name_wo_ext}.sql"
-    with open(p, "r", encoding="utf-8") as f:
+    with open(p, encoding="utf-8") as f:
         return f.read()
 
 

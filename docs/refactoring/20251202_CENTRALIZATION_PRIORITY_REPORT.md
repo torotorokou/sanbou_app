@@ -11,13 +11,13 @@
 現状のコードベースを分析した結果、以下の5つの領域で重複・散在が確認されました。
 優先順位が高いものから順に、理由と対策をまとめています。
 
-| 優先度 | 領域 | 散在度 | ビジネスインパクト | 技術的リスク |
-|--------|------|--------|-------------------|-------------|
-| 🔴 **P0** | API設定・エンドポイント | ★★★★★ | 高 | 高 |
-| 🟠 **P1** | 日付フォーマット・ユーティリティ | ★★★★☆ | 中 | 中 |
-| 🟡 **P2** | 通知・エラーハンドリング | ★★★☆☆ | 高 | 低 |
-| 🔵 **P3** | ブレークポイント・レスポンシブ設定 | ★★☆☆☆ | 低 | 低 |
-| 🟢 **P4** | 設定オブジェクト（Config系） | ★★☆☆☆ | 中 | 低 |
+| 優先度    | 領域                               | 散在度 | ビジネスインパクト | 技術的リスク |
+| --------- | ---------------------------------- | ------ | ------------------ | ------------ |
+| 🔴 **P0** | API設定・エンドポイント            | ★★★★★  | 高                 | 高           |
+| 🟠 **P1** | 日付フォーマット・ユーティリティ   | ★★★★☆  | 中                 | 中           |
+| 🟡 **P2** | 通知・エラーハンドリング           | ★★★☆☆  | 高                 | 低           |
+| 🔵 **P3** | ブレークポイント・レスポンシブ設定 | ★★☆☆☆  | 低                 | 低           |
+| 🟢 **P4** | 設定オブジェクト（Config系）       | ★★☆☆☆  | 中                 | 低           |
 
 ---
 
@@ -28,6 +28,7 @@
 APIエンドポイントやHTTPクライアントの設定が複数箇所に散在しており、以下の問題が発生しています。
 
 #### 散在状況
+
 ```
 1. app/config/api.ts                              ← レガシー（block_unit_price専用）
 2. app/frontend/src/shared/infrastructure/http/
@@ -71,32 +72,32 @@ APIエンドポイントやHTTPクライアントの設定が複数箇所に散�
 /**
  * API Endpoint Configuration
  * Single Source of Truth for all API endpoints
- * 
+ *
  * すべてのAPI呼び出しはこのファイルで定義されたエンドポイントを経由する
  */
 
 /**
  * Core API ベースパス（BFF統一）
  */
-export const CORE_API_BASE = '/core_api';
+export const CORE_API_BASE = "/core_api";
 
 /**
  * レポート系API
  */
 export const REPORT_ENDPOINTS = {
   base: `${CORE_API_BASE}/reports`,
-  
+
   // 工場日報系
   factoryReport: `${CORE_API_BASE}/reports/factory_report`,
-  
+
   // 収支・管理表系
   balanceSheet: `${CORE_API_BASE}/reports/balance_sheet`,
   averageSheet: `${CORE_API_BASE}/reports/average_sheet`,
   managementSheet: `${CORE_API_BASE}/reports/management_sheet`,
-  
+
   // インタラクティブ
   blockUnitPrice: `${CORE_API_BASE}/block_unit_price_interactive`,
-  
+
   // 台帳系
   ledgerBook: `${CORE_API_BASE}/reports/ledger`,
 } as const;
@@ -108,7 +109,7 @@ export const DASHBOARD_ENDPOINTS = {
   // 受入系
   inboundDaily: `${CORE_API_BASE}/inbound/daily`,
   inboundForecast: `${CORE_API_BASE}/inbound/forecast`,
-  
+
   // カレンダー
   calendar: `${CORE_API_BASE}/calendar/month`,
 } as const;
@@ -163,19 +164,19 @@ export const getReportEndpoint = (reportKey: string): string => {
 
 ```typescript
 // 🆕 推奨: coreApi を標準として使用
-export { coreApi } from './coreApi';
+export { coreApi } from "./coreApi";
 
 // Legacy互換（段階的に移行）
-export { 
-  apiGet, 
-  apiPost, 
-  apiGetBlob, 
+export {
+  apiGet,
+  apiPost,
+  apiGetBlob,
   apiPostBlob,
   client, // 直接使用は避け、coreApi を優先
-} from './httpClient';
+} from "./httpClient";
 
 // @deprecated - 新規使用禁止
-export { coreApi as legacyCoreApiClient } from './coreApiClient';
+export { coreApi as legacyCoreApiClient } from "./coreApiClient";
 ```
 
 #### Phase 3: 移行手順
@@ -201,6 +202,7 @@ export { coreApi as legacyCoreApiClient } from './coreApiClient';
 日付フォーマット関数が各feature内で重複実装されており、一貫性が欠けています。
 
 #### 散在状況
+
 ```
 1. app/frontend/src/features/dashboard/ukeire/domain/valueObjects.ts
    ├── toDate(s: string): Date
@@ -249,10 +251,10 @@ export { coreApi as legacyCoreApiClient } from './coreApiClient';
  * 日付操作・フォーマットの統一ライブラリ
  */
 
-import dayjs, { type Dayjs } from 'dayjs';
-import isoWeek from 'dayjs/plugin/isoWeek';
-import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
-import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
+import dayjs, { type Dayjs } from "dayjs";
+import isoWeek from "dayjs/plugin/isoWeek";
+import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
+import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
 
 // プラグインの一括初期化
 dayjs.extend(isoWeek);
@@ -278,20 +280,20 @@ export type IsoDateTime = string;
 
 export const DATE_FORMATS = {
   // ISO標準
-  isoDate: 'YYYY-MM-DD',
-  isoMonth: 'YYYY-MM',
-  isoDateTime: 'YYYY-MM-DDTHH:mm:ss',
-  
+  isoDate: "YYYY-MM-DD",
+  isoMonth: "YYYY-MM",
+  isoDateTime: "YYYY-MM-DDTHH:mm:ss",
+
   // 日本語表示
-  jpDate: 'YYYY年MM月DD日',
-  jpMonth: 'YYYY年MM月',
-  jpShortDate: 'MM/DD',
-  jpDateTime: 'YYYY/MM/DD HH:mm',
-  jpFullDateTime: 'YYYY/MM/DD HH:mm:ss',
-  
+  jpDate: "YYYY年MM月DD日",
+  jpMonth: "YYYY年MM月",
+  jpShortDate: "MM/DD",
+  jpDateTime: "YYYY/MM/DD HH:mm",
+  jpFullDateTime: "YYYY/MM/DD HH:mm:ss",
+
   // API互換
-  compactDate: 'YYYYMMDD',
-  compactMonth: 'YYYYMM',
+  compactDate: "YYYYMMDD",
+  compactMonth: "YYYYMM",
 } as const;
 
 // ========================================
@@ -299,42 +301,46 @@ export const DATE_FORMATS = {
 // ========================================
 
 /** 文字列→Date変換 */
-export const toDate = (s: string): Date => new Date(s + 'T00:00:00');
+export const toDate = (s: string): Date => new Date(s + "T00:00:00");
 
 /** Date→ISO日付文字列 */
-export const toIsoDate = (d: Date): IsoDate => dayjs(d).format(DATE_FORMATS.isoDate);
+export const toIsoDate = (d: Date): IsoDate =>
+  dayjs(d).format(DATE_FORMATS.isoDate);
 
 /** Date→ISO月文字列 */
-export const toIsoMonth = (d: Date): IsoMonth => dayjs(d).format(DATE_FORMATS.isoMonth);
+export const toIsoMonth = (d: Date): IsoMonth =>
+  dayjs(d).format(DATE_FORMATS.isoMonth);
 
 /** Dayjs→ISO日付文字列 */
-export const dayjsToIsoDate = (d: Dayjs): IsoDate => d.format(DATE_FORMATS.isoDate);
+export const dayjsToIsoDate = (d: Dayjs): IsoDate =>
+  d.format(DATE_FORMATS.isoDate);
 
 /** Dayjs→ISO月文字列 */
-export const dayjsToIsoMonth = (d: Dayjs): IsoMonth => d.format(DATE_FORMATS.isoMonth);
+export const dayjsToIsoMonth = (d: Dayjs): IsoMonth =>
+  d.format(DATE_FORMATS.isoMonth);
 
 // ========================================
 // フォーマット関数
 // ========================================
 
 /** 日本語日付フォーマット: YYYY年MM月DD日 */
-export const formatJpDate = (d: Date | Dayjs | string): string => 
+export const formatJpDate = (d: Date | Dayjs | string): string =>
   dayjs(d).format(DATE_FORMATS.jpDate);
 
 /** 日本語月フォーマット: YYYY年MM月 */
-export const formatJpMonth = (d: Date | Dayjs | string): string => 
+export const formatJpMonth = (d: Date | Dayjs | string): string =>
   dayjs(d).format(DATE_FORMATS.jpMonth);
 
 /** 短縮日付フォーマット: MM/DD */
-export const formatShortDate = (d: Date | Dayjs | string): string => 
+export const formatShortDate = (d: Date | Dayjs | string): string =>
   dayjs(d).format(DATE_FORMATS.jpShortDate);
 
 /** 日時フォーマット: YYYY/MM/DD HH:mm */
-export const formatDateTime = (d: Date | Dayjs | string): string => 
+export const formatDateTime = (d: Date | Dayjs | string): string =>
   dayjs(d).format(DATE_FORMATS.jpDateTime);
 
 /** 完全日時フォーマット: YYYY/MM/DD HH:mm:ss */
-export const formatFullDateTime = (d: Date | Dayjs | string): string => 
+export const formatFullDateTime = (d: Date | Dayjs | string): string =>
   dayjs(d).format(DATE_FORMATS.jpFullDateTime);
 
 // ========================================
@@ -344,42 +350,53 @@ export const formatFullDateTime = (d: Date | Dayjs | string): string =>
 /** 指定日が属する週の月曜日（ISO週） */
 export const getMondayOfWeek = (d: Date | Dayjs): Date => {
   const dj = dayjs(d);
-  return dj.startOf('isoWeek').toDate();
+  return dj.startOf("isoWeek").toDate();
 };
 
 /** 現在月を取得 */
-export const getCurrentMonth = (): IsoMonth => dayjs().format(DATE_FORMATS.isoMonth);
+export const getCurrentMonth = (): IsoMonth =>
+  dayjs().format(DATE_FORMATS.isoMonth);
 
 /** 翌月を取得 */
-export const getNextMonth = (m: IsoMonth): IsoMonth => 
-  dayjs(m + '-01').add(1, 'month').format(DATE_FORMATS.isoMonth);
+export const getNextMonth = (m: IsoMonth): IsoMonth =>
+  dayjs(m + "-01")
+    .add(1, "month")
+    .format(DATE_FORMATS.isoMonth);
 
 /** 前月を取得 */
-export const getPreviousMonth = (m: IsoMonth): IsoMonth => 
-  dayjs(m + '-01').subtract(1, 'month').format(DATE_FORMATS.isoMonth);
+export const getPreviousMonth = (m: IsoMonth): IsoMonth =>
+  dayjs(m + "-01")
+    .subtract(1, "month")
+    .format(DATE_FORMATS.isoMonth);
 
 /** n日後のDateを取得 */
-export const addDays = (d: Date, n: number): Date => dayjs(d).add(n, 'day').toDate();
+export const addDays = (d: Date, n: number): Date =>
+  dayjs(d).add(n, "day").toDate();
 
 /** n日前のDateを取得 */
-export const subtractDays = (d: Date, n: number): Date => dayjs(d).subtract(n, 'day').toDate();
+export const subtractDays = (d: Date, n: number): Date =>
+  dayjs(d).subtract(n, "day").toDate();
 
 // ========================================
 // 比較・検証
 // ========================================
 
 /** 日付が同じかチェック */
-export const isSameDate = (a: Date | Dayjs | string, b: Date | Dayjs | string): boolean => 
-  dayjs(a).isSame(dayjs(b), 'day');
+export const isSameDate = (
+  a: Date | Dayjs | string,
+  b: Date | Dayjs | string,
+): boolean => dayjs(a).isSame(dayjs(b), "day");
 
 /** 日付が範囲内かチェック */
 export const isInRange = (
-  date: Date | Dayjs | string, 
-  start: Date | Dayjs | string, 
-  end: Date | Dayjs | string
+  date: Date | Dayjs | string,
+  start: Date | Dayjs | string,
+  end: Date | Dayjs | string,
 ): boolean => {
   const d = dayjs(date);
-  return d.isSameOrAfter(dayjs(start), 'day') && d.isSameOrBefore(dayjs(end), 'day');
+  return (
+    d.isSameOrAfter(dayjs(start), "day") && d.isSameOrBefore(dayjs(end), "day")
+  );
 };
 
 /** 有効な日付文字列かチェック */
@@ -390,10 +407,11 @@ export const isValidDate = (s: string): boolean => dayjs(s).isValid();
 // ========================================
 
 /** 通貨フォーマット */
-export const formatCurrency = (n: number): string => `¥${n.toLocaleString('ja-JP')}`;
+export const formatCurrency = (n: number): string =>
+  `¥${n.toLocaleString("ja-JP")}`;
 
 /** パーセントフォーマット */
-export const formatPercent = (n: number, decimals = 1): string => 
+export const formatPercent = (n: number, decimals = 1): string =>
   `${n.toFixed(decimals)}%`;
 
 // ========================================
@@ -426,6 +444,7 @@ export type { Dayjs };
 通知機構は既に `features/notification` で統一されていますが、利用側でのパターンがまだ統一されていません。
 
 #### 現状（良好だが改善の余地あり）
+
 ```
 ✅ 統一済み:
    - features/notification/infrastructure/notify.ts
@@ -444,18 +463,18 @@ export type { Dayjs };
 
 **新規ファイル**: `app/frontend/src/shared/utils/errorHandling.ts`
 
-```typescript
+````typescript
 /**
  * Error Handling Utilities
  * 統一されたエラーハンドリングパターン
  */
 
-import { notifyApiError, notifyError } from '@features/notification';
-import { ApiError } from '@shared/types';
+import { notifyApiError, notifyError } from "@features/notification";
+import { ApiError } from "@shared/types";
 
 /**
  * 標準的なAPI呼び出しエラーハンドリング
- * 
+ *
  * @example
  * ```typescript
  * const data = await handleApiCall(
@@ -466,7 +485,7 @@ import { ApiError } from '@shared/types';
  */
 export async function handleApiCall<T>(
   apiCall: () => Promise<T>,
-  operationName: string
+  operationName: string,
 ): Promise<T | null> {
   try {
     return await apiCall();
@@ -483,19 +502,22 @@ export async function handleApiCall<T>(
 export async function handleApiCallWithRetry<T>(
   apiCall: () => Promise<T>,
   operationName: string,
-  maxRetries = 3
+  maxRetries = 3,
 ): Promise<T | null> {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
       return await apiCall();
     } catch (error) {
       if (attempt === maxRetries) {
-        notifyApiError(error, `${operationName}に失敗しました（${maxRetries}回試行）`);
+        notifyApiError(
+          error,
+          `${operationName}に失敗しました（${maxRetries}回試行）`,
+        );
         console.error(`[${operationName}] Final attempt failed:`, error);
         return null;
       }
       console.warn(`[${operationName}] Retry ${attempt}/${maxRetries}...`);
-      await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+      await new Promise((resolve) => setTimeout(resolve, 1000 * attempt));
     }
   }
   return null;
@@ -506,22 +528,22 @@ export async function handleApiCallWithRetry<T>(
  * 新しいエラーコードを追加する際のガイド
  */
 export const ERROR_CODE_CONVENTIONS = {
-  naming: 'UPPER_SNAKE_CASE',
+  naming: "UPPER_SNAKE_CASE",
   categories: [
-    'INPUT_*',       // 入力エラー
-    'VALIDATION_*',  // バリデーションエラー
-    'AUTH_*',        // 認証エラー
-    '*_NOT_FOUND',   // リソース未発見
-    'PROCESSING_*',  // 処理エラー
-    'TIMEOUT',       // タイムアウト
-    'JOB_*',         // ジョブエラー
+    "INPUT_*", // 入力エラー
+    "VALIDATION_*", // バリデーションエラー
+    "AUTH_*", // 認証エラー
+    "*_NOT_FOUND", // リソース未発見
+    "PROCESSING_*", // 処理エラー
+    "TIMEOUT", // タイムアウト
+    "JOB_*", // ジョブエラー
   ],
   examples: {
-    good: ['INPUT_INVALID', 'VALIDATION_ERROR', 'USER_NOT_FOUND'],
-    bad: ['error', 'Error', 'validation-error', 'userNotFound'],
+    good: ["INPUT_INVALID", "VALIDATION_ERROR", "USER_NOT_FOUND"],
+    bad: ["error", "Error", "validation-error", "userNotFound"],
   },
 } as const;
-```
+````
 
 #### Phase 2: 実装ガイドラインの作成
 
@@ -541,6 +563,7 @@ export const ERROR_CODE_CONVENTIONS = {
 ブレークポイント設定は既に `shared/constants/breakpoints.ts` で統一されていますが、各feature での使い方に一貫性が欠けています。
 
 #### 現状
+
 ```
 ✅ 統一済み:
    - shared/constants/breakpoints.ts
@@ -564,8 +587,13 @@ export const ERROR_CODE_CONVENTIONS = {
  * ブレークポイント判定の統一Hook
  */
 
-import { useState, useEffect } from 'react';
-import { bp, type BpKey, type ViewportTier, tierOf } from '@shared/constants/breakpoints';
+import { useState, useEffect } from "react";
+import {
+  bp,
+  type BpKey,
+  type ViewportTier,
+  tierOf,
+} from "@shared/constants/breakpoints";
 
 export interface BreakpointState {
   /** 現在のビューポート幅 */
@@ -584,13 +612,13 @@ export interface BreakpointState {
 
 export function useBreakpoint(): BreakpointState {
   const [width, setWidth] = useState(
-    typeof window !== 'undefined' ? window.innerWidth : 1280
+    typeof window !== "undefined" ? window.innerWidth : 1280,
   );
 
   useEffect(() => {
     const handleResize = () => setWidth(window.innerWidth);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   const tier = tierOf(width);
@@ -605,9 +633,9 @@ export function useBreakpoint(): BreakpointState {
       lg: width >= bp.lg,
       xl: width >= bp.xl,
     },
-    isMobile: tier === 'mobile',
-    isTablet: tier === 'tabletHalf',
-    isDesktop: tier === 'desktop',
+    isMobile: tier === "mobile",
+    isTablet: tier === "tabletHalf",
+    isDesktop: tier === "desktop",
   };
 }
 ```
@@ -626,6 +654,7 @@ export function useBreakpoint(): BreakpointState {
 各feature で独自の設定オブジェクトを持っており、構造が統一されていません。
 
 #### 散在状況
+
 ```
 1. features/database/config/
    ├── datasets.ts       → DATASETS定義
@@ -644,6 +673,7 @@ export function useBreakpoint(): BreakpointState {
 #### 設定ファイルの構造を標準化
 
 **標準構造**:
+
 ```
 features/[feature-name]/
   ├── config/
@@ -665,23 +695,27 @@ features/[feature-name]/
 ## 📅 実装ロードマップ
 
 ### Week 1: API設定統合（P0）
+
 - [ ] `shared/config/apiEndpoints.ts` 作成
 - [ ] report/shared/config の更新
 - [ ] 各Repository の更新
 - [ ] テスト・動作確認
 
 ### Week 2: 日付ユーティリティ統合（P1）
+
 - [ ] `shared/utils/dateUtils.ts` 作成
 - [ ] 既存 valueObjects の移行
 - [ ] pages/ 内の dayjs 使用箇所の置換
 - [ ] 型定義の統一
 
 ### Week 3: エラーハンドリング標準化（P2）
+
 - [ ] `shared/utils/errorHandling.ts` 作成
 - [ ] ガイドライン文書作成
 - [ ] 主要feature での適用例作成
 
 ### Week 4: ブレークポイント・設定構造（P3, P4）
+
 - [ ] `shared/hooks/ui/useBreakpoint.ts` 作成
 - [ ] 設定構造ガイドライン作成
 - [ ] 既存コードのリファクタリング開始
@@ -690,13 +724,13 @@ features/[feature-name]/
 
 ## 🎯 成功指標（KPI）
 
-| 指標 | 現状 | 目標（3ヶ月後） |
-|------|------|----------------|
-| API設定の重複箇所 | 10箇所 | 1箇所 |
-| 日付フォーマット関数の重複 | 15箇所 | 1箇所 |
-| エラーハンドリングの一貫性 | 40% | 90% |
-| 新規開発者のオンボーディング時間 | 2週間 | 1週間 |
-| コードレビューでの指摘事項（設定関連） | 月20件 | 月5件 |
+| 指標                                   | 現状   | 目標（3ヶ月後） |
+| -------------------------------------- | ------ | --------------- |
+| API設定の重複箇所                      | 10箇所 | 1箇所           |
+| 日付フォーマット関数の重複             | 15箇所 | 1箇所           |
+| エラーハンドリングの一貫性             | 40%    | 90%             |
+| 新規開発者のオンボーディング時間       | 2週間  | 1週間           |
+| コードレビューでの指摘事項（設定関連） | 月20件 | 月5件           |
 
 ---
 

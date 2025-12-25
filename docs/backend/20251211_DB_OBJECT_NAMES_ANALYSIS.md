@@ -2,7 +2,7 @@
 
 **作成日**: 2025年12月11日  
 **対象**: PostgreSQL スキーマ・テーブル・VIEW・Materialized View  
-**配置先**: `backend_shared/db/names.py`  
+**配置先**: `backend_shared/db/names.py`
 
 ---
 
@@ -10,44 +10,44 @@
 
 ### 1.1. ref スキーマ（参照データ）
 
-| オブジェクト種別 | schema | name | usage | 依存関係 |
-|----------------|---------|------|-------|---------|
-| view | ref | v_closure_days | 作成対象 | ref.closure_periods |
-| view | ref | v_calendar_classified | 作成対象 | ref.calendar_day, ref.holiday_jp, ref.v_closure_days, ref.calendar_exception |
-| table | ref | closure_periods | 参照のみ | - |
-| table | ref | calendar_day | 参照のみ | - |
-| table | ref | holiday_jp | 参照のみ | - |
-| table | ref | calendar_exception | 参照のみ | - |
+| オブジェクト種別 | schema | name                  | usage    | 依存関係                                                                     |
+| ---------------- | ------ | --------------------- | -------- | ---------------------------------------------------------------------------- |
+| view             | ref    | v_closure_days        | 作成対象 | ref.closure_periods                                                          |
+| view             | ref    | v_calendar_classified | 作成対象 | ref.calendar_day, ref.holiday_jp, ref.v_closure_days, ref.calendar_exception |
+| table            | ref    | closure_periods       | 参照のみ | -                                                                            |
+| table            | ref    | calendar_day          | 参照のみ | -                                                                            |
+| table            | ref    | holiday_jp            | 参照のみ | -                                                                            |
+| table            | ref    | calendar_exception    | 参照のみ | -                                                                            |
 
 ### 1.2. stg スキーマ（ステージング）
 
-| オブジェクト種別 | schema | name | usage | 備考 |
-|----------------|---------|------|-------|------|
-| table | stg | receive_shogun_final | 参照のみ | 将軍システム確定データ（ETL投入） |
-| table | stg | receive_shogun_flash | 参照のみ | 将軍システム速報データ（ETL投入） |
-| table | stg | receive_king_final | 参照のみ | KINGシステムデータ（ETL投入） |
+| オブジェクト種別 | schema | name                 | usage    | 備考                              |
+| ---------------- | ------ | -------------------- | -------- | --------------------------------- |
+| table            | stg    | receive_shogun_final | 参照のみ | 将軍システム確定データ（ETL投入） |
+| table            | stg    | receive_shogun_flash | 参照のみ | 将軍システム速報データ（ETL投入） |
+| table            | stg    | receive_king_final   | 参照のみ | KINGシステムデータ（ETL投入）     |
 
 ### 1.3. mart スキーマ（データマート）
 
-| オブジェクト種別 | schema | name | usage | 依存関係 |
-|----------------|---------|------|-------|---------|
-| materialized_view | mart | mv_receive_daily | 作成対象 | stg.receive_shogun_final, stg.receive_shogun_flash, stg.receive_king_final, ref.v_calendar_classified |
-| materialized_view | mart | mv_target_card_per_day | 作成対象 | mart.v_daily_target_with_calendar, kpi.monthly_targets, mart.mv_receive_daily |
-| materialized_view | mart | mv_inb5y_week_profile_min | 作成対象 | mart.mv_receive_daily |
-| materialized_view | mart | mv_inb_avg5y_day_biz | 作成対象 | mart.mv_receive_daily |
-| materialized_view | mart | mv_inb_avg5y_weeksum_biz | 作成対象 | mart.mv_receive_daily |
-| materialized_view | mart | mv_inb_avg5y_day_scope | 作成対象 | mart.mv_receive_daily |
-| view | mart | v_receive_daily | 作成対象 | stg.receive_shogun_final, stg.receive_shogun_flash, stg.receive_king_final, ref.v_calendar_classified |
-| view | mart | v_receive_weekly | 作成対象 | mart.mv_receive_daily |
-| view | mart | v_receive_monthly | 作成対象 | mart.mv_receive_daily |
-| view | mart | v_daily_target_with_calendar | 作成対象 | ref.v_calendar_classified, mart.daily_target_plan |
-| table | mart | daily_target_plan | 参照のみ | 日次目標計画マスタ |
+| オブジェクト種別  | schema | name                         | usage    | 依存関係                                                                                              |
+| ----------------- | ------ | ---------------------------- | -------- | ----------------------------------------------------------------------------------------------------- |
+| materialized_view | mart   | mv_receive_daily             | 作成対象 | stg.receive_shogun_final, stg.receive_shogun_flash, stg.receive_king_final, ref.v_calendar_classified |
+| materialized_view | mart   | mv_target_card_per_day       | 作成対象 | mart.v_daily_target_with_calendar, kpi.monthly_targets, mart.mv_receive_daily                         |
+| materialized_view | mart   | mv_inb5y_week_profile_min    | 作成対象 | mart.mv_receive_daily                                                                                 |
+| materialized_view | mart   | mv_inb_avg5y_day_biz         | 作成対象 | mart.mv_receive_daily                                                                                 |
+| materialized_view | mart   | mv_inb_avg5y_weeksum_biz     | 作成対象 | mart.mv_receive_daily                                                                                 |
+| materialized_view | mart   | mv_inb_avg5y_day_scope       | 作成対象 | mart.mv_receive_daily                                                                                 |
+| view              | mart   | v_receive_daily              | 作成対象 | stg.receive_shogun_final, stg.receive_shogun_flash, stg.receive_king_final, ref.v_calendar_classified |
+| view              | mart   | v_receive_weekly             | 作成対象 | mart.mv_receive_daily                                                                                 |
+| view              | mart   | v_receive_monthly            | 作成対象 | mart.mv_receive_daily                                                                                 |
+| view              | mart   | v_daily_target_with_calendar | 作成対象 | ref.v_calendar_classified, mart.daily_target_plan                                                     |
+| table             | mart   | daily_target_plan            | 参照のみ | 日次目標計画マスタ                                                                                    |
 
 ### 1.4. kpi スキーマ（KPI管理）
 
-| オブジェクト種別 | schema | name | usage | 備考 |
-|----------------|---------|------|-------|------|
-| table | kpi | monthly_targets | 参照のみ | 月次目標マスタ |
+| オブジェクト種別 | schema | name            | usage    | 備考           |
+| ---------------- | ------ | --------------- | -------- | -------------- |
+| table            | kpi    | monthly_targets | 参照のみ | 月次目標マスタ |
 
 ---
 
@@ -66,7 +66,7 @@ All SQL identifiers should reference these constants to:
 
 Usage:
     from backend_shared.db.names import SCHEMA_MART, MV_RECEIVE_DAILY, fq
-    
+
     sql = f"REFRESH MATERIALIZED VIEW {fq(SCHEMA_MART, MV_RECEIVE_DAILY)};"
 """
 
@@ -140,18 +140,18 @@ T_MONTHLY_TARGETS = "monthly_targets"
 def fq(schema: str, name: str) -> str:
     """
     Return fully-qualified PostgreSQL identifier: "schema"."name"
-    
+
     Args:
         schema: Schema name (use SCHEMA_* constants)
         name: Object name (use T_*, V_*, MV_* constants)
-    
+
     Returns:
         Quoted identifier: "schema"."name"
-    
+
     Example:
         >>> fq(SCHEMA_MART, MV_RECEIVE_DAILY)
         '"mart"."mv_receive_daily"'
-    
+
     Note:
         - This function is safe for SQL construction (no user input)
         - All inputs should be constants defined in this module
@@ -163,16 +163,16 @@ def fq(schema: str, name: str) -> str:
 def schema_qualified(schema: str, name: str) -> str:
     """
     Return schema-qualified identifier without quotes: schema.name
-    
+
     Use this for contexts where quotes are not needed (e.g., psycopg3 Identifier)
-    
+
     Args:
         schema: Schema name (use SCHEMA_* constants)
         name: Object name (use T_*, V_*, MV_* constants)
-    
+
     Returns:
         Unquoted identifier: schema.name
-    
+
     Example:
         >>> schema_qualified(SCHEMA_MART, MV_RECEIVE_DAILY)
         'mart.mv_receive_daily'
@@ -225,7 +225,7 @@ class MaterializedViewRefresher:
             "mart.mv_target_card_per_day",
         ],
     }
-    
+
     def _refresh_single_mv(self, mv_name: str) -> None:
         sql = f"REFRESH MATERIALIZED VIEW CONCURRENTLY {mv_name};"
         self.db.execute(text(sql))
@@ -262,7 +262,7 @@ class MaterializedViewRefresher:
             fq(SCHEMA_MART, MV_TARGET_CARD_PER_DAY),
         ],
     }
-    
+
     def _refresh_single_mv(self, mv_name: str) -> None:
         # mv_name already includes schema prefix from MV_MAPPINGS
         sql = f"REFRESH MATERIALIZED VIEW CONCURRENTLY {mv_name};"
@@ -307,6 +307,7 @@ sql = f"SELECT * FROM {fq(SCHEMA_MART, MV_RECEIVE_DAILY)};"
 ```
 
 **設計方針**:
+
 - スキーマ名・テーブル名は**固定の定数**として管理
 - 動的に変わる値（日付、ID等）は必ずバインドパラメータで渡す
 - `fq()` の引数には絶対にユーザー入力を渡さない
@@ -318,21 +319,25 @@ sql = f"SELECT * FROM {fq(SCHEMA_MART, MV_RECEIVE_DAILY)};"
 ### 4.1. 自動抽出が困難なケース
 
 1. **重複SQLファイル**
+
    - `v_receive_weekly.sql` が2つ存在（一方は `mv_receive_daily` 参照、もう一方は `v_receive_daily` 参照）
    - **要確認**: どちらが最新版か、DB実態との整合性
 
 2. **MV vs VIEW の混在**
+
    - `receive_daily`, `receive_weekly`, `receive_monthly` に対して:
      - SQL定義ファイルが存在
      - 実際のDB上には VIEW or MV or TABLE のいずれかが存在
    - **要調査**: DB実態と SQL定義の対応関係
 
 3. **外部システム管理テーブル**
+
    - `stg.*` テーブル（ETL で投入されるデータ）
    - `kpi.monthly_targets`（別システムで管理？）
    - SQL定義ファイルが存在しないため、スキーマ定義は別途確認が必要
 
 4. **コメント内にしか存在しない情報**
+
    - `mv_target_card_per_day.sql` のコメント:
      - 参照エンドポイント: `/core_api/dashboard/target`
      - 更新頻度: "1日1回（受入データのETL完了後）"
@@ -349,7 +354,7 @@ sql = f"SELECT * FROM {fq(SCHEMA_MART, MV_RECEIVE_DAILY)};"
 
 **最終更新**: 2025年12月11日  
 **目的**: SQL自動抽出で取得できない情報を手動で補完  
-**対象スキーマ**: ref, stg, mart, kpi  
+**対象スキーマ**: ref, stg, mart, kpi
 
 ---
 
@@ -372,7 +377,7 @@ sql = f"SELECT * FROM {fq(SCHEMA_MART, MV_RECEIVE_DAILY)};"
   - `mart.mv_inb_avg5y_weeksum_biz` (MATERIALIZED VIEW)
   - `mart.mv_inb_avg5y_day_scope` (MATERIALIZED VIEW)
 - **更新頻度**: CSV upload (receive type) 完了後に自動 REFRESH
-- **参照 Python コード**: 
+- **参照 Python コード**:
   - `app/infra/adapters/inbound/inbound_repository.py`
   - `app/infra/adapters/materialized_view/materialized_view_refresher.py`
 
@@ -389,12 +394,12 @@ sql = f"SELECT * FROM {fq(SCHEMA_MART, MV_RECEIVE_DAILY)};"
 
 ### 1.3. 5年平均統計MV群
 
-| MV名 | 用途 | 依存元 | 更新頻度 |
-|------|------|--------|---------|
-| `mv_inb5y_week_profile_min` | 5年間週次プロファイル | `mv_receive_daily` | 手動 |
-| `mv_inb_avg5y_day_biz` | 5年間平日日次平均 | `mv_receive_daily` | 手動 |
-| `mv_inb_avg5y_weeksum_biz` | 5年間週次合計（営業日） | `mv_receive_daily` | 手動 |
-| `mv_inb_avg5y_day_scope` | 5年間日次平均（全/営業） | `mv_receive_daily` | 手動 |
+| MV名                        | 用途                     | 依存元             | 更新頻度 |
+| --------------------------- | ------------------------ | ------------------ | -------- |
+| `mv_inb5y_week_profile_min` | 5年間週次プロファイル    | `mv_receive_daily` | 手動     |
+| `mv_inb_avg5y_day_biz`      | 5年間平日日次平均        | `mv_receive_daily` | 手動     |
+| `mv_inb_avg5y_weeksum_biz`  | 5年間週次合計（営業日）  | `mv_receive_daily` | 手動     |
+| `mv_inb_avg5y_day_scope`    | 5年間日次平均（全/営業） | `mv_receive_daily` | 手動     |
 
 **Note**: これらのMVは現在自動更新の対象外。予測モデルで使用される可能性がある。
 
@@ -405,13 +410,14 @@ sql = f"SELECT * FROM {fq(SCHEMA_MART, MV_RECEIVE_DAILY)};"
 ### 2.1. 重複SQLファイル
 
 - [ ] **v_receive_weekly.sql の重複**
+
   - `sql/mart/v_receive_weekly.sql` (2ファイル)
   - 一方は `mv_receive_daily` 参照、もう一方は `v_receive_daily` 参照
   - **アクション**: DB実態を確認し、不要な方を削除
 
 - [ ] **v_receive_daily vs mv_receive_daily**
   - SQLファイルに両方存在
-  - **確認事項**: 
+  - **確認事項**:
     - どちらが実運用で使用されているか
     - Python コードではどちらを参照しているか
     - 両方が共存している理由（移行期間？）
@@ -419,27 +425,30 @@ sql = f"SELECT * FROM {fq(SCHEMA_MART, MV_RECEIVE_DAILY)};"
 ### 2.2. 外部システム管理オブジェクト
 
 - [ ] **stg.receive_shogun_final, stg.receive_shogun_flash**
+
   - ETLプロセスで投入されるテーブル
-  - **確認事項**: 
+  - **確認事項**:
     - DDL定義の管理場所
     - データ投入頻度
     - データ保持期間
 
 - [ ] **stg.receive_king_final**
+
   - KINGシステムから投入されるテーブル
-  - **確認事項**: 
+  - **確認事項**:
     - KINGシステムとの連携方法
     - データフォーマット
 
 - [ ] **kpi.monthly_targets**
   - 月次目標マスタ
-  - **確認事項**: 
+  - **確認事項**:
     - データ登録方法（管理画面？CSV import？）
     - 更新頻度
 
 ### 2.3. コメント内情報の整合性
 
 - [ ] **mv_target_card_per_day の API エンドポイント**
+
   - コメント: `/core_api/dashboard/target`
   - **確認事項**: 実際のエンドポイント定義と一致しているか
 
@@ -462,10 +471,12 @@ sql = f"SELECT * FROM {fq(SCHEMA_MART, MV_RECEIVE_DAILY)};"
 ### 3.1. Repository 層での参照
 
 - [ ] **InboundRepository**
+
   - 参照オブジェクト: `mart.mv_receive_daily` or `mart.v_receive_daily`?
   - ファイルパス: `app/infra/adapters/inbound/inbound_repository.py`
 
 - [ ] **DashboardRepository**
+
   - 参照オブジェクト: `mart.mv_target_card_per_day`
   - ファイルパス: `app/infra/adapters/dashboard/dashboard_repository.py`
 
@@ -505,10 +516,9 @@ sql = f"SELECT * FROM {fq(SCHEMA_MART, MV_RECEIVE_DAILY)};"
 
 ## 5. メンテナンス履歴
 
-| 日付 | 変更内容 | 担当者 |
-|------|---------|--------|
+| 日付       | 変更内容 | 担当者         |
+| ---------- | -------- | -------------- |
 | 2025-12-11 | 初版作成 | GitHub Copilot |
-
 ```
 
 ---
@@ -518,15 +528,18 @@ sql = f"SELECT * FROM {fq(SCHEMA_MART, MV_RECEIVE_DAILY)};"
 ### 5.1. 成果物
 
 1. **オブジェクト一覧Markdownテーブル** ✅
+
    - 全15SQLファイルから依存関係を抽出
    - スキーマ別に整理（ref, stg, mart, kpi）
 
 2. **backend_shared/db/names.py 定数定義案** ✅
+
    - 全スキーマ・テーブル・VIEW・MVの定数定義
    - `fq()` ヘルパー関数
    - オブジェクトコレクション（AUTO_REFRESH_MVS等）
 
 3. **Repository 利用イメージ** ✅
+
    - 変更前後のコード比較
    - SQLインジェクション対策の説明
 
@@ -539,7 +552,7 @@ sql = f"SELECT * FROM {fq(SCHEMA_MART, MV_RECEIVE_DAILY)};"
 - **中核オブジェクト**: `mart.mv_receive_daily` が7つのMV/VIEWから参照される
 - **重複定義**: `v_receive_weekly.sql` が2つ存在（要整理）
 - **MV vs VIEW混在**: 実DB構成との整合性確認が必要
-- **外部システム依存**: stg.* テーブルはETL管理
+- **外部システム依存**: stg.\* テーブルはETL管理
 
 ### 5.3. 次のステップ
 

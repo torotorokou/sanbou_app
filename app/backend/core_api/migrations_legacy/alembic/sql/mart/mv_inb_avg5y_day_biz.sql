@@ -39,10 +39,3 @@ CREATE MATERIALIZED VIEW mart.mv_inb_avg5y_day_biz AS
 
 
 COMMENT ON MATERIALIZED VIEW mart.mv_inb_avg5y_day_biz IS '5y avg inbound/day (business Mon–Sat, holidays excluded) by (iso_week, iso_dow).';
-
-
-
-
-
-
-

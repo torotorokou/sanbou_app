@@ -44,12 +44,13 @@
 ### ❌ 削除するもの
 
 1. **App.tsx からの自動ヘルスチェック実行**
+
    ```tsx
    // Before: 削除
    useSystemHealth({
-       enabled: true,  // ← これが問題
-       interval: 30000,
-       showNotifications: true,
+     enabled: true, // ← これが問題
+     interval: 30000,
+     showNotifications: true,
    });
    ```
 
@@ -60,66 +61,73 @@
 ### ✅ 維持するもの
 
 1. **バックエンドの /health エンドポイント**
+
    - Docker HEALTHCHECK が使用
    - 監視ツールのプローブ先として必要
 
 2. **useSystemHealth hook (オンデマンド用)**
+
    ```tsx
    // 管理画面で手動実行用に残す
    const { status, checkHealth, isChecking } = useSystemHealth();
-   
+
    return (
-       <Button onClick={checkHealth} loading={isChecking}>
-           システム状態を確認
-       </Button>
+     <Button onClick={checkHealth} loading={isChecking}>
+       システム状態を確認
+     </Button>
    );
    ```
 
 ### 🆕 追加するもの
 
 1. **Axios interceptor によるエラーハンドリング**
+
    ```typescript
    // src/shared/api/interceptors.ts
    axios.interceptors.response.use(
-       (response) => response,
-       (error) => {
-           // サービスごとの適切なエラーメッセージ表示
-           if (error.response?.status === 503) {
-               notifyError('サービス一時停止中', '後ほど再度お試しください');
-           }
-           return Promise.reject(error);
+     (response) => response,
+     (error) => {
+       // サービスごとの適切なエラーメッセージ表示
+       if (error.response?.status === 503) {
+         notifyError("サービス一時停止中", "後ほど再度お試しください");
        }
+       return Promise.reject(error);
+     },
    );
    ```
 
 2. **管理画面用のシステムステータスページ**
+
    ```tsx
    // pages/admin/SystemStatus.tsx
    export const SystemStatusPage = () => {
-       const { status, checkHealth, isChecking, lastChecked } = useSystemHealth();
-       
-       return (
-           <Card>
-               <Button onClick={checkHealth}>今すぐチェック</Button>
-               {status && <ServiceStatusTable services={status.services} />}
-           </Card>
-       );
+     const { status, checkHealth, isChecking, lastChecked } = useSystemHealth();
+
+     return (
+       <Card>
+         <Button onClick={checkHealth}>今すぐチェック</Button>
+         {status && <ServiceStatusTable services={status.services} />}
+       </Card>
+     );
    };
    ```
 
 ## メリット
 
 ### パフォーマンス
+
 - ネットワーク負荷: 30秒ごと → オンデマンドのみ
 - ログ量: 大幅削減
 - サーバーCPU: ポーリング処理削減
 
 ### 保守性
+
 - 責務の明確な分離
 - それぞれの層で適切なツール使用
 - コードの可読性向上
 
 ### 拡張性
+
 - 監視ツール(Prometheus等)の導入が容易
 - カスタムメトリクスの追加が簡単
 - マイクロサービス追加時の対応も明確
@@ -155,6 +163,7 @@ HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
 ```
 
 **動作確認:**
+
 ```bash
 # ヘルスチェック状態を確認
 docker inspect local_dev-core_api-1 | grep -A 10 Health
@@ -177,12 +186,12 @@ docker inspect local_dev-core_api-1 | grep -A 10 Health
 
 ### 推奨監視ツール
 
-| ツール | 用途 | コスト |
-|--------|------|--------|
+| ツール               | 用途                   | コスト             |
+| -------------------- | ---------------------- | ------------------ |
 | Prometheus + Grafana | メトリクス収集・可視化 | 無料(セルフホスト) |
-| GCP Cloud Monitoring | GCP環境の統合監視 | 従量課金 |
-| Datadog | オールインワン監視 | 有料 |
-| New Relic | APM・監視 | 有料 |
+| GCP Cloud Monitoring | GCP環境の統合監視      | 従量課金           |
+| Datadog              | オールインワン監視     | 有料               |
+| New Relic            | APM・監視              | 有料               |
 
 ## 結論
 

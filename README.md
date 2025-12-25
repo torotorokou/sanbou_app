@@ -54,8 +54,8 @@ secrets ファイル（`secrets/.env.local_dev.secrets`）:
 
 ```env
 POSTGRES_PASSWORD=your_secure_password
-OPENAI_API_KEY=sk-...
-GEMINI_API_KEY=...
+OPENAI_API_KEY=your-openai-api-key
+GEMINI_API_KEY=your-gemini-api-key
 ```
 
 ### 1-3. コンテナ起動
@@ -67,11 +67,11 @@ make up ENV=local_dev
 アクセス先:
 
 - Frontend: http://localhost:5173
-- AI API:  http://localhost:8001/docs
-- Ledger:  http://localhost:8002/docs
+- AI API: http://localhost:8001/docs
+- Ledger: http://localhost:8002/docs
 - Core API: http://localhost:8003/docs
-- RAG:     http://localhost:8004/docs
-- Manual:  http://localhost:8005/docs
+- RAG: http://localhost:8004/docs
+- Manual: http://localhost:8005/docs
 
 よく使うコマンド:
 
@@ -136,7 +136,7 @@ cp secrets/.env.secrets.template secrets/.env.vm_stg.secrets
 ```env
 # 認証モード（VPN 経由固定ユーザー）
 AUTH_MODE=vpn_dummy
-VPN_USER_EMAIL=stg-admin@honest-recycle.co.jp
+VPN_USER_EMAIL=stg-admin@example.com
 VPN_USER_NAME=STG Administrator
 
 # DB 設定
@@ -148,7 +148,7 @@ DEBUG=false
 IAP_ENABLED=false
 
 # PUBLIC_BASE_URL は VPN 内 IP または FQDN
-PUBLIC_BASE_URL=http://100.64.0.1
+PUBLIC_BASE_URL=http://10.0.0.1
 ```
 
 #### PROD（vm_prod）
@@ -164,7 +164,7 @@ cp secrets/.env.secrets.template secrets/.env.vm_prod.secrets
 # 認証モード（IAP ヘッダ検証）
 AUTH_MODE=iap
 IAP_ENABLED=true
-IAP_AUDIENCE=/projects/PROJECT_NUMBER/global/backendServices/SERVICE_ID
+IAP_AUDIENCE=/projects/YOUR_PROJECT_NUMBER/global/backendServices/YOUR_SERVICE_ID
 
 # DB 設定
 POSTGRES_USER=sanbou_app_prod
@@ -174,7 +174,7 @@ POSTGRES_DB=sanbou_prod
 DEBUG=false
 
 # PUBLIC_BASE_URL は本番ドメイン
-PUBLIC_BASE_URL=https://sanbou-app.jp
+PUBLIC_BASE_URL=https://example.com
 ```
 
 ### 2-3. Docker イメージの準備
@@ -205,7 +205,7 @@ gcloud auth configure-docker asia-northeast1-docker.pkg.dev
 make up ENV=vm_stg
 ```
 
-アクセス: VPN 経由で `http://100.x.x.x/`（Tailscale IP）
+アクセス: VPN 経由で `http://10.0.0.x/`（VPN IP）
 
 #### PROD 環境（vm_prod）
 

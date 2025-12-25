@@ -164,7 +164,7 @@ set_secret() {
     return 0
   fi
   # Use -b to pass the secret body; avoid printing value
-  GH_PAGER=cat gh secret set "$full_key" \
+  env GH_PAGER=cat gh secret set "$full_key" \
     --repo "$REPO" \
     --env "$env" \
     -b "$value" \

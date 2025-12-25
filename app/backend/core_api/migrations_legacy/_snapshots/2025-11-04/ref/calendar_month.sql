@@ -47,4 +47,3 @@ ALTER TABLE ONLY ref.calendar_month
 --
 
 \unrestrict ZZpEdgMzA1O71hGL7QJBgZwxpndNZxnaq5uaXvSht5BpmeEi6rRAR2Aah05EU7B
-

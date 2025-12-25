@@ -7,6 +7,7 @@
 ## 問題
 
 ### 修正前の状態
+
 ```sql
 -- 誤った定義（修正前）
 SELECT
@@ -22,8 +23,9 @@ WHERE
 ```
 
 この定義では：
+
 - **伝票全体の正味重量** (`net_weight`) を明細単位の重量として扱っていた
-- Python 側で計算していた「正味重量_明細」（`net_weight_detail`）と異なる値が集計されていた
+- Python 側で計算していた「正味重量\_明細」（`net_weight_detail`）と異なる値が集計されていた
 - 結果として、KING のトン数が水増しされていた
 
 ## 実施した修正
@@ -31,6 +33,7 @@ WHERE
 ### Alembic マイグレーション作成
 
 新しいリビジョンファイルを作成：
+
 ```
 20251121_100000000_fix_v_king_receive_clean_use_net_weight_detail.py
 ```
@@ -59,6 +62,7 @@ WHERE
 ```
 
 ### 変更点
+
 1. **SELECT 句**: `net_weight AS net_weight_detail` → `net_weight_detail`
 2. **WHERE 句**: `net_weight <> 0` → `net_weight_detail <> 0`
 3. その他のロジック（日付変換、`vehicle_type_code = 1`、日付バリデーション）は維持
@@ -78,9 +82,10 @@ docker compose -f docker/docker-compose.dev.yml -p local_dev exec -T db psql -U 
 ## 検証結果
 
 ### データ統計
+
 ```sql
 -- 全期間のデータ統計
-SELECT 
+SELECT
     MIN(invoice_d) as earliest_date,
     MAX(invoice_d) as latest_date,
     COUNT(*) as total_records,
@@ -90,15 +95,17 @@ FROM stg.v_king_receive_clean;
 ```
 
 実行結果（修正後）:
+
 ```
- earliest_date | latest_date | total_records | total_net_weight_detail | total_amount 
+ earliest_date | latest_date | total_records | total_net_weight_detail | total_amount
 ---------------+-------------+---------------+-------------------------+--------------
  2021-03-01    | 2024-04-30  |        165269 |                87778251 |   5063660631
 ```
 
 ### 月別集計（最新5ヶ月）
+
 ```sql
-SELECT 
+SELECT
     DATE_TRUNC('month', invoice_d) as month,
     COUNT(*) as record_count,
     SUM(net_weight_detail)::numeric(12,2) as total_net_weight_detail,
@@ -110,8 +117,9 @@ LIMIT 5;
 ```
 
 実行結果:
+
 ```
-         month          | record_count | total_net_weight_detail | total_amount 
+         month          | record_count | total_net_weight_detail | total_amount
 ------------------------+--------------+-------------------------+--------------
  2024-04-01 00:00:00+00 |         4476 |              2421290.00 | 144405780.00
  2024-03-01 00:00:00+00 |         5015 |              2591210.00 | 154904400.00
@@ -123,20 +131,22 @@ LIMIT 5;
 ## 影響範囲
 
 ### 直接影響を受ける VIEW
+
 - `stg.v_king_receive_clean` (修正対象)
 
 ### 間接的に影響を受ける VIEW
+
 - `mart.v_receive_daily`
   - r_king CTE で `k.net_weight_detail` を参照
   - KING のトン数集計が正しい明細単位の値になる
 
 ## 比較検証用 SQL
 
-### Python 側の「正味重量_明細」との比較
+### Python 側の「正味重量\_明細」との比較
 
 ```sql
 -- 修正後の VIEW を使った集計（mart.v_receive_daily 経由）
-SELECT 
+SELECT
     DATE_TRUNC('month', ddate) as month,
     SUM(CASE WHEN source_system = 'king' THEN receive_net_ton ELSE 0 END) as king_ton,
     SUM(CASE WHEN source_system = 'king' THEN receive_vehicle_count ELSE 0 END) as king_vehicle_count,
@@ -152,8 +162,8 @@ ORDER BY month;
 ```sql
 -- stg.receive_king_final の生データと VIEW の比較
 WITH raw_data AS (
-    SELECT 
-        DATE_TRUNC('month', 
+    SELECT
+        DATE_TRUNC('month',
             make_date(
                 split_part(replace(invoice_date::text, '/', '-'), '-', 1)::int,
                 split_part(replace(invoice_date::text, '/', '-'), '-', 2)::int,
@@ -168,7 +178,7 @@ WITH raw_data AS (
       AND invoice_date::text ~ '^[0-9]{4}[-/][0-9]{2}[-/][0-9]{2}$'
       AND split_part(replace(invoice_date::text, '/', '-'), '-', 2)::int BETWEEN 1 AND 12
       AND split_part(replace(invoice_date::text, '/', '-'), '-', 3)::int BETWEEN 1 AND 31
-    GROUP BY DATE_TRUNC('month', 
+    GROUP BY DATE_TRUNC('month',
         make_date(
             split_part(replace(invoice_date::text, '/', '-'), '-', 1)::int,
             split_part(replace(invoice_date::text, '/', '-'), '-', 2)::int,
@@ -177,14 +187,14 @@ WITH raw_data AS (
     )
 ),
 view_data AS (
-    SELECT 
+    SELECT
         DATE_TRUNC('month', invoice_d) as month,
         SUM(net_weight_detail) as total_net_weight_detail_view,
         COUNT(*) as record_count_view
     FROM stg.v_king_receive_clean
     GROUP BY DATE_TRUNC('month', invoice_d)
 )
-SELECT 
+SELECT
     COALESCE(r.month, v.month) as month,
     r.total_net_weight_detail_raw,
     v.total_net_weight_detail_view,

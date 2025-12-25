@@ -8,12 +8,13 @@ Report processing services.
 - interactive_report_processing_service: インタラクティブレポート処理サービス
 """
 
-from app.core.usecases.reports.processors.report_processing_service import (
-    ReportProcessingService,
-)
 from app.core.usecases.reports.processors.interactive_report_processing_service import (
     InteractiveReportProcessingService,
 )
+from app.core.usecases.reports.processors.report_processing_service import (
+    ReportProcessingService,
+)
+
 
 __all__ = [
     "ReportProcessingService",

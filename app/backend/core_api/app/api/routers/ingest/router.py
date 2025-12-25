@@ -11,16 +11,18 @@ Ingest Router - CSVアップロードと予約登録エンドポイント
   - ビジネスロジックはUseCaseに集約
   - カスタム例外を使用（HTTPExceptionは使用しない）
 """
-from fastapi import APIRouter, Depends, UploadFile, File
-import pandas as pd
+
 import io
 
-from backend_shared.application.logging import get_module_logger
-from app.core.usecases.ingest.upload_ingest_csv_uc import UploadIngestCsvUseCase
-from app.core.usecases.ingest.create_reservation_uc import CreateReservationUseCase
-from app.config.di_providers import get_upload_ingest_csv_uc, get_create_reservation_uc
+import pandas as pd
+from fastapi import APIRouter, Depends, File, UploadFile
+
 from app.api.schemas import ReservationCreate, ReservationResponse
-from backend_shared.core.domain.exceptions import ValidationError, InfrastructureError
+from app.config.di_providers import get_create_reservation_uc, get_upload_ingest_csv_uc
+from app.core.usecases.ingest.create_reservation_uc import CreateReservationUseCase
+from app.core.usecases.ingest.upload_ingest_csv_uc import UploadIngestCsvUseCase
+from backend_shared.application.logging import create_log_context, get_module_logger
+from backend_shared.core.domain.exceptions import InfrastructureError, ValidationError
 
 router = APIRouter(prefix="/ingest", tags=["ingest"])
 logger = get_module_logger(__name__)
@@ -33,26 +35,26 @@ async def upload_csv(
 ):
     """
     CSVファイルをアップロード（受入実績データ）
-    
+
     処理フロー:
       1. CSVファイルバリデーション（拡張子チェック）
       2. pandas.read_csv() で読み込み
       3. UploadIngestCsvUseCase.execute() でDB保存
-    
+
     Note:
       - 現状はスタブ実装（バリデーション・フォーマットは将来実装）
       - 完全実装には要件定義が必要:
         * CSVカラム仕様の明確化
         * 必須カラムの定義
         * 日付・数値のパース処理
-    
+
     Args:
         file: アップロードされたCSVファイル
         uc: UploadIngestCsvUseCase (DI)
-    
+
     Returns:
         アップロード結果（行数等）
-    
+
     Raises:
         ValidationError: CSVファイル以外がアップロードされた場合
         InfrastructureError: CSV処理失敗時
@@ -68,10 +70,8 @@ async def upload_csv(
         logger.info(
             "Processing CSV upload",
             extra=create_log_context(
-                operation="upload_csv",
-                filename=file.filename,
-                row_count=len(rows)
-            )
+                operation="upload_csv", filename=file.filename, row_count=len(rows)
+            ),
         )
         result = uc.execute(rows)
         return result
@@ -83,9 +83,9 @@ async def upload_csv(
         logger.error(
             "Failed to process CSV",
             extra=create_log_context(operation="upload_csv", error=str(e)),
-            exc_info=True
+            exc_info=True,
         )
-        raise InfrastructureError(f"Failed to process CSV", cause=e)
+        raise InfrastructureError("Failed to process CSV", cause=e)
 
 
 @router.post("/reserve", response_model=ReservationResponse, summary="Create truck reservation")
@@ -95,18 +95,18 @@ def create_reservation(
 ):
     """
     トラック予約の作成/更新
-    
+
     Note:
       - 現状はスタブ実装（予約ビジネスルールは将来実装）
       - 完全実装には要件定義が必要:
         * 予約上限チェック
         * 重複予約のハンドリング
         * 予約履歴の記録
-    
+
     Args:
         req: 予約作成リクエスト
         uc: CreateReservationUseCase (DI)
-    
+
     Returns:
         予約作成結果
     """

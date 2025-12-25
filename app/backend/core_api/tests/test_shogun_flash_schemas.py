@@ -8,17 +8,25 @@ YAML から動的生成されたモデルが正しく動作するか検証しま
 import sys
 from pathlib import Path
 
+from pydantic import ValidationError
+
 # パスを追加（backend_shared と core_api をインポート可能にする）
 backend_path = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(backend_path / "backend_shared" / "src"))
 sys.path.insert(0, str(backend_path / "core_api"))
 
 # ローカル実行用にパスを上書き
-import backend_shared.infrastructure.config.paths as paths_module
-paths_module.SHOGUNCSV_DEF_PATH = str(backend_path.parent / "config" / "csv_config" / "shogun_csv_masters.yaml")
+import backend_shared.infrastructure.config.paths as paths_module  # noqa: E402
 
-from app.core.domain.shogun_flash_schemas import ReceiveFlashRow, ShipmentFlashRow, YardFlashRow
-from pydantic import ValidationError
+paths_module.SHOGUNCSV_DEF_PATH = str(
+    backend_path.parent / "config" / "csv_config" / "shogun_csv_masters.yaml"
+)
+
+from app.core.domain.shogun_flash_schemas import (  # noqa: E402
+    ReceiveFlashRow,
+    ShipmentFlashRow,
+    YardFlashRow,
+)
 
 
 def test_receive_flash_row():
@@ -26,7 +34,7 @@ def test_receive_flash_row():
     print("=" * 60)
     print("受入一覧モデル (ReceiveFlashRow) のテスト")
     print("=" * 60)
-    
+
     # 正常ケース（必須フィールドのみ）
     valid_row = {
         "slip_date": "2025-11-12",
@@ -35,7 +43,7 @@ def test_receive_flash_row():
         "receive_no": 789,
         "net_weight": 100.5,
     }
-    
+
     try:
         model = ReceiveFlashRow(**valid_row)
         print("✓ 必須フィールドのみ: 成功")
@@ -43,21 +51,21 @@ def test_receive_flash_row():
         print(f"  slip_date value: {model.slip_date}")
     except ValidationError as e:
         print(f"✗ 必須フィールドのみ: 失敗\n{e}")
-    
+
     # 必須フィールドが不足しているケース
     invalid_row = {
         "slip_date": "2025-11-12",
         "vendor_cd": 123,
         # item_cd が欠けている
     }
-    
+
     try:
         model = ReceiveFlashRow(**invalid_row)
         print("✗ 必須フィールド不足: 検証エラーが出なかった（バグの可能性）")
     except ValidationError as e:
-        print(f"✓ 必須フィールド不足: 正しくエラーが出た")
+        print("✓ 必須フィールド不足: 正しくエラーが出た")
         print(f"  エラー内容: {e.error_count()} 件")
-    
+
     # 任意フィールドを含むケース
     full_row = {
         "slip_date": "2025-11-12",
@@ -72,7 +80,7 @@ def test_receive_flash_row():
         "quantity": 2.0,
         "unit_name": "kg",
     }
-    
+
     try:
         model = ReceiveFlashRow(**full_row)
         print("✓ 任意フィールド含む: 成功")
@@ -80,7 +88,7 @@ def test_receive_flash_row():
         print(f"  payment_date: {model.payment_date}")
     except ValidationError as e:
         print(f"✗ 任意フィールド含む: 失敗\n{e}")
-    
+
     print()
 
 
@@ -89,7 +97,7 @@ def test_shipment_flash_row():
     print("=" * 60)
     print("出荷一覧モデル (ShipmentFlashRow) のテスト")
     print("=" * 60)
-    
+
     # 正常ケース
     valid_row = {
         "slip_date": "2025-11-12",
@@ -101,14 +109,14 @@ def test_shipment_flash_row():
         "net_weight": 50.0,
         "quantity": 10.0,
     }
-    
+
     try:
         model = ShipmentFlashRow(**valid_row)
         print("✓ 必須フィールド: 成功")
         print(f"  shipment_no: {model.shipment_no}")
     except ValidationError as e:
         print(f"✗ 必須フィールド: 失敗\n{e}")
-    
+
     print()
 
 
@@ -117,7 +125,7 @@ def test_yard_flash_row():
     print("=" * 60)
     print("ヤード一覧モデル (YardFlashRow) のテスト")
     print("=" * 60)
-    
+
     # 正常ケース
     valid_row = {
         "slip_date": "2025-11-12",
@@ -129,14 +137,14 @@ def test_yard_flash_row():
         "vendor_en_name": "業者Z",
         "item_cd": 111,
     }
-    
+
     try:
         model = YardFlashRow(**valid_row)
         print("✓ 必須フィールド: 成功")
         print(f"  item_cd: {model.item_cd}")
     except ValidationError as e:
         print(f"✗ 必須フィールド: 失敗\n{e}")
-    
+
     print()
 
 

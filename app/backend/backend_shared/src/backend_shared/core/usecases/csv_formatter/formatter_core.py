@@ -1,13 +1,12 @@
 import pandas as pd
+
 from backend_shared.core.usecases.csv_formatter.type_parser_map import (
     type_formatting_map,
     type_parser_map,
 )
 
 
-def apply_column_cleaning(
-    df: pd.DataFrame, columns_def: dict[str, dict]
-) -> pd.DataFrame:
+def apply_column_cleaning(df: pd.DataFrame, columns_def: dict[str, dict]) -> pd.DataFrame:
     """
     各列に対して「値そのものの整形」を行う処理（型変換前の前処理）。
 
@@ -47,9 +46,7 @@ def apply_column_cleaning(
     return df
 
 
-def apply_column_type_parsing(
-    df: pd.DataFrame, columns_def: dict[str, dict]
-) -> pd.DataFrame:
+def apply_column_type_parsing(df: pd.DataFrame, columns_def: dict[str, dict]) -> pd.DataFrame:
     """
     各列に対して「pandasのデータ型変換（dtype変換）」を適用する処理（本番の型変換）。
 
@@ -95,9 +92,7 @@ def apply_column_type_parsing(
     return df
 
 
-def dedupe_and_aggregate(
-    df: pd.DataFrame, unique_keys: list, agg_map: dict
-) -> pd.DataFrame:
+def dedupe_and_aggregate(df: pd.DataFrame, unique_keys: list, agg_map: dict) -> pd.DataFrame:
     """
     unique_keys でグループ化し、agg_map で指定した方法（sum, mean, first など）で集計し重複を解消する。
 
@@ -119,49 +114,59 @@ def dedupe_and_aggregate(
     if not unique_keys or not agg_map:
         return df
 
-    
     # tracking columns の保護（システムカラムは常に 'first' で集約）
-    TRACKING_COLUMNS = ['upload_file_id', 'source_row_no']
+    TRACKING_COLUMNS = ["upload_file_id", "source_row_no"]
     tracking_agg_map = {}
     for col in TRACKING_COLUMNS:
         if col in df.columns and col not in agg_map:
-            tracking_agg_map[col] = 'first'
+            tracking_agg_map[col] = "first"
             print(f"[INFO] Preserving tracking column '{col}' with 'first' aggregation")
-    
+
     df = df.copy()
-    
+
     # agg_map から不正な集計関数を除外（例: 'wavg(quantity)' など）
-    valid_agg_funcs = {'sum', 'mean', 'median', 'min', 'max', 'first', 'last', 'count', 'std', 'var'}
+    valid_agg_funcs = {
+        "sum",
+        "mean",
+        "median",
+        "min",
+        "max",
+        "first",
+        "last",
+        "count",
+        "std",
+        "var",
+    }
     cleaned_agg_map = {}
     for col, func in agg_map.items():
         if func in valid_agg_funcs:
             cleaned_agg_map[col] = func
         else:
             # 不正な関数の場合は 'first' をデフォルトとして使用
-            print(f"[WARN] Invalid aggregation function '{func}' for column '{col}'. Using 'first' instead.")
-            cleaned_agg_map[col] = 'first'
-    
+            print(
+                f"[WARN] Invalid aggregation function '{func}' for column '{col}'. Using 'first' instead."
+            )
+            cleaned_agg_map[col] = "first"
+
     if not cleaned_agg_map:
         # すべての集計関数が不正だった場合は、重複解消をスキップ
         print("[WARN] No valid aggregation functions found. Skipping deduplication.")
         return df
-    
+
     # DataFrameが空の場合はそのまま返す
     if len(df) == 0:
         print("[INFO] DataFrame is empty. Skipping deduplication.")
         return df
-    
+
     # グループIDを全行に付与
-    df["_dup_group_id"] = pd.factorize(
-        df[unique_keys].astype(str).agg("-".join, axis=1)
-    )[0]
+    df["_dup_group_id"] = pd.factorize(df[unique_keys].astype(str).agg("-".join, axis=1))[0]
 
     # _dup_group_idで集約
     grouped = df.groupby("_dup_group_id", dropna=False)
 
     # tracking columns を集約マップに追加
     cleaned_agg_map.update(tracking_agg_map)
-    
+
     # 集約してリセット
     df_agg = grouped.agg(cleaned_agg_map).reset_index(drop=True)
 

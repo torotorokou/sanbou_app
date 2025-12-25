@@ -36,6 +36,7 @@ docs/
 #### docs/ 直下のファイル
 
 **修正前 → 修正後:**
+
 - `DOCUMENTATION_REORGANIZATION_20251127.md` → `20251127_DOCUMENTATION_REORGANIZATION.md`
 - `FINAL_REPORT_20251206.md` → `20251206_FINAL_REPORT.md`
 - `GIT_HISTORY_CLEANUP_REPORT_20251206.md` → `20251206_GIT_HISTORY_CLEANUP_REPORT.md`
@@ -48,6 +49,7 @@ docs/
 #### archive/ ディレクトリ
 
 全27ファイルに `20251206_` プレフィックスを追加:
+
 - `BFF_PROXY_ARCHITECTURE.md` → `20251206_BFF_PROXY_ARCHITECTURE.md`
 - `CALENDAR_API_IMPLEMENTATION.md` → `20251206_CALENDAR_API_IMPLEMENTATION.md`
 - `CORE_API_IMPLEMENTATION.md` → `20251206_CORE_API_IMPLEMENTATION.md`
@@ -56,11 +58,13 @@ docs/
 #### conventions/ ディレクトリ
 
 トップレベル:
+
 - `CONFIG_STRUCTURE_GUIDE.md` → `20251206_CONFIG_STRUCTURE_GUIDE.md`
 - `DOCUMENTATION_SECURITY_GUIDELINES.md` → `20251206_DOCUMENTATION_SECURITY_GUIDELINES.md`
 - `refactoring_plan_local_dev.md` → `20251206_refactoring_plan_local_dev.md`
 
 サブディレクトリ:
+
 - `db/column_naming_dictionary.md` → `db/20251206_column_naming_dictionary.md`
 
 #### logging/ ディレクトリ
@@ -71,6 +75,7 @@ docs/
 #### shared/ ディレクトリ
 
 重複日付プレフィックスの修正:
+
 - `20251117_ACHIEVEMENT_MODE_IMPLEMENTATION_20251117.md` → `20251117_ACHIEVEMENT_MODE_IMPLEMENTATION.md`
 - `20251117_INBOUND_COMPARISON_IMPLEMENTATION_20251117.md` → `20251117_INBOUND_COMPARISON_IMPLEMENTATION.md`
 - `20251119_CSV_CALENDAR_IMPLEMENTATION_20251119.md` → `20251119_CSV_CALENDAR_IMPLEMENTATION.md`
@@ -78,6 +83,7 @@ docs/
 - `20251119_CSV_UPLOAD_NOTIFICATION_IMPROVEMENT_20251119.md` → `20251119_CSV_UPLOAD_NOTIFICATION_IMPROVEMENT.md`
 
 サブディレクトリ:
+
 - `contracts/frontend_features_directry_insfra.txt` → `contracts/20251206_frontend_features_directry_insfra.txt`
 - `contracts/notifications.openapi.yaml` → `contracts/20251206_notifications.openapi.yaml`
 - `contracts/responsible.md` → `contracts/20251206_responsible.md`
@@ -103,6 +109,7 @@ docs/
 #### archive/ へ移動 (5ファイル)
 
 env_templates/ から古い環境変数ファイルを移動:
+
 - `.env.common` → `archive/20251206_env.common.bak`
 - `.env.local_dev` → `archive/20251206_env.local_dev.bak`
 - `.env.local_stg` → `archive/20251206_env.local_stg.bak`
@@ -112,6 +119,7 @@ env_templates/ から古い環境変数ファイルを移動:
 ### 4. README.md の更新
 
 `docs/README.md` を全面的に更新:
+
 - 新しいディレクトリ構造のツリー表示
 - 日付プレフィックス命名規則の明示
 - カテゴリ別ガイドの追加
@@ -121,19 +129,19 @@ env_templates/ から古い環境変数ファイルを移動:
 
 ## 📊 統計
 
-| カテゴリ | ファイル数 | 説明 |
-|---------|-----------|------|
-| reports/ | 37 | 日次作業レポート |
-| security/ | 1 | セキュリティガイド |
-| database/ | 3 | DB設計・管理 |
-| bugs/ | 4 | バグレポート |
-| refactoring/ | 12 | リファクタリング計画 |
-| logging/ | 3 | ログ仕様 |
-| conventions/ | 9 (3+6) | コーディング規約 |
-| shared/ | 15 (10+5) | 共有ドキュメント |
-| archive/ | 34 | アーカイブ |
-| env_templates/ | 1 | README のみ |
-| **合計** | **119** | 全Markdownファイル |
+| カテゴリ       | ファイル数 | 説明                 |
+| -------------- | ---------- | -------------------- |
+| reports/       | 37         | 日次作業レポート     |
+| security/      | 1          | セキュリティガイド   |
+| database/      | 3          | DB設計・管理         |
+| bugs/          | 4          | バグレポート         |
+| refactoring/   | 12         | リファクタリング計画 |
+| logging/       | 3          | ログ仕様             |
+| conventions/   | 9 (3+6)    | コーディング規約     |
+| shared/        | 15 (10+5)  | 共有ドキュメント     |
+| archive/       | 34         | アーカイブ           |
+| env_templates/ | 1          | README のみ          |
+| **合計**       | **119**    | 全Markdownファイル   |
 
 ### ファイル移動・リネーム数
 
@@ -175,6 +183,7 @@ YYYYMMDD_機能名_種別.md
 ```
 
 **例:**
+
 - `20251206_GIT_SECURITY_GUIDE.md`
 - `20251204_DATABASE_PERMISSION_FIX.md`
 - `20251202_BALANCE_SHEET_DISPOSAL_VALUE_BUG_REPORT.md`
@@ -189,14 +198,17 @@ YYYYMMDD_機能名_種別.md
 ### 改善点
 
 1. **検索性向上**
+
    - 日付でファイルをソート可能
    - カテゴリ別にドキュメントを探しやすい
 
 2. **保守性向上**
+
    - 役割別・タスク別の参照ガイド
    - 新しいドキュメントの配置場所が明確
 
 3. **一貫性確保**
+
    - すべてのファイルが統一された命名規則に準拠
    - Git履歴を保持したままリネーム・移動
 
@@ -221,6 +233,7 @@ touch docs/refactoring/${DATE}_リファクタリング計画.md # リファク�
 ### ドキュメントレビュー
 
 月次で以下を確認:
+
 1. 全ファイルが日付プレフィックスを持つか
 2. 適切なカテゴリに配置されているか
 3. 古くなったドキュメントを `archive/` に移動

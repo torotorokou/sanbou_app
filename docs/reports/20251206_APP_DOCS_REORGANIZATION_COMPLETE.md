@@ -23,10 +23,12 @@ app配下の全サービス (backend_shared, core_api, ledger_api, frontend) の
 #### 1. backend_shared/docs (7ファイル)
 
 **修正:**
+
 - `tree.txt` → `20251206_tree.txt`
 - `tree_final.txt` → `20251206_tree_final.txt`
 
 **既存維持:**
+
 - `20251128_CLEANUP_COMPLETE.md` ✓
 - `20251128_ERROR_HANDLING_GUIDE.md` ✓
 - `20251128_REFACTORING_REPORT.md` ✓
@@ -36,12 +38,14 @@ app配下の全サービス (backend_shared, core_api, ledger_api, frontend) の
 #### 2. core_api/docs (44ファイル + サブディレクトリ)
 
 **トップレベル:**
+
 - `未実装エンドポイント一覧.md` → `20251206_未実装エンドポイント一覧.md`
 - `20251128_REFACTOR_COMPLETE_CLEAN_ARCHITECTURE.md` ✓
 - `README.md` ✓
 
 **api-implementation/ (6ファイル):**
 重複日付プレフィックスを修正:
+
 - `20251127_CUSTOMER_CHURN_ANALYSIS_REFACTORING_20251121.md` → `20251121_CUSTOMER_CHURN_ANALYSIS_REFACTORING.md`
 - `20251127_MV_AUTO_REFRESH_IMPLEMENTATION_SUMMARY_20251117.md` → `20251117_MV_AUTO_REFRESH_IMPLEMENTATION_SUMMARY.md`
 - `20251127_MV_TARGET_CARD_IMPLEMENTATION_20251117.md` → `20251117_MV_TARGET_CARD_IMPLEMENTATION.md`
@@ -51,6 +55,7 @@ app配下の全サービス (backend_shared, core_api, ledger_api, frontend) の
 
 **csv-processing/ (9ファイル):**
 重複日付プレフィックスを修正:
+
 - `20251127_CSV_ASYNC_UPLOAD_IMPLEMENTATION_20251118.md` → `20251118_CSV_ASYNC_UPLOAD_IMPLEMENTATION.md`
 - `20251127_CSV_UPLOAD_EMPTY_ROW_IMPLEMENTATION_20251114.txt` → `20251114_CSV_UPLOAD_EMPTY_ROW_IMPLEMENTATION.txt`
 - `20251127_CSV_UPLOAD_ERROR_ANALYSIS_20251114.md` → `20251114_CSV_UPLOAD_ERROR_ANALYSIS.md`
@@ -63,9 +68,11 @@ app配下の全サービス (backend_shared, core_api, ledger_api, frontend) の
 
 **database/ (7ファイル):**
 日付プレフィックス追加:
+
 - `README_migrations.md` → `20251206_README_migrations.md`
 
 既に修正済み:
+
 - `20251126_ALEMBIC_SQL_REFERENCE_SURVEY.md` ✓
 - `20251127_BACKEND_FIELD_NAME_DICTIONARY.md` ✓
 - `20251127_CUSTOMER_LIST_DB_DESIGN.txt` ✓
@@ -75,10 +82,12 @@ app配下の全サービス (backend_shared, core_api, ledger_api, frontend) の
 
 **legacy/ (6ファイル):**
 バックアップファイルに日付追加:
+
 - `.dockerignore copy` → `20251206_dockerignore.bak`
 - `Dockerfile.bak.20251030_093302` → `20251030_Dockerfile.bak`
 
 既存維持:
+
 - `20251006_IMPLEMENTATION_COMPLETE.md` ✓
 - `20251027_CSV_UPLOAD_IMPLEMENTATION.md` ✓
 - `20251027_YAML_FIRST_ARCHITECTURE.md` ✓
@@ -86,6 +95,7 @@ app配下の全サービス (backend_shared, core_api, ledger_api, frontend) の
 
 **refactoring/ (6ファイル):**
 重複日付プレフィックスを修正:
+
 - `20251127_COLUMN_CLEANUP_STEP1_REPORT_20251114.md` → `20251114_COLUMN_CLEANUP_STEP1_REPORT.md`
 - `20251127_COLUMN_CLEANUP_STEP2_REPORT_20251114.md` → `20251114_COLUMN_CLEANUP_STEP2_REPORT.md`
 - `20251127_COLUMN_CLEANUP_STEP3_REPORT_20251114.md` → `20251114_COLUMN_CLEANUP_STEP3_REPORT.md`
@@ -95,30 +105,36 @@ app配下の全サービス (backend_shared, core_api, ledger_api, frontend) の
 
 **reports/ (3ファイル):**
 重複日付プレフィックスを修正:
+
 - `20251127_RAW_DATA_SAVE_FAILURE_ANALYSIS_20251114.md` → `20251114_RAW_DATA_SAVE_FAILURE_ANALYSIS.md`
 - `20251127_RAW_SHOGUN_FLASH_EMPTY_ANALYSIS_20251114.md` → `20251114_RAW_SHOGUN_FLASH_EMPTY_ANALYSIS.md`
 - `20251127_RAW_SHOGUN_FLASH_FIX_COMPLETE_20251114.md` → `20251114_RAW_SHOGUN_FLASH_FIX_COMPLETE.md`
 
 **soft-delete/ (4ファイル):**
 重複日付プレフィックスを修正:
+
 - `20251127_BUG_FIX_SOFT_DELETE_20251119.md` → `20251119_BUG_FIX_SOFT_DELETE.md`
 - `20251127_SOFT_DELETE_REFACTORING_20251120.md` → `20251120_SOFT_DELETE_REFACTORING.md`
 
 既存維持:
+
 - `20251127_SOFT_DELETE_IMPLEMENTATION_SUMMARY.md` ✓
 - `20251127_SOFT_DELETE_QUICKSTART.md` ✓
 
 #### 3. ledger_api/docs (13ファイル + サブディレクトリ)
 
 **トップレベル:**
+
 - `Dockerfile.bak.20251030_093302` → `20251030_Dockerfile.bak`
 - `README.md` ✓
 
 **architecture/ (1ファイル):**
+
 - `20250908_ARCHITECTURE_IMPROVEMENT_PROPOSAL.md` ✓
 
 **migration/ (6ファイル):**
 すべて既に正しい形式:
+
 - `20251002_COMPLETE_MIGRATION_SUMMARY.md` ✓
 - `20251002_DOCKERFILE_MIGRATION_REPORT.md` ✓
 - `20251002_FINAL_MIGRATION_REPORT.md` ✓
@@ -128,6 +144,7 @@ app配下の全サービス (backend_shared, core_api, ledger_api, frontend) の
 
 **refactoring/ (6ファイル):**
 すべて既に正しい形式:
+
 - `20250908_API_REFACTORING_GUIDE.md` ✓
 - `20251002_REFACTORING_FINAL.md` ✓
 - `20251002_REFACTORING_SERVICES.md` ✓
@@ -139,12 +156,14 @@ app配下の全サービス (backend_shared, core_api, ledger_api, frontend) の
 
 **トップレベル:**
 既に正しい形式:
+
 - `20251006_notifications.md` ✓
 - `20251127_FRONTEND_TYPESCRIPT_FIELD_DICTIONARY.md` ✓
 - `README.md` ✓
 
 **architecture/ (7ファイル):**
 すべて既に正しい形式:
+
 - `20250908_api-best-practices.md` ✓
 - `20250911_RESPONSIVE_GUIDE.md` ✓
 - `20250919_frontend-architecture.md` ✓
@@ -154,10 +173,12 @@ app配下の全サービス (backend_shared, core_api, ledger_api, frontend) の
 - `20251127_FSD_ARCHITECTURE_GUIDE.md` ✓
 
 **legacy/ (1ファイル):**
+
 - `20251003_notifications-old.md` ✓
 
 **migration/ (10ファイル):**
 すべて既に正しい形式:
+
 - `20251003_IMPORT_REPLACEMENT_PLAN.md` ✓
 - `20251003_MIGRATION_PLAN.md` ✓
 - `20251003_MIGRATION_STATUS.md` ✓
@@ -171,10 +192,12 @@ app配下の全サービス (backend_shared, core_api, ledger_api, frontend) の
 
 **refactoring/ (6ファイル):**
 重複日付プレフィックスを修正:
+
 - `20251127_FSD_MVVM_REPOSITORY_COMPLETE_20251121.md` → `20251121_FSD_MVVM_REPOSITORY_COMPLETE.md`
 - `20251127_SUB_FEATURE_SPLIT_COMPLETE_20251121.md` → `20251121_SUB_FEATURE_SPLIT_COMPLETE.md`
 
 既存維持:
+
 - `20251006_CIRCULAR_DEPENDENCY_RESULTS.md` ✓
 - `20251006_circular-dependency-check.md` ✓
 - `20251120_FSD_REFACTORING_SUMMARY.md` ✓
@@ -184,22 +207,22 @@ app配下の全サービス (backend_shared, core_api, ledger_api, frontend) の
 
 ### サービス別ファイル数
 
-| サービス | ファイル数 | サブディレクトリ | 修正数 |
-|---------|-----------|----------------|--------|
-| backend_shared | 7 | 0 | 2 |
-| core_api | 44 | 7 | 28 |
-| ledger_api | 13 | 3 | 1 |
-| frontend | 29 | 4 | 2 |
-| **合計** | **93** | **14** | **33** |
+| サービス       | ファイル数 | サブディレクトリ | 修正数 |
+| -------------- | ---------- | ---------------- | ------ |
+| backend_shared | 7          | 0                | 2      |
+| core_api       | 44         | 7                | 28     |
+| ledger_api     | 13         | 3                | 1      |
+| frontend       | 29         | 4                | 2      |
+| **合計**       | **93**     | **14**           | **33** |
 
 ### 修正種別
 
-| 種別 | 件数 | 説明 |
-|------|------|------|
-| 重複日付修正 | 28 | `20251127_*_20251114.md` → `20251114_*.md` |
-| 日付プレフィックス追加 | 3 | `*.md` → `20251206_*.md` |
-| バックアップファイル修正 | 2 | `*.bak.*` → `20251030_*.bak` |
-| **合計** | **33** | |
+| 種別                     | 件数   | 説明                                       |
+| ------------------------ | ------ | ------------------------------------------ |
+| 重複日付修正             | 28     | `20251127_*_20251114.md` → `20251114_*.md` |
+| 日付プレフィックス追加   | 3      | `*.md` → `20251206_*.md`                   |
+| バックアップファイル修正 | 2      | `*.bak.*` → `20251030_*.bak`               |
+| **合計**                 | **33** |                                            |
 
 ## 📁 最終ディレクトリ構造
 
@@ -282,14 +305,17 @@ git status --short | grep "^R"
 ### 改善点
 
 1. **一貫性の確保**
+
    - app配下の全サービスで統一された命名規則
    - 重複日付プレフィックスの除去
 
 2. **可読性の向上**
+
    - ファイル名から作成日が即座に判別可能
    - 日付順のソートで時系列把握が容易
 
 3. **保守性の向上**
+
    - 既存のサブディレクトリ構造を維持
    - Git履歴を保持したままリネーム
 
@@ -339,6 +365,7 @@ touch app/backend/${SERVICE}/docs/refactoring/${DATE}_リファクタリング�
 ### ドキュメントレビュー
 
 月次で以下を確認:
+
 1. 全ファイルが `YYYYMMDD_` プレフィックスを持つか (README.md以外)
 2. 適切なサブディレクトリに配置されているか
 3. 古くなったドキュメントを `legacy/` に移動

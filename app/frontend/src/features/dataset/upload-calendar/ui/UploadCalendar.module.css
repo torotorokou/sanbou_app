@@ -1,0 +1,32 @@
+/**
+ * UploadCalendar - レスポンシブ対応
+ * xl (1280px) 以上でカレンダーセルの高さを動的に調整し、スクロールなしで全表示
+ */
+
+/* デフォルト: セルの最小高さ */
+.dayCell {
+  min-height: 96px;
+}
+
+/* xl以上(1280px~)ではセルの高さを小さくして全体を圧縮 */
+@media (min-width: 1280px) {
+  .dayCell {
+    min-height: 72px; /* 96px → 72px に縮小 */
+  }
+
+  /* カレンダー内のフォントサイズも若干調整 */
+  .dayCell .dateNumber {
+    font-size: 14px;
+  }
+
+  .dayCell .dotWrapper {
+    gap: 6px;
+  }
+}
+
+/* 1440px以上ではさらに余裕を持たせる */
+@media (min-width: 1440px) {
+  .dayCell {
+    min-height: 80px;
+  }
+}

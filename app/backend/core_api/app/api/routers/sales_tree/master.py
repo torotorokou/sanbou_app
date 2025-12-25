@@ -10,12 +10,13 @@ Sales Tree Master Router - Filter option endpoints
 Note: これは「マスタAPI」ではなく、SalesTree分析画面のプルダウンフィルタ用です。
       mart.v_sales_tree_detail_base から SELECT DISTINCT で動的に取得します。
 """
+
 from fastapi import APIRouter, Depends, Query
 
-from backend_shared.application.logging import get_module_logger
 from app.config.di_providers import get_sales_tree_repo
-from app.infra.adapters.sales_tree.sales_tree_repository import SalesTreeRepository
 from app.core.domain.sales_tree import CategoryKind
+from app.infra.adapters.sales_tree.sales_tree_repository import SalesTreeRepository
+from backend_shared.application.logging import get_module_logger
 from backend_shared.core.domain.exceptions import InfrastructureError
 
 logger = get_module_logger(__name__)
@@ -29,16 +30,16 @@ def get_sales_reps_master(
 ):
     """
     【SalesTree分析専用】営業フィルタ候補取得
-    
+
     NOTE: これは「営業マスタAPI」ではありません。
     mart.v_sales_tree_detail_base から SELECT DISTINCT で動的に営業候補を取得します。
-    
+
     用途: SalesTree分析画面のプルダウンフィルタ用
     データソース: mart.v_sales_tree_detail_base（実売上明細ビュー）
-    
+
     **Query Parameters:**
     - category_kind: カテゴリ種別（'waste'=廃棄物, 'valuable'=有価物）
-    
+
     **Response Example:**
     ```json
     [
@@ -48,7 +49,9 @@ def get_sales_reps_master(
     ```
     """
     try:
-        logger.info(f"GET /analytics/sales-tree/masters/reps (SalesTree filter API) category_kind={category_kind}")
+        logger.info(
+            f"GET /analytics/sales-tree/masters/reps (SalesTree filter API) category_kind={category_kind}"
+        )
         reps = repo.get_sales_reps(category_kind)
         logger.info(f"Successfully retrieved {len(reps)} sales reps for filter")
         return reps
@@ -56,7 +59,7 @@ def get_sales_reps_master(
         logger.error(f"Error in get_sales_reps_master: {str(e)}", exc_info=True)
         raise InfrastructureError(
             message=f"Internal server error while fetching sales reps: {str(e)}",
-            cause=e
+            cause=e,
         )
 
 
@@ -67,26 +70,27 @@ def get_customers_master(
 ):
     """
     【SalesTree分析専用】顧客フィルタ候補取得
-    
+
     NOTE: これは「顧客マスタAPI」ではありません。
     mart.v_sales_tree_detail_base から SELECT DISTINCT で動的に顧客候補を取得します。
-    
+
     用途: SalesTree分析画面のプルダウンフィルタ用
     データソース: mart.v_sales_tree_detail_base（実売上明細ビュー）
-    
+
     **Query Parameters:**
     - category_kind: カテゴリ種別（'waste'=廃棄物, 'valuable'=有価物）
     """
     try:
-        logger.info(f"GET /analytics/sales-tree/masters/customers (SalesTree filter API) category_kind={category_kind}")
+        logger.info(
+            f"GET /analytics/sales-tree/masters/customers (SalesTree filter API) category_kind={category_kind}"
+        )
         customers = repo.get_customers(category_kind)
         logger.info(f"Successfully retrieved {len(customers)} customers for filter")
         return customers
     except Exception as e:
         logger.error(f"Error in get_customers_master: {str(e)}", exc_info=True)
         raise InfrastructureError(
-            message=f"Internal server error while fetching customers: {str(e)}",
-            cause=e
+            message=f"Internal server error while fetching customers: {str(e)}", cause=e
         )
 
 
@@ -97,24 +101,25 @@ def get_items_master(
 ):
     """
     【SalesTree分析専用】商品フィルタ候補取得
-    
+
     NOTE: これは「商品マスタAPI」ではありません。
     mart.v_sales_tree_detail_base から SELECT DISTINCT で動的に商品候補を取得します。
-    
+
     用途: SalesTree分析画面のプルダウンフィルタ用
     データソース: mart.v_sales_tree_detail_base（実売上明細ビュー）
-    
+
     **Query Parameters:**
     - category_kind: カテゴリ種別（'waste'=廃棄物, 'valuable'=有価物）
     """
     try:
-        logger.info(f"GET /analytics/sales-tree/masters/items (SalesTree filter API) category_kind={category_kind}")
+        logger.info(
+            f"GET /analytics/sales-tree/masters/items (SalesTree filter API) category_kind={category_kind}"
+        )
         items = repo.get_items(category_kind)
         logger.info(f"Successfully retrieved {len(items)} items for filter")
         return items
     except Exception as e:
         logger.error(f"Error in get_items_master: {str(e)}", exc_info=True)
         raise InfrastructureError(
-            message=f"Internal server error while fetching items: {str(e)}",
-            cause=e
+            message=f"Internal server error while fetching items: {str(e)}", cause=e
         )

@@ -5,17 +5,15 @@ Revises: 20251104_210000000
 Create Date: 2025-11-04 08:48:18.834992
 
 """
-from alembic import op
-import sqlalchemy as sa
-from alembic import context
 
+import sqlalchemy as sa
+from alembic import context, op
 
 # revision identifiers, used by Alembic.
-revision = '20251104_174818076'
-down_revision = '20251104_210000000'
+revision = "20251104_174818076"
+down_revision = "20251104_210000000"
 branch_labels = None
 depends_on = None
-
 
 
 def _exists(qualified: str) -> bool:
@@ -29,6 +27,7 @@ def _exists(qualified: str) -> bool:
     return bool(
         conn.execute(sa.text("SELECT to_regclass(:q) IS NOT NULL"), {"q": qualified}).scalar()
     )
+
 
 def upgrade():
     """
@@ -57,7 +56,6 @@ def upgrade():
                 nullable=False,
             ),
             sa.Column("note", sa.Text(), nullable=True),
-
             # 制約名は実DBと完全一致させる
             sa.UniqueConstraint("month_date", "segment", "metric", name="uq_monthly_targets"),
             sa.CheckConstraint(
@@ -81,7 +79,6 @@ def upgrade():
             unique=False,
             schema="kpi",
         )
-
 
 
 def downgrade():

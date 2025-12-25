@@ -32,14 +32,18 @@ async def test(request: Request):
     return {"request_id": request_id}
 ```
 """
+
 import uuid
+
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
 
+
 # backend_shared.application.logging から set_request_id をインポート
 try:
     from backend_shared.application.logging import set_request_id
+
     HAS_LOGGING_INTEGRATION = True
 except ImportError:
     # logging統合がない場合はスキップ（後方互換性）
@@ -49,11 +53,11 @@ except ImportError:
 class RequestIdMiddleware(BaseHTTPMiddleware):
     """
     Request ID ミドルウェア
-    
+
     Description:
         各HTTPリクエストにユニークなRequest IDを付与し、
         ログとレスポンスに含めることでトレーシングを実現します。
-        
+
     Processing Flow:
         1. X-Request-ID ヘッダーを確認
         2. なければ新規 UUID を生成
@@ -62,15 +66,15 @@ class RequestIdMiddleware(BaseHTTPMiddleware):
         5. 次のミドルウェア/エンドポイントへ処理を渡す
         6. レスポンスヘッダーに X-Request-ID を追加
     """
-    
+
     async def dispatch(self, request: Request, call_next):
         """
         ミドルウェアの処理本体
-        
+
         Args:
             request: FastAPI Request
             call_next: 次の処理を呼び出すコールバック
-            
+
         Returns:
             Response: レスポンス（X-Request-ID ヘッダー付き）
         """
@@ -82,14 +86,14 @@ class RequestIdMiddleware(BaseHTTPMiddleware):
         request_id = request.headers.get("X-Request-ID")
         if not request_id:
             request_id = str(uuid.uuid4())
-        
+
         # ========================================
         # 2. ContextVar に設定（logging 統合）
         # ========================================
         # これにより、以降の全ログに自動的に request_id が付与される
         if HAS_LOGGING_INTEGRATION:
             set_request_id(request_id)
-        
+
         # ========================================
         # 3. request.state に保存
         # ========================================
@@ -97,16 +101,16 @@ class RequestIdMiddleware(BaseHTTPMiddleware):
         # 既存コードとの互換性のため trace_id としても保存
         request.state.request_id = request_id
         request.state.trace_id = request_id  # 後方互換性
-        
+
         # ========================================
         # 4. 次の処理へ（エンドポイント実行）
         # ========================================
         response: Response = await call_next(request)
-        
+
         # ========================================
         # 5. レスポンスヘッダーに追加
         # ========================================
         # クライアント側でもRequest IDを確認できるようにする
         response.headers["X-Request-ID"] = request_id
-        
+
         return response

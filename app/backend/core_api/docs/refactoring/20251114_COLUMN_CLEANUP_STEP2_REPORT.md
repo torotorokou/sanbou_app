@@ -11,25 +11,25 @@
 
 全5セクションにおいて、冗長な `_en_` 接尾辞を削除しました。
 
-| セクション | 修正前カラム名 | 修正後カラム名 |
-|-----------|--------------|-------------|
-| **shipment** | client_en_name | client_name |
-| | vendor_en_name | vendor_name |
-| | site_en_name | site_name |
-| | item_en_name | item_name |
-| | unit_en_name | unit_name |
-| | transport_vendor_en_name | transport_vendor_name |
-| | slip_type_en_name | slip_type_name |
-| | category_en_name | category_name |
-| **yard** | client_en_name | client_name |
-| | item_en_name | item_name |
-| | unit_en_name | unit_name |
-| | sales_staff_en_name | sales_staff_name |
-| | vendor_en_name | vendor_name |
-| | category_en_name | category_name |
-| **payable** | client_en_name | client_name |
-| **sales_summary** | client_en_name | client_name |
-| **receive** | (変更なし) | 元々 *_name 形式 |
+| セクション        | 修正前カラム名           | 修正後カラム名        |
+| ----------------- | ------------------------ | --------------------- |
+| **shipment**      | client_en_name           | client_name           |
+|                   | vendor_en_name           | vendor_name           |
+|                   | site_en_name             | site_name             |
+|                   | item_en_name             | item_name             |
+|                   | unit_en_name             | unit_name             |
+|                   | transport_vendor_en_name | transport_vendor_name |
+|                   | slip_type_en_name        | slip_type_name        |
+|                   | category_en_name         | category_name         |
+| **yard**          | client_en_name           | client_name           |
+|                   | item_en_name             | item_name             |
+|                   | unit_en_name             | unit_name             |
+|                   | sales_staff_en_name      | sales_staff_name      |
+|                   | vendor_en_name           | vendor_name           |
+|                   | category_en_name         | category_name         |
+| **payable**       | client_en_name           | client_name           |
+| **sales_summary** | client_en_name           | client_name           |
+| **receive**       | (変更なし)               | 元々 \*\_name 形式    |
 
 **合計変更数**: 16カラム
 
@@ -66,11 +66,13 @@ unique_keys_en: ['slip_date', 'vendor_cd', 'item_cd', 'amount', 'slip_no']
 ## 3. 命名規則の一貫性チェック
 
 ### Before (問題あり)
+
 - receive: `vendor_name`, `item_name` ← OK
 - shipment: `vendor_en_name`, `item_en_name` ← 不一致
 - yard: `vendor_en_name`, `item_en_name` ← 不一致
 
 ### After (統一済み)
+
 - receive: `vendor_name`, `item_name`
 - shipment: `vendor_name`, `item_name`
 - yard: `vendor_name`, `item_name`
@@ -82,21 +84,25 @@ unique_keys_en: ['slip_date', 'vendor_cd', 'item_cd', 'amount', 'slip_no']
 ## 4. 影響範囲
 
 ### データベース側への影響
+
 ❗ **現時点では影響なし**
 
 現在のデータベーステーブル構造は古いカラム名を使用しています:
+
 ```sql
 -- 例: stg.shipment_shogun_flash
-SELECT column_name FROM information_schema.columns 
+SELECT column_name FROM information_schema.columns
 WHERE table_schema = 'stg' AND table_name = 'shipment_shogun_flash';
 ```
 
 → まだ `client_en_name`, `vendor_en_name` などが存在
 
 ### アプリケーションコードへの影響
+
 ⚠️ **次ステップで対応が必要**
 
 YAMLを読み込む以下のコンポーネントがあります:
+
 - `shogun_csv_repository.py` - CSVアップロード処理
 - `dataframe_to_model.py` - DataFrameとORMモデル変換
 - その他の参照箇所（要調査）
@@ -106,11 +112,13 @@ YAMLを読み込む以下のコンポーネントがあります:
 ## 5. 次ステップへの準備状況
 
 ### Step 3 (Migration作成) の前提条件
+
 ✅ YAML定義が新しいカラム名に統一済み  
 ⏳ 既存データベースは古いカラム名のまま  
 ⏳ Alembicマイグレーションによるカラム名変更が必要
 
 ### 必要なマイグレーション内容（予定）
+
 ```python
 # raw スキーマ
 op.execute("ALTER TABLE raw.shipment_shogun_flash RENAME COLUMN client_en_name TO client_name")
@@ -123,6 +131,7 @@ op.execute("ALTER TABLE stg.shipment_shogun_flash RENAME COLUMN client_en_name T
 ```
 
 対象テーブル:
+
 - `shipment_shogun_flash`
 - `shipment_shogun_final`
 - `yard_shogun_flash`

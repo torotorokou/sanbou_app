@@ -16,10 +16,10 @@ Revision ID: 20251119_100000000
 Revises: 20251117_135913797
 Create Date: 2025-11-19 10:00:00.000000
 """
-from alembic import op
-import sqlalchemy as sa
-from sqlalchemy.dialects.postgresql import TIMESTAMP
 
+import sqlalchemy as sa
+from alembic import op
+from sqlalchemy.dialects.postgresql import TIMESTAMP
 
 revision = "20251119_100000000"
 down_revision = "20251117_135913797"
@@ -31,9 +31,9 @@ def upgrade() -> None:
     """
     log.upload_file に論理削除カラムを追加
     """
-    
+
     print("[log.upload_file] Adding soft delete columns...")
-    
+
     # is_deleted カラム追加
     op.add_column(
         "upload_file",
@@ -42,11 +42,11 @@ def upgrade() -> None:
             sa.Boolean(),
             nullable=False,
             server_default=sa.false(),
-            comment="論理削除フラグ (true=削除済み, false=有効)"
+            comment="論理削除フラグ (true=削除済み, false=有効)",
         ),
-        schema="log"
+        schema="log",
     )
-    
+
     # deleted_at カラム追加
     op.add_column(
         "upload_file",
@@ -54,11 +54,11 @@ def upgrade() -> None:
             "deleted_at",
             TIMESTAMP(timezone=True),
             nullable=True,
-            comment="削除日時 (is_deleted=true の場合に設定)"
+            comment="削除日時 (is_deleted=true の場合に設定)",
         ),
-        schema="log"
+        schema="log",
     )
-    
+
     # deleted_by カラム追加
     op.add_column(
         "upload_file",
@@ -66,11 +66,11 @@ def upgrade() -> None:
             "deleted_by",
             sa.Text(),
             nullable=True,
-            comment="削除実行者（ユーザー名など）"
+            comment="削除実行者（ユーザー名など）",
         ),
-        schema="log"
+        schema="log",
     )
-    
+
     print("✓ Added is_deleted, deleted_at, deleted_by columns to log.upload_file")
 
 
@@ -81,5 +81,5 @@ def downgrade() -> None:
     op.drop_column("upload_file", "deleted_by", schema="log")
     op.drop_column("upload_file", "deleted_at", schema="log")
     op.drop_column("upload_file", "is_deleted", schema="log")
-    
+
     print("✓ Dropped soft delete columns from log.upload_file")

@@ -1,17 +1,18 @@
 from __future__ import annotations
-from pathlib import Path
-from datetime import date
+
 import argparse
+from datetime import date
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
-from sqlalchemy import create_engine
 from common import _dsn
-
 from plan_smoothing import (
     SmoothConfig,
     apply_intraweek_pipeline,
     bridge_smooth_across_months_and_renorm,
 )
+from sqlalchemy import create_engine
 
 OUT = Path("/backend/app/test/out/plan")
 
@@ -30,7 +31,7 @@ def _first_day_next_month(d: date) -> date:
 
 def _engine_url(dsn: str) -> str:
     prefix = "postgresql://"
-    return ("postgresql+psycopg" + dsn[len("postgresql"):]) if dsn.startswith(prefix) else dsn
+    return ("postgresql+psycopg" + dsn[len("postgresql") :]) if dsn.startswith(prefix) else dsn
 
 
 def _ensure_odd(n: int) -> int:
@@ -48,13 +49,28 @@ def main():
 
     # 週配分（既存）
     ap.add_argument("--weekly-window", type=int, default=3, help="週の移動平均窓（奇数・中心付き）")
-    ap.add_argument("--weekly-alpha", type=float, default=0.35, help="週配分の凸結合：raw(1-α)+MA(α)")
+    ap.add_argument(
+        "--weekly-alpha",
+        type=float,
+        default=0.35,
+        help="週配分の凸結合：raw(1-α)+MA(α)",
+    )
     ap.add_argument("--weekly-cap", type=float, default=1.30, help="週配分の上限（raw の何倍まで）")
 
     # 週内配分（強化）
-    ap.add_argument("--intraweek-window", type=int, default=3, help="週内ロール窓（奇数・中央値→平均）")
+    ap.add_argument(
+        "--intraweek-window",
+        type=int,
+        default=3,
+        help="週内ロール窓（奇数・中央値→平均）",
+    )
     ap.add_argument("--within-week-relcap", type=float, default=1.6, help="週平均×倍率 まで上限")
-    ap.add_argument("--min-open-days", type=int, default=2, help="週の営業日がこの数未満なら例外処理")
+    ap.add_argument(
+        "--min-open-days",
+        type=int,
+        default=2,
+        help="週の営業日がこの数未満なら例外処理",
+    )
 
     # 日タイプ倍率（平日=1.0, 日曜/祝日を抑制したいときに使う）
     ap.add_argument("--sun-mult", type=float, default=1.0, help="日曜倍率（例: 0.6）")
@@ -123,12 +139,13 @@ def main():
         raise SystemExit(
             "[error] mart.inb_profile_smooth_test が空です。step03_save を先に実行してください。"
         )
-    prof_biz = prof[prof["scope"] == "biz"].copy().rename(columns={"day_mean_smooth": "day_mean_biz"})
-    # 日曜・祝日は「all の日曜行」を流用
-    prof_all_sun = (
-        prof[(prof["scope"] == "all") & (prof["iso_dow"] == 7)][["iso_week", "day_mean_smooth"]]
-        .rename(columns={"day_mean_smooth": "day_mean_all_sun"})
+    prof_biz = (
+        prof[prof["scope"] == "biz"].copy().rename(columns={"day_mean_smooth": "day_mean_biz"})
     )
+    # 日曜・祝日は「all の日曜行」を流用
+    prof_all_sun = prof[(prof["scope"] == "all") & (prof["iso_dow"] == 7)][
+        ["iso_week", "day_mean_smooth"]
+    ].rename(columns={"day_mean_smooth": "day_mean_all_sun"})
 
     # KPI
     kpi = pd.read_sql_query(
@@ -145,18 +162,21 @@ def main():
     )
     kpi["month_date"] = pd.to_datetime(kpi["month_date"]).dt.to_period("M").dt.to_timestamp()
     if kpi.empty:
-        raise SystemExit(f"[error] 対象期間に inbound KPI がありません: {m_from}〜{m_to_excl}（排他）")
+        raise SystemExit(
+            f"[error] 対象期間に inbound KPI がありません: {m_from}〜{m_to_excl}（排他）"
+        )
 
     # scope（sun/hol/biz/closed）
     is_closed = (~cal["is_business"]) | (cal["day_type"] == "CLOSED")
-    use_sun = (~is_closed) & (cal["iso_dow"] == 7)               # 日曜（営業日のみ）
-    use_hol = (~is_closed) & (cal["is_holiday"]) & (~use_sun)    # 祝日（ただし日曜優先）
-    use_biz = (~is_closed) & (~use_sun) & (~use_hol)             # 平日
+    use_sun = (~is_closed) & (cal["iso_dow"] == 7)  # 日曜（営業日のみ）
+    use_hol = (~is_closed) & (cal["is_holiday"]) & (~use_sun)  # 祝日（ただし日曜優先）
+    use_biz = (~is_closed) & (~use_sun) & (~use_hol)  # 平日
 
-    base = (
-        cal.merge(prof_biz[["iso_week", "iso_dow", "day_mean_biz"]], on=["iso_week", "iso_dow"], how="left")
-           .merge(prof_all_sun, on=["iso_week"], how="left")
-    )
+    base = cal.merge(
+        prof_biz[["iso_week", "iso_dow", "day_mean_biz"]],
+        on=["iso_week", "iso_dow"],
+        how="left",
+    ).merge(prof_all_sun, on=["iso_week"], how="left")
     base["day_mean_biz"] = base["day_mean_biz"].fillna(0.0)
     base["day_mean_all_sun"] = base["day_mean_all_sun"].fillna(0.0)
 
@@ -181,7 +201,9 @@ def main():
                 f"select scope, weight_multiplier from {args.daytype_weight_table}", eng
             )
             if not wtbl.empty:
-                for k, v in zip(wtbl["scope"], wtbl["weight_multiplier"].astype(float)):
+                for k, v in zip(
+                    wtbl["scope"], wtbl["weight_multiplier"].astype(float), strict=True
+                ):
                     if str(k) in scope_mult:
                         scope_mult[str(k)] = float(v)
         except Exception:
@@ -190,25 +212,25 @@ def main():
     # ① 月→週（安全平滑 + cap）
     week_mass = (
         base.groupby(["month_date", "iso_year", "iso_week"], as_index=False)["day_mean"]
-            .sum()
-            .rename(columns={"day_mean": "mu_week"})
+        .sum()
+        .rename(columns={"day_mean": "mu_week"})
     )
     first_dd = (
         base.groupby(["month_date", "iso_year", "iso_week"], as_index=False)["ddate"]
-            .min()
-            .rename(columns={"ddate": "week_start"})
+        .min()
+        .rename(columns={"ddate": "week_start"})
     )
     open_days = (
         base.assign(is_open=base["day_mean"] > 0)
-            .groupby(["month_date", "iso_year", "iso_week"], as_index=False)["is_open"]
-            .sum()
-            .rename(columns={"is_open": "open_days"})
+        .groupby(["month_date", "iso_year", "iso_week"], as_index=False)["is_open"]
+        .sum()
+        .rename(columns={"is_open": "open_days"})
     )
     week_mass = (
         week_mass.merge(first_dd, on=["month_date", "iso_year", "iso_week"], how="left")
-                 .merge(open_days, on=["month_date", "iso_year", "iso_week"], how="left")
-                 .fillna({"open_days": 0})
-                 .sort_values(["month_date", "week_start"])
+        .merge(open_days, on=["month_date", "iso_year", "iso_week"], how="left")
+        .fillna({"open_days": 0})
+        .sort_values(["month_date", "week_start"])
     )
 
     def _blend_smooth_per_month(g: pd.DataFrame) -> pd.DataFrame:
@@ -229,7 +251,9 @@ def main():
     week_mass = week_mass.groupby("month_date", group_keys=False).apply(
         _blend_smooth_per_month, include_groups=True
     )
-    week_mass = week_mass.merge(kpi[["month_date", "month_target_ton"]], on="month_date", how="left")
+    week_mass = week_mass.merge(
+        kpi[["month_date", "month_target_ton"]], on="month_date", how="left"
+    )
     week_mass["month_target_ton"] = week_mass["month_target_ton"].astype(float)
     week_mass["week_target_ton_in_month"] = week_mass["w_week"] * week_mass["month_target_ton"]
 
@@ -241,8 +265,8 @@ def main():
     )
     week_sum = (
         base.groupby(["month_date", "iso_year", "iso_week"], as_index=False)["day_mean"]
-            .sum()
-            .rename(columns={"day_mean": "mu_week_sum"})
+        .sum()
+        .rename(columns={"day_mean": "mu_week_sum"})
     )
     base = base.merge(week_sum, on=["month_date", "iso_year", "iso_week"], how="left")
     base["w_day_in_week_raw"] = np.where(
@@ -254,25 +278,25 @@ def main():
         intraweek_method="median_then_mean",
         within_week_rel_cap=float(args.within_week_relcap),
         min_open_days_for_smooth=int(args.min_open_days),
-        scope_weight_multiplier=scope_mult,           # biz/sun/hol 倍率
+        scope_weight_multiplier=scope_mult,  # biz/sun/hol 倍率
         bridge_smooth_enabled=not args.no_bridge,
         bridge_smooth_window=int(args.bridge_window),
-        bridge_smooth_scope_values=("biz",),         # 平日のみブリッジ
+        bridge_smooth_scope_values=("biz",),  # 平日のみブリッジ
     )
 
     base = (
         base.sort_values(["month_date", "iso_year", "iso_week", "ddate"])
-            .groupby(["month_date", "iso_year", "iso_week"], group_keys=False)
-            .apply(
-                lambda g: apply_intraweek_pipeline(
-                    df_week=g,
-                    weight_raw_col="w_day_in_week_raw",
-                    weight_col="w_day_in_week",
-                    cfg=cfg,
-                    scope_col="scope_used",
-                ),
-                include_groups=True,
-            )
+        .groupby(["month_date", "iso_year", "iso_week"], group_keys=False)
+        .apply(
+            lambda g: apply_intraweek_pipeline(
+                df_week=g,
+                weight_raw_col="w_day_in_week_raw",
+                weight_col="w_day_in_week",
+                cfg=cfg,
+                scope_col="scope_used",
+            ),
+            include_groups=True,
+        )
     )
 
     base["target_ton"] = base["w_day_in_week"] * base["week_target_ton_in_month"]
@@ -313,14 +337,14 @@ def main():
     if args.debug:
         weekly = (
             daily.groupby(["month_date", "iso_year", "iso_week"], as_index=False)["target_ton"]
-                 .sum()
-                 .rename(columns={"target_ton": "week_target_ton_in_month"})
+            .sum()
+            .rename(columns={"target_ton": "week_target_ton_in_month"})
         )
         chk_day_month = (
             daily.groupby("month_date", as_index=False)["target_ton"]
-                 .sum()
-                 .rename(columns={"target_ton": "sum_plan"})
-                 .merge(kpi[["month_date", "month_target_ton"]], on="month_date", how="left")
+            .sum()
+            .rename(columns={"target_ton": "sum_plan"})
+            .merge(kpi[["month_date", "month_target_ton"]], on="month_date", how="left")
         )
         chk_day_month["month_target_ton"] = chk_day_month["month_target_ton"].astype(float)
         chk_day_month["diff"] = chk_day_month["sum_plan"] - chk_day_month["month_target_ton"]
@@ -332,7 +356,9 @@ def main():
         leak = daily.query("scope_used == 'closed' and target_ton > 1e-9")
         if not leak.empty:
             leak.to_csv(OUT / "leak_closed_days.csv", index=False)
-            print(f"[warn] closed日の配分リーク {len(leak)} 件 → leak_closed_days.csv を確認してください")
+            print(
+                f"[warn] closed日の配分リーク {len(leak)} 件 → leak_closed_days.csv を確認してください"
+            )
 
     # ログ
     print(f"[range] months: {m_from} .. (excl) {m_to_excl}")

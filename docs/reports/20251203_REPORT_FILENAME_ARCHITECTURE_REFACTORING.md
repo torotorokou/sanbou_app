@@ -13,16 +13,19 @@
 ### 旧アーキテクチャの課題
 
 1. **HTTPヘッダー制約**
+
    - HTTPヘッダーは`latin-1`エンコーディングのみサポート
    - 日本語文字を含むファイル名でUnicodeEncodeError発生
    - RFC 5987エンコーディングが必要（複雑な実装）
 
 2. **ファイルシステム依存**
+
    - OS依存の文字コード問題
    - パス区切り文字の違い（Windows/Unix）
    - ファイル名の正規化が困難
 
 3. **保守性の問題**
+
    - バックエンドで日本語ラベルをYAMLから取得
    - エンコーディング処理が複数箇所に分散
    - エラーハンドリングが複雑
@@ -37,20 +40,22 @@
 
 **責務の分離原則（Separation of Concerns）に基づく設計:**
 
-| レイヤー | 責務 | 使用文字セット |
-|---------|------|--------------|
-| **バックエンド** | ファイル保存・配信 | ASCII安全な英語キー |
-| **フロントエンド** | ファイル名変換・ダウンロード | 日本語（Unicode） |
+| レイヤー           | 責務                         | 使用文字セット      |
+| ------------------ | ---------------------------- | ------------------- |
+| **バックエンド**   | ファイル保存・配信           | ASCII安全な英語キー |
+| **フロントエンド** | ファイル名変換・ダウンロード | 日本語（Unicode）   |
 
 ### メリット
 
 #### バックエンド側
+
 - ✅ HTTPヘッダー制約の完全回避（ASCII文字のみ）
 - ✅ ファイルシステムの互換性向上
 - ✅ シンプルなコード（エンコーディング処理不要）
 - ✅ パフォーマンス改善（文字列変換処理削減）
 
 #### フロントエンド側
+
 - ✅ ブラウザAPIの完全活用（BlobAPI、URLオブジェクト）
 - ✅ 国際化（i18n）との自然な統合
 - ✅ ユーザー言語設定に応じた柔軟な切替
@@ -63,6 +68,7 @@
 #### artifact_service.py
 
 **変更前:**
+
 ```python
 def allocate(self, report_key: str, report_date: str) -> ArtifactLocation:
     token = f"{report_date.replace('-', '')}_{time.strftime('%H%M%S')}-{secrets.token_hex(4)}"
@@ -73,6 +79,7 @@ def allocate(self, report_key: str, report_date: str) -> ArtifactLocation:
 ```
 
 **変更後:**
+
 ```python
 def allocate(self, report_key: str, report_date: str) -> ArtifactLocation:
     token = f"{report_date.replace('-', '')}_{time.strftime('%H%M%S')}-{secrets.token_hex(4)}"
@@ -82,6 +89,7 @@ def allocate(self, report_key: str, report_date: str) -> ArtifactLocation:
 ```
 
 **削除した機能:**
+
 - `_get_japanese_label()` メソッド
 - `ReportTemplateConfigLoader` インポート
 - YAML設定からの日本語ラベル取得ロジック
@@ -89,6 +97,7 @@ def allocate(self, report_key: str, report_date: str) -> ArtifactLocation:
 #### report_artifacts.py
 
 **変更前:**
+
 ```python
 # RFC 5987に準拠した日本語ファイル名のエンコーディング
 try:
@@ -107,6 +116,7 @@ except UnicodeEncodeError:
 ```
 
 **変更後:**
+
 ```python
 # バックエンドは英語キーのみ使用（ASCII安全）
 disposition_value = "inline" if disposition == "inline" else "attachment"
@@ -115,6 +125,7 @@ response.headers["X-Report-Artifact"] = artifact_path
 ```
 
 **削除した機能:**
+
 - RFC 5987エンコーディング処理
 - try-exceptによるUnicodeエラーハンドリング
 - `urllib.parse.quote` インポート
@@ -124,36 +135,40 @@ response.headers["X-Report-Artifact"] = artifact_path
 #### reportKeyTranslation.ts（新規作成）
 
 **最終版（自動生成）:**
+
 ```typescript
-import { REPORT_KEYS } from '@features/report/shared/config';
+import { REPORT_KEYS } from "@features/report/shared/config";
 
 /**
  * 帳票キーから日本語ラベルへの変換マップ
  * REPORT_KEYSから自動生成されるため、設定の重複なし
  */
-export const REPORT_KEY_TO_JAPANESE: Record<string, string> = Object.entries(REPORT_KEYS).reduce(
-    (acc, [key, config]) => {
-        acc[key] = config.label;
-        return acc;
-    },
-    {} as Record<string, string>
+export const REPORT_KEY_TO_JAPANESE: Record<string, string> = Object.entries(
+  REPORT_KEYS,
+).reduce(
+  (acc, [key, config]) => {
+    acc[key] = config.label;
+    return acc;
+  },
+  {} as Record<string, string>,
 );
 
 export const translateReportKeyToJapanese = (reportKey: string): string => {
-    return REPORT_KEY_TO_JAPANESE[reportKey] || reportKey;
+  return REPORT_KEY_TO_JAPANESE[reportKey] || reportKey;
 };
 
 export const generateJapaneseFilename = (
-    reportKey: string,
-    reportDate: string,
-    extension: string = '.xlsx'
+  reportKey: string,
+  reportDate: string,
+  extension: string = ".xlsx",
 ): string => {
-    const japaneseLabel = translateReportKeyToJapanese(reportKey);
-    return `${japaneseLabel}-${reportDate}${extension}`;
+  const japaneseLabel = translateReportKeyToJapanese(reportKey);
+  return `${japaneseLabel}-${reportDate}${extension}`;
 };
 ```
 
 **保守性の改善:**
+
 - ✅ 単一の情報源（REPORT_KEYS）から自動生成
 - ✅ 新しい帳票追加時に自動的に反映
 - ✅ 設定の重複排除（DRY原則）
@@ -161,56 +176,65 @@ export const generateJapaneseFilename = (
 #### useReportArtifact.ts
 
 **変更前:**
+
 ```typescript
 const downloadExcel = useCallback(() => {
-    if (state.excelUrl) {
-        window.open(state.excelUrl, '_blank', 'noopener');
-    } else {
-        notifyInfo('ダウンロード不可', 'Excel ダウンロード URL がありません。');
-    }
+  if (state.excelUrl) {
+    window.open(state.excelUrl, "_blank", "noopener");
+  } else {
+    notifyInfo("ダウンロード不可", "Excel ダウンロード URL がありません。");
+  }
 }, [state.excelUrl]);
 ```
 
 **変更後:**
+
 ```typescript
 const downloadExcel = useCallback(async () => {
-    if (!state.excelUrl) {
-        notifyInfo('ダウンロード不可', 'Excel ダウンロード URL がありません。');
-        return;
+  if (!state.excelUrl) {
+    notifyInfo("ダウンロード不可", "Excel ダウンロード URL がありません。");
+    return;
+  }
+
+  try {
+    // URLからファイルをダウンロード
+    const response = await fetch(state.excelUrl);
+    if (!response.ok) throw new Error("ダウンロードに失敗しました");
+
+    const blob = await response.blob();
+
+    // report_keyから日本語ファイル名を生成
+    let filename = "report.xlsx";
+    if (state.reportKey && state.reportDate) {
+      filename = generateJapaneseFilename(
+        state.reportKey,
+        state.reportDate,
+        ".xlsx",
+      );
     }
 
-    try {
-        // URLからファイルをダウンロード
-        const response = await fetch(state.excelUrl);
-        if (!response.ok) throw new Error('ダウンロードに失敗しました');
-        
-        const blob = await response.blob();
-        
-        // report_keyから日本語ファイル名を生成
-        let filename = 'report.xlsx';
-        if (state.reportKey && state.reportDate) {
-            filename = generateJapaneseFilename(state.reportKey, state.reportDate, '.xlsx');
-        }
-        
-        // Blob URLを作成してダウンロード
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = filename;
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-        window.URL.revokeObjectURL(url);
-    } catch (error) {
-        notifyError(
-            'ダウンロード失敗',
-            error instanceof Error ? error.message : 'Excelのダウンロードに失敗しました'
-        );
-    }
+    // Blob URLを作成してダウンロード
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+  } catch (error) {
+    notifyError(
+      "ダウンロード失敗",
+      error instanceof Error
+        ? error.message
+        : "Excelのダウンロードに失敗しました",
+    );
+  }
 }, [state.excelUrl, state.reportKey, state.reportDate]);
 ```
 
 **追加機能:**
+
 - Blob APIによるファイル取得
 - 日本語ファイル名の動的生成
 - エラーハンドリングの改善
@@ -219,7 +243,9 @@ const downloadExcel = useCallback(async () => {
 ## ファイル変更一覧
 
 ### バックエンド
+
 - ✏️ `app/backend/ledger_api/app/infra/adapters/artifact_storage/artifact_service.py`
+
   - `allocate()`: 英語キーでファイル名生成
   - `_get_japanese_label()`: 削除
   - `ReportTemplateConfigLoader`: インポート削除
@@ -230,7 +256,9 @@ const downloadExcel = useCallback(async () => {
   - `urllib.parse.quote`: インポート削除
 
 ### フロントエンド
+
 - ✨ `app/frontend/src/features/report/shared/lib/reportKeyTranslation.ts`（新規）
+
   - 帳票キー翻訳ユーティリティ
   - 日本語ファイル名生成関数
 
@@ -244,6 +272,7 @@ const downloadExcel = useCallback(async () => {
 ### 動作確認項目
 
 1. **ファイル名検証**
+
    - [ ] 工場日報: `工場日報-2024-12-03.xlsx`
    - [ ] 収支表: `収支表-2024-12-03.xlsx`
    - [ ] 平均表: `平均表-2024-12-03.xlsx`
@@ -251,12 +280,14 @@ const downloadExcel = useCallback(async () => {
    - [ ] ブロック単価表: `ブロック単価表-2024-12-03.xlsx`
 
 2. **ブラウザ互換性**
+
    - [ ] Chrome（最新版）
    - [ ] Firefox（最新版）
    - [ ] Safari（最新版）
    - [ ] Edge（最新版）
 
 3. **エラーハンドリング**
+
    - [ ] ネットワークエラー時の通知
    - [ ] 404エラー時の処理
    - [ ] タイムアウト時の処理
@@ -271,9 +302,9 @@ const downloadExcel = useCallback(async () => {
 
 ```typescript
 // i18n統合例
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from "react-i18next";
 
-const { t } = useTranslation('reports');
+const { t } = useTranslation("reports");
 const japaneseLabel = t(`reportKeys.${reportKey}`);
 ```
 
@@ -281,10 +312,10 @@ const japaneseLabel = t(`reportKeys.${reportKey}`);
 
 ```typescript
 // YAML設定との自動同期
-import reportConfig from '@config/manage_report_masters.yaml';
+import reportConfig from "@config/manage_report_masters.yaml";
 
 export const REPORT_KEY_TO_JAPANESE = Object.fromEntries(
-    Object.entries(reportConfig).map(([key, config]) => [key, config.label])
+  Object.entries(reportConfig).map(([key, config]) => [key, config.label]),
 );
 ```
 

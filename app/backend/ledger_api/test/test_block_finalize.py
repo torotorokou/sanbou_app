@@ -16,15 +16,16 @@ session_store から state を復元して finalize を実行する。
   }
 }
 """
+
 from __future__ import annotations
 
 import os
 import sys
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
-from fastapi.testclient import TestClient
 import pytest
+from fastapi.testclient import TestClient
 
 
 def _discover_repo_root(start: Path) -> Path:
@@ -45,17 +46,15 @@ if not ST_APP_BASE.exists():  # pragma: no cover - misconfigured workspace guard
     raise RuntimeError(f"st_app directory not found: {ST_APP_BASE}")
 os.environ.setdefault("BASE_ST_APP_DIR", str(ST_APP_BASE))
 
-from app.main import app  # noqa: E402
 from app.api.services.report.session_store import session_store  # noqa: E402
+from app.main import app  # noqa: E402
 from app.st_app.logic.manage.block_unit_price_interactive_main import (  # noqa: E402
     BlockUnitPriceInteractive,
 )
 
 
 def _load_sample_shipment_bytes() -> tuple[str, bytes, str]:
-    shuka={1:"出荷一覧_20250630_180038.csv",
-           2:"出荷一覧_20250829_164653.csv"
-           }
+    shuka = {1: "出荷一覧_20250630_180038.csv", 2: "出荷一覧_20250829_164653.csv"}
 
     sample_path = REPO_ROOT / "app" / "test" / shuka[2]
     content = sample_path.read_bytes()
@@ -66,14 +65,14 @@ def _initial_session_and_rows(client: TestClient) -> tuple[str, list[dict[str, A
     files = {"shipment": _load_sample_shipment_bytes()}
     resp = client.post("/ledger_api/block_unit_price_interactive/initial", files=files)
     assert resp.status_code == 200, resp.text
-    data: Dict[str, Any] = resp.json()
+    data: dict[str, Any] = resp.json()
     session_id = data["session_id"]
     rows = data.get("rows", [])
     assert isinstance(rows, list) and rows, "initial rows should not be empty"
     return session_id, rows
 
 
-def _make_fixed_frontend_payload(session_id: str) -> Dict[str, Any]:
+def _make_fixed_frontend_payload(session_id: str) -> dict[str, Any]:
     """
     前に提示したフロントエンドの戻り値そのままの selections を組み立てて返す。
     entry_id が実データに存在しない可能性はあるが、ここでは形を合わせることを目的とする。
@@ -119,6 +118,7 @@ def test_finalize_success_from_initial_state_with_fixed_frontend_selections():
     # マスターの表記ゆれに起因する不安定さを避けるため最小限のモックを当てる
     def _apply_vendor(df_after, df_transport):
         import pandas as _pd
+
         df_result = df_after.copy()
         if "運搬費" not in df_result.columns:
             df_result["運搬費"] = 0
@@ -130,9 +130,11 @@ def test_finalize_success_from_initial_state_with_fixed_frontend_selections():
                 (str(r.get("業者CD")), str(r.get("運搬業者"))): float(r.get("運搬費", 0) or 0)
                 for _, r in t.iterrows()
             }
+
             def _calc(row):
                 key = (str(row.get("業者CD")), str(row.get("運搬業者")))
                 return lookup.get(key, 0.0)
+
             df_result["運搬費"] = df_result.apply(_calc, axis=1)
         except Exception:
             pass
@@ -161,7 +163,9 @@ def test_finalize_success_from_initial_state_with_fixed_frontend_selections():
         assert final_df is not None
 
 
-def test_state_passed_to_finalize_matches_saved_serialized_state(monkeypatch: pytest.MonkeyPatch):
+def test_state_passed_to_finalize_matches_saved_serialized_state(
+    monkeypatch: pytest.MonkeyPatch,
+):
     """/initial で保存されたシリアライズ state が /finalize 実行時に読み出されるものと一致することを検証。
 
     仕組み: session_store.load をラップして、読み出し結果が initial 直後に取得した serialized と等しいことを検査する。
@@ -178,7 +182,7 @@ def test_state_passed_to_finalize_matches_saved_serialized_state(monkeypatch: py
     frontend_payload = _make_fixed_frontend_payload(session_id)
 
     # spy: session_store.load をラップ
-    calls: list[Dict[str, Any]] = []
+    calls: list[dict[str, Any]] = []
     orig_load = session_store.load
 
     def _spy_load(sid: str):

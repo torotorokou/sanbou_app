@@ -3,23 +3,24 @@ AIによる回答生成のためのローダーモジュール。
 OpenAIクライアント・ベクトルストア・JSONデータを組み合わせて回答を生成する。
 """
 
-from app.infra.adapters.llm.openai_client import generate_answer
-from app.core.usecases.rag.file_ingest_service import get_resource_paths, load_json_data
-from app.shared.chunk_utils import load_faiss_vectorstore
-from typing import List, Optional
 import os
+
 from openai import RateLimitError
+
+from app.core.usecases.rag.file_ingest_service import get_resource_paths, load_json_data
+from app.infra.adapters.llm.openai_client import generate_answer
+from app.shared.chunk_utils import load_faiss_vectorstore
 
 
 def get_answer(
     query: str,
     category: str,
-    tags: Optional[List[str]] = None,
+    tags: list[str] | None = None,
     *,
     answer_func=generate_answer,
     resource_paths_func=get_resource_paths,
     json_loader=load_json_data,
-    vectorstore_loader=load_faiss_vectorstore
+    vectorstore_loader=load_faiss_vectorstore,
 ) -> dict:
     """
     クエリ・カテゴリ・タグをもとにAIによる回答を生成する。
@@ -47,7 +48,7 @@ def get_answer(
             "[DEBUG][ai_loader] resource paths:",
             {"JSON_PATH": json_path, "FAISS_PATH": faiss_path},
         )
-        
+
         # ファイル存在チェック
         json_exists = os.path.exists(json_path)
         faiss_exists = os.path.exists(faiss_path)
@@ -58,7 +59,7 @@ def get_answer(
                 "faiss_exists": faiss_exists,
             },
         )
-        
+
         # どちらかのファイルが存在しない場合は早期リターン
         if not json_exists or not faiss_exists:
             missing = []
@@ -68,12 +69,7 @@ def get_answer(
                 missing.append("FAISSベクトルストア")
             error_msg = f"必要なデータファイルが見つかりません: {', '.join(missing)}"
             print(f"[DEBUG][ai_loader] {error_msg}")
-            return {
-                "error": error_msg,
-                "answer": None,
-                "sources": [],
-                "pages": None
-            }
+            return {"error": error_msg, "answer": None, "sources": [], "pages": None}
 
         json_data = json_loader(json_path)
         vectorstore = vectorstore_loader(faiss_path)
@@ -86,29 +82,33 @@ def get_answer(
             pages_len = len(pages) if isinstance(pages, list) else 0
             print(
                 "[DEBUG][ai_loader] answer_func returned:",
-                {"has_answer": bool(result.get("answer")), "sources_len": sources_len, "pages_len": pages_len},
+                {
+                    "has_answer": bool(result.get("answer")),
+                    "sources_len": sources_len,
+                    "pages_len": pages_len,
+                },
             )
         return {
             "answer": result["answer"],
             "sources": result["sources"],
-            "pages": result["pages"]
+            "pages": result["pages"],
         }
     except RateLimitError as rate_err:
         # OpenAI RateLimitError（insufficient_quota等）
         error_msg = str(rate_err)
         print("[DEBUG][ai_loader] RateLimitError:", repr(rate_err))
-        
+
         # insufficient_quotaの判定
         error_code = "OPENAI_RATE_LIMIT"
         if "insufficient_quota" in error_msg.lower():
             error_code = "OPENAI_INSUFFICIENT_QUOTA"
-        
+
         return {
             "error": error_msg,
             "error_code": error_code,
             "answer": None,
             "sources": [],
-            "pages": None
+            "pages": None,
         }
     except Exception as e:
         # その他の予期しない例外
@@ -118,5 +118,5 @@ def get_answer(
             "error_code": "OPENAI_ERROR",
             "answer": None,
             "sources": [],
-            "pages": None
+            "pages": None,
         }

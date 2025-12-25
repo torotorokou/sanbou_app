@@ -5,6 +5,7 @@
 `env/` および `secrets/` ディレクトリ内の実設定ファイルが誤って Git 管理されていました。
 
 ### Git 管理されていたファイル (削除対象)
+
 ```
 env/.env.common           # 共通設定（DB接続情報等を含む）
 env/.env.local_dev        # ローカル開発環境設定
@@ -16,6 +17,7 @@ env/.env.vm_prod         # ⚠️ VM 本番設定（最も危険）
 ### セキュリティリスク
 
 これらのファイルには以下の機密情報が含まれます:
+
 - データベース接続情報 (`POSTGRES_HOST`, `POSTGRES_USER` 等)
 - GCP プロジェクト ID (`GCP_PROJECT_ID`)
 - Artifact Registry URL
@@ -29,6 +31,7 @@ env/.env.vm_prod         # ⚠️ VM 本番設定（最も危険）
 `.gitignore` の記載が不十分でした:
 
 ### Before (問題あり)
+
 ```gitignore
 # env/ ディレクトリ: 実ファイル除外、example / template のみ許可
 env/*
@@ -40,6 +43,7 @@ env/*
 **問題**: `env/*` は「env 配下の全ファイル」を意味するため、`env/` ディレクトリ自体が追跡されず、後から追加されたファイルも除外されません。また、`.env.common` のような example/template でないファイルは除外パターンにマッチしませんでした。
 
 ### After (修正後)
+
 ```gitignore
 # env/ ディレクトリ: 全ファイル除外
 env/
@@ -53,7 +57,8 @@ secrets/
 !secrets/README.md
 ```
 
-**修正点**: 
+**修正点**:
+
 - `env/*` → `env/` (ディレクトリ自体を除外)
 - `secrets/*` → `secrets/` (ディレクトリ自体を除外)
 - 許可ファイルを明示的に指定 (`!env/.env.example`, `!env/*.template`)
@@ -126,7 +131,8 @@ git push origin --force --all
 git push origin --force --tags
 ```
 
-**注意**: 
+**注意**:
+
 - チーム全員に履歴変更を通知
 - 全員が `git clone` で再取得が必要
 - 公開リポジトリの場合、既にクローンした人の履歴には残る
@@ -134,6 +140,7 @@ git push origin --force --tags
 ### 代替案: 秘密情報のローテーション
 
 Git 履歴削除が困難な場合:
+
 1. データベースパスワード変更
 2. API キー再発行
 3. GCP サービスアカウント鍵再生成
@@ -142,6 +149,7 @@ Git 履歴削除が困難な場合:
 ## 今後の運用ルール
 
 ### 許可されるファイル（Git 管理対象）
+
 ```
 env/.env.example          # 設定項目のサンプル
 env/*.template            # テンプレートファイル
@@ -152,6 +160,7 @@ secrets/README.md              # ドキュメント
 ```
 
 ### 禁止ファイル（Git 管理外）
+
 ```
 env/.env.*                # 全ての実設定ファイル
 env/.env.common           # 共通設定
@@ -161,6 +170,7 @@ secrets/.env.*.secrets    # 全ての secrets ファイル
 ### 新規環境追加時の手順
 
 1. **テンプレートをコピー**
+
    ```bash
    cp env/.env.example env/.env.new_env
    cp secrets/.env.secrets.template secrets/.env.new_env.secrets
@@ -177,6 +187,7 @@ secrets/.env.*.secrets    # 全ての secrets ファイル
 ### Pre-commit フック（推奨）
 
 `.git/hooks/pre-commit` を作成:
+
 ```bash
 #!/bin/bash
 # env/*.secrets や実設定ファイルの commit を防止
@@ -199,6 +210,6 @@ chmod +x .git/hooks/pre-commit
 ✅ 実ファイル保持: ローカル環境で引き続き使用可能  
 ✅ 検証完了: `git check-ignore` で除外確認  
 ⚠️ Git 履歴削除: 必要に応じて BFG で対応（チーム調整必要）  
-📋 運用ルール: テンプレートのみ Git 管理、実設定は全て除外  
+📋 運用ルール: テンプレートのみ Git 管理、実設定は全て除外
 
 次回コミット時、env/ と secrets/ の実設定ファイルは追跡されません。

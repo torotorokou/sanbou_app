@@ -24,15 +24,19 @@ export const MiniBarChart: React.FC<MiniBarChartProps> = ({
   width = 80,
 }) => {
   const percentage = Math.round((value / maxValue) * 100);
-  
+
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'flex-end' }}>
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 8,
+        justifyContent: 'flex-end',
+      }}
+    >
       <span style={{ minWidth: width, textAlign: 'right' }}>{label}</span>
       <div className="mini-bar-bg">
-        <div
-          className={`mini-bar mini-bar-${color}`}
-          style={{ width: `${percentage}%` }}
-        />
+        <div className={`mini-bar mini-bar-${color}`} style={{ width: `${percentage}%` }} />
       </div>
     </div>
   );

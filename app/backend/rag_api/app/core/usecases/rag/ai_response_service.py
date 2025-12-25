@@ -26,12 +26,14 @@ generate-answerエンドポイント用のAI回答生成を担当するサービ
 """
 
 import os
-from typing import List, Dict, Any
-from backend_shared.application.logging import get_module_logger
-from backend_shared.utils.datetime_utils import now_in_app_timezone
-from app.shared.file_utils import PDF_PATH
+from typing import Any
+
 from app.config.paths import get_pdf_url_prefix
 from app.core.ports.rag.pdf_service_port import PDFServiceBase
+from app.shared.file_utils import PDF_PATH
+from backend_shared.application.logging import get_module_logger
+from backend_shared.utils.datetime_utils import now_in_app_timezone
+
 
 logger = get_module_logger(__name__)
 
@@ -46,9 +48,7 @@ class AIResponseService:
     def __init__(self, pdf_service: PDFServiceBase):
         self.pdf_service = pdf_service
 
-    def generate_ai_response(
-        self, query: str, category: str, tags: List[str]
-    ) -> Dict[str, Any]:
+    def generate_ai_response(self, query: str, category: str, tags: list[str]) -> dict[str, Any]:
         """
         AI回答とPDFを生成
 
@@ -60,24 +60,31 @@ class AIResponseService:
         Returns:
             AIレスポンスデータ（answer, sources, pdf_url）
         """
-        logger.info("Generating AI response", extra={"query": query, "category": category, "tags": tags})
+        logger.info(
+            "Generating AI response",
+            extra={"query": query, "category": category, "tags": tags},
+        )
         answer = None
         sources: list[Any] = []
         pages = None
         error_code: str | None = None
         error_detail: str | None = None
-        
+
         try:
             # 遅延インポート：テストや軽量実行時に不要な依存を避ける
             from app.infra.adapters.llm import ai_loader  # type: ignore
+
             result = ai_loader.get_answer(query, category, tags)
-            
+
             # エラーレスポンスのチェック
             if "error" in result:
                 error_msg = result.get("error", "不明なエラー")
                 error_code = result.get("error_code", "OPENAI_ERROR")
-                logger.warning("AI loader returned error", extra={"error_msg": error_msg, "error_code": error_code})
-                
+                logger.warning(
+                    "AI loader returned error",
+                    extra={"error_msg": error_msg, "error_code": error_code},
+                )
+
                 # エラーコードに応じたメッセージ生成
                 if error_code == "OPENAI_INSUFFICIENT_QUOTA":
                     error_detail = (
@@ -85,14 +92,10 @@ class AIResponseService:
                         "管理者にお問い合わせください。"
                     )
                 elif error_code == "OPENAI_RATE_LIMIT":
-                    error_detail = (
-                        "OpenAI APIのレート制限に達しました。しばらく時間をおいて再度お試しください。"
-                    )
+                    error_detail = "OpenAI APIのレート制限に達しました。しばらく時間をおいて再度お試しください。"
                 else:
-                    error_detail = (
-                        f"AI回答の生成中にエラーが発生しました: {error_msg}"
-                    )
-                
+                    error_detail = f"AI回答の生成中にエラーが発生しました: {error_msg}"
+
                 # エラー情報を返却（answer=None, error_code/error_detailを含む）
                 return {
                     "answer": None,
@@ -105,10 +108,17 @@ class AIResponseService:
                 answer = result.get("answer")
                 sources = result.get("sources", [])
                 pages = result.get("pages")
-                logger.info("AI loader succeeded", extra={"pages": pages, "sources_count": len(sources)})
+                logger.info(
+                    "AI loader succeeded",
+                    extra={"pages": pages, "sources_count": len(sources)},
+                )
         except Exception as ae:
             # 予期しない例外：汎用エラーとして扱う
-            logger.error("AI loader failed with exception", exc_info=True, extra={"error": str(ae)})
+            logger.error(
+                "AI loader failed with exception",
+                exc_info=True,
+                extra={"error": str(ae)},
+            )
             return {
                 "answer": None,
                 "sources": [],
@@ -148,12 +158,13 @@ class AIResponseService:
                 timestamp = now_in_app_timezone().strftime("%Y%m%d_%H%M%S")
                 merged_pdf_name = f"merged_response_{timestamp}.pdf"
                 merged_pdf_path = os.path.join(static_dir, merged_pdf_name)
-                pdf_file_paths = [
-                    os.path.join(debug_dir, url.split("/")[-1]) for url in pdf_urls
-                ]
+                pdf_file_paths = [os.path.join(debug_dir, url.split("/")[-1]) for url in pdf_urls]
                 try:
                     self.pdf_service.merge_pdfs(pdf_file_paths, merged_pdf_path)
-                    logger.info("PDFs merged successfully", extra={"merged_pdf_path": merged_pdf_path})
+                    logger.info(
+                        "PDFs merged successfully",
+                        extra={"merged_pdf_path": merged_pdf_path},
+                    )
                     pdf_url = f"{get_pdf_url_prefix()}/{merged_pdf_name}"
                 except Exception as me:
                     logger.error("PDF merge failed", exc_info=True, extra={"error": str(me)})
@@ -165,17 +176,20 @@ class AIResponseService:
 
         return {"answer": answer, "sources": sources, "pdf_url": pdf_url}
 
-    def _normalize_pages(self, pages) -> List[int]:
+    def _normalize_pages(self, pages) -> list[int]:
         """ページリストを正規化
 
         - カンマ区切りや範囲指定(1-3)を展開して、正の整数の昇順ユニークなリストを返す。
         - 不正トークンは無視しつつデバッグログを出力する。
         """
         before_repr = repr(pages)
-        normalized: List[int] = []
+        normalized: list[int] = []
 
         def debug_skip(token: object, reason: str) -> None:
-            logger.debug(f"Skip token in normalize_pages", extra={"token": repr(token), "reason": reason})
+            logger.debug(
+                "Skip token in normalize_pages",
+                extra={"token": repr(token), "reason": reason},
+            )
 
         def add_if_positive(n: int) -> None:
             if isinstance(n, int) and n > 0:

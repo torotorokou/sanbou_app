@@ -65,8 +65,7 @@ export const NaviLayout: React.FC<NaviLayoutProps> = ({
 }) => {
   const { width } = useResponsive();
   const isNarrow = typeof width === 'number' ? isTabletOrHalf(width) : false;
-  const isMd =
-    typeof width === 'number' ? width >= ANT.md && width < ANT.xl : false;
+  const isMd = typeof width === 'number' ? width >= ANT.md && width < ANT.xl : false;
 
   return (
     <div
@@ -79,9 +78,7 @@ export const NaviLayout: React.FC<NaviLayoutProps> = ({
         position: 'relative',
       }}
     >
-      {loading && (
-        <Spin tip="AIが回答中です..." size="large" fullscreen />
-      )}
+      {loading && <Spin tip="AIが回答中です..." size="large" fullscreen />}
 
       <div style={{ padding: '12px 24px' }}>
         <ReportStepIndicator currentStep={currentStep} items={stepItems} />

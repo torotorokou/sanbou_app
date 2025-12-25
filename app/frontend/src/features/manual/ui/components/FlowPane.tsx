@@ -13,7 +13,13 @@ export interface FlowPaneProps {
   lazy?: boolean; // 遅延ロードフラグ
 }
 
-export const FlowPane: React.FC<FlowPaneProps> = ({ src, title, frameClassName, imgClassName, lazy = false }) => {
+export const FlowPane: React.FC<FlowPaneProps> = ({
+  src,
+  title,
+  frameClassName,
+  imgClassName,
+  lazy = false,
+}) => {
   const [shouldLoad, setShouldLoad] = React.useState(!lazy);
 
   React.useEffect(() => {
@@ -34,7 +40,15 @@ export const FlowPane: React.FC<FlowPaneProps> = ({ src, title, frameClassName, 
 
   if (!shouldLoad) {
     return (
-      <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f5f5f5' }}>
+      <div
+        style={{
+          height: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: '#f5f5f5',
+        }}
+      >
         <span style={{ color: '#999' }}>読み込み中...</span>
       </div>
     );

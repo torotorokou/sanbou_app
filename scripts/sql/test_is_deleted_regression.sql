@@ -92,7 +92,7 @@ LIMIT 30;
 -- ============================================================================
 -- mart.v_receive_daily の結果が is_deleted フィルタでどう変わるかを検証
 
-WITH 
+WITH
 -- フィルタなし（旧ロジック）
 unfiltered AS (
     SELECT
@@ -250,7 +250,7 @@ ORDER BY slip_date DESC, csv_kind;
 -- ============================================================================
 -- 実行方法
 -- ============================================================================
--- 
+--
 -- ローカル環境での実行例:
 -- docker compose -f docker/docker-compose.dev.yml -p local_dev exec -T db \
 --   psql -U myuser -d sanbou_dev -f /path/to/this/file.sql

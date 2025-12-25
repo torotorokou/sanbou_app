@@ -8,7 +8,16 @@ import { Card, Table, Tabs, Tag, Space, Button } from 'antd';
 import type { TableColumnsType, TableProps } from 'antd';
 import { SwapOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import { Tooltip } from 'antd';
-import type { SummaryRow, MetricEntry, Mode, SortKey, SortOrder, SummaryQuery, CategoryKind, ID } from '../../shared/model/types';
+import type {
+  SummaryRow,
+  MetricEntry,
+  Mode,
+  SortKey,
+  SortOrder,
+  SummaryQuery,
+  CategoryKind,
+  ID,
+} from '../../shared/model/types';
 import { fmtCurrency, fmtNumber, fmtUnitPrice, axisLabel } from '../../shared/model/metrics';
 import { MetricChart } from './MetricChart';
 
@@ -61,7 +70,7 @@ export const ExpandedRow: React.FC<ExpandedRowProps> = ({
   const unitCandidates = data.map((x: MetricEntry) => x.unitPrice ?? 0);
   const maxUnit = Math.max(1, ...unitCandidates);
   const nameTitle = axisLabel(mode);
-  
+
   // 件数/台数ラベルの動的切り替え
   const countLabel = mode === 'item' ? '件数' : '台数';
   const countSuffix = mode === 'item' ? '件' : '台';
@@ -69,12 +78,12 @@ export const ExpandedRow: React.FC<ExpandedRowProps> = ({
   const amountLabel = categoryKind === 'waste' ? '売上' : '仕入';
 
   const childCols: TableColumnsType<MetricEntry> = [
-    { 
-      title: nameTitle, 
-      dataIndex: 'name', 
-      key: 'name', 
-      width: 150, 
-      sorter: (a: MetricEntry, b: MetricEntry) => a.name.localeCompare(b.name, 'ja')
+    {
+      title: nameTitle,
+      dataIndex: 'name',
+      key: 'name',
+      width: 150,
+      sorter: (a: MetricEntry, b: MetricEntry) => a.name.localeCompare(b.name, 'ja'),
     },
     {
       title: amountLabel,
@@ -123,7 +132,9 @@ export const ExpandedRow: React.FC<ExpandedRowProps> = ({
       sorter: (a: MetricEntry, b: MetricEntry) => a.count - b.count,
       render: (v: number) => (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ minWidth: 48, textAlign: 'right' }}>{fmtNumber(v)} {countSuffix}</span>
+          <span style={{ minWidth: 48, textAlign: 'right' }}>
+            {fmtNumber(v)} {countSuffix}
+          </span>
           <div className="sales-tree-mini-bar-bg">
             <div
               className="sales-tree-mini-bar sales-tree-mini-bar-blue"
@@ -148,7 +159,14 @@ export const ExpandedRow: React.FC<ExpandedRowProps> = ({
       width: 120,
       sorter: (a: MetricEntry, b: MetricEntry) => (a.unitPrice ?? 0) - (b.unitPrice ?? 0),
       render: (v: number | null) => (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'flex-end' }}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            justifyContent: 'flex-end',
+          }}
+        >
           <span style={{ minWidth: 64, textAlign: 'right' }}>{fmtUnitPrice(v)}</span>
           <div className="sales-tree-mini-bar-bg">
             <div
@@ -177,9 +195,12 @@ export const ExpandedRow: React.FC<ExpandedRowProps> = ({
     if (s && 'field' in s && s.field) {
       const f = String(s.field);
       let key: SortKey = sortBy as SortKey;
+      // dataIndex から SortKey へのマッピング
       if (f === 'name') key = mode === 'date' ? 'date' : 'name';
-      else if ((['amount', 'qty', 'count', 'unit_price'] as string[]).includes(f))
-        key = f as SortKey;
+      else if (f === 'amount') key = 'amount';
+      else if (f === 'qty') key = 'qty';
+      else if (f === 'count') key = 'count';
+      else if (f === 'unitPrice') key = 'unit_price'; // camelCase -> snake_case
       const ord: SortOrder = s.order === 'ascend' ? 'asc' : 'desc';
       onSortChange(key, ord);
     }
@@ -194,7 +215,11 @@ export const ExpandedRow: React.FC<ExpandedRowProps> = ({
   };
 
   return (
-    <Card className="sales-tree-accent-card sales-tree-accent-secondary" size="small" style={{ marginTop: 8 }}>
+    <Card
+      className="sales-tree-accent-card sales-tree-accent-secondary"
+      size="small"
+      style={{ marginTop: 8 }}
+    >
       <Tabs
         tabBarExtraContent={
           <Space wrap>
@@ -208,14 +233,16 @@ export const ExpandedRow: React.FC<ExpandedRowProps> = ({
             label: '表',
             children: (
               <Table<MetricEntry>
-                rowKey="id"
+                rowKey={(record, index) => `${record.id}-${index}`}
                 size="small"
                 columns={childCols}
                 dataSource={data}
                 pagination={false}
                 onChange={onChildChange}
                 scroll={{ x: 'max-content' }}
-                rowClassName={(_: unknown, idx: number) => (idx % 2 === 0 ? 'sales-tree-zebra-even' : 'sales-tree-zebra-odd')}
+                rowClassName={(_: unknown, idx: number) =>
+                  idx % 2 === 0 ? 'sales-tree-zebra-even' : 'sales-tree-zebra-odd'
+                }
               />
             ),
           },

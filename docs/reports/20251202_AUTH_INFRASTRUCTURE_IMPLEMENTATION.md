@@ -17,6 +17,7 @@
 ### 1. ドメイン層
 
 #### `app/core/domain/auth/entities.py`
+
 - **AuthUser** dataclass を定義
 - 不変オブジェクト（`frozen=True`）として実装
 - フィールド:
@@ -26,6 +27,7 @@
 ### 2. ポート層
 
 #### `app/core/ports/auth/auth_provider.py`
+
 - **IAuthProvider** 抽象インターフェースを定義
 - `get_current_user(request: Request) -> AuthUser` メソッド
 - 認証方式に依存しない統一的なインターフェース
@@ -33,11 +35,13 @@
 ### 3. インフラ層
 
 #### `app/infra/adapters/auth/dev_auth_provider.py`
+
 - **DevAuthProvider** - 開発用固定ユーザープロバイダ
 - 認証チェックなしで常に同じユーザーを返す
 - デフォルトユーザー: `dev-user@honest-recycle.co.jp`
 
 #### `app/infra/adapters/auth/iap_auth_provider.py`
+
 - **IapAuthProvider** - Google Cloud IAP 統合プロバイダ
 - `X-Goog-Authenticated-User-Email` ヘッダーを読み取り
 - `@honest-recycle.co.jp` ドメインのみを許可（ホワイトリスト方式）
@@ -46,6 +50,7 @@
 ### 4. ユースケース層
 
 #### `app/core/usecases/auth/get_current_user.py`
+
 - **GetCurrentUserUseCase** - ユーザー情報取得ユースケース
 - IAuthProvider に委譲するシンプルな実装
 - Clean Architecture に準拠
@@ -53,6 +58,7 @@
 ### 5. DI 設定
 
 #### `app/config/di_providers.py` - 追加内容
+
 - **get_auth_provider()**: 環境変数 `AUTH_MODE` に応じてプロバイダを切り替え
   - `AUTH_MODE=dev` → DevAuthProvider
   - `AUTH_MODE=iap` → IapAuthProvider
@@ -61,6 +67,7 @@
 ### 6. API エンドポイント
 
 #### `app/api/routers/auth.py`
+
 - **GET /auth/me** - 現在ユーザー情報取得エンドポイント
 - レスポンス:
   ```json
@@ -75,12 +82,14 @@
   - 403: アクセス拒否（許可されていないドメイン等）
 
 #### `app/app.py`
+
 - auth router を FastAPI アプリケーションに登録
 - `/core_api/auth/me` として公開
 
 ### 7. 環境変数設定
 
 #### `.env.example` - 追加内容
+
 ```dotenv
 # Authentication Settings
 # AUTH_MODE: Authentication provider mode
@@ -96,6 +105,7 @@ AUTH_MODE=dev
 ### 1. Feature 構成（FSD）
 
 #### `src/features/authStatus/`
+
 ```
 authStatus/
 ├── domain/
@@ -114,6 +124,7 @@ authStatus/
 ### 2. ドメイン層
 
 #### `domain/authUser.ts`
+
 - **AuthUser** 型定義
 - フィールド:
   - `email: string` - メールアドレス
@@ -122,12 +133,14 @@ authStatus/
 ### 3. ポート層
 
 #### `ports/AuthRepository.ts`
+
 - **AuthRepository** インターフェース
 - `fetchCurrentUser(): Promise<AuthUser>` メソッド
 
 ### 4. インフラ層
 
 #### `infrastructure/AuthHttpRepository.ts`
+
 - **AuthHttpRepository** - HTTP 実装
 - `GET /core_api/auth/me` を呼び出し
 - 既存の `coreApi` クライアントを使用
@@ -135,6 +148,7 @@ authStatus/
 ### 5. ViewModel 層
 
 #### `model/useAuthStatusViewModel.ts`
+
 - **useAuthStatusViewModel** カスタムフック
 - 状態管理:
   - `user: AuthUser | null` - ユーザー情報
@@ -146,6 +160,7 @@ authStatus/
 ### 6. UI 層
 
 #### `ui/UserInfoChip.tsx`
+
 - **UserInfoChip** コンポーネント
 - 表示内容:
   - ローディング中: "ユーザー情報取得中..."
@@ -157,6 +172,7 @@ authStatus/
 ### 7. レイアウト統合
 
 #### `app/layout/Sidebar.tsx` - 変更内容
+
 - `UserInfoChip` をインポート
 - デスクトップ版: サイドバー上部（折りたたみ時は非表示）
 - モバイル版（Drawer）: メニュー上部に表示
@@ -168,6 +184,7 @@ authStatus/
 ### バックエンド
 
 **Clean Architecture / Hexagonal / DDD**
+
 - **Domain**: `AuthUser` エンティティ（不変オブジェクト）
 - **Ports**: `IAuthProvider` 抽象インターフェース
 - **Infrastructure**: `DevAuthProvider`, `IapAuthProvider` 実装
@@ -177,6 +194,7 @@ authStatus/
 ### フロントエンド
 
 **Feature-Sliced Design (FSD) + MVVM + Repository パターン**
+
 - **Domain**: 型定義（`AuthUser`）
 - **Ports**: リポジトリインターフェース
 - **Infrastructure**: HTTP 実装
@@ -216,11 +234,13 @@ UserInfoChip 表示: "ログイン中：開発ユーザー"
 ### 2. 環境切り替えフロー
 
 **開発環境（デフォルト）**
+
 ```
 AUTH_MODE=dev → DevAuthProvider → 固定ユーザー
 ```
 
 **本番環境（IAP 有効化後）**
+
 ```
 AUTH_MODE=iap → IapAuthProvider → X-Goog-Authenticated-User-Email ヘッダー読み取り
 ```
@@ -300,6 +320,7 @@ curl http://localhost:8000/core_api/auth/me
 ### 2. OAuth2 プロバイダ追加
 
 将来的に自前の OAuth2 認証を追加する場合:
+
 1. `app/infra/adapters/auth/oauth2_auth_provider.py` を作成
 2. `get_auth_provider()` に `AUTH_MODE=oauth2` の分岐を追加
 3. JWT トークン検証ロジックを実装
@@ -307,6 +328,7 @@ curl http://localhost:8000/core_api/auth/me
 ### 3. 権限管理（Authorization）
 
 現在は「認証（誰か）」のみ実装。将来的に「認可（何ができるか）」を追加する場合:
+
 1. `AuthUser` に `roles: list[str]` フィールドを追加
 2. デコレータ `@require_role("admin")` を実装
 3. フロントエンドで権限に応じた UI 表示制御
@@ -314,6 +336,7 @@ curl http://localhost:8000/core_api/auth/me
 ### 4. ユーザー情報キャッシュ
 
 現在は毎回 API 呼び出し。パフォーマンス改善のため:
+
 1. LocalStorage / SessionStorage にキャッシュ
 2. トークンリフレッシュ機構
 3. Context API でアプリ全体に共有
@@ -410,18 +433,21 @@ app/frontend/src/
 ## まとめ
 
 ✅ **実装完了**
+
 - バックエンド: 認証基盤（Domain / Ports / Infrastructure / UseCase / Router）
 - フロントエンド: authStatus feature（Domain / Ports / Infrastructure / Model / UI）
 - 環境変数: AUTH_MODE による認証方式切り替え
 - UI 統合: Sidebar へのユーザー情報表示
 
 ✅ **設計品質**
+
 - Clean Architecture / Hexagonal Architecture に準拠
 - Feature-Sliced Design (FSD) に準拠
 - MVVM + Repository パターン
 - 認証方式の抽象化による拡張性の確保
 
 ✅ **次のステップ**
+
 - 開発環境で動作確認
 - 本番環境で IAP 統合
 - 権限管理（Authorization）の追加（将来）

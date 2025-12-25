@@ -1,7 +1,6 @@
 import pandas as pd
-
-from app.api.services.report.ledger.factory_report import process as proc_factory
 from app.api.services.report.ledger.average_sheet import process as proc_average
+from app.api.services.report.ledger.factory_report import process as proc_factory
 from app.api.services.report.ledger.management_sheet import process as proc_management
 
 
@@ -34,11 +33,7 @@ def test_average_sheet_with_minimal_receive():
 
 
 def test_management_sheet_with_minimal_receive():
-    dfs = {
-        "receive": pd.DataFrame(
-            {"伝票日付": [pd.Timestamp("2025-10-01")]}
-        )
-    }
+    dfs = {"receive": pd.DataFrame({"伝票日付": [pd.Timestamp("2025-10-01")]})}
     df = proc_management(dfs)
     assert isinstance(df, pd.DataFrame)
     assert "値" in df.columns

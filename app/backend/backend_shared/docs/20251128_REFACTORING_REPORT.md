@@ -13,6 +13,7 @@
 従来の構造を Clean Architecture / Hexagonal Architecture に基づいた層構造に再編しました。
 
 #### 変更前
+
 ```
 backend_shared/
 ├── adapters/          # プレゼンテーション層が混在
@@ -24,6 +25,7 @@ backend_shared/
 ```
 
 #### 変更後
+
 ```
 backend_shared/
 ├── core/                    # コア層（ビジネスロジック）
@@ -48,12 +50,15 @@ backend_shared/
 ### 2. 新規追加ファイル
 
 #### core/ports/ - 抽象インターフェース層
+
 - `repository.py`: Repository の抽象定義（AsyncRepository Protocol）
 - `csv_processor.py`: CSV フォーマッター・バリデーターの抽象定義
 - `config_loader.py`: 設定ローダーの抽象定義
 
 #### config/di_providers.py - DI コンテナ
+
 依存関係の組み立てを集約:
+
 - `provide_database_session_manager()`: DB セッションマネージャーの提供
 - `provide_csv_config_loader()`: CSV 設定ローダーの提供
 - `provide_csv_formatter()`: CSV フォーマッターの提供
@@ -62,13 +67,13 @@ backend_shared/
 
 全ファイルの import を新しい構造に合わせて修正:
 
-| 変更前 | 変更後 |
-|--------|--------|
-| `backend_shared.db.database` | `backend_shared.infra.frameworks.database` |
+| 変更前                                 | 変更後                                       |
+| -------------------------------------- | -------------------------------------------- |
+| `backend_shared.db.database`           | `backend_shared.infra.frameworks.database`   |
 | `backend_shared.adapters.presentation` | `backend_shared.infra.adapters.presentation` |
-| `backend_shared.infrastructure.config` | `backend_shared.config` |
-| `backend_shared.usecases` | `backend_shared.core.usecases` |
-| `backend_shared.domain` | `backend_shared.core.domain` |
+| `backend_shared.infrastructure.config` | `backend_shared.config`                      |
+| `backend_shared.usecases`              | `backend_shared.core.usecases`               |
+| `backend_shared.domain`                | `backend_shared.core.domain`                 |
 
 ### 4. ドキュメント更新
 
@@ -96,6 +101,7 @@ Clean Architecture の原則に従った依存関係:
 ```
 
 **ポイント**:
+
 - `core` は他のどの層にも依存しない（外部依存ゼロ）
 - `infra` は `core/ports` に依存する（依存関係逆転の原則）
 - `config` で実装を組み立てる（DI パターン）
@@ -105,6 +111,7 @@ Clean Architecture の原則に従った依存関係:
 ## 使用例
 
 ### 従来の方法（変更前）
+
 ```python
 from backend_shared.db.database import DatabaseSessionManager
 from backend_shared.config.config_loader import SyogunCsvConfigLoader
@@ -118,6 +125,7 @@ formatter = CSVFormatter(config)
 ```
 
 ### 推奨される方法（変更後）
+
 ```python
 from backend_shared.config.di_providers import (
     provide_database_session_manager,
@@ -134,11 +142,13 @@ formatter = provide_csv_formatter(csv_type="shipment")
 ## テスト状況
 
 ### 実施したテスト
+
 - [ ] 既存テストの実行（`pytest`）
 - [ ] Import エラーのチェック
 - [ ] 型チェック（Pylance）
 
 ### 確認が必要な項目
+
 1. 各サービス（core_api, ledger_api 等）での動作確認
 2. CSV フォーマット処理の動作確認
 3. DB セッション管理の動作確認
@@ -150,6 +160,7 @@ formatter = provide_csv_formatter(csv_type="shipment")
 ### 他サービスへの影響
 
 以下のサービスで import パスの修正が必要:
+
 - `core_api`
 - `ledger_api`
 - `manual_api`
@@ -173,16 +184,19 @@ from backend_shared.infra.adapters.presentation.response_base import SuccessApiR
 ## 今後のタスク
 
 ### 短期
+
 1. 他サービスでの import パス修正
 2. 既存テストの実行と修正
 3. 型エラーの解消
 
 ### 中期
+
 4. UseCase の責務整理（ports への依存を明確化）
 5. Repository パターンの実装例追加
 6. DI コンテナの拡張（環境差分の吸収）
 
 ### 長期
+
 7. 各サービスの Clean Architecture 対応
 8. E2E テストの整備
 9. パフォーマンステスト
@@ -203,7 +217,7 @@ from backend_shared.infra.adapters.presentation.response_base import SuccessApiR
 - [x] DI コンテナ（di_providers.py）を作成
 - [x] Import パスを統一
 - [x] README.md を更新
-- [x] __init__.py を更新
+- [x] **init**.py を更新
 - [ ] 既存テストの動作確認
 - [ ] 他サービスでの動作確認
 - [ ] ドキュメントの最終確認

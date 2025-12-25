@@ -1,34 +1,34 @@
 import pandas as pd
 
-from backend_shared.utils.dataframe_utils_optimized import clean_na_strings_vectorized
-from app.infra.report_utils.formatters import set_value_fast_safe
 from app.infra.report_utils.formatters import (
+    set_value_fast_safe,
     to_japanese_era,
     to_japanese_month_day,
 )
+from backend_shared.utils.dataframe_utils_optimized import clean_na_strings_vectorized
 
 
-def generate_summary_dataframe(df: pd.DataFrame, master_csv_etc: pd.DataFrame = None) -> pd.DataFrame:
+def generate_summary_dataframe(
+    df: pd.DataFrame, master_csv_etc: pd.DataFrame = None
+) -> pd.DataFrame:
     """
     合計行を追加する。
-    
+
     Args:
         df: 処理対象のDataFrame
         master_csv_etc: etc合計行マスターCSV（事前読み込み済み）。Noneの場合は合計行なしでそのまま返す。
-    
+
     Returns:
         pd.DataFrame: 合計行追加済みのDataFrame
-    
+
     Notes:
         - Step 5最適化: master_csv_etcを引数で受け取ることでI/O削減
     """
     if master_csv_etc is None or master_csv_etc.empty:
         # etc テンプレートが無い場合は加算行なしでそのまま返す
-        print(
-            "[WARN] etcマスターCSVが提供されていません。合計行の追加をスキップします。"
-        )
+        print("[WARN] etcマスターCSVが提供されていません。合計行の追加をスキップします。")
         return df.copy()
-    
+
     etc_csv = master_csv_etc
 
     df_sum = df.copy()
@@ -47,13 +47,17 @@ def generate_summary_dataframe(df: pd.DataFrame, master_csv_etc: pd.DataFrame = 
     # 最適化: apply(axis=1)をベクトル化（条件マスクで直接代入）
     # デフォルトは既存の値を保持
     etc_csv["値"] = etc_csv["値"].copy()
-    
+
     # 各条件に対してマスクを作成して値を代入
-    mask_yard = etc_csv["大項目"].str.contains("ヤード", na=False) & ~etc_csv["大項目"].str.contains("処分", na=False)
-    mask_shobun = etc_csv["大項目"].str.contains("処分", na=False) & ~etc_csv["大項目"].str.contains("ヤード", na=False)
+    mask_yard = etc_csv["大項目"].str.contains("ヤード", na=False) & ~etc_csv[
+        "大項目"
+    ].str.contains("処分", na=False)
+    mask_shobun = etc_csv["大項目"].str.contains("処分", na=False) & ~etc_csv[
+        "大項目"
+    ].str.contains("ヤード", na=False)
     mask_yuuka = etc_csv["大項目"].str.contains("有価", na=False)
     mask_total = etc_csv["大項目"].str.contains("総合計", na=False)
-    
+
     etc_csv.loc[mask_yard, "値"] = category_sum.get("ヤード", 0.0)
     etc_csv.loc[mask_shobun, "値"] = category_sum.get("処分", 0.0)
     etc_csv.loc[mask_yuuka, "値"] = category_sum.get("有価", 0.0)
@@ -103,9 +107,7 @@ def date_format(master_csv, df_shipment):
 
     match_columns = ["大項目"]
     match_value = ["和暦"]
-    master_csv = set_value_fast_safe(
-        master_csv, match_columns, match_value, to_japanese_era(today)
-    )
+    master_csv = set_value_fast_safe(master_csv, match_columns, match_value, to_japanese_era(today))
 
     match_columns = ["大項目"]
     match_value = ["月日"]

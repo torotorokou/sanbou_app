@@ -13,7 +13,9 @@ html {
   scrollbar-gutter: stable;
 }
 
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: inherit;
 }
 
@@ -50,14 +52,18 @@ body {
 }
 
 /* === Media Elements === */
-img, video, canvas, svg {
+img,
+video,
+canvas,
+svg {
   max-width: 100%;
   height: auto;
   display: block;
 }
 
 /* === Text Overflow Prevention === */
-pre, code {
+pre,
+code {
   white-space: normal;
   overflow-wrap: anywhere;
 }

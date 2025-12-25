@@ -8,7 +8,7 @@
     - ローカル環境: gcloud auth application-default login を実行済み
     - GCE環境: VMに適切な権限を持つサービスアカウントがアタッチされている
     - google-cloud-storageがインストールされている
-    
+
 認証方式:
     Application Default Credentials (ADC) を使用します。
     JSONキーファイルは不要です。
@@ -36,14 +36,14 @@ TARGET_SUBDIRS = ["master", "templates"]
 
 def download_from_gcs():
     """GCSからマスターデータとテンプレートをダウンロード
-    
+
     ADC (Application Default Credentials) を使用してGCSに接続します。
-    
+
     前提条件:
         - ローカル: gcloud auth application-default login を実行済み
         - GCE: VMにサービスアカウントがアタッチされている
     """
-    
+
     # GCSクライアント初期化（ADCを使用）
     try:
         client = storage.Client()
@@ -53,48 +53,50 @@ def download_from_gcs():
         print(f"ERROR: バケット接続失敗: {e}")
         print("\nヒント:")
         print("  - ローカル: gcloud auth application-default login を実行してください")
-        print("  - GCE: VMに適切な権限を持つサービスアカウントがアタッチされているか確認してください")
+        print(
+            "  - GCE: VMに適切な権限を持つサービスアカウントがアタッチされているか確認してください"
+        )
         exit(1)
-    
+
     # 各サブディレクトリをダウンロード
     for subdir in TARGET_SUBDIRS:
         prefix = f"{GCS_PREFIX}/{subdir}/"
         local_dir = TARGET_DIR / subdir
-        
+
         print(f"\n📥 ダウンロード中: gs://{BUCKET_NAME}/{prefix} -> {local_dir}")
-        
+
         # ローカルディレクトリ作成
         local_dir.mkdir(parents=True, exist_ok=True)
-        
+
         # 既存ファイルを削除（クリーンアップ）
         for existing_file in local_dir.rglob("*"):
             if existing_file.is_file():
                 existing_file.unlink()
                 print(f"  🗑️  削除: {existing_file.relative_to(TARGET_DIR)}")
-        
+
         # GCSからダウンロード
         blobs = list(client.list_blobs(BUCKET_NAME, prefix=prefix))
-        
+
         if not blobs:
             print(f"  ⚠️  ファイルが見つかりません")
             continue
-        
+
         downloaded_count = 0
         for blob in blobs:
             # プレフィックスからの相対パスを取得
-            rel_path = blob.name[len(prefix):]
+            rel_path = blob.name[len(prefix) :]
             if not rel_path:  # ディレクトリのみのケース
                 continue
-            
+
             dest_path = local_dir / rel_path
             dest_path.parent.mkdir(parents=True, exist_ok=True)
-            
+
             blob.download_to_filename(str(dest_path))
             print(f"  ✓ {rel_path}")
             downloaded_count += 1
-        
+
         print(f"  合計: {downloaded_count} ファイル")
-    
+
     print("\n✅ ダウンロード完了")
     print(f"\nダウンロード先: {TARGET_DIR}")
     print("\n次のステップ:")

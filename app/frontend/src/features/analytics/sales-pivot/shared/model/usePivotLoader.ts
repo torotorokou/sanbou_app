@@ -3,18 +3,26 @@
  * Pivotドロワーのデータ読み込みロジック
  */
 
-import { useCallback } from 'react';
-import type { Mode, MetricEntry } from './types';
-import type { DrawerState } from './usePivotDrawerState';
-import type { HttpSalesPivotRepository } from '../infrastructure/salesPivot.repository';
+import { useCallback, useRef } from "react";
+import type { Mode, MetricEntry } from "./types";
+import type { DrawerState } from "./usePivotDrawerState";
+import type { HttpSalesPivotRepository } from "../infrastructure/salesPivot.repository";
 
 interface PivotLoaderParams {
   drawer: DrawerState;
   pivotCursor: Record<Mode, string | null>;
-  categoryKind: 'waste' | 'valuable';
+  categoryKind: "waste" | "valuable";
   repository: HttpSalesPivotRepository;
-  setPivotData: (data: Record<Mode, MetricEntry[]> | ((prev: Record<Mode, MetricEntry[]>) => Record<Mode, MetricEntry[]>)) => void;
-  setPivotCursor: (cursor: Record<Mode, string | null> | ((prev: Record<Mode, string | null>) => Record<Mode, string | null>)) => void;
+  setPivotData: (
+    data:
+      | Record<Mode, MetricEntry[]>
+      | ((prev: Record<Mode, MetricEntry[]>) => Record<Mode, MetricEntry[]>),
+  ) => void;
+  setPivotCursor: (
+    cursor:
+      | Record<Mode, string | null>
+      | ((prev: Record<Mode, string | null>) => Record<Mode, string | null>),
+  ) => void;
   setPivotLoading: (loading: boolean) => void;
 }
 
@@ -29,10 +37,15 @@ export function usePivotLoader(params: PivotLoaderParams) {
     setPivotLoading,
   } = params;
 
+  // pivotCursorをRefで保持して、useCallbackの依存配列から除外
+  // これにより、loadPivotの再生成を防ぎつつ最新のカーソル値を参照できる
+  const pivotCursorRef = useRef(pivotCursor);
+  pivotCursorRef.current = pivotCursor;
+
   const loadPivot = useCallback(
     async (axis: Mode, reset = false) => {
       if (!drawer.open) return;
-      
+
       const baseAxis = drawer.baseAxis;
       const baseId = drawer.baseId;
       const drawerRepIds = drawer.repIds;
@@ -42,11 +55,21 @@ export function usePivotLoader(params: PivotLoaderParams) {
       const month = drawer.month;
       const monthRange = drawer.monthRange;
       // オプショナルプロパティを明示的にundefinedとして扱う
-      const dateFrom: string | undefined = ('dateFrom' in drawer ? drawer.dateFrom : undefined) as string | undefined;
-      const dateTo: string | undefined = ('dateTo' in drawer ? drawer.dateTo : undefined) as string | undefined;
-      
+      const dateFrom: string | undefined = (
+        "dateFrom" in drawer ? drawer.dateFrom : undefined
+      ) as string | undefined;
+      const dateTo: string | undefined = (
+        "dateTo" in drawer ? drawer.dateTo : undefined
+      ) as string | undefined;
+
       const targetAxis = axis;
       if (targetAxis === baseAxis) return;
+
+      // リセット時は先に全軸のデータとカーソルをクリア（増殖防止）
+      if (reset) {
+        setPivotData({ customer: [], item: [], date: [] });
+        setPivotCursor({ customer: null, item: null, date: null });
+      }
 
       setPivotLoading(true);
       try {
@@ -57,7 +80,7 @@ export function usePivotLoader(params: PivotLoaderParams) {
           dateFrom?: string;
           dateTo?: string;
         } = {};
-        
+
         if (dateFrom && dateTo) {
           periodParams = { dateFrom, dateTo };
         } else if (monthRange) {
@@ -65,7 +88,7 @@ export function usePivotLoader(params: PivotLoaderParams) {
         } else if (month) {
           periodParams = { month };
         }
-        
+
         const page = await repository.fetchPivot({
           ...periodParams,
           baseAxis,
@@ -76,7 +99,8 @@ export function usePivotLoader(params: PivotLoaderParams) {
           sortBy: drawerSortBy,
           order: drawerOrder,
           topN: drawerTopN,
-          cursor: reset ? null : pivotCursor[targetAxis],
+          // リセット時はカーソルをnullに、追加読み込み時はRefから最新値を取得
+          cursor: reset ? null : pivotCursorRef.current[targetAxis],
         });
         setPivotData((prev) => ({
           ...prev,
@@ -87,7 +111,16 @@ export function usePivotLoader(params: PivotLoaderParams) {
         setPivotLoading(false);
       }
     },
-    [drawer, pivotCursor, categoryKind, repository, setPivotData, setPivotCursor, setPivotLoading]
+    // pivotCursorを依存から除外して無限ループを防止
+
+    [
+      drawer,
+      categoryKind,
+      repository,
+      setPivotData,
+      setPivotCursor,
+      setPivotLoading,
+    ],
   );
 
   return { loadPivot };

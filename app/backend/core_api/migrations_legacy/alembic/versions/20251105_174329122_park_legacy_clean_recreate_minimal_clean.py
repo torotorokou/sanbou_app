@@ -5,13 +5,13 @@ Revises: 20251105_174016896
 Create Date: 2025-11-05 08:43:29.934476
 
 """
-from alembic import op
-import sqlalchemy as sa
 
+import sqlalchemy as sa
+from alembic import op
 
 # revision identifiers, used by Alembic.
-revision = '20251105_174329122'
-down_revision = '20251105_174016896'
+revision = "20251105_174329122"
+down_revision = "20251105_174016896"
 branch_labels = None
 depends_on = None
 
@@ -47,21 +47,27 @@ WHERE
   AND split_part(replace(k.invoice_date::text, '/', '-')::text, '-', 3)::int BETWEEN 1 AND 31;
 """
 
+
 def upgrade():
     with op.get_context().autocommit_block():
         op.execute(sa.text(SQL_RENAME_LEGACY))
         op.execute(sa.text(SQL_CREATE_MINIMAL_CLEAN))
         op.execute(sa.text("GRANT SELECT ON stg.v_king_receive_clean TO myuser;"))
 
+
 def downgrade():
     # 簡易ロールバック：新cleanをDROPし、legacyがあれば元名に戻す
     with op.get_context().autocommit_block():
         op.execute(sa.text("DROP VIEW IF EXISTS stg.v_king_receive_clean;"))
-        op.execute(sa.text("""
+        op.execute(
+            sa.text(
+                """
         DO $$
         BEGIN
           IF to_regclass('stg.v_king_receive_clean_legacy') IS NOT NULL THEN
             EXECUTE 'ALTER VIEW stg.v_king_receive_clean_legacy RENAME TO v_king_receive_clean';
           END IF;
         END $$;
-        """))
+        """
+            )
+        )

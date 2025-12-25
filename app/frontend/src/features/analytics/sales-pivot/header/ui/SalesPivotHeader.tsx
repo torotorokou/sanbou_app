@@ -1,22 +1,22 @@
 /**
  * header/ui/SalesPivotHeader.tsx
  * ヘッダーUI（タイトル + CSV出力Dropdownボタン）
- * 
+ *
  * 【概要】
  * 売上ピボット分析画面のヘッダー部分を表示するプレゼンテーショナルコンポーネント
- * 
+ *
  * 【責務】
  * 1. ページタイトルの表示
  * 2. CSV出力ボタンとオプションメニューの表示
  * 3. ユーザー操作の受付と親コンポーネントへの通知
- * 
+ *
  * 【機能】
  * - CSV出力オプション設定（Dropdownメニュー内）
  *   - 追加カラム選択（残りモード1, 2）
  *   - 0実績除外
  *   - 営業ごと分割出力
  * - CSV出力実行（Blobダウンロード）
- * 
+ *
  * 【使用例】
  * ```tsx
  * <SalesPivotHeader
@@ -43,7 +43,7 @@ import { axisLabel } from '../../shared/model/metrics';
 
 /**
  * SalesPivotHeader Props
- * 
+ *
  * @property canExport - CSV出力可能かどうか（営業選択有無で判定）
  * @property exportOptions - 現在のCSV出力オプション
  * @property onExportOptionsChange - 出力オプション変更時のコールバック
@@ -58,7 +58,9 @@ import { axisLabel } from '../../shared/model/metrics';
 interface SalesPivotHeaderProps {
   canExport: boolean;
   exportOptions: ExportOptions;
-  onExportOptionsChange: (options: ExportOptions | ((prev: ExportOptions) => ExportOptions)) => void;
+  onExportOptionsChange: (
+    options: ExportOptions | ((prev: ExportOptions) => ExportOptions)
+  ) => void;
   onExport: () => Promise<void>;
   onExportSuccess?: () => void;
   onExportError?: (error: Error) => void;
@@ -71,7 +73,7 @@ interface SalesPivotHeaderProps {
 
 /**
  * ヘッダーコンポーネント
- * 
+ *
  * @description
  * タイトルとCSV出力機能を提供するヘッダーUI
  * Dropdown内でCSV出力オプションを設定可能
@@ -138,7 +140,12 @@ export const SalesPivotHeader: React.FC<SalesPivotHeaderProps> = ({
           <Switch
             size="small"
             checked={exportOptions.excludeZero}
-            onChange={(checked) => onExportOptionsChange((prev) => ({ ...prev, excludeZero: checked }))}
+            onChange={(checked) =>
+              onExportOptionsChange((prev) => ({
+                ...prev,
+                excludeZero: checked,
+              }))
+            }
           />
           <span>0実績を除外する（Excel負荷対策）</span>
         </Space>
@@ -153,7 +160,9 @@ export const SalesPivotHeader: React.FC<SalesPivotHeaderProps> = ({
           <Select
             size="small"
             value={exportOptions.splitBy}
-            onChange={(v: 'none' | 'rep') => onExportOptionsChange((prev) => ({ ...prev, splitBy: v }))}
+            onChange={(v: 'none' | 'rep') =>
+              onExportOptionsChange((prev) => ({ ...prev, splitBy: v }))
+            }
             options={[
               { label: '分割しない', value: 'none' },
               { label: '営業ごとに分割', value: 'rep' },
@@ -180,13 +189,15 @@ export const SalesPivotHeader: React.FC<SalesPivotHeaderProps> = ({
   return (
     <div className="sales-tree-header">
       <Typography.Title level={3} className="sales-tree-title">
-        <span className="sales-tree-title-accent">{categoryKind === 'waste' ? '廃棄物ツリー' : '有価物ツリー'}</span>
+        <span className="sales-tree-title-accent">
+          {categoryKind === 'waste' ? '廃棄物ツリー' : '有価物ツリー'}
+        </span>
       </Typography.Title>
       <div className="sales-tree-header-actions">
         {!canExport ? (
-          <Button 
-            icon={<DownloadOutlined />} 
-            type="default" 
+          <Button
+            icon={<DownloadOutlined />}
+            type="default"
             disabled
             title="営業が未選択のためCSV出力できません"
           >
@@ -206,11 +217,7 @@ export const SalesPivotHeader: React.FC<SalesPivotHeaderProps> = ({
             >
               CSV出力
             </Button>
-            <Dropdown
-              menu={{ items: exportMenu }}
-              placement="bottomRight"
-              trigger={['click']}
-            >
+            <Dropdown menu={{ items: exportMenu }} placement="bottomRight" trigger={['click']}>
               <Button type="default" icon={<DownOutlined />} />
             </Dropdown>
           </Space.Compact>
@@ -221,30 +228,30 @@ export const SalesPivotHeader: React.FC<SalesPivotHeaderProps> = ({
       <style>{`
         .app-header { position: relative; padding: 12px 0 4px; }
         .app-title { text-align: center; font-weight: 700; letter-spacing: 0.02em; margin: 0; }
-        .app-title-accent { 
-          display: inline-flex; 
-          align-items: center; 
-          gap: 10px; 
-          padding-left: 8px; 
-          color: #000; 
-          font-weight: 700; 
-          line-height: 1.2; 
-          font-size: 1.05em; 
+        .app-title-accent {
+          display: inline-flex;
+          align-items: center;
+          gap: 10px;
+          padding-left: 8px;
+          color: #000;
+          font-weight: 700;
+          line-height: 1.2;
+          font-size: 1.05em;
         }
-        .app-title-accent::before { 
-          content: ""; 
-          display: inline-block; 
-          width: 6px; 
-          height: 22px; 
-          background: #237804; 
-          border-radius: 3px; 
+        .app-title-accent::before {
+          content: "";
+          display: inline-block;
+          width: 6px;
+          height: 22px;
+          background: #237804;
+          border-radius: 3px;
         }
-        .app-header-actions { 
-          position: absolute; 
-          right: 0; 
-          top: 8px; 
-          display: flex; 
-          gap: 8px; 
+        .app-header-actions {
+          position: absolute;
+          right: 0;
+          top: 8px;
+          display: flex;
+          gap: 8px;
         }
       `}</style>
     </div>

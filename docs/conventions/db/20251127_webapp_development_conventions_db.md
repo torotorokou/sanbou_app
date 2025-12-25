@@ -1,4 +1,5 @@
 # Webアプリ開発 共通ルール（DB・マイグレーション版）
+
 - ファイル名: 20251127_webapp_development_conventions_db.md
 - 日付: 2025-11-27
 - 対象: PostgreSQL / スキーマ設計 / Alembic マイグレーション / docs 命名
@@ -16,17 +17,17 @@
 
 ## 2. スキーマごとの役割
 
-- **raw**  
+- **raw**
   - 外部システム / CSV からの取り込みテーブル
   - 元データのカラム名を尊重し、基本的に名称変更しない
-- **stg**  
+- **stg**
   - 型変換・簡易クレンジング・コード変換などを行う中間層
   - `raw` の構造を大きく変えない
-- **mart**  
+- **mart**
   - 分析・アプリケーションで利用する最終データ
   - カラム名は canonical 名（ドメイン寄り）に揃える
   - VIEW / MATERIALIZED VIEW を積極的に活用
-- **forecast / kpi / log**  
+- **forecast / kpi / log**
   - それぞれ用途（予測・KPI・ログ）に応じて設計
   - 命名規約は mart と同じルールを適用
 
@@ -59,17 +60,17 @@
 - 単位は:
   - COMMENT
   - `docs/conventions/column_naming_dictionary.md`
-  などで明示する
+    などで明示する
 
 ### 3-3. 生データと mart の対応
 
-- raw/stg:  
+- raw/stg:
   - 外部システムのカラム名（`sales_staff_cd`, `client_cd`, `receive_no` 等）を維持
-- mart:  
+- mart:
   - 上記を canonical 名へマッピング
-  - 例:  
-    - `sales_staff_cd AS rep_id`  
-    - `client_cd AS customer_id`  
+  - 例:
+    - `sales_staff_cd AS rep_id`
+    - `client_cd AS customer_id`
     - `receive_no AS slip_no`
 - このマッピングは VIEW 定義や `column_naming_dictionary.md` に明記する
 

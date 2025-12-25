@@ -1,7 +1,7 @@
 # =========================
 # rag_api Dockerfile (multi-stage: wheelbuilder/base/dev/stg/prod)
 # Context: app/backend
-# 
+#
 # Target stages:
 #   - wheelbuilder: Python 依存パッケージをビルド (wheel 生成)
 #   - base: 共通ランタイムベース (wheelインストール + アプリコード配置)
@@ -14,6 +14,10 @@
 # Stage: gcloud (gcloud SDK インストール)
 # ──────────────────────────────────────────────────────────────
 FROM python:3.12-slim AS gcloud
+
+# Set shell options for better error handling
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1
@@ -37,10 +41,11 @@ RUN apt-get update && \
 # ──────────────────────────────────────────────────────────────
 FROM gcloud AS wheelbuilder
 COPY ./backend_shared /build/backend_shared
+WORKDIR /build/backend_shared
 # Security: Upgrade pip to >=25.3 to fix CVE-2025-8869
-RUN python -m pip install --upgrade "pip>=25.3,<26.0" setuptools wheel && \
-    cd /build/backend_shared && \
+RUN python -m pip install --no-cache-dir --upgrade "pip>=25.3,<26.0" setuptools wheel && \
     pip wheel --no-deps . -w /wheels
+WORKDIR /build
 
 COPY ./rag_api/requirements.txt /build/requirements.txt
 RUN pip wheel --no-deps -r /build/requirements.txt -w /wheels
@@ -73,13 +78,13 @@ ENV PATH="/usr/lib/google-cloud-sdk/bin:${PATH}"
 
 COPY ./rag_api/requirements.txt /backend/requirements.txt
 # Security: Upgrade pip to >=25.3 to fix CVE-2025-8869
-RUN python -m pip install --upgrade "pip>=25.3,<26.0" && \
+RUN python -m pip install --no-cache-dir --upgrade "pip>=25.3,<26.0" && \
     pip install --no-cache-dir -r /backend/requirements.txt watchfiles
 
 # backend_shared を editable モードでインストール
 RUN mkdir -p /opt/backend_shared
 COPY ./backend_shared /opt/backend_shared
-RUN pip install -e /opt/backend_shared
+RUN pip install --no-cache-dir -e /opt/backend_shared
 
 # USER 切替前に必要ディレクトリを作成・chown
 RUN mkdir -p /backend/app /backend/test /backend/static/pdfs /backend/static/test_pdfs \
@@ -122,7 +127,7 @@ ENV PATH="/usr/lib/google-cloud-sdk/bin:${PATH}"
 
 COPY --from=wheelbuilder /wheels /wheels
 # Security: Upgrade pip to >=25.3 to fix CVE-2025-8869
-RUN python -m pip install --upgrade "pip>=25.3,<26.0" && \
+RUN python -m pip install --no-cache-dir --upgrade "pip>=25.3,<26.0" && \
     pip install --no-cache-dir /wheels/*.whl && \
     rm -rf /wheels
 

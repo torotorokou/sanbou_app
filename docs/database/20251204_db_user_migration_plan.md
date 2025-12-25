@@ -28,12 +28,12 @@
 
 ### 移行後の構成
 
-| 環境 | ユーザー名 | 接続先DB | 権限 |
-|------|-----------|---------|------|
-| 開発 | `sanbou_app_dev` | `sanbou_dev` | CRUD + DDL |
-| ステージング | `sanbou_app_stg` | `sanbou_stg` | CRUD のみ |
-| 本番 | `sanbou_app_prod` | `sanbou_prod` | CRUD のみ |
-| 管理用 | `myuser` | すべて | マイグレーション用 |
+| 環境         | ユーザー名        | 接続先DB      | 権限               |
+| ------------ | ----------------- | ------------- | ------------------ |
+| 開発         | `sanbou_app_dev`  | `sanbou_dev`  | CRUD + DDL         |
+| ステージング | `sanbou_app_stg`  | `sanbou_stg`  | CRUD のみ          |
+| 本番         | `sanbou_app_prod` | `sanbou_prod` | CRUD のみ          |
+| 管理用       | `myuser`          | すべて        | マイグレーション用 |
 
 ### メリット
 
@@ -71,21 +71,21 @@ docker compose version
 
 ### 変更対象ファイル
 
-| カテゴリ | ファイル | 変更内容 | Git管理 |
-|---------|---------|---------|--------|
-| **環境変数** | `env/.env.common` | POSTGRES_USER/PASSWORD をプレースホルダ化 | ✅ |
-| **環境変数** | `env/.env.local_dev` | コメント追加 | ✅ |
-| **環境変数** | `env/.env.local_stg` | コメント追加 | ✅ |
-| **環境変数** | `env/.env.vm_stg` | コメント追加 | ✅ |
-| **環境変数** | `env/.env.vm_prod` | コメント追加 | ✅ |
-| **シークレット** | `secrets/.env.local_dev.secrets` | 新ユーザー情報を追加 | ❌ |
-| **シークレット** | `secrets/.env.local_stg.secrets` | 新ユーザー情報を追加 | ❌ |
-| **シークレット** | `secrets/.env.vm_stg.secrets` | 新ユーザー情報を追加 | ❌ |
-| **シークレット** | `secrets/.env.vm_prod.secrets` | 新ユーザー情報を追加 | ❌ |
-| **SQL** | `scripts/sql/20251204_alter_current_user_password.sql` | 新規作成 | ✅ |
-| **SQL** | `scripts/sql/20251204_create_app_db_users.sql` | 新規作成 | ✅ |
-| **ドキュメント** | `docs/db/20251204_db_user_design.md` | 新規作成 | ✅ |
-| **ドキュメント** | `docs/db/20251204_db_user_migration_plan.md` | 新規作成 | ✅ |
+| カテゴリ         | ファイル                                               | 変更内容                                  | Git管理 |
+| ---------------- | ------------------------------------------------------ | ----------------------------------------- | ------- |
+| **環境変数**     | `env/.env.common`                                      | POSTGRES_USER/PASSWORD をプレースホルダ化 | ✅      |
+| **環境変数**     | `env/.env.local_dev`                                   | コメント追加                              | ✅      |
+| **環境変数**     | `env/.env.local_stg`                                   | コメント追加                              | ✅      |
+| **環境変数**     | `env/.env.vm_stg`                                      | コメント追加                              | ✅      |
+| **環境変数**     | `env/.env.vm_prod`                                     | コメント追加                              | ✅      |
+| **シークレット** | `secrets/.env.local_dev.secrets`                       | 新ユーザー情報を追加                      | ❌      |
+| **シークレット** | `secrets/.env.local_stg.secrets`                       | 新ユーザー情報を追加                      | ❌      |
+| **シークレット** | `secrets/.env.vm_stg.secrets`                          | 新ユーザー情報を追加                      | ❌      |
+| **シークレット** | `secrets/.env.vm_prod.secrets`                         | 新ユーザー情報を追加                      | ❌      |
+| **SQL**          | `scripts/sql/20251204_alter_current_user_password.sql` | 新規作成                                  | ✅      |
+| **SQL**          | `scripts/sql/20251204_create_app_db_users.sql`         | 新規作成                                  | ✅      |
+| **ドキュメント** | `docs/db/20251204_db_user_design.md`                   | 新規作成                                  | ✅      |
+| **ドキュメント** | `docs/db/20251204_db_user_migration_plan.md`           | 新規作成                                  | ✅      |
 
 ### サービス再起動が必要なコンポーネント
 
@@ -198,6 +198,7 @@ docker compose -f docker/docker-compose.dev.yml -p local_dev logs core_api | gre
 ```
 
 **✅ 確認ポイント:**
+
 - アプリケーションが正常に起動する
 - データベース接続エラーが出ない
 - 既存データが参照できる
@@ -243,6 +244,7 @@ docker compose -f docker/docker-compose.stg.yml logs -f core_api
 #### ステップ 2-4: 本番環境の切り替え（慎重に実施）
 
 **⚠️ 注意:**
+
 - メンテナンス時間帯に実施
 - ステークホルダーへの事前通知
 - ロールバック手順の準備
@@ -323,6 +325,7 @@ docker compose -f docker/docker-compose.<env>.yml restart
 **原因:** パスワードが間違っている
 
 **対処:**
+
 ```bash
 # secrets ファイルのパスワードを確認
 cat secrets/.env.<env>.secrets | grep POSTGRES_PASSWORD
@@ -336,6 +339,7 @@ cat secrets/.env.<env>.secrets | grep POSTGRES_PASSWORD
 **原因:** 新しいユーザーに権限が付与されていない
 
 **対処:**
+
 ```bash
 # 権限を再付与
 docker compose exec db psql -U myuser -d sanbou_<env> \
@@ -347,6 +351,7 @@ docker compose exec db psql -U myuser -d sanbou_<env> \
 **原因:** データベース名が間違っている
 
 **対処:**
+
 ```bash
 # DATABASE_URL のデータベース名を確認
 cat secrets/.env.<env>.secrets | grep DATABASE_URL
@@ -359,6 +364,7 @@ cat secrets/.env.<env>.secrets | grep DATABASE_URL
 **原因:** `myuser` のパスワードが更新されていない、または Alembic が新しいユーザーで実行されている
 
 **対処:**
+
 ```bash
 # マイグレーションは myuser で実行する必要があります
 docker compose exec \

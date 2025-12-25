@@ -16,12 +16,18 @@
 }
 
 /* 日付セル: 土曜日に薄い青の背景 */
-:global(.ant-picker-dropdown .ant-picker-content tbody tr td):nth-child(6):not(:global(.ant-picker-cell-disabled)) :global(.ant-picker-cell-inner) {
+:global(.ant-picker-dropdown .ant-picker-content tbody tr td):nth-child(6):not(
+    :global(.ant-picker-cell-disabled)
+  )
+  :global(.ant-picker-cell-inner) {
   background-color: #e6f7ff;
 }
 
 /* 日付セル: 日曜日に薄い赤の背景 */
-:global(.ant-picker-dropdown .ant-picker-content tbody tr td):nth-child(7):not(:global(.ant-picker-cell-disabled)) :global(.ant-picker-cell-inner) {
+:global(.ant-picker-dropdown .ant-picker-content tbody tr td):nth-child(7):not(
+    :global(.ant-picker-cell-disabled)
+  )
+  :global(.ant-picker-cell-inner) {
   background-color: #fff1f0;
 }
 
@@ -44,11 +50,17 @@
 }
 
 /* ホバー時: 土曜日 */
-:global(.ant-picker-dropdown .ant-picker-content tbody tr td):nth-child(6):hover:not(:global(.ant-picker-cell-selected)):not(:global(.ant-picker-cell-disabled)) :global(.ant-picker-cell-inner) {
+:global(.ant-picker-dropdown .ant-picker-content tbody tr td):nth-child(6):hover:not(
+    :global(.ant-picker-cell-selected)
+  ):not(:global(.ant-picker-cell-disabled))
+  :global(.ant-picker-cell-inner) {
   background-color: #bae7ff;
 }
 
 /* ホバー時: 日曜日 */
-:global(.ant-picker-dropdown .ant-picker-content tbody tr td):nth-child(7):hover:not(:global(.ant-picker-cell-selected)):not(:global(.ant-picker-cell-disabled)) :global(.ant-picker-cell-inner) {
+:global(.ant-picker-dropdown .ant-picker-content tbody tr td):nth-child(7):hover:not(
+    :global(.ant-picker-cell-selected)
+  ):not(:global(.ant-picker-cell-disabled))
+  :global(.ant-picker-cell-inner) {
   background-color: #ffccc7;
 }

@@ -7,7 +7,14 @@ import React from 'react';
 import { Card, Table, Typography } from 'antd';
 import type { TableColumnsType } from 'antd';
 import { Tag } from 'antd';
-import type { SummaryRow, Mode, MetricEntry, SummaryQuery, CategoryKind, ID } from '../../shared/model/types';
+import type {
+  SummaryRow,
+  Mode,
+  MetricEntry,
+  SummaryQuery,
+  CategoryKind,
+  ID,
+} from '../../shared/model/types';
 import { fmtCurrency, fmtNumber, fmtUnitPrice, axisLabel } from '../../shared/model/metrics';
 import { ExpandedRow } from './ExpandedRow';
 
@@ -49,7 +56,7 @@ export const SummaryTable: React.FC<SummaryTableProps> = ({
   const countLabel = mode === 'item' ? '件数' : '台数';
   // 売上/仕入ラベルの動的切り替え
   const amountLabel = categoryKind === 'waste' ? '売上' : '仕入';
-  
+
   if (!hasSelection) {
     return (
       <Card className="sales-tree-accent-card sales-tree-accent-primary">
@@ -63,13 +70,13 @@ export const SummaryTable: React.FC<SummaryTableProps> = ({
   }
 
   const parentCols: TableColumnsType<SummaryRow> = [
-    { 
-      title: '営業', 
-      dataIndex: 'repName', 
-      key: 'repName', 
-      width: 160, 
+    {
+      title: '営業',
+      dataIndex: 'repName',
+      key: 'repName',
+      width: 160,
       fixed: 'left',
-      sorter: (a: SummaryRow, b: SummaryRow) => a.repName.localeCompare(b.repName, 'ja')
+      sorter: (a: SummaryRow, b: SummaryRow) => a.repName.localeCompare(b.repName, 'ja'),
     },
     {
       title: `${axisLabel(mode)} Top${topN === 'all' ? 'All' : topN}`,
@@ -87,7 +94,11 @@ export const SummaryTable: React.FC<SummaryTableProps> = ({
           },
           render: (_: unknown, row: SummaryRow) => {
             const totalAmount = row.topN.reduce((s: number, x: MetricEntry) => s + x.amount, 0);
-            return <Tag color="volcano" style={{ fontSize: '15px', padding: '4px 8px' }}>{fmtCurrency(totalAmount)}</Tag>;
+            return (
+              <Tag color="volcano" style={{ fontSize: '15px', padding: '4px 8px' }}>
+                {fmtCurrency(totalAmount)}
+              </Tag>
+            );
           },
         },
         {
@@ -102,7 +113,11 @@ export const SummaryTable: React.FC<SummaryTableProps> = ({
           },
           render: (_: unknown, row: SummaryRow) => {
             const totalQty = row.topN.reduce((s: number, x: MetricEntry) => s + x.qty, 0);
-            return <Tag color="green" style={{ fontSize: '15px', padding: '4px 8px' }}>{fmtNumber(totalQty)} kg</Tag>;
+            return (
+              <Tag color="green" style={{ fontSize: '15px', padding: '4px 8px' }}>
+                {fmtNumber(totalQty)} kg
+              </Tag>
+            );
           },
         },
         {
@@ -118,7 +133,11 @@ export const SummaryTable: React.FC<SummaryTableProps> = ({
           render: (_: unknown, row: SummaryRow) => {
             const totalCount = row.topN.reduce((s: number, x: MetricEntry) => s + x.count, 0);
             const suffix = mode === 'item' ? '件' : '台';
-            return <Tag color="blue" style={{ fontSize: '15px', padding: '4px 8px' }}>{fmtNumber(totalCount)} {suffix}</Tag>;
+            return (
+              <Tag color="blue" style={{ fontSize: '15px', padding: '4px 8px' }}>
+                {fmtNumber(totalCount)} {suffix}
+              </Tag>
+            );
           },
         },
         {
@@ -139,7 +158,11 @@ export const SummaryTable: React.FC<SummaryTableProps> = ({
             const totalAmount = row.topN.reduce((s: number, x: MetricEntry) => s + x.amount, 0);
             const totalQty = row.topN.reduce((s: number, x: MetricEntry) => s + x.qty, 0);
             const unit = totalQty > 0 ? totalAmount / totalQty : null;
-            return <Tag color="gold" style={{ fontSize: '15px', padding: '4px 8px' }}>{fmtUnitPrice(unit)}</Tag>;
+            return (
+              <Tag color="gold" style={{ fontSize: '15px', padding: '4px 8px' }}>
+                {fmtUnitPrice(unit)}
+              </Tag>
+            );
           },
         },
       ],
@@ -176,7 +199,9 @@ export const SummaryTable: React.FC<SummaryTableProps> = ({
           rowExpandable: () => true,
         }}
         scroll={{ x: 'max-content' }}
-        rowClassName={(_: unknown, idx: number) => (idx % 2 === 0 ? 'sales-tree-zebra-even' : 'sales-tree-zebra-odd')}
+        rowClassName={(_: unknown, idx: number) =>
+          idx % 2 === 0 ? 'sales-tree-zebra-even' : 'sales-tree-zebra-odd'
+        }
       />
     </Card>
   );

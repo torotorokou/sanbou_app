@@ -38,18 +38,16 @@ export interface InboundDailyParams {
  */
 export async function fetchInboundDaily(params: InboundDailyParams): Promise<InboundDailyRow[]> {
   const { start, end, segment, cum_scope = 'none' } = params;
-  
+
   const queryParams = new URLSearchParams({
     start,
     end,
     cum_scope,
   });
-  
+
   if (segment) {
     queryParams.append('segment', segment);
   }
-  
-  return await coreApi.get<InboundDailyRow[]>(
-    `/core_api/inbound/daily?${queryParams.toString()}`
-  );
+
+  return await coreApi.get<InboundDailyRow[]>(`/core_api/inbound/daily?${queryParams.toString()}`);
 }

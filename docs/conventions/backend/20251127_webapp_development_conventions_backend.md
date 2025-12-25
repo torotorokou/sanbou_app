@@ -1,4 +1,5 @@
 # Webアプリ開発 共通ルール（バックエンド版）
+
 - ファイル名: 20251127_webapp_development_conventions_backend.md
 - 日付: 2025-11-27
 - 対象: FastAPI バックエンド（core_api / ledger_api / rag_api など）
@@ -20,7 +21,7 @@
 ```text
 app/
   main.py
-  api/  
+  api/
     routers/
     schemas/
   core/
@@ -58,51 +59,59 @@ docs/
 
 ### 2-2. 各層の役割
 
-- **api/routers/**  
+- **api/routers/**
+
   - FastAPI ルーター定義
   - Request → DTO（Pydantic）への変換、UseCase 呼び出し、Response 生成のみ担当
   - ここでは `new` や SQL を書かない（UseCase インスタンスは DI で受け取る）
 
-- **core/usecases/**  
+- **core/usecases/**
+
   - Application 層
-  - 「何をどうするか」の手順を記述する  
+  - 「何をどうするか」の手順を記述する
     - データ読み込み → 検証 → ドメイン操作 → 保存/取得
   - 依存するのは **core/ports/** の抽象のみ
   - infra の実装には依存してはいけない
 
-- **core/domain/**  
+- **core/domain/**
+
   - 業務ドメインモデル（Entity / 値オブジェクト / ドメインサービス）
   - 業務ルール・不変条件を表現
   - 外部 I/O（DB, HTTP, 設定）には依存しない
 
-- **core/ports/**  
+- **core/ports/**
+
   - UseCase が利用する抽象インターフェース（Repository, Gateway 等）
   - 例: `class InboundRepository(Protocol): ...`
 
-- **infra/adapters/**  
+- **infra/adapters/**
+
   - ports の具体実装
   - DB アクセス（SQLAlchemy / 生 SQL）、外部 API SDK を用いた実処理はここに閉じ込める
   - Domain 型と DB モデル間の変換を行う
 
-- **infra/db/**  
+- **infra/db/**
+
   - DB 接続・スキーマ定義・マイグレーション関連
   - `models/` に ORM モデル（schema）、`migrations/` に Alembic スクリプトを配置
   - `db.py` で Engine / SessionLocal を定義する
 
-- **infra/frameworks/**  
+- **infra/frameworks/**
+
   - DB 接続 (`db.py`)、ログ設定、その他フレームワーク固有の初期化処理
   - 例: `get_db()` による Session 提供
 
-- **config/di_providers.py**  
+- **config/di_providers.py**
+
   - DI コンテナ
   - UseCase / Repository 実装 / DB セッションを組み立てる
   - 環境差分（schema 切替・debug/raw/flash/final 等）はここで吸収する
 
-- **shared（ローカル shared）**  
+- **shared（ローカル shared）**
   - コンテナ（サービス）内部で完結する技術的共通処理のみ
   - 他コンテナとは共有しない
   - あくまで「局所的 util や共通部品」を置く軽量スコープ
-  - backend_shared のような “プロジェクト横断基盤” ではない  
+  - backend_shared のような “プロジェクト横断基盤” ではない
   - 例:
     - 当該サービス専用の小さなユーティリティ（`date_utils.py` など）
     - 特定の API グループだけで使う ResponseBuilder
@@ -117,7 +126,7 @@ docs/
 - Python の標準規約（PEP8）に従い、**snake_case**
 - クラス名: PascalCase
 - モジュール名: snake_case
-- Domain 層:  
+- Domain 層:
   - ビジネス的な意味がわかる命名を優先（`InboundPlan`, `CustomerLTV` 等）
 
 ### 3-2. UseCase の書き方
@@ -165,7 +174,7 @@ def calculate_inbound_plan(
   - Request → Input DTO の変換
   - UseCase 呼び出し
   - Output DTO → Response の変換
-  のみ行う
+    のみ行う
 
 ---
 
@@ -214,23 +223,26 @@ docs/
 
 ### 6-2. ドキュメント分類
 
-- **backend 共通規約**  
+- **backend 共通規約**
+
   - 本ファイル（バックエンド開発規約）
   - DB 規約（スキーマ・マイグレーション・命名ルール）
   - エラーハンドリングガイド
   - ログ出力ポリシー
 
-- **API 仕様**  
+- **API 仕様**
+
   - OpenAPI 定義（自動生成 or 抜粋）
   - エンドポイント一覧
   - 代表的なリクエスト/レスポンス例
 
-- **アーキテクチャ**  
+- **アーキテクチャ**
+
   - レイヤー構成図（api / core / infra / shared / backend_shared）
   - データフロー / シーケンス図
   - 各コンテナ（core_api / ledger_api / rag_api 等）の役割
 
-- **運用・運用補助**  
+- **運用・運用補助**
   - デプロイ手順
   - マイグレーション手順（Alembic 運用ルール）
   - 障害対応フロー
@@ -241,15 +253,15 @@ docs/
 - 新規サービス（例: 新しい FastAPI コンテナ）を追加する場合は:
   - `docs/backend/api/<service_name>_openapi.md`
   - 必要なら `docs/backend/architecture/<service_name>_overview.md`
-  を追加すること
+    を追加すること
 
 ### 6-4. shared / backend_shared との関係
 
 - 各コンテナ内の `app/shared/` に関するルールは本ファイルで定義する
 - 複数コンテナで使用する共通基盤（`backend_shared/`）については、  
-  別途 `docs/backend/backend_shared_guidelines.md` を作成し、  
-  - どの機能を backend_shared に置くか  
+  別途 `docs/backend/backend_shared_guidelines.md` を作成し、
+  - どの機能を backend_shared に置くか
   - 各コンテナからの依存ルール  
-  を明文化する
+    を明文化する
 
 ---

@@ -58,6 +58,7 @@ from app.api.services.csv import CsvFormatterService, CsvValidatorService
 ✅ **すべての変更ファイルでエラーなし**
 
 検証したファイル：
+
 - `/app/api/services/csv/__init__.py`
 - `/app/api/services/csv/formatter_service.py`
 - `/app/api/services/csv/validator_service.py`
@@ -71,18 +72,22 @@ from app.api.services.csv import CsvFormatterService, CsvValidatorService
 ## 利点
 
 ### 1. **コードの可読性向上**
+
 - 機能ごとにディレクトリが分かれているため、一目で構造が理解できる
 - READMEファイルで各モジュールの役割が明確
 
 ### 2. **保守性の向上**
+
 - 関連するコードがまとまっているため、変更や拡張が容易
 - 新しい機能を追加する場所が明確
 
 ### 3. **拡張性の確保**
+
 - 新しいサービスカテゴリ（`database/`, `notification/`など）を追加しやすい
 - 既存コードに影響を与えずに拡張可能
 
 ### 4. **後方互換性**
+
 - 既存のコードは**一切変更不要**
 - 段階的な移行が可能
 
@@ -91,9 +96,11 @@ from app.api.services.csv import CsvFormatterService, CsvValidatorService
 ### 即座に対応不要（任意）
 
 1. **既存コードの段階的移行**
+
    - 新しいインポート方式への移行（機能には影響なし）
 
 2. **さらなるモジュール分割**
+
    - データベース操作を `database/` に分離
    - 通知機能を `notification/` に分離
 

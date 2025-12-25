@@ -1,13 +1,15 @@
 """
 Factory Report - 工場日報生成エンドポイント
 """
-import os
-from fastapi import APIRouter, Request
-import httpx
 
+import os
+
+import httpx
+from fastapi import APIRouter, Request
+
+from app.shared.utils import rewrite_artifact_urls_to_bff
 from backend_shared.application.logging import create_log_context, get_module_logger
 from backend_shared.core.domain.exceptions import ExternalServiceError
-from app.shared.utils import rewrite_artifact_urls_to_bff
 
 logger = get_module_logger(__name__)
 
@@ -24,24 +26,22 @@ async def proxy_factory_report(request: Request):
     """
     logger.info(
         "Proxying factory_report request (FormData)",
-        extra=create_log_context(
-            operation="proxy_factory_report",
-            client=str(request.client)
-        )
+        extra=create_log_context(operation="proxy_factory_report", client=str(request.client)),
     )
     logger.info(f"Request headers: {dict(request.headers)}")
     try:
         # FormDataをそのまま読み取り
         form = await request.form()
         logger.info(f"Received form keys: {list(form.keys())}")
-        
+
         # FormDataを再構築してledger_apiに送信
         files = {}
         data = {}
         for key, value in form.items():
-            if hasattr(value, 'read'):  # ファイルオブジェクト（UploadFile）
+            if hasattr(value, "read"):  # ファイルオブジェクト（UploadFile）
                 # UploadFileの場合、ファイル内容を読み取って送信
                 from starlette.datastructures import UploadFile
+
                 if isinstance(value, UploadFile):
                     content = await value.read()
                     files[key] = (value.filename, content, value.content_type)
@@ -49,7 +49,7 @@ async def proxy_factory_report(request: Request):
             else:
                 data[key] = value
                 logger.info(f"Data '{key}': {value}")
-        
+
         async with httpx.AsyncClient(timeout=60.0) as client:
             url = f"{LEDGER_API_BASE}/reports/factory_report/"
             logger.info(f"Forwarding to {url}")
@@ -58,22 +58,25 @@ async def proxy_factory_report(request: Request):
             r = await client.post(url, data=data, files=files)
             logger.info(f"Ledger API response: {r.status_code}")
             r.raise_for_status()
-            
+
             # BFFの責務: 内部論理パスを外向きパスに変換
             response_data = r.json()
             return rewrite_artifact_urls_to_bff(response_data)
     except httpx.HTTPStatusError as e:
-        logger.error(f"Ledger API returned error: {e.response.status_code} - {e.response.text}", exc_info=True)
+        logger.error(
+            f"Ledger API returned error: {e.response.status_code} - {e.response.text}",
+            exc_info=True,
+        )
         raise ExternalServiceError(
             service_name="ledger_api",
             message=f"Factory report generation failed: {e.response.text[:200]}",
             status_code=e.response.status_code,
-            cause=e
+            cause=e,
         )
     except httpx.HTTPError as e:
         logger.error(f"Failed to reach ledger_api: {str(e)}", exc_info=True)
         raise ExternalServiceError(
             service_name="ledger_api",
             message=f"Cannot reach ledger_api: {str(e)}",
-            cause=e
+            cause=e,
         )

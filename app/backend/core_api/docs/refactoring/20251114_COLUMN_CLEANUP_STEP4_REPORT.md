@@ -8,16 +8,19 @@
 ## 1. マイグレーション実行サマリー
 
 ### 実行コマンド
+
 ```bash
 alembic upgrade head
 ```
 
 ### 実行結果
+
 ```
 ✅ All _en_ suffix columns renamed successfully
 ```
 
 ### 現在のマイグレーション状態
+
 ```
 20251114_remove_en_suffix (head)
 ```
@@ -27,12 +30,14 @@ alembic upgrade head
 ## 2. カラム名変更の検証結果
 
 ### stg.shipment_shogun_flash (18カラム)
+
 ```sql
-SELECT column_name FROM information_schema.columns 
+SELECT column_name FROM information_schema.columns
 WHERE table_schema = 'stg' AND table_name = 'shipment_shogun_flash';
 ```
 
 **変更後のカラム一覧**:
+
 ```
 id
 slip_date
@@ -59,6 +64,7 @@ created_at
 ---
 
 ### stg.yard_shogun_flash (17カラム)
+
 ```
 id
 slip_date
@@ -84,6 +90,7 @@ created_at
 ---
 
 ### raw.shipment_shogun_flash (18カラム)
+
 ```
 slip_date
 client_name              ← ✅ 変更済み
@@ -112,6 +119,7 @@ created_at
 ## 3. データ整合性の確認
 
 ### 各テーブルのレコード数
+
 ```sql
 SELECT schemaname || '.' || tablename AS table_name, n_live_tup AS row_count
 FROM pg_stat_user_tables
@@ -120,6 +128,7 @@ ORDER BY schemaname, tablename;
 ```
 
 **結果**:
+
 ```
       table_name           | row_count
 ---------------------------+-----------
@@ -140,12 +149,14 @@ stg.yard_shogun_flash      |     1
 ✅ **全テーブルでデータが保持されています**
 
 ### サンプルデータの確認
+
 ```sql
-SELECT slip_date, client_name, vendor_name, item_name 
+SELECT slip_date, client_name, vendor_name, item_name
 FROM stg.shipment_shogun_flash LIMIT 3;
 ```
 
 **結果**:
+
 ```
  slip_date  |    client_name    |    vendor_name    |  item_name
 ------------+-------------------+-------------------+-------------
@@ -160,14 +171,17 @@ FROM stg.shipment_shogun_flash LIMIT 3;
 ## 4. マイグレーション詳細
 
 ### 実行された操作数
+
 - **shipment**: 7カラム × 2スキーマ(raw/stg) × 2バリアント(flash/final) = **28回**
 - **yard**: 6カラム × 2スキーマ × 2バリアント = **24回**
 - **合計**: **52回のRENAME COLUMN操作**
 
 ### 修正事項
+
 ⚠️ 当初の予定では`category_en_name`もshipmentテーブルに含まれる想定でしたが、実際のDBスキーマには存在しないため、マイグレーションから除外しました。
 
 **理由**:
+
 - YAML定義には`種類CD`と`種類名`が存在
 - しかし実際のDBテーブルには作成されていない
 - このため`category_*`カラムはshipmentのマイグレーション対象から除外
@@ -177,14 +191,17 @@ FROM stg.shipment_shogun_flash LIMIT 3;
 ## 5. ロールバック可能性
 
 ### downgrade() メソッド
+
 実装済み - 全てのカラム名を元の `*_en_*` 形式に戻せます。
 
 ### ロールバックコマンド
+
 ```bash
 alembic downgrade -1
 ```
 
 これにより以下が実行されます:
+
 - `client_name` → `client_en_name`
 - `vendor_name` → `vendor_en_name`
 - (以下略、全52カラムを元に戻す)
@@ -194,9 +211,11 @@ alembic downgrade -1
 ## 6. 影響範囲の再確認
 
 ### データベース側
+
 ✅ **完了** - 全カラムが新しい命名規則に統一
 
 ### アプリケーションコード側
+
 ⏳ **次ステップで検証が必要**
 
 YAMLベースでカラム名を動的に読み込むため、理論上は自動的に新カラム名が使われるはずですが、以下を確認する必要があります:

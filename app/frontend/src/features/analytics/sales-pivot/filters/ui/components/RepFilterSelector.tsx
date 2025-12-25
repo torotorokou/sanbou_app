@@ -47,7 +47,11 @@ export const RepFilterSelector: React.FC<RepFilterSelectorProps> = ({
               >
                 全営業を表示
               </Button>
-              <Button size="small" onClick={() => onRepIdsChange([])} disabled={repIds.length === 0}>
+              <Button
+                size="small"
+                onClick={() => onRepIdsChange([])}
+                disabled={repIds.length === 0}
+              >
                 クリア
               </Button>
             </Space>

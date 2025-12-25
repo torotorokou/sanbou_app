@@ -9,6 +9,7 @@ from .access_log import (
     setup_uvicorn_access_filter,
 )
 
+
 __all__ = [
     "AccessLogFilterConfig",
     "PathExcludeAccessFilter",

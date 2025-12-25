@@ -28,6 +28,7 @@ SQLファイルは以下の規則で命名されています:
 ```
 
 例:
+
 - `dashboard_target_repo__get_by_date_optimized.sql`
   - クラス: `DashboardTargetRepository`
   - メソッド: `get_by_date_optimized`
@@ -58,7 +59,7 @@ class MyRepository:
         self.db = db
         # __init__で事前にコンパイル
         self._my_query_sql = text(load_sql("path/to/query.sql"))
-    
+
     def my_method(self, param):
         # 事前にコンパイルしたクエリを使用
         return self.db.execute(self._my_query_sql, {"param": param})
@@ -95,16 +96,17 @@ SELECT * FROM users WHERE id = :user_id AND status = :status
 result = session.execute(query, {"user_id": 123, "status": "active"})
 ```
 
-**注意**: 
+**注意**:
+
 - テーブル名や列名などの識別子は、パラメータバインディングでは渡せません
 - 動的な識別子が必要な場合は、Python側で文字列置換を行ってから`text()`に渡します
 
 ## 各SQLファイルの説明
 
-### dashboard/dashboard_target_repo__get_by_date_optimized.sql
+### dashboard/dashboard_target_repo\_\_get_by_date_optimized.sql
 
 - **目的**: 月次/週次/日次の目標と実績データを最適化された単一クエリで取得
-- **特徴**: 
+- **特徴**:
   - 190行の超長大SQL
   - 複数のCTEでアンカー日の解決、累積計算、NULLマスキングを実行
   - Materialized View(mv_target_card_per_day)を参照してパフォーマンス最適化
@@ -112,7 +114,7 @@ result = session.execute(query, {"user_id": 123, "status": "active"})
   - `:req` - 対象日付(通常は月初)
   - `:mode` - 'daily' または 'monthly'
 
-### inbound/inbound_pg_repository__get_daily_with_cumulative.sql
+### inbound/inbound_pg_repository\_\_get_daily_with_cumulative.sql
 
 - **目的**: 日次入荷データをカレンダーと結合し、累積値を計算
 - **特徴**:
@@ -125,7 +127,7 @@ result = session.execute(query, {"user_id": 123, "status": "active"})
   - `:cum_scope` - 累積スコープ('range', 'month', 'week', 'none')
 - **注意**: テーブル名はPython側で動的に差し込むため、SQL内では`mart.v_calendar`のままですが、実行時に置換されます
 
-### forecast/job_repo__claim_job.sql
+### forecast/job_repo\_\_claim_job.sql
 
 - **目的**: 待機中の予測ジョブを1つクレームし、実行中状態に更新
 - **特徴**:
@@ -164,6 +166,7 @@ FileNotFoundError: SQL file not found: .../sql/path/to/file.sql
 **原因**: SQLファイルが存在しないか、パスが間違っています
 
 **解決策**:
+
 1. ファイルが存在するか確認
 2. パスの区切り文字は `/` を使用(Windows/Linux両対応)
 3. ファイル名の大文字/小文字が正確か確認
@@ -177,6 +180,7 @@ relation "mart.v_calendar" does not exist
 **原因**: SQL内のテーブル名が環境に合っていません
 
 **解決策**:
+
 - Python側で`sql_names.py`の定数を使用してテーブル名を動的に差し込む
 - 例: `sql_str.replace("mart.v_calendar", V_CALENDAR)`
 

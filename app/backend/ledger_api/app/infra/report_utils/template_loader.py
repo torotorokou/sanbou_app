@@ -1,6 +1,8 @@
-from pathlib import Path
-import pandas as pd
 import os
+from pathlib import Path
+
+import pandas as pd
+
 from backend_shared.utils.dataframe_utils import clean_na_strings
 
 
@@ -11,7 +13,7 @@ def load_master_and_template(master_path: str | Path) -> pd.DataFrame:
     """
     """
     master_path: YAMLで指定したデータマスターのパス (例: data/master/abc_average_write_targets.csv)
-    
+
     BASE_API_DIR環境変数を使用
     """
     base_dir = Path(os.getenv("BASE_API_DIR", "/backend/app/api"))

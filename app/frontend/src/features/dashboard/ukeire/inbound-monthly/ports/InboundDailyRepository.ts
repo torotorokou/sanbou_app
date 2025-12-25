@@ -3,7 +3,7 @@
  * 日次搬入量データ取得のインターフェース定義
  */
 
-export type CumScope = "range" | "month" | "week" | "none";
+export type CumScope = 'range' | 'month' | 'week' | 'none';
 
 /**
  * 日次搬入量データ行

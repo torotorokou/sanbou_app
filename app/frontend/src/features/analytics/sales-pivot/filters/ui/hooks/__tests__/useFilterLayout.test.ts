@@ -10,7 +10,7 @@ vi.mock('@/shared', () => ({
 
 describe('useFilterLayout', () => {
   it('デスクトップ（xl以上）レイアウトを返す', () => {
-    vi.mocked(sharedModule.useResponsive).mockReturnValue({ 
+    vi.mocked(sharedModule.useResponsive).mockReturnValue({
       isDesktop: true,
       isMobile: false,
       isTablet: false,
@@ -25,7 +25,7 @@ describe('useFilterLayout', () => {
   });
 
   it('モバイル（xl未満）レイアウトを返す', () => {
-    vi.mocked(sharedModule.useResponsive).mockReturnValue({ 
+    vi.mocked(sharedModule.useResponsive).mockReturnValue({
       isDesktop: false,
       isMobile: true,
       isTablet: false,
@@ -39,7 +39,7 @@ describe('useFilterLayout', () => {
   });
 
   it('期間・営業・フィルタグリッド設定が正しく返される', () => {
-    vi.mocked(sharedModule.useResponsive).mockReturnValue({ 
+    vi.mocked(sharedModule.useResponsive).mockReturnValue({
       isDesktop: true,
       isMobile: false,
       isTablet: false,

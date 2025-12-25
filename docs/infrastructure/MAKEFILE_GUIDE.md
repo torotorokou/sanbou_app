@@ -32,12 +32,12 @@ Docker Compose操作を統一的に管理するためのツールです。
 
 ## 環境の種類
 
-| ENV名 | 説明 | 用途 | ビルド | イメージソース |
-|-------|------|------|--------|----------------|
-| `local_dev` | ローカル開発環境 | 開発・デバッグ | ⭕ | ローカルビルド |
-| `local_demo` | ローカルデモ環境 | デモ・検証 | ⭕ | ローカルビルド |
-| `vm_stg` | GCP VM ステージング | 統合テスト | ❌ | Artifact Registry |
-| `vm_prod` | GCP VM 本番環境 | 本番運用 | ❌ | Artifact Registry |
+| ENV名        | 説明                | 用途           | ビルド | イメージソース    |
+| ------------ | ------------------- | -------------- | ------ | ----------------- |
+| `local_dev`  | ローカル開発環境    | 開発・デバッグ | ⭕     | ローカルビルド    |
+| `local_demo` | ローカルデモ環境    | デモ・検証     | ⭕     | ローカルビルド    |
+| `vm_stg`     | GCP VM ステージング | 統合テスト     | ❌     | Artifact Registry |
+| `vm_prod`    | GCP VM 本番環境     | 本番運用       | ❌     | Artifact Registry |
 
 ### 環境ごとの設定ファイル
 
@@ -194,7 +194,7 @@ curl http://localhost/api/v1/health
 
 - GCP VMインスタンスが作成済み
 - Cloud Load Balancer + IAP設定済み
-- ドメイン（sanbou-app.jp）がLBに向いている
+- ドメイン（example.com）がLBに向いている
 - Docker & Docker Composeがインストール済み
 
 #### **Step 1: ローカルPCでイメージをビルド・プッシュ**
@@ -225,7 +225,7 @@ IMAGE_TAG=prod-20251212
 
 ```bash
 # VM にログイン
-gcloud compute ssh vm-prod --project=honest-sanbou-app-prod
+gcloud compute ssh vm-prod --project=your-project-id
 
 # リポジトリをclone（初回のみ）
 git clone <リポジトリURL> ~/sanbou_app
@@ -276,7 +276,7 @@ curl http://localhost/
 curl http://localhost/api/v1/health
 
 # 外部から（LB + IAP経由）
-# https://sanbou-app.jp/
+# https://example.com/
 ```
 
 ---
@@ -311,16 +311,39 @@ make al-down ENV=local_dev
 make al-down-env ENV=vm_stg
 ```
 
-### DB Bootstrap（自動実行）
+### 新規環境での自動構築（推奨）
 
-`al-up` および `al-up-env` を実行すると、自動的に以下が実行されます：
+`al-up-env` を実行すると、新規環境では自動的に以下の順序で実行されます：
 
-1. **db-bootstrap-roles-env**: app_readonly ロールと権限の設定（冪等）
-2. **alembic upgrade head**: スキーママイグレーション
+1. **db-ensure-baseline-env**: スキーマ・テーブル構造の適用（初回のみ、冪等）
+   - marker table (`public.schema_baseline_meta`) で適用済み判定
+   - `app/backend/core_api/migrations_v2/sql/schema_baseline.sql` を使用
+   - vm_prod では `FORCE=1` 必須（誤操作防止）
+2. **db-bootstrap-roles-env**: app_readonly ロールと権限の設定（冪等）
+3. **alembic upgrade head**: 差分マイグレーション
+
+**使用例**:
+
+```bash
+# 新規環境（自動で器まで作成）
+make al-up-env ENV=vm_stg
+
+# 本番環境（初回のみFORCE=1必須）
+make al-up-env ENV=vm_prod FORCE=1
+
+# 既存環境（baselineスキップ、差分だけ適用）
+make al-up-env ENV=local_dev
+```
+
+**注意事項**:
+
+- baseline適用後は `stg`, `mart`, `ref`, `kpi`, `tmp` 等のスキーマ・テーブルが作成されます
+- 中途半端な状態（stgだけ存在等）では明示的にボリューム削除が必要です
 
 手動実行する場合：
 
 ```bash
+make db-ensure-baseline-env ENV=vm_stg
 make db-bootstrap-roles-env ENV=local_dev
 make db-bootstrap-roles-env ENV=vm_stg
 make db-bootstrap-roles-env ENV=vm_prod
@@ -445,6 +468,7 @@ NO_CACHE=1 PULL=1 make publish-prod-images PROD_IMAGE_TAG=prod-20251212
 **原因**: DB bootstrapが未実行
 
 **解決策**:
+
 ```bash
 make db-bootstrap-roles-env ENV=vm_stg
 make al-up-env ENV=vm_stg
@@ -455,6 +479,7 @@ make al-up-env ENV=vm_stg
 **原因**: vm_stg と vm_prod が同時起動している
 
 **解決策**:
+
 ```bash
 # どちらか片方をdown
 make down ENV=vm_stg
@@ -466,6 +491,7 @@ make up ENV=vm_prod
 **原因**: gcloud認証が未設定
 
 **解決策**:
+
 ```bash
 # ローカルPC
 make gcloud-auth-docker
@@ -480,6 +506,7 @@ gcloud auth configure-docker asia-northeast1-docker.pkg.dev
 **原因**: スキーマ不整合、権限不足
 
 **解決策**:
+
 ```bash
 # 現在の状態確認
 make al-cur-env ENV=vm_stg
@@ -499,6 +526,7 @@ make al-stamp-env ENV=vm_stg REV=<REVISION_ID>
 **原因**: バックエンドサービスが起動していない
 
 **解決策**:
+
 ```bash
 # コンテナ状態確認
 make ps ENV=vm_prod
@@ -520,7 +548,7 @@ make config ENV=vm_stg
 docker compose -p vm_stg exec core_api bash
 
 # DBに直接接続
-docker compose -p vm_stg exec db psql -U myuser -d sanbou_stg
+docker compose -p vm_stg exec db psql -U dbuser -d sanbou_stg
 
 # ネットワーク確認
 docker compose -p vm_stg exec nginx curl http://core_api:8000/health
@@ -548,12 +576,15 @@ make scan-prod-images PROD_IMAGE_TAG=prod-20251212
 ### ⚠️ 重要な制約
 
 1. **vm_stg と vm_prod は同時起動不可**
+
    - ポート80が競合するため、必ず片方をdownしてから起動
 
 2. **イメージはローカルでビルド**
+
    - VM上ではビルドせず、Artifact Registryからpull
 
 3. **マイグレーションは慎重に**
+
    - 本番環境では必ずバックアップを取ってから実施
 
 4. **secrets ファイルは手動配置**
@@ -599,7 +630,7 @@ make scan-prod-images PROD_IMAGE_TAG=prod-20251212
 
 ## 更新履歴
 
-| 日付 | 変更内容 |
-|------|----------|
-| 2025-12-12 | 初版作成、VM移行ガイド追加 |
+| 日付       | 変更内容                    |
+| ---------- | --------------------------- |
+| 2025-12-12 | 初版作成、VM移行ガイド追加  |
 | 2025-12-12 | DB Bootstrap セクション追加 |

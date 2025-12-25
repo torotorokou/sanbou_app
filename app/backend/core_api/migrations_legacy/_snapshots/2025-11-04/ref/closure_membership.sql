@@ -66,4 +66,3 @@ ALTER TABLE ONLY ref.closure_membership
 --
 
 \unrestrict ffIAyBeBlt4xvO5YtVqFvybY7g0knK8pIjXMJSStWIFLIF6UiAXnljtO4bVu0t2
-

@@ -25,15 +25,17 @@ export const ItemCard: React.FC<ItemCardProps> = memo(({ item, onOpen, className
     bodyStyle={{ flex: 1, display: 'flex', flexDirection: 'column' }}
     cover={
       item.thumbnailUrl || item.flowUrl ? (
-        <div style={{ 
-          width: '100%', 
-          height: '160px', 
-          overflow: 'hidden', 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'center',
-          backgroundColor: '#f0f0f0'
-        }}>
+        <div
+          style={{
+            width: '100%',
+            height: '160px',
+            overflow: 'hidden',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: '#f0f0f0',
+          }}
+        >
           <img
             alt={item.title}
             src={item.thumbnailUrl || item.flowUrl}
@@ -52,8 +54,8 @@ export const ItemCard: React.FC<ItemCardProps> = memo(({ item, onOpen, className
     }
   >
     <Space direction="vertical" size={8} style={{ width: '100%', flex: 1 }}>
-      <Paragraph 
-        type="secondary" 
+      <Paragraph
+        type="secondary"
         ellipsis={{ rows: 5 }}
         style={{ marginBottom: 8, minHeight: '7.5em' }}
       >

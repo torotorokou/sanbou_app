@@ -26,9 +26,14 @@ const { Title, Text } = Typography;
 /* ========== Types ========== */
 type GroupKey = 'shogun_flash' | 'shogun_final' | 'manifest';
 type KindKey =
-  | 'flash_ship' | 'flash_receive' | 'flash_yard'
-  | 'final_ship' | 'final_receive' | 'final_yard'
-  | 'mani_primary' | 'mani_secondary';
+  | 'flash_ship'
+  | 'flash_receive'
+  | 'flash_yard'
+  | 'final_ship'
+  | 'final_receive'
+  | 'final_yard'
+  | 'mani_primary'
+  | 'mani_secondary';
 type Status = 'ok' | 'warn' | 'error';
 
 type RecordRow = {
@@ -92,7 +97,9 @@ const loadRows = (): RecordRow[] => {
 const saveRows = (rows: RecordRow[]) => {
   try {
     localStorage.setItem(LS_KEY, JSON.stringify(rows));
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
 };
 
 /* ========== Sample Data Generator ========== */
@@ -164,7 +171,11 @@ const generateSampleMonth = (month: Dayjs): RecordRow[] => {
 type DayCellProps = {
   date: Dayjs;
   month: Dayjs;
-  counts: { total: number; byGroup: Partial<Record<GroupKey, number>>; hasError: boolean };
+  counts: {
+    total: number;
+    byGroup: Partial<Record<GroupKey, number>>;
+    hasError: boolean;
+  };
   onClick: (d: Dayjs) => void;
   selected: boolean;
   business: boolean;
@@ -191,7 +202,13 @@ const DayCell: React.FC<DayCellProps> = ({ date, month, counts, onClick, selecte
         gap: 6,
       }}
     >
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+        }}
+      >
         <span style={{ fontWeight: 600, color }}>{date.date()}</span>
         {counts.total > 0 ? <Badge count={counts.total} size="small" /> : <span />}
       </div>
@@ -209,11 +226,20 @@ const DayCell: React.FC<DayCellProps> = ({ date, month, counts, onClick, selecte
             <div
               key={g}
               title={`${GROUP_LABEL[g]}: ${n}件`}
-              style={{ width: 10, height: 10, borderRadius: 10, background: colorMap[g] }}
+              style={{
+                width: 10,
+                height: 10,
+                borderRadius: 10,
+                background: colorMap[g],
+              }}
             />
           );
         })}
-        {counts.hasError && <Tag color="red" style={{ marginLeft: 'auto' }}>!</Tag>}
+        {counts.hasError && (
+          <Tag color="red" style={{ marginLeft: 'auto' }}>
+            !
+          </Tag>
+        )}
       </div>
     </div>
   );
@@ -253,7 +279,11 @@ const RecordManagerPage: React.FC = () => {
   const calendarCounts = useMemo(() => {
     const map: Record<
       string,
-      { total: number; byGroup: Partial<Record<GroupKey, number>>; hasError: boolean }
+      {
+        total: number;
+        byGroup: Partial<Record<GroupKey, number>>;
+        hasError: boolean;
+      }
     > = {};
     const ym = month.format('YYYY-MM');
     rows.forEach((r) => {
@@ -307,7 +337,10 @@ const RecordManagerPage: React.FC = () => {
       content: (
         <div>
           <p>対象日：{target}</p>
-          <p>対象グループ：{groupFilter === 'all' ? 'すべて' : GROUP_LABEL[groupFilter]}</p>
+          <p>
+            対象グループ：
+            {groupFilter === 'all' ? 'すべて' : GROUP_LABEL[groupFilter]}
+          </p>
           <p>削除件数：{count} 件</p>
           <Alert type="warning" showIcon message="この操作は取り消せません" />
         </div>
@@ -371,7 +404,9 @@ const RecordManagerPage: React.FC = () => {
       header.join(','),
       ...filteredRows.map((r) => header.map((h) => String(r[h] ?? '')).join(',')),
     ];
-    const blob = new Blob(['\uFEFF' + lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const blob = new Blob(['\uFEFF' + lines.join('\n')], {
+      type: 'text/csv;charset=utf-8;',
+    });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
     a.download = `records_${selectedDate.format('YYYYMMDD')}.csv`;
@@ -395,7 +430,12 @@ const RecordManagerPage: React.FC = () => {
       width: 130,
       render: (v: GroupKey) => <Tag color={GROUP_COLOR[v]}>{GROUP_LABEL[v]}</Tag>,
     },
-    { title: '区分', dataIndex: 'kind', width: 110, render: (v: KindKey) => KIND_LABEL[v] },
+    {
+      title: '区分',
+      dataIndex: 'kind',
+      width: 110,
+      render: (v: KindKey) => KIND_LABEL[v],
+    },
     { title: '伝票No', dataIndex: 'slip_no', width: 130, ellipsis: true },
     { title: '顧客', dataIndex: 'customer', width: 120, ellipsis: true },
     {
@@ -520,16 +560,16 @@ ${selectedRow.date},${selectedRow.slip_no || '-'},${selectedRow.customer || '-'}
                       selectedRow.status === 'error'
                         ? 'error'
                         : selectedRow.status === 'warn'
-                        ? 'warning'
-                        : 'success'
+                          ? 'warning'
+                          : 'success'
                     }
                     showIcon
                     message={
                       selectedRow.status === 'ok'
                         ? '整合性チェックOK'
                         : selectedRow.status === 'warn'
-                        ? '一部に警告があります'
-                        : 'エラーが検出されました'
+                          ? '一部に警告があります'
+                          : 'エラーが検出されました'
                     }
                     description="実運用では、速報↔最終の差分、予約表との突合、型/必須列の検証結果などを可視化します。"
                   />
@@ -566,7 +606,12 @@ ${selectedRow.date},${selectedRow.slip_no || '-'},${selectedRow.customer || '-'}
   };
 
   return (
-    <div style={{ height: 'calc(100dvh - (var(--page-padding, 0px) * 2))', minHeight: 680 }}>
+    <div
+      style={{
+        height: 'calc(100dvh - (var(--page-padding, 0px) * 2))',
+        minHeight: 680,
+      }}
+    >
       <div
         style={{
           display: 'flex',
@@ -607,7 +652,13 @@ ${selectedRow.date},${selectedRow.slip_no || '-'},${selectedRow.customer || '-'}
       <Row gutter={16} style={{ height: 'calc(100% - 60px)' }}>
         <Col span={8} style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
           <Card size="small" title="月間カレンダー（クリックで絞込み）" style={{ flex: 1 }}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 8 }}>
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(7, 1fr)',
+                gap: 8,
+              }}
+            >
               {['日', '月', '火', '水', '木', '金', '土'].map((d) => (
                 <div
                   key={d}
@@ -623,7 +674,11 @@ ${selectedRow.date},${selectedRow.slip_no || '-'},${selectedRow.customer || '-'}
               ))}
               {daysGrid.map((d) => {
                 const k = d.format('YYYY-MM-DD');
-                const counts = calendarCounts[k] || { total: 0, byGroup: {}, hasError: false };
+                const counts = calendarCounts[k] || {
+                  total: 0,
+                  byGroup: {},
+                  hasError: false,
+                };
                 return (
                   <DayCell
                     key={k}
@@ -693,7 +748,15 @@ ${selectedRow.date},${selectedRow.slip_no || '-'},${selectedRow.customer || '-'}
           </Card>
         </Col>
 
-        <Col span={7} style={{ height: '100%', display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <Col
+          span={7}
+          style={{
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 16,
+          }}
+        >
           <RightPanel />
           <Card size="small" title="ヒント">
             <ul style={{ margin: 0, paddingLeft: 18 }}>

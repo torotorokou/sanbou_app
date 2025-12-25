@@ -92,4 +92,3 @@ ALTER TABLE ONLY raw.receive_shogun_flash
 --
 
 \unrestrict pjdufDjCBmwGKjDekiMxgmwhwVr0ioWaOFl7oTvH2rHvpSjYcGFz9IMpLvobn1r
-

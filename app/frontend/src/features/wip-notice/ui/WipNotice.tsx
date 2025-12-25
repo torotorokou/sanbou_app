@@ -1,13 +1,13 @@
 /**
  * WipNotice Component
  * 開発中（Work In Progress）機能を示す汎用警告バナー
- * 
+ *
  * 任意のページや機能で利用可能な共通コンポーネント
  */
 
-import React from "react";
-import { Alert } from "antd";
-import { ExclamationCircleOutlined } from "@ant-design/icons";
+import React from 'react';
+import { Alert } from 'antd';
+import { ExclamationCircleOutlined } from '@ant-design/icons';
 
 export type WipNoticeProps = {
   /**
@@ -27,7 +27,7 @@ export type WipNoticeProps = {
    * Alert type (オプション)
    * デフォルト: "warning"
    */
-  type?: "info" | "success" | "warning" | "error";
+  type?: 'info' | 'success' | 'warning' | 'error';
   /**
    * 閉じるボタンを表示するかどうか（オプション）
    * デフォルト: false
@@ -38,21 +38,21 @@ export type WipNoticeProps = {
 /**
  * 開発中機能を示す汎用警告バナー
  * feature層から呼び出して、オンオフを制御可能
- * 
+ *
  * @example
  * ```tsx
- * <WipNotice 
+ * <WipNotice
  *   show={true}
  *   message="開発中の機能です"
  *   description="この機能は現在開発中です。"
  * />
  * ```
  */
-export const WipNotice: React.FC<WipNoticeProps> = ({ 
-  show = false, 
-  message = "開発中の機能です",
-  description = "この機能は現在開発中であり、表示されているデータはダミーデータです。",
-  type = "warning",
+export const WipNotice: React.FC<WipNoticeProps> = ({
+  show = false,
+  message = '開発中の機能です',
+  description = 'この機能は現在開発中であり、表示されているデータはダミーデータです。',
+  type = 'warning',
   closable = false,
 }) => {
   if (!show) {
@@ -67,7 +67,7 @@ export const WipNotice: React.FC<WipNoticeProps> = ({
       icon={<ExclamationCircleOutlined />}
       showIcon
       closable={closable}
-      style={{ 
+      style={{
         marginBottom: 16,
         borderRadius: 6,
       }}

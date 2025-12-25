@@ -17,6 +17,7 @@ env/.env.vm_prod        # 🔴 VM 本番設定（最も危険）
 ### 流出した Commit
 
 #### 本番環境設定 (env/.env.vm_prod) の履歴
+
 ```
 618116b9 - refactor: POSTGRES_USERをenvファイルに移行
 54f03b3d - refactor: 環境変数と Docker Compose ファイルの同期・整理
@@ -25,6 +26,7 @@ ab307d2d - feat(security): DBユーザー分離・パスワード強化対応
 ```
 
 #### すべての env ファイルの最新 commit
+
 ```
 618116b9 (2025年頃) - refactor: POSTGRES_USERをenvファイルに移行
   ├─ env/.env.common
@@ -89,6 +91,7 @@ secrets/.env.secrets.template ✅ テンプレートのみ
 ### 4. ローカルファイル保持
 
 実ファイルは削除されず、ローカルで引き続き使用可能:
+
 ```
 env/.env.common          # 使用可能
 env/.env.local_dev       # 使用可能
@@ -152,6 +155,7 @@ git push origin --force --tags
 ```
 
 **注意事項**:
+
 - チーム全員に履歴変更を通知し、再クローンを依頼
 - 既にクローンした外部の人がいる場合、履歴削除は無効
 - GitHub の Settings → Actions → General で "Allow GitHub Actions to create and approve pull requests" を無効化（誤った自動 commit 防止）
@@ -183,6 +187,7 @@ gcloud secrets versions access latest --secret=postgres-password
 #### 2. Pre-commit フック導入
 
 `.git/hooks/pre-commit`:
+
 ```bash
 #!/bin/bash
 if git diff --cached --name-only | grep -qE "^(env/\.env\.|secrets/)"; then
@@ -204,6 +209,7 @@ chmod +x .git/hooks/pre-commit
 ## ✅ 対応完了チェックリスト
 
 ### 即座に実施（必須）
+
 - [x] Git 管理から env/secrets の実ファイルを削除
 - [x] .gitignore で env/ と secrets/ を完全除外
 - [x] テンプレートのみ Git 管理対象に
@@ -213,6 +219,7 @@ chmod +x .git/hooks/pre-commit
 - [ ] リポジトリの可視性確認（public → private）
 
 ### 中期的に実施（推奨）
+
 - [ ] Git 履歴からの完全削除（BFG）
 - [ ] チーム全員への通知と再クローン依頼
 - [ ] Google Secret Manager への移行
@@ -220,6 +227,7 @@ chmod +x .git/hooks/pre-commit
 - [ ] GitHub Advanced Security 有効化
 
 ### 長期的に実施（改善）
+
 - [ ] 定期的な認証情報ローテーション（90日ごと）
 - [ ] アクセスログ監視
 - [ ] 異常検知アラート設定

@@ -11,34 +11,37 @@ ReportProcessingService のインタラクティブ版。
 
 from __future__ import annotations
 
-from typing import Any, Dict, Optional, Tuple, Union
+from typing import Any
 
 from fastapi import BackgroundTasks, UploadFile
 from fastapi.responses import JSONResponse
 
-from backend_shared.infra.adapters.fastapi.error_handlers import DomainError
-from app.core.usecases.reports.base_generators import (
-    BaseInteractiveReportGenerator,
+from app.core.usecases.reports.base_generators import BaseInteractiveReportGenerator
+from app.core.usecases.reports.processors.report_processing_service import (
+    ReportProcessingService,
 )
-from app.core.usecases.reports.processors.report_processing_service import ReportProcessingService
 from app.infra.adapters.session import session_store
+from backend_shared.application.logging import create_log_context, get_module_logger
+from backend_shared.infra.adapters.fastapi.error_handlers import DomainError
 
 # (NoFilesUploadedResponse, read_csv_files は base クラス経由で利用しないため削除)
 from backend_shared.utils.date_filter_utils import (
-    filter_by_period_from_min_date as shared_filter_by_period_from_min_date,
     filter_by_period_from_max_date as shared_filter_by_period_from_max_date,
 )
-from backend_shared.application.logging import get_module_logger, create_log_context
+from backend_shared.utils.date_filter_utils import (
+    filter_by_period_from_min_date as shared_filter_by_period_from_min_date,
+)
+
 
 logger = get_module_logger(__name__)
 
 
-def _convert_error_to_dict(error: Any) -> Dict[str, Any]:
+def _convert_error_to_dict(error: Any) -> dict[str, Any]:
     """エラーオブジェクトを辞書形式に変換（共通化）
-    
+
     Args:
         error: エラーオブジェクト
-        
+
     Returns:
         エラー辞書
     """
@@ -48,17 +51,18 @@ def _convert_error_to_dict(error: Any) -> Dict[str, Any]:
             from backend_shared.infra.adapters.presentation.response_base import (
                 _model_to_dict,
             )
+
             return _model_to_dict(error.payload)
         except Exception:
             pass
-    
+
     # to_dict メソッドがある場合
     if hasattr(error, "to_dict"):
         try:
             return error.to_dict()
         except Exception:
             pass
-    
+
     # フォールバック: 文字列化
     return {"status": "error", "message": str(error)}
 
@@ -69,8 +73,8 @@ class InteractiveReportProcessingService(ReportProcessingService):
     # 既存 _read_uploaded_files を再利用しても良いが、型が同一なのでそのまま呼ぶ
 
     def initial(
-        self, generator: BaseInteractiveReportGenerator, files: Dict[str, UploadFile]
-    ) -> Dict[str, Any]:
+        self, generator: BaseInteractiveReportGenerator, files: dict[str, UploadFile]
+    ) -> dict[str, Any]:
         """初期処理（共通化されたエラーハンドリング）"""
         try:
             dfs, error = self._read_uploaded_files(files)
@@ -78,9 +82,8 @@ class InteractiveReportProcessingService(ReportProcessingService):
                 logger.warning(
                     "CSV読み込みエラー",
                     extra=create_log_context(
-                        operation="interactive_initial",
-                        error_type=type(error).__name__
-                    )
+                        operation="interactive_initial", error_type=type(error).__name__
+                    ),
                 )
                 return _convert_error_to_dict(error)
 
@@ -92,8 +95,8 @@ class InteractiveReportProcessingService(ReportProcessingService):
                     "CSV検証エラー",
                     extra=create_log_context(
                         operation="interactive_initial",
-                        error_type=type(validation_error).__name__
-                    )
+                        error_type=type(validation_error).__name__,
+                    ),
                 )
                 return _convert_error_to_dict(validation_error)
 
@@ -112,32 +115,27 @@ class InteractiveReportProcessingService(ReportProcessingService):
                         extra=create_log_context(
                             operation="interactive_initial",
                             period_type=period_type,
-                            strategy=date_filter_strategy
-                        )
+                            strategy=date_filter_strategy,
+                        ),
                     )
                 except Exception as e:
                     logger.warning(
                         "期間フィルタスキップ",
-                        extra=create_log_context(
-                            operation="interactive_initial",
-                            error=str(e)
-                        )
+                        extra=create_log_context(operation="interactive_initial", error=str(e)),
                     )
 
             df_formatted = generator.format(dfs)
 
             state, payload = generator.initial_step(df_formatted)
-            
+
             # セッションID処理
-            preferred_session_id: Optional[str] = None
+            preferred_session_id: str | None = None
             state_session_id = state.get("session_id") if isinstance(state, dict) else None
             if isinstance(state_session_id, str) and state_session_id:
                 preferred_session_id = state_session_id
             else:
                 payload_session_id = (
-                    payload.get("session_id")
-                    if isinstance(payload, dict)
-                    else None
+                    payload.get("session_id") if isinstance(payload, dict) else None
                 )
                 if isinstance(payload_session_id, str) and payload_session_id:
                     preferred_session_id = payload_session_id
@@ -158,7 +156,7 @@ class InteractiveReportProcessingService(ReportProcessingService):
             if isinstance(payload, dict) and payload.get("status") == "error":
                 return payload
 
-            response_payload: Dict[str, Any] = {
+            response_payload: dict[str, Any] = {
                 "session_id": session_id,
                 "rows": payload.get("rows", []) if isinstance(payload, dict) else [],
             }
@@ -168,34 +166,34 @@ class InteractiveReportProcessingService(ReportProcessingService):
                 extra=create_log_context(
                     operation="interactive_initial",
                     session_id=session_id,
-                    rows_count=len(response_payload["rows"])
-                )
+                    rows_count=len(response_payload["rows"]),
+                ),
             )
 
             return response_payload
-            
+
         except Exception as e:
             logger.exception(
                 "初期処理中に予期しないエラー",
                 extra=create_log_context(
                     operation="interactive_initial",
                     error_type=type(e).__name__,
-                    error=str(e)
-                )
+                    error=str(e),
+                ),
             )
             return {
                 "status": "error",
                 "code": "INITIAL_FAILED",
-                "message": f"初期処理中にエラーが発生しました: {str(e)}"
+                "message": f"初期処理中にエラーが発生しました: {str(e)}",
             }
 
     # -------- Apply (中間) --------
     def apply(
         self,
         generator: BaseInteractiveReportGenerator,
-        session_data: Union[Dict[str, Any], str],
-        user_input: Dict[str, Any],
-    ) -> Dict[str, Any] | JSONResponse:
+        session_data: dict[str, Any] | str,
+        user_input: dict[str, Any],
+    ) -> dict[str, Any] | JSONResponse:
         try:
             state_payload, session_id = self._resolve_session(session_data)
             if state_payload is None:
@@ -203,7 +201,7 @@ class InteractiveReportProcessingService(ReportProcessingService):
                     code="SESSION_NOT_FOUND",
                     status=400,
                     user_message="セッションデータが見つかりませんでした",
-                    title="セッションエラー"
+                    title="セッションエラー",
                 )
 
             state = generator.deserialize_state(state_payload)
@@ -218,7 +216,8 @@ class InteractiveReportProcessingService(ReportProcessingService):
                     final_df, finalize_payload = generator.finalize_step(state)
                     try:
                         report_date = finalize_payload.get(
-                            "report_date", generator.make_report_date({"result": final_df})
+                            "report_date",
+                            generator.make_report_date({"result": final_df}),
                         )
                     except Exception:  # noqa: BLE001
                         from datetime import datetime
@@ -229,7 +228,7 @@ class InteractiveReportProcessingService(ReportProcessingService):
                         generator,
                         final_df,
                         report_date,
-                        extra_payload=extra_payload if isinstance(extra_payload, dict) else None,
+                        extra_payload=(extra_payload if isinstance(extra_payload, dict) else None),
                     )
                     summary = finalize_payload.get("summary")
                     if isinstance(summary, dict):
@@ -248,10 +247,10 @@ class InteractiveReportProcessingService(ReportProcessingService):
                         code="AUTO_FINALIZE_FAILED",
                         status=500,
                         user_message=f"自動最終計算中にエラーが発生しました: {str(e)}",
-                        title="自動計算エラー"
+                        title="自動計算エラー",
                     ) from e
 
-            result: Dict[str, Any] = {
+            result: dict[str, Any] = {
                 "session_id": session_id or user_input.get("session_id"),
                 "selection_summary": payload.get("selection_summary"),
                 "message": payload.get("message", "applied"),
@@ -268,16 +267,16 @@ class InteractiveReportProcessingService(ReportProcessingService):
                 code="INTERACTIVE_APPLY_FAILED",
                 status=500,
                 user_message=f"運搬業者選択の適用中にエラーが発生しました: {str(e)}",
-                title="処理エラー"
+                title="処理エラー",
             ) from e
 
     # -------- Finalize --------
     def finalize(
         self,
         generator: BaseInteractiveReportGenerator,
-        session_data: Union[Dict[str, Any], str],
-        user_input: Optional[Dict[str, Any]] = None,
-        background_tasks: Optional[BackgroundTasks] = None,
+        session_data: dict[str, Any] | str,
+        user_input: dict[str, Any] | None = None,
+        background_tasks: BackgroundTasks | None = None,
     ) -> JSONResponse:
         state_payload, session_id = self._resolve_session(session_data)
         if state_payload is None:
@@ -285,7 +284,7 @@ class InteractiveReportProcessingService(ReportProcessingService):
                 code="SESSION_NOT_FOUND",
                 status=400,
                 user_message="セッションデータが見つかりませんでした",
-                title="セッションエラー"
+                title="セッションエラー",
             )
 
         state = generator.deserialize_state(state_payload)
@@ -300,7 +299,7 @@ class InteractiveReportProcessingService(ReportProcessingService):
                     code="INTERACTIVE_FINALIZE_ERROR",
                     status=500,
                     user_message=f"ユーザー入力を適用した最終計算中にエラーが発生しました: {str(e)}",
-                    title="最終計算エラー"
+                    title="最終計算エラー",
                 ) from e
         else:
             try:
@@ -312,9 +311,9 @@ class InteractiveReportProcessingService(ReportProcessingService):
                     code="INTERACTIVE_FINALIZE_ERROR",
                     status=500,
                     user_message=f"最終計算中にエラーが発生しました: {str(e)}",
-                    title="最終計算エラー"
+                    title="最終計算エラー",
                 ) from e
-        
+
         try:
             report_date = payload.get(
                 "report_date", generator.make_report_date({"result": final_df})
@@ -371,8 +370,8 @@ class InteractiveReportProcessingService(ReportProcessingService):
         return value
 
     def _resolve_session(
-        self, session_payload: Union[Dict[str, Any], str]
-    ) -> Tuple[Optional[Dict[str, Any]], Optional[str]]:
+        self, session_payload: dict[str, Any] | str
+    ) -> tuple[dict[str, Any] | None, str | None]:
         """Resolve the stored session data from various payload formats.
 
         Supports three patterns for backward compatibility:

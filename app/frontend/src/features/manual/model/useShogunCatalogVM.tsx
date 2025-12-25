@@ -36,12 +36,12 @@ export function useShogunCatalog() {
   useEffect(() => {
     const ctrl = new AbortController();
     setLoading(true);
-    
+
     ShogunClient.catalog(ctrl.signal)
       .then((data) => {
         // Debug: Log raw catalog response to verify item.id presence
         console.log('[useShogunCatalog] Raw catalog response:', data);
-        
+
         const mapped = data.sections.map((sec) => ({
           id: sec.id,
           title: sec.title,
@@ -56,21 +56,26 @@ export function useShogunCatalog() {
             videoUrl: item.video_url,
           })),
         }));
-        
+
         // Debug: Log mapped items to verify id mapping
-        console.log('[useShogunCatalog] Mapped sections with item ids:', 
-          mapped.map(s => ({ 
-            section: s.title, 
-            items: s.items.map(i => ({ id: i.id, title: i.title })) 
+        console.log(
+          '[useShogunCatalog] Mapped sections with item ids:',
+          mapped.map((s) => ({
+            section: s.title,
+            items: s.items.map((i) => ({ id: i.id, title: i.title })),
           }))
         );
-        
+
         setSections(mapped);
         setLoading(false);
       })
       .catch((err) => {
         // AbortError またはキャンセルエラーは無視
-        if (err.name === 'AbortError' || err.name === 'CanceledError' || err.code === 'ERR_CANCELED') {
+        if (
+          err.name === 'AbortError' ||
+          err.name === 'CanceledError' ||
+          err.code === 'ERR_CANCELED'
+        ) {
           return;
         }
         console.error('[useShogunCatalog] Error:', err);

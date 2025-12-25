@@ -1,8 +1,8 @@
 // features/navi/repository/NaviRepository.ts
 // Repositoryインターフェース定義
 
-import type { CategoryDataMap, ChatAnswer } from '../domain/types/types';
-import type { ChatQuestionRequestDto } from '../domain/types/dto';
+import type { CategoryDataMap, ChatAnswer } from "../domain/types/types";
+import type { ChatQuestionRequestDto } from "../domain/types/dto";
 
 /**
  * Navi機能のリポジトリインターフェース

@@ -6,24 +6,26 @@ pandas.Timestamp、numpy型、datetime型など、JSON直列化で失敗する�
 
 使用例:
     from backend_shared.infra.json_utils import deep_jsonable
-    
+
     payload = row.to_dict()
     payload = deep_jsonable(payload)  # 最終バリア
     orm_object = Model(**payload)
 """
-import pandas as pd
-import numpy as np
-from datetime import datetime, date, time
+
+from datetime import date, datetime, time
 from typing import Any
+
+import numpy as np
+import pandas as pd
 
 
 def _to_jsonable(v: Any) -> Any:
     """
     単一の値をJSON互換な型に変換
-    
+
     Args:
         v: 変換対象の値
-        
+
     Returns:
         JSON互換の値
     """
@@ -46,16 +48,16 @@ def _to_jsonable(v: Any) -> Any:
 def deep_jsonable(obj: Any) -> Any:
     """
     オブジェクトを再帰的にJSON互換に変換
-    
+
     dict, list, tuple を再帰的に走査し、すべての値を
     JSON直列化可能な型に変換します。
-    
+
     Args:
         obj: 変換対象のオブジェクト
-        
+
     Returns:
         JSON互換に変換されたオブジェクト
-        
+
     使用例:
         >>> data = {"timestamp": pd.Timestamp("2025-01-01"), "value": np.int64(42)}
         >>> deep_jsonable(data)

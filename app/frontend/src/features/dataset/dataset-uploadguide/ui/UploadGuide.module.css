@@ -1,0 +1,53 @@
+/**
+ * UploadGuide - コンパクトなガイド表示のためのスタイル
+ * Ant Design の Collapse / List のデフォルトスペースを削減
+ */
+
+/* Collapse全体の縦幅削減 */
+.compactCollapse :global(.ant-collapse-item) {
+  margin-bottom: 0;
+}
+
+.compactCollapse :global(.ant-collapse-header) {
+  padding: 6px 12px !important;
+  font-size: 13px !important;
+  line-height: 1.3 !important;
+}
+
+.compactCollapse :global(.ant-collapse-content-box) {
+  padding: 8px 12px !important;
+}
+
+/* List アイテムの縦幅削減 */
+.compactCollapse :global(.ant-list-item) {
+  padding: 4px 0 !important;
+  line-height: 1.3 !important;
+}
+
+.compactCollapse :global(.ant-tag) {
+  margin: 0 4px 0 0;
+  padding: 0 6px;
+  font-size: 12px;
+  line-height: 20px;
+}
+
+.compactCollapse :global(.ant-typography) {
+  font-size: 13px;
+  line-height: 1.3;
+}
+
+/* ol 要素のコンパクト化 */
+.compactList {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.compactList li {
+  margin-bottom: 3px;
+}
+
+.compactList li:last-child {
+  margin-bottom: 0;
+}

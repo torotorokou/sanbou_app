@@ -3,23 +3,13 @@
  * FSD: ページ層はレイアウト・検索・状態管理を統合
  */
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import {
-  Anchor,
-  Badge,
-  Empty,
-  Flex,
-  Input,
-  Layout,
-  Space,
-  Tooltip,
-  Typography,
-} from 'antd';
+import { Anchor, Badge, Empty, Flex, Input, Layout, Space, Tooltip, Typography } from 'antd';
 import { FileDoneOutlined } from '@ant-design/icons';
 import { useResponsive } from '@/shared'; // responsive: flags
 import { useShogunCatalog } from '@features/manual';
 import { SectionBlock } from '@features/manual/ui/components/SectionBlock';
 import { ManualModal } from '@features/manual/ui/components/ShogunModal';
-import { UnimplementedModal } from '@features/shared';
+import { UnimplementedModal } from '@features/unimplemented-feature';
 import type { ManualItem } from '@features/manual';
 import styles from './ShogunList.module.css';
 
@@ -32,7 +22,7 @@ const ShogunManualListPage: React.FC = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [showUnimplementedModal, setShowUnimplementedModal] = useState(false);
   const contentScrollRef = useRef<HTMLDivElement | null>(null);
-  
+
   const { sections, loading } = useShogunCatalog();
   // responsive: useResponsive(flags)
   const { flags } = useResponsive();
@@ -42,18 +32,17 @@ const ShogunManualListPage: React.FC = () => {
     setShowUnimplementedModal(true);
   }, []);
 
-  // responsive: pickByDevice helper
-  const pickByDevice = <T,>(mobile: T, tablet: T, laptop: T, desktop: T): T => {
-    if (flags.isMobile) return mobile;
-    if (flags.isTablet) return tablet;
-    if (flags.isLaptop) return laptop;
-    return desktop;
+  // responsive: pickByDevice helper (3-tier unified)
+  const pickByDevice = <T,>(mobile: T, tablet: T, desktop: T): T => {
+    if (flags.isMobile) return mobile; // ≤767px
+    if (flags.isTablet) return tablet; // 768-1280px
+    return desktop; // ≥1281px
   };
 
-  // responsive: showSider logic (Tablet以上)
-  const showSider = flags.isTablet || flags.isLaptop || flags.isDesktop;
-  // responsive: showHeaderSearch logic (Tablet以上)
-  const showHeaderSearch = flags.isTablet || flags.isLaptop || flags.isDesktop;
+  // responsive: showSider logic (Tablet以上 = ≥768px)
+  const showSider = !flags.isMobile;
+  // responsive: showHeaderSearch logic (Tablet以上 = ≥768px)
+  const showHeaderSearch = !flags.isMobile;
 
   // フィルタリング
   const filtered = useMemo(() => {
@@ -98,14 +87,20 @@ const ShogunManualListPage: React.FC = () => {
           </div>
 
           {showHeaderSearch && (
-            <div style={{ marginLeft: 'auto', display: 'flex', justifyContent: 'flex-end' }}>
+            <div
+              style={{
+                marginLeft: 'auto',
+                display: 'flex',
+                justifyContent: 'flex-end',
+              }}
+            >
               <Tooltip title="全体検索（タイトル/説明/タグ）">
                 <Input
                   allowClear
                   placeholder="キーワードで検索…（例：E票、見積、台帳）"
                   className={styles.headerSearchInput}
                   // responsive: width
-                  style={{ width: pickByDevice(240, 360, 360, 360) }}
+                  style={{ width: pickByDevice(240, 360, 360) }}
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                 />
@@ -129,7 +124,11 @@ const ShogunManualListPage: React.FC = () => {
                   <Space>
                     {s.icon}
                     <span>{s.title}</span>
-                    <Badge size="small" count={s.items.length} style={{ backgroundColor: 'var(--ant-color-primary)' }} />
+                    <Badge
+                      size="small"
+                      count={s.items.length}
+                      style={{ backgroundColor: 'var(--ant-color-primary)' }}
+                    />
                   </Space>
                 ),
               }))}
@@ -140,7 +139,13 @@ const ShogunManualListPage: React.FC = () => {
         {/* メインコンテンツ */}
         <Content className={styles.content}>
           {!showHeaderSearch && (
-            <div style={{ padding: '12px 0', display: 'flex', justifyContent: 'flex-end' }}>
+            <div
+              style={{
+                padding: '12px 0',
+                display: 'flex',
+                justifyContent: 'flex-end',
+              }}
+            >
               <Tooltip title="全体検索（タイトル/説明/タグ）">
                 <Input
                   allowClear

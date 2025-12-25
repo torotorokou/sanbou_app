@@ -1,6 +1,6 @@
 /**
  * SSE（Server-Sent Events）通知クライアント
- * 
+ *
  * 目的:
  * - サーバーからの通知イベントをリアルタイム受信
  * - 自動再接続
@@ -23,39 +23,23 @@ let isManuallyDisconnected = false;
 function handleNotificationEvent(event: MessageEvent) {
   try {
     const notification: NotificationEvent = JSON.parse(event.data);
-    
+
     console.log('[SSE] Received notification:', notification);
-    
+
     // severity に応じて通知を表示
     switch (notification.severity) {
       case 'success':
-        notifySuccess(
-          notification.title,
-          notification.message,
-          notification.duration ?? undefined
-        );
+        notifySuccess(notification.title, notification.message, notification.duration ?? undefined);
         break;
       case 'error':
-        notifyError(
-          notification.title,
-          notification.message,
-          notification.duration ?? undefined
-        );
+        notifyError(notification.title, notification.message, notification.duration ?? undefined);
         break;
       case 'warning':
-        notifyWarning(
-          notification.title,
-          notification.message,
-          notification.duration ?? undefined
-        );
+        notifyWarning(notification.title, notification.message, notification.duration ?? undefined);
         break;
       case 'info':
       default:
-        notifyInfo(
-          notification.title,
-          notification.message,
-          notification.duration ?? undefined
-        );
+        notifyInfo(notification.title, notification.message, notification.duration ?? undefined);
         break;
     }
   } catch (error) {
@@ -92,7 +76,7 @@ function connect() {
   eventSource.onerror = (error) => {
     console.error('[SSE] Connection error:', error);
     eventSource?.close();
-    
+
     // 自動再接続（5秒後）
     if (!isManuallyDisconnected) {
       console.log('[SSE] Reconnecting in 5 seconds...');
@@ -109,12 +93,12 @@ function connect() {
 function disconnect() {
   console.log('[SSE] Disconnecting');
   isManuallyDisconnected = true;
-  
+
   if (reconnectTimer) {
     clearTimeout(reconnectTimer);
     reconnectTimer = null;
   }
-  
+
   if (eventSource) {
     eventSource.close();
     eventSource = null;
@@ -141,7 +125,7 @@ export function stopSSE() {
  */
 export function getSSEState(): 'connecting' | 'open' | 'closed' {
   if (!eventSource) return 'closed';
-  
+
   switch (eventSource.readyState) {
     case EventSource.CONNECTING:
       return 'connecting';
