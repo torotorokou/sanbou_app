@@ -223,6 +223,10 @@ nginx/cache/
 # *.json
 # *.csv (まず除外、後で明示許可)
 
+# 設定ファイルは例外
+!.hadolint.yaml
+!.pre-commit-config.yaml
+
 # 大きなディレクトリを先に除外
 data/
 **/data/

@@ -100,23 +100,23 @@ repos:
         name: Python ASTをチェック
         types: [python]
 
-# ============================================================
-# Secrets検出（追加レイヤー）
-# ============================================================
+  # ============================================================
+  # Secrets検出（追加レイヤー）
+  # ============================================================
   - repo: https://github.com/Yelp/detect-secrets
     rev: v1.5.0
     hooks:
       - id: detect-secrets
         name: 機密情報を検出 (detect-secrets)
         args:
-          - '--baseline'
-          - '.secrets.baseline'
-          - '--exclude-files'
+          - "--baseline"
+          - ".secrets.baseline"
+          - "--exclude-files"
           - '^secrets/.*\.template$'
-          - '--exclude-files'
+          - "--exclude-files"
           - '^.*_example\..*$'
-          - '--exclude-files'
-          - '^docs/archive/.*$'
+          - "--exclude-files"
+          - "^docs/archive/.*$"
         exclude: |
           (?x)^(
               package-lock\.json|
@@ -124,9 +124,9 @@ repos:
               \.secrets\.baseline
           )$
 
-# ============================================================
-# Python フォーマット・リント
-# ============================================================
+  # ============================================================
+  # Python フォーマット・リント
+  # ============================================================
   - repo: https://github.com/psf/black
     rev: 25.12.0
     hooks:
@@ -151,9 +151,9 @@ repos:
         args: [--fix, --exit-zero]
         files: ^app/backend/.*\.py$
 
-# ============================================================
-# Frontend (JavaScript/TypeScript)
-# ============================================================
+  # ============================================================
+  # Frontend (JavaScript/TypeScript)
+  # ============================================================
   - repo: https://github.com/pre-commit/mirrors-prettier
     rev: v4.0.0-alpha.8
     hooks:
@@ -182,27 +182,27 @@ repos:
         additional_dependencies:
           - eslint@^9.17.0
           - typescript@^5.7.2
-          - '@typescript-eslint/parser@^8.18.1'
-          - '@typescript-eslint/eslint-plugin@^8.18.1'
+          - "@typescript-eslint/parser@^8.18.1"
+          - "@typescript-eslint/eslint-plugin@^8.18.1"
           - eslint-plugin-react@^7.37.2
           - eslint-plugin-react-hooks@^5.1.0
           - globals@^15.0.0
-          - '@eslint/js@^9.0.0'
+          - "@eslint/js@^9.0.0"
           - eslint-plugin-boundaries@^5.0.0
 
-# ============================================================
-# Docker・Dockerfileチェック
-# ============================================================
+  # ============================================================
+  # Docker・Dockerfileチェック
+  # ============================================================
   - repo: https://github.com/hadolint/hadolint
     rev: v2.14.0
     hooks:
       - id: hadolint
         name: Dockerfile リント (hadolint)
-        args: [--ignore, DL3008, --ignore, DL3009, --ignore, DL3013]
+        args: [--config, .hadolint.yaml]
 
-# ============================================================
-# Markdown リント
-# ============================================================
+  # ============================================================
+  # Markdown リント
+  # ============================================================
   - repo: https://github.com/igorshubovych/markdownlint-cli
     rev: v0.47.0
     hooks:
@@ -210,9 +210,9 @@ repos:
         name: Markdown リント
         args: [--fix, --disable, MD013, MD033, MD041]
 
-# ============================================================
-# シェルスクリプトチェック
-# ============================================================
+  # ============================================================
+  # シェルスクリプトチェック
+  # ============================================================
   - repo: https://github.com/shellcheck-py/shellcheck-py
     rev: v0.11.0.1
     hooks:
@@ -220,9 +220,9 @@ repos:
         name: シェルスクリプトチェック (shellcheck)
         args: [--severity=warning]
 
-# ============================================================
-# カスタムチェック（repo: local）
-# ============================================================
+  # ============================================================
+  # カスタムチェック（repo: local）
+  # ============================================================
   - repo: local
     hooks:
       # パスワードパターンチェック（既存）
