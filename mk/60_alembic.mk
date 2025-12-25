@@ -15,7 +15,7 @@
 ## Local Dev Alembic Commands (local_dev 前提)
 ## ============================================================
 ALEMBIC_DC  := docker compose -f docker/docker-compose.dev.yml -p local_dev
-ALEMBIC     := $(ALEMBIC_DC) exec core_api alembic -c /backend/migrations/alembic.ini
+ALEMBIC     := $(ALEMBIC_DC) exec core_api alembic -c /backend/migrations_v2/alembic.ini
 MSG         ?=
 REV_ID      ?=
 
@@ -47,7 +47,7 @@ al-stamp: ## Stamp database with revision (local_dev)
 ## ENV-aware Alembic Commands
 ## ※ migrations_v2 を使用（legacy migrations/ は削除済み）
 ## ============================================================
-ALEMBIC_INI ?= /backend/migrations/alembic.ini
+ALEMBIC_INI ?= /backend/migrations_v2/alembic.ini
 ALEMBIC_ENV := $(DC_FULL) exec core_api alembic -c $(ALEMBIC_INI)
 
 al-up-env: check ## Apply migrations to ENV (baseline + roles + alembic upgrade)
