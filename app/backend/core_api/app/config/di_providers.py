@@ -35,7 +35,14 @@ from app.infra.clients.ai_client import AIClient
 from app.infra.adapters.notification.in_memory_outbox_adapter import InMemoryNotificationOutboxAdapter
 from app.infra.adapters.notification.db_outbox_adapter import DbNotificationOutboxAdapter
 from app.infra.adapters.notification.noop_sender_adapter import NoopNotificationSenderAdapter
-from app.core.ports.notification_port import NotificationOutboxPort, NotificationSenderPort
+from app.infra.adapters.notification.in_memory_preference_adapter import InMemoryNotificationPreferenceAdapter
+from app.infra.adapters.notification.dummy_resolver_adapter import DummyRecipientResolverAdapter
+from app.core.ports.notification_port import (
+    NotificationOutboxPort,
+    NotificationSenderPort,
+    NotificationPreferencePort,
+    RecipientResolverPort,
+)
 from app.core.usecases.notification.enqueue_notifications_uc import EnqueueNotificationsUseCase
 from app.core.usecases.notification.dispatch_pending_notifications_uc import DispatchPendingNotificationsUseCase
 
@@ -580,6 +587,13 @@ _notification_sender_adapter: NoopNotificationSenderAdapter | None = None
 # USE_DB_NOTIFICATION_OUTBOX=true → DB-backed (本番)
 # USE_DB_NOTIFICATION_OUTBOX=false or 未設定 → InMemory (開発/テスト)
 
+# Singleton instances for InMemory adapters
+_notification_outbox_adapter: InMemoryNotificationOutboxAdapter | None = None
+_notification_sender_adapter: NoopNotificationSenderAdapter | None = None
+_notification_preference_adapter: InMemoryNotificationPreferenceAdapter | None = None
+_recipient_resolver_adapter: DummyRecipientResolverAdapter | None = None
+
+
 def get_notification_outbox_port(db: Session = Depends(get_db)) -> NotificationOutboxPort:
     """通知 Outbox Port 提供（環境変数で切り替え）"""
     use_db = os.getenv("USE_DB_NOTIFICATION_OUTBOX", "false").lower() == "true"
@@ -601,6 +615,29 @@ def get_notification_sender_port() -> NotificationSenderPort:
     if _notification_sender_adapter is None:
         _notification_sender_adapter = NoopNotificationSenderAdapter()
     return _notification_sender_adapter
+
+
+def get_notification_preference_port() -> NotificationPreferencePort:
+    """通知許可 Preference Port 提供（InMemory実装）"""
+    global _notification_preference_adapter
+    if _notification_preference_adapter is None:
+        _notification_preference_adapter = InMemoryNotificationPreferenceAdapter()
+    return _notification_preference_adapter
+
+
+def get_recipient_resolver_port() -> RecipientResolverPort:
+    """recipient resolver Port 提供（Dummy実装）"""
+    preference: NotificationPreferencePort = Depends(get_notification_preference_port),
+    resolver: RecipientResolverPort = Depends(get_recipient_resolver_port),
+) -> DispatchPendingNotificationsUseCase:
+    """通知送信 UseCase 提供"""
+    return DispatchPendingNotificationsUseCase(
+        outbox=outbox,
+        sender=sender,
+        preference=preference,
+        resolver=resolver,
+    
+    return _recipient_resolver_adapter
 
 
 def get_enqueue_notifications_usecase(
