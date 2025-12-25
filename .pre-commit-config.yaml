@@ -108,6 +108,12 @@ repos:
     hooks:
       - id: detect-secrets
         name: 機密情報を検出 (detect-secrets)
+        files: |
+          (?x)^(
+            env/.*|
+            secrets/.*|
+            scripts/(?!test/).*
+          )$
         args:
           - "--baseline"
           - ".secrets.baseline"

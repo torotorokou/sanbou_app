@@ -2,11 +2,6 @@ import os
 import sys
 from pathlib import Path
 
-from app.api.routers import manuals, query  # ← query.py に router を定義
-from app.config.paths import CONFIG_ENV
-from app.config.settings import settings
-from app.shared.env_loader import load_env_and_secrets
-
 # ==========================================
 # 統一ロギング設定のインポート（backend_shared）
 # ==========================================
@@ -21,6 +16,11 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
+
+from app.api.routers import manuals, query  # ← query.py に router を定義
+from app.config.paths import CONFIG_ENV
+from app.config.settings import settings
+from app.shared.env_loader import load_env_and_secrets
 
 # --- .env + secrets 読み込み --------------------------------------------------
 load_dotenv(dotenv_path=CONFIG_ENV)

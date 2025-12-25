@@ -8,6 +8,9 @@ Upload Calendar Query Adapter
 from datetime import date as date_type
 from typing import Any
 
+from sqlalchemy import text
+from sqlalchemy.orm import Session
+
 from app.infra.db.sql_loader import load_sql
 from backend_shared.application.logging import get_module_logger
 from backend_shared.db.names import (
@@ -21,8 +24,6 @@ from backend_shared.db.names import (
     V_ACTIVE_SHOGUN_FLASH_SHIPMENT,
     V_ACTIVE_SHOGUN_FLASH_YARD,
 )
-from sqlalchemy import text
-from sqlalchemy.orm import Session
 
 logger = get_module_logger(__name__)
 

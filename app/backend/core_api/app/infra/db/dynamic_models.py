@@ -9,8 +9,6 @@ shogun_csv_masters.yaml からSQLAlchemy ORMモデルを動的に生成します
 from collections.abc import Callable
 from typing import Any
 
-from app.infra.db.table_definition import get_table_definition_generator
-from backend_shared.application.logging import get_module_logger
 from sqlalchemy import (
     TIMESTAMP,
     Column,
@@ -24,6 +22,9 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import declarative_base, registry
 from sqlalchemy.sql.type_api import TypeEngine
+
+from app.infra.db.table_definition import get_table_definition_generator
+from backend_shared.application.logging import get_module_logger
 
 logger = get_module_logger(__name__)
 

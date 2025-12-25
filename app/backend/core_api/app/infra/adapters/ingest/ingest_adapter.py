@@ -4,8 +4,9 @@ Ingest Adapter: Implements IngestPort for data ingestion operations.
 
 from datetime import date as date_type
 
-from app.infra.adapters.misc.core_repository import CoreRepository
 from sqlalchemy.orm import Session
+
+from app.infra.adapters.misc.core_repository import CoreRepository
 
 
 class IngestAdapter:

@@ -17,7 +17,7 @@ import type { PortalCardProps } from "../model/types";
 import { PALETTE } from "../domain/constants";
 
 export const portalMenus: PortalCardProps[] = [
-    {
+  {
     title: "お知らせ",
     description: "最新のお知らせ・更新情報を確認。",
     detail:
@@ -88,5 +88,5 @@ export const portalMenus: PortalCardProps[] = [
     icon: <SettingOutlined />,
     link: ROUTER_PATHS.SETTINGS,
     color: PALETTE.CYAN,
-  }
+  },
 ];

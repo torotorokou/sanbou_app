@@ -26,6 +26,8 @@ Forecast Router - 予測機能エンドポイント
 
 from datetime import date as date_type
 
+from fastapi import APIRouter, Depends, Query
+
 from app.api.schemas import ForecastJobCreate, ForecastJobResponse, PredictionDTO
 from app.config.di_providers import (
     get_create_forecast_job_uc,
@@ -38,7 +40,6 @@ from app.core.usecases.forecast.forecast_job_uc import (
     GetPredictionsUseCase,
 )
 from backend_shared.core.domain.exceptions import NotFoundError
-from fastapi import APIRouter, Depends, Query
 
 router = APIRouter(prefix="/forecast", tags=["forecast"])
 

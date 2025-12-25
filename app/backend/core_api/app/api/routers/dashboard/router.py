@@ -18,13 +18,14 @@ Dashboard Router - ダッシュボード用エンドポイント
 from datetime import date as date_type
 from typing import Literal
 
+from fastapi import APIRouter, Depends, Query
+
 from app.api.schemas import TargetMetricsResponse
 from app.config.di_providers import get_build_target_card_uc
 from app.core.usecases.dashboard.build_target_card_uc import BuildTargetCardUseCase
 from app.core.usecases.dashboard.dto import BuildTargetCardInput
 from backend_shared.application.logging import create_log_context, get_module_logger
 from backend_shared.core.domain.exceptions import NotFoundError
-from fastapi import APIRouter, Depends, Query
 
 logger = get_module_logger(__name__)
 router = APIRouter(prefix="/dashboard", tags=["dashboard"])

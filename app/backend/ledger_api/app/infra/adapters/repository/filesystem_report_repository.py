@@ -9,10 +9,11 @@ import time
 from datetime import date
 from io import BytesIO
 
+from backend_shared.application.logging import get_module_logger
+
 from app.core.ports.inbound import ReportRepository
 from app.core.ports.inbound.report_repository import ArtifactUrls
 from app.infra.adapters.artifact_storage import get_report_artifact_storage
-from backend_shared.application.logging import get_module_logger
 
 logger = get_module_logger(__name__)
 

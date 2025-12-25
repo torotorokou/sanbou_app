@@ -7,9 +7,10 @@ Customer Churn Analysis - Integration Test
 from datetime import date
 
 import pytest
+from sqlalchemy.orm import Session
+
 from app.core.usecases.customer_churn import AnalyzeCustomerChurnUseCase
 from app.infra.adapters.customer_churn import CustomerChurnQueryAdapter
-from sqlalchemy.orm import Session
 
 
 @pytest.mark.integration

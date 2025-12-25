@@ -22,12 +22,13 @@ app.add_middleware(
 ```
 """
 
-from app.deps import get_auth_provider
-from backend_shared.application.logging import get_module_logger
-from backend_shared.config.env_utils import is_iap_enabled
 from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import JSONResponse
+
+from app.deps import get_auth_provider
+from backend_shared.application.logging import get_module_logger
+from backend_shared.config.env_utils import is_iap_enabled
 
 logger = get_module_logger(__name__)
 

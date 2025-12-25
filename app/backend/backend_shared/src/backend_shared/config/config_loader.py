@@ -6,6 +6,7 @@ YAML形式の設定ファイルを読み込み、CSV処理や帳票生成に必�
 """
 
 import yaml
+
 from backend_shared.config.paths import MANAGER_CSV_DEF_PATH, SHOGUNCSV_DEF_PATH
 
 

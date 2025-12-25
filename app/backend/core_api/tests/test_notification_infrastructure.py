@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 from unittest.mock import Mock
 
 import pytest
+
 from app.core.domain.notification import (
     FailureType,
     NotificationOutboxItem,

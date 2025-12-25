@@ -7,6 +7,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from fastapi import APIRouter, HTTPException, Query
+from fastapi.responses import FileResponse
+
 from app.infra.adapters.artifact_storage import (
     ReportArtifactStorage,
     get_report_artifact_storage,
@@ -15,8 +18,6 @@ from app.infra.adapters.artifact_storage.artifact_service import (
     UrlSigner,
     get_url_signer,
 )
-from fastapi import APIRouter, HTTPException, Query
-from fastapi.responses import FileResponse
 
 router = APIRouter()
 

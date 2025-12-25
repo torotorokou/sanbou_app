@@ -6,9 +6,10 @@ KPIQueryPortの実装。PostgreSQL/SQLAlchemyを使用してKPI集計データ�
 
 from datetime import date as date_type
 
-from app.infra.db.orm_models import ForecastJob, PredictionDaily
 from sqlalchemy import func
 from sqlalchemy.orm import Session
+
+from app.infra.db.orm_models import ForecastJob, PredictionDaily
 
 
 class KPIQueryAdapter:

@@ -6,10 +6,11 @@ Unit tests for Materialized View Refresh functionality
 
 from unittest.mock import MagicMock, Mock, patch
 
+from sqlalchemy.orm import Session
+
 from app.infra.adapters.materialized_view.materialized_view_refresher import (
     MaterializedViewRefresher,
 )
-from sqlalchemy.orm import Session
 
 
 class TestMaterializedViewRefresher:

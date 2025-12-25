@@ -1,8 +1,6 @@
 # ==========================================
 # 統一ロギング設定のインポート（backend_shared）
 # ==========================================
-from app.api.routers import chat
-from app.config.settings import settings
 from backend_shared.application.logging import get_module_logger, setup_logging
 from backend_shared.infra.adapters.middleware import RequestIdMiddleware
 from backend_shared.infra.frameworks.cors_config import setup_cors
@@ -11,6 +9,9 @@ from backend_shared.infra.frameworks.exception_handlers import (
 )
 from backend_shared.infra.frameworks.logging_utils import setup_uvicorn_access_filter
 from fastapi import FastAPI
+
+from app.api.routers import chat
+from app.config.settings import settings
 
 # ==========================================
 # 統一ロギング設定の初期化

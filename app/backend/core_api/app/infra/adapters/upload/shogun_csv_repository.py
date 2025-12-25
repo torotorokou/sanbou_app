@@ -8,6 +8,9 @@ YAMLファイル(shogun_csv_masters.yaml)から動的にカラムマッピング
 
 import pandas as pd
 import sqlalchemy as sa
+from sqlalchemy import text
+from sqlalchemy.orm import Session
+
 from app.config.settings import get_settings
 from app.infra.db.dynamic_models import (
     create_shogun_model_class,
@@ -17,8 +20,6 @@ from app.infra.db.table_definition import get_table_definition_generator
 from backend_shared.application.logging import create_log_context, get_module_logger
 from backend_shared.infra.dataframe import filter_defined_columns, to_sql_ready_df
 from backend_shared.infra.json_utils import deep_jsonable
-from sqlalchemy import text
-from sqlalchemy.orm import Session
 
 logger = get_module_logger(__name__)
 

@@ -6,6 +6,8 @@
 それぞれの変更が独立して行えるようになります。
 """
 
+from fastapi import UploadFile
+
 from backend_shared.core.usecases.csv_formatter.dataframe import serialize_dates_info
 from backend_shared.core.usecases.csv_validator.validation_result import (
     ValidationError,
@@ -18,7 +20,6 @@ from backend_shared.infra.adapters.presentation.response_error import (
     MissingColumnsResponse,
     MissingDateFieldResponse,
 )
-from fastapi import UploadFile
 
 
 class ValidationResponseConverter:
