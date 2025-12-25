@@ -93,6 +93,7 @@ repos:
       # 秘密鍵検出
       - id: detect-private-key
         name: 秘密鍵を検出
+        exclude: 'scripts/git/lib/security_patterns\.sh'
         exclude: ^(secrets/.*\.template|.*_example\..*|.*\.md)$
 
       # Python AST チェック
