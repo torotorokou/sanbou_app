@@ -20,7 +20,8 @@ CSV種別とMV更新の対応:
   - 各MV更新後にセッションをflushして変更を確定
 """
 
-from typing import List, Optional
+from sqlalchemy import text
+from sqlalchemy.orm import Session
 
 from backend_shared.application.logging import create_log_context, get_module_logger
 from backend_shared.db.names import (
@@ -28,8 +29,6 @@ from backend_shared.db.names import (
     MV_TARGET_CARD_PER_DAY,
     SCHEMA_MART,
 )
-from sqlalchemy import text
-from sqlalchemy.orm import Session
 
 logger = get_module_logger(__name__)
 
@@ -80,7 +79,7 @@ class MaterializedViewRefresher:
             return
 
         logger.info(
-            f"[MV_REFRESH] === START MV REFRESH BATCH ===",
+            "[MV_REFRESH] === START MV REFRESH BATCH ===",
             extra=create_log_context(
                 operation="refresh_batch_start",
                 csv_type=csv_type,
@@ -90,7 +89,7 @@ class MaterializedViewRefresher:
             ),
         )
         logger.info(f"[MV_REFRESH] csv_type='{csv_type}', auto_commit={auto_commit}")
-        logger.info(f"[MV_REFRESH] MV update order (dependency-aware):")
+        logger.info("[MV_REFRESH] MV update order (dependency-aware):")
         for i, mv_name in enumerate(mv_list, 1):
             logger.info(f"[MV_REFRESH]   {i}. {mv_name}")
 
@@ -140,7 +139,7 @@ class MaterializedViewRefresher:
 
         if success_count == len(mv_list):
             logger.info(
-                f"[MV_REFRESH] === END MV REFRESH BATCH (SUCCESS) ===",
+                "[MV_REFRESH] === END MV REFRESH BATCH (SUCCESS) ===",
                 extra=create_log_context(
                     operation="refresh_batch_success",
                     csv_type=csv_type,
@@ -153,7 +152,7 @@ class MaterializedViewRefresher:
             )
         else:
             logger.warning(
-                f"[MV_REFRESH] === END MV REFRESH BATCH (PARTIAL) ===",
+                "[MV_REFRESH] === END MV REFRESH BATCH (PARTIAL) ===",
                 extra=create_log_context(
                     operation="refresh_batch_partial",
                     csv_type=csv_type,
@@ -288,7 +287,7 @@ class MaterializedViewRefresher:
                 exc_info=True,
             )
 
-    def _extract_csv_type(self, csv_kind: str) -> Optional[str]:
+    def _extract_csv_type(self, csv_kind: str) -> str | None:
         """
         csv_kindからcsv_typeを抽出
 
@@ -313,7 +312,7 @@ class MaterializedViewRefresher:
         self.refresh_for_csv_type("receive")
 
     @staticmethod
-    def extract_csv_type_from_csv_kind(csv_kind: str) -> Optional[str]:
+    def extract_csv_type_from_csv_kind(csv_kind: str) -> str | None:
         """静的メソッド版のcsv_type抽出（後方互換性用）"""
         parts = csv_kind.split("_")
         if len(parts) >= 3:

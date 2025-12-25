@@ -5,8 +5,6 @@
 モックデータで処理を代用するためのサービス実装です。
 """
 
-from typing import List
-
 from app.core.ports.rag.pdf_service_port import PDFServiceBase
 
 
@@ -22,16 +20,16 @@ class MockPDFService(PDFServiceBase):
         self,
         pdf_path: str,
         query_name: str,
-        pages: List[int],
+        pages: list[int],
         save_dir: str,
         url_prefix: str,
-    ) -> List[str]:
+    ) -> list[str]:
         """
         モック実装: 固定のダミーURLリストを返す
         """
         return [f"{url_prefix}/mock_page_{p}.pdf" for p in pages]
 
-    def merge_pdfs(self, pdf_file_paths: List[str], output_path: str) -> str:
+    def merge_pdfs(self, pdf_file_paths: list[str], output_path: str) -> str:
         """
         モック実装: 実際のPDF結合は行わず、パスのみ返す
         """

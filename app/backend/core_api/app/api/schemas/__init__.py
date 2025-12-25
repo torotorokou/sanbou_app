@@ -22,8 +22,8 @@ class ForecastJobCreate(BaseModel):
     job_type: str = Field(default="daily", description="Type of forecast job")
     target_from: date_type = Field(description="Start date of forecast range")
     target_to: date_type = Field(description="End date of forecast range")
-    actor: Optional[str] = Field(default="system", description="User or system actor")
-    payload_json: Optional[dict] = Field(
+    actor: str | None = Field(default="system", description="User or system actor")
+    payload_json: dict | None = Field(
         default=None, description="Additional job parameters"
     )
 
@@ -37,10 +37,10 @@ class ForecastJobResponse(BaseModel):
     target_to: date_type
     status: str  # queued | running | done | failed
     attempts: int
-    scheduled_for: Optional[datetime]
-    actor: Optional[str]
-    payload_json: Optional[dict]
-    error_message: Optional[str]
+    scheduled_for: datetime | None
+    actor: str | None
+    payload_json: dict | None
+    error_message: str | None
     created_at: datetime
     updated_at: datetime
 
@@ -57,10 +57,10 @@ class PredictionDTO(BaseModel):
 
     date: date_type
     y_hat: float = Field(description="Predicted value")
-    y_lo: Optional[float] = Field(default=None, description="Lower bound")
-    y_hi: Optional[float] = Field(default=None, description="Upper bound")
-    model_version: Optional[str] = Field(default=None, description="Model version used")
-    generated_at: Optional[datetime] = Field(
+    y_lo: float | None = Field(default=None, description="Lower bound")
+    y_hi: float | None = Field(default=None, description="Upper bound")
+    model_version: str | None = Field(default=None, description="Model version used")
+    generated_at: datetime | None = Field(
         default=None, description="When prediction was generated"
     )
 
@@ -102,7 +102,7 @@ class KPIOverview(BaseModel):
     total_jobs: int = Field(default=0, description="Total number of forecast jobs")
     completed_jobs: int = Field(default=0, description="Completed jobs")
     failed_jobs: int = Field(default=0, description="Failed jobs")
-    latest_prediction_date: Optional[date_type] = Field(
+    latest_prediction_date: date_type | None = Field(
         default=None, description="Latest prediction date available"
     )
     last_updated: datetime = Field(
@@ -125,7 +125,7 @@ class RAGAskResponse(BaseModel):
     """Response from RAG API."""
 
     answer: str
-    sources: Optional[list[str]] = None
+    sources: list[str] | None = None
 
 
 class ManualListResponse(BaseModel):
@@ -159,10 +159,8 @@ class LostCustomerDTO(BaseModel):
 
     customer_id: str = Field(description="Customer ID")
     customer_name: str = Field(description="Customer name")
-    rep_id: Optional[str] = Field(default=None, description="Sales representative ID")
-    rep_name: Optional[str] = Field(
-        default=None, description="Sales representative name"
-    )
+    rep_id: str | None = Field(default=None, description="Sales representative ID")
+    rep_name: str | None = Field(default=None, description="Sales representative name")
     last_visit_date: date_type = Field(description="Last visit date in previous period")
     prev_visit_days: int = Field(description="Number of visit days in previous period")
     prev_total_amount_yen: float = Field(
@@ -209,50 +207,50 @@ class SalesRepListResponse(BaseModel):
 class TargetMetricsResponse(BaseModel):
     """Response for dashboard target metrics with actuals."""
 
-    ddate: Optional[date_type] = Field(default=None, description="Data date")
-    month_target_ton: Optional[float] = Field(
+    ddate: date_type | None = Field(default=None, description="Data date")
+    month_target_ton: float | None = Field(
         default=None, description="Monthly target in tons"
     )
-    week_target_ton: Optional[float] = Field(
+    week_target_ton: float | None = Field(
         default=None, description="Weekly target in tons"
     )
-    day_target_ton: Optional[float] = Field(
+    day_target_ton: float | None = Field(
         default=None, description="Daily target in tons"
     )
-    month_actual_ton: Optional[float] = Field(
+    month_actual_ton: float | None = Field(
         default=None, description="Monthly actual in tons"
     )
-    week_actual_ton: Optional[float] = Field(
+    week_actual_ton: float | None = Field(
         default=None, description="Weekly actual in tons"
     )
-    day_actual_ton_prev: Optional[float] = Field(
+    day_actual_ton_prev: float | None = Field(
         default=None, description="Previous day actual in tons"
     )
-    iso_year: Optional[int] = Field(default=None, description="ISO year")
-    iso_week: Optional[int] = Field(default=None, description="ISO week number")
-    iso_dow: Optional[int] = Field(
+    iso_year: int | None = Field(default=None, description="ISO year")
+    iso_week: int | None = Field(default=None, description="ISO week number")
+    iso_dow: int | None = Field(
         default=None, description="ISO day of week (1=Monday, 7=Sunday)"
     )
-    day_type: Optional[str] = Field(
+    day_type: str | None = Field(
         default=None, description="Day type (weekday/sat/sun_hol)"
     )
-    is_business: Optional[bool] = Field(default=None, description="Is business day")
+    is_business: bool | None = Field(default=None, description="Is business day")
     # New fields for achievement mode calculation (cumulative to yesterday vs. total at period end)
-    month_target_to_date_ton: Optional[float] = Field(
+    month_target_to_date_ton: float | None = Field(
         default=None, description="Monthly cumulative target (month_start to yesterday)"
     )
-    month_target_total_ton: Optional[float] = Field(
+    month_target_total_ton: float | None = Field(
         default=None, description="Monthly total target (entire month)"
     )
-    week_target_to_date_ton: Optional[float] = Field(
+    week_target_to_date_ton: float | None = Field(
         default=None, description="Weekly cumulative target (week_start to yesterday)"
     )
-    week_target_total_ton: Optional[float] = Field(
+    week_target_total_ton: float | None = Field(
         default=None, description="Weekly total target (entire week)"
     )
-    month_actual_to_date_ton: Optional[float] = Field(
+    month_actual_to_date_ton: float | None = Field(
         default=None, description="Monthly cumulative actual (month_start to yesterday)"
     )
-    week_actual_to_date_ton: Optional[float] = Field(
+    week_actual_to_date_ton: float | None = Field(
         default=None, description="Weekly cumulative actual (week_start to yesterday)"
     )

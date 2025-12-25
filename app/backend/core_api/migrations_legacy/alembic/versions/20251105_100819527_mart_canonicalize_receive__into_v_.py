@@ -8,7 +8,6 @@ Create Date: 2025-11-05 01:08:20.295566
 
 from pathlib import Path
 
-import sqlalchemy as sa
 from alembic import op
 
 # revision identifiers, used by Alembic.

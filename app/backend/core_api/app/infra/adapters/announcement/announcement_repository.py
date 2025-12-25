@@ -1,10 +1,12 @@
-# -*- coding: utf-8 -*-
 """
 Announcement repository implementation with PostgreSQL.
 お知らせデータ（お知らせ本体・ユーザー状態）の取得・更新
 """
-from datetime import datetime, timezone
-from typing import List, Optional
+
+from datetime import UTC, datetime
+
+from sqlalchemy import and_, func, select
+from sqlalchemy.orm import Session
 
 from app.core.domain.announcement import (
     Announcement,
@@ -16,8 +18,6 @@ from app.core.domain.announcement import (
 from app.core.ports.announcement_repository_port import AnnouncementRepositoryPort
 from app.infra.db.orm_models import AnnouncementORM, AnnouncementUserStateORM
 from backend_shared.application.logging import get_module_logger
-from sqlalchemy import and_, func, select
-from sqlalchemy.orm import Session
 
 logger = get_module_logger(__name__)
 
@@ -71,12 +71,12 @@ class AnnouncementRepositoryImpl(AnnouncementRepositoryPort):
     def list_active(
         self,
         user_id: str,
-        audience: Optional[str] = None,
-        now: Optional[datetime] = None,
-    ) -> List[AnnouncementWithState]:
+        audience: str | None = None,
+        now: datetime | None = None,
+    ) -> list[AnnouncementWithState]:
         """アクティブなお知らせ一覧を取得（公開中かつ未削除）"""
         if now is None:
-            now = datetime.now(timezone.utc)
+            now = datetime.now(UTC)
 
         try:
             # Base query: active (not deleted) and published
@@ -148,7 +148,7 @@ class AnnouncementRepositoryImpl(AnnouncementRepositoryPort):
         self,
         announcement_id: int,
         user_id: str,
-    ) -> Optional[AnnouncementWithState]:
+    ) -> AnnouncementWithState | None:
         """指定IDのお知らせを取得"""
         try:
             # Subquery for user state
@@ -207,7 +207,7 @@ class AnnouncementRepositoryImpl(AnnouncementRepositoryPort):
     ) -> AnnouncementUserState:
         """お知らせを既読にする"""
         try:
-            now = datetime.now(timezone.utc)
+            now = datetime.now(UTC)
 
             # Check if state exists
             existing = self.db.execute(
@@ -250,7 +250,7 @@ class AnnouncementRepositoryImpl(AnnouncementRepositoryPort):
     ) -> AnnouncementUserState:
         """お知らせを確認済みにする（critical用）"""
         try:
-            now = datetime.now(timezone.utc)
+            now = datetime.now(UTC)
 
             # Check if state exists
             existing = self.db.execute(
@@ -294,12 +294,12 @@ class AnnouncementRepositoryImpl(AnnouncementRepositoryPort):
     def get_unread_count(
         self,
         user_id: str,
-        audience: Optional[str] = None,
-        now: Optional[datetime] = None,
+        audience: str | None = None,
+        now: datetime | None = None,
     ) -> int:
         """未読お知らせ数を取得"""
         if now is None:
-            now = datetime.now(timezone.utc)
+            now = datetime.now(UTC)
 
         try:
             # Subquery for user state

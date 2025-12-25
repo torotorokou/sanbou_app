@@ -8,19 +8,19 @@ Generate Factory Report UseCase.
 
 from datetime import date
 from io import BytesIO
-from typing import Any, Dict, Optional
+from typing import Any
+
+from fastapi import BackgroundTasks, UploadFile
+from fastapi.responses import JSONResponse
 
 from app.application.usecases.reports.report_generation_utils import (
     generate_excel_from_dataframe,
 )
 from app.core.domain.reports.factory_report import FactoryReport
-from app.core.ports.inbound import CsvGateway, ReportRepository
 from app.core.usecases.reports.base_report_usecase import BaseReportUseCase
 from app.core.usecases.reports.factory_report_processor import (
     process as factory_report_process,
 )
-from fastapi import BackgroundTasks, UploadFile
-from fastapi.responses import JSONResponse
 
 
 class GenerateFactoryReportUseCase(BaseReportUseCase):
@@ -36,9 +36,9 @@ class GenerateFactoryReportUseCase(BaseReportUseCase):
 
     def execute(  # type: ignore[override]
         self,
-        files: Dict[str, UploadFile],
-        period_type: Optional[str] = None,
-        background_tasks: Optional[BackgroundTasks] = None,
+        files: dict[str, UploadFile],
+        period_type: str | None = None,
+        background_tasks: BackgroundTasks | None = None,
         async_pdf: bool = True,
     ) -> JSONResponse:
         """
@@ -63,14 +63,14 @@ class GenerateFactoryReportUseCase(BaseReportUseCase):
             async_pdf=async_pdf,
         )
 
-    def create_domain_model(self, df_formatted: Dict[str, Any]) -> FactoryReport:
+    def create_domain_model(self, df_formatted: dict[str, Any]) -> FactoryReport:
         """ドメインモデル生成（Step 4）"""
         return FactoryReport.from_dataframes(
             df_shipment=df_formatted.get("shipment"),
             df_yard=df_formatted.get("yard"),
         )
 
-    def execute_domain_logic(self, df_formatted: Dict[str, Any]) -> Any:
+    def execute_domain_logic(self, df_formatted: dict[str, Any]) -> Any:
         """ドメインロジック実行（Step 5）"""
         return factory_report_process(df_formatted)
 

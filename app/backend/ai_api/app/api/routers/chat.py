@@ -1,5 +1,3 @@
-from typing import List
-
 from app.api.schemas.chat import ChatRequest
 from app.infra.adapters.gemini_client import GeminiClient
 from backend_shared.application.logging import get_module_logger
@@ -63,7 +61,7 @@ def ping():
 
 # 最小動作確認用: backend_shared のインポートテスト
 @router.post("/validate")
-def validate(rows: List[dict]):
+def validate(rows: list[dict]):
     """
     backend_shared パッケージの動作確認用エンドポイント。
     簡易的なバリデーションを実行して ok を返します。
@@ -74,7 +72,7 @@ def validate(rows: List[dict]):
 
     # backend_shared からのインポートテスト
     try:
-        from backend_shared.domain import JobStatus
+        from backend_shared.domain import JobStatus  # noqa: F401
 
         # 正常にインポートできれば成功
         return {"ok": True, "errors": [], "imported": "backend_shared.domain.JobStatus"}

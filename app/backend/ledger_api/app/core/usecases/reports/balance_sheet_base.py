@@ -16,11 +16,12 @@ balance_sheet処理で使用するベースDataFrame構造を提供。
 """
 
 from dataclasses import dataclass
-from typing import Any, Dict, Optional
+from typing import Any
 
 import pandas as pd
-from app.infra.report_utils import get_unit_price_table_csv
 from backend_shared.application.logging import get_module_logger
+
+from app.infra.report_utils import get_unit_price_table_csv
 
 logger = get_module_logger(__name__)
 
@@ -41,14 +42,14 @@ class BalanceSheetBaseData:
         target_day: 対象日（伝票日付から決定）
     """
 
-    df_receive: Optional[pd.DataFrame]
-    df_shipment: Optional[pd.DataFrame]
-    df_yard: Optional[pd.DataFrame]
+    df_receive: pd.DataFrame | None
+    df_shipment: pd.DataFrame | None
+    df_yard: pd.DataFrame | None
     unit_price_table: pd.DataFrame
     target_day: pd.Timestamp
 
 
-def build_balance_sheet_base_data(df_dict: Dict[str, Any]) -> BalanceSheetBaseData:
+def build_balance_sheet_base_data(df_dict: dict[str, Any]) -> BalanceSheetBaseData:
     """
     balance_sheet処理用のベースDataFrameを構築する。
 

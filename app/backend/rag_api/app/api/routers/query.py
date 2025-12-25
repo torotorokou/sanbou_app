@@ -7,13 +7,8 @@ import io
 import os
 import tempfile
 import zipfile
-from typing import Any, List, Tuple
 
 import pypdf
-from app.api.dependencies import get_ai_response_service, get_dummy_response_service
-from app.api.schemas.query_schema import QueryRequest, QueryResponse
-from app.core.usecases.rag import file_ingest_service as loader
-from app.infra.adapters.pdf import pdf_loader
 from backend_shared.application.logging import get_module_logger
 from backend_shared.infra.adapters.presentation.response_base import (
     ErrorApiResponse,
@@ -22,7 +17,11 @@ from backend_shared.infra.adapters.presentation.response_base import (
 from backend_shared.infra.adapters.presentation.response_utils import api_response
 from fastapi import APIRouter, Body, Depends, HTTPException, Request
 from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
-from pydantic import BaseModel
+
+from app.api.dependencies import get_ai_response_service, get_dummy_response_service
+from app.api.schemas.query_schema import QueryRequest
+from app.core.usecases.rag import file_ingest_service as loader
+from app.infra.adapters.pdf import pdf_loader
 
 logger = get_module_logger(__name__)
 router = APIRouter()

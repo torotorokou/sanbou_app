@@ -17,13 +17,12 @@ Cloud Storage アクセス権限のデバッグログ出力を行います。
 
 import logging
 import os
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
 
 def debug_log_gcp_adc_and_permissions(
-    bucket_name: Optional[str] = None, object_prefix: Optional[str] = None
+    bucket_name: str | None = None, object_prefix: str | None = None
 ) -> bool:
     """
     GCP ADC認証と Cloud Storage 権限をデバッグログに出力
@@ -239,7 +238,7 @@ def debug_log_gcp_adc_and_permissions(
 
         except gcp_exceptions.Forbidden as e:
             logger.error(
-                f"🛑 オブジェクト一覧取得で権限不足 (403 Forbidden)",
+                "🛑 オブジェクト一覧取得で権限不足 (403 Forbidden)",
                 extra={
                     "operation": "gcp_debug",
                     "status": "permission_denied",

@@ -13,7 +13,6 @@ Outbox から pending 通知を取り出し、Sender で送信するユースケ
 """
 
 from datetime import datetime
-from typing import Optional
 
 from app.core.domain.notification import FailureType, RecipientRef
 from app.core.ports.notification_port import (
@@ -42,8 +41,8 @@ class DispatchPendingNotificationsUseCase:
         self,
         outbox: NotificationOutboxPort,
         sender: NotificationSenderPort,
-        preference: Optional[NotificationPreferencePort] = None,
-        resolver: Optional[RecipientResolverPort] = None,
+        preference: NotificationPreferencePort | None = None,
+        resolver: RecipientResolverPort | None = None,
     ):
         self._outbox = outbox
         self._sender = sender
@@ -82,7 +81,7 @@ class DispatchPendingNotificationsUseCase:
                                 now=now,
                             )
                             logger.info(
-                                f"Skipped: LINE disabled",
+                                "Skipped: LINE disabled",
                                 extra={
                                     "notification_id": str(item.id),
                                     "recipient_key": item.recipient_key,
@@ -96,7 +95,7 @@ class DispatchPendingNotificationsUseCase:
                                 now=now,
                             )
                             logger.info(
-                                f"Skipped: Email disabled",
+                                "Skipped: Email disabled",
                                 extra={
                                     "notification_id": str(item.id),
                                     "recipient_key": item.recipient_key,
@@ -116,7 +115,7 @@ class DispatchPendingNotificationsUseCase:
                             now=now,
                         )
                         logger.warning(
-                            f"Skipped: Recipient not resolved",
+                            "Skipped: Recipient not resolved",
                             extra={
                                 "notification_id": str(item.id),
                                 "recipient_key": item.recipient_key,
@@ -139,7 +138,7 @@ class DispatchPendingNotificationsUseCase:
                 # ValueError → PERMANENT失敗
                 error_msg = f"{type(e).__name__}: {str(e)}"
                 logger.warning(
-                    f"PERMANENT failure (ValueError)",
+                    "PERMANENT failure (ValueError)",
                     extra={
                         "notification_id": str(item.id),
                         "channel": item.channel,
@@ -157,7 +156,7 @@ class DispatchPendingNotificationsUseCase:
                 # その他の例外 → TEMPORARY失敗（リトライ）
                 error_msg = f"{type(e).__name__}: {str(e)}"
                 logger.warning(
-                    f"TEMPORARY failure (will retry)",
+                    "TEMPORARY failure (will retry)",
                     extra={
                         "notification_id": str(item.id),
                         "channel": item.channel,

@@ -22,15 +22,13 @@ app.add_middleware(
 ```
 """
 
-import os
-from typing import List
+from fastapi import Request
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.responses import JSONResponse
 
 from app.deps import get_auth_provider
 from backend_shared.application.logging import get_module_logger
 from backend_shared.config.env_utils import is_iap_enabled
-from fastapi import Request, Response
-from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.responses import JSONResponse
 
 logger = get_module_logger(__name__)
 
@@ -46,7 +44,7 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
         iap_enabled: IAP が有効かどうか
     """
 
-    def __init__(self, app, excluded_paths: List[str] = None):
+    def __init__(self, app, excluded_paths: list[str] = None):
         """
         認証ミドルウェアを初期化
 

@@ -5,10 +5,11 @@ Jobs - ジョブステータス・通知ストリームエンドポイント
 import os
 
 import httpx
-from backend_shared.application.logging import create_log_context, get_module_logger
-from backend_shared.core.domain.exceptions import ExternalServiceError
 from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
+
+from backend_shared.application.logging import create_log_context, get_module_logger
+from backend_shared.core.domain.exceptions import ExternalServiceError
 
 logger = get_module_logger(__name__)
 
@@ -34,7 +35,7 @@ async def proxy_notifications_stream():
                         yield chunk
         except httpx.HTTPError as e:
             logger.error(f"Failed to stream from ledger_api: {str(e)}")
-            yield f'data: {{"error": "LEDGER_UNREACHABLE"}}\n\n'.encode()
+            yield b'data: {"error": "LEDGER_UNREACHABLE"}\n\n'
 
     return StreamingResponse(stream_generator(), media_type="text/event-stream")
 

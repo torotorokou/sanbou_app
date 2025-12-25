@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 API エンドポイントの動作確認スクリプト
 
@@ -233,7 +232,7 @@ def test_no_st_app_imports():
             continue
 
         try:
-            with open(py_file, "r", encoding="utf-8") as f:
+            with open(py_file, encoding="utf-8") as f:
                 content = f.read()
 
             if "st_app" in content or "from app.st_app" in content:

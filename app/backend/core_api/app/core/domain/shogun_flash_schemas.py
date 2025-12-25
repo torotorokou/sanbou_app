@@ -10,8 +10,9 @@ config_loader から YAML を読み込んで動的にモデルを生成します
 from datetime import datetime
 from typing import Any, Optional
 
-from backend_shared.config.config_loader import ShogunCsvConfigLoader
 from pydantic import BaseModel, ConfigDict, Field, create_model, field_validator
+
+from backend_shared.config.config_loader import ShogunCsvConfigLoader
 
 # 型マッピング: YAML の type 文字列 → Python 型
 TYPE_MAP = {
@@ -23,7 +24,7 @@ TYPE_MAP = {
 }
 
 
-def parse_datetime_field(v: Any) -> Optional[datetime]:
+def parse_datetime_field(v: Any) -> datetime | None:
     """日付文字列をdatetimeに変換するバリデータ関数"""
     if v is None or v == "":
         return None

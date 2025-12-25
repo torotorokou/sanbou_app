@@ -19,7 +19,7 @@ Core API - BFF/Facade for frontend
   - Presentation層: HTTPエンドポイント、リクエスト/レスポンス変換
 """
 
-import logging
+from fastapi import FastAPI
 
 from app.api.routers.analysis.router import router as analysis_router
 from app.api.routers.announcements import router as announcements_router
@@ -46,7 +46,6 @@ from app.config.settings import settings
 # 統一ロギング設定のインポート（backend_shared）
 # ==========================================
 from backend_shared.application.logging import setup_logging
-from fastapi import FastAPI
 
 # ==========================================
 # 統一ロギング設定の初期化

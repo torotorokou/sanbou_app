@@ -12,11 +12,11 @@ forecast.predictions_dailyテーブルに対する読み取り専用操作。
 """
 
 from datetime import date as date_type
-from typing import List
+
+from sqlalchemy.orm import Session
 
 from app.core.domain.models import PredictionDTO
 from app.infra.db.orm_models import PredictionDaily
-from sqlalchemy.orm import Session
 
 
 class ForecastQueryRepository:
@@ -25,7 +25,7 @@ class ForecastQueryRepository:
     def __init__(self, db: Session):
         self.db = db
 
-    def list_predictions(self, from_: date_type, to_: date_type) -> List[PredictionDTO]:
+    def list_predictions(self, from_: date_type, to_: date_type) -> list[PredictionDTO]:
         """
         指定期間内の予測結果を取得
 

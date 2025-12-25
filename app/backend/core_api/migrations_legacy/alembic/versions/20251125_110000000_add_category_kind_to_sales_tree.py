@@ -16,7 +16,6 @@ Revises: 20251121_100000000
 Create Date: 2025-11-25 11:00:00.000000
 """
 
-import sqlalchemy as sa
 from alembic import op
 
 revision = "20251125_110000000"

@@ -5,8 +5,7 @@ shogun_csv_masters.yaml から動的にテーブル定義を生成するユー�
 YAMLファイルを唯一の真（Single Source of Truth）として扱う。
 """
 
-from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import yaml
 
@@ -25,7 +24,7 @@ class TableDefinitionGenerator:
         "bool": "Boolean",
     }
 
-    def __init__(self, yaml_path: Optional[str] = None):
+    def __init__(self, yaml_path: str | None = None):
         """
         初期化
 
@@ -43,12 +42,12 @@ class TableDefinitionGenerator:
         self.yaml_path = yaml_path
         self.config = self._load_yaml()
 
-    def _load_yaml(self) -> Dict[str, Any]:
+    def _load_yaml(self) -> dict[str, Any]:
         """YAMLファイルを読み込む"""
-        with open(self.yaml_path, "r", encoding="utf-8") as f:
+        with open(self.yaml_path, encoding="utf-8") as f:
             return yaml.safe_load(f)
 
-    def get_csv_types(self) -> List[str]:
+    def get_csv_types(self) -> list[str]:
         """
         定義されているCSV種別のリストを取得
 
@@ -73,7 +72,7 @@ class TableDefinitionGenerator:
         table_name = f"shogun_flash_{csv_type}"
         return f"{schema}.{table_name}"
 
-    def get_columns_definition(self, csv_type: str) -> List[Dict[str, Any]]:
+    def get_columns_definition(self, csv_type: str) -> list[dict[str, Any]]:
         """
         CSV種別のカラム定義を取得
 
@@ -114,7 +113,7 @@ class TableDefinitionGenerator:
 
         return columns
 
-    def get_expected_headers(self, csv_type: str) -> List[str]:
+    def get_expected_headers(self, csv_type: str) -> list[str]:
         """
         必須ヘッダーを取得
 
@@ -127,7 +126,7 @@ class TableDefinitionGenerator:
         csv_config = self.config.get(csv_type, {})
         return csv_config.get("expected_headers", [])
 
-    def get_unique_keys(self, csv_type: str) -> List[str]:
+    def get_unique_keys(self, csv_type: str) -> list[str]:
         """
         一意キー（日本語）を取得
 
@@ -140,7 +139,7 @@ class TableDefinitionGenerator:
         csv_config = self.config.get(csv_type, {})
         return csv_config.get("unique_keys", [])
 
-    def get_unique_keys_en(self, csv_type: str) -> List[str]:
+    def get_unique_keys_en(self, csv_type: str) -> list[str]:
         """
         一意キー（英語）を取得
 
@@ -153,7 +152,7 @@ class TableDefinitionGenerator:
         csv_config = self.config.get(csv_type, {})
         return csv_config.get("unique_keys_en", [])
 
-    def generate_index_columns(self, csv_type: str) -> List[str]:
+    def generate_index_columns(self, csv_type: str) -> list[str]:
         """
         インデックスを作成すべきカラムを推奨
 
@@ -183,7 +182,7 @@ class TableDefinitionGenerator:
         en_names = [col["en_name"] for col in columns]
         return [col for col in index_candidates if col in en_names]
 
-    def get_column_mapping(self, csv_type: str) -> Dict[str, str]:
+    def get_column_mapping(self, csv_type: str) -> dict[str, str]:
         """
         日本語→英語のカラムマッピングを取得
 
@@ -196,7 +195,7 @@ class TableDefinitionGenerator:
         columns = self.get_columns_definition(csv_type)
         return {col["jp_name"]: col["en_name"] for col in columns}
 
-    def get_type_mapping(self, csv_type: str) -> Dict[str, str]:
+    def get_type_mapping(self, csv_type: str) -> dict[str, str]:
         """
         カラム名（英語）→型のマッピングを取得
 
@@ -243,7 +242,7 @@ class TableDefinitionGenerator:
 
 
 # シングルトンインスタンス
-_generator_instance: Optional[TableDefinitionGenerator] = None
+_generator_instance: TableDefinitionGenerator | None = None
 
 
 def get_table_definition_generator(

@@ -6,13 +6,12 @@ Generate Average Sheet UseCase.
 
 from datetime import date
 from io import BytesIO
-from typing import Any, Dict
+from typing import Any
 
 from app.application.usecases.reports.report_generation_utils import (
     generate_excel_from_dataframe,
 )
 from app.core.domain.reports.average_sheet import AverageSheet
-from app.core.ports.inbound import CsvGateway, ReportRepository
 from app.core.usecases.reports.average_sheet_processor import (
     process as average_sheet_process,
 )
@@ -30,7 +29,7 @@ class GenerateAverageSheetUseCase(BaseReportUseCase):
     def report_name(self) -> str:
         return "単価平均表"
 
-    def create_domain_model(self, df_formatted: Dict[str, Any]) -> AverageSheet:
+    def create_domain_model(self, df_formatted: dict[str, Any]) -> AverageSheet:
         """ドメインモデル生成（Step 4）"""
         return AverageSheet.from_dataframes(
             df_shipment=df_formatted.get("shipment"),
@@ -38,7 +37,7 @@ class GenerateAverageSheetUseCase(BaseReportUseCase):
             df_receive=df_formatted.get("receive"),
         )
 
-    def execute_domain_logic(self, df_formatted: Dict[str, Any]) -> Any:
+    def execute_domain_logic(self, df_formatted: dict[str, Any]) -> Any:
         """ドメインロジック実行（Step 5）"""
         return average_sheet_process(df_formatted)
 

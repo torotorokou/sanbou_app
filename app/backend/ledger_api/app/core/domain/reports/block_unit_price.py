@@ -2,9 +2,6 @@
 
 from dataclasses import dataclass
 from datetime import date
-from typing import List
-
-import pandas as pd
 
 
 @dataclass
@@ -12,9 +9,9 @@ class BlockUnitPrice:
     """ブロック単価表エンティティ"""
 
     report_date: date
-    shipment_items: List
-    yard_items: List
-    receive_items: List
+    shipment_items: list
+    yard_items: list
+    receive_items: list
 
     @classmethod
     def from_dataframes(cls, df_shipment, df_yard, df_receive):

@@ -10,8 +10,6 @@
   5. キャッシュ制御もUseCase層で実施
 """
 
-import logging
-
 from app.core.domain.services import target_card
 from app.core.ports.dashboard_query_port import IDashboardTargetQuery
 from app.core.usecases.dashboard.dto import BuildTargetCardInput, BuildTargetCardOutput

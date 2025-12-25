@@ -8,13 +8,12 @@ Database Upload Router - CSV upload endpoints
   - POST /database/upload/shogun_csv_flash: 速報版CSVアップロード
 """
 
-from typing import Optional
+from fastapi import APIRouter, BackgroundTasks, Depends, File, UploadFile
 
 from app.config.di_providers import get_uc_default, get_uc_flash, get_uc_stg_final
 from app.core.usecases.upload.upload_shogun_csv_uc import UploadShogunCsvUseCase
 from backend_shared.application.logging import get_module_logger
 from backend_shared.infra.adapters.presentation import ErrorApiResponse
-from fastapi import APIRouter, BackgroundTasks, Depends, File, UploadFile
 
 logger = get_module_logger(__name__)
 
@@ -24,9 +23,9 @@ router = APIRouter()
 @router.post("/upload/shogun_csv")
 async def upload_shogun_csv(
     background_tasks: BackgroundTasks,
-    receive: Optional[UploadFile] = File(None),
-    yard: Optional[UploadFile] = File(None),
-    shipment: Optional[UploadFile] = File(None),
+    receive: UploadFile | None = File(None),
+    yard: UploadFile | None = File(None),
+    shipment: UploadFile | None = File(None),
     uc: UploadShogunCsvUseCase = Depends(get_uc_default),
 ):
     """
@@ -72,9 +71,9 @@ async def upload_shogun_csv(
 @router.post("/upload/shogun_csv_final")
 async def upload_shogun_csv_final(
     background_tasks: BackgroundTasks,
-    receive: Optional[UploadFile] = File(None),
-    yard: Optional[UploadFile] = File(None),
-    shipment: Optional[UploadFile] = File(None),
+    receive: UploadFile | None = File(None),
+    yard: UploadFile | None = File(None),
+    shipment: UploadFile | None = File(None),
     uc: UploadShogunCsvUseCase = Depends(get_uc_stg_final),
 ):
     """
@@ -120,9 +119,9 @@ async def upload_shogun_csv_final(
 @router.post("/upload/shogun_csv_flash")
 async def upload_shogun_csv_flash(
     background_tasks: BackgroundTasks,
-    receive: Optional[UploadFile] = File(None),
-    yard: Optional[UploadFile] = File(None),
-    shipment: Optional[UploadFile] = File(None),
+    receive: UploadFile | None = File(None),
+    yard: UploadFile | None = File(None),
+    shipment: UploadFile | None = File(None),
     uc: UploadShogunCsvUseCase = Depends(get_uc_flash),
 ):
     """

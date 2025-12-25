@@ -31,7 +31,6 @@ Core APIが他のマイクロサービス(rag_api, ledger_api, manual_api)を
 from __future__ import annotations
 
 import os
-from typing import Any
 
 import httpx
 

@@ -7,7 +7,6 @@ DataFrame依存を緩和し、ビジネスロジックをドメイン層に集�
 
 from dataclasses import dataclass
 from datetime import date
-from typing import List, Optional
 
 import pandas as pd
 
@@ -29,7 +28,7 @@ class ShipmentItem:
     vendor_name: str
     item_name: str
     net_weight: float
-    site_name: Optional[str] = None
+    site_name: str | None = None
 
     def __post_init__(self):
         """不変条件（Invariant）の検証"""
@@ -98,15 +97,15 @@ class FactoryReport:
     """
 
     report_date: date
-    shipment_items: List[ShipmentItem]
-    yard_items: List[YardItem]
-    cells: List[ReportCell]
+    shipment_items: list[ShipmentItem]
+    yard_items: list[YardItem]
+    cells: list[ReportCell]
 
     @classmethod
     def from_dataframes(
         cls,
-        df_shipment: Optional[pd.DataFrame],
-        df_yard: Optional[pd.DataFrame],
+        df_shipment: pd.DataFrame | None,
+        df_yard: pd.DataFrame | None,
     ) -> "FactoryReport":
         """
         DataFrameから工場日報エンティティを生成する
@@ -174,11 +173,11 @@ class FactoryReport:
         """ヤードデータの存在確認"""
         return len(self.yard_items) > 0
 
-    def get_shipment_by_vendor(self, vendor_code: str) -> List[ShipmentItem]:
+    def get_shipment_by_vendor(self, vendor_code: str) -> list[ShipmentItem]:
         """特定業者の出荷データを取得"""
         return [item for item in self.shipment_items if item.vendor_code == vendor_code]
 
-    def get_yard_by_category(self, category_name: str) -> List[YardItem]:
+    def get_yard_by_category(self, category_name: str) -> list[YardItem]:
         """特定種類名のヤードデータを取得"""
         return [item for item in self.yard_items if item.category_name == category_name]
 

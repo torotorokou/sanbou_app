@@ -1,14 +1,12 @@
-# -*- coding: utf-8 -*-
-
 """
 Block Unit Price Interactive - Initial Step Handler
 初期処理を担当するモジュール
 """
 
-import traceback
-from typing import Any, Dict, List, Tuple, Union
+from typing import Any
 
 import pandas as pd
+from backend_shared.application.logging import create_log_context, get_module_logger
 
 # Legacy exports for compatibility
 from app.core.domain.reports.processors.block_unit_price import process0 as _process0
@@ -22,7 +20,6 @@ from app.infra.report_utils import (
     load_master_and_template,
 )
 from app.infra.report_utils.domain import ReadTransportDiscount
-from backend_shared.application.logging import create_log_context, get_module_logger
 
 from .block_unit_price_utils import (
     canonical_sort_labels,
@@ -46,7 +43,7 @@ logger = get_module_logger(__name__)
 
 def compute_options_and_initial(
     row: pd.Series, df_transport_cost: pd.DataFrame
-) -> Tuple[List[str], int, str, str, Any]:
+) -> tuple[list[str], int, str, str, Any]:
     """
     運搬業者の選択肢と初期選択インデックスを計算
 
@@ -103,10 +100,10 @@ def compute_options_and_initial(
 def build_row_payload(
     row: pd.Series,
     df_idx: Any,
-    normalized_options: List[str],
+    normalized_options: list[str],
     initial_index: int,
     entry_id: str,
-) -> Tuple[Dict[str, Any], Any]:
+) -> tuple[dict[str, Any], Any]:
     """
     行のペイロードを構築
 
@@ -140,8 +137,8 @@ def build_row_payload(
 
 
 def execute_initial_step(
-    df_formatted: Dict[str, Any]
-) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+    df_formatted: dict[str, Any],
+) -> tuple[dict[str, Any], dict[str, Any]]:
     """
     初期ステップの実行
 
@@ -220,8 +217,8 @@ def execute_initial_step(
             df_shipment if carriers is None else df_shipment[carriers.fillna(0) != 1]
         )
 
-        rows_payload: List[Dict[str, Any]] = []
-        entry_index_map: Dict[str, Union[int, str]] = {}
+        rows_payload: list[dict[str, Any]] = []
+        entry_index_map: dict[str, int | str] = {}
 
         # 各行の処理
         for row_num, (idx, row) in enumerate(target_rows.iterrows()):

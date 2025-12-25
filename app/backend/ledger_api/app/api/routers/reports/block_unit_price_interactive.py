@@ -6,17 +6,18 @@
 ユーザーの入力を段階的に受け取りながら、最終的な計算結果を返します。
 """
 
-from typing import Any, Dict, Optional, Union
+from typing import Any
+
+from backend_shared.application.logging import create_log_context, get_module_logger
+from backend_shared.infra.adapters.fastapi.error_handlers import DomainError
+from fastapi import APIRouter, BackgroundTasks, File, UploadFile
+from pydantic import BaseModel
 
 # 移行済みの実装ファイルからインポート
 from app.core.usecases.reports.interactive import BlockUnitPriceInteractive
 from app.core.usecases.reports.processors.interactive_report_processing_service import (
     InteractiveReportProcessingService,
 )
-from backend_shared.application.logging import create_log_context, get_module_logger
-from backend_shared.infra.adapters.fastapi.error_handlers import DomainError
-from fastapi import APIRouter, BackgroundTasks, File, UploadFile
-from pydantic import BaseModel
 
 router = APIRouter()
 tag_name = "Block Unit Price"
@@ -24,18 +25,18 @@ logger = get_module_logger(__name__)
 
 
 class StartProcessRequest(BaseModel):  # レガシー JSON 経由 (互換用)
-    files: Dict[str, Any]
+    files: dict[str, Any]
 
 
 class TransportSelectionRequest(BaseModel):
     session_id: str
-    selections: Dict[str, Union[int, str]]
+    selections: dict[str, int | str]
 
 
 class FinalizeRequest(BaseModel):
     session_id: str
     # 一本化運用のため、任意で selections を同送可能
-    selections: Optional[Dict[str, Union[int, str]]] = None
+    selections: dict[str, int | str] | None = None
 
 
 def _raise_if_error_payload(result: Any) -> None:
@@ -70,7 +71,7 @@ async def start_block_unit_price_process(
     )
 
     # 1) UploadFile 優先 (新方式)
-    upload_files: Dict[str, UploadFile] = {}
+    upload_files: dict[str, UploadFile] = {}
     if shipment is not None:
         upload_files["shipment"] = shipment
 

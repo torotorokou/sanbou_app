@@ -4,14 +4,15 @@ Excel同期+PDF非同期構成でのポーリング用
 """
 
 import os
-from typing import Literal, Optional
+from typing import Literal
 
 import httpx
+from fastapi import APIRouter, Query
+from pydantic import BaseModel
+
 from app.shared.utils import rewrite_artifact_urls_to_bff
 from backend_shared.application.logging import create_log_context, get_module_logger
 from backend_shared.core.domain.exceptions import ExternalServiceError
-from fastapi import APIRouter, Query
-from pydantic import BaseModel
 
 logger = get_module_logger(__name__)
 
@@ -26,8 +27,8 @@ class PdfStatusResponse(BaseModel):
     report_key: str
     report_token: str
     status: Literal["pending", "ready", "error"]
-    pdf_url: Optional[str] = None
-    message: Optional[str] = None
+    pdf_url: str | None = None
+    message: str | None = None
 
 
 @router.get("/pdf-status")

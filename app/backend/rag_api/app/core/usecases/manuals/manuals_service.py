@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from typing import Optional
-
 from app.core.domain.manuals.manual_entity import ManualDetail, ManualListResponse
 from app.core.ports.manuals.manuals_repository import ManualsRepository
 

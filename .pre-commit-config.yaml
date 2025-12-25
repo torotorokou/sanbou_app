@@ -43,7 +43,7 @@ exclude: |
 # ============================================================
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.6.0
+    rev: v6.0.0
     hooks:
       # ファイル整形
       - id: trailing-whitespace
@@ -104,7 +104,7 @@ repos:
 # Secrets検出（追加レイヤー）
 # ============================================================
   - repo: https://github.com/Yelp/detect-secrets
-    rev: v1.4.0
+    rev: v1.5.0
     hooks:
       - id: detect-secrets
         name: 機密情報を検出 (detect-secrets)
@@ -128,7 +128,7 @@ repos:
 # Python フォーマット・リント
 # ============================================================
   - repo: https://github.com/psf/black
-    rev: 24.8.0
+    rev: 25.12.0
     hooks:
       - id: black
         name: Python コードフォーマット (black)
@@ -136,11 +136,19 @@ repos:
         files: ^app/backend/.*\.py$
 
   - repo: https://github.com/pycqa/isort
-    rev: 5.13.2
+    rev: 7.0.0
     hooks:
       - id: isort
         name: Python importソート (isort)
         args: ["--profile", "black"]
+        files: ^app/backend/.*\.py$
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.14.10
+    hooks:
+      - id: ruff
+        name: Python リント (ruff)
+        args: [--fix, --exit-zero]
         files: ^app/backend/.*\.py$
 
 # ============================================================
@@ -163,11 +171,30 @@ repos:
         additional_dependencies:
           - prettier@3.3.3
 
+  - repo: https://github.com/pre-commit/mirrors-eslint
+    rev: v10.0.0-beta.0
+    hooks:
+      - id: eslint
+        name: TypeScript/JavaScript リント (ESLint)
+        files: ^app/frontend/src/.*\.[jt]sx?$
+        types: [file]
+        args: [--fix, --config, app/frontend/eslint.config.js]
+        additional_dependencies:
+          - eslint@^9.17.0
+          - typescript@^5.7.2
+          - '@typescript-eslint/parser@^8.18.1'
+          - '@typescript-eslint/eslint-plugin@^8.18.1'
+          - eslint-plugin-react@^7.37.2
+          - eslint-plugin-react-hooks@^5.1.0
+          - globals@^15.0.0
+          - '@eslint/js@^9.0.0'
+          - eslint-plugin-boundaries@^5.0.0
+
 # ============================================================
 # Docker・Dockerfileチェック
 # ============================================================
   - repo: https://github.com/hadolint/hadolint
-    rev: v2.12.0
+    rev: v2.14.0
     hooks:
       - id: hadolint
         name: Dockerfile リント (hadolint)
@@ -177,7 +204,7 @@ repos:
 # Markdown リント
 # ============================================================
   - repo: https://github.com/igorshubovych/markdownlint-cli
-    rev: v0.39.0
+    rev: v0.47.0
     hooks:
       - id: markdownlint
         name: Markdown リント
@@ -187,7 +214,7 @@ repos:
 # シェルスクリプトチェック
 # ============================================================
   - repo: https://github.com/shellcheck-py/shellcheck-py
-    rev: v0.10.0.1
+    rev: v0.11.0.1
     hooks:
       - id: shellcheck
         name: シェルスクリプトチェック (shellcheck)

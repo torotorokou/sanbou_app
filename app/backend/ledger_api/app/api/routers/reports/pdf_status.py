@@ -6,13 +6,14 @@ PDFステータス確認API
 PDF生成が非同期で行われる場合に、生成完了をポーリングで確認するためのエンドポイント。
 """
 
-from typing import Literal, Optional
+from typing import Literal
 
-from app.infra.adapters.artifact_storage.artifact_builder import get_pdf_status
 from backend_shared.application.logging import get_module_logger
 from fastapi import APIRouter, Query
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
+
+from app.infra.adapters.artifact_storage.artifact_builder import get_pdf_status
 
 logger = get_module_logger(__name__)
 
@@ -25,8 +26,8 @@ class PdfStatusResponse(BaseModel):
     report_key: str
     report_token: str
     status: Literal["pending", "ready", "error"]
-    pdf_url: Optional[str] = None
-    message: Optional[str] = None
+    pdf_url: str | None = None
+    message: str | None = None
 
 
 @router.get("/pdf-status")

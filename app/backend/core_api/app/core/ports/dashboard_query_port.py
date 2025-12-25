@@ -5,7 +5,7 @@ Dashboard系のターゲット取得に必要な抽象インターフェース�
 """
 
 from datetime import date as date_type
-from typing import Any, Dict, Optional, Protocol
+from typing import Any, Protocol
 
 
 class IDashboardTargetQuery(Protocol):
@@ -13,7 +13,7 @@ class IDashboardTargetQuery(Protocol):
 
     def get_by_date_optimized(
         self, target_date: date_type, mode: str = "daily"
-    ) -> Optional[Dict[str, Any]]:
+    ) -> dict[str, Any] | None:
         """
         指定日付のターゲットメトリクスを取得（最適化版）
 

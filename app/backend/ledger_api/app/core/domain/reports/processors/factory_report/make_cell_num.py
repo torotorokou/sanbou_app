@@ -1,5 +1,4 @@
 import re
-from typing import Dict, List, Optional
 
 import pandas as pd
 
@@ -12,8 +11,8 @@ def make_cell_num(master_csv: pd.DataFrame) -> pd.DataFrame:
 
 def make_cell_num_cal(
     master_csv: pd.DataFrame,
-    start_cells: Dict[str, str],
-    col_list: Optional[List[str]] = None,
+    start_cells: dict[str, str],
+    col_list: list[str] | None = None,
     category_col: str = "カテゴリ",
 ) -> pd.DataFrame:
     if col_list is None:

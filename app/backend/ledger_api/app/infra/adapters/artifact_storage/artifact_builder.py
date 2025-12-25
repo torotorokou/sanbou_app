@@ -10,9 +10,8 @@ Excel/PDF の生成・保存と、署名付きURLの JSON ペイロード組み�
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, Literal, Optional
+from typing import TYPE_CHECKING, Any, Literal
 
 from backend_shared.application.logging import get_module_logger
 from backend_shared.utils.datetime_utils import format_datetime_iso, now_in_app_timezone
@@ -66,7 +65,7 @@ class ArtifactResponseBuilder:
         df_result: Any,
         report_date: str,
         *,
-        extra_payload: Optional[Dict[str, Any]] = None,
+        extra_payload: dict[str, Any] | None = None,
         async_pdf: bool = True,
     ) -> JSONResponse:
         """レポートを生成してレスポンスを返す。
@@ -95,13 +94,13 @@ class ArtifactResponseBuilder:
                 # report_token を追加（PDFステータス確認用）
                 artifact_payload["report_token"] = location.token
 
-                metadata: Dict[str, Any] = {
+                metadata: dict[str, Any] = {
                     "generated_at": format_datetime_iso(now_in_app_timezone()),
                     "pdf_status": "pending",
                     "excel_path": str(excel_path),
                 }
 
-                response_body: Dict[str, Any] = {
+                response_body: dict[str, Any] = {
                     "status": "success",
                     "report_key": generator.report_key,
                     "report_date": report_date,
@@ -120,7 +119,7 @@ class ArtifactResponseBuilder:
             else:
                 # 同期モード: 従来通りPDFも同時に生成
                 pdf_exists = True
-                pdf_error: Optional[str] = None
+                pdf_error: str | None = None
                 try:
                     pdf_bytes = convert_excel_to_pdf(
                         excel_path,
@@ -245,7 +244,7 @@ def generate_pdf_background(
                 "elapsed_seconds": round(elapsed, 3),
             },
         )
-    except Exception as exc:
+    except Exception:
         logger.exception(
             "PDF生成中に予期しないエラー（バックグラウンド）",
             extra={
@@ -260,7 +259,7 @@ def get_pdf_status(
     report_key: str,
     report_date: str,
     report_token: str,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """PDFのステータスを確認する。
 
     Args:

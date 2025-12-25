@@ -3,8 +3,6 @@ Tests for inbound daily API endpoint.
 日次搬入量APIのテスト（累積モード・バリデーション）
 """
 
-from datetime import date
-
 import pytest
 from fastapi import status
 from httpx import AsyncClient

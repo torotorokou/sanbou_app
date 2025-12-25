@@ -20,7 +20,6 @@ Phase 2: app.announcement_user_states テーブル追加
 
 """
 
-import sqlalchemy as sa
 from alembic import op
 
 # revision identifiers, used by Alembic.

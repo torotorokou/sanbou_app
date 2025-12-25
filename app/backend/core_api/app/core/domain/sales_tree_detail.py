@@ -25,7 +25,7 @@ Domain models for Sales Tree Detail Lines - 売上ツリー詳細明細行ドメ
 """
 
 from datetime import date as date_type
-from typing import Literal, Optional
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -58,10 +58,10 @@ class DetailLinesRequest(BaseModel):
     )
 
     # フィルタ条件（集計パスを再現）
-    rep_id: Optional[int] = Field(None, description="営業IDフィルタ")
-    customer_id: Optional[str] = Field(None, description="顧客IDフィルタ")
-    item_id: Optional[int] = Field(None, description="品目IDフィルタ")
-    date_value: Optional[date_type] = Field(
+    rep_id: int | None = Field(None, description="営業IDフィルタ")
+    customer_id: str | None = Field(None, description="顧客IDフィルタ")
+    item_id: int | None = Field(None, description="品目IDフィルタ")
+    date_value: date_type | None = Field(
         None, description="日付フィルタ（mode=dateの場合）"
     )
 
@@ -95,7 +95,7 @@ class DetailLine(BaseModel):
     )
 
     # 品名情報（常に含む。slip_summaryの場合はカンマ区切り）
-    item_id: Optional[int] = Field(
+    item_id: int | None = Field(
         None, description="品目ID（item_lines時のみ）", serialization_alias="itemId"
     )
     item_name: str = Field(
@@ -105,13 +105,13 @@ class DetailLine(BaseModel):
     )
 
     # 集計値
-    line_count: Optional[int] = Field(
+    line_count: int | None = Field(
         None,
         description="明細行数（slip_summary時のみ）",
         serialization_alias="lineCount",
     )
     qty_kg: float = Field(..., description="数量（kg）", serialization_alias="qtyKg")
-    unit_price_yen_per_kg: Optional[float] = Field(
+    unit_price_yen_per_kg: float | None = Field(
         None, description="単価（円/kg）", serialization_alias="unitPriceYenPerKg"
     )
     amount_yen: float = Field(

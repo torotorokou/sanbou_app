@@ -4,17 +4,18 @@ Health Check Router
 システム全体およびCore API自体のヘルスチェックエンドポイントを提供する。
 """
 
-from typing import Any, Dict
+from typing import Any
+
+from fastapi import APIRouter, Depends
 
 from app.config.di_providers import get_health_check_usecase
 from app.core.usecases.health_check_uc import HealthCheckUseCase
-from fastapi import APIRouter, Depends
 
 router = APIRouter(tags=["health"])
 
 
 @router.get("/health")
-async def health_check() -> Dict[str, str]:
+async def health_check() -> dict[str, str]:
     """
     Core API自体のヘルスチェック
 
@@ -27,7 +28,7 @@ async def health_check() -> Dict[str, str]:
 @router.get("/health/services")
 async def services_health_check(
     usecase: HealthCheckUseCase = Depends(get_health_check_usecase),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     すべてのマイクロサービスのヘルスチェック
 

@@ -20,16 +20,14 @@ backend_shared の BaseAppSettings を継承し、ledger_api 固有の設定を�
 from __future__ import annotations
 
 import os
-from functools import lru_cache
 from pathlib import Path
-from typing import List, Optional
 
 from backend_shared.config.base_settings import BaseAppSettings
 
 TRUE_SET = {"1", "true", "yes", "on"}
 
 
-def _as_bool(val: Optional[str], default: bool = False) -> bool:
+def _as_bool(val: str | None, default: bool = False) -> bool:
     if val is None:
         return default
     return val.lower() in TRUE_SET
@@ -55,13 +53,13 @@ class LedgerApiSettings(BaseAppSettings):
 
     stage: str = ""
     strict_startup: bool = False
-    startup_download_enable_raw: Optional[str] = None
+    startup_download_enable_raw: str | None = None
     base_api_dir: Path = Path("/backend/app/api")
-    gcs_ledger_bucket_override: Optional[str] = None
-    gcs_ledger_bucket_dev: Optional[str] = None
-    gcs_ledger_bucket_stg: Optional[str] = None
-    gcs_ledger_bucket_prod: Optional[str] = None
-    ledger_sync_subdirs: List[str] = []
+    gcs_ledger_bucket_override: str | None = None
+    gcs_ledger_bucket_dev: str | None = None
+    gcs_ledger_bucket_stg: str | None = None
+    gcs_ledger_bucket_prod: str | None = None
+    ledger_sync_subdirs: list[str] = []
     report_artifact_root_dir: Path = Path("/backend/data/report_artifacts")
     report_artifact_url_prefix: str = "/api/report_artifacts"
     report_artifact_url_ttl: int = 900
@@ -74,7 +72,7 @@ class LedgerApiSettings(BaseAppSettings):
         case_sensitive = True
         extra = "allow"
 
-    def bucket_base(self) -> Optional[str]:
+    def bucket_base(self) -> str | None:
         if self.gcs_ledger_bucket_override:
             return self.gcs_ledger_bucket_override
         if self.stage == "dev":
@@ -120,7 +118,7 @@ def load_settings() -> LedgerApiSettings:
     startup_download_enable_raw = os.getenv("STARTUP_DOWNLOAD_ENABLE")
     base_api_dir = Path(os.getenv("BASE_API_DIR", "/backend/app/api"))
 
-    def _clean(val: Optional[str]) -> Optional[str]:
+    def _clean(val: str | None) -> str | None:
         if val is None:
             return None
         v = val.strip()

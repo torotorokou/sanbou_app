@@ -20,8 +20,6 @@ UseCase / Repository 実装 / DB セッションを組み立てる。
     formatter = provide_csv_formatter(csv_type="shipment")
 """
 
-from typing import Optional
-
 from backend_shared.config.config_loader import ShogunCsvConfigLoader
 from backend_shared.core.usecases.csv_formatter.formatter_config import (
     build_formatter_config,
@@ -60,7 +58,7 @@ def provide_csv_config_loader() -> ShogunCsvConfigLoader:
 
 
 def provide_csv_formatter(
-    csv_type: str, config_loader: Optional[ShogunCsvConfigLoader] = None
+    csv_type: str, config_loader: ShogunCsvConfigLoader | None = None
 ):
     """
     CSV フォーマッターを提供する

@@ -4,7 +4,7 @@ Announcement domain entities.
 """
 
 from datetime import datetime
-from typing import List, Literal, Optional
+from typing import Literal
 
 from pydantic import BaseModel, Field
 
@@ -49,14 +49,14 @@ class Announcement(BaseModel):
     title: str = Field(..., description="タイトル")
     body_md: str = Field(..., description="本文（Markdown形式）")
     severity: AnnouncementSeverity = Field("info", description="重要度")
-    tags: List[str] = Field(default_factory=list, description="タグ配列")
+    tags: list[str] = Field(default_factory=list, description="タグ配列")
     publish_from: datetime = Field(..., description="公開開始日時")
-    publish_to: Optional[datetime] = Field(None, description="公開終了日時")
+    publish_to: datetime | None = Field(None, description="公開終了日時")
     audience: Audience = Field("all", description="対象")
-    attachments: List[Attachment] = Field(
+    attachments: list[Attachment] = Field(
         default_factory=list, description="添付ファイル配列"
     )
-    notification_plan: Optional[NotificationPlan] = Field(None, description="通知設定")
+    notification_plan: NotificationPlan | None = Field(None, description="通知設定")
     created_at: datetime = Field(..., description="作成日時")
     updated_at: datetime = Field(..., description="更新日時")
 
@@ -79,8 +79,8 @@ class AnnouncementUserState(BaseModel):
     id: int = Field(..., description="状態ID")
     user_id: str = Field(..., description="ユーザー識別子")
     announcement_id: int = Field(..., description="お知らせID")
-    read_at: Optional[datetime] = Field(None, description="既読日時")
-    ack_at: Optional[datetime] = Field(None, description="確認日時")
+    read_at: datetime | None = Field(None, description="既読日時")
+    ack_at: datetime | None = Field(None, description="確認日時")
 
     class Config:
         from_attributes = True
@@ -93,8 +93,8 @@ class AnnouncementWithState(BaseModel):
     """
 
     announcement: Announcement
-    read_at: Optional[datetime] = None
-    ack_at: Optional[datetime] = None
+    read_at: datetime | None = None
+    ack_at: datetime | None = None
 
     class Config:
         from_attributes = True

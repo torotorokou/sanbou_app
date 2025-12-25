@@ -4,9 +4,7 @@ Repository Port
 データ永続化層の抽象インターフェース。
 """
 
-from typing import Generic, Optional, Protocol, TypeVar
-
-from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Generic, Protocol, TypeVar
 
 T = TypeVar("T")
 
@@ -14,7 +12,7 @@ T = TypeVar("T")
 class AsyncRepository(Protocol, Generic[T]):
     """非同期 Repository の抽象インターフェース"""
 
-    async def get_by_id(self, id: int) -> Optional[T]:
+    async def get_by_id(self, id: int) -> T | None:
         """ID でエンティティを取得"""
         ...
 

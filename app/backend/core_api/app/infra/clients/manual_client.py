@@ -22,12 +22,11 @@ Manual API Client - マニュアル/ドキュメントサービス内部HTTPク�
         print(f"{manual['id']}: {manual['title']}")
 """
 
-import logging
 import os
-from typing import Dict, List
 
 import httpx
-from backend_shared.application.logging import create_log_context, get_module_logger
+
+from backend_shared.application.logging import get_module_logger
 
 logger = get_module_logger(__name__)
 
@@ -41,7 +40,7 @@ class ManualClient:
     def __init__(self, base_url: str = MANUAL_API_BASE):
         self.base_url = base_url.rstrip("/")
 
-    async def list_manuals(self) -> List[Dict]:
+    async def list_manuals(self) -> list[dict]:
         """
         List all available manuals.
 

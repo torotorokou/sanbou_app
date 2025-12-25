@@ -10,7 +10,6 @@ UseCase: CreateForecastJobUseCase
 """
 
 from datetime import date as date_type
-from typing import List, Optional
 
 from app.core.domain.models import ForecastJobCreate, ForecastJobResponse, PredictionDTO
 from app.core.domain.services import forecasting
@@ -104,7 +103,7 @@ class GetForecastJobStatusUseCase:
         """
         self._job_repo = job_repo
 
-    def execute(self, job_id: int) -> Optional[ForecastJobResponse]:
+    def execute(self, job_id: int) -> ForecastJobResponse | None:
         """
         ジョブIDでステータスを取得
 
@@ -134,7 +133,7 @@ class GetPredictionsUseCase:
     def __init__(self, query_repo: IForecastQueryRepository):
         self._query_repo = query_repo
 
-    def execute(self, from_: date_type, to_: date_type) -> List[PredictionDTO]:
+    def execute(self, from_: date_type, to_: date_type) -> list[PredictionDTO]:
         """
         指定期間の予測結果を取得
 

@@ -5,7 +5,7 @@ Input/Output DTOs for Calendar feature following Clean Architecture principles.
 """
 
 from dataclasses import dataclass
-from typing import Any, Dict, List
+from typing import Any
 
 
 @dataclass(frozen=True)
@@ -43,4 +43,4 @@ class GetCalendarMonthOutput:
         calendar_days: カレンダーデータリスト（日ごとの営業日情報等）
     """
 
-    calendar_days: List[Dict[str, Any]]
+    calendar_days: list[dict[str, Any]]

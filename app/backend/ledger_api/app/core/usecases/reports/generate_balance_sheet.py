@@ -7,10 +7,9 @@ factory_reportと同じClean Architectureパターンを適用。
 
 from datetime import date
 from io import BytesIO
-from typing import Any, Dict
+from typing import Any
 
 from app.core.domain.reports.balance_sheet import BalanceSheet
-from app.core.ports.inbound import CsvGateway, ReportRepository
 from app.core.usecases.reports.balance_sheet_processor import (
     process as balance_sheet_process,
 )
@@ -30,7 +29,7 @@ class GenerateBalanceSheetUseCase(BaseReportUseCase):
     def report_name(self) -> str:
         return "搬出入収支表"
 
-    def create_domain_model(self, df_formatted: Dict[str, Any]) -> BalanceSheet:
+    def create_domain_model(self, df_formatted: dict[str, Any]) -> BalanceSheet:
         """ドメインモデル生成（Step 4）"""
         return BalanceSheet.from_dataframes(
             df_receive=df_formatted.get("receive"),
@@ -38,7 +37,7 @@ class GenerateBalanceSheetUseCase(BaseReportUseCase):
             df_yard=df_formatted.get("yard"),
         )
 
-    def execute_domain_logic(self, df_formatted: Dict[str, Any]) -> Any:
+    def execute_domain_logic(self, df_formatted: dict[str, Any]) -> Any:
         """ドメインロジック実行（Step 5）"""
         return balance_sheet_process(df_formatted)
 

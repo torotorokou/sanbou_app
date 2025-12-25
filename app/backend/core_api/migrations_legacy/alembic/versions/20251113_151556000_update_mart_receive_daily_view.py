@@ -9,7 +9,6 @@ mart.v_receive_daily ビューを更新して stg スキーマを参照するよ
 
 from pathlib import Path
 
-import sqlalchemy as sa
 from alembic import op
 
 # revision identifiers, used by Alembic.
@@ -25,7 +24,7 @@ def upgrade() -> None:
     """
     # SQLファイルから読み込んで実行
     sql_file = Path(__file__).parent.parent / "sql" / "mart" / "v_receive_daily.sql"
-    with open(sql_file, "r", encoding="utf-8") as f:
+    with open(sql_file, encoding="utf-8") as f:
         sql = f.read()
 
     op.execute(sql)

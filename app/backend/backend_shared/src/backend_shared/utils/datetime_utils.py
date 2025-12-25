@@ -30,7 +30,7 @@ print(timestamp)  # '2024年12月04日 15:30'
 """
 
 import os
-from datetime import date, datetime, timezone
+from datetime import date, datetime
 from functools import lru_cache
 from zoneinfo import ZoneInfo
 

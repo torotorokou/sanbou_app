@@ -1,5 +1,3 @@
-from typing import Optional, Union
-
 import pandas as pd
 import yaml
 from backend_shared.config.config_loader import (
@@ -23,15 +21,13 @@ def resolve_dtype(dtype_str: str):
     return dtype_map.get(dtype_str, object)
 
 
-def get_path_from_yaml(
-    key: Union[str, list[str]], section: Optional[str] = None
-) -> str:
+def get_path_from_yaml(key: str | list[str], section: str | None = None) -> str:
     mainpath = MainPath()
     path = mainpath.get_path(key, section)
     return str(path)
 
 
-def load_yaml(key_or_path: str, section: Optional[str] = None) -> dict:
+def load_yaml(key_or_path: str, section: str | None = None) -> dict:
     """
     YAMLファイルを辞書形式で読み込む。
 

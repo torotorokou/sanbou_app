@@ -7,7 +7,6 @@ InMemory Notification Outbox Adapter
 
 import threading
 from datetime import datetime, timedelta
-from typing import List
 from uuid import UUID
 
 from app.core.domain.notification import (
@@ -33,13 +32,13 @@ class InMemoryNotificationOutboxAdapter(NotificationOutboxPort):
         self._items: dict[UUID, NotificationOutboxItem] = {}
         self._lock = threading.Lock()
 
-    def enqueue(self, items: List[NotificationOutboxItem]) -> None:
+    def enqueue(self, items: list[NotificationOutboxItem]) -> None:
         """通知アイテムを登録"""
         with self._lock:
             for item in items:
                 self._items[item.id] = item
                 logger.info(
-                    f"[Outbox] Enqueued notification",
+                    "[Outbox] Enqueued notification",
                     extra={
                         "notification_id": str(item.id),
                         "channel": item.channel,
@@ -50,7 +49,7 @@ class InMemoryNotificationOutboxAdapter(NotificationOutboxPort):
 
     def list_pending(
         self, now: datetime, limit: int = 100
-    ) -> List[NotificationOutboxItem]:
+    ) -> list[NotificationOutboxItem]:
         """送信対象の pending アイテムを取得"""
         with self._lock:
             pending = []
@@ -78,7 +77,7 @@ class InMemoryNotificationOutboxAdapter(NotificationOutboxPort):
         with self._lock:
             if id not in self._items:
                 logger.warning(
-                    f"[Outbox] mark_sent called for unknown id",
+                    "[Outbox] mark_sent called for unknown id",
                     extra={"notification_id": str(id)},
                 )
                 return
@@ -87,7 +86,7 @@ class InMemoryNotificationOutboxAdapter(NotificationOutboxPort):
             item.status = NotificationStatus.SENT
             item.sent_at = sent_at
             logger.info(
-                f"[Outbox] Marked notification as sent",
+                "[Outbox] Marked notification as sent",
                 extra={"notification_id": str(id), "sent_at": sent_at.isoformat()},
             )
 
@@ -98,7 +97,7 @@ class InMemoryNotificationOutboxAdapter(NotificationOutboxPort):
         with self._lock:
             if id not in self._items:
                 logger.warning(
-                    f"[Outbox] mark_failed called for unknown id",
+                    "[Outbox] mark_failed called for unknown id",
                     extra={"notification_id": str(id)},
                 )
                 return
@@ -120,7 +119,7 @@ class InMemoryNotificationOutboxAdapter(NotificationOutboxPort):
                 item.next_retry_at = now + timedelta(minutes=backoff_minutes)
 
                 logger.info(
-                    f"[Outbox] Marked notification as failed (TEMPORARY)",
+                    "[Outbox] Marked notification as failed (TEMPORARY)",
                     extra={
                         "notification_id": str(id),
                         "retry_count": item.retry_count,
@@ -132,7 +131,7 @@ class InMemoryNotificationOutboxAdapter(NotificationOutboxPort):
                 # PERMANENT: failedのままでリトライしない
                 item.status = NotificationStatus.FAILED
                 logger.warning(
-                    f"[Outbox] Marked notification as failed (PERMANENT)",
+                    "[Outbox] Marked notification as failed (PERMANENT)",
                     extra={
                         "notification_id": str(id),
                         "error": error[:100],
@@ -144,7 +143,7 @@ class InMemoryNotificationOutboxAdapter(NotificationOutboxPort):
         with self._lock:
             if id not in self._items:
                 logger.warning(
-                    f"[Outbox] mark_skipped called for unknown id",
+                    "[Outbox] mark_skipped called for unknown id",
                     extra={"notification_id": str(id)},
                 )
                 return
@@ -152,7 +151,7 @@ class InMemoryNotificationOutboxAdapter(NotificationOutboxPort):
             item.status = NotificationStatus.SKIPPED
             item.last_error = reason
             logger.info(
-                f"[Outbox] Marked notification as skipped",
+                "[Outbox] Marked notification as skipped",
                 extra={
                     "notification_id": str(id),
                     "reason": reason[:100],

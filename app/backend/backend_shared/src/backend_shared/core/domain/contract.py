@@ -6,7 +6,7 @@
 - contracts/notifications.openapi.yaml と完全一致
 """
 
-from typing import Literal, Optional
+from typing import Literal
 
 from pydantic import BaseModel, Field
 
@@ -28,8 +28,8 @@ class ProblemDetails(BaseModel):
     status: int
     code: str
     userMessage: str = Field(alias="userMessage")
-    title: Optional[str] = None
-    traceId: Optional[str] = Field(default=None, alias="traceId")
+    title: str | None = None
+    traceId: str | None = Field(default=None, alias="traceId")
 
     class Config:
         populate_by_name = True  # Pydantic v2: allow both snake_case and camelCase
@@ -55,12 +55,12 @@ class NotificationEvent(BaseModel):
     id: str
     severity: Severity
     title: str
-    message: Optional[str] = None
-    duration: Optional[int] = None
-    feature: Optional[str] = None
-    resultUrl: Optional[str] = Field(default=None, alias="resultUrl")
-    jobId: Optional[str] = Field(default=None, alias="jobId")
-    traceId: Optional[str] = Field(default=None, alias="traceId")
+    message: str | None = None
+    duration: int | None = None
+    feature: str | None = None
+    resultUrl: str | None = Field(default=None, alias="resultUrl")
+    jobId: str | None = Field(default=None, alias="jobId")
+    traceId: str | None = Field(default=None, alias="traceId")
     createdAt: str = Field(alias="createdAt")
 
     class Config:

@@ -1,12 +1,6 @@
 # 共通: DSNと基本import
-import datetime as dt
-import json
-import math
 import os
 
-import numpy as np
-import pandas as pd
-import psycopg
 from backend_shared.infra.db.url_builder import build_database_url
 
 

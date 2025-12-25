@@ -9,8 +9,7 @@ import re
 import subprocess
 import tempfile
 import zipfile
-from datetime import datetime, timezone
-from typing import Any, Dict, Optional, Tuple
+from typing import Any
 
 from backend_shared.utils.datetime_utils import format_datetime_iso, now_in_app_timezone
 from fastapi.responses import StreamingResponse
@@ -66,7 +65,7 @@ def create_excel_bytes(generator: Any, df_result: Any, report_date: str) -> byte
 
 def convert_excel_to_pdf(
     excel_bytes: bytes,
-) -> Tuple[Optional[bytes], str, Optional[str]]:
+) -> tuple[bytes | None, str, str | None]:
     excel_bytes = _ensure_bytes(excel_bytes, "excel_bytes for convert_excel_to_pdf")
 
     with tempfile.TemporaryDirectory() as td:
@@ -78,7 +77,7 @@ def convert_excel_to_pdf(
         lo_profile = td_path / "lo_profile"
         lo_profile.mkdir(parents=True, exist_ok=True)
 
-        last_error: Optional[str] = None
+        last_error: str | None = None
         for attempt, target in enumerate(
             (_build_convert_target(True), _build_convert_target(False)), start=1
         ):
@@ -149,12 +148,12 @@ def _sanitize_filename(value: str) -> str:
 
 def create_zip_with_excel_and_pdf(
     excel_bytes: bytes,
-    pdf_bytes: Optional[bytes],
+    pdf_bytes: bytes | None,
     report_key: str,
     report_date: str,
-) -> Tuple[io.BytesIO, str, Dict[str, Any]]:
+) -> tuple[io.BytesIO, str, dict[str, Any]]:
     excel_bytes = _ensure_bytes(excel_bytes, "excel_bytes for ZIP")
-    pdf_payload: Optional[bytes] = None
+    pdf_payload: bytes | None = None
     if pdf_bytes is not None:
         pdf_payload = _ensure_bytes(pdf_bytes, "pdf_bytes for ZIP")
 
@@ -167,7 +166,7 @@ def create_zip_with_excel_and_pdf(
         )
         archive.writestr(f"{base}.xlsx", excel_bytes)
 
-    manifest: Dict[str, Any] = {
+    manifest: dict[str, Any] = {
         "report_key": report_key,
         "report_date": report_date,
         "pdf_generated": bool(pdf_payload),

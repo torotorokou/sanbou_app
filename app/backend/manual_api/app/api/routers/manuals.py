@@ -9,7 +9,7 @@ from app.core.domain.manual_entity import (
 from app.core.usecases.manuals_service import ManualsService
 from backend_shared.application.logging import get_module_logger
 from backend_shared.core.domain.exceptions import NotFoundError
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, Query
 
 logger = get_module_logger(__name__)
 router = APIRouter(prefix="/manuals", tags=["manuals"])

@@ -4,7 +4,7 @@ Port: External API Clients
 外部マイクロサービス呼び出しの抽象インターフェース。
 """
 
-from typing import Any, Dict, List, Protocol
+from typing import Protocol
 
 
 class IRAGClient(Protocol):
@@ -30,7 +30,7 @@ class ILedgerClient(Protocol):
 class IManualClient(Protocol):
     """Manual API クライアントのPort"""
 
-    async def list_manuals(self) -> List[Dict]:
+    async def list_manuals(self) -> list[dict]:
         """マニュアル一覧を取得"""
         ...
 

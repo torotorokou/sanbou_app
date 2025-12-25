@@ -93,7 +93,7 @@ def _maybe_replace_font(font: Any, tracker: set[tuple[str, str]]) -> Any:
                 object.__setattr__(cloned, "name", target)
             return cloned
         except Exception:
-            if hasattr(font, "copy") and callable(getattr(font, "copy")):
+            if hasattr(font, "copy") and callable(font.copy):
                 return font.copy(name=target)  # type: ignore[attr-defined]
     return font
 

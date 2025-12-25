@@ -52,7 +52,7 @@ def upgrade():
             "Example: DB_USER=sanbou_app_dev or POSTGRES_USER=sanbou_app_dev"
         )
 
-    print(f"[PERMISSIONS] Environment-specific permission grant")
+    print("[PERMISSIONS] Environment-specific permission grant")
     print(f"[PERMISSIONS] Target user: {current_user}")
     print(
         f"[PERMISSIONS] Security: Only {current_user} will receive permissions (environment isolation)"
@@ -167,10 +167,10 @@ def upgrade():
             f"{row[0]:6} | {row[1]:24} | {str(row[2]):6} | {str(row[3]):6} | {str(row[4]):6} | {str(row[5]):6}"
         )
 
-    print(f"\n✅ [PERMISSIONS] Comprehensive permissions granted successfully")
+    print("\n✅ [PERMISSIONS] Comprehensive permissions granted successfully")
     print(f"   Environment user: {current_user}")
-    print(f"   Schemas: stg, mart, ref, kpi, tmp")
-    print(f"   Permissions: Full CRUD + Materialized View REFRESH")
+    print("   Schemas: stg, mart, ref, kpi, tmp")
+    print("   Permissions: Full CRUD + Materialized View REFRESH")
     print(
         f"   Security: Environment isolation maintained (only {current_user} has access)"
     )

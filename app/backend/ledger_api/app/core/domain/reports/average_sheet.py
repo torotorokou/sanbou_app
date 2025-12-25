@@ -6,7 +6,6 @@ Average Sheet Domain Model.
 
 from dataclasses import dataclass
 from datetime import date
-from typing import List, Optional
 
 import pandas as pd
 
@@ -26,16 +25,16 @@ class AverageSheet:
     """
 
     report_date: date
-    shipment_items: List  # ShipmentItem型
-    yard_items: List  # YardItem型
-    receive_items: List  # ReceiveItem型
+    shipment_items: list  # ShipmentItem型
+    yard_items: list  # YardItem型
+    receive_items: list  # ReceiveItem型
 
     @classmethod
     def from_dataframes(
         cls,
-        df_shipment: Optional[pd.DataFrame],
-        df_yard: Optional[pd.DataFrame],
-        df_receive: Optional[pd.DataFrame],
+        df_shipment: pd.DataFrame | None,
+        df_yard: pd.DataFrame | None,
+        df_receive: pd.DataFrame | None,
     ) -> "AverageSheet":
         """DataFrameから単価平均表エンティティを生成"""
         from app.core.domain.reports.report_utils import (

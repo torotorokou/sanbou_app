@@ -6,7 +6,7 @@
 それぞれの変更が独立して行えるようになります。
 """
 
-from typing import Optional
+from fastapi import UploadFile
 
 from backend_shared.core.usecases.csv_formatter.dataframe import serialize_dates_info
 from backend_shared.core.usecases.csv_validator.validation_result import (
@@ -20,7 +20,6 @@ from backend_shared.infra.adapters.presentation.response_error import (
     MissingColumnsResponse,
     MissingDateFieldResponse,
 )
-from fastapi import UploadFile
 
 
 class ValidationResponseConverter:
@@ -34,8 +33,8 @@ class ValidationResponseConverter:
     def convert_to_api_response(
         self,
         validation_result: ValidationResult,
-        file_inputs: Optional[dict[str, UploadFile]] = None,
-    ) -> Optional[ErrorApiResponse]:
+        file_inputs: dict[str, UploadFile] | None = None,
+    ) -> ErrorApiResponse | None:
         """
         バリデーション結果をAPIレスポンスに変換
 
@@ -59,7 +58,7 @@ class ValidationResponseConverter:
     def _convert_single_error(
         self,
         error: ValidationError,
-        file_inputs: Optional[dict[str, UploadFile]] = None,
+        file_inputs: dict[str, UploadFile] | None = None,
     ) -> ErrorApiResponse:
         """
         単一のバリデーションエラーをAPIレスポンスに変換
@@ -87,7 +86,7 @@ class ValidationResponseConverter:
             )
 
     def _create_missing_columns_response(
-        self, error: ValidationError, file_inputs: Optional[dict[str, UploadFile]]
+        self, error: ValidationError, file_inputs: dict[str, UploadFile] | None
     ) -> MissingColumnsResponse:
         """MissingColumnsResponseを作成"""
         details = error.details or {}
@@ -118,7 +117,7 @@ class ValidationResponseConverter:
         )
 
     def _create_missing_date_field_response(
-        self, error: ValidationError, file_inputs: Optional[dict[str, UploadFile]]
+        self, error: ValidationError, file_inputs: dict[str, UploadFile] | None
     ) -> MissingDateFieldResponse:
         """MissingDateFieldResponseを作成"""
         details = error.details or {}

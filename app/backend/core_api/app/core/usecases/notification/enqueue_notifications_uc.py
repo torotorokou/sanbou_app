@@ -6,7 +6,6 @@ Enqueue Notifications UseCase
 
 from dataclasses import dataclass
 from datetime import datetime
-from typing import List, Optional
 
 from app.core.domain.notification import (
     NotificationChannel,
@@ -27,8 +26,8 @@ class EnqueueNotificationRequest:
     title: str
     body: str
     recipient_key: str
-    url: Optional[str] = None
-    scheduled_at: Optional[datetime] = None
+    url: str | None = None
+    scheduled_at: datetime | None = None
 
 
 class EnqueueNotificationsUseCase:
@@ -43,7 +42,7 @@ class EnqueueNotificationsUseCase:
         self._outbox = outbox
 
     def execute(
-        self, requests: List[EnqueueNotificationRequest], now: datetime
+        self, requests: list[EnqueueNotificationRequest], now: datetime
     ) -> None:
         """
         通知を Outbox に登録
@@ -52,7 +51,7 @@ class EnqueueNotificationsUseCase:
             requests: 登録する通知リクエスト
             now: 現在時刻（テストで差し替え可能にするため注入）
         """
-        items: List[NotificationOutboxItem] = []
+        items: list[NotificationOutboxItem] = []
         for req in requests:
             payload = NotificationPayload(
                 title=req.title,

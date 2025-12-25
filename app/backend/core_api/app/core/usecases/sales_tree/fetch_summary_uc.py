@@ -4,8 +4,6 @@ UseCase: FetchSalesTreeSummary
 売上ツリーのサマリーデータ取得UseCase
 """
 
-import logging
-
 from app.core.domain.sales_tree import SummaryRequest, SummaryRow
 from app.core.ports.sales_tree_port import ISalesTreeQuery
 from backend_shared.application.logging import get_module_logger, log_usecase_execution

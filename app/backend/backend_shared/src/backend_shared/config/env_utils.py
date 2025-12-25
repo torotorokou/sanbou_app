@@ -43,7 +43,6 @@ if get_stage() == "prod":
 """
 
 import os
-from typing import Optional
 
 
 def get_bool_env(key: str, default: bool = False) -> bool:
@@ -171,7 +170,7 @@ def is_iap_enabled() -> bool:
     return get_bool_env("IAP_ENABLED", default=False)
 
 
-def get_iap_audience() -> Optional[str]:
+def get_iap_audience() -> str | None:
     """
     IAP の audience 値を取得
 

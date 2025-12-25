@@ -1,6 +1,6 @@
 import ast
 import os
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from backend_shared.application.logging import get_module_logger
 from langchain_community.vectorstores import FAISS
@@ -16,7 +16,7 @@ def load_faiss_vectorstore(faiss_path: str) -> Any:
     )
 
 
-def safe_parse_tags(raw: Any) -> List[Any]:
+def safe_parse_tags(raw: Any) -> list[Any]:
     """与えられたタグフィールドを確実にリストへ正規化する。
 
     受け入れる形式:
@@ -59,11 +59,11 @@ def _normalize_token(s: Any) -> str:
 def search_documents_with_category(
     query: str,
     category: str,
-    json_data: List[dict],
+    json_data: list[dict],
     vectorstore: Any,
     top_k: int = 12,
-    tags: Optional[List[str]] = None,
-) -> List[tuple]:
+    tags: list[str] | None = None,
+) -> list[tuple]:
     results = vectorstore.similarity_search_with_score(query, k=top_k)
     logger.debug("Vector search completed", extra={"raw_hits": len(results)})
     filtered = []
@@ -72,8 +72,8 @@ def search_documents_with_category(
     DEBUG_VERBOSE = os.environ.get("RAG_DEBUG_VERBOSE") == "1"
 
     # JSON データからタグを引くための簡易インデックス（title と chunk_id をキーに）
-    title_to_tags: Dict[str, List[Any]] = {}
-    chunk_to_tags: Dict[str, List[Any]] = {}
+    title_to_tags: dict[str, list[Any]] = {}
+    chunk_to_tags: dict[str, list[Any]] = {}
     if isinstance(json_data, list):
         for item in json_data:
             try:
@@ -117,7 +117,7 @@ def search_documents_with_category(
         # title と chunk_id で JSON のタグを検索
         title = meta.get("title")
         chunk_id = meta.get("chunk_id") or meta.get("CHUNK_ID")
-        json_tags: List[Any] = []
+        json_tags: list[Any] = []
         if title and title in title_to_tags:
             json_tags.extend(title_to_tags.get(title, []))
         if chunk_id and chunk_id in chunk_to_tags:
@@ -158,7 +158,7 @@ def search_documents_with_category(
     )
 
     # JSON データからカテゴリ・タグ一致で候補を合成（ベクトル結果に統合）
-    json_candidates_scored: List[tuple] = []
+    json_candidates_scored: list[tuple] = []
     if isinstance(json_data, list):
         for item in json_data:
             try:
@@ -218,7 +218,7 @@ def search_documents_with_category(
         json_candidates = [tpl for _, tpl in json_candidates_scored]
         # ベクトル結果と統合（title+chunk_id で重複除去）
         seen = set()
-        merged: List[tuple] = []
+        merged: list[tuple] = []
 
         def key_of(tpl: tuple):
             m = tpl[2] if len(tpl) > 2 and isinstance(tpl[2], dict) else {}

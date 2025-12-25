@@ -6,14 +6,13 @@
 import json
 import os
 from pathlib import Path
-from typing import Dict, List, Tuple
 
 import yaml
 from app.shared.file_utils import ENV_PATH, FAISS_PATH, JSON_PATH, PDF_PATH, YAML_PATH
 from backend_shared.core.domain.exceptions import InfrastructureError, NotFoundError
 
 
-def get_resource_paths() -> Dict[str, str]:
+def get_resource_paths() -> dict[str, str]:
     """
     各種リソースファイルのパスをまとめて返す。
     新しいリソース種別追加時はこの辞書に追記するだけで拡張可能。
@@ -31,7 +30,7 @@ def get_resource_paths() -> Dict[str, str]:
     }
 
 
-def load_json_data(json_path: str) -> Dict:
+def load_json_data(json_path: str) -> dict:
     """
     JSONファイルを読み込んで辞書として返す。
     ファイル存在チェック・例外処理付き。
@@ -51,7 +50,7 @@ def load_json_data(json_path: str) -> Dict:
         raise InfrastructureError(f"JSONファイルの読み込みに失敗: {json_path}", cause=e)
 
 
-def load_question_templates() -> List[Dict]:
+def load_question_templates() -> list[dict]:
     """
     質問テンプレート（YAML）を読み込み、必ず List[Dict] で返す。
 
@@ -98,7 +97,7 @@ def load_question_templates() -> List[Dict]:
     except Exception:
         pass
 
-    candidates: List[str] = []
+    candidates: list[str] = []
     if primary:
         candidates.append(primary)
     candidates.extend(fallbacks)
@@ -121,8 +120,8 @@ def load_question_templates() -> List[Dict]:
 
 
 def extract_categories_and_titles(
-    data: List[Dict],
-) -> Tuple[List[str], Dict[str, List[str]]]:
+    data: list[dict],
+) -> tuple[list[str], dict[str, list[str]]]:
     """
     データからカテゴリとタイトルを抽出する。
 
@@ -148,8 +147,8 @@ def extract_categories_and_titles(
 
 
 def group_templates_by_category_and_tags(
-    data: List[Dict],
-) -> Dict[str, Dict[Tuple[str, ...], List[str]]]:
+    data: list[dict],
+) -> dict[str, dict[tuple[str, ...], list[str]]]:
     """
     テンプレートをカテゴリ・タグごとにグループ化する。
 
@@ -160,7 +159,7 @@ def group_templates_by_category_and_tags(
         dict: グループ化されたテンプレート
     """
 
-    def flatten_tags(tags) -> Tuple[str, ...]:
+    def flatten_tags(tags) -> tuple[str, ...]:
         """
         ネストしたリストやタプルを再帰的にフラットなタプルに変換
         """

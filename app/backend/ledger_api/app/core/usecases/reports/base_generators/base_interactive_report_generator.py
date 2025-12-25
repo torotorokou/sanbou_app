@@ -31,15 +31,17 @@
 from __future__ import annotations
 
 from abc import abstractmethod
+from collections.abc import Callable
 from io import StringIO
-from typing import Any, Callable, Dict, Tuple
+from typing import Any
 
 import pandas as pd
+
 from app.core.usecases.reports.base_generators.base_report_generator import (
     BaseReportGenerator,
 )
 
-SerializedState = Dict[str, Any]
+SerializedState = dict[str, Any]
 
 
 class BaseInteractiveReportGenerator(BaseReportGenerator):
@@ -51,14 +53,14 @@ class BaseInteractiveReportGenerator(BaseReportGenerator):
     # ------- 抽象ステップメソッド -------
     @abstractmethod
     def initial_step(
-        self, df_formatted: Dict[str, Any]
-    ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+        self, df_formatted: dict[str, Any]
+    ) -> tuple[dict[str, Any], dict[str, Any]]:
         """初期ステップ。state, payload を返す。"""
         raise NotImplementedError
 
     def apply_step(
-        self, state: Dict[str, Any], user_input: Dict[str, Any]
-    ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+        self, state: dict[str, Any], user_input: dict[str, Any]
+    ) -> tuple[dict[str, Any], dict[str, Any]]:
         """中間ステップ (汎用ディスパッチ)
 
         user_input から以下いずれかを読みステップハンドラを呼び出す:
@@ -87,24 +89,24 @@ class BaseInteractiveReportGenerator(BaseReportGenerator):
     # サブクラスで必要に応じてオーバーライド
     def get_step_handlers(
         self,
-    ) -> Dict[
+    ) -> dict[
         str,
         Callable[
-            [Dict[str, Any], Dict[str, Any]], Tuple[Dict[str, Any], Dict[str, Any]]
+            [dict[str, Any], dict[str, Any]], tuple[dict[str, Any], dict[str, Any]]
         ],
     ]:  # noqa: E501
         return {}
 
     @abstractmethod
     def finalize_step(
-        self, state: Dict[str, Any]
-    ) -> Tuple[pd.DataFrame, Dict[str, Any]]:
+        self, state: dict[str, Any]
+    ) -> tuple[pd.DataFrame, dict[str, Any]]:
         """最終ステップ。帳票最終 DataFrame と追加情報 payload を返す。"""
         raise NotImplementedError
 
     # ------- セッション状態シリアライズ支援 -------
-    def serialize_state(self, state: Dict[str, Any]) -> SerializedState:
-        serialized: Dict[str, Any] = {}
+    def serialize_state(self, state: dict[str, Any]) -> SerializedState:
+        serialized: dict[str, Any] = {}
         for k, v in state.items():
             if isinstance(v, pd.DataFrame):
                 serialized[k] = {"__df__": True, "value": v.to_json()}
@@ -112,8 +114,8 @@ class BaseInteractiveReportGenerator(BaseReportGenerator):
                 serialized[k] = v
         return serialized
 
-    def deserialize_state(self, serialized: SerializedState) -> Dict[str, Any]:
-        state: Dict[str, Any] = {}
+    def deserialize_state(self, serialized: SerializedState) -> dict[str, Any]:
+        state: dict[str, Any] = {}
         for k, v in serialized.items():
             if isinstance(v, dict) and v.get("__df__") and "value" in v:
                 value = v["value"]
@@ -128,7 +130,7 @@ class BaseInteractiveReportGenerator(BaseReportGenerator):
         return state
 
     # main_process は未使用 (互換のため定義) ---------
-    def main_process(self, df_formatted: Dict[str, Any]):  # type: ignore[override]
+    def main_process(self, df_formatted: dict[str, Any]):  # type: ignore[override]
         """非インタラクティブ互換: finalize_step を直接呼ぶ場合のフォールバック。
         インタラクティブフローでは利用しない。"""
         final_df, _ = self.finalize_step({"df_formatted": df_formatted})

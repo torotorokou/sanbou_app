@@ -23,16 +23,18 @@ app.add_middleware(
 ```
 """
 
-from typing import Any, Callable, List, Optional
+from collections.abc import Callable
+from typing import Any
+
+from fastapi import Request
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.responses import JSONResponse
 
 from backend_shared.application.logging import get_module_logger
 from backend_shared.config.env_utils import (
     get_default_auth_excluded_paths,
     is_iap_enabled,
 )
-from fastapi import Request
-from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.responses import JSONResponse
 
 logger = get_module_logger(__name__)
 
@@ -52,8 +54,8 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
     def __init__(
         self,
         app,
-        auth_provider_factory: Optional[Callable[[], Any]] = None,
-        excluded_paths: Optional[List[str]] = None,
+        auth_provider_factory: Callable[[], Any] | None = None,
+        excluded_paths: list[str] | None = None,
     ):
         """
         認証ミドルウェアを初期化

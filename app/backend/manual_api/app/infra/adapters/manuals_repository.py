@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-import os
-from typing import Dict, List, Optional
+import builtins
 
 from app.core.domain.manual_entity import (
     CatalogItem,
@@ -21,7 +20,7 @@ logger = get_module_logger(__name__)
 
 
 class InMemoryManualRepository(ManualsRepository):
-    def __init__(self, base_url: Optional[str] = None) -> None:
+    def __init__(self, base_url: str | None = None) -> None:
         from app.config.settings import settings
 
         resolved_base_url = base_url or settings.MANUAL_FRONTEND_BASE_URL
@@ -29,14 +28,14 @@ class InMemoryManualRepository(ManualsRepository):
             "Initializing InMemoryManualRepository",
             extra={"base_url": resolved_base_url},
         )
-        self._items: Dict[str, ManualDetail] = {}
+        self._items: dict[str, ManualDetail] = {}
         self._seed(resolved_base_url)
 
     def _seed(self, base_url: str) -> None:
         def build(
-            doc_id: str, title: str, description: str, category: str, tags: List[str]
+            doc_id: str, title: str, description: str, category: str, tags: list[str]
         ) -> ManualDetail:
-            sections: List[ManualSectionChunk] = [
+            sections: list[ManualSectionChunk] = [
                 ManualSectionChunk(
                     title="概要",
                     anchor="s-1",
@@ -53,7 +52,7 @@ class InMemoryManualRepository(ManualsRepository):
                     html="<h2>注意点</h2><ul><li>権限を確認</li><li>入力値を再確認</li></ul>",
                 ),
             ]
-            rag: List[RagMetadata] = [
+            rag: list[RagMetadata] = [
                 RagMetadata(
                     doc_id=f"manual-{doc_id}",
                     page_title=title,
@@ -98,9 +97,9 @@ class InMemoryManualRepository(ManualsRepository):
     def list(
         self,
         *,
-        query: Optional[str] = None,
-        tag: Optional[str] = None,
-        category: Optional[str] = None,
+        query: str | None = None,
+        tag: str | None = None,
+        category: str | None = None,
         page: int = 1,
         size: int = 20,
     ) -> ManualListResponse:
@@ -121,7 +120,7 @@ class InMemoryManualRepository(ManualsRepository):
         total = len(items)
         start = max((page - 1) * size, 0)
         end = start + size
-        summaries: List[ManualSummary] = [
+        summaries: list[ManualSummary] = [
             ManualSummary(
                 id=x.id,
                 title=x.title,
@@ -134,18 +133,16 @@ class InMemoryManualRepository(ManualsRepository):
         ]
         return ManualListResponse(items=summaries, page=page, size=size, total=total)
 
-    def get(self, manual_id: str) -> Optional[ManualDetail]:
+    def get(self, manual_id: str) -> ManualDetail | None:
         return self._items.get(manual_id)
 
-    def get_sections(self, manual_id: str) -> List[ManualSectionChunk]:
+    def get_sections(self, manual_id: str) -> builtins.list[ManualSectionChunk]:
         m = self._items.get(manual_id)
         return m.sections if m else []
 
-    def get_catalog(
-        self, *, category: Optional[str] = "shogun"
-    ) -> ManualCatalogResponse:
+    def get_catalog(self, *, category: str | None = "shogun") -> ManualCatalogResponse:
         # Load from static dataset (migrated from frontend). Future: replace with SQL-backed repository.
-        sections: List[CatalogSection] = []
+        sections: list[CatalogSection] = []
         for sec in CATALOG_SECTIONS:
             items = [
                 CatalogItem(

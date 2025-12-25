@@ -32,9 +32,10 @@ import logging.config
 import os
 import threading
 import time
+from collections.abc import Callable
 from contextvars import ContextVar
 from datetime import datetime
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Optional
 
 # pythonjsonlogger は optional: なければ通常のフォーマッタを使用
 try:
@@ -399,7 +400,7 @@ def get_request_id() -> str:
 # ========================================
 # Helper 関数: 構造化ログコンテキスト作成
 # ========================================
-def create_log_context(operation: str, **kwargs: Any) -> Dict[str, Any]:
+def create_log_context(operation: str, **kwargs: Any) -> dict[str, Any]:
     """
     構造化ログのコンテキスト辞書を作成
 
@@ -589,7 +590,7 @@ LOG_LEVEL_CRITICAL = "CRITICAL"
 
 
 def log_usecase_execution(
-    usecase_name: Optional[str] = None,
+    usecase_name: str | None = None,
     log_args: bool = True,
     log_result: bool = False,
     track_time: bool = True,
@@ -626,7 +627,7 @@ def log_usecase_execution(
                     uc_name = func.__name__
 
             # 実行開始ログ
-            log_data: Dict[str, Any] = {
+            log_data: dict[str, Any] = {
                 "usecase": uc_name,
                 "timestamp": datetime.utcnow().isoformat(),
                 "event": "start",
@@ -731,7 +732,7 @@ class UseCaseMetrics:
 
     def __init__(self) -> None:
         """インスタンス変数の型ヒント定義"""
-        self._metrics: Dict[str, Dict[str, int]]
+        self._metrics: dict[str, dict[str, int]]
         self._metrics_lock: threading.Lock
 
     def __new__(cls):
@@ -763,7 +764,7 @@ class UseCaseMetrics:
 
             self._metrics[usecase_name][status] += 1
 
-    def get_metrics(self, usecase_name: Optional[str] = None) -> Dict[str, Any]:
+    def get_metrics(self, usecase_name: str | None = None) -> dict[str, Any]:
         """
         メトリクスを取得（スレッドセーフ）
 
@@ -785,7 +786,7 @@ class UseCaseMetrics:
         logger.info("UseCase metrics reset")
 
 
-def track_usecase_metrics(usecase_name: Optional[str] = None) -> Callable:
+def track_usecase_metrics(usecase_name: str | None = None) -> Callable:
     """
     UseCaseのメトリクスを収集するデコレータ
 
@@ -818,11 +819,11 @@ def track_usecase_metrics(usecase_name: Optional[str] = None) -> Callable:
                 result = func(*args, **kwargs)
                 metrics.increment(uc_name, "success")
                 return result
-            except ValueError as e:
+            except ValueError:
                 # バリデーションエラー
                 metrics.increment(uc_name, "validation_error")
                 raise
-            except Exception as e:
+            except Exception:
                 # その他のエラー
                 metrics.increment(uc_name, "error")
                 raise
@@ -833,7 +834,7 @@ def track_usecase_metrics(usecase_name: Optional[str] = None) -> Callable:
 
 
 def combined_usecase_decorator(
-    usecase_name: Optional[str] = None,
+    usecase_name: str | None = None,
     log_args: bool = True,
     log_result: bool = False,
     track_metrics: bool = True,

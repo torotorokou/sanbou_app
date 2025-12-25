@@ -6,7 +6,6 @@ Money Value Object - 金額を表す値オブジェクト
 
 from dataclasses import dataclass
 from decimal import ROUND_HALF_UP, Decimal
-from typing import Union
 
 
 @dataclass(frozen=True)
@@ -94,7 +93,7 @@ class Money:
             )
         return Money(result, self.currency)
 
-    def __mul__(self, multiplier: Union[int, float, Decimal]) -> "Money":
+    def __mul__(self, multiplier: int | float | Decimal) -> "Money":
         """
         金額の乗算
 
@@ -107,7 +106,7 @@ class Money:
         result = self.amount * Decimal(str(multiplier))
         return Money(result, self.currency)
 
-    def __truediv__(self, divisor: Union[int, float, Decimal]) -> "Money":
+    def __truediv__(self, divisor: int | float | Decimal) -> "Money":
         """
         金額の除算
 
@@ -180,23 +179,23 @@ class Money:
     def __lt__(self, other: "Money") -> bool:
         """小なり比較"""
         if self.currency != other.currency:
-            raise ValueError(f"Cannot compare different currencies")
+            raise ValueError("Cannot compare different currencies")
         return self.amount < other.amount
 
     def __le__(self, other: "Money") -> bool:
         """小なりイコール比較"""
         if self.currency != other.currency:
-            raise ValueError(f"Cannot compare different currencies")
+            raise ValueError("Cannot compare different currencies")
         return self.amount <= other.amount
 
     def __gt__(self, other: "Money") -> bool:
         """大なり比較"""
         if self.currency != other.currency:
-            raise ValueError(f"Cannot compare different currencies")
+            raise ValueError("Cannot compare different currencies")
         return self.amount > other.amount
 
     def __ge__(self, other: "Money") -> bool:
         """大なりイコール比較"""
         if self.currency != other.currency:
-            raise ValueError(f"Cannot compare different currencies")
+            raise ValueError("Cannot compare different currencies")
         return self.amount >= other.amount

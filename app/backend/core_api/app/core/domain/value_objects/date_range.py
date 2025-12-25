@@ -5,9 +5,9 @@ Date Range Value Object - 日付範囲を表す値オブジェクト
 開始日・終了日の妥当性検証と、範囲に関する問い合わせメソッドを提供します。
 """
 
+from collections.abc import Iterator
 from dataclasses import dataclass
 from datetime import date, timedelta
-from typing import Iterator
 
 
 @dataclass(frozen=True)

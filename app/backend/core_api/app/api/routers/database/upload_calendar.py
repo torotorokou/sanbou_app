@@ -8,7 +8,8 @@ CSVアップロードカレンダー取得と削除エンドポイント
 """
 
 from datetime import date
-from typing import Optional
+
+from fastapi import APIRouter, Depends, Query
 
 from app.config.di_providers import (
     get_delete_upload_scope_uc,
@@ -24,7 +25,6 @@ from backend_shared.core.domain.exceptions import (
     NotFoundError,
     ValidationError,
 )
-from fastapi import APIRouter, Depends, Query
 
 logger = get_module_logger(__name__)
 
@@ -78,7 +78,7 @@ def delete_upload_scope(
     upload_file_id: int,
     target_date: date = Query(..., alias="date"),
     csv_kind: str = Query(..., alias="csvKind"),
-    deleted_by: Optional[str] = None,
+    deleted_by: str | None = None,
     uc: DeleteUploadScopeUseCase = Depends(get_delete_upload_scope_uc),
 ):
     """

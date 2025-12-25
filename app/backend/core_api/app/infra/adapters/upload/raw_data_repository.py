@@ -12,27 +12,12 @@ log.upload_file はすべての CSV アップロード(将軍、マニフェス�
 """
 
 import hashlib
-import logging
 import os
+from collections.abc import Iterable
 from datetime import date, datetime
-from typing import Any, Dict, Iterable, Optional
+from typing import Any
 
 import pandas as pd
-from app.core.domain.csv import CsvKind
-from app.infra.db.sql_loader import load_sql
-from backend_shared.application.logging import create_log_context, get_module_logger
-from backend_shared.db.names import (
-    SCHEMA_LOG,
-    SCHEMA_STG,
-    T_UPLOAD_FILE,
-    V_ACTIVE_SHOGUN_FINAL_RECEIVE,
-    V_ACTIVE_SHOGUN_FINAL_SHIPMENT,
-    V_ACTIVE_SHOGUN_FINAL_YARD,
-    V_ACTIVE_SHOGUN_FLASH_RECEIVE,
-    V_ACTIVE_SHOGUN_FLASH_SHIPMENT,
-    V_ACTIVE_SHOGUN_FLASH_YARD,
-    fq,
-)
 from sqlalchemy import (
     BigInteger,
     Boolean,
@@ -48,11 +33,27 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import Session
 
+from app.core.domain.csv import CsvKind
+from app.infra.db.sql_loader import load_sql
+from backend_shared.application.logging import create_log_context, get_module_logger
+from backend_shared.db.names import (
+    SCHEMA_LOG,
+    SCHEMA_STG,
+    T_UPLOAD_FILE,
+    V_ACTIVE_SHOGUN_FINAL_RECEIVE,
+    V_ACTIVE_SHOGUN_FINAL_SHIPMENT,
+    V_ACTIVE_SHOGUN_FINAL_YARD,
+    V_ACTIVE_SHOGUN_FLASH_RECEIVE,
+    V_ACTIVE_SHOGUN_FLASH_SHIPMENT,
+    V_ACTIVE_SHOGUN_FLASH_YARD,
+    fq,
+)
+
 logger = get_module_logger(__name__)
 
 
 # csv_kind から stg テーブル名へのマッピング（CsvKind Enum を使用）
-CSV_KIND_TABLE_MAP: Dict[str, str] = {kind.value: kind.table_name for kind in CsvKind}
+CSV_KIND_TABLE_MAP: dict[str, str] = {kind.value: kind.table_name for kind in CsvKind}
 
 
 class RawDataRepository:
@@ -263,10 +264,10 @@ class RawDataRepository:
         file_name: str,
         file_hash: str,
         file_type: str,
-        file_size_bytes: Optional[int] = None,
-        row_count: Optional[int] = None,
-        uploaded_by: Optional[str] = None,
-        env: Optional[str] = None,
+        file_size_bytes: int | None = None,
+        row_count: int | None = None,
+        uploaded_by: str | None = None,
+        env: str | None = None,
     ) -> int:
         """
         アップロードファイルのメタ情報を log.upload_file に登録
@@ -330,10 +331,10 @@ class RawDataRepository:
         csv_type: str,
         file_hash: str,
         file_type: str,
-        file_name: Optional[str] = None,
-        file_size_bytes: Optional[int] = None,
-        row_count: Optional[int] = None,
-    ) -> Optional[Dict[str, Any]]:
+        file_name: str | None = None,
+        file_size_bytes: int | None = None,
+        row_count: int | None = None,
+    ) -> dict[str, Any] | None:
         """
         重複アップロードチェック（成功済み＆有効なファイルのみ）
 
@@ -420,7 +421,7 @@ class RawDataRepository:
 
         return None
 
-    def check_file_exists(self, file_hash: str, csv_type: str) -> Optional[int]:
+    def check_file_exists(self, file_hash: str, csv_type: str) -> int | None:
         """
         同一ファイルがすでに登録されているかチェック（後方互換性のため残す）
 
@@ -444,8 +445,8 @@ class RawDataRepository:
         self,
         file_id: int,
         status: str,
-        error_message: Optional[str] = None,
-        row_count: Optional[int] = None,
+        error_message: str | None = None,
+        row_count: int | None = None,
     ) -> None:
         """
         アップロードファイルの処理ステータスを更新
@@ -457,7 +458,7 @@ class RawDataRepository:
             row_count: 実際に処理された行数（成功時に更新）
         """
         try:
-            values: Dict[str, Any] = {
+            values: dict[str, Any] = {
                 "processing_status": status,
                 "error_message": error_message,
             }
@@ -490,7 +491,7 @@ class RawDataRepository:
     def soft_delete_upload_file(
         self,
         file_id: int,
-        deleted_by: Optional[str] = None,
+        deleted_by: str | None = None,
     ) -> None:
         """
         アップロードファイルを論理削除
@@ -534,7 +535,7 @@ class RawDataRepository:
         *,
         csv_kind: str,
         dates: Iterable[date],
-        deleted_by: Optional[str] = None,
+        deleted_by: str | None = None,
     ) -> int:
         """
         指定された csv_kind について、指定日付の有効データをすべて論理削除する。
@@ -638,7 +639,7 @@ class RawDataRepository:
         upload_file_id: int,
         target_date: date,
         csv_kind: str,
-        deleted_by: Optional[str] = None,
+        deleted_by: str | None = None,
     ) -> int:
         """
         カレンダーの1マス（upload_file_id + date + csv_kind）に対応する行だけを論理削除。
@@ -797,7 +798,7 @@ class RawDataRepository:
             # 行番号を付与
             records = []
             for row_idx, (idx, row) in enumerate(df.iterrows(), start=1):
-                record: Dict[str, Any] = {
+                record: dict[str, Any] = {
                     "file_id": file_id,
                     "row_number": row_idx,  # 1-indexed
                 }
@@ -869,7 +870,7 @@ class RawDataRepository:
             # 行番号を付与してレコード作成
             records = []
             for row_idx, (idx, row) in enumerate(df.iterrows(), start=1):
-                record: Dict[str, Any] = {
+                record: dict[str, Any] = {
                     "file_id": file_id,
                     "row_number": row_idx,
                 }
@@ -940,7 +941,7 @@ class RawDataRepository:
             # 行番号を付与してレコード作成
             records = []
             for row_idx, (idx, row) in enumerate(df.iterrows(), start=1):
-                record: Dict[str, Any] = {
+                record: dict[str, Any] = {
                     "file_id": file_id,
                     "row_number": row_idx,
                 }
@@ -970,7 +971,7 @@ class RawDataRepository:
     # Upload Status Query Methods (IUploadStatusQuery Port implementation)
     # ========================================================================
 
-    def get_upload_status(self, upload_file_id: int) -> Optional[Dict[str, Any]]:
+    def get_upload_status(self, upload_file_id: int) -> dict[str, Any] | None:
         """
         アップロードファイルのステータスを取得
 
@@ -1021,7 +1022,7 @@ class RawDataRepository:
             )
             raise
 
-    def get_upload_calendar(self, year: int, month: int) -> list[Dict[str, Any]]:
+    def get_upload_calendar(self, year: int, month: int) -> list[dict[str, Any]]:
         """
         指定月のアップロードカレンダーデータを取得
 

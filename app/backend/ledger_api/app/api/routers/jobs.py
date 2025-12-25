@@ -12,7 +12,6 @@
 
 import uuid
 from datetime import datetime
-from typing import Dict
 
 from backend_shared.core.domain import JobCreate, JobStatus, ProblemDetails
 from backend_shared.infra.adapters.fastapi import DomainError
@@ -21,7 +20,7 @@ from fastapi import APIRouter, HTTPException, Request
 router = APIRouter(prefix="/api/jobs", tags=["Jobs"])
 
 # 簡易的なインメモリストア（本番ではRedis/DBを使用）
-job_store: Dict[str, JobStatus] = {}
+job_store: dict[str, JobStatus] = {}
 
 
 @router.post("", response_model=JobStatus)

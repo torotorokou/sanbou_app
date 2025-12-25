@@ -9,8 +9,9 @@ Sales Tree Repository - {fq(SCHEMA_MART, V_SALES_TREE_DETAIL_BASE)} からのデ
 
 import csv
 import io
-import logging
-from typing import Optional
+
+from sqlalchemy import text
+from sqlalchemy.orm import Session
 
 from app.core.domain.sales_tree import (
     AxisMode,
@@ -34,12 +35,8 @@ from app.infra.db.sql_loader import load_sql
 from backend_shared.application.logging import create_log_context, get_module_logger
 from backend_shared.db.names import (
     SCHEMA_MART,
-    SCHEMA_STG,
-    V_ACTIVE_SHOGUN_FINAL_RECEIVE,
     V_SALES_TREE_DETAIL_BASE,
 )
-from sqlalchemy import text
-from sqlalchemy.orm import Session
 
 logger = get_module_logger(__name__)
 
@@ -164,15 +161,15 @@ class SalesTreeRepository:
                 # filter_ids はaxis_id_colの型に応じて処理
                 # customer_id: text, item_id: integer, sales_date: date
                 if req.mode == "customer":
-                    where_clauses.append(f"customer_id = ANY(:filter_ids)")
+                    where_clauses.append("customer_id = ANY(:filter_ids)")
                     params["filter_ids"] = req.filter_ids
                 elif req.mode == "item":
                     # item_id は integer なので変換
-                    where_clauses.append(f"item_id = ANY(:filter_ids)")
+                    where_clauses.append("item_id = ANY(:filter_ids)")
                     params["filter_ids"] = [int(fid) for fid in req.filter_ids]
                 elif req.mode == "date":
                     # sales_date は date なので変換
-                    where_clauses.append(f"sales_date = ANY(:filter_ids)")
+                    where_clauses.append("sales_date = ANY(:filter_ids)")
                     params["filter_ids"] = [str(fid) for fid in req.filter_ids]
 
             where_sql = " AND ".join(where_clauses)
@@ -390,13 +387,13 @@ class SalesTreeRepository:
 
             # baseAxisフィルタ
             if req.base_axis == "customer":
-                where_clauses.append(f"customer_id = :base_id")
+                where_clauses.append("customer_id = :base_id")
                 params["base_id"] = req.base_id
             elif req.base_axis == "item":
-                where_clauses.append(f"item_id = :base_id")
+                where_clauses.append("item_id = :base_id")
                 params["base_id"] = int(req.base_id)
             elif req.base_axis == "date":
-                where_clauses.append(f"sales_date = :base_id")
+                where_clauses.append("sales_date = :base_id")
                 params["base_id"] = req.base_id
 
             # rep_idsフィルタ
@@ -690,18 +687,18 @@ class SalesTreeRepository:
             }
 
             if req.rep_ids:
-                where_clauses.append(f"rep_id = ANY(:rep_ids)")
+                where_clauses.append("rep_id = ANY(:rep_ids)")
                 params["rep_ids"] = req.rep_ids
 
             if req.filter_ids:
                 if req.mode == "customer":
-                    where_clauses.append(f"customer_id = ANY(:filter_ids)")
+                    where_clauses.append("customer_id = ANY(:filter_ids)")
                     params["filter_ids"] = req.filter_ids
                 elif req.mode == "item":
-                    where_clauses.append(f"item_id = ANY(:filter_ids)")
+                    where_clauses.append("item_id = ANY(:filter_ids)")
                     params["filter_ids"] = [int(fid) for fid in req.filter_ids]
                 elif req.mode == "date":
-                    where_clauses.append(f"sales_date = ANY(:filter_ids)")
+                    where_clauses.append("sales_date = ANY(:filter_ids)")
                     params["filter_ids"] = [str(fid) for fid in req.filter_ids]
 
             where_sql = " AND ".join(where_clauses)

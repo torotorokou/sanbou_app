@@ -3,10 +3,10 @@ Ingest Adapter: Implements IngestPort for data ingestion operations.
 """
 
 from datetime import date as date_type
-from typing import List
+
+from sqlalchemy.orm import Session
 
 from app.infra.adapters.misc.core_repository import CoreRepository
-from sqlalchemy.orm import Session
 
 
 class IngestAdapter:
@@ -18,7 +18,7 @@ class IngestAdapter:
     def __init__(self, db: Session):
         self._repo = CoreRepository(db)
 
-    def upsert_actuals(self, rows: List[dict]) -> None:
+    def upsert_actuals(self, rows: list[dict]) -> None:
         """Insert or update actual data rows."""
         self._repo.upsert_actuals(rows)
 

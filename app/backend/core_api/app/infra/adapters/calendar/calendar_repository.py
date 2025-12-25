@@ -4,13 +4,13 @@ Calendar Repository - カレンダーデータ取得の PostgreSQL 実装
 implements Port: ICalendarQuery
 """
 
-import logging
-from typing import Any, Dict, List
+from typing import Any
+
+from sqlalchemy import text
+from sqlalchemy.orm import Session
 
 from backend_shared.application.logging import create_log_context, get_module_logger
 from backend_shared.db.names import SCHEMA_REF, V_CALENDAR_CLASSIFIED, fq
-from sqlalchemy import text
-from sqlalchemy.orm import Session
 
 logger = get_module_logger(__name__)
 
@@ -29,7 +29,7 @@ class CalendarRepository:
         """
         self.db = db
 
-    def get_month_calendar(self, year: int, month: int) -> List[Dict[str, Any]]:
+    def get_month_calendar(self, year: int, month: int) -> list[dict[str, Any]]:
         """
         指定された年月のカレンダーデータを取得
 

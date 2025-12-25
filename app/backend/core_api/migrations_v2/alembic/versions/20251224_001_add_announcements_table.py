@@ -26,7 +26,6 @@ Phase 1: app.announcements テーブル追加
 
 """
 
-import sqlalchemy as sa
 from alembic import op
 
 # revision identifiers, used by Alembic.

@@ -5,9 +5,9 @@ APIレスポンスに依存しない、純粋なバリデーションロジッ�
 バリデーション結果は ValidationResult として返され、レスポンス変換は上位層で行います。
 """
 
-from typing import Dict, List, Optional, Union
-
 import pandas as pd
+from fastapi import UploadFile
+
 from backend_shared.core.usecases.csv_validator.validation_result import (
     ValidationError,
     ValidationErrorType,
@@ -19,7 +19,6 @@ from backend_shared.utils.dataframe_validator import (
     check_missing_file,
     check_required_columns,
 )
-from fastapi import UploadFile
 
 
 class PureCSVValidator:
@@ -30,7 +29,7 @@ class PureCSVValidator:
     すべてのバリデーション結果は ValidationResult として統一的に返されます。
     """
 
-    def __init__(self, required_columns: Dict[str, List[str]]):
+    def __init__(self, required_columns: dict[str, list[str]]):
         """
         バリデーターの初期化
 
@@ -40,7 +39,7 @@ class PureCSVValidator:
         self.required_columns = required_columns
 
     def validate_missing_files(
-        self, file_inputs: Dict[str, Optional[UploadFile]]
+        self, file_inputs: dict[str, UploadFile | None]
     ) -> ValidationResult:
         """
         アップロードされていないファイルがあるかをチェック
@@ -68,8 +67,8 @@ class PureCSVValidator:
 
     def validate_required_columns(
         self,
-        dfs: Dict[str, pd.DataFrame],
-        file_inputs: Dict[str, UploadFile],
+        dfs: dict[str, pd.DataFrame],
+        file_inputs: dict[str, UploadFile],
     ) -> ValidationResult:
         """
         必須カラムが揃っているかをチェック
@@ -103,8 +102,8 @@ class PureCSVValidator:
 
     def validate_denpyou_date_exists(
         self,
-        dfs: Dict[str, pd.DataFrame],
-        file_inputs: Dict[str, UploadFile],
+        dfs: dict[str, pd.DataFrame],
+        file_inputs: dict[str, UploadFile],
     ) -> ValidationResult:
         """
         「伝票日付」カラムの存在をチェック
@@ -134,7 +133,7 @@ class PureCSVValidator:
         return ValidationResult.success()
 
     def validate_denpyou_date_consistency(
-        self, dfs: Dict[str, pd.DataFrame]
+        self, dfs: dict[str, pd.DataFrame]
     ) -> ValidationResult:
         """
         すべてのファイルの「伝票日付」が一致しているかをチェック
@@ -159,8 +158,8 @@ class PureCSVValidator:
 
     def validate_all(
         self,
-        dfs: Dict[str, pd.DataFrame],
-        file_inputs: Dict[str, UploadFile],
+        dfs: dict[str, pd.DataFrame],
+        file_inputs: dict[str, UploadFile],
     ) -> ValidationResult:
         """
         すべてのバリデーションを実行
@@ -173,7 +172,7 @@ class PureCSVValidator:
             ValidationResult: 統合されたバリデーション結果
         """
         # ファイル入力をOptional型に変換
-        optional_file_inputs: Dict[str, Optional[UploadFile]] = {
+        optional_file_inputs: dict[str, UploadFile | None] = {
             k: v for k, v in file_inputs.items()
         }
 

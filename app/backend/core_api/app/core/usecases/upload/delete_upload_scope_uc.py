@@ -8,14 +8,13 @@ Delete Upload Scope UseCase - アップロードスコープ削除ユースケ�
     将軍速報/最終版の受入CSV削除時にMV更新を実行
 """
 
-import logging
 from datetime import date
-from typing import Optional
+
+from sqlalchemy.orm import Session
 
 from app.core.ports.upload_status_port import IUploadCalendarQuery
 from app.infra.adapters.materialized_view import MaterializedViewRefresher
 from backend_shared.application.logging import get_module_logger, log_usecase_execution
-from sqlalchemy.orm import Session
 
 logger = get_module_logger(__name__)
 
@@ -46,7 +45,7 @@ class DeleteUploadScopeUseCase:
         upload_file_id: int,
         target_date: date,
         csv_kind: str,
-        deleted_by: Optional[str] = None,
+        deleted_by: str | None = None,
     ) -> int:
         """
         指定されたアップロードスコープを論理削除

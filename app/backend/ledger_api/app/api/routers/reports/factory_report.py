@@ -1,11 +1,11 @@
 # backend/app/api/endpoints/reports/factory_report.py
 
-from typing import Optional
+
+from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, UploadFile
+from fastapi.responses import Response
 
 from app.config.di_providers import get_factory_report_usecase
 from app.core.usecases.reports import GenerateFactoryReportUseCase
-from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, UploadFile
-from fastapi.responses import Response
 
 # APIルーターの初期化
 router = APIRouter()
@@ -18,9 +18,7 @@ async def generate_factory_report(
     shipment: UploadFile = File(None),
     yard: UploadFile = File(None),
     receive: UploadFile = File(None),
-    period_type: Optional[str] = Form(
-        None
-    ),  # "oneday" | "oneweek" | "onemonth"（任意）
+    period_type: str | None = Form(None),  # "oneday" | "oneweek" | "onemonth"（任意）
     usecase: GenerateFactoryReportUseCase = Depends(get_factory_report_usecase),
 ) -> Response:
     """

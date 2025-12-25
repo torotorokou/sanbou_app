@@ -9,7 +9,6 @@ Adapter (Repository) はこのインターフェースを実装します。
   - テストでは Mock 実装を差し替え可能
 """
 
-from abc import ABC, abstractmethod
 from typing import Protocol
 
 import pandas as pd

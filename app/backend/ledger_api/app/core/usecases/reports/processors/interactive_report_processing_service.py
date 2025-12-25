@@ -11,13 +11,8 @@ ReportProcessingService のインタラクティブ版。
 
 from __future__ import annotations
 
-from typing import Any, Dict, Optional, Tuple, Union
+from typing import Any
 
-from app.core.usecases.reports.base_generators import BaseInteractiveReportGenerator
-from app.core.usecases.reports.processors.report_processing_service import (
-    ReportProcessingService,
-)
-from app.infra.adapters.session import session_store
 from backend_shared.application.logging import create_log_context, get_module_logger
 from backend_shared.infra.adapters.fastapi.error_handlers import DomainError
 
@@ -31,10 +26,16 @@ from backend_shared.utils.date_filter_utils import (
 from fastapi import BackgroundTasks, UploadFile
 from fastapi.responses import JSONResponse
 
+from app.core.usecases.reports.base_generators import BaseInteractiveReportGenerator
+from app.core.usecases.reports.processors.report_processing_service import (
+    ReportProcessingService,
+)
+from app.infra.adapters.session import session_store
+
 logger = get_module_logger(__name__)
 
 
-def _convert_error_to_dict(error: Any) -> Dict[str, Any]:
+def _convert_error_to_dict(error: Any) -> dict[str, Any]:
     """エラーオブジェクトを辞書形式に変換（共通化）
 
     Args:
@@ -71,8 +72,8 @@ class InteractiveReportProcessingService(ReportProcessingService):
     # 既存 _read_uploaded_files を再利用しても良いが、型が同一なのでそのまま呼ぶ
 
     def initial(
-        self, generator: BaseInteractiveReportGenerator, files: Dict[str, UploadFile]
-    ) -> Dict[str, Any]:
+        self, generator: BaseInteractiveReportGenerator, files: dict[str, UploadFile]
+    ) -> dict[str, Any]:
         """初期処理（共通化されたエラーハンドリング）"""
         try:
             dfs, error = self._read_uploaded_files(files)
@@ -129,7 +130,7 @@ class InteractiveReportProcessingService(ReportProcessingService):
             state, payload = generator.initial_step(df_formatted)
 
             # セッションID処理
-            preferred_session_id: Optional[str] = None
+            preferred_session_id: str | None = None
             state_session_id = (
                 state.get("session_id") if isinstance(state, dict) else None
             )
@@ -160,7 +161,7 @@ class InteractiveReportProcessingService(ReportProcessingService):
             if isinstance(payload, dict) and payload.get("status") == "error":
                 return payload
 
-            response_payload: Dict[str, Any] = {
+            response_payload: dict[str, Any] = {
                 "session_id": session_id,
                 "rows": payload.get("rows", []) if isinstance(payload, dict) else [],
             }
@@ -195,9 +196,9 @@ class InteractiveReportProcessingService(ReportProcessingService):
     def apply(
         self,
         generator: BaseInteractiveReportGenerator,
-        session_data: Union[Dict[str, Any], str],
-        user_input: Dict[str, Any],
-    ) -> Dict[str, Any] | JSONResponse:
+        session_data: dict[str, Any] | str,
+        user_input: dict[str, Any],
+    ) -> dict[str, Any] | JSONResponse:
         try:
             state_payload, session_id = self._resolve_session(session_data)
             if state_payload is None:
@@ -256,7 +257,7 @@ class InteractiveReportProcessingService(ReportProcessingService):
                         title="自動計算エラー",
                     ) from e
 
-            result: Dict[str, Any] = {
+            result: dict[str, Any] = {
                 "session_id": session_id or user_input.get("session_id"),
                 "selection_summary": payload.get("selection_summary"),
                 "message": payload.get("message", "applied"),
@@ -280,9 +281,9 @@ class InteractiveReportProcessingService(ReportProcessingService):
     def finalize(
         self,
         generator: BaseInteractiveReportGenerator,
-        session_data: Union[Dict[str, Any], str],
-        user_input: Optional[Dict[str, Any]] = None,
-        background_tasks: Optional[BackgroundTasks] = None,
+        session_data: dict[str, Any] | str,
+        user_input: dict[str, Any] | None = None,
+        background_tasks: BackgroundTasks | None = None,
     ) -> JSONResponse:
         state_payload, session_id = self._resolve_session(session_data)
         if state_payload is None:
@@ -376,8 +377,8 @@ class InteractiveReportProcessingService(ReportProcessingService):
         return value
 
     def _resolve_session(
-        self, session_payload: Union[Dict[str, Any], str]
-    ) -> Tuple[Optional[Dict[str, Any]], Optional[str]]:
+        self, session_payload: dict[str, Any] | str
+    ) -> tuple[dict[str, Any] | None, str | None]:
         """Resolve the stored session data from various payload formats.
 
         Supports three patterns for backward compatibility:

@@ -10,7 +10,7 @@ CSVアップロード処理をPort&Adapter化。
   - 現時点はスタブ実装（TODO: 要件定義後に完全実装）
 """
 
-from typing import Any, Dict, List
+from typing import Any
 
 from app.core.ports.ingest_port import IngestPort
 
@@ -32,7 +32,7 @@ class UploadIngestCsvUseCase:
         """
         self.ingest_repo = ingest_repo
 
-    def execute(self, rows: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def execute(self, rows: list[dict[str, Any]]) -> dict[str, Any]:
         """
         CSVデータをDB保存
 

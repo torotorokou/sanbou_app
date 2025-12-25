@@ -11,7 +11,6 @@ from app.core.domain.sales_tree import (
     DailyPoint,
     DailySeriesRequest,
     ExportRequest,
-    MetricEntry,
     PivotRequest,
     SummaryRequest,
     SummaryRow,

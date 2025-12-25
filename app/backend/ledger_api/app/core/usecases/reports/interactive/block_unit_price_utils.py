@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 Block Unit Price Interactive - Utility Functions
 共通ユーティリティ関数とデータクラス
@@ -10,7 +8,7 @@ import re
 import secrets
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any
 
 import pandas as pd
 from backend_shared.application.logging import create_log_context, get_module_logger
@@ -36,12 +34,12 @@ class InteractiveProcessState:
     """インタラクティブ処理の状態"""
 
     step: int
-    df_shipment: Optional[pd.DataFrame] = None
-    transport_options: Optional[List[TransportOption]] = None
-    selected_vendors: Optional[Dict[str, str]] = None
-    master_csv: Optional[pd.DataFrame] = None
-    df_transport_cost: Optional[pd.DataFrame] = None
-    session_id: Optional[str] = None
+    df_shipment: pd.DataFrame | None = None
+    transport_options: list[TransportOption] | None = None
+    selected_vendors: dict[str, str] | None = None
+    master_csv: pd.DataFrame | None = None
+    df_transport_cost: pd.DataFrame | None = None
+    session_id: str | None = None
 
 
 # ------------------------------ Session Management ------------------------------
@@ -82,7 +80,7 @@ def clean_vendor_name(name: Any) -> str:
     return re.sub(r"（\s*\d+\s*）", "", s)
 
 
-def safe_int(v: Any) -> Union[int, Any]:
+def safe_int(v: Any) -> int | Any:
     """安全に整数に変換"""
     try:
         if isinstance(v, float) and float(v).is_integer():
@@ -92,7 +90,7 @@ def safe_int(v: Any) -> Union[int, Any]:
         return v
 
 
-def normalize_df_index(idx: Any) -> Union[int, str]:
+def normalize_df_index(idx: Any) -> int | str:
     """DataFrameのインデックスを正規化"""
     if isinstance(idx, (int,)):
         return int(idx)
@@ -107,7 +105,7 @@ _CARRIER_ORDER = {"オネスト": 0, "シェノンビ": 1, "エコライン": 2}
 _VEHICLE_ORDER = {"ウイング": 0, "コンテナ": 1, None: 2}
 
 
-def parse_label(lbl: str) -> Tuple[int, int, int, str]:
+def parse_label(lbl: str) -> tuple[int, int, int, str]:
     """ラベルを解析してソート用のタプルを返す"""
     s = lbl or ""
     if s.startswith("オネスト"):
@@ -131,7 +129,7 @@ def parse_label(lbl: str) -> Tuple[int, int, int, str]:
     return (c_ord, v_ord, shared_flag, s)
 
 
-def canonical_sort_labels(labels: List[str]) -> List[str]:
+def canonical_sort_labels(labels: list[str]) -> list[str]:
     """ラベルを正規化してソート"""
     uniq = {str(x).strip() for x in labels if isinstance(x, str) and str(x).strip()}
     return sorted(uniq, key=parse_label)
@@ -141,8 +139,8 @@ def canonical_sort_labels(labels: List[str]) -> List[str]:
 
 
 def ensure_datetime_col(
-    df: Optional[pd.DataFrame], col: str = "伝票日付"
-) -> Optional[pd.DataFrame]:
+    df: pd.DataFrame | None, col: str = "伝票日付"
+) -> pd.DataFrame | None:
     """指定列をdatetimeに変換"""
     if df is None or col not in df.columns:
         return df
@@ -197,10 +195,10 @@ def ensure_datetime_col(
 
 
 def error_payload(
-    code: str, detail: str, step: int, extra: Optional[Dict[str, Any]] = None
-) -> Tuple[pd.DataFrame, Dict[str, Any]]:
+    code: str, detail: str, step: int, extra: dict[str, Any] | None = None
+) -> tuple[pd.DataFrame, dict[str, Any]]:
     """統一フォーマットでエラーペイロードを返す"""
-    payload: Dict[str, Any] = {
+    payload: dict[str, Any] = {
         "status": "error",
         "code": code,
         "detail": detail,
@@ -212,7 +210,7 @@ def error_payload(
     return pd.DataFrame(), payload
 
 
-def missing_cols(df: pd.DataFrame, required: List[str]) -> List[str]:
+def missing_cols(df: pd.DataFrame, required: list[str]) -> list[str]:
     """必須カラムの不足をチェック"""
     return [c for c in required if c not in df.columns]
 
@@ -221,8 +219,8 @@ def handle_step_error(
     step_name: str,
     step_number: int,
     error: Exception,
-    context: Optional[Dict[str, Any]] = None,
-) -> Tuple[pd.DataFrame, Dict[str, Any]]:
+    context: dict[str, Any] | None = None,
+) -> tuple[pd.DataFrame, dict[str, Any]]:
     """ステップエラーを統一的に処理
 
     Args:
@@ -240,7 +238,7 @@ def handle_step_error(
     error_type = type(error).__name__
     error_msg = str(error)
 
-    extra_data: Dict[str, Any] = {
+    extra_data: dict[str, Any] = {
         "err_type": error_type,
         "err": error_msg,
         "traceback": tb,
@@ -271,7 +269,7 @@ def handle_step_error(
 # ------------------------------ Debug Helpers ------------------------------
 
 
-def fmt_cols(df: Optional[pd.DataFrame]) -> str:
+def fmt_cols(df: pd.DataFrame | None) -> str:
     """DataFrameのカラム情報をフォーマット"""
     if df is None:
         return "None"
@@ -281,7 +279,7 @@ def fmt_cols(df: Optional[pd.DataFrame]) -> str:
         return f"<fmt_cols_error:{e}>"
 
 
-def fmt_head_rows(df: Optional[pd.DataFrame], n: int = 3) -> str:
+def fmt_head_rows(df: pd.DataFrame | None, n: int = 3) -> str:
     """DataFrameの先頭行をフォーマット"""
     if df is None:
         return "None"
@@ -291,7 +289,7 @@ def fmt_head_rows(df: Optional[pd.DataFrame], n: int = 3) -> str:
         return f"<fmt_head_error:{e}>"
 
 
-def series_sample(df: Optional[pd.DataFrame], col: str, k: int = 5) -> List[Any]:
+def series_sample(df: pd.DataFrame | None, col: str, k: int = 5) -> list[Any]:
     """カラムのサンプル値を取得"""
     try:
         if df is None or col not in df.columns:
@@ -302,7 +300,7 @@ def series_sample(df: Optional[pd.DataFrame], col: str, k: int = 5) -> List[Any]
 
 
 def log_checkpoint(
-    tag: str, df_a: Optional[pd.DataFrame], df_b: Optional[pd.DataFrame] = None
+    tag: str, df_a: pd.DataFrame | None, df_b: pd.DataFrame | None = None
 ) -> None:
     """チェックポイントログを出力"""
     msg = f"DBG checkpoint[{tag}] A({fmt_cols(df_a)})"

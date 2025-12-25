@@ -8,7 +8,6 @@ import tempfile
 from datetime import date
 from io import BytesIO
 from pathlib import Path
-from typing import Any
 
 import pandas as pd
 from app.infra.report_utils import get_template_config, write_values_to_template

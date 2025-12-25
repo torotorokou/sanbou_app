@@ -16,7 +16,6 @@ import time
 from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
-from typing import Dict, Optional
 from urllib.parse import quote, unquote
 
 from app.settings import settings
@@ -80,7 +79,7 @@ class UrlSigner:
         )  # 👶 有効期限が極端に短すぎないようにします
 
     def _sign(self, relative_path: str, disposition: str, expires: int) -> str:
-        payload = f"{relative_path}|{disposition}|{expires}".encode("utf-8")
+        payload = f"{relative_path}|{disposition}|{expires}".encode()
         return hmac.new(self._secret, payload, hashlib.sha256).hexdigest()
 
     def create_url(self, relative_path: str, *, disposition: str) -> str:
@@ -135,8 +134,8 @@ class ReportArtifactStorage:
 
     def build_payload(
         self, location: ArtifactLocation, *, excel_exists: bool, pdf_exists: bool
-    ) -> Dict[str, str]:
-        payload: Dict[str, str] = {
+    ) -> dict[str, str]:
+        payload: dict[str, str] = {
             "report_token": location.token,
             "excel_download_url": "",
             "pdf_preview_url": "",
@@ -153,7 +152,7 @@ class ReportArtifactStorage:
             )
         return payload
 
-    def resolve(self, relative_path: str) -> Optional[Path]:
+    def resolve(self, relative_path: str) -> Path | None:
         """URL で渡された相対パスから実際のファイルパスを復元する。"""
         raw = Path(unquote(relative_path))
         parts = [segment for segment in raw.parts if segment not in {"..", ""}]

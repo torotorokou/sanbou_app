@@ -21,7 +21,6 @@ Description:
     - API/FE層への影響を最小化（既存の qty は継続使用可能）
 """
 
-import sqlalchemy as sa
 from alembic import op
 
 # revision identifiers, used by Alembic.

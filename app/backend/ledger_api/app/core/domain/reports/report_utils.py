@@ -7,7 +7,7 @@ Report共通ユーティリティモジュール
 """
 
 from datetime import date
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING
 
 import pandas as pd
 
@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 
 
 def extract_report_date(
-    *dataframes_with_columns: tuple[Optional[pd.DataFrame], str]
+    *dataframes_with_columns: tuple[pd.DataFrame | None, str]
 ) -> date:
     """
     複数のDataFrameから優先順位に従って日付を抽出する
@@ -54,8 +54,8 @@ def extract_report_date(
 
 
 def convert_to_shipment_items(
-    df_shipment: Optional[pd.DataFrame],
-) -> List["ShipmentItem"]:
+    df_shipment: pd.DataFrame | None,
+) -> list["ShipmentItem"]:
     """
     出荷DataFrameをShipmentItemリストに変換
 
@@ -67,7 +67,7 @@ def convert_to_shipment_items(
     """
     from app.core.domain.reports.factory_report import ShipmentItem
 
-    shipment_items: List[ShipmentItem] = []
+    shipment_items: list[ShipmentItem] = []
 
     if df_shipment is None or df_shipment.empty:
         return shipment_items
@@ -94,7 +94,7 @@ def convert_to_shipment_items(
     return shipment_items
 
 
-def convert_to_yard_items(df_yard: Optional[pd.DataFrame]) -> List["YardItem"]:
+def convert_to_yard_items(df_yard: pd.DataFrame | None) -> list["YardItem"]:
     """
     ヤードDataFrameをYardItemリストに変換
 
@@ -106,7 +106,7 @@ def convert_to_yard_items(df_yard: Optional[pd.DataFrame]) -> List["YardItem"]:
     """
     from app.core.domain.reports.factory_report import YardItem
 
-    yard_items: List[YardItem] = []
+    yard_items: list[YardItem] = []
 
     if df_yard is None or df_yard.empty:
         return yard_items
@@ -128,8 +128,8 @@ def convert_to_yard_items(df_yard: Optional[pd.DataFrame]) -> List["YardItem"]:
 
 
 def convert_to_receive_items(
-    df_receive: Optional[pd.DataFrame], default_date: date
-) -> List["ReceiveItem"]:
+    df_receive: pd.DataFrame | None, default_date: date
+) -> list["ReceiveItem"]:
     """
     受入DataFrameをReceiveItemリストに変換
 
@@ -142,7 +142,7 @@ def convert_to_receive_items(
     """
     from app.core.domain.reports.balance_sheet import ReceiveItem
 
-    receive_items: List[ReceiveItem] = []
+    receive_items: list[ReceiveItem] = []
 
     if df_receive is None or df_receive.empty:
         return receive_items

@@ -6,9 +6,11 @@ st_app依存を排し、services側のprocessors/utilsを利用する。
 """
 
 import time
-from typing import Any, Dict
+from typing import Any
 
 import pandas as pd
+from backend_shared.application.logging import create_log_context, get_module_logger
+
 from app.core.domain.reports.processors.factory_report.etc import (
     date_format,
     generate_summary_dataframe,
@@ -23,10 +25,9 @@ from app.core.domain.reports.processors.factory_report.yuuka import process_yuuk
 from app.core.usecases.reports.factory_report_base import build_factory_report_base_data
 from app.infra.report_utils import get_template_config, load_all_filtered_dataframes
 from app.infra.report_utils.excel import sort_by_cell_row
-from backend_shared.application.logging import create_log_context, get_module_logger
 
 
-def process(dfs: Dict[str, Any]) -> pd.DataFrame:
+def process(dfs: dict[str, Any]) -> pd.DataFrame:
     """
     工場日報テンプレート用のメイン処理関数。
 

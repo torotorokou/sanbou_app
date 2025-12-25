@@ -5,9 +5,11 @@ ABC平均表（average_sheet）のサービス実装。
 st_app依存を排し、services側のprocessors/utilsを利用する。
 """
 
-from typing import Any, Dict
+from typing import Any
 
 import pandas as pd
+from backend_shared.application.logging import create_log_context, get_module_logger
+
 from app.core.domain.reports.processors.average_sheet.processors import (
     aggregate_vehicle_data,
     apply_rounding,
@@ -22,10 +24,9 @@ from app.infra.report_utils import (
     load_all_filtered_dataframes,
     load_master_and_template,
 )
-from backend_shared.application.logging import create_log_context, get_module_logger
 
 
-def process(dfs: Dict[str, Any]) -> pd.DataFrame:
+def process(dfs: dict[str, Any]) -> pd.DataFrame:
     logger = get_module_logger(__name__)
     template_name = get_template_config()["average_sheet"]["key"]
 

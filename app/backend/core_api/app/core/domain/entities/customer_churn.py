@@ -6,7 +6,6 @@ Customer Churn Domain Entities
 
 from dataclasses import dataclass
 from datetime import date as date_type
-from typing import Optional
 
 
 @dataclass(frozen=True)
@@ -19,8 +18,8 @@ class LostCustomer:
 
     customer_id: str
     customer_name: str
-    rep_id: Optional[str]
-    rep_name: Optional[str]
+    rep_id: str | None
+    rep_name: str | None
     last_visit_date: date_type
     prev_visit_days: int
     prev_total_amount_yen: float

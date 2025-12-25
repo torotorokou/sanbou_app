@@ -1,23 +1,22 @@
-# -*- coding: utf-8 -*-
 """
 Reservation repository implementation with PostgreSQL.
 予約データ（手入力・顧客別・予測用ビュー）の取得・更新
 """
+
 import calendar
-import logging
+from datetime import UTC
 from datetime import date as date_type
-from typing import List, Optional
+
+from sqlalchemy import select, text, update
+from sqlalchemy.orm import Session
 
 from app.core.domain.reservation import (
-    ReservationCustomerRow,
     ReservationForecastRow,
     ReservationManualRow,
 )
 from app.core.ports.reservation_repository_port import ReservationRepository
-from app.infra.db.orm_models import ReserveCustomerDaily, ReserveDailyManual
+from app.infra.db.orm_models import ReserveDailyManual
 from backend_shared.application.logging import get_module_logger
-from sqlalchemy import delete, select, text, update
-from sqlalchemy.orm import Session
 
 logger = get_module_logger(__name__)
 
@@ -34,7 +33,7 @@ class ReservationRepositoryImpl(ReservationRepository):
     # Manual (手入力) Operations
     # ========================================
 
-    def get_manual(self, reserve_date: date_type) -> Optional[ReservationManualRow]:
+    def get_manual(self, reserve_date: date_type) -> ReservationManualRow | None:
         """指定日の手入力予約データを取得（論理削除を除外）"""
         try:
             stmt = select(ReserveDailyManual).where(
@@ -129,7 +128,7 @@ class ReservationRepositoryImpl(ReservationRepository):
     def delete_manual(self, reserve_date: date_type) -> bool:
         """指定日の手入力予約データを論理削除"""
         try:
-            from datetime import datetime, timezone
+            from datetime import datetime
 
             # 論理削除: deleted_atを設定
             stmt = (
@@ -139,7 +138,7 @@ class ReservationRepositoryImpl(ReservationRepository):
                     ReserveDailyManual.deleted_at == None,  # 既に削除済みは除外
                 )
                 .values(
-                    deleted_at=datetime.now(timezone.utc),
+                    deleted_at=datetime.now(UTC),
                     deleted_by="system",  # TODO: Get from auth context
                 )
             )
@@ -157,7 +156,7 @@ class ReservationRepositoryImpl(ReservationRepository):
     # Forecast View (予測用) Operations
     # ========================================
 
-    def get_forecast_month(self, year: int, month: int) -> List[ReservationForecastRow]:
+    def get_forecast_month(self, year: int, month: int) -> list[ReservationForecastRow]:
         """指定月の予測用予約データを取得（manual優先、なければcustomer集計）"""
         try:
             # Calculate month start and end dates

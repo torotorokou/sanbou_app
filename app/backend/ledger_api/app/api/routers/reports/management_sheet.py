@@ -1,11 +1,10 @@
-from typing import Optional
+from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, UploadFile
+from fastapi.responses import JSONResponse
 
 from app.config.di_providers import get_management_sheet_usecase
 from app.core.usecases.reports.generate_management_sheet import (
     GenerateManagementSheetUseCase,
 )
-from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, UploadFile
-from fastapi.responses import JSONResponse
 
 router = APIRouter()
 
@@ -17,7 +16,7 @@ async def generate_management_sheet(
     shipment: UploadFile = File(None),
     yard: UploadFile = File(None),
     receive: UploadFile = File(None),
-    period_type: Optional[str] = Form(None),
+    period_type: str | None = Form(None),
     usecase: GenerateManagementSheetUseCase = Depends(get_management_sheet_usecase),
 ) -> JSONResponse:
     """

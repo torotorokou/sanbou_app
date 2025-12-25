@@ -4,7 +4,6 @@ OpenAIクライアント・ベクトルストア・JSONデータを組み合わ�
 """
 
 import os
-from typing import List, Optional
 
 from app.core.usecases.rag.file_ingest_service import get_resource_paths, load_json_data
 from app.infra.adapters.llm.openai_client import generate_answer
@@ -15,7 +14,7 @@ from openai import RateLimitError
 def get_answer(
     query: str,
     category: str,
-    tags: Optional[List[str]] = None,
+    tags: list[str] | None = None,
     *,
     answer_func=generate_answer,
     resource_paths_func=get_resource_paths,

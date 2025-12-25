@@ -11,12 +11,8 @@ import time
 from abc import ABC, abstractmethod
 from datetime import date
 from io import BytesIO
-from typing import Any, Dict, Optional
+from typing import Any
 
-from app.application.usecases.reports.report_generation_utils import (
-    generate_pdf_from_excel,
-)
-from app.core.ports.inbound import CsvGateway, ReportRepository
 from backend_shared.application.logging import get_module_logger
 from backend_shared.infra.adapters.fastapi.error_handlers import DomainError
 from backend_shared.utils.date_filter_utils import (
@@ -24,6 +20,11 @@ from backend_shared.utils.date_filter_utils import (
 )
 from fastapi import BackgroundTasks, UploadFile
 from fastapi.responses import JSONResponse
+
+from app.application.usecases.reports.report_generation_utils import (
+    generate_pdf_from_excel,
+)
+from app.core.ports.inbound import CsvGateway, ReportRepository
 
 logger = get_module_logger(__name__)
 
@@ -64,7 +65,7 @@ class BaseReportUseCase(ABC):
         pass
 
     @abstractmethod
-    def create_domain_model(self, df_formatted: Dict[str, Any]) -> Any:
+    def create_domain_model(self, df_formatted: dict[str, Any]) -> Any:
         """
         ドメインモデルを生成する（Step 4）。
 
@@ -77,7 +78,7 @@ class BaseReportUseCase(ABC):
         pass
 
     @abstractmethod
-    def execute_domain_logic(self, df_formatted: Dict[str, Any]) -> Any:
+    def execute_domain_logic(self, df_formatted: dict[str, Any]) -> Any:
         """
         ドメインロジックを実行する（Step 5）。
 
@@ -105,11 +106,11 @@ class BaseReportUseCase(ABC):
 
     def execute(
         self,
-        shipment: Optional[UploadFile] = None,
-        yard: Optional[UploadFile] = None,
-        receive: Optional[UploadFile] = None,
-        period_type: Optional[str] = None,
-        background_tasks: Optional[BackgroundTasks] = None,
+        shipment: UploadFile | None = None,
+        yard: UploadFile | None = None,
+        receive: UploadFile | None = None,
+        period_type: str | None = None,
+        background_tasks: BackgroundTasks | None = None,
         async_pdf: bool = True,
     ) -> JSONResponse:
         """
@@ -211,10 +212,10 @@ class BaseReportUseCase(ABC):
 
     def _read_csv_files(
         self,
-        shipment: Optional[UploadFile],
-        yard: Optional[UploadFile],
-        receive: Optional[UploadFile],
-    ) -> Dict[str, Any]:
+        shipment: UploadFile | None,
+        yard: UploadFile | None,
+        receive: UploadFile | None,
+    ) -> dict[str, Any]:
         """Step 1: CSV読み込み"""
         step_start = time.time()
         logger.debug("Step 1: CSV読み込み開始")
@@ -242,9 +243,9 @@ class BaseReportUseCase(ABC):
 
     def _apply_period_filter(
         self,
-        dfs: Dict[str, Any],
+        dfs: dict[str, Any],
         period_type: str,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Step 2: 期間フィルタ適用"""
         step_start = time.time()
         logger.debug(
@@ -269,7 +270,7 @@ class BaseReportUseCase(ABC):
             )
             return dfs
 
-    def _format_csv_data(self, dfs: Dict[str, Any]) -> Dict[str, Any]:
+    def _format_csv_data(self, dfs: dict[str, Any]) -> dict[str, Any]:
         """Step 3: CSV整形"""
         step_start = time.time()
         logger.debug("Step 3: CSV整形開始")
@@ -281,7 +282,7 @@ class BaseReportUseCase(ABC):
         )
         return df_formatted
 
-    def _create_domain_model_with_logging(self, df_formatted: Dict[str, Any]) -> Any:
+    def _create_domain_model_with_logging(self, df_formatted: dict[str, Any]) -> Any:
         """Step 4: ドメインモデル生成（ログ付き）"""
         step_start = time.time()
         logger.debug("Step 4: ドメインモデル生成開始")
@@ -297,7 +298,7 @@ class BaseReportUseCase(ABC):
         )
         return domain_model
 
-    def _execute_domain_logic_with_logging(self, df_formatted: Dict[str, Any]) -> Any:
+    def _execute_domain_logic_with_logging(self, df_formatted: dict[str, Any]) -> Any:
         """Step 5: ドメインロジック実行（ログ付き）"""
         step_start = time.time()
         logger.debug("Step 5: ドメインロジック実行開始")

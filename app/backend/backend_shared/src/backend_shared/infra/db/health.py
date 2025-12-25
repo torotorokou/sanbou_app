@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass
-from typing import Optional
 
 try:
     import psycopg
@@ -40,7 +39,7 @@ class DbHealth:
 
 def ping_database(
     timeout_sec: int = 2,
-    database_url: Optional[str] = None,
+    database_url: str | None = None,
 ) -> DbHealth:
     """
     PostgreSQLデータベースへの接続をテストし、ヘルスステータスを返す

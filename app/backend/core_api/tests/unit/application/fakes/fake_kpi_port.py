@@ -1,7 +1,6 @@
 """Fake implementation of KPIQueryPort for unit testing"""
 
 from datetime import date
-from typing import Optional
 
 from app.core.ports.kpi_port import KPIQueryPort
 
@@ -15,8 +14,8 @@ class FakeKPIQueryPort(KPIQueryPort):
 
     def __init__(
         self,
-        forecast_job_counts: Optional[dict[str, int]] = None,
-        latest_prediction_date: Optional[date] = None,
+        forecast_job_counts: dict[str, int] | None = None,
+        latest_prediction_date: date | None = None,
     ):
         self._forecast_job_counts = forecast_job_counts or {
             "pending": 0,
@@ -30,7 +29,7 @@ class FakeKPIQueryPort(KPIQueryPort):
         """Return preset job counts"""
         return self._forecast_job_counts
 
-    def get_latest_prediction_date(self) -> Optional[date]:
+    def get_latest_prediction_date(self) -> date | None:
         """Return preset latest date"""
         return self._latest_prediction_date
 
@@ -39,6 +38,6 @@ class FakeKPIQueryPort(KPIQueryPort):
         """Update job counts for testing"""
         self._forecast_job_counts = counts
 
-    def set_latest_date(self, latest_date: Optional[date]) -> None:
+    def set_latest_date(self, latest_date: date | None) -> None:
         """Update latest prediction date for testing"""
         self._latest_prediction_date = latest_date

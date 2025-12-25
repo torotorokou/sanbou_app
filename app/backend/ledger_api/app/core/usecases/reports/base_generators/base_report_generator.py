@@ -3,7 +3,7 @@
 from abc import ABC, abstractmethod
 from datetime import datetime
 from io import BytesIO
-from typing import Any, Dict, Optional
+from typing import Any
 
 import pandas as pd
 from backend_shared.application.logging import get_module_logger
@@ -11,10 +11,11 @@ from backend_shared.application.logging import get_module_logger
 logger = get_module_logger(__name__)
 
 # CSV処理サービス（application/usecases/csvから参照）
-from app.infra.adapters.csv import CsvFormatterService, CsvValidatorService
-from app.infra.report_utils import get_template_config, write_values_to_template
 from backend_shared.config.config_loader import ReportTemplateConfigLoader
 from backend_shared.core.usecases.report_checker.check_csv_files import check_csv_files
+
+from app.infra.adapters.csv import CsvFormatterService, CsvValidatorService
+from app.infra.report_utils import get_template_config, write_values_to_template
 
 
 class BaseReportGenerator(ABC):
@@ -29,29 +30,29 @@ class BaseReportGenerator(ABC):
     - 後処理（ファイル名生成）
     """
 
-    def __init__(self, report_key: str, files: Dict[str, Any]):
+    def __init__(self, report_key: str, files: dict[str, Any]):
         # files はアップロード入力（Raw）を想定。必要に応じて使用可。
         self.files = files
         self.report_key = report_key
         self.config_loader_report = ReportTemplateConfigLoader()
         self.result_df = None  # main_processの結果を保存
         # 帳簿ごとの期間指定（"oneday" | "oneweek" | "onemonth" など）。未指定ならNone。
-        self.period_type: Optional[str] = None
+        self.period_type: str | None = None
         # デフォルトのバリデータ/フォーマッタ（必要に応じてサブクラスで置換）
         self._validator = CsvValidatorService()
         self._formatter = CsvFormatterService()
 
     def print_start_report_key(self):
         logger.debug(
-            f"Starting report generation", extra={"report_key": self.report_key}
+            "Starting report generation", extra={"report_key": self.report_key}
         )
 
     def print_finish_report_key(self):
         logger.debug(
-            f"Finished report generation", extra={"report_key": self.report_key}
+            "Finished report generation", extra={"report_key": self.report_key}
         )
 
-    def preprocess(self, report_key: Optional[str] = None):
+    def preprocess(self, report_key: str | None = None):
         if report_key is None:
             raise ValueError("report_key must be provided and must be a string.")
         required = self.config_loader_report.get_required_files(report_key)
@@ -62,7 +63,7 @@ class BaseReportGenerator(ABC):
 
     # --- 新インターフェース: validate / format / main_process ---
     # 既定実装では共通サービスを使ったバリデーション・整形を提供。
-    def validate(self, dfs: Dict[str, Any], file_inputs: Dict[str, Any]):
+    def validate(self, dfs: dict[str, Any], file_inputs: dict[str, Any]):
         """
         デフォルト実装: 共通CsvValidatorServiceで検証。
         戻り値は None（成功）または ErrorApiResponse。
@@ -73,7 +74,7 @@ class BaseReportGenerator(ABC):
             logger.error("Validation failed", extra={"error": str(e)}, exc_info=True)
             raise
 
-    def format(self, dfs: Dict[str, Any]) -> Dict[str, Any]:
+    def format(self, dfs: dict[str, Any]) -> dict[str, Any]:
         """デフォルト実装: 共通CsvFormatterServiceで整形。"""
         try:
             return self._formatter.format(dfs)
@@ -81,7 +82,7 @@ class BaseReportGenerator(ABC):
             logger.error("Formatting failed", extra={"error": str(e)}, exc_info=True)
             raise
 
-    def make_report_date(self, df_formatted: Dict[str, Any]) -> str:
+    def make_report_date(self, df_formatted: dict[str, Any]) -> str:
         """
         帳票日付の作成（整形後データを前提）
 
@@ -141,7 +142,7 @@ class BaseReportGenerator(ABC):
         return datetime.now().date().isoformat()
 
     @abstractmethod
-    def main_process(self, df_formatted: Dict[str, Any]) -> pd.DataFrame:
+    def main_process(self, df_formatted: dict[str, Any]) -> pd.DataFrame:
         """サブクラスで実装: 整形済みDataFrame群から最終DFを生成。"""
         raise NotImplementedError
 

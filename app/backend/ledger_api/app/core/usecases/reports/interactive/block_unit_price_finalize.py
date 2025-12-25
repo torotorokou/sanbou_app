@@ -1,14 +1,13 @@
-# -*- coding: utf-8 -*-
-
 """
 Block Unit Price Interactive - Finalize Step Handler
 最終処理を担当するモジュール
 """
 
-import traceback
-from typing import Any, Dict, Optional, cast
+from typing import Any, cast
 
 import pandas as pd
+from backend_shared.application.logging import create_log_context, get_module_logger
+
 from app.core.domain.reports.processors.block_unit_price.process2 import (
     apply_transport_fee_by_vendor,
     apply_weight_based_transport_fee,
@@ -23,11 +22,9 @@ from app.infra.report_utils import (
     load_master_and_template,
 )
 from app.infra.report_utils.domain import ReadTransportDiscount
-from backend_shared.application.logging import create_log_context, get_module_logger
 
 from .block_unit_price_utils import (
     ensure_datetime_col,
-    error_payload,
     fmt_cols,
     fmt_head_rows,
     handle_step_error,
@@ -71,7 +68,7 @@ def merge_selected_transport_vendors_with_df(
     sel["entry_id"] = sel["entry_id"].astype(str)
 
     logger.info(
-        f"=== MERGE DEBUG START ===",
+        "=== MERGE DEBUG START ===",
         extra=create_log_context(
             operation="merge_transport_vendors",
             df_shipment_shape=df_shipment.shape,
@@ -178,7 +175,7 @@ def merge_selected_transport_vendors_with_df(
 
 
 def merge_selected_transport_vendors_copy(
-    df_shipment: pd.DataFrame, state: Dict[str, Any]
+    df_shipment: pd.DataFrame, state: dict[str, Any]
 ) -> pd.DataFrame:
     """
     選択辞書を使って運搬業者をマージ（コピー版）
@@ -363,7 +360,7 @@ def run_block_unit_price_pipeline(
 # ------------------------------ Main Finalize Step ------------------------------
 
 
-def execute_finalize_step(state: Dict[str, Any]) -> tuple[pd.DataFrame, Dict[str, Any]]:
+def execute_finalize_step(state: dict[str, Any]) -> tuple[pd.DataFrame, dict[str, Any]]:
     """
     最終ステップの実行
 
@@ -411,7 +408,7 @@ def execute_finalize_step(state: Dict[str, Any]) -> tuple[pd.DataFrame, Dict[str
         log_checkpoint("shipment_initial", df_shipment_initial)
 
         # 選択データの準備
-        selection_df: Optional[pd.DataFrame] = state.get("selection_df")
+        selection_df: pd.DataFrame | None = state.get("selection_df")
         if (selection_df is None or selection_df.empty) and state.get("selections"):
             try:
                 selections_dict = state["selections"]
@@ -558,7 +555,7 @@ def execute_finalize_step(state: Dict[str, Any]) -> tuple[pd.DataFrame, Dict[str
 
     except Exception as e:
         # 共通エラーハンドリングを使用
-        context: Dict[str, Any] = {}
+        context: dict[str, Any] = {}
         try:
             if "df_selected" in locals():
                 context["df_selected_cols"] = list(
@@ -579,8 +576,8 @@ def execute_finalize_step(state: Dict[str, Any]) -> tuple[pd.DataFrame, Dict[str
 
 
 def execute_finalize_with_optional_selections(
-    state: Dict[str, Any], user_input: Dict[str, Any]
-) -> tuple[pd.DataFrame, Dict[str, Any]]:
+    state: dict[str, Any], user_input: dict[str, Any]
+) -> tuple[pd.DataFrame, dict[str, Any]]:
     """
     オプショナル選択付き最終ステップの実行
 

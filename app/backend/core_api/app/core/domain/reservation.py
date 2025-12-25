@@ -5,7 +5,7 @@ Reservation domain entities.
 
 from datetime import date as date_type
 from datetime import datetime
-from typing import Literal, Optional
+from typing import Literal
 
 from pydantic import BaseModel, Field
 
@@ -28,11 +28,11 @@ class ReservationManualRow(BaseModel):
     reserve_date: date_type = Field(..., description="予約日")
     total_trucks: int = Field(..., ge=0, description="合計台数")
     fixed_trucks: int = Field(..., ge=0, description="固定客台数")
-    note: Optional[str] = Field(None, description="メモ")
-    created_by: Optional[str] = Field(None, description="作成者")
-    updated_by: Optional[str] = Field(None, description="更新者")
-    created_at: Optional[datetime] = Field(None, description="作成日時")
-    updated_at: Optional[datetime] = Field(None, description="更新日時")
+    note: str | None = Field(None, description="メモ")
+    created_by: str | None = Field(None, description="作成者")
+    updated_by: str | None = Field(None, description="更新者")
+    created_at: datetime | None = Field(None, description="作成日時")
+    updated_at: datetime | None = Field(None, description="更新日時")
 
     class Config:
         from_attributes = True
@@ -78,15 +78,15 @@ class ReservationCustomerRow(BaseModel):
         updated_at: 更新日時（オプション）
     """
 
-    id: Optional[int] = Field(None, description="ID")
+    id: int | None = Field(None, description="ID")
     reserve_date: date_type = Field(..., description="予約日")
     customer_cd: str = Field(..., description="顧客コード")
-    customer_name: Optional[str] = Field(None, description="顧客名")
+    customer_name: str | None = Field(None, description="顧客名")
     planned_trucks: int = Field(..., ge=0, description="予定台数")
     is_fixed_customer: bool = Field(..., description="固定客フラグ")
-    note: Optional[str] = Field(None, description="メモ")
-    created_at: Optional[datetime] = Field(None, description="作成日時")
-    updated_at: Optional[datetime] = Field(None, description="更新日時")
+    note: str | None = Field(None, description="メモ")
+    created_at: datetime | None = Field(None, description="作成日時")
+    updated_at: datetime | None = Field(None, description="更新日時")
 
     class Config:
         from_attributes = True

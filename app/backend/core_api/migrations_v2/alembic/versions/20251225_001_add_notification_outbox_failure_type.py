@@ -22,7 +22,6 @@ notification_outbox テーブルに failure_type カラムを追加
   - PERMANENT: 即座に failed に遷移し、リトライしない
 """
 
-import sqlalchemy as sa
 from alembic import op
 
 # revision identifiers, used by Alembic.

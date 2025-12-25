@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 
 from app.api.routers.manuals import router as manuals_router
@@ -13,7 +12,6 @@ from backend_shared.infra.frameworks.cors_config import setup_cors
 from backend_shared.infra.frameworks.exception_handlers import (
     register_exception_handlers,
 )
-from backend_shared.infra.frameworks.logging_utils import setup_uvicorn_access_filter
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 

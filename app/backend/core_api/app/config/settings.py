@@ -251,7 +251,7 @@ class CoreApiSettings(BaseAppSettings):
         return get_shogun_model_class(csv_type)
 
 
-@lru_cache()
+@lru_cache
 def get_settings() -> CoreApiSettings:
     """
     設定のシングルトンインスタンスを取得

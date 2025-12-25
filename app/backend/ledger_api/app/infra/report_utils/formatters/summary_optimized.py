@@ -16,7 +16,6 @@ master_csvのcopy()を呼び出し元に委譲し、不要な中間copy()を削�
 
 import pandas as pd
 from backend_shared.application.logging import get_module_logger
-from backend_shared.utils.dataframe_utils_optimized import clean_na_strings_vectorized
 
 logger = get_module_logger(__name__)
 

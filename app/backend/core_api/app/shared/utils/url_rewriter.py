@@ -10,7 +10,7 @@ BFFの責務として、内部マイクロサービス(ledger_api等)の論理�
     # => {"artifact": {"excel_download_url": "/core_api/reports/artifacts/..."}}
 """
 
-from typing import Any, Dict
+from typing import Any
 
 from backend_shared.application.logging import create_log_context, get_module_logger
 
@@ -18,8 +18,8 @@ logger = get_module_logger(__name__)
 
 
 def rewrite_artifact_urls_to_bff(
-    response_data: Dict[str, Any], base_prefix: str = "/core_api"
-) -> Dict[str, Any]:
+    response_data: dict[str, Any], base_prefix: str = "/core_api"
+) -> dict[str, Any]:
     """
     BFFの責務: ledger_apiの内部論理パス(/reports/artifacts)を
     外向きパス(/core_api/reports/artifacts)に変換

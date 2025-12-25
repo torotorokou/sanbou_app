@@ -42,7 +42,6 @@ Create Date: 2025-12-12 10:00:00.000000
 
 import os
 
-import sqlalchemy as sa
 from alembic import op
 
 # revision identifiers, used by Alembic.
@@ -103,10 +102,10 @@ def upgrade() -> None:
 
     if not target_user:
         print(
-            f"  ⚠️  POSTGRES_USER environment variable not set, skipping permission grant"
+            "  ⚠️  POSTGRES_USER environment variable not set, skipping permission grant"
         )
-        print(f"  💡 Set POSTGRES_USER=<app_user> to grant permissions automatically")
-        print(f"  Example: POSTGRES_USER=sanbou_app_dev")
+        print("  💡 Set POSTGRES_USER=<app_user> to grant permissions automatically")
+        print("  Example: POSTGRES_USER=sanbou_app_dev")
     else:
         try:
             # 現在の環境に対応するユーザーのみに権限付与
@@ -156,7 +155,7 @@ def downgrade() -> None:
     current_db = os.environ.get("POSTGRES_DB") or op.get_bind().engine.url.database
 
     if not target_user:
-        print(f"  ⚠️  POSTGRES_USER not set, skipping permission revoke")
+        print("  ⚠️  POSTGRES_USER not set, skipping permission revoke")
 
     if target_user:
         try:

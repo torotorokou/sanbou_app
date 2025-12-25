@@ -5,8 +5,6 @@ InMemory Notification Preference Adapter
 将来的にはDBから取得する。
 """
 
-from typing import Dict, Optional
-
 from app.core.domain.notification import NotificationPreference
 from app.core.ports.notification_port import NotificationPreferencePort
 from backend_shared.application.logging import get_module_logger
@@ -23,7 +21,7 @@ class InMemoryNotificationPreferenceAdapter(NotificationPreferencePort):
 
     def __init__(self):
         # デフォルト設定（開発・テスト用）
-        self._preferences: Dict[str, NotificationPreference] = {
+        self._preferences: dict[str, NotificationPreference] = {
             "user:1": NotificationPreference(
                 user_key="user:1",
                 email_enabled=True,
@@ -42,7 +40,7 @@ class InMemoryNotificationPreferenceAdapter(NotificationPreferencePort):
         }
         logger.info("[Preference] InMemory adapter initialized")
 
-    def get_for_recipient(self, recipient_key: str) -> Optional[NotificationPreference]:
+    def get_for_recipient(self, recipient_key: str) -> NotificationPreference | None:
         """
         recipient_key に対応する通知許可設定を取得
 

@@ -6,21 +6,16 @@ shogun_csv_masters.yaml からSQLAlchemy ORMモデルを動的に生成します
 クラス名衝突を回避するため、同一クラス名の再生成を抑止します。
 """
 
-import logging
-from typing import Any, Callable, Dict, Type, Union
+from collections.abc import Callable
+from typing import Any
 
-from app.infra.db.table_definition import get_table_definition_generator
-from backend_shared.application.logging import create_log_context, get_module_logger
 from sqlalchemy import (
-    JSON,
     TIMESTAMP,
     Column,
     Date,
     Integer,
-    MetaData,
     Numeric,
     String,
-    Table,
     Text,
     Time,
     func,
@@ -28,18 +23,21 @@ from sqlalchemy import (
 from sqlalchemy.orm import declarative_base, registry
 from sqlalchemy.sql.type_api import TypeEngine
 
+from app.infra.db.table_definition import get_table_definition_generator
+from backend_shared.application.logging import get_module_logger
+
 logger = get_module_logger(__name__)
 
 Base = declarative_base()
 mapper_registry = registry()
 
 # 動的に生成されたモデルクラスのレジストリ（クラス名衝突を防ぐ）
-_dynamic_model_registry: Dict[str, Type] = {}
+_dynamic_model_registry: dict[str, type] = {}
 
 
 def create_shogun_model_class(
     csv_type: str, table_name: str | None = None, schema: str = "stg"
-) -> Type:
+) -> type:
     """
     CSV種別からORMモデルクラスを動的に生成
 
@@ -56,7 +54,7 @@ def create_shogun_model_class(
     columns_def = generator.get_columns_definition(csv_type)
 
     # SQLAlchemy ORMモデルクラスの属性を準備
-    attrs: Dict[str, Any] = {
+    attrs: dict[str, Any] = {
         "__tablename__": actual_table_name,  # DBテーブル名
         "__table_args__": {
             "schema": schema,  # スキーマ名 (raw, debug等)
@@ -65,7 +63,7 @@ def create_shogun_model_class(
     }
 
     # YAML型定義 → SQLAlchemy型のマッピング
-    TYPE_MAPPING: Dict[str, Union[Type[TypeEngine[Any]], Callable[[], Any]]] = {
+    TYPE_MAPPING: dict[str, type[TypeEngine[Any]] | Callable[[], Any]] = {
         "String": String,
         "Integer": Integer,
         "Int64": Integer,  # pandas nullable Int64 → SQLAlchemy Integer
@@ -148,7 +146,7 @@ def create_shogun_model_class(
 
 
 # 事前に生成したモデルをキャッシュ
-_model_cache: Dict[str, Type] = {}
+_model_cache: dict[str, type] = {}
 
 
 def clear_model_cache():
@@ -159,7 +157,7 @@ def clear_model_cache():
     logger.info("Model cache cleared")
 
 
-def get_shogun_model_class(csv_type: str, schema: str = "raw") -> Type:
+def get_shogun_model_class(csv_type: str, schema: str = "raw") -> type:
     """
     CSV種別からORMモデルクラスを取得（キャッシュ付き）
 

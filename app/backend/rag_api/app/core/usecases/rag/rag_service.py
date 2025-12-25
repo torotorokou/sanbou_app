@@ -1,6 +1,5 @@
 import streamlit as st
 from app.core.usecases.rag.file_ingest_service import (
-    extract_categories_and_titles,
     load_config,
     load_json_data,
     load_question_templates,
@@ -14,8 +13,6 @@ from app.infra.adapters.pdf.pdf_loader import (
 )
 from app.shared.chunk_utils import load_vectorstore
 from components.custom_button import centered_button
-from langchain_community.embeddings import OpenAIEmbeddings
-from langchain_community.vectorstores import FAISS
 
 
 def controller_education_gpt_page():

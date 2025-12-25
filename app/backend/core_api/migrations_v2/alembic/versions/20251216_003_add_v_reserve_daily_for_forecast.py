@@ -23,7 +23,6 @@ Phase 3: mart.v_reserve_daily_for_forecast ビュー追加
 
 """
 
-import sqlalchemy as sa
 from alembic import op
 
 # revision identifiers, used by Alembic.

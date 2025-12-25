@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 SQL識別子定数
 
@@ -17,6 +16,7 @@ SQL識別子定数
 このファイルは後方互換性のために残されています。
 新しいコードでは backend_shared.db.names を使用してください。
 """
+
 import warnings
 
 warnings.warn(

@@ -10,19 +10,19 @@ Reservation Router - 予約データ取得・更新エンドポイント
 """
 
 from datetime import date as date_type
-from typing import List
+
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
 
 from app.api.schemas.reservation import (
     ReservationForecastDaily,
     ReservationManualInput,
     ReservationManualResponse,
 )
-from app.core.domain.reservation import ReservationForecastRow, ReservationManualRow
+from app.core.domain.reservation import ReservationManualRow
 from app.deps import get_db
 from app.infra.adapters.reservation import ReservationRepositoryImpl
 from backend_shared.application.logging import get_module_logger
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
 
 logger = get_module_logger(__name__)
 
@@ -126,7 +126,7 @@ def delete_manual_reservation(
 # ========================================
 
 
-@router.get("/forecast/{year}/{month}", response_model=List[ReservationForecastDaily])
+@router.get("/forecast/{year}/{month}", response_model=list[ReservationForecastDaily])
 def get_forecast_month(
     year: int,
     month: int,

@@ -7,7 +7,7 @@
 """
 
 import traceback
-from typing import Any, Dict, Optional, Tuple
+from typing import Any
 
 from backend_shared.application.logging import get_module_logger
 
@@ -17,7 +17,6 @@ from fastapi.responses import JSONResponse, Response
 
 logger = get_module_logger(__name__)
 
-from app.core.usecases.reports.base_generators import BaseReportGenerator
 from backend_shared.infra.adapters.fastapi.error_handlers import DomainError
 from backend_shared.infra.adapters.presentation.response_error import (
     NoFilesUploadedResponse,
@@ -26,6 +25,8 @@ from backend_shared.utils.csv_reader import read_csv_files
 from backend_shared.utils.date_filter_utils import (
     filter_by_period_from_max_date as shared_filter_by_period_from_max_date,
 )
+
+from app.core.usecases.reports.base_generators import BaseReportGenerator
 
 
 def _ensure_bytes(value: Any, *, label: str) -> bytes:
@@ -57,8 +58,8 @@ class ReportProcessingService:
         pass
 
     def _read_uploaded_files(
-        self, files: Dict[str, UploadFile]
-    ) -> Tuple[Optional[Dict[str, Any]], Optional[Any]]:
+        self, files: dict[str, UploadFile]
+    ) -> tuple[dict[str, Any] | None, Any | None]:
         """CSV読込のみを担当。空チェックも含む。"""
         if not files:
             logger.warning("No files uploaded")
@@ -76,8 +77,8 @@ class ReportProcessingService:
     def run(
         self,
         generator: BaseReportGenerator,
-        files: Dict[str, UploadFile],
-        background_tasks: Optional[BackgroundTasks] = None,
+        files: dict[str, UploadFile],
+        background_tasks: BackgroundTasks | None = None,
         async_pdf: bool = True,
     ) -> Response:
         """
@@ -254,8 +255,8 @@ class ReportProcessingService:
         df_result: Any,
         report_date: str,
         *,
-        extra_payload: Optional[Dict[str, Any]] = None,
-        background_tasks: Optional[BackgroundTasks] = None,
+        extra_payload: dict[str, Any] | None = None,
+        background_tasks: BackgroundTasks | None = None,
         async_pdf: bool = True,
     ) -> JSONResponse:
         """Excel/PDF を保存し、署名付き URL を含む JSON を返却する。

@@ -9,7 +9,7 @@ from __future__ import annotations
 import os
 import sys
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient
@@ -64,7 +64,7 @@ def test_initial_endpoint_accepts_shipment_only_and_returns_rows(
 
     # Assert: HTTP 200 and essential fields
     assert resp.status_code == 200, resp.text
-    data: Dict[str, Any] = resp.json()
+    data: dict[str, Any] = resp.json()
 
     assert isinstance(data.get("session_id"), str) and data["session_id"], data
     assert isinstance(data.get("rows"), list) and len(data["rows"]) > 0, data

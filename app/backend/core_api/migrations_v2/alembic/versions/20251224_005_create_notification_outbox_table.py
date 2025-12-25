@@ -26,9 +26,7 @@ Create Date: 2024-12-24
   - created_at: 履歴参照の高速化
 """
 
-import sqlalchemy as sa
 from alembic import op
-from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision = "20251224_005"

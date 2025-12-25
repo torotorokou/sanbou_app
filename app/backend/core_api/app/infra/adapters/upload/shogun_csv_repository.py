@@ -6,10 +6,11 @@ backend_sharedのCSVバリデーター・フォーマッターを活用します
 YAMLファイル(shogun_csv_masters.yaml)から動的にカラムマッピングを取得します。
 """
 
-from typing import Any, Dict, Optional
-
 import pandas as pd
 import sqlalchemy as sa
+from sqlalchemy import text
+from sqlalchemy.orm import Session
+
 from app.config.settings import get_settings
 from app.infra.db.dynamic_models import (
     create_shogun_model_class,
@@ -19,8 +20,6 @@ from app.infra.db.table_definition import get_table_definition_generator
 from backend_shared.application.logging import create_log_context, get_module_logger
 from backend_shared.infra.dataframe import filter_defined_columns, to_sql_ready_df
 from backend_shared.infra.json_utils import deep_jsonable
-from sqlalchemy import text
-from sqlalchemy.orm import Session
 
 logger = get_module_logger(__name__)
 
@@ -136,10 +135,10 @@ class ShogunCsvRepository:
             tracking_columns = []
             if "upload_file_id" in df_renamed.columns:
                 tracking_columns.append("upload_file_id")
-                logger.info(f"[DEBUG REPO] [stg] Found upload_file_id in df_renamed")
+                logger.info("[DEBUG REPO] [stg] Found upload_file_id in df_renamed")
             if "source_row_no" in df_renamed.columns:
                 tracking_columns.append("source_row_no")
-                logger.info(f"[DEBUG REPO] [stg] Found source_row_no in df_renamed")
+                logger.info("[DEBUG REPO] [stg] Found source_row_no in df_renamed")
 
             # YAML定義カラム + トラッキングカラムを保持
             valid_columns_with_tracking = valid_columns + tracking_columns
@@ -350,7 +349,7 @@ class ShogunCsvRepository:
         model_class = get_shogun_model_class(csv_type)
         return self.db.query(model_class).count()
 
-    def get_column_mapping(self, csv_type: str) -> Dict[str, str]:
+    def get_column_mapping(self, csv_type: str) -> dict[str, str]:
         """
         YAMLから日本語→英語のカラムマッピングを取得
 

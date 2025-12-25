@@ -22,11 +22,10 @@ AIサービスと通信し、テキスト分類、感情分析、
     print(result['category'])  # 例: 'positive'
 """
 
-import logging
 import os
-from typing import Optional
 
 import httpx
+
 from backend_shared.application.logging import create_log_context, get_module_logger
 
 logger = get_module_logger(__name__)

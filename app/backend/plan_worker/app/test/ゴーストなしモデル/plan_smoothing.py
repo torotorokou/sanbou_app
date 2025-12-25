@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Dict, Iterable, Literal, Optional, Tuple
+from typing import Literal
 
 import numpy as np
 import pandas as pd
@@ -21,22 +22,22 @@ class SmoothConfig:
     min_open_days_for_smooth: int = 2  # これ未満は例外処理（開いてる日に100%）
 
     # 日タイプ倍率（例：平日=1.0, 日曜=1.0, 祝日=1.0）
-    scope_weight_multiplier: Optional[Dict[str, float]] = None
+    scope_weight_multiplier: dict[str, float] | None = None
 
     # 週内スムージングの対象スコープ（Bモード：平日のみ）
-    intraweek_smooth_scope_values: Tuple[str, ...] = ("biz",)
+    intraweek_smooth_scope_values: tuple[str, ...] = ("biz",)
 
     # 非平日（sun/hol）の週内1日あたり上限シェア（例: 0.08 = 8%）
-    non_biz_scopes: Tuple[str, ...] = ("sun", "hol")
-    non_biz_share_cap_per_day: Optional[float] = 0.08
+    non_biz_scopes: tuple[str, ...] = ("sun", "hol")
+    non_biz_share_cap_per_day: float | None = 0.08
 
     # 任意：1日あたりの全体上限シェア（尖り対策）。Noneで無効
-    per_day_share_cap: Optional[float] = None
+    per_day_share_cap: float | None = None
 
     # 月またぎブリッジ平滑
     bridge_smooth_enabled: bool = True
     bridge_smooth_window: int = 5
-    bridge_smooth_scope_values: Tuple[str, ...] = ("biz",)  # 平日のみ等
+    bridge_smooth_scope_values: tuple[str, ...] = ("biz",)  # 平日のみ等
 
 
 # ------------------------------------------------------------
@@ -85,7 +86,7 @@ def apply_intraweek_pipeline(
     weight_raw_col: str,
     weight_col: str,
     cfg: SmoothConfig,
-    scope_col: Optional[str] = None,
+    scope_col: str | None = None,
 ) -> pd.DataFrame:
     """
     前提: df_week は 1週ぶん（同じ (month_date, iso_year, iso_week)）。
@@ -195,7 +196,7 @@ def apply_intraweek_pipeline(
 def _clip_and_redistribute(
     w_norm: pd.Series,
     clip_mask: pd.Series,
-    per_day_cap: Optional[float],
+    per_day_cap: float | None,
     redistribute_mask: pd.Series,
 ) -> pd.Series:
     """
@@ -243,7 +244,7 @@ def bridge_smooth_across_months_and_renorm(
     month_key: str,
     target_col: str,
     scope_col: str,
-    scope_values: Tuple[str, ...],
+    scope_values: tuple[str, ...],
     window: int,
     method: SmoothingMethod = "median_then_mean",
 ) -> pd.DataFrame:

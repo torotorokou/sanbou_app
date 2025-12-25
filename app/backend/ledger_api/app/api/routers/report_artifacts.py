@@ -6,7 +6,9 @@ Excel/PDF ファイルを署名付き URL で配布するためのエンドポ�
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Optional
+
+from fastapi import APIRouter, HTTPException, Query
+from fastapi.responses import FileResponse
 
 from app.infra.adapters.artifact_storage import (
     ReportArtifactStorage,
@@ -16,8 +18,6 @@ from app.infra.adapters.artifact_storage.artifact_service import (
     UrlSigner,
     get_url_signer,
 )
-from fastapi import APIRouter, HTTPException, Query
-from fastapi.responses import FileResponse
 
 router = APIRouter()
 
@@ -50,7 +50,7 @@ async def download_artifact(
             status_code=403, detail="署名が無効、または有効期限切れです。"
         )
 
-    resolved_path: Optional[Path] = storage.resolve(artifact_path)
+    resolved_path: Path | None = storage.resolve(artifact_path)
     if resolved_path is None or not resolved_path.exists():
         raise HTTPException(status_code=404, detail="ファイルが見つかりません。")
 

@@ -22,7 +22,7 @@ from __future__ import annotations
 import os
 import sys
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient
@@ -65,14 +65,14 @@ def _initial_session_and_rows(client: TestClient) -> tuple[str, list[dict[str, A
     files = {"shipment": _load_sample_shipment_bytes()}
     resp = client.post("/ledger_api/block_unit_price_interactive/initial", files=files)
     assert resp.status_code == 200, resp.text
-    data: Dict[str, Any] = resp.json()
+    data: dict[str, Any] = resp.json()
     session_id = data["session_id"]
     rows = data.get("rows", [])
     assert isinstance(rows, list) and rows, "initial rows should not be empty"
     return session_id, rows
 
 
-def _make_fixed_frontend_payload(session_id: str) -> Dict[str, Any]:
+def _make_fixed_frontend_payload(session_id: str) -> dict[str, Any]:
     """
     前に提示したフロントエンドの戻り値そのままの selections を組み立てて返す。
     entry_id が実データに存在しない可能性はあるが、ここでは形を合わせることを目的とする。
@@ -186,7 +186,7 @@ def test_state_passed_to_finalize_matches_saved_serialized_state(
     frontend_payload = _make_fixed_frontend_payload(session_id)
 
     # spy: session_store.load をラップ
-    calls: list[Dict[str, Any]] = []
+    calls: list[dict[str, Any]] = []
     orig_load = session_store.load
 
     def _spy_load(sid: str):

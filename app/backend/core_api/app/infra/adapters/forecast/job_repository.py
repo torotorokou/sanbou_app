@@ -16,12 +16,12 @@ jobs.forecast_jobsテーブルに対する操作を担当。
 
 from datetime import date as date_type
 from datetime import datetime
-from typing import Optional
+
+from sqlalchemy import text
+from sqlalchemy.orm import Session
 
 from app.infra.db.orm_models import ForecastJob
 from app.infra.db.sql_loader import load_sql
-from sqlalchemy import text
-from sqlalchemy.orm import Session
 
 
 class JobRepository:
@@ -38,8 +38,8 @@ class JobRepository:
         target_from: date_type,
         target_to: date_type,
         actor: str = "system",
-        payload_json: Optional[dict] = None,
-        scheduled_for: Optional[datetime] = None,
+        payload_json: dict | None = None,
+        scheduled_for: datetime | None = None,
     ) -> int:
         """
         新しい予測ジョブをキューに登録
@@ -75,7 +75,7 @@ class JobRepository:
         self.db.flush()  # IDを取得するためflush(トランザクションはまだコミットしない)
         return job.id
 
-    def claim_one_queued_job_for_update(self) -> Optional[int]:
+    def claim_one_queued_job_for_update(self) -> int | None:
         """
         待機中のジョブを1つクレームし、実行中状態に変更
 
@@ -115,6 +115,6 @@ class JobRepository:
             job.updated_at = datetime.utcnow()
             self.db.commit()
 
-    def get_job_by_id(self, job_id: int) -> Optional[ForecastJob]:
+    def get_job_by_id(self, job_id: int) -> ForecastJob | None:
         """Retrieve job by ID."""
         return self.db.query(ForecastJob).filter(ForecastJob.id == job_id).first()

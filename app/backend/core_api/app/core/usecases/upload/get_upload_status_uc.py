@@ -4,8 +4,7 @@ Get Upload Status UseCase - アップロードステータス取得ユースケ�
 指定されたアップロードファイルの処理状態を取得します。
 """
 
-import logging
-from typing import Any, Dict, Optional
+from typing import Any
 
 from app.core.ports.upload_status_port import IUploadStatusQuery
 from backend_shared.application.logging import (
@@ -35,7 +34,7 @@ class GetUploadStatusUseCase:
         self.query = query
 
     @log_usecase_execution(usecase_name="GetUploadStatus")
-    def execute(self, upload_file_id: int) -> Optional[Dict[str, Any]]:
+    def execute(self, upload_file_id: int) -> dict[str, Any] | None:
         """
         アップロードファイルのステータスを取得
 

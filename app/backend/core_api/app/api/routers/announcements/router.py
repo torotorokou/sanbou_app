@@ -4,21 +4,19 @@ Announcements API Router
 """
 
 from datetime import datetime
-from typing import List, Optional
+
+from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel, Field
+from sqlalchemy.orm import Session
 
 from app.core.domain.announcement import (
-    Announcement,
     AnnouncementSeverity,
-    AnnouncementWithState,
     Audience,
 )
 from app.core.domain.auth.entities import AuthUser
 from app.deps import get_current_user, get_db
 from app.infra.adapters.announcement import AnnouncementRepositoryImpl
 from backend_shared.application.logging import create_log_context, get_module_logger
-from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel, Field
-from sqlalchemy.orm import Session
 
 logger = get_module_logger(__name__)
 
@@ -36,12 +34,12 @@ class AnnouncementListItem(BaseModel):
     id: int
     title: str
     severity: AnnouncementSeverity
-    tags: List[str]
+    tags: list[str]
     publish_from: datetime
-    publish_to: Optional[datetime]
+    publish_to: datetime | None
     audience: Audience
-    read_at: Optional[datetime]
-    ack_at: Optional[datetime]
+    read_at: datetime | None
+    ack_at: datetime | None
     created_at: datetime
 
 
@@ -52,14 +50,14 @@ class AnnouncementDetail(BaseModel):
     title: str
     body_md: str
     severity: AnnouncementSeverity
-    tags: List[str]
+    tags: list[str]
     publish_from: datetime
-    publish_to: Optional[datetime]
+    publish_to: datetime | None
     audience: Audience
     attachments: list
-    notification_plan: Optional[dict]
-    read_at: Optional[datetime]
-    ack_at: Optional[datetime]
+    notification_plan: dict | None
+    read_at: datetime | None
+    ack_at: datetime | None
     created_at: datetime
     updated_at: datetime
 
@@ -67,7 +65,7 @@ class AnnouncementDetail(BaseModel):
 class AnnouncementListResponse(BaseModel):
     """お知らせ一覧APIレスポンス"""
 
-    announcements: List[AnnouncementListItem]
+    announcements: list[AnnouncementListItem]
     total: int
     unread_count: int
 
@@ -107,7 +105,7 @@ class MarkAcknowledgedResponse(BaseModel):
 
 @router.get("", response_model=AnnouncementListResponse)
 async def list_announcements(
-    audience: Optional[str] = Query(
+    audience: str | None = Query(
         None, description="対象フィルタ (all, internal, site:narita, site:shinkiba)"
     ),
     db: Session = Depends(get_db),
@@ -163,7 +161,7 @@ async def list_announcements(
 
 @router.get("/unread-count", response_model=UnreadCountResponse)
 async def get_unread_count(
-    audience: Optional[str] = Query(None, description="対象フィルタ"),
+    audience: str | None = Query(None, description="対象フィルタ"),
     db: Session = Depends(get_db),
     current_user: AuthUser = Depends(get_current_user),
 ):

@@ -9,10 +9,9 @@ Get Upload Calendar UseCase
   - Router層からSQL実行を排除
 """
 
-import logging
 from calendar import monthrange
 from datetime import date
-from typing import Any, Dict, List
+from typing import Any
 
 from app.core.ports.upload_status_port import IUploadCalendarQuery
 from backend_shared.application.logging import create_log_context, get_module_logger
@@ -35,7 +34,7 @@ class GetUploadCalendarDetailUseCase:
         """
         self.query = query
 
-    def execute(self, year: int, month: int) -> Dict[str, List[Dict[str, Any]]]:
+    def execute(self, year: int, month: int) -> dict[str, list[dict[str, Any]]]:
         """
         指定年月のアップロードカレンダーデータを取得
 

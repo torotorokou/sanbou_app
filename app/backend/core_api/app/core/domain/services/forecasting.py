@@ -5,7 +5,7 @@ No I/O.
 """
 
 from datetime import date as date_type
-from typing import Any, Dict, List
+from typing import Any
 
 # ビジネス定数
 MAX_FORECAST_DAYS = 90  # 予測可能な最大日数
@@ -54,8 +54,8 @@ def validate_forecast_date_range(
 
 
 def apply_business_rules_to_predictions(
-    predictions: List[Dict[str, Any]]
-) -> List[Dict[str, Any]]:
+    predictions: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
     """
     Apply domain-specific business rules to prediction results.
     Pure function: no side effects.
@@ -108,7 +108,7 @@ def apply_business_rules_to_predictions(
     return result
 
 
-def calculate_forecast_confidence(predictions: List[Dict[str, Any]]) -> float:
+def calculate_forecast_confidence(predictions: list[dict[str, Any]]) -> float:
     """
     予測の信頼度を計算（将来の拡張用）
 

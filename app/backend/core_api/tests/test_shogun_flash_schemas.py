@@ -20,12 +20,13 @@ paths_module.SHOGUNCSV_DEF_PATH = str(
     backend_path.parent / "config" / "csv_config" / "shogun_csv_masters.yaml"
 )
 
+from pydantic import ValidationError
+
 from app.core.domain.shogun_flash_schemas import (
     ReceiveFlashRow,
     ShipmentFlashRow,
     YardFlashRow,
 )
-from pydantic import ValidationError
 
 
 def test_receive_flash_row():
@@ -62,7 +63,7 @@ def test_receive_flash_row():
         model = ReceiveFlashRow(**invalid_row)
         print("✗ 必須フィールド不足: 検証エラーが出なかった（バグの可能性）")
     except ValidationError as e:
-        print(f"✓ 必須フィールド不足: 正しくエラーが出た")
+        print("✓ 必須フィールド不足: 正しくエラーが出た")
         print(f"  エラー内容: {e.error_count()} 件")
 
     # 任意フィールドを含むケース

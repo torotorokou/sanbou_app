@@ -5,7 +5,7 @@ KPI集計データ取得のためのPort（抽象インターフェース）
 """
 
 from datetime import date as date_type
-from typing import Optional, Protocol
+from typing import Protocol
 
 
 class KPIQueryPort(Protocol):
@@ -24,7 +24,7 @@ class KPIQueryPort(Protocol):
         """
         ...
 
-    def get_latest_prediction_date(self) -> Optional[date_type]:
+    def get_latest_prediction_date(self) -> date_type | None:
         """
         最新の予測日付を取得
 

@@ -6,10 +6,11 @@ Manual API Router - BFF for manual_api endpoints
 import os
 
 import httpx
-from backend_shared.application.logging import create_log_context, get_module_logger
-from backend_shared.core.domain.exceptions import ExternalServiceError, ValidationError
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse, StreamingResponse
+
+from backend_shared.application.logging import create_log_context, get_module_logger
+from backend_shared.core.domain.exceptions import ExternalServiceError, ValidationError
 
 logger = get_module_logger(__name__)
 
@@ -479,7 +480,7 @@ async def proxy_manual_assets(file_path: str, request: Request):
                 logger.error(f"[BFF Manual] Asset upstream error: {resp.status_code}")
                 raise ExternalServiceError(
                     service_name="manual_api",
-                    message=f"Asset retrieval failed",
+                    message="Asset retrieval failed",
                     status_code=resp.status_code,
                 )
 

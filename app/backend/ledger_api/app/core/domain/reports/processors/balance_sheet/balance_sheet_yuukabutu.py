@@ -1,7 +1,6 @@
 import pandas as pd
 from app.infra.report_utils import (
     get_template_config,
-    get_unit_price_table_csv,
     load_master_and_template,
 )
 from app.infra.report_utils.formatters import summary_apply

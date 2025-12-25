@@ -40,7 +40,7 @@ def _exists(qualified: str) -> bool:
 def _read_sql(name_wo_ext: str) -> str:
     """SQL正本ファイル読み込み"""
     p = BASE / f"{name_wo_ext}.sql"
-    with open(p, "r", encoding="utf-8") as f:
+    with open(p, encoding="utf-8") as f:
         return f.read()
 
 

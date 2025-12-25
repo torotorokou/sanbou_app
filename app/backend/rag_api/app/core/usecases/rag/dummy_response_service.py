@@ -29,7 +29,7 @@ test-answerエンドポイント用のダミーデータ生成を担当するサ
 """
 
 import os
-from typing import Any, Dict
+from typing import Any
 
 from app.config.paths import get_pdf_url_prefix
 from app.core.ports.rag.pdf_service_port import PDFServiceBase
@@ -47,7 +47,7 @@ class DummyResponseService:
     def __init__(self, pdf_service: PDFServiceBase):
         self.pdf_service = pdf_service
 
-    def generate_dummy_response(self, query: str, category: str) -> Dict[str, Any]:
+    def generate_dummy_response(self, query: str, category: str) -> dict[str, Any]:
         """
         ダミーレスポンスを生成
 

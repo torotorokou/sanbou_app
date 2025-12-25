@@ -19,7 +19,7 @@ import threading
 import time
 import uuid
 from dataclasses import dataclass
-from typing import Any, Dict, Optional
+from typing import Any
 
 DEFAULT_SESSION_TTL_SECONDS = int(os.getenv("INTERACTIVE_SESSION_TTL", "3600"))
 
@@ -31,7 +31,7 @@ except Exception:  # pragma: no cover - fallback if redis not installed
 
 @dataclass
 class _SessionEntry:
-    value: Dict[str, Any]
+    value: dict[str, Any]
     expires_at: float
 
 
@@ -39,11 +39,11 @@ class _InMemorySessionBackend:
     """Thread-safe in-memory session backend used as a fallback."""
 
     def __init__(self) -> None:
-        self._store: Dict[str, _SessionEntry] = {}
+        self._store: dict[str, _SessionEntry] = {}
         self._lock = threading.Lock()
 
     def save(
-        self, data: Dict[str, Any], ttl: int, session_id: Optional[str] = None
+        self, data: dict[str, Any], ttl: int, session_id: str | None = None
     ) -> str:
         sid = session_id or str(uuid.uuid4())
         entry = _SessionEntry(value=data, expires_at=time.time() + ttl)
@@ -51,7 +51,7 @@ class _InMemorySessionBackend:
             self._store[sid] = entry
         return sid
 
-    def load(self, session_id: str) -> Optional[Dict[str, Any]]:
+    def load(self, session_id: str) -> dict[str, Any] | None:
         now = time.time()
         with self._lock:
             entry = self._store.get(session_id)
@@ -81,7 +81,7 @@ class _RedisSessionBackend:
         self._client = redis.Redis.from_url(url, decode_responses=True)
 
     def save(
-        self, data: Dict[str, Any], ttl: int, session_id: Optional[str] = None
+        self, data: dict[str, Any], ttl: int, session_id: str | None = None
     ) -> str:
         sid = session_id or str(uuid.uuid4())
         payload = json.dumps(data)
@@ -89,7 +89,7 @@ class _RedisSessionBackend:
         self._client.setex(sid, ttl, payload)
         return sid
 
-    def load(self, session_id: str) -> Optional[Dict[str, Any]]:
+    def load(self, session_id: str) -> dict[str, Any] | None:
         payload = self._client.get(session_id)
         if payload is None:
             return None
@@ -104,7 +104,7 @@ class SessionStore:
 
     def __init__(self, default_ttl: int = DEFAULT_SESSION_TTL_SECONDS) -> None:
         self.default_ttl = default_ttl
-        backend: Optional[Any] = None
+        backend: Any | None = None
         redis_url = os.getenv("REDIS_URL") or os.getenv("INTERACTIVE_SESSION_REDIS_URL")
         if redis_url:
             try:
@@ -118,15 +118,15 @@ class SessionStore:
 
     def save(
         self,
-        data: Dict[str, Any],
+        data: dict[str, Any],
         *,
-        ttl: Optional[int] = None,
-        session_id: Optional[str] = None,
+        ttl: int | None = None,
+        session_id: str | None = None,
     ) -> str:
         ttl_to_use = ttl or self.default_ttl
         return self._backend.save(data, ttl_to_use, session_id=session_id)
 
-    def load(self, session_id: str) -> Optional[Dict[str, Any]]:
+    def load(self, session_id: str) -> dict[str, Any] | None:
         return self._backend.load(session_id)
 
     def delete(self, session_id: str) -> None:

@@ -5,10 +5,8 @@ Reservation repository port (abstract interface).
 
 from abc import ABC, abstractmethod
 from datetime import date as date_type
-from typing import List, Optional
 
 from app.core.domain.reservation import (
-    ReservationCustomerRow,
     ReservationForecastRow,
     ReservationManualRow,
 )
@@ -25,7 +23,7 @@ class ReservationRepository(ABC):
     # ========================================
 
     @abstractmethod
-    def get_manual(self, reserve_date: date_type) -> Optional[ReservationManualRow]:
+    def get_manual(self, reserve_date: date_type) -> ReservationManualRow | None:
         """
         指定日の手入力予約データを取得
 
@@ -68,7 +66,7 @@ class ReservationRepository(ABC):
     # ========================================
 
     @abstractmethod
-    def get_forecast_month(self, year: int, month: int) -> List[ReservationForecastRow]:
+    def get_forecast_month(self, year: int, month: int) -> list[ReservationForecastRow]:
         """
         指定月の予測用予約データを取得（manual優先、なければcustomer集計）
 

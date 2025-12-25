@@ -18,11 +18,10 @@ DataFrame を SQL データベースに挿入可能な形式に正規化する�
     filtered_df = filter_defined_columns(normalized_df, ["id", "name", "created_at"])
 """
 
-from datetime import date, datetime, time
-from typing import Any
+from datetime import datetime
 
-import numpy as np
 import pandas as pd
+
 from backend_shared.application.logging import get_module_logger
 from backend_shared.infra.json_utils import deep_jsonable
 

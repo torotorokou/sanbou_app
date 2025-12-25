@@ -5,7 +5,7 @@ No side effects, no I/O.
 
 from datetime import date as date_type
 from decimal import Decimal, InvalidOperation
-from typing import Any, Dict, Literal, Optional
+from typing import Any, Literal
 
 Mode = Literal["daily", "monthly"]
 
@@ -42,7 +42,7 @@ def validate_target_card_date(
     return True, ""
 
 
-def calculate_achievement_rate(actual: float, target: float) -> Optional[float]:
+def calculate_achievement_rate(actual: float, target: float) -> float | None:
     """
     達成率を計算（ビジネスロジック）
 
@@ -77,8 +77,8 @@ def calculate_variance(actual: float, target: float) -> float:
 
 
 def transform_target_card_data(
-    raw_data: Optional[Dict[str, Any]]
-) -> Optional[Dict[str, Any]]:
+    raw_data: dict[str, Any] | None,
+) -> dict[str, Any] | None:
     """
     Transform raw repository data into presentation format.
     Pure function: no side effects.
@@ -134,7 +134,7 @@ def transform_target_card_data(
     return transformed
 
 
-def format_target_card_value(value: Any, decimal_places: int = 2) -> Optional[float]:
+def format_target_card_value(value: Any, decimal_places: int = 2) -> float | None:
     """
     目標カード用の数値フォーマット
 

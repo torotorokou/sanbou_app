@@ -9,10 +9,10 @@ IngestPortの実装。PostgreSQL/SQLAlchemyを使用してデータ永続化。
 """
 
 from datetime import date as date_type
-from typing import Dict, List
+
+from sqlalchemy.orm import Session
 
 from backend_shared.application.logging import create_log_context, get_module_logger
-from sqlalchemy.orm import Session
 
 logger = get_module_logger(__name__)
 
@@ -23,7 +23,7 @@ class IngestRepository:
     def __init__(self, db: Session):
         self.db = db
 
-    def upsert_actuals(self, rows: List[dict]) -> None:
+    def upsert_actuals(self, rows: list[dict]) -> None:
         """
         実績データの登録/更新
 

@@ -11,8 +11,6 @@ UseCase: Get Inbound Daily Data
   5. ビジネスロジックはDomain層に委譲
 """
 
-import logging
-
 from app.core.ports.inbound_repository_port import InboundRepository
 from app.core.usecases.inbound.dto import GetInboundDailyInput, GetInboundDailyOutput
 from backend_shared.application.logging import get_module_logger

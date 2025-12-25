@@ -4,8 +4,7 @@ Get Upload Calendar UseCase - アップロードカレンダー取得ユース�
 指定された年月のCSVアップロード履歴をカレンダー形式で取得します。
 """
 
-import logging
-from typing import Any, Dict, List
+from typing import Any
 
 from app.core.ports.upload_status_port import IUploadStatusQuery
 from backend_shared.application.logging import (
@@ -35,7 +34,7 @@ class GetUploadCalendarUseCase:
         self.query = query
 
     @log_usecase_execution(usecase_name="GetUploadCalendar", log_result=True)
-    def execute(self, year: int, month: int) -> List[Dict[str, Any]]:
+    def execute(self, year: int, month: int) -> list[dict[str, Any]]:
         """
         指定月のアップロードカレンダーデータを取得
 

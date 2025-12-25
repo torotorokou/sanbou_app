@@ -5,11 +5,11 @@ KPIQueryPortの実装。PostgreSQL/SQLAlchemyを使用してKPI集計データ�
 """
 
 from datetime import date as date_type
-from typing import Optional
 
-from app.infra.db.orm_models import ForecastJob, PredictionDaily
 from sqlalchemy import func
 from sqlalchemy.orm import Session
+
+from app.infra.db.orm_models import ForecastJob, PredictionDaily
 
 
 class KPIQueryAdapter:
@@ -60,7 +60,7 @@ class KPIQueryAdapter:
             "failed": failed,
         }
 
-    def get_latest_prediction_date(self) -> Optional[date_type]:
+    def get_latest_prediction_date(self) -> date_type | None:
         """
         最新の予測結果の日付を取得
 

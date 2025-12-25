@@ -4,7 +4,7 @@ Calendar Query Port - カレンダーデータ取得の抽象インターフェ�
 営業カレンダーデータ（営業日判定・祝日情報など）を取得するための Port。
 """
 
-from typing import Any, Dict, List, Protocol
+from typing import Any, Protocol
 
 
 class ICalendarQuery(Protocol):
@@ -15,7 +15,7 @@ class ICalendarQuery(Protocol):
     同等のデータソースからカレンダー情報を取得します。
     """
 
-    def get_month_calendar(self, year: int, month: int) -> List[Dict[str, Any]]:
+    def get_month_calendar(self, year: int, month: int) -> list[dict[str, Any]]:
         """
         指定された年月のカレンダーデータを取得
 

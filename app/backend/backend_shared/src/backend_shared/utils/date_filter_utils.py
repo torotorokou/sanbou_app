@@ -5,7 +5,7 @@ DataFrame の日付関連共通ユーティリティ
 - 最小日付を起点にした期間フィルタ（oneday / oneweek / onemonth / all）
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import pandas as pd
 
@@ -21,7 +21,7 @@ except Exception:  # フォールバック
 DEFAULT_DATE_CANDIDATES = ["伝票日付", "日付", "date", "Date"]
 
 
-def find_date_column(df: Any, candidates: List[str]) -> Optional[str]:
+def find_date_column(df: Any, candidates: list[str]) -> str | None:
     """候補名から最初に見つかった日付列名を返す。なければNone。
 
     - 候補は順序を尊重
@@ -45,10 +45,10 @@ def find_date_column(df: Any, candidates: List[str]) -> Optional[str]:
 
 
 def filter_by_period_from_min_date(
-    dfs: Dict[str, Any],
+    dfs: dict[str, Any],
     period_type: str,
-    date_candidates: Optional[List[str]] = None,
-) -> Dict[str, Any]:
+    date_candidates: list[str] | None = None,
+) -> dict[str, Any]:
     """
     各CSVの最小日付を起点に、指定期間で各DataFrameをフィルタ。
 
@@ -110,7 +110,7 @@ def filter_by_period_from_min_date(
     else:
         raise ValueError(f"Unknown period_type: {period_type}")
 
-    filtered: Dict[str, Any] = {}
+    filtered: dict[str, Any] = {}
     for name, df in dfs.items():
         if not hasattr(df, "columns"):
             filtered[name] = df
@@ -134,10 +134,10 @@ def filter_by_period_from_min_date(
 
 
 def filter_by_period_from_max_date(
-    dfs: Dict[str, Any],
+    dfs: dict[str, Any],
     period_type: str,
-    date_candidates: Optional[List[str]] = None,
-) -> Dict[str, Any]:
+    date_candidates: list[str] | None = None,
+) -> dict[str, Any]:
     """
     各CSVの最大日付を起点に、指定期間（過去方向）で各DataFrameをフィルタ。
 
@@ -196,7 +196,7 @@ def filter_by_period_from_max_date(
     else:
         raise ValueError(f"Unknown period_type: {period_type}")
 
-    filtered: Dict[str, Any] = {}
+    filtered: dict[str, Any] = {}
     for name, df in dfs.items():
         if not hasattr(df, "columns"):
             filtered[name] = df

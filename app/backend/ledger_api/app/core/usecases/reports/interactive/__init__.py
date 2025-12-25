@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 Interactive report generators package
 インタラクティブレポート生成関連モジュール

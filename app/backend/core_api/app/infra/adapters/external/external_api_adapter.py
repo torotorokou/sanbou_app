@@ -20,8 +20,6 @@ BFFパターン:
   - フロントエンドは core_api のみを呼び出す
 """
 
-from typing import Dict, List
-
 from app.infra.clients.ai_client import AIClient
 from app.infra.clients.ledger_client import LedgerClient
 from app.infra.clients.manual_client import ManualClient
@@ -48,7 +46,7 @@ class ExternalApiAdapter:
         logger.info("Calling RAG service", extra={"query": query})
         return await self.rag_client.ask(query)
 
-    async def list_manuals(self) -> List[Dict]:
+    async def list_manuals(self) -> list[dict]:
         """List all manuals from Manual API."""
         logger.info("Calling Manual service for list")
         return await self.manual_client.list_manuals()

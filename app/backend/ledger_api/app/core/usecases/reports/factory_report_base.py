@@ -17,11 +17,12 @@ factory_report処理で使用するベースDataFrame構造を提供。
 """
 
 from dataclasses import dataclass
-from typing import Any, Dict, Optional
+from typing import Any
 
 import pandas as pd
-from app.infra.report_utils import get_template_config, load_master_and_template
 from backend_shared.application.logging import get_module_logger
+
+from app.infra.report_utils import get_template_config, load_master_and_template
 
 logger = get_module_logger(__name__)
 
@@ -45,13 +46,13 @@ class FactoryReportBaseData:
 
     df_shipment: pd.DataFrame
     df_yard: pd.DataFrame
-    master_csv_shobun: Optional[pd.DataFrame] = None
-    master_csv_yuuka: Optional[pd.DataFrame] = None
-    master_csv_yard: Optional[pd.DataFrame] = None
-    master_csv_etc: Optional[pd.DataFrame] = None
+    master_csv_shobun: pd.DataFrame | None = None
+    master_csv_yuuka: pd.DataFrame | None = None
+    master_csv_yard: pd.DataFrame | None = None
+    master_csv_etc: pd.DataFrame | None = None
 
 
-def build_factory_report_base_data(df_dict: Dict[str, Any]) -> FactoryReportBaseData:
+def build_factory_report_base_data(df_dict: dict[str, Any]) -> FactoryReportBaseData:
     """
     factory_report処理用のベースDataFrameを構築する。
 

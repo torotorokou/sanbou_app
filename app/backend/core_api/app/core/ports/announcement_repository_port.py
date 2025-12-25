@@ -5,10 +5,8 @@ Announcement repository port (abstract interface).
 
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import List, Optional
 
 from app.core.domain.announcement import (
-    Announcement,
     AnnouncementUserState,
     AnnouncementWithState,
 )
@@ -28,9 +26,9 @@ class AnnouncementRepositoryPort(ABC):
     def list_active(
         self,
         user_id: str,
-        audience: Optional[str] = None,
-        now: Optional[datetime] = None,
-    ) -> List[AnnouncementWithState]:
+        audience: str | None = None,
+        now: datetime | None = None,
+    ) -> list[AnnouncementWithState]:
         """
         アクティブなお知らせ一覧を取得（公開中かつ未削除）
 
@@ -49,7 +47,7 @@ class AnnouncementRepositoryPort(ABC):
         self,
         announcement_id: int,
         user_id: str,
-    ) -> Optional[AnnouncementWithState]:
+    ) -> AnnouncementWithState | None:
         """
         指定IDのお知らせを取得
 
@@ -106,8 +104,8 @@ class AnnouncementRepositoryPort(ABC):
     def get_unread_count(
         self,
         user_id: str,
-        audience: Optional[str] = None,
-        now: Optional[datetime] = None,
+        audience: str | None = None,
+        now: datetime | None = None,
     ) -> int:
         """
         未読お知らせ数を取得

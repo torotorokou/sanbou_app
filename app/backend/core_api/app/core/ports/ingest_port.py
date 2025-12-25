@@ -3,13 +3,13 @@ Ingest Port: Interface for data ingestion operations.
 """
 
 from datetime import date as date_type
-from typing import Dict, List, Protocol
+from typing import Protocol
 
 
 class IngestPort(Protocol):
     """Port for data ingestion operations (CSV upload, reservations)."""
 
-    def upsert_actuals(self, rows: List[dict]) -> None:
+    def upsert_actuals(self, rows: list[dict]) -> None:
         """Insert or update actual data rows."""
         ...
 

@@ -6,10 +6,11 @@ APSchedulerを使用してFastAPI起動時にスケジューラーを開始。
 """
 
 import os
-from datetime import datetime, timezone
+from datetime import UTC
 
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
+
 from backend_shared.application.logging import get_module_logger
 
 logger = get_module_logger(__name__)
@@ -27,7 +28,7 @@ def dispatch_pending_notifications_job():
     """
     logger.info("Notification dispatch job started")
     try:
-        from datetime import datetime, timezone
+        from datetime import datetime
 
         from app.config.di_providers import (
             get_notification_outbox_port,
@@ -47,11 +48,11 @@ def dispatch_pending_notifications_job():
 
             # UseCase実行
             uc = DispatchPendingNotificationsUseCase(outbox=outbox, sender=sender)
-            now = datetime.now(timezone.utc)
+            now = datetime.now(UTC)
             sent_count = uc.execute(now=now)
 
             logger.info(
-                f"Notification dispatch completed",
+                "Notification dispatch completed",
                 extra={"sent_count": sent_count, "job": "dispatch_notifications"},
             )
         finally:

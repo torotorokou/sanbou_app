@@ -5,7 +5,7 @@ CSV アップロードファイルの状態取得・カレンダー表示・削�
 """
 
 from datetime import date
-from typing import Any, Dict, List, Optional, Protocol
+from typing import Any, Protocol
 
 
 class IUploadStatusQuery(Protocol):
@@ -15,7 +15,7 @@ class IUploadStatusQuery(Protocol):
     log.upload_file テーブルからアップロードファイルの情報を取得します。
     """
 
-    def get_upload_status(self, upload_file_id: int) -> Optional[Dict[str, Any]]:
+    def get_upload_status(self, upload_file_id: int) -> dict[str, Any] | None:
         """
         アップロードファイルのステータスを取得
 
@@ -36,7 +36,7 @@ class IUploadStatusQuery(Protocol):
         """
         ...
 
-    def get_upload_calendar(self, year: int, month: int) -> List[Dict[str, Any]]:
+    def get_upload_calendar(self, year: int, month: int) -> list[dict[str, Any]]:
         """
         指定月のアップロードカレンダーデータを取得
 
@@ -63,7 +63,7 @@ class IUploadCalendarQuery(Protocol):
 
     def fetch_upload_calendar(
         self, start_date: date, end_date: date
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         指定期間のアップロードカレンダーデータを取得
 
@@ -86,7 +86,7 @@ class IUploadCalendarQuery(Protocol):
         upload_file_id: int,
         target_date: date,
         csv_kind: str,
-        deleted_by: Optional[str] = None
+        deleted_by: str | None = None
     ) -> int:
         """
         指定されたアップロードスコープを論理削除

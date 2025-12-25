@@ -1,16 +1,17 @@
-# -*- coding: utf-8 -*-
 """
 Inbound repository implementation with PostgreSQL.
 日次搬入量データの取得（CTE + ウィンドウ関数で累積計算）
 """
-import logging
+
 from datetime import date as date_type
-from typing import List, Optional
+
+from sqlalchemy import text
+from sqlalchemy.orm import Session
 
 from app.core.domain.inbound import CumScope, InboundDailyRow
 from app.core.ports.inbound_repository_port import InboundRepository
 from app.infra.db.sql_loader import load_sql
-from backend_shared.application.logging import create_log_context, get_module_logger
+from backend_shared.application.logging import get_module_logger
 from backend_shared.db.names import (
     MV_RECEIVE_DAILY,
     SCHEMA_MART,
@@ -18,8 +19,6 @@ from backend_shared.db.names import (
     V_CALENDAR_CLASSIFIED,
     fq,
 )
-from sqlalchemy import text
-from sqlalchemy.orm import Session
 
 logger = get_module_logger(__name__)
 
@@ -67,9 +66,9 @@ class InboundRepositoryImpl(InboundRepository):
         self,
         start: date_type,
         end: date_type,
-        segment: Optional[str] = None,
+        segment: str | None = None,
         cum_scope: CumScope = "none",
-    ) -> List[InboundDailyRow]:
+    ) -> list[InboundDailyRow]:
         """
         Fetch daily inbound data with calendar continuity and optional cumulative calculation.
 
@@ -125,7 +124,7 @@ class InboundRepositoryImpl(InboundRepository):
             )
             rows = result.fetchall()
 
-            data: List[InboundDailyRow] = []
+            data: list[InboundDailyRow] = []
             for r in rows:
                 # rのポジションはSELECT順に対応
                 # New SQL returns: ddate, iso_year, iso_week, iso_dow, is_business, segment,
@@ -187,8 +186,8 @@ class InboundRepositoryImpl(InboundRepository):
         self,
         start: date_type,
         end: date_type,
-        segment: Optional[str] = None,
-    ) -> List[InboundDailyRow]:
+        segment: str | None = None,
+    ) -> list[InboundDailyRow]:
         """
         案6: Simplified daily fetch without prev_month/prev_year comparisons.
         20-30% faster than fetch_daily(), suitable when comparisons are not needed.
@@ -230,7 +229,7 @@ class InboundRepositoryImpl(InboundRepository):
             )
             rows = result.fetchall()
 
-            data: List[InboundDailyRow] = []
+            data: list[InboundDailyRow] = []
             for r in rows:
                 # SQL returns: ddate, iso_year, iso_week, iso_dow, is_business,
                 #              day_ton, week_ton, month_cumulative_ton, week_cumulative_ton

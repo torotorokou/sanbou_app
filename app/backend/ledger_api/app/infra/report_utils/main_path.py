@@ -1,6 +1,5 @@
 import os
 from pathlib import Path
-from typing import Optional, Union
 
 import yaml
 
@@ -15,9 +14,7 @@ class MainPath:
         config_dict = YamlLoader(self.base_dir).load(config_path)
         self.resolver = MainPathResolver(config_dict, self.base_dir)
 
-    def get_path(
-        self, keys: Union[str, list[str]], section: Optional[str] = None
-    ) -> Path:
+    def get_path(self, keys: str | list[str], section: str | None = None) -> Path:
         return self.resolver.get_path(keys, section)
 
     def get_config(self) -> dict:
@@ -48,9 +45,7 @@ class MainPathResolver:
         self.config_data = config_data
         self.base_dir = base_dir
 
-    def get_path(
-        self, keys: Union[str, list[str]], section: Optional[str] = None
-    ) -> Path:
+    def get_path(self, keys: str | list[str], section: str | None = None) -> Path:
         target = self.config_data
         if section:
             target = target.get(section, {})

@@ -18,10 +18,12 @@ UseCase: UploadShogunCsvUseCase
   - 非同期アップロード対応: start_async_upload で受付のみ行い、重い処理はバックグラウンドタスクへ
 """
 
-import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import pandas as pd
+from fastapi import BackgroundTasks, UploadFile
+from fastapi.concurrency import run_in_threadpool
+
 from app.core.ports.csv_writer_port import IShogunCsvWriter
 from app.infra.adapters.materialized_view.materialized_view_refresher import (
     MaterializedViewRefresher,
@@ -42,8 +44,6 @@ from backend_shared.infra.adapters.presentation import (
     ErrorApiResponse,
     SuccessApiResponse,
 )
-from fastapi import BackgroundTasks, UploadFile
-from fastapi.concurrency import run_in_threadpool
 
 logger = get_module_logger(__name__)
 
@@ -57,8 +57,8 @@ class UploadShogunCsvUseCase:
         stg_writer: IShogunCsvWriter,
         csv_config: ShogunCsvConfigLoader,
         validator: CSVValidationResponder,
-        raw_data_repo: Optional[RawDataRepository] = None,
-        mv_refresher: Optional[MaterializedViewRefresher] = None,
+        raw_data_repo: RawDataRepository | None = None,
+        mv_refresher: MaterializedViewRefresher | None = None,
     ):
         """
         Args:
@@ -79,11 +79,11 @@ class UploadShogunCsvUseCase:
     async def start_async_upload(
         self,
         background_tasks: BackgroundTasks,
-        receive: Optional[UploadFile],
-        yard: Optional[UploadFile],
-        shipment: Optional[UploadFile],
+        receive: UploadFile | None,
+        yard: UploadFile | None,
+        shipment: UploadFile | None,
         file_type: str = "FLASH",
-        uploaded_by: Optional[str] = None,
+        uploaded_by: str | None = None,
     ) -> SuccessApiResponse | ErrorApiResponse:
         """
         非同期アップロードを開始（軽量バリデーション→即座に受付完了レスポンス→重い処理はバックグラウンド）
@@ -175,9 +175,9 @@ class UploadShogunCsvUseCase:
             )
 
         # 3. 重複チェック＋log.upload_fileへの登録（pending状態）
-        upload_file_ids: Dict[str, int] = {}
-        duplicate_files: Dict[str, Dict[str, Any]] = {}
-        recent_duplicate_files: Dict[str, Dict[str, Any]] = {}
+        upload_file_ids: dict[str, int] = {}
+        duplicate_files: dict[str, dict[str, Any]] = {}
+        recent_duplicate_files: dict[str, dict[str, Any]] = {}
 
         if self.raw_data_repo:
             for csv_type, uf in uploaded_files.items():
@@ -300,7 +300,7 @@ class UploadShogunCsvUseCase:
 
         return SuccessApiResponse(
             code="UPLOAD_ACCEPTED",
-            detail=f"CSVアップロードを受け付けました。処理中です。",
+            detail="CSVアップロードを受け付けました。処理中です。",
             result={
                 "upload_file_ids": upload_file_ids,
                 "status": "processing",
@@ -310,10 +310,10 @@ class UploadShogunCsvUseCase:
 
     async def _process_csv_in_background(
         self,
-        file_contents: Dict[str, Dict[str, Any]],
-        upload_file_ids: Dict[str, int],
+        file_contents: dict[str, dict[str, Any]],
+        upload_file_ids: dict[str, int],
         file_type: str,
-        uploaded_by: Optional[str] = None,
+        uploaded_by: str | None = None,
     ) -> None:
         """
         バックグラウンドで実行される重い処理
@@ -356,7 +356,7 @@ class UploadShogunCsvUseCase:
             # CSV読込
             import io
 
-            dfs: Dict[str, pd.DataFrame] = {}
+            dfs: dict[str, pd.DataFrame] = {}
             for csv_type, file_info in file_contents.items():
                 try:
                     content_io = io.BytesIO(file_info["content"])
@@ -495,11 +495,11 @@ class UploadShogunCsvUseCase:
 
     async def execute(
         self,
-        receive: Optional[UploadFile],
-        yard: Optional[UploadFile],
-        shipment: Optional[UploadFile],
+        receive: UploadFile | None,
+        yard: UploadFile | None,
+        shipment: UploadFile | None,
         file_type: str = "FLASH",  # 'FLASH' or 'FINAL'
-        uploaded_by: Optional[str] = None,
+        uploaded_by: str | None = None,
     ) -> SuccessApiResponse | ErrorApiResponse:
         """
         将軍CSVアップロード処理を実行
@@ -528,7 +528,7 @@ class UploadShogunCsvUseCase:
             )
 
         # log.upload_file への登録前に重複チェック
-        duplicate_files: Dict[str, Dict[str, Any]] = {}
+        duplicate_files: dict[str, dict[str, Any]] = {}
         if self.raw_data_repo:
             for csv_type, uf in uploaded_files.items():
                 try:
@@ -582,7 +582,7 @@ class UploadShogunCsvUseCase:
             )
 
         # log.upload_file にアップロードログを作成（csv_type 単位）
-        upload_file_ids: Dict[str, int] = {}
+        upload_file_ids: dict[str, int] = {}
         if self.raw_data_repo:
             for csv_type, uf in uploaded_files.items():
                 try:
@@ -664,8 +664,8 @@ class UploadShogunCsvUseCase:
         return self._generate_response(raw_result, stg_result)
 
     def _validate_file_types(
-        self, uploaded_files: Dict[str, UploadFile]
-    ) -> Optional[ErrorApiResponse]:
+        self, uploaded_files: dict[str, UploadFile]
+    ) -> ErrorApiResponse | None:
         """ファイルタイプの検証（MIME type + 拡張子）"""
         ALLOWED_CT = {"text/csv", "application/vnd.ms-excel"}
 
@@ -685,10 +685,10 @@ class UploadShogunCsvUseCase:
         return None
 
     async def _read_csv_files(
-        self, uploaded_files: Dict[str, UploadFile]
-    ) -> tuple[Dict[str, pd.DataFrame], Optional[ErrorApiResponse]]:
+        self, uploaded_files: dict[str, UploadFile]
+    ) -> tuple[dict[str, pd.DataFrame], ErrorApiResponse | None]:
         """CSVファイルをDataFrameに読み込み"""
-        dfs: Dict[str, pd.DataFrame] = {}
+        dfs: dict[str, pd.DataFrame] = {}
 
         async def _read_one(uf: UploadFile) -> pd.DataFrame:
             """pandas.read_csv を別スレッドで実行（asyncイベントループをブロックしない）"""
@@ -717,8 +717,8 @@ class UploadShogunCsvUseCase:
         return dfs, None
 
     def _add_source_row_numbers(
-        self, dfs: Dict[str, pd.DataFrame]
-    ) -> Dict[str, pd.DataFrame]:
+        self, dfs: dict[str, pd.DataFrame]
+    ) -> dict[str, pd.DataFrame]:
         """
         各DataFrameに source_row_no カラムを追加（1-indexed）
 
@@ -739,8 +739,8 @@ class UploadShogunCsvUseCase:
         return result_dfs
 
     def _validate_csv_data(
-        self, dfs: Dict[str, pd.DataFrame], uploaded_files: Dict[str, UploadFile]
-    ) -> Optional[ErrorApiResponse]:
+        self, dfs: dict[str, pd.DataFrame], uploaded_files: dict[str, UploadFile]
+    ) -> ErrorApiResponse | None:
         """CSVデータのバリデーション"""
         # カラム検証
         validation_error = self.validator.validate_columns(dfs, uploaded_files)
@@ -765,13 +765,13 @@ class UploadShogunCsvUseCase:
         return None
 
     async def _clean_empty_rows(
-        self, dfs: Dict[str, pd.DataFrame]
-    ) -> Dict[str, pd.DataFrame]:
+        self, dfs: dict[str, pd.DataFrame]
+    ) -> dict[str, pd.DataFrame]:
         """
         空行除去のみ（raw層保存用）
         日本語カラム名のまま、型変換なし
         """
-        cleaned_dfs: Dict[str, pd.DataFrame] = {}
+        cleaned_dfs: dict[str, pd.DataFrame] = {}
 
         for csv_type, df in dfs.items():
             original_row_count = len(df)
@@ -788,8 +788,8 @@ class UploadShogunCsvUseCase:
         return cleaned_dfs
 
     async def _format_csv_data(
-        self, dfs: Dict[str, pd.DataFrame]
-    ) -> tuple[Dict[str, pd.DataFrame], Optional[ErrorApiResponse]]:
+        self, dfs: dict[str, pd.DataFrame]
+    ) -> tuple[dict[str, pd.DataFrame], ErrorApiResponse | None]:
         """
         CSVデータのフォーマット（stg層保存用）
         - 空行除去
@@ -797,7 +797,7 @@ class UploadShogunCsvUseCase:
         - 型変換、正規化
         - tracking columns (upload_file_id, source_row_no) を保持
         """
-        formatted_dfs: Dict[str, pd.DataFrame] = {}
+        formatted_dfs: dict[str, pd.DataFrame] = {}
 
         # tracking columns のカラム名定義（保守性向上のため定数化）
         TRACKING_COLUMNS = ["upload_file_id", "source_row_no"]
@@ -881,11 +881,11 @@ class UploadShogunCsvUseCase:
     async def _save_data(
         self,
         writer: IShogunCsvWriter,
-        formatted_dfs: Dict[str, pd.DataFrame],
-        uploaded_files: Dict[str, UploadFile],
+        formatted_dfs: dict[str, pd.DataFrame],
+        uploaded_files: dict[str, UploadFile],
         layer_name: str,
-        upload_file_ids: Optional[Dict[str, int]] = None,
-    ) -> Dict[str, dict]:
+        upload_file_ids: dict[str, int] | None = None,
+    ) -> dict[str, dict]:
         """
         フォーマット済みCSVデータをDBに保存（raw層 or stg層）
 
@@ -899,7 +899,7 @@ class UploadShogunCsvUseCase:
         Returns:
             保存結果の辞書
         """
-        result: Dict[str, dict] = {}
+        result: dict[str, dict] = {}
 
         for csv_type, df in formatted_dfs.items():
             try:
@@ -948,7 +948,7 @@ class UploadShogunCsvUseCase:
         return result
 
     def _mark_all_as_failed(
-        self, upload_file_ids: Dict[str, int], error_msg: str
+        self, upload_file_ids: dict[str, int], error_msg: str
     ) -> None:
         """全アップロードログを失敗としてマーク"""
         if not self.raw_data_repo:
@@ -965,7 +965,7 @@ class UploadShogunCsvUseCase:
 
     def _soft_delete_existing_data_by_dates(
         self,
-        formatted_dfs: Dict[str, pd.DataFrame],
+        formatted_dfs: dict[str, pd.DataFrame],
         file_type: str,
         deleted_by: str,
     ) -> None:
@@ -1088,9 +1088,9 @@ class UploadShogunCsvUseCase:
 
     def _update_upload_logs(
         self,
-        upload_file_ids: Dict[str, int],
-        formatted_dfs: Dict[str, pd.DataFrame],
-        stg_result: Dict[str, dict],
+        upload_file_ids: dict[str, int],
+        formatted_dfs: dict[str, pd.DataFrame],
+        stg_result: dict[str, dict],
     ) -> None:
         """
         log.upload_file のステータスを更新し、必要に応じてマテリアライズドビューを更新
@@ -1155,7 +1155,7 @@ class UploadShogunCsvUseCase:
         # ★ マテリアライズドビューの更新（受入CSV成功時のみ）
         self._refresh_materialized_views(mv_refresh_needed)
 
-    def _refresh_materialized_views(self, csv_types: List[str]) -> None:
+    def _refresh_materialized_views(self, csv_types: list[str]) -> None:
         """
         指定された csv_type に関連するマテリアライズドビューを更新
 
@@ -1221,7 +1221,7 @@ class UploadShogunCsvUseCase:
                 # 呼び出し側には影響を与えない（アップロード自体は成功している）
 
     def _generate_response(
-        self, raw_result: Dict[str, dict], stg_result: Dict[str, dict]
+        self, raw_result: dict[str, dict], stg_result: dict[str, dict]
     ) -> SuccessApiResponse | ErrorApiResponse:
         """
         raw層とstg層の保存結果を統合してレスポンスを生成

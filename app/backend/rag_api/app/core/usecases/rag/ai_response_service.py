@@ -26,7 +26,7 @@ generate-answerエンドポイント用のAI回答生成を担当するサービ
 """
 
 import os
-from typing import Any, Dict, List
+from typing import Any
 
 from app.config.paths import get_pdf_url_prefix
 from app.core.ports.rag.pdf_service_port import PDFServiceBase
@@ -48,8 +48,8 @@ class AIResponseService:
         self.pdf_service = pdf_service
 
     def generate_ai_response(
-        self, query: str, category: str, tags: List[str]
-    ) -> Dict[str, Any]:
+        self, query: str, category: str, tags: list[str]
+    ) -> dict[str, Any]:
         """
         AI回答とPDFを生成
 
@@ -181,18 +181,18 @@ class AIResponseService:
 
         return {"answer": answer, "sources": sources, "pdf_url": pdf_url}
 
-    def _normalize_pages(self, pages) -> List[int]:
+    def _normalize_pages(self, pages) -> list[int]:
         """ページリストを正規化
 
         - カンマ区切りや範囲指定(1-3)を展開して、正の整数の昇順ユニークなリストを返す。
         - 不正トークンは無視しつつデバッグログを出力する。
         """
         before_repr = repr(pages)
-        normalized: List[int] = []
+        normalized: list[int] = []
 
         def debug_skip(token: object, reason: str) -> None:
             logger.debug(
-                f"Skip token in normalize_pages",
+                "Skip token in normalize_pages",
                 extra={"token": repr(token), "reason": reason},
             )
 

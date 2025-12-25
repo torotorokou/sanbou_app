@@ -20,7 +20,6 @@ Create Date: 2025-11-20 09:14:27
   - direction: receive (受入) / shipment (出荷) / yard (ヤード)
 """
 
-import sqlalchemy as sa
 from alembic import op
 
 # revision identifiers, used by Alembic.

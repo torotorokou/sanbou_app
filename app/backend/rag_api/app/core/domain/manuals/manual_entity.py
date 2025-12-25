@@ -1,15 +1,13 @@
 from __future__ import annotations
 
-from typing import List, Optional
-
 from pydantic import BaseModel, Field, HttpUrl
 
 
 class ManualSectionChunk(BaseModel):
     title: str
     anchor: str = Field(..., pattern=r"^s-\d+$")
-    html: Optional[str] = None
-    markdown: Optional[str] = None
+    html: str | None = None
+    markdown: str | None = None
 
 
 class RagMetadata(BaseModel):
@@ -17,29 +15,29 @@ class RagMetadata(BaseModel):
     page_title: str
     section_id: str
     url: HttpUrl
-    category: Optional[str] = None
-    tags: List[str] = []
+    category: str | None = None
+    tags: list[str] = []
     version: str
     lang: str = "ja"
-    breadcrumbs: List[str] = []
+    breadcrumbs: list[str] = []
 
 
 class ManualSummary(BaseModel):
     id: str
     title: str
-    description: Optional[str] = None
-    category: Optional[str] = None
-    tags: List[str] = []
-    version: Optional[str] = None
+    description: str | None = None
+    category: str | None = None
+    tags: list[str] = []
+    version: str | None = None
 
 
 class ManualDetail(ManualSummary):
-    sections: List[ManualSectionChunk] = []
-    rag: List[RagMetadata] = []
+    sections: list[ManualSectionChunk] = []
+    rag: list[RagMetadata] = []
 
 
 class ManualListResponse(BaseModel):
-    items: List[ManualSummary]
+    items: list[ManualSummary]
     page: int
     size: int
     total: int

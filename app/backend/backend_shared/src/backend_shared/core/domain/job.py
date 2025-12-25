@@ -6,7 +6,7 @@
 - 失敗時に ProblemDetails を保持
 """
 
-from typing import Any, Literal, Optional
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
@@ -33,9 +33,9 @@ class JobStatus(BaseModel):
     id: str
     status: JobStatusType
     progress: int = Field(default=0, ge=0, le=100)
-    message: Optional[str] = None
-    result: Optional[Any] = None
-    error: Optional[ProblemDetails] = None  # 失敗時の詳細エラー情報
+    message: str | None = None
+    result: Any | None = None
+    error: ProblemDetails | None = None  # 失敗時の詳細エラー情報
     createdAt: str = Field(alias="createdAt")
     updatedAt: str = Field(alias="updatedAt")
 
@@ -49,7 +49,7 @@ class JobCreate(BaseModel):
     """
 
     feature: str
-    parameters: Optional[dict] = None
+    parameters: dict | None = None
 
 
 class JobUpdate(BaseModel):
@@ -57,8 +57,8 @@ class JobUpdate(BaseModel):
     ジョブ更新リクエスト
     """
 
-    status: Optional[JobStatusType] = None
-    progress: Optional[int] = Field(default=None, ge=0, le=100)
-    message: Optional[str] = None
-    result: Optional[Any] = None
-    error: Optional[ProblemDetails] = None
+    status: JobStatusType | None = None
+    progress: int | None = Field(default=None, ge=0, le=100)
+    message: str | None = None
+    result: Any | None = None
+    error: ProblemDetails | None = None

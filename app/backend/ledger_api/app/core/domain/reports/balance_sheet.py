@@ -6,7 +6,6 @@ Balance Sheet Domain Model.
 
 from dataclasses import dataclass
 from datetime import date
-from typing import List, Optional
 
 import pandas as pd
 
@@ -27,8 +26,8 @@ class ReceiveItem:
     slip_date: date
     site_name: str
     net_weight: float
-    volume: Optional[float] = None
-    item_name: Optional[str] = None
+    volume: float | None = None
+    item_name: str | None = None
 
     def __post_init__(self):
         if self.net_weight < 0:
@@ -52,16 +51,16 @@ class BalanceSheet:
     """
 
     report_date: date
-    receive_items: List[ReceiveItem]
-    shipment_items: List  # ShipmentItem型だが循環参照回避のためList
-    yard_items: List  # YardItem型
+    receive_items: list[ReceiveItem]
+    shipment_items: list  # ShipmentItem型だが循環参照回避のためList
+    yard_items: list  # YardItem型
 
     @classmethod
     def from_dataframes(
         cls,
-        df_receive: Optional[pd.DataFrame],
-        df_shipment: Optional[pd.DataFrame],
-        df_yard: Optional[pd.DataFrame],
+        df_receive: pd.DataFrame | None,
+        df_shipment: pd.DataFrame | None,
+        df_yard: pd.DataFrame | None,
     ) -> "BalanceSheet":
         """
         DataFrameから搬出入収支表エンティティを生成

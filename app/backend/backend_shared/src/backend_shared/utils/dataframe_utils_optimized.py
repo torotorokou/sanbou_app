@@ -5,7 +5,6 @@ dataframe_utils.pyの最適化版関数を提供。
 apply()を使った行単位処理をベクトル化して高速化する。
 """
 
-import numpy as np
 import pandas as pd
 
 

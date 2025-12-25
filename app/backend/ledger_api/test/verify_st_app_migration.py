@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 st_app から api への移管状況を検証するスクリプト
 
@@ -13,7 +12,6 @@ st_app から api への移管状況を検証するスクリプト
 import ast
 from collections import defaultdict
 from pathlib import Path
-from typing import Dict, List, Set, Tuple
 
 
 class DependencyAnalyzer:
@@ -25,20 +23,20 @@ class DependencyAnalyzer:
         self.st_app_path = self.root_path / "app" / "st_app"
 
         # 依存関係の記録
-        self.api_to_st_app: Dict[str, List[str]] = defaultdict(list)
-        self.st_app_to_api: Dict[str, List[str]] = defaultdict(list)
+        self.api_to_st_app: dict[str, list[str]] = defaultdict(list)
+        self.st_app_to_api: dict[str, list[str]] = defaultdict(list)
 
         # 関数・クラスの記録
-        self.api_functions: Dict[str, Set[str]] = defaultdict(set)
-        self.st_app_functions: Dict[str, Set[str]] = defaultdict(set)
+        self.api_functions: dict[str, set[str]] = defaultdict(set)
+        self.st_app_functions: dict[str, set[str]] = defaultdict(set)
 
-    def analyze_imports(self, file_path: Path) -> Tuple[List[str], List[str]]:
+    def analyze_imports(self, file_path: Path) -> tuple[list[str], list[str]]:
         """ファイルのインポート文を解析"""
         st_app_imports = []
         api_imports = []
 
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 content = f.read()
                 tree = ast.parse(content)
 
@@ -61,13 +59,13 @@ class DependencyAnalyzer:
 
         return st_app_imports, api_imports
 
-    def extract_definitions(self, file_path: Path) -> Tuple[Set[str], Set[str]]:
+    def extract_definitions(self, file_path: Path) -> tuple[set[str], set[str]]:
         """ファイル内の関数とクラスの定義を抽出"""
         functions = set()
         classes = set()
 
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 content = f.read()
                 tree = ast.parse(content)
 

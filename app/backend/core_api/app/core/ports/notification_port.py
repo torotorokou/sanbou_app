@@ -6,7 +6,6 @@ UseCase が依存する抽象。具体実装は infra/adapters に置く。
 
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import List, Optional
 from uuid import UUID
 
 from app.core.domain.notification import (
@@ -30,14 +29,14 @@ class NotificationOutboxPort(ABC):
     """
 
     @abstractmethod
-    def enqueue(self, items: List[NotificationOutboxItem]) -> None:
+    def enqueue(self, items: list[NotificationOutboxItem]) -> None:
         """通知アイテムを Outbox に登録"""
         pass
 
     @abstractmethod
     def list_pending(
         self, now: datetime, limit: int = 100
-    ) -> List[NotificationOutboxItem]:
+    ) -> list[NotificationOutboxItem]:
         """
         送信対象の pending アイテムを取得
 
@@ -118,7 +117,7 @@ class NotificationPreferencePort(ABC):
     """
 
     @abstractmethod
-    def get_for_recipient(self, recipient_key: str) -> Optional[NotificationPreference]:
+    def get_for_recipient(self, recipient_key: str) -> NotificationPreference | None:
         """
         recipient_key に対応する通知許可設定を取得
 
@@ -144,9 +143,7 @@ class RecipientResolverPort(ABC):
     """
 
     @abstractmethod
-    def resolve(
-        self, recipient_key: str, channel: NotificationChannel
-    ) -> Optional[str]:
+    def resolve(self, recipient_key: str, channel: NotificationChannel) -> str | None:
         """
         recipient_key をチャネル固有のIDに解決
 

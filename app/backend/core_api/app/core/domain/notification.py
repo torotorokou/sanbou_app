@@ -14,7 +14,7 @@ Recipient Key 規約:
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, Literal, Optional
+from typing import Any, Literal, Optional
 from uuid import UUID, uuid4
 
 # 通知チャネル（将来拡張可能）
@@ -95,8 +95,8 @@ class NotificationPayload:
 
     title: str
     body: str
-    url: Optional[str] = None
-    meta: Dict[str, Any] = field(default_factory=dict)
+    url: str | None = None
+    meta: dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self):
         """不変条件チェック"""
@@ -122,12 +122,12 @@ class NotificationOutboxItem:
     payload: NotificationPayload
     recipient_key: str  # "user:123", "email:a@b.com", "aud:site:narita" 形式
     created_at: datetime
-    scheduled_at: Optional[datetime] = None
-    sent_at: Optional[datetime] = None
+    scheduled_at: datetime | None = None
+    sent_at: datetime | None = None
     retry_count: int = 0
-    next_retry_at: Optional[datetime] = None
-    last_error: Optional[str] = None
-    failure_type: Optional[FailureType] = None  # TEMPORARY/PERMANENT
+    next_retry_at: datetime | None = None
+    last_error: str | None = None
+    failure_type: FailureType | None = None  # TEMPORARY/PERMANENT
 
     def __post_init__(self):
         """不変条件チェック"""
@@ -142,7 +142,7 @@ class NotificationOutboxItem:
         payload: NotificationPayload,
         recipient_key: str,
         now: datetime,
-        scheduled_at: Optional[datetime] = None,
+        scheduled_at: datetime | None = None,
     ) -> "NotificationOutboxItem":
         """pending 状態の新規アイテムを作成"""
         return NotificationOutboxItem(

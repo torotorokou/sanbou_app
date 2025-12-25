@@ -8,8 +8,6 @@ UseCase: External API呼び出し系
   - 複数サービスの呼び出しをオーケストレーション
 """
 
-from typing import Any, Dict, List
-
 from app.core.ports.external_api_port import (
     IAIClient,
     ILedgerClient,
@@ -63,7 +61,7 @@ class ListManualsUseCase:
     def __init__(self, manual_client: IManualClient):
         self._manual_client = manual_client
 
-    async def execute(self) -> List[Dict]:
+    async def execute(self) -> list[dict]:
         """
         マニュアル一覧を取得
 

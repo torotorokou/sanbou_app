@@ -294,13 +294,13 @@ def upgrade() -> None:
     print("\n" + "=" * 70)
     print("client_cd 正規化処理完了")
     print("=" * 70)
-    print(f"  ✓ バックアップテーブル:")
+    print("  ✓ バックアップテーブル:")
     print(f"      - stg.{backup_table_flash} ({flash_backup_count} 件)")
     print(f"      - stg.{backup_table_final} ({final_backup_count} 件)")
-    print(f"  ✓ 更新件数:")
+    print("  ✓ 更新件数:")
     print(f"      - shogun_flash_receive: {flash_updated} 件")
     print(f"      - shogun_final_receive: {final_updated} 件")
-    print(f"  ✓ ビュー修正: 末尾X除去表示")
+    print("  ✓ ビュー修正: 末尾X除去表示")
     print("=" * 70 + "\n")
 
 

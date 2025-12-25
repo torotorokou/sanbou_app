@@ -1,9 +1,8 @@
-from typing import Optional
+from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, UploadFile
+from fastapi.responses import JSONResponse
 
 from app.config.di_providers import get_average_sheet_usecase
 from app.core.usecases.reports.generate_average_sheet import GenerateAverageSheetUseCase
-from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, UploadFile
-from fastapi.responses import JSONResponse
 
 router = APIRouter()
 
@@ -13,8 +12,8 @@ router = APIRouter()
 async def generate_average_sheet(
     background_tasks: BackgroundTasks,
     receive: UploadFile = File(None),
-    report_key: Optional[str] = Form(None),
-    period_type: Optional[str] = Form(None),
+    report_key: str | None = Form(None),
+    period_type: str | None = Form(None),
     usecase: GenerateAverageSheetUseCase = Depends(get_average_sheet_usecase),
 ) -> JSONResponse:
     """

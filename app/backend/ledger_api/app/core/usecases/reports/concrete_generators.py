@@ -12,9 +12,10 @@
     - GenerateManagementSheetUseCase
 """
 
-from typing import Any, Dict
+from typing import Any
 
 import pandas as pd
+
 from app.core.usecases.reports.average_sheet_processor import (
     process as process_average_sheet,
 )
@@ -36,7 +37,7 @@ class FactoryReportGenerator(BaseReportGenerator):
     ⚠️ 互換性維持用。新規開発では GenerateFactoryReportUseCase を使用してください。
     """
 
-    def main_process(self, df_formatted: Dict[str, Any]) -> pd.DataFrame:
+    def main_process(self, df_formatted: dict[str, Any]) -> pd.DataFrame:
         return process_factory_report(df_formatted)
 
 
@@ -46,7 +47,7 @@ class BalanceSheetGenerator(BaseReportGenerator):
     ⚠️ 互換性維持用。新規開発では GenerateBalanceSheetUseCase を使用してください。
     """
 
-    def main_process(self, df_formatted: Dict[str, Any]) -> pd.DataFrame:
+    def main_process(self, df_formatted: dict[str, Any]) -> pd.DataFrame:
         return process_balance_sheet(df_formatted)
 
 
@@ -56,7 +57,7 @@ class AverageSheetGenerator(BaseReportGenerator):
     ⚠️ 互換性維持用。新規開発では GenerateAverageSheetUseCase を使用してください。
     """
 
-    def main_process(self, df_formatted: Dict[str, Any]) -> pd.DataFrame:
+    def main_process(self, df_formatted: dict[str, Any]) -> pd.DataFrame:
         return process_average_sheet(df_formatted)
 
 
@@ -66,5 +67,5 @@ class ManagementSheetGenerator(BaseReportGenerator):
     ⚠️ 互換性維持用。新規開発では GenerateManagementSheetUseCase を使用してください。
     """
 
-    def main_process(self, df_formatted: Dict[str, Any]) -> pd.DataFrame:
+    def main_process(self, df_formatted: dict[str, Any]) -> pd.DataFrame:
         return process_management_sheet(df_formatted)

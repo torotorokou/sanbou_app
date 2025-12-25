@@ -6,7 +6,6 @@ Input/Output DTOs for KPI feature following Clean Architecture principles.
 
 from dataclasses import dataclass
 from datetime import date as date_type
-from typing import Optional
 
 
 @dataclass(frozen=True)
@@ -36,4 +35,4 @@ class GetKPIOverviewOutput:
     total_jobs: int
     completed_jobs: int
     failed_jobs: int
-    latest_prediction_date: Optional[date_type]
+    latest_prediction_date: date_type | None

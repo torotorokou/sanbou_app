@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from typing import List
 
 
 class PDFServiceBase(ABC):
@@ -8,12 +7,12 @@ class PDFServiceBase(ABC):
         self,
         pdf_path: str,
         query_name: str,
-        pages: List[int],
+        pages: list[int],
         save_dir: str,
         url_prefix: str,
-    ) -> List[str]:
+    ) -> list[str]:
         pass
 
     @abstractmethod
-    def merge_pdfs(self, pdf_file_paths: List[str], output_path: str) -> str:
+    def merge_pdfs(self, pdf_file_paths: list[str], output_path: str) -> str:
         pass

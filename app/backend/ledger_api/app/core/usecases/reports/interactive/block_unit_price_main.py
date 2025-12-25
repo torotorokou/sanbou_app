@@ -1,15 +1,15 @@
-# -*- coding: utf-8 -*-
-
 """
 Block Unit Price Interactive - Main Entry Point
 インタラクティブブロック単価計算のメインエントリポイント
 """
 
-from typing import Any, Callable, Dict, Optional, Tuple, Union
+from collections.abc import Callable
+from typing import Any
 
 import pandas as pd
-from app.core.usecases.reports.base_generators import BaseInteractiveReportGenerator
 from backend_shared.application.logging import get_module_logger
+
+from app.core.usecases.reports.base_generators import BaseInteractiveReportGenerator
 
 from .block_unit_price_finalize import (
     execute_finalize_step,
@@ -26,18 +26,18 @@ logger = get_module_logger(__name__)
 class BlockUnitPriceInteractive(BaseInteractiveReportGenerator):
     """ブロック単価インタラクティブレポート生成クラス"""
 
-    def __init__(self, files: Optional[Dict[str, Any]] = None):
+    def __init__(self, files: dict[str, Any] | None = None):
         super().__init__(report_key="block_unit_price", files=files or {})
         self.logger = logger
         # 最新の日付のみを対象とする
         self.period_type = "oneday"
         self.date_filter_strategy = "max"
 
-    def initial_step(self, df_formatted: Dict[str, Any]):  # type: ignore[override]
+    def initial_step(self, df_formatted: dict[str, Any]):  # type: ignore[override]
         """初期ステップ: 運搬業者選択肢を生成"""
         return execute_initial_step(df_formatted)
 
-    def get_step_handlers(self) -> Dict[str, Callable[[Dict[str, Any], Dict[str, Any]], Tuple[Dict[str, Any], Dict[str, Any]]]]:  # type: ignore[override]
+    def get_step_handlers(self) -> dict[str, Callable[[dict[str, Any], dict[str, Any]], tuple[dict[str, Any], dict[str, Any]]]]:  # type: ignore[override]
         """ステップハンドラーを返す"""
         return {
             "select_transport": self._handle_select_transport,
@@ -45,15 +45,15 @@ class BlockUnitPriceInteractive(BaseInteractiveReportGenerator):
         }
 
     def _resolve_and_apply_selections(
-        self, state: Dict[str, Any], selections: Dict[str, Union[int, str]]
-    ) -> Dict[str, str]:
+        self, state: dict[str, Any], selections: dict[str, int | str]
+    ) -> dict[str, str]:
         """選択を解決してstateに適用"""
         if not selections:
             state["selections"] = {}
             return {}
 
         df_shipment: pd.DataFrame = state["df_shipment"]
-        df_transport_cost: Optional[pd.DataFrame] = state.get("df_transport_cost")
+        df_transport_cost: pd.DataFrame | None = state.get("df_transport_cost")
         opts_df = (
             df_transport_cost.copy()
             if isinstance(df_transport_cost, pd.DataFrame)
@@ -62,7 +62,7 @@ class BlockUnitPriceInteractive(BaseInteractiveReportGenerator):
         if not opts_df.empty and "業者CD" in opts_df.columns:
             opts_df = opts_df.assign(業者CD=opts_df["業者CD"].astype(str))
 
-        resolved_entry_map: Dict[str, str] = {}
+        resolved_entry_map: dict[str, str] = {}
         for entry_id, value in selections.items():
             matches = df_shipment.index[df_shipment.get("entry_id") == entry_id]
             if len(matches) == 0:
@@ -100,10 +100,10 @@ class BlockUnitPriceInteractive(BaseInteractiveReportGenerator):
         return resolved_entry_map
 
     def _handle_select_transport(
-        self, state: Dict[str, Any], user_input: Dict[str, Any]
-    ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+        self, state: dict[str, Any], user_input: dict[str, Any]
+    ) -> tuple[dict[str, Any], dict[str, Any]]:
         """運搬業者選択ハンドラー"""
-        selections: Dict[str, Union[int, str]] = user_input.get("selections", {}) or {}
+        selections: dict[str, int | str] = user_input.get("selections", {}) or {}
         resolved_entry_map = self._resolve_and_apply_selections(state, selections)
         selection_summary = self._create_selection_summary(resolved_entry_map)
 
@@ -117,20 +117,20 @@ class BlockUnitPriceInteractive(BaseInteractiveReportGenerator):
         return state, payload
 
     def finalize_with_optional_selections(
-        self, state: Dict[str, Any], user_input: Dict[str, Any]
+        self, state: dict[str, Any], user_input: dict[str, Any]
     ):
         """オプション選択付き最終処理"""
         return execute_finalize_with_optional_selections(state, user_input)
 
-    def finalize_step(self, state: Dict[str, Any]):  # type: ignore[override]
+    def finalize_step(self, state: dict[str, Any]):  # type: ignore[override]
         """最終ステップ: ブロック単価計算を実行"""
         return execute_finalize_step(state)
 
     def _create_selection_summary(
-        self, resolved_entry_map: Dict[str, str]
-    ) -> Dict[str, Any]:
+        self, resolved_entry_map: dict[str, str]
+    ) -> dict[str, Any]:
         """選択サマリーを作成"""
-        summary: Dict[str, Any] = {"selections": {}, "affected_records": {}}
+        summary: dict[str, Any] = {"selections": {}, "affected_records": {}}
         for entry_id, label in resolved_entry_map.items():
             summary["selections"][entry_id] = label
             summary["affected_records"][entry_id] = {

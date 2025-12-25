@@ -5,7 +5,6 @@ Inbound repository port (abstract interface).
 
 from abc import ABC, abstractmethod
 from datetime import date as date_type
-from typing import List, Optional
 
 from app.core.domain.inbound import CumScope, InboundDailyRow
 
@@ -21,9 +20,9 @@ class InboundRepository(ABC):
         self,
         start: date_type,
         end: date_type,
-        segment: Optional[str] = None,
+        segment: str | None = None,
         cum_scope: CumScope = "none",
-    ) -> List[InboundDailyRow]:
+    ) -> list[InboundDailyRow]:
         """
         Fetch daily inbound data with calendar continuity (zero-filled missing days).
 

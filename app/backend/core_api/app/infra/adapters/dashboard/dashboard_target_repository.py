@@ -3,17 +3,16 @@ Dashboard target repository: fetch monthly/weekly/daily targets and actuals.
 Optimized with single-query anchor resolution and NULL masking.
 """
 
-import logging
 from datetime import date as date_type
-from datetime import timedelta
-from typing import Any, Dict, Optional
+from typing import Any
+
+from sqlalchemy import text
+from sqlalchemy.orm import Session
 
 from app.infra.db.db import get_engine
 from app.infra.db.sql_loader import load_sql
 from backend_shared.application.logging import create_log_context, get_module_logger
 from backend_shared.db.names import MV_TARGET_CARD_PER_DAY, SCHEMA_MART, fq
-from sqlalchemy import text
-from sqlalchemy.orm import Session
 
 logger = get_module_logger(__name__)
 
@@ -65,7 +64,7 @@ class DashboardTargetRepository:
 
     def get_by_date_optimized(
         self, target_date: date_type, mode: str = "daily"
-    ) -> Optional[Dict[str, Any]]:
+    ) -> dict[str, Any] | None:
         """
         最適化されたターゲットデータ取得（アンカー解決 + NULLマスキング）
 
@@ -219,7 +218,7 @@ class DashboardTargetRepository:
             )
             raise
 
-    def get_by_date(self, target_date: date_type) -> Optional[Dict[str, Any]]:
+    def get_by_date(self, target_date: date_type) -> dict[str, Any] | None:
         """
         Get target and actual metrics for a specific date.
 
@@ -286,7 +285,7 @@ class DashboardTargetRepository:
 
     def get_first_business_in_month(
         self, month_start: date_type, month_end: date_type
-    ) -> Optional[date_type]:
+    ) -> date_type | None:
         """
         Get the first business day in the specified month range.
 
@@ -317,9 +316,7 @@ class DashboardTargetRepository:
             )
             raise
 
-    def get_target_card_metrics(
-        self, target_date: date_type
-    ) -> Optional[Dict[str, Any]]:
+    def get_target_card_metrics(self, target_date: date_type) -> dict[str, Any] | None:
         """
         Get target and actual metrics from mart.mv_target_card_per_day (Materialized View).
 

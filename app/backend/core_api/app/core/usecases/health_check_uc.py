@@ -6,9 +6,10 @@ Health Check UseCase
 
 import asyncio
 from datetime import datetime
-from typing import Any, Dict
+from typing import Any
 
 import httpx
+
 from backend_shared.application.logging import get_module_logger
 
 logger = get_module_logger(__name__)
@@ -47,7 +48,7 @@ class HealthCheckUseCase:
 
     async def _check_service(
         self, name: str, base_url: str, client: httpx.AsyncClient
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         個別サービスのヘルスチェックを実行
 
@@ -110,7 +111,7 @@ class HealthCheckUseCase:
                 "checked_at": datetime.now().isoformat(),
             }
 
-    async def execute(self) -> Dict[str, Any]:
+    async def execute(self) -> dict[str, Any]:
         """
         すべてのサービスのヘルスチェックを並行実行
 

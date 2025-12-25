@@ -6,7 +6,7 @@ Input/Output DTOを明確に定義し、UseCase層とPresentation層の境界を
 
 from dataclasses import dataclass
 from datetime import date as date_type
-from typing import Any, Dict, Literal, Optional
+from typing import Any, Literal
 
 # ========================================================================
 # Type Aliases
@@ -63,11 +63,11 @@ class BuildTargetCardOutput:
         found: データが見つかったかどうか
     """
 
-    data: Optional[Dict[str, Any]]
+    data: dict[str, Any] | None
     found: bool
 
     @classmethod
-    def from_domain(cls, data: Optional[Dict[str, Any]]) -> "BuildTargetCardOutput":
+    def from_domain(cls, data: dict[str, Any] | None) -> "BuildTargetCardOutput":
         """
         ドメインモデルからOutput DTOを生成
 

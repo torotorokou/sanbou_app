@@ -10,8 +10,6 @@ Design:
   - Business logic and validation in UseCase layer
 """
 
-import logging
-
 from app.core.ports.calendar_port import ICalendarQuery
 from app.core.usecases.calendar.dto import GetCalendarMonthInput, GetCalendarMonthOutput
 from backend_shared.application.logging import get_module_logger, log_usecase_execution

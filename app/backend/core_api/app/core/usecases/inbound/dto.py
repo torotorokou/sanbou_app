@@ -6,7 +6,6 @@ Input/Output DTOを明確に定義し、UseCase層とPresentation層の境界を
 
 from dataclasses import dataclass
 from datetime import date as date_type
-from typing import List, Optional
 
 from app.core.domain.inbound import CumScope, InboundDailyRow
 
@@ -29,7 +28,7 @@ class GetInboundDailyInput:
 
     start: date_type
     end: date_type
-    segment: Optional[str] = None
+    segment: str | None = None
     cum_scope: CumScope = "none"
 
     def validate(self) -> None:
@@ -65,14 +64,14 @@ class GetInboundDailyOutput:
         date_range_days: 日付範囲（日数）
     """
 
-    data: List[InboundDailyRow]
+    data: list[InboundDailyRow]
     total_count: int
     date_range_days: int
 
     @classmethod
     def from_domain(
         cls,
-        data: List[InboundDailyRow],
+        data: list[InboundDailyRow],
         start: date_type,
         end: date_type,
     ) -> "GetInboundDailyOutput":

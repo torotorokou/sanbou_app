@@ -5,8 +5,6 @@ Dummy Recipient Resolver Adapter
 将来的にはUser管理システムやDB連携で実装する。
 """
 
-from typing import Optional
-
 from app.core.domain.notification import NotificationChannel
 from app.core.ports.notification_port import RecipientResolverPort
 from backend_shared.application.logging import get_module_logger
@@ -23,9 +21,7 @@ class DummyRecipientResolverAdapter(RecipientResolverPort):
     - 他: そのまま返す
     """
 
-    def resolve(
-        self, recipient_key: str, channel: NotificationChannel
-    ) -> Optional[str]:
+    def resolve(self, recipient_key: str, channel: NotificationChannel) -> str | None:
         """
         recipient_key をチャネル固有のIDに解決
 

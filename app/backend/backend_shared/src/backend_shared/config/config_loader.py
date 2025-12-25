@@ -6,6 +6,7 @@ YAML形式の設定ファイルを読み込み、CSV処理や帳票生成に必�
 """
 
 import yaml
+
 from backend_shared.config.paths import MANAGER_CSV_DEF_PATH, SHOGUNCSV_DEF_PATH
 
 
@@ -35,7 +36,7 @@ class ShogunCsvConfigLoader:
         Returns:
             dict: 設定情報の辞書
         """
-        with open(self.config_path, "r", encoding="utf-8") as f:
+        with open(self.config_path, encoding="utf-8") as f:
             return yaml.safe_load(f)
 
     def get_expected_headers(self, sheet_type: str) -> list:
@@ -170,7 +171,7 @@ class ReportTemplateConfigLoader:
             path (str): 設定ファイルのパス
         """
         # 設定ファイルの読み込み
-        with open(path, "r", encoding="utf-8") as f:
+        with open(path, encoding="utf-8") as f:
             self.config = yaml.safe_load(f)
 
     def get_required_files(self, report_key: str) -> list[str]:

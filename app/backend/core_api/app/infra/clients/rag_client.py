@@ -22,12 +22,11 @@ RAG(Retrieval-Augmented Generation)サービスと通信し、
     print(result['sources'])  # 参照ドキュメント
 """
 
-import logging
 import os
-from typing import Optional
 
 import httpx
-from backend_shared.application.logging import create_log_context, get_module_logger
+
+from backend_shared.application.logging import get_module_logger
 
 logger = get_module_logger(__name__)
 
@@ -43,7 +42,7 @@ class RAGClient:
         self.base_url = base_url.rstrip("/")
 
     async def ask(
-        self, query: str, category: str = "shogun", tags: Optional[list[str]] = None
+        self, query: str, category: str = "shogun", tags: list[str] | None = None
     ) -> dict:
         """
         Ask RAG API a question.

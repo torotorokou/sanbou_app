@@ -18,7 +18,6 @@ Create Date: 2025-12-11 14:00:00.000000
 
 from pathlib import Path
 
-import sqlalchemy as sa
 from alembic import op
 from sqlalchemy import text
 
@@ -35,7 +34,7 @@ BASE = Path("/backend/migrations/alembic/sql/mart")
 def _read_sql(name: str) -> str:
     """Read SQL file content"""
     p = BASE / name
-    with open(p, "r", encoding="utf-8") as f:
+    with open(p, encoding="utf-8") as f:
         return f.read()
 
 

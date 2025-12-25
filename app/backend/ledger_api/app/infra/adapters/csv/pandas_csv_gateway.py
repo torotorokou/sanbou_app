@@ -6,18 +6,19 @@ Pandas CSV Gateway (pandas を使った CSV 読み込み実装).
 """
 
 import time
-from typing import Any, Dict, Optional
+from typing import Any
 
-from app.core.ports.inbound import CsvGateway
-from app.infra.adapters.csv.formatter_service import CsvFormatterService
-from app.infra.adapters.csv.validator_service import CsvValidatorService
-from backend_shared.application.logging import create_log_context, get_module_logger
+from backend_shared.application.logging import get_module_logger
 from backend_shared.infra.adapters.presentation.response_error import (
     CSVReadErrorResponse,
     NoFilesUploadedResponse,
 )
 from backend_shared.utils.csv_reader import read_csv_files
 from fastapi import UploadFile
+
+from app.core.ports.inbound import CsvGateway
+from app.infra.adapters.csv.formatter_service import CsvFormatterService
+from app.infra.adapters.csv.validator_service import CsvValidatorService
 
 logger = get_module_logger(__name__)
 
@@ -31,8 +32,8 @@ class PandasCsvGateway(CsvGateway):
         self._formatter = CsvFormatterService()
 
     def read_csv_files(
-        self, files: Dict[str, UploadFile]
-    ) -> tuple[Optional[Dict[str, Any]], Optional[Any]]:
+        self, files: dict[str, UploadFile]
+    ) -> tuple[dict[str, Any] | None, Any | None]:
         """
         CSV ファイルを pandas DataFrame として読み込む.
 
@@ -102,8 +103,8 @@ class PandasCsvGateway(CsvGateway):
             return None, CSVReadErrorResponse(file_name="uploaded_files", exception=e)
 
     def validate_csv_structure(
-        self, dfs: Dict[str, Any], file_inputs: Dict[str, Any]
-    ) -> Optional[Any]:
+        self, dfs: dict[str, Any], file_inputs: dict[str, Any]
+    ) -> Any | None:
         """
         CSV の構造検証.
 
@@ -161,7 +162,7 @@ class PandasCsvGateway(CsvGateway):
             # バリデーションエラーとして扱う
             return CSVReadErrorResponse(file_name="validation", exception=e)
 
-    def format_csv_data(self, dfs: Dict[str, Any]) -> Dict[str, Any]:
+    def format_csv_data(self, dfs: dict[str, Any]) -> dict[str, Any]:
         """
         CSV データの整形.
 

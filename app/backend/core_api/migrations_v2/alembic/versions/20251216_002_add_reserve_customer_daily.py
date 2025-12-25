@@ -24,7 +24,6 @@ Phase 2: stg.reserve_customer_daily テーブル追加
 
 """
 
-import sqlalchemy as sa
 from alembic import op
 
 # revision identifiers, used by Alembic.

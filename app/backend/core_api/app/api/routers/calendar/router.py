@@ -9,14 +9,15 @@ Design:
   - Exception handling with custom exceptions
 """
 
-from typing import Any, Dict, List
+from typing import Any
+
+from fastapi import APIRouter, Depends, Query
 
 from app.config.di_providers import get_calendar_month_uc
 from app.core.usecases.calendar.dto import GetCalendarMonthInput
 from app.core.usecases.calendar.get_calendar_month_uc import GetCalendarMonthUseCase
 from backend_shared.application.logging import get_module_logger
 from backend_shared.core.domain.exceptions import InfrastructureError, ValidationError
-from fastapi import APIRouter, Depends, Query
 
 logger = get_module_logger(__name__)
 
@@ -28,7 +29,7 @@ def get_calendar_month(
     year: int = Query(..., ge=1900, le=2100, description="Year"),
     month: int = Query(..., ge=1, le=12, description="Month"),
     uc: GetCalendarMonthUseCase = Depends(get_calendar_month_uc),
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """
     指定された年月の営業カレンダーデータを取得
 

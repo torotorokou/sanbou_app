@@ -3,7 +3,6 @@ OpenAI APIを用いたAI回答生成クライアント。
 """
 
 import os
-from typing import List, Optional
 
 from app.config.constants import build_prompt
 from app.config.paths import CONFIG_ENV
@@ -25,9 +24,9 @@ client = OpenAI(api_key=_k)
 def generate_answer(
     query: str,
     category: str,
-    json_data: List[dict],
+    json_data: list[dict],
     vectorstore,
-    tags: Optional[List[str]] = None,
+    tags: list[str] | None = None,
 ) -> dict:
     """
     クエリ・カテゴリ・タグをもとにAI回答を生成する。

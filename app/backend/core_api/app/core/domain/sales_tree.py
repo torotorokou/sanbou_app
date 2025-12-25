@@ -25,7 +25,7 @@ Domain models for Sales Tree Analytics - 売上ツリー分析ドメインモデ
 """
 
 from datetime import date as date_type
-from typing import Literal, Optional
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -77,9 +77,9 @@ class DailySeriesRequest(BaseModel):
     category_kind: CategoryKind = Field(
         "waste", description="カテゴリ種別: waste, valuable"
     )
-    rep_id: Optional[int] = Field(None, description="営業IDフィルタ")
-    customer_id: Optional[str] = Field(None, description="顧客IDフィルタ")
-    item_id: Optional[int] = Field(None, description="品目IDフィルタ")
+    rep_id: int | None = Field(None, description="営業IDフィルタ")
+    customer_id: str | None = Field(None, description="顧客IDフィルタ")
+    item_id: int | None = Field(None, description="品目IDフィルタ")
 
 
 class PivotRequest(BaseModel):
@@ -104,7 +104,7 @@ class PivotRequest(BaseModel):
     top_n: int = Field(50, description="TOP-N件数（0=全件）")
     sort_by: SortKey = Field("amount", description="ソート項目")
     order: SortOrder = Field("desc", description="ソート順")
-    cursor: Optional[str] = Field(
+    cursor: str | None = Field(
         None, description="ページネーションカーソル（オフセット値）"
     )
 
@@ -134,10 +134,10 @@ class MetricEntry(BaseModel):
     count: int = Field(
         ..., description="表示用カウント値（商品軸=line_count、それ以外=slip_count）"
     )
-    unit_price: Optional[float] = Field(
+    unit_price: float | None = Field(
         None, description="単価（円/kg）", serialization_alias="unitPrice"
     )
-    date_key: Optional[str] = Field(
+    date_key: str | None = Field(
         None,
         description="日付キー（mode=dateの場合のみ）",
         serialization_alias="dateKey",
@@ -177,7 +177,7 @@ class DailyPoint(BaseModel):
         serialization_alias="slipCount",
     )
     count: int = Field(..., description="表示用カウント値（現状は slip_count を使用）")
-    unit_price: Optional[float] = Field(
+    unit_price: float | None = Field(
         None, description="単価（円/kg）", serialization_alias="unitPrice"
     )
 
@@ -190,7 +190,7 @@ class CursorPage(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
     rows: list[MetricEntry] = Field(..., description="データ行")
-    next_cursor: Optional[str] = Field(
+    next_cursor: str | None = Field(
         None,
         description="次ページのカーソル（なければNull）",
         serialization_alias="nextCursor",

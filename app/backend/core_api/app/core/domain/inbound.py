@@ -4,7 +4,7 @@ Inbound domain entities and value objects.
 """
 
 from datetime import date as date_type
-from typing import Literal, Optional
+from typing import Literal
 
 from pydantic import BaseModel, Field
 
@@ -36,21 +36,17 @@ class InboundDailyRow(BaseModel):
     iso_week: int = Field(..., description="ISO週番号")
     iso_dow: int = Field(..., ge=1, le=7, description="ISO曜日（1=月, 7=日）")
     is_business: bool = Field(..., description="営業日フラグ")
-    segment: Optional[str] = Field(None, description="セグメント")
+    segment: str | None = Field(None, description="セグメント")
     ton: float = Field(..., ge=0, description="日次搬入量トン数")
-    cum_ton: Optional[float] = Field(None, ge=0, description="累積搬入量トン数")
-    prev_month_ton: Optional[float] = Field(
+    cum_ton: float | None = Field(None, ge=0, description="累積搬入量トン数")
+    prev_month_ton: float | None = Field(
         None, ge=0, description="先月（4週前）の同曜日の搬入量"
     )
-    prev_year_ton: Optional[float] = Field(
+    prev_year_ton: float | None = Field(
         None, ge=0, description="前年の同ISO週・同曜日の搬入量"
     )
-    prev_month_cum_ton: Optional[float] = Field(
-        None, ge=0, description="先月の累積搬入量"
-    )
-    prev_year_cum_ton: Optional[float] = Field(
-        None, ge=0, description="前年の累積搬入量"
-    )
+    prev_month_cum_ton: float | None = Field(None, ge=0, description="先月の累積搬入量")
+    prev_year_cum_ton: float | None = Field(None, ge=0, description="前年の累積搬入量")
 
     class Config:
         json_schema_extra = {

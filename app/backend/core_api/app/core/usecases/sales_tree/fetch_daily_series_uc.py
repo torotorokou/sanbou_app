@@ -4,8 +4,6 @@ UseCase: FetchSalesTreeDailySeries
 売上ツリーの日次推移データ取得UseCase
 """
 
-import logging
-
 from app.core.domain.sales_tree import DailyPoint, DailySeriesRequest
 from app.core.ports.sales_tree_port import ISalesTreeQuery
 from backend_shared.application.logging import get_module_logger, log_usecase_execution
