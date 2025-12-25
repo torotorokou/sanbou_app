@@ -12,38 +12,38 @@
 
 ### 🔴 高優先度（セキュリティ/必須）
 
-| 現在の定数名/値 | 種類 | 発見場所 | 推奨環境変数名 | 設定先 | メモ |
-|---|---|---|---|---|---|
-| `"honest-recycle.co.jp"` | 許可ドメイン | `core_api/infra/adapters/auth/iap_auth_provider.py:63` | `ALLOWED_EMAIL_DOMAIN` | common | ホワイトリストの中核値 |
-| `"https://www.gstatic.com/iap/verify/public_key"` | IAP公開鍵URL | `core_api/infra/adapters/auth/iap_auth_provider.py:59` | `IAP_PUBLIC_KEY_URL` | common | 通常は変更不要だが設定可能にすべき |
-| `"change-me-in-production"` | シークレット | `ledger_api/app/settings.py:129` | `REPORT_ARTIFACT_SECRET` | secrets | 本番では必ず変更 |
+| 現在の定数名/値                                   | 種類         | 発見場所                                               | 推奨環境変数名           | 設定先  | メモ                               |
+| ------------------------------------------------- | ------------ | ------------------------------------------------------ | ------------------------ | ------- | ---------------------------------- |
+| `"honest-recycle.co.jp"`                          | 許可ドメイン | `core_api/infra/adapters/auth/iap_auth_provider.py:63` | `ALLOWED_EMAIL_DOMAIN`   | common  | ホワイトリストの中核値             |
+| `"https://www.gstatic.com/iap/verify/public_key"` | IAP公開鍵URL | `core_api/infra/adapters/auth/iap_auth_provider.py:59` | `IAP_PUBLIC_KEY_URL`     | common  | 通常は変更不要だが設定可能にすべき |
+| `"change-me-in-production"`                       | シークレット | `ledger_api/app/settings.py:129`                       | `REPORT_ARTIFACT_SECRET` | secrets | 本番では必ず変更                   |
 
 ### 🟡 中優先度（デプロイ柔軟性）
 
-| 現在の定数名/値 | 種類 | 発見場所 | 推奨環境変数名 | 設定先 | メモ |
-|---|---|---|---|---|---|
-| `"http://localhost:5173"` | フロントエンドURL | `manual_api/infra/adapters/manuals_repository.py:25` | `MANUAL_FRONTEND_BASE_URL` | 各環境 | 既に実装済みだが、デフォルト値がハードコード |
-| `"http://localhost:5173,http://127.0.0.1:5173"` | CORS Origins | `manual_api/app/main.py:131` | `CORS_ORIGINS` | 各環境 | 既に実装済み、デフォルト値の見直し |
-| `"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"` | Gemini API URL | `ai_api/infra/adapters/gemini_client.py:14` | `GEMINI_API_URL` | common | モデルバージョン変更に対応 |
-| `/backend/secrets` | シークレットディレクトリ | `rag_api/shared/env_loader.py:41` | `SECRETS_DIR` | common | 既に実装済み、デフォルト値の文書化 |
+| 現在の定数名/値                                                                              | 種類                     | 発見場所                                             | 推奨環境変数名             | 設定先 | メモ                                         |
+| -------------------------------------------------------------------------------------------- | ------------------------ | ---------------------------------------------------- | -------------------------- | ------ | -------------------------------------------- |
+| `"http://localhost:5173"`                                                                    | フロントエンドURL        | `manual_api/infra/adapters/manuals_repository.py:25` | `MANUAL_FRONTEND_BASE_URL` | 各環境 | 既に実装済みだが、デフォルト値がハードコード |
+| `"http://localhost:5173,http://127.0.0.1:5173"`                                              | CORS Origins             | `manual_api/app/main.py:131`                         | `CORS_ORIGINS`             | 各環境 | 既に実装済み、デフォルト値の見直し           |
+| `"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"` | Gemini API URL           | `ai_api/infra/adapters/gemini_client.py:14`          | `GEMINI_API_URL`           | common | モデルバージョン変更に対応                   |
+| `/backend/secrets`                                                                           | シークレットディレクトリ | `rag_api/shared/env_loader.py:41`                    | `SECRETS_DIR`              | common | 既に実装済み、デフォルト値の文書化           |
 
 ### 🟢 低優先度（コード整理）
 
-| 現在の定数名/値 | 種類 | 発見場所 | 推奨環境変数名 | 設定先 | メモ |
-|---|---|---|---|---|---|
-| `"Asia/Tokyo"` | タイムゾーン | 複数ファイル | `TZ` または `APP_TIMEZONE` | common | 標準的な環境変数 TZ を推奨 |
-| `10485760` (10MB) | CSVアップロード最大サイズ | `core_api/config/settings.py:65` | `CSV_UPLOAD_MAX_SIZE` | common | 既に実装済み |
-| `/tmp/csv_uploads` | CSV一時ディレクトリ | `core_api/config/settings.py:68` | `CSV_TEMP_DIR` | common | 既に実装済み |
-| `/backend/config/csv_config/shogun_csv_masters.yaml` | YAML設定パス | `core_api/config/settings.py:71` | `CSV_MASTERS_YAML_PATH` | common | 既に実装済み |
+| 現在の定数名/値                                      | 種類                      | 発見場所                         | 推奨環境変数名             | 設定先 | メモ                       |
+| ---------------------------------------------------- | ------------------------- | -------------------------------- | -------------------------- | ------ | -------------------------- |
+| `"Asia/Tokyo"`                                       | タイムゾーン              | 複数ファイル                     | `TZ` または `APP_TIMEZONE` | common | 標準的な環境変数 TZ を推奨 |
+| `10485760` (10MB)                                    | CSVアップロード最大サイズ | `core_api/config/settings.py:65` | `CSV_UPLOAD_MAX_SIZE`      | common | 既に実装済み               |
+| `/tmp/csv_uploads`                                   | CSV一時ディレクトリ       | `core_api/config/settings.py:68` | `CSV_TEMP_DIR`             | common | 既に実装済み               |
+| `/backend/config/csv_config/shogun_csv_masters.yaml` | YAML設定パス              | `core_api/config/settings.py:71` | `CSV_MASTERS_YAML_PATH`    | common | 既に実装済み               |
 
 ### ⚪ コードに残してよいもの（定数として適切）
 
-| 値 | 理由 |
-|---|---|
-| `stg.shogun_flash_receive` などのテーブル名 | ビジネスロジックの一部、DBスキーマ構造に依存 |
-| `IAP_PUBLIC_KEY_URL` のデフォルト値 | Google公式URL、変更の可能性極めて低い（ただし設定可能にはすべき） |
-| `placeholder` 画像URL（manual_api） | テストデータ、実装が完了すれば削除予定 |
-| HTTPステータスコード | 標準仕様 |
+| 値                                          | 理由                                                              |
+| ------------------------------------------- | ----------------------------------------------------------------- |
+| `stg.shogun_flash_receive` などのテーブル名 | ビジネスロジックの一部、DBスキーマ構造に依存                      |
+| `IAP_PUBLIC_KEY_URL` のデフォルト値         | Google公式URL、変更の可能性極めて低い（ただし設定可能にはすべき） |
+| `placeholder` 画像URL（manual_api）         | テストデータ、実装が完了すれば削除予定                            |
+| HTTPステータスコード                        | 標準仕様                                                          |
 
 ## 📋 推奨する環境変数の追加
 
@@ -105,24 +105,24 @@ from backend_shared.config.env_utils import get_str_env
 
 class Settings(BaseSettings):
     # ... 既存の設定 ...
-    
+
     # === Authentication / Security ===
     ALLOWED_EMAIL_DOMAIN: str = get_str_env("ALLOWED_EMAIL_DOMAIN", "honest-recycle.co.jp")
     """許可するメールドメイン（IAP認証用ホワイトリスト）"""
-    
+
     IAP_PUBLIC_KEY_URL: str = get_str_env(
         "IAP_PUBLIC_KEY_URL",
         "https://www.gstatic.com/iap/verify/public_key"
     )
     """IAP JWT検証用の公開鍵URL"""
-    
+
     # === Application Settings ===
     APP_TIMEZONE: str = get_str_env("APP_TIMEZONE", "Asia/Tokyo")
     """アプリケーション全体で使用するタイムゾーン"""
-    
+
     # === CORS Settings ===
     CORS_ORIGINS: list[str] = [
-        origin.strip() 
+        origin.strip()
         for origin in get_str_env(
             "CORS_ORIGINS",
             "http://localhost:5173,http://127.0.0.1:5173"
@@ -142,13 +142,13 @@ from backend_shared.config.env_utils import get_str_env
 class Settings(BaseSettings):
     GEMINI_API_KEY: str = get_str_env("GEMINI_API_KEY", "")
     """Gemini API キー（必須）"""
-    
+
     GEMINI_API_URL: str = get_str_env(
         "GEMINI_API_URL",
         "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
     )
     """Gemini API エンドポイントURL"""
-    
+
     class Config:
         env_file = ".env"
         case_sensitive = True
@@ -165,13 +165,13 @@ def get_settings() -> Settings:
 @dataclass(slots=True)
 class Settings:
     # ... 既存フィールド ...
-    
+
     report_artifact_secret: str
     """レポートアーティファクトURL署名用シークレット（必須）"""
 
 def load_settings() -> Settings:
     # ... 既存コード ...
-    
+
     report_artifact_secret = os.getenv("REPORT_ARTIFACT_SECRET")
     if not report_artifact_secret or report_artifact_secret == "change-me-in-production":
         stage = os.getenv("STAGE", "dev").lower()
@@ -179,7 +179,7 @@ def load_settings() -> Settings:
             raise ValueError(
                 "REPORT_ARTIFACT_SECRET must be set to a strong secret in stg/prod environments"
             )
-    
+
     return Settings(
         # ... 既存引数 ...
         report_artifact_secret=report_artifact_secret or "dev-default-secret",
@@ -198,7 +198,7 @@ from app.config.settings import get_settings
 def provide_auth_provider() -> IAuthProvider:
     """認証プロバイダーを提供"""
     settings = get_settings()
-    
+
     if settings.IAP_ENABLED:
         return IapAuthProvider(
             allowed_domain=settings.ALLOWED_EMAIL_DOMAIN,
@@ -219,7 +219,7 @@ from app.config.settings import get_settings
 def provide_gemini_client() -> GeminiClient:
     """Gemini APIクライアントを提供"""
     settings = get_settings()
-    
+
     return GeminiClient(
         api_key=settings.GEMINI_API_KEY,
         api_url=settings.GEMINI_API_URL,  # 新規追加

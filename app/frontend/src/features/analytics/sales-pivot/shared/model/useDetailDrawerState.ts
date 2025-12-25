@@ -3,8 +3,8 @@
  * 詳細明細行表示用ドロワーの状態管理
  */
 
-import { useState } from 'react';
-import type { DetailMode, DetailLine } from './types';
+import { useState } from "react";
+import type { DetailMode, DetailLine } from "./types";
 
 export interface DetailDrawerState {
   detailDrawerOpen: boolean;
@@ -26,11 +26,15 @@ export interface DetailDrawerState {
  */
 export function useDetailDrawerState(): DetailDrawerState {
   const [detailDrawerOpen, setDetailDrawerOpen] = useState<boolean>(false);
-  const [detailDrawerLoading, setDetailDrawerLoading] = useState<boolean>(false);
-  const [detailDrawerTitle, setDetailDrawerTitle] = useState<string>('');
-  const [detailDrawerMode, setDetailDrawerMode] = useState<DetailMode | null>(null);
+  const [detailDrawerLoading, setDetailDrawerLoading] =
+    useState<boolean>(false);
+  const [detailDrawerTitle, setDetailDrawerTitle] = useState<string>("");
+  const [detailDrawerMode, setDetailDrawerMode] = useState<DetailMode | null>(
+    null,
+  );
   const [detailDrawerRows, setDetailDrawerRows] = useState<DetailLine[]>([]);
-  const [detailDrawerTotalCount, setDetailDrawerTotalCount] = useState<number>(0);
+  const [detailDrawerTotalCount, setDetailDrawerTotalCount] =
+    useState<number>(0);
 
   return {
     detailDrawerOpen,

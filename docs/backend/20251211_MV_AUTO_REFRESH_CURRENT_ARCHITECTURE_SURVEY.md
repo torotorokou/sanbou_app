@@ -2,7 +2,7 @@
 
 **作成日**: 2025年12月11日  
 **調査対象**: 将軍 CSV アップロードに伴う MV/集計テーブルの自動更新機能  
-**調査目的**: 新規 MV を追加する前に、既存の自動更新ロジックを正確に把握する  
+**調査目的**: 新規 MV を追加する前に、既存の自動更新ロジックを正確に把握する
 
 ---
 
@@ -22,32 +22,32 @@
 
 以下のマテリアライズドビューが `mart` スキーマに定義されています。
 
-| MV名 | 格納場所 | 役割 | コメント |
-|------|----------|------|----------|
-| `mart.mv_target_card_per_day` | `sql/mart/mv_target_card_per_day.sql` | 日次目標・実績カード集計 | ダッシュボード用。日次の目標 ton と実績 ton を事前集計。`REFRESH MATERIALIZED VIEW CONCURRENTLY` で更新。 |
-| `mart.mv_receive_daily` | `versions/20251211_120000000_create_mv_receive_daily.py` | 受入日次実績（`v_receive_daily` の MV 版） | 2025-12-11 に新規作成。パフォーマンス改善のため VIEW → MV に切り替え。 |
-| `mart.mv_sales_tree_daily` | `sql/mart/mv_sales_tree_daily.sql` | 日次売上ツリー集計 | 出荷伝票から日次で売上を集計。階層構造（得意先 → 品目）を持つ。 |
-| `mart.mv_inb5y_week_profile_min` | `sql/mart/mv_inb5y_week_profile_min.sql` | 5年間週次プロファイル（最小版） | 平日平均、予約日（日祝）平均を週単位で集計。予測モデル用。 |
-| `mart.mv_inb_avg5y_day_biz` | `sql/mart/mv_inb_avg5y_day_biz.sql` | 5年間平日日次平均 | 営業日（月〜土、祝日除外）のみの平均値を週・曜日別に集計。 |
-| `mart.mv_inb_avg5y_day_scope` | `sql/mart/mv_inb_avg5y_day_scope.sql` | 5年間日次平均（全日 or 営業日） | `scope='all'` or `'biz'` で全日/営業日を区別。 |
-| `mart.mv_inb_avg5y_weeksum_biz` | `sql/mart/mv_inb_avg5y_weeksum_biz.sql` | 5年間週次合計（営業日のみ） | 週単位の合計値の平均・標準偏差を計算。 |
+| MV名                             | 格納場所                                                 | 役割                                       | コメント                                                                                                  |
+| -------------------------------- | -------------------------------------------------------- | ------------------------------------------ | --------------------------------------------------------------------------------------------------------- |
+| `mart.mv_target_card_per_day`    | `sql/mart/mv_target_card_per_day.sql`                    | 日次目標・実績カード集計                   | ダッシュボード用。日次の目標 ton と実績 ton を事前集計。`REFRESH MATERIALIZED VIEW CONCURRENTLY` で更新。 |
+| `mart.mv_receive_daily`          | `versions/20251211_120000000_create_mv_receive_daily.py` | 受入日次実績（`v_receive_daily` の MV 版） | 2025-12-11 に新規作成。パフォーマンス改善のため VIEW → MV に切り替え。                                    |
+| `mart.mv_sales_tree_daily`       | `sql/mart/mv_sales_tree_daily.sql`                       | 日次売上ツリー集計                         | 出荷伝票から日次で売上を集計。階層構造（得意先 → 品目）を持つ。                                           |
+| `mart.mv_inb5y_week_profile_min` | `sql/mart/mv_inb5y_week_profile_min.sql`                 | 5年間週次プロファイル（最小版）            | 平日平均、予約日（日祝）平均を週単位で集計。予測モデル用。                                                |
+| `mart.mv_inb_avg5y_day_biz`      | `sql/mart/mv_inb_avg5y_day_biz.sql`                      | 5年間平日日次平均                          | 営業日（月〜土、祝日除外）のみの平均値を週・曜日別に集計。                                                |
+| `mart.mv_inb_avg5y_day_scope`    | `sql/mart/mv_inb_avg5y_day_scope.sql`                    | 5年間日次平均（全日 or 営業日）            | `scope='all'` or `'biz'` で全日/営業日を区別。                                                            |
+| `mart.mv_inb_avg5y_weeksum_biz`  | `sql/mart/mv_inb_avg5y_weeksum_biz.sql`                  | 5年間週次合計（営業日のみ）                | 週単位の合計値の平均・標準偏差を計算。                                                                    |
 
 ### 1.2. 通常のVIEW（参照用）
 
 以下のビューは MV ではなく、通常の VIEW として定義されています。
 
-| VIEW名 | 役割 |
-|--------|------|
-| `mart.v_receive_daily` | 受入日次実績（元データ）。`mv_receive_daily` 作成後も残存。 |
+| VIEW名                              | 役割                                                              |
+| ----------------------------------- | ----------------------------------------------------------------- |
+| `mart.v_receive_daily`              | 受入日次実績（元データ）。`mv_receive_daily` 作成後も残存。       |
 | `mart.v_daily_target_with_calendar` | 営業カレンダー付き日次目標。`mv_target_card_per_day` の元データ。 |
-| `mart.v_target_card_per_day` | ターゲットカード集計の VIEW 版（MV 版と並行稼働中）。 |
+| `mart.v_target_card_per_day`        | ターゲットカード集計の VIEW 版（MV 版と並行稼働中）。             |
 
 ### 1.3. 集計テーブル（通常テーブル）
 
-| テーブル名 | 役割 |
-|-----------|------|
+| テーブル名               | 役割                                                            |
+| ------------------------ | --------------------------------------------------------------- |
 | `mart.daily_target_plan` | 日次目標計画マスタ。`v_daily_target_with_calendar` の元データ。 |
-| `kpi.monthly_targets` | 月次目標マスタ。KPI 計算の基準値。 |
+| `kpi.monthly_targets`    | 月次目標マスタ。KPI 計算の基準値。                              |
 
 ---
 
@@ -62,6 +62,7 @@
 **クラス**: `MaterializedViewRefresher`
 
 **責務**:
+
 - マテリアライズドビューの `REFRESH MATERIALIZED VIEW CONCURRENTLY` を実行
 - CSV アップロード成功時に呼び出される
 - エラーハンドリング（個別 MV の失敗はログに記録するが、全体処理は継続）
@@ -84,6 +85,7 @@ MV_MAPPINGS = {
 ```
 
 **実行タイミング**:
+
 - `UploadShogunCsvUseCase._process_background_upload()` 内で呼び出し
 - CSV の raw/stg 層への保存が成功した後に実行
 - `csv_type='receive'` の場合のみ `mart.mv_target_card_per_day` を更新
@@ -117,11 +119,13 @@ MV_MAPPINGS = {
 **ファイル**: `migrations/alembic/versions/20251104_162109457_manage_materialized_views_mart.py`
 
 **実行内容**:
+
 - Alembic マイグレーション（`alembic upgrade head`）実行時に MV を自動更新
 - 既存 DB の場合: `REFRESH MATERIALIZED VIEW CONCURRENTLY` のみ実行
 - 新規 DB の場合: `CREATE MATERIALIZED VIEW` + INDEX 作成 + REFRESH
 
 **更新対象**:
+
 ```python
 MV_DEFINITIONS = {
     "mart.mv_inb5y_week_profile_min": "...",
@@ -136,10 +140,12 @@ MV_DEFINITIONS = {
 **ファイル**: `scripts/refactoring/apply_soft_delete_refactoring.sh`
 
 **実行内容**:
+
 - 論理削除（Soft Delete）対応マイグレーション後に MV を一括更新
 - `REFRESH MATERIALIZED VIEW CONCURRENTLY` を実行
 
 **更新対象**:
+
 ```bash
 MVS=(
   "mart.mv_target_card_per_day"
@@ -151,17 +157,18 @@ MVS=(
 ```
 
 **実行方法**:
+
 ```bash
 ./scripts/refactoring/apply_soft_delete_refactoring.sh
 ```
 
 ### 2.3. 現在の更新タイミング一覧
 
-| 更新タイミング | トリガー | 更新対象 MV | 実行方法 |
-|---------------|---------|------------|---------|
-| **CSV アップロード完了時**（自動） | `csv_type='receive'` のアップロード成功 | `mart.mv_target_card_per_day` | `MaterializedViewRefresher.refresh_for_csv_type()` |
-| **Alembic マイグレーション適用時**（半自動） | `alembic upgrade head` | 予測モデル用 MV 群（4つ） | マイグレーション内の `REFRESH MATERIALIZED VIEW CONCURRENTLY` |
-| **スキーマ変更後の手動更新** | 開発者が手動実行 | 全 MV（5つ以上） | `scripts/refactoring/apply_soft_delete_refactoring.sh` |
+| 更新タイミング                               | トリガー                                | 更新対象 MV                   | 実行方法                                                      |
+| -------------------------------------------- | --------------------------------------- | ----------------------------- | ------------------------------------------------------------- |
+| **CSV アップロード完了時**（自動）           | `csv_type='receive'` のアップロード成功 | `mart.mv_target_card_per_day` | `MaterializedViewRefresher.refresh_for_csv_type()`            |
+| **Alembic マイグレーション適用時**（半自動） | `alembic upgrade head`                  | 予測モデル用 MV 群（4つ）     | マイグレーション内の `REFRESH MATERIALIZED VIEW CONCURRENTLY` |
+| **スキーマ変更後の手動更新**                 | 開発者が手動実行                        | 全 MV（5つ以上）              | `scripts/refactoring/apply_soft_delete_refactoring.sh`        |
 
 ---
 
@@ -185,6 +192,7 @@ al-rev-auto:
 ```
 
 **実行例**:
+
 ```bash
 # マイグレーション適用（MV 更新も含む）
 make al-up ENV=local_dev
@@ -198,7 +206,8 @@ make al-rev-auto MSG="add new mv" REV_ID=$(date +%Y%m%d_%H%M%S%3N)
 
 ### 3.2. 起動スクリプト
 
-**調査結果**: 
+**調査結果**:
+
 - `startup.sh` は `rag_api`、`ledger_api`、`manual_api` にのみ存在
 - `core_api` には起動時スクリプトなし（`uvicorn` 直接起動）
 - **起動時の自動 MV 更新ロジックは存在しない**
@@ -206,11 +215,13 @@ make al-rev-auto MSG="add new mv" REV_ID=$(date +%Y%m%d_%H%M%S%3N)
 ### 3.3. バッチ・cron・スケジューラ
 
 **調査結果**:
+
 - 定期的な MV 更新を行う cron ジョブや scheduler は **現時点では存在しない**
 - `plan_worker` サービスが存在するが、MV 更新は担当していない
   - 役割: 予測計画の再計算（`rebuild_daytype_ratios`）
 
 **今後の拡張可能性**:
+
 - `plan_worker` を拡張して、夜間バッチで MV を一括更新する案は検討可能
 
 ---
@@ -222,6 +233,7 @@ make al-rev-auto MSG="add new mv" REV_ID=$(date +%Y%m%d_%H%M%S%3N)
 **ファイル**: `app/infra/adapters/materialized_view/materialized_view_refresher.py`
 
 **良い点**:
+
 1. **単一責任の原則（SRP）**: MV 更新のみに特化したクラス
 2. **疎結合**: UseCase から DI 経由で注入（`get_mv_refresher()`）
 3. **拡張性**: `MV_MAPPINGS` に追加するだけで新しい MV を自動更新対象にできる
@@ -229,6 +241,7 @@ make al-rev-auto MSG="add new mv" REV_ID=$(date +%Y%m%d_%H%M%S%3N)
 5. **CONCURRENTLY オプション**: ロックを最小化（UNIQUE INDEX 必須）
 
 **参考にすべき設計**:
+
 ```python
 # 新しい MV を追加する場合
 MV_MAPPINGS = {
@@ -244,6 +257,7 @@ MV_MAPPINGS = {
 ```
 
 **使い方（DI経由）**:
+
 ```python
 # config/di_providers.py
 def get_mv_refresher(db: Session = Depends(get_db)) -> MaterializedViewRefresher:
@@ -256,7 +270,7 @@ class UploadShogunCsvUseCase:
         mv_refresher: Optional[MaterializedViewRefresher] = None,
     ):
         self.mv_refresher = mv_refresher
-    
+
     def _refresh_materialized_views(self, csv_types: List[str]) -> None:
         if not self.mv_refresher:
             return
@@ -269,11 +283,13 @@ class UploadShogunCsvUseCase:
 **ファイル**: `app/core/usecases/upload/upload_shogun_csv_uc.py`
 
 **良い点**:
+
 1. **ユーザー体験向上**: 軽量バリデーション → 即座に受付完了レスポンス
 2. **重い処理を分離**: CSV 読込・保存・MV 更新はバックグラウンドで実行
 3. **進捗管理**: `log.upload_file.status` で状態管理（pending → success/error）
 
 **フロー**:
+
 ```python
 async def start_async_upload(
     self,
@@ -297,6 +313,7 @@ async def start_async_upload(
 ```
 
 **参考にすべき理由**:
+
 - 新しい MV 追加時も、既存のバックグラウンド処理フローに乗せるだけで自動更新可能
 - エラーハンドリングが既に実装済み（MV 更新失敗してもアップロード自体は成功扱い）
 
@@ -305,11 +322,13 @@ async def start_async_upload(
 **ファイル**: `migrations/alembic/versions/20251104_162109457_manage_materialized_views_mart.py`
 
 **現状の問題点**:
+
 1. **マイグレーション実行時間が長くなる**: 大量データがある場合、REFRESH に時間がかかる
 2. **デプロイ時のリスク**: マイグレーション失敗 = デプロイ失敗になる可能性
 3. **冪等性の保証が難しい**: 同じマイグレーションを複数回実行すると予期しない動作
 
 **代替案**:
+
 - **マイグレーションでは MV の DDL（CREATE MATERIALIZED VIEW）のみ実行**
 - **初回データ投入は別途スクリプトで実行**: `REFRESH MATERIALIZED VIEW` を手動または自動化スクリプトで実行
 - 例: `scripts/db/init_mv_data.sh`
@@ -319,11 +338,13 @@ async def start_async_upload(
 **ファイル**: `scripts/refactoring/apply_soft_delete_refactoring.sh`
 
 **問題点**:
+
 1. **メンテナンス負荷**: 新しい MV を追加するたびにスクリプトを修正する必要がある
 2. **実行忘れのリスク**: 手動実行を前提としているため、忘れると MV が古いまま
 3. **冪等性の欠如**: 複数回実行しても問題ない設計になっていない
 
 **改善提案**:
+
 - `MaterializedViewRefresher` に統一して、スクリプト側から呼び出す形に変更
 - または、`make refresh-all-mv` のような Makefile ターゲットを用意
 
@@ -357,38 +378,45 @@ async def start_async_upload(
 ### 5.2. パフォーマンス最適化
 
 #### 1. **UNIQUE INDEX の必須性**
+
 - `REFRESH MATERIALIZED VIEW CONCURRENTLY` を使用するには UNIQUE INDEX が必須
 - マイグレーション内で `CREATE UNIQUE INDEX CONCURRENTLY` を実行
 
 #### 2. **部分更新（Incremental Refresh）の検討**
+
 - 現在は全行更新（Full Refresh）
 - 将来的には、増分更新（最新データのみ再計算）を検討
   - PostgreSQL 13+ の `WITH NO DATA` → `REFRESH MATERIALIZED VIEW WHERE ...` は未対応
   - 代替案: トリガー関数で更新行のみを別テーブルに記録し、定期的にマージ
 
 #### 3. **並列実行の最適化**
+
 - 複数 MV を更新する場合、`asyncio.gather()` で並列実行を検討
 - ただし、DB の CONCURRENTLY 更新は既に並列化されているため、効果は限定的
 
 ### 5.3. エラーハンドリング
 
 #### 1. **個別 MV 失敗時の挙動**
+
 - 現在: ログに記録するが、アップロード処理は成功扱い
 - 推奨: 重要度によって処理を分ける
   - **Critical MV**（例: `mv_target_card_per_day`）: 失敗時は例外を投げる
   - **Optional MV**（例: 予測モデル用 MV）: ログのみ記録
 
 #### 2. **リトライ機構の追加**
+
 - MV 更新失敗時に自動リトライする機能を検討
 - 例: `tenacity` ライブラリで exponential backoff
 
 ### 5.4. 監視・アラート
 
 #### 1. **MV 更新完了時のログ出力**
+
 - 現在: INFO レベルでログ出力済み
 - 推奨: Prometheus メトリクスとして公開（例: `mv_refresh_duration_seconds`）
 
 #### 2. **長時間実行の検知**
+
 - MV 更新に 10 分以上かかる場合は WARNING ログを出力
 - Cloud Logging でアラート設定
 
@@ -398,22 +426,25 @@ async def start_async_upload(
 
 ### 現状の更新方式
 
-| 方式 | トリガー | 対象 MV | 実行方法 | 自動化レベル |
-|------|---------|---------|---------|------------|
-| **CSV アップロード完了時** | `csv_type='receive'` のアップロード成功 | `mart.mv_target_card_per_day` | `MaterializedViewRefresher` | ✅ 完全自動 |
-| **Alembic マイグレーション** | `alembic upgrade head` | 予測モデル用 MV 群 | マイグレーション内の SQL | 🔶 半自動（マイグレーション実行時） |
-| **手動スクリプト** | 開発者が手動実行 | 全 MV | `apply_soft_delete_refactoring.sh` | ❌ 手動 |
+| 方式                         | トリガー                                | 対象 MV                       | 実行方法                           | 自動化レベル                        |
+| ---------------------------- | --------------------------------------- | ----------------------------- | ---------------------------------- | ----------------------------------- |
+| **CSV アップロード完了時**   | `csv_type='receive'` のアップロード成功 | `mart.mv_target_card_per_day` | `MaterializedViewRefresher`        | ✅ 完全自動                         |
+| **Alembic マイグレーション** | `alembic upgrade head`                  | 予測モデル用 MV 群            | マイグレーション内の SQL           | 🔶 半自動（マイグレーション実行時） |
+| **手動スクリプト**           | 開発者が手動実行                        | 全 MV                         | `apply_soft_delete_refactoring.sh` | ❌ 手動                             |
 
 ### 推奨される設計方針
 
 1. **既存の `MaterializedViewRefresher` を活用**
+
    - 新しい MV は `MV_MAPPINGS` に追加するだけで自動更新対象になる
    - DI 経由で UseCase に注入されるため、テストも容易
 
 2. **BackgroundTasks による非同期処理を継続**
+
    - ユーザー体験を損なわず、重い MV 更新をバックグラウンドで実行
 
 3. **マイグレーションでは DDL のみ実行**
+
    - REFRESH は別途スクリプトまたは自動更新ロジックで実行
 
 4. **監視・アラート機能の追加**
@@ -431,6 +462,7 @@ async def start_async_upload(
 #### ✅ v_receive_daily → mv_receive_daily 移行
 
 **実施内容**:
+
 1. `app/infra/db/sql_names.py` の `V_RECEIVE_DAILY` 定数を `mart.mv_receive_daily` に変更
 2. 依存する全MVとVIEWのSQL定義を更新（7ファイル）:
    - `mv_inb5y_week_profile_min.sql`
@@ -449,6 +481,7 @@ async def start_async_upload(
 5. `MaterializedViewRefresher.MV_MAPPINGS` の `"receive"` リストに `"mart.mv_receive_daily"` を追加
 
 **結果**:
+
 - ✅ CSV upload時に `mv_receive_daily` が自動更新されるようになった
 - ✅ `/inbound/daily` API のレスポンスタイム改善を期待（VIEW→MV化）
 - ✅ 既存の依存MVは全て `mv_receive_daily` を参照するように更新済み
@@ -456,6 +489,7 @@ async def start_async_upload(
 #### ✅ mv_target_card_per_day 再作成
 
 **実施内容**:
+
 1. `sql/mart/mv_target_card_per_day.sql` を使用して MV を再作成
 2. `mv_receive_daily` への依存関係を確立
 3. UNIQUE INDEX: `ux_mv_target_card_per_day_ddate`
@@ -463,6 +497,7 @@ async def start_async_upload(
 5. 初回 REFRESH 実行（データ件数: **2,191行**）
 
 **結果**:
+
 - ✅ ダッシュボード API で使用される目標カード MV が復活
 - ✅ CSV upload時に自動更新対象（`MaterializedViewRefresher` 既登録）
 
@@ -471,12 +506,14 @@ async def start_async_upload(
 **調査結果** (`docs/backend/20251211_MV_DELETION_CANDIDATE_LIST.md`):
 
 **削除可能**:
+
 - ❌ `mart.mv_sales_tree_daily` (8KB, 未使用)
   - Repositoryで参照なし
   - v_sales_tree_detail_base へ移行済み
   - 削除推奨（低リスク）
 
 **削除不可**:
+
 - ⚠️ `mart.v_sales_tree_daily` (VIEW)
   - `mart.v_customer_sales_daily` が依存
   - 削除には `v_customer_sales_daily` のリファクタが必要（別タスク）
@@ -485,22 +522,23 @@ async def start_async_upload(
 
 #### アクティブなMV（自動更新対象）
 
-| MV名 | サイズ | データ件数 | 自動更新 | 用途 |
-|------|--------|----------|---------|------|
-| `mart.mv_receive_daily` | 224 KB | 1,805行 | ✅ | 日次受入実績（基礎データ） |
-| `mart.mv_target_card_per_day` | 240 KB | 2,191行 | ✅ | ダッシュボード目標カード |
+| MV名                          | サイズ | データ件数 | 自動更新 | 用途                       |
+| ----------------------------- | ------ | ---------- | -------- | -------------------------- |
+| `mart.mv_receive_daily`       | 224 KB | 1,805行    | ✅       | 日次受入実績（基礎データ） |
+| `mart.mv_target_card_per_day` | 240 KB | 2,191行    | ✅       | ダッシュボード目標カード   |
 
 **更新タイミング**: CSV type `"receive"` アップロード完了後、BackgroundTasks で自動 REFRESH
 
-**更新順序**: 
+**更新順序**:
+
 1. `mart.mv_receive_daily` (基礎データ)
 2. `mart.mv_target_card_per_day` (mv_receive_daily に依存)
 
 #### 削除候補MV
 
-| MV名 | サイズ | 削除優先度 | 理由 |
-|------|--------|----------|------|
-| `mart.mv_sales_tree_daily` | 8 KB | **HIGH** | 未使用、v_sales_tree_detail_base へ移行済み |
+| MV名                       | サイズ | 削除優先度 | 理由                                        |
+| -------------------------- | ------ | ---------- | ------------------------------------------- |
+| `mart.mv_sales_tree_daily` | 8 KB   | **HIGH**   | 未使用、v_sales_tree_detail_base へ移行済み |
 
 #### 依存関係図（更新版）
 
@@ -522,6 +560,7 @@ MaterializedViewRefresher.refresh_for_csv_type("receive")
 ### 6.3. 残課題
 
 1. **5年平均系MVの再作成**
+
    - `mv_inb5y_week_profile_min`
    - `mv_inb_avg5y_day_biz`
    - `mv_inb_avg5y_day_scope`
@@ -529,10 +568,12 @@ MaterializedViewRefresher.refresh_for_csv_type("receive")
    - 現在はDBに存在せず、SQL定義のみ存在
 
 2. **mv_sales_tree_daily の削除**
+
    - マイグレーション作成と適用
    - 低リスク（未使用、依存なし）
 
 3. **v_customer_sales_daily のリファクタ**
+
    - `v_sales_tree_daily` 依存を `v_sales_tree_detail_base` 直接参照に変更
    - 完了後 `v_sales_tree_daily` を削除可能
 
@@ -542,10 +583,10 @@ MaterializedViewRefresher.refresh_for_csv_type("receive")
 
 ---
 
-**次のステップ**: 
+**次のステップ**:
+
 - ✅ ~~新規 MV（`mart.mv_receive_daily`）の DDL 作成~~ **完了**
 - ✅ ~~`MaterializedViewRefresher.MV_MAPPINGS` に追加~~ **完了**
 - [ ] 5年平均系MVの作成と自動更新対象化
 - [ ] `mv_sales_tree_daily` 削除マイグレーション実行
 - [ ] MV更新パフォーマンス監視機能の追加
-

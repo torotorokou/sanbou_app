@@ -1,6 +1,7 @@
 from __future__ import annotations
+
 from dataclasses import dataclass
-from typing import Iterable, Literal, Optional, Tuple, Dict
+from typing import Dict, Iterable, Literal, Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -14,10 +15,10 @@ SmoothingMethod = Literal["median_then_mean", "mean_only"]
 @dataclass(frozen=True)
 class SmoothConfig:
     # 週内スムージング
-    intraweek_window: int = 3                      # 奇数推奨（1で無効）
+    intraweek_window: int = 3  # 奇数推奨（1で無効）
     intraweek_method: SmoothingMethod = "median_then_mean"
-    within_week_rel_cap: float = 1.6               # （平日）週平均×倍率 上限
-    min_open_days_for_smooth: int = 2              # これ未満は例外処理（開いてる日に100%）
+    within_week_rel_cap: float = 1.6  # （平日）週平均×倍率 上限
+    min_open_days_for_smooth: int = 2  # これ未満は例外処理（開いてる日に100%）
 
     # 日タイプ倍率（例：平日=1.0, 日曜=1.0, 祝日=1.0）
     scope_weight_multiplier: Optional[Dict[str, float]] = None
@@ -102,14 +103,18 @@ def apply_intraweek_pipeline(
     # 0) 下ごしらえ
     w = g[weight_raw_col].astype(float).fillna(0.0)
     if scope_col and cfg.scope_weight_multiplier:
-        mult = g[scope_col].map(lambda v: float(cfg.scope_weight_multiplier.get(str(v), 1.0))).astype(float)
+        mult = (
+            g[scope_col]
+            .map(lambda v: float(cfg.scope_weight_multiplier.get(str(v), 1.0)))
+            .astype(float)
+        )
         w = (w * mult).astype(float)
 
     if scope_col:
         biz_mask = g[scope_col].isin(cfg.intraweek_smooth_scope_values)
         nonbiz_mask = g[scope_col].isin(cfg.non_biz_scopes)
-        sun_mask = (g[scope_col] == "sun")
-        hol_mask = (g[scope_col] == "hol")
+        sun_mask = g[scope_col] == "sun"
+        hol_mask = g[scope_col] == "hol"
     else:
         biz_mask = pd.Series(True, index=g.index)
         nonbiz_mask = pd.Series(False, index=g.index)

@@ -5,20 +5,21 @@
     cd /home/koujiro/work_env/22.Work_React/sanbou_app/app/backend/core_api
     python -m tests.manual_notification_demo
 """
+
 from datetime import datetime
 
-from app.infra.adapters.notification.in_memory_outbox_adapter import (
-    InMemoryNotificationOutboxAdapter,
-)
-from app.infra.adapters.notification.noop_sender_adapter import (
-    NoopNotificationSenderAdapter,
+from app.core.usecases.notification.dispatch_pending_notifications_uc import (
+    DispatchPendingNotificationsUseCase,
 )
 from app.core.usecases.notification.enqueue_notifications_uc import (
     EnqueueNotificationRequest,
     EnqueueNotificationsUseCase,
 )
-from app.core.usecases.notification.dispatch_pending_notifications_uc import (
-    DispatchPendingNotificationsUseCase,
+from app.infra.adapters.notification.in_memory_outbox_adapter import (
+    InMemoryNotificationOutboxAdapter,
+)
+from app.infra.adapters.notification.noop_sender_adapter import (
+    NoopNotificationSenderAdapter,
 )
 
 
@@ -66,7 +67,9 @@ def main():
     pending = outbox.list_pending(now=now)
     print(f"✓ pending 通知: {len(pending)}件")
     for item in pending:
-        print(f"  - [{item.channel}] {item.payload.title} (recipient: {item.recipient_key})")
+        print(
+            f"  - [{item.channel}] {item.payload.title} (recipient: {item.recipient_key})"
+        )
     print()
 
     # Step 3: 通知を送信（Noop）

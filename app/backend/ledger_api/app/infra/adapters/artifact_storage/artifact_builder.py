@@ -7,24 +7,28 @@ Excel/PDF の生成・保存と、署名付きURLの JSON ペイロード組み�
 - generate_pdf_background(): バックグラウンドでPDF生成
 - get_pdf_status(): PDFステータス確認
 """
+
 from __future__ import annotations
 
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, Literal, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Dict, Literal, Optional
 
-from fastapi.responses import JSONResponse
-from backend_shared.utils.datetime_utils import now_in_app_timezone, format_datetime_iso
 from backend_shared.application.logging import get_module_logger
+from backend_shared.utils.datetime_utils import format_datetime_iso, now_in_app_timezone
+from fastapi.responses import JSONResponse
 
 if TYPE_CHECKING:
     from app.core.usecases.reports.base_generators import BaseReportGenerator
 
 from app.infra.adapters.artifact_storage.artifact_service import (
-    get_report_artifact_storage,
     ArtifactLocation,
+    get_report_artifact_storage,
 )
-from app.infra.adapters.file_processing.pdf_conversion import PdfConversionError, convert_excel_to_pdf
+from app.infra.adapters.file_processing.pdf_conversion import (
+    PdfConversionError,
+    convert_excel_to_pdf,
+)
 
 logger = get_module_logger(__name__)
 
@@ -50,7 +54,7 @@ def _ensure_bytes(value: Any, *, label: str) -> bytes:
 
 class ArtifactResponseBuilder:
     """Excel/PDF の生成とアーティファクト JSON の組み立てを担当するクラス。
-    
+
     🔄 リファクタリング: 2段階構成
     - build(): Excel生成 → 即座にレスポンス（PDF生成はバックグラウンド）
     - build_sync(): 従来通りExcel+PDFを同期生成（後方互換用）
@@ -66,7 +70,7 @@ class ArtifactResponseBuilder:
         async_pdf: bool = True,
     ) -> JSONResponse:
         """レポートを生成してレスポンスを返す。
-        
+
         Args:
             generator: レポート生成器
             df_result: 処理結果DataFrame
@@ -85,10 +89,12 @@ class ArtifactResponseBuilder:
 
             if async_pdf:
                 # 非同期モード: PDFは後でバックグラウンドで生成
-                artifact_payload = storage.build_payload(location, excel_exists=True, pdf_exists=False)
+                artifact_payload = storage.build_payload(
+                    location, excel_exists=True, pdf_exists=False
+                )
                 # report_token を追加（PDFステータス確認用）
                 artifact_payload["report_token"] = location.token
-                
+
                 metadata: Dict[str, Any] = {
                     "generated_at": format_datetime_iso(now_in_app_timezone()),
                     "pdf_status": "pending",
@@ -102,7 +108,7 @@ class ArtifactResponseBuilder:
                     "artifact": artifact_payload,
                     "metadata": metadata,
                 }
-                
+
                 logger.info(
                     "Excel生成完了（PDF非同期モード）",
                     extra={
@@ -126,9 +132,11 @@ class ArtifactResponseBuilder:
                     pdf_exists = False
                     pdf_error = str(exc)
 
-                artifact_payload = storage.build_payload(location, excel_exists=True, pdf_exists=pdf_exists)
+                artifact_payload = storage.build_payload(
+                    location, excel_exists=True, pdf_exists=pdf_exists
+                )
                 artifact_payload["report_token"] = location.token
-                
+
                 metadata = {
                     "generated_at": format_datetime_iso(now_in_app_timezone()),
                     "pdf_status": "ready" if pdf_exists else "error",
@@ -163,10 +171,10 @@ def generate_pdf_background(
     excel_path_str: str,
 ) -> None:
     """バックグラウンドでPDFを生成する関数。
-    
+
     FastAPIのBackgroundTasksから呼び出される。
     🚀 高速化: 即座に実行開始してレスポンス待機なし
-    
+
     Args:
         report_key: レポートキー
         report_date: レポート日付
@@ -174,8 +182,9 @@ def generate_pdf_background(
         excel_path_str: Excelファイルのパス（文字列）
     """
     import time
+
     start_time = time.time()
-    
+
     logger.info(
         "PDF生成開始（バックグラウンド）",
         extra={
@@ -184,23 +193,23 @@ def generate_pdf_background(
             "report_token": report_token,
         },
     )
-    
+
     try:
         excel_path = Path(excel_path_str)
         if not excel_path.exists():
             logger.error(f"Excel file not found: {excel_path}")
             return
-        
+
         output_dir = excel_path.parent
         profile_dir = output_dir / "lo_profile"
-        
+
         # PDF変換実行
         pdf_bytes = convert_excel_to_pdf(
             excel_path,
             output_dir=output_dir,
             profile_dir=profile_dir,
         )
-        
+
         # PDF保存
         storage = get_report_artifact_storage()
         # locationを再構築
@@ -212,7 +221,7 @@ def generate_pdf_background(
             file_base=excel_path.stem,  # Excel名から拡張子を除いた部分
         )
         storage.save_pdf(location, pdf_bytes)
-        
+
         elapsed = time.time() - start_time
         logger.info(
             "PDF生成完了（バックグラウンド）",
@@ -223,7 +232,7 @@ def generate_pdf_background(
                 "elapsed_seconds": round(elapsed, 3),
             },
         )
-        
+
     except PdfConversionError as exc:
         elapsed = time.time() - start_time
         logger.error(
@@ -253,22 +262,23 @@ def get_pdf_status(
     report_token: str,
 ) -> Dict[str, Any]:
     """PDFのステータスを確認する。
-    
+
     Args:
         report_key: レポートキー
         report_date: レポート日付
         report_token: レポートトークン
-        
+
     Returns:
         Dict with status ("pending", "ready", "error") and optional pdf_url
     """
     storage = get_report_artifact_storage()
-    
+
     # locationを再構築してPDFパスを推測
     # file_baseはreport_key-report_dateの形式
     from app.infra.adapters.artifact_storage.artifact_service import _sanitize_segment
+
     file_base = _sanitize_segment(f"{report_key}-{report_date}")
-    
+
     location = ArtifactLocation(
         root_dir=storage.root_dir,
         report_key=report_key,
@@ -276,17 +286,17 @@ def get_pdf_status(
         token=report_token,
         file_base=file_base,
     )
-    
+
     pdf_path = location.file_path(".pdf")
     excel_path = location.file_path(".xlsx")
-    
+
     # Excelが存在しない場合はトークンが無効
     if not excel_path.exists():
         return {
             "status": "error",
             "message": "Invalid report token or report not found",
         }
-    
+
     if pdf_path.exists():
         # PDFが存在する → ready
         pdf_filename = f"{file_base}.pdf"

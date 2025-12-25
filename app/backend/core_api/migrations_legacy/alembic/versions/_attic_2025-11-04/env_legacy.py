@@ -2,13 +2,15 @@
 Alembic environment configuration.
 Supports schema-based multi-tenancy.
 """
-from logging.config import fileConfig
+
 import os
-from sqlalchemy import engine_from_config, pool
+from logging.config import fileConfig
+
 from alembic import context
 
 # Import your models' Base
 from app.repositories.orm_models import Base
+from sqlalchemy import engine_from_config, pool
 
 # Alembic Config object
 config = context.config

@@ -1,9 +1,9 @@
 /**
  * API Endpoint Configuration
  * Single Source of Truth for all API endpoints
- * 
+ *
  * すべてのAPI呼び出しはこのファイルで定義されたエンドポイントを経由する
- * 
+ *
  * @module shared/config/apiEndpoints
  * @created 2024-12-02
  * @refactoring P0: API設定統合 (refactor/centralize-scattered-concerns)
@@ -13,7 +13,7 @@
  * Core API ベースパス（BFF統一）
  * すべてのAPI呼び出しは /core_api を経由してバックエンドにルーティングされる
  */
-export const CORE_API_BASE = '/core_api';
+export const CORE_API_BASE = "/core_api";
 
 /**
  * レポート系API
@@ -22,13 +22,13 @@ export const CORE_API_BASE = '/core_api';
 export const REPORT_ENDPOINTS = {
   /** レポートAPIベース */
   base: `${CORE_API_BASE}/reports`,
-  
+
   // 工場日報系
   /** 工場日報 */
   factoryReport: `${CORE_API_BASE}/reports/factory_report`,
   /** 工場実績報告書（factory_reportと同じエンドポイントを使用） */
   factoryReport2: `${CORE_API_BASE}/reports/factory_report`,
-  
+
   // 収支・管理表系
   /** 収支表 */
   balanceSheet: `${CORE_API_BASE}/reports/balance_sheet`,
@@ -36,11 +36,11 @@ export const REPORT_ENDPOINTS = {
   averageSheet: `${CORE_API_BASE}/reports/average_sheet`,
   /** 管理票 */
   managementSheet: `${CORE_API_BASE}/reports/management_sheet`,
-  
+
   // インタラクティブ帳簿系
   /** ブロック単価インタラクティブ処理 (初期化エンドポイント) */
   blockUnitPrice: `${CORE_API_BASE}/block_unit_price_interactive/initial`,
-  
+
   // 台帳系
   /** 台帳 */
   ledgerBook: `${CORE_API_BASE}/reports/ledger`,
@@ -56,7 +56,7 @@ export const DASHBOARD_ENDPOINTS = {
   inboundDaily: `${CORE_API_BASE}/inbound/daily`,
   /** 受入予測データ */
   inboundForecast: `${CORE_API_BASE}/inbound/forecast`,
-  
+
   // カレンダー
   /** 営業カレンダー（月単位） */
   calendar: `${CORE_API_BASE}/calendar/month`,
@@ -116,10 +116,10 @@ export const API_ENDPOINTS = {
 
 /**
  * レポートキーからエンドポイントを取得するヘルパー関数
- * 
+ *
  * @param reportKey - レポートキー（例: 'factory_report', 'balance_sheet'）
  * @returns エンドポイントURL
- * 
+ *
  * @example
  * ```typescript
  * const endpoint = getReportEndpoint('factory_report');
@@ -141,7 +141,7 @@ export function getReportEndpoint(reportKey: string): string {
 
 /**
  * ダッシュボードキーからエンドポイントを取得するヘルパー関数
- * 
+ *
  * @param dashboardKey - ダッシュボードキー
  * @returns エンドポイントURL
  */

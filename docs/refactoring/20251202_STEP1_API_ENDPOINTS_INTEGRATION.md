@@ -12,21 +12,25 @@
 ### ✅ 完了したタスク
 
 1. **Step 1: APIエンドポイント定数ファイル作成**
+
    - ✅ `app/frontend/src/shared/config/apiEndpoints.ts` を新規作成
    - ✅ 全エンドポイントを5つのドメインに分類（Report, Dashboard, Database, RAG, Manual）
    - ✅ 型安全なヘルパー関数（`getReportEndpoint`, `getDashboardEndpoint`）を実装
 
 2. **Step 2: report/shared/config の更新**
+
    - ✅ `features/report/shared/config/shared/common.ts` を更新
    - ✅ `REPORT_API_ENDPOINTS` を `@shared/config/apiEndpoints` からインポートに変更
    - ✅ `@deprecated` アノテーションを追加して段階的移行を促進
 
 3. **Step 3: app/config/api.ts の移行**
+
    - ✅ レガシー `app/config/api.ts` に deprecation 警告を追加
    - ✅ `BLOCK_UNIT_PRICE_BASE` を `REPORT_ENDPOINTS.blockUnitPrice` から参照
    - ✅ 全関数に `@deprecated` アノテーションを追加
 
 4. **Step 4: 各Repository の baseUrl 統一**
+
    - ✅ `calendar.repository.ts`: `DASHBOARD_ENDPOINTS.calendar` を使用
    - ✅ `HttpInboundDailyRepository.ts`: デフォルト値を `DASHBOARD_ENDPOINTS.inboundDaily` に変更
    - ✅ `HttpInboundForecastRepository.ts`: デフォルト値を `DASHBOARD_ENDPOINTS.inboundForecast` に変更
@@ -58,18 +62,23 @@
 ### エンドポイント統合の効果
 
 #### Before（変更前）
+
 ```typescript
 // 10箇所以上に散在
-const url1 = '/core_api/reports/factory_report';
-const url2 = '/core_api/calendar/month';
-const baseUrl = '/api/inbound';
+const url1 = "/core_api/reports/factory_report";
+const url2 = "/core_api/calendar/month";
+const baseUrl = "/api/inbound";
 // ...など
 ```
 
 #### After（変更後）
+
 ```typescript
 // Single Source of Truth
-import { REPORT_ENDPOINTS, DASHBOARD_ENDPOINTS } from '@shared/config/apiEndpoints';
+import {
+  REPORT_ENDPOINTS,
+  DASHBOARD_ENDPOINTS,
+} from "@shared/config/apiEndpoints";
 
 const url1 = REPORT_ENDPOINTS.factoryReport;
 const url2 = DASHBOARD_ENDPOINTS.calendar;
@@ -82,19 +91,21 @@ const url3 = DASHBOARD_ENDPOINTS.inboundDaily;
 
 ### 定量的改善
 
-| 指標 | Before | After | 改善率 |
-|------|--------|-------|--------|
-| エンドポイント定義の散在箇所 | 10箇所 | 1箇所 | **▼90%** |
-| 型安全性 | 部分的 | 完全 | **+100%** |
-| ハードコードされたURL | 7箇所 | 0箇所 | **▼100%** |
+| 指標                         | Before | After | 改善率    |
+| ---------------------------- | ------ | ----- | --------- |
+| エンドポイント定義の散在箇所 | 10箇所 | 1箇所 | **▼90%**  |
+| 型安全性                     | 部分的 | 完全  | **+100%** |
+| ハードコードされたURL        | 7箇所  | 0箇所 | **▼100%** |
 
 ### 定性的改善
 
 1. **変更容易性の向上**
+
    - エンドポイント変更時の修正箇所が1箇所に集約
    - 影響範囲の特定が容易
 
 2. **開発者体験の向上**
+
    - 新規feature追加時に「どのエンドポイントを使うべきか」が明確
    - IDE の型補完により、利用可能なエンドポイントが即座に確認可能
 
@@ -116,11 +127,11 @@ const url3 = DASHBOARD_ENDPOINTS.inboundDaily;
 
 ```typescript
 // Old（動作するが非推奨）
-import { REPORT_API_ENDPOINTS } from '@features/report/shared/config/shared/common';
+import { REPORT_API_ENDPOINTS } from "@features/report/shared/config/shared/common";
 const url = REPORT_API_ENDPOINTS.factory_report;
 
 // New（推奨）
-import { REPORT_ENDPOINTS } from '@shared/config/apiEndpoints';
+import { REPORT_ENDPOINTS } from "@shared/config/apiEndpoints";
 const url = REPORT_ENDPOINTS.factoryReport;
 ```
 
@@ -131,10 +142,12 @@ const url = REPORT_ENDPOINTS.factoryReport;
 ### 残タスク
 
 1. **既存コードの段階的移行**（優先度: 中）
+
    - [ ] `features/report` 内の直接的な `/core_api/...` 使用箇所を移行
    - [ ] `app/config/api.ts` を使用している箇所を特定し、移行計画策定
 
 2. **ドキュメント整備**（優先度: 低）
+
    - [ ] APIエンドポイント命名規則のドキュメント化
    - [ ] 新規feature追加時のガイドライン更新
 
@@ -149,6 +162,7 @@ const url = REPORT_ENDPOINTS.factoryReport;
 ### TypeScript型エラーについて
 
 以下のエラーは今回の変更とは無関係の既存問題です:
+
 - `@testing-library/react` のインポートエラー（テスト設定の問題）
 - `usePivotLoader.ts` の `dateFrom/dateTo` エラー（sales-pivotの既存バグ）
 
@@ -157,6 +171,7 @@ const url = REPORT_ENDPOINTS.factoryReport;
 ### レビューポイント
 
 レビュー時に確認すべき事項:
+
 1. ✅ エンドポイントのパスが正しいか
 2. ✅ 型定義が適切か
 3. ✅ `@deprecated` の移行期限が妥当か

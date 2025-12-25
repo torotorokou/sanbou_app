@@ -1,9 +1,11 @@
 # 将軍CSVアップロード機能拡張: 実装完了サマリー
 
 ## 実装日
+
 2025-11-14
 
 ## 概要
+
 CSVアップロード処理に `upload_file_id` と `source_row_no` によるトラッキング機能、および既存カラムを使った重複チェック機能を追加しました。
 
 ---
@@ -11,6 +13,7 @@ CSVアップロード処理に `upload_file_id` と `source_row_no` によるト
 ## 実装内容
 
 ### 1. 調査・設計ドキュメント
+
 - **詳細ドキュメント**: `docs/SHOGUN_CSV_UPLOAD_FILE_ID_TRACKING_IMPLEMENTATION.md`
   - 現状の構成分析
   - スキーマ変更設計
@@ -21,6 +24,7 @@ CSVアップロード処理に `upload_file_id` と `source_row_no` によるト
 ### 2. Alembicマイグレーションファイル（3つ）
 
 #### 2-1. raw層テーブル変更
+
 **ファイル**: `migrations/alembic/versions/20251114_130000000_add_upload_tracking_to_raw_tables.py`
 
 ```python
@@ -37,6 +41,7 @@ CSVアップロード処理に `upload_file_id` と `source_row_no` によるト
 ```
 
 #### 2-2. stg層テーブル変更
+
 **ファイル**: `migrations/alembic/versions/20251114_130100000_add_upload_tracking_to_stg_tables.py`
 
 ```python
@@ -51,6 +56,7 @@ CSVアップロード処理に `upload_file_id` と `source_row_no` によるト
 ```
 
 #### 2-3. 重複チェック用インデックス
+
 **ファイル**: `migrations/alembic/versions/20251114_130200000_add_duplicate_check_indexes.py`
 
 ```python
@@ -66,6 +72,7 @@ CSVアップロード処理に `upload_file_id` と `source_row_no` によるト
 ### Phase 1: Repository層の拡張
 
 #### Task 1-1: RawDataRepository に重複チェックメソッド追加
+
 **ファイル**: `app/backend/core_api/app/infra/adapters/upload/raw_data_repository.py`
 
 ```python
@@ -79,7 +86,7 @@ def check_duplicate_upload(
 ) -> Optional[Dict[str, Any]]:
     """
     同一ファイルが既に成功済みかチェック
-    
+
     Returns:
         Optional[Dict]: 重複あり → {'id': ..., 'uploaded_at': ..., 'file_name': ...}
                         重複なし → None
@@ -87,7 +94,8 @@ def check_duplicate_upload(
     # 実装詳細は SHOGUN_CSV_UPLOAD_FILE_ID_TRACKING_IMPLEMENTATION.md 参照
 ```
 
-#### Task 1-2: RawDataRepository の save_*_raw メソッド修正
+#### Task 1-2: RawDataRepository の save\_\*\_raw メソッド修正
+
 ```python
 def save_receive_raw(self, file_id: int, df: pd.DataFrame) -> int:
     """
@@ -100,6 +108,7 @@ def save_receive_raw(self, file_id: int, df: pd.DataFrame) -> int:
 ```
 
 #### Task 1-3: ShogunCsvRepository の save_csv_by_type メソッド修正
+
 **ファイル**: `app/backend/core_api/app/infra/adapters/upload/shogun_csv_repository.py`
 
 ```python
@@ -117,12 +126,13 @@ def save_csv_by_type(self, csv_type: str, df: pd.DataFrame) -> int:
 ### Phase 2: UseCase層の修正
 
 #### Task 2-1: UploadSyogunCsvUseCase.execute() に重複チェック追加
+
 **ファイル**: `app/backend/core_api/app/application/usecases/upload/upload_syogun_csv_uc.py`
 
 ```python
 async def execute(self, receive, yard, shipment, file_type="FLASH", uploaded_by=None):
     # ... 入力チェック、ファイルタイプ検証
-    
+
     # ★ 重複チェック（log.upload_file 作成前）
     if self.raw_data_repo:
         duplicates = {}
@@ -130,7 +140,7 @@ async def execute(self, receive, yard, shipment, file_type="FLASH", uploaded_by=
             duplicate = self.raw_data_repo.check_duplicate_upload(...)
             if duplicate:
                 duplicates[csv_type] = duplicate
-        
+
         # 全ファイルが重複の場合はエラー
         if len(duplicates) == len(uploaded_files):
             return ErrorApiResponse(
@@ -139,11 +149,12 @@ async def execute(self, receive, yard, shipment, file_type="FLASH", uploaded_by=
                 metadata={"duplicates": {...}},
                 status_code=409,
             )
-    
+
     # ... 以降の処理
 ```
 
 #### Task 2-2: source_row_no の採番
+
 ```python
 # CSV読込後、各行に source_row_no を追加
 dfs, read_error = await self._read_csv_files(uploaded_files)
@@ -152,7 +163,8 @@ for csv_type, df in dfs.items():
     df['source_row_no'] = range(1, len(df) + 1)  # 1-indexed
 ```
 
-#### Task 2-3: _save_data() メソッドに upload_file_ids を渡す
+#### Task 2-3: \_save_data() メソッドに upload_file_ids を渡す
+
 ```python
 raw_result = await self._save_data(
     self.raw_writer,
@@ -173,7 +185,7 @@ async def _save_data(
     for csv_type, df in formatted_dfs.items():
         if upload_file_ids and csv_type in upload_file_ids:
             df['upload_file_id'] = upload_file_ids[csv_type]
-        
+
         # source_row_no は既に追加済み
         count = await run_in_threadpool(writer.save_csv_by_type, csv_type, df)
 ```
@@ -216,12 +228,12 @@ EOF
 
 ```sql
 -- raw.receive_raw の変更確認
-SELECT 
-    column_name, 
-    data_type, 
+SELECT
+    column_name,
+    data_type,
     is_nullable
 FROM information_schema.columns
-WHERE table_schema = 'raw' 
+WHERE table_schema = 'raw'
   AND table_name = 'receive_raw'
   AND column_name IN ('upload_file_id', 'source_row_no')
 ORDER BY ordinal_position;
@@ -233,23 +245,23 @@ ORDER BY ordinal_position;
 --  source_row_no  | integer   | NO
 
 -- stg.receive_shogun_flash の変更確認
-SELECT 
-    column_name, 
-    data_type, 
+SELECT
+    column_name,
+    data_type,
     is_nullable
 FROM information_schema.columns
-WHERE table_schema = 'stg' 
+WHERE table_schema = 'stg'
   AND table_name = 'receive_shogun_flash'
   AND column_name IN ('upload_file_id', 'source_row_no')
 ORDER BY ordinal_position;
 
 -- 制約確認
-SELECT 
+SELECT
     conname AS constraint_name,
     contype AS constraint_type
 FROM pg_constraint
 JOIN pg_namespace ON pg_namespace.oid = pg_constraint.connamespace
-WHERE nspname = 'raw' 
+WHERE nspname = 'raw'
   AND conrelid::regclass::text LIKE 'raw.receive_raw'
   AND conname LIKE '%upload%';
 
@@ -265,16 +277,19 @@ WHERE nspname = 'raw'
 ## 次のステップ（実装タスク）
 
 1. **Repository層のコード修正**（Phase 1）
+
    - [ ] `RawDataRepository.check_duplicate_upload()` 実装
    - [ ] `RawDataRepository.save_receive_raw()` 修正（source_row_no 対応）
    - [ ] `ShogunCsvRepository.save_csv_by_type()` 修正（upload_file_id, source_row_no 保持）
 
 2. **UseCase層のコード修正**（Phase 2）
+
    - [ ] `UploadSyogunCsvUseCase.execute()` に重複チェック追加
    - [ ] `source_row_no` 採番処理追加
    - [ ] `_save_data()` メソッドに `upload_file_ids` 引数追加
 
 3. **単体テスト作成**
+
    - [ ] `test_raw_data_repository.py` - 重複チェックのテスト
    - [ ] `test_upload_syogun_csv_uc.py` - UseCase の統合テスト
 
@@ -296,13 +311,16 @@ WHERE nspname = 'raw'
 ## 注意事項
 
 1. **既存データの扱い**:
+
    - マイグレーション後、既存データは `upload_file_id = 0`, `source_row_no = 0` となります
    - 本番適用前にデータクリーンアップが必要な場合は別途対応してください
 
 2. **processing_status の拡張**:
+
    - 'duplicate' ステータスを追加するため、enum定義がある場合は更新が必要
 
 3. **フロントエンド対応**:
+
    - 409 Conflict レスポンス（重複エラー）を適切に表示する UI 実装が必要
 
 4. **パフォーマンス**:

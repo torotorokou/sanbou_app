@@ -3,10 +3,14 @@
  * KPIサマリカード表示UI
  */
 
-import React from 'react';
-import { Card, Row, Col, Statistic, Typography, Tooltip } from 'antd';
-import { fmtCurrency, fmtNumber, fmtUnitPrice } from '../../shared/model/metrics';
-import type { Mode, CategoryKind } from '../../shared/model/types';
+import React from "react";
+import { Card, Row, Col, Statistic, Typography, Tooltip } from "antd";
+import {
+  fmtCurrency,
+  fmtNumber,
+  fmtUnitPrice,
+} from "../../shared/model/metrics";
+import type { Mode, CategoryKind } from "../../shared/model/types";
 
 interface KpiCardsProps {
   totalAmount: number;
@@ -33,10 +37,10 @@ export const KpiCards: React.FC<KpiCardsProps> = ({
   categoryKind,
 }) => {
   // 件数/台数ラベルの動的切り替え
-  const countLabel = mode === 'item' ? '件数' : '台数';
-  const countSuffix = mode === 'item' ? '件' : '台';
+  const countLabel = mode === "item" ? "件数" : "台数";
+  const countSuffix = mode === "item" ? "件" : "台";
   // 売上/仕入ラベルの動的切り替え
-  const amountLabel = categoryKind === 'waste' ? '売上' : '仕入';
+  const amountLabel = categoryKind === "waste" ? "売上" : "仕入";
   if (!hasSelection) {
     return (
       <Card className="sales-tree-accent-card sales-tree-accent-gold">

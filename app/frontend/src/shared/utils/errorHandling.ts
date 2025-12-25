@@ -1,10 +1,10 @@
 /**
  * Error Handling Utilities
  * 統一されたエラーハンドリングパターン
- * 
+ *
  * このモジュールは、API呼び出しやその他の非同期処理における
  * エラーハンドリングを標準化し、通知機構との統合を簡素化します。
- * 
+ *
  * @module shared/utils/errorHandling
  */
 
@@ -28,10 +28,10 @@ export interface ApiError {
 
 /**
  * 標準的なAPI呼び出しエラーハンドリング
- * 
+ *
  * try-catchブロックをラップし、エラー時の通知を自動化します。
  * エラー時はnullを返すため、呼び出し側でnullチェックが必要です。
- * 
+ *
  * @example
  * ```typescript
  * // Repository内での使用例
@@ -43,7 +43,7 @@ export interface ApiError {
  *     );
  *   }
  * }
- * 
+ *
  * // ViewModel内での使用例
  * const data = await handleApiCall(
  *   () => repository.fetchData(params),
@@ -53,14 +53,14 @@ export interface ApiError {
  *   setState(data);
  * }
  * ```
- * 
+ *
  * @param apiCall - 実行するAPI呼び出し関数
  * @param operationName - 操作名（エラーメッセージに使用）
  * @returns 成功時はAPI呼び出しの結果、失敗時はnull
  */
 export async function handleApiCall<T>(
   apiCall: () => Promise<T>,
-  operationName: string
+  operationName: string,
 ): Promise<T | null> {
   try {
     return await apiCall();
@@ -73,10 +73,10 @@ export async function handleApiCall<T>(
 
 /**
  * リトライ付きAPI呼び出し
- * 
+ *
  * ネットワークエラーや一時的な障害に対して、指定回数までリトライします。
  * リトライ間隔は attempt * 1000ms（1秒、2秒、3秒...）で増加します。
- * 
+ *
  * @example
  * ```typescript
  * // 重要なアップロード処理など
@@ -86,7 +86,7 @@ export async function handleApiCall<T>(
  *   3  // 最大3回リトライ
  * );
  * ```
- * 
+ *
  * @param apiCall - 実行するAPI呼び出し関数
  * @param operationName - 操作名（エラーメッセージに使用）
  * @param maxRetries - 最大リトライ回数（デフォルト: 3）
@@ -95,7 +95,7 @@ export async function handleApiCall<T>(
 export async function handleApiCallWithRetry<T>(
   apiCall: () => Promise<T>,
   operationName: string,
-  maxRetries = 3
+  maxRetries = 3,
 ): Promise<T | null> {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
@@ -104,7 +104,7 @@ export async function handleApiCallWithRetry<T>(
       if (attempt === maxRetries) {
         notifyApiError(
           error,
-          `${operationName}に失敗しました（${maxRetries}回試行）`
+          `${operationName}に失敗しました（${maxRetries}回試行）`,
         );
         console.error(`[${operationName}] Final attempt failed:`, error);
         return null;
@@ -118,9 +118,9 @@ export async function handleApiCallWithRetry<T>(
 
 /**
  * 汎用エラーハンドリング（非API処理用）
- * 
+ *
  * ファイル処理、計算処理など、APIに関係しない処理のエラーハンドリングに使用します。
- * 
+ *
  * @example
  * ```typescript
  * const result = await handleOperation(
@@ -131,14 +131,14 @@ export async function handleApiCallWithRetry<T>(
  *   '計算処理'
  * );
  * ```
- * 
+ *
  * @param operation - 実行する操作関数
  * @param operationName - 操作名（エラーメッセージに使用）
  * @returns 成功時は操作の結果、失敗時はnull
  */
 export async function handleOperation<T>(
   operation: () => Promise<T>,
-  operationName: string
+  operationName: string,
 ): Promise<T | null> {
   try {
     return await operation();
@@ -153,12 +153,12 @@ export async function handleOperation<T>(
 
 /**
  * エラーコードの標準化規約
- * 
+ *
  * 新しいエラーコードを追加する際は、以下の規約に従ってください：
  * - 命名規則: UPPER_SNAKE_CASE
  * - カテゴリプレフィックスを使用
  * - 明確で一貫性のある命名
- * 
+ *
  * @example
  * ```typescript
  * // ✅ 良い例
@@ -169,7 +169,7 @@ export async function handleOperation<T>(
  *   'PROCESSING_TIMEOUT',
  *   'JOB_FAILED',
  * ];
- * 
+ *
  * // ❌ 悪い例
  * const BAD_EXAMPLES = [
  *   'error',                // 小文字
@@ -242,7 +242,7 @@ export const ERROR_CODE_CONVENTIONS = {
 /**
  * エラーコードの検証
  * 開発時にエラーコードが規約に準拠しているかチェックします
- * 
+ *
  * @param errorCode - 検証するエラーコード
  * @returns 規約に準拠している場合はtrue
  */
@@ -252,7 +252,7 @@ export function validateErrorCode(errorCode: string): boolean {
 
   if (!isUpperSnakeCase) {
     console.warn(
-      `[Error Code] "${errorCode}" は UPPER_SNAKE_CASE ではありません`
+      `[Error Code] "${errorCode}" は UPPER_SNAKE_CASE ではありません`,
     );
     return false;
   }
@@ -265,7 +265,7 @@ export function validateErrorCode(errorCode: string): boolean {
 
   if (!hasKnownCategory) {
     console.info(
-      `[Error Code] "${errorCode}" は既知のカテゴリに該当しません（新規カテゴリの可能性）`
+      `[Error Code] "${errorCode}" は既知のカテゴリに該当しません（新規カテゴリの可能性）`,
     );
   }
 

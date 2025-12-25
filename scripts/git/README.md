@@ -21,32 +21,42 @@ scripts/git/
 ## 🎯 各ツールの役割
 
 ### 1. **pre-commit** (Git フック)
+
 コミット前に以下をチェック:
+
 - ✅ 機密ファイルのパターンマッチング
 - ✅ ファイル内容の機密情報検出
 - ✅ ユーザーへの警告と確認
 
 ### 2. **pre-push** (Git フック)
+
 プッシュ前に以下をチェック:
+
 - ✅ Git 履歴内の機密ファイル
 - ✅ コミット履歴の機密情報パターン
 - ✅ Git 追跡状態の確認
 - ✅ .gitignore の整合性
 
 ### 3. **verify_gitignore.sh**
+
 .gitignore の設定状態を検証:
+
 ```bash
 bash scripts/git/verify_gitignore.sh
 ```
 
 ### 4. **security_patterns.sh** (共通ライブラリ)
+
 機密情報の検出パターンを一元管理:
+
 - 禁止ファイルパターン
 - 機密情報の内容パターン
 - 除外パターン（誤検知防止）
 
 ### 5. **output_utils.sh** (共通ライブラリ)
+
 統一された出力形式:
+
 - 色付きログ出力
 - プログレスバー
 - エラー詳細表示
@@ -55,12 +65,14 @@ bash scripts/git/verify_gitignore.sh
 ## 🔧 リファクタリングの改善点
 
 ### Before (旧実装)
+
 ❌ パターンが各ファイルに分散
 ❌ 重複したチェックロジック
 ❌ 不統一なエラーメッセージ
 ❌ 除外ルールが複雑で読みにくい
 
 ### After (新実装)
+
 ✅ パターンを共通ライブラリに集約
 ✅ 段階的チェックで早期検出
 ✅ 統一されたユーザーフレンドリーな出力
@@ -70,6 +82,7 @@ bash scripts/git/verify_gitignore.sh
 ## 📋 検出対象の機密情報
 
 ### ファイルパターン
+
 - `env/.env.*` (テンプレート以外)
 - `secrets/*.secrets`
 - `secrets/gcp-sa*.json`
@@ -77,6 +90,7 @@ bash scripts/git/verify_gitignore.sh
 - `*.dump` (データベースダンプ)
 
 ### 内容パターン
+
 - データベースパスワード
 - GCP 秘密鍵 (`BEGIN PRIVATE KEY`)
 - API キー
@@ -84,6 +98,7 @@ bash scripts/git/verify_gitignore.sh
 - AWS アクセスキー
 
 ### 除外パターン（誤検知防止）
+
 - 環境変数参照 (`os.getenv`, `$VAR`)
 - コメント行
 - コード例・ドキュメント内のバッククォート
@@ -92,6 +107,7 @@ bash scripts/git/verify_gitignore.sh
 ## 🚀 使用方法
 
 ### 通常の Git 操作
+
 ```bash
 # コミット時に自動チェック
 git add .
@@ -102,6 +118,7 @@ git push origin branch
 ```
 
 ### 手動チェック
+
 ```bash
 # .gitignore の整合性確認
 bash scripts/git/verify_gitignore.sh
@@ -111,6 +128,7 @@ bash scripts/git/cleanup_git_history.sh
 ```
 
 ### フック再セットアップ
+
 ```bash
 bash scripts/git/setup_git_hooks.sh
 ```
@@ -141,6 +159,7 @@ gcs-key*.json
 ## ⚠️ トラブルシューティング
 
 ### エラー: "セキュリティパターンライブラリが見つかりません"
+
 ```bash
 # ライブラリの存在確認
 ls -la scripts/git/lib/
@@ -150,6 +169,7 @@ chmod +x scripts/git/lib/*.sh
 ```
 
 ### エラー: "機密ファイルがプッシュに含まれています"
+
 ```bash
 # ファイルを unstage
 git restore --staged <ファイル名>
@@ -162,6 +182,7 @@ bash scripts/git/cleanup_git_history.sh
 ```
 
 ### 警告を無視してコミット/プッシュする場合
+
 ```bash
 # pre-commit をスキップ（非推奨）
 git commit --no-verify -m "message"
@@ -195,17 +216,21 @@ git show <commit-hash>
 ## 🎓 ベストプラクティス
 
 1. **テンプレートファイルのみコミット**
+
    - `.env.example`, `*.template` を使用
 
 2. **定期的な整合性チェック**
+
    ```bash
    bash scripts/git/verify_gitignore.sh
    ```
 
 3. **CI/CD でのチェック統合**
+
    - GitHub Actions で pre-push 相当のチェック実施
 
 4. **チーム内での共有**
+
    - 全メンバーが同じフックを使用
    - `scripts/git/setup_git_hooks.sh` で統一
 

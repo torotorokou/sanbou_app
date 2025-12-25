@@ -16,9 +16,9 @@ Revision ID: 20251120_190000000
 Revises: 20251120_180000000
 Create Date: 2025-11-20 19:00:00.000000
 """
-from alembic import op
-import sqlalchemy as sa
 
+import sqlalchemy as sa
+from alembic import op
 
 revision = "20251120_190000000"
 down_revision = "20251120_180000000"
@@ -41,19 +41,19 @@ def upgrade() -> None:
     """
     active_* ビューを v_active_* にリネーム
     """
-    
+
     print("[stg.v_active_*] Renaming active views to include v_ prefix...")
     print("")
-    
+
     # ========================================================================
     # Step 1: 新しい名前でビューを作成
     # ========================================================================
     print("[Step 1/3] Creating new views with v_ prefix...")
-    
+
     for table_name in SHOGUN_TABLES:
         old_view_name = f"active_{table_name}"
         new_view_name = f"v_active_{table_name}"
-        
+
         # 新しい名前でビューを作成
         sql = f"""
         CREATE OR REPLACE VIEW stg.{new_view_name} AS
@@ -61,26 +61,27 @@ def upgrade() -> None:
         FROM stg.{table_name}
         WHERE is_deleted = false;
         """
-        
+
         op.execute(sql)
         print(f"  ✓ Created stg.{new_view_name}")
-        
+
         # コメントを付与
         comment_sql = f"""
-        COMMENT ON VIEW stg.{new_view_name} IS 
-        'Active rows view: filters out soft-deleted rows (is_deleted = false only). 
+        COMMENT ON VIEW stg.{new_view_name} IS
+        'Active rows view: filters out soft-deleted rows (is_deleted = false only).
         Use this view in mart aggregations to automatically exclude deleted data.';
         """
         op.execute(comment_sql)
-    
+
     print("")
-    
+
     # ========================================================================
     # Step 2: mart.v_receive_daily を更新（新しいビュー名を使用）
     # ========================================================================
     print("[Step 2/3] Updating mart.v_receive_daily to use new view names...")
-    
-    op.execute("""
+
+    op.execute(
+        """
         CREATE OR REPLACE VIEW mart.v_receive_daily AS
         WITH r_shogun_final AS (
             SELECT
@@ -123,9 +124,9 @@ def upgrade() -> None:
                 sales_yen,
                 'shogun_final'::text AS source
             FROM r_shogun_final
-            
+
             UNION ALL
-            
+
             SELECT
                 f.ddate,
                 f.receive_ton,
@@ -136,9 +137,9 @@ def upgrade() -> None:
             WHERE NOT EXISTS (
                 SELECT 1 FROM r_shogun_final s WHERE s.ddate = f.ddate
             )
-            
+
             UNION ALL
-            
+
             SELECT
                 k.ddate,
                 k.receive_ton,
@@ -181,21 +182,22 @@ def upgrade() -> None:
         LEFT JOIN r_pick p ON p.ddate = cal.ddate
         WHERE cal.ddate <= (NOW() AT TIME ZONE 'Asia/Tokyo')::date - 1
         ORDER BY cal.ddate;
-    """)
-    
+    """
+    )
+
     print("  ✓ Updated mart.v_receive_daily")
     print("")
-    
+
     # ========================================================================
     # Step 3: 古いビューを削除
     # ========================================================================
     print("[Step 3/3] Dropping old active_* views...")
-    
+
     for table_name in SHOGUN_TABLES:
         old_view_name = f"active_{table_name}"
         op.execute(f"DROP VIEW IF EXISTS stg.{old_view_name};")
         print(f"  ✓ Dropped stg.{old_view_name}")
-    
+
     print("")
     print("[stg.v_active_*] Rename completed successfully")
     print("")
@@ -213,32 +215,33 @@ def downgrade() -> None:
     """
     v_active_* ビューを active_* に戻す
     """
-    
+
     print("[stg.v_active_*] Reverting view names to remove v_ prefix...")
     print("")
-    
+
     # Step 1: 古い名前でビューを再作成
     print("[Step 1/3] Recreating views without v_ prefix...")
-    
+
     for table_name in SHOGUN_TABLES:
         old_view_name = f"active_{table_name}"
-        
+
         sql = f"""
         CREATE OR REPLACE VIEW stg.{old_view_name} AS
         SELECT *
         FROM stg.{table_name}
         WHERE is_deleted = false;
         """
-        
+
         op.execute(sql)
         print(f"  ✓ Created stg.{old_view_name}")
-    
+
     print("")
-    
+
     # Step 2: mart.v_receive_daily を元に戻す
     print("[Step 2/3] Reverting mart.v_receive_daily...")
-    
-    op.execute("""
+
+    op.execute(
+        """
         CREATE OR REPLACE VIEW mart.v_receive_daily AS
         WITH r_shogun_final AS (
             SELECT
@@ -281,9 +284,9 @@ def downgrade() -> None:
                 sales_yen,
                 'shogun_final'::text AS source
             FROM r_shogun_final
-            
+
             UNION ALL
-            
+
             SELECT
                 f.ddate,
                 f.receive_ton,
@@ -294,9 +297,9 @@ def downgrade() -> None:
             WHERE NOT EXISTS (
                 SELECT 1 FROM r_shogun_final s WHERE s.ddate = f.ddate
             )
-            
+
             UNION ALL
-            
+
             SELECT
                 k.ddate,
                 k.receive_ton,
@@ -339,18 +342,19 @@ def downgrade() -> None:
         LEFT JOIN r_pick p ON p.ddate = cal.ddate
         WHERE cal.ddate <= (NOW() AT TIME ZONE 'Asia/Tokyo')::date - 1
         ORDER BY cal.ddate;
-    """)
-    
+    """
+    )
+
     print("  ✓ Reverted mart.v_receive_daily")
     print("")
-    
+
     # Step 3: 新しいビューを削除
     print("[Step 3/3] Dropping v_active_* views...")
-    
+
     for table_name in SHOGUN_TABLES:
         new_view_name = f"v_active_{table_name}"
         op.execute(f"DROP VIEW IF EXISTS stg.{new_view_name};")
         print(f"  ✓ Dropped stg.{new_view_name}")
-    
+
     print("")
     print("[stg.v_active_*] Rollback completed successfully")

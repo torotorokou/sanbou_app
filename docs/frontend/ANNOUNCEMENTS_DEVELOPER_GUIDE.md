@@ -41,13 +41,13 @@ app/frontend/src/features/announcements/
 
 ### 1. 責務分離
 
-| 層 | 責務 | 禁止事項 |
-|----|------|---------|
-| **domain** | ビジネスルール、型定義 | 外部依存（API、DB、localStorage）を持たない |
-| **ports** | 抽象化（インターフェース） | 実装を含まない |
-| **infrastructure** | データ取得・永続化の具体実装 | ビジネスロジックを含まない |
-| **model** | 状態管理、ViewModel | UIレンダリングを含まない |
-| **ui** | UIレンダリング | 状態管理、API呼び出しを含まない |
+| 層                 | 責務                         | 禁止事項                                    |
+| ------------------ | ---------------------------- | ------------------------------------------- |
+| **domain**         | ビジネスルール、型定義       | 外部依存（API、DB、localStorage）を持たない |
+| **ports**          | 抽象化（インターフェース）   | 実装を含まない                              |
+| **infrastructure** | データ取得・永続化の具体実装 | ビジネスロジックを含まない                  |
+| **model**          | 状態管理、ViewModel          | UIレンダリングを含まない                    |
+| **ui**             | UIレンダリング               | 状態管理、API呼び出しを含まない             |
 
 ### 2. 型安全性
 
@@ -60,7 +60,7 @@ interface UseAnnouncementBannerViewModelResult {
 }
 
 export function useAnnouncementBannerViewModel(
-  userKey: string = 'local'
+  userKey: string = "local",
 ): UseAnnouncementBannerViewModelResult {
   // ...
 }
@@ -73,13 +73,13 @@ export function useAnnouncementBannerViewModel(userKey: any): any {
 
 ### 3. 命名規則
 
-| 種類 | 規則 | 例 |
-|------|------|-----|
-| 型・インターフェース | PascalCase | `Announcement`, `AnnouncementRepository` |
-| 関数・変数 | camelCase | `isAnnouncementActive`, `userKey` |
-| Hooks | `use` 接頭辞 | `useAnnouncementBannerViewModel` |
-| UIコンポーネント | PascalCase | `AnnouncementBanner` |
-| 定数 | UPPER_SNAKE_CASE | `ANNOUNCEMENT_SEEDS` |
+| 種類                 | 規則             | 例                                       |
+| -------------------- | ---------------- | ---------------------------------------- |
+| 型・インターフェース | PascalCase       | `Announcement`, `AnnouncementRepository` |
+| 関数・変数           | camelCase        | `isAnnouncementActive`, `userKey`        |
+| Hooks                | `use` 接頭辞     | `useAnnouncementBannerViewModel`         |
+| UIコンポーネント     | PascalCase       | `AnnouncementBanner`                     |
+| 定数                 | UPPER_SNAKE_CASE | `ANNOUNCEMENT_SEEDS`                     |
 
 ---
 
@@ -119,10 +119,10 @@ const MyPage: React.FC = () => {
 
 ```typescript
 // 現在（MVP）: LocalAnnouncementRepository
-import { announcementRepository } from '@features/announcements/infrastructure/LocalAnnouncementRepository';
+import { announcementRepository } from "@features/announcements/infrastructure/LocalAnnouncementRepository";
 
 // 将来（HTTP対応）: HttpAnnouncementRepository
-import { announcementRepository } from '@features/announcements/infrastructure/HttpAnnouncementRepository';
+import { announcementRepository } from "@features/announcements/infrastructure/HttpAnnouncementRepository";
 
 // ViewModel内での使用（どちらも同じインターフェース）
 const announcements = await announcementRepository.list();
@@ -170,17 +170,17 @@ const announcement = await announcementRepository.get(id);
 ### ViewModel のユニットテスト（例）
 
 ```typescript
-import { renderHook, act } from '@testing-library/react';
-import { useAnnouncementBannerViewModel } from '@features/announcements';
+import { renderHook, act } from "@testing-library/react";
+import { useAnnouncementBannerViewModel } from "@features/announcements";
 
-describe('useAnnouncementBannerViewModel', () => {
+describe("useAnnouncementBannerViewModel", () => {
   beforeEach(() => {
     localStorage.clear();
   });
 
-  it('should return banner announcement', async () => {
+  it("should return banner announcement", async () => {
     const { result } = renderHook(() =>
-      useAnnouncementBannerViewModel('test-user')
+      useAnnouncementBannerViewModel("test-user"),
     );
 
     // 初期状態はローディング
@@ -196,9 +196,9 @@ describe('useAnnouncementBannerViewModel', () => {
     expect(result.current.announcement?.pinned).toBe(true);
   });
 
-  it('should acknowledge announcement', async () => {
+  it("should acknowledge announcement", async () => {
     const { result } = renderHook(() =>
-      useAnnouncementBannerViewModel('test-user')
+      useAnnouncementBannerViewModel("test-user"),
     );
 
     await act(async () => {
@@ -217,7 +217,7 @@ describe('useAnnouncementBannerViewModel', () => {
 
     // localStorageに保存される
     const state = JSON.parse(
-      localStorage.getItem('announcements.v1.test-user') || '{}'
+      localStorage.getItem("announcements.v1.test-user") || "{}",
     );
     expect(state.ackAtById[announcementId!]).toBeDefined();
   });
@@ -298,13 +298,13 @@ describe('AnnouncementBanner', () => {
 ### ViewModel のログ出力
 
 ```typescript
-export function useAnnouncementsListViewModel(userKey: string = 'local') {
+export function useAnnouncementsListViewModel(userKey: string = "local") {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
 
   useEffect(() => {
     const fetchAnnouncements = async () => {
       const all = await announcementRepository.list();
-      console.log('[ViewModel] Fetched announcements:', all); // ← デバッグログ
+      console.log("[ViewModel] Fetched announcements:", all); // ← デバッグログ
       setAnnouncements(all);
     };
     fetchAnnouncements();
@@ -367,19 +367,21 @@ async def mark_as_read(
 ```typescript
 // app/frontend/src/features/announcements/infrastructure/HttpAnnouncementRepository.ts
 
-import type { Announcement } from '../domain/announcement';
-import type { AnnouncementRepository } from '../ports/AnnouncementRepository';
-import { httpClient } from '@/shared/infrastructure/http';
+import type { Announcement } from "../domain/announcement";
+import type { AnnouncementRepository } from "../ports/AnnouncementRepository";
+import { httpClient } from "@/shared/infrastructure/http";
 
 export class HttpAnnouncementRepository implements AnnouncementRepository {
   async list(): Promise<Announcement[]> {
-    const response = await httpClient.get<Announcement[]>('/api/announcements');
+    const response = await httpClient.get<Announcement[]>("/api/announcements");
     return response.data;
   }
 
   async get(id: string): Promise<Announcement | null> {
     try {
-      const response = await httpClient.get<Announcement>(`/api/announcements/${id}`);
+      const response = await httpClient.get<Announcement>(
+        `/api/announcements/${id}`,
+      );
       return response.data;
     } catch {
       return null;
@@ -395,18 +397,22 @@ export const announcementRepository = new HttpAnnouncementRepository();
 ```typescript
 // app/frontend/src/features/announcements/infrastructure/announcementUserStateApi.ts
 
-import { httpClient } from '@/shared/infrastructure/http';
+import { httpClient } from "@/shared/infrastructure/http";
 
 export async function markAsRead(announcementId: string): Promise<void> {
   await httpClient.post(`/api/announcements/${announcementId}/read`);
 }
 
-export async function markAsAcknowledged(announcementId: string): Promise<void> {
+export async function markAsAcknowledged(
+  announcementId: string,
+): Promise<void> {
   await httpClient.post(`/api/announcements/${announcementId}/acknowledge`);
 }
 
 export async function getUnreadCount(): Promise<number> {
-  const response = await httpClient.get<{ count: number }>('/api/announcements/unread-count');
+  const response = await httpClient.get<{ count: number }>(
+    "/api/announcements/unread-count",
+  );
   return response.data.count;
 }
 ```
@@ -416,7 +422,7 @@ export async function getUnreadCount(): Promise<number> {
 ```typescript
 // model/useAnnouncementsListViewModel.ts の変更例
 
-import { markAsRead as markAsReadApi } from '../infrastructure/announcementUserStateApi';
+import { markAsRead as markAsReadApi } from "../infrastructure/announcementUserStateApi";
 
 const openDetail = useCallback(
   async (id: string) => {
@@ -429,7 +435,7 @@ const openDetail = useCallback(
       setIsDetailOpen(true);
     }
   },
-  [announcements]
+  [announcements],
 );
 ```
 
@@ -447,7 +453,9 @@ const unreadCount = useMemo(() => {
 }, [announcements, userKey]);
 
 // ❌ Bad: 毎回計算
-const unreadCount = announcements.filter((ann) => !isRead(userKey, ann.id)).length;
+const unreadCount = announcements.filter(
+  (ann) => !isRead(userKey, ann.id),
+).length;
 ```
 
 ### 2. コンポーネントの分割
@@ -464,7 +472,7 @@ const unreadCount = announcements.filter((ann) => !isRead(userKey, ann.id)).leng
 
 ```typescript
 // pages/home/index.ts
-export const NewsPage = lazy(() => import('./NewsPage'));
+export const NewsPage = lazy(() => import("./NewsPage"));
 ```
 
 ---
@@ -504,6 +512,6 @@ const isAdmin = user?.role === 'admin';
 
 **更新履歴**
 
-| 日付 | 変更内容 | 担当 |
-|------|---------|------|
+| 日付       | 変更内容 | 担当    |
+| ---------- | -------- | ------- |
 | 2025-12-23 | 初版作成 | Copilot |

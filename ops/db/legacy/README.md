@@ -15,13 +15,13 @@
 
 ## 📁 ファイル一覧
 
-| ファイル名 | 旧用途 | 代替スクリプト |
-|-----------|--------|--------------|
-| `bootstrap_roles.sql` | app_readonly ロール作成 | `01_roles.sql` |
-| `db_permissions.sql` | core_api_user / forecast_user 作成 | `01_roles.sql` + `03_grants.sql` |
-| `fix_schema_permissions.sql` | 権限修正 | `03_grants.sql` + `04_default_privileges.sql` |
-| `grant_schema_permissions.sql` | 権限付与 | `03_grants.sql` |
-| `20251204_create_app_db_users.sql` | 環境別ユーザー作成 | `01_roles.sql` |
+| ファイル名                         | 旧用途                             | 代替スクリプト                                |
+| ---------------------------------- | ---------------------------------- | --------------------------------------------- |
+| `bootstrap_roles.sql`              | app_readonly ロール作成            | `01_roles.sql`                                |
+| `db_permissions.sql`               | core_api_user / forecast_user 作成 | `01_roles.sql` + `03_grants.sql`              |
+| `fix_schema_permissions.sql`       | 権限修正                           | `03_grants.sql` + `04_default_privileges.sql` |
+| `grant_schema_permissions.sql`     | 権限付与                           | `03_grants.sql`                               |
+| `20251204_create_app_db_users.sql` | 環境別ユーザー作成                 | `01_roles.sql`                                |
 
 ---
 

@@ -1,16 +1,15 @@
-
-
 # データファイルのロードやカテゴリ抽出など、ファイル入出力関連のサービス群。
 """
 データファイルのロードやカテゴリ抽出など、ファイル入出力関連のサービス群。
 """
 
+import json
 import os
 from pathlib import Path
-import json
+from typing import Dict, List, Tuple
+
 import yaml
-from typing import Dict, Tuple, List
-from app.shared.file_utils import PDF_PATH, JSON_PATH, FAISS_PATH, ENV_PATH, YAML_PATH
+from app.shared.file_utils import ENV_PATH, FAISS_PATH, JSON_PATH, PDF_PATH, YAML_PATH
 from backend_shared.core.domain.exceptions import InfrastructureError, NotFoundError
 
 
@@ -30,7 +29,6 @@ def get_resource_paths() -> Dict[str, str]:
         "YAML_PATH": str(YAML_PATH),
         # 追加リソースはここに追記
     }
-
 
 
 def load_json_data(json_path: str) -> Dict:
@@ -68,7 +66,11 @@ def load_question_templates() -> List[Dict]:
         List[Dict]: テンプレートデータ
     """
     # 候補パスを順に確認
-    primary = str(get_resource_paths().get("YAML_PATH")) if get_resource_paths().get("YAML_PATH") else None
+    primary = (
+        str(get_resource_paths().get("YAML_PATH"))
+        if get_resource_paths().get("YAML_PATH")
+        else None
+    )
     fallbacks = [
         "/backend/config/category_question_templates_with_tags.yaml",
         "/backend/local_data/master/category_question_templates_with_tags.yaml",
@@ -118,7 +120,9 @@ def load_question_templates() -> List[Dict]:
     return []
 
 
-def extract_categories_and_titles(data: List[Dict]) -> Tuple[List[str], Dict[str, List[str]]]:
+def extract_categories_and_titles(
+    data: List[Dict],
+) -> Tuple[List[str], Dict[str, List[str]]]:
     """
     データからカテゴリとタイトルを抽出する。
 
@@ -142,7 +146,10 @@ def extract_categories_and_titles(data: List[Dict]) -> Tuple[List[str], Dict[str
         subcategories[k] = sorted(subcategories[k])
     return categories, subcategories
 
-def group_templates_by_category_and_tags(data: List[Dict]) -> Dict[str, Dict[Tuple[str, ...], List[str]]]:
+
+def group_templates_by_category_and_tags(
+    data: List[Dict],
+) -> Dict[str, Dict[Tuple[str, ...], List[str]]]:
     """
     テンプレートをカテゴリ・タグごとにグループ化する。
 
@@ -152,6 +159,7 @@ def group_templates_by_category_and_tags(data: List[Dict]) -> Dict[str, Dict[Tup
     Returns:
         dict: グループ化されたテンプレート
     """
+
     def flatten_tags(tags) -> Tuple[str, ...]:
         """
         ネストしたリストやタプルを再帰的にフラットなタプルに変換

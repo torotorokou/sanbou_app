@@ -7,16 +7,17 @@ Create Reservation UseCase
   - Port経由でDB操作を抽象化
   - ビジネスルールの明確化（将来的に拡張）
 """
+
 from datetime import datetime
 
-from app.core.ports.ingest_port import IngestPort
 from app.core.domain.models import ReservationCreate, ReservationResponse
+from app.core.ports.ingest_port import IngestPort
 
 
 class CreateReservationUseCase:
     """
     トラック予約作成 UseCase
-    
+
     将来的な拡張予定:
       - 予約上限チェック
       - 重複予約のハンドリング
@@ -33,18 +34,18 @@ class CreateReservationUseCase:
     def execute(self, req: ReservationCreate) -> ReservationResponse:
         """
         トラック予約を作成/更新
-        
+
         処理フロー:
           1. バリデーション（日付・台数チェック）
           2. DB保存（Port経由）
           3. レスポンス生成
-        
+
         Args:
             req: 予約作成リクエスト
-        
+
         Returns:
             予約作成結果
-        
+
         Note:
             現状はスタブ実装。完全実装には以下が必要:
             - 予約ビジネスルールの明確化
@@ -53,7 +54,7 @@ class CreateReservationUseCase:
         """
         # TODO: バリデーションロジック
         # TODO: ビジネスルール適用
-        
+
         # DB保存（Port経由）
         result = self.ingest_repo.insert_reservation(
             date=req.date,

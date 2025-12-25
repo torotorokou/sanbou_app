@@ -2,4 +2,4 @@
  * screen barrel
  */
 
-export * from './DatasetPreviewScreen';
+export * from "./DatasetPreviewScreen";

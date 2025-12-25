@@ -8,17 +8,16 @@ Pandas CSV Gateway (pandas を使った CSV 読み込み実装).
 import time
 from typing import Any, Dict, Optional
 
-from fastapi import UploadFile
-
 from app.core.ports.inbound import CsvGateway
-from backend_shared.application.logging import get_module_logger, create_log_context
-from backend_shared.utils.csv_reader import read_csv_files
-from backend_shared.infra.adapters.presentation.response_error import (
-    NoFilesUploadedResponse,
-    CSVReadErrorResponse,
-)
-from app.infra.adapters.csv.validator_service import CsvValidatorService
 from app.infra.adapters.csv.formatter_service import CsvFormatterService
+from app.infra.adapters.csv.validator_service import CsvValidatorService
+from backend_shared.application.logging import create_log_context, get_module_logger
+from backend_shared.infra.adapters.presentation.response_error import (
+    CSVReadErrorResponse,
+    NoFilesUploadedResponse,
+)
+from backend_shared.utils.csv_reader import read_csv_files
+from fastapi import UploadFile
 
 logger = get_module_logger(__name__)
 
@@ -41,7 +40,7 @@ class PandasCsvGateway(CsvGateway):
         """
         start_time = time.time()
         file_keys = list(files.keys())
-        
+
         logger.info(
             "CSV読み込み開始",
             extra={
@@ -57,9 +56,9 @@ class PandasCsvGateway(CsvGateway):
                 return None, NoFilesUploadedResponse()
 
             dfs, error = read_csv_files(files)
-            
+
             elapsed = time.time() - start_time
-            
+
             if error:
                 logger.error(
                     "CSV読み込みエラー",
@@ -84,9 +83,9 @@ class PandasCsvGateway(CsvGateway):
                         "elapsed_seconds": round(elapsed, 3),
                     },
                 )
-            
+
             return dfs, None
-            
+
         except Exception as e:
             elapsed = time.time() - start_time
             logger.exception(
@@ -100,10 +99,7 @@ class PandasCsvGateway(CsvGateway):
                 },
             )
             # 既存のエラーレスポンス形式を維持
-            return None, CSVReadErrorResponse(
-                file_name="uploaded_files",
-                exception=e
-            )
+            return None, CSVReadErrorResponse(file_name="uploaded_files", exception=e)
 
     def validate_csv_structure(
         self, dfs: Dict[str, Any], file_inputs: Dict[str, Any]
@@ -115,7 +111,7 @@ class PandasCsvGateway(CsvGateway):
         """
         start_time = time.time()
         file_keys = list(dfs.keys())
-        
+
         logger.info(
             "CSV構造検証開始",
             extra={
@@ -127,7 +123,7 @@ class PandasCsvGateway(CsvGateway):
         try:
             error = self._validator.validate(dfs, file_inputs)
             elapsed = time.time() - start_time
-            
+
             if error:
                 logger.warning(
                     "CSV構造検証失敗",
@@ -147,9 +143,9 @@ class PandasCsvGateway(CsvGateway):
                         "elapsed_seconds": round(elapsed, 3),
                     },
                 )
-            
+
             return error
-            
+
         except Exception as e:
             elapsed = time.time() - start_time
             logger.exception(
@@ -163,10 +159,7 @@ class PandasCsvGateway(CsvGateway):
                 },
             )
             # バリデーションエラーとして扱う
-            return CSVReadErrorResponse(
-                file_name="validation",
-                exception=e
-            )
+            return CSVReadErrorResponse(file_name="validation", exception=e)
 
     def format_csv_data(self, dfs: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -176,7 +169,7 @@ class PandasCsvGateway(CsvGateway):
         """
         start_time = time.time()
         file_keys = list(dfs.keys())
-        
+
         logger.info(
             "CSVデータ整形開始",
             extra={
@@ -188,7 +181,7 @@ class PandasCsvGateway(CsvGateway):
         try:
             formatted_dfs = self._formatter.format(dfs)
             elapsed = time.time() - start_time
-            
+
             logger.info(
                 "CSVデータ整形完了",
                 extra={
@@ -197,9 +190,9 @@ class PandasCsvGateway(CsvGateway):
                     "elapsed_seconds": round(elapsed, 3),
                 },
             )
-            
+
             return formatted_dfs
-            
+
         except Exception as e:
             elapsed = time.time() - start_time
             logger.exception(

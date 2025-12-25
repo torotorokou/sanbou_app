@@ -5,13 +5,13 @@ Revises: 20251125_140000000
 Create Date: 2025-11-25 23:27:17.737401
 
 """
-from alembic import op
-import sqlalchemy as sa
 
+import sqlalchemy as sa
+from alembic import op
 
 # revision identifiers, used by Alembic.
-revision = '20251125_150000000'
-down_revision = '20251125_140000000'
+revision = "20251125_150000000"
+down_revision = "20251125_140000000"
 branch_labels = None
 depends_on = None
 
@@ -19,17 +19,18 @@ depends_on = None
 def upgrade() -> None:
     """
     Create mart sales tree views
-    
+
     Purpose: Query interface for sales tree analysis
     Views:
     - mart.v_sales_tree_daily: wrapper for mv_sales_tree_daily
     - mart.v_customer_sales_daily: customer-level daily aggregation
-    
+
     Depends on: mart.mv_sales_tree_daily (materialized view)
     """
-    
+
     print("[mart] Creating v_sales_tree_daily view...")
-    op.execute("""
+    op.execute(
+        """
         CREATE OR REPLACE VIEW mart.v_sales_tree_daily AS
         SELECT
             sales_date,
@@ -44,10 +45,12 @@ def upgrade() -> None:
             slip_no,
             slip_count
         FROM mart.mv_sales_tree_daily
-    """)
-    
+    """
+    )
+
     print("[mart] Creating v_customer_sales_daily view...")
-    op.execute("""
+    op.execute(
+        """
         CREATE OR REPLACE VIEW mart.v_customer_sales_daily AS
         SELECT
             sales_date,
@@ -60,8 +63,9 @@ def upgrade() -> None:
             SUM(qty_kg) AS total_qty_kg
         FROM mart.v_sales_tree_daily v
         GROUP BY sales_date, customer_id
-    """)
-    
+    """
+    )
+
     print("[ok] mart sales tree views created")
 
 

@@ -4,13 +4,16 @@
 
 ## 🚀 基本コマンド
 
-
 # イメージを事前に pull して起動（VM環境向け）
+
 # ※ `vm_stg` / `vm_prod` では `make up` 実行時にデフォルトで `pull` が実行されます。
-#    これを無効化するには `PULL=0` を指定します: `make up ENV=vm_stg PULL=0`
+
+# これを無効化するには `PULL=0` を指定します: `make up ENV=vm_stg PULL=0`
 
 # pull のみ実行
+
 make pull ENV=local_dev
+
 ### 環境起動・停止
 
 ```bash
@@ -30,8 +33,11 @@ make rebuild ENV=local_dev
 ### ログ・状態確認
 
 make pull ENV=vm_stg
+
 # 補足: `vm_stg` はデフォルトで `make up` 時に `docker compose pull` されます。
+
 # 事前に手動で pull する場合は: `make pull ENV=vm_stg`
+
 ```bash
 # ログ確認（全サービス）
 make logs ENV=local_dev
@@ -51,12 +57,12 @@ make health ENV=local_dev
 
 ## 🌍 環境一覧
 
-| ENV | 説明 | ビルド | イメージソース |
-|-----|------|--------|----------------|
-| `local_dev` | ローカル開発 | ⭕ | ローカル |
-| `local_demo` | ローカルデモ | ⭕ | ローカル |
-| `vm_stg` | VMステージング | ❌ | Artifact Registry |
-| `vm_prod` | VM本番 | ❌ | Artifact Registry |
+| ENV          | 説明           | ビルド | イメージソース    |
+| ------------ | -------------- | ------ | ----------------- |
+| `local_dev`  | ローカル開発   | ⭕     | ローカル          |
+| `local_demo` | ローカルデモ   | ⭕     | ローカル          |
+| `vm_stg`     | VMステージング | ❌     | Artifact Registry |
+| `vm_prod`    | VM本番         | ❌     | Artifact Registry |
 
 ## 🗄️ データベース操作
 
@@ -92,6 +98,7 @@ make al-up-env ENV=local_dev
 ```
 
 **実行内容**:
+
 - `sanbou_owner` (NOLOGIN) ロール作成
 - 全スキーマ・テーブル・シーケンスの owner を統一
 - RW/RO スキーマごとの適切な権限付与
@@ -235,6 +242,7 @@ make al-up-env ENV=vm_prod
 ### VM環境の制約
 
 1. **ポート競合**: vm_stg と vm_prod は同時起動不可（ポート80競合）
+
    ```bash
    # STGを起動する前にPRODを停止
    make down ENV=vm_prod
@@ -287,8 +295,10 @@ make db-bootstrap-roles-env ENV=vm_stg
 ## 📚 詳細ドキュメント
 
 完全なドキュメント・移行ガイド:
+
 - [docs/infrastructure/MAKEFILE_GUIDE.md](./docs/infrastructure/MAKEFILE_GUIDE.md)
 
 関連ドキュメント:
+
 - [docs/development/ALEMBIC_GUIDE.md](./docs/development/ALEMBIC_GUIDE.md)
 - [docs/infrastructure/DEPLOYMENT.md](./docs/infrastructure/DEPLOYMENT.md)

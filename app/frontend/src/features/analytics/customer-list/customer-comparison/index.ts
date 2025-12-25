@@ -3,11 +3,11 @@
  */
 
 // Domain
-export type { CustomerComparisonResult } from './domain/types';
+export type { CustomerComparisonResult } from "./domain/types";
 
 // Model
-export { getExclusiveCustomers, getCommonCustomers } from './model/comparison';
-export { useCustomerComparison } from './model/useCustomerComparison';
+export { getExclusiveCustomers, getCommonCustomers } from "./model/comparison";
+export { useCustomerComparison } from "./model/useCustomerComparison";
 
 // UI
-export { CustomerComparisonResultCard } from './ui';
+export { CustomerComparisonResultCard } from "./ui";

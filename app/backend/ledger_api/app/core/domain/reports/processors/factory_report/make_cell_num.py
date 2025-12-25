@@ -1,6 +1,7 @@
 import re
+from typing import Dict, List, Optional
+
 import pandas as pd
-from typing import Optional, Dict, List
 
 
 def make_cell_num(master_csv: pd.DataFrame) -> pd.DataFrame:
@@ -33,7 +34,9 @@ def make_cell_num_cal(
         cat_key = str(category)
         start_cell = start_cells.get(cat_key)
         if not start_cell:
-            raise ValueError(f"[カテゴリ: {category}] に対する開始セルが指定されていません。")
+            raise ValueError(
+                f"[カテゴリ: {category}] に対する開始セルが指定されていません。"
+            )
 
         match = re.match(r"([A-Z]+)(\d+)", start_cell)
         if not match:

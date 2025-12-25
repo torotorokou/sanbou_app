@@ -5,20 +5,20 @@ Revises: 20251105_165932182
 Create Date: 2025-11-05 08:03:35.569011
 
 """
-from alembic import op
-import sqlalchemy as sa
 
+import sqlalchemy as sa
+from alembic import op
 
 # revision identifiers, used by Alembic.
-revision = '20251105_170334790'
-down_revision = '20251105_165932182'
+revision = "20251105_170334790"
+down_revision = "20251105_165932182"
 branch_labels = None
 depends_on = None
 
 
-
 def upgrade():
-    op.execute("""
+    op.execute(
+        """
     CREATE OR REPLACE VIEW mart.v_receive_daily AS
     WITH r_shogun_final AS (
       SELECT
@@ -107,8 +107,10 @@ def upgrade():
     LEFT JOIN r_pick p ON p.ddate = cal.ddate
     WHERE cal.ddate <= ((now() AT TIME ZONE 'Asia/Tokyo')::date - 1)
     ORDER BY cal.ddate;
-    """)
+    """
+    )
+
 
 def downgrade():
-    
+
     pass

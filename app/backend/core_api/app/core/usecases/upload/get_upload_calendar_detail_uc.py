@@ -8,10 +8,11 @@ Get Upload Calendar UseCase
   - 複雑なSQL集計ロジックをPort&Adapter化
   - Router層からSQL実行を排除
 """
+
 import logging
-from typing import List, Dict, Any
-from datetime import date
 from calendar import monthrange
+from datetime import date
+from typing import Any, Dict, List
 
 from app.core.ports.upload_status_port import IUploadCalendarQuery
 from backend_shared.application.logging import create_log_context, get_module_logger
@@ -22,7 +23,7 @@ logger = get_module_logger(__name__)
 class GetUploadCalendarDetailUseCase:
     """
     アップロードカレンダー取得UseCase
-    
+
     指定年月の全アップロードファイルについて、
     データ日付、CSV種別、行数、upload_file_idを集計します。
     """
@@ -37,11 +38,11 @@ class GetUploadCalendarDetailUseCase:
     def execute(self, year: int, month: int) -> Dict[str, List[Dict[str, Any]]]:
         """
         指定年月のアップロードカレンダーデータを取得
-        
+
         Args:
             year: 年（例: 2025）
             month: 月（1-12）
-        
+
         Returns:
             {
                 "items": [
@@ -59,12 +60,17 @@ class GetUploadCalendarDetailUseCase:
         _, last_day = monthrange(year, month)
         start_date = date(year, month, 1)
         end_date = date(year, month, last_day)
-        
+
         # Port経由でデータ取得
         items = self.query.fetch_upload_calendar(start_date, end_date)
-        
+
         logger.info(
             "アップロードカレンダー詳細取得",
-            extra=create_log_context(operation="get_upload_calendar_detail", year=year, month=month, items_count=len(items))
+            extra=create_log_context(
+                operation="get_upload_calendar_detail",
+                year=year,
+                month=month,
+                items_count=len(items),
+            ),
         )
         return {"items": items}

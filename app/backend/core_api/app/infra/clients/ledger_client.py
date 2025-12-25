@@ -18,16 +18,18 @@ Ledger API Client - 元帳サービス内部HTTPクライアント
 使用例:
     client = LedgerClient()
     report = await client.generate_report(
-        "balance_sheet", 
+        "balance_sheet",
         {"start_date": "2025-01-01", "end_date": "2025-01-31"}
     )
 """
-import os
-import httpx
-from typing import Optional, Any
-import logging
 
-from backend_shared.application.logging import get_module_logger, create_log_context
+import logging
+import os
+from typing import Any, Optional
+
+import httpx
+from backend_shared.application.logging import create_log_context, get_module_logger
+
 logger = get_module_logger(__name__)
 
 LEDGER_API_BASE = os.getenv("LEDGER_API_BASE", "http://ledger_api:8000")
@@ -43,14 +45,14 @@ class LedgerClient:
     async def generate_report(self, report_type: str, params: dict) -> dict:
         """
         Request report generation from Ledger API.
-        
+
         Args:
             report_type: Type of report (e.g., 'balance_sheet', 'factory_report')
             params: Report parameters (date range, filters, etc.)
-            
+
         Returns:
             dict with report metadata or job ID
-            
+
         Raises:
             httpx.TimeoutException: If request times out
             httpx.HTTPStatusError: If Ledger API returns error status
@@ -61,8 +63,8 @@ class LedgerClient:
                 extra=create_log_context(
                     operation="call_ledger_api",
                     url=f"{self.base_url}/reports/{report_type}",
-                    params=params
-                )
+                    params=params,
+                ),
             )
             response = await client.post(
                 f"{self.base_url}/reports/{report_type}",
@@ -70,7 +72,9 @@ class LedgerClient:
             )
             response.raise_for_status()
             data = response.json()
-            logger.info("Ledger API response received", extra={"report_type": report_type})
+            logger.info(
+                "Ledger API response received", extra={"report_type": report_type}
+            )
             return data
 
     async def get_health(self) -> dict:

@@ -16,7 +16,7 @@ def make_df_shipment_after_use(
 
     def _filter_by_vendor_code(df: pd.DataFrame) -> pd.DataFrame:
         """マスターCSVの業者CDでフィルタリング
-        
+
         最適化: copy()を削減（フィルタリングだけで充分）
         """
         return df[df["業者CD"].isin(master_csv["業者CD"])]
@@ -83,9 +83,7 @@ def apply_unit_price_addition(
         - 業者CDをキーにしてマスターデータと結合します
         - 手数料が設定されていない業者は、元の単価がそのまま維持されます
     """
-    from app.infra.report_utils.dataframe import (
-        apply_column_addition_by_keys,
-    )
+    from app.infra.report_utils.dataframe import apply_column_addition_by_keys
 
     return apply_column_addition_by_keys(
         base_df=df_shipment,
@@ -114,16 +112,14 @@ def apply_transport_fee_by1(
     Returns:
         pd.DataFrame: 固定運搬費が適用された出荷データ（業者CD順にソート済み）
     """
-    from app.infra.report_utils.dataframe import (
-        apply_column_addition_by_keys,
-    )
+    from app.infra.report_utils.dataframe import apply_column_addition_by_keys
 
     def _extract_single_transport_rows(
         df: pd.DataFrame,
     ) -> tuple[pd.DataFrame, pd.DataFrame]:
         """
         ① 運搬社数 = 1 の行とそれ以外の行を分離
-        
+
         最適化: copy()を削減（concatで新規DataFrameを作るため不要）
         """
         single_transport = df[df["運搬社数"] == 1]

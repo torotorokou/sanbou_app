@@ -23,20 +23,18 @@ export interface UseSidebarOptions {
 
 /**
  * useSidebar — サイドバーの状態・設定・アニメーションを一元管理（2025-12-23更新）
- * 
+ *
  * 【動作】
  * - モバイル（≤767px）: Drawerモード、drawerOpenで開閉
  * - タブレット（768-1280px）: collapsedで開閉
  * - デスクトップ（≥1281px）: collapsedで開閉
- * 
+ *
  * 【状態分離】
  * - collapsed: デスクトップ/タブレット用の開閉状態
  * - drawerOpen: モバイルDrawer用の開閉状態
  * - ブレークポイント変更時に状態を正規化（モバイル強制値を保存しない）
  */
-export function useSidebar(
-  options: UseSidebarOptions = {}
-): {
+export function useSidebar(options: UseSidebarOptions = {}): {
   isMobile: boolean;
   collapsed: boolean;
   drawerOpen: boolean;
@@ -98,7 +96,7 @@ export function useSidebar(
   useEffect(() => {
     if (config.breakpoint !== prevBreakpoint) {
       setPrevBreakpoint(config.breakpoint);
-      
+
       if (isMobile) {
         // モバイルに移行: collapsedを強制的にtrueにし、drawerは閉じる
         setCollapsed(true);
@@ -116,25 +114,25 @@ export function useSidebar(
   const closeDrawer = () => setDrawerOpen(false);
 
   // Desktop/Tablet折りたたみ操作
-  const toggleCollapsed = () => setCollapsed(prev => !prev);
+  const toggleCollapsed = () => setCollapsed((prev) => !prev);
 
   const style = useMemo<React.CSSProperties>(
     () => ({
       transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
       willChange: "width, transform",
     }),
-    []
+    [],
   );
 
-  return { 
+  return {
     isMobile,
-    collapsed, 
+    collapsed,
     drawerOpen,
     openDrawer,
     closeDrawer,
     toggleCollapsed,
-    config, 
-    style 
+    config,
+    style,
   };
 }
 

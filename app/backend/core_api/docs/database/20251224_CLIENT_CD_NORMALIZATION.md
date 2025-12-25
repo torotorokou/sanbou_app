@@ -7,7 +7,7 @@
 
 ## 📋 概要
 
-stg.shogun_flash_receive / stg.shogun_final_receive の client_cd について、先頭0除去の正規化処理を実装し、既存データも backfill しました。また、v_active_* ビューで末尾Xを除去して表示するよう修正しました。
+stg.shogun*flash_receive / stg.shogun_final_receive の client_cd について、先頭0除去の正規化処理を実装し、既存データも backfill しました。また、v_active*\* ビューで末尾Xを除去して表示するよう修正しました。
 
 ---
 
@@ -24,18 +24,20 @@ stg.shogun_flash_receive / stg.shogun_final_receive の client_cd について�
 
 **2025-12-24 時点の調査結果**:
 
-| テーブル名 | 総件数 | 先頭0残存件数 | 残存率 |
-|-----------|--------|--------------|--------|
-| stg.shogun_flash_receive | 117,005 | 7,302 | 6.2% |
-| stg.shogun_final_receive | 91,200 | 5,684 | 6.2% |
+| テーブル名               | 総件数  | 先頭0残存件数 | 残存率 |
+| ------------------------ | ------- | ------------- | ------ |
+| stg.shogun_flash_receive | 117,005 | 7,302         | 6.2%   |
+| stg.shogun_final_receive | 91,200  | 5,684         | 6.2%   |
 
 **サンプル**:
+
 - flash: `'001021'`, `'000804'`, `'001353'` 等（6桁数値、先頭0付き）
 - final: `'00169X'`, `'00537X'`, `'00954X'` 等（6桁、末尾X、先頭0付き）
 
 ### 安全性確認
 
 ✅ **client_cd は UNIQUE制約・PK・インデックスなし**
+
 - 正規化による重複リスクなし
 - backfill UPDATE 安全
 
@@ -46,12 +48,14 @@ stg.shogun_flash_receive / stg.shogun_final_receive の client_cd について�
 ### 1. 正規化関数 `stg.normalize_client_cd()`
 
 **機能**:
+
 - 前後空白除去
 - 先頭0（半角）を除去
 - ただし全て0の場合は `'0'` を返す（空値化しない）
 - NULL 安全
 
 **実装**:
+
 ```sql
 CREATE OR REPLACE FUNCTION stg.normalize_client_cd(input_code text)
 RETURNS text
@@ -65,25 +69,26 @@ BEGIN
     IF input_code IS NULL THEN
         RETURN NULL;
     END IF;
-    
+
     trimmed := btrim(input_code);
-    
+
     IF trimmed = '' THEN
         RETURN trimmed;
     END IF;
-    
+
     result := regexp_replace(trimmed, '^0+', '', 'g');
-    
+
     IF result = '' THEN
         RETURN '0';
     END IF;
-    
+
     RETURN result;
 END;
 $$;
 ```
 
 **変換例**:
+
 - `'001021'` → `'1021'`
 - `'00169X'` → `'169X'`
 - `'0000'` → `'0'`
@@ -95,6 +100,7 @@ $$;
 **目的**: ロールバック可能にする
 
 **作成されるテーブル**:
+
 - `stg.shogun_flash_receive_client_cd_backup_YYYYMMDD_HHMMSS`
 - `stg.shogun_final_receive_client_cd_backup_YYYYMMDD_HHMMSS`
 
@@ -103,10 +109,12 @@ $$;
 ### 3. 既存データ backfill UPDATE
 
 **対象**:
+
 - `stg.shogun_flash_receive`: 先頭0付きの client_cd を持つ全レコード
 - `stg.shogun_final_receive`: 先頭0付きの client_cd を持つ全レコード
 
 **実行SQL**:
+
 ```sql
 UPDATE stg.shogun_flash_receive
 SET client_cd = stg.normalize_client_cd(client_cd)
@@ -118,31 +126,36 @@ WHERE btrim(client_cd) ~ '^0[0-9]';
 ```
 
 **安全ガード**:
+
 - トランザクション内で実行
 - 事前にバックアップテーブル作成
 - 更新件数を出力
 - client_cd に UNIQUE制約なし確認済み
 
-### 4. v_active_* ビュー修正（末尾X除去表示）
+### 4. v*active*\* ビュー修正（末尾X除去表示）
 
 **変更箇所**: `client_cd` カラムのみ
 
 **Before**:
+
 ```sql
 client_cd,
 ```
 
 **After**:
+
 ```sql
 regexp_replace(client_cd, '[Xx]$', '') AS client_cd,  -- 末尾X除去
 ```
 
 **影響**:
+
 - **表示のみ変更**（テーブルデータは変更なし）
 - `'169X'` → `'169'` として view で見える
 - JOIN キーとして使っている箇所への影響なし（元テーブルの client_cd は変更されていないため）
 
 **対象ビュー**:
+
 - `stg.v_active_shogun_flash_receive`
 - `stg.v_active_shogun_final_receive`
 
@@ -154,13 +167,13 @@ regexp_replace(client_cd, '[Xx]$', '') AS client_cd,  -- 末尾X除去
 
 ```sql
 -- 先頭0残存件数の確認
-SELECT 
+SELECT
   'shogun_flash_receive' as table_name,
   COUNT(*) as leading_zero_count
 FROM stg.shogun_flash_receive
 WHERE btrim(client_cd) ~ '^0[0-9]'
 UNION ALL
-SELECT 
+SELECT
   'shogun_final_receive' as table_name,
   COUNT(*) as leading_zero_count
 FROM stg.shogun_final_receive
@@ -173,13 +186,13 @@ WHERE btrim(client_cd) ~ '^0[0-9]';
 
 ```sql
 -- 先頭0残存件数の確認（0件のはず）
-SELECT 
+SELECT
   'shogun_flash_receive' as table_name,
   COUNT(*) as leading_zero_count
 FROM stg.shogun_flash_receive
 WHERE btrim(client_cd) ~ '^0[0-9]'
 UNION ALL
-SELECT 
+SELECT
   'shogun_final_receive' as table_name,
   COUNT(*) as leading_zero_count
 FROM stg.shogun_final_receive
@@ -190,7 +203,7 @@ WHERE btrim(client_cd) ~ '^0[0-9]';
 
 ```sql
 -- view の末尾X除去確認
-SELECT 
+SELECT
   client_cd,
   COUNT(*) as count
 FROM stg.v_active_shogun_final_receive
@@ -204,7 +217,7 @@ LIMIT 10;
 
 ```sql
 -- 正規化関数の動作確認
-SELECT 
+SELECT
   stg.normalize_client_cd('001021') as case1,  -- '1021'
   stg.normalize_client_cd('00169X') as case2,  -- '169X'
   stg.normalize_client_cd('0000') as case3,    -- '0'
@@ -215,7 +228,7 @@ SELECT
 **期待結果**:
 | case1 | case2 | case3 | case4 | case5 |
 |-------|-------|-------|-------|-------|
-| 1021  | 169X  | 0     | NULL  | 1234  |
+| 1021 | 169X | 0 | NULL | 1234 |
 
 ---
 
@@ -307,6 +320,7 @@ DROP TABLE stg.shogun_final_receive_client_cd_backup_20251224_153045;
 **実装場所**: [shogun_csv_repository.py](../app/infra/adapters/upload/shogun_csv_repository.py)
 
 **実装例**:
+
 ```python
 # save_csv_by_type() メソッド内で、df_to_save の前処理として追加
 
@@ -328,16 +342,19 @@ if 'client_cd' in df_to_save.columns:
 ## 🎯 成果
 
 ✅ **目的達成**:
+
 1. 先頭0除去処理の実装 → ✅ `stg.normalize_client_cd()` 関数作成
 2. 既存データ backfill → ✅ 約13,000件を更新（安全ガード付き）
 3. view で末尾X除去表示 → ✅ `v_active_*` ビュー修正
 
 ✅ **安全性確保**:
+
 - UNIQUE制約なし確認済み
 - バックアップテーブル作成済み
 - ロールバック可能
 
 ✅ **再発防止**:
+
 - 正規化関数により、今後の手動修正も統一ロジックで実施可能
 - CSVアップロード時の正規化実装を推奨事項として明記
 

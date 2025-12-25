@@ -1,9 +1,9 @@
 /**
  * PortalCardのボタン部分のコンポーネント
  */
-import React from 'react';
-import { Button } from 'antd';
-import { BUTTON_WIDTH, BUTTON_HEIGHT } from '../domain/constants';
+import React from "react";
+import { Button } from "antd";
+import { BUTTON_WIDTH, BUTTON_HEIGHT } from "../domain/constants";
 
 interface CardButtonProps {
   title: string;
@@ -47,22 +47,24 @@ export const CardButton: React.FC<CardButtonProps> = ({
         lineHeight: `${finalHeight}px`,
         fontSize,
         padding: 0,
-        whiteSpace: 'nowrap',
-        flex: '0 0 auto',
-        alignSelf: 'center',
+        whiteSpace: "nowrap",
+        flex: "0 0 auto",
+        alignSelf: "center",
         backgroundColor,
-        borderColor: 'transparent',
+        borderColor: "transparent",
         color: textColor,
         backgroundImage,
-        backgroundRepeat: 'no-repeat',
-        backgroundSize: 'cover',
-        boxShadow: 'none',
+        backgroundRepeat: "no-repeat",
+        backgroundSize: "cover",
+        boxShadow: "none",
       }}
       onMouseEnter={(e) => {
-        (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-1px)';
+        (e.currentTarget as HTMLButtonElement).style.transform =
+          "translateY(-1px)";
       }}
       onMouseLeave={(e) => {
-        (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(0)';
+        (e.currentTarget as HTMLButtonElement).style.transform =
+          "translateY(0)";
       }}
       onClick={onClick}
       aria-label={`${title} へ移動`}

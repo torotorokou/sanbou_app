@@ -1,7 +1,7 @@
-import { Space, Segmented, Typography } from 'antd';
-import type { SortKey, SortOrder } from '../../../shared/model/types';
+import { Space, Segmented, Typography } from "antd";
+import type { SortKey, SortOrder } from "../../../shared/model/types";
 
-type TopN = 10 | 20 | 50 | 'all';
+type TopN = 10 | 20 | 50 | "all";
 
 interface TopNSortControlsProps {
   topN: TopN;
@@ -23,19 +23,19 @@ export const TopNSortControls: React.FC<TopNSortControlsProps> = ({
   onOrderChange,
 }) => {
   return (
-    <Space direction="vertical" size={2} style={{ width: '100%' }}>
+    <Space direction="vertical" size={2} style={{ width: "100%" }}>
       <Typography.Text type="secondary">Top & 並び替え</Typography.Text>
       <Space wrap>
         <Segmented
           options={[
-            { label: '10', value: '10' },
-            { label: '20', value: '20' },
-            { label: '50', value: '50' },
-            { label: 'All', value: 'all' },
+            { label: "10", value: "10" },
+            { label: "20", value: "20" },
+            { label: "50", value: "50" },
+            { label: "All", value: "all" },
           ]}
           value={String(topN)}
           onChange={(v: string | number) =>
-            onTopNChange(v === 'all' ? 'all' : (Number(v) as 10 | 20 | 50))
+            onTopNChange(v === "all" ? "all" : (Number(v) as 10 | 20 | 50))
           }
         />
         <Segmented
@@ -45,8 +45,8 @@ export const TopNSortControls: React.FC<TopNSortControlsProps> = ({
         />
         <Segmented
           options={[
-            { label: '降順', value: 'desc' },
-            { label: '昇順', value: 'asc' },
+            { label: "降順", value: "desc" },
+            { label: "昇順", value: "asc" },
           ]}
           value={order}
           onChange={(v) => onOrderChange(v as SortOrder)}

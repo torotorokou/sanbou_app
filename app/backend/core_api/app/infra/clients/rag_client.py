@@ -21,12 +21,14 @@ RAG(Retrieval-Augmented Generation)サービスと通信し、
     print(result['answer'])
     print(result['sources'])  # 参照ドキュメント
 """
-import os
-import httpx
-from typing import Optional
-import logging
 
-from backend_shared.application.logging import get_module_logger, create_log_context
+import logging
+import os
+from typing import Optional
+
+import httpx
+from backend_shared.application.logging import create_log_context, get_module_logger
+
 logger = get_module_logger(__name__)
 
 RAG_API_BASE = os.getenv("RAG_API_BASE", "http://rag_api:8000")
@@ -40,35 +42,43 @@ class RAGClient:
     def __init__(self, base_url: str = RAG_API_BASE):
         self.base_url = base_url.rstrip("/")
 
-    async def ask(self, query: str, category: str = "shogun", tags: Optional[list[str]] = None) -> dict:
+    async def ask(
+        self, query: str, category: str = "shogun", tags: Optional[list[str]] = None
+    ) -> dict:
         """
         Ask RAG API a question.
-        
+
         Args:
             query: User query string
             category: Question category (default: "shogun")
             tags: List of tags (default: None)
-            
+
         Returns:
             dict with 'answer' and optional 'sources'
-            
+
         Raises:
             httpx.TimeoutException: If request times out
             httpx.HTTPStatusError: If RAG API returns error status
         """
         async with httpx.AsyncClient(timeout=TIMEOUT) as client:
-            logger.info(f"Calling RAG API: {self.base_url}/api/generate-answer", extra={"query": query})
+            logger.info(
+                f"Calling RAG API: {self.base_url}/api/generate-answer",
+                extra={"query": query},
+            )
             response = await client.post(
                 f"{self.base_url}/api/generate-answer",
                 json={"query": query, "category": category, "tags": tags or []},
             )
             response.raise_for_status()
             data = response.json()
-            
+
             # レスポンス形式の正規化 (SuccessApiResponse or direct dict)
             result = data.get("result", data)
-            
-            logger.info("RAG API response received", extra={"answer_length": len(result.get("answer", ""))})
+
+            logger.info(
+                "RAG API response received",
+                extra={"answer_length": len(result.get("answer", ""))},
+            )
             return {
                 "answer": result.get("answer", ""),
                 "sources": result.get("sources", []),

@@ -33,5 +33,6 @@ def build_answer_prompt(context, query):
     4. 信頼度や出典（ページ番号）も可能な限り明示してください。
     """
 
+
 def build_prompt(query: str, context: str) -> str:
     return build_answer_prompt(context, query)

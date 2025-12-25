@@ -1,9 +1,16 @@
 // features/report/model/config/pages/managePageConfig.ts
 import React from "react";
-import { Spin } from 'antd';
+import { Spin } from "antd";
 import { CSV_DEFINITIONS } from "@features/csv-schemas/domain/config/CsvDefinition";
-import type { CsvConfigGroup, ModalStepConfig, PeriodType } from "@features/report/shared/config/shared/types";
-import { createReportConfig, SIMPLE_CREATE_AND_DONE_STEPS } from "@features/report/shared/config/shared/common";
+import type {
+  CsvConfigGroup,
+  ModalStepConfig,
+  PeriodType,
+} from "@features/report/shared/config/shared/types";
+import {
+  createReportConfig,
+  SIMPLE_CREATE_AND_DONE_STEPS,
+} from "@features/report/shared/config/shared/common";
 
 // ==============================
 // 📄 管理業務ページ専用設定
@@ -73,8 +80,8 @@ export const manageModalStepsMap: Record<ManageReportKey, ModalStepConfig[]> = {
       label: "帳簿作成中",
       content: React.createElement(
         "div",
-        { style: { textAlign: 'center', padding: 24 } },
-        React.createElement(Spin, { size: 'large' })
+        { style: { textAlign: "center", padding: 24 } },
+        React.createElement(Spin, { size: "large" }),
       ),
       showNext: false,
       showClose: false,
@@ -83,8 +90,8 @@ export const manageModalStepsMap: Record<ManageReportKey, ModalStepConfig[]> = {
       label: "帳簿作成中",
       content: React.createElement(
         "div",
-        { style: { textAlign: 'center', padding: 24 } },
-        React.createElement(Spin, { size: 'large' })
+        { style: { textAlign: "center", padding: 24 } },
+        React.createElement(Spin, { size: "large" }),
       ),
       showNext: false,
       showClose: false,
@@ -96,7 +103,7 @@ export const manageModalStepsMap: Record<ManageReportKey, ModalStepConfig[]> = {
       showClose: true,
     },
   ],
-  management_sheet:[...SIMPLE_CREATE_AND_DONE_STEPS],
+  management_sheet: [...SIMPLE_CREATE_AND_DONE_STEPS],
 };
 
 // PDFプレビュー設定
@@ -112,5 +119,5 @@ export const managePdfPreviewMap: Record<ManageReportKey, string> = {
 export const manageReportConfigMap = createReportConfig(
   manageCsvConfigMap,
   manageModalStepsMap,
-  managePdfPreviewMap
+  managePdfPreviewMap,
 );

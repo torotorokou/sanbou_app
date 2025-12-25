@@ -15,8 +15,3 @@ CREATE OR REPLACE VIEW mart.v_daily_target_with_calendar AS
     p.created_at
    FROM (ref.v_calendar_classified c
      LEFT JOIN mart.daily_target_plan p ON ((c.ddate = p.ddate)));
-
-
-
-
-

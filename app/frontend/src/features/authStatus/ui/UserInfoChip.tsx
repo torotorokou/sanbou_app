@@ -1,15 +1,15 @@
 /**
  * UserInfoChip - ユーザー情報表示コンポーネント
- * 
+ *
  * 現在ログインしているユーザーの情報を表示する小型のUIコンポーネント。
  * サイドバーやヘッダーに配置して、ユーザーに認証状態を伝えます。
- * 
+ *
  * 【表示内容】
  * - ローディング中: "ユーザー情報取得中..."（AuthProviderで初期化済みなので通常は表示されない）
  * - エラー時: エラーメッセージ（赤色）
  * - 未ログイン: "未ログイン"
  * - ログイン中: "ログイン中：{表示名 or メールアドレス}"
- * 
+ *
  * 【変更履歴】
  * - AuthProviderを使用してグローバルな認証状態を参照
  */
@@ -24,10 +24,12 @@ export const UserInfoChip: FC = () => {
   // ローディング中の表示
   if (isLoading) {
     return (
-      <span style={{
-        fontSize: '12px',
-        color: customTokens.colorTextSecondary,
-      }}>
+      <span
+        style={{
+          fontSize: "12px",
+          color: customTokens.colorTextSecondary,
+        }}
+      >
         ユーザー情報取得中...
       </span>
     );
@@ -36,9 +38,9 @@ export const UserInfoChip: FC = () => {
   // エラー時の表示
   if (error) {
     return (
-      <span 
+      <span
         style={{
-          fontSize: '12px',
+          fontSize: "12px",
           color: customTokens.colorError,
         }}
         title={error}
@@ -51,10 +53,12 @@ export const UserInfoChip: FC = () => {
   // 未ログイン時の表示
   if (!user) {
     return (
-      <span style={{
-        fontSize: '12px',
-        color: customTokens.colorTextSecondary,
-      }}>
+      <span
+        style={{
+          fontSize: "12px",
+          color: customTokens.colorTextSecondary,
+        }}
+      >
         未ログイン
       </span>
     );
@@ -65,26 +69,32 @@ export const UserInfoChip: FC = () => {
   const displayLabel = user.displayName ?? user.email;
 
   return (
-    <div style={{
-      display: 'inline-flex',
-      alignItems: 'center',
-      gap: '8px',
-      borderRadius: '16px',
-      border: `1px solid ${customTokens.colorBorderSecondary}`,
-      backgroundColor: 'rgba(255, 255, 255, 0.1)',
-      padding: '6px 12px',
-      fontSize: '13px',
-    }}>
-      <span style={{ 
-        fontWeight: 600,
-        color: customTokens.colorSiderText,
-        opacity: 0.8,
-      }}>
+    <div
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: "8px",
+        borderRadius: "16px",
+        border: `1px solid ${customTokens.colorBorderSecondary}`,
+        backgroundColor: "rgba(255, 255, 255, 0.1)",
+        padding: "6px 12px",
+        fontSize: "13px",
+      }}
+    >
+      <span
+        style={{
+          fontWeight: 600,
+          color: customTokens.colorSiderText,
+          opacity: 0.8,
+        }}
+      >
         ログイン中：
       </span>
-      <span style={{ 
-        color: customTokens.colorSiderText,
-      }}>
+      <span
+        style={{
+          color: customTokens.colorSiderText,
+        }}
+      >
         {displayLabel}
       </span>
     </div>

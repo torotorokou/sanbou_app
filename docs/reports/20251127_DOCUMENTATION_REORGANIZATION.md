@@ -12,6 +12,7 @@
 ### 1. プロジェクトルート `docs/` の整理
 
 **変更前:**
+
 ```
 docs/
 ├── backend/       (33ファイル - 細分化前)
@@ -21,6 +22,7 @@ docs/
 ```
 
 **変更後:**
+
 ```
 docs/
 ├── shared/        # アプリ全体に関わる共有ドキュメントのみ
@@ -32,6 +34,7 @@ docs/
 **配置先:** `app/frontend/docs/`
 
 **構成:**
+
 ```
 frontend/docs/
 ├── architecture/   # FSDアーキテクチャ、設計規約 (7ファイル)
@@ -50,6 +53,7 @@ frontend/docs/
 **配置先:** `app/backend/core_api/docs/`
 
 **構成:**
+
 ```
 core_api/docs/
 ├── database/           # DB設計・マイグレーション (7ファイル)
@@ -69,6 +73,7 @@ core_api/docs/
 **配置先:** `app/backend/ledger_api/docs/`
 
 **構成:**
+
 ```
 ledger_api/docs/
 ├── architecture/  # アーキテクチャ設計 (1ファイル)
@@ -99,21 +104,29 @@ ledger_api/docs/
 ## 開発者向けガイド
 
 ### フロントエンド開発者
+
 📁 `app/frontend/docs/` を参照
+
 - アーキテクチャ: `architecture/FSD_ARCHITECTURE_GUIDE.md`
 - 実装ガイド: `FRONTEND_TYPESCRIPT_FIELD_DICTIONARY.md`
 
 ### バックエンド開発者
+
 📁 `app/backend/core_api/docs/` を参照
+
 - DB設計: `database/DATABASE_COLUMN_DICTIONARY.md`
 - API実装: `api-implementation/` ディレクトリ
 
 ### 帳票機能開発者
+
 📁 `app/backend/ledger_api/docs/` を参照
+
 - リファクタリング: `refactoring/API_REFACTORING_GUIDE.md`
 
 ### アーキテクト・PM
+
 📁 `docs/shared/` を参照
+
 - フルスタック機能実装レポート
 - API契約・スキーマ定義
 

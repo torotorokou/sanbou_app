@@ -21,7 +21,9 @@ export const ChartFrame: React.FC<ChartFrameProps> = ({ style, children }) => {
       const hh = Math.max(0, Math.floor(r.height));
       setH((prev) => (Math.abs(prev - hh) > 1 ? hh : prev));
     };
-    const ro = new ResizeObserver(() => requestAnimationFrame(() => !disposed && setFromRect()));
+    const ro = new ResizeObserver(() =>
+      requestAnimationFrame(() => !disposed && setFromRect()),
+    );
     ro.observe(el);
     let tries = 0;
     const kick = () => {
@@ -39,7 +41,10 @@ export const ChartFrame: React.FC<ChartFrameProps> = ({ style, children }) => {
   }, [h]);
 
   return (
-    <div ref={ref} style={{ height: "100%", width: "100%", minHeight: 200, ...style }}>
+    <div
+      ref={ref}
+      style={{ height: "100%", width: "100%", minHeight: 200, ...style }}
+    >
       {h > 0 ? (
         <ResponsiveContainer width="100%" height={h}>
           {children as unknown as React.ReactElement}

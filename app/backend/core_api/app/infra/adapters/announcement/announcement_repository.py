@@ -6,11 +6,6 @@ Announcement repository implementation with PostgreSQL.
 from datetime import datetime, timezone
 from typing import List, Optional
 
-from sqlalchemy import select, and_, func
-from sqlalchemy.orm import Session
-
-from backend_shared.application.logging import get_module_logger
-from app.core.ports.announcement_repository_port import AnnouncementRepositoryPort
 from app.core.domain.announcement import (
     Announcement,
     AnnouncementUserState,
@@ -18,7 +13,11 @@ from app.core.domain.announcement import (
     Attachment,
     NotificationPlan,
 )
+from app.core.ports.announcement_repository_port import AnnouncementRepositoryPort
 from app.infra.db.orm_models import AnnouncementORM, AnnouncementUserStateORM
+from backend_shared.application.logging import get_module_logger
+from sqlalchemy import and_, func, select
+from sqlalchemy.orm import Session
 
 logger = get_module_logger(__name__)
 
@@ -29,11 +28,11 @@ def _orm_to_domain(orm_obj: AnnouncementORM) -> Announcement:
     if orm_obj.attachments:
         for att in orm_obj.attachments:
             attachments.append(Attachment(**att))
-    
+
     notification_plan = None
     if orm_obj.notification_plan:
         notification_plan = NotificationPlan(**orm_obj.notification_plan)
-    
+
     return Announcement(
         id=orm_obj.id,
         title=orm_obj.title,
@@ -78,21 +77,19 @@ class AnnouncementRepositoryImpl(AnnouncementRepositoryPort):
         """アクティブなお知らせ一覧を取得（公開中かつ未削除）"""
         if now is None:
             now = datetime.now(timezone.utc)
-        
+
         try:
             # Base query: active (not deleted) and published
             conditions = [
                 AnnouncementORM.deleted_at == None,
                 AnnouncementORM.publish_from <= now,
             ]
-            
+
             # Optional audience filter
             if audience and audience != "all":
                 # Match exact audience or 'all'
-                conditions.append(
-                    AnnouncementORM.audience.in_([audience, "all"])
-                )
-            
+                conditions.append(AnnouncementORM.audience.in_([audience, "all"]))
+
             # Subquery for user state
             user_state_subq = (
                 select(
@@ -103,7 +100,7 @@ class AnnouncementRepositoryImpl(AnnouncementRepositoryPort):
                 .where(AnnouncementUserStateORM.user_id == user_id)
                 .subquery()
             )
-            
+
             # Main query with left join
             stmt = (
                 select(
@@ -113,24 +110,25 @@ class AnnouncementRepositoryImpl(AnnouncementRepositoryPort):
                 )
                 .outerjoin(
                     user_state_subq,
-                    AnnouncementORM.id == user_state_subq.c.announcement_id
+                    AnnouncementORM.id == user_state_subq.c.announcement_id,
                 )
                 .where(and_(*conditions))
                 .where(
                     # Not expired: publish_to is NULL or > now
-                    (AnnouncementORM.publish_to == None) | (AnnouncementORM.publish_to > now)
+                    (AnnouncementORM.publish_to == None)
+                    | (AnnouncementORM.publish_to > now)
                 )
                 .order_by(AnnouncementORM.publish_from.desc())
             )
-            
+
             results = self.db.execute(stmt).all()
-            
+
             announcements_with_state = []
             for row in results:
                 announcement_orm = row[0]
                 read_at = row[1]
                 ack_at = row[2]
-                
+
                 announcement = _orm_to_domain(announcement_orm)
                 announcements_with_state.append(
                     AnnouncementWithState(
@@ -139,9 +137,9 @@ class AnnouncementRepositoryImpl(AnnouncementRepositoryPort):
                         ack_at=ack_at,
                     )
                 )
-            
+
             return announcements_with_state
-            
+
         except Exception as e:
             logger.error(f"Failed to list active announcements: {e}", exc_info=True)
             raise
@@ -163,7 +161,7 @@ class AnnouncementRepositoryImpl(AnnouncementRepositoryPort):
                 .where(AnnouncementUserStateORM.user_id == user_id)
                 .subquery()
             )
-            
+
             stmt = (
                 select(
                     AnnouncementORM,
@@ -172,7 +170,7 @@ class AnnouncementRepositoryImpl(AnnouncementRepositoryPort):
                 )
                 .outerjoin(
                     user_state_subq,
-                    AnnouncementORM.id == user_state_subq.c.announcement_id
+                    AnnouncementORM.id == user_state_subq.c.announcement_id,
                 )
                 .where(
                     and_(
@@ -181,23 +179,23 @@ class AnnouncementRepositoryImpl(AnnouncementRepositoryPort):
                     )
                 )
             )
-            
+
             row = self.db.execute(stmt).first()
-            
+
             if row is None:
                 return None
-            
+
             announcement_orm = row[0]
             read_at = row[1]
             ack_at = row[2]
-            
+
             announcement = _orm_to_domain(announcement_orm)
             return AnnouncementWithState(
                 announcement=announcement,
                 read_at=read_at,
                 ack_at=ack_at,
             )
-            
+
         except Exception as e:
             logger.error(f"Failed to get announcement by id: {e}", exc_info=True)
             raise
@@ -210,7 +208,7 @@ class AnnouncementRepositoryImpl(AnnouncementRepositoryPort):
         """お知らせを既読にする"""
         try:
             now = datetime.now(timezone.utc)
-            
+
             # Check if state exists
             existing = self.db.execute(
                 select(AnnouncementUserStateORM).where(
@@ -220,7 +218,7 @@ class AnnouncementRepositoryImpl(AnnouncementRepositoryPort):
                     )
                 )
             ).scalar_one_or_none()
-            
+
             if existing:
                 # Already exists, update read_at if not set
                 if existing.read_at is None:
@@ -240,7 +238,7 @@ class AnnouncementRepositoryImpl(AnnouncementRepositoryPort):
                 self.db.add(new_state)
                 self.db.flush()
                 return _state_orm_to_domain(new_state)
-                
+
         except Exception as e:
             logger.error(f"Failed to mark announcement as read: {e}", exc_info=True)
             raise
@@ -253,7 +251,7 @@ class AnnouncementRepositoryImpl(AnnouncementRepositoryPort):
         """お知らせを確認済みにする（critical用）"""
         try:
             now = datetime.now(timezone.utc)
-            
+
             # Check if state exists
             existing = self.db.execute(
                 select(AnnouncementUserStateORM).where(
@@ -263,7 +261,7 @@ class AnnouncementRepositoryImpl(AnnouncementRepositoryPort):
                     )
                 )
             ).scalar_one_or_none()
-            
+
             if existing:
                 # Update ack_at and read_at (acknowledged implies read)
                 if existing.ack_at is None:
@@ -286,9 +284,11 @@ class AnnouncementRepositoryImpl(AnnouncementRepositoryPort):
                 self.db.add(new_state)
                 self.db.flush()
                 return _state_orm_to_domain(new_state)
-                
+
         except Exception as e:
-            logger.error(f"Failed to mark announcement as acknowledged: {e}", exc_info=True)
+            logger.error(
+                f"Failed to mark announcement as acknowledged: {e}", exc_info=True
+            )
             raise
 
     def get_unread_count(
@@ -300,7 +300,7 @@ class AnnouncementRepositoryImpl(AnnouncementRepositoryPort):
         """未読お知らせ数を取得"""
         if now is None:
             now = datetime.now(timezone.utc)
-        
+
         try:
             # Subquery for user state
             user_state_subq = (
@@ -313,26 +313,29 @@ class AnnouncementRepositoryImpl(AnnouncementRepositoryPort):
                 )
                 .subquery()
             )
-            
+
             # Base conditions: active and not read
             conditions = [
                 AnnouncementORM.deleted_at == None,
                 AnnouncementORM.publish_from <= now,
-                (AnnouncementORM.publish_to == None) | (AnnouncementORM.publish_to > now),
+                (AnnouncementORM.publish_to == None)
+                | (AnnouncementORM.publish_to > now),
                 AnnouncementORM.id.notin_(select(user_state_subq.c.announcement_id)),
             ]
-            
+
             # Optional audience filter
             if audience and audience != "all":
-                conditions.append(
-                    AnnouncementORM.audience.in_([audience, "all"])
-                )
-            
-            stmt = select(func.count()).select_from(AnnouncementORM).where(and_(*conditions))
-            
+                conditions.append(AnnouncementORM.audience.in_([audience, "all"]))
+
+            stmt = (
+                select(func.count())
+                .select_from(AnnouncementORM)
+                .where(and_(*conditions))
+            )
+
             result = self.db.execute(stmt).scalar()
             return result or 0
-            
+
         except Exception as e:
             logger.error(f"Failed to get unread count: {e}", exc_info=True)
             raise

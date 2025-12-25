@@ -9,7 +9,7 @@ from pydantic import BaseModel, Field, validator
 
 class TransportCandidateRowDTO(BaseModel):
     """運搬候補行レスポンススキーマ"""
-    
+
     entry_id: str
     vendor_code: Union[int, str]
     vendor_name: str

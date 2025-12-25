@@ -7,6 +7,7 @@
 ## 問題
 
 `myuser`がスーパーユーザーとして作成され、多くのスキーマのオーナーになっていた。これにより：
+
 - 環境変数で指定した`sanbou_app_dev`ユーザーとの不整合
 - 権限エラーが発生する可能性
 - セキュリティベストプラクティスに反する
@@ -62,6 +63,7 @@ docker compose -f docker/docker-compose.dev.yml -p local_dev exec -T db \
 新しい環境（vm_stg、vm_prod、local_demo）を構築する際：
 
 1. **環境変数の確認**
+
    ```bash
    # 各環境の.envファイルでPOSTGRES_USERが正しく設定されていること
    cat env/.env.local_dev | grep POSTGRES_USER
@@ -69,12 +71,14 @@ docker compose -f docker/docker-compose.dev.yml -p local_dev exec -T db \
    ```
 
 2. **Baseline適用後の確認**
+
    ```bash
    make db-ensure-baseline-env ENV=<環境名>
    # schema_baseline.sqlは Owner: - を使用（環境変数のユーザーが自動的にオーナーになる）
    ```
 
 3. **Roles Bootstrapの実行**
+
    ```bash
    make db-bootstrap-roles-env ENV=<環境名>
    # app_readonlyロールと権限を設定
@@ -102,10 +106,12 @@ $(DC_FULL) exec -T db psql -U myuser -d sanbou_dev
 ### セキュリティ推奨事項
 
 1. **スーパーユーザーの使用を最小限に**
+
    - アプリケーションユーザー（sanbou_app_dev）は通常ユーザー
    - スーパーユーザー操作が必要な場合のみ`myuser`を使用
 
 2. **パスワード管理**
+
    - 全環境で`secrets/.env.*.secrets`にパスワードを保存
    - `POSTGRES_PASSWORD`は環境ごとに異なる強力なパスワードを使用
 

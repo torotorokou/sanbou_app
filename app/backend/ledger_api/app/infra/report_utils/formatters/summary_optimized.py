@@ -13,6 +13,7 @@ master_csvのcopy()を呼び出し元に委譲し、不要な中間copy()を削�
 使用条件:
 - master_csvが既にコピーされた書き換え可能なDataFrameであること
 """
+
 import pandas as pd
 from backend_shared.application.logging import get_module_logger
 from backend_shared.utils.dataframe_utils_optimized import clean_na_strings_vectorized
@@ -29,7 +30,7 @@ def summary_apply_optimized(
 ) -> pd.DataFrame:
     """
     インポートCSVをgroupby＆sumし、マスターCSVにマージ＆更新する最適化版関数。
-    
+
     Parameters
     ----------
     master_csv : pd.DataFrame
@@ -42,12 +43,12 @@ def summary_apply_optimized(
         集計する列名
     target_col : str
         結果を格納する列名
-    
+
     Returns
     -------
     pd.DataFrame
         更新されたマスターDataFrame
-    
+
     Notes
     -----
     - 従来のsummary_applyと異なり、master_csv.copy()を実行しない
@@ -84,7 +85,7 @@ def safe_merge_by_keys_optimized(
 ) -> pd.DataFrame:
     """
     最適化版: master_dfを直接書き換えず、効率的にマージする。
-    
+
     従来版との違い:
     - dropna/concatの代わりに、より効率的なマージ戦略を使用
     """
@@ -108,7 +109,7 @@ def summary_update_column_if_notna(
 ) -> pd.DataFrame:
     """
     source_colがNaNでない行のみ、target_colに値をコピーする。
-    
+
     Note: 入力DataFrameを直接書き換える（inplace操作）
     """
     mask = df[source_col].notna()

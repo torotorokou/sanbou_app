@@ -1,16 +1,16 @@
-import { describe, it, expect } from 'vitest';
-import { renderHook } from '@testing-library/react';
-import { useFilterLayout } from '../useFilterLayout';
-import * as sharedModule from '@/shared';
+import { describe, it, expect } from "vitest";
+import { renderHook } from "@testing-library/react";
+import { useFilterLayout } from "../useFilterLayout";
+import * as sharedModule from "@/shared";
 
 // useResponsiveをモック
-vi.mock('@/shared', () => ({
+vi.mock("@/shared", () => ({
   useResponsive: vi.fn(),
 }));
 
-describe('useFilterLayout', () => {
-  it('デスクトップ（xl以上）レイアウトを返す', () => {
-    vi.mocked(sharedModule.useResponsive).mockReturnValue({ 
+describe("useFilterLayout", () => {
+  it("デスクトップ（xl以上）レイアウトを返す", () => {
+    vi.mocked(sharedModule.useResponsive).mockReturnValue({
       isDesktop: true,
       isMobile: false,
       isTablet: false,
@@ -24,8 +24,8 @@ describe('useFilterLayout', () => {
     expect(result.current.topNSortGrid).toEqual({ xs: 24, md: 24, xl: 14 });
   });
 
-  it('モバイル（xl未満）レイアウトを返す', () => {
-    vi.mocked(sharedModule.useResponsive).mockReturnValue({ 
+  it("モバイル（xl未満）レイアウトを返す", () => {
+    vi.mocked(sharedModule.useResponsive).mockReturnValue({
       isDesktop: false,
       isMobile: true,
       isTablet: false,
@@ -38,8 +38,8 @@ describe('useFilterLayout', () => {
     expect(result.current.topNSortGrid).toEqual({ xs: 24, md: 16, xl: 14 });
   });
 
-  it('期間・営業・フィルタグリッド設定が正しく返される', () => {
-    vi.mocked(sharedModule.useResponsive).mockReturnValue({ 
+  it("期間・営業・フィルタグリッド設定が正しく返される", () => {
+    vi.mocked(sharedModule.useResponsive).mockReturnValue({
       isDesktop: true,
       isMobile: false,
       isTablet: false,

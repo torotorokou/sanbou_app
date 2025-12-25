@@ -1,9 +1,9 @@
 -- ============================================================
 -- 99_verify.sql - 検証クエリ
 -- ============================================================
--- 
+--
 -- 目的: 権限整備が正しく適用されたことを確認
--- 
+--
 -- 実行方法:
 --   psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -f 99_verify.sql
 -- ============================================================
@@ -22,7 +22,7 @@
 \echo '[1/7] ロール一覧'
 \echo '--------------------------------------------------------------'
 
-SELECT 
+SELECT
   rolname,
   CASE WHEN rolsuper THEN '✓' ELSE ' ' END as superuser,
   CASE WHEN rolcanlogin THEN '✓' ELSE ' ' END as login,
@@ -30,8 +30,8 @@ SELECT
   CASE WHEN rolcreatedb THEN '✓' ELSE ' ' END as create_db
 FROM pg_roles
 WHERE rolname NOT LIKE 'pg_%'
-ORDER BY 
-  CASE 
+ORDER BY
+  CASE
     WHEN rolname = 'sanbou_owner' THEN 1
     WHEN rolname LIKE 'sanbou_app_%' THEN 2
     WHEN rolname = 'app_readonly' THEN 3
@@ -54,10 +54,10 @@ ORDER BY
 \echo '[2/7] スキーマ owner 確認'
 \echo '--------------------------------------------------------------'
 
-SELECT 
+SELECT
   nspname as schema_name,
   pg_catalog.pg_get_userbyid(nspowner) as owner,
-  CASE 
+  CASE
     WHEN pg_catalog.pg_get_userbyid(nspowner) = 'sanbou_owner' THEN '✓'
     ELSE '⚠️'
   END as status
@@ -78,7 +78,7 @@ ORDER BY nspname;
 \echo '--------------------------------------------------------------'
 
 WITH table_samples AS (
-  SELECT 
+  SELECT
     schemaname,
     tablename,
     tableowner,
@@ -86,11 +86,11 @@ WITH table_samples AS (
   FROM pg_tables
   WHERE schemaname IN ('raw', 'stg', 'mart', 'ref', 'kpi', 'log', 'app', 'app_auth', 'forecast', 'jobs', 'sandbox', 'public')
 )
-SELECT 
+SELECT
   schemaname,
   tablename,
   tableowner,
-  CASE 
+  CASE
     WHEN tableowner = 'sanbou_owner' THEN '✓'
     ELSE '⚠️'
   END as status
@@ -108,11 +108,11 @@ ORDER BY schemaname, tablename;
 \echo '[4/7] シーケンス owner サンプル（先頭10件）'
 \echo '--------------------------------------------------------------'
 
-SELECT 
+SELECT
   schemaname,
   sequencename,
   sequenceowner,
-  CASE 
+  CASE
     WHEN sequenceowner = 'sanbou_owner' THEN '✓'
     ELSE '⚠️'
   END as status
@@ -131,7 +131,7 @@ LIMIT 10;
 \echo '[5/7] アプリユーザーのテーブル権限'
 \echo '--------------------------------------------------------------'
 
-SELECT 
+SELECT
   table_schema,
   string_agg(DISTINCT privilege_type, ', ' ORDER BY privilege_type) as privileges,
   COUNT(DISTINCT table_name) as table_count
@@ -139,7 +139,7 @@ FROM information_schema.table_privileges
 WHERE grantee = current_user
   AND table_schema IN ('raw', 'stg', 'mart', 'ref', 'kpi', 'log', 'app', 'app_auth', 'forecast', 'jobs', 'sandbox', 'public')
 GROUP BY table_schema
-ORDER BY 
+ORDER BY
   CASE table_schema
     WHEN 'raw' THEN 1
     WHEN 'stg' THEN 2
@@ -170,30 +170,30 @@ ORDER BY
 \echo '--------------------------------------------------------------'
 
 WITH seq_privs AS (
-  SELECT 
+  SELECT
     n.nspname as schema_name,
     c.relname as sequence_name,
-    CASE 
-      WHEN has_sequence_privilege(current_user, c.oid, 'USAGE') THEN '✓' 
-      ELSE '❌' 
+    CASE
+      WHEN has_sequence_privilege(current_user, c.oid, 'USAGE') THEN '✓'
+      ELSE '❌'
     END as usage_priv,
-    CASE 
-      WHEN has_sequence_privilege(current_user, c.oid, 'SELECT') THEN '✓' 
-      ELSE '❌' 
+    CASE
+      WHEN has_sequence_privilege(current_user, c.oid, 'SELECT') THEN '✓'
+      ELSE '❌'
     END as select_priv
   FROM pg_class c
   JOIN pg_namespace n ON n.oid = c.relnamespace
   WHERE c.relkind = 'S'
     AND n.nspname IN ('raw', 'stg', 'kpi', 'log', 'app', 'app_auth', 'forecast', 'jobs', 'sandbox', 'public')
 )
-SELECT 
+SELECT
   schema_name,
   COUNT(*) as seq_count,
   SUM(CASE WHEN usage_priv = '✓' THEN 1 ELSE 0 END) as usage_ok,
   SUM(CASE WHEN select_priv = '✓' THEN 1 ELSE 0 END) as select_ok,
-  CASE 
-    WHEN SUM(CASE WHEN usage_priv = '✓' THEN 1 ELSE 0 END) = COUNT(*) 
-     AND SUM(CASE WHEN select_priv = '✓' THEN 1 ELSE 0 END) = COUNT(*) 
+  CASE
+    WHEN SUM(CASE WHEN usage_priv = '✓' THEN 1 ELSE 0 END) = COUNT(*)
+     AND SUM(CASE WHEN select_priv = '✓' THEN 1 ELSE 0 END) = COUNT(*)
     THEN '✓ OK'
     ELSE '⚠️ NG'
   END as status
@@ -211,14 +211,14 @@ ORDER BY schema_name;
 \echo '[7/7] デフォルト権限設定確認'
 \echo '--------------------------------------------------------------'
 
-SELECT 
+SELECT
   defaclnamespace::regnamespace as schema,
   defaclobjtype as obj_type,
   pg_catalog.pg_get_userbyid(defaclrole) as for_role,
   defaclacl as default_acl
 FROM pg_default_acl
 WHERE defaclnamespace IN (
-  SELECT oid FROM pg_namespace 
+  SELECT oid FROM pg_namespace
   WHERE nspname IN ('raw', 'stg', 'mart', 'ref', 'kpi', 'log', 'app', 'app_auth', 'forecast', 'jobs', 'sandbox', 'public')
 )
 ORDER BY schema, obj_type;

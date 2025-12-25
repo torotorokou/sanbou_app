@@ -1,10 +1,9 @@
 from typing import Optional
 
-from fastapi import APIRouter, BackgroundTasks, File, Form, UploadFile, Depends
-from fastapi.responses import JSONResponse
-
-from app.core.usecases.reports.generate_average_sheet import GenerateAverageSheetUseCase
 from app.config.di_providers import get_average_sheet_usecase
+from app.core.usecases.reports.generate_average_sheet import GenerateAverageSheetUseCase
+from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, UploadFile
+from fastapi.responses import JSONResponse
 
 router = APIRouter()
 
@@ -22,7 +21,7 @@ async def generate_average_sheet(
     工場平均表生成APIエンドポイント
 
     受入一覧から平均表を自動集計します。
-    
+
     🔄 リファクタリング: Excel同期 + PDF非同期の2段階構成
     - Excel生成は同期的に実行し、すぐにダウンロードURL返却
     - PDF生成はバックグラウンドで実行

@@ -28,8 +28,8 @@ make al-up
 docker compose -f docker/docker-compose.dev.yml -p local_dev exec db psql -U myuser -d sanbou_dev
 
 # マテビューの最終更新時刻を確認
-SELECT schemaname, matviewname, last_refresh 
-FROM pg_matviews 
+SELECT schemaname, matviewname, last_refresh
+FROM pg_matviews
 WHERE matviewname = 'mv_target_card_per_day';
 
 # マテビューのデータ件数を確認
@@ -78,8 +78,8 @@ docker compose -f docker/docker-compose.dev.yml -p local_dev logs -f core_api
 docker compose -f docker/docker-compose.dev.yml -p local_dev exec db psql -U myuser -d sanbou_dev
 
 # マテビューの最終更新時刻が新しくなっていることを確認
-SELECT schemaname, matviewname, last_refresh 
-FROM pg_matviews 
+SELECT schemaname, matviewname, last_refresh
+FROM pg_matviews
 WHERE matviewname = 'mv_target_card_per_day';
 
 # データ件数の変化を確認
@@ -93,9 +93,9 @@ SELECT MAX(ddate) FROM mart.mv_target_card_per_day;
 
 ```bash
 # 最新のアップロードログを確認
-SELECT id, csv_type, file_name, processing_status, row_count, uploaded_at 
-FROM log.upload_file 
-ORDER BY uploaded_at DESC 
+SELECT id, csv_type, file_name, processing_status, row_count, uploaded_at
+FROM log.upload_file
+ORDER BY uploaded_at DESC
 LIMIT 5;
 
 # csv_type='receive' かつ processing_status='success' の行が存在することを確認
@@ -124,9 +124,9 @@ curl -X POST "http://localhost:8000/database/upload/syogun_csv_flash" \
   -F "receive=@/path/to/invalid.csv"
 
 # upload_file.processing_status が 'failed' になることを確認
-SELECT id, csv_type, processing_status, error_message 
-FROM log.upload_file 
-ORDER BY uploaded_at DESC 
+SELECT id, csv_type, processing_status, error_message
+FROM log.upload_file
+ORDER BY uploaded_at DESC
 LIMIT 1;
 
 # マテビュー更新は実行されない（ログに "Starting materialized view refresh" が出力されない）
@@ -142,6 +142,7 @@ LIMIT 1;
 ```
 
 アップロードを実行すると:
+
 - upload_file.processing_status は 'success' になる
 - ログに ERROR レベルのメッセージが記録される
 - ユーザーにはアップロード成功が返される（MVエラーは内部で処理）
@@ -162,9 +163,11 @@ pytest tests/test_mv_refresh.py -v
 ### マテビュー更新が実行されない
 
 1. `mv_refresher` が DI されているか確認
+
    - ログに "MaterializedViewRefresher not injected" が出力される場合、DI設定を確認
 
 2. csv_type が 'receive' であるか確認
+
    - yard や shipment の場合、マテビュー更新は実行されない（MV_MAPPINGS に定義されていない）
 
 3. processing_status が 'success' であるか確認
@@ -184,6 +187,7 @@ ERROR: Failed to refresh materialized view mart.mv_target_card_per_day: ...
 ```
 
 考えられる原因:
+
 1. マテビューが存在しない → マイグレーション実行
 2. UNIQUE INDEX が存在しない → CONCURRENTLY オプションが使えない
 3. DB接続エラー → DB の状態を確認
@@ -213,7 +217,7 @@ docker compose -f docker/docker-compose.dev.yml -p local_dev exec -T db \
 
 ```sql
 -- マテビューのサイズと更新頻度を確認
-SELECT 
+SELECT
     schemaname,
     matviewname,
     pg_size_pretty(pg_total_relation_size(schemaname||'.'||matviewname)) AS size,

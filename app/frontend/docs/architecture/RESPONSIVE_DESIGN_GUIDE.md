@@ -75,18 +75,18 @@ import { useResponsive } from '@/shared';
 
 const MyPage: React.FC = () => {
   const { flags } = useResponsive();
-  
+
   // 3段階分岐
   if (flags.isMobile) {
     // Mobile (≤767px): 1列縦並び
     return <MobileLayout />;
   }
-  
+
   if (flags.isTablet) {
     // Tablet (768-1280px): 2列レイアウト
     return <TabletLayout />;
   }
-  
+
   // Desktop (≥1281px): 3列フルレイアウト
   return <DesktopLayout />;
 };
@@ -97,18 +97,18 @@ const MyPage: React.FC = () => {
 ```typescript
 const MyComponent: React.FC = () => {
   const { flags } = useResponsive();
-  
+
   // 値を3段階で決定
   const pickByDevice = <T,>(mobile: T, tablet: T, desktop: T): T => {
     if (flags.isMobile) return mobile;      // ≤767
     if (flags.isTablet) return tablet;      // 768-1280
     return desktop;                         // ≥1281
   };
-  
+
   const columns = pickByDevice(1, 2, 3);
   const gap = pickByDevice(8, 16, 24);
   const padding = pickByDevice('8px', '16px', '24px');
-  
+
   return (
     <div style={{
       display: 'grid',
@@ -131,12 +131,12 @@ import { useSidebar } from '@/shared';
 
 const MyLayout: React.FC = () => {
   const { state, actions } = useSidebar();
-  
+
   // state.drawerMode は自動で決まる
   // - Mobile (≤767):        drawerMode=true, defaultCollapsed=true
   // - Tablet (768-1280):    drawerMode=false, defaultCollapsed=true
   // - Desktop (≥1281):      drawerMode=false, defaultCollapsed=false
-  
+
   return (
     <Layout>
       {state.drawerMode ? (
@@ -165,12 +165,12 @@ const MyLayout: React.FC = () => {
 ```typescript
 const MyModal: React.FC<Props> = ({ visible, onClose }) => {
   const { flags } = useResponsive();
-  
+
   // モーダル幅を3段階で決定
   const modalWidth = flags.isMobile ? '90%'      // ≤767
                    : flags.isTablet ? 640        // 768-1280
                    : 800;                        // ≥1281
-  
+
   return (
     <Modal
       open={visible}
@@ -188,12 +188,12 @@ const MyModal: React.FC<Props> = ({ visible, onClose }) => {
 ```typescript
 const MyTable: React.FC = () => {
   const { flags } = useResponsive();
-  
+
   // Mobile: カード表示、Tablet以上: テーブル表示
   if (flags.isMobile) {
     return <CardList data={data} />;
   }
-  
+
   // Tablet/Desktop: テーブル表示（カラム数は同じでOK）
   return (
     <Table
@@ -210,12 +210,12 @@ const MyTable: React.FC = () => {
 ```typescript
 const MyForm: React.FC = () => {
   const { flags } = useResponsive();
-  
+
   // フォーム列数を3段階で決定
   const colSpan = flags.isMobile ? 24      // 1列（全幅）
                 : flags.isTablet ? 12      // 2列（半幅）
                 : 8;                       // 3列（1/3幅）
-  
+
   return (
     <Form>
       <Row gutter={16}>
@@ -254,6 +254,7 @@ if (!flags.isDesktop) { ... }  // = Mobile or Tablet
 ```
 
 **理由**:
+
 - SSRで window が存在しない
 - テストが困難
 - 境界値変更時に複数ファイル修正が必要
@@ -273,6 +274,7 @@ const modalWidth = flags.isMobile ? 320 : 640;
 ```
 
 **理由**:
+
 - 境界値変更時に修正箇所が散在
 - typoリスク（1279 vs 1280 など）
 
@@ -292,6 +294,7 @@ else { ... }  // Desktop (≥1281)
 ```
 
 **理由**:
+
 - 4段階にすると Tablet/Laptop の境界（1024px）で混乱
 - **isTablet が 768-1280 を含むため、isLaptop は不要**
 
@@ -299,11 +302,11 @@ else { ... }  // Desktop (≥1281)
 
 ```typescript
 // ❌ 禁止
-const MOBILE_MAX = 799;  // 独自定義
+const MOBILE_MAX = 799; // 独自定義
 const TABLET_MIN = 800;
 
 // ✅ 正解
-import { BP } from '@/shared';
+import { BP } from "@/shared";
 // BP.mobileMax, BP.tabletMin, BP.tabletMax, BP.desktopMin を使用
 ```
 
@@ -326,37 +329,39 @@ import { BP } from '@/shared';
   };
   ```
 
-#### features/*/ui/
+#### features/\*/ui/
 
 - **役割**: 表示コンポーネント（できるだけ状態レス）
 - **レスポンシブ**: variant prop で受け取る（推奨）
 - **例**:
+
   ```typescript
   // features/report/upload/ui/CsvUploadSection.tsx
   type Props = {
-    variant?: 'mobile' | 'tablet' | 'desktop';
+    variant?: "mobile" | "tablet" | "desktop";
   };
-  
-  const CsvUploadSection: React.FC<Props> = ({ variant = 'desktop' }) => {
-    const fontSize = variant === 'mobile' ? '14px' : '16px';
+
+  const CsvUploadSection: React.FC<Props> = ({ variant = "desktop" }) => {
+    const fontSize = variant === "mobile" ? "14px" : "16px";
     // ...
   };
   ```
 
-#### features/*/model/
+#### features/\*/model/
 
 - **役割**: 画面状態・ユースケース・レスポンシブロジック集約
 - **レスポンシブ**: useResponsive() を呼び、計算結果をuiに渡す
 - **例**:
+
   ```typescript
   // features/report/selector/model/useReportLayoutStyles.ts
   export const useReportLayoutStyles = () => {
     const { flags } = useResponsive();
-    
+
     const padding = flags.isMobile ? 8
                   : flags.isTablet ? 16
                   : 24;
-    
+
     return { padding, gap, ... };
   };
   ```
@@ -369,12 +374,12 @@ import { BP } from '@/shared';
 
 ### D-2. レスポンシブロジックの配置指針
 
-| ロジック種類 | 推奨配置 | 理由 |
-|------------|---------|------|
-| 画面構造分岐（1列/2列/3列） | pages/ | ページ全体の骨組み |
-| モーダル幅・余白・フォント | features/*/model/ | 再利用可能なロジック |
-| variant受け取り | features/*/ui/ | テスト容易性 |
-| レスポンシブ基盤 | shared/hooks/ui/ | 唯一の真実 |
+| ロジック種類                | 推奨配置           | 理由                 |
+| --------------------------- | ------------------ | -------------------- |
+| 画面構造分岐（1列/2列/3列） | pages/             | ページ全体の骨組み   |
+| モーダル幅・余白・フォント  | features/\*/model/ | 再利用可能なロジック |
+| variant受け取り             | features/\*/ui/    | テスト容易性         |
+| レスポンシブ基盤            | shared/hooks/ui/   | 唯一の真実           |
 
 ---
 
@@ -387,16 +392,16 @@ import { useResponsive } from '@/shared';
 
 const MyComponent: React.FC = () => {
   const { flags, tier, width } = useResponsive();
-  
+
   // flags.isMobile   : boolean (≤767)
   // flags.isTablet   : boolean (768-1280) ★1280含む
   // flags.isDesktop  : boolean (≥1281)
   // tier             : 'mobile' | 'tablet' | 'desktop'
   // width            : number (画面幅、SSR時は768)
-  
+
   // 使用例
   const layout = flags.isMobile ? 'stack' : 'grid';
-  
+
   return <div>{/* ... */}</div>;
 };
 ```
@@ -406,18 +411,18 @@ const MyComponent: React.FC = () => {
 ```typescript
 const MyComponent: React.FC = () => {
   const { flags } = useResponsive();
-  
+
   const pickByDevice = <T,>(mobile: T, tablet: T, desktop: T): T => {
     if (flags.isMobile) return mobile;
     if (flags.isTablet) return tablet;
     return desktop;
   };
-  
+
   // 使用例
   const columns = pickByDevice(1, 2, 3);
   const fontSize = pickByDevice(14, 15, 16);
   const padding = pickByDevice('8px 12px', '12px 16px', '16px 24px');
-  
+
   return <div style={{ padding, fontSize }}>{/* ... */}</div>;
 };
 ```
@@ -435,14 +440,14 @@ type Props = {
   // ...
 };
 
-export const MyComponent: React.FC<Props> = ({ 
+export const MyComponent: React.FC<Props> = ({
   variant = 'desktop',
-  ...props 
+  ...props
 }) => {
   const size = variant === 'mobile' ? 'small'
              : variant === 'tablet' ? 'middle'
              : 'large';
-  
+
   return <Button size={size}>{/* ... */}</Button>;
 };
 ```
@@ -453,7 +458,7 @@ export const MyComponent: React.FC<Props> = ({
 // pages/MyPage.tsx
 const MyPage: React.FC = () => {
   const { tier } = useResponsive();
-  
+
   return <MyComponent variant={tier} />;
 };
 ```
@@ -463,7 +468,7 @@ const MyPage: React.FC = () => {
 ```typescript
 const MyComponent: React.FC = () => {
   const { flags } = useResponsive();
-  
+
   const styles = {
     container: {
       display: 'flex',
@@ -472,7 +477,7 @@ const MyComponent: React.FC = () => {
       padding: flags.isMobile ? '8px 12px' : '16px 24px',
     } as React.CSSProperties,
   };
-  
+
   return <div style={styles.container}>{/* ... */}</div>;
 };
 ```
@@ -484,7 +489,7 @@ import { BP } from '@/shared';
 
 const MyComponent: React.FC = () => {
   const [containerWidth, setContainerWidth] = useState(0);
-  
+
   useEffect(() => {
     // コンテナ幅を取得して判定（window.innerWidthは使わない）
     const updateWidth = () => {
@@ -495,12 +500,12 @@ const MyComponent: React.FC = () => {
     };
     // ...
   }, []);
-  
+
   // BP定数を使って判定
   const isMobileContainer = containerWidth <= BP.mobileMax;
-  const isTabletContainer = containerWidth >= BP.tabletMin 
+  const isTabletContainer = containerWidth >= BP.tabletMin
                          && containerWidth <= BP.tabletMax;
-  
+
   return <div ref={ref}>{/* ... */}</div>;
 };
 ```
@@ -517,11 +522,15 @@ const MyComponent: React.FC = () => {
 
 ```typescript
 // 例: フォントサイズの微調整
-const fontSize = flags.isXs ? 12
-               : flags.isSm ? 14
-               : flags.isMd ? 14
-               : flags.isLg ? 15
-               : 16;
+const fontSize = flags.isXs
+  ? 12
+  : flags.isSm
+    ? 14
+    : flags.isMd
+      ? 14
+      : flags.isLg
+        ? 15
+        : 16;
 
 // ただし、基本は3段階で十分
 // 迷ったら3段階にする
@@ -531,7 +540,7 @@ const fontSize = flags.isXs ? 12
 
 ```typescript
 // shared/hooks/ui/useResponsive.ts
-const width = window.innerWidth;  // OK（内部実装）
+const width = window.innerWidth; // OK（内部実装）
 ```
 
 #### 3. テスト・デバッグ
@@ -561,6 +570,7 @@ if (window.innerWidth > 1920) { ... }  // OK（テストツール）
 **原因**: 1280px が Desktop 扱いになっている（旧定義）
 
 **修正**:
+
 - `breakpoints.ts` で `BP.desktopMin: 1281` を確認
 - `useResponsive.ts` で `isDesktop: width >= 1281` を確認
 
@@ -570,6 +580,7 @@ if (window.innerWidth > 1920) { ... }  // OK（テストツール）
 **原因**: `isTablet: isMd` のみ（`isMd || isLg` でない）
 
 **修正**:
+
 ```typescript
 // ❌ 誤り
 isTablet: isMd,  // 768-1023のみ
@@ -584,12 +595,13 @@ isTablet: isMd || isLg,  // 768-1280（★1280含む）
 **原因**: 浮動小数点演算、境界値のズレ
 
 **修正**:
+
 ```typescript
 // テストは整数で明示的に
 expect(makeFlags(767).isMobile).toBe(true);
 expect(makeFlags(768).isTablet).toBe(true);
-expect(makeFlags(1280).isTablet).toBe(true);   // ★重要
-expect(makeFlags(1281).isDesktop).toBe(true);  // ★重要
+expect(makeFlags(1280).isTablet).toBe(true); // ★重要
+expect(makeFlags(1281).isDesktop).toBe(true); // ★重要
 ```
 
 ---

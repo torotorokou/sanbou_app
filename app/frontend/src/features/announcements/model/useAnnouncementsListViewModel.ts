@@ -1,6 +1,6 @@
 /**
  * useAnnouncementsListViewModel - 一覧用ViewModel
- * 
+ *
  * お知らせ一覧ページのロジック。
  * - 一覧取得
  * - 詳細表示の開閉
@@ -8,30 +8,34 @@
  * - 期限・対象フィルタ適用
  */
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
-import type { Announcement, AnnouncementSeverity, Audience } from '../domain/announcement';
-import { isVisibleForAudience } from '../domain/announcement';
-import { announcementRepository } from '../infrastructure';
-import { stripMarkdownForSnippet } from '../domain/stripMarkdownForSnippet';
-import { useAnnouncementState } from './AnnouncementStateContext';
+import { useState, useEffect, useCallback, useMemo } from "react";
+import type {
+  Announcement,
+  AnnouncementSeverity,
+  Audience,
+} from "../domain/announcement";
+import { isVisibleForAudience } from "../domain/announcement";
+import { announcementRepository } from "../infrastructure";
+import { stripMarkdownForSnippet } from "../domain/stripMarkdownForSnippet";
+import { useAnnouncementState } from "./AnnouncementStateContext";
 
 /**
  * 現在のユーザーオーディエンス
- * 
+ *
  * TODO: 将来的にはユーザープロファイル（認証情報/ユーザー設定）から取得する
  * 現在はデモ用に 'site:narita' を設定
  */
-const CURRENT_AUDIENCE: Audience = 'site:narita';
+const CURRENT_AUDIENCE: Audience = "site:narita";
 
 /**
  * フィルタタブの種類
  */
-export type AnnouncementFilterTab = 'all' | 'unread';
+export type AnnouncementFilterTab = "all" | "unread";
 
 /**
  * ソート種類
  */
-export type AnnouncementSortType = 'date-desc' | 'date-asc' | 'severity';
+export type AnnouncementSortType = "date-desc" | "date-asc" | "severity";
 
 /**
  * バッジ表示用データ
@@ -94,11 +98,11 @@ interface UseAnnouncementsListViewModelResult {
 
 /**
  * 一覧用ViewModel
- * 
+ *
  * @param userKey - ユーザー識別子（未ログイン時は"local"）※現在は未使用
  */
 export function useAnnouncementsListViewModel(
-  userKey: string = 'local'
+  userKey: string = "local",
 ): UseAnnouncementsListViewModelResult {
   // userKey は将来のユーザー認証対応時に使用予定
   void userKey;
@@ -114,9 +118,9 @@ export function useAnnouncementsListViewModel(
   // 既読状態マップ（API or localStorage から取得）
   const [readAtMap, setReadAtMap] = useState<Record<string, string | null>>({});
   // タブ状態
-  const [selectedTab, setSelectedTab] = useState<AnnouncementFilterTab>('all');
+  const [selectedTab, setSelectedTab] = useState<AnnouncementFilterTab>("all");
   // ソート状態
-  const [sortType, setSortType] = useState<AnnouncementSortType>('date-desc');
+  const [sortType, setSortType] = useState<AnnouncementSortType>("date-desc");
 
   useEffect(() => {
     let cancelled = false;
@@ -162,7 +166,7 @@ export function useAnnouncementsListViewModel(
         setIsDetailOpen(true);
       }
     },
-    [announcements, notifyReadStateChanged]
+    [announcements, notifyReadStateChanged],
   );
 
   const closeDetail = useCallback(() => {
@@ -175,16 +179,16 @@ export function useAnnouncementsListViewModel(
       // readAtMap から既読状態を判定
       return readAtMap[id] === null || readAtMap[id] === undefined;
     },
-    [readAtMap]
+    [readAtMap],
   );
 
   const unreadCount = useMemo(() => {
     // 対象フィルタ適用後のお知らせで未読数を計算
     const filteredAnnouncements = announcements.filter((ann) =>
-      isVisibleForAudience(ann, CURRENT_AUDIENCE)
+      isVisibleForAudience(ann, CURRENT_AUDIENCE),
     );
-    return filteredAnnouncements.filter((ann) => 
-      readAtMap[ann.id] === null || readAtMap[ann.id] === undefined
+    return filteredAnnouncements.filter(
+      (ann) => readAtMap[ann.id] === null || readAtMap[ann.id] === undefined,
     ).length;
   }, [announcements, readAtMap]);
 
@@ -193,7 +197,7 @@ export function useAnnouncementsListViewModel(
    */
   const visibleAnnouncements = useMemo(() => {
     return announcements.filter((ann) =>
-      isVisibleForAudience(ann, CURRENT_AUDIENCE)
+      isVisibleForAudience(ann, CURRENT_AUDIENCE),
     );
   }, [announcements]);
 
@@ -205,10 +209,10 @@ export function useAnnouncementsListViewModel(
     return visibleAnnouncements.map((ann) => {
       // 公開日をフォーマット
       const publishedDate = new Date(ann.publishFrom);
-      const publishedLabel = publishedDate.toLocaleDateString('ja-JP', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
+      const publishedLabel = publishedDate.toLocaleDateString("ja-JP", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
       });
 
       // 本文スニペット（Markdown記号除去）
@@ -219,14 +223,14 @@ export function useAnnouncementsListViewModel(
 
       // 重要度バッジ
       switch (ann.severity) {
-        case 'critical':
-          badges.push({ label: '重要', color: 'red' });
+        case "critical":
+          badges.push({ label: "重要", color: "red" });
           break;
-        case 'warn':
-          badges.push({ label: '注意', color: 'orange' });
+        case "warn":
+          badges.push({ label: "注意", color: "orange" });
           break;
-        case 'info':
-          badges.push({ label: '情報', color: 'blue' });
+        case "info":
+          badges.push({ label: "情報", color: "blue" });
           break;
       }
 
@@ -254,46 +258,64 @@ export function useAnnouncementsListViewModel(
   /**
    * ソート関数
    */
-  const sortItems = useCallback((items: AnnouncementDisplayItem[]): AnnouncementDisplayItem[] => {
-    const sorted = [...items];
-    
-    switch (sortType) {
-      case 'date-desc':
-        // 日付降順（新しい順）
-        sorted.sort((a, b) => {
-          const dateA = new Date(visibleAnnouncements.find(ann => ann.id === a.id)?.publishFrom || 0);
-          const dateB = new Date(visibleAnnouncements.find(ann => ann.id === b.id)?.publishFrom || 0);
-          return dateB.getTime() - dateA.getTime();
-        });
-        break;
-      case 'date-asc':
-        // 日付昇順（古い順）
-        sorted.sort((a, b) => {
-          const dateA = new Date(visibleAnnouncements.find(ann => ann.id === a.id)?.publishFrom || 0);
-          const dateB = new Date(visibleAnnouncements.find(ann => ann.id === b.id)?.publishFrom || 0);
-          return dateA.getTime() - dateB.getTime();
-        });
-        break;
-      case 'severity':
-        // 重要度順（critical→warn→info）
-        const severityOrder = { critical: 0, warn: 1, info: 2 };
-        sorted.sort((a, b) => severityOrder[a.severity] - severityOrder[b.severity]);
-        break;
-    }
-    
-    return sorted;
-  }, [sortType, visibleAnnouncements]);
+  const sortItems = useCallback(
+    (items: AnnouncementDisplayItem[]): AnnouncementDisplayItem[] => {
+      const sorted = [...items];
+
+      switch (sortType) {
+        case "date-desc":
+          // 日付降順（新しい順）
+          sorted.sort((a, b) => {
+            const dateA = new Date(
+              visibleAnnouncements.find((ann) => ann.id === a.id)
+                ?.publishFrom || 0,
+            );
+            const dateB = new Date(
+              visibleAnnouncements.find((ann) => ann.id === b.id)
+                ?.publishFrom || 0,
+            );
+            return dateB.getTime() - dateA.getTime();
+          });
+          break;
+        case "date-asc":
+          // 日付昇順（古い順）
+          sorted.sort((a, b) => {
+            const dateA = new Date(
+              visibleAnnouncements.find((ann) => ann.id === a.id)
+                ?.publishFrom || 0,
+            );
+            const dateB = new Date(
+              visibleAnnouncements.find((ann) => ann.id === b.id)
+                ?.publishFrom || 0,
+            );
+            return dateA.getTime() - dateB.getTime();
+          });
+          break;
+        case "severity":
+          // 重要度順（critical→warn→info）
+          const severityOrder = { critical: 0, warn: 1, info: 2 };
+          sorted.sort(
+            (a, b) => severityOrder[a.severity] - severityOrder[b.severity],
+          );
+          break;
+      }
+
+      return sorted;
+    },
+    [sortType, visibleAnnouncements],
+  );
 
   /**
    * 重要・注意アイツム（warn/critical、タブフィルタ・ソート適用済み）
    */
   const importantItems = useMemo<AnnouncementDisplayItem[]>(() => {
     const important = displayItems.filter(
-      (item) => item.severity === 'warn' || item.severity === 'critical'
+      (item) => item.severity === "warn" || item.severity === "critical",
     );
-    const filtered = selectedTab === 'unread' 
-      ? important.filter((item) => item.isUnread)
-      : important;
+    const filtered =
+      selectedTab === "unread"
+        ? important.filter((item) => item.isUnread)
+        : important;
     return sortItems(filtered);
   }, [displayItems, selectedTab, sortItems]);
 
@@ -302,11 +324,10 @@ export function useAnnouncementsListViewModel(
    */
   const otherItems = useMemo<AnnouncementDisplayItem[]>(() => {
     const other = displayItems.filter(
-      (item) => item.severity !== 'warn' && item.severity !== 'critical'
+      (item) => item.severity !== "warn" && item.severity !== "critical",
     );
-    const filtered = selectedTab === 'unread'
-      ? other.filter((item) => item.isUnread)
-      : other;
+    const filtered =
+      selectedTab === "unread" ? other.filter((item) => item.isUnread) : other;
     return sortItems(filtered);
   }, [displayItems, selectedTab, sortItems]);
 

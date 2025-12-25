@@ -5,13 +5,13 @@ Revises: 20251104_174818076
 Create Date: 2025-11-05 00:18:49.804814
 
 """
-from alembic import op
+
 import sqlalchemy as sa
-from alembic import context
+from alembic import context, op
 
 # revision identifiers, used by Alembic.
-revision = '20251105_091848960'
-down_revision = '20251104_174818076'
+revision = "20251105_091848960"
+down_revision = "20251104_174818076"
 branch_labels = None
 depends_on = None
 
@@ -24,7 +24,9 @@ def _exists(qualified: str) -> bool:
     if context.is_offline_mode():
         return False
     conn = op.get_bind()
-    return bool(conn.scalar(sa.text("SELECT to_regclass(:q) IS NOT NULL"), {"q": qualified}))
+    return bool(
+        conn.scalar(sa.text("SELECT to_regclass(:q) IS NOT NULL"), {"q": qualified})
+    )
 
 
 def upgrade():

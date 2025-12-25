@@ -7,17 +7,16 @@ from datetime import datetime, timedelta, timezone
 from typing import List
 from uuid import UUID, uuid4
 
-from sqlalchemy.orm import Session
-
 from app.core.domain.notification import (
     FailureType,
     NotificationChannel,
     NotificationOutboxItem,
-    NotificationStatus,
     NotificationPayload,
+    NotificationStatus,
 )
 from app.core.ports.notification_port import NotificationOutboxPort
 from app.infra.db.orm_models import NotificationOutboxORM
+from sqlalchemy.orm import Session
 
 logger = logging.getLogger(__name__)
 
@@ -49,11 +48,13 @@ class DbNotificationOutboxAdapter(NotificationOutboxPort):
                 failure_type=item.failure_type.value if item.failure_type else None,
             )
             self.db.add(orm_item)
-        
+
         self.db.commit()
         logger.info(f"Enqueued {len(items)} notifications to DB")
 
-    def list_pending(self, now: datetime, limit: int = 100) -> List[NotificationOutboxItem]:
+    def list_pending(
+        self, now: datetime, limit: int = 100
+    ) -> List[NotificationOutboxItem]:
         """送信待ちの通知を取得"""
 
         # ステータスがpendingで、scheduled_atが過去または未設定、next_retry_atが過去または未設定
@@ -85,7 +86,9 @@ class DbNotificationOutboxAdapter(NotificationOutboxPort):
         self.db.commit()
         logger.info(f"Marked notification {id} as sent")
 
-    def mark_failed(self, id: UUID, error: str, failure_type: FailureType, now: datetime) -> None:
+    def mark_failed(
+        self, id: UUID, error: str, failure_type: FailureType, now: datetime
+    ) -> None:
         """通知を失敗にマーク（TEMPORARY: リトライ、PERMANENT: 即失敗）"""
         orm_item = self.db.query(NotificationOutboxORM).filter_by(id=id).first()
         if not orm_item:
@@ -157,5 +160,7 @@ class DbNotificationOutboxAdapter(NotificationOutboxPort):
             retry_count=orm_item.retry_count,
             next_retry_at=orm_item.next_retry_at,
             last_error=orm_item.last_error,
-            failure_type=FailureType(orm_item.failure_type) if orm_item.failure_type else None,
+            failure_type=(
+                FailureType(orm_item.failure_type) if orm_item.failure_type else None
+            ),
         )

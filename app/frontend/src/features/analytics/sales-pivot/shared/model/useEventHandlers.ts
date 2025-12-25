@@ -3,8 +3,8 @@
  * シンプルなイベントハンドラー（モード切替）の管理
  */
 
-import { useCallback } from 'react';
-import type { Mode, ID } from './types';
+import { useCallback } from "react";
+import type { Mode, ID } from "./types";
 
 interface EventHandlersParams {
   setMode: (mode: Mode) => void;
@@ -20,7 +20,7 @@ export function useEventHandlers(params: EventHandlersParams) {
       setMode(m);
       setFilterIds([]);
     },
-    [setMode, setFilterIds]
+    [setMode, setFilterIds],
   );
 
   return {

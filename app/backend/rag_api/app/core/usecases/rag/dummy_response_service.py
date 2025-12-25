@@ -12,7 +12,7 @@ test-answerエンドポイント用のダミーデータ生成を担当するサ
 
 レスポンス形式：
 {
-  "status": "success", 
+  "status": "success",
   "code": "S200",
   "detail": "ダミーAI回答生成成功",
   "result": {
@@ -29,31 +29,32 @@ test-answerエンドポイント用のダミーデータ生成を担当するサ
 """
 
 import os
-from typing import Dict, Any
-from backend_shared.utils.datetime_utils import now_in_app_timezone
+from typing import Any, Dict
+
 from app.config.paths import get_pdf_url_prefix
 from app.core.ports.rag.pdf_service_port import PDFServiceBase
+from backend_shared.utils.datetime_utils import now_in_app_timezone
 
 
 class DummyResponseService:
     """
     ダミーレスポンス生成サービス
-    
+
     test-answerエンドポイント用のダミーデータを生成します。
     PDFファイルの結合やダミー回答の作成を担当します。
     """
-    
+
     def __init__(self, pdf_service: PDFServiceBase):
         self.pdf_service = pdf_service
-    
+
     def generate_dummy_response(self, query: str, category: str) -> Dict[str, Any]:
         """
         ダミーレスポンスを生成
-        
+
         Args:
             query: ユーザーのクエリ
             category: カテゴリ
-            
+
         Returns:
             ダミーレスポンスデータ（answer, sources, pdf_url）
         """
@@ -64,19 +65,19 @@ class DummyResponseService:
         debug_dir = os.path.join(pdfs_dir, "debug")
         os.makedirs(pdfs_dir, exist_ok=True)
         os.makedirs(debug_dir, exist_ok=True)
-        
+
         # PDFファイル一覧取得（先頭5つ）
         pdf_files = [f for f in os.listdir(pdfs_dir) if f.lower().endswith(".pdf")]
         pdf_files.sort()
         selected_files = pdf_files[:5]
-        
+
         # 固定ページ番号
-        pages = list(range(3, 8))[:len(selected_files)]
+        pages = list(range(3, 8))[: len(selected_files)]
         sources = [
             [selected_files[i] if i < len(selected_files) else "dummy.pdf", pages[i]]
             for i in range(len(pages))
         ]
-        
+
         # デバッグ用：選択されたPDFをデバッグディレクトリにコピー（参考用）
         debug_file_paths = []
         for fname in selected_files:
@@ -85,19 +86,20 @@ class DummyResponseService:
             # ファイルが存在し、デバッグファイルがまだなければコピー
             if os.path.exists(src_path) and not os.path.exists(debug_path):
                 import shutil
+
                 shutil.copy2(src_path, debug_path)
             debug_file_paths.append(src_path)  # 元ファイルパスを使用
-        
+
         # PDF結合処理（ユーザー向けは本体ディレクトリに保存）
         timestamp = now_in_app_timezone().strftime("%Y%m%d_%H%M%S")
         merged_pdf_name = f"merged_response_{timestamp}.pdf"
         merged_pdf_path = os.path.join(pdfs_dir, merged_pdf_name)
         pdf_file_paths = debug_file_paths  # 元ファイルから結合
-        
+
         self.pdf_service.merge_pdfs(pdf_file_paths, merged_pdf_path)
-        
+
         pdf_url = f"{get_pdf_url_prefix()}/{merged_pdf_name}"
-        
+
         return {
             "answer": f"ダミー回答: {query}（カテゴリ: {category}）",
             "sources": sources,

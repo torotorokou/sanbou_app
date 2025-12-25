@@ -11,6 +11,9 @@ type Params = { year: number; month: number; repository: ICalendarRepository };
  */
 export function useBusinessCalendarVM({ year, month, repository }: Params) {
   const base = useCalendarVM({ year, month, repository });
-  const decorated = useMemo(() => decorateCalendarCells(base.grid), [base.grid]);
+  const decorated = useMemo(
+    () => decorateCalendarCells(base.grid),
+    [base.grid],
+  );
   return { ...base, grid: decorated };
 }

@@ -2,7 +2,7 @@
  * 将軍マニュアル一覧ページ
  * FSD: ページ層はレイアウト・検索・状態管理を統合
  */
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   Anchor,
   Badge,
@@ -13,26 +13,26 @@ import {
   Space,
   Tooltip,
   Typography,
-} from 'antd';
-import { FileDoneOutlined } from '@ant-design/icons';
-import { useResponsive } from '@/shared'; // responsive: flags
-import { useShogunCatalog } from '@features/manual';
-import { SectionBlock } from '@features/manual/ui/components/SectionBlock';
-import { ManualModal } from '@features/manual/ui/components/ShogunModal';
-import { UnimplementedModal } from '@features/unimplemented-feature';
-import type { ManualItem } from '@features/manual';
-import styles from './ShogunList.module.css';
+} from "antd";
+import { FileDoneOutlined } from "@ant-design/icons";
+import { useResponsive } from "@/shared"; // responsive: flags
+import { useShogunCatalog } from "@features/manual";
+import { SectionBlock } from "@features/manual/ui/components/SectionBlock";
+import { ManualModal } from "@features/manual/ui/components/ShogunModal";
+import { UnimplementedModal } from "@features/unimplemented-feature";
+import type { ManualItem } from "@features/manual";
+import styles from "./ShogunList.module.css";
 
 const { Title } = Typography;
 const { Header, Sider, Content } = Layout;
 
 const ShogunManualListPage: React.FC = () => {
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState("");
   const [activeItem, setActiveItem] = useState<ManualItem | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [showUnimplementedModal, setShowUnimplementedModal] = useState(false);
   const contentScrollRef = useRef<HTMLDivElement | null>(null);
-  
+
   const { sections, loading } = useShogunCatalog();
   // responsive: useResponsive(flags)
   const { flags } = useResponsive();
@@ -44,9 +44,9 @@ const ShogunManualListPage: React.FC = () => {
 
   // responsive: pickByDevice helper (3-tier unified)
   const pickByDevice = <T,>(mobile: T, tablet: T, desktop: T): T => {
-    if (flags.isMobile) return mobile;      // ≤767px
-    if (flags.isTablet) return tablet;      // 768-1280px
-    return desktop;                         // ≥1281px
+    if (flags.isMobile) return mobile; // ≤767px
+    if (flags.isTablet) return tablet; // 768-1280px
+    return desktop; // ≥1281px
   };
 
   // responsive: showSider logic (Tablet以上 = ≥768px)
@@ -63,8 +63,10 @@ const ShogunManualListPage: React.FC = () => {
         ...sec,
         items: sec.items.filter((it: ManualItem) => {
           const inTitle = it.title.toLowerCase().includes(q);
-          const inDesc = (it.description ?? '').toLowerCase().includes(q);
-          const inTags = (it.tags ?? []).some((t: string) => t.toLowerCase().includes(q));
+          const inDesc = (it.description ?? "").toLowerCase().includes(q);
+          const inTags = (it.tags ?? []).some((t: string) =>
+            t.toLowerCase().includes(q),
+          );
           return inTitle || inDesc || inTags;
         }),
       }))
@@ -85,7 +87,13 @@ const ShogunManualListPage: React.FC = () => {
     <Layout className={styles.layoutRoot}>
       {/* ヘッダー */}
       <Header className={styles.header}>
-        <Flex align="center" justify="space-between" wrap gap={12} className={styles.headerInner}>
+        <Flex
+          align="center"
+          justify="space-between"
+          wrap
+          gap={12}
+          className={styles.headerInner}
+        >
           <Space align="center" size="middle">
             <FileDoneOutlined />
           </Space>
@@ -97,7 +105,13 @@ const ShogunManualListPage: React.FC = () => {
           </div>
 
           {showHeaderSearch && (
-            <div style={{ marginLeft: 'auto', display: 'flex', justifyContent: 'flex-end' }}>
+            <div
+              style={{
+                marginLeft: "auto",
+                display: "flex",
+                justifyContent: "flex-end",
+              }}
+            >
               <Tooltip title="全体検索（タイトル/説明/タグ）">
                 <Input
                   allowClear
@@ -128,7 +142,11 @@ const ShogunManualListPage: React.FC = () => {
                   <Space>
                     {s.icon}
                     <span>{s.title}</span>
-                    <Badge size="small" count={s.items.length} style={{ backgroundColor: 'var(--ant-color-primary)' }} />
+                    <Badge
+                      size="small"
+                      count={s.items.length}
+                      style={{ backgroundColor: "var(--ant-color-primary)" }}
+                    />
                   </Space>
                 ),
               }))}
@@ -139,7 +157,13 @@ const ShogunManualListPage: React.FC = () => {
         {/* メインコンテンツ */}
         <Content className={styles.content}>
           {!showHeaderSearch && (
-            <div style={{ padding: '12px 0', display: 'flex', justifyContent: 'flex-end' }}>
+            <div
+              style={{
+                padding: "12px 0",
+                display: "flex",
+                justifyContent: "flex-end",
+              }}
+            >
               <Tooltip title="全体検索（タイトル/説明/タグ）">
                 <Input
                   allowClear
@@ -147,7 +171,7 @@ const ShogunManualListPage: React.FC = () => {
                   className={styles.searchInput}
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  style={{ width: '100%', maxWidth: 640 }}
+                  style={{ width: "100%", maxWidth: 640 }}
                 />
               </Tooltip>
             </div>
@@ -155,7 +179,11 @@ const ShogunManualListPage: React.FC = () => {
 
           <div ref={contentScrollRef} className={styles.contentScroll}>
             <div style={{ minHeight: 240 }}>
-              <Space direction="vertical" size={24} style={{ display: 'block' }}>
+              <Space
+                direction="vertical"
+                size={24}
+                style={{ display: "block" }}
+              >
                 {loading ? (
                   <div>読み込み中...</div>
                 ) : filtered.length === 0 ? (

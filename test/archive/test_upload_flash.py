@@ -21,20 +21,20 @@ print("=" * 80)
 
 for csv_type, filename in csv_files.items():
     file_path = Path(filename)
-    
+
     if not file_path.exists():
         print(f"❌ {csv_type}: ファイルが見つかりません: {filename}")
         continue
-    
+
     print(f"\n📤 {csv_type}: {filename} をアップロード中...")
-    
+
     # ファイルをShift-JISとして読み込み（将軍ソフトの出力形式）
     with open(file_path, 'rb') as f:
         files = {csv_type: (filename, f, 'text/csv')}
-        
+
         try:
             response = requests.post(upload_endpoint, files=files, timeout=300)
-            
+
             if response.status_code == 200:
                 result = response.json()
                 print(f"✅ {csv_type}: 成功")
@@ -52,7 +52,7 @@ for csv_type, filename in csv_files.items():
                     print(f"   エラー: {error}")
                 except:
                     print(f"   エラー: {response.text[:500]}")
-        
+
         except requests.exceptions.RequestException as e:
             print(f"❌ {csv_type}: 通信エラー - {e}")
         except Exception as e:

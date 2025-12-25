@@ -24,7 +24,9 @@ notification/
 このモジュールは、アプリケーション全体で使用される通知システムを提供します。
 
 ### Model (モデル)
+
 - **notification.types.ts**: 通知の型定義
+
   - `NotificationType`: 'success' | 'error' | 'warning' | 'info'
   - `Notification`: 通知オブジェクトの型
   - `CreateNotificationData`: 通知作成時のデータ型
@@ -36,6 +38,7 @@ notification/
   - 最大表示数の制限（5件）
 
 ### Controller (コントローラー)
+
 - **notify.ts**: 通知を発行する関数
   - `notifySuccess()`: 成功通知
   - `notifyError()`: エラー通知
@@ -45,10 +48,12 @@ notification/
   - `notifyApiError()`: APIエラーを通知に変換
 
 ### View (ビュー)
+
 - **NotificationCenter.tsx**: 基本的な通知表示コンポーネント
 - **NotificationCenterAntd.tsx**: Ant Design の Alert を使った通知表示
 
 ### Config (設定)
+
 - **config.ts**: デフォルト設定
   - 各通知タイプの表示時間
   - persistent: 自動削除しない設定
@@ -58,41 +63,46 @@ notification/
 ### 基本的な使用
 
 ```typescript
-import { notifySuccess, notifyError, notifyInfo, notifyWarning } from '@features/notification';
+import {
+  notifySuccess,
+  notifyError,
+  notifyInfo,
+  notifyWarning,
+} from "@features/notification";
 
 // 成功通知
-notifySuccess('保存完了', 'データが正常に保存されました');
+notifySuccess("保存完了", "データが正常に保存されました");
 
 // エラー通知
-notifyError('保存失敗', 'データの保存に失敗しました');
+notifyError("保存失敗", "データの保存に失敗しました");
 
 // 情報通知
-notifyInfo('お知らせ', '新しい機能が追加されました');
+notifyInfo("お知らせ", "新しい機能が追加されました");
 
 // 警告通知
-notifyWarning('注意', 'この操作は取り消せません');
+notifyWarning("注意", "この操作は取り消せません");
 ```
 
 ### カスタム表示時間
 
 ```typescript
 // 10秒間表示
-notifySuccess('保存完了', 'データが保存されました', 10000);
+notifySuccess("保存完了", "データが保存されました", 10000);
 
 // 自動削除しない（手動で閉じるまで表示）
-notifyPersistent('error', '重要なエラー', 'システム管理者に連絡してください');
+notifyPersistent("error", "重要なエラー", "システム管理者に連絡してください");
 ```
 
 ### APIエラーの通知
 
 ```typescript
-import { notifyApiError } from '@features/notification';
+import { notifyApiError } from "@features/notification";
 
 try {
   await api.save(data);
 } catch (error) {
   // RFC7807形式のエラーやApiErrorを自動で通知に変換
-  notifyApiError(error, 'データの保存に失敗しました');
+  notifyApiError(error, "データの保存に失敗しました");
 }
 ```
 
@@ -103,7 +113,7 @@ import { useNotificationStore } from '@features/notification';
 
 function MyComponent() {
   const { notifications, removeNotification } = useNotificationStore();
-  
+
   return (
     <div>
       {notifications.map(n => (
@@ -137,7 +147,7 @@ function App() {
 ## 🔧 設定のカスタマイズ
 
 ```typescript
-import { NOTIFY_DEFAULTS } from '@features/notification';
+import { NOTIFY_DEFAULTS } from "@features/notification";
 
 // デフォルト設定
 // successMs: 4000,

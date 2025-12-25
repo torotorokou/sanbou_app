@@ -1,4 +1,5 @@
 """Database health check CLI script for Docker HEALTHCHECK."""
+
 import json
 import sys
 

@@ -1,8 +1,8 @@
 // API configuration and types
-// 
+//
 // ⚠️ DEPRECATION WARNING:
 // このファイルは非推奨です。新しいコードでは @shared/config/apiEndpoints を使用してください。
-// 
+//
 // 移行先:
 // - エンドポイント定数: import { REPORT_ENDPOINTS } from '@shared/config/apiEndpoints'
 // - HTTPクライアント: import { coreApi } from '@shared/infrastructure/http'

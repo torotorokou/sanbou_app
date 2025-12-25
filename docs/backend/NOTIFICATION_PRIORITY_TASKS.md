@@ -9,10 +9,11 @@
 ## 📋 現状
 
 ### ✅ Phase 1完了（2024-12-24）
+
 - Domain層: NotificationChannel, NotificationStatus, NotificationPayload, NotificationOutboxItem
 - Ports: NotificationOutboxPort, NotificationSenderPort
 - UseCases: EnqueueNotificationsUseCase, DispatchPendingNotificationsUseCase
-- Adapters: 
+- Adapters:
   - InMemoryNotificationOutboxAdapter（開発/テスト用）
   - **DbNotificationOutboxAdapter（本番用、PostgreSQL）** ← NEW
   - NoopNotificationSenderAdapter（Phase 3で実Email/LINE送信に置き換え予定）
@@ -22,6 +23,7 @@
 - **定期実行**: APScheduler統合（1分間隔、FastAPI lifecycle管理）← NEW
 
 ### ✅ Phase 2完了（2025-12-25）
+
 - **Domain層拡張**:
   - FailureType enum（TEMPORARY / PERMANENT）
   - RecipientRef dataclass（recipient_key解析: `user:123`, `email:addr`, `aud:site:code`）
@@ -42,6 +44,7 @@
 - **テスト**: 16ケース全成功（既存13 + 新規3: Preference/Resolver/失敗分類）
 
 ### ⚠️ 制限事項（現状）
+
 - 通知送信がNoop（実際に送信されない）← **Phase 3で解決予定**
 - Resolver がDummy（LINE常にNone）← **Phase 3でDB実装予定**
 - ビジネスロジックからの呼び出しなし ← **Phase 3で統合予定**
@@ -52,11 +55,14 @@
 ## 🎯 優先実装タスク
 
 ### ✅ Phase 1: DB永続化 + 定期実行（完了）
+
 **完了日**: 2024年12月24日  
 **所要期間**: 2日
 
 #### 実装内容
+
 1. **DB永続化**
+
    - ✅ Alembic migration: `20251224_005_create_notification_outbox_table.py`
    - ✅ NotificationOutboxORM model（UUID PK、JSONB meta、retry logic）
    - ✅ DbNotificationOutboxAdapter実装（enqueue, list_pending, mark_sent, mark_failed）
@@ -73,18 +79,21 @@
 ---
 
 ### ✅ Phase 2: LINE通知基盤準備（完了）
+
 **完了日**: 2025年12月25日  
 **所要期間**: 1日
 
 #### 実装内容
 
 1. **Recipient Key統一方針**
+
    - ✅ `user:{id}` - ユーザーID（将来的にLINE userId等に解決）
    - ✅ `email:{address}` - メールアドレス直接指定
    - ✅ `aud:{site}:{code}` - 視聴者コード
    - ✅ RecipientRef dataclass（parse/as_string）
 
 2. **失敗分類（TEMPORARY / PERMANENT）**
+
    - ✅ FailureType enum追加
    - ✅ TEMPORARY: タイムアウト等 → リトライ対象（1→5→30→60分）
    - ✅ PERMANENT: ValidationError等 → 即failed、リトライなし
@@ -92,12 +101,14 @@
    - ✅ mark_failed(failure_type) シグネチャ更新
 
 3. **通知許可管理（Opt-in）**
+
    - ✅ NotificationPreference dataclass（email_enabled, line_enabled）
    - ✅ NotificationPreferencePort追加
    - ✅ InMemoryPreferenceAdapter（テスト用: user:1,2,3）
    - ✅ DispatchUseCase: Preference判定 → 無効化ならmark_skipped()
 
 4. **Recipient解決機構**
+
    - ✅ RecipientResolverPort追加
    - ✅ DummyResolverAdapter（テスト用: email→そのまま、LINE→None）
    - ✅ DispatchUseCase: Resolver解決 → None ならmark_skipped()
@@ -108,12 +119,14 @@
    - ✅ 用途: Preference無効化、Resolver解決失敗
 
 #### テスト結果
+
 - ✅ 16ケース全成功
   - Preference無効化でskipped検証
   - Resolver解決失敗でskipped検証
   - ValueError→PERMANENT, RuntimeError→TEMPORARY検証
 
 #### 実装ファイル
+
 - `app/core/domain/notification.py`: FailureType, RecipientRef, NotificationPreference追加
 - `app/core/ports/notification_port.py`: PreferencePort, ResolverPort, mark_skipped追加
 - `app/infra/adapters/notification/in_memory_preference_adapter.py`: NEW
@@ -125,6 +138,7 @@
 - `tests/test_notification_infrastructure.py`: 3ケース追加
 
 #### ドキュメント
+
 - `docs/development/notification_line_foundation_COMPLETED.md`: 完了報告
 - `docs/backend/NOTIFICATION_SYSTEM_GUIDE.md`: 完全ガイド（NEW）
 - `docs/backend/NOTIFICATION_QUICKREF.md`: クイックリファレンス（NEW）
@@ -132,23 +146,26 @@
 ---
 
 ### 🔄 Phase 3: 実Email/LINE送信 + ビジネスロジック統合（次のフェーズ）
+
 **優先度**: 🟡 MEDIUM  
 **予定期間**: 3-5日
+
 # UseCaseから通知を登録
+
 class ConfirmOrderUseCase:
-    def __init__(
-        self,
-        order_repo: OrderRepository,
-        notification_uc: EnqueueNotificationsUseCase
-    ):
-        self._order_repo = order_repo
-        self._notification_uc = notification_uc
-    
+def **init**(
+self,
+order_repo: OrderRepository,
+notification_uc: EnqueueNotificationsUseCase
+):
+self.\_order_repo = order_repo
+self.\_notification_uc = notification_uc
+
     def execute(self, order_id: str):
         order = self._order_repo.get(order_id)
         order.confirm()
         self._order_repo.save(order)
-        
+
         # 通知を登録
         now = datetime.now()
         requests = [
@@ -161,6 +178,7 @@ class ConfirmOrderUseCase:
             )
         ]
         self._notification_uc.execute(requests=requests, now=now)
+
 ```
 
 ---
@@ -172,7 +190,7 @@ class ConfirmOrderUseCase:
    - Alembic migration、ORM model、DbNotificationOutboxAdapter
    - UUID PK、JSONB meta、retry logic with exponential backoff
    - DI configuration with environment variable switching
-   
+
 2. ✅ **定期実行（APScheduler）** (完了)
    - BackgroundScheduler統合、FastAPI lifecycle管理
    - 1分間隔での自動dispatch
@@ -187,7 +205,7 @@ class ConfirmOrderUseCase:
    - EmailNotificationSenderAdapter（SendGrid or AWS SES）
    - API key管理、エラーハンドリング
    - HTMLテンプレート対応（オプション）
-   
+
 4. ⏳ **ビジネスロジック統合** (未実装)
    - 既存UseCaseからの通知発行
    - 受注確定、レポート生成、エラー通知等
@@ -297,3 +315,4 @@ class ConfirmOrderUseCase:
 - [Transactional Outbox Pattern](https://microservices.io/patterns/data/transactional-outbox.html)
 - [APScheduler Documentation](https://apscheduler.readthedocs.io/)
 - [SendGrid Python SDK](https://github.com/sendgrid/sendgrid-python)
+```

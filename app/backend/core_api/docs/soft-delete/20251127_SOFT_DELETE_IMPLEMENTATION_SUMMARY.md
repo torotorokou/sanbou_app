@@ -5,11 +5,13 @@
 ### Alembic マイグレーションファイル（3つ）
 
 1. **`20251120_160000000_create_active_shogun_views.py`**
-   - アクティブ行専用ビュー（stg.active_*）を6つ作成
+
+   - アクティブ行専用ビュー（stg.active\_\*）を6つ作成
    - 論理削除済み行を自動的に除外するフィルタビュー
 
 2. **`20251120_170000000_update_mart_views_for_soft_delete.py`**
-   - mart.v_receive_daily の更新（active_* ビュー使用）
+
+   - mart.v*receive_daily の更新（active*\* ビュー使用）
    - mart.v_shogun_flash_receive_daily の更新（is_deleted フィルタ追加）
    - mart.v_shogun_final_receive_daily の更新（is_deleted フィルタ追加）
 
@@ -20,14 +22,17 @@
 ### テスト・ドキュメント類（4つ）
 
 4. **`scripts/sql/test_is_deleted_regression.sql`**
+
    - リグレッションテスト用SQL（9つのテストケース）
    - 論理削除状況の確認、集計結果の比較、インデックス使用確認など
 
 5. **`scripts/apply_soft_delete_refactoring.sh`**
+
    - 自動実行スクリプト（マイグレーション適用～テスト実行まで）
    - 色付きログ出力、エラーハンドリング付き
 
 6. **`docs/SOFT_DELETE_REFACTORING_20251120.md`**
+
    - 詳細実装レポート（Before/After 比較、性能評価、運用手順）
 
 7. **`docs/SOFT_DELETE_QUICKSTART.md`**
@@ -49,12 +54,14 @@ SELECT * FROM stg.shogun_flash_receive WHERE is_deleted = false;
 ### 2. mart ビューの更新
 
 #### Before:
+
 ```sql
 FROM stg.shogun_flash_receive s
 WHERE s.slip_date IS NOT NULL
 ```
 
 #### After:
+
 ```sql
 FROM stg.active_shogun_flash_receive s
 WHERE s.slip_date IS NOT NULL
@@ -70,6 +77,7 @@ WHERE is_deleted = false;
 ```
 
 **メリット**:
+
 - インデックスサイズが削減（論理削除行を含まない）
 - クエリ性能の向上（WHERE is_deleted = false の条件に最適化）
 
@@ -79,27 +87,27 @@ WHERE is_deleted = false;
 
 ### 変更されたビュー/マテビュー
 
-| オブジェクト | 変更内容 | リフレッシュ要否 |
-|---|---|---|
-| `stg.active_shogun_flash_receive` | ✅ 新規作成 | - |
-| `stg.active_shogun_final_receive` | ✅ 新規作成 | - |
-| `stg.active_shogun_*_yard` (×2) | ✅ 新規作成 | - |
-| `stg.active_shogun_*_shipment` (×2) | ✅ 新規作成 | - |
-| `mart.v_receive_daily` | ✅ 更新（active_* 使用） | - |
-| `mart.v_shogun_flash_receive_daily` | ✅ 更新（フィルタ追加） | - |
-| `mart.v_shogun_final_receive_daily` | ✅ 更新（フィルタ追加） | - |
-| `mart.mv_target_card_per_day` | ⚠️ 間接影響 | ✅ 必須 |
-| `mart.mv_inb5y_week_profile_min` | ⚠️ 間接影響 | ✅ 必須 |
-| `mart.mv_inb_avg5y_day_biz` | ⚠️ 間接影響 | ✅ 必須 |
-| `mart.mv_inb_avg5y_weeksum_biz` | ⚠️ 間接影響 | ✅ 必須 |
-| `mart.mv_inb_avg5y_day_scope` | ⚠️ 間接影響 | ✅ 必須 |
+| オブジェクト                        | 変更内容                   | リフレッシュ要否 |
+| ----------------------------------- | -------------------------- | ---------------- |
+| `stg.active_shogun_flash_receive`   | ✅ 新規作成                | -                |
+| `stg.active_shogun_final_receive`   | ✅ 新規作成                | -                |
+| `stg.active_shogun_*_yard` (×2)     | ✅ 新規作成                | -                |
+| `stg.active_shogun_*_shipment` (×2) | ✅ 新規作成                | -                |
+| `mart.v_receive_daily`              | ✅ 更新（active\_\* 使用） | -                |
+| `mart.v_shogun_flash_receive_daily` | ✅ 更新（フィルタ追加）    | -                |
+| `mart.v_shogun_final_receive_daily` | ✅ 更新（フィルタ追加）    | -                |
+| `mart.mv_target_card_per_day`       | ⚠️ 間接影響                | ✅ 必須          |
+| `mart.mv_inb5y_week_profile_min`    | ⚠️ 間接影響                | ✅ 必須          |
+| `mart.mv_inb_avg5y_day_biz`         | ⚠️ 間接影響                | ✅ 必須          |
+| `mart.mv_inb_avg5y_weeksum_biz`     | ⚠️ 間接影響                | ✅ 必須          |
+| `mart.mv_inb_avg5y_day_scope`       | ⚠️ 間接影響                | ✅ 必須          |
 
 ### Python コード
 
-| ファイル | 変更要否 | 理由 |
-|---|---|---|
-| `database/router.py` | ❌ 不要 | すでに is_deleted フィルタ適用済み |
-| `ShogunCsvRepository` | ❌ 不要 | INSERT のみ、SELECT なし |
+| ファイル              | 変更要否 | 理由                               |
+| --------------------- | -------- | ---------------------------------- |
+| `database/router.py`  | ❌ 不要  | すでに is_deleted フィルタ適用済み |
+| `ShogunCsvRepository` | ❌ 不要  | INSERT のみ、SELECT なし           |
 
 ---
 
@@ -191,8 +199,8 @@ docker compose exec core_api alembic downgrade 20251120_150000000
 ### データ整合性
 
 - ✅ 論理削除済み行が自動的に集計から除外される
-- ✅ is_deleted 条件の書き忘れを防止（active_* ビュー）
-- ✅ 二重防御（active_* ビュー + 明示的 WHERE 句）
+- ✅ is*deleted 条件の書き忘れを防止（active*\* ビュー）
+- ✅ 二重防御（active\_\* ビュー + 明示的 WHERE 句）
 
 ### 性能
 
@@ -202,7 +210,7 @@ docker compose exec core_api alembic downgrade 20251120_150000000
 
 ### 保守性
 
-- ✅ コードの可読性向上（active_* ビューで意図が明確）
+- ✅ コードの可読性向上（active\_\* ビューで意図が明確）
 - ✅ 統一的なフィルタ適用方法
 - ✅ 将来の機能追加が容易
 

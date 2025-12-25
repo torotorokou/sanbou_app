@@ -4,10 +4,25 @@ Schemas: core, jobs, forecast, raw, app
 
 raw スキーマのモデルは shogun_csv_masters.yaml から動的に生成されます。
 """
-from datetime import datetime, date as date_type
+
+from datetime import date as date_type
+from datetime import datetime
 from uuid import UUID
-from sqlalchemy import Column, Integer, String, Date, Numeric, Text, TIMESTAMP, JSON, ForeignKey, func
-from sqlalchemy.dialects.postgresql import UUID as PG_UUID, JSONB
+
+from sqlalchemy import (
+    JSON,
+    TIMESTAMP,
+    Column,
+    Date,
+    ForeignKey,
+    Integer,
+    Numeric,
+    String,
+    Text,
+    func,
+)
+from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import declarative_base, relationship
 
 Base = declarative_base()
@@ -17,8 +32,10 @@ Base = declarative_base()
 # jobs schema
 # ========================================
 
+
 class ForecastJob(Base):
     """jobs.forecast_jobs table."""
+
     __tablename__ = "forecast_jobs"
     __table_args__ = {"schema": "jobs"}
 
@@ -33,15 +50,19 @@ class ForecastJob(Base):
     payload_json = Column(JSON, nullable=True)
     error_message = Column(Text, nullable=True)
     created_at = Column(TIMESTAMP, nullable=False, default=func.now())
-    updated_at = Column(TIMESTAMP, nullable=False, default=func.now(), onupdate=func.now())
+    updated_at = Column(
+        TIMESTAMP, nullable=False, default=func.now(), onupdate=func.now()
+    )
 
 
 # ========================================
 # forecast schema
 # ========================================
 
+
 class PredictionDaily(Base):
     """forecast.predictions_daily table."""
+
     __tablename__ = "predictions_daily"
     __table_args__ = {"schema": "forecast"}
 
@@ -57,11 +78,13 @@ class PredictionDaily(Base):
 # core schema (ingest data)
 # ========================================
 
+
 class InboundActual(Base):
     """
     core.inbound_actuals table: CSV upload data.
     TODO: Define proper columns based on CSV spec.
     """
+
     __tablename__ = "inbound_actuals"
     __table_args__ = {"schema": "core"}
 
@@ -74,21 +97,26 @@ class InboundActual(Base):
 
 class InboundReservation(Base):
     """core.inbound_reservations table: truck reservations."""
+
     __tablename__ = "inbound_reservations"
     __table_args__ = {"schema": "core"}
 
     date = Column(Date, primary_key=True)
     trucks = Column(Integer, nullable=False)
     created_at = Column(TIMESTAMP, nullable=False, default=func.now())
-    updated_at = Column(TIMESTAMP, nullable=False, default=func.now(), onupdate=func.now())
+    updated_at = Column(
+        TIMESTAMP, nullable=False, default=func.now(), onupdate=func.now()
+    )
 
 
 # ========================================
 # app schema (announcements)
 # ========================================
 
+
 class AnnouncementORM(Base):
     """app.announcements table: システムのお知らせ"""
+
     __tablename__ = "announcements"
     __table_args__ = {"schema": "app"}
 
@@ -103,26 +131,43 @@ class AnnouncementORM(Base):
     attachments = Column(JSON, nullable=True, default=list)
     notification_plan = Column(JSON, nullable=True)
     created_at = Column(TIMESTAMP(timezone=True), nullable=False, default=func.now())
-    updated_at = Column(TIMESTAMP(timezone=True), nullable=False, default=func.now(), onupdate=func.now())
+    updated_at = Column(
+        TIMESTAMP(timezone=True),
+        nullable=False,
+        default=func.now(),
+        onupdate=func.now(),
+    )
     deleted_at = Column(TIMESTAMP(timezone=True), nullable=True)
     deleted_by = Column(Text, nullable=True)
 
     # Relationship
-    user_states = relationship("AnnouncementUserStateORM", back_populates="announcement", cascade="all, delete-orphan")
+    user_states = relationship(
+        "AnnouncementUserStateORM",
+        back_populates="announcement",
+        cascade="all, delete-orphan",
+    )
 
 
 class AnnouncementUserStateORM(Base):
     """app.announcement_user_states table: ユーザーごとのお知らせ既読・確認状態"""
+
     __tablename__ = "announcement_user_states"
     __table_args__ = {"schema": "app"}
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     user_id = Column(Text, nullable=False)
-    announcement_id = Column(Integer, ForeignKey("app.announcements.id", ondelete="CASCADE"), nullable=False)
+    announcement_id = Column(
+        Integer, ForeignKey("app.announcements.id", ondelete="CASCADE"), nullable=False
+    )
     read_at = Column(TIMESTAMP(timezone=True), nullable=True)
     ack_at = Column(TIMESTAMP(timezone=True), nullable=True)
     created_at = Column(TIMESTAMP(timezone=True), nullable=False, default=func.now())
-    updated_at = Column(TIMESTAMP(timezone=True), nullable=False, default=func.now(), onupdate=func.now())
+    updated_at = Column(
+        TIMESTAMP(timezone=True),
+        nullable=False,
+        default=func.now(),
+        onupdate=func.now(),
+    )
 
     # Relationship
     announcement = relationship("AnnouncementORM", back_populates="user_states")
@@ -132,8 +177,10 @@ class AnnouncementUserStateORM(Base):
 # stg schema (reservation data)
 # ========================================
 
+
 class ReserveDailyManual(Base):
     """stg.reserve_daily_manual table: 手入力の日次予約合計"""
+
     __tablename__ = "reserve_daily_manual"
     __table_args__ = {"schema": "stg"}
 
@@ -144,13 +191,19 @@ class ReserveDailyManual(Base):
     created_by = Column(Text, nullable=True)
     updated_by = Column(Text, nullable=True)
     created_at = Column(TIMESTAMP(timezone=True), nullable=False, default=func.now())
-    updated_at = Column(TIMESTAMP(timezone=True), nullable=False, default=func.now(), onupdate=func.now())
+    updated_at = Column(
+        TIMESTAMP(timezone=True),
+        nullable=False,
+        default=func.now(),
+        onupdate=func.now(),
+    )
     deleted_at = Column(TIMESTAMP(timezone=True), nullable=True)
     deleted_by = Column(Text, nullable=True)
 
 
 class ReserveCustomerDaily(Base):
     """stg.reserve_customer_daily table: 顧客ごとの予約一覧"""
+
     __tablename__ = "reserve_customer_daily"
     __table_args__ = {"schema": "stg"}
 
@@ -159,20 +212,29 @@ class ReserveCustomerDaily(Base):
     customer_cd = Column(Text, nullable=False)
     customer_name = Column(Text, nullable=True)
     planned_trucks = Column(Integer, nullable=False, default=0)
-    is_fixed_customer = Column(Integer, nullable=False, default=False)  # Boolean stored as int
+    is_fixed_customer = Column(
+        Integer, nullable=False, default=False
+    )  # Boolean stored as int
     note = Column(Text, nullable=True)
     created_by = Column(Text, nullable=True)
     updated_by = Column(Text, nullable=True)
     created_at = Column(TIMESTAMP(timezone=True), nullable=False, default=func.now())
-    updated_at = Column(TIMESTAMP(timezone=True), nullable=False, default=func.now(), onupdate=func.now())
+    updated_at = Column(
+        TIMESTAMP(timezone=True),
+        nullable=False,
+        default=func.now(),
+        onupdate=func.now(),
+    )
 
 
 # ========================================
 # app schema - Notifications
 # ========================================
 
+
 class NotificationOutboxORM(Base):
     """app.notification_outbox table - 通知Outbox"""
+
     __tablename__ = "notification_outbox"
     __table_args__ = {"schema": "app"}
 
@@ -200,26 +262,26 @@ class NotificationOutboxORM(Base):
 
 # 動的モデルをインポート
 from app.infra.db.dynamic_models import (
-    get_shogun_model_class,
     ReceiveShogunFlash,
-    YardShogunFlash,
     ShipmentShogunFlash,
+    YardShogunFlash,
+    get_shogun_model_class,
 )
 
 # 後方互換性のため、ここでも公開
 __all__ = [
-    'Base',
-    'ForecastJob',
-    'PredictionDaily',
-    'InboundActual',
-    'InboundReservation',
-    'AnnouncementORM',
-    'AnnouncementUserStateORM',
-    'ReserveDailyManual',
-    'ReserveCustomerDaily',
-    'NotificationOutboxORM',
-    'ReceiveShogunFlash',
-    'YardShogunFlash',
-    'ShipmentShogunFlash',
-    'get_shogun_model_class',
+    "Base",
+    "ForecastJob",
+    "PredictionDaily",
+    "InboundActual",
+    "InboundReservation",
+    "AnnouncementORM",
+    "AnnouncementUserStateORM",
+    "ReserveDailyManual",
+    "ReserveCustomerDaily",
+    "NotificationOutboxORM",
+    "ReceiveShogunFlash",
+    "YardShogunFlash",
+    "ShipmentShogunFlash",
+    "get_shogun_model_class",
 ]

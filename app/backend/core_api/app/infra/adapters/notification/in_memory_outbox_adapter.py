@@ -4,12 +4,11 @@ InMemory Notification Outbox Adapter
 プロセス内メモリで outbox を保持（開発・テスト用）。
 将来 DB 化する際はこのファイルを差し替えるか、別クラスに実装。
 """
+
 import threading
 from datetime import datetime, timedelta
 from typing import List
 from uuid import UUID
-
-from backend_shared.application.logging import get_module_logger
 
 from app.core.domain.notification import (
     FailureType,
@@ -17,6 +16,7 @@ from app.core.domain.notification import (
     NotificationStatus,
 )
 from app.core.ports.notification_port import NotificationOutboxPort
+from backend_shared.application.logging import get_module_logger
 
 logger = get_module_logger(__name__)
 
@@ -24,7 +24,7 @@ logger = get_module_logger(__name__)
 class InMemoryNotificationOutboxAdapter(NotificationOutboxPort):
     """
     InMemory Outbox 実装
-    
+
     - スレッド安全性: 最小限（単一プロセス想定）
     - 永続化なし
     """
@@ -48,7 +48,9 @@ class InMemoryNotificationOutboxAdapter(NotificationOutboxPort):
                     },
                 )
 
-    def list_pending(self, now: datetime, limit: int = 100) -> List[NotificationOutboxItem]:
+    def list_pending(
+        self, now: datetime, limit: int = 100
+    ) -> List[NotificationOutboxItem]:
         """送信対象の pending アイテムを取得"""
         with self._lock:
             pending = []
@@ -89,7 +91,9 @@ class InMemoryNotificationOutboxAdapter(NotificationOutboxPort):
                 extra={"notification_id": str(id), "sent_at": sent_at.isoformat()},
             )
 
-    def mark_failed(self, id: UUID, error: str, failure_type: FailureType, now: datetime) -> None:
+    def mark_failed(
+        self, id: UUID, error: str, failure_type: FailureType, now: datetime
+    ) -> None:
         """送信失敗をマーク（TEMP/PERM対応）"""
         with self._lock:
             if id not in self._items:

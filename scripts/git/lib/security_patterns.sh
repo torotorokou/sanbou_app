@@ -48,7 +48,7 @@ declare -a ALLOWED_FILE_PATTERNS=(
 declare -a SENSITIVE_CONTENT_PATTERNS=(
     # データベースパスワード（実際の値のみ、変数参照除外）
     "POSTGRES_PASSWORD[[:space:]]*=[[:space:]]*['\"][^\$][^'\"]{3,}['\"]"
-    
+
     # データベース DSN（接続文字列）
     # PostgreSQL/Postgres DSN (password >= 8 chars)
     "postgresql://[^:]+:[^@[:space:]]{8,}@"
@@ -60,7 +60,7 @@ declare -a SENSITIVE_CONTENT_PATTERNS=(
     # docker-compose environment variables with DSN
     "DB_DSN[[:space:]]*[:=][[:space:]]*['\"]?[^'\"[:space:]]*://[^:]+:[^@[:space:]]{8,}@"
     "DATABASE_URL[[:space:]]*[:=][[:space:]]*['\"]?[^'\"[:space:]]*://[^:]+:[^@[:space:]]{8,}@"
-    
+
     # GCP 秘密鍵
     "BEGIN PRIVATE KEY"
     "BEGIN RSA PRIVATE KEY"
@@ -128,21 +128,21 @@ declare -a CONTENT_EXCLUSION_PATTERNS=(
 # 戻り値: 0 = 禁止, 1 = 許可
 is_forbidden_file() {
     local file="$1"
-    
+
     # まず許可パターンをチェック（テンプレート等）
     for pattern in "${ALLOWED_FILE_PATTERNS[@]}"; do
         if [[ "$file" =~ $pattern ]]; then
             return 1  # 許可
         fi
     done
-    
+
     # 禁止パターンをチェック
     for pattern in "${FORBIDDEN_FILE_PATTERNS[@]}"; do
         if [[ "$file" =~ $pattern ]]; then
             return 0  # 禁止
         fi
     done
-    
+
     return 1  # 許可
 }
 
@@ -154,33 +154,33 @@ is_forbidden_file() {
 contains_sensitive_content() {
     local content="$1"
     local found=1  # 初期値: なし
-    
+
     for pattern in "${SENSITIVE_CONTENT_PATTERNS[@]}"; do
         # パターンが空の場合はスキップ
         [ -z "$pattern" ] && continue
-        
+
         # パターンに一致する行を取得
         local matched_lines
         matched_lines=$(echo "$content" | grep -E "$pattern" 2>/dev/null || true)
-        
+
         if [ -z "$matched_lines" ]; then
             continue
         fi
-        
+
         # 除外パターンでフィルタリング
         local filtered_lines="$matched_lines"
         for exclusion in "${CONTENT_EXCLUSION_PATTERNS[@]}"; do
             [ -z "$exclusion" ] && continue
             filtered_lines=$(echo "$filtered_lines" | grep -vE "$exclusion" 2>/dev/null || true)
         done
-        
+
         # フィルタリング後も残っている行があれば機密情報あり
         if [ -n "$filtered_lines" ]; then
             echo "$filtered_lines"
             found=0
         fi
     done
-    
+
     return $found
 }
 
@@ -192,7 +192,7 @@ contains_sensitive_content() {
 check_gitignore_patterns() {
     local gitignore_content="$1"
     local missing_patterns=()
-    
+
     # 必須パターンのリスト
     local -a required_patterns=(
         "^/env/"
@@ -203,19 +203,19 @@ check_gitignore_patterns() {
         "gcp-sa.*\.json"
         "gcs-key.*\.json"
     )
-    
+
     for pattern in "${required_patterns[@]}"; do
         if ! echo "$gitignore_content" | grep -qE "$pattern"; then
             missing_patterns+=("$pattern")
         fi
     done
-    
+
     if [ ${#missing_patterns[@]} -gt 0 ]; then
         echo "不足しているパターン:"
         printf '  - %s\n' "${missing_patterns[@]}"
         return 1
     fi
-    
+
     return 0
 }
 

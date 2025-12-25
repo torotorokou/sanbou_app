@@ -1,10 +1,10 @@
 /**
  * useElementResponsive - 要素幅ベースのレスポンシブ判定
- * 
+ *
  * 【役割】
  * - コンテナ要素の幅に基づくブレークポイント判定
  * - useContainerSize + makeFlags の組み合わせ
- * 
+ *
  * 【使用例】
  * ```tsx
  * const { ref, flags, width } = useElementResponsive<HTMLDivElement>();

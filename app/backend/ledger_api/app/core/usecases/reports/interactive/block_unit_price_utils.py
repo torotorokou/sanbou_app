@@ -5,25 +5,27 @@ Block Unit Price Interactive - Utility Functions
 共通ユーティリティ関数とデータクラス
 """
 
-from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Tuple, Union
-from datetime import datetime
 import hashlib
-import secrets
 import re
-import pandas as pd
-from pandas.api.types import is_datetime64_any_dtype as _is_dt
+import secrets
+from dataclasses import dataclass
+from datetime import datetime
+from typing import Any, Dict, List, Optional, Tuple, Union
 
-from backend_shared.application.logging import get_module_logger, create_log_context
+import pandas as pd
+from backend_shared.application.logging import create_log_context, get_module_logger
+from pandas.api.types import is_datetime64_any_dtype as _is_dt
 
 logger = get_module_logger(__name__)
 
 
 # ------------------------------ dataclasses ------------------------------
 
+
 @dataclass
 class TransportOption:
     """運搬オプション"""
+
     vendor_code: str
     vendor_name: str
     transport_fee: float
@@ -32,6 +34,7 @@ class TransportOption:
 @dataclass
 class InteractiveProcessState:
     """インタラクティブ処理の状態"""
+
     step: int
     df_shipment: Optional[pd.DataFrame] = None
     transport_options: Optional[List[TransportOption]] = None
@@ -43,6 +46,7 @@ class InteractiveProcessState:
 
 # ------------------------------ Session Management ------------------------------
 
+
 def make_session_id() -> str:
     """セッションIDを生成"""
     return f"bup-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}-{secrets.token_hex(3)}"
@@ -50,7 +54,7 @@ def make_session_id() -> str:
 
 def stable_entry_id(row: pd.Series, fallback_key: str, row_index: int = 0) -> str:
     """行の安定したエントリIDを生成
-    
+
     Args:
         row: データ行
         fallback_key: フォールバックキー
@@ -70,6 +74,7 @@ def stable_entry_id(row: pd.Series, fallback_key: str, row_index: int = 0) -> st
 
 
 # ------------------------------ Data Formatting ------------------------------
+
 
 def clean_vendor_name(name: Any) -> str:
     """業者名をクリーンアップ"""
@@ -114,14 +119,14 @@ def parse_label(lbl: str) -> Tuple[int, int, int, str]:
     else:
         c = "zzz"
     c_ord = _CARRIER_ORDER.get(c, 99)
-    
+
     if "ウイング" in s:
         v_ord = _VEHICLE_ORDER["ウイング"]
     elif "コンテナ" in s:
         v_ord = _VEHICLE_ORDER["コンテナ"]
     else:
         v_ord = _VEHICLE_ORDER[None]
-    
+
     shared_flag = 1 if "合積" in s else 0
     return (c_ord, v_ord, shared_flag, s)
 
@@ -134,23 +139,26 @@ def canonical_sort_labels(labels: List[str]) -> List[str]:
 
 # ------------------------------ Date Handling ------------------------------
 
-def ensure_datetime_col(df: Optional[pd.DataFrame], col: str = "伝票日付") -> Optional[pd.DataFrame]:
+
+def ensure_datetime_col(
+    df: Optional[pd.DataFrame], col: str = "伝票日付"
+) -> Optional[pd.DataFrame]:
     """指定列をdatetimeに変換"""
     if df is None or col not in df.columns:
         return df
-    
+
     s = df[col]
     try:
         if _is_dt(s):
             return df
-        
+
         if pd.api.types.is_integer_dtype(s) or pd.api.types.is_float_dtype(s):
             ser = pd.to_numeric(s, errors="coerce")
             valid = ser.dropna()
             if len(valid) == 0:
                 df[col] = pd.to_datetime(ser, errors="coerce")
                 return df
-            
+
             max_abs = float(valid.abs().max())
             if max_abs > 1e17:
                 unit = "ns"
@@ -160,38 +168,43 @@ def ensure_datetime_col(df: Optional[pd.DataFrame], col: str = "伝票日付") -
                 unit = "ms"
             else:
                 unit = "s"
-            
+
             logger.debug(
                 "epoch形式検出",
-                extra=create_log_context(operation="normalize_datetime_columns", column=col, unit=unit)
+                extra=create_log_context(
+                    operation="normalize_datetime_columns", column=col, unit=unit
+                ),
             )
             df[col] = pd.to_datetime(ser, unit=unit, errors="coerce")
             return df
-        
+
         df[col] = pd.to_datetime(s, errors="coerce")
         return df
     except Exception as e:
         logger.warning(
             "日付正規化失敗",
-            extra=create_log_context(operation="normalize_datetime_columns", column=col, error_type=type(e).__name__, error=str(e))
+            extra=create_log_context(
+                operation="normalize_datetime_columns",
+                column=col,
+                error_type=type(e).__name__,
+                error=str(e),
+            ),
         )
         return df
 
 
 # ------------------------------ Error Handling ------------------------------
 
+
 def error_payload(
-    code: str,
-    detail: str,
-    step: int,
-    extra: Optional[Dict[str, Any]] = None
+    code: str, detail: str, step: int, extra: Optional[Dict[str, Any]] = None
 ) -> Tuple[pd.DataFrame, Dict[str, Any]]:
     """統一フォーマットでエラーペイロードを返す"""
     payload: Dict[str, Any] = {
         "status": "error",
         "code": code,
         "detail": detail,
-        "step": step
+        "step": step,
     }
     if extra:
         payload.update({"extra": extra})
@@ -208,34 +221,34 @@ def handle_step_error(
     step_name: str,
     step_number: int,
     error: Exception,
-    context: Optional[Dict[str, Any]] = None
+    context: Optional[Dict[str, Any]] = None,
 ) -> Tuple[pd.DataFrame, Dict[str, Any]]:
     """ステップエラーを統一的に処理
-    
+
     Args:
         step_name: ステップ名（例: "initial", "finalize"）
         step_number: ステップ番号
         error: 発生した例外
         context: 追加コンテキスト情報
-    
+
     Returns:
         エラーペイロード
     """
     import traceback
-    
+
     tb = traceback.format_exc(limit=5)
     error_type = type(error).__name__
     error_msg = str(error)
-    
+
     extra_data: Dict[str, Any] = {
         "err_type": error_type,
         "err": error_msg,
         "traceback": tb,
     }
-    
+
     if context:
         extra_data.update(context)
-    
+
     logger.error(
         f"{step_name} step error",
         extra=create_log_context(
@@ -243,19 +256,20 @@ def handle_step_error(
             step=step_number,
             error_type=error_type,
             error_msg=error_msg,
-            **extra_data
-        )
+            **extra_data,
+        ),
     )
-    
+
     return error_payload(
         code=f"STEP{step_number}_EXCEPTION",
         detail=error_msg,
         step=step_number,
-        extra=extra_data
+        extra=extra_data,
     )
 
 
 # ------------------------------ Debug Helpers ------------------------------
+
 
 def fmt_cols(df: Optional[pd.DataFrame]) -> str:
     """DataFrameのカラム情報をフォーマット"""
@@ -287,7 +301,9 @@ def series_sample(df: Optional[pd.DataFrame], col: str, k: int = 5) -> List[Any]
         return []
 
 
-def log_checkpoint(tag: str, df_a: Optional[pd.DataFrame], df_b: Optional[pd.DataFrame] = None) -> None:
+def log_checkpoint(
+    tag: str, df_a: Optional[pd.DataFrame], df_b: Optional[pd.DataFrame] = None
+) -> None:
     """チェックポイントログを出力"""
     msg = f"DBG checkpoint[{tag}] A({fmt_cols(df_a)})"
     if df_b is not None:

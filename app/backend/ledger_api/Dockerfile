@@ -1,7 +1,7 @@
 # =========================
 # ledger_api Dockerfile (multi-stage: wheelbuilder/base/dev/stg/prod)
 # Context: app/backend
-# 
+#
 # Target stages:
 #   - wheelbuilder: Python 依存パッケージをビルド (wheel 生成)
 #   - base: 共通ランタイムベース (wheelインストール + アプリコード配置)

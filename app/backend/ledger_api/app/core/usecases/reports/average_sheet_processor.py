@@ -4,24 +4,25 @@ services.report.ledger.average_sheet
 ABC平均表（average_sheet）のサービス実装。
 st_app依存を排し、services側のprocessors/utilsを利用する。
 """
-from typing import Any, Dict
-import pandas as pd
 
+from typing import Any, Dict
+
+import pandas as pd
+from app.core.domain.reports.processors.average_sheet.processors import (
+    aggregate_vehicle_data,
+    apply_rounding,
+    calculate_final_totals,
+    calculate_item_summary,
+    set_report_date_info,
+    summarize_item_and_abc_totals,
+    tikan,
+)
 from app.infra.report_utils import (
     get_template_config,
     load_all_filtered_dataframes,
     load_master_and_template,
 )
-from backend_shared.application.logging import get_module_logger, create_log_context
-from app.core.domain.reports.processors.average_sheet.processors import (
-    tikan,
-    aggregate_vehicle_data,
-    calculate_item_summary,
-    summarize_item_and_abc_totals,
-    calculate_final_totals,
-    set_report_date_info,
-    apply_rounding,
-)
+from backend_shared.application.logging import create_log_context, get_module_logger
 
 
 def process(dfs: Dict[str, Any]) -> pd.DataFrame:
@@ -31,7 +32,7 @@ def process(dfs: Dict[str, Any]) -> pd.DataFrame:
     csv_name = get_template_config()["average_sheet"]["required_files"]
     logger.info(
         "average_sheet process開始",
-        extra=create_log_context(operation="generate_average_sheet", csv_name=csv_name)
+        extra=create_log_context(operation="generate_average_sheet", csv_name=csv_name),
     )
     df_dict = load_all_filtered_dataframes(dfs, csv_name, template_name)
 
@@ -40,7 +41,9 @@ def process(dfs: Dict[str, Any]) -> pd.DataFrame:
     master_path = get_template_config()[template_name]["master_csv_path"]
     logger.info(
         "マスターCSV読込",
-        extra=create_log_context(operation="generate_average_sheet", master_path=master_path)
+        extra=create_log_context(
+            operation="generate_average_sheet", master_path=master_path
+        ),
     )
     master_csv = load_master_and_template(master_path)
     logger.info(
@@ -66,9 +69,7 @@ def process(dfs: Dict[str, Any]) -> pd.DataFrame:
 
         logger.info("[STEP] calculate_item_summary start")
         master_csv = calculate_item_summary(df_receive, master_csv, master_columns_keys)
-        logger.info(
-            f"[STEP] calculate_item_summary done: shape={master_csv.shape}"
-        )
+        logger.info(f"[STEP] calculate_item_summary done: shape={master_csv.shape}")
 
         logger.info("[STEP] summarize_item_and_abc_totals start")
         master_csv = summarize_item_and_abc_totals(master_csv, master_columns_keys)
@@ -78,9 +79,7 @@ def process(dfs: Dict[str, Any]) -> pd.DataFrame:
 
         logger.info("[STEP] calculate_final_totals start")
         master_csv = calculate_final_totals(df_receive, master_csv, master_columns_keys)
-        logger.info(
-            f"[STEP] calculate_final_totals done: shape={master_csv.shape}"
-        )
+        logger.info(f"[STEP] calculate_final_totals done: shape={master_csv.shape}")
 
         logger.info("[STEP] set_report_date_info start")
         master_csv = set_report_date_info(df_receive, master_csv, master_columns_keys)
@@ -98,8 +97,12 @@ def process(dfs: Dict[str, Any]) -> pd.DataFrame:
 
         logger.error(
             "average_sheet処理失敗",
-            extra=create_log_context(operation="generate_average_sheet", error=str(ex), traceback=_tb.format_exc()),
-            exc_info=True
+            extra=create_log_context(
+                operation="generate_average_sheet",
+                error=str(ex),
+                traceback=_tb.format_exc(),
+            ),
+            exc_info=True,
         )
         raise
 

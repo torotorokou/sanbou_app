@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 from datetime import datetime
-from sqlalchemy import MetaData, DateTime, func
-from sqlalchemy.orm import DeclarativeBase, declared_attr, Mapped, mapped_column
+
+from sqlalchemy import DateTime, MetaData, func
+from sqlalchemy.orm import DeclarativeBase, Mapped, declared_attr, mapped_column
 
 # Alembic 互換の命名規約(将来のマイグレーションで便利)
 NAMING_CONVENTION = {
@@ -14,6 +15,7 @@ NAMING_CONVENTION = {
 }
 metadata_obj = MetaData(naming_convention=NAMING_CONVENTION)
 
+
 class Base(DeclarativeBase):
     metadata = metadata_obj
 
@@ -22,12 +24,16 @@ class Base(DeclarativeBase):
     def __tablename__(cls) -> str:  # type: ignore[override]
         return cls.__name__.lower()
 
+
 class TimestampMixin:
     """作成・更新のタイムスタンプを自動で持たせたい時に継承する Mixin。"""
+
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(),
-        onupdate=func.now(), nullable=False
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
     )

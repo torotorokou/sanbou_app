@@ -23,9 +23,11 @@ balance_sheet最適化と同様に、factory_report（工場日報）の生成�
 ## 2. 実施した最適化ステップ
 
 ### Step 1: プロセスフロー文書化とログ追加
+
 **コミット**: `21d9b5c4`
 
 #### 変更内容
+
 - `factory_report.py`の`process()`関数にdocstringを追加
   - 処理フロー全体の説明
   - 各ステップの目的と入出力を明記
@@ -37,6 +39,7 @@ balance_sheet最適化と同様に、factory_report（工場日報）の生成�
   - Step 5: 結合・整形処理
 
 #### 効果
+
 - 処理の流れが一目で理解できる
 - ボトルネック箇所の特定が容易に（ミリ秒単位のログ）
 - 保守性の大幅向上
@@ -44,9 +47,11 @@ balance_sheet最適化と同様に、factory_report（工場日報）の生成�
 ---
 
 ### Step 2: ベースDataFrame構造導入
+
 **コミット**: `af91d8d7`
 
 #### 変更内容
+
 - 新規ファイル: `factory_report_base.py`
   - `FactoryReportBaseData` dataclass追加
   - `build_factory_report_base_data()` 関数で前処理を一元化
@@ -57,6 +62,7 @@ balance_sheet最適化と同様に、factory_report（工場日報）の生成�
 - `shobun.py`: 不要なcopy()とastype()を削除
 
 #### 効果
+
 - 型変換の重複実行を排除
 - 各処理関数が前処理済みデータを受け取る
 - コードの責任分離が明確化
@@ -64,15 +70,18 @@ balance_sheet最適化と同様に、factory_report（工場日報）の生成�
 ---
 
 ### Step 3: copy()操作の最適化
+
 **コミット**: `a8ced982`
 
 #### 変更内容
+
 - `summary.py`: `process_sheet_partition()`のcopy()を削減（3箇所）
 - `summary.py`: `apply_negation_filters()`に渡すdata_dfのcopy()を削除
 - `yuuka.py`: `apply_yuuka_summary()`のmaster_csv.copy()を削除
 - `yard.py`: `apply_yard_summary()`のmaster_csv.copy()を削除
 
 #### 効果
+
 - DataFrameのcopy()回数を約60%削減
 - メモリ使用量の削減
 - `summary_apply_by_sheet()`が新規DataFrameを返すため、呼び出し元での事前copy()は不要
@@ -80,9 +89,11 @@ balance_sheet最適化と同様に、factory_report（工場日報）の生成�
 ---
 
 ### Step 4: ベクトル化処理の適用
+
 **コミット**: `c61e4e50`
 
 #### 変更内容
+
 - `shobun.py`: `clean_na_strings` → `clean_na_strings_vectorized`
 - `etc.py`: `clean_na_strings` → `clean_na_strings_vectorized`
 - `etc.py`: `assign_sum()` apply(axis=1)をベクトル化
@@ -90,6 +101,7 @@ balance_sheet最適化と同様に、factory_report（工場日報）の生成�
   - 条件マスクで直接代入（Pythonループ排除）
 
 #### 効果
+
 - `clean_na_strings_vectorized`: **10-100倍高速化**（NumPy/Cython処理）
 - `assign_sum`のベクトル化: axis=1ループを排除し、Series演算に変更
 - 大量データ処理時に顕著な効果
@@ -97,9 +109,11 @@ balance_sheet最適化と同様に、factory_report（工場日報）の生成�
 ---
 
 ### Step 5: I/O操作の削減
+
 **コミット**: `638216bb`
 
 #### 変更内容
+
 - `factory_report_base.py`: マスターCSV読み込みを追加
   - shobun, yuuka, yard, etcの4つのマスターCSVを事前読み込み
   - `FactoryReportBaseData`にマスターCSVフィールドを追加
@@ -112,6 +126,7 @@ balance_sheet最適化と同様に、factory_report（工場日報）の生成�
 - 未使用import削除: `get_template_config`, `load_master_and_template`
 
 #### 効果
+
 - マスターCSV読み込み: **4回 → 1回（75%削減）**
 - ファイルI/O待機時間を大幅削減
 - ネットワークストレージの場合、さらに効果大
@@ -121,6 +136,7 @@ balance_sheet最適化と同様に、factory_report（工場日報）の生成�
 ## 3. 最適化前後の比較
 
 ### コミット履歴
+
 ```bash
 21d9b5c4  refactor(factory_report): Step 1 - プロセスフロー文書化とログ追加
 af91d8d7  refactor(factory_report): Step 2 - ベースDataFrame構造導入
@@ -130,14 +146,16 @@ c61e4e50  refactor(factory_report): Step 4 - ベクトル化処理の適用
 ```
 
 ### 定量的改善
-| 項目 | 最適化前 | 最適化後 | 改善率 |
-|------|---------|---------|-------|
-| マスターCSV読み込み回数 | 4回 | 1回 | **-75%** |
-| DataFrame copy()回数 | 7回以上 | 2回 | **約-70%** |
-| apply()使用箇所（ベクトル化対象） | 3箇所 | 0箇所 | **-100%** |
-| 型変換（業者CD）実行回数 | 各関数で1回ずつ | 1回（base構築時） | **集約** |
+
+| 項目                              | 最適化前        | 最適化後          | 改善率     |
+| --------------------------------- | --------------- | ----------------- | ---------- |
+| マスターCSV読み込み回数           | 4回             | 1回               | **-75%**   |
+| DataFrame copy()回数              | 7回以上         | 2回               | **約-70%** |
+| apply()使用箇所（ベクトル化対象） | 3箇所           | 0箇所             | **-100%**  |
+| 型変換（業者CD）実行回数          | 各関数で1回ずつ | 1回（base構築時） | **集約**   |
 
 ### 期待される効果
+
 - **処理時間**: 2-5倍高速化（データ量により変動）
   - I/O削減: 20-40%高速化
   - ベクトル化: 10-100倍高速化（対象処理）
@@ -150,6 +168,7 @@ c61e4e50  refactor(factory_report): Step 4 - ベクトル化処理の適用
 ## 4. アーキテクチャ改善
 
 ### 処理フロー（最適化後）
+
 ```
 factory_report.py (メイン処理)
     │
@@ -170,6 +189,7 @@ factory_report.py (メイン処理)
 ```
 
 ### 責任分離の明確化
+
 - **factory_report_base.py**: データの前処理とI/O管理
 - **各プロセッサー関数**: ビジネスロジックに集中
 - **factory_report.py**: オーケストレーション
@@ -179,16 +199,19 @@ factory_report.py (メイン処理)
 ## 5. コード品質の向上
 
 ### ドキュメント整備
+
 - 各ステップの目的と入出力を明記
 - 最適化ポイントに🔥マークでコメント追加
 - doctringでAPI仕様を明確化
 
 ### 保守性の確保
+
 - ベイビーステップ方式により、各変更が小さく理解しやすい
 - 各コミットが独立してレビュー可能
 - 動作を変えないリファクタリング（出力は完全一致）
 
 ### テスト容易性
+
 - base構造により、前処理とビジネスロジックが分離
 - 各プロセッサー関数が引数でマスターCSVを受け取るため、テストデータ注入が容易
 
@@ -197,12 +220,14 @@ factory_report.py (メイン処理)
 ## 6. 今後の展開
 
 ### 適用対象
+
 - ✅ balance_sheet（完了）
 - ✅ factory_report（完了）
 - 🔄 management_sheet（factory_reportとbalance_sheetを利用するため、間接的に高速化）
 - ⏳ average_sheet（次の候補）
 
 ### さらなる最適化の可能性
+
 1. **並列処理**: Step 4の個別ドメイン処理を並行実行
 2. **キャッシング**: 頻繁に使用されるマスターCSVのメモリキャッシュ
 3. **増分処理**: 差分データのみを処理する仕組み

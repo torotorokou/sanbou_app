@@ -21,8 +21,8 @@ Revises: 20251201_130000000
 Create Date: 2025-12-11 10:00:00
 """
 
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = "20251211_100000000"
@@ -34,7 +34,7 @@ depends_on = None
 def upgrade() -> None:
     """
     stg.shogun_final_receive と stg.shogun_flash_receive に slip_date のインデックスを追加
-    
+
     インデックス設計:
     - 部分インデックス (WHERE slip_date IS NOT NULL) でサイズ削減
     - mart.v_receive_daily の以下のクエリを高速化:
@@ -44,23 +44,27 @@ def upgrade() -> None:
       GROUP BY slip_date
     """
     print("📌 Adding slip_date indexes to stg shogun receive tables...")
-    
+
     # 1. stg.shogun_final_receive に slip_date のインデックス追加
-    op.execute("""
-        CREATE INDEX IF NOT EXISTS ix_shogun_final_receive_slip_date 
-        ON stg.shogun_final_receive (slip_date) 
+    op.execute(
+        """
+        CREATE INDEX IF NOT EXISTS ix_shogun_final_receive_slip_date
+        ON stg.shogun_final_receive (slip_date)
         WHERE slip_date IS NOT NULL;
-    """)
+    """
+    )
     print("  ✓ Created ix_shogun_final_receive_slip_date")
-    
+
     # 2. stg.shogun_flash_receive に slip_date のインデックス追加
-    op.execute("""
-        CREATE INDEX IF NOT EXISTS ix_shogun_flash_receive_slip_date 
-        ON stg.shogun_flash_receive (slip_date) 
+    op.execute(
+        """
+        CREATE INDEX IF NOT EXISTS ix_shogun_flash_receive_slip_date
+        ON stg.shogun_flash_receive (slip_date)
         WHERE slip_date IS NOT NULL;
-    """)
+    """
+    )
     print("  ✓ Created ix_shogun_flash_receive_slip_date")
-    
+
     print("✅ Slip_date indexes added successfully")
 
 
@@ -69,11 +73,11 @@ def downgrade() -> None:
     インデックスを削除
     """
     print("📌 Dropping slip_date indexes from stg shogun receive tables...")
-    
+
     op.execute("DROP INDEX IF EXISTS stg.ix_shogun_flash_receive_slip_date;")
     print("  ✓ Dropped ix_shogun_flash_receive_slip_date")
-    
+
     op.execute("DROP INDEX IF EXISTS stg.ix_shogun_final_receive_slip_date;")
     print("  ✓ Dropped ix_shogun_final_receive_slip_date")
-    
+
     print("✅ Slip_date indexes dropped successfully")

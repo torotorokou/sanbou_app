@@ -13,6 +13,7 @@ CSVアップロード後のバックグラウンド処理の完了/失敗をユ�
 ### 背景
 
 既存実装では:
+
 - ✅ バックエンドで非同期処理が実装済み（FastAPI BackgroundTasks）
 - ✅ ステータス照会API (`/database/upload/status/{upload_file_id}`) が存在
 - ❌ フロントエンドでポーリングする仕組みが未実装
@@ -59,17 +60,20 @@ async checkStatus(uploadFileId: number): Promise<UploadStatusResponse>
 **ファイル**: `features/database/dataset-import/hooks/useUploadStatusPolling.ts`
 
 **機能**:
+
 - アップロード後、定期的にステータスをチェック（デフォルト2秒間隔）
 - 全ファイルの処理が完了するまでポーリング継続
 - 最大試行回数: 30回（合計60秒）
 
 **処理フロー**:
+
 1. `upload_file_ids` がセットされるとポーリング開始
 2. 各ファイルのステータスを並列チェック
 3. すべて完了 or 失敗 or タイムアウトで停止
 4. 結果に応じて通知表示
 
 **通知ルール**:
+
 - ✅ **すべて成功**: `notifySuccess` で処理完了通知（5秒で自動消去）
 - ❌ **失敗あり**: `notifyPersistent` でエラー通知（手動クローズ必要）
 - ⏰ **タイムアウト**: `notifyPersistent` でタイムアウト通知
@@ -81,6 +85,7 @@ async checkStatus(uploadFileId: number): Promise<UploadStatusResponse>
 **ファイル**: `features/database/dataset-submit/hooks/useSubmitVM.ts`
 
 **変更点**:
+
 - `doUpload` の戻り値を `boolean` → `UploadResult` に変更
 - バックエンドから返された `upload_file_ids` を抽出
 - アップロード受付完了時の通知文言を変更
@@ -93,6 +98,7 @@ export interface UploadResult {
 ```
 
 **通知メッセージの変更**:
+
 ```typescript
 // 旧: "CSVファイルのアップロードが完了しました。データの処理が開始されます。"
 // 新: "CSVファイルのアップロードを受け付けました。データ処理中です..."
@@ -105,6 +111,7 @@ export interface UploadResult {
 **ファイル**: `features/database/dataset-import/hooks/useDatasetImportVM.ts`
 
 **変更点**:
+
 1. `uploadFileIds` ステートを追加
 2. `useUploadStatusPolling` を統合
 3. アップロード成功時に `upload_file_ids` をセットしてポーリング開始
@@ -115,9 +122,9 @@ export interface UploadResult {
 useUploadStatusPolling({
   uploadFileIds,
   onComplete: (allSuccess) => {
-    console.log('Processing complete:', allSuccess);
+    console.log("Processing complete:", allSuccess);
     setUploadFileIds(undefined); // ポーリング停止
-    
+
     if (allSuccess) {
       // すべて成功した場合のみファイルをクリア
       setFiles({});
@@ -166,9 +173,11 @@ useUploadStatusPolling({
 ## 📦 変更ファイル一覧
 
 ### 新規作成
+
 - `features/database/dataset-import/hooks/useUploadStatusPolling.ts`
 
 ### 更新
+
 - `features/database/dataset-import/api/client.ts`
 - `features/database/dataset-import/hooks/useDatasetImportVM.ts`
 - `features/database/dataset-import/index.ts`
@@ -212,12 +221,14 @@ useUploadStatusPolling({
 ## 🎨 通知デザイン
 
 ### 成功通知（自動消去）
+
 ```
 ✓ 処理完了
 3件のCSVファイルの処理が完了しました。（10,000行）
 ```
 
 ### エラー通知（手動クローズ）
+
 ```
 ✗ 処理失敗
 以下のファイルの処理に失敗しました:
@@ -226,6 +237,7 @@ useUploadStatusPolling({
 ```
 
 ### タイムアウト通知（手動クローズ）
+
 ```
 ⚠ 処理タイムアウト
 受入一覧 の処理が時間内に完了しませんでした。
@@ -242,13 +254,13 @@ useUploadStatusPolling({
 export interface UploadStatusPollingOptions {
   /** ポーリング対象の upload_file_ids */
   uploadFileIds?: Record<string, number>;
-  
+
   /** ポーリング間隔（ミリ秒）*/
   interval?: number; // デフォルト: 2000
-  
+
   /** 最大試行回数 */
   maxAttempts?: number; // デフォルト: 30（60秒）
-  
+
   /** 完了時のコールバック */
   onComplete?: (allSuccess: boolean) => void;
 }
@@ -259,12 +271,14 @@ export interface UploadStatusPollingOptions {
 ## 📊 パフォーマンス考慮
 
 ### ポーリング負荷
+
 - **間隔**: 2秒（調整可能）
 - **最大試行**: 30回（60秒間）
 - **並列チェック**: 全ファイルを Promise.all で並列実行
 - **自動停止**: 完了・失敗・タイムアウト時に自動停止
 
 ### ネットワーク負荷
+
 - 1ファイルあたり最大30リクエスト
 - 3ファイル同時アップロード時: 最大90リクエスト/60秒
 - APIレスポンスは軽量（JSON）
@@ -274,18 +288,22 @@ export interface UploadStatusPollingOptions {
 ## 🚀 今後の改善案
 
 ### 1. Server-Sent Events (SSE)
+
 - ポーリングからプッシュ通知に変更
 - リアルタイム性向上、ネットワーク負荷削減
 
 ### 2. WebSocket
+
 - 双方向通信で進捗状況をリアルタイム表示
 - 処理進捗バー（10%、50%、100%）
 
 ### 3. リトライ機能
+
 - 処理失敗時に自動リトライ
 - 指数バックオフで負荷分散
 
 ### 4. 履歴画面連携
+
 - 通知から履歴画面への遷移ボタン
 - 詳細なエラーログ表示
 
@@ -294,11 +312,13 @@ export interface UploadStatusPollingOptions {
 ## 🎯 まとめ
 
 ### 実装前
+
 - ❌ アップロード後、処理状況がわからない
 - ❌ エラーが発生してもユーザーに通知されない
 - ❌ 処理完了まで待つ方法がない
 
 ### 実装後
+
 - ✅ アップロード受付完了を即座に通知
 - ✅ バックグラウンド処理の完了・失敗を自動検知
 - ✅ 成功時は自動消去、失敗時は手動クローズで適切な通知

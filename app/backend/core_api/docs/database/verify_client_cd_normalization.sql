@@ -1,15 +1,15 @@
 -- ================================================================
 -- client_cd 正規化処理の検証SQL
 -- ================================================================
--- 
+--
 -- 目的: 20251224_004 マイグレーション実行後の検証
 -- 実行タイミング: make al-up-env 実行後
--- 
+--
 -- 期待結果:
 --   1. 先頭0残存件数: 0件
 --   2. 末尾X残存件数（view）: 0件
 --   3. 正規化関数の動作: 正常
--- 
+--
 -- ================================================================
 
 \echo '================================================================'
@@ -23,20 +23,20 @@
 \echo '[1/6] 先頭0残存件数の確認（0件のはず）'
 \echo '--------------------------------------------------------------'
 
-SELECT 
+SELECT
   'shogun_flash_receive' as table_name,
   COUNT(*) as leading_zero_count,
-  CASE 
+  CASE
     WHEN COUNT(*) = 0 THEN '✅ OK'
     ELSE '❌ NG - 先頭0が残っています'
   END as status
 FROM stg.shogun_flash_receive
 WHERE btrim(client_cd) ~ '^0[0-9]'
 UNION ALL
-SELECT 
+SELECT
   'shogun_final_receive' as table_name,
   COUNT(*) as leading_zero_count,
-  CASE 
+  CASE
     WHEN COUNT(*) = 0 THEN '✅ OK'
     ELSE '❌ NG - 先頭0が残っています'
   END as status
@@ -53,47 +53,47 @@ WHERE btrim(client_cd) ~ '^0[0-9]';
 \echo '[2/6] stg.normalize_client_cd() 関数の動作確認'
 \echo '--------------------------------------------------------------'
 
-SELECT 
+SELECT
   '001021' as input,
   stg.normalize_client_cd('001021') as output,
   '1021' as expected,
-  CASE 
+  CASE
     WHEN stg.normalize_client_cd('001021') = '1021' THEN '✅ OK'
     ELSE '❌ NG'
   END as status
 UNION ALL
-SELECT 
+SELECT
   '00169X' as input,
   stg.normalize_client_cd('00169X') as output,
   '169X' as expected,
-  CASE 
+  CASE
     WHEN stg.normalize_client_cd('00169X') = '169X' THEN '✅ OK'
     ELSE '❌ NG'
   END as status
 UNION ALL
-SELECT 
+SELECT
   '0000' as input,
   stg.normalize_client_cd('0000') as output,
   '0' as expected,
-  CASE 
+  CASE
     WHEN stg.normalize_client_cd('0000') = '0' THEN '✅ OK'
     ELSE '❌ NG'
   END as status
 UNION ALL
-SELECT 
+SELECT
   'NULL' as input,
   COALESCE(stg.normalize_client_cd(NULL), 'NULL') as output,
   'NULL' as expected,
-  CASE 
+  CASE
     WHEN stg.normalize_client_cd(NULL) IS NULL THEN '✅ OK'
     ELSE '❌ NG'
   END as status
 UNION ALL
-SELECT 
+SELECT
   ' 001234 ' as input,
   stg.normalize_client_cd(' 001234 ') as output,
   '1234' as expected,
-  CASE 
+  CASE
     WHEN stg.normalize_client_cd(' 001234 ') = '1234' THEN '✅ OK'
     ELSE '❌ NG'
   END as status;
@@ -107,17 +107,17 @@ SELECT
 \echo '--------------------------------------------------------------'
 
 WITH final_view_x_check AS (
-  SELECT 
+  SELECT
     client_cd,
     COUNT(*) as count
   FROM stg.v_active_shogun_final_receive
   WHERE client_cd ~ '[Xx]$'
   GROUP BY client_cd
 )
-SELECT 
+SELECT
   'v_active_shogun_final_receive' as view_name,
   COALESCE(SUM(count), 0) as trailing_x_count,
-  CASE 
+  CASE
     WHEN COALESCE(SUM(count), 0) = 0 THEN '✅ OK - 末尾Xが除去されています'
     ELSE '❌ NG - 末尾Xが残っています'
   END as status
@@ -131,7 +131,7 @@ FROM final_view_x_check;
 \echo '[4/6] バックアップテーブルの存在確認'
 \echo '--------------------------------------------------------------'
 
-SELECT 
+SELECT
   tablename,
   'stg' as schema,
   'backup' as type
@@ -165,19 +165,19 @@ BEGIN
       AND tablename LIKE 'shogun_flash_receive_client_cd_backup_%'
     ORDER BY tablename DESC
     LIMIT 1;
-    
+
     SELECT tablename INTO backup_table_final
     FROM pg_tables
     WHERE schemaname = 'stg'
       AND tablename LIKE 'shogun_final_receive_client_cd_backup_%'
     ORDER BY tablename DESC
     LIMIT 1;
-    
+
     IF backup_table_flash IS NOT NULL THEN
         RAISE NOTICE 'shogun_flash_receive サンプル比較:';
         RAISE NOTICE '--------------------------------------------------------------';
         EXECUTE format('
-            SELECT 
+            SELECT
               t.id,
               b.old_client_cd as before,
               t.client_cd as after
@@ -187,13 +187,13 @@ BEGIN
             LIMIT 10;
         ', backup_table_flash);
     END IF;
-    
+
     IF backup_table_final IS NOT NULL THEN
         RAISE NOTICE '';
         RAISE NOTICE 'shogun_final_receive サンプル比較:';
         RAISE NOTICE '--------------------------------------------------------------';
         EXECUTE format('
-            SELECT 
+            SELECT
               t.id,
               b.old_client_cd as before,
               t.client_cd as after
@@ -214,7 +214,7 @@ END $$;
 \echo '--------------------------------------------------------------'
 
 WITH flash_stats AS (
-  SELECT 
+  SELECT
     'shogun_flash_receive' as table_name,
     COUNT(*) as total_rows,
     COUNT(DISTINCT client_cd) as unique_client_cd,
@@ -224,7 +224,7 @@ WITH flash_stats AS (
   WHERE client_cd IS NOT NULL
 ),
 final_stats AS (
-  SELECT 
+  SELECT
     'shogun_final_receive' as table_name,
     COUNT(*) as total_rows,
     COUNT(DISTINCT client_cd) as unique_client_cd,

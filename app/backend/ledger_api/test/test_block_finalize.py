@@ -16,6 +16,7 @@ session_store から state を復元して finalize を実行する。
   }
 }
 """
+
 from __future__ import annotations
 
 import os
@@ -23,8 +24,8 @@ import sys
 from pathlib import Path
 from typing import Any, Dict, List
 
-from fastapi.testclient import TestClient
 import pytest
+from fastapi.testclient import TestClient
 
 
 def _discover_repo_root(start: Path) -> Path:
@@ -45,17 +46,15 @@ if not ST_APP_BASE.exists():  # pragma: no cover - misconfigured workspace guard
     raise RuntimeError(f"st_app directory not found: {ST_APP_BASE}")
 os.environ.setdefault("BASE_ST_APP_DIR", str(ST_APP_BASE))
 
-from app.main import app  # noqa: E402
 from app.api.services.report.session_store import session_store  # noqa: E402
+from app.main import app  # noqa: E402
 from app.st_app.logic.manage.block_unit_price_interactive_main import (  # noqa: E402
     BlockUnitPriceInteractive,
 )
 
 
 def _load_sample_shipment_bytes() -> tuple[str, bytes, str]:
-    shuka={1:"出荷一覧_20250630_180038.csv",
-           2:"出荷一覧_20250829_164653.csv"
-           }
+    shuka = {1: "出荷一覧_20250630_180038.csv", 2: "出荷一覧_20250829_164653.csv"}
 
     sample_path = REPO_ROOT / "app" / "test" / shuka[2]
     content = sample_path.read_bytes()
@@ -109,7 +108,9 @@ def test_finalize_success_from_initial_state_with_fixed_frontend_selections():
     if df_transport_cost is not None:
         print("[DBG test] transport_cost columns:", list(df_transport_cost.columns))
         try:
-            print("[DBG test] transport_cost head:", df_transport_cost.head(3).to_dict())
+            print(
+                "[DBG test] transport_cost head:", df_transport_cost.head(3).to_dict()
+            )
         except Exception:
             pass
 
@@ -119,6 +120,7 @@ def test_finalize_success_from_initial_state_with_fixed_frontend_selections():
     # マスターの表記ゆれに起因する不安定さを避けるため最小限のモックを当てる
     def _apply_vendor(df_after, df_transport):
         import pandas as _pd
+
         df_result = df_after.copy()
         if "運搬費" not in df_result.columns:
             df_result["運搬費"] = 0
@@ -127,12 +129,16 @@ def test_finalize_success_from_initial_state_with_fixed_frontend_selections():
             if "運搬費" in t.columns:
                 t["運搬費"] = _pd.to_numeric(t["運搬費"], errors="coerce").fillna(0)
             lookup = {
-                (str(r.get("業者CD")), str(r.get("運搬業者"))): float(r.get("運搬費", 0) or 0)
+                (str(r.get("業者CD")), str(r.get("運搬業者"))): float(
+                    r.get("運搬費", 0) or 0
+                )
                 for _, r in t.iterrows()
             }
+
             def _calc(row):
                 key = (str(row.get("業者CD")), str(row.get("運搬業者")))
                 return lookup.get(key, 0.0)
+
             df_result["運搬費"] = df_result.apply(_calc, axis=1)
         except Exception:
             pass
@@ -161,7 +167,9 @@ def test_finalize_success_from_initial_state_with_fixed_frontend_selections():
         assert final_df is not None
 
 
-def test_state_passed_to_finalize_matches_saved_serialized_state(monkeypatch: pytest.MonkeyPatch):
+def test_state_passed_to_finalize_matches_saved_serialized_state(
+    monkeypatch: pytest.MonkeyPatch,
+):
     """/initial で保存されたシリアライズ state が /finalize 実行時に読み出されるものと一致することを検証。
 
     仕組み: session_store.load をラップして、読み出し結果が initial 直後に取得した serialized と等しいことを検査する。
@@ -188,7 +196,9 @@ def test_state_passed_to_finalize_matches_saved_serialized_state(monkeypatch: py
         assert loaded == serialized_expected
         return loaded
 
-    monkeypatch.setattr("app.api.services.report.session_store.session_store.load", _spy_load)
+    monkeypatch.setattr(
+        "app.api.services.report.session_store.session_store.load", _spy_load
+    )
 
     # /finalize エンドポイントを叩く（StreamingResponse だが 200 のみ確認）
     resp = client.post(

@@ -9,6 +9,7 @@
 ### 1. バックエンド: DomainError への統一
 
 #### 修正ファイル
+
 - `app/backend/ledger_api/app/api/services/report/core/processors/report_processing_service.py`
 - `app/backend/ledger_api/app/api/services/report/core/processors/interactive_report_processing_service.py`
 - `app/backend/ledger_api/app/api/endpoints/reports/block_unit_price_interactive.py`
@@ -16,6 +17,7 @@
 #### 変更内容
 
 **report_processing_service.py:**
+
 - すべての例外を `DomainError` に変換し、ProblemDetails形式でレスポンス
 - `format()` のエラー → `REPORT_FORMAT_ERROR`
 - `main_process()` のエラー → `REPORT_PROCESSING_ERROR`
@@ -42,6 +44,7 @@ raise DomainError(
 ```
 
 **interactive_report_processing_service.py:**
+
 - インタラクティブ処理のエラーも `DomainError` に統一
 - `apply()` のエラー → `INTERACTIVE_APPLY_FAILED`
 - `finalize()` のエラー → `INTERACTIVE_FINALIZE_ERROR`
@@ -49,6 +52,7 @@ raise DomainError(
 - セッション未検出 → `SESSION_NOT_FOUND`
 
 **block_unit_price_interactive.py:**
+
 - `HTTPException` から `DomainError` に変更
 - すべてのエンドポイント (`/initial`, `/apply`, `/finalize`, `/status/{step}`) で統一
 
@@ -68,6 +72,7 @@ raise DomainError(
 ### 2. フロントエンド: エラーコードカタログの拡張
 
 #### 修正ファイル
+
 - `app/frontend/src/features/notification/config.ts`
 
 #### 追加したエラーコード
@@ -86,6 +91,7 @@ SESSION_NOT_FOUND: { severity: 'warning', title: 'セッションエラー' },
 ## エラーフロー
 
 ### 修正前
+
 ```
 帳簿処理でエラー発生
   ↓
@@ -97,6 +103,7 @@ SESSION_NOT_FOUND: { severity: 'warning', title: 'セッションエラー' },
 ```
 
 ### 修正後
+
 ```
 帳簿処理でエラー発生
   ↓
@@ -122,6 +129,7 @@ notifyApiError() が自動的にエラー通知を表示
 ## 影響範囲
 
 ### 修正された帳票エンドポイント
+
 - `/ledger_api/reports/factory_report` - 工場日報
 - `/ledger_api/reports/balance_sheet` - 工場搬出入収支表
 - `/ledger_api/reports/average_sheet` - 工場平均表
@@ -132,6 +140,7 @@ notifyApiError() が自動的にエラー通知を表示
 - `/ledger_api/reports/block_unit_price/status/{step}` - ステップ情報取得
 
 ### 改善されたユーザー体験
+
 1. **エラーの可視化**: エラーが発生すると即座に通知が表示される
 2. **詳細なエラー情報**: traceId とともに、具体的なエラー内容が表示される
 3. **一貫したエラーハンドリング**: すべての帳票エンドポイントで統一された方式
@@ -140,6 +149,7 @@ notifyApiError() が自動的にエラー通知を表示
 ## テスト方法
 
 ### 1. CSVエラーのテスト
+
 ```bash
 # 不正なCSVファイルをアップロードし、エラー通知が表示されることを確認
 curl -X POST http://localhost:8001/ledger_api/reports/factory_report \
@@ -148,11 +158,13 @@ curl -X POST http://localhost:8001/ledger_api/reports/factory_report \
 ```
 
 ### 2. 処理エラーのテスト
+
 ```bash
 # 必須カラムが欠けたCSVで帳票生成を試み、適切なエラーが返ることを確認
 ```
 
 ### 3. セッションエラーのテスト
+
 ```bash
 # 無効なsession_idでブロック単価計算を試み、SESSION_NOT_FOUNDエラーが返ることを確認
 curl -X POST http://localhost:8001/ledger_api/reports/block_unit_price/finalize \
@@ -163,19 +175,21 @@ curl -X POST http://localhost:8001/ledger_api/reports/block_unit_price/finalize 
 ## 既存の契約との整合性
 
 ### ProblemDetails契約 (RFC 7807準拠)
+
 すべてのエラーは以下のフォーマットで返却されます:
 
 ```typescript
 interface ProblemDetails {
-  status: number;          // HTTPステータスコード
-  code: string;            // エラーコード (例: "REPORT_PROCESSING_ERROR")
-  userMessage: string;     // ユーザー向けメッセージ
-  title?: string;          // エラータイトル (例: "帳票処理エラー")
-  traceId?: string;        // リクエストトレースID
+  status: number; // HTTPステータスコード
+  code: string; // エラーコード (例: "REPORT_PROCESSING_ERROR")
+  userMessage: string; // ユーザー向けメッセージ
+  title?: string; // エラータイトル (例: "帳票処理エラー")
+  traceId?: string; // リクエストトレースID
 }
 ```
 
 ### 自動エラー通知
+
 すべての帳票APIエラーは自動的に以下のように処理されます:
 
 1. **axios インターセプター** → `ApiError` クラスに変換
@@ -185,22 +199,26 @@ interface ProblemDetails {
 ## 今後の改善提案
 
 ### 1. より具体的なエラーコード
+
 - `MISSING_REQUIRED_COLUMN` - 必須カラム不足
 - `INVALID_DATE_FORMAT` - 日付フォーマット不正
 - `CALCULATION_OVERFLOW` - 計算オーバーフロー
 
 ### 2. エラー詳細モーダル
+
 - traceId をコピー可能にする
 - エラーの技術的詳細を表示
 - サポート連絡先を表示
 
 ### 3. エラーロギング
+
 - Sentry/DataDog などの監視ツールへの統合
 - traceId ベースの分散トレーシング
 
 ## まとめ
 
 この修正により、帳簿作成エラーが発生した際に:
+
 - ✅ フロントエンドに適切なエラー通知が表示される
 - ✅ フリーズ問題が解消される
 - ✅ traceId によるエラー追跡が可能になる

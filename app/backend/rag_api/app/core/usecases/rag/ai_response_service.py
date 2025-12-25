@@ -26,12 +26,13 @@ generate-answerエンドポイント用のAI回答生成を担当するサービ
 """
 
 import os
-from typing import List, Dict, Any
-from backend_shared.application.logging import get_module_logger
-from backend_shared.utils.datetime_utils import now_in_app_timezone
-from app.shared.file_utils import PDF_PATH
+from typing import Any, Dict, List
+
 from app.config.paths import get_pdf_url_prefix
 from app.core.ports.rag.pdf_service_port import PDFServiceBase
+from app.shared.file_utils import PDF_PATH
+from backend_shared.application.logging import get_module_logger
+from backend_shared.utils.datetime_utils import now_in_app_timezone
 
 logger = get_module_logger(__name__)
 
@@ -60,24 +61,31 @@ class AIResponseService:
         Returns:
             AIレスポンスデータ（answer, sources, pdf_url）
         """
-        logger.info("Generating AI response", extra={"query": query, "category": category, "tags": tags})
+        logger.info(
+            "Generating AI response",
+            extra={"query": query, "category": category, "tags": tags},
+        )
         answer = None
         sources: list[Any] = []
         pages = None
         error_code: str | None = None
         error_detail: str | None = None
-        
+
         try:
             # 遅延インポート：テストや軽量実行時に不要な依存を避ける
             from app.infra.adapters.llm import ai_loader  # type: ignore
+
             result = ai_loader.get_answer(query, category, tags)
-            
+
             # エラーレスポンスのチェック
             if "error" in result:
                 error_msg = result.get("error", "不明なエラー")
                 error_code = result.get("error_code", "OPENAI_ERROR")
-                logger.warning("AI loader returned error", extra={"error_msg": error_msg, "error_code": error_code})
-                
+                logger.warning(
+                    "AI loader returned error",
+                    extra={"error_msg": error_msg, "error_code": error_code},
+                )
+
                 # エラーコードに応じたメッセージ生成
                 if error_code == "OPENAI_INSUFFICIENT_QUOTA":
                     error_detail = (
@@ -85,14 +93,10 @@ class AIResponseService:
                         "管理者にお問い合わせください。"
                     )
                 elif error_code == "OPENAI_RATE_LIMIT":
-                    error_detail = (
-                        "OpenAI APIのレート制限に達しました。しばらく時間をおいて再度お試しください。"
-                    )
+                    error_detail = "OpenAI APIのレート制限に達しました。しばらく時間をおいて再度お試しください。"
                 else:
-                    error_detail = (
-                        f"AI回答の生成中にエラーが発生しました: {error_msg}"
-                    )
-                
+                    error_detail = f"AI回答の生成中にエラーが発生しました: {error_msg}"
+
                 # エラー情報を返却（answer=None, error_code/error_detailを含む）
                 return {
                     "answer": None,
@@ -105,10 +109,17 @@ class AIResponseService:
                 answer = result.get("answer")
                 sources = result.get("sources", [])
                 pages = result.get("pages")
-                logger.info("AI loader succeeded", extra={"pages": pages, "sources_count": len(sources)})
+                logger.info(
+                    "AI loader succeeded",
+                    extra={"pages": pages, "sources_count": len(sources)},
+                )
         except Exception as ae:
             # 予期しない例外：汎用エラーとして扱う
-            logger.error("AI loader failed with exception", exc_info=True, extra={"error": str(ae)})
+            logger.error(
+                "AI loader failed with exception",
+                exc_info=True,
+                extra={"error": str(ae)},
+            )
             return {
                 "answer": None,
                 "sources": [],
@@ -153,10 +164,15 @@ class AIResponseService:
                 ]
                 try:
                     self.pdf_service.merge_pdfs(pdf_file_paths, merged_pdf_path)
-                    logger.info("PDFs merged successfully", extra={"merged_pdf_path": merged_pdf_path})
+                    logger.info(
+                        "PDFs merged successfully",
+                        extra={"merged_pdf_path": merged_pdf_path},
+                    )
                     pdf_url = f"{get_pdf_url_prefix()}/{merged_pdf_name}"
                 except Exception as me:
-                    logger.error("PDF merge failed", exc_info=True, extra={"error": str(me)})
+                    logger.error(
+                        "PDF merge failed", exc_info=True, extra={"error": str(me)}
+                    )
                     pdf_url = None
         except Exception as se:
             # PDF保存段階での失敗もanswerは返す
@@ -175,7 +191,10 @@ class AIResponseService:
         normalized: List[int] = []
 
         def debug_skip(token: object, reason: str) -> None:
-            logger.debug(f"Skip token in normalize_pages", extra={"token": repr(token), "reason": reason})
+            logger.debug(
+                f"Skip token in normalize_pages",
+                extra={"token": repr(token), "reason": reason},
+            )
 
         def add_if_positive(n: int) -> None:
             if isinstance(n, int) and n > 0:
@@ -235,5 +254,7 @@ class AIResponseService:
             debug_skip(type(pages).__name__, "unsupported_type")
 
         after = sorted(set(normalized))
-        logger.debug("Normalize pages completed", extra={"before": before_repr, "after": after})
+        logger.debug(
+            "Normalize pages completed", extra={"before": before_repr, "after": after}
+        )
         return after

@@ -3,9 +3,15 @@
  * サマリテーブル機能のViewModel
  */
 
-import { useState, useCallback } from 'react';
-import type { SummaryRow, SummaryQuery, MetricEntry, ID, DailyPoint } from '../../shared/model/types';
-import type { SalesPivotRepository } from '../../shared/infrastructure/salesPivot.repository';
+import { useState, useCallback } from "react";
+import type {
+  SummaryRow,
+  SummaryQuery,
+  MetricEntry,
+  ID,
+  DailyPoint,
+} from "../../shared/model/types";
+import type { SalesPivotRepository } from "../../shared/infrastructure/salesPivot.repository";
 
 export interface UseSummaryViewModelParams {
   repository: SalesPivotRepository;
@@ -16,11 +22,11 @@ export interface UseSummaryViewModelResult {
   summary: SummaryRow[];
   loading: boolean;
   reload: () => Promise<void>;
-  
+
   // Daily series for charts
   repSeriesCache: Record<ID, DailyPoint[]>;
   loadDailySeries: (repId: ID) => Promise<void>;
-  
+
   // Pivot trigger
   onRowClick: (rec: MetricEntry) => void;
 }
@@ -30,13 +36,15 @@ export interface UseSummaryViewModelResult {
  */
 export function useSummaryViewModel(
   params: UseSummaryViewModelParams,
-  onPivotOpen?: (rec: MetricEntry) => void
+  onPivotOpen?: (rec: MetricEntry) => void,
 ): UseSummaryViewModelResult {
   const { repository, query } = params;
 
   const [summary, setSummary] = useState<SummaryRow[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
-  const [repSeriesCache, setRepSeriesCache] = useState<Record<ID, DailyPoint[]>>({});
+  const [repSeriesCache, setRepSeriesCache] = useState<
+    Record<ID, DailyPoint[]>
+  >({});
 
   // Reload summary
   const reload = useCallback(async () => {
@@ -45,7 +53,7 @@ export function useSummaryViewModel(
       const rows = await repository.fetchSummary(query);
       setSummary(rows);
     } catch (error) {
-      console.error('Failed to fetch summary:', error);
+      console.error("Failed to fetch summary:", error);
     } finally {
       setLoading(false);
     }
@@ -58,15 +66,15 @@ export function useSummaryViewModel(
       try {
         const s = await repository.fetchDailySeries(
           query.month
-            ? { month: query.month, repId, categoryKind: 'waste' }
-            : { monthRange: query.monthRange!, repId, categoryKind: 'waste' }
+            ? { month: query.month, repId, categoryKind: "waste" }
+            : { monthRange: query.monthRange!, repId, categoryKind: "waste" },
         );
         setRepSeriesCache((prev) => ({ ...prev, [repId]: s }));
       } catch (error) {
-        console.error('Failed to fetch daily series:', error);
+        console.error("Failed to fetch daily series:", error);
       }
     },
-    [repository, query, repSeriesCache]
+    [repository, query, repSeriesCache],
   );
 
   // Pivot open handler
@@ -74,7 +82,7 @@ export function useSummaryViewModel(
     (rec: MetricEntry) => {
       onPivotOpen?.(rec);
     },
-    [onPivotOpen]
+    [onPivotOpen],
   );
 
   return {

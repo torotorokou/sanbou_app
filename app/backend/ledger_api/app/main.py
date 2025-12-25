@@ -18,25 +18,25 @@ except Exception:  # if not available, inject stub module
         pass
 
 import os
-from fastapi import FastAPI
+
+from app.api.routers.jobs import router as jobs_router
+from app.api.routers.notifications import router as notifications_router
+from app.api.routers.report_artifacts import router as report_artifact_router
+from app.api.routers.reports import reports_router
+from app.api.routers.reports.block_unit_price_interactive import (
+    router as block_unit_price_router,
+)
+from app.settings import settings
 
 # ==========================================
 # 統一ロギング設定のインポート（backend_shared）
 # ==========================================
-from backend_shared.application.logging import setup_logging, get_module_logger
-from backend_shared.infra.frameworks.logging_utils import setup_uvicorn_access_filter
-from backend_shared.infra.adapters.middleware import RequestIdMiddleware
-from backend_shared.infra.adapters.fastapi import register_error_handlers
+from backend_shared.application.logging import get_module_logger, setup_logging
 from backend_shared.config.env_utils import is_debug_mode
-
-from app.api.routers.reports.block_unit_price_interactive import (
-    router as block_unit_price_router,
-)
-from app.api.routers.report_artifacts import router as report_artifact_router
-from app.api.routers.reports import reports_router
-from app.api.routers.jobs import router as jobs_router
-from app.api.routers.notifications import router as notifications_router
-from app.settings import settings
+from backend_shared.infra.adapters.fastapi import register_error_handlers
+from backend_shared.infra.adapters.middleware import RequestIdMiddleware
+from backend_shared.infra.frameworks.logging_utils import setup_uvicorn_access_filter
+from fastapi import FastAPI
 
 # ==========================================
 # 統一ロギング設定の初期化
@@ -66,7 +66,7 @@ app = FastAPI(
 
 logger.info(
     f"Ledger API initialized (DEBUG={DEBUG}, docs_enabled={DEBUG})",
-    extra={"operation": "app_init", "debug": DEBUG}
+    extra={"operation": "app_init", "debug": DEBUG},
 )
 
 # ミドルウェア: Request ID（traceId）の付与
@@ -74,6 +74,7 @@ app.add_middleware(RequestIdMiddleware)
 
 # CORS設定
 from backend_shared.infra.frameworks.cors_config import setup_cors
+
 setup_cors(app)
 
 # エラーハンドラの登録（ProblemDetails統一）
@@ -84,15 +85,15 @@ setup_uvicorn_access_filter(excluded_paths=("/health",))
 
 
 # ルーター登録 - 内部論理パスで公開（core_api BFFが /core_api を付与）
-app.include_router(
-    block_unit_price_router, prefix="/block_unit_price_interactive"
-)
+app.include_router(block_unit_price_router, prefix="/block_unit_price_interactive")
 app.include_router(reports_router, prefix="/reports")
 app.include_router(jobs_router, prefix="")  # /api/jobs
 app.include_router(notifications_router, prefix="")  # /notifications
 
 
-artifact_prefix = settings.report_artifact_url_prefix.rstrip("/") or "/reports/artifacts"
+artifact_prefix = (
+    settings.report_artifact_url_prefix.rstrip("/") or "/reports/artifacts"
+)
 if not artifact_prefix.startswith("/"):
     artifact_prefix = f"/{artifact_prefix}"
 app.include_router(
@@ -117,8 +118,8 @@ def health_check():
 def health():
     return {"status": "ok"}
 
+
 # 互換性: 旧 root_path=/ledger_api 時代のルート ( /ledger_api/ ) にヘルスを返す
 @app.get("/ledger_api/", include_in_schema=False)
 def legacy_root_health():  # pragma: no cover - 簡易互換
     return {"status": "ledger_api is running"}
-

@@ -1,31 +1,31 @@
 /**
  * dataset-import 型定義
- * 
+ *
  * 機能:
  *   - データセットインポート画面の状態管理
  *   - 左パネルのファイル一覧表示
  *   - CSVバリデーション状態の管理
  *   - プレビューデータの保持
- * 
+ *
  * 設計方針:
  *   - MVVMパターン: ViewModelで使用される型定義
  *   - Feature-Sliced Design: features/database/dataset-import 層
  *   - 他機能との結合度を低く保つ
  */
 
-import type { CsvValidationStatus } from '@features/csv-validation';
-import type { TypeKey } from '../../shared/types/common';
-import type { CsvPreviewData } from '../../dataset-preview/model/types';
+import type { CsvValidationStatus } from "@features/csv-validation";
+import type { TypeKey } from "../../shared/types/common";
+import type { CsvPreviewData } from "../../dataset-preview/model/types";
 
 /**
  * 左パネルに表示するファイルアイテム
- * 
+ *
  * 機能:
  *   - 各CSVファイルの状態を保持
  *   - バリデーション状態の表示
  *   - プレビューデータのキャッシュ
  *   - スキップ機能のサポート
- * 
+ *
  * @example
  * const fileItem: PanelFileItem = {
  *   typeKey: 'receive',
@@ -56,9 +56,9 @@ export interface PanelFileItem {
 
 /**
  * データセットインポートViewModel用のオプション
- * 
+ *
  * ViewModeの初期化時に渡す設定。
- * 
+ *
  * @example
  * const options: DatasetImportVMOptions = {
  *   activeTypes: ['receive', 'yard', 'shipment'],

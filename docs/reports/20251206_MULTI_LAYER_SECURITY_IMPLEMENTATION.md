@@ -12,6 +12,7 @@
 ## 🛡️ 構築した7層の防御システム
 
 ### 第1層: .gitignore ✅
+
 **レベル**: ファイルシステム  
 **ファイル**: `.gitignore`
 
@@ -27,6 +28,7 @@
 ---
 
 ### 第2層: .gitattributes + Git フィルター ✅
+
 **レベル**: Git 内部処理  
 **ファイル**: `.gitattributes`, `.git/config`
 
@@ -38,6 +40,7 @@ secrets/*.secrets filter=forbidden
 ```
 
 Git 設定:
+
 ```bash
 filter.forbidden.clean = "echo 'ERROR: このファイルはGitに追加できません' >&2; exit 1"
 filter.forbidden.smudge = "cat"
@@ -46,20 +49,24 @@ filter.forbidden.smudge = "cat"
 **効果**: `git add -f` で強制追加しても **完全にブロック**
 
 **テスト結果**:
+
 ```bash
 $ git add -f env/.env.test_temp
 ERROR: このファイルはGitに追加できません
 error: external filter failed
 ```
+
 ✅ **正常に動作**
 
 ---
 
 ### 第3層: prepare-commit-msg フック ✅
+
 **レベル**: コミット準備  
 **ファイル**: `.git/hooks/prepare-commit-msg`
 
 **機能**:
+
 - env/ と secrets/ の変更を検出
 - テンプレートと実設定ファイルを区別
 - 警告メッセージを表示
@@ -69,11 +76,14 @@ error: external filter failed
 ---
 
 ### 第4層: pre-commit フック ✅
+
 **レベル**: コミット直前  
 **ファイル**: `.git/hooks/pre-commit`
 
 **チェック項目**:
+
 1. 機密ファイルパターン検出
+
    - `env/.env.*` (except .example, .template)
    - `secrets/*.secrets`
    - `secrets/gcp-sa*.json`
@@ -89,10 +99,12 @@ error: external filter failed
 ---
 
 ### 第5層: commit-msg フック ✅
+
 **レベル**: コミットメッセージ  
 **ファイル**: `.git/hooks/commit-msg`
 
 **チェック項目**:
+
 - パスワード文字列
 - トークン
 - API キー
@@ -104,10 +116,12 @@ error: external filter failed
 ---
 
 ### 第6層: pre-push フック ✅
+
 **レベル**: プッシュ直前  
 **ファイル**: `.git/hooks/pre-push`
 
 **チェック項目**:
+
 1. 機密ファイルの存在（diff チェック）
 2. パスワードパターン（全コミット検査）
 3. Git 追跡対象の整合性
@@ -116,6 +130,7 @@ error: external filter failed
 **効果**: リモートプッシュを **完全にブロック**
 
 **チェック内容**:
+
 ```
 🔍 [1/4] 機密ファイルのチェック...
 🔍 [2/4] パスワードパターンのチェック...
@@ -126,14 +141,17 @@ error: external filter failed
 ---
 
 ### 第7層: GitHub Actions ✅
+
 **レベル**: CI/CD パイプライン  
 **ファイル**: `.github/workflows/security-check.yml`
 
 **トリガー**:
+
 - すべてのブランチへの push
 - すべてのプルリクエスト
 
 **チェック項目**:
+
 1. 機密ファイルの検出
 2. 機密情報パターンのスキャン
 3. .gitignore の検証
@@ -146,6 +164,7 @@ error: external filter failed
 ## 📁 作成・更新したファイル
 
 ### Git フック
+
 ```
 ✅ .git/hooks/pre-commit          (更新済み)
 ✅ .git/hooks/pre-push            (新規作成)
@@ -154,22 +173,26 @@ error: external filter failed
 ```
 
 ### 設定ファイル
+
 ```
 ✅ .gitattributes                 (更新: filter=forbidden 追加)
 ✅ .git/config                    (filter.forbidden 設定)
 ```
 
 ### GitHub Actions
+
 ```
 ✅ .github/workflows/security-check.yml  (新規作成)
 ```
 
 ### スクリプト
+
 ```
 ✅ scripts/setup_git_hooks.sh     (新規作成)
 ```
 
 ### ドキュメント
+
 ```
 ✅ docs/GIT_SECURITY_GUIDE.md                              (新規作成)
 ✅ docs/20251206_ENV_SECRETS_LEAK_COMPREHENSIVE_AUDIT.md   (新規作成)
@@ -181,22 +204,27 @@ error: external filter failed
 ## 🧪 テスト結果
 
 ### テスト 1: .gitignore による除外
+
 ```bash
 $ git add env/.env.local_dev
 $ git status
 # → ファイルが追加されない
 ```
+
 ✅ **合格**
 
 ### テスト 2: Git フィルターによるブロック
+
 ```bash
 $ git add -f env/.env.test_temp
 ERROR: このファイルはGitに追加できません
 error: external filter failed
 ```
+
 ✅ **合格** - 強制追加も完全にブロック
 
 ### テスト 3: pre-commit フックの動作確認
+
 ```bash
 # 既存のフックで検証済み
 ✅ 機密ファイルパターン検出: 動作確認済み
@@ -204,25 +232,27 @@ error: external filter failed
 ```
 
 ### テスト 4: pre-push フックの構文確認
+
 ```bash
 $ bash -n .git/hooks/pre-push
 # → エラーなし
 ```
+
 ✅ **合格**
 
 ---
 
 ## 🎯 防御レベルの比較
 
-| 防御層 | 手法 | ブロック強度 | バイパス可能性 | 備考 |
-|-------|------|------------|--------------|------|
-| **第1層: .gitignore** | ファイル除外 | 🟡 中 | 高（`-f` で回避可） | 基本的な防御 |
-| **第2層: Git フィルター** | 内部処理ブロック | 🔴 最高 | **不可** | **最強の防御** |
-| **第3層: prepare-commit-msg** | 警告表示 | 🟢 低 | 高（無視可能） | 注意喚起のみ |
-| **第4層: pre-commit** | コミット阻止 | 🔴 高 | 中（`--no-verify` で回避可） | 主要な防御線 |
-| **第5層: commit-msg** | メッセージ検査 | 🟡 中 | 中（`--no-verify` で回避可） | 補助的防御 |
-| **第6層: pre-push** | プッシュ阻止 | 🔴 高 | 中（`--no-verify` で回避可） | 最終防衛線 |
-| **第7層: GitHub Actions** | CI/CD 検査 | 🔴 高 | 低（管理者権限必要） | 組織レベルの防御 |
+| 防御層                        | 手法             | ブロック強度 | バイパス可能性               | 備考             |
+| ----------------------------- | ---------------- | ------------ | ---------------------------- | ---------------- |
+| **第1層: .gitignore**         | ファイル除外     | 🟡 中        | 高（`-f` で回避可）          | 基本的な防御     |
+| **第2層: Git フィルター**     | 内部処理ブロック | 🔴 最高      | **不可**                     | **最強の防御**   |
+| **第3層: prepare-commit-msg** | 警告表示         | 🟢 低        | 高（無視可能）               | 注意喚起のみ     |
+| **第4層: pre-commit**         | コミット阻止     | 🔴 高        | 中（`--no-verify` で回避可） | 主要な防御線     |
+| **第5層: commit-msg**         | メッセージ検査   | 🟡 中        | 中（`--no-verify` で回避可） | 補助的防御       |
+| **第6層: pre-push**           | プッシュ阻止     | 🔴 高        | 中（`--no-verify` で回避可） | 最終防衛線       |
+| **第7層: GitHub Actions**     | CI/CD 検査       | 🔴 高        | 低（管理者権限必要）         | 組織レベルの防御 |
 
 **結論**: 第2層の Git フィルターにより、**`git add -f` でも追加不可能**な最強の防御を実現
 
@@ -266,16 +296,19 @@ cat docs/GIT_SECURITY_GUIDE.md
 セキュリティ向上のため、機密ファイルの誤コミット防止システムを導入しました。
 
 ## 実施事項
+
 1. 最新のコードを取得: `git pull origin refactor/env-3tier-architecture`
 2. セットアップスクリプトを実行: `bash scripts/setup_git_hooks.sh`
 3. 詳細は `docs/GIT_SECURITY_GUIDE.md` を参照
 
 ## 影響
-- env/.env.* や secrets/*.secrets は **絶対に** Git に追加できなくなります
+
+- env/.env._ や secrets/_.secrets は **絶対に** Git に追加できなくなります
 - 強制追加（`git add -f`）も完全にブロックされます
 - プッシュ前に自動セキュリティチェックが実行されます
 
 ## 質問
+
 不明点があれば、セキュリティチームまでお問い合わせください。
 ```
 
@@ -284,11 +317,13 @@ cat docs/GIT_SECURITY_GUIDE.md
 ## 📊 セキュリティ向上の効果
 
 ### Before（対策前）
+
 - ❌ .gitignore のみ（`git add -f` で回避可能）
 - ❌ pre-commit フックのみ（`--no-verify` で回避可能）
 - ❌ 誤ってコミット・プッシュするリスクあり
 
 ### After（対策後）
+
 - ✅ **7層の多層防御**
 - ✅ Git フィルターで**物理的に追加不可能**
 - ✅ pre-push フックで最終チェック
@@ -332,6 +367,7 @@ bash scripts/setup_git_hooks.sh
 ### Q1: フックが動作しない
 
 **A1**: セットアップスクリプトを実行してください
+
 ```bash
 bash scripts/setup_git_hooks.sh
 ```
@@ -339,6 +375,7 @@ bash scripts/setup_git_hooks.sh
 ### Q2: テンプレートファイルがコミットできない
 
 **A2**: ファイル名が `.example` または `.template` で終わっているか確認
+
 ```bash
 # OK
 env/.env.example
@@ -352,6 +389,7 @@ secrets/.env.local_dev.secrets
 ### Q3: 古いフックが残っている
 
 **A3**: 手動で削除して再セットアップ
+
 ```bash
 rm -f .git/hooks/pre-commit.old
 bash scripts/setup_git_hooks.sh
@@ -371,6 +409,7 @@ bash scripts/setup_git_hooks.sh
 ## ✅ チェックリスト
 
 ### 実装完了項目
+
 - [x] .gitignore の強化
 - [x] .gitattributes の設定
 - [x] Git フィルター設定（filter.forbidden）
@@ -384,6 +423,7 @@ bash scripts/setup_git_hooks.sh
 - [x] テスト実施
 
 ### 今後の対応
+
 - [ ] チーム全員への通知
 - [ ] セットアップスクリプトの実行確認
 - [ ] GitHub Actions の初回実行確認

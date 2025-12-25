@@ -15,16 +15,19 @@
 現在の `ledger_api` は以下の課題を抱えている：
 
 1. **レイヤー構成の不統一**
+
    - `application/usecases` に UseCase と Service が混在
    - `core/` レイヤーが存在せず、Clean Architecture の原則から逸脱
    - Domain モデルが `application/domain/` に配置されている
 
 2. **責務の曖昧さ**
+
    - `CsvValidatorService`, `CsvFormatterService` が UseCase 層に配置
    - これらは実質的に Domain Service または Infrastructure Adapter
    - Router が UseCase を直接呼び出しているが、Input/Output DTO の変換が不明瞭
 
 3. **backend_shared への過度な依存**
+
    - CSV 読み込み、バリデーション、フォーマット等の多くのロジックが backend_shared に依存
    - ledger_api 固有のドメインロジックとの境界が不明瞭
 
@@ -38,12 +41,10 @@
   - `core/` レイヤーの導入（domain, ports, usecases）
   - `infra/` レイヤーの明確化（adapters, frameworks）
   - 依存性逆転の原則（DIP）の徹底
-  
 - **責務の明確化**
   - UseCase: アプリケーション固有のビジネスフロー
   - Domain: ビジネスルール・不変条件
   - Adapter: 外部 I/O の具体実装
-  
 - **テスタビリティの向上**
   - Port（抽象インターフェース）への依存
   - 全 UseCase が単体テスト可能な構造
@@ -64,6 +65,7 @@
 #### フォルダ構成の変更
 
 **現在:**
+
 ```
 app/
   application/
@@ -81,6 +83,7 @@ app/
 ```
 
 **変更後:**
+
 ```
 app/
   core/                      ← 新規作成
@@ -127,15 +130,15 @@ app/
 
 ### 2.2 主要ファイルの移動・変更
 
-| 現在のパス | 変更後のパス | 変更内容 |
-|----------|------------|---------|
-| `application/domain/reports/*` | `core/domain/reports/*` | フォルダ移動 |
-| `application/ports/*` | `core/ports/inbound/*` | フォルダ移動 + inbound/outbound 分離 |
-| `application/usecases/reports/*` | `core/usecases/reports/*` | フォルダ移動 |
-| `application/usecases/csv/validator_service.py` | `infra/adapters/csv/csv_validator.py` | Adapter として再配置 |
-| `application/usecases/csv/formatter_service.py` | `infra/adapters/csv/csv_formatter.py` | Adapter として再配置 |
-| `local_config/di_providers.py` | `config/di_providers.py` | フォルダ移動 |
-| `main.py` | `main.py` (内容整理) | Framework 初期化を `infra/frameworks/` に分離 |
+| 現在のパス                                      | 変更後のパス                          | 変更内容                                      |
+| ----------------------------------------------- | ------------------------------------- | --------------------------------------------- |
+| `application/domain/reports/*`                  | `core/domain/reports/*`               | フォルダ移動                                  |
+| `application/ports/*`                           | `core/ports/inbound/*`                | フォルダ移動 + inbound/outbound 分離          |
+| `application/usecases/reports/*`                | `core/usecases/reports/*`             | フォルダ移動                                  |
+| `application/usecases/csv/validator_service.py` | `infra/adapters/csv/csv_validator.py` | Adapter として再配置                          |
+| `application/usecases/csv/formatter_service.py` | `infra/adapters/csv/csv_formatter.py` | Adapter として再配置                          |
+| `local_config/di_providers.py`                  | `config/di_providers.py`              | フォルダ移動                                  |
+| `main.py`                                       | `main.py` (内容整理)                  | Framework 初期化を `infra/frameworks/` に分離 |
 
 ### 2.3 対象外
 
@@ -218,7 +221,7 @@ class GenerateManagementSheetUseCase:
     ):
         self._csv_gateway = csv_gateway
         self._report_repository = report_repository
-    
+
     def execute(self, input_dto: GenerateManagementSheetInput) -> GenerateManagementSheetOutput:
         # UseCase ロジック
         pass
@@ -280,16 +283,16 @@ async def generate_management_sheet(
     csv_data, error = csv_gateway.read_csv_files(files)
     if error:
         return error.to_json_response()
-    
+
     # 2. Input DTO 作成
     input_dto = GenerateManagementSheetInput(
         csv_files=csv_data,
         period_type=period_type,
     )
-    
+
     # 3. UseCase 実行
     output_dto = usecase.execute(input_dto)
-    
+
     # 4. Response 変換
     return JSONResponse(content={
         "status": "success",
@@ -309,6 +312,7 @@ async def generate_management_sheet(
 現在 `application/usecases/csv/` にある Service は以下のように整理：
 
 1. **CsvValidatorService** → `infra/adapters/csv/csv_validator.py`
+
    - backend_shared の `PureCSVValidator` をラップする Adapter
    - Port として `CsvValidator` を `core/ports/inbound/` に定義
 
@@ -459,6 +463,7 @@ async def generate_management_sheet(...):
 ### リスク1: API レスポンス構造の変更による互換性破壊
 
 **対策:**
+
 - 各 UseCase の Output DTO は既存レスポンスと完全互換を維持
 - 統合テストで既存のレスポンス構造をスナップショット比較
 - ステージング環境でフロントエンドと結合テスト
@@ -466,6 +471,7 @@ async def generate_management_sheet(...):
 ### リスク2: Import パス変更による大量のコンフリクト
 
 **対策:**
+
 - 一括置換ツール（sed, ripgrep）を活用
 - ファイル移動とロジック変更を別 PR に分離
 - Phase ごとに動作確認を挟む
@@ -473,6 +479,7 @@ async def generate_management_sheet(...):
 ### リスク3: backend_shared への依存が複雑化
 
 **対策:**
+
 - backend_shared への依存は Adapter 層に閉じ込める
 - UseCase は backend_shared を直接 import しない
 - 将来的に backend_shared からの脱却を視野に、Port 経由で抽象化
@@ -480,6 +487,7 @@ async def generate_management_sheet(...):
 ### リスク4: リファクタリングが長期化し、他開発とのコンフリクト
 
 **対策:**
+
 - 小さな単位で PR を作成し、こまめにマージ
 - Feature flag を導入し、段階的にリリース（必要に応じて）
 - 他開発者とのコミュニケーションを密にする
@@ -532,6 +540,7 @@ async def generate_management_sheet(...):
 - Entity, Value Object, Domain Service
 
 **例:**
+
 ```python
 # core/domain/reports/management_sheet.py
 from dataclasses import dataclass
@@ -542,12 +551,12 @@ class ManagementSheet:
     report_date: date
     total_shipment: float
     total_receive: float
-    
+
     @staticmethod
     def from_dataframes(shipment_df, yard_df, receive_df):
         # ドメインロジック
         pass
-    
+
     def validate(self):
         if self.total_shipment < 0:
             raise DomainError("出荷量は負の値にできません")
@@ -560,6 +569,7 @@ class ManagementSheet:
 - `Protocol` または `ABC` で定義
 
 **例:**
+
 ```python
 # core/ports/inbound/csv_gateway.py
 from typing import Protocol, Dict, Any, Tuple, Optional
@@ -568,7 +578,7 @@ class CsvGateway(Protocol):
     def read_csv_files(self, files: Dict[str, Any]) -> Tuple[Optional[Dict[str, Any]], Optional[Any]]:
         """CSV ファイルを読み込み、DataFrame を返す."""
         ...
-    
+
     def format_csv_data(self, dfs: Dict[str, Any]) -> Dict[str, Any]:
         """CSV データを整形する."""
         ...
@@ -581,6 +591,7 @@ class CsvGateway(Protocol):
 - 具体的な実装（Adapter）には依存しない
 
 **例:**
+
 ```python
 # core/usecases/reports/generate_management_sheet.py
 class GenerateManagementSheetUseCase:
@@ -591,21 +602,21 @@ class GenerateManagementSheetUseCase:
     ):
         self._csv_gateway = csv_gateway
         self._report_repository = report_repository
-    
+
     def execute(self, input_dto: GenerateManagementSheetInput) -> GenerateManagementSheetOutput:
         # 1. データ取得
         csv_data = input_dto.csv_files
-        
+
         # 2. ドメインモデル生成
         management_sheet = ManagementSheet.from_dataframes(
             csv_data.get("shipment"),
             csv_data.get("yard"),
             csv_data.get("receive"),
         )
-        
+
         # 3. ドメインロジック実行
         management_sheet.validate()
-        
+
         # 4. レポート保存
         urls = self._report_repository.save_report(
             report_key="management_sheet",
@@ -613,7 +624,7 @@ class GenerateManagementSheetUseCase:
             excel_bytes=...,
             pdf_bytes=...,
         )
-        
+
         # 5. Output DTO 返却
         return GenerateManagementSheetOutput(
             report_key="management_sheet",
@@ -630,6 +641,7 @@ class GenerateManagementSheetUseCase:
 - Domain 型と外部型の変換を行う
 
 **例:**
+
 ```python
 # infra/adapters/csv/pandas_csv_gateway.py
 from app.core.ports.inbound.csv_gateway import CsvGateway
@@ -638,7 +650,7 @@ class PandasCsvGateway(CsvGateway):
     def read_csv_files(self, files):
         # pandas を使って CSV 読み込み
         pass
-    
+
     def format_csv_data(self, dfs):
         # backend_shared の Formatter を呼び出し
         pass
@@ -652,6 +664,7 @@ class PandasCsvGateway(CsvGateway):
 - DTO → HTTP Response 変換
 
 **例:**
+
 ```python
 # presentation/api/routers/reports/management_sheet.py
 @router.post("")
@@ -673,6 +686,7 @@ async def generate_management_sheet(
 - 環境設定の読み込み
 
 **例:**
+
 ```python
 # config/di_providers.py
 def get_management_sheet_usecase() -> GenerateManagementSheetUseCase:
@@ -688,6 +702,7 @@ def get_management_sheet_usecase() -> GenerateManagementSheetUseCase:
 ### Phase 1-8: 完了 (2025-11-28)
 
 **実施内容:**
+
 - ✅ Phase 1: `core/` ディレクトリ構造作成
 - ✅ Phase 2: Domain 層移行 (`application/domain/` → `core/domain/`)
 - ✅ Phase 3: Ports 層移行 (`application/ports/` → `core/ports/inbound/`)
@@ -698,6 +713,7 @@ def get_management_sheet_usecase() -> GenerateManagementSheetUseCase:
 - ✅ Phase 8: Presentation 層リファクタリング (`presentation/api/` → `api/`)
 
 **コミット:**
+
 - `ac2a7be` - Phase 1-4: core/ layer creation and file migration
 - `688d6ab` - Phase 1-4: Fix circular imports and syntax errors
 - `eeb0d1c` - Phase 6: Migrate CSV services to infra/adapters/csv
@@ -706,6 +722,7 @@ def get_management_sheet_usecase() -> GenerateManagementSheetUseCase:
 - `2462ff3` - Phase 8: Refactor presentation layer to match conventions
 
 **検証結果:**
+
 - ledger_api コンテナ: 正常起動・healthy
 - core_api コンテナ: 正常起動・healthy (BFF として ledger_api をプロキシ)
 - ai_api / rag_api コンテナ: 正常起動・healthy
@@ -716,6 +733,7 @@ def get_management_sheet_usecase() -> GenerateManagementSheetUseCase:
 - DB 影響: なし (ledger_api は DB 未使用)
 
 **最終ディレクトリ構造:**
+
 ```
 app/
 ├── api/                 # FastAPI routers, schemas (presentation layer)
@@ -757,4 +775,3 @@ app/
 5. **規約準拠**: `20251127_webapp_development_conventions_backend.md` に完全準拠
 
 **Phase 1-8 完了**: Clean Architecture / Hexagonal Architecture への移行が完了しました。
-

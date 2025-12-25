@@ -2,14 +2,23 @@
  * 将軍マニュアル詳細ページ
  * FSD: ページ層は組み立てのみ + パフォーマンス最適化
  */
-import React, { useEffect, useState } from 'react';
-import { Breadcrumb, Button, Col, Layout, Row, Space, Spin, Typography } from 'antd';
-import { useNavigate, useParams } from 'react-router-dom';
-import { useShogunCatalog } from '@features/manual';
-import { FlowPane } from '@features/manual/ui/components/FlowPane';
-import { VideoPane } from '@features/manual/ui/components/VideoPane';
-import { UnimplementedModal } from '@features/unimplemented-feature';
-import styles from './ShogunDetail.module.css';
+import React, { useEffect, useState } from "react";
+import {
+  Breadcrumb,
+  Button,
+  Col,
+  Layout,
+  Row,
+  Space,
+  Spin,
+  Typography,
+} from "antd";
+import { useNavigate, useParams } from "react-router-dom";
+import { useShogunCatalog } from "@features/manual";
+import { FlowPane } from "@features/manual/ui/components/FlowPane";
+import { VideoPane } from "@features/manual/ui/components/VideoPane";
+import { UnimplementedModal } from "@features/unimplemented-feature";
+import styles from "./ShogunDetail.module.css";
 
 const { Title, Paragraph } = Typography;
 
@@ -17,7 +26,7 @@ const ShogunManualDetailPage: React.FC = () => {
   const { id } = useParams();
   const nav = useNavigate();
   const [showUnimplementedModal, setShowUnimplementedModal] = useState(false);
-  
+
   // カタログから該当アイテムを取得
   const { sections, loading } = useShogunCatalog();
   const item = React.useMemo(() => {
@@ -39,27 +48,68 @@ const ShogunManualDetailPage: React.FC = () => {
   return (
     <Layout className={styles.detailLayout}>
       <Layout.Content className={styles.detailContent}>
-        <Space direction='vertical' size={12} style={{ width: '100%', marginBottom: 16 }}>
-          <Breadcrumb items={[
-            { title: <a onClick={() => nav('/manuals')} className={styles.detailLink}>マニュアル</a> },
-            { title: <a onClick={() => nav('/manuals/shogun')} className={styles.detailLink}>将軍</a> },
-            { title: item?.title || '読み込み中...' }
-          ]} />
+        <Space
+          direction="vertical"
+          size={12}
+          style={{ width: "100%", marginBottom: 16 }}
+        >
+          <Breadcrumb
+            items={[
+              {
+                title: (
+                  <a
+                    onClick={() => nav("/manuals")}
+                    className={styles.detailLink}
+                  >
+                    マニュアル
+                  </a>
+                ),
+              },
+              {
+                title: (
+                  <a
+                    onClick={() => nav("/manuals/shogun")}
+                    className={styles.detailLink}
+                  >
+                    将軍
+                  </a>
+                ),
+              },
+              { title: item?.title || "読み込み中..." },
+            ]}
+          />
           <div className={styles.detailTitleBar}>
             <Title level={3} className={styles.detailTitle}>
-              {showSkeleton ? '読み込み中...' : item.title}
+              {showSkeleton ? "読み込み中..." : item.title}
             </Title>
           </div>
         </Space>
 
         {showSkeleton ? (
-          <div className={styles.detailLoadingContainer}><Spin size='large' tip="データを読み込んでいます..." /></div>
+          <div className={styles.detailLoadingContainer}>
+            <Spin size="large" tip="データを読み込んでいます..." />
+          </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16, padding: 16 }}>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 16,
+              padding: 16,
+            }}
+          >
             {/* 概要 */}
-            <div style={{ maxHeight: '20vh', overflow: 'auto', padding: 16, background: '#fafafa', borderRadius: 8 }}>
+            <div
+              style={{
+                maxHeight: "20vh",
+                overflow: "auto",
+                padding: 16,
+                background: "#fafafa",
+                borderRadius: 8,
+              }}
+            >
               <Paragraph type="secondary" style={{ marginBottom: 0 }}>
-                {item.description ?? '説明は未設定です。'}
+                {item.description ?? "説明は未設定です。"}
               </Paragraph>
             </div>
 
@@ -72,7 +122,7 @@ const ShogunManualDetailPage: React.FC = () => {
                 <div className={styles.flowPane}>
                   <FlowPane
                     src={item.flowUrl}
-                    title={item.title ?? 'flow'}
+                    title={item.title ?? "flow"}
                     frameClassName={styles.paneFrame}
                     imgClassName={styles.paneImg}
                     lazy={true}
@@ -87,7 +137,7 @@ const ShogunManualDetailPage: React.FC = () => {
                 <div className={styles.videoPane}>
                   <VideoPane
                     src={item.videoUrl}
-                    title={item.title ?? 'video'}
+                    title={item.title ?? "video"}
                     frameClassName={styles.paneFrame}
                     videoClassName={styles.paneVideo}
                     lazy={true}
@@ -98,9 +148,7 @@ const ShogunManualDetailPage: React.FC = () => {
 
             {/* 下中央に配置する戻るボタン */}
             <div className={styles.detailFooter}>
-              <Button onClick={() => nav('/manuals/shogun')}>
-                一覧に戻る
-              </Button>
+              <Button onClick={() => nav("/manuals/shogun")}>一覧に戻る</Button>
             </div>
           </div>
         )}

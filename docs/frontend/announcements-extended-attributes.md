@@ -13,35 +13,43 @@
 ## 追加した属性
 
 ### 1. 重要度（severity）
+
 既存の `'info' | 'warn' | 'critical'` を維持。
 
 ### 2. タグ（tags）
+
 ```typescript
 tags?: string[];  // 任意、最大2〜3個表示推奨
 ```
+
 - 一覧カードにバッジ表示（最大3個）
 - 例: `['メンテナンス', 'システム']`
 
 ### 3. 公開期限（publishFrom / publishTo）
+
 ```typescript
-publishFrom: string;  // ISO8601 形式（既存）
-publishTo: string | null;  // ISO8601 形式、null=無期限（既存）
+publishFrom: string; // ISO8601 形式（既存）
+publishTo: string | null; // ISO8601 形式、null=無期限（既存）
 ```
+
 - `isAnnouncementActive()` 関数で期限判定
 - 期限切れは一覧・トップに表示されない
 
 ### 4. 対象オーディエンス（audience）
+
 ```typescript
-type Audience = 'all' | 'internal' | 'site:narita' | 'site:shinkiba';
+type Audience = "all" | "internal" | "site:narita" | "site:shinkiba";
 
 audience: Audience;
 ```
+
 - `isVisibleForAudience()` 関数で対象判定
 - 現在は `CURRENT_AUDIENCE = 'site:narita'` で固定（TODO: 将来ユーザープロファイルから取得）
 - `'all'` と `'internal'` は全員に表示
 - `'site:narita'` / `'site:shinkiba'` は拠点が一致する場合のみ表示
 
 ### 5. 添付ファイル（attachments）
+
 ```typescript
 interface Attachment {
   label: string;       // 表示ラベル
@@ -51,11 +59,13 @@ interface Attachment {
 
 attachments?: Attachment[];
 ```
+
 - 一覧カードに「添付」バッジ表示
 - 詳細画面に添付ファイルセクション表示
 - リンクは `target="_blank" rel="noopener noreferrer"`
 
 ### 6. 通知設定（notification）
+
 ```typescript
 type NotificationChannel = 'inApp' | 'email' | 'line';
 
@@ -68,6 +78,7 @@ interface NotificationPlan {
 
 notification?: NotificationPlan;
 ```
+
 - **今回は表示のみ（送信機能は実装していません）**
 - `notification` が無い場合は `inApp` のみとみなす
 
@@ -76,36 +87,41 @@ notification?: NotificationPlan;
 ## 実装したフィルタロジック
 
 ### 期限フィルタ（isAnnouncementActive）
+
 ```typescript
 // domain/announcement.ts
 export function isAnnouncementActive(
   announcement: Announcement,
-  now: Date = new Date()
+  now: Date = new Date(),
 ): boolean {
   const publishFrom = new Date(announcement.publishFrom);
-  const publishTo = announcement.publishTo ? new Date(announcement.publishTo) : null;
+  const publishTo = announcement.publishTo
+    ? new Date(announcement.publishTo)
+    : null;
   return publishFrom <= now && (publishTo === null || now <= publishTo);
 }
 ```
 
 ### 対象フィルタ（isVisibleForAudience）
+
 ```typescript
 // domain/announcement.ts
 export function isVisibleForAudience(
   announcement: Announcement,
-  currentAudience: Audience
+  currentAudience: Audience,
 ): boolean {
   const { audience } = announcement;
-  
-  if (audience === 'all' || audience === 'internal') {
+
+  if (audience === "all" || audience === "internal") {
     return true;
   }
-  
+
   return audience === currentAudience;
 }
 ```
 
 ### 適用箇所
+
 - `LocalAnnouncementRepository.list()`: 期限フィルタのみ適用
 - `useAnnouncementsListViewModel`: 対象フィルタ適用
 - `useAnnouncementBannerViewModel`: 対象フィルタ適用、critical優先ソート
@@ -116,10 +132,12 @@ export function isVisibleForAudience(
 ## UI変更点
 
 ### 一覧カード（AnnouncementListItem）
+
 - タグバッジ追加（最大3個、グレー背景）
 - 添付ありバッジ追加（📎アイコン付き、青背景）
 
 ### 詳細画面（AnnouncementDetail）
+
 - 添付ファイルセクション追加（`attachments` がある場合のみ表示）
   - PDF: 赤アイコン + "PDF" タグ
   - リンク: リンクアイコン
@@ -129,36 +147,39 @@ export function isVisibleForAudience(
 
 ## テストデータ（seed.ts）
 
-| ID | タイトル | 用途 |
-|----|---------|------|
-| ann-001 | システムメンテナンス | warn + attachments(pdf) + notification(email, sendOnPublish) |
-| ann-002 | 新機能リリース | info + notification無し（互換確認） |
-| ann-003 | セキュリティアップデート | critical + attachments(link) + notification(email) |
-| ann-004 | 年末年始の営業時間 | info + tags |
-| ann-005 | サーバー増強作業完了 | info |
-| ann-006 | 不正アクセス注意喚起 | warn + notification(line, scheduledAt) |
-| ann-007 | 成田拠点向け | info + audience=site:narita + tags |
-| ann-008 | 新木場拠点向け | info + audience=site:shinkiba + tags（表示されない） |
-| ann-009 | 社内向けドキュメント | info + audience=internal + attachments |
-| ann-010 | 期限切れテスト | publishTo=過去（表示されない） |
-| ann-011 | 未来開始テスト | publishFrom=未来（表示されない） |
+| ID      | タイトル                 | 用途                                                         |
+| ------- | ------------------------ | ------------------------------------------------------------ |
+| ann-001 | システムメンテナンス     | warn + attachments(pdf) + notification(email, sendOnPublish) |
+| ann-002 | 新機能リリース           | info + notification無し（互換確認）                          |
+| ann-003 | セキュリティアップデート | critical + attachments(link) + notification(email)           |
+| ann-004 | 年末年始の営業時間       | info + tags                                                  |
+| ann-005 | サーバー増強作業完了     | info                                                         |
+| ann-006 | 不正アクセス注意喚起     | warn + notification(line, scheduledAt)                       |
+| ann-007 | 成田拠点向け             | info + audience=site:narita + tags                           |
+| ann-008 | 新木場拠点向け           | info + audience=site:shinkiba + tags（表示されない）         |
+| ann-009 | 社内向けドキュメント     | info + audience=internal + attachments                       |
+| ann-010 | 期限切れテスト           | publishTo=過去（表示されない）                               |
+| ann-011 | 未来開始テスト           | publishFrom=未来（表示されない）                             |
 
 ---
 
 ## Repository 境界の維持
 
 ### 設計方針
+
 - **Repository**: アクティブ（期限内）なお知らせのみ返す
 - **ViewModel**: 対象（audience）フィルタを適用
 - 将来のAPI化時、サーバー側でユーザー属性に基づくフィルタを実装可能
 
 ### インターフェース（ports/AnnouncementRepository.ts）
+
 ```typescript
 export interface AnnouncementRepository {
   list(): Promise<Announcement[]>;
   get(id: string): Promise<Announcement | null>;
 }
 ```
+
 - 変更なし、互換性維持
 - 将来 `HttpAnnouncementRepository` に差し替え可能
 
@@ -167,6 +188,7 @@ export interface AnnouncementRepository {
 ## 将来のバックエンド実装（Outbox パターン推奨）
 
 ### DB設計
+
 ```sql
 -- announcements テーブル
 ALTER TABLE announcements ADD COLUMN notification_plan JSONB;
@@ -184,12 +206,14 @@ CREATE TABLE notification_outbox (
 ```
 
 ### Worker処理フロー
+
 1. **publish時**: `notification_outbox` にレコードを積む
 2. **Worker**: 定期的にポーリング（例: 1分ごと）
 3. **送信**: `status='pending'` のレコードを処理
 4. **更新**: 送信成功 → `status='sent'`, `sent_at=NOW()`、失敗 → `status='failed'`, `error_message`
 
 ### Clean Architecture
+
 ```
 application/
   ports/
@@ -202,6 +226,7 @@ infrastructure/
 ```
 
 ### 実装TODO
+
 - [ ] バックエンドに `notification_plan` カラム追加
 - [ ] `notification_outbox` テーブル作成
 - [ ] Worker実装（Celery/BullMQ/etc）
@@ -214,12 +239,14 @@ infrastructure/
 ## 既存機能への影響
 
 ### 確認済み（影響なし）
+
 - ✅ 既読/未読機能（localStorage）
 - ✅ ACK機能（バナーの「理解した」）
 - ✅ 詳細モーダル表示
 - ✅ タブフィルタ（全て/未読）
 
 ### 追加されたフィルタ
+
 - ✅ 期限切れは一覧/トップから自動除外
 - ✅ 対象外（audience不一致）は一覧/トップから自動除外
 - ✅ 未読数も対象フィルタ適用済み
@@ -243,6 +270,7 @@ infrastructure/
 ## 制限事項
 
 ### 現在の制限
+
 1. **対象判定**: `CURRENT_AUDIENCE` が定数（`'site:narita'`）
    - 将来: ユーザープロファイル/認証情報から取得
 2. **通知送信**: 実装していない（表示のみ）
@@ -251,6 +279,7 @@ infrastructure/
    - 将来: メール/LINEテンプレート切替に使用
 
 ### API移行時の注意点
+
 - `CURRENT_AUDIENCE` の取得ロジックを追加
 - サーバー側で audience フィルタを実装推奨（パフォーマンス向上）
 - `notification_plan` の保存/取得APIを実装
@@ -260,18 +289,22 @@ infrastructure/
 ## 関連ファイル
 
 ### Domain
+
 - `features/announcements/domain/announcement.ts`
 
 ### Infrastructure
+
 - `features/announcements/infrastructure/seed.ts`
 - `features/announcements/infrastructure/LocalAnnouncementRepository.ts`
 
 ### ViewModel
+
 - `features/announcements/model/useAnnouncementsListViewModel.ts`
 - `features/announcements/model/useAnnouncementBannerViewModel.ts`
 - `features/announcements/model/useUnreadAnnouncementCountViewModel.ts`
 
 ### UI
+
 - `features/announcements/ui/AnnouncementListItem.tsx`
 - `features/announcements/ui/AnnouncementDetail.tsx`
 

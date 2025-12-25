@@ -85,15 +85,15 @@ Docker コンテナが多くなっても、ログの流れは基本的に次の�
 
 ```json
 {
-  "ts": "2025-11-28T11:23:45+09:00",  // 日時（ISO8601）
-  "level": "INFO",                     // ログレベル（DEBUG / INFO / WARN / ERROR）
-  "service": "ledger_api",             // サービス名（コンテナ名に対応）
-  "env": "vm_stg",                     // 環境名（local_dev / vm_stg / vm_prod 等）
-  "trace_id": "af31c...",              // リクエストやジョブを一意に識別するID
-  "user_id": "sales_001",              // （あれば）ユーザーID
+  "ts": "2025-11-28T11:23:45+09:00", // 日時（ISO8601）
+  "level": "INFO", // ログレベル（DEBUG / INFO / WARN / ERROR）
+  "service": "ledger_api", // サービス名（コンテナ名に対応）
+  "env": "vm_stg", // 環境名（local_dev / vm_stg / vm_prod 等）
+  "trace_id": "af31c...", // リクエストやジョブを一意に識別するID
+  "user_id": "sales_001", // （あれば）ユーザーID
   "message": "GET /api/sales/tree completed",
-  "duration_ms": 43,                   // 処理時間
-  "rows": 120                          // 処理件数など、関心のあるメトリクス
+  "duration_ms": 43, // 処理時間
+  "rows": 120 // 処理件数など、関心のあるメトリクス
 }
 ```
 

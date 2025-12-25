@@ -76,8 +76,3 @@ CREATE OR REPLACE VIEW ref.v_calendar_classified AS
    FROM (base b
      LEFT JOIN ex ON ((ex.ddate = b.ddate)))
   ORDER BY b.ddate;
-
-
-
-
-

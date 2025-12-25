@@ -9,7 +9,8 @@ CSVアップロード処理をPort&Adapter化。
   - backend_sharedのバリデーター統合を見据えた設計
   - 現時点はスタブ実装（TODO: 要件定義後に完全実装）
 """
-from typing import List, Dict, Any
+
+from typing import Any, Dict, List
 
 from app.core.ports.ingest_port import IngestPort
 
@@ -17,7 +18,7 @@ from app.core.ports.ingest_port import IngestPort
 class UploadIngestCsvUseCase:
     """
     CSVアップロード UseCase
-    
+
     将来的な拡張予定:
       - backend_shared.usecases.csv_validator との統合
       - backend_shared.usecases.csv_formatter との統合
@@ -34,18 +35,18 @@ class UploadIngestCsvUseCase:
     def execute(self, rows: List[Dict[str, Any]]) -> Dict[str, Any]:
         """
         CSVデータをDB保存
-        
+
         処理フロー:
           1. バリデーション（TODO: 要件定義後）
           2. フォーマット（TODO: 要件定義後）
           3. DB保存（Port経由）
-        
+
         Args:
             rows: CSVから読み込んだ行データ（辞書形式）
-        
+
         Returns:
             処理結果（成功/失敗、処理行数等）
-        
+
         Note:
             現状はスタブ実装。完全実装には以下が必要:
             - CSVカラム仕様の明確化
@@ -55,7 +56,7 @@ class UploadIngestCsvUseCase:
         """
         # TODO: バリデーション実装
         # TODO: フォーマット処理実装
-        
+
         # DB保存（Port経由）
         self.ingest_repo.upsert_actuals(rows)
 

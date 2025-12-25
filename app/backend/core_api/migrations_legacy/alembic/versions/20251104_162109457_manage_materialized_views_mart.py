@@ -9,9 +9,10 @@ Revision ID: 20251104_162109457
 Revises: 20251104_160703155
 """
 
-from alembic import op, context
-import sqlalchemy as sa
 from pathlib import Path
+
+import sqlalchemy as sa
+from alembic import context, op
 
 # .sql 正本の配置ディレクトリ（MV本体）
 BASE = Path("/backend/migrations/alembic/sql/mart")
@@ -33,7 +34,9 @@ def _exists(qualified: str) -> bool:
         return False
     conn = op.get_bind()
     return bool(
-        conn.execute(sa.text("SELECT to_regclass(:q) IS NOT NULL"), {"q": qualified}).scalar()
+        conn.execute(
+            sa.text("SELECT to_regclass(:q) IS NOT NULL"), {"q": qualified}
+        ).scalar()
     )
 
 

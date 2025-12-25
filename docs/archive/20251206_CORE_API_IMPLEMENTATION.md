@@ -11,7 +11,7 @@ Successfully transformed `sql_api` into `core_api` as a **Backend-for-Frontend (
 ✅ **Structured Logging** - JSON logs with contextual information  
 ✅ **Health Checks** - All services have `/healthz` endpoints  
 ✅ **Docker Compose** - Dev and Prod configurations  
-✅ **Acceptance Tests** - Automated validation script  
+✅ **Acceptance Tests** - Automated validation script
 
 ## Architecture Overview
 
@@ -130,20 +130,20 @@ app/backend/
 
 Job queue table for async operations.
 
-| Column | Type | Description |
-|--------|------|-------------|
-| id | SERIAL PRIMARY KEY | Job ID |
-| job_type | TEXT NOT NULL | Job type (e.g., 'daily') |
-| target_from | DATE NOT NULL | Start date |
-| target_to | DATE NOT NULL | End date |
-| status | TEXT NOT NULL | queued / running / done / failed |
-| attempts | INT DEFAULT 0 | Retry count |
-| scheduled_for | TIMESTAMP | Scheduled execution time |
-| actor | TEXT | User or system identifier |
-| payload_json | JSONB | Additional parameters |
-| error_message | TEXT | Error details (if failed) |
-| created_at | TIMESTAMP DEFAULT now() | Creation timestamp |
-| updated_at | TIMESTAMP DEFAULT now() | Last update timestamp |
+| Column        | Type                    | Description                      |
+| ------------- | ----------------------- | -------------------------------- |
+| id            | SERIAL PRIMARY KEY      | Job ID                           |
+| job_type      | TEXT NOT NULL           | Job type (e.g., 'daily')         |
+| target_from   | DATE NOT NULL           | Start date                       |
+| target_to     | DATE NOT NULL           | End date                         |
+| status        | TEXT NOT NULL           | queued / running / done / failed |
+| attempts      | INT DEFAULT 0           | Retry count                      |
+| scheduled_for | TIMESTAMP               | Scheduled execution time         |
+| actor         | TEXT                    | User or system identifier        |
+| payload_json  | JSONB                   | Additional parameters            |
+| error_message | TEXT                    | Error details (if failed)        |
+| created_at    | TIMESTAMP DEFAULT now() | Creation timestamp               |
+| updated_at    | TIMESTAMP DEFAULT now() | Last update timestamp            |
 
 **Index**: `status` (for efficient polling)
 
@@ -151,25 +151,25 @@ Job queue table for async operations.
 
 Prediction results with idempotent UPSERT.
 
-| Column | Type | Description |
-|--------|------|-------------|
-| date | DATE PRIMARY KEY | Prediction date |
-| y_hat | NUMERIC NOT NULL | Predicted value |
-| y_lo | NUMERIC | Lower confidence bound |
-| y_hi | NUMERIC | Upper confidence bound |
-| model_version | TEXT | Model identifier |
-| generated_at | TIMESTAMP DEFAULT now() | Generation timestamp |
+| Column        | Type                    | Description            |
+| ------------- | ----------------------- | ---------------------- |
+| date          | DATE PRIMARY KEY        | Prediction date        |
+| y_hat         | NUMERIC NOT NULL        | Predicted value        |
+| y_lo          | NUMERIC                 | Lower confidence bound |
+| y_hi          | NUMERIC                 | Upper confidence bound |
+| model_version | TEXT                    | Model identifier       |
+| generated_at  | TIMESTAMP DEFAULT now() | Generation timestamp   |
 
 ### core.inbound_actuals
 
 CSV upload data storage.
 
-| Column | Type | Description |
-|--------|------|-------------|
-| id | SERIAL PRIMARY KEY | Record ID |
-| date | DATE NOT NULL | Data date |
-| data_json | JSONB | Flexible CSV data |
-| created_at | TIMESTAMP DEFAULT now() | Upload timestamp |
+| Column     | Type                    | Description       |
+| ---------- | ----------------------- | ----------------- |
+| id         | SERIAL PRIMARY KEY      | Record ID         |
+| date       | DATE NOT NULL           | Data date         |
+| data_json  | JSONB                   | Flexible CSV data |
+| created_at | TIMESTAMP DEFAULT now() | Upload timestamp  |
 
 **TODO**: Define proper columns based on CSV spec.
 
@@ -177,11 +177,11 @@ CSV upload data storage.
 
 Truck reservation data.
 
-| Column | Type | Description |
-|--------|------|-------------|
-| date | DATE PRIMARY KEY | Reservation date |
-| trucks | INT NOT NULL | Number of trucks |
-| created_at | TIMESTAMP DEFAULT now() | Creation timestamp |
+| Column     | Type                    | Description           |
+| ---------- | ----------------------- | --------------------- |
+| date       | DATE PRIMARY KEY        | Reservation date      |
+| trucks     | INT NOT NULL            | Number of trucks      |
+| created_at | TIMESTAMP DEFAULT now() | Creation timestamp    |
 | updated_at | TIMESTAMP DEFAULT now() | Last update timestamp |
 
 ## API Endpoints
@@ -262,29 +262,34 @@ GRANT SELECT, INSERT, UPDATE ON ALL TABLES IN SCHEMA forecast TO forecast_user;
 ## Acceptance Criteria (All Met ✓)
 
 ✅ **Architecture**
-- Frontend only calls Core API (/api/**)
+
+- Frontend only calls Core API (/api/\*\*)
 - Short sync calls via internal HTTP (1s timeout, no retry)
 - Long jobs queued in DB, executed by worker
 
 ✅ **Endpoints**
+
 - All endpoints implemented with type hints and docstrings
 - /api/healthz returns 200 OK
 - POST /api/forecast/jobs returns {id, status: 'queued'}
 - GET /api/forecast/predictions returns array of predictions
 
 ✅ **Worker**
+
 - forecast_worker polls jobs.forecast_jobs every 3s
 - Uses FOR UPDATE SKIP LOCKED for atomic claiming
 - Transitions status: queued → running → done/failed
 - Logs errors in error_message field
 
 ✅ **Database**
+
 - SQLAlchemy 2.x (synchronous) with psycopg3
 - Schema separation (core / jobs / forecast)
 - Alembic migrations for version control
 - Predictions are idempotent (UPSERT on date)
 
 ✅ **Non-Functional**
+
 - Structured JSON logging with important fields
 - Health checks for all services
 - Transaction management in Service layer
@@ -339,18 +344,21 @@ curl -X POST http://localhost:8003/api/ingest/reserve \
 ## TODO & Next Steps
 
 ### Short-term
+
 - [ ] Define proper CSV column schema in `inbound_actuals`
 - [ ] Implement authentication and populate `actor` field
 - [ ] Add business day calculation in `domain/rules.py`
 - [ ] Replace dummy predictor with real ML model (Prophet, etc.)
 
 ### Medium-term
+
 - [ ] Add retry logic for failed jobs (exponential backoff)
 - [ ] Implement scheduled jobs (cron-like, e.g., daily at 2am)
 - [ ] Add job priority field for queue ordering
 - [ ] Migrate frontend to call `/api/**` exclusively (remove direct API calls)
 
 ### Long-term
+
 - [ ] Add monitoring and alerting (Prometheus, Grafana)
 - [ ] Implement rate limiting for external API calls
 - [ ] Add API versioning (e.g., `/api/v1/...`)

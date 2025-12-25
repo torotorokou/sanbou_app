@@ -18,7 +18,7 @@ Core APIが他のマイクロサービス(rag_api, ledger_api, manual_api)を
     # 同期呼び出し
     client = get_http_client()
     response = client.get(f"{RAG_API_BASE}/health")
-    
+
     # 非同期呼び出し
     async with get_async_http_client() as client:
         response = await client.get(f"{RAG_API_BASE}/health")
@@ -27,10 +27,12 @@ Core APIが他のマイクロサービス(rag_api, ledger_api, manual_api)を
   - 内部ネットワーク専用(外部API呼び出しには使用しない)
   - SSL証明書検証は無効(内部ネットワークのため)
 """
+
 from __future__ import annotations
 
 import os
 from typing import Any
+
 import httpx
 
 # ==========================================
@@ -53,20 +55,20 @@ INTERNAL_TIMEOUT = 1.0  # 1秒
 def get_http_client() -> httpx.Client:
     """
     同期内部API呼び出し用HTTPクライアントを取得
-    
+
     特徴:
       - タイムアウト: 1.0秒(短く設定し、高速に失敗させる)
       - リトライなし(シンプルなエラーハンドリング)
       - リダイレクト自動追従
-      
+
     Returns:
         httpx.Client: 同期 HTTPクライアント
-        
+
     使用例:
         client = get_http_client()
         response = client.get("http://rag_api:8000/health")
         data = response.json()
-        
+
     注意:
         - withブロックで使用することを推奨(リソースの自動クリーンアップ)
     """
@@ -76,21 +78,21 @@ def get_http_client() -> httpx.Client:
 async def get_async_http_client() -> httpx.AsyncClient:
     """
     非同期内部API呼び出し用HTTPクライアントを取得
-    
+
     特徴:
       - タイムアウト: 1.0秒
       - リトライなし
       - リダイレクト自動追従
       - asyncioとの統合(非同期処理向け)
-      
+
     Returns:
         httpx.AsyncClient: 非同期 HTTPクライアント
-        
+
     使用例:
         async with get_async_http_client() as client:
             response = await client.get("http://rag_api:8000/health")
             data = response.json()
-            
+
     注意:
         - 必ず async with ブロックで使用(リソースリーク防止)
         - FastAPIの非同期エンドポイント内で使用

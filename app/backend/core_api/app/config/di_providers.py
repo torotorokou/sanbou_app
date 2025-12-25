@@ -11,40 +11,60 @@ DI Providers - Dependency Injection Container
   - SET LOCAL search_path によるスキーマ切替を活用
 """
 import os
+
+from app.core.ports.notification_port import (
+    NotificationOutboxPort,
+    NotificationPreferencePort,
+    NotificationSenderPort,
+    RecipientResolverPort,
+)
+from app.core.usecases.notification.dispatch_pending_notifications_uc import (
+    DispatchPendingNotificationsUseCase,
+)
+from app.core.usecases.notification.enqueue_notifications_uc import (
+    EnqueueNotificationsUseCase,
+)
+from app.deps import get_db
+from app.infra.adapters.dashboard.dashboard_target_repository import (
+    DashboardTargetRepository,
+)
+from app.infra.adapters.forecast.forecast_query_repository import (
+    ForecastQueryRepository,
+)
+from app.infra.adapters.forecast.job_repository import JobRepository
+from app.infra.adapters.materialized_view.materialized_view_refresher import (
+    MaterializedViewRefresher,
+)
+from app.infra.adapters.notification.db_outbox_adapter import (
+    DbNotificationOutboxAdapter,
+)
+from app.infra.adapters.notification.dummy_resolver_adapter import (
+    DummyRecipientResolverAdapter,
+)
+from app.infra.adapters.notification.in_memory_outbox_adapter import (
+    InMemoryNotificationOutboxAdapter,
+)
+from app.infra.adapters.notification.in_memory_preference_adapter import (
+    InMemoryNotificationPreferenceAdapter,
+)
+from app.infra.adapters.notification.noop_sender_adapter import (
+    NoopNotificationSenderAdapter,
+)
+from app.infra.adapters.upload.raw_data_repository import RawDataRepository
+from app.infra.adapters.upload.shogun_csv_repository import ShogunCsvRepository
+from app.infra.clients.ai_client import AIClient
+from app.infra.clients.ledger_client import LedgerClient
+from app.infra.clients.manual_client import ManualClient
+from app.infra.clients.rag_client import RAGClient
+from backend_shared.application.logging import create_log_context, get_module_logger
+from backend_shared.db.names import (
+    T_SHOGUN_FINAL_RECEIVE,
+    T_SHOGUN_FINAL_SHIPMENT,
+    T_SHOGUN_FINAL_YARD,
+)
 from fastapi import Depends
 from sqlalchemy import text
 from sqlalchemy.orm import Session
-
-from backend_shared.application.logging import get_module_logger, create_log_context
-from backend_shared.db.names import (
-    T_SHOGUN_FINAL_RECEIVE,
-    T_SHOGUN_FINAL_YARD,
-    T_SHOGUN_FINAL_SHIPMENT,
-)
-from app.deps import get_db
-from app.infra.adapters.upload.shogun_csv_repository import ShogunCsvRepository
-from app.infra.adapters.upload.raw_data_repository import RawDataRepository
-from app.infra.adapters.materialized_view.materialized_view_refresher import MaterializedViewRefresher
-from app.infra.adapters.dashboard.dashboard_target_repository import DashboardTargetRepository
-from app.infra.adapters.forecast.job_repository import JobRepository
-from app.infra.adapters.forecast.forecast_query_repository import ForecastQueryRepository
-from app.infra.clients.rag_client import RAGClient
-from app.infra.clients.ledger_client import LedgerClient
-from app.infra.clients.manual_client import ManualClient
-from app.infra.clients.ai_client import AIClient
-from app.infra.adapters.notification.in_memory_outbox_adapter import InMemoryNotificationOutboxAdapter
-from app.infra.adapters.notification.db_outbox_adapter import DbNotificationOutboxAdapter
-from app.infra.adapters.notification.noop_sender_adapter import NoopNotificationSenderAdapter
-from app.infra.adapters.notification.in_memory_preference_adapter import InMemoryNotificationPreferenceAdapter
-from app.infra.adapters.notification.dummy_resolver_adapter import DummyRecipientResolverAdapter
-from app.core.ports.notification_port import (
-    NotificationOutboxPort,
-    NotificationSenderPort,
-    NotificationPreferencePort,
-    RecipientResolverPort,
-)
-from app.core.usecases.notification.enqueue_notifications_uc import EnqueueNotificationsUseCase
-from app.core.usecases.notification.dispatch_pending_notifications_uc import DispatchPendingNotificationsUseCase
 
 logger = get_module_logger(__name__)
 
@@ -118,7 +138,9 @@ def get_repo_raw_final(db: Session = Depends(get_db)) -> ShogunCsvRepository:
 # ========================================================================
 from app.core.usecases.upload.upload_shogun_csv_uc import UploadShogunCsvUseCase
 from backend_shared.config.config_loader import ShogunCsvConfigLoader
-from backend_shared.core.usecases.csv_validator.csv_upload_validator_api import CSVValidationResponder
+from backend_shared.core.usecases.csv_validator.csv_upload_validator_api import (
+    CSVValidationResponder,
+)
 
 # CSV設定とバリデーターの初期化（アプリケーションスコープで共有）
 _csv_config = ShogunCsvConfigLoader()
@@ -138,7 +160,7 @@ def get_raw_data_repo(db: Session = Depends(get_db)) -> RawDataRepository:
 def get_mv_refresher(db: Session = Depends(get_db)) -> MaterializedViewRefresher:
     """
     MaterializedViewRefresher提供
-    
+
     マテリアライズドビュー更新専用リポジトリ。
     CSVアップロード成功時にMVを自動更新するために使用。
     """
@@ -260,11 +282,11 @@ def get_predictions_uc(
 # ========================================================================
 from app.core.usecases.external.external_api_uc import (
     AskRAGUseCase,
+    ClassifyTextUseCase,
     GenerateLedgerReportUseCase,
     GenerateReportUseCase,
-    ListManualsUseCase,
     GetManualUseCase,
-    ClassifyTextUseCase,
+    ListManualsUseCase,
 )
 
 
@@ -326,12 +348,13 @@ def get_classify_text_uc(client: AIClient = Depends(get_ai_client)) -> ClassifyT
     return ClassifyTextUseCase(ai_client=client)
 
 
+from app.core.ports.inbound_repository_port import InboundRepository
+
 # ========================================================================
 # Inbound UseCase Providers
 # ========================================================================
 from app.core.usecases.inbound.get_inbound_daily_uc import GetInboundDailyUseCase
 from app.infra.adapters.inbound.inbound_repository import InboundRepositoryImpl
-from app.core.ports.inbound_repository_port import InboundRepository
 
 
 def get_inbound_repo(db: Session = Depends(get_db)) -> InboundRepository:
@@ -384,14 +407,19 @@ def get_analyze_customer_churn_uc(
     return AnalyzeCustomerChurnUseCase(query_port=query_adapter)
 
 
+from app.core.usecases.sales_tree.export_csv_uc import ExportSalesTreeCSVUseCase
+from app.core.usecases.sales_tree.fetch_daily_series_uc import (
+    FetchSalesTreeDailySeriesUseCase,
+)
+from app.core.usecases.sales_tree.fetch_detail_lines_uc import (
+    FetchSalesTreeDetailLinesUseCase,
+)
+from app.core.usecases.sales_tree.fetch_pivot_uc import FetchSalesTreePivotUseCase
+
 # ========================================================================
 # Sales Tree UseCase Providers
 # ========================================================================
 from app.core.usecases.sales_tree.fetch_summary_uc import FetchSalesTreeSummaryUseCase
-from app.core.usecases.sales_tree.fetch_daily_series_uc import FetchSalesTreeDailySeriesUseCase
-from app.core.usecases.sales_tree.fetch_pivot_uc import FetchSalesTreePivotUseCase
-from app.core.usecases.sales_tree.export_csv_uc import ExportSalesTreeCSVUseCase
-from app.core.usecases.sales_tree.fetch_detail_lines_uc import FetchSalesTreeDetailLinesUseCase
 from app.infra.adapters.sales_tree.sales_tree_repository import SalesTreeRepository
 
 
@@ -454,15 +482,19 @@ def get_calendar_month_uc(
     return GetCalendarMonthUseCase(query=repo)
 
 
+from app.core.usecases.upload.delete_upload_scope_uc import DeleteUploadScopeUseCase
+from app.core.usecases.upload.get_upload_calendar_detail_uc import (
+    GetUploadCalendarDetailUseCase,
+)
+from app.core.usecases.upload.get_upload_calendar_uc import GetUploadCalendarUseCase
+
 # ========================================================================
 # Upload Status UseCase Providers
 # ========================================================================
 from app.core.usecases.upload.get_upload_status_uc import GetUploadStatusUseCase
-from app.core.usecases.upload.get_upload_calendar_uc import GetUploadCalendarUseCase
-from app.core.usecases.upload.get_upload_calendar_detail_uc import GetUploadCalendarDetailUseCase
-from app.core.usecases.upload.delete_upload_scope_uc import DeleteUploadScopeUseCase
-from app.infra.adapters.upload.upload_calendar_query_adapter import UploadCalendarQueryAdapter
-
+from app.infra.adapters.upload.upload_calendar_query_adapter import (
+    UploadCalendarQueryAdapter,
+)
 
 # RawDataRepository は既に定義されているので、それを再利用
 # get_raw_data_repo() は既に定義済み（上部参照）
@@ -502,11 +534,12 @@ def get_delete_upload_scope_uc(
     return DeleteUploadScopeUseCase(query=repo, db=db)
 
 
+from app.core.usecases.ingest.create_reservation_uc import CreateReservationUseCase
+
 # ========================================================================
 # Ingest UseCase Providers
 # ========================================================================
 from app.core.usecases.ingest.upload_ingest_csv_uc import UploadIngestCsvUseCase
-from app.core.usecases.ingest.create_reservation_uc import CreateReservationUseCase
 from app.infra.adapters.ingest.ingest_repository import IngestRepository
 
 
@@ -529,11 +562,13 @@ def get_create_reservation_uc(
     return CreateReservationUseCase(ingest_repo=repo)
 
 
+from app.core.ports.auth.auth_provider import IAuthProvider
+
 # ========================================================================
 # Auth UseCase Providers
 # ========================================================================
 from app.core.usecases.auth.get_current_user import GetCurrentUserUseCase
-from app.core.ports.auth.auth_provider import IAuthProvider
+
 # 認証プロバイダーは app.deps.get_auth_provider() を使用（AUTH_MODE ベース）
 from app.deps import get_auth_provider
 
@@ -543,7 +578,7 @@ def get_get_current_user_usecase(
 ) -> GetCurrentUserUseCase:
     """
     GetCurrentUserUseCase提供
-    
+
     認証プロバイダーは app.deps.get_auth_provider() 経由で取得します。
     AUTH_MODE 環境変数に基づいて適切なプロバイダーを使用します：
     - AUTH_MODE=dummy: DevAuthProvider（開発環境）
@@ -553,11 +588,12 @@ def get_get_current_user_usecase(
     return GetCurrentUserUseCase(auth_provider=auth_provider)
 
 
+from app.config.settings import get_settings
+
 # ========================================================================
 # Health Check UseCase Providers
 # ========================================================================
 from app.core.usecases.health_check_uc import HealthCheckUseCase
-from app.config.settings import get_settings
 
 _settings = get_settings()
 
@@ -597,7 +633,7 @@ _recipient_resolver_adapter: DummyRecipientResolverAdapter | None = None
 def get_notification_outbox_port(db: Session = Depends(get_db)) -> NotificationOutboxPort:
     """通知 Outbox Port 提供（環境変数で切り替え）"""
     use_db = os.getenv("USE_DB_NOTIFICATION_OUTBOX", "false").lower() == "true"
-    
+
     if use_db:
         # DB-backed adapter (production)
         return DbNotificationOutboxAdapter(db)
@@ -636,7 +672,7 @@ def get_recipient_resolver_port() -> RecipientResolverPort:
         sender=sender,
         preference=preference,
         resolver=resolver,
-    
+
     return _recipient_resolver_adapter
 
 

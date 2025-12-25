@@ -17,4 +17,8 @@ export {
 } from "./model/useInboundForecastVM";
 
 // UI
-export { ForecastCard, type ForecastCardProps, type KPIBlockProps } from "./ui/cards/ForecastCard";
+export {
+  ForecastCard,
+  type ForecastCardProps,
+  type KPIBlockProps,
+} from "./ui/cards/ForecastCard";

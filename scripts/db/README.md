@@ -31,6 +31,7 @@ make db-dev-dump-schema ENV=local_dev
 **出力先**: `app/backend/core_api/migrations/alembic/sql_current/schema_head.sql`
 
 **用途**:
+
 - スキーマ変更のレビュー
 - マイグレーション前後の比較
 - ドキュメント化
@@ -52,10 +53,12 @@ make db-dev-export-baseline ENV=local_dev
 **出力先**: `app/backend/core_api/migrations_v2/sql/schema_baseline.sql`
 
 **前提条件**:
+
 - local_dev 環境が起動済み (`make up ENV=local_dev`)
 - Alembic が head まで適用済み (`make al-up ENV=local_dev`)
 
 **用途**:
+
 - Alembic マイグレーションの基準点作成
 - 新しい環境へのスキーマ移行
 
@@ -65,20 +68,20 @@ make db-dev-export-baseline ENV=local_dev
 
 ### 本番環境運用
 
-| 項目 | 場所 |
-|------|------|
-| **権限管理** | [ops/db/](../../ops/db/) |
-| **ロール設計** | [ops/db/README.md](../../ops/db/README.md) |
-| **実行用SQL** | [ops/db/sql/](../../ops/db/sql/) |
-| **旧スクリプト** | [ops/db/legacy/](../../ops/db/legacy/) |
+| 項目             | 場所                                       |
+| ---------------- | ------------------------------------------ |
+| **権限管理**     | [ops/db/](../../ops/db/)                   |
+| **ロール設計**   | [ops/db/README.md](../../ops/db/README.md) |
+| **実行用SQL**    | [ops/db/sql/](../../ops/db/sql/)           |
+| **旧スクリプト** | [ops/db/legacy/](../../ops/db/legacy/)     |
 
 ### Makefile コマンド
 
-| コマンド | 説明 |
-|---------|------|
-| `make db-dev-dump-schema` | スキーマダンプ |
-| `make db-dev-export-baseline` | ベースラインエクスポート |
-| `make db-apply-all ENV=...` | 本番用ロール適用（ops/db/sql/使用） |
+| コマンド                      | 説明                                |
+| ----------------------------- | ----------------------------------- |
+| `make db-dev-dump-schema`     | スキーマダンプ                      |
+| `make db-dev-export-baseline` | ベースラインエクスポート            |
+| `make db-apply-all ENV=...`   | 本番用ロール適用（ops/db/sql/使用） |
 
 詳細は [mk/50_db_roles.mk](../../mk/50_db_roles.mk) を参照。
 

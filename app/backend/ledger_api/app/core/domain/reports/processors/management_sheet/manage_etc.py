@@ -1,7 +1,6 @@
 import pandas as pd
-from app.infra.report_utils import load_master_and_template, get_template_config
-from app.infra.report_utils.formatters import set_value_fast_safe
-from app.infra.report_utils.formatters import get_title_from_date
+from app.infra.report_utils import get_template_config, load_master_and_template
+from app.infra.report_utils.formatters import get_title_from_date, set_value_fast_safe
 
 
 def manage_etc(df_receive: pd.DataFrame) -> pd.DataFrame:

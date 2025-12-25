@@ -3,18 +3,23 @@
 Inbound repository implementation with PostgreSQL.
 日次搬入量データの取得（CTE + ウィンドウ関数で累積計算）
 """
+import logging
 from datetime import date as date_type
 from typing import List, Optional
-import logging
 
+from app.core.domain.inbound import CumScope, InboundDailyRow
+from app.core.ports.inbound_repository_port import InboundRepository
+from app.infra.db.sql_loader import load_sql
+from backend_shared.application.logging import create_log_context, get_module_logger
+from backend_shared.db.names import (
+    MV_RECEIVE_DAILY,
+    SCHEMA_MART,
+    SCHEMA_REF,
+    V_CALENDAR_CLASSIFIED,
+    fq,
+)
 from sqlalchemy import text
 from sqlalchemy.orm import Session
-
-from backend_shared.application.logging import get_module_logger, create_log_context
-from backend_shared.db.names import SCHEMA_REF, SCHEMA_MART, MV_RECEIVE_DAILY, V_CALENDAR_CLASSIFIED, fq
-from app.core.ports.inbound_repository_port import InboundRepository
-from app.core.domain.inbound import InboundDailyRow, CumScope
-from app.infra.db.sql_loader import load_sql
 
 logger = get_module_logger(__name__)
 
@@ -36,7 +41,7 @@ class InboundRepositoryImpl(InboundRepository):
         self._daily_cumulative_sql = text(
             template.format(
                 v_calendar=fq(SCHEMA_REF, V_CALENDAR_CLASSIFIED),
-                mv_receive_daily=fq(SCHEMA_MART, MV_RECEIVE_DAILY)
+                mv_receive_daily=fq(SCHEMA_MART, MV_RECEIVE_DAILY),
             )
         )
         # Pre-load SQL for get_daily_with_comparisons (new: includes prev_month/prev_year)
@@ -46,17 +51,15 @@ class InboundRepositoryImpl(InboundRepository):
         self._daily_comparisons_sql = text(
             template.format(
                 v_calendar=fq(SCHEMA_REF, V_CALENDAR_CLASSIFIED),
-                mv_receive_daily=fq(SCHEMA_MART, MV_RECEIVE_DAILY)
+                mv_receive_daily=fq(SCHEMA_MART, MV_RECEIVE_DAILY),
             )
         )
         # 案6: Simplified query without comparisons (for performance)
-        template = load_sql(
-            "inbound/inbound_pg_repository__get_daily_simple.sql"
-        )
+        template = load_sql("inbound/inbound_pg_repository__get_daily_simple.sql")
         self._daily_simple_sql = text(
             template.format(
                 v_calendar=fq(SCHEMA_REF, V_CALENDAR_CLASSIFIED),
-                mv_receive_daily=fq(SCHEMA_MART, MV_RECEIVE_DAILY)
+                mv_receive_daily=fq(SCHEMA_MART, MV_RECEIVE_DAILY),
             )
         )
 
@@ -100,8 +103,11 @@ class InboundRepositoryImpl(InboundRepository):
 
         # 現時点のmv_receive_dailyにはsegment列がないため、受け取っても無視（将来対応用）
         if segment is not None:
-            logger.warning("segment filter is not supported on %s; ignoring segment=%r",
-                           fq(SCHEMA_MART, MV_RECEIVE_DAILY), segment)
+            logger.warning(
+                "segment filter is not supported on %s; ignoring segment=%r",
+                fq(SCHEMA_MART, MV_RECEIVE_DAILY),
+                segment,
+            )
 
         # --- SQL with CTE + window function (loaded from external file) ---
         # Use the new SQL that includes comparison data (prev_month/prev_year)
@@ -157,14 +163,22 @@ class InboundRepositoryImpl(InboundRepository):
 
             logger.info(
                 "Fetched %d daily rows: %s to %s, segment=%s, cum_scope=%s",
-                len(data), start, end, segment, cum_scope
+                len(data),
+                start,
+                end,
+                segment,
+                cum_scope,
             )
             return data
 
         except Exception as e:
             logger.error(
                 "Failed to fetch daily inbound: %s to %s, segment=%s, cum_scope=%s, error=%s",
-                start, end, segment, cum_scope, e,
+                start,
+                end,
+                segment,
+                cum_scope,
+                e,
                 exc_info=True,
             )
             raise
@@ -196,8 +210,11 @@ class InboundRepositoryImpl(InboundRepository):
             raise ValueError(f"Date range exceeds 366 days: {delta_days} days")
 
         if segment is not None:
-            logger.warning("segment filter is not supported on %s; ignoring segment=%r",
-                           fq(SCHEMA_MART, MV_RECEIVE_DAILY), segment)
+            logger.warning(
+                "segment filter is not supported on %s; ignoring segment=%r",
+                fq(SCHEMA_MART, MV_RECEIVE_DAILY),
+                segment,
+            )
 
         # --- SQL with simple query (no comparisons) ---
         # backend_shared.db.names の定数で置換済み（__init__で実行）
@@ -246,14 +263,20 @@ class InboundRepositoryImpl(InboundRepository):
 
             logger.info(
                 "Fetched %d daily rows (simple): %s to %s, segment=%s",
-                len(data), start, end, segment
+                len(data),
+                start,
+                end,
+                segment,
             )
             return data
 
         except Exception as e:
             logger.error(
                 "Failed to fetch daily inbound (simple): %s to %s, segment=%s, error=%s",
-                start, end, segment, e,
+                start,
+                end,
+                segment,
+                e,
                 exc_info=True,
             )
             raise

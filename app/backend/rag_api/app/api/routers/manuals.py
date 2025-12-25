@@ -1,11 +1,9 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException, Query, Depends
-
+from app.api.dependencies import get_manuals_service
 from app.core.domain.manuals.manual_entity import ManualDetail, ManualListResponse
 from app.core.usecases.manuals.manuals_service import ManualsService
-from app.api.dependencies import get_manuals_service
-
+from fastapi import APIRouter, Depends, HTTPException, Query
 
 router = APIRouter(prefix="/manuals", tags=["manuals"])
 
@@ -31,7 +29,9 @@ def get_manual(manual_id: str, service: ManualsService = Depends(get_manuals_ser
 
 
 @router.get("/{manual_id}/sections")
-def get_manual_sections(manual_id: str, service: ManualsService = Depends(get_manuals_service)):
+def get_manual_sections(
+    manual_id: str, service: ManualsService = Depends(get_manuals_service)
+):
     m = service.get(manual_id)
     if not m:
         raise HTTPException(status_code=404, detail="manual not found")

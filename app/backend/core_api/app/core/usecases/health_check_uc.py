@@ -5,10 +5,10 @@ Health Check UseCase
 """
 
 import asyncio
-from typing import Dict, Any
-import httpx
 from datetime import datetime
+from typing import Any, Dict
 
+import httpx
 from backend_shared.application.logging import get_module_logger
 
 logger = get_module_logger(__name__)
@@ -17,7 +17,7 @@ logger = get_module_logger(__name__)
 class HealthCheckUseCase:
     """
     システム全体のヘルスチェックを実行するUseCase
-    
+
     各マイクロサービスの状態を並行でチェックし、統合されたステータスを返す。
     """
 
@@ -50,12 +50,12 @@ class HealthCheckUseCase:
     ) -> Dict[str, Any]:
         """
         個別サービスのヘルスチェックを実行
-        
+
         Args:
             name: サービス名
             base_url: サービスのベースURL
             client: HTTPクライアント
-            
+
         Returns:
             サービスのステータス情報
         """
@@ -74,7 +74,7 @@ class HealthCheckUseCase:
                         }
                 except httpx.HTTPError:
                     continue
-            
+
             # すべてのエンドポイントが失敗
             return {
                 "name": name,
@@ -85,7 +85,10 @@ class HealthCheckUseCase:
             }
 
         except httpx.TimeoutException:
-            logger.warning(f"Health check timeout for {name}", extra={"service": name, "url": base_url})
+            logger.warning(
+                f"Health check timeout for {name}",
+                extra={"service": name, "url": base_url},
+            )
             return {
                 "name": name,
                 "status": "timeout",
@@ -110,7 +113,7 @@ class HealthCheckUseCase:
     async def execute(self) -> Dict[str, Any]:
         """
         すべてのサービスのヘルスチェックを並行実行
-        
+
         Returns:
             統合されたヘルスステータス
         """

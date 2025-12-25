@@ -1,7 +1,7 @@
 -- ==============================================================================
 -- 環境別アプリケーション用DBユーザー作成SQL
 -- ==============================================================================
--- 
+--
 -- 【目的】
 -- 環境ごとに専用のアプリケーション用DBユーザーを作成し、最小権限の原則に従って
 -- 必要な権限のみを付与します。
@@ -69,10 +69,10 @@ GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO sanbou_app_dev;
 GRANT CREATE ON SCHEMA public TO sanbou_app_dev;
 
 -- 今後追加されるテーブルにも自動で権限付与
-ALTER DEFAULT PRIVILEGES IN SCHEMA public 
+ALTER DEFAULT PRIVILEGES IN SCHEMA public
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO sanbou_app_dev;
 
-ALTER DEFAULT PRIVILEGES IN SCHEMA public 
+ALTER DEFAULT PRIVILEGES IN SCHEMA public
 GRANT USAGE, SELECT ON SEQUENCES TO sanbou_app_dev;
 
 \echo '✓ 開発環境ユーザーの設定完了'
@@ -110,10 +110,10 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO sanbou_ap
 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO sanbou_app_stg;
 
 -- 今後追加されるテーブルにも自動で権限付与
-ALTER DEFAULT PRIVILEGES IN SCHEMA public 
+ALTER DEFAULT PRIVILEGES IN SCHEMA public
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO sanbou_app_stg;
 
-ALTER DEFAULT PRIVILEGES IN SCHEMA public 
+ALTER DEFAULT PRIVILEGES IN SCHEMA public
 GRANT USAGE, SELECT ON SEQUENCES TO sanbou_app_stg;
 
 \echo '✓ ステージング環境ユーザーの設定完了'
@@ -151,10 +151,10 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO sanbou_ap
 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO sanbou_app_prod;
 
 -- 今後追加されるテーブルにも自動で権限付与
-ALTER DEFAULT PRIVILEGES IN SCHEMA public 
+ALTER DEFAULT PRIVILEGES IN SCHEMA public
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO sanbou_app_prod;
 
-ALTER DEFAULT PRIVILEGES IN SCHEMA public 
+ALTER DEFAULT PRIVILEGES IN SCHEMA public
 GRANT USAGE, SELECT ON SEQUENCES TO sanbou_app_prod;
 
 \echo '✓ 本番環境ユーザーの設定完了'
@@ -177,10 +177,10 @@ GRANT USAGE, SELECT ON SEQUENCES TO sanbou_app_prod;
 \echo '=========================================='
 
 -- 各データベースの接続権限を確認
-SELECT 
+SELECT
     datname AS database,
     array_agg(DISTINCT grantee) AS allowed_users
-FROM 
+FROM
     pg_database d
     CROSS JOIN LATERAL (
         SELECT r.rolname AS grantee
@@ -188,11 +188,11 @@ FROM
         WHERE has_database_privilege(r.oid, d.oid, 'CONNECT')
         AND r.rolname LIKE 'sanbou_app_%'
     ) perms
-WHERE 
+WHERE
     datname IN ('sanbou_dev', 'sanbou_stg', 'sanbou_prod')
-GROUP BY 
+GROUP BY
     datname
-ORDER BY 
+ORDER BY
     datname;
 
 \echo ''
@@ -209,7 +209,7 @@ ORDER BY
 -- ==============================================================================
 -- 追加のスキーマがある場合の権限設定（オプション）
 -- ==============================================================================
--- 
+--
 -- 【注意】
 -- プロジェクトに raw / stg / mart などの追加スキーマがある場合、
 -- 以下のコマンドをアンコメントして実行してください。

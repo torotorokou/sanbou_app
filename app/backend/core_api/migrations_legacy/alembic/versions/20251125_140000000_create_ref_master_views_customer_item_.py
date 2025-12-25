@@ -5,13 +5,13 @@ Revises: 20251125_130000000
 Create Date: 2025-11-25 09:10:29.085908
 
 """
-from alembic import op
-import sqlalchemy as sa
 
+import sqlalchemy as sa
+from alembic import op
 
 # revision identifiers, used by Alembic.
-revision = '20251125_140000000'
-down_revision = '20251125_130000000'
+revision = "20251125_140000000"
+down_revision = "20251125_130000000"
 branch_labels = None
 depends_on = None
 
@@ -19,18 +19,19 @@ depends_on = None
 def upgrade() -> None:
     """
     Create ref master views for customer, item, and sales_rep
-    
+
     Purpose: Extract master data from transactional data (stg.shogun_flash_receive)
     Views:
     - ref.v_customer: customer master with assigned sales rep
     - ref.v_item: item master with unit and category
     - ref.v_sales_rep: sales rep master
-    
+
     Note: These views dynamically derive master data from active transactions
     """
-    
+
     print("[ref] Creating v_customer view...")
-    op.execute("""
+    op.execute(
+        """
         CREATE OR REPLACE VIEW ref.v_customer AS
         SELECT
             client_cd AS customer_id,
@@ -40,10 +41,12 @@ def upgrade() -> None:
         FROM stg.shogun_flash_receive s
         WHERE is_deleted = false
         GROUP BY client_cd
-    """)
-    
+    """
+    )
+
     print("[ref] Creating v_item view...")
-    op.execute("""
+    op.execute(
+        """
         CREATE OR REPLACE VIEW ref.v_item AS
         SELECT
             item_cd AS item_id,
@@ -55,10 +58,12 @@ def upgrade() -> None:
         FROM stg.shogun_flash_receive s
         WHERE is_deleted = false
         GROUP BY item_cd
-    """)
-    
+    """
+    )
+
     print("[ref] Creating v_sales_rep view...")
-    op.execute("""
+    op.execute(
+        """
         CREATE OR REPLACE VIEW ref.v_sales_rep AS
         SELECT
             sales_staff_cd AS sales_rep_id,
@@ -66,8 +71,9 @@ def upgrade() -> None:
         FROM stg.shogun_flash_receive s
         WHERE is_deleted = false
         GROUP BY sales_staff_cd
-    """)
-    
+    """
+    )
+
     print("[ok] ref master views created")
 
 

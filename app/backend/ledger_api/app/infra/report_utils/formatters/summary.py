@@ -1,6 +1,7 @@
 import pandas as pd
 from backend_shared.application.logging import get_module_logger
 from backend_shared.utils.dataframe_utils import clean_na_strings
+
 from .value_setter import set_value_fast_safe
 
 logger = get_module_logger(__name__)

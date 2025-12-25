@@ -3,4 +3,4 @@
  * Detail Drawer UI exports
  */
 
-export { DetailDrawer } from './DetailDrawer';
+export { DetailDrawer } from "./DetailDrawer";

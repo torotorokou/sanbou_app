@@ -1,16 +1,16 @@
 /**
  * FilterPanelのレイアウト定数定義
- * 
+ *
  * グリッドギャップ、マージン、グリッド設定など、
  * レイアウト関連のすべての定数を一元管理します。
- * 
+ *
  * 【保守性のポイント】
  * - レイアウト変更時はこのファイルのみ修正
  * - コンポーネント側はこの設定を参照するだけ
  * - 型安全性を確保（as const）
  */
 
-import { bp } from '@shared';
+import { bp } from "@shared";
 
 /**
  * Ant Design Grid型定義
@@ -37,12 +37,12 @@ export const GRID_GUTTER = {
  */
 export const MARGINS = {
   sectionTop: 16,
-  divider: '16px 0',
+  divider: "16px 0",
 } as const;
 
 /**
  * @deprecated 代わりに @shared から bp をインポートして使用してください
- * 
+ *
  * 例:
  * ```typescript
  * import { bp } from '@shared';
@@ -53,11 +53,11 @@ export const BREAKPOINTS = bp;
 
 /**
  * FilterPanel グリッド設定
- * 
+ *
  * 各要素のグリッド配置を定義します。
  * デスクトップ（xl以上）とモバイル（xl未満）で異なる設定が必要な要素は
  * 別々の設定を用意しています。
- * 
+ *
  * 【命名規則】
  * - 基本: [要素名]
  * - デスクトップ専用: [要素名]Desktop
@@ -145,11 +145,11 @@ export const FILTER_GRID = {
 /**
  * レイアウトモード
  */
-export type LayoutMode = 'desktop' | 'mobile';
+export type LayoutMode = "desktop" | "mobile";
 
 /**
  * レイアウトモードの判定
  * xl以上（1280px~）をデスクトップとみなす
  */
-export const getLayoutMode = (isDesktop: boolean): LayoutMode => 
-  isDesktop ? 'desktop' : 'mobile';
+export const getLayoutMode = (isDesktop: boolean): LayoutMode =>
+  isDesktop ? "desktop" : "mobile";

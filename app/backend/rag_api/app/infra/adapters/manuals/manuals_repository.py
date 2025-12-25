@@ -2,7 +2,13 @@ from __future__ import annotations
 
 from typing import Dict, List, Optional
 
-from app.core.domain.manuals.manual_entity import ManualDetail, ManualListResponse, ManualSectionChunk, ManualSummary, RagMetadata
+from app.core.domain.manuals.manual_entity import (
+    ManualDetail,
+    ManualListResponse,
+    ManualSectionChunk,
+    ManualSummary,
+    RagMetadata,
+)
 from app.core.ports.manuals.manuals_repository import ManualsRepository
 
 
@@ -13,11 +19,25 @@ class InMemoryManualRepository(ManualsRepository):
         self._seed(base_url)
 
     def _seed(self, base_url: str) -> None:
-        def build(doc_id: str, title: str, description: str, category: str, tags: List[str]) -> ManualDetail:
+        def build(
+            doc_id: str, title: str, description: str, category: str, tags: List[str]
+        ) -> ManualDetail:
             sections: List[ManualSectionChunk] = [
-                ManualSectionChunk(title="概要", anchor="s-1", html=f"<h2>概要</h2><p>{description}</p>"),
-                ManualSectionChunk(title="手順", anchor="s-2", html="<h2>手順</h2><ol><li>画面を開く</li><li>必要項目を入力</li><li>保存</li></ol>"),
-                ManualSectionChunk(title="注意点", anchor="s-3", html="<h2>注意点</h2><ul><li>権限を確認</li><li>入力値を再確認</li></ul>"),
+                ManualSectionChunk(
+                    title="概要",
+                    anchor="s-1",
+                    html=f"<h2>概要</h2><p>{description}</p>",
+                ),
+                ManualSectionChunk(
+                    title="手順",
+                    anchor="s-2",
+                    html="<h2>手順</h2><ol><li>画面を開く</li><li>必要項目を入力</li><li>保存</li></ol>",
+                ),
+                ManualSectionChunk(
+                    title="注意点",
+                    anchor="s-3",
+                    html="<h2>注意点</h2><ul><li>権限を確認</li><li>入力値を再確認</li></ul>",
+                ),
             ]
             rag: List[RagMetadata] = [
                 RagMetadata(
@@ -49,14 +69,14 @@ class InMemoryManualRepository(ManualsRepository):
             title="見積書の作成フロー",
             description="見積作成の全体像",
             category="shogun",
-            tags=["見積", "営業"]
+            tags=["見積", "営業"],
         )
         item2 = build(
             doc_id="mf-honest-out",
             title="工場外のオネスト運搬のマニフェスト入力",
             description="工場外マニフェスト入力の流れ",
             category="shogun",
-            tags=["マニフェスト", "E票"]
+            tags=["マニフェスト", "E票"],
         )
         self._items[item1.id] = item1
         self._items[item2.id] = item2

@@ -4,11 +4,11 @@
  */
 
 // ValidationStatusは共通型として@/sharedに移動しました
-export type { ValidationStatus } from '@/shared';
+export type { ValidationStatus } from "@/shared";
 
 // CsvKindはdatabase featureに移動
-export type { CsvKind } from './csvKind';
-export { CsvKindUtils, ALL_CSV_KINDS } from './csvKind';
+export type { CsvKind } from "./csvKind";
+export { CsvKindUtils, ALL_CSV_KINDS } from "./csvKind";
 
 export type TypeKey = string;
 
@@ -35,8 +35,10 @@ export interface UploadResponseShape {
   status?: string;
   detail?: string;
   hint?: string;
-  result?: Record<string, UploadFileIssue> | {
-    upload_file_ids?: Record<string, number>;
-    status?: string;
-  };
+  result?:
+    | Record<string, UploadFileIssue>
+    | {
+        upload_file_ids?: Record<string, number>;
+        status?: string;
+      };
 }

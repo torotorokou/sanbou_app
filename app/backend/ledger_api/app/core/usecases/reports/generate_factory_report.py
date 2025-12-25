@@ -10,25 +10,26 @@ from datetime import date
 from io import BytesIO
 from typing import Any, Dict, Optional
 
-from fastapi import BackgroundTasks, UploadFile
-from fastapi.responses import JSONResponse
-
-from app.core.ports.inbound import CsvGateway, ReportRepository
-from app.core.domain.reports.factory_report import FactoryReport
-from app.core.usecases.reports.base_report_usecase import BaseReportUseCase
-from app.core.usecases.reports.factory_report_processor import process as factory_report_process
 from app.application.usecases.reports.report_generation_utils import (
     generate_excel_from_dataframe,
 )
+from app.core.domain.reports.factory_report import FactoryReport
+from app.core.ports.inbound import CsvGateway, ReportRepository
+from app.core.usecases.reports.base_report_usecase import BaseReportUseCase
+from app.core.usecases.reports.factory_report_processor import (
+    process as factory_report_process,
+)
+from fastapi import BackgroundTasks, UploadFile
+from fastapi.responses import JSONResponse
 
 
 class GenerateFactoryReportUseCase(BaseReportUseCase):
     """工場日報生成 UseCase."""
-    
+
     @property
     def report_key(self) -> str:
         return "factory_report"
-    
+
     @property
     def report_name(self) -> str:
         return "工場日報"
@@ -42,13 +43,13 @@ class GenerateFactoryReportUseCase(BaseReportUseCase):
     ) -> JSONResponse:
         """
         工場日報生成の実行（filesパラメータを受け取る独自実装）。
-        
+
         Args:
             files: アップロードされたCSVファイル辞書
             period_type: 期間指定
             background_tasks: FastAPIのBackgroundTasks（PDF非同期生成用）
             async_pdf: True=PDF非同期生成（デフォルト）, False=同期生成（従来互換）
-            
+
         Returns:
             JSONResponse: 署名付きURLを含むレスポンス
         """
@@ -80,5 +81,3 @@ class GenerateFactoryReportUseCase(BaseReportUseCase):
             report_key=self.report_key,
             report_date=report_date,
         )
-
-

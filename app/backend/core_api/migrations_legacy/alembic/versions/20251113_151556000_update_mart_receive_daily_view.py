@@ -6,14 +6,15 @@ Create Date: 2025-11-13 15:15:56.000000
 
 mart.v_receive_daily ビューを更新して stg スキーマを参照するようにする
 """
-from alembic import op
-import sqlalchemy as sa
+
 from pathlib import Path
 
+import sqlalchemy as sa
+from alembic import op
 
 # revision identifiers, used by Alembic.
-revision = '20251113_151556000'
-down_revision = '20251113_151137000'
+revision = "20251113_151556000"
+down_revision = "20251113_151137000"
 branch_labels = None
 depends_on = None
 
@@ -24,9 +25,9 @@ def upgrade() -> None:
     """
     # SQLファイルから読み込んで実行
     sql_file = Path(__file__).parent.parent / "sql" / "mart" / "v_receive_daily.sql"
-    with open(sql_file, 'r', encoding='utf-8') as f:
+    with open(sql_file, "r", encoding="utf-8") as f:
         sql = f.read()
-    
+
     op.execute(sql)
     print("✓ Updated mart.v_receive_daily to reference stg schema")
 

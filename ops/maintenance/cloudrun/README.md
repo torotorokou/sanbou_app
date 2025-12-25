@@ -19,17 +19,20 @@
 ### 計画メンテナンスの流れ
 
 1. **メンテナンス開始**
+
    ```bash
    cd ops/maintenance
    make maintenance-on
    ```
 
 2. **メンテナンス作業実施**
+
    - DB マイグレーション
    - アプリケーション更新
    - 動作確認
 
 3. **メンテナンス終了**
+
    ```bash
    cd ops/maintenance
    make maintenance-off

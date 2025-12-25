@@ -57,4 +57,4 @@ include $(MK_DIR)/70_db_ownership.mk
 include $(MK_DIR)/80_registry.mk
 include $(MK_DIR)/90_maintenance.mk
 include $(MK_DIR)/95_security.mk
-
+include $(MK_DIR)/98_hooks.mk

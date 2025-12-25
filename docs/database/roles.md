@@ -27,12 +27,12 @@
 
 ### ロール一覧
 
-| ロール名 | 用途 | 権限レベル | 使用箇所 |
-|---------|------|-----------|---------|
-| `{env}_app_rw` | アプリケーション実行用（読み書き） | DML (SELECT, INSERT, UPDATE, DELETE) | FastAPI実行時 |
-| `{env}_app_ro` | 読み取り専用（レポート等） | SELECT のみ | 分析ツール、レポート生成 |
-| `{env}_migrator` | マイグレーション実行用 | DDL (CREATE, ALTER, DROP) + DML | Alembic実行時 |
-| `{env}_dba` | データベース管理者 | SUPERUSER または広範な権限 | 緊急対応のみ |
+| ロール名         | 用途                               | 権限レベル                           | 使用箇所                 |
+| ---------------- | ---------------------------------- | ------------------------------------ | ------------------------ |
+| `{env}_app_rw`   | アプリケーション実行用（読み書き） | DML (SELECT, INSERT, UPDATE, DELETE) | FastAPI実行時            |
+| `{env}_app_ro`   | 読み取り専用（レポート等）         | SELECT のみ                          | 分析ツール、レポート生成 |
+| `{env}_migrator` | マイグレーション実行用             | DDL (CREATE, ALTER, DROP) + DML      | Alembic実行時            |
+| `{env}_dba`      | データベース管理者                 | SUPERUSER または広範な権限           | 緊急対応のみ             |
 
 `{env}` は環境名（例: `dev`, `stg`, `prod`）を表します。
 
@@ -260,16 +260,19 @@ DB_MIGRATOR_PASSWORD=<STRONG_PASSWORD_HERE>
 ### 2. ユーザー使用ガイドライン
 
 #### アプリケーション実行時
+
 - **使用ユーザー**: `{env}_app_rw`
 - **接続方法**: DB_USER / DB_PASSWORD 環境変数
 - **用途**: FastAPI、ワーカー等の通常実行
 
 #### マイグレーション実行時
+
 - **使用ユーザー**: `{env}_migrator`（未設定時は app にフォールバック）
 - **接続方法**: DB_MIGRATOR_USER / DB_MIGRATOR_PASSWORD 環境変数
 - **用途**: Alembic マイグレーション、スキーマ変更
 
 #### データベース管理作業
+
 - **使用ユーザー**: `{env}_dba` または postgres ユーザー
 - **接続方法**: 手動接続（psql等）
 - **用途**: 緊急対応、大規模メンテナンス
@@ -351,7 +354,7 @@ SELECT usename, usecreatedb, usesuper FROM pg_user ORDER BY usename;
 \dp raw.*
 
 -- または
-SELECT 
+SELECT
     schemaname,
     tablename,
     tableowner,
@@ -379,6 +382,7 @@ psql "postgresql://sanbou_migrator_dev:<PASSWORD>@localhost:5432/sanbou_dev" -c 
 **原因**: パスワードが間違っているか、ユーザーが存在しない
 
 **解決策**:
+
 1. ユーザーが作成されているか確認: `\du` (psql上)
 2. secrets ファイルのパスワードを確認
 3. 環境変数が正しく読み込まれているか確認: `env | grep DB_`
@@ -388,6 +392,7 @@ psql "postgresql://sanbou_migrator_dev:<PASSWORD>@localhost:5432/sanbou_dev" -c 
 **原因**: テーブルへのアクセス権限がない
 
 **解決策**:
+
 1. 権限確認: `\dp <schema>.<table>`
 2. GRANT文を再実行
 3. ALTER DEFAULT PRIVILEGES が設定されているか確認
@@ -397,6 +402,7 @@ psql "postgresql://sanbou_migrator_dev:<PASSWORD>@localhost:5432/sanbou_dev" -c 
 **原因**: migrator ユーザーに DDL権限がない
 
 **解決策**:
+
 1. DB_MIGRATOR_USER が設定されているか確認
 2. migrator ユーザーの権限を確認
 3. 必要に応じて ALL PRIVILEGES を付与

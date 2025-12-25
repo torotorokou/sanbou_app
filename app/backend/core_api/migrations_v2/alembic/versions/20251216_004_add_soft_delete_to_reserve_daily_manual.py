@@ -20,52 +20,63 @@ Create Date: 2025-12-16 12:00:00.000000
   - SELECT時は deleted_at IS NULL で除外
 
 """
-from alembic import op
-import sqlalchemy as sa
 
+import sqlalchemy as sa
+from alembic import op
 
 # revision identifiers, used by Alembic.
-revision = '20251216_004'
-down_revision = '11e8fe1cc1d4'  # 20251216_003_add_v_reserve_daily_for_forecast
+revision = "20251216_004"
+down_revision = "11e8fe1cc1d4"  # 20251216_003_add_v_reserve_daily_for_forecast
 branch_labels = None
 depends_on = None
 
 
 def upgrade() -> None:
     """論理削除カラムを追加"""
-    
+
     # deleted_at カラム追加（デフォルトNULL = 未削除）
-    op.execute("""
+    op.execute(
+        """
         ALTER TABLE stg.reserve_daily_manual
         ADD COLUMN deleted_at timestamp with time zone DEFAULT NULL;
-    """)
-    
+    """
+    )
+
     # deleted_by カラム追加（削除者記録用）
-    op.execute("""
+    op.execute(
+        """
         ALTER TABLE stg.reserve_daily_manual
         ADD COLUMN deleted_by text DEFAULT NULL;
-    """)
-    
+    """
+    )
+
     # インデックス追加（deleted_at IS NULL の検索を高速化）
-    op.execute("""
-        CREATE INDEX idx_reserve_daily_manual_not_deleted 
-        ON stg.reserve_daily_manual (reserve_date) 
+    op.execute(
+        """
+        CREATE INDEX idx_reserve_daily_manual_not_deleted
+        ON stg.reserve_daily_manual (reserve_date)
         WHERE deleted_at IS NULL;
-    """)
-    
+    """
+    )
+
     # カラムコメント追加
-    op.execute("""
-        COMMENT ON COLUMN stg.reserve_daily_manual.deleted_at IS 
+    op.execute(
+        """
+        COMMENT ON COLUMN stg.reserve_daily_manual.deleted_at IS
         '論理削除日時（NULL=未削除、値あり=削除済み）';
-    """)
-    
-    op.execute("""
-        COMMENT ON COLUMN stg.reserve_daily_manual.deleted_by IS 
+    """
+    )
+
+    op.execute(
+        """
+        COMMENT ON COLUMN stg.reserve_daily_manual.deleted_by IS
         '削除実行者（将来の認証機能で使用）';
-    """)
-    
+    """
+    )
+
     # ビューを再作成（論理削除を除外）
-    op.execute("""
+    op.execute(
+        """
         CREATE OR REPLACE VIEW mart.v_reserve_daily_for_forecast AS
         WITH customer_agg AS (
             -- 顧客別データを日次集計
@@ -102,24 +113,24 @@ def upgrade() -> None:
             date,
             reserve_trucks,
             reserve_fixed_trucks,
-            CASE 
-                WHEN reserve_trucks > 0 THEN 
+            CASE
+                WHEN reserve_trucks > 0 THEN
                     ROUND(reserve_fixed_trucks::numeric / reserve_trucks::numeric, 4)
                 ELSE 0
             END AS reserve_fixed_ratio,
             source
         FROM combined
         ORDER BY date;
-    """)
+    """
+    )
 
 
 def downgrade() -> None:
     """論理削除カラムを削除"""
-    
+
     # インデックス削除
     op.execute("DROP INDEX IF EXISTS stg.idx_reserve_daily_manual_not_deleted;")
-    
+
     # カラム削除
     op.execute("ALTER TABLE stg.reserve_daily_manual DROP COLUMN IF EXISTS deleted_by;")
     op.execute("ALTER TABLE stg.reserve_daily_manual DROP COLUMN IF EXISTS deleted_at;")
-

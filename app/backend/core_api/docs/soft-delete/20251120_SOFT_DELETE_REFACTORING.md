@@ -9,6 +9,7 @@
 ## 📋 変更概要
 
 ### 対象テーブル
+
 - `stg.shogun_flash_receive`
 - `stg.shogun_final_receive`
 - `stg.shogun_flash_yard`
@@ -32,6 +33,7 @@
 **Alembic リビジョン**: `20251120_160000000_create_active_shogun_views.py`
 
 **作成されたビュー**:
+
 ```sql
 CREATE OR REPLACE VIEW stg.active_shogun_flash_receive AS
 SELECT * FROM stg.shogun_flash_receive WHERE is_deleted = false;
@@ -43,6 +45,7 @@ SELECT * FROM stg.shogun_final_receive WHERE is_deleted = false;
 ```
 
 **目的**:
+
 - 論理削除済み行を自動的に除外する共通ビューを提供
 - WHERE 句での is_deleted 条件の書き忘れを防止
 - コードの可読性と保守性を向上
@@ -56,6 +59,7 @@ SELECT * FROM stg.shogun_final_receive WHERE is_deleted = false;
 #### 2.1 mart.v_receive_daily の変更
 
 **Before**:
+
 ```sql
 WITH r_shogun_final AS (
     SELECT
@@ -81,6 +85,7 @@ r_shogun_flash AS (
 ```
 
 **After**:
+
 ```sql
 WITH r_shogun_final AS (
     SELECT
@@ -108,6 +113,7 @@ r_shogun_flash AS (
 ```
 
 **変更点**:
+
 - `stg.shogun_final_receive` → `stg.active_shogun_final_receive`
 - `stg.shogun_flash_receive` → `stg.active_shogun_flash_receive`
 - WHERE 句に `AND is_deleted = false` を明示的に追加（2重防御）
@@ -117,6 +123,7 @@ r_shogun_flash AS (
 #### 2.2 mart.v_shogun_flash_receive_daily の変更
 
 **Before**:
+
 ```sql
 SELECT
     s.slip_date::date AS slip_date,
@@ -129,6 +136,7 @@ ORDER BY s.slip_date DESC;
 ```
 
 **After**:
+
 ```sql
 SELECT
     s.slip_date::date AS slip_date,
@@ -142,6 +150,7 @@ ORDER BY s.slip_date DESC;
 ```
 
 **変更点**:
+
 - WHERE 句に `AND s.is_deleted = false` を追加
 
 ---
@@ -157,6 +166,7 @@ ORDER BY s.slip_date DESC;
 **Alembic リビジョン**: `20251120_180000000_optimize_is_deleted_indexes.py`
 
 **追加されたインデックス**:
+
 ```sql
 CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_shogun_flash_receive_active
 ON stg.shogun_flash_receive (slip_date, upload_file_id)
@@ -170,11 +180,13 @@ WHERE is_deleted = false;
 ```
 
 **メリット**:
+
 - アクティブ行のみにインデックスを張ることで、インデックスサイズを削減
 - 論理削除率が高くなっても、クエリパフォーマンスが維持される
 - `WHERE is_deleted = false` 条件付きクエリが高速化
 
 **既存インデックスとの関係**:
+
 - 既存の `idx_shogun_flash_receive_is_deleted` は保持（全行対象）
 - 部分インデックスは `is_deleted = false` のクエリで優先的に使用される
 - 論理削除行のクエリ（`is_deleted = true`）は既存インデックスを使用
@@ -184,10 +196,12 @@ WHERE is_deleted = false;
 ### 4. データクリーンアップ
 
 **実施内容**:
+
 - `is_deleted` カラムが NULL の行を一括で `false` に更新
 - 既存データの整合性を確保
 
 **SQL**:
+
 ```sql
 UPDATE stg.shogun_flash_receive
 SET is_deleted = false
@@ -195,6 +209,7 @@ WHERE is_deleted IS NULL;
 ```
 
 **備考**:
+
 - 既存の Alembic マイグレーション（`20251119_130000000`）で `NOT NULL DEFAULT false` が定義済み
 - このクリーンアップは念のための処理（本来 NULL は存在しない想定）
 
@@ -204,23 +219,23 @@ WHERE is_deleted IS NULL;
 
 ### 変更されたビュー/マテビュー
 
-| ビュー/マテビュー | 変更内容 | 影響 |
-|---|---|---|
-| `mart.v_receive_daily` | active_* ビュー使用 + is_deleted フィルタ | ✅ 論理削除行が集計から除外される |
-| `mart.v_shogun_flash_receive_daily` | is_deleted フィルタ追加 | ✅ 論理削除行が集計から除外される |
-| `mart.v_shogun_final_receive_daily` | is_deleted フィルタ追加 | ✅ 論理削除行が集計から除外される |
-| `mart.mv_target_card_per_day` | 間接的に影響（v_receive_daily 経由） | ⚠️ REFRESH が必要 |
-| `mart.mv_inb5y_week_profile_min` | 間接的に影響（v_receive_daily 経由） | ⚠️ REFRESH が必要 |
-| `mart.mv_inb_avg5y_day_biz` | 間接的に影響（v_receive_daily 経由） | ⚠️ REFRESH が必要 |
-| `mart.mv_inb_avg5y_weeksum_biz` | 間接的に影響（v_receive_daily 経由） | ⚠️ REFRESH が必要 |
-| `mart.mv_inb_avg5y_day_scope` | 間接的に影響（v_receive_daily 経由） | ⚠️ REFRESH が必要 |
+| ビュー/マテビュー                   | 変更内容                                    | 影響                              |
+| ----------------------------------- | ------------------------------------------- | --------------------------------- |
+| `mart.v_receive_daily`              | active\_\* ビュー使用 + is_deleted フィルタ | ✅ 論理削除行が集計から除外される |
+| `mart.v_shogun_flash_receive_daily` | is_deleted フィルタ追加                     | ✅ 論理削除行が集計から除外される |
+| `mart.v_shogun_final_receive_daily` | is_deleted フィルタ追加                     | ✅ 論理削除行が集計から除外される |
+| `mart.mv_target_card_per_day`       | 間接的に影響（v_receive_daily 経由）        | ⚠️ REFRESH が必要                 |
+| `mart.mv_inb5y_week_profile_min`    | 間接的に影響（v_receive_daily 経由）        | ⚠️ REFRESH が必要                 |
+| `mart.mv_inb_avg5y_day_biz`         | 間接的に影響（v_receive_daily 経由）        | ⚠️ REFRESH が必要                 |
+| `mart.mv_inb_avg5y_weeksum_biz`     | 間接的に影響（v_receive_daily 経由）        | ⚠️ REFRESH が必要                 |
+| `mart.mv_inb_avg5y_day_scope`       | 間接的に影響（v_receive_daily 経由）        | ⚠️ REFRESH が必要                 |
 
 ### Python コード
 
-| ファイル | 変更内容 |
-|---|---|
-| `app/presentation/routers/database/router.py` | ✅ すでに `is_deleted = false` フィルタ適用済み（変更不要） |
-| `app/infra/adapters/upload/shogun_csv_repository.py` | 変更不要（INSERT のみ） |
+| ファイル                                             | 変更内容                                                    |
+| ---------------------------------------------------- | ----------------------------------------------------------- |
+| `app/presentation/routers/database/router.py`        | ✅ すでに `is_deleted = false` フィルタ適用済み（変更不要） |
+| `app/infra/adapters/upload/shogun_csv_repository.py` | 変更不要（INSERT のみ）                                     |
 
 ---
 
@@ -238,7 +253,8 @@ docker compose -f docker/docker-compose.dev.yml -p local_dev exec core_api \
 ```
 
 **実行されるリビジョン**:
-1. `20251120_160000000` - active_* ビューの作成
+
+1. `20251120_160000000` - active\_\* ビューの作成
 2. `20251120_170000000` - mart ビューの更新
 3. `20251120_180000000` - 部分インデックスの追加
 
@@ -279,10 +295,11 @@ docker compose -f docker/docker-compose.dev.yml -p local_dev exec -T db \
 ```
 
 **テスト項目**:
+
 1. stg テーブルの論理削除状況の確認
 2. slip_date 別の論理削除分布
 3. 日次集計の比較（フィルタあり／なし）
-4. active_* ビューの動作確認
+4. active\_\* ビューの動作確認
 5. mart.v_receive_daily の結果検証
 6. インデックス使用状況の確認（EXPLAIN ANALYZE）
 7. upload_file_id ごとの論理削除状況
@@ -305,6 +322,7 @@ FROM stg.shogun_flash_receive;
 ```
 
 **期待結果**:
+
 - `deleted_percent` が 0% に近い場合は影響なし
 - 5% 以上の場合は、集計結果に有意な変化が生じる可能性あり
 
@@ -314,7 +332,7 @@ FROM stg.shogun_flash_receive;
 
 ```sql
 -- フィルタあり／なしで集計を比較
-WITH 
+WITH
 unfiltered AS (
     SELECT slip_date, SUM(net_weight) / 1000.0 AS ton
     FROM stg.shogun_flash_receive
@@ -340,6 +358,7 @@ LIMIT 10;
 ```
 
 **期待結果**:
+
 - 差異がない場合: 論理削除行が存在しない
 - 差異がある場合: 差分が論理削除行の影響
 
@@ -357,6 +376,7 @@ GROUP BY slip_date;
 ```
 
 **期待結果**:
+
 - `Index Scan using idx_shogun_flash_receive_active` が表示される
 - 実行時間が高速化される
 
@@ -384,11 +404,13 @@ docker compose -f docker/docker-compose.dev.yml -p local_dev exec core_api \
 ### 想定される改善点
 
 1. **クエリ性能の向上**
+
    - 部分インデックスにより、is_deleted = false のクエリが高速化
    - インデックスサイズが削減され、メモリ効率が向上
 
 2. **保守性の向上**
-   - active_* ビューにより、is_deleted 条件の書き忘れを防止
+
+   - active\_\* ビューにより、is_deleted 条件の書き忘れを防止
    - コードの可読性が向上
 
 3. **データ整合性の保証**
@@ -397,7 +419,7 @@ docker compose -f docker/docker-compose.dev.yml -p local_dev exec core_api \
 
 ### 想定されるオーバーヘッド
 
-- **ビュー経由のクエリ**: 軽微（ビューは単純な SELECT * + WHERE）
+- **ビュー経由のクエリ**: 軽微（ビューは単純な SELECT \* + WHERE）
 - **部分インデックスの維持**: INSERT/UPDATE 時に若干のオーバーヘッド（ただし、既存の is_deleted インデックスと大差なし）
 
 ---
@@ -434,7 +456,7 @@ make refresh-mv
 
 - **データ整合性**: ✅ 論理削除済み行が集計から自動除外
 - **性能**: ✅ 部分インデックスによる高速化
-- **保守性**: ✅ active_* ビューによる書き忘れ防止
+- **保守性**: ✅ active\_\* ビューによる書き忘れ防止
 - **外部 API**: ✅ 変更なし（内部ロジックのみ変更）
 
 ### 次のアクション
@@ -449,4 +471,3 @@ make refresh-mv
 **作成者**: GitHub Copilot (Claude Sonnet 4.5)  
 **レビュー**: [担当者名]  
 **承認**: [承認者名]
-

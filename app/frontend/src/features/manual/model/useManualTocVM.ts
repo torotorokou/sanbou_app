@@ -3,10 +3,10 @@
  * マニュアル目次取得のロジック
  */
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
-import type { ManualRepository } from '../ports/repository';
-import { ManualRepositoryImpl } from '../infrastructure/manual.repository';
-import type { ManualTocItem } from '../domain/types/manual.types';
+import { useState, useEffect, useMemo, useCallback } from "react";
+import type { ManualRepository } from "../ports/repository";
+import { ManualRepositoryImpl } from "../infrastructure/manual.repository";
+import type { ManualTocItem } from "../domain/types/manual.types";
 
 export function useManualToc() {
   const repo: ManualRepository = useMemo(() => new ManualRepositoryImpl(), []);

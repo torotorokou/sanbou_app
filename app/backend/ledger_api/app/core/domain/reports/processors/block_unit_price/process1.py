@@ -1,12 +1,10 @@
 # NOTE: このモジュールは Streamlit UI 用のヘルパで、API 実行時は利用しません。
-import streamlit as st  # type: ignore
-import pandas as pd
 import re
 
-from .style import (
-    _get_transport_selection_styles,
-    _get_vendor_card_styles,
-)
+import pandas as pd
+import streamlit as st  # type: ignore
+
+from .style import _get_transport_selection_styles, _get_vendor_card_styles
 
 
 def _apply_transport_selection_styles() -> None:

@@ -299,6 +299,7 @@ make test PROJECT_ID=honest-sanbou-app-prod
 **原因**: CDNキャッシュまたはブラウザキャッシュ
 
 **対処法**:
+
 ```bash
 # 1. CDNキャッシュをクリア（GCP Console から）
 #    - ネットワークサービス → Cloud CDN
@@ -320,6 +321,7 @@ gcloud compute url-maps describe sanbou-app-url-map \
 **原因**: Cloud Runサービスの問題
 
 **対処法**:
+
 ```bash
 # 1. サービス状態確認
 cd ops/maintenance
@@ -340,6 +342,7 @@ make deploy PROJECT_ID=honest-sanbou-app-prod
 **原因**: IAP Service Agent の権限不足
 
 **対処法**:
+
 ```bash
 # IAP設定の再実行
 cd ops/maintenance
@@ -351,6 +354,7 @@ make setup-iap PROJECT_ID=honest-sanbou-app-prod
 **原因**: Dockerイメージの問題またはリソース不足
 
 **対処法**:
+
 ```bash
 # 1. ローカルでテスト
 cd ops/maintenance/cloudrun

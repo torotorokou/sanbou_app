@@ -8,18 +8,15 @@
 
 from typing import Any, Dict, Optional, Union
 
-from fastapi import APIRouter, BackgroundTasks, File, UploadFile
-from pydantic import BaseModel
-
-from backend_shared.infra.adapters.fastapi.error_handlers import DomainError
-from backend_shared.application.logging import get_module_logger, create_log_context
+# 移行済みの実装ファイルからインポート
+from app.core.usecases.reports.interactive import BlockUnitPriceInteractive
 from app.core.usecases.reports.processors.interactive_report_processing_service import (
     InteractiveReportProcessingService,
 )
-# 移行済みの実装ファイルからインポート
-from app.core.usecases.reports.interactive import (
-    BlockUnitPriceInteractive,
-)
+from backend_shared.application.logging import create_log_context, get_module_logger
+from backend_shared.infra.adapters.fastapi.error_handlers import DomainError
+from fastapi import APIRouter, BackgroundTasks, File, UploadFile
+from pydantic import BaseModel
 
 router = APIRouter()
 tag_name = "Block Unit Price"
@@ -49,10 +46,7 @@ def _raise_if_error_payload(result: Any) -> None:
         code = result.get("code", "PROCESSING_ERROR")
         detail = result.get("detail") or result.get("message") or "処理に失敗しました"
         raise DomainError(
-            code=code,
-            status=422,
-            user_message=detail,
-            title="処理エラー"
+            code=code, status=422, user_message=detail, title="処理エラー"
         )
 
 
@@ -71,10 +65,10 @@ async def start_block_unit_price_process(
         extra=create_log_context(
             operation="block_unit_price_initial",
             has_request=request is not None,
-            has_shipment=shipment is not None
-        )
+            has_shipment=shipment is not None,
+        ),
     )
-    
+
     # 1) UploadFile 優先 (新方式)
     upload_files: Dict[str, UploadFile] = {}
     if shipment is not None:
@@ -84,7 +78,7 @@ async def start_block_unit_price_process(
     if not upload_files and request is not None:
         logger.warning(
             "非推奨: JSON経由のファイルアップロード",
-            extra=create_log_context(operation="block_unit_price_initial")
+            extra=create_log_context(operation="block_unit_price_initial"),
         )
         _ = BlockUnitPriceInteractive(files=request.files)
         return {"status": "deprecated", "message": "Use multipart upload instead."}
@@ -95,16 +89,16 @@ async def start_block_unit_price_process(
         raw_result = service.initial(generator, upload_files)
 
         _raise_if_error_payload(raw_result)
-        
+
         logger.info(
             "ブロック単価初期処理完了",
             extra=create_log_context(
                 operation="block_unit_price_initial",
                 session_id=raw_result.get("session_id"),
-                rows_count=len(raw_result.get("rows", []))
-            )
+                rows_count=len(raw_result.get("rows", [])),
+            ),
         )
-        
+
         return raw_result
     except DomainError:
         raise
@@ -114,14 +108,14 @@ async def start_block_unit_price_process(
             extra=create_log_context(
                 operation="block_unit_price_initial",
                 error_type=type(e).__name__,
-                error=str(e)
-            )
+                error=str(e),
+            ),
         )
         raise DomainError(
             code="INITIAL_FAILED",
             status=500,
             user_message=f"初期処理中にエラーが発生しました: {str(e)}",
-            title="処理エラー"
+            title="処理エラー",
         ) from e
 
 
@@ -135,16 +129,16 @@ async def apply_transport_selection(request: TransportSelectionRequest):
         extra=create_log_context(
             operation="block_unit_price_apply",
             session_id=request.session_id,
-            selections_count=len(request.selections) if request.selections else 0
-        )
+            selections_count=len(request.selections) if request.selections else 0,
+        ),
     )
-    
+
     if not request.session_id:
         raise DomainError(
             code="INPUT_INVALID",
             status=400,
             user_message="session_id が指定されていません",
-            title="入力エラー"
+            title="入力エラー",
         )
 
     try:
@@ -159,15 +153,14 @@ async def apply_transport_selection(request: TransportSelectionRequest):
         result = service.apply(generator, request.session_id, user_input)
 
         _raise_if_error_payload(result)
-        
+
         logger.info(
             "運搬業者選択適用完了",
             extra=create_log_context(
-                operation="block_unit_price_apply",
-                session_id=request.session_id
-            )
+                operation="block_unit_price_apply", session_id=request.session_id
+            ),
         )
-        
+
         return result
     except DomainError:
         raise
@@ -178,27 +171,26 @@ async def apply_transport_selection(request: TransportSelectionRequest):
                 operation="block_unit_price_apply",
                 session_id=request.session_id,
                 error_type=type(e).__name__,
-                error=str(e)
-            )
+                error=str(e),
+            ),
         )
         raise DomainError(
             code="APPLY_FAILED",
             status=500,
             user_message=f"選択適用中にエラーが発生しました: {str(e)}",
-            title="処理エラー"
+            title="処理エラー",
         ) from e
 
 
 @router.post("/finalize", tags=[tag_name])
 async def finalize_calculation(
-    request: FinalizeRequest,
-    background_tasks: BackgroundTasks
+    request: FinalizeRequest, background_tasks: BackgroundTasks
 ) -> Any:
     """
     最終計算処理 (Step 2)
     - 一本化運用：{session_id, selections} を同送 → 選択適用→最終計算を一括実行
     - 互換運用   ：selections 無し → 既存の選択状態で最終計算のみ実行
-    
+
     🔄 PDF非同期生成: BackgroundTasksでPDFをバックグラウンド生成
     """
     logger.info(
@@ -206,16 +198,16 @@ async def finalize_calculation(
         extra=create_log_context(
             operation="block_unit_price_finalize",
             session_id=request.session_id,
-            has_selections=bool(request.selections)
-        )
+            has_selections=bool(request.selections),
+        ),
     )
-    
+
     if not request.session_id:
         raise DomainError(
             code="INPUT_INVALID",
             status=400,
             user_message="session_id が指定されていません",
-            title="入力エラー"
+            title="入力エラー",
         )
 
     try:
@@ -229,20 +221,19 @@ async def finalize_calculation(
 
         # selections があれば finalize 内で適用し、そのまま共通の ZIP レスポンスを返す
         response = service.finalize(
-            generator, 
-            request.session_id, 
+            generator,
+            request.session_id,
             user_input,
-            background_tasks=background_tasks  # 🔄 BackgroundTasksを渡す
+            background_tasks=background_tasks,  # 🔄 BackgroundTasksを渡す
         )
-        
+
         logger.info(
             "ブロック単価最終計算完了",
             extra=create_log_context(
-                operation="block_unit_price_finalize",
-                session_id=request.session_id
-            )
+                operation="block_unit_price_finalize", session_id=request.session_id
+            ),
         )
-        
+
         return response
     except DomainError:
         raise
@@ -253,14 +244,14 @@ async def finalize_calculation(
                 operation="block_unit_price_finalize",
                 session_id=request.session_id,
                 error_type=type(e).__name__,
-                error=str(e)
-            )
+                error=str(e),
+            ),
         )
         raise DomainError(
             code="FINALIZE_FAILED",
             status=500,
             user_message=f"最終計算中にエラーが発生しました: {str(e)}",
-            title="処理エラー"
+            title="処理エラー",
         ) from e
 
 
@@ -295,6 +286,6 @@ async def get_step_info(step: int):
             code="INPUT_INVALID",
             status=404,
             user_message="無効なステップです",
-            title="入力エラー"
+            title="入力エラー",
         )
     return step_info[step]

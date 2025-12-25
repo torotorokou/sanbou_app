@@ -1,7 +1,7 @@
 /**
  * PortalCardのアイコン部分のコンポーネント
  */
-import React from 'react';
+import React from "react";
 
 interface CardIconProps {
   icon: React.ReactNode;
@@ -28,15 +28,15 @@ export const CardIcon: React.FC<CardIconProps> = ({
       style={{
         width: size,
         height: size,
-        borderRadius: isCompact ? 8 : '50%',
+        borderRadius: isCompact ? 8 : "50%",
         background,
         color,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
         fontSize: `${fontSize}px`,
         lineHeight: 1,
-        flex: '0 0 auto',
+        flex: "0 0 auto",
         marginRight: marginRight || 0,
       }}
     >

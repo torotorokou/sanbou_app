@@ -24,9 +24,10 @@ grep -r "open\(|Path\(.*\)\.read_text\(|\.read\(\)" alembic/versions/*.py
 ### 1. `20251104_160703155_manage_views_mart.py`
 
 **作成日**: 2025-11-04  
-**目的**: mart.* スキーマの VIEW 定義を作成
+**目的**: mart.\* スキーマの VIEW 定義を作成
 
 **参照ファイル** (upgrade):
+
 - `sql/mart/receive_daily.sql`
 - `sql/mart/receive_weekly.sql`
 - `sql/mart/receive_monthly.sql`
@@ -34,9 +35,10 @@ grep -r "open\(|Path\(.*\)\.read_text\(|\.read\(\)" alembic/versions/*.py
 - `sql/mart/v_target_card_per_day.sql`
 
 **参照方法**:
+
 ```python
 BASE = Path("/backend/migrations/alembic/sql/mart")
-def _sql(name: str) -> str: 
+def _sql(name: str) -> str:
     return (BASE / name).read_text(encoding="utf-8")
 
 def upgrade():
@@ -52,15 +54,17 @@ def upgrade():
 ### 2. `20251104_162109457_manage_materialized_views_mart.py`
 
 **作成日**: 2025-11-04  
-**目的**: mart.* スキーマの Materialized VIEW 定義を作成・リフレッシュ
+**目的**: mart.\* スキーマの Materialized VIEW 定義を作成・リフレッシュ
 
 **参照ファイル** (upgrade):
+
 - `sql/mart/mv_inb5y_week_profile_min.sql`
 - `sql/mart/mv_inb_avg5y_day_biz.sql`
 - `sql/mart/mv_inb_avg5y_day_scope.sql`
 - `sql/mart/mv_inb_avg5y_weeksum_biz.sql`
 
 **参照方法**:
+
 ```python
 BASE = Path("/backend/migrations/alembic/sql/mart")
 
@@ -82,13 +86,15 @@ def _ensure_mv(name: str, create_sql_name: str, indexes: list[str]) -> None:
 ### 3. `20251104_163649629_manage_views_ref.py`
 
 **作成日**: 2025-11-04  
-**目的**: ref.* スキーマの VIEW 定義を作成
+**目的**: ref.\* スキーマの VIEW 定義を作成
 
 **参照ファイル** (upgrade):
+
 - `sql/ref/v_calendar_classified.sql`
 - `sql/ref/v_closure_days.sql`
 
 **参照方法**:
+
 ```python
 BASE = Path("/backend/migrations/alembic/sql/ref")
 
@@ -107,14 +113,16 @@ def upgrade():
 ### 4. `20251105_100819527_mart_canonicalize_receive__into_v_.py`
 
 **作成日**: 2025-11-05  
-**目的**: mart.receive_* を VIEW (v_receive_*) に正規化
+**目的**: mart.receive*\* を VIEW (v_receive*\*) に正規化
 
 **参照ファイル** (upgrade):
+
 - `sql/mart/v_receive_daily.sql`
 - `sql/mart/v_receive_weekly.sql`
 - `sql/mart/v_receive_monthly.sql`
 
 **参照方法**:
+
 ```python
 SQL_BASE = Path("/backend/migrations/alembic/sql/mart")
 
@@ -134,9 +142,10 @@ def upgrade():
 ### 5. `20251105_115452784_mart_repoint_mv_view_definitions_to_v_.py`
 
 **作成日**: 2025-11-05  
-**目的**: Materialized VIEW の定義を v_receive_* を参照するように更新
+**目的**: Materialized VIEW の定義を v*receive*\* を参照するように更新
 
 **参照ファイル** (upgrade):
+
 - `sql/mart/v_receive_daily.sql`
 - `sql/mart/v_receive_weekly.sql`
 - `sql/mart/v_receive_monthly.sql`
@@ -147,6 +156,7 @@ def upgrade():
 - `sql/mart/mv_inb_avg5y_weeksum_biz.sql`
 
 **参照方法**:
+
 ```python
 SQL_FILES = [
     "v_receive_daily.sql",
@@ -166,12 +176,14 @@ def upgrade():
 ### 6. `20251113_151556000_update_mart_receive_daily_view.py`
 
 **作成日**: 2025-11-13  
-**目的**: mart.v_receive_daily を stg.* テーブルを参照するように更新
+**目的**: mart.v_receive_daily を stg.\* テーブルを参照するように更新
 
 **参照ファイル** (upgrade):
+
 - `sql/mart/v_receive_daily.sql`
 
 **参照方法**:
+
 ```python
 sql_file = Path(__file__).parent.parent / "sql" / "mart" / "v_receive_daily.sql"
 with open(sql_file, 'r', encoding='utf-8') as f:
@@ -179,7 +191,7 @@ with open(sql_file, 'r', encoding='utf-8') as f:
 op.execute(sql)
 ```
 
-**downgrade**: べた書きSQL（raw.* スキーマを参照する元のVIEW定義）
+**downgrade**: べた書きSQL（raw.\* スキーマを参照する元のVIEW定義）
 
 ---
 
@@ -189,9 +201,11 @@ op.execute(sql)
 **目的**: mart.mv_target_card_per_day (Materialized VIEW) を作成
 
 **参照ファイル** (upgrade):
+
 - `sql/mart/mv_target_card_per_day.sql`
 
 **参照方法**:
+
 ```python
 BASE = Path("/backend/migrations/alembic/sql/mart")
 
@@ -214,28 +228,28 @@ def _ensure_mv(name: str, create_sql_name: str, indexes: list[str]) -> None:
 
 ### `alembic/sql/mart/`
 
-| ファイル名 | 参照している revision 数 | 用途 |
-|-----------|----------------------|------|
-| `receive_daily.sql` | 1 | VIEW 定義（廃止予定） |
-| `receive_weekly.sql` | 1 | VIEW 定義（廃止予定） |
-| `receive_monthly.sql` | 1 | VIEW 定義（廃止予定） |
-| `v_daily_target_with_calendar.sql` | 2 | VIEW 定義 |
-| `v_target_card_per_day.sql` | 2 | VIEW 定義 |
-| `v_receive_daily.sql` | 4 | VIEW 定義（最新版） |
-| `v_receive_weekly.sql` | 3 | VIEW 定義（最新版） |
-| `v_receive_monthly.sql` | 3 | VIEW 定義（最新版） |
-| `mv_inb5y_week_profile_min.sql` | 2 | Materialized VIEW 定義 |
-| `mv_inb_avg5y_day_biz.sql` | 2 | Materialized VIEW 定義 |
-| `mv_inb_avg5y_day_scope.sql` | 2 | Materialized VIEW 定義 |
-| `mv_inb_avg5y_weeksum_biz.sql` | 2 | Materialized VIEW 定義 |
-| `mv_target_card_per_day.sql` | 1 | Materialized VIEW 定義 |
+| ファイル名                         | 参照している revision 数 | 用途                   |
+| ---------------------------------- | ------------------------ | ---------------------- |
+| `receive_daily.sql`                | 1                        | VIEW 定義（廃止予定）  |
+| `receive_weekly.sql`               | 1                        | VIEW 定義（廃止予定）  |
+| `receive_monthly.sql`              | 1                        | VIEW 定義（廃止予定）  |
+| `v_daily_target_with_calendar.sql` | 2                        | VIEW 定義              |
+| `v_target_card_per_day.sql`        | 2                        | VIEW 定義              |
+| `v_receive_daily.sql`              | 4                        | VIEW 定義（最新版）    |
+| `v_receive_weekly.sql`             | 3                        | VIEW 定義（最新版）    |
+| `v_receive_monthly.sql`            | 3                        | VIEW 定義（最新版）    |
+| `mv_inb5y_week_profile_min.sql`    | 2                        | Materialized VIEW 定義 |
+| `mv_inb_avg5y_day_biz.sql`         | 2                        | Materialized VIEW 定義 |
+| `mv_inb_avg5y_day_scope.sql`       | 2                        | Materialized VIEW 定義 |
+| `mv_inb_avg5y_weeksum_biz.sql`     | 2                        | Materialized VIEW 定義 |
+| `mv_target_card_per_day.sql`       | 1                        | Materialized VIEW 定義 |
 
 ### `alembic/sql/ref/`
 
-| ファイル名 | 参照している revision 数 | 用途 |
-|-----------|----------------------|------|
-| `v_calendar_classified.sql` | 1 | VIEW 定義 |
-| `v_closure_days.sql` | 1 | VIEW 定義 |
+| ファイル名                  | 参照している revision 数 | 用途      |
+| --------------------------- | ------------------------ | --------- |
+| `v_calendar_classified.sql` | 1                        | VIEW 定義 |
+| `v_closure_days.sql`        | 1                        | VIEW 定義 |
 
 ### `alembic/sql/stg/`
 

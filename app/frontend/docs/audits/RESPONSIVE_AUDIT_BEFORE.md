@@ -35,10 +35,12 @@ rg -n "\bmodalWidth\b|\bdrawer\b|\bsidebar\b" --type-add 'ts:*.ts' --type-add 't
 ## 1. window.innerWidth 直接参照（8件）
 
 ### 1-1. 正当な使用（shared基盤内部のみ）
+
 - `shared/hooks/ui/useResponsive.ts:86,99,108` - useResponsiveフック内部実装（正当）
 - `shared/utils/responsiveTest.ts:77` - テストユーティリティ内（正当）
 
 ### 1-2. コメント内の言及（4件）
+
 - `features/report/selector/model/useReportLayoutStyles.ts:8`
 - `features/report/manage/ui/ReportManagePageLayout.tsx:17`
 - `features/report/viewer/ui/ReportSampleThumbnail.tsx:15`
@@ -51,11 +53,14 @@ rg -n "\bmodalWidth\b|\bdrawer\b|\bsidebar\b" --type-add 'ts:*.ts' --type-add 't
 ## 2. 境界値ハードコード（68件）
 
 ### 2-1. breakpoints.ts（正当な定義元）
+
 - `shared/constants/breakpoints.ts` 内: 767, 768, 1024, 1280, 1279 の定義（正当）
 - `shared/constants/tests/breakpoints.spec.ts` 内: テストでの境界値確認（正当）
 
 ### 2-2. コメント内の言及（多数）
+
 以下のファイルで境界値がコメントに記載されている：
+
 - `pages/report/ManagePage.tsx:35` - "768-1279px（1024-1279を含む）"
 - `pages/home/PortalPage.tsx:432,561`
 - `pages/manual/shogun/index.tsx:48`
@@ -65,10 +70,12 @@ rg -n "\bmodalWidth\b|\bdrawer\b|\bsidebar\b" --type-add 'ts:*.ts' --type-add 't
 - その他多数のコメント
 
 ### 2-3. 運用上の境界値使用
+
 - `plugins/vite-plugin-custom-media.ts:35-40` - CSS custom media定義（ANT定数参照、直書きなし）
 - `shared/utils/responsiveTest.ts:18-20,23` - テストデバイス定義（正当）
 
 ### 2-4. 無関係な数値
+
 - `features/analytics/customer-list/shared/model/mockData.ts:187` - weight: 1280（重量データ、無関係）
 - `features/manual/ui/components/ManualResultList.tsx:62` - size / 1024（KBサイズ計算、無関係）
 
@@ -79,20 +86,24 @@ rg -n "\bmodalWidth\b|\bdrawer\b|\bsidebar\b" --type-add 'ts:*.ts' --type-add 't
 ## 3. Responsive Flags 使用状況（184件）
 
 ### 現在の定義（shared/hooks/ui/useResponsive.ts）
+
 ```typescript
-isMobile: boolean;   // ≤767 (xs or sm)
-isTablet: boolean;   // 768–1279 (md or lg) ★1024-1279を含む
-isLaptop: boolean;   // 1024–1279 (lg) - 詳細判定用、運用分岐では非推奨
-isDesktop: boolean;  // ≥1280 (xl)
-isNarrow: boolean;   // <1280 (= isMobile || isTablet)
+isMobile: boolean; // ≤767 (xs or sm)
+isTablet: boolean; // 768–1279 (md or lg) ★1024-1279を含む
+isLaptop: boolean; // 1024–1279 (lg) - 詳細判定用、運用分岐では非推奨
+isDesktop: boolean; // ≥1280 (xl)
+isNarrow: boolean; // <1280 (= isMobile || isTablet)
 ```
 
 ### flags使用総数
+
 - **184件** の isMobile/isTablet/isLaptop/isDesktop 使用
 
 ### isLaptop 運用使用（Phase 5で除去済み）
+
 以前の監査で isLaptop の operational 使用は完全除去済み。
 現在は以下のみ：
+
 - `shared/hooks/ui/useResponsive.ts:39,71` - 定義と makeFlags 内部
 - `shared/constants/tests/breakpoints.spec.ts` - テストで検証
 
@@ -113,10 +124,12 @@ isNarrow: boolean;   // <1280 (= isMobile || isTablet)
 ## 5. matchMedia / addEventListener('resize')（5件）
 
 ### 正当な使用（shared基盤内部）
+
 - `shared/constants/breakpoints.ts:40,43` - getMediaQuery実装（正当）
 - `shared/hooks/ui/useResponsive.ts:114` - resizeリスナー登録（正当）
 
 ### 個別実装
+
 - `features/dashboard/ukeire/shared/ui/ChartFrame.tsx:33` - チャート再描画用resizeリスナー
 
 **判定**: 🟡 ChartFrame.tsxのresizeリスナーは特殊用途（グラフサイズ調整）。responsive判定には無関係。
@@ -135,32 +148,41 @@ isNarrow: boolean;   // <1280 (= isMobile || isTablet)
 ## 現在の問題点（Desktop定義変更前）
 
 ### ⚠️ Critical: Desktop境界定義
+
 現在の定義（変更が必要）：
+
 - `isDesktop: w >= 1280` ← **1280を含んでいる**
 - `isTablet: 768–1279` ← **1280を含んでいない**
 
 **新要求**：
+
 - `isDesktop: w >= 1281` ← **1280を除外**
 - `isTablet: 768–1280` ← **1280を含む**
 
 ### 影響を受けるファイル（予測）
+
 1. **shared/constants/breakpoints.ts**
+
    - `BP.desktopMin: 1280` → `1281`
    - `isDesktop(w)` 関数の境界条件
    - `isTabletOrHalf(w)` 関数の上限条件
 
 2. **shared/hooks/ui/useResponsive.ts**
+
    - `makeFlags()` 内の境界値ロジック
    - JSDocコメントの境界値記述
 
 3. **shared/constants/tests/breakpoints.spec.ts**
+
    - 1280pxのテストケース（現在Desktop、変更後Tablet）
    - 1281pxの新規テストケース追加
 
 4. **shared/theme/cssVars.ts**
+
    - `--breakpoint-auto-collapse: 1280px` → `1281px`
 
 5. **shared/hooks/ui/useSidebar.ts**
+
    - サイドバー挙動（1280px時の期待動作変更）
 
 6. **各ページ/コンポーネントのコメント**
@@ -171,15 +193,15 @@ isNarrow: boolean;   // <1280 (= isMobile || isTablet)
 
 ## 監査サマリー
 
-| 項目 | 現状 | 判定 |
-|------|------|------|
-| window.innerWidth直接参照（operational） | 0件 | ✅ |
-| 境界値ハードコード（operational） | 0件（コメント除く） | ✅ |
-| isLaptop operational使用 | 0件 | ✅ |
-| 3-tier運用確立 | isMobile/isTablet/isDesktop | ✅ |
-| **Desktop定義** | **≥1280（変更必要）** | ❌ |
-| breakpoints集約管理 | breakpoints.ts 1箇所 | ✅ |
-| 基盤コード品質 | useResponsive/useSidebar整備済み | ✅ |
+| 項目                                     | 現状                             | 判定 |
+| ---------------------------------------- | -------------------------------- | ---- |
+| window.innerWidth直接参照（operational） | 0件                              | ✅   |
+| 境界値ハードコード（operational）        | 0件（コメント除く）              | ✅   |
+| isLaptop operational使用                 | 0件                              | ✅   |
+| 3-tier運用確立                           | isMobile/isTablet/isDesktop      | ✅   |
+| **Desktop定義**                          | **≥1280（変更必要）**            | ❌   |
+| breakpoints集約管理                      | breakpoints.ts 1箇所             | ✅   |
+| 基盤コード品質                           | useResponsive/useSidebar整備済み | ✅   |
 
 ---
 

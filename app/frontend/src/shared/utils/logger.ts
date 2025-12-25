@@ -1,29 +1,29 @@
 /**
  * Logger Utility
- * 
+ *
  * 本番環境では console.log を抑制し、開発環境でのみ出力するロガー
- * 
+ *
  * 使用方法:
  * ```typescript
  * import { logger } from '@shared/utils/logger';
- * 
+ *
  * logger.log('Debug message', data);
  * logger.warn('Warning message');
  * logger.error('Error message', error);
  * ```
- * 
+ *
  * 環境判定:
  * - import.meta.env.MODE === 'production' の場合: console.log/info/debug を抑制
  * - import.meta.env.MODE === 'development' の場合: すべて出力
- * 
+ *
  * 注意: error/warn は本番環境でも出力（重要なエラー情報を失わないため）
  */
 
-const isDevelopment = import.meta.env.MODE === 'development';
+const isDevelopment = import.meta.env.MODE === "development";
 
 /**
  * Application Logger
- * 
+ *
  * 本番環境では console.log/info/debug を抑制
  * error/warn は常に出力
  */
@@ -33,7 +33,6 @@ export const logger = {
    */
   log: (...args: unknown[]): void => {
     if (isDevelopment) {
-       
       console.log(...args);
     }
   },
@@ -43,7 +42,6 @@ export const logger = {
    */
   info: (...args: unknown[]): void => {
     if (isDevelopment) {
-       
       console.info(...args);
     }
   },
@@ -53,7 +51,6 @@ export const logger = {
    */
   debug: (...args: unknown[]): void => {
     if (isDevelopment) {
-       
       console.debug(...args);
     }
   },
@@ -62,7 +59,6 @@ export const logger = {
    * 警告ログ（常に出力）
    */
   warn: (...args: unknown[]): void => {
-     
     console.warn(...args);
   },
 
@@ -70,7 +66,6 @@ export const logger = {
    * エラーログ（常に出力）
    */
   error: (...args: unknown[]): void => {
-     
     console.error(...args);
   },
 
@@ -79,7 +74,6 @@ export const logger = {
    */
   group: (label: string): void => {
     if (isDevelopment) {
-       
       console.group(label);
     }
   },
@@ -89,7 +83,6 @@ export const logger = {
    */
   groupEnd: (): void => {
     if (isDevelopment) {
-       
       console.groupEnd();
     }
   },
@@ -99,7 +92,6 @@ export const logger = {
    */
   table: (data: unknown): void => {
     if (isDevelopment) {
-       
       console.table(data);
     }
   },

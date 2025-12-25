@@ -15,19 +15,23 @@
 ## 🎯 監査対象ファイル
 
 ### 1. docker/docker-compose.dev.yml ✅
+
 **ステータス**: 対応済み  
 **実施日**: 2024-12-11  
 **結果**: パスワードを環境変数化、Git履歴から削除
 
 ### 2. docker/docker-compose.local_demo.yml
+
 **ステータス**: 未監査  
 **用途**: ローカルデモ環境
 
 ### 3. docker/docker-compose.stg.yml
+
 **ステータス**: 未監査  
 **用途**: ステージング環境
 
 ### 4. docker/docker-compose.prod.yml
+
 **ステータス**: 未監査  
 **用途**: 本番環境
 
@@ -36,6 +40,7 @@
 ## 🔍 チェック項目
 
 ### 必須チェック
+
 - [ ] パスワードが平文で記載されていないか
 - [ ] APIキーが平文で記載されていないか
 - [ ] データベース接続文字列（DSN）が平文でないか
@@ -43,6 +48,7 @@
 - [ ] その他の機密情報（JWT秘密鍵等）
 
 ### ベストプラクティス
+
 - [ ] すべての機密情報が環境変数化されているか
 - [ ] 環境変数のデフォルト値が安全か
 - [ ] コメントに機密情報が残っていないか
@@ -53,17 +59,19 @@
 ## 📝 監査手順
 
 ### Step 1: ファイル一覧の取得
+
 ```bash
 cd /home/koujiro/work_env/22.Work_React/sanbou_app
 find docker/ -name "docker-compose*.yml" -type f
 ```
 
 ### Step 2: 各ファイルの内容チェック
+
 ```bash
 # パスワードパターン検索
 grep -i "password" docker/docker-compose.*.yml
 
-# APIキーパターン検索  
+# APIキーパターン検索
 grep -i "api[_-]key" docker/docker-compose.*.yml
 
 # DSNパターン検索
@@ -71,12 +79,14 @@ grep -E "(postgresql|mysql|redis)://[^:]+:[^@]{8,}@" docker/docker-compose.*.yml
 ```
 
 ### Step 3: 環境変数の確認
+
 ```bash
 # 環境変数参照が正しいか確認
 grep -E '\$\{[A-Z_]+\}' docker/docker-compose.*.yml
 ```
 
 ### Step 4: 監査レポート作成
+
 各ファイルの監査結果を記録
 
 ---
@@ -84,14 +94,17 @@ grep -E '\$\{[A-Z_]+\}' docker/docker-compose.*.yml
 ## ✅ 監査結果テンプレート
 
 ### docker/docker-compose.local_demo.yml
+
 **監査日**: 2024-12-24  
-**監査者**: GitHub Copilot  
+**監査者**: GitHub Copilot
 
 **発見事項**:
+
 - [x] 問題なし
 - [ ] 修正が必要な項目あり
 
 **詳細**:
+
 - ✅ すべての機密情報が環境変数参照（`${VARIABLE}`）で管理されている
 - ✅ 平文のパスワード・APIキーなし
 - ✅ DSN形式の接続文字列に平文パスワードなし
@@ -99,6 +112,7 @@ grep -E '\$\{[A-Z_]+\}' docker/docker-compose.*.yml
 - ✅ コメントに機密情報なし
 
 **対応**:
+
 - [x] 実施済み
 - [ ] 対応不要（理由: ...）
 - [ ] 要対応
@@ -106,14 +120,17 @@ grep -E '\$\{[A-Z_]+\}' docker/docker-compose.*.yml
 ---
 
 ### docker/docker-compose.stg.yml
+
 **監査日**: 2024-12-24  
-**監査者**: GitHub Copilot  
+**監査者**: GitHub Copilot
 
 **発見事項**:
+
 - [x] 問題なし
 - [ ] 修正が必要な項目あり
 
 **詳細**:
+
 - ✅ すべての機密情報が環境変数参照（`${VARIABLE}`）で管理されている
 - ✅ 平文のパスワード・APIキーなし
 - ✅ DSN形式の接続文字列に平文パスワードなし
@@ -122,6 +139,7 @@ grep -E '\$\{[A-Z_]+\}' docker/docker-compose.*.yml
 - ✅ コメントに機密情報なし
 
 **対応**:
+
 - [x] 実施済み
 - [ ] 対応不要（理由: ...）
 - [ ] 要対応
@@ -129,14 +147,17 @@ grep -E '\$\{[A-Z_]+\}' docker/docker-compose.*.yml
 ---
 
 ### docker/docker-compose.prod.yml
+
 **監査日**: 2024-12-24  
-**監査者**: GitHub Copilot  
+**監査者**: GitHub Copilot
 
 **発見事項**:
+
 - [x] 問題なし
 - [ ] 修正が必要な項目あり
 
 **詳細**:
+
 - ✅ すべての機密情報が環境変数参照（`${VARIABLE}`）で管理されている
 - ✅ 平文のパスワード・APIキーなし
 - ✅ DSN形式の接続文字列に平文パスワードなし
@@ -145,6 +166,7 @@ grep -E '\$\{[A-Z_]+\}' docker/docker-compose.*.yml
 - ✅ コメントに機密情報なし
 
 **対応**:
+
 - [x] 実施済み
 - [ ] 対応不要（理由: ...）
 - [ ] 要対応
@@ -154,6 +176,7 @@ grep -E '\$\{[A-Z_]+\}' docker/docker-compose.*.yml
 ## 🔒 修正ガイドライン
 
 ### パスワードの環境変数化
+
 ```yaml
 # ❌ Bad
 db:
@@ -167,6 +190,7 @@ db:
 ```
 
 ### DSNの環境変数化
+
 ```yaml
 # ❌ Bad
 app:
@@ -180,6 +204,7 @@ app:
 ```
 
 ### APIキーの管理
+
 ```yaml
 # ❌ Bad
 app:
@@ -196,14 +221,15 @@ app:
 
 ## 📊 監査サマリー
 
-| ファイル | ステータス | 問題数 | 重大度 | 対応状況 |
-|---------|----------|--------|--------|----------|
-| docker-compose.dev.yml | ✅ 完了 | 1 | 🔴 高 | ✅ 対応済み |
-| docker-compose.local_demo.yml | ✅ 完了 | 0 | - | ✅ 問題なし |
-| docker-compose.stg.yml | ✅ 完了 | 0 | - | ✅ 問題なし |
-| docker-compose.prod.yml | ✅ 完了 | 0 | - | ✅ 問題なし |
+| ファイル                      | ステータス | 問題数 | 重大度 | 対応状況    |
+| ----------------------------- | ---------- | ------ | ------ | ----------- |
+| docker-compose.dev.yml        | ✅ 完了    | 1      | 🔴 高  | ✅ 対応済み |
+| docker-compose.local_demo.yml | ✅ 完了    | 0      | -      | ✅ 問題なし |
+| docker-compose.stg.yml        | ✅ 完了    | 0      | -      | ✅ 問題なし |
+| docker-compose.prod.yml       | ✅ 完了    | 0      | -      | ✅ 問題なし |
 
-**総評**: 
+**総評**:
+
 - ✅ すべてのdocker-composeファイルでセキュリティベストプラクティスが適用されている
 - ✅ 機密情報は適切に環境変数化されている
 - ✅ 2024-12-11のインシデント対応後、他の環境でも同様の問題は発生していない

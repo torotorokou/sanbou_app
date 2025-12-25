@@ -3,7 +3,9 @@
 本番と同じ構成で、出荷一覧のみをmultipartでバックエンドに渡し、
 エラーなく所定のフィールドが返ることを確認する。
 """
+
 from __future__ import annotations
+
 import os
 import sys
 from pathlib import Path
@@ -50,7 +52,9 @@ def _load_sample_shipment_bytes() -> tuple[str, bytes, str]:
     return ("shipment.csv", content, "text/csv")
 
 
-def test_initial_endpoint_accepts_shipment_only_and_returns_rows(client: TestClient) -> None:
+def test_initial_endpoint_accepts_shipment_only_and_returns_rows(
+    client: TestClient,
+) -> None:
     # Arrange: multipart files payload（shipment のみ）
     file_tuple = _load_sample_shipment_bytes()
     files = {"shipment": file_tuple}
@@ -67,7 +71,9 @@ def test_initial_endpoint_accepts_shipment_only_and_returns_rows(client: TestCli
 
     # 丸源(業者CD=8327) の行が含まれており、候補に少なくとも『オネスト』が存在
     target_rows = [r for r in data["rows"] if r.get("vendor_code") in (8327, "8327")]
-    assert target_rows, f"vendor_code=8327 の行が見つかりません: rows={data['rows'][:3]}..."
+    assert (
+        target_rows
+    ), f"vendor_code=8327 の行が見つかりません: rows={data['rows'][:3]}..."
 
     row0 = target_rows[0]
     assert isinstance(row0.get("options"), list) and len(row0["options"]) >= 1
@@ -75,7 +81,9 @@ def test_initial_endpoint_accepts_shipment_only_and_returns_rows(client: TestCli
 
     # initial_index は options の範囲内
     ii = row0.get("initial_index")
-    assert isinstance(ii, int) and 0 <= ii < len(row0["options"])  # 候補数に応じた初期選択
+    assert isinstance(ii, int) and 0 <= ii < len(
+        row0["options"]
+    )  # 候補数に応じた初期選択
 
 
 def test_initial_endpoint_without_file_returns_422(client: TestClient) -> None:

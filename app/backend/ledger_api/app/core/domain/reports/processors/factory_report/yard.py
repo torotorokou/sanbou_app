@@ -1,27 +1,27 @@
 import pandas as pd
-from app.infra.report_utils.formatters import (
-    summarize_value_by_cell_with_label,
-)
 from app.core.domain.reports.processors.factory_report.summary import (
     summary_apply_by_sheet,
 )
+from app.infra.report_utils.formatters import summarize_value_by_cell_with_label
 from backend_shared.application.logging import get_module_logger
 
 logger = get_module_logger(__name__)
 
 
-def process_yard(df_yard: pd.DataFrame, df_shipment: pd.DataFrame, master_csv: pd.DataFrame = None) -> pd.DataFrame:
+def process_yard(
+    df_yard: pd.DataFrame, df_shipment: pd.DataFrame, master_csv: pd.DataFrame = None
+) -> pd.DataFrame:
     """
     ヤードデータを処理する。
-    
+
     Args:
         df_yard: ヤードデータ
         df_shipment: 出荷データ
         master_csv: ヤードマスターCSV（事前読み込み済み）。Noneの場合は空データを返す。
-    
+
     Returns:
         pd.DataFrame: 整形済みのヤード帳票
-    
+
     Notes:
         - Step 5最適化: master_csvを引数で受け取ることでI/O削減
     """
@@ -31,7 +31,18 @@ def process_yard(df_yard: pd.DataFrame, df_shipment: pd.DataFrame, master_csv: p
         logger.warning(
             "マスターCSVが提供されていません（ヤード）。空データで継続します。"
         )
-        return pd.DataFrame(columns=["大項目", "セル", "値", "セルロック", "順番", "品目名", "種類名", "品名"])  # 空
+        return pd.DataFrame(
+            columns=[
+                "大項目",
+                "セル",
+                "値",
+                "セルロック",
+                "順番",
+                "品目名",
+                "種類名",
+                "品名",
+            ]
+        )  # 空
 
     # --- ② ヤードの値集計処理（df_yard + df_shipmentを使用） ---
     updated_master_csv = apply_yard_summary(master_csv, df_yard, df_shipment)

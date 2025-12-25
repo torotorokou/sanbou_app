@@ -13,6 +13,7 @@
 ## 1. Pydantic Response Schemas
 
 ### ForecastJobResponse (予測ジョブ)
+
 - id: int
 - job_type: str
 - target_from: date
@@ -27,6 +28,7 @@
 - updated_at: datetime
 
 ### PredictionDTO (予測結果)
+
 - date: date
 - y_hat: float
 - y_lo: Optional[float]
@@ -35,6 +37,7 @@
 - generated_at: Optional[datetime]
 
 ### KPIOverview (KPIダッシュボード)
+
 - total_jobs: int
 - completed_jobs: int
 - failed_jobs: int
@@ -42,6 +45,7 @@
 - last_updated: datetime
 
 ### LostCustomerDTO (離脱顧客)
+
 - customer_id: str
 - customer_name: str
 - sales_rep_id: Optional[str]
@@ -52,10 +56,12 @@
 - prev_total_qty_kg: float
 
 ### SalesRepDTO (営業担当)
+
 - sales_rep_id: str
 - sales_rep_name: str
 
 ### TargetMetricsResponse (ダッシュボードターゲット)
+
 - ddate: Optional[date]
 - month_target_ton: Optional[float]
 - week_target_ton: Optional[float]
@@ -76,6 +82,7 @@
 - week_actual_to_date_ton: Optional[float]
 
 ### InboundDailyRow (日次搬入量)
+
 - ddate: date
 - iso_year: int
 - iso_week: int
@@ -90,6 +97,7 @@
 - prev_year_cum_ton: Optional[float]
 
 ### MetricEntry (売上メトリクス)
+
 - id: str
 - name: str
 - amount: float
@@ -101,11 +109,13 @@
 - date_key: Optional[str]
 
 ### SummaryRow (営業別サマリ)
+
 - rep_id: int (serialization_alias: repId)
 - rep_name: str (serialization_alias: repName)
 - metrics: list[MetricEntry] (serialization_alias: topN)
 
 ### DailyPoint (日次推移)
+
 - date: date
 - amount: float
 - qty: float
@@ -115,6 +125,7 @@
 - unit_price: Optional[float]
 
 ### DetailLine (詳細明細行)
+
 - mode: DetailMode
 - sales_date: date (serialization_alias: salesDate)
 - slip_no: int (serialization_alias: slipNo)
@@ -132,6 +143,7 @@
 ## 2. Domain Models (Entities / Value Objects)
 
 ### LostCustomer (顧客離脱エンティティ)
+
 - customer_id: str
 - customer_name: str
 - sales_rep_id: Optional[str]
@@ -142,6 +154,7 @@
 - prev_total_qty_kg: float
 
 ### SummaryRequest (売上ツリーサマリリクエスト)
+
 - date_from: date
 - date_to: date
 - mode: AxisMode
@@ -153,6 +166,7 @@
 - order: SortOrder
 
 ### DailySeriesRequest (日次推移リクエスト)
+
 - date_from: date
 - date_to: date
 - category_kind: CategoryKind
@@ -161,6 +175,7 @@
 - item_id: Optional[int]
 
 ### PivotRequest (ピボットリクエスト)
+
 - date_from: date
 - date_to: date
 - base_axis: AxisMode
@@ -174,6 +189,7 @@
 - cursor: Optional[str]
 
 ### DetailLinesRequest (詳細明細リクエスト)
+
 - date_from: date
 - date_to: date
 - last_group_by: GroupBy
@@ -188,7 +204,9 @@
 ## 3. SQL Column Names (Repository層)
 
 ### mart.v_sales_tree_detail_base
+
 **SELECT時に使用される列:**
+
 - sales_date: 売上日
 - rep_id: 営業ID (integer)
 - rep_name: 営業名
@@ -202,12 +220,15 @@
 - category_cd: カテゴリコード（'W'=waste, 'V'=valuable）
 
 **集計時に計算される列:**
-- line_count: COUNT(*) - 明細行数
+
+- line_count: COUNT(\*) - 明細行数
 - slip_count: COUNT(DISTINCT slip_no) - 伝票数（台数）
 - unit_price: amount_yen / qty_kg - 単価
 
 ### mart.v_customer_sales_daily
+
 **SELECT時に使用される列:**
+
 - customer_id: 顧客ID
 - customer_name: 顧客名
 - sales_date: 売上日
@@ -217,13 +238,16 @@
 - total_qty_kg: 日次売上重量
 
 **集計時に計算される列:**
-- prev_visit_days: COUNT(*) - 前期間訪問日数
+
+- prev_visit_days: COUNT(\*) - 前期間訪問日数
 - prev_total_amount_yen: SUM(total_amount_yen) - 前期間合計金額
 - prev_total_qty_kg: SUM(total_qty_kg) - 前期間合計重量
 - last_visit_date: MAX(sales_date) - 最終訪問日
 
 ### mart.mv_target_card_per_day (Materialized View)
+
 **SELECT時に使用される列:**
+
 - ddate: 日付
 - month_target_ton: 月目標トン数
 - week_target_ton: 週目標トン数
@@ -244,16 +268,21 @@
 - week_actual_to_date_ton: 週累計実績（週初～昨日）
 
 ### mart.v_receive_daily
+
 **SELECT時に使用される列:**
+
 - ddate: 日付
 - receive_net_ton: 日次搬入量（トン）
 
 **LEFT JOIN + 0埋め処理:**
+
 - mart.v_calendar と LEFT JOIN して連続日を保証
 - NULLの場合は0として扱う
 
 ### mart.v_calendar
+
 **SELECT時に使用される列:**
+
 - ddate: 日付
 - y: 年
 - m: 月
@@ -269,84 +298,106 @@
 ## 4. Concept Mapping (概念ごとの名称の揺れ)
 
 ### 営業担当
+
 **Pydantic:**
+
 - rep_id: int (SummaryRow, MetricEntry)
 - rep_name: str (SummaryRow, DetailLine)
 - sales_rep_id: Optional[str] (LostCustomerDTO, SalesRepDTO)
 - sales_rep_name: Optional[str] (LostCustomerDTO, SalesRepDTO)
 
 **Domain:**
+
 - rep_id: Optional[int] (DailySeriesRequest)
 - rep_ids: list[int] (SummaryRequest, PivotRequest)
 - sales_rep_id: Optional[str] (LostCustomer)
 - sales_rep_name: Optional[str] (LostCustomer)
 
 **SQL:**
+
 - rep_id: integer (mart.v_sales_tree_detail_base)
 - sales_rep_id: text (mart.v_customer_sales_daily)
 - sales_rep_name: text (mart.v_customer_sales_daily)
 
 **揺れの種類:**
+
 - `rep_id` vs `sales_rep_id`（名前）
 - `int` vs `str`（型）
 
 ---
 
 ### 顧客
+
 **Pydantic:**
+
 - customer_id: str (LostCustomerDTO, DetailLine)
 - customer_name: str (LostCustomerDTO, DetailLine)
 
 **Domain:**
+
 - customer_id: Optional[str] (DailySeriesRequest, DetailLinesRequest)
 
 **SQL:**
+
 - customer_id: text (mart.v_sales_tree_detail_base, mart.v_customer_sales_daily)
 - customer_name: text (mart.v_sales_tree_detail_base, mart.v_customer_sales_daily)
 
 **揺れ:**
+
 - なし（統一されている）
 
 ---
 
 ### 品目
+
 **Pydantic:**
+
 - item_id: Optional[int] (DetailLine)
 - item_name: str (DetailLine)
 
 **Domain:**
+
 - item_id: Optional[int] (DailySeriesRequest, DetailLinesRequest)
 
 **SQL:**
+
 - item_id: integer (mart.v_sales_tree_detail_base)
 - item_name: text (mart.v_sales_tree_detail_base)
 
 **揺れ:**
+
 - なし（統一されている）
 
 ---
 
 ### 金額
+
 **Pydantic:**
+
 - amount: float (MetricEntry, DailyPoint)
 - amount_yen: float (DetailLine)
 - prev_total_amount_yen: float (LostCustomerDTO)
 - total_amount_yen: float (implicit in CustomerChurnQueryAdapter)
 
 **Domain:**
+
 - N/A（フィールド名なし）
 
 **SQL:**
+
 - amount_yen: numeric (mart.v_sales_tree_detail_base)
 - total_amount_yen: numeric (mart.v_customer_sales_daily)
 
 **揺れの種類:**
+
 - `amount` vs `amount_yen` vs `total_amount_yen` vs `prev_total_amount_yen`（接頭辞・接尾辞）
 
 ---
 
 ### 重量
+
 **Pydantic:**
+
 - qty: float (MetricEntry, DailyPoint)
 - qty_kg: float (DetailLine)
 - prev_total_qty_kg: float (LostCustomerDTO)
@@ -355,37 +406,47 @@
 - week_target_ton: Optional[float] (TargetMetricsResponse)
 
 **Domain:**
+
 - N/A（フィールド名なし）
 
 **SQL:**
+
 - qty_kg: numeric (mart.v_sales_tree_detail_base)
 - total_qty_kg: numeric (mart.v_customer_sales_daily)
 - receive_net_ton: numeric (mart.v_receive_daily)
 - month_target_ton: numeric (mart.mv_target_card_per_day)
 
 **揺れの種類:**
+
 - `qty` vs `qty_kg` vs `total_qty_kg` vs `prev_total_qty_kg`（単位接尾辞）
 - `ton` vs `kg`（単位の違い）
 
 ---
 
 ### 伝票番号
+
 **Pydantic:**
+
 - slip_no: int (DetailLine)
 
 **Domain:**
+
 - N/A
 
 **SQL:**
+
 - slip_no: integer (mart.v_sales_tree_detail_base, receive_no の別名)
 
 **揺れ:**
+
 - なし（統一されている）
 
 ---
 
 ### 日付
+
 **Pydantic:**
+
 - date: date (PredictionDTO, DailyPoint)
 - ddate: Optional[date] (TargetMetricsResponse, InboundDailyRow)
 - sales_date: date (DetailLine)
@@ -396,101 +457,129 @@
 - date_to: date (SummaryRequest)
 
 **Domain:**
+
 - date_from: date (SummaryRequest, DailySeriesRequest, PivotRequest, DetailLinesRequest)
 - date_to: date (SummaryRequest, DailySeriesRequest, PivotRequest, DetailLinesRequest)
 - date_value: Optional[date] (DetailLinesRequest)
 
 **SQL:**
+
 - ddate: date (mart.v_calendar, mart.mv_target_card_per_day)
 - sales_date: date (mart.v_sales_tree_detail_base, mart.v_customer_sales_daily)
 
 **揺れの種類:**
+
 - `date` vs `ddate` vs `sales_date` vs `last_visit_date`（接頭辞）
 - `date_from` / `date_to` vs `target_from` / `target_to`（期間表現）
 
 ---
 
 ### カウント
+
 **Pydantic:**
+
 - count: int (MetricEntry, DailyPoint) - 表示用カウント値
 - line_count: int (MetricEntry, DailyPoint, DetailLine) - 明細行数
 - slip_count: int (MetricEntry, DailyPoint) - 伝票数（台数）
 - prev_visit_days: int (LostCustomerDTO) - 前期間訪問日数
 
 **Domain:**
+
 - N/A
 
 **SQL:**
-- COUNT(*) AS line_count
+
+- COUNT(\*) AS line_count
 - COUNT(DISTINCT slip_no) AS slip_count
 
 **揺れの種類:**
+
 - `count` vs `line_count` vs `slip_count`（粒度の違い）
 - ビジネスルール: 商品軸=line_count、それ以外=slip_count
 
 ---
 
 ### 単価
+
 **Pydantic:**
+
 - unit_price: Optional[float] (MetricEntry, DailyPoint)
 - unit_price_yen_per_kg: Optional[float] (DetailLine)
 
 **Domain:**
+
 - N/A
 
 **SQL:**
+
 - CASE WHEN SUM(qty_kg) > 0 THEN SUM(amount_yen) / SUM(qty_kg) ELSE NULL END AS unit_price
 
 **揺れの種類:**
+
 - `unit_price` vs `unit_price_yen_per_kg`（単位明示）
 
 ---
 
 ### カテゴリ
+
 **Pydantic:**
+
 - category_kind: CategoryKind = Literal["waste", "valuable"]
 
 **Domain:**
+
 - category_kind: CategoryKind = Literal["waste", "valuable"] (SummaryRequest, etc.)
 
 **SQL:**
+
 - category_cd: text = 'W' | 'V'
 
 **揺れの種類:**
+
 - `category_kind` (waste/valuable) vs `category_cd` (W/V)（人間可読 vs DB略称）
 
 ---
 
 ### ISO週情報
+
 **Pydantic:**
+
 - iso_year: int (TargetMetricsResponse, InboundDailyRow)
 - iso_week: int (TargetMetricsResponse, InboundDailyRow)
 - iso_dow: int (TargetMetricsResponse, InboundDailyRow)
 
 **Domain:**
+
 - N/A
 
 **SQL:**
+
 - iso_year: integer (mart.v_calendar, mart.mv_target_card_per_day)
 - iso_week: integer (mart.v_calendar, mart.mv_target_card_per_day)
 - iso_dow: integer (mart.v_calendar, mart.mv_target_card_per_day)
 
 **揺れ:**
+
 - なし（統一されている）
 
 ---
 
 ### 営業日フラグ
+
 **Pydantic:**
+
 - is_business: bool (TargetMetricsResponse, InboundDailyRow)
 
 **Domain:**
+
 - N/A
 
 **SQL:**
+
 - is_business: boolean (mart.v_calendar, mart.mv_target_card_per_day)
 
 **揺れ:**
+
 - なし（統一されている）
 
 ---
@@ -500,18 +589,22 @@
 ### 統一化の提案
 
 1. **営業担当ID:**
+
    - 推奨: `rep_id: int`（一貫性のため）
    - 既存: `sales_rep_id: str`（互換性維持が必要な場合のみ）
 
 2. **金額:**
+
    - 推奨: `amount_yen: float`（単位を明示）
    - 既存: `amount: float`（軽量表現）
 
 3. **重量:**
+
    - 推奨: `qty_kg: float`（単位を明示）
    - 既存: `qty: float`（軽量表現）
 
 4. **日付:**
+
    - 推奨: `date: date`（汎用フィールド）
    - 推奨: `sales_date: date`（売上日特定）
    - 推奨: `ddate: date`（カレンダーマスタ）
@@ -522,6 +615,7 @@
    - 推奨: `count: int`（表示用カウント値）
 
 ### camelCase vs snake_case
+
 - **Pydantic (内部):** snake_case
 - **JSON (API Response):** camelCase (serialization_alias使用)
 - **SQL:** snake_case

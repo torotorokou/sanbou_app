@@ -1,9 +1,9 @@
 import pandas as pd
-from backend_shared.application.logging import get_module_logger, create_log_context
 from app.infra.report_utils.formatters import (
     safe_merge_by_keys,
     summary_update_column_if_notna,
 )
+from backend_shared.application.logging import create_log_context, get_module_logger
 
 logger = get_module_logger(__name__)
 
@@ -19,7 +19,9 @@ def apply_negation_filters(
         if col not in df.columns:
             logger.warning(
                 "データに列が存在せず",
-                extra=create_log_context(operation="process_sheet_partition", column=col)
+                extra=create_log_context(
+                    operation="process_sheet_partition", column=col
+                ),
             )
             continue
 
@@ -46,7 +48,7 @@ def process_sheet_partition(
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     """
     指定シートから key_level 一致行と不一致行を分離。
-    
+
     最適化: copy()を削減（呼び出し元が必要に応じてcopyする）
     """
     sheet_df = master_csv[master_csv["CSVシート名"] == sheet_name]
@@ -63,7 +65,7 @@ def process_sheet_partition(
         logger.error(
             "key_level変換エラー",
             extra=create_log_context(operation="process_sheet_partition", error=str(e)),
-            exc_info=True
+            exc_info=True,
         )
         return pd.DataFrame(), pd.DataFrame()
 
@@ -83,7 +85,12 @@ def summary_apply_by_sheet(
     """
     logger.info(
         "シート集計開始",
-        extra=create_log_context(operation="summary_apply_by_sheet", sheet_name=sheet_name, key_cols=key_cols, source_col=source_col)
+        extra=create_log_context(
+            operation="summary_apply_by_sheet",
+            sheet_name=sheet_name,
+            key_cols=key_cols,
+            source_col=source_col,
+        ),
     )
 
     # --- 該当シートの key_level フィルタ ---
@@ -100,9 +107,7 @@ def summary_apply_by_sheet(
 
     # --- not検索を適用（Not値のある行を除外） ---
     # 最適化: data_dfのcopy()を削減（apply_negation_filtersで書き換えがないため不要）
-    filtered_data_df = apply_negation_filters(
-        data_df, match_df, key_cols
-    )
+    filtered_data_df = apply_negation_filters(data_df, match_df, key_cols)
 
     # --- マージ用 key を再定義（Not〇〇を含む列を除外） ---
     merge_key_cols = []

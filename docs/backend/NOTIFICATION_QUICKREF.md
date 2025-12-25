@@ -36,11 +36,11 @@ enqueue_uc.execute(requests=[request], now=datetime.now(timezone.utc))
 
 ### recipient_key形式
 
-| 形式 | 例 | 用途 |
-|------|-----|------|
-| `email:{address}` | `email:admin@example.com` | メール直接送信 |
-| `user:{id}` | `user:123` | ユーザーID（LINE等に解決） |
-| `aud:{site}:{code}` | `aud:tokyo:A001` | 視聴者コード |
+| 形式                | 例                        | 用途                       |
+| ------------------- | ------------------------- | -------------------------- |
+| `email:{address}`   | `email:admin@example.com` | メール直接送信             |
+| `user:{id}`         | `user:123`                | ユーザーID（LINE等に解決） |
+| `aud:{site}:{code}` | `aud:tokyo:A001`          | 視聴者コード               |
 
 ### ステータス遷移
 
@@ -59,21 +59,21 @@ pending → sent       （送信成功）
 
 ```sql
 -- 全通知の状態集計
-SELECT status, channel, COUNT(*) 
-FROM app.notification_outbox 
+SELECT status, channel, COUNT(*)
+FROM app.notification_outbox
 GROUP BY status, channel;
 
 -- Pending通知一覧
-SELECT id, channel, recipient_key, title, created_at, retry_count 
-FROM app.notification_outbox 
-WHERE status = 'pending' 
+SELECT id, channel, recipient_key, title, created_at, retry_count
+FROM app.notification_outbox
+WHERE status = 'pending'
 ORDER BY created_at DESC;
 
 -- 最近の失敗通知
-SELECT id, channel, recipient_key, last_error, failure_type 
-FROM app.notification_outbox 
-WHERE status = 'failed' 
-ORDER BY created_at DESC 
+SELECT id, channel, recipient_key, last_error, failure_type
+FROM app.notification_outbox
+WHERE status = 'failed'
+ORDER BY created_at DESC
 LIMIT 10;
 ```
 
@@ -81,9 +81,9 @@ LIMIT 10;
 
 ```sql
 -- 特定の通知をリトライ対象に戻す
-UPDATE app.notification_outbox 
-SET status = 'pending', 
-    next_retry_at = NULL 
+UPDATE app.notification_outbox
+SET status = 'pending',
+    next_retry_at = NULL
 WHERE id = '<UUID>';
 ```
 
@@ -91,8 +91,8 @@ WHERE id = '<UUID>';
 
 ```sql
 -- 7日以上前の完了通知を削除
-DELETE FROM app.notification_outbox 
-WHERE status IN ('sent', 'skipped', 'failed') 
+DELETE FROM app.notification_outbox
+WHERE status IN ('sent', 'skipped', 'failed')
   AND created_at < NOW() - INTERVAL '7 days';
 ```
 
@@ -136,10 +136,10 @@ LINE_CHANNEL_ACCESS_TOKEN=<SECRET>
 ### InMemory Preference（テスト用）
 
 | recipient_key | email_enabled | line_enabled |
-|--------------|---------------|--------------|
-| `user:1` | ✅ | ✅ |
-| `user:2` | ✅ | ❌ |
-| `user:3` | ❌ | ✅ |
+| ------------- | ------------- | ------------ |
+| `user:1`      | ✅            | ✅           |
+| `user:2`      | ✅            | ❌           |
+| `user:3`      | ❌            | ✅           |
 
 ### Dummy Resolver動作
 
@@ -153,13 +153,15 @@ LINE_CHANNEL_ACCESS_TOKEN=<SECRET>
 ### 通知が送信されない
 
 1. Schedulerログ確認
+
    ```bash
    docker compose logs core_api | grep "Dispatching"
    ```
 
 2. Outbox確認
+
    ```sql
-   SELECT * FROM app.notification_outbox 
+   SELECT * FROM app.notification_outbox
    WHERE status = 'pending' AND next_retry_at < NOW();
    ```
 
@@ -180,9 +182,9 @@ LINE_CHANNEL_ACCESS_TOKEN=<SECRET>
 
 ```sql
 -- エラー内容確認
-SELECT recipient_key, last_error 
-FROM app.notification_outbox 
-WHERE failure_type = 'PERMANENT' 
+SELECT recipient_key, last_error
+FROM app.notification_outbox
+WHERE failure_type = 'PERMANENT'
 ORDER BY created_at DESC LIMIT 5;
 ```
 

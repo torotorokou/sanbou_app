@@ -119,38 +119,50 @@ def dedupe_and_aggregate(
     if not unique_keys or not agg_map:
         return df
 
-    
     # tracking columns の保護（システムカラムは常に 'first' で集約）
-    TRACKING_COLUMNS = ['upload_file_id', 'source_row_no']
+    TRACKING_COLUMNS = ["upload_file_id", "source_row_no"]
     tracking_agg_map = {}
     for col in TRACKING_COLUMNS:
         if col in df.columns and col not in agg_map:
-            tracking_agg_map[col] = 'first'
+            tracking_agg_map[col] = "first"
             print(f"[INFO] Preserving tracking column '{col}' with 'first' aggregation")
-    
+
     df = df.copy()
-    
+
     # agg_map から不正な集計関数を除外（例: 'wavg(quantity)' など）
-    valid_agg_funcs = {'sum', 'mean', 'median', 'min', 'max', 'first', 'last', 'count', 'std', 'var'}
+    valid_agg_funcs = {
+        "sum",
+        "mean",
+        "median",
+        "min",
+        "max",
+        "first",
+        "last",
+        "count",
+        "std",
+        "var",
+    }
     cleaned_agg_map = {}
     for col, func in agg_map.items():
         if func in valid_agg_funcs:
             cleaned_agg_map[col] = func
         else:
             # 不正な関数の場合は 'first' をデフォルトとして使用
-            print(f"[WARN] Invalid aggregation function '{func}' for column '{col}'. Using 'first' instead.")
-            cleaned_agg_map[col] = 'first'
-    
+            print(
+                f"[WARN] Invalid aggregation function '{func}' for column '{col}'. Using 'first' instead."
+            )
+            cleaned_agg_map[col] = "first"
+
     if not cleaned_agg_map:
         # すべての集計関数が不正だった場合は、重複解消をスキップ
         print("[WARN] No valid aggregation functions found. Skipping deduplication.")
         return df
-    
+
     # DataFrameが空の場合はそのまま返す
     if len(df) == 0:
         print("[INFO] DataFrame is empty. Skipping deduplication.")
         return df
-    
+
     # グループIDを全行に付与
     df["_dup_group_id"] = pd.factorize(
         df[unique_keys].astype(str).agg("-".join, axis=1)
@@ -161,7 +173,7 @@ def dedupe_and_aggregate(
 
     # tracking columns を集約マップに追加
     cleaned_agg_map.update(tracking_agg_map)
-    
+
     # 集約してリセット
     df_agg = grouped.agg(cleaned_agg_map).reset_index(drop=True)
 

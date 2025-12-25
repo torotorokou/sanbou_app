@@ -20,12 +20,13 @@ Note:
   - 旧router.pyにあったDEPRECATEDなcache/clearエンドポイントは削除されました
   - UseCaseパターンではTTLキャッシュを使用せず常に最新データを取得します
 """
+
 from fastapi import APIRouter
 
 # サブルーターをインポート
 from .upload import router as upload_router
-from .upload_status import router as upload_status_router
 from .upload_calendar import router as upload_calendar_router
+from .upload_status import router as upload_status_router
 
 # メインルーター
 router = APIRouter(prefix="/database", tags=["database"])

@@ -5,19 +5,23 @@ Revises: d64c705dde4a
 Create Date: 2025-11-04 05:25:44.915519
 
 """
-from alembic import op
-import sqlalchemy as sa
+
 from textwrap import dedent
 
+import sqlalchemy as sa
+from alembic import op
 
 # revision identifiers, used by Alembic.
-revision = '454f7f0472db'
-down_revision = 'd64c705dde4a'
+revision = "454f7f0472db"
+down_revision = "d64c705dde4a"
 branch_labels = None
 depends_on = None
 
+
 def upgrade() -> None:
-    op.execute(dedent("""
+    op.execute(
+        dedent(
+            """
         CREATE OR REPLACE VIEW mart.receive_weekly AS
         WITH w AS (
             SELECT
@@ -63,7 +67,9 @@ def upgrade() -> None:
             )::numeric(18,3)                                        AS unit_price_yen_per_kg
         FROM w
         ORDER BY iso_year, iso_week;
-    """))
+    """
+        )
+    )
 
 
 def downgrade() -> None:

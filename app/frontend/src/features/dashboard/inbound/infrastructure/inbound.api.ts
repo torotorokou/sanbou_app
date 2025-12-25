@@ -3,9 +3,9 @@
  * 受入日次データの取得
  */
 
-import { coreApi } from '@/shared';
+import { coreApi } from "@/shared";
 
-export type CumScope = 'range' | 'month' | 'week' | 'none';
+export type CumScope = "range" | "month" | "week" | "none";
 
 /**
  * 日次搬入量データ（カレンダー連続・0埋め済み）
@@ -36,20 +36,22 @@ export interface InboundDailyParams {
 /**
  * 日次搬入量データを取得（カレンダー連続・0埋め済み）
  */
-export async function fetchInboundDaily(params: InboundDailyParams): Promise<InboundDailyRow[]> {
-  const { start, end, segment, cum_scope = 'none' } = params;
-  
+export async function fetchInboundDaily(
+  params: InboundDailyParams,
+): Promise<InboundDailyRow[]> {
+  const { start, end, segment, cum_scope = "none" } = params;
+
   const queryParams = new URLSearchParams({
     start,
     end,
     cum_scope,
   });
-  
+
   if (segment) {
-    queryParams.append('segment', segment);
+    queryParams.append("segment", segment);
   }
-  
+
   return await coreApi.get<InboundDailyRow[]>(
-    `/core_api/inbound/daily?${queryParams.toString()}`
+    `/core_api/inbound/daily?${queryParams.toString()}`,
   );
 }

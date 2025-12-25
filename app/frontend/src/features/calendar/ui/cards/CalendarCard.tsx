@@ -34,10 +34,14 @@ export type CalendarCardProps = {
 /**
  * CalendarDayDTO から CalendarPayload への変換
  */
-function convertToPayload(year: number, month: number, days: CalendarDayDTO[]): CalendarPayload {
-  const pad = (n: number) => String(n).padStart(2, '0');
+function convertToPayload(
+  year: number,
+  month: number,
+  days: CalendarDayDTO[],
+): CalendarPayload {
+  const pad = (n: number) => String(n).padStart(2, "0");
   const monthStr = `${year}-${pad(month)}`;
-  
+
   const dayDecors: DayDecor[] = days.map((d): DayDecor => {
     // day_type に基づいてステータスを判定
     // NORMAL: 営業日（緑）
@@ -45,7 +49,7 @@ function convertToPayload(year: number, month: number, days: CalendarDayDTO[]): 
     // CLOSED: 休業日（赤）
     let status: "business" | "holiday" | "closed" = "business";
     let label: string | undefined = undefined;
-    
+
     if (d.day_type === "CLOSED" || d.is_company_closed) {
       status = "closed";
       label = "休業日";
@@ -56,7 +60,7 @@ function convertToPayload(year: number, month: number, days: CalendarDayDTO[]): 
       status = "business";
       label = undefined;
     }
-    
+
     return {
       date: d.ddate,
       status,
@@ -64,7 +68,7 @@ function convertToPayload(year: number, month: number, days: CalendarDayDTO[]): 
       color: undefined,
     };
   });
-  
+
   return {
     month: monthStr,
     days: dayDecors,
@@ -76,23 +80,31 @@ function convertToPayload(year: number, month: number, days: CalendarDayDTO[]): 
   };
 }
 
-export const CalendarCard: React.FC<CalendarCardProps> = ({ year, month, repository, style }) => {
+export const CalendarCard: React.FC<CalendarCardProps> = ({
+  year,
+  month,
+  repository,
+  style,
+}) => {
   const vm = useCalendarVM({ repository, year, month });
-  
+
   const payload = useMemo(() => {
     if (vm.grid.length === 0) {
       return {
-        month: `${year}-${String(month).padStart(2, '0')}`,
+        month: `${year}-${String(month).padStart(2, "0")}`,
         days: [],
         legend: [],
       };
     }
     // grid から実際の月内データを抽出
-    const monthDays = vm.grid.flat().filter(d => d.inMonth).map(d => {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { inMonth, ...rest } = d;
-      return rest;
-    });
+    const monthDays = vm.grid
+      .flat()
+      .filter((d) => d.inMonth)
+      .map((d) => {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { inMonth, ...rest } = d;
+        return rest;
+      });
     return convertToPayload(year, month, monthDays);
   }, [vm.grid, year, month]);
 
@@ -101,8 +113,22 @@ export const CalendarCard: React.FC<CalendarCardProps> = ({ year, month, reposit
       <Card
         bordered
         size="small"
-        style={{ height: "100%", display: "flex", flexDirection: "column", ...(style || {}) }}
-        styles={{ body: { display: "flex", flexDirection: "column", padding: 12, gap: 8, flex: 1, minHeight: 0 } }}
+        style={{
+          height: "100%",
+          display: "flex",
+          flexDirection: "column",
+          ...(style || {}),
+        }}
+        styles={{
+          body: {
+            display: "flex",
+            flexDirection: "column",
+            padding: 12,
+            gap: 8,
+            flex: 1,
+            minHeight: 0,
+          },
+        }}
       >
         <Skeleton active paragraph={{ rows: 6 }} />
       </Card>
@@ -114,8 +140,22 @@ export const CalendarCard: React.FC<CalendarCardProps> = ({ year, month, reposit
       <Card
         bordered
         size="small"
-        style={{ height: "100%", display: "flex", flexDirection: "column", ...(style || {}) }}
-        styles={{ body: { display: "flex", flexDirection: "column", padding: 12, gap: 8, flex: 1, minHeight: 0 } }}
+        style={{
+          height: "100%",
+          display: "flex",
+          flexDirection: "column",
+          ...(style || {}),
+        }}
+        styles={{
+          body: {
+            display: "flex",
+            flexDirection: "column",
+            padding: 12,
+            gap: 8,
+            flex: 1,
+            minHeight: 0,
+          },
+        }}
       >
         <Typography.Text type="danger">{vm.error}</Typography.Text>
       </Card>
@@ -126,10 +166,29 @@ export const CalendarCard: React.FC<CalendarCardProps> = ({ year, month, reposit
     <Card
       variant="outlined"
       size="small"
-      style={{ height: "100%", display: "flex", flexDirection: "column", ...(style || {}) }}
-      bodyStyle={{ display: "flex", flexDirection: "column", padding: 12, gap: 8, flex: 1, minHeight: 0 }}
+      style={{
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+        ...(style || {}),
+      }}
+      bodyStyle={{
+        display: "flex",
+        flexDirection: "column",
+        padding: 12,
+        gap: 8,
+        flex: 1,
+        minHeight: 0,
+      }}
     >
-      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", position: "relative" }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          position: "relative",
+        }}
+      >
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <Typography.Title level={5} style={{ margin: 0, fontSize: 16 }}>
             営業カレンダー
@@ -143,7 +202,9 @@ export const CalendarCard: React.FC<CalendarCardProps> = ({ year, month, reposit
         <div style={{ position: "absolute", right: 12 }} />
       </div>
 
-      <div style={{ flex: 1, minHeight: 0, overflow: "hidden", height: "100%" }}>
+      <div
+        style={{ flex: 1, minHeight: 0, overflow: "hidden", height: "100%" }}
+      >
         <UkeireCalendar
           month={payload.month}
           days={payload.days}

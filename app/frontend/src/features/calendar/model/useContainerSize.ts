@@ -10,7 +10,10 @@ export interface ContainerSize {
   height: number;
 }
 
-export function useContainerSize(): [React.RefObject<HTMLDivElement>, ContainerSize | null] {
+export function useContainerSize(): [
+  React.RefObject<HTMLDivElement>,
+  ContainerSize | null,
+] {
   const ref = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState<ContainerSize | null>(null);
 

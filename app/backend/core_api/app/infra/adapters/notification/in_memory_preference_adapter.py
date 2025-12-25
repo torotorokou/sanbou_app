@@ -4,12 +4,12 @@ InMemory Notification Preference Adapter
 開発・テスト用のインメモリ実装。
 将来的にはDBから取得する。
 """
-from typing import Dict, Optional
 
-from backend_shared.application.logging import get_module_logger
+from typing import Dict, Optional
 
 from app.core.domain.notification import NotificationPreference
 from app.core.ports.notification_port import NotificationPreferencePort
+from backend_shared.application.logging import get_module_logger
 
 logger = get_module_logger(__name__)
 
@@ -17,7 +17,7 @@ logger = get_module_logger(__name__)
 class InMemoryNotificationPreferenceAdapter(NotificationPreferencePort):
     """
     InMemory Preference 実装
-    
+
     固定マップでユーザーの通知許可設定を管理。
     """
 
@@ -45,10 +45,10 @@ class InMemoryNotificationPreferenceAdapter(NotificationPreferencePort):
     def get_for_recipient(self, recipient_key: str) -> Optional[NotificationPreference]:
         """
         recipient_key に対応する通知許可設定を取得
-        
+
         Args:
             recipient_key: "user:123" 形式
-            
+
         Returns:
             NotificationPreference or None (設定なし = 全て許可)
         """

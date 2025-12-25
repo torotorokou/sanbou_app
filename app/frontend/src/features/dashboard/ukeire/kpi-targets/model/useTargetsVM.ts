@@ -1,7 +1,7 @@
 /**
  * kpi-targets/application/useTargetsVM.ts
  * KPI目標達成率計算・表示整形を担当するViewModel
- * 
+ *
  * 達成率モード:
  *   - "toDate": 昨日までの累計目標に対する達成率
  *   - "toEnd": 期末（週末・月末）のトータル目標に対する達成率
@@ -87,7 +87,7 @@ export function useTargetsVM(params: UseTargetsVMParams): UseTargetsVMResult {
       todayActual,
       weekActual,
       monthActual,
-    ]
+    ],
   );
 
   return { rows };

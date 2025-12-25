@@ -21,43 +21,51 @@ notification_outbox テーブルに failure_type カラムを追加
   - TEMPORARY: 指数バックオフでリトライ（1→5→30→60分）
   - PERMANENT: 即座に failed に遷移し、リトライしない
 """
-from alembic import op
-import sqlalchemy as sa
 
+import sqlalchemy as sa
+from alembic import op
 
 # revision identifiers, used by Alembic.
-revision = '20251225_001'
-down_revision = '20251224_006'
+revision = "20251225_001"
+down_revision = "20251224_006"
 branch_labels = None
 depends_on = None
 
 
 def upgrade() -> None:
     """failure_type カラムを追加"""
-    
-    op.execute("""
-        ALTER TABLE app.notification_outbox 
+
+    op.execute(
+        """
+        ALTER TABLE app.notification_outbox
         ADD COLUMN failure_type VARCHAR(20) DEFAULT NULL;
-    """)
-    
+    """
+    )
+
     # 既存の failed レコードに TEMPORARY を設定（互換性のため）
-    op.execute("""
-        UPDATE app.notification_outbox 
-        SET failure_type = 'TEMPORARY' 
+    op.execute(
+        """
+        UPDATE app.notification_outbox
+        SET failure_type = 'TEMPORARY'
         WHERE status = 'failed' AND failure_type IS NULL;
-    """)
-    
+    """
+    )
+
     # コメント追加
-    op.execute("""
-        COMMENT ON COLUMN app.notification_outbox.failure_type IS 
+    op.execute(
+        """
+        COMMENT ON COLUMN app.notification_outbox.failure_type IS
         '失敗タイプ（TEMPORARY: リトライ可能、PERMANENT: リトライ不可、NULL: 未失敗）';
-    """)
+    """
+    )
 
 
 def downgrade() -> None:
     """failure_type カラムを削除"""
-    
-    op.execute("""
-        ALTER TABLE app.notification_outbox 
+
+    op.execute(
+        """
+        ALTER TABLE app.notification_outbox
         DROP COLUMN IF EXISTS failure_type;
-    """)
+    """
+    )

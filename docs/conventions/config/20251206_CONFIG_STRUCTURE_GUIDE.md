@@ -56,6 +56,7 @@ export const getDatasetByKey = (key: string) => { ... };
 **目的**: config/ 内の全てのエクスポートを集約し、外部からの参照を簡潔にする
 
 **ルール**:
+
 - 必ず `export *` または `export { ... }` を使用
 - 他のファイルをインポートしない（再エクスポートのみ）
 - ドキュメントコメントを追加
@@ -66,9 +67,9 @@ export const getDatasetByKey = (key: string) => { ... };
  * データセット定義と設定関数
  */
 
-export * from './datasets';
-export * from './types';
-export * from './selectors';
+export * from "./datasets";
+export * from "./types";
+export * from "./selectors";
 ```
 
 ### 2. `constants.ts` - 定数定義
@@ -76,6 +77,7 @@ export * from './selectors';
 **目的**: feature固有の定数値を集約
 
 **ルール**:
+
 - `UPPER_SNAKE_CASE` で命名
 - `as const` で型を固定
 - JSDocコメントで説明を追加
@@ -87,14 +89,14 @@ export * from './selectors';
  */
 export const DATASETS = {
   receive: {
-    key: 'receive',
-    label: '受入データ',
-    tableName: 'receive_records',
+    key: "receive",
+    label: "受入データ",
+    tableName: "receive_records",
   },
   shipment: {
-    key: 'shipment',
-    label: '出荷データ',
-    tableName: 'shipment_records',
+    key: "shipment",
+    label: "出荷データ",
+    tableName: "shipment_records",
   },
 } as const;
 
@@ -103,7 +105,7 @@ export const DATASETS = {
  */
 export const UPLOAD_CONFIG = {
   maxFileSize: 10 * 1024 * 1024, // 10MB
-  allowedExtensions: ['.csv', '.xlsx'],
+  allowedExtensions: [".csv", ".xlsx"],
 } as const;
 ```
 
@@ -112,11 +114,12 @@ export const UPLOAD_CONFIG = {
 **目的**: config関連の型を集約
 
 **ルール**:
+
 - インターフェース、型エイリアス、ユーティリティ型を定義
 - constants.ts から型を派生させる場合は `typeof` を使用
 
 ```typescript
-import { DATASETS } from './constants';
+import { DATASETS } from "./constants";
 
 /**
  * データセットキー型
@@ -143,16 +146,17 @@ export type DatasetMap = typeof DATASETS;
 **目的**: 設定値を取得・加工する純粋関数を提供
 
 **ルール**:
+
 - 全て純粋関数（副作用なし）
 - 引数の型は明示的に指定
 - JSDocで使用例を記載
 
-```typescript
-import { DATASETS, type DatasetKey, type DatasetConfig } from '.';
+````typescript
+import { DATASETS, type DatasetKey, type DatasetConfig } from ".";
 
 /**
  * キーからデータセット設定を取得
- * 
+ *
  * @example
  * ```typescript
  * const config = getDatasetByKey('receive');
@@ -176,7 +180,7 @@ export function getAllDatasets(): DatasetConfig[] {
 export function isValidDatasetKey(key: string): key is DatasetKey {
   return key in DATASETS;
 }
-```
+````
 
 ## アンチパターン
 
@@ -199,7 +203,7 @@ export function processUpload(file: File) {
 ```typescript
 // ❌ BAD: 設定ファイルでAPI呼び出し
 export async function getRemoteConfig() {
-  const response = await fetch('/api/config');
+  const response = await fetch("/api/config");
   return response.json();
 }
 ```
@@ -208,7 +212,7 @@ export async function getRemoteConfig() {
 
 ```typescript
 // ❌ BAD: 設定ファイルで状態を持つ
-let currentDataset = 'receive';
+let currentDataset = "receive";
 
 export function setCurrentDataset(key: string) {
   currentDataset = key;
@@ -222,8 +226,8 @@ export function setCurrentDataset(key: string) {
 ```typescript
 // ✅ GOOD: 設定は純粋なデータ
 export const DATASETS = {
-  receive: { key: 'receive', label: '受入データ' },
-  shipment: { key: 'shipment', label: '出荷データ' },
+  receive: { key: "receive", label: "受入データ" },
+  shipment: { key: "shipment", label: "出荷データ" },
 } as const;
 ```
 
@@ -232,7 +236,7 @@ export const DATASETS = {
 ```typescript
 // ✅ GOOD: ビジネスロジックは domain/services に配置
 // features/database/domain/services/uploadService.ts
-import { DATASETS } from '../../config';
+import { DATASETS } from "../../config";
 
 export async function processUpload(datasetKey: DatasetKey, file: File) {
   const dataset = DATASETS[datasetKey];
@@ -258,10 +262,10 @@ shared/config/
 
 ```typescript
 // features内から参照
-import { REPORT_ENDPOINTS, DASHBOARD_ENDPOINTS } from '@shared/config';
+import { REPORT_ENDPOINTS, DASHBOARD_ENDPOINTS } from "@shared/config";
 
 // または
-import { REPORT_ENDPOINTS, DASHBOARD_ENDPOINTS } from '@shared';
+import { REPORT_ENDPOINTS, DASHBOARD_ENDPOINTS } from "@shared";
 ```
 
 ## 設定の優先順位
@@ -269,10 +273,12 @@ import { REPORT_ENDPOINTS, DASHBOARD_ENDPOINTS } from '@shared';
 設定ファイルの配置場所は以下の優先順位で決定します：
 
 1. **Feature固有** → `features/[feature]/config/`
+
    - 特定のfeatureでのみ使用される設定
    - 例: データセット定義、ページ設定
 
 2. **複数Featureで共有** → `shared/config/`
+
    - 2つ以上のfeatureで使用される設定
    - 例: APIエンドポイント、共通定数
 
@@ -321,10 +327,10 @@ touch features/[feature-name]/config/{index,constants,types,selectors}.ts
 
 ```typescript
 // Before
-import { DATASETS } from '../constants/datasets';
+import { DATASETS } from "../constants/datasets";
 
 // After
-import { DATASETS } from '../config';
+import { DATASETS } from "../config";
 ```
 
 ## ベストプラクティス
@@ -340,7 +346,7 @@ import { DATASETS } from '../config';
 ```typescript
 // ✅ GOOD: as const で型を固定
 export const DATASETS = {
-  receive: { key: 'receive', label: '受入データ' },
+  receive: { key: "receive", label: "受入データ" },
 } as const;
 
 // データセットキー型が自動的に 'receive' のリテラル型になる
@@ -351,15 +357,15 @@ type DatasetKey = keyof typeof DATASETS; // 'receive'
 
 JSDocコメントで使用例や注意事項を記載します。
 
-```typescript
+````typescript
 /**
  * データセット定義
- * 
+ *
  * CSVアップロード・データベース管理で使用されます。
  * 新しいデータセットを追加する場合は、以下も更新してください：
  * - backend/core_api/routers/csv.py
  * - docs/database/DATASETS.md
- * 
+ *
  * @example
  * ```typescript
  * import { DATASETS } from '@features/database/config';
@@ -367,7 +373,7 @@ JSDocコメントで使用例や注意事項を記載します。
  * ```
  */
 export const DATASETS = { ... } as const;
-```
+````
 
 ### 4. マジックナンバーを避ける
 
@@ -414,7 +420,8 @@ A: 環境変数は `.env` ファイルで管理し、`import.meta.env` 経由で
 
 ```typescript
 // ✅ GOOD: シンプルなラッパー
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+export const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
 // ❌ BAD: 複雑な初期化ロジック
 export function initializeApiClient() {

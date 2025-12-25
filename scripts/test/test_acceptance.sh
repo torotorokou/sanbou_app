@@ -81,7 +81,7 @@ for i in {1..10}; do
     response=$(curl -s "$API_URL/forecast/jobs/$job_id")
     job_status=$(echo "$response" | jq -r '.status')
     echo "  Attempt $i/10: Job status = $job_status"
-    
+
     if [ "$job_status" = "done" ]; then
         pass "Job completed successfully"
         break
@@ -89,7 +89,7 @@ for i in {1..10}; do
         error_msg=$(echo "$response" | jq -r '.error_message')
         fail "Job failed with error: $error_msg"
     fi
-    
+
     if [ $i -eq 10 ]; then
         fail "Job did not complete within 30 seconds"
     fi

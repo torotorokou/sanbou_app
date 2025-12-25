@@ -80,12 +80,12 @@ show_progress() {
     local width=50
     local percentage=$((current * 100 / total))
     local filled=$((width * current / total))
-    
+
     printf "\r${CYAN}["
     printf "%${filled}s" | tr ' ' '='
     printf "%$((width - filled))s" | tr ' ' ' '
     printf "] %3d%% (%d/%d)${NC}" "$percentage" "$current" "$total"
-    
+
     if [ "$current" -eq "$total" ]; then
         echo ""
     fi
@@ -118,12 +118,12 @@ confirm_action_default_yes() {
 # 機密ファイル検出時の詳細表示
 show_forbidden_file_details() {
     local file="$1"
-    
+
     log_error_section "機密ファイルが検出されました"
     log_file "$file"
     echo ""
     echo "このファイルは以下の理由で Git 管理外にすべきです:"
-    
+
     case "$file" in
         env/.env.*)
             echo "  • 環境変数ファイル（環境固有の設定を含む）"
@@ -141,7 +141,7 @@ show_forbidden_file_details() {
             echo "  • データベースダンプ（個人情報を含む可能性）"
             ;;
     esac
-    
+
     echo ""
     echo "対応方法:"
     echo "  1. ファイルを unstage する:"
@@ -157,7 +157,7 @@ show_sensitive_content_details() {
     local file="$1"
     local pattern="$2"
     local matched_lines="$3"
-    
+
     log_error_section "機密情報パターンが検出されました"
     echo "ファイル: $(log_file "$file")"
     echo "パターン: $pattern"
@@ -166,7 +166,7 @@ show_sensitive_content_details() {
     echo "$matched_lines" | head -5 | while IFS= read -r line; do
         echo "  ${YELLOW}$line${NC}"
     done
-    
+
     local line_count
     line_count=$(echo "$matched_lines" | wc -l)
     if [ "$line_count" -gt 5 ]; then

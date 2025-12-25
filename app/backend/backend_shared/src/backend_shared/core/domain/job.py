@@ -6,18 +6,19 @@
 - 失敗時に ProblemDetails を保持
 """
 
-from typing import Optional, Literal, Any
+from typing import Any, Literal, Optional
+
 from pydantic import BaseModel, Field
 
 from .contract import ProblemDetails
 
-JobStatusType = Literal['pending', 'running', 'completed', 'failed', 'cancelled']
+JobStatusType = Literal["pending", "running", "completed", "failed", "cancelled"]
 
 
 class JobStatus(BaseModel):
     """
     ジョブステータスDTO
-    
+
     フィールド:
     - id: ジョブID
     - status: ジョブの状態
@@ -28,15 +29,16 @@ class JobStatus(BaseModel):
     - createdAt: 作成日時
     - updatedAt: 更新日時
     """
+
     id: str
     status: JobStatusType
     progress: int = Field(default=0, ge=0, le=100)
     message: Optional[str] = None
     result: Optional[Any] = None
     error: Optional[ProblemDetails] = None  # 失敗時の詳細エラー情報
-    createdAt: str = Field(alias='createdAt')
-    updatedAt: str = Field(alias='updatedAt')
-    
+    createdAt: str = Field(alias="createdAt")
+    updatedAt: str = Field(alias="updatedAt")
+
     class Config:
         populate_by_name = True
 
@@ -45,6 +47,7 @@ class JobCreate(BaseModel):
     """
     ジョブ作成リクエスト
     """
+
     feature: str
     parameters: Optional[dict] = None
 
@@ -53,6 +56,7 @@ class JobUpdate(BaseModel):
     """
     ジョブ更新リクエスト
     """
+
     status: Optional[JobStatusType] = None
     progress: Optional[int] = Field(default=None, ge=0, le=100)
     message: Optional[str] = None

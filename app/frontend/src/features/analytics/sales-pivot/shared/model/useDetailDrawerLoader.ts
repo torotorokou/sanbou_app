@@ -3,13 +3,19 @@
  * 詳細明細行ドロワーのデータ読み込みロジック
  */
 
-import { useCallback } from 'react';
-import type { GroupBy, DetailLinesFilter, SummaryQuery, DetailLine, DetailMode } from './types';
-import type { HttpSalesPivotRepository } from '../infrastructure/salesPivot.repository';
+import { useCallback } from "react";
+import type {
+  GroupBy,
+  DetailLinesFilter,
+  SummaryQuery,
+  DetailLine,
+  DetailMode,
+} from "./types";
+import type { HttpSalesPivotRepository } from "../infrastructure/salesPivot.repository";
 
 interface DetailDrawerLoaderParams {
   query: SummaryQuery;
-  categoryKind: 'waste' | 'valuable';
+  categoryKind: "waste" | "valuable";
   repository: HttpSalesPivotRepository;
   setDetailDrawerOpen: (open: boolean) => void;
   setDetailDrawerLoading: (loading: boolean) => void;
@@ -24,10 +30,10 @@ interface DetailDrawerLoaderParams {
  * 月末日を計算するヘルパー関数
  */
 const getMonthEndDate = (yyyymm: string): string => {
-  const [year, month] = yyyymm.split('-').map(Number);
+  const [year, month] = yyyymm.split("-").map(Number);
   const nextMonth = new Date(year, month, 1);
   const lastDay = new Date(nextMonth.getTime() - 86400000);
-  const dd = String(lastDay.getDate()).padStart(2, '0');
+  const dd = String(lastDay.getDate()).padStart(2, "0");
   return `${yyyymm}-${dd}`;
 };
 
@@ -52,11 +58,11 @@ export function useDetailDrawerLoader(params: DetailDrawerLoaderParams) {
       customerId?: string,
       itemId?: string,
       dateValue?: string,
-      title?: string
+      title?: string,
     ) => {
       setDetailDrawerLoading(true);
       setDetailDrawerOpen(true);
-      setDetailDrawerTitle(title || '詳細明細');
+      setDetailDrawerTitle(title || "詳細明細");
 
       try {
         // 期間計算（月次モードと日次モードの両方に対応）
@@ -76,7 +82,7 @@ export function useDetailDrawerLoader(params: DetailDrawerLoaderParams) {
           dateFrom = `${query.month}-01`;
           dateTo = getMonthEndDate(query.month);
         } else {
-          throw new Error('期間が設定されていません');
+          throw new Error("期間が設定されていません");
         }
 
         const filter: DetailLinesFilter = {
@@ -90,11 +96,11 @@ export function useDetailDrawerLoader(params: DetailDrawerLoaderParams) {
           dateValue,
         };
 
-        console.log('📋 詳細明細取得リクエスト:', filter);
+        console.log("📋 詳細明細取得リクエスト:", filter);
 
         const response = await repository.fetchDetailLines(filter);
 
-        console.log('✅ 詳細明細取得成功:', {
+        console.log("✅ 詳細明細取得成功:", {
           mode: response.mode,
           rowCount: response.rows.length,
           totalCount: response.totalCount,
@@ -104,8 +110,8 @@ export function useDetailDrawerLoader(params: DetailDrawerLoaderParams) {
         setDetailDrawerRows(response.rows);
         setDetailDrawerTotalCount(response.totalCount);
       } catch (error) {
-        console.error('❌ 詳細明細取得エラー:', error);
-        message?.error?.('詳細明細の取得に失敗しました。');
+        console.error("❌ 詳細明細取得エラー:", error);
+        message?.error?.("詳細明細の取得に失敗しました。");
         setDetailDrawerOpen(false);
       } finally {
         setDetailDrawerLoading(false);
@@ -122,7 +128,7 @@ export function useDetailDrawerLoader(params: DetailDrawerLoaderParams) {
       setDetailDrawerRows,
       setDetailDrawerTotalCount,
       message,
-    ]
+    ],
   );
 
   return { openDetailDrawer };

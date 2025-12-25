@@ -31,6 +31,7 @@ core_api (FastAPI)
 ### テーブル
 
 #### 1. `raw.receive_shogun_flash` (受入一覧)
+
 ```sql
 CREATE TABLE raw.receive_shogun_flash (
     id SERIAL PRIMARY KEY,
@@ -51,6 +52,7 @@ CREATE TABLE raw.receive_shogun_flash (
 ```
 
 #### 2. `raw.yard_shogun_flash` (ヤード一覧)
+
 ```sql
 CREATE TABLE raw.yard_shogun_flash (
     id SERIAL PRIMARY KEY,
@@ -66,6 +68,7 @@ CREATE TABLE raw.yard_shogun_flash (
 ```
 
 #### 3. `raw.shipment_shogun_flash` (出荷一覧)
+
 ```sql
 CREATE TABLE raw.shipment_shogun_flash (
     id SERIAL PRIMARY KEY,
@@ -113,7 +116,7 @@ class Settings(BaseSettings):
     # テーブル名マッピング
     CSV_TABLE_MAPPING: dict[str, str] = {
         "receive": "raw.receive_shogun_flash",
-        "yard": "raw.yard_shogun_flash", 
+        "yard": "raw.yard_shogun_flash",
         "shipment": "raw.shipment_shogun_flash",
     }
 ```
@@ -129,6 +132,7 @@ alembic upgrade head
 ```
 
 これにより以下が作成されます：
+
 - `raw` スキーマ
 - 3つのテーブル（receive_shogun_flash, yard_shogun_flash, shipment_shogun_flash）
 - インデックス
@@ -167,6 +171,7 @@ POST /core_api/database/upload/syogun_csv
 ### レスポンス例
 
 #### 成功時
+
 ```json
 {
   "status": "success",
@@ -193,6 +198,7 @@ POST /core_api/database/upload/syogun_csv
 ```
 
 #### エラー時
+
 ```json
 {
   "code": "MISSING_COLUMNS",
@@ -219,6 +225,7 @@ POST /core_api/database/upload/syogun_csv
 ### 必須カラム（CSVヘッダー）
 
 **受入一覧 (receive)**
+
 - 伝票日付
 - 売上日付
 - 支払日付
@@ -226,6 +233,7 @@ POST /core_api/database/upload/syogun_csv
 - 業者名
 
 **ヤード一覧 (yard)**
+
 - 伝票日付
 - 取引先名
 - 品名
@@ -233,6 +241,7 @@ POST /core_api/database/upload/syogun_csv
 - 数量
 
 **出荷一覧 (shipment)**
+
 - 伝票日付
 - 出荷番号
 - 取引先名
@@ -240,6 +249,7 @@ POST /core_api/database/upload/syogun_csv
 - 業者名
 
 ### その他のバリデーション
+
 - 伝票日付が全ファイルで一致すること
 - CSVエンコーディング: UTF-8
 - ファイルサイズ: デフォルト10MB以内
@@ -314,7 +324,7 @@ UNION ALL
 SELECT 'shipment', COUNT(*) FROM raw.shipment_shogun_flash;
 
 -- 最新データ確認
-SELECT * FROM raw.receive_shogun_flash 
+SELECT * FROM raw.receive_shogun_flash
 ORDER BY uploaded_at DESC LIMIT 10;
 ```
 

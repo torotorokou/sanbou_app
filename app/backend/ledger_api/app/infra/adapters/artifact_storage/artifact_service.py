@@ -9,13 +9,13 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from functools import lru_cache
 import hashlib
 import hmac
-from pathlib import Path
 import secrets
 import time
+from dataclasses import dataclass
+from functools import lru_cache
+from pathlib import Path
 from typing import Dict, Optional
 from urllib.parse import quote, unquote
 
@@ -46,7 +46,12 @@ class ArtifactLocation:
     @property
     def directory(self) -> Path:
         """👶 ファイルを保存する最終ディレクトリを返します。"""
-        return self.root_dir / _sanitize_segment(self.report_key) / _sanitize_segment(self.report_date) / self.token
+        return (
+            self.root_dir
+            / _sanitize_segment(self.report_key)
+            / _sanitize_segment(self.report_date)
+            / self.token
+        )
 
     def relative_path(self, filename: str) -> str:
         """保存先ディレクトリからの相対パスを返す。"""
@@ -70,7 +75,9 @@ class UrlSigner:
     def __init__(self, secret: str, url_prefix: str, ttl_seconds: int) -> None:
         self._secret = secret.encode("utf-8")
         self._url_prefix = url_prefix.rstrip("/")
-        self._ttl_seconds = max(30, ttl_seconds)  # 👶 有効期限が極端に短すぎないようにします
+        self._ttl_seconds = max(
+            30, ttl_seconds
+        )  # 👶 有効期限が極端に短すぎないようにします
 
     def _sign(self, relative_path: str, disposition: str, expires: int) -> str:
         payload = f"{relative_path}|{disposition}|{expires}".encode("utf-8")
@@ -81,11 +88,11 @@ class UrlSigner:
         expires = int(time.time()) + self._ttl_seconds
         signature = self._sign(relative_path, disposition, expires)
         safe_path = quote(relative_path, safe="/")
-        return (
-            f"{self._url_prefix}/{safe_path}?expires={expires}&disposition={disposition}&signature={signature}"
-        )
+        return f"{self._url_prefix}/{safe_path}?expires={expires}&disposition={disposition}&signature={signature}"
 
-    def verify(self, relative_path: str, *, disposition: str, expires: int, signature: str) -> bool:
+    def verify(
+        self, relative_path: str, *, disposition: str, expires: int, signature: str
+    ) -> bool:
         if expires < int(time.time()):
             return False
         expected = self._sign(relative_path, disposition, expires)
@@ -108,7 +115,9 @@ class ReportArtifactStorage:
         token = f"{report_date.replace('-', '')}_{time.strftime('%H%M%S')}-{secrets.token_hex(4)}"
         # 英語キーをそのまま使用（ASCII安全、フロントエンドで日本語変換）
         file_base = _sanitize_segment(f"{report_key}-{report_date}")
-        location = ArtifactLocation(self.root_dir, report_key, report_date, token, file_base)
+        location = ArtifactLocation(
+            self.root_dir, report_key, report_date, token, file_base
+        )
         location.directory.mkdir(parents=True, exist_ok=True)
         return location
 
@@ -124,7 +133,9 @@ class ReportArtifactStorage:
         target.write_bytes(content)
         return target
 
-    def build_payload(self, location: ArtifactLocation, *, excel_exists: bool, pdf_exists: bool) -> Dict[str, str]:
+    def build_payload(
+        self, location: ArtifactLocation, *, excel_exists: bool, pdf_exists: bool
+    ) -> Dict[str, str]:
         payload: Dict[str, str] = {
             "report_token": location.token,
             "excel_download_url": "",

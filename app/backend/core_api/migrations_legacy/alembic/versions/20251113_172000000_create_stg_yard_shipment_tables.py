@@ -7,13 +7,14 @@ Revision ID: 20251113_172000000
 Revises: 20251113_171000000
 Create Date: 2025-11-13 17:20:00.000000
 """
-from alembic import op, context
+
 import sqlalchemy as sa
+from alembic import context, op
 from sqlalchemy import text
 
 # revision identifiers, used by Alembic.
-revision = '20251113_172000000'
-down_revision = '20251113_171000000'
+revision = "20251113_172000000"
+down_revision = "20251113_171000000"
 branch_labels = None
 depends_on = None
 
@@ -24,14 +25,16 @@ def _table_exists(schema: str, table: str) -> bool:
         return False
     conn = op.get_bind()
     qualified = f"{schema}.{table}"
-    return bool(conn.scalar(sa.text("SELECT to_regclass(:q) IS NOT NULL"), {"q": qualified}))
+    return bool(
+        conn.scalar(sa.text("SELECT to_regclass(:q) IS NOT NULL"), {"q": qualified})
+    )
 
 
 def upgrade():
     """
     stg スキーマに yard と shipment テーブルを作成
     """
-    
+
     # -------------------------------------------------------------------------
     # 1. stg.yard (15カラム、型変換済み)
     # YAML yard columns 参照:
@@ -52,35 +55,32 @@ def upgrade():
             sa.Column("unit_en_name", sa.Text(), nullable=True, comment="単位名"),
             sa.Column("unit_price", sa.Float(), nullable=True, comment="単価"),
             sa.Column("amount", sa.Float(), nullable=False, comment="金額"),
-            sa.Column("sales_staff_en_name", sa.Text(), nullable=True, comment="営業担当者名"),
+            sa.Column(
+                "sales_staff_en_name", sa.Text(), nullable=True, comment="営業担当者名"
+            ),
             sa.Column("vendor_cd", sa.Integer(), nullable=False, comment="業者CD"),
             sa.Column("vendor_en_name", sa.Text(), nullable=False, comment="業者名"),
             sa.Column("category_cd", sa.Integer(), nullable=True, comment="種類CD"),
             sa.Column("category_en_name", sa.Text(), nullable=True, comment="種類名"),
             sa.Column("item_cd", sa.Integer(), nullable=False, comment="品名CD"),
             sa.Column("slip_no", sa.Text(), nullable=True, comment="伝票番号"),
-            sa.Column("created_at", sa.DateTime(timezone=True), server_default=text("CURRENT_TIMESTAMP"), nullable=False),
+            sa.Column(
+                "created_at",
+                sa.DateTime(timezone=True),
+                server_default=text("CURRENT_TIMESTAMP"),
+                nullable=False,
+            ),
             sa.PrimaryKeyConstraint("id"),
             schema="stg",
-            comment="ヤード一覧（整形済み）"
+            comment="ヤード一覧（整形済み）",
         )
-        
+
         # インデックス作成
-        op.create_index(
-            "idx_yard_slip_date",
-            "yard",
-            ["slip_date"],
-            schema="stg"
-        )
-        op.create_index(
-            "idx_yard_vendor_cd",
-            "yard",
-            ["vendor_cd"],
-            schema="stg"
-        )
-        
+        op.create_index("idx_yard_slip_date", "yard", ["slip_date"], schema="stg")
+        op.create_index("idx_yard_vendor_cd", "yard", ["vendor_cd"], schema="stg")
+
         print("✓ Created stg.yard")
-    
+
     # -------------------------------------------------------------------------
     # 2. stg.shipment (16カラム、型変換済み)
     # YAML shipment columns 参照:
@@ -106,35 +106,36 @@ def upgrade():
             sa.Column("unit_en_name", sa.Text(), nullable=True, comment="単位名"),
             sa.Column("unit_price", sa.Float(), nullable=True, comment="単価"),
             sa.Column("amount", sa.Float(), nullable=True, comment="金額"),
-            sa.Column("transport_vendor_en_name", sa.Text(), nullable=True, comment="運搬業者名"),
-            sa.Column("slip_type_en_name", sa.Text(), nullable=True, comment="伝票区分名"),
+            sa.Column(
+                "transport_vendor_en_name",
+                sa.Text(),
+                nullable=True,
+                comment="運搬業者名",
+            ),
+            sa.Column(
+                "slip_type_en_name", sa.Text(), nullable=True, comment="伝票区分名"
+            ),
             sa.Column("detail_note", sa.Text(), nullable=True, comment="明細備考"),
-            sa.Column("created_at", sa.DateTime(timezone=True), server_default=text("CURRENT_TIMESTAMP"), nullable=False),
+            sa.Column(
+                "created_at",
+                sa.DateTime(timezone=True),
+                server_default=text("CURRENT_TIMESTAMP"),
+                nullable=False,
+            ),
             sa.PrimaryKeyConstraint("id"),
             schema="stg",
-            comment="出荷一覧（整形済み）"
+            comment="出荷一覧（整形済み）",
         )
-        
+
         # インデックス作成
         op.create_index(
-            "idx_shipment_slip_date",
-            "shipment",
-            ["slip_date"],
-            schema="stg"
+            "idx_shipment_slip_date", "shipment", ["slip_date"], schema="stg"
         )
         op.create_index(
-            "idx_shipment_vendor_cd",
-            "shipment",
-            ["vendor_cd"],
-            schema="stg"
+            "idx_shipment_vendor_cd", "shipment", ["vendor_cd"], schema="stg"
         )
-        op.create_index(
-            "idx_shipment_no",
-            "shipment",
-            ["shipment_no"],
-            schema="stg"
-        )
-        
+        op.create_index("idx_shipment_no", "shipment", ["shipment_no"], schema="stg")
+
         print("✓ Created stg.shipment")
 
 
@@ -145,7 +146,7 @@ def downgrade():
     if _table_exists("stg", "shipment"):
         op.drop_table("shipment", schema="stg")
         print("✓ Dropped stg.shipment")
-    
+
     if _table_exists("stg", "yard"):
         op.drop_table("yard", schema="stg")
         print("✓ Dropped stg.yard")

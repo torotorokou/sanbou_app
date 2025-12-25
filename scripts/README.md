@@ -278,9 +278,9 @@ source "${SCRIPT_DIR}/../lib/git_utils.sh"  # 必要に応じて
 # メイン処理
 main() {
     show_script_header "スクリプト名" "説明"
-    
+
     # 処理...
-    
+
     log_success "完了しました"
 }
 
@@ -415,14 +415,14 @@ bash scripts/test/test_acceptance.sh
 
 スクリプトが再編成されました。以下の対応表を参考にしてください。
 
-| 旧パス | 新パス | カテゴリ |
-|--------|--------|----------|
-| `scripts/setup_git_hooks.sh` | `scripts/git/setup_git_hooks.sh` | Git |
-| `scripts/cleanup_git_history.sh` | `scripts/git/cleanup_git_history.sh` | Git |
-| `scripts/gh_env_secrets_sync.sh` | `scripts/git/gh_env_secrets_sync.sh` | Git |
-| `scripts/validate_compose.sh` | `scripts/docker/validate_compose.sh` | Docker |
-| `scripts/test_acceptance.sh` | `scripts/test/test_acceptance.sh` | Test |
-| `scripts/test_raw_save.sh` | `scripts/test/test_raw_save.sh` | Test |
+| 旧パス                           | 新パス                               | カテゴリ |
+| -------------------------------- | ------------------------------------ | -------- |
+| `scripts/setup_git_hooks.sh`     | `scripts/git/setup_git_hooks.sh`     | Git      |
+| `scripts/cleanup_git_history.sh` | `scripts/git/cleanup_git_history.sh` | Git      |
+| `scripts/gh_env_secrets_sync.sh` | `scripts/git/gh_env_secrets_sync.sh` | Git      |
+| `scripts/validate_compose.sh`    | `scripts/docker/validate_compose.sh` | Docker   |
+| `scripts/test_acceptance.sh`     | `scripts/test/test_acceptance.sh`    | Test     |
+| `scripts/test_raw_save.sh`       | `scripts/test/test_raw_save.sh`      | Test     |
 
 ### 既存スクリプトの修正方法
 

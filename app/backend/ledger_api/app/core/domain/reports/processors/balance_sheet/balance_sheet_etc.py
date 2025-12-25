@@ -1,7 +1,6 @@
 import pandas as pd
 from app.infra.report_utils import get_template_config, load_master_and_template
-from app.infra.report_utils.formatters import to_reiwa_format
-from app.infra.report_utils.formatters import set_value_fast_safe
+from app.infra.report_utils.formatters import set_value_fast_safe, to_reiwa_format
 
 
 def calculate_misc_summary_rows(

@@ -8,13 +8,15 @@ import type {
   FetchDailyParams,
   InboundDailyRow,
 } from "../ports/InboundDailyRepository";
-import { DASHBOARD_ENDPOINTS } from '@/shared';
+import { DASHBOARD_ENDPOINTS } from "@/shared";
 
 /**
  * HTTP経由で日次搬入量データを取得
  */
 export class HttpInboundDailyRepository implements InboundDailyRepository {
-  constructor(private readonly baseUrl: string = DASHBOARD_ENDPOINTS.inboundDaily) {}
+  constructor(
+    private readonly baseUrl: string = DASHBOARD_ENDPOINTS.inboundDaily,
+  ) {}
 
   async fetchDaily(params: FetchDailyParams): Promise<InboundDailyRow[]> {
     const { start, end, segment, cum_scope = "none" } = params;
@@ -32,7 +34,7 @@ export class HttpInboundDailyRepository implements InboundDailyRepository {
     if (!response.ok) {
       const errorText = await response.text();
       throw new Error(
-        `Failed to fetch inbound daily: ${response.status} ${errorText}`
+        `Failed to fetch inbound daily: ${response.status} ${errorText}`,
       );
     }
 

@@ -28,9 +28,15 @@ def _build_targets() -> list[str]:
     ]
 
 
-def convert_excel_to_pdf(excel_path: Path, *, output_dir: Optional[Path] = None, profile_dir: Optional[Path] = None, timeout: int = 60) -> bytes:
+def convert_excel_to_pdf(
+    excel_path: Path,
+    *,
+    output_dir: Optional[Path] = None,
+    profile_dir: Optional[Path] = None,
+    timeout: int = 60,
+) -> bytes:
     """Excel ファイルを LibreOffice で PDF に変換してバイト列を返す。
-    
+
     🚀 高速化: タイムアウト60秒、起動オプション最適化
     """
     if not excel_path.exists():
@@ -63,11 +69,17 @@ def convert_excel_to_pdf(excel_path: Path, *, output_dir: Optional[Path] = None,
         ]
 
         try:
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+            result = subprocess.run(
+                cmd, capture_output=True, text=True, timeout=timeout
+            )
         except FileNotFoundError as exc:  # LibreOffice がインストールされていないケース
-            raise PdfConversionError("LibreOffice (soffice) が見つかりません。") from exc
+            raise PdfConversionError(
+                "LibreOffice (soffice) が見つかりません。"
+            ) from exc
         except subprocess.TimeoutExpired as exc:
-            raise PdfConversionError("LibreOffice 変換がタイムアウトしました。") from exc
+            raise PdfConversionError(
+                "LibreOffice 変換がタイムアウトしました。"
+            ) from exc
 
         if result.returncode != 0:
             last_error = result.stderr or result.stdout

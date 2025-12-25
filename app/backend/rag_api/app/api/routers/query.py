@@ -10,17 +10,19 @@ import zipfile
 from typing import Any, List, Tuple
 
 import pypdf
-from fastapi import APIRouter, Body, Request, Depends, HTTPException
-from fastapi.responses import FileResponse, StreamingResponse, JSONResponse
-from pydantic import BaseModel
-
-from backend_shared.application.logging import get_module_logger
+from app.api.dependencies import get_ai_response_service, get_dummy_response_service
+from app.api.schemas.query_schema import QueryRequest, QueryResponse
 from app.core.usecases.rag import file_ingest_service as loader
 from app.infra.adapters.pdf import pdf_loader
-from app.api.schemas.query_schema import QueryRequest, QueryResponse
-from app.api.dependencies import get_dummy_response_service, get_ai_response_service
-from backend_shared.infra.adapters.presentation.response_base import SuccessApiResponse, ErrorApiResponse
+from backend_shared.application.logging import get_module_logger
+from backend_shared.infra.adapters.presentation.response_base import (
+    ErrorApiResponse,
+    SuccessApiResponse,
+)
 from backend_shared.infra.adapters.presentation.response_utils import api_response
+from fastapi import APIRouter, Body, Depends, HTTPException, Request
+from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
+from pydantic import BaseModel
 
 logger = get_module_logger(__name__)
 router = APIRouter()
@@ -59,48 +61,64 @@ async def generate_answer(
     request: QueryRequest,
     ai_service=Depends(get_ai_response_service),
 ) -> JSONResponse:
-    logger.info("Generate answer request", extra={"query": request.query, "category": request.category, "tags": request.tags})
+    logger.info(
+        "Generate answer request",
+        extra={
+            "query": request.query,
+            "category": request.category,
+            "tags": request.tags,
+        },
+    )
     try:
         logger.debug(
             "Generate answer request details",
             extra={
                 "query": request.query,
                 "category": request.category,
-                "tags": request.tags
-            }
+                "tags": request.tags,
+            },
         )
-        result = ai_service.generate_ai_response(request.query, request.category, request.tags)
-        logger.debug("Generate answer result", extra={"result_keys": list(result.keys())})
-        
+        result = ai_service.generate_ai_response(
+            request.query, request.category, request.tags
+        )
+        logger.debug(
+            "Generate answer result", extra={"result_keys": list(result.keys())}
+        )
+
         # エラーコードの存在をチェック
         if "error_code" in result:
             error_code = result.get("error_code", "OPENAI_ERROR")
             error_detail = result.get("error_detail", "AI回答の生成に失敗しました。")
-            logger.error("Generate answer failed", extra={"error_code": error_code, "error_detail": error_detail})
+            logger.error(
+                "Generate answer failed",
+                extra={"error_code": error_code, "error_detail": error_detail},
+            )
             logger.debug("Error detected in result", extra={"error_code": error_code})
-            
+
             # エラーコードに応じたヒントメッセージ
             if error_code == "OPENAI_INSUFFICIENT_QUOTA":
                 hint = "OpenAI APIの利用上限を超過しています。システム管理者にお問い合わせください。"
             elif error_code == "OPENAI_RATE_LIMIT":
-                hint = "一時的なレート制限です。しばらく時間をおいて再度お試しください。"
+                hint = (
+                    "一時的なレート制限です。しばらく時間をおいて再度お試しください。"
+                )
             else:
                 hint = "エラーが継続する場合は管理者にお問い合わせください。"
-            
+
             return ErrorApiResponse(
                 code=error_code,
                 detail=error_detail,
                 hint=hint,
                 status_code=200,  # 既存互換性のため200を維持
             ).to_json_response()
-        
+
         # 正常系の処理
         logger.debug(
             "Generate answer success details",
             extra={
                 "pdf_url": result.get("pdf_url"),
-                "sources_count": len(result.get("sources", []))
-            }
+                "sources_count": len(result.get("sources", [])),
+            },
         )
 
         answer_ok = bool(result.get("answer"))
@@ -108,7 +126,10 @@ async def generate_answer(
 
         if answer_ok and pdf_ok:
             # 両方成功
-            logger.info("Generate answer succeeded", extra={"answer_length": len(result.get("answer", "")), "has_pdf": True})
+            logger.info(
+                "Generate answer succeeded",
+                extra={"answer_length": len(result.get("answer", "")), "has_pdf": True},
+            )
             return SuccessApiResponse(
                 code="S200",
                 detail="AI回答生成成功",
@@ -116,7 +137,10 @@ async def generate_answer(
             ).to_json_response()
         if answer_ok and not pdf_ok:
             # 回答は成功、PDFは失敗
-            logger.warning("Generate answer succeeded without PDF", extra={"answer_length": len(result.get("answer", ""))})
+            logger.warning(
+                "Generate answer succeeded without PDF",
+                extra={"answer_length": len(result.get("answer", ""))},
+            )
             return SuccessApiResponse(
                 code="S200",
                 detail="AI回答生成（PDFなし）",
@@ -134,7 +158,9 @@ async def generate_answer(
         ).to_json_response()
     except ValueError as e:
         # 予期したValueErrorはanswerが空のケースとして扱い、ErrorApiResponse
-        logger.error("Generate answer ValueError", exc_info=True, extra={"error": str(e)})
+        logger.error(
+            "Generate answer ValueError", exc_info=True, extra={"error": str(e)}
+        )
         return ErrorApiResponse(
             code="E400",
             detail="回答生成に失敗しました。",
@@ -143,7 +169,9 @@ async def generate_answer(
             status_code=500,
         ).to_json_response()
     except Exception as e:
-        logger.error("Generate answer exception", exc_info=True, extra={"error": str(e)})
+        logger.error(
+            "Generate answer exception", exc_info=True, extra={"error": str(e)}
+        )
         return api_response(
             status_code=500,
             status_str="error",
@@ -164,8 +192,7 @@ async def download_report(request: Request, pages: list = Body(..., embed=True))
 
         pdf_path = str(PDF_PATH)
         logger.debug(
-            "Download report request",
-            extra={"pages": pages, "pdf_path": pdf_path}
+            "Download report request", extra={"pages": pages, "pdf_path": pdf_path}
         )
         if not pages or not isinstance(pages, list):
             return api_response(
@@ -224,7 +251,9 @@ async def download_report(request: Request, pages: list = Body(..., embed=True))
         headers = {"Content-Disposition": "attachment; filename=pages.zip"}
         return FileResponse(buf.name, media_type="application/zip", headers=headers)
     except Exception as e:
-        logger.error("Download report exception", extra={"error": repr(e)}, exc_info=True)
+        logger.error(
+            "Download report exception", extra={"error": repr(e)}, exc_info=True
+        )
         return api_response(
             status_code=500,
             status_str="error",
@@ -244,10 +273,7 @@ def pdf_page(page_num: str):
     from app.shared.file_utils import PDF_PATH
 
     pdf_path = str(PDF_PATH)
-    logger.debug(
-        "PDF page request",
-        extra={"page_num": page_num, "pdf_path": pdf_path}
-    )
+    logger.debug("PDF page request", extra={"page_num": page_num, "pdf_path": pdf_path})
     if "-" in page_num:
         start, end = page_num.split("-")
         start = int(start)
@@ -318,15 +344,13 @@ def debug_keys() -> JSONResponse:
     本番環境・ステージング環境では無効化されます。
     """
     import os
+
     stage = os.environ.get("STAGE", "").lower()
-    
+
     # 本番・ステージング環境では404を返す
     if stage in ("prod", "stg"):
-        raise HTTPException(
-            status_code=404,
-            detail="Not found"
-        )
-    
+        raise HTTPException(status_code=404, detail="Not found")
+
     k = os.environ.get("OPENAI_API_KEY")
     masked = f"***{k[-4:]}" if k and len(k) > 8 else ("set" if k else "missing")
     payload = {

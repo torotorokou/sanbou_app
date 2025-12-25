@@ -17,13 +17,14 @@ Permissions Granted:
   - SELECT, INSERT, UPDATE, DELETE on all tables
   - USAGE, SELECT on all sequences
 """
-from alembic import op
+
 import os
 
+from alembic import op
 
 # revision identifiers, used by Alembic.
-revision = '20251224_003'
-down_revision = '20251224_002'
+revision = "20251224_003"
+down_revision = "20251224_002"
 branch_labels = None
 depends_on = None
 
@@ -34,16 +35,18 @@ def upgrade():
     """
     # Get the current environment's database user from DB_USER or POSTGRES_USER env var
     # Prioritize DB_USER, fall back to POSTGRES_USER for backward compatibility
-    current_user = os.environ.get('DB_USER') or os.environ.get('POSTGRES_USER')
+    current_user = os.environ.get("DB_USER") or os.environ.get("POSTGRES_USER")
     if not current_user:
         raise ValueError(
             "Database user not specified. Please set DB_USER or POSTGRES_USER environment variable.\n"
             "Example: DB_USER=sanbou_app_dev or POSTGRES_USER=sanbou_app_dev"
         )
-    schema = 'app'
-    
-    print(f"[PERMISSIONS] Granting permissions on schema {schema} to user {current_user}")
-    
+    schema = "app"
+
+    print(
+        f"[PERMISSIONS] Granting permissions on schema {schema} to user {current_user}"
+    )
+
     grant_sql = f"""
         DO $$
         BEGIN
@@ -51,19 +54,19 @@ def upgrade():
                 IF EXISTS (SELECT 1 FROM information_schema.schemata WHERE schema_name = '{schema}') THEN
                     -- Grant USAGE on schema
                     EXECUTE 'GRANT USAGE ON SCHEMA {schema} TO {current_user}';
-                    
+
                     -- Grant ALL privileges on all tables in schema
                     EXECUTE 'GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA {schema} TO {current_user}';
-                    
+
                     -- Grant ALL privileges on all sequences in schema
                     EXECUTE 'GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA {schema} TO {current_user}';
-                    
+
                     -- Grant default privileges for future tables
                     EXECUTE 'ALTER DEFAULT PRIVILEGES IN SCHEMA {schema} GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO {current_user}';
-                    
+
                     -- Grant default privileges for future sequences
                     EXECUTE 'ALTER DEFAULT PRIVILEGES IN SCHEMA {schema} GRANT USAGE, SELECT ON SEQUENCES TO {current_user}';
-                    
+
                     RAISE NOTICE 'Granted permissions on schema {schema} to {current_user}';
                 ELSE
                     RAISE WARNING 'Schema {schema} does not exist!';
@@ -81,13 +84,13 @@ def downgrade():
     Revoke permissions on app schema (typically not done in practice)
     """
     # Get the current environment's database user from DB_USER or POSTGRES_USER env var
-    current_user = os.environ.get('DB_USER') or os.environ.get('POSTGRES_USER')
+    current_user = os.environ.get("DB_USER") or os.environ.get("POSTGRES_USER")
     if not current_user:
         raise ValueError(
             "Database user not specified. Please set DB_USER or POSTGRES_USER environment variable."
         )
-    schema = 'app'
-    
+    schema = "app"
+
     revoke_sql = f"""
         DO $$
         BEGIN

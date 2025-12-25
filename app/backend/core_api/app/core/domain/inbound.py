@@ -2,10 +2,11 @@
 Inbound domain entities and value objects.
 日次搬入量データのドメインエンティティ
 """
-from datetime import date as date_type
-from typing import Optional, Literal
-from pydantic import BaseModel, Field
 
+from datetime import date as date_type
+from typing import Literal, Optional
+
+from pydantic import BaseModel, Field
 
 # Cumulative scope literal type
 CumScope = Literal["range", "month", "week", "none"]
@@ -14,7 +15,7 @@ CumScope = Literal["range", "month", "week", "none"]
 class InboundDailyRow(BaseModel):
     """
     日次搬入量データ（カレンダー連続・0埋め済み）
-    
+
     Fields:
         ddate: 日付
         iso_year: ISO年
@@ -29,6 +30,7 @@ class InboundDailyRow(BaseModel):
         prev_month_cum_ton: 先月の累積搬入量（オプション）
         prev_year_cum_ton: 前年の累積搬入量（オプション）
     """
+
     ddate: date_type = Field(..., description="日付")
     iso_year: int = Field(..., description="ISO年")
     iso_week: int = Field(..., description="ISO週番号")
@@ -37,10 +39,18 @@ class InboundDailyRow(BaseModel):
     segment: Optional[str] = Field(None, description="セグメント")
     ton: float = Field(..., ge=0, description="日次搬入量トン数")
     cum_ton: Optional[float] = Field(None, ge=0, description="累積搬入量トン数")
-    prev_month_ton: Optional[float] = Field(None, ge=0, description="先月（4週前）の同曜日の搬入量")
-    prev_year_ton: Optional[float] = Field(None, ge=0, description="前年の同ISO週・同曜日の搬入量")
-    prev_month_cum_ton: Optional[float] = Field(None, ge=0, description="先月の累積搬入量")
-    prev_year_cum_ton: Optional[float] = Field(None, ge=0, description="前年の累積搬入量")
+    prev_month_ton: Optional[float] = Field(
+        None, ge=0, description="先月（4週前）の同曜日の搬入量"
+    )
+    prev_year_ton: Optional[float] = Field(
+        None, ge=0, description="前年の同ISO週・同曜日の搬入量"
+    )
+    prev_month_cum_ton: Optional[float] = Field(
+        None, ge=0, description="先月の累積搬入量"
+    )
+    prev_year_cum_ton: Optional[float] = Field(
+        None, ge=0, description="前年の累積搬入量"
+    )
 
     class Config:
         json_schema_extra = {

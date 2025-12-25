@@ -1,9 +1,11 @@
 import pandas as pd
-from backend_shared.application.logging import get_module_logger, create_log_context
+from app.infra.report_utils.formatters import (
+    get_weekday_japanese,
+    round_value_column_generic,
+    set_value_fast_safe,
+)
+from backend_shared.application.logging import create_log_context, get_module_logger
 from backend_shared.utils.dataframe_utils_optimized import clean_na_strings_vectorized
-from app.infra.report_utils.formatters import set_value_fast_safe
-from app.infra.report_utils.formatters import get_weekday_japanese
-from app.infra.report_utils.formatters import round_value_column_generic
 
 logger = get_module_logger(__name__)
 
@@ -68,19 +70,32 @@ def calculate_item_summary(
             ave_sell = total_sell / total_weight if total_weight > 0 else 0
 
             master_csv = set_value_fast_safe(
-                master_csv, master_columns_keys, [abc_key, "平均単価", item_name], ave_sell
+                master_csv,
+                master_columns_keys,
+                [abc_key, "平均単価", item_name],
+                ave_sell,
             )
             master_csv = set_value_fast_safe(
-                master_csv, master_columns_keys, [abc_key, "kg", item_name], total_weight
+                master_csv,
+                master_columns_keys,
+                [abc_key, "kg", item_name],
+                total_weight,
             )
             master_csv = set_value_fast_safe(
-                master_csv, master_columns_keys, [abc_key, "売上", item_name], total_sell
+                master_csv,
+                master_columns_keys,
+                [abc_key, "売上", item_name],
+                total_sell,
             )
 
             if total_weight == 0:
                 logger.warning(
                     "ABC重量0のため単価が0",
-                    extra=create_log_context(operation="calculate_abc_unit_prices", abc_key=abc_key, item_name=item_name)
+                    extra=create_log_context(
+                        operation="calculate_abc_unit_prices",
+                        abc_key=abc_key,
+                        item_name=item_name,
+                    ),
                 )
 
     return master_csv
@@ -113,7 +128,10 @@ def summarize_item_and_abc_totals(
         ave_sell = total_sell / total_weight if total_weight > 0 else 0
 
         master_csv = set_value_fast_safe(
-            master_csv, master_columns_keys, [abc_key, "平均単価", "3品目合計"], ave_sell
+            master_csv,
+            master_columns_keys,
+            [abc_key, "平均単価", "3品目合計"],
+            ave_sell,
         )
         master_csv = set_value_fast_safe(
             master_csv, master_columns_keys, [abc_key, "kg", "3品目合計"], total_weight
@@ -174,7 +192,10 @@ def calculate_final_totals(
         master_csv, master_columns_keys, ["総品目売上", None, None], total_sell_all
     )
     master_csv = set_value_fast_safe(
-        master_csv, master_columns_keys, ["総品目平均単価", None, None], average_price_all
+        master_csv,
+        master_columns_keys,
+        ["総品目平均単価", None, None],
+        average_price_all,
     )
 
     total_sell_3items = master_csv[
@@ -200,7 +221,10 @@ def calculate_final_totals(
         master_csv, master_columns_keys, ["その他品目売上", None, None], other_sell
     )
     master_csv = set_value_fast_safe(
-        master_csv, master_columns_keys, ["その他品目平均単価", None, None], other_avg_price
+        master_csv,
+        master_columns_keys,
+        ["その他品目平均単価", None, None],
+        other_avg_price,
     )
 
     return master_csv
@@ -222,7 +246,9 @@ def set_report_date_info(
 
     logger.info(
         "日付設定完了",
-        extra=create_log_context(operation="apply_date_and_weekday", date=formatted_date, weekday=weekday)
+        extra=create_log_context(
+            operation="apply_date_and_weekday", date=formatted_date, weekday=weekday
+        ),
     )
     return master_csv
 

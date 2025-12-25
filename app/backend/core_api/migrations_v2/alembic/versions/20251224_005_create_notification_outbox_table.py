@@ -25,22 +25,23 @@ Create Date: 2024-12-24
   - next_retry_at: リトライ対象の検索
   - created_at: 履歴参照の高速化
 """
-from alembic import op
+
 import sqlalchemy as sa
+from alembic import op
 from sqlalchemy.dialects import postgresql
 
-
 # revision identifiers, used by Alembic.
-revision = '20251224_005'
-down_revision = '20251224_004'
+revision = "20251224_005"
+down_revision = "20251224_004"
 branch_labels = None
 depends_on = None
 
 
 def upgrade() -> None:
     """app.notification_outbox テーブルを作成"""
-    
-    op.execute("""
+
+    op.execute(
+        """
         CREATE TABLE app.notification_outbox (
             id UUID PRIMARY KEY,
             channel VARCHAR(50) NOT NULL,
@@ -57,63 +58,84 @@ def upgrade() -> None:
             next_retry_at TIMESTAMP WITH TIME ZONE DEFAULT NULL,
             last_error TEXT DEFAULT NULL
         );
-    """)
-    
+    """
+    )
+
     # インデックス作成
-    op.execute("""
-        CREATE INDEX idx_notification_outbox_status 
+    op.execute(
+        """
+        CREATE INDEX idx_notification_outbox_status
         ON app.notification_outbox(status);
-    """)
-    
-    op.execute("""
-        CREATE INDEX idx_notification_outbox_next_retry 
-        ON app.notification_outbox(next_retry_at) 
+    """
+    )
+
+    op.execute(
+        """
+        CREATE INDEX idx_notification_outbox_next_retry
+        ON app.notification_outbox(next_retry_at)
         WHERE next_retry_at IS NOT NULL;
-    """)
-    
-    op.execute("""
-        CREATE INDEX idx_notification_outbox_created_at 
+    """
+    )
+
+    op.execute(
+        """
+        CREATE INDEX idx_notification_outbox_created_at
         ON app.notification_outbox(created_at DESC);
-    """)
-    
+    """
+    )
+
     # コメント追加（テーブル仕様の文書化）
-    op.execute("""
-        COMMENT ON TABLE app.notification_outbox IS 
+    op.execute(
+        """
+        COMMENT ON TABLE app.notification_outbox IS
         '通知Outbox - Transactional Outbox Patternによる通知管理';
-    """)
-    
-    op.execute("""
-        COMMENT ON COLUMN app.notification_outbox.id IS 
+    """
+    )
+
+    op.execute(
+        """
+        COMMENT ON COLUMN app.notification_outbox.id IS
         '通知ID（UUID）';
-    """)
-    
-    op.execute("""
-        COMMENT ON COLUMN app.notification_outbox.channel IS 
+    """
+    )
+
+    op.execute(
+        """
+        COMMENT ON COLUMN app.notification_outbox.channel IS
         '通知チャネル（email/line/webhook/push）';
-    """)
-    
-    op.execute("""
-        COMMENT ON COLUMN app.notification_outbox.status IS 
+    """
+    )
+
+    op.execute(
+        """
+        COMMENT ON COLUMN app.notification_outbox.status IS
         'ステータス（pending/sent/failed/skipped）';
-    """)
-    
-    op.execute("""
-        COMMENT ON COLUMN app.notification_outbox.recipient_key IS 
+    """
+    )
+
+    op.execute(
+        """
+        COMMENT ON COLUMN app.notification_outbox.recipient_key IS
         '宛先識別子（メールアドレス、user_id等）';
-    """)
-    
-    op.execute("""
-        COMMENT ON COLUMN app.notification_outbox.retry_count IS 
+    """
+    )
+
+    op.execute(
+        """
+        COMMENT ON COLUMN app.notification_outbox.retry_count IS
         'リトライ回数（0始まり）';
-    """)
-    
-    op.execute("""
-        COMMENT ON COLUMN app.notification_outbox.next_retry_at IS 
+    """
+    )
+
+    op.execute(
+        """
+        COMMENT ON COLUMN app.notification_outbox.next_retry_at IS
         '次回リトライ時刻（NULL=即座に実行可能）';
-    """)
+    """
+    )
 
 
 def downgrade() -> None:
     """app.notification_outbox テーブルを削除"""
-    
+
     op.execute("DROP TABLE IF EXISTS app.notification_outbox CASCADE;")

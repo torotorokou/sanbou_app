@@ -33,8 +33,3 @@ CREATE OR REPLACE VIEW mart.v_receive_monthly AS
    FROM d
   GROUP BY y, m
   ORDER BY y, m;
-
-
-
-
-

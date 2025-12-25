@@ -3,11 +3,11 @@ Notification Infrastructure Tests
 
 通知基盤の動作確認テスト（InMemory/Noop）
 """
+
 from datetime import datetime, timedelta
 from unittest.mock import Mock
 
 import pytest
-
 from app.core.domain.notification import (
     FailureType,
     NotificationChannel,
@@ -15,24 +15,24 @@ from app.core.domain.notification import (
     NotificationPayload,
     NotificationStatus,
 )
+from app.core.usecases.notification.dispatch_pending_notifications_uc import (
+    DispatchPendingNotificationsUseCase,
+)
 from app.core.usecases.notification.enqueue_notifications_uc import (
     EnqueueNotificationRequest,
     EnqueueNotificationsUseCase,
 )
-from app.core.usecases.notification.dispatch_pending_notifications_uc import (
-    DispatchPendingNotificationsUseCase,
+from app.infra.adapters.notification.dummy_resolver_adapter import (
+    DummyRecipientResolverAdapter,
 )
 from app.infra.adapters.notification.in_memory_outbox_adapter import (
     InMemoryNotificationOutboxAdapter,
 )
-from app.infra.adapters.notification.noop_sender_adapter import (
-    NoopNotificationSenderAdapter,
-)
 from app.infra.adapters.notification.in_memory_preference_adapter import (
     InMemoryNotificationPreferenceAdapter,
 )
-from app.infra.adapters.notification.dummy_resolver_adapter import (
-    DummyRecipientResolverAdapter,
+from app.infra.adapters.notification.noop_sender_adapter import (
+    NoopNotificationSenderAdapter,
 )
 
 
@@ -334,7 +334,9 @@ class TestDispatchPendingNotificationsUseCase:
 class TestNotificationLineFoundation:
     """LINE通知基盤の拡張テスト（preference/resolver/failure分類）"""
 
-    def test_preference_disabled_skips_notification(self, outbox, sender, preference, resolver):
+    def test_preference_disabled_skips_notification(
+        self, outbox, sender, preference, resolver
+    ):
         """Test Case 1: Preference で無効化された通知は skipped"""
         now = datetime.now()
         # user:2 は LINE disabled（test data）
@@ -365,7 +367,9 @@ class TestNotificationLineFoundation:
         assert item_in_outbox.status == NotificationStatus.SKIPPED
         assert "LINE notification disabled" in item_in_outbox.last_error
 
-    def test_resolver_returns_none_skips_notification(self, outbox, sender, preference, resolver):
+    def test_resolver_returns_none_skips_notification(
+        self, outbox, sender, preference, resolver
+    ):
         """Test Case 2: Resolver が None を返す場合 skipped（PERMANENT）"""
         now = datetime.now()
         # user:1 for LINE → Resolver returns None (未連携)
@@ -456,4 +460,3 @@ class TestNotificationLineFoundation:
         assert item_temp_in_outbox.failure_type == FailureType.TEMPORARY
         assert item_temp_in_outbox.retry_count == 1
         assert "RuntimeError" in item_temp_in_outbox.last_error
-

@@ -2,10 +2,13 @@
  * SectionBlock UI Component
  * セクション単位でマニュアルアイテムを表示（純粋UI）
  */
-import React from 'react';
-import { Badge, Col, Row, Space, Typography } from 'antd';
-import type { ManualItem, ManualSection } from '../../domain/types/shogun.types';
-import { ItemCard } from './ItemCard';
+import React from "react";
+import { Badge, Col, Row, Space, Typography } from "antd";
+import type {
+  ManualItem,
+  ManualSection,
+} from "../../domain/types/shogun.types";
+import { ItemCard } from "./ItemCard";
 
 const { Title } = Typography;
 

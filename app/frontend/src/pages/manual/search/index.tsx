@@ -21,7 +21,7 @@ const ManualSearchPage: React.FC = () => {
       setQuery(searchQuery);
       setSelectedDoc(null);
     },
-    [setQuery]
+    [setQuery],
   );
 
   const handleSelectDoc = useCallback((doc: ManualDoc) => {

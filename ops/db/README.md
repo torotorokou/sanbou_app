@@ -30,43 +30,44 @@
 
 ### ロール一覧
 
-| ロール名 | LOGIN | 用途 | 権限レベル |
-|---------|-------|------|----------|
-| `sanbou_owner` | ❌ NOLOGIN | DBオブジェクトの所有者（owner専用） | スキーマ・テーブル・シーケンス等の所有権 |
-| `sanbou_app_dev` | ✅ LOGIN | local_dev環境のアプリ接続ユーザー | 必要十分な権限（RW/RO） |
-| `sanbou_app_stg` | ✅ LOGIN | vm_stg環境のアプリ接続ユーザー | 同上 |
-| `sanbou_app_prod` | ✅ LOGIN | vm_prod環境のアプリ接続ユーザー | 同上 |
-| `app_readonly` | ❌ NOLOGIN | 読み取り専用アクセス用（将来の拡張） | SELECT のみ |
-| `myuser` | ✅ LOGIN (superuser) | 緊急用（break-glass） | superuser（使用は最小限に） |
+| ロール名          | LOGIN                | 用途                                 | 権限レベル                               |
+| ----------------- | -------------------- | ------------------------------------ | ---------------------------------------- |
+| `sanbou_owner`    | ❌ NOLOGIN           | DBオブジェクトの所有者（owner専用）  | スキーマ・テーブル・シーケンス等の所有権 |
+| `sanbou_app_dev`  | ✅ LOGIN             | local_dev環境のアプリ接続ユーザー    | 必要十分な権限（RW/RO）                  |
+| `sanbou_app_stg`  | ✅ LOGIN             | vm_stg環境のアプリ接続ユーザー       | 同上                                     |
+| `sanbou_app_prod` | ✅ LOGIN             | vm_prod環境のアプリ接続ユーザー      | 同上                                     |
+| `app_readonly`    | ❌ NOLOGIN           | 読み取り専用アクセス用（将来の拡張） | SELECT のみ                              |
+| `myuser`          | ✅ LOGIN (superuser) | 緊急用（break-glass）                | superuser（使用は最小限に）              |
 
 ### 環境ごとの変数
 
-| 環境 | POSTGRES_USER | POSTGRES_DB | パスワード |
-|------|---------------|-------------|-----------|
-| local_dev | `sanbou_app_dev` | `sanbou_dev` | `.env.local_dev.secrets` |
-| vm_stg | `sanbou_app_stg` | `sanbou_stg` | `.env.vm_stg.secrets` |
-| vm_prod | `sanbou_app_prod` | `sanbou_prod` | `.env.vm_prod.secrets` |
+| 環境      | POSTGRES_USER     | POSTGRES_DB   | パスワード               |
+| --------- | ----------------- | ------------- | ------------------------ |
+| local_dev | `sanbou_app_dev`  | `sanbou_dev`  | `.env.local_dev.secrets` |
+| vm_stg    | `sanbou_app_stg`  | `sanbou_stg`  | `.env.vm_stg.secrets`    |
+| vm_prod   | `sanbou_app_prod` | `sanbou_prod` | `.env.vm_prod.secrets`   |
 
 ---
 
 ## 🗂️ スキーマ別権限方針
 
-| スキーマ | 用途 | owner | アプリ権限 | 備考 |
-|---------|------|-------|----------|------|
-| `raw` | 生データ保存 | `sanbou_owner` | **RW** (SELECT, INSERT, UPDATE, DELETE) + SEQUENCES | CSVアップロード先 |
-| `stg` | 正規化済みデータ | `sanbou_owner` | **RW** + SEQUENCES | ETL処理の中間層 |
-| `mart` | 集計・分析用 | `sanbou_owner` | **RO** (SELECT) | マテリアライズドビュー・集計テーブル |
-| `ref` | マスタデータ | `sanbou_owner` | **RO** (SELECT) | 参照専用 |
-| `kpi` | KPI管理 | `sanbou_owner` | **RW** + SEQUENCES | 月次目標等の更新が必要 |
-| `log` | ログテーブル | `sanbou_owner` | **RW** + SEQUENCES | アプリログ記録 |
-| `app` | アプリ固有機能 | `sanbou_owner` | **RW** + SEQUENCES | お知らせ機能等 |
-| `app_auth` | 認証情報 | `sanbou_owner` | **RW** + SEQUENCES | 将来の認証機能用 |
-| `forecast` | 予測データ | `sanbou_owner` | **RW** + SEQUENCES | AI予測結果保存 |
-| `jobs` | ジョブ管理 | `sanbou_owner` | **RW** + SEQUENCES | バックグラウンドジョブ |
-| `sandbox` | 開発用 | `sanbou_owner` | **RW** + SEQUENCES | 実験・検証用 |
-| `public` | デフォルト | `sanbou_owner` | **RW** + SEQUENCES | alembic_version等 |
+| スキーマ   | 用途             | owner          | アプリ権限                                          | 備考                                 |
+| ---------- | ---------------- | -------------- | --------------------------------------------------- | ------------------------------------ |
+| `raw`      | 生データ保存     | `sanbou_owner` | **RW** (SELECT, INSERT, UPDATE, DELETE) + SEQUENCES | CSVアップロード先                    |
+| `stg`      | 正規化済みデータ | `sanbou_owner` | **RW** + SEQUENCES                                  | ETL処理の中間層                      |
+| `mart`     | 集計・分析用     | `sanbou_owner` | **RO** (SELECT)                                     | マテリアライズドビュー・集計テーブル |
+| `ref`      | マスタデータ     | `sanbou_owner` | **RO** (SELECT)                                     | 参照専用                             |
+| `kpi`      | KPI管理          | `sanbou_owner` | **RW** + SEQUENCES                                  | 月次目標等の更新が必要               |
+| `log`      | ログテーブル     | `sanbou_owner` | **RW** + SEQUENCES                                  | アプリログ記録                       |
+| `app`      | アプリ固有機能   | `sanbou_owner` | **RW** + SEQUENCES                                  | お知らせ機能等                       |
+| `app_auth` | 認証情報         | `sanbou_owner` | **RW** + SEQUENCES                                  | 将来の認証機能用                     |
+| `forecast` | 予測データ       | `sanbou_owner` | **RW** + SEQUENCES                                  | AI予測結果保存                       |
+| `jobs`     | ジョブ管理       | `sanbou_owner` | **RW** + SEQUENCES                                  | バックグラウンドジョブ               |
+| `sandbox`  | 開発用           | `sanbou_owner` | **RW** + SEQUENCES                                  | 実験・検証用                         |
+| `public`   | デフォルト       | `sanbou_owner` | **RW** + SEQUENCES                                  | alembic_version等                    |
 
 **凡例**:
+
 - **RW**: SELECT, INSERT, UPDATE, DELETE
 - **RO**: SELECT のみ
 - **SEQUENCES**: USAGE, SELECT（自動採番に必須）
@@ -183,7 +184,7 @@ ORDER BY schemaname, tablename
 LIMIT 20;
 
 -- アプリユーザーの権限確認
-SELECT 
+SELECT
   table_schema,
   privilege_type,
   COUNT(*) as count
@@ -235,13 +236,13 @@ cat backups/globals_YYYYMMDD_HHMMSS.sql | \
 
 ## 📝 スクリプト一覧
 
-| ファイル | 用途 | 冪等性 |
-|---------|------|-------|
-| `01_roles.sql` | sanbou_owner ロール作成 | ✅ |
-| `02_reassign_ownership.sql` | 所有権を sanbou_owner に移管 | ✅ |
-| `03_grants.sql` | アプリユーザーへ権限付与 | ✅ |
-| `04_default_privileges.sql` | 新規オブジェクトへの自動権限設定 | ✅ |
-| `99_verify.sql` | 検証クエリ | - |
+| ファイル                    | 用途                             | 冪等性 |
+| --------------------------- | -------------------------------- | ------ |
+| `01_roles.sql`              | sanbou_owner ロール作成          | ✅     |
+| `02_reassign_ownership.sql` | 所有権を sanbou_owner に移管     | ✅     |
+| `03_grants.sql`             | アプリユーザーへ権限付与         | ✅     |
+| `04_default_privileges.sql` | 新規オブジェクトへの自動権限設定 | ✅     |
+| `99_verify.sql`             | 検証クエリ                       | -      |
 
 ---
 

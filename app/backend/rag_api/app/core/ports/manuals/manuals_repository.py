@@ -1,6 +1,12 @@
 from abc import ABC, abstractmethod
-from typing import Optional, List
-from app.core.domain.manuals.manual_entity import ManualDetail, ManualListResponse, ManualSectionChunk
+from typing import List, Optional
+
+from app.core.domain.manuals.manual_entity import (
+    ManualDetail,
+    ManualListResponse,
+    ManualSectionChunk,
+)
+
 
 class ManualsRepository(ABC):
     @abstractmethod

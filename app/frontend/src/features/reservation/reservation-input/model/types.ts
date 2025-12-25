@@ -1,11 +1,11 @@
 /**
  * ReservationInput - 型定義
- * 
+ *
  * Model (型定義)
  * 規約: UI Componentのprops型をmodel層で一元管理
  */
 
-import type { Dayjs } from 'dayjs';
+import type { Dayjs } from "dayjs";
 
 /**
  * ReservationInputForm コンポーネントのProps

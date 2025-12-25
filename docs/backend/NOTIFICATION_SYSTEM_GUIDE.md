@@ -26,12 +26,12 @@
 
 ### 対応チャネル
 
-| チャネル | ステータス | 用途 |
-|---------|----------|------|
-| **email** | ✅ 準備完了（Sender未実装） | システム通知、レポート送信 |
-| **line** | ✅ 基盤準備完了 | リアルタイム通知、ユーザー向けアラート |
-| webhook | 🔜 将来対応 | 外部システム連携 |
-| push | 🔜 将来対応 | モバイルアプリ通知 |
+| チャネル  | ステータス                  | 用途                                   |
+| --------- | --------------------------- | -------------------------------------- |
+| **email** | ✅ 準備完了（Sender未実装） | システム通知、レポート送信             |
+| **line**  | ✅ 基盤準備完了             | リアルタイム通知、ユーザー向けアラート |
+| webhook   | 🔜 将来対応                 | 外部システム連携                       |
+| push      | 🔜 将来対応                 | モバイルアプリ通知                     |
 
 ### 主要機能
 
@@ -98,13 +98,14 @@
 
 すべての通知は以下の形式で宛先を管理します：
 
-| 形式 | 例 | 用途 |
-|------|-----|------|
-| `user:{id}` | `user:123` | ユーザーID（将来的にLINE userId等に解決） |
-| `email:{address}` | `email:admin@example.com` | メールアドレス直接指定 |
-| `aud:{site}:{code}` | `aud:tokyo:A001` | 視聴者コード（レポート送信等） |
+| 形式                | 例                        | 用途                                      |
+| ------------------- | ------------------------- | ----------------------------------------- |
+| `user:{id}`         | `user:123`                | ユーザーID（将来的にLINE userId等に解決） |
+| `email:{address}`   | `email:admin@example.com` | メールアドレス直接指定                    |
+| `aud:{site}:{code}` | `aud:tokyo:A001`          | 視聴者コード（レポート送信等）            |
 
 **利点**:
+
 - チャネルに依存しない統一的な宛先管理
 - 将来的な拡張が容易（`user:123` → LINE userId / Push token 等への解決）
 - データベース設計の柔軟性
@@ -126,30 +127,36 @@
 #### 実装内容
 
 **Domain層**:
+
 - ✅ `FailureType` enum（TEMPORARY / PERMANENT）
 - ✅ `RecipientRef` dataclass（recipient_key解析）
 - ✅ `NotificationPreference` dataclass（opt-in制御）
 
 **Ports層**:
+
 - ✅ `NotificationPreferencePort`（通知許可管理）
 - ✅ `RecipientResolverPort`（チャネル固有ID解決）
 - ✅ `mark_failed(failure_type)`, `mark_skipped(reason)` 拡張
 
 **Adapters層**:
+
 - ✅ `InMemoryNotificationPreferenceAdapter`（テスト用）
 - ✅ `DummyRecipientResolverAdapter`（テスト用）
 - ✅ `InMemoryOutboxAdapter` TEMP/PERM対応
 - ✅ `DbOutboxAdapter` failure_type対応
 
 **UseCases層**:
+
 - ✅ `DispatchPendingNotificationsUseCase` 拡張
   - Preference判定 → Resolver解決 → 送信 → 失敗分類
 
 **DBマイグレーション**:
+
 - ✅ `20251225_001_add_notification_outbox_failure_type.py`
   - `failure_type VARCHAR(20)` カラム追加
 
 **テスト**:
+
 - ✅ 16ケース全成功（既存13 + 新規3）
   - Preference無効化でskipped検証
   - Resolver解決失敗でskipped検証
@@ -158,6 +165,7 @@
 ### Phase 3: 実Email/LINE送信 🔜 未実装
 
 **残タスク**:
+
 - Email Sender実装（SMTP連携）
 - LINE Sender実装（Messaging API連携）
 - DB Recipient Resolver実装（user_line_accounts テーブル）
@@ -187,17 +195,17 @@ class EmailNotificationSenderAdapter(NotificationSenderPort):
         self.smtp_port = smtp_port
         self.username = username
         self.password = password
-    
+
     def send(self, channel: str, payload: NotificationPayload, recipient_key: str) -> None:
         if channel != "email":
             raise ValueError(f"Unsupported channel: {channel}")
-        
+
         # MIME message構築
         msg = MIMEMultipart("alternative")
         msg["Subject"] = payload.title
         msg["From"] = self.username
         msg["To"] = recipient_key
-        
+
         # HTML body
         html = f"""
         <html>
@@ -209,7 +217,7 @@ class EmailNotificationSenderAdapter(NotificationSenderPort):
         </html>
         """
         msg.attach(MIMEText(html, "html"))
-        
+
         # SMTP送信
         with smtplib.SMTP(self.smtp_host, self.smtp_port) as server:
             server.starttls()
@@ -235,7 +243,7 @@ SMTP_PASSWORD=<SET_IN_SECRETS>
 # app/config/di_providers.py
 def get_notification_sender_port() -> NotificationSenderPort:
     enable_email = os.getenv("ENABLE_EMAIL_NOTIFICATION", "false").lower() == "true"
-    
+
     if enable_email:
         return EmailNotificationSenderAdapter(
             smtp_host=os.getenv("SMTP_HOST"),
@@ -302,10 +310,10 @@ def get_notification_sender_port() -> NotificationSenderPort:
 
 ### 失敗分類
 
-| 失敗タイプ | 判定条件 | リトライ | 例 |
-|-----------|---------|---------|-----|
+| 失敗タイプ    | 判定条件                                      | リトライ               | 例                                              |
+| ------------- | --------------------------------------------- | ---------------------- | ----------------------------------------------- |
 | **TEMPORARY** | RuntimeError, TimeoutError, ConnectionError等 | ✅ あり（1→5→30→60分） | タイムアウト、ネットワークエラー、APIレート制限 |
-| **PERMANENT** | ValueError, 認証エラー等 | ❌ なし（即failed） | 不正なrecipient_key、LINE userId無効 |
+| **PERMANENT** | ValueError, 認証エラー等                      | ❌ なし（即failed）    | 不正なrecipient_key、LINE userId無効            |
 
 ### 実装待ち: user_line_accounts テーブル
 
@@ -319,13 +327,13 @@ CREATE TABLE app.user_line_accounts (
     CONSTRAINT valid_line_user_id CHECK (line_user_id ~ '^U[a-f0-9]{32}$')
 );
 
-CREATE INDEX idx_user_line_accounts_line_user_id 
+CREATE INDEX idx_user_line_accounts_line_user_id
 ON app.user_line_accounts(line_user_id);
 
-COMMENT ON TABLE app.user_line_accounts IS 
+COMMENT ON TABLE app.user_line_accounts IS
 'ユーザーとLINEアカウントの連携情報';
 
-COMMENT ON COLUMN app.user_line_accounts.line_user_id IS 
+COMMENT ON COLUMN app.user_line_accounts.line_user_id IS
 'LINE userId（形式: U[a-f0-9]{32}）';
 ```
 
@@ -336,34 +344,34 @@ COMMENT ON COLUMN app.user_line_accounts.line_user_id IS
 class DbRecipientResolverAdapter(RecipientResolverPort):
     def __init__(self, db: Session):
         self.db = db
-    
+
     def resolve(self, recipient_key: str, channel: str) -> Optional[str]:
         ref = RecipientRef.parse(recipient_key)
         if not ref:
             return None
-        
+
         if ref.kind == "user" and channel == "line":
             # DB照会: user_id → line_user_id
             result = self.db.execute(
                 text("""
-                    SELECT line_user_id 
-                    FROM app.user_line_accounts 
-                    WHERE user_id = :user_id 
+                    SELECT line_user_id
+                    FROM app.user_line_accounts
+                    WHERE user_id = :user_id
                       AND unlinked_at IS NULL
                 """),
                 {"user_id": int(ref.key)}
             ).fetchone()
-            
+
             return result[0] if result else None
-        
+
         elif ref.kind == "email":
             # Email: そのまま使用
             return ref.key
-        
+
         elif ref.kind == "aud":
             # 視聴者: サイト別ロジック（TODO）
             return None
-        
+
         return None
 ```
 
@@ -377,15 +385,15 @@ class LineNotificationSenderAdapter(NotificationSenderPort):
     def __init__(self, channel_access_token: str):
         self.channel_access_token = channel_access_token
         self.api_url = "https://api.line.me/v2/bot/message/push"
-    
+
     def send(self, channel: str, payload: NotificationPayload, recipient_key: str) -> None:
         if channel != "line":
             raise ValueError(f"Unsupported channel: {channel}")
-        
+
         # LINE userId検証
         if not recipient_key.startswith("U") or len(recipient_key) != 33:
             raise ValueError(f"Invalid LINE userId: {recipient_key}")
-        
+
         # Flex Message構築（シンプル版）
         message = {
             "to": recipient_key,
@@ -396,14 +404,14 @@ class LineNotificationSenderAdapter(NotificationSenderPort):
                 }
             ]
         }
-        
+
         # URLがある場合は追加
         if payload.url:
             message["messages"].append({
                 "type": "text",
                 "text": f"詳細: {payload.url}"
             })
-        
+
         # LINE Messaging API呼び出し
         response = requests.post(
             self.api_url,
@@ -414,7 +422,7 @@ class LineNotificationSenderAdapter(NotificationSenderPort):
             json=message,
             timeout=10
         )
-        
+
         if response.status_code == 400:
             # Bad Request → PERMANENT
             raise ValueError(f"LINE API error: {response.text}")
@@ -424,7 +432,7 @@ class LineNotificationSenderAdapter(NotificationSenderPort):
         elif response.status_code >= 500:
             # Server error → TEMPORARY
             raise RuntimeError(f"LINE API server error: {response.text}")
-        
+
         response.raise_for_status()
 ```
 
@@ -444,7 +452,7 @@ LINE_CHANNEL_ACCESS_TOKEN=<SET_IN_SECRETS>
 # app/config/di_providers.py
 def get_recipient_resolver_port(db: Session = Depends(get_db)) -> RecipientResolverPort:
     use_db = os.getenv("USE_DB_RECIPIENT_RESOLVER", "false").lower() == "true"
-    
+
     if use_db:
         return DbRecipientResolverAdapter(db)
     else:
@@ -457,14 +465,14 @@ def get_recipient_resolver_port(db: Session = Depends(get_db)) -> RecipientResol
 def get_notification_sender_port() -> NotificationSenderPort:
     enable_line = os.getenv("ENABLE_LINE_NOTIFICATION", "false").lower() == "true"
     enable_email = os.getenv("ENABLE_EMAIL_NOTIFICATION", "false").lower() == "true"
-    
+
     # Multi-channel sender（将来実装）
     senders = []
     if enable_email:
         senders.append(EmailNotificationSenderAdapter(...))
     if enable_line:
         senders.append(LineNotificationSenderAdapter(...))
-    
+
     if senders:
         return MultiChannelNotificationSenderAdapter(senders)
     else:
@@ -526,7 +534,7 @@ def test_notification_with_preference():
     preference = InMemoryNotificationPreferenceAdapter()
     resolver = DummyRecipientResolverAdapter()
     sender = NoopNotificationSenderAdapter()
-    
+
     # user:2 は LINE disabled（test data）
     item = NotificationOutboxItem.create_pending(
         channel="line",
@@ -535,7 +543,7 @@ def test_notification_with_preference():
         now=datetime.now(timezone.utc),
     )
     outbox.enqueue([item])
-    
+
     # Dispatch
     dispatch_uc = DispatchPendingNotificationsUseCase(
         outbox=outbox,
@@ -544,7 +552,7 @@ def test_notification_with_preference():
         resolver=resolver,
     )
     sent_count = dispatch_uc.execute(now=datetime.now(timezone.utc))
-    
+
     # 検証
     assert sent_count == 0
     assert outbox._items[item.id].status == NotificationStatus.SKIPPED
@@ -559,15 +567,15 @@ services:
     environment:
       # DB永続化を使用
       USE_DB_NOTIFICATION_OUTBOX: "true"
-      
+
       # スケジューラー有効化
       ENABLE_NOTIFICATION_SCHEDULER: "true"
       NOTIFICATION_DISPATCH_INTERVAL_MINUTES: "1"
-      
+
       # Noop sender使用（実送信しない）
       ENABLE_EMAIL_NOTIFICATION: "false"
       ENABLE_LINE_NOTIFICATION: "false"
-      
+
       # Dummy resolver使用
       USE_DB_RECIPIENT_RESOLVER: "false"
 ```
@@ -582,7 +590,7 @@ services:
 
 ```sql
 -- Pending状態で1時間以上滞留している通知
-SELECT 
+SELECT
     id,
     channel,
     recipient_key,
@@ -600,13 +608,13 @@ ORDER BY created_at DESC;
 
 ```sql
 -- 直近1時間の失敗率
-SELECT 
+SELECT
     channel,
     COUNT(*) FILTER (WHERE status = 'sent') as sent_count,
     COUNT(*) FILTER (WHERE status = 'failed') as failed_count,
     COUNT(*) FILTER (WHERE status = 'skipped') as skipped_count,
     ROUND(
-        100.0 * COUNT(*) FILTER (WHERE status = 'failed') / 
+        100.0 * COUNT(*) FILTER (WHERE status = 'failed') /
         NULLIF(COUNT(*) FILTER (WHERE status IN ('sent', 'failed')), 0),
         2
     ) as failure_rate_pct
@@ -619,7 +627,7 @@ GROUP BY channel;
 
 ```sql
 -- リトライ回数別の件数
-SELECT 
+SELECT
     retry_count,
     COUNT(*) as count,
     AVG(EXTRACT(EPOCH FROM (sent_at - created_at))) as avg_delay_seconds
@@ -632,12 +640,12 @@ ORDER BY retry_count;
 
 ### アラート設定
 
-| メトリクス | 閾値 | アクション |
-|-----------|------|-----------|
-| Pending滞留1時間以上 | 10件以上 | Slack通知 + 調査 |
-| 失敗率 | 10%以上 | Slack通知 + 調査 |
-| PERMANENT失敗 | 5件/時間以上 | Slack通知 + コード調査 |
-| Scheduler停止 | 5分間dispatch無し | Slack通知 + 再起動 |
+| メトリクス           | 閾値              | アクション             |
+| -------------------- | ----------------- | ---------------------- |
+| Pending滞留1時間以上 | 10件以上          | Slack通知 + 調査       |
+| 失敗率               | 10%以上           | Slack通知 + 調査       |
+| PERMANENT失敗        | 5件/時間以上      | Slack通知 + コード調査 |
+| Scheduler停止        | 5分間dispatch無し | Slack通知 + 再起動     |
 
 ### データ保持期間
 
@@ -657,29 +665,33 @@ WHERE status IN ('sent', 'skipped', 'failed')
 ### 問題1: 通知が送信されない
 
 #### 症状
+
 - Outboxに登録されるが、status=pending のまま
 
 #### 確認手順
 
 1. **Schedulerが動作しているか**
+
    ```bash
    # ログ確認
    docker compose -p local_dev logs core_api | grep "Dispatching pending notifications"
    ```
 
 2. **環境変数が正しいか**
+
    ```bash
    docker compose -p local_dev exec core_api env | grep NOTIFICATION
    ```
 
 3. **Outbox内のnext_retry_atを確認**
    ```sql
-   SELECT id, next_retry_at, NOW() 
-   FROM app.notification_outbox 
+   SELECT id, next_retry_at, NOW()
+   FROM app.notification_outbox
    WHERE status = 'pending';
    ```
 
 #### 解決策
+
 - Scheduler未起動 → `ENABLE_NOTIFICATION_SCHEDULER=true`
 - next_retry_at が未来 → リトライ待ち（正常）
 - DB接続エラー → DBコンテナ確認
@@ -689,19 +701,22 @@ WHERE status IN ('sent', 'skipped', 'failed')
 ### 問題2: LINE通知がskippedになる
 
 #### 症状
+
 - status='skipped', last_error='Recipient not resolved for channel=line'
 
 #### 確認手順
 
 1. **Resolverの実装を確認**
+
    ```python
    # DummyResolverAdapter → 常にNone返す（開発環境）
    # DbResolverAdapter → DB照会（本番環境）
    ```
 
 2. **user_line_accounts テーブルを確認**
+
    ```sql
-   SELECT * FROM app.user_line_accounts 
+   SELECT * FROM app.user_line_accounts
    WHERE user_id = 123 AND unlinked_at IS NULL;
    ```
 
@@ -712,6 +727,7 @@ WHERE status IN ('sent', 'skipped', 'failed')
    ```
 
 #### 解決策
+
 - Dummy Resolver使用中 → 開発環境では正常（実LINE送信は本番のみ）
 - LINE未連携 → ユーザーにLINE連携を促す
 - recipient_key形式エラー → コード修正
@@ -721,15 +737,17 @@ WHERE status IN ('sent', 'skipped', 'failed')
 ### 問題3: PERMANENT失敗が多発
 
 #### 症状
+
 - status='failed', failure_type='PERMANENT', retry_count=0
 
 #### 確認手順
 
 1. **last_errorを確認**
+
    ```sql
-   SELECT id, recipient_key, last_error 
-   FROM app.notification_outbox 
-   WHERE failure_type = 'PERMANENT' 
+   SELECT id, recipient_key, last_error
+   FROM app.notification_outbox
+   WHERE failure_type = 'PERMANENT'
    ORDER BY created_at DESC LIMIT 10;
    ```
 
@@ -738,6 +756,7 @@ WHERE status IN ('sent', 'skipped', 'failed')
    - 認証エラー → API token無効
 
 #### 解決策
+
 - recipient_key形式エラー → ビジネスロジック修正
 - API token無効 → Secrets更新
 
@@ -746,12 +765,14 @@ WHERE status IN ('sent', 'skipped', 'failed')
 ### 問題4: スケジューラーが重複実行される
 
 #### 症状
+
 - ログに "Dispatching..." が重複して出力される
 - 同じ通知が複数回送信される
 
 #### 確認手順
 
 1. **uvicorn --reload使用確認**
+
    ```bash
    # 開発環境でreload有効？
    ps aux | grep uvicorn
@@ -763,6 +784,7 @@ WHERE status IN ('sent', 'skipped', 'failed')
    ```
 
 #### 解決策
+
 - uvicorn --reload使用中 → 正常（開発環境の制限）
 - 本番環境で重複 → core_apiインスタンス数確認、Schedulerを1インスタンスのみに制限
 

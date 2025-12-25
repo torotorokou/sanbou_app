@@ -20,6 +20,7 @@ def get_database_url(default: str = "postgresql://myuser:<WEAK_PASSWORD>@db:5432
 ```
 
 **問題:**
+
 - パスワードが平文でコードに直接記載
 - デフォルト値がフォールバックとして使用される可能性
 - Git履歴に機密情報が残る
@@ -30,6 +31,7 @@ def get_database_url(default: str = "postgresql://myuser:<WEAK_PASSWORD>@db:5432
 以下のファイルでハードコードが発見されました:
 
 **Pythonコード:**
+
 1. `app/backend/backend_shared/src/backend_shared/config/env_utils.py`
 2. `app/backend/plan_worker/app/infra/db/health.py`
 3. `app/backend/plan_worker/app/test/common.py`
@@ -38,6 +40,7 @@ def get_database_url(default: str = "postgresql://myuser:<WEAK_PASSWORD>@db:5432
 6. `app/backend/core_api/app/infra/db/db.py`
 
 **環境ファイル:**
+
 1. `env/.env.local_stg`
 2. `env/.env.vm_stg`
 3. `env/.env.vm_prod`
@@ -50,6 +53,7 @@ def get_database_url(default: str = "postgresql://myuser:<WEAK_PASSWORD>@db:5432
 #### 修正パターン
 
 **修正前:**
+
 ```python
 # 危険: パスワードがハードコード (例)
 user = os.getenv("POSTGRES_USER", "<DEFAULT_USER>")  # ハードコードされたデフォルト値
@@ -59,6 +63,7 @@ return f"postgresql://{user}:{pwd}@{host}:{port}/{db}"
 ```
 
 **修正後:**
+
 ```python
 # 安全: 環境変数必須、フォールバックなし
 user = os.getenv("POSTGRES_USER", "")
@@ -78,23 +83,28 @@ return f"postgresql://{user}:{pwd}@{host}:{port}/{db}"
 #### 修正した関数
 
 1. **`backend_shared/config/env_utils.py::get_database_url()`**
+
    - デフォルト引数を `None` に変更
    - 環境変数が未設定の場合は明示的にエラー
-   - POSTGRES_* 変数から動的に構築
+   - POSTGRES\_\* 変数から動的に構築
 
 2. **`plan_worker/app/infra/db/health.py::_dsn()`**
+
    - フォールバック値を空文字列に変更
    - 必須変数チェックを追加
 
 3. **`plan_worker/app/test/common.py::_dsn()`**
+
    - テスト用関数も同様に修正
    - 本番コードと同じ安全性を確保
 
 4. **`plan_worker/app/config/settings.py::Settings`**
+
    - `default_factory` パターンを使用
    - Pydantic モデルで動的構築
 
 5. **`core_api/app/config/settings.py::Settings`**
+
    - 静的メソッドで DATABASE_URL を構築
    - クラス初期化時に環境変数を評価
 
@@ -107,17 +117,19 @@ return f"postgresql://{user}:{pwd}@{host}:{port}/{db}"
 #### .env.local_stg, .env.vm_stg, .env.vm_prod, .env.local_demo
 
 **修正前:**
+
 ```dotenv
 POSTGRES_DB=sanbou_stg
 DATABASE_URL=postgresql://myuser:mypassword@db:5432/sanbou_stg
 ```
 
 **修正後:**
+
 ```dotenv
 # === DB ===
 # 【DB ユーザー分離対応】
 # POSTGRES_USER / POSTGRES_PASSWORD / DATABASE_URL は secrets/.env.*.secrets に記載してください
-# 
+#
 # 注意: DATABASE_URL はパスワードを含むため、必ず secrets/ ファイルで設定してください
 #       ここで設定すると Git にパスワードが記録されます
 POSTGRES_DB=sanbou_stg
@@ -163,6 +175,7 @@ if not user or not password or not database:
 ```
 
 **利点:**
+
 - 起動時に設定ミスを即座に検出
 - 暗黙的なフォールバックによるセキュリティリスクを排除
 - デバッグが容易
@@ -220,15 +233,17 @@ docker compose -f docker/docker-compose.dev.yml -p local_dev \
 ### 6.1 既存環境への適用
 
 1. **secrets ファイルの作成**
+
    ```bash
    cp secrets/.env.secrets.template secrets/.env.local_dev.secrets
    ```
 
 2. **パスワードの設定**
+
    ```bash
    # 強力なパスワードを生成
    openssl rand -base64 32
-   
+
    # secrets/.env.local_dev.secrets を編集
    POSTGRES_USER=myuser
    POSTGRES_PASSWORD=<生成したパスワード>
@@ -236,6 +251,7 @@ docker compose -f docker/docker-compose.dev.yml -p local_dev \
    ```
 
 3. **DBパスワードの更新**（既存DBの場合）
+
    ```sql
    ALTER USER myuser WITH PASSWORD '<生成したパスワード>';
    ```
@@ -248,6 +264,7 @@ docker compose -f docker/docker-compose.dev.yml -p local_dev \
 ### 6.2 新規環境のセットアップ
 
 1. **テンプレートからコピー**
+
    ```bash
    cp secrets/.env.secrets.template secrets/.env.vm_stg.secrets
    ```
@@ -264,12 +281,14 @@ docker compose -f docker/docker-compose.dev.yml -p local_dev \
 ### 7.1 パスワード管理
 
 ✅ **推奨:**
+
 - `openssl rand -base64 32` で強力なパスワードを生成
 - 環境ごとに異なるパスワードを使用
 - 1Password 等でバックアップ
 - 定期的にローテーション
 
 ❌ **禁止:**
+
 - 弱いパスワード（`password`, `123456` など）
 - 環境間でのパスワード共有
 - Git へのコミット
@@ -295,24 +314,28 @@ echo $POSTGRES_USER
 ### 8.1 起動時エラー
 
 **エラー:**
+
 ```
-ValueError: DATABASE_URL is not set and POSTGRES_USER, POSTGRES_PASSWORD, 
+ValueError: DATABASE_URL is not set and POSTGRES_USER, POSTGRES_PASSWORD,
 or POSTGRES_DB is missing.
 ```
 
 **解決策:**
-1. secrets/.env.*.secrets ファイルが存在するか確認
+
+1. secrets/.env.\*.secrets ファイルが存在するか確認
 2. docker-compose.yml で env_file が正しく指定されているか確認
 3. 環境変数が正しく設定されているか確認
 
 ### 8.2 認証エラー
 
 **エラー:**
+
 ```
 FATAL: password authentication failed for user "myuser"
 ```
 
 **解決策:**
+
 1. secrets ファイルのパスワードと実際のDBパスワードが一致しているか確認
 2. DATABASE_URL のパスワード部分が正しいか確認
 3. 必要に応じて SQL で ALTER USER を実行
@@ -354,6 +377,6 @@ FATAL: password authentication failed for user "myuser"
 ✅ 環境変数からの動的構築に統一  
 ✅ 必須変数の明示的なバリデーション  
 ✅ Git 履歴からの機密情報排除  
-✅ 環境ごとの柔軟な設定管理  
+✅ 環境ごとの柔軟な設定管理
 
 セキュリティとメンテナンス性が大幅に向上しました。

@@ -3,12 +3,12 @@
  * SimpleUploadPanel から分離して保守性を向上
  */
 
-import React from 'react';
-import { Typography, Button, Checkbox } from 'antd';
-import { DeleteOutlined } from '@ant-design/icons';
-import type { PanelFileItem } from '../model/types';
-import { CsvValidationBadge } from '@features/csv-validation';
-import { DragDropCsv } from './DragDropCsv';
+import React from "react";
+import { Typography, Button, Checkbox } from "antd";
+import { DeleteOutlined } from "@ant-design/icons";
+import type { PanelFileItem } from "../model/types";
+import { CsvValidationBadge } from "@features/csv-validation";
+import { DragDropCsv } from "./DragDropCsv";
 
 const { Text } = Typography;
 
@@ -18,7 +18,7 @@ export interface UploadFileCardProps {
   onRemoveFile: (typeKey: string) => void;
   onToggleSkip?: (typeKey: string) => void;
   /** カードの高さモード: 'compact' | 'normal' */
-  size?: 'compact' | 'normal';
+  size?: "compact" | "normal";
 }
 
 export const UploadFileCard: React.FC<UploadFileCardProps> = ({
@@ -26,17 +26,22 @@ export const UploadFileCard: React.FC<UploadFileCardProps> = ({
   onPickFile,
   onRemoveFile,
   onToggleSkip,
-  size = 'compact',
+  size = "compact",
 }) => {
-  const isCompact = size === 'compact';
+  const isCompact = size === "compact";
 
   // ステータスに応じたカードの背景色・ボーダー色
   const statusStyles = {
-    valid: { background: '#f6ffed', border: '1px solid #b7eb8f' },
-    invalid: { background: '#fff2f0', border: '1px solid #ffccc7' },
-    unknown: { background: '#fafafa', border: '1px solid #f0f0f0' },
+    valid: { background: "#f6ffed", border: "1px solid #b7eb8f" },
+    invalid: { background: "#fff2f0", border: "1px solid #ffccc7" },
+    unknown: { background: "#fafafa", border: "1px solid #f0f0f0" },
   } as const;
-  const currentStatus = item.status === 'valid' ? 'valid' : item.status === 'invalid' ? 'invalid' : 'unknown';
+  const currentStatus =
+    item.status === "valid"
+      ? "valid"
+      : item.status === "invalid"
+        ? "invalid"
+        : "unknown";
   const cardStyle = statusStyles[currentStatus];
 
   return (
@@ -51,13 +56,13 @@ export const UploadFileCard: React.FC<UploadFileCardProps> = ({
       {/* ヘッダー: チェックボックス + ラベル + バッジ */}
       <div
         style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
           marginBottom: isCompact ? 6 : 8,
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           {onToggleSkip && (
             <Checkbox
               checked={item.skipped}
@@ -67,7 +72,14 @@ export const UploadFileCard: React.FC<UploadFileCardProps> = ({
               スキップ
             </Checkbox>
           )}
-          <Text strong style={{ fontSize: isCompact ? 14 : 16, textDecoration: item.skipped ? 'line-through' : 'none', opacity: item.skipped ? 0.5 : 1 }}>
+          <Text
+            strong
+            style={{
+              fontSize: isCompact ? 14 : 16,
+              textDecoration: item.skipped ? "line-through" : "none",
+              opacity: item.skipped ? 0.5 : 1,
+            }}
+          >
             {item.label}
           </Text>
           {item.required && (
@@ -76,7 +88,10 @@ export const UploadFileCard: React.FC<UploadFileCardProps> = ({
             </Text>
           )}
         </div>
-        <CsvValidationBadge status={item.status} size={isCompact ? 'small' : 'default'} />
+        <CsvValidationBadge
+          status={item.status}
+          size={isCompact ? "small" : "default"}
+        />
       </div>
 
       {/* ファイル選択ボタン（ファイルがアップロードされていない場合かつスキップされていない場合のみ表示） */}
@@ -88,10 +103,17 @@ export const UploadFileCard: React.FC<UploadFileCardProps> = ({
           compact={isCompact}
         />
       )}
-      
+
       {/* スキップ中の表示 */}
       {item.skipped && !item.file && (
-        <div style={{ padding: '8px 12px', textAlign: 'center', color: '#999', fontSize: isCompact ? 12 : 13 }}>
+        <div
+          style={{
+            padding: "8px 12px",
+            textAlign: "center",
+            color: "#999",
+            fontSize: isCompact ? 12 : 13,
+          }}
+        >
           ⏭️ このCSVはアップロードしません
         </div>
       )}
@@ -100,8 +122,8 @@ export const UploadFileCard: React.FC<UploadFileCardProps> = ({
       {item.file && (
         <div
           style={{
-            display: 'flex',
-            alignItems: 'center',
+            display: "flex",
+            alignItems: "center",
             gap: 6,
             marginTop: isCompact ? 6 : 8,
           }}
@@ -110,10 +132,10 @@ export const UploadFileCard: React.FC<UploadFileCardProps> = ({
             style={{
               flex: 1,
               fontSize: isCompact ? 11 : 12,
-              color: '#666',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
+              color: "#666",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
             }}
             title={item.file.name}
           >
@@ -126,7 +148,7 @@ export const UploadFileCard: React.FC<UploadFileCardProps> = ({
             onClick={() => onRemoveFile(item.typeKey)}
             style={{
               height: isCompact ? 22 : 24,
-              padding: isCompact ? '0 6px' : '0 8px',
+              padding: isCompact ? "0 6px" : "0 8px",
               fontSize: isCompact ? 11 : 12,
             }}
           >

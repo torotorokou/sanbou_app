@@ -1,5 +1,7 @@
 """Date utility functions for report processing."""
-from datetime import datetime, date
+
+from datetime import date, datetime
+
 import pandas as pd
 
 

@@ -23,9 +23,11 @@ Domain models for Sales Tree Detail Lines - 売上ツリー詳細明細行ドメ
       item_id=501
   )
 """
+
 from datetime import date as date_type
 from typing import Literal, Optional
-from pydantic import BaseModel, Field, ConfigDict
+
+from pydantic import BaseModel, ConfigDict, Field
 
 # ========================================
 # Type Definitions
@@ -41,20 +43,27 @@ CategoryKind = Literal["waste", "valuable"]
 class DetailLinesRequest(BaseModel):
     """
     詳細明細行取得リクエスト
-    
+
     SalesTreeの集計行クリック時に表示する「詳細テーブル」用データ取得リクエスト
     最後の集計軸に応じて、明細行レベル or 伝票単位サマリを返す
     """
+
     date_from: date_type = Field(..., description="集計開始日")
     date_to: date_type = Field(..., description="集計終了日")
-    last_group_by: GroupBy = Field(..., description="最後の集計軸: rep, customer, date, item")
-    category_kind: CategoryKind = Field("waste", description="カテゴリ種別: waste, valuable")
-    
+    last_group_by: GroupBy = Field(
+        ..., description="最後の集計軸: rep, customer, date, item"
+    )
+    category_kind: CategoryKind = Field(
+        "waste", description="カテゴリ種別: waste, valuable"
+    )
+
     # フィルタ条件（集計パスを再現）
     rep_id: Optional[int] = Field(None, description="営業IDフィルタ")
     customer_id: Optional[str] = Field(None, description="顧客IDフィルタ")
     item_id: Optional[int] = Field(None, description="品目IDフィルタ")
-    date_value: Optional[date_type] = Field(None, description="日付フィルタ（mode=dateの場合）")
+    date_value: Optional[date_type] = Field(
+        None, description="日付フィルタ（mode=dateの場合）"
+    )
 
 
 # ========================================
@@ -63,34 +72,60 @@ class DetailLinesRequest(BaseModel):
 class DetailLine(BaseModel):
     """
     詳細明細行（またはサマリ行）
-    
+
     mode によって内容が変わる:
     - item_lines: 明細行そのまま（品名まで含む）
     - slip_summary: 伝票単位の集約（品名は含まない）
     """
+
     model_config = ConfigDict(populate_by_name=True)
-    
-    mode: DetailMode = Field(..., description="モード: item_lines, slip_summary", serialization_alias="mode")
-    sales_date: date_type = Field(..., description="売上日", serialization_alias="salesDate")
-    slip_no: int = Field(..., description="伝票No（receive_no）", serialization_alias="slipNo")
+
+    mode: DetailMode = Field(
+        ..., description="モード: item_lines, slip_summary", serialization_alias="mode"
+    )
+    sales_date: date_type = Field(
+        ..., description="売上日", serialization_alias="salesDate"
+    )
+    slip_no: int = Field(
+        ..., description="伝票No（receive_no）", serialization_alias="slipNo"
+    )
     rep_name: str = Field(..., description="営業名", serialization_alias="repName")
-    customer_name: str = Field(..., description="顧客名", serialization_alias="customerName")
-    
+    customer_name: str = Field(
+        ..., description="顧客名", serialization_alias="customerName"
+    )
+
     # 品名情報（常に含む。slip_summaryの場合はカンマ区切り）
-    item_id: Optional[int] = Field(None, description="品目ID（item_lines時のみ）", serialization_alias="itemId")
-    item_name: str = Field(..., description="品目名（slip_summary時はカンマ区切り）", serialization_alias="itemName")
-    
+    item_id: Optional[int] = Field(
+        None, description="品目ID（item_lines時のみ）", serialization_alias="itemId"
+    )
+    item_name: str = Field(
+        ...,
+        description="品目名（slip_summary時はカンマ区切り）",
+        serialization_alias="itemName",
+    )
+
     # 集計値
-    line_count: Optional[int] = Field(None, description="明細行数（slip_summary時のみ）", serialization_alias="lineCount")
+    line_count: Optional[int] = Field(
+        None,
+        description="明細行数（slip_summary時のみ）",
+        serialization_alias="lineCount",
+    )
     qty_kg: float = Field(..., description="数量（kg）", serialization_alias="qtyKg")
-    unit_price_yen_per_kg: Optional[float] = Field(None, description="単価（円/kg）", serialization_alias="unitPriceYenPerKg")
-    amount_yen: float = Field(..., description="金額（円）", serialization_alias="amountYen")
+    unit_price_yen_per_kg: Optional[float] = Field(
+        None, description="単価（円/kg）", serialization_alias="unitPriceYenPerKg"
+    )
+    amount_yen: float = Field(
+        ..., description="金額（円）", serialization_alias="amountYen"
+    )
 
 
 class DetailLinesResponse(BaseModel):
     """
     詳細明細行取得レスポンス
     """
+
     mode: DetailMode = Field(..., description="返却データのモード")
     rows: list[DetailLine] = Field(..., description="詳細明細行リスト")
-    total_count: int = Field(..., description="総行数", serialization_alias="totalCount")
+    total_count: int = Field(
+        ..., description="総行数", serialization_alias="totalCount"
+    )

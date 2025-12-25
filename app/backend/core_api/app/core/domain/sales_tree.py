@@ -23,10 +23,11 @@ Domain models for Sales Tree Analytics - 売上ツリー分析ドメインモデ
       order="desc"
   )
 """
+
 from datetime import date as date_type
 from typing import Literal, Optional
-from pydantic import BaseModel, Field, ConfigDict
 
+from pydantic import BaseModel, ConfigDict, Field
 
 # ========================================
 # Type Definitions
@@ -43,15 +44,22 @@ CategoryKind = Literal["waste", "valuable"]
 class SummaryRequest(BaseModel):
     """
     サマリーデータ取得リクエスト
-    
+
     営業ごとに、指定された軸（顧客/品目/日付）でTOP-N集計を取得
     """
+
     date_from: date_type = Field(..., description="集計開始日")
     date_to: date_type = Field(..., description="集計終了日")
     mode: AxisMode = Field(..., description="集計軸: customer, item, date")
-    category_kind: CategoryKind = Field("waste", description="カテゴリ種別: waste, valuable")
-    rep_ids: list[int] = Field(default_factory=list, description="営業IDフィルタ（空=全営業）")
-    filter_ids: list[str] = Field(default_factory=list, description="軸IDフィルタ（空=全データ）")
+    category_kind: CategoryKind = Field(
+        "waste", description="カテゴリ種別: waste, valuable"
+    )
+    rep_ids: list[int] = Field(
+        default_factory=list, description="営業IDフィルタ（空=全営業）"
+    )
+    filter_ids: list[str] = Field(
+        default_factory=list, description="軸IDフィルタ（空=全データ）"
+    )
     top_n: int = Field(50, description="TOP-N件数（0=全件）")
     sort_by: SortKey = Field("amount", description="ソート項目")
     order: SortOrder = Field("desc", description="ソート順")
@@ -60,12 +68,15 @@ class SummaryRequest(BaseModel):
 class DailySeriesRequest(BaseModel):
     """
     日次推移データ取得リクエスト
-    
+
     指定された条件（営業/顧客/品目）での日別推移を取得
     """
+
     date_from: date_type = Field(..., description="取得開始日")
     date_to: date_type = Field(..., description="取得終了日")
-    category_kind: CategoryKind = Field("waste", description="カテゴリ種別: waste, valuable")
+    category_kind: CategoryKind = Field(
+        "waste", description="カテゴリ種別: waste, valuable"
+    )
     rep_id: Optional[int] = Field(None, description="営業IDフィルタ")
     customer_id: Optional[str] = Field(None, description="顧客IDフィルタ")
     item_id: Optional[int] = Field(None, description="品目IDフィルタ")
@@ -74,21 +85,28 @@ class DailySeriesRequest(BaseModel):
 class PivotRequest(BaseModel):
     """
     Pivotデータ取得リクエスト（詳細ドリルダウン用）
-    
+
     固定軸（baseAxis + baseId）に対して、別の軸（targetAxis）で展開
     例: 顧客「泉土木」に対して、品目別の内訳を取得
     """
+
     date_from: date_type = Field(..., description="集計開始日")
     date_to: date_type = Field(..., description="集計終了日")
     base_axis: AxisMode = Field(..., description="固定軸: customer, item, date")
     base_id: str = Field(..., description="固定値ID（顧客ID/品目ID/日付文字列）")
-    category_kind: CategoryKind = Field("waste", description="カテゴリ種別: waste, valuable")
-    rep_ids: list[int] = Field(default_factory=list, description="営業IDフィルタ（空=全営業）")
+    category_kind: CategoryKind = Field(
+        "waste", description="カテゴリ種別: waste, valuable"
+    )
+    rep_ids: list[int] = Field(
+        default_factory=list, description="営業IDフィルタ（空=全営業）"
+    )
     target_axis: AxisMode = Field(..., description="展開軸: customer, item, date")
     top_n: int = Field(50, description="TOP-N件数（0=全件）")
     sort_by: SortKey = Field("amount", description="ソート項目")
     order: SortOrder = Field("desc", description="ソート順")
-    cursor: Optional[str] = Field(None, description="ページネーションカーソル（オフセット値）")
+    cursor: Optional[str] = Field(
+        None, description="ページネーションカーソル（オフセット値）"
+    )
 
 
 # ========================================
@@ -98,66 +116,105 @@ class MetricEntry(BaseModel):
     """
     メトリクスエントリ（集計結果1行）
     """
+
     model_config = ConfigDict(populate_by_name=True)
-    
+
     id: str = Field(..., description="ID（顧客ID, 品目ID, 日付文字列など）")
     name: str = Field(..., description="名称（顧客名, 品目名, 日付文字列など）")
     amount: float = Field(..., description="売上金額（円）")
     qty: float = Field(..., description="数量（kg）")
-    line_count: int = Field(..., description="明細行数（件数） - COUNT(*)", serialization_alias="lineCount")
-    slip_count: int = Field(..., description="伝票数（台数） - COUNT(DISTINCT slip_no)", serialization_alias="slipCount")
-    count: int = Field(..., description="表示用カウント値（商品軸=line_count、それ以外=slip_count）")
-    unit_price: Optional[float] = Field(None, description="単価（円/kg）", serialization_alias="unitPrice")
-    date_key: Optional[str] = Field(None, description="日付キー（mode=dateの場合のみ）", serialization_alias="dateKey")
+    line_count: int = Field(
+        ..., description="明細行数（件数） - COUNT(*)", serialization_alias="lineCount"
+    )
+    slip_count: int = Field(
+        ...,
+        description="伝票数（台数） - COUNT(DISTINCT slip_no)",
+        serialization_alias="slipCount",
+    )
+    count: int = Field(
+        ..., description="表示用カウント値（商品軸=line_count、それ以外=slip_count）"
+    )
+    unit_price: Optional[float] = Field(
+        None, description="単価（円/kg）", serialization_alias="unitPrice"
+    )
+    date_key: Optional[str] = Field(
+        None,
+        description="日付キー（mode=dateの場合のみ）",
+        serialization_alias="dateKey",
+    )
 
 
 class SummaryRow(BaseModel):
     """
     営業ごとのサマリー行
     """
+
     model_config = ConfigDict(populate_by_name=True)
-    
+
     rep_id: int = Field(..., description="営業ID", serialization_alias="repId")
     rep_name: str = Field(..., description="営業名", serialization_alias="repName")
-    metrics: list[MetricEntry] = Field(default_factory=list, description="TOP-Nメトリクス", serialization_alias="topN")
+    metrics: list[MetricEntry] = Field(
+        default_factory=list, description="TOP-Nメトリクス", serialization_alias="topN"
+    )
 
 
 class DailyPoint(BaseModel):
     """
     日次推移データポイント
     """
+
     model_config = ConfigDict(populate_by_name=True)
-    
+
     date: date_type = Field(..., description="日付")
     amount: float = Field(..., description="売上金額（円）")
     qty: float = Field(..., description="数量（kg）")
-    line_count: int = Field(..., description="明細行数（件数） - COUNT(*)", serialization_alias="lineCount")
-    slip_count: int = Field(..., description="伝票数（台数） - COUNT(DISTINCT slip_no)", serialization_alias="slipCount")
+    line_count: int = Field(
+        ..., description="明細行数（件数） - COUNT(*)", serialization_alias="lineCount"
+    )
+    slip_count: int = Field(
+        ...,
+        description="伝票数（台数） - COUNT(DISTINCT slip_no)",
+        serialization_alias="slipCount",
+    )
     count: int = Field(..., description="表示用カウント値（現状は slip_count を使用）")
-    unit_price: Optional[float] = Field(None, description="単価（円/kg）", serialization_alias="unitPrice")
+    unit_price: Optional[float] = Field(
+        None, description="単価（円/kg）", serialization_alias="unitPrice"
+    )
 
 
 class CursorPage(BaseModel):
     """
     カーソルベースページネーション結果
     """
+
     model_config = ConfigDict(populate_by_name=True)
-    
+
     rows: list[MetricEntry] = Field(..., description="データ行")
-    next_cursor: Optional[str] = Field(None, description="次ページのカーソル（なければNull）", serialization_alias="nextCursor")
+    next_cursor: Optional[str] = Field(
+        None,
+        description="次ページのカーソル（なければNull）",
+        serialization_alias="nextCursor",
+    )
 
 
 class ExportRequest(BaseModel):
     """
     CSV Export リクエスト
-    
+
     指定された条件でCSVファイルを生成
     """
+
     date_from: date_type = Field(..., description="集計開始日")
     date_to: date_type = Field(..., description="集計終了日")
     mode: AxisMode = Field(..., description="集計軸: customer, item, date")
-    category_kind: CategoryKind = Field("waste", description="カテゴリ種別: waste, valuable")
-    rep_ids: list[int] = Field(default_factory=list, description="営業IDフィルタ（空=全営業）")
-    filter_ids: list[str] = Field(default_factory=list, description="軸IDフィルタ（空=全データ）")
+    category_kind: CategoryKind = Field(
+        "waste", description="カテゴリ種別: waste, valuable"
+    )
+    rep_ids: list[int] = Field(
+        default_factory=list, description="営業IDフィルタ（空=全営業）"
+    )
+    filter_ids: list[str] = Field(
+        default_factory=list, description="軸IDフィルタ（空=全データ）"
+    )
     sort_by: SortKey = Field("amount", description="ソート項目")
     order: SortOrder = Field("desc", description="ソート順")

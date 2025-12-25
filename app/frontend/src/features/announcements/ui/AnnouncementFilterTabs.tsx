@@ -1,13 +1,13 @@
 /**
  * AnnouncementFilterTabs - お知らせフィルタタブUI
- * 
+ *
  * 「すべて」「未読」の切替タブ。
  * 状態レス：propsのみで動作。
  */
 
-import React from 'react';
-import { Segmented } from 'antd';
-import type { AnnouncementFilterTab } from '../model/useAnnouncementsListViewModel';
+import React from "react";
+import { Segmented } from "antd";
+import type { AnnouncementFilterTab } from "../model/useAnnouncementsListViewModel";
 
 interface AnnouncementFilterTabsProps {
   /** 選択中のタブ */
@@ -29,12 +29,12 @@ export const AnnouncementFilterTabs: React.FC<AnnouncementFilterTabsProps> = ({
       onChange={(value) => onChange(value as AnnouncementFilterTab)}
       options={[
         {
-          label: 'すべて',
-          value: 'all',
+          label: "すべて",
+          value: "all",
         },
         {
-          label: `未読${unreadCount > 0 ? ` (${unreadCount})` : ''}`,
-          value: 'unread',
+          label: `未読${unreadCount > 0 ? ` (${unreadCount})` : ""}`,
+          value: "unread",
         },
       ]}
       style={{ marginBottom: 16 }}

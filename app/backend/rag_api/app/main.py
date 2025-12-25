@@ -1,29 +1,26 @@
 import os
 import sys
 from pathlib import Path
-from dotenv import load_dotenv
 
-from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse
-from fastapi.staticfiles import StaticFiles
+from app.api.routers import manuals, query  # ← query.py に router を定義
+from app.config.paths import CONFIG_ENV
+from app.config.settings import settings
+from app.shared.env_loader import load_env_and_secrets
 
 # ==========================================
 # 統一ロギング設定のインポート（backend_shared）
 # ==========================================
 from backend_shared.application.logging import setup_logging
-from backend_shared.infra.frameworks.logging_utils import setup_uvicorn_access_filter
 from backend_shared.infra.adapters.middleware import RequestIdMiddleware
 from backend_shared.infra.frameworks.cors_config import setup_cors
-from backend_shared.infra.frameworks.exception_handlers import register_exception_handlers
-
-from app.config.settings import settings
+from backend_shared.infra.frameworks.exception_handlers import (
+    register_exception_handlers,
+)
+from backend_shared.infra.frameworks.logging_utils import setup_uvicorn_access_filter
+from dotenv import load_dotenv
+from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
-
-from app.config.paths import CONFIG_ENV
-from app.shared.env_loader import load_env_and_secrets
-from app.api.routers import query, manuals  # ← query.py に router を定義
-
 
 # --- .env + secrets 読み込み --------------------------------------------------
 load_dotenv(dotenv_path=CONFIG_ENV)
@@ -57,19 +54,20 @@ app = FastAPI(
 )
 
 from backend_shared.application.logging import get_module_logger
+
 logger = get_module_logger(__name__)
 logger.info(
     f"RAG API initialized (DEBUG={settings.DEBUG}, docs_enabled={settings.DEBUG})",
-    extra={"operation": "app_init", "debug": settings.DEBUG}
+    extra={"operation": "app_init", "debug": settings.DEBUG},
 )
 
 # --- GCP認証・権限デバッグ（起動時1回のみ実行） ---------------------------------
 if settings.STAGE in ("stg", "prod") and settings.PERMISSION_DEBUG:
     logger.info("🔍 PERMISSION_DEBUG=1 が有効なため、GCP認証デバッグを実行します")
     from app.infra.adapters.gcp import debug_log_gcp_adc_and_permissions
+
     debug_log_gcp_adc_and_permissions(
-        bucket_name=settings.GCS_BUCKET_NAME,
-        object_prefix=settings.GCS_DATA_PREFIX
+        bucket_name=settings.GCS_BUCKET_NAME, object_prefix=settings.GCS_DATA_PREFIX
     )
 
 # --- ミドルウェア: Request ID追跡 ----------------------------------------------

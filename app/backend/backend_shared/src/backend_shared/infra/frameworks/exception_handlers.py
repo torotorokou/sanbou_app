@@ -7,30 +7,32 @@ Exception Handler Middleware - 統一エラーハンドリング
 
 このモジュールは backend_shared に配置され、全てのサービスで共通利用されます。
 """
-from fastapi import Request, status
-from fastapi.responses import JSONResponse
-from fastapi.exceptions import RequestValidationError
-from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from backend_shared.application.logging import create_log_context, get_module_logger
 from backend_shared.core.domain.exceptions import (
-    ValidationError,
-    NotFoundError,
     BusinessRuleViolation,
-    UnauthorizedError,
+    DomainException,
+    ExternalServiceError,
     ForbiddenError,
     InfrastructureError,
-    ExternalServiceError,
-    DomainException,
+    NotFoundError,
+    UnauthorizedError,
+    ValidationError,
 )
+from fastapi import Request, status
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 logger = get_module_logger(__name__)
 
 
-async def domain_exception_handler(request: Request, exc: DomainException) -> JSONResponse:
+async def domain_exception_handler(
+    request: Request, exc: DomainException
+) -> JSONResponse:
     """
     ドメイン例外のハンドラー
-    
+
     ビジネスルール違反などのドメイン層の例外を適切な HTTP レスポンスに変換します。
     """
     # ValidationError
@@ -41,8 +43,8 @@ async def domain_exception_handler(request: Request, exc: DomainException) -> JS
                 operation="domain_exception_handler",
                 error_type="ValidationError",
                 message=exc.message,
-                field=exc.field
-            )
+                field=exc.field,
+            ),
         )
         return JSONResponse(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -54,7 +56,7 @@ async def domain_exception_handler(request: Request, exc: DomainException) -> JS
                 }
             },
         )
-    
+
     # NotFoundError
     if isinstance(exc, NotFoundError):
         logger.info(
@@ -63,8 +65,8 @@ async def domain_exception_handler(request: Request, exc: DomainException) -> JS
                 operation="domain_exception_handler",
                 error_type="NotFoundError",
                 resource_type=exc.resource_type,
-                identifier=str(exc.identifier)
-            )
+                identifier=str(exc.identifier),
+            ),
         )
         return JSONResponse(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -77,7 +79,7 @@ async def domain_exception_handler(request: Request, exc: DomainException) -> JS
                 }
             },
         )
-    
+
     # BusinessRuleViolation
     if isinstance(exc, BusinessRuleViolation):
         logger.warning(
@@ -86,8 +88,8 @@ async def domain_exception_handler(request: Request, exc: DomainException) -> JS
                 operation="domain_exception_handler",
                 error_type="BusinessRuleViolation",
                 rule=exc.rule,
-                details=exc.details
-            )
+                details=exc.details,
+            ),
         )
         return JSONResponse(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -100,7 +102,7 @@ async def domain_exception_handler(request: Request, exc: DomainException) -> JS
                 }
             },
         )
-    
+
     # UnauthorizedError
     if isinstance(exc, UnauthorizedError):
         logger.warning(
@@ -108,8 +110,8 @@ async def domain_exception_handler(request: Request, exc: DomainException) -> JS
             extra=create_log_context(
                 operation="domain_exception_handler",
                 error_type="UnauthorizedError",
-                message=exc.message
-            )
+                message=exc.message,
+            ),
         )
         return JSONResponse(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -120,7 +122,7 @@ async def domain_exception_handler(request: Request, exc: DomainException) -> JS
                 }
             },
         )
-    
+
     # ForbiddenError
     if isinstance(exc, ForbiddenError):
         logger.warning(
@@ -129,8 +131,8 @@ async def domain_exception_handler(request: Request, exc: DomainException) -> JS
                 operation="domain_exception_handler",
                 error_type="ForbiddenError",
                 message=exc.message,
-                required_permission=exc.required_permission
-            )
+                required_permission=exc.required_permission,
+            ),
         )
         return JSONResponse(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -142,7 +144,7 @@ async def domain_exception_handler(request: Request, exc: DomainException) -> JS
                 }
             },
         )
-    
+
     # 上記以外の DomainException
     logger.error(f"Unhandled domain exception: {exc}", exc_info=True)
     return JSONResponse(
@@ -156,19 +158,26 @@ async def domain_exception_handler(request: Request, exc: DomainException) -> JS
     )
 
 
-async def external_service_exception_handler(request: Request, exc: ExternalServiceError) -> JSONResponse:
+async def external_service_exception_handler(
+    request: Request, exc: ExternalServiceError
+) -> JSONResponse:
     """
     外部サービス例外のハンドラー
-    
+
     外部API呼び出しエラーを処理します。
     """
     # ステータスコードの決定: タイムアウトなら504、それ以外は502
     if exc.status_code:
-        status_code = exc.status_code if exc.status_code >= 500 else status.HTTP_502_BAD_GATEWAY
+        status_code = (
+            exc.status_code if exc.status_code >= 500 else status.HTTP_502_BAD_GATEWAY
+        )
     else:
         status_code = status.HTTP_502_BAD_GATEWAY
-    
-    logger.error(f"External service error: {exc.service_name}, status={exc.status_code}, cause={exc.cause}", exc_info=True)
+
+    logger.error(
+        f"External service error: {exc.service_name}, status={exc.status_code}, cause={exc.cause}",
+        exc_info=True,
+    )
     return JSONResponse(
         status_code=status_code,
         content={
@@ -182,10 +191,12 @@ async def external_service_exception_handler(request: Request, exc: ExternalServ
     )
 
 
-async def infrastructure_exception_handler(request: Request, exc: InfrastructureError) -> JSONResponse:
+async def infrastructure_exception_handler(
+    request: Request, exc: InfrastructureError
+) -> JSONResponse:
     """
     インフラストラクチャ例外のハンドラー
-    
+
     DB接続エラーや外部API呼び出しエラーなどを処理します。
     """
     logger.error(
@@ -193,9 +204,9 @@ async def infrastructure_exception_handler(request: Request, exc: Infrastructure
         extra=create_log_context(
             operation="infrastructure_error_handler",
             error_message=exc.message,
-            cause=str(exc.cause) if exc.cause else None
+            cause=str(exc.cause) if exc.cause else None,
         ),
-        exc_info=True
+        exc_info=True,
     )
     return JSONResponse(
         status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
@@ -209,18 +220,19 @@ async def infrastructure_exception_handler(request: Request, exc: Infrastructure
     )
 
 
-async def validation_exception_handler(request: Request, exc: RequestValidationError) -> JSONResponse:
+async def validation_exception_handler(
+    request: Request, exc: RequestValidationError
+) -> JSONResponse:
     """
     FastAPI バリデーションエラーのハンドラー
-    
+
     Pydantic によるリクエストバリデーションエラーを処理します。
     """
     logger.warning(
         "Request validation error",
         extra=create_log_context(
-            operation="validation_exception_handler",
-            errors=exc.errors()
-        )
+            operation="validation_exception_handler", errors=exc.errors()
+        ),
     )
     return JSONResponse(
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -234,10 +246,12 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     )
 
 
-async def http_exception_handler(request: Request, exc: StarletteHTTPException) -> JSONResponse:
+async def http_exception_handler(
+    request: Request, exc: StarletteHTTPException
+) -> JSONResponse:
     """
     HTTP 例外のハンドラー
-    
+
     FastAPI/Starlette の HTTPException を処理します。
     """
     logger.info(
@@ -245,8 +259,8 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException) 
         extra=create_log_context(
             operation="http_exception_handler",
             status_code=exc.status_code,
-            detail=str(exc.detail)
-        )
+            detail=str(exc.detail),
+        ),
     )
     return JSONResponse(
         status_code=exc.status_code,
@@ -263,7 +277,7 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException) 
 async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
     """
     予期しない例外のハンドラー
-    
+
     上記以外の全ての例外をキャッチし、500エラーを返します。
     """
     logger.exception(f"Unhandled exception: {exc}")
@@ -281,22 +295,22 @@ async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONR
 def register_exception_handlers(app):
     """
     例外ハンドラーを FastAPI アプリケーションに登録
-    
+
     Args:
         app: FastAPI アプリケーションインスタンス
     """
     # ドメイン例外（優先度: 高）
     app.add_exception_handler(DomainException, domain_exception_handler)
-    
+
     # インフラストラクチャ例外
     app.add_exception_handler(ExternalServiceError, external_service_exception_handler)
     app.add_exception_handler(InfrastructureError, infrastructure_exception_handler)
-    
+
     # FastAPI標準例外
     app.add_exception_handler(RequestValidationError, validation_exception_handler)
     app.add_exception_handler(StarletteHTTPException, http_exception_handler)
-    
+
     # 最後のセーフティネット
     app.add_exception_handler(Exception, unhandled_exception_handler)
-    
+
     logger.info("Exception handlers registered successfully")

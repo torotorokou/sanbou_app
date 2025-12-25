@@ -43,6 +43,7 @@ uvicorn app.main:app --reload
 ### 環境変数
 
 主要な環境変数:
+
 - `OPENAI_API_KEY` - OpenAI API キー
 - `OPENAI_MODEL` - 使用するモデル名
 

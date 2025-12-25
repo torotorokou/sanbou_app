@@ -19,15 +19,37 @@ def test_make_total_sum_basic():
 
 def test_df_cul_filtering_columns():
     df = pd.DataFrame(
-        [{"業者名": "A", "明細備考": "x", "正味重量": 10, "総額": 1000, "ブロック単価": 100}]
+        [
+            {
+                "業者名": "A",
+                "明細備考": "x",
+                "正味重量": 10,
+                "総額": 1000,
+                "ブロック単価": 100,
+            }
+        ]
     )
     out = process2.df_cul_filtering(df)
-    assert list(out.columns) == ["業者名", "明細備考", "正味重量", "総額", "ブロック単価"]
+    assert list(out.columns) == [
+        "業者名",
+        "明細備考",
+        "正味重量",
+        "総額",
+        "ブロック単価",
+    ]
 
 
 def test_first_cell_in_template_structure():
     df = pd.DataFrame(
-        [{"業者名": "A", "明細備考": "x", "正味重量": 10, "総額": 1000, "ブロック単価": 100}]
+        [
+            {
+                "業者名": "A",
+                "明細備考": "x",
+                "正味重量": 10,
+                "総額": 1000,
+                "ブロック単価": 100,
+            }
+        ]
     )
     out = process2.first_cell_in_template(df)
     # 5 columns * 1 row -> 5 entries

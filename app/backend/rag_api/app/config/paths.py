@@ -1,18 +1,29 @@
 import os
 from pathlib import Path
 
-def _resolve_root() -> str:
-        """アプリ基底ディレクトリを解決 (後方互換)。
 
-        優先順位:
-            1. APP_ROOT_DIR (新)
-            2. APP_BASE_DIR (旧)
-            3. /backend (デフォルト)
-        """
-        return os.environ.get("APP_ROOT_DIR") or os.environ.get("APP_BASE_DIR") or "/backend"
+def _resolve_root() -> str:
+    """アプリ基底ディレクトリを解決 (後方互換)。
+
+    優先順位:
+        1. APP_ROOT_DIR (新)
+        2. APP_BASE_DIR (旧)
+        3. /backend (デフォルト)
+    """
+    return (
+        os.environ.get("APP_ROOT_DIR") or os.environ.get("APP_BASE_DIR") or "/backend"
+    )
+
 
 BASE_DIR = Path(_resolve_root())
-print("APP_ROOT_DIR:", os.environ.get("APP_ROOT_DIR"), "(fallback APP_BASE_DIR=", os.environ.get("APP_BASE_DIR"), ") =>", BASE_DIR)
+print(
+    "APP_ROOT_DIR:",
+    os.environ.get("APP_ROOT_DIR"),
+    "(fallback APP_BASE_DIR=",
+    os.environ.get("APP_BASE_DIR"),
+    ") =>",
+    BASE_DIR,
+)
 
 # 各種パス（環境変数で上書き可）
 CONFIG_ENV = os.environ.get("CONFIG_ENV", str(BASE_DIR / "config/.env"))

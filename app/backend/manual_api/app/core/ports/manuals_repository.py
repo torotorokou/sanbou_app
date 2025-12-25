@@ -1,6 +1,13 @@
 from abc import ABC, abstractmethod
-from typing import Optional, List
-from app.core.domain.manual_entity import ManualDetail, ManualListResponse, ManualSectionChunk, ManualCatalogResponse
+from typing import List, Optional
+
+from app.core.domain.manual_entity import (
+    ManualCatalogResponse,
+    ManualDetail,
+    ManualListResponse,
+    ManualSectionChunk,
+)
+
 
 class ManualsRepository(ABC):
     @abstractmethod
@@ -24,5 +31,7 @@ class ManualsRepository(ABC):
         pass
 
     @abstractmethod
-    def get_catalog(self, *, category: Optional[str] = "shogun") -> ManualCatalogResponse:
+    def get_catalog(
+        self, *, category: Optional[str] = "shogun"
+    ) -> ManualCatalogResponse:
         pass

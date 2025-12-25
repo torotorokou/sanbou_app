@@ -24,7 +24,3 @@ ALTER TABLE ONLY ref.calendar_exception
 
 ALTER TABLE ONLY ref.calendar_exception
     ADD CONSTRAINT fk_cal_exception_day FOREIGN KEY (ddate) REFERENCES ref.calendar_day(ddate);
-
-
-
-

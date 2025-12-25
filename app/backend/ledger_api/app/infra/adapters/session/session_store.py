@@ -42,7 +42,9 @@ class _InMemorySessionBackend:
         self._store: Dict[str, _SessionEntry] = {}
         self._lock = threading.Lock()
 
-    def save(self, data: Dict[str, Any], ttl: int, session_id: Optional[str] = None) -> str:
+    def save(
+        self, data: Dict[str, Any], ttl: int, session_id: Optional[str] = None
+    ) -> str:
         sid = session_id or str(uuid.uuid4())
         entry = _SessionEntry(value=data, expires_at=time.time() + ttl)
         with self._lock:
@@ -78,7 +80,9 @@ class _RedisSessionBackend:
             raise RuntimeError("redis package is not installed")
         self._client = redis.Redis.from_url(url, decode_responses=True)
 
-    def save(self, data: Dict[str, Any], ttl: int, session_id: Optional[str] = None) -> str:
+    def save(
+        self, data: Dict[str, Any], ttl: int, session_id: Optional[str] = None
+    ) -> str:
         sid = session_id or str(uuid.uuid4())
         payload = json.dumps(data)
         # setex overwrites existing keys and sets TTL atomically
@@ -106,11 +110,19 @@ class SessionStore:
             try:
                 backend = _RedisSessionBackend(redis_url)
             except Exception as exc:  # pragma: no cover - falls back to memory
-                print(f"[WARN] redis backend not available ({exc}); falling back to in-memory store")
+                print(
+                    f"[WARN] redis backend not available ({exc}); falling back to in-memory store"
+                )
                 backend = None
         self._backend = backend or _InMemorySessionBackend()
 
-    def save(self, data: Dict[str, Any], *, ttl: Optional[int] = None, session_id: Optional[str] = None) -> str:
+    def save(
+        self,
+        data: Dict[str, Any],
+        *,
+        ttl: Optional[int] = None,
+        session_id: Optional[str] = None,
+    ) -> str:
         ttl_to_use = ttl or self.default_ttl
         return self._backend.save(data, ttl_to_use, session_id=session_id)
 

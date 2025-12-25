@@ -18,6 +18,7 @@ React + TypeScript、FSD構成 + MVVM（Hooks = ViewModel） + Repositoryパタ�
 ### Phase A: ルーティングとサイドバー追加 ✅
 
 **変更ファイル:**
+
 - [app/frontend/src/app/routes/routes.ts](../../app/frontend/src/app/routes/routes.ts)
   - `RESERVATION_DAILY: '/database/reservation-daily'` を追加
 - [app/frontend/src/app/navigation/sidebarMenu.tsx](../../app/frontend/src/app/navigation/sidebarMenu.tsx)
@@ -30,6 +31,7 @@ React + TypeScript、FSD構成 + MVVM（Hooks = ViewModel） + Repositoryパタ�
   - Public API に追加
 
 **動作確認:**
+
 - サイドバーの「データベース」→「予約表」から遷移可能
 - 左右2カラムのレイアウトで表示
 
@@ -56,17 +58,19 @@ features/reservation-daily/
 #### 型定義
 
 **ReservationForecastDaily** (表示用データ)
+
 ```typescript
 {
-  date: string;                          // YYYY-MM-DD
-  reserve_trucks: number;                // 予約台数合計
-  reserve_fixed_trucks: number;          // 固定客台数
-  reserve_fixed_ratio: number;           // 固定客比率
-  source: 'manual' | 'customer_agg';     // データソース
+  date: string; // YYYY-MM-DD
+  reserve_trucks: number; // 予約台数合計
+  reserve_fixed_trucks: number; // 固定客台数
+  reserve_fixed_ratio: number; // 固定客比率
+  source: "manual" | "customer_agg"; // データソース
 }
 ```
 
 **ReservationManualInput** (入力データ)
+
 ```typescript
 {
   reserve_date: string;                  // YYYY-MM-DD
@@ -79,6 +83,7 @@ features/reservation-daily/
 #### Repository (インターフェース)
 
 **ReservationDailyRepository**
+
 - `getForecastDaily(from, to)` - 予測用日次データ取得
 - `upsertManual(payload)` - 手入力データ保存/更新
 - `deleteManual(date)` - 手入力データ削除
@@ -86,6 +91,7 @@ features/reservation-daily/
 #### HTTP実装
 
 **ReservationDailyHttpRepository**
+
 - 既存の `apiClient` を使用
 - シングルトンインスタンス `reservationDailyRepository` をエクスポート
 
@@ -94,6 +100,7 @@ features/reservation-daily/
 **useReservationDailyViewModel**
 
 **State:**
+
 - `currentMonth` - 表示中の月
 - `forecastData` - カレンダー表示用データ
 - `selectedDate` - 選択中の日付
@@ -102,6 +109,7 @@ features/reservation-daily/
 - `error`, `successMessage` - メッセージ
 
 **Events:**
+
 - `onChangeMonth(month)` - 月変更
 - `onSelectDate(date)` - 日付選択（フォームに反映）
 - `onChangeTotalTrucks(value)` - 合計台数変更
@@ -112,6 +120,7 @@ features/reservation-daily/
 - `clearMessages()` - メッセージクリア
 
 **バリデーション:**
+
 - `total_trucks >= 0`
 - `fixed_trucks >= 0`
 - `fixed_trucks <= total_trucks`
@@ -120,6 +129,7 @@ features/reservation-daily/
 #### UI Components
 
 **ReservationCalendar**
+
 - Ant Design の `Calendar` を使用
 - `dateCellRender` でバッジ表示
   - manual: 緑バッジ（success）
@@ -128,6 +138,7 @@ features/reservation-daily/
 - 月切替で再取得
 
 **ReservationForm**
+
 - 選択日表示
 - InputNumber × 2（合計台数、固定客台数）
 - TextArea（備考）
@@ -149,6 +160,7 @@ GET /api/reservations/forecast-daily?from=YYYY-MM-DD&to=YYYY-MM-DD
 ```
 
 **Response:**
+
 ```json
 [
   {
@@ -168,6 +180,7 @@ POST /api/reservations/daily-manual
 ```
 
 **Request Body:**
+
 ```json
 {
   "reserve_date": "2025-01-15",
@@ -178,6 +191,7 @@ POST /api/reservations/daily-manual
 ```
 
 **Response:**
+
 ```json
 { "success": true }
 ```
@@ -189,6 +203,7 @@ DELETE /api/reservations/daily-manual?date=YYYY-MM-DD
 ```
 
 **Response:**
+
 ```json
 { "success": true }
 ```
@@ -198,6 +213,7 @@ DELETE /api/reservations/daily-manual?date=YYYY-MM-DD
 ## 変更ファイル一覧
 
 ### Phase A（ルーティング）
+
 - `app/frontend/src/app/routes/routes.ts`
 - `app/frontend/src/app/navigation/sidebarMenu.tsx`
 - `app/frontend/src/app/routes/AppRoutes.tsx`
@@ -205,6 +221,7 @@ DELETE /api/reservations/daily-manual?date=YYYY-MM-DD
 - `app/frontend/src/pages/database/index.ts`
 
 ### Phase B & C（機能実装）
+
 - `app/frontend/src/features/reservation-daily/index.ts` (新規)
 - `app/frontend/src/features/reservation-daily/ports/ReservationDailyRepository.ts` (新規)
 - `app/frontend/src/features/reservation-daily/infrastructure/ReservationDailyHttpRepository.ts` (新規)
@@ -265,6 +282,7 @@ DELETE /api/reservations/daily-manual?date=YYYY-MM-DD
 ### 調整箇所
 
 エンドポイントが確定したら、以下のファイルを修正：
+
 - [ReservationDailyHttpRepository.ts](../../app/frontend/src/features/reservation-daily/infrastructure/ReservationDailyHttpRepository.ts)
 
 ---
@@ -275,7 +293,7 @@ DELETE /api/reservations/daily-manual?date=YYYY-MM-DD
 ✅ **FSD構成**: features/reservation-daily 配下に配置  
 ✅ **MVVM**: useReservationDailyViewModel (ViewModel), UI Components (View)  
 ✅ **Repositoryパターン**: Port (interface) + Infrastructure (HTTP実装)  
-✅ **既存ページ保全**: DatasetImportPage のスタイルを再利用、破壊的変更なし  
+✅ **既存ページ保全**: DatasetImportPage のスタイルを再利用、破壊的変更なし
 
 ---
 
@@ -291,14 +309,17 @@ DELETE /api/reservations/daily-manual?date=YYYY-MM-DD
 ## 次のステップ
 
 1. ⬜ **バックエンドAPI実装**
+
    - GET /reservations/forecast-daily
    - POST /reservations/daily-manual
    - DELETE /reservations/daily-manual
 
 2. ⬜ **エンドポイント調整**
+
    - ReservationDailyHttpRepository.ts のパスを実際のAPIに合わせる
 
 3. ⬜ **統合テスト**
+
    - バックエンドと接続して動作確認
    - エラーハンドリングの確認
 

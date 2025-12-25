@@ -19,11 +19,13 @@ ledger_api (Business Logic)
 ## レイヤー責務
 
 ### 1. フロントエンド
+
 - **URL**: `/core_api/reports/...`, `/core_api/block_unit_price_interactive/...`
 - **責務**: ユーザーインターフェース、入力検証、レポート表示
 - **特徴**: 常に `/core_api` プレフィックスでAPIを呼び出す
 
 ### 2. Vite Dev Server / Caddy
+
 - **責務**: プロキシ設定
 - **開発環境 (Vite)**:
   ```ts
@@ -45,6 +47,7 @@ ledger_api (Business Logic)
   ```
 
 ### 3. core_api (BFF)
+
 - **URL**: `/reports/*`, `/block_unit_price_interactive/*`
 - **責務**:
   - リクエストの転送（HTTP proxy）
@@ -52,16 +55,18 @@ ledger_api (Business Logic)
   - 認証・認可（将来実装）
   - ヘッダー透過
   - ストリーミング
-- **特徴**: 
+- **特徴**:
   - ビジネスロジックを持たない薄い窓口
   - ledger_apiへのHTTPクライアント
   - `rewrite_artifact_urls_to_bff()` で `/reports/artifacts/...` → `/core_api/reports/artifacts/...`
 
 **主要ファイル**:
+
 - `app/backend/core_api/app/routers/reports.py`
 - `app/backend/core_api/app/routers/block_unit_price.py`
 
 **エンドポイント例**:
+
 ```python
 # 工場日報
 @router.post("/factory_report/")
@@ -73,6 +78,7 @@ async def proxy_factory_report(request: Request):
 ```
 
 ### 4. ledger_api (Business Logic)
+
 - **URL**: `/reports/*`, `/block_unit_price_interactive/*`（内部論理パス）
 - **責務**:
   - 帳票生成（Excel/PDF）
@@ -85,10 +91,12 @@ async def proxy_factory_report(request: Request):
   - `REPORT_ARTIFACT_URL_PREFIX=/reports/artifacts` を返す
 
 **主要ファイル**:
+
 - `app/backend/ledger_api/app/main.py`
 - `app/backend/ledger_api/app/api/endpoints/reports/*.py`
 
 **エンドポイント例**:
+
 ```python
 # ルーター登録（内部論理パス）
 app.include_router(reports_router, prefix="/reports")
@@ -107,6 +115,7 @@ app.include_router(block_unit_price_router, prefix="/block_unit_price_interactiv
 ### アーティファクトURLの変換
 
 **ledger_apiからのレスポンス**:
+
 ```json
 {
   "artifact": {
@@ -117,6 +126,7 @@ app.include_router(block_unit_price_router, prefix="/block_unit_price_interactiv
 ```
 
 **core_api BFFでの変換** (`rewrite_artifact_urls_to_bff()`):
+
 ```json
 {
   "artifact": {
@@ -131,10 +141,12 @@ app.include_router(block_unit_price_router, prefix="/block_unit_price_interactiv
 ## DIP (依存関係逆転の原則)
 
 ### 原則
+
 - **上位レイヤー（core_api）が下位レイヤー（ledger_api）を知る**: ✅ OK
 - **下位レイヤー（ledger_api）が上位レイヤー（core_api）を知る**: ❌ NG
 
 ### 実装
+
 - ledger_apiは `/core_api` プレフィックスの存在を知らない
 - ledger_apiは内部論理パス（`/reports/...`）のみを返す
 - core_apiがプレフィックスを付与する責務を持つ
@@ -142,11 +154,13 @@ app.include_router(block_unit_price_router, prefix="/block_unit_price_interactiv
 ## 環境変数
 
 ### core_api
+
 ```bash
 LEDGER_API_BASE=http://ledger_api:8000  # ledger_apiのベースURL
 ```
 
 ### ledger_api
+
 ```bash
 REPORT_ARTIFACT_URL_PREFIX=/reports/artifacts  # 内部論理パス
 REPORT_ARTIFACT_ROOT_DIR=/tmp/reports          # ファイル保存先
@@ -172,16 +186,19 @@ REPORT_ARTIFACT_URL_TTL=900                    # URL有効期限（秒）
 ## トラブルシューティング
 
 ### 404エラー（Artifact not found）
+
 - **原因**: URLに `/core_api` プレフィックスが付いていない
 - **確認**: `rewrite_artifact_urls_to_bff()` が呼ばれているか
 - **修正**: BFFエンドポイントで `return rewrite_artifact_urls_to_bff(r.json())`
 
 ### 500エラー（ECONNREFUSED）
+
 - **原因**: core_apiがledger_apiに接続できない
 - **確認**: `LEDGER_API_BASE` 環境変数の値
 - **修正**: `http://ledger_api:8000` に設定（Dockerサービス名を使用）
 
 ### 422エラー（Validation Error）
+
 - **原因**: CSVファイルの形式が不正
 - **確認**: 必須カラムが含まれているか
 - **対処**: エラーメッセージを確認して必要なカラムを追加

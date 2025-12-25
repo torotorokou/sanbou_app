@@ -17,29 +17,29 @@
 
 ## 環境別構成一覧
 
-| 項目 | local_dev | vm_stg | vm_prod | local_demo |
-|------|-----------|--------|---------|------------|
-| **用途** | ローカル開発 | VPN 内検証 | 本番運用 | デモ・検証 |
-| **アクセス方法** | localhost | VPN/Tailscale 経由<br>http://100.x.x.x/ | LB + IAP 経由<br>https://sanbou-app.jp/ | localhost (別ポート) |
-| **docker-compose** | `docker-compose.dev.yml` | `docker-compose.stg.yml` | `docker-compose.prod.yml` | `docker-compose.local_demo.yml` |
-| **env ファイル** | `.env.local_dev` | `.env.vm_stg` | `.env.vm_prod` | `.env.local_demo` |
-| **secrets ファイル** | `.env.local_dev.secrets` | `.env.vm_stg.secrets` | `.env.vm_prod.secrets` | `.env.local_demo.secrets` |
-| **AUTH_MODE** | `dummy` | `vpn_dummy` | `iap` | `dummy` |
-| **IAP_ENABLED** | `false` | `false` | `true` | `false` |
-| **DEBUG** | `true` | `false` | `false` | `true` |
-| **STAGE** | `dev` | `stg` | `prod` | `demo` |
-| **APP_TAG** | `local_dev` | `stg` | `prod` | `local_demo` |
-| **POSTGRES_USER** | `sanbou_app_dev` | `sanbou_app_stg` | `sanbou_app_prod` | `sanbou_app_demo` |
-| **POSTGRES_DB** | `sanbou_dev` | `sanbou_stg` | `sanbou_prod` | `sanbou_demo` |
-| **DB ポート公開** | `5432:5432` | `5432:5432` | `127.0.0.1:5432:5432`<br>(localhost のみ) | `5433:5432` |
-| **nginx ポート** | - | `80:80`, `443:443` | `80:80`, `443:443` | - |
-| **イメージソース** | build (local) | Artifact Registry<br>(pull のみ) | Artifact Registry<br>(pull のみ) | build (local) |
-| **イメージタグ** | - | `*:stg-latest` | `*:prod-latest` | - |
-| **Dockerfile target** | `dev` | `stg` | `prod` | `dev` |
-| **ホットリロード** | ✅ 有効 | ❌ 無効 | ❌ 無効 | ✅ 有効 |
-| **nginx 設定** | - | `stg.conf` | `app.conf` | - |
-| **IAP ヘッダ転送** | - | ❌ 不要 | ✅ 必須 | - |
-| **VPN ユーザー** | - | `VPN_USER_EMAIL`<br>`VPN_USER_NAME` | - | - |
+| 項目                  | local_dev                | vm_stg                                  | vm_prod                                   | local_demo                      |
+| --------------------- | ------------------------ | --------------------------------------- | ----------------------------------------- | ------------------------------- |
+| **用途**              | ローカル開発             | VPN 内検証                              | 本番運用                                  | デモ・検証                      |
+| **アクセス方法**      | localhost                | VPN/Tailscale 経由<br>http://100.x.x.x/ | LB + IAP 経由<br>https://sanbou-app.jp/   | localhost (別ポート)            |
+| **docker-compose**    | `docker-compose.dev.yml` | `docker-compose.stg.yml`                | `docker-compose.prod.yml`                 | `docker-compose.local_demo.yml` |
+| **env ファイル**      | `.env.local_dev`         | `.env.vm_stg`                           | `.env.vm_prod`                            | `.env.local_demo`               |
+| **secrets ファイル**  | `.env.local_dev.secrets` | `.env.vm_stg.secrets`                   | `.env.vm_prod.secrets`                    | `.env.local_demo.secrets`       |
+| **AUTH_MODE**         | `dummy`                  | `vpn_dummy`                             | `iap`                                     | `dummy`                         |
+| **IAP_ENABLED**       | `false`                  | `false`                                 | `true`                                    | `false`                         |
+| **DEBUG**             | `true`                   | `false`                                 | `false`                                   | `true`                          |
+| **STAGE**             | `dev`                    | `stg`                                   | `prod`                                    | `demo`                          |
+| **APP_TAG**           | `local_dev`              | `stg`                                   | `prod`                                    | `local_demo`                    |
+| **POSTGRES_USER**     | `sanbou_app_dev`         | `sanbou_app_stg`                        | `sanbou_app_prod`                         | `sanbou_app_demo`               |
+| **POSTGRES_DB**       | `sanbou_dev`             | `sanbou_stg`                            | `sanbou_prod`                             | `sanbou_demo`                   |
+| **DB ポート公開**     | `5432:5432`              | `5432:5432`                             | `127.0.0.1:5432:5432`<br>(localhost のみ) | `5433:5432`                     |
+| **nginx ポート**      | -                        | `80:80`, `443:443`                      | `80:80`, `443:443`                        | -                               |
+| **イメージソース**    | build (local)            | Artifact Registry<br>(pull のみ)        | Artifact Registry<br>(pull のみ)          | build (local)                   |
+| **イメージタグ**      | -                        | `*:stg-latest`                          | `*:prod-latest`                           | -                               |
+| **Dockerfile target** | `dev`                    | `stg`                                   | `prod`                                    | `dev`                           |
+| **ホットリロード**    | ✅ 有効                  | ❌ 無効                                 | ❌ 無効                                   | ✅ 有効                         |
+| **nginx 設定**        | -                        | `stg.conf`                              | `app.conf`                                | -                               |
+| **IAP ヘッダ転送**    | -                        | ❌ 不要                                 | ✅ 必須                                   | -                               |
+| **VPN ユーザー**      | -                        | `VPN_USER_EMAIL`<br>`VPN_USER_NAME`     | -                                         | -                               |
 
 ---
 
@@ -47,11 +47,11 @@
 
 ### AUTH_MODE の値と動作
 
-| AUTH_MODE | 使用環境 | 動作 | 必要な設定 |
-|-----------|----------|------|------------|
-| `dummy` | local_dev<br>local_demo | 固定の開発用ユーザーを返す<br>`dev-user@honest-recycle.co.jp` | なし |
-| `vpn_dummy` | vm_stg | 環境変数で指定した VPN ユーザーを返す | `VPN_USER_EMAIL`<br>`VPN_USER_NAME` |
-| `iap` | vm_prod | IAP ヘッダ（`X-Goog-*`）を検証してユーザーを取得 | `IAP_AUDIENCE`<br>`IAP_PUBLIC_KEY_URL` |
+| AUTH_MODE   | 使用環境                | 動作                                                          | 必要な設定                             |
+| ----------- | ----------------------- | ------------------------------------------------------------- | -------------------------------------- |
+| `dummy`     | local_dev<br>local_demo | 固定の開発用ユーザーを返す<br>`dev-user@honest-recycle.co.jp` | なし                                   |
+| `vpn_dummy` | vm_stg                  | 環境変数で指定した VPN ユーザーを返す                         | `VPN_USER_EMAIL`<br>`VPN_USER_NAME`    |
+| `iap`       | vm_prod                 | IAP ヘッダ（`X-Goog-*`）を検証してユーザーを取得              | `IAP_AUDIENCE`<br>`IAP_PUBLIC_KEY_URL` |
 
 ### 認証プロバイダー実装
 
@@ -196,7 +196,7 @@ data-net  ← backend ↔ DB 間通信（内部のみ）
 - [ ] `secrets/.env.<ENV>.secrets` ファイル作成
 - [ ] `AUTH_MODE` を適切に設定
 - [ ] DB ユーザー・パスワードを設定
-- [ ] （vm_* のみ）Artifact Registry イメージを push
+- [ ] （vm\_\* のみ）Artifact Registry イメージを push
 - [ ] （vm_prod のみ）IAP_AUDIENCE を設定
 - [ ] `make up ENV=<ENV>` で起動確認
 - [ ] `make health ENV=<ENV>` でヘルスチェック

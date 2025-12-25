@@ -1,16 +1,16 @@
 /**
  * components/CategorySelector.tsx
  * 種別選択コンポーネント（廃棄物/有価物）
- * 
+ *
  * 責務:
  * - 廃棄物/有価物の切り替えUIを提供
  * - レスポンシブ対応のボタンスタイル
  */
 
-import React from 'react';
-import { Space, Typography, Radio } from 'antd';
-import type { CategoryKind } from '../../../shared/model/types';
-import styles from './CategorySelector.module.css';
+import React from "react";
+import { Space, Typography, Radio } from "antd";
+import type { CategoryKind } from "../../../shared/model/types";
+import styles from "./CategorySelector.module.css";
 
 interface CategorySelectorProps {
   value: CategoryKind;

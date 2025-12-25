@@ -1,17 +1,17 @@
 -- ============================================================
 -- 03_grants.sql - 権限付与（冪等）
 -- ============================================================
--- 
+--
 -- 目的: アプリユーザーに必要十分な権限を付与
--- 
+--
 -- 実行方法:
 --   psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" \
 --        -v app_user="$POSTGRES_USER" \
 --        -f 03_grants.sql
--- 
+--
 -- パラメータ:
 --   app_user: アプリ接続ユーザー名（例: sanbou_app_dev）
--- 
+--
 -- 権限方針:
 --   - raw, stg, kpi, log, app, app_auth, forecast, jobs, sandbox, public: RW + SEQUENCES
 --   - mart, ref: RO (SELECT のみ)
@@ -43,29 +43,29 @@ BEGIN
         IF EXISTS (SELECT FROM pg_catalog.pg_namespace WHERE nspname = schema_rec) THEN
             -- USAGE 権限
             EXECUTE format('GRANT USAGE ON SCHEMA %I TO %I', schema_rec, app_user_var);
-            
+
             -- テーブル・ビューへの RW 権限
             EXECUTE format(
                 'GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA %I TO %I',
                 schema_rec,
                 app_user_var
             );
-            
+
             -- シーケンスへの権限（自動採番に必須）
             EXECUTE format(
                 'GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA %I TO %I',
                 schema_rec,
                 app_user_var
             );
-            
+
             -- 関数への EXECUTE 権限
             EXECUTE format(
                 'GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA %I TO %I',
                 schema_rec,
                 app_user_var
             );
-            
-            RAISE NOTICE '✓ [RW] %.% → %', 
+
+            RAISE NOTICE '✓ [RW] %.% → %',
                          schema_rec,
                          repeat(' ', 12 - length(schema_rec::text)),
                          app_user_var;
@@ -94,22 +94,22 @@ BEGIN
         IF EXISTS (SELECT FROM pg_catalog.pg_namespace WHERE nspname = schema_rec) THEN
             -- USAGE 権限
             EXECUTE format('GRANT USAGE ON SCHEMA %I TO %I', schema_rec, app_user_var);
-            
+
             -- テーブル・ビューへの SELECT 権限のみ
             EXECUTE format(
                 'GRANT SELECT ON ALL TABLES IN SCHEMA %I TO %I',
                 schema_rec,
                 app_user_var
             );
-            
+
             -- 関数への EXECUTE 権限
             EXECUTE format(
                 'GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA %I TO %I',
                 schema_rec,
                 app_user_var
             );
-            
-            RAISE NOTICE '✓ [RO] %.% → %', 
+
+            RAISE NOTICE '✓ [RO] %.% → %',
                          schema_rec,
                          repeat(' ', 12 - length(schema_rec::text)),
                          app_user_var;
@@ -147,7 +147,7 @@ BEGIN
             mv_count := mv_count + 1;
         END IF;
     END LOOP;
-    
+
     IF mv_count > 0 THEN
         RAISE NOTICE '✓ Materialized views: SELECT granted in % schemas', mv_count;
         RAISE NOTICE '  Note: REFRESH requires owner privileges';

@@ -44,4 +44,3 @@ ALTER VIEW mart.v_daily_target_with_calendar OWNER TO myuser;
 --
 
 \unrestrict UmtFt0AtLcandBKoAbTgceoNAipvjhO9Xo4nZOVNNo4lSVdPfSPyhKeF3x29oWz
-

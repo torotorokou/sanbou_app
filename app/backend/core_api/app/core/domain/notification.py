@@ -7,15 +7,15 @@ Recipient Key 規約:
   - user:{id}     : 自社ユーザー（例: user:123）
   - email:{addr}  : メールアドレス（例: email:user@example.com）
   - aud:{site}:{code} : 顧客コード（例: aud:site:narita）
-  
+
   将来的にLINE送信時は、RecipientResolverが user:123 → LINE user ID に解決する。
 """
+
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, Literal, Optional
 from uuid import UUID, uuid4
-
 
 # 通知チャネル（将来拡張可能）
 NotificationChannel = Literal["email", "line", "webhook", "push"]
@@ -23,6 +23,7 @@ NotificationChannel = Literal["email", "line", "webhook", "push"]
 
 class NotificationStatus(str, Enum):
     """通知ステータス"""
+
     PENDING = "pending"
     SENT = "sent"
     FAILED = "failed"
@@ -32,12 +33,13 @@ class NotificationStatus(str, Enum):
 class FailureType(str, Enum):
     """
     送信失敗の種別
-    
+
     - TEMPORARY: 一時的な失敗（リトライ可能）
       例: ネットワークエラー、タイムアウト、一時的なAPI制限
     - PERMANENT: 恒久的な失敗（リトライ不要）
       例: 無効なrecipient、通知許可なし、Resolver解決不可
     """
+
     TEMPORARY = "temporary"
     PERMANENT = "permanent"
 
@@ -46,15 +48,16 @@ class FailureType(str, Enum):
 class RecipientRef:
     """
     通知送信先の参照
-    
+
     自社システム内のキーで通知先を表現する。
     チャネル固有のID（LINE user ID等）は含めない。
-    
+
     Examples:
         RecipientRef(kind="user", key="123")      -> "user:123"
         RecipientRef(kind="email", key="a@b.com") -> "email:a@b.com"
         RecipientRef(kind="aud", key="site:narita") -> "aud:site:narita"
     """
+
     kind: Literal["user", "email", "aud"]
     key: str
 
@@ -70,10 +73,10 @@ class RecipientRef:
     def parse(recipient_key: str) -> Optional["RecipientRef"]:
         """
         recipient_key文字列から RecipientRef を生成
-        
+
         Args:
             recipient_key: "user:123" 等の形式
-            
+
         Returns:
             RecipientRef or None (パース失敗時)
         """
@@ -89,6 +92,7 @@ class RecipientRef:
 @dataclass(frozen=True)
 class NotificationPayload:
     """通知ペイロード（チャネル共通の最小構造）"""
+
     title: str
     body: str
     url: Optional[str] = None
@@ -106,11 +110,12 @@ class NotificationPayload:
 class NotificationOutboxItem:
     """
     通知 Outbox アイテム
-    
+
     - enqueue 時に作成
     - dispatch で処理され、sent/failed/skipped に遷移
     - 失敗時は failure_type で TEMP/PERM を判定し、retry_count と next_retry_at で再試行制御
     """
+
     id: UUID
     channel: NotificationChannel
     status: NotificationStatus
@@ -155,10 +160,11 @@ class NotificationOutboxItem:
 class NotificationPreference:
     """
     ユーザーの通知許可設定
-    
+
     将来的にはDB永続化される想定。
     今回はInMemory実装で枠だけ用意。
     """
+
     user_key: str  # "user:123" 形式
     email_enabled: bool = True
     line_enabled: bool = False  # デフォルトは無効（LINE連携が必要）

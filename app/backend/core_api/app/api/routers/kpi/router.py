@@ -7,12 +7,12 @@ Design:
   - Request → Input DTO → UseCase → Output DTO → Response
   - No business logic in this layer
 """
-from fastapi import APIRouter, Depends
 
 from app.api.schemas import KPIOverview
-from app.core.usecases.kpi.kpi_uc import KPIUseCase
-from app.core.usecases.kpi.dto import GetKPIOverviewInput
 from app.config.di_providers import get_kpi_uc
+from app.core.usecases.kpi.dto import GetKPIOverviewInput
+from app.core.usecases.kpi.kpi_uc import KPIUseCase
+from fastapi import APIRouter, Depends
 
 router = APIRouter(prefix="/kpi", tags=["kpi"])
 
@@ -30,10 +30,10 @@ def get_overview(
     """
     # Step 1: Request → Input DTO (no parameters needed)
     input_dto = GetKPIOverviewInput()
-    
+
     # Step 2: UseCase execution
     output_dto = uc.execute(input_dto)
-    
+
     # Step 3: Output DTO → Response
     return KPIOverview(
         total_jobs=output_dto.total_jobs,

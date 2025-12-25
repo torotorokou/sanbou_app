@@ -2,16 +2,16 @@
 PDF Status - PDFステータス確認エンドポイント
 Excel同期+PDF非同期構成でのポーリング用
 """
+
 import os
-from typing import Optional, Literal
+from typing import Literal, Optional
 
-from fastapi import APIRouter, Query
-from pydantic import BaseModel
 import httpx
-
+from app.shared.utils import rewrite_artifact_urls_to_bff
 from backend_shared.application.logging import create_log_context, get_module_logger
 from backend_shared.core.domain.exceptions import ExternalServiceError
-from app.shared.utils import rewrite_artifact_urls_to_bff
+from fastapi import APIRouter, Query
+from pydantic import BaseModel
 
 logger = get_module_logger(__name__)
 
@@ -22,6 +22,7 @@ LEDGER_API_BASE = os.getenv("LEDGER_API_BASE", "http://ledger_api:8000")
 
 class PdfStatusResponse(BaseModel):
     """PDFステータスレスポンス"""
+
     report_key: str
     report_token: str
     status: Literal["pending", "ready", "error"]
@@ -37,7 +38,7 @@ async def proxy_pdf_status(
 ) -> PdfStatusResponse:
     """
     PDFステータス確認（ledger_apiへフォワード）
-    
+
     フロントエンドからポーリングで呼ばれ、PDF生成完了を確認する。
     """
     logger.debug(
@@ -47,9 +48,9 @@ async def proxy_pdf_status(
             report_key=report_key,
             report_date=report_date,
             report_token=report_token,
-        )
+        ),
     )
-    
+
     try:
         async with httpx.AsyncClient(timeout=10.0) as client:
             url = f"{LEDGER_API_BASE}/reports/pdf-status"
@@ -58,16 +59,16 @@ async def proxy_pdf_status(
                 "report_date": report_date,
                 "report_token": report_token,
             }
-            
+
             logger.debug(f"Forwarding PDF status check to {url}")
             r = await client.get(url, params=params)
             r.raise_for_status()
-            
+
             # BFFの責務: 内部論理パスを外向きパスに変換
             response_data = r.json()
             response_data = rewrite_artifact_urls_to_bff(response_data)
             return PdfStatusResponse(**response_data)
-            
+
     except httpx.HTTPStatusError as e:
         logger.error(
             f"Ledger API returned error: {e.response.status_code}",

@@ -1,14 +1,14 @@
 -- ============================================================
 -- 02_reassign_ownership.sql - 所有権移管（冪等）
 -- ============================================================
--- 
+--
 -- 目的: すべてのDBオブジェクトの所有者を sanbou_owner に統一
--- 
+--
 -- 実行方法:
 --   psql -U myuser -d sanbou_dev \
 --        -c "SET vars.app_user TO 'sanbou_app_dev'" \
 --        -f 02_reassign_ownership.sql
--- 
+--
 -- パラメータ:
 --   vars.app_user: 現在の所有者（例: sanbou_app_dev）
 -- ============================================================
@@ -49,7 +49,7 @@ DO $$
 DECLARE
     app_user_input text := current_setting('vars.app_user', true);
     schema_list text[] := ARRAY[
-        'raw', 'stg', 'mart', 'ref', 'kpi', 'log', 
+        'raw', 'stg', 'mart', 'ref', 'kpi', 'log',
         'app', 'app_auth', 'forecast', 'jobs', 'sandbox'
     ];
     schema_name text;
@@ -58,9 +58,9 @@ BEGIN
     IF app_user_input IS NULL THEN
         RAISE EXCEPTION 'Missing vars.app_user setting';
     END IF;
-    
+
     RAISE NOTICE 'Application User: %', app_user_input;
-    
+
     FOREACH schema_name IN ARRAY schema_list
     LOOP
         -- スキーマの存在確認
@@ -72,11 +72,11 @@ BEGIN
             INTO current_owner
             FROM pg_namespace
             WHERE nspname = schema_name;
-            
+
             -- owner が sanbou_owner でない場合のみ変更
             IF current_owner != 'sanbou_owner' THEN
                 EXECUTE format('ALTER SCHEMA %I OWNER TO sanbou_owner', schema_name);
-                RAISE NOTICE '✓ Changed schema % owner: % → sanbou_owner', 
+                RAISE NOTICE '✓ Changed schema % owner: % → sanbou_owner',
                              schema_name, current_owner;
             ELSE
                 RAISE NOTICE '  Schema % already owned by sanbou_owner', schema_name;
@@ -99,7 +99,7 @@ DO $$
 DECLARE
     app_user_input text := current_setting('vars.app_user', true);
     schema_list text[] := ARRAY[
-        'raw', 'stg', 'mart', 'ref', 'kpi', 'log', 
+        'raw', 'stg', 'mart', 'ref', 'kpi', 'log',
         'app', 'app_auth', 'forecast', 'jobs', 'sandbox', 'public'
     ];
     schema_rec text;
@@ -111,7 +111,7 @@ BEGIN
     IF app_user_input IS NULL THEN
         RAISE EXCEPTION 'Missing vars.app_user setting';
     END IF;
-    
+
     FOREACH schema_rec IN ARRAY schema_list
     LOOP
         -- スキーマが存在する場合のみ処理
@@ -124,42 +124,42 @@ BEGIN
             FROM pg_tables
             WHERE schemaname = schema_rec
               AND tableowner = app_user_input;
-            
+
             IF table_count > 0 THEN
-                FOR table_name IN 
-                    SELECT tablename 
-                    FROM pg_tables 
-                    WHERE schemaname = schema_rec 
+                FOR table_name IN
+                    SELECT tablename
+                    FROM pg_tables
+                    WHERE schemaname = schema_rec
                       AND tableowner = app_user_input
                 LOOP
-                    EXECUTE format('ALTER TABLE %I.%I OWNER TO sanbou_owner', 
+                    EXECUTE format('ALTER TABLE %I.%I OWNER TO sanbou_owner',
                                    schema_rec, table_name);
                 END LOOP;
                 RAISE NOTICE '✓ Reassigned % tables in schema %', table_count, schema_rec;
             END IF;
-            
+
             -- シーケンスの所有権移管
             SELECT COUNT(*)
             INTO sequence_count
             FROM pg_sequences
             WHERE schemaname = schema_rec
               AND sequenceowner = app_user_input;
-            
+
             IF sequence_count > 0 THEN
-                FOR seq_name IN 
-                    SELECT sequencename 
-                    FROM pg_sequences 
-                    WHERE schemaname = schema_rec 
+                FOR seq_name IN
+                    SELECT sequencename
+                    FROM pg_sequences
+                    WHERE schemaname = schema_rec
                       AND sequenceowner = app_user_input
                 LOOP
-                    EXECUTE format('ALTER SEQUENCE %I.%I OWNER TO sanbou_owner', 
+                    EXECUTE format('ALTER SEQUENCE %I.%I OWNER TO sanbou_owner',
                                    schema_rec, seq_name);
                 END LOOP;
                 RAISE NOTICE '✓ Reassigned % sequences in schema %', sequence_count, schema_rec;
             END IF;
         END IF;
     END LOOP;
-    
+
     RAISE NOTICE '✓ Ownership reassignment completed';
 END
 $$;

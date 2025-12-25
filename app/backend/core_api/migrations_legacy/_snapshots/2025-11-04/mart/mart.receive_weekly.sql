@@ -66,4 +66,3 @@ ALTER VIEW mart.receive_weekly OWNER TO myuser;
 --
 
 \unrestrict sxNzm8e2YR2m6to68dkj7UgN0vSundYAUcIVJZoNH2YERTnFnJzxSQVlbWoaiqZ
-

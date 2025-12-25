@@ -15,20 +15,24 @@
 from typing import Any, Dict
 
 import pandas as pd
-
-from app.core.usecases.reports.average_sheet_processor import process as process_average_sheet
-from app.core.usecases.reports.balance_sheet_processor import process as process_balance_sheet
-from app.core.usecases.reports.factory_report_processor import process as process_factory_report
+from app.core.usecases.reports.average_sheet_processor import (
+    process as process_average_sheet,
+)
+from app.core.usecases.reports.balance_sheet_processor import (
+    process as process_balance_sheet,
+)
+from app.core.usecases.reports.base_generators import BaseReportGenerator
+from app.core.usecases.reports.factory_report_processor import (
+    process as process_factory_report,
+)
 from app.core.usecases.reports.management_sheet_processor import (
     process as process_management_sheet,
 )
 
-from app.core.usecases.reports.base_generators import BaseReportGenerator
-
 
 class FactoryReportGenerator(BaseReportGenerator):
     """工場レポート生成クラス（旧版）
-    
+
     ⚠️ 互換性維持用。新規開発では GenerateFactoryReportUseCase を使用してください。
     """
 
@@ -38,7 +42,7 @@ class FactoryReportGenerator(BaseReportGenerator):
 
 class BalanceSheetGenerator(BaseReportGenerator):
     """バランスシート生成クラス（旧版）
-    
+
     ⚠️ 互換性維持用。新規開発では GenerateBalanceSheetUseCase を使用してください。
     """
 
@@ -48,7 +52,7 @@ class BalanceSheetGenerator(BaseReportGenerator):
 
 class AverageSheetGenerator(BaseReportGenerator):
     """平均シート生成クラス（旧版）
-    
+
     ⚠️ 互換性維持用。新規開発では GenerateAverageSheetUseCase を使用してください。
     """
 
@@ -58,7 +62,7 @@ class AverageSheetGenerator(BaseReportGenerator):
 
 class ManagementSheetGenerator(BaseReportGenerator):
     """管理シート生成クラス（旧版）
-    
+
     ⚠️ 互換性維持用。新規開発では GenerateManagementSheetUseCase を使用してください。
     """
 

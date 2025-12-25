@@ -1,6 +1,9 @@
 # ============================
 # 基本ルール / OS / エディタ
 # ============================
+# Git 内部ディレクトリ（Explorer非表示推奨、必要なら一時的に表示）
+.git/
+
 .DS_Store
 Thumbs.db
 .vscode/
@@ -15,6 +18,15 @@ Thumbs.db
 
 # JetBrains 等派生
 .fleet/
+
+# ============================
+# Pre-commit / Git Hooks
+# ============================
+# Pre-commit キャッシュとログ
+.pre-commit.log
+
+# Secrets baseline（追跡する）
+!.secrets.baseline
 
 # ============================
 # Node.js / Frontend Build
@@ -126,7 +138,7 @@ docker-compose.local.yml
 
 # Docker volumes
 docker-volumes/
- 
+
 
 # ============================
 # データ / バックアップ

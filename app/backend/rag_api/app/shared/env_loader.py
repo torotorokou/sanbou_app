@@ -19,8 +19,9 @@ from __future__ import annotations
 import os
 from pathlib import Path
 from typing import Optional
-from dotenv import load_dotenv
+
 from app.config.paths import CONFIG_ENV
+from dotenv import load_dotenv
 
 
 def load_env_and_secrets() -> Optional[str]:

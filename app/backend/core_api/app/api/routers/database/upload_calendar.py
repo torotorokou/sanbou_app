@@ -6,18 +6,25 @@ CSVアップロードカレンダー取得と削除エンドポイント
   - GET /database/upload-calendar: 年月指定でアップロードカレンダー取得
   - DELETE /database/upload-calendar/{upload_file_id}: 特定日付・CSV種別のデータを論理削除
 """
-from typing import Optional
-from datetime import date
-from fastapi import APIRouter, Depends, Query
 
-from backend_shared.application.logging import get_module_logger
+from datetime import date
+from typing import Optional
+
 from app.config.di_providers import (
-    get_upload_calendar_detail_uc,
     get_delete_upload_scope_uc,
+    get_upload_calendar_detail_uc,
 )
-from app.core.usecases.upload.get_upload_calendar_detail_uc import GetUploadCalendarDetailUseCase
 from app.core.usecases.upload.delete_upload_scope_uc import DeleteUploadScopeUseCase
-from backend_shared.core.domain.exceptions import ValidationError, InfrastructureError, NotFoundError
+from app.core.usecases.upload.get_upload_calendar_detail_uc import (
+    GetUploadCalendarDetailUseCase,
+)
+from backend_shared.application.logging import get_module_logger
+from backend_shared.core.domain.exceptions import (
+    InfrastructureError,
+    NotFoundError,
+    ValidationError,
+)
+from fastapi import APIRouter, Depends, Query
 
 logger = get_module_logger(__name__)
 
@@ -32,16 +39,16 @@ def get_upload_calendar(
 ):
     """
     CSV アップロードカレンダー用のアップロードファイル情報を取得
-    
+
     指定された年月の全アップロードファイルについて、
     データ日付、CSV種別、行数、upload_file_idを取得します。
     論理削除されたファイルのデータは除外されます。
-    
+
     Args:
         year: 年（例: 2025）
         month: 月（1-12）
         uc: GetUploadCalendarDetailUseCase (DI)
-    
+
     Returns:
         {
             "items": [
@@ -61,7 +68,7 @@ def get_upload_calendar(
         logger.error(
             "Failed to fetch upload calendar",
             extra=create_log_context(operation="get_upload_calendar", error=str(e)),
-            exc_info=True
+            exc_info=True,
         )
         raise InfrastructureError(message=f"Calendar query failed: {str(e)}", cause=e)
 
@@ -76,10 +83,10 @@ def delete_upload_scope(
 ):
     """
     指定されたアップロードファイルの特定日付・CSV種別のデータを論理削除
-    
+
     カレンダーの1マス（upload_file_id + date + csv_kind）に対応する
     stg テーブルの行を is_deleted=true に更新します。
-    
+
     Args:
         upload_file_id: 削除対象の log.upload_file.id
         target_date: 削除対象の日付（クエリパラメータ: date）
@@ -87,7 +94,7 @@ def delete_upload_scope(
                   例: 'shogun_flash_receive', 'shogun_final_yard'
         deleted_by: 削除実行者（オプション）
         uc: DeleteUploadScopeUseCase (DI)
-    
+
     Returns:
         {
             "status": "deleted",
@@ -104,14 +111,14 @@ def delete_upload_scope(
             csv_kind=csv_kind,
             deleted_by=deleted_by,
         )
-        
+
         if affected_rows == 0:
             raise NotFoundError(
                 entity="UploadScope",
                 entity_id=f"file={upload_file_id},date={target_date},kind={csv_kind}",
-                message="対象データが見つかりません（既に削除済みの可能性があります）"
+                message="対象データが見つかりません（既に削除済みの可能性があります）",
             )
-        
+
         logger.info(
             f"Soft deleted {affected_rows} rows "
             f"for upload_file_id={upload_file_id}, date={target_date}, "
@@ -124,20 +131,20 @@ def delete_upload_scope(
             "csvKind": csv_kind,
             "affectedRows": affected_rows,
         }
-        
+
     except ValueError as e:
         logger.warning(
             "Validation error",
-            extra=create_log_context(operation="delete_upload_scope", error=str(e))
+            extra=create_log_context(operation="delete_upload_scope", error=str(e)),
         )
         raise ValidationError(message=str(e), field="csv_kind")
-        
+
     except NotFoundError:
         raise
     except Exception as e:
         logger.error(
             "Failed to delete upload scope",
             extra=create_log_context(operation="delete_upload_scope", error=str(e)),
-            exc_info=True
+            exc_info=True,
         )
         raise InfrastructureError(message=f"Delete operation failed: {str(e)}", cause=e)

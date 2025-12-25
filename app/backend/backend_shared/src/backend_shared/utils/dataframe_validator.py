@@ -3,9 +3,9 @@ DataFrameのバリデーション処理を行う関数群モジュール。
 初心者にも分かりやすいように日本語でコメント・ドックストリングを記載しています。
 """
 
-import pandas as pd
 from typing import Optional
 
+import pandas as pd
 from backend_shared.utils.dataframe_utils import (
     has_denpyou_date_column,
     remove_weekday_parentheses,

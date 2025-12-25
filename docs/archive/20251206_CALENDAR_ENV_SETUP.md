@@ -63,30 +63,35 @@ Core API は `DEV_CORE_API_PORT` (8003) でホストにマッピングされま�
 
 ```typescript
 // HttpCalendarRepository.ts
-const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000';
+const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000";
 ```
 
 ## ステージ別設定
 
 ### 開発環境（dev）
+
 - **ファイル**: `env/.env.local_dev`
 - **Core API**: `http://localhost:8003/api`
 
 ### ステージング環境（stg）
+
 - **ファイル**: `env/.env.local_stg` または `env/.env.vm_stg`
 - **設定が必要**: Core API の実際の URL に応じて `VITE_API_BASE_URL` を追加
 
 ### 本番環境（prod）
+
 - **ファイル**: `env/.env.vm_prod`
 - **設定が必要**: Core API の実際の URL に応じて `VITE_API_BASE_URL` を追加
 
 ## 注意事項
 
-1. **VITE_ プレフィックス**
+1. **VITE\_ プレフィックス**
+
    - Vite ビルド時にフロントエンドに埋め込まれる環境変数は `VITE_` で始まる必要があります
    - このプレフィックスがない変数はフロントエンドコードから参照できません
 
 2. **セキュリティ**
+
    - `VITE_` プレフィックスの環境変数はビルド時にクライアント側のコードに埋め込まれます
    - 機密情報（APIキー、シークレットなど）は含めないでください
 
@@ -106,16 +111,20 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000';
 ### 環境変数が読み込まれない場合
 
 1. **ファイルの存在確認**
+
    ```bash
    ls -la env/.env.local_dev
    ```
 
-2. **VITE_ プレフィックスの確認**
+2. **VITE\_ プレフィックスの確認**
+
    - 環境変数名が `VITE_` で始まっていることを確認
    - 例: `API_BASE_URL` → `VITE_API_BASE_URL`
 
 3. **サーバーの再起動**
+
    - 環境変数の変更後は Vite サーバーを再起動
+
    ```bash
    # 開発サーバーを停止 (Ctrl+C)
    npm run dev

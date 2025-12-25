@@ -1,14 +1,14 @@
 /**
  * AnnouncementListItem - お知らせアイテムUI（カード型）
- * 
+ *
  * プロフェッショナルな見た目のカード型アイテム。
  * 状態レス：propsのみで動作。
  */
 
-import React from 'react';
-import { Card, Tag, Space } from 'antd';
-import { RightOutlined, PaperClipOutlined } from '@ant-design/icons';
-import type { AnnouncementDisplayItem } from '../model/useAnnouncementsListViewModel';
+import React from "react";
+import { Card, Tag, Space } from "antd";
+import { RightOutlined, PaperClipOutlined } from "@ant-design/icons";
+import type { AnnouncementDisplayItem } from "../model/useAnnouncementsListViewModel";
 
 interface AnnouncementListItemProps {
   /** 表示用に整形されたアイテム */
@@ -27,49 +27,51 @@ export const AnnouncementListItem: React.FC<AnnouncementListItemProps> = ({
   // 重要度に応じた色を取得
   const getSeverityColors = () => {
     switch (item.severity) {
-      case 'critical':
+      case "critical":
         return {
-          bgColor: item.isUnread ? '#fff1f0' : '#fafafa', // 薄赤
-          borderColor: '#ff4d4f', // 赤
-          dotColor: '#ff4d4f',
+          bgColor: item.isUnread ? "#fff1f0" : "#fafafa", // 薄赤
+          borderColor: "#ff4d4f", // 赤
+          dotColor: "#ff4d4f",
         };
-      case 'warn':
+      case "warn":
         return {
-          bgColor: item.isUnread ? '#fff7e6' : '#fafafa', // 薄オレンジ
-          borderColor: '#fa8c16', // オレンジ
-          dotColor: '#fa8c16',
+          bgColor: item.isUnread ? "#fff7e6" : "#fafafa", // 薄オレンジ
+          borderColor: "#fa8c16", // オレンジ
+          dotColor: "#fa8c16",
         };
-      case 'info':
+      case "info":
       default:
         return {
-          bgColor: item.isUnread ? '#e6f7ff' : '#fafafa', // 薄青
-          borderColor: '#1890ff', // 青
-          dotColor: '#1890ff',
+          bgColor: item.isUnread ? "#e6f7ff" : "#fafafa", // 薄青
+          borderColor: "#1890ff", // 青
+          dotColor: "#1890ff",
         };
     }
   };
 
   const colors = getSeverityColors();
-  
+
   return (
     <Card
       onClick={() => onOpen(item.id)}
       style={{
         marginBottom: 8,
         borderRadius: 8,
-        cursor: 'pointer',
+        cursor: "pointer",
         backgroundColor: colors.bgColor,
-        borderLeft: item.isUnread ? `4px solid ${colors.borderColor}` : '4px solid transparent',
-        transition: 'all 0.2s',
+        borderLeft: item.isUnread
+          ? `4px solid ${colors.borderColor}`
+          : "4px solid transparent",
+        transition: "all 0.2s",
       }}
       styles={{
         body: {
-          padding: isMobile ? '12px 16px' : '16px 20px',
+          padding: isMobile ? "12px 16px" : "16px 20px",
           backgroundColor: colors.bgColor,
         },
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+      <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
         {/* 左側：未読ドット */}
         <div style={{ paddingTop: 4 }}>
           {item.isUnread && (
@@ -77,7 +79,7 @@ export const AnnouncementListItem: React.FC<AnnouncementListItemProps> = ({
               style={{
                 width: 8,
                 height: 8,
-                borderRadius: '50%',
+                borderRadius: "50%",
                 backgroundColor: colors.dotColor,
               }}
             />
@@ -95,19 +97,19 @@ export const AnnouncementListItem: React.FC<AnnouncementListItemProps> = ({
                   marginBottom: 6,
                   fontSize: 14,
                   fontWeight: item.isUnread ? 700 : 600,
-                  color: item.isUnread ? '#262626' : '#404040',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                  letterSpacing: '0.2px',
+                  color: item.isUnread ? "#262626" : "#404040",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                  letterSpacing: "0.2px",
                 }}
               >
                 {item.title}
               </h4>
               <div
                 style={{
-                  display: 'flex',
-                  alignItems: 'center',
+                  display: "flex",
+                  alignItems: "center",
                   gap: 6,
                   marginBottom: 6,
                 }}
@@ -115,13 +117,15 @@ export const AnnouncementListItem: React.FC<AnnouncementListItemProps> = ({
                 <span
                   style={{
                     fontSize: 11,
-                    color: '#8c8c8c',
+                    color: "#8c8c8c",
                   }}
                 >
                   {item.publishedLabel}
                 </span>
                 {item.hasAttachments && (
-                  <PaperClipOutlined style={{ fontSize: 12, color: '#8c8c8c' }} />
+                  <PaperClipOutlined
+                    style={{ fontSize: 12, color: "#8c8c8c" }}
+                  />
                 )}
               </div>
             </>
@@ -129,25 +133,33 @@ export const AnnouncementListItem: React.FC<AnnouncementListItemProps> = ({
             // デスクトップ：既存のレイアウト（タイトル + バッジ + タグ + 添付 + 公開日を1行）
             <div
               style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
                 marginBottom: 6,
                 gap: 8,
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 1, minWidth: 0 }}>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                  flex: 1,
+                  minWidth: 0,
+                }}
+              >
                 <h4
                   style={{
                     margin: 0,
                     fontSize: 17,
                     fontWeight: item.isUnread ? 700 : 600,
-                    color: item.isUnread ? '#262626' : '#404040',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                    flex: '0 1 auto',
-                    letterSpacing: '0.3px',
+                    color: item.isUnread ? "#262626" : "#404040",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                    flex: "0 1 auto",
+                    letterSpacing: "0.3px",
                   }}
                 >
                   {item.title}
@@ -172,7 +184,12 @@ export const AnnouncementListItem: React.FC<AnnouncementListItemProps> = ({
                     {item.tags.map((tag, index) => (
                       <Tag
                         key={`tag-${index}`}
-                        style={{ margin: 0, fontSize: 10, backgroundColor: '#f0f0f0', borderColor: '#d9d9d9' }}
+                        style={{
+                          margin: 0,
+                          fontSize: 10,
+                          backgroundColor: "#f0f0f0",
+                          borderColor: "#d9d9d9",
+                        }}
                       >
                         {tag}
                       </Tag>
@@ -183,7 +200,12 @@ export const AnnouncementListItem: React.FC<AnnouncementListItemProps> = ({
                 {item.hasAttachments && (
                   <Tag
                     icon={<PaperClipOutlined />}
-                    style={{ margin: 0, fontSize: 10, backgroundColor: '#e6f7ff', borderColor: '#91d5ff' }}
+                    style={{
+                      margin: 0,
+                      fontSize: 10,
+                      backgroundColor: "#e6f7ff",
+                      borderColor: "#91d5ff",
+                    }}
                   >
                     添付
                   </Tag>
@@ -192,8 +214,8 @@ export const AnnouncementListItem: React.FC<AnnouncementListItemProps> = ({
               <span
                 style={{
                   fontSize: 12,
-                  color: '#8c8c8c',
-                  whiteSpace: 'nowrap',
+                  color: "#8c8c8c",
+                  whiteSpace: "nowrap",
                   flexShrink: 0,
                 }}
               >
@@ -207,13 +229,13 @@ export const AnnouncementListItem: React.FC<AnnouncementListItemProps> = ({
             style={{
               margin: 0,
               fontSize: isMobile ? 13 : 14,
-              color: item.isUnread ? '#595959' : '#8c8c8c',
-              lineHeight: '1.5',
-              display: '-webkit-box',
+              color: item.isUnread ? "#595959" : "#8c8c8c",
+              lineHeight: "1.5",
+              display: "-webkit-box",
               WebkitLineClamp: isMobile ? 1 : 2,
-              WebkitBoxOrient: 'vertical',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
+              WebkitBoxOrient: "vertical",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
             }}
           >
             {item.snippet}
@@ -222,7 +244,7 @@ export const AnnouncementListItem: React.FC<AnnouncementListItemProps> = ({
 
         {/* 右側：誘導記号 */}
         <div style={{ paddingTop: 4 }}>
-          <RightOutlined style={{ fontSize: 14, color: '#bfbfbf' }} />
+          <RightOutlined style={{ fontSize: 14, color: "#bfbfbf" }} />
         </div>
       </div>
     </Card>

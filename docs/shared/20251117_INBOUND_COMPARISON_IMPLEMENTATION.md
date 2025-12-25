@@ -53,7 +53,7 @@ prev_year AS (
   LEFT JOIN mart.v_receive_daily AS r_prev ON r_prev.ddate = c_prev.ddate
   WHERE c_curr.ddate BETWEEN :start AND :end
 )
-SELECT 
+SELECT
   b.ddate, b.iso_year, b.iso_week, b.iso_dow, b.is_business,
   NULL::text AS segment,
   b.ton,
@@ -76,6 +76,7 @@ ORDER BY b.ddate
 ```
 
 **設計ポイント**:
+
 - `mart.v_receive_daily` を編集せず、自己JOINで比較データを取得
 - ウィンドウ関数で累積値を効率的に計算
 - `cum_scope` パラメータに応じて柔軟に集計範囲を変更可能
@@ -103,6 +104,7 @@ class InboundDailyRow(BaseModel):
 ```
 
 **後方互換性**:
+
 - すべて `Optional` にすることで、既存のAPIクライアントは影響を受けない
 - フィールドがない場合は `None` が返される
 
@@ -118,19 +120,19 @@ class InboundPgRepository(InboundRepository):
         self._daily_comparisons_sql_template = load_sql(
             "inbound/inbound_pg_repository__get_daily_with_comparisons.sql"
         )
-    
+
     def fetch_daily(self, start, end, segment, cum_scope):
         # 🆕 新しいSQLを使用
         sql_str = self._daily_comparisons_sql_template.replace(...)
         result = self.db.execute(sql, {...})
-        
+
         for r in rows:
             # 🆕 比較データをパース
             prev_month_ton = float(r[8]) if r[8] is not None else None
             prev_year_ton = float(r[9]) if r[9] is not None else None
             prev_month_cum = float(r[10]) if r[10] is not None else None
             prev_year_cum = float(r[11]) if r[11] is not None else None
-            
+
             data.append(InboundDailyRow(
                 ...,
                 prev_month_ton=prev_month_ton,
@@ -174,14 +176,16 @@ export type InboundDailyRow = {
 // 日次実績データ整形
 const dailyChartData = data.map((row) => {
   const calendarDay = calendarMap?.get(row.ddate);
-  const status = calendarDay ? mapDayTypeToStatus(calendarDay.day_type) : undefined;
-  
+  const status = calendarDay
+    ? mapDayTypeToStatus(calendarDay.day_type)
+    : undefined;
+
   return {
     label: dayjs(row.ddate).format("DD"),
     actual: row.ton,
     dateFull: row.ddate,
     prevMonth: row.prev_month_ton ?? null, // 🆕 先月データをマッピング
-    prevYear: row.prev_year_ton ?? null,   // 🆕 前年データをマッピング
+    prevYear: row.prev_year_ton ?? null, // 🆕 前年データをマッピング
     status,
   };
 });
@@ -192,7 +196,7 @@ const cumulativeChartData = data.map((row) => ({
   yyyyMMdd: row.ddate,
   actualCumulative: row.cum_ton ?? 0,
   prevMonthCumulative: row.prev_month_cum_ton ?? 0, // 🆕 先月累積をマッピング
-  prevYearCumulative: row.prev_year_cum_ton ?? 0,   // 🆕 前年累積をマッピング
+  prevYearCumulative: row.prev_year_cum_ton ?? 0, // 🆕 前年累積をマッピング
 }));
 ```
 
@@ -220,6 +224,7 @@ const cumulativeChartData = data.map((row) => ({
 **実装**: `ddate - INTERVAL '28 days'`（= 4週間前）
 
 **理由**:
+
 - 曜日を揃えることで、曜日による搬入量のバラつき（平日vs週末）を排除
 - 正確に4週間（28日）前の「同じ曜日」を取得
 - 例: 2025-11-17（月）→ 2025-10-20（月）
@@ -231,6 +236,7 @@ const cumulativeChartData = data.map((row) => ({
 **実装**: `iso_year = base.iso_year - 1 AND iso_week = base.iso_week AND iso_dow = base.iso_dow`
 
 **理由**:
+
 - ISO 8601規格の週番号を使うことで、年をまたぐ週を正確に扱える
 - 例: 2025年第42週 → 2024年第42週（ほぼ同時期の前年データ）
 - 単純な「365日前」では曜日がズレるため不適切
@@ -240,6 +246,7 @@ const cumulativeChartData = data.map((row) => ({
 **実装**: `prev_month_cum_ton`、`prev_year_cum_ton`
 
 **理由**:
+
 - 日次グラフだけでなく、「月内累積グラフ」でも比較線を表示する要件があったため
 - ウィンドウ関数で効率的に計算可能（追加のクエリ不要）
 - UI側ですでに累積比較の Switch/Line が実装済みだったため
@@ -247,10 +254,12 @@ const cumulativeChartData = data.map((row) => ({
 ### 4. 後方互換性の保証
 
 **Optional フィールド化**:
+
 - Python: `Optional[float] = Field(None, ...)`
 - TypeScript: `prev_month_ton?: number | null`
 
 **メリット**:
+
 - 既存のクライアントがこのフィールドを無視しても問題なし
 - 新しいクライアントのみが比較機能を利用可能
 - 段階的なロールアウトが可能
@@ -261,24 +270,24 @@ const cumulativeChartData = data.map((row) => ({
 
 ### バックエンド
 
-| ファイルパス | 変更内容 |
-|------------|---------|
-| `app/backend/core_api/app/infra/db/sql/inbound/inbound_pg_repository__get_daily_with_comparisons.sql` | 🆕 新規作成：比較データ取得SQL |
-| `app/backend/core_api/app/domain/inbound.py` | ✏️ 修正：`InboundDailyRow` に比較フィールド4件追加 |
-| `app/backend/core_api/app/infra/adapters/inbound/inbound_pg_repository.py` | ✏️ 修正：新SQLを使用、パース処理を更新 |
+| ファイルパス                                                                                          | 変更内容                                           |
+| ----------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
+| `app/backend/core_api/app/infra/db/sql/inbound/inbound_pg_repository__get_daily_with_comparisons.sql` | 🆕 新規作成：比較データ取得SQL                     |
+| `app/backend/core_api/app/domain/inbound.py`                                                          | ✏️ 修正：`InboundDailyRow` に比較フィールド4件追加 |
+| `app/backend/core_api/app/infra/adapters/inbound/inbound_pg_repository.py`                            | ✏️ 修正：新SQLを使用、パース処理を更新             |
 
 ### フロントエンド
 
-| ファイルパス | 変更内容 |
-|------------|---------|
-| `app/frontend/src/features/dashboard/ukeire/inbound-monthly/ports/InboundDailyRepository.ts` | ✏️ 修正：`InboundDailyRow` に比較フィールド4件追加 |
-| `app/frontend/src/features/dashboard/ukeire/inbound-monthly/application/useInboundMonthlyVM.ts` | ✏️ 修正：マッピングロジック更新（TODO解決） |
+| ファイルパス                                                                                    | 変更内容                                           |
+| ----------------------------------------------------------------------------------------------- | -------------------------------------------------- |
+| `app/frontend/src/features/dashboard/ukeire/inbound-monthly/ports/InboundDailyRepository.ts`    | ✏️ 修正：`InboundDailyRow` に比較フィールド4件追加 |
+| `app/frontend/src/features/dashboard/ukeire/inbound-monthly/application/useInboundMonthlyVM.ts` | ✏️ 修正：マッピングロジック更新（TODO解決）        |
 
 ### UIコンポーネント
 
-| ファイルパス | 変更内容 |
-|------------|---------|
-| `app/frontend/src/features/dashboard/ukeire/inbound-monthly/ui/cards/DailyActualsCard.tsx` | ✅ 変更なし（すでに対応済み） |
+| ファイルパス                                                                                  | 変更内容                      |
+| --------------------------------------------------------------------------------------------- | ----------------------------- |
+| `app/frontend/src/features/dashboard/ukeire/inbound-monthly/ui/cards/DailyActualsCard.tsx`    | ✅ 変更なし（すでに対応済み） |
 | `app/frontend/src/features/dashboard/ukeire/inbound-monthly/ui/cards/DailyCumulativeCard.tsx` | ✅ 変更なし（すでに対応済み） |
 
 ---
@@ -289,8 +298,8 @@ const cumulativeChartData = data.map((row) => ({
 
 ```sql
 -- ターゲット期間: 2025-11-01 ~ 2025-11-30
-SELECT 
-  ddate, ton, 
+SELECT
+  ddate, ton,
   prev_month_ton, -- 2025-10-04 ~ 2025-11-02 のデータ
   prev_year_ton   -- 2024年の同ISO週・同曜日のデータ
 FROM (実装したSQL)
@@ -299,6 +308,7 @@ ORDER BY ddate;
 ```
 
 **期待結果**:
+
 - `prev_month_ton`: 28日前の同曜日のデータが取得される
 - `prev_year_ton`: 前年の同ISO週・同曜日のデータが取得される
 - データがない日は `0` が返される（NULL ではない）
@@ -310,6 +320,7 @@ curl "http://localhost:8001/api/inbound/daily?start=2025-11-01&end=2025-11-30&cu
 ```
 
 **期待結果**:
+
 ```json
 [
   {
@@ -336,6 +347,7 @@ curl "http://localhost:8001/api/inbound/daily?start=2025-11-01&end=2025-11-30&cu
 6. 同様に「先月」「前年」の累積線が表示される
 
 **期待結果**:
+
 - グラフが破綻せず、比較線が適切に表示される
 - Tooltipで差分（%）が表示される
 - データがない日は線が途切れるか0として描画される
@@ -361,6 +373,7 @@ curl "http://localhost:8001/api/inbound/daily?start=2025-11-01&end=2025-11-30&cu
 ## まとめ
 
 ✅ **実装完了項目**:
+
 - バックエンドの比較データ取得SQL実装
 - DTO/Schema拡張（後方互換性あり）
 - リポジトリ実装更新
@@ -368,11 +381,13 @@ curl "http://localhost:8001/api/inbound/daily?start=2025-11-01&end=2025-11-30&cu
 - ViewModelのマッピング更新
 
 ✅ **動作確認済み**:
+
 - 型エラーなし
 - 既存のUIコンポーネントと互換性あり
 - 既存のAPIクライアントへの影響なし（Optional化）
 
 🎯 **達成された要件**:
+
 - ① 先月比較（4週間前の同曜日）の実装
 - ② 前年比較（前年の同ISO週×曜日）の実装
 - ③ 日次グラフでの比較線表示（既存UIを活用）

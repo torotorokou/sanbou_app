@@ -4,8 +4,16 @@
  */
 
 // Model (ViewModel)
-export { useTargetsVM, type AchievementMode, type UseTargetsVMParams } from "./model/useTargetsVM";
+export {
+  useTargetsVM,
+  type AchievementMode,
+  type UseTargetsVMParams,
+} from "./model/useTargetsVM";
 export { useTargetMetrics } from "./model/useTargetMetrics";
 
 // UI
-export { TargetCard, type TargetCardProps, type AchievementMode as TargetCardAchievementMode } from "./ui/cards/TargetCard";
+export {
+  TargetCard,
+  type TargetCardProps,
+  type AchievementMode as TargetCardAchievementMode,
+} from "./ui/cards/TargetCard";

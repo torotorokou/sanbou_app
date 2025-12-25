@@ -147,12 +147,14 @@ cd ops/maintenance && make deploy PROJECT_ID=honest-sanbou-app-prod
 ## 📝 チェックリスト
 
 ### 開始前
+
 - [ ] ユーザー通知（1日前）
 - [ ] DBバックアップ
 - [ ] LB設定バックアップ
 - [ ] メンテナンスページ動作確認
 
 ### 終了後
+
 - [ ] 動作確認
 - [ ] LB復帰確認
 - [ ] ユーザー通知

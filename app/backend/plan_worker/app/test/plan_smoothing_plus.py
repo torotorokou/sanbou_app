@@ -1,6 +1,7 @@
 from __future__ import annotations
+
 from dataclasses import dataclass
-from typing import Iterable, Literal, Optional, Tuple, Dict
+from typing import Dict, Iterable, Literal, Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -112,12 +113,18 @@ def apply_intraweek_pipeline(
     if g_proc.empty:
         return g
 
-    open_mask = (g_proc[weight_raw_col] > 0)
+    open_mask = g_proc[weight_raw_col] > 0
 
     # 1) scope倍率
     if scope_col and cfg.scope_weight_multiplier:
-        factors = g_proc[scope_col].map(lambda v: float(cfg.scope_weight_multiplier.get(str(v), 1.0))).astype(float)
-        w_scaled = np.where(open_mask, g_proc[weight_raw_col] * factors, 0.0).astype(float)
+        factors = (
+            g_proc[scope_col]
+            .map(lambda v: float(cfg.scope_weight_multiplier.get(str(v), 1.0)))
+            .astype(float)
+        )
+        w_scaled = np.where(open_mask, g_proc[weight_raw_col] * factors, 0.0).astype(
+            float
+        )
     else:
         w_scaled = g_proc[weight_raw_col].astype(float)
 
@@ -129,12 +136,20 @@ def apply_intraweek_pipeline(
         g_proc[weight_col] = np.where(open_mask, (w_small / s) if s > 0 else 0.0, 0.0)
     else:
         # 3) 平滑
-        w_for_roll = pd.Series(np.where(open_mask, w_scaled, np.nan), index=g_proc.index)
-        w_sm = rolling_smooth(w_for_roll, window=cfg.intraweek_window, method=cfg.intraweek_method).fillna(0.0)
+        w_for_roll = pd.Series(
+            np.where(open_mask, w_scaled, np.nan), index=g_proc.index
+        )
+        w_sm = rolling_smooth(
+            w_for_roll, window=cfg.intraweek_window, method=cfg.intraweek_method
+        ).fillna(0.0)
         # 4) キャップ
         open_mean = float(w_sm[open_mask].mean()) if open_days > 0 else 0.0
         if open_mean > 0.0:
-            w_cap = np.where(open_mask, np.minimum(w_sm, open_mean * float(cfg.within_week_rel_cap)), 0.0)
+            w_cap = np.where(
+                open_mask,
+                np.minimum(w_sm, open_mean * float(cfg.within_week_rel_cap)),
+                0.0,
+            )
         else:
             w_cap = np.where(open_mask, w_sm, 0.0)
         # 5) 正規化

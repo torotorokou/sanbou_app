@@ -1,4 +1,5 @@
 # Webアプリ開発 共通ルール（フロントエンド版）
+
 - ファイル名: 20251127_webapp_development_conventions_frontend.md
 - 日付: 2025-11-27
 - 対象: React + TypeScript フロントエンド全般
@@ -9,14 +10,14 @@
 
 - 言語: **TypeScript + React**
 - 構成:
-  - **Feature-Sliced Design (FSD)**  
+  - **Feature-Sliced Design (FSD)**
     - 「機能ごと」にフォルダを分割する
-  - **MVVM / VVMC パターン**  
+  - **MVVM / VVMC パターン**
     - View（UI コンポーネント）
     - ViewModel（Hooks = 画面状態＋イベント）
     - Model（domain / ports / infrastructure）
     - Controller（ルーティング・画面遷移）
-  - **Repository パターン**  
+  - **Repository パターン**
     - HTTP アダプタを features 側で抽象化し、画面からは直接 HTTP を意識しない
 - 目的:
   - 機能単位でコードを整理し、責務を明確にする
@@ -58,10 +59,10 @@ src/
   constants/                        # カラー・ブレイクポイントなど
 ```
 
-- `pages/` … 画面単位（ルーティングの終点）  
-- `features/` … 機能（feature）単位のモジュール  
-- `shared/` … 複数 feature から利用される共通部品  
-- `constants/` … カラー・ブレイクポイント・定数類  
+- `pages/` … 画面単位（ルーティングの終点）
+- `features/` … 機能（feature）単位のモジュール
+- `shared/` … 複数 feature から利用される共通部品
+- `constants/` … カラー・ブレイクポイント・定数類
 
 **注意:**  
 既存構成では `analytics`, `dashboard`, `database`, `manual`, `navi`, `notification`, `report` などが `features` 相当のルートになっている。  
@@ -138,17 +139,20 @@ src/
   - `features/<group>/<feature>/infrastructure/` - Repository 実装
 
 1. **model/**
+
    - 画面の状態・イベント管理を担当する ViewModel hooks（`useXxxVM.ts`）
    - ViewModel を補助する hooks（データ取得、状態管理、計算ロジックなど）
    - 型定義（`types.ts`）や定数も配置可能
    - 例: `useSalesPivotVM.ts`, `useReportArtifact.ts`, `useMasterData.ts`
 
 2. **domain/**
+
    - 機能専用のドメインオブジェクト・値オブジェクト・サービス
    - 値の検証・変換ロジックなど
    - 外部 I/O（HTTP・localStorage 等）には依存しない
 
 3. **ports/**
+
    - Repository インターフェース（抽象）を定義
    - 例: `interface SalesPivotRepository { ... }`
    - 実装詳細（axios/fetch 等）に依存しない
@@ -198,6 +202,7 @@ src/
 ### 3-3. Export / Import スタイル
 
 - **Named Export を推奨** (FSD ベストプラクティス)
+
   - TypeScript/hooks/utilities: 必ず named export を使用
     ```typescript
     // ✅ Good
@@ -206,22 +211,26 @@ src/
     export interface CustomerData { ... }
     ```
   - React コンポーネント: named export を推奨（既存の default export も許容）
+
     ```typescript
     // ✅ Preferred (新規コード)
     export function CustomerList() { ... }
-    
+
     // ✅ Acceptable (既存コード・互換性)
     export default function CustomerList() { ... }
     ```
+
 - Feature の `index.ts` では明示的な re-export
+
   ```typescript
   // ✅ Good - 明示的
-  export { useCustomerChurnVM } from './model/useCustomerChurnVM';
-  export { CustomerList } from './ui/CustomerList';
-  
+  export { useCustomerChurnVM } from "./model/useCustomerChurnVM";
+  export { CustomerList } from "./ui/CustomerList";
+
   // ⚠️ 既存コードとの互換性のため許容
-  export { default as CustomerList } from './ui/CustomerList';
+  export { default as CustomerList } from "./ui/CustomerList";
   ```
+
 - Barrel export (`export *`) は慎重に使用
   - 型定義の場合は許容: `export * from './types'`
   - 実装コードは明示的な export を優先
@@ -235,7 +244,7 @@ src/
 
 ```ts
 // NG (pages 直で axios)
-const res = await axios.get('/api/sales');
+const res = await axios.get("/api/sales");
 
 // OK (ViewModel から Repository 経由)
 const data = await salesPivotRepository.fetchSummary(params);

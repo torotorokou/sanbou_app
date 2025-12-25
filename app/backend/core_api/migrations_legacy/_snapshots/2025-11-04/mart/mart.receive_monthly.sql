@@ -62,4 +62,3 @@ ALTER VIEW mart.receive_monthly OWNER TO myuser;
 --
 
 \unrestrict 9967nLOuFV0yNMuNsqLcrvQvAA6qjlL3uQZCqqfm7I58weA2sf4oRdShp7tdKtW
-

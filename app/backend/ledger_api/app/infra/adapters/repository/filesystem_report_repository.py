@@ -13,7 +13,7 @@ from typing import Optional
 from app.core.ports.inbound import ReportRepository
 from app.core.ports.inbound.report_repository import ArtifactUrls
 from app.infra.adapters.artifact_storage import get_report_artifact_storage
-from backend_shared.application.logging import get_module_logger, create_log_context
+from backend_shared.application.logging import create_log_context, get_module_logger
 
 logger = get_module_logger(__name__)
 
@@ -38,7 +38,7 @@ class FileSystemReportRepository(ReportRepository):
         既存の ReportArtifactStorage を利用します。
         """
         start_time = time.time()
-        
+
         logger.info(
             "レポート保存開始",
             extra={
@@ -58,7 +58,7 @@ class FileSystemReportRepository(ReportRepository):
                 report_key=report_key,
                 report_date=report_date.isoformat(),
             )
-            
+
             logger.debug(
                 "Artifactロケーション確保完了",
                 extra={
@@ -69,9 +69,17 @@ class FileSystemReportRepository(ReportRepository):
             )
 
             # Excel と PDF のバイトデータを取得
-            excel_content = excel_bytes.getvalue() if hasattr(excel_bytes, 'getvalue') else excel_bytes.read()
-            pdf_content = pdf_bytes.getvalue() if hasattr(pdf_bytes, 'getvalue') else pdf_bytes.read()
-            
+            excel_content = (
+                excel_bytes.getvalue()
+                if hasattr(excel_bytes, "getvalue")
+                else excel_bytes.read()
+            )
+            pdf_content = (
+                pdf_bytes.getvalue()
+                if hasattr(pdf_bytes, "getvalue")
+                else pdf_bytes.read()
+            )
+
             excel_size = len(excel_content)
             pdf_size = len(pdf_content)
 
@@ -100,8 +108,10 @@ class FileSystemReportRepository(ReportRepository):
             )
 
             # 署名付き URL を生成
-            payload = self._storage.build_payload(location, excel_exists=True, pdf_exists=True)
-            
+            payload = self._storage.build_payload(
+                location, excel_exists=True, pdf_exists=True
+            )
+
             urls = ArtifactUrls(
                 excel_url=payload["excel_download_url"],
                 pdf_url=payload["pdf_preview_url"],
@@ -120,12 +130,12 @@ class FileSystemReportRepository(ReportRepository):
                     "elapsed_seconds": round(elapsed, 3),
                 },
             )
-            
+
             return urls
 
         except Exception as e:
             elapsed = time.time() - start_time
-            
+
             # エラー情報を詳細にログ出力
             logger.exception(
                 "レポート保存中にエラー",
@@ -140,11 +150,11 @@ class FileSystemReportRepository(ReportRepository):
                     "exception_message": str(e),
                 },
             )
-            
+
             # NOTE: 部分保存済みファイルのクリーンアップは現状不要
             # 理由: 既存の storage が自動的にタイムスタンプ付きディレクトリを作成するため、
             #       失敗時はそのディレクトリごと削除することが理想だが、現在は問題が発生していない。
-            
+
             # エラーを再送出（UseCase層でキャッチされる）
             raise
 

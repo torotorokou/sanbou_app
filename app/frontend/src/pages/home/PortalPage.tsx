@@ -3,37 +3,37 @@
 // Feature-Sliced Design に従ったインポート構造
 // React + TypeScript / Ant Design v5 前提。
 
-import React from 'react';
-import { Typography, Modal, List, theme } from 'antd';
-import { useNavigate } from 'react-router-dom';
-import { useResponsive } from '@/shared';
-import { ResponsiveNotice } from '@features/announcements';
-import { useAuth } from '@features/authStatus';
+import React from "react";
+import { Typography, Modal, List, theme } from "antd";
+import { useNavigate } from "react-router-dom";
+import { useResponsive } from "@/shared";
+import { ResponsiveNotice } from "@features/announcements";
+import { useAuth } from "@features/authStatus";
 import {
   useAnnouncementBannerViewModel,
   AnnouncementBanner,
-} from '@features/announcements';
+} from "@features/announcements";
 import {
   PortalCard,
   portalMenus,
   CARD_WIDTH,
   CARD_HEIGHT,
   BUTTON_WIDTH,
-} from '@features/portal';
-import type { Notice } from '@features/portal';
-import './PortalPage.css';
+} from "@features/portal";
+import type { Notice } from "@features/portal";
+import "./PortalPage.css";
 
 const { Title, Text } = Typography;
 
 // サンプル通知データ
 const sampleNotices: Notice[] = [
   {
-    id: 'n1',
-    title: 'システムメンテナンスのお知らせ',
-    summary: '9/20 02:00-04:00 にシステムメンテナンスを実施します。',
+    id: "n1",
+    title: "システムメンテナンスのお知らせ",
+    summary: "9/20 02:00-04:00 にシステムメンテナンスを実施します。",
     detail:
-      'サービス安定化のため、上記時間帯でシステムメンテナンスを実施します。メンテナンス中は一部機能がご利用いただけません。',
-    date: '2025-09-10',
+      "サービス安定化のため、上記時間帯でシステムメンテナンスを実施します。メンテナンス中は一部機能がご利用いただけません。",
+    date: "2025-09-10",
   },
 ];
 
@@ -45,7 +45,7 @@ export const PortalPage: React.FC = () => {
 
   // 認証情報
   const { user } = useAuth();
-  const userKey = user?.userId ?? 'local';
+  const userKey = user?.userId ?? "local";
 
   // お知らせバナー用ViewModel
   const {
@@ -56,9 +56,9 @@ export const PortalPage: React.FC = () => {
 
   // レスポンシブ判定ヘルパー
   const pickByDevice = <T,>(mobile: T, tablet: T, desktop: T): T => {
-    if (flags.isMobile) return mobile;    // ≤767px
-    if (flags.isTablet) return tablet;    // 768-1280px
-    return desktop;                        // ≥1281px
+    if (flags.isMobile) return mobile; // ≤767px
+    if (flags.isTablet) return tablet; // 768-1280px
+    return desktop; // ≥1281px
   };
 
   // レスポンシブフラグ
@@ -77,8 +77,8 @@ export const PortalPage: React.FC = () => {
   const CARD_ROW_GAP = pickByDevice(0, 1, 1);
 
   const introText = isCompact
-    ? '社内ポータルです。必要な機能を選択してください。'
-    : '社内ポータルへようこそ。下記メニューから業務に必要な機能を選択してください。';
+    ? "社内ポータルです。必要な機能を選択してください。"
+    : "社内ポータルへようこそ。下記メニューから業務に必要な機能を選択してください。";
 
   // 通知管理
   const [notices] = React.useState<Notice[]>(sampleNotices);
@@ -90,29 +90,35 @@ export const PortalPage: React.FC = () => {
     setActiveNotice(notice);
     setModalOpen(true);
   };
-  
+
   const closeNoticeModal = () => {
     setModalOpen(false);
     setActiveNotice(null);
   };
 
   // ヒーローセクションのCSS変数
-  type PortalHeroVars = React.CSSProperties & Record<
-    '--portal-accent' | '--portal-hero-bg' | '--portal-hero-plate' | '--portal-text-secondary' | '--portal-border' | '--portal-shadow',
-    string
-  >;
+  type PortalHeroVars = React.CSSProperties &
+    Record<
+      | "--portal-accent"
+      | "--portal-hero-bg"
+      | "--portal-hero-plate"
+      | "--portal-text-secondary"
+      | "--portal-border"
+      | "--portal-shadow",
+      string
+    >;
 
   const heroVars: PortalHeroVars = {
-    '--portal-accent': token.colorPrimary,
-    '--portal-hero-bg': token.colorBgContainer,
-    '--portal-hero-plate': token.colorFillQuaternary,
-    '--portal-text-secondary': token.colorTextTertiary,
-    '--portal-border': token.colorBorderSecondary,
-    '--portal-shadow': token.boxShadowSecondary,
+    "--portal-accent": token.colorPrimary,
+    "--portal-hero-bg": token.colorBgContainer,
+    "--portal-hero-plate": token.colorFillQuaternary,
+    "--portal-text-secondary": token.colorTextTertiary,
+    "--portal-border": token.colorBorderSecondary,
+    "--portal-shadow": token.boxShadowSecondary,
   };
 
   return (
-    <div className="portal-page" style={{ minHeight: '100%' }}>
+    <div className="portal-page" style={{ minHeight: "100%" }}>
       <section className="portal-hero" style={heroVars}>
         <Title level={2} className="portal-title">
           参謀くん-社内ポータル
@@ -120,10 +126,12 @@ export const PortalPage: React.FC = () => {
         {!isXs && <Text className="portal-subtitle">{introText}</Text>}
       </section>
 
-      <main style={{ width: '100%', maxWidth: '1280px', margin: '0 auto' }}>
+      <main style={{ width: "100%", maxWidth: "1280px", margin: "0 auto" }}>
         {/* お知らせバナー（重要通知） */}
         {bannerAnnouncement && (
-          <div style={{ width: '100%', margin: '0 0 16px 0', padding: '0 16px' }}>
+          <div
+            style={{ width: "100%", margin: "0 0 16px 0", padding: "0 16px" }}
+          >
             <AnnouncementBanner
               announcement={bannerAnnouncement}
               onClose={onBannerAcknowledge}
@@ -135,13 +143,17 @@ export const PortalPage: React.FC = () => {
 
         {/* 重要通知バナー */}
         {noticeVisible && notices.length > 0 && (
-          <div style={{ width: '100%', margin: '0 0 24px 0', padding: '0 16px' }}>
+          <div
+            style={{ width: "100%", margin: "0 0 24px 0", padding: "0 16px" }}
+          >
             <ResponsiveNotice
               title={notices[0].title}
               description={notices[0].summary}
               detailContent={
                 <div>
-                  <div style={{ marginBottom: 8, color: token.colorTextTertiary }}>
+                  <div
+                    style={{ marginBottom: 8, color: token.colorTextTertiary }}
+                  >
                     {notices[0].date}
                   </div>
                   <div style={{ marginBottom: 12 }}>{notices[0].detail}</div>
@@ -154,22 +166,36 @@ export const PortalPage: React.FC = () => {
         )}
 
         {/* ポータルカード */}
-        <div style={{ display: 'flex', gap: CARD_COLUMN_GAP, alignItems: 'flex-start', padding: '0 16px' }}>
-          <div style={{ flex: '1 1 0', display: 'flex', flexDirection: 'column', gap: CARD_ROW_GAP }}>
+        <div
+          style={{
+            display: "flex",
+            gap: CARD_COLUMN_GAP,
+            alignItems: "flex-start",
+            padding: "0 16px",
+          }}
+        >
+          <div
+            style={{
+              flex: "1 1 0",
+              display: "flex",
+              flexDirection: "column",
+              gap: CARD_ROW_GAP,
+            }}
+          >
             <div
               aria-label="ポータルメニュー一覧"
               style={{
-                display: 'grid',
+                display: "grid",
                 columnGap: CARD_COLUMN_GAP,
                 rowGap: CARD_ROW_GAP,
                 gridAutoRows: `minmax(${Math.round(pickByDevice(64, 120, CARD_HEIGHT) * cardScale)}px, auto)`,
                 gridTemplateColumns: flags.isMobile
-                  ? 'repeat(1, 1fr)'
+                  ? "repeat(1, 1fr)"
                   : flags.isDesktop
-                  ? 'repeat(3, 1fr)'
-                  : `repeat(auto-fit, minmax(${Math.round(CARD_WIDTH * cardScale)}px, 1fr))`,
-                justifyContent: 'center',
-                alignItems: 'stretch',
+                    ? "repeat(3, 1fr)"
+                    : `repeat(auto-fit, minmax(${Math.round(CARD_WIDTH * cardScale)}px, 1fr))`,
+                justifyContent: "center",
+                alignItems: "stretch",
               }}
             >
               {portalMenus.map((menu) => (
@@ -191,7 +217,7 @@ export const PortalPage: React.FC = () => {
 
       {/* 通知詳細モーダル */}
       <Modal
-        title={activeNotice?.title ?? '通知詳細'}
+        title={activeNotice?.title ?? "通知詳細"}
         open={modalOpen}
         onCancel={closeNoticeModal}
         footer={null}
@@ -210,12 +236,9 @@ export const PortalPage: React.FC = () => {
               <List.Item
                 key={item.title + item.date}
                 onClick={() => openNoticeModal(item)}
-                style={{ cursor: 'pointer' }}
+                style={{ cursor: "pointer" }}
               >
-                <List.Item.Meta
-                  title={item.title}
-                  description={item.summary}
-                />
+                <List.Item.Meta title={item.title} description={item.summary} />
               </List.Item>
             )}
           />

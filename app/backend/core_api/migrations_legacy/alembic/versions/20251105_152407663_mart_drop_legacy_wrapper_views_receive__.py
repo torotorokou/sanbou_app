@@ -4,8 +4,9 @@ Revision ID: 20251105_152407663
 Revises: 20251105_115452784
 Create Date: 2025-11-05
 """
-from alembic import op, context
+
 import sqlalchemy as sa
+from alembic import context, op
 
 # revision identifiers, used by Alembic.
 revision = "20251105_152407663"
@@ -31,9 +32,11 @@ WHERE src_ns.nspname = 'mart';
 """
 )
 
+
 def _has_deps(conn) -> bool:
     cnt = conn.execute(_CHECK_SQL).scalar()
     return (cnt or 0) > 0
+
 
 def upgrade():
     # オフライン(--sql)生成時: DROP 文だけを出力
@@ -55,8 +58,15 @@ def upgrade():
     op.execute("DROP VIEW IF EXISTS mart.receive_weekly;")
     op.execute("DROP VIEW IF EXISTS mart.receive_monthly;")
 
+
 def downgrade():
     # 非破壊ポリシー: 復旧用の簡易ラッパー（v_ に依存）
-    op.execute("CREATE OR REPLACE VIEW mart.receive_daily   AS SELECT * FROM mart.v_receive_daily;")
-    op.execute("CREATE OR REPLACE VIEW mart.receive_weekly  AS SELECT * FROM mart.v_receive_weekly;")
-    op.execute("CREATE OR REPLACE VIEW mart.receive_monthly AS SELECT * FROM mart.v_receive_monthly;")
+    op.execute(
+        "CREATE OR REPLACE VIEW mart.receive_daily   AS SELECT * FROM mart.v_receive_daily;"
+    )
+    op.execute(
+        "CREATE OR REPLACE VIEW mart.receive_weekly  AS SELECT * FROM mart.v_receive_weekly;"
+    )
+    op.execute(
+        "CREATE OR REPLACE VIEW mart.receive_monthly AS SELECT * FROM mart.v_receive_monthly;"
+    )

@@ -16,14 +16,14 @@ yaml.add_representer(OrderedDict, represent_ordereddict)
 def apply_anchors(input_file: str, env_type: str):
     """
     docker-compose ファイルに YAML アンカーを適用
-    
+
     Args:
         input_file: 入力ファイルパス
         env_type: 'stg' or 'prod'
     """
     with open(input_file, 'r') as f:
         data = yaml.safe_load(f)
-    
+
     # アンカー定義を追加
     if env_type == 'stg':
         env_files = [
@@ -37,7 +37,7 @@ def apply_anchors(input_file: str, env_type: str):
             '../env/.env.vm_prod',
             '../secrets/.env.vm_prod.secrets'
         ]
-    
+
     common_logging = {
         'driver': 'json-file',
         'options': {
@@ -45,25 +45,25 @@ def apply_anchors(input_file: str, env_type: str):
             'max-file': '3'
         }
     }
-    
+
     common_healthcheck_base = {
         'interval': '30s',
         'timeout': '5s',
         'retries': 3
     }
-    
+
     # 各サービスに適用
     services = data.get('services', {})
-    
+
     for service_name, service_config in services.items():
         # env_file を統一
         if 'env_file' in service_config:
             service_config['env_file'] = env_files
-        
+
         # logging を統一
         if 'logging' in service_config:
             service_config['logging'] = common_logging.copy()
-        
+
         # environment の TZ を整理
         if 'environment' in service_config:
             env = service_config['environment']
@@ -92,7 +92,7 @@ def apply_anchors(input_file: str, env_type: str):
                     env_ordered['TZ'] = 'Asia/Tokyo'
                     env_ordered.update(env)
                     service_config['environment'] = env_ordered
-        
+
         # healthcheck の共通部分を適用
         if 'healthcheck' in service_config:
             hc = service_config['healthcheck']
@@ -102,7 +102,7 @@ def apply_anchors(input_file: str, env_type: str):
                 hc['timeout'] = common_healthcheck_base['timeout']
             if 'retries' not in hc:
                 hc['retries'] = common_healthcheck_base['retries']
-    
+
     # 出力
     output_file = input_file
     with open(output_file, 'w') as f:
@@ -133,7 +133,7 @@ def apply_anchors(input_file: str, env_type: str):
             else:
                 f.write("## - イメージ: asia-northeast1-docker.pkg.dev/honest-sanbou-app-stg/sanbou-app/*:stg-latest\n")
         f.write("## " + "=" * 61 + "\n\n")
-        
+
         # YAML アンカー定義
         f.write("# " + "=" * 77 + "\n")
         f.write("# YAML アンカー定義（共通設定の再利用）\n")
@@ -156,15 +156,15 @@ def apply_anchors(input_file: str, env_type: str):
         f.write("x-tz-env: &tz-environment\n")
         f.write("  TZ: \"Asia/Tokyo\"\n")
         f.write("\n")
-        
+
         # services 以降
         yaml.dump(data, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
-    
+
     print(f"✓ {output_file} に YAML アンカーを適用しました")
 
 if __name__ == '__main__':
     if len(sys.argv) != 3:
         print("Usage: python apply_yaml_anchors.py <file> <stg|prod>")
         sys.exit(1)
-    
+
     apply_anchors(sys.argv[1], sys.argv[2])

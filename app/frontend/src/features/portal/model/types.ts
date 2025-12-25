@@ -1,7 +1,7 @@
 /**
  * PortalPageの型定義
  */
-import type React from 'react';
+import type React from "react";
 
 export interface PortalCardProps {
   title: string;

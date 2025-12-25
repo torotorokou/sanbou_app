@@ -2,10 +2,12 @@
 Tests for inbound daily API endpoint.
 日次搬入量APIのテスト（累積モード・バリデーション）
 """
-import pytest
+
 from datetime import date
-from httpx import AsyncClient
+
+import pytest
 from fastapi import status
+from httpx import AsyncClient
 
 
 @pytest.mark.asyncio
@@ -56,12 +58,12 @@ async def test_inbound_daily_cum_scope_month(client: AsyncClient):
     assert response.status_code == status.HTTP_200_OK
     data = response.json()
     assert len(data) == 6
-    
+
     # 月跨ぎで累積がリセットされることを確認
     # 9月末の累積 > 10月初日の累積
     sep_last = [r for r in data if r["ddate"].startswith("2025-09")][-1]
     oct_first = [r for r in data if r["ddate"].startswith("2025-10")][0]
-    
+
     if sep_last["cum_ton"] is not None and oct_first["cum_ton"] is not None:
         # 10月の累積はリセットされるため、9月末より小さい可能性が高い
         # （ただし10月初日のtonが大きい場合は逆転もあり得る）
@@ -82,7 +84,7 @@ async def test_inbound_daily_cum_scope_week(client: AsyncClient):
     assert response.status_code == status.HTTP_200_OK
     data = response.json()
     assert len(data) == 9
-    
+
     # 週跨ぎで累積がリセット
     # iso_weekが変わるタイミングで累積がリセットされる
     prev_week = None

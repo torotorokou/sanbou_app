@@ -20,10 +20,10 @@ Clean Architectureに従い、Infra層に配置されています。
 try:
     # 1. CSV削除（RawDataRepository）
     affected_rows = repository.soft_delete_by_date_and_kind(...)
-    
+
     # 2. MV更新（MaterializedViewRefresher）
     mv_refresher.refresh_for_csv_kind(csv_kind)
-    
+
     # 3. 正常終了時: FastAPIのget_db()が自動的にcommit()
 except Exception:
     # 4. エラー時: FastAPIのget_db()が自動的にrollback()
@@ -45,6 +45,7 @@ except Exception:
 #### 更新されるMV
 
 1. **`mart.mv_receive_daily`** - 日次受入集計MV（基礎データ）
+
    - 将軍最終版（final）を優先
    - 最終版がない日付は将軍速報版（flash）を使用
    - どちらもなければKingシステムのデータを使用
@@ -54,7 +55,8 @@ except Exception:
    - 依存関係の順序で更新されます（mv_receive_daily → mv_target_card_per_day）
    - **各MV更新後にcommit()を実行**し、次のMVが最新データを確実に参照できるようにします
 
-**注意**: 
+**注意**:
+
 - MV名はクォートなしの標準PostgreSQL形式を使用（`mart.mv_receive_daily`）
 - 依存関係のあるMVは、基礎MVの更新とコミット後に更新されます
 
@@ -121,9 +123,10 @@ migration を確認してください。
 ```
 
 **対処方法:**
+
 ```sql
 -- UNIQUE INDEX を作成
-CREATE UNIQUE INDEX idx_mv_receive_daily_ddate 
+CREATE UNIQUE INDEX idx_mv_receive_daily_ddate
 ON mart.mv_receive_daily (ddate);
 ```
 
@@ -144,11 +147,13 @@ MV更新に失敗してもCSVアップロード処理自体は成功扱いにな
 ### 複数MV更新時の部分失敗
 
 **動作仕様（2025-12-12修正）:**
+
 - 複数のMVを更新する際、1つのMV更新が失敗しても、残りのMVの更新を継続します
 - 例: `mv_receive_daily` の更新に失敗しても、`mv_target_card_per_day` の更新を試みます
 - 各MVの成功/失敗はログに個別に記録されます
 
 **ログ例（部分失敗時）:**
+
 ```
 [MV_REFRESH] Starting refresh for csv_type='receive'
 [MV_REFRESH] Refreshing MV: mart.mv_receive_daily
@@ -206,7 +211,7 @@ def upgrade():
         CREATE MATERIALIZED VIEW mart.新しいMV名 AS
         SELECT ... ;
     """)
-    
+
     op.execute("""
         CREATE UNIQUE INDEX idx_新しいMV名_pk
         ON mart.新しいMV名 (主キー列);
@@ -225,9 +230,7 @@ MV_NEW_VIEW = "新しいMV名"
 - **CONCURRENTLY オプション**: ロックを最小化するために使用
   - UNIQUE INDEX が必要
   - 初回更新時は CONCURRENTLY を使わない方が良い（データがない場合）
-  
 - **更新時間**: MVのサイズによって数秒～数十秒かかる場合あり
-  
 - **依存関係**: MVが他のMVに依存している場合は、更新順序に注意
   - 現状: `mv_receive_daily` → `mv_target_card_per_day` の順で更新
 
@@ -244,10 +247,8 @@ Migration (`20251212_100000000_add_unique_indexes_for_mvs.py`) は環境変数�
 
 1. **環境ごとにハードコードされたマッピング不要**
    - 新しい環境（demo, test, etc.）を追加してもmigration変更不要
-   
 2. **環境分離の保証**
    - STG環境では `myapp_user_stg` のみ、PROD環境では `myapp_user_prod` のみに権限付与
-   
 3. **柔軟な設定管理**
    - `env/.env.local_dev`, `env/.env.vm_stg`, `env/.env.vm_prod` で一元管理
 
@@ -272,30 +273,36 @@ POSTGRES_DB=myapp_prod
 ### MVが更新されない
 
 1. ログを確認:
+
    ```
    docker logs <container_id> | grep "MV_REFRESH"
    ```
 
 2. `mv_refresher` が注入されているか確認:
+
    ```
    [MV_REFRESH] ⚠️ MaterializedViewRefresher not injected, skipping MV refresh.
    ```
+
    → DI設定を確認
 
 3. CSV保存が成功しているか確認:
+
    ```sql
-   SELECT * FROM log.upload_file 
-   WHERE processing_status = 'success' 
+   SELECT * FROM log.upload_file
+   WHERE processing_status = 'success'
    ORDER BY uploaded_at DESC LIMIT 10;
    ```
 
 4. UNIQUE INDEXが存在するか確認:
+
    ```sql
-   SELECT indexname, indexdef 
-   FROM pg_indexes 
+   SELECT indexname, indexdef
+   FROM pg_indexes
    WHERE tablename IN ('mv_receive_daily', 'mv_target_card_per_day')
    AND indexname LIKE 'ux_%';
    ```
+
    → 存在しない場合は migration 20251212_100000000 を実行
 
 5. 手動でMV更新を実行:
@@ -307,22 +314,26 @@ POSTGRES_DB=myapp_prod
 ### 権限エラー (permission denied)
 
 **エラーメッセージ:**
+
 ```
 permission denied for materialized view mv_receive_daily
 ```
 
 **原因:**
+
 - Alembic migration実行ユーザー (postgres/admin_user) がMVを作成
-- アプリケーション実行ユーザー (myapp_user_*) がMVにアクセス
+- アプリケーション実行ユーザー (myapp*user*\*) がMVにアクセス
 - SELECT権限が付与されていない
 
 **対策:**
 Migration 20251212_100000000 で対策済み。以下の権限が自動付与される：
+
 - myapp_user_dev (local_dev環境)
 - myapp_user_stg (vm_stg環境)
 - myapp_user_prod (vm_prod環境)
 
 **手動で権限を付与する場合:**
+
 ```sql
 -- 各環境のアプリユーザーに権限付与
 GRANT USAGE ON SCHEMA mart TO myapp_user_dev;  -- local_dev
@@ -341,6 +352,7 @@ GRANT SELECT ON mart.mv_target_card_per_day TO myapp_user_prod;
 ```
 
 **確認方法:**
+
 ```sql
 -- アプリユーザーでMVにアクセスできるか確認
 \c myapp_dev myapp_user_dev
@@ -351,7 +363,7 @@ SELECT COUNT(*) FROM mart.mv_receive_daily;  -- 正常に実行できればOK
 
 ```sql
 -- 日次受入集計
-SELECT * FROM mart.mv_receive_daily 
+SELECT * FROM mart.mv_receive_daily
 ORDER BY ddate DESC LIMIT 10;
 
 -- 目標カード
@@ -364,8 +376,9 @@ ORDER BY ddate DESC LIMIT 10;
 ### 事前準備（重要）
 
 Migration 20251212_100000000 は以下を実行します：
+
 1. MVにUNIQUE INDEXを追加（REFRESH CONCURRENTLY を有効化）
-2. アプリユーザー (sanbou_app_*) にSELECT権限を付与
+2. アプリユーザー (sanbou*app*\*) にSELECT権限を付与
 
 **この migration を実行しないと、本番環境でMV更新が失敗します。**
 
@@ -425,7 +438,7 @@ docker compose -f docker/docker-compose.prod.yml -p vm_prod exec -T db \
 ```bash
 # 1. UNIQUE INDEXが作成されているか
 docker compose ... exec -T db psql -U myuser -d <db_name> -c "
-SELECT indexname FROM pg_indexes 
+SELECT indexname FROM pg_indexes
 WHERE tablename IN ('mv_receive_daily', 'mv_target_card_per_day')
 AND indexname LIKE 'ux_%';
 "
@@ -440,7 +453,7 @@ SELECT COUNT(*) FROM mart.mv_receive_daily;
 # 3. CSV アップロードでMVが更新されるか
 # フロントエンドからCSVをアップロード → ログを確認
 docker logs <container_id> | grep "MV_REFRESH"
-# 期待: 
+# 期待:
 # [MV_REFRESH] Starting refresh for csv_type='receive'
 # [MV_REFRESH] ✅ MV refresh successful: mart.mv_receive_daily (XXX rows)
 ```

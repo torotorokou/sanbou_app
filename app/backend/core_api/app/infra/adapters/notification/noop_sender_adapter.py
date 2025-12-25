@@ -4,10 +4,10 @@ Noop Notification Sender Adapter
 実際の送信を行わず、ログ出力のみ（開発・テスト用）。
 将来、実送信実装（email SDK, LINE API 等）に差し替える。
 """
-from backend_shared.application.logging import get_module_logger
 
 from app.core.domain.notification import NotificationChannel, NotificationPayload
 from app.core.ports.notification_port import NotificationSenderPort
+from backend_shared.application.logging import get_module_logger
 
 logger = get_module_logger(__name__)
 
@@ -15,7 +15,7 @@ logger = get_module_logger(__name__)
 class NoopNotificationSenderAdapter(NotificationSenderPort):
     """
     No-op Sender 実装
-    
+
     外部API呼び出しは行わず、ログ出力のみ。
     将来的に実装を差し替える。
     """

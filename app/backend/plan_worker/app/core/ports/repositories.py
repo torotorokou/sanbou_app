@@ -1,8 +1,10 @@
 from __future__ import annotations
-from typing import Iterable
+
+from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal
-from dataclasses import dataclass
+from typing import Iterable
+
 
 # domainの型に近い最小DTO（必要最小限）
 @dataclass(frozen=True)
@@ -11,17 +13,27 @@ class DayTypeStatDTO:
     sample_days: int
     mean_ton: Decimal
 
+
 @dataclass(frozen=True)
 class DayTypeRatioDTO:
     day_type: str
     mean_ton: Decimal
-    ratio:   Decimal
+    ratio: Decimal
     sample_days: int | None = None
 
+
 class ActualsRepository:
-    def fetch_daytype_stats(self, window_start: date, window_end: date, lookback_years: int) -> Iterable[DayTypeStatDTO]:
+    def fetch_daytype_stats(
+        self, window_start: date, window_end: date, lookback_years: int
+    ) -> Iterable[DayTypeStatDTO]:
         raise NotImplementedError
 
+
 class RatiosRepository:
-    def upsert_ratios(self, effective_from: date, ratios: Iterable[DayTypeRatioDTO], lookback_years: int) -> None:
+    def upsert_ratios(
+        self,
+        effective_from: date,
+        ratios: Iterable[DayTypeRatioDTO],
+        lookback_years: int,
+    ) -> None:
         raise NotImplementedError

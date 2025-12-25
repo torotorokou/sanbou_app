@@ -3,9 +3,9 @@
  * モード別のフィルター選択肢を生成
  */
 
-import { useMemo } from 'react';
-import type { Mode, ID, SummaryQuery } from './types';
-import { allDaysInRange, monthDays } from './metrics';
+import { useMemo } from "react";
+import type { Mode, ID, SummaryQuery } from "./types";
+import { allDaysInRange, monthDays } from "./metrics";
 
 export interface FilterOptionsState {
   repOptions: Array<{ label: string; value: ID }>;
@@ -25,12 +25,15 @@ export function useFilterOptions(
   query: SummaryQuery,
   reps: Array<{ id: ID; name: string }>,
   customers: Array<{ id: ID; name: string }>,
-  items: Array<{ id: ID; name: string }>
+  items: Array<{ id: ID; name: string }>,
 ): FilterOptionsState {
-  const repOptions = useMemo(() => reps.map((r) => ({ label: r.name, value: r.id })), [reps]);
+  const repOptions = useMemo(
+    () => reps.map((r) => ({ label: r.name, value: r.id })),
+    [reps],
+  );
 
   const filterOptions = useMemo(() => {
-    if (mode === 'customer') {
+    if (mode === "customer") {
       // 顧客名の重複を削除（idでユニーク化）
       const seen = new Set<ID>();
       const uniqueCustomers: Array<{ label: string; value: ID }> = [];
@@ -46,7 +49,7 @@ export function useFilterOptions(
       return uniqueCustomers.sort((a, b) => a.label.localeCompare(b.label));
     }
 
-    if (mode === 'item') {
+    if (mode === "item") {
       // 品名の重複を削除（idでユニーク化）
       const seen = new Set<ID>();
       const uniqueItems: Array<{ label: string; value: ID }> = [];
@@ -63,7 +66,9 @@ export function useFilterOptions(
     }
 
     // date mode - 日付は重複なし想定だが念のため処理
-    const days = query.monthRange ? allDaysInRange(query.monthRange) : monthDays(query.month!);
+    const days = query.monthRange
+      ? allDaysInRange(query.monthRange)
+      : monthDays(query.month!);
     const seen = new Set<ID>();
     const uniqueDays: Array<{ label: string; value: ID }> = [];
 

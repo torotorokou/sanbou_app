@@ -3,12 +3,12 @@
  */
 
 // Types
-export * from './types/common';
-export * from './types/csvKind';
+export * from "./types/common";
+export * from "./types/csvKind";
 
 // CSV utilities
-export * from './csv/detectEncoding';
-export * from './csv/parseCsv';
+export * from "./csv/detectEncoding";
+export * from "./csv/parseCsv";
 
 // Upload utilities
-export * from './upload/buildFormData';
+export * from "./upload/buildFormData";

@@ -24,11 +24,11 @@ FAILED=0
 test_should_detect() {
     local test_name="$1"
     local test_input="$2"
-    
+
     local result
     result=$(contains_sensitive_content "$test_input" 2>&1)
     local exit_code=$?
-    
+
     if [ $exit_code -eq 0 ] && [ -n "$result" ]; then
         echo "✅ PASS: $test_name"
         ((PASSED++))
@@ -47,11 +47,11 @@ test_should_detect() {
 test_should_not_detect() {
     local test_name="$1"
     local test_input="$2"
-    
+
     local result
     result=$(contains_sensitive_content "$test_input" 2>&1)
     local exit_code=$?
-    
+
     if [ $exit_code -eq 1 ] || [ -z "$result" ]; then
         echo "✅ PASS: $test_name"
         ((PASSED++))

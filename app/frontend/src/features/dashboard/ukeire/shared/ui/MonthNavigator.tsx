@@ -1,18 +1,27 @@
 /**
  * MonthNavigator - 月ナビゲーションUI
- * 
+ *
  * 責務：
  * - タイトル表示（月表示含む）
  * - 月選択DatePicker
  * - 前月/翌月ボタン
  * - 今日バッジ表示
  * - モバイル/デスクトップレスポンシブ対応
- * 
+ *
  * 状態管理なし・純UIコンポーネント
  */
 
 import React from "react";
-import { Row, Col, Typography, DatePicker, Space, Badge, Button, Tooltip } from "antd";
+import {
+  Row,
+  Col,
+  Typography,
+  DatePicker,
+  Space,
+  Badge,
+  Button,
+  Tooltip,
+} from "antd";
 import { LeftOutlined, RightOutlined } from "@ant-design/icons";
 import dayjs from "dayjs";
 import type { Dayjs } from "dayjs";
@@ -67,7 +76,9 @@ export const MonthNavigator: React.FC<MonthNavigatorProps> = ({
       <Tooltip title="翌月へ">
         <Button size="small" icon={<RightOutlined />} onClick={onNextMonth} />
       </Tooltip>
-      {todayBadge && <Badge count={todayBadge} style={{ backgroundColor: "#1677ff" }} />}
+      {todayBadge && (
+        <Badge count={todayBadge} style={{ backgroundColor: "#1677ff" }} />
+      )}
     </Space>
   );
 
@@ -82,7 +93,14 @@ export const MonthNavigator: React.FC<MonthNavigatorProps> = ({
           </Col>
         </Row>
         <Row>
-          <Col span={24} style={{ display: "flex", justifyContent: "flex-end", marginTop: 8 }}>
+          <Col
+            span={24}
+            style={{
+              display: "flex",
+              justifyContent: "flex-end",
+              marginTop: 8,
+            }}
+          >
             {controls}
           </Col>
         </Row>

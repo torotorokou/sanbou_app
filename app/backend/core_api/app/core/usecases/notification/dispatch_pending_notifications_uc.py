@@ -11,10 +11,9 @@ Outbox から pending 通知を取り出し、Sender で送信するユースケ
    c) sender.send で送信
    d) 成功/失敗で状態を更新
 """
+
 from datetime import datetime
 from typing import Optional
-
-from backend_shared.application.logging import get_module_logger
 
 from app.core.domain.notification import FailureType, RecipientRef
 from app.core.ports.notification_port import (
@@ -23,6 +22,7 @@ from app.core.ports.notification_port import (
     NotificationSenderPort,
     RecipientResolverPort,
 )
+from backend_shared.application.logging import get_module_logger
 
 logger = get_module_logger(__name__)
 
@@ -30,7 +30,7 @@ logger = get_module_logger(__name__)
 class DispatchPendingNotificationsUseCase:
     """
     pending 通知を送信
-    
+
     - preference で通知許可をチェック
     - resolver でチャネル固有IDに解決
     - sender.send で送信（成功/失敗で状態を更新）
@@ -53,11 +53,11 @@ class DispatchPendingNotificationsUseCase:
     def execute(self, now: datetime, limit: int = 100) -> int:
         """
         pending 通知を送信
-        
+
         Args:
             now: 現在時刻
             limit: 1回の実行で処理する最大件数
-            
+
         Returns:
             送信成功件数
         """

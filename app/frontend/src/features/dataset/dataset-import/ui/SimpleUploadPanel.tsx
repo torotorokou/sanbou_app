@@ -1,15 +1,15 @@
 /**
  * SimpleUploadPanel - シンプルなCSVアップロードパネル
- * 
+ *
  * PanelFileItemを受け取り、ファイル選択UIを提供する純UI部品
  * 保守性向上のため UploadFileCard にカードロジックを分離
  */
 
-import React from 'react';
-import { Card, Button, Tooltip } from 'antd';
-import { ClearOutlined } from '@ant-design/icons';
-import type { PanelFileItem } from '../model/types';
-import { UploadFileCard } from './UploadFileCard';
+import React from "react";
+import { Card, Button, Tooltip } from "antd";
+import { ClearOutlined } from "@ant-design/icons";
+import type { PanelFileItem } from "../model/types";
+import { UploadFileCard } from "./UploadFileCard";
 
 export interface SimpleUploadPanelProps {
   items: PanelFileItem[];
@@ -18,7 +18,7 @@ export interface SimpleUploadPanelProps {
   onToggleSkip?: (typeKey: string) => void;
   onResetAll?: () => void;
   /** カードサイズ: 'compact' | 'normal'。既定は 'compact' */
-  size?: 'compact' | 'normal';
+  size?: "compact" | "normal";
   /** タイトルを表示するか（既定: false） */
   showTitle?: boolean;
 }
@@ -29,16 +29,16 @@ export const SimpleUploadPanel: React.FC<SimpleUploadPanelProps> = ({
   onRemoveFile,
   onToggleSkip,
   onResetAll,
-  size = 'compact',
+  size = "compact",
   showTitle = false,
 }) => {
-  const isCompact = size === 'compact';
-  const hasFiles = items.some(item => item.file !== null);
+  const isCompact = size === "compact";
+  const hasFiles = items.some((item) => item.file !== null);
 
   return (
     <Card
       size="small"
-      title={showTitle ? '📂 CSVアップロード' : undefined}
+      title={showTitle ? "📂 CSVアップロード" : undefined}
       extra={
         onResetAll && hasFiles ? (
           <Tooltip title="すべてのCSVを削除">
@@ -56,7 +56,7 @@ export const SimpleUploadPanel: React.FC<SimpleUploadPanelProps> = ({
       styles={{
         header: showTitle
           ? {
-              padding: isCompact ? '4px 8px' : '8px 12px',
+              padding: isCompact ? "4px 8px" : "8px 12px",
               minHeight: isCompact ? 32 : 40,
               fontSize: isCompact ? 13 : 14,
             }
@@ -67,10 +67,16 @@ export const SimpleUploadPanel: React.FC<SimpleUploadPanelProps> = ({
       }}
       style={{
         borderRadius: isCompact ? 8 : 12,
-        width: '100%',
+        width: "100%",
       }}
     >
-      <div style={{ display: 'flex', flexDirection: 'column', gap: isCompact ? 6 : 12 }}>
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: isCompact ? 6 : 12,
+        }}
+      >
         {items.map((item) => (
           <UploadFileCard
             key={item.typeKey}

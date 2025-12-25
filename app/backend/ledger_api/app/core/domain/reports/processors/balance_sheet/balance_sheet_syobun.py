@@ -1,8 +1,13 @@
 import pandas as pd
-from app.infra.report_utils import get_template_config, load_master_and_template
-from app.infra.report_utils import get_unit_price_table_csv
+from app.infra.report_utils import (
+    get_template_config,
+    get_unit_price_table_csv,
+    load_master_and_template,
+)
 from app.infra.report_utils.formatters import summary_apply
-from app.infra.report_utils.formatters.multiply_optimized import multiply_columns_optimized
+from app.infra.report_utils.formatters.multiply_optimized import (
+    multiply_columns_optimized,
+)
 from app.infra.report_utils.formatters.summary_optimized import summary_apply_optimized
 
 
@@ -13,15 +18,19 @@ def calculate_total_disposal_cost(
 ) -> int:
     """
     処分費の合計を計算する。
-    
+
     Args:
         df_yard: ヤードデータ
         df_shipment: 出荷データ
         unit_price_table: 単価テーブル（外部から受け取り、I/O削減）
     """
     cost_by_vendor = int(calculate_disposal_costs(df_shipment)["値"].sum())
-    cost_safe_shipment = int(calculate_safe_disposal_costs(df_shipment, unit_price_table)["値"].sum())
-    cost_safe_yard = int(calculate_yard_disposal_costs(df_yard, unit_price_table)["値"].sum())
+    cost_safe_shipment = int(
+        calculate_safe_disposal_costs(df_shipment, unit_price_table)["値"].sum()
+    )
+    cost_safe_yard = int(
+        calculate_yard_disposal_costs(df_yard, unit_price_table)["値"].sum()
+    )
     total_cost = cost_by_vendor + cost_safe_shipment + cost_safe_yard
     return total_cost
 
@@ -29,7 +38,7 @@ def calculate_total_disposal_cost(
 def calculate_disposal_costs(df_shipment: pd.DataFrame) -> pd.DataFrame:
     """
     業者別処分費を計算する。
-    
+
     Note:
         df_shipmentは呼び出し元（balance_sheet_base）で既にcopy()済みのため、
         ここでは追加のcopy()は不要。業者CDの型変換も既に実行済み。
@@ -53,7 +62,7 @@ def calculate_safe_disposal_costs(
 ) -> pd.DataFrame:
     """
     金庫品の処分費を計算（業者名×品名でグループ化）。
-    
+
     最適化版を使用:
     - summary_apply_optimized: master_csvのcopy()を1回だけ実行
     - multiply_columns_optimized: 不要なcopy()を削減
@@ -95,7 +104,7 @@ def calculate_yard_disposal_costs(
 ) -> pd.DataFrame:
     """
     ヤードの処分費を計算（種類名×品名でグループ化）。
-    
+
     最適化版を使用:
     - summary_apply_optimized: master_csvのcopy()を1回だけ実行
     - multiply_columns_optimized: 不要なcopy()を削減

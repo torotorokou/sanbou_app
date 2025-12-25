@@ -2,6 +2,7 @@
 Domain rules and utilities (business logic).
 TODO: Add営業日計算、祝日判定などのロジック.
 """
+
 from datetime import date as date_type
 
 

@@ -14,8 +14,10 @@ IAP のヘッダが正しく転送されているかを確認するためのデ�
     アクセス制限を設けることを推奨します。
   - JWT の検証は行っていません（ヘッダの受信確認のみ）。
 """
+
+from typing import Any, Dict
+
 from fastapi import APIRouter, Request
-from typing import Dict, Any
 
 router = APIRouter(
     prefix="/debug",
@@ -46,7 +48,9 @@ async def debug_iap_headers(request: Request) -> Dict[str, Any]:
     headers = request.headers
 
     return {
-        "x_goog_authenticated_user_email": headers.get("x-goog-authenticated-user-email"),
+        "x_goog_authenticated_user_email": headers.get(
+            "x-goog-authenticated-user-email"
+        ),
         "x_goog_authenticated_user_id": headers.get("x-goog-authenticated-user-id"),
         "x_goog_iap_jwt_assertion_exists": "x-goog-iap-jwt-assertion" in headers,
         "x_goog_iap_jwt_assertion_preview": (

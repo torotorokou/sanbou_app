@@ -25,17 +25,29 @@ export const coreApi = {
     return res.data as T;
   },
 
-  async post<T, B = unknown>(path: string, body?: B, config?: AxiosRequestConfig): Promise<T> {
+  async post<T, B = unknown>(
+    path: string,
+    body?: B,
+    config?: AxiosRequestConfig,
+  ): Promise<T> {
     const res = await client.post<T>(normalize(path), body, config);
     return res.data as T;
   },
 
-  async put<T, B = unknown>(path: string, body?: B, config?: AxiosRequestConfig): Promise<T> {
+  async put<T, B = unknown>(
+    path: string,
+    body?: B,
+    config?: AxiosRequestConfig,
+  ): Promise<T> {
     const res = await client.put<T>(normalize(path), body, config);
     return res.data as T;
   },
 
-  async patch<T, B = unknown>(path: string, body?: B, config?: AxiosRequestConfig): Promise<T> {
+  async patch<T, B = unknown>(
+    path: string,
+    body?: B,
+    config?: AxiosRequestConfig,
+  ): Promise<T> {
     const res = await client.patch<T>(normalize(path), body, config);
     return res.data as T;
   },
@@ -48,7 +60,7 @@ export const coreApi = {
   /**
    * FormData アップロード専用メソッド
    * Content-Type は boundary 自動付与のため指定しない
-   * 
+   *
    * @param path - API パス（/core_api/... で開始）
    * @param form - アップロードする FormData
    * @param config - axios 設定 + onProgress コールバック
@@ -57,7 +69,7 @@ export const coreApi = {
   async uploadForm<T>(
     path: string,
     form: FormData,
-    config?: AxiosRequestConfig & { onProgress?: (pct?: number) => void }
+    config?: AxiosRequestConfig & { onProgress?: (pct?: number) => void },
   ): Promise<T> {
     const res = await client.post<T>(normalize(path), form, {
       ...config,
@@ -65,7 +77,9 @@ export const coreApi = {
       headers: { ...(config?.headers ?? {}) },
       onUploadProgress: (e) => {
         if (config?.onProgress) {
-          const pct = e.total ? Math.round((e.loaded * 100) / e.total) : undefined;
+          const pct = e.total
+            ? Math.round((e.loaded * 100) / e.total)
+            : undefined;
           config.onProgress(pct);
         }
       },

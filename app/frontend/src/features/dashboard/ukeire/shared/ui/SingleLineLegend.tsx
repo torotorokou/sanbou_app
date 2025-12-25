@@ -28,7 +28,8 @@ interface LegendPropsLike {
 export const SingleLineLegend: React.FC<LegendPropsLike> = (props) => {
   const payload = props.payload;
   const extraStatic = props.extraStatic ?? [];
-  if ((!payload || !Array.isArray(payload)) && extraStatic.length === 0) return null;
+  if ((!payload || !Array.isArray(payload)) && extraStatic.length === 0)
+    return null;
 
   const map: Record<string, string> = {
     prevMonth: "先月",
@@ -90,7 +91,10 @@ export const SingleLineLegend: React.FC<LegendPropsLike> = (props) => {
         if (label === "実績") return null;
         const color = p.color ?? p.payload?.color ?? "#ccc";
         return (
-          <div key={i} style={{ display: "flex", gap: 6, alignItems: "center" }}>
+          <div
+            key={i}
+            style={{ display: "flex", gap: 6, alignItems: "center" }}
+          >
             <div
               style={{
                 width: 14,
@@ -104,9 +108,21 @@ export const SingleLineLegend: React.FC<LegendPropsLike> = (props) => {
         );
       })}
       {extraStatic.map((ex, i) => (
-        <div key={`ex-${i}`} style={{ display: "flex", gap: 6, alignItems: "center" }}>
-          <div style={{ width: 14, height: 14, borderRadius: 3, background: ex.color }} />
-          <div style={{ color: "#595959", fontSize: FONT.size }}>{ex.label}</div>
+        <div
+          key={`ex-${i}`}
+          style={{ display: "flex", gap: 6, alignItems: "center" }}
+        >
+          <div
+            style={{
+              width: 14,
+              height: 14,
+              borderRadius: 3,
+              background: ex.color,
+            }}
+          />
+          <div style={{ color: "#595959", fontSize: FONT.size }}>
+            {ex.label}
+          </div>
         </div>
       ))}
     </div>

@@ -15,10 +15,10 @@ API基底レスポンス（Pydantic v2 対応 + ProblemDetails統合）
 # - ProblemDetails 契約を統合
 """
 
-from typing import Any, Optional, Generic, TypeVar, Literal
+from typing import Any, Generic, Literal, Optional, TypeVar
+
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel  # Pydantic v2 を前提に統一
-
 
 # --- 共通レスポンス契約（/docs に出す唯一のスキーマ） -------------------------
 T = TypeVar("T")
@@ -27,7 +27,7 @@ T = TypeVar("T")
 class ProblemDetails(BaseModel):
     """
     RFC 7807 Problem Details 準拠のエラー情報（OpenAPI契約準拠）
-    
+
     契約定義: contracts/notifications.openapi.yaml
     - status (必須): HTTPステータスコード
     - code (必須): アプリケーション固有のエラーコード
@@ -35,6 +35,7 @@ class ProblemDetails(BaseModel):
     - title (任意): エラータイトル
     - traceId (任意): トレースID
     """
+
     status: int
     code: str
     userMessage: str

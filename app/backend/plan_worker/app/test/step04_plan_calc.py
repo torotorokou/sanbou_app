@@ -1,18 +1,19 @@
 # /backend/app/test/step04_plan_calc.py
 from __future__ import annotations
-from pathlib import Path
-from datetime import date
+
 import argparse
+from datetime import date
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
-from sqlalchemy import create_engine
-from common import _dsn
-
 from app.test.plan_smoothing_plus import (
     SmoothConfig,
     apply_intraweek_pipeline,
     bridge_smooth_across_months_and_renorm,
 )
+from common import _dsn
+from sqlalchemy import create_engine
 
 OUT = Path("/backend/app/test/out/plan")
 
@@ -26,13 +27,18 @@ def _parse_month(s: str) -> date:
 
 
 def _first_day_next_month(d: date) -> date:
-    return date(d.year + (1 if d.month == 12 else 0),
-                1 if d.month == 12 else d.month + 1, 1)
+    return date(
+        d.year + (1 if d.month == 12 else 0), 1 if d.month == 12 else d.month + 1, 1
+    )
 
 
 def _engine_url(dsn: str) -> str:
     prefix = "postgresql://"
-    return ("postgresql+psycopg" + dsn[len("postgresql"):]) if dsn.startswith(prefix) else dsn
+    return (
+        ("postgresql+psycopg" + dsn[len("postgresql") :])
+        if dsn.startswith(prefix)
+        else dsn
+    )
 
 
 def _ensure_odd(n: int) -> int:
@@ -101,11 +107,14 @@ def main():
         eng,
     )
 
-    prof_biz = prof[prof["scope"] == "biz"].copy().rename(columns={"day_mean_smooth": "day_mean_biz"})
-    prof_all_sun = (
-        prof[(prof["scope"] == "all") & (prof["iso_dow"] == 7)][["iso_week", "day_mean_smooth"]]
-        .rename(columns={"day_mean_smooth": "day_mean_all_sun"})
+    prof_biz = (
+        prof[prof["scope"] == "biz"]
+        .copy()
+        .rename(columns={"day_mean_smooth": "day_mean_biz"})
     )
+    prof_all_sun = prof[(prof["scope"] == "all") & (prof["iso_dow"] == 7)][
+        ["iso_week", "day_mean_smooth"]
+    ].rename(columns={"day_mean_smooth": "day_mean_all_sun"})
 
     # KPI
     kpi = pd.read_sql_query(
@@ -120,7 +129,9 @@ def main():
         eng,
         params={"mfrom": m_from, "mto": m_to_excl},
     )
-    kpi["month_date"] = pd.to_datetime(kpi["month_date"]).dt.to_period("M").dt.to_timestamp()
+    kpi["month_date"] = (
+        pd.to_datetime(kpi["month_date"]).dt.to_period("M").dt.to_timestamp()
+    )
 
     # --------------------------------------------------------
     # Base join
@@ -130,15 +141,18 @@ def main():
     use_hol = (~is_closed) & (cal["is_holiday"]) & (~use_sun)
     use_biz = (~is_closed) & (~use_sun) & (~use_hol)
 
-    base = (
-        cal.merge(prof_biz[["iso_week", "iso_dow", "day_mean_biz"]], on=["iso_week", "iso_dow"], how="left")
-           .merge(prof_all_sun, on=["iso_week"], how="left")
-    )
+    base = cal.merge(
+        prof_biz[["iso_week", "iso_dow", "day_mean_biz"]],
+        on=["iso_week", "iso_dow"],
+        how="left",
+    ).merge(prof_all_sun, on=["iso_week"], how="left")
     base["day_mean_biz"] = base["day_mean_biz"].fillna(0.0)
     base["day_mean_all_sun"] = base["day_mean_all_sun"].fillna(0.0)
     base["day_mean"] = 0.0
     base.loc[use_biz, "day_mean"] = base.loc[use_biz, "day_mean_biz"]
-    base.loc[use_sun | use_hol, "day_mean"] = base.loc[use_sun | use_hol, "day_mean_all_sun"]
+    base.loc[use_sun | use_hol, "day_mean"] = base.loc[
+        use_sun | use_hol, "day_mean_all_sun"
+    ]
     base["scope_used"] = np.select(
         [is_closed, use_sun, use_hol, use_biz],
         ["closed", "sun", "hol", "biz"],
@@ -164,8 +178,14 @@ def main():
         intraweek_method="median_then_mean",
         within_week_rel_cap=float(args.within_week_relcap),
         min_open_days_for_smooth=int(args.min_open_days),
-        nonbiz_share_cap=(float(args.nonbiz_share_cap) if args.nonbiz_share_cap is not None else None),
-        per_day_share_cap=(float(args.per_day_share_cap) if args.per_day_share_cap is not None else None),
+        nonbiz_share_cap=(
+            float(args.nonbiz_share_cap) if args.nonbiz_share_cap is not None else None
+        ),
+        per_day_share_cap=(
+            float(args.per_day_share_cap)
+            if args.per_day_share_cap is not None
+            else None
+        ),
         bridge_smooth_enabled=not args.no_bridge,
         bridge_smooth_window=int(args.bridge_window),
         bridge_smooth_scope_values=("biz",),
@@ -189,17 +209,30 @@ def main():
     )
 
     # 日別の初期目標値
-    base = base.merge(kpi[["month_date", "month_target_ton"]], on="month_date", how="left")
+    base = base.merge(
+        kpi[["month_date", "month_target_ton"]], on="month_date", how="left"
+    )
     base["target_ton"] = base["w_day_in_week"] * base["month_target_ton"]
 
     # --------------------------------------------------------
     # (New) 全体スムージング 〜指数移動平均 (EWM)〜
     # --------------------------------------------------------
     smooth_span = 21  # 約3週間の指数平滑
-    daily = base[
-        ["ddate", "month_date", "iso_year", "iso_week", "iso_dow",
-         "scope_used", "target_ton"]
-    ].sort_values("ddate").reset_index(drop=True)
+    daily = (
+        base[
+            [
+                "ddate",
+                "month_date",
+                "iso_year",
+                "iso_week",
+                "iso_dow",
+                "scope_used",
+                "target_ton",
+            ]
+        ]
+        .sort_values("ddate")
+        .reset_index(drop=True)
+    )
 
     is_biz = daily["scope_used"] == "biz"
 
@@ -213,7 +246,8 @@ def main():
 
     # 月単位で再スケール（KPI整合）
     chk = (
-        daily.groupby("month_date", as_index=False)["target_ton"].sum()
+        daily.groupby("month_date", as_index=False)["target_ton"]
+        .sum()
         .rename(columns={"target_ton": "sum_plan"})
         .merge(kpi[["month_date", "month_target_ton"]], on="month_date", how="left")
     )

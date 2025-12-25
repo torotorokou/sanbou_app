@@ -6,7 +6,7 @@
 # - 複数スキーマ（raw/ref/mart/stg）差分検出: include_schemas=True
 # - 型/デフォルト値の差分検出: compare_type / compare_server_default
 # - プロジェクト直下 (/backend) を sys.path に追加して import 解決
-# 
+#
 # ★ v2 と legacy の違い:
 #   - script_location が /backend/migrations_v2/alembic （このファイル）
 #   - version_table は引き続き public.alembic_version を使用（同一DB内で管理）
@@ -16,8 +16,8 @@ from __future__ import annotations
 
 import os
 import sys
-from pathlib import Path
 from logging.config import fileConfig
+from pathlib import Path
 
 from alembic import context
 from sqlalchemy import engine_from_config, pool
@@ -60,7 +60,7 @@ target_metadata = Base.metadata
 def _get_url() -> str:
     """
     データベース接続URLを取得
-    
+
     優先順位:
       1) backend_shared.infra.db.url_builder.build_database_url_with_driver()
          → DB_MIGRATOR_USER / DB_MIGRATOR_PASSWORD 環境変数を優先
@@ -68,13 +68,13 @@ def _get_url() -> str:
          → さらに未設定の場合は POSTGRES_* にフォールバック
       2) DB_DSN 環境変数（フォールバック1）
       3) DATABASE_URL 環境変数（フォールバック2）
-    
+
     Returns:
         str: SQLAlchemy用のDSN文字列（postgresql+psycopg://...）
-        
+
     Raises:
         RuntimeError: いずれの方法でもURLを取得できない場合
-        
+
     Notes:
         - 旧仕様の ALEMBIC_DB_USER は非推奨（後方互換性のため一時的にサポート）
         - 新仕様では DB_MIGRATOR_USER を使用
@@ -85,16 +85,17 @@ def _get_url() -> str:
     alembic_db_user = os.getenv("ALEMBIC_DB_USER")
     if alembic_db_user:
         import warnings
+
         warnings.warn(
             "ALEMBIC_DB_USER is deprecated. Please use DB_MIGRATOR_USER instead. "
             "ALEMBIC_DB_USER will be removed in a future version.",
             DeprecationWarning,
-            stacklevel=2
+            stacklevel=2,
         )
         # 一時的に DB_MIGRATOR_USER にマッピング
         if not os.getenv("DB_MIGRATOR_USER"):
             os.environ["DB_MIGRATOR_USER"] = alembic_db_user
-    
+
     try:
         # 方法1: backend_shared の url_builder を使用（推奨）
         # mode="migrator" により、DB_MIGRATOR_USER を優先、未設定時は DB_USER にフォールバック
@@ -111,23 +112,31 @@ def _get_url() -> str:
                 pass
     finally:
         pass
-    
+
     # 方法2: DB_DSN 環境変数（フォールバック1）
     url = os.getenv("DB_DSN")
     if url:
         # psycopg3 を明示
-        if url.startswith("postgresql://") and "+psycopg" not in url and "+psycopg2" not in url:
+        if (
+            url.startswith("postgresql://")
+            and "+psycopg" not in url
+            and "+psycopg2" not in url
+        ):
             url = url.replace("postgresql://", "postgresql+psycopg://", 1)
         return url
-    
+
     # 方法3: DATABASE_URL 環境変数（フォールバック2）
     url = os.getenv("DATABASE_URL")
     if url:
         # psycopg3 を明示
-        if url.startswith("postgresql://") and "+psycopg" not in url and "+psycopg2" not in url:
+        if (
+            url.startswith("postgresql://")
+            and "+psycopg" not in url
+            and "+psycopg2" not in url
+        ):
             url = url.replace("postgresql://", "postgresql+psycopg://", 1)
         return url
-    
+
     # いずれも取得できない場合はエラー
     raise RuntimeError(
         "Database URL not found. Please set one of:\n"
@@ -153,9 +162,9 @@ def _configure_context_offline(url: str) -> None:
         literal_binds=True,
         version_table="alembic_version",
         version_table_schema="public",
-        include_schemas=True,          # 複数スキーマの差分を含める
-        compare_type=True,             # 型の差分検出
-        compare_server_default=True,   # サーバデフォルトの差分検出
+        include_schemas=True,  # 複数スキーマの差分を含める
+        compare_type=True,  # 型の差分検出
+        compare_server_default=True,  # サーバデフォルトの差分検出
     )
 
 
@@ -175,9 +184,9 @@ def _configure_context_online(url: str):
         target_metadata=target_metadata,
         version_table="alembic_version",
         version_table_schema="public",
-        include_schemas=True,          # 複数スキーマの差分を含める
-        compare_type=True,             # 型の差分検出
-        compare_server_default=True,   # サーバデフォルトの差分検出
+        include_schemas=True,  # 複数スキーマの差分を含める
+        compare_type=True,  # 型の差分検出
+        compare_server_default=True,  # サーバデフォルトの差分検出
     )
     return connectable, connection
 

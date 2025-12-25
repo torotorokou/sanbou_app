@@ -85,4 +85,3 @@ ALTER VIEW mart.v_target_card_per_day OWNER TO myuser;
 --
 
 \unrestrict Ttiasje4nVTenA0f2cPsbt6lpjW5Pcqj5wnIAB6bsUwyTjcicFrczrSGjVTMKiH
-

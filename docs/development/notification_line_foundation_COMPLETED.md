@@ -18,6 +18,7 @@ LINE通知を後から安全に追加できるようにする最低限の仕込�
 この方針により、将来的にLINE連携時に `user:123` → LINE userId への解決が可能になります。
 
 実装箇所:
+
 - [app/core/domain/notification.py](app/core/domain/notification.py) - RecipientRef dataclass
 
 ### 2. 失敗分類（TEMPORARY / PERMANENT）
@@ -25,16 +26,19 @@ LINE通知を後から安全に追加できるようにする最低限の仕込�
 送信失敗を2種類に分類し、リトライ可否を明確にしました：
 
 #### TEMPORARY（一時的失敗）
+
 - タイムアウト、ネットワークエラー、APIレート制限など
 - **リトライ対象**: 1分 → 5分 → 30分 → 60分の指数バックオフ
 - status = `pending` のまま、retry_count++ & next_retry_at 更新
 
 #### PERMANENT（恒久的失敗）
+
 - バリデーションエラー（ValueError）、認証失敗、不正な recipient_key など
 - **リトライしない**: 即座に status = `failed` に遷移
 - 再送するには手動での介入が必要
 
 実装箇所:
+
 - [app/core/domain/notification.py](app/core/domain/notification.py) - FailureType enum
 - [app/infra/adapters/notification/in_memory_outbox_adapter.py](app/infra/adapters/notification/in_memory_outbox_adapter.py) - mark_failed ロジック
 - [app/core/usecases/notification/dispatch_pending_notifications_uc.py](app/core/usecases/notification/dispatch_pending_notifications_uc.py) - 例外ハンドリング
@@ -55,11 +59,13 @@ class NotificationPreference:
 - Preferenceで無効化されたチャネルは status = `skipped` に遷移
 
 テストデータ（InMemory実装）:
+
 - `user:1` - LINE: ✅, Email: ✅
 - `user:2` - LINE: ❌, Email: ✅（LINEはskipped）
 - `user:3` - LINE: ✅, Email: ❌（Emailはskipped）
 
 実装箇所:
+
 - [app/core/domain/notification.py](app/core/domain/notification.py) - NotificationPreference dataclass
 - [app/core/ports/notification_port.py](app/core/ports/notification_port.py) - NotificationPreferencePort
 - [app/infra/adapters/notification/in_memory_preference_adapter.py](app/infra/adapters/notification/in_memory_preference_adapter.py)
@@ -75,13 +81,16 @@ class RecipientResolverPort(ABC):
 ```
 
 現在の動作（Dummy実装）:
+
 - **email**: `email:addr@example.com` → `addr@example.com`（そのまま）
 - **line**: 常に `None`（未連携扱い）→ status = `skipped`
 
 LINE連携後の理想的な動作:
+
 - `user:123` → DB照会 → LINE userId `U1234abcd...`（実LINEユーザーID）
 
 実装箇所:
+
 - [app/core/ports/notification_port.py](app/core/ports/notification_port.py) - RecipientResolverPort
 - [app/infra/adapters/notification/dummy_resolver_adapter.py](app/infra/adapters/notification/dummy_resolver_adapter.py)
 
@@ -95,10 +104,12 @@ def mark_skipped(self, id: UUID, reason: str, now: datetime) -> None:
 ```
 
 skipped 条件:
+
 1. Preference でチャネルが無効化されている
 2. Resolver が None を返す（LINE未連携など）
 
 実装箇所:
+
 - [app/core/ports/notification_port.py](app/core/ports/notification_port.py) - NotificationOutboxPort.mark_skipped
 - [app/infra/adapters/notification/in_memory_outbox_adapter.py](app/infra/adapters/notification/in_memory_outbox_adapter.py)
 
@@ -122,6 +133,7 @@ skipped 条件:
 全16ケース成功（既存13 + 新規3）:
 
 ### 新規追加テスト（LINE通知基盤）
+
 1. **test_preference_disabled_skips_notification**
    - `user:2` にLINE通知 → `line_enabled=false` → skipped
 2. **test_resolver_returns_none_skips_notification**
@@ -131,6 +143,7 @@ skipped 条件:
    - RuntimeError → TEMPORARY（pending、リトライあり）
 
 テスト実行結果:
+
 ```bash
 $ pytest tests/test_notification_infrastructure.py -v
 16 passed in 0.07s
@@ -177,7 +190,7 @@ class LineNotificationSenderAdapter(NotificationSenderPort):
     def send(self, channel: str, payload: NotificationPayload, recipient_key: str) -> None:
         if channel != "line":
             raise ValueError(f"Unsupported channel: {channel}")
-        
+
         # LINE Messaging API呼び出し
         response = requests.post(
             "https://api.line.me/v2/bot/message/push",
@@ -248,6 +261,7 @@ $ make al-cur-env ENV=local_dev
 ### マイグレーション内容
 
 **20251225_001_add_notification_outbox_failure_type.py**
+
 - `app.notification_outbox` テーブルに `failure_type VARCHAR(20)` カラムを追加
 - デフォルト値: NULL（pending/sent/skipped 時）
 - 既存の failed レコードには 'TEMPORARY' を自動設定（互換性維持）
@@ -256,22 +270,22 @@ $ make al-cur-env ENV=local_dev
 
 ```sql
                               Table "app.notification_outbox"
-    Column     |           Type           | Nullable |         Default         
+    Column     |           Type           | Nullable |         Default
 ---------------+--------------------------+----------+-------------------------
- id            | uuid                     | not null | 
- channel       | character varying(50)    | not null | 
- status        | character varying(50)    | not null | 
- recipient_key | character varying(255)   | not null | 
- title         | character varying(500)   | not null | 
- body          | text                     | not null | 
+ id            | uuid                     | not null |
+ channel       | character varying(50)    | not null |
+ status        | character varying(50)    | not null |
+ recipient_key | character varying(255)   | not null |
+ title         | character varying(500)   | not null |
+ body          | text                     | not null |
  url           | character varying(1000)  |          | NULL
- meta          | jsonb                    |          | 
- scheduled_at  | timestamp with time zone |          | 
- created_at    | timestamp with time zone | not null | 
- sent_at       | timestamp with time zone |          | 
+ meta          | jsonb                    |          |
+ scheduled_at  | timestamp with time zone |          |
+ created_at    | timestamp with time zone | not null |
+ sent_at       | timestamp with time zone |          |
  retry_count   | integer                  | not null | 0
- next_retry_at | timestamp with time zone |          | 
- last_error    | text                     |          | 
+ next_retry_at | timestamp with time zone |          |
+ last_error    | text                     |          |
  failure_type  | character varying(20)    |          | NULL  ← NEW!
 ```
 

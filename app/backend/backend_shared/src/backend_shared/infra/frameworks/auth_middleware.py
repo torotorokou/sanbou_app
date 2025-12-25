@@ -23,12 +23,16 @@ app.add_middleware(
 ```
 """
 
-from typing import Callable, List, Optional, Any
+from typing import Any, Callable, List, Optional
+
+from backend_shared.application.logging import get_module_logger
+from backend_shared.config.env_utils import (
+    get_default_auth_excluded_paths,
+    is_iap_enabled,
+)
 from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import JSONResponse
-from backend_shared.application.logging import get_module_logger
-from backend_shared.config.env_utils import is_iap_enabled, get_default_auth_excluded_paths
 
 logger = get_module_logger(__name__)
 
@@ -36,24 +40,24 @@ logger = get_module_logger(__name__)
 class AuthenticationMiddleware(BaseHTTPMiddleware):
     """
     IAP 認証を強制するミドルウェア（共通実装）
-    
+
     除外パスを除く全てのリクエストで認証を実施します。
-    
+
     Attributes:
         excluded_paths: 認証を除外するパスのリスト
         iap_enabled: IAP が有効かどうか
         auth_provider_factory: 認証プロバイダーを生成する関数
     """
-    
+
     def __init__(
         self,
         app,
         auth_provider_factory: Optional[Callable[[], Any]] = None,
-        excluded_paths: Optional[List[str]] = None
+        excluded_paths: Optional[List[str]] = None,
     ):
         """
         認証ミドルウェアを初期化
-        
+
         Args:
             app: FastAPI アプリケーション
             auth_provider_factory: 認証プロバイダーを生成する関数
@@ -61,41 +65,45 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
         """
         super().__init__(app)
         self.auth_provider_factory = auth_provider_factory
-        self.excluded_paths = excluded_paths if excluded_paths is not None else get_default_auth_excluded_paths()
+        self.excluded_paths = (
+            excluded_paths
+            if excluded_paths is not None
+            else get_default_auth_excluded_paths()
+        )
         self.iap_enabled = is_iap_enabled()
-        
+
         logger.info(
             f"AuthenticationMiddleware initialized (IAP_ENABLED={self.iap_enabled})",
             extra={
                 "operation": "middleware_init",
                 "iap_enabled": self.iap_enabled,
-                "excluded_paths": self.excluded_paths
-            }
+                "excluded_paths": self.excluded_paths,
+            },
         )
-    
+
     async def dispatch(self, request: Request, call_next):
         """
         リクエストごとに認証を実施
-        
+
         Args:
             request: FastAPI Request オブジェクト
             call_next: 次のミドルウェアまたはエンドポイント
-            
+
         Returns:
             Response: レスポンス
         """
         # 除外パスの場合は認証をスキップ
         if request.url.path in self.excluded_paths:
             return await call_next(request)
-        
+
         # 認証プロバイダーが設定されていない場合はスキップ
         if not self.auth_provider_factory:
             logger.debug(
                 "Auth provider not configured, skipping authentication",
-                extra={"operation": "authentication", "path": request.url.path}
+                extra={"operation": "authentication", "path": request.url.path},
             )
             return await call_next(request)
-        
+
         # IAP が無効の場合は認証をスキップ（開発環境）
         # ただし、DevAuthProvider を使用してユーザー情報は設定する
         if not self.iap_enabled:
@@ -107,29 +115,29 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
             except Exception as e:
                 logger.debug(
                     f"Dev auth skipped: {str(e)}",
-                    extra={"operation": "dev_auth", "error": str(e)}
+                    extra={"operation": "dev_auth", "error": str(e)},
                 )
             return await call_next(request)
-        
+
         # IAP 認証を実施
         try:
             auth_provider = self.auth_provider_factory()
             user = await auth_provider.get_current_user(request)
-            
+
             # 認証成功: request.state に user を保存
             request.state.user = user
-            
+
             logger.debug(
                 f"Authentication successful: {user.email}",
                 extra={
                     "operation": "authentication",
                     "email": user.email,
-                    "user_id": user.user_id
-                }
+                    "user_id": user.user_id,
+                },
             )
-            
+
             return await call_next(request)
-            
+
         except Exception as e:
             # 認証失敗
             logger.warning(
@@ -137,14 +145,14 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
                 extra={
                     "operation": "authentication",
                     "path": request.url.path,
-                    "error": str(e)
-                }
+                    "error": str(e),
+                },
             )
-            
+
             # HTTPException の場合はステータスコードを取得
             status_code = getattr(e, "status_code", 401)
             detail = getattr(e, "detail", "Authentication required")
-            
+
             return JSONResponse(
                 status_code=status_code,
                 content={
@@ -152,5 +160,5 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
                         "code": "AUTHENTICATION_REQUIRED",
                         "message": detail,
                     }
-                }
+                },
             )

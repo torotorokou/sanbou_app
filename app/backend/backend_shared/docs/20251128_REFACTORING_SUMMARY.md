@@ -9,29 +9,37 @@
 ## ✅ 完了した作業
 
 ### 1. ディレクトリ構造の再編
+
 従来の平坦な構造を Clean Architecture に基づいた層構造に再編成しました。
 
 **主要な変更点**:
+
 - `core/` 層を新設（domain, ports, usecases）
 - `infra/` 層を新設（adapters, frameworks）
 - `config/` を独立層として整理（DI コンテナ追加）
 
 ### 2. Ports 層の追加
+
 抽象インターフェースを定義する ports 層を新規追加:
+
 - `repository.py`: Repository の抽象定義
 - `csv_processor.py`: CSV 処理の抽象定義
 - `config_loader.py`: 設定ローダーの抽象定義
 
 ### 3. DI コンテナの作成
+
 `config/di_providers.py` を作成し、依存関係の組み立てを集約:
+
 - データベースセッション管理
 - CSV フォーマッター
 - 設定ローダー
 
 ### 4. Import パスの統一
+
 全ファイル（backend_shared 約 20 ファイル + 他サービス 約 20 ファイル）の import を新構造に合わせて修正完了。
 
 **修正したサービス**:
+
 - ✅ backend_shared (20+ ファイル)
 - ✅ core_api (5 ファイル)
 - ✅ ledger_api (10 ファイル)
@@ -41,8 +49,9 @@
 - ✅ ai_api (使用なし)
 
 ### 5. ドキュメント整備
+
 - README.md: アーキテクチャ説明と使用例を更新
-- __init__.py: パッケージ構造を v0.2.0 に更新
+- **init**.py: パッケージ構造を v0.2.0 に更新
 - REFACTORING_REPORT_20251128.md: 詳細レポート作成
 
 ---
@@ -80,6 +89,7 @@ core (Domain/Ports/UseCases) → 抽象
 ```
 
 **ポイント**:
+
 - core は外部依存ゼロ（純粋なビジネスロジック）
 - infra は core/ports に依存（依存関係逆転）
 - config で実装を組み立て（DI パターン）
@@ -89,6 +99,7 @@ core (Domain/Ports/UseCases) → 抽象
 ## 📝 次のステップ
 
 ### ✅ 完了済み
+
 - [x] backend_shared のリファクタリング
 - [x] 全サービスの import パス修正
   - [x] core_api (5 ファイル)
@@ -97,6 +108,7 @@ core (Domain/Ports/UseCases) → 抽象
   - [x] manual_api, plan_worker, ai_api (使用なし)
 
 ### 今後の作業
+
 - [ ] 既存テストの実行と修正
 - [ ] 型エラーの解消
 - [ ] DI コンテナの拡張

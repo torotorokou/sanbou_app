@@ -17,13 +17,16 @@
 ### 1. 残存 hooks/ ディレクトリの統合 ✅
 
 **対象ファイル:**
+
 - `features/database/dataset-import/hooks/useUploadStatusPolling.ts`
 
 **変更内容:**
+
 - `hooks/` → `model/` に移動
 - FSD 規約完全準拠を達成
 
 **理由:**
+
 - FSD では hooks は `model/` に配置する方針
 - ViewModel と補助 hooks を同じレイヤーに統一
 
@@ -32,11 +35,13 @@
 ### 2. CalendarCard を Named Export に変更 ✅
 
 **対象ファイル:**
+
 - `features/dashboard/ukeire/business-calendar/ui/cards/CalendarCard.tsx`
 - `features/dashboard/ukeire/business-calendar/index.ts`
 - `features/dashboard/ukeire/index.ts`
 
 **変更内容:**
+
 ```typescript
 // Before
 export default function CalendarCard(...) { ... }
@@ -48,6 +53,7 @@ export { CalendarCard } from "./ui/cards/CalendarCard";
 ```
 
 **影響範囲:**
+
 - 外部からは `UkeireCalendarCard` として再エクスポートされているため、利用側に影響なし
 
 ---
@@ -57,44 +63,50 @@ export { CalendarCard } from "./ui/cards/CalendarCard";
 #### 3-1. csv-validation feature
 
 **対象ファイル:**
+
 - `features/csv-validation/index.ts`
 
 **変更内容:**
+
 ```typescript
 // Before
-export * from './core/csvRowValidator';
-export * from './model/useValidateOnPick';
+export * from "./core/csvRowValidator";
+export * from "./model/useValidateOnPick";
 
 // After
-export { validateRows } from './core/csvRowValidator';
-export { useValidateOnPick } from './model/useValidateOnPick';
+export { validateRows } from "./core/csvRowValidator";
+export { useValidateOnPick } from "./model/useValidateOnPick";
 ```
 
 **理由:**
+
 - 実装コードは明示的な export を優先（FSD ベストプラクティス）
 - 型定義の `export *` は許容
 
 #### 3-2. report feature
 
 **対象ファイル:**
+
 - `features/report/index.ts`
 
 **変更内容:**
+
 ```typescript
 // Before
-export * from '@features/report/selector/model/useReportManager';
-export * from '@features/report/actions/model/useReportActions';
-export * from '@features/report/base/model/useReportBaseBusiness';
-export * from '@features/report/selector/model/useReportLayoutStyles';
+export * from "@features/report/selector/model/useReportManager";
+export * from "@features/report/actions/model/useReportActions";
+export * from "@features/report/base/model/useReportBaseBusiness";
+export * from "@features/report/selector/model/useReportLayoutStyles";
 
 // After
-export { useReportManager } from '@features/report/selector/model/useReportManager';
-export { useReportLayoutStyles } from '@features/report/selector/model/useReportLayoutStyles';
-export { useReportActions } from '@features/report/actions/model/useReportActions';
-export { useReportBaseBusiness } from '@features/report/base/model/useReportBaseBusiness';
+export { useReportManager } from "@features/report/selector/model/useReportManager";
+export { useReportLayoutStyles } from "@features/report/selector/model/useReportLayoutStyles";
+export { useReportActions } from "@features/report/actions/model/useReportActions";
+export { useReportBaseBusiness } from "@features/report/base/model/useReportBaseBusiness";
 ```
 
 **理由:**
+
 - hooks/ViewModel は明示的に export
 - コード補完とツリーシェイキングの向上
 
@@ -103,10 +115,12 @@ export { useReportBaseBusiness } from '@features/report/base/model/useReportBase
 ### 4. 小規模 UI コンポーネントの Named Export 化 ✅
 
 **対象ファイル:**
+
 - `features/dashboard/ukeire/shared/ui/InfoTooltip.tsx`
 - `features/chat/ui/components/AnswerViewer.tsx`
 
 **変更内容:**
+
 ```typescript
 // Before
 export default InfoTooltip;
@@ -118,19 +132,21 @@ export { AnswerViewer };
 ```
 
 **影響ファイル:**
+
 - `features/dashboard/ukeire/inbound-monthly/ui/cards/DailyActualsCard.tsx`
 - `features/dashboard/ukeire/inbound-monthly/ui/cards/DailyCumulativeCard.tsx`
 - `features/chat/ui/cards/ChatAnswerSection.tsx`
 
 **変更内容:**
+
 ```typescript
 // Before
 import InfoTooltip from "@/features/...";
-import AnswerViewer from '../components/AnswerViewer';
+import AnswerViewer from "../components/AnswerViewer";
 
 // After
 import { InfoTooltip } from "@/features/...";
-import { AnswerViewer } from '../components/AnswerViewer';
+import { AnswerViewer } from "../components/AnswerViewer";
 ```
 
 ---
@@ -178,9 +194,11 @@ import { AnswerViewer } from '../components/AnswerViewer';
 ### Named Export の継続推進
 
 1. **新規コンポーネント**
+
    - すべて Named Export で作成
 
 2. **既存コンポーネント**
+
    - 触る機会があれば段階的に Named Export に移行
    - pages/ 配下の default export は互換性のため許容
 

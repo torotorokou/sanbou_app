@@ -1,7 +1,7 @@
 /**
  * CalendarCore Component
  * カレンダーグリッドの汎用コア実装（features/calendar に統一）
- * 
+ *
  * ISO 8601標準に準拠:
  * - 週は月曜日始まり
  * - ISO週番号はバックエンドから取得したデータをそのまま表示
@@ -70,22 +70,25 @@ export function CalendarCore<T extends CalendarCell = CalendarCell>({
 
   /**
    * ISO週番号の取得（バックエンドデータ優先）
-   * 
+   *
    * 月曜始まりのグリッドなので:
    * - インデックス0 = 月曜日（ISO週の基準日）
    * - 各週の最初のセル（月曜日）のiso_weekを直接使用
-   * 
+   *
    * フォールバックは最小限に抑え、バックエンドデータを信頼
    */
   const weekNumbers = React.useMemo(() => {
     const numbers: string[] = [];
-    
+
     for (let w = 0; w < weeks; w++) {
       const weekStartIndex = w * 7;
-      
+
       // 週の最初のセル = 月曜日のiso_weekを取得
-      const mondayCell = cells[weekStartIndex] as T & { iso_week?: number; inMonth?: boolean };
-      
+      const mondayCell = cells[weekStartIndex] as T & {
+        iso_week?: number;
+        inMonth?: boolean;
+      };
+
       if (mondayCell?.iso_week) {
         // バックエンドから取得したISO週番号をそのまま表示
         numbers.push(String(mondayCell.iso_week));
@@ -93,7 +96,10 @@ export function CalendarCore<T extends CalendarCell = CalendarCell>({
         // 月曜日が月外の場合、週内の月内セルから取得
         let weekNum: string | undefined;
         for (let d = 1; d < 7; d++) {
-          const cell = cells[weekStartIndex + d] as T & { iso_week?: number; inMonth?: boolean };
+          const cell = cells[weekStartIndex + d] as T & {
+            iso_week?: number;
+            inMonth?: boolean;
+          };
           if (cell?.inMonth && cell?.iso_week) {
             weekNum = String(cell.iso_week);
             break;
@@ -109,20 +115,22 @@ export function CalendarCore<T extends CalendarCell = CalendarCell>({
   }, [cells, weeks]);
 
   return (
-    <div 
-      className={className} 
-      style={{ 
-        display: "flex", 
-        flexDirection: "column", 
-        height: "100%", 
+    <div
+      className={className}
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        height: "100%",
         minHeight: 0,
-        ...style 
+        ...style,
       }}
     >
       {/* Header row: W + 7 weekdays */}
       <div
         className={styles.headerRow}
-        style={{ ...({ ["--row-h"]: `${rowHeight}px` } as React.CSSProperties) }}
+        style={{
+          ...({ ["--row-h"]: `${rowHeight}px` } as React.CSSProperties),
+        }}
       >
         {["W", ...DOW].map((label, idx) => (
           <div key={idx} className={styles.headerCell}>

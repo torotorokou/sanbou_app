@@ -1,17 +1,17 @@
 -- ============================================================
 -- 04_default_privileges.sql - デフォルト権限設定（冪等）
 -- ============================================================
--- 
+--
 -- 目的: 新規作成されるオブジェクトに対して自動的に権限を付与
--- 
+--
 -- 実行方法:
 --   psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" \
 --        -v app_user="$POSTGRES_USER" \
 --        -f 04_default_privileges.sql
--- 
+--
 -- パラメータ:
 --   app_user: アプリ接続ユーザー名（例: sanbou_app_dev）
--- 
+--
 -- 重要:
 --   - sanbou_owner が作成する将来のオブジェクトに対して権限を自動付与
 --   - マイグレーション実行後に手動で GRANT する必要がなくなる
@@ -48,7 +48,7 @@ BEGIN
                 schema_rec,
                 app_user_var
             );
-            
+
             -- シーケンス: USAGE, SELECT（自動採番に必須）
             EXECUTE format(
                 'ALTER DEFAULT PRIVILEGES FOR ROLE sanbou_owner IN SCHEMA %I ' ||
@@ -56,7 +56,7 @@ BEGIN
                 schema_rec,
                 app_user_var
             );
-            
+
             -- 関数: EXECUTE
             EXECUTE format(
                 'ALTER DEFAULT PRIVILEGES FOR ROLE sanbou_owner IN SCHEMA %I ' ||
@@ -64,8 +64,8 @@ BEGIN
                 schema_rec,
                 app_user_var
             );
-            
-            RAISE NOTICE '✓ [RW default] %.% → %', 
+
+            RAISE NOTICE '✓ [RW default] %.% → %',
                          schema_rec,
                          repeat(' ', 12 - length(schema_rec::text)),
                          app_user_var;
@@ -95,7 +95,7 @@ BEGIN
                 schema_rec,
                 app_user_var
             );
-            
+
             -- 関数: EXECUTE
             EXECUTE format(
                 'ALTER DEFAULT PRIVILEGES FOR ROLE sanbou_owner IN SCHEMA %I ' ||
@@ -103,8 +103,8 @@ BEGIN
                 schema_rec,
                 app_user_var
             );
-            
-            RAISE NOTICE '✓ [RO default] %.% → %', 
+
+            RAISE NOTICE '✓ [RO default] %.% → %',
                          schema_rec,
                          repeat(' ', 12 - length(schema_rec::text)),
                          app_user_var;

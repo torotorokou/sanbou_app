@@ -3,6 +3,7 @@
 Git管理されたローカルファイルを使用するため、GCS同期機能は削除済み。
 マスターデータとテンプレートは app/infra/data_sources/ に配置。
 """
+
 from __future__ import annotations
 
 from .settings import settings

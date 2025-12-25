@@ -1,16 +1,16 @@
 /**
  * shared/tokens.ts
  * 共通トークン（ブレークポイント・余白など）
- * 
+ *
  * @deprecated このファイルのBREAKPOINTSは使用しないでください
  * 代わりに @shared/constants/breakpoints からインポートしてください
  */
 
-import { bp } from '@shared';
+import { bp } from "@shared";
 
 /**
  * @deprecated 代わりに @shared から bp をインポートしてください
- * 
+ *
  * 例:
  * ```typescript
  * import { bp } from '@shared';

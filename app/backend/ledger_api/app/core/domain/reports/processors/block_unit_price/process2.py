@@ -1,6 +1,6 @@
 import pandas as pd
+from backend_shared.application.logging import create_log_context, get_module_logger
 from pandas import DataFrame
-from backend_shared.application.logging import get_module_logger, create_log_context
 
 logger = get_module_logger(__name__)
 
@@ -21,7 +21,7 @@ def apply_transport_fee_by_vendor(
     # 運搬業者が設定されている行を抽出
     # 最適化: copy()を削減（後でconcatするため不要）
     target_rows = df_after[df_after["運搬業者"].notna()]
-    
+
     # デバッグ: マージ前の業者CD・運搬業者の組み合わせを確認
     if not target_rows.empty:
         df_combinations = target_rows[["業者CD", "運搬業者"]].drop_duplicates()
@@ -29,19 +29,19 @@ def apply_transport_fee_by_vendor(
             f"Transport fee merge - Target combinations: {len(df_combinations)}",
             extra=create_log_context(
                 operation="apply_transport_fee_by_vendor",
-                target_combinations=df_combinations.to_dict('records'),
-                target_rows_count=len(target_rows)
-            )
+                target_combinations=df_combinations.to_dict("records"),
+                target_rows_count=len(target_rows),
+            ),
         )
-        
+
         # transport_costsに存在する組み合わせを確認
         transport_combinations = df_transport[["業者CD", "運搬業者"]].drop_duplicates()
         logger.info(
             f"Transport fee merge - Available in master: {len(transport_combinations)}",
             extra=create_log_context(
                 operation="apply_transport_fee_by_vendor",
-                transport_combinations=transport_combinations.to_dict('records')[:20]
-            )
+                transport_combinations=transport_combinations.to_dict("records")[:20],
+            ),
         )
 
     # 運搬費マスターを準備（重複除外）
@@ -49,41 +49,40 @@ def apply_transport_fee_by_vendor(
     transport_fees = df_transport[["業者CD", "運搬業者", "運搬費"]].drop_duplicates(
         subset=["業者CD", "運搬業者"]
     )
-    
+
     # 運搬費をマージ（LEFT JOIN で全行を保持）
     updated_target_rows = target_rows.merge(
-        transport_fees,
-        on=["業者CD", "運搬業者"],
-        how="left",
-        suffixes=("_old", "_new")
+        transport_fees, on=["業者CD", "運搬業者"], how="left", suffixes=("_old", "_new")
     )
-    
+
     # マージされた運搬費で既存の運搬費を上書き（マッチした場合のみ）
     if "運搬費_new" in updated_target_rows.columns:
         # 元の運搬費をクリーンアップ
         if "運搬費_old" in updated_target_rows.columns:
             updated_target_rows["運搬費"] = updated_target_rows["運搬費_old"]
             updated_target_rows.drop(columns=["運搬費_old"], inplace=True)
-        
+
         # 新しい運搬費で上書き（NaNでない場合）
         mask = updated_target_rows["運搬費_new"].notna()
         updated_target_rows.loc[mask, "運搬費"] = pd.to_numeric(
             updated_target_rows.loc[mask, "運搬費_new"], errors="coerce"
         )
         updated_target_rows.drop(columns=["運搬費_new"], inplace=True)
-    
+
     # デバッグ: マージ後の運搬費を確認
     if not updated_target_rows.empty and "運搬費" in updated_target_rows.columns:
         transport_fee_stats = updated_target_rows["運搬費"].describe().to_dict()
-        vendor_fee_summary = updated_target_rows.groupby("運搬業者")["運搬費"].first().to_dict()
+        vendor_fee_summary = (
+            updated_target_rows.groupby("運搬業者")["運搬費"].first().to_dict()
+        )
         logger.info(
             f"Transport fee applied - Vendor fees: {vendor_fee_summary}",
             extra=create_log_context(
                 operation="apply_transport_fee_by_vendor",
                 vendor_fee_summary=vendor_fee_summary,
                 transport_fee_stats=transport_fee_stats,
-                updated_rows_count=len(updated_target_rows)
-            )
+                updated_rows_count=len(updated_target_rows),
+            ),
         )
 
     # 運搬業者が未設定の行を保持
@@ -100,15 +99,17 @@ def apply_weight_based_transport_fee(
     df_after: DataFrame, df_transport: DataFrame
 ) -> DataFrame:
     """運搬費係数を用いて重量ベースの運搬費を再計算する
-    
+
     最適化: copy()を削減（mergeが新規DataFrameを返すため不要）
     """
 
     # 最適化: out = df_after.copy()を削除（後でmergeで新規DataFrameが作られる）
     out = df_after
 
-    fee_str = df_transport.get("運搬費", pd.Series(dtype=object)).astype(str).str.replace(
-        r"\s+", "", regex=True
+    fee_str = (
+        df_transport.get("運搬費", pd.Series(dtype=object))
+        .astype(str)
+        .str.replace(r"\s+", "", regex=True)
     )
     mask = fee_str.str.fullmatch(r"\d+\*weight", na=False)
     # 最適化: copy()を削減（フィルタリングだけで充分）
@@ -120,7 +121,9 @@ def apply_weight_based_transport_fee(
             ["業者CD", "運搬業者", "運搬費係数"]
         ]
 
-        out = out.merge(t, on=["業者CD", "運搬業者"], how="left", suffixes=("", "_formula"))
+        out = out.merge(
+            t, on=["業者CD", "運搬業者"], how="left", suffixes=("", "_formula")
+        )
 
         has_coef = out["運搬費係数"].notna()
         weight = pd.to_numeric(
@@ -137,17 +140,17 @@ def apply_weight_based_transport_fee(
 def make_total_sum(df: DataFrame, master_csv: DataFrame) -> DataFrame:
     """
     総額計算とブロック単価計算
-    
+
     最適化: apply(axis=1)をベクトル化（10-100倍高速化）
     """
     # 最適化: apply()を使わずにVector演算で計算
     # kgの場合: 単価 * 正味重量
     # 台の場合: 単価 * 数量
     df = df.copy()  # 元のDataFrameを保護
-    
+
     kg_mask = df["単位名"] == "kg"
     dai_mask = df["単位名"] == "台"
-    
+
     df["金額"] = 0.0
     df.loc[kg_mask, "金額"] = df.loc[kg_mask, "単価"] * df.loc[kg_mask, "正味重量"]
     df.loc[dai_mask, "金額"] = df.loc[dai_mask, "単価"] * df.loc[dai_mask, "数量"]

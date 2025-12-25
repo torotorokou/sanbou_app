@@ -3,10 +3,22 @@
  * TopNデータの棒グラフコンポーネント
  */
 
-import React from 'react';
-import { ResponsiveContainer, BarChart, Bar, CartesianGrid, XAxis, YAxis, Tooltip as RTooltip } from 'recharts';
-import type { MetricEntry, CategoryKind } from '../../shared/model/types';
-import { fmtCurrency, fmtNumber, fmtUnitPrice } from '../../shared/model/metrics';
+import React from "react";
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  CartesianGrid,
+  XAxis,
+  YAxis,
+  Tooltip as RTooltip,
+} from "recharts";
+import type { MetricEntry, CategoryKind } from "../../shared/model/types";
+import {
+  fmtCurrency,
+  fmtNumber,
+  fmtUnitPrice,
+} from "../../shared/model/metrics";
 
 export interface TopNBarChartProps {
   data: MetricEntry[];
@@ -16,8 +28,11 @@ export interface TopNBarChartProps {
 /**
  * TopN棒グラフ
  */
-export const TopNBarChart: React.FC<TopNBarChartProps> = ({ data, categoryKind }) => {
-  const amountLabel = categoryKind === 'waste' ? '売上' : '仕入';
+export const TopNBarChart: React.FC<TopNBarChartProps> = ({
+  data,
+  categoryKind,
+}) => {
+  const amountLabel = categoryKind === "waste" ? "売上" : "仕入";
   const chartData = data.map((d) => ({
     name: d.name,
     [amountLabel]: d.amount,
@@ -27,18 +42,21 @@ export const TopNBarChart: React.FC<TopNBarChartProps> = ({ data, categoryKind }
   }));
 
   return (
-    <div style={{ width: '100%', height: 320 }}>
+    <div style={{ width: "100%", height: 320 }}>
       <ResponsiveContainer>
-        <BarChart data={chartData} margin={{ top: 8, right: 8, left: 8, bottom: 24 }}>
+        <BarChart
+          data={chartData}
+          margin={{ top: 8, right: 8, left: 8, bottom: 24 }}
+        >
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey="name" hide={chartData.length > 12} />
           <YAxis />
           <RTooltip
             formatter={(value: number, name: string) => {
               if (name === amountLabel) return fmtCurrency(value);
-              if (name === '数量') return `${fmtNumber(value)} kg`;
-              if (name === '件数') return `${fmtNumber(value)} 件`;
-              if (name === '単価') return fmtUnitPrice(value);
+              if (name === "数量") return `${fmtNumber(value)} kg`;
+              if (name === "件数") return `${fmtNumber(value)} 件`;
+              if (name === "単価") return fmtUnitPrice(value);
               return value;
             }}
           />

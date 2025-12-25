@@ -8,8 +8,8 @@ Include the current date in mart.mv_receive_daily so that same-day receive uploa
 are reflected immediately. The previous definition stopped at yesterday, causing
 "today" rows to be invisible in dashboards and downstream MVs.
 """
-from alembic import op
 
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = "20251224_006"

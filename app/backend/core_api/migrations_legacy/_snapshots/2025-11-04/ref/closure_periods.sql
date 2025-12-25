@@ -50,4 +50,3 @@ ALTER TABLE ONLY ref.closure_periods
 --
 
 \unrestrict 7YrZS1XZCNGalFbiFSJ5qqAiA1jMMRDoCR6aopThaO9M3fbmCNM0Dsod58WYbSV
-

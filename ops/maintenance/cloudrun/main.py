@@ -27,7 +27,7 @@ MAINTENANCE_HTML = """
             box-sizing: border-box;
         }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
                          "Helvetica Neue", Arial, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
@@ -104,11 +104,11 @@ MAINTENANCE_HTML = """
 async def maintenance_handler(request: Request, path: str):
     """
     すべてのパスとメソッドに対して503を返す
-    
+
     Args:
         request: FastAPI Request オブジェクト
         path: リクエストされたパス
-    
+
     Returns:
         HTMLResponse: 503 Service Unavailable
     """
@@ -127,7 +127,7 @@ async def maintenance_handler(request: Request, path: str):
 async def health_check():
     """
     ヘルスチェック用エンドポイント（Cloud Run が使用）
-    
+
     Returns:
         dict: ステータス情報
     """
@@ -137,6 +137,6 @@ async def health_check():
 if __name__ == "__main__":
     import uvicorn
     import os
-    
+
     port = int(os.environ.get("PORT", 8080))
     uvicorn.run(app, host="0.0.0.0", port=port)

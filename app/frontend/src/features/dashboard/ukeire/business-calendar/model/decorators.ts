@@ -13,7 +13,7 @@ type DecoratedCell = CalendarDayDTO & {
  * day_typeに基づいて正確に判定
  */
 export function decorateCalendarCells(
-  grid: Array<Array<CalendarDayDTO & { inMonth: boolean }>>
+  grid: Array<Array<CalendarDayDTO & { inMonth: boolean }>>,
 ): DecoratedCell[][] {
   return grid.map((row) =>
     row.map((cell) => {
@@ -50,6 +50,6 @@ export function decorateCalendarCells(
         label,
         color,
       };
-    })
+    }),
   );
 }

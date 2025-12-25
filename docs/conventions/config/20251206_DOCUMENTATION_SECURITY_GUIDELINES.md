@@ -16,6 +16,7 @@
 ### 1. 実際のパスワード・APIキーを記載しない
 
 **NG例:**
+
 ```bash
 # POSTGRES_PASSWORD: 実際のパスワードを直接書かない
 # DATABASE_URL: postgresql://user:<実際のパスワード>@host:5432/db  # ← NG
@@ -23,6 +24,7 @@
 ```
 
 **OK例:**
+
 ```bash
 # POSTGRES_PASSWORD は secrets/ ファイルに設定
 DATABASE_URL=postgresql://<USER>:<PASSWORD>@<HOST>:5432/<DB>
@@ -32,15 +34,17 @@ GEMINI_API_KEY=<YOUR_API_KEY>
 ### 2. 本番環境の接続文字列を記載しない
 
 **NG例:**
+
 ```yaml
 environment:
   # DATABASE_URL: postgresql://prod_user:<実際のパスワード>@prod-db.example.com:5432/production  # ← NG
 ```
 
 **OK例:**
+
 ```yaml
 environment:
-  DATABASE_URL: ${DATABASE_URL}  # secrets/ で設定
+  DATABASE_URL: ${DATABASE_URL} # secrets/ で設定
   # または環境変数を使用
   # DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:5432/${POSTGRES_DB}
 ```
@@ -48,10 +52,12 @@ environment:
 ### 3. GCP サービスアカウントキーの内容を記載しない
 
 **NG:**
+
 - キーの JSON 内容をドキュメントにコピペ
 - キーファイルのパスワード保護されていないリンク
 
 **OK:**
+
 - ファイルパスの参照のみ: `secrets/stg_key.json`
 - Workload Identity の使用を推奨する記述
 
@@ -73,27 +79,30 @@ API_KEY=<YOUR_API_KEY>
 ```bash
 # 以下を secrets/.env.local_dev.secrets に設定してください:
 # パスワードは32文字以上のランダム文字列を使用
-# 
+#
 # 生成方法:
 # openssl rand -base64 32
 ```
 
 ### パターン3: 「例」と明示
 
-```markdown
+````markdown
 **パスワード設定例:**
+
 ```bash
 # 例: 以下は実際の値ではありません
 # POSTGRES_PASSWORD: 実際には32文字以上のランダム文字列を使用
 ```
-```
+````
+
+````
 
 ### パターン4: マスク表示
 
 ```markdown
 実際のパスワード: `fOb1***[マスク済み]`
 APIキー: `AIza****[35文字マスク]****xyz`
-```
+````
 
 ---
 
@@ -116,16 +125,19 @@ APIキー: `AIza****[35文字マスク]****xyz`
 コードレビュー時は以下を確認:
 
 ### 高リスク (即座に修正)
+
 - [ ] 実際のパスワードが平文で記載されていないか
 - [ ] 本番環境の接続情報が含まれていないか
 - [ ] APIキーが生で記載されていないか
 
 ### 中リスク (修正推奨)
+
 - [ ] デフォルト値として弱いパスワードが設定されていないか
 - [ ] 環境変数のフォールバックにハードコード値がないか
 - [ ] Docker Compose ファイルに直接パスワードが書かれていないか
 
 ### 低リスク (改善提案)
+
 - [ ] プレースホルダが一貫しているか
 - [ ] 設定方法の説明が適切か
 - [ ] セキュリティのベストプラクティスに従っているか

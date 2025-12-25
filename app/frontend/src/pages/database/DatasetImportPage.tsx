@@ -1,46 +1,64 @@
 /**
  * DatasetImportPage - データセットインポート画面（骨組み）
- * 
+ *
  * 責務: レイアウト・配置のみ
  * ロジック: useDatabaseUploadVM に委譲
  * プレビュー: DatasetPreviewScreen に委譲
  */
 
-import React, { useState, useRef, useEffect } from 'react';
-import { Typography, Col, Row, Button, Modal, Spin, Empty, Select, Space, Badge } from 'antd';
-import styles from './DatasetImportPage.module.css';
+import React, { useState, useRef, useEffect } from "react";
+import {
+  Typography,
+  Col,
+  Row,
+  Button,
+  Modal,
+  Spin,
+  Empty,
+  Select,
+  Space,
+  Badge,
+} from "antd";
+import styles from "./DatasetImportPage.module.css";
 
 import {
   SimpleUploadPanel,
   useDatasetImportVM,
-} from '@features/dataset/dataset-import';
-import { UploadGuide, toFileStates } from '@features/dataset/dataset-uploadguide';
-import { getAllDatasets, collectTypesForDataset, type DatasetKey } from '@features/dataset/config';
-import { UploadCalendar } from '@features/dataset/upload-calendar';
-import { DatasetFinalWarningModal } from '@features/dataset/dataset-final-warning';
+} from "@features/dataset/dataset-import";
+import {
+  UploadGuide,
+  toFileStates,
+} from "@features/dataset/dataset-uploadguide";
+import {
+  getAllDatasets,
+  collectTypesForDataset,
+  type DatasetKey,
+} from "@features/dataset/config";
+import { UploadCalendar } from "@features/dataset/upload-calendar";
+import { DatasetFinalWarningModal } from "@features/dataset/dataset-final-warning";
 
 const { Text } = Typography;
 
 const DatasetImportPage: React.FC = () => {
   // ===== データセット選択 =====
-  const [datasetKey, setDatasetKey] = useState<DatasetKey>('shogun_flash');
-  
+  const [datasetKey, setDatasetKey] = useState<DatasetKey>("shogun_flash");
+
   // 将軍最終版の注意モーダル
   const [showFinalWarning, setShowFinalWarning] = useState(false);
-  
+
   // データセット一覧
   const datasets = getAllDatasets();
-  
+
   // カレンダーリロード用のref
   const calendarReloadRef = useRef<(() => void) | null>(null);
-  
+
   // 将軍最終版が選択されたときにモーダルを表示
   useEffect(() => {
-    if (datasetKey === 'shogun_final') {
+    if (datasetKey === "shogun_final") {
       setShowFinalWarning(true);
     }
   }, [datasetKey]);
-  
+
   // ===== ViewModel（状態管理・ロジック） =====
   const activeTypes = collectTypesForDataset(datasetKey);
   const {
@@ -55,20 +73,22 @@ const DatasetImportPage: React.FC = () => {
     onResetAll,
     doUpload,
     resetUploadState,
-  } = useDatasetImportVM({ 
-    activeTypes, 
+  } = useDatasetImportVM({
+    activeTypes,
     datasetKey,
     onUploadComplete: () => {
       // アップロード完了時にカレンダーをリロード
       if (calendarReloadRef.current) {
         calendarReloadRef.current();
       }
-    }
+    },
   });
 
   // 進捗表示用
-  const requiredFiles = panelFiles.filter(p => p.required);
-  const validCount = requiredFiles.filter(p => p.status === 'valid' && p.file).length;
+  const requiredFiles = panelFiles.filter((p) => p.required);
+  const validCount = requiredFiles.filter(
+    (p) => p.status === "valid" && p.file,
+  ).length;
 
   // UploadGuide 用の FileState に変換
   const fileStates = toFileStates(panelFiles);
@@ -85,11 +105,19 @@ const DatasetImportPage: React.FC = () => {
               <Select<DatasetKey>
                 value={datasetKey}
                 onChange={setDatasetKey}
-                options={datasets.map(d => ({ value: d.key, label: d.label }))}
+                options={datasets.map((d) => ({
+                  value: d.key,
+                  label: d.label,
+                }))}
                 style={{ minWidth: 260 }}
               />
               <Badge
-                status={validCount === requiredFiles.length && requiredFiles.length > 0 ? 'success' : 'processing'}
+                status={
+                  validCount === requiredFiles.length &&
+                  requiredFiles.length > 0
+                    ? "success"
+                    : "processing"
+                }
                 text={`必須 ${validCount}/${requiredFiles.length}`}
               />
             </Space>
@@ -98,7 +126,10 @@ const DatasetImportPage: React.FC = () => {
           <UploadGuide datasetKey={datasetKey} files={fileStates} />
 
           {/* CSVアップロードタイトル（固定） */}
-          <Typography.Title level={5} style={{ margin: '6px 0 4px 0', fontSize: 13 }}>
+          <Typography.Title
+            level={5}
+            style={{ margin: "6px 0 4px 0", fontSize: 13 }}
+          >
             📂 CSVアップロード
           </Typography.Title>
 
@@ -118,27 +149,35 @@ const DatasetImportPage: React.FC = () => {
             )}
           </div>
 
-          <Space direction="vertical" size={4} style={{ width: '100%' }}>
+          <Space direction="vertical" size={4} style={{ width: "100%" }}>
             <Button
               type="primary"
-              disabled={!canUpload || panelFiles.length === 0 || uploading || isProcessing}
+              disabled={
+                !canUpload ||
+                panelFiles.length === 0 ||
+                uploading ||
+                isProcessing
+              }
               loading={uploading || isProcessing}
               onClick={doUpload}
               block
             >
-              {uploadSuccess ? 'アップロード完了' : isProcessing ? '処理中...' : uploading ? 'アップロード中...' : 'アップロードする'}
+              {uploadSuccess
+                ? "アップロード完了"
+                : isProcessing
+                  ? "処理中..."
+                  : uploading
+                    ? "アップロード中..."
+                    : "アップロードする"}
             </Button>
-            
+
             {uploadSuccess && (
-              <Button
-                onClick={resetUploadState}
-                block
-              >
+              <Button onClick={resetUploadState} block>
                 別のファイルをアップロード
               </Button>
             )}
           </Space>
-          
+
           {/* {!canUpload && panelFiles.length > 0 && !uploadSuccess && (
             <div className={styles.hint}>
               <Text type="secondary">
@@ -150,8 +189,8 @@ const DatasetImportPage: React.FC = () => {
 
         {/* 右カラム：カレンダー */}
         <Col span={14} className={styles.rightCol}>
-          <UploadCalendar 
-            datasetKey={datasetKey} 
+          <UploadCalendar
+            datasetKey={datasetKey}
             onMountReload={(reload) => {
               calendarReloadRef.current = reload;
             }}
@@ -166,12 +205,14 @@ const DatasetImportPage: React.FC = () => {
         closable={false}
         centered
         maskClosable={false}
-        styles={{ mask: { backdropFilter: 'blur(2px)' } }}
+        styles={{ mask: { backdropFilter: "blur(2px)" } }}
       >
-        <div style={{ textAlign: 'center', padding: '2rem' }}>
+        <div style={{ textAlign: "center", padding: "2rem" }}>
           <Spin size="large" />
           <div style={{ marginTop: 16 }}>
-            <Text type="secondary">CSVをアップロード中です。しばらくお待ちください。</Text>
+            <Text type="secondary">
+              CSVをアップロード中です。しばらくお待ちください。
+            </Text>
           </div>
         </div>
       </Modal>

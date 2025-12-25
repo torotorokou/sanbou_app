@@ -8,11 +8,13 @@
 ## 全体方針
 
 ### ゴール
+
 1. **ledger_api を Clean Architecture / Hexagonal Architecture に段階的に近づける**
 2. **小さく・安全に・連続して** リファクタリング（1 コミット = 1 ステップ）
 3. **core_api にも適用可能な汎用パターンを確立**
 
 ### 原則
+
 - ✅ **既存 API の後方互換性を維持**（URL/Request/Response は変更しない）
 - ✅ **段階的移行**（1 エンドポイントずつ）
 - ✅ **テストで安全性を担保**（各ステップで既存テストを実行）
@@ -25,6 +27,7 @@
 ### フェーズ 1: 基盤整備（準備作業）
 
 #### **ステップ 1: ディレクトリ構造の準備と Port/Adapter の骨格作成**
+
 - **目的**: Clean Architecture のディレクトリ構造を作成し、Port インターフェースの骨格を定義
 - **対象ディレクトリ**:
   - 新規作成: `app/core/ports/`, `app/infra/adapters/`
@@ -46,19 +49,22 @@
 ---
 
 #### **ステップ 2: UseCase 層の骨格作成（factory_report 専用）**
+
 - **目的**: 最も利用頻度が高い `factory_report` エンドポイント用の UseCase を作成
 - **対象ファイル**:
   - 新規作成: `app/core/usecases/reports/generate_factory_report.py`
   - 既存参照: `app/api/services/report/ledger/factory_report.py`
 - **変更内容**:
+
   1. `app/core/usecases/reports/` ディレクトリを作成
   2. `GenerateFactoryReportUseCase` クラスを定義
+
      ```python
      class GenerateFactoryReportUseCase:
          def __init__(self, csv_gateway: CsvGateway, report_repo: ReportRepository):
              self.csv_gateway = csv_gateway
              self.report_repo = report_repo
-         
+
          def execute(self, files: Dict[str, UploadFile], period_type: Optional[str] = None) -> ArtifactUrls:
              # 1. CSV 読み込み（Port 経由）
              # 2. 検証
@@ -67,7 +73,9 @@
              # 5. 署名付き URL 返却
              ...
      ```
+
   3. 既存の `ReportProcessingService` のロジックを UseCase に移管
+
 - **期待効果**:
   - ✅ アプリケーション層の明確化
   - ✅ Port に依存する設計の実践
@@ -78,6 +86,7 @@
 ---
 
 #### **ステップ 3: factory_report エンドポイントを UseCase 経由に切り替え**
+
 - **目的**: エンドポイントから UseCase を呼び出す形に変更し、動作確認
 - **対象ファイル**:
   - 編集: `app/api/endpoints/reports/factory_report.py`
@@ -116,25 +125,30 @@
 ### フェーズ 2: ドメイン層の整備
 
 #### **ステップ 4: FactoryReport ドメインモデルの抽出**
+
 - **目的**: pandas DataFrame 依存を緩和し、ドメインオブジェクトを導入
 - **対象ファイル**:
   - 新規作成: `app/core/domain/reports/factory_report.py`
   - 編集: `app/api/services/report/ledger/factory_report.py`
 - **変更内容**:
+
   1. `FactoryReport` Entity を定義
+
      ```python
      @dataclass(frozen=True)
      class FactoryReport:
          report_date: date
          shipment_items: List[ShipmentItem]
          yard_items: List[YardItem]
-         
+
          def to_dataframe(self) -> pd.DataFrame:
              # Entity → DataFrame 変換（インフラ層で使用）
              ...
      ```
+
   2. `ShipmentItem`, `YardItem` など ValueObject を定義
   3. 既存の `process()` 関数を `FactoryReport.from_dataframes()` ファクトリメソッドに移管
+
 - **期待効果**:
   - ✅ ドメインロジックが DataFrame から独立
   - ✅ 不変条件をコンストラクタで保証
@@ -145,6 +159,7 @@
 ---
 
 #### **ステップ 5: UseCase を ドメインモデル経由に変更**
+
 - **目的**: UseCase が DataFrame ではなく Entity を扱うように変更
 - **対象ファイル**:
   - 編集: `app/core/usecases/reports/generate_factory_report.py`
@@ -162,6 +177,7 @@
 ### フェーズ 3: 水平展開
 
 #### **ステップ 6: balance_sheet エンドポイントを同じパターンで移行**
+
 - **目的**: factory_report で確立したパターンを他の帳票に適用
 - **対象ファイル**:
   - 新規作成: `app/core/usecases/reports/generate_balance_sheet.py`
@@ -176,9 +192,10 @@
 ---
 
 #### **ステップ 7: average_sheet / management_sheet の移行**
+
 - **目的**: 残りの帳票エンドポイントを順次移行
 - **変更内容**: ステップ 6 と同様
-- **想定コミットメッセージ**: 
+- **想定コミットメッセージ**:
   - `refactor(api): migrate average_sheet to Clean Architecture pattern`
   - `refactor(api): migrate management_sheet to Clean Architecture pattern`
 
@@ -187,6 +204,7 @@
 ### フェーズ 4: インフラ層の洗練
 
 #### **ステップ 8: Port 実装の抽象化（dev/staging/prod 対応）**
+
 - **目的**: 環境ごとに異なる実装を差し替え可能にする
 - **対象ファイル**:
   - 編集: `app/config/di_providers.py`
@@ -209,6 +227,7 @@
 ---
 
 #### **ステップ 9: Artifact 保存ロジックの Port 化**
+
 - **目的**: `artifacts/artifact_service.py` を Port/Adapter パターンに準拠させる
 - **対象ファイル**:
   - 編集: `app/core/ports/report_repository.py`（メソッド追加）
@@ -228,6 +247,7 @@
 ### フェーズ 5: クリーンアップ
 
 #### **ステップ 10: 旧 ReportProcessingService の削除**
+
 - **目的**: 移行完了後、使われなくなったコードを削除
 - **対象ファイル**:
   - 削除候補: `app/api/services/report/core/processors/report_processing_service.py`
@@ -244,6 +264,7 @@
 ---
 
 #### **ステップ 11: Streamlit 残骸のクリーンアップ**
+
 - **目的**: st_app 関連の未使用コードを削除
 - **対象ファイル**:
   - 削除候補: `app/api/config/settings/loader.py`（Streamlit 専用設定）
@@ -263,6 +284,7 @@
 ### フェーズ 6: ドキュメント化とテスト拡充
 
 #### **ステップ 12: UseCase 単体テストの追加**
+
 - **目的**: リファクタリング後の安全性を担保
 - **対象ファイル**:
   - 新規作成: `test/unit/usecases/test_generate_factory_report.py`
@@ -278,6 +300,7 @@
 ---
 
 #### **ステップ 13: core_api 適用ガイドの作成**
+
 - **目的**: ledger_api で確立したパターンを core_api に適用するためのドキュメント化
 - **対象ファイル**:
   - 新規作成: `docs/CORE_LEDGER_REFACTORING_PATTERN.md`
@@ -294,19 +317,19 @@
 
 ## 優先度マトリクス
 
-| ステップ | 優先度 | 影響範囲 | リスク | 推定工数 |
-|---------|--------|---------|--------|---------|
-| 1. Port/Adapter 骨格 | ⭐⭐⭐ | 小 | 低 | 0.5日 |
-| 2. UseCase 骨格 | ⭐⭐⭐ | 小 | 低 | 0.5日 |
-| 3. factory_report 接続 | ⭐⭐⭐ | 中 | 中 | 1日 |
-| 4. ドメインモデル抽出 | ⭐⭐ | 大 | 高 | 2日 |
-| 5. UseCase ドメイン対応 | ⭐⭐ | 中 | 中 | 1日 |
-| 6-7. 水平展開 | ⭐⭐ | 大 | 中 | 3日 |
-| 8. Port 抽象化 | ⭐ | 小 | 低 | 0.5日 |
-| 9. Artifact Port化 | ⭐ | 中 | 中 | 1日 |
-| 10-11. クリーンアップ | ⭐ | 小 | 低 | 0.5日 |
-| 12. テスト拡充 | ⭐⭐ | 中 | 低 | 1日 |
-| 13. ドキュメント化 | ⭐ | 小 | 低 | 0.5日 |
+| ステップ                | 優先度 | 影響範囲 | リスク | 推定工数 |
+| ----------------------- | ------ | -------- | ------ | -------- |
+| 1. Port/Adapter 骨格    | ⭐⭐⭐ | 小       | 低     | 0.5日    |
+| 2. UseCase 骨格         | ⭐⭐⭐ | 小       | 低     | 0.5日    |
+| 3. factory_report 接続  | ⭐⭐⭐ | 中       | 中     | 1日      |
+| 4. ドメインモデル抽出   | ⭐⭐   | 大       | 高     | 2日      |
+| 5. UseCase ドメイン対応 | ⭐⭐   | 中       | 中     | 1日      |
+| 6-7. 水平展開           | ⭐⭐   | 大       | 中     | 3日      |
+| 8. Port 抽象化          | ⭐     | 小       | 低     | 0.5日    |
+| 9. Artifact Port化      | ⭐     | 中       | 中     | 1日      |
+| 10-11. クリーンアップ   | ⭐     | 小       | 低     | 0.5日    |
+| 12. テスト拡充          | ⭐⭐   | 中       | 低     | 1日      |
+| 13. ドキュメント化      | ⭐     | 小       | 低     | 0.5日    |
 
 **合計推定工数**: 約 11.5 日
 
@@ -317,6 +340,7 @@
 このロードマップに基づき、**ステップ 1: Port/Adapter 骨格の作成** から着手します。
 
 各ステップの実行前に、必ず以下を行います：
+
 1. ✅ 目的の再確認
 2. ✅ 変更内容の明示
 3. ✅ 期待効果とリスクの確認

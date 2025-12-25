@@ -50,7 +50,7 @@ export const getDateColor = (date: IsoDate): string => {
  */
 export const countDayTypes = (
   days: CalendarDay[],
-  today: IsoDate
+  today: IsoDate,
 ): {
   weekday: number;
   sunday: number;
@@ -83,5 +83,12 @@ export const countDayTypes = (
     }
   });
 
-  return { weekday, sunday, secondSunday, weekdayRem, sundayRem, secondSundayRem };
+  return {
+    weekday,
+    sunday,
+    secondSunday,
+    weekdayRem,
+    sundayRem,
+    secondSundayRem,
+  };
 };

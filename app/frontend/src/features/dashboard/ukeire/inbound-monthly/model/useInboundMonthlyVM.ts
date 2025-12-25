@@ -1,7 +1,7 @@
 /**
  * inbound-monthly/application/useInboundMonthlyVM.ts
  * 日次搬入量データのフェッチと整形を担当するViewModel
- * 
+ *
  * 責務：
  * - API経由でデータ取得
  * - 日次実績チャート用データ整形
@@ -36,7 +36,9 @@ export type UseInboundMonthlyVMResult = {
 /**
  * day_type から status を判定（営業カレンダーと統一）
  */
-function mapDayTypeToStatus(dayType: string): "business" | "holiday" | "closed" {
+function mapDayTypeToStatus(
+  dayType: string,
+): "business" | "holiday" | "closed" {
   switch (dayType) {
     case "CLOSED":
       return "closed";
@@ -50,19 +52,24 @@ function mapDayTypeToStatus(dayType: string): "business" | "holiday" | "closed" 
 
 /**
  * 日次搬入量データのフェッチと整形
- * 
+ *
  * - month変更時に自動でデータ再取得
  * - cum_scope="month"で累積計算
  * - データ整形してDailyActualsCard/DailyCumulativeCardに渡す
  * - 営業カレンダーのステータスを統合
  */
-export function useInboundMonthlyVM(params: UseInboundMonthlyVMParams): UseInboundMonthlyVMResult {
+export function useInboundMonthlyVM(
+  params: UseInboundMonthlyVMParams,
+): UseInboundMonthlyVMResult {
   const { repository, calendarRepository, month } = params;
 
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
-  const [dailyProps, setDailyProps] = useState<DailyActualsCardProps | null>(null);
-  const [cumulativeProps, setCumulativeProps] = useState<DailyCumulativeCardProps | null>(null);
+  const [dailyProps, setDailyProps] = useState<DailyActualsCardProps | null>(
+    null,
+  );
+  const [cumulativeProps, setCumulativeProps] =
+    useState<DailyCumulativeCardProps | null>(null);
 
   // 月の範囲計算（start=月初、end=月末）
   const { start, end, year, monthNum } = useMemo(() => {
@@ -84,10 +91,16 @@ export function useInboundMonthlyVM(params: UseInboundMonthlyVMParams): UseInbou
       let calendarMap: Map<string, CalendarDayDTO> | null = null;
       if (calendarRepository) {
         try {
-          const calendarData = await calendarRepository.fetchMonth({ year, month: monthNum });
+          const calendarData = await calendarRepository.fetchMonth({
+            year,
+            month: monthNum,
+          });
           calendarMap = new Map(calendarData.map((d) => [d.ddate, d]));
         } catch (calErr) {
-          console.warn("営業カレンダーデータの取得に失敗しました（フォールバックロジックを使用）:", calErr);
+          console.warn(
+            "営業カレンダーデータの取得に失敗しました（フォールバックロジックを使用）:",
+            calErr,
+          );
         }
       }
 
@@ -102,8 +115,10 @@ export function useInboundMonthlyVM(params: UseInboundMonthlyVMParams): UseInbou
       // 日次実績データ整形（営業カレンダーのステータスを統合）
       const dailyChartData = data.map((row) => {
         const calendarDay = calendarMap?.get(row.ddate);
-        const status = calendarDay ? mapDayTypeToStatus(calendarDay.day_type) : undefined;
-        
+        const status = calendarDay
+          ? mapDayTypeToStatus(calendarDay.day_type)
+          : undefined;
+
         return {
           label: dayjs(row.ddate).format("DD"),
           actual: row.ton,
@@ -156,4 +171,3 @@ export function useInboundMonthlyVM(params: UseInboundMonthlyVMParams): UseInbou
     refetch: fetchData,
   };
 }
-

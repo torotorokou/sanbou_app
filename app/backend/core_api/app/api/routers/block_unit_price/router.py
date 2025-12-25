@@ -6,14 +6,15 @@ Block Unit Price Router - BFF for ledger_api block_unit_price_interactive endpoi
   - カスタム例外を使用(HTTPExceptionは使用しない)
   - ExternalServiceError で外部サービスエラーをラップ
 """
+
 import os
 from typing import Any, Dict, Optional
-from fastapi import APIRouter, Request, UploadFile, File, Form
-import httpx
 
+import httpx
+from app.shared.utils import rewrite_artifact_urls_to_bff
 from backend_shared.application.logging import get_module_logger
 from backend_shared.core.domain.exceptions import ExternalServiceError
-from app.shared.utils import rewrite_artifact_urls_to_bff
+from fastapi import APIRouter, File, Form, Request, UploadFile
 
 logger = get_module_logger(__name__)
 
@@ -33,18 +34,22 @@ async def proxy_block_unit_price_initial(
     フロントから /core_api/block_unit_price_interactive/initial へのリクエストを受け取る
     FormDataとして送信されたファイルを ledger_api に転送
     """
-    logger.info(f"Proxying block_unit_price_interactive/initial request from {request.client}")
+    logger.info(
+        f"Proxying block_unit_price_interactive/initial request from {request.client}"
+    )
     try:
         files = {}
-        
+
         if shipment:
             # ファイルを読み込んで転送用に準備
             file_content = await shipment.read()
             files["shipment"] = (shipment.filename, file_content, shipment.content_type)
-            logger.info(f"File 'shipment': {shipment.filename} ({len(file_content)} bytes)")
+            logger.info(
+                f"File 'shipment': {shipment.filename} ({len(file_content)} bytes)"
+            )
         else:
             logger.warning("No shipment file provided")
-        
+
         async with httpx.AsyncClient(timeout=60.0) as client:
             # ledger_apiの実エンドポイント（内部論理パス）
             url = f"{LEDGER_API_BASE}/block_unit_price_interactive/initial"
@@ -54,19 +59,22 @@ async def proxy_block_unit_price_initial(
             r.raise_for_status()
             return r.json()
     except httpx.HTTPStatusError as e:
-        logger.error(f"Ledger API returned error: {e.response.status_code} - {e.response.text}", exc_info=True)
+        logger.error(
+            f"Ledger API returned error: {e.response.status_code} - {e.response.text}",
+            exc_info=True,
+        )
         raise ExternalServiceError(
             service_name="ledger_api",
             message=f"Block unit price initial failed: {e.response.text[:200]}",
             status_code=e.response.status_code,
-            cause=e
+            cause=e,
         )
     except httpx.HTTPError as e:
         logger.error(f"Failed to reach ledger_api: {str(e)}", exc_info=True)
         raise ExternalServiceError(
             service_name="ledger_api",
             message=f"Cannot reach ledger_api: {str(e)}",
-            cause=e
+            cause=e,
         )
 
 
@@ -89,14 +97,14 @@ async def proxy_block_unit_price_start(request: Request):
             service_name="ledger_api",
             message=f"Block unit price start failed: {str(e)}",
             status_code=e.response.status_code,
-            cause=e
+            cause=e,
         )
     except httpx.HTTPError as e:
         logger.error(f"HTTP error: {str(e)}", exc_info=True)
         raise ExternalServiceError(
             service_name="ledger_api",
             message=f"Cannot reach ledger_api: {str(e)}",
-            cause=e
+            cause=e,
         )
 
 
@@ -119,14 +127,14 @@ async def proxy_block_unit_price_select_transport(request: Request):
             service_name="ledger_api",
             message=f"Transport selection failed: {str(e)}",
             status_code=e.response.status_code,
-            cause=e
+            cause=e,
         )
     except httpx.HTTPError as e:
         logger.error(f"HTTP error: {str(e)}", exc_info=True)
         raise ExternalServiceError(
             service_name="ledger_api",
             message=f"Cannot reach ledger_api: {str(e)}",
-            cause=e
+            cause=e,
         )
 
 
@@ -149,14 +157,14 @@ async def proxy_block_unit_price_apply(request: Request):
             service_name="ledger_api",
             message=f"Block unit price apply failed: {str(e)}",
             status_code=e.response.status_code,
-            cause=e
+            cause=e,
         )
     except httpx.HTTPError as e:
         logger.error(f"HTTP error: {str(e)}", exc_info=True)
         raise ExternalServiceError(
             service_name="ledger_api",
             message=f"Cannot reach ledger_api: {str(e)}",
-            cause=e
+            cause=e,
         )
 
 
@@ -181,12 +189,12 @@ async def proxy_block_unit_price_finalize(request: Request):
             service_name="ledger_api",
             message=f"Block unit price finalize failed: {str(e)}",
             status_code=e.response.status_code,
-            cause=e
+            cause=e,
         )
     except httpx.HTTPError as e:
         logger.error(f"HTTP error: {str(e)}", exc_info=True)
         raise ExternalServiceError(
             service_name="ledger_api",
             message=f"Cannot reach ledger_api: {str(e)}",
-            cause=e
+            cause=e,
         )

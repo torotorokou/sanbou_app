@@ -26,12 +26,13 @@ IAP が不要な STG 環境で使用します。
    ネットワークレベルで認証済みという前提で動作します
 """
 
-import os
 import logging
-from fastapi import Request
+import os
+
 from app.core.domain.auth.entities import AuthUser
 from app.core.ports.auth.auth_provider import IAuthProvider
 from backend_shared.application.logging import create_log_context, get_module_logger
+from fastapi import Request
 
 logger = get_module_logger(__name__)
 
@@ -39,17 +40,17 @@ logger = get_module_logger(__name__)
 class VpnAuthProvider(IAuthProvider):
     """
     VPN/Tailscale 経由アクセス用認証プロバイダ
-    
+
     環境変数で指定された固定ユーザーを返します。
     VPN 接続制御により既に認証済みという前提で動作します。
-    
+
     Attributes:
         _vpn_user: 環境変数から読み込んだ VPN ユーザー情報
-    
+
     Environment Variables:
         VPN_USER_EMAIL: VPN ユーザーのメールアドレス（必須）
         VPN_USER_NAME: VPN ユーザーの表示名（オプション、デフォルト: VPN User）
-    
+
     Examples:
         >>> # .env.vm_stg に以下を設定:
         >>> # AUTH_MODE=vpn_dummy
@@ -60,16 +61,16 @@ class VpnAuthProvider(IAuthProvider):
         >>> user.email
         'stg-admin@honest-recycle.co.jp'
     """
-    
+
     def __init__(self) -> None:
         """
         VPN 認証プロバイダを初期化
-        
+
         環境変数から VPN ユーザー情報を読み込みます。
-        
+
         Raises:
             ValueError: VPN_USER_EMAIL が未設定の場合
-        
+
         Environment Variables:
             VPN_USER_EMAIL: VPN ユーザーのメールアドレス（必須）
             VPN_USER_NAME: VPN ユーザーの表示名（オプション、デフォルト: VPN User）
@@ -81,10 +82,10 @@ class VpnAuthProvider(IAuthProvider):
                 "VPN_USER_EMAIL environment variable is required for VPN auth mode. "
                 "Please set it in secrets/.env.vm_stg.secrets"
             )
-        
+
         self._vpn_user_display_name = os.getenv("VPN_USER_NAME", "VPN User")
         self._vpn_user_id = os.getenv("VPN_USER_ID", "vpn_001")
-        
+
         logger.info(
             "VpnAuthProvider initialized",
             extra=create_log_context(
@@ -97,17 +98,17 @@ class VpnAuthProvider(IAuthProvider):
                 },
             ),
         )
-    
+
     async def get_current_user(self, request: Request) -> AuthUser:
         """
         固定の VPN ユーザーを返す
-        
+
         Args:
             request: FastAPI Request オブジェクト（参照のみ、検証不要）
-        
+
         Returns:
             AuthUser: 環境変数で設定された VPN ユーザー
-        
+
         Note:
             VPN 経由であることは nginx / firewall レベルで保証されているため、
             ここでは追加の認証チェックは行いません。
@@ -117,14 +118,14 @@ class VpnAuthProvider(IAuthProvider):
             display_name=self._vpn_user_display_name,
             user_id=self._vpn_user_id,
         )
-    
+
     async def verify_token(self, request: Request) -> bool:
         """
         トークン検証（VPN 認証では常に True）
-        
+
         Args:
             request: FastAPI Request オブジェクト
-        
+
         Returns:
             bool: 常に True（VPN 接続制御により認証済み）
         """

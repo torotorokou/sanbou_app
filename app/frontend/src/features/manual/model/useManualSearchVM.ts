@@ -3,10 +3,13 @@
  * マニュアル検索のビジネスロジックとステート管理
  */
 
-import { useEffect, useMemo, useState } from 'react';
-import type { ManualRepository } from '../ports/repository';
-import { ManualRepositoryImpl } from '../infrastructure/manual.repository';
-import type { ManualSearchQuery, ManualSearchResult } from '../domain/types/manual.types';
+import { useEffect, useMemo, useState } from "react";
+import type { ManualRepository } from "../ports/repository";
+import { ManualRepositoryImpl } from "../infrastructure/manual.repository";
+import type {
+  ManualSearchQuery,
+  ManualSearchResult,
+} from "../domain/types/manual.types";
 
 export function useManualSearch(initial: ManualSearchQuery) {
   const repo: ManualRepository = useMemo(() => new ManualRepositoryImpl(), []);
@@ -27,7 +30,7 @@ export function useManualSearch(initial: ManualSearchQuery) {
         setError(null);
       })
       .catch((err) => {
-        if (err.name !== 'AbortError') {
+        if (err.name !== "AbortError") {
           setError(err as Error);
           setData(null);
         }

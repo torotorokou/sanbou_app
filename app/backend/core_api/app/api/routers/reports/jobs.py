@@ -1,13 +1,14 @@
 """
 Jobs - ジョブステータス・通知ストリームエンドポイント
 """
+
 import os
+
+import httpx
+from backend_shared.application.logging import create_log_context, get_module_logger
+from backend_shared.core.domain.exceptions import ExternalServiceError
 from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
-import httpx
-
-from backend_shared.core.domain.exceptions import ExternalServiceError
-from backend_shared.application.logging import create_log_context, get_module_logger
 
 logger = get_module_logger(__name__)
 
@@ -20,10 +21,12 @@ LEDGER_API_BASE = os.getenv("LEDGER_API_BASE", "http://ledger_api:8000")
 async def proxy_notifications_stream():
     """SSE通知ストリーム（ledger_apiへフォワード）"""
     logger.info("Proxying notifications/stream request")
-    
+
     async def stream_generator():
         try:
-            async with httpx.AsyncClient(timeout=None) as client:  # SSEは長時間接続なのでtimeout無し
+            async with httpx.AsyncClient(
+                timeout=None
+            ) as client:  # SSEは長時間接続なのでtimeout無し
                 url = f"{LEDGER_API_BASE}/notifications/stream"
                 async with client.stream("GET", url) as response:
                     response.raise_for_status()
@@ -31,8 +34,8 @@ async def proxy_notifications_stream():
                         yield chunk
         except httpx.HTTPError as e:
             logger.error(f"Failed to stream from ledger_api: {str(e)}")
-            yield f"data: {{\"error\": \"LEDGER_UNREACHABLE\"}}\n\n".encode()
-    
+            yield f'data: {{"error": "LEDGER_UNREACHABLE"}}\n\n'.encode()
+
     return StreamingResponse(stream_generator(), media_type="text/event-stream")
 
 
@@ -41,7 +44,7 @@ async def proxy_job_status(job_id: str):
     """ジョブステータス取得（ledger_apiへフォワード）"""
     logger.info(
         "Proxying job status request",
-        extra=create_log_context(operation="proxy_job_status", job_id=job_id)
+        extra=create_log_context(operation="proxy_job_status", job_id=job_id),
     )
     try:
         async with httpx.AsyncClient(timeout=30.0) as client:
@@ -54,11 +57,11 @@ async def proxy_job_status(job_id: str):
             service_name="ledger_api",
             message=f"Job status fetch failed: {str(e)}",
             status_code=e.response.status_code,
-            cause=e
+            cause=e,
         )
     except httpx.HTTPError as e:
         raise ExternalServiceError(
             service_name="ledger_api",
             message=f"Cannot reach ledger_api: {str(e)}",
-            cause=e
+            cause=e,
         )

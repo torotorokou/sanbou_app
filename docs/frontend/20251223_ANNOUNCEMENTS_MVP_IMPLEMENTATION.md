@@ -15,11 +15,13 @@
 ### 実現した機能
 
 1. **トップページの重要通知バナー**
+
    - `pinned=true` かつ重要度が `warn` または `critical` のお知らせを1件表示
    - 「理解しました」ボタンで確認済み（ack）にし、再表示されないようにする
    - 「×」ボタンでも同様に確認済みにする
 
 2. **お知らせ一覧ページ**
+
    - アクティブなお知らせを一覧表示
    - 重要度（info/warn/critical）とピン留めをバッジで視覚化
    - 未読のお知らせは背景色と左ボーダーで強調
@@ -73,13 +75,13 @@ app/frontend/src/features/announcements/
 
 ```typescript
 export interface Announcement {
-  id: string;                    // 一意識別子
-  title: string;                 // タイトル
-  bodyMd: string;                // 本文（Markdown形式）
-  severity: 'info' | 'warn' | 'critical';  // 重要度
-  pinned: boolean;               // ピン留め（トップページバナー対象）
-  publishFrom: string;           // 公開開始日時（ISO8601）
-  publishTo: string | null;      // 公開終了日時（null=無期限）
+  id: string; // 一意識別子
+  title: string; // タイトル
+  bodyMd: string; // 本文（Markdown形式）
+  severity: "info" | "warn" | "critical"; // 重要度
+  pinned: boolean; // ピン留め（トップページバナー対象）
+  publishFrom: string; // 公開開始日時（ISO8601）
+  publishTo: string | null; // 公開終了日時（null=無期限）
 }
 ```
 
@@ -87,8 +89,8 @@ export interface Announcement {
 
 ```typescript
 export interface AnnouncementUserState {
-  readAtById: Record<string, string>;  // 既読日時（ID→ISO8601）
-  ackAtById: Record<string, string>;   // 確認済み日時（ID→ISO8601）
+  readAtById: Record<string, string>; // 既読日時（ID→ISO8601）
+  ackAtById: Record<string, string>; // 確認済み日時（ID→ISO8601）
 }
 ```
 
@@ -106,8 +108,10 @@ export interface AnnouncementUserState {
 function isAnnouncementActive(announcement: Announcement): boolean {
   const now = new Date();
   const publishFrom = new Date(announcement.publishFrom);
-  const publishTo = announcement.publishTo ? new Date(announcement.publishTo) : null;
-  
+  const publishTo = announcement.publishTo
+    ? new Date(announcement.publishTo)
+    : null;
+
   return publishFrom <= now && (publishTo === null || now <= publishTo);
 }
 ```
@@ -116,8 +120,10 @@ function isAnnouncementActive(announcement: Announcement): boolean {
 
 ```typescript
 function isBannerTarget(announcement: Announcement): boolean {
-  return announcement.pinned && 
-         (announcement.severity === 'warn' || announcement.severity === 'critical');
+  return (
+    announcement.pinned &&
+    (announcement.severity === "warn" || announcement.severity === "critical")
+  );
 }
 ```
 
@@ -200,12 +206,14 @@ function isBannerTarget(announcement: Announcement): boolean {
 ### 実装予定
 
 1. **バックエンドAPI作成**
+
    - `GET /api/announcements` - 一覧取得
    - `GET /api/announcements/:id` - 詳細取得
    - `POST /api/announcements/:id/read` - 既読化
    - `POST /api/announcements/:id/acknowledge` - 確認済み化
 
 2. **DB設計**
+
    ```sql
    CREATE TABLE announcements (
      id UUID PRIMARY KEY,
@@ -230,6 +238,7 @@ function isBannerTarget(announcement: Announcement): boolean {
    ```
 
 3. **HttpAnnouncementRepository 作成**
+
    - `LocalAnnouncementRepository` と同じインターフェースで実装
    - DI（依存性注入）で切り替え可能にする
 
@@ -241,10 +250,10 @@ function isBannerTarget(announcement: Announcement): boolean {
 
 ```typescript
 // 現在（MVP）
-import { announcementRepository } from '@features/announcements/infrastructure/LocalAnnouncementRepository';
+import { announcementRepository } from "@features/announcements/infrastructure/LocalAnnouncementRepository";
 
 // 次フェーズ
-import { announcementRepository } from '@features/announcements/infrastructure/HttpAnnouncementRepository';
+import { announcementRepository } from "@features/announcements/infrastructure/HttpAnnouncementRepository";
 ```
 
 ViewModel と UI は変更不要（Repository の差し替えのみ）。
@@ -266,29 +275,29 @@ ViewModel と UI は変更不要（Repository の差し替えのみ）。
 
 ### 新規作成ファイル（14ファイル）
 
-| ファイルパス | 説明 |
-|-------------|------|
-| `features/announcements/domain/announcement.ts` | 型定義、判定関数 |
-| `features/announcements/ports/AnnouncementRepository.ts` | リポジトリIF |
-| `features/announcements/infrastructure/seed.ts` | ダミーデータ |
-| `features/announcements/infrastructure/LocalAnnouncementRepository.ts` | ローカル実装 |
-| `features/announcements/infrastructure/announcementUserStateStorage.ts` | localStorage |
-| `features/announcements/model/useAnnouncementBannerViewModel.ts` | バナーVM |
-| `features/announcements/model/useAnnouncementsListViewModel.ts` | 一覧VM |
-| `features/announcements/model/useUnreadAnnouncementCountViewModel.ts` | 未読数VM |
-| `features/announcements/ui/AnnouncementBanner.tsx` | バナーUI |
-| `features/announcements/ui/AnnouncementList.tsx` | 一覧UI |
-| `features/announcements/ui/AnnouncementDetailModal.tsx` | 詳細モーダル |
-| `features/announcements/ui/NewsMenuLabel.tsx` | サイドバー用 |
-| `features/announcements/index.ts` | 公開API |
+| ファイルパス                                                            | 説明             |
+| ----------------------------------------------------------------------- | ---------------- |
+| `features/announcements/domain/announcement.ts`                         | 型定義、判定関数 |
+| `features/announcements/ports/AnnouncementRepository.ts`                | リポジトリIF     |
+| `features/announcements/infrastructure/seed.ts`                         | ダミーデータ     |
+| `features/announcements/infrastructure/LocalAnnouncementRepository.ts`  | ローカル実装     |
+| `features/announcements/infrastructure/announcementUserStateStorage.ts` | localStorage     |
+| `features/announcements/model/useAnnouncementBannerViewModel.ts`        | バナーVM         |
+| `features/announcements/model/useAnnouncementsListViewModel.ts`         | 一覧VM           |
+| `features/announcements/model/useUnreadAnnouncementCountViewModel.ts`   | 未読数VM         |
+| `features/announcements/ui/AnnouncementBanner.tsx`                      | バナーUI         |
+| `features/announcements/ui/AnnouncementList.tsx`                        | 一覧UI           |
+| `features/announcements/ui/AnnouncementDetailModal.tsx`                 | 詳細モーダル     |
+| `features/announcements/ui/NewsMenuLabel.tsx`                           | サイドバー用     |
+| `features/announcements/index.ts`                                       | 公開API          |
 
 ### 変更ファイル（3ファイル）
 
-| ファイルパス | 変更内容 |
-|-------------|---------|
-| `pages/home/NewsPage.tsx` | 未実装モーダル削除、実装版に置き換え |
-| `pages/home/PortalPage.tsx` | バナー表示追加 |
-| `app/navigation/sidebarMenu.tsx` | 未読バッジ追加 |
+| ファイルパス                     | 変更内容                             |
+| -------------------------------- | ------------------------------------ |
+| `pages/home/NewsPage.tsx`        | 未実装モーダル削除、実装版に置き換え |
+| `pages/home/PortalPage.tsx`      | バナー表示追加                       |
+| `app/navigation/sidebarMenu.tsx` | 未読バッジ追加                       |
 
 ---
 
@@ -338,11 +347,13 @@ const AnnouncementList = () => {
 ## 🐛 既知の制限事項
 
 1. **Markdown レンダリングが簡易的**
+
    - 見出し、リスト、強調のみ対応
    - 画像、リンク、コードブロックは未対応
    - → 次フェーズで `react-markdown` 導入を検討
 
 2. **リアルタイム更新なし**
+
    - ページリロードまたは遷移時のみデータ取得
    - → 将来的に WebSocket または polling で対応
 
@@ -362,6 +373,6 @@ const AnnouncementList = () => {
 
 **更新履歴**
 
-| 日付 | 変更内容 | 担当 |
-|------|---------|------|
+| 日付       | 変更内容              | 担当    |
+| ---------- | --------------------- | ------- |
 | 2025-12-23 | 初版作成（MVP完成時） | Copilot |

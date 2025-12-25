@@ -42,10 +42,14 @@ class BaseReportGenerator(ABC):
         self._formatter = CsvFormatterService()
 
     def print_start_report_key(self):
-        logger.debug(f"Starting report generation", extra={"report_key": self.report_key})
+        logger.debug(
+            f"Starting report generation", extra={"report_key": self.report_key}
+        )
 
     def print_finish_report_key(self):
-        logger.debug(f"Finished report generation", extra={"report_key": self.report_key})
+        logger.debug(
+            f"Finished report generation", extra={"report_key": self.report_key}
+        )
 
     def preprocess(self, report_key: Optional[str] = None):
         if report_key is None:
@@ -53,10 +57,7 @@ class BaseReportGenerator(ABC):
         required = self.config_loader_report.get_required_files(report_key)
         optional = self.config_loader_report.get_optional_files(report_key)
         check_csv_files(self.files, required, optional)
-        logger.info(
-            "Required file check passed",
-            extra={"required_files": required}
-        )
+        logger.info("Required file check passed", extra={"required_files": required})
         return self.files
 
     # --- 新インターフェース: validate / format / main_process ---
@@ -103,7 +104,9 @@ class BaseReportGenerator(ABC):
                         # 正規化
                         if isinstance(first, str):
                             try:
-                                dt = datetime.fromisoformat(first[:19].replace("/", "-"))
+                                dt = datetime.fromisoformat(
+                                    first[:19].replace("/", "-")
+                                )
                                 return dt.date().isoformat()
                             except Exception:
                                 try:

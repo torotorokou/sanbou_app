@@ -11,10 +11,12 @@
 ### 現在の Git 管理状況（修正後）
 
 ✅ **正しく管理されているファイル（テンプレートのみ）:**
+
 - `env/.env.example` - 環境変数設定のテンプレート
 - `secrets/.env.secrets.template` - シークレット設定のテンプレート
 
 ✅ **正しく除外されているファイル（実ファイル）:**
+
 - `env/.env.common`
 - `env/.env.local_dev`
 - `env/.env.local_demo`
@@ -82,6 +84,7 @@ env/.env.*          # env/ 配下の .env.* を除外
 ```
 
 **しかし**、このルールには問題がありました：
+
 - `env/.env.*` は `env/.env.common` にマッチする（ドットで始まるファイル）
 - `env/.env.*` は `env/.env.local_dev` にマッチする
 - **BUT**: 最初の `env/.env.*` ルールが除外しているので、その後の追加（`git add`）では除外ルールが**既存の追跡ファイルには適用されない**
@@ -91,6 +94,7 @@ env/.env.*          # env/ 配下の .env.* を除外
 > **一度 Git に追加されたファイルは、.gitignore に追加しても追跡が継続される**
 
 つまり：
+
 1. `ab307d2d` コミットで `env/.env.local_dev` 等が `git add` された
 2. その時点の .gitignore ルールでは、これらのファイルが意図せず追加された可能性
 3. または、`.gitignore` ルールが後から追加された
@@ -138,6 +142,7 @@ c52bbc8c (2024-12-04) fix: Resolve DB connection failure
 ### 1. .gitignore ルールの修正
 
 **修正前:**
+
 ```gitignore
 # 行番号: 63-67
 # 仮想環境
@@ -154,6 +159,7 @@ ENV/
 ```
 
 **修正後:**
+
 ```gitignore
 # 行番号: 62-67
 # 仮想環境（Python venv）
@@ -188,6 +194,7 @@ $ git check-ignore -v env/.env.common env/.env.local_dev
 ### 3. バックアップの作成
 
 現在の env/ ファイルを `docs/env_templates/` にバックアップとして保存：
+
 - `docs/env_templates/.env.common`
 - `docs/env_templates/.env.local_dev`
 - `docs/env_templates/.env.local_stg`
@@ -227,13 +234,16 @@ $ git check-ignore -v secrets/.env.local_dev.secrets secrets/.env.secrets.templa
 ### なぜ env/ ファイルが Git 管理下になったのか？
 
 1. **初期追加時（`ab307d2d`）の .gitignore ルールが不完全だった**
+
    - `env/.env.*` というパターンではすべての env ファイルをカバーできなかった
    - または、`.gitignore` よりも先に `git add` が実行された
 
 2. **Git の仕様により、一度追跡されたファイルは .gitignore を追加しても追跡され続ける**
+
    - 既存の追跡ファイルを除外するには `git rm --cached` が必要
 
 3. **.gitignore ルールの競合**
+
    - 複数のルール（65行目、80行目、92-94行目）が競合
    - 意図したルールが機能していなかった
 
@@ -248,6 +258,7 @@ $ git check-ignore -v secrets/.env.local_dev.secrets secrets/.env.secrets.templa
 ### 1. .gitignore の検証プロセス
 
 新しいディレクトリや重要なファイルを追加する際：
+
 ```bash
 # 追加前に .gitignore をテスト
 git check-ignore -v <ファイル名>
@@ -288,11 +299,13 @@ git status --short
 **問題**: env/ ファイルが意図せず Git 管理下になっていた
 
 **原因**:
+
 1. 初期追加時の .gitignore ルールが不完全
 2. Git の「一度追跡されたファイルは .gitignore を追加しても追跡され続ける」仕様
 3. .gitignore ルール間の競合（`env/` vs `env/*` vs `.env.*`）
 
 **修正**:
+
 1. .gitignore ルールの競合を解消
 2. env/ ファイルを Git から削除（`git rm --cached`）
 3. バックアップを `docs/env_templates/` に作成

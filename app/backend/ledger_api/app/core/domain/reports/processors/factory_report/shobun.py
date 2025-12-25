@@ -1,13 +1,16 @@
 import pandas as pd
-
-from backend_shared.application.logging import get_module_logger, create_log_context
+from app.infra.report_utils.dataframe.cleaning import (
+    clean_cd_column as _clean_cd_column,
+)
+from backend_shared.application.logging import create_log_context, get_module_logger
 from backend_shared.utils.dataframe_utils_optimized import clean_na_strings_vectorized
-from app.infra.report_utils.dataframe.cleaning import clean_cd_column as _clean_cd_column
 
 logger = get_module_logger(__name__)
 
 
-def process_shobun(df_shipment: pd.DataFrame, master_csv: pd.DataFrame = None) -> pd.DataFrame:
+def process_shobun(
+    df_shipment: pd.DataFrame, master_csv: pd.DataFrame = None
+) -> pd.DataFrame:
     """
     出荷データ（処分）を処理して、マスターCSVに加算・ラベル挿入・整形を行う。
 
@@ -20,7 +23,7 @@ def process_shobun(df_shipment: pd.DataFrame, master_csv: pd.DataFrame = None) -
     Returns:
         pd.DataFrame
             整形済みの出荷処分帳票
-            
+
     Notes:
         - Step 5最適化: master_csvを引数で受け取ることでI/O削減
     """
@@ -52,7 +55,7 @@ def apply_shobun_weight(
 ) -> pd.DataFrame:
     """
     処分重量を業者別に加算する。
-    
+
     Note:
         df_shipmentは呼び出し元（factory_report_base）で既にcopy()済みで、
         業者CDも文字列化済みのため、ここでは追加処理は不要。

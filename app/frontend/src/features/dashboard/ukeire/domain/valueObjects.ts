@@ -1,7 +1,7 @@
 /**
  * 受入ダッシュボード - Value Objects
  * 日付操作・純粋関数群
- * 
+ *
  * @deprecated 日付関連の関数は @shared を使用してください
  * このファイルは後方互換性のために残されています
  */
@@ -78,7 +78,7 @@ export { todayInMonth };
 
 /**
  * 実績カットオフ日を取得（昨日まで表示）
- * 
+ *
  * @param m - ISO月文字列
  * @returns ISO日付文字列
  */

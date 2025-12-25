@@ -8,8 +8,6 @@ APIレスポンスに依存しない、純粋なバリデーションロジッ�
 from typing import Dict, List, Optional, Union
 
 import pandas as pd
-from fastapi import UploadFile
-
 from backend_shared.core.usecases.csv_validator.validation_result import (
     ValidationError,
     ValidationErrorType,
@@ -21,6 +19,7 @@ from backend_shared.utils.dataframe_validator import (
     check_missing_file,
     check_required_columns,
 )
+from fastapi import UploadFile
 
 
 class PureCSVValidator:

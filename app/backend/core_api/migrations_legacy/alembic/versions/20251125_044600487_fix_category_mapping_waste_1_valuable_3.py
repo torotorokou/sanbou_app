@@ -5,13 +5,13 @@ Revises: 20251125_110000000
 Create Date: 2025-11-25 04:46:00.487125
 
 """
-from alembic import op
-import sqlalchemy as sa
 
+import sqlalchemy as sa
+from alembic import op
 
 # revision identifiers, used by Alembic.
-revision = '20251125_044600487'
-down_revision = '20251125_110000000'
+revision = "20251125_044600487"
+down_revision = "20251125_110000000"
 branch_labels = None
 depends_on = None
 
@@ -19,22 +19,25 @@ depends_on = None
 def upgrade() -> None:
     """
     mart.v_sales_tree_detail_base のカテゴリマッピングを修正
-    
+
     変更内容:
     - category_cd IN (1, 2) → IN (1, 3) に変更
     - category_cd = 1: 廃棄物(waste) - 処分費
     - category_cd = 3: 有価物(valuable) - 仕入
     - category_cd = 2: 運搬費は除外（売上ツリー分析対象外）
     """
-    
+
     print("[mart.v_sales_tree_detail_base] Updating category mapping...")
-    
+
     # ビューを再作成
-    op.execute("""
+    op.execute(
+        """
         DROP VIEW IF EXISTS mart.v_sales_tree_detail_base CASCADE;
-    """)
-    
-    op.execute("""
+    """
+    )
+
+    op.execute(
+        """
         CREATE VIEW mart.v_sales_tree_detail_base AS
         SELECT
             COALESCE(sales_date, slip_date) AS sales_date,
@@ -64,27 +67,35 @@ def upgrade() -> None:
             COALESCE(sales_date, slip_date) IS NOT NULL
             AND COALESCE(is_deleted, false) = false
             AND category_cd IN (1, 3);  -- 廃棄物と有価物のみ（運搬費を除外）
-    """)
-    
-    op.execute("""
+    """
+    )
+
+    op.execute(
+        """
         GRANT SELECT ON mart.v_sales_tree_detail_base TO app_readonly;
-    """)
-    
-    print("[mart.v_sales_tree_detail_base] Category mapping updated: waste=1, valuable=3")
+    """
+    )
+
+    print(
+        "[mart.v_sales_tree_detail_base] Category mapping updated: waste=1, valuable=3"
+    )
 
 
 def downgrade() -> None:
     """
     元の定義に戻す（1と2を含める）
     """
-    
+
     print("[mart.v_sales_tree_detail_base] Reverting category mapping...")
-    
-    op.execute("""
+
+    op.execute(
+        """
         DROP VIEW IF EXISTS mart.v_sales_tree_detail_base CASCADE;
-    """)
-    
-    op.execute("""
+    """
+    )
+
+    op.execute(
+        """
         CREATE VIEW mart.v_sales_tree_detail_base AS
         SELECT
             COALESCE(sales_date, slip_date) AS sales_date,
@@ -114,10 +125,13 @@ def downgrade() -> None:
             COALESCE(sales_date, slip_date) IS NOT NULL
             AND COALESCE(is_deleted, false) = false
             AND category_cd IN (1, 2);
-    """)
-    
-    op.execute("""
+    """
+    )
+
+    op.execute(
+        """
         GRANT SELECT ON mart.v_sales_tree_detail_base TO app_readonly;
-    """)
-    
+    """
+    )
+
     print("[mart.v_sales_tree_detail_base] Downgrade complete.")

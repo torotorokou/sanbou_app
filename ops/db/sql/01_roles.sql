@@ -1,15 +1,15 @@
 -- ============================================================
 -- 01_roles.sql - ロール作成（冪等）
 -- ============================================================
--- 
+--
 -- 目的: sanbou_owner ロールを作成し、環境に応じた設定を行う
--- 
+--
 -- 実行方法:
 --   psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" \
 --        -v app_user="$POSTGRES_USER" \
 --        -v env="local_dev" \
 --        -f 01_roles.sql
--- 
+--
 -- パラメータ:
 --   app_user: アプリ接続ユーザー名（例: sanbou_app_dev）
 --   env: 環境名（local_dev/vm_stg/vm_prod）
@@ -56,12 +56,12 @@ DECLARE
 BEGIN
     -- NULL チェック（変数が設定されていない場合）
     IF app_user_input IS NULL OR env_input IS NULL THEN
-        RAISE EXCEPTION 'Missing required variables: app_user=%, env=%', 
+        RAISE EXCEPTION 'Missing required variables: app_user=%, env=%',
                         app_user_input, env_input;
     END IF;
-    
+
     RAISE NOTICE 'Environment: %, Application User: %', env_input, app_user_input;
-    
+
     -- local_dev の場合のみ GRANT
     IF env_input = 'local_dev' THEN
         -- 既にメンバーか確認
@@ -72,7 +72,7 @@ BEGIN
             WHERE r.rolname = 'sanbou_owner'
               AND u.rolname = app_user_input
         ) INTO already_member;
-        
+
         IF NOT already_member THEN
             EXECUTE format('GRANT sanbou_owner TO %I', app_user_input);
             RAISE NOTICE '✓ (local_dev only) Granted sanbou_owner to %', app_user_input;

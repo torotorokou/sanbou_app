@@ -17,7 +17,3 @@ CREATE TABLE ref.closure_periods (
 
 ALTER TABLE ONLY ref.closure_periods
     ADD CONSTRAINT closure_periods_pkey PRIMARY KEY (start_date, end_date);
-
-
-
-

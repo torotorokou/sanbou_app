@@ -28,6 +28,7 @@ IAP_ENABLED=false              # IAP 有効化フラグ
 ```
 
 **環境別設定:**
+
 - **開発環境** (`local_dev`): `DEBUG=true`, `IAP_ENABLED=false`
 - **ステージング** (`vm_stg`): `DEBUG=false`, `IAP_ENABLED=true`
 - **本番環境** (`vm_prod`): `DEBUG=false`, `IAP_ENABLED=true`
@@ -37,6 +38,7 @@ IAP_ENABLED=false              # IAP 有効化フラグ
 **ファイル**: `app/backend/core_api/app/infra/adapters/auth/iap_auth_provider.py`
 
 **強化内容:**
+
 - JWT 署名検証機能を追加（`google-auth` ライブラリ使用）
 - `X-Goog-IAP-JWT-Assertion` ヘッダーの検証
 - フォールバック: `X-Goog-Authenticated-User-Email` ヘッダー対応
@@ -44,6 +46,7 @@ IAP_ENABLED=false              # IAP 有効化フラグ
 - 詳細なロギングとエラーハンドリング
 
 **JWT 検証フロー:**
+
 ```python
 1. X-Goog-IAP-JWT-Assertion ヘッダーを取得
 2. Google の公開鍵で署名を検証
@@ -108,6 +111,7 @@ app = FastAPI(
 **ファイル**: `app/backend/core_api/app/api/middleware/auth_middleware.py`
 
 **機能:**
+
 - 全リクエストで認証を実施（除外パスを除く）
 - 除外パス: `/health`, `/healthz`, `/`, `/docs`, `/redoc`, `/openapi.json`
 - `IAP_ENABLED=false` の場合は DevAuthProvider を使用
@@ -115,6 +119,7 @@ app = FastAPI(
 - 認証失敗時は 401/403 を返却
 
 **適用方法:**
+
 ```python
 from app.api.middleware.auth_middleware import AuthenticationMiddleware
 
@@ -160,7 +165,7 @@ proxy_set_header X-Goog-IAP-JWT-Assertion $http_x_goog_iap_jwt_assertion;
 1. **Credentials** → **Create Credentials** → **OAuth client ID**
 2. **Application type**: Web application
 3. **Name**: `sanbou-app-iap`
-4. **Authorized redirect URIs**: 
+4. **Authorized redirect URIs**:
    - `https://your-domain.com/_gcp_gatekeeper/authenticate`
 5. **Create** → クライアント ID をメモ
 
@@ -175,7 +180,7 @@ proxy_set_header X-Goog-IAP-JWT-Assertion $http_x_goog_iap_jwt_assertion;
 
 1. IAP ページでバックエンドサービスを選択
 2. **Add Principal** をクリック
-3. **New principals**: 
+3. **New principals**:
    - 個別ユーザー: `user@example.com`
    - グループ: `developers@example.com`
 4. **Role**: `IAP-secured Web App User`
@@ -195,6 +200,7 @@ proxy_set_header X-Goog-IAP-JWT-Assertion $http_x_goog_iap_jwt_assertion;
 ### Step 6: デプロイと検証
 
 1. 環境変数を更新してデプロイ：
+
 ```bash
 # ステージング環境
 make rebuild ENV=vm_stg
@@ -204,10 +210,12 @@ make rebuild ENV=vm_prod
 ```
 
 2. ブラウザでアクセス:
+
    - `https://your-domain.com/` → Google ログイン画面が表示される
    - ログイン後、アプリケーションが表示される
 
 3. ログを確認:
+
 ```bash
 make logs ENV=vm_prod S=core_api | grep "IAP"
 ```
@@ -259,6 +267,7 @@ docker logs <container_id> | grep "IAP JWT"
 **原因**: IAP ヘッダーが届いていない
 
 **解決策**:
+
 1. IAP が有効化されているか確認
 2. nginx の `_proxy_headers.conf` が正しく設定されているか確認
 3. Load Balancer → nginx → backend の経路を確認
@@ -268,6 +277,7 @@ docker logs <container_id> | grep "IAP JWT"
 **原因**: `IAP_AUDIENCE` が正しく設定されていない
 
 **解決策**:
+
 1. GCP コンソールで正しい audience 値を取得
 2. `.env.vm_stg` または `.env.vm_prod` を更新
 3. コンテナを再起動
@@ -277,6 +287,7 @@ docker logs <container_id> | grep "IAP JWT"
 **原因**: 許可されていないドメインのユーザーがアクセスしている
 
 **解決策**:
+
 1. `IapAuthProvider` の `allowed_domain` を確認
 2. 別ドメインを許可する場合は、コードを修正して再デプロイ
 
@@ -285,6 +296,7 @@ docker logs <container_id> | grep "IAP JWT"
 **原因**: `DEBUG=false` の場合、意図的に無効化されている
 
 **解決策**:
+
 - 開発環境で確認する: `DEBUG=true` に設定
 - 本番環境では `/docs` へのアクセスは不要（セキュリティ上の理由）
 
@@ -325,6 +337,6 @@ IAP 認証の実装により、以下を達成しました：
 ✅ **Google アカウント認証**: 組織の Google アカウントでのみアクセス可能  
 ✅ **開発環境との両立**: 開発時は固定ユーザー、本番時は IAP 認証  
 ✅ **JWT 署名検証**: なりすまし攻撃への対策  
-✅ **ドメインホワイトリスト**: 組織外ユーザーの遮断  
+✅ **ドメインホワイトリスト**: 組織外ユーザーの遮断
 
 本番公開前に必ず IAP を有効化し、`IAP_AUDIENCE` を正しく設定してください。

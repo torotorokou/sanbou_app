@@ -7,7 +7,7 @@ IFS=$'\n\t'
 # RAG API スタートアップスクリプト - ADC (Application Default Credentials) 対応版
 # Last Modified: 2025-12-08 16:05 JST
 # =============================================================================
-# 
+#
 # 認証方式:
 #   - ローカル開発環境: gcloud auth application-default login による ADC
 #   - GCE (stg/prod): VM にアタッチされたサービスアカウントによる ADC
@@ -58,7 +58,7 @@ download_gcs_data() {
       local exit_code=$?
       echo "❌ [GCS] データ取得に失敗しました (${norm_uri}/*)" >&2
       echo "   終了コード: $exit_code" >&2
-      
+
       # エラーの種類を推測
       if [ $exit_code -eq 1 ]; then
         echo "   🛑 可能性: 認証エラー、または権限不足 (403 Forbidden)" >&2
@@ -70,7 +70,7 @@ download_gcs_data() {
       else
         echo "   🛑 可能性: ネットワークエラー、またはその他のエラー" >&2
       fi
-      
+
       return 1
     fi
   else
@@ -82,7 +82,7 @@ download_gcs_data() {
       local exit_code=$?
       echo "❌ [GCS] データ取得に失敗しました (gs://$bucket/$prefix/*)" >&2
       echo "   終了コード: $exit_code" >&2
-      
+
       # エラーの種類を推測
       if [ $exit_code -eq 1 ]; then
         echo "   🛑 可能性: 認証エラー、または権限不足 (403 Forbidden)" >&2
@@ -96,7 +96,7 @@ download_gcs_data() {
       else
         echo "   🛑 可能性: ネットワークエラー、またはその他のエラー" >&2
       fi
-      
+
       return 1
     fi
   fi
@@ -115,11 +115,11 @@ else
     echo "🔑 ADC (Application Default Credentials) を使用してGCPに接続します"
     echo "   STAGE=$STAGE"
     echo "   TARGET_DIR=$TARGET_DIR"
-    
+
     # gcloud config list で認証状態を確認
     if gcloud config list 2>/dev/null | grep -q "account"; then
       echo "✅ GCP ADC認証確認完了 - gcloud config list にアカウント情報が存在"
-      
+
       # 可能であればアカウント情報を表示
       if gcloud config list account 2>/dev/null; then
         echo "   使用中のアカウント情報を確認できました"
@@ -145,7 +145,7 @@ else
   # 空白を削除(bashの変数展開で実現)
   DATA_FILE_COUNT="${DATA_FILE_COUNT// /}"
   DATA_FILE_COUNT="${DATA_FILE_COUNT:-0}"
-  
+
   if [ "$DATA_FILE_COUNT" -gt 0 ]; then
     echo "⏩ [1/2] Local data already exists ($DATA_FILE_COUNT data files found). Skipping GCS download."
   else

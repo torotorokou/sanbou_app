@@ -1,10 +1,10 @@
 import pandas as pd
 from backend_shared.core.usecases.csv_formatter.formatter_base import CommonCSVFormatter
+from backend_shared.core.usecases.csv_formatter.formatter_config import FormatterConfig
 from backend_shared.utils.dataframe_utils import (
     combine_date_and_time,
     remove_weekday_parentheses,
 )
-from backend_shared.core.usecases.csv_formatter.formatter_config import FormatterConfig
 
 
 # =========================
@@ -66,7 +66,9 @@ class DefaultFormatter(CommonCSVFormatter):
     """
 
     def __init__(self):
-        from backend_shared.core.usecases.csv_formatter.formatter_config import FormatterConfig
+        from backend_shared.core.usecases.csv_formatter.formatter_config import (
+            FormatterConfig,
+        )
 
         empty_config = FormatterConfig(columns_def={}, unique_keys=[], agg_map={})
         super().__init__(empty_config)
