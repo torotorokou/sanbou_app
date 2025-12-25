@@ -3,16 +3,24 @@
  * 目標達成状況を表示するカード
  */
 
-import React from 'react';
-import { Card, Space, Typography, Tooltip, Statistic, Progress, Segmented } from 'antd';
-import './TargetCard.overrides.css';
-import dayjs from 'dayjs';
-import isoWeekPlugin from 'dayjs/plugin/isoWeek';
-import { InfoCircleOutlined } from '@ant-design/icons';
-import { COLORS } from '@/features/dashboard/ukeire/domain/constants';
-import { clamp } from '@/features/dashboard/ukeire/domain/valueObjects';
+import React from "react";
+import {
+  Card,
+  Space,
+  Typography,
+  Tooltip,
+  Statistic,
+  Progress,
+  Segmented,
+} from "antd";
+import styles from "./TargetCard.module.css";
+import dayjs from "dayjs";
+import isoWeekPlugin from "dayjs/plugin/isoWeek";
+import { InfoCircleOutlined } from "@ant-design/icons";
+import { COLORS } from "@/features/dashboard/ukeire/domain/constants";
+import { clamp } from "@/features/dashboard/ukeire/domain/valueObjects";
 
-export type AchievementMode = 'toDate' | 'toEnd';
+export type AchievementMode = "toDate" | "toEnd";
 
 export type TargetCardRowData = {
   key: string;
@@ -35,16 +43,24 @@ export const TargetCard: React.FC<TargetCardProps> = ({
   style,
   isMobile = false,
   isoWeek,
-  achievementMode = 'toDate',
+  achievementMode = "toDate",
   onModeChange,
 }) => {
   // isoWeek プラグインを拡張
   dayjs.extend(isoWeekPlugin);
   // 画面サイズに応じて動的にフォントサイズを調整（xl: 1280px付近では小さめ）
-  const headerFontSize = isMobile ? 'clamp(10px, 2.8vw, 12px)' : 'clamp(13px, 0.9vw, 16px)';
-  const labelFontSize = isMobile ? 'clamp(10px, 2.5vw, 12px)' : 'clamp(10px, 0.7vw, 13px)';
-  const valueFontSize = isMobile ? 'clamp(12px, 3.2vw, 15px)' : 'clamp(14px, 1.1vw, 20px)';
-  const pctFontSize = isMobile ? 'clamp(10px, 2.5vw, 13px)' : 'clamp(14px, 1vw, 18px)';
+  const headerFontSize = isMobile
+    ? "clamp(10px, 2.8vw, 12px)"
+    : "clamp(13px, 0.9vw, 16px)";
+  const labelFontSize = isMobile
+    ? "clamp(10px, 2.5vw, 12px)"
+    : "clamp(10px, 0.7vw, 13px)";
+  const valueFontSize = isMobile
+    ? "clamp(12px, 3.2vw, 15px)"
+    : "clamp(14px, 1.1vw, 20px)";
+  const pctFontSize = isMobile
+    ? "clamp(10px, 2.5vw, 13px)"
+    : "clamp(14px, 1vw, 18px)";
 
   // Mobile モードでは行の高さを確保（複数行ラベル対応）
   const minRowHeight = isMobile ? 44 : 44;
@@ -55,39 +71,42 @@ export const TargetCard: React.FC<TargetCardProps> = ({
     <Card
       variant="outlined"
       style={{
-        height: '100%',
-        display: 'flex',
-        flexDirection: 'column',
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
         ...style,
       }}
       styles={{
         body: {
           padding: isMobile ? 8 : 12,
-          display: 'flex',
-          flexDirection: 'column',
+          display: "flex",
+          flexDirection: "column",
           gap: isMobile ? 4 : 8,
           flex: 1,
           minHeight: 0,
-          overflow: 'visible',
+          overflow: "visible",
         },
       }}
     >
       {/* ヘッダー: タイトル・ツールチップ・モード切り替え */}
       <div
         style={{
-          width: '100%',
-          display: 'flex',
-          flexDirection: 'column',
+          width: "100%",
+          display: "flex",
+          flexDirection: "column",
           gap: isMobile ? 2 : 4,
         }}
       >
         <Space align="baseline" size={isMobile ? 4 : 8}>
-          <Typography.Title level={5} style={{ margin: 0, fontSize: isMobile ? '14px' : '16px' }}>
+          <Typography.Title
+            level={5}
+            style={{ margin: 0, fontSize: isMobile ? "14px" : "16px" }}
+          >
             目標カード
           </Typography.Title>
           <Tooltip title="週目標は当月の営業日配分で按分。日目標は平日/土/日祝の重みで配分。">
             <InfoCircleOutlined
-              style={{ color: '#8c8c8c', fontSize: isMobile ? '12px' : '14px' }}
+              style={{ color: "#8c8c8c", fontSize: isMobile ? "12px" : "14px" }}
             />
           </Tooltip>
         </Space>
@@ -96,20 +115,20 @@ export const TargetCard: React.FC<TargetCardProps> = ({
         {onModeChange && (
           <div
             style={{
-              display: 'flex',
-              justifyContent: isMobile ? 'flex-start' : 'flex-end',
+              display: "flex",
+              justifyContent: isMobile ? "flex-start" : "flex-end",
             }}
           >
             <Segmented
-              className="customSegmented"
+              className={styles.customSegmented}
               value={achievementMode}
               onChange={(value) => onModeChange(value as AchievementMode)}
               options={[
-                { label: isMobile ? '累計' : '昨日まで', value: 'toDate' },
-                { label: isMobile ? '期末' : '月末・週末', value: 'toEnd' },
+                { label: isMobile ? "累計" : "昨日まで", value: "toDate" },
+                { label: isMobile ? "期末" : "月末・週末", value: "toEnd" },
               ]}
-              size={isMobile ? 'small' : 'small'}
-              style={{ width: isMobile ? 'auto' : 'auto' }}
+              size={isMobile ? "small" : "small"}
+              style={{ width: isMobile ? "auto" : "auto" }}
             />
           </div>
         )}
@@ -117,52 +136,54 @@ export const TargetCard: React.FC<TargetCardProps> = ({
 
       <div
         style={{
-          border: '1px solid #f0f0f0',
+          border: "1px solid #f0f0f0",
           borderRadius: 8,
-          background: '#fff',
+          background: "#fff",
           padding: gridPadding,
-          display: 'grid',
-          gridTemplateColumns: isMobile ? '1fr auto auto 1.2fr' : 'auto auto auto 1fr',
+          display: "grid",
+          gridTemplateColumns: isMobile
+            ? "1fr auto auto 1.2fr"
+            : "auto auto auto 1fr",
           gridTemplateRows: `repeat(${1 + rows.length}, minmax(${minRowHeight}px, auto))`,
           columnGap: isMobile ? 6 : 12,
           rowGap: rowGap,
-          alignItems: isMobile ? 'start' : 'center',
-          boxSizing: 'border-box',
+          alignItems: isMobile ? "start" : "center",
+          boxSizing: "border-box",
           flex: 1,
-          overflow: 'visible',
+          overflow: "visible",
         }}
       >
         {/* ヘッダ行 */}
-        <div style={{ color: '#8c8c8c', fontSize: headerFontSize }} />
+        <div style={{ color: "#8c8c8c", fontSize: headerFontSize }} />
         <div
           style={{
-            color: '#8c8c8c',
+            color: "#8c8c8c",
             fontSize: headerFontSize,
             fontWeight: 700,
-            textAlign: 'center',
-            justifySelf: 'center',
+            textAlign: "center",
+            justifySelf: "center",
           }}
         >
           目標
         </div>
         <div
           style={{
-            color: '#8c8c8c',
+            color: "#8c8c8c",
             fontSize: headerFontSize,
             fontWeight: 700,
-            textAlign: 'center',
-            justifySelf: 'center',
+            textAlign: "center",
+            justifySelf: "center",
           }}
         >
           実績
         </div>
         <div
           style={{
-            color: '#8c8c8c',
+            color: "#8c8c8c",
             fontSize: headerFontSize,
             fontWeight: 700,
-            textAlign: 'center',
-            justifySelf: 'center',
+            textAlign: "center",
+            justifySelf: "center",
           }}
         >
           達成率
@@ -172,18 +193,27 @@ export const TargetCard: React.FC<TargetCardProps> = ({
         {rows.map((r) => {
           // NULL値をチェックして達成率を計算
           const ratioRaw =
-            r.target !== null && r.actual !== null && r.target > 0 ? r.actual / r.target : 0;
+            r.target !== null && r.actual !== null && r.target > 0
+              ? r.actual / r.target
+              : 0;
           const pct =
-            r.target !== null && r.actual !== null && r.target > 0 ? Math.round(ratioRaw * 100) : 0;
+            r.target !== null && r.actual !== null && r.target > 0
+              ? Math.round(ratioRaw * 100)
+              : 0;
           const barPct = clamp(pct, 0, 100);
           const pctColor =
-            ratioRaw >= 1 ? COLORS.ok : ratioRaw >= 0.9 ? COLORS.warn : COLORS.danger;
+            ratioRaw >= 1
+              ? COLORS.ok
+              : ratioRaw >= 0.9
+                ? COLORS.warn
+                : COLORS.danger;
 
           // NULL値の場合は達成率を非表示にするかどうか
           const hasValidData = r.target !== null && r.actual !== null;
 
           // determine iso week to show: prefer prop on the component; fallback to computing from today
-          let isoWeekToShow: number | undefined = typeof isoWeek === 'number' ? isoWeek : undefined;
+          let isoWeekToShow: number | undefined =
+            typeof isoWeek === "number" ? isoWeek : undefined;
           if (isoWeekToShow === undefined) {
             isoWeekToShow = dayjs().isoWeek();
           }
@@ -192,30 +222,30 @@ export const TargetCard: React.FC<TargetCardProps> = ({
             <React.Fragment key={r.key}>
               <div
                 style={{
-                  color: '#595959',
+                  color: "#595959",
                   fontSize: labelFontSize,
                   fontWeight: 800,
                   lineHeight: isMobile ? 1.2 : 1.2,
                   minWidth: 0,
-                  wordBreak: 'break-word',
+                  wordBreak: "break-word",
                 }}
               >
                 {/* 今週のラベルにはW##を表示 */}
                 {(() => {
-                  const label = r.label ?? '';
+                  const label = r.label ?? "";
                   // allow labels to include explicit newline markers ("\n") and render them stacked
-                  const lines = String(label).split('\n');
-                  const isThisWeekLabel = label.startsWith('今週');
+                  const lines = String(label).split("\n");
+                  const isThisWeekLabel = label.startsWith("今週");
 
-                  if (isThisWeekLabel && typeof isoWeekToShow === 'number') {
-                    const w = String(isoWeekToShow).padStart(2, '0');
+                  if (isThisWeekLabel && typeof isoWeekToShow === "number") {
+                    const w = String(isoWeekToShow).padStart(2, "0");
                     if (isMobile) {
                       // Mobile: 縦並びで全て表示（途切れないように）
                       return (
                         <div
                           style={{
-                            display: 'flex',
-                            flexDirection: 'column',
+                            display: "flex",
+                            flexDirection: "column",
                             gap: 1,
                             lineHeight: 1.2,
                           }}
@@ -224,8 +254,8 @@ export const TargetCard: React.FC<TargetCardProps> = ({
                             <span
                               key={idx}
                               style={{
-                                fontSize: idx > 0 ? '0.85em' : '1em',
-                                color: idx > 0 ? '#8c8c8c' : 'inherit',
+                                fontSize: idx > 0 ? "0.85em" : "1em",
+                                color: idx > 0 ? "#8c8c8c" : "inherit",
                               }}
                             >
                               {ln}
@@ -233,9 +263,9 @@ export const TargetCard: React.FC<TargetCardProps> = ({
                           ))}
                           <span
                             style={{
-                              color: '#1890ff',
+                              color: "#1890ff",
                               fontWeight: 700,
-                              fontSize: '0.85em',
+                              fontSize: "0.85em",
                             }}
                           >{`W${w}`}</span>
                         </div>
@@ -245,21 +275,23 @@ export const TargetCard: React.FC<TargetCardProps> = ({
                     return (
                       <div
                         style={{
-                          display: 'flex',
-                          flexDirection: 'column',
+                          display: "flex",
+                          flexDirection: "column",
                           gap: 2,
                         }}
                       >
-                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        <div
+                          style={{ display: "flex", flexDirection: "column" }}
+                        >
                           {lines.map((ln, idx) => (
                             <span key={idx}>{ln}</span>
                           ))}
                         </div>
                         <span
                           style={{
-                            color: '#1890ff',
+                            color: "#1890ff",
                             fontWeight: 700,
-                            fontSize: '0.85em',
+                            fontSize: "0.85em",
                           }}
                         >{`W${w}`}</span>
                       </div>
@@ -271,8 +303,8 @@ export const TargetCard: React.FC<TargetCardProps> = ({
                     return (
                       <div
                         style={{
-                          display: 'flex',
-                          flexDirection: 'column',
+                          display: "flex",
+                          flexDirection: "column",
                           gap: 2,
                         }}
                       >
@@ -302,11 +334,11 @@ export const TargetCard: React.FC<TargetCardProps> = ({
                 ) : (
                   <div
                     style={{
-                      color: '#8c8c8c',
+                      color: "#8c8c8c",
                       fontSize: valueFontSize,
                       fontWeight: 800,
                       lineHeight: 1,
-                      textAlign: 'center',
+                      textAlign: "center",
                     }}
                   >
                     —
@@ -319,7 +351,7 @@ export const TargetCard: React.FC<TargetCardProps> = ({
                     value={Math.round(r.actual)}
                     suffix="t"
                     valueStyle={{
-                      color: '#222',
+                      color: "#222",
                       fontSize: valueFontSize,
                       fontWeight: 800,
                       lineHeight: 1,
@@ -329,11 +361,11 @@ export const TargetCard: React.FC<TargetCardProps> = ({
                 ) : (
                   <div
                     style={{
-                      color: '#8c8c8c',
+                      color: "#8c8c8c",
                       fontSize: valueFontSize,
                       fontWeight: 800,
                       lineHeight: 1,
-                      textAlign: 'center',
+                      textAlign: "center",
                     }}
                   >
                     —
@@ -342,8 +374,8 @@ export const TargetCard: React.FC<TargetCardProps> = ({
               </div>
               <div
                 style={{
-                  display: 'flex',
-                  flexDirection: 'column',
+                  display: "flex",
+                  flexDirection: "column",
                   gap: 2,
                   minWidth: 0,
                 }}
@@ -352,9 +384,9 @@ export const TargetCard: React.FC<TargetCardProps> = ({
                   <>
                     <div
                       style={{
-                        display: 'flex',
-                        justifyContent: 'flex-end',
-                        alignItems: 'baseline',
+                        display: "flex",
+                        justifyContent: "flex-end",
+                        alignItems: "baseline",
                       }}
                     >
                       <Statistic
@@ -373,18 +405,18 @@ export const TargetCard: React.FC<TargetCardProps> = ({
                       percent={barPct}
                       showInfo={false}
                       strokeColor={pctColor}
-                      size={['100%', 8]}
+                      size={["100%", 8]}
                       style={{ margin: 0 }}
                     />
                   </>
                 ) : (
                   <div
                     style={{
-                      color: '#8c8c8c',
+                      color: "#8c8c8c",
                       fontSize: pctFontSize,
                       fontWeight: 700,
                       lineHeight: 1,
-                      textAlign: 'right',
+                      textAlign: "right",
                     }}
                   >
                     —

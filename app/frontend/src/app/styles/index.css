@@ -1,0 +1,31 @@
+/* ===================================================
+ * Global Styles Entry Point
+ * ===================================================
+ * This is the ONLY global CSS import in the application.
+ * Import order is critical for proper cascade.
+ *
+ * Location: src/app/styles/index.css
+ * Import from: src/main.tsx only
+ * ===================================================
+ */
+
+/* 1. Custom Media Queries (must be first for @media references) */
+@import "./custom-media.css";
+
+/* 2. CSS Reset (normalize browser defaults) */
+@import "./reset.css";
+
+/* 3. Design Tokens (CSS variables) */
+@import "./tokens.css";
+
+/* 4. Theme Variables (colors, brand tokens) */
+@import "./theme.css";
+
+/* 5. Ant Design Overrides (component customization) */
+@import "./antd-overrides.css";
+
+/* 6. Utility Classes (helpers) */
+@import "./utilities.css";
+
+/* 7. Global Base Styles (body, layout, container) */
+@import "./globals.css";

@@ -1,48 +1,67 @@
 /**
- * SalesTreePage.css
- * 売上ツリー分析ページ専用スタイル
+ * SalesTreePage.module.css
+ * 売上ツリー分析ページ専用スタイル（CSS Modules版）
  */
 
+/* ページルートコンテナ */
+.salesTreePage {
+  /* ページ固有のスコープ */
+}
+
 /* カードホバー効果を無効化（ページ内およびDrawer内） */
-.sales-tree-page .ant-card,
-.ant-drawer .ant-card {
+.salesTreePage :global(.ant-card) {
   transition: none !important;
 }
 
-.sales-tree-page .ant-card:hover,
-.ant-drawer .ant-card:hover {
+.salesTreePage :global(.ant-card:hover) {
   box-shadow: none !important;
   transform: none !important;
 }
 
-.sales-tree-page .ant-card-hoverable,
-.ant-drawer .ant-card-hoverable {
+.salesTreePage :global(.ant-card-hoverable) {
   cursor: default !important;
 }
 
-.sales-tree-page .ant-card-hoverable:hover,
-.ant-drawer .ant-card-hoverable:hover {
-  box-shadow:
-    0 1px 2px -2px rgba(0, 0, 0, 0.16),
-    0 3px 6px 0 rgba(0, 0, 0, 0.12),
-    0 5px 12px 4px rgba(0, 0, 0, 0.09) !important;
+.salesTreePage :global(.ant-card-hoverable:hover) {
+  box-shadow: 0 1px 2px -2px rgba(0, 0, 0, 0.16),
+    0 3px 6px 0 rgba(0, 0, 0, 0.12), 0 5px 12px 4px rgba(0, 0, 0, 0.09) !important;
+  border-color: rgba(0, 0, 0, 0.09) !important;
+}
+
+/* Drawer内のカード */
+:global(.ant-drawer .ant-card) {
+  transition: none !important;
+}
+
+:global(.ant-drawer .ant-card:hover) {
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+:global(.ant-drawer .ant-card-hoverable) {
+  cursor: default !important;
+}
+
+:global(.ant-drawer .ant-card-hoverable:hover) {
+  box-shadow: 0 1px 2px -2px rgba(0, 0, 0, 0.16),
+    0 3px 6px 0 rgba(0, 0, 0, 0.12), 0 5px 12px 4px rgba(0, 0, 0, 0.09) !important;
   border-color: rgba(0, 0, 0, 0.09) !important;
 }
 
 /* ヘッダー */
-.sales-tree-header {
+.header {
   position: relative;
   padding: 12px 0 4px;
 }
 
-.sales-tree-title {
+.title {
   text-align: center;
   font-weight: 700;
   letter-spacing: 0.02em;
   margin: 0;
 }
 
-.sales-tree-title-accent {
+.titleAccent {
   display: inline-flex;
   align-items: center;
   gap: 10px;
@@ -53,8 +72,8 @@
   font-size: 1.05em;
 }
 
-.sales-tree-title-accent::before {
-  content: '';
+.titleAccent::before {
+  content: "";
   display: inline-block;
   width: 6px;
   height: 22px;
@@ -63,32 +82,32 @@
 }
 
 /* 有価物モード用スタイル */
-.sales-tree-page.valuable-mode .sales-tree-title-accent::before {
+.valuableMode .titleAccent::before {
   background: #faad14;
 }
 
-.sales-tree-page.valuable-mode .sales-tree-accent-card {
+.valuableMode .accentCard {
   border-left-color: #faad14;
 }
 
-.sales-tree-page.valuable-mode .sales-tree-card-section-header {
+.valuableMode .cardSectionHeader {
   background: #fffbf0;
   border: 1px solid #ffe7ba;
 }
 
-.sales-tree-page.valuable-mode .ant-table-tbody > tr:hover > td {
+.valuableMode :global(.ant-table-tbody > tr:hover > td) {
   background: #fffbf0 !important;
 }
 
-.sales-tree-page.valuable-mode .sales-tree-mini-bar-blue {
+.valuableMode .miniBarBlue {
   background: #faad14;
 }
 
-.sales-tree-page.valuable-mode .sales-tree-zebra-odd {
+.valuableMode .zebraOdd {
   background: #fffef9;
 }
 
-.sales-tree-header-actions {
+.headerActions {
   position: absolute;
   right: 0;
   top: 8px;
@@ -97,25 +116,25 @@
 }
 
 /* アクセントカード */
-.sales-tree-accent-card {
+.accentCard {
   border-left: 4px solid #23780410;
   overflow: hidden;
 }
 
-.sales-tree-accent-primary {
+.accentPrimary {
   border-left-color: #237804;
 }
 
-.sales-tree-accent-secondary {
+.accentSecondary {
   border-left-color: #52c41a;
 }
 
-.sales-tree-accent-gold {
+.accentGold {
   border-left-color: #faad14;
 }
 
 /* カードセクション */
-.sales-tree-card-section-header {
+.cardSectionHeader {
   font-weight: 600;
   padding: 6px 10px;
   margin-bottom: 12px;
@@ -124,14 +143,14 @@
   border: 1px solid #e6f7e6;
 }
 
-.sales-tree-card-subtitle {
+.cardSubtitle {
   color: rgba(0, 0, 0, 0.55);
   margin-bottom: 6px;
   font-size: 12px;
 }
 
 /* ミニバーチャート */
-.sales-tree-mini-bar-bg {
+.miniBarBg {
   flex: 1;
   height: 6px;
   background: #f6f7fb;
@@ -139,47 +158,47 @@
   overflow: hidden;
 }
 
-.sales-tree-mini-bar {
+.miniBar {
   height: 100%;
 }
 
-.sales-tree-mini-bar-blue {
+.miniBarBlue {
   background: #237804;
 }
 
-.sales-tree-mini-bar-green {
+.miniBarGreen {
   background: #52c41a;
 }
 
-.sales-tree-mini-bar-gold {
+.miniBarGold {
   background: #faad14;
 }
 
 /* テーブルゼブラストライプ */
-.sales-tree-zebra-even {
+.zebraEven {
   background: #ffffff;
 }
 
-.sales-tree-zebra-odd {
+.zebraOdd {
   background: #fbfcfe;
 }
 
 /* テーブルホバー */
-.sales-tree-page .ant-table-tbody > tr:hover > td {
+.salesTreePage :global(.ant-table-tbody > tr:hover > td) {
   background: #f6fff4 !important;
 }
 
 /* テーブルヘッダー */
-.sales-tree-page .ant-table-header {
+.salesTreePage :global(.ant-table-header) {
   box-shadow: inset 0 -1px 0 #f0f0f0;
 }
 
 /* サマリタグ */
-.sales-tree-summary-tags {
+.summaryTags {
   font-size: 14px;
 }
 
-.sales-tree-summary-tags .ant-tag {
+.summaryTags :global(.ant-tag) {
   font-size: 14px;
   padding: 0 10px;
 }

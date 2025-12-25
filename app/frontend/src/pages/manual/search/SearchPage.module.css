@@ -1,5 +1,5 @@
 /* Import custom media queries */
-@import '@/shared/styles/custom-media.css';
+@import '@app/styles/custom-media.css';
 
 .pageContainer {
   display: flex;

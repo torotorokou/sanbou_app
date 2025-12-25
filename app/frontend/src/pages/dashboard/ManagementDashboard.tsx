@@ -1,45 +1,45 @@
-import React from 'react';
-import { Typography } from 'antd';
-import './ManagementDashboard.css';
+import React from "react";
+import { Typography } from "antd";
+import styles from "./ManagementDashboard.module.css";
 import {
   SummaryPanel,
   CustomerAnalysis,
   RevenuePanel,
   BlockCountPanel,
   ProcessVolumePanel,
-} from '@features/dashboard';
+} from "@features/dashboard";
 
 const { Title } = Typography;
 const ManagementDashboard: React.FC = () => {
   return (
-    <div className="dashboard-root">
-      <Title level={3} className="dashboard-title">
+    <div className={styles.dashboardRoot}>
+      <Title level={3} className={styles.dashboardTitle}>
         2025年6月27日 実績ダッシュボード
       </Title>
 
-      <div className="dashboard-main">
+      <div className={styles.dashboardMain}>
         {/* left column */}
-        <div className="left-column">
-          <div className="panel card-wrapper">
+        <div className={styles.leftColumn}>
+          <div className={`${styles.panel} ${styles.cardWrapper}`}>
             <SummaryPanel />
           </div>
 
-          <div className="panel card-wrapper">
+          <div className={`${styles.panel} ${styles.cardWrapper}`}>
             <RevenuePanel />
           </div>
         </div>
 
         {/* right column */}
-        <div className="right-column">
-          <div className="panel-top card-wrapper">
+        <div className={styles.rightColumn}>
+          <div className={`${styles.panelTop} ${styles.cardWrapper}`}>
             <CustomerAnalysis />
           </div>
 
-          <div className="panel-mid card-wrapper">
+          <div className={`${styles.panelMid} ${styles.cardWrapper}`}>
             <ProcessVolumePanel />
           </div>
 
-          <div className="panel-bottom card-wrapper">
+          <div className={`${styles.panelBottom} ${styles.cardWrapper}`}>
             <BlockCountPanel />
           </div>
         </div>

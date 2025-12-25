@@ -29,7 +29,7 @@ import { PivotDrawer } from "@/features/analytics/sales-pivot/pivot-drawer/ui/Pi
 import { DetailDrawer } from "@/features/analytics/sales-pivot/detail-drawer/ui/DetailDrawer";
 
 // Styles
-import "./SalesTreePage.css";
+import styles from "./SalesTreePage.module.css";
 
 /**
  * DrawerStateがopenかどうかを判定する型ガード
@@ -152,7 +152,7 @@ const SalesTreePage: React.FC = () => {
       direction="vertical"
       size="large"
       style={{ display: "block" }}
-      className={`sales-tree-page ${categoryKind === "valuable" ? "valuable-mode" : ""}`}
+      className={`${styles.salesTreePage} ${categoryKind === "valuable" ? styles.valuableMode : ""}`}
     >
       {/* Header */}
       <SalesPivotHeader

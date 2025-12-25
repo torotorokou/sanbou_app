@@ -10,9 +10,7 @@
   border-radius: 10px;
   background-color: var(--color-bg-container);
   border-color: var(--color-border-secondary);
-  transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .ant-card:hover {
@@ -66,11 +64,8 @@
   cursor: pointer;
   border-left: 4px solid var(--color-primary);
   padding-left: calc(24px - 4px);
-  transition:
-    background-color 0.3s ease,
-    padding-left 0.3s ease,
-    border-left 0.3s ease,
-    color 0.3s ease;
+  transition: background-color 0.3s ease, padding-left 0.3s ease,
+    border-left 0.3s ease, color 0.3s ease;
 }
 
 .custom-sider-menu .ant-menu-item:hover .anticon {
@@ -82,9 +77,7 @@
   color: #ffffff !important;
   border-left: none !important;
   padding-left: 24px;
-  transition:
-    background-color 0.3s ease,
-    padding-left 0.3s ease;
+  transition: background-color 0.3s ease, padding-left 0.3s ease;
 }
 
 .custom-sider-menu .ant-menu-item-selected .anticon {

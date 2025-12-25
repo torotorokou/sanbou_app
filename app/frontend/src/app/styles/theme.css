@@ -1,0 +1,35 @@
+/* ===================================================
+ * Theme Variables
+ * ===================================================
+ * Brand colors and theme-specific tokens
+ * These are applied via ThemeProvider or generateCssVars()
+ */
+
+:root {
+  /* === Base Colors === */
+  --color-primary: #237804;
+  --color-primary-light: #52c41a;
+  --color-secondary: #1677ff;
+
+  /* === Background Colors === */
+  --color-bg-base: #f5f5f5;
+  --color-bg-container: #ffffff;
+
+  /* === Text Colors === */
+  --color-text: rgba(0, 0, 0, 0.88);
+  --color-text-secondary: rgba(0, 0, 0, 0.65);
+  --color-text-tertiary: rgba(0, 0, 0, 0.45);
+
+  /* === Border Colors === */
+  --color-border: #d9d9d9;
+  --color-border-secondary: #f0f0f0;
+
+  /* === Sider Colors === */
+  --color-sider-bg: #001529;
+  --color-sider-hover: rgba(255, 255, 255, 0.08);
+
+  /* === Portal Page Colors === */
+  --portal-border: #e8e8e8;
+  --portal-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  --portal-text-secondary: rgba(0, 0, 0, 0.55);
+}

@@ -66,9 +66,7 @@
   cursor: pointer;
   border-radius: 8px;
   overflow: hidden;
-  transition:
-    transform 0.1s,
-    box-shadow 0.2s;
+  transition: transform 0.1s, box-shadow 0.2s;
 }
 
 .sample-thumbnail:hover {

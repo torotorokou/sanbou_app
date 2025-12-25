@@ -1,11 +1,11 @@
 /* PortalPage styles - uses shared responsive breakpoints */
-@import '@/shared/styles/custom-media.css';
+@import '@app/styles/custom-media.css';
 
-.portal-page {
+.portalPage {
   padding: 32px 32px 48px;
 }
 
-.portal-hero {
+.portalHero {
   box-sizing: border-box;
   max-width: 1280px; /* bp.xl に統一 */
   margin: 0 auto 28px;
@@ -22,7 +22,7 @@
   overflow: hidden;
 }
 
-.portal-hero::before {
+.portalHero::before {
   content: '';
   position: absolute;
   /* 擬似要素のサイズも縦方向に縮小（220px → 176px）して見た目の高さを合わせる */
@@ -36,34 +36,34 @@
   pointer-events: none;
 }
 
-.portal-title {
+.portalTitle {
   margin: 0 0 6px 0 !important;
   font-weight: 750;
   letter-spacing: 0.2px;
 }
 
-.portal-subtitle {
+.portalSubtitle {
   color: var(--portal-text-secondary) !important;
 }
 
 /* sm: ≤ 767px (md未満) */
 @media (--lt-md) {
-  .portal-hero {
+  .portalHero {
     /* md 未満も縦方向を約0.8倍に */
     padding: 18px 18px;
     margin-bottom: 24px;
   }
-  .portal-title {
+  .portalTitle {
     font-size: 22px !important;
   }
 }
 
 /* sm 未満: 更に余白を詰める（カード間・ページ余白の最小化） */
 @media (--lt-sm) {
-  .portal-page {
+  .portalPage {
     padding: 4px 4px 8px;
   }
-  .portal-hero {
+  .portalHero {
     /* sm 未満は更に詰める（12px -> 約4px） */
     padding: 6px 8px;
     margin-bottom: 4px;
