@@ -88,7 +88,7 @@ def search_documents_with_category(
             except Exception:
                 pass
 
-    for doc, score in results:
+    for doc, _score in results:
         meta = doc.metadata
         doc_category_raw = meta.get("category")
         # support both 'tag' and 'tags' keys (some sources use 'tags')
@@ -170,7 +170,7 @@ def search_documents_with_category(
                 if norm_category not in item_cats:
                     continue
                 item_tags = safe_parse_tags(item.get("tags") or item.get("tag") or [])
-                item_tags_norm = set(_normalize_token(t) for t in item_tags)
+                item_tags_norm = {_normalize_token(t) for t in item_tags}
                 if norm_query_tags and not (norm_query_tags & item_tags_norm):
                     continue
                 meta = {
@@ -240,7 +240,7 @@ def search_documents_with_category(
     # フォールバック2: それでも0件ならカテゴリのみで再評価
     if not filtered:
         category_only = []
-        for doc, score in results:
+        for doc, _score in results:
             meta = doc.metadata
             doc_category_raw = meta.get("category")
             if isinstance(doc_category_raw, list):
@@ -261,7 +261,7 @@ def search_documents_with_category(
     # それでも0件なら生ヒットを返す（上位top_k、観察用）
     if not filtered:
         raw_mapped = []
-        for doc, score in results:
+        for doc, _score in results:
             meta = doc.metadata
             raw_mapped.append((meta.get("title", "Unknown"), doc.page_content, meta))
         logger.debug(

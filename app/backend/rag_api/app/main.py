@@ -14,7 +14,7 @@ from backend_shared.infra.frameworks.exception_handlers import (
 from backend_shared.infra.frameworks.logging_utils import setup_uvicorn_access_filter
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.api.routers import manuals, query  # ← query.py に router を定義
