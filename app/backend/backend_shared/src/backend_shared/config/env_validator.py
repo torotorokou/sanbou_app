@@ -148,7 +148,7 @@ def validate_environment() -> dict:
     Examples:
         >>> config = validate_environment()
         >>> print(config["database"]["database_url"])
-        postgresql://user:password@localhost:5432/db
+        postgresql://user:<PASSWORD>@localhost:5432/db
     """
 
     # データベース設定の検証

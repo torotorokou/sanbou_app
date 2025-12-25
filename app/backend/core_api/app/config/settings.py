@@ -71,7 +71,7 @@ class CoreApiSettings(BaseAppSettings):
     """
     PostgreSQL接続URL
 
-    形式: postgresql://user:password@host:port/database
+    形式: postgresql://user:<PASSWORD>@host:port/database
     環境変数 DATABASE_URL で上書き可能
     環境変数が未設定の場合は POSTGRES_* 環境変数から動的に構築
     """

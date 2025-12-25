@@ -117,6 +117,7 @@ declare -a CONTENT_EXCLUSION_PATTERNS=(
     'example'      # example_pass
     'your_'        # your_password
     'placeholder'  # placeholder
+    'app_user:app_pass@'  # sample DSN placeholder
     # BEGIN PRIVATE KEY を含むログやドキュメント
     "^\+[0-9]+\."
 )

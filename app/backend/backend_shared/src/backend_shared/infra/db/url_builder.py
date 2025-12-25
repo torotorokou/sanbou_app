@@ -102,25 +102,25 @@ def build_database_url(
 
     Examples:
         >>> # DATABASE_URL が設定されている場合
-        >>> os.environ["DATABASE_URL"] = "postgresql://user:pass@host:5432/db"
+        >>> os.environ["DATABASE_URL"] = "postgresql://user:<PASSWORD>@host:5432/db"
         >>> build_database_url()
-        'postgresql://user:pass@host:5432/db'
+        'postgresql://user:<PASSWORD>@host:5432/db'
 
         >>> # DB_USER / DB_PASSWORD から構築（推奨）
         >>> os.environ.pop("DATABASE_URL", None)
         >>> os.environ["DB_USER"] = "app_user"
-        >>> os.environ["DB_PASSWORD"] = "app_pass"
+        >>> os.environ["DB_PASSWORD"] = "example_password"
         >>> os.environ["DB_NAME"] = "mydb"
         >>> build_database_url()
-        'postgresql://app_user:app_pass@db:5432/mydb'
+        'postgresql://app_user:<PASSWORD>@db:5432/mydb'
 
         >>> # SQLAlchemy driver 指定
         >>> build_database_url(driver="psycopg")
-        'postgresql+psycopg://app_user:app_pass@db:5432/mydb'
+        'postgresql+psycopg://app_user:<PASSWORD>@db:5432/mydb'
 
         >>> # migrator モード（未設定時は app にフォールバック）
         >>> build_database_url(mode="migrator")
-        'postgresql://app_user:app_pass@db:5432/mydb'
+        'postgresql://app_user:<PASSWORD>@db:5432/mydb'
     """
     # 1. DATABASE_URL が設定されていればそのまま使用
     database_url = os.getenv("DATABASE_URL")
@@ -213,9 +213,9 @@ def build_database_url_with_driver(driver: str = "psycopg") -> str:
 
     Examples:
         >>> build_database_url_with_driver()
-        'postgresql+psycopg://user:pass@host:5432/db'
+        'postgresql+psycopg://user:<PASSWORD>@host:5432/db'
 
         >>> build_database_url_with_driver(driver="psycopg2")
-        'postgresql+psycopg2://user:pass@host:5432/db'
+        'postgresql+psycopg2://user:<PASSWORD>@host:5432/db'
     """
     return build_database_url(driver=driver, raise_on_missing=True)
