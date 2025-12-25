@@ -11,7 +11,11 @@ from uuid import UUID
 
 from backend_shared.application.logging import get_module_logger
 
-from app.core.domain.notification import NotificationOutboxItem, NotificationStatus
+from app.core.domain.notification import (
+    FailureType,
+    NotificationOutboxItem,
+    NotificationStatus,
+)
 from app.core.ports.notification_port import NotificationOutboxPort
 
 logger = get_module_logger(__name__)
@@ -85,8 +89,8 @@ class InMemoryNotificationOutboxAdapter(NotificationOutboxPort):
                 extra={"notification_id": str(id), "sent_at": sent_at.isoformat()},
             )
 
-    def mark_failed(self, id: UUID, error: str, now: datetime) -> None:
-        """送信失敗をマーク（リトライ設定含む）"""
+    def mark_failed(self, id: UUID, error: str, failure_type: FailureType, now: datetime) -> None:
+        """送信失敗をマーク（TEMP/PERM対応）"""
         with self._lock:
             if id not in self._items:
                 logger.warning(
@@ -95,25 +99,58 @@ class InMemoryNotificationOutboxAdapter(NotificationOutboxPort):
                 )
                 return
             item = self._items[id]
-            # status は pending に戻す（リトライ対象にするため）
-            item.status = NotificationStatus.PENDING
-            item.retry_count += 1
             item.last_error = error
+            item.failure_type = failure_type
 
-            # 簡易バックオフ: 1分, 5分, 30分, それ以降は 60分
-            backoff_minutes = {
-                1: 1,
-                2: 5,
-                3: 30,
-            }.get(item.retry_count, 60)
-            item.next_retry_at = now + timedelta(minutes=backoff_minutes)
+            if failure_type == FailureType.TEMPORARY:
+                # TEMPORARY: pendingに戻してリトライ対象にする
+                item.status = NotificationStatus.PENDING
+                item.retry_count += 1
 
+                # 簡易バックオフ: 1分, 5分, 30分, それ以降は 60分
+                backoff_minutes = {
+                    1: 1,
+                    2: 5,
+                    3: 30,
+                }.get(item.retry_count, 60)
+                item.next_retry_at = now + timedelta(minutes=backoff_minutes)
+
+                logger.info(
+                    f"[Outbox] Marked notification as failed (TEMPORARY)",
+                    extra={
+                        "notification_id": str(id),
+                        "retry_count": item.retry_count,
+                        "next_retry_at": item.next_retry_at.isoformat(),
+                        "error": error[:100],
+                    },
+                )
+            else:
+                # PERMANENT: failedのままでリトライしない
+                item.status = NotificationStatus.FAILED
+                logger.warning(
+                    f"[Outbox] Marked notification as failed (PERMANENT)",
+                    extra={
+                        "notification_id": str(id),
+                        "error": error[:100],
+                    },
+                )
+
+    def mark_skipped(self, id: UUID, reason: str, now: datetime) -> None:
+        """送信スキップをマーク"""
+        with self._lock:
+            if id not in self._items:
+                logger.warning(
+                    f"[Outbox] mark_skipped called for unknown id",
+                    extra={"notification_id": str(id)},
+                )
+                return
+            item = self._items[id]
+            item.status = NotificationStatus.SKIPPED
+            item.last_error = reason
             logger.info(
-                f"[Outbox] Marked notification as failed",
+                f"[Outbox] Marked notification as skipped",
                 extra={
                     "notification_id": str(id),
-                    "retry_count": item.retry_count,
-                    "next_retry_at": item.next_retry_at.isoformat(),
-                    "error": error[:100],  # エラーメッセージは100文字まで
+                    "reason": reason[:100],
                 },
             )
