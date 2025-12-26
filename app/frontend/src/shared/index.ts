@@ -74,6 +74,15 @@ export {
   useContainerSize,
   useScrollTracker,
   useSidebar,
+  // Sidebar ナビゲーション・自動クローズ
+  getIsDrawerMode,
+  getIsDrawerModeAndOpen,
+  useSidebarNavigation,
+  useAutoCloseSidebarOnRouteChange,
+  type SidebarConfig,
+  type UseSidebarNavigationParams,
+  type UseSidebarNavigationReturn,
+  type UseAutoCloseSidebarOnRouteChangeParams,
 } from "./hooks/ui";
 
 // Feature Flags ViewModel Hook
