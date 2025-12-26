@@ -22,7 +22,11 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
+from backend_shared.application.logging import get_module_logger
 from backend_shared.config.base_settings import BaseAppSettings
+
+
+logger = get_module_logger(__name__)
 
 
 TRUE_SET = {"1", "true", "yes", "on"}
@@ -203,8 +207,8 @@ def load_settings() -> LedgerApiSettings:
 
         import logging
 
-        logger = logging.getLogger(__name__)
-        logger.info(
+        _logger = logging.getLogger(__name__)
+        _logger.info(
             "✅ REPORT_ARTIFACT_SECRET validated successfully",
             extra={
                 "operation": "load_settings",
@@ -215,10 +219,10 @@ def load_settings() -> LedgerApiSettings:
     else:
         # 開発環境では警告のみ
         if is_insecure or is_weak:
-            print(
-                f"⚠️  WARNING: REPORT_ARTIFACT_SECRET is weak (length: {len(secret)})\n"
-                "   This is OK for development, but MUST be set in production!\n"
-                "   Generate: openssl rand -base64 32"
+            logger.warning(
+                f"REPORT_ARTIFACT_SECRET is weak (length: {len(secret)}). "
+                "This is OK for development, but MUST be set in production! "
+                "Generate: openssl rand -base64 32"
             )
 
     return _settings

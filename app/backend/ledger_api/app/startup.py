@@ -6,11 +6,16 @@ Git管理されたローカルファイルを使用するため、GCS同期機�
 
 from __future__ import annotations
 
+from backend_shared.application.logging import get_module_logger
+
 from .settings import settings
 
 
+logger = get_module_logger(__name__)
+
+
 def log(msg: str) -> None:
-    print(f"[startup] {msg}", flush=True)
+    logger.info(msg)
 
 
 def main() -> None:

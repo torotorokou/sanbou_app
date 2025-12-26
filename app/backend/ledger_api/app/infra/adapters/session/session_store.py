@@ -21,6 +21,11 @@ import uuid
 from dataclasses import dataclass
 from typing import Any
 
+from backend_shared.application.logging import get_module_logger
+
+
+logger = get_module_logger(__name__)
+
 
 DEFAULT_SESSION_TTL_SECONDS = int(os.getenv("INTERACTIVE_SESSION_TTL", "3600"))
 
@@ -107,8 +112,8 @@ class SessionStore:
             try:
                 backend = _RedisSessionBackend(redis_url)
             except Exception as exc:  # pragma: no cover - falls back to memory
-                print(
-                    f"[WARN] redis backend not available ({exc}); falling back to in-memory store"
+                logger.warning(
+                    f"redis backend not available ({exc}); falling back to in-memory store"
                 )
                 backend = None
         self._backend = backend or _InMemorySessionBackend()

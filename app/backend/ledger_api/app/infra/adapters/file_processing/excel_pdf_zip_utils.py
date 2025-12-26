@@ -13,7 +13,11 @@ from typing import Any
 
 from fastapi.responses import StreamingResponse
 
+from backend_shared.application.logging import get_module_logger
 from backend_shared.utils.datetime_utils import format_datetime_iso, now_in_app_timezone
+
+
+logger = get_module_logger(__name__)
 
 
 # LibreOffice filter options crafted to embed CJK fonts and keep fidelity.
@@ -36,7 +40,7 @@ _LOG_PREFIX = "[REPORT_PIPELINE]"
 
 
 def _log(message: str) -> None:
-    print(f"{_LOG_PREFIX} {message}")
+    logger.debug(f"{_LOG_PREFIX} {message}")
 
 
 def _ensure_bytes(data: Any, label: str) -> bytes:

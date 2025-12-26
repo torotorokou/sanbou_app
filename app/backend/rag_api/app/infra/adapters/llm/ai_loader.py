@@ -10,6 +10,10 @@ from openai import RateLimitError
 from app.core.usecases.rag.file_ingest_service import get_resource_paths, load_json_data
 from app.infra.adapters.llm.openai_client import generate_answer
 from app.shared.chunk_utils import load_faiss_vectorstore
+from backend_shared.application.logging import get_module_logger
+
+
+logger = get_module_logger(__name__)
 
 
 def get_answer(
@@ -44,16 +48,16 @@ def get_answer(
         paths = resource_paths_func()
         json_path = str(paths.get("JSON_PATH"))
         faiss_path = str(paths.get("FAISS_PATH"))
-        print(
-            "[DEBUG][ai_loader] resource paths:",
+        logger.debug(
+            "resource paths: %s",
             {"JSON_PATH": json_path, "FAISS_PATH": faiss_path},
         )
 
         # ファイル存在チェック
         json_exists = os.path.exists(json_path)
         faiss_exists = os.path.exists(faiss_path)
-        print(
-            "[DEBUG][ai_loader] exists:",
+        logger.debug(
+            "exists: %s",
             {
                 "json_exists": json_exists,
                 "faiss_exists": faiss_exists,
@@ -68,7 +72,7 @@ def get_answer(
             if not faiss_exists:
                 missing.append("FAISSベクトルストア")
             error_msg = f"必要なデータファイルが見つかりません: {', '.join(missing)}"
-            print(f"[DEBUG][ai_loader] {error_msg}")
+            logger.debug(error_msg)
             return {"error": error_msg, "answer": None, "sources": [], "pages": None}
 
         json_data = json_loader(json_path)
@@ -80,8 +84,8 @@ def get_answer(
             sources = result.get("sources")
             sources_len = len(sources) if isinstance(sources, list) else 0
             pages_len = len(pages) if isinstance(pages, list) else 0
-            print(
-                "[DEBUG][ai_loader] answer_func returned:",
+            logger.debug(
+                "answer_func returned: %s",
                 {
                     "has_answer": bool(result.get("answer")),
                     "sources_len": sources_len,
@@ -96,7 +100,7 @@ def get_answer(
     except RateLimitError as rate_err:
         # OpenAI RateLimitError（insufficient_quota等）
         error_msg = str(rate_err)
-        print("[DEBUG][ai_loader] RateLimitError:", repr(rate_err))
+        logger.warning("RateLimitError: %r", rate_err)
 
         # insufficient_quotaの判定
         error_code = "OPENAI_RATE_LIMIT"
@@ -112,7 +116,7 @@ def get_answer(
         }
     except Exception as e:
         # その他の予期しない例外
-        print("[DEBUG][ai_loader] error:", repr(e))
+        logger.error("error: %r", e)
         return {
             "error": str(e),
             "error_code": "OPENAI_ERROR",

@@ -3,7 +3,11 @@ from pathlib import Path
 
 import pandas as pd
 
+from backend_shared.application.logging import get_module_logger
 from backend_shared.utils.dataframe_utils import clean_na_strings
+
+
+logger = get_module_logger(__name__)
 
 
 def load_master_and_template(master_path: str | Path) -> pd.DataFrame:
@@ -25,7 +29,7 @@ def load_master_and_template(master_path: str | Path) -> pd.DataFrame:
         # 絶対パスの場合はそのまま使用（/work/app は既に修正済み）
         full_path = Path(master_path)
 
-    print(f"[INFO] Loading master file from: {full_path}")
+    logger.info(f"Loading master file from: {full_path}")
 
     # <NA>文字列をfloat変換エラーから守るため、na_valuesを指定
     na_values = ["<NA>", "NaN", "nan", "None", "NULL", "null", "#N/A", "#NA", ""]

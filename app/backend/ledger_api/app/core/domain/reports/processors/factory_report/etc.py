@@ -5,7 +5,11 @@ from app.infra.report_utils.formatters import (
     to_japanese_era,
     to_japanese_month_day,
 )
+from backend_shared.application.logging import get_module_logger
 from backend_shared.utils.dataframe_utils_optimized import clean_na_strings_vectorized
+
+
+logger = get_module_logger(__name__)
 
 
 def generate_summary_dataframe(
@@ -26,7 +30,7 @@ def generate_summary_dataframe(
     """
     if master_csv_etc is None or master_csv_etc.empty:
         # etc テンプレートが無い場合は加算行なしでそのまま返す
-        print("[WARN] etcマスターCSVが提供されていません。合計行の追加をスキップします。")
+        logger.warning("etcマスターCSVが提供されていません。合計行の追加をスキップします。")
         return df.copy()
 
     etc_csv = master_csv_etc

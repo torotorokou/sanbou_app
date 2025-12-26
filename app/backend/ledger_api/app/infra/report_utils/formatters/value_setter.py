@@ -1,5 +1,10 @@
 import pandas as pd
 
+from backend_shared.application.logging import get_module_logger
+
+
+logger = get_module_logger(__name__)
+
 
 def set_value(master_csv, category_name: str, level1_name: str, level2_name: str, value):
     """
@@ -20,7 +25,7 @@ def set_value(master_csv, category_name: str, level1_name: str, level2_name: str
     """
     # ABC項目は必須（空欄は許さない前提とします）
     if not category_name:
-        print("⚠️ ABC項目が未指定です。スキップします。")
+        logger.warning("ABC項目が未指定です。スキップします。")
         return
 
     # --- 条件構築 ---
@@ -38,8 +43,8 @@ def set_value(master_csv, category_name: str, level1_name: str, level2_name: str
 
     # --- 該当行の確認 ---
     if cond.sum() == 0:
-        print(
-            f"⚠️ 該当行が見つかりません（大項目: {category_name}, 小項目1: {level1_name}, 小項目2: {level2_name}）"
+        logger.warning(
+            f"該当行が見つかりません（大項目: {category_name}, 小項目1: {level1_name}, 小項目2: {level2_name}）"
         )
         return
 
@@ -59,7 +64,7 @@ def set_value_fast(df, match_columns, match_values, value, value_col="値"):
             cond &= df[col] == val
 
     if cond.sum() == 0:
-        print(f"⚠️ 該当行なし: {dict(zip(match_columns, match_values, strict=True))}")
+        logger.warning(f"該当行なし: {dict(zip(match_columns, match_values, strict=True))}")
         return
 
     df.loc[cond, value_col] = value
@@ -105,7 +110,7 @@ def set_value_fast_safe(
             cond &= df_copy[col] == val
 
     if cond.sum() == 0:
-        print(f"⚠️ 該当行なし: {dict(zip(match_columns, match_values, strict=True))}")
+        logger.warning(f"該当行なし: {dict(zip(match_columns, match_values, strict=True))}")
         return df_copy
 
     # 値の型に応じて安全に代入できるよう、『値』列のdtypeを適宜アップキャスト

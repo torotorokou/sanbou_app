@@ -1,6 +1,11 @@
 import os
 from pathlib import Path
 
+from backend_shared.application.logging import get_module_logger
+
+
+logger = get_module_logger(__name__)
+
 
 def _resolve_root() -> str:
     """アプリ基底ディレクトリを解決 (後方互換)。
@@ -14,12 +19,10 @@ def _resolve_root() -> str:
 
 
 BASE_DIR = Path(_resolve_root())
-print(
-    "APP_ROOT_DIR:",
+logger.debug(
+    "APP_ROOT_DIR: %s (fallback APP_BASE_DIR=%s) => %s",
     os.environ.get("APP_ROOT_DIR"),
-    "(fallback APP_BASE_DIR=",
     os.environ.get("APP_BASE_DIR"),
-    ") =>",
     BASE_DIR,
 )
 

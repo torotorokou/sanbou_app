@@ -322,7 +322,7 @@ class InteractiveReportProcessingService(ReportProcessingService):
             # Fallback to today if date extraction fails
             from datetime import datetime
 
-            print(f"[WARN] report_date fallback due to: {e}")
+            logger.warning(f"report_date fallback due to: {e}")
             report_date = datetime.now().date().isoformat()
 
         extra_payload = self._to_serializable(payload)
