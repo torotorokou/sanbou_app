@@ -9,6 +9,7 @@
 ## 🛡️ 多層防御の仕組み
 
 ### 第1層: .gitignore
+
 **目的**: ファイルシステムレベルでの除外
 
 ```gitignore
@@ -23,6 +24,7 @@
 ```
 
 ### 第2層: .gitattributes + Git フィルター
+
 **目的**: Git の内部処理レベルでのブロック
 
 ```gitattributes
@@ -33,21 +35,26 @@ secrets/*.secrets filter=forbidden
 ```
 
 Git 設定:
+
 ```bash
 git config filter.forbidden.clean "echo 'ERROR: このファイルはGitに追加できません' >&2; exit 1"
 ```
 
 ### 第3層: prepare-commit-msg フック
+
 **目的**: コミット準備段階での警告
 
 - env/ や secrets/ のファイル変更を検出
 - テンプレートファイルと実設定ファイルを区別して表示
 
 ### 第4層: pre-commit フック
+
 **目的**: コミット実行直前の最終チェック
 
 チェック項目:
+
 1. 機密ファイルパターンの検出
+
    - `env/.env.*` （.example, .template 以外）
    - `secrets/*.secrets`
    - `secrets/gcp-sa*.json`
@@ -61,9 +68,11 @@ git config filter.forbidden.clean "echo 'ERROR: このファイルはGitに追�
 **エラー時**: コミットを中止し、ファイルを unstage するよう指示
 
 ### 第5層: commit-msg フック
+
 **目的**: コミットメッセージ内の機密情報チェック
 
 チェック項目:
+
 - パスワード文字列
 - トークン文字列
 - API キー
@@ -73,9 +82,11 @@ git config filter.forbidden.clean "echo 'ERROR: このファイルはGitに追�
 **警告時**: ユーザーに確認を求める
 
 ### 第6層: pre-push フック
+
 **目的**: リモートプッシュ前の最終防衛線
 
 チェック項目:
+
 1. 機密ファイルの存在（Git 履歴全体）
 2. パスワードパターン（全コミット）
 3. Git 追跡対象の整合性
@@ -84,11 +95,13 @@ git config filter.forbidden.clean "echo 'ERROR: このファイルはGitに追�
 **エラー時**: プッシュを中止し、履歴クリーンアップを推奨
 
 ### 第7層: GitHub Actions
+
 **目的**: CI/CD パイプラインでの二重チェック
 
 ワークフロー: `.github/workflows/security-check.yml`
 
 チェック項目:
+
 1. 機密ファイルの検出
 2. 機密情報パターンのスキャン
 3. .gitignore の検証
@@ -313,10 +326,12 @@ bash -x .git/hooks/pre-commit
 ### 問題が発生した場合
 
 1. **フックが動作しない**
+
    - `bash scripts/setup_git_hooks.sh` を再実行
    - 実行権限を確認: `ls -la .git/hooks/`
 
 2. **誤って機密ファイルをコミットした**
+
    - 直ちに `git reset --soft HEAD~1` を実行
    - セキュリティチームに報告
 

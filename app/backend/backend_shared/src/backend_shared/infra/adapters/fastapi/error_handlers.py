@@ -12,13 +12,14 @@
 
 from fastapi import Request
 from fastapi.responses import JSONResponse
+
 from backend_shared.core.domain.contract import ProblemDetails
 
 
 class DomainError(Exception):
     """
     ドメインエラー（ビジネスロジック層のエラー）
-    
+
     使用例:
         raise DomainError(
             code="VALIDATION_ERROR",
@@ -27,7 +28,7 @@ class DomainError(Exception):
             title="バリデーションエラー"
         )
     """
-    
+
     def __init__(
         self,
         code: str,
@@ -47,12 +48,12 @@ class DomainError(Exception):
 async def handle_domain_error(request: Request, exc: DomainError) -> JSONResponse:
     """
     ドメインエラーハンドラ
-    
+
     ProblemDetails 形式でエラーを返す
     """
     # traceId を取得（例外に含まれるか、request.state から）
     trace_id = exc.trace_id or getattr(request.state, "trace_id", None)
-    
+
     # ProblemDetails を作成
     pd = ProblemDetails(
         status=exc.status,
@@ -61,7 +62,7 @@ async def handle_domain_error(request: Request, exc: DomainError) -> JSONRespons
         title=exc.title,
         traceId=trace_id,
     )
-    
+
     return JSONResponse(
         status_code=exc.status,
         content=pd.model_dump(by_alias=True),  # camelCase で出力
@@ -71,11 +72,11 @@ async def handle_domain_error(request: Request, exc: DomainError) -> JSONRespons
 async def handle_unexpected(request: Request, exc: Exception) -> JSONResponse:
     """
     予期しないエラーハンドラ
-    
+
     500 Internal Server Error として ProblemDetails を返す
     """
     trace_id = getattr(request.state, "trace_id", None)
-    
+
     pd = ProblemDetails(
         status=500,
         code="INTERNAL_ERROR",
@@ -83,12 +84,13 @@ async def handle_unexpected(request: Request, exc: Exception) -> JSONResponse:
         title="Unexpected error",
         traceId=trace_id,
     )
-    
+
     # ログ出力（本番環境では詳細を記録）
     import logging
+
     logger = logging.getLogger(__name__)
     logger.exception(f"Unexpected error [traceId={trace_id}]", exc_info=exc)
-    
+
     return JSONResponse(
         status_code=500,
         content=pd.model_dump(by_alias=True),
@@ -98,10 +100,10 @@ async def handle_unexpected(request: Request, exc: Exception) -> JSONResponse:
 def register_error_handlers(app):
     """
     エラーハンドラを登録
-    
+
     使用例:
         from backend_shared.api.error_handlers import register_error_handlers
-        
+
         app = FastAPI()
         register_error_handlers(app)
     """

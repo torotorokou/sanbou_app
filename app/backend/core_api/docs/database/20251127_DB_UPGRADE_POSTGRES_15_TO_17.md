@@ -24,11 +24,13 @@ PostgreSQL 16 から 17 へ **論理ダンプ＋リストア方式**で安全に
 ## 📐 方針
 
 ### 1. **非破壊アプローチ**
+
 - 旧クラスタ（v16）のボリュームは削除しない
 - 新規ボリュームに v17 クラスタを新規作成
 - `down -v` は **絶対禁止**（ボリューム消去のため）
 
 ### 2. **移行ステップ**
+
 1. 旧ボリュームのメジャーバージョン確認（`PG_VERSION` ファイル読み取り）
 2. 旧ボリュームの物理バックアップ（tar.gz）
 3. 全DB論理ダンプ（`pg_dumpall`）
@@ -39,12 +41,13 @@ PostgreSQL 16 から 17 へ **論理ダンプ＋リストア方式**で安全に
 8. 動作確認
 
 ### 3. **環境ごとの違い**
-| 環境 | ボリューム種別 | 対象ボリューム名 | 注意点 |
-|------|---------------|------------------|--------|
-| **local_dev** | ホストバインド | `data/postgres` | 物理バックアップが高速 |
+
+| 環境          | ボリューム種別     | 対象ボリューム名    | 注意点                     |
+| ------------- | ------------------ | ------------------- | -------------------------- |
+| **local_dev** | ホストバインド     | `data/postgres`     | 物理バックアップが高速     |
 | **local_stg** | 名前付きボリューム | `local_stg_db_data` | docker volume コマンド使用 |
-| **vm_stg** | 名前付きボリューム | `vm_stg_db_data` | 本番リハーサル推奨 |
-| **vm_prod** | 名前付きボリューム | `vm_prod_db_data` | メンテナンスウィンドウ必須 |
+| **vm_stg**    | 名前付きボリューム | `vm_stg_db_data`    | 本番リハーサル推奨         |
+| **vm_prod**   | 名前付きボリューム | `vm_prod_db_data`   | メンテナンスウィンドウ必須 |
 
 ---
 
@@ -86,46 +89,53 @@ make pg.verify ENV=local_dev
 ## 🔧 実装済みツール
 
 ### Makefile ターゲット
-| ターゲット | 説明 | 引数 |
-|-----------|------|------|
-| `make pg.version` | 既存ボリュームの PG バージョン確認 | `ENV=<env>` |
-| `make pg.archive` | 旧ボリュームの tar.gz バックアップ | `ENV=<env>` |
-| `make pg.dumpall` | pg_dumpall で全DB論理ダンプ | `ENV=<env>` |
-| `make pg.compose17` | v17 用 Compose オーバーライド生成 | `ENV=<env>` |
-| `make pg.up17` | v17 クラスタ起動 | `ENV=<env>` |
-| `make pg.restore` | ダンプをリストア | `ENV=<env> SQL=<path>` |
-| `make pg.extensions` | 拡張機能再有効化 | `ENV=<env>` |
-| `make pg.verify` | 動作確認（version/DB一覧/拡張一覧） | `ENV=<env>` |
+
+| ターゲット           | 説明                                | 引数                   |
+| -------------------- | ----------------------------------- | ---------------------- |
+| `make pg.version`    | 既存ボリュームの PG バージョン確認  | `ENV=<env>`            |
+| `make pg.archive`    | 旧ボリュームの tar.gz バックアップ  | `ENV=<env>`            |
+| `make pg.dumpall`    | pg_dumpall で全DB論理ダンプ         | `ENV=<env>`            |
+| `make pg.compose17`  | v17 用 Compose オーバーライド生成   | `ENV=<env>`            |
+| `make pg.up17`       | v17 クラスタ起動                    | `ENV=<env>`            |
+| `make pg.restore`    | ダンプをリストア                    | `ENV=<env> SQL=<path>` |
+| `make pg.extensions` | 拡張機能再有効化                    | `ENV=<env>`            |
+| `make pg.verify`     | 動作確認（version/DB一覧/拡張一覧） | `ENV=<env>`            |
 
 ### スクリプト
-| ファイル | 説明 |
-|---------|------|
-| `scripts/pg/print_pg_version_in_volume.sh` | ボリューム内の PG_VERSION 読み取り |
-| `scripts/pg/archive_volume_tar.sh` | ボリューム全体を tar.gz 化 |
-| `scripts/pg/dumpall_from_v16.sh` | v16 コンテナを一時起動して pg_dumpall |
-| `scripts/pg/restore_to_v17.sh` | v17 へ SQL リストア |
-| `sql/extensions_after_restore.sql` | 拡張再有効化テンプレート |
+
+| ファイル                                   | 説明                                  |
+| ------------------------------------------ | ------------------------------------- |
+| `scripts/pg/print_pg_version_in_volume.sh` | ボリューム内の PG_VERSION 読み取り    |
+| `scripts/pg/archive_volume_tar.sh`         | ボリューム全体を tar.gz 化            |
+| `scripts/pg/dumpall_from_v16.sh`           | v16 コンテナを一時起動して pg_dumpall |
+| `scripts/pg/restore_to_v17.sh`             | v17 へ SQL リストア                   |
+| `sql/extensions_after_restore.sql`         | 拡張再有効化テンプレート              |
 
 ---
 
 ## 🔄 Rollback 手順
 
 ### 前提
+
 - 旧ボリュームは削除していないこと
 - `down -v` を実行していないこと
 
 ### 手順
+
 1. **v17 を停止**
+
    ```bash
    docker compose -f docker/docker-compose.dev.yml -f docker-compose.pg17.yml down
    ```
 
 2. **元の v16 構成で再起動**
+
    ```bash
    make up ENV=local_dev
    ```
 
 3. **データ確認**
+
    ```bash
    make pg.verify ENV=local_dev
    ```
@@ -144,12 +154,14 @@ make pg.verify ENV=local_dev
 ## 🧩 拡張機能の再有効化
 
 ### 確認方法
+
 ```sql
 -- 旧環境で確認
 \dx
 ```
 
 ### 再有効化
+
 `sql/extensions_after_restore.sql` を編集してから実行：
 
 ```sql
@@ -161,6 +173,7 @@ CREATE EXTENSION IF NOT EXISTS vector;
 ```
 
 実行：
+
 ```bash
 make pg.extensions ENV=local_dev
 ```
@@ -170,8 +183,10 @@ make pg.extensions ENV=local_dev
 ## 🚨 トラブルシュート
 
 ### 1. 認証エラー (`FATAL: password authentication failed`)
+
 **原因**: `.env` ファイルの `POSTGRES_PASSWORD` が不一致  
 **対策**:
+
 ```bash
 # 環境変数を確認
 make config ENV=local_dev | grep POSTGRES_PASSWORD
@@ -180,8 +195,10 @@ make config ENV=local_dev | grep POSTGRES_PASSWORD
 ```
 
 ### 2. 権限エラー (`permission denied for schema public`)
+
 **原因**: ダンプに GRANT 文が含まれていない  
 **対策**:
+
 ```bash
 # pg_dumpall に --globals-only を追加
 docker exec <container> pg_dumpall -U postgres --globals-only > globals.sql
@@ -189,7 +206,9 @@ psql -h localhost -U postgres < globals.sql
 ```
 
 ### 3. 巨大テーブルでリストアが遅い
+
 **対策**: インデックス再作成を後回しに
+
 ```bash
 # --section オプションで分割
 pg_restore --section=pre-data your.dump
@@ -198,17 +217,21 @@ pg_restore --section=post-data your.dump  # インデックス・制約
 ```
 
 ### 4. PostGIS バージョン不整合
+
 **エラー例**: `postgis is not available for postgres:17`  
 **対策**: `docker-compose.pg17.yml` の image を変更
+
 ```yaml
 services:
   db:
-    image: postgis/postgis:17-3.5  # PostGIS 3.5 for PG 17
+    image: postgis/postgis:17-3.5 # PostGIS 3.5 for PG 17
 ```
 
 ### 5. pg_dumpall が途中で止まる
+
 **原因**: 長時間ロックまたは巨大オブジェクト  
 **対策**:
+
 ```bash
 # 単一DBずつダンプ
 pg_dump -U postgres -d sanbou_dev -Fc > sanbou_dev.dump
@@ -220,11 +243,13 @@ pg_restore -U postgres -d postgres sanbou_dev.dump
 ## 📝 注意事項
 
 ### ❌ やってはいけないこと
+
 1. **`docker compose down -v`** を実行（ボリューム削除）
 2. 旧ボリュームの上書き（必ず新規ボリュームに移行）
 3. バックアップなしでの本番移行
 
 ### ✅ 推奨事項
+
 1. **必ず dev 環境でリハーサル**
 2. 物理バックアップ + 論理ダンプの **二段構え**
 3. メンテナンスウィンドウの確保（本番は30分～2時間想定）
@@ -243,17 +268,21 @@ pg_restore -U postgres -d postgres sanbou_dev.dump
 ## 🎓 追加情報
 
 ### なぜ pg_upgrade を使わないのか？
+
 - Docker ボリュームの制約（両バージョンの同時マウントが複雑）
 - 拡張機能のバイナリ互換性リスク
 - ロールバックの簡便性（論理ダンプは汎用的）
 
 ### 本番環境での移行タイミング
+
 1. **事前準備** (1週間前):
+
    - dev/stg 環境での完全リハーサル
    - データ量に基づく所要時間計測
    - ロールバック手順の確認
 
 2. **当日** (深夜メンテナンス):
+
    - 全サービス停止
    - 論理ダンプ取得（15分）
    - v17 起動＋リストア（30～90分）
@@ -268,4 +297,5 @@ pg_restore -U postgres -d postgres sanbou_dev.dump
 
 **作成者**: AI (GitHub Copilot)  
 **更新履歴**:
+
 - 2025-10-30: 初版作成（v16 → v17 対応）

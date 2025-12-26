@@ -26,9 +26,11 @@
 ### 1. バックエンド
 
 #### 1.1 SQL / Repository
+
 **ファイル**: `app/backend/core_api/app/infra/adapters/dashboard/dashboard_target_repo.py`
 
 **変更内容**:
+
 - `get_by_date_optimized` メソッドのSQLクエリを拡張
 - 以下の新しいフィールドを計算・返却：
   - `month_target_to_date_ton`: 月初〜昨日までの日次目標の合計
@@ -39,6 +41,7 @@
   - `week_actual_to_date_ton`: 週初〜昨日までの実績合計（`v_receive_daily` より）
 
 **SQL処理の詳細**:
+
 ```sql
 -- 昨日の日付を計算
 yesterday AS (
@@ -63,6 +66,7 @@ month_target_total AS (
 ```
 
 #### 1.2 Pydantic Schema
+
 **ファイル**: `app/backend/core_api/app/presentation/schemas/__init__.py`
 
 **変更内容**:
@@ -85,6 +89,7 @@ week_actual_to_date_ton: Optional[float] = Field(default=None, description="Week
 ### 2. フロントエンド
 
 #### 2.1 DTO
+
 **ファイル**: `app/frontend/src/features/dashboard/ukeire/kpi-targets/infrastructure/targetMetrics.api.ts`
 
 **変更内容**:
@@ -93,7 +98,7 @@ week_actual_to_date_ton: Optional[float] = Field(default=None, description="Week
 ```typescript
 export interface TargetMetricsDTO {
   // ... 既存フィールド ...
-  
+
   // New fields for achievement mode calculation
   month_target_to_date_ton: number | null;
   month_target_total_ton: number | null;
@@ -105,16 +110,19 @@ export interface TargetMetricsDTO {
 ```
 
 #### 2.2 ViewModel
+
 **ファイル**: `app/frontend/src/features/dashboard/ukeire/kpi-targets/application/useTargetsVM.ts`
 
 **変更内容**:
 
 1. **新しい型の追加**:
+
 ```typescript
 export type AchievementMode = "toDate" | "toEnd";
 ```
 
 2. **UseTargetsVMParams の拡張**:
+
 ```typescript
 export type UseTargetsVMParams = {
   mode: AchievementMode;
@@ -133,12 +141,14 @@ export type UseTargetsVMParams = {
 ```
 
 3. **モードに応じた目標値の切り替え**:
+
 ```typescript
 const monthTarget = mode === "toDate" ? monthTargetToDate : monthTargetTotal;
 const weekTarget = mode === "toDate" ? weekTargetToDate : weekTargetTotal;
 ```
 
 4. **ラベルの動的変更**:
+
 ```typescript
 {
   key: "month",
@@ -149,51 +159,63 @@ const weekTarget = mode === "toDate" ? weekTargetToDate : weekTargetTotal;
 ```
 
 **設計のポイント**:
+
 - 達成率の計算は TargetCard コンポーネントに任せる（変更なし）
 - ViewModel は「どの目標値を使うか」の切り替えのみを担当
 - SOLID原則に従い、責務を分離
 
 #### 2.3 エクスポート
+
 **ファイル**: `app/frontend/src/features/dashboard/ukeire/kpi-targets/index.ts`
 
 **変更内容**:
+
 ```typescript
-export { 
-  useTargetsVM, 
-  type AchievementMode, 
-  type UseTargetsVMParams 
+export {
+  useTargetsVM,
+  type AchievementMode,
+  type UseTargetsVMParams,
 } from "./application/useTargetsVM";
 ```
 
 **ファイル**: `app/frontend/src/features/dashboard/ukeire/index.ts`
 
 **変更内容**:
+
 ```typescript
-export { 
-  useTargetsVM, 
-  type AchievementMode, 
-  type UseTargetsVMParams 
+export {
+  useTargetsVM,
+  type AchievementMode,
+  type UseTargetsVMParams,
 } from "./kpi-targets/application/useTargetsVM";
 ```
 
 #### 2.4 Page Component
+
 **ファイル**: `app/frontend/src/pages/dashboard/ukeire/InboundForecastDashboardPage.tsx`
 
 **変更内容**:
 
 1. **import の追加**:
+
 ```typescript
 import { useState } from "react";
 import { Button, Space } from "antd";
-import { useTargetsVM, type AchievementMode } from "@/features/dashboard/ukeire";
+import {
+  useTargetsVM,
+  type AchievementMode,
+} from "@/features/dashboard/ukeire";
 ```
 
 2. **state の追加**:
+
 ```typescript
-const [achievementMode, setAchievementMode] = useState<AchievementMode>("toDate");
+const [achievementMode, setAchievementMode] =
+  useState<AchievementMode>("toDate");
 ```
 
 3. **useTargetsVM の呼び出し**:
+
 ```typescript
 const targetCardVM = useTargetsVM({
   mode: achievementMode,
@@ -209,8 +231,11 @@ const targetCardVM = useTargetsVM({
 ```
 
 4. **モード切り替えボタンの追加**:
+
 ```tsx
-{/* モード切り替えボタン */}
+{
+  /* モード切り替えボタン */
+}
 <div style={{ marginBottom: layout.gutter }}>
   <Space wrap>
     <Button
@@ -228,10 +253,11 @@ const targetCardVM = useTargetsVM({
       月末・週末目標に対する達成率
     </Button>
   </Space>
-</div>
+</div>;
 ```
 
 5. **TargetCard の呼び出し変更**:
+
 ```tsx
 <TargetCard rows={targetCardVM.rows} isoWeek={isoWeek} />
 ```
@@ -241,6 +267,7 @@ const targetCardVM = useTargetsVM({
 ## 動作確認手順
 
 ### 前提条件
+
 - Docker環境が起動している（`make up ENV=local_dev`）
 - PostgreSQL に `mart.v_target_card_per_day` と `mart.v_receive_daily` が存在する
 - 目標データと実績データが登録されている
@@ -255,6 +282,7 @@ curl -X GET "http://localhost:8001/core_api/dashboard/target?date=2025-11-01&mod
 ```
 
 **期待される結果**:
+
 - レスポンスに以下のフィールドが含まれること
   - `month_target_to_date_ton`
   - `month_target_total_ton`
@@ -265,6 +293,7 @@ curl -X GET "http://localhost:8001/core_api/dashboard/target?date=2025-11-01&mod
 - 値が数値またはnullであること
 
 **サンプルレスポンス**:
+
 ```json
 {
   "ddate": "2025-11-16",
@@ -291,16 +320,19 @@ curl -X GET "http://localhost:8001/core_api/dashboard/target?date=2025-11-01&mod
 #### 2. フロントエンドUIの動作確認
 
 1. **ブラウザで受入ダッシュボードを開く**
+
    ```
    http://localhost:3000/dashboard/ukeire
    ```
 
 2. **モード切り替えボタンの表示確認**
+
    - 月ナビゲーションの下に2つのボタンが表示されること
    - 「昨日までの目標に対する達成率」（デフォルトで選択）
    - 「月末・週末目標に対する達成率」
 
 3. **デフォルトモード（toDate）の確認**
+
    - 目標カードのラベルが以下であること：
      - "当月目標（昨日まで）"
      - "週目標（昨日まで）"
@@ -308,6 +340,7 @@ curl -X GET "http://localhost:8001/core_api/dashboard/target?date=2025-11-01&mod
    - 達成率が「昨日までの累計実績 ÷ 昨日までの累計目標」で計算されていること
 
 4. **モード切り替え（toEnd）の確認**
+
    - 「月末・週末目標に対する達成率」ボタンをクリック
    - 目標カードのラベルが以下に変更されること：
      - "当月最終目標"
@@ -325,13 +358,14 @@ curl -X GET "http://localhost:8001/core_api/dashboard/target?date=2025-11-01&mod
 
 **例**: 11月の場合（昨日 = 11/16と仮定）
 
-| 項目 | toDate モード | toEnd モード |
-|------|--------------|--------------|
-| **月目標** | 3,200t（11/1〜11/16の累計） | 5,000t（11月全体のトータル） |
-| **月実績** | 3,000t（11/1〜11/16の累計） | 3,000t（同じ） |
-| **月達成率** | 3000 ÷ 3200 = **93.8%** | 3000 ÷ 5000 = **60.0%** |
+| 項目         | toDate モード               | toEnd モード                 |
+| ------------ | --------------------------- | ---------------------------- |
+| **月目標**   | 3,200t（11/1〜11/16の累計） | 5,000t（11月全体のトータル） |
+| **月実績**   | 3,000t（11/1〜11/16の累計） | 3,000t（同じ）               |
+| **月達成率** | 3000 ÷ 3200 = **93.8%**     | 3000 ÷ 5000 = **60.0%**      |
 
 **検証ポイント**:
+
 - toDate モードでは「進捗に対する達成度」が分かる
 - toEnd モードでは「最終目標に対する進捗度」が分かる
 - 同じ実績でも分母が違うため、達成率が異なることを確認
@@ -339,9 +373,11 @@ curl -X GET "http://localhost:8001/core_api/dashboard/target?date=2025-11-01&mod
 #### 4. エラーハンドリングの確認
 
 1. **APIエラー時**
+
    - バックエンドを停止 → 「目標データ取得エラー」アラートが表示されること
 
 2. **データ未取得時**
+
    - ローディング中に「データ読み込み中」アラートが表示されること
 
 3. **NULL値の処理**
@@ -360,24 +396,29 @@ curl -X GET "http://localhost:8001/core_api/dashboard/target?date=2025-11-01&mod
 ## 技術的なポイント
 
 ### 1. 既存テーブルを活用
+
 - `mart.v_target_card_per_day` を利用し、新しいテーブルやカラムの追加は不要
 - SQLクエリで集計処理を行い、バックエンドで完結
 
 ### 2. 責務の分離
+
 - **Backend**: 目標・実績の集計ロジック
 - **ViewModel (useTargetsVM)**: モードに応じた値の切り替え
 - **UI (TargetCard)**: 達成率の計算と表示
 
 ### 3. 型安全性
+
 - TypeScript の型システムを活用
 - `AchievementMode` 型で "toDate" | "toEnd" のみを許可
 - DTO/Schema で1:1の型対応
 
 ### 4. レスポンシブ対応
+
 - ボタンサイズをレイアウトモードに応じて調整
 - Space コンポーネントの wrap で改行対応
 
 ### 5. キャッシュ対応
+
 - `useTargetMetrics` のクライアント側キャッシュ（60秒TTL）が有効
 - `BuildTargetCardUseCase` のサーバー側キャッシュも有効
 - モード切り替え時はキャッシュされたデータを再利用（APIリクエストなし）
@@ -391,6 +432,7 @@ curl -X GET "http://localhost:8001/core_api/dashboard/target?date=2025-11-01&mod
 **原因**: APIレスポンスに新フィールドが含まれていない
 
 **解決策**:
+
 1. バックエンドのコードが最新か確認
 2. Dockerコンテナを再起動
    ```bash
@@ -403,6 +445,7 @@ curl -X GET "http://localhost:8001/core_api/dashboard/target?date=2025-11-01&mod
 **原因**: import が不足している
 
 **解決策**:
+
 1. フロントエンドのビルドエラーを確認
    ```bash
    cd app/frontend
@@ -415,6 +458,7 @@ curl -X GET "http://localhost:8001/core_api/dashboard/target?date=2025-11-01&mod
 **原因**: useTargetsVM のパラメータマッピングが間違っている
 
 **解決策**:
+
 1. `InboundForecastDashboardPage.tsx` の useTargetsVM 呼び出しを確認
 2. `targetMetrics` のフィールド名が正しいか確認
 3. ブラウザの開発者ツールで API レスポンスを確認
@@ -424,6 +468,7 @@ curl -X GET "http://localhost:8001/core_api/dashboard/target?date=2025-11-01&mod
 ## まとめ
 
 ### 実装の特徴
+
 - ✅ 既存のビュー `mart.v_target_card_per_day` をそのまま活用
 - ✅ ALTER TABLE などのスキーマ変更は不要
 - ✅ クリーンアーキテクチャに準拠（Domain/Application/UI/Infrastructure の分離）
@@ -432,6 +477,7 @@ curl -X GET "http://localhost:8001/core_api/dashboard/target?date=2025-11-01&mod
 - ✅ 既存機能への影響なし（後方互換性あり）
 
 ### 今後の拡張案
+
 - localStorage を使ったモードの永続化
 - モードごとの色分け・可視化の強化
 - 週次・日次ビューでのモード対応

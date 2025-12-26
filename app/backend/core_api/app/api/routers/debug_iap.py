@@ -14,8 +14,10 @@ IAP のヘッダが正しく転送されているかを確認するためのデ�
     アクセス制限を設けることを推奨します。
   - JWT の検証は行っていません（ヘッダの受信確認のみ）。
 """
+
+from typing import Any
+
 from fastapi import APIRouter, Request
-from typing import Dict, Any
 
 router = APIRouter(
     prefix="/debug",
@@ -24,7 +26,7 @@ router = APIRouter(
 
 
 @router.get("/iap-headers", summary="IAP ヘッダ確認用デバッグエンドポイント")
-async def debug_iap_headers(request: Request) -> Dict[str, Any]:
+async def debug_iap_headers(request: Request) -> dict[str, Any]:
     """
     IAP (Identity-Aware Proxy) が付与するヘッダをそのまま返すデバッグエンドポイント。
 

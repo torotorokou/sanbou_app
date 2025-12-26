@@ -6,13 +6,16 @@
 - クライアントはイベントストリームを購読
 """
 
-from fastapi import APIRouter, Request
-from fastapi.responses import StreamingResponse
-from backend_shared.core.domain import NotificationEvent
 import asyncio
 import json
-from datetime import datetime
 import uuid
+from datetime import datetime
+
+from fastapi import APIRouter, Request
+from fastapi.responses import StreamingResponse
+
+from backend_shared.core.domain import NotificationEvent
+
 
 router = APIRouter(prefix="/notifications", tags=["Notifications"])
 
@@ -20,7 +23,7 @@ router = APIRouter(prefix="/notifications", tags=["Notifications"])
 async def notification_generator():
     """
     通知イベントを定期的に生成するジェネレーター（サンプル実装）
-    
+
     本番環境では Redis Pub/Sub や Message Queue から受信
     """
     # サンプル通知を定期的に送信
@@ -29,7 +32,7 @@ async def notification_generator():
         # 5秒ごとにサンプル通知を送信
         await asyncio.sleep(5)
         count += 1
-        
+
         # NotificationEvent を生成
         event = NotificationEvent(
             id=str(uuid.uuid4()),
@@ -38,9 +41,9 @@ async def notification_generator():
             message=f"これは{count}番目のサンプル通知です",
             duration=5000,
             feature="notification_test",
-            createdAt=datetime.utcnow().isoformat()
+            createdAt=datetime.utcnow().isoformat(),
         )
-        
+
         # SSE形式で送信
         # event: notification
         # data: <JSON>
@@ -53,7 +56,7 @@ async def notification_generator():
 async def notification_stream(request: Request):
     """
     通知ストリーム（SSE）
-    
+
     クライアント側:
     ```typescript
     const eventSource = new EventSource('/ledger_api/notifications/stream');
@@ -62,7 +65,7 @@ async def notification_stream(request: Request):
       // 通知を表示
     });
     ```
-    
+
     レスポンス:
     - Content-Type: text/event-stream
     - イベント形式:
@@ -78,5 +81,5 @@ async def notification_stream(request: Request):
             "Cache-Control": "no-cache",
             "Connection": "keep-alive",
             "X-Accel-Buffering": "no",  # Nginx のバッファリングを無効化
-        }
+        },
     )

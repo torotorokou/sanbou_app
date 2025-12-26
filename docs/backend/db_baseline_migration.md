@@ -105,7 +105,8 @@ app/backend/core_api/
         └── schema_baseline.sql   # スキーマスナップショット（2476行）
 ```
 
-**注意**: 
+**注意**:
+
 - legacy `migrations/` フォルダは2025年12月12日に完全削除されました
 - `migrations_legacy/` も存在しません
 - 標準コマンド（`make al-up-env`, `make al-cur-env`）が自動的に migrations_v2 を使用します
@@ -242,6 +243,7 @@ make al-cur-v2-env ENV=vm_prod
 **原因**: スナップショットが適用されていない
 
 **解決策**:
+
 ```bash
 # スナップショット適用状態を確認
 make ps ENV=vm_stg
@@ -257,6 +259,7 @@ make al-stamp-v2-env ENV=vm_stg REV=0001_baseline
 **原因**: `FORCE=1` なしで実行してしまった
 
 **解決策**:
+
 ```bash
 # ❌ 実行できない（ガードされている）
 make db-apply-snapshot-v2-env ENV=vm_prod
@@ -310,6 +313,7 @@ git commit -m "Update schema baseline"
 ### Q3. local_dev と vm_stg で revision が異なるのは正常？
 
 **A**: v2 導入直後は:
+
 - **local_dev**: 既存データを保持し、v2 baseline にstamp
 - **vm_stg**: スナップショットから新規構築し、v2 baseline にstamp
 
@@ -363,6 +367,6 @@ Alembic v2 により:
 ✅ **新規環境（vm_stg/vm_prod）**: スナップショットから構築し、v2で前進  
 ✅ **既存環境（local_dev）**: データを保持したまま v2 に移行  
 ✅ **安全性**: vm_prod の初期化には `FORCE=1` が必須  
-✅ **Legacy保持**: 過去の履歴は `migrations_legacy/` に退避して参照可能  
+✅ **Legacy保持**: 過去の履歴は `migrations_legacy/` に退避して参照可能
 
 今後の運用は `migrations_v2/` で行い、`make al-up-v2-env` でマイグレーション適用してください。

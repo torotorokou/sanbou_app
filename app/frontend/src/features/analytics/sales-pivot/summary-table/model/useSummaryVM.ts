@@ -4,7 +4,13 @@
  */
 
 import { useState, useCallback } from 'react';
-import type { SummaryRow, SummaryQuery, MetricEntry, ID, DailyPoint } from '../../shared/model/types';
+import type {
+  SummaryRow,
+  SummaryQuery,
+  MetricEntry,
+  ID,
+  DailyPoint,
+} from '../../shared/model/types';
 import type { SalesPivotRepository } from '../../shared/infrastructure/salesPivot.repository';
 
 export interface UseSummaryViewModelParams {
@@ -16,11 +22,11 @@ export interface UseSummaryViewModelResult {
   summary: SummaryRow[];
   loading: boolean;
   reload: () => Promise<void>;
-  
+
   // Daily series for charts
   repSeriesCache: Record<ID, DailyPoint[]>;
   loadDailySeries: (repId: ID) => Promise<void>;
-  
+
   // Pivot trigger
   onRowClick: (rec: MetricEntry) => void;
 }

@@ -5,17 +5,17 @@ CSVデータのフォーマット処理を行う基底クラスと共通フォ�
 前処理、個別処理、後処理の3段階でデータを変換します。
 """
 
-import pandas as pd
 from abc import ABC, abstractmethod
 
-from backend_shared.utils.dataframe_utils import common_cleaning
+import pandas as pd
+
+from backend_shared.core.usecases.csv_formatter.formatter_config import FormatterConfig
 from backend_shared.core.usecases.csv_formatter.formatter_core import (
     apply_column_cleaning,
     apply_column_type_parsing,
     dedupe_and_aggregate,
 )
-
-from backend_shared.core.usecases.csv_formatter.formatter_config import FormatterConfig
+from backend_shared.utils.dataframe_utils import common_cleaning
 
 
 # =========================

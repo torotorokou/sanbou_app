@@ -1,20 +1,24 @@
 # Phase 3 実行計画
 
 ## 概要
+
 機能別コンポーネントを `features/` 配下に移行し、Feature-Sliced Design (FSD) を完成させる
 
 ## Phase 3 サブフェーズ
 
 ### Phase 3-A: コア機能の移行 (優先度: 高)
+
 1. **Report機能** - レポート生成・管理
 2. **Database機能** - CSVアップロード・データ管理
 3. **Manual機能** - マニュアル表示・検索
 
 ### Phase 3-B: AI/Chat機能の移行 (優先度: 中)
+
 4. **Chat機能** - AI質問応答
 5. **AI機能** - AI関連ユーティリティ
 
 ### Phase 3-C: その他機能とクリーンアップ (優先度: 低)
+
 6. **Analysis機能** - データ分析
 7. **Dashboard機能** - ダッシュボード
 8. **古いファイルの削除**
@@ -27,6 +31,7 @@
 ### 移行対象ファイル
 
 #### Components → features/report/
+
 ```
 src/components/Report/
 ├── ReportBase.tsx → features/report/ui/ReportBase.tsx
@@ -49,6 +54,7 @@ src/components/Report/
 ```
 
 #### Hooks → features/report/
+
 ```
 src/hooks/report/
 ├── useReportActions.ts → features/report/hooks/useReportActions.ts
@@ -62,18 +68,21 @@ src/hooks/
 ```
 
 #### Types → features/report/
+
 ```
 src/types/
 └── reportBase.ts → features/report/model/report.types.ts
 ```
 
 #### Constants → features/report/
+
 ```
 src/constants/
 └── reportConfig.ts → features/report/config/reportConfig.ts
 ```
 
 ### 新しいディレクトリ構造
+
 ```
 features/report/
 ├── README.md
@@ -114,6 +123,7 @@ features/report/
 ### 移行対象ファイル
 
 #### Components → features/database/
+
 ```
 src/components/database/
 ├── CsvUploadPanel.tsx → features/database/ui/CsvUploadPanel.tsx
@@ -126,6 +136,7 @@ src/components/common/csv-upload/
 ```
 
 #### Hooks → features/database/
+
 ```
 src/hooks/database/
 ├── useCsvUploadHandler.ts → features/database/hooks/useCsvUploadHandler.ts
@@ -133,6 +144,7 @@ src/hooks/database/
 ```
 
 ### 新しいディレクトリ構造
+
 ```
 features/database/
 ├── README.md
@@ -154,24 +166,28 @@ features/database/
 ### 移行対象ファイル
 
 #### Components → features/manual/
+
 ```
 src/components/manual/
 └── (manual関連コンポーネント) → features/manual/ui/
 ```
 
 #### Services → features/manual/
+
 ```
 src/services/api/
 └── manualsApi.ts → features/manual/api/manualsApi.ts
 ```
 
 #### Types → features/manual/
+
 ```
 src/types/
 └── manuals.ts → features/manual/model/manual.types.ts
 ```
 
 ### 新しいディレクトリ構造
+
 ```
 features/manual/
 ├── README.md
@@ -191,6 +207,7 @@ features/manual/
 ### 移行対象ファイル
 
 #### Components → features/chat/
+
 ```
 src/components/chat/
 ├── ChatQuestionSection.tsx → features/chat/ui/ChatQuestionSection.tsx
@@ -201,12 +218,14 @@ src/components/chat/
 ```
 
 #### Services → features/chat/
+
 ```
 src/services/
 └── chatService.ts → features/chat/api/chatService.ts
 ```
 
 ### 新しいディレクトリ構造
+
 ```
 features/chat/
 ├── README.md
@@ -226,30 +245,35 @@ features/chat/
 ## 実行戦略
 
 ### ステップ1: Report機能の移行
+
 1. ディレクトリ構造作成
 2. ファイルコピー
 3. インポートパス更新
 4. ビルド確認
 
 ### ステップ2: Database機能の移行
+
 1. ディレクトリ構造作成
 2. ファイルコピー
 3. インポートパス更新
 4. ビルド確認
 
 ### ステップ3: Manual機能の移行
+
 1. ディレクトリ構造作成
 2. ファイルコピー
 3. インポートパス更新
 4. ビルド確認
 
 ### ステップ4: Chat機能の移行
+
 1. ディレクトリ構造作成
 2. ファイルコピー
 3. インポートパス更新
 4. ビルド確認
 
 ### ステップ5: クリーンアップ
+
 1. 古いファイル削除
 2. 未使用コード削除
 3. ドキュメント更新
@@ -272,11 +296,13 @@ features/chat/
 ## リスク管理
 
 ### 高リスク項目
+
 1. **循環依存**: Report ↔ Database ↔ Manual
 2. **大量のインポートパス変更**: 100+ファイルに影響
 3. **型定義の分離**: 共有型の取り扱い
 
 ### 軽減策
+
 1. 段階的移行 (1機能ずつ)
 2. コピー優先 (削除は最後)
 3. ビルド確認を各ステップで実施

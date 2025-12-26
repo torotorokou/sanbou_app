@@ -74,6 +74,7 @@ gcloud compute backend-services describe <BACKEND_SERVICE_NAME> \
 ```
 
 出力例：
+
 ```
 /projects/123456789/global/backendServices/987654321
 ```
@@ -150,6 +151,7 @@ curl -H "Authorization: Bearer $(gcloud auth print-identity-token)" \
 ```
 
 **期待されるレスポンス：**
+
 ```json
 {
   "email": "user@honest-recycle.co.jp",
@@ -191,11 +193,13 @@ docker logs core_api | grep "IAP JWT authentication successful"
 **症状：** `/auth/me` にアクセスすると 401 エラーが返る
 
 **原因と対策：**
+
 1. `IAP_AUDIENCE` が正しく設定されているか確認
 2. IAP が正しく有効化されているか GCP Console で確認
 3. `IAP_ENABLED=true` が設定されているか確認
 
 **ログの確認：**
+
 ```bash
 docker logs core_api | grep "IAP JWT verification failed"
 ```
@@ -205,6 +209,7 @@ docker logs core_api | grep "IAP JWT verification failed"
 **症状：** ログインはできるが、アプリケーションにアクセスできない
 
 **原因と対策：**
+
 1. ユーザーのメールドメインが `@honest-recycle.co.jp` であることを確認
 2. 他のドメインを許可する場合は `iap_auth_provider.py` の `allowed_domain` を修正
 
@@ -213,6 +218,7 @@ docker logs core_api | grep "IAP JWT verification failed"
 **症状：** Load Balancer のヘルスチェックが失敗する
 
 **原因と対策：**
+
 1. `/health` と `/healthz` が IAP 除外パスに含まれているか確認
 2. `auth_middleware.py` の `excluded_paths` を確認
 3. GCP Console で Backend Service のヘルスチェックパスが `/health` になっているか確認
@@ -261,7 +267,6 @@ gcloud logging read "textPayload:\"IAP JWT verification failed\"" --limit 100
 
 ## 変更履歴
 
-| 日付 | 変更内容 | 担当者 |
-|------|---------|--------|
-| 2024-12-03 | 初版作成 | - |
-
+| 日付       | 変更内容 | 担当者 |
+| ---------- | -------- | ------ |
+| 2024-12-03 | 初版作成 | -      |

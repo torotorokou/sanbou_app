@@ -19,12 +19,12 @@ export interface ExportOptionsState {
 
 /**
  * エクスポートオプションの状態を管理するカスタムフック
- * 
+ *
  * @description
  * - localStorageと自動連携
  * - 初期値はlocalStorageから取得、なければデフォルト値
  * - 変更時に自動でlocalStorageに保存
- * 
+ *
  * @returns {ExportOptionsState} エクスポートオプション状態とセッター関数
  */
 export function useExportOptions(): ExportOptionsState {

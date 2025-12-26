@@ -9,6 +9,7 @@
 ## 🔍 問題の特定
 
 ### 現在のログ出力例
+
 ```json
 {
   "request_id": "-",
@@ -23,11 +24,13 @@
 ### 問題点
 
 1. **`taskName` フィールドの不適切な使用**
+
    - Uvicornがasyncioタスク管理のために自動付与
    - `Task-3`, `Task-8` などの連番は**HTTPリクエストとは無関係**
    - ビジネスログと混同される（"フロントエンドからのリクエスト"と誤解される）
 
 2. **Health Check ログの識別困難**
+
    - Docker HEALTHCHECK（内部監視）とアプリケーションリクエストが同じフォーマット
    - `127.0.0.1` vs `172.20.0.x` の区別がログ上不明瞭
    - 運用時に正常なログとアラート対象を混同しやすい
@@ -44,18 +47,22 @@
 ### 技術的原因
 
 1. **Uvicorn Access Log のデフォルト動作**
+
    ```python
    # uvicorn/logging.py の実装
    # asyncio.current_task().get_name() を使用 → "Task-1", "Task-2"...
    ```
+
    - Uvicornの `AccessFormatter` が自動的に `taskName` を付与
    - これは**リクエストIDではなくasyncioタスクの管理ID**
    - pythonjsonlogger使用時、全フィールドがJSON化される
 
 2. **Request ID の未活用**
+
    ```python
    "request_id": "-"  # ← 常に "-" (未設定)
    ```
+
    - `RequestIdMiddleware` が適用されているが、Access Logには反映されない
    - Uvicornの Access Log は middleware より前に実行される
 
@@ -80,7 +87,7 @@ from typing import Dict, Any
 
 class HealthCheckFilter(logging.Filter):
     """Health Checkリクエストをフィルタリング"""
-    
+
     def filter(self, record: logging.LogRecord) -> bool:
         # Health Check エンドポイントへのアクセスを除外
         message = record.getMessage()
@@ -91,11 +98,11 @@ class HealthCheckFilter(logging.Filter):
 
 class RequestTypeFormatter(logging.Formatter):
     """リクエストタイプを識別するカスタムフォーマッタ"""
-    
+
     def format(self, record: logging.LogRecord) -> str:
         # リクエスト元を識別
         message = record.getMessage()
-        
+
         # リクエストタイプを追加
         if "127.0.0.1" in message:
             record.request_type = "internal"  # Docker HEALTHCHECK
@@ -105,11 +112,11 @@ class RequestTypeFormatter(logging.Formatter):
             record.request_type = "external"  # 外部リクエスト
         else:
             record.request_type = "unknown"
-        
+
         # taskName を削除（不要な情報）
         if hasattr(record, 'taskName'):
             delattr(record, 'taskName')
-        
+
         return super().format(record)
 ```
 
@@ -122,19 +129,19 @@ class RequestTypeFormatter(logging.Formatter):
 
 def setup_logging(log_level: str | None = None, force: bool = False) -> None:
     """既存の setup_logging に追加"""
-    
+
     # ... 既存コード ...
-    
+
     # ========================================
     # Access Log の最適化
     # ========================================
     uvicorn_access_logger = logging.getLogger("uvicorn.access")
-    
+
     # Health Check Filter の追加
     health_check_filter = HealthCheckFilter()
     for handler in uvicorn_access_logger.handlers:
         handler.addFilter(health_check_filter)
-    
+
     # 本番環境では WARNING レベルに設定（エラーのみ記録）
     if os.getenv("ENV", "dev").lower() == "prod":
         uvicorn_access_logger.setLevel(logging.WARNING)
@@ -159,29 +166,29 @@ logger = get_module_logger(__name__)
 
 class StructuredAccessLogMiddleware(BaseHTTPMiddleware):
     """構造化アクセスログMiddleware（Uvicorn Access Logの代替）"""
-    
+
     async def dispatch(self, request: Request, call_next):
         # Health Check は記録しない（最初に判定）
         if request.url.path in ["/health", "/healthz"]:
             return await call_next(request)
-        
+
         start_time = time.perf_counter()
-        
+
         # リクエスト情報の収集
         client_host = request.client.host if request.client else "unknown"
         method = request.method
         path = request.url.path
-        
+
         # リクエストタイプの判定
         request_type = self._classify_request(client_host)
-        
+
         try:
             response = await call_next(request)
             status_code = response.status_code
-            
+
             # 実行時間の計測
             duration_ms = round((time.perf_counter() - start_time) * 1000, 2)
-            
+
             # 構造化ログ出力
             logger.info(
                 f"{method} {path} {status_code}",
@@ -196,12 +203,12 @@ class StructuredAccessLogMiddleware(BaseHTTPMiddleware):
                     # request_id は RequestIdMiddleware で付与済み
                 }
             )
-            
+
             return response
-            
+
         except Exception as e:
             duration_ms = round((time.perf_counter() - start_time) * 1000, 2)
-            
+
             logger.error(
                 f"{method} {path} - Error: {str(e)}",
                 extra={
@@ -217,7 +224,7 @@ class StructuredAccessLogMiddleware(BaseHTTPMiddleware):
                 exc_info=True
             )
             raise
-    
+
     def _classify_request(self, client_host: str) -> str:
         """リクエストタイプを分類"""
         if client_host == "127.0.0.1":
@@ -244,6 +251,7 @@ class StructuredAccessLogMiddleware(BaseHTTPMiddleware):
 3. 全サービスへのデプロイ
 
 **期待される改善**:
+
 - ログボリューム: 約60-70%削減（30秒間隔のHEALTHCHECKが消える）
 - CloudWatch Logs コスト: 月額約30-40%削減
 - デバッグ効率: ビジネスログが見やすくなる
@@ -258,6 +266,7 @@ class StructuredAccessLogMiddleware(BaseHTTPMiddleware):
 3. ログ分析ツール（CloudWatch Insights等）の調整
 
 **期待される改善**:
+
 - リクエストタイプの自動分類（healthcheck/internal/external）
 - 実行時間の正確な計測（ミリ秒単位）
 - Request ID との完全な統合
@@ -282,7 +291,7 @@ class StructuredAccessLogMiddleware(BaseHTTPMiddleware):
 # 既存の setup_logging() に3行追加するだけ
 def setup_logging(...):
     # ... 既存コード ...
-    
+
     # Health Check Filter の追加
     uvicorn_access_logger = logging.getLogger("uvicorn.access")
     health_check_filter = HealthCheckFilter()
@@ -317,13 +326,13 @@ def setup_logging(...):
 
 ### ログレベル設計
 
-| レベル | 用途 | 例 |
-|--------|------|-----|
-| **DEBUG** | 開発・デバッグ情報 | 内部状態、詳細なトレース |
-| **INFO** | 通常のビジネスイベント | ユーザーアクション、成功した処理 |
-| **WARNING** | 異常だが処理継続可能 | バリデーションエラー、リトライ |
-| **ERROR** | エラー（処理失敗） | 例外、失敗したリクエスト |
-| **CRITICAL** | システム停止レベル | データ破損、致命的な障害 |
+| レベル       | 用途                   | 例                               |
+| ------------ | ---------------------- | -------------------------------- |
+| **DEBUG**    | 開発・デバッグ情報     | 内部状態、詳細なトレース         |
+| **INFO**     | 通常のビジネスイベント | ユーザーアクション、成功した処理 |
+| **WARNING**  | 異常だが処理継続可能   | バリデーションエラー、リトライ   |
+| **ERROR**    | エラー（処理失敗）     | 例外、失敗したリクエスト         |
+| **CRITICAL** | システム停止レベル     | データ破損、致命的な障害         |
 
 ### Health Check の扱い
 

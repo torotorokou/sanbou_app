@@ -1,28 +1,35 @@
+import builtins
 from abc import ABC, abstractmethod
-from typing import Optional, List
-from app.core.domain.manual_entity import ManualDetail, ManualListResponse, ManualSectionChunk, ManualCatalogResponse
+
+from app.core.domain.manual_entity import (
+    ManualCatalogResponse,
+    ManualDetail,
+    ManualListResponse,
+    ManualSectionChunk,
+)
+
 
 class ManualsRepository(ABC):
     @abstractmethod
     def list(
         self,
         *,
-        query: Optional[str] = None,
-        tag: Optional[str] = None,
-        category: Optional[str] = None,
+        query: str | None = None,
+        tag: str | None = None,
+        category: str | None = None,
         page: int = 1,
         size: int = 20,
     ) -> ManualListResponse:
         pass
 
     @abstractmethod
-    def get(self, manual_id: str) -> Optional[ManualDetail]:
+    def get(self, manual_id: str) -> ManualDetail | None:
         pass
 
     @abstractmethod
-    def get_sections(self, manual_id: str) -> List[ManualSectionChunk]:
+    def get_sections(self, manual_id: str) -> builtins.list[ManualSectionChunk]:
         pass
 
     @abstractmethod
-    def get_catalog(self, *, category: Optional[str] = "shogun") -> ManualCatalogResponse:
+    def get_catalog(self, *, category: str | None = "shogun") -> ManualCatalogResponse:
         pass

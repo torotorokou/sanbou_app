@@ -5,17 +5,20 @@
 ### ✅ 完了した作業
 
 #### 1. Pages層のCSS Module化
+
 - **FactoryPage.tsx**: インラインスタイルを削除、CSS Modulesに移行 (87%削減: ~216行 → ~28行)
 - **LedgerBookPage.tsx**: インラインスタイルを削除、CSS Modulesに移行
 - **ManagePage.tsx**: インラインスタイルを削除、CSS Modulesに移行 (72%削減: ~100行 → ~28行)
 - **ReportPage.module.css**: 共通ページレイアウトCSSを新規作成
 
 #### 2. 不要コードの削除
+
 - **ActionsSection_new.tsx**: 未使用ファイルを削除
 - **useZipFileGeneration.ts**: すでに削除済み(非推奨)
 - **useZipProcessing.ts**: すでに削除済み(非推奨)
 
 #### 3. 品質検証
+
 - ✅ **型チェック**: `pnpm typecheck` → **エラー0**
 - ✅ **ビルド**: `pnpm build` → **成功**
 
@@ -28,6 +31,7 @@
 Report機能は**FSD + MVVM + Repository Pattern**が完璧に実装されています:
 
 #### 1. Pages層（骨組み）✅
+
 ```tsx
 // pages/report/*.tsx
 - レイアウト/配置のみ (~28行)
@@ -36,6 +40,7 @@ Report機能は**FSD + MVVM + Repository Pattern**が完璧に実装されてい
 ```
 
 #### 2. Features層（完全分離）✅
+
 ```
 features/report/
 ├── api/                    # HTTP通信層
@@ -58,19 +63,20 @@ features/report/
 
 #### 3. 責務分離の明確さ ✅
 
-| 層 | 責務 | 状態管理 | 副作用 | HTTP通信 |
-|---|---|---|---|---|
-| **Pages** | レイアウト/配置 | ❌ | ❌ | ❌ |
-| **UI** | 見た目 | ❌ | ❌ | ❌ |
-| **Hook(ViewModel)** | 状態+ロジック | ✅ | ✅ | ❌ |
-| **API** | HTTP通信のみ | ❌ | ❌ | ✅ |
-| **Repository** | DTO→Domain変換 | ❌ | ✅ | ✅(API経由) |
+| 層                  | 責務            | 状態管理 | 副作用 | HTTP通信    |
+| ------------------- | --------------- | -------- | ------ | ----------- |
+| **Pages**           | レイアウト/配置 | ❌       | ❌     | ❌          |
+| **UI**              | 見た目          | ❌       | ❌     | ❌          |
+| **Hook(ViewModel)** | 状態+ロジック   | ✅       | ✅     | ❌          |
+| **API**             | HTTP通信のみ    | ❌       | ❌     | ✅          |
+| **Repository**      | DTO→Domain変換  | ❌       | ✅     | ✅(API経由) |
 
 ---
 
 ## 🎨 CSS管理戦略
 
 ### Before（削除済み）
+
 ```tsx
 // インラインスタイル
 <div style={{
@@ -81,6 +87,7 @@ features/report/
 ```
 
 ### After（CSS Modules）
+
 ```tsx
 // pages/report/*.tsx
 import styles from './ReportPage.module.css';
@@ -92,23 +99,24 @@ import styles from './ReportPage.module.css';
 ```css
 /* ReportPage.module.css */
 .pageContainer {
-    height: calc(100dvh - (var(--page-padding, 0px) * 2));
-    padding: var(--page-padding, 16px);
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    box-sizing: border-box;
-    scrollbar-gutter: stable both-edges;
+  height: calc(100dvh - (var(--page-padding, 0px) * 2));
+  padding: var(--page-padding, 16px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-sizing: border-box;
+  scrollbar-gutter: stable both-edges;
 }
 
 .contentArea {
-    flex: 1;
-    min-height: 0;
-    overflow: hidden;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
 }
 ```
 
 **利点**:
+
 - ✅ スタイルとロジックの分離
 - ✅ 再利用性向上
 - ✅ メンテナンス性向上
@@ -135,6 +143,7 @@ User Action
 ```
 
 ### 具体例: レポート生成フロー
+
 ```typescript
 // 1. Page: 配置のみ
 <ReportBase {...reportBaseProps} />
@@ -155,11 +164,11 @@ await generateFactoryReport(date, factory_id);
 
 ## 📊 コード削減率
 
-| ファイル | Before | After | 削減率 |
-|---------|--------|-------|--------|
-| FactoryPage.tsx | ~216行 | ~28行 | **87%** |
-| ManagePage.tsx | ~100行 | ~28行 | **72%** |
-| LedgerBookPage.tsx | - | ~40行 | 新規 |
+| ファイル           | Before | After | 削減率  |
+| ------------------ | ------ | ----- | ------- |
+| FactoryPage.tsx    | ~216行 | ~28行 | **87%** |
+| ManagePage.tsx     | ~100行 | ~28行 | **72%** |
+| LedgerBookPage.tsx | -      | ~40行 | 新規    |
 
 **平均削減率: 80%以上**
 
@@ -168,6 +177,7 @@ await generateFactoryReport(date, factory_id);
 ## ✅ 受け入れ条件チェック
 
 ### 必須条件
+
 - ✅ Page層にレイアウト/ルーティング/配置のみ
 - ✅ Feature層にUI/Hook/Repository/API/Model完備
 - ✅ ページ専用CSSはpages配下にスコープ
@@ -175,6 +185,7 @@ await generateFactoryReport(date, factory_id);
 - ✅ `pnpm build` 成功
 
 ### コード品質
+
 - ✅ Pageにfetch/axios無し
 - ✅ Pageに大きなuseEffect/useState無し
 - ✅ UI部品に状態/副作用無し
@@ -186,6 +197,7 @@ await generateFactoryReport(date, factory_id);
 ## 🚀 今後の拡張性
 
 ### 1. 新しいレポートページの追加
+
 ```typescript
 // 1. configに設定追加
 // features/report/model/config/pages/newPageConfig.ts
@@ -203,24 +215,26 @@ const NewReportPage: React.FC = () => {
 ```
 
 ### 2. 既存ページのカスタマイズ
+
 ```typescript
 // Hook拡張でロジック追加
 export function useCustomReportManager(reportKey: ReportKey) {
-    const base = useReportManager(reportKey);
-    
-    // カスタムロジック追加
-    const customAction = () => {
-        // ...
-    };
-    
-    return { ...base, customAction };
+  const base = useReportManager(reportKey);
+
+  // カスタムロジック追加
+  const customAction = () => {
+    // ...
+  };
+
+  return { ...base, customAction };
 }
 ```
 
 ### 3. UI部品の再利用
+
 ```typescript
 // 他機能でもReport UIを再利用可能
-import { ReportBase, ReportHeader } from '@features/report';
+import { ReportBase, ReportHeader } from "@features/report";
 ```
 
 ---
@@ -230,18 +244,22 @@ import { ReportBase, ReportHeader } from '@features/report';
 ### このアーキテクチャが優れている理由
 
 1. **単一責任の原則（SRP）**
+
    - 各ファイルが1つの責務のみ担当
    - 変更の影響範囲が限定的
 
 2. **依存性逆転の原則（DIP）**
+
    - Page→Feature→API の一方向依存
    - 下位層の変更が上位層に影響しない
 
 3. **開放閉鎖の原則（OCP）**
+
    - 新機能追加時に既存コード変更不要
    - Config/Hook拡張で対応可能
 
 4. **テスタビリティ**
+
    - Hook単体でテスト可能
    - UI部品が純粋関数（副作用無し）
 

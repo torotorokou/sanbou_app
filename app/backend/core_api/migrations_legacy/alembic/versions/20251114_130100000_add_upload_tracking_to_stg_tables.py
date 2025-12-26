@@ -18,8 +18,9 @@ Revision ID: 20251114_130100000
 Revises: 20251114_130000000
 Create Date: 2025-11-14 13:01:00.000000
 """
-from alembic import op
+
 import sqlalchemy as sa
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = "20251114_130100000"
@@ -32,7 +33,7 @@ def upgrade() -> None:
     """
     stg層テーブルに upload_file_id, source_row_no カラムとINDEXを追加
     """
-    
+
     tables = [
         "receive_shogun_flash",
         "yard_shogun_flash",
@@ -41,10 +42,10 @@ def upgrade() -> None:
         "yard_shogun_final",
         "shipment_shogun_final",
     ]
-    
+
     for table in tables:
         print(f"[{table}] Adding upload_file_id and source_row_no columns...")
-        
+
         # カラム追加（nullable=True で既存コードとの互換性を保つ）
         op.add_column(
             table,
@@ -52,30 +53,30 @@ def upgrade() -> None:
                 "upload_file_id",
                 sa.Integer(),
                 nullable=True,
-                comment="アップロード元ファイル ID (log.upload_file.id への参照)"
+                comment="アップロード元ファイル ID (log.upload_file.id への参照)",
             ),
-            schema="stg"
+            schema="stg",
         )
-        
+
         op.add_column(
             table,
             sa.Column(
                 "source_row_no",
                 sa.Integer(),
                 nullable=True,
-                comment="CSV元行番号（1-indexed）"
+                comment="CSV元行番号（1-indexed）",
             ),
-            schema="stg"
+            schema="stg",
         )
-        
+
         # INDEX作成（upload_file_id, source_row_no の複合インデックス）
         op.create_index(
             f"idx_{table}_upload",
             table,
             ["upload_file_id", "source_row_no"],
-            schema="stg"
+            schema="stg",
         )
-        
+
         print(f"✓ Updated stg.{table}: added upload_file_id, source_row_no, and index")
 
 
@@ -83,7 +84,7 @@ def downgrade() -> None:
     """
     カラムとINDEXを削除
     """
-    
+
     tables = [
         "receive_shogun_flash",
         "yard_shogun_flash",
@@ -92,7 +93,7 @@ def downgrade() -> None:
         "yard_shogun_final",
         "shipment_shogun_final",
     ]
-    
+
     for table in tables:
         op.drop_index(f"idx_{table}_upload", table, schema="stg")
         op.drop_column(table, "source_row_no", schema="stg")

@@ -55,6 +55,7 @@ features/analytics/customer-list/
 **責務**: 日付範囲の選択・検証・月リスト生成
 
 **提供する機能**:
+
 - `PeriodRange`: 期間範囲の型定義
 - `ComparisonPeriods`: 比較期間の型定義
 - `getMonthRange()`: 月範囲を計算する純粋関数
@@ -62,18 +63,19 @@ features/analytics/customer-list/
 - `usePeriodSelection()`: 期間選択の状態管理Hook
 
 **使用例**:
+
 ```typescript
 const periodSelection = usePeriodSelection();
 
 // 期間を設定
-periodSelection.setCurrentStart(dayjs('2024-01'));
-periodSelection.setCurrentEnd(dayjs('2024-03'));
+periodSelection.setCurrentStart(dayjs("2024-01"));
+periodSelection.setCurrentEnd(dayjs("2024-03"));
 
 // 検証
 if (periodSelection.isAllPeriodsValid) {
   const months = getMonthRange(
     periodSelection.currentStart,
-    periodSelection.currentEnd
+    periodSelection.currentEnd,
   ); // => ['2024-01', '2024-02', '2024-03']
 }
 ```
@@ -87,21 +89,23 @@ if (periodSelection.isAllPeriodsValid) {
 **責務**: 顧客データの集約・比較・フィルタリング
 
 **提供する機能**:
+
 - `aggregateCustomers()`: 複数月の顧客データを集約
 - `getExclusiveCustomers()`: 2つのリストの差分を抽出
 
 **使用例**:
+
 ```typescript
 // 複数月のデータを集約
 const currentCustomers = aggregateCustomers(
-  ['2024-01', '2024-02'], 
-  allCustomerData
+  ["2024-01", "2024-02"],
+  allCustomerData,
 );
 
 // 離脱顧客を抽出
 const lostCustomers = getExclusiveCustomers(
-  previousCustomers, 
-  currentCustomers
+  previousCustomers,
+  currentCustomers,
 );
 ```
 
@@ -114,21 +118,25 @@ const lostCustomers = getExclusiveCustomers(
 **責務**: CSV/Excelのエクスポート機能
 
 **提供する機能**:
+
 - `buildLostCustomersCsv()`: 顧客データからCSV文字列を生成
 - `downloadCsv()`: CSVファイルをダウンロード
 - `useExcelDownload()`: Excelダウンロードの状態管理Hook
 
 **使用例**:
+
 ```typescript
 // CSVエクスポート
 const csv = buildLostCustomersCsv(lostCustomers);
-downloadCsv(csv, 'lost-customers.csv');
+downloadCsv(csv, "lost-customers.csv");
 
 // Excelエクスポート
 const excelDownload = useExcelDownload(apiPostBlob);
 await excelDownload.handleDownload(
-  currentStart, currentEnd,
-  previousStart, previousEnd
+  currentStart,
+  currentEnd,
+  previousStart,
+  previousEnd,
 );
 ```
 
@@ -143,21 +151,28 @@ await excelDownload.handleDownload(
 ```typescript
 // すべてのロジックがViewModel内に混在
 export function useCustomerChurnViewModel() {
-    // 期間選択のstate（8個のuseState）
-    const [currentStart, setCurrentStart] = useState<Dayjs | null>(null);
-    // ...
-    
-    // ヘルパー関数（30行）
-    function getMonthRange() { /* ... */ }
-    function aggregateCustomers() { /* ... */ }
-    
-    // イベントハンドラ（50行 × 3個）
-    const handleDownloadExcel = async () => { /* ... */ };
-    // ...
+  // 期間選択のstate（8個のuseState）
+  const [currentStart, setCurrentStart] = useState<Dayjs | null>(null);
+  // ...
+
+  // ヘルパー関数（30行）
+  function getMonthRange() {
+    /* ... */
+  }
+  function aggregateCustomers() {
+    /* ... */
+  }
+
+  // イベントハンドラ（50行 × 3個）
+  const handleDownloadExcel = async () => {
+    /* ... */
+  };
+  // ...
 }
 ```
 
 **問題点**:
+
 - ViewModel が 250行超
 - 責務が混在（期間選択・集約・エクスポート）
 - テストが困難（すべてを一度にテストする必要がある）
@@ -168,50 +183,52 @@ export function useCustomerChurnViewModel() {
 
 ```typescript
 export function useCustomerChurnViewModel(
-    apiPostBlob: <T>(url: string, data: T) => Promise<Blob>
+  apiPostBlob: <T>(url: string, data: T) => Promise<Blob>,
 ): CustomerChurnViewModel {
-    // === Sub-Features ===
-    // 期間選択の状態管理（25行 → 1行に集約）
-    const periodSelection = usePeriodSelection();
-    
-    // Excelダウンロード機能（50行 → 1行に集約）
-    const excelDownload = useExcelDownload(apiPostBlob);
-    
-    // === Computed Values ===
-    const currentMonths = useMemo(
-        () => getMonthRange(periodSelection.currentStart, periodSelection.currentEnd),
-        [periodSelection.currentStart, periodSelection.currentEnd]
-    );
-    
-    const currentCustomers = useMemo(
-        () => aggregateCustomers(currentMonths, allCustomerData),
-        [currentMonths]
-    );
-    
-    const lostCustomers = useMemo(
-        () => getExclusiveCustomers(previousCustomers, currentCustomers),
-        [previousCustomers, currentCustomers]
-    );
-    
-    // === Actions ===
-    const handleDownloadLostCustomersCsv = () => {
-        const csv = buildLostCustomersCsv(lostCustomers);
-        downloadCsv(csv, '来なくなった顧客.csv');
-    };
-    
-    // サブフィーチャーから必要なプロパティを集約して返却
-    return {
-        ...periodSelection,  // 期間選択のstate/actions
-        currentCustomers,
-        lostCustomers,
-        downloadingExcel: excelDownload.isDownloading,
-        handleDownloadExcel: excelDownload.handleDownload,
-        handleDownloadLostCustomersCsv,
-    };
+  // === Sub-Features ===
+  // 期間選択の状態管理（25行 → 1行に集約）
+  const periodSelection = usePeriodSelection();
+
+  // Excelダウンロード機能（50行 → 1行に集約）
+  const excelDownload = useExcelDownload(apiPostBlob);
+
+  // === Computed Values ===
+  const currentMonths = useMemo(
+    () =>
+      getMonthRange(periodSelection.currentStart, periodSelection.currentEnd),
+    [periodSelection.currentStart, periodSelection.currentEnd],
+  );
+
+  const currentCustomers = useMemo(
+    () => aggregateCustomers(currentMonths, allCustomerData),
+    [currentMonths],
+  );
+
+  const lostCustomers = useMemo(
+    () => getExclusiveCustomers(previousCustomers, currentCustomers),
+    [previousCustomers, currentCustomers],
+  );
+
+  // === Actions ===
+  const handleDownloadLostCustomersCsv = () => {
+    const csv = buildLostCustomersCsv(lostCustomers);
+    downloadCsv(csv, "来なくなった顧客.csv");
+  };
+
+  // サブフィーチャーから必要なプロパティを集約して返却
+  return {
+    ...periodSelection, // 期間選択のstate/actions
+    currentCustomers,
+    lostCustomers,
+    downloadingExcel: excelDownload.isDownloading,
+    handleDownloadExcel: excelDownload.handleDownload,
+    handleDownloadLostCustomersCsv,
+  };
 }
 ```
 
 **改善点**:
+
 - ✅ ViewModel: 250行 → 150行（40%削減）
 - ✅ 責務分離: 各サブフィーチャーが独立してテスト可能
 - ✅ 再利用性: サブフィーチャーは他の機能でも利用可能
@@ -243,12 +260,12 @@ useCustomerChurnViewModel (メインViewModel)
 
 ### 1. **単一責任の原則（SRP）の徹底**
 
-| サブフィーチャー | 責務 | 行数 | テスト容易性 |
-|---|---|---|---|
-| **period-selection** | 期間選択のstate管理 | 70行 | ✅ 単体テスト可能 |
-| **customer-aggregation** | 顧客データ集約ロジック | 50行 | ✅ 純粋関数（完全独立） |
-| **data-export** | CSV/Excelエクスポート | 130行 | ✅ 単体テスト可能 |
-| **ViewModel** | サブフィーチャー統合 | 150行 | ✅ モック注入でテスト |
+| サブフィーチャー         | 責務                   | 行数  | テスト容易性            |
+| ------------------------ | ---------------------- | ----- | ----------------------- |
+| **period-selection**     | 期間選択のstate管理    | 70行  | ✅ 単体テスト可能       |
+| **customer-aggregation** | 顧客データ集約ロジック | 50行  | ✅ 純粋関数（完全独立） |
+| **data-export**          | CSV/Excelエクスポート  | 130行 | ✅ 単体テスト可能       |
+| **ViewModel**            | サブフィーチャー統合   | 150行 | ✅ モック注入でテスト   |
 
 **Before**: 1つのファイルに250行  
 **After**: 4つのモジュールに分割（最大150行）
@@ -261,12 +278,18 @@ useCustomerChurnViewModel (メインViewModel)
 
 ```typescript
 // features/analytics/sales-trend/ で再利用
-import { usePeriodSelection, getMonthRange } from '../customer-list/lib/period-selection';
+import {
+  usePeriodSelection,
+  getMonthRange,
+} from "../customer-list/lib/period-selection";
 
 export function useSalesTrendViewModel() {
-    const periodSelection = usePeriodSelection();
-    const months = getMonthRange(periodSelection.currentStart, periodSelection.currentEnd);
-    // 売上データを取得...
+  const periodSelection = usePeriodSelection();
+  const months = getMonthRange(
+    periodSelection.currentStart,
+    periodSelection.currentEnd,
+  );
+  // 売上データを取得...
 }
 ```
 
@@ -274,13 +297,13 @@ export function useSalesTrendViewModel() {
 
 ```typescript
 // features/analytics/sales-report/ で再利用
-import { downloadCsv } from '../customer-list/lib/data-export';
+import { downloadCsv } from "../customer-list/lib/data-export";
 
 export function useSalesReportViewModel() {
-    const handleExportCsv = () => {
-        const csv = buildSalesReportCsv(salesData);
-        downloadCsv(csv, 'sales-report.csv'); // ← 再利用
-    };
+  const handleExportCsv = () => {
+    const csv = buildSalesReportCsv(salesData);
+    downloadCsv(csv, "sales-report.csv"); // ← 再利用
+  };
 }
 ```
 
@@ -292,21 +315,21 @@ export function useSalesReportViewModel() {
 
 ```typescript
 // aggregation.test.ts
-import { aggregateCustomers, getExclusiveCustomers } from './aggregation';
+import { aggregateCustomers, getExclusiveCustomers } from "./aggregation";
 
-describe('aggregateCustomers', () => {
-    it('should aggregate customers across multiple months', () => {
-        const result = aggregateCustomers(['2024-01', '2024-02'], mockData);
-        expect(result).toHaveLength(3);
-        expect(result[0].weight).toBe(2200); // 2ヶ月分の合計
-    });
+describe("aggregateCustomers", () => {
+  it("should aggregate customers across multiple months", () => {
+    const result = aggregateCustomers(["2024-01", "2024-02"], mockData);
+    expect(result).toHaveLength(3);
+    expect(result[0].weight).toBe(2200); // 2ヶ月分の合計
+  });
 });
 
-describe('getExclusiveCustomers', () => {
-    it('should return customers only in source list', () => {
-        const result = getExclusiveCustomers(previousCustomers, currentCustomers);
-        expect(result).toEqual([{ key: 'C999', name: '離脱顧客' }]);
-    });
+describe("getExclusiveCustomers", () => {
+  it("should return customers only in source list", () => {
+    const result = getExclusiveCustomers(previousCustomers, currentCustomers);
+    expect(result).toEqual([{ key: "C999", name: "離脱顧客" }]);
+  });
 });
 ```
 
@@ -314,18 +337,18 @@ describe('getExclusiveCustomers', () => {
 
 ```typescript
 // usePeriodSelection.test.ts
-import { renderHook, act } from '@testing-library/react';
-import { usePeriodSelection } from './usePeriodSelection';
+import { renderHook, act } from "@testing-library/react";
+import { usePeriodSelection } from "./usePeriodSelection";
 
-it('should manage period selection state', () => {
-    const { result } = renderHook(() => usePeriodSelection());
-    
-    act(() => {
-        result.current.setCurrentStart(dayjs('2024-01'));
-        result.current.setCurrentEnd(dayjs('2024-03'));
-    });
-    
-    expect(result.current.isCurrentPeriodValid).toBe(true);
+it("should manage period selection state", () => {
+  const { result } = renderHook(() => usePeriodSelection());
+
+  act(() => {
+    result.current.setCurrentStart(dayjs("2024-01"));
+    result.current.setCurrentEnd(dayjs("2024-03"));
+  });
+
+  expect(result.current.isCurrentPeriodValid).toBe(true);
 });
 ```
 
@@ -333,18 +356,18 @@ it('should manage period selection state', () => {
 
 ```typescript
 // useCustomerChurnViewModel.test.ts
-jest.mock('../lib/period-selection');
-jest.mock('../lib/data-export');
+jest.mock("../lib/period-selection");
+jest.mock("../lib/data-export");
 
-it('should integrate sub-features correctly', () => {
-    const mockApiPostBlob = jest.fn();
-    const { result } = renderHook(() => 
-        useCustomerChurnViewModel(mockApiPostBlob)
-    );
-    
-    // サブフィーチャーのモックを検証
-    expect(usePeriodSelection).toHaveBeenCalled();
-    expect(useExcelDownload).toHaveBeenCalledWith(mockApiPostBlob);
+it("should integrate sub-features correctly", () => {
+  const mockApiPostBlob = jest.fn();
+  const { result } = renderHook(() =>
+    useCustomerChurnViewModel(mockApiPostBlob),
+  );
+
+  // サブフィーチャーのモックを検証
+  expect(usePeriodSelection).toHaveBeenCalled();
+  expect(useExcelDownload).toHaveBeenCalledWith(mockApiPostBlob);
 });
 ```
 
@@ -354,12 +377,12 @@ it('should integrate sub-features correctly', () => {
 
 #### 変更の影響範囲が明確
 
-| 変更内容 | 影響範囲 | 変更ファイル数 |
-|---|---|---|
-| **期間選択のUIロジック変更** | `lib/period-selection/` のみ | 1-2ファイル |
-| **CSV出力フォーマット変更** | `lib/data-export/csv-export.ts` のみ | 1ファイル |
-| **顧客集約ロジック変更** | `lib/customer-aggregation/` のみ | 1-2ファイル |
-| **Excel APIエンドポイント変更** | `lib/data-export/useExcelDownload.ts` のみ | 1ファイル |
+| 変更内容                        | 影響範囲                                   | 変更ファイル数 |
+| ------------------------------- | ------------------------------------------ | -------------- |
+| **期間選択のUIロジック変更**    | `lib/period-selection/` のみ               | 1-2ファイル    |
+| **CSV出力フォーマット変更**     | `lib/data-export/csv-export.ts` のみ       | 1ファイル      |
+| **顧客集約ロジック変更**        | `lib/customer-aggregation/` のみ           | 1-2ファイル    |
+| **Excel APIエンドポイント変更** | `lib/data-export/useExcelDownload.ts` のみ | 1ファイル      |
 
 **Before**: 1つの変更でViewModel全体（250行）を確認する必要があった  
 **After**: 該当するサブフィーチャー（50-70行）のみ確認すればOK
@@ -386,13 +409,15 @@ features/
 ```typescript
 // lib/period-selection/types.ts
 export type ValidPeriodRange = PeriodRange & {
-    _brand: 'ValidPeriodRange'; // Branded Type
+  _brand: "ValidPeriodRange"; // Branded Type
 };
 
 // 型ガードで安全性を保証
-export function toValidPeriodRange(range: PeriodRange): ValidPeriodRange | null {
-    if (!isValidPeriodRange(range.start, range.end)) return null;
-    return range as ValidPeriodRange;
+export function toValidPeriodRange(
+  range: PeriodRange,
+): ValidPeriodRange | null {
+  if (!isValidPeriodRange(range.start, range.end)) return null;
+  return range as ValidPeriodRange;
 }
 ```
 
@@ -400,12 +425,12 @@ export function toValidPeriodRange(range: PeriodRange): ValidPeriodRange | null 
 
 ```typescript
 // lib/customer-aggregation/aggregation.ts
-import { memoize } from 'lodash-es';
+import { memoize } from "lodash-es";
 
 // メモ化でパフォーマンス向上
 export const aggregateCustomersMemoized = memoize(
-    aggregateCustomers,
-    (months, dataSource) => months.join(',') // キャッシュキー
+  aggregateCustomers,
+  (months, dataSource) => months.join(","), // キャッシュキー
 );
 ```
 
@@ -413,14 +438,14 @@ export const aggregateCustomersMemoized = memoize(
 
 ## 📈 メトリクス
 
-| 指標 | Before | After | 改善 |
-|---|---|---|---|
-| **ViewModel行数** | 250行 | 150行 | ▼40% |
-| **最大ファイルサイズ** | 250行 | 130行 | ▼48% |
-| **モジュール数** | 1個 | 4個 | +300% |
-| **テスト容易性** | 低 | 高 | ✅ |
-| **再利用性** | 低 | 高 | ✅ |
-| **保守性** | 中 | 高 | ✅ |
+| 指標                   | Before | After | 改善  |
+| ---------------------- | ------ | ----- | ----- |
+| **ViewModel行数**      | 250行  | 150行 | ▼40%  |
+| **最大ファイルサイズ** | 250行  | 130行 | ▼48%  |
+| **モジュール数**       | 1個    | 4個   | +300% |
+| **テスト容易性**       | 低     | 高    | ✅    |
+| **再利用性**           | 低     | 高    | ✅    |
+| **保守性**             | 中     | 高    | ✅    |
 
 ---
 

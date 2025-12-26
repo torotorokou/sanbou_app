@@ -7,24 +7,28 @@
 #### `@/services/httpClient` → `@shared/infrastructure/http`
 
 1. ✅ `src/components/Report/interactive/BlockUnitPriceInteractive.tsx`
+
    ```typescript
    - import { apiPost } from '@/services/httpClient';
    + import { apiPost } from '@shared/infrastructure/http';
    ```
 
 2. ✅ `src/pages/analysis/CustomerListAnalysis.tsx`
+
    ```typescript
    - import { apiPostBlob } from '@/services/httpClient';
    + import { apiPostBlob } from '@shared/infrastructure/http';
    ```
 
 3. ✅ `src/pages/navi/SolvestNavi.tsx`
+
    ```typescript
    - import { apiGet, apiPost } from '@/services/httpClient';
    + import { apiGet, apiPost } from '@shared/infrastructure/http';
    ```
 
 4. ✅ `src/services/chatService.ts`
+
    ```typescript
    - import { apiPost } from '@/services/httpClient';
    + import { apiPost } from '@shared/infrastructure/http';
@@ -41,6 +45,7 @@
 #### anchors（2ファイル）
 
 6. ✅ `src/pages/manual/ManualPage.tsx`
+
    ```typescript
    - import { ensureSectionAnchors, smoothScrollToAnchor } from '@/utils/anchors';
    + import { ensureSectionAnchors, smoothScrollToAnchor } from '@shared/utils';
@@ -63,6 +68,7 @@
 #### pdfWorkerLoader（2ファイル）
 
 9. ✅ `src/components/chat/PdfPreviewModal.tsx`
+
    ```typescript
    - import { ensurePdfJsWorkerLoaded } from '@/utils/pdfWorkerLoader';
    + import { ensurePdfJsWorkerLoaded } from '@shared/utils';
@@ -87,6 +93,7 @@
 #### api.ts（2ファイル）
 
 12. ✅ `src/services/httpClient_impl.ts`
+
     ```typescript
     - import type { ApiResponse } from '@/types/api';
     + import type { ApiResponse } from '@shared/types';
@@ -103,11 +110,11 @@
 #### `@/hooks/ui` → `@shared/hooks/ui`
 
 14-28. ✅ 以下15ファイル
-    ```typescript
+`typescript
     - import { useWindowSize } from '@/hooks/ui';
     + import { useWindowSize } from '@shared/hooks/ui';
-    ```
-    
+    `
+
     - `src/theme/ThemeProvider.tsx`
     - `src/layout/Sidebar.tsx` (2箇所)
     - `src/pages/home/PortalPage.tsx`
@@ -131,13 +138,13 @@
 #### 相対パス → `@shared/hooks/ui`
 
 30-41. ✅ 以下12ファイル（相対パス）
-    ```typescript
+`typescript
     - import { useWindowSize } from '../../hooks/ui';
     - import { useWindowSize } from '../../../hooks/ui';
     - import { useWindowSize } from '../hooks/ui';
     + import { useWindowSize } from '@shared/hooks/ui';
-    ```
-    
+    `
+
     - `src/shared/ui/VerticalActionButton.tsx`
     - `src/components/debug/ResponsiveDebugInfo.tsx`
     - `src/components/ui/VerticalActionButton.tsx`
@@ -155,13 +162,13 @@
 
 ## 📊 置換サマリー
 
-| カテゴリ | ファイル数 | 対象パス |
-|---------|----------|----------|
-| HTTPクライアント | 5 | `@/services/httpClient` |
-| ユーティリティ | 6 | `@/utils/*` |
-| 型定義 | 2 | `@/types/api` |
-| UIフック | 27 | `@/hooks/ui` + 相対パス |
-| **合計** | **40** | - |
+| カテゴリ         | ファイル数 | 対象パス                |
+| ---------------- | ---------- | ----------------------- |
+| HTTPクライアント | 5          | `@/services/httpClient` |
+| ユーティリティ   | 6          | `@/utils/*`             |
+| 型定義           | 2          | `@/types/api`           |
+| UIフック         | 27         | `@/hooks/ui` + 相対パス |
+| **合計**         | **40**     | -                       |
 
 ---
 

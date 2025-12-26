@@ -1,7 +1,7 @@
 /* 将軍マニュアル一覧ページ専用スタイル */
 
 /* ShogunList styles - Lean-3 responsive */
-@import "@/shared/styles/custom-media.css";
+@import '@app/styles/custom-media.css';
 
 :root {
   --header-height: 56px;
@@ -41,6 +41,15 @@
   margin: 0;
   text-align: center;
   pointer-events: auto;
+  white-space: nowrap;
+  font-size: 18px;
+}
+
+/* モバイルではタイトルのフォントサイズを調整 */
+@media (max-width: 767px) {
+  .title {
+    font-size: 16px;
+  }
 }
 
 .sider {
@@ -66,6 +75,7 @@
 .sectionBlock {
   scroll-margin-top: 80px;
   margin-bottom: 32px;
+  position: relative; /* sentinel用 */
 }
 
 .sectionHeader {
@@ -106,7 +116,7 @@
 .headerSearchInput {
   border-radius: 6px;
   padding: 4px 8px;
-  border: 1px solid var(--ant-color-border, rgba(0,0,0,0.06));
+  border: 1px solid var(--ant-color-border, rgba(0, 0, 0, 0.06));
 }
 
 /* xl: 1280px+ */
@@ -119,8 +129,10 @@
 .searchInput {
   border-radius: 6px;
   padding: 6px 10px;
-  border: 1px solid var(--ant-color-border, rgba(0,0,0,0.08));
-  transition: box-shadow 0.16s ease, border-color 0.16s ease;
+  border: 1px solid var(--ant-color-border, rgba(0, 0, 0, 0.08));
+  transition:
+    box-shadow 0.16s ease,
+    border-color 0.16s ease;
   background: #fff;
 }
 
@@ -128,5 +140,24 @@
 .searchInput:focus-visible {
   outline: none;
   border-color: var(--ant-color-primary, #52c41a);
-  box-shadow: 0 0 0 6px rgba(82,196,26,0.09);
+  box-shadow: 0 0 0 6px rgba(82, 196, 26, 0.09);
+}
+
+/* モバイル用FABボタン */
+.fabButton {
+  position: fixed;
+  right: 16px;
+  bottom: 24px;
+  width: 56px;
+  height: 56px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 999;
+}
+
+.fabButton:hover {
+  transform: scale(1.05);
+}
+
+.fabButton:active {
+  transform: scale(0.95);
 }

@@ -36,7 +36,8 @@ export const UploadFileCard: React.FC<UploadFileCardProps> = ({
     invalid: { background: '#fff2f0', border: '1px solid #ffccc7' },
     unknown: { background: '#fafafa', border: '1px solid #f0f0f0' },
   } as const;
-  const currentStatus = item.status === 'valid' ? 'valid' : item.status === 'invalid' ? 'invalid' : 'unknown';
+  const currentStatus =
+    item.status === 'valid' ? 'valid' : item.status === 'invalid' ? 'invalid' : 'unknown';
   const cardStyle = statusStyles[currentStatus];
 
   return (
@@ -67,7 +68,14 @@ export const UploadFileCard: React.FC<UploadFileCardProps> = ({
               スキップ
             </Checkbox>
           )}
-          <Text strong style={{ fontSize: isCompact ? 14 : 16, textDecoration: item.skipped ? 'line-through' : 'none', opacity: item.skipped ? 0.5 : 1 }}>
+          <Text
+            strong
+            style={{
+              fontSize: isCompact ? 14 : 16,
+              textDecoration: item.skipped ? 'line-through' : 'none',
+              opacity: item.skipped ? 0.5 : 1,
+            }}
+          >
             {item.label}
           </Text>
           {item.required && (
@@ -88,10 +96,17 @@ export const UploadFileCard: React.FC<UploadFileCardProps> = ({
           compact={isCompact}
         />
       )}
-      
+
       {/* スキップ中の表示 */}
       {item.skipped && !item.file && (
-        <div style={{ padding: '8px 12px', textAlign: 'center', color: '#999', fontSize: isCompact ? 12 : 13 }}>
+        <div
+          style={{
+            padding: '8px 12px',
+            textAlign: 'center',
+            color: '#999',
+            fontSize: isCompact ? 12 : 13,
+          }}
+        >
           ⏭️ このCSVはアップロードしません
         </div>
       )}

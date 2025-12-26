@@ -2,6 +2,9 @@
  * Features - Public API
  */
 
+// Portal - ポータルページ関連コンポーネント
+export * from './portal';
+
 // WipNotice - 開発中機能警告バナー
 export { WipNotice, type WipNoticeProps } from './wip-notice';
 

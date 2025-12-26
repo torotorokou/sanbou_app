@@ -39,6 +39,7 @@ result = self.db.execute(sql, {"dates": dates_list, "deleted_by": deleted_by})
 ```
 
 **問題点**:
+
 - PostgreSQLの`ANY(:dates)`演算子とSQLAlchemyの組み合わせで型の不整合が発生
 - Pythonの`list[datetime.date]`を直接`ANY()`に渡すと、PostgreSQLの`date[]`配列として正しく認識されないことがある
 - その結果、`WHERE`句がマッチせず、`affected_rows = 0`のまま
@@ -57,6 +58,7 @@ stg_result = await self._save_data(self.stg_writer, ...)
 ```
 
 **問題点**:
+
 - 非同期版（`start_async_upload` → `_process_csv_in_background`）では削除処理が実装されている
 - 同期版（`execute`）では削除処理が呼ばれていない
 - 同期版エンドポイントを使った場合、論理削除が実行されない
@@ -101,11 +103,13 @@ result = self.db.execute(sql, {
 ```
 
 **変更点**:
+
 1. `ANY(:dates)` → `IN :dates` + `bindparam(..., expanding=True)`に変更
 2. `dates`をPython `datetime.date`のリストに正規化
 3. 詳細なデバッグログを追加
 
 **メリット**:
+
 - 型の不整合を完全に解決
 - SQLAlchemyが自動的に正しいパラメータ展開を行う
 - PostgreSQLのクエリプランナーが最適化しやすい
@@ -193,6 +197,7 @@ logger.info(
 ```
 
 **改善理由**:
+
 - DEBUGレベルではログが出力されない環境がある
 - INFOレベルにすることで確実に問題を追跡可能
 - 絵文字を使ってログを視認しやすく
@@ -202,6 +207,7 @@ logger.info(
 ### 修正対象ファイル
 
 1. `app/infra/adapters/upload/raw_data_repository.py`
+
    - `soft_delete_scope_by_dates`メソッド（SQL構文変更）
 
 2. `app/application/usecases/upload/upload_shogun_csv_uc.py`
@@ -213,6 +219,7 @@ logger.info(
 ### 影響を受けるテーブル
 
 stg層の将軍テーブル6つすべて:
+
 1. `stg.receive_shogun_flash`
 2. `stg.shipment_shogun_flash`
 3. `stg.yard_shogun_flash`
@@ -305,6 +312,7 @@ curl http://localhost:8000/database/upload-calendar?dataset=shogun_flash&year=20
 ```
 
 期待結果:
+
 - 11/02 には最新のアップロードのみが表示される
 - `is_deleted=false`のデータだけが返される
 
@@ -316,6 +324,7 @@ docker compose -f docker/docker-compose.dev.yml logs -f core_api | grep -E "SOFT
 ```
 
 期待されるログ出力:
+
 ```
 [PRE-INSERT] 📋 About to soft delete: csv_type=receive, csv_kind=shogun_flash_receive, dates_count=2, dates_sample=[datetime.date(2025, 11, 2), datetime.date(2025, 11, 3)]
 [SOFT_DELETE] soft_delete_scope_by_dates called: table=stg.receive_shogun_flash, csv_kind=shogun_flash_receive, dates_count=2, dates_sample=[2025-11-02, 2025-11-03]
@@ -323,7 +332,8 @@ docker compose -f docker/docker-compose.dev.yml logs -f core_api | grep -E "SOFT
 [PRE-INSERT] ✅ Soft deleted Y existing rows for shogun_flash_receive before inserting new data (dates: 2 dates)
 ```
 
-**重要**: 
+**重要**:
+
 - `affected_rows=0`の場合、削除が実行されていない
 - ログが全く出ない場合、メソッドが呼ばれていない可能性がある
 
@@ -348,6 +358,7 @@ result = db.execute(sql, {"ids": [1, 2, 3, 4, 5]})
 ```
 
 **メリット**:
+
 - SQLインジェクション対策
 - 型の安全性
 - データベース最適化
@@ -369,6 +380,7 @@ for d in dates_list:
 ## 既知の制限事項
 
 1. **型チェッカーのエラー**:
+
    - `result.rowcount`に対して型チェッカーが警告を出す
    - 実行時には問題なし（SQLAlchemy 2.x の仕様）
 
@@ -402,12 +414,14 @@ docker compose -f docker/docker-compose.dev.yml restart core_api
 **原因**: メソッドが呼ばれていない
 
 **確認方法**:
+
 ```bash
 # UseCase内のログを確認
 docker compose -f docker/docker-compose.dev.yml logs core_api | grep "PRE-INSERT"
 ```
 
 **対処**:
+
 1. `_soft_delete_existing_data_by_dates`が実際に呼ばれているか確認
 2. `self.raw_data_repo`が`None`になっていないか確認
 3. エンドポイントが正しいUseCaseを使用しているか確認（DI設定）
@@ -417,6 +431,7 @@ docker compose -f docker/docker-compose.dev.yml logs core_api | grep "PRE-INSERT
 **原因1**: テーブルに該当日付のデータが存在しない
 
 **確認方法**:
+
 ```sql
 -- 実際にデータが存在するか確認
 SELECT slip_date, is_deleted, COUNT(*)
@@ -428,14 +443,16 @@ GROUP BY slip_date, is_deleted;
 **原因2**: `csv_kind`が間違っている
 
 **確認方法**:
+
 ```bash
 # ログでcsv_kindを確認
 docker compose logs core_api | grep "csv_kind="
 ```
 
 正しい形式:
+
 - `shogun_flash_receive`
-- `shogun_flash_shipment`  
+- `shogun_flash_shipment`
 - `shogun_flash_yard`
 - `shogun_final_receive`
 - `shogun_final_shipment`
@@ -444,11 +461,12 @@ docker compose logs core_api | grep "csv_kind="
 **原因3**: テーブル名が間違っている
 
 **確認方法**:
+
 ```sql
 -- テーブルの存在確認
-SELECT table_schema, table_name 
-FROM information_schema.tables 
-WHERE table_schema = 'stg' 
+SELECT table_schema, table_name
+FROM information_schema.tables
+WHERE table_schema = 'stg'
   AND table_name LIKE '%shogun%';
 ```
 
@@ -457,8 +475,10 @@ WHERE table_schema = 'stg'
 **症状**: 同じ日付の古いデータが`is_deleted = false`のまま
 
 **確認手順**:
+
 1. ログで`affected_rows > 0`を確認
 2. SQLで実際のデータを確認:
+
 ```sql
 SELECT slip_date, is_deleted, upload_file_id, deleted_at, deleted_by, COUNT(*)
 FROM stg.receive_shogun_flash
@@ -473,12 +493,14 @@ ORDER BY upload_file_id;
 ### 問題: エラーが発生して処理が中断される
 
 **確認方法**:
+
 ```bash
 # エラーログを確認
 docker compose logs core_api | grep -E "ERROR|Failed to soft delete"
 ```
 
 **よくあるエラー**:
+
 - `Invalid csv_kind`: CSV_KIND_TABLE_MAPに該当するキーがない
 - `relation does not exist`: テーブルが存在しない、またはschemaが間違っている
 - `column "slip_date" does not exist`: カラム名が間違っている
@@ -494,6 +516,7 @@ docker compose logs core_api | grep -E "ERROR|Failed to soft delete"
 ✅ カレンダーAPIで最新データのみが表示される
 
 **設計方針の維持**:
+
 - Minimal diff: 既存のレイヤ分離を保持
 - Clean Architecture: Router → UseCase → Repository の流れを維持
 - DDD: ドメインロジックはUseCaseに集約

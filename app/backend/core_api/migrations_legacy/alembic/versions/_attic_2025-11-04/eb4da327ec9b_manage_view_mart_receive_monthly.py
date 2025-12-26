@@ -4,8 +4,9 @@ Revision ID: 20251105_101233931
 Revises: 20251105_101107506
 Create Date: 2025-11-05 01:12:34.713146
 """
-from alembic import op, context
+
 import sqlalchemy as sa
+from alembic import context, op
 
 # revision identifiers, used by Alembic.
 revision = "20251105_101233931"
@@ -54,7 +55,11 @@ def upgrade():
         op.execute(f"GRANT USAGE ON SCHEMA mart TO {qrole};")
 
         # 明示ビューに付与
-        for v in ("mart.v_receive_daily", "mart.v_receive_weekly", "mart.v_receive_monthly"):
+        for v in (
+            "mart.v_receive_daily",
+            "mart.v_receive_weekly",
+            "mart.v_receive_monthly",
+        ):
             op.execute(f"GRANT SELECT ON {v} TO {qrole};")
 
         # 以後 mart スキーマで作成されるテーブル/ビューにも自動付与
@@ -77,6 +82,10 @@ def downgrade():
     bind = op.get_bind()
     if _role_exists(bind, role):
         qrole = _qi(role)
-        for v in ("mart.v_receive_daily", "mart.v_receive_weekly", "mart.v_receive_monthly"):
+        for v in (
+            "mart.v_receive_daily",
+            "mart.v_receive_weekly",
+            "mart.v_receive_monthly",
+        ):
             op.execute(f"REVOKE SELECT ON {v} FROM {qrole};")
         op.execute(f"ALTER DEFAULT PRIVILEGES IN SCHEMA mart REVOKE SELECT ON TABLES FROM {qrole};")

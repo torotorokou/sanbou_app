@@ -1,21 +1,21 @@
 /**
  * MonthNavigator - 月ナビゲーションUI
- * 
+ *
  * 責務：
  * - タイトル表示（月表示含む）
  * - 月選択DatePicker
  * - 前月/翌月ボタン
  * - 今日バッジ表示
  * - モバイル/デスクトップレスポンシブ対応
- * 
+ *
  * 状態管理なし・純UIコンポーネント
  */
 
-import React from "react";
-import { Row, Col, Typography, DatePicker, Space, Badge, Button, Tooltip } from "antd";
-import { LeftOutlined, RightOutlined } from "@ant-design/icons";
-import dayjs from "dayjs";
-import type { Dayjs } from "dayjs";
+import React from 'react';
+import { Row, Col, Typography, DatePicker, Space, Badge, Button, Tooltip } from 'antd';
+import { LeftOutlined, RightOutlined } from '@ant-design/icons';
+import dayjs from 'dayjs';
+import type { Dayjs } from 'dayjs';
 
 export type MonthNavigatorProps = {
   /** ページタイトル */
@@ -47,7 +47,7 @@ export const MonthNavigator: React.FC<MonthNavigatorProps> = ({
   onNextMonth,
 }) => {
   const handleDatePickerChange = (d: Dayjs | null, s: string | string[]) => {
-    if (d && d.isValid && d.isValid() && typeof s === "string" && s) {
+    if (d && d.isValid && d.isValid() && typeof s === 'string' && s) {
       onMonthChange(s);
     }
   };
@@ -59,7 +59,7 @@ export const MonthNavigator: React.FC<MonthNavigatorProps> = ({
       </Tooltip>
       <DatePicker
         picker="month"
-        value={month ? dayjs(month, "YYYY-MM") : null}
+        value={month ? dayjs(month, 'YYYY-MM') : null}
         onChange={handleDatePickerChange}
         className="dashboard-month-picker"
         size="small"
@@ -67,7 +67,7 @@ export const MonthNavigator: React.FC<MonthNavigatorProps> = ({
       <Tooltip title="翌月へ">
         <Button size="small" icon={<RightOutlined />} onClick={onNextMonth} />
       </Tooltip>
-      {todayBadge && <Badge count={todayBadge} style={{ backgroundColor: "#1677ff" }} />}
+      {todayBadge && <Badge count={todayBadge} style={{ backgroundColor: '#1677ff' }} />}
     </Space>
   );
 
@@ -75,14 +75,21 @@ export const MonthNavigator: React.FC<MonthNavigatorProps> = ({
     return (
       <>
         <Row align="middle">
-          <Col span={24} style={{ textAlign: "center" }}>
+          <Col span={24} style={{ textAlign: 'center' }}>
             <Typography.Title level={4} style={{ margin: 0 }}>
               {title}
             </Typography.Title>
           </Col>
         </Row>
         <Row>
-          <Col span={24} style={{ display: "flex", justifyContent: "flex-end", marginTop: 8 }}>
+          <Col
+            span={24}
+            style={{
+              display: 'flex',
+              justifyContent: 'flex-end',
+              marginTop: 8,
+            }}
+          >
             {controls}
           </Col>
         </Row>
@@ -93,13 +100,13 @@ export const MonthNavigator: React.FC<MonthNavigatorProps> = ({
   return (
     <Row align="middle">
       <Col flex="1" />
-      <Col flex="none" style={{ textAlign: "center" }}>
+      <Col flex="none" style={{ textAlign: 'center' }}>
         <Typography.Title level={4} style={{ margin: 0 }}>
           {title}
           {monthJP && ` — ${monthJP}`}
         </Typography.Title>
       </Col>
-      <Col flex="1" style={{ display: "flex", justifyContent: "flex-end" }}>
+      <Col flex="1" style={{ display: 'flex', justifyContent: 'flex-end' }}>
         {controls}
       </Col>
     </Row>

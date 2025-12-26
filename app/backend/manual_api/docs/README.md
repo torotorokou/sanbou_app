@@ -44,6 +44,7 @@ docs/
 ## データ構造
 
 ### マスターデータ
+
 - ベンダー情報: `data/master/vender/`
 
 ## 開発ガイド
@@ -59,6 +60,7 @@ uvicorn app.main:app --reload --port 8006
 ### 環境変数
 
 主要な環境変数:
+
 - `MANUAL_DATA_PATH` - マニュアルデータディレクトリ
 - `PORT` - APIポート番号（デフォルト: 8006）
 

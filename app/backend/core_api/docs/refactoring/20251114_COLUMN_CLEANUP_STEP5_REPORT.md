@@ -8,11 +8,13 @@
 ## 1. テスト実行サマリー
 
 ### テスト対象
+
 - ✅ **shipment** (出荷一覧): 18,978行
-- ✅ **yard** (ヤード一覧): 12,301行  
+- ✅ **yard** (ヤード一覧): 12,301行
 - ✅ **receive** (受入一覧): 1,759行
 
 ### 全アップロード結果
+
 ```json
 {
   "status": "success",
@@ -28,18 +30,23 @@
 ## 2. 追加マイグレーション
 
 ### 問題
+
 shipmentテーブルで `category_cd` と `category_name` カラムが存在しないエラーが発生:
+
 ```
 column "category_cd" of relation "shipment_shogun_flash" does not exist
 ```
 
 ### 原因
+
 - YAML定義には `種類CD` (category_cd) と `種類名` (category_name) が含まれる
 - 実際のCSVファイルにもこれらのカラムが存在
 - しかしデータベーステーブルには作成されていなかった
 
 ### 対応
+
 マイグレーション `20251114_add_shipment_category.py` を作成・実行:
+
 ```sql
 ALTER TABLE raw.shipment_shogun_flash ADD COLUMN category_cd TEXT;
 ALTER TABLE raw.shipment_shogun_flash ADD COLUMN category_name TEXT;
@@ -54,12 +61,14 @@ ALTER TABLE stg.shipment_shogun_flash ADD COLUMN category_name VARCHAR;
 ## 3. アップロードテスト結果
 
 ### shipment (出荷一覧)
+
 ```bash
 curl -X POST "http://localhost:8003/database/upload/syogun_csv_flash" \
   -F "shipment=@出荷一覧_202404_202510.csv"
 ```
 
 **結果**:
+
 ```json
 {
   "status": "success",
@@ -78,12 +87,14 @@ curl -X POST "http://localhost:8003/database/upload/syogun_csv_flash" \
 ---
 
 ### yard (ヤード一覧)
+
 ```bash
 curl -X POST "http://localhost:8003/database/upload/syogun_csv_flash" \
   -F "yard=@ヤード一覧_202404_202510.csv"
 ```
 
 **結果**:
+
 ```json
 {
   "status": "success",
@@ -102,12 +113,14 @@ curl -X POST "http://localhost:8003/database/upload/syogun_csv_flash" \
 ---
 
 ### receive (受入一覧)
+
 ```bash
 curl -X POST "http://localhost:8003/database/upload/syogun_csv_flash" \
   -F "receive=@受入一覧_20251112_150252.csv"
 ```
 
 **結果**:
+
 ```json
 {
   "status": "success",
@@ -130,13 +143,15 @@ curl -X POST "http://localhost:8003/database/upload/syogun_csv_flash" \
 ### 新カラム名での参照確認
 
 #### shipment テーブル
+
 ```sql
-SELECT slip_date, client_name, vendor_name, item_name, category_name, amount 
-FROM stg.shipment_shogun_flash 
+SELECT slip_date, client_name, vendor_name, item_name, category_name, amount
+FROM stg.shipment_shogun_flash
 ORDER BY slip_date DESC LIMIT 5;
 ```
 
 **結果**:
+
 ```
  slip_date  | client_name | vendor_name  | item_name | category_name | amount
 ------------+-------------+--------------+-----------+---------------+--------
@@ -149,12 +164,14 @@ ORDER BY slip_date DESC LIMIT 5;
 ---
 
 #### yard テーブル
+
 ```sql
-SELECT slip_date, client_name, vendor_name, item_name, sales_staff_name 
+SELECT slip_date, client_name, vendor_name, item_name, sales_staff_name
 FROM stg.yard_shogun_flash LIMIT 5;
 ```
 
 **結果**:
+
 ```
  slip_date  | client_name  |   vendor_name    |   item_name   | sales_staff_name
 ------------+--------------+------------------+---------------+------------------
@@ -166,12 +183,14 @@ FROM stg.yard_shogun_flash LIMIT 5;
 ---
 
 #### receive テーブル
+
 ```sql
-SELECT slip_date, vendor_name, item_name, transport_vendor_name 
+SELECT slip_date, vendor_name, item_name, transport_vendor_name
 FROM stg.receive_shogun_flash LIMIT 5;
 ```
 
 **結果**:
+
 ```
  slip_date  |   vendor_name    |  item_name  | transport_vendor_name
 ------------+------------------+-------------+-----------------------
@@ -187,11 +206,12 @@ FROM stg.receive_shogun_flash LIMIT 5;
 
 ```sql
 SELECT table_schema || '.' || table_name AS table_name, COUNT(*) AS row_count
-FROM (各テーブルをUNION) 
+FROM (各テーブルをUNION)
 ORDER BY table_schema, table_name;
 ```
 
 **結果**:
+
 ```
         table_name         | row_count
 ---------------------------+-----------
@@ -216,13 +236,15 @@ stg.yard_shogun_flash      |     12301
 ## 6. カラム構造の最終確認
 
 ### shipment_shogun_flash (stg)
+
 ```sql
-SELECT column_name FROM information_schema.columns 
-WHERE table_schema = 'stg' AND table_name = 'shipment_shogun_flash' 
+SELECT column_name FROM information_schema.columns
+WHERE table_schema = 'stg' AND table_name = 'shipment_shogun_flash'
 ORDER BY ordinal_position;
 ```
 
 **カラム一覧** (20カラム):
+
 ```
 id
 slip_date
@@ -251,18 +273,20 @@ created_at
 ## 7. 命名規則統一の確認
 
 ### Before (問題あり)
-| テーブル | client | vendor | item | unit | 一貫性 |
-|---------|--------|--------|------|------|--------|
-| receive | client_name | vendor_name | item_name | unit_name | ✅ OK |
-| shipment | client_**en**_name | vendor_**en**_name | item_**en**_name | unit_**en**_name | ❌ 不一致 |
-| yard | client_**en**_name | vendor_**en**_name | item_**en**_name | unit_**en**_name | ❌ 不一致 |
+
+| テーブル | client               | vendor               | item               | unit               | 一貫性    |
+| -------- | -------------------- | -------------------- | ------------------ | ------------------ | --------- |
+| receive  | client_name          | vendor_name          | item_name          | unit_name          | ✅ OK     |
+| shipment | client\_**en**\_name | vendor\_**en**\_name | item\_**en**\_name | unit\_**en**\_name | ❌ 不一致 |
+| yard     | client\_**en**\_name | vendor\_**en**\_name | item\_**en**\_name | unit\_**en**\_name | ❌ 不一致 |
 
 ### After (統一済み)
-| テーブル | client | vendor | item | unit | 一貫性 |
-|---------|--------|--------|------|------|--------|
-| receive | client_name | vendor_name | item_name | unit_name | ✅ OK |
-| shipment | client_name | vendor_name | item_name | unit_name | ✅ OK |
-| yard | client_name | vendor_name | item_name | unit_name | ✅ OK |
+
+| テーブル | client      | vendor      | item      | unit      | 一貫性 |
+| -------- | ----------- | ----------- | --------- | --------- | ------ |
+| receive  | client_name | vendor_name | item_name | unit_name | ✅ OK  |
+| shipment | client_name | vendor_name | item_name | unit_name | ✅ OK  |
+| yard     | client_name | vendor_name | item_name | unit_name | ✅ OK  |
 
 ✅ **全テーブルで命名規則が完全に統一されました**
 
@@ -273,20 +297,25 @@ created_at
 **Step 5 完了 ✅**
 
 ### 達成した成果
+
 1. ✅ **3種類のCSV全てでアップロード成功**
+
    - receive: 1,759行
    - shipment: 18,980行
    - yard: 12,301行
 
 2. ✅ **raw/stg両層への保存確認**
+
    - 全テーブルで同じ件数が保存
    - データ損失なし
 
 3. ✅ **新カラム名での正常動作確認**
+
    - `_en_` 接尾辞が削除されたカラム名で参照可能
    - SQLクエリ・アプリケーションコード共に正常動作
 
 4. ✅ **追加カラムの実装**
+
    - shipmentテーブルに category_cd/category_name を追加
    - YAMLとDBスキーマの整合性確保
 
@@ -296,13 +325,13 @@ created_at
 
 ### 全5ステップ完了
 
-| Step | タスク | ステータス | ドキュメント |
-|------|--------|----------|------------|
-| 1 | 現状分析 | ✅ 完了 | COLUMN_CLEANUP_STEP1_REPORT_20251114.md |
-| 2 | YAML修正 | ✅ 完了 | COLUMN_CLEANUP_STEP2_REPORT_20251114.md |
-| 3 | マイグレーション作成 | ✅ 完了 | COLUMN_CLEANUP_STEP3_REPORT_20251114.md |
-| 4 | マイグレーション実行 | ✅ 完了 | COLUMN_CLEANUP_STEP4_REPORT_20251114.md |
-| 5 | CSVアップロードテスト | ✅ 完了 | COLUMN_CLEANUP_STEP5_REPORT_20251114.md |
+| Step | タスク                | ステータス | ドキュメント                            |
+| ---- | --------------------- | ---------- | --------------------------------------- |
+| 1    | 現状分析              | ✅ 完了    | COLUMN_CLEANUP_STEP1_REPORT_20251114.md |
+| 2    | YAML修正              | ✅ 完了    | COLUMN_CLEANUP_STEP2_REPORT_20251114.md |
+| 3    | マイグレーション作成  | ✅ 完了    | COLUMN_CLEANUP_STEP3_REPORT_20251114.md |
+| 4    | マイグレーション実行  | ✅ 完了    | COLUMN_CLEANUP_STEP4_REPORT_20251114.md |
+| 5    | CSVアップロードテスト | ✅ 完了    | COLUMN_CLEANUP_STEP5_REPORT_20251114.md |
 
 ---
 

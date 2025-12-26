@@ -1,0 +1,50 @@
+# Hadolint Configuration
+# Dockerfile linter configuration for sanbou_app project
+# See: https://github.com/hadolint/hadolint
+
+# ============================================================
+# Ignored Rules
+# ============================================================
+ignored:
+  # DL3008: Pin versions in apt-get install
+  # 理由: Debian/Ubuntuパッケージのバージョン固定は、セキュリティパッチ適用を困難にし、
+  #       ビルド失敗のリスクが高い。apt-get upgrade -yで最新パッチを適用する方針。
+  - DL3008
+
+  # DL3009: Delete apt-cache after use
+  # 理由: 既に `apt-get clean && rm -rf /var/lib/apt/lists/*` で対処済み
+  - DL3009
+
+  # DL3013: Pin versions in pip install
+  # 理由: requirements.txtまたはpip install時のバージョン指定で管理。
+  #       Dockerfile内でのpip自体のバージョン固定は既に実施済み(pip>=25.3,<26.0)
+  - DL3013
+
+  # DL3002: Last USER should not be root (for nginx base images)
+  # 理由: nginx公式イメージのentrypointが/var/cache/nginx/*を作成するため、
+  #       base stageではrootが必要。実運用でのハードニングは別途検討。
+  - DL3002
+
+# ============================================================
+# Warning Thresholds
+# ============================================================
+# failure-threshold: error (警告は許容、エラーで失敗)
+failure-threshold: error
+
+# ============================================================
+# Trusted Registries (optional)
+# ============================================================
+# trustedRegistries:
+#   - docker.io
+#   - gcr.io
+
+# ============================================================
+# Label Schema
+# ============================================================
+label-schema:
+  author: text
+  version: semver
+# ============================================================
+# Strict Labels (optional)
+# ============================================================
+# strict-labels: false

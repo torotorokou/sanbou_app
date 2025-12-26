@@ -18,12 +18,13 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-from typing import Optional
+
 from dotenv import load_dotenv
+
 from app.config.paths import CONFIG_ENV
 
 
-def load_env_and_secrets() -> Optional[str]:
+def load_env_and_secrets() -> str | None:
     """
     CONFIG_ENV とステージ別 secrets を読み込む。
 

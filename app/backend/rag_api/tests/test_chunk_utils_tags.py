@@ -1,27 +1,31 @@
 import pytest
 
-from app.utils.chunk_utils import search_documents_with_category, safe_parse_tags
+from app.utils.chunk_utils import safe_parse_tags, search_documents_with_category
+
 
 class DummyDoc:
     def __init__(self, page_content: str, metadata: dict):
         self.page_content = page_content
         self.metadata = metadata
 
+
 class DummyVectorStore:
     def __init__(self, docs):
         # docs: list[DummyDoc]
         self._docs = docs
+
     def similarity_search_with_score(self, query, k=4):
         # return top-k with dummy score
         return [(d, 0.0) for d in self._docs[:k]]
+
 
 @pytest.mark.parametrize(
     "raw, expected",
     [
         ([], []),
-        (["A","B"], ["A","B"]),
-        ("['A','B']", ["A","B"]),
-        ("A,B", ["A","B"]),
+        (["A", "B"], ["A", "B"]),
+        ("['A','B']", ["A", "B"]),
+        ("A,B", ["A", "B"]),
         ("A", ["A"]),
         (None, []),
         (1, [1]),
@@ -29,6 +33,7 @@ class DummyVectorStore:
 )
 def test_safe_parse_tags(raw, expected):
     assert safe_parse_tags(raw) == expected
+
 
 @pytest.mark.parametrize(
     "meta_key",
@@ -65,4 +70,3 @@ def test_search_with_tag_and_tags_keys(meta_key):
     )
     # should at least include doc1
     assert any(r[0] == "t1" for r in res)
-

@@ -1,12 +1,13 @@
 from pydantic import BaseModel
-from typing import List, Optional
+
 
 class QueryRequest(BaseModel):
     query: str
     category: str
-    tags: Optional[List[str]] = None
+    tags: list[str] | None = None
+
 
 class QueryResponse(BaseModel):
     answer: str
-    sources: List[str]
-    pages: List[str]
+    sources: list[str]
+    pages: list[str]

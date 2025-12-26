@@ -131,9 +131,9 @@ services:
       - TZ=Asia/Tokyo
       # Security: Use service account key instead of mounting ~/.config/gcloud
       - GOOGLE_APPLICATION_CREDENTIALS=/backend/secrets/gcs-key-dev.json
-      # Alembic: DB connection string (uses myuser for DDL operations)
-      # PASSWORD MOVED TO: secrets/.env.local_dev.secrets (DB_ALEMBIC_PASSWORD)
-      - ALEMBIC_DB_USER=myuser
+      # Alembic: DB connection uses DB_MIGRATOR_USER if set, otherwise falls back to DB_USER
+      # DB_MIGRATOR_USER should be set in .env files for environments that separate migration users
+      # For dev, we use the same user as the app (set via .env.local_dev)
     depends_on:
       db:
         condition: service_healthy
@@ -223,11 +223,14 @@ services:
       - "${DEV_MANUAL_API_PORT:-8005}:8000"
     volumes:
       - ../app/backend/manual_api/app:/backend/app:rw
+      - ../app/backend/manual_api/data:/backend/data:rw
+      - ../app/backend/manual_api/local_data:/backend/local_data:rw
       - ../app/backend/backend_shared:/opt/backend_shared:rw
       - ../secrets:/backend/secrets:ro
     environment:
       MANUAL_FRONTEND_BASE_URL: ${MANUAL_FRONTEND_BASE_URL:-http://localhost:5173}
       TZ: "Asia/Tokyo"
+      DEV_RELOAD: "1"
       # Security: Use service account key instead of mounting ~/.config/gcloud
       GOOGLE_APPLICATION_CREDENTIALS: /backend/secrets/gcs-key-dev.json
     networks:

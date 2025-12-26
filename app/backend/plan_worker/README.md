@@ -38,9 +38,9 @@ plan_worker/
 
 ## Environment Variables
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `POLL_INTERVAL` | Polling interval in seconds | `10` |
+| Variable        | Description                 | Default |
+| --------------- | --------------------------- | ------- |
+| `POLL_INTERVAL` | Polling interval in seconds | `10`    |
 
 ## Development
 
@@ -68,7 +68,6 @@ docker run --rm plan_worker
 - [ ] Add error handling and retry logic
 - [ ] Add monitoring and metrics
 - [ ] Add unit tests
-
 
 ## Logging
 

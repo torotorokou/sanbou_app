@@ -3,9 +3,9 @@
  * 目標関連の計算ロジック
  */
 
-import dayjs from "dayjs";
-import type { CalendarDay, TargetsDTO, DailyCurveDTO } from "../types";
-import { toDate, mondayOf, addDays, sum } from "../valueObjects";
+import dayjs from 'dayjs';
+import type { CalendarDay, TargetsDTO, DailyCurveDTO } from '../types';
+import { toDate, mondayOf, addDays, sum } from '../valueObjects';
 
 /**
  * 1営業日あたりの目標トン数を計算
@@ -19,14 +19,18 @@ export const calculateOneBusinessDayTarget = (
   const weekdayCount = calendarDays.filter(
     (d) => d.is_business_day && toDate(d.date).getDay() >= 1 && toDate(d.date).getDay() <= 5
   ).length;
-  const satCount = calendarDays.filter((d) => d.is_business_day && toDate(d.date).getDay() === 6).length;
-  const sunHolCount = calendarDays.filter((d) => d.is_business_day && toDate(d.date).getDay() === 0).length;
+  const satCount = calendarDays.filter(
+    (d) => d.is_business_day && toDate(d.date).getDay() === 6
+  ).length;
+  const sunHolCount = calendarDays.filter(
+    (d) => d.is_business_day && toDate(d.date).getDay() === 0
+  ).length;
 
   const businessDayCount = weekdayCount + satCount;
   const businessWeight = dayWeight.weekday + dayWeight.sat;
 
   const totalW = businessDayCount * businessWeight + sunHolCount * dayWeight.sun_hol || 1;
-  return Math.round((targets.month * (businessWeight / totalW)) || 0);
+  return Math.round(targets.month * (businessWeight / totalW) || 0);
 };
 
 /**
@@ -37,7 +41,7 @@ export const calculateWeekStats = (
   calendarDays: CalendarDay[],
   daily_curve?: DailyCurveDTO[]
 ): { target: number; actual: number } => {
-  const todayStr = dayjs().format("YYYY-MM-DD");
+  const todayStr = dayjs().format('YYYY-MM-DD');
   const dayEntry = calendarDays.find((d) => d.date === todayStr) || calendarDays[0];
   const todayWeekId = dayEntry.week_id;
 
@@ -53,7 +57,8 @@ export const calculateWeekStats = (
     }
   }
 
-  const curWeek = targets.weeks.find((w) => w.bw_idx === currentIdx) ?? targets.weeks[targets.weeks.length - 1];
+  const curWeek =
+    targets.weeks.find((w) => w.bw_idx === currentIdx) ?? targets.weeks[targets.weeks.length - 1];
   const weekTarget = curWeek ? curWeek.week_target : 0;
 
   const thisWeekActual = daily_curve
@@ -74,8 +79,8 @@ export const calculateWeekStats = (
  * 今日の実績を取得
  */
 export const getTodayActual = (daily_curve?: DailyCurveDTO[]): number => {
-  const todayStr = dayjs().format("YYYY-MM-DD");
-  return daily_curve ? daily_curve.find((d) => d.date === todayStr)?.actual ?? 0 : 0;
+  const todayStr = dayjs().format('YYYY-MM-DD');
+  return daily_curve ? (daily_curve.find((d) => d.date === todayStr)?.actual ?? 0) : 0;
 };
 
 /**
@@ -90,9 +95,9 @@ export const calculateAchievementRate = (actual: number, target: number): number
  */
 export const getAchievementColor = (actual: number, target: number): string => {
   const C = {
-    ok: "#389e0d",
-    warn: "#fa8c16",
-    danger: "#cf1322",
+    ok: '#389e0d',
+    warn: '#fa8c16',
+    danger: '#cf1322',
   };
 
   const ratio = target ? actual / target : 0;

@@ -25,6 +25,7 @@ dsn = build_postgres_dsn(
 ```
 
 **特徴:**
+
 - パラメータを明示的に渡す形式
 - user/passwordを自動的にURLエンコード
 - `/`, `@`, `:` などの特殊文字を含むパスワードでも安全
@@ -44,6 +45,7 @@ dsn = build_database_url(driver="psycopg")
 ```
 
 **変更点:**
+
 - 内部で`build_postgres_dsn()`を呼び出すように改善
 - URLエンコードロジックの重複を排除
 - 後方互換性を完全に維持
@@ -53,9 +55,10 @@ dsn = build_database_url(driver="psycopg")
 `tests/test_db_url_builder.py`に包括的なテストを追加しました。
 
 **テスト項目:**
+
 - 基本的なDSN構築
 - パスワードに `/` を含む場合
-- パスワードに `@` を含む場合  
+- パスワードに `@` を含む場合
 - パスワードに `:` を含む場合
 - 複数の特殊文字を含む場合
 - ユーザー名に特殊文字を含む場合
@@ -73,18 +76,21 @@ dsn = build_database_url(driver="psycopg")
 以下のコンポーネントは既に`build_database_url()`または`build_database_url_with_driver()`を使用しており、変更不要：
 
 1. **core_api** - `app/infra/db/db.py`
+
    ```python
    from backend_shared.infra.db.url_builder import build_database_url_with_driver
    DATABASE_URL = build_database_url_with_driver(driver="psycopg")
    ```
 
 2. **plan_worker** - `app/config/settings.py`
+
    ```python
    from backend_shared.infra.db.url_builder import build_database_url_with_driver
    database_url: str = Field(default_factory=_build_database_url)
    ```
 
 3. **plan_worker テスト** - `app/test/common.py`
+
    ```python
    from backend_shared.infra.db.url_builder import build_database_url
    return build_database_url(driver=None, raise_on_missing=True)
@@ -98,6 +104,7 @@ dsn = build_database_url(driver="psycopg")
 `backend_shared.infra.db.url_builder.build_database_url()`の内部実装を改善しましたが、APIインターフェースは変更していません。
 
 **Before:**
+
 ```python
 # URLエンコードを直接実装
 encoded_user = quote_plus(user)
@@ -106,6 +113,7 @@ return f"{protocol}://{encoded_user}:{encoded_password}@{host}:{port}/{database}
 ```
 
 **After:**
+
 ```python
 # 新しい build_postgres_dsn() を利用
 return build_postgres_dsn(
@@ -206,6 +214,7 @@ DATABASE_URL = build_postgres_dsn(
 ### 特殊文字を含むパスワードへの対応
 
 **問題:**
+
 ```python
 # パスワードが "p@ss/w:rd" の場合
 dsn = f"postgresql://user:p@ss/w:rd@localhost:5432/db"
@@ -215,6 +224,7 @@ dsn = f"postgresql://user:p@ss/w:rd@localhost:5432/db"
 ```
 
 **解決:**
+
 ```python
 # URLエンコードにより安全に
 dsn = build_postgres_dsn(
@@ -231,14 +241,14 @@ dsn = build_postgres_dsn(
 
 ### エンコード表
 
-| 文字 | エンコード | 用途 |
-|------|------------|------|
-| `/`  | `%2F`      | パス区切り文字 |
-| `@`  | `%40`      | ユーザー情報とホストの区切り |
+| 文字 | エンコード | 用途                                           |
+| ---- | ---------- | ---------------------------------------------- |
+| `/`  | `%2F`      | パス区切り文字                                 |
+| `@`  | `%40`      | ユーザー情報とホストの区切り                   |
 | `:`  | `%3A`      | ユーザー名とパスワード、ホストとポートの区切り |
-| `#`  | `%23`      | フラグメント識別子 |
-| `?`  | `%3F`      | クエリパラメータ開始 |
-| `&`  | `%26`      | クエリパラメータ区切り |
+| `#`  | `%23`      | フラグメント識別子                             |
+| `?`  | `%3F`      | クエリパラメータ開始                           |
+| `&`  | `%26`      | クエリパラメータ区切り                         |
 
 ## 動作確認
 

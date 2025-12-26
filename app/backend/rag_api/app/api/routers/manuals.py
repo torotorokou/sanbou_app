@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException, Query, Depends
+from fastapi import APIRouter, Depends, HTTPException, Query
 
+from app.api.dependencies import get_manuals_service
 from app.core.domain.manuals.manual_entity import ManualDetail, ManualListResponse
 from app.core.usecases.manuals.manuals_service import ManualsService
-from app.api.dependencies import get_manuals_service
 
 
 router = APIRouter(prefix="/manuals", tags=["manuals"])

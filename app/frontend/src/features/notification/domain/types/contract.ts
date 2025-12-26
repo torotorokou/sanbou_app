@@ -9,7 +9,7 @@ export interface ProblemDetails {
 }
 
 export interface NotificationEvent {
-  id: string;           // uuid
+  id: string; // uuid
   severity: Severity;
   title: string;
   message?: string;
@@ -18,5 +18,5 @@ export interface NotificationEvent {
   resultUrl?: string;
   jobId?: string;
   traceId?: string;
-  createdAt: string;    // ISO8601
+  createdAt: string; // ISO8601
 }

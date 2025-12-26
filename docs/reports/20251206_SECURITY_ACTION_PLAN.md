@@ -3,18 +3,21 @@
 ## ✅ 完了済み対応
 
 ### 1. Git 管理からの削除 ✓
+
 - [x] env/ と secrets/ の実設定ファイルを Git 管理から削除
 - [x] .gitignore を修正してディレクトリレベルで除外
 - [x] テンプレートファイル (.example, .template) のみ Git 管理対象
 - [x] commit & push 済み (commit: 65053574)
 
 ### 2. Pre-commit フックの導入 ✓
+
 - [x] `.git/hooks/pre-commit` を作成
 - [x] 機密ファイルパターンの検出
 - [x] 機密情報（パスワード、API キー）の検出
 - [x] 実行権限付与済み
 
 ### 3. Git 履歴削除スクリプトの準備 ✓
+
 - [x] `scripts/cleanup_git_history.sh` を作成
 - [x] git-filter-repo を使用した安全な削除手順
 - [x] 実行権限付与済み
@@ -53,6 +56,7 @@ docker compose -f docker/docker-compose.prod.yml restart
 ```
 
 **検証**:
+
 ```bash
 # 接続テスト
 docker compose -f docker/docker-compose.prod.yml exec core_api curl http://localhost:8000/health
@@ -104,6 +108,7 @@ docker compose -f docker/docker-compose.prod.yml restart
 ```
 
 **検証**:
+
 ```bash
 # GCS アクセステスト
 docker compose -f docker/docker-compose.prod.yml exec core_api \
@@ -346,6 +351,7 @@ gcloud alpha monitoring policies create \
 ### 1. Pre-commit フック ✅
 
 **機能**:
+
 - env/ と secrets/ の実設定ファイル検出
 - パスワード、API キーなど機密情報パターン検出
 - commit 前にブロック
@@ -353,6 +359,7 @@ gcloud alpha monitoring policies create \
 **場所**: `.git/hooks/pre-commit`
 
 **テスト**:
+
 ```bash
 # テスト用ファイルを作成
 echo "TEST" > env/.env.test
@@ -368,6 +375,7 @@ git commit -m "test"
 ### 2. Git 履歴削除スクリプト ✅
 
 **機能**:
+
 - git-filter-repo で安全に履歴削除
 - 削除前の確認プロンプト
 - リモート復元の自動化
@@ -375,6 +383,7 @@ git commit -m "test"
 **場所**: `scripts/cleanup_git_history.sh`
 
 **実行**:
+
 ```bash
 bash scripts/cleanup_git_history.sh
 ```
@@ -382,6 +391,7 @@ bash scripts/cleanup_git_history.sh
 ### 3. .gitignore の強化 ✅
 
 **変更内容**:
+
 ```gitignore
 # Before
 env/*                    # ファイルのみ除外（不十分）

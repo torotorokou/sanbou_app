@@ -10,15 +10,15 @@
 
 ### 1.1 エンドポイント
 
-| エンドポイント | 用途 | Router | UseCase | Repository |
-|-------------|------|---------|---------|------------|
-| `GET /inbound/daily` | 日次搬入量データ取得（カレンダー連続・0埋め済み） | [app/api/routers/inbound/router.py](app/backend/core_api/app/api/routers/inbound/router.py#L38) | [GetInboundDailyUseCase](app/backend/core_api/app/core/usecases/inbound/get_inbound_daily_uc.py) | [InboundRepositoryImpl](app/backend/core_api/app/infra/adapters/inbound/inbound_repository.py) |
-| `GET /dashboard/target` | 月次/週次/日次ターゲット＋実績 | [app/api/routers/dashboard/router.py](app/backend/core_api/app/api/routers/dashboard/router.py#L33) | [BuildTargetCardUseCase](app/backend/core_api/app/core/usecases/dashboard/build_target_card_uc.py) | [DashboardTargetRepository](app/backend/core_api/app/infra/adapters/dashboard/dashboard_target_repository.py) |
+| エンドポイント          | 用途                                              | Router                                                                                              | UseCase                                                                                            | Repository                                                                                                    |
+| ----------------------- | ------------------------------------------------- | --------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `GET /inbound/daily`    | 日次搬入量データ取得（カレンダー連続・0埋め済み） | [app/api/routers/inbound/router.py](app/backend/core_api/app/api/routers/inbound/router.py#L38)     | [GetInboundDailyUseCase](app/backend/core_api/app/core/usecases/inbound/get_inbound_daily_uc.py)   | [InboundRepositoryImpl](app/backend/core_api/app/infra/adapters/inbound/inbound_repository.py)                |
+| `GET /dashboard/target` | 月次/週次/日次ターゲット＋実績                    | [app/api/routers/dashboard/router.py](app/backend/core_api/app/api/routers/dashboard/router.py#L33) | [BuildTargetCardUseCase](app/backend/core_api/app/core/usecases/dashboard/build_target_card_uc.py) | [DashboardTargetRepository](app/backend/core_api/app/infra/adapters/dashboard/dashboard_target_repository.py) |
 
 ### 1.2 主要クエリファイル
 
-- **daily**: [inbound_pg_repository__get_daily_with_comparisons.sql](app/backend/core_api/app/infra/db/sql/inbound/inbound_pg_repository__get_daily_with_comparisons.sql)
-- **target**: [dashboard_target_repo__get_by_date_optimized.sql](app/backend/core_api/app/infra/db/sql/dashboard/dashboard_target_repo__get_by_date_optimized.sql)
+- **daily**: [inbound_pg_repository\_\_get_daily_with_comparisons.sql](app/backend/core_api/app/infra/db/sql/inbound/inbound_pg_repository__get_daily_with_comparisons.sql)
+- **target**: [dashboard_target_repo\_\_get_by_date_optimized.sql](app/backend/core_api/app/infra/db/sql/dashboard/dashboard_target_repo__get_by_date_optimized.sql)
 
 ---
 
@@ -33,6 +33,7 @@
 **定義**: [migrations/alembic/sql/mart/v_receive_daily.sql](app/backend/core_api/migrations/alembic/sql/mart/v_receive_daily.sql)
 
 **構造**:
+
 ```sql
 WITH r_shogun_final AS (
   SELECT s.slip_date AS ddate,
@@ -71,6 +72,7 @@ ORDER BY cal.ddate;
 **既存インデックス**: なし（VIEWのため実体化されていない）
 
 **依存する stg テーブル**:
+
 - `stg.receive_shogun_final` (主キー: `receive_no, line_no`)
 - `stg.receive_shogun_flash` (主キー: `receive_no, line_no`)
 - `stg.receive_king_final` (主キー: `invoice_no, line_no`)
@@ -81,12 +83,14 @@ ORDER BY cal.ddate;
 
 **定義**: [migrations/alembic/sql/mart/v_target_card_per_day.sql](app/backend/core_api/migrations/alembic/sql/mart/v_target_card_per_day.sql)
 
-**マテリアライズド化の経緯**: 
+**マテリアライズド化の経緯**:
+
 - 元々は VIEW `mart.v_target_card_per_day` として存在
 - 2025-11-17 に MV 化（[migration](app/backend/core_api/migrations/alembic/versions/20251117_135913797_create_mv_target_card_per_day.py)）
 - 日次で `REFRESH MATERIALIZED VIEW CONCURRENTLY` される前提
 
 **構造**:
+
 ```sql
 WITH base AS (
   SELECT v.ddate, v.iso_year, v.iso_week, ..., day_target_ton
@@ -121,9 +125,10 @@ ORDER BY b.ddate;
 ```
 
 **粒度**: 日次（カレンダー全体、将来日も含む）  
-**想定行数**: ~3,000行（2022-01-01 ～ 2027-12-31 想定）  
+**想定行数**: ~3,000行（2022-01-01 ～ 2027-12-31 想定）
 
 **既存インデックス**:
+
 - `UNIQUE INDEX ux_mv_target_card_per_day_ddate ON (ddate)` ← REFRESH CONCURRENTLY 要件 + 単一日検索最適化
 - `INDEX ix_mv_target_card_per_day_iso_week ON (iso_year, iso_week)` ← 週次集計最適化
 
@@ -139,9 +144,10 @@ ORDER BY b.ddate;
 
 **役割**: KING伝票データ（行レベル）
 
-**推定行数**: ~数万～数十万行（伝票×行）  
+**推定行数**: ~数万～数十万行（伝票×行）
 
 **既存インデックス**:
+
 - `idx_king_invdate_func_no_filtered ON ((invoice_date::date))` ← 日付検索用
 - `idx_king_invdate_receiveno_cover ON (invoice_date, receive_no)` ← カバリングインデックス
 
@@ -149,9 +155,10 @@ ORDER BY b.ddate;
 
 **役割**: 将軍伝票データ（行レベル）
 
-**推定行数**: ~数万～数十万行（伝票×行）  
+**推定行数**: ~数万～数十万行（伝票×行）
 
-**既存インデックス**: 
+**既存インデックス**:
+
 - `slip_date` に対する明示的なインデックスは確認できず（主キー: `receive_no, line_no` のみ）
 
 ---
@@ -173,7 +180,7 @@ ORDER BY b.ddate;
 
 ### 3.1 `/inbound/daily` の処理フロー
 
-#### クエリ構造（[inbound_pg_repository__get_daily_with_comparisons.sql](app/backend/core_api/app/infra/db/sql/inbound/inbound_pg_repository__get_daily_with_comparisons.sql)）
+#### クエリ構造（[inbound_pg_repository\_\_get_daily_with_comparisons.sql](app/backend/core_api/app/infra/db/sql/inbound/inbound_pg_repository__get_daily_with_comparisons.sql)）
 
 ```sql
 WITH d AS (
@@ -227,20 +234,24 @@ ORDER BY b.ddate;
 #### ボトルネック仮説
 
 1. **`mart.v_receive_daily` が VIEW であるため、毎回 CTE を再評価**
+
    - `r_shogun_final`, `r_shogun_flash`, `r_king` の 3つの集計を毎回実行
    - 各 CTE で `GROUP BY slip_date` / `invoice_date::date` を実行 → stg テーブルのフルスキャンまたはインデックススキャン
    - `r_pick` の UNION ALL + NOT EXISTS による優先順位制御 → 複雑な実行計画
 
 2. **前月/前年の比較データ取得で `v_receive_daily` を複数回参照**
+
    - `prev_month` CTE で再度 `v_receive_daily` を評価（28日前の範囲）
    - `prev_year` CTE で再度 `v_receive_daily` を評価（前年同週同曜日）
    - → 合計 3回 `v_receive_daily` のCTEが展開される可能性
 
 3. **`stg.receive_shogun_*` テーブルに `slip_date` のインデックスがない**
+
    - `WHERE slip_date IS NOT NULL` + `GROUP BY slip_date` → Sequential Scan の可能性
    - 特に `stg.receive_shogun_final` / `stg.receive_shogun_flash` が大きい場合に顕著
 
 4. **ウィンドウ関数の累積計算（`cum_scope`）**
+
    - `cum_scope='month'` や `cum_scope='week'` の場合、PARTITION BY + ORDER BY でソートが発生
    - 対象期間が長いと（例: 1年分）、計算コストが増大
 
@@ -252,7 +263,7 @@ ORDER BY b.ddate;
 
 ### 3.2 `/dashboard/target` の処理フロー
 
-#### クエリ構造（[dashboard_target_repo__get_by_date_optimized.sql](app/backend/core_api/app/infra/db/sql/dashboard/dashboard_target_repo__get_by_date_optimized.sql)）
+#### クエリ構造（[dashboard_target_repo\_\_get_by_date_optimized.sql](app/backend/core_api/app/infra/db/sql/dashboard/dashboard_target_repo__get_by_date_optimized.sql)）
 
 ```sql
 WITH today AS (SELECT CURRENT_DATE::date AS today),
@@ -331,19 +342,23 @@ FROM base b;
 #### ボトルネック仮説
 
 1. **`mart.mv_target_card_per_day` の複数回スキャン**
+
    - `base` で 1行取得（UNIQUE INDEX で高速）
    - `month_target_to_date` / `month_target_total` / `week_target_to_date` / `week_target_total` で再度スキャン
    - → 合計 5回の MV アクセス（ただし MV なので VIEW よりは高速）
 
 2. **`mart.v_receive_daily` を2回参照（`month_actual_to_date` / `week_actual_to_date`）**
+
    - VIEW なので毎回 CTE を再評価 → stg テーブルの集計を2回実行
    - 特に `month_actual_to_date` で月全体をスキャン → 30～40日分の CTE 展開
 
 3. **複数の CTE が Sequential に実行される**
+
    - PostgreSQL のクエリプランナーは CTE を最適化しづらい（Materialization fence）
    - 各 CTE が独立して実行されるため、共通部分を共有できない
 
 4. **`week_actual_to_date` / `month_actual_to_date` の実行コスト**
+
    - `v_receive_daily` は実体化されていないため、毎回 stg テーブルの集計が走る
    - `WHERE ddate BETWEEN ...` でフィルタされるが、VIEW の定義上 `ORDER BY ddate` があるため、全体をソートしてから範囲抽出する可能性
 
@@ -361,10 +376,12 @@ FROM base b;
 #### 【高優先度】案1: `mart.v_receive_daily` をマテリアライズドビュー化
 
 **概要**:
+
 - 現在 VIEW である `mart.v_receive_daily` を `mart.mv_receive_daily` として MV 化
 - 毎回 stg テーブルの集計を実行するコストを削減
 
 **具体的な手順**:
+
 ```sql
 -- 1. MVを作成
 CREATE MATERIALIZED VIEW mart.mv_receive_daily AS
@@ -381,23 +398,27 @@ REFRESH MATERIALIZED VIEW CONCURRENTLY mart.mv_receive_daily;
 ```
 
 **狙い**:
+
 - `/inbound/daily` の `prev_month` / `prev_year` CTE で `v_receive_daily` を 3回参照 → MV なら事前集計済みで高速
 - `/dashboard/target` の `month_actual_to_date` / `week_actual_to_date` でも MV 参照 → 集計コスト削減
 
 **想定効果**: **大**（特に `/inbound/daily` で顕著）
 
 **影響範囲**:
+
 - [InboundRepositoryImpl](app/backend/core_api/app/infra/adapters/inbound/inbound_repository.py) の SQL テンプレート（`mart.v_receive_daily` → `mart.mv_receive_daily` に置換）
 - [DashboardTargetRepository](app/backend/core_api/app/infra/adapters/dashboard/dashboard_target_repository.py) の SQL テンプレート
 - 新規マイグレーションファイルの作成
 - **REFRESH タイミング**: CSV アップロード完了後、または日次バッチで自動実行
 
 **注意点**:
+
 - MV のリフレッシュコスト: 数百行程度なら数秒で完了（CONCURRENTLY なのでロック無し）
 - データ整合性: リフレッシュ前の古いデータが表示される可能性（許容範囲なら OK）
 - 運用ルール: `make refresh-mv-receive-daily` のようなタスクを Makefile に追加
 
 **DDL サンプル**:
+
 ```sql
 -- migrations/alembic/versions/20251211_create_mv_receive_daily.py
 
@@ -407,11 +428,11 @@ def upgrade():
         SELECT * FROM mart.v_receive_daily;
     """)
     op.execute("""
-        CREATE UNIQUE INDEX ux_mv_receive_daily_ddate 
+        CREATE UNIQUE INDEX ux_mv_receive_daily_ddate
         ON mart.mv_receive_daily (ddate);
     """)
     op.execute("""
-        CREATE INDEX ix_mv_receive_daily_iso_week 
+        CREATE INDEX ix_mv_receive_daily_iso_week
         ON mart.mv_receive_daily (iso_year, iso_week);
     """)
     print("✓ Created mart.mv_receive_daily with indexes")
@@ -425,10 +446,12 @@ def downgrade():
 #### 【中優先度】案2: 日次集計専用のサマリテーブル `kpi.inbound_daily_summary`
 
 **概要**:
+
 - `mart.v_receive_daily` の結果を毎日コピーして、軽量な物理テーブルに格納
 - MV よりも軽量で、追加カラム（前月比、前年比など）を事前計算して格納可能
 
 **テーブル定義**:
+
 ```sql
 CREATE TABLE kpi.inbound_daily_summary (
   ddate date PRIMARY KEY,
@@ -449,11 +472,12 @@ CREATE TABLE kpi.inbound_daily_summary (
   updated_at timestamp DEFAULT now()
 );
 
-CREATE INDEX ix_inbound_daily_summary_iso_week 
+CREATE INDEX ix_inbound_daily_summary_iso_week
 ON kpi.inbound_daily_summary (iso_year, iso_week);
 ```
 
 **更新ロジック**:
+
 ```sql
 -- CSV アップロード後に実行（Upsert）
 INSERT INTO kpi.inbound_daily_summary (ddate, iso_year, iso_week, receive_net_ton, ...)
@@ -466,17 +490,20 @@ ON CONFLICT (ddate) DO UPDATE SET
 ```
 
 **狙い**:
+
 - `/inbound/daily` のクエリが単純な `SELECT * FROM kpi.inbound_daily_summary WHERE ddate BETWEEN ...` になる
 - 前月比・前年比も事前計算済みなので、CTE 不要
 
 **想定効果**: **大**（`/inbound/daily` が 1秒未満になる可能性）
 
 **影響範囲**:
+
 - 新規テーブル作成
 - CSV アップロード完了後の更新処理（[IngestUseCase](app/backend/core_api/app/core/usecases/ingest/ingest_uc.py) に追加）
 - [InboundRepositoryImpl](app/backend/core_api/app/infra/adapters/inbound/inbound_repository.py) のクエリを書き換え
 
 **注意点**:
+
 - 過去データの初回投入が必要（バックフィル）
 - 更新タイミングを明確にする（CSV アップロード後、日次バッチ後など）
 - VIEW との二重管理になるため、整合性チェックが必要
@@ -486,11 +513,13 @@ ON CONFLICT (ddate) DO UPDATE SET
 #### 【低優先度】案3: 月次目標テーブルの正規化
 
 **概要**:
+
 - 現在 `kpi.monthly_targets` は `(month_date, metric, segment)` の複合キーで管理
 - `month_target_ton` を取得するたびに `DISTINCT ON` + `ORDER BY updated_at DESC` で最新値を取得
 - → 最新値のみを保持する専用テーブル `kpi.monthly_targets_current` を作成
 
 **テーブル定義**:
+
 ```sql
 CREATE TABLE kpi.monthly_targets_current (
   month_date date,
@@ -503,12 +532,14 @@ CREATE TABLE kpi.monthly_targets_current (
 ```
 
 **狙い**:
+
 - `mart.v_target_card_per_day` の `month_target` CTE が単純な JOIN になる
 - `DISTINCT ON` + `ORDER BY` のコストを削減
 
 **想定効果**: **小**（月次目標は数十行程度なので、効果は限定的）
 
 **影響範囲**:
+
 - 新規テーブル作成
 - 目標値更新処理（[MonthlyTargetUseCase](app/backend/core_api/app/core/usecases/kpi/monthly_target_uc.py)）に Upsert ロジック追加
 
@@ -519,30 +550,35 @@ CREATE TABLE kpi.monthly_targets_current (
 #### 【高優先度】案4: `stg.receive_shogun_*` に `slip_date` のインデックスを追加
 
 **概要**:
+
 - `stg.receive_shogun_final` と `stg.receive_shogun_flash` に `slip_date` の B-tree インデックスを追加
 - `WHERE slip_date IS NOT NULL` + `GROUP BY slip_date` が高速化される
 
 **DDL**:
+
 ```sql
-CREATE INDEX IF NOT EXISTS ix_receive_shogun_final_slip_date 
-ON stg.receive_shogun_final (slip_date) 
+CREATE INDEX IF NOT EXISTS ix_receive_shogun_final_slip_date
+ON stg.receive_shogun_final (slip_date)
 WHERE slip_date IS NOT NULL;
 
-CREATE INDEX IF NOT EXISTS ix_receive_shogun_flash_slip_date 
-ON stg.receive_shogun_flash (slip_date) 
+CREATE INDEX IF NOT EXISTS ix_receive_shogun_flash_slip_date
+ON stg.receive_shogun_flash (slip_date)
 WHERE slip_date IS NOT NULL;
 ```
 
 **狙い**:
+
 - `mart.v_receive_daily` の `r_shogun_final` / `r_shogun_flash` CTE で Sequential Scan → Index Scan に変更
 - 特に `GROUP BY slip_date` の前処理が高速化
 
 **想定効果**: **中～大**（stg テーブルが大きい場合に顕著）
 
 **影響範囲**:
+
 - 新規インデックス追加のみ（既存クエリは変更不要）
 
 **注意点**:
+
 - 部分インデックス（`WHERE slip_date IS NOT NULL`）にすることでインデックスサイズを削減
 - インデックスの肥大化を防ぐため、定期的な `REINDEX` または `VACUUM FULL` を検討
 
@@ -551,25 +587,30 @@ WHERE slip_date IS NOT NULL;
 #### 【中優先度】案5: `stg.receive_king_final` の複合インデックス最適化
 
 **概要**:
+
 - 現在 `idx_king_invdate_func_no_filtered` が `(invoice_date::date)` にあるが、`WHERE vehicle_type_code = 1` のフィルタには効かない
 - → `(vehicle_type_code, invoice_date)` の複合インデックスを追加
 
 **DDL**:
+
 ```sql
-CREATE INDEX IF NOT EXISTS ix_receive_king_final_vtype_invdate 
+CREATE INDEX IF NOT EXISTS ix_receive_king_final_vtype_invdate
 ON stg.receive_king_final (vehicle_type_code, (invoice_date::date))
 WHERE vehicle_type_code = 1 AND net_weight_detail <> 0;
 ```
 
 **狙い**:
+
 - `mart.v_receive_daily` の `r_king` CTE で `WHERE vehicle_type_code = 1 AND net_weight_detail <> 0` + `GROUP BY invoice_date::date` が高速化
 
 **想定効果**: **中**（KING伝票が多い場合に効果あり）
 
 **影響範囲**:
+
 - 新規インデックス追加のみ
 
 **注意点**:
+
 - 部分インデックス（`WHERE vehicle_type_code = 1 AND net_weight_detail <> 0`）にすることでサイズ削減
 - 既存インデックス `idx_king_invdate_func_no_filtered` と併用（将来的に統合検討）
 
@@ -580,10 +621,12 @@ WHERE vehicle_type_code = 1 AND net_weight_detail <> 0;
 #### 【高優先度】案6: `/inbound/daily` のクエリを段階的に分割
 
 **概要**:
+
 - 現在のクエリは「当期間 + 前月 + 前年」を1つの SQL で取得
 - → まず当期間のデータのみを取得し、前月/前年は別途クエリで取得（または省略）
 
 **変更案**:
+
 ```python
 # 1. 当期間のデータのみ取得（軽量クエリ）
 SELECT ddate, iso_year, iso_week, iso_dow, is_business, ton, cum_ton
@@ -598,12 +641,14 @@ WHERE ddate BETWEEN (:start - 28) AND (:end - 28);
 ```
 
 **狙い**:
+
 - メインクエリの複雑さを削減 → プランニング時間短縮
 - フロントエンドで「前月/前年比較は詳細表示時のみ取得」といった UX 改善も可能
 
 **想定効果**: **中～大**（特にクエリが複雑な場合）
 
 **影響範囲**:
+
 - [InboundRepositoryImpl](app/backend/core_api/app/infra/adapters/inbound/inbound_repository.py) のクエリロジック変更
 - フロントエンド側の API 呼び出し調整（必要に応じて）
 
@@ -612,10 +657,12 @@ WHERE ddate BETWEEN (:start - 28) AND (:end - 28);
 #### 【中優先度】案7: `/dashboard/target` の累積計算を MV に統合
 
 **概要**:
+
 - 現在 `month_target_to_date` / `week_target_to_date` などを毎回 SQL で計算
 - → これらを `mart.mv_target_card_per_day` に事前計算済みカラムとして追加
 
 **MV の追加カラム案**:
+
 ```sql
 CREATE MATERIALIZED VIEW mart.mv_target_card_per_day_enhanced AS
 WITH base AS (...),
@@ -625,20 +672,20 @@ WITH base AS (...),
      month_actual AS (...),
      -- 新規: 累積計算
      month_cumulative AS (
-       SELECT ddate, 
+       SELECT ddate,
               SUM(day_target_ton) OVER (
-                PARTITION BY DATE_TRUNC('month', ddate) 
+                PARTITION BY DATE_TRUNC('month', ddate)
                 ORDER BY ddate ROWS UNBOUNDED PRECEDING
               ) AS month_target_to_date_ton,
               SUM(receive_net_ton) OVER (
-                PARTITION BY DATE_TRUNC('month', ddate) 
+                PARTITION BY DATE_TRUNC('month', ddate)
                 ORDER BY ddate ROWS UNBOUNDED PRECEDING
               ) AS month_actual_to_date_ton
        FROM base
      ),
      week_cumulative AS (...)
-SELECT b.ddate, ..., 
-       mc.month_target_to_date_ton, 
+SELECT b.ddate, ...,
+       mc.month_target_to_date_ton,
        mc.month_actual_to_date_ton,
        wc.week_target_to_date_ton,
        wc.week_actual_to_date_ton
@@ -648,16 +695,19 @@ LEFT JOIN week_cumulative wc ON wc.ddate = b.ddate;
 ```
 
 **狙い**:
+
 - `/dashboard/target` のクエリが単純な `SELECT * FROM mv_target_card_per_day_enhanced WHERE ddate = :date` になる
 - 複数 CTE の再計算が不要
 
 **想定効果**: **大**（特に `/dashboard/target` の応答時間が 50%以上短縮される可能性）
 
 **影響範囲**:
+
 - MV の再設計（マイグレーション）
 - [DashboardTargetRepository](app/backend/core_api/app/infra/adapters/dashboard/dashboard_target_repository.py) のクエリ書き換え
 
 **注意点**:
+
 - MV のリフレッシュ時間が若干増加（累積計算のため）
 - ただし事前計算なので、クエリ実行時のコストは大幅削減
 
@@ -666,10 +716,12 @@ LEFT JOIN week_cumulative wc ON wc.ddate = b.ddate;
 #### 【低優先度】案8: 不要な `ORDER BY` の削除
 
 **概要**:
+
 - `mart.v_receive_daily` の定義に `ORDER BY cal.ddate` があるが、VIEW の結果をさらに JOIN/フィルタする場合は無駄なソート
 - → VIEW 定義から `ORDER BY` を削除し、必要な箇所（最終的な SELECT）でのみソート
 
 **変更案**:
+
 ```sql
 -- Before
 CREATE OR REPLACE VIEW mart.v_receive_daily AS
@@ -684,12 +736,14 @@ CREATE OR REPLACE VIEW mart.v_receive_daily AS
 ```
 
 **狙い**:
+
 - VIEW を参照する側で `WHERE ddate BETWEEN ...` などのフィルタがある場合、ソートが無駄になる
 - PostgreSQL のクエリプランナーは ORDER BY を最適化できない場合がある
 
 **想定効果**: **小～中**（プランナーが賢い場合は効果なし）
 
 **影響範囲**:
+
 - VIEW 定義の修正（マイグレーション）
 - 既存の参照箇所で `ORDER BY` が必要な場合は明示的に追加
 
@@ -700,10 +754,12 @@ CREATE OR REPLACE VIEW mart.v_receive_daily AS
 #### 【高優先度】案9: 目標値のメモリキャッシュ（TTL 延長）
 
 **概要**:
+
 - 現在 `BuildTargetCardUseCase` で cachetools による 60秒 TTL キャッシュ
 - → 目標値は日次でしか変わらないため、TTL を 1時間 or 当日中に延長
 
 **変更案**:
+
 ```python
 # app/core/usecases/dashboard/build_target_card_uc.py
 from cachetools import TTLCache
@@ -711,15 +767,18 @@ _CACHE: TTLCache = TTLCache(maxsize=512, ttl=3600)  # 1時間
 ```
 
 **狙い**:
+
 - 複数ユーザーが同じ月を開いても、1時間内なら DB クエリ不要
 - キャッシュヒット率が大幅向上
 
 **想定効果**: **中**（アクセスパターンによる）
 
 **影響範囲**:
+
 - UseCase の TTL 設定のみ変更
 
 **注意点**:
+
 - CSV アップロード後に `BuildTargetCardUseCase.clear_cache()` を呼び出す必要あり
 - キャッシュサイズ（maxsize）も 512 程度に増やすと良い
 
@@ -728,10 +787,12 @@ _CACHE: TTLCache = TTLCache(maxsize=512, ttl=3600)  # 1時間
 #### 【中優先度】案10: Redis によるグローバルキャッシュ
 
 **概要**:
+
 - 現在のメモリキャッシュはアプリインスタンスごとに独立
 - → Redis を導入し、複数インスタンス間でキャッシュを共有
 
 **実装案**:
+
 ```python
 import redis
 from functools import lru_cache
@@ -743,7 +804,7 @@ def get_target_card_cached(date: str, mode: str):
     cached = redis_client.get(cache_key)
     if cached:
         return json.loads(cached)
-    
+
     # DB から取得
     result = repository.get_by_date_optimized(date, mode)
     redis_client.setex(cache_key, 3600, json.dumps(result))  # 1時間
@@ -751,16 +812,19 @@ def get_target_card_cached(date: str, mode: str):
 ```
 
 **狙い**:
+
 - 複数 API サーバー（Kubernetes など）で同じキャッシュを共有
 - TTL を柔軟に設定可能（日次で自動削除など）
 
 **想定効果**: **中～大**（マルチインスタンス環境で顕著）
 
 **影響範囲**:
+
 - Redis の導入（インフラ）
 - UseCase または Repository 層にキャッシュロジック追加
 
 **注意点**:
+
 - Redis の可用性管理が必要
 - キャッシュの無効化タイミングを明確にする（CSV アップロード後など）
 
@@ -769,32 +833,36 @@ def get_target_card_cached(date: str, mode: str):
 #### 【低優先度】案11: フロントエンドでの SWR（Stale-While-Revalidate）
 
 **概要**:
+
 - React の SWR ライブラリを使い、フロントエンドでデータをキャッシュ
 - バックグラウンドで再取得しつつ、古いデータをすぐ表示
 
 **実装案**:
+
 ```tsx
-import useSWR from 'swr';
+import useSWR from "swr";
 
 function InboundForecastDashboardPage() {
   const { data, error } = useSWR(
     `/dashboard/target?date=${date}&mode=monthly`,
     fetcher,
-    { refreshInterval: 60000 } // 1分ごとに再取得
+    { refreshInterval: 60000 }, // 1分ごとに再取得
   );
-  
+
   if (!data) return <Skeleton />;
   return <TargetCard data={data} />;
 }
 ```
 
 **狙い**:
+
 - 初回アクセス後、ブラウザ内でキャッシュされるため、2回目以降は瞬時に表示
 - バックエンドの負荷も軽減
 
 **想定効果**: **中**（UX 改善がメイン）
 
 **影響範囲**:
+
 - フロントエンドのみ（バックエンドは変更不要）
 
 ---
@@ -804,10 +872,12 @@ function InboundForecastDashboardPage() {
 #### 【中優先度】案12: `/dashboard/all` で `daily` + `target` を一括取得
 
 **概要**:
+
 - 現在フロントエンドは `/inbound/daily` と `/dashboard/target` を別々に呼び出し
 - → 1つの API `/dashboard/all` で両方のデータを返すことで、DB クエリを統合
 
 **実装案**:
+
 ```python
 @router.get("/all")
 def get_dashboard_all(
@@ -819,13 +889,13 @@ def get_dashboard_all(
     # 月初～月末の範囲を計算
     start = date.replace(day=1)
     end = (start + timedelta(days=32)).replace(day=1) - timedelta(days=1)
-    
+
     # target データを取得
     target_output = uc_target.execute(BuildTargetCardInput(date, mode))
-    
+
     # daily データを取得（月全体）
     daily_output = uc_daily.execute(GetInboundDailyInput(start, end, None, "month"))
-    
+
     return {
         "target": target_output.data,
         "daily": daily_output.data,
@@ -833,16 +903,19 @@ def get_dashboard_all(
 ```
 
 **狙い**:
+
 - 2つの HTTP リクエスト → 1つにまとめることで、RTT（Round Trip Time）を削減
 - 裏側で `mart.mv_receive_daily` を1回だけ評価すれば両方のクエリで使える
 
 **想定効果**: **中**（ネットワークレイテンシが大きい環境で効果大）
 
 **影響範囲**:
+
 - 新規エンドポイント追加
 - フロントエンドの API 呼び出しロジック変更
 
 **注意点**:
+
 - レスポンスサイズが大きくなる（圧縮必須）
 - 既存エンドポイントとの互換性を保つため、`/dashboard/target` と `/inbound/daily` は残す
 
@@ -852,20 +925,20 @@ def get_dashboard_all(
 
 ### 5.1 優先順位マトリクス
 
-| 案 | 優先度 | 難易度 | 想定効果 | `/daily` への効果 | `/target` への効果 |
-|---|-------|-------|---------|-----------------|------------------|
-| 案1: `mart.v_receive_daily` の MV 化 | **High** | 中 | **大** | ⭐⭐⭐ | ⭐⭐ |
-| 案4: `stg.receive_shogun_*` にインデックス追加 | **High** | 小 | **中～大** | ⭐⭐⭐ | ⭐ |
-| 案6: `/inbound/daily` のクエリ分割 | **High** | 中 | **中～大** | ⭐⭐⭐ | - |
-| 案9: 目標値キャッシュの TTL 延長 | **High** | 小 | 中 | - | ⭐⭐ |
-| 案7: `/dashboard/target` の累積計算を MV に統合 | Medium | 大 | **大** | - | ⭐⭐⭐ |
-| 案2: 日次集計専用テーブル `kpi.inbound_daily_summary` | Medium | 中 | **大** | ⭐⭐⭐ | ⭐ |
-| 案5: `stg.receive_king_final` の複合インデックス | Medium | 小 | 中 | ⭐⭐ | - |
-| 案10: Redis によるグローバルキャッシュ | Medium | 中 | 中～大 | ⭐ | ⭐⭐ |
-| 案12: `/dashboard/all` で一括取得 | Medium | 中 | 中 | ⭐ | ⭐ |
-| 案8: 不要な `ORDER BY` の削除 | Low | 小 | 小～中 | ⭐ | - |
-| 案3: 月次目標テーブルの正規化 | Low | 小 | 小 | - | ⭐ |
-| 案11: フロントエンド SWR | Low | 小 | 中（UX改善） | ⭐ | ⭐ |
+| 案                                                    | 優先度   | 難易度 | 想定効果     | `/daily` への効果 | `/target` への効果 |
+| ----------------------------------------------------- | -------- | ------ | ------------ | ----------------- | ------------------ |
+| 案1: `mart.v_receive_daily` の MV 化                  | **High** | 中     | **大**       | ⭐⭐⭐            | ⭐⭐               |
+| 案4: `stg.receive_shogun_*` にインデックス追加        | **High** | 小     | **中～大**   | ⭐⭐⭐            | ⭐                 |
+| 案6: `/inbound/daily` のクエリ分割                    | **High** | 中     | **中～大**   | ⭐⭐⭐            | -                  |
+| 案9: 目標値キャッシュの TTL 延長                      | **High** | 小     | 中           | -                 | ⭐⭐               |
+| 案7: `/dashboard/target` の累積計算を MV に統合       | Medium   | 大     | **大**       | -                 | ⭐⭐⭐             |
+| 案2: 日次集計専用テーブル `kpi.inbound_daily_summary` | Medium   | 中     | **大**       | ⭐⭐⭐            | ⭐                 |
+| 案5: `stg.receive_king_final` の複合インデックス      | Medium   | 小     | 中           | ⭐⭐              | -                  |
+| 案10: Redis によるグローバルキャッシュ                | Medium   | 中     | 中～大       | ⭐                | ⭐⭐               |
+| 案12: `/dashboard/all` で一括取得                     | Medium   | 中     | 中           | ⭐                | ⭐                 |
+| 案8: 不要な `ORDER BY` の削除                         | Low      | 小     | 小～中       | ⭐                | -                  |
+| 案3: 月次目標テーブルの正規化                         | Low      | 小     | 小           | -                 | ⭐                 |
+| 案11: フロントエンド SWR                              | Low      | 小     | 中（UX改善） | ⭐                | ⭐                 |
 
 ---
 
@@ -874,11 +947,13 @@ def get_dashboard_all(
 #### **Phase 1: 即効性のある軽量施策（1週間以内）**
 
 1. **案4**: `stg.receive_shogun_final` / `stg.receive_shogun_flash` に `slip_date` のインデックス追加
+
    - **実装**: マイグレーションファイル作成 → `alembic upgrade`
    - **検証**: EXPLAIN ANALYZE で Sequential Scan → Index Scan を確認
    - **期待**: `/inbound/daily` のレスポンスタイム 20～30% 短縮
 
 2. **案9**: `BuildTargetCardUseCase` の TTL を 60秒 → 3600秒（1時間）に延長
+
    - **実装**: UseCase のコード変更（1行）
    - **期待**: キャッシュヒット率向上（複数ユーザー環境で効果大）
 
@@ -892,6 +967,7 @@ def get_dashboard_all(
 #### **Phase 2: 本命施策（2～3週間）**
 
 4. **案1**: `mart.v_receive_daily` を `mart.mv_receive_daily` として MV 化 ⭐
+
    - **実装**:
      1. 新規マイグレーションファイル作成
      2. MV 作成 + UNIQUE INDEX + 週次インデックス
@@ -915,6 +991,7 @@ def get_dashboard_all(
 #### **Phase 3: 中長期的な最適化（1～2ヶ月）**
 
 6. **案7**: `/dashboard/target` の累積計算を MV に統合
+
    - **実装**:
      1. `mart.v_target_card_per_day` の定義を拡張（累積カラム追加）
      2. MV を再作成（`mv_target_card_per_day_enhanced`）
@@ -923,6 +1000,7 @@ def get_dashboard_all(
    - **期待**: `/dashboard/target` のレスポンスタイム **50～60% 短縮**
 
 7. **案2**: 日次集計専用テーブル `kpi.inbound_daily_summary` を導入
+
    - **実装**:
      1. 新規テーブル作成（マイグレーション）
      2. CSV アップロード後の Upsert ロジック追加
@@ -953,13 +1031,16 @@ def get_dashboard_all(
 ### 5.3 特に `/inbound/daily` を 1秒前後まで短縮するための本命案
 
 ✅ **必ず実施**:
+
 - **案1**: `mart.v_receive_daily` の MV 化
 - **案4**: `stg.receive_shogun_*` にインデックス追加
 
 ✅ **強く推奨**:
+
 - **案6**: クエリの段階的分割
 
 ✅ **理想形**:
+
 - **案2**: 日次集計専用テーブル導入（最終的に MV も不要になる）
 
 ---
@@ -972,7 +1053,7 @@ def get_dashboard_all(
 
 ```sql
 -- 1. /inbound/daily のクエリ
-EXPLAIN (ANALYZE, BUFFERS, TIMING) 
+EXPLAIN (ANALYZE, BUFFERS, TIMING)
 <inbound_pg_repository__get_daily_with_comparisons.sql の内容>;
 
 -- 2. /dashboard/target のクエリ
@@ -981,6 +1062,7 @@ EXPLAIN (ANALYZE, BUFFERS, TIMING)
 ```
 
 **確認ポイント**:
+
 - Seq Scan が発生している箇所（特に stg テーブル）
 - CTE の Materialize が複数回実行されているか
 - Sort や Hash Join のコスト

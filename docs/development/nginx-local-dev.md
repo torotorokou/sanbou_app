@@ -14,6 +14,7 @@ make up ENV=local_dev
 ```
 
 **アクセスURL:**
+
 - フロントエンド: http://localhost:5173
 - AI API: http://localhost:8001
 - Core API: http://localhost:8002
@@ -29,7 +30,9 @@ make dev-with-nginx
 ```
 
 **アクセスURL:**
+
 - **nginx 経由**: http://localhost:8080
+
   - フロントエンド: http://localhost:8080/
   - API (新形式): http://localhost:8080/api/core_api/...
   - API (旧形式): http://localhost:8080/core_api/...
@@ -119,6 +122,7 @@ make up ENV=local_dev
 ```
 
 **メリット:**
+
 - 高速（プロキシのオーバーヘッドなし）
 - デバッグしやすい
 - HMR（Hot Module Replacement）が高速
@@ -134,6 +138,7 @@ make dev-with-nginx
 ```
 
 **メリット:**
+
 - 本番環境（vm_stg / vm_prod）と同じルーティング
 - nginx のリバースプロキシ動作を検証
 - CORS、ヘッダー、リダイレクトの挙動確認
@@ -141,14 +146,14 @@ make dev-with-nginx
 
 ## 環境間の違い
 
-| 項目 | local_dev | local_dev (nginx) | vm_stg | vm_prod |
-|------|-----------|-------------------|--------|---------|
-| アクセス | 直接 | nginx 経由 | nginx 経由 | nginx 経由 |
-| ポート | 5173, 800x | 8080 | 80, 443 | 80, 443 |
+| 項目           | local_dev       | local_dev (nginx)       | vm_stg       | vm_prod      |
+| -------------- | --------------- | ----------------------- | ------------ | ------------ |
+| アクセス       | 直接            | nginx 経由              | nginx 経由   | nginx 経由   |
+| ポート         | 5173, 800x      | 8080                    | 80, 443      | 80, 443      |
 | フロントエンド | Vite dev server | Vite dev server (proxy) | 静的ファイル | 静的ファイル |
-| 認証 | なし | なし | VPN | IAP |
-| ホットリロード | ✅ | ✅ | ❌ | ❌ |
-| ビルド | 不要 | 不要 | 必要 | 必要 |
+| 認証           | なし            | なし                    | VPN          | IAP          |
+| ホットリロード | ✅              | ✅                      | ❌           | ❌           |
+| ビルド         | 不要            | 不要                    | 必要         | 必要         |
 
 ## 参考
 

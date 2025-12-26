@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+# ============================================================
+# Git Pre-push Hook (Thin Wrapper)
+# ============================================================
+#
+# このスクリプトは .git/hooks/pre-push として設置され、
+# push 前に自動実行されます。
+#
+# チェック内容の正本は .pre-commit-config.yaml です。
+# このファイルは薄いラッパーとして pre-commit を呼び出すだけです。
+#
+# ============================================================
+
+set -euo pipefail
+
+REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+PRE_COMMIT_BIN="$(command -v pre-commit 2>/dev/null || true)"
+
+if [ -z "$PRE_COMMIT_BIN" ] && [ -x "$REPO_ROOT/.venv/bin/pre-commit" ]; then
+    PRE_COMMIT_BIN="$REPO_ROOT/.venv/bin/pre-commit"
+fi
+
+if [ -z "$PRE_COMMIT_BIN" ]; then
+    echo ""
+    echo "❌ エラー: pre-commit がインストールされていません"
+    echo ""
+    echo "以下のコマンドでインストールしてください:"
+    echo "  pip install pre-commit"
+    echo ""
+    echo "または、プロジェクトのセットアップを実行してください:"
+    echo "  make hooks-install"
+    echo ""
+    exit 1
+fi
+
+echo "🔍 Pre-push チェックを実行中..."
+"$PRE_COMMIT_BIN" run --hook-stage push --all-files
+
+exit_code=$?
+
+if [ $exit_code -ne 0 ]; then
+    echo ""
+    echo "❌ Pre-push チェックが失敗しました"
+    echo ""
+    echo "修正後、再度 push してください。"
+    echo "チェックをスキップする場合は: git push --no-verify"
+    echo ""
+fi
+
+exit $exit_code

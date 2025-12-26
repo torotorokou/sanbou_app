@@ -8,12 +8,13 @@ Revision ID: 20251201_140000000
 Revises: 20251201_130000000
 Create Date: 2025-12-01 14:00:00.000000
 """
-from alembic import op
+
 import sqlalchemy as sa
+from alembic import op
 
 # revision identifiers, used by Alembic.
-revision = '20251201_140000000'
-down_revision = '20251201_130000000'
+revision = "20251201_140000000"
+down_revision = "20251201_130000000"
 branch_labels = None
 depends_on = None
 
@@ -82,21 +83,27 @@ def upgrade() -> None:
     # ビューを削除
     op.execute("DROP VIEW IF EXISTS stg.v_active_shogun_final_yard")
     op.execute("DROP VIEW IF EXISTS stg.v_active_shogun_flash_yard")
-    
+
     # slip_no を TEXT から INTEGER に変更
     # 空文字列やNULLは NULL に変換、数値文字列は INTEGER に変換
-    op.alter_column('shogun_final_yard', 'slip_no',
-               existing_type=sa.Text(),
-               type_=sa.Integer(),
-               postgresql_using="CASE WHEN slip_no ~ '^[0-9]+$' THEN slip_no::integer ELSE NULL END",
-               schema='stg')
-    
-    op.alter_column('shogun_flash_yard', 'slip_no',
-               existing_type=sa.Text(),
-               type_=sa.Integer(),
-               postgresql_using="CASE WHEN slip_no ~ '^[0-9]+$' THEN slip_no::integer ELSE NULL END",
-               schema='stg')
-    
+    op.alter_column(
+        "shogun_final_yard",
+        "slip_no",
+        existing_type=sa.Text(),
+        type_=sa.Integer(),
+        postgresql_using="CASE WHEN slip_no ~ '^[0-9]+$' THEN slip_no::integer ELSE NULL END",
+        schema="stg",
+    )
+
+    op.alter_column(
+        "shogun_flash_yard",
+        "slip_no",
+        existing_type=sa.Text(),
+        type_=sa.Integer(),
+        postgresql_using="CASE WHEN slip_no ~ '^[0-9]+$' THEN slip_no::integer ELSE NULL END",
+        schema="stg",
+    )
+
     # ビューを再作成
     op.execute(v_active_shogun_final_yard)
     op.execute(v_active_shogun_flash_yard)
@@ -109,20 +116,26 @@ def downgrade() -> None:
     # ビューを削除
     op.execute("DROP VIEW IF EXISTS stg.v_active_shogun_final_yard")
     op.execute("DROP VIEW IF EXISTS stg.v_active_shogun_flash_yard")
-    
+
     # slip_no を INTEGER から TEXT に戻す
-    op.alter_column('shogun_final_yard', 'slip_no',
-               existing_type=sa.Integer(),
-               type_=sa.Text(),
-               postgresql_using='slip_no::text',
-               schema='stg')
-    
-    op.alter_column('shogun_flash_yard', 'slip_no',
-               existing_type=sa.Integer(),
-               type_=sa.Text(),
-               postgresql_using='slip_no::text',
-               schema='stg')
-    
+    op.alter_column(
+        "shogun_final_yard",
+        "slip_no",
+        existing_type=sa.Integer(),
+        type_=sa.Text(),
+        postgresql_using="slip_no::text",
+        schema="stg",
+    )
+
+    op.alter_column(
+        "shogun_flash_yard",
+        "slip_no",
+        existing_type=sa.Integer(),
+        type_=sa.Text(),
+        postgresql_using="slip_no::text",
+        schema="stg",
+    )
+
     # ビューを再作成
     op.execute(v_active_shogun_final_yard)
     op.execute(v_active_shogun_flash_yard)

@@ -1,12 +1,11 @@
 import pandas as pd
 
+
 # 共通の特殊値リスト（欠損値として扱う文字列）
 NA_STRING_VALUES = ["<NA>", "nan", "None", "NaN", "NULL", "null", "#N/A", "#NA", ""]
 
 
-def combine_date_and_time(
-    df: pd.DataFrame, date_col: str, time_col: str
-) -> pd.DataFrame:
+def combine_date_and_time(df: pd.DataFrame, date_col: str, time_col: str) -> pd.DataFrame:
     """
     date_col（datetime64）と time_col（時刻文字列）を結合し、
     datetime64[ns] に変換して time_col に上書き。
@@ -26,9 +25,7 @@ def combine_date_and_time(
 
     # 結合して datetime 変換
     combined_str = date_str + " " + time_str
-    df[time_col] = pd.to_datetime(
-        combined_str, format="%Y/%m/%d %H:%M:%S", errors="coerce"
-    )
+    df[time_col] = pd.to_datetime(combined_str, format="%Y/%m/%d %H:%M:%S", errors="coerce")
 
     # デバッグ用
     # print(df[[date_col, time_col]].head())
@@ -49,10 +46,7 @@ def remove_weekday_parentheses(df: pd.DataFrame, column: str) -> pd.DataFrame:
 
     # 括弧がある行だけ除去処理
     df.loc[mask, column] = (
-        df.loc[mask, column]
-        .astype(str)
-        .str.replace(r"\([^)]+\)", "", regex=True)
-        .str.strip()
+        df.loc[mask, column].astype(str).str.replace(r"\([^)]+\)", "", regex=True).str.strip()
     )
 
     # 全体をdatetimeに変換（括弧がない行も含め）
@@ -65,7 +59,7 @@ def parse_str_column(df: pd.DataFrame, col: str) -> pd.DataFrame:
     """
     欠損値はそのまま、文字列は strip() して object 型にする
     '<NA>' などの値も適切に処理する
-    
+
     コードカラム（英語名が _cd で終わる）の場合は先頭ゼロを除去して正規化する
     例: "000123" → "123", "00123X" → "123X"
     """
@@ -76,7 +70,7 @@ def parse_str_column(df: pd.DataFrame, col: str) -> pd.DataFrame:
 
     # 非欠損値だけに str.strip() を適用（NaN は触らない）
     cleaned = cleaned.where(cleaned.isna(), cleaned.astype(str).str.strip())
-    
+
     # コードカラム（_cdで終わる）の場合は先頭ゼロを除去
     # 注意: この時点では日本語カラム名なので、英語名への変換前に適用する必要がある
     # そのため、カラム名ベースではなく、設定で判定する必要がある
@@ -88,30 +82,27 @@ def parse_str_column(df: pd.DataFrame, col: str) -> pd.DataFrame:
 def normalize_code_column(df: pd.DataFrame, col: str) -> pd.DataFrame:
     """
     コードカラムの先頭ゼロを除去して正規化する
-    
+
     用途: 取引先CD、業者CD、品目CD、営業担当者CDなどのコードフィールド
     例: "000123" → "123", "00123X" → "123X", "0000" → "" (空文字列)
-    
+
     :param df: 対象DataFrame
     :param col: 変換対象のカラム名
     :return: 変換後のDataFrame
     """
     cleaned = df[col].copy()
-    
+
     # '<NA>' などの特殊な値をNaNに変換
     cleaned = cleaned.replace(NA_STRING_VALUES, pd.NA)
-    
+
     # 非欠損値に対して先頭ゼロを除去
     # lstrip('0')を使用（例: "000123" → "123", "00123X" → "123X"）
     # 注意: "0000" のように全てゼロの場合は空文字列になるため、空文字列をNaNに変換
-    cleaned = cleaned.where(
-        cleaned.isna(), 
-        cleaned.astype(str).str.strip().str.lstrip('0')
-    )
-    
+    cleaned = cleaned.where(cleaned.isna(), cleaned.astype(str).str.strip().str.lstrip("0"))
+
     # 空文字列をNaNに変換（全てゼロだった場合）
     cleaned = cleaned.replace("", pd.NA)
-    
+
     return df.assign(**{col: cleaned})
 
 

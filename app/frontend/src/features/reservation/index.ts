@@ -1,6 +1,6 @@
 /**
  * Public API for reservation features
- * 
+ *
  * 規約: 予約管理関連機能のグループ
  * 明示的な Named Export を使用
  */

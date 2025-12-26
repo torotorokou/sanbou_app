@@ -5,14 +5,14 @@ Revises: 20251105_101233931
 Create Date: 2025-11-05 02:54:53.576123
 
 """
-from alembic import op
-import sqlalchemy as sa
+
 from pathlib import Path
 
+from alembic import op
 
 # revision identifiers, used by Alembic.
-revision = '20251105_115452784'
-down_revision = '20251105_101233931'
+revision = "20251105_115452784"
+down_revision = "20251105_101233931"
 branch_labels = None
 depends_on = None
 
@@ -44,21 +44,21 @@ def upgrade() -> None:
     """
     各SQLファイルを実行して、ビュー/マテビューの定義を最新化。
     既に v_receive_* を参照するように修正済みの定義を適用。
-    
+
     マテビューは CREATE OR REPLACE がサポートされていないため、
     DROP IF EXISTS してから再作成する。
     """
     # マテビューを一旦削除
     for mv in MATERIALIZED_VIEWS:
         op.execute(f"DROP MATERIALIZED VIEW IF EXISTS {mv} CASCADE;")
-    
+
     # 全SQLファイルを適用
     for sql_file in SQL_FILES:
         sql_path = SQL_DIR / sql_file
         if not sql_path.exists():
             op.execute(f"-- NOTICE: {sql_file} not found at {sql_path}")
             continue
-        
+
         sql_text = sql_path.read_text(encoding="utf-8")
         op.execute(f"-- Applying: {sql_file}")
         op.execute(sql_text)
@@ -72,4 +72,3 @@ def downgrade() -> None:
     downgrade による削除は行わない。
     """
     pass
-

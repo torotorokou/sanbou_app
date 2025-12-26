@@ -13,18 +13,23 @@
 ## ファイル一覧
 
 ### env/.env.common
+
 全環境共通の設定。すべての環境で最初に読み込まれます。
 
 ### env/.env.local_dev
+
 ローカル開発環境用。環境変数スキーマの基準（Source of Truth）です。
 
 ### env/.env.local_stg
+
 ローカルステージング検証環境用。nginx + 本番近似構成。
 
 ### env/.env.vm_stg
+
 GCP VM ステージング環境用。
 
 ### env/.env.vm_prod
+
 GCP VM 本番環境用。
 
 ## 新しい環境のセットアップ手順

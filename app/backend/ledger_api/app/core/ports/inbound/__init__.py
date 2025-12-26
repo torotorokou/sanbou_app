@@ -8,7 +8,8 @@ UseCase 層はこれらの抽象に依存し、具体的な実装（Adapter）�
 """
 
 from app.core.ports.inbound.csv_gateway import CsvGateway
-from app.core.ports.inbound.report_repository import ReportRepository, ArtifactUrls
+from app.core.ports.inbound.report_repository import ArtifactUrls, ReportRepository
+
 
 __all__ = [
     "CsvGateway",

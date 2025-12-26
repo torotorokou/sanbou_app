@@ -36,42 +36,47 @@ sales-pivot/
 ## 🎯 アーキテクチャ原則
 
 ### FSD (Feature-Sliced Design)
+
 - **機能単位でスライス化**: 8つの独立した機能スライス
 - **レイヤー分離**: ui/ (View), model/ (ViewModel), shared/ (共通)
 - **明確な依存関係**: 下位層から上位層への一方向依存
 
 ### MVVM (Hooks = ViewModel)
-- **View**: React コンポーネント (*.tsx)
-- **ViewModel**: Custom Hooks (use*.ts)
+
+- **View**: React コンポーネント (\*.tsx)
+- **ViewModel**: Custom Hooks (use\*.ts)
 - **Model**: Repository + 型定義
 
 ### Repository パターン
+
 - **Interface**: `SalesPivotRepository`
 - **Implementation**: `MockSalesPivotRepository`
 - **Singleton**: `salesPivotRepository`
 
 ## 📦 スライス一覧
 
-| スライス | 責務 | ViewModel | UI |
-|---------|------|-----------|-----|
-| **header** | タイトル・CSV出力 | useHeaderViewModel | SalesPivotHeader |
-| **filters** | フィルタ管理 | useFiltersViewModel, useMasters | FilterPanel |
-| **kpi** | KPI集計 | useKpiViewModel | KpiCards |
-| **summary-table** | サマリテーブル | useSummaryViewModel | SummaryTable, ExpandedRow, MetricChart |
-| **pivot-drawer** | Pivotドロワー | usePivotViewModel | PivotDrawer, PivotTable |
-| **export-menu** | CSV出力メニュー | - | ExportMenu |
-| **detail-chart** | 詳細チャート | - | TopNBarChart, DailySeriesChart |
-| **shared** | 共通層 | - | SortBadge, MiniBarChart, EmptyStateCard, styles |
+| スライス          | 責務              | ViewModel                       | UI                                              |
+| ----------------- | ----------------- | ------------------------------- | ----------------------------------------------- |
+| **header**        | タイトル・CSV出力 | useHeaderViewModel              | SalesPivotHeader                                |
+| **filters**       | フィルタ管理      | useFiltersViewModel, useMasters | FilterPanel                                     |
+| **kpi**           | KPI集計           | useKpiViewModel                 | KpiCards                                        |
+| **summary-table** | サマリテーブル    | useSummaryViewModel             | SummaryTable, ExpandedRow, MetricChart          |
+| **pivot-drawer**  | Pivotドロワー     | usePivotViewModel               | PivotDrawer, PivotTable                         |
+| **export-menu**   | CSV出力メニュー   | -                               | ExportMenu                                      |
+| **detail-chart**  | 詳細チャート      | -                               | TopNBarChart, DailySeriesChart                  |
+| **shared**        | 共通層            | -                               | SortBadge, MiniBarChart, EmptyStateCard, styles |
 
 ## 🔧 使用方法
 
 ### 統合ページ（廃止）
+
 旧 `SalesPivotBoardPage` およびその統合ViewModelは分割完了に伴い削除済み（2025-11-20）。
 今後は必要なスライスの ViewModel Hook と UI コンポーネントを個別にインポートしてください。
 
 ### スライス単位で使用
+
 ```tsx
-import { 
+import {
   SalesPivotHeader,
   useHeaderViewModel,
   FilterPanel,
@@ -79,17 +84,18 @@ import {
   KpiCards,
   useKpiViewModel,
   // ...
-} from '@/features/analytics/sales-pivot';
+} from "@/features/analytics/sales-pivot";
 ```
 
 ### 共通UIコンポーネント
+
 ```tsx
-import { 
-  SortBadge, 
-  MiniBarChart, 
+import {
+  SortBadge,
+  MiniBarChart,
   EmptyStateCard,
-  salesPivotStyles 
-} from '@/features/analytics/sales-pivot';
+  salesPivotStyles,
+} from "@/features/analytics/sales-pivot";
 ```
 
 ## 📊 統計
@@ -104,7 +110,7 @@ import {
 ページレイアウトコンポーネントは `pages/analytics/SalesTreePage.tsx` に統合:
 
 ```tsx
-import { SalesPivotLayout } from '@/pages/analytics/SalesTreePage';
+import { SalesPivotLayout } from "@/pages/analytics/SalesTreePage";
 ```
 
 ## 🚀 リファクタリング履歴

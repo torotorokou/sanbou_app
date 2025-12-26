@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 SQL識別子定数
 
@@ -7,7 +6,7 @@ SQL識別子定数
 
 移行方法:
     from backend_shared.db.names import SCHEMA_MART, MV_RECEIVE_DAILY, fq
-    
+
     sql = f"SELECT * FROM {fq(SCHEMA_MART, MV_RECEIVE_DAILY)}"
 
 詳細:
@@ -17,6 +16,7 @@ SQL識別子定数
 このファイルは後方互換性のために残されています。
 新しいコードでは backend_shared.db.names を使用してください。
 """
+
 import warnings
 
 warnings.warn(
@@ -26,8 +26,8 @@ warnings.warn(
 )
 
 # martスキーマのビュー/MV(集約済みデータ)
-V_RECEIVE_DAILY   = "mart.mv_receive_daily"   # 日次搬入集計MV (旧: v_receive_daily)
-V_RECEIVE_WEEKLY  = "mart.v_receive_weekly"   # 週次搬入集計ビュー
+V_RECEIVE_DAILY = "mart.mv_receive_daily"  # 日次搬入集計MV (旧: v_receive_daily)
+V_RECEIVE_WEEKLY = "mart.v_receive_weekly"  # 週次搬入集計ビュー
 V_RECEIVE_MONTHLY = "mart.v_receive_monthly"  # 月次搬入集計ビュー
 
 # refスキーマのビュー(参照データ)

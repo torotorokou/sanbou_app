@@ -44,15 +44,15 @@ describe('useResponsive 3-tier flags', () => {
   it('1024px should still be Tablet (critical fix)', () => {
     const flags = makeFlags(1024);
     expect(flags.isMobile).toBe(false);
-    expect(flags.isTablet).toBe(true);  // ★重要: 以前は false だった
-    expect(flags.isLaptop).toBe(true);  // 詳細判定
+    expect(flags.isTablet).toBe(true); // ★重要: 以前は false だった
+    expect(flags.isLaptop).toBe(true); // 詳細判定
     expect(flags.isDesktop).toBe(false);
   });
 
   it('1280px should be Tablet (2025-12-22変更)', () => {
     const flags = makeFlags(1280);
     expect(flags.isMobile).toBe(false);
-    expect(flags.isTablet).toBe(true);   // ★変更: true（Tablet上限）
+    expect(flags.isTablet).toBe(true); // ★変更: true（Tablet上限）
     expect(flags.isDesktop).toBe(false); // ★変更: false
   });
 
@@ -66,7 +66,7 @@ describe('useResponsive 3-tier flags', () => {
   it('isNarrow should be true for Mobile and Tablet (2025-12-22更新)', () => {
     expect(makeFlags(767).isNarrow).toBe(true);
     expect(makeFlags(768).isNarrow).toBe(true);
-    expect(makeFlags(1280).isNarrow).toBe(true);  // ★変更: true（Tablet扱い）
+    expect(makeFlags(1280).isNarrow).toBe(true); // ★変更: true（Tablet扱い）
     expect(makeFlags(1281).isNarrow).toBe(false); // ★変更: false（Desktop開始）
   });
 });

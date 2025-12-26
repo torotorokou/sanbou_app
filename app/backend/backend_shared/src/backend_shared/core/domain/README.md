@@ -28,6 +28,7 @@ problem = ProblemDetails(
 ```
 
 **フィールド:**
+
 - `status` (必須): HTTPステータスコード
 - `code` (必須): アプリケーション固有のエラーコード
 - `userMessage` (必須): ユーザー向けメッセージ
@@ -58,6 +59,7 @@ notification = NotificationEvent(
 ```
 
 **フィールド:**
+
 - `id` (必須): UUID形式の通知ID
 - `severity` (必須): `success` | `info` | `warning` | `error`
 - `title` (必須): 通知タイトル
@@ -117,7 +119,10 @@ problem_details = error_response.to_problem_details(status_code=422)
 TypeScript型は `/app/frontend/src/features/notification/model/contract.ts` で定義されています。
 
 ```typescript
-import type { NotificationEvent, ProblemDetails } from '@/features/notification/model/contract';
+import type {
+  NotificationEvent,
+  ProblemDetails,
+} from "@/features/notification/model/contract";
 
 // 通知の受信
 const notification: NotificationEvent = {
@@ -131,7 +136,7 @@ const notification: NotificationEvent = {
 const problem: ProblemDetails = {
   status: 422,
   code: "VALIDATION_ERROR",
-  userMessage: "入力値が不正です"
+  userMessage: "入力値が不正です",
 };
 ```
 

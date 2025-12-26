@@ -8,7 +8,7 @@ CSV Gateway Port (CSV 読み込みの抽象インターフェース).
 """
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Optional
+from typing import Any
 
 from fastapi import UploadFile
 
@@ -18,8 +18,8 @@ class CsvGateway(ABC):
 
     @abstractmethod
     def read_csv_files(
-        self, files: Dict[str, UploadFile]
-    ) -> tuple[Optional[Dict[str, Any]], Optional[Any]]:
+        self, files: dict[str, UploadFile]
+    ) -> tuple[dict[str, Any] | None, Any | None]:
         """
         CSV ファイルを読み込み、データフレームまたはエラーを返す.
 
@@ -39,8 +39,8 @@ class CsvGateway(ABC):
 
     @abstractmethod
     def validate_csv_structure(
-        self, dfs: Dict[str, Any], file_inputs: Dict[str, Any]
-    ) -> Optional[Any]:
+        self, dfs: dict[str, Any], file_inputs: dict[str, Any]
+    ) -> Any | None:
         """
         CSV の構造検証（必須カラム存在確認など）.
 
@@ -54,7 +54,7 @@ class CsvGateway(ABC):
         pass
 
     @abstractmethod
-    def format_csv_data(self, dfs: Dict[str, Any]) -> Dict[str, Any]:
+    def format_csv_data(self, dfs: dict[str, Any]) -> dict[str, Any]:
         """
         CSV データの整形（型変換、正規化など）.
 

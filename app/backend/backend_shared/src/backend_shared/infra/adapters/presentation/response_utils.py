@@ -1,6 +1,6 @@
+from typing import Any
+
 from fastapi.responses import JSONResponse
-from typing import Any, Optional
-from .response_base import BaseApiResponse, SuccessApiResponse, ErrorApiResponse
 
 
 # 旧形式（関数型）も互換用に残しておく
@@ -10,8 +10,8 @@ def api_response(
     status_str: str,
     code: str,
     detail: str,
-    result: Optional[Any] = None,
-    hint: Optional[str] = None,
+    result: Any | None = None,
+    hint: str | None = None,
 ) -> JSONResponse:
     """非推奨：クラス版に移行推奨"""
     content = {

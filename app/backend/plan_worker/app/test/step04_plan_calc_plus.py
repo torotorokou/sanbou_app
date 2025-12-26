@@ -1,17 +1,19 @@
 from __future__ import annotations
-from pathlib import Path
-from datetime import date
+
 import argparse
+from datetime import date
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
-from sqlalchemy import create_engine
-from scipy.ndimage import gaussian_filter1d
 from common import _dsn
 from plan_smoothing_plus import (
     SmoothConfig,
     apply_intraweek_pipeline,
     bridge_smooth_across_months_and_renorm,
 )
+from scipy.ndimage import gaussian_filter1d
+from sqlalchemy import create_engine
 
 OUT = Path("/backend/app/test/out/plan")
 
@@ -22,13 +24,12 @@ def _parse_month(s: str) -> date:
 
 
 def _first_day_next_month(d: date) -> date:
-    return date(d.year + (1 if d.month == 12 else 0),
-                1 if d.month == 12 else d.month + 1, 1)
+    return date(d.year + (1 if d.month == 12 else 0), 1 if d.month == 12 else d.month + 1, 1)
 
 
 def _engine_url(dsn: str) -> str:
     prefix = "postgresql://"
-    return ("postgresql+psycopg" + dsn[len("postgresql"):]) if dsn.startswith(prefix) else dsn
+    return ("postgresql+psycopg" + dsn[len("postgresql") :]) if dsn.startswith(prefix) else dsn
 
 
 def main():
@@ -71,10 +72,9 @@ def main():
         eng,
     )
     prof_biz = prof[prof["scope"] == "biz"].rename(columns={"day_mean_smooth": "day_mean_biz"})
-    prof_all_sun = (
-        prof[(prof["scope"] == "all") & (prof["iso_dow"] == 7)][["iso_week", "day_mean_smooth"]]
-        .rename(columns={"day_mean_smooth": "day_mean_all_sun"})
-    )
+    prof_all_sun = prof[(prof["scope"] == "all") & (prof["iso_dow"] == 7)][
+        ["iso_week", "day_mean_smooth"]
+    ].rename(columns={"day_mean_smooth": "day_mean_all_sun"})
 
     kpi = pd.read_sql_query(
         """
@@ -96,11 +96,11 @@ def main():
     use_hol = (~is_closed) & (cal["is_holiday"]) & (~use_sun)
     use_biz = (~is_closed) & (~use_sun) & (~use_hol)
 
-    base = (
-        cal.merge(prof_biz[["iso_week", "iso_dow", "day_mean_biz"]],
-                  on=["iso_week", "iso_dow"], how="left")
-           .merge(prof_all_sun, on=["iso_week"], how="left")
-    )
+    base = cal.merge(
+        prof_biz[["iso_week", "iso_dow", "day_mean_biz"]],
+        on=["iso_week", "iso_dow"],
+        how="left",
+    ).merge(prof_all_sun, on=["iso_week"], how="left")
     base["day_mean_biz"] = base["day_mean_biz"].fillna(0.0)
     base["day_mean_all_sun"] = base["day_mean_all_sun"].fillna(0.0)
     base["day_mean"] = 0.0
@@ -117,11 +117,14 @@ def main():
     # 月→週→日配分
     week_mass = (
         base.groupby(["month_date", "iso_year", "iso_week"], as_index=False)["day_mean"]
-            .sum().rename(columns={"day_mean": "mu_week"})
+        .sum()
+        .rename(columns={"day_mean": "mu_week"})
     )
     total = week_mass.groupby("month_date")["mu_week"].transform("sum")
     week_mass["w_week"] = week_mass["mu_week"] / total
-    week_mass = week_mass.merge(kpi[["month_date", "month_target_ton"]], on="month_date", how="left")
+    week_mass = week_mass.merge(
+        kpi[["month_date", "month_target_ton"]], on="month_date", how="left"
+    )
     week_mass["week_target_ton_in_month"] = week_mass["w_week"] * week_mass["month_target_ton"]
 
     base = base.merge(
@@ -131,10 +134,13 @@ def main():
     )
     week_sum = (
         base.groupby(["month_date", "iso_year", "iso_week"], as_index=False)["day_mean"]
-            .sum().rename(columns={"day_mean": "mu_week_sum"})
+        .sum()
+        .rename(columns={"day_mean": "mu_week_sum"})
     )
     base = base.merge(week_sum, on=["month_date", "iso_year", "iso_week"], how="left")
-    base["w_day_in_week_raw"] = np.where(base["mu_week_sum"] > 0.0, base["day_mean"] / base["mu_week_sum"], 0.0)
+    base["w_day_in_week_raw"] = np.where(
+        base["mu_week_sum"] > 0.0, base["day_mean"] / base["mu_week_sum"], 0.0
+    )
 
     cfg = SmoothConfig(
         intraweek_window=3,
@@ -149,10 +155,13 @@ def main():
 
     base = (
         base.sort_values(["month_date", "iso_year", "iso_week", "ddate"])
-            .groupby(["month_date", "iso_year", "iso_week"], group_keys=False)
-            .apply(lambda g: apply_intraweek_pipeline(
+        .groupby(["month_date", "iso_year", "iso_week"], group_keys=False)
+        .apply(
+            lambda g: apply_intraweek_pipeline(
                 g, "w_day_in_week_raw", "w_day_in_week", cfg, scope_col="scope_used"
-            ), include_groups=True)
+            ),
+            include_groups=True,
+        )
     )
 
     base["target_ton"] = base["w_day_in_week"] * base["week_target_ton_in_month"]
@@ -194,14 +203,13 @@ def main():
     if args.debug:
         weekly = (
             daily.groupby(["iso_year", "iso_week"], as_index=False)
-                  .agg({"target_ton": "sum"})
-                  .rename(columns={"target_ton": "week_target_ton"})
+            .agg({"target_ton": "sum"})
+            .rename(columns={"target_ton": "week_target_ton"})
         )
         weekly.to_csv(OUT / "weekly_plan_smooth_final.csv", index=False)
         print("[debug] weekly_plan_smooth_final.csv written")
 
     eng.dispose()
-
 
     # === DB保存処理 ===
     cols_keep = ["ddate", "target_ton", "scope_used"]
@@ -217,7 +225,6 @@ def main():
         index=False,
     )
     print("[OK] mart.daily_target_plan updated.")
-
 
 
 if __name__ == "__main__":

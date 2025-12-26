@@ -46,11 +46,11 @@ curl -X POST http://localhost:8003/api/forecast/jobs \
 
 ### 3. Access Services
 
-| Service | URL | Description |
-|---------|-----|-------------|
-| Frontend | http://localhost:5173 | React app (Vite dev server) |
-| Core API | http://localhost:8003 | BFF (all /api/** requests) |
-| API Docs | http://localhost:8003/docs | Swagger UI |
+| Service  | URL                        | Description                  |
+| -------- | -------------------------- | ---------------------------- |
+| Frontend | http://localhost:5173      | React app (Vite dev server)  |
+| Core API | http://localhost:8003      | BFF (all /api/\*\* requests) |
+| API Docs | http://localhost:8003/docs | Swagger UI                   |
 
 ## 📁 Key Files
 
@@ -157,7 +157,7 @@ GET /api/external/manual/list
 ## 🏗️ Architecture
 
 ```
-Frontend (/api/**) 
+Frontend (/api/**)
     ↓
 Core API (BFF)
     ├─→ Internal HTTP (sync) → rag_api / ledger_api / manual_api
@@ -180,7 +180,7 @@ Core API (BFF)
 - [ ] Replace dummy predictor with real ML model
 - [ ] Implement authentication (populate actor field)
 - [ ] Add business day calculation
-- [ ] Migrate frontend to use /api/** exclusively
+- [ ] Migrate frontend to use /api/\*\* exclusively
 
 ## 📚 Documentation
 

@@ -30,6 +30,4 @@ def serialize_dates_info(dates_info: dict) -> dict:
     :param dates_info: 日付情報の辞書
     :return: 文字列化された日付情報
     """
-    return {
-        key: [str(d) for d in sorted(list(value))] for key, value in dates_info.items()
-    }
+    return {key: [str(d) for d in sorted(value)] for key, value in dates_info.items()}

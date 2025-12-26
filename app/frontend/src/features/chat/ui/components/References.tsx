@@ -14,7 +14,9 @@ const References: React.FC<{ items: RefItem[] }> = ({ items }) => {
         const path = u.pathname + u.hash;
         return (
           <React.Fragment key={r.url}>
-            <Link to={path} state={{ backgroundLocation }}>{r.title}（{r.section}）</Link>
+            <Link to={path} state={{ backgroundLocation }}>
+              {r.title}（{r.section}）
+            </Link>
             {i < items.length - 1 ? ', ' : ''}
           </React.Fragment>
         );

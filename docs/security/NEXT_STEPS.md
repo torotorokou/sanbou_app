@@ -3,6 +3,7 @@
 ## 🔴 最優先（今すぐ実施）
 
 ### 1. ローカル統合テスト
+
 ```bash
 # ブランチ確認
 git branch
@@ -28,6 +29,7 @@ docker compose -f docker/docker-compose.dev.yml down
 ```
 
 **期待される結果:**
+
 - ✅ すべてのサービスが正常起動
 - ✅ ヘルスチェックが200 OKを返す
 - ✅ エラーログがない
@@ -37,18 +39,21 @@ docker compose -f docker/docker-compose.dev.yml down
 ## 🟡 高優先（今日中に実施）
 
 ### 2. Pull Request作成
+
 ```bash
 # GitHubのPRページを開く
 open https://github.com/torotorokou/sanbou_app/pull/new/security/fix-vulnerabilities-2025-12
 ```
 
 **PRテンプレート使用:**
+
 - タイトル: `security: Fix CVE vulnerabilities in Python dependencies (Dec 2025)`
 - 本文: `.github/PULL_REQUEST_TEMPLATE_SECURITY.md` の内容をコピー
 - ラベル: `security`, `dependencies`, `docker`
 - レビュアー: チームメンバーをアサイン
 
 ### 3. CI/CDパイプライン確認
+
 - GitHub Actionsが自動実行されることを確認
 - テストが全て通ることを確認
 - ビルドエラーがないことを確認
@@ -60,6 +65,7 @@ open https://github.com/torotorokou/sanbou_app/pull/new/security/fix-vulnerabili
 ### 4. ステージング環境（vm_stg）でのテスト
 
 PRマージ後:
+
 ```bash
 # VM_STGにログイン
 ssh your-stg-vm
@@ -93,6 +99,7 @@ docker push [REGISTRY]/core_api:latest
 ```
 
 **期待される結果:**
+
 - ✅ CVE-2025-62727（high）→ 解消
 - ✅ CVE-2025-54121（medium）→ 解消
 - ✅ CVE-2024-47081（medium）→ 解消
@@ -106,6 +113,7 @@ docker push [REGISTRY]/core_api:latest
 ### 6. 本番環境（vm_prod）へのデプロイ
 
 ステージング環境で十分なテスト後:
+
 ```bash
 # 本番環境デプロイ
 # 既存のCI/CDパイプラインに従う
@@ -120,6 +128,7 @@ docker push [REGISTRY]/core_api:latest
 ### 8. 自動化の改善
 
 #### 8.1 Dependabot設定
+
 ```yaml
 # .github/dependabot.yml
 version: 2
@@ -135,6 +144,7 @@ updates:
 ```
 
 #### 8.2 セキュリティスキャンをCI/CDに組み込み
+
 ```yaml
 # .github/workflows/security-scan.yml
 name: Security Scan
@@ -147,10 +157,10 @@ jobs:
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
         with:
-          scan-type: 'fs'
-          scan-ref: '.'
-          format: 'sarif'
-          output: 'trivy-results.sarif'
+          scan-type: "fs"
+          scan-ref: "."
+          format: "sarif"
+          output: "trivy-results.sarif"
 ```
 
 ### 9. ベースイメージの固定化検討
@@ -159,14 +169,17 @@ jobs:
 提案: `python:3.12.8-slim` (特定バージョン固定)
 
 **メリット:**
+
 - 再現性の向上
 - 予期しないbreaking changeを防ぐ
 
 **デメリット:**
+
 - セキュリティパッチの自動適用がされない
 - 定期的な手動更新が必要
 
 **推奨アプローチ:**
+
 - 開発環境: latest patch（現状維持）
 - 本番環境: 特定バージョン固定 + 月次更新
 
@@ -175,6 +188,7 @@ jobs:
 ## 📋 チェックリスト（進捗管理用）
 
 ### Phase 1: テストとレビュー（今日）
+
 - [x] ローカルビルドテスト（wheelbuilder）✅
 - [x] 依存関係整合性チェック ✅
 - [x] GitHubへプッシュ ✅
@@ -184,18 +198,21 @@ jobs:
 - [ ] コードレビュー依頼
 
 ### Phase 2: 統合とデプロイ（今週）
+
 - [ ] PR承認 & マージ
 - [ ] vm_stg でのテスト
 - [ ] Artifact Registry再スキャン
 - [ ] 脆弱性解消確認
 
 ### Phase 3: 本番とドキュメント（来週）
+
 - [ ] vm_prod デプロイ
 - [ ] 本番動作確認
 - [ ] ドキュメント更新
 - [ ] チームへの共有
 
 ### Phase 4: 継続的改善（今月）
+
 - [ ] Dependabot設定
 - [ ] CI/CDにセキュリティスキャン追加
 - [ ] ベースイメージ戦略の確立
@@ -206,6 +223,7 @@ jobs:
 ## 🚨 トラブルシューティング
 
 ### 問題1: コンテナが起動しない
+
 ```bash
 # ログ確認
 docker compose logs [service_name]
@@ -219,6 +237,7 @@ docker compose down && docker compose up -d
 ```
 
 ### 問題2: 依存関係の競合
+
 ```bash
 # requirements.txtの依存関係ツリー確認
 pip install pipdeptree
@@ -226,6 +245,7 @@ pipdeptree -p fastapi -p starlette -p langchain-core
 ```
 
 ### 問題3: ヘルスチェック失敗
+
 ```bash
 # サービス内部から確認
 docker compose exec core_api curl http://localhost:8000/health

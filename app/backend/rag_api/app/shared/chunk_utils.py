@@ -1,17 +1,22 @@
-from langchain_community.vectorstores import FAISS
-from langchain_openai import OpenAIEmbeddings
-from typing import List, Optional, Any, Dict
 import ast
 import os
+from typing import Any
+
+from langchain_community.vectorstores import FAISS
+from langchain_openai import OpenAIEmbeddings
+
 from backend_shared.application.logging import get_module_logger
 
+
 logger = get_module_logger(__name__)
+
 
 def load_faiss_vectorstore(faiss_path: str) -> Any:
     embeddings = OpenAIEmbeddings()
     return FAISS.load_local(str(faiss_path), embeddings, allow_dangerous_deserialization=True)
 
-def safe_parse_tags(raw: Any) -> List[Any]:
+
+def safe_parse_tags(raw: Any) -> list[Any]:
     """与えられたタグフィールドを確実にリストへ正規化する。
 
     受け入れる形式:
@@ -42,6 +47,7 @@ def safe_parse_tags(raw: Any) -> List[Any]:
     # その他の型は単一値として扱う
     return [raw] if raw is not None else []
 
+
 def _normalize_token(s: Any) -> str:
     try:
         # 前後空白を除去し、簡易に小文字化（英数用）。日本語には影響軽微。
@@ -49,24 +55,25 @@ def _normalize_token(s: Any) -> str:
     except Exception:
         return str(s)
 
+
 def search_documents_with_category(
     query: str,
     category: str,
-    json_data: List[dict],
+    json_data: list[dict],
     vectorstore: Any,
     top_k: int = 12,
-    tags: Optional[List[str]] = None
-) -> List[tuple]:
+    tags: list[str] | None = None,
+) -> list[tuple]:
     results = vectorstore.similarity_search_with_score(query, k=top_k)
     logger.debug("Vector search completed", extra={"raw_hits": len(results)})
     filtered = []
     norm_category = _normalize_token(category)
-    norm_query_tags = set(_normalize_token(t) for t in (tags or []))
+    norm_query_tags = {_normalize_token(t) for t in (tags or [])}
     DEBUG_VERBOSE = os.environ.get("RAG_DEBUG_VERBOSE") == "1"
 
     # JSON データからタグを引くための簡易インデックス（title と chunk_id をキーに）
-    title_to_tags: Dict[str, List[Any]] = {}
-    chunk_to_tags: Dict[str, List[Any]] = {}
+    title_to_tags: dict[str, list[Any]] = {}
+    chunk_to_tags: dict[str, list[Any]] = {}
     if isinstance(json_data, list):
         for item in json_data:
             try:
@@ -81,7 +88,7 @@ def search_documents_with_category(
             except Exception:
                 pass
 
-    for doc, score in results:
+    for doc, _score in results:
         meta = doc.metadata
         doc_category_raw = meta.get("category")
         # support both 'tag' and 'tags' keys (some sources use 'tags')
@@ -95,8 +102,8 @@ def search_documents_with_category(
                 extra={
                     "metadata_keys": list(meta.keys()),
                     "meta_tag": repr(meta.get("tag")),
-                    "meta_tags": repr(meta.get("tags"))
-                }
+                    "meta_tags": repr(meta.get("tags")),
+                },
             )
 
         # カテゴリ正規化（リストも考慮して包含判定）
@@ -110,7 +117,7 @@ def search_documents_with_category(
         # title と chunk_id で JSON のタグを検索
         title = meta.get("title")
         chunk_id = meta.get("chunk_id") or meta.get("CHUNK_ID")
-        json_tags: List[Any] = []
+        json_tags: list[Any] = []
         if title and title in title_to_tags:
             json_tags.extend(title_to_tags.get(title, []))
         if chunk_id and chunk_id in chunk_to_tags:
@@ -124,18 +131,18 @@ def search_documents_with_category(
                     "title": title,
                     "chunk_id": chunk_id,
                     "base_tags": base_tags_list,
-                    "json_tags": json_tags
-                }
+                    "json_tags": json_tags,
+                },
             )
-        doc_tags_norm = set(_normalize_token(t) for t in combined_list)
+        doc_tags_norm = {_normalize_token(t) for t in combined_list}
 
         if DEBUG_VERBOSE:
             logger.debug(
                 "Tag matching details",
                 extra={
                     "doc_tags_norm": list(doc_tags_norm),
-                    "norm_query_tags": list(norm_query_tags)
-                }
+                    "norm_query_tags": list(norm_query_tags),
+                },
             )
 
         # マッチ条件
@@ -147,15 +154,11 @@ def search_documents_with_category(
 
     logger.debug(
         "Filtered search results",
-        extra={
-            "filtered_hits": len(filtered),
-            "category": category,
-            "tags": tags
-        }
+        extra={"filtered_hits": len(filtered), "category": category, "tags": tags},
     )
 
     # JSON データからカテゴリ・タグ一致で候補を合成（ベクトル結果に統合）
-    json_candidates_scored: List[tuple] = []
+    json_candidates_scored: list[tuple] = []
     if isinstance(json_data, list):
         for item in json_data:
             try:
@@ -167,7 +170,7 @@ def search_documents_with_category(
                 if norm_category not in item_cats:
                     continue
                 item_tags = safe_parse_tags(item.get("tags") or item.get("tag") or [])
-                item_tags_norm = set(_normalize_token(t) for t in item_tags)
+                item_tags_norm = {_normalize_token(t) for t in item_tags}
                 if norm_query_tags and not (norm_query_tags & item_tags_norm):
                     continue
                 meta = {
@@ -200,23 +203,27 @@ def search_documents_with_category(
                     elif kt in title:
                         score += 6
                 score += len(norm_query_tags & item_tags_norm)
-                json_candidates_scored.append((score, (meta.get("title", "Unknown"), page_content, meta)))
+                json_candidates_scored.append(
+                    (score, (meta.get("title", "Unknown"), page_content, meta))
+                )
             except Exception:
                 continue
     if json_candidates_scored:
         logger.debug(
             "JSON candidates scored",
-            extra={"json_candidates_count": len(json_candidates_scored)}
+            extra={"json_candidates_count": len(json_candidates_scored)},
         )
         # スコア順に並べ替え（降順）
         json_candidates_scored.sort(key=lambda x: x[0], reverse=True)
         json_candidates = [tpl for _, tpl in json_candidates_scored]
         # ベクトル結果と統合（title+chunk_id で重複除去）
         seen = set()
-        merged: List[tuple] = []
+        merged: list[tuple] = []
+
         def key_of(tpl: tuple):
             m = tpl[2] if len(tpl) > 2 and isinstance(tpl[2], dict) else {}
             return (m.get("title"), m.get("chunk_id"))
+
         for tpl in filtered:
             k = key_of(tpl)
             if k not in seen:
@@ -233,7 +240,7 @@ def search_documents_with_category(
     # フォールバック2: それでも0件ならカテゴリのみで再評価
     if not filtered:
         category_only = []
-        for doc, score in results:
+        for doc, _score in results:
             meta = doc.metadata
             doc_category_raw = meta.get("category")
             if isinstance(doc_category_raw, list):
@@ -245,20 +252,17 @@ def search_documents_with_category(
         if category_only:
             logger.debug(
                 "Fallback: category-only hits",
-                extra={"category_only_hits": len(category_only)}
+                extra={"category_only_hits": len(category_only)},
             )
             return category_only
 
     # それでも0件なら生ヒットを返す（上位top_k、観察用）
     if not filtered:
         raw_mapped = []
-        for doc, score in results:
+        for doc, _score in results:
             meta = doc.metadata
             raw_mapped.append((meta.get("title", "Unknown"), doc.page_content, meta))
-        logger.debug(
-            "Fallback: raw mapped hits",
-            extra={"raw_mapped_hits": len(raw_mapped)}
-        )
+        logger.debug("Fallback: raw mapped hits", extra={"raw_mapped_hits": len(raw_mapped)})
         return raw_mapped
 
     return filtered

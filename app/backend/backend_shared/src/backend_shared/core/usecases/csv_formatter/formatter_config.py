@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from backend_shared.config.config_loader import ShogunCsvConfigLoader
 
@@ -14,10 +14,10 @@ class FormatterConfig:
     extra_settings: 任意の追加設定（dict形式で格納）
     """
 
-    columns_def: Dict[str, Any]  # カラム定義情報
-    unique_keys: List[List[str]]  # ユニークキーの組み合わせ
-    agg_map: Dict[str, str]  # 集計方法マッピング
-    extra_settings: Optional[Dict[str, Any]] = None  # 任意の追加設定
+    columns_def: dict[str, Any]  # カラム定義情報
+    unique_keys: list[list[str]]  # ユニークキーの組み合わせ
+    agg_map: dict[str, str]  # 集計方法マッピング
+    extra_settings: dict[str, Any] | None = None  # 任意の追加設定
 
     def __init__(self, columns_def, unique_keys, agg_map, **extra_settings):
         self.columns_def = columns_def

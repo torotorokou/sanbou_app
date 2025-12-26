@@ -1,18 +1,19 @@
 /**
  * DatasetPreviewScreen - プレビュー画面骨組み
- * 
+ *
  * 責務:
  * - Tabs 構築
  * - ResizeObserver で cardHeight 計測
  * - CsvPreviewCard への props 伝達
  */
 
-import React, { useLayoutEffect, useRef, useState } from 'react';
-import { Col, Row, Tabs, Empty } from 'antd';
-import { useDatasetPreviewVM } from '../model/useDatasetPreviewVM';
-import { CsvPreviewCard } from '../ui/CsvPreviewCard';
-import type { PreviewSource } from '../model/types';
-import './styles.css';
+import React, { useLayoutEffect, useRef, useState } from "react";
+import { Col, Row, Tabs, Empty } from "antd";
+import { useDatasetPreviewVM } from "../model/useDatasetPreviewVM";
+import { CsvPreviewCard } from "../ui/CsvPreviewCard";
+import type { PreviewSource } from "../model/types";
+import styles from "./DatasetPreviewScreen.module.css";
+import { logger } from "@/shared";
 
 export type DatasetPreviewScreenProps = {
   source: PreviewSource;
@@ -24,20 +25,20 @@ const TAB_BAR_FALLBACK = 40;
 // 背景色から適切なテキスト色を計算
 function readableTextColor(bg: string): string {
   try {
-    const c = bg.replace('#', '');
+    const c = bg.replace("#", "");
     const r = parseInt(c.substring(0, 2), 16);
     const g = parseInt(c.substring(2, 4), 16);
     const b = parseInt(c.substring(4, 6), 16);
     const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-    return luminance > 0.6 ? '#111827' : '#ffffff';
+    return luminance > 0.6 ? "#111827" : "#ffffff";
   } catch {
-    return '#ffffff';
+    return "#ffffff";
   }
 }
 
-export const DatasetPreviewScreen: React.FC<DatasetPreviewScreenProps> = ({ 
-  source, 
-  initialTypeKey 
+export const DatasetPreviewScreen: React.FC<DatasetPreviewScreenProps> = ({
+  source,
+  initialTypeKey,
 }) => {
   const { tabs } = useDatasetPreviewVM(source);
   const hostRef = useRef<HTMLDivElement | null>(null);
@@ -48,76 +49,93 @@ export const DatasetPreviewScreen: React.FC<DatasetPreviewScreenProps> = ({
     const calc = () => {
       const host = hostRef.current;
       if (!host) return;
-      
+
       const h = host.clientHeight;
-      const navEl = tabsRef.current?.querySelector('.ant-tabs-nav') as HTMLElement | null;
+      const navEl = tabsRef.current?.querySelector(
+        ".ant-tabs-nav",
+      ) as HTMLElement | null;
       const navH = navEl?.offsetHeight ?? TAB_BAR_FALLBACK;
       const margin = 8; // tabBarStyle の marginBottom
-      
+
       const computed = Math.max(160, Math.floor(h - navH - margin));
-      
-      // デバッグログ（開発時のみ有効化）
-      if (process.env.NODE_ENV === 'development') {
-        console.debug('[DatasetPreviewScreen] hostH:', h, 'navH:', navH, 'margin:', margin, '→ cardHeight:', computed);
-      }
-      
+
+      // デバッグログ（loggerが開発環境でのみ出力）
+      logger.debug(
+        "[DatasetPreviewScreen] hostH:",
+        h,
+        "navH:",
+        navH,
+        "margin:",
+        margin,
+        "→ cardHeight:",
+        computed,
+      );
+
       setCardHeight(computed);
     };
-    
+
     const ro = new ResizeObserver(calc);
     if (hostRef.current) ro.observe(hostRef.current);
     calc();
-    
+
     return () => ro.disconnect();
   }, []);
 
   return (
-    <Row className="dp-row">
-      <Col span={24} className="dp-right">
-        <div ref={hostRef} className="dp-host">
+    <Row className={styles.dpRow}>
+      <Col span={24} className={styles.dpRight}>
+        <div ref={hostRef} className={styles.dpHost}>
           {tabs.length === 0 ? (
-            <div className="dp-empty">
+            <div className={styles.dpEmpty}>
               <Empty description="プレビュー対象がありません" />
             </div>
           ) : (
             <Tabs
               defaultActiveKey={initialTypeKey ?? tabs[0].key}
-              className="dp-tabs"
+              className={styles.dpTabs}
               tabBarStyle={{ marginBottom: 8, flexShrink: 0 }}
               renderTabBar={(props, DefaultTabBar) => (
-                <div ref={(el) => { tabsRef.current = el; }}>
+                <div
+                  ref={(el) => {
+                    tabsRef.current = el;
+                  }}
+                >
                   <DefaultTabBar {...props} />
                 </div>
               )}
-              items={tabs.map(t => {
-                const fg = readableTextColor(t.color ?? '#777');
+              items={tabs.map((t) => {
+                const fg = readableTextColor(t.color ?? "#777");
                 return {
                   key: t.key,
                   label: (
-                    <div 
-                      className="dp-pill" 
-                      style={{ 
-                        background: t.color ?? '#777',
-                        color: fg 
+                    <div
+                      className={styles.dpPill}
+                      style={{
+                        background: t.color ?? "#777",
+                        color: fg,
                       }}
                     >
                       <span>{t.label}</span>
-                      {t.status === 'valid' ? (
+                      {t.status === "valid" ? (
                         <span style={{ marginLeft: 6, fontSize: 12 }}>✅</span>
-                      ) : t.status === 'invalid' ? (
+                      ) : t.status === "invalid" ? (
                         <span style={{ marginLeft: 6, fontSize: 12 }}>❌</span>
                       ) : (
-                        <span style={{ marginLeft: 6, fontSize: 12, opacity: 0.6 }}>未</span>
+                        <span
+                          style={{ marginLeft: 6, fontSize: 12, opacity: 0.6 }}
+                        >
+                          未
+                        </span>
                       )}
                     </div>
                   ),
                   children: (
-                    <div className="dp-pane">
+                    <div className={styles.dpPane}>
                       <CsvPreviewCard
                         type={t.key}
                         label={t.label}
                         csvPreview={t.preview}
-                        validationResult={t.status ?? 'unknown'}
+                        validationResult={t.status ?? "unknown"}
                         cardHeight={cardHeight}
                         backgroundColor={t.color}
                         hideHead={true}

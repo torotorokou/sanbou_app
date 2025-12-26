@@ -32,9 +32,7 @@ export function normalizeValidationStatus(
  * @param status - ValidationStatus
  * @returns 'ok' | 'ng' | 'unknown'
  */
-export function toLegacyValidationStatus(
-  status: ValidationStatus
-): 'ok' | 'ng' | 'unknown' {
+export function toLegacyValidationStatus(status: ValidationStatus): 'ok' | 'ng' | 'unknown' {
   if (status === 'valid') return 'ok';
   if (status === 'invalid') return 'ng';
   return 'unknown';

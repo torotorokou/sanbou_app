@@ -3,9 +3,10 @@ Balance Sheet Domain Model.
 
 搬出入収支表のドメインモデル。
 """
+
 from dataclasses import dataclass
 from datetime import date
-from typing import List, Optional
+
 import pandas as pd
 
 
@@ -13,7 +14,7 @@ import pandas as pd
 class ReceiveItem:
     """
     受入データの値オブジェクト
-    
+
     Attributes:
         slip_date: 伝票日付
         site_name: 現場名
@@ -21,11 +22,12 @@ class ReceiveItem:
         volume: 体積（m3）
         item_name: 品名
     """
+
     slip_date: date
     site_name: str
     net_weight: float
-    volume: Optional[float] = None
-    item_name: Optional[str] = None
+    volume: float | None = None
+    item_name: str | None = None
 
     def __post_init__(self):
         if self.net_weight < 0:
@@ -38,51 +40,52 @@ class ReceiveItem:
 class BalanceSheet:
     """
     搬出入収支表エンティティ（Aggregate Root）
-    
+
     受入・出荷・ヤードデータから収支表を生成するドメインエンティティ。
-    
+
     Attributes:
         report_date: レポート対象日
         receive_items: 受入データリスト
         shipment_items: 出荷データリスト（factory_reportから再利用）
         yard_items: ヤードデータリスト（factory_reportから再利用）
     """
+
     report_date: date
-    receive_items: List[ReceiveItem]
-    shipment_items: List  # ShipmentItem型だが循環参照回避のためList
-    yard_items: List  # YardItem型
+    receive_items: list[ReceiveItem]
+    shipment_items: list  # ShipmentItem型だが循環参照回避のためList
+    yard_items: list  # YardItem型
 
     @classmethod
     def from_dataframes(
         cls,
-        df_receive: Optional[pd.DataFrame],
-        df_shipment: Optional[pd.DataFrame],
-        df_yard: Optional[pd.DataFrame],
+        df_receive: pd.DataFrame | None,
+        df_shipment: pd.DataFrame | None,
+        df_yard: pd.DataFrame | None,
     ) -> "BalanceSheet":
         """
         DataFrameから搬出入収支表エンティティを生成
-        
+
         Args:
             df_receive: 受入データのDataFrame
             df_shipment: 出荷データのDataFrame
             df_yard: ヤードデータのDataFrame
-            
+
         Returns:
             BalanceSheet: 搬出入収支表エンティティ
         """
         from app.core.domain.reports.report_utils import (
-            extract_report_date,
+            convert_to_receive_items,
             convert_to_shipment_items,
             convert_to_yard_items,
-            convert_to_receive_items,
+            extract_report_date,
         )
-        
+
         # 共通ユーティリティを使用して日付抽出とデータ変換
         report_date = extract_report_date(
             (df_shipment, "伝票日付"),
             (df_receive, "伝票日付"),
         )
-        
+
         receive_items = convert_to_receive_items(df_receive, report_date)
         shipment_items = convert_to_shipment_items(df_shipment)
         yard_items = convert_to_yard_items(df_yard)

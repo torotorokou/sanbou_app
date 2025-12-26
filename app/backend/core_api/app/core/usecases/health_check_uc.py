@@ -5,9 +5,10 @@ Health Check UseCase
 """
 
 import asyncio
-from typing import Dict, Any
-import httpx
 from datetime import datetime
+from typing import Any
+
+import httpx
 
 from backend_shared.application.logging import get_module_logger
 
@@ -17,7 +18,7 @@ logger = get_module_logger(__name__)
 class HealthCheckUseCase:
     """
     システム全体のヘルスチェックを実行するUseCase
-    
+
     各マイクロサービスの状態を並行でチェックし、統合されたステータスを返す。
     """
 
@@ -47,15 +48,15 @@ class HealthCheckUseCase:
 
     async def _check_service(
         self, name: str, base_url: str, client: httpx.AsyncClient
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         個別サービスのヘルスチェックを実行
-        
+
         Args:
             name: サービス名
             base_url: サービスのベースURL
             client: HTTPクライアント
-            
+
         Returns:
             サービスのステータス情報
         """
@@ -74,7 +75,7 @@ class HealthCheckUseCase:
                         }
                 except httpx.HTTPError:
                     continue
-            
+
             # すべてのエンドポイントが失敗
             return {
                 "name": name,
@@ -85,7 +86,10 @@ class HealthCheckUseCase:
             }
 
         except httpx.TimeoutException:
-            logger.warning(f"Health check timeout for {name}", extra={"service": name, "url": base_url})
+            logger.warning(
+                f"Health check timeout for {name}",
+                extra={"service": name, "url": base_url},
+            )
             return {
                 "name": name,
                 "status": "timeout",
@@ -107,19 +111,16 @@ class HealthCheckUseCase:
                 "checked_at": datetime.now().isoformat(),
             }
 
-    async def execute(self) -> Dict[str, Any]:
+    async def execute(self) -> dict[str, Any]:
         """
         すべてのサービスのヘルスチェックを並行実行
-        
+
         Returns:
             統合されたヘルスステータス
         """
         async with httpx.AsyncClient(timeout=self.timeout) as client:
             # 並行実行
-            tasks = [
-                self._check_service(name, url, client)
-                for name, url in self.services.items()
-            ]
+            tasks = [self._check_service(name, url, client) for name, url in self.services.items()]
             results = await asyncio.gather(*tasks, return_exceptions=False)
 
         # 結果を集計

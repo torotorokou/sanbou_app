@@ -1,0 +1,49 @@
+/* ===================================================
+ * CSS Reset
+ * ===================================================
+ * Minimal reset for consistent cross-browser rendering
+ */
+
+/* === Box Model Reset === */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* === Document Reset === */
+html {
+  height: 100%;
+  width: 100%;
+  overflow-x: clip;
+  scrollbar-gutter: stable;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100dvh;
+  width: 100%;
+  overflow-x: clip;
+  scrollbar-gutter: stable;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* === Media Elements === */
+img,
+video,
+canvas,
+svg {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* === Pre/Code Reset === */
+pre,
+code {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}

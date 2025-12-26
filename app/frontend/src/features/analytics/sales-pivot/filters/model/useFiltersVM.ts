@@ -6,7 +6,14 @@
 import { useState, useMemo, useCallback } from 'react';
 import dayjs from 'dayjs';
 import type { Dayjs } from 'dayjs';
-import type { Mode, SortKey, SortOrder, ID, SummaryQuery, UniverseEntry } from '../../shared/model/types';
+import type {
+  Mode,
+  SortKey,
+  SortOrder,
+  ID,
+  SummaryQuery,
+  UniverseEntry,
+} from '../../shared/model/types';
 
 export interface UseFiltersViewModelParams {
   customers: UniverseEntry[];
@@ -72,12 +79,23 @@ export function useFiltersViewModel(params: UseFiltersViewModelParams): UseFilte
 
   // ========== Query ==========
   const query: SummaryQuery = useMemo(() => {
-    const base = { mode, repIds, filterIds, sortBy, order, topN, categoryKind: 'waste' as const };
+    const base = {
+      mode,
+      repIds,
+      filterIds,
+      sortBy,
+      order,
+      topN,
+      categoryKind: 'waste' as const,
+    };
     if (periodMode === 'single') return { ...base, month: month.format('YYYY-MM') };
     if (range)
       return {
         ...base,
-        monthRange: { from: range[0].format('YYYY-MM'), to: range[1].format('YYYY-MM') },
+        monthRange: {
+          from: range[0].format('YYYY-MM'),
+          to: range[1].format('YYYY-MM'),
+        },
       };
     return { ...base, month: month.format('YYYY-MM') };
   }, [periodMode, month, range, mode, repIds, filterIds, sortBy, order, topN]);
@@ -93,9 +111,12 @@ export function useFiltersViewModel(params: UseFiltersViewModelParams): UseFilte
   const sortKeyOptions = useMemo(() => {
     // 件数/台数ラベルの動的切り替え
     const countLabel = mode === 'item' ? '件数' : '台数';
-    
+
     return [
-      { label: mode === 'date' ? '日付' : '名称', value: (mode === 'date' ? 'date' : 'name') as SortKey },
+      {
+        label: mode === 'date' ? '日付' : '名称',
+        value: (mode === 'date' ? 'date' : 'name') as SortKey,
+      },
       { label: '売上', value: 'amount' as SortKey },
       { label: '数量', value: 'qty' as SortKey },
       { label: countLabel, value: 'count' as SortKey },

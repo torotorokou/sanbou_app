@@ -1,6 +1,6 @@
 /**
  * ReservationDailyRepository - 予約表リポジトリインターフェース
- * 
+ *
  * Port (インターフェース定義)
  * 規約: Repository抽象、実装詳細に依存しない
  */

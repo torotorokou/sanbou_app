@@ -13,12 +13,14 @@ interface UploadCalendarLegendProps {
   datasetKey?: string; // 選択中のデータセットキー
 }
 
-export const UploadCalendarLegend: React.FC<UploadCalendarLegendProps> = ({ datasetKey = 'shogun_flash' }) => {
+export const UploadCalendarLegend: React.FC<UploadCalendarLegendProps> = ({
+  datasetKey = 'shogun_flash',
+}) => {
   // 選択中のデータセットに応じたマスタのみを取得
   const filteredMaster = getMasterByDatasetKey(datasetKey);
-  
+
   // カテゴリごとにグループ化
-  const categories = Array.from(new Set(filteredMaster.map(m => m.category)));
+  const categories = Array.from(new Set(filteredMaster.map((m) => m.category)));
 
   return (
     <div style={{ marginTop: 12, padding: '8px 0' }}>
@@ -26,13 +28,15 @@ export const UploadCalendarLegend: React.FC<UploadCalendarLegendProps> = ({ data
         凡例
       </Text>
       <Space direction="vertical" size={4}>
-        {categories.map(category => {
-          const kinds = filteredMaster.filter(m => m.category === category);
+        {categories.map((category) => {
+          const kinds = filteredMaster.filter((m) => m.category === category);
           return (
             <div key={category}>
-              <Text strong style={{ fontSize: 13 }}>{category}</Text>
+              <Text strong style={{ fontSize: 13 }}>
+                {category}
+              </Text>
               <Space size={8} wrap style={{ marginLeft: 8 }}>
-                {kinds.map(master => (
+                {kinds.map((master) => (
                   <Space key={master.kind} size={8}>
                     <span
                       style={{

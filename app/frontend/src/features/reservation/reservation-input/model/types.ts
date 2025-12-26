@@ -1,6 +1,6 @@
 /**
  * ReservationInput - 型定義
- * 
+ *
  * Model (型定義)
  * 規約: UI Componentのprops型をmodel層で一元管理
  */

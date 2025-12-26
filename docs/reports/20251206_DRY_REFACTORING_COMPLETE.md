@@ -9,9 +9,11 @@ docker-compose および nginx 設定ファイルで、ベタ打ちされてい�
 ### 1. Nginx 設定の共通化
 
 #### 作成ファイル
+
 - `app/nginx/conf.d/_proxy_common.conf` (11行)
 
 #### 共通化した設定
+
 ```nginx
 proxy_set_header Host $host;
 proxy_set_header X-Real-IP $remote_addr;
@@ -25,6 +27,7 @@ proxy_send_timeout 300s;
 ```
 
 #### 効果
+
 - `stg.conf`: 110行 → 70行 (約36%削減)
 - 6つの location ブロックで使用
 - 保守性向上: プロキシ設定の変更が1箇所で完結
@@ -32,6 +35,7 @@ proxy_send_timeout 300s;
 ### 2. docker-compose の共通化
 
 #### 適用ファイル
+
 - `docker/docker-compose.stg.yml`
 - `docker/docker-compose.prod.yml`
 
@@ -63,6 +67,7 @@ x-tz-env: &tz-environment
 ```
 
 #### Before (各サービスで重複)
+
 ```yaml
 services:
   core_api:
@@ -82,7 +87,7 @@ services:
       timeout: 5s
       retries: 3
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-  
+
   plan_worker:
     env_file:
       - ../env/.env.common
@@ -98,6 +103,7 @@ services:
 ```
 
 #### After (アンカー参照)
+
 ```yaml
 services:
   core_api:
@@ -108,7 +114,7 @@ services:
     healthcheck:
       <<: *common-healthcheck
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-  
+
   plan_worker:
     env_file: *common-env-files
     environment:
@@ -117,6 +123,7 @@ services:
 ```
 
 #### 効果
+
 - **stg.yml**: 全10サービスで適用
 - **prod.yml**: 全10サービスで適用
 - 重複削除: env_file (30箇所) + logging (20箇所) + TZ (10箇所) = 60箇所
@@ -125,6 +132,7 @@ services:
 ### 3. 実装方法
 
 #### Python スクリプトによる安全な変換
+
 `scripts/apply_yaml_anchors.py` を作成し、以下を実施:
 
 1. YAML パーサーで構造を保持

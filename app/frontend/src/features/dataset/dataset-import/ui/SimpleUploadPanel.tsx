@@ -1,6 +1,6 @@
 /**
  * SimpleUploadPanel - シンプルなCSVアップロードパネル
- * 
+ *
  * PanelFileItemを受け取り、ファイル選択UIを提供する純UI部品
  * 保守性向上のため UploadFileCard にカードロジックを分離
  */
@@ -33,7 +33,7 @@ export const SimpleUploadPanel: React.FC<SimpleUploadPanelProps> = ({
   showTitle = false,
 }) => {
   const isCompact = size === 'compact';
-  const hasFiles = items.some(item => item.file !== null);
+  const hasFiles = items.some((item) => item.file !== null);
 
   return (
     <Card
@@ -70,7 +70,13 @@ export const SimpleUploadPanel: React.FC<SimpleUploadPanelProps> = ({
         width: '100%',
       }}
     >
-      <div style={{ display: 'flex', flexDirection: 'column', gap: isCompact ? 6 : 12 }}>
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: isCompact ? 6 : 12,
+        }}
+      >
         {items.map((item) => (
           <UploadFileCard
             key={item.typeKey}

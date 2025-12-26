@@ -1,7 +1,7 @@
 from pydantic import BaseModel
-from typing import List
+
 
 class ChatRequest(BaseModel):
     query: str
-    tags: List[str] = []
+    tags: list[str] = []
     pdf: str = ""

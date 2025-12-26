@@ -3,8 +3,8 @@
  * 親の実寸高さを測ってResponsiveContainerに渡すラッパー
  */
 
-import React, { useEffect, useRef, useState } from "react";
-import { ResponsiveContainer } from "recharts";
+import React, { useEffect, useRef, useState } from 'react';
+import { ResponsiveContainer } from 'recharts';
 
 type ChartFrameProps = React.PropsWithChildren<{ style?: React.CSSProperties }>;
 
@@ -30,16 +30,16 @@ export const ChartFrame: React.FC<ChartFrameProps> = ({ style, children }) => {
       if (h === 0 && tries++ < 20) requestAnimationFrame(kick);
     };
     kick();
-    window.addEventListener("resize", setFromRect);
+    window.addEventListener('resize', setFromRect);
     return () => {
       disposed = true;
       ro.disconnect();
-      window.removeEventListener("resize", setFromRect);
+      window.removeEventListener('resize', setFromRect);
     };
   }, [h]);
 
   return (
-    <div ref={ref} style={{ height: "100%", width: "100%", minHeight: 200, ...style }}>
+    <div ref={ref} style={{ height: '100%', width: '100%', minHeight: 200, ...style }}>
       {h > 0 ? (
         <ResponsiveContainer width="100%" height={h}>
           {children as unknown as React.ReactElement}

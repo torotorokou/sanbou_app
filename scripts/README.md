@@ -2,6 +2,10 @@
 
 このディレクトリには、プロジェクトで使用する各種スクリプトが格納されています。
 
+> **📌 データベース権限管理について**  
+> 本番環境の権限管理は [ops/db/](../ops/db/) を参照してください。  
+> 開発環境用のツール（スキーマダンプ等）のみこのディレクトリに残しています。
+
 ## 📁 ディレクトリ構造
 
 ```
@@ -14,20 +18,17 @@ scripts/
 │   ├── setup_git_hooks.sh       # Git フックセットアップ
 │   ├── cleanup_git_history.sh   # Git 履歴クリーンアップ
 │   └── gh_env_secrets_sync.sh   # GitHub Secrets 同期
-├── db/                           # データベース関連スクリプト
-│   ├── db_permissions.sql       # 権限設定 SQL
+├── db/                           # データベース関連スクリプト（開発用）
 │   ├── dump_schema_current.sh   # スキーマダンプ
-│   ├── fix_schema_permissions.sql
-│   ├── grant_schema_permissions.sql
-│   └── setup_permissions.sh
+│   ├── export_schema_baseline_local_dev.sh
+│   └── setup_permissions.sh     # 開発環境セットアップ
 ├── pg/                           # PostgreSQL バージョン管理
 │   ├── archive_volume_tar.sh
 │   ├── dumpall_from_v16.sh
 │   ├── print_pg_version_in_volume.sh
 │   └── restore_to_v17.sh
-├── sql/                          # SQL ファイル
+├── sql/                          # SQL ファイル（テスト・開発用）
 │   ├── 20251204_alter_current_user_password.sql
-│   ├── 20251204_create_app_db_users.sql
 │   ├── extensions_after_restore.sql
 │   └── test_is_deleted_regression.sql
 ├── docker/                       # Docker 関連スクリプト
@@ -277,9 +278,9 @@ source "${SCRIPT_DIR}/../lib/git_utils.sh"  # 必要に応じて
 # メイン処理
 main() {
     show_script_header "スクリプト名" "説明"
-    
+
     # 処理...
-    
+
     log_success "完了しました"
 }
 
@@ -414,14 +415,14 @@ bash scripts/test/test_acceptance.sh
 
 スクリプトが再編成されました。以下の対応表を参考にしてください。
 
-| 旧パス | 新パス | カテゴリ |
-|--------|--------|----------|
-| `scripts/setup_git_hooks.sh` | `scripts/git/setup_git_hooks.sh` | Git |
-| `scripts/cleanup_git_history.sh` | `scripts/git/cleanup_git_history.sh` | Git |
-| `scripts/gh_env_secrets_sync.sh` | `scripts/git/gh_env_secrets_sync.sh` | Git |
-| `scripts/validate_compose.sh` | `scripts/docker/validate_compose.sh` | Docker |
-| `scripts/test_acceptance.sh` | `scripts/test/test_acceptance.sh` | Test |
-| `scripts/test_raw_save.sh` | `scripts/test/test_raw_save.sh` | Test |
+| 旧パス                           | 新パス                               | カテゴリ |
+| -------------------------------- | ------------------------------------ | -------- |
+| `scripts/setup_git_hooks.sh`     | `scripts/git/setup_git_hooks.sh`     | Git      |
+| `scripts/cleanup_git_history.sh` | `scripts/git/cleanup_git_history.sh` | Git      |
+| `scripts/gh_env_secrets_sync.sh` | `scripts/git/gh_env_secrets_sync.sh` | Git      |
+| `scripts/validate_compose.sh`    | `scripts/docker/validate_compose.sh` | Docker   |
+| `scripts/test_acceptance.sh`     | `scripts/test/test_acceptance.sh`    | Test     |
+| `scripts/test_raw_save.sh`       | `scripts/test/test_raw_save.sh`      | Test     |
 
 ### 既存スクリプトの修正方法
 

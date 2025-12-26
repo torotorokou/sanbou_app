@@ -42,4 +42,3 @@ ALTER TABLE mart.daily_target_plan OWNER TO myuser;
 --
 
 \unrestrict uNyMI7eiZEBPMgRJcQK3QE2Yxx1YrKhFjf89UPhnsYjtd6efrnbDwu1YfbtAkGW
-

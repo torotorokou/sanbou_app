@@ -5,28 +5,23 @@ Formatting utilities for report generation.
 """
 
 from .dates import (
+    get_title_from_date,
     get_weekday_japanese,
-    to_reiwa_format,
     to_japanese_era,
     to_japanese_month_day,
-    get_title_from_date,
+    to_reiwa_format,
 )
-from .value_setter import (
-    set_value_fast_safe,
-)
+from .multiply import multiply_columns
+from .rounding import round_value_column_generic
 from .summary import (
-    summary_apply,
-    summarize_value_by_cell_with_label,
     safe_merge_by_keys,
+    summarize_value_by_cell_with_label,
+    summary_apply,
     summary_update_column_if_notna,
     write_sum_to_target_cell,
 )
-from .multiply import (
-    multiply_columns,
-)
-from .rounding import (
-    round_value_column_generic,
-)
+from .value_setter import set_value_fast_safe
+
 
 __all__ = [
     # Dates

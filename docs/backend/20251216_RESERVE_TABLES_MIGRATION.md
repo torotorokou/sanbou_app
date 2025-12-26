@@ -21,6 +21,7 @@ Alembicを使って予約データ基盤（stg 2テーブル + mart 1ビュー�
 ## Phase 1: stg.reserve_daily_manual
 
 ### マイグレーションファイル
+
 - `20251216_001_add_reserve_daily_manual.py`
 - Revision ID: `1d57288e056c`
 
@@ -43,6 +44,7 @@ CREATE TABLE stg.reserve_daily_manual (
 ```
 
 ### 特徴
+
 - PK: `reserve_date` (date)
 - manual入力は3項目のみ: `reserve_date`, `total_trucks`, `fixed_trucks`
 - `fixed_ratio` は計算しない（VIEW側で計算）
@@ -53,6 +55,7 @@ CREATE TABLE stg.reserve_daily_manual (
 ## Phase 2: stg.reserve_customer_daily
 
 ### マイグレーションファイル
+
 - `20251216_002_add_reserve_customer_daily.py`
 - Revision ID: `6807c2215b75`
 
@@ -75,14 +78,15 @@ CREATE TABLE stg.reserve_customer_daily (
     CONSTRAINT uq_reserve_customer_daily_date_customer UNIQUE (reserve_date, customer_cd)
 );
 
-CREATE INDEX idx_reserve_customer_daily_date 
+CREATE INDEX idx_reserve_customer_daily_date
 ON stg.reserve_customer_daily (reserve_date);
 
-CREATE INDEX idx_reserve_customer_daily_date_fixed 
+CREATE INDEX idx_reserve_customer_daily_date_fixed
 ON stg.reserve_customer_daily (reserve_date, is_fixed_customer);
 ```
 
 ### 特徴
+
 - 顧客ごとの予約を管理
 - UNIQUE制約: `(reserve_date, customer_cd)`
 - インデックス: 日付検索、固定客フィルタ用
@@ -92,6 +96,7 @@ ON stg.reserve_customer_daily (reserve_date, is_fixed_customer);
 ## Phase 3: mart.v_reserve_daily_for_forecast
 
 ### マイグレーションファイル
+
 - `20251216_003_add_v_reserve_daily_for_forecast.py`
 - Revision ID: `11e8fe1cc1d4`
 
@@ -130,8 +135,8 @@ SELECT
     date,
     reserve_trucks,
     reserve_fixed_trucks,
-    CASE 
-        WHEN reserve_trucks > 0 THEN 
+    CASE
+        WHEN reserve_trucks > 0 THEN
             ROUND(reserve_fixed_trucks::numeric / reserve_trucks::numeric, 4)
         ELSE 0
     END AS reserve_fixed_ratio,
@@ -141,6 +146,7 @@ ORDER BY date;
 ```
 
 ### 出力列
+
 - `date`: 予約日
 - `reserve_trucks`: 予約台数合計
 - `reserve_fixed_trucks`: 固定客台数
@@ -148,6 +154,7 @@ ORDER BY date;
 - `source`: データソース（'manual' or 'customer_agg'）
 
 ### ロジック
+
 1. manual入力がある日付は **manual を優先**
 2. manualがない日付は **customer_agg を集計**
 3. どちらもない日は出力しない
@@ -167,8 +174,9 @@ SELECT * FROM mart.v_reserve_daily_for_forecast WHERE date = '2025-01-10';
 ```
 
 **結果**:
+
 ```
-    date    | reserve_trucks | reserve_fixed_trucks | reserve_fixed_ratio | source 
+    date    | reserve_trucks | reserve_fixed_trucks | reserve_fixed_ratio | source
 ------------+----------------+----------------------+---------------------+--------
  2025-01-10 |            100 |                   60 |              0.6000 | manual
 ```
@@ -181,7 +189,7 @@ SELECT * FROM mart.v_reserve_daily_for_forecast WHERE date = '2025-01-10';
 
 ```sql
 INSERT INTO stg.reserve_customer_daily (reserve_date, customer_cd, customer_name, planned_trucks, is_fixed_customer)
-VALUES 
+VALUES
     ('2025-01-11', 'C001', '顧客A', 30, true),
     ('2025-01-11', 'C002', '顧客B', 20, false);
 
@@ -189,8 +197,9 @@ SELECT * FROM mart.v_reserve_daily_for_forecast WHERE date = '2025-01-11';
 ```
 
 **結果**:
+
 ```
-    date    | reserve_trucks | reserve_fixed_trucks | reserve_fixed_ratio |    source    
+    date    | reserve_trucks | reserve_fixed_trucks | reserve_fixed_ratio |    source
 ------------+----------------+----------------------+---------------------+--------------
  2025-01-11 |             50 |                   30 |              0.6000 | customer_agg
 ```
@@ -209,8 +218,9 @@ SELECT * FROM mart.v_reserve_daily_for_forecast WHERE date = '2025-01-12';
 ```
 
 **結果**:
+
 ```
-    date    | reserve_trucks | reserve_fixed_trucks | reserve_fixed_ratio | source 
+    date    | reserve_trucks | reserve_fixed_trucks | reserve_fixed_ratio | source
 ------------+----------------+----------------------+---------------------+--------
  2025-01-12 |              0 |                    0 |                   0 | manual
 ```
@@ -285,16 +295,19 @@ fd779322 - db: add reserve_customer_daily (phase 2, alembic)
 ## 安全性の確認
 
 ### 既存データへの影響
+
 - ✅ 既存テーブルへの変更なし
 - ✅ 既存ビューへの影響なし
 - ✅ 新規スキーマオブジェクトのみ追加
 
 ### スキーマ運用
+
 - ✅ stg/mart の標準スキーマ構成に準拠
 - ✅ timestamptz 使用（既存規約に準拠）
 - ✅ CHECK制約でデータ整合性を保証
 
 ### Alembic運用
+
 - ✅ 日付+連番の命名規則に準拠
 - ✅ upgrade/downgrade が対になっている
 - ✅ ローカルで検証済み

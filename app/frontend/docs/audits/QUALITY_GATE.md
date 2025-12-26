@@ -2,11 +2,11 @@
 
 ## 📋 実行サマリー
 
-| チェック項目      | 結果 | エラー数 | 備考                                    |
-| ----------------- | ---- | -------- | --------------------------------------- |
-| ESLint            | ✅   | 0        | 4件修正後、全クリア                     |
-| TypeScript 型検査 | ✅   | 0        | 6件の型エラー修正後、全クリア           |
-| Build (Vite)      | ✅   | 0        | 13.36秒でビルド成功（chunk警告は許容）  |
+| チェック項目      | 結果 | エラー数 | 備考                                   |
+| ----------------- | ---- | -------- | -------------------------------------- |
+| ESLint            | ✅   | 0        | 4件修正後、全クリア                    |
+| TypeScript 型検査 | ✅   | 0        | 6件の型エラー修正後、全クリア          |
+| Build (Vite)      | ✅   | 0        | 13.36秒でビルド成功（chunk警告は許容） |
 
 ---
 
@@ -26,7 +26,7 @@ npm run lint
 
 /home/koujiro/work_env/22.Work_React/sanbou_app/app/frontend/src/shared/constants/tests/breakpoints.spec.ts
   3:1  error  Restricted import '@/shared/hooks/ui/useResponsive'  @typescript-eslint/no-restricted-imports
-  
+
 /home/koujiro/work_env/22.Work_React/sanbou_app/app/frontend/src/shared/hooks/ui/useSidebar.ts
   44:11  error  'respectUserToggleUntilBreakpointChange' is assigned a value but never used  @typescript-eslint/no-unused-vars
   85:10  error  'userToggled' is assigned a value but never used  @typescript-eslint/no-unused-vars
@@ -137,7 +137,7 @@ heights: {
     mobile: number;
     laptopOrBelow: number;
     desktop: string | number;
-  };
+  }
   // ...
 }
 ```
@@ -150,7 +150,7 @@ heights: {
     mobile: number;
     tablet: number;
     desktop: string | number;
-  };
+  }
   // ...
 }
 ```
@@ -163,30 +163,44 @@ heights: {
 
    ```typescript
    // 修正前
-   const leftPanelMaxWidth = pickByDevice<string | number>('100%', '100%', 260, 300);
+   const leftPanelMaxWidth = pickByDevice<string | number>(
+     "100%",
+     "100%",
+     260,
+     300,
+   );
 
    // 修正後（Desktop値を採用）
-   const leftPanelMaxWidth = pickByDevice<string | number>('100%', '100%', 300);
+   const leftPanelMaxWidth = pickByDevice<string | number>("100%", "100%", 300);
    ```
 
 2. **ReportHeader.tsx** (5箇所)
 
    ```typescript
    // 修正前
-   const flexDirection = pickByDevice<'column' | 'row'>('column', 'column', 'row', 'row');
+   const flexDirection = pickByDevice<"column" | "row">(
+     "column",
+     "column",
+     "row",
+     "row",
+   );
 
    // 修正後
-   const flexDirection = pickByDevice<'column' | 'row'>('column', 'column', 'row');
+   const flexDirection = pickByDevice<"column" | "row">(
+     "column",
+     "column",
+     "row",
+   );
    ```
 
 3. **InboundForecastDashboardPage.tsx** (mode判定 + heights参照)
    ```typescript
    // 修正前
-   layout.mode === "laptopOrBelow"
-   layout.heights.target.laptopOrBelow
+   layout.mode === "laptopOrBelow";
+   layout.heights.target.laptopOrBelow;
    // 修正後
-   layout.mode === "tablet"
-   layout.heights.target.tablet
+   layout.mode === "tablet";
+   layout.heights.target.tablet;
    ```
 
 #### D. コメント更新
@@ -252,12 +266,12 @@ dist/assets/index-B3kZq9c_.js  1432.28 kB │ gzip: 443.20 kB
 
 ## 🎯 品質ゲート最終判定
 
-| 項目             | 状態 |
-| ---------------- | ---- |
-| ESLint           | ✅   |
-| TypeScript       | ✅   |
-| Build            | ✅   |
-| **総合判定**     | ✅   |
+| 項目         | 状態 |
+| ------------ | ---- |
+| ESLint       | ✅   |
+| TypeScript   | ✅   |
+| Build        | ✅   |
+| **総合判定** | ✅   |
 
 ### 修正ファイル一覧（Phase 6）
 

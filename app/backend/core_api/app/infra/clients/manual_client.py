@@ -21,12 +21,13 @@ Manual API Client - マニュアル/ドキュメントサービス内部HTTPク�
     for manual in manuals:
         print(f"{manual['id']}: {manual['title']}")
 """
-import os
-import httpx
-from typing import List, Dict
-import logging
 
-from backend_shared.application.logging import get_module_logger, create_log_context
+import os
+
+import httpx
+
+from backend_shared.application.logging import get_module_logger
+
 logger = get_module_logger(__name__)
 
 MANUAL_API_BASE = os.getenv("MANUAL_API_BASE", "http://manual_api:8000")
@@ -39,13 +40,13 @@ class ManualClient:
     def __init__(self, base_url: str = MANUAL_API_BASE):
         self.base_url = base_url.rstrip("/")
 
-    async def list_manuals(self) -> List[Dict]:
+    async def list_manuals(self) -> list[dict]:
         """
         List all available manuals.
-        
+
         Returns:
             List of manual metadata dicts
-            
+
         Raises:
             httpx.TimeoutException: If request times out
             httpx.HTTPStatusError: If Manual API returns error status

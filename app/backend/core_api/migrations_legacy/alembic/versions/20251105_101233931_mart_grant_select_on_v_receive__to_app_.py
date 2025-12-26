@@ -5,13 +5,13 @@ Revises: 20251105_101107506
 Create Date: 2025-11-05 01:12:34.713146
 
 """
-from alembic import op
+
 import sqlalchemy as sa
-from alembic import context
+from alembic import context, op
 
 # revision identifiers, used by Alembic.
-revision = '20251105_101233931'
-down_revision = '20251105_101107506'
+revision = "20251105_101233931"
+down_revision = "20251105_101107506"
 branch_labels = None
 depends_on = None
 
@@ -30,7 +30,7 @@ def upgrade():
     read_role = _get_read_role()
     # シングルクォート・ダブルクォートをエスケープ（PostgreSQL識別子は""でクォート、SQL文字列は''でエスケープ）
     safe_role_ident = read_role.replace('"', '""')  # 識別子用
-    safe_role_str = read_role.replace("'", "''")    # 文字列用
+    safe_role_str = read_role.replace("'", "''")  # 文字列用
 
     # オフライン(--sql)はコメントだけ出して終了（GRANTはオンライン環境で実行）
     if context.is_offline_mode():
@@ -43,10 +43,14 @@ def upgrade():
         for v in ("v_receive_daily", "v_receive_weekly", "v_receive_monthly"):
             op.execute(f'GRANT SELECT ON mart.{v} TO "{safe_role_ident}";')
         # 以降に作成されるビュー/テーブルにも自動付与（所有者=実行ユーザ前提）
-        op.execute(f'ALTER DEFAULT PRIVILEGES IN SCHEMA mart GRANT SELECT ON TABLES TO "{safe_role_ident}";')
+        op.execute(
+            f'ALTER DEFAULT PRIVILEGES IN SCHEMA mart GRANT SELECT ON TABLES TO "{safe_role_ident}";'
+        )
     else:
         # ロールが存在しない場合はNOTICEを出力
-        op.execute(f"DO $$ BEGIN RAISE NOTICE 'Role {safe_role_str} does not exist; skipping grants'; END $$;")
+        op.execute(
+            f"DO $$ BEGIN RAISE NOTICE 'Role {safe_role_str} does not exist; skipping grants'; END $$;"
+        )
 
 
 def downgrade():

@@ -1,7 +1,7 @@
 /**
  * 受入ダッシュボード - Value Objects
  * 日付操作・純粋関数群
- * 
+ *
  * @deprecated 日付関連の関数は @shared を使用してください
  * このファイルは後方互換性のために残されています
  */
@@ -20,7 +20,7 @@ import {
   dayjs,
   type IsoMonth,
   type IsoDate,
-} from "@shared";
+} from '@shared';
 
 // ========================================
 // Re-export from shared/utils/dateUtils
@@ -78,16 +78,14 @@ export { todayInMonth };
 
 /**
  * 実績カットオフ日を取得（昨日まで表示）
- * 
+ *
  * @param m - ISO月文字列
  * @returns ISO日付文字列
  */
 export const getActualCutoffIso = (m: IsoMonth): IsoDate => {
   const now = dayjs();
-  const monthStart = dayjs(m + "-01");
-  if (monthStart.isSame(now, "month"))
-    return now.subtract(1, "day").format("YYYY-MM-DD");
-  if (monthStart.isBefore(now, "month"))
-    return monthStart.endOf("month").format("YYYY-MM-DD");
-  return monthStart.startOf("month").subtract(1, "day").format("YYYY-MM-DD");
+  const monthStart = dayjs(m + '-01');
+  if (monthStart.isSame(now, 'month')) return now.subtract(1, 'day').format('YYYY-MM-DD');
+  if (monthStart.isBefore(now, 'month')) return monthStart.endOf('month').format('YYYY-MM-DD');
+  return monthStart.startOf('month').subtract(1, 'day').format('YYYY-MM-DD');
 };

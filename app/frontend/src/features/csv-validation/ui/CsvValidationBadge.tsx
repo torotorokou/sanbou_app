@@ -1,13 +1,13 @@
 /**
  * CsvValidationBadge - CSV バリデーション専用のステータスバッジ
- * 
+ *
  * @/shared/ui/ValidationBadge のCSV用ラッパー
  * CSV アップロード機能で使用するバリデーションステータスを表示
- * 
+ *
  * 使用例:
  * ```tsx
  * import { CsvValidationBadge } from '@features/csv-validation';
- * 
+ *
  * <CsvValidationBadge status="valid" />  // 緑の「OK」バッジ
  * <CsvValidationBadge status="invalid" /> // 赤の「NG」バッジ
  * <CsvValidationBadge status="unknown" /> // グレーの「未検証」バッジ
@@ -37,13 +37,13 @@ export interface CsvValidationBadgeProps {
 
 /**
  * CSV バリデーションステータスを表示するバッジコンポーネント
- * 
+ *
  * @/shared/ui/ValidationBadge の薄いラッパーで、CSV 特化の型を提供
  * 実装は共通コンポーネントに委譲し、型レベルでの CSV 特化を実現
  */
-export const CsvValidationBadge: React.FC<CsvValidationBadgeProps> = ({ 
-  status, 
-  size = 'default' 
+export const CsvValidationBadge: React.FC<CsvValidationBadgeProps> = ({
+  status,
+  size = 'default',
 }) => {
   return <ValidationBadge status={status} size={size} />;
 };

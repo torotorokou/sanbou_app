@@ -73,7 +73,8 @@ Transaction 3: 20251211_140000000
   CREATE VIEW ... FROM mart.mv_receive_daily   ← エラー
 ```
 
-**仮説**: 
+**仮説**:
+
 - VM環境では、トランザクションコミット後の可視性に遅延がある可能性
 - または、別のDBコネクション/セッションで実行されている可能性
 - CREATE MATERIALIZED VIEWの特殊な挙動（テーブルとは異なる）
@@ -89,6 +90,7 @@ Transaction 3: 20251211_140000000
 ### 修正方針
 
 1. **事前チェック（存在確認ガード）の追加**
+
    - `to_regclass()` を使用してMVの存在を確認
    - 存在しない場合は明確なエラーメッセージで即座に失敗
    - 問題の原因を特定しやすくする
@@ -106,26 +108,26 @@ from sqlalchemy import text
 def _check_mv_exists() -> None:
     """
     Check if mart.mv_receive_daily exists before creating dependent views.
-    
+
     Raises:
         RuntimeError: If mart.mv_receive_daily does not exist
     """
     conn = op.get_bind()
     result = conn.execute(text("SELECT to_regclass('mart.mv_receive_daily')")).scalar()
-    
+
     if result is None:
         raise RuntimeError(
             "❌ mart.mv_receive_daily is missing before creating v_receive_weekly/monthly.\n"
             "   This migration depends on 20251211_120000000_create_mv_receive_daily.\n"
             "   Please ensure that migration completed successfully."
         )
-    
+
     print(f"  ✓ Verified mart.mv_receive_daily exists (oid: {result})")
 
 def upgrade() -> None:
     print("[mart] Checking dependencies...")
     _check_mv_exists()  # ← 追加
-    
+
     print("[mart] Recreating v_receive_weekly...")
     op.execute(_read_sql("v_receive_weekly.sql"))
     # ...
@@ -171,6 +173,7 @@ def upgrade() -> None:
 ```
 
 **メリット**:
+
 - 問題の原因が即座に明確になる
 - 依存関係の問題を早期検出
 - デバッグ時間の大幅短縮
@@ -270,16 +273,19 @@ app/backend/core_api/migrations/alembic/versions/
 **追加の調査が必要な項目**:
 
 1. **Alembic env.py の設定確認**
+
    ```python
    # app/backend/core_api/migrations/alembic/env.py
    # transaction_per_migration の設定確認
    ```
 
 2. **PostgreSQL接続プール設定**
+
    - コネクションプールが異なるセッションを返している可能性
    - `SHOW server_version;` でPostgreSQLバージョン確認
 
 3. **VM環境固有の問題**
+
    - ネットワークレイテンシー
    - DBの負荷状況
    - トランザクション分離レベル
@@ -316,12 +322,14 @@ app/backend/core_api/migrations/alembic/versions/
 ## 🎯 次のステップ
 
 1. **レビュー依頼**
+
    ```bash
    git push origin feature/fix-mv-receive-daily-visibility
    # PR作成: "fix: Add existence checks for mv_receive_daily"
    ```
 
 2. **ステージング環境でテスト**
+
    ```bash
    # vm_stg で実行
    make al-up-env ENV=vm_stg

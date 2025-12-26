@@ -16,8 +16,8 @@ export function useDatasetPreviewVM(source: PreviewSource) {
     // kind: 'fallback' - datasetKey のみでタブ生成
     if (source.kind === 'fallback') {
       const csvList = getCsvListSorted(source.datasetKey);
-      
-      return csvList.map(csv => {
+
+      return csvList.map((csv) => {
         return {
           key: csv.typeKey,
           label: csv.label.split(':')[1] ?? csv.label, // "将軍_速報版:出荷一覧" → "出荷一覧"
@@ -29,21 +29,21 @@ export function useDatasetPreviewVM(source: PreviewSource) {
         };
       });
     }
-    
+
     // kind: 'previews' - 既存データから構築
     if (source.kind === 'previews') {
       const keys = Object.keys(source.data) as CsvTypeKey[];
       const csvList = getCsvListSorted(source.datasetKey);
-      
+
       // config の順序に従ってソート
       const sorted = keys.sort((a, b) => {
-        const csvA = csvList.find(c => c.typeKey === a);
-        const csvB = csvList.find(c => c.typeKey === b);
+        const csvA = csvList.find((c) => c.typeKey === a);
+        const csvB = csvList.find((c) => c.typeKey === b);
         if (!csvA || !csvB) return 0;
         return csvA.order - csvB.order;
       });
-      
-      return sorted.map(k => {
+
+      return sorted.map((k) => {
         const csv = findCsv(source.datasetKey, k);
         return {
           key: k,
@@ -55,7 +55,7 @@ export function useDatasetPreviewVM(source: PreviewSource) {
         };
       });
     }
-    
+
     // TODO: files / uploadId の分岐は Repository 経由でプレビューを構築
     return [];
   }, [source]);

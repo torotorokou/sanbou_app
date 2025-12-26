@@ -15,7 +15,8 @@ API基底レスポンス（Pydantic v2 対応 + ProblemDetails統合）
 # - ProblemDetails 契約を統合
 """
 
-from typing import Any, Optional, Generic, TypeVar, Literal
+from typing import Any, Generic, Literal, TypeVar
+
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel  # Pydantic v2 を前提に統一
 
@@ -27,7 +28,7 @@ T = TypeVar("T")
 class ProblemDetails(BaseModel):
     """
     RFC 7807 Problem Details 準拠のエラー情報（OpenAPI契約準拠）
-    
+
     契約定義: contracts/notifications.openapi.yaml
     - status (必須): HTTPステータスコード
     - code (必須): アプリケーション固有のエラーコード
@@ -35,11 +36,12 @@ class ProblemDetails(BaseModel):
     - title (任意): エラータイトル
     - traceId (任意): トレースID
     """
+
     status: int
     code: str
     userMessage: str
-    title: Optional[str] = None
-    traceId: Optional[str] = None
+    title: str | None = None
+    traceId: str | None = None
 
     class Config:
         populate_by_name = True
@@ -56,9 +58,9 @@ class ApiResponse(BaseModel, Generic[T]):  # GenericModel -> BaseModel に置換
     status: Literal["success", "error"]
     code: str
     detail: str
-    result: Optional[T] = None
-    hint: Optional[str] = None
-    traceId: Optional[str] = None  # ProblemDetails互換
+    result: T | None = None
+    hint: str | None = None
+    traceId: str | None = None  # ProblemDetails互換
 
     @classmethod
     def success(
@@ -66,9 +68,9 @@ class ApiResponse(BaseModel, Generic[T]):  # GenericModel -> BaseModel に置換
         *,
         code: str,
         detail: str,
-        result: Optional[T] = None,
-        hint: Optional[str] = None,
-        traceId: Optional[str] = None,
+        result: T | None = None,
+        hint: str | None = None,
+        traceId: str | None = None,
     ) -> "ApiResponse[T]":
         return cls(
             status="success",
@@ -85,9 +87,9 @@ class ApiResponse(BaseModel, Generic[T]):  # GenericModel -> BaseModel に置換
         *,
         code: str,
         detail: str,
-        result: Optional[Any] = None,
-        hint: Optional[str] = None,
-        traceId: Optional[str] = None,
+        result: Any | None = None,
+        hint: str | None = None,
+        traceId: str | None = None,
     ) -> "ApiResponse[Any]":
         return cls(
             status="error",
@@ -136,10 +138,10 @@ class BaseApiResponse:
         *,
         code: str,
         detail: str,
-        result: Optional[Any] = None,
-        hint: Optional[str] = None,
+        result: Any | None = None,
+        hint: str | None = None,
         status_code: int = 200,
-        traceId: Optional[str] = None,
+        traceId: str | None = None,
     ):
         """
         互換コンストラクタ
@@ -149,9 +151,7 @@ class BaseApiResponse:
         """
         # サブクラスで status がセットされている前提
         if self.status not in ("success", "error"):
-            raise ValueError(
-                "BaseApiResponse.status は 'success' か 'error' を指定してください。"
-            )
+            raise ValueError("BaseApiResponse.status は 'success' か 'error' を指定してください。")
 
         if self.status == "success":
             self.payload = ApiResponse.success(
@@ -187,10 +187,10 @@ class SuccessApiResponse(BaseApiResponse):
         *,
         code: str,
         detail: str,
-        result: Optional[Any] = None,
-        hint: Optional[str] = None,
+        result: Any | None = None,
+        hint: str | None = None,
         status_code: int = 200,
-        traceId: Optional[str] = None,
+        traceId: str | None = None,
     ):
         super().__init__(
             code=code,
@@ -215,10 +215,10 @@ class ErrorApiResponse(BaseApiResponse):
         *,
         code: str,
         detail: str,
-        result: Optional[Any] = None,
-        hint: Optional[str] = None,
+        result: Any | None = None,
+        hint: str | None = None,
         status_code: int = 422,
-        traceId: Optional[str] = None,
+        traceId: str | None = None,
     ):
         super().__init__(
             code=code,

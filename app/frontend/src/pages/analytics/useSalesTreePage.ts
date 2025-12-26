@@ -1,7 +1,7 @@
 /**
  * useSalesTreePage.ts
  * SalesTreePageの状態・ロジックを統合する複合フック
- * 
+ *
  * 責務:
  * - 各種状態フックの統合
  * - データ取得フックの統合
@@ -99,7 +99,11 @@ export function useSalesTreePage() {
   // Computed Values
   // ========================================
   const { repOptions, filterOptions } = useFilterOptions(
-    filterState.mode, query, reps, customers, items
+    filterState.mode,
+    query,
+    reps,
+    customers,
+    items
   );
 
   const { periodLabel, headerTotals, selectedRepLabel } = useComputedLabels(
@@ -193,7 +197,7 @@ export function useSalesTreePage() {
     periodState.setRange(null);
     periodState.setSingleDate(dayjs());
     periodState.setDateRange(null);
-    
+
     // フィルターをリセット
     filterState.setMode('customer');
     filterState.setFilterTopN('all');
@@ -208,10 +212,13 @@ export function useSalesTreePage() {
   // ========================================
   // Table Sort Handler
   // ========================================
-  const handleTableSortChange = useCallback((sortBy: string, order: SortOrder) => {
-    filterState.setTableSortBy(sortBy as SortKey);
-    filterState.setTableOrder(order);
-  }, [filterState]);
+  const handleTableSortChange = useCallback(
+    (sortBy: string, order: SortOrder) => {
+      filterState.setTableSortBy(sortBy as SortKey);
+      filterState.setTableOrder(order);
+    },
+    [filterState]
+  );
 
   // ========================================
   // Pivot Drawer Handlers
@@ -220,29 +227,33 @@ export function useSalesTreePage() {
     pivotDrawerState.setDrawer({ open: false });
   }, [pivotDrawerState]);
 
-  const handleActiveAxisChange = useCallback((axis: Mode) => {
-    pivotDrawerState.setDrawer((prev) => 
-      prev.open ? { ...prev, activeAxis: axis } : prev
-    );
-  }, [pivotDrawerState]);
+  const handleActiveAxisChange = useCallback(
+    (axis: Mode) => {
+      pivotDrawerState.setDrawer((prev) => (prev.open ? { ...prev, activeAxis: axis } : prev));
+    },
+    [pivotDrawerState]
+  );
 
-  const handlePivotTopNChange = useCallback((topN: 10 | 20 | 50 | 'all') => {
-    pivotDrawerState.setDrawer((prev) => 
-      prev.open ? { ...prev, topN } : prev
-    );
-  }, [pivotDrawerState]);
+  const handlePivotTopNChange = useCallback(
+    (topN: 10 | 20 | 50 | 'all') => {
+      pivotDrawerState.setDrawer((prev) => (prev.open ? { ...prev, topN } : prev));
+    },
+    [pivotDrawerState]
+  );
 
-  const handlePivotSortByChange = useCallback((sortBy: SortKey) => {
-    pivotDrawerState.setDrawer((prev) => 
-      prev.open ? { ...prev, sortBy } : prev
-    );
-  }, [pivotDrawerState]);
+  const handlePivotSortByChange = useCallback(
+    (sortBy: SortKey) => {
+      pivotDrawerState.setDrawer((prev) => (prev.open ? { ...prev, sortBy } : prev));
+    },
+    [pivotDrawerState]
+  );
 
-  const handlePivotOrderChange = useCallback((order: SortOrder) => {
-    pivotDrawerState.setDrawer((prev) => 
-      prev.open ? { ...prev, order } : prev
-    );
-  }, [pivotDrawerState]);
+  const handlePivotOrderChange = useCallback(
+    (order: SortOrder) => {
+      pivotDrawerState.setDrawer((prev) => (prev.open ? { ...prev, order } : prev));
+    },
+    [pivotDrawerState]
+  );
 
   const handleDetailDrawerClose = useCallback(() => {
     detailDrawerState.setDetailDrawerOpen(false);
@@ -255,25 +266,25 @@ export function useSalesTreePage() {
     // Core State
     categoryKind,
     setCategoryKind,
-    
+
     // Period State (展開)
     ...periodState,
-    
+
     // Filter State (展開)
     ...filterState,
-    
+
     // Export
     exportOptions,
     setExportOptions,
-    
+
     // Query
     query,
-    
+
     // Data
     summary,
     loading,
     reps,
-    
+
     // Computed
     repOptions,
     filterOptions,
@@ -284,14 +295,14 @@ export function useSalesTreePage() {
     axB,
     axC,
     sortKeyOptions,
-    
+
     // Pivot Drawer
     drawer: pivotDrawerState.drawer,
     pivotData: pivotDrawerState.pivotData,
     pivotCursor: pivotDrawerState.pivotCursor,
     pivotLoading: pivotDrawerState.pivotLoading,
     repSeriesCache: pivotDrawerState.repSeriesCache,
-    
+
     // Detail Drawer
     detailDrawerOpen: detailDrawerState.detailDrawerOpen,
     detailDrawerLoading: detailDrawerState.detailDrawerLoading,
@@ -299,7 +310,7 @@ export function useSalesTreePage() {
     detailDrawerMode: detailDrawerState.detailDrawerMode,
     detailDrawerRows: detailDrawerState.detailDrawerRows,
     detailDrawerTotalCount: detailDrawerState.detailDrawerTotalCount,
-    
+
     // Handlers
     switchMode,
     handleReset,
@@ -309,7 +320,7 @@ export function useSalesTreePage() {
     loadDailySeries,
     handleExport,
     handlePivotRowClick,
-    
+
     // Drawer Handlers
     handlePivotDrawerClose,
     handleActiveAxisChange,
@@ -319,4 +330,3 @@ export function useSalesTreePage() {
     handleDetailDrawerClose,
   };
 }
-

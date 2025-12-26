@@ -10,8 +10,18 @@ Domain Layer
 - 他のレイヤーから依存される（依存関係逆転の原則）
 """
 
-from backend_shared.core.domain.contract import ProblemDetails, NotificationEvent, Severity
-from backend_shared.core.domain.job import JobStatus, JobCreate, JobUpdate, JobStatusType
+from backend_shared.core.domain.contract import (
+    NotificationEvent,
+    ProblemDetails,
+    Severity,
+)
+from backend_shared.core.domain.job import (
+    JobCreate,
+    JobStatus,
+    JobStatusType,
+    JobUpdate,
+)
+
 
 __all__ = [
     "ProblemDetails",

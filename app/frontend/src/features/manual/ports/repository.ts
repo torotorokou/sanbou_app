@@ -3,7 +3,12 @@
  * マニュアル機能のリポジトリインターフェース（DIP）
  */
 
-import type { ManualSearchQuery, ManualSearchResult, ManualTocItem, ManualCategory } from '../domain/types/manual.types';
+import type {
+  ManualSearchQuery,
+  ManualSearchResult,
+  ManualTocItem,
+  ManualCategory,
+} from '../domain/types/manual.types';
 
 export interface ManualRepository {
   /**

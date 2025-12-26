@@ -7,7 +7,7 @@ APIレスポンスとは独立した、純粋なバリデーション結果を�
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 class ValidationErrorType(Enum):
@@ -28,9 +28,9 @@ class ValidationError:
     """
 
     error_type: ValidationErrorType
-    csv_type: Optional[str] = None
+    csv_type: str | None = None
     message: str = ""
-    details: Optional[Dict[str, Any]] = None
+    details: dict[str, Any] | None = None
 
 
 @dataclass
@@ -43,7 +43,7 @@ class ValidationResult:
     """
 
     is_valid: bool
-    errors: List[ValidationError]
+    errors: list[ValidationError]
 
     @classmethod
     def success(cls) -> "ValidationResult":
@@ -51,7 +51,7 @@ class ValidationResult:
         return cls(is_valid=True, errors=[])
 
     @classmethod
-    def failure(cls, errors: List[ValidationError]) -> "ValidationResult":
+    def failure(cls, errors: list[ValidationError]) -> "ValidationResult":
         """失敗結果を作成"""
         return cls(is_valid=False, errors=errors)
 

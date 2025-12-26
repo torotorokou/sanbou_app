@@ -23,20 +23,12 @@ interface UploadCalendarProps {
   onMountReload?: (reload: () => void) => void; // リロード関数を親に渡すコールバック
 }
 
-export const UploadCalendar: React.FC<UploadCalendarProps> = ({ 
+export const UploadCalendar: React.FC<UploadCalendarProps> = ({
   datasetKey = 'shogun_flash',
-  onMountReload 
+  onMountReload,
 }) => {
-  const {
-    currentMonth,
-    weeks,
-    isLoading,
-    error,
-    goPrevMonth,
-    goNextMonth,
-    deleteUpload,
-    reload,
-  } = useUploadCalendar();
+  const { currentMonth, weeks, isLoading, error, goPrevMonth, goNextMonth, deleteUpload, reload } =
+    useUploadCalendar();
 
   // マウント時にreload関数を親に渡す（1回のみ）
   React.useEffect(() => {
@@ -87,23 +79,20 @@ export const UploadCalendar: React.FC<UploadCalendarProps> = ({
       styles={{ body: { flex: 1, overflow: 'auto', padding: '12px' } }}
     >
       {/* 月移動ヘッダー（タイトル直近に Prev/Next を配置） */}
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: 12 }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          marginBottom: 12,
+        }}
+      >
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <Button
-            type="text"
-            icon={<LeftOutlined />}
-            onClick={goPrevMonth}
-            size="small"
-          />
+          <Button type="text" icon={<LeftOutlined />} onClick={goPrevMonth} size="small" />
           <Text strong style={{ fontSize: 18, minWidth: 160, textAlign: 'center' }}>
             {dayjs(currentMonth).format('YYYY年MM月')}
           </Text>
-          <Button
-            type="text"
-            icon={<RightOutlined />}
-            onClick={goNextMonth}
-            size="small"
-          />
+          <Button type="text" icon={<RightOutlined />} onClick={goNextMonth} size="small" />
         </div>
       </div>
 
@@ -114,34 +103,47 @@ export const UploadCalendar: React.FC<UploadCalendarProps> = ({
         </div>
       )}
 
-      {error && !isLoading && (
-        <Alert message="エラー" description={error} type="error" showIcon />
-      )}
+      {error && !isLoading && <Alert message="エラー" description={error} type="error" showIcon />}
 
       {/* カレンダー本体 */}
       {!isLoading && !error && (
         <>
           {/* 曜日ヘッダー */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2, marginBottom: 4 }}>
-                {WEEKDAYS.map((day, idx) => (
-                  <div
-                    key={day}
-                    style={{
-                      textAlign: 'center',
-                      fontSize: 15,
-                      fontWeight: 'bold',
-                      color: idx === 5 ? '#1890ff' : idx === 6 ? '#ff4d4f' : '#595959',
-                      padding: '8px 0',
-                    }}
-                  >
-                    {day}
-                  </div>
-                ))}
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(7, 1fr)',
+              gap: 2,
+              marginBottom: 4,
+            }}
+          >
+            {WEEKDAYS.map((day, idx) => (
+              <div
+                key={day}
+                style={{
+                  textAlign: 'center',
+                  fontSize: 15,
+                  fontWeight: 'bold',
+                  color: idx === 5 ? '#1890ff' : idx === 6 ? '#ff4d4f' : '#595959',
+                  padding: '8px 0',
+                }}
+              >
+                {day}
+              </div>
+            ))}
           </div>
 
           {/* 週ごとのグリッド */}
           {weeks.map((week, weekIdx) => (
-            <div key={weekIdx} style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2, marginBottom: 2 }}>
+            <div
+              key={weekIdx}
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(7, 1fr)',
+                gap: 2,
+                marginBottom: 2,
+              }}
+            >
               {week.days.map((day, dayIdx) => {
                 const dayOfMonth = dayjs(day.date).date();
                 // 選択中のデータセットに関連するアップロードのみをカウント
@@ -150,7 +152,7 @@ export const UploadCalendar: React.FC<UploadCalendarProps> = ({
                   .flatMap(([, items]) => items || []);
                 const uploadsCount = filteredUploads.length;
                 const hasUploads = uploadsCount > 0;
-                
+
                 // 今日かどうかを判定
                 const isToday = dayjs(day.date).isSame(dayjs(), 'day');
 
@@ -163,11 +165,13 @@ export const UploadCalendar: React.FC<UploadCalendarProps> = ({
                       border: '1px solid #d9d9d9',
                       borderRadius: 4,
                       padding: 6,
-                      backgroundColor: isToday 
-                        ? '#fffbe6'  // 今日は黄色
-                        : day.isCurrentMonth 
-                        ? (hasUploads ? '#fafafa' : '#fff') 
-                        : '#f5f5f5',
+                      backgroundColor: isToday
+                        ? '#fffbe6' // 今日は黄色
+                        : day.isCurrentMonth
+                          ? hasUploads
+                            ? '#fafafa'
+                            : '#fff'
+                          : '#f5f5f5',
                       cursor: hasUploads ? 'pointer' : 'default',
                       position: 'relative',
                       transition: 'all 0.2s',
@@ -188,7 +192,9 @@ export const UploadCalendar: React.FC<UploadCalendarProps> = ({
                       if (hasUploads) {
                         e.currentTarget.style.backgroundColor = isToday
                           ? '#fffbe6'
-                          : day.isCurrentMonth ? '#fafafa' : '#f5f5f5';
+                          : day.isCurrentMonth
+                            ? '#fafafa'
+                            : '#f5f5f5';
                         e.currentTarget.style.borderColor = '#d9d9d9';
                       }
                     }}
@@ -201,12 +207,12 @@ export const UploadCalendar: React.FC<UploadCalendarProps> = ({
                         color: !day.isCurrentMonth
                           ? '#bfbfbf'
                           : isToday
-                          ? '#faad14'  // 今日はオレンジ色
-                          : dayIdx === 5
-                          ? '#1890ff'  // 土曜日
-                          : dayIdx === 6
-                          ? '#ff4d4f'  // 日曜日
-                          : '#595959',
+                            ? '#faad14' // 今日はオレンジ色
+                            : dayIdx === 5
+                              ? '#1890ff' // 土曜日
+                              : dayIdx === 6
+                                ? '#ff4d4f' // 日曜日
+                                : '#595959',
                         fontWeight: day.isCurrentMonth ? 'bold' : 'normal',
                         marginBottom: 4,
                       }}
@@ -215,33 +221,36 @@ export const UploadCalendar: React.FC<UploadCalendarProps> = ({
                     </div>
 
                     {/* アップロード状況ドット */}
-                        {/* 凡例と合わせた丸（アップロード未実施は点線の透明丸） */}
-                        <div className={styles.dotWrapper} style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                          {masters.map((master) => {
-                            // この日の該当種別アップロード有無を判定
-                            const items = day.uploadsByKind[master.kind];
-                            const has = !!(items && items.length > 0);
-                            return (
-                              <span
-                                key={master.kind}
-                                title={master.label}
-                                style={{
-                                  display: 'inline-block',
-                                  width: 14,
-                                  height: 14,
-                                  borderRadius: '50%',
-                                  boxSizing: 'border-box',
-                                  ...(has
-                                    ? { backgroundColor: master.color }
-                                    : {
-                                        backgroundColor: 'transparent',
-                                        border: '2px dashed rgba(0,0,0,0.12)',
-                                      }),
-                                }}
-                              />
-                            );
-                          })}
-                        </div>
+                    {/* 凡例と合わせた丸（アップロード未実施は点線の透明丸） */}
+                    <div
+                      className={styles.dotWrapper}
+                      style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}
+                    >
+                      {masters.map((master) => {
+                        // この日の該当種別アップロード有無を判定
+                        const items = day.uploadsByKind[master.kind];
+                        const has = !!(items && items.length > 0);
+                        return (
+                          <span
+                            key={master.kind}
+                            title={master.label}
+                            style={{
+                              display: 'inline-block',
+                              width: 14,
+                              height: 14,
+                              borderRadius: '50%',
+                              boxSizing: 'border-box',
+                              ...(has
+                                ? { backgroundColor: master.color }
+                                : {
+                                    backgroundColor: 'transparent',
+                                    border: '2px dashed rgba(0,0,0,0.12)',
+                                  }),
+                            }}
+                          />
+                        );
+                      })}
+                    </div>
                   </div>
                 );
               })}
@@ -249,13 +258,22 @@ export const UploadCalendar: React.FC<UploadCalendarProps> = ({
           ))}
 
           {/* 当月に戻るボタン */}
-          <div style={{ display: 'flex', justifyContent: 'center', marginTop: 12, marginBottom: 12 }}>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'center',
+              marginTop: 12,
+              marginBottom: 12,
+            }}
+          >
             <Button
               size="small"
               onClick={() => {
                 const today = new Date();
                 // goToMonthが存在しない場合は、差分だけ移動する簡易実装
-                const diff = (today.getFullYear() - currentMonth.getFullYear()) * 12 + (today.getMonth() - currentMonth.getMonth());
+                const diff =
+                  (today.getFullYear() - currentMonth.getFullYear()) * 12 +
+                  (today.getMonth() - currentMonth.getMonth());
                 if (diff > 0) {
                   for (let i = 0; i < diff; i++) goNextMonth();
                 } else if (diff < 0) {

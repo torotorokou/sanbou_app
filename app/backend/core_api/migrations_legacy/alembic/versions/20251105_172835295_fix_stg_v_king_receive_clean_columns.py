@@ -4,8 +4,9 @@ Revision ID: 20251105_172835295
 Revises: 20251105_171336072
 Create Date: 2025-11-05 08:28:35
 """
-from alembic import op
+
 import sqlalchemy as sa
+from alembic import op
 
 revision = "20251105_172835295"
 down_revision = "20251105_171336072"
@@ -33,6 +34,7 @@ WHERE
   AND split_part(replace(k.invoice_date::text, '/', '-')::text, '-', 3)::int BETWEEN 1 AND 31;
 """
 
+
 def upgrade():
     bind = op.get_bind()
 
@@ -42,16 +44,16 @@ def upgrade():
         op.execute(sa.text("GRANT SELECT ON stg.v_king_receive_clean_min TO myuser;"))
 
     # 2) mart.v_receive_daily の参照先を _min に差し替え
-    vdef = bind.execute(sa.text(
-        "SELECT pg_get_viewdef('mart.v_receive_daily'::regclass, true)"
-    )).scalar()
+    vdef = bind.execute(
+        sa.text("SELECT pg_get_viewdef('mart.v_receive_daily'::regclass, true)")
+    ).scalar()
 
     if not vdef:
         raise RuntimeError("could not fetch v_receive_daily definition")
 
     # 素直なテキスト置換（現行の定義にそのままマッチする想定）
     BEFORE = "FROM stg.v_king_receive_clean k"
-    AFTER  = "FROM stg.v_king_receive_clean_min k"
+    AFTER = "FROM stg.v_king_receive_clean_min k"
 
     if BEFORE not in vdef:
         # 多少のフォーマット差異に備えてスペースを1つだけ緩めたパターンも試す
@@ -72,15 +74,18 @@ def upgrade():
     with op.get_context().autocommit_block():
         op.execute(sa.text(f"CREATE OR REPLACE VIEW mart.v_receive_daily AS {vdef};"))
 
+
 def downgrade():
     bind = op.get_bind()
 
     # v_receive_daily を元のビュー参照に戻す
-    vdef = bind.execute(sa.text(
-        "SELECT pg_get_viewdef('mart.v_receive_daily'::regclass, true)"
-    )).scalar()
+    vdef = bind.execute(
+        sa.text("SELECT pg_get_viewdef('mart.v_receive_daily'::regclass, true)")
+    ).scalar()
     if vdef and "stg.v_king_receive_clean_min" in vdef:
-        vdef = vdef.replace("FROM stg.v_king_receive_clean_min k", "FROM stg.v_king_receive_clean k")
+        vdef = vdef.replace(
+            "FROM stg.v_king_receive_clean_min k", "FROM stg.v_king_receive_clean k"
+        )
         with op.get_context().autocommit_block():
             op.execute(sa.text(f"CREATE OR REPLACE VIEW mart.v_receive_daily AS {vdef};"))
 

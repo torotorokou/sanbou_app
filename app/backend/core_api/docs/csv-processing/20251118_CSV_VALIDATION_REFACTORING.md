@@ -1,9 +1,11 @@
 # CSV バリデーション共通化実装完了レポート
 
 ## 実装日
+
 2025年11月18日
 
 ## 目的
+
 レポート機能とデータベース機能で使用されているCSV検証ロジックを共通化し、コードの重複を削減して保守性を向上させる。
 
 ## 実装内容
@@ -13,6 +15,7 @@
 新しく `features/shared/csv-validation` モジュールを作成し、以下のファイルを実装：
 
 #### ファイル構成
+
 ```
 features/shared/csv-validation/
 ├── index.ts                    # エクスポート
@@ -25,19 +28,22 @@ features/shared/csv-validation/
 #### 主要機能
 
 **a) `csvHeaderValidator.ts`**
+
 - `parseHeader()`: CSVヘッダーのパース
 - `validateHeaders()`: ヘッダー検証（最初の5列を検証）
 - `validateHeadersFromText()`: テキストからの直接検証
 
 **b) `useCsvFileValidator.ts`**
+
 - CSVファイル検証用のReactフック
 - ヘッダー検証 + カスタム検証の組み合わせ
 - 検証結果の状態管理
 - バリデーション結果のリセット機能
 
 **c) `types.ts`**
+
 ```typescript
-type ValidationStatus = 'valid' | 'invalid' | 'unknown';
+type ValidationStatus = "valid" | "invalid" | "unknown";
 
 interface CsvValidationOptions {
   requiredHeaders?: string[];
@@ -50,10 +56,12 @@ interface CsvValidationOptions {
 **変更ファイル**: `features/database/dataset-validate/`
 
 #### `hooks/useValidateOnPick.ts`
+
 - 共通の `validateHeaders` を使用するように変更
 - インポートパスを `@features/shared/csv-validation` に更新
 
 #### `core/csvHeaderValidator.ts`
+
 - 非推奨マークを追加
 - 内部的に共通モジュールを呼び出すラッパーに変更
 - 後方互換性を維持
@@ -63,29 +71,32 @@ interface CsvValidationOptions {
 **変更ファイル**: `features/report/base/model/useReportBaseBusiness.ts`
 
 #### Before（スタブ実装）
+
 ```typescript
 const useCsvValidation = () => {
   // 簡易的な検証のみ
   const validateCsvFile = useCallback((file, label) => {
-    setValidationResults(prev => ({ ...prev, [label]: 'unknown' }));
+    setValidationResults((prev) => ({ ...prev, [label]: "unknown" }));
   }, []);
   // ...
 };
 ```
 
 #### After（共通モジュール使用）
+
 ```typescript
-import { useCsvFileValidator } from '@features/shared/csv-validation';
+import { useCsvFileValidator } from "@features/shared/csv-validation";
 
 const csvValidation = useCsvFileValidator({
   getRequiredHeaders: (label) => {
-    const entry = csvConfigs.find(c => c.config.label === label);
+    const entry = csvConfigs.find((c) => c.config.label === label);
     return entry?.config.expectedHeaders;
   },
 });
 ```
 
 #### 主な改善点
+
 1. **ヘッダー検証の実装**: 最初の5列が期待されるヘッダーと一致するか検証
 2. **パーサー検証の保持**: データ構造の検証も継続
 3. **非同期処理の改善**: `async/await`で明示的なエラーハンドリング
@@ -95,6 +106,7 @@ const csvValidation = useCsvFileValidator({
 **変更ファイル**: `features/report/upload/ui/ReportUploadFileCard.tsx`
 
 #### 追加機能
+
 - `errorMessage` プロパティの追加
 - バリデーションエラー時のメッセージ表示
 - エラー時の視覚的フィードバック強化
@@ -112,13 +124,15 @@ const csvValidation = useCsvFileValidator({
 ### 5. 共通エクスポートの追加
 
 **新規ファイル**: `features/shared/index.ts`
+
 ```typescript
-export * from './csv-validation';
+export * from "./csv-validation";
 ```
 
 ## バリデーションフロー
 
 ### 検証プロセス
+
 ```
 1. ユーザーがCSVファイルを選択
    ↓
@@ -147,39 +161,47 @@ export * from './csv-validation';
 ### 検証ルール
 
 **ヘッダー検証**
+
 - 最初の5列のヘッダーを検証
 - 順序と内容が完全一致する必要がある
 - 前後の空白はトリム処理される
 
 **パーサー検証**
+
 - CSVのデータ構造を検証
 - パース失敗時は `invalid` になる
 
 ## メリット
 
 ### 1. コード重複の削減
+
 - 検証ロジックを1箇所に集約
 - database と report で同じコードを共有
 
 ### 2. 保守性の向上
+
 - 検証ルールの変更が1箇所で完結
 - バグ修正が全機能に反映される
 
 ### 3. 再利用性
+
 - 他の機能からも簡単に使用可能
 - 拡張が容易
 
 ### 4. 型安全性
+
 - TypeScriptによる完全な型チェック
 - ValidationStatusの統一
 
 ### 5. テスタビリティ
+
 - 独立したモジュールとしてテスト可能
 - モックが容易
 
 ## 影響範囲
 
 ### 変更されたファイル
+
 1. ✅ `features/shared/csv-validation/*` (新規作成)
 2. ✅ `features/database/dataset-validate/hooks/useValidateOnPick.ts`
 3. ✅ `features/database/dataset-validate/core/csvHeaderValidator.ts`
@@ -188,12 +210,14 @@ export * from './csv-validation';
 6. ✅ `features/shared/index.ts` (新規作成)
 
 ### 後方互換性
+
 - ✅ database 機能：完全に互換性あり
 - ✅ report 機能：改善のみ、破壊的変更なし
 
 ## テスト項目
 
 ### 必須テスト
+
 - [ ] 正しいヘッダーのCSVファイルをアップロード → `valid`
 - [ ] 間違ったヘッダーのCSVファイルをアップロード → `invalid`
 - [ ] 空のCSVファイルをアップロード → `invalid`
@@ -205,17 +229,20 @@ export * from './csv-validation';
 ## 今後の拡張案
 
 ### 短期（優先度：高）
+
 - [ ] エラーメッセージの詳細化（どの列が間違っているか）
 - [ ] 検証失敗時のトースト通知
 - [ ] ローディング状態の表示
 
 ### 中期（優先度：中）
+
 - [ ] 行単位のバリデーション
 - [ ] データ型検証（数値、日付など）
 - [ ] 必須フィールドのチェック
 - [ ] CSVプレビュー機能の統合
 
 ### 長期（優先度：低）
+
 - [ ] バリデーションルールのカスタマイズUI
 - [ ] バリデーション結果のエクスポート
 - [ ] 大容量CSVの段階的検証

@@ -33,6 +33,7 @@ Desktop: ≥ 1281px   (1281 〜 ∞)  ★1280は含まない
 **変更後**: Desktop = ≥1281px
 
 **理由**:
+
 - **1280px幅はTabletに含める**（多くのノートPC標準解像度）
 - Desktopは「十分に広い画面」のみを指す（フルHD以上）
 - Tablet上限を1280pxとすることで、サイドバーのデフォルト閉じ動作が1280pxまで適用される
@@ -70,23 +71,23 @@ Desktop: ≥ 1281px   (1281 〜 ∞)  ★1280は含まない
 export const bp = {
   xs: 0,
   sm: 640,
-  md: 768,   // Mobile/Tablet 境界
-  lg: 1024,  // 詳細判定用（運用では使わない）
-  xl: 1280,  // 参考値（Tablet上限）
+  md: 768, // Mobile/Tablet 境界
+  lg: 1024, // 詳細判定用（運用では使わない）
+  xl: 1280, // 参考値（Tablet上限）
 } as const;
 
 // 運用3段階の境界値（★2025-12-22更新）
 export const BP = {
-  mobileMax: bp.md - 1,    // 767
-  tabletMin: bp.md,        // 768
-  tabletMax: bp.xl,        // 1280 ★追加: Tablet上限
-  desktopMin: bp.xl + 1,   // 1281 ★変更: 1280→1281
+  mobileMax: bp.md - 1, // 767
+  tabletMin: bp.md, // 768
+  tabletMax: bp.xl, // 1280 ★追加: Tablet上限
+  desktopMin: bp.xl + 1, // 1281 ★変更: 1280→1281
 } as const;
 
 // 運用判定関数
-export const isMobile = (w: number) => w <= BP.mobileMax;                    // ≤767
+export const isMobile = (w: number) => w <= BP.mobileMax; // ≤767
 export const isTablet = (w: number) => w >= BP.tabletMin && w <= BP.tabletMax; // 768-1280 ★変更
-export const isDesktop = (w: number) => w >= BP.desktopMin;                  // ≥1281 ★変更
+export const isDesktop = (w: number) => w >= BP.desktopMin; // ≥1281 ★変更
 ```
 
 ### 2. 統一Hook
@@ -96,20 +97,20 @@ export const isDesktop = (w: number) => w >= BP.desktopMin;                  // 
 ```typescript
 export type ResponsiveFlags = {
   // 運用3段階（主要な判定に使用）★2025-12-22境界値更新
-  isMobile: boolean;   // ≤767
-  isTablet: boolean;   // 768-1280（★1280を含む）
-  isDesktop: boolean;  // ≥1281（★1280は含まない）
-  
+  isMobile: boolean; // ≤767
+  isTablet: boolean; // 768-1280（★1280を含む）
+  isDesktop: boolean; // ≥1281（★1280は含まない）
+
   // 詳細5段階（特殊なUI調整のみ使用可）
-  isXs: boolean;  // <640
-  isSm: boolean;  // 640-767
-  isMd: boolean;  // 768-1023
-  isLg: boolean;  // 1024-1279
-  isXl: boolean;  // ≥1280
-  
+  isXs: boolean; // <640
+  isSm: boolean; // 640-767
+  isMd: boolean; // 768-1023
+  isLg: boolean; // 1024-1279
+  isXl: boolean; // ≥1280
+
   // ユーティリティ
-  tier: 'mobile' | 'tablet' | 'desktop';
-  isNarrow: boolean;  // ≤1280（= isMobile || isTablet）★更新
+  tier: "mobile" | "tablet" | "desktop";
+  isNarrow: boolean; // ≤1280（= isMobile || isTablet）★更新
 };
 ```
 
@@ -124,7 +125,7 @@ import { useResponsive } from '@/shared';
 
 function MyComponent() {
   const { flags } = useResponsive();
-  
+
   if (flags.isMobile) {
     return <MobileView />;
   }
@@ -138,29 +139,27 @@ function MyComponent() {
 #### ✅ レイアウト分岐
 
 ```typescript
-const padding = flags.isMobile ? 8 
-              : flags.isTablet ? 16 
-              : 24;
+const padding = flags.isMobile ? 8 : flags.isTablet ? 16 : 24;
 
-const columns = flags.isMobile ? 1
-              : flags.isTablet ? 2
-              : 3;
+const columns = flags.isMobile ? 1 : flags.isTablet ? 2 : 3;
 ```
 
 #### ✅ 詳細判定が必要な場合
 
 ```typescript
 // 特殊なUI調整でのみ使用可
-const fontSize = flags.isXs ? 12
-               : flags.isSm ? 14
-               : flags.isMd ? 14
-               : flags.isLg ? 15
-               : 16;
+const fontSize = flags.isXs
+  ? 12
+  : flags.isSm
+    ? 14
+    : flags.isMd
+      ? 14
+      : flags.isLg
+        ? 15
+        : 16;
 
 // ただし、基本は3段階で十分
-const fontSize = flags.isMobile ? 14
-               : flags.isTablet ? 15
-               : 16;
+const fontSize = flags.isMobile ? 14 : flags.isTablet ? 15 : 16;
 ```
 
 ---
@@ -186,7 +185,7 @@ const isMobile = width <= 767;
 const modalWidth = width < 1280 ? 640 : 720;
 
 // ✅ 正解
-import { BP } from '@/shared';
+import { BP } from "@/shared";
 const isMobile = width <= BP.mobileMax;
 const modalWidth = flags.isTablet ? 640 : 720;
 ```
@@ -318,18 +317,22 @@ return {
 ### 許容される例外
 
 1. **shared 層の内部実装**
+
    - `useResponsive.ts` 内の `window.innerWidth` 参照
    - `breakpoints.ts` 内の数値定義
 
 2. **テスト・デバッグツール**
+
    - `responsiveTest.ts` などのデバッグ用ツール
 
 3. **CSS変数**
+
    ```css
    --breakpoint-mobile: 767px;
    --breakpoint-tablet-max: 1280px; /* ★更新 */
-   --breakpoint-desktop: 1281px;    /* ★更新 */
+   --breakpoint-desktop: 1281px; /* ★更新 */
    ```
+
    → breakpoints.ts から生成されている場合は許容
 
 4. **コメント内の説明**
@@ -367,29 +370,32 @@ return {
 ### 確認項目
 
 1. **サイドバーの挙動**
+
    - 767px: Drawer、閉じる
    - 768px: 固定サイドバー、閉じる
    - 1280px: 固定サイドバー、閉じる（★更新：Tablet扱い）
    - 1281px: 固定サイドバー、開く（★更新：Desktop開始）
 
 2. **ページレイアウト**
+
    - 各ページが3段階で正しく分岐
    - 1024-1280px で期待通りの表示（★更新：1280px含む）
 
 3. **レスポンシブフラグ**
+
    ```typescript
    // 767px
    expect(flags.isMobile).toBe(true);
    expect(flags.isTablet).toBe(false);
-   
+
    // 768px
    expect(flags.isMobile).toBe(false);
    expect(flags.isTablet).toBe(true);
-   
+
    // 1280px ★更新：Tablet扱い
    expect(flags.isTablet).toBe(true);
    expect(flags.isDesktop).toBe(false);
-   
+
    // 1281px ★更新：Desktop開始
    expect(flags.isTablet).toBe(false);
    expect(flags.isDesktop).toBe(true);
@@ -412,7 +418,7 @@ return desktop;
 
 // 修正後
 if (flags.isMobile) return mobile;
-if (flags.isTablet) return tablet;  // 768-1279を含む
+if (flags.isTablet) return tablet; // 768-1279を含む
 return desktop;
 ```
 
@@ -435,7 +441,7 @@ if (flags.isMobile) { ... }
 const modalWidth = width < 1280 ? 640 : 720;
 
 // 修正後
-import { BP } from '@/shared';
+import { BP } from "@/shared";
 const modalWidth = width < BP.desktopMin ? 640 : 720;
 
 // さらに良い
@@ -450,9 +456,7 @@ const modalWidth = flags.isTablet ? 640 : 720;
 
 ```typescript
 // ✅ Good: 明確な3段階
-const layout = flags.isMobile ? 'stack'
-             : flags.isTablet ? 'grid-2'
-             : 'grid-3';
+const layout = flags.isMobile ? "stack" : flags.isTablet ? "grid-2" : "grid-3";
 ```
 
 ### 2. 早期リターン

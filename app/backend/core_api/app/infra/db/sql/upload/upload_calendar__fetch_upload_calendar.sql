@@ -1,6 +1,6 @@
 -- アップロードカレンダー集計
 -- 全CSV種別（flash/final × receive/yard/shipment）のUNION ALL集計
--- 
+--
 -- パラメータ:
 --   :start_date - 開始日
 --   :end_date   - 終了日
@@ -18,7 +18,7 @@
 
 WITH upload_data AS (
     -- 将軍速報版 受入（アクティブ行専用ビュー使用）
-    SELECT 
+    SELECT
         uf.id AS upload_file_id,
         s.slip_date AS data_date,
         'shogun_flash_receive'::text AS csv_kind,
@@ -30,11 +30,11 @@ WITH upload_data AS (
       AND s.slip_date >= :start_date
       AND s.slip_date <= :end_date
     GROUP BY uf.id, s.slip_date
-    
+
     UNION ALL
-    
+
     -- 将軍速報版 ヤード（アクティブ行専用ビュー使用）
-    SELECT 
+    SELECT
         uf.id AS upload_file_id,
         s.slip_date AS data_date,
         'shogun_flash_yard'::text AS csv_kind,
@@ -46,11 +46,11 @@ WITH upload_data AS (
       AND s.slip_date >= :start_date
       AND s.slip_date <= :end_date
     GROUP BY uf.id, s.slip_date
-    
+
     UNION ALL
-    
+
     -- 将軍速報版 出荷（アクティブ行専用ビュー使用）
-    SELECT 
+    SELECT
         uf.id AS upload_file_id,
         s.slip_date AS data_date,
         'shogun_flash_shipment'::text AS csv_kind,
@@ -62,11 +62,11 @@ WITH upload_data AS (
       AND s.slip_date >= :start_date
       AND s.slip_date <= :end_date
     GROUP BY uf.id, s.slip_date
-    
+
     UNION ALL
-    
+
     -- 将軍最終版 受入（アクティブ行専用ビュー - is_deleted=false自動フィルタ）
-    SELECT 
+    SELECT
         uf.id AS upload_file_id,
         s.slip_date AS data_date,
         'shogun_final_receive'::text AS csv_kind,
@@ -78,11 +78,11 @@ WITH upload_data AS (
       AND s.slip_date >= :start_date
       AND s.slip_date <= :end_date
     GROUP BY uf.id, s.slip_date
-    
+
     UNION ALL
-    
+
     -- 将軍最終版 出荷（アクティブ行専用ビュー - is_deleted=false自動フィルタ）
-    SELECT 
+    SELECT
         uf.id AS upload_file_id,
         s.slip_date AS data_date,
         'shogun_final_shipment'::text AS csv_kind,
@@ -94,11 +94,11 @@ WITH upload_data AS (
       AND s.slip_date >= :start_date
       AND s.slip_date <= :end_date
     GROUP BY uf.id, s.slip_date
-    
+
     UNION ALL
-    
+
     -- 将軍最終版 ヤード（アクティブ行専用ビュー - is_deleted=false自動フィルタ）
-    SELECT 
+    SELECT
         uf.id AS upload_file_id,
         s.slip_date AS data_date,
         'shogun_final_yard'::text AS csv_kind,
@@ -111,7 +111,7 @@ WITH upload_data AS (
       AND s.slip_date <= :end_date
     GROUP BY uf.id, s.slip_date
 )
-SELECT 
+SELECT
     upload_file_id,
     data_date,
     csv_kind,

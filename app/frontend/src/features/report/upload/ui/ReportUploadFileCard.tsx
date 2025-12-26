@@ -41,7 +41,7 @@ export const ReportUploadFileCard: React.FC<ReportUploadFileCardProps> = ({
 
   // レガシーステータスをCSVバリデーションステータスに変換
   const csvStatus = mapLegacyToCsvStatus(validationResult);
-  
+
   // ステータスに応じたカードの背景色・ボーダー色
   const statusStyles = {
     valid: { background: '#f6ffed', border: '1px solid #b7eb8f' },
@@ -71,7 +71,7 @@ export const ReportUploadFileCard: React.FC<ReportUploadFileCardProps> = ({
       // RcFile に必要なプロパティを追加（読み取り専用プロパティを避けて新しいオブジェクトを作成）
       const rcFile = new File([selectedFile], selectedFile.name, {
         type: selectedFile.type,
-        lastModified: selectedFile.lastModified
+        lastModified: selectedFile.lastModified,
       }) as RcFile;
       rcFile.uid = selectedFile.name + Date.now();
       uploadProps.beforeUpload(rcFile, [rcFile]);
@@ -169,8 +169,20 @@ export const ReportUploadFileCard: React.FC<ReportUploadFileCardProps> = ({
               backgroundColor: '#fafafa',
             }}
           >
-            <UploadOutlined style={{ fontSize: isCompact ? 20 : 24, color: '#1890ff', marginBottom: 4 }} />
-            <div style={{ fontSize: isCompact ? 12 : 13, color: '#666', textAlign: 'center' }}>
+            <UploadOutlined
+              style={{
+                fontSize: isCompact ? 20 : 24,
+                color: '#1890ff',
+                marginBottom: 4,
+              }}
+            />
+            <div
+              style={{
+                fontSize: isCompact ? 12 : 13,
+                color: '#666',
+                textAlign: 'center',
+              }}
+            >
               ここをクリックして CSV をアップロード
             </div>
           </div>

@@ -53,7 +53,14 @@ export const ManualModal: React.FC<ManualModalProps> = ({
         body: { height: '80vh', overflow: 'hidden', paddingTop: 8 },
       }}
     >
-      <div style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: 12 }}>
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          height: '100%',
+          gap: 12,
+        }}
+      >
         <div style={{ maxHeight: '20vh', overflow: 'auto' }}>
           <Paragraph type="secondary" style={{ marginBottom: 0 }}>
             {item?.description ?? '説明は未設定です。'}
@@ -106,7 +113,10 @@ export const ManualModal: React.FC<ManualModalProps> = ({
                 } else if (item.id) {
                   navigate(`/manuals/shogun/${item.id}`);
                 } else {
-                  console.warn('ManualModal: Cannot navigate - item.id and item.route are missing', item);
+                  console.warn(
+                    'ManualModal: Cannot navigate - item.id and item.route are missing',
+                    item
+                  );
                 }
               }}
             >

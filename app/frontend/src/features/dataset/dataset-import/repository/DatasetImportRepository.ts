@@ -12,5 +12,9 @@ export interface DatasetImportRepository {
    * @param signal AbortSignal for cancellation
    * @returns アップロードレスポンス（upload_file_idsを含む可能性がある）
    */
-  upload(filesByType: Record<string, File>, uploadPath: string, signal?: AbortSignal): Promise<UploadResponseShape>;
+  upload(
+    filesByType: Record<string, File>,
+    uploadPath: string,
+    signal?: AbortSignal
+  ): Promise<UploadResponseShape>;
 }

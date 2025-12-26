@@ -7,10 +7,12 @@
 ### 具体的な問題点
 
 1. **型定義の不足**
+
    - `CalendarDayDTO`型に`day_type`や`is_company_closed`などのフィールドが定義されていなかった
    - バックエンドから返される全フィールドが型に含まれていなかった
 
 2. **マッピングロジックの誤り**
+
    - `calendar.http.repository.ts`のマッピング関数が、`date`と`isHoliday`の2フィールドのみしかマッピングしていなかった
    - バックエンドから返される重要な情報（`day_type`, `is_company_closed`など）が破棄されていた
 
@@ -24,19 +26,19 @@
 
 ```typescript
 export type CalendarDayDTO = {
-  ddate: string;         // 'YYYY-MM-DD'
-  y: number;             // 年
-  m: number;             // 月
-  iso_year: number;      // ISO年
-  iso_week: number;      // ISO週番号
-  iso_dow: number;       // ISO曜日（1=月, 7=日）
-  is_holiday: boolean;   // 祝日フラグ
+  ddate: string; // 'YYYY-MM-DD'
+  y: number; // 年
+  m: number; // 月
+  iso_year: number; // ISO年
+  iso_week: number; // ISO週番号
+  iso_dow: number; // ISO曜日（1=月, 7=日）
+  is_holiday: boolean; // 祝日フラグ
   is_second_sunday: boolean; // 第2日曜日フラグ
   is_company_closed: boolean; // 会社休業日フラグ
-  day_type: string;      // 日タイプ（NORMAL, RESERVATION, CLOSED）
-  is_business: boolean;  // 営業日フラグ
-  date?: string;         // 後方互換性のためのエイリアス
-  isHoliday?: boolean;   // 後方互換性のためのエイリアス
+  day_type: string; // 日タイプ（NORMAL, RESERVATION, CLOSED）
+  is_business: boolean; // 営業日フラグ
+  date?: string; // 後方互換性のためのエイリアス
+  isHoliday?: boolean; // 後方互換性のためのエイリアス
 };
 ```
 
@@ -54,7 +56,7 @@ function mapBackendDayToCalendarDTO(d: BackendCalendarDay): CalendarDayDTO {
     is_holiday: d.is_holiday,
     is_second_sunday: d.is_second_sunday,
     is_company_closed: d.is_company_closed,
-    day_type: d.day_type,        // ← 重要！
+    day_type: d.day_type, // ← 重要！
     is_business: d.is_business,
     date: d.ddate,
     isHoliday: d.is_holiday || !d.is_business,
@@ -65,24 +67,28 @@ function mapBackendDayToCalendarDTO(d: BackendCalendarDay): CalendarDayDTO {
 ### 3. 表示ロジックの修正 (`CalendarCard.tsx`)
 
 ```typescript
-function convertToPayload(year: number, month: number, days: CalendarDayDTO[]): CalendarPayload {
+function convertToPayload(
+  year: number,
+  month: number,
+  days: CalendarDayDTO[],
+): CalendarPayload {
   // ...
   const dayDecors: DayDecor[] = days.map((d): DayDecor => {
     let status: "business" | "holiday" | "closed" = "business";
     let label: string | undefined = undefined;
-    
+
     // day_type に基づいて正しく判定
     if (d.day_type === "CLOSED" || d.is_company_closed) {
-      status = "closed";    // 休業日（赤）
+      status = "closed"; // 休業日（赤）
       label = "休業日";
     } else if (d.day_type === "RESERVATION" || d.is_holiday) {
-      status = "holiday";   // 日曜・祝日（ピンク）
+      status = "holiday"; // 日曜・祝日（ピンク）
       label = d.is_holiday ? "祝日" : "日曜";
     } else {
-      status = "business";  // 営業日（緑）
+      status = "business"; // 営業日（緑）
       label = undefined;
     }
-    
+
     return { date: d.ddate, status, label, color: undefined };
   });
   // ...
@@ -93,12 +99,12 @@ function convertToPayload(year: number, month: number, days: CalendarDayDTO[]): 
 
 修正後の正しい色分け：
 
-| ステータス | day_type | 色 | 説明 |
-|-----------|----------|-----|------|
-| **営業日** | NORMAL | 🟢 緑 (#52c41a) | 通常の営業日 |
+| ステータス     | day_type    | 色                  | 説明                         |
+| -------------- | ----------- | ------------------- | ---------------------------- |
+| **営業日**     | NORMAL      | 🟢 緑 (#52c41a)     | 通常の営業日                 |
 | **日曜・祝日** | RESERVATION | 🩷 ピンク (#ff85c0) | 日曜日または祝日（予約受付） |
-| **休業日** | CLOSED | 🔴 赤 (#cf1322) | 会社休業日（第2日曜など） |
-| **当日** | - | 🟡 黄色 (#fadb14) | 今日の日付（上記色を上書き） |
+| **休業日**     | CLOSED      | 🔴 赤 (#cf1322)     | 会社休業日（第2日曜など）    |
+| **当日**       | -           | 🟡 黄色 (#fadb14)   | 今日の日付（上記色を上書き） |
 
 ## 凡例表示
 
@@ -125,7 +131,7 @@ function convertToPayload(year: number, month: number, days: CalendarDayDTO[]): 
   "is_holiday": false,
   "is_second_sunday": false,
   "is_company_closed": false,
-  "day_type": "RESERVATION",  // 日曜日のため
+  "day_type": "RESERVATION", // 日曜日のため
   "is_business": true
 }
 ```
@@ -133,6 +139,7 @@ function convertToPayload(year: number, month: number, days: CalendarDayDTO[]): 
 ## 影響範囲
 
 修正したファイル：
+
 1. `app/frontend/src/features/calendar/model/types.ts` - 型定義
 2. `app/frontend/src/features/dashboard/ukeire/application/adapters/calendar.http.repository.ts` - マッピング
 3. `app/frontend/src/features/calendar/ui/CalendarCard.tsx` - 表示ロジック

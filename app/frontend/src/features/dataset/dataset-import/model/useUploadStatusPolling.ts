@@ -1,15 +1,20 @@
 /**
  * アップロード処理のステータスをポーリングするフック
- * 
+ *
  * 責務:
  * - バックグラウンド処理の完了/失敗を監視
  * - 処理完了時に通知を表示
  * - 最大試行回数と間隔を管理
  */
 
-import { useEffect, useRef, useCallback } from 'react';
-import { DatasetImportClient } from '../infrastructure/client';
-import { notifySuccess, notifyWarning, notifyError } from '@features/notification';
+import { useEffect, useRef, useCallback } from "react";
+import { DatasetImportClient } from "../infrastructure/client";
+import {
+  notifySuccess,
+  notifyWarning,
+  notifyError,
+} from "@features/notification";
+import { logger } from "@/shared";
 
 export interface UploadStatusPollingOptions {
   /** ポーリング対象の upload_file_ids （csv_type -> upload_file_id） */
@@ -30,7 +35,7 @@ const INITIAL_DELAY = 3000; // 初回チェックまでの遅延（バックグ�
 type StatusCheckResult = {
   csvType: string;
   fileId: number;
-  status?: 'pending' | 'processing' | 'success' | 'failed';
+  status?: "pending" | "processing" | "success" | "failed";
   fileName?: string;
   errorMessage?: string;
   rowCount?: number;
@@ -40,7 +45,9 @@ type StatusCheckResult = {
 /**
  * アップロードステータスをポーリング
  */
-export function useUploadStatusPolling(options: UploadStatusPollingOptions = {}) {
+export function useUploadStatusPolling(
+  options: UploadStatusPollingOptions = {},
+) {
   const {
     uploadFileIds,
     interval = DEFAULT_INTERVAL,
@@ -71,7 +78,10 @@ export function useUploadStatusPolling(options: UploadStatusPollingOptions = {})
 
   const checkStatuses = useCallback(async () => {
     const currentUploadFileIds = uploadFileIdsRef.current;
-    if (!currentUploadFileIds || Object.keys(currentUploadFileIds).length === 0) {
+    if (
+      !currentUploadFileIds ||
+      Object.keys(currentUploadFileIds).length === 0
+    ) {
       stopPolling();
       return;
     }
@@ -80,75 +90,96 @@ export function useUploadStatusPolling(options: UploadStatusPollingOptions = {})
 
     try {
       // 全ファイルのステータスをチェック
-      const statusChecks = Object.entries(currentUploadFileIds).map(async ([csvType, fileId]): Promise<StatusCheckResult> => {
-        try {
-          const response = await DatasetImportClient.checkStatus(fileId);
-          return {
-            csvType,
-            fileId,
-            status: response.result?.processing_status,
-            fileName: response.result?.file_name,
-            errorMessage: response.result?.error_message,
-            rowCount: response.result?.row_count,
-            apiError: false,
-          };
-        } catch (error) {
-          // ステータス取得エラーは処理中として扱う（リトライ継続）
-          console.warn(`[UploadStatusPolling] API error for ${csvType} (${fileId}), will retry:`, error);
-          return {
-            csvType,
-            fileId,
-            status: 'processing' as const,
-            fileName: csvType,
-            errorMessage: undefined,
-            rowCount: undefined,
-            apiError: true,
-          };
-        }
-      });
+      const statusChecks = Object.entries(currentUploadFileIds).map(
+        async ([csvType, fileId]): Promise<StatusCheckResult> => {
+          try {
+            const response = await DatasetImportClient.checkStatus(fileId);
+            return {
+              csvType,
+              fileId,
+              status: response.result?.processing_status,
+              fileName: response.result?.file_name,
+              errorMessage: response.result?.error_message,
+              rowCount: response.result?.row_count,
+              apiError: false,
+            };
+          } catch (error) {
+            // ステータス取得エラーは処理中として扱う（リトライ継続）
+            console.warn(
+              `[UploadStatusPolling] API error for ${csvType} (${fileId}), will retry:`,
+              error,
+            );
+            return {
+              csvType,
+              fileId,
+              status: "processing" as const,
+              fileName: csvType,
+              errorMessage: undefined,
+              rowCount: undefined,
+              apiError: true,
+            };
+          }
+        },
+      );
 
       const results = await Promise.all(statusChecks);
 
       // ステータスを分類（API取得エラーは除外）
-      const processing = results.filter(r => 
-        (r.status === 'pending' || r.status === 'processing') && !r.apiError
+      const processing = results.filter(
+        (r) =>
+          (r.status === "pending" || r.status === "processing") && !r.apiError,
       );
-      const apiErrors = results.filter(r => r.apiError);
-      const failed = results.filter(r => r.status === 'failed' && !r.apiError);
-      const succeeded = results.filter(r => r.status === 'success');
+      const apiErrors = results.filter((r) => r.apiError);
+      const failed = results.filter(
+        (r) => r.status === "failed" && !r.apiError,
+      );
+      const succeeded = results.filter((r) => r.status === "success");
 
-      console.log(`[UploadStatusPolling] Attempt ${attemptCountRef.current}/${maxAttempts}:`, {
-        processing: processing.length,
-        apiErrors: apiErrors.length,
-        failed: failed.length,
-        succeeded: succeeded.length,
-        details: results.map(r => `${r.csvType}:${r.status}${r.apiError ? '(API_ERR)' : ''}`).join(', '),
-      });
+      logger.log(
+        `[UploadStatusPolling] Attempt ${attemptCountRef.current}/${maxAttempts}:`,
+        {
+          processing: processing.length,
+          apiErrors: apiErrors.length,
+          failed: failed.length,
+          succeeded: succeeded.length,
+          details: results
+            .map(
+              (r) => `${r.csvType}:${r.status}${r.apiError ? "(API_ERR)" : ""}`,
+            )
+            .join(", "),
+        },
+      );
 
       // すべて完了した場合（API取得エラーは無視）
       const stillProcessing = processing.length > 0 || apiErrors.length > 0;
-      
+
       if (!stillProcessing) {
         stopPolling();
 
         if (failed.length > 0) {
           // 失敗があった場合
           const errorDetails = failed
-            .map(f => `【${f.fileName || f.csvType}】${f.errorMessage || '処理エラー'}`)
-            .join('\n');
+            .map(
+              (f) =>
+                `【${f.fileName || f.csvType}】${f.errorMessage || "処理エラー"}`,
+            )
+            .join("\n");
 
           notifyError(
-            '処理失敗',
+            "処理失敗",
             `以下のファイルの処理に失敗しました:\n${errorDetails}`,
           );
 
           onCompleteRef.current?.(false);
         } else {
           // すべて成功
-          const totalRows = succeeded.reduce((sum, r) => sum + (r.rowCount || 0), 0);
+          const totalRows = succeeded.reduce(
+            (sum, r) => sum + (r.rowCount || 0),
+            0,
+          );
           notifySuccess(
-            '処理完了',
-            `${succeeded.length}件のCSVファイルの処理が完了しました。${totalRows > 0 ? `（${totalRows.toLocaleString()}行）` : ''}`,
+            "処理完了",
+            `${succeeded.length}件のCSVファイルの処理が完了しました。${totalRows > 0 ? `（${totalRows.toLocaleString()}行）` : ""}`,
             5000,
           );
 
@@ -161,10 +192,12 @@ export function useUploadStatusPolling(options: UploadStatusPollingOptions = {})
       // 最大試行回数に達した場合
       if (attemptCountRef.current >= maxAttempts) {
         stopPolling();
-        const processingFiles = processing.map(f => f.fileName || f.csvType).join('、');
-        
+        const processingFiles = processing
+          .map((f) => f.fileName || f.csvType)
+          .join("、");
+
         notifyWarning(
-          '処理タイムアウト',
+          "処理タイムアウト",
           `${processingFiles} の処理が時間内に完了しませんでした。履歴画面で確認してください。`,
         );
 
@@ -175,12 +208,12 @@ export function useUploadStatusPolling(options: UploadStatusPollingOptions = {})
       // 次回のポーリングをスケジュール
       timerRef.current = setTimeout(checkStatuses, interval);
     } catch (error) {
-      console.error('[UploadStatusPolling] Unexpected error:', error);
+      console.error("[UploadStatusPolling] Unexpected error:", error);
       stopPolling();
-      
+
       notifyError(
-        'ステータス確認エラー',
-        '処理状況の確認中にエラーが発生しました。履歴画面で確認してください。',
+        "ステータス確認エラー",
+        "処理状況の確認中にエラーが発生しました。履歴画面で確認してください。",
       );
 
       onCompleteRef.current?.(false);
@@ -194,12 +227,14 @@ export function useUploadStatusPolling(options: UploadStatusPollingOptions = {})
     }
 
     if (isPollingRef.current) {
-      console.warn('[UploadStatusPolling] Already polling. Ignoring.');
+      console.warn("[UploadStatusPolling] Already polling. Ignoring.");
       return;
     }
 
-    console.log('[UploadStatusPolling] Starting polling for:', uploadFileIds);
-    console.log(`[UploadStatusPolling] Initial delay: ${INITIAL_DELAY}ms, Interval: ${interval}ms, Max attempts: ${maxAttempts}`);
+    logger.log("[UploadStatusPolling] Starting polling for:", uploadFileIds);
+    logger.log(
+      `[UploadStatusPolling] Initial delay: ${INITIAL_DELAY}ms, Interval: ${interval}ms, Max attempts: ${maxAttempts}`,
+    );
     isPollingRef.current = true;
     attemptCountRef.current = 0;
 

@@ -1,14 +1,17 @@
 # カレンダーコンポーネント統一完了レポート
 
 ## 概要
+
 受入ダッシュボード用のカレンダー表示を、バックエンドAPIから取得したデータに基づいて正しく色分けするように修正しました。
 
 ## 修正したファイル
 
 ### 1. カレンダーカード本体
+
 **ファイル**: `app/frontend/src/features/dashboard/ukeire/ui/cards/CalendarCard.tsx`
 
 #### 変更内容
+
 - `UkeireCalendar`コンポーネントを使用するように変更
 - `convertToPayload`関数を追加して、`day_type`に基づいた正しいステータス判定を実装
 - 凡例データを含む完全なペイロードを生成
@@ -16,29 +19,33 @@
 ```typescript
 // day_type に基づいてステータスを判定
 if (d.day_type === "CLOSED" || d.is_company_closed) {
-  status = "closed";    // 休業日（赤）
+  status = "closed"; // 休業日（赤）
   label = "休業日";
 } else if (d.day_type === "RESERVATION" || d.is_holiday) {
-  status = "holiday";   // 日曜・祝日（ピンク）
+  status = "holiday"; // 日曜・祝日（ピンク）
   label = d.is_holiday ? "祝日" : "日曜";
 } else {
-  status = "business";  // 営業日（緑）
+  status = "business"; // 営業日（緑）
   label = undefined;
 }
 ```
 
 ### 2. セル装飾ロジック
+
 **ファイル**: `app/frontend/src/features/dashboard/ukeire/application/decorateCalendarCells.ts`
 
 #### 変更内容
+
 - `day_type`フィールドを使用した正しいステータス判定を実装
 - 営業日にも緑色（#52c41a）を設定
 - 休業日の判定を追加（第2日曜日など）
 
 ### 3. 型定義の拡張
+
 **ファイル**: `app/frontend/src/features/calendar/model/types.ts`
 
 #### 変更内容
+
 - `CalendarDayDTO`型にバックエンドの全フィールドを追加
 - 後方互換性のため`date`と`isHoliday`エイリアスを残す
 
@@ -53,24 +60,28 @@ export type CalendarDayDTO = {
   is_holiday: boolean;
   is_second_sunday: boolean;
   is_company_closed: boolean;
-  day_type: string;      // NORMAL, RESERVATION, CLOSED
+  day_type: string; // NORMAL, RESERVATION, CLOSED
   is_business: boolean;
-  date?: string;         // 後方互換性
-  isHoliday?: boolean;   // 後方互換性
+  date?: string; // 後方互換性
+  isHoliday?: boolean; // 後方互換性
 };
 ```
 
 ### 4. HTTPリポジトリのマッピング
+
 **ファイル**: `app/frontend/src/features/dashboard/ukeire/application/adapters/calendar.http.repository.ts`
 
 #### 変更内容
+
 - バックエンドから返される全フィールドをマッピング
 - `day_type`などの重要フィールドを確実に伝播
 
 ### 5. モックリポジトリの改善
+
 **ファイル**: `app/frontend/src/features/dashboard/ukeire/application/adapters/calendar.mock.repository.ts`
 
 #### 変更内容
+
 - 完全なデータ構造を返すように修正
 - 日曜日、第2日曜日、祝日をシミュレート
 - 開発時にも正しい表示を確認可能
@@ -95,12 +106,12 @@ CalendarCore (共通カレンダーコア)
 
 ## 色の定義
 
-| ステータス | day_type | 色 | 16進数 |
-|-----------|----------|-----|--------|
-| 営業日 | NORMAL | 🟢 緑 | #52c41a |
+| ステータス | day_type    | 色        | 16進数  |
+| ---------- | ----------- | --------- | ------- |
+| 営業日     | NORMAL      | 🟢 緑     | #52c41a |
 | 日曜・祝日 | RESERVATION | 🩷 ピンク | #ff85c0 |
-| 休業日 | CLOSED | 🔴 赤 | #cf1322 |
-| 当日 | - | 🟡 黄色 | #fadb14 |
+| 休業日     | CLOSED      | 🔴 赤     | #cf1322 |
+| 当日       | -           | 🟡 黄色   | #fadb14 |
 
 ## 凡例表示
 
@@ -118,23 +129,28 @@ CalendarCore (共通カレンダーコア)
 ## データフロー
 
 1. **ページレベル** (`InboundForecastDashboardPage`)
+
    - 年月を管理
    - `CalendarCardUkeire`を表示
 
 2. **ラッパーコンポーネント** (`CalendarCard.Ukeire`)
+
    - リポジトリを注入（HTTPまたはMock）
    - `CalendarCard`に委譲
 
 3. **カードコンポーネント** (`CalendarCard`)
+
    - `useUkeireCalendarVM`でデータ取得
    - `convertToPayload`でペイロード変換
    - `UkeireCalendar`に表示を委譲
 
 4. **ViewModelフック** (`useUkeireCalendarVM`)
+
    - 基本的なカレンダーVM取得
    - `decorateCalendarCells`で装飾追加
 
 5. **リポジトリ** (`CalendarRepositoryForUkeire`)
+
    - バックエンドAPIからデータ取得
    - 全フィールドをマッピング
 
@@ -146,11 +162,13 @@ CalendarCore (共通カレンダーコア)
 ## 共通カレンダーとの関係
 
 ### features/calendar (共通)
+
 - `CalendarCore` - 汎用カレンダーコアUI
 - `useCalendarVM` - 基本的なカレンダーロジック
 - `CalendarCard` - 汎用カレンダーカード（他機能で使用可能）
 
 ### features/dashboard/ukeire (受入専用)
+
 - `CalendarCard` - 受入ダッシュボード専用カード
 - `useUkeireCalendarVM` - 受入専用のVM拡張
 - `decorateCalendarCells` - 受入専用の装飾ロジック
@@ -161,6 +179,7 @@ CalendarCore (共通カレンダーコア)
 ## テスト方法
 
 ### 開発環境
+
 ```bash
 # フロントエンド起動（すでに起動済み）
 cd app/frontend
@@ -168,6 +187,7 @@ npm run dev
 ```
 
 ### 確認項目
+
 1. ✅ 営業日が緑色で表示される
 2. ✅ 日曜日がピンク色で表示される
 3. ✅ 祝日がピンク色で「祝日」ラベル付きで表示される
@@ -176,6 +196,7 @@ npm run dev
 6. ✅ 凡例に正しい日数と残り日数が表示される
 
 ### モックモード
+
 開発中にモックデータで確認する場合：
 
 ```tsx
@@ -185,6 +206,7 @@ npm run dev
 ## 後方互換性
 
 既存コードとの互換性を保つため：
+
 - `date`フィールドは`ddate`のエイリアス
 - `isHoliday`フィールドは計算プロパティとして提供
 - 旧形式のデータも表示可能
@@ -192,15 +214,18 @@ npm run dev
 ## トラブルシューティング
 
 ### 色が表示されない
+
 - ブラウザのDevToolsでネットワークタブを確認
 - `/core_api/calendar/month?year=YYYY&month=MM`のレスポンスを確認
 - `day_type`フィールドが含まれているか確認
 
 ### データが取得できない
+
 - core_apiが起動しているか確認: `http://localhost:8003/api/healthz`
 - データベースにカレンダーデータが存在するか確認（2025-2026年）
 
 ### モックモードが動作しない
+
 - `useMock={true}`プロップを確認
 - ブラウザコンソールでエラーを確認
 

@@ -2,7 +2,11 @@ import { ensureSectionAnchors, smoothScrollToAnchor, useResponsive } from '@/sha
 import React, { useEffect, useRef, useState } from 'react';
 import { Modal, Typography, Spin, Anchor, Row, Col } from 'antd';
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { ShogunClientDefault as ShogunClient, type ManualSummary, type ManualDetail } from '@features/manual';
+import {
+  ShogunClientDefault as ShogunClient,
+  type ManualSummary,
+  type ManualDetail,
+} from '@features/manual';
 
 const { Title } = Typography;
 
@@ -36,13 +40,15 @@ const ManualDetailPage: React.FC = () => {
         if (alive) setLoading(false);
       }
     })();
-    return () => { alive = false; };
+    return () => {
+      alive = false;
+    };
   }, [id]);
 
   useEffect(() => {
     const container = ref.current;
     if (!container) return;
-  ensureSectionAnchors(container);
+    ensureSectionAnchors(container);
     const hash = window.location.hash;
     if (hash) smoothScrollToAnchor(container, hash);
   }, [data]);
@@ -51,7 +57,9 @@ const ManualDetailPage: React.FC = () => {
   useEffect(() => {
     if (forceFull || isMobile || !loc.state?.backgroundLocation) {
       // 単独ページにリプレース
-      nav(`/manuals/shogun/${id}?full=1${window.location.hash || ''}`, { replace: true });
+      nav(`/manuals/shogun/${id}?full=1${window.location.hash || ''}`, {
+        replace: true,
+      });
     }
   }, [forceFull, isMobile, loc.state, id, nav]);
 
@@ -68,7 +76,9 @@ const ManualDetailPage: React.FC = () => {
         const nextIdx = e.key === 'ArrowLeft' ? idx - 1 : idx + 1;
         if (nextIdx < 0 || nextIdx >= list.length) return;
         const nextId = list[nextIdx].id;
-        nav(`/manuals/shogun/${nextId}`, { state: { backgroundLocation: loc.state?.backgroundLocation || loc } });
+        nav(`/manuals/shogun/${nextId}`, {
+          state: { backgroundLocation: loc.state?.backgroundLocation || loc },
+        });
       }
     };
     window.addEventListener('keydown', onKey);
@@ -84,15 +94,34 @@ const ManualDetailPage: React.FC = () => {
   };
 
   return (
-    <Modal open={!forceFull && !isMobile} onCancel={handleClose} onOk={handleClose} okText='閉じる' cancelButtonProps={{ style: { display: 'none' }}} title={data?.title || '読み込み中…'} width='80vw' centered styles={{ body: { height: '80vh', overflow: 'hidden', paddingTop: 8 }}} afterOpenChange={(open) => { if (open) firstFocusable.current?.focus(); }}>
-      {loading ? <Spin /> : (
+    <Modal
+      open={!forceFull && !isMobile}
+      onCancel={handleClose}
+      onOk={handleClose}
+      okText="閉じる"
+      cancelButtonProps={{ style: { display: 'none' } }}
+      title={data?.title || '読み込み中…'}
+      width="80vw"
+      centered
+      styles={{ body: { height: '80vh', overflow: 'hidden', paddingTop: 8 } }}
+      afterOpenChange={(open) => {
+        if (open) firstFocusable.current?.focus();
+      }}
+    >
+      {loading ? (
+        <Spin />
+      ) : (
         <div style={{ height: '100%' }}>
           <Row gutter={[16, 16]} style={{ height: '100%' }}>
             <Col xs={24} md={6} style={{ height: '100%', overflow: 'auto' }}>
               <Anchor
                 targetOffset={16}
                 getContainer={() => ref.current as HTMLElement}
-                items={data?.sections.map((s) => ({ key: s.anchor, href: `#${s.anchor}`, title: s.title }))}
+                items={data?.sections.map((s) => ({
+                  key: s.anchor,
+                  href: `#${s.anchor}`,
+                  title: s.title,
+                }))}
                 onClick={(e, link) => {
                   e.preventDefault();
                   if (!ref.current) return;
@@ -102,7 +131,9 @@ const ManualDetailPage: React.FC = () => {
             </Col>
             <Col xs={24} md={18}>
               <div ref={ref} style={{ height: '100%', overflow: 'auto' }}>
-                <Title level={5} tabIndex={-1} ref={firstFocusable}>概要</Title>
+                <Title level={5} tabIndex={-1} ref={firstFocusable}>
+                  概要
+                </Title>
                 {data?.sections?.map((s) => (
                   <div key={s.anchor} dangerouslySetInnerHTML={{ __html: s.html || '' }} />
                 ))}

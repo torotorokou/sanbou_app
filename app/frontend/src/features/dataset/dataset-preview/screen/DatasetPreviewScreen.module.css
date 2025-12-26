@@ -1,0 +1,81 @@
+/**
+ * DatasetPreviewScreen スタイル
+ *
+ * スクロール設計:
+ * - 親（Row/Col/Tabs/TabPane）: overflow:hidden, height:100%, min-height:0
+ * - 子（Table）のみスクロール
+ */
+
+.dpRow {
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.dpRight {
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  box-sizing: border-box; /* padding を内側に収める */
+}
+
+.dpHost {
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.dpTabs {
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.dpTabs :global(.ant-tabs-content-holder) {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.dpTabs :global(.ant-tabs-content) {
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.dpTabs :global(.ant-tabs-tabpane) {
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.dpPane {
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.dpEmpty {
+  flex: 1;
+  display: grid;
+  place-items: center;
+}
+
+.dpPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  font-weight: 600;
+  font-size: 14px;
+}

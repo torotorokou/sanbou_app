@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator
 
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+
 
 class DatabaseSessionManager:
     """
@@ -11,6 +12,7 @@ class DatabaseSessionManager:
     - session_scope(): commit/rollback を自動制御
     - get_session(): FastAPI Depends 用のラッパ
     """
+
     def __init__(self, db_url: str, *, echo: bool = False, pool_pre_ping: bool = True) -> None:
         self.db_url = db_url
         self.engine = create_async_engine(

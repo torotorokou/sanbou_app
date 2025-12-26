@@ -13,10 +13,12 @@ jobs.forecast_jobsテーブルに対する操作を担当。
   - FOR UPDATE SKIP LOCKEDを使用して、同一ジョブの重複実行を防止
   - attemptsカウンタでリトライ回数を管理
 """
-from typing import Optional
-from datetime import date as date_type, datetime
-from sqlalchemy.orm import Session
+
+from datetime import date as date_type
+from datetime import datetime
+
 from sqlalchemy import text
+from sqlalchemy.orm import Session
 
 from app.infra.db.orm_models import ForecastJob
 from app.infra.db.sql_loader import load_sql
@@ -36,15 +38,15 @@ class JobRepository:
         target_from: date_type,
         target_to: date_type,
         actor: str = "system",
-        payload_json: Optional[dict] = None,
-        scheduled_for: Optional[datetime] = None,
+        payload_json: dict | None = None,
+        scheduled_for: datetime | None = None,
     ) -> int:
         """
         新しい予測ジョブをキューに登録
-        
+
         ジョブはstatus='queued'で作成され、ワーカープロセスによって
         非同期に実行されます。
-        
+
         Args:
             job_type: ジョブタイプ(例: 'daily', 'weekly')
             target_from: 予測対象期間の開始日
@@ -52,10 +54,10 @@ class JobRepository:
             actor: ジョブを登録したユーザーまたはシステム(デフォルト: 'system')
             payload_json: 追加パラメータ(JSON形式)
             scheduled_for: 実行予定時刻(省略時は即座に実行可能)
-            
+
         Returns:
             int: 作成されたジョブのID
-            
+
         Raises:
             SQLAlchemyError: データベースエラー
         """
@@ -64,7 +66,7 @@ class JobRepository:
             target_from=target_from,
             target_to=target_to,
             status="queued",  # 初期状態: 待機中
-            attempts=0,        # 実行回数: 0
+            attempts=0,  # 実行回数: 0
             actor=actor,
             payload_json=payload_json,
             scheduled_for=scheduled_for,
@@ -73,22 +75,22 @@ class JobRepository:
         self.db.flush()  # IDを取得するためflush(トランザクションはまだコミットしない)
         return job.id
 
-    def claim_one_queued_job_for_update(self) -> Optional[int]:
+    def claim_one_queued_job_for_update(self) -> int | None:
         """
         待機中のジョブを1つクレームし、実行中状態に変更
-        
+
         FOR UPDATE SKIP LOCKEDを使用して、複数のワーカープロセスが
         同時に実行されても、同一ジョブが重複して実行されることを防止。
-        
+
         処理フロー:
           1. status='queued' かつ scheduled_for <= NOW() のジョブを検索
           2. FOR UPDATE SKIP LOCKED でロック取得(他プロセスがロック中ならスキップ)
           3. status='running' に変更、attempts を +1
           4. トランザクションコミット
-        
+
         Returns:
             Optional[int]: クレームしたジョブのID、または利用可能なジョブがない場合はNone
-            
+
         Note:
             このメソッドは自動的にcommitするため、呼び出し側でのコミットは不要。
         """
@@ -113,6 +115,6 @@ class JobRepository:
             job.updated_at = datetime.utcnow()
             self.db.commit()
 
-    def get_job_by_id(self, job_id: int) -> Optional[ForecastJob]:
+    def get_job_by_id(self, job_id: int) -> ForecastJob | None:
         """Retrieve job by ID."""
         return self.db.query(ForecastJob).filter(ForecastJob.id == job_id).first()

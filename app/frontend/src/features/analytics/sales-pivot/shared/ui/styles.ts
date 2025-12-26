@@ -1,30 +1,30 @@
 /**
  * shared/ui/styles.ts
  * 売上ピボット機能の共通スタイル定義
- * 
+ *
  * 【概要】
  * Feature全体で使用される共通CSSスタイルを文字列として提供
  * グローバルCSSまたは <style> タグで注入して使用
- * 
+ *
  * 【設計思想】
  * - BEM記法ライクなクラス命名（sales-tree-*, app-*）
  * - アクセントカラーによる視覚的階層化
  * - 再利用可能なユーティリティクラス
- * 
+ *
  * 【使用方法】
  * ```tsx
  * import { salesPivotStyles } from '@/features/analytics/sales-pivot';
- * 
+ *
  * // グローバルスタイルとして注入（ルートコンポーネント等）
  * <style dangerouslySetInnerHTML={{ __html: salesPivotStyles }} />
- * 
+ *
  * // コンポーネント内で使用
  * <Card className="sales-tree-accent-card sales-tree-accent-primary">
  *   <div className="sales-tree-card-section-header">セクションタイトル</div>
  *   ...
  * </Card>
  * ```
- * 
+ *
  * 【主要クラス一覧】
  * - `.app-header` - ヘッダー全体コンテナ
  * - `.app-title` - タイトルテキスト
@@ -42,7 +42,7 @@ export const salesPivotStyles = `
   /* ========================================
    * ヘッダー関連スタイル
    * ======================================== */
-  
+
   /**
    * ヘッダー全体コンテナ
    * 相対配置でアクションボタンエリアを右上に配置可能にする
@@ -101,7 +101,7 @@ export const salesPivotStyles = `
   /* ========================================
    * カード・アクセント関連スタイル
    * ======================================== */
-  
+
   /**
    * アクセント付きCard基底クラス
    * 左側に太いボーダーを表示して視覚的な区別を付ける
@@ -161,7 +161,7 @@ export const salesPivotStyles = `
   /* ========================================
    * ミニバーチャート関連スタイル
    * ======================================== */
-  
+
   /**
    * ミニバー背景（グレーのバー全体）
    */

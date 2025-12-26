@@ -14,33 +14,33 @@ export interface CsvUploadFileType {
 
 // UploadFileConfigと互換性のある型定義（共通のValidationStatusを使用）
 export interface CsvFileType {
-    label: string;
-    file: File | null;
-    onChange: (file: File | null) => void;
-    validationResult?: ValidationStatus;
-    required: boolean;
-    onRemove?: () => void;
+  label: string;
+  file: File | null;
+  onChange: (file: File | null) => void;
+  validationResult?: ValidationStatus;
+  required: boolean;
+  onRemove?: () => void;
 }
 
 export interface ActionsSectionProps {
-    onGenerate: () => void;
-    readyToCreate: boolean;
-    finalized: boolean;
-    onDownloadExcel: () => void;
-    onPrintPdf?: () => void;
-    excelUrl?: string | null;
-    pdfUrl?: string | null;
-    excelReady?: boolean;
-    pdfReady?: boolean;
-    /** 半画面以下のコンパクトモード（レイアウト: 左にサンプル+アップロード、右にプレビュー、ボタンは下部） */
-    compactMode?: boolean;
+  onGenerate: () => void;
+  readyToCreate: boolean;
+  finalized: boolean;
+  onDownloadExcel: () => void;
+  onPrintPdf?: () => void;
+  excelUrl?: string | null;
+  pdfUrl?: string | null;
+  excelReady?: boolean;
+  pdfReady?: boolean;
+  /** 半画面以下のコンパクトモード（レイアウト: 左にサンプル+アップロード、右にプレビュー、ボタンは下部） */
+  compactMode?: boolean;
 }
 
 export interface SampleSectionProps {
-    sampleImageUrl?: string;
+  sampleImageUrl?: string;
 }
 
 export interface CsvUploadSectionProps {
-    uploadFiles: CsvUploadFileType[];
-    makeUploadProps: (label: string) => UploadProps;
+  uploadFiles: CsvUploadFileType[];
+  makeUploadProps: (label: string) => UploadProps;
 }

@@ -1,6 +1,6 @@
 /**
  * UploadGuide - データセットアップロードガイド UI
- * 
+ *
  * データセット別の必要ファイル・注意事項・手順を表示
  * Alert で未完了・エラーを強調
  */
@@ -81,7 +81,6 @@ export const UploadGuide: React.FC<UploadGuideProps> = ({ datasetKey, files }) =
         />
       )}
 
-
       {/* 手順・必要ファイル・注意事項（Collapse） */}
       <Collapse
         defaultActiveKey={[]}
@@ -127,7 +126,9 @@ export const UploadGuide: React.FC<UploadGuideProps> = ({ datasetKey, files }) =
                 renderItem={(r) => (
                   <List.Item style={{ paddingLeft: 0 }}>
                     <Tag color="blue">{r.label}</Tag>
-                    <Text type="secondary" style={{ fontSize: 12 }}>(必須)</Text>
+                    <Text type="secondary" style={{ fontSize: 12 }}>
+                      (必須)
+                    </Text>
                     {Array.isArray(r.filenameHints) && r.filenameHints.length > 0 && (
                       <span style={{ marginLeft: 8, fontSize: 12, color: '#888' }}>
                         ファイル名例: {r.filenameHints.join(' / ')}

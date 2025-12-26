@@ -1,6 +1,8 @@
-from .response_base import ErrorApiResponse
-from fastapi import UploadFile
 from typing import Any
+
+from fastapi import UploadFile
+
+from .response_base import ErrorApiResponse
 
 
 class NoFilesUploadedResponse(ErrorApiResponse):

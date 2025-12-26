@@ -4,8 +4,10 @@ Revision ID: d64c705dde4a
 Revises: 83f7cf7d956e
 Create Date: 2025-11-04
 """
-from alembic import op
+
 from textwrap import dedent
+
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = "d64c705dde4a"

@@ -29,12 +29,13 @@ class DummyResponseService:
         # 毎回 ZoneInfo を生成（パフォーマンスロス）
         jst = ZoneInfo('Asia/Tokyo')  # ❌ タイムゾーン名がハードコード
         now = datetime.now(jst)
-        
+
         # フォーマット文字列もハードコード
         timestamp = now.strftime('%Y年%m月%d日 %H:%M')  # ❌ 個別実装
 ```
 
 **問題点:**
+
 - `ZoneInfo('Asia/Tokyo')` を毎回生成（キャッシュされない）
 - タイムゾーン名がハードコード（環境変数で変更不可）
 - フォーマット文字列が散在（統一されていない）
@@ -58,6 +59,7 @@ class AiResponseService:
 ```
 
 **問題点:**
+
 - `dummy_response_service.py` と微妙に実装が異なる
 - コードの重複（DRY原則違反）
 - メンテナンス時に修正漏れのリスク
@@ -170,7 +172,7 @@ from backend_shared.utils.datetime_utils import get_app_timezone
 def test_datetime_format():
     os.environ["APP_TIMEZONE"] = "UTC"
     get_app_timezone.cache_clear()  # キャッシュクリア
-    
+
     # UTC での動作をテスト
     assert get_app_timezone().key == "UTC"
 ```

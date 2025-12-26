@@ -4,4 +4,4 @@
  */
 
 // 上位の domain から IInboundForecastRepository を再エクスポート
-export type { IInboundForecastRepository } from "../../domain/repository";
+export type { IInboundForecastRepository } from '../../domain/repository';

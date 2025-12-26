@@ -124,4 +124,3 @@ ALTER TABLE raw.receive_king_final OWNER TO myuser;
 --
 
 \unrestrict nSFYhH5rec6EkvCU7oa8wS9UYnn04r1RWFnZk9zg7GNCDhAo6xjSr3ejwSK5AZr
-

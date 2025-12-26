@@ -4,7 +4,6 @@ DataFrameのバリデーション処理を行う関数群モジュール。
 """
 
 import pandas as pd
-from typing import Optional
 
 from backend_shared.utils.dataframe_utils import (
     has_denpyou_date_column,
@@ -12,7 +11,7 @@ from backend_shared.utils.dataframe_utils import (
 )
 
 
-def check_missing_file(file_inputs: dict[str, Optional[object]]) -> Optional[str]:
+def check_missing_file(file_inputs: dict[str, object | None]) -> str | None:
     """
     ファイル入力のうち、未入力のものがあればそのキー（CSV種別名）を返す。
     すべて入力されていればNoneを返す。
@@ -46,7 +45,7 @@ def check_required_columns(
     return True, "", []
 
 
-def check_field_exists(dfs: dict[str, pd.DataFrame], field_name: str) -> Optional[str]:
+def check_field_exists(dfs: dict[str, pd.DataFrame], field_name: str) -> str | None:
     """
     全てのDataFrameに指定カラムが存在するかを確認。
     存在しない場合はそのcsv_type名を返す。
@@ -88,7 +87,7 @@ def check_field_consistency(
     return values_match, values_by_type
 
 
-def check_denpyou_date_exists(dfs: dict[str, pd.DataFrame]) -> Optional[str]:
+def check_denpyou_date_exists(dfs: dict[str, pd.DataFrame]) -> str | None:
     """
     各DataFrameに「伝票日付」カラムが存在するかをチェック。
     存在しない場合はそのcsv_type名を返す。

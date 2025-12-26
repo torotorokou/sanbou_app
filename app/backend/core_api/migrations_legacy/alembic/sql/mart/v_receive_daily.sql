@@ -85,8 +85,3 @@ CREATE OR REPLACE VIEW mart.v_receive_daily AS
      LEFT JOIN r_pick p ON ((p.ddate = cal.ddate)))
   WHERE (cal.ddate <= (((now() AT TIME ZONE 'Asia/Tokyo'::text))::date - 1))
   ORDER BY cal.ddate;
-
-
-
-
-

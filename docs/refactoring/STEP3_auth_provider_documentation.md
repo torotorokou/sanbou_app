@@ -14,17 +14,17 @@
 
 #### 1.1 認証プロバイダーの実装状況
 
-| プロバイダー | ファイルパス | 環境 | 実装状況 |
-|-------------|-------------|------|---------|
+| プロバイダー        | ファイルパス                                   | 環境                  | 実装状況    |
+| ------------------- | ---------------------------------------------- | --------------------- | ----------- |
 | **DevAuthProvider** | `app/infra/adapters/auth/dev_auth_provider.py` | local_dev, local_demo | ✅ 実装済み |
-| **VpnAuthProvider** | `app/infra/adapters/auth/vpn_auth_provider.py` | vm_stg | ✅ 実装済み |
-| **IapAuthProvider** | `app/infra/adapters/auth/iap_auth_provider.py` | vm_prod | ✅ 実装済み |
+| **VpnAuthProvider** | `app/infra/adapters/auth/vpn_auth_provider.py` | vm_stg                | ✅ 実装済み |
+| **IapAuthProvider** | `app/infra/adapters/auth/iap_auth_provider.py` | vm_prod               | ✅ 実装済み |
 
 #### 1.2 依存性注入の構造
 
 ```
 app/deps.py
-  └─ get_auth_provider() 
+  └─ get_auth_provider()
        ├─ AUTH_MODE=dummy → DevAuthProvider
        ├─ AUTH_MODE=vpn_dummy → VpnAuthProvider
        └─ AUTH_MODE=iap → IapAuthProvider
@@ -65,10 +65,12 @@ class AuthUser:
 #### 2.1 `/auth/me` エンドポイントのドキュメント更新
 
 **app/api/routers/auth.py**:
+
 - API ドキュメント（OpenAPI）を `AUTH_MODE` ベースの説明に更新
 - 環境別のレスポンス例を追加（dev/stg/prod）
 
 **変更前**:
+
 ```python
 description="""
 認証方式（Dev / IAP）は環境変数 IAP_ENABLED で切り替え可能です。
@@ -78,17 +80,18 @@ description="""
 ```
 
 **変更後**:
+
 ```python
 description="""
 **認証方式は AUTH_MODE 環境変数で切り替え可能です：**
 
 - `AUTH_MODE=dummy`: 固定の開発用ユーザーを返す（DevAuthProvider）
   - 使用環境: local_dev, local_demo
-  
+
 - `AUTH_MODE=vpn_dummy`: VPN経由の固定ユーザーを返す（VpnAuthProvider）
   - 使用環境: vm_stg（Tailscale/VPN経由）
   - VPN_USER_EMAIL, VPN_USER_NAME 環境変数で設定
-  
+
 - `AUTH_MODE=iap`: Google Cloud IAP の JWT を検証（IapAuthProvider）
   - 使用環境: vm_prod（本番環境）
   - IAP_AUDIENCE 環境変数に正しい audience 値の設定が必須
@@ -98,6 +101,7 @@ description="""
 #### 2.2 各プロバイダーのモジュールドキュメント更新
 
 **DevAuthProvider** (`dev_auth_provider.py`):
+
 ```python
 """
 【環境設定】
@@ -111,6 +115,7 @@ description="""
 ```
 
 **VpnAuthProvider** (`vpn_auth_provider.py`):
+
 ```python
 """
 【環境設定】
@@ -127,6 +132,7 @@ description="""
 ```
 
 **IapAuthProvider** (`iap_auth_provider.py`):
+
 ```python
 """
 【環境設定】
@@ -149,6 +155,7 @@ description="""
 ### 3.1 環境別の認証フロー
 
 #### **local_dev / local_demo** (AUTH_MODE=dummy)
+
 ```
 1. リクエスト → GET /auth/me
 2. deps.py: get_auth_provider() → DevAuthProvider
@@ -163,6 +170,7 @@ description="""
 ```
 
 #### **vm_stg** (AUTH_MODE=vpn_dummy)
+
 ```
 1. リクエスト → GET /auth/me (VPN/Tailscale 経由)
 2. deps.py: get_auth_provider() → VpnAuthProvider
@@ -177,6 +185,7 @@ description="""
 ```
 
 #### **vm_prod** (AUTH_MODE=iap)
+
 ```
 1. リクエスト → GET /auth/me (LB + IAP 経由)
    ├─ Header: X-Goog-IAP-JWT-Assertion: <JWT>
@@ -197,24 +206,26 @@ description="""
 
 ### 3.2 セキュリティチェックポイント
 
-| チェック項目 | 実装場所 | タイミング |
-|-------------|---------|----------|
-| **STAGE=prod で AUTH_MODE≠iap** | `deps.py:get_auth_provider()` | 起動時（初回呼び出し） |
-| **STAGE=prod で IAP_AUDIENCE 未設定** | `deps.py:get_auth_provider()` | 起動時（初回呼び出し） |
-| **JWT 署名検証** | `IapAuthProvider.get_current_user()` | リクエスト毎 |
-| **メールドメインチェック** | `IapAuthProvider.get_current_user()` | リクエスト毎 |
+| チェック項目                          | 実装場所                             | タイミング             |
+| ------------------------------------- | ------------------------------------ | ---------------------- |
+| **STAGE=prod で AUTH_MODE≠iap**       | `deps.py:get_auth_provider()`        | 起動時（初回呼び出し） |
+| **STAGE=prod で IAP_AUDIENCE 未設定** | `deps.py:get_auth_provider()`        | 起動時（初回呼び出し） |
+| **JWT 署名検証**                      | `IapAuthProvider.get_current_user()` | リクエスト毎           |
+| **メールドメインチェック**            | `IapAuthProvider.get_current_user()` | リクエスト毎           |
 
 ---
 
 ## 4. 変更ファイル一覧
 
 ### バックエンドコード
+
 - ✏️ `app/backend/core_api/app/api/routers/auth.py` - `/auth/me` エンドポイントのドキュメント更新
 - ✏️ `app/backend/core_api/app/infra/adapters/auth/dev_auth_provider.py` - モジュールドキュメント更新
 - ✏️ `app/backend/core_api/app/infra/adapters/auth/vpn_auth_provider.py` - モジュールドキュメント更新
 - ✏️ `app/backend/core_api/app/infra/adapters/auth/iap_auth_provider.py` - モジュールドキュメント更新
 
 ### ドキュメント
+
 - 📄 `docs/refactoring/STEP3_auth_provider_documentation.md` - 本ドキュメント
 
 ---
@@ -224,12 +235,14 @@ description="""
 ### ✅ 確認が必要な項目
 
 - [ ] **GET /auth/me のレスポンス確認（local_dev）**
+
   ```bash
   curl http://localhost:8003/auth/me
   # 期待: {"email": "<DEV_USER_EMAIL>", "display_name": "<DEV_USER_NAME>", ...}
   ```
 
 - [ ] **GET /auth/me のレスポンス確認（vm_stg）**
+
   ```bash
   # VPN_USER_EMAIL を secrets/.env.vm_stg.secrets に設定
   curl https://stg.sanbou-app.jp/auth/me
@@ -237,6 +250,7 @@ description="""
   ```
 
 - [ ] **GET /auth/me のレスポンス確認（vm_prod）**
+
   ```bash
   # IAP 経由でアクセス
   curl https://sanbou-app.jp/auth/me
@@ -244,6 +258,7 @@ description="""
   ```
 
 - [ ] **OpenAPI ドキュメントの確認**
+
   - http://localhost:8003/docs にアクセス
   - `/auth/me` エンドポイントのドキュメントが更新されていることを確認
 
@@ -258,24 +273,24 @@ description="""
 
 ### ✅ Clean Architecture への準拠
 
-| レイヤー | 実装 | 評価 |
-|---------|------|------|
-| **Domain** | `core/domain/auth/entities.py` | ✅ 不変オブジェクト、インフラ非依存 |
-| **UseCase** | `core/usecases/auth/get_current_user.py` | ✅ プロバイダーへの委譲のみ、ビジネスロジックなし |
-| **Ports** | `core/ports/auth/auth_provider.py` | ✅ インターフェース定義 |
-| **Adapters** | `infra/adapters/auth/*_provider.py` | ✅ 各認証方式の具体実装 |
-| **DI** | `deps.py`, `config/di_providers.py` | ✅ 環境変数ベースの切り替え |
-| **API** | `api/routers/auth.py` | ✅ UseCase への委譲のみ |
+| レイヤー     | 実装                                     | 評価                                              |
+| ------------ | ---------------------------------------- | ------------------------------------------------- |
+| **Domain**   | `core/domain/auth/entities.py`           | ✅ 不変オブジェクト、インフラ非依存               |
+| **UseCase**  | `core/usecases/auth/get_current_user.py` | ✅ プロバイダーへの委譲のみ、ビジネスロジックなし |
+| **Ports**    | `core/ports/auth/auth_provider.py`       | ✅ インターフェース定義                           |
+| **Adapters** | `infra/adapters/auth/*_provider.py`      | ✅ 各認証方式の具体実装                           |
+| **DI**       | `deps.py`, `config/di_providers.py`      | ✅ 環境変数ベースの切り替え                       |
+| **API**      | `api/routers/auth.py`                    | ✅ UseCase への委譲のみ                           |
 
 ### ✅ SOLID 原則への準拠
 
-| 原則 | 評価 |
-|-----|------|
-| **単一責任原則 (SRP)** | ✅ 各プロバイダーは1つの認証方式のみを担当 |
-| **開放閉鎖原則 (OCP)** | ✅ 新しい認証方式の追加は既存コード変更なし（プロバイダー追加のみ） |
-| **リスコフの置換原則 (LSP)** | ✅ すべてのプロバイダーが IAuthProvider を実装 |
-| **インターフェース分離原則 (ISP)** | ✅ IAuthProvider は最小限のメソッドのみ定義 |
-| **依存性逆転原則 (DIP)** | ✅ UseCase はインターフェースに依存、具体実装に依存しない |
+| 原則                               | 評価                                                                |
+| ---------------------------------- | ------------------------------------------------------------------- |
+| **単一責任原則 (SRP)**             | ✅ 各プロバイダーは1つの認証方式のみを担当                          |
+| **開放閉鎖原則 (OCP)**             | ✅ 新しい認証方式の追加は既存コード変更なし（プロバイダー追加のみ） |
+| **リスコフの置換原則 (LSP)**       | ✅ すべてのプロバイダーが IAuthProvider を実装                      |
+| **インターフェース分離原則 (ISP)** | ✅ IAuthProvider は最小限のメソッドのみ定義                         |
+| **依存性逆転原則 (DIP)**           | ✅ UseCase はインターフェースに依存、具体実装に依存しない           |
 
 ---
 
@@ -305,16 +320,18 @@ description="""
 ✅ 既存の認証プロバイダー実装を確認（適切な Clean Architecture 構造を確認）  
 ✅ `/auth/me` エンドポイントのドキュメントを AUTH_MODE ベースに更新  
 ✅ 各プロバイダーのモジュールドキュメントに環境別の使い分けを明記  
-✅ セキュリティ要件を明確化（本番環境での強制チェック）  
+✅ セキュリティ要件を明確化（本番環境での強制チェック）
 
 ### 発見事項
 
 1. **既存実装は既に適切な構造**:
+
    - Clean Architecture に沿った責務分離
    - SOLID 原則への準拠
    - 環境変数ベースの柔軟な切り替え
 
 2. **ドキュメントの古さを解消**:
+
    - `IAP_ENABLED` ベースの説明 → `AUTH_MODE` ベースに更新
    - 環境別の設定方法を明確化
 
@@ -327,6 +344,7 @@ description="""
 ## 付録: 環境変数設定例
 
 ### local_dev (.env.local_dev)
+
 ```bash
 STAGE=dev
 AUTH_MODE=dummy
@@ -334,6 +352,7 @@ DEBUG=true
 ```
 
 ### vm_stg (.env.vm_stg + secrets/.env.vm_stg.secrets)
+
 ```bash
 # .env.vm_stg
 STAGE=stg
@@ -347,6 +366,7 @@ VPN_USER_NAME=<YOUR_VPN_NAME>
 ```
 
 ### vm_prod (.env.vm_prod + secrets/.env.vm_prod.secrets)
+
 ```bash
 # .env.vm_prod
 STAGE=prod
@@ -358,4 +378,3 @@ DEBUG=false
 IAP_AUDIENCE=/projects/YOUR_PROJECT_NUMBER/global/backendServices/YOUR_SERVICE_ID
 ALLOWED_EMAIL_DOMAIN=honest-recycle.co.jp
 ```
-

@@ -5,13 +5,13 @@ Revises: 20251127_140000000
 Create Date: 2025-11-28 07:08:20.328688
 
 """
-from alembic import op
-import sqlalchemy as sa
 
+import sqlalchemy as sa
+from alembic import op
 
 # revision identifiers, used by Alembic.
-revision = '20251128_160819394'
-down_revision = '20251127_140000000'
+revision = "20251128_160819394"
+down_revision = "20251127_140000000"
 branch_labels = None
 depends_on = None
 
@@ -130,6 +130,7 @@ CREATE OR REPLACE VIEW stg.v_active_shogun_flash_yard AS
   WHERE is_deleted = false;
 """
 
+
 def upgrade() -> None:
     # Drop views
     op.execute("DROP VIEW IF EXISTS stg.v_active_shogun_final_shipment")
@@ -138,26 +139,38 @@ def upgrade() -> None:
     op.execute("DROP VIEW IF EXISTS stg.v_active_shogun_flash_yard")
 
     # Alter columns
-    op.alter_column('shogun_final_shipment', 'shipment_no',
-               existing_type=sa.Text(),
-               type_=sa.Integer(),
-               postgresql_using='shipment_no::integer',
-               schema='stg')
-    op.alter_column('shogun_flash_shipment', 'shipment_no',
-               existing_type=sa.Text(),
-               type_=sa.Integer(),
-               postgresql_using='shipment_no::integer',
-               schema='stg')
-    op.alter_column('shogun_final_yard', 'slip_no',
-               existing_type=sa.Text(),
-               type_=sa.Integer(),
-               postgresql_using='slip_no::integer',
-               schema='stg')
-    op.alter_column('shogun_flash_yard', 'slip_no',
-               existing_type=sa.Text(),
-               type_=sa.Integer(),
-               postgresql_using='slip_no::integer',
-               schema='stg')
+    op.alter_column(
+        "shogun_final_shipment",
+        "shipment_no",
+        existing_type=sa.Text(),
+        type_=sa.Integer(),
+        postgresql_using="shipment_no::integer",
+        schema="stg",
+    )
+    op.alter_column(
+        "shogun_flash_shipment",
+        "shipment_no",
+        existing_type=sa.Text(),
+        type_=sa.Integer(),
+        postgresql_using="shipment_no::integer",
+        schema="stg",
+    )
+    op.alter_column(
+        "shogun_final_yard",
+        "slip_no",
+        existing_type=sa.Text(),
+        type_=sa.Integer(),
+        postgresql_using="slip_no::integer",
+        schema="stg",
+    )
+    op.alter_column(
+        "shogun_flash_yard",
+        "slip_no",
+        existing_type=sa.Text(),
+        type_=sa.Integer(),
+        postgresql_using="slip_no::integer",
+        schema="stg",
+    )
 
     # Recreate views
     op.execute(v_active_shogun_final_shipment)
@@ -174,22 +187,34 @@ def downgrade() -> None:
     op.execute("DROP VIEW IF EXISTS stg.v_active_shogun_flash_yard")
 
     # Revert columns
-    op.alter_column('shogun_final_shipment', 'shipment_no',
-               existing_type=sa.Integer(),
-               type_=sa.Text(),
-               schema='stg')
-    op.alter_column('shogun_flash_shipment', 'shipment_no',
-               existing_type=sa.Integer(),
-               type_=sa.Text(),
-               schema='stg')
-    op.alter_column('shogun_final_yard', 'slip_no',
-               existing_type=sa.Integer(),
-               type_=sa.Text(),
-               schema='stg')
-    op.alter_column('shogun_flash_yard', 'slip_no',
-               existing_type=sa.Integer(),
-               type_=sa.Text(),
-               schema='stg')
+    op.alter_column(
+        "shogun_final_shipment",
+        "shipment_no",
+        existing_type=sa.Integer(),
+        type_=sa.Text(),
+        schema="stg",
+    )
+    op.alter_column(
+        "shogun_flash_shipment",
+        "shipment_no",
+        existing_type=sa.Integer(),
+        type_=sa.Text(),
+        schema="stg",
+    )
+    op.alter_column(
+        "shogun_final_yard",
+        "slip_no",
+        existing_type=sa.Integer(),
+        type_=sa.Text(),
+        schema="stg",
+    )
+    op.alter_column(
+        "shogun_flash_yard",
+        "slip_no",
+        existing_type=sa.Integer(),
+        type_=sa.Text(),
+        schema="stg",
+    )
 
     # Recreate views
     op.execute(v_active_shogun_final_shipment)

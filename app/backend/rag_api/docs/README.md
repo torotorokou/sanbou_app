@@ -88,6 +88,7 @@ uvicorn app.main:app --reload --port 8007
 ### 環境変数
 
 主要な環境変数:
+
 - `OPENAI_API_KEY` - OpenAI API キー
 - `OPENAI_MODEL` - 使用するGPTモデル
 - `VECTOR_DB_PATH` - ベクトルDB保存先
@@ -106,9 +107,11 @@ uvicorn app.main:app --reload --port 8007
 ## ユーティリティ
 
 ### チャンク処理
+
 - `chunk_utils.py`: チャンク分割ユーティリティ
 
 ### ファイル処理
+
 - `file_utils.py`: ファイル操作
 - `utils.py`: 汎用ユーティリティ
 

@@ -11,7 +11,9 @@ import { axisLabel } from '../../shared/model/metrics';
 
 export interface ExportMenuProps {
   exportOptions: ExportOptions;
-  onExportOptionsChange: (options: ExportOptions | ((prev: ExportOptions) => ExportOptions)) => void;
+  onExportOptionsChange: (
+    options: ExportOptions | ((prev: ExportOptions) => ExportOptions)
+  ) => void;
   axB: Mode;
   axC: Mode;
 }
@@ -71,7 +73,10 @@ export const createExportMenu = (props: ExportMenuProps): MenuProps['items'] => 
             size="small"
             checked={exportOptions.excludeZero}
             onChange={(checked) =>
-              onExportOptionsChange((prev) => ({ ...prev, excludeZero: checked }))
+              onExportOptionsChange((prev) => ({
+                ...prev,
+                excludeZero: checked,
+              }))
             }
           />
           <span>0実績を除外する（Excel負荷対策）</span>

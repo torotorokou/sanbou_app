@@ -1,9 +1,9 @@
-import React from "react";
-import ReportManagePageLayout from "./ReportManagePageLayout";
+import React from 'react';
+import ReportManagePageLayout from './ReportManagePageLayout';
 
 /**
  * Report Management Page
- * 
+ *
  * FSD構造における統合ページコンポーネント
  * 各feature配下のコンポーネントを集約して表示
  */

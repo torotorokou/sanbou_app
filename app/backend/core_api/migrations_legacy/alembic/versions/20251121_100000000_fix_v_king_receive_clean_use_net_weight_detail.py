@@ -21,9 +21,8 @@ Revision ID: 20251121_100000000
 Revises: 20251120_200000000
 Create Date: 2025-11-21 10:00:00.000000
 """
-from alembic import op
-import sqlalchemy as sa
 
+from alembic import op
 
 revision = "20251121_100000000"
 down_revision = "20251120_200000000"
@@ -37,10 +36,11 @@ def upgrade() -> None:
     - net_weight → net_weight_detail に変更
     - フィルタ条件も net_weight_detail を使用
     """
-    
+
     print("[stg.v_king_receive_clean] Fixing VIEW to use net_weight_detail column...")
-    
-    op.execute("""
+
+    op.execute(
+        """
         CREATE OR REPLACE VIEW stg.v_king_receive_clean AS
         SELECT
           make_date(
@@ -58,8 +58,9 @@ def upgrade() -> None:
           AND k.invoice_date::text ~ '^[0-9]{4}[-/][0-9]{2}[-/][0-9]{2}$'::text
           AND split_part(replace(k.invoice_date::text, '/'::text, '-'::text), '-'::text, 2)::integer BETWEEN 1 AND 12
           AND split_part(replace(k.invoice_date::text, '/'::text, '-'::text), '-'::text, 3)::integer BETWEEN 1 AND 31;
-    """)
-    
+    """
+    )
+
     print("[ok] stg.v_king_receive_clean now uses net_weight_detail column correctly")
 
 
@@ -67,10 +68,13 @@ def downgrade() -> None:
     """
     元の（誤った）定義に戻す: net_weight AS net_weight_detail
     """
-    
-    print("[stg.v_king_receive_clean] Reverting to old definition (net_weight AS net_weight_detail)...")
-    
-    op.execute("""
+
+    print(
+        "[stg.v_king_receive_clean] Reverting to old definition (net_weight AS net_weight_detail)..."
+    )
+
+    op.execute(
+        """
         CREATE OR REPLACE VIEW stg.v_king_receive_clean AS
         SELECT
           make_date(
@@ -88,6 +92,7 @@ def downgrade() -> None:
           AND k.invoice_date::text ~ '^[0-9]{4}[-/][0-9]{2}[-/][0-9]{2}$'::text
           AND split_part(replace(k.invoice_date::text, '/'::text, '-'::text), '-'::text, 2)::integer BETWEEN 1 AND 12
           AND split_part(replace(k.invoice_date::text, '/'::text, '-'::text), '-'::text, 3)::integer BETWEEN 1 AND 31;
-    """)
-    
+    """
+    )
+
     print("[ok] stg.v_king_receive_clean reverted to old definition")

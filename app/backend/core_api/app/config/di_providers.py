@@ -10,28 +10,62 @@ DI Providers - Dependency Injection Container
   - 環境差分（debug/raw、flash/final）をここで吸収
   - SET LOCAL search_path によるスキーマ切替を活用
 """
+
 import os
+
 from fastapi import Depends
-from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from backend_shared.application.logging import get_module_logger, create_log_context
-from backend_shared.db.names import (
-    T_SHOGUN_FINAL_RECEIVE,
-    T_SHOGUN_FINAL_YARD,
-    T_SHOGUN_FINAL_SHIPMENT,
+from app.core.ports.notification_port import (
+    NotificationOutboxPort,
+    NotificationPreferencePort,
+    NotificationSenderPort,
+    RecipientResolverPort,
+)
+from app.core.usecases.notification.dispatch_pending_notifications_uc import (
+    DispatchPendingNotificationsUseCase,
+)
+from app.core.usecases.notification.enqueue_notifications_uc import (
+    EnqueueNotificationsUseCase,
 )
 from app.deps import get_db
-from app.infra.adapters.upload.shogun_csv_repository import ShogunCsvRepository
-from app.infra.adapters.upload.raw_data_repository import RawDataRepository
-from app.infra.adapters.materialized_view.materialized_view_refresher import MaterializedViewRefresher
-from app.infra.adapters.dashboard.dashboard_target_repository import DashboardTargetRepository
+from app.infra.adapters.dashboard.dashboard_target_repository import (
+    DashboardTargetRepository,
+)
+from app.infra.adapters.forecast.forecast_query_repository import (
+    ForecastQueryRepository,
+)
 from app.infra.adapters.forecast.job_repository import JobRepository
-from app.infra.adapters.forecast.forecast_query_repository import ForecastQueryRepository
-from app.infra.clients.rag_client import RAGClient
+from app.infra.adapters.materialized_view.materialized_view_refresher import (
+    MaterializedViewRefresher,
+)
+from app.infra.adapters.notification.db_outbox_adapter import (
+    DbNotificationOutboxAdapter,
+)
+from app.infra.adapters.notification.dummy_resolver_adapter import (
+    DummyRecipientResolverAdapter,
+)
+from app.infra.adapters.notification.in_memory_outbox_adapter import (
+    InMemoryNotificationOutboxAdapter,
+)
+from app.infra.adapters.notification.in_memory_preference_adapter import (
+    InMemoryNotificationPreferenceAdapter,
+)
+from app.infra.adapters.notification.noop_sender_adapter import (
+    NoopNotificationSenderAdapter,
+)
+from app.infra.adapters.upload.raw_data_repository import RawDataRepository
+from app.infra.adapters.upload.shogun_csv_repository import ShogunCsvRepository
+from app.infra.clients.ai_client import AIClient
 from app.infra.clients.ledger_client import LedgerClient
 from app.infra.clients.manual_client import ManualClient
-from app.infra.clients.ai_client import AIClient
+from app.infra.clients.rag_client import RAGClient
+from backend_shared.application.logging import get_module_logger
+from backend_shared.db.names import (
+    T_SHOGUN_FINAL_RECEIVE,
+    T_SHOGUN_FINAL_SHIPMENT,
+    T_SHOGUN_FINAL_YARD,
+)
 
 logger = get_module_logger(__name__)
 
@@ -100,12 +134,15 @@ def get_repo_raw_final(db: Session = Depends(get_db)) -> ShogunCsvRepository:
     )
 
 
+from app.core.usecases.upload.upload_shogun_csv_uc import UploadShogunCsvUseCase
+
 # ========================================================================
 # UseCase Providers
 # ========================================================================
-from app.core.usecases.upload.upload_shogun_csv_uc import UploadShogunCsvUseCase
 from backend_shared.config.config_loader import ShogunCsvConfigLoader
-from backend_shared.core.usecases.csv_validator.csv_upload_validator_api import CSVValidationResponder
+from backend_shared.core.usecases.csv_validator.csv_upload_validator_api import (
+    CSVValidationResponder,
+)
 
 # CSV設定とバリデーターの初期化（アプリケーションスコープで共有）
 _csv_config = ShogunCsvConfigLoader()
@@ -125,7 +162,7 @@ def get_raw_data_repo(db: Session = Depends(get_db)) -> RawDataRepository:
 def get_mv_refresher(db: Session = Depends(get_db)) -> MaterializedViewRefresher:
     """
     MaterializedViewRefresher提供
-    
+
     マテリアライズドビュー更新専用リポジトリ。
     CSVアップロード成功時にMVを自動更新するために使用。
     """
@@ -136,7 +173,7 @@ def get_uc_default(
     raw_repo: ShogunCsvRepository = Depends(get_repo_raw_final),
     stg_repo: ShogunCsvRepository = Depends(get_repo_stg_final),
     raw_data_repo: RawDataRepository = Depends(get_raw_data_repo),
-    mv_refresher: MaterializedViewRefresher = Depends(get_mv_refresher)
+    mv_refresher: MaterializedViewRefresher = Depends(get_mv_refresher),
 ) -> UploadShogunCsvUseCase:
     """デフォルト用のUploadShogunCsvUseCase (raw.shogun_final_receive + stg.shogun_final_receive)"""
     return UploadShogunCsvUseCase(
@@ -153,7 +190,7 @@ def get_uc_flash(
     raw_repo: ShogunCsvRepository = Depends(get_repo_raw_flash),
     stg_repo: ShogunCsvRepository = Depends(get_repo_stg_flash),
     raw_data_repo: RawDataRepository = Depends(get_raw_data_repo),
-    mv_refresher: MaterializedViewRefresher = Depends(get_mv_refresher)
+    mv_refresher: MaterializedViewRefresher = Depends(get_mv_refresher),
 ) -> UploadShogunCsvUseCase:
     """Flash用のUploadShogunCsvUseCase (raw.shogun_flash_receive + stg.shogun_flash_receive)"""
     return UploadShogunCsvUseCase(
@@ -170,7 +207,7 @@ def get_uc_stg_final(
     raw_repo: ShogunCsvRepository = Depends(get_repo_raw_final),
     stg_repo: ShogunCsvRepository = Depends(get_repo_stg_final),
     raw_data_repo: RawDataRepository = Depends(get_raw_data_repo),
-    mv_refresher: MaterializedViewRefresher = Depends(get_mv_refresher)
+    mv_refresher: MaterializedViewRefresher = Depends(get_mv_refresher),
 ) -> UploadShogunCsvUseCase:
     """Final用のUploadShogunCsvUseCase (raw.*_shogun_final + stg.*_shogun_final)"""
     return UploadShogunCsvUseCase(
@@ -189,13 +226,15 @@ def get_uc_stg_final(
 from app.core.usecases.dashboard.build_target_card_uc import BuildTargetCardUseCase
 
 
-def get_dashboard_target_repo(db: Session = Depends(get_db)) -> DashboardTargetRepository:
+def get_dashboard_target_repo(
+    db: Session = Depends(get_db),
+) -> DashboardTargetRepository:
     """DashboardTargetRepository提供"""
     return DashboardTargetRepository(db)
 
 
 def get_build_target_card_uc(
-    repo: DashboardTargetRepository = Depends(get_dashboard_target_repo)
+    repo: DashboardTargetRepository = Depends(get_dashboard_target_repo),
 ) -> BuildTargetCardUseCase:
     """BuildTargetCardUseCase提供"""
     return BuildTargetCardUseCase(query=repo)
@@ -222,21 +261,21 @@ def get_forecast_query_repo(db: Session = Depends(get_db)) -> ForecastQueryRepos
 
 
 def get_create_forecast_job_uc(
-    job_repo: JobRepository = Depends(get_job_repo)
+    job_repo: JobRepository = Depends(get_job_repo),
 ) -> CreateForecastJobUseCase:
     """CreateForecastJobUseCase提供"""
     return CreateForecastJobUseCase(job_repo=job_repo)
 
 
 def get_forecast_job_status_uc(
-    job_repo: JobRepository = Depends(get_job_repo)
+    job_repo: JobRepository = Depends(get_job_repo),
 ) -> GetForecastJobStatusUseCase:
     """GetForecastJobStatusUseCase提供"""
     return GetForecastJobStatusUseCase(job_repo=job_repo)
 
 
 def get_predictions_uc(
-    query_repo: ForecastQueryRepository = Depends(get_forecast_query_repo)
+    query_repo: ForecastQueryRepository = Depends(get_forecast_query_repo),
 ) -> GetPredictionsUseCase:
     """GetPredictionsUseCase提供"""
     return GetPredictionsUseCase(query_repo=query_repo)
@@ -247,11 +286,11 @@ def get_predictions_uc(
 # ========================================================================
 from app.core.usecases.external.external_api_uc import (
     AskRAGUseCase,
+    ClassifyTextUseCase,
     GenerateLedgerReportUseCase,
     GenerateReportUseCase,
-    ListManualsUseCase,
     GetManualUseCase,
-    ClassifyTextUseCase,
+    ListManualsUseCase,
 )
 
 
@@ -281,44 +320,47 @@ def get_ask_rag_uc(client: RAGClient = Depends(get_rag_client)) -> AskRAGUseCase
 
 
 def get_ledger_report_uc(
-    client: LedgerClient = Depends(get_ledger_client)
+    client: LedgerClient = Depends(get_ledger_client),
 ) -> GenerateLedgerReportUseCase:
     """GenerateLedgerReportUseCase提供"""
     return GenerateLedgerReportUseCase(ledger_client=client)
 
 
 def get_list_manuals_uc(
-    client: ManualClient = Depends(get_manual_client)
+    client: ManualClient = Depends(get_manual_client),
 ) -> ListManualsUseCase:
     """ListManualsUseCase提供"""
     return ListManualsUseCase(manual_client=client)
 
 
 def get_get_manual_uc(
-    client: ManualClient = Depends(get_manual_client)
+    client: ManualClient = Depends(get_manual_client),
 ) -> GetManualUseCase:
     """GetManualUseCase提供"""
     return GetManualUseCase(manual_client=client)
 
 
 def get_generate_report_uc(
-    client: LedgerClient = Depends(get_ledger_client)
+    client: LedgerClient = Depends(get_ledger_client),
 ) -> GenerateReportUseCase:
     """GenerateReportUseCase提供"""
     return GenerateReportUseCase(ledger_client=client)
 
 
-def get_classify_text_uc(client: AIClient = Depends(get_ai_client)) -> ClassifyTextUseCase:
+def get_classify_text_uc(
+    client: AIClient = Depends(get_ai_client),
+) -> ClassifyTextUseCase:
     """ClassifyTextUseCase提供"""
     return ClassifyTextUseCase(ai_client=client)
 
+
+from app.core.ports.inbound_repository_port import InboundRepository
 
 # ========================================================================
 # Inbound UseCase Providers
 # ========================================================================
 from app.core.usecases.inbound.get_inbound_daily_uc import GetInboundDailyUseCase
 from app.infra.adapters.inbound.inbound_repository import InboundRepositoryImpl
-from app.core.ports.inbound_repository_port import InboundRepository
 
 
 def get_inbound_repo(db: Session = Depends(get_db)) -> InboundRepository:
@@ -327,7 +369,7 @@ def get_inbound_repo(db: Session = Depends(get_db)) -> InboundRepository:
 
 
 def get_inbound_daily_uc(
-    repo: InboundRepository = Depends(get_inbound_repo)
+    repo: InboundRepository = Depends(get_inbound_repo),
 ) -> GetInboundDailyUseCase:
     """GetInboundDailyUseCase提供"""
     return GetInboundDailyUseCase(query=repo)
@@ -346,7 +388,7 @@ def get_kpi_query_adapter(db: Session = Depends(get_db)) -> KPIQueryAdapter:
 
 
 def get_kpi_uc(
-    kpi_query: KPIQueryAdapter = Depends(get_kpi_query_adapter)
+    kpi_query: KPIQueryAdapter = Depends(get_kpi_query_adapter),
 ) -> KPIUseCase:
     """KPIUseCase提供"""
     return KPIUseCase(kpi_query=kpi_query)
@@ -359,26 +401,33 @@ from app.core.usecases.customer_churn import AnalyzeCustomerChurnUseCase
 from app.infra.adapters.customer_churn import CustomerChurnQueryAdapter
 
 
-def get_customer_churn_query_adapter(db: Session = Depends(get_db)) -> CustomerChurnQueryAdapter:
+def get_customer_churn_query_adapter(
+    db: Session = Depends(get_db),
+) -> CustomerChurnQueryAdapter:
     """CustomerChurnQueryAdapter提供"""
     return CustomerChurnQueryAdapter(db)
 
 
 def get_analyze_customer_churn_uc(
-    query_adapter: CustomerChurnQueryAdapter = Depends(get_customer_churn_query_adapter)
+    query_adapter: CustomerChurnQueryAdapter = Depends(get_customer_churn_query_adapter),
 ) -> AnalyzeCustomerChurnUseCase:
     """AnalyzeCustomerChurnUseCase提供"""
     return AnalyzeCustomerChurnUseCase(query_port=query_adapter)
 
 
+from app.core.usecases.sales_tree.export_csv_uc import ExportSalesTreeCSVUseCase
+from app.core.usecases.sales_tree.fetch_daily_series_uc import (
+    FetchSalesTreeDailySeriesUseCase,
+)
+from app.core.usecases.sales_tree.fetch_detail_lines_uc import (
+    FetchSalesTreeDetailLinesUseCase,
+)
+from app.core.usecases.sales_tree.fetch_pivot_uc import FetchSalesTreePivotUseCase
+
 # ========================================================================
 # Sales Tree UseCase Providers
 # ========================================================================
 from app.core.usecases.sales_tree.fetch_summary_uc import FetchSalesTreeSummaryUseCase
-from app.core.usecases.sales_tree.fetch_daily_series_uc import FetchSalesTreeDailySeriesUseCase
-from app.core.usecases.sales_tree.fetch_pivot_uc import FetchSalesTreePivotUseCase
-from app.core.usecases.sales_tree.export_csv_uc import ExportSalesTreeCSVUseCase
-from app.core.usecases.sales_tree.fetch_detail_lines_uc import FetchSalesTreeDetailLinesUseCase
 from app.infra.adapters.sales_tree.sales_tree_repository import SalesTreeRepository
 
 
@@ -388,35 +437,35 @@ def get_sales_tree_repo(db: Session = Depends(get_db)) -> SalesTreeRepository:
 
 
 def get_fetch_sales_tree_summary_uc(
-    repo: SalesTreeRepository = Depends(get_sales_tree_repo)
+    repo: SalesTreeRepository = Depends(get_sales_tree_repo),
 ) -> FetchSalesTreeSummaryUseCase:
     """FetchSalesTreeSummaryUseCase提供"""
     return FetchSalesTreeSummaryUseCase(query=repo)
 
 
 def get_fetch_sales_tree_daily_series_uc(
-    repo: SalesTreeRepository = Depends(get_sales_tree_repo)
+    repo: SalesTreeRepository = Depends(get_sales_tree_repo),
 ) -> FetchSalesTreeDailySeriesUseCase:
     """FetchSalesTreeDailySeriesUseCase提供"""
     return FetchSalesTreeDailySeriesUseCase(query=repo)
 
 
 def get_fetch_sales_tree_pivot_uc(
-    repo: SalesTreeRepository = Depends(get_sales_tree_repo)
+    repo: SalesTreeRepository = Depends(get_sales_tree_repo),
 ) -> FetchSalesTreePivotUseCase:
     """FetchSalesTreePivotUseCase提供"""
     return FetchSalesTreePivotUseCase(query=repo)
 
 
 def get_export_sales_tree_csv_uc(
-    repo: SalesTreeRepository = Depends(get_sales_tree_repo)
+    repo: SalesTreeRepository = Depends(get_sales_tree_repo),
 ) -> ExportSalesTreeCSVUseCase:
     """ExportSalesTreeCSVUseCase提供"""
     return ExportSalesTreeCSVUseCase(query=repo)
 
 
 def get_fetch_sales_tree_detail_lines_uc(
-    repo: SalesTreeRepository = Depends(get_sales_tree_repo)
+    repo: SalesTreeRepository = Depends(get_sales_tree_repo),
 ) -> FetchSalesTreeDetailLinesUseCase:
     """FetchSalesTreeDetailLinesUseCase提供"""
     return FetchSalesTreeDetailLinesUseCase(query=repo)
@@ -435,65 +484,71 @@ def get_calendar_repo(db: Session = Depends(get_db)) -> CalendarRepository:
 
 
 def get_calendar_month_uc(
-    repo: CalendarRepository = Depends(get_calendar_repo)
+    repo: CalendarRepository = Depends(get_calendar_repo),
 ) -> GetCalendarMonthUseCase:
     """GetCalendarMonthUseCase提供"""
     return GetCalendarMonthUseCase(query=repo)
 
 
+from app.core.usecases.upload.delete_upload_scope_uc import DeleteUploadScopeUseCase
+from app.core.usecases.upload.get_upload_calendar_detail_uc import (
+    GetUploadCalendarDetailUseCase,
+)
+from app.core.usecases.upload.get_upload_calendar_uc import GetUploadCalendarUseCase
+
 # ========================================================================
 # Upload Status UseCase Providers
 # ========================================================================
 from app.core.usecases.upload.get_upload_status_uc import GetUploadStatusUseCase
-from app.core.usecases.upload.get_upload_calendar_uc import GetUploadCalendarUseCase
-from app.core.usecases.upload.get_upload_calendar_detail_uc import GetUploadCalendarDetailUseCase
-from app.core.usecases.upload.delete_upload_scope_uc import DeleteUploadScopeUseCase
-from app.infra.adapters.upload.upload_calendar_query_adapter import UploadCalendarQueryAdapter
-
+from app.infra.adapters.upload.upload_calendar_query_adapter import (
+    UploadCalendarQueryAdapter,
+)
 
 # RawDataRepository は既に定義されているので、それを再利用
 # get_raw_data_repo() は既に定義済み（上部参照）
 
 
-def get_upload_calendar_query_adapter(db: Session = Depends(get_db)) -> UploadCalendarQueryAdapter:
+def get_upload_calendar_query_adapter(
+    db: Session = Depends(get_db),
+) -> UploadCalendarQueryAdapter:
     """UploadCalendarQueryAdapter提供"""
     return UploadCalendarQueryAdapter(db)
 
 
 def get_upload_status_uc(
-    repo: RawDataRepository = Depends(get_raw_data_repo)
+    repo: RawDataRepository = Depends(get_raw_data_repo),
 ) -> GetUploadStatusUseCase:
     """GetUploadStatusUseCase提供"""
     return GetUploadStatusUseCase(query=repo)
 
 
 def get_upload_calendar_uc(
-    repo: RawDataRepository = Depends(get_raw_data_repo)
+    repo: RawDataRepository = Depends(get_raw_data_repo),
 ) -> GetUploadCalendarUseCase:
     """GetUploadCalendarUseCase提供"""
     return GetUploadCalendarUseCase(query=repo)
 
 
 def get_upload_calendar_detail_uc(
-    query: UploadCalendarQueryAdapter = Depends(get_upload_calendar_query_adapter)
+    query: UploadCalendarQueryAdapter = Depends(get_upload_calendar_query_adapter),
 ) -> GetUploadCalendarDetailUseCase:
     """GetUploadCalendarDetailUseCase提供"""
     return GetUploadCalendarDetailUseCase(query=query)
 
 
 def get_delete_upload_scope_uc(
-    repo: RawDataRepository = Depends(get_raw_data_repo),
-    db: Session = Depends(get_db)
+    repo: RawDataRepository = Depends(get_raw_data_repo), db: Session = Depends(get_db)
 ) -> DeleteUploadScopeUseCase:
     """DeleteUploadScopeUseCase提供（MV更新機能付き）"""
     return DeleteUploadScopeUseCase(query=repo, db=db)
 
 
+from app.core.usecases.ingest.create_reservation_uc import CreateReservationUseCase
+
 # ========================================================================
 # Ingest UseCase Providers
 # ========================================================================
 from app.core.usecases.ingest.upload_ingest_csv_uc import UploadIngestCsvUseCase
-from app.core.usecases.ingest.create_reservation_uc import CreateReservationUseCase
 from app.infra.adapters.ingest.ingest_repository import IngestRepository
 
 
@@ -503,34 +558,36 @@ def get_ingest_repo(db: Session = Depends(get_db)) -> IngestRepository:
 
 
 def get_upload_ingest_csv_uc(
-    repo: IngestRepository = Depends(get_ingest_repo)
+    repo: IngestRepository = Depends(get_ingest_repo),
 ) -> UploadIngestCsvUseCase:
     """UploadIngestCsvUseCase提供"""
     return UploadIngestCsvUseCase(ingest_repo=repo)
 
 
 def get_create_reservation_uc(
-    repo: IngestRepository = Depends(get_ingest_repo)
+    repo: IngestRepository = Depends(get_ingest_repo),
 ) -> CreateReservationUseCase:
     """CreateReservationUseCase提供"""
     return CreateReservationUseCase(ingest_repo=repo)
 
 
+from app.core.ports.auth.auth_provider import IAuthProvider
+
 # ========================================================================
 # Auth UseCase Providers
 # ========================================================================
 from app.core.usecases.auth.get_current_user import GetCurrentUserUseCase
-from app.core.ports.auth.auth_provider import IAuthProvider
+
 # 認証プロバイダーは app.deps.get_auth_provider() を使用（AUTH_MODE ベース）
 from app.deps import get_auth_provider
 
 
 def get_get_current_user_usecase(
-    auth_provider: IAuthProvider = Depends(get_auth_provider)
+    auth_provider: IAuthProvider = Depends(get_auth_provider),
 ) -> GetCurrentUserUseCase:
     """
     GetCurrentUserUseCase提供
-    
+
     認証プロバイダーは app.deps.get_auth_provider() 経由で取得します。
     AUTH_MODE 環境変数に基づいて適切なプロバイダーを使用します：
     - AUTH_MODE=dummy: DevAuthProvider（開発環境）
@@ -540,11 +597,12 @@ def get_get_current_user_usecase(
     return GetCurrentUserUseCase(auth_provider=auth_provider)
 
 
+from app.config.settings import get_settings
+
 # ========================================================================
 # Health Check UseCase Providers
 # ========================================================================
 from app.core.usecases.health_check_uc import HealthCheckUseCase
-from app.config.settings import get_settings
 
 _settings = get_settings()
 
@@ -560,3 +618,85 @@ def get_health_check_usecase() -> HealthCheckUseCase:
     )
 
 
+# ========================================================================
+# Notification Infrastructure (InMemory/Noop)
+# ========================================================================
+# シングルトンで保持（プロセス内で共有）
+_notification_outbox_adapter: InMemoryNotificationOutboxAdapter | None = None
+_notification_sender_adapter: NoopNotificationSenderAdapter | None = None
+
+
+# ========================================================================
+# Notification Providers - 環境変数で切り替え可能
+# ========================================================================
+# USE_DB_NOTIFICATION_OUTBOX=true → DB-backed (本番)
+# USE_DB_NOTIFICATION_OUTBOX=false or 未設定 → InMemory (開発/テスト)
+
+# Singleton instances for InMemory adapters
+_notification_outbox_adapter: InMemoryNotificationOutboxAdapter | None = None
+_notification_sender_adapter: NoopNotificationSenderAdapter | None = None
+_notification_preference_adapter: InMemoryNotificationPreferenceAdapter | None = None
+_recipient_resolver_adapter: DummyRecipientResolverAdapter | None = None
+
+
+def get_notification_outbox_port(
+    db: Session = Depends(get_db),
+) -> NotificationOutboxPort:
+    """通知 Outbox Port 提供（環境変数で切り替え）"""
+    use_db = os.getenv("USE_DB_NOTIFICATION_OUTBOX", "false").lower() == "true"
+
+    if use_db:
+        # DB-backed adapter (production)
+        return DbNotificationOutboxAdapter(db)
+    else:
+        # InMemory adapter (development/test)
+        global _notification_outbox_adapter
+        if _notification_outbox_adapter is None:
+            _notification_outbox_adapter = InMemoryNotificationOutboxAdapter()
+        return _notification_outbox_adapter
+
+
+def get_notification_sender_port() -> NotificationSenderPort:
+    """通知 Sender Port 提供（Noop実装）"""
+    global _notification_sender_adapter
+    if _notification_sender_adapter is None:
+        _notification_sender_adapter = NoopNotificationSenderAdapter()
+    return _notification_sender_adapter
+
+
+def get_notification_preference_port() -> NotificationPreferencePort:
+    """通知許可 Preference Port 提供（InMemory実装）"""
+    global _notification_preference_adapter
+    if _notification_preference_adapter is None:
+        _notification_preference_adapter = InMemoryNotificationPreferenceAdapter()
+    return _notification_preference_adapter
+
+
+def get_recipient_resolver_port() -> RecipientResolverPort:
+    """recipient resolver Port 提供（Dummy実装）"""
+    global _recipient_resolver_adapter
+    if _recipient_resolver_adapter is None:
+        _recipient_resolver_adapter = DummyRecipientResolverAdapter()
+    return _recipient_resolver_adapter
+
+
+def get_enqueue_notifications_usecase(
+    outbox: NotificationOutboxPort = Depends(get_notification_outbox_port),
+) -> EnqueueNotificationsUseCase:
+    """通知登録 UseCase 提供"""
+    return EnqueueNotificationsUseCase(outbox=outbox)
+
+
+def get_dispatch_pending_notifications_usecase(
+    outbox: NotificationOutboxPort = Depends(get_notification_outbox_port),
+    sender: NotificationSenderPort = Depends(get_notification_sender_port),
+    preference: NotificationPreferencePort = Depends(get_notification_preference_port),
+    resolver: RecipientResolverPort = Depends(get_recipient_resolver_port),
+) -> DispatchPendingNotificationsUseCase:
+    """通知送信 UseCase 提供"""
+    return DispatchPendingNotificationsUseCase(
+        outbox=outbox,
+        sender=sender,
+        preference=preference,
+        resolver=resolver,
+    )

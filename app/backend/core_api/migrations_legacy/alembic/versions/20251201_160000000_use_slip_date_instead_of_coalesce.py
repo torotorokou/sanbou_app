@@ -24,13 +24,12 @@ Revises: 20251201_150000000
 Create Date: 2025-12-01 16:00:00.000000
 
 """
-from alembic import op
-import sqlalchemy as sa
 
+from alembic import op
 
 # revision identifiers, used by Alembic.
-revision = '20251201_160000000'
-down_revision = '20251201_150000000'
+revision = "20251201_160000000"
+down_revision = "20251201_150000000"
 branch_labels = None
 depends_on = None
 
@@ -39,17 +38,20 @@ def upgrade():
     """
     sales-tree 関連 VIEW で COALESCE(sales_date, slip_date) を slip_date に変更
     """
-    
+
     # ============================================================
     # 1. mart.v_sales_tree_detail_base の更新
     # ============================================================
     print("[mart.v_sales_tree_detail_base] Changing to use slip_date only...")
-    
-    op.execute("""
+
+    op.execute(
+        """
         DROP VIEW IF EXISTS mart.v_sales_tree_detail_base CASCADE;
-    """)
-    
-    op.execute("""
+    """
+    )
+
+    op.execute(
+        """
         CREATE VIEW mart.v_sales_tree_detail_base AS
         SELECT
             slip_date AS sales_date,
@@ -78,20 +80,24 @@ def upgrade():
         WHERE
             slip_date IS NOT NULL
             AND category_cd IN (1, 3);
-    """)
-    
-    op.execute("""
+    """
+    )
+
+    op.execute(
+        """
         GRANT SELECT ON mart.v_sales_tree_detail_base TO app_readonly;
-    """)
-    
+    """
+    )
+
     print("[mart.v_sales_tree_detail_base] Updated - now using slip_date only.")
-    
+
     # ============================================================
     # 1.5. mart.v_sales_tree_daily の再作成 (detail_base を参照)
     # ============================================================
     print("[mart.v_sales_tree_daily] Recreating view (references detail_base)...")
-    
-    op.execute("""
+
+    op.execute(
+        """
         CREATE VIEW mart.v_sales_tree_daily AS
         SELECT
             sales_date,
@@ -107,20 +113,24 @@ def upgrade():
             slip_no,
             category_cd
         FROM mart.v_sales_tree_detail_base;
-    """)
-    
-    op.execute("""
+    """
+    )
+
+    op.execute(
+        """
         GRANT SELECT ON mart.v_sales_tree_daily TO app_readonly;
-    """)
-    
+    """
+    )
+
     print("[mart.v_sales_tree_daily] Recreated - automatically uses slip_date via detail_base.")
-    
+
     # ============================================================
     # 1.6. mart.v_customer_sales_daily の再作成 (v_sales_tree_daily を参照)
     # ============================================================
     print("[mart.v_customer_sales_daily] Recreating view (references v_sales_tree_daily)...")
-    
-    op.execute("""
+
+    op.execute(
+        """
         CREATE VIEW mart.v_customer_sales_daily AS
         SELECT
             sales_date,
@@ -134,35 +144,45 @@ def upgrade():
             SUM(qty_kg) AS total_net_weight_kg
         FROM mart.v_sales_tree_daily v
         GROUP BY sales_date, customer_id;
-    """)
-    
-    op.execute("""
+    """
+    )
+
+    op.execute(
+        """
         GRANT SELECT ON mart.v_customer_sales_daily TO app_readonly;
-    """)
-    
+    """
+    )
+
     print("[mart.v_customer_sales_daily] Recreated successfully.")
-    
+
     # ============================================================
     # 2. mart.mv_sales_tree_daily の更新 (MATERIALIZED VIEW)
     # ============================================================
     print("[mart.mv_sales_tree_daily] Dropping and recreating with slip_date only...")
-    
+
     # インデックスを明示的に削除（CASCADE で削除されるが明示）
-    op.execute("""
+    op.execute(
+        """
         DROP INDEX IF EXISTS mart.idx_mv_sales_tree_daily_composite;
-    """)
-    
-    op.execute("""
+    """
+    )
+
+    op.execute(
+        """
         DROP INDEX IF EXISTS mart.idx_mv_sales_tree_daily_slip;
-    """)
-    
+    """
+    )
+
     # MATERIALIZED VIEW を削除
-    op.execute("""
+    op.execute(
+        """
         DROP MATERIALIZED VIEW IF EXISTS mart.mv_sales_tree_daily;
-    """)
-    
+    """
+    )
+
     # 新しい定義で再作成（slip_date ベース）
-    op.execute("""
+    op.execute(
+        """
         CREATE MATERIALIZED VIEW mart.mv_sales_tree_daily AS
         SELECT
             slip_date AS sales_date,
@@ -181,34 +201,42 @@ def upgrade():
           AND slip_date IS NOT NULL
           AND COALESCE(is_deleted, false) = false
         WITH NO DATA;
-    """)
-    
+    """
+    )
+
     # インデックスを再作成
     print("[mart.mv_sales_tree_daily] Recreating indexes...")
-    
-    op.execute("""
+
+    op.execute(
+        """
         CREATE INDEX idx_mv_sales_tree_daily_composite
         ON mart.mv_sales_tree_daily (sales_date, rep_id, customer_id, item_id);
-    """)
-    
-    op.execute("""
+    """
+    )
+
+    op.execute(
+        """
         CREATE INDEX idx_mv_sales_tree_daily_slip
         ON mart.mv_sales_tree_daily (sales_date, customer_id, slip_no);
-    """)
-    
+    """
+    )
+
     print("[mart.mv_sales_tree_daily] Updated - now using slip_date only.")
     print("[info] Run 'REFRESH MATERIALIZED VIEW mart.mv_sales_tree_daily;' to populate data.")
-    
+
     # ============================================================
     # 3. sandbox.v_sales_tree_detail_base の更新
     # ============================================================
     print("[sandbox.v_sales_tree_detail_base] Changing to use slip_date only...")
-    
-    op.execute("""
+
+    op.execute(
+        """
         DROP VIEW IF EXISTS sandbox.v_sales_tree_detail_base CASCADE;
-    """)
-    
-    op.execute("""
+    """
+    )
+
+    op.execute(
+        """
         CREATE VIEW sandbox.v_sales_tree_detail_base AS
         SELECT
             slip_date AS sales_date,
@@ -237,56 +265,66 @@ def upgrade():
         WHERE
             slip_date IS NOT NULL
             AND COALESCE(is_deleted, false) = false;
-    """)
-    
+    """
+    )
+
     print("[sandbox.v_sales_tree_detail_base] Updated - now using slip_date only.")
-    
+
     # ============================================================
     # 4. ref.v_sales_rep の再作成（CASCADE削除されたため）
     # ============================================================
     print("[ref.v_sales_rep] Recreating view (uses mart.v_sales_tree_detail_base)...")
-    
-    op.execute("""
+
+    op.execute(
+        """
         CREATE VIEW ref.v_sales_rep AS
         SELECT DISTINCT
             rep_id,
             rep_name
         FROM mart.v_sales_tree_detail_base
         ORDER BY rep_id;
-    """)
-    
-    op.execute("""
+    """
+    )
+
+    op.execute(
+        """
         GRANT SELECT ON ref.v_sales_rep TO app_readonly;
-    """)
-    
+    """
+    )
+
     print("[ref.v_sales_rep] Recreated successfully.")
-    
+
     # ============================================================
     # 5. ref.v_customer の再作成（CASCADE削除されたため）
     # ============================================================
     print("[ref.v_customer] Recreating view (uses mart.v_sales_tree_detail_base)...")
-    
-    op.execute("""
+
+    op.execute(
+        """
         CREATE VIEW ref.v_customer AS
         SELECT DISTINCT
             customer_id,
             customer_name
         FROM mart.v_sales_tree_detail_base
         ORDER BY customer_id;
-    """)
-    
-    op.execute("""
+    """
+    )
+
+    op.execute(
+        """
         GRANT SELECT ON ref.v_customer TO app_readonly;
-    """)
-    
+    """
+    )
+
     print("[ref.v_customer] Recreated successfully.")
-    
+
     # ============================================================
     # 6. ref.v_item の再作成（CASCADE削除されたため）
     # ============================================================
     print("[ref.v_item] Recreating view (uses mart.v_sales_tree_detail_base)...")
-    
-    op.execute("""
+
+    op.execute(
+        """
         CREATE VIEW ref.v_item AS
         SELECT DISTINCT
             item_id,
@@ -295,14 +333,17 @@ def upgrade():
             category_name
         FROM mart.v_sales_tree_detail_base
         ORDER BY item_id;
-    """)
-    
-    op.execute("""
+    """
+    )
+
+    op.execute(
+        """
         GRANT SELECT ON ref.v_item TO app_readonly;
-    """)
-    
+    """
+    )
+
     print("[ref.v_item] Recreated successfully.")
-    
+
     print("=" * 60)
     print("[OK] Migration complete - All views now use slip_date instead of COALESCE")
     print("=" * 60)
@@ -312,17 +353,20 @@ def downgrade():
     """
     sales-tree 関連 VIEW を COALESCE(sales_date, slip_date) に戻す
     """
-    
+
     # ============================================================
     # 1. mart.v_sales_tree_detail_base を元に戻す
     # ============================================================
     print("[mart.v_sales_tree_detail_base] Reverting to COALESCE(sales_date, slip_date)...")
-    
-    op.execute("""
+
+    op.execute(
+        """
         DROP VIEW IF EXISTS mart.v_sales_tree_detail_base CASCADE;
-    """)
-    
-    op.execute("""
+    """
+    )
+
+    op.execute(
+        """
         CREATE VIEW mart.v_sales_tree_detail_base AS
         SELECT
             COALESCE(sales_date, slip_date) AS sales_date,
@@ -351,20 +395,24 @@ def downgrade():
         WHERE
             COALESCE(sales_date, slip_date) IS NOT NULL
             AND category_cd IN (1, 3);
-    """)
-    
-    op.execute("""
+    """
+    )
+
+    op.execute(
+        """
         GRANT SELECT ON mart.v_sales_tree_detail_base TO app_readonly;
-    """)
-    
+    """
+    )
+
     print("[mart.v_sales_tree_detail_base] Reverted to COALESCE.")
-    
+
     # ============================================================
     # 1.5. mart.v_sales_tree_daily の再作成
     # ============================================================
     print("[mart.v_sales_tree_daily] Recreating view (references detail_base)...")
-    
-    op.execute("""
+
+    op.execute(
+        """
         CREATE VIEW mart.v_sales_tree_daily AS
         SELECT
             sales_date,
@@ -380,20 +428,24 @@ def downgrade():
             slip_no,
             category_cd
         FROM mart.v_sales_tree_detail_base;
-    """)
-    
-    op.execute("""
+    """
+    )
+
+    op.execute(
+        """
         GRANT SELECT ON mart.v_sales_tree_daily TO app_readonly;
-    """)
-    
+    """
+    )
+
     print("[mart.v_sales_tree_daily] Recreated with COALESCE via detail_base.")
-    
+
     # ============================================================
     # 1.6. mart.v_customer_sales_daily の再作成
     # ============================================================
     print("[mart.v_customer_sales_daily] Recreating view (references v_sales_tree_daily)...")
-    
-    op.execute("""
+
+    op.execute(
+        """
         CREATE VIEW mart.v_customer_sales_daily AS
         SELECT
             sales_date,
@@ -407,32 +459,42 @@ def downgrade():
             SUM(qty_kg) AS total_net_weight_kg
         FROM mart.v_sales_tree_daily v
         GROUP BY sales_date, customer_id;
-    """)
-    
-    op.execute("""
+    """
+    )
+
+    op.execute(
+        """
         GRANT SELECT ON mart.v_customer_sales_daily TO app_readonly;
-    """)
-    
+    """
+    )
+
     print("[mart.v_customer_sales_daily] Recreated with COALESCE via detail_base.")
-    
+
     # ============================================================
     # 2. mart.mv_sales_tree_daily を元に戻す
     # ============================================================
     print("[mart.mv_sales_tree_daily] Reverting to COALESCE(sales_date, slip_date)...")
-    
-    op.execute("""
+
+    op.execute(
+        """
         DROP INDEX IF EXISTS mart.idx_mv_sales_tree_daily_composite;
-    """)
-    
-    op.execute("""
+    """
+    )
+
+    op.execute(
+        """
         DROP INDEX IF EXISTS mart.idx_mv_sales_tree_daily_slip;
-    """)
-    
-    op.execute("""
+    """
+    )
+
+    op.execute(
+        """
         DROP MATERIALIZED VIEW IF EXISTS mart.mv_sales_tree_daily;
-    """)
-    
-    op.execute("""
+    """
+    )
+
+    op.execute(
+        """
         CREATE MATERIALIZED VIEW mart.mv_sales_tree_daily AS
         SELECT
             COALESCE(sales_date, slip_date) AS sales_date,
@@ -451,30 +513,38 @@ def downgrade():
           AND COALESCE(sales_date, slip_date) IS NOT NULL
           AND COALESCE(is_deleted, false) = false
         WITH NO DATA;
-    """)
-    
-    op.execute("""
+    """
+    )
+
+    op.execute(
+        """
         CREATE INDEX idx_mv_sales_tree_daily_composite
         ON mart.mv_sales_tree_daily (sales_date, rep_id, customer_id, item_id);
-    """)
-    
-    op.execute("""
+    """
+    )
+
+    op.execute(
+        """
         CREATE INDEX idx_mv_sales_tree_daily_slip
         ON mart.mv_sales_tree_daily (sales_date, customer_id, slip_no);
-    """)
-    
+    """
+    )
+
     print("[mart.mv_sales_tree_daily] Reverted to COALESCE.")
-    
+
     # ============================================================
     # 3. sandbox.v_sales_tree_detail_base を元に戻す
     # ============================================================
     print("[sandbox.v_sales_tree_detail_base] Reverting to COALESCE(sales_date, slip_date)...")
-    
-    op.execute("""
+
+    op.execute(
+        """
         DROP VIEW IF EXISTS sandbox.v_sales_tree_detail_base CASCADE;
-    """)
-    
-    op.execute("""
+    """
+    )
+
+    op.execute(
+        """
         CREATE VIEW sandbox.v_sales_tree_detail_base AS
         SELECT
             COALESCE(sales_date, slip_date) AS sales_date,
@@ -503,56 +573,66 @@ def downgrade():
         WHERE
             COALESCE(sales_date, slip_date) IS NOT NULL
             AND COALESCE(is_deleted, false) = false;
-    """)
-    
+    """
+    )
+
     print("[sandbox.v_sales_tree_detail_base] Reverted to COALESCE.")
-    
+
     # ============================================================
     # 4. ref.v_sales_rep の再作成
     # ============================================================
     print("[ref.v_sales_rep] Recreating view with COALESCE...")
-    
-    op.execute("""
+
+    op.execute(
+        """
         CREATE VIEW ref.v_sales_rep AS
         SELECT DISTINCT
             rep_id,
             rep_name
         FROM mart.v_sales_tree_detail_base
         ORDER BY rep_id;
-    """)
-    
-    op.execute("""
+    """
+    )
+
+    op.execute(
+        """
         GRANT SELECT ON ref.v_sales_rep TO app_readonly;
-    """)
-    
+    """
+    )
+
     print("[ref.v_sales_rep] Recreated.")
-    
+
     # ============================================================
     # 5. ref.v_customer の再作成
     # ============================================================
     print("[ref.v_customer] Recreating view with COALESCE...")
-    
-    op.execute("""
+
+    op.execute(
+        """
         CREATE VIEW ref.v_customer AS
         SELECT DISTINCT
             customer_id,
             customer_name
         FROM mart.v_sales_tree_detail_base
         ORDER BY customer_id;
-    """)
-    
-    op.execute("""
+    """
+    )
+
+    op.execute(
+        """
         GRANT SELECT ON ref.v_customer TO app_readonly;
-    """)
-    
+    """
+    )
+
     print("[ref.v_customer] Recreated.")
-    
+
     # ============================================================
     # 6. ref.v_item の再作成
     # ============================================================
     print("[ref.v_item] Recreating view with COALESCE...")
-    
-    op.execute("""
+
+    op.execute(
+        """
         CREATE VIEW ref.v_item AS
         SELECT DISTINCT
             item_id,
@@ -561,14 +641,17 @@ def downgrade():
             category_name
         FROM mart.v_sales_tree_detail_base
         ORDER BY item_id;
-    """)
-    
-    op.execute("""
+    """
+    )
+
+    op.execute(
+        """
         GRANT SELECT ON ref.v_item TO app_readonly;
-    """)
-    
+    """
+    )
+
     print("[ref.v_item] Recreated.")
-    
+
     print("=" * 60)
     print("[OK] Downgrade complete - All views reverted to COALESCE")
     print("=" * 60)

@@ -10,7 +10,7 @@
 --   {schema_mart}            - mart スキーマ
 --   {mv_target_card_per_day} - mart.mv_target_card_per_day MV
 
-SELECT 
+SELECT
     month_target_ton,
     week_target_ton,
     day_target_ton,

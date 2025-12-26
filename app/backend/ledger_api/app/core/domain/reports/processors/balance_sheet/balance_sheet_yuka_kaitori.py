@@ -1,6 +1,9 @@
 import pandas as pd
+
 from app.infra.report_utils import get_template_config, load_master_and_template
-from app.infra.report_utils.formatters.multiply_optimized import multiply_columns_optimized
+from app.infra.report_utils.formatters.multiply_optimized import (
+    multiply_columns_optimized,
+)
 from app.infra.report_utils.formatters.summary_optimized import summary_apply_optimized
 
 
@@ -10,7 +13,7 @@ def calculate_purchase_value_of_valuable_items(
 ) -> int:
     """
     有価買取の金額を計算する。
-    
+
     最適化版を使用:
     - summary_apply_optimized: master_csvのcopy()を1回だけ実行
     - multiply_columns_optimized: 不要なcopy()を削減

@@ -56,4 +56,3 @@ ALTER TABLE ONLY ref.holiday_jp
 --
 
 \unrestrict udYCbkZpwfbSpbYNPoNkdtTmYP7oJ5ilp1kUKadarJff1ivqa9Qf2AZGceS7Ft3
-

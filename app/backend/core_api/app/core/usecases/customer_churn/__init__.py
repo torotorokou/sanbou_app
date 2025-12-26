@@ -4,16 +4,17 @@ Customer Churn UseCase
 顧客離脱分析のユースケース層
 Clean Architectureに準拠し、Portを介してデータアクセスを行う
 """
+
 from datetime import date as date_type
 
-from app.core.ports.customer_churn_port import CustomerChurnQueryPort
 from app.core.domain.entities.customer_churn import LostCustomer
+from app.core.ports.customer_churn_port import CustomerChurnQueryPort
 
 
 class AnalyzeCustomerChurnUseCase:
     """
     顧客離脱分析ユースケース
-    
+
     前期間と今期間を比較して、離脱した顧客を特定する。
     """
 
@@ -29,16 +30,16 @@ class AnalyzeCustomerChurnUseCase:
     ) -> list[LostCustomer]:
         """
         離脱顧客分析を実行
-        
+
         Args:
             current_start: 今期間の開始日
             current_end: 今期間の終了日
             previous_start: 前期間の開始日
             previous_end: 前期間の終了日
-            
+
         Returns:
             list[LostCustomer]: 離脱顧客のリスト
-            
+
         Raises:
             ValueError: 期間指定が不正な場合
         """
@@ -47,7 +48,7 @@ class AnalyzeCustomerChurnUseCase:
             raise ValueError("current_start must be <= current_end")
         if previous_start > previous_end:
             raise ValueError("previous_start must be <= previous_end")
-        
+
         # Port経由でデータ取得（Clean Architectureの依存性逆転）
         return self.query_port.find_lost_customers(
             current_start=current_start,
@@ -58,4 +59,4 @@ class AnalyzeCustomerChurnUseCase:
 
 
 # Export for external use
-__all__ = ['AnalyzeCustomerChurnUseCase']
+__all__ = ["AnalyzeCustomerChurnUseCase"]

@@ -1,45 +1,45 @@
 {
-    "compilerOptions": {
-        "target": "ES2020",
-        "useDefineForClassFields": true,
-        "lib": ["ES2020", "DOM", "DOM.Iterable"],
-        "module": "ESNext",
-        "skipLibCheck": true,
-        "jsx": "react-jsx",
-        "moduleResolution": "bundler",
-        "allowImportingTsExtensions": true,
-        "resolveJsonModule": true,
-        "isolatedModules": true,
-        "noEmit": true,
-        "strict": true,
-        "noUnusedLocals": false,
-        "noUnusedParameters": false,
-        "noFallthroughCasesInSwitch": true,
-        "baseUrl": "src",
-        "paths": {
-            "@/*": ["*"],
-            "@shared": ["shared"],
-            "@app/*": ["app/*"],
-            "@shared/*": ["shared/*"],
-            "@features/*": ["features/*"],
-            "@pages/*": ["pages/*"],
-            "@/app/*": ["app/*"],
-            "@/shared/*": ["shared/*"],
-            "@/features/*": ["features/*"],
-            "@/pages/*": ["pages/*"]
-        },
-        "esModuleInterop": true,
-        "allowSyntheticDefaultImports": true,
-        "forceConsistentCasingInFileNames": true
+  "compilerOptions": {
+    "target": "ES2020",
+    "useDefineForClassFields": true,
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+    "jsx": "react-jsx",
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "strict": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "noFallthroughCasesInSwitch": true,
+    "baseUrl": "src",
+    "paths": {
+      "@/*": ["*"],
+      "@shared": ["shared"],
+      "@app/*": ["app/*"],
+      "@shared/*": ["shared/*"],
+      "@features/*": ["features/*"],
+      "@pages/*": ["pages/*"],
+      "@/app/*": ["app/*"],
+      "@/shared/*": ["shared/*"],
+      "@/features/*": ["features/*"],
+      "@/pages/*": ["pages/*"]
     },
-    "include": ["src"],
-    "exclude": [
-        "dist",
-        "node_modules",
-        "**/__tests__/**",
-        "**/*.test.ts",
-        "**/*.test.tsx",
-        "**/*.spec.ts",
-        "**/*.spec.tsx"
-    ]
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": ["src"],
+  "exclude": [
+    "dist",
+    "node_modules",
+    "**/__tests__/**",
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "**/*.spec.ts",
+    "**/*.spec.tsx"
+  ]
 }

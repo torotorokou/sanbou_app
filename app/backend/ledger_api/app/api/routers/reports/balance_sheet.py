@@ -1,11 +1,12 @@
 # backend/app/api/endpoints/reports/balance_sheet.py
 
-from typing import Optional
 
-from app.core.usecases.reports.generate_balance_sheet import GenerateBalanceSheetUseCase
-from app.config.di_providers import get_balance_sheet_usecase
-from fastapi import APIRouter, BackgroundTasks, File, Form, UploadFile, Depends
+from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, UploadFile
 from fastapi.responses import JSONResponse
+
+from app.config.di_providers import get_balance_sheet_usecase
+from app.core.usecases.reports.generate_balance_sheet import GenerateBalanceSheetUseCase
+
 
 # APIルーターの初期化
 router = APIRouter()
@@ -18,14 +19,14 @@ async def generate_balance_sheet(
     shipment: UploadFile = File(None),
     yard: UploadFile = File(None),
     receive: UploadFile = File(None),
-    period_type: Optional[str] = Form(None),
+    period_type: str | None = Form(None),
     usecase: GenerateBalanceSheetUseCase = Depends(get_balance_sheet_usecase),
 ) -> JSONResponse:
     """
     工場搬出入収支表生成APIエンドポイント
 
     受入・ヤード・出荷一覧から収支表を自動集計します。
-    
+
     🔄 リファクタリング: Excel同期 + PDF非同期の2段階構成
     - Excel生成は同期的に実行し、すぐにダウンロードURL返却
     - PDF生成はバックグラウンドで実行

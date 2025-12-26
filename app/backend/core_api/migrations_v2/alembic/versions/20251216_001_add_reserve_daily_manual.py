@@ -18,20 +18,20 @@ Phase 1: stg.reserve_daily_manual テーブル追加
   - 制約: total_trucks >= 0, fixed_trucks >= 0, fixed_trucks <= total_trucks
 
 """
-from alembic import op
-import sqlalchemy as sa
 
+from alembic import op
 
 # revision identifiers, used by Alembic.
-revision = '1d57288e056c'
-down_revision = '20251212_100000000'
+revision = "1d57288e056c"
+down_revision = "20251212_100000000"
 branch_labels = None
 depends_on = None
 
 
 def upgrade() -> None:
     """stg.reserve_daily_manual テーブルを作成"""
-    op.execute("""
+    op.execute(
+        """
         CREATE TABLE stg.reserve_daily_manual (
             reserve_date date PRIMARY KEY,
             total_trucks integer NOT NULL DEFAULT 0,
@@ -45,22 +45,31 @@ def upgrade() -> None:
             CONSTRAINT chk_fixed_trucks_non_negative CHECK (fixed_trucks >= 0),
             CONSTRAINT chk_fixed_trucks_not_exceed_total CHECK (fixed_trucks <= total_trucks)
         );
-    """)
-    
+    """
+    )
+
     # コメント追加（ドキュメンテーション）
-    op.execute("""
-        COMMENT ON TABLE stg.reserve_daily_manual IS 
+    op.execute(
+        """
+        COMMENT ON TABLE stg.reserve_daily_manual IS
         'ユーザー手入力の日次予約合計。manual入力がある日付はこのテーブルを優先';
-    """)
-    op.execute("""
+    """
+    )
+    op.execute(
+        """
         COMMENT ON COLUMN stg.reserve_daily_manual.reserve_date IS '予約日（PK）';
-    """)
-    op.execute("""
+    """
+    )
+    op.execute(
+        """
         COMMENT ON COLUMN stg.reserve_daily_manual.total_trucks IS '合計台数';
-    """)
-    op.execute("""
+    """
+    )
+    op.execute(
+        """
         COMMENT ON COLUMN stg.reserve_daily_manual.fixed_trucks IS '固定客台数';
-    """)
+    """
+    )
 
 
 def downgrade() -> None:

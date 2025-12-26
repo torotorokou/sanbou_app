@@ -13,12 +13,12 @@
   .dayCell {
     min-height: 72px; /* 96px → 72px に縮小 */
   }
-  
+
   /* カレンダー内のフォントサイズも若干調整 */
   .dayCell .dateNumber {
     font-size: 14px;
   }
-  
+
   .dayCell .dotWrapper {
     gap: 6px;
   }

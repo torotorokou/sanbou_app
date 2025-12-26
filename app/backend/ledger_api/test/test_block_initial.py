@@ -3,11 +3,13 @@
 本番と同じ構成で、出荷一覧のみをmultipartでバックエンドに渡し、
 エラーなく所定のフィールドが返ることを確認する。
 """
+
 from __future__ import annotations
+
 import os
 import sys
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient
@@ -50,7 +52,9 @@ def _load_sample_shipment_bytes() -> tuple[str, bytes, str]:
     return ("shipment.csv", content, "text/csv")
 
 
-def test_initial_endpoint_accepts_shipment_only_and_returns_rows(client: TestClient) -> None:
+def test_initial_endpoint_accepts_shipment_only_and_returns_rows(
+    client: TestClient,
+) -> None:
     # Arrange: multipart files payload（shipment のみ）
     file_tuple = _load_sample_shipment_bytes()
     files = {"shipment": file_tuple}
@@ -60,7 +64,7 @@ def test_initial_endpoint_accepts_shipment_only_and_returns_rows(client: TestCli
 
     # Assert: HTTP 200 and essential fields
     assert resp.status_code == 200, resp.text
-    data: Dict[str, Any] = resp.json()
+    data: dict[str, Any] = resp.json()
 
     assert isinstance(data.get("session_id"), str) and data["session_id"], data
     assert isinstance(data.get("rows"), list) and len(data["rows"]) > 0, data

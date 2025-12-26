@@ -3,9 +3,9 @@
  * サマリーデータの取得とローディング状態管理
  */
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
-import type { SummaryRow, SummaryQuery } from './types';
-import type { SalesPivotRepository } from '../infrastructure/salesPivot.repository';
+import { useState, useEffect, useCallback, useMemo } from "react";
+import type { SummaryRow, SummaryQuery } from "./types";
+import type { SalesPivotRepository } from "../infrastructure/salesPivot.repository";
 
 export interface DataLoadingState {
   rawSummary: SummaryRow[];
@@ -20,7 +20,7 @@ export interface DataLoadingState {
  */
 export function useDataLoading(
   repository: SalesPivotRepository,
-  baseQuery: SummaryQuery
+  baseQuery: SummaryQuery,
 ): DataLoadingState {
   const [rawSummary, setRawSummary] = useState<SummaryRow[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
@@ -52,7 +52,6 @@ export function useDataLoading(
     };
     loadData();
     // queryKeyを使用することで、実際のクエリ内容が変わった時のみ再実行
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [repository, queryKey]);
 
   return { rawSummary, loading, reload };

@@ -66,4 +66,3 @@ CREATE INDEX ix_calendar_day_ym ON ref.calendar_day USING btree (y, m);
 --
 
 \unrestrict kr8YJGS5dWl5xkybRfEE7jcP6Kq5ZfLx6vRn3HfeBrCMgjTF0wVJz4raNRoKgKr
-

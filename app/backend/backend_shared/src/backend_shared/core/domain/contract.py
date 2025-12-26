@@ -6,16 +6,18 @@
 - contracts/notifications.openapi.yaml と完全一致
 """
 
-from typing import Optional, Literal
+from typing import Literal
+
 from pydantic import BaseModel, Field
 
-Severity = Literal['success', 'info', 'warning', 'error']
+
+Severity = Literal["success", "info", "warning", "error"]
 
 
 class ProblemDetails(BaseModel):
     """
     RFC 7807 Problem Details 準拠のエラー情報
-    
+
     OpenAPI契約:
     - status (必須): HTTPステータスコード
     - code (必須): アプリケーション固有のエラーコード
@@ -23,11 +25,12 @@ class ProblemDetails(BaseModel):
     - title (任意): エラータイトル
     - traceId (任意): トレースID
     """
+
     status: int
     code: str
-    userMessage: str = Field(alias='userMessage')
-    title: Optional[str] = None
-    traceId: Optional[str] = Field(default=None, alias='traceId')
+    userMessage: str = Field(alias="userMessage")
+    title: str | None = None
+    traceId: str | None = Field(default=None, alias="traceId")
 
     class Config:
         populate_by_name = True  # Pydantic v2: allow both snake_case and camelCase
@@ -36,7 +39,7 @@ class ProblemDetails(BaseModel):
 class NotificationEvent(BaseModel):
     """
     通知イベントモデル
-    
+
     OpenAPI契約:
     - id (必須): UUID形式の通知ID
     - severity (必須): success/info/warning/error
@@ -49,16 +52,17 @@ class NotificationEvent(BaseModel):
     - traceId (任意): トレースID
     - createdAt (必須): 作成日時(ISO8601)
     """
+
     id: str
     severity: Severity
     title: str
-    message: Optional[str] = None
-    duration: Optional[int] = None
-    feature: Optional[str] = None
-    resultUrl: Optional[str] = Field(default=None, alias='resultUrl')
-    jobId: Optional[str] = Field(default=None, alias='jobId')
-    traceId: Optional[str] = Field(default=None, alias='traceId')
-    createdAt: str = Field(alias='createdAt')
+    message: str | None = None
+    duration: int | None = None
+    feature: str | None = None
+    resultUrl: str | None = Field(default=None, alias="resultUrl")
+    jobId: str | None = Field(default=None, alias="jobId")
+    traceId: str | None = Field(default=None, alias="traceId")
+    createdAt: str = Field(alias="createdAt")
 
     class Config:
         populate_by_name = True  # Pydantic v2: allow both snake_case and camelCase

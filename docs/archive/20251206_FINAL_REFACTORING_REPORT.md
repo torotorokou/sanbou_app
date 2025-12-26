@@ -24,11 +24,13 @@ feature-name/
 ### 2. 対象機能
 
 #### features/calendar
+
 - **Before**: controller/, model/, repository/, ui/, utils/
 - **After**: domain/, ports/, application/, ui/cards/, ui/components/
 - **git mv使用**: 履歴を完全に保持
 
 #### features/dashboard/ukeire/business-calendar
+
 - **Before**: application/, infrastructure/, ui/
 - **After**: domain/, ports/, application/, infrastructure/, ui/cards/, ui/components/
 - **主要変更**:
@@ -37,20 +39,23 @@ feature-name/
   - 後方互換性: `useUkeireCalendarVM` → `useBusinessCalendarVM`
 
 #### features/dashboard/ukeire/forecast-inbound
+
 - **Before**: application/, infrastructure/, ui/
 - **After**: ports/, application/, infrastructure/, ui/cards/
 - **主要変更**:
   - 新規 ports/repository.ts でインターフェース定義
-  - infrastructure ファイル名を inboundForecast.*.ts に統一
+  - infrastructure ファイル名を inboundForecast.\*.ts に統一
   - ForecastCard.tsx を ui/cards/ に移動
 
 #### features/dashboard/ukeire/inbound-monthly
+
 - **Before**: application/, ui/
 - **After**: application/, ui/cards/
 - **主要変更**:
   - すべてのカード (DailyActualsCard, DailyCumulativeCard, CombinedDailyCard) を ui/cards/ に移動
 
 #### features/dashboard/ukeire/kpi-targets
+
 - **Before**: application/, domain/services/, ui/
 - **After**: application/, domain/services/, ui/cards/
 - **主要変更**:
@@ -59,6 +64,7 @@ feature-name/
 ### 3. Import パス修正
 
 #### 修正したファイル (抜粋)
+
 - `features/dashboard/ukeire/index.ts` - メインバレルエクスポート
 - `features/dashboard/ukeire/kpi-targets/application/useTargetsVM.ts`
 - `features/dashboard/ukeire/forecast-inbound/application/useInboundForecastVM.ts`
@@ -72,6 +78,7 @@ feature-name/
 - `features/calendar/application/useCalendarVM.ts`
 
 #### パス修正の内容
+
 - 相対パス `../../domain/*` → `@/features/dashboard/ukeire/domain/*`
 - 相対パス `../../shared/ui/*` → `@/features/dashboard/ukeire/shared/ui/*`
 - 相対パス `../ui/*` → `../ui/cards/*`
@@ -79,21 +86,24 @@ feature-name/
 ### 4. TypeScript エラー解消
 
 #### 修正したエラー (全20件)
+
 1. **barrel export のパス更新** (ukeire/index.ts)
-   - decorateCalendarCells, calendar.repository, ui/cards/* パス
-   
+   - decorateCalendarCells, calendar.repository, ui/cards/\* パス
 2. **application 層の import パス** (useTargetsVM.ts, useInboundForecastVM.ts, useUkeireForecastVM.ts, useInboundMonthlyVM.ts)
+
    - `../ui/TargetCard` → `../ui/cards/TargetCard`
    - `../../kpi-targets/ui/TargetCard` → `../../kpi-targets/ui/cards/TargetCard`
    - `../../inbound-monthly/ui/CombinedDailyCard` → `../../inbound-monthly/ui/cards/CombinedDailyCard`
    - `../ui/ForecastCard` → `../ui/cards/ForecastCard`
 
 3. **UI 層のドメイン参照** (TargetCard.tsx, ForecastCard.tsx, DailyActualsCard.tsx, DailyCumulativeCard.tsx)
+
    - `../../domain/constants` → `@/features/dashboard/ukeire/domain/constants`
    - `../../domain/valueObjects` → `@/features/dashboard/ukeire/domain/valueObjects`
    - `../../shared/ui/ChartFrame` → `@/features/dashboard/ukeire/shared/ui/ChartFrame`
 
 4. **Repository エクスポート** (forecast-inbound/index.ts, ukeire/index.ts)
+
    - HttpInboundForecastRepository と MockInboundForecastRepository を追加エクスポート
 
 5. **Calendar 型エラー** (useCalendarVM.ts)
@@ -108,6 +118,7 @@ feature-name/
 ## 変更統計
 
 ### ファイル移動 (git mv)
+
 - calendar: 約15ファイル
 - business-calendar: 約10ファイル
 - forecast-inbound: 約5ファイル
@@ -115,10 +126,12 @@ feature-name/
 - kpi-targets: 1ファイル
 
 ### Import パス更新
+
 - 修正ファイル数: 約15ファイル
 - 変更行数: 約80行
 
 ### 新規作成ファイル
+
 - README.md: 5個
 - index.ts (barrel): 5個
 - ports/repository.ts: 2個
@@ -126,6 +139,7 @@ feature-name/
 ## アーキテクチャ上の改善点
 
 ### 1. 関心の分離 (Separation of Concerns)
+
 - **Domain**: ビジネスロジック・型定義
 - **Ports**: インターフェース定義
 - **Application**: ViewModel (UI とドメインの仲介)
@@ -133,22 +147,26 @@ feature-name/
 - **UI**: プレゼンテーション層
 
 ### 2. 依存性逆転の原則 (Dependency Inversion)
+
 - Application 層は Ports (インターフェース) に依存
 - Infrastructure 層が Ports を実装
 - Mock/Test 実装の差し替えが容易
 
 ### 3. 単一責任の原則 (Single Responsibility)
+
 - 各ディレクトリ・ファイルが明確な責務を持つ
 - カード UI コンポーネント → ui/cards/
 - 再利用可能コンポーネント → ui/components/
 
 ### 4. 開放閉鎖の原則 (Open/Closed)
+
 - インターフェースを通じた拡張が可能
 - 既存コードの修正なしに新しい実装を追加可能
 
 ## 後方互換性
 
 ### 維持された古いエクスポート
+
 - `useUkeireCalendarVM` → `useBusinessCalendarVM` への再エクスポート
 - `UkeireCalendar`, `UkeireCalendarCard` などの UI コンポーネント
 

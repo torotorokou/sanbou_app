@@ -7,10 +7,10 @@
 1. mart.v_receive_daily
    - stg.shogun_final_receive → stg.active_shogun_final_receive に変更
    - stg.shogun_flash_receive → stg.active_shogun_flash_receive に変更
-   
+
 2. mart.v_shogun_flash_receive_daily
    - WHERE 句に is_deleted = false 条件を追加
-   
+
 3. mart.v_shogun_final_receive_daily
    - WHERE 句に is_deleted = false 条件を追加
 
@@ -29,9 +29,8 @@ Revision ID: 20251120_170000000
 Revises: 20251120_160000000
 Create Date: 2025-11-20 17:00:00.000000
 """
-from alembic import op
-import sqlalchemy as sa
 
+from alembic import op
 
 revision = "20251120_170000000"
 down_revision = "20251120_160000000"
@@ -43,17 +42,18 @@ def upgrade() -> None:
     """
     mart スキーマのビュー/マテビューを更新し、is_deleted = false の行のみを集計対象にする
     """
-    
+
     print("[mart.*] Updating views to filter soft-deleted rows...")
-    
+
     # ========================================================================
     # 1. mart.v_receive_daily の更新
     #    - stg.shogun_* → stg.active_shogun_* に変更
     #    - is_deleted = false 条件を明示的に追加（防御的プログラミング）
     # ========================================================================
     print("  -> Updating mart.v_receive_daily")
-    
-    op.execute("""
+
+    op.execute(
+        """
         CREATE OR REPLACE VIEW mart.v_receive_daily AS
         WITH r_shogun_final AS (
             SELECT
@@ -97,9 +97,9 @@ def upgrade() -> None:
                 sales_yen,
                 'shogun_final'::text AS source
             FROM r_shogun_final
-            
+
             UNION ALL
-            
+
             -- 優先順位2: shogun_flash（最終版がない日のみ）
             SELECT
                 f.ddate,
@@ -111,9 +111,9 @@ def upgrade() -> None:
             WHERE NOT EXISTS (
                 SELECT 1 FROM r_shogun_final s WHERE s.ddate = f.ddate
             )
-            
+
             UNION ALL
-            
+
             -- 優先順位3: king（将軍データがない日のみ）
             SELECT
                 k.ddate,
@@ -157,16 +157,18 @@ def upgrade() -> None:
         LEFT JOIN r_pick p ON p.ddate = cal.ddate
         WHERE cal.ddate <= (NOW() AT TIME ZONE 'Asia/Tokyo')::date - 1
         ORDER BY cal.ddate;
-    """)
-    
+    """
+    )
+
     print("    ✓ Updated mart.v_receive_daily (using stg.active_* views)")
-    
+
     # ========================================================================
     # 2. mart.v_shogun_flash_receive_daily の更新
     # ========================================================================
     print("  -> Updating mart.v_shogun_flash_receive_daily")
-    
-    op.execute("""
+
+    op.execute(
+        """
         CREATE OR REPLACE VIEW mart.v_shogun_flash_receive_daily AS
         SELECT
             s.slip_date AS data_date,
@@ -177,16 +179,18 @@ def upgrade() -> None:
         WHERE s.slip_date IS NOT NULL
           AND s.is_deleted = false  -- 論理削除された行を除外
         GROUP BY s.slip_date;
-    """)
-    
+    """
+    )
+
     print("    ✓ Updated mart.v_shogun_flash_receive_daily")
-    
+
     # ========================================================================
     # 3. mart.v_shogun_final_receive_daily の更新
     # ========================================================================
     print("  -> Updating mart.v_shogun_final_receive_daily")
-    
-    op.execute("""
+
+    op.execute(
+        """
         CREATE OR REPLACE VIEW mart.v_shogun_final_receive_daily AS
         SELECT
             s.slip_date AS data_date,
@@ -197,10 +201,11 @@ def upgrade() -> None:
         WHERE s.slip_date IS NOT NULL
           AND s.is_deleted = false  -- 論理削除された行を除外
         GROUP BY s.slip_date;
-    """)
-    
+    """
+    )
+
     print("    ✓ Updated mart.v_shogun_final_receive_daily")
-    
+
     # ========================================================================
     # 4. マテリアライズドビューは定義を変更せず、REFRESH のみ実行
     #    （v_receive_daily の変更が自動的に反映される）
@@ -222,13 +227,14 @@ def downgrade() -> None:
     """
     ビューを元の定義に戻す（active_* ビューを使用しない版）
     """
-    
+
     print("[mart.*] Reverting views to original definitions...")
-    
+
     # mart.v_receive_daily を元に戻す
     print("  -> Reverting mart.v_receive_daily")
-    
-    op.execute("""
+
+    op.execute(
+        """
         CREATE OR REPLACE VIEW mart.v_receive_daily AS
         WITH r_shogun_final AS (
             SELECT
@@ -269,9 +275,9 @@ def downgrade() -> None:
                 sales_yen,
                 'shogun_final'::text AS source
             FROM r_shogun_final
-            
+
             UNION ALL
-            
+
             SELECT
                 f.ddate,
                 f.receive_ton,
@@ -282,9 +288,9 @@ def downgrade() -> None:
             WHERE NOT EXISTS (
                 SELECT 1 FROM r_shogun_final s WHERE s.ddate = f.ddate
             )
-            
+
             UNION ALL
-            
+
             SELECT
                 k.ddate,
                 k.receive_ton,
@@ -327,10 +333,12 @@ def downgrade() -> None:
         LEFT JOIN r_pick p ON p.ddate = cal.ddate
         WHERE cal.ddate <= (NOW() AT TIME ZONE 'Asia/Tokyo')::date - 1
         ORDER BY cal.ddate;
-    """)
-    
+    """
+    )
+
     # mart.v_shogun_flash_receive_daily を元に戻す
-    op.execute("""
+    op.execute(
+        """
         CREATE OR REPLACE VIEW mart.v_shogun_flash_receive_daily AS
         SELECT
             s.slip_date AS data_date,
@@ -340,10 +348,12 @@ def downgrade() -> None:
         JOIN log.upload_file uf ON uf.id = s.upload_file_id AND uf.is_deleted = false
         WHERE s.slip_date IS NOT NULL
         GROUP BY s.slip_date;
-    """)
-    
+    """
+    )
+
     # mart.v_shogun_final_receive_daily を元に戻す
-    op.execute("""
+    op.execute(
+        """
         CREATE OR REPLACE VIEW mart.v_shogun_final_receive_daily AS
         SELECT
             s.slip_date AS data_date,
@@ -353,6 +363,7 @@ def downgrade() -> None:
         JOIN log.upload_file uf ON uf.id = s.upload_file_id AND uf.is_deleted = false
         WHERE s.slip_date IS NOT NULL
         GROUP BY s.slip_date;
-    """)
-    
+    """
+    )
+
     print("[mart.*] Views reverted successfully")

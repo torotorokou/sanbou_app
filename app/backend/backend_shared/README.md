@@ -1,4 +1,3 @@
-
 # backend-shared
 
 共通ユーティリティ（Clean Architecture/SOLID原則準拠）と DB レイヤー（SQLAlchemy Async, トランザクション管理）。
@@ -61,6 +60,7 @@ sql = "SELECT * FROM mart.mv_receive_daily WHERE ddate = :date"
 #### SQLファイルでの使用（テンプレートパターン）
 
 **SQLファイル** (`app/infra/db/sql/example/query.sql`):
+
 ```sql
 -- プレースホルダーを使用
 SELECT *
@@ -69,6 +69,7 @@ WHERE ddate BETWEEN :start AND :end
 ```
 
 **Pythonコード**:
+
 ```python
 from backend_shared.db.names import SCHEMA_MART, MV_RECEIVE_DAILY, fq
 from app.infra.db.sql_loader import load_sql
@@ -84,7 +85,7 @@ class MyRepository:
                 mv_receive_daily=fq(SCHEMA_MART, MV_RECEIVE_DAILY)
             )
         )
-    
+
     def fetch_data(self, start: date, end: date):
         # バインドパラメータでユーザー入力を安全に渡す
         result = self.db.execute(
@@ -94,7 +95,8 @@ class MyRepository:
         return result.fetchall()
 ```
 
-**重要**: 
+**重要**:
+
 - `.format()` は**定数のみ**に使用（スキーマ名、テーブル名）
 - ユーザー入力は**必ずバインドパラメータ**（`:param_name`）で渡す
 - これによりSQLインジェクションを防止
@@ -102,14 +104,17 @@ class MyRepository:
 #### 利用可能な定数
 
 **スキーマ** (6個):
+
 - `SCHEMA_REF`, `SCHEMA_STG`, `SCHEMA_MART`, `SCHEMA_KPI`, `SCHEMA_RAW`, `SCHEMA_LOG`
 
 **主要オブジェクト**:
+
 - MV: `MV_RECEIVE_DAILY`, `MV_TARGET_CARD_PER_DAY` など
 - テーブル: `T_SHOGUN_FINAL_RECEIVE`, `T_UPLOAD_FILE` など
 - ビュー: `V_CALENDAR_CLASSIFIED`, `V_SALES_TREE_DETAIL_BASE` など
 
 **コレクション**:
+
 - `AUTO_REFRESH_MVS`: 自動更新対象のMV（2個）
 - `SHOGUN_FINAL_TABLES`: 将軍確定データテーブル（3個）
 - `SHOGUN_FLASH_TABLES`: 将軍速報データテーブル（3個）
@@ -150,6 +155,7 @@ DATABASE_URL = build_postgres_dsn(
 ```
 
 **注意事項:**
+
 - パスワードに `/`, `@`, `:` などが含まれる場合、自動的にURLエンコードされます
 - 手動での文字列連結は避けてください（接続エラーの原因になります）
 

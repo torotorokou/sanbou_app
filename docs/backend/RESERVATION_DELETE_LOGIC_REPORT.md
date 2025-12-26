@@ -69,24 +69,28 @@
 **ファイル**: `app/frontend/src/features/reservation/reservation-calendar/model/useReservationCalendarVM.ts`
 
 ```typescript
-const onDeleteDate = useCallback(async (date: string) => {
-  setIsDeletingDate(date);
-  try {
-    await repository.deleteManual(date);
-    message.success('削除しました');
-    // データを再取得
-    await fetchHistoryData(historyMonth);
-  } catch (err: unknown) {
-    console.error('Failed to delete manual data:', err);
-    const errorMessage = err instanceof Error ? err.message : '不明なエラー';
-    message.error(`削除に失敗しました: ${errorMessage}`);
-  } finally {
-    setIsDeletingDate(null);
-  }
-}, [repository, historyMonth, fetchHistoryData]);
+const onDeleteDate = useCallback(
+  async (date: string) => {
+    setIsDeletingDate(date);
+    try {
+      await repository.deleteManual(date);
+      message.success("削除しました");
+      // データを再取得
+      await fetchHistoryData(historyMonth);
+    } catch (err: unknown) {
+      console.error("Failed to delete manual data:", err);
+      const errorMessage = err instanceof Error ? err.message : "不明なエラー";
+      message.error(`削除に失敗しました: ${errorMessage}`);
+    } finally {
+      setIsDeletingDate(null);
+    }
+  },
+  [repository, historyMonth, fetchHistoryData],
+);
 ```
 
 **責務**:
+
 - 削除APIの呼び出し
 - ローディング状態の管理 (`isDeletingDate`)
 - エラーハンドリングとユーザーへの通知
@@ -131,6 +135,7 @@ const handleDeleteClick = async () => {
 ```
 
 **UXフロー**:
+
 1. ユーザーが日付セルをクリック
 2. モーダル表示（日付、合計台数、固定客台数を表示）
 3. 「削除する」ボタンをクリック
@@ -153,22 +158,23 @@ def delete_manual_reservation(
 ):
     """
     指定日の手入力予約データを削除
-    
+
     Args:
         reserve_date: 予約日 (YYYY-MM-DD)
-    
+
     Returns:
         dict: 削除結果
     """
     success = repo.delete_manual(reserve_date)
     if not success:
         raise HTTPException(status_code=404, detail="Manual reservation not found")
-    
+
     logger.info(f"Deleted manual reservation for {reserve_date}")
     return {"message": "Deleted successfully", "reserve_date": str(reserve_date)}
 ```
 
 **責務**:
+
 - パスパラメータから日付を受け取る
 - リポジトリの `delete_manual()` を呼び出す
 - 削除失敗時（データが存在しない）は404エラーを返す
@@ -197,6 +203,7 @@ def delete_manual(self, reserve_date: date_type) -> bool:
 ```
 
 **実装詳細**:
+
 - SQLAlchemyの `delete()` を使用
 - `WHERE reserve_date = ?` で対象レコードを特定
 - `result.rowcount` で削除された行数を確認
@@ -222,7 +229,7 @@ CREATE TABLE stg.reserve_daily_manual (
     updated_by text,
     created_at timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    
+
     -- 制約
     CONSTRAINT chk_total_trucks_non_negative CHECK (total_trucks >= 0),
     CONSTRAINT chk_fixed_trucks_non_negative CHECK (fixed_trucks >= 0),
@@ -242,6 +249,7 @@ WHERE reserve_date = '2025-12-10';
 ```
 
 **実行内容**:
+
 - 指定した日付のレコードを**物理削除**（完全削除）
 - カスケード削除なし（単一テーブル操作）
 - トリガーなし（シンプルなDELETE）
@@ -252,14 +260,14 @@ WHERE reserve_date = '2025-12-10';
 
 ### ✅ **2025-12-16更新: 論理削除に変更**
 
-| 観点 | 物理削除（旧） | 論理削除（現在） |
-|------|----------|----------|
-| **SQL操作** | `DELETE FROM` | `UPDATE SET deleted_at = NOW()` |
-| **データの状態** | レコードが完全に消える | レコードは残る（フラグ付き） |
-| **復元可能性** | 不可（バックアップから） | 可（deleted_atをNULLに戻す） |
-| **パフォーマンス** | 良好（レコード減少） | 劣化（データ増加） |
-| **監査証跡** | 困難 | 容易 |
-| **実装複雑度** | 低 | 中（全クエリで除外条件が必要） |
+| 観点               | 物理削除（旧）           | 論理削除（現在）                |
+| ------------------ | ------------------------ | ------------------------------- |
+| **SQL操作**        | `DELETE FROM`            | `UPDATE SET deleted_at = NOW()` |
+| **データの状態**   | レコードが完全に消える   | レコードは残る（フラグ付き）    |
+| **復元可能性**     | 不可（バックアップから） | 可（deleted_atをNULLに戻す）    |
+| **パフォーマンス** | 良好（レコード減少）     | 劣化（データ増加）              |
+| **監査証跡**       | 困難                     | 容易                            |
+| **実装複雑度**     | 低                       | 中（全クエリで除外条件が必要）  |
 
 **論理削除に変更した理由（2025-12-16）**:
 
@@ -282,8 +290,8 @@ ADD COLUMN deleted_at timestamp with time zone DEFAULT NULL,
 ADD COLUMN deleted_by text DEFAULT NULL;
 
 -- インデックス追加（パフォーマンス対策）
-CREATE INDEX idx_reserve_daily_manual_not_deleted 
-ON stg.reserve_daily_manual (reserve_date) 
+CREATE INDEX idx_reserve_daily_manual_not_deleted
+ON stg.reserve_daily_manual (reserve_date)
 WHERE deleted_at IS NULL;
 ```
 
@@ -295,7 +303,7 @@ WHERE deleted_at IS NULL;
 def delete_manual(self, reserve_date: date_type) -> bool:
     """論理削除: deleted_atを設定"""
     from datetime import datetime, timezone
-    
+
     stmt = (
         update(ReserveDailyManual)
         .where(
@@ -412,6 +420,7 @@ created_by="system",  # TODO: Get from auth context
 ```
 
 **将来の実装予定**:
+
 - JWT認証
 - ユーザー情報を `created_by`, `deleted_by` に記録
 - 削除権限チェック（管理者のみ、など）
@@ -421,6 +430,7 @@ created_by="system",  # TODO: Get from auth context
 ### 2. データ整合性
 
 **制約チェック**:
+
 - `total_trucks >= 0`
 - `fixed_trucks >= 0`
 - `fixed_trucks <= total_trucks`
@@ -456,10 +466,10 @@ def test_delete_manual_success():
     """正常系: データが存在する日付を削除"""
     # Arrange
     repo.upsert_manual(ReservationManualRow(...))
-    
+
     # Act
     result = repo.delete_manual(date(2025, 12, 10))
-    
+
     # Assert
     assert result == True
     assert repo.get_manual(date(2025, 12, 10)) is None
@@ -483,14 +493,14 @@ def test_delete_api_success(client):
         "total_trucks": 100,
         "fixed_trucks": 50
     })
-    
+
     # Act: 削除
     response = client.delete("/reservation/manual/2025-12-10")
-    
+
     # Assert
     assert response.status_code == 200
     assert response.json()["message"] == "Deleted successfully"
-    
+
     # 再度GETで確認
     get_response = client.get("/reservation/manual/2025-12-10")
     assert get_response.status_code == 404
@@ -506,24 +516,24 @@ def test_delete_api_not_found(client):
 ### 3. E2Eテスト（フロントエンド）
 
 ```typescript
-describe('予約削除機能', () => {
-  it('カレンダーから削除できる', async () => {
+describe("予約削除機能", () => {
+  it("カレンダーから削除できる", async () => {
     // 1. データがある日付をクリック
-    await userEvent.click(screen.getByText('10'));
-    
+    await userEvent.click(screen.getByText("10"));
+
     // 2. モーダルが表示される
-    expect(screen.getByText('予約データの削除')).toBeInTheDocument();
-    
+    expect(screen.getByText("予約データの削除")).toBeInTheDocument();
+
     // 3. 削除ボタンをクリック
-    await userEvent.click(screen.getByRole('button', { name: '削除する' }));
-    
+    await userEvent.click(screen.getByRole("button", { name: "削除する" }));
+
     // 4. 成功メッセージが表示される
     await waitFor(() => {
-      expect(screen.getByText('削除しました')).toBeInTheDocument();
+      expect(screen.getByText("削除しました")).toBeInTheDocument();
     });
-    
+
     // 5. カレンダーが再描画され、データが消えている
-    expect(screen.queryByText('100')).not.toBeInTheDocument();
+    expect(screen.queryByText("100")).not.toBeInTheDocument();
   });
 });
 ```
@@ -544,25 +554,27 @@ describe('予約削除機能', () => {
 
 ### 推奨事項
 
-| 項目 | 現状（2025-12-16） | 推奨 |
-|------|------|------|
-| **削除種別** | 論理削除 | ✅ 完了（2025-12-16実装） |
-| **認証** | なし | ⚠️ JWT認証を追加すべき |
-| **監査ログ** | deleted_at/deleted_byで記録 | ✅ OK（基本的な監査は可能） |
-| **権限管理** | なし | ⚠️ 管理者のみ削除可能にすべき |
-| **削除確認** | モーダルのみ | ✅ OK（誤操作防止済み） |
-| **復元機能** | 未実装 | △ 必要に応じてUI追加検討 |
+| 項目         | 現状（2025-12-16）          | 推奨                          |
+| ------------ | --------------------------- | ----------------------------- |
+| **削除種別** | 論理削除                    | ✅ 完了（2025-12-16実装）     |
+| **認証**     | なし                        | ⚠️ JWT認証を追加すべき        |
+| **監査ログ** | deleted_at/deleted_byで記録 | ✅ OK（基本的な監査は可能）   |
+| **権限管理** | なし                        | ⚠️ 管理者のみ削除可能にすべき |
+| **削除確認** | モーダルのみ                | ✅ OK（誤操作防止済み）       |
+| **復元機能** | 未実装                      | △ 必要に応じてUI追加検討      |
 
 ---
 
 ## 参考ファイル
 
 - フロントエンド
+
   - `app/frontend/src/features/reservation/reservation-calendar/model/useReservationCalendarVM.ts`
   - `app/frontend/src/features/reservation/shared/infrastructure/ReservationDailyHttpRepository.ts`
   - `app/frontend/src/features/reservation/reservation-calendar/ui/ReservationHistoryCalendar.tsx`
 
 - バックエンド
+
   - `app/backend/core_api/app/api/routers/reservation/router.py`
   - `app/backend/core_api/app/infra/adapters/reservation/reservation_repository.py`
   - `app/backend/core_api/app/core/ports/reservation_repository_port.py`

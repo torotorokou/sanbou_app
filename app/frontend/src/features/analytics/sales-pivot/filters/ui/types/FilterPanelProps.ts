@@ -1,11 +1,18 @@
 /**
  * FilterPanel コンポーネントのProps型定義
- * 
+ *
  * 各責務ごとに型を分離し、型安全性と可読性を向上させます。
  */
 
 import type { Dayjs } from 'dayjs';
-import type { Mode, SortKey, SortOrder, ID, SalesRep, CategoryKind } from '../../../shared/model/types';
+import type {
+  Mode,
+  SortKey,
+  SortOrder,
+  ID,
+  SalesRep,
+  CategoryKind,
+} from '../../../shared/model/types';
 
 /**
  * 期間選択関連のProps
@@ -72,9 +79,8 @@ export interface ResetProps {
  * FilterPanelの全Props
  * 各責務の型を結合
  */
-export type FilterPanelProps = 
-  & PeriodProps 
-  & CategoryProps 
-  & ModeControlProps 
-  & RepFilterProps
-  & ResetProps;
+export type FilterPanelProps = PeriodProps &
+  CategoryProps &
+  ModeControlProps &
+  RepFilterProps &
+  ResetProps;

@@ -2,31 +2,36 @@
 OpenAI APIを用いたAI回答生成クライアント。
 """
 
-from typing import List, Optional
-from app.shared.chunk_utils import search_documents_with_category
-from app.config.constants import build_prompt
-from openai import OpenAI
 import os
-from dotenv import load_dotenv
-from app.config.paths import CONFIG_ENV
-from app.shared.env_loader import load_env_and_secrets
 
-print(f"[DEBUG] .env path: {CONFIG_ENV}")
+from dotenv import load_dotenv
+from openai import OpenAI
+
+from app.config.constants import build_prompt
+from app.config.paths import CONFIG_ENV
+from app.shared.chunk_utils import search_documents_with_category
+from app.shared.env_loader import load_env_and_secrets
+from backend_shared.application.logging import get_module_logger
+
+
+logger = get_module_logger(__name__)
+
+logger.debug(f".env path: {CONFIG_ENV}")
 load_dotenv(dotenv_path=str(CONFIG_ENV))
 _secrets_loaded = load_env_and_secrets()
-print(f"[DEBUG] secrets loaded from: {_secrets_loaded}")
+logger.debug(f"secrets loaded from: {_secrets_loaded}")
 _k = os.getenv("OPENAI_API_KEY")
 masked = f"***{_k[-4:]}" if _k and len(_k) > 8 else ("set" if _k else "missing")
-print(f"[DEBUG] OPENAI_API_KEY: {masked}")
+logger.debug(f"OPENAI_API_KEY: {masked}")
 client = OpenAI(api_key=_k)
 
 
 def generate_answer(
     query: str,
     category: str,
-    json_data: List[dict],
+    json_data: list[dict],
     vectorstore,
-    tags: Optional[List[str]] = None,
+    tags: list[str] | None = None,
 ) -> dict:
     """
     クエリ・カテゴリ・タグをもとにAI回答を生成する。
@@ -41,12 +46,10 @@ def generate_answer(
     Returns:
         dict: 回答、参照元、ページ情報
     """
-    retrieved = search_documents_with_category(
-        query, category, json_data, vectorstore, tags=tags
-    )
+    retrieved = search_documents_with_category(query, category, json_data, vectorstore, tags=tags)
     try:
-        print(
-            "[DEBUG][openai_client] retrieved count:",
+        logger.debug(
+            "retrieved count: %s",
             len(retrieved) if isinstance(retrieved, list) else "unknown",
         )
     except Exception:
@@ -70,10 +73,7 @@ def generate_answer(
         if isinstance(r, dict):
             source = r.get("source")
             page_num = (
-                r.get("page")
-                or r.get("PAGE")
-                or r.get("page_number")
-                or r.get("PAGE_NUMBER")
+                r.get("page") or r.get("PAGE") or r.get("page_number") or r.get("PAGE_NUMBER")
             )
         elif isinstance(r, (list, tuple)) and len(r) > 2 and isinstance(r[2], dict):
             source = r[0]
@@ -114,8 +114,8 @@ def generate_answer(
             else:
                 pages.append(token)
     try:
-        print(
-            "[DEBUG][openai_client] pages extracted (raw):",
+        logger.debug(
+            "pages extracted (raw): %s",
             pages[:10] if isinstance(pages, list) else pages,
         )
     except Exception:

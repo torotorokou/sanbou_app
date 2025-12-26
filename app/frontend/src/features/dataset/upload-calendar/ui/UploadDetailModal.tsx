@@ -34,7 +34,9 @@ export const UploadDetailModal: React.FC<UploadDetailModalProps> = ({
   const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set());
 
   const handleDelete = async (upload: UploadCalendarItem) => {
-    const confirmed = window.confirm(`データ数: ${upload.rowCount.toLocaleString()}行 を削除しますか？`);
+    const confirmed = window.confirm(
+      `データ数: ${upload.rowCount.toLocaleString()}行 を削除しますか？`
+    );
     if (!confirmed) return;
 
     if (!upload.uploadFileId) {
@@ -49,10 +51,10 @@ export const UploadDetailModal: React.FC<UploadDetailModalProps> = ({
         date: upload.date,
         csvKind: upload.kind,
       });
-      
+
       // 削除成功したらIDをセットに追加（即座にボタンを無効化）
-      setDeletedIds(prev => new Set(prev).add(upload.id));
-      
+      setDeletedIds((prev) => new Set(prev).add(upload.id));
+
       notifySuccess('削除完了', '削除しました');
       // 削除後、アップロードが0件になった場合はモーダルを閉じる
       if (uploads.length <= 1) {
@@ -140,13 +142,7 @@ export const UploadDetailModal: React.FC<UploadDetailModalProps> = ({
       footer={null}
       width={700}
     >
-      <Table
-        dataSource={uploads}
-        columns={columns}
-        rowKey="id"
-        pagination={false}
-        size="small"
-      />
+      <Table dataSource={uploads} columns={columns} rowKey="id" pagination={false} size="small" />
     </Modal>
   );
 };

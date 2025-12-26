@@ -17,7 +17,13 @@ export function toFileStates(panelFiles: PanelFileItem[]): FileState[] {
     label: p.label,
     required: p.required !== false,
     // スキップされている場合はステータスを 'unknown' として扱う
-    status: p.skipped ? 'unknown' : (p.status === 'valid' ? 'valid' : p.status === 'invalid' ? 'invalid' : 'unknown'),
+    status: p.skipped
+      ? 'unknown'
+      : p.status === 'valid'
+        ? 'valid'
+        : p.status === 'invalid'
+          ? 'invalid'
+          : 'unknown',
     missingHeaders: [], // 将来的に PanelFileItem に追加されたら p.missingHeaders を使用
   }));
 }

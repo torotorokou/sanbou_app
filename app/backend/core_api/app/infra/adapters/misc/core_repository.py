@@ -1,10 +1,12 @@
 """
 Core repository: operations on core schema (inbound_actuals, inbound_reservations).
 """
-from typing import List
-from datetime import date as date_type, datetime
-from sqlalchemy.orm import Session
+
+from datetime import date as date_type
+from datetime import datetime
+
 from sqlalchemy.dialects.postgresql import insert as pg_insert
+from sqlalchemy.orm import Session
 
 from app.infra.db.orm_models import InboundActual, InboundReservation
 
@@ -15,7 +17,7 @@ class CoreRepository:
     def __init__(self, db: Session):
         self.db = db
 
-    def upsert_actuals(self, rows: List[dict]) -> None:
+    def upsert_actuals(self, rows: list[dict]) -> None:
         """
         Upsert CSV data into inbound_actuals.
         TODO: Define proper columns based on CSV spec.

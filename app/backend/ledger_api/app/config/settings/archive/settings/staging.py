@@ -1,4 +1,6 @@
+# ruff: noqa: F403
 from app.config.settings.base import *
+
 
 # --- ステージング環境用設定 ---
 

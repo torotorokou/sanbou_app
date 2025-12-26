@@ -46,10 +46,3 @@ CREATE MATERIALIZED VIEW mart.mv_inb5y_week_profile_min AS
 
 
 COMMENT ON MATERIALIZED VIEW mart.mv_inb5y_week_profile_min IS '5y weekly profile (minimal): normal_day_mean (NORMAL), reservation_day_mean (RESERVATION=Sun+Holiday).';
-
-
-
-
-
-
-

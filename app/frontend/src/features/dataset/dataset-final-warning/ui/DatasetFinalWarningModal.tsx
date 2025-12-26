@@ -1,6 +1,6 @@
 /**
  * DatasetFinalWarningModal - 将軍最終版データアップロード時の注意モーダル
- * 
+ *
  * 全体会議で確定したCSVをアップロードする旨を確認するモーダル
  */
 
@@ -38,9 +38,7 @@ export const DatasetFinalWarningModal: React.FC<DatasetFinalWarningModalProps> =
           <p style={{ marginBottom: 12 }}>
             ・全体会議で数字が確定した後、CSVファイルをアップロードしてください。
           </p>
-          <p style={{ marginBottom: 0 }}>
-            ・月1回程度の更新を想定しています。
-          </p>
+          <p style={{ marginBottom: 0 }}>・月1回程度の更新を想定しています。</p>
         </div>
       </div>
     </Modal>

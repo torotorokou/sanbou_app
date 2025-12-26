@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { useResponsive, customTokens, bp } from "@/shared";
+import { useResponsive, customTokens } from "@/shared";
 
 /**
  * レイアウトとスタイリングのロジックを管理するフック - useResponsive(flags)統合版
@@ -20,53 +20,81 @@ export const useReportLayoutStyles = () => {
   const { flags } = useResponsive();
 
   // responsive: 3段階ヘルパー
-  const pickByDevice = <T,>(mobile: T, tablet: T, desktop: T): T => {
-    if (flags.isMobile) return mobile;       // ≤767px
-    if (flags.isTablet) return tablet;       // 768-1280px
-    return desktop;                          // ≥1281px
+  const pickByDevice = <T>(mobile: T, tablet: T, desktop: T): T => {
+    if (flags.isMobile) return mobile; // ≤767px
+    if (flags.isTablet) return tablet; // 768-1280px
+    return desktop; // ≥1281px
   };
 
   // responsive: 各種スタイル値を3段階で定義
   const padding = pickByDevice(12, 18, 20);
   const gap = pickByDevice(12, 20, 24);
   const gapSmall = pickByDevice(8, 12, 12);
-  const leftPanelWidth = pickByDevice<string | number>('100%', '100%', 300);
-  const leftPanelMinWidth = pickByDevice<string | number>('auto', 'auto', 300);
-  const leftPanelMaxWidth = pickByDevice<string | number>('100%', '100%', 300);
-  const leftPanelFlex = pickByDevice<'1 1 auto' | '0 0 300px'>('1 1 auto', '1 1 auto', '0 0 300px');
+  const leftPanelWidth = pickByDevice<string | number>("100%", "100%", 300);
+  const leftPanelMinWidth = pickByDevice<string | number>("auto", "auto", 300);
+  const leftPanelMaxWidth = pickByDevice<string | number>("100%", "100%", 300);
+  const leftPanelFlex = pickByDevice<"1 1 auto" | "0 0 300px">(
+    "1 1 auto",
+    "1 1 auto",
+    "0 0 300px",
+  );
   const leftPanelOrder = pickByDevice(3, 3, 1);
-  
-  const centerPanelDisplay = pickByDevice<'none' | 'flex'>('none', 'none', 'flex');
+
+  const centerPanelDisplay = pickByDevice<"none" | "flex">(
+    "none",
+    "none",
+    "flex",
+  );
   const centerPanelWidth = pickByDevice(48, 48, 60);
   const centerPanelMinHeight = pickByDevice(320, 320, 400);
-  
+
   const rightPanelOrder = pickByDevice(1, 1, 3);
   const rightPanelMinWidth = pickByDevice(0, 0, 600);
   // responsive: rightPanelはflexで残りの横幅を使用、maxWidthでサイドバーの幅を考慮して画面外はみ出しを防止
-  const rightPanelFlex = pickByDevice<'1 1 auto'>('1 1 auto', '1 1 auto', '1 1 auto');
-  const rightPanelMaxWidth = pickByDevice<string | undefined>('100%', '100%', undefined);
-  
+  const rightPanelFlex = pickByDevice<"1 1 auto">(
+    "1 1 auto",
+    "1 1 auto",
+    "1 1 auto",
+  );
+  const rightPanelMaxWidth = pickByDevice<string | undefined>(
+    "100%",
+    "100%",
+    undefined,
+  );
+
   const previewGap = pickByDevice(8, 10, 16);
-  const previewHeight = pickByDevice('50vh', '55vh', '100%');
-  const previewWidth = pickByDevice('100%', '100%', 'auto');
-  
-  const downloadWidth = pickByDevice<string | number>('100%', '100%', 120);
+  const previewHeight = pickByDevice("50vh", "55vh", "100%");
+  const previewWidth = pickByDevice("100%", "100%", "auto");
+
+  const downloadWidth = pickByDevice<string | number>("100%", "100%", 120);
   const downloadMarginTop = pickByDevice(12, 12, 0);
 
   // responsive: レイアウト方向（Mobile/Tablet=縦、Desktop=横）
-  const mainLayoutDirection = pickByDevice<'column' | 'row'>('column', 'column', 'row');
-  const previewDirection = pickByDevice<'column' | 'row'>('column', 'column', 'row');
-  const downloadDirection = pickByDevice<'row' | 'column'>('row', 'row', 'column');
+  const mainLayoutDirection = pickByDevice<"column" | "row">(
+    "column",
+    "column",
+    "row",
+  );
+  const previewDirection = pickByDevice<"column" | "row">(
+    "column",
+    "column",
+    "row",
+  );
+  const downloadDirection = pickByDevice<"row" | "column">(
+    "row",
+    "row",
+    "column",
+  );
 
   const styles = useMemo(
     () => ({
       container: {
         padding,
-        height: '100%',
-        display: 'flex',
-        flexDirection: 'column' as const,
+        height: "100%",
+        display: "flex",
+        flexDirection: "column" as const,
         minHeight: 0,
-        boxSizing: 'border-box' as const,
+        boxSizing: "border-box" as const,
       },
       mainLayout: {
         display: "flex",
@@ -76,7 +104,7 @@ export const useReportLayoutStyles = () => {
         flex: 1,
         marginTop: pickByDevice(8, 10, 12),
         minHeight: 0,
-        overflow: 'hidden' as const,
+        overflow: "hidden" as const,
         width: "100%",
         maxWidth: "100%",
         minWidth: 0,
@@ -122,15 +150,20 @@ export const useReportLayoutStyles = () => {
         order: 3,
       },
       rightPanel: {
-        width: flags.isMobile || flags.isTablet ? '100%' : undefined,
+        width: flags.isMobile || flags.isTablet ? "100%" : undefined,
         maxWidth: rightPanelMaxWidth,
         flex: rightPanelFlex,
         minWidth: rightPanelMinWidth,
         display: "flex",
         flexDirection: "column" as const,
         order: rightPanelOrder,
-        overflow: 'hidden' as const,
-        overflowX: ("hidden" as unknown) as "visible" | "hidden" | "clip" | "scroll" | "auto",
+        overflow: "hidden" as const,
+        overflowX: "hidden" as unknown as
+          | "visible"
+          | "hidden"
+          | "clip"
+          | "scroll"
+          | "auto",
         boxSizing: "border-box" as const,
       },
       previewContainer: {
@@ -198,7 +231,7 @@ export const useReportLayoutStyles = () => {
       mainLayoutDirection,
       previewDirection,
       downloadDirection,
-    ]
+    ],
   );
 
   return styles;

@@ -18,22 +18,22 @@
 **使用例（Repository層）**:
 
 ```typescript
-import { handleApiCall } from '@shared/utils';
-import { coreApi } from '@shared';
-import type { User } from '../domain/types';
+import { handleApiCall } from "@shared/utils";
+import { coreApi } from "@shared";
+import type { User } from "../domain/types";
 
 export class UserRepository {
   async getUser(id: string): Promise<User | null> {
     return await handleApiCall(
       () => coreApi.get<User>(`/api/users/${id}`),
-      'ユーザー取得'
+      "ユーザー取得",
     );
   }
 
   async createUser(data: CreateUserParams): Promise<User | null> {
     return await handleApiCall(
-      () => coreApi.post<User>('/api/users', data),
-      'ユーザー作成'
+      () => coreApi.post<User>("/api/users", data),
+      "ユーザー作成",
     );
   }
 }
@@ -42,8 +42,8 @@ export class UserRepository {
 **使用例（ViewModel/hooks）**:
 
 ```typescript
-import { handleApiCall } from '@shared/utils';
-import { userRepository } from '../infrastructure/user.repository';
+import { handleApiCall } from "@shared/utils";
+import { userRepository } from "../infrastructure/user.repository";
 
 export const useUserData = (userId: string) => {
   const [user, setUser] = useState<User | null>(null);
@@ -53,7 +53,7 @@ export const useUserData = (userId: string) => {
     setLoading(true);
     const result = await handleApiCall(
       () => userRepository.getUser(userId),
-      'ユーザーデータ取得'
+      "ユーザーデータ取得",
     );
     if (result) {
       setUser(result);
@@ -76,23 +76,24 @@ export const useUserData = (userId: string) => {
 **使用例（アップロード処理）**:
 
 ```typescript
-import { handleApiCallWithRetry } from '@shared/utils';
-import { coreApi } from '@shared';
+import { handleApiCallWithRetry } from "@shared/utils";
+import { coreApi } from "@shared";
 
 export const uploadFile = async (file: File): Promise<UploadResult | null> => {
   const formData = new FormData();
-  formData.append('file', file);
+  formData.append("file", file);
 
   // 最大3回リトライ（デフォルト）
   return await handleApiCallWithRetry(
-    () => coreApi.post<UploadResult>('/api/upload', formData),
-    'ファイルアップロード',
-    3
+    () => coreApi.post<UploadResult>("/api/upload", formData),
+    "ファイルアップロード",
+    3,
   );
 };
 ```
 
 **リトライ間隔**:
+
 - 1回目: 失敗後 1秒待機
 - 2回目: 失敗後 2秒待機
 - 3回目: 失敗後 3秒待機
@@ -104,16 +105,13 @@ API以外の処理（ファイル操作、計算処理など）のエラーハ�
 **使用例（ファイル処理）**:
 
 ```typescript
-import { handleOperation } from '@shared/utils';
+import { handleOperation } from "@shared/utils";
 
 export const processCSV = async (file: File): Promise<ParsedData | null> => {
-  return await handleOperation(
-    async () => {
-      const text = await file.text();
-      return parseCSV(text);
-    },
-    'CSVファイル処理'
-  );
+  return await handleOperation(async () => {
+    const text = await file.text();
+    return parseCSV(text);
+  }, "CSVファイル処理");
 };
 ```
 
@@ -128,30 +126,30 @@ export const processCSV = async (file: File): Promise<ParsedData | null> => {
 
 ### カテゴリ一覧
 
-| カテゴリ | 説明 | 例 |
-|---------|------|-----|
-| `INPUT_*` | 入力エラー（フォーム、パラメータなど） | `INPUT_INVALID`, `INPUT_MISSING` |
-| `VALIDATION_*` | バリデーションエラー | `VALIDATION_ERROR`, `VALIDATION_FAILED` |
-| `AUTH_*` | 認証・認可エラー | `AUTH_REQUIRED`, `AUTH_FAILED` |
-| `*_NOT_FOUND` | リソース未発見 | `USER_NOT_FOUND`, `FILE_NOT_FOUND` |
-| `PROCESSING_*` | 処理エラー（計算、変換など） | `PROCESSING_TIMEOUT`, `PROCESSING_FAILED` |
-| `TIMEOUT` | タイムアウト | `TIMEOUT`, `CONNECTION_TIMEOUT` |
-| `JOB_*` | ジョブエラー（バックグラウンド処理） | `JOB_FAILED`, `JOB_CANCELLED` |
-| `NETWORK_*` | ネットワークエラー | `NETWORK_ERROR`, `NETWORK_UNREACHABLE` |
-| `DATABASE_*` | データベースエラー | `DATABASE_CONNECTION_FAILED` |
+| カテゴリ       | 説明                                   | 例                                        |
+| -------------- | -------------------------------------- | ----------------------------------------- |
+| `INPUT_*`      | 入力エラー（フォーム、パラメータなど） | `INPUT_INVALID`, `INPUT_MISSING`          |
+| `VALIDATION_*` | バリデーションエラー                   | `VALIDATION_ERROR`, `VALIDATION_FAILED`   |
+| `AUTH_*`       | 認証・認可エラー                       | `AUTH_REQUIRED`, `AUTH_FAILED`            |
+| `*_NOT_FOUND`  | リソース未発見                         | `USER_NOT_FOUND`, `FILE_NOT_FOUND`        |
+| `PROCESSING_*` | 処理エラー（計算、変換など）           | `PROCESSING_TIMEOUT`, `PROCESSING_FAILED` |
+| `TIMEOUT`      | タイムアウト                           | `TIMEOUT`, `CONNECTION_TIMEOUT`           |
+| `JOB_*`        | ジョブエラー（バックグラウンド処理）   | `JOB_FAILED`, `JOB_CANCELLED`             |
+| `NETWORK_*`    | ネットワークエラー                     | `NETWORK_ERROR`, `NETWORK_UNREACHABLE`    |
+| `DATABASE_*`   | データベースエラー                     | `DATABASE_CONNECTION_FAILED`              |
 
 ### 良い例
 
 ```typescript
 const GOOD_EXAMPLES = [
-  'INPUT_INVALID',
-  'VALIDATION_ERROR',
-  'USER_NOT_FOUND',
-  'PROCESSING_TIMEOUT',
-  'JOB_FAILED',
-  'AUTH_REQUIRED',
-  'NETWORK_ERROR',
-  'DATABASE_CONNECTION_FAILED',
+  "INPUT_INVALID",
+  "VALIDATION_ERROR",
+  "USER_NOT_FOUND",
+  "PROCESSING_TIMEOUT",
+  "JOB_FAILED",
+  "AUTH_REQUIRED",
+  "NETWORK_ERROR",
+  "DATABASE_CONNECTION_FAILED",
 ];
 ```
 
@@ -159,12 +157,12 @@ const GOOD_EXAMPLES = [
 
 ```typescript
 const BAD_EXAMPLES = [
-  'error',                // 小文字
-  'Error',                // PascalCase
-  'validation-error',     // kebab-case
-  'userNotFound',         // camelCase
-  'err',                  // 省略形
-  'failed',               // 抽象的すぎる
+  "error", // 小文字
+  "Error", // PascalCase
+  "validation-error", // kebab-case
+  "userNotFound", // camelCase
+  "err", // 省略形
+  "failed", // 抽象的すぎる
 ];
 ```
 
@@ -183,13 +181,13 @@ const BAD_EXAMPLES = [
 開発時に `validateErrorCode` 関数でエラーコードが規約に準拠しているか確認できます：
 
 ```typescript
-import { validateErrorCode } from '@shared/utils/errorHandling';
+import { validateErrorCode } from "@shared/utils/errorHandling";
 
 // ✅ 正しいコード
-validateErrorCode('USER_NOT_FOUND'); // true
+validateErrorCode("USER_NOT_FOUND"); // true
 
 // ❌ 間違ったコード
-validateErrorCode('userNotFound'); // false（警告がコンソールに表示される）
+validateErrorCode("userNotFound"); // false（警告がコンソールに表示される）
 ```
 
 ## 移行パターン
@@ -200,11 +198,11 @@ validateErrorCode('userNotFound'); // false（警告がコンソールに表示�
 // ❌ 各所で個別にエラーハンドリング
 export const fetchData = async () => {
   try {
-    const response = await coreApi.get('/api/data');
+    const response = await coreApi.get("/api/data");
     return response;
   } catch (error) {
-    notifyApiError(error, 'データ取得に失敗しました');
-    console.error('Error:', error);
+    notifyApiError(error, "データ取得に失敗しました");
+    console.error("Error:", error);
     return null;
   }
 };
@@ -214,13 +212,10 @@ export const fetchData = async () => {
 
 ```typescript
 // ✅ handleApiCallを使用
-import { handleApiCall } from '@shared/utils';
+import { handleApiCall } from "@shared/utils";
 
 export const fetchData = async () => {
-  return await handleApiCall(
-    () => coreApi.get('/api/data'),
-    'データ取得'
-  );
+  return await handleApiCall(() => coreApi.get("/api/data"), "データ取得");
 };
 ```
 
@@ -235,7 +230,7 @@ export class ReportRepository {
   async getReport(id: string): Promise<Report | null> {
     return await handleApiCall(
       () => coreApi.get<Report>(`/api/reports/${id}`),
-      'レポート取得'
+      "レポート取得",
     );
   }
 }
@@ -270,14 +265,14 @@ export const useReportData = (reportId: string) => {
 ```typescript
 const handleSubmit = async (data: FormData) => {
   const result = await handleApiCallWithRetry(
-    () => coreApi.post('/api/submit', data),
-    'データ送信',
-    3  // 最大3回リトライ
+    () => coreApi.post("/api/submit", data),
+    "データ送信",
+    3, // 最大3回リトライ
   );
-  
+
   if (result) {
     // 成功処理
-    navigate('/success');
+    navigate("/success");
   }
 };
 ```

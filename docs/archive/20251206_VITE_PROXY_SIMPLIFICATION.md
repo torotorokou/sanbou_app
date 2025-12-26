@@ -9,11 +9,13 @@
 ### 1. vite.config.ts の簡素化
 
 #### 削除した機能
+
 - **YAML plugin**: 未使用だったため削除（`@rollup/plugin-yaml`）
 - **レガシープロキシエンドポイント**: `/ai_api`, `/ledger_api`, `/rag_api`, `/manual_api` など複数のプロキシ設定を削除
 - **カスタム環境変数読み込みロジック**: 約40行の複雑なファイル走査処理を削除
 
 #### 保持した機能
+
 - **custom-media plugin**: CSSの`@custom-media`ルール処理（5つのCSSファイルで使用中）
 - **単一プロキシエンドポイント**: `/api` → `http://localhost:8003` (Core API) のみ
 - **環境変数読み込み**: Vite標準の`loadEnv()`を使用
@@ -21,37 +23,37 @@
 #### 変更後の構成
 
 ```typescript
-import { defineConfig, loadEnv } from 'vite';
-import react from '@vitejs/plugin-react';
-import customMediaPlugin from './src/plugins/vite-plugin-custom-media';
+import { defineConfig, loadEnv } from "vite";
+import react from "@vitejs/plugin-react";
+import customMediaPlugin from "./src/plugins/vite-plugin-custom-media";
 
 export default defineConfig(({ mode }) => {
-    const envDir = path.resolve(__dirname, '../../env');
-    const env = loadEnv(mode, envDir, '');
-    
-    return {
-        envDir,
-        plugins: [react(), customMediaPlugin()],
-        resolve: {
-            alias: {
-                '@': path.resolve(__dirname, 'src'),
-                '@/app': path.resolve(__dirname, 'src/app'),
-                '@/shared': path.resolve(__dirname, 'src/shared'),
-                '@/features': path.resolve(__dirname, 'src/features'),
-                '@/pages': path.resolve(__dirname, 'src/pages'),
-                // Backward compatibility
-                '@app': path.resolve(__dirname, 'src/app'),
-                '@shared': path.resolve(__dirname, 'src/shared'),
-                '@features': path.resolve(__dirname, 'src/features'),
-                '@pages': path.resolve(__dirname, 'src/pages'),
-            },
-        },
-        server: {
-            proxy: {
-                '/api': { target: `http://localhost:${CORE_PORT}`, changeOrigin: true },
-            },
-        },
-    };
+  const envDir = path.resolve(__dirname, "../../env");
+  const env = loadEnv(mode, envDir, "");
+
+  return {
+    envDir,
+    plugins: [react(), customMediaPlugin()],
+    resolve: {
+      alias: {
+        "@": path.resolve(__dirname, "src"),
+        "@/app": path.resolve(__dirname, "src/app"),
+        "@/shared": path.resolve(__dirname, "src/shared"),
+        "@/features": path.resolve(__dirname, "src/features"),
+        "@/pages": path.resolve(__dirname, "src/pages"),
+        // Backward compatibility
+        "@app": path.resolve(__dirname, "src/app"),
+        "@shared": path.resolve(__dirname, "src/shared"),
+        "@features": path.resolve(__dirname, "src/features"),
+        "@pages": path.resolve(__dirname, "src/pages"),
+      },
+    },
+    server: {
+      proxy: {
+        "/api": { target: `http://localhost:${CORE_PORT}`, changeOrigin: true },
+      },
+    },
+  };
 });
 ```
 
@@ -60,9 +62,11 @@ export default defineConfig(({ mode }) => {
 ### 2. tsconfig.json paths の統一
 
 #### 変更前
+
 20以上のpath aliasが定義されていた（`@app`, `@domain`, `@infra`, `@controllers`, `@entities`, `@widgets`, `@components`, `@hooks`, `@services`, `@stores`, `@types`, `@utils`, `@config`, `@constants`, `@layout`, `@theme` など）
 
 #### 変更後
+
 9つのaliasに統一（スラッシュあり/なし両方サポート）:
 
 ```json
@@ -73,10 +77,10 @@ export default defineConfig(({ mode }) => {
     "@/shared/*": ["shared/*"],
     "@/features/*": ["features/*"],
     "@/pages/*": ["pages/*"],
-    "@app/*": ["app/*"],      // 後方互換
+    "@app/*": ["app/*"], // 後方互換
     "@shared/*": ["shared/*"], // 後方互換
     "@features/*": ["features/*"], // 後方互換
-    "@pages/*": ["pages/*"]    // 後方互換
+    "@pages/*": ["pages/*"] // 後方互換
   }
 }
 ```
@@ -84,6 +88,7 @@ export default defineConfig(({ mode }) => {
 ### 3. API呼び出しの相対パス化
 
 #### 変更前
+
 ```typescript
 // 環境変数を使用した絶対URL
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
@@ -91,16 +96,19 @@ const url = `${apiBaseUrl}/calendar/month?year=${year}&month=${month}`;
 ```
 
 #### 変更後
+
 ```typescript
 // 相対パスでプロキシを活用
 const url = `/api/calendar/month?year=${year}&month=${month}`;
 ```
 
 **影響ファイル**:
+
 - `src/features/calendar/repository/http.calendar.repository.ts`
 - `src/features/notification/controller/sse.ts`
 
 **メリット**:
+
 - 環境変数依存が減少
 - Vite dev serverのプロキシが自動適用される
 - 本番環境でもNginxリバースプロキシで同じパターンが使える
@@ -122,45 +130,53 @@ VITE_API_BASE_URL=http://localhost:8003/api
 ### 5. package.json の整理
 
 #### 削除した依存関係
+
 ```json
 {
   "devDependencies": {
-    "@rollup/plugin-yaml": "^4.1.2"  // 削除
+    "@rollup/plugin-yaml": "^4.1.2" // 削除
   }
 }
 ```
 
 ## 実装前後の比較
 
-| 項目 | Before | After | 改善 |
-|------|--------|-------|------|
-| vite.config.ts 行数 | ~70行 | ~50行 | -30% |
-| プロキシエンドポイント数 | 5+ | 1 | BFFパターン化 |
-| tsconfig paths エントリ数 | 20+ | 9 | -55% |
-| 環境変数参照箇所 | 3ファイル | 0ファイル（deprecated扱い） | 依存削減 |
-| npmパッケージ数 | +1 (yaml) | 0 | 軽量化 |
+| 項目                      | Before    | After                       | 改善          |
+| ------------------------- | --------- | --------------------------- | ------------- |
+| vite.config.ts 行数       | ~70行     | ~50行                       | -30%          |
+| プロキシエンドポイント数  | 5+        | 1                           | BFFパターン化 |
+| tsconfig paths エントリ数 | 20+       | 9                           | -55%          |
+| 環境変数参照箇所          | 3ファイル | 0ファイル（deprecated扱い） | 依存削減      |
+| npmパッケージ数           | +1 (yaml) | 0                           | 軽量化        |
 
 ## 動作確認
 
 ### TypeCheck
+
 ```bash
 npm run typecheck
 ```
+
 **結果**: 既存エラー4件のみ（`DASHBOARD`ルート未定義、カレンダー無関係）
 
 ### Lint
+
 ```bash
 npm run lint
 ```
+
 **結果**: 既存エラー1件のみ（未使用import、カレンダー無関係）
 
 ### Dev Server
+
 ```bash
 npm run dev
 ```
+
 **結果**: ✅ エラーなしで起動（ポート5174）
 
 ### カレンダー機能確認
+
 1. ブラウザで `http://localhost:5174/dashboard/ukeire` にアクセス
 2. 営業カレンダーカードが表示される
 3. モックデータで2025年1月のカレンダーが表示される
@@ -171,7 +187,7 @@ npm run dev
 
 ```typescript
 // Good: Viteプロキシが自動適用される
-const response = await fetch('/api/calendar/month?year=2025&month=1');
+const response = await fetch("/api/calendar/month?year=2025&month=1");
 ```
 
 ### ❌ 非推奨: 環境変数の絶対URL
@@ -185,6 +201,7 @@ const response = await fetch(`${apiBaseUrl}/calendar/month?...`);
 ## BFFパターンの採用
 
 Core API (`localhost:8003`) が Backend for Frontend (BFF) として機能:
+
 - フロントエンドは `/api/**` のみを呼び出す
 - Core APIが他のマイクロサービス（RAG API、Ledger API等）を内部で呼び出す
 - フロントエンドの環境変数設定が簡素化される

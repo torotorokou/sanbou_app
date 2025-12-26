@@ -47,6 +47,7 @@
 3. **GCE / GKE のメタデータサーバー** (VM / Pod にアタッチされたサービスアカウント)
 
 **本プロジェクトでは**:
+
 - ローカル開発: `gcloud auth application-default login` を使用 (2番目)
 - GCE (stg/prod): VM にアタッチされたサービスアカウント (3番目)
 - 環境変数 `GOOGLE_APPLICATION_CREDENTIALS` は**使用しない** (1番目をスキップ)
@@ -128,6 +129,7 @@ A: はい。`secrets/dev_key.json` は使用されません。削除しても問
 **Q: GCS へのアクセス権限が不足している場合は？**
 
 A: IAM でユーザーアカウントに以下のロールを付与してください:
+
 - `roles/storage.objectViewer` (読み取り)
 - `roles/storage.objectAdmin` (読み書き)
 
@@ -250,6 +252,7 @@ COMPOSE_PROFILES=edge make up ENV=vm_prod
 **原因**: ADC が設定されていない
 
 **解決策**:
+
 ```bash
 gcloud auth application-default login
 ```
@@ -259,6 +262,7 @@ gcloud auth application-default login
 **原因**: ユーザーアカウントに権限がない
 
 **解決策**:
+
 ```bash
 # 自分のアカウントを確認
 gcloud auth list
@@ -276,6 +280,7 @@ gcloud projects add-iam-policy-binding sanbouapp-dev \
 **原因**: VM にサービスアカウントがアタッチされていない
 
 **解決策**:
+
 ```bash
 # VM のサービスアカウントを確認
 gcloud compute instances describe sanbou-stg-vm --zone=asia-northeast1-a \
@@ -289,6 +294,7 @@ gcloud compute instances describe sanbou-stg-vm --zone=asia-northeast1-a \
 **原因**: サービスアカウントに権限がない
 
 **解決策**:
+
 ```bash
 # サービスアカウントの権限を確認
 gcloud projects get-iam-policy sanbouapp-stg \
@@ -306,6 +312,7 @@ gcloud projects add-iam-policy-binding sanbouapp-stg \
 **原因**: Docker ネットワークがメタデータサーバーへのアクセスをブロックしている
 
 **解決策**:
+
 ```bash
 # コンテナ内で確認
 docker exec -it <container_id> bash
@@ -323,6 +330,7 @@ curl -H "Metadata-Flavor: Google" \
 ### 移行前 (JSON キー使用)
 
 **Python コード**:
+
 ```python
 from google.cloud import storage
 
@@ -332,6 +340,7 @@ def get_gcs_client():
 ```
 
 **docker-compose.yml**:
+
 ```yaml
 volumes:
   - ../secrets:/backend/secrets:ro
@@ -340,6 +349,7 @@ environment:
 ```
 
 **環境変数 (.env)**:
+
 ```bash
 GOOGLE_APPLICATION_CREDENTIALS=/backend/secrets/dev_key.json
 ```
@@ -347,6 +357,7 @@ GOOGLE_APPLICATION_CREDENTIALS=/backend/secrets/dev_key.json
 ### 移行後 (ADC 使用)
 
 **Python コード**:
+
 ```python
 from google.cloud import storage
 
@@ -356,12 +367,14 @@ def get_gcs_client():
 ```
 
 **docker-compose.yml**:
+
 ```yaml
 # secrets/ マウント不要
 # GOOGLE_APPLICATION_CREDENTIALS 環境変数不要
 ```
 
 **環境変数 (.env)**:
+
 ```bash
 # === GCP 認証 (ADC) ===
 # Application Default Credentials を使用
@@ -379,12 +392,14 @@ ADC を使用することで、将来的に **Workload Identity** (GKE) や **Wo
 ### Workload Identity (GKE) への移行
 
 1. **GKE クラスタで Workload Identity を有効化**:
+
 ```bash
 gcloud container clusters update CLUSTER_NAME \
   --workload-pool=PROJECT_ID.svc.id.goog
 ```
 
 2. **Kubernetes ServiceAccount を作成**:
+
 ```yaml
 apiVersion: v1
 kind: ServiceAccount
@@ -396,6 +411,7 @@ metadata:
 ```
 
 3. **IAM バインディング**:
+
 ```bash
 gcloud iam service-accounts add-iam-policy-binding \
   sanbou-stg-sa@PROJECT_ID.iam.gserviceaccount.com \
@@ -410,6 +426,7 @@ gcloud iam service-accounts add-iam-policy-binding \
 ### Cloud Run への移行
 
 1. **Cloud Run サービスにサービスアカウントを指定**:
+
 ```bash
 gcloud run deploy sanbou-api \
   --image gcr.io/PROJECT_ID/sanbou-api:latest \

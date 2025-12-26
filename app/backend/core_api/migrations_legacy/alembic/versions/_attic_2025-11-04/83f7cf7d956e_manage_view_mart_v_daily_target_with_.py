@@ -4,10 +4,11 @@ Revision ID: 83f7cf7d956e
 Revises: 9a092c4a1fcf
 Create Date: 2025-11-04 04:58:18.783472
 """
-from alembic import op
-import sqlalchemy as sa  # noqa: F401
+
 from textwrap import dedent
 
+import sqlalchemy as sa  # noqa: F401
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = "83f7cf7d956e"
