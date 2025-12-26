@@ -1,11 +1,11 @@
-import React, { useMemo } from 'react';
-import { Card, Skeleton, Typography, Tooltip } from 'antd';
-import { InfoCircleOutlined } from '@ant-design/icons';
-import UkeireCalendar from '../components/UkeireCalendar';
-import { useBusinessCalendarVM } from '../../model/useBusinessCalendarVM';
-import { CalendarRepositoryForUkeire } from '../../infrastructure/calendar.repository';
-import type { ICalendarRepository } from '@/features/calendar/ports/repository';
-import type { CalendarDayDTO } from '@/features/calendar/domain/types';
+import React, { useMemo } from "react";
+import { Card, Skeleton, Typography, Tooltip } from "antd";
+import { InfoCircleOutlined } from "@ant-design/icons";
+import UkeireCalendar from "../components/UkeireCalendar";
+import { useBusinessCalendarVM } from "../../model/useBusinessCalendarVM";
+import { CalendarRepositoryForUkeire } from "../../infrastructure/calendar.repository";
+import type { ICalendarRepository } from "@/features/calendar/ports/repository";
+import type { CalendarDayDTO } from "@/features/calendar/domain/types";
 
 type DayDecor = {
   date: string;
@@ -39,14 +39,20 @@ type Props = {
   repository?: ICalendarRepository;
   title?: string;
   style?: React.CSSProperties;
+  isMobile?: boolean;
+  isTablet?: boolean;
 };
 
 /**
  * CalendarDayDTO から CalendarPayload への変換
  * day_typeに基づいて正確にステータスを判定
  */
-function convertToPayload(year: number, month: number, days: CalendarDayDTO[]): CalendarPayload {
-  const pad = (n: number) => String(n).padStart(2, '0');
+function convertToPayload(
+  year: number,
+  month: number,
+  days: CalendarDayDTO[],
+): CalendarPayload {
+  const pad = (n: number) => String(n).padStart(2, "0");
   const monthStr = `${year}-${pad(month)}`;
 
   const dayDecors: DayDecor[] = days.map((d): DayDecor => {
@@ -54,26 +60,26 @@ function convertToPayload(year: number, month: number, days: CalendarDayDTO[]): 
     // NORMAL: 通常営業日（緑）
     // RESERVATION: 予約営業日（ピンク）
     // CLOSED: 休業日（赤）
-    let status: 'business' | 'holiday' | 'closed';
+    let status: "business" | "holiday" | "closed";
     let label: string | undefined;
     let color: string;
 
     switch (d.day_type) {
-      case 'CLOSED':
-        status = 'closed';
-        label = '休業日';
-        color = '#cf1322'; // 赤
+      case "CLOSED":
+        status = "closed";
+        label = "休業日";
+        color = "#cf1322"; // 赤
         break;
-      case 'RESERVATION':
-        status = 'holiday';
-        label = d.is_holiday ? '祝日' : '予約営業日';
-        color = '#ff85c0'; // ピンク
+      case "RESERVATION":
+        status = "holiday";
+        label = d.is_holiday ? "祝日" : "予約営業日";
+        color = "#ff85c0"; // ピンク
         break;
-      case 'NORMAL':
+      case "NORMAL":
       default:
-        status = 'business';
+        status = "business";
         label = undefined;
-        color = '#52c41a'; // 緑
+        color = "#52c41a"; // 緑
         break;
     }
 
@@ -91,18 +97,18 @@ function convertToPayload(year: number, month: number, days: CalendarDayDTO[]): 
     month: monthStr,
     days: dayDecors,
     legend: [
-      { key: 'business', label: '通常営業日', color: '#52c41a' },
-      { key: 'holiday', label: '予約営業日', color: '#ff85c0' },
-      { key: 'closed', label: '休業日', color: '#cf1322' },
+      { key: "business", label: "通常営業日", color: "#52c41a" },
+      { key: "holiday", label: "予約営業日", color: "#ff85c0" },
+      { key: "closed", label: "休業日", color: "#cf1322" },
     ],
   };
 }
 
 // カレンダー用ツールチップ文言をモジュール内にまとめて保守性を高める
 const CALENDAR_TOOLTIP_TEXTS = {
-  business: '営業日（残り日数）',
-  holiday: '日曜・祝日（残り日数）',
-  closed: '非営業日（残り日数）',
+  business: "営業日（残り日数）",
+  holiday: "日曜・祝日（残り日数）",
+  closed: "非営業日（残り日数）",
 };
 
 const CALENDAR_TOOLTIP_TITLE = (
@@ -113,11 +119,22 @@ const CALENDAR_TOOLTIP_TITLE = (
   </div>
 );
 
-export function CalendarCard({ year, month, repository, title = '営業カレンダー', style }: Props) {
-  const repo = useMemo(() => repository ?? new CalendarRepositoryForUkeire(), [repository]);
+export function CalendarCard({
+  year,
+  month,
+  repository,
+  title = "営業カレンダー",
+  style,
+  isMobile = false,
+  isTablet = false,
+}: Props) {
+  const repo = useMemo(
+    () => repository ?? new CalendarRepositoryForUkeire(),
+    [repository],
+  );
   const vm = useBusinessCalendarVM({ year, month, repository: repo });
 
-  const pad = (n: number) => String(n).padStart(2, '0');
+  const pad = (n: number) => String(n).padStart(2, "0");
   const monthStr = `${year}-${pad(month)}`;
 
   const payload = useMemo(() => {
@@ -139,12 +156,12 @@ export function CalendarCard({ year, month, repository, title = '営業カレン
     return (
       <Card
         title={
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <Typography.Title level={5} style={{ margin: 0, fontSize: 16 }}>
               {title}
             </Typography.Title>
             <Tooltip title={CALENDAR_TOOLTIP_TITLE}>
-              <InfoCircleOutlined style={{ color: '#8c8c8c' }} />
+              <InfoCircleOutlined style={{ color: "#8c8c8c" }} />
             </Tooltip>
           </div>
         }
@@ -159,12 +176,12 @@ export function CalendarCard({ year, month, repository, title = '営業カレン
     return (
       <Card
         title={
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <Typography.Title level={5} style={{ margin: 0, fontSize: 16 }}>
               {title}
             </Typography.Title>
             <Tooltip title={CALENDAR_TOOLTIP_TITLE}>
-              <InfoCircleOutlined style={{ color: '#8c8c8c' }} />
+              <InfoCircleOutlined style={{ color: "#8c8c8c" }} />
             </Tooltip>
           </div>
         }
@@ -178,29 +195,29 @@ export function CalendarCard({ year, month, repository, title = '営業カレン
   return (
     <Card
       title={
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <Typography.Title level={5} style={{ margin: 0, fontSize: 16 }}>
             {title}
           </Typography.Title>
           <Tooltip title={CALENDAR_TOOLTIP_TITLE}>
-            <InfoCircleOutlined style={{ color: '#8c8c8c' }} />
+            <InfoCircleOutlined style={{ color: "#8c8c8c" }} />
           </Tooltip>
         </div>
       }
       style={{
-        height: '100%',
-        display: 'flex',
-        flexDirection: 'column',
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
         ...style,
       }}
       styles={{
         body: {
           flex: 1,
           minHeight: 0,
-          overflow: 'hidden',
+          overflow: "hidden",
           padding: 12,
-          display: 'flex',
-          flexDirection: 'column',
+          display: "flex",
+          flexDirection: "column",
         },
       }}
     >
@@ -208,11 +225,17 @@ export function CalendarCard({ year, month, repository, title = '営業カレン
         style={{
           flex: 1,
           minHeight: 0,
-          display: 'flex',
-          flexDirection: 'column',
+          display: "flex",
+          flexDirection: "column",
         }}
       >
-        <UkeireCalendar month={payload.month} days={payload.days} legend={payload.legend} />
+        <UkeireCalendar
+          month={payload.month}
+          days={payload.days}
+          legend={payload.legend}
+          isMobile={isMobile}
+          isTablet={isTablet}
+        />
       </div>
     </Card>
   );

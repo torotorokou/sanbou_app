@@ -33,6 +33,7 @@ export type TargetCardProps = {
   rows: TargetCardRowData[];
   style?: React.CSSProperties;
   isMobile?: boolean; // Mobile モードでフォントサイズを動的に調整
+  isTablet?: boolean; // Tablet モードでフォントサイズを動的に調整
   isoWeek?: number; // 将来的にはバックグラウンドから取得する想定。指定があればそれを優先して表示する
   achievementMode?: AchievementMode; // 達成率モード（親コンポーネントで管理）
   onModeChange?: (mode: AchievementMode) => void; // モード変更コールバック
@@ -42,25 +43,34 @@ export const TargetCard: React.FC<TargetCardProps> = ({
   rows,
   style,
   isMobile = false,
+  isTablet = false,
   isoWeek,
   achievementMode = "toDate",
   onModeChange,
 }) => {
   // isoWeek プラグインを拡張
   dayjs.extend(isoWeekPlugin);
-  // 画面サイズに応じて動的にフォントサイズを調整（xl: 1280px付近では小さめ）
+  // 画面サイズに応じて動的にフォントサイズを調整（Mobile/Tablet/Desktopの3段階）
   const headerFontSize = isMobile
-    ? "clamp(10px, 2.8vw, 12px)"
-    : "clamp(13px, 0.9vw, 16px)";
+    ? "clamp(11px, 3vw, 14px)"
+    : isTablet
+      ? "clamp(13px, 1.2vw, 15px)"
+      : "clamp(13px, 0.9vw, 16px)";
   const labelFontSize = isMobile
-    ? "clamp(10px, 2.5vw, 12px)"
-    : "clamp(10px, 0.7vw, 13px)";
+    ? "clamp(12px, 3vw, 14px)"
+    : isTablet
+      ? "clamp(11px, 1vw, 13px)"
+      : "clamp(10px, 0.7vw, 13px)";
   const valueFontSize = isMobile
-    ? "clamp(12px, 3.2vw, 15px)"
-    : "clamp(14px, 1.1vw, 20px)";
+    ? "clamp(16px, 4vw, 20px)"
+    : isTablet
+      ? "clamp(15px, 1.5vw, 18px)"
+      : "clamp(14px, 1.1vw, 20px)";
   const pctFontSize = isMobile
-    ? "clamp(10px, 2.5vw, 13px)"
-    : "clamp(14px, 1vw, 18px)";
+    ? "clamp(14px, 3.5vw, 18px)"
+    : isTablet
+      ? "clamp(14px, 1.3vw, 17px)"
+      : "clamp(14px, 1vw, 18px)";
 
   // Mobile モードでは行の高さを確保（複数行ラベル対応）
   const minRowHeight = isMobile ? 44 : 44;
@@ -124,8 +134,8 @@ export const TargetCard: React.FC<TargetCardProps> = ({
               value={achievementMode}
               onChange={(value) => onModeChange(value as AchievementMode)}
               options={[
-                { label: isMobile ? "累計" : "昨日まで", value: "toDate" },
-                { label: isMobile ? "期末" : "月末・週末", value: "toEnd" },
+                { label: "昨日まで", value: "toDate" },
+                { label: "月末・週末", value: "toEnd" },
               ]}
               size={isMobile ? "small" : "small"}
               style={{ width: isMobile ? "auto" : "auto" }}
