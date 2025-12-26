@@ -2,10 +2,9 @@ import React, { useEffect } from "react";
 import { BrowserRouter } from "react-router-dom";
 import { App as AntdApp } from "antd";
 import MainLayout from "@app/layout/MainLayout";
-import { ErrorBoundary } from "@/shared";
+import { ErrorBoundary, setMessageInstance } from "@/shared";
 import { AuthProvider } from "@app/providers/AuthProvider";
 import { AnnouncementStateProvider } from "@features/announcements";
-import { setMessageInstance } from "@shared/infrastructure/http/httpClient";
 
 /**
  * アプリケーションルート

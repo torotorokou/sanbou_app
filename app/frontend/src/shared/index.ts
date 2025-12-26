@@ -53,6 +53,7 @@ export {
   fetchWithTimeout,
   ApiError,
   client,
+  setMessageInstance,
 } from "./infrastructure/http";
 
 // ===================================================
