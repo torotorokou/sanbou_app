@@ -1,4 +1,5 @@
 import React, { Suspense, useEffect, useState, useRef } from "react";
+import { logger } from "@/shared";
 import ReportManagePageLayout from "@features/report/manage/ui/ReportManagePageLayout";
 import ReportStepperModal from "@features/report/modal/ui/ReportStepperModal";
 import BlockUnitPriceInteractiveModal from "@features/report/interactive/ui/BlockUnitPriceInteractiveModal";
@@ -78,10 +79,10 @@ const ReportBase: React.FC<ReportBaseProps> = ({
   const isInteractive = isInteractiveReport(reportKey);
 
   const resetInteractiveState = () => {
-    console.log("[ReportBase] resetInteractiveState 呼び出し");
+    logger.log("[ReportBase] resetInteractiveState 呼び出し");
     // モーダルタイマークリア
     if (modalTimerRef.current) {
-      console.log("[ReportBase] モーダルタイマークリア");
+      logger.log("[ReportBase] モーダルタイマークリア");
       clearTimeout(modalTimerRef.current);
       modalTimerRef.current = null;
     }
@@ -95,10 +96,10 @@ const ReportBase: React.FC<ReportBaseProps> = ({
 
   // 📑 帳簿切り替え時にプレビューや内部状態をリセット（タブ遷移時のPDFクリア）
   useEffect(() => {
-    console.log("[ReportBase] 帳簿切り替え検知:", reportKey);
+    logger.log("[ReportBase] 帳簿切り替え検知:", reportKey);
     // モーダルタイマークリア
     if (modalTimerRef.current) {
-      console.log("[ReportBase] モーダルタイマークリア (reportKey変更)");
+      logger.log("[ReportBase] モーダルタイマークリア (reportKey変更)");
       clearTimeout(modalTimerRef.current);
       modalTimerRef.current = null;
     }
@@ -108,10 +109,10 @@ const ReportBase: React.FC<ReportBaseProps> = ({
     setModalOpen(false);
 
     return () => {
-      console.log("[ReportBase] アンマウント/クリーンアップ");
+      logger.log("[ReportBase] アンマウント/クリーンアップ");
       // モーダルタイマークリア
       if (modalTimerRef.current) {
-        console.log("[ReportBase] モーダルタイマークリア (アンマウント)");
+        logger.log("[ReportBase] モーダルタイマークリア (アンマウント)");
         clearTimeout(modalTimerRef.current);
         modalTimerRef.current = null;
       }
@@ -133,17 +134,17 @@ const ReportBase: React.FC<ReportBaseProps> = ({
    * ⚠️ PDFはバックグラウンドで生成され、モーダルの動作には一切関与しません
    */
   const handleNormalGenerate = () => {
-    console.log("[ReportBase] === Excel生成フロー開始 ===");
+    logger.log("[ReportBase] === Excel生成フロー開始 ===");
 
     // タイマークリア
     if (modalTimerRef.current) {
-      console.log("[ReportBase] 既存タイマーをクリア");
+      logger.log("[ReportBase] 既存タイマーをクリア");
       clearTimeout(modalTimerRef.current);
       modalTimerRef.current = null;
     }
 
     // 初期状態設定
-    console.log("[ReportBase] モーダル表示: 作成中ステップ");
+    logger.log("[ReportBase] モーダル表示: 作成中ステップ");
     setFinalized(false);
     step.setCurrentStep(0);
     modal.setModalOpen(true);
@@ -153,12 +154,12 @@ const ReportBase: React.FC<ReportBaseProps> = ({
       () => {}, // onStart
       () => {
         // onComplete: API呼び出し完了
-        console.log("[ReportBase] API呼び出し完了");
+        logger.log("[ReportBase] API呼び出し完了");
         loading.setLoading(false);
       },
       () => {
         // onSuccess: Excel生成完了 (モーダルの核心イベント)
-        console.log("[ReportBase] ✅ Excel生成完了");
+        logger.log("[ReportBase] ✅ Excel生成完了");
 
         // 完了ステップへ移行
         finalized.setFinalized(true);
@@ -166,12 +167,12 @@ const ReportBase: React.FC<ReportBaseProps> = ({
         notifySuccess("生成完了", "帳簿生成が完了しました");
 
         // 1.2秒後にモーダルを自動クローズ
-        console.log("[ReportBase] 1.2秒後にモーダルをクローズするタイマー設定");
+        logger.log("[ReportBase] 1.2秒後にモーダルをクローズするタイマー設定");
         modalTimerRef.current = setTimeout(() => {
-          console.log("[ReportBase] 🚪 モーダルをクローズ");
+          logger.log("[ReportBase] 🚪 モーダルをクローズ");
           modal.setModalOpen(false);
           step.setCurrentStep(0);
-          console.log("[ReportBase] === Excel生成フロー完了 ===");
+          logger.log("[ReportBase] === Excel生成フロー完了 ===");
         }, 1200);
       },
     );
@@ -224,13 +225,13 @@ const ReportBase: React.FC<ReportBaseProps> = ({
             displayValue,
           ];
         });
-        console.groupCollapsed("[BlockUnitPrice] initial request payload");
-        console.log("reportKey:", reportKey);
-        console.log("endpoint:", getApiEndpoint(reportKey));
-        console.log("FormData:", formDataSummary);
-        console.groupEnd();
+        logger.log("[BlockUnitPrice] initial request payload:", {
+          reportKey,
+          endpoint: getApiEndpoint(reportKey),
+          formData: formDataSummary,
+        });
       } catch (logError) {
-        console.warn("Failed to log initial request payload:", logError);
+        logger.warn("Failed to log initial request payload:", logError);
       }
 
       const apiEndpoint = getApiEndpoint(reportKey);
@@ -238,9 +239,7 @@ const ReportBase: React.FC<ReportBaseProps> = ({
         timeout: 60000,
       });
       // 生データをまず全部出す（インスペクト用）
-      console.groupCollapsed("[BlockUnitPrice] initial response - raw");
-      console.log(data);
-      console.groupEnd();
+      logger.log("[BlockUnitPrice] initial response - raw:", data);
 
       if (!isRecord(data)) {
         throw new Error("初期レスポンス形式が不正です。");
@@ -263,14 +262,14 @@ const ReportBase: React.FC<ReportBaseProps> = ({
           acc.push(normalizedRow);
         } else {
           try {
-            console.warn(
+            logger.warn(
               `Skipped invalid transport row at index ${idx}:`,
               row,
               "serialized:",
               JSON.stringify(row),
             );
           } catch {
-            console.warn(
+            logger.warn(
               `Skipped invalid transport row at index ${idx}: (unserializable)`,
               row,
             );
@@ -279,15 +278,11 @@ const ReportBase: React.FC<ReportBaseProps> = ({
         return acc;
       }, []);
 
-      console.groupCollapsed(
-        "[BlockUnitPrice] initial response payload (normalized)",
-      );
-      console.log("session_id:", session_id);
-      console.log("rows count:", normalizedRows.length);
-      if (normalizedRows.length > 0) {
-        console.log("rows sample:", normalizedRows.slice(0, 3));
-      }
-      console.groupEnd();
+      logger.log("[BlockUnitPrice] initial response payload (normalized):", {
+        session_id,
+        rowsCount: normalizedRows.length,
+        rowsSample: normalizedRows.length > 0 ? normalizedRows.slice(0, 3) : [],
+      });
 
       const sessionData: SessionData = { session_id };
 
@@ -349,10 +344,10 @@ const ReportBase: React.FC<ReportBaseProps> = ({
 
   // ラップして呼び出し元をログ
   const handleGenerateWithLog = () => {
-    console.log(">>> [ReportBase] handleGenerate 呼び出し <<<");
-    console.log("[ReportBase] isInteractive:", isInteractive);
-    console.log("[ReportBase] reportKey:", reportKey);
-    console.trace("[ReportBase] 呼び出しスタック");
+    logger.log(">>> [ReportBase] handleGenerate 呼び出し <<<");
+    logger.log("[ReportBase] isInteractive:", isInteractive);
+    logger.log("[ReportBase] reportKey:", reportKey);
+    logger.debug("[ReportBase] 呼び出しスタック");
     handleGenerate();
   };
 

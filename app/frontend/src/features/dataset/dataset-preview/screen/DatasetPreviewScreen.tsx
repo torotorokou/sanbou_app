@@ -13,6 +13,7 @@ import { useDatasetPreviewVM } from "../model/useDatasetPreviewVM";
 import { CsvPreviewCard } from "../ui/CsvPreviewCard";
 import type { PreviewSource } from "../model/types";
 import styles from "./DatasetPreviewScreen.module.css";
+import { logger } from "@/shared";
 
 export type DatasetPreviewScreenProps = {
   source: PreviewSource;
@@ -58,19 +59,17 @@ export const DatasetPreviewScreen: React.FC<DatasetPreviewScreenProps> = ({
 
       const computed = Math.max(160, Math.floor(h - navH - margin));
 
-      // デバッグログ（開発時のみ有効化）
-      if (process.env.NODE_ENV === "development") {
-        console.debug(
-          "[DatasetPreviewScreen] hostH:",
-          h,
-          "navH:",
-          navH,
-          "margin:",
-          margin,
-          "→ cardHeight:",
-          computed,
-        );
-      }
+      // デバッグログ（loggerが開発環境でのみ出力）
+      logger.debug(
+        "[DatasetPreviewScreen] hostH:",
+        h,
+        "navH:",
+        navH,
+        "margin:",
+        margin,
+        "→ cardHeight:",
+        computed,
+      );
 
       setCardHeight(computed);
     };

@@ -3,9 +3,10 @@
  * Pivot行クリック時のハンドラー
  */
 
-import { useCallback } from 'react';
-import type { Mode, MetricEntry, GroupBy } from './types';
-import type { DrawerState } from './usePivotDrawerState';
+import { useCallback } from "react";
+import type { Mode, MetricEntry, GroupBy } from "./types";
+import type { DrawerState } from "./usePivotDrawerState";
+import { logger } from "@/shared";
 
 interface PivotRowClickHandlerParams {
   drawer: DrawerState;
@@ -15,7 +16,7 @@ interface PivotRowClickHandlerParams {
     customerId?: string,
     itemId?: string,
     dateValue?: string,
-    title?: string
+    title?: string,
   ) => Promise<void>;
 }
 
@@ -41,24 +42,24 @@ export function usePivotRowClickHandler(params: PivotRowClickHandlerParams) {
       let dateValue: string | undefined;
 
       // baseAxisに応じてフィルタを設定
-      if (baseAxis === 'customer') {
+      if (baseAxis === "customer") {
         customerId = baseId;
-      } else if (baseAxis === 'item') {
+      } else if (baseAxis === "item") {
         itemId = baseId;
-      } else if (baseAxis === 'date') {
+      } else if (baseAxis === "date") {
         dateValue = baseId;
       }
 
       // activeAxis（クリックされた行の軸）に応じてフィルタを追加
-      if (axis === 'customer') {
+      if (axis === "customer") {
         customerId = row.id;
-      } else if (axis === 'item') {
+      } else if (axis === "item") {
         itemId = row.id;
-      } else if (axis === 'date') {
+      } else if (axis === "date") {
         dateValue = row.id;
       }
 
-      console.log('🔍 Pivot行クリック:', {
+      logger.log("🔍 Pivot行クリック:", {
         baseAxis,
         baseId,
         clickedAxis: axis,
@@ -70,9 +71,16 @@ export function usePivotRowClickHandler(params: PivotRowClickHandlerParams) {
       // タイトル構築
       const title = `${row.name} の詳細明細`;
 
-      await openDetailDrawer(lastGroupBy, repId, customerId, itemId, dateValue, title);
+      await openDetailDrawer(
+        lastGroupBy,
+        repId,
+        customerId,
+        itemId,
+        dateValue,
+        title,
+      );
     },
-    [drawer, openDetailDrawer]
+    [drawer, openDetailDrawer],
   );
 
   return { handlePivotRowClick };

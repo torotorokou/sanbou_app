@@ -7,11 +7,12 @@
  * TODO: バックエンドAPI実装後、ReservationDailyHttpRepositoryに切り替え
  */
 
+import { logger } from "@/shared";
 import type {
   ReservationDailyRepository,
   ReservationForecastDaily,
   ReservationManualInput,
-} from '../ports/ReservationDailyRepository';
+} from "../ports/ReservationDailyRepository";
 
 export class ReservationDailyMockRepository implements ReservationDailyRepository {
   // モックストレージ（メモリ内）
@@ -20,16 +21,23 @@ export class ReservationDailyMockRepository implements ReservationDailyRepositor
   /**
    * 予測用日次予約データを取得（モック）
    */
-  async getForecastDaily(from: string, to: string): Promise<ReservationForecastDaily[]> {
-    console.log('[MOCK] getForecastDaily:', { from, to });
+  async getForecastDaily(
+    from: string,
+    to: string,
+  ): Promise<ReservationForecastDaily[]> {
+    logger.log("[MOCK] getForecastDaily:", { from, to });
 
     // モックデータを生成
     const result: ReservationForecastDaily[] = [];
     const startDate = new Date(from);
     const endDate = new Date(to);
 
-    for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
-      const dateStr = d.toISOString().split('T')[0];
+    for (
+      let d = new Date(startDate);
+      d <= endDate;
+      d.setDate(d.getDate() + 1)
+    ) {
+      const dateStr = d.toISOString().split("T")[0];
 
       // 手入力データがあればそれを優先
       const manual = this.manualData.get(dateStr);
@@ -39,7 +47,7 @@ export class ReservationDailyMockRepository implements ReservationDailyRepositor
           reserve_trucks: manual.total_trucks,
           reserve_fixed_trucks: manual.fixed_trucks,
           reserve_fixed_ratio: manual.fixed_trucks / manual.total_trucks,
-          source: 'manual',
+          source: "manual",
         });
       } else {
         // ランダムな集計データ（開発用）
@@ -50,7 +58,7 @@ export class ReservationDailyMockRepository implements ReservationDailyRepositor
           reserve_trucks: totalTrucks,
           reserve_fixed_trucks: fixedTrucks,
           reserve_fixed_ratio: totalTrucks > 0 ? fixedTrucks / totalTrucks : 0,
-          source: 'customer_agg',
+          source: "customer_agg",
         });
       }
     }
@@ -65,7 +73,7 @@ export class ReservationDailyMockRepository implements ReservationDailyRepositor
    * 手入力データを保存/更新（モック）
    */
   async upsertManual(payload: ReservationManualInput): Promise<void> {
-    console.log('[MOCK] upsertManual:', payload);
+    logger.log("[MOCK] upsertManual:", payload);
 
     this.manualData.set(payload.reserve_date, payload);
 
@@ -76,7 +84,7 @@ export class ReservationDailyMockRepository implements ReservationDailyRepositor
    * 手入力データを削除（モック）
    */
   async deleteManual(date: string): Promise<void> {
-    console.log('[MOCK] deleteManual:', date);
+    logger.log("[MOCK] deleteManual:", date);
 
     this.manualData.delete(date);
 
@@ -85,4 +93,5 @@ export class ReservationDailyMockRepository implements ReservationDailyRepositor
 }
 
 // シングルトンインスタンス
-export const reservationDailyMockRepository = new ReservationDailyMockRepository();
+export const reservationDailyMockRepository =
+  new ReservationDailyMockRepository();
