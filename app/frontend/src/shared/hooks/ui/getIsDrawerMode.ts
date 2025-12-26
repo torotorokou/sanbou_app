@@ -1,65 +1,31 @@
 /**
- * Drawerモード判定を集約
- * サイドバーがオーバーレイDrawerとして表示される状態かどうかを判定
+ * getIsDrawerMode - Drawerモード判定の集約関数
  *
- * FSD + MVVM アーキテクチャに準拠:
- * - Shared Layer: プロジェクト全体で再利用可能なユーティリティ
- * - 状態管理フック（useSidebar）の戻り値から判定
+ * 【役割】
+ * - サイドバーがDrawer（オーバーレイ）表示かどうかを判定
+ * - プロジェクト内で唯一のDrawerモード判定ロジック
  *
- * @description
- * Drawerモードは以下の条件で決定:
- * - モバイル（≤767px）: drawerMode = true
- * - タブレット（768-1280px）: drawerMode = false
- * - デスクトップ（≥1281px）: drawerMode = false
+ * 【定義】
+ * - Drawerモード = モバイル幅（≤767px）かつ drawerMode設定がtrue
+ * - デスクトップ/タブレットでは常にfalse（常時表示Siderモード）
  *
- * この判定を集約することで、以下のメリット:
- * - 画面幅判定ロジックの一元化
- * - isDrawerMode の使用箇所での一貫性担保
- * - 将来的な判定条件変更への対応が容易
- */
-
-import type { SidebarConfig } from "./useSidebar";
-
-// 型の再エクスポート（互換性のため）
-export type { SidebarConfig };
-
-/**
- * Drawerモードかどうかを判定
- *
- * @param config - useSidebar()から取得したconfig
- * @returns true: オーバーレイDrawer表示、false: 常時表示Sider
- *
- * @example
+ * 【使用例】
  * ```tsx
- * const { config } = useSidebar();
- * const isDrawer = getIsDrawerMode(config);
- * if (isDrawer) {
- *   // Drawerモードの処理
- * }
+ * const isDrawer = getIsDrawerMode(isMobile, config.drawerMode);
+ * if (isDrawer) closeDrawer();
  * ```
  */
-export function getIsDrawerMode(config: SidebarConfig): boolean {
-  return config.drawerMode;
-}
 
 /**
- * Drawerモードで開いているかどうかを判定
+ * Drawerモードかどうかを判定する純粋関数
  *
- * @param config - useSidebar()から取得したconfig
- * @param isMobile - モバイル判定フラグ
- * @param drawerOpen - Drawer開閉状態
- * @returns true: Drawerモードで開いている、false: それ以外
- *
- * @example
- * ```tsx
- * const { config, isMobile, drawerOpen } = useSidebar();
- * const isOpen = getIsDrawerModeAndOpen(config, isMobile, drawerOpen);
- * ```
+ * @param isMobile - モバイル幅かどうか（≤767px）
+ * @param drawerMode - サイドバー設定のdrawerModeフラグ
+ * @returns Drawerモードならtrue
  */
-export function getIsDrawerModeAndOpen(
-  config: SidebarConfig,
+export function getIsDrawerMode(
   isMobile: boolean,
-  drawerOpen: boolean,
+  drawerMode: boolean,
 ): boolean {
-  return getIsDrawerMode(config) && isMobile && drawerOpen;
+  return isMobile && drawerMode;
 }

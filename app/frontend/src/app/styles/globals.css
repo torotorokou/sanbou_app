@@ -13,7 +13,9 @@ html {
   scrollbar-gutter: stable;
 }
 
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: inherit;
 }
 
@@ -50,14 +52,18 @@ body {
 }
 
 /* === Media Elements === */
-img, video, canvas, svg {
+img,
+video,
+canvas,
+svg {
   max-width: 100%;
   height: auto;
   display: block;
 }
 
 /* === Text Overflow Prevention === */
-pre, code {
+pre,
+code {
   white-space: normal;
   overflow-wrap: anywhere;
 }
@@ -102,4 +108,71 @@ pre, code {
     margin: 0 !important;
     padding: 0 !important;
   }
+}
+
+/* ===================================================
+ * SalesTree ミニバーチャート（グローバル）
+ * ===================================================
+ * ExpandedRow, PivotTable で使用するインラインバーチャート
+ */
+.sales-tree-mini-bar-bg {
+  flex: 1;
+  height: 6px;
+  background: #f6f7fb;
+  border-radius: 4px;
+  overflow: hidden;
+  min-width: 40px;
+}
+
+.sales-tree-mini-bar {
+  height: 100%;
+}
+
+.sales-tree-mini-bar-blue {
+  background: #237804;
+}
+
+.sales-tree-mini-bar-green {
+  background: #52c41a;
+}
+
+.sales-tree-mini-bar-gold {
+  background: #faad14;
+}
+
+/* SalesTree アクセントカード */
+.sales-tree-accent-card {
+  border-left: 4px solid rgba(35, 120, 4, 0.06);
+  overflow: hidden;
+}
+
+.sales-tree-accent-primary {
+  border-left-color: #237804;
+}
+
+.sales-tree-accent-secondary {
+  border-left-color: #52c41a;
+}
+
+.sales-tree-accent-gold {
+  border-left-color: #faad14;
+}
+
+/* SalesTree カードセクションヘッダー */
+.sales-tree-card-section-header {
+  font-weight: 600;
+  padding: 6px 10px;
+  margin-bottom: 12px;
+  border-radius: 6px;
+  background: #f3fff4;
+  border: 1px solid #e6f7e6;
+}
+
+/* SalesTree ゼブラストライプ */
+.sales-tree-zebra-even {
+  background: #ffffff;
+}
+
+.sales-tree-zebra-odd {
+  background: #fbfcfe;
 }

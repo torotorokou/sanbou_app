@@ -6,13 +6,14 @@ import {
   MenuUnfoldOutlined,
   HomeOutlined,
 } from "@ant-design/icons";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { SIDEBAR_MENU } from "@app/navigation/sidebarMenu";
 import { ROUTER_PATHS } from "@app/routes/routes";
 import {
   customTokens,
   useSidebar,
   useResponsive,
+  useSidebarNavigation,
   useAutoCloseSidebarOnRouteChange,
   getIsDrawerMode,
 } from "@/shared";
@@ -90,7 +91,8 @@ interface SidebarMenuProps {
   selectedPath: string;
   theme?: "light" | "dark";
   collapsed?: boolean;
-  onMenuClick?: (info: { key: string }) => void;
+  /** メニュークリック時のコールバック（Drawer自動クローズ用） */
+  onMenuClick?: () => void;
 }
 
 const SidebarMenu: React.FC<SidebarMenuProps> = ({
@@ -130,7 +132,6 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({
 /** メインSidebarコンポーネント（2分岐構造） */
 const Sidebar: React.FC = () => {
   const location = useLocation();
-  const navigate = useNavigate();
   const {
     isMobile,
     collapsed,
@@ -145,12 +146,15 @@ const Sidebar: React.FC = () => {
   const unreadCount = useUnreadCount();
   const hasUnread = unreadCount > 0;
 
-  // ルート変更時にDrawerモードのサイドバーを自動で閉じる
-  useAutoCloseSidebarOnRouteChange({
-    config: sidebarConfig,
-    isMobile,
+  // Drawerモード判定（親のuseSidebarの状態を使用）
+  const isDrawerMode = getIsDrawerMode(isMobile, sidebarConfig.drawerMode);
+
+  // Drawer自動クローズ用hooks（親のcloseDrawerを渡す）
+  const { handleMenuClick } = useSidebarNavigation({
+    isDrawerMode,
     closeDrawer,
   });
+  useAutoCloseSidebarOnRouteChange({ isDrawerMode, closeDrawer });
 
   // デバッグログ
   console.log("[Sidebar] unreadCount:", unreadCount, "hasUnread:", hasUnread);
@@ -170,25 +174,6 @@ const Sidebar: React.FC = () => {
   React.useEffect(() => {
     setOpenKeys(collapsed ? [] : parentKeys);
   }, [collapsed, parentKeys]);
-
-  // メニュークリック時のハンドラ（Drawerモード時の自動クローズ対応）
-  const handleMenuClick = React.useCallback(
-    (info: { key: string }) => {
-      const key = info.key;
-
-      // パス形式のキーの場合のみナビゲート
-      if (key.startsWith("/")) {
-        navigate(key);
-
-        // Drawerモードの場合のみサイドバーを閉じる
-        const isDrawerMode = getIsDrawerMode(sidebarConfig);
-        if (isDrawerMode && isMobile) {
-          closeDrawer();
-        }
-      }
-    },
-    [navigate, sidebarConfig, isMobile, closeDrawer],
-  );
 
   // ===== モバイル: Drawerモード =====
   if (isMobile) {
@@ -285,7 +270,6 @@ const Sidebar: React.FC = () => {
           selectedPath={location.pathname}
           theme="dark"
           collapsed={collapsed}
-          onMenuClick={handleMenuClick}
         />
       </Sider>
     </>

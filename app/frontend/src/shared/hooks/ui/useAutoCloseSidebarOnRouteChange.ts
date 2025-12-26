@@ -1,68 +1,59 @@
 /**
- * ルート変更時にDrawerモードのサイドバーを自動で閉じるhook
+ * useAutoCloseSidebarOnRouteChange - ルート変更時のサイドバー自動クローズ
  *
- * FSD + MVVM アーキテクチャに準拠:
- * - Shared Layer: プロジェクト全体で再利用可能なViewModel hook
- * - 副作用管理: useEffect でルート変更を監視
- * - ビジネスロジック: Drawerモード時の自動クローズ
+ * 【役割】
+ * - ブラウザの戻る/進むなど、メニュークリック以外の遷移でもDrawerを閉じる
+ * - 初回マウント時は閉じない（初回レンダリングで勝手に閉じるのを防止）
  *
- * @description
- * 用途:
- * - ブラウザの戻る/進むボタンでルート変更した際の保険
- * - 外部からの遷移でもDrawerを閉じる
- *
- * 動作:
- * 1. useLocation() で pathname の変化を検知
- * 2. 初回マウントでは何もしない（初回レンダリングで勝手に閉じるのを防ぐ）
- * 3. 2回目以降の pathname 変更時、Drawerモードなら closeSidebar() を呼ぶ
- * 4. closeSidebar() は冪等性があるので、多重に呼ばれても問題なし
+ * 【使用例】
+ * ```tsx
+ * // Sidebarコンポーネント内で呼び出す
+ * useAutoCloseSidebarOnRouteChange({ isDrawerMode, closeDrawer });
+ * ```
  */
-
 import { useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
-import { getIsDrawerMode } from "./getIsDrawerMode";
-import type { SidebarConfig } from "./useSidebar";
 
-export interface UseAutoCloseSidebarOnRouteChangeParams {
-  /** useSidebar()から取得したconfig */
-  config: SidebarConfig;
-  /** モバイル判定（useSidebar()から取得） */
-  isMobile: boolean;
-  /** Drawerを閉じる関数（useSidebar()から取得） */
+export interface UseAutoCloseSidebarOnRouteChangeOptions {
+  /** 現在Drawerモードかどうか */
+  isDrawerMode: boolean;
+  /** Drawerを閉じる関数（親のuseSidebarから渡す） */
   closeDrawer: () => void;
 }
 
 /**
- * ルート変更時にDrawerモードのサイドバーを自動で閉じる
+ * ルート変更を検知してDrawerモード時にサイドバーを自動クローズ
  *
- * @param params - config, isMobile, closeDrawer
- *
- * @example
- * ```tsx
- * // Layout または Sidebar 内で呼び出す
- * const { config, isMobile, closeDrawer } = useSidebar();
- * useAutoCloseSidebarOnRouteChange({ config, isMobile, closeDrawer });
- * ```
+ * - 初回マウント時は閉じない（isFirstRender フラグで制御）
+ * - pathname変更時、Drawerモードなら closeDrawer() を呼ぶ
+ * - close は冪等（すでに閉じていても問題なし）
  */
 export function useAutoCloseSidebarOnRouteChange({
-  config,
-  isMobile,
+  isDrawerMode,
   closeDrawer,
-}: UseAutoCloseSidebarOnRouteChangeParams): void {
+}: UseAutoCloseSidebarOnRouteChangeOptions): void {
   const location = useLocation();
-  const isFirstMount = useRef(true);
+
+  // 初回マウントを判定するためのref
+  const isFirstRender = useRef(true);
+  const prevPathname = useRef(location.pathname);
 
   useEffect(() => {
-    // 初回マウントでは何もしない
-    if (isFirstMount.current) {
-      isFirstMount.current = false;
+    // 初回マウント時はスキップ
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      prevPathname.current = location.pathname;
       return;
     }
 
-    // Drawerモードの場合のみ閉じる
-    const isDrawerMode = getIsDrawerMode(config);
-    if (isDrawerMode && isMobile) {
-      closeDrawer();
+    // パスが変わった場合のみ処理
+    if (location.pathname !== prevPathname.current) {
+      prevPathname.current = location.pathname;
+
+      // Drawerモードの場合のみ閉じる
+      if (isDrawerMode) {
+        closeDrawer();
+      }
     }
-  }, [location.pathname, config, isMobile, closeDrawer]);
+  }, [location.pathname, isDrawerMode, closeDrawer]);
 }

@@ -9,14 +9,8 @@ export {
 export { useElementResponsive } from "./useElementResponsive";
 export { useContainerSize } from "./useContainerSize";
 export { useScrollTracker } from "./useScrollTracker";
-export { useSidebar, type SidebarConfig } from "./useSidebar";
-export { getIsDrawerMode, getIsDrawerModeAndOpen } from "./getIsDrawerMode";
-export {
-  useSidebarNavigation,
-  type UseSidebarNavigationParams,
-  type UseSidebarNavigationReturn,
-} from "./useSidebarNavigation";
-export {
-  useAutoCloseSidebarOnRouteChange,
-  type UseAutoCloseSidebarOnRouteChangeParams,
-} from "./useAutoCloseSidebarOnRouteChange";
+export { useSidebar } from "./useSidebar";
+// Sidebar Drawer auto-close hooks
+export { getIsDrawerMode } from "./getIsDrawerMode";
+export { useSidebarNavigation } from "./useSidebarNavigation";
+export { useAutoCloseSidebarOnRouteChange } from "./useAutoCloseSidebarOnRouteChange";

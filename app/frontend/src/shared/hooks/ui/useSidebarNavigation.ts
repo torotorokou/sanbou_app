@@ -1,85 +1,48 @@
 /**
- * サイドバーのナビゲーション処理を担当するViewModel hook
+ * useSidebarNavigation - サイドバーメニュークリック時のナビゲーション処理
  *
- * FSD + MVVM アーキテクチャに準拠:
- * - Shared Layer: プロジェクト全体で再利用可能なViewModel hook
- * - ビジネスロジック: ナビゲーション後のDrawer自動クローズ
- * - 疎結合: UIコンポーネントから状態管理・遷移ロジックを分離
+ * 【役割】
+ * - メニュークリック時にDrawerモードなら自動でサイドバーを閉じる
+ * - ViewModelとしてナビゲーション + サイドバー閉じる処理を一元管理
  *
- * @description
- * 責務:
- * 1. サイドバーメニューからのナビゲーション処理
- * 2. 遷移後、Drawerモードの場合のみサイドバーを閉じる
- * 3. デスクトップ/タブレットの常時表示サイドバーは閉じない
- *
- * 使用場面:
- * - サイドバーメニューのonClickハンドラ
- * - メニューアイテム内のカスタム遷移ボタン
+ * 【使用例】
+ * ```tsx
+ * const { handleMenuClick } = useSidebarNavigation({ isDrawerMode, closeDrawer });
+ * <Menu onClick={handleMenuClick} ... />
+ * ```
  */
-
 import { useCallback } from "react";
-import { useNavigate } from "react-router-dom";
-import { getIsDrawerMode } from "./getIsDrawerMode";
-import type { SidebarConfig } from "./useSidebar";
 
-export interface UseSidebarNavigationParams {
-  /** useSidebar()から取得したconfig */
-  config: SidebarConfig;
-  /** モバイル判定（useSidebar()から取得） */
-  isMobile: boolean;
-  /** Drawerを閉じる関数（useSidebar()から取得） */
+export interface UseSidebarNavigationOptions {
+  /** 現在Drawerモードかどうか */
+  isDrawerMode: boolean;
+  /** Drawerを閉じる関数（親のuseSidebarから渡す） */
   closeDrawer: () => void;
 }
 
 export interface UseSidebarNavigationReturn {
-  /**
-   * メニューからのナビゲーション処理
-   * @param to - 遷移先パス
-   */
-  navigateAndClose: (to: string) => void;
+  /** メニュークリック時のハンドラ（Drawerモード時に自動クローズ） */
+  handleMenuClick: () => void;
 }
 
 /**
- * サイドバーのナビゲーション処理hook
+ * サイドバーメニューナビゲーション用ViewModel
  *
- * @param params - config, isMobile, closeDrawer
- * @returns navigateAndClose - メニュークリック時の遷移関数
- *
- * @example
- * ```tsx
- * const { config, isMobile, closeDrawer } = useSidebar();
- * const { navigateAndClose } = useSidebarNavigation({
- *   config,
- *   isMobile,
- *   closeDrawer,
- * });
- *
- * // メニューアイテム内で使用
- * <button onClick={() => navigateAndClose('/path')}>ページへ</button>
- * ```
+ * - メニュークリック時、Drawerモードなら自動でcloseDrawer()を呼ぶ
+ * - Linkによる遷移は既存のまま（react-router-dom）
+ * - このhookはクリック後の副作用（Drawer閉じる）のみ担当
  */
 export function useSidebarNavigation({
-  config,
-  isMobile,
+  isDrawerMode,
   closeDrawer,
-}: UseSidebarNavigationParams): UseSidebarNavigationReturn {
-  const navigate = useNavigate();
-
-  const navigateAndClose = useCallback(
-    (to: string) => {
-      // 1. ページ遷移を実行
-      navigate(to);
-
-      // 2. Drawerモードの場合のみサイドバーを閉じる
-      const isDrawerMode = getIsDrawerMode(config);
-      if (isDrawerMode && isMobile) {
-        closeDrawer();
-      }
-    },
-    [navigate, config, isMobile, closeDrawer],
-  );
+}: UseSidebarNavigationOptions): UseSidebarNavigationReturn {
+  const handleMenuClick = useCallback(() => {
+    if (isDrawerMode) {
+      closeDrawer();
+    }
+  }, [isDrawerMode, closeDrawer]);
 
   return {
-    navigateAndClose,
+    handleMenuClick,
   };
 }
