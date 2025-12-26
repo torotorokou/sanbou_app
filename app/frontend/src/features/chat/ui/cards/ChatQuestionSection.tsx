@@ -1,7 +1,7 @@
 // ChatQuestionSection.tsx
-import React from 'react';
-import { useResponsive, isTabletOrHalf } from '@/shared';
-import QuestionPanel from '../components/QuestionPanel';
+import React from "react";
+import { useResponsive, isTabletOrHalf } from "@/shared";
+import QuestionPanel from "../components/QuestionPanel";
 
 type Props = {
   category: string;
@@ -30,20 +30,21 @@ const ChatQuestionSection: React.FC<Props> = ({
   setQuestion,
   categoryData,
 }) => {
-  const { width } = useResponsive();
-  const isNarrow = typeof width === 'number' ? isTabletOrHalf(width) : false;
+  const { width, isMobile } = useResponsive();
+  const isNarrow = typeof width === "number" ? isTabletOrHalf(width) : false;
 
   return (
     <div
       style={{
-        width: isNarrow ? '100%' : 420,
-        padding: 24,
+        width: isNarrow ? "100%" : 420,
+        maxWidth: "100%",
+        padding: isMobile ? "8px 0" : 24,
         paddingBottom: isNarrow ? 8 : 88,
-        overflowY: 'auto',
-        display: 'flex',
-        flexDirection: 'column',
+        overflow: isMobile ? "visible" : "auto",
+        display: "flex",
+        flexDirection: "column",
         gap: 12,
-        minHeight: 0,
+        minHeight: isMobile ? "auto" : 0,
       }}
     >
       {/* QuestionPanelをそのまま使う */}

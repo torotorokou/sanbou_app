@@ -63,7 +63,7 @@ export const NaviLayout: React.FC<NaviLayoutProps> = ({
   handleSearch,
   stepItems,
 }) => {
-  const { width } = useResponsive();
+  const { width, isMobile } = useResponsive();
   const isNarrow = typeof width === "number" ? isTabletOrHalf(width) : false;
   const isMd =
     typeof width === "number" ? width >= bp.md && width < bp.xl : false;
@@ -81,20 +81,106 @@ export const NaviLayout: React.FC<NaviLayoutProps> = ({
     >
       {loading && <Spin tip="AIが回答中です..." size="large" fullscreen />}
 
-      <div style={{ padding: "12px 24px" }}>
+      <div style={{ padding: isMobile ? "4px 8px" : "12px 24px" }}>
         <ReportStepIndicator currentStep={currentStep} items={stepItems} />
       </div>
 
       <div
         style={{
           display: "flex",
+          flexDirection: isMobile ? "column" : "row",
           flex: 1,
-          overflow: "hidden",
+          overflow: isMobile ? "auto" : "hidden",
+          overflowX: "hidden",
           minHeight: 0,
           height: "100%",
+          gap: isMobile ? 16 : 0,
+          maxWidth: "100%",
         }}
       >
-        {isNarrow ? (
+        {isMobile ? (
+          /* モバイル: 縦積みレイアウト */
+          <>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                padding: "0 8px",
+                maxWidth: "100%",
+                width: "100%",
+              }}
+            >
+              <ChatQuestionSection
+                category={category}
+                setCategory={(val) => {
+                  setCategory(val);
+                  setCurrentStep(1);
+                  setTags([]);
+                  setTemplate("自由入力");
+                }}
+                tags={tags}
+                setTag={setTags}
+                template={template}
+                setTemplate={(val) => {
+                  setTemplate(val);
+                  if (val !== "自由入力") {
+                    setQuestion(val);
+                    setCurrentStep(2);
+                  }
+                }}
+                question={question}
+                setQuestion={(val) => {
+                  setQuestion(val);
+                  if (val.trim()) setCurrentStep(2);
+                }}
+                categoryData={categoryData}
+              />
+
+              <div
+                style={{
+                  padding: "16px 0",
+                  display: "flex",
+                  justifyContent: "center",
+                }}
+              >
+                <ChatSendButtonSection
+                  onClick={handleSearch}
+                  disabled={!question.trim() || tags.length === 0 || loading}
+                />
+              </div>
+
+              {/* 回答がある場合、下にスクロールを促すインジケーター */}
+              {answer && (
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    padding: "8px 0",
+                    color: "#1890ff",
+                    fontSize: 13,
+                    animation: "bounce 1.5s infinite",
+                  }}
+                >
+                  <span>↓ 回答が生成されました ↓</span>
+                  <span style={{ fontSize: 20, marginTop: 4 }}>▼</span>
+                </div>
+              )}
+            </div>
+
+            {/* 回答エリア */}
+            <div
+              style={{
+                minHeight: 400,
+                padding: "0 8px 16px",
+                maxWidth: "100%",
+                width: "100%",
+              }}
+            >
+              <ChatAnswerSection answer={answer} />
+            </div>
+          </>
+        ) : isNarrow ? (
           <>
             <div
               style={{

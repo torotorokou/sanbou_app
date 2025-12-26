@@ -19,37 +19,49 @@ import {
   AnalysisProcessingModal,
   useCustomerChurnViewModel,
 } from "@features/analytics/customer-list";
+import { useResponsive } from "@/shared";
 
 const CustomerListAnalysis: React.FC = () => {
   // ViewModel を呼び出し（すべての状態・ロジック・イベントハンドラがここに集約）
   const vm = useCustomerChurnViewModel();
+  const { isMobile } = useResponsive();
 
   return (
-    <div style={{ height: "100%", minHeight: 0 }}>
+    <div style={{ height: isMobile ? "auto" : "100%", minHeight: 0 }}>
       {/* 分析中モーダル */}
       <AnalysisProcessingModal open={vm.isAnalyzing} />
 
-      <Row gutter={24} style={{ height: "100%", minHeight: 0 }}>
+      <Row
+        gutter={isMobile ? [0, 16] : 24}
+        style={{
+          height: isMobile ? "auto" : "100%",
+          minHeight: 0,
+          flexDirection: isMobile ? "column" : "row",
+          flexWrap: isMobile ? "nowrap" : "wrap",
+        }}
+      >
         {/* 左カラム: 条件指定・実行ボタン */}
         <Col
-          span={7}
+          xs={24}
+          lg={7}
           style={{
             display: "flex",
             flexDirection: "column",
-            height: "100%",
-            padding: "clamp(24px, 2vw, 40px) clamp(16px, 1.5vw, 24px)",
+            height: isMobile ? "auto" : "100%",
+            padding: isMobile
+              ? "clamp(16px, 2vw, 24px) clamp(12px, 1.5vw, 16px)"
+              : "clamp(24px, 2vw, 40px) clamp(16px, 1.5vw, 24px)",
             background: "#f8fcfa",
-            overflow: "auto",
+            overflow: isMobile ? "visible" : "auto",
           }}
         >
           <div
             style={{
               display: "flex",
               flexDirection: "column",
-              gap: "clamp(20px, 2vw, 32px)",
-              height: "100%",
-              justifyContent: "flex-start",
-              alignItems: "stretch",
+              gap: isMobile
+                ? "clamp(12px, 2vw, 20px)"
+                : "clamp(20px, 2vw, 32px)",
             }}
           >
             <ConditionPanel
@@ -79,12 +91,14 @@ const CustomerListAnalysis: React.FC = () => {
 
         {/* 右カラム: 分析結果表示 */}
         <Col
-          span={17}
+          xs={24}
+          lg={17}
           style={{
-            height: "95%",
-            minHeight: 0,
+            height: isMobile ? "auto" : "95%",
+            minHeight: isMobile ? 300 : 0,
             display: "flex",
             flexDirection: "column",
+            flex: isMobile ? 1 : undefined,
           }}
         >
           <ResultPanel

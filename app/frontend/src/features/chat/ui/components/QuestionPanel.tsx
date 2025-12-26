@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo } from "react";
 import { Card, Select, Input, Typography, Button } from "antd";
 import { ReloadOutlined } from "@ant-design/icons";
+import { useResponsive } from "@/shared";
 import styles from "./QuestionPanel.module.css";
 
 const { Option } = Select;
@@ -30,6 +31,8 @@ const QuestionPanel: React.FC<Props> = ({
   setQuestion,
   categoryData,
 }) => {
+  const { isMobile } = useResponsive();
+
   // 選択肢をYAMLから動的生成
   const categoryOptions = useMemo(
     () => (categoryData ? Object.keys(categoryData) : []),
@@ -125,6 +128,8 @@ const QuestionPanel: React.FC<Props> = ({
           minHeight: 0, // ←または削除
           display: "flex",
           flexDirection: "column",
+          maxWidth: "100%",
+          width: "100%",
         }}
       >
         <div style={{ marginBottom: 14 }}>
@@ -213,19 +218,18 @@ const QuestionPanel: React.FC<Props> = ({
           </Select>
         </div>
 
-        <div style={{ marginBottom: 0, marginTop: 35 }}>
+        <div style={{ marginBottom: 0, marginTop: isMobile ? 16 : 35 }}>
           <Typography.Text strong>質問内容</Typography.Text>
           <TextArea
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
             placeholder="質問を入力してください"
             allowClear
-            // ↓ここを修正
-            autoSize={{ minRows: 8, maxRows: 14 }} // ←好きな行数で大きく
+            autoSize={{ minRows: isMobile ? 3 : 8, maxRows: isMobile ? 5 : 14 }}
             style={{
               marginTop: 8,
-              minHeight: 160, // ←高さ指定（または不要なら消す）
-              fontSize: 16, // ←フォントもやや大きく（任意）
+              minHeight: isMobile ? 60 : 160,
+              fontSize: isMobile ? 14 : 16,
             }}
           />
         </div>

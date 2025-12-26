@@ -1,0 +1,23 @@
+/* ReportStepIndicator.module.css */
+/* モバイル時にStepsを強制的に横1行に表示 */
+
+.mobileSteps :global(.ant-steps) {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+}
+
+.mobileSteps :global(.ant-steps-item) {
+  flex: 0 0 auto !important;
+  white-space: nowrap !important;
+}
+
+.mobileSteps :global(.ant-steps-item-title) {
+  white-space: nowrap !important;
+}
+
+.mobileSteps :global(.ant-steps-item-container) {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+}

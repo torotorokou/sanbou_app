@@ -18,27 +18,9 @@ type Props = {
 /**
  * 分析結果表示パネル
  *
- * 分析未実行時のプレースホルダーと結果テーブルを切り替え表示
+ * 分析未実行時でも表の外枠とヘッダーを表示
  */
 const ResultPanel: React.FC<Props> = ({ data, analysisStarted }) => {
-  if (!analysisStarted) {
-    return (
-      <div
-        style={{
-          marginTop: 24,
-          color: "#888",
-          height: "100%",
-          minHeight: 0,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        左で月を選択し、「分析する」ボタンを押してください。
-      </div>
-    );
-  }
-
   return (
     <div
       style={{
@@ -51,7 +33,11 @@ const ResultPanel: React.FC<Props> = ({ data, analysisStarted }) => {
       }}
     >
       <CustomerComparisonResultCard
-        title={`来なくなった顧客（離脱）: ${data.length} 件`}
+        title={
+          analysisStarted
+            ? `来なくなった顧客（離脱）: ${data.length} 件`
+            : "来なくなった顧客（離脱）"
+        }
         data={data}
         cardStyle={{
           backgroundColor: customTokens.colorBgContainer,
