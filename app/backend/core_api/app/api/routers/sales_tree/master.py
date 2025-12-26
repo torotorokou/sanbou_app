@@ -12,6 +12,7 @@ Note: これは「マスタAPI」ではなく、SalesTree分析画面のプル�
 """
 
 from fastapi import APIRouter, Depends, Query
+from sqlalchemy.exc import SQLAlchemyError
 
 from app.config.di_providers import get_sales_tree_repo
 from app.core.domain.sales_tree import CategoryKind
@@ -55,8 +56,15 @@ def get_sales_reps_master(
         reps = repo.get_sales_reps(category_kind)
         logger.info(f"Successfully retrieved {len(reps)} sales reps for filter")
         return reps
+    except SQLAlchemyError as e:
+        logger.error(f"Database error in get_sales_reps_master: {str(e)}", exc_info=True)
+        raise InfrastructureError(
+            message="Database error while fetching sales reps",
+            cause=e,
+        )
     except Exception as e:
-        logger.error(f"Error in get_sales_reps_master: {str(e)}", exc_info=True)
+        # 予期しない例外の最後のキャッチ
+        logger.error(f"Unexpected error in get_sales_reps_master: {str(e)}", exc_info=True)
         raise InfrastructureError(
             message=f"Internal server error while fetching sales reps: {str(e)}",
             cause=e,
@@ -87,8 +95,12 @@ def get_customers_master(
         customers = repo.get_customers(category_kind)
         logger.info(f"Successfully retrieved {len(customers)} customers for filter")
         return customers
+    except SQLAlchemyError as e:
+        logger.error(f"Database error in get_customers_master: {str(e)}", exc_info=True)
+        raise InfrastructureError(message="Database error while fetching customers", cause=e)
     except Exception as e:
-        logger.error(f"Error in get_customers_master: {str(e)}", exc_info=True)
+        # 予期しない例外の最後のキャッチ
+        logger.error(f"Unexpected error in get_customers_master: {str(e)}", exc_info=True)
         raise InfrastructureError(
             message=f"Internal server error while fetching customers: {str(e)}", cause=e
         )
@@ -118,8 +130,12 @@ def get_items_master(
         items = repo.get_items(category_kind)
         logger.info(f"Successfully retrieved {len(items)} items for filter")
         return items
+    except SQLAlchemyError as e:
+        logger.error(f"Database error in get_items_master: {str(e)}", exc_info=True)
+        raise InfrastructureError(message="Database error while fetching items", cause=e)
     except Exception as e:
-        logger.error(f"Error in get_items_master: {str(e)}", exc_info=True)
+        # 予期しない例外の最後のキャッチ
+        logger.error(f"Unexpected error in get_items_master: {str(e)}", exc_info=True)
         raise InfrastructureError(
             message=f"Internal server error while fetching items: {str(e)}", cause=e
         )

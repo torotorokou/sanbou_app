@@ -7,6 +7,7 @@ Database Upload Status Router - Upload status query
 """
 
 from fastapi import APIRouter, Depends
+from sqlalchemy.exc import SQLAlchemyError
 
 from app.config.di_providers import get_upload_status_uc
 from app.core.usecases.upload.get_upload_status_uc import GetUploadStatusUseCase
@@ -63,8 +64,17 @@ async def get_upload_status(
             status_code=400,
         ).to_json_response()
 
+    except SQLAlchemyError as e:
+        logger.exception(f"Database error retrieving upload status: {e}")
+        return ErrorApiResponse(
+            code="DATABASE_ERROR",
+            detail="データベースエラーが発生しました",
+            status_code=500,
+        ).to_json_response()
+
     except Exception as e:
-        logger.exception(f"Error retrieving upload status: {e}")
+        # 予期しない例外の最後のキャッチ
+        logger.exception(f"Unexpected error retrieving upload status: {e}")
         return ErrorApiResponse(
             code="INTERNAL_ERROR",
             detail=f"ステータス取得エラー: {str(e)}",

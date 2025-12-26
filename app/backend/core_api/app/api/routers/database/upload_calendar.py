@@ -10,6 +10,7 @@ CSVアップロードカレンダー取得と削除エンドポイント
 from datetime import date
 
 from fastapi import APIRouter, Depends, Query
+from sqlalchemy.exc import SQLAlchemyError
 
 from app.config.di_providers import (
     get_delete_upload_scope_uc,
@@ -64,9 +65,17 @@ def get_upload_calendar(
     """
     try:
         return uc.execute(year=year, month=month)
-    except Exception as e:
+    except SQLAlchemyError as e:
         logger.error(
-            "Failed to fetch upload calendar",
+            "Database error fetching upload calendar",
+            extra=create_log_context(operation="get_upload_calendar", error=str(e)),
+            exc_info=True,
+        )
+        raise InfrastructureError(message="Database error during calendar query", cause=e)
+    except Exception as e:
+        # 予期しない例外の最後のキャッチ
+        logger.error(
+            "Unexpected error fetching upload calendar",
             extra=create_log_context(operation="get_upload_calendar", error=str(e)),
             exc_info=True,
         )
@@ -141,9 +150,17 @@ def delete_upload_scope(
 
     except NotFoundError:
         raise
-    except Exception as e:
+    except SQLAlchemyError as e:
         logger.error(
-            "Failed to delete upload scope",
+            "Database error deleting upload scope",
+            extra=create_log_context(operation="delete_upload_scope", error=str(e)),
+            exc_info=True,
+        )
+        raise InfrastructureError(message="Database error during delete operation", cause=e)
+    except Exception as e:
+        # 予期しない例外の最後のキャッチ
+        logger.error(
+            "Unexpected error deleting upload scope",
             extra=create_log_context(operation="delete_upload_scope", error=str(e)),
             exc_info=True,
         )

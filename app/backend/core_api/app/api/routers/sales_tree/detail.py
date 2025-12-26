@@ -7,6 +7,7 @@ Sales Tree Detail Router - Detail lines endpoint
 """
 
 from fastapi import APIRouter, Depends
+from sqlalchemy.exc import SQLAlchemyError
 
 from app.config.di_providers import get_fetch_sales_tree_detail_lines_uc
 from app.core.domain.sales_tree_detail import DetailLinesRequest, DetailLinesResponse
@@ -84,8 +85,15 @@ def get_detail_lines(
         )
         return result
 
+    except SQLAlchemyError as e:
+        logger.error(f"Database error in get_detail_lines: {str(e)}", exc_info=True)
+        raise InfrastructureError(
+            message="Database error while fetching detail lines",
+            cause=e,
+        )
     except Exception as e:
-        logger.error(f"Error in get_detail_lines: {str(e)}", exc_info=True)
+        # 予期しない例外の最後のキャッチ
+        logger.error(f"Unexpected error in get_detail_lines: {str(e)}", exc_info=True)
         raise InfrastructureError(
             message=f"Internal server error while fetching detail lines: {str(e)}",
             cause=e,

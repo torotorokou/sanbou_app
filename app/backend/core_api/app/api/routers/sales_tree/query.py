@@ -9,6 +9,7 @@ Sales Tree Query Router - Summary, daily series, and pivot endpoints
 """
 
 from fastapi import APIRouter, Depends
+from sqlalchemy.exc import SQLAlchemyError
 
 from app.config.di_providers import (
     get_fetch_sales_tree_daily_series_uc,
@@ -84,8 +85,12 @@ def get_summary(
         logger.info(f"Successfully retrieved summary: {len(result)} reps")
         return result
 
+    except SQLAlchemyError as e:
+        logger.error(f"Database error in get_summary: {str(e)}", exc_info=True)
+        raise InfrastructureError(message="Database error while fetching summary data", cause=e)
     except Exception as e:
-        logger.error(f"Error in get_summary: {str(e)}", exc_info=True)
+        # 予期しない例外の最後のキャッチ
+        logger.error(f"Unexpected error in get_summary: {str(e)}", exc_info=True)
         raise InfrastructureError(
             message=f"Internal server error while fetching summary: {str(e)}", cause=e
         )
@@ -132,8 +137,15 @@ def get_daily_series(
         logger.info(f"Successfully retrieved daily series: {len(result)} points")
         return result
 
+    except SQLAlchemyError as e:
+        logger.error(f"Database error in get_daily_series: {str(e)}", exc_info=True)
+        raise InfrastructureError(
+            message="Database error while fetching daily series data",
+            cause=e,
+        )
     except Exception as e:
-        logger.error(f"Error in get_daily_series: {str(e)}", exc_info=True)
+        # 予期しない例外の最後のキャッチ
+        logger.error(f"Unexpected error in get_daily_series: {str(e)}", exc_info=True)
         raise InfrastructureError(
             message=f"Internal server error while fetching daily series: {str(e)}",
             cause=e,
@@ -186,8 +198,12 @@ def get_pivot(
         logger.info(f"Successfully retrieved pivot: {len(result.rows)} rows")
         return result
 
+    except SQLAlchemyError as e:
+        logger.error(f"Database error in get_pivot: {str(e)}", exc_info=True)
+        raise InfrastructureError(message="Database error while fetching pivot data", cause=e)
     except Exception as e:
-        logger.error(f"Error in get_pivot: {str(e)}", exc_info=True)
+        # 予期しない例外の最後のキャッチ
+        logger.error(f"Unexpected error in get_pivot: {str(e)}", exc_info=True)
         raise InfrastructureError(
             message=f"Internal server error while fetching pivot: {str(e)}", cause=e
         )

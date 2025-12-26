@@ -8,6 +8,7 @@ Sales Tree Export Router - CSV export endpoint
 
 from fastapi import APIRouter, Depends
 from fastapi.responses import Response
+from sqlalchemy.exc import SQLAlchemyError
 
 from app.config.di_providers import get_export_sales_tree_csv_uc
 from app.core.domain.sales_tree import ExportRequest
@@ -68,8 +69,15 @@ def export_csv(
             headers={"Content-Disposition": f'attachment; filename="{filename}"'},
         )
 
+    except SQLAlchemyError as e:
+        logger.error(f"Database error in export_csv: {str(e)}", exc_info=True)
+        raise InfrastructureError(
+            message="Database error while exporting CSV",
+            cause=e,
+        )
     except Exception as e:
-        logger.error(f"Error in export_csv: {str(e)}", exc_info=True)
+        # 予期しない例外の最後のキャッチ
+        logger.error(f"Unexpected error in export_csv: {str(e)}", exc_info=True)
         raise InfrastructureError(
             message=f"Internal server error while exporting CSV: {str(e)}", cause=e
         )
