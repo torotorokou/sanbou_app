@@ -1,4 +1,4 @@
-import { isMobile, isTabletOrHalf, isDesktop, ANT } from "@/shared";
+import { isMobile, isTabletOrHalf, isDesktop, bp } from "@/shared";
 /**
  * レスポンシブデザインの動作確認用ユーティリティ
  *
@@ -15,13 +15,13 @@ export const RESPONSIVE_TEST_SIZES = {
   AndroidSmall: { width: 360, height: 640 },
 
   // タブレット
-  iPad: { width: ANT.md, height: 1024 },
+  iPad: { width: bp.md, height: 1024 },
   iPadPro: { width: 1024, height: 1366 },
   AndroidTablet: { width: 800, height: 1280 },
 
   // デスクトップ
-  SmallLaptop: { width: 1024, height: ANT.md },
-  MediumDesktop: { width: 1366, height: ANT.md },
+  SmallLaptop: { width: 1024, height: bp.md },
+  MediumDesktop: { width: 1366, height: bp.md },
   FullHD: { width: 1920, height: 1080 },
   LargeScreen: { width: 2560, height: 1440 },
 };

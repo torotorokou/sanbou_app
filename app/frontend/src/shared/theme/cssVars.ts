@@ -1,5 +1,5 @@
 import { customTokens } from "./tokens";
-import { ANT } from "@/shared";
+import { bp } from "@/shared";
 
 export function generateCssVars(): string {
   return `
@@ -59,9 +59,9 @@ export function generateCssVars(): string {
       --content-transition: padding 0.3s ease-in-out;
 
   /* ブレークポイント（単一ソース: src/shared/constants/breakpoints.ts）★2025-12-22更新 */
-  --breakpoint-mobile: ${ANT.md - 1}px; /* ≤767 */
-  --breakpoint-tablet-max: ${ANT.xl}px; /* 768–1280 の max ★更新 */
-  --breakpoint-auto-collapse: ${ANT.xl + 1}px; /* 1281 ★更新: Desktop開始 */
+  --breakpoint-mobile: ${bp.md - 1}px; /* ≤767 */
+  --breakpoint-tablet-max: ${bp.xl}px; /* 768–1280 の max ★更新 */
+  --breakpoint-auto-collapse: ${bp.xl + 1}px; /* 1281 ★更新: Desktop開始 */
     }
   `;
 }

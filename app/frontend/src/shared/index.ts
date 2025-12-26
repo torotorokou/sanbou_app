@@ -8,14 +8,12 @@ export {
   bp,
   mq,
   match,
-  ANT, // @deprecated bp を使用してください
   BP,
   tierOf,
   isMobile,
   isTabletOrHalf,
   isDesktop,
   type BpKey,
-  type AntKey, // @deprecated
   type ViewportTier,
 } from "./constants/breakpoints";
 
