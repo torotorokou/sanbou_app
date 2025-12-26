@@ -1,6 +1,6 @@
 /**
  * Public API for dataset features
- * 
+ *
  * 規約: データセット関連機能（CSV入力）のグループ
  */
 
@@ -23,10 +23,10 @@ export * from './dataset-final-warning';
 export * from './upload-calendar';
 
 // Config (個別エクスポートで重複を回避)
-export { 
-  DATASETS, 
-  getDatasetConfig, 
-  getAllDatasets, 
+export {
+  DATASETS,
+  getDatasetConfig,
+  getAllDatasets,
   getCsvColor,
   getCsvLabel,
   getDatasetLabel,

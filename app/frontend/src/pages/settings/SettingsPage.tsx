@@ -1,9 +1,9 @@
 /**
  * Settings Page - 設定ページ
- * 
+ *
  * ユーザーの設定情報を表示・管理するページ。
  * 現在は認証情報（ID、ログイン名、メールアドレス、ロール）を表示。
- * 
+ *
  * 【変更履歴】
  * - AuthProviderを使用してグローバルな認証状態を参照
  */
@@ -20,12 +20,14 @@ export const SettingsPage: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        minHeight: '400px' 
-      }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          minHeight: '400px',
+        }}
+      >
         <Spin size="large" tip="ユーザー情報を読み込み中..." />
       </div>
     );
@@ -34,12 +36,7 @@ export const SettingsPage: React.FC = () => {
   if (error) {
     return (
       <div style={{ padding: '24px' }}>
-        <Alert
-          message="エラー"
-          description={error}
-          type="error"
-          showIcon
-        />
+        <Alert message="エラー" description={error} type="error" showIcon />
       </div>
     );
   }
@@ -47,12 +44,7 @@ export const SettingsPage: React.FC = () => {
   if (!user) {
     return (
       <div style={{ padding: '24px' }}>
-        <Alert
-          message="未ログイン"
-          description="ログインしていません。"
-          type="warning"
-          showIcon
-        />
+        <Alert message="未ログイン" description="ログインしていません。" type="warning" showIcon />
       </div>
     );
   }
@@ -72,7 +64,7 @@ export const SettingsPage: React.FC = () => {
             column={{ xs: 1, sm: 1, md: 2 }}
             labelStyle={{ fontWeight: 'bold', width: '150px' }}
           >
-            <Descriptions.Item 
+            <Descriptions.Item
               label={
                 <span>
                   <IdcardOutlined style={{ marginRight: 8 }} />
@@ -83,7 +75,7 @@ export const SettingsPage: React.FC = () => {
               {user.userId || '(未設定)'}
             </Descriptions.Item>
 
-            <Descriptions.Item 
+            <Descriptions.Item
               label={
                 <span>
                   <UserOutlined style={{ marginRight: 8 }} />
@@ -94,7 +86,7 @@ export const SettingsPage: React.FC = () => {
               {user.displayName || user.email.split('@')[0]}
             </Descriptions.Item>
 
-            <Descriptions.Item 
+            <Descriptions.Item
               label={
                 <span>
                   <MailOutlined style={{ marginRight: 8 }} />
@@ -106,7 +98,7 @@ export const SettingsPage: React.FC = () => {
               {user.email}
             </Descriptions.Item>
 
-            <Descriptions.Item 
+            <Descriptions.Item
               label={
                 <span>
                   <SafetyOutlined style={{ marginRight: 8 }} />
@@ -115,14 +107,16 @@ export const SettingsPage: React.FC = () => {
               }
             >
               {user.role ? (
-                <span style={{ 
-                  padding: '2px 8px', 
-                  borderRadius: '4px',
-                  backgroundColor: user.role === 'admin' ? '#52c41a' : '#1890ff',
-                  color: 'white',
-                  fontSize: '12px',
-                  fontWeight: 'bold'
-                }}>
+                <span
+                  style={{
+                    padding: '2px 8px',
+                    borderRadius: '4px',
+                    backgroundColor: user.role === 'admin' ? '#52c41a' : '#1890ff',
+                    color: 'white',
+                    fontSize: '12px',
+                    fontWeight: 'bold',
+                  }}
+                >
                   {user.role.toUpperCase()}
                 </span>
               ) : (

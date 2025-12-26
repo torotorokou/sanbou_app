@@ -1,10 +1,11 @@
-from typing import Optional
-
-from fastapi import APIRouter, BackgroundTasks, File, Form, UploadFile, Depends
+from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, UploadFile
 from fastapi.responses import JSONResponse
 
-from app.core.usecases.reports.generate_management_sheet import GenerateManagementSheetUseCase
 from app.config.di_providers import get_management_sheet_usecase
+from app.core.usecases.reports.generate_management_sheet import (
+    GenerateManagementSheetUseCase,
+)
+
 
 router = APIRouter()
 
@@ -16,17 +17,17 @@ async def generate_management_sheet(
     shipment: UploadFile = File(None),
     yard: UploadFile = File(None),
     receive: UploadFile = File(None),
-    period_type: Optional[str] = Form(None),
+    period_type: str | None = Form(None),
     usecase: GenerateManagementSheetUseCase = Depends(get_management_sheet_usecase),
 ) -> JSONResponse:
     """
     経営管理表生成APIエンドポイント
-    
+
     🔄 リファクタリング: Excel同期 + PDF非同期の2段階構成
     - Excel生成は同期的に実行し、すぐにダウンロードURL返却
     - PDF生成はバックグラウンドで実行
     - フロントエンドは pdf_status をポーリングして完了を確認
-    
+
     Args:
         background_tasks: FastAPIのBackgroundTasks（PDF非同期生成用）
         shipment: 出荷データCSVファイル

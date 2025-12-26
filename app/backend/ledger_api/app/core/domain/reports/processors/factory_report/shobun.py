@@ -1,8 +1,11 @@
 import pandas as pd
 
-from backend_shared.application.logging import get_module_logger, create_log_context
+from app.infra.report_utils.dataframe.cleaning import (
+    clean_cd_column as _clean_cd_column,
+)
+from backend_shared.application.logging import create_log_context, get_module_logger
 from backend_shared.utils.dataframe_utils_optimized import clean_na_strings_vectorized
-from app.infra.report_utils.dataframe.cleaning import clean_cd_column as _clean_cd_column
+
 
 logger = get_module_logger(__name__)
 
@@ -20,7 +23,7 @@ def process_shobun(df_shipment: pd.DataFrame, master_csv: pd.DataFrame = None) -
     Returns:
         pd.DataFrame
             整形済みの出荷処分帳票
-            
+
     Notes:
         - Step 5最適化: master_csvを引数で受け取ることでI/O削減
     """
@@ -29,9 +32,7 @@ def process_shobun(df_shipment: pd.DataFrame, master_csv: pd.DataFrame = None) -
     logger.info("マスターCSV確認", extra=create_log_context(operation="process_shobun"))
 
     if master_csv is None or master_csv.empty:
-        logger.warning(
-            "マスターCSVが提供されていません（処分）。空データで継続します。"
-        )
+        logger.warning("マスターCSVが提供されていません（処分）。空データで継続します。")
         # 下流で期待される最小列を用意して空で返す
         empty_cols = ["業者名", "セル", "値", "セルロック", "順番", "業者CD", "品名"]
         return pd.DataFrame(columns=empty_cols)
@@ -47,12 +48,10 @@ def process_shobun(df_shipment: pd.DataFrame, master_csv: pd.DataFrame = None) -
     return final_df
 
 
-def apply_shobun_weight(
-    master_csv: pd.DataFrame, df_shipment: pd.DataFrame
-) -> pd.DataFrame:
+def apply_shobun_weight(master_csv: pd.DataFrame, df_shipment: pd.DataFrame) -> pd.DataFrame:
     """
     処分重量を業者別に加算する。
-    
+
     Note:
         df_shipmentは呼び出し元（factory_report_base）で既にcopy()済みで、
         業者CDも文字列化済みのため、ここでは追加処理は不要。
@@ -64,9 +63,7 @@ def apply_shobun_weight(
     # --- 丸源処理 ---
     df_marugen = df_shipment[df_shipment["業者CD"] == marugen_num].copy()
     filtered_marugen = df_marugen[df_marugen["品名"].isin(master_csv["品名"])]
-    agg_marugen = filtered_marugen.groupby(["業者CD", "品名"], as_index=False)[
-        "正味重量"
-    ].sum()
+    agg_marugen = filtered_marugen.groupby(["業者CD", "品名"], as_index=False)["正味重量"].sum()
 
     # --- その他業者処理 ---
     df_others = df_shipment[df_shipment["業者CD"] != marugen_num]

@@ -2,7 +2,7 @@
 
 **作成日**: 2025年12月11日  
 **調査対象**: `mart.v_receive_daily` VIEW 削除時のCASCADE影響  
-**トリガー**: マイグレーション `e581d89ba5db_drop_v_receive_daily_view.py` による `DROP VIEW ... CASCADE`  
+**トリガー**: マイグレーション `e581d89ba5db_drop_v_receive_daily_view.py` による `DROP VIEW ... CASCADE`
 
 ---
 
@@ -10,7 +10,8 @@
 
 **問題**: `mart.v_receive_daily` VIEW を削除した際、`CASCADE` オプションにより依存する6つのオブジェクト（VIEW 2つ、MV 4つ）が連鎖削除された。
 
-**影響範囲**: 
+**影響範囲**:
+
 - ✅ **復元完了**: 全6オブジェクトを再作成し、データも復元済み
 - ⚠️ **命名規則違反**: マイグレーションID `e581d89ba5db` を標準形式 `YYYYMMDD_HHMMSS` に修正
 - 🔄 **マイグレーション追加**: 3つの新規マイグレーションで復元処理を正式化
@@ -23,24 +24,26 @@
 
 ### 1.1. 削除されたVIEW（2つ）
 
-| オブジェクト名 | 種別 | 用途 | 依存関係 |
-|--------------|------|------|----------|
-| `mart.v_receive_weekly` | VIEW | 週次受入集計 | `FROM mart.v_receive_daily` |
+| オブジェクト名           | 種別 | 用途         | 依存関係                    |
+| ------------------------ | ---- | ------------ | --------------------------- |
+| `mart.v_receive_weekly`  | VIEW | 週次受入集計 | `FROM mart.v_receive_daily` |
 | `mart.v_receive_monthly` | VIEW | 月次受入集計 | `FROM mart.v_receive_daily` |
 
-**削除理由**: 
+**削除理由**:
+
 - 両VIEWとも `FROM mart.v_receive_daily` で定義されていたため、親VIEWの削除時にCASCADE削除された
 
 ### 1.2. 削除されたMaterialized View（4つ）
 
-| オブジェクト名 | 種別 | 用途 | 依存関係 | データサイズ |
-|--------------|------|------|----------|------------|
-| `mart.mv_inb5y_week_profile_min` | MV | 5年間週次プロファイル | `FROM mart.v_receive_daily` | 32 KB (53行) |
-| `mart.mv_inb_avg5y_day_biz` | MV | 5年間平日日次平均 | `FROM mart.v_receive_daily` | 64 KB (312行) |
-| `mart.mv_inb_avg5y_weeksum_biz` | MV | 5年間週次合計（営業日） | `FROM mart.v_receive_daily` | 40 KB (53行) |
-| `mart.mv_inb_avg5y_day_scope` | MV | 5年間日次平均（全/営業） | `FROM mart.v_receive_daily` | 184 KB (679行) |
+| オブジェクト名                   | 種別 | 用途                     | 依存関係                    | データサイズ   |
+| -------------------------------- | ---- | ------------------------ | --------------------------- | -------------- |
+| `mart.mv_inb5y_week_profile_min` | MV   | 5年間週次プロファイル    | `FROM mart.v_receive_daily` | 32 KB (53行)   |
+| `mart.mv_inb_avg5y_day_biz`      | MV   | 5年間平日日次平均        | `FROM mart.v_receive_daily` | 64 KB (312行)  |
+| `mart.mv_inb_avg5y_weeksum_biz`  | MV   | 5年間週次合計（営業日）  | `FROM mart.v_receive_daily` | 40 KB (53行)   |
+| `mart.mv_inb_avg5y_day_scope`    | MV   | 5年間日次平均（全/営業） | `FROM mart.v_receive_daily` | 184 KB (679行) |
 
 **削除理由**:
+
 - 全MVのCTE定義内で `FROM mart.v_receive_daily` を参照していたため、親VIEWの削除時にCASCADE削除された
 - SQL定義ファイル（`sql/mart/mv_inb*.sql`）は既に `mv_receive_daily` 参照に更新済みだったが、DB上のMVは旧定義のまま残っていた
 
@@ -48,10 +51,10 @@
 
 以下のオブジェクトは削除されず、正常に動作継続：
 
-| オブジェクト名 | 種別 | 理由 |
-|--------------|------|------|
-| `mart.mv_target_card_per_day` | MV | 今回の作業で `mv_receive_daily` 参照に更新済み |
-| `mart.mv_receive_daily` | MV | 削除対象ではなく、`v_receive_daily` の代替として新規作成 |
+| オブジェクト名                | 種別 | 理由                                                     |
+| ----------------------------- | ---- | -------------------------------------------------------- |
+| `mart.mv_target_card_per_day` | MV   | 今回の作業で `mv_receive_daily` 参照に更新済み           |
+| `mart.mv_receive_daily`       | MV   | 削除対象ではなく、`v_receive_daily` の代替として新規作成 |
 
 ---
 
@@ -79,6 +82,7 @@ mart.v_receive_daily (VIEW) - DROP CASCADE
 ### 2.3. PostgreSQL依存関係検出
 
 PostgreSQLは以下の方法で依存関係を検出：
+
 - VIEW定義内の `FROM`, `JOIN` 句に含まれるテーブル/VIEW名
 - Materialized View定義内のクエリで参照されるオブジェクト
 - `CASCADE` オプション指定時、これらの依存オブジェクトも再帰的に削除
@@ -119,16 +123,16 @@ done
 
 ```sql
 -- REFRESH CONCURRENTLY要件のためUNIQUE INDEXを作成
-CREATE UNIQUE INDEX mv_inb5y_week_profile_min_pk 
+CREATE UNIQUE INDEX mv_inb5y_week_profile_min_pk
   ON mart.mv_inb5y_week_profile_min (iso_week);
 
-CREATE UNIQUE INDEX mv_inb_avg5y_day_biz_pk 
+CREATE UNIQUE INDEX mv_inb_avg5y_day_biz_pk
   ON mart.mv_inb_avg5y_day_biz (iso_week, iso_dow);
 
-CREATE UNIQUE INDEX mv_inb_avg5y_weeksum_biz_pk 
+CREATE UNIQUE INDEX mv_inb_avg5y_weeksum_biz_pk
   ON mart.mv_inb_avg5y_weeksum_biz (iso_week);
 
-CREATE UNIQUE INDEX ux_mv_inb_avg5y_day_scope 
+CREATE UNIQUE INDEX ux_mv_inb_avg5y_day_scope
   ON mart.mv_inb_avg5y_day_scope (scope, iso_week, iso_dow);
 ```
 
@@ -149,35 +153,35 @@ REFRESH MATERIALIZED VIEW mart.mv_inb_avg5y_weeksum_biz;
 
 ```sql
 -- Materialized Views
-SELECT matviewname, 
+SELECT matviewname,
        pg_size_pretty(pg_total_relation_size('mart.' || matviewname)) AS size
-FROM pg_matviews 
+FROM pg_matviews
 WHERE schemaname = 'mart';
 ```
 
-| MV名 | サイズ | 行数 | 状態 |
-|------|--------|------|------|
-| `mv_receive_daily` | 320 KB | 1,805 | ✅ 正常 |
-| `mv_target_card_per_day` | 344 KB | 2,191 | ✅ 正常 |
-| `mv_sales_tree_daily` | 24 KB | - | ⚠️ 未使用（削除候補） |
-| `mv_inb5y_week_profile_min` | 32 KB | 53 | ✅ 復元完了 |
-| `mv_inb_avg5y_day_biz` | 64 KB | 312 | ✅ 復元完了 |
-| `mv_inb_avg5y_weeksum_biz` | 40 KB | 53 | ✅ 復元完了 |
-| `mv_inb_avg5y_day_scope` | 184 KB | 679 | ✅ 復元完了 |
+| MV名                        | サイズ | 行数  | 状態                  |
+| --------------------------- | ------ | ----- | --------------------- |
+| `mv_receive_daily`          | 320 KB | 1,805 | ✅ 正常               |
+| `mv_target_card_per_day`    | 344 KB | 2,191 | ✅ 正常               |
+| `mv_sales_tree_daily`       | 24 KB  | -     | ⚠️ 未使用（削除候補） |
+| `mv_inb5y_week_profile_min` | 32 KB  | 53    | ✅ 復元完了           |
+| `mv_inb_avg5y_day_biz`      | 64 KB  | 312   | ✅ 復元完了           |
+| `mv_inb_avg5y_weeksum_biz`  | 40 KB  | 53    | ✅ 復元完了           |
+| `mv_inb_avg5y_day_scope`    | 184 KB | 679   | ✅ 復元完了           |
 
 ```sql
 -- Views
 SELECT viewname FROM pg_views WHERE schemaname = 'mart';
 ```
 
-| VIEW名 | 状態 |
-|--------|------|
-| `v_customer_sales_daily` | ✅ 正常 |
-| `v_daily_target_with_calendar` | ✅ 正常 |
-| `v_sales_tree_daily` | ✅ 正常 |
-| `v_sales_tree_detail_base` | ✅ 正常 |
-| `v_receive_weekly` | ✅ 復元完了 |
-| `v_receive_monthly` | ✅ 復元完了 |
+| VIEW名                         | 状態        |
+| ------------------------------ | ----------- |
+| `v_customer_sales_daily`       | ✅ 正常     |
+| `v_daily_target_with_calendar` | ✅ 正常     |
+| `v_sales_tree_daily`           | ✅ 正常     |
+| `v_sales_tree_detail_base`     | ✅ 正常     |
+| `v_receive_weekly`             | ✅ 復元完了 |
+| `v_receive_monthly`            | ✅ 復元完了 |
 
 ---
 
@@ -186,10 +190,12 @@ SELECT viewname FROM pg_views WHERE schemaname = 'mart';
 ### 4.1. 問題のあったマイグレーション
 
 **旧ファイル名**: `e581d89ba5db_drop_v_receive_daily_view.py`
+
 - ❌ リビジョンID: `e581d89ba5db` (ランダムな16進数)
 - ❌ 命名規則違反: `alembic revision --autogenerate` で自動生成された名前
 
 **標準規則**: `YYYYMMDD_HHMMSSMMM_descriptive_name.py`
+
 - 例: `20251211_120000000_create_mv_receive_daily.py`
 
 ### 4.2. 修正後のマイグレーション構成
@@ -199,6 +205,7 @@ SELECT viewname FROM pg_views WHERE schemaname = 'mart';
 #### 1. `20251211_130000000_drop_v_receive_daily_view.py`
 
 **内容**:
+
 ```python
 def upgrade() -> None:
     # Drop v_receive_daily VIEW (replaced by mv_receive_daily materialized view)
@@ -224,11 +231,12 @@ def downgrade() -> None:
 #### 2. `20251211_140000000_recreate_v_receive_weekly_monthly.py`
 
 **内容**:
+
 ```python
 def upgrade() -> None:
     print("[mart] Recreating v_receive_weekly...")
     op.execute(_read_sql("v_receive_weekly.sql"))
-    
+
     print("[mart] Recreating v_receive_monthly...")
     op.execute(_read_sql("v_receive_monthly.sql"))
 ```
@@ -239,6 +247,7 @@ def upgrade() -> None:
 #### 3. `20251211_150000000_recreate_5year_avg_mvs.py`
 
 **内容**:
+
 ```python
 def upgrade() -> None:
     # 4つのMVを作成 + UNIQUE INDEX + REFRESH
@@ -272,11 +281,13 @@ UPDATE alembic_version SET version_num = '20251211_150000000';
 ### 5.1. なぜCASCADE削除が発生したか？
 
 **原因1: SQL定義とDB実体の不一致**
+
 - SQL定義ファイル（`sql/mart/*.sql`）は既に `mv_receive_daily` 参照に更新済み
 - しかしDB上のMV/VIEWオブジェクトは旧定義（`v_receive_daily` 参照）のまま残っていた
 - `DROP VIEW ... CASCADE` 実行時、DB上の実際の依存関係に基づいて削除が連鎖
 
 **原因2: マイグレーション順序の誤り**
+
 - 正しい順序:
   1. 依存オブジェクト（MV/VIEW）を `mv_receive_daily` 参照に更新
   2. `v_receive_daily` VIEW を削除
@@ -287,6 +298,7 @@ UPDATE alembic_version SET version_num = '20251211_150000000';
 ### 5.2. 今回の対策
 
 ✅ **実施済み**:
+
 1. 削除された全オブジェクトを再作成（SQL定義ファイルを使用）
 2. マイグレーション命名規則違反を修正（`e581d89ba5db` → `20251211_130000000`）
 3. 復元手順を正式なマイグレーションとして記録（20251211_140000000, 20251211_150000000）
@@ -308,11 +320,11 @@ def upgrade():
         op.execute(_read_sql(f"{mv}.sql"))  # 新定義で再作成
         op.execute(f"CREATE UNIQUE INDEX {mv}_pk ON {mv} (...);")
         op.execute(f"REFRESH MATERIALIZED VIEW {mv};")
-    
+
     for view in dependent_views:
         op.execute(f"DROP VIEW IF EXISTS {view};")
         op.execute(_read_sql(f"{view}.sql"))  # 新定義で再作成
-    
+
     # Step 2: 元のVIEWを安全に削除（依存なし）
     op.execute("DROP VIEW IF EXISTS old_view;")  # CASCADEなし
 ```
@@ -331,13 +343,13 @@ def upgrade():
 
 ### 6.1. 調査結論
 
-| 項目 | 結果 |
-|------|------|
-| **削除されたオブジェクト数** | 6つ（VIEW 2つ、MV 4つ） |
-| **データ損失** | なし（全て復元可能） |
-| **復元状態** | ✅ 100%復元完了 |
-| **ダウンタイム** | なし（開発環境のみ） |
-| **根本原因** | SQL定義とDB実体の不一致 + CASCADE削除 |
+| 項目                         | 結果                                  |
+| ---------------------------- | ------------------------------------- |
+| **削除されたオブジェクト数** | 6つ（VIEW 2つ、MV 4つ）               |
+| **データ損失**               | なし（全て復元可能）                  |
+| **復元状態**                 | ✅ 100%復元完了                       |
+| **ダウンタイム**             | なし（開発環境のみ）                  |
+| **根本原因**                 | SQL定義とDB実体の不一致 + CASCADE削除 |
 
 ### 6.2. 推奨事項
 
@@ -382,7 +394,7 @@ def upgrade():
 
 ```sql
 -- 依存関係の確認
-SELECT 
+SELECT
     dependent.relname AS dependent_view,
     referenced.relname AS referenced_view
 FROM pg_depend d

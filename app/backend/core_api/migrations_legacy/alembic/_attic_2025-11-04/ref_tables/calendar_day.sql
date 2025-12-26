@@ -27,7 +27,3 @@ CREATE INDEX ix_calendar_day_date ON ref.calendar_day USING btree (ddate);
 
 
 CREATE INDEX ix_calendar_day_ym ON ref.calendar_day USING btree (y, m);
-
-
-
-

@@ -2,13 +2,14 @@
 
 **作成日**: 2025年12月11日  
 **ブランチ**: feature/db-performance-investigation  
-**前回完了**: settings.py、di_providers.py の定数使用移行  
+**前回完了**: settings.py、di_providers.py の定数使用移行
 
 ---
 
 ## 🎯 高優先度タスク（今すぐ実施）
 
 ### 1. ✅ 完了済みタスクの確認
+
 - [x] backend_shared/db/names.py 実装（47定数）
 - [x] MaterializedViewRefresher 定数使用
 - [x] InboundRepository 定数使用
@@ -23,6 +24,7 @@
 ### 2. ✅ 緊急タスク（完了）
 
 #### 2.1 統合テストの実行 ✅
+
 - [x] アプリケーション起動確認
 - [x] Dashboard Target Card取得 (`/dashboard/target`) - ✅ 正常動作
 - [x] Inbound Daily Data取得 (`/inbound/daily`) - ✅ 累積値・比較値正常
@@ -32,6 +34,7 @@
 **詳細**: `20251211_DB_NAMES_IMPLEMENTATION_REPORT.md` 第8章参照
 
 #### 2.2 Alembic Migrationのテスト ✅
+
 - [x] 現在のマイグレーションバージョン確認: `20251211_160000000`
 - [x] MV自動更新対象の確認: `AUTO_REFRESH_MVS` 使用中
 
@@ -42,21 +45,25 @@
 ### 3. 残りのハードコード箇所の移行
 
 #### 3.1 RawDataRepository ✅
+
 - [x] `app/infra/adapters/upload/raw_data_repository.py` リファクタリング完了
 - [x] SQL内部コード（60行）を外部ファイルに分離
 - [x] `upload_calendar__fetch_upload_calendar.sql` を共用
 - [x] 定数使用に移行完了
 
 #### 3.2 SQL定義ファイルの動的生成検討 ✅
+
 - [x] `.format()` パターンに統一（テンプレート変数: `{v_calendar}`, `{mv_receive_daily}` など）
 - [x] InboundRepository の3つのSQLファイルを `.replace()` → `.format()` に変更
 - [x] SQL事前コンパイル（パフォーマンス改善）
 
 **決定事項**:
+
 - 現状: `.sql` ファイル + `.format()` パターンで十分
 - 将来: Jinja2テンプレート化は必要に応じて検討
 
 #### 3.3 ドキュメントの最終化 ✅
+
 - [x] `20251211_DB_NAMES_IMPLEMENTATION_REPORT.md` に統合テスト結果を追記（第8章追加）
 - [x] `backend_shared/README.md` に `backend_shared.db.names` の使用方法を追加
 - [x] コード例・ベストプラクティス記載完了
@@ -68,6 +75,7 @@
 ### 4. コードベース全体の精査
 
 #### 4.1 未移行ファイルの検索 ✅
+
 ```bash
 # ハードコードされたDB名の全検索（実施済み）
 grep -r '"mart\.' app/backend/core_api/app --include="*.py"
@@ -83,10 +91,12 @@ grep -r '"ref\.' app/backend/core_api/app --include="*.py"
 **結論**: Python コード内のハードコードはすべて除去完了
 
 #### 4.2 Docstringとコメントの更新
+
 - コード内のコメントで `mart.v_receive_daily` のような参照を更新
 - 例: "Data source: mart.mv_receive_daily" → `{fq(SCHEMA_MART, MV_RECEIVE_DAILY)}`
 
 #### 4.3 Type Hintsの強化
+
 ```python
 # 現状
 def get_table_name(csv_type: str) -> str:
@@ -107,6 +117,7 @@ def get_table_name(csv_type: CsvType) -> str:
 ### 5. 自動化とCI/CD統合
 
 #### 5.1 pre-commit hook の追加
+
 ```bash
 # .pre-commit-config.yaml
 - repo: local
@@ -119,6 +130,7 @@ def get_table_name(csv_type: CsvType) -> str:
 ```
 
 #### 5.2 Lintルールの追加
+
 ```python
 # pylint custom checker
 # ハードコードされた "mart." "stg." 文字列を検出
@@ -126,23 +138,27 @@ def get_table_name(csv_type: CsvType) -> str:
 ```
 
 #### 5.3 ドキュメント自動生成
+
 ```bash
 # DBスキーマ → Markdown 自動生成
 python scripts/generate_db_docs.py > docs/database/schema.md
 ```
 
-### 6. v_active_* VIEWs の調査
+### 6. v*active*\* VIEWs の調査
 
 #### 6.1 作成元の特定
+
 - stg スキーマの `v_active_shogun_*` VIEWs（6個）
 - SQL定義ファイルなし
 - Alembic history で作成元を特定
+
 ```bash
 make al-history | grep -i "active"
 git log --all --grep="v_active"
 ```
 
 #### 6.2 SQL定義ファイルの追加
+
 - `migrations/alembic/sql/stg/v_active_shogun_final_receive.sql` 作成
 - 他5個のVIEWも同様
 
@@ -152,24 +168,26 @@ git log --all --grep="v_active"
 
 ### 完了状況
 
-| カテゴリ | 完了 | 全体 | 進捗率 |
-|---------|------|------|--------|
-| Repository層 | 5 | 5 | 100% ✅ |
-| Config層 | 2 | 2 | 100% ✅ |
-| SQL抽出リファクタリング | 13 | 13 | 100% ✅ |
-| ドキュメント | 4 | 4 | 100% ✅ |
-| テスト実施 | 2 | 2 | 100% ✅ |
-| ハードコード調査 | 1 | 1 | 100% ✅ |
-| **全体** | **27** | **27** | **100%** ✅ |
+| カテゴリ                | 完了   | 全体   | 進捗率      |
+| ----------------------- | ------ | ------ | ----------- |
+| Repository層            | 5      | 5      | 100% ✅     |
+| Config層                | 2      | 2      | 100% ✅     |
+| SQL抽出リファクタリング | 13     | 13     | 100% ✅     |
+| ドキュメント            | 4      | 4      | 100% ✅     |
+| テスト実施              | 2      | 2      | 100% ✅     |
+| ハードコード調査        | 1      | 1      | 100% ✅     |
+| **全体**                | **27** | **27** | **100%** ✅ |
 
 ### ✅ 完了した主要タスク
 
 1. **統合テスト実行** ✅
+
    - アプリケーション起動確認完了
    - 主要APIエンドポイント5つすべてテスト完了
    - MV自動更新対象の確認完了
 
 2. **全Repositoryリファクタリング** ✅
+
    - DashboardTargetRepository（3 SQLファイル分離）
    - SalesTreeRepository（9 SQLファイル分離）
    - UploadCalendarQueryAdapter（1 SQLファイル分離）
@@ -184,9 +202,11 @@ git log --all --grep="v_active"
 ### 今後の推奨タスク
 
 1. **Docstringとコメントの更新**（低優先）
+
    - コード内コメントで `mart.v_receive_daily` のような参照を定数参照に更新
 
 2. **Type Hintsの強化**（低優先）
+
    - CSV種別等のLiteral型の追加
 
 3. **CI/CD統合**（拡張タスク）

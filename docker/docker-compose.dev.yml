@@ -131,6 +131,9 @@ services:
       - TZ=Asia/Tokyo
       # Security: Use service account key instead of mounting ~/.config/gcloud
       - GOOGLE_APPLICATION_CREDENTIALS=/backend/secrets/gcs-key-dev.json
+      # Alembic: DB connection uses DB_MIGRATOR_USER if set, otherwise falls back to DB_USER
+      # DB_MIGRATOR_USER should be set in .env files for environments that separate migration users
+      # For dev, we use the same user as the app (set via .env.local_dev)
     depends_on:
       db:
         condition: service_healthy
@@ -156,39 +159,6 @@ services:
       - ../app/backend/backend_shared:/opt/backend_shared:rw
       - ../secrets:/backend/secrets:ro
       # - ~/.config/gcloud:/home/appuser/.config/gcloud
-    environment:
-      WATCHFILES_FORCE_POLLING: "1"
-      TZ: "Asia/Tokyo"
-    depends_on:
-      db:
-        condition: service_healthy
-    networks:
-      - app-net
-    restart: unless-stopped
-
-  # ===========================================================================
-  # Inbound Forecast Worker
-  # ===========================================================================
-  inbound_forecast_worker:
-    build:
-      context: ../app/backend
-      dockerfile: inbound_forecast_worker/Dockerfile
-      target: dev
-    env_file:
-      - ../env/.env.common
-      - ../env/.env.local_dev
-      - ../secrets/.env.local_dev.secrets
-    command: >
-      bash -c '
-      export DATABASE_URL="postgresql+psycopg://$${POSTGRES_USER}:$${POSTGRES_PASSWORD}@$${POSTGRES_HOST}:$${POSTGRES_PORT}/$${POSTGRES_DB}"
-      && python -m app.main
-      '
-    volumes:
-      - ../app/backend/inbound_forecast_worker/app:/backend/app:rw
-      - ../app/backend/inbound_forecast_worker/scripts:/backend/scripts:rw
-      - ../app/backend/inbound_forecast_worker/models:/backend/models:rw
-      - ../app/backend/backend_shared:/opt/backend_shared:rw
-      - ../secrets:/backend/secrets:ro
     environment:
       WATCHFILES_FORCE_POLLING: "1"
       TZ: "Asia/Tokyo"
@@ -253,11 +223,14 @@ services:
       - "${DEV_MANUAL_API_PORT:-8005}:8000"
     volumes:
       - ../app/backend/manual_api/app:/backend/app:rw
+      - ../app/backend/manual_api/data:/backend/data:rw
+      - ../app/backend/manual_api/local_data:/backend/local_data:rw
       - ../app/backend/backend_shared:/opt/backend_shared:rw
       - ../secrets:/backend/secrets:ro
     environment:
       MANUAL_FRONTEND_BASE_URL: ${MANUAL_FRONTEND_BASE_URL:-http://localhost:5173}
       TZ: "Asia/Tokyo"
+      DEV_RELOAD: "1"
       # Security: Use service account key instead of mounting ~/.config/gcloud
       GOOGLE_APPLICATION_CREDENTIALS: /backend/secrets/gcs-key-dev.json
     networks:

@@ -1,6 +1,6 @@
 /**
  * PreviewFactory - Fallback プレビューデータ生成
- * 
+ *
  * CSV未アップロード時に表示するプレビューを生成:
  * - empty: 空テーブル（ヘッダーのみ、行0）
  * - schema: ヘッダー + ダミー行2行
@@ -27,10 +27,10 @@ function createEmptyPreview(typeKey: string): CsvPreviewData {
 function createSchemaPreview(typeKey: string): CsvPreviewData {
   const columns = getHeadersByType(typeKey);
   const dummyRow = columns.map((col, i) => `${col}_${i + 1}`);
-  
+
   return {
     columns,
-    rows: [dummyRow, dummyRow.map(v => `${v}_2`)],
+    rows: [dummyRow, dummyRow.map((v) => `${v}_2`)],
   };
 }
 
@@ -39,7 +39,7 @@ function createSchemaPreview(typeKey: string): CsvPreviewData {
  */
 function createSamplePreview(typeKey: string): CsvPreviewData {
   const columns = getHeadersByType(typeKey);
-  
+
   // typeKey に応じたサンプルデータ
   const samples: Record<string, string[][]> = {
     shogun_flash_ship: [
@@ -67,9 +67,8 @@ function createSamplePreview(typeKey: string): CsvPreviewData {
   };
 
   // 将軍_最終版は速報版と同じサンプル
-  const sampleRows = samples[typeKey] 
-    ?? samples[typeKey.replace('final', 'flash')]
-    ?? [columns.map((col, i) => `サンプル${i + 1}`)];
+  const sampleRows = samples[typeKey] ??
+    samples[typeKey.replace('final', 'flash')] ?? [columns.map((col, i) => `サンプル${i + 1}`)];
 
   return {
     columns,
@@ -80,10 +79,7 @@ function createSamplePreview(typeKey: string): CsvPreviewData {
 /**
  * Fallback プレビューデータ生成
  */
-export function createFallbackPreview(
-  typeKey: string, 
-  mode: FallbackMode
-): CsvPreviewData {
+export function createFallbackPreview(typeKey: string, mode: FallbackMode): CsvPreviewData {
   switch (mode) {
     case 'empty':
       return createEmptyPreview(typeKey);

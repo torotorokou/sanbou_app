@@ -3,47 +3,54 @@
 ## 修正内容
 
 ### 問題
+
 ```
-Failed to resolve import "@/shared/api/client" from "src/features/reservation-daily/infrastructure/ReservationDailyHttpRepository.ts". 
+Failed to resolve import "@/shared/api/client" from "src/features/reservation-daily/infrastructure/ReservationDailyHttpRepository.ts".
 Does the file exist?
 ```
 
 ### 原因
+
 `@/shared/api/client` というパスが存在しない。
 既存のコードベースでは `coreApi` という統一APIクライアントを使用している。
 
 ### 修正箇所
+
 [app/frontend/src/features/reservation-daily/infrastructure/ReservationDailyHttpRepository.ts](app/frontend/src/features/reservation-daily/infrastructure/ReservationDailyHttpRepository.ts)
 
 **修正前:**
+
 ```typescript
-import { apiClient } from '@/shared/api/client';
+import { apiClient } from "@/shared/api/client";
 
 // ...
 const response = await apiClient.get<ReservationForecastDaily[]>(
-  '/reservations/forecast-daily',
-  { params: { from, to } }
+  "/reservations/forecast-daily",
+  { params: { from, to } },
 );
 return response.data;
 ```
 
 **修正後:**
+
 ```typescript
-import { coreApi } from '@/shared';
+import { coreApi } from "@/shared";
 
 // ...
 return await coreApi.get<ReservationForecastDaily[]>(
-  '/core_api/reservations/forecast-daily',
-  { params: { from, to } }
+  "/core_api/reservations/forecast-daily",
+  { params: { from, to } },
 );
 ```
 
 ### 主な変更点
 
 1. **インポート修正**
+
    - `@/shared/api/client` → `@/shared` （coreApi を使用）
 
 2. **APIパス修正**
+
    - `/reservations/...` → `/core_api/reservations/...`
    - coreApi は `/core_api/` で始まるパスを要求する仕様
 
@@ -53,12 +60,14 @@ return await coreApi.get<ReservationForecastDaily[]>(
 ## 検証結果
 
 ### ✅ TypeScript型チェック
+
 ```bash
 npx tsc --noEmit --project tsconfig.json
 # エラーなし
 ```
 
 ### ✅ Vite起動
+
 ```
 VITE v7.1.5  ready in 277 ms
 ➜  Local:   http://localhost:5173/
@@ -66,17 +75,20 @@ VITE v7.1.5  ready in 277 ms
 ```
 
 ### ✅ インポート解決
+
 - `@/shared` から `coreApi` を正しくインポート可能
 - エイリアスは vite.config.ts と tsconfig.json で正しく設定済み
 
 ## 動作確認手順
 
 1. **ブラウザでアクセス**
+
    ```
    http://localhost:5173/database/reservation-daily
    ```
 
 2. **ハードリロード（キャッシュクリア）**
+
    - Windows/Linux: `Ctrl + Shift + R`
    - Mac: `Cmd + Shift + R`
 
@@ -90,14 +102,16 @@ VITE v7.1.5  ready in 277 ms
 
 現時点では **バックエンドAPIが未実装** のため、以下のエンドポイントは 404 エラーになります：
 
-- `GET /core_api/reservations/forecast-daily` 
+- `GET /core_api/reservations/forecast-daily`
 - `POST /core_api/reservations/daily-manual`
 - `DELETE /core_api/reservations/daily-manual`
 
 これは **正常な動作** です。バックエンド実装後に接続されます。
 
 ### エラーハンドリング
+
 ViewModelで `try-catch` が実装されているため、API未実装でも：
+
 - ページはクラッシュしない
 - 「データの取得に失敗しました」というメッセージが表示される
 - カレンダーは空の状態で表示される

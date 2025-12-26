@@ -11,6 +11,6 @@ def _dsn() -> str:
     dsn = os.getenv("DB_DSN")
     if dsn:
         return dsn.strip()
-    
+
     # backend_shared の共通関数を使用
     return build_database_url(driver=None, raise_on_missing=True)

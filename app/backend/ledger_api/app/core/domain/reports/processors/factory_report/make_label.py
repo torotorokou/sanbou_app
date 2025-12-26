@@ -1,6 +1,4 @@
-from app.infra.report_utils.excel.tools import (
-    add_label_rows,
-)
+from app.infra.report_utils.excel.tools import add_label_rows
 
 
 def make_label(df):

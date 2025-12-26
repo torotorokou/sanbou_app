@@ -15,8 +15,16 @@ interface OpenPivotParams {
   filterOrder: SortOrder;
   filterTopN: 10 | 20 | 50 | 'all';
   setDrawer: (drawer: DrawerState | ((prev: DrawerState) => DrawerState)) => void;
-  setPivotData: (data: Record<Mode, MetricEntry[]> | ((prev: Record<Mode, MetricEntry[]>) => Record<Mode, MetricEntry[]>)) => void;
-  setPivotCursor: (cursor: Record<Mode, string | null> | ((prev: Record<Mode, string | null>) => Record<Mode, string | null>)) => void;
+  setPivotData: (
+    data:
+      | Record<Mode, MetricEntry[]>
+      | ((prev: Record<Mode, MetricEntry[]>) => Record<Mode, MetricEntry[]>)
+  ) => void;
+  setPivotCursor: (
+    cursor:
+      | Record<Mode, string | null>
+      | ((prev: Record<Mode, string | null>) => Record<Mode, string | null>)
+  ) => void;
 }
 
 export function useOpenPivot(params: OpenPivotParams) {
@@ -54,8 +62,8 @@ export function useOpenPivot(params: OpenPivotParams) {
         ...(query.dateFrom && query.dateTo
           ? { dateFrom: query.dateFrom, dateTo: query.dateTo }
           : query.monthRange
-          ? { monthRange: query.monthRange }
-          : { month: query.month }),
+            ? { monthRange: query.monthRange }
+            : { month: query.month }),
       };
 
       setDrawer(drawerState);

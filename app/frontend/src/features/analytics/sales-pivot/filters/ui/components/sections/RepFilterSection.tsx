@@ -5,7 +5,7 @@ import type { Mode, ID, SalesRep } from '../../../../shared/model/types';
 
 interface RepFilterSectionProps {
   gutter: [number, number];
-  
+
   mode: Mode;
   repIds: ID[];
   filterIds: ID[];
@@ -18,7 +18,7 @@ interface RepFilterSectionProps {
 
 /**
  * 営業・絞り込みセクション
- * 
+ *
  * 営業選択と顧客/品名/日付による絞り込みを行う
  */
 export const RepFilterSection: React.FC<RepFilterSectionProps> = ({

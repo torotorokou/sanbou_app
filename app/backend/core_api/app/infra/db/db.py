@@ -36,18 +36,20 @@ def example(db: Session = Depends(get_db)):
     return result
 ```
 """
-from typing import Generator
-from functools import lru_cache
-from sqlalchemy import create_engine, Engine
-from sqlalchemy.orm import sessionmaker, Session, declarative_base
-from sqlalchemy.pool import NullPool
+
 import os
+from collections.abc import Generator
+from functools import lru_cache
+
+from sqlalchemy import Engine, create_engine
+from sqlalchemy.orm import Session, declarative_base, sessionmaker
+
+from backend_shared.infra.db.url_builder import build_database_url_with_driver
 
 # ========================================
 # 環境変数の読み込み
 # ========================================
 
-from backend_shared.db.url_builder import build_database_url_with_driver
 
 DATABASE_URL = build_database_url_with_driver(driver="psycopg")
 """
@@ -66,25 +68,25 @@ DATABASE_URL = build_database_url_with_driver(driver="psycopg")
 def get_engine() -> Engine:
     """
     共有SQLAlchemyエンジンを取得または生成
-    
+
     Returns:
         Engine: SQLAlchemyエンジンインスタンス（シングルトン）
-        
+
     Description:
         @lru_cache により、アプリケーション全体で1つのエンジンのみを共有。
         コネクションプーリングによりパフォーマンスを最適化します。
-        
+
     Pool設定:
         - pool_size: 維持する接続数（デフォルト: 8）
         - max_overflow: pool_size を超えて許可する追加接続数（デフォルト: 8）
         - pool_pre_ping: 接続使用前に生存確認（stale connection防止）
         - pool_recycle: 接続の自動リサイクル時間（30分、long-lived接続問題の回避）
         - echo: SQLログ出力（環境変数 SQL_ECHO=true で有効化）
-        
+
     Notes:
         - Web APIサーバー: 現在の設定が推奨
         - 長時間実行ワーカー: NullPool 使用を検討（stale connection回避）
-        
+
     Examples:
         >>> engine = get_engine()
         >>> with engine.connect() as conn:
@@ -92,12 +94,12 @@ def get_engine() -> Engine:
     """
     return create_engine(
         DATABASE_URL,
-        pool_size=8,           # 同時接続数の上限
-        max_overflow=8,        # ピーク時の追加接続許可数
-        pool_pre_ping=True,    # 接続使用前の生存確認（重要）
-        pool_recycle=1800,     # 30分でコネクションをリサイクル
+        pool_size=8,  # 同時接続数の上限
+        max_overflow=8,  # ピーク時の追加接続許可数
+        pool_pre_ping=True,  # 接続使用前の生存確認（重要）
+        pool_recycle=1800,  # 30分でコネクションをリサイクル
         echo=os.getenv("SQL_ECHO", "false").lower() == "true",  # SQLログ出力
-        future=True,           # SQLAlchemy 2.x 互換モード
+        future=True,  # SQLAlchemy 2.x 互換モード
     )
 
 
@@ -131,33 +133,33 @@ ORMモデルの基底クラス
 def get_db() -> Generator[Session, None, None]:
     """
     FastAPIエンドポイント用のデータベースセッション依存性
-    
+
     Yields:
         Session: SQLAlchemy セッションインスタンス
-        
+
     Description:
         FastAPI の Depends() で使用される依存性関数。
         セッションのライフサイクル（生成、コミット、ロールバック、クローズ）を自動管理します。
-        
+
     トランザクション管理:
         - 成功時: 自動的に commit() を実行
         - 例外発生時: 自動的に rollback() を実行
         - 終了時: 必ず close() を実行（コネクションをプールに返却）
-        
+
     使用例:
         ```python
         from app.deps import get_db
         from fastapi import Depends, APIRouter
         from sqlalchemy.orm import Session
-        
+
         router = APIRouter()
-        
+
         @router.get("/users")
         def get_users(db: Session = Depends(get_db)):
             users = db.query(User).all()
             return users
         ```
-        
+
     Notes:
         - エンドポイント実行前にセッションが生成される
         - エンドポイント正常終了時、自動的にコミットされる
@@ -173,4 +175,3 @@ def get_db() -> Generator[Session, None, None]:
         raise  # 例外を再送出
     finally:
         db.close()  # 必ずクローズ（コネクションをプールに返却）
-

@@ -26,19 +26,21 @@ types	src/shared/types/**	型定義	✅ 主要	保持	同じ	変更不要
 
 ### 現在の定義値の比較
 
-| ソース | xs | sm | md | lg | xl | xxl |
-|--------|----|----|----|----|----|----|
-| breakpoints.ts (ANT) | 480 | 576 | 768 | 992 | 1200 | 1600 |
-| breakpoints.ts (BP) | - | - | 767(max) | - | 1200(min) | - |
-| custom-media.css | - | - | 767(max), 768(min) | - | 1200(min) | - |
-| 目標値（新bp） | 0 | 640 | 768 | 1024 | 1280 | - |
+| ソース               | xs  | sm  | md                 | lg   | xl        | xxl  |
+| -------------------- | --- | --- | ------------------ | ---- | --------- | ---- |
+| breakpoints.ts (ANT) | 480 | 576 | 768                | 992  | 1200      | 1600 |
+| breakpoints.ts (BP)  | -   | -   | 767(max)           | -    | 1200(min) | -    |
+| custom-media.css     | -   | -   | 767(max), 768(min) | -    | 1200(min) | -    |
+| 目標値（新bp）       | 0   | 640 | 768                | 1024 | 1280      | -    |
 
 **⚠️ 重大な不一致**：
+
 - 現在の実装は `ANT.md=768, ANT.xl=1200` の2軸
 - 提案の `bp` は `sm:640, md:768, lg:1024, xl:1280` の4軸
 - **既存UIは ANT.md/xl に最適化されているため、完全置換は破壊的**
 
 ### 推奨方針：段階的移行
+
 1. **フェーズ1（本PR）**: `bp` を ANT互換で導入（`bp.sm=576, bp.md=768, bp.lg=992, bp.xl=1200`）
 2. **フェーズ2（別PR）**: 新しい値体系への移行検討（UI検証必要）
 
@@ -62,6 +64,7 @@ features/calendar/.../CalendarCore.tsx      → ../../styles/calendar.module.css
 ### useWindowSize への依存（30箇所超）
 
 主要な利用箇所：
+
 - `app/layout/*`: Sidebar, MainLayout
 - `pages/*`: PortalPage, ShogunList
 - `shared/hooks/ui/*`: useResponsive, useSidebarResponsive
@@ -72,6 +75,7 @@ features/calendar/.../CalendarCore.tsx      → ../../styles/calendar.module.css
 ### ANT/BP の直接参照（30箇所超）
 
 主要なパターン：
+
 - CSS内の固定値: `@media (max-width: 1024px)` など（1箇所のみ検出）
 - TypeScript内: `ANT.md`, `ANT.xl`, `BP.mobileMax`, `BP.desktopMin` など
 - Viteプラグイン: `ANT.md`, `ANT.xl` の読み取り
@@ -80,13 +84,13 @@ features/calendar/.../CalendarCore.tsx      → ../../styles/calendar.module.css
 
 ## 1.4 インポート置換の影響件数（概算）
 
-| 対象 | 件数 | 置換内容 | 優先度 |
-|------|------|----------|--------|
-| `@/styles/custom-media.css` | 4 | `@/shared/theme/responsive.css` | 🔴 高 |
-| `@/styles/tabsTight.module.css` | 1 | `@/shared/styles/tabsTight.module.css` | 🟡 中 |
-| features内の相対styles import | 2 | 要調査・個別判断 | 🟢 低 |
-| 固定値メディアクエリ | 1 | `mq.up()` or カスタムメディア | 🟡 中 |
-| useBreakpoint | 少数 | useResponsive | 🟡 中 |
+| 対象                            | 件数 | 置換内容                               | 優先度 |
+| ------------------------------- | ---- | -------------------------------------- | ------ |
+| `@/styles/custom-media.css`     | 4    | `@/shared/theme/responsive.css`        | 🔴 高  |
+| `@/styles/tabsTight.module.css` | 1    | `@/shared/styles/tabsTight.module.css` | 🟡 中  |
+| features内の相対styles import   | 2    | 要調査・個別判断                       | 🟢 低  |
+| 固定値メディアクエリ            | 1    | `mq.up()` or カスタムメディア          | 🟡 中  |
+| useBreakpoint                   | 少数 | useResponsive                          | 🟡 中  |
 
 **合計影響ファイル数**: 約8-12ファイル（安全に置換可能）
 
@@ -140,46 +144,56 @@ src/
 ## 1.6 コミット分割案
 
 ### Commit 1: `chore(shared): add unified breakpoints with ANT compatibility`
+
 - breakpoints.ts の上書き（ANT互換値で bp, mq, match を追加）
 - useResponsive.ts の上書き（簡潔版）
 - 既存機能に影響なし（互換性維持）
 
 ### Commit 2: `refactor(styles): consolidate custom-media into responsive.css`
+
 - vite-plugin-custom-media.ts の出力先を responsive.css に変更
 - responsive.css にカスタムメディア定義を統合
 - @import の置換（4箇所）
 
 ### Commit 3: `refactor(styles): move tabsTight to shared/styles`
+
 - git mv src/styles/tabsTight.module.css → src/shared/styles/
 - import の置換（1箇所）
 
 ### Commit 4: `refactor(hooks): consolidate useBreakpoint into useResponsive`
+
 - useBreakpoint.ts の削除
 - useResponsive への置換（該当箇所のみ）
 
 ### Commit 5: `refactor(shared): enforce barrel exports for @/shared`
+
 - shared/index.ts の充実化
 - 深いimportの置換（必要に応じて）
 
 ### Commit 6: `cleanup: remove deprecated styles/ directory`
+
 - src/styles/ の削除（custom-media.css含む）
 - 最終動作確認
 
 ### Commit 7: `chore(eslint): add rules for shared deep imports`
+
 - ESLintルール追加
 - docs/fsd-linting-rules.md の更新
 
 ## 1.7 リスク分析
 
 ### 🔴 高リスク
+
 - **ブレークポイント値の変更**: 新bp値（sm:640, lg:1024, xl:1280）は既存UIを破壊
   - **対策**: ANT互換値で導入し、新値への移行は別PRで慎重に
 
 ### 🟡 中リスク
+
 - **カスタムメディアの統合**: @import先の変更で一時的にスタイル崩れの可能性
   - **対策**: ビルド後に各ページを目視確認
 
 ### 🟢 低リスク
+
 - **Hook名の変更**: useBreakpoint → useResponsive は利用箇所が少ない
 - **バレル化**: 段階的に進めるため影響範囲を制御可能
 

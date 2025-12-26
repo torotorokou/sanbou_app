@@ -5,6 +5,7 @@
 ### ✅ 削除完了
 
 **Git 履歴から完全に削除されました:**
+
 ```
 ✓ env/.env.common
 ✓ env/.env.local_dev
@@ -15,6 +16,7 @@
 ```
 
 **検証結果:**
+
 ```bash
 env ファイル履歴: 0 commits
 secrets ファイル履歴: 0 commits
@@ -25,6 +27,7 @@ Git サイズ: 110M → 15M (86% 削減)
 ### ✅ ローカルファイル保持
 
 **使用可能なファイル（Git 管理外）:**
+
 ```
 ✓ env/.env.common
 ✓ env/.env.local_dev
@@ -45,24 +48,25 @@ Git サイズ: 110M → 15M (86% 削減)
 
 **検証項目:**
 
-| 項目 | 検証方法 | 結果 |
-|------|---------|------|
-| POSTGRES_PASSWORD | `git log -S "POSTGRES_PASSWORD"` | ✅ ドキュメントのみ |
-| GCP サービスアカウント鍵 | `git log -S "-----BEGIN PRIVATE KEY-----"` | ✅ 存在しない |
-| GCP_SERVICE_ACCOUNT_KEY | `git log -S "GCP_SERVICE_ACCOUNT_KEY"` | ✅ ドキュメントのみ |
-| API キー | `git grep -E "api.*key.*=.*['\"]"` | ✅ 存在しない |
-| 実際のパスワード値 | `git grep -E "password.*=.*[^$]"` | ✅ サンプルのみ |
+| 項目                     | 検証方法                                   | 結果                |
+| ------------------------ | ------------------------------------------ | ------------------- |
+| POSTGRES_PASSWORD        | `git log -S "POSTGRES_PASSWORD"`           | ✅ ドキュメントのみ |
+| GCP サービスアカウント鍵 | `git log -S "-----BEGIN PRIVATE KEY-----"` | ✅ 存在しない       |
+| GCP_SERVICE_ACCOUNT_KEY  | `git log -S "GCP_SERVICE_ACCOUNT_KEY"`     | ✅ ドキュメントのみ |
+| API キー                 | `git grep -E "api.*key.*=.*['\"]"`         | ✅ 存在しない       |
+| 実際のパスワード値       | `git grep -E "password.*=.*[^$]"`          | ✅ サンプルのみ     |
 
 **詳細:**
+
 ```
-✅ POSTGRES_PASSWORD: 
+✅ POSTGRES_PASSWORD:
    - env/ では変数名のみ定義（値なし）
    - 実際の値は secrets/ で管理（Git 履歴なし）
-   
+
 ✅ GCP 秘密鍵:
    - secrets/ で管理（Git 履歴なし）
    - テンプレートファイルのみ追跡
-   
+
 ✅ API キー:
    - すべて環境変数または secrets/ で管理
    - ハードコードなし
@@ -73,18 +77,21 @@ Git サイズ: 110M → 15M (86% 削減)
 ## 🛡️ 実施ステップ
 
 ### Step 1: バックアップ作成 ✅
+
 ```bash
 tar -czf sanbou_app_git_backup_20251206_114511.tar.gz .git/ env/ secrets/
 # サイズ: 98M
 ```
 
 ### Step 2: リモート保護 ✅
+
 ```bash
 git remote rename origin origin-backup
 # 誤った push を防止
 ```
 
 ### Step 3: 削除対象リスト作成 ✅
+
 ```
 env/.env.common
 env/.env.local_dev
@@ -95,6 +102,7 @@ secrets/.env.*.secrets
 ```
 
 ### Step 4: Git 履歴削除 ✅
+
 ```bash
 git filter-repo --invert-paths --paths-from-file /tmp/files_to_remove.txt --force
 # 処理: 1008 commits
@@ -102,6 +110,7 @@ git filter-repo --invert-paths --paths-from-file /tmp/files_to_remove.txt --forc
 ```
 
 ### Step 5: 削除検証 ✅
+
 ```bash
 git log --all --oneline -- 'env/.env.*'
 # 結果: 0 commits
@@ -111,17 +120,20 @@ du -sh .git/
 ```
 
 ### Step 6: ローカルファイル確認 ✅
+
 ```bash
 ls env/ secrets/
 # 結果: すべてのファイルが保持されている
 ```
 
 ### Step 7: リモート復元 ✅
+
 ```bash
 git remote rename origin-backup origin
 ```
 
 ### Step 8: パスワード検証 ✅
+
 ```bash
 git log -S "POSTGRES_PASSWORD"
 git log -S "-----BEGIN PRIVATE KEY-----"
@@ -148,10 +160,12 @@ git push origin --force --tags
 ### 推奨: 追加のセキュリティ対策
 
 1. **リポジトリ可視性確認**
+
    - https://github.com/torotorokou/sanbou_app/settings
    - Private になっているか確認
 
 2. **Secret Scanning 有効化**
+
    - Settings → Security → Secret scanning
    - Push protection を有効化
 
@@ -179,19 +193,22 @@ git push origin --force --tags
 - ✅ .gitignore で今後の commit を防止
 - ✅ Pre-commit フックで二重防護
 
-**残存リスク**: 
+**残存リスク**:
+
 - ⚠️ まだリモートにプッシュしていない（ローカルのみ削除）
 - ⚠️ 他の開発者が古い履歴を持っている可能性
 
 ### 🚀 最終ステップ
 
 **今すぐ実行:**
+
 ```bash
 git push origin --force --all
 git push origin --force --tags
 ```
 
 **チームに通知:**
+
 ```
 【重要】Git リポジトリの履歴を書き換えました
 

@@ -29,7 +29,11 @@ export const DatasetImportClient = {
   async post(
     path: string,
     body: FormData,
-    options?: { timeout?: number; signal?: AbortSignal; onProgress?: (pct?: number) => void }
+    options?: {
+      timeout?: number;
+      signal?: AbortSignal;
+      onProgress?: (pct?: number) => void;
+    }
   ): Promise<UploadResponseShape> {
     try {
       // coreApiのuploadFormメソッドを使用
@@ -47,6 +51,8 @@ export const DatasetImportClient = {
    * アップロード処理のステータスを照会
    */
   async checkStatus(uploadFileId: number): Promise<UploadStatusResponse> {
-    return await coreApi.get<UploadStatusResponse>(`/core_api/database/upload/status/${uploadFileId}`);
+    return await coreApi.get<UploadStatusResponse>(
+      `/core_api/database/upload/status/${uploadFileId}`
+    );
   },
 };

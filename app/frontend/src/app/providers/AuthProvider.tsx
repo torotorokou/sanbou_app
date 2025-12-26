@@ -1,8 +1,8 @@
 /**
  * AuthProvider - 認証プロバイダー
- * 
+ *
  * アプリケーション全体の認証状態を管理し、初期化処理を担当します。
- * 
+ *
  * 【責務】
  * - アプリケーション起動時に認証情報を取得
  * - 認証完了までローディング画面を表示
@@ -50,7 +50,7 @@ interface AuthProviderProps {
 
 /**
  * 認証プロバイダーコンポーネント
- * 
+ *
  * アプリケーションのルートに配置し、全体の認証状態を管理します。
  */
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
@@ -65,10 +65,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const fetchedUser = await repository.fetchCurrentUser();
       setUser(fetchedUser);
     } catch (e) {
-      const errorMessage =
-        e instanceof Error
-          ? e.message
-          : 'ユーザー情報の取得に失敗しました';
+      const errorMessage = e instanceof Error ? e.message : 'ユーザー情報の取得に失敗しました';
       setError(errorMessage);
       console.error('認証エラー:', e);
     } finally {
@@ -132,9 +129,5 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     refetch: fetchUser,
   };
 
-  return (
-    <AuthContext.Provider value={contextValue}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>;
 };

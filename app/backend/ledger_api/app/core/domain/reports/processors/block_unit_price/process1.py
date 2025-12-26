@@ -1,12 +1,10 @@
 # NOTE: このモジュールは Streamlit UI 用のヘルパで、API 実行時は利用しません。
-import streamlit as st  # type: ignore
-import pandas as pd
 import re
 
-from .style import (
-    _get_transport_selection_styles,
-    _get_vendor_card_styles,
-)
+import pandas as pd
+import streamlit as st  # type: ignore
+
+from .style import _get_transport_selection_styles, _get_vendor_card_styles
 
 
 def _apply_transport_selection_styles() -> None:
@@ -86,13 +84,9 @@ def create_transport_selection_form(
                 gyousha_name_clean = re.sub(r"（\s*\d+\s*）", "", gyousha_name)
 
                 # 運搬業者の選択肢を取得
-                options = df_transport[df_transport["業者CD"] == gyousha_cd][
-                    "運搬業者"
-                ].tolist()
+                options = df_transport[df_transport["業者CD"] == gyousha_cd]["運搬業者"].tolist()
                 if not options:
-                    st.warning(
-                        f"{gyousha_name_clean} に対応する運搬業者が見つかりません。"
-                    )
+                    st.warning(f"{gyousha_name_clean} に対応する運搬業者が見つかりません。")
                     continue
 
                 # セレクトボックスの初期値を設定

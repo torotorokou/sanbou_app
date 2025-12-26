@@ -69,6 +69,7 @@ features/dashboard/ukeire/
 ## 設計原則
 
 ### 1. 機能別分割
+
 - **shared/**: ukeire内で共通のUI・スタイル
 - **business-calendar/**: カレンダー表示・装飾
 - **kpi-targets/**: 目標達成率表示
@@ -76,17 +77,20 @@ features/dashboard/ukeire/
 - **inbound-monthly/**: 月次実績データ表示
 
 ### 2. MVC パターン（各機能内）
+
 - **Model (Domain)**: ビジネスロジック、型定義、ドメインサービス
 - **View (UI)**: 純粋コンポーネント、propsのみ受け取り副作用なし
 - **Controller (Application)**: ViewModel Hookでデータ取得・整形
 
 ### 3. SOLID 原則
+
 - **単一責任**: 各層・各ファイルが明確な責務
 - **依存性逆転**: Repository抽象に依存、具象は注入
 - **インターフェース分離**: UI propsは最小限、必要な情報のみ
 - **開放閉鎖**: 新機能追加時は新ディレクトリを追加
 
 ### 4. 純粋性
+
 - Domain層: 副作用なし、テスト容易
 - UI層: props駆動、useEffect/fetch不使用
 - Application層: データ取得と整形に集約
@@ -96,14 +100,14 @@ features/dashboard/ukeire/
 ### Page での利用（barrel経由）
 
 ```tsx
-import { 
+import {
   useUkeireForecastVM,
   MockInboundForecastRepository,
   TargetCard,
   CombinedDailyCard,
   CalendarCardUkeire,
-  ForecastCard
-} from '@/features/dashboard/ukeire';
+  ForecastCard,
+} from "@/features/dashboard/ukeire";
 
 const Page = () => {
   const repository = useMemo(() => new MockInboundForecastRepository(), []);
@@ -126,17 +130,18 @@ const Page = () => {
 
 ```tsx
 // 開発環境: Mock
-import { MockInboundForecastRepository } from '@/features/dashboard/ukeire';
+import { MockInboundForecastRepository } from "@/features/dashboard/ukeire";
 const repository = new MockInboundForecastRepository();
 
 // 本番環境: HTTP
-import { HttpInboundForecastRepository } from '@/features/dashboard/ukeire';
+import { HttpInboundForecastRepository } from "@/features/dashboard/ukeire";
 const repository = new HttpInboundForecastRepository(API_BASE_URL);
 ```
 
 ## リファクタリング履歴
 
 ### 2025-10-23: 機能別ディレクトリ構造への再編成
+
 - **変更**: application/ui層を機能別に分割
 - **追加ディレクトリ**: shared/, business-calendar/, kpi-targets/, forecast-inbound/, inbound-monthly/
 - **削除**: 旧application/, ui/構造、未使用mockCalendar.repository.ts
@@ -159,22 +164,26 @@ const repository = new HttpInboundForecastRepository(API_BASE_URL);
 ## Follow-up TODO
 
 ### 1. HttpRepository 実装
+
 - [ ] `/api/inbound-forecast/:month` エンドポイント実装
 - [ ] エラーハンドリング追加
 - [ ] リトライロジック追加
 
 ### 2. テスト
+
 - [ ] Domain Services 単体テスト
 - [ ] ViewModel 単体テスト
 - [ ] UI Components Storybook追加
 - [ ] E2Eテスト
 
 ### 3. パフォーマンス最適化
+
 - [ ] ChartDataメモ化
 - [ ] React.memo適用
 - [ ] useMemo/useCallback最適化
 
 ### 4. 機能拡張
+
 - [ ] CSV/PDFエクスポート
 - [ ] 週次・月次比較機能
 - [ ] アラート閾値設定
@@ -182,6 +191,7 @@ const repository = new HttpInboundForecastRepository(API_BASE_URL);
 ## 差分サマリ
 
 ### 作成ファイル (31個)
+
 - Domain: 7ファイル
 - Application: 3ファイル
 - UI: 14ファイル
@@ -190,11 +200,13 @@ const repository = new HttpInboundForecastRepository(API_BASE_URL);
 - Docs: 1ファイル (README.md)
 
 ### 変更ファイル
+
 - `app/routes/routes.ts`: DASHBOARD_UKEIRE追加
 - `app/navigation/sidebarMenu.tsx`: メニュー項目追加
 - `app/routes/AppRoutes.tsx`: Route追加
 
 ### 削除ファイル
+
 - なし（既存のFactoryDashboard.tsxは保持）
 
 ## コミット提案
@@ -275,12 +287,14 @@ git commit -m "chore: wire ukeire dashboard routing and menu
 ### アーキテクチャ変更
 
 #### Before（旧実装）
+
 ```
 pages/dashboard/ukeire/components/calendar/CalendarGrid.tsx
 └─ フロント側でカレンダーロジック（第2日曜判定など）を実装
 ```
 
 #### After（新実装）
+
 ```
 shared/ui/calendar/               # 汎用化されたカレンダーUI
 ├── CalendarGrid.tsx              # 汎用グリッド表示器
@@ -304,13 +318,29 @@ features/dashboard/ukeire/
 **Endpoint**: `GET /api/calendar?month=YYYY-MM`
 
 **Response**:
+
 ```json
 {
   "month": "2025-10",
   "days": [
-    { "date": "2025-10-01", "status": "business", "label": null, "color": null },
-    { "date": "2025-10-12", "status": "holiday", "label": "スポーツの日", "color": null },
-    { "date": "2025-10-13", "status": "closed", "label": "第2日曜 休業", "color": "#cf1322" }
+    {
+      "date": "2025-10-01",
+      "status": "business",
+      "label": null,
+      "color": null
+    },
+    {
+      "date": "2025-10-12",
+      "status": "holiday",
+      "label": "スポーツの日",
+      "color": null
+    },
+    {
+      "date": "2025-10-13",
+      "status": "closed",
+      "label": "第2日曜 休業",
+      "color": "#cf1322"
+    }
   ],
   "legend": [
     { "key": "business", "label": "営業日", "color": "#52c41a" },
@@ -323,13 +353,13 @@ features/dashboard/ukeire/
 
 ### SOLID適用
 
-| 原則 | 実装 |
-|------|------|
+| 原則    | 実装                                                 |
+| ------- | ---------------------------------------------------- |
 | **SRP** | 表示（shared）・取得（repository）・組立（VM）が分離 |
-| **OCP** | ステータス拡張はAPI側で対応、フロント変更最小 |
-| **LSP** | Mock ↔ HTTP を透過的に切り替え可能 |
-| **ISP** | Viewは最小限のpropsのみ受け取る |
-| **DIP** | ViewModelは抽象Repository IFに依存 |
+| **OCP** | ステータス拡張はAPI側で対応、フロント変更最小        |
+| **LSP** | Mock ↔ HTTP を透過的に切り替え可能                  |
+| **ISP** | Viewは最小限のpropsのみ受け取る                      |
+| **DIP** | ViewModelは抽象Repository IFに依存                   |
 
 ### メリット
 
@@ -341,11 +371,13 @@ features/dashboard/ukeire/
 ### 切り替え方法
 
 開発中（Mock使用）:
+
 ```typescript
 const repository = useMemo(() => new MockCalendarRepository(), []);
 ```
 
 本番（HTTP使用）:
+
 ```typescript
 const repository = useMemo(() => new HttpCalendarRepository(), []);
 ```
@@ -405,4 +437,3 @@ git commit -m "chore: lint fixes and remove old calendar files
 - Remove unused imports (countDayTypes)
 - 0 TypeScript/ESLint errors"
 ```
-

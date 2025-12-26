@@ -1,4 +1,5 @@
 # CSV Upload STG Layer Column Loss Analysis
+
 **Date**: 2025-11-14  
 **Issue**: Yard and Shipment CSV uploads fail at STG layer with NOT NULL violation
 
@@ -8,7 +9,8 @@
 
 **Root Cause**: `filter_defined_columns()` and `to_sql_ready_df()` functions are removing all data columns except tracking columns during STG layer processing.
 
-**Impact**: 
+**Impact**:
+
 - RAW layer: ✅ SUCCESS (all columns saved)
 - STG layer: ❌ FAILURE (only tracking columns remain)
 
@@ -17,24 +19,27 @@
 ## Error Pattern
 
 ### Shipment CSV Error
+
 ```
-[SQL: INSERT INTO stg.shipment_shogun_flash 
-  (net_weight, quantity, amount, upload_file_id, source_row_no) 
+[SQL: INSERT INTO stg.shipment_shogun_flash
+  (net_weight, quantity, amount, upload_file_id, source_row_no)
 VALUES (%(net_weight)s, %(quantity)s, %(amount)s, %(upload_file_id)s::INTEGER, %(source_row_no)s::INTEGER)]
 
 Failing row contains: (18979, null, null, null, null, null, null, null, null, 0, 0, null, null, 0, null, null, null, ...)
 ```
 
 ### Yard CSV Error
+
 ```
-[SQL: INSERT INTO stg.yard_shogun_flash 
-  (net_weight, quantity, amount, upload_file_id, source_row_no) 
+[SQL: INSERT INTO stg.yard_shogun_flash
+  (net_weight, quantity, amount, upload_file_id, source_row_no)
 VALUES (%(net_weight)s, %(quantity)s, %(amount)s, %(upload_file_id)s::INTEGER, %(source_row_no)s::INTEGER)]
 
 Failing row contains: (12302, null, null, null, 0, 0, null, null, 0, null, null, null, null, null, null, null, ...)
 ```
 
-**Key Observation**: 
+**Key Observation**:
+
 - INSERT statement only contains 5 columns
 - Expected columns (slip_date, client_name, item_name, etc.) are missing
 - Only net_weight, quantity, amount, upload_file_id, source_row_no remain
@@ -44,52 +49,59 @@ Failing row contains: (12302, null, null, null, 0, 0, null, null, 0, null, null,
 ## Data Flow Analysis
 
 ### Step 1: Column Rename (✅ Working)
+
 ```
 [DEBUG REPO] stg.shipment: After rename, columns=['slip_date', 'shipment_no', 'client_name', 'vendor_cd', 'vendor_name', 'site_cd', 'site_name', 'item_name', 'net_weight', 'quantity', 'unit_name', 'unit_price', 'amount', 'transport_vendor_name', 'slip_type_name']
 ```
+
 - 15 columns present after rename
 - All expected columns exist
 
 ### Step 2: Filter Defined Columns (⚠️ Issue Here)
+
 ```
 [DEBUG REPO] [stg] YAML valid columns for shipment: 18 cols
 [DEBUG REPO] [stg] Before filter: 20 cols, After filter will keep: 20 cols
 [DEBUG REPO] [stg] After filter: 20 cols: ['slip_date', 'shipment_no', 'client_name', ...]
 ```
+
 - Shows 20 columns after filter
 - Seems correct at this point
 
 ### Step 3: to_sql_ready_df() (❌ Major Issue)
+
 ```
 [DEBUG REPO] [stg] After to_sql_ready: 20 cols: ['slip_date', 'shipment_no', 'client_name', ...]
 ```
+
 - Logs show 20 columns still present
 - BUT actual SQL INSERT only has 5 columns
 
 ### Step 4: ORM Object Creation (❌ Data Loss Confirmed)
+
 ```
 [DEBUG REPO] First record keys: ['slip_date', 'shipment_no', 'client_name', 'vendor_cd', 'vendor_name', 'site_cd', 'site_name', 'item_name', 'net_weight', 'quantity', 'unit_name', 'unit_price', 'amount', 'transport_vendor_name', 'slip_type_name']
 
 [DEBUG REPO] First record sample: {
-  'slip_date': datetime.date(2024, 4, 1), 
-  'shipment_no': '620.0', 
-  'client_name': '宮崎', 
-  'vendor_cd': 747.0, 
-  'vendor_name': '宮崎', 
-  'site_cd': 1.0, 
-  'site_name': '新木場ﾘｻｲｸﾙｾﾝﾀｰ', 
-  'item_name': 'ダンボール', 
-  'net_weight': 530.0, 
-  'quantity': 530.0, 
-  'unit_name': 'kg', 
-  'unit_price': 14.0, 
-  'amount': 7420.0, 
-  'transport_vendor_name': '■ｺｳﾗﾝ', 
-  'slip_type_name': '売上', 
-  'detail_note': None, 
-  'category_cd': 1.0, 
-  'category_name': '処分費', 
-  'source_row_no': 1, 
+  'slip_date': datetime.date(2024, 4, 1),
+  'shipment_no': '620.0',
+  'client_name': '宮崎',
+  'vendor_cd': 747.0,
+  'vendor_name': '宮崎',
+  'site_cd': 1.0,
+  'site_name': '新木場ﾘｻｲｸﾙｾﾝﾀｰ',
+  'item_name': 'ダンボール',
+  'net_weight': 530.0,
+  'quantity': 530.0,
+  'unit_name': 'kg',
+  'unit_price': 14.0,
+  'amount': 7420.0,
+  'transport_vendor_name': '■ｺｳﾗﾝ',
+  'slip_type_name': '売上',
+  'detail_note': None,
+  'category_cd': 1.0,
+  'category_name': '処分費',
+  'source_row_no': 1,
   'upload_file_id': 2
 }
 
@@ -118,11 +130,13 @@ The problem occurs when `create_shogun_model_class()` generates the ORM model:
 ### Why RAW Works But STG Fails
 
 **RAW Layer**:
+
 - Uses same process
 - Actually succeeds
 - All columns inserted correctly
 
 **STG Layer**:
+
 - Same code path
 - Fails with only 5 columns
 - Suggests schema or model definition issue
@@ -130,10 +144,12 @@ The problem occurs when `create_shogun_model_class()` generates the ORM model:
 ### Possible Causes
 
 1. **Schema-specific model generation issue**:
+
    - `create_shogun_model_class(csv_type, table_name, schema='stg')` may be reading wrong table definition
    - STG table schema may be out of sync
 
 2. **Column type mismatch**:
+
    - Some columns may have incompatible types between DataFrame and DB
    - SQLAlchemy may be silently dropping them
 
@@ -146,17 +162,21 @@ The problem occurs when `create_shogun_model_class()` generates the ORM model:
 ## Detailed Error Context
 
 ### Shipment CSV
+
 - **RAW Save**: ✅ 19,331 rows saved successfully
 - **Formatter**: Reduced to 18,979 rows (deduplication)
 - **STG Save**: ❌ Failed with only 5 columns in INSERT
 
 ### Yard CSV
+
 - **RAW Save**: ✅ 12,561 rows saved successfully
 - **Formatter**: Reduced to 12,302 rows (deduplication)
 - **STG Save**: ❌ Failed with only 5 columns in INSERT
 
 ### Common Pattern
+
 Both failures show identical symptoms:
+
 - Only `net_weight`, `quantity`, `amount`, `upload_file_id`, `source_row_no` in SQL
 - All other columns (`slip_date`, `client_name`, `item_name`, etc.) missing from INSERT
 - NOT NULL constraint on `slip_date` causes immediate failure
@@ -166,18 +186,21 @@ Both failures show identical symptoms:
 ## Next Steps for Investigation
 
 1. **Check ORM Model Generation**:
+
    ```python
    model_class = create_shogun_model_class('shipment', table_name='shipment_shogun_flash', schema='stg')
    # Inspect model_class.__table__.columns
    ```
 
 2. **Verify STG Table Schema**:
+
    ```sql
    \d stg.shipment_shogun_flash
    \d stg.yard_shogun_flash
    ```
 
 3. **Compare RAW vs STG Model**:
+
    - Check if column definitions match
    - Verify data types align
 
@@ -190,13 +213,17 @@ Both failures show identical symptoms:
 ## Proposed Fix
 
 ### Option 1: Fix create_shogun_model_class()
+
 Ensure the function generates complete column definitions for STG schema tables.
 
 ### Option 2: Fix Table Schema Reflection
+
 If using reflection, refresh metadata or fix schema definition source.
 
 ### Option 3: Explicit Column Mapping
+
 Add explicit column validation before ORM object creation:
+
 ```python
 # Verify model has all required columns
 model_columns = set(model_class.__table__.columns.keys())

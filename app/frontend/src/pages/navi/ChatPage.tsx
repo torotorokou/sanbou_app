@@ -1,17 +1,21 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { ROUTER_PATHS } from '@app/routes/routes';
-import { useNaviChat } from '@features/navi';
-import { NaviLayout, PdfReferenceButton, UsageWarningModal } from '@features/navi/ui';
-import { normalizePdfUrl } from '@features/navi';
-import type { StepItem } from '@features/navi';
-import styles from './ChatPage.module.css';
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { ROUTER_PATHS } from "@app/routes/routes";
+import { useNaviChat } from "@features/navi";
+import {
+  NaviLayout,
+  PdfReferenceButton,
+  UsageWarningModal,
+} from "@features/navi/ui";
+import { normalizePdfUrl } from "@features/navi";
+import type { StepItem } from "@features/navi";
+import styles from "./ChatPage.module.css";
 
 const stepItems: StepItem[] = [
-  { title: '分類', description: 'カテゴリ選択' },
-  { title: '質問作成', description: '質問入力' },
-  { title: '送信', description: 'AIに質問' },
-  { title: '結果', description: '回答を確認' },
+  { title: "分類", description: "カテゴリ選択" },
+  { title: "質問作成", description: "質問入力" },
+  { title: "送信", description: "AIに質問" },
+  { title: "結果", description: "回答を確認" },
 ];
 
 const ChatPage: React.FC = () => {
@@ -30,7 +34,7 @@ const ChatPage: React.FC = () => {
   const handlePdfClick = () => {
     if (vm.pdfUrl) {
       const url = normalizePdfUrl(vm.pdfUrl);
-      console.log('[参考PDF URL]', url);
+      console.log("[参考PDF URL]", url);
       vm.setPdfToShow(url);
       vm.setPdfModalVisible(true);
     }

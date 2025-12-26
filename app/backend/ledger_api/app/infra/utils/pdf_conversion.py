@@ -7,7 +7,6 @@ from __future__ import annotations
 
 import subprocess
 from pathlib import Path
-from typing import Optional
 
 
 class PdfConversionError(RuntimeError):
@@ -29,21 +28,21 @@ def _build_targets() -> list[str]:
 def convert_excel_to_pdf(
     excel_path: Path,
     *,
-    output_dir: Optional[Path] = None,
-    profile_dir: Optional[Path] = None,
+    output_dir: Path | None = None,
+    profile_dir: Path | None = None,
     timeout: int = 120,
 ) -> bytes:
     """ExcelファイルをLibreOfficeでPDFに変換してバイト列を返す。
-    
+
     Args:
         excel_path: 変換するExcelファイルのパス
         output_dir: PDF出力先ディレクトリ(省略時はexcel_pathと同じ)
         profile_dir: LibreOfficeプロファイルディレクトリ(省略時は自動生成)
         timeout: 変換タイムアウト秒数(デフォルト120秒)
-        
+
     Returns:
         PDFのバイト列
-        
+
     Raises:
         PdfConversionError: 変換失敗時
     """
@@ -57,7 +56,7 @@ def convert_excel_to_pdf(
     profile_dir.mkdir(parents=True, exist_ok=True)
 
     pdf_path = output_dir / f"{excel_path.stem}.pdf"
-    last_error: Optional[str] = None
+    last_error: str | None = None
 
     for target in _build_targets():
         cmd = [

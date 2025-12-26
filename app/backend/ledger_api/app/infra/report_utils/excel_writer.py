@@ -1,18 +1,21 @@
-from openpyxl import load_workbook
-from io import BytesIO
 import logging
-import pandas as pd
+import os
+import re
+import unicodedata
+from copy import copy
+from io import BytesIO
+from pathlib import Path
+from typing import Any, cast
+
 import numpy as np
+import pandas as pd
+from openpyxl import load_workbook
 from openpyxl.cell.cell import Cell, MergedCell
 from openpyxl.workbook.workbook import Workbook
 from openpyxl.worksheet.worksheet import Worksheet
-from copy import copy
-from pathlib import Path
-import os
-import unicodedata
-from typing import Any, cast
-import re
-from backend_shared.application.logging import get_module_logger, create_log_context
+
+from backend_shared.application.logging import create_log_context, get_module_logger
+
 
 logger = get_module_logger(__name__)
 
@@ -38,7 +41,12 @@ def load_template_workbook(template_path: str | Path) -> Workbook:
     """
     # BASE_API_DIR環境変数を使用、未設定の場合はapiディレクトリを基準とする
     current_file_dir = Path(__file__).parent.parent  # utils -> ledger
-    base_dir = Path(os.getenv("BASE_API_DIR", str(current_file_dir.parent.parent.parent.parent.parent / "api")))
+    base_dir = Path(
+        os.getenv(
+            "BASE_API_DIR",
+            str(current_file_dir.parent.parent.parent.parent.parent / "api"),
+        )
+    )
     full_path = base_dir / Path(template_path)
 
     try:
@@ -87,7 +95,7 @@ def _maybe_replace_font(font: Any, tracker: set[tuple[str, str]]) -> Any:
                 object.__setattr__(cloned, "name", target)
             return cloned
         except Exception:
-            if hasattr(font, "copy") and callable(getattr(font, "copy")):
+            if hasattr(font, "copy") and callable(font.copy):
                 return font.copy(name=target)  # type: ignore[attr-defined]
     return font
 
@@ -137,13 +145,13 @@ def normalize_workbook_fonts(wb: Workbook) -> None:
         replacements = ", ".join(f"{src}→{dst}" for src, dst in sorted(tracker))
         logger.info(
             "Excelフォント置換完了",
-            extra=create_log_context(operation="replace_fonts", replacements=replacements)
+            extra=create_log_context(operation="replace_fonts", replacements=replacements),
         )
 
 
 def write_dataframe_to_worksheet(df: pd.DataFrame, ws: Worksheet):
     debug_enabled = logger.isEnabledFor(logging.DEBUG)
-    
+
     for idx, row in df.iterrows():
         cell_ref = row.get("セル")
         value = safe_excel_value(row.get("値"))
@@ -186,7 +194,11 @@ def write_dataframe_to_worksheet(df: pd.DataFrame, ws: Worksheet):
             if isinstance(cell, MergedCell):
                 logger.warning(
                     "結合セル書き込み不可",
-                    extra=create_log_context(operation="write_dataframe_to_worksheet", cell_ref=cell_ref, value=value)
+                    extra=create_log_context(
+                        operation="write_dataframe_to_worksheet",
+                        cell_ref=cell_ref,
+                        value=value,
+                    ),
                 )
                 continue
 
@@ -208,8 +220,13 @@ def write_dataframe_to_worksheet(df: pd.DataFrame, ws: Worksheet):
         except Exception as e:
             logger.error(
                 "セル書き込み失敗",
-                extra=create_log_context(operation="write_dataframe_to_worksheet", cell_ref=cell_ref, value=value, error=str(e)),
-                exc_info=True
+                extra=create_log_context(
+                    operation="write_dataframe_to_worksheet",
+                    cell_ref=cell_ref,
+                    value=value,
+                    error=str(e),
+                ),
+                exc_info=True,
             )
 
 
@@ -235,9 +252,7 @@ def save_workbook_to_bytesio(wb: Workbook) -> BytesIO:
     return output
 
 
-def write_values_to_template(
-    df: pd.DataFrame, template_path: str, extracted_date: str
-) -> BytesIO:
+def write_values_to_template(df: pd.DataFrame, template_path: str, extracted_date: str) -> BytesIO:
     """
     単一責任原則に基づいて分割されたExcelテンプレート書き込み関数
     - テンプレ読み込み

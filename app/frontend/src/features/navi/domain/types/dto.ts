@@ -18,7 +18,7 @@ export interface ChatAnswerResponseDto {
   answer?: string;
   pdf_url?: string | null;
   merged_pdf_url?: string | null;
-  
+
   // エラー時
   status?: "success" | "error";
   code?: string;

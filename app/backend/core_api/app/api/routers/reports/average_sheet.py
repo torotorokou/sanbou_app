@@ -1,13 +1,15 @@
 """
 Average Sheet - 平均表生成エンドポイント
 """
-import os
-from fastapi import APIRouter, Request
-import httpx
 
-from backend_shared.core.domain.exceptions import ExternalServiceError
-from backend_shared.application.logging import create_log_context, get_module_logger
+import os
+
+import httpx
+from fastapi import APIRouter, Request
+
 from app.shared.utils import rewrite_artifact_urls_to_bff
+from backend_shared.application.logging import create_log_context, get_module_logger
+from backend_shared.core.domain.exceptions import ExternalServiceError
 
 logger = get_module_logger(__name__)
 
@@ -21,20 +23,18 @@ async def proxy_average_sheet(request: Request):
     """平均表生成（ledger_apiへフォワード）- FormData対応"""
     logger.info(
         "Proxying average_sheet request (FormData)",
-        extra=create_log_context(
-            operation="proxy_average_sheet",
-            client=str(request.client)
-        )
+        extra=create_log_context(operation="proxy_average_sheet", client=str(request.client)),
     )
     try:
         form = await request.form()
         logger.info(f"Received form keys: {list(form.keys())}")
-        
+
         files = {}
         data = {}
         for key, value in form.items():
-            if hasattr(value, 'read'):
+            if hasattr(value, "read"):
                 from starlette.datastructures import UploadFile
+
                 if isinstance(value, UploadFile):
                     content = await value.read()
                     files[key] = (value.filename, content, value.content_type)
@@ -42,7 +42,7 @@ async def proxy_average_sheet(request: Request):
             else:
                 data[key] = value
                 logger.info(f"Data '{key}': {value}")
-        
+
         async with httpx.AsyncClient(timeout=60.0) as client:
             url = f"{LEDGER_API_BASE}/reports/average_sheet/"
             logger.info(f"Forwarding to {url}")
@@ -53,17 +53,20 @@ async def proxy_average_sheet(request: Request):
             r.raise_for_status()
             return rewrite_artifact_urls_to_bff(r.json())
     except httpx.HTTPStatusError as e:
-        logger.error(f"Ledger API returned error: {e.response.status_code} - {e.response.text}", exc_info=True)
+        logger.error(
+            f"Ledger API returned error: {e.response.status_code} - {e.response.text}",
+            exc_info=True,
+        )
         raise ExternalServiceError(
             service_name="ledger_api",
             message=f"Average sheet generation failed: {e.response.text[:200]}",
             status_code=e.response.status_code,
-            cause=e
+            cause=e,
         )
     except httpx.HTTPError as e:
         logger.error(f"Failed to reach ledger_api: {str(e)}", exc_info=True)
         raise ExternalServiceError(
             service_name="ledger_api",
             message=f"Cannot reach ledger_api: {str(e)}",
-            cause=e
+            cause=e,
         )

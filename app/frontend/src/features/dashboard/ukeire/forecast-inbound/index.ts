@@ -4,17 +4,14 @@
  */
 
 // Ports
-export type { IInboundForecastRepository } from "./ports/repository";
+export type { IInboundForecastRepository } from './ports/repository';
 
 // Infrastructure
-export { HttpInboundForecastRepository } from "./infrastructure/inboundForecast.repository";
-export { MockInboundForecastRepository } from "./infrastructure/inboundForecast.mock.repository";
+export { HttpInboundForecastRepository } from './infrastructure/inboundForecast.repository';
+export { MockInboundForecastRepository } from './infrastructure/inboundForecast.mock.repository';
 
 // Application
-export {
-  useInboundForecastVM,
-  type InboundForecastViewModel,
-} from "./model/useInboundForecastVM";
+export { useInboundForecastVM, type InboundForecastViewModel } from './model/useInboundForecastVM';
 
 // UI
-export { ForecastCard, type ForecastCardProps, type KPIBlockProps } from "./ui/cards/ForecastCard";
+export { ForecastCard, type ForecastCardProps, type KPIBlockProps } from './ui/cards/ForecastCard';

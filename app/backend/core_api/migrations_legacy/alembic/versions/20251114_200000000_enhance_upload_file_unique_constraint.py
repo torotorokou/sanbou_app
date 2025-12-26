@@ -15,6 +15,7 @@ Revision ID: 20251114_200000000
 Revises: 20251114_093000000
 Create Date: 2025-11-14 20:00:00.000000
 """
+
 from alembic import op
 
 revision = "20251114_200000000"
@@ -27,25 +28,20 @@ def upgrade() -> None:
     """
     UNIQUE 制約を processing_status を含む形に強化
     """
-    
+
     print("[log.upload_file] Enhancing UNIQUE constraint with processing_status...")
-    
+
     # 既存の制約を削除
-    op.drop_constraint(
-        "uq_upload_file_hash_type_csv",
-        "upload_file",
-        schema="log",
-        type_="unique"
-    )
-    
+    op.drop_constraint("uq_upload_file_hash_type_csv", "upload_file", schema="log", type_="unique")
+
     # 新しい制約を追加（processing_status を含む）
     op.create_unique_constraint(
         "uq_upload_file_hash_type_csv_status",
         "upload_file",
         ["file_hash", "file_type", "csv_type", "processing_status"],
-        schema="log"
+        schema="log",
     )
-    
+
     print("✓ Enhanced UNIQUE constraint: uq_upload_file_hash_type_csv_status")
 
 
@@ -57,12 +53,12 @@ def downgrade() -> None:
         "uq_upload_file_hash_type_csv_status",
         "upload_file",
         schema="log",
-        type_="unique"
+        type_="unique",
     )
-    
+
     op.create_unique_constraint(
         "uq_upload_file_hash_type_csv",
         "upload_file",
         ["file_hash", "file_type", "csv_type"],
-        schema="log"
+        schema="log",
     )

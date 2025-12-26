@@ -36,12 +36,12 @@ export interface PeriodState {
 
 /**
  * 期間関連の状態を管理するカスタムフック
- * 
+ *
  * @description
  * - periodMode: 'single' (単月) or 'range' (期間範囲)
  * - month: 単月モード時の対象月
  * - range: 期間範囲モード時の開始月〜終了月
- * 
+ *
  * @returns {PeriodState} 期間状態とセッター関数
  */
 export function usePeriodState(): PeriodState {

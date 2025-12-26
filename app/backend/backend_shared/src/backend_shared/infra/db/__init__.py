@@ -1,23 +1,24 @@
 """
 Database infrastructure utilities for backend services.
 
-DEPRECATED: This module has been moved to backend_shared.db
-Please update your imports:
-    from backend_shared.infra.db import ... → from backend_shared.db import ...
-
-This compatibility layer will be removed in a future version.
+This module provides common database utilities:
+- Database URL construction from environment variables
+- Connection mode management (app / migrator separation)
+- Health check functionality
+- Connection helpers
 """
 
-# Re-export from new location for backward compatibility
-from backend_shared.db.url_builder import (
-    build_postgres_dsn,
+from backend_shared.infra.db.connection_mode import (
+    DBConnectionMode,
+    get_db_connection_params,
+)
+from backend_shared.infra.db.health import DbHealth, ping_database
+from backend_shared.infra.db.url_builder import (
     build_database_url,
     build_database_url_with_driver,
+    build_postgres_dsn,
 )
-from backend_shared.db.health import (
-    DbHealth,
-    ping_database,
-)
+
 
 __all__ = [
     "build_postgres_dsn",
@@ -25,4 +26,6 @@ __all__ = [
     "build_database_url_with_driver",
     "DbHealth",
     "ping_database",
+    "DBConnectionMode",
+    "get_db_connection_params",
 ]

@@ -56,8 +56,3 @@ CREATE OR REPLACE VIEW mart.v_target_card_per_day AS
      LEFT JOIN month_actual ma ON ((ma.month_key = (date_trunc('month'::text, (b.ddate)::timestamp with time zone))::date)))
      LEFT JOIN mart.v_receive_daily rprev ON ((rprev.ddate = (b.ddate - '1 day'::interval))))
   ORDER BY b.ddate;
-
-
-
-
-

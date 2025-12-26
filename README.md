@@ -67,11 +67,11 @@ make up ENV=local_dev
 アクセス先:
 
 - Frontend: http://localhost:5173
-- AI API:  http://localhost:8001/docs
-- Ledger:  http://localhost:8002/docs
+- AI API: http://localhost:8001/docs
+- Ledger: http://localhost:8002/docs
 - Core API: http://localhost:8003/docs
-- RAG:     http://localhost:8004/docs
-- Manual:  http://localhost:8005/docs
+- RAG: http://localhost:8004/docs
+- Manual: http://localhost:8005/docs
 
 よく使うコマンド:
 

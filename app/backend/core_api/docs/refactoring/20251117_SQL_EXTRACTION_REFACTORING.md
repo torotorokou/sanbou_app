@@ -21,11 +21,11 @@
 
 ### 対象ファイルと切り出したSQL
 
-| Pythonファイル | クラス/メソッド | SQLファイル | 行数 | 複雑度 |
-|---|---|---|---|---|
-| `dashboard_target_repo.py` | `DashboardTargetRepository.get_by_date_optimized` | `dashboard/dashboard_target_repo__get_by_date_optimized.sql` | 155行 | ★★★★★ |
-| `inbound_pg_repository.py` | `InboundPgRepository.fetch_daily` | `inbound/inbound_pg_repository__get_daily_with_cumulative.sql` | 52行 | ★★★☆☆ |
-| `job_repo.py` | `JobRepository.claim_one_queued_job_for_update` | `forecast/job_repo__claim_job.sql` | 23行 | ★★☆☆☆ |
+| Pythonファイル             | クラス/メソッド                                   | SQLファイル                                                    | 行数  | 複雑度 |
+| -------------------------- | ------------------------------------------------- | -------------------------------------------------------------- | ----- | ------ |
+| `dashboard_target_repo.py` | `DashboardTargetRepository.get_by_date_optimized` | `dashboard/dashboard_target_repo__get_by_date_optimized.sql`   | 155行 | ★★★★★  |
+| `inbound_pg_repository.py` | `InboundPgRepository.fetch_daily`                 | `inbound/inbound_pg_repository__get_daily_with_cumulative.sql` | 52行  | ★★★☆☆  |
+| `job_repo.py`              | `JobRepository.claim_one_queued_job_for_update`   | `forecast/job_repo__claim_job.sql`                             | 23行  | ★★☆☆☆  |
 
 **総計**: 3ファイル、230行のSQLを切り出し
 
@@ -88,7 +88,7 @@ class DashboardTargetRepository:
         self._get_by_date_optimized_sql = text(
             load_sql("dashboard/dashboard_target_repo__get_by_date_optimized.sql")
         )
-    
+
     def get_by_date_optimized(self, target_date, mode):
         # キャッシュされたSQLを使用
         result = conn.execute(
@@ -98,6 +98,7 @@ class DashboardTargetRepository:
 ```
 
 **改善点**:
+
 - SQLがコンストラクタで1回だけロード・コンパイルされる(パフォーマンス向上)
 - メソッド本体がビジネスロジックに集中
 - SQLの変更がPythonコードに影響しない
@@ -141,6 +142,7 @@ self._get_by_date_optimized_sql = text(
 ```
 
 **メリット**:
+
 - メソッド呼び出しのたびにファイルを読み込まない
 - SQLAlchemyがクエリを事前にパース・最適化
 - メモリ効率も向上(1つのインスタンスで共有)
@@ -156,8 +158,8 @@ self._get_by_date_optimized_sql = text(
 ```python
 # Before/After共に同じインターフェース
 def get_by_date_optimized(
-    self, 
-    target_date: date_type, 
+    self,
+    target_date: date_type,
     mode: str = "daily"
 ) -> Optional[Dict[str, Any]]:
 ```
@@ -300,6 +302,7 @@ WHERE status = :status
 ### 変更したファイル
 
 1. **新規作成**:
+
    - `app/infra/db/sql_loader.py`
    - `app/infra/db/sql/README.md`
    - `app/infra/db/sql/dashboard/dashboard_target_repo__get_by_date_optimized.sql`

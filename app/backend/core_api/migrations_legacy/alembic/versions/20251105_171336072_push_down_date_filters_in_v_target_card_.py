@@ -4,8 +4,9 @@ Revision ID: 20251105_171336072
 Revises: 20251105_170334790
 Create Date: 2025-11-05 08:13:36.879301
 """
-from alembic import op
+
 import sqlalchemy as sa
+from alembic import op
 
 revision = "20251105_171336072"
 down_revision = "20251105_170334790"
@@ -87,12 +88,15 @@ LEFT JOIN r rprev
 ORDER BY b.ddate;
 """
 
+
 def upgrade() -> None:
     with op.get_context().autocommit_block():
         op.execute(sa.text(VIEW_SQL))
 
+
 def downgrade() -> None:
     with op.get_context().autocommit_block():
-        op.execute(sa.text(
-            "DO $$ BEGIN RAISE NOTICE 'no-op downgrade for %', :rev; END $$;"
-        ), {"rev": revision})
+        op.execute(
+            sa.text("DO $$ BEGIN RAISE NOTICE 'no-op downgrade for %', :rev; END $$;"),
+            {"rev": revision},
+        )

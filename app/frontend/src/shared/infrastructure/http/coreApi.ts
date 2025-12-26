@@ -1,15 +1,15 @@
 // src/shared/infrastructure/http/coreApi.ts
 // /core_api 専用のHTTPクライアント（axios ベース）
 
-import type { AxiosRequestConfig } from "axios";
-import { client } from "./httpClient";
+import type { AxiosRequestConfig } from 'axios';
+import { client } from './httpClient';
 
 /**
  * パスを正規化し、/core_api/* であることを保証
  */
 function normalize(path: string): string {
-  const p = path.startsWith("/") ? path : `/${path}`;
-  if (!p.startsWith("/core_api/")) {
+  const p = path.startsWith('/') ? path : `/${path}`;
+  if (!p.startsWith('/core_api/')) {
     throw new Error(`coreApi must target "/core_api/**" but got "${p}"`);
   }
   return p;
@@ -48,7 +48,7 @@ export const coreApi = {
   /**
    * FormData アップロード専用メソッド
    * Content-Type は boundary 自動付与のため指定しない
-   * 
+   *
    * @param path - API パス（/core_api/... で開始）
    * @param form - アップロードする FormData
    * @param config - axios 設定 + onProgress コールバック

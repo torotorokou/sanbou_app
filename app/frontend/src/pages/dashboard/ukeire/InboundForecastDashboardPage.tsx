@@ -1,11 +1,11 @@
 /**
  * 受入ダッシュボード - Page Component
- * 
+ *
  * 責務：ページレイアウトの骨組みのみ
  * - ViewModel（useInboundForecastVM）からデータを取得
  * - レスポンシブレイアウト設定（useResponsiveLayout）
  * - UI部品（MonthNavigator, Card系）の配置
- * 
+ *
  * ロジック・状態管理・API呼び出しは全てFeatures層に分離済み
  */
 
@@ -13,7 +13,7 @@ import React, { useMemo, useState } from "react";
 import { Row, Col, Skeleton, Alert } from "antd";
 import dayjs from "dayjs";
 import isoWeek from "dayjs/plugin/isoWeek";
-import { 
+import {
   useInboundForecastVM,
   MockInboundForecastRepository,
   TargetCard,
@@ -29,15 +29,19 @@ import {
   useTargetsVM,
   type AchievementMode,
 } from "@/features/dashboard/ukeire";
+import { usePageLayout } from "@/app/layout/PageLayoutContext";
 import styles from "./InboundForecastDashboardPage.module.css";
 
 // dayjs の isoWeek プラグインを有効化
 dayjs.extend(isoWeek);
 
 const InboundForecastDashboardPage: React.FC = () => {
+  // ページレイアウト設定: MainLayoutのパディングを無効化
+  usePageLayout({ noPadding: true });
+
   // 初期月を先に確定
   const initialMonth = useMemo(() => dayjs().format("YYYY-MM"), []);
-  
+
   const repository = useMemo(() => new MockInboundForecastRepository(), []);
   const vm = useInboundForecastVM(repository, initialMonth);
   const layout = useResponsiveLayout();
@@ -52,21 +56,30 @@ const InboundForecastDashboardPage: React.FC = () => {
 
   // 達成率モードの状態管理(デフォルト: 昨日までの累計目標に対する達成率)
   // ※当月以外では常に"toEnd"モードに固定
-  const [achievementMode, setAchievementMode] = useState<AchievementMode>("toDate");
-  const effectiveMode: AchievementMode = isCurrentMonth ? achievementMode : "toEnd";
+  const [achievementMode, setAchievementMode] =
+    useState<AchievementMode>("toDate");
+  const effectiveMode: AchievementMode = isCurrentMonth
+    ? achievementMode
+    : "toEnd";
 
   // 選択中の月から対象日付を計算（月の初日を使用してAPIに渡す）
   // ※Backend側で該当月の適切な日付（当月=today, 過去=月末, 未来=月初営業日）を自動解決
   const targetDate = useMemo(() => {
     return dayjs(vm.month, "YYYY-MM").startOf("month").format("YYYY-MM-DD");
   }, [vm.month]);
-  
+
   // DBから目標値と実績値を取得（選択月に応じて動的に変更、mode=monthlyで過去/未来は日週マスク）
-  const { data: targetMetrics, error: targetError } = useTargetMetrics(targetDate, "monthly");
+  const { data: targetMetrics, error: targetError } = useTargetMetrics(
+    targetDate,
+    "monthly",
+  );
 
   // 日次搬入量データ用のリポジトリとVM（営業カレンダーリポジトリを追加）
   const dailyRepository = useMemo(() => new HttpInboundDailyRepository(), []);
-  const calendarRepository = useMemo(() => new CalendarRepositoryForUkeire(), []);
+  const calendarRepository = useMemo(
+    () => new CalendarRepositoryForUkeire(),
+    [],
+  );
   const dailyVM = useInboundMonthlyVM({
     repository: dailyRepository,
     calendarRepository,
@@ -111,9 +124,15 @@ const InboundForecastDashboardPage: React.FC = () => {
       <div className={styles.pageContainer} style={{ padding: layout.padding }}>
         <div className={styles.contentWrapper}>
           <Row gutter={[layout.gutter, layout.gutter]}>
-            <Col span={24}><Skeleton active paragraph={{ rows: 6 }} /></Col>
-            <Col span={24}><Skeleton active paragraph={{ rows: 6 }} /></Col>
-            <Col span={24}><Skeleton active paragraph={{ rows: 6 }} /></Col>
+            <Col span={24}>
+              <Skeleton active paragraph={{ rows: 6 }} />
+            </Col>
+            <Col span={24}>
+              <Skeleton active paragraph={{ rows: 6 }} />
+            </Col>
+            <Col span={24}>
+              <Skeleton active paragraph={{ rows: 6 }} />
+            </Col>
           </Row>
         </div>
       </div>
@@ -122,7 +141,10 @@ const InboundForecastDashboardPage: React.FC = () => {
 
   return (
     <div className={styles.pageContainer}>
-      <div className={styles.contentWrapper} style={{ padding: layout.padding }}>
+      <div
+        className={styles.contentWrapper}
+        style={{ padding: layout.padding }}
+      >
         {/* ヘッダー：月ナビゲーション */}
         <div style={{ marginBottom: layout.gutter }}>
           <MonthNavigator
@@ -138,20 +160,26 @@ const InboundForecastDashboardPage: React.FC = () => {
         </div>
 
         {/* 上段：レスポンシブレイアウト分岐 */}
-        <div 
-          style={{ 
-            marginBottom: layout.gutter, 
-            flex: layout.mode === "desktop" ? "1" : "0 0 auto", 
+        <div
+          style={{
+            marginBottom: layout.gutter,
+            flex: layout.mode === "desktop" ? "1" : "0 0 auto",
             minHeight: 0,
             display: "flex",
-            flexDirection: "column"
+            flexDirection: "column",
           }}
         >
-          <Row gutter={[layout.gutter, layout.gutter]} style={{ height: layout.mode === "desktop" ? "100%" : "auto", flex: layout.mode === "desktop" ? 1 : "none" }}>
+          <Row
+            gutter={[layout.gutter, layout.gutter]}
+            style={{
+              height: layout.mode === "desktop" ? "100%" : "auto",
+              flex: layout.mode === "desktop" ? 1 : "none",
+            }}
+          >
             {layout.mode === "mobile" ? (
               // Mobile: 目標カードのみ（予測と日次は下段へ）
               <Col span={layout.spans.target}>
-                <div style={{ height: layout.heights.target.mobile }}>
+                <div>
                   {targetError ? (
                     <Alert
                       message="目標データ取得エラー"
@@ -167,21 +195,23 @@ const InboundForecastDashboardPage: React.FC = () => {
                       showIcon
                     />
                   ) : (
-                    <TargetCard 
-                      rows={targetCardVM.rows} 
-                      isoWeek={isoWeek} 
+                    <TargetCard
+                      rows={targetCardVM.rows}
+                      isoWeek={isoWeek}
                       isMobile={true}
                       achievementMode={effectiveMode}
-                      onModeChange={isCurrentMonth ? setAchievementMode : undefined}
+                      onModeChange={
+                        isCurrentMonth ? setAchievementMode : undefined
+                      }
                     />
                   )}
                 </div>
               </Col>
-            ) : layout.mode === "laptopOrBelow" ? (
-              // LaptopOrBelow: 上段2列（目標/カレンダー）、中段1列（日次）
+            ) : layout.mode === "tablet" ? (
+              // Tablet: 上段2列（目標/カレンダー）、中段1列（日次）
               <>
                 <Col span={layout.spans.target}>
-                  <div style={{ height: layout.heights.target.laptopOrBelow }}>
+                  <div style={{ height: layout.heights.target.tablet }}>
                     {targetError ? (
                       <Alert
                         message="目標データ取得エラー"
@@ -197,27 +227,42 @@ const InboundForecastDashboardPage: React.FC = () => {
                         showIcon
                       />
                     ) : (
-                      <TargetCard 
-                        rows={targetCardVM.rows} 
+                      <TargetCard
+                        rows={targetCardVM.rows}
                         isoWeek={isoWeek}
+                        isTablet={true}
                         achievementMode={effectiveMode}
-                        onModeChange={isCurrentMonth ? setAchievementMode : undefined}
+                        onModeChange={
+                          isCurrentMonth ? setAchievementMode : undefined
+                        }
                       />
                     )}
                   </div>
                 </Col>
                 <Col span={layout.spans.cal}>
-                  <div style={{ height: layout.heights.calendar.laptopOrBelow }}>
+                  <div style={{ height: layout.heights.calendar.tablet }}>
                     {(() => {
                       if (!vm.month) return null;
                       const [year, month] = vm.month.split("-").map(Number);
-                      if (!year || !month || Number.isNaN(year) || Number.isNaN(month)) return null;
-                      return <UkeireCalendarCard year={year} month={month} />;
+                      if (
+                        !year ||
+                        !month ||
+                        Number.isNaN(year) ||
+                        Number.isNaN(month)
+                      )
+                        return null;
+                      return (
+                        <UkeireCalendarCard
+                          year={year}
+                          month={month}
+                          isTablet={true}
+                        />
+                      );
                     })()}
                   </div>
                 </Col>
                 <Col span={layout.spans.daily}>
-                  <div style={{ height: layout.heights.daily.laptopOrBelow }}>
+                  <div style={{ height: layout.heights.daily.tablet }}>
                     {dailyVM.loading ? (
                       <Skeleton active paragraph={{ rows: 4 }} />
                     ) : dailyVM.error ? (
@@ -229,9 +274,9 @@ const InboundForecastDashboardPage: React.FC = () => {
                         style={{ height: "100%" }}
                       />
                     ) : dailyVM.dailyProps && dailyVM.cumulativeProps ? (
-                      <CombinedDailyCard 
-                        dailyProps={dailyVM.dailyProps} 
-                        cumulativeProps={dailyVM.cumulativeProps} 
+                      <CombinedDailyCard
+                        dailyProps={dailyVM.dailyProps}
+                        cumulativeProps={dailyVM.cumulativeProps}
                       />
                     ) : null}
                   </div>
@@ -257,11 +302,13 @@ const InboundForecastDashboardPage: React.FC = () => {
                         showIcon
                       />
                     ) : (
-                      <TargetCard 
-                        rows={targetCardVM.rows} 
+                      <TargetCard
+                        rows={targetCardVM.rows}
                         isoWeek={isoWeek}
                         achievementMode={effectiveMode}
-                        onModeChange={isCurrentMonth ? setAchievementMode : undefined}
+                        onModeChange={
+                          isCurrentMonth ? setAchievementMode : undefined
+                        }
                       />
                     )}
                   </div>
@@ -279,9 +326,9 @@ const InboundForecastDashboardPage: React.FC = () => {
                         style={{ height: "100%" }}
                       />
                     ) : dailyVM.dailyProps && dailyVM.cumulativeProps ? (
-                      <CombinedDailyCard 
-                        dailyProps={dailyVM.dailyProps} 
-                        cumulativeProps={dailyVM.cumulativeProps} 
+                      <CombinedDailyCard
+                        dailyProps={dailyVM.dailyProps}
+                        cumulativeProps={dailyVM.cumulativeProps}
                       />
                     ) : null}
                   </div>
@@ -291,7 +338,13 @@ const InboundForecastDashboardPage: React.FC = () => {
                     {(() => {
                       if (!vm.month) return null;
                       const [year, month] = vm.month.split("-").map(Number);
-                      if (!year || !month || Number.isNaN(year) || Number.isNaN(month)) return null;
+                      if (
+                        !year ||
+                        !month ||
+                        Number.isNaN(year) ||
+                        Number.isNaN(month)
+                      )
+                        return null;
                       return <UkeireCalendarCard year={year} month={month} />;
                     })()}
                   </div>
@@ -302,16 +355,24 @@ const InboundForecastDashboardPage: React.FC = () => {
         </div>
 
         {/* 下段：予測カード（全幅） */}
-        <div style={{ flex: layout.mode === "desktop" ? "1" : "0 0 auto", minHeight: 0, display: "flex", flexDirection: "column" }}>
-          <Row gutter={[layout.gutter, layout.gutter]} style={{ height: layout.mode === "desktop" ? "100%" : "auto", flex: layout.mode === "desktop" ? 1 : "none" }}>
+        <div
+          style={{
+            flex: layout.mode === "desktop" ? "1" : "0 0 auto",
+            minHeight: 0,
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
+          <Row
+            gutter={[layout.gutter, layout.gutter]}
+            style={{
+              height: layout.mode === "desktop" ? "100%" : "auto",
+              flex: layout.mode === "desktop" ? 1 : "none",
+            }}
+          >
             {layout.mode === "mobile" ? (
-              // Mobile: 予測 → 日次の順
+              // Mobile: 日次 → 予測の順
               <>
-                <Col span={24}>
-                  <div style={{ height: layout.heights.forecast.mobile }}>
-                    {vm.forecastCardProps && <ForecastCard {...vm.forecastCardProps} isGeMd={false} showWipNotice={true} />}
-                  </div>
-                </Col>
                 <Col span={24}>
                   <div style={{ height: layout.heights.daily.mobile }}>
                     {dailyVM.loading ? (
@@ -325,19 +386,46 @@ const InboundForecastDashboardPage: React.FC = () => {
                         style={{ height: "100%" }}
                       />
                     ) : dailyVM.dailyProps && dailyVM.cumulativeProps ? (
-                      <CombinedDailyCard 
-                        dailyProps={dailyVM.dailyProps} 
-                        cumulativeProps={dailyVM.cumulativeProps} 
+                      <CombinedDailyCard
+                        dailyProps={dailyVM.dailyProps}
+                        cumulativeProps={dailyVM.cumulativeProps}
                       />
                     ) : null}
                   </div>
                 </Col>
+                <Col span={24}>
+                  <div style={{ height: layout.heights.forecast.mobile }}>
+                    {vm.forecastCardProps && (
+                      <ForecastCard
+                        {...vm.forecastCardProps}
+                        isGeMd={false}
+                        showWipNotice={true}
+                      />
+                    )}
+                  </div>
+                </Col>
               </>
             ) : (
-              // Desktop/LaptopOrBelow: 予測のみ
-              <Col span={24} style={{ height: layout.mode === "desktop" ? "100%" : "auto" }}>
-                <div style={{ height: layout.mode === "desktop" ? layout.heights.forecast.desktop : layout.heights.forecast.laptopOrBelow }}>
-                  {vm.forecastCardProps && <ForecastCard {...vm.forecastCardProps} isGeMd={true} showWipNotice={true} />}
+              // Desktop/Tablet: 予測のみ
+              <Col
+                span={24}
+                style={{ height: layout.mode === "desktop" ? "100%" : "auto" }}
+              >
+                <div
+                  style={{
+                    height:
+                      layout.mode === "desktop"
+                        ? layout.heights.forecast.desktop
+                        : layout.heights.forecast.tablet,
+                  }}
+                >
+                  {vm.forecastCardProps && (
+                    <ForecastCard
+                      {...vm.forecastCardProps}
+                      isGeMd={true}
+                      showWipNotice={true}
+                    />
+                  )}
                 </div>
               </Col>
             )}

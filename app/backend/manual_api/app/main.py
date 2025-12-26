@@ -1,19 +1,21 @@
-import os
 from pathlib import Path
+
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
+
+from app.api.routers.manuals import router as manuals_router
+from app.config.settings import settings
 
 # ==========================================
 # 統一ロギング設定のインポート（backend_shared）
 # ==========================================
 from backend_shared.application.logging import setup_logging
-from backend_shared.infra.frameworks.logging_utils import setup_uvicorn_access_filter
 from backend_shared.infra.adapters.middleware import RequestIdMiddleware
 from backend_shared.infra.frameworks.cors_config import setup_cors
-from backend_shared.infra.frameworks.exception_handlers import register_exception_handlers
+from backend_shared.infra.frameworks.exception_handlers import (
+    register_exception_handlers,
+)
 
-from app.config.settings import settings
-from app.api.routers.manuals import router as manuals_router
 
 # ==========================================
 # 統一ロギング設定の初期化
@@ -23,6 +25,8 @@ from app.api.routers.manuals import router as manuals_router
 setup_logging()
 
 from backend_shared.application.logging import get_module_logger
+
+
 logger = get_module_logger(__name__)
 
 app = FastAPI(
@@ -38,7 +42,7 @@ app = FastAPI(
 
 logger.info(
     f"Manual API initialized (DEBUG={settings.DEBUG}, docs_enabled={settings.DEBUG})",
-    extra={"operation": "app_init", "debug": settings.DEBUG}
+    extra={"operation": "app_init", "debug": settings.DEBUG},
 )
 
 # --- ミドルウェア: Request ID追跡 ----------------------------------------------
@@ -52,13 +56,30 @@ register_exception_handlers(app)
 # --- CORS設定 (backend_shared統一版) -----------------------------------------
 setup_cors(app)
 
+# --- 静的ファイル配信 ---------------------------------------------------------
+# 1. 旧アセット（data/）: 互換性維持のため残す
 data_dir = Path(__file__).resolve().parent.parent / "data"
 if data_dir.exists():
     # Serve manual static assets under internal logical path
     # BFF (core_api) will add /core_api prefix when exposing to frontend
     app.mount("/manual/assets", StaticFiles(directory=data_dir), name="manual-assets")
 
+# 2. 新マニュアル動画アセット（local_data/manuals/）
+#    将来GCSに移行する際はこのマウントを削除し、URL生成をGCS署名付きURLに変更
+manual_assets_dir = Path(__file__).resolve().parent.parent / "local_data" / "manuals"
+if manual_assets_dir.exists():
+    app.mount(
+        "/manual-assets",
+        StaticFiles(directory=manual_assets_dir),
+        name="manual-video-assets",
+    )
+    logger.info(
+        f"Mounted manual video assets: {manual_assets_dir}",
+        extra={"operation": "mount_assets", "path": str(manual_assets_dir)},
+    )
+
 app.include_router(manuals_router, prefix="/manual")
+
 
 @app.get("/__health")
 @app.get("/health")

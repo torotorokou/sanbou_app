@@ -3,9 +3,10 @@
  * 営業担当者・顧客・商品のマスタデータ取得と管理
  */
 
-import { useState, useEffect, useRef } from 'react';
-import type { ID, CategoryKind } from './types';
-import type { SalesPivotRepository } from '../infrastructure/salesPivot.repository';
+import { useState, useEffect, useRef } from "react";
+import type { ID, CategoryKind } from "./types";
+import type { SalesPivotRepository } from "../infrastructure/salesPivot.repository";
+import { logger } from "@/shared";
 
 export interface MasterDataState {
   reps: Array<{ id: ID; name: string }>;
@@ -22,12 +23,14 @@ export interface MasterDataState {
 export function useMasterData(
   repository: SalesPivotRepository,
   categoryKind: CategoryKind,
-  onError?: (message: string) => void
+  onError?: (message: string) => void,
 ): MasterDataState {
   const [reps, setReps] = useState<Array<{ id: ID; name: string }>>([]);
-  const [customers, setCustomers] = useState<Array<{ id: ID; name: string }>>([]);
+  const [customers, setCustomers] = useState<Array<{ id: ID; name: string }>>(
+    [],
+  );
   const [items, setItems] = useState<Array<{ id: ID; name: string }>>([]);
-  
+
   // onErrorの最新の参照を保持（依存配列に含めないため）
   const onErrorRef = useRef(onError);
   useEffect(() => {
@@ -42,7 +45,7 @@ export function useMasterData(
           repository.getCustomers(),
           repository.getItems(),
         ]);
-        console.log('マスタデータ取得成功:', {
+        logger.log("マスタデータ取得成功:", {
           営業: repData.length,
           顧客: custData.length,
           商品: itemData.length,
@@ -51,8 +54,8 @@ export function useMasterData(
         setCustomers(custData);
         setItems(itemData);
       } catch (error) {
-        console.error('マスタデータ取得エラー:', error);
-        onErrorRef.current?.('マスタデータの取得に失敗しました。');
+        console.error("マスタデータ取得エラー:", error);
+        onErrorRef.current?.("マスタデータの取得に失敗しました。");
       }
     };
     loadMasters();

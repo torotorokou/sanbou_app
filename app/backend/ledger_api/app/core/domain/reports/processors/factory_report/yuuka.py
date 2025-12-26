@@ -1,37 +1,36 @@
 import pandas as pd
 
-from app.infra.report_utils.formatters import (
-    summarize_value_by_cell_with_label,
-)
 from app.core.domain.reports.processors.factory_report.summary import (
     summary_apply_by_sheet,
 )
+from app.infra.report_utils.formatters import summarize_value_by_cell_with_label
 from backend_shared.application.logging import get_module_logger
+
 
 logger = get_module_logger(__name__)
 
 
-def process_yuuka(df_yard: pd.DataFrame, df_shipment: pd.DataFrame, master_csv: pd.DataFrame = None) -> pd.DataFrame:
+def process_yuuka(
+    df_yard: pd.DataFrame, df_shipment: pd.DataFrame, master_csv: pd.DataFrame = None
+) -> pd.DataFrame:
     """
     有価データを処理する。
-    
+
     Args:
         df_yard: ヤードデータ
         df_shipment: 出荷データ
         master_csv: 有価マスターCSV（事前読み込み済み）。Noneの場合は空データを返す。
-    
+
     Returns:
         pd.DataFrame: 整形済みの有価帳票
-    
+
     Notes:
         - Step 5最適化: master_csvを引数で受け取ることでI/O削減
     """
 
     # --- ① マスターCSVの確認 ---
     if master_csv is None or master_csv.empty:
-        logger.warning(
-            "マスターCSVが提供されていません（有価）。空データで継続します。"
-        )
+        logger.warning("マスターCSVが提供されていません（有価）。空データで継続します。")
         # 後段の format_table で参照される列を用意
         return pd.DataFrame(columns=["大項目", "セル", "値", "セルロック", "順番", "有価名"])  # 空
 

@@ -1,5 +1,7 @@
+from backend_shared.application.logging import create_log_context, get_module_logger
+
 from .template_config import get_required_columns_definition
-from backend_shared.application.logging import get_module_logger, create_log_context
+
 
 logger = get_module_logger(__name__)
 
@@ -29,18 +31,18 @@ def load_filtered_dataframe(dfs, key, target_columns):
         target_columns = list(target_columns.keys())
 
     # --- listの中身がさらにlistなら flatten（[[...]] → [...]）
-    if (
-        isinstance(target_columns, list)
-        and target_columns
-        and isinstance(target_columns[0], list)
-    ):
+    if isinstance(target_columns, list) and target_columns and isinstance(target_columns[0], list):
         target_columns = target_columns[0]
 
     missing_cols = [col for col in target_columns if col not in df.columns]
     if missing_cols:
         logger.error(
             "必要カラム不足",
-            extra=create_log_context(operation="load_all_filtered_dataframes", key=key, missing_cols=missing_cols)
+            extra=create_log_context(
+                operation="load_all_filtered_dataframes",
+                key=key,
+                missing_cols=missing_cols,
+            ),
         )
         raise ValueError(f"{key} に次のカラムが存在しません: {missing_cols}")
 
@@ -72,7 +74,7 @@ def load_all_filtered_dataframes(
 
     df_dict = {}
     column_defs = get_required_columns_definition(template_name)
-    print(f"🔍 対象テンプレート: {template_name}, カラム定義: {column_defs}")
+    logger.debug(f"対象テンプレート: {template_name}, カラム定義: {column_defs}")
 
     for key in keys:
         if key in dfs:

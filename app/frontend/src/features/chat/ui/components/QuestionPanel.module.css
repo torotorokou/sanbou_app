@@ -1,0 +1,52 @@
+/* QuestionPanel scoped styles */
+
+.templateSelectDropdown :global(.ant-select-item-option-content) {
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  line-height: 1.4;
+}
+
+/* 選択後の単一表示部にも折り返しを適用 */
+.templateSelect :global(.ant-select-selection-item) {
+  white-space: normal !important;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+/* ===== 質問カラムのSelectを縦に広げる ===== */
+.questionSelect :global(.ant-select-selector) {
+  min-height: 64px; /* デフォルトで約2行ぶんの高さ */
+  align-items: flex-start; /* 内容を上詰め */
+  padding-top: 8px !important;
+  padding-bottom: 8px !important;
+  overflow-y: auto; /* 行数が増えたら内側でスクロール */
+}
+
+/* プレースホルダも2行表示を想定して折返し */
+.questionSelect :global(.ant-select-selection-placeholder) {
+  white-space: normal;
+  line-height: 1.5;
+}
+
+/* タグ（multiple）時は行折返しして高さを活用 */
+.questionSelectTags :global(.ant-select-selection-overflow) {
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* テンプレートの選択域内テキストも折返し */
+.questionSelectTemplate :global(.ant-select-selection-item) {
+  white-space: normal !important;
+  line-height: 1.5;
+}
+
+/* ドロップダウンパネルの見やすさ向上 */
+.templateSelectDropdown :global(.ant-select-dropdown) {
+  max-height: 60vh; /* 画面に応じて高さ確保 */
+}
+
+/* hover無効化用 */
+.noHover :global(.ant-card):hover {
+  box-shadow: none;
+}

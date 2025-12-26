@@ -1,0 +1,40 @@
+/* StickyManualTitleBar スタイル */
+
+.stickyBar {
+  position: sticky;
+  top: 56px; /* ヘッダー高さ分下げる */
+  z-index: 900; /* ヘッダー(1000)より下、FAB(999)より下 */
+  background: var(--ant-color-bg-container, #fff);
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--ant-color-border, #d9d9d9);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  display: flex;
+  align-items: center;
+  min-height: 40px;
+  transition: all 0.2s ease;
+}
+
+.title {
+  font-size: 14px;
+  color: var(--ant-color-text, #000);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
+/* アニメーション効果（オプション） */
+@keyframes slideInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.stickyBar {
+  animation: slideInDown 0.3s ease-out;
+}

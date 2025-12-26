@@ -1,7 +1,7 @@
-import { useMemo } from "react";
-import { useCalendarVM } from "@/features/calendar/model/useCalendarVM";
-import { decorateCalendarCells } from "./decorators";
-import type { ICalendarRepository } from "@/features/calendar/ports/repository";
+import { useMemo } from 'react';
+import { useCalendarVM } from '@/features/calendar/model/useCalendarVM';
+import { decorateCalendarCells } from './decorators';
+import type { ICalendarRepository } from '@/features/calendar/ports/repository';
 
 type Params = { year: number; month: number; repository: ICalendarRepository };
 

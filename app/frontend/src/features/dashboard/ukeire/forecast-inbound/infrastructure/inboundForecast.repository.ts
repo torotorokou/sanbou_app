@@ -3,8 +3,8 @@
  * 実API経由のRepository実装（未実装）
  */
 
-import type { IInboundForecastRepository } from "../../domain/repository";
-import type { IsoMonth, MonthPayloadDTO } from "../../domain/types";
+import type { IInboundForecastRepository } from '../../domain/repository';
+import type { IsoMonth, MonthPayloadDTO } from '../../domain/types';
 import { DASHBOARD_ENDPOINTS } from '@/shared';
 
 export class HttpInboundForecastRepository implements IInboundForecastRepository {
@@ -15,6 +15,6 @@ export class HttpInboundForecastRepository implements IInboundForecastRepository
     // TODO: 実装
     // const response = await fetch(`${this.baseUrl}/${month}`);
     // return await response.json();
-    throw new Error("HttpInboundForecastRepository is not implemented yet.");
+    throw new Error('HttpInboundForecastRepository is not implemented yet.');
   }
 }

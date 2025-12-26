@@ -1,7 +1,7 @@
 # =========================
 # ai_api Dockerfile (multi-stage: wheelbuilder/base/dev/stg/prod)
 # Context: app/backend
-# 
+#
 # Target stages:
 #   - wheelbuilder: Python 依存パッケージをビルド (wheel 生成)
 #   - base: 共通ランタイムベース (wheelインストール + アプリコード配置)
@@ -32,9 +32,10 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 COPY ./backend_shared /build/backend_shared
-RUN python -m pip install --upgrade "pip>=25.3,<26.0" setuptools wheel && \
-    cd /build/backend_shared && \
+WORKDIR /build/backend_shared
+RUN python -m pip install --no-cache-dir --upgrade "pip>=25.3,<26.0" setuptools wheel && \
     pip wheel --no-deps . -w /wheels
+WORKDIR /build
 
 COPY ./ai_api/requirements.txt /build/requirements.txt
 RUN pip wheel --no-deps -r /build/requirements.txt -w /wheels
@@ -63,13 +64,13 @@ RUN apt-get update && \
 
 COPY ./ai_api/requirements.txt /backend/requirements.txt
 # Security: Upgrade pip to >=25.3 to fix CVE-2025-8869
-RUN python -m pip install --upgrade "pip>=25.3,<26.0" && \
+RUN python -m pip install --no-cache-dir --upgrade "pip>=25.3,<26.0" && \
     pip install --no-cache-dir -r /backend/requirements.txt watchfiles
 
 # backend_shared を editable モードでインストール
 RUN mkdir -p /opt/backend_shared
 COPY ./backend_shared /opt/backend_shared
-RUN pip install -e /opt/backend_shared
+RUN pip install --no-cache-dir -e /opt/backend_shared
 
 # USER 切替前に必要ディレクトリを作成・chown
 RUN mkdir -p /backend/app /backend/test && \
@@ -107,7 +108,7 @@ RUN apt-get update && \
 
 COPY --from=wheelbuilder /wheels /wheels
 # Security: Upgrade pip to >=25.3 to fix CVE-2025-8869
-RUN python -m pip install --upgrade "pip>=25.3,<26.0" && \
+RUN python -m pip install --no-cache-dir --upgrade "pip>=25.3,<26.0" && \
     pip install --no-cache-dir /wheels/*.whl && \
     rm -rf /wheels
 

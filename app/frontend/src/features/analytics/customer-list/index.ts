@@ -1,9 +1,9 @@
 /**
  * Customer List Feature - Public API
- * 
+ *
  * 顧客離脱分析フィーチャーのエクスポート
  * FSD + MVVM + Repository アーキテクチャに準拠
- * 
+ *
  * アーキテクチャ構成:
  * - domain/: ビジネスエンティティ（純粋なドメインモデル）
  * - model/: 主ViewModel（Repositoryパターンでバックエンドと連携）
@@ -17,11 +17,19 @@
  */
 
 // Domain Types
-export type { CustomerData, LostCustomer, CustomerChurnAnalyzeParams, SalesRep } from './shared/domain/types';
+export type {
+  CustomerData,
+  LostCustomer,
+  CustomerChurnAnalyzeParams,
+  SalesRep,
+} from './shared/domain/types';
 
 // Repository (Clean Architecture Ports & Adapters)
 export type { CustomerChurnRepository } from './shared/ports/customerChurnRepository';
-export { customerChurnRepository, CustomerChurnHttpRepository } from './shared/infrastructure/customerChurnRepository';
+export {
+  customerChurnRepository,
+  CustomerChurnHttpRepository,
+} from './shared/infrastructure/customerChurnRepository';
 
 // Main ViewModel - 主要なエントリーポイント
 export { useCustomerChurnViewModel } from './shared/model/useCustomerChurnVM';
@@ -39,4 +47,3 @@ export * from './data-export';
 
 // Shared Components
 export * from './shared';
-

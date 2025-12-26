@@ -5,7 +5,12 @@
 
 import type { ManualRepository } from '../ports/repository';
 import { ManualClient } from './manual.client';
-import type { ManualSearchQuery, ManualSearchResult, ManualTocItem, ManualCategory } from '../domain/types/manual.types';
+import type {
+  ManualSearchQuery,
+  ManualSearchResult,
+  ManualTocItem,
+  ManualCategory,
+} from '../domain/types/manual.types';
 
 export class ManualRepositoryImpl implements ManualRepository {
   async search(query: ManualSearchQuery, signal?: AbortSignal): Promise<ManualSearchResult> {

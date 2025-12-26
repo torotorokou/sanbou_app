@@ -92,4 +92,3 @@ ALTER TABLE ONLY raw.receive_shogun_final
 --
 
 \unrestrict NsY3847RsXKA9AVqzRwGk3aK8YxtvYTsShemkKvZhZfComxVDnlejhYrJ0hcjkp
-

@@ -1,13 +1,15 @@
 """
 Management Sheet - 管理表生成エンドポイント
 """
-import os
-from fastapi import APIRouter, Request
-import httpx
 
-from backend_shared.core.domain.exceptions import ExternalServiceError
-from backend_shared.application.logging import create_log_context, get_module_logger
+import os
+
+import httpx
+from fastapi import APIRouter, Request
+
 from app.shared.utils import rewrite_artifact_urls_to_bff
+from backend_shared.application.logging import create_log_context, get_module_logger
+from backend_shared.core.domain.exceptions import ExternalServiceError
 
 logger = get_module_logger(__name__)
 
@@ -21,26 +23,23 @@ async def proxy_management_sheet(request: Request):
     """管理表生成（ledger_apiへフォワード）- FormData対応"""
     logger.info(
         "Proxying management_sheet request (FormData)",
-        extra=create_log_context(
-            operation="proxy_management_sheet",
-            client=str(request.client)
-        )
+        extra=create_log_context(operation="proxy_management_sheet", client=str(request.client)),
     )
     try:
         form = await request.form()
         logger.info(
             "Received form keys",
             extra=create_log_context(
-                operation="proxy_management_sheet",
-                form_keys=list(form.keys())
-            )
+                operation="proxy_management_sheet", form_keys=list(form.keys())
+            ),
         )
-        
+
         files = {}
         data = {}
         for key, value in form.items():
-            if hasattr(value, 'read'):
+            if hasattr(value, "read"):
                 from starlette.datastructures import UploadFile
+
                 if isinstance(value, UploadFile):
                     content = await value.read()
                     files[key] = (value.filename, content, value.content_type)
@@ -48,7 +47,7 @@ async def proxy_management_sheet(request: Request):
             else:
                 data[key] = value
                 logger.info(f"Data '{key}': {value}")
-        
+
         async with httpx.AsyncClient(timeout=60.0) as client:
             url = f"{LEDGER_API_BASE}/reports/management_sheet/"
             logger.info(f"Forwarding to {url}")
@@ -61,11 +60,11 @@ async def proxy_management_sheet(request: Request):
             service_name="ledger_api",
             message=f"Management sheet generation failed: {str(e)}",
             status_code=e.response.status_code,
-            cause=e
+            cause=e,
         )
     except httpx.HTTPError as e:
         raise ExternalServiceError(
             service_name="ledger_api",
             message=f"Cannot reach ledger_api: {str(e)}",
-            cause=e
+            cause=e,
         )

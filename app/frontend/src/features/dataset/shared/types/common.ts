@@ -35,8 +35,10 @@ export interface UploadResponseShape {
   status?: string;
   detail?: string;
   hint?: string;
-  result?: Record<string, UploadFileIssue> | {
-    upload_file_ids?: Record<string, number>;
-    status?: string;
-  };
+  result?:
+    | Record<string, UploadFileIssue>
+    | {
+        upload_file_ids?: Record<string, number>;
+        status?: string;
+      };
 }

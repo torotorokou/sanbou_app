@@ -3,25 +3,25 @@
  * フィルタパネル統合UI
  */
 
-import React from 'react';
-import { Card, Divider, Button } from 'antd';
-import { ReloadOutlined } from '@ant-design/icons';
-import { CategoryModeSection } from './components/sections/CategoryModeSection';
-import { PeriodSection } from './components/sections/PeriodSection';
-import { RepFilterSection } from './components/sections/RepFilterSection';
-import { useFilterLayout } from './hooks/useFilterLayout';
-import { GRID_GUTTER, MARGINS } from './config/layout.config';
-import type { FilterPanelProps } from './types/FilterPanelProps';
-import styles from './FilterPanel.module.css';
+import React from "react";
+import { Card, Divider, Button } from "antd";
+import { ReloadOutlined } from "@ant-design/icons";
+import { CategoryModeSection } from "./components/sections/CategoryModeSection";
+import { PeriodSection } from "./components/sections/PeriodSection";
+import { RepFilterSection } from "./components/sections/RepFilterSection";
+import { useFilterLayout } from "./hooks/useFilterLayout";
+import { GRID_GUTTER, MARGINS } from "./config/layout.config";
+import type { FilterPanelProps } from "./types/FilterPanelProps";
+import styles from "./FilterPanel.module.css";
 
 /**
  * フィルタパネルコンポーネント
- * 
+ *
  * 【構成】
  * 1. 種別・モード・TopN/ソート セクション
  * 2. 期間選択 セクション
  * 3. 営業・絞り込み セクション
- * 
+ *
  * 【レスポンシブ】
  * xl: 1280px以下で2行レイアウト（種別 / モード+Top&並び替え）
  */
@@ -61,15 +61,17 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
   const layout = useFilterLayout();
 
   return (
-    <Card 
+    <Card
       className={`${styles.accentCard} ${styles.accentPrimary} sales-tree-accent-card sales-tree-accent-primary`}
-      title={<div className={`${styles.cardSectionHeader} sales-tree-card-section-header`}>条件</div>}
-      extra={
-        <Button 
-          icon={<ReloadOutlined />} 
-          onClick={onReset}
-          size="small"
+      title={
+        <div
+          className={`${styles.cardSectionHeader} sales-tree-card-section-header`}
         >
+          条件
+        </div>
+      }
+      extra={
+        <Button icon={<ReloadOutlined />} onClick={onReset} size="small">
           リセット
         </Button>
       }

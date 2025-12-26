@@ -6,7 +6,8 @@ YAML形式の設定ファイルを読み込み、CSV処理や帳票生成に必�
 """
 
 import yaml
-from backend_shared.config.paths import SHOGUNCSV_DEF_PATH, MANAGER_CSV_DEF_PATH
+
+from backend_shared.config.paths import MANAGER_CSV_DEF_PATH, SHOGUNCSV_DEF_PATH
 
 
 class ShogunCsvConfigLoader:
@@ -15,7 +16,7 @@ class ShogunCsvConfigLoader:
 
     統合型CSV定義ファイル（YAML）を読み込み、CSV処理に必要な
     カラム定義、型情報、一意キーなどの設定情報を提供します。
-    
+
     機能:
     - データセット名の日本語表示（shogun_final_receive → "受入一覧"）
     - カラム名の英語→日本語変換（slip_date → "伝票日付"）
@@ -41,7 +42,7 @@ class ShogunCsvConfigLoader:
         Returns:
             dict: 設定情報の辞書
         """
-        with open(self.config_path, "r", encoding="utf-8") as f:
+        with open(self.config_path, encoding="utf-8") as f:
             return yaml.safe_load(f)
 
     def get_expected_headers(self, sheet_type: str) -> list:
@@ -108,9 +109,7 @@ class ShogunCsvConfigLoader:
             dict: 日本語名→型のマッピング辞書（例: {'伝票日付': 'datetime', ...}）
         """
         return {
-            jp: meta["type"]
-            for jp, meta in self.get_columns(sheet_type).items()
-            if "type" in meta
+            jp: meta["type"] for jp, meta in self.get_columns(sheet_type).items() if "type" in meta
         }
 
     def get_unique_keys(self, sheet_type: str) -> list[list[str]]:
@@ -154,32 +153,30 @@ class ShogunCsvConfigLoader:
             dict: 集約関数マッピング辞書（例: {'金額': 'sum', '数量': 'sum', ...}）
         """
         return {
-            jp: meta["agg"]
-            for jp, meta in self.get_columns(sheet_type).items()
-            if "agg" in meta
+            jp: meta["agg"] for jp, meta in self.get_columns(sheet_type).items() if "agg" in meta
         }
 
     def get_dataset_label(self, dataset_key: str) -> str:
         """
         データセットキーから日本語ラベルを取得
-        
+
         Args:
             dataset_key: データセットキー（例: "shogun_final_receive"）
-        
+
         Returns:
             str: 日本語ラベル（例: "受入一覧"）
                  定義がない場合はdataset_keyをそのまま返す
-        
+
         例:
             get_dataset_label("shogun_final_receive") => "受入一覧"
             get_dataset_label("shogun_flash_shipment") => "出荷一覧"
         """
         # dataset_key から master_key を抽出
         master_key = self._extract_master_key(dataset_key)
-        
+
         if not master_key:
             return dataset_key
-        
+
         try:
             config = self.config.get(master_key, {})
             label = config.get("label", dataset_key)
@@ -190,15 +187,15 @@ class ShogunCsvConfigLoader:
     def get_ja_column_name(self, master_key: str, en_name: str) -> str:
         """
         英語カラム名から日本語カラム名を取得
-        
+
         Args:
             master_key: master.yamlのキー（例: "receive", "shipment", "yard"）
             en_name: 英語カラム名（例: "slip_date"）
-        
+
         Returns:
             str: 日本語カラム名（例: "伝票日付"）
                  定義がない場合は en_name をそのまま返す
-        
+
         例:
             get_ja_column_name("receive", "slip_date") => "伝票日付"
             get_ja_column_name("shipment", "vendor_name") => "業者名"
@@ -217,15 +214,15 @@ class ShogunCsvConfigLoader:
     def get_en_column_name(self, master_key: str, ja_name: str) -> str:
         """
         日本語カラム名から英語カラム名を取得
-        
+
         Args:
             master_key: master.yamlのキー（例: "receive", "shipment", "yard"）
             ja_name: 日本語カラム名（例: "伝票日付"）
-        
+
         Returns:
             str: 英語カラム名（例: "slip_date"）
                  定義がない場合は ja_name をそのまま返す
-        
+
         例:
             get_en_column_name("receive", "伝票日付") => "slip_date"
             get_en_column_name("shipment", "業者名") => "vendor_name"
@@ -240,13 +237,13 @@ class ShogunCsvConfigLoader:
     def get_all_columns(self, master_key: str) -> dict:
         """
         指定したmaster_keyの全カラム定義を取得
-        
+
         Args:
             master_key: master.yamlのキー（例: "receive", "shipment", "yard"）
-        
+
         Returns:
             dict: カラム定義辞書 {日本語名: {en_name: ..., type: ...}, ...}
-        
+
         例:
             get_all_columns("receive")
             => {
@@ -263,13 +260,13 @@ class ShogunCsvConfigLoader:
     def get_en_to_ja_map(self, master_key: str) -> dict:
         """
         英語名→日本語名のマッピング辞書を取得
-        
+
         Args:
             master_key: master.yamlのキー（例: "receive", "shipment", "yard"）
-        
+
         Returns:
             dict: {英語名: 日本語名} の辞書
-        
+
         例:
             get_en_to_ja_map("receive")
             => {
@@ -281,9 +278,7 @@ class ShogunCsvConfigLoader:
         try:
             columns = self.get_columns(master_key)
             return {
-                meta["en_name"]: ja_name
-                for ja_name, meta in columns.items()
-                if "en_name" in meta
+                meta["en_name"]: ja_name for ja_name, meta in columns.items() if "en_name" in meta
             }
         except Exception:
             return {}
@@ -291,13 +286,13 @@ class ShogunCsvConfigLoader:
     def get_ja_to_en_map(self, master_key: str) -> dict:
         """
         日本語名→英語名のマッピング辞書を取得
-        
+
         Args:
             master_key: master.yamlのキー（例: "receive", "shipment", "yard"）
-        
+
         Returns:
             dict: {日本語名: 英語名} の辞書
-        
+
         例:
             get_ja_to_en_map("receive")
             => {
@@ -309,9 +304,7 @@ class ShogunCsvConfigLoader:
         try:
             columns = self.get_columns(master_key)
             return {
-                ja_name: meta["en_name"]
-                for ja_name, meta in columns.items()
-                if "en_name" in meta
+                ja_name: meta["en_name"] for ja_name, meta in columns.items() if "en_name" in meta
             }
         except Exception:
             return {}
@@ -320,13 +313,13 @@ class ShogunCsvConfigLoader:
     def _extract_master_key(dataset_key: str) -> str:
         """
         データセットキーから master_key を抽出
-        
+
         Args:
             dataset_key: データセットキー（例: "shogun_final_receive"）
-        
+
         Returns:
             str: master_keyまたは空文字列（抽出できない場合）
-        
+
         内部ロジック:
             shogun_final_receive -> receive
             shogun_flash_shipment -> shipment
@@ -357,7 +350,7 @@ class ReportTemplateConfigLoader:
             path (str): 設定ファイルのパス
         """
         # 設定ファイルの読み込み
-        with open(path, "r", encoding="utf-8") as f:
+        with open(path, encoding="utf-8") as f:
             self.config = yaml.safe_load(f)
 
     def get_required_files(self, report_key: str) -> list[str]:

@@ -83,6 +83,7 @@ export type ManualCatalogResponse = {
       tags: string[];
       flow_url?: string;
       video_url?: string;
+      thumbnail_url?: string;
     }>;
   }>;
 };

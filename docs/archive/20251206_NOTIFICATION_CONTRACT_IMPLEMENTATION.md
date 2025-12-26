@@ -1,6 +1,7 @@
 # 通知契約実装完了レポート（Phase 2）
 
 ## 実装完了日
+
 2025年10月6日
 
 ## 概要
@@ -12,6 +13,7 @@ OpenAPI仕様に準拠した通知契約システムを実装し、フロント/
 ## 📋 実装完了プロンプト一覧
 
 ### Phase 1: 基盤整備（NL1〜NL5）
+
 - ✅ NL1: 契約ファイルの作成（OpenAPI）
 - ✅ NL2: フロント契約型の追加（TypeScript）
 - ✅ NL3: バックエンド契約モデル（Pydantic）
@@ -19,6 +21,7 @@ OpenAPI仕様に準拠した通知契約システムを実装し、フロント/
 - ✅ NL5: ジョブAPI/失敗時のProblemDetails搭載
 
 ### Phase 2: フロントエンド統合（NL6〜NL11）
+
 - ✅ NL6: 通知設定とコードマッピングの一元化
 - ✅ NL7: HTTPクライアントでProblemDetails→ApiError変換
 - ✅ NL8: notifyApiErrorの作成＆既存catchの置換
@@ -31,14 +34,17 @@ OpenAPI仕様に準拠した通知契約システムを実装し、フロント/
 ## ✅ Prompt NL6: 通知設定とコードマッピングの一元化
 
 ### 更新ファイル
+
 - **`/app/frontend/src/features/notification/config.ts`** 📝大幅更新
 
 ### 内容
+
 - `NOTIFY_DEFAULTS`: severity別のデフォルト秒数
 - `codeCatalog`: エラーコード→severity/titleのマッピング（40+エントリ）
 - `getNotificationConfig()`: ヘルパー関数
 
 ### 受け入れ条件
+
 ✅ config.ts が作成され、他ファイルから参照可能
 ✅ 後方互換性維持（successMs/errorMs など）
 
@@ -47,10 +53,12 @@ OpenAPI仕様に準拠した通知契約システムを実装し、フロント/
 ## ✅ Prompt NL7: HTTPクライアントでProblemDetails→ApiError変換
 
 ### 更新ファイル
+
 - **`/app/frontend/src/shared/infrastructure/http/httpClient.ts`** 📝大幅更新
 - **`/app/frontend/src/shared/infrastructure/http/index.ts`** 📝更新
 
 ### 内容
+
 - `ApiError` クラス（code/status/userMessage/traceId）
 - `ApiError.fromProblemDetails()`: ProblemDetailsから生成
 - `ApiError.fromAxiosError()`: AxiosErrorから生成
@@ -58,6 +66,7 @@ OpenAPI仕様に準拠した通知契約システムを実装し、フロント/
 - `fetchWithTimeout()`: レガシー互換用（タイムアウト対応）
 
 ### 受け入れ条件
+
 ✅ 500/422などでApiErrorが投げられ、catchできる
 ✅ traceIdが自動的に含まれる
 ✅ 既存のapiGet/apiPostが動作する
@@ -67,24 +76,28 @@ OpenAPI仕様に準拠した通知契約システムを実装し、フロント/
 ## ✅ Prompt NL8: notifyApiErrorの作成＆既存catchの置換
 
 ### 更新ファイル
+
 - **`/app/frontend/src/features/notification/controller/notify.ts`** 📝大幅更新
 - **`/app/frontend/src/features/notification/index.ts`** 📝更新
 
 ### 内容
+
 - `notifyApiError()`: ApiError/ProblemDetails/Errorを自動判別
 - `codeCatalog`参照: code→severity変換
 - デフォルトduration: severity別に自動設定
 
 ### 使用例
+
 ```typescript
 try {
-  await apiPost('/api/upload', formData);
+  await apiPost("/api/upload", formData);
 } catch (error) {
-  notifyApiError(error, 'アップロードに失敗しました');
+  notifyApiError(error, "アップロードに失敗しました");
 }
 ```
 
 ### 受け入れ条件
+
 ✅ 失敗時の通知がすべてnotifyApiError経由で出る
 ✅ code→severity変換が自動的に行われる
 ✅ ApiErrorクラスとの統合
@@ -94,26 +107,27 @@ try {
 ## ✅ Prompt NL9: ジョブの失敗を通知にマッピング
 
 ### 新規作成ファイル
+
 - **`/app/frontend/src/shared/infrastructure/job/jobService.ts`** ✨新規
 - **`/app/frontend/src/shared/infrastructure/job/index.ts`** ✨新規
 
 ### 内容
+
 - `JobStatus` インターフェース（error: ProblemDetailsを含む）
 - `pollJob()`: ジョブをポーリング、失敗時に`notifyApiError`
 - `createAndPollJob()`: ジョブ作成→ポーリング
 
 ### 使用例
+
 ```typescript
-const result = await pollJob(
-  jobId,
-  (progress, message) => {
-    console.log(`進捗: ${progress}% - ${message}`);
-  }
-);
+const result = await pollJob(jobId, (progress, message) => {
+  console.log(`進捗: ${progress}% - ${message}`);
+});
 // 失敗時は自動的に job.error から通知表示
 ```
 
 ### 受け入れ条件
+
 ✅ ジョブ失敗時に統一フォーマットの通知が出る
 ✅ job.errorのProblemDetailsが通知に変換される
 
@@ -122,19 +136,23 @@ const result = await pollJob(
 ## ✅ Prompt NL10: サーバープッシュ通知（SSE）
 
 ### 新規作成ファイル（バックエンド）
+
 - **`/app/backend/ledger_api/app/api/endpoints/notifications.py`** ✨新規
 - **`/app/backend/ledger_api/app/main.py`** 📝更新
 
 ### 内容（バックエンド）
+
 - `/notifications/stream` エンドポイント（SSE）
 - `notification_generator()`: サンプル通知を5秒ごとに送信
 - NotificationEvent形式で配信
 
 ### 新規作成ファイル（フロントエンド）
+
 - **`/app/frontend/src/features/notification/controller/sse.ts`** ✨新規
 - **`/app/frontend/src/features/notification/index.ts`** 📝更新
 
 ### 内容（フロントエンド）
+
 - `EventSource`を使用したSSEクライアント
 - `startSSE()`: 接続開始
 - `stopSSE()`: 接続停止
@@ -142,6 +160,7 @@ const result = await pollJob(
 - 自動再接続（5秒後）
 
 ### 使用例
+
 ```typescript
 // App.tsx
 useEffect(() => {
@@ -151,6 +170,7 @@ useEffect(() => {
 ```
 
 ### 受け入れ条件
+
 ✅ サンプルのNotificationEventが届くとトーストが出る
 ✅ 自動再接続が機能する
 
@@ -159,10 +179,12 @@ useEffect(() => {
 ## ✅ Prompt NL11: 最小テスト & ドキュメント
 
 ### 新規作成ファイル
+
 - **`/app/frontend/src/features/notification/application/notifyApiError.test.ts`** ✨新規
 - **`/app/frontend/docs/notifications.md`** ✨新規（既存は notifications-old.md にバックアップ）
 
 ### テスト内容
+
 - INPUT_INVALID → warning
 - AUTH_REQUIRED → error
 - INTERNAL_ERROR → error
@@ -172,6 +194,7 @@ useEffect(() => {
 - null/undefined
 
 ### ドキュメント内容
+
 - 契約の目的・スキーマ
 - アーキテクチャ図
 - 使い方（フロント/バック）
@@ -182,6 +205,7 @@ useEffect(() => {
 - トラブルシューティング
 
 ### 受け入れ条件
+
 ✅ テストが7ケース通る
 ✅ ドキュメントが生成される
 
@@ -190,6 +214,7 @@ useEffect(() => {
 ## 📊 変更統計（Phase 2: NL6〜NL11）
 
 ### 新規作成ファイル
+
 - フロントエンド: 4ファイル
   - config.ts（既存を大幅更新）
   - jobService.ts
@@ -203,6 +228,7 @@ useEffect(() => {
 **小計: 6ファイル**
 
 ### 更新ファイル
+
 - フロントエンド: 5ファイル
   - httpClient.ts
   - http/index.ts
@@ -215,6 +241,7 @@ useEffect(() => {
 **小計: 6ファイル**
 
 ### Phase 1 + Phase 2 合計
+
 - **新規作成: 16ファイル**
 - **更新: 12ファイル**
 - **削除: 1ファイル**
@@ -330,6 +357,7 @@ curl -X POST http://localhost:8000/ledger_api/api/jobs/test-123/raise-error
 ```
 
 フロントで catch すると自動的に通知表示:
+
 - code="TEST_ERROR" → codeCatalog → error severity
 - title="テストエラー"
 - duration=6000ms
@@ -357,6 +385,7 @@ curl -X POST http://localhost:8000/ledger_api/api/jobs/{job_id}/fail
 ```
 
 フロントでpollJob()を使用すると:
+
 - status='failed' を検知
 - job.error (ProblemDetails) を notifyApiError() に渡す
 - 自動的に通知表示
@@ -371,6 +400,7 @@ curl -N http://localhost:8000/ledger_api/notifications/stream
 ```
 
 フロントで startSSE() を呼ぶと:
+
 - EventSource接続
 - サンプル通知を5秒ごとに受信
 - 自動的に通知表示
@@ -383,6 +413,7 @@ npm test notifyApiError.test.ts
 ```
 
 7つのテストケースが通ります:
+
 - INPUT_INVALID → warning
 - AUTH_REQUIRED → error
 - INTERNAL_ERROR → error
@@ -398,12 +429,14 @@ npm test notifyApiError.test.ts
 ### 1. プロダクション対応
 
 #### バックエンド
+
 - [ ] SSE通知を Redis Pub/Sub / Message Queue に接続
 - [ ] ジョブストアを Redis/DB に永続化
 - [ ] ジョブのクリーンアップ処理
 - [ ] レート制限（DDoS対策）
 
 #### フロントエンド
+
 - [ ] エラー通知に「詳細を表示」ボタン追加
   - traceId をコピー可能に
   - エラーコード・ステータスを表示
@@ -458,20 +491,22 @@ npm test notifyApiError.test.ts
 ✅ SSEリアルタイム通知  
 ✅ ジョブ失敗の自動通知  
 ✅ ユニットテスト  
-✅ 完全ドキュメント  
+✅ 完全ドキュメント
 
 本番環境へのデプロイ準備が整いました！
 
-
 ### 作成ファイル
+
 - **`/contracts/notifications.openapi.yaml`**
 
 ### 内容
+
 - `ProblemDetails` スキーマ（RFC 7807準拠）
 - `NotificationEvent` スキーマ
 - severity enum: `success` | `info` | `warning` | `error`
 
 ### 受け入れ条件
+
 ✅ 契約ファイルが作成され、OpenAPI 3.0.3準拠
 
 ---
@@ -479,14 +514,17 @@ npm test notifyApiError.test.ts
 ## ✅ Prompt NL2: フロント契約型の追加（TypeScript）
 
 ### 作成ファイル
+
 - **`/app/frontend/src/features/notification/model/contract.ts`**
 
 ### 内容
+
 - `Severity` 型
 - `ProblemDetails` インターフェース
 - `NotificationEvent` インターフェース
 
 ### 受け入れ条件
+
 ✅ TypeScript型定義が作成され、OpenAPI契約と一致
 ✅ 型エラーなし
 
@@ -495,16 +533,19 @@ npm test notifyApiError.test.ts
 ## ✅ Prompt NL3: バックエンド契約モデル（Pydantic）
 
 ### 作成/更新ファイル
+
 - **`/app/backend/backend_shared/src/domain/contract.py`** ✨新規
 - **`/app/backend/backend_shared/src/domain/__init__.py`** 📝更新
 
 ### 内容
+
 - `Severity` Literal型
 - `ProblemDetails` Pydanticモデル
 - `NotificationEvent` Pydanticモデル
 - camelCase/snake_case両対応（`populate_by_name=True`）
 
 ### 受け入れ条件
+
 ✅ Pydanticモデルが作成され、OpenAPI契約と一致
 ✅ backend_shared に統合（ledger_api の重複削除）
 ✅ アプリが起動する
@@ -516,43 +557,52 @@ npm test notifyApiError.test.ts
 ### 作成/更新ファイル
 
 #### 1. **ミドルウェア**
+
 - **`/app/backend/backend_shared/src/middleware/request_id.py`** ✨新規
 - **`/app/backend/backend_shared/src/middleware/__init__.py`** 📝更新
 
 **機能:**
+
 - `X-Request-ID` ヘッダーから読み取り、または自動生成
 - `request.state.trace_id` に保存
 - レスポンスヘッダーに `X-Request-ID` を追加
 
 #### 2. **エラーハンドラ**
+
 - **`/app/backend/backend_shared/src/api/error_handlers.py`** ✨新規
 - **`/app/backend/backend_shared/src/api/__init__.py`** 📝更新
 
 **機能:**
+
 - `DomainError` クラス（ビジネスロジック層のエラー）
 - `handle_domain_error()`: ProblemDetails 形式で返す
 - `handle_unexpected()`: 予期しないエラーを500として返す
 - `register_error_handlers()`: アプリに登録
 
 #### 3. **API統合**
+
 - **`/app/backend/ledger_api/app/main.py`** 📝更新
 
 **変更点:**
+
 - `RequestIdMiddleware` を追加
 - `register_error_handlers(app)` を呼び出し
 - CORS の `expose_headers` に `X-Request-ID` を追加
 
 #### 4. **API Response更新**
+
 - **`/app/backend/backend_shared/src/api_response/response_base.py`** 📝更新
 - **`/app/backend/backend_shared/src/api_response/__init__.py`** 📝更新
 
 **変更点:**
+
 - `ProblemDetails` クラスを追加
 - `ApiResponse` に `traceId` フィールドを追加
 - `to_problem_details()` メソッドを追加
 - すべてのレスポンスクラスに `traceId` 対応
 
 ### 受け入れ条件
+
 ✅ 任意のエラーで JSON が ProblemDetails 形式に統一
 ✅ レスポンスヘッダに `X-Request-ID` が出る
 ✅ 既存コードとの後方互換性を維持
@@ -564,31 +614,37 @@ npm test notifyApiError.test.ts
 ### 作成/更新ファイル
 
 #### 1. **ジョブドメインモデル**
+
 - **`/app/backend/backend_shared/src/domain/job.py`** ✨新規
 - **`/app/backend/backend_shared/src/domain/__init__.py`** 📝更新
 
 **内容:**
+
 - `JobStatusType`: `pending` | `running` | `completed` | `failed` | `cancelled`
 - `JobStatus`: ジョブステータスDTO（`error: ProblemDetails | None` を含む）
 - `JobCreate`: ジョブ作成リクエスト
 - `JobUpdate`: ジョブ更新リクエスト
 
 #### 2. **ジョブAPI**
+
 - **`/app/backend/ledger_api/app/api/endpoints/jobs.py`** ✨新規
 - **`/app/backend/ledger_api/app/main.py`** 📝更新
 
 **エンドポイント:**
+
 - `POST /api/jobs` - ジョブを作成
 - `GET /api/jobs/{job_id}` - ジョブの状態を取得
 - `POST /api/jobs/{job_id}/fail` - 【テスト用】ジョブを失敗させる
 - `POST /api/jobs/{job_id}/raise-error` - 【テスト用】DomainError を発生させる
 
 **機能:**
+
 - 非同期処理のジョブ状態を管理
 - 失敗時に `JobStatus.error` に ProblemDetails を保存
 - traceId の自動付与
 
 ### 受け入れ条件
+
 ✅ ジョブ型APIが動作する
 ✅ 失敗時に `JobStatus.error` が ProblemDetails 形で返る
 ✅ テストエンドポイントで動作確認可能
@@ -600,6 +656,7 @@ npm test notifyApiError.test.ts
 ### 作成したドキュメント
 
 1. **`/app/backend/backend_shared/src/domain/README.md`**
+
    - Domain契約モジュールの使い方
    - ProblemDetails / NotificationEvent のサンプルコード
    - フロントエンドとの連携方法
@@ -616,6 +673,7 @@ npm test notifyApiError.test.ts
 ## 🎯 アーキテクチャ改善
 
 ### 1. **契約の一元管理**
+
 ```
 contracts/notifications.openapi.yaml (契約定義)
     ↓
@@ -624,6 +682,7 @@ contracts/notifications.openapi.yaml (契約定義)
 ```
 
 ### 2. **エラーハンドリングの統一**
+
 ```
 すべてのエラー → ProblemDetails (RFC 7807準拠)
     ↓
@@ -634,6 +693,7 @@ JSONResponse (status, code, userMessage, traceId)
 ```
 
 ### 3. **トレーシング**
+
 ```
 RequestIdMiddleware
     ↓
@@ -643,6 +703,7 @@ X-Request-ID ヘッダー → request.state.trace_id
 ```
 
 ### 4. **ジョブ管理**
+
 ```
 JobStatus (ドメインモデル)
     ↓
@@ -657,6 +718,7 @@ GET /api/jobs/{id} で状態を取得
 ## 📊 変更統計
 
 ### 新規作成ファイル
+
 - OpenAPI契約: 1ファイル
 - TypeScript型定義: 1ファイル
 - Pydanticモデル: 2ファイル
@@ -668,6 +730,7 @@ GET /api/jobs/{id} で状態を取得
 **合計: 10ファイル**
 
 ### 更新ファイル
+
 - `__init__.py`: 4ファイル
 - `response_base.py`: 1ファイル
 - `main.py`: 1ファイル
@@ -675,6 +738,7 @@ GET /api/jobs/{id} で状態を取得
 **合計: 6ファイル**
 
 ### 削除ファイル
+
 - 重複した `ledger_api/app/domain/contract.py`: 1ファイル
 
 ---
@@ -729,19 +793,23 @@ curl -X POST http://localhost:8000/ledger_api/api/jobs/{job_id}/fail
 ## 🚀 次のステップ（推奨）
 
 ### 1. WebSocket/SSE 統合
+
 - NotificationEvent をリアルタイム配信
 - `/ws/notifications` エンドポイントの実装
 
 ### 2. ジョブストアの永続化
+
 - インメモリ → Redis/DB への移行
 - ジョブのクリーンアップ処理
 
 ### 3. フロントエンド統合
+
 - エラー通知コンポーネントの実装
 - traceId のロギング
 - ジョブ状態のポーリング/WebSocket購読
 
 ### 4. 監視・ロギング
+
 - traceId を使った分散トレーシング
 - エラーメトリクスの収集
 - Sentry/DataDog等の統合

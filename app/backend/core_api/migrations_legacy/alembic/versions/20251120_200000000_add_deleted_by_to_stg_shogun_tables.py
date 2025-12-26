@@ -23,9 +23,9 @@ Revision ID: 20251120_200000000
 Revises: 20251120_190000000
 Create Date: 2025-11-20 20:00:00.000000
 """
-from alembic import op
-import sqlalchemy as sa
 
+import sqlalchemy as sa
+from alembic import op
 
 revision = "20251120_200000000"
 down_revision = "20251120_190000000"
@@ -48,24 +48,29 @@ def upgrade() -> None:
     """
     stg.shogun_*_* テーブルに deleted_by カラムを追加
     """
-    
+
     print("[stg.shogun_*] Adding deleted_by column to 6 tables...")
-    
+
     for table_name in STG_SHOGUN_TABLES:
         # deleted_by カラムが既に存在するかチェック
         conn = op.get_bind()
-        result = conn.execute(sa.text("""
+        result = conn.execute(
+            sa.text(
+                """
             SELECT EXISTS (
-                SELECT 1 
-                FROM information_schema.columns 
-                WHERE table_schema = 'stg' 
-                  AND table_name = :table_name 
+                SELECT 1
+                FROM information_schema.columns
+                WHERE table_schema = 'stg'
+                  AND table_name = :table_name
                   AND column_name = 'deleted_by'
             )
-        """), {"table_name": table_name})
-        
+        """
+            ),
+            {"table_name": table_name},
+        )
+
         exists = result.scalar()
-        
+
         if not exists:
             print(f"  ✓ Adding deleted_by to stg.{table_name}")
             op.add_column(
@@ -74,13 +79,13 @@ def upgrade() -> None:
                     "deleted_by",
                     sa.Text(),
                     nullable=True,
-                    comment="削除実行者 (ユーザー名またはシステム識別子)"
+                    comment="削除実行者 (ユーザー名またはシステム識別子)",
                 ),
-                schema="stg"
+                schema="stg",
             )
         else:
             print(f"  ⊘ stg.{table_name} already has deleted_by, skipping")
-    
+
     print("[stg.shogun_*] deleted_by column addition completed")
 
 
@@ -88,27 +93,32 @@ def downgrade() -> None:
     """
     deleted_by カラムを削除（ロールバック用）
     """
-    
+
     print("[stg.shogun_*] Removing deleted_by column from 6 tables...")
-    
+
     for table_name in STG_SHOGUN_TABLES:
         conn = op.get_bind()
-        result = conn.execute(sa.text("""
+        result = conn.execute(
+            sa.text(
+                """
             SELECT EXISTS (
-                SELECT 1 
-                FROM information_schema.columns 
-                WHERE table_schema = 'stg' 
-                  AND table_name = :table_name 
+                SELECT 1
+                FROM information_schema.columns
+                WHERE table_schema = 'stg'
+                  AND table_name = :table_name
                   AND column_name = 'deleted_by'
             )
-        """), {"table_name": table_name})
-        
+        """
+            ),
+            {"table_name": table_name},
+        )
+
         exists = result.scalar()
-        
+
         if exists:
             print(f"  ✓ Dropping deleted_by from stg.{table_name}")
             op.drop_column(table_name, "deleted_by", schema="stg")
         else:
             print(f"  ⊘ stg.{table_name} has no deleted_by, skipping")
-    
+
     print("[stg.shogun_*] deleted_by column removal completed")

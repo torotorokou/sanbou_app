@@ -21,7 +21,7 @@ IAP_ENABLED=false
 # 【DB ユーザー分離対応】
 # POSTGRES_USER / POSTGRES_PASSWORD / DATABASE_URL は secrets/.env.local_dev.secrets に記載してください
 # 推奨: sanbou_app_dev ユーザーを使用（scripts/sql/20251204_create_app_db_users.sql 参照）
-# 
+#
 # 注意: DATABASE_URL はパスワードを含むため、必ず secrets/ ファイルで設定してください
 #       ここで設定すると Git にパスワードが記録されます
 POSTGRES_DB=sanbou_dev

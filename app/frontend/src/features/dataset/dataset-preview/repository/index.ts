@@ -2,5 +2,5 @@
  * repository barrel
  */
 
-export * from './DatasetPreviewRepository';
-export * from './DatasetPreviewRepositoryImpl';
+export * from "./DatasetPreviewRepository";
+export * from "./DatasetPreviewRepositoryImpl";

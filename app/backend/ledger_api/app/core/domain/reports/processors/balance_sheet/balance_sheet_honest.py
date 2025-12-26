@@ -1,4 +1,5 @@
 import pandas as pd
+
 from app.infra.report_utils import get_template_config, load_master_and_template
 from app.infra.report_utils.formatters import summary_apply
 
@@ -27,14 +28,10 @@ def calculate_honest_sales_by_unit(df_receive: pd.DataFrame) -> tuple[int, int]:
     )
 
     honest_row_m3 = summary_m3[summary_m3["項目"] == "オネストm3"]
-    honest_m3_value = (
-        honest_row_m3["金額"].fillna(0).values[0] if not honest_row_m3.empty else 0
-    )
+    honest_m3_value = honest_row_m3["金額"].fillna(0).values[0] if not honest_row_m3.empty else 0
 
     honest_row_kg = summary_kg[summary_kg["項目"] == "オネストkg"]
-    honest_kg_value = (
-        honest_row_kg["金額"].fillna(0).values[0] if not honest_row_kg.empty else 0
-    )
+    honest_kg_value = honest_row_kg["金額"].fillna(0).values[0] if not honest_row_kg.empty else 0
 
     honest_kg_total = honest_kg_value - honest_m3_value
 

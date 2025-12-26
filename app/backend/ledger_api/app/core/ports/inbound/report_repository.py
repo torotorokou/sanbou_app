@@ -11,7 +11,6 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import date
 from io import BytesIO
-from typing import Dict, Optional
 
 
 @dataclass(frozen=True)
@@ -20,9 +19,9 @@ class ArtifactUrls:
 
     excel_url: str
     pdf_url: str
-    zip_url: Optional[str] = None
+    zip_url: str | None = None
 
-    def to_dict(self) -> Dict[str, str]:
+    def to_dict(self) -> dict[str, str]:
         """辞書形式に変換（JSON レスポンス用）."""
         result = {
             "excel_url": self.excel_url,
@@ -68,7 +67,7 @@ class ReportRepository(ABC):
         report_key: str,
         report_date: date,
         timestamp_token: str,
-    ) -> Optional[ArtifactUrls]:
+    ) -> ArtifactUrls | None:
         """
         既存のアーティファクトの URL を取得.
 

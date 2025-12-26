@@ -6,7 +6,7 @@ PDFステータス確認API
 PDF生成が非同期で行われる場合に、生成完了をポーリングで確認するためのエンドポイント。
 """
 
-from typing import Literal, Optional
+from typing import Literal
 
 from fastapi import APIRouter, Query
 from fastapi.responses import JSONResponse
@@ -15,6 +15,7 @@ from pydantic import BaseModel
 from app.infra.adapters.artifact_storage.artifact_builder import get_pdf_status
 from backend_shared.application.logging import get_module_logger
 
+
 logger = get_module_logger(__name__)
 
 router = APIRouter()
@@ -22,11 +23,12 @@ router = APIRouter()
 
 class PdfStatusResponse(BaseModel):
     """PDFステータスレスポンス"""
+
     report_key: str
     report_token: str
     status: Literal["pending", "ready", "error"]
-    pdf_url: Optional[str] = None
-    message: Optional[str] = None
+    pdf_url: str | None = None
+    message: str | None = None
 
 
 @router.get("/pdf-status")
@@ -37,15 +39,15 @@ async def check_pdf_status(
 ) -> JSONResponse:
     """
     PDFの生成ステータスを確認する。
-    
+
     フロントエンドからポーリングで呼び出され、
     PDFが生成完了したら `status: "ready"` と `pdf_url` を返す。
-    
+
     Args:
         report_key: レポートキー
         report_date: レポート日付
         report_token: レポートトークン
-        
+
     Returns:
         JSONResponse: PDFステータス情報
     """
@@ -57,19 +59,19 @@ async def check_pdf_status(
             "report_token": report_token,
         },
     )
-    
+
     result = get_pdf_status(report_key, report_date, report_token)
-    
+
     response_data = {
         "report_key": report_key,
         "report_token": report_token,
         "status": result.get("status", "error"),
     }
-    
+
     if result.get("pdf_url"):
         response_data["pdf_url"] = result["pdf_url"]
-    
+
     if result.get("message"):
         response_data["message"] = result["message"]
-    
+
     return JSONResponse(status_code=200, content=response_data)

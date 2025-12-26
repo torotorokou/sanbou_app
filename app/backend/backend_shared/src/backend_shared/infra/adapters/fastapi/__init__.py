@@ -9,6 +9,7 @@ from .error_handlers import (
     register_error_handlers,
 )
 
+
 __all__ = [
     "DomainError",
     "handle_domain_error",

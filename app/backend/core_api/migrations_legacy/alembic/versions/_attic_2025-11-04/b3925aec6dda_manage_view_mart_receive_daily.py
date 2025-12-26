@@ -4,9 +4,11 @@ Revision ID: b3925aec6dda
 Revises: eb4da327ec9b
 Create Date: 2025-11-04 05:59:53.726364
 """
-from alembic import op
+
 from textwrap import dedent
+
 import sqlalchemy as sa  # noqa: F401  (kept for consistency with other revisions)
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = "b3925aec6dda"

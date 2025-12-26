@@ -15,20 +15,20 @@
 
 ### 主要な成果物
 
-| ドキュメント | 内容 | ページ数 |
-|------------|------|---------|
-| [ENV_HARDCODE_AUDIT.md](./20251204_ENV_HARDCODE_AUDIT.md) | ハードコード値の監査と環境変数化計画 | 15+ |
-| [BACKEND_SHARED_CONSOLIDATION_PLAN.md](./20251204_BACKEND_SHARED_CONSOLIDATION_PLAN.md) | 共通処理集約の詳細計画 | 20+ |
-| [RAG_API_DATETIME_REFACTORING.md](./refactoring/20251204_RAG_API_DATETIME_REFACTORING.md) | リファクタリング実例 | 10+ |
+| ドキュメント                                                                              | 内容                                 | ページ数 |
+| ----------------------------------------------------------------------------------------- | ------------------------------------ | -------- |
+| [ENV_HARDCODE_AUDIT.md](./20251204_ENV_HARDCODE_AUDIT.md)                                 | ハードコード値の監査と環境変数化計画 | 15+      |
+| [BACKEND_SHARED_CONSOLIDATION_PLAN.md](./20251204_BACKEND_SHARED_CONSOLIDATION_PLAN.md)   | 共通処理集約の詳細計画               | 20+      |
+| [RAG_API_DATETIME_REFACTORING.md](./refactoring/20251204_RAG_API_DATETIME_REFACTORING.md) | リファクタリング実例                 | 10+      |
 
 ### 新規実装コード
 
-| モジュール | ファイル | 行数 |
-|----------|---------|------|
-| datetime_utils | `backend_shared/utils/datetime_utils.py` | 225行 |
-| cors_config | `backend_shared/infra/frameworks/cors_config.py` | 145行 |
-| base_settings | `backend_shared/config/base_settings.py` | 180行 |
-| **合計** | | **550行** |
+| モジュール     | ファイル                                         | 行数      |
+| -------------- | ------------------------------------------------ | --------- |
+| datetime_utils | `backend_shared/utils/datetime_utils.py`         | 225行     |
+| cors_config    | `backend_shared/infra/frameworks/cors_config.py` | 145行     |
+| base_settings  | `backend_shared/config/base_settings.py`         | 180行     |
+| **合計**       |                                                  | **550行** |
 
 ### 期待される効果
 
@@ -85,19 +85,19 @@
 
 #### 🔴 高優先度（セキュリティ/必須）
 
-| 項目 | 現在の値 | 推奨環境変数名 | 影響範囲 |
-|-----|---------|--------------|---------|
-| 許可ドメイン | `"honest-recycle.co.jp"` | `ALLOWED_EMAIL_DOMAIN` | core_api |
-| IAP公開鍵URL | `"https://www.gstatic.com/iap/verify/public_key"` | `IAP_PUBLIC_KEY_URL` | core_api |
-| レポートシークレット | `"change-me-in-production"` | `REPORT_ARTIFACT_SECRET` | ledger_api |
+| 項目                 | 現在の値                                          | 推奨環境変数名           | 影響範囲   |
+| -------------------- | ------------------------------------------------- | ------------------------ | ---------- |
+| 許可ドメイン         | `"honest-recycle.co.jp"`                          | `ALLOWED_EMAIL_DOMAIN`   | core_api   |
+| IAP公開鍵URL         | `"https://www.gstatic.com/iap/verify/public_key"` | `IAP_PUBLIC_KEY_URL`     | core_api   |
+| レポートシークレット | `"change-me-in-production"`                       | `REPORT_ARTIFACT_SECRET` | ledger_api |
 
 #### 🟡 中優先度（デプロイ柔軟性）
 
-| 項目 | 現在の値 | 推奨環境変数名 | 影響範囲 |
-|-----|---------|--------------|---------|
-| Gemini API URL | `"https://generativelanguage.googleapis.com/..."` | `GEMINI_API_URL` | ai_api |
-| CORS Origins | `"http://localhost:5173,..."` | `CORS_ORIGINS` | 全サービス |
-| タイムゾーン | `"Asia/Tokyo"` | `APP_TIMEZONE` | rag_api, ledger_api |
+| 項目           | 現在の値                                          | 推奨環境変数名   | 影響範囲            |
+| -------------- | ------------------------------------------------- | ---------------- | ------------------- |
+| Gemini API URL | `"https://generativelanguage.googleapis.com/..."` | `GEMINI_API_URL` | ai_api              |
+| CORS Origins   | `"http://localhost:5173,..."`                     | `CORS_ORIGINS`   | 全サービス          |
+| タイムゾーン   | `"Asia/Tokyo"`                                    | `APP_TIMEZONE`   | rag_api, ledger_api |
 
 ### 共通処理の重複状況
 
@@ -107,17 +107,17 @@
 
 #### ⚠️ 部分的に重複
 
-| 項目 | 重複サービス | 削減可能コード量 | 優先度 |
-|-----|------------|----------------|-------|
-| エラーハンドリング | core_api, manual_api, ai_api, rag_api | ~500行 | 🔥 高 |
-| 環境変数読み込み | 全サービス | ~200行 | 🟡 中 |
-| CORS設定 | 全サービス | ~100行 | 🟡 中 |
+| 項目               | 重複サービス                          | 削減可能コード量 | 優先度 |
+| ------------------ | ------------------------------------- | ---------------- | ------ |
+| エラーハンドリング | core_api, manual_api, ai_api, rag_api | ~500行           | 🔥 高  |
+| 環境変数読み込み   | 全サービス                            | ~200行           | 🟡 中  |
+| CORS設定           | 全サービス                            | ~100行           | 🟡 中  |
 
 #### 🔴 完全に重複
 
-| 項目 | 重複サービス | 削減可能コード量 | 優先度 |
-|-----|------------|----------------|-------|
-| 日付/時刻変換 | rag_api, ledger_api | ~50行 | 🔥 高 |
+| 項目          | 重複サービス        | 削減可能コード量 | 優先度 |
+| ------------- | ------------------- | ---------------- | ------ |
+| 日付/時刻変換 | rag_api, ledger_api | ~50行            | 🔥 高  |
 
 #### 🟡 特殊ケース
 
@@ -133,6 +133,7 @@
 **目的**: タイムゾーン処理の統一とパフォーマンス最適化
 
 **主な機能**:
+
 - `get_app_timezone()`: アプリケーションタイムゾーンの取得（キャッシュ済み）
 - `now_in_app_timezone()`: 現在時刻の取得
 - `to_app_timezone()`: タイムゾーン変換
@@ -140,6 +141,7 @@
 - `format_date_jp()`: 日付フォーマット
 
 **使用例**:
+
 ```python
 from backend_shared.utils.datetime_utils import now_in_app_timezone, format_datetime_jp
 
@@ -152,10 +154,12 @@ timestamp = format_datetime_jp(now_in_app_timezone())
 **目的**: CORS設定の統一とセキュリティ強化
 
 **主な機能**:
+
 - `get_cors_origins()`: 環境変数からオリジンリスト取得
 - `setup_cors()`: FastAPIへのCORSミドルウェア設定
 
 **使用例**:
+
 ```python
 from backend_shared.infra.frameworks.cors_config import setup_cors
 
@@ -168,10 +172,12 @@ setup_cors(app)  # 環境変数から自動取得
 **目的**: 設定クラスの共通化と型安全性の確保
 
 **主な機能**:
+
 - `BaseAppSettings`: 全サービス共通の基底設定クラス
 - ステージ設定、デバッグモード、API基本情報、CORS設定
 
 **使用例**:
+
 ```python
 from backend_shared.config.base_settings import BaseAppSettings
 
@@ -194,6 +200,7 @@ class AiApiSettings(BaseAppSettings):
 ### Phase 2: 環境変数の追加（次のステップ）
 
 `.env.common` に追加:
+
 ```bash
 # === Security / Authentication ===
 ALLOWED_EMAIL_DOMAIN=honest-recycle.co.jp
@@ -207,6 +214,7 @@ GEMINI_API_URL=https://generativelanguage.googleapis.com/v1beta/models/gemini-1.
 ```
 
 `secrets/.env.*.secrets` に追加:
+
 ```bash
 # === ledger_api Report Artifact Secret ===
 REPORT_ARTIFACT_SECRET=<strong-random-secret>
@@ -237,10 +245,10 @@ REPORT_ARTIFACT_SECRET=<strong-random-secret>
 
 ### コスト削減
 
-| 項目 | Before | After | 削減量 |
-|-----|--------|-------|--------|
-| コード量 | ~850行の重複 | 統一実装 | 約850行 |
-| 保守コスト | 6サービス個別管理 | 1箇所で統一管理 | 約80% |
+| 項目       | Before            | After           | 削減量  |
+| ---------- | ----------------- | --------------- | ------- |
+| コード量   | ~850行の重複      | 統一実装        | 約850行 |
+| 保守コスト | 6サービス個別管理 | 1箇所で統一管理 | 約80%   |
 
 ### 品質向上
 
@@ -301,11 +309,13 @@ REPORT_ARTIFACT_SECRET=<strong-random-secret>
 ### 新規作成ドキュメント
 
 1. [ENV_HARDCODE_AUDIT.md](./20251204_ENV_HARDCODE_AUDIT.md)
+
    - ハードコード値の詳細な監査レポート
    - 環境変数化の推奨リスト
    - BaseSettings 設計案
 
 2. [BACKEND_SHARED_CONSOLIDATION_PLAN.md](./20251204_BACKEND_SHARED_CONSOLIDATION_PLAN.md)
+
    - 共通処理の重複分析
    - backend_shared への集約計画
    - 4フェーズの実装手順

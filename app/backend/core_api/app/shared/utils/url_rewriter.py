@@ -9,7 +9,8 @@ BFFの責務として、内部マイクロサービス(ledger_api等)の論理�
     rewritten = rewrite_artifact_urls_to_bff(response_data)
     # => {"artifact": {"excel_download_url": "/core_api/reports/artifacts/..."}}
 """
-from typing import Any, Dict
+
+from typing import Any
 
 from backend_shared.application.logging import create_log_context, get_module_logger
 
@@ -17,24 +18,23 @@ logger = get_module_logger(__name__)
 
 
 def rewrite_artifact_urls_to_bff(
-    response_data: Dict[str, Any],
-    base_prefix: str = "/core_api"
-) -> Dict[str, Any]:
+    response_data: dict[str, Any], base_prefix: str = "/core_api"
+) -> dict[str, Any]:
     """
     BFFの責務: ledger_apiの内部論理パス(/reports/artifacts)を
     外向きパス(/core_api/reports/artifacts)に変換
-    
+
     この関数は以下のルーターで共通使用される:
     - app/presentation/routers/reports/router.py
     - app/presentation/routers/block_unit_price/router.py
-    
+
     Args:
         response_data: ledger_apiからのレスポンスJSON
         base_prefix: BFFのベースプレフィックス（デフォルト: "/core_api"）
-        
+
     Returns:
         URLが書き換えられたレスポンスJSON
-        
+
     Note:
         response_dataを直接変更します（参照渡し）
     """
@@ -47,15 +47,15 @@ def rewrite_artifact_urls_to_bff(
             artifact["pdf_preview_url"] = f"{base_prefix}{artifact['pdf_preview_url']}"
         logger.debug(
             "[BFF] Rewritten artifact URLs with prefix",
-            extra=create_log_context(operation="rewrite_artifact_urls", base_prefix=base_prefix)
+            extra=create_log_context(operation="rewrite_artifact_urls", base_prefix=base_prefix),
         )
-    
+
     # PDFステータスレスポンスの pdf_url フィールドも変換
     if "pdf_url" in response_data and response_data["pdf_url"]:
         response_data["pdf_url"] = f"{base_prefix}{response_data['pdf_url']}"
         logger.debug(
             "[BFF] Rewritten pdf_url with prefix",
-            extra=create_log_context(operation="rewrite_pdf_url", base_prefix=base_prefix)
+            extra=create_log_context(operation="rewrite_pdf_url", base_prefix=base_prefix),
         )
-    
+
     return response_data

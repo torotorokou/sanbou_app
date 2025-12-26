@@ -12,12 +12,12 @@
 
 ## アーカイブファイル
 
-| ファイル | 説明 |
-|---------|------|
-| `001_initial_schema.py` | 初期スキーマ定義（jobs, forecast, core） |
-| `002_add_raw_shogun_tables.py` | raw スキーマ（YAML から生成） |
-| `4befa8148602_msg.py` | テストリビジョン |
-| `f59be045f166_baseline_no_op.py` | 旧ベースライン（重複） |
+| ファイル                         | 説明                                     |
+| -------------------------------- | ---------------------------------------- |
+| `001_initial_schema.py`          | 初期スキーマ定義（jobs, forecast, core） |
+| `002_add_raw_shogun_tables.py`   | raw スキーマ（YAML から生成）            |
+| `4befa8148602_msg.py`            | テストリビジョン                         |
+| `f59be045f166_baseline_no_op.py` | 旧ベースライン（重複）                   |
 
 ## 今後の扱い
 

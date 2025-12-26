@@ -17,6 +17,7 @@
 
 **対象ファイル**: 194件  
 **検索パターン**:
+
 - `password|passwd|pwd`
 - `secret|token|api_key`
 - `DATABASE_URL`
@@ -35,6 +36,7 @@
 **ファイル**: `docs/shared/20251030_docker-compose.pg17.yml`
 
 **修正内容**:
+
 ```diff
 - POSTGRES_PASSWORD: mypassword
 + POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -47,19 +49,24 @@
 ### 2. 🟡 Warning: ドキュメント内のパスワード例
 
 **修正ファイル** (合計15+ 箇所):
+
 1. `docs/bugs/20251204_db_connection_failure_diagnosis.md`
+
    - 10+ 箇所のパスワード例を `<OLD_PASSWORD>`, `<NEW_PASSWORD>`, `<WEAK_PASSWORD>` に置換
    - 実際のパスワード `fOb1TYnB9...` を `fOb1***[マスク済み]` に変更
 
 2. `docs/archive/ENVIRONMENT_VARIABLES.md`
+
    - `POSTGRES_PASSWORD (実際の値)` → `__SET_IN_SECRETS__`
    - `DATABASE_URL` 例を `postgresql://<USER>:<PASSWORD>@...` に置換
 
 3. `docs/db/20251204_db_user_design.md`
+
    - 弱いパスワード例 `mypassword` を `<WEAK_PASSWORD>` に変更
    - 注釈追加: 「実際にはこのような弱いパスワードが使われていた」
 
 4. `docs/refactoring/20251204_db_env_hardcode_removal.md`
+
    - コード例のパスワードをすべてプレースホルダーに変更
 
 5. `docs/shared/20251127_LOCAL_DEMO_ENVIRONMENT_SETUP.md`
@@ -74,11 +81,13 @@
 **ファイル**: `.pre-commit-config.yaml`
 
 **機能**:
+
 - `detect-secrets`: AWS/Azure/GitHub/JWT など 21 種類のシークレット検出
 - カスタム正規表現: `docs/` 内でのパスワードハードコードを検出
 - Python/TypeScript のコードフォーマット (black, isort, prettier)
 
 **セットアップ**:
+
 ```bash
 pip install pre-commit
 pre-commit install
@@ -89,11 +98,13 @@ pre-commit install
 **ファイル**: `.secrets.baseline`
 
 **機能**:
+
 - 既知の安全なパターンをホワイトリスト化
 - 新しいコミットで追加されるシークレットを検出
 - 誤検出を減らすための基準ファイル
 
 **更新方法**:
+
 ```bash
 detect-secrets scan --baseline .secrets.baseline
 ```
@@ -103,6 +114,7 @@ detect-secrets scan --baseline .secrets.baseline
 **ファイル**: `docs/conventions/DOCUMENTATION_SECURITY_GUIDELINES.md`
 
 **内容**:
+
 - 禁止事項（パスワード・APIキーの記載禁止）
 - 推奨パターン（プレースホルダ、マスク表示）
 - チェックリスト（作成時・レビュー時）
@@ -115,22 +127,22 @@ detect-secrets scan --baseline .secrets.baseline
 
 ### Git 管理ファイル
 
-| ファイル | 変更箇所 | 修正内容 |
-|---------|---------|---------|
-| `docs/shared/20251030_docker-compose.pg17.yml` | 3行 | 環境変数に置換 |
+| ファイル                                                | 変更箇所 | 修正内容                              |
+| ------------------------------------------------------- | -------- | ------------------------------------- |
+| `docs/shared/20251030_docker-compose.pg17.yml`          | 3行      | 環境変数に置換                        |
 | `docs/bugs/20251204_db_connection_failure_diagnosis.md` | 10+ 箇所 | パスワードをマスク/プレースホルダー化 |
-| `docs/archive/ENVIRONMENT_VARIABLES.md` | 5箇所 | プレースホルダーに置換 |
-| `docs/db/20251204_db_user_design.md` | 3箇所 | 弱いパスワード例を明示 |
-| `docs/refactoring/20251204_db_env_hardcode_removal.md` | 5箇所 | コード例をプレースホルダー化 |
-| `docs/shared/20251127_LOCAL_DEMO_ENVIRONMENT_SETUP.md` | 1箇所 | DATABASE_URL 例を修正 |
+| `docs/archive/ENVIRONMENT_VARIABLES.md`                 | 5箇所    | プレースホルダーに置換                |
+| `docs/db/20251204_db_user_design.md`                    | 3箇所    | 弱いパスワード例を明示                |
+| `docs/refactoring/20251204_db_env_hardcode_removal.md`  | 5箇所    | コード例をプレースホルダー化          |
+| `docs/shared/20251127_LOCAL_DEMO_ENVIRONMENT_SETUP.md`  | 1箇所    | DATABASE_URL 例を修正                 |
 
 ### 新規追加ファイル
 
-| ファイル | 目的 |
-|---------|------|
-| `.pre-commit-config.yaml` | 自動セキュリティチェック |
-| `.secrets.baseline` | シークレット検出のベースライン |
-| `docs/conventions/DOCUMENTATION_SECURITY_GUIDELINES.md` | セキュリティガイドライン |
+| ファイル                                                | 目的                           |
+| ------------------------------------------------------- | ------------------------------ |
+| `.pre-commit-config.yaml`                               | 自動セキュリティチェック       |
+| `.secrets.baseline`                                     | シークレット検出のベースライン |
+| `docs/conventions/DOCUMENTATION_SECURITY_GUIDELINES.md` | セキュリティガイドライン       |
 
 ---
 
@@ -139,6 +151,7 @@ detect-secrets scan --baseline .secrets.baseline
 ### 1. 残存リスクの確認
 
 以下のコマンドで再確認:
+
 ```bash
 grep -r -i -E "password.*=.*[^$<{\"']" docs/ --include="*.md" --include="*.yml" \
   --exclude-dir=archive | grep -v "__SET_" | grep -v "<"
@@ -167,6 +180,7 @@ secrets/
 ### 即座に実施 (5分)
 
 1. **Pre-commit フックのインストール**
+
    ```bash
    pip install pre-commit
    pre-commit install
@@ -180,6 +194,7 @@ secrets/
 ### チーム対応 (1-2日)
 
 3. **ガイドラインの周知**
+
    - 全メンバーに `docs/conventions/DOCUMENTATION_SECURITY_GUIDELINES.md` を共有
    - オンボーディング資料に追加
 
@@ -190,6 +205,7 @@ secrets/
 ### 継続的な運用 (月次)
 
 5. **定期的なセキュリティ監査**
+
    ```bash
    # 月1回実行を推奨
    grep -r -i -E "(password|secret|token|api_key)[:=]\s*[\"'][^$<{][^\"']+[\"']" docs/ \

@@ -2,7 +2,7 @@
 
 **実装日**: 2025年12月11日  
 **ブランチ**: feature/db-performance-investigation  
-**コミット**: cffac264  
+**コミット**: cffac264
 
 ---
 
@@ -11,14 +11,17 @@
 ### 1.1. 新規ファイル作成
 
 1. **backend_shared/db/names.py** (240行)
+
    - 全DBオブジェクト名の定数定義（41オブジェクト）
    - ヘルパー関数: `fq()`, `schema_qualified()`
    - オブジェクトコレクション: `AUTO_REFRESH_MVS`, `FIVE_YEAR_AVG_MVS`, etc.
 
-2. **backend_shared/db/__init__.py** (43行)
+2. **backend_shared/db/**init**.py** (43行)
+
    - モジュール初期化とエクスポート
 
 3. **docs/backend/20251211_DB_REALITY_CHECK.md** (480行)
+
    - DB実態調査結果（41オブジェクトの全リスト）
    - テーブル名の誤認識修正（receive_shogun_final → shogun_final_receive）
    - SQL定義ファイルの網羅性分析
@@ -32,6 +35,7 @@
 ### 1.2. 既存ファイル更新
 
 1. **MaterializedViewRefresher** (2箇所)
+
    - `MV_MAPPINGS` を定数使用に変更
    - `"mart.mv_receive_daily"` → `fq(SCHEMA_MART, MV_RECEIVE_DAILY)`
 
@@ -60,19 +64,23 @@ SCHEMA_LOG = "log"
 #### オブジェクト定数（41個）
 
 **ref スキーマ**（11個）:
+
 - テーブル: 6個 (calendar_day, calendar_month, calendar_exception, closure_periods, closure_membership, holiday_jp)
 - VIEW: 5個 (v_calendar_classified, v_closure_days, v_customer, v_item, v_sales_rep)
 
 **stg スキーマ**（13個）:
-- テーブル: 7個 (shogun_final_*, shogun_flash_*, receive_king_final)
-- VIEW: 6個 (v_active_shogun_*, v_king_receive_clean)
+
+- テーブル: 7個 (shogun*final*_, shogun*flash*_, receive_king_final)
+- VIEW: 6個 (v*active_shogun*\*, v_king_receive_clean)
 
 **mart スキーマ**（16個）:
-- MV: 6個 (mv_receive_daily, mv_target_card_per_day, mv_inb5y_*, mv_inb_avg5y_*)
-- VIEW: 7個 (v_receive_daily, v_receive_weekly, v_receive_monthly, v_daily_target_with_calendar, v_customer_sales_daily, v_sales_tree_*)
+
+- MV: 6個 (mv*receive_daily, mv_target_card_per_day, mv_inb5y*_, mv*inb_avg5y*_)
+- VIEW: 7個 (v*receive_daily, v_receive_weekly, v_receive_monthly, v_daily_target_with_calendar, v_customer_sales_daily, v_sales_tree*\*)
 - テーブル: 3個 (daily_target_plan, inb_profile_smooth_test)
 
 **kpi スキーマ**（1個）:
+
 - テーブル: monthly_targets
 
 #### ヘルパー関数（2個）
@@ -103,6 +111,7 @@ SHOGUN_ACTIVE_VIEWS = [...]  # is_deleted=false フィルタVIEW 6個
 #### MaterializedViewRefresher
 
 **変更前**:
+
 ```python
 MV_MAPPINGS = {
     "receive": [
@@ -113,6 +122,7 @@ MV_MAPPINGS = {
 ```
 
 **変更後**:
+
 ```python
 from backend_shared.db.names import SCHEMA_MART, MV_RECEIVE_DAILY, MV_TARGET_CARD_PER_DAY, fq
 
@@ -127,6 +137,7 @@ MV_MAPPINGS = {
 #### InboundRepository
 
 **変更前**:
+
 ```python
 from app.infra.db.sql_names import V_RECEIVE_DAILY, V_CALENDAR
 
@@ -138,6 +149,7 @@ sql_str = template.replace(
 ```
 
 **変更後**:
+
 ```python
 from backend_shared.db.names import SCHEMA_MART, MV_RECEIVE_DAILY, V_CALENDAR_CLASSIFIED, fq
 
@@ -155,16 +167,19 @@ sql_str = template.replace(
 ### 3.1. ✅ テーブル名の修正
 
 **誤認識**:
+
 ```python
 T_RECEIVE_SHOGUN_FINAL = "receive_shogun_final"  # ❌ 存在しない
 ```
 
 **正しい名前**:
+
 ```python
 T_SHOGUN_FINAL_RECEIVE = "shogun_final_receive"  # ✅ DB実態
 ```
 
 この命名はコードベース全体で一貫:
+
 - `CsvKind.SHOGUN_FINAL_RECEIVE = "shogun_final_receive"`
 - DI providers: `"receive": "shogun_final_receive"`
 - Alembic migrations: `stg.shogun_final_receive`
@@ -172,11 +187,13 @@ T_SHOGUN_FINAL_RECEIVE = "shogun_final_receive"  # ✅ DB実態
 ### 3.2. ✅ V_CALENDAR の正しい名前
 
 **誤認識**:
+
 ```python
 V_CALENDAR = "mart.v_calendar"  # ❌ 存在しない
 ```
 
 **正しい名前**:
+
 ```python
 V_CALENDAR_CLASSIFIED = "v_calendar_classified"  # ✅ ref.v_calendar_classified
 ```
@@ -193,6 +210,7 @@ V_CALENDAR_CLASSIFIED = "v_calendar_classified"  # ✅ ref.v_calendar_classified
 ### 3.4. ❌ 重複SQLファイルは存在せず
 
 Subagentの分析で「v_receive_weekly.sql が2つ」と報告されたが、実際には1ファイルのみ。
+
 - DB実態: `mart.v_receive_weekly` (VIEW) → `mv_receive_daily` を参照（正しい）
 - SQL定義: 1ファイル、同じく `mv_receive_daily` を参照（一致）
 
@@ -215,6 +233,7 @@ sql = f"SELECT * FROM {fq(SCHEMA_MART, MV_RECEIVE_DAILY)}"
 ### 4.2. リファクタリング容易性
 
 テーブル名変更時の影響範囲を最小化:
+
 1. `backend_shared/db/names.py` の1箇所を変更
 2. IDEの"Find Usages"で全参照箇所を把握
 3. 型チェックでコンパイルエラー検出
@@ -222,6 +241,7 @@ sql = f"SELECT * FROM {fq(SCHEMA_MART, MV_RECEIVE_DAILY)}"
 ### 4.3. ドキュメントとしての価値
 
 `names.py` を見れば、DBスキーマ構造が一目瞭然:
+
 - スキーマごとのオブジェクト分類
 - MVのサイズ・行数情報
 - 自動更新vs手動更新の区別
@@ -261,7 +281,7 @@ sql = f"SELECT * FROM {fq(SCHEMA_MART, table)}"  # SQL injection!
 
 ### 5.3. 長期（来月以降）
 
-- [ ] **v_active_* VIEWsの作成元調査** - Alembic history確認
+- [ ] **v*active*\* VIEWsの作成元調査** - Alembic history確認
 - [ ] **SQL定義ファイルの完全化** - 31個のオブジェクトにSQL定義追加
 - [ ] **CI/CDでのハードコード検出** - lint rule追加（pytest-flake8 extension）
 - [ ] **ドキュメント自動生成** - DBスキーマ → Markdown
@@ -275,12 +295,14 @@ sql = f"SELECT * FROM {fq(SCHEMA_MART, table)}"  # SQL injection!
 現時点では、SQL定義ファイルに`mart.v_receive_daily`とハードコードされているため、`backend_shared.db.names`の定数を直接使用できない。
 
 **現状**:
+
 ```sql
 -- mart/v_receive_weekly.sql
 SELECT * FROM mart.mv_receive_daily  -- ハードコード
 ```
 
 **理想**:
+
 ```python
 # migration: v_receive_weekly.sql.py (Pythonで生成)
 from backend_shared.db.names import fq, SCHEMA_MART, MV_RECEIVE_DAILY
@@ -292,6 +314,7 @@ SELECT * FROM {fq(SCHEMA_MART, MV_RECEIVE_DAILY)}
 ```
 
 **対応方針**:
+
 - 当面は`.sql`ファイルをそのまま保持
 - Python側で`.replace()`を使用して置換（現行の方式を継続）
 - 将来的に、Alembic migration内でSQLを動的生成する方式に移行
@@ -301,15 +324,17 @@ SELECT * FROM {fq(SCHEMA_MART, MV_RECEIVE_DAILY)}
 stgスキーマの全テーブル（7個）はETL管理のため、SQL定義ファイルが存在しない。
 
 **対応**:
+
 - `backend_shared/db/names.py`にはテーブル名定数のみ定義
 - DDL定義は別途ドキュメント化（ETL仕様書）
 - 将来的に、ETLプロセスのIaC化（Terraform等）で管理
 
-### 6.3. v_active_* VIEWsの謎
+### 6.3. v*active*\* VIEWsの謎
 
 6個の`v_active_*` VIEWがDB上に存在するが、SQL定義ファイルなし。
 
 **要調査**:
+
 - Alembic history で作成元を特定
 - 手動でCREATEされた場合、SQL定義ファイルを追加
 - 今後の運用ルール策定（手動CREATE禁止？）
@@ -392,6 +417,7 @@ curl "http://localhost:8003/dashboard/target?target_date=2024-12-10"
 ```
 
 **結果**: ✅ **PASS**
+
 ```json
 {
   "target": 25000.5,
@@ -408,11 +434,13 @@ curl "http://localhost:8003/inbound/daily?start=2024-12-01&end=2024-12-10&cum_sc
 ```
 
 **結果**: ✅ **PASS**
+
 - 10日分のデータ取得（欠損日0埋め済み）
 - 累積値計算正常（cum_ton フィールド）
 - 前月比・前年比計算正常（prev_month_ton, prev_year_ton フィールド）
 
 サンプル:
+
 ```json
 {
   "ddate": "2024-12-05",
@@ -437,6 +465,7 @@ curl "http://localhost:8003/analytics/sales-tree/summary?start_date=2024-11-01&e
 ```
 
 **結果**: ✅ **PASS**
+
 - 営業担当者別の売上集計取得
 - amount_yen, qty_kg, slip_count フィールド正常
 - TOP-N 制限（ROW_NUMBER）正常動作
@@ -448,19 +477,51 @@ curl "http://localhost:8003/database/upload-calendar?year=2024&month=11"
 ```
 
 **結果**: ✅ **PASS**
+
 - 6種類のCSV（flash/final × receive/yard/shipment）すべて取得
 - uploadFileId, date, csvKind, rowCount フィールド正常
 
 サンプル:
+
 ```json
 {
   "items": [
-    {"uploadFileId": 1, "date": "2024-11-01", "csvKind": "shogun_flash_receive", "rowCount": 182},
-    {"uploadFileId": 11, "date": "2024-11-01", "csvKind": "shogun_flash_shipment", "rowCount": 56},
-    {"uploadFileId": 13, "date": "2024-11-01", "csvKind": "shogun_flash_yard", "rowCount": 11},
-    {"uploadFileId": 8, "date": "2024-11-01", "csvKind": "shogun_final_receive", "rowCount": 182},
-    {"uploadFileId": 14, "date": "2024-11-01", "csvKind": "shogun_final_shipment", "rowCount": 56},
-    {"uploadFileId": 15, "date": "2024-11-01", "csvKind": "shogun_final_yard", "rowCount": 11}
+    {
+      "uploadFileId": 1,
+      "date": "2024-11-01",
+      "csvKind": "shogun_flash_receive",
+      "rowCount": 182
+    },
+    {
+      "uploadFileId": 11,
+      "date": "2024-11-01",
+      "csvKind": "shogun_flash_shipment",
+      "rowCount": 56
+    },
+    {
+      "uploadFileId": 13,
+      "date": "2024-11-01",
+      "csvKind": "shogun_flash_yard",
+      "rowCount": 11
+    },
+    {
+      "uploadFileId": 8,
+      "date": "2024-11-01",
+      "csvKind": "shogun_final_receive",
+      "rowCount": 182
+    },
+    {
+      "uploadFileId": 14,
+      "date": "2024-11-01",
+      "csvKind": "shogun_final_shipment",
+      "rowCount": 56
+    },
+    {
+      "uploadFileId": 15,
+      "date": "2024-11-01",
+      "csvKind": "shogun_final_yard",
+      "rowCount": 11
+    }
   ]
 }
 ```
@@ -472,6 +533,7 @@ curl "http://localhost:8003/database/upload-calendar?year=2024&month=11"
 **InboundRepository の改善**
 
 **変更前**:
+
 ```python
 # __init__
 self._daily_comparisons_sql_template = load_sql("inbound/...")
@@ -486,6 +548,7 @@ sql = text(sql_str)
 ```
 
 **変更後**:
+
 ```python
 # __init__
 template = load_sql("inbound/...")
@@ -501,6 +564,7 @@ result = self.db.execute(self._daily_comparisons_sql, {...})
 ```
 
 **メリット**:
+
 - SQL コンパイルが1回のみ（パフォーマンス向上）
 - fetch_daily() メソッドのコード量削減（5行 → 1行）
 - SQL プレースホルダーが明示的（{v_calendar}, {mv_receive_daily}）
@@ -510,6 +574,7 @@ result = self.db.execute(self._daily_comparisons_sql, {...})
 **DashboardTargetRepository の改善**
 
 **変更前**:
+
 ```python
 def get_by_date(self, target_date: date) -> Optional[DashboardTarget]:
     sql = text(f"""
@@ -521,6 +586,7 @@ def get_by_date(self, target_date: date) -> Optional[DashboardTarget]:
 ```
 
 **変更後**:
+
 ```python
 # __init__
 template = load_sql("dashboard/dashboard_target_repo__get_by_date.sql")
@@ -534,22 +600,23 @@ def get_by_date(self, target_date: date) -> Optional[DashboardTarget]:
 ```
 
 **メリット**:
+
 - Pythonコード可読性向上（40行 → 3行）
 - SQLファイルで構文ハイライト・フォーマット可能
 - SQL単体でのテスト・デバッグ容易
 
 ### 8.4. テスト結果サマリー
 
-| テスト項目 | 結果 | 詳細 |
-|-----------|------|------|
-| Pythonインポート | ✅ PASS | 5リポジトリすべてエラーなし |
-| Dashboard API | ✅ PASS | target_date パラメータ正常動作 |
-| Inbound API | ✅ PASS | 累積値・比較値計算正常 |
-| SalesTree API | ✅ PASS | 軸切り替え・集計正常 |
-| Upload Calendar API | ✅ PASS | 6種CSV全取得 |
-| SQL構文エラー | ✅ なし | すべてのSQLファイル正常実行 |
-| バインドパラメータ | ✅ 正常 | SQLインジェクション対策維持 |
-| パフォーマンス | ✅ 改善 | .format()によるSQL事前コンパイル |
+| テスト項目          | 結果    | 詳細                             |
+| ------------------- | ------- | -------------------------------- |
+| Pythonインポート    | ✅ PASS | 5リポジトリすべてエラーなし      |
+| Dashboard API       | ✅ PASS | target_date パラメータ正常動作   |
+| Inbound API         | ✅ PASS | 累積値・比較値計算正常           |
+| SalesTree API       | ✅ PASS | 軸切り替え・集計正常             |
+| Upload Calendar API | ✅ PASS | 6種CSV全取得                     |
+| SQL構文エラー       | ✅ なし | すべてのSQLファイル正常実行      |
+| バインドパラメータ  | ✅ 正常 | SQLインジェクション対策維持      |
+| パフォーマンス      | ✅ 改善 | .format()によるSQL事前コンパイル |
 
 ### 8.5. 残課題
 
@@ -558,12 +625,14 @@ def get_by_date(self, target_date: date) -> Optional[DashboardTarget]:
 3つのSQLファイルは、今回`.replace()` → `.format()`パターンに変更しましたが、SQLファイル自体に`{v_calendar}`プレースホルダーを追加しました。
 
 **今後の方針**:
+
 - 現状維持（.format()パターンで十分）
 - 他のリポジトリも同様のパターンで統一
 
 #### 8.5.2. 未検証のメソッド
 
 以下のメソッドは今回のテストでカバーされていません:
+
 - `SalesTreeRepository.fetch_detail_lines()` （詳細行取得）
 - `SalesTreeRepository.export_csv()` （CSV出力）
 - `DashboardTargetRepository.get_first_business_in_month()` （月初営業日取得）

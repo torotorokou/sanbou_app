@@ -1,10 +1,10 @@
 /**
  * ジョブポーリングサービス
- * 
+ *
  * 目的:
  * - 非同期ジョブの状態をポーリング
  * - 失敗時に通知機能を利用してエラー通知
- * 
+ *
  * Note: このサービスは notification feature に配置されています。
  * 理由: pollJob は notifyApiError/notifySuccess に依存しており、
  * notification feature の一部として管理することで依存関係が明確になります。
@@ -35,7 +35,7 @@ export interface JobStatus {
 
 /**
  * ジョブをポーリングして完了を待つ
- * 
+ *
  * @param jobId ジョブID
  * @param onProgress 進捗コールバック
  * @param intervalMs ポーリング間隔（ミリ秒）
@@ -71,7 +71,11 @@ export async function pollJob<T = unknown>(
           notifyApiError(job.error, '処理に失敗しました');
         } else {
           notifyApiError(
-            { code: 'JOB_FAILED', status: 500, userMessage: '処理に失敗しました' },
+            {
+              code: 'JOB_FAILED',
+              status: 500,
+              userMessage: '処理に失敗しました',
+            },
             '処理に失敗しました'
           );
         }
@@ -84,7 +88,11 @@ export async function pollJob<T = unknown>(
           notifyApiError(job.error, '処理がキャンセルされました');
         } else {
           notifyApiError(
-            { code: 'JOB_CANCELLED', status: 400, userMessage: '処理がキャンセルされました' },
+            {
+              code: 'JOB_CANCELLED',
+              status: 400,
+              userMessage: '処理がキャンセルされました',
+            },
             '処理がキャンセルされました'
           );
         }
@@ -92,11 +100,14 @@ export async function pollJob<T = unknown>(
       }
 
       // 待機
-      await new Promise(resolve => setTimeout(resolve, intervalMs));
+      await new Promise((resolve) => setTimeout(resolve, intervalMs));
       attempts++;
     } catch (error) {
       // エラーが JOB_FAILED/JOB_CANCELLED の場合はそのまま throw
-      if (error instanceof Error && (error.message === 'JOB_FAILED' || error.message === 'JOB_CANCELLED')) {
+      if (
+        error instanceof Error &&
+        (error.message === 'JOB_FAILED' || error.message === 'JOB_CANCELLED')
+      ) {
         throw error;
       }
       // その他のエラーは notifyApiError で通知
@@ -107,7 +118,11 @@ export async function pollJob<T = unknown>(
 
   // タイムアウト
   notifyApiError(
-    { code: 'TIMEOUT', status: 408, userMessage: 'ジョブの完了待機がタイムアウトしました' },
+    {
+      code: 'TIMEOUT',
+      status: 408,
+      userMessage: 'ジョブの完了待機がタイムアウトしました',
+    },
     'タイムアウトしました'
   );
   throw new Error('POLL_TIMEOUT');
@@ -115,7 +130,7 @@ export async function pollJob<T = unknown>(
 
 /**
  * ジョブを作成してポーリング
- * 
+ *
  * @param endpoint ジョブ作成エンドポイント
  * @param body リクエストボディ
  * @param onProgress 進捗コールバック
@@ -129,7 +144,7 @@ export async function createAndPollJob<T = unknown>(
   try {
     // ジョブを作成
     const job = await apiGet<JobStatus>(`${endpoint}`, { params: body });
-    
+
     // ポーリング開始
     return await pollJob<T>(job.id, onProgress);
   } catch (error) {

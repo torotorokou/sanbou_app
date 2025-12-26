@@ -126,7 +126,7 @@ check_dir_exists() {
 confirm() {
     local prompt="${1:-続行しますか?}"
     local default="${2:-no}"
-    
+
     if [[ "$default" == "yes" ]]; then
         prompt="$prompt (Y/n)"
         local pattern="^[Nn]"
@@ -134,10 +134,10 @@ confirm() {
         prompt="$prompt (y/N)"
         local pattern="^[Yy]"
     fi
-    
+
     echo -e "${YELLOW}$prompt${NC}"
     read -r response
-    
+
     if [[ "$default" == "yes" ]]; then
         # デフォルトが yes の場合、N/n 以外は yes
         [[ ! "$response" =~ $pattern ]]
@@ -178,7 +178,7 @@ require_commands() {
             missing+=("$cmd")
         fi
     done
-    
+
     if [[ ${#missing[@]} -gt 0 ]]; then
         log_error "以下のコマンドがインストールされていません:"
         for cmd in "${missing[@]}"; do
@@ -196,9 +196,10 @@ require_commands() {
 # ディレクトリ/ファイルのバックアップを作成
 create_backup() {
     local target="$1"
-    local timestamp=$(date +%Y%m%d_%H%M%S)
+    local timestamp
+    timestamp=$(date +%Y%m%d_%H%M%S)
     local backup_name="${target}_backup_${timestamp}"
-    
+
     if [[ -e "$target" ]]; then
         log_step "バックアップを作成中: $backup_name"
         cp -r "$target" "$backup_name"
@@ -213,9 +214,10 @@ create_backup() {
 # tar.gz バックアップを作成
 create_tar_backup() {
     local target="$1"
-    local timestamp=$(date +%Y%m%d_%H%M%S)
+    local timestamp
+    timestamp=$(date +%Y%m%d_%H%M%S)
     local backup_name="${target##*/}_backup_${timestamp}.tar.gz"
-    
+
     if [[ -e "$target" ]]; then
         log_step "tar.gz バックアップを作成中: $backup_name"
         tar -czf "$backup_name" "$target"
@@ -260,17 +262,18 @@ get_remote_url() {
 load_env_file() {
     local env_file="$1"
     check_file_exists "$env_file" || return 1
-    
+
     log_debug ".env ファイルを読み込み中: $env_file"
-    
+
     # コメントと空行を除外して読み込み
     while IFS= read -r line; do
         # コメント行と空行をスキップ
         [[ "$line" =~ ^[[:space:]]*# ]] && continue
         [[ -z "$line" ]] && continue
-        
+
         # エクスポート
         if [[ "$line" =~ ^[[:space:]]*([A-Za-z_][A-Za-z0-9_]*)= ]]; then
+            # shellcheck disable=SC2163
             export "$line"
             log_debug "  loaded: ${BASH_REMATCH[1]}"
         fi
@@ -282,13 +285,14 @@ get_env_var() {
     local env_file="$1"
     local var_name="$2"
     local default_value="${3:-}"
-    
+
     check_file_exists "$env_file" || {
         echo "$default_value"
         return 1
     }
-    
-    local value=$(grep "^${var_name}=" "$env_file" | cut -d'=' -f2- | tr -d '"' | tr -d "'")
+
+    local value
+    value=$(grep "^${var_name}=" "$env_file" | cut -d'=' -f2- | tr -d '"' | tr -d "'")
     echo "${value:-$default_value}"
 }
 
@@ -301,7 +305,7 @@ array_contains() {
     local element="$1"
     shift
     local array=("$@")
-    
+
     for item in "${array[@]}"; do
         [[ "$item" == "$element" ]] && return 0
     done
@@ -328,6 +332,7 @@ handle_error() {
 # クリーンアップ関数の登録
 register_cleanup() {
     local cleanup_func="$1"
+    # shellcheck disable=SC2064
     trap "$cleanup_func" EXIT
 }
 
@@ -339,7 +344,7 @@ register_cleanup() {
 version_gte() {
     local version1="$1"
     local version2="$2"
-    
+
     # sort -V で比較
     if [[ "$(printf '%s\n' "$version2" "$version1" | sort -V | head -n1)" == "$version2" ]]; then
         return 0
@@ -355,7 +360,7 @@ version_gte() {
 show_script_header() {
     local script_name="$1"
     local description="$2"
-    
+
     log_section "🚀 $script_name"
     if [[ -n "$description" ]]; then
         log_info "$description"

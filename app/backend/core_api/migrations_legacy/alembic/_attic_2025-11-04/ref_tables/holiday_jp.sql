@@ -20,7 +20,3 @@ ALTER TABLE ONLY ref.holiday_jp
 
 ALTER TABLE ONLY ref.holiday_jp
     ADD CONSTRAINT fk_holiday_day FOREIGN KEY (hdate) REFERENCES ref.calendar_day(ddate);
-
-
-
-

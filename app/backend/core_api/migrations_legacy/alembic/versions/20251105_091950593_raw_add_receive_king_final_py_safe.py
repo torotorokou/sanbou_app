@@ -9,8 +9,9 @@ Revision ID: 20251105_091950593
 Revises: 20251105_091848960
 Create Date: 2025-11-05 09:19:50.000000
 """
-from alembic import op, context
+
 import sqlalchemy as sa
+from alembic import context, op
 from sqlalchemy.dialects import postgresql as pg
 
 # revision identifiers, used by Alembic.

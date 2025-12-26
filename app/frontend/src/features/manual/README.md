@@ -1,9 +1,11 @@
 # Manual Feature
 
 ## 概要
+
 環境将軍マニュアルの表示・検索機能を提供
 
 ## 責務
+
 - マニュアルの一覧表示
 - マニュアル検索
 - マニュアル詳細表示
@@ -13,6 +15,7 @@
 ## 構造
 
 ### 現在の配置
+
 ```
 src/
 ├── components/manual/         # Manual UI Components
@@ -32,6 +35,7 @@ src/
 ### Pages
 
 #### ShogunManualList
+
 - **役割**: マニュアル一覧・検索ページ
 - **パス**: `@/pages/manual/ShogunManualList.tsx`
 - **機能**:
@@ -40,6 +44,7 @@ src/
   - モーダル開閉
 
 #### ManualPage
+
 - **役割**: マニュアル詳細フルページ
 - **パス**: `@/pages/manual/ManualPage.tsx`
 - **機能**:
@@ -48,6 +53,7 @@ src/
   - アンカーリンク
 
 #### ManualModal
+
 - **役割**: マニュアル詳細モーダル
 - **パス**: `@/pages/manual/ManualModal.tsx`
 - **機能**:
@@ -58,6 +64,7 @@ src/
 ### API Client
 
 #### manualsApi
+
 - **パス**: `@/services/api/manualsApi.ts`
 - **メソッド**:
   - `list()`: マニュアル一覧取得
@@ -67,6 +74,7 @@ src/
 ## 型定義
 
 ### ManualSummary (一覧用)
+
 ```typescript
 type ManualSummary = {
   id: string;
@@ -78,17 +86,19 @@ type ManualSummary = {
 ```
 
 ### ManualDetail (詳細用)
+
 ```typescript
 type ManualDetail = {
   id: string;
   title: string;
-  content: string;        // HTML形式
+  content: string; // HTML形式
   category: string;
-  sections?: Section[];   // 目次
+  sections?: Section[]; // 目次
 };
 ```
 
 ### ManualSection (カタログ用)
+
 ```typescript
 type ManualSection = {
   title: string;
@@ -101,16 +111,18 @@ type ManualSection = {
 ## 使用例
 
 ### マニュアル一覧の取得
+
 ```typescript
-import manualsApi from '@/services/api/manualsApi';
+import manualsApi from "@/services/api/manualsApi";
 
 async function loadManuals() {
-  const manuals = await manualsApi.list({ category: 'syogun' });
+  const manuals = await manualsApi.list({ category: "syogun" });
   console.log(manuals);
 }
 ```
 
 ### マニュアル詳細の表示
+
 ```typescript
 import { useState, useEffect } from 'react';
 import manualsApi from '@/services/api/manualsApi';
@@ -131,6 +143,7 @@ function ManualViewer({ manualId }: { manualId: string }) {
 ```
 
 ### モーダル/ページ切り替え
+
 ```typescript
 // ページモード
 <Link to={`/manuals/syogun/${id}?full=1`}>フルページで開く</Link>
@@ -144,11 +157,13 @@ function ManualViewer({ manualId }: { manualId: string }) {
 ## 目次ナビゲーション
 
 ### アンカー生成
+
 - **関数**: `ensureSectionAnchors()`
 - **パス**: `@shared/utils/anchors.ts`
 - **機能**: H2, H3タグに自動的にIDを付与
 
 ### スムーススクロール
+
 - **関数**: `smoothScrollToAnchor()`
 - **パス**: `@shared/utils/anchors.ts`
 - **機能**: アンカーリンククリック時にスムーススクロール
@@ -156,16 +171,19 @@ function ManualViewer({ manualId }: { manualId: string }) {
 ## 依存関係
 
 ### 内部依存
+
 - `@shared/utils/anchors` - 目次ナビゲーション
 - `@shared/hooks/ui` - レスポンシブ対応
 
 ### 外部依存
+
 - `antd` - UIコンポーネント (Modal, Anchor, Breadcrumb)
 - `react-router-dom` - ルーティング
 
 ## API仕様
 
 ### マニュアル一覧取得
+
 ```
 GET /manual_api/manuals?category=syogun
 
@@ -182,6 +200,7 @@ Response:
 ```
 
 ### マニュアル詳細取得
+
 ```
 GET /manual_api/manuals/:id
 
@@ -197,6 +216,7 @@ Response:
 ```
 
 ### カタログ取得
+
 ```
 GET /manual_api/catalog?category=syogun
 
@@ -216,22 +236,26 @@ Response:
 ## ルーティング
 
 ### パス定義
+
 - `/manuals` - マニュアル一覧
 - `/manuals/syogun/:id` - マニュアル詳細 (モーダル)
 - `/manuals/syogun/:id?full=1` - マニュアル詳細 (フルページ)
 
 ### モーダルルーティング
+
 React Routerの`state.backgroundLocation`を使用してモーダル実装
 
 ## 今後の改善点
 
 ### Phase 4 (将来)
+
 - [ ] `features/manual/` 配下への完全移行
 - [ ] 全文検索機能の追加
 - [ ] ブックマーク機能
 - [ ] 閲覧履歴
 
 ### 技術的負債
+
 - [ ] HTML sanitization (XSS対策)
 - [ ] 画像の遅延読み込み
 - [ ] 目次の自動生成改善
@@ -240,14 +264,17 @@ React Routerの`state.backgroundLocation`を使用してモーダル実装
 ## セキュリティ
 
 ### XSS対策
+
 - サーバー側でHTMLサニタイズ
 - `dangerouslySetInnerHTML`使用時は信頼できるコンテンツのみ
 
 ### アクセス制御
+
 - 認証済みユーザーのみアクセス可能
 - ロールベースのマニュアル表示制御 (将来)
 
 ## 関連ドキュメント
+
 - `PHASE2_COMPLETION_REPORT.md` - Phase 2完了レポート
 - `@/types/manuals.ts` - 型定義詳細
 - `@shared/utils/anchors.ts` - アンカーユーティリティ

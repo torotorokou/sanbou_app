@@ -13,7 +13,7 @@ Phase 3: mart.v_reserve_daily_for_forecast ビュー追加
   - manual入力がある日付はmanualを採用
   - manualがない日付はcustomer_dailyを集計
   - どちらもない日は出力しない
-  
+
 出力列：
   - date: 予約日
   - reserve_trucks: 予約台数合計
@@ -22,20 +22,20 @@ Phase 3: mart.v_reserve_daily_for_forecast ビュー追加
   - source: データソース（'manual' or 'customer_agg'）
 
 """
-from alembic import op
-import sqlalchemy as sa
 
+from alembic import op
 
 # revision identifiers, used by Alembic.
-revision = '11e8fe1cc1d4'
-down_revision = '6807c2215b75'
+revision = "11e8fe1cc1d4"
+down_revision = "6807c2215b75"
 branch_labels = None
 depends_on = None
 
 
 def upgrade() -> None:
     """mart.v_reserve_daily_for_forecast ビューを作成"""
-    op.execute("""
+    op.execute(
+        """
         CREATE OR REPLACE VIEW mart.v_reserve_daily_for_forecast AS
         WITH customer_agg AS (
             -- 顧客別データを日次集計
@@ -71,21 +71,24 @@ def upgrade() -> None:
             date,
             reserve_trucks,
             reserve_fixed_trucks,
-            CASE 
-                WHEN reserve_trucks > 0 THEN 
+            CASE
+                WHEN reserve_trucks > 0 THEN
                     ROUND(reserve_fixed_trucks::numeric / reserve_trucks::numeric, 4)
                 ELSE 0
             END AS reserve_fixed_ratio,
             source
         FROM combined
         ORDER BY date;
-    """)
-    
+    """
+    )
+
     # コメント追加
-    op.execute("""
-        COMMENT ON VIEW mart.v_reserve_daily_for_forecast IS 
+    op.execute(
+        """
+        COMMENT ON VIEW mart.v_reserve_daily_for_forecast IS
         '予測用の予約日次データ。manual優先、なければcustomer集計。fixed_ratioは0除算を0で処理';
-    """)
+    """
+    )
 
 
 def downgrade() -> None:

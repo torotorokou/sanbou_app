@@ -1,4 +1,4 @@
-from typing import Any, Optional
+from typing import Any
 
 from .response_base import SuccessApiResponse
 
@@ -13,8 +13,8 @@ class TransportersSuccessResponse(SuccessApiResponse):
         *,
         code: str = "TRANSPORTERS_LIST_SUCCESS",
         detail: str = "運搬業者リストの取得に成功しました。",
-        result: Optional[Any] = None,
-        hint: Optional[str] = None,
+        result: Any | None = None,
+        hint: str | None = None,
         status_code: int = 200,
     ):
         super().__init__(

@@ -8,10 +8,11 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass
-from typing import Optional
+
 
 try:
     import psycopg
+
     PSYCOPG_AVAILABLE = True
 except ImportError:
     PSYCOPG_AVAILABLE = False
@@ -23,7 +24,7 @@ from backend_shared.db.url_builder import build_database_url
 class DbHealth:
     """
     Database health check result.
-    
+
     Attributes:
         ok: 接続が成功したかどうか
         latency_ms: 接続とクエリの実行にかかった時間（ミリ秒）
@@ -39,21 +40,21 @@ class DbHealth:
 
 def ping_database(
     timeout_sec: int = 2,
-    database_url: Optional[str] = None,
+    database_url: str | None = None,
 ) -> DbHealth:
     """
     PostgreSQLデータベースへの接続をテストし、ヘルスステータスを返す
-    
+
     Args:
         timeout_sec: 接続タイムアウト（秒）（デフォルト: 2）
         database_url: 接続先URL（Noneの場合は環境変数から自動構築）
-        
+
     Returns:
         DbHealth: 接続結果を含むヘルスチェックオブジェクト
-        
+
     Raises:
         ImportError: psycopg3 がインストールされていない場合
-        
+
     Examples:
         >>> health = ping_database()
         >>> if health.ok:
@@ -68,7 +69,7 @@ def ping_database(
             version=None,
             error="psycopg3 is not installed. Install it with: pip install psycopg[binary]",
         )
-    
+
     # DATABASE_URL の構築
     if database_url is None:
         try:
@@ -80,7 +81,7 @@ def ping_database(
                 version=None,
                 error=f"Database URL construction failed: {e}",
             )
-    
+
     # データベース接続テスト
     t0 = time.time()
     try:
@@ -89,7 +90,7 @@ def ping_database(
                 cur.execute("SELECT version();")
                 row = cur.fetchone()
                 ver = row[0] if row else "unknown"
-        
+
         ms = (time.time() - t0) * 1000.0
         return DbHealth(
             ok=True,
@@ -109,16 +110,16 @@ def ping_database(
 def check_database_connection(timeout_sec: int = 2) -> bool:
     """
     データベース接続が可能かどうかを真偽値で返す
-    
+
     シンプルなヘルスチェック用のヘルパー関数。
     詳細情報が必要な場合は ping_database() を使用してください。
-    
+
     Args:
         timeout_sec: 接続タイムアウト（秒）
-        
+
     Returns:
         bool: 接続成功時は True、失敗時は False
-        
+
     Examples:
         >>> if check_database_connection():
         ...     print("Database is accessible")

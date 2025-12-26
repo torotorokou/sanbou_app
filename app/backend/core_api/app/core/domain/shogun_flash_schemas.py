@@ -8,10 +8,11 @@ config_loader から YAML を読み込んで動的にモデルを生成します
 """
 
 from datetime import datetime
-from typing import Optional, Any
-from pydantic import BaseModel, Field, field_validator, ConfigDict, create_model
-from backend_shared.config.config_loader import ShogunCsvConfigLoader
+from typing import Any, Optional
 
+from pydantic import BaseModel, ConfigDict, Field, create_model, field_validator
+
+from backend_shared.config.config_loader import ShogunCsvConfigLoader
 
 # 型マッピング: YAML の type 文字列 → Python 型
 TYPE_MAP = {
@@ -23,15 +24,15 @@ TYPE_MAP = {
 }
 
 
-def parse_datetime_field(v: Any) -> Optional[datetime]:
+def parse_datetime_field(v: Any) -> datetime | None:
     """日付文字列をdatetimeに変換するバリデータ関数"""
-    if v is None or v == '':
+    if v is None or v == "":
         return None
     if isinstance(v, datetime):
         return v
     if isinstance(v, str):
         # 複数の日付フォーマットに対応
-        for fmt in ['%Y-%m-%d', '%Y/%m/%d', '%Y%m%d']:
+        for fmt in ["%Y-%m-%d", "%Y/%m/%d", "%Y%m%d"]:
             try:
                 return datetime.strptime(v.strip(), fmt)
             except ValueError:
@@ -55,71 +56,75 @@ def create_flash_row_model(sheet_type: str) -> type[BaseModel]:
         >>> validated = model_cls(**row)
     """
     loader = ShogunCsvConfigLoader()
-    
+
     # 必須カラム（expected_headers に含まれるカラムの日本語名）
     expected_headers_jp = loader.get_expected_headers(sheet_type)
-    
+
     # 英語名マップと型マップを取得
     en_name_map = loader.get_en_name_map(sheet_type)
-    
+
     # 必須カラムの英語名セットを作成
     required_en_names = {
-        en_name_map[jp_name] 
-        for jp_name in expected_headers_jp 
-        if jp_name in en_name_map
+        en_name_map[jp_name] for jp_name in expected_headers_jp if jp_name in en_name_map
     }
-    
+
     # フィールド定義を構築
     field_definitions = {}
     datetime_fields = []
-    
+
     for jp_name, meta in loader.get_columns(sheet_type).items():
         en_name = meta.get("en_name")
         type_str = meta.get("type")
-        
+
         if not en_name or not type_str:
             continue
-        
+
         # Python型に変換
         py_type = TYPE_MAP.get(type_str, str)
-        
+
         # 必須かどうかを判定
         is_required = en_name in required_en_names
-        
+
         # datetime 型のフィールドは後でバリデータを追加
         if py_type == datetime:
             datetime_fields.append(en_name)
             if is_required:
                 field_definitions[en_name] = (datetime, Field(..., description=jp_name))
             else:
-                field_definitions[en_name] = (Optional[datetime], Field(None, description=jp_name))
+                field_definitions[en_name] = (
+                    Optional[datetime],
+                    Field(None, description=jp_name),
+                )
         else:
             if is_required:
                 field_definitions[en_name] = (py_type, Field(..., description=jp_name))
             else:
-                field_definitions[en_name] = (Optional[py_type], Field(None, description=jp_name))
-    
+                field_definitions[en_name] = (
+                    Optional[py_type],
+                    Field(None, description=jp_name),
+                )
+
     # モデルを動的生成
     model_name = f"{sheet_type.capitalize()}FlashRow"
     DynamicModel = create_model(
         model_name,
         __config__=ConfigDict(str_strip_whitespace=True, arbitrary_types_allowed=True),
-        **field_definitions
+        **field_definitions,
     )
-    
+
     # datetime フィールドにバリデータを追加
     if datetime_fields:
         # バリデータをデコレータとして追加
         for dt_field in datetime_fields:
-            validator_func = field_validator(dt_field, mode='before')(
+            _validator_func = field_validator(dt_field, mode="before")(
                 lambda cls, v, _field=dt_field: parse_datetime_field(v)
             )
             # モデルにバリデータを登録
-            if not hasattr(DynamicModel, '__pydantic_decorators__'):
-                DynamicModel.__pydantic_decorators__ = type('Decorators', (), {
-                    'field_validators': {}
-                })()
-            
+            if not hasattr(DynamicModel, "__pydantic_decorators__"):
+                DynamicModel.__pydantic_decorators__ = type(
+                    "Decorators", (), {"field_validators": {}}
+                )()
+
     return DynamicModel
 
 

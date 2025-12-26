@@ -7,11 +7,7 @@
 // Domain (Types)
 // ============================================================================
 
-export type {
-  ChatMessage,
-  ChatAnswerResult,
-  ChatAnswerRequest,
-} from './domain/types';
+export type { ChatMessage, ChatAnswerResult, ChatAnswerRequest } from './domain/types';
 
 // ============================================================================
 // Ports

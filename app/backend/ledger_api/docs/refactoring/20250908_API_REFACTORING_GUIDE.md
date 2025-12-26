@@ -9,16 +9,19 @@
 各帳票に専用のエンドポイントが用意されました：
 
 #### 工場日報
+
 ```
 POST /ledger_api/reports/factory_report/
 ```
 
 #### 工場搬出入収支表
+
 ```
 POST /ledger_api/reports/balance_sheet/
 ```
 
 #### ブロック単価計算レポート
+
 ```
 POST /ledger_api/reports/block_unit_price/
 ```
@@ -51,25 +54,29 @@ POST /ledger_api/report/manage
 ## アーキテクチャ変更点
 
 ### Before (単一エンドポイント)
+
 ```
 POST /report/manage + report_key parameter
 └── 全ての帳票処理が一つのエンドポイントに集約
 ```
 
 ### After (帳票別エンドポイント)
+
 ```
 POST /reports/factory_report/      → 工場日報専用
-POST /reports/balance_sheet/       → 収支表専用  
+POST /reports/balance_sheet/       → 収支表専用
 POST /reports/block_unit_price/    → ブロック単価専用
 ```
 
 ### 共通化されたコンポーネント
 
 1. **ReportProcessingService** - 共通処理の管理
+
    - ファイル取得・バリデーション・フォーマット変換
    - Excel・PDF・ZIP生成
 
 2. **BaseReportGenerator** - 帳票生成基底クラス
+
    - 各帳票固有の `main_process()` 実装
 
 3. **個別Generator** - 帳票別実装クラス

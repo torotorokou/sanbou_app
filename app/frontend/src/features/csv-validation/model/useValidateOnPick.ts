@@ -6,9 +6,7 @@
 import { useCallback } from 'react';
 import { validateHeaders } from '../core/csvHeaderValidator';
 
-export function useValidateOnPick(
-  getRequired: (typeKey: string) => string[] | undefined
-) {
+export function useValidateOnPick(getRequired: (typeKey: string) => string[] | undefined) {
   return useCallback(
     async (typeKey: string, file: File) => {
       const req = getRequired(typeKey) ?? [];

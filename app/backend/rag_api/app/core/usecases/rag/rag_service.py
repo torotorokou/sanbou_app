@@ -1,27 +1,22 @@
 import streamlit as st
-from langchain_community.vectorstores import FAISS
-from langchain_community.embeddings import OpenAIEmbeddings
+from components.custom_button import centered_button
 
+from app.core.usecases.rag.file_ingest_service import (
+    load_config,
+    load_question_templates,
+)
+from app.infra.adapters.llm.ai_loader import OpenAIConfig, load_ai
+from app.infra.adapters.llm.openai_client import OpenAIClient, generate_answer
 from app.infra.adapters.pdf.pdf_loader import (
     load_pdf_first_page,
     render_pdf_first_page,
     render_pdf_pages,
 )
-from app.core.usecases.rag.file_ingest_service import (
-    load_config,
-    load_json_data,
-    extract_categories_and_titles,
-    load_question_templates,
-)
-from app.infra.adapters.llm.ai_loader import OpenAIConfig, load_ai
-from app.infra.adapters.llm.openai_client import OpenAIClient, generate_answer
 from app.shared.chunk_utils import load_vectorstore
-from components.custom_button import centered_button
 
 
 def controller_education_gpt_page():
     FAISS_PATH, PDF_PATH, JSON_PATH = load_config()
-    json_data = load_json_data(JSON_PATH)
     templates = load_question_templates()
     categories = list(templates.keys())
 
@@ -39,21 +34,30 @@ def controller_education_gpt_page():
     main_category = st.selectbox("まずカテゴリを選択してください", categories)
     category_template = templates.get(main_category, [])
 
-    all_tags = sorted(set(
-        tag.strip(" []'\"")
-        for t in category_template
-        for tag in t.get("tag", [])
-        if isinstance(tag, str)
-    ))
+    all_tags = sorted(
+        {
+            tag.strip(" []'\"")
+            for t in category_template
+            for tag in t.get("tag", [])
+            if isinstance(tag, str)
+        }
+    )
 
     selected_tags = st.multiselect("次に、関心のあるトピック（タグ）を選択してください", all_tags)
 
-    filtered_questions = [
-        t["title"] for t in category_template
-        if any(tag.strip(" []'\"") in selected_tags for tag in t.get("tag", []))
-    ] if selected_tags else []
+    filtered_questions = (
+        [
+            t["title"]
+            for t in category_template
+            if any(tag.strip(" []'\"") in selected_tags for tag in t.get("tag", []))
+        ]
+        if selected_tags
+        else []
+    )
     subcategory_options = ["自由入力"] + filtered_questions
-    sub_category = st.selectbox("質問テンプレートを選択（または自由入力）", options=subcategory_options)
+    sub_category = st.selectbox(
+        "質問テンプレートを選択（または自由入力）", options=subcategory_options
+    )
 
     if sub_category == "自由入力":
         user_input = st.text_area("質問内容を入力してください", height=100)

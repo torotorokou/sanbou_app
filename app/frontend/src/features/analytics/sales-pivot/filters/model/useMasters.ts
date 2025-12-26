@@ -3,9 +3,9 @@
  * マスタデータ取得Hook
  */
 
-import { useState, useEffect } from 'react';
-import type { SalesRep, UniverseEntry } from '../../shared/model/types';
-import type { SalesPivotRepository } from '../../shared/infrastructure/salesPivot.repository';
+import { useState, useEffect } from "react";
+import type { SalesRep, UniverseEntry } from "../../shared/model/types";
+import type { SalesPivotRepository } from "../../shared/infrastructure/salesPivot.repository";
 
 export interface UseMastersResult {
   reps: SalesRep[];
@@ -35,7 +35,7 @@ export function useMasters(repository: SalesPivotRepository): UseMastersResult {
         setCustomers(c);
         setItems(i);
       } catch (error) {
-        console.error('Failed to load masters:', error);
+        console.error("Failed to load masters:", error);
       } finally {
         setLoading(false);
       }

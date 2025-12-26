@@ -23,30 +23,30 @@ Forecast Router - 予測機能エンドポイント
   - カスタム例外を使用(HTTPExceptionは使用しない)
   - NotFoundError でリソース不存在エラーを表現
 """
-from fastapi import APIRouter, Depends, Query
+
 from datetime import date as date_type
-from sqlalchemy.orm import Session
 from uuid import UUID
 
+from fastapi import APIRouter, Depends, Query
+from sqlalchemy.orm import Session
+
+from app.api.schemas import ForecastJobCreate, ForecastJobResponse, PredictionDTO
+from app.api.schemas.forecast_job_v2_schema import (
+    ForecastJobV2Response,
+    SubmitDailyTplus1JobRequest,
+)
 from app.config.di_providers import (
     get_create_forecast_job_uc,
     get_forecast_job_status_uc,
     get_predictions_uc,
 )
+from app.core.ports.forecast_job_repository_port_v2 import DuplicateJobError
 from app.core.usecases.forecast.forecast_job_uc import (
     CreateForecastJobUseCase,
     GetForecastJobStatusUseCase,
     GetPredictionsUseCase,
 )
-from app.api.schemas import ForecastJobCreate, ForecastJobResponse, PredictionDTO
-from app.api.schemas.forecast_job_v2_schema import (
-    SubmitDailyTplus1JobRequest,
-    ForecastJobV2Response
-)
-from app.core.usecases.forecast.submit_daily_tplus1_job_uc import (
-    SubmitDailyTplus1JobUseCase
-)
-from app.core.ports.forecast_job_repository_port_v2 import DuplicateJobError
+from app.core.usecases.forecast.submit_daily_tplus1_job_uc import SubmitDailyTplus1JobUseCase
 from app.deps import get_db
 from backend_shared.core.domain.exceptions import NotFoundError
 
@@ -95,31 +95,29 @@ def get_predictions(
 # V2 Endpoints (forecast.forecast_jobs)
 # ========================================
 
+
 @router.post(
     "/jobs/daily-tplus1",
     response_model=ForecastJobV2Response,
     summary="Submit daily t+1 forecast job",
-    description="日次t+1予測ジョブを手動投入します。既に queued/running のジョブがあれば既存ジョブを返します。"
+    description="日次t+1予測ジョブを手動投入します。既に queued/running のジョブがあれば既存ジョブを返します。",
 )
-def submit_daily_tplus1_job(
-    req: SubmitDailyTplus1JobRequest,
-    db: Session = Depends(get_db)
-):
+def submit_daily_tplus1_job(req: SubmitDailyTplus1JobRequest, db: Session = Depends(get_db)):
     """
     日次t+1予測ジョブを投入
-    
+
     - 既に queued/running のジョブがあれば既存ジョブを返す（重複投入を防止）
     - target_date 省略時は明日（JST）を予測対象とする
     """
     from app.infra.adapters.forecast.forecast_job_repository_v2 import (
-        PostgresForecastJobRepositoryV2
+        PostgresForecastJobRepositoryV2,
     )
-    
+
     repo = PostgresForecastJobRepositoryV2(db)
     uc = SubmitDailyTplus1JobUseCase(repo)
-    
+
     job = uc.execute(requested_date=req.target_date)
-    
+
     return ForecastJobV2Response.model_validate(job)
 
 
@@ -127,23 +125,20 @@ def submit_daily_tplus1_job(
     "/jobs/v2/{job_id}",
     response_model=ForecastJobV2Response,
     summary="Get forecast job by ID (V2)",
-    description="ジョブIDで予測ジョブを取得します（forecast.forecast_jobs テーブル用）。"
+    description="ジョブIDで予測ジョブを取得します（forecast.forecast_jobs テーブル用）。",
 )
-def get_forecast_job_v2(
-    job_id: UUID,
-    db: Session = Depends(get_db)
-):
+def get_forecast_job_v2(job_id: UUID, db: Session = Depends(get_db)):
     """
     ジョブIDで予測ジョブを取得
     """
     from app.infra.adapters.forecast.forecast_job_repository_v2 import (
-        PostgresForecastJobRepositoryV2
+        PostgresForecastJobRepositoryV2,
     )
-    
+
     repo = PostgresForecastJobRepositoryV2(db)
     job = repo.get_job_by_id(job_id)
-    
+
     if job is None:
         raise NotFoundError(entity="ForecastJob", entity_id=str(job_id))
-    
+
     return ForecastJobV2Response.model_validate(job)

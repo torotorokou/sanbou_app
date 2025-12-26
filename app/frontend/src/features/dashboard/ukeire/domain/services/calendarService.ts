@@ -3,8 +3,8 @@
  * カレンダー関連のドメインロジック
  */
 
-import type { CalendarDay, IsoDate } from "../types";
-import { toDate } from "../valueObjects";
+import type { CalendarDay, IsoDate } from '../types';
+import { toDate } from '../valueObjects';
 
 /**
  * 指定日が第2日曜日かどうかを判定
@@ -31,9 +31,9 @@ export const isSecondSunday = (date: IsoDate): boolean => {
  */
 export const getDateColor = (date: IsoDate): string => {
   const C = {
-    ok: "#52c41a",
-    danger: "#cf1322",
-    sunday: "#ff85c0",
+    ok: '#52c41a',
+    danger: '#cf1322',
+    sunday: '#ff85c0',
   };
 
   if (isSecondSunday(date)) return C.danger;
@@ -83,5 +83,12 @@ export const countDayTypes = (
     }
   });
 
-  return { weekday, sunday, secondSunday, weekdayRem, sundayRem, secondSundayRem };
+  return {
+    weekday,
+    sunday,
+    secondSunday,
+    weekdayRem,
+    sundayRem,
+    secondSundayRem,
+  };
 };

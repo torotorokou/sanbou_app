@@ -18,6 +18,7 @@ CSV アップロード確認カレンダー機能を実装しました。この�
 ### 1. データベースマイグレーション
 
 #### ✅ Step 2: 論理削除カラムの追加
+
 **ファイル**: `20251119_100000000_add_soft_delete_to_upload_file.py`
 
 ```sql
@@ -28,6 +29,7 @@ ALTER TABLE log.upload_file
 ```
 
 #### ✅ Step 3: 部分ユニークインデックス
+
 **ファイル**: `20251119_110000000_partial_unique_index_for_soft_delete.py`
 
 既存の UNIQUE 制約を部分ユニークインデックスに置き換え:
@@ -45,6 +47,7 @@ CREATE UNIQUE INDEX ux_upload_file_hash_type_csv_status_active
 **効果**: 論理削除されたレコードはユニーク制約から除外され、同じファイルの再アップロードが可能に。
 
 #### ✅ Step 6: 日次集計ビューの作成
+
 **ファイル**: `20251119_120000000_create_csv_calendar_daily_views.py`
 
 6つの個別ビュー + 1つの統合ビューを作成:
@@ -83,6 +86,7 @@ SELECT * FROM mart.v_shogun_final_shipment_daily;
 ### 2. アプリケーション層の修正
 
 #### ✅ Step 4: 重複チェックロジックの修正
+
 **ファイル**: `app/infra/adapters/upload/raw_data_repository.py`
 
 ```python
@@ -121,9 +125,11 @@ def soft_delete_upload_file(self, file_id: int, deleted_by: Optional[str] = None
 ### 3. API エンドポイントの追加
 
 #### ✅ Step 7: カレンダー API
+
 **ファイル**: `app/presentation/routers/database/router.py`
 
 **GET /database/upload-calendar**
+
 - 指定年月のアップロード状況を取得
 - 論理削除されたデータは除外
 
@@ -132,7 +138,7 @@ def soft_delete_upload_file(self, file_id: int, deleted_by: Optional[str] = None
 def get_upload_calendar(year: int, month: int, db: Session = Depends(get_db)):
     """
     CSV アップロードカレンダー用の日次集計データを取得
-    
+
     Returns:
         {
             "items": [
@@ -148,6 +154,7 @@ def get_upload_calendar(year: int, month: int, db: Session = Depends(get_db)):
 ```
 
 **DELETE /database/upload-calendar/{upload_file_id}**
+
 - アップロードファイルを論理削除
 - カレンダーから該当データが消える
 
@@ -156,7 +163,7 @@ def get_upload_calendar(year: int, month: int, db: Session = Depends(get_db)):
 def delete_upload_file(upload_file_id: int, deleted_by: Optional[str] = None, ...):
     """
     アップロードファイルを論理削除
-    
+
     Returns:
         {"status": "deleted", "uploadFileId": <id>}
     """
@@ -175,6 +182,7 @@ docker compose -f docker/docker-compose.dev.yml -p local_dev exec core_api \
 ```
 
 実行されるマイグレーション:
+
 1. `20251119_100000000` - is_deleted カラム追加
 2. `20251119_110000000` - 部分ユニークインデックス作成
 3. `20251119_120000000` - カレンダービュー作成
@@ -186,9 +194,9 @@ docker compose -f docker/docker-compose.dev.yml -p local_dev exec core_api \
 \d log.upload_file
 
 -- 2. 部分ユニークインデックスの確認
-SELECT indexname, indexdef 
-FROM pg_indexes 
-WHERE schemaname = 'log' 
+SELECT indexname, indexdef
+FROM pg_indexes
+WHERE schemaname = 'log'
   AND tablename = 'upload_file'
   AND indexname LIKE '%active%';
 
@@ -213,8 +221,8 @@ curl -X POST http://localhost:8000/database/upload/syogun_csv \
 SELECT * FROM log.upload_file ORDER BY id DESC LIMIT 1;
 # is_deleted = false を確認
 
-SELECT * FROM mart.v_csv_calendar_daily 
-WHERE csv_kind = 'shogun_flash_receive' 
+SELECT * FROM mart.v_csv_calendar_daily
+WHERE csv_kind = 'shogun_flash_receive'
 ORDER BY data_date DESC LIMIT 10;
 # 該当日にデータが表示されることを確認
 
@@ -225,8 +233,8 @@ curl -X DELETE http://localhost:8000/database/upload-calendar/123
 SELECT * FROM log.upload_file WHERE id = 123;
 # is_deleted = true を確認
 
-SELECT * FROM mart.v_csv_calendar_daily 
-WHERE csv_kind = 'shogun_flash_receive' 
+SELECT * FROM mart.v_csv_calendar_daily
+WHERE csv_kind = 'shogun_flash_receive'
 ORDER BY data_date DESC LIMIT 10;
 # 該当データが表示されないことを確認
 
@@ -265,7 +273,7 @@ curl -X GET "http://localhost:8000/database/upload-calendar?year=2025&month=11"
 
 ```sql
 -- 全 upload_file を確認（削除済み含む）
-SELECT 
+SELECT
     id,
     csv_type,
     file_type,
@@ -273,34 +281,34 @@ SELECT
     is_deleted,
     deleted_at,
     uploaded_at
-FROM log.upload_file 
-ORDER BY id DESC 
+FROM log.upload_file
+ORDER BY id DESC
 LIMIT 10;
 
 -- 有効な upload_file のみ確認
-SELECT 
+SELECT
     id,
     csv_type,
     file_type,
     processing_status,
     uploaded_at
-FROM log.upload_file 
+FROM log.upload_file
 WHERE is_deleted = false
-ORDER BY id DESC 
+ORDER BY id DESC
 LIMIT 10;
 
 -- カレンダービューの日次集計を確認
-SELECT 
+SELECT
     data_date,
     csv_kind,
     row_count
 FROM mart.v_csv_calendar_daily
-WHERE data_date >= '2025-11-01' 
+WHERE data_date >= '2025-11-01'
   AND data_date <= '2025-11-30'
 ORDER BY data_date, csv_kind;
 
 -- 特定日の詳細を確認
-SELECT 
+SELECT
     s.slip_date::date as data_date,
     COUNT(*) as row_count,
     uf.id as upload_file_id,
@@ -323,9 +331,10 @@ GROUP BY s.slip_date::date, uf.id, uf.file_name, uf.is_deleted;
 **原因**: 既存制約名が異なる
 
 **解決策**:
+
 ```sql
 -- 現在の制約を確認
-SELECT conname FROM pg_constraint 
+SELECT conname FROM pg_constraint
 WHERE conrelid = 'log.upload_file'::regclass;
 
 -- 実際の制約名で DROP を実行
@@ -335,21 +344,23 @@ DROP CONSTRAINT <実際の制約名>;
 ### 問題 2: カレンダービューにデータが表示されない
 
 **確認ポイント**:
+
 1. `upload_file_id` が stg テーブルに正しくセットされているか
 2. `is_deleted = false` のレコードが存在するか
 3. `slip_date` が NULL でないか
 
 **確認クエリ**:
+
 ```sql
 -- stg テーブルの upload_file_id 設定状況
-SELECT 
+SELECT
     COUNT(*) as total_rows,
     COUNT(upload_file_id) as with_upload_file_id,
     COUNT(CASE WHEN upload_file_id IS NULL THEN 1 END) as null_upload_file_id
 FROM stg.receive_shogun_flash;
 
 -- upload_file の is_deleted 状況
-SELECT 
+SELECT
     is_deleted,
     COUNT(*) as count
 FROM log.upload_file
@@ -390,14 +401,17 @@ GROUP BY is_deleted;
 ## 関連ファイル
 
 ### マイグレーション
+
 - `app/backend/core_api/migrations/alembic/versions/20251119_100000000_add_soft_delete_to_upload_file.py`
 - `app/backend/core_api/migrations/alembic/versions/20251119_110000000_partial_unique_index_for_soft_delete.py`
 - `app/backend/core_api/migrations/alembic/versions/20251119_120000000_create_csv_calendar_daily_views.py`
 
 ### アプリケーション
+
 - `app/backend/core_api/app/infra/adapters/upload/raw_data_repository.py`
 - `app/backend/core_api/app/presentation/routers/database/router.py`
 
 ### フロントエンド連携
+
 - API エンドポイント: `/database/upload-calendar` (GET)
 - API エンドポイント: `/database/upload-calendar/{id}` (DELETE)

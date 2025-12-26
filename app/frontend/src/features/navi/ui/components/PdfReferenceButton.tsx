@@ -10,10 +10,7 @@ interface PdfReferenceButtonProps {
   onClick: () => void;
 }
 
-export const PdfReferenceButton: React.FC<PdfReferenceButtonProps> = ({
-  pdfUrl,
-  onClick,
-}) => {
+export const PdfReferenceButton: React.FC<PdfReferenceButtonProps> = ({ pdfUrl, onClick }) => {
   return (
     <div
       style={{

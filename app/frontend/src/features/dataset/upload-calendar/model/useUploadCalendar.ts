@@ -41,7 +41,7 @@ export function useUploadCalendar(): UseUploadCalendarResult {
       const year = currentMonth.getFullYear();
       const month = currentMonth.getMonth() + 1; // JavaScript の月は 0-indexed
       const data = await uploadCalendarRepository.fetchMonthly({ year, month });
-      setItems(data.filter(item => !item.deleted)); // 削除済みは除外
+      setItems(data.filter((item) => !item.deleted)); // 削除済みは除外
     } catch (err) {
       console.error('Failed to fetch upload calendar:', err);
       setError(err instanceof Error ? err.message : 'データの取得に失敗しました');
@@ -57,14 +57,14 @@ export function useUploadCalendar(): UseUploadCalendarResult {
 
   // 月移動
   const goPrevMonth = useCallback(() => {
-    setCurrentMonth(prev => {
+    setCurrentMonth((prev) => {
       const d = dayjs(prev).subtract(1, 'month');
       return d.toDate();
     });
   }, []);
 
   const goNextMonth = useCallback(() => {
-    setCurrentMonth(prev => {
+    setCurrentMonth((prev) => {
       const d = dayjs(prev).add(1, 'month');
       return d.toDate();
     });
@@ -76,15 +76,14 @@ export function useUploadCalendar(): UseUploadCalendarResult {
   }, [fetchData]);
 
   // 削除
-  const deleteUpload = useCallback(async (params: {
-    uploadFileId: number;
-    date: string;
-    csvKind: UploadCalendarItem['kind'];
-  }) => {
-    await uploadCalendarRepository.deleteUpload(params);
-    // 削除後に再取得
-    await fetchData();
-  }, [fetchData]);
+  const deleteUpload = useCallback(
+    async (params: { uploadFileId: number; date: string; csvKind: UploadCalendarItem['kind'] }) => {
+      await uploadCalendarRepository.deleteUpload(params);
+      // 削除後に再取得
+      await fetchData();
+    },
+    [fetchData]
+  );
 
   // 日付ごとのアップロードマップを作成
   const uploadsByDate = useMemo(() => {
@@ -114,7 +113,7 @@ export function useUploadCalendar(): UseUploadCalendarResult {
     // 日曜(0)なら6日前、月曜(1)なら0日前、火曜(2)なら1日前...
     const daysToSubtract = firstDayOfWeek === 0 ? 6 : firstDayOfWeek - 1;
     const startDate = firstDayOfMonth.subtract(daysToSubtract, 'day');
-    
+
     // カレンダー表示の終了日（週の終わりを日曜日とする）
     // 月の最後の日の曜日を取得
     const lastDayOfWeek = lastDayOfMonth.day();

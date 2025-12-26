@@ -74,7 +74,9 @@ export function useComputedLabels(
   const selectedRepLabel = useMemo(() => {
     if (repIds.length === 0) return '未選択';
     const names = reps.filter((r) => repIds.includes(r.id)).map((r) => r.name);
-    return names.length <= 3 ? names.join('・') : `${names.slice(0, 3).join('・')} ほか${names.length - 3}名`;
+    return names.length <= 3
+      ? names.join('・')
+      : `${names.slice(0, 3).join('・')} ほか${names.length - 3}名`;
   }, [repIds, reps]);
 
   return { periodLabel, headerTotals, selectedRepLabel };

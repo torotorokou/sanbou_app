@@ -23,13 +23,15 @@ export const ShogunClient = {
   /**
    * マニュアル一覧取得
    */
-  async list(params: {
-    query?: string;
-    tag?: string;
-    category?: string;
-    page?: number;
-    size?: number;
-  } = {}): Promise<ManualListResponse> {
+  async list(
+    params: {
+      query?: string;
+      tag?: string;
+      category?: string;
+      page?: number;
+      size?: number;
+    } = {}
+  ): Promise<ManualListResponse> {
     return apiGet<ManualListResponse>('/core_api/manual/manuals', { params });
   },
 

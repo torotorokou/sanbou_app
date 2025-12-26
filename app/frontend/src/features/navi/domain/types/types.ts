@@ -92,6 +92,6 @@ export class RagChatError extends Error {
     public hint?: string
   ) {
     super(detail);
-    this.name = "RagChatError";
+    this.name = 'RagChatError';
   }
 }

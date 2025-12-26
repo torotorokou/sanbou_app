@@ -15,9 +15,9 @@ Revision ID: 20251114_120000000
 Revises: 20251114_000600000
 Create Date: 2025-11-14 12:00:00.000000
 """
-from alembic import op
-import sqlalchemy as sa
 
+import sqlalchemy as sa
+from alembic import op
 
 revision = "20251114_120000000"
 down_revision = "20251114_000600000"
@@ -36,12 +36,12 @@ def upgrade() -> None:
     op.add_column(
         "upload_file",
         sa.Column("env", sa.Text(), nullable=False, server_default="local_dev"),
-        schema="log"
+        schema="log",
     )
 
     # 4. raw.*_raw テーブルの FK を log.upload_file.id に向け直し
     #    (receive_raw, yard_raw, shipment_raw が log.upload_file を参照するように変更)
-    
+
     op.drop_constraint("fk_receive_raw_file_id", "receive_raw", schema="raw", type_="foreignkey")
     op.create_foreign_key(
         "fk_receive_raw_file_id",

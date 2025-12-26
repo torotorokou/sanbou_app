@@ -12,6 +12,7 @@
 旧Streamlitアプリから新Reactアプリへの移行中、売上収支表において「処分有価」（有価物）の値が一致しない問題が発生。
 
 ### 影響範囲
+
 - **帳票**: 売上収支表（balance_sheet）
 - **項目**: 有価物（仕入計の計算に使用）
 - **計算式**: `仕入計 = 処分費 - 有価物`
@@ -21,6 +22,7 @@
 ## 🔍 根本原因
 
 ### 問題のあるファイル
+
 `app/backend/ledger_api/app/core/domain/reports/processors/balance_sheet/balance_sheet_yuukabutu.py`
 
 ### バグの詳細
@@ -112,7 +114,7 @@ def calculate_safe_disposal_costs(df_shipment: pd.DataFrame) -> pd.DataFrame:
     master_df = load_master_and_template(master_path)
 
     key_cols = ["業者名", "品名"]
-    
+
     # ① 重量を集計
     master_with_weight = summary_apply(
         master_df,
@@ -144,6 +146,7 @@ def calculate_safe_disposal_costs(df_shipment: pd.DataFrame) -> pd.DataFrame:
 ## ✅ 修正方法
 
 ### 修正すべき関数
+
 `calculate_valuable_material_cost_by_item(df_yard: pd.DataFrame) -> pd.DataFrame`
 
 ### 修正内容
@@ -180,7 +183,7 @@ def calculate_valuable_material_cost_by_item(df_yard: pd.DataFrame) -> pd.DataFr
     result_df = multiply_columns(
         master_with_price, col1="設定単価", col2="数量", result_col="値"
     )
-    
+
     result_df = result_df.rename(columns={"品名": "大項目"})
     return result_df
 ```
@@ -198,21 +201,21 @@ from app.infra.report_utils.formatters import multiply_columns
 
 `infra/data_sources/master/costs/unit_price_table.csv`より、有価物の単価設定：
 
-| 品名 | 設定単価 | 必要項目 | CSVシート |
-|------|----------|----------|-----------|
-| GAH鋼･鉄筋等 | 31.5 | 有価物 | ヤード |
-| GC軽鉄･ｽﾁｰﾙ類 | 31.5 | 有価物 | ヤード |
-| GC軽鉄・ｽﾁｰﾙ類 | 31.5 | 有価物 | ヤード |
-| GD | 31.5 | 有価物 | ヤード |
-| ｱﾙﾐ類 | 180 | 有価物 | ヤード |
-| ｽﾃﾝﾚｽ | 180 | 有価物 | ヤード |
-| ﾄﾗﾝｽ | 33 | 有価物 | ヤード |
-| ﾓｰﾀｰ | 60 | 有価物 | ヤード |
-| ﾗｼﾞｴﾀｰ | 31.5 | 有価物 | ヤード |
-| 室外機 | 28 | 有価物 | ヤード |
-| 鉄千地 | 31.5 | 有価物 | ヤード |
-| 銅 | 500 | 有価物 | ヤード |
-| 配線 | 100 | 有価物 | ヤード |
+| 品名           | 設定単価 | 必要項目 | CSVシート |
+| -------------- | -------- | -------- | --------- |
+| GAH鋼･鉄筋等   | 31.5     | 有価物   | ヤード    |
+| GC軽鉄･ｽﾁｰﾙ類  | 31.5     | 有価物   | ヤード    |
+| GC軽鉄・ｽﾁｰﾙ類 | 31.5     | 有価物   | ヤード    |
+| GD             | 31.5     | 有価物   | ヤード    |
+| ｱﾙﾐ類          | 180      | 有価物   | ヤード    |
+| ｽﾃﾝﾚｽ          | 180      | 有価物   | ヤード    |
+| ﾄﾗﾝｽ           | 33       | 有価物   | ヤード    |
+| ﾓｰﾀｰ           | 60       | 有価物   | ヤード    |
+| ﾗｼﾞｴﾀｰ         | 31.5     | 有価物   | ヤード    |
+| 室外機         | 28       | 有価物   | ヤード    |
+| 鉄千地         | 31.5     | 有価物   | ヤード    |
+| 銅             | 500      | 有価物   | ヤード    |
+| 配線           | 100      | 有価物   | ヤード    |
 
 ---
 
@@ -230,14 +233,17 @@ from app.infra.report_utils.formatters import multiply_columns
 ## 🔗 関連ファイル
 
 ### 修正対象
+
 - `app/backend/ledger_api/app/core/domain/reports/processors/balance_sheet/balance_sheet_yuukabutu.py`
 
 ### 参考ファイル
+
 - `app/backend/ledger_api/app/core/domain/reports/processors/balance_sheet/balance_sheet_yuka_kaitori.py` (有価買取 - 正常)
 - `app/backend/ledger_api/app/core/domain/reports/processors/balance_sheet/balance_sheet_syobun.py` (処分費 - 正常)
 - `app/backend/ledger_api/app/infra/data_sources/master/costs/unit_price_table.csv` (単価マスタ)
 
 ### 設定ファイル
+
 - `app/backend/ledger_api/app/infra/data_sources/master/balance_sheet/yuka_yard.csv` (有価物品目マスタ)
 - `app/backend/ledger_api/app/config/templates_config.yaml`
 
@@ -246,6 +252,7 @@ from app.infra.report_utils.formatters import multiply_columns
 ## 📝 その他の注意点
 
 ### 仕入計の計算式
+
 `app/backend/ledger_api/app/core/domain/reports/processors/balance_sheet/balance_sheet_etc.py`
 
 ```python
@@ -253,18 +260,18 @@ def calculate_misc_summary_rows(
     master_csv: pd.DataFrame, first_invoice_date: pd.Timestamp
 ) -> pd.DataFrame:
     # ...
-    
+
     shobun_cost = safe_int(
         master_csv.loc[master_csv["大項目"] == "処分費", "値"].values[0]
     )
     yuka_cost = safe_int(
         master_csv.loc[master_csv["大項目"] == "有価物", "値"].values[0]
     )
-    
+
     # 仕入計 = 処分費 - 有価物
     cost_total = shobun_cost - yuka_cost
     etc_df = set_value_fast_safe(etc_df, ["大項目"], ["仕入計"], cost_total, "値")
-    
+
     # ...
 ```
 

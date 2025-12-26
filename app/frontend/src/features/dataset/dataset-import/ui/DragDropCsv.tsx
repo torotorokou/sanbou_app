@@ -1,6 +1,6 @@
 /**
  * DragDropCsv - CSVファイル選択コンポーネント（ドラッグ&ドロップ + クリック対応）
- * 
+ *
  * hidden input + ref でファイル選択ダイアログを開く
  * カード全体がクリック可能エリアとなり、キーボード操作にも対応
  * ドラッグ&ドロップでもCSVファイルをアップロード可能
@@ -63,7 +63,7 @@ export const DragDropCsv: React.FC<DragDropCsvProps> = ({
     const rect = e.currentTarget.getBoundingClientRect();
     const x = e.clientX;
     const y = e.clientY;
-    
+
     // マウスが完全に要素の外に出た場合のみリセット
     if (x < rect.left || x >= rect.right || y < rect.top || y >= rect.bottom) {
       setIsDragging(false);
@@ -131,8 +131,20 @@ export const DragDropCsv: React.FC<DragDropCsvProps> = ({
         style={{ display: 'none' }}
         disabled={disabled}
       />
-      <UploadOutlined style={{ fontSize: compact ? 20 : 24, color: disabled ? '#bfbfbf' : '#1890ff', marginBottom: 4 }} />
-      <div style={{ fontSize: compact ? 12 : 13, color: disabled ? '#bfbfbf' : '#666', textAlign: 'center' }}>
+      <UploadOutlined
+        style={{
+          fontSize: compact ? 20 : 24,
+          color: disabled ? '#bfbfbf' : '#1890ff',
+          marginBottom: 4,
+        }}
+      />
+      <div
+        style={{
+          fontSize: compact ? 12 : 13,
+          color: disabled ? '#bfbfbf' : '#666',
+          textAlign: 'center',
+        }}
+      >
         {isDragging ? 'ここにドロップ' : 'クリック または ドラッグ&ドロップで CSV をアップロード'}
       </div>
     </div>

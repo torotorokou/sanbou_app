@@ -1,0 +1,56 @@
+name: Type Check (mypy)
+
+on:
+  pull_request:
+    branches: ["**"]
+    paths:
+      - "app/backend/core_api/app/core/**"
+      - "app/backend/core_api/app/api/**"
+      - "app/backend/core_api/pyproject.toml"
+
+jobs:
+  typecheck:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ runner.os }}-${{ hashFiles('app/backend/core_api/requirements*.txt') }}
+          restore-keys: |
+            pip-${{ runner.os }}-
+
+      - name: Install dependencies
+        working-directory: app/backend/core_api
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install mypy>=1.10.0
+
+      - name: Run mypy on core layer
+        working-directory: app/backend/core_api
+        run: |
+          mypy app/core --config-file=pyproject.toml || true
+        continue-on-error: true
+
+      - name: Run mypy on api layer
+        working-directory: app/backend/core_api
+        run: |
+          mypy app/api --config-file=pyproject.toml || true
+        continue-on-error: true
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "✅ Type check completed (Phase 1: errors are warnings only)"
+          echo "📋 See logs above for type issues to fix"
+          echo "📖 Documentation: docs/dev/TYPECHECK.md"

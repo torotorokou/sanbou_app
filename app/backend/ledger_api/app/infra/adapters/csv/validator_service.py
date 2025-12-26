@@ -11,11 +11,13 @@ CSVファイルのバリデーション処理を統合的に管理するファ�
 """
 
 from backend_shared.config.config_loader import ShogunCsvConfigLoader
-from backend_shared.infra.adapters.presentation.response_base import ErrorApiResponse
-from backend_shared.core.usecases.csv_validator.pure_csv_validator import PureCSVValidator
+from backend_shared.core.usecases.csv_validator.pure_csv_validator import (
+    PureCSVValidator,
+)
 from backend_shared.core.usecases.csv_validator.response_converter import (
     ValidationResponseConverter,
 )
+from backend_shared.infra.adapters.presentation.response_base import ErrorApiResponse
 
 
 class CsvValidatorService:
@@ -55,9 +57,7 @@ class CsvValidatorService:
             ErrorApiResponse | None: エラーがある場合はエラーレスポンス、正常時はNone
         """
         # 期待されるヘッダー情報を各CSVタイプから取得
-        required_columns = {
-            k: self.config_loader.get_expected_headers(k) for k in files.keys()
-        }
+        required_columns = {k: self.config_loader.get_expected_headers(k) for k in files.keys()}
 
         # 純粋なバリデーター初期化
         validator = PureCSVValidator(required_columns)
@@ -66,8 +66,6 @@ class CsvValidatorService:
         validation_result = validator.validate_all(dfs, files)
 
         # バリデーション結果をAPIレスポンス形式に変換
-        api_response = self.response_converter.convert_to_api_response(
-            validation_result, files
-        )
+        api_response = self.response_converter.convert_to_api_response(validation_result, files)
 
         return api_response

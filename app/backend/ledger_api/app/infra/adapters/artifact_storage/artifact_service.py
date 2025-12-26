@@ -9,14 +9,13 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from functools import lru_cache
 import hashlib
 import hmac
-from pathlib import Path
 import secrets
 import time
-from typing import Dict, Optional
+from dataclasses import dataclass
+from functools import lru_cache
+from pathlib import Path
 from urllib.parse import quote, unquote
 
 from app.settings import settings
@@ -46,7 +45,12 @@ class ArtifactLocation:
     @property
     def directory(self) -> Path:
         """👶 ファイルを保存する最終ディレクトリを返します。"""
-        return self.root_dir / _sanitize_segment(self.report_key) / _sanitize_segment(self.report_date) / self.token
+        return (
+            self.root_dir
+            / _sanitize_segment(self.report_key)
+            / _sanitize_segment(self.report_date)
+            / self.token
+        )
 
     def relative_path(self, filename: str) -> str:
         """保存先ディレクトリからの相対パスを返す。"""
@@ -73,7 +77,7 @@ class UrlSigner:
         self._ttl_seconds = max(30, ttl_seconds)  # 👶 有効期限が極端に短すぎないようにします
 
     def _sign(self, relative_path: str, disposition: str, expires: int) -> str:
-        payload = f"{relative_path}|{disposition}|{expires}".encode("utf-8")
+        payload = f"{relative_path}|{disposition}|{expires}".encode()
         return hmac.new(self._secret, payload, hashlib.sha256).hexdigest()
 
     def create_url(self, relative_path: str, *, disposition: str) -> str:
@@ -81,9 +85,7 @@ class UrlSigner:
         expires = int(time.time()) + self._ttl_seconds
         signature = self._sign(relative_path, disposition, expires)
         safe_path = quote(relative_path, safe="/")
-        return (
-            f"{self._url_prefix}/{safe_path}?expires={expires}&disposition={disposition}&signature={signature}"
-        )
+        return f"{self._url_prefix}/{safe_path}?expires={expires}&disposition={disposition}&signature={signature}"
 
     def verify(self, relative_path: str, *, disposition: str, expires: int, signature: str) -> bool:
         if expires < int(time.time()):
@@ -124,8 +126,10 @@ class ReportArtifactStorage:
         target.write_bytes(content)
         return target
 
-    def build_payload(self, location: ArtifactLocation, *, excel_exists: bool, pdf_exists: bool) -> Dict[str, str]:
-        payload: Dict[str, str] = {
+    def build_payload(
+        self, location: ArtifactLocation, *, excel_exists: bool, pdf_exists: bool
+    ) -> dict[str, str]:
+        payload: dict[str, str] = {
             "report_token": location.token,
             "excel_download_url": "",
             "pdf_preview_url": "",
@@ -142,7 +146,7 @@ class ReportArtifactStorage:
             )
         return payload
 
-    def resolve(self, relative_path: str) -> Optional[Path]:
+    def resolve(self, relative_path: str) -> Path | None:
         """URL で渡された相対パスから実際のファイルパスを復元する。"""
         raw = Path(unquote(relative_path))
         parts = [segment for segment in raw.parts if segment not in {"..", ""}]

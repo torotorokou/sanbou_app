@@ -15,13 +15,15 @@ Sales Tree Router - 売上ツリー分析APIエンドポイント
   - カスタム例外を使用(HTTPExceptionは使用しない)
   - InfrastructureError でDB操作エラーを表現
 """
+
 from fastapi import APIRouter
+
+from .detail import router as detail_router
+from .export import router as export_router
+from .master import router as master_router
 
 # サブルーターをインポート
 from .query import router as query_router
-from .export import router as export_router
-from .master import router as master_router
-from .detail import router as detail_router
 
 # メインルーター
 router = APIRouter(prefix="/analytics/sales-tree", tags=["sales-tree"])

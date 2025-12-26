@@ -5,16 +5,15 @@ Revises: 20251105_172835295
 Create Date: 2025-11-05 08:40:17.667268
 
 """
-from alembic import op
-import sqlalchemy as sa
 
+import sqlalchemy as sa
+from alembic import op
 
 # revision identifiers, used by Alembic.
-revision = '20251105_174016896'
-down_revision = '20251105_172835295'
+revision = "20251105_174016896"
+down_revision = "20251105_172835295"
 branch_labels = None
 depends_on = None
-
 
 
 SQL_DROP = "DROP VIEW IF EXISTS stg.v_king_receive_daily;"
@@ -31,9 +30,11 @@ FROM stg.v_king_receive_clean_min k
 GROUP BY k.invoice_d;
 """
 
+
 def upgrade():
     with op.get_context().autocommit_block():
         op.execute(sa.text(SQL_DROP))
+
 
 def downgrade():
     with op.get_context().autocommit_block():

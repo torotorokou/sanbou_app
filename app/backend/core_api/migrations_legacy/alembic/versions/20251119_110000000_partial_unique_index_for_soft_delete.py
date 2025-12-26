@@ -21,8 +21,8 @@ Revision ID: 20251119_110000000
 Revises: 20251119_100000000
 Create Date: 2025-11-19 11:00:00.000000
 """
-from alembic import op
 
+from alembic import op
 
 revision = "20251119_110000000"
 down_revision = "20251119_100000000"
@@ -34,18 +34,18 @@ def upgrade() -> None:
     """
     UNIQUE 制約を部分ユニークインデックスに置き換え
     """
-    
+
     print("[log.upload_file] Replacing UNIQUE constraint with partial unique index...")
-    
+
     # 既存の UNIQUE 制約を削除
     op.drop_constraint(
         "uq_upload_file_hash_type_csv_status",
         "upload_file",
         schema="log",
-        type_="unique"
+        type_="unique",
     )
     print("✓ Dropped existing unique constraint: uq_upload_file_hash_type_csv_status")
-    
+
     # 部分ユニークインデックスを作成（is_deleted=false のみに適用）
     op.execute(
         """
@@ -63,18 +63,16 @@ def downgrade() -> None:
     """
     部分ユニークインデックスを削除し、元の UNIQUE 制約を復元
     """
-    
+
     # 部分ユニークインデックスを削除
-    op.execute(
-        "DROP INDEX IF EXISTS log.ux_upload_file_hash_type_csv_status_active;"
-    )
+    op.execute("DROP INDEX IF EXISTS log.ux_upload_file_hash_type_csv_status_active;")
     print("✓ Dropped partial unique index: ux_upload_file_hash_type_csv_status_active")
-    
+
     # 元の UNIQUE 制約を復元
     op.create_unique_constraint(
         "uq_upload_file_hash_type_csv_status",
         "upload_file",
         ["file_hash", "file_type", "csv_type", "processing_status"],
-        schema="log"
+        schema="log",
     )
     print("✓ Restored unique constraint: uq_upload_file_hash_type_csv_status")

@@ -59,7 +59,7 @@ base AS (
 -- 過去月: 月末まで（month_end）※月末日を含む
 -- 未来月: first_business_day の前日（ただし月初より前にならないよう調整）
 cumulative_end_date AS (
-  SELECT 
+  SELECT
     CASE
       -- 当月の場合: 昨日まで（today - 1）
       WHEN date_trunc('month', CAST(:req AS DATE)) = date_trunc('month', (SELECT today FROM today))

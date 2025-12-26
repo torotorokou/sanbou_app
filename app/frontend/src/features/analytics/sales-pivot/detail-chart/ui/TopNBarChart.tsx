@@ -4,7 +4,15 @@
  */
 
 import React from 'react';
-import { ResponsiveContainer, BarChart, Bar, CartesianGrid, XAxis, YAxis, Tooltip as RTooltip } from 'recharts';
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  CartesianGrid,
+  XAxis,
+  YAxis,
+  Tooltip as RTooltip,
+} from 'recharts';
 import type { MetricEntry, CategoryKind } from '../../shared/model/types';
 import { fmtCurrency, fmtNumber, fmtUnitPrice } from '../../shared/model/metrics';
 

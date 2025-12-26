@@ -39,12 +39,12 @@ declare -a FILES_TO_REMOVE=(
 main() {
     show_script_header "Git 履歴から機密ファイルを削除" \
         "⚠️  この操作は Git 履歴を書き換えます"
-    
+
     # Git リポジトリのルートを取得
     local repo_root
     repo_root=$(get_repo_root) || exit 1
-    cd "$repo_root"
-    
+    cd "$repo_root" || exit 1
+
     # 確認
     log_warn "以下を確認してください:"
     echo "1. ✅ バックアップを取得済み"
@@ -52,30 +52,30 @@ main() {
     echo "3. ✅ 作業中のブランチがないことを確認"
     echo "4. ✅ この操作後、全員が再クローンする必要があります"
     echo ""
-    
+
     confirm_critical "Git 履歴を書き換えます" || {
         log_info "キャンセルしました"
         exit 0
     }
     echo ""
-    
+
     # Step 1: git-filter-repo の確認
     log_section "Step 1: git-filter-repo の確認"
     check_git_filter_repo || exit 1
     echo ""
-    
+
     # Step 2: バックアップ作成
     log_section "Step 2: バックアップ作成"
     local backup_file
     backup_file=$(create_tar_backup ".git") || exit 1
     log_success "バックアップ: $backup_file"
     echo ""
-    
+
     # Step 3: リモートの一時的な変更
     log_section "Step 3: リモートの一時的な変更"
     backup_remote "origin" "origin-backup"
     echo ""
-    
+
     # Step 4: 削除対象ファイルのリストアップ
     log_section "Step 4: 削除対象ファイルのリストアップ"
     log_info "以下のファイルを履歴から削除します:"
@@ -83,16 +83,16 @@ main() {
         echo "  - $file"
     done
     echo ""
-    
+
     # Step 5: git-filter-repo による履歴削除
     log_section "Step 5: git-filter-repo による履歴削除"
-    
+
     # 削除コマンドを構築
     local filter_args=""
     for file in "${FILES_TO_REMOVE[@]}"; do
         filter_args="$filter_args --path $file --invert-paths"
     done
-    
+
     log_step "実行中..."
     if git filter-repo $filter_args --force; then
         log_success "履歴から削除完了"
@@ -102,12 +102,12 @@ main() {
         exit 1
     fi
     echo ""
-    
+
     # Step 6: リモートの復元
     log_section "Step 6: リモートの復元"
     restore_remote "origin-backup" "origin"
     echo ""
-    
+
     # Step 7: Git のクリーンアップ
     log_section "Step 7: Git のクリーンアップ"
     log_step "Git データベースを最適化中..."
@@ -115,15 +115,15 @@ main() {
     git gc --prune=now --aggressive
     log_success "Git データベースを最適化しました"
     echo ""
-    
+
     # Step 8: Git サイズの確認
     log_section "Step 8: Git サイズの確認"
     show_git_size
     echo ""
-    
+
     # 完了メッセージ
     log_section "✅ 完了しました"
-    
+
     log_warn "次のステップ:"
     echo ""
     echo "1. リモートに強制プッシュ:"
@@ -145,4 +145,3 @@ main() {
 # スクリプト実行
 # =============================================================================
 main "$@"
-

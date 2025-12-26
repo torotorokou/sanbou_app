@@ -3,9 +3,11 @@ PDFファイルのページ画像取得ユーティリティ。
 fitz（PyMuPDF）とPillowを利用してPDFページをPNG画像として返す。
 """
 
-import fitz
 import io
+
+import fitz
 from PIL import Image
+
 
 def get_pdf_page_image(pdf_path: str, page_num: int) -> io.BytesIO:
     """

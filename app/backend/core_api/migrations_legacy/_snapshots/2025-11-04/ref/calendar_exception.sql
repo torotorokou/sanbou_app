@@ -60,4 +60,3 @@ ALTER TABLE ONLY ref.calendar_exception
 --
 
 \unrestrict OhG3DufT5aKz2TvbLnhypWHfMqPYF9a9Ucb1QVdB4sP14HZNQlmsCp2XcaeewJH
-

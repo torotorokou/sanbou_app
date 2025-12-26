@@ -4,39 +4,37 @@
 // ===================================================
 // Constants - ブレークポイント・定数
 // ===================================================
-export { 
-  bp, 
-  mq, 
-  match, 
-  ANT,  // @deprecated bp を使用してください
-  BP, 
-  tierOf, 
-  isMobile, 
-  isTabletOrHalf, 
+export {
+  bp,
+  mq,
+  match,
+  BP,
+  tierOf,
+  isMobile,
+  isTabletOrHalf,
   isDesktop,
   type BpKey,
-  type AntKey,  // @deprecated
   type ViewportTier,
-} from './constants/breakpoints';
+} from "./constants/breakpoints";
 
 // ===================================================
 // Config - API Endpoints & Configuration
 // ===================================================
-export * from './config';
+export * from "./config";
 
 // ===================================================
 // Utils - 日付・数値・汎用ユーティリティ
 // ===================================================
-export * from './utils/dateUtils';
-export * from './utils/errorHandling';
-export * from './utils/anchors';
-export * from './utils/pdf/workerLoader';
-export * from './utils/responsiveTest';
+export * from "./utils/dateUtils";
+export * from "./utils/errorHandling";
+export * from "./utils/anchors";
+export * from "./utils/pdf/workerLoader";
+export * from "./utils/responsiveTest";
 
 // ===================================================
 // Theme - トークン・カラーマップ
 // ===================================================
-export * from './theme';
+export * from "./theme";
 
 // ===================================================
 // Infrastructure - HTTP/Job
@@ -44,48 +42,59 @@ export * from './theme';
 // ===================================================
 // Infrastructure - HTTP Client
 // ===================================================
-export { 
+export {
   coreApi,
-  apiGet, 
-  apiPost, 
-  apiGetBlob, 
+  apiGet,
+  apiPost,
+  apiGetBlob,
   apiPostBlob,
   fetchWithTimeout,
   ApiError,
   client,
-} from './infrastructure/http';
+  setMessageInstance,
+} from "./infrastructure/http";
 
 // ===================================================
 // Utils - ユーティリティ
 // ===================================================
-export * from './utils';
+export * from "./utils";
 
 // ===================================================
 // Types - 型定義
 // ===================================================
-export * from './types';
+export * from "./types";
 
 // ===================================================
 // Hooks - 公開Hook（推奨）
 // ===================================================
-export { 
+export {
   // レスポンシブ（推奨）
   useResponsive,
   // 内部実装（必要な場合のみ）
   useContainerSize,
   useScrollTracker,
   useSidebar,
-} from './hooks/ui';
+  // Drawer自動クローズ
+  getIsDrawerMode,
+  useSidebarNavigation,
+  useAutoCloseSidebarOnRouteChange,
+} from "./hooks/ui";
+
+// Feature Flags ViewModel Hook
+export {
+  useFeatureFlags,
+  type FeatureFlagsViewModel,
+} from "./hooks/useFeatureFlags";
 
 // ===================================================
 // UI Components - 再利用可能なコンポーネント
 // ===================================================
-export * from './ui';
+export * from "./ui";
 
 // ===================================================
 // Components - 共通コンポーネント
 // ===================================================
-export { ErrorBoundary } from './components/ErrorBoundary';
+export { ErrorBoundary } from "./components/ErrorBoundary";
 
 // ===================================================
 // Styles - グローバルCSS（直接importで使用）

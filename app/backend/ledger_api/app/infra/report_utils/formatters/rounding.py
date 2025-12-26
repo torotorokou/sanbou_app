@@ -35,9 +35,7 @@ def round_value_column_generic(
 
     # --- その他：整数で丸め ---
     mask_non_tanka = ~is_tanka & is_numeric
-    rounded.loc[mask_non_tanka] = (
-        numeric_vals.loc[mask_non_tanka].round(0).astype("Int64")
-    )
+    rounded.loc[mask_non_tanka] = numeric_vals.loc[mask_non_tanka].round(0).astype("Int64")
 
     # --- 結果を反映 ---
     df[value_column] = rounded

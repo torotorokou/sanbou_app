@@ -22,17 +22,17 @@ Backend Shared Package
   - backend_shared.core.domain
   - backend_shared.core.usecases.csv_validator
   - backend_shared.core.usecases.csv_formatter
-  
+
   # Infrastructure
   - backend_shared.infra.adapters.presentation
   - backend_shared.infra.adapters.middleware
   - backend_shared.infra.adapters.fastapi
   - backend_shared.infra.frameworks.database
-  
+
   # Configuration & DI
   - backend_shared.config.config_loader
   - backend_shared.config.di_providers
-  
+
   # Database (DB関連全機能)
   - backend_shared.db (names, url_builder, health, shogun)
 

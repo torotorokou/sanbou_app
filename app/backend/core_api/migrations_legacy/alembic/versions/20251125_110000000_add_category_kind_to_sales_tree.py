@@ -15,9 +15,8 @@ Revision ID: 20251125_110000000
 Revises: 20251121_100000000
 Create Date: 2025-11-25 11:00:00.000000
 """
-from alembic import op
-import sqlalchemy as sa
 
+from alembic import op
 
 revision = "20251125_110000000"
 down_revision = "20251121_100000000"
@@ -28,22 +27,25 @@ depends_on = None
 def upgrade() -> None:
     """
     mart.v_sales_tree_detail_base に category_cd と category_kind カラムを追加
-    
+
     処理順序:
     1. 既存の mart.v_sales_tree_detail_base を DROP
     2. category_cd と category_kind を含む新しいビューを作成
     3. app_readonly に SELECT 権限を付与
     """
-    
+
     print("[mart.v_sales_tree_detail_base] Updating VIEW to include category_kind...")
-    
+
     # 1) 既存ビューをDROP
-    op.execute("""
+    op.execute(
+        """
         DROP VIEW IF EXISTS mart.v_sales_tree_detail_base CASCADE;
-    """)
-    
+    """
+    )
+
     # 2) category_cd と category_kind を含む新しいビューを作成
-    op.execute("""
+    op.execute(
+        """
         CREATE VIEW mart.v_sales_tree_detail_base AS
         SELECT
             COALESCE(sales_date, slip_date) AS sales_date,
@@ -73,17 +75,20 @@ def upgrade() -> None:
             COALESCE(sales_date, slip_date) IS NOT NULL
             AND COALESCE(is_deleted, false) = false
             AND category_cd IN (1, 2);  -- 廃棄物と有価物のみ
-    """)
-    
+    """
+    )
+
     print("[mart.v_sales_tree_detail_base] VIEW updated successfully with category_kind.")
-    
+
     # 3) app_readonly に SELECT 権限を付与
     print("[mart.v_sales_tree_detail_base] Granting SELECT to app_readonly...")
-    
-    op.execute("""
+
+    op.execute(
+        """
         GRANT SELECT ON mart.v_sales_tree_detail_base TO app_readonly;
-    """)
-    
+    """
+    )
+
     print("[mart.v_sales_tree_detail_base] Migration complete.")
 
 
@@ -91,14 +96,17 @@ def downgrade() -> None:
     """
     元の定義に戻す（廃棄物のみ、category_cd と category_kind なし）
     """
-    
+
     print("[mart.v_sales_tree_detail_base] Reverting to original definition...")
-    
-    op.execute("""
+
+    op.execute(
+        """
         DROP VIEW IF EXISTS mart.v_sales_tree_detail_base CASCADE;
-    """)
-    
-    op.execute("""
+    """
+    )
+
+    op.execute(
+        """
         CREATE VIEW mart.v_sales_tree_detail_base AS
         SELECT
             COALESCE(sales_date, slip_date) AS sales_date,
@@ -122,10 +130,13 @@ def downgrade() -> None:
             category_cd = 1
             AND COALESCE(sales_date, slip_date) IS NOT NULL
             AND COALESCE(is_deleted, false) = false;
-    """)
-    
-    op.execute("""
+    """
+    )
+
+    op.execute(
+        """
         GRANT SELECT ON mart.v_sales_tree_detail_base TO app_readonly;
-    """)
-    
+    """
+    )
+
     print("[mart.v_sales_tree_detail_base] Downgrade complete.")

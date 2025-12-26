@@ -19,29 +19,35 @@ docs/
 ## 主要コンポーネント
 
 ### adapters/
+
 - **FastAPI統合**: エラーハンドラー、ミドルウェア
 - **Presentation層**: レスポンスベース、エラーレスポンス、成功レスポンス
 
 ### db/
+
 - **database.py**: データベース接続管理
 - **base_model.py**: 共通ベースモデル
 - **repository_base.py**: リポジトリ基底クラス
 - **utils.py**: DB関連ユーティリティ
 
 ### domain/
+
 - **contract.py**: 契約ドメインモデル
 - **job.py**: ジョブドメインモデル
 
 ### infrastructure/
+
 - **config**: 設定ローダー、パス管理
 - **logging_utils**: ログ設定、アクセスログ
 
 ### usecases/
+
 - **csv_formatter**: CSVフォーマット処理
 - **csv_validator**: CSVバリデーション
 - **report_checker**: レポートチェッカー
 
 ### utils/
+
 - **csv_reader.py**: CSV読み込み
 - **dataframe_utils.py**: DataFrame操作
 - **dataframe_validator.py**: DataFrameバリデーション

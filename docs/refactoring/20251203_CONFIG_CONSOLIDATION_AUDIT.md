@@ -11,10 +11,12 @@
 ### 主要な発見事項
 
 1. **backend_sharedの`ReportTemplateConfigLoader`は現在使用されている**
+
    - `ledger_api`の`base_report_generator.py`で使用中
    - 削除は不可
 
 2. **設定ファイルの重複が存在**
+
    - `app/config/report_config/manage_report_masters.yaml`
    - `app/backend/ledger_api/app/config/templates_config.yaml`
    - 両者はほぼ同じ内容（パスの表記が異なるのみ）
@@ -42,16 +44,19 @@ class ReportTemplateConfigLoader:
 ```
 
 **使用箇所**:
+
 - `app/backend/ledger_api/app/core/usecases/reports/base_generators/base_report_generator.py`
+
   ```python
   from backend_shared.config.config_loader import ReportTemplateConfigLoader
-  
+
   class BaseReportGenerator:
       def __init__(self):
           self.config_loader_report = ReportTemplateConfigLoader()
   ```
 
 **パス定義**: `backend_shared/config/paths.py`
+
 ```python
 MANAGER_CSV_DEF_PATH = (
     "/backend/config/report_config/manage_report_masters.yaml"
@@ -68,15 +73,15 @@ MANAGER_CSV_DEF_PATH = (
 
 #### 📁 現在の設定ファイル一覧
 
-| ファイルパス | 用途 | 使用サービス | 管理場所 |
-|------------|------|------------|---------|
-| `app/config/csv_config/shogun_csv_masters.yaml` | CSV基本定義（カラム、型、一意キー） | core_api, backend_shared, ledger_api | ✅ 共有 |
-| `app/config/csv_config/header_mappings/master.yaml` | マスターCSVヘッダーマッピング | ？（使用箇所不明） | 共有 |
-| `app/config/report_config/manage_report_masters.yaml` | レポートテンプレート設定 | ledger_api (via backend_shared) | ✅ 共有 |
-| `app/backend/ledger_api/app/config/main_paths.yaml` | ledger_api用パス設定 | ledger_api | ❌ ledger_api専用 |
-| `app/backend/ledger_api/app/config/templates_config.yaml` | レポートテンプレート設定（重複） | ledger_api | ❌ ledger_api専用 |
-| `app/backend/ledger_api/app/config/required_columns_definition.yaml` | レポート用必須カラム定義 | ledger_api | ❌ ledger_api専用 |
-| `app/backend/ledger_api/app/config/expected_import_csv_dtypes.yaml` | レポート用型定義 | ledger_api | ❌ ledger_api専用 |
+| ファイルパス                                                         | 用途                                | 使用サービス                         | 管理場所          |
+| -------------------------------------------------------------------- | ----------------------------------- | ------------------------------------ | ----------------- |
+| `app/config/csv_config/shogun_csv_masters.yaml`                      | CSV基本定義（カラム、型、一意キー） | core_api, backend_shared, ledger_api | ✅ 共有           |
+| `app/config/csv_config/header_mappings/master.yaml`                  | マスターCSVヘッダーマッピング       | ？（使用箇所不明）                   | 共有              |
+| `app/config/report_config/manage_report_masters.yaml`                | レポートテンプレート設定            | ledger_api (via backend_shared)      | ✅ 共有           |
+| `app/backend/ledger_api/app/config/main_paths.yaml`                  | ledger_api用パス設定                | ledger_api                           | ❌ ledger_api専用 |
+| `app/backend/ledger_api/app/config/templates_config.yaml`            | レポートテンプレート設定（重複）    | ledger_api                           | ❌ ledger_api専用 |
+| `app/backend/ledger_api/app/config/required_columns_definition.yaml` | レポート用必須カラム定義            | ledger_api                           | ❌ ledger_api専用 |
+| `app/backend/ledger_api/app/config/expected_import_csv_dtypes.yaml`  | レポート用型定義                    | ledger_api                           | ❌ ledger_api専用 |
 
 ---
 
@@ -87,6 +92,7 @@ MANAGER_CSV_DEF_PATH = (
 **場所**: `app/config/csv_config/shogun_csv_masters.yaml`
 
 **内容**:
+
 - CSV種別ごとの基本定義（shipment, receive, yard, payable, sales_summary）
 - カラムの日本語名→英語名マッピング
 - データ型定義
@@ -95,6 +101,7 @@ MANAGER_CSV_DEF_PATH = (
 - 集約関数（agg）定義
 
 **使用箇所**:
+
 - `backend_shared/config/config_loader.py` → `ShogunCsvConfigLoader`
 - `core_api` の動的ORMモデル生成
 - `core_api` のCSVアップロード処理
@@ -109,18 +116,20 @@ MANAGER_CSV_DEF_PATH = (
 **場所**: `app/backend/ledger_api/app/config/templates_config.yaml`
 
 **内容**:
+
 ```yaml
 factory_report:
-    key: factory_report
-    label: 工場日報
-    required_files: [yard, shipment]
-    master_csv_path:
-        shobun: infra/data_sources/master/factory_report/shobun_map.csv
-        # ...
-    template_excel_path: infra/data_sources/templates/factory_report.xlsx
+  key: factory_report
+  label: 工場日報
+  required_files: [yard, shipment]
+  master_csv_path:
+    shobun: infra/data_sources/master/factory_report/shobun_map.csv
+    # ...
+  template_excel_path: infra/data_sources/templates/factory_report.xlsx
 ```
 
 **使用箇所**:
+
 - `ledger_api/app/infra/report_utils/template_config.py`
   ```python
   def get_template_config() -> dict:
@@ -136,18 +145,20 @@ factory_report:
 **場所**: `app/config/report_config/manage_report_masters.yaml`
 
 **内容**: `templates_config.yaml`とほぼ同じ（パスが絶対パスで記載）
+
 ```yaml
 factory_report:
-    key: factory_report
-    label: 工場日報
-    required_files: [yard, shipment]
-    master_csv_path:
-        shobun: data/master/factory_report/shobun_map.csv
-        # ...
-    template_excel_path: /backend/app/api/services/manage_report_processors/factory_report/data/templates/factory_report.xlsx
+  key: factory_report
+  label: 工場日報
+  required_files: [yard, shipment]
+  master_csv_path:
+    shobun: data/master/factory_report/shobun_map.csv
+    # ...
+  template_excel_path: /backend/app/api/services/manage_report_processors/factory_report/data/templates/factory_report.xlsx
 ```
 
 **使用箇所**:
+
 - `backend_shared/config/config_loader.py` → `ReportTemplateConfigLoader`
 - `ledger_api/app/core/usecases/reports/base_generators/base_report_generator.py`
 
@@ -160,6 +171,7 @@ factory_report:
 **場所**: `app/backend/ledger_api/app/config/required_columns_definition.yaml`
 
 **内容**:
+
 ```yaml
 columns:
     shipment: &shipment_cols
@@ -177,6 +189,7 @@ factory_report:
 ```
 
 **使用箇所**:
+
 - `ledger_api/app/infra/report_utils/template_config.py`
   ```python
   def get_required_columns_definition(template_name: str) -> dict:
@@ -187,6 +200,7 @@ factory_report:
 **役割**: **レポート生成時に必要なカラムをフィルタリング**するための定義
 
 **特徴**:
+
 - `shogun_csv_masters.yaml`の全カラムではなく、各レポートで**実際に使うカラムのみ**を定義
 - YAMLアンカーで共通カラムを再利用
 
@@ -197,21 +211,23 @@ factory_report:
 **場所**: `app/backend/ledger_api/app/config/expected_import_csv_dtypes.yaml`
 
 **内容**:
+
 ```yaml
 column_types:
-    shipment: &shipment_schema
-        業者CD: int
-        業者名: str
-        # ...
+  shipment: &shipment_schema
+    業者CD: int
+    業者名: str
+    # ...
 
 factory_report:
-    shipment:
-        業者CD: int
-        正味重量: int
-        品名: str
+  shipment:
+    業者CD: int
+    正味重量: int
+    品名: str
 ```
 
 **使用箇所**:
+
 - `ledger_api/app/infra/report_utils/template_config.py`
   ```python
   def get_expected_dtypes() -> dict:
@@ -221,6 +237,7 @@ factory_report:
 **役割**: **レポート生成時のCSV読み込みで使う型定義**（pandas dtype指定用）
 
 **特徴**:
+
 - `shogun_csv_masters.yaml`と似ているが、**レポート特化**の型定義
 - `required_columns_definition.yaml`で指定されたカラムの型情報を提供
 
@@ -231,22 +248,23 @@ factory_report:
 **場所**: `app/config/csv_config/header_mappings/master.yaml`
 
 **内容**:
+
 ```yaml
 取引先一覧:
-    columns:
-        取引先CD: client_cd
-        取引先名1: client_name1
-        # ...
+  columns:
+    取引先CD: client_cd
+    取引先名1: client_name1
+    # ...
 
 業者一覧:
-    columns:
-        業者CD: vendor_cd
-        # ...
+  columns:
+    業者CD: vendor_cd
+    # ...
 
 品名一覧:
-    columns:
-        品名CD: item_cd
-        # ...
+  columns:
+    品名CD: item_cd
+    # ...
 ```
 
 **使用箇所**: grep検索では**使用箇所が見つからなかった**
@@ -259,20 +277,20 @@ factory_report:
 
 #### ✅ レポート生成でのみ使用される設定ファイル
 
-| ファイル | 理由 | 移行可能性 |
-|---------|------|----------|
-| `templates_config.yaml` | レポートテンプレート設定（ledger_api専用） | ⚠️ 重複のため整理必要 |
-| `manage_report_masters.yaml` | 同上（backend_shared経由） | ⚠️ 重複のため整理必要 |
-| `required_columns_definition.yaml` | レポート用カラムフィルタ | ✅ backend_sharedへ移行可能 |
-| `expected_import_csv_dtypes.yaml` | レポート用型定義 | ✅ backend_sharedへ移行可能 |
-| `main_paths.yaml` | ledger_api用パス管理 | ❌ ledger_api専用（移行不要） |
+| ファイル                           | 理由                                       | 移行可能性                    |
+| ---------------------------------- | ------------------------------------------ | ----------------------------- |
+| `templates_config.yaml`            | レポートテンプレート設定（ledger_api専用） | ⚠️ 重複のため整理必要         |
+| `manage_report_masters.yaml`       | 同上（backend_shared経由）                 | ⚠️ 重複のため整理必要         |
+| `required_columns_definition.yaml` | レポート用カラムフィルタ                   | ✅ backend_sharedへ移行可能   |
+| `expected_import_csv_dtypes.yaml`  | レポート用型定義                           | ✅ backend_sharedへ移行可能   |
+| `main_paths.yaml`                  | ledger_api用パス管理                       | ❌ ledger_api専用（移行不要） |
 
 #### ❌ レポート以外でも使用される設定ファイル
 
-| ファイル | 理由 |
-|---------|------|
-| `shogun_csv_masters.yaml` | core_api（CSV upload）、backend_shared（formatter）、ledger_api（report）で使用 |
-| `header_mappings/master.yaml` | 用途不明（使用箇所なし） |
+| ファイル                      | 理由                                                                            |
+| ----------------------------- | ------------------------------------------------------------------------------- |
+| `shogun_csv_masters.yaml`     | core_api（CSV upload）、backend_shared（formatter）、ledger_api（report）で使用 |
+| `header_mappings/master.yaml` | 用途不明（使用箇所なし）                                                        |
 
 ---
 
@@ -283,6 +301,7 @@ factory_report:
 #### 1. レポートテンプレート設定の重複解消
 
 **問題**:
+
 - `templates_config.yaml` (ledger_api専用)
 - `manage_report_masters.yaml` (backend_shared経由)
 
@@ -291,17 +310,20 @@ factory_report:
 **推奨アクション**:
 
 **オプションA: backend_sharedに統一（推奨）**
+
 ```
 削除: app/backend/ledger_api/app/config/templates_config.yaml
 保持: app/config/report_config/manage_report_masters.yaml
 ```
 
 **理由**:
+
 - `ReportTemplateConfigLoader`が既に`backend_shared`にある
 - 他のサービスで将来レポート機能が必要になった場合に再利用可能
 - シングルソースの原則
 
 **変更が必要な箇所**:
+
 ```python
 # ledger_api/app/infra/report_utils/template_config.py
 def get_template_config() -> dict:
@@ -313,10 +335,12 @@ def get_template_config() -> dict:
 ```
 
 **オプションB: ledger_apiに統一**
+
 - backend_sharedから`ReportTemplateConfigLoader`を削除
 - すべて`templates_config.yaml`に統一
 
 **理由**:
+
 - レポート機能は現状`ledger_api`のみ
 - 他サービスで使われる予定がない場合はシンプル
 
@@ -327,6 +351,7 @@ def get_template_config() -> dict:
 #### 2. ledger_api専用設定のbackend_sharedへの移行検討
 
 **対象**:
+
 - `required_columns_definition.yaml`
 - `expected_import_csv_dtypes.yaml`
 
@@ -345,10 +370,12 @@ backend_sharedにローダークラスを追加:
 ```
 
 **メリット**:
+
 - 設定ファイルが`app/config/`に集約される
 - 他のサービスでも再利用可能
 
 **デメリット**:
+
 - 現状は`ledger_api`専用なので、過剰設計の可能性
 - `main_paths.yaml`のリファクタリングが必要
 
@@ -363,6 +390,7 @@ backend_sharedにローダークラスを追加:
 **現状**: 使用箇所が見つからない
 
 **推奨アクション**:
+
 1. 全サービスで詳細に使用箇所を検索
 2. 未使用の場合は削除または`archive/`に移動
 3. 使用されている場合は用途をドキュメント化
@@ -374,10 +402,12 @@ backend_sharedにローダークラスを追加:
 **現状**: `ledger_api`専用のパス管理YAML
 
 **問題点**:
+
 - 他の設定YAMLへのパスが記載されている（メタ設定）
 - 相対パスと絶対パスが混在
 
 **推奨アクション**:
+
 - `main_paths.yaml`を廃止し、環境変数またはコンストラクタ引数でパスを注入
 - または、`backend_shared/config/paths.py`に統合
 
@@ -390,10 +420,12 @@ backend_sharedにローダークラスを追加:
 **現状**: すべてのCSV種別の基本定義が含まれている
 
 **将来の課題**:
+
 - CSV種別が増えるとファイルが肥大化
 - レポート特有の定義（`required_columns`など）は別ファイルが適切
 
 **推奨アクション**:
+
 - 現状維持（当面は問題なし）
 - 将来的には種別ごとにファイル分割を検討
   ```
@@ -435,11 +467,13 @@ app/
 ```
 
 **メリット**:
+
 - 設定ファイルが`app/config/`に集約
 - backend_sharedで設定ロジックを一元管理
 - 他サービスでの再利用が容易
 
 **デメリット**:
+
 - backend_sharedの責務が増える
 - レポート機能がledger_api専用の場合は過剰設計
 
@@ -467,11 +501,13 @@ app/
 ```
 
 **メリット**:
+
 - サービスの独立性が高い
 - ledger_api専用の設定をledger_api内に閉じる
 - backend_sharedの責務が軽い
 
 **デメリット**:
+
 - 将来的に他サービスでレポート機能が必要になった場合に再利用しにくい
 - `ReportTemplateConfigLoader`の配置が不自然（backend_sharedにあるのにledger_api専用）
 
@@ -489,6 +525,7 @@ app/
 ### ステップ2: 設定ファイルの整理（短期）
 
 2. `header_mappings/master.yaml`の使用状況を確認
+
    - 未使用なら削除
    - 使用されているなら用途をドキュメント化
 
@@ -500,6 +537,7 @@ app/
 ### ステップ3: アーキテクチャの整理（中長期）
 
 4. `main_paths.yaml`のリファクタリング
+
    - パス管理方法の統一
    - 環境変数化の検討
 
@@ -560,10 +598,12 @@ app/
 #### 1. ✅ `manage_report_masters.yaml`のパス形式を統一
 
 **変更内容**:
+
 - 絶対パス形式から相対パス形式に変更
 - `templates_config.yaml`と同じパス形式に統一
 
 **例**:
+
 ```yaml
 # 変更前
 template_excel_path: /backend/app/api/services/manage_report_processors/factory_report/data/templates/factory_report.xlsx
@@ -575,6 +615,7 @@ template_excel_path: infra/data_sources/templates/factory_report.xlsx
 #### 2. ✅ `ReportTemplateConfigLoader`に新メソッドを追加
 
 **追加メソッド**:
+
 ```python
 def get_all_config(self) -> dict:
     """全ての帳票設定を取得"""
@@ -590,10 +631,12 @@ def get_report_config(self, report_key: str) -> dict:
 #### 3. ✅ `template_config.py`を修正
 
 **変更内容**:
+
 - `get_template_config()`を`ReportTemplateConfigLoader`を使用する形に変更
 - `main_paths.yaml`経由でのアクセスから、backend_shared経由に変更
 
 **変更前**:
+
 ```python
 def get_template_config() -> dict:
     """main_paths.yaml 経由で templates_config.yaml を読み込む"""
@@ -601,11 +644,12 @@ def get_template_config() -> dict:
 ```
 
 **変更後**:
+
 ```python
 def get_template_config() -> dict:
     """
     backend_sharedのReportTemplateConfigLoaderを使用してテンプレート設定を読み込む
-    
+
     Returns:
         dict: 全ての帳票設定の辞書
     """
@@ -616,22 +660,26 @@ def get_template_config() -> dict:
 #### 4. ✅ `main_paths.yaml`から参照を削除
 
 **変更内容**:
+
 - `templates_config: 'config/templates_config.yaml'`の行を削除
 
 #### 5. ✅ 重複ファイルを削除
 
 **削除したファイル**:
+
 - `app/backend/ledger_api/app/config/templates_config.yaml`
 
 ### 動作確認結果
 
 #### ✅ コンテナ起動確認
+
 ```bash
 $ docker compose ps ledger_api
 STATUS: Up 55 minutes (healthy)
 ```
 
 #### ✅ ReportTemplateConfigLoader動作確認
+
 ```bash
 $ docker exec ledger_api python -c "from backend_shared.config.config_loader import ReportTemplateConfigLoader; ..."
 ✅ ReportTemplateConfigLoader works
@@ -639,6 +687,7 @@ $ docker exec ledger_api python -c "from backend_shared.config.config_loader imp
 ```
 
 #### ✅ get_template_config関数動作確認
+
 ```bash
 $ docker exec ledger_api python -c "from app.infra.report_utils import get_template_config; ..."
 ✅ get_template_config works
@@ -646,11 +695,13 @@ $ docker exec ledger_api python -c "from app.infra.report_utils import get_templ
 ```
 
 #### ✅ パス解決確認
+
 ```bash
 ✅ factory_report template_excel_path: infra/data_sources/templates/factory_report.xlsx
 ```
 
 #### ✅ Pythonエラーチェック
+
 ```bash
 $ get_errors app/backend/ledger_api
 No errors found.
@@ -659,6 +710,7 @@ No errors found.
 ### 変更ファイル一覧
 
 1. **修正**:
+
    - `app/config/report_config/manage_report_masters.yaml` - パス形式を統一
    - `app/backend/backend_shared/src/backend_shared/config/config_loader.py` - メソッド追加
    - `app/backend/ledger_api/app/infra/report_utils/template_config.py` - ReportTemplateConfigLoader使用に変更
@@ -672,7 +724,7 @@ No errors found.
 ✅ **重複解消**: 2つの設定ファイルが1つに統一  
 ✅ **シングルソース**: `app/config/report_config/manage_report_masters.yaml`が唯一の真実の情報源  
 ✅ **backend_shared統一**: レポート設定がbackend_sharedで一元管理  
-✅ **エラーなし**: 全ての動作確認でエラーなし  
+✅ **エラーなし**: 全ての動作確認でエラーなし
 
 ### 今後の作業
 
@@ -698,20 +750,24 @@ No errors found.
 ✅ **確認完了**: `header_mappings/master.yaml`は**現在使用されていません**
 
 **詳細**:
+
 - Pythonコード内での参照なし（grep検索で0件）
 - インポート文なし
 - YAMLファイル内のキー名（取引先一覧、業者一覧、品名一覧）の参照もなし
 
 **作成したドキュメント**:
+
 - `app/config/csv_config/header_mappings/README.md`を作成
 - 使用状況、経緯、今後の対応オプションを記載
 
 **推奨アクション**:
+
 1. **即時対応可**: ファイルを削除またはアーカイブ
 2. 削除する場合: `rm -rf app/config/csv_config/header_mappings/`（README作成後なので保留）
 3. アーカイブする場合: `mv app/config/csv_config/header_mappings app/config/archive/`
 
 **判断保留理由**:
+
 - 将来的に使用する計画があるか確認が必要
 - プロジェクトオーナーの判断を待つ
 
@@ -726,6 +782,7 @@ No errors found.
 **現状**: 未使用であることが確認済み
 
 **アクション**:
+
 1. プロジェクトオーナーに確認
    - 将来的に使用する予定があるか？
    - 削除してよいか？
@@ -740,10 +797,12 @@ No errors found.
 #### B. ledger_api専用設定のbackend_shared移行検討
 
 **対象ファイル**:
+
 - `required_columns_definition.yaml`
 - `expected_import_csv_dtypes.yaml`
 
 **判断ポイント**:
+
 1. 他のサービス（rag_api、manual_api）でレポート機能が必要になるか？
    - YES → backend_sharedに移行
    - NO → 現状維持（ledger_api専用）
@@ -751,38 +810,41 @@ No errors found.
 **移行する場合の手順**:
 
 1. **ファイル移動**:
+
    ```bash
    mv app/backend/ledger_api/app/config/required_columns_definition.yaml \
       app/config/csv_config/required_columns_definition.yaml
-   
+
    mv app/backend/ledger_api/app/config/expected_import_csv_dtypes.yaml \
       app/config/csv_config/expected_import_csv_dtypes.yaml
    ```
 
 2. **backend_sharedにローダークラス追加**:
+
    ```python
    # backend_shared/config/config_loader.py
-   
+
    class RequiredColumnsLoader:
        """レポート用必須カラム定義ローダー"""
        def __init__(self, path="/backend/config/csv_config/required_columns_definition.yaml"):
            with open(path, "r", encoding="utf-8") as f:
                self.config = yaml.safe_load(f)
-       
+
        def get_required_columns(self, template_name: str, csv_type: str) -> list[str]:
            return self.config.get(template_name, {}).get(csv_type, [])
-   
+
    class ExpectedDtypesLoader:
        """レポート用型定義ローダー"""
        def __init__(self, path="/backend/config/csv_config/expected_import_csv_dtypes.yaml"):
            with open(path, "r", encoding="utf-8") as f:
                self.config = yaml.safe_load(f)
-       
+
        def get_dtypes(self, template_name: str, csv_type: str) -> dict:
            return self.config.get(template_name, {}).get(csv_type, {})
    ```
 
 3. **ledger_apiのコード修正**:
+
    - `template_config.py`の`get_required_columns_definition()`を修正
    - `template_config.py`の`get_expected_dtypes()`を修正
    - `main_paths.yaml`から参照を削除
@@ -794,15 +856,18 @@ No errors found.
 **想定作業時間**: 1-2時間
 
 **メリット**:
+
 - 設定ファイルが`app/config/`に集約
 - 他サービスでの再利用が可能
 - backend_sharedで一元管理
 
 **デメリット**:
+
 - ledger_api専用の場合は過剰設計
 - `main_paths.yaml`のリファクタリングが必要
 
 **判断基準**:
+
 - 他サービスでレポート機能が必要 → 移行
 - ledger_apiのみで使用 → 現状維持
 
@@ -813,6 +878,7 @@ No errors found.
 #### C. `main_paths.yaml`のリファクタリング
 
 **現状の問題点**:
+
 - メタ設定（他のYAMLファイルへのパス）が記載されている
 - 相対パスと絶対パスが混在
 - ledger_api専用だが、汎用的な名前
@@ -820,21 +886,25 @@ No errors found.
 **推奨アクション**:
 
 **オプション1**: `main_paths.yaml`を廃止
+
 - 環境変数またはコンストラクタ引数でパスを注入
 - 設定ファイルのパスをハードコーディングではなく、DIで管理
 
 **オプション2**: `backend_shared/config/paths.py`に統合
+
 - ledger_api固有のパスも`paths.py`で管理
 - サービスごとのセクションを作成
 
 **想定作業時間**: 2-3時間
 
 **メリット**:
+
 - パス管理が一元化
 - 環境ごとの切り替えが容易
 - テストがしやすい
 
 **デメリット**:
+
 - 既存コードの変更箇所が多い
 - リスクが高い（動作確認が必要）
 
@@ -902,11 +972,12 @@ git commit -m "chore: 未使用のheader_mappingsディレクトリを削除
 **ファイル**: `app/backend/ledger_api/app/infra/report_utils/template_config.py`
 
 **追加した関数**:
+
 ```python
 def get_required_columns_from_shogun(template_name: str) -> dict:
     """ShogunCsvConfigLoaderを使用して、テンプレートに必要なカラムを取得"""
     # shogun_csv_masters.yamlから全カラム情報を取得
-    
+
 def get_expected_dtypes_from_shogun() -> dict:
     """ShogunCsvConfigLoaderを使用して、全テンプレートの型定義を取得"""
     # shogun_csv_masters.yamlから型情報を取得
@@ -915,6 +986,7 @@ def get_expected_dtypes_from_shogun() -> dict:
 #### 2. ✅ 既存関数を新実装に置き換え
 
 **変更前**:
+
 ```python
 def get_required_columns_definition(template_name: str) -> dict:
     all_defs = load_yaml("required_columns_definition", section="config_files")
@@ -926,6 +998,7 @@ def get_expected_dtypes() -> dict:
 ```
 
 **変更後**:
+
 ```python
 def get_required_columns_definition(template_name: str) -> dict:
     """ShogunCsvConfigLoaderを使用（shogun_csv_masters.yamlから取得）"""
@@ -939,17 +1012,19 @@ def get_expected_dtypes() -> dict:
 #### 3. ✅ ledger_api専用YAMLファイルを削除
 
 **削除したファイル**:
+
 - `app/backend/ledger_api/app/config/required_columns_definition.yaml`
 - `app/backend/ledger_api/app/config/expected_import_csv_dtypes.yaml`
 
 #### 4. ✅ `main_paths.yaml`から参照を削除
 
 **削除したセクション**:
+
 ```yaml
 # yamlパス
 config_files:
-    expected_dtypes: 'config/expected_import_csv_dtypes.yaml'
-    required_columns_definition: 'config/required_columns_definition.yaml'
+  expected_dtypes: "config/expected_import_csv_dtypes.yaml"
+  required_columns_definition: "config/required_columns_definition.yaml"
 ```
 
 #### 5. ✅ エクスポートの追加
@@ -959,6 +1034,7 @@ config_files:
 ### 動作確認結果
 
 #### ✅ get_required_columns_definition テスト
+
 ```bash
 $ docker exec ledger_api python -c "from app.infra.report_utils import get_required_columns_definition; ..."
 ✅ factory_report: ['yard', 'shipment']
@@ -966,6 +1042,7 @@ $ docker exec ledger_api python -c "from app.infra.report_utils import get_requi
 ```
 
 #### ✅ get_expected_dtypes テスト
+
 ```bash
 $ docker exec ledger_api python -c "from app.infra.report_utils import get_expected_dtypes; ..."
 ✅ Templates: 6 templates
@@ -973,12 +1050,14 @@ $ docker exec ledger_api python -c "from app.infra.report_utils import get_expec
 ```
 
 #### ✅ Pythonエラーチェック
+
 ```bash
 $ get_errors app/backend/ledger_api
 No errors found.
 ```
 
 #### ✅ コンテナ状態
+
 ```bash
 $ docker compose ps ledger_api
 STATUS: Up About an hour (healthy)
@@ -987,6 +1066,7 @@ STATUS: Up About an hour (healthy)
 ### 変更ファイル一覧
 
 1. **修正**:
+
    - `app/backend/ledger_api/app/infra/report_utils/template_config.py` - 新実装追加、既存関数を置き換え
    - `app/backend/ledger_api/app/infra/report_utils/__init__.py` - エクスポート追加
    - `app/backend/ledger_api/app/config/main_paths.yaml` - 参照削除
@@ -1001,11 +1081,12 @@ STATUS: Up About an hour (healthy)
 ✅ **backend_shared統一**: `shogun_csv_masters.yaml`が唯一の情報源  
 ✅ **重複排除**: カラム定義と型定義が一元管理される  
 ✅ **メンテナンス性向上**: 設定変更が1ファイルで完結  
-✅ **エラーなし**: 全ての動作確認でエラーなし  
+✅ **エラーなし**: 全ての動作確認でエラーなし
 
 ### アーキテクチャの改善
 
 **Before（変更前）**:
+
 ```
 ledger_api専用YAML
   ├── required_columns_definition.yaml  （カラムリスト）
@@ -1016,6 +1097,7 @@ shogun_csv_masters.yaml（全サービス共有）
 ```
 
 **After（変更後）**:
+
 ```
 shogun_csv_masters.yaml（全サービス共有）
   └── カラム定義 + 型定義 + その他メタ情報

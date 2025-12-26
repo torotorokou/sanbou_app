@@ -1,6 +1,6 @@
 /**
  * ReservationDailyRepository - 予約表リポジトリインターフェース
- * 
+ *
  * Port (インターフェース定義)
  * 規約: Repository抽象、実装詳細に依存しない
  */
@@ -12,7 +12,7 @@ export interface ReservationForecastDaily {
   fixed_customer_count?: number; // 固定客企業数
   reserve_fixed_trucks: number;
   reserve_fixed_ratio: number;
-  source: 'manual' | 'customer_agg';
+  source: "manual" | "customer_agg";
   note?: string;
 }
 
@@ -31,7 +31,10 @@ export interface ReservationDailyRepository {
    * @param from 開始日 (YYYY-MM-DD)
    * @param to 終了日 (YYYY-MM-DD)
    */
-  getForecastDaily(from: string, to: string): Promise<ReservationForecastDaily[]>;
+  getForecastDaily(
+    from: string,
+    to: string,
+  ): Promise<ReservationForecastDaily[]>;
 
   /**
    * 手入力データを保存/更新

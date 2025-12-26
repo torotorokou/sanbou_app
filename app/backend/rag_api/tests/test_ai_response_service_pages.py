@@ -1,5 +1,5 @@
-from app.core.usecases.ai_response_service import AIResponseService
 from app.core.ports.pdf_service_port import PDFServiceBase
+from app.core.usecases.ai_response_service import AIResponseService
 
 
 class _DummyPDFService(PDFServiceBase):

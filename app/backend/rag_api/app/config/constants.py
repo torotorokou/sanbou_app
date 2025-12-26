@@ -1,4 +1,4 @@
-def build_prompt(query_input):
+def build_category_prompt(query_input):
     return f"""
     以下は、日本の産業廃棄物処理に関する教育用AIシステムで使われるカテゴリの一覧です：
     - 処理工程
@@ -32,6 +32,7 @@ def build_answer_prompt(context, query):
     3. 回答は 1. 2. 3. のように箇条書きで。
     4. 信頼度や出典（ページ番号）も可能な限り明示してください。
     """
+
 
 def build_prompt(query: str, context: str) -> str:
     return build_answer_prompt(context, query)

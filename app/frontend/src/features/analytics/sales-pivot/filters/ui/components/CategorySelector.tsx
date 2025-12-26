@@ -1,7 +1,7 @@
 /**
  * components/CategorySelector.tsx
  * 種別選択コンポーネント（廃棄物/有価物）
- * 
+ *
  * 責務:
  * - 廃棄物/有価物の切り替えUIを提供
  * - レスポンシブ対応のボタンスタイル
@@ -20,10 +20,7 @@ interface CategorySelectorProps {
 /**
  * 種別選択コンポーネント
  */
-export const CategorySelector: React.FC<CategorySelectorProps> = ({
-  value,
-  onChange,
-}) => (
+export const CategorySelector: React.FC<CategorySelectorProps> = ({ value, onChange }) => (
   <Space direction="vertical" size={2} className={styles.container}>
     <Typography.Text type="secondary">種別</Typography.Text>
     <Radio.Group

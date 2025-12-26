@@ -9,12 +9,9 @@ Revises: None
 Create Date: 2025-11-04 00:49:59.978622
 
 """
-from alembic import op
-import sqlalchemy as sa
-
 
 # revision identifiers, used by Alembic.
-revision = '9a092c4a1fcf'
+revision = "9a092c4a1fcf"
 down_revision = None  # ベースラインは親を持たない
 branch_labels = None
 depends_on = None

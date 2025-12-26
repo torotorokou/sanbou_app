@@ -45,10 +45,3 @@ CREATE MATERIALIZED VIEW mart.mv_inb_avg5y_weeksum_biz AS
 
 
 COMMENT ON MATERIALIZED VIEW mart.mv_inb_avg5y_weeksum_biz IS '5y weekly sum (business Mon–Sat, holidays excluded): AVG/STD across years by iso_week. iso_dow=0 sentinel.';
-
-
-
-
-
-
-

@@ -1,20 +1,19 @@
-
-
 # データファイルのロードやカテゴリ抽出など、ファイル入出力関連のサービス群。
 """
 データファイルのロードやカテゴリ抽出など、ファイル入出力関連のサービス群。
 """
 
+import json
 import os
 from pathlib import Path
-import json
+
 import yaml
-from typing import Dict, Tuple, List
-from app.shared.file_utils import PDF_PATH, JSON_PATH, FAISS_PATH, ENV_PATH, YAML_PATH
+
+from app.shared.file_utils import ENV_PATH, FAISS_PATH, JSON_PATH, PDF_PATH, YAML_PATH
 from backend_shared.core.domain.exceptions import InfrastructureError, NotFoundError
 
 
-def get_resource_paths() -> Dict[str, str]:
+def get_resource_paths() -> dict[str, str]:
     """
     各種リソースファイルのパスをまとめて返す。
     新しいリソース種別追加時はこの辞書に追記するだけで拡張可能。
@@ -32,8 +31,7 @@ def get_resource_paths() -> Dict[str, str]:
     }
 
 
-
-def load_json_data(json_path: str) -> Dict:
+def load_json_data(json_path: str) -> dict:
     """
     JSONファイルを読み込んで辞書として返す。
     ファイル存在チェック・例外処理付き。
@@ -53,7 +51,7 @@ def load_json_data(json_path: str) -> Dict:
         raise InfrastructureError(f"JSONファイルの読み込みに失敗: {json_path}", cause=e)
 
 
-def load_question_templates() -> List[Dict]:
+def load_question_templates() -> list[dict]:
     """
     質問テンプレート（YAML）を読み込み、必ず List[Dict] で返す。
 
@@ -68,7 +66,11 @@ def load_question_templates() -> List[Dict]:
         List[Dict]: テンプレートデータ
     """
     # 候補パスを順に確認
-    primary = str(get_resource_paths().get("YAML_PATH")) if get_resource_paths().get("YAML_PATH") else None
+    primary = (
+        str(get_resource_paths().get("YAML_PATH"))
+        if get_resource_paths().get("YAML_PATH")
+        else None
+    )
     fallbacks = [
         "/backend/config/category_question_templates_with_tags.yaml",
         "/backend/local_data/master/category_question_templates_with_tags.yaml",
@@ -77,14 +79,7 @@ def load_question_templates() -> List[Dict]:
     # 親ディレクトリを遡って repo 直下の config/ を探索（ローカル実行の救済）
     try:
         here = Path(__file__).resolve()
-        for parent in list(here.parents)[:6]:
-            for name in (
-                "category_question_templates_with_tags.yaml",
-                "category_question_templates.yaml",
-            ):
-                p = parent / ".." / ".." / ".." / ".." / ".."  # 安全のため更に遡る
-                # 上記は固定ではないので、実際には parent 直下から順に確認
-            # 正しくは parent 直下
+        # 正しくは parent 直下
         for parent in list(here.parents)[:6]:
             for rel in (
                 Path("config/category_question_templates_with_tags.yaml"),
@@ -96,7 +91,7 @@ def load_question_templates() -> List[Dict]:
     except Exception:
         pass
 
-    candidates: List[str] = []
+    candidates: list[str] = []
     if primary:
         candidates.append(primary)
     candidates.extend(fallbacks)
@@ -118,7 +113,9 @@ def load_question_templates() -> List[Dict]:
     return []
 
 
-def extract_categories_and_titles(data: List[Dict]) -> Tuple[List[str], Dict[str, List[str]]]:
+def extract_categories_and_titles(
+    data: list[dict],
+) -> tuple[list[str], dict[str, list[str]]]:
     """
     データからカテゴリとタイトルを抽出する。
 
@@ -142,7 +139,10 @@ def extract_categories_and_titles(data: List[Dict]) -> Tuple[List[str], Dict[str
         subcategories[k] = sorted(subcategories[k])
     return categories, subcategories
 
-def group_templates_by_category_and_tags(data: List[Dict]) -> Dict[str, Dict[Tuple[str, ...], List[str]]]:
+
+def group_templates_by_category_and_tags(
+    data: list[dict],
+) -> dict[str, dict[tuple[str, ...], list[str]]]:
     """
     テンプレートをカテゴリ・タグごとにグループ化する。
 
@@ -152,7 +152,8 @@ def group_templates_by_category_and_tags(data: List[Dict]) -> Dict[str, Dict[Tup
     Returns:
         dict: グループ化されたテンプレート
     """
-    def flatten_tags(tags) -> Tuple[str, ...]:
+
+    def flatten_tags(tags) -> tuple[str, ...]:
         """
         ネストしたリストやタプルを再帰的にフラットなタプルに変換
         """
@@ -162,7 +163,7 @@ def group_templates_by_category_and_tags(data: List[Dict]) -> Dict[str, Dict[Tup
                 result.extend(flatten_tags(t))
             return tuple(result)
         elif tags is None:
-            return tuple()
+            return ()
         else:
             return (str(tags),)
 

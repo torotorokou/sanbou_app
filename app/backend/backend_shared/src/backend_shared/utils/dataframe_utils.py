@@ -1,13 +1,11 @@
 import pandas as pd
-import numpy as np
+
 
 # 共通の特殊値リスト（欠損値として扱う文字列）
 NA_STRING_VALUES = ["<NA>", "nan", "None", "NaN", "NULL", "null", "#N/A", "#NA", ""]
 
 
-def combine_date_and_time(
-    df: pd.DataFrame, date_col: str, time_col: str
-) -> pd.DataFrame:
+def combine_date_and_time(df: pd.DataFrame, date_col: str, time_col: str) -> pd.DataFrame:
     """
     date_col（datetime64）と time_col（時刻文字列）を結合し、
     datetime64[ns] に変換して time_col に上書き。
@@ -27,9 +25,7 @@ def combine_date_and_time(
 
     # 結合して datetime 変換
     combined_str = date_str + " " + time_str
-    df[time_col] = pd.to_datetime(
-        combined_str, format="%Y/%m/%d %H:%M:%S", errors="coerce"
-    )
+    df[time_col] = pd.to_datetime(combined_str, format="%Y/%m/%d %H:%M:%S", errors="coerce")
 
     # デバッグ用
     # print(df[[date_col, time_col]].head())
@@ -50,10 +46,7 @@ def remove_weekday_parentheses(df: pd.DataFrame, column: str) -> pd.DataFrame:
 
     # 括弧がある行だけ除去処理
     df.loc[mask, column] = (
-        df.loc[mask, column]
-        .astype(str)
-        .str.replace(r"\([^)]+\)", "", regex=True)
-        .str.strip()
+        df.loc[mask, column].astype(str).str.replace(r"\([^)]+\)", "", regex=True).str.strip()
     )
 
     # 全体をdatetimeに変換（括弧がない行も含め）
@@ -66,7 +59,7 @@ def parse_str_column(df: pd.DataFrame, col: str) -> pd.DataFrame:
     """
     欠損値はそのまま、文字列は strip() して object 型にする
     '<NA>' などの値も適切に処理する
-    
+
     コードカラム（英語名が _cd で終わる）の場合は先頭ゼロを除去して正規化する
     例: "000123" → "123", "00123X" → "123X"
     """
@@ -77,7 +70,7 @@ def parse_str_column(df: pd.DataFrame, col: str) -> pd.DataFrame:
 
     # 非欠損値だけに str.strip() を適用（NaN は触らない）
     cleaned = cleaned.where(cleaned.isna(), cleaned.astype(str).str.strip())
-    
+
     # コードカラム（_cdで終わる）の場合は先頭ゼロを除去
     # 注意: この時点では日本語カラム名なので、英語名への変換前に適用する必要がある
     # そのため、カラム名ベースではなく、設定で判定する必要がある
@@ -89,30 +82,27 @@ def parse_str_column(df: pd.DataFrame, col: str) -> pd.DataFrame:
 def normalize_code_column(df: pd.DataFrame, col: str) -> pd.DataFrame:
     """
     コードカラムの先頭ゼロを除去して正規化する
-    
+
     用途: 取引先CD、業者CD、品目CD、営業担当者CDなどのコードフィールド
     例: "000123" → "123", "00123X" → "123X", "0000" → "" (空文字列)
-    
+
     :param df: 対象DataFrame
     :param col: 変換対象のカラム名
     :return: 変換後のDataFrame
     """
     cleaned = df[col].copy()
-    
+
     # '<NA>' などの特殊な値をNaNに変換
     cleaned = cleaned.replace(NA_STRING_VALUES, pd.NA)
-    
+
     # 非欠損値に対して先頭ゼロを除去
     # lstrip('0')を使用（例: "000123" → "123", "00123X" → "123X"）
     # 注意: "0000" のように全てゼロの場合は空文字列になるため、空文字列をNaNに変換
-    cleaned = cleaned.where(
-        cleaned.isna(), 
-        cleaned.astype(str).str.strip().str.lstrip('0')
-    )
-    
+    cleaned = cleaned.where(cleaned.isna(), cleaned.astype(str).str.strip().str.lstrip("0"))
+
     # 空文字列をNaNに変換（全てゼロだった場合）
     cleaned = cleaned.replace("", pd.NA)
-    
+
     return df.assign(**{col: cleaned})
 
 
@@ -145,7 +135,7 @@ def has_denpyou_date_column(df: pd.DataFrame, column_name: str = "伝票日付")
 def clean_na_strings(val):
     """
     <NA>等の文字列や空文字列をNoneに変換する共通関数
-    
+
     Note:
         パフォーマンスが重要な場合は clean_na_strings_vectorized() を使用してください。
     """
@@ -170,21 +160,21 @@ def clean_na_strings(val):
 def clean_na_strings_vectorized(series: pd.Series) -> pd.Series:
     """
     clean_na_strings のベクトル化版（高速）
-    
+
     従来版は series.apply(clean_na_strings) で行単位処理していたが、
     この関数ではベクトル化操作で一括変換する。
-    
+
     Parameters:
         series: クリーニング対象のSeries
-    
+
     Returns:
         <NA>等の文字列をNoneに変換したSeries
-    
+
     Performance:
         - 従来版: O(n) の Python ループ（apply）
         - 最適化版: O(1) のベクトル化操作（NumPy/Pandas内部）
         - 速度改善: 約10-100倍（データサイズに依存）
-    
+
     Notes:
         変換対象の文字列:
         - '<NA>', 'NaN', 'nan', 'None', 'NULL', 'null', '#N/A', '#NA'
@@ -193,46 +183,46 @@ def clean_na_strings_vectorized(series: pd.Series) -> pd.Series:
     # 文字列型でない場合はそのまま返す
     if not pd.api.types.is_string_dtype(series):
         return series
-    
+
     # ベクトル化: isin() で一括判定
-    na_strings = ['<NA>', 'NaN', 'nan', 'None', 'NULL', 'null', '#N/A', '#NA']
-    
+    na_strings = ["<NA>", "NaN", "nan", "None", "NULL", "null", "#N/A", "#NA"]
+
     # 1. NA文字列を判定
     is_na_string = series.isin(na_strings)
-    
+
     # 2. 空文字列（strip後）を判定
     # str.strip()は既にベクトル化されているので高速
-    is_empty = series.str.strip() == ''
-    
+    is_empty = series.str.strip() == ""
+
     # 3. どちらかに該当する場合はNone（pd.NA）に変換
     result = series.copy()
     result[is_na_string | is_empty] = None
-    
+
     return result
 
 
 def to_numeric_vectorized(series: pd.Series) -> pd.Series:
     """
     clean_na_strings_vectorized + pd.to_numeric の組み合わせを一括実行。
-    
+
     従来は:
     1. series.apply(clean_na_strings)
     2. pd.to_numeric(series, errors='coerce')
-    
+
     最適化版:
     1. clean_na_strings_vectorized(series)
     2. pd.to_numeric(series, errors='coerce')
-    
+
     両方ともベクトル化されているため、apply()を使うよりはるかに高速。
-    
+
     Parameters:
         series: 数値変換対象のSeries
-    
+
     Returns:
         数値型に変換されたSeries（変換できない値はNaN）
     """
     cleaned = clean_na_strings_vectorized(series)
-    return pd.to_numeric(cleaned, errors='coerce')
+    return pd.to_numeric(cleaned, errors="coerce")
 
 
 def common_cleaning(df: pd.DataFrame) -> pd.DataFrame:

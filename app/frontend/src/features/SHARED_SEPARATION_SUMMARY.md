@@ -3,6 +3,7 @@
 ## 🎯 実施内容
 
 ### 目的
+
 機能固有のストアと型定義をshared層から排除し、各機能層に集約する
 
 ### 実施内容
@@ -10,27 +11,32 @@
 #### 1. Manuals機能の移行
 
 **ファイル移動:**
+
 - `shared/infrastructure/stores/manualsStore.ts` → `features/manuals/model/manuals.store.ts`
 
 **新規作成:**
+
 - `features/manuals/index.ts` - 公開API
 
 **変更内容:**
+
 ```typescript
 // Before
-import { useManualsStore } from '@shared/infrastructure/stores';
+import { useManualsStore } from "@shared/infrastructure/stores";
 
 // After
-import { useManualsStore } from '@features/manuals';
+import { useManualsStore } from "@features/manuals";
 ```
 
 #### 2. Navi機能の移行
 
 **新規作成:**
+
 - `features/navi/model/types.ts` - MenuItem型定義とfilterMenuItems関数
 - `features/navi/index.ts` - 公開API
 
 **変更内容:**
+
 ```typescript
 // Before (app/layout/Sidebar.tsx)
 interface RawMenuItem { ... }
@@ -45,6 +51,7 @@ import { type MenuItem, filterMenuItems } from '@features/navi';
 ### Shared層の構成
 
 #### Before
+
 ```
 shared/
 ├── infrastructure/
@@ -57,6 +64,7 @@ shared/
 ```
 
 #### After
+
 ```
 shared/
 ├── infrastructure/
@@ -69,6 +77,7 @@ shared/
 ### Features層の構成
 
 #### Before
+
 ```
 features/
 ├── manuals/
@@ -82,6 +91,7 @@ features/
 ```
 
 #### After
+
 ```
 features/
 ├── manuals/
@@ -101,33 +111,39 @@ features/
 ## 📝 変更ファイル一覧
 
 ### 新規作成
+
 1. `features/manuals/index.ts`
 2. `features/manuals/model/manuals.store.ts`
 3. `features/navi/index.ts`
 4. `features/navi/model/types.ts`
 
 ### 更新
+
 1. `app/layout/Sidebar.tsx` - MenuItem型とfilterMenuItemsをnaviからインポート
 2. `shared/infrastructure/stores/index.ts` - コメントに変更
 
 ### 削除
+
 1. `shared/infrastructure/stores/manualsStore.ts`
 
 ## ✅ 検証結果
 
 ### ビルド
+
 ```bash
 $ npm run build
 ✓ built in 9.23s
 ```
 
 ### ESLint
+
 ```bash
 $ npm run lint
 ✔ No errors found
 ```
 
 ### 循環依存
+
 ```bash
 $ npm run dep:circular
 Processed 193 files (1.5s)
@@ -137,6 +153,7 @@ Processed 193 files (1.5s)
 ## 🎯 FSD適合度
 
 ### ✅ 改善項目
+
 1. ✅ 機能固有ストア削除（manuals）
 2. ✅ 機能固有型定義整理（navi）
 3. ✅ Shared層からfeatures層への適切な分離
@@ -144,21 +161,22 @@ Processed 193 files (1.5s)
 
 ### 📊 Before / After
 
-| 項目 | Before | After | 改善 |
-|---|---|---|---|
-| ファイル数 | 190 | 193 | +3 (新規追加) |
-| Shared層の機能固有ファイル | 1 | 0 | ✅ |
-| Features公開API | なし | 2 (manuals, navi) | ✅ |
-| 循環依存 | 0 | 0 | ✅ |
-| ESLintエラー | 0 | 0 | ✅ |
-| ビルド時間 | ~9s | 9.23s | ✅ |
+| 項目                       | Before | After             | 改善          |
+| -------------------------- | ------ | ----------------- | ------------- |
+| ファイル数                 | 190    | 193               | +3 (新規追加) |
+| Shared層の機能固有ファイル | 1      | 0                 | ✅            |
+| Features公開API            | なし   | 2 (manuals, navi) | ✅            |
+| 循環依存                   | 0      | 0                 | ✅            |
+| ESLintエラー               | 0      | 0                 | ✅            |
+| ビルド時間                 | ~9s    | 9.23s             | ✅            |
 
 ## 📚 使用例
 
 ### Manuals機能
+
 ```typescript
 // ✅ 推奨
-import { useManualsStore } from '@features/manuals';
+import { useManualsStore } from "@features/manuals";
 
 const Component = () => {
   const { listScrollY, setListScrollY } = useManualsStore();
@@ -167,9 +185,10 @@ const Component = () => {
 ```
 
 ### Navi機能
+
 ```typescript
 // ✅ 推奨
-import { type MenuItem, filterMenuItems } from '@features/navi';
+import { type MenuItem, filterMenuItems } from "@features/navi";
 
 const Sidebar = () => {
   const menu: MenuItem[] = filterMenuItems(SIDEBAR_MENU);

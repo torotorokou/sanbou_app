@@ -1,6 +1,8 @@
 from __future__ import annotations
+
+from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Iterable, Literal, Optional, Tuple, Dict
+from typing import Literal
 
 import numpy as np
 import pandas as pd
@@ -14,18 +16,18 @@ SmoothingMethod = Literal["median_then_mean", "mean_only"]
 @dataclass(frozen=True)
 class SmoothConfig:
     # 週内スムージング
-    intraweek_window: int = 3                      # 奇数推奨（1で無効）
+    intraweek_window: int = 3  # 奇数推奨（1で無効）
     intraweek_method: SmoothingMethod = "median_then_mean"
-    within_week_rel_cap: float = 1.6               # 週平均×倍率 上限
-    min_open_days_for_smooth: int = 2              # これ未満は例外処理
+    within_week_rel_cap: float = 1.6  # 週平均×倍率 上限
+    min_open_days_for_smooth: int = 2  # これ未満は例外処理
 
     # 日タイプ倍率（例：平日=1.0, 日曜=0.6, 祝日=0.8 など）
-    scope_weight_multiplier: Optional[Dict[str, float]] = None
+    scope_weight_multiplier: dict[str, float] | None = None
 
     # 月またぎブリッジ平滑
     bridge_smooth_enabled: bool = True
     bridge_smooth_window: int = 5
-    bridge_smooth_scope_values: Tuple[str, ...] = ("biz",)  # 平日のみ等
+    bridge_smooth_scope_values: tuple[str, ...] = ("biz",)  # 平日のみ等
 
 
 # ------------------------------------------------------------
@@ -72,7 +74,7 @@ def apply_intraweek_pipeline(
     weight_raw_col: str,
     weight_col: str,
     cfg: SmoothConfig,
-    scope_col: Optional[str] = None,
+    scope_col: str | None = None,
 ) -> pd.DataFrame:
     """
     前提: df_week は 1週ぶん（同じ (month_date, iso_year, iso_week)）。
@@ -87,11 +89,15 @@ def apply_intraweek_pipeline(
     w = g[weight_raw_col].astype(float).fillna(0.0)
 
     # 開いている日（raw>0）
-    open_mask = (w > 0)
+    open_mask = w > 0
 
     # 1) scope倍率（開いている日にのみ適用）
     if scope_col and cfg.scope_weight_multiplier:
-        factors = g[scope_col].map(lambda v: float(cfg.scope_weight_multiplier.get(str(v), 1.0))).astype(float)
+        factors = (
+            g[scope_col]
+            .map(lambda v: float(cfg.scope_weight_multiplier.get(str(v), 1.0)))
+            .astype(float)
+        )
         w = np.where(open_mask, w * factors, 0.0).astype(float)
 
     # 2) 営業日が少ない週
@@ -104,12 +110,16 @@ def apply_intraweek_pipeline(
 
     # 3) 平滑（閉所日は NaN 扱い → ロール後に 0 に戻す）
     w_for_roll = pd.Series(np.where(open_mask, w, np.nan), index=g.index)
-    w_sm = rolling_smooth(w_for_roll, window=cfg.intraweek_window, method=cfg.intraweek_method).fillna(0.0)
+    w_sm = rolling_smooth(
+        w_for_roll, window=cfg.intraweek_window, method=cfg.intraweek_method
+    ).fillna(0.0)
 
     # 4) 相対キャップ（開いている日の平均ベース）
     open_mean = float(w_sm[open_mask].mean()) if open_days > 0 else 0.0
     if open_mean > 0.0:
-        w_cap = np.where(open_mask, np.minimum(w_sm, open_mean * float(cfg.within_week_rel_cap)), 0.0)
+        w_cap = np.where(
+            open_mask, np.minimum(w_sm, open_mean * float(cfg.within_week_rel_cap)), 0.0
+        )
     else:
         w_cap = np.where(open_mask, w_sm, 0.0)
 
@@ -128,7 +138,7 @@ def bridge_smooth_across_months_and_renorm(
     month_key: str,
     target_col: str,
     scope_col: str,
-    scope_values: Tuple[str, ...],
+    scope_values: tuple[str, ...],
     window: int,
     method: SmoothingMethod = "median_then_mean",
 ) -> pd.DataFrame:

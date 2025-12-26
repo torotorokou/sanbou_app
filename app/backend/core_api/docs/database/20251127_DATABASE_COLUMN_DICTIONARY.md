@@ -3,7 +3,8 @@
 データベーススキーマから抽出した全カラム名の辞書。
 
 **生成日**: 2025-11-27  
-**ソース**: 
+**ソース**:
+
 - `app/backend/core_api/migrations/alembic/sql_current/schema_head.sql`
 - `app/backend/core_api/migrations/alembic/versions/*.py`
 
@@ -14,6 +15,7 @@
 ### raw schema (生データ：全カラムtext型)
 
 #### raw.shogun_flash_receive (受入速報 生データ)
+
 - slip_date, sales_date, payment_date
 - vendor_cd, vendor_name
 - slip_type_cd, slip_type_name
@@ -36,6 +38,7 @@
 - upload_file_id, source_row_no
 
 #### raw.shogun_final_receive (受入確定 生データ)
+
 - slip_date, sales_date, payment_date
 - vendor_cd, vendor_name
 - slip_type_cd, slip_type_name
@@ -59,6 +62,7 @@
 - upload_file_id, source_row_no
 
 #### raw.shogun_flash_shipment (出荷速報 生データ)
+
 - slip_date
 - client_name
 - item_name
@@ -76,6 +80,7 @@
 - upload_file_id, source_row_no
 
 #### raw.shogun_final_shipment (出荷確定 生データ)
+
 - slip_date
 - client_name
 - item_name
@@ -93,6 +98,7 @@
 - upload_file_id, source_row_no
 
 #### raw.shogun_flash_yard (ヤード速報 生データ)
+
 - slip_date
 - client_name
 - item_name
@@ -107,6 +113,7 @@
 - upload_file_id, source_row_no
 
 #### raw.shogun_final_yard (ヤード確定 生データ)
+
 - slip_date
 - client_name
 - item_name
@@ -125,6 +132,7 @@
 ### stg schema (型変換済み・クリーンデータ)
 
 #### stg.shogun_flash_receive (受入速報)
+
 - id (bigint, PK)
 - slip_date, sales_date, payment_date (date)
 - vendor_cd (integer), vendor_name (text)
@@ -150,9 +158,11 @@
 - created_at (timestamptz)
 
 #### stg.shogun_final_receive (受入確定)
+
 - 同上（shogun_flash_receiveと同じカラム構成）
 
 #### stg.shogun_flash_shipment (出荷速報)
+
 - id (bigint, PK)
 - slip_date (date)
 - client_name (text)
@@ -172,9 +182,11 @@
 - created_at (timestamptz)
 
 #### stg.shogun_final_shipment (出荷確定)
+
 - 同上（shogun_flash_shipmentと同じカラム構成）
 
 #### stg.shogun_flash_yard (ヤード速報)
+
 - id (bigint, PK)
 - slip_date (date)
 - client_name (text)
@@ -192,9 +204,11 @@
 - created_at (timestamptz)
 
 #### stg.shogun_final_yard (ヤード確定)
+
 - 同上（shogun_flash_yardと同じカラム構成）
 
 #### stg.receive_king_final (KING受入データ)
+
 - invoice_no (integer), invoice_date (varchar)
 - weighing_location_code (integer), weighing_location (varchar)
 - sales_purchase_type_code (integer), sales_purchase_type (varchar)
@@ -231,13 +245,14 @@
 - gross_weight_detail, tare_weight_detail, net_weight_detail (integer)
 - scale_ratio, scale (integer)
 - remarks_customer, remarks_internal (varchar)
-- param_* (各種パラメータ: varchar)
+- param\_\* (各種パラメータ: varchar)
 
 ---
 
 ### log schema (メタデータ・ログ)
 
 #### log.upload_file (CSVアップロードファイル情報)
+
 - id (integer, PK)
 - file_name (text): 元のファイル名
 - file_hash (varchar): SHA-256ハッシュ
@@ -260,6 +275,7 @@
 ### ref schema (マスタ・参照データ)
 
 #### ref.calendar_day (日付マスタ)
+
 - ddate (date, PK)
 - y (integer, generated): 年
 - m (integer, generated): 月
@@ -268,13 +284,16 @@
 - iso_dow (integer, generated): ISO曜日 (1=月, 7=日)
 
 #### ref.calendar_month (月マスタ)
+
 - month_date (date, PK): 月初日
 
 #### ref.holiday_jp (日本の祝日)
+
 - hdate (date, PK)
 - name (text): 祝日名
 
 #### ref.calendar_exception (カレンダー例外設定)
+
 - ddate (date, PK)
 - override_type (text): 'FORCE_CLOSED' / 'FORCE_OPEN' / 'FORCE_RESERVATION'
 - reason (text)
@@ -282,11 +301,13 @@
 - updated_at (timestamp)
 
 #### ref.closure_periods (休業期間)
+
 - start_date (date, PK)
 - end_date (date)
 - closure_name (text): 休業名（例: 正月休み）
 
 #### ref.closure_membership (日付と休業期間の紐付け)
+
 - ddate (date, PK)
 - start_date (date)
 - end_date (date)
@@ -297,6 +318,7 @@
 ### kpi schema (KPI・目標管理)
 
 #### kpi.monthly_targets (月次目標)
+
 - month_date (date, PK): 月初日
 - segment (text, PK): セグメント
 - metric (text, PK): メトリック名
@@ -311,12 +333,14 @@
 ### mart schema (分析用マート)
 
 #### mart.daily_target_plan (日次目標計画)
+
 - ddate (timestamp)
 - target_ton (double precision)
 - scope_used (text)
 - created_at (timestamp)
 
 #### mart.inb_profile_smooth_test (入荷プロファイル平滑化テスト)
+
 - scope (text, PK)
 - iso_week (integer, PK)
 - iso_dow (integer, PK)
@@ -330,6 +354,7 @@
 ### forecast schema (予測データ)
 
 #### forecast.inbound_forecast_run (予測実行メタデータ)
+
 - run_id (bigint, PK)
 - factory_id (text)
 - target_month (date)
@@ -342,6 +367,7 @@
 - notes (text)
 
 #### forecast.inbound_forecast_daily (日次予測結果)
+
 - run_id (bigint, FK → inbound_forecast_run)
 - target_date (date, PK)
 - horizon_days (integer): 予測日数先
@@ -350,12 +376,14 @@
 - scenario (text): シナリオ名 (default: 'base')
 
 #### forecast.inbound_forecast_weekly_raw (週次予測 生データ)
+
 - run_id (bigint, FK)
 - target_week_start (date, PK)
 - p50_ton, p10_ton, p90_ton (numeric)
 - scenario (text)
 
 #### forecast.inbound_forecast_monthly_raw (月次予測 生データ)
+
 - run_id (bigint, FK)
 - target_month (date, PK)
 - p50_ton, p10_ton, p90_ton (numeric)
@@ -368,32 +396,39 @@
 ### stg schema
 
 #### stg.v_active_shogun_final_receive
+
 - **SELECT列**: stg.shogun_final_receiveの全カラム
 - **条件**: `is_deleted = false`
 - **説明**: 論理削除されていない受入確定データ
 
 #### stg.v_active_shogun_flash_receive
+
 - **SELECT列**: stg.shogun_flash_receiveの全カラム
 - **条件**: `is_deleted = false`
 - **説明**: 論理削除されていない受入速報データ
 
 #### stg.v_active_shogun_final_shipment
+
 - **SELECT列**: stg.shogun_final_shipmentの全カラム
 - **条件**: `is_deleted = false`
 
 #### stg.v_active_shogun_flash_shipment
+
 - **SELECT列**: stg.shogun_flash_shipmentの全カラム
 - **条件**: `is_deleted = false`
 
 #### stg.v_active_shogun_final_yard
+
 - **SELECT列**: stg.shogun_final_yardの全カラム
 - **条件**: `is_deleted = false`
 
 #### stg.v_active_shogun_flash_yard
+
 - **SELECT列**: stg.shogun_flash_yardの全カラム
 - **条件**: `is_deleted = false`
 
 #### stg.v_king_receive_clean
+
 - **SELECT列**:
   - invoice_d (AS: invoice_dateをdate型に変換)
   - invoice_no
@@ -408,12 +443,14 @@
 ### ref schema (マスタビュー)
 
 #### ref.v_closure_days
+
 - **SELECT列**:
   - ddate (date): 休業日
   - closure_name (text): 休業名
 - **ソース**: ref.closure_periods (generate_seriesで日付展開)
 
 #### ref.v_calendar_classified
+
 - **SELECT列**:
   - ddate, y, m, iso_year, iso_week, iso_dow
   - is_holiday (boolean): 祝日フラグ
@@ -425,6 +462,7 @@
 - **説明**: カレンダー分類マスタ（祝日・休業日・営業日判定）
 
 #### ref.v_customer (顧客マスタビュー)
+
 - **SELECT列**:
   - customer_id (AS: client_cd)
   - customer_name (AS: max(client_name))
@@ -435,6 +473,7 @@
 - **グループ**: client_cd
 
 #### ref.v_item (品目マスタビュー)
+
 - **SELECT列**:
   - item_id (AS: item_cd)
   - item_name (AS: max(item_name))
@@ -447,6 +486,7 @@
 - **グループ**: item_cd
 
 #### ref.v_sales_rep (営業担当マスタビュー)
+
 - **SELECT列**:
   - sales_rep_id (AS: sales_staff_cd)
   - sales_rep_name (AS: max(sales_staff_name))
@@ -459,6 +499,7 @@
 ### mart schema
 
 #### mart.v_receive_daily (日次受入集計ビュー)
+
 - **SELECT列**:
   - ddate, y, m, iso_year, iso_week, iso_dow
   - is_business, is_holiday, day_type
@@ -468,7 +509,7 @@
   - sales_yen (numeric): 売上金額（円）
   - unit_price_yen_per_kg (numeric): kg単価（円/kg）
   - source_system (text): 'shogun_final' / 'shogun_flash' / 'king'
-- **ソース**: 
+- **ソース**:
   - stg.v_active_shogun_final_receive
   - stg.v_active_shogun_flash_receive
   - stg.v_king_receive_clean
@@ -477,6 +518,7 @@
 - **説明**: 将軍・KING統合の日次受入集計
 
 #### mart.v_receive_monthly (月次受入集計ビュー)
+
 - **SELECT列**:
   - month_date (date): 月初日
   - y, m (integer): 年、月
@@ -491,6 +533,7 @@
 - **グループ**: year, month
 
 #### mart.v_receive_weekly (週次受入集計ビュー)
+
 - **SELECT列**:
   - iso_year, iso_week (integer): ISO年、週番号
   - week_start_date, week_end_date (date): 週開始・終了日
@@ -505,6 +548,7 @@
 - **グループ**: iso_year, iso_week
 
 #### mart.v_daily_target_with_calendar (日次目標とカレンダー)
+
 - **SELECT列**:
   - ddate, iso_year, iso_week, iso_dow
   - day_type, is_business
@@ -514,6 +558,7 @@
 - **ソース**: ref.v_calendar_classified LEFT JOIN mart.daily_target_plan
 
 #### mart.mv_sales_tree_daily (売上ツリー日次 マテビュー)
+
 - **SELECT列**:
   - sales_date (date): 売上日（sales_date ?? slip_date）
   - rep_id (AS: sales_staff_cd)
@@ -533,10 +578,12 @@
   - idx_mv_sales_tree_daily_slip: (sales_date, customer_id, slip_no)
 
 #### mart.v_sales_tree_daily (売上ツリー日次ビュー)
+
 - **SELECT列**: mart.mv_sales_tree_dailyの全カラム
 - **説明**: マテリアライズドビューのラッパー
 
 #### mart.v_customer_sales_daily (顧客別日次売上ビュー)
+
 - **SELECT列**:
   - sales_date
   - customer_id
@@ -550,6 +597,7 @@
 - **グループ**: sales_date, customer_id
 
 #### mart.v_sales_tree_detail_base (売上ツリー詳細ベースビュー)
+
 - **SELECT列**:
   - sales_date (AS: COALESCE(sales_date, slip_date))
   - rep_id (AS: sales_staff_cd)
@@ -571,6 +619,7 @@
 - **説明**: 廃棄物(1)と有価物(3)の詳細データ
 
 #### mart.mv_target_card_per_day (日次目標カード マテビュー)
+
 - **SELECT列**:
   - ddate, iso_year, iso_week, iso_dow, is_business
   - target_ton (double precision)
@@ -582,15 +631,19 @@
 - **インデックス**: idx_mv_target_card_per_day_ddate (ddate DESC)
 
 #### mart.mv_inb5y_week_profile_min (5年入荷週プロファイル)
+
 - 省略（複雑な集計ビュー）
 
 #### mart.mv_inb_avg5y_day_biz (5年平均日次入荷 営業日)
+
 - 省略（複雑な集計ビュー）
 
 #### mart.mv_inb_avg5y_day_scope (5年平均日次入荷 スコープ別)
+
 - 省略（複雑な集計ビュー）
 
 #### mart.mv_inb_avg5y_weeksum_biz (5年平均週間合計入荷 営業日)
+
 - 省略（複雑な集計ビュー）
 
 ---
@@ -600,15 +653,17 @@
 ### Concept: 営業担当 (Sales Representative)
 
 **Variants**:
-- `sales_staff_cd` (stg.shogun_*_receive, raw.shogun_*_receive)
-- `sales_staff_name` (stg.shogun_*_receive, raw.shogun_*_receive)
-- `rep_id` (mart.mv_sales_tree_daily, mart.v_sales_tree_*) ← **別名**: sales_staff_cd
+
+- `sales_staff_cd` (stg.shogun*\*\_receive, raw.shogun*\*\_receive)
+- `sales_staff_name` (stg.shogun*\*\_receive, raw.shogun*\*\_receive)
+- `rep_id` (mart.mv*sales_tree_daily, mart.v_sales_tree*\*) ← **別名**: sales_staff_cd
 - `rep_name` (mart.mv_sales_tree_daily) ← **別名**: sales_staff_name
 - `sales_rep_id` (ref.v_customer, mart.v_customer_sales_daily) ← **別名**: sales_staff_cd
 - `sales_rep_name` (ref.v_customer, mart.v_customer_sales_daily) ← **別名**: sales_staff_name
 - `sales_person_code`, `sales_person` (stg.receive_king_final)
 
 **Used in**:
+
 - rawテーブル: `raw.shogun_flash_receive`, `raw.shogun_final_receive`, `raw.shogun_flash_yard`, `raw.shogun_final_yard`
 - stgテーブル: `stg.shogun_flash_receive`, `stg.shogun_final_receive`, `stg.shogun_flash_yard`, `stg.shogun_final_yard`, `stg.receive_king_final`
 - マートビュー: `mart.mv_sales_tree_daily`, `mart.v_sales_tree_daily`, `mart.v_customer_sales_daily`, `mart.v_sales_tree_detail_base`
@@ -616,6 +671,7 @@
 - API responses: sales_rep_id, sales_rep_name
 
 **マッピング**:
+
 ```
 sales_staff_cd → rep_id → sales_rep_id (コード)
 sales_staff_name → rep_name → sales_rep_name (名前)
@@ -626,13 +682,15 @@ sales_staff_name → rep_name → sales_rep_name (名前)
 ### Concept: 顧客 (Customer)
 
 **Variants**:
-- `client_cd` (stg.shogun_*_receive, raw.shogun_*_receive)
-- `client_name` (stg.shogun_*_receive/shipment/yard, raw.shogun_*_receive/shipment/yard)
-- `customer_id` (mart.mv_sales_tree_daily, mart.v_sales_tree_*, ref.v_customer) ← **別名**: client_cd
+
+- `client_cd` (stg.shogun*\*\_receive, raw.shogun*\*\_receive)
+- `client_name` (stg.shogun*\*\_receive/shipment/yard, raw.shogun*\*\_receive/shipment/yard)
+- `customer_id` (mart.mv*sales_tree_daily, mart.v_sales_tree*\*, ref.v_customer) ← **別名**: client_cd
 - `customer_name` (mart.mv_sales_tree_daily, mart.v_customer_sales_daily, ref.v_customer) ← **別名**: client_name
 - `customer_code`, `customer` (stg.receive_king_final)
 
 **Used in**:
+
 - rawテーブル: 全shogun系テーブル
 - stgテーブル: 全shogun系テーブル、receive_king_final
 - マートビュー: `mart.mv_sales_tree_daily`, `mart.v_sales_tree_*`, `mart.v_customer_sales_daily`
@@ -640,6 +698,7 @@ sales_staff_name → rep_name → sales_rep_name (名前)
 - API responses: customer_id, customer_name
 
 **マッピング**:
+
 ```
 client_cd → customer_id (コード)
 client_name → customer_name (名前)
@@ -650,19 +709,22 @@ client_name → customer_name (名前)
 ### Concept: 品目 (Item)
 
 **Variants**:
-- `item_cd` (stg.shogun_flash_receive, stg.shogun_final_receive, stg.shogun_*_yard)
+
+- `item_cd` (stg.shogun*flash_receive, stg.shogun_final_receive, stg.shogun*\*\_yard)
 - `item_name` (全shogun系テーブル)
 - `item_id` (mart.mv_sales_tree_daily, ref.v_item) ← **別名**: item_cd
 - `item_code` (stg.receive_king_final)
-- `aggregate_item_cd`, `aggregate_item_name` (shogun_*_receive系)
+- `aggregate_item_cd`, `aggregate_item_name` (shogun\_\*\_receive系)
 
 **Used in**:
+
 - rawテーブル: 全shogun系テーブル
 - stgテーブル: 全shogun系テーブル、receive_king_final
 - マートビュー: `mart.mv_sales_tree_daily`, `mart.v_sales_tree_*`
 - マスタビュー: `ref.v_item`
 
 **マッピング**:
+
 ```
 item_cd → item_id (コード)
 item_name (名前)
@@ -674,19 +736,22 @@ aggregate_item_cd, aggregate_item_name (集計品目)
 ### Concept: 伝票番号 (Slip/Receipt Number)
 
 **Variants**:
-- `receive_no` (stg.shogun_*_receive, raw.shogun_*_receive)
-- `slip_no` (mart.mv_sales_tree_daily, stg.shogun_*_yard) ← **別名**: receive_no
-- `shipment_no` (stg.shogun_*_shipment)
+
+- `receive_no` (stg.shogun*\*\_receive, raw.shogun*\*\_receive)
+- `slip_no` (mart.mv*sales_tree_daily, stg.shogun*\*\_yard) ← **別名**: receive_no
+- `shipment_no` (stg.shogun\_\*\_shipment)
 - `invoice_no` (stg.receive_king_final)
-- `manifest_no` (stg.shogun_*_receive)
+- `manifest_no` (stg.shogun\_\*\_receive)
 
 **Used in**:
+
 - 受入系: receive_no → slip_no
 - 出荷系: shipment_no
 - ヤード系: slip_no
 - KING系: invoice_no
 
 **マッピング**:
+
 ```
 receive_no → slip_no (受入)
 shipment_no (出荷)
@@ -699,18 +764,20 @@ invoice_no (KING)
 ### Concept: 日付 (Date)
 
 **Variants**:
+
 - `slip_date` (全shogun系テーブル): 伝票日付
-- `sales_date` (shogun_*_receive): 売上日付
-- `payment_date` (shogun_*_receive): 支払日付
+- `sales_date` (shogun\_\*\_receive): 売上日付
+- `payment_date` (shogun\_\*\_receive): 支払日付
 - `invoice_date`, `invoice_d` (stg.receive_king_final, stg.v_king_receive_clean): 請求日
 - `ddate` (ref.calendar_day, mart.v_receive_daily): 日付
 - `month_date` (kpi.monthly_targets, ref.calendar_month): 月初日
 - `target_date` (forecast.inbound_forecast_daily): 予測対象日
 - `uploaded_at` (log.upload_file): アップロード日時
-- `deleted_at` (stg.shogun_*, log.upload_file): 削除日時
-- `created_at` (stg.shogun_*, log.upload_file): 作成日時
+- `deleted_at` (stg.shogun\_\*, log.upload_file): 削除日時
+- `created_at` (stg.shogun\_\*, log.upload_file): 作成日時
 
 **マッピング**:
+
 ```
 slip_date: 伝票日（物理的な日付）
 sales_date: 売上日（会計上の日付）
@@ -722,6 +789,7 @@ COALESCE(sales_date, slip_date) → sales_date (martビューで統一)
 ### Concept: 重量 (Weight)
 
 **Variants**:
+
 - `net_weight` (全shogun系テーブル): 正味重量（kg）
 - `qty_kg` (mart.mv_sales_tree_daily) ← **別名**: net_weight
 - `net_weight_detail` (stg.receive_king_final, stg.v_king_receive_clean): KING正味重量詳細
@@ -732,10 +800,12 @@ COALESCE(sales_date, slip_date) → sales_date (martビューで統一)
 - `total_qty_kg` (mart.v_customer_sales_daily): 合計数量（kg）
 
 **Used in**:
+
 - 元データ: net_weight (kg単位)
 - マート: receive_net_ton (トン単位), qty_kg (kg単位)
 
 **マッピング**:
+
 ```
 net_weight → qty_kg (キログラム)
 net_weight / 1000 → receive_net_ton (トン)
@@ -746,6 +816,7 @@ net_weight / 1000 → receive_net_ton (トン)
 ### Concept: 金額 (Amount)
 
 **Variants**:
+
 - `amount` (全shogun系テーブル): 金額
 - `amount_yen` (mart.mv_sales_tree_daily) ← **別名**: amount
 - `sales_yen` (mart.v_receive_daily): 売上金額
@@ -754,6 +825,7 @@ net_weight / 1000 → receive_net_ton (トン)
 - `unit_price_yen_per_kg` (mart.v_receive_daily): kg単価（円/kg）
 
 **マッピング**:
+
 ```
 amount → amount_yen → sales_yen (金額)
 unit_price → unit_price_yen_per_kg (単価)
@@ -764,12 +836,14 @@ unit_price → unit_price_yen_per_kg (単価)
 ### Concept: カテゴリ (Category)
 
 **Variants**:
+
 - `category_cd` (全shogun系テーブル): カテゴリコード
 - `category_name` (全shogun系テーブル): カテゴリ名
 - `category_kind` (mart.v_sales_tree_detail_base): カテゴリ種別（'waste' / 'valuable' / 'other'）
 - `item_category_code`, `item_category` (stg.receive_king_final)
 
 **マッピング**:
+
 ```
 category_cd = 1 → category_kind = 'waste' (廃棄物)
 category_cd = 3 → category_kind = 'valuable' (有価物)
@@ -781,14 +855,16 @@ category_cd = 3 → category_kind = 'valuable' (有価物)
 ### Concept: ベンダー/業者 (Vendor)
 
 **Variants**:
-- `vendor_cd`, `vendor_name` (shogun_*_receive, shogun_*_shipment, shogun_*_yard)
-- `unload_vendor_cd`, `unload_vendor_name` (shogun_*_receive): 荷卸し業者
-- `transport_vendor_cd`, `transport_vendor_name` (shogun_*_receive): 運搬業者
+
+- `vendor_cd`, `vendor_name` (shogun*\*\_receive, shogun*_*shipment, shogun*_\_yard)
+- `unload_vendor_cd`, `unload_vendor_name` (shogun\_\*\_receive): 荷卸し業者
+- `transport_vendor_cd`, `transport_vendor_name` (shogun\_\*\_receive): 運搬業者
 - `discharge_company_code`, `discharge_company` (stg.receive_king_final): 排出業者
 - `disposal_company_code`, `disposal_contractor` (stg.receive_king_final): 処分業者
 - `carrier_code`, `carrier` (stg.receive_king_final): 運搬業者
 
 **Used in**:
+
 - 受入: vendor (仕入先), unload_vendor (荷卸し), transport_vendor (運搬)
 - 出荷: vendor (出荷先), transport_vendor_name (運搬)
 - ヤード: vendor (仕入先)
@@ -798,8 +874,9 @@ category_cd = 3 → category_kind = 'valuable' (有価物)
 ### Concept: サイト/場所 (Site/Location)
 
 **Variants**:
+
 - `site_cd`, `site_name` (shogun系テーブル)
-- `unload_site_cd`, `unload_site_name` (shogun_*_receive)
+- `unload_site_cd`, `unload_site_name` (shogun\_\*\_receive)
 - `weighing_location_code`, `weighing_location` (stg.receive_king_final)
 - `disposal_site_code`, `disposal_site` (stg.receive_king_final)
 
@@ -808,8 +885,9 @@ category_cd = 3 → category_kind = 'valuable' (有価物)
 ### Concept: 単位 (Unit)
 
 **Variants**:
-- `unit_cd`, `unit_name` (shogun_*_receive)
-- `unit_name` (shogun_*_shipment, shogun_*_yard)
+
+- `unit_cd`, `unit_name` (shogun\_\*\_receive)
+- `unit_name` (shogun*\*\_shipment, shogun*\*\_yard)
 - `unit_code`, `unit` (stg.receive_king_final)
 - `quantity` (全shogun系テーブル): 数量
 
@@ -818,26 +896,30 @@ category_cd = 3 → category_kind = 'valuable' (有価物)
 ### Concept: 論理削除 (Soft Delete)
 
 **Variants**:
-- `is_deleted` (stg.shogun_*, log.upload_file): 削除フラグ（true=削除済み）
-- `deleted_at` (stg.shogun_*, log.upload_file): 削除日時
-- `deleted_by` (stg.shogun_*, log.upload_file): 削除実行者
+
+- `is_deleted` (stg.shogun\_\*, log.upload_file): 削除フラグ（true=削除済み）
+- `deleted_at` (stg.shogun\_\*, log.upload_file): 削除日時
+- `deleted_by` (stg.shogun\_\*, log.upload_file): 削除実行者
 
 **Used in**:
-- 全stg.shogun_*テーブル
+
+- 全stg.shogun\_\*テーブル
 - log.upload_file
-- ビュー: stg.v_active_* (is_deleted = false でフィルタ)
+- ビュー: stg.v*active*\* (is_deleted = false でフィルタ)
 
 ---
 
 ### Concept: アップロード追跡 (Upload Tracking)
 
 **Variants**:
+
 - `upload_file_id` (全raw/stgテーブル): FK → log.upload_file.id
 - `source_row_no` (全raw/stgテーブル): CSVの元行番号
 - `file_name`, `file_hash`, `file_type`, `csv_type` (log.upload_file)
 - `processing_status` (log.upload_file): 'pending' / 'processing' / 'completed' / 'failed'
 
 **マッピング**:
+
 ```
 log.upload_file.id ← upload_file_id (FK)
 元CSVの行番号 → source_row_no
@@ -848,6 +930,7 @@ log.upload_file.id ← upload_file_id (FK)
 ### Concept: カレンダー分類 (Calendar Classification)
 
 **Variants**:
+
 - `is_business` (ref.v_calendar_classified, mart.v_receive_daily): 営業日フラグ
 - `is_holiday` (ref.v_calendar_classified, mart.v_receive_daily): 祝日フラグ
 - `day_type` (ref.v_calendar_classified, mart.v_receive_daily): 'NORMAL' / 'CLOSED' / 'RESERVATION'
@@ -860,6 +943,7 @@ log.upload_file.id ← upload_file_id (FK)
 ### Concept: 目標・実績 (Target & Achievement)
 
 **Variants**:
+
 - `target_ton` (mart.daily_target_plan, mart.mv_target_card_per_day): 目標トン数
 - `receive_net_ton` (mart.v_receive_daily, mart.mv_target_card_per_day): 受入純重量（トン）
 - `diff_ton` (mart.mv_target_card_per_day): 差異（実績 - 目標）
@@ -870,6 +954,7 @@ log.upload_file.id ← upload_file_id (FK)
 ### Concept: 集計単位 (Aggregation Level)
 
 **Variants**:
+
 - 日次: `ddate`, `sales_date`, `slip_date`
 - 週次: `iso_year`, `iso_week`, `week_start_date`, `week_end_date`
 - 月次: `y`, `m`, `month_date`
@@ -880,6 +965,7 @@ log.upload_file.id ← upload_file_id (FK)
 ## Summary
 
 ### スキーマ構成
+
 - **raw**: 生データ（全カラムtext型）
 - **stg**: 型変換済みクリーンデータ
 - **mart**: 分析用マート（集計ビュー・マテビュー）
@@ -891,7 +977,7 @@ log.upload_file.id ← upload_file_id (FK)
 ### 命名規則パターン
 
 1. **コード・名前ペア**: `xxx_cd` + `xxx_name` (例: item_cd, item_name)
-2. **マート別名**: 
+2. **マート別名**:
    - `sales_staff_cd` → `rep_id`
    - `client_cd` → `customer_id`
    - `item_cd` → `item_id`

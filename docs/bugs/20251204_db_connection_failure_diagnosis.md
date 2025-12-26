@@ -16,12 +16,12 @@ FATAL: password authentication failed for user "dbuser"
 
 ### 2.1 パスワード不整合の詳細
 
-| 場所 | パスワード設定 | 状態 |
-|------|--------------|------|
-| **実際のDB (PostgreSQL)** | `dbpassword` (例) | 変更されていない |
-| **secrets/.env.local_dev.secrets** | `newpassword***[マスク済み]` (例) | 新しいパスワードに変更済み |
-| **env/.env.local_dev (DATABASE_URL)** | `dbpassword` (例) | **ハードコードされたまま** |
-| **env/.env.common** | `__SET_IN_ENV_SPECIFIC_FILE__` | プレースホルダー |
+| 場所                                  | パスワード設定                    | 状態                       |
+| ------------------------------------- | --------------------------------- | -------------------------- |
+| **実際のDB (PostgreSQL)**             | `dbpassword` (例)                 | 変更されていない           |
+| **secrets/.env.local_dev.secrets**    | `newpassword***[マスク済み]` (例) | 新しいパスワードに変更済み |
+| **env/.env.local_dev (DATABASE_URL)** | `dbpassword` (例)                 | **ハードコードされたまま** |
+| **env/.env.common**                   | `__SET_IN_ENV_SPECIFIC_FILE__`    | プレースホルダー           |
 
 ### 2.2 問題の構造
 
@@ -31,28 +31,28 @@ graph TD
     B --> C[1. env/.env.common]
     B --> D[2. env/.env.local_dev]
     B --> E[3. secrets/.env.local_dev.secrets]
-    
+
     C --> F[POSTGRES_PASSWORD=__SET_IN_ENV_SPECIFIC_FILE__]
     D --> G[DATABASE_URL=postgresql://dbuser:<OLD_PASSWORD>@db:5432/sanbou_dev]
     E --> H[POSTGRES_PASSWORD=<NEW_PASSWORD>]
-    
+
     H --> I[DBコンテナ: 新パスワードで環境変数設定]
     I --> J{既存DBデータ存在?}
     J -->|Yes| K[既存のパスワード <OLD_PASSWORD> を使用]
     J -->|No| L[新パスワードで初期化]
-    
+
     K --> M[実際のDBパスワード: <OLD_PASSWORD>]
-    
+
     G --> N[アプリケーションコンテナ: DATABASE_URLを使用]
     N --> O[接続試行: dbpassword]
-    
+
     H --> P[アプリケーションコンテナ: POSTGRES_PASSWORDも設定]
     P --> Q[衝突: 2つの異なるパスワード設定]
-    
+
     O --> R[成功するはずだが...]
     Q --> S[DATABASE_URLが優先される]
     S --> T[結果的に dbpassword で接続成功]
-    
+
     style K fill:#f96
     style H fill:#fc6
     style G fill:#f96
@@ -89,7 +89,7 @@ local_dev-plan_worker-1   local_dev-plan_worker   Up 4 minutes (unhealthy)
 
 ```sql
 \du
-   Role name    |                         Attributes                         
+   Role name    |                         Attributes
 ----------------+------------------------------------------------------------
  app_readonly   | Cannot login
  dbuser         | Superuser, Create role, Create DB, Replication, Bypass RLS
@@ -112,11 +112,12 @@ Docker Composeの`env_file`は以下の順序で読み込まれますが、**後
 ### 4.2 実際の動作
 
 1. **DBコンテナ**: PostgreSQLイメージは起動時に既存のDBデータディレクトリを検出
+
    - `PostgreSQL Database directory appears to contain a database; Skipping initialization`
    - **既存のパスワード (`<OLD_PASSWORD>` 例) をそのまま使用**
    - `POSTGRES_PASSWORD` 環境変数は既存DBには影響しない
 
-2. **アプリケーションコンテナ**: 
+2. **アプリケーションコンテナ**:
    - `DATABASE_URL` 環境変数が明示的に接続文字列を指定
    - この中に `<OLD_PASSWORD>` (例) がハードコードされている
    - 個別の `POSTGRES_PASSWORD` 環境変数より `DATABASE_URL` が優先される
@@ -132,6 +133,7 @@ DATABASE_URL=postgresql://dbuser:<PASSWORD>@db:5432/sanbou_dev
 ```
 
 **問題点:**
+
 - パスワードが平文でGit管理ファイルに記載
 - `POSTGRES_PASSWORD` 環境変数を使う設計なのに、DATABASE_URLで上書きされる
 - 環境変数の分離設計が機能していない
@@ -145,16 +147,19 @@ healthcheck:
 ```
 
 **問題点:**
+
 - ユーザー名 `dbuser` がハードコード
 - 環境変数を使用していない
 
 ### 5.3 PostgreSQLの初期化メカニズム
 
 PostgreSQLコンテナは以下の動作をします:
+
 - 初回起動時: `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB` で初期化
 - 2回目以降: 既存データがあれば環境変数を無視して既存のパスワードを使用
 
 **つまり、既存DBのパスワードを変更するには:**
+
 1. SQLコマンドで直接変更する必要がある
 2. または、データを削除して再初期化する
 
@@ -165,6 +170,7 @@ PostgreSQLコンテナは以下の動作をします:
 #### Step 1: DATABASE_URLを環境変数から構築
 
 `env/.env.local_dev`:
+
 ```dotenv
 # ❌ 削除
 # DATABASE_URL=postgresql://dbuser:dbpassword@db:5432/sanbou_dev
@@ -174,6 +180,7 @@ POSTGRES_DB=sanbou_dev
 ```
 
 `secrets/.env.local_dev.secrets`:
+
 ```dotenv
 POSTGRES_USER=dbuser
 POSTGRES_PASSWORD=dbpassword  # 既存のパスワードに戻す
@@ -181,6 +188,7 @@ DATABASE_URL=postgresql://dbuser:dbpassword@db:5432/sanbou_dev
 ```
 
 または、アプリケーションコード側で環境変数から動的に構築:
+
 ```python
 DATABASE_URL = f"postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_HOST}:{POSTGRES_PORT}/{POSTGRES_DB}"
 ```
@@ -188,6 +196,7 @@ DATABASE_URL = f"postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_HOST
 #### Step 2: healthcheckを環境変数化
 
 `docker/docker-compose.dev.yml`:
+
 ```yaml
 healthcheck:
   test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
@@ -199,12 +208,14 @@ healthcheck:
 #### Step 3: 既存パスワードを使い続けるか、新パスワードへ移行
 
 **Option A-1: 既存パスワードを使い続ける（最も安全）**
+
 ```bash
 # secrets/.env.local_dev.secrets でパスワードを戻す (例)
 POSTGRES_PASSWORD=<YOUR_CURRENT_PASSWORD>
 ```
 
 **Option A-2: 新パスワードへ移行（データ保持）**
+
 ```bash
 # 1. SQLでパスワード変更 (例: 実際のパスワードに置き換えてください)
 docker compose -f docker/docker-compose.dev.yml -p local_dev exec -T db \
@@ -217,6 +228,7 @@ docker compose -f docker/docker-compose.dev.yml -p local_dev restart
 ```
 
 **Option A-3: 新パスワードへ移行（データ削除）**
+
 ```bash
 # 1. 全コンテナ停止・削除
 docker compose -f docker/docker-compose.dev.yml -p local_dev down
@@ -231,6 +243,7 @@ docker compose -f docker/docker-compose.dev.yml -p local_dev up -d
 ### オプション B: 一時的な修正（推奨しない）
 
 `secrets/.env.local_dev.secrets` を元のパスワードに戻す (例):
+
 ```dotenv
 POSTGRES_PASSWORD=<YOUR_CURRENT_PASSWORD>
 ```
@@ -242,6 +255,7 @@ POSTGRES_PASSWORD=<YOUR_CURRENT_PASSWORD>
 ### 7.1 現在の移行計画の状況
 
 以下の準備が完了:
+
 - ✅ `docs/db/20251204_db_user_design.md` - 設計文書
 - ✅ `docs/db/20251204_db_user_migration_plan.md` - 移行計画
 - ✅ `scripts/sql/20251204_alter_current_user_password.sql` - パスワード変更SQL
@@ -275,15 +289,18 @@ POSTGRES_PASSWORD=<YOUR_CURRENT_PASSWORD>
 ### 8.3 推奨アクション
 
 **優先度1: DATABASE_URLの修正**
+
 - `env/.env.local_dev` から `DATABASE_URL` を削除
 - `secrets/.env.local_dev.secrets` に移動、または動的構築
 
 **優先度2: パスワードの整合性**
+
 - Option A-1: 既存パスワードを使い続ける（最も安全）
 - Option A-2: SQLでDBパスワードを変更（データ保持）
 - Option A-3: データ削除して再初期化（開発環境のみ）
 
 **優先度3: 環境変数の完全分離**
+
 - healthcheckの環境変数化
 - 全ての接続設定をsecrets/に統一
 

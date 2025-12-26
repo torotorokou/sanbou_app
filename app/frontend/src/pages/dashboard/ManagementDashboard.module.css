@@ -1,0 +1,192 @@
+/* Responsive dashboard layout for ManagementDashboard */
+@import '@app/styles/custom-media.css';
+
+.dashboardRoot {
+  padding: 16px;
+  height: calc(100vh - 32px);
+  box-sizing: border-box;
+}
+
+.dashboardTitle {
+  margin-bottom: 12px;
+}
+
+.dashboardMain {
+  height: calc(100% - 56px); /* title height approximation */
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+/* Two-column layout on desktop (xl: 1280px+) */
+@media (--ge-xl) {
+  .dashboardMain {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.leftColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.leftColumn > .panel {
+  flex: 1 1 50%;
+  min-height: 0; /* allow children to shrink for overflow */
+}
+
+.rightColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 0;
+}
+
+/* Use proportional flex for 40/30/30 split */
+.rightColumn > .panelTop {
+  flex: 4 1 40%;
+  min-height: 0;
+}
+.rightColumn > .panelMid,
+.rightColumn > .panelBottom {
+  flex: 3 1 30%;
+  min-height: 0;
+}
+
+/* Mobile / tablet tweaks: stack nicely, allow content-driven heights (< 1280px) */
+@media (--lt-md) {
+  .dashboardRoot {
+    padding: 12px;
+    height: auto; /* let page flow naturally on mobile */
+  }
+
+  .dashboardMain {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    height: auto;
+  }
+
+  .leftColumn,
+  .rightColumn {
+    display: block;
+  }
+
+  .leftColumn > .panel,
+  .rightColumn > .panelTop,
+  .rightColumn > .panelMid,
+  .rightColumn > .panelBottom {
+    flex: none;
+    min-height: 220px; /* reasonable minimum for charts on mobile */
+    height: auto;
+  }
+
+  /* Ensure card bodies can scroll internally if content is long */
+  .cardWrapper :global(.ant-card-body) {
+    overflow: auto;
+    max-height: 60vh;
+  }
+}
+
+/* md+: タブレット以上のレイアウト */
+@media (--ge-md) {
+  .dashboardRoot {
+    padding: 16px;
+    height: auto;
+  }
+
+  .dashboardMain {
+    grid-template-columns: 1fr;
+    gap: 14px;
+    height: auto;
+  }
+
+  .leftColumn,
+  .rightColumn {
+    display: block;
+  }
+
+  .leftColumn > .panel,
+  .rightColumn > .panelTop,
+  .rightColumn > .panelMid,
+  .rightColumn > .panelBottom {
+    flex: none;
+    min-height: 280px;
+    height: auto;
+  }
+}
+
+/* xl: 1280px 以上では全カードをビューポート内に収める（動的計算） */
+@media (--ge-xl) {
+  .dashboardRoot {
+    /* 固定ビューポート高さを採用（パディング分は既に差し引かれている想定） */
+    height: calc(100vh - 32px);
+  }
+
+  /* main 高さはタイトル分を差し引く（タイトル高さは約56px） */
+  .dashboardMain {
+    height: calc(100% - 56px);
+    display: flex;
+    gap: 16px;
+  }
+
+  /* 左右カラムを等幅にする */
+  .leftColumn,
+  .rightColumn {
+    flex: 1 1 50%;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-height: 0;
+  }
+
+  /* 左側：2パネルを上下に配置、間の gap を差し引いて等分 */
+  .leftColumn > .panel {
+    height: calc((100% - 16px) / 2);
+    min-height: 0;
+  }
+
+  /* 右側：3パネルを上下に配置。全体の gap は panel 間で 2 * 16px = 32px */
+  .rightColumn > .panelTop {
+    height: calc((100% - 32px) * 0.4);
+  }
+  .rightColumn > .panelMid {
+    height: calc((100% - 32px) * 0.3);
+  }
+  .rightColumn > .panelBottom {
+    height: calc((100% - 32px) * 0.3);
+  }
+
+  /* 内部カードは高さを100%にして body が伸縮するように */
+  .cardWrapper {
+    height: 100%;
+  }
+  .cardWrapper :global(.ant-card) {
+    height: 100%;
+  }
+  .cardWrapper :global(.ant-card-body) {
+    overflow: auto;
+  }
+}
+
+/* Card wrapper ensures the antd Card fills available height and its body is flexible */
+.cardWrapper {
+  height: 100%;
+}
+.cardWrapper :global(.ant-card) {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+.cardWrapper :global(.ant-card-body) {
+  flex: 1 1 auto;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Make small tweaks to ensure charts scale */
+.cardWrapper :global(.recharts-responsive-container) {
+  flex: 1 1 auto;
+  min-height: 0;
+}

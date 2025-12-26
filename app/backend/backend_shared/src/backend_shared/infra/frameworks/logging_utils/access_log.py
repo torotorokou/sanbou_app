@@ -16,8 +16,8 @@ from __future__ import annotations
 
 import logging
 import re
+from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Iterable, Tuple
 
 
 @dataclass(frozen=True)
@@ -29,7 +29,7 @@ class AccessLogFilterConfig:
         logger_name: Name of the logger to filter; defaults to "uvicorn.access".
     """
 
-    excluded_paths: Tuple[str, ...] = ("/health",)
+    excluded_paths: tuple[str, ...] = ("/health",)
     logger_name: str = "uvicorn.access"
 
 

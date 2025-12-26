@@ -23,6 +23,7 @@ chmod +x scripts/apply_soft_delete_refactoring.sh
 ```
 
 このスクリプトは以下を自動的に実行します:
+
 - ✅ Alembic マイグレーションの適用（3つのリビジョン）
 - ✅ マテリアライズドビューのリフレッシュ（5つのMV）
 - ✅ テーブル統計情報の更新（6テーブル）
@@ -48,7 +49,8 @@ make al-cur
 ```
 
 **適用されるリビジョン**:
-1. `20251120_160000000` - アクティブ行専用ビュー（stg.active_*）の作成
+
+1. `20251120_160000000` - アクティブ行専用ビュー（stg.active\_\*）の作成
 2. `20251120_170000000` - mart ビューの更新（is_deleted フィルタ追加）
 3. `20251120_180000000` - 部分インデックスの追加
 
@@ -113,10 +115,11 @@ docker compose -f docker/docker-compose.dev.yml -p local_dev exec -T db \
 ```
 
 **主なテスト項目**:
+
 1. 論理削除状況の確認
 2. slip_date 別の削除分布
 3. 集計結果の比較（フィルタあり／なし）
-4. active_* ビューの動作確認
+4. active\_\* ビューの動作確認
 5. インデックス使用状況の確認
 
 ---
@@ -130,7 +133,7 @@ docker compose -f docker/docker-compose.dev.yml -p local_dev exec -T db \
 make al-cur
 ```
 
-### 2. active_* ビューの存在確認
+### 2. active\_\* ビューの存在確認
 
 ```sql
 -- psql で実行
@@ -142,6 +145,7 @@ ORDER BY viewname;
 ```
 
 **期待される結果**: 6つのビューが表示される
+
 - `active_shogun_flash_receive`
 - `active_shogun_final_receive`
 - `active_shogun_flash_yard`
@@ -244,6 +248,7 @@ ORDER BY slip_date DESC;
 ```
 
 **期待される結果**:
+
 - `Index Scan using idx_shogun_flash_receive_active` が表示される
 - 実行時間が短い（数ミリ秒～数十ミリ秒）
 
@@ -256,6 +261,7 @@ ORDER BY slip_date DESC;
 **原因**: マイグレーションが正しく適用されていない
 
 **解決策**:
+
 ```bash
 make al-cur  # 現在のリビジョンを確認
 make al-up   # マイグレーションを再実行
@@ -268,6 +274,7 @@ make al-up   # マイグレーションを再実行
 **原因**: トランザクション内で CONCURRENTLY インデックス作成を実行している
 
 **解決策**:
+
 - Alembic マイグレーションは自動的にトランザクション外で実行されます
 - 手動で実行する場合は、個別のコマンドとして実行してください
 
@@ -278,6 +285,7 @@ make al-up   # マイグレーションを再実行
 **原因**: データ量が多い、またはインデックスが未作成
 
 **解決策**:
+
 1. ANALYZE を実行してテーブル統計を更新
 2. 部分インデックスが作成されているか確認
 3. バックグラウンドで実行（nohup など）
@@ -300,7 +308,7 @@ make al-up   # マイグレーションを再実行
 すべて完了したら、以下をチェックしてください:
 
 - [ ] Alembic マイグレーションが 20251120_180000000 まで適用されている
-- [ ] active_* ビューが6つ作成されている
+- [ ] active\_\* ビューが6つ作成されている
 - [ ] 部分インデックスが6つ作成されている
 - [ ] マテリアライズドビューが5つリフレッシュされている
 - [ ] テーブル統計が更新されている

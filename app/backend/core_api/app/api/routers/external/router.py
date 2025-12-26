@@ -7,25 +7,26 @@ For short synchronous calls only. Heavy jobs should be queued.
   - ExternalServiceError で外部サービスエラーをラップ
   - NotFoundError でリソース不存在を表現
 """
-from fastapi import APIRouter, Depends
-import httpx
 
-from backend_shared.application.logging import get_module_logger
+import httpx
+from fastapi import APIRouter, Depends
+
+from app.api.schemas import ManualListResponse, RAGAskRequest, RAGAskResponse
 from app.config.di_providers import (
     get_ask_rag_uc,
-    get_list_manuals_uc,
-    get_get_manual_uc,
-    get_generate_report_uc,
     get_classify_text_uc,
+    get_generate_report_uc,
+    get_get_manual_uc,
+    get_list_manuals_uc,
 )
 from app.core.usecases.external.external_api_uc import (
     AskRAGUseCase,
-    ListManualsUseCase,
-    GetManualUseCase,
-    GenerateReportUseCase,
     ClassifyTextUseCase,
+    GenerateReportUseCase,
+    GetManualUseCase,
+    ListManualsUseCase,
 )
-from app.api.schemas import RAGAskRequest, RAGAskResponse, ManualListResponse
+from backend_shared.application.logging import create_log_context, get_module_logger
 from backend_shared.core.domain.exceptions import ExternalServiceError, NotFoundError
 
 router = APIRouter(prefix="/external", tags=["external"])
@@ -40,7 +41,7 @@ async def ask_rag(
     """
     RAG APIに質問を投げて回答を取得します。
     タイムアウト: 5秒（接続1秒、読み取り5秒）
-    
+
     重い処理の場合はジョブキューに登録することを推奨します。
     """
     try:
@@ -54,7 +55,7 @@ async def ask_rag(
         raise ExternalServiceError(
             service_name="rag_api",
             message="RAG APIへの接続がタイムアウトしました。時間をおいて再度お試しください。",
-            status_code=504
+            status_code=504,
         )
     except httpx.HTTPStatusError as e:
         logger.error(
@@ -62,21 +63,21 @@ async def ask_rag(
             extra=create_log_context(
                 operation="proxy_rag_search",
                 status_code=e.response.status_code,
-                query=req.query
-            )
+                query=req.query,
+            ),
         )
         raise ExternalServiceError(
             service_name="rag_api",
             message=f"RAG APIでエラーが発生しました: {e.response.status_code}",
             status_code=e.response.status_code,
-            cause=e
+            cause=e,
         )
     except Exception as e:
         logger.exception("RAG API 予期しないエラー", extra={"query": req.query})
         raise ExternalServiceError(
             service_name="rag_api",
             message="RAG APIへの接続中に予期しないエラーが発生しました。",
-            cause=e
+            cause=e,
         )
 
 
@@ -86,7 +87,7 @@ async def list_manuals(
 ):
     """
     Manual APIからマニュアル一覧を取得します。
-    
+
     重い処理の場合はジョブキューに登録することを推奨します。
     """
     try:
@@ -97,28 +98,27 @@ async def list_manuals(
         raise ExternalServiceError(
             service_name="manual_api",
             message="Manual APIへの接続がタイムアウトしました。",
-            status_code=504
+            status_code=504,
         )
     except httpx.HTTPStatusError as e:
         logger.error(
             "Manual API エラー",
             extra=create_log_context(
-                operation="proxy_manual_search",
-                status_code=e.response.status_code
-            )
+                operation="proxy_manual_search", status_code=e.response.status_code
+            ),
         )
         raise ExternalServiceError(
             service_name="manual_api",
             message=f"Manual APIでエラーが発生しました: {e.response.status_code}",
             status_code=e.response.status_code,
-            cause=e
+            cause=e,
         )
     except Exception as e:
         logger.exception("Manual API 予期しないエラー")
         raise ExternalServiceError(
             service_name="manual_api",
             message="Manual APIへの接続中に予期しないエラーが発生しました。",
-            cause=e
+            cause=e,
         )
 
 
@@ -138,14 +138,14 @@ async def get_manual(
             service_name="manual_api",
             message=f"Manual APIでエラーが発生しました: {e.response.status_code}",
             status_code=e.response.status_code,
-            cause=e
+            cause=e,
         )
     except Exception as e:
         logger.exception("Manual API エラー", extra={"manual_id": manual_id})
         raise ExternalServiceError(
             service_name="manual_api",
             message="マニュアル取得中にエラーが発生しました。",
-            cause=e
+            cause=e,
         )
 
 
@@ -157,7 +157,7 @@ async def generate_report(
 ):
     """
     Ledger APIに帳票生成をリクエストします。
-    
+
     重い処理の場合はジョブキューに登録することを推奨します（TODO）。
     """
     try:
@@ -168,7 +168,7 @@ async def generate_report(
         raise ExternalServiceError(
             service_name="ledger_api",
             message="Ledger APIへの接続がタイムアウトしました。",
-            status_code=504
+            status_code=504,
         )
     except httpx.HTTPStatusError as e:
         logger.error(
@@ -176,21 +176,21 @@ async def generate_report(
             extra=create_log_context(
                 operation="proxy_ledger_report",
                 status_code=e.response.status_code,
-                report_type=report_type
-            )
+                report_type=report_type,
+            ),
         )
         raise ExternalServiceError(
             service_name="ledger_api",
             message=f"Ledger APIでエラーが発生しました: {e.response.status_code}",
             status_code=e.response.status_code,
-            cause=e
+            cause=e,
         )
     except Exception as e:
         logger.exception("Ledger API エラー", extra={"report_type": report_type})
         raise ExternalServiceError(
             service_name="ledger_api",
             message="帳票生成中にエラーが発生しました。",
-            cause=e
+            cause=e,
         )
 
 
@@ -208,26 +208,25 @@ async def classify_text(
         raise ExternalServiceError(
             service_name="ai_api",
             message="AI APIへの接続がタイムアウトしました。",
-            status_code=504
+            status_code=504,
         )
     except httpx.HTTPStatusError as e:
         logger.error(
             "AI API エラー",
             extra=create_log_context(
-                operation="proxy_ai_classify",
-                status_code=e.response.status_code
-            )
+                operation="proxy_ai_classify", status_code=e.response.status_code
+            ),
         )
         raise ExternalServiceError(
             service_name="ai_api",
             message=f"AI APIでエラーが発生しました: {e.response.status_code}",
             status_code=e.response.status_code,
-            cause=e
+            cause=e,
         )
     except Exception as e:
         logger.exception("AI API エラー")
         raise ExternalServiceError(
             service_name="ai_api",
             message="テキスト分類中にエラーが発生しました。",
-            cause=e
+            cause=e,
         )

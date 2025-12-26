@@ -37,8 +37,3 @@ CREATE OR REPLACE VIEW mart.v_receive_weekly AS
         END)::numeric(18,3) AS unit_price_yen_per_kg
    FROM w
   ORDER BY iso_year, iso_week;
-
-
-
-
-

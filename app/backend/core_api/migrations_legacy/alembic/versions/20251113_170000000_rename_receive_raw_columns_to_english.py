@@ -7,11 +7,12 @@ Revision ID: 20251113_170000000
 Revises: 20251113_151137000
 Create Date: 2025-11-13 17:00:00.000000
 """
+
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision = '20251113_170000000'
-down_revision = '20251113_151137000'
+revision = "20251113_170000000"
+down_revision = "20251113_151137000"
 branch_labels = None
 depends_on = None
 
@@ -63,7 +64,7 @@ def upgrade():
     raw.receive_raw の日本語カラム名を英語にリネーム
     """
     print("Renaming raw.receive_raw columns to English...")
-    
+
     for jp_name, en_name in COLUMN_RENAME_MAP.items():
         try:
             # PostgreSQL では日本語カラム名はダブルクォートで囲む必要がある
@@ -72,8 +73,10 @@ def upgrade():
         except Exception as e:
             print(f"  ✗ Failed to rename '{jp_name}': {e}")
             raise
-    
-    print(f"✓ Renamed {len(COLUMN_RENAME_MAP)} columns in raw.receive_raw to English (_text suffix)")
+
+    print(
+        f"✓ Renamed {len(COLUMN_RENAME_MAP)} columns in raw.receive_raw to English (_text suffix)"
+    )
 
 
 def downgrade():
@@ -81,10 +84,10 @@ def downgrade():
     英語カラム名を日本語に戻す
     """
     print("Reverting raw.receive_raw columns to Japanese...")
-    
+
     # 逆マッピング
     reverse_map = {en: jp for jp, en in COLUMN_RENAME_MAP.items()}
-    
+
     for en_name, jp_name in reverse_map.items():
         try:
             op.execute(f'ALTER TABLE raw.receive_raw RENAME COLUMN {en_name} TO "{jp_name}"')
@@ -92,5 +95,5 @@ def downgrade():
         except Exception as e:
             print(f"  ✗ Failed to rename '{en_name}': {e}")
             raise
-    
+
     print(f"✓ Reverted {len(reverse_map)} columns in raw.receive_raw to Japanese")

@@ -3,6 +3,7 @@
 ## 概要
 
 CSVアップロード処理において、以下の機能を追加します：
+
 1. `log.upload_file` テーブルに各CSVアップロードを記録し、その `id` を取得
 2. 各CSV行に `source_row_no`（元行番号）を採番
 3. raw / stg テーブルに `upload_file_id` と `source_row_no` を保存
@@ -15,6 +16,7 @@ CSVアップロード処理において、以下の機能を追加します：
 ### 1-1. テーブル構成
 
 #### `log.upload_file`（アップロードログ、全CSV共通）
+
 **場所**: `app/backend/core_api/app/infra/adapters/upload/raw_data_repository.py`
 
 ```python
@@ -34,21 +36,25 @@ Column('env', Text, nullable=False)                 # 'local_dev' など
 ```
 
 #### raw層テーブル（生データ、全カラムTEXT型）
+
 - `raw.receive_raw` (id, file_id, row_number + TEXT型カラム)
 - `raw.yard_raw` (id, file_id, row_number + TEXT型カラム)
 - `raw.shipment_raw` (id, file_id, row_number + TEXT型カラム)
 
 **現状の問題点**:
+
 - `file_id` カラム名が分かりにくい（`upload_file_id` の方が明示的）
 - `row_number` が何の行番号か不明確（CSV元行か、DB行か）
 
 #### stg層テーブル（型変換済み）
+
 - `stg.receive_shogun_flash` (id + 型付きカラム)
 - `stg.yard_shogun_flash` (id + 型付きカラム)
 - `stg.shipment_shogun_flash` (id + 型付きカラム)
 - `stg.receive_shogun_final` / `stg.yard_shogun_final` / `stg.shipment_shogun_final`
 
 **現状の問題点**:
+
 - アップロード元ファイル・行番号を追跡できない
 
 ### 1-2. 処理フロー
@@ -56,10 +62,10 @@ Column('env', Text, nullable=False)                 # 'local_dev' など
 ```
 [フロントエンド]
   ↓ POST /database/upload/syogun_csv_flash (receive.csv, yard.csv, shipment.csv)
-  
+
 [router.py] /database/upload/syogun_csv_flash
   ↓ Depends(get_uc_flash) でDI
-  
+
 [UploadSyogunCsvUseCase.execute()]
   1. ファイルタイプ検証（MIME, 拡張子）
   2. CSV読込（pandas DataFrame化）
@@ -72,6 +78,7 @@ Column('env', Text, nullable=False)                 # 'local_dev' など
 ```
 
 **関連ファイル**:
+
 - **Router**: `app/backend/core_api/app/presentation/routers/database/router.py`
 - **UseCase**: `app/backend/core_api/app/application/usecases/upload/upload_syogun_csv_uc.py`
 - **Repository (raw層)**: `app/backend/core_api/app/infra/adapters/upload/raw_data_repository.py`
@@ -108,12 +115,14 @@ CREATE INDEX idx_receive_raw_upload_file_id ON raw.receive_raw(upload_file_id);
 ```
 
 **変更点**:
+
 1. `file_id` → `upload_file_id` にリネーム（意味を明確化）
 2. `row_number` → `source_row_no` にリネーム（CSV元行番号であることを明示）
 3. UNIQUE制約: `(upload_file_id, source_row_no)` を追加
 4. INDEX: `upload_file_id` を追加
 
 **同様の変更を以下にも適用**:
+
 - `raw.yard_raw`
 - `raw.shipment_raw`
 
@@ -143,12 +152,14 @@ CREATE INDEX idx_receive_shogun_flash_upload ON stg.receive_shogun_flash(upload_
 ```
 
 **変更点**:
+
 1. `upload_file_id INT NOT NULL` を追加
 2. `source_row_no INT NOT NULL` を追加
 3. INDEX: `(upload_file_id, source_row_no)` を追加
 4. **FK制約は不要**（raw層で log.upload_file への FK が設定されているため重複）
 
 **同様の変更を以下すべてに適用**:
+
 - `stg.receive_shogun_flash`
 - `stg.yard_shogun_flash`
 - `stg.shipment_shogun_flash`
@@ -169,7 +180,7 @@ CREATE INDEX idx_receive_shogun_flash_upload ON stg.receive_shogun_flash(upload_
 ```python
 async def execute(self, receive, yard, shipment, file_type="FLASH", uploaded_by=None):
     # ... 入力チェック、バリデーション
-    
+
     # log.upload_file にアップロードログを作成
     upload_file_ids: Dict[str, int] = {}
     if self.raw_data_repo:
@@ -183,16 +194,16 @@ async def execute(self, receive, yard, shipment, file_type="FLASH", uploaded_by=
                 uploaded_by=uploaded_by,
             )
             upload_file_ids[csv_type] = file_id  # ★ここで upload_file_id を取得済み
-    
+
     # CSV読込
     dfs, read_error = await self._read_csv_files(uploaded_files)
-    
+
     # バリデーション
     # ...
-    
+
     # raw層保存（★ upload_file_id を渡していない）
     raw_result = await self._save_data(self.raw_writer, raw_cleaned_dfs, uploaded_files, "raw")
-    
+
     # stg層保存（★ upload_file_id を渡していない）
     stg_result = await self._save_data(self.stg_writer, formatted_dfs, uploaded_files, "stg")
 ```
@@ -202,26 +213,26 @@ async def execute(self, receive, yard, shipment, file_type="FLASH", uploaded_by=
 ```python
 async def execute(self, receive, yard, shipment, file_type="FLASH", uploaded_by=None):
     # ... 入力チェック、バリデーション
-    
+
     # log.upload_file にアップロードログを作成
     upload_file_ids: Dict[str, int] = {}
     if self.raw_data_repo:
         for csv_type, uf in uploaded_files.items():
             file_id = self.raw_data_repo.create_upload_file(...)
             upload_file_ids[csv_type] = file_id
-    
+
     # CSV読込（★ source_row_no を採番）
     dfs, read_error = await self._read_csv_files(uploaded_files)
     if read_error:
         return read_error
-    
+
     # ★ source_row_no を各行に追加（1-indexed）
     for csv_type, df in dfs.items():
         df['source_row_no'] = range(1, len(df) + 1)
-    
+
     # バリデーション
     # ...
-    
+
     # raw層保存（★ upload_file_ids を渡す）
     raw_result = await self._save_data(
         self.raw_writer,
@@ -230,7 +241,7 @@ async def execute(self, receive, yard, shipment, file_type="FLASH", uploaded_by=
         "raw",
         upload_file_ids=upload_file_ids  # ★追加
     )
-    
+
     # stg層保存（★ upload_file_ids を渡す）
     stg_result = await self._save_data(
         self.stg_writer,
@@ -241,7 +252,7 @@ async def execute(self, receive, yard, shipment, file_type="FLASH", uploaded_by=
     )
 ```
 
-#### ■ _save_data() メソッドの修正
+#### ■ \_save_data() メソッドの修正
 
 ```python
 async def _save_data(
@@ -258,9 +269,9 @@ async def _save_data(
             # ★ upload_file_id を DataFrame に追加
             if upload_file_ids and csv_type in upload_file_ids:
                 df['upload_file_id'] = upload_file_ids[csv_type]
-            
+
             # ★ source_row_no は既に追加済み（_read_csv_files 後に追加）
-            
+
             count = await run_in_threadpool(writer.save_csv_by_type, csv_type, df)
             results[csv_type] = {
                 "status": "success",
@@ -281,11 +292,11 @@ async def _save_data(
 def save_receive_raw(self, file_id: int, df: pd.DataFrame) -> int:
     """
     受入CSV の生データを raw.receive_raw に保存
-    
+
     Args:
         file_id: upload_file.id
         df: 日本語カラム名のままの DataFrame（変換前）
-        
+
     Returns:
         int: 保存した行数
     """
@@ -298,25 +309,26 @@ def save_receive_raw(self, file_id: int, df: pd.DataFrame) -> int:
 def save_receive_raw(self, file_id: int, df: pd.DataFrame) -> int:
     """
     受入CSV の生データを raw.receive_raw に保存
-    
+
     Args:
         file_id: upload_file.id（= upload_file_id）
         df: 日本語カラム名 + upload_file_id, source_row_no を含む DataFrame
-        
+
     Returns:
         int: 保存した行数
     """
     # ★ upload_file_id, source_row_no が df に含まれていることを前提とする
     # （UseCase側で事前に追加済み）
-    
+
     # カラム名マッピング（日本語→英語_text）
     # ... （既存ロジック）
-    
+
     # upload_file_id, source_row_no はそのまま保持
     # INSERT実行
 ```
 
 **同様の修正を以下メソッドにも適用**:
+
 - `save_yard_raw()`
 - `save_shipment_raw()`
 
@@ -330,22 +342,22 @@ def save_receive_raw(self, file_id: int, df: pd.DataFrame) -> int:
 def save_csv_by_type(self, csv_type: str, df: pd.DataFrame) -> int:
     """
     CSV種別に応じて stg層に保存
-    
+
     Args:
         csv_type: 'receive', 'yard', 'shipment'
         df: 型変換済みDataFrame
-        
+
     Returns:
         int: 保存行数
     """
     # YAMLから日本語→英語のカラムマッピングを取得
     column_mapping = self.table_gen.get_column_mapping(csv_type)
     df_renamed = df.rename(columns=column_mapping)
-    
+
     # stg層: YAML定義カラムのみフィルタ
     valid_columns = self.table_gen.get_columns(csv_type)
     df_to_save = filter_defined_columns(df_renamed, valid_columns, log_dropped=True)
-    
+
     # INSERT
     model_class = create_shogun_model_class(csv_type, table_name=table_name, schema=schema)
     records = df_to_save.to_dict('records')
@@ -358,28 +370,28 @@ def save_csv_by_type(self, csv_type: str, df: pd.DataFrame) -> int:
 def save_csv_by_type(self, csv_type: str, df: pd.DataFrame) -> int:
     """
     CSV種別に応じて stg層に保存
-    
+
     Args:
         csv_type: 'receive', 'yard', 'shipment'
         df: 型変換済み + upload_file_id, source_row_no を含む DataFrame
-        
+
     Returns:
         int: 保存行数
     """
     # YAMLから日本語→英語のカラムマッピングを取得
     column_mapping = self.table_gen.get_column_mapping(csv_type)
     df_renamed = df.rename(columns=column_mapping)
-    
+
     # ★ upload_file_id, source_row_no は必須カラムとして保持
     required_columns = ['upload_file_id', 'source_row_no']
     for col in required_columns:
         if col not in df_renamed.columns:
             raise ValueError(f"Required column '{col}' not found in DataFrame")
-    
+
     # stg層: YAML定義カラム + upload_file_id + source_row_no
     valid_columns = self.table_gen.get_columns(csv_type) + required_columns
     df_to_save = filter_defined_columns(df_renamed, valid_columns, log_dropped=True)
-    
+
     # INSERT
     # ... （既存ロジック、upload_file_id, source_row_no も含めて保存）
 ```
@@ -403,6 +415,7 @@ LIMIT 1;
 ```
 
 **理由**:
+
 - `file_hash` (SHA-256) は内容が1バイトでも異なれば変わる
 - 最も信頼性の高い同一判定
 - `processing_status = 'success'` で、過去に成功したアップロードのみを対象
@@ -438,14 +451,14 @@ def check_duplicate_upload(
 ) -> Optional[Dict[str, Any]]:
     """
     同一ファイルが既に成功済みかチェック
-    
+
     Args:
         csv_type: CSV種別
         file_hash: SHA-256ハッシュ
         file_name: ファイル名（フォールバック用）
         file_size_bytes: ファイルサイズ（フォールバック用）
         row_count: 行数（フォールバック用）
-        
+
     Returns:
         Optional[Dict]: 重複あり → {'id': ..., 'uploaded_at': ..., 'file_name': ...}
                         重複なし → None
@@ -463,14 +476,14 @@ def check_duplicate_upload(
                 .order_by(self.upload_file_table.c.uploaded_at.desc())
                 .limit(1)
             ).fetchone()
-            
+
             if result:
                 return {
                     'id': result.id,
                     'uploaded_at': result.uploaded_at,
                     'file_name': result.file_name,
                 }
-        
+
         # フォールバック: (csv_type, file_name, file_size, row_count) で検索
         if file_name and file_size_bytes is not None:
             result = self.db.execute(
@@ -485,14 +498,14 @@ def check_duplicate_upload(
                 .order_by(self.upload_file_table.c.uploaded_at.desc())
                 .limit(1)
             ).fetchone()
-            
+
             if result:
                 return {
                     'id': result.id,
                     'uploaded_at': result.uploaded_at,
                     'file_name': result.file_name,
                 }
-        
+
         return None
     except Exception as e:
         logger.error(f"Failed to check duplicate upload: {e}")
@@ -506,7 +519,7 @@ def check_duplicate_upload(
 ```python
 async def execute(self, receive, yard, shipment, file_type="FLASH", uploaded_by=None):
     # ... 入力チェック、ファイルタイプ検証
-    
+
     # ★ 重複チェック（log.upload_file 作成前）
     if self.raw_data_repo:
         duplicates: Dict[str, Dict[str, Any]] = {}
@@ -514,7 +527,7 @@ async def execute(self, receive, yard, shipment, file_type="FLASH", uploaded_by=
             content = await uf.read()
             file_hash = self.raw_data_repo.calculate_file_hash(content)
             uf.file.seek(0)
-            
+
             # 重複チェック
             duplicate = self.raw_data_repo.check_duplicate_upload(
                 csv_type=csv_type,
@@ -522,10 +535,10 @@ async def execute(self, receive, yard, shipment, file_type="FLASH", uploaded_by=
                 file_name=uf.filename,
                 file_size_bytes=len(content),
             )
-            
+
             if duplicate:
                 duplicates[csv_type] = duplicate
-        
+
         # 全ファイルが重複の場合はエラー
         if len(duplicates) == len(uploaded_files):
             return ErrorApiResponse(
@@ -542,14 +555,14 @@ async def execute(self, receive, yard, shipment, file_type="FLASH", uploaded_by=
                 },
                 status_code=409,  # Conflict
             )
-        
+
         # 一部重複の場合は警告（処理は継続）
         if duplicates:
             logger.warning(
                 f"Partial duplicates detected: {list(duplicates.keys())}. "
                 f"Non-duplicate files will be processed."
             )
-    
+
     # log.upload_file にアップロードログを作成（重複していないファイルのみ）
     upload_file_ids: Dict[str, int] = {}
     if self.raw_data_repo:
@@ -559,7 +572,7 @@ async def execute(self, receive, yard, shipment, file_type="FLASH", uploaded_by=
                 content = await uf.read()
                 file_hash = self.raw_data_repo.calculate_file_hash(content)
                 uf.file.seek(0)
-                
+
                 file_id = self.raw_data_repo.create_upload_file(
                     csv_type=csv_type,
                     file_name=uf.filename or f"{csv_type}.csv",
@@ -574,21 +587,21 @@ async def execute(self, receive, yard, shipment, file_type="FLASH", uploaded_by=
                     error_message=f"Duplicate of upload_file.id={duplicates[csv_type]['id']}",
                 )
                 continue
-            
+
             # 重複していない場合は通常処理
             content = await uf.read()
             file_hash = self.raw_data_repo.calculate_file_hash(content)
             uf.file.seek(0)
-            
+
             file_id = self.raw_data_repo.create_upload_file(...)
             upload_file_ids[csv_type] = file_id
-    
+
     # 重複していないファイルのみ処理（CSV読込、バリデーション、保存）
     non_duplicate_files = {k: v for k, v in uploaded_files.items() if k not in duplicates}
     if not non_duplicate_files:
         # すべて重複（上記で既にエラーレスポンス返却済み）
         pass
-    
+
     # CSV読込（重複していないファイルのみ）
     dfs, read_error = await self._read_csv_files(non_duplicate_files)
     # ... 以降の処理
@@ -609,11 +622,13 @@ self.raw_data_repo.update_upload_status(
 ```
 
 **理由**:
+
 - アップロード試行の完全な履歴が残る
 - 「いつ、誰が、何度同じファイルをアップロードしようとしたか」が分かる
 - 監査ログとして有用
 
 **レスポンス**:
+
 ```json
 {
   "status": "error",
@@ -645,21 +660,21 @@ self.raw_data_repo.update_upload_status(
 -- raw.receive_raw
 ALTER TABLE raw.receive_raw RENAME COLUMN file_id TO upload_file_id;
 ALTER TABLE raw.receive_raw RENAME COLUMN row_number TO source_row_no;
-ALTER TABLE raw.receive_raw 
+ALTER TABLE raw.receive_raw
   ADD CONSTRAINT uq_receive_raw_upload_row UNIQUE (upload_file_id, source_row_no);
 CREATE INDEX idx_receive_raw_upload_file_id ON raw.receive_raw(upload_file_id);
 
 -- raw.yard_raw
 ALTER TABLE raw.yard_raw RENAME COLUMN file_id TO upload_file_id;
 ALTER TABLE raw.yard_raw RENAME COLUMN row_number TO source_row_no;
-ALTER TABLE raw.yard_raw 
+ALTER TABLE raw.yard_raw
   ADD CONSTRAINT uq_yard_raw_upload_row UNIQUE (upload_file_id, source_row_no);
 CREATE INDEX idx_yard_raw_upload_file_id ON raw.yard_raw(upload_file_id);
 
 -- raw.shipment_raw
 ALTER TABLE raw.shipment_raw RENAME COLUMN file_id TO upload_file_id;
 ALTER TABLE raw.shipment_raw RENAME COLUMN row_number TO source_row_no;
-ALTER TABLE raw.shipment_raw 
+ALTER TABLE raw.shipment_raw
   ADD CONSTRAINT uq_shipment_raw_upload_row UNIQUE (upload_file_id, source_row_no);
 CREATE INDEX idx_shipment_raw_upload_file_id ON raw.shipment_raw(upload_file_id);
 ```
@@ -668,27 +683,27 @@ CREATE INDEX idx_shipment_raw_upload_file_id ON raw.shipment_raw(upload_file_id)
 
 ```sql
 -- stg.receive_shogun_flash
-ALTER TABLE stg.receive_shogun_flash 
+ALTER TABLE stg.receive_shogun_flash
   ADD COLUMN upload_file_id INT NOT NULL;
-ALTER TABLE stg.receive_shogun_flash 
+ALTER TABLE stg.receive_shogun_flash
   ADD COLUMN source_row_no INT NOT NULL;
-CREATE INDEX idx_receive_shogun_flash_upload 
+CREATE INDEX idx_receive_shogun_flash_upload
   ON stg.receive_shogun_flash(upload_file_id, source_row_no);
 
 -- stg.yard_shogun_flash
-ALTER TABLE stg.yard_shogun_flash 
+ALTER TABLE stg.yard_shogun_flash
   ADD COLUMN upload_file_id INT NOT NULL;
-ALTER TABLE stg.yard_shogun_flash 
+ALTER TABLE stg.yard_shogun_flash
   ADD COLUMN source_row_no INT NOT NULL;
-CREATE INDEX idx_yard_shogun_flash_upload 
+CREATE INDEX idx_yard_shogun_flash_upload
   ON stg.yard_shogun_flash(upload_file_id, source_row_no);
 
 -- stg.shipment_shogun_flash
-ALTER TABLE stg.shipment_shogun_flash 
+ALTER TABLE stg.shipment_shogun_flash
   ADD COLUMN upload_file_id INT NOT NULL;
-ALTER TABLE stg.shipment_shogun_flash 
+ALTER TABLE stg.shipment_shogun_flash
   ADD COLUMN source_row_no INT NOT NULL;
-CREATE INDEX idx_shipment_shogun_flash_upload 
+CREATE INDEX idx_shipment_shogun_flash_upload
   ON stg.shipment_shogun_flash(upload_file_id, source_row_no);
 
 -- 同様に *_final テーブルにも適用
@@ -702,7 +717,7 @@ CREATE INDEX idx_shipment_shogun_flash_upload
 -- これで (csv_type, file_hash) のクエリは高速
 
 -- フォールバック用の複合インデックス
-CREATE INDEX idx_upload_file_duplicate_fallback 
+CREATE INDEX idx_upload_file_duplicate_fallback
   ON log.upload_file(csv_type, file_name, file_size_bytes, row_count, processing_status);
 ```
 
@@ -757,7 +772,7 @@ def upgrade() -> None:
         source_schema="raw", referent_schema="log",
         ondelete="CASCADE"
     )
-    
+
     # UNIQUE制約とINDEX
     op.create_unique_constraint(
         "uq_receive_raw_upload_row",
@@ -771,7 +786,7 @@ def upgrade() -> None:
         ["upload_file_id"],
         schema="raw"
     )
-    
+
     # ===== raw.yard_raw =====
     op.drop_constraint("fk_yard_raw_file_id", "yard_raw", schema="raw", type_="foreignkey")
     op.alter_column("yard_raw", "file_id", new_column_name="upload_file_id", schema="raw")
@@ -795,7 +810,7 @@ def upgrade() -> None:
         ["upload_file_id"],
         schema="raw"
     )
-    
+
     # ===== raw.shipment_raw =====
     op.drop_constraint("fk_shipment_raw_file_id", "shipment_raw", schema="raw", type_="foreignkey")
     op.alter_column("shipment_raw", "file_id", new_column_name="upload_file_id", schema="raw")
@@ -835,7 +850,7 @@ def downgrade() -> None:
         source_schema="raw", referent_schema="log",
         ondelete="CASCADE"
     )
-    
+
     # yard_raw
     op.drop_index("idx_yard_raw_upload_file_id", "yard_raw", schema="raw")
     op.drop_constraint("uq_yard_raw_upload_row", "yard_raw", schema="raw", type_="unique")
@@ -849,7 +864,7 @@ def downgrade() -> None:
         source_schema="raw", referent_schema="log",
         ondelete="CASCADE"
     )
-    
+
     # shipment_raw
     op.drop_index("idx_shipment_raw_upload_file_id", "shipment_raw", schema="raw")
     op.drop_constraint("uq_shipment_raw_upload_row", "shipment_raw", schema="raw", type_="unique")
@@ -901,7 +916,7 @@ def upgrade() -> None:
         "yard_shogun_final",
         "shipment_shogun_final",
     ]
-    
+
     for table in tables:
         # カラム追加
         op.add_column(
@@ -914,11 +929,11 @@ def upgrade() -> None:
             sa.Column("source_row_no", sa.Integer(), nullable=False, server_default="0"),
             schema="stg"
         )
-        
+
         # server_default削除（既存データは0、新規データは正しい値が入る）
         op.alter_column(table, "upload_file_id", server_default=None, schema="stg")
         op.alter_column(table, "source_row_no", server_default=None, schema="stg")
-        
+
         # INDEX作成
         op.create_index(
             f"idx_{table}_upload",
@@ -937,7 +952,7 @@ def downgrade() -> None:
         "yard_shogun_final",
         "shipment_shogun_final",
     ]
-    
+
     for table in tables:
         op.drop_index(f"idx_{table}_upload", table, schema="stg")
         op.drop_column(table, "source_row_no", schema="stg")
@@ -1109,15 +1124,15 @@ curl -X POST http://localhost:8001/database/upload/syogun_csv_flash \
 
 ### 8-1. 変更箇所一覧
 
-| カテゴリ | ファイル/テーブル | 変更内容 |
-|---------|-----------------|---------|
-| **スキーマ** | `raw.receive_raw` / `raw.yard_raw` / `raw.shipment_raw` | `file_id` → `upload_file_id`, `row_number` → `source_row_no`, UNIQUE制約、INDEX追加 |
-| **スキーマ** | `stg.*_shogun_flash` / `stg.*_shogun_final` (6テーブル) | `upload_file_id`, `source_row_no` カラム追加、INDEX追加 |
-| **スキーマ** | `log.upload_file` | フォールバック用INDEX追加 |
-| **UseCase** | `upload_syogun_csv_uc.py` | 重複チェック、`source_row_no` 採番、`upload_file_id` 追加 |
-| **Repository** | `raw_data_repository.py` | `check_duplicate_upload()` メソッド追加 |
-| **Repository** | `shogun_csv_repository.py` | `upload_file_id`, `source_row_no` 保存対応 |
-| **Alembic** | 3つのマイグレーションファイル | raw層変更、stg層変更、INDEX追加 |
+| カテゴリ       | ファイル/テーブル                                       | 変更内容                                                                            |
+| -------------- | ------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| **スキーマ**   | `raw.receive_raw` / `raw.yard_raw` / `raw.shipment_raw` | `file_id` → `upload_file_id`, `row_number` → `source_row_no`, UNIQUE制約、INDEX追加 |
+| **スキーマ**   | `stg.*_shogun_flash` / `stg.*_shogun_final` (6テーブル) | `upload_file_id`, `source_row_no` カラム追加、INDEX追加                             |
+| **スキーマ**   | `log.upload_file`                                       | フォールバック用INDEX追加                                                           |
+| **UseCase**    | `upload_syogun_csv_uc.py`                               | 重複チェック、`source_row_no` 採番、`upload_file_id` 追加                           |
+| **Repository** | `raw_data_repository.py`                                | `check_duplicate_upload()` メソッド追加                                             |
+| **Repository** | `shogun_csv_repository.py`                              | `upload_file_id`, `source_row_no` 保存対応                                          |
+| **Alembic**    | 3つのマイグレーションファイル                           | raw層変更、stg層変更、INDEX追加                                                     |
 
 ### 8-2. 実装の優先順位
 

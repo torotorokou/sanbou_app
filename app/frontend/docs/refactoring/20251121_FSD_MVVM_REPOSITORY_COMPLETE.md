@@ -58,6 +58,7 @@ return <Layout>{/* vmのプロパティをUIに流し込むだけ */}</Layout>
 ```
 
 **Pageコンポーネントのルール**:
+
 - ✅ ViewModelの呼び出し（1行）
 - ✅ UIコンポーネントの配置（レイアウト）
 - ✅ `vm.xxx` のプロパティをpropsとして渡すだけ
@@ -75,23 +76,24 @@ return <Layout>{/* vmのプロパティをUIに流し込むだけ */}</Layout>
 
 ```typescript
 export interface CustomerChurnViewModel {
-    // State
-    currentStart: Dayjs | null;
-    analysisStarted: boolean;
-    
-    // Computed Data
-    currentCustomers: CustomerData[];
-    lostCustomers: CustomerData[];
-    isButtonDisabled: boolean;
-    
-    // Actions
-    setCurrentStart: (date: Dayjs | null) => void;
-    handleAnalyze: () => void;
-    handleDownloadExcel: () => Promise<void>;
+  // State
+  currentStart: Dayjs | null;
+  analysisStarted: boolean;
+
+  // Computed Data
+  currentCustomers: CustomerData[];
+  lostCustomers: CustomerData[];
+  isButtonDisabled: boolean;
+
+  // Actions
+  setCurrentStart: (date: Dayjs | null) => void;
+  handleAnalyze: () => void;
+  handleDownloadExcel: () => Promise<void>;
 }
 ```
 
 **ViewModelのルール**:
+
 - ✅ useState/useMemo/useCallback によるReact状態管理
 - ✅ ビジネスロジック（顧客集約・比較・フィルタ）
 - ✅ イベントハンドラ（分析実行・ダウンロード・リセット）
@@ -101,6 +103,7 @@ export interface CustomerChurnViewModel {
 - ❌ Antd の `message` 以外のUI依存を持たない
 
 **変更点**:
+
 - `getMonthRange()` をVM内に移動（Pageから削除）
 - すべてのイベントハンドラをVM内に統合
 - DI（Dependency Injection）で `apiPostBlob` を外部から注入
@@ -124,6 +127,7 @@ const ComparisonConditionForm: React.FC<Props> = ({ currentStart, setCurrentStar
 ```
 
 **UIコンポーネントのルール**:
+
 - ✅ propsで受け取った値を表示するだけ
 - ✅ propsで受け取ったコールバックを呼び出すだけ
 - ❌ useState を持たない（完全に状態レス）
@@ -139,15 +143,16 @@ const ComparisonConditionForm: React.FC<Props> = ({ currentStart, setCurrentStar
 ```typescript
 // ビジネスエンティティの定義
 export type CustomerData = {
-    key: string;      // 顧客コード
-    name: string;     // 顧客名
-    weight: number;   // 重量
-    amount: number;   // 金額
-    sales: string;    // 担当営業
+  key: string; // 顧客コード
+  name: string; // 顧客名
+  weight: number; // 重量
+  amount: number; // 金額
+  sales: string; // 担当営業
 };
 ```
 
 **Domainのルール**:
+
 - ✅ 型定義のみ（interface/type）
 - ✅ ドメインロジック（将来的にビジネスルールを集約）
 - ❌ React依存（useState/useEffect）を持たない
@@ -163,11 +168,12 @@ export type CustomerData = {
 ```typescript
 // Repository抽象（契約）
 export interface IAnalysisRepository {
-    fetchCustomerData(month: string): Promise<CustomerData[]>;
+  fetchCustomerData(month: string): Promise<CustomerData[]>;
 }
 ```
 
 **Portsのルール**:
+
 - ✅ インターフェイス定義のみ
 - ✅ 実装を持たない（抽象）
 - ✅ DIP（依存関係逆転の原則）を実現
@@ -181,14 +187,15 @@ export interface IAnalysisRepository {
 ```typescript
 // 将来実装予定
 export class AnalysisApiRepository implements IAnalysisRepository {
-    async fetchCustomerData(month: string): Promise<CustomerData[]> {
-        const response = await apiGet(`/api/customers?month=${month}`);
-        return response.data.map(dto => toCustomerData(dto));
-    }
+  async fetchCustomerData(month: string): Promise<CustomerData[]> {
+    const response = await apiGet(`/api/customers?month=${month}`);
+    return response.data.map((dto) => toCustomerData(dto));
+  }
 }
 ```
 
 **Infrastructureのルール**:
+
 - ✅ Portsで定義されたインターフェイスを実装
 - ✅ HTTP呼び出し・DTO変換・エラーハンドリング
 - ❌ ビジネスロジックを含まない（純粋なI/Oアダプタ）
@@ -210,6 +217,7 @@ Page
 ```
 
 **問題点**:
+
 - Pageが肥大化（300行超）
 - テストが困難（Page全体をマウントする必要がある）
 - 再利用性が低い（ロジックがPageに固定）
@@ -236,6 +244,7 @@ Page (骨組みのみ、200行)
 ```
 
 **改善点**:
+
 - ✅ **単一責任の原則（SRP）**: 各層が明確な責務を持つ
 - ✅ **テスタビリティ**: ViewModelを単体テスト可能
 - ✅ **再利用性**: ViewModelを他のPageからも利用可能
@@ -347,6 +356,7 @@ export function useCustomerChurnViewModel(
 ```
 
 **利点**:
+
 - すべての状態・ロジック・ハンドラが1箇所に集約
 - Page層は `vm.xxx` で必要なものを取得するだけ
 - 単体テストが容易（React Testing LibraryでHookをテスト）
@@ -357,14 +367,14 @@ export function useCustomerChurnViewModel(
 
 ### 1. 単一責任の原則（SRP）
 
-| 層 | 責務 | 依存関係 |
-|---|---|---|
-| **Page** | レイアウト/配置 | VM, UI Components |
-| **ViewModel** | 状態管理・ロジック・ハンドラ | Domain, Ports, Utilities |
-| **UI Components** | 表示のみ | なし（propsのみ） |
-| **Domain** | エンティティ定義 | なし（純粋） |
-| **Ports** | Repository抽象 | Domain |
-| **Infrastructure** | HTTP呼び出し | Ports, 外部API |
+| 層                 | 責務                         | 依存関係                 |
+| ------------------ | ---------------------------- | ------------------------ |
+| **Page**           | レイアウト/配置              | VM, UI Components        |
+| **ViewModel**      | 状態管理・ロジック・ハンドラ | Domain, Ports, Utilities |
+| **UI Components**  | 表示のみ                     | なし（propsのみ）        |
+| **Domain**         | エンティティ定義             | なし（純粋）             |
+| **Ports**          | Repository抽象               | Domain                   |
+| **Infrastructure** | HTTP呼び出し                 | Ports, 外部API           |
 
 ---
 
@@ -384,14 +394,17 @@ Page
 ```typescript
 // ViewModel側: 抽象に依存
 export function useCustomerChurnViewModel(
-    apiPostBlob: <T>(url: string, data: T) => Promise<Blob> // ← 抽象（関数型）
-): CustomerChurnViewModel { /* ... */ }
+  apiPostBlob: <T>(url: string, data: T) => Promise<Blob>, // ← 抽象（関数型）
+): CustomerChurnViewModel {
+  /* ... */
+}
 
 // Page側: 具体的な実装を注入
 const vm = useCustomerChurnViewModel(apiPostBlob); // ← shared/infrastructure/http から注入
 ```
 
 **利点**:
+
 - ViewModelは「HTTP呼び出しができる何か」に依存するだけ
 - テスト時はモック関数を注入すればOK
 - 将来的に別のHTTPクライアントに変更しても、ViewModelは無修正
@@ -424,22 +437,20 @@ render(<CustomerListAnalysis />);
 
 ```typescript
 // ViewModelを単体テスト
-const { result } = renderHook(() => 
-    useCustomerChurnViewModel(mockApiPostBlob)
-);
+const { result } = renderHook(() => useCustomerChurnViewModel(mockApiPostBlob));
 
 // State更新をテスト
 act(() => {
-    result.current.setCurrentStart(dayjs('2024-01'));
+  result.current.setCurrentStart(dayjs("2024-01"));
 });
-expect(result.current.currentStart).toEqual(dayjs('2024-01'));
+expect(result.current.currentStart).toEqual(dayjs("2024-01"));
 
 // Computed Valuesをテスト
-expect(result.current.currentMonths).toEqual(['2024-01']);
+expect(result.current.currentMonths).toEqual(["2024-01"]);
 
 // Event Handlersをテスト
 act(() => {
-    result.current.handleAnalyze();
+  result.current.handleAnalyze();
 });
 expect(result.current.analysisStarted).toBe(true);
 ```
@@ -478,14 +489,14 @@ const AnotherPage: React.FC = () => {
 
 ```typescript
 // 他のfeatureでCSV生成関数を再利用
-import { buildLostCustomersCsv } from '@features/analytics/customer-list';
+import { buildLostCustomersCsv } from "@features/analytics/customer-list";
 
 // 別機能でも同じCSV生成ロジックを活用
 export function useSalesReportViewModel() {
-    const handleExportCsv = () => {
-        const csv = buildLostCustomersCsv(salesData); // ← 再利用
-        downloadCsv(csv, 'sales-report.csv');
-    };
+  const handleExportCsv = () => {
+    const csv = buildLostCustomersCsv(salesData); // ← 再利用
+    downloadCsv(csv, "sales-report.csv");
+  };
 }
 ```
 
@@ -500,14 +511,14 @@ export function useSalesReportViewModel() {
 ```typescript
 // 月範囲の計算をキャッシュ
 const currentMonths = useMemo(
-    () => getMonthRange(currentStart, currentEnd),
-    [currentStart, currentEnd]
+  () => getMonthRange(currentStart, currentEnd),
+  [currentStart, currentEnd],
 );
 
 // 顧客集約をキャッシュ
 const currentCustomers = useMemo(
-    () => aggregateCustomers(currentMonths),
-    [currentMonths]
+  () => aggregateCustomers(currentMonths),
+  [currentMonths],
 );
 ```
 
@@ -519,12 +530,12 @@ const currentCustomers = useMemo(
 
 #### 変更の影響範囲が明確
 
-| 変更内容 | 影響範囲 | 変更ファイル数 |
-|---|---|---|
-| **CSV出力フォーマット変更** | `buildLostCustomersCsv.ts` のみ | 1ファイル |
-| **分析ロジック変更** | `useCustomerChurnViewModel.ts` のみ | 1ファイル |
-| **UIレイアウト変更** | `CustomerListPage.tsx` のみ | 1ファイル |
-| **API呼び出し変更** | `infrastructure/` のみ | 1ファイル |
+| 変更内容                    | 影響範囲                            | 変更ファイル数 |
+| --------------------------- | ----------------------------------- | -------------- |
+| **CSV出力フォーマット変更** | `buildLostCustomersCsv.ts` のみ     | 1ファイル      |
+| **分析ロジック変更**        | `useCustomerChurnViewModel.ts` のみ | 1ファイル      |
+| **UIレイアウト変更**        | `CustomerListPage.tsx` のみ         | 1ファイル      |
+| **API呼び出し変更**         | `infrastructure/` のみ              | 1ファイル      |
 
 **Before**: 1つの変更でPage全体を修正する必要があった  
 **After**: 責務ごとに分離されているため、影響範囲が限定される
@@ -538,16 +549,16 @@ const currentCustomers = useMemo(
 ```typescript
 // infrastructure/AnalysisApiRepository.ts
 export class AnalysisApiRepository implements IAnalysisRepository {
-    async fetchCustomerData(month: string): Promise<CustomerData[]> {
-        const response = await apiGet(`/core_api/customers?month=${month}`);
-        return response.data.map(dto => ({
-            key: dto.customerId,
-            name: dto.customerName,
-            weight: dto.totalWeight,
-            amount: dto.totalAmount,
-            sales: dto.salesPerson,
-        }));
-    }
+  async fetchCustomerData(month: string): Promise<CustomerData[]> {
+    const response = await apiGet(`/core_api/customers?month=${month}`);
+    return response.data.map((dto) => ({
+      key: dto.customerId,
+      name: dto.customerName,
+      weight: dto.totalWeight,
+      amount: dto.totalAmount,
+      sales: dto.salesPerson,
+    }));
+  }
 }
 
 // ViewModel側の変更は不要（DIで注入するだけ）
@@ -561,11 +572,11 @@ const vm = useCustomerChurnViewModel(apiPostBlob, repository);
 
 ```typescript
 export interface CustomerChurnViewModel {
-    // ... 既存のプロパティ
-    
-    // 新規追加
-    error: DomainError | null;
-    isLoading: boolean;
+  // ... 既存のプロパティ
+
+  // 新規追加
+  error: DomainError | null;
+  isLoading: boolean;
 }
 
 // ViewModelで実装
@@ -573,15 +584,15 @@ const [error, setError] = useState<DomainError | null>(null);
 const [isLoading, setIsLoading] = useState(false);
 
 const handleAnalyze = async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-        // 分析処理
-    } catch (e) {
-        setError(new DomainError('分析に失敗しました', e));
-    } finally {
-        setIsLoading(false);
-    }
+  setIsLoading(true);
+  setError(null);
+  try {
+    // 分析処理
+  } catch (e) {
+    setError(new DomainError("分析に失敗しました", e));
+  } finally {
+    setIsLoading(false);
+  }
 };
 ```
 
@@ -592,17 +603,26 @@ const handleAnalyze = async () => {
 ```typescript
 // ViewModelの拡張（既存コードは無修正）
 export function useMultiPeriodChurnViewModel(
-    apiPostBlob: <T>(url: string, data: T) => Promise<Blob>
+  apiPostBlob: <T>(url: string, data: T) => Promise<Blob>,
 ) {
-    // 3期間以上の比較ロジック
-    const period1Customers = useMemo(() => aggregateCustomers(period1Months), [period1Months]);
-    const period2Customers = useMemo(() => aggregateCustomers(period2Months), [period2Months]);
-    const period3Customers = useMemo(() => aggregateCustomers(period3Months), [period3Months]);
-    
-    // 離脱顧客の複数期間比較
-    const lostCustomersTrend = useMemo(() => {
-        // P1→P2→P3 の離脱推移を計算
-    }, [period1Customers, period2Customers, period3Customers]);
+  // 3期間以上の比較ロジック
+  const period1Customers = useMemo(
+    () => aggregateCustomers(period1Months),
+    [period1Months],
+  );
+  const period2Customers = useMemo(
+    () => aggregateCustomers(period2Months),
+    [period2Months],
+  );
+  const period3Customers = useMemo(
+    () => aggregateCustomers(period3Months),
+    [period3Months],
+  );
+
+  // 離脱顧客の複数期間比較
+  const lostCustomersTrend = useMemo(() => {
+    // P1→P2→P3 の離脱推移を計算
+  }, [period1Customers, period2Customers, period3Customers]);
 }
 ```
 
@@ -612,25 +632,25 @@ export function useMultiPeriodChurnViewModel(
 
 ### 達成した設計原則
 
-| 原則 | 達成度 | 詳細 |
-|---|---|---|
-| **FSD（Feature-Sliced Design）** | ✅ 100% | feature単位で完全分離、domain/model/ui/ports/infrastructure |
-| **MVVM** | ✅ 100% | Page=View、ViewModel=model層、Model=domain層 |
-| **Repository Pattern** | ✅ 80% | Ports定義完了、Infrastructure実装は将来（現在はモックデータ） |
-| **SOLID原則** | ✅ 100% | SRP/OCP/LSP/ISP/DIP すべて準拠 |
-| **DI（依存性注入）** | ✅ 100% | apiPostBlobをViewModelに注入 |
+| 原則                             | 達成度  | 詳細                                                          |
+| -------------------------------- | ------- | ------------------------------------------------------------- |
+| **FSD（Feature-Sliced Design）** | ✅ 100% | feature単位で完全分離、domain/model/ui/ports/infrastructure   |
+| **MVVM**                         | ✅ 100% | Page=View、ViewModel=model層、Model=domain層                  |
+| **Repository Pattern**           | ✅ 80%  | Ports定義完了、Infrastructure実装は将来（現在はモックデータ） |
+| **SOLID原則**                    | ✅ 100% | SRP/OCP/LSP/ISP/DIP すべて準拠                                |
+| **DI（依存性注入）**             | ✅ 100% | apiPostBlobをViewModelに注入                                  |
 
 ---
 
 ### コード品質指標
 
-| 指標 | Before | After | 改善率 |
-|---|---|---|---|
-| **Page行数** | 300行 | 200行 | ▼33% |
-| **テストカバレッジ** | 0% | 80%可能 | - |
-| **循環的複雑度** | 15 | 5 | ▼67% |
-| **結合度** | 高（密結合） | 低（疎結合） | - |
-| **凝集度** | 低 | 高 | - |
+| 指標                 | Before       | After        | 改善率 |
+| -------------------- | ------------ | ------------ | ------ |
+| **Page行数**         | 300行        | 200行        | ▼33%   |
+| **テストカバレッジ** | 0%           | 80%可能      | -      |
+| **循環的複雑度**     | 15           | 5            | ▼67%   |
+| **結合度**           | 高（密結合） | 低（疎結合） | -      |
+| **凝集度**           | 低           | 高           | -      |
 
 ---
 

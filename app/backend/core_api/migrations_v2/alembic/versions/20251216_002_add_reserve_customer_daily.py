@@ -23,20 +23,20 @@ Phase 2: stg.reserve_customer_daily テーブル追加
   - 制約: planned_trucks >= 0
 
 """
-from alembic import op
-import sqlalchemy as sa
 
+from alembic import op
 
 # revision identifiers, used by Alembic.
-revision = '6807c2215b75'
-down_revision = '1d57288e056c'
+revision = "6807c2215b75"
+down_revision = "1d57288e056c"
 branch_labels = None
 depends_on = None
 
 
 def upgrade() -> None:
     """stg.reserve_customer_daily テーブルを作成"""
-    op.execute("""
+    op.execute(
+        """
         CREATE TABLE stg.reserve_customer_daily (
             id bigserial PRIMARY KEY,
             reserve_date date NOT NULL,
@@ -52,38 +52,55 @@ def upgrade() -> None:
             CONSTRAINT chk_planned_trucks_non_negative CHECK (planned_trucks >= 0),
             CONSTRAINT uq_reserve_customer_daily_date_customer UNIQUE (reserve_date, customer_cd)
         );
-    """)
-    
+    """
+    )
+
     # インデックス作成
-    op.execute("""
-        CREATE INDEX idx_reserve_customer_daily_date 
+    op.execute(
+        """
+        CREATE INDEX idx_reserve_customer_daily_date
         ON stg.reserve_customer_daily (reserve_date);
-    """)
-    op.execute("""
-        CREATE INDEX idx_reserve_customer_daily_date_fixed 
+    """
+    )
+    op.execute(
+        """
+        CREATE INDEX idx_reserve_customer_daily_date_fixed
         ON stg.reserve_customer_daily (reserve_date, is_fixed_customer);
-    """)
-    
+    """
+    )
+
     # コメント追加（ドキュメンテーション）
-    op.execute("""
-        COMMENT ON TABLE stg.reserve_customer_daily IS 
+    op.execute(
+        """
+        COMMENT ON TABLE stg.reserve_customer_daily IS
         '顧客ごとの予約一覧。manual入力がない日付はこのテーブルから集計';
-    """)
-    op.execute("""
+    """
+    )
+    op.execute(
+        """
         COMMENT ON COLUMN stg.reserve_customer_daily.reserve_date IS '予約日';
-    """)
-    op.execute("""
+    """
+    )
+    op.execute(
+        """
         COMMENT ON COLUMN stg.reserve_customer_daily.customer_cd IS '顧客コード';
-    """)
-    op.execute("""
+    """
+    )
+    op.execute(
+        """
         COMMENT ON COLUMN stg.reserve_customer_daily.customer_name IS '顧客名（スナップショット）';
-    """)
-    op.execute("""
+    """
+    )
+    op.execute(
+        """
         COMMENT ON COLUMN stg.reserve_customer_daily.planned_trucks IS '予定台数';
-    """)
-    op.execute("""
+    """
+    )
+    op.execute(
+        """
         COMMENT ON COLUMN stg.reserve_customer_daily.is_fixed_customer IS '固定客フラグ';
-    """)
+    """
+    )
 
 
 def downgrade() -> None:

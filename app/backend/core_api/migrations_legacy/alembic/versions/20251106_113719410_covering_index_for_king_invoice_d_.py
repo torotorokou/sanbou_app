@@ -5,13 +5,13 @@ Revises: 20251105_174743743
 Create Date: 2025-11-06 02:37:20.540958
 
 """
-from alembic import op
-import sqlalchemy as sa
 
+import sqlalchemy as sa
+from alembic import op
 
 # revision identifiers, used by Alembic.
-revision = '20251106_113719410'
-down_revision = '20251105_174743743'
+revision = "20251106_113719410"
+down_revision = "20251105_174743743"
 branch_labels = None
 depends_on = None
 
@@ -39,13 +39,17 @@ AND ((split_part(replace((invoice_date)::text, '/'::text, '-'::text), '-'::text,
 AND ((split_part(replace((invoice_date)::text, '/'::text, '-'::text), '-'::text, 3))::integer BETWEEN 1 AND 31)
 """.strip()
 
+
 def upgrade() -> None:
     bind = op.get_bind()
     rel = "raw.receive_king_final"
     exists = bind.execute(sa.text("SELECT to_regclass(:r)"), {"r": rel}).scalar()
     if exists is None:
         with op.get_context().autocommit_block():
-            op.execute(sa.text("DO $$ BEGIN RAISE NOTICE 'skip: % not found'; END $$;"), {"r": rel})
+            op.execute(
+                sa.text("DO $$ BEGIN RAISE NOTICE 'skip: % not found'; END $$;"),
+                {"r": rel},
+            )
         return
 
     # 1) 新しい「カバリング」インデックスを CONCURRENTLY で作成
@@ -65,6 +69,7 @@ def upgrade() -> None:
     # 2) 旧インデックスがあるなら CONCURRENTLY で削除（任意：残して観察でもOK）
     with op.get_context().autocommit_block():
         op.execute(sa.text(f"DROP INDEX CONCURRENTLY IF EXISTS {OLD_IDX};"))
+
 
 def downgrade() -> None:
     rel = "raw.receive_king_final"

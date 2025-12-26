@@ -12,7 +12,9 @@ interface DailySeriesLoaderParams {
   query: SummaryQuery;
   categoryKind: 'waste' | 'valuable';
   repSeriesCache: Record<ID, DailyPoint[]>;
-  setRepSeriesCache: (cache: Record<ID, DailyPoint[]> | ((prev: Record<ID, DailyPoint[]>) => Record<ID, DailyPoint[]>)) => void;
+  setRepSeriesCache: (
+    cache: Record<ID, DailyPoint[]> | ((prev: Record<ID, DailyPoint[]>) => Record<ID, DailyPoint[]>)
+  ) => void;
 }
 
 export function useDailySeriesLoader(params: DailySeriesLoaderParams) {

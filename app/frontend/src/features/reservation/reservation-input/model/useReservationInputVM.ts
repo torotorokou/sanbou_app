@@ -1,20 +1,20 @@
 /**
  * useReservationInputVM - 予約手入力 ViewModel
- * 
+ *
  * Model (状態管理・ビジネスロジック)
  * 規約: ViewModel hooks は useXxxVM.ts 命名に統一
- * 
+ *
  * 責務: 手入力フォームの状態管理・保存・削除
  */
 
-import { useState, useCallback } from 'react';
-import { message } from 'antd';
-import type { Dayjs } from 'dayjs';
+import { useState, useCallback } from "react";
+import { message } from "antd";
+import type { Dayjs } from "dayjs";
 import type {
   ReservationDailyRepository,
   ReservationManualInput,
-} from '../../shared';
-import { reservationDailyRepository } from '../../shared';
+} from "../../shared";
+import { reservationDailyRepository } from "../../shared";
 
 export interface ReservationInputViewModel {
   // State
@@ -40,13 +40,17 @@ export interface ReservationInputViewModel {
 
 export const useReservationInputVM = (
   repository: ReservationDailyRepository = reservationDailyRepository,
-  onDataChanged?: () => void
+  onDataChanged?: () => void,
 ): ReservationInputViewModel => {
   const [selectedDate, setSelectedDate] = useState<Dayjs | null>(null);
   const [totalTrucks, setTotalTrucks] = useState<number | null>(null);
-  const [totalCustomerCount, setTotalCustomerCount] = useState<number | null>(null);
-  const [fixedCustomerCount, setFixedCustomerCount] = useState<number | null>(null);
-  const [note, setNote] = useState<string>('');
+  const [totalCustomerCount, setTotalCustomerCount] = useState<number | null>(
+    null,
+  );
+  const [fixedCustomerCount, setFixedCustomerCount] = useState<number | null>(
+    null,
+  );
+  const [note, setNote] = useState<string>("");
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [hasManualData, setHasManualData] = useState<boolean>(false);
@@ -55,29 +59,41 @@ export const useReservationInputVM = (
     setError(null);
   }, []);
 
-  const onSelectDate = useCallback((date: Dayjs | null) => {
-    setSelectedDate(date);
-    clearMessages();
-    // TODO: 選択日のデータを取得してhasManualDataを更新
-    setHasManualData(false);
-  }, [clearMessages]);
+  const onSelectDate = useCallback(
+    (date: Dayjs | null) => {
+      setSelectedDate(date);
+      clearMessages();
+      // TODO: 選択日のデータを取得してhasManualDataを更新
+      setHasManualData(false);
+    },
+    [clearMessages],
+  );
 
-  const onChangeTotalTrucks = useCallback((value: number | null) => {
-    setTotalTrucks(value);
-    clearMessages();
-  }, [clearMessages]);
+  const onChangeTotalTrucks = useCallback(
+    (value: number | null) => {
+      setTotalTrucks(value);
+      clearMessages();
+    },
+    [clearMessages],
+  );
 
-  const onChangeTotalCustomerCount = useCallback((value: number | null) => {
-    console.log('[ReservationInputVM] totalCustomerCount changed:', value);
-    setTotalCustomerCount(value);
-    clearMessages();
-  }, [clearMessages]);
+  const onChangeTotalCustomerCount = useCallback(
+    (value: number | null) => {
+      console.log("[ReservationInputVM] totalCustomerCount changed:", value);
+      setTotalCustomerCount(value);
+      clearMessages();
+    },
+    [clearMessages],
+  );
 
-  const onChangeFixedCustomerCount = useCallback((value: number | null) => {
-    console.log('[ReservationInputVM] fixedCustomerCount changed:', value);
-    setFixedCustomerCount(value);
-    clearMessages();
-  }, [clearMessages]);
+  const onChangeFixedCustomerCount = useCallback(
+    (value: number | null) => {
+      console.log("[ReservationInputVM] fixedCustomerCount changed:", value);
+      setFixedCustomerCount(value);
+      clearMessages();
+    },
+    [clearMessages],
+  );
 
   const onChangeNote = useCallback((value: string) => {
     setNote(value);
@@ -85,11 +101,11 @@ export const useReservationInputVM = (
 
   const onSubmit = useCallback(async () => {
     if (!selectedDate) {
-      setError('日付を選択してください');
+      setError("日付を選択してください");
       return;
     }
     if (totalTrucks === null || totalTrucks === undefined) {
-      setError('総台数を入力してください');
+      setError("総台数を入力してください");
       return;
     }
     // customer_countはオプショナル（バリデーション不要）
@@ -99,38 +115,46 @@ export const useReservationInputVM = (
 
     try {
       const payload: ReservationManualInput = {
-        reserve_date: selectedDate.format('YYYY-MM-DD'),
+        reserve_date: selectedDate.format("YYYY-MM-DD"),
         total_trucks: totalTrucks,
         total_customer_count: totalCustomerCount,
         fixed_customer_count: fixedCustomerCount,
         note: note || undefined,
       };
 
-      console.log('[ReservationInputVM] Submitting payload:', payload);
+      console.log("[ReservationInputVM] Submitting payload:", payload);
       await repository.upsertManual(payload);
-      console.log('[ReservationInputVM] Save successful');
-      message.success('保存しました');
-      
+      console.log("[ReservationInputVM] Save successful");
+      message.success("保存しました");
+
       // フォームをリセット
       setSelectedDate(null);
       setTotalTrucks(null);
       setTotalCustomerCount(null);
       setFixedCustomerCount(null);
-      setNote('');
+      setNote("");
       setHasManualData(false);
-      
+
       // 親コンポーネントに変更を通知
       if (onDataChanged) {
         onDataChanged();
       }
     } catch (err: unknown) {
-      console.error('Failed to save manual data:', err);
-      const errorMessage = err instanceof Error ? err.message : '不明なエラー';
+      console.error("Failed to save manual data:", err);
+      const errorMessage = err instanceof Error ? err.message : "不明なエラー";
       setError(`保存に失敗しました: ${errorMessage}`);
     } finally {
       setIsSaving(false);
     }
-  }, [selectedDate, totalTrucks, totalCustomerCount, fixedCustomerCount, note, repository, onDataChanged]);
+  }, [
+    selectedDate,
+    totalTrucks,
+    totalCustomerCount,
+    fixedCustomerCount,
+    note,
+    repository,
+    onDataChanged,
+  ]);
 
   const onDelete = useCallback(async () => {
     if (!selectedDate) return;
@@ -139,21 +163,21 @@ export const useReservationInputVM = (
     setError(null);
 
     try {
-      await repository.deleteManual(selectedDate.format('YYYY-MM-DD'));
-      message.success('削除しました');
+      await repository.deleteManual(selectedDate.format("YYYY-MM-DD"));
+      message.success("削除しました");
       setTotalTrucks(null);
       setTotalCustomerCount(null);
       setFixedCustomerCount(null);
-      setNote('');
+      setNote("");
       setHasManualData(false);
-      
+
       // 親コンポーネントに変更を通知
       if (onDataChanged) {
         onDataChanged();
       }
     } catch (err: unknown) {
-      console.error('Failed to delete manual data:', err);
-      const errorMessage = err instanceof Error ? err.message : '不明なエラー';
+      console.error("Failed to delete manual data:", err);
+      const errorMessage = err instanceof Error ? err.message : "不明なエラー";
       setError(`削除に失敗しました: ${errorMessage}`);
     } finally {
       setIsSaving(false);

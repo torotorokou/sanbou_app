@@ -24,6 +24,7 @@ Alembic の基本機能は動作しているが、以下の課題があります
 ### 1. Alembic 設定ファイル (alembic.ini, env.py)
 
 #### ✅ alembic.ini
+
 - **場所**: `app/backend/core_api/migrations/alembic.ini`
 - **状態**: 正常
 - **設定内容**:
@@ -32,6 +33,7 @@ Alembic の基本機能は動作しているが、以下の課題があります
   - タイムゾーン設定なし (python-dateutil 未使用)
 
 #### ✅ env.py
+
 - **場所**: `app/backend/core_api/migrations/alembic/env.py`
 - **状態**: 正常
 - **主要機能**:
@@ -42,6 +44,7 @@ Alembic の基本機能は動作しているが、以下の課題があります
   - `/backend` を sys.path に追加して `app.*` モジュールをインポート可能
 
 #### ⚠️ 環境変数の問題
+
 - **症状**: `DB_DSN` または `DATABASE_URL` が設定されていないと `RuntimeError` が発生
 - **原因**: docker-compose.dev.yml の `core_api` サービスに環境変数が定義されていない
 - **影響**: `make al-cur`, `make al-rev-auto` などのコマンドが失敗
@@ -52,20 +55,23 @@ Alembic の基本機能は動作しているが、以下の課題があります
 ### 2. マイグレーション状態 (DB vs ファイル)
 
 #### ✅ alembic_version テーブル
+
 ```sql
 SELECT * FROM public.alembic_version;
 ```
-| version_num          | type    |
-|---------------------|---------|
-| 1d84cbab2c95        | alembic |
-| 20251211_100000000  | custom  |
-| 20251211_110000000  | custom  |
-| 20251211_120000000  | custom  |
+
+| version_num        | type    |
+| ------------------ | ------- |
+| 1d84cbab2c95       | alembic |
+| 20251211_100000000 | custom  |
+| 20251211_110000000 | custom  |
+| 20251211_120000000 | custom  |
 
 ⚠️ **問題**: 通常、`alembic_version` テーブルには **1レコードのみ** (現在の HEAD) が残るべき。
 4レコード残留しているのは、過去のマイグレーション適用時に手動で `INSERT` した痕跡。
 
 #### ✅ マイグレーションファイル数
+
 - **合計**: 100ファイル
 - **最新3件** (今回追加分):
   1. `20251211_100000000_add_slip_date_indexes.py` (案4)
@@ -73,6 +79,7 @@ SELECT * FROM public.alembic_version;
   3. `20251211_120000000_create_mv_receive_daily.py` (案1)
 
 #### ✅ 現在の HEAD
+
 ```bash
 $ make al-heads
 20251211_120000000 (head)
@@ -85,6 +92,7 @@ $ make al-heads
 ### 3. マイグレーション依存関係
 
 #### ✅ 依存グラフ (最新10件)
+
 ```
 20251202_100000000 → 1d84cbab2c95
                   ↘
@@ -106,12 +114,14 @@ $ make al-heads
 ### 4. Makefile コマンド動作確認
 
 #### ✅ 動作するコマンド
+
 ```bash
 make al-heads   # ✅ 成功: 20251211_120000000 (head)
 make al-hist    # ✅ 成功: 履歴表示可能
 ```
 
 #### ❌ 動作しないコマンド
+
 ```bash
 make al-cur       # ❌ 失敗: RuntimeError: Set DB_DSN or DATABASE_URL
 make al-rev-auto  # ❌ 失敗: RuntimeError: Set DB_DSN or DATABASE_URL
@@ -121,7 +131,9 @@ make al-up        # ❌ 失敗: RuntimeError: Set DB_DSN or DATABASE_URL
 **原因**: `env.py` の `_get_url()` 関数が `DB_DSN` または `DATABASE_URL` を環境変数から取得しようとするが、Makefile 経由のコマンドでは環境変数が渡っていない。
 
 #### 回避方法
+
 `docker-compose.dev.yml` の `core_api` サービスに以下を追加:
+
 ```yaml
 core_api:
   environment:
@@ -129,6 +141,7 @@ core_api:
 ```
 
 または、Makefile の `ALEMBIC` 定義を修正:
+
 ```makefile
 ALEMBIC := $(ALEMBIC_DC) exec -e DB_DSN="postgresql://myuser:mypassword@db:5432/sanbou_dev" core_api alembic -c /backend/migrations/alembic.ini
 ```
@@ -140,24 +153,27 @@ ALEMBIC := $(ALEMBIC_DC) exec -e DB_DSN="postgresql://myuser:mypassword@db:5432/
 #### ✅ 今回追加した3つのマイグレーション
 
 ##### 1. `20251211_100000000_add_slip_date_indexes.py` (案4)
+
 - **目的**: `stg.shogun_final_receive` と `stg.shogun_flash_receive` に `slip_date` インデックスを追加
 - **状態**: ✅ 適用済み
 - **確認**:
   ```sql
-  SELECT indexname FROM pg_indexes 
-  WHERE schemaname = 'stg' 
-    AND tablename = 'shogun_final_receive' 
+  SELECT indexname FROM pg_indexes
+  WHERE schemaname = 'stg'
+    AND tablename = 'shogun_final_receive'
     AND indexname LIKE '%slip_date%';
   ```
   結果: `ix_shogun_final_receive_slip_date` など3つのインデックスが存在
 
 ##### 2. `20251211_110000000_merge_heads.py`
+
 - **目的**: `1d84cbab2c95` と `20251211_100000000` の2つのブランチをマージ
 - **状態**: ✅ 適用済み
 - **down_revision**: `("1d84cbab2c95", "20251211_100000000")` (タプル)
 - **upgrade/downgrade**: 空実装 (マージのみ)
 
 ##### 3. `20251211_120000000_create_mv_receive_daily.py` (案1)
+
 - **目的**: `mart.v_receive_daily` を `mart.mv_receive_daily` (MATERIALIZED VIEW) として複製
 - **状態**: ✅ 適用済み (手動実行)
 - **確認**:
@@ -167,7 +183,9 @@ ALEMBIC := $(ALEMBIC_DC) exec -e DB_DSN="postgresql://myuser:mypassword@db:5432/
   結果: `1805` 行
 
 #### ⚠️ 手動適用の問題
+
 今回のマイグレーションは、以下の理由で手動適用されました:
+
 1. Alembic の `upgrade head` コマンドでは権限エラー発生 (sanbou_app_dev ユーザーでは CREATE INDEX 不可)
 2. 直接 `psql` で DDL を実行 (myuser ユーザー)
 3. `alembic_version` テーブルに手動で `INSERT` して記録
@@ -183,6 +201,7 @@ ALEMBIC := $(ALEMBIC_DC) exec -e DB_DSN="postgresql://myuser:mypassword@db:5432/
 **問題**: Makefile から実行する Alembic コマンドで `DB_DSN` が渡らない
 
 **解決策A**: docker-compose.dev.yml に環境変数を追加
+
 ```yaml
 # docker/docker-compose.dev.yml
 services:
@@ -192,6 +211,7 @@ services:
 ```
 
 **解決策B**: Makefile の定義を修正
+
 ```makefile
 # makefile
 ALEMBIC := $(ALEMBIC_DC) exec \
@@ -208,9 +228,10 @@ ALEMBIC := $(ALEMBIC_DC) exec \
 **問題**: 4レコード残留 (本来1レコードのみ)
 
 **解決策**:
+
 ```sql
 -- 現在の HEAD 以外を削除
-DELETE FROM public.alembic_version 
+DELETE FROM public.alembic_version
 WHERE version_num NOT IN ('20251211_120000000');
 ```
 
@@ -223,10 +244,12 @@ WHERE version_num NOT IN ('20251211_120000000');
 **問題**: `alembic upgrade head` で権限エラー発生
 
 **現状**:
+
 - アプリケーションユーザー: `sanbou_app_dev` (SELECT/INSERT/UPDATE/DELETE のみ)
 - スキーマオーナー: `myuser` (DDL 可能)
 
 **解決策**:
+
 ```sql
 -- sanbou_app_dev に DDL 権限を付与 (開発環境のみ)
 GRANT CREATE ON SCHEMA stg TO sanbou_app_dev;
@@ -234,6 +257,7 @@ GRANT CREATE ON SCHEMA mart TO sanbou_app_dev;
 ```
 
 または、Alembic 実行時のみ `myuser` を使用:
+
 ```makefile
 # makefile
 ALEMBIC := $(ALEMBIC_DC) exec \
@@ -248,16 +272,19 @@ ALEMBIC := $(ALEMBIC_DC) exec \
 ### 4. マイグレーションファイルの命名規則統一 (優先度: 低)
 
 **現状**:
+
 - 古いマイグレーション: Alembic デフォルト (例: `1d84cbab2c95`)
 - 今回のマイグレーション: カスタム形式 (例: `20251211_100000000`)
 
 **推奨**: カスタム形式 (`YYYYMMDD_HHMMSS000`) に統一
+
 ```makefile
 # makefile
 REV_ID ?= $(shell date +%Y%m%d_%H%M%S%3N)
 ```
 
 **利点**:
+
 - 時系列順に並ぶ
 - ファイル名からマイグレーション日時が推測可能
 - 既に Makefile で実装済み
@@ -266,29 +293,32 @@ REV_ID ?= $(shell date +%Y%m%d_%H%M%S%3N)
 
 ## ✅ アクションアイテム
 
-| 優先度 | 項目 | 担当 | 期限 |
-|--------|------|------|------|
-| 🔴 高 | docker-compose.dev.yml に DB_DSN 環境変数を追加 | Backend | 即座 |
-| 🟡 中 | alembic_version テーブルのクリーンアップ | Backend | 今週中 |
-| 🟡 中 | Alembic 実行ユーザーを myuser に変更 (Makefile 修正) | Backend | 今週中 |
-| 🟢 低 | マイグレーション命名規則の統一ドキュメント作成 | Backend | 来週 |
+| 優先度 | 項目                                                 | 担当    | 期限   |
+| ------ | ---------------------------------------------------- | ------- | ------ |
+| 🔴 高  | docker-compose.dev.yml に DB_DSN 環境変数を追加      | Backend | 即座   |
+| 🟡 中  | alembic_version テーブルのクリーンアップ             | Backend | 今週中 |
+| 🟡 中  | Alembic 実行ユーザーを myuser に変更 (Makefile 修正) | Backend | 今週中 |
+| 🟢 低  | マイグレーション命名規則の統一ドキュメント作成       | Backend | 来週   |
 
 ---
 
 ## 📊 統計情報
 
 ### マイグレーションファイル
+
 - **合計数**: 100ファイル
 - **今回追加**: 3ファイル
 - **最古**: `20251104_154033124_mart_baseline.py`
 - **最新**: `20251211_120000000_create_mv_receive_daily.py`
 
 ### データベース状態
+
 - **現在の HEAD**: `20251211_120000000`
 - **alembic_version レコード数**: 4 (⚠️ 異常、本来1レコード)
 - **マイグレーション適用済み数**: 100 (推定)
 
 ### Makefile コマンド
+
 - **動作確認済み**: `al-heads`, `al-hist`
 - **要修正**: `al-cur`, `al-rev-auto`, `al-up`, `al-down`
 

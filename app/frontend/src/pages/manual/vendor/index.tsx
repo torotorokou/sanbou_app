@@ -14,7 +14,7 @@ const { Title, Paragraph } = Typography;
 
 const VendorMasterPage: React.FC = () => {
   const nav = useNavigate();
-  
+
   // カタログから業者マスター情報を取得
   const { sections, loading } = useShogunCatalog();
   const vendorItem = React.useMemo(() => {
@@ -28,13 +28,27 @@ const VendorMasterPage: React.FC = () => {
   return (
     <Layout className={styles.detailLayout}>
       <Layout.Content className={styles.detailContent}>
-        <Space direction='vertical' size={12} style={{ width: '100%', marginBottom: 16 }}>
-          <Breadcrumb items={[
-            { title: <a onClick={() => nav('/manuals')} className={styles.detailLink}>マニュアル</a> },
-            { title: <a onClick={() => nav('/manuals/shogun')} className={styles.detailLink}>将軍</a> },
-            { title: 'マスター情報' },
-            { title: '業者' }
-          ]} />
+        <Space direction="vertical" size={12} style={{ width: '100%', marginBottom: 16 }}>
+          <Breadcrumb
+            items={[
+              {
+                title: (
+                  <a onClick={() => nav('/manuals')} className={styles.detailLink}>
+                    マニュアル
+                  </a>
+                ),
+              },
+              {
+                title: (
+                  <a onClick={() => nav('/manuals/shogun')} className={styles.detailLink}>
+                    将軍
+                  </a>
+                ),
+              },
+              { title: 'マスター情報' },
+              { title: '業者' },
+            ]}
+          />
           <div className={styles.detailTitleBar}>
             <Title level={3} className={styles.detailTitle}>
               {vendorItem?.title || '業者マスター'}
@@ -44,16 +58,31 @@ const VendorMasterPage: React.FC = () => {
 
         {loading ? (
           <div className={styles.detailLoadingContainer}>
-            <Spin size='large' />
+            <Spin size="large" />
           </div>
         ) : !vendorItem ? (
           <div style={{ padding: 24, textAlign: 'center' }}>
             <Typography.Text type="secondary">マニュアルが見つかりません</Typography.Text>
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16, padding: 16 }}>
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 16,
+              padding: 16,
+            }}
+          >
             {/* 概要 */}
-            <div style={{ maxHeight: '20vh', overflow: 'auto', padding: 16, background: '#fafafa', borderRadius: 8 }}>
+            <div
+              style={{
+                maxHeight: '20vh',
+                overflow: 'auto',
+                padding: 16,
+                background: '#fafafa',
+                borderRadius: 8,
+              }}
+            >
               <Paragraph type="secondary" style={{ marginBottom: 0 }}>
                 {vendorItem.description ?? '運搬業者・処分業者の管理に関するマニュアルです。'}
               </Paragraph>

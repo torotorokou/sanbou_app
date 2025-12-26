@@ -1,11 +1,12 @@
 """mart_baseline
 
 Revision ID: 20251104_154033124
-Revises: 
+Revises:
 Create Date: 2025-11-04 06:40:33.866612
 """
-from alembic import op
+
 import sqlalchemy as sa
+from alembic import op
 from sqlalchemy.dialects import postgresql as psql
 
 # revision identifiers, used by Alembic.
@@ -56,7 +57,9 @@ def upgrade() -> None:
             nullable=False,
         ),
         sa.PrimaryKeyConstraint(
-            "scope", "iso_week", "iso_dow",
+            "scope",
+            "iso_week",
+            "iso_dow",
             name="inb_profile_smooth_test_pkey",
         ),
         schema="mart",
