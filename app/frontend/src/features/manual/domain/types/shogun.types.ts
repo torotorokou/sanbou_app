@@ -2,7 +2,7 @@
  * Shogun Manual Types
  * 将軍マニュアル機能の型定義
  */
-import type { ReactNode } from 'react';
+import type { ReactNode } from "react";
 
 // ============================================================================
 // Catalog / List Types (カタログ・一覧表示用)
@@ -83,6 +83,7 @@ export type ManualCatalogResponse = {
       tags: string[];
       flow_url?: string;
       video_url?: string;
+      thumbnail_url?: string;
     }>;
   }>;
 };

@@ -59,6 +59,7 @@ export function useShogunCatalog() {
             tags: item.tags || [],
             flowUrl: item.flow_url,
             videoUrl: item.video_url,
+            thumbnailUrl: item.thumbnail_url,
           })),
         }));
 

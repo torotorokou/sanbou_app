@@ -1,189 +1,310 @@
-from app.utils.utils import build_manual_asset_url
+"""
+Catalog Data for Manual API
+カタログデータ（セクション別マニュアル一覧）
+
+**Single Source of Truth**: local_data/manuals/index.json
+
+このファイルは index.json をカタログ正本として読み込み、
+major フィールドでセクションを自動グループ化します。
+
+将来の移行ポイント:
+- load_manual_index() で GCS から取得するよう変更
+- build_manual_asset_url() で GCS 署名付き URL を生成
+- load_manual_content() で GCS 上の Markdown を取得
+"""
+
+from __future__ import annotations
+
+import json
+import os
+from functools import lru_cache
+from pathlib import Path
+from typing import Optional, TypedDict
+
+from backend_shared.application.logging import get_module_logger
 
 
-sections = [
-    {
-        "id": "master",
-        "title": "マスター情報・登録",
-        "icon": "FolderOpenOutlined",
-        "items": [
+logger = get_module_logger(__name__)
+
+
+# =============================================================================
+# Type Definitions
+# =============================================================================
+
+
+class ManualAssets(TypedDict, total=False):
+    """マニュアルアセット（サムネイル、動画、フローチャート）"""
+
+    thumb: Optional[str]
+    video: Optional[str]
+    flowchart: Optional[str]
+
+
+class ManualItem(TypedDict):
+    """index.json のマニュアル項目"""
+
+    id: str
+    no: int
+    major: str
+    title: str
+    description: str
+    order: int
+    icon: str
+    tags: list[str]
+    assets: ManualAssets
+    content_path: str
+
+
+class ManualIndex(TypedDict):
+    """index.json のルート構造"""
+
+    version: int
+    manuals: list[ManualItem]
+
+
+class CatalogItem(TypedDict, total=False):
+    """カタログ形式のアイテム（API レスポンス用）"""
+
+    id: str
+    title: str
+    description: Optional[str]
+    tags: list[str]
+    route: str
+    thumbnail_url: Optional[str]
+    video_url: Optional[str]
+    flow_url: Optional[str]
+
+
+class CatalogSection(TypedDict):
+    """カタログセクション（major でグループ化）"""
+
+    id: str
+    title: str
+    icon: str
+    items: list[CatalogItem]
+
+
+# =============================================================================
+# URL Builders
+# =============================================================================
+
+
+def _get_asset_base_url() -> str:
+    """マニュアルアセットのベースURLを取得
+
+    環境変数 MANUAL_ASSET_BASE_URL があればそれを使用
+    なければ /core_api/manual/manual-assets を使用（BFF経由）
+    """
+    env_url = os.getenv("MANUAL_ASSET_BASE_URL", "").strip()
+    if env_url:
+        return env_url.rstrip("/")
+    return "/core_api/manual/manual-assets"
+
+
+def build_manual_asset_url(relative_path: Optional[str]) -> Optional[str]:
+    """マニュアルアセットのURLを生成
+
+    Args:
+        relative_path: 相対パス（例: thumbs/m11_master_vendor.png）
+
+    Returns:
+        完全なURL or None
+    """
+    if not relative_path:
+        return None
+    if relative_path.startswith(("http://", "https://")):
+        return relative_path
+    base = _get_asset_base_url()
+    return f"{base}/{relative_path.lstrip('/')}"
+
+
+# 後方互換性エイリアス
+build_manual_video_asset_url = build_manual_asset_url
+
+
+# =============================================================================
+# Index Loader
+# =============================================================================
+
+
+def _get_index_path() -> Path:
+    """index.json のパスを取得"""
+    return (
+        Path(__file__).resolve().parent.parent.parent.parent
+        / "local_data"
+        / "manuals"
+        / "index.json"
+    )
+
+
+def _get_contents_dir() -> Path:
+    """contents/ ディレクトリのパスを取得"""
+    return _get_index_path().parent / "contents"
+
+
+@lru_cache(maxsize=1)
+def load_manual_index() -> ManualIndex:
+    """index.json を読み込む（Single Source of Truth）"""
+    index_path = _get_index_path()
+    if not index_path.exists():
+        logger.warning(f"Manual index not found: {index_path}")
+        return {"version": 0, "manuals": []}
+
+    try:
+        with open(index_path, encoding="utf-8") as f:
+            data: ManualIndex = json.load(f)
+        logger.info(
+            f"Loaded {len(data.get('manuals', []))} manuals from index (v{data.get('version', 0)})"
+        )
+        return data
+    except Exception as e:
+        logger.error(f"Failed to load manual index: {e}")
+        return {"version": 0, "manuals": []}
+
+
+# 後方互換性エイリアス
+def load_video_index() -> list[dict]:
+    """後方互換: 旧形式で manuals を返す"""
+    index = load_manual_index()
+    return index.get("manuals", [])
+
+
+# =============================================================================
+# Content Loader
+# =============================================================================
+
+
+def load_manual_content(content_path: str) -> Optional[str]:
+    """マニュアルのMarkdownコンテンツを読み込む
+
+    Args:
+        content_path: 相対パス（例: contents/m11_master_vendor.md）
+
+    Returns:
+        Markdown 文字列 or None
+    """
+    if not content_path:
+        return None
+
+    full_path = _get_index_path().parent / content_path
+    if not full_path.exists():
+        logger.warning(f"Manual content not found: {full_path}")
+        return None
+
+    try:
+        with open(full_path, encoding="utf-8") as f:
+            return f.read()
+    except Exception as e:
+        logger.error(f"Failed to load manual content: {e}")
+        return None
+
+
+# =============================================================================
+# Catalog Builders (新スキーマ対応)
+# =============================================================================
+
+
+def _manual_to_catalog_item(manual: ManualItem) -> CatalogItem:
+    """ManualItem を CatalogItem に変換"""
+    assets = manual.get("assets", {})
+    return {
+        "id": manual["id"],
+        "title": manual["title"],
+        "description": manual.get("description"),
+        "tags": manual.get("tags", []),
+        "route": f"/manuals/shogun/{manual['id']}",
+        "thumbnail_url": build_manual_asset_url(assets.get("thumb")),
+        "video_url": build_manual_asset_url(assets.get("video")),
+        "flow_url": build_manual_asset_url(assets.get("flowchart")),
+    }
+
+
+def get_catalog_sections() -> list[CatalogSection]:
+    """index.json から major 別セクションを生成
+
+    Returns:
+        CatalogSection のリスト（order 順）
+    """
+    index = load_manual_index()
+    manuals = index.get("manuals", [])
+
+    if not manuals:
+        return []
+
+    # major 別にグループ化
+    major_groups: dict[str, list[ManualItem]] = {}
+    for manual in manuals:
+        major = manual.get("major", "その他")
+        if major not in major_groups:
+            major_groups[major] = []
+        major_groups[major].append(manual)
+
+    # セクションを生成（order 順）
+    result: list[CatalogSection] = []
+    for major, items in major_groups.items():
+        # items を order でソート
+        sorted_items = sorted(items, key=lambda x: x.get("order", 999))
+        # 最初のアイテムの icon を使用
+        icon = sorted_items[0].get("icon", "FileOutlined") if sorted_items else "FileOutlined"
+        # ID は major の最初の2桁から生成
+        section_id = f"sec-{sorted_items[0]['no'] // 10}" if sorted_items else major
+
+        result.append(
             {
-                "id": "customer",
-                "title": "取引先",
-                "route": "/manual/master/customer",
-                "description": "取引先マスタの登録・更新・検索方法。新規取引先の追加、既存取引先情報の変更、取引先コードでの検索など、取引先管理の基本操作を解説します。",
-                "thumbnail_url": "https://via.placeholder.com/400x300/4A90E2/ffffff?text=取引先マスタ",
-                "tags": ["取引先", "マスター", "登録"],
-            },
-            {
-                "id": "vendor",
-                "title": "業者",
-                "route": "/manual/master/vendor",
-                "description": "運搬業者・処分業者マスタの管理方法。業者情報の登録、更新、業者区分の設定、許可証管理など、業者マスタに関する操作手順を詳しく説明します。",
-                "flow_url": build_manual_asset_url("master/vender/vender_fllowchart.png"),
-                "video_url": build_manual_asset_url("master/vender/vender_movie.mp4"),
-                "thumbnail_url": build_manual_asset_url("master/vender/vender_fllowchart.png"),
-                "tags": ["業者", "マスター", "運搬", "処分"],
-            },
-            {
-                "id": "site",
-                "title": "現場",
-                "route": "/manual/master/site",
-                "description": "現場マスタの登録・管理方法。建設現場の新規登録、現場情報の更新、現場コードの採番ルール、現場と取引先の紐付けなどを解説します。",
-                "thumbnail_url": "https://via.placeholder.com/400x300/50C878/ffffff?text=現場マスタ",
-                "tags": ["現場", "マスター", "建設"],
-            },
-            {
-                "id": "unitprice",
-                "title": "単価",
-                "route": "/manual/master/unit-price",
-                "description": "単価マスタの設定・管理方法。品目別単価の登録、取引先別単価の設定、期間別単価の管理、単価改定の手順などを詳しく説明します。",
-                "thumbnail_url": "https://via.placeholder.com/400x300/F39C12/ffffff?text=単価マスタ",
-                "tags": ["単価", "マスター", "価格"],
-            },
-            {
-                "id": "item",
-                "title": "品名",
-                "route": "/manual/master/item",
-                "description": "品名マスタの登録・分類管理方法。廃棄物・有価物の品名登録、品目コードの設定、品目分類の管理、マニフェスト品名との対応付けなどを解説します。",
-                "thumbnail_url": "https://via.placeholder.com/400x300/9B59B6/ffffff?text=品名マスタ",
-                "tags": ["品名", "マスター", "品目"],
-            },
-        ],
-    },
-    {
-        "id": "contract",
-        "title": "契約書",
-        "icon": "FileProtectOutlined",
-        "items": [
-            {
-                "id": "contract-reg-biz",
-                "title": "登録関係（事業系）",
-                "description": "事業系廃棄物の契約書登録フロー。契約書の新規作成、契約内容の入力、品目・単価の設定、契約期間の管理、契約書PDFの生成・保存方法を段階的に説明します。",
-                "flow_url": "https://example.com/contract_biz_flow.pdf",
-                "video_url": "https://example.com/contract_biz.mp4",
-                "thumbnail_url": "https://via.placeholder.com/400x300/E74C3C/ffffff?text=事業系契約書",
-                "route": "/manual/contract/biz",
-                "tags": ["契約書", "事業系", "登録"],
-            },
-            {
-                "id": "contract-reg-construction",
-                "title": "登録関係（建設系）",
-                "description": "建設系廃棄物の契約書登録フロー。現場との紐付け、建設系特有の品目設定、工期との連動、契約書の作成から保存までの一連の流れを詳しく解説します。",
-                "flow_url": "https://example.com/contract_construction_flow.pdf",
-                "video_url": "https://example.com/contract_construction.mp4",
-                "thumbnail_url": "https://via.placeholder.com/400x300/E67E22/ffffff?text=建設系契約書",
-                "route": "/manual/contract/construction",
-                "tags": ["契約書", "建設系", "登録"],
-            },
-            {
-                "id": "contract-search",
-                "title": "検索",
-                "route": "/manual/contract/search",
-                "description": "契約書の検索・閲覧方法。取引先名、契約番号、契約期間などの条件指定による検索、契約書PDFの表示、契約内容の確認方法を説明します。",
-                "thumbnail_url": "https://via.placeholder.com/400x300/3498DB/ffffff?text=契約書検索",
-                "tags": ["契約書", "検索"],
-            },
-        ],
-    },
-    {
-        "id": "estimate",
-        "title": "見積書",
-        "icon": "FileTextOutlined",
-        "items": [
-            {
-                "id": "estimate-make",
-                "title": "見積書の作成フロー",
-                "flow_url": "https://example.com/estimate_flow.pdf",
-                "video_url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
-                "description": "見積書作成の全体フロー。取引先選択、品目・数量の入力、単価の自動設定、値引き・調整の方法、見積書PDFの作成・印刷、見積履歴の管理まで、見積作成に関する全ての操作を解説します。",
-                "thumbnail_url": "https://via.placeholder.com/400x300/1ABC9C/ffffff?text=見積書作成",
-                "route": "/manual/estimate",
-                "tags": ["見積書", "作成", "PDF"],
-            },
-        ],
-    },
-    {
-        "id": "manifest",
-        "title": "マニフェスト",
-        "icon": "FileDoneOutlined",
-        "items": [
-            {
-                "id": "mf-honest-out",
-                "title": "工場外のオネスト運搬のマニフェスト入力",
-                "description": "工場外で発生したオネスト運搬案件のマニフェスト入力手順。排出場所の指定、運搬業者の選択、品目・数量の入力、マニフェスト番号の採番、各票の印刷方法を詳しく説明します。",
-                "flow_url": "https://example.com/mf_honest_out_flow.pdf",
-                "video_url": "https://example.com/mf_honest_out.mp4",
-                "thumbnail_url": "https://via.placeholder.com/400x300/2ECC71/ffffff?text=オネスト運搬",
-                "route": "/manual/manifest/honest-out",
-                "tags": ["マニフェスト", "オネスト", "工場外", "運搬"],
-            },
-            {
-                "id": "mf-search",
-                "title": "マニフェストの検索",
-                "route": "/manual/manifest/search",
-                "description": "マニフェストの検索・照会方法。マニフェスト番号、交付日、排出事業者、運搬業者などの条件での検索、検索結果の絞り込み、マニフェスト詳細の確認方法を解説します。",
-                "thumbnail_url": "https://via.placeholder.com/400x300/3498DB/ffffff?text=マニフェスト検索",
-                "tags": ["マニフェスト", "検索", "照会"],
-            },
-            {
-                "id": "mf-edit",
-                "title": "マニフェストの修正",
-                "route": "/manual/manifest/edit",
-                "description": "既存マニフェストの修正方法。入力ミスの訂正、数量・品目の変更、修正履歴の記録、修正後の再印刷など、マニフェスト修正時の注意点と手順を説明します。",
-                "thumbnail_url": "https://via.placeholder.com/400x300/F39C12/ffffff?text=マニフェスト修正",
-                "tags": ["マニフェスト", "修正", "訂正"],
-            },
-            {
-                "id": "mf-e-return",
-                "title": "E票の返却",
-                "description": "E票（処分終了票）の返却登録方法。処分業者からのE票受領確認、返却日の入力、返却内容のチェック、JWNETとの連携など、E票管理の一連の流れを詳しく解説します。",
-                "flow_url": "https://example.com/mf_e_return.pdf",
-                "video_url": "https://example.com/mf_e_return.mp4",
-                "thumbnail_url": "https://via.placeholder.com/400x300/E74C3C/ffffff?text=E票返却",
-                "tags": ["マニフェスト", "E票", "返却", "JWNET"],
-            },
-            {
-                "id": "mf-e-check",
-                "title": "E票・返却の有無確認",
-                "route": "/manual/manifest/e-check",
-                "description": "E票返却状況の確認方法。未返却マニフェストの一覧表示、返却期限のチェック、督促が必要な案件の抽出、返却状況レポートの出力方法を説明します。",
-                "thumbnail_url": "https://via.placeholder.com/400x300/9B59B6/ffffff?text=E票確認",
-                "tags": ["マニフェスト", "E票", "確認", "管理"],
-            },
-            {
-                "id": "mf-ledger",
-                "title": "台帳",
-                "route": "/manual/manifest/ledger",
-                "description": "マニフェスト台帳の閲覧・管理方法。法定保存期間に基づく台帳の整理、期間別の集計、台帳の印刷・PDF出力、行政報告用データの作成方法を解説します。",
-                "thumbnail_url": "https://via.placeholder.com/400x300/34495E/ffffff?text=マニフェスト台帳",
-                "tags": ["マニフェスト", "台帳", "保存", "報告"],
-            },
-        ],
-    },
-    {
-        "id": "external-input",
-        "title": "工場外入力",
-        "icon": "CloudUploadOutlined",
-        "items": [
-            {
-                "id": "ext-sales",
-                "title": "売上のみ入力",
-                "description": "工場外で発生した売上の直接入力方法。売上伝票の手動作成、取引先・品目・金額の入力、請求書との紐付け、売上データの確定手順を詳しく説明します。",
-                "flow_url": "https://example.com/ext_sales_flow.png",
-                "video_url": "https://example.com/ext_sales.mp4",
-                "thumbnail_url": "https://via.placeholder.com/400x300/27AE60/ffffff?text=売上入力",
-                "tags": ["工場外", "売上", "入力", "伝票"],
-            },
-            {
-                "id": "ext-purchase",
-                "title": "仕入のみの入力",
-                "description": "工場外で発生した仕入の直接入力方法。仕入伝票の手動作成、仕入先・品目・金額の入力、支払予定との連携、仕入データの確定手順を詳しく説明します。",
-                "flow_url": "https://example.com/ext_purchase_flow.png",
-                "video_url": "https://example.com/ext_purchase.mp4",
-                "thumbnail_url": "https://via.placeholder.com/400x300/E67E22/ffffff?text=仕入入力",
-                "tags": ["工場外", "仕入", "入力", "伝票"],
-            },
-        ],
-    },
-]
+                "id": section_id,
+                "title": major,
+                "icon": icon,
+                "items": [_manual_to_catalog_item(m) for m in sorted_items],
+            }
+        )
+
+    # セクションを最初のアイテムの order でソート
+    result.sort(key=lambda s: s["items"][0]["id"] if s["items"] else "zzz")
+    return result
+
+
+def get_manual_by_id(manual_id: str) -> Optional[ManualItem]:
+    """ID でマニュアルを取得"""
+    index = load_manual_index()
+    for manual in index.get("manuals", []):
+        if manual["id"] == manual_id:
+            return manual
+    return None
+
+
+def get_manual_detail(manual_id: str) -> Optional[dict]:
+    """マニュアル詳細（content 含む）を取得"""
+    manual = get_manual_by_id(manual_id)
+    if not manual:
+        return None
+
+    assets = manual.get("assets", {})
+    content = load_manual_content(manual.get("content_path", ""))
+
+    return {
+        **manual,
+        "content": content,
+        "thumbnail_url": build_manual_asset_url(assets.get("thumb")),
+        "video_url": build_manual_asset_url(assets.get("video")),
+        "flowchart_url": build_manual_asset_url(assets.get("flowchart")),
+    }
+
+
+# =============================================================================
+# 後方互換用エイリアス（既存コードからの移行用）
+# =============================================================================
+
+
+def get_video_sections() -> list[dict]:
+    """後方互換: get_catalog_sections のエイリアス"""
+    return get_catalog_sections()
+
+
+# 旧 sections 変数の代替 (動的生成)
+# 使用箇所: manuals_repository.py の CATALOG_SECTIONS
+sections = property(lambda self: get_catalog_sections())
+
+
+def get_sections() -> list[CatalogSection]:
+    """sections 変数の代替関数"""
+    return get_catalog_sections()

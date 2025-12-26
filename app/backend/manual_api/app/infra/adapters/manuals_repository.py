@@ -13,7 +13,9 @@ from app.core.domain.manual_entity import (
     RagMetadata,
 )
 from app.core.ports.manuals_repository import ManualsRepository
-from app.infra.adapters.catalog_data import sections as CATALOG_SECTIONS
+from app.infra.adapters.catalog_data import (
+    get_catalog_sections,
+)
 from backend_shared.application.logging import get_module_logger
 
 
@@ -142,9 +144,11 @@ class InMemoryManualRepository(ManualsRepository):
         return m.sections if m else []
 
     def get_catalog(self, *, category: str | None = "shogun") -> ManualCatalogResponse:
-        # Load from static dataset (migrated from frontend). Future: replace with SQL-backed repository.
+        """index.json から動的にカタログを生成（Single Source of Truth）"""
+        catalog_sections = get_catalog_sections()
         sections: list[CatalogSection] = []
-        for sec in CATALOG_SECTIONS:
+
+        for sec in catalog_sections:
             items = [
                 CatalogItem(
                     id=str(it.get("id", "")),
@@ -158,12 +162,14 @@ class InMemoryManualRepository(ManualsRepository):
                 )
                 for it in sec.get("items", [])
             ]
-            sections.append(
-                CatalogSection(
-                    id=str(sec.get("id", "")),
-                    title=str(sec.get("title", "")),
-                    icon=sec.get("icon"),
-                    items=items,
+            if items:
+                sections.append(
+                    CatalogSection(
+                        id=str(sec.get("id", "")),
+                        title=str(sec.get("title", "")),
+                        icon=sec.get("icon"),
+                        items=items,
+                    )
                 )
-            )
+
         return ManualCatalogResponse(sections=sections)

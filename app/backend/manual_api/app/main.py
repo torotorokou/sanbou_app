@@ -56,11 +56,27 @@ register_exception_handlers(app)
 # --- CORS設定 (backend_shared統一版) -----------------------------------------
 setup_cors(app)
 
+# --- 静的ファイル配信 ---------------------------------------------------------
+# 1. 旧アセット（data/）: 互換性維持のため残す
 data_dir = Path(__file__).resolve().parent.parent / "data"
 if data_dir.exists():
     # Serve manual static assets under internal logical path
     # BFF (core_api) will add /core_api prefix when exposing to frontend
     app.mount("/manual/assets", StaticFiles(directory=data_dir), name="manual-assets")
+
+# 2. 新マニュアル動画アセット（local_data/manuals/）
+#    将来GCSに移行する際はこのマウントを削除し、URL生成をGCS署名付きURLに変更
+manual_assets_dir = Path(__file__).resolve().parent.parent / "local_data" / "manuals"
+if manual_assets_dir.exists():
+    app.mount(
+        "/manual-assets",
+        StaticFiles(directory=manual_assets_dir),
+        name="manual-video-assets",
+    )
+    logger.info(
+        f"Mounted manual video assets: {manual_assets_dir}",
+        extra={"operation": "mount_assets", "path": str(manual_assets_dir)},
+    )
 
 app.include_router(manuals_router, prefix="/manual")
 
