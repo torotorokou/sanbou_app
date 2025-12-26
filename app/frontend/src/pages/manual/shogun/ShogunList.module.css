@@ -41,6 +41,15 @@
   margin: 0;
   text-align: center;
   pointer-events: auto;
+  white-space: nowrap;
+  font-size: 18px;
+}
+
+/* モバイルではタイトルのフォントサイズを調整 */
+@media (max-width: 767px) {
+  .title {
+    font-size: 16px;
+  }
 }
 
 .sider {
@@ -66,6 +75,7 @@
 .sectionBlock {
   scroll-margin-top: 80px;
   margin-bottom: 32px;
+  position: relative; /* sentinel用 */
 }
 
 .sectionHeader {
@@ -131,4 +141,23 @@
   outline: none;
   border-color: var(--ant-color-primary, #52c41a);
   box-shadow: 0 0 0 6px rgba(82, 196, 26, 0.09);
+}
+
+/* モバイル用FABボタン */
+.fabButton {
+  position: fixed;
+  right: 16px;
+  bottom: 24px;
+  width: 56px;
+  height: 56px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 999;
+}
+
+.fabButton:hover {
+  transform: scale(1.05);
+}
+
+.fabButton:active {
+  transform: scale(0.95);
 }

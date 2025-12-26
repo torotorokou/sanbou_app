@@ -6,6 +6,7 @@ import React, { useMemo, useRef, useState } from "react";
 import {
   Anchor,
   Badge,
+  Button,
   Empty,
   Flex,
   Input,
@@ -14,12 +15,18 @@ import {
   Tooltip,
   Typography,
 } from "antd";
-import { FileDoneOutlined } from "@ant-design/icons";
+import { FileDoneOutlined, UnorderedListOutlined } from "@ant-design/icons";
 import { useResponsive } from "@/shared"; // responsive: flags
 import { useShogunCatalog } from "@features/manual";
 import { SectionBlock } from "@features/manual/ui/components/SectionBlock";
 import { ManualModal } from "@features/manual/ui/components/ShogunModal";
 import type { ManualItem } from "@features/manual";
+import { useSectionNavViewModel } from "@features/manual/model/useSectionNavViewModel";
+import { BottomSheet } from "@features/manual/ui/components/BottomSheet";
+import { SectionList } from "@features/manual/ui/components/SectionList";
+import type { SectionNavItem } from "@features/manual/domain/types/sectionNav.types";
+import { useManualTitleSpyViewModel } from "@features/manual/model/useManualTitleSpyViewModel";
+import { StickyManualTitleBar } from "@features/manual/ui/components/StickyManualTitleBar";
 import styles from "./ShogunList.module.css";
 
 const { Title } = Typography;
@@ -65,6 +72,28 @@ const ShogunManualListPage: React.FC = () => {
       }))
       .filter((sec) => sec.items.length > 0);
   }, [query, sections]);
+
+  // Section Navigation Items（PCサイドバー/モバイルBottomSheetで共通）
+  const sectionNavItems = useMemo<SectionNavItem[]>(() => {
+    return filtered.map((sec) => ({
+      id: sec.id,
+      label: sec.title,
+      kind: "scroll" as const,
+      target: `#${sec.id}`,
+      icon: sec.icon,
+      count: sec.items.length,
+    }));
+  }, [filtered]);
+
+  // Section Navigation ViewModel
+  const sectionNav = useSectionNavViewModel({ items: sectionNavItems });
+
+  // Manual Title ScrollSpy ViewModel（モバイルのみ使用）
+  const titleSpy = useManualTitleSpyViewModel({
+    sections: filtered,
+    scrollRoot: contentScrollRef.current,
+    rootMargin: "-80px 0px -70% 0px",
+  });
 
   const handleOpen = (item: ManualItem) => {
     setActiveItem(item);
@@ -122,24 +151,26 @@ const ShogunManualListPage: React.FC = () => {
       </Header>
 
       <Layout>
-        {/* サイドバー */}
+        {/* サイドバー（PC/タブレット） */}
         {showSider && (
           <Sider width={260} className={styles.sider}>
             <Anchor
               targetOffset={16}
               getContainer={() => contentScrollRef.current ?? window}
-              items={filtered.map((s) => ({
-                key: s.id,
-                href: `#${s.id}`,
+              items={sectionNavItems.map((item) => ({
+                key: item.id,
+                href: item.target,
                 title: (
                   <Space>
-                    {s.icon}
-                    <span>{s.title}</span>
-                    <Badge
-                      size="small"
-                      count={s.items.length}
-                      style={{ backgroundColor: "var(--ant-color-primary)" }}
-                    />
+                    {item.icon}
+                    <span>{item.label}</span>
+                    {item.count !== undefined && (
+                      <Badge
+                        size="small"
+                        count={item.count}
+                        style={{ backgroundColor: "var(--ant-color-primary)" }}
+                      />
+                    )}
                   </Space>
                 ),
               }))}
@@ -149,6 +180,12 @@ const ShogunManualListPage: React.FC = () => {
 
         {/* メインコンテンツ */}
         <Content className={styles.content}>
+          {/* Sticky Title Bar（モバイルのみ） */}
+          <StickyManualTitleBar
+            title={titleSpy.activeTitle}
+            show={flags.isMobile}
+          />
+
           {!showHeaderSearch && (
             <div
               style={{
@@ -190,6 +227,7 @@ const ShogunManualListPage: React.FC = () => {
                       sectionClassName={styles.sectionBlock}
                       headerClassName={styles.sectionHeader}
                       itemClassName={styles.itemCard}
+                      sentinelRef={titleSpy.registerSentinel(sec.id)}
                     />
                   ))
                 )}
@@ -198,6 +236,31 @@ const ShogunManualListPage: React.FC = () => {
           </div>
         </Content>
       </Layout>
+
+      {/* モバイル用目次ボタン（FAB） */}
+      {!showSider && (
+        <Button
+          type="primary"
+          shape="circle"
+          size="large"
+          icon={<UnorderedListOutlined />}
+          onClick={sectionNav.open}
+          className={styles.fabButton}
+          aria-label="目次を開く"
+        />
+      )}
+
+      {/* モバイル用BottomSheet */}
+      <BottomSheet
+        open={sectionNav.isOpen}
+        onClose={sectionNav.close}
+        title="目次"
+      >
+        <SectionList
+          items={sectionNavItems}
+          onItemClick={sectionNav.onSelect}
+        />
+      </BottomSheet>
 
       {/* モーダル */}
       <ManualModal
