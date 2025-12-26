@@ -12,6 +12,8 @@ Sanbou Appは、レポート生成・データベース管理・マニュアル�
 - Zustand (状態管理)
 - React Router 7.0 (ルーティング)
 
+**パフォーマンス最適化**: [バンドル最適化レポート](docs/BUNDLE_OPTIMIZATION.md)
+
 ---
 
 ## 🏗️ アーキテクチャ
@@ -117,6 +119,10 @@ npm run dev
 
 # ビルド
 npm run build
+
+# バンドルサイズ解析付きビルド
+npm run build:analyze
+# レポート: dist/stats.html をブラウザで開く
 
 # ビルド結果プレビュー
 npm run preview

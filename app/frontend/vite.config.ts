@@ -3,6 +3,7 @@ import react from "@vitejs/plugin-react";
 import path from "path";
 import { fileURLToPath } from "url";
 import customMediaPlugin from "./src/plugins/vite-plugin-custom-media";
+import { visualizer } from "rollup-plugin-visualizer";
 
 // ESM 環境では __dirname が無いので定義
 const __filename = fileURLToPath(import.meta.url);
@@ -31,7 +32,16 @@ export default defineConfig(({ mode }) => {
 
   return {
     envDir, // Vite に env ディレクトリを伝える
-    plugins: [react(), customMediaPlugin()],
+    plugins: [
+      react(),
+      customMediaPlugin(),
+      visualizer({
+        filename: "./dist/stats.html",
+        open: false,
+        gzipSize: true,
+        brotliSize: true,
+      }),
+    ],
     resolve: {
       alias: {
         "@": path.resolve(__dirname, "src"),
@@ -55,11 +65,79 @@ export default defineConfig(({ mode }) => {
       // チャンク分割設定
       rollupOptions: {
         output: {
-          manualChunks: {
-            // ベンダーライブラリを分割
-            "vendor-react": ["react", "react-dom", "react-router-dom"],
-            "vendor-antd": ["antd", "@ant-design/icons"],
-            "vendor-charts": ["recharts"],
+          manualChunks: (id) => {
+            // Node modules の分類
+            if (id.includes("node_modules")) {
+              // 1. React系は初回必須なので vendor-react にまとめる
+              if (
+                id.includes("react") ||
+                id.includes("react-dom") ||
+                id.includes("react-router")
+              ) {
+                return "vendor-react";
+              }
+
+              // 2. Ant Design は使用頻度が高いので vendor-antd
+              if (id.includes("antd") || id.includes("@ant-design")) {
+                return "vendor-antd";
+              }
+
+              // 3. recharts は遅延読み込みページでのみ使用（独立chunk）
+              if (id.includes("recharts")) {
+                return "vendor-charts";
+              }
+
+              // 4. 地図関連も遅延読み込みページでのみ使用（独立chunk）
+              if (id.includes("leaflet") || id.includes("react-leaflet")) {
+                return "vendor-map";
+              }
+
+              // 5. PDF関連も遅延読み込みページでのみ使用（独立chunk）
+              if (
+                id.includes("pdfjs-dist") ||
+                id.includes("react-pdf") ||
+                id.includes("canvas")
+              ) {
+                return "vendor-pdf";
+              }
+
+              // 6. dayjs（日時ライブラリ）
+              if (id.includes("dayjs")) {
+                return "vendor-dayjs";
+              }
+
+              // 7. axios（HTTP通信）
+              if (id.includes("axios")) {
+                return "vendor-axios";
+              }
+
+              // 8. zustand（状態管理）
+              if (id.includes("zustand")) {
+                return "vendor-zustand";
+              }
+
+              // 9. テーブル関連
+              if (id.includes("@tanstack/react-table")) {
+                return "vendor-table";
+              }
+
+              // 10. マークダウン関連
+              if (
+                id.includes("react-markdown") ||
+                id.includes("remark") ||
+                id.includes("rehype")
+              ) {
+                return "vendor-markdown";
+              }
+
+              // 11. その他のutilityライブラリ（jszip, papaparse等）
+              if (id.includes("jszip") || id.includes("papaparse")) {
+                return "vendor-utils";
+              }
+
+              // 12. その他のnode_modulesは vendor-misc へ
+              return "vendor-misc";
+            }
           },
         },
       },
