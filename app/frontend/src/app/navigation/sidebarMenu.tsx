@@ -1,6 +1,6 @@
 // src/app/navigation/sidebarMenu.tsx
 // サイドバー用定数・アイコン・ルーティング
-import React from 'react';
+import React from "react";
 
 // アイコン（Ant Design）
 import {
@@ -24,20 +24,29 @@ import {
   UploadOutlined, // アップロード
   UnorderedListOutlined, // リスト
   ControlOutlined, // 管理機能
-} from '@ant-design/icons';
+  ExperimentOutlined, // 実験的機能
+} from "@ant-design/icons";
 
 // ルーティング
-import { Link } from 'react-router-dom';
-import { ROUTER_PATHS } from '@app/routes/routes';
-import { NewsMenuLabel, NewsMenuIcon } from '@features/announcements';
+import { Link } from "react-router-dom";
+import { ROUTER_PATHS } from "@app/routes/routes";
+import { NewsMenuLabel, NewsMenuIcon } from "@features/announcements";
 
-// サイドバーのメニュー定義
-export const SIDEBAR_MENU = [
+// Feature Flags
+import { isFeatureEnabled } from "@/shared";
+
+/**
+ * サイドバーメニューを生成する関数
+ * Feature Flags に基づいて動的にメニューを構築する
+ *
+ * @returns サイドバーメニュー配列
+ */
+export const getSidebarMenu = () => [
   // ホーム（ポータル + お知らせ を統合）
   {
-    key: 'home',
+    key: "home",
     icon: <HomeOutlined />,
-    label: 'ホーム',
+    label: "ホーム",
     children: [
       {
         key: ROUTER_PATHS.PORTAL,
@@ -53,9 +62,9 @@ export const SIDEBAR_MENU = [
   },
   // ダッシュボード
   {
-    key: 'dashboardGroup',
+    key: "dashboardGroup",
     icon: <DashboardOutlined />,
-    label: '速報ダッシュボード',
+    label: "速報ダッシュボード",
     hidden: false,
     children: [
       {
@@ -73,9 +82,9 @@ export const SIDEBAR_MENU = [
   },
   // アナリティクス
   {
-    key: 'analytics',
+    key: "analytics",
     icon: <LineChartOutlined />,
-    label: 'アナリティクス',
+    label: "アナリティクス",
     hidden: false,
     children: [
       {
@@ -86,15 +95,19 @@ export const SIDEBAR_MENU = [
       {
         key: ROUTER_PATHS.ANALYSIS_CUSTOMERLIST,
         icon: <UserDeleteOutlined />,
-        label: <Link to={ROUTER_PATHS.ANALYSIS_CUSTOMERLIST}>搬入なし顧客チェック</Link>,
+        label: (
+          <Link to={ROUTER_PATHS.ANALYSIS_CUSTOMERLIST}>
+            搬入なし顧客チェック
+          </Link>
+        ),
       },
     ],
   },
   // 帳票作成
   {
-    key: 'report',
+    key: "report",
     icon: <ContainerOutlined />,
-    label: '帳票作成',
+    label: "帳票作成",
     children: [
       {
         key: ROUTER_PATHS.REPORT_MANAGE,
@@ -105,6 +118,8 @@ export const SIDEBAR_MENU = [
         key: ROUTER_PATHS.REPORT_FACTORY,
         icon: <ProfileOutlined />,
         label: <Link to={ROUTER_PATHS.REPORT_FACTORY}>工場帳簿</Link>,
+        // Feature Flag: OFF の場合は非表示
+        hidden: !isFeatureEnabled("FACTORY_REPORT"),
       },
       {
         key: ROUTER_PATHS.LEDGER_BOOK,
@@ -116,9 +131,9 @@ export const SIDEBAR_MENU = [
   },
   // 参謀NAVI（親はラベルのみ、子にリンクを持たせる）
   {
-    key: 'navi',
+    key: "navi",
     icon: <CompassOutlined />,
-    label: '参謀NAVI',
+    label: "参謀NAVI",
     children: [
       {
         key: ROUTER_PATHS.NAVI,
@@ -129,9 +144,9 @@ export const SIDEBAR_MENU = [
   },
   // マニュアル（親メニュー化：子に既存のマニュアル一覧を置く）
   {
-    key: 'manual',
+    key: "manual",
     icon: <ReadOutlined />,
-    label: 'マニュアル',
+    label: "マニュアル",
     children: [
       {
         key: `${ROUTER_PATHS.MANUALS}`,
@@ -140,7 +155,7 @@ export const SIDEBAR_MENU = [
         hidden: true,
       },
       {
-        key: '/manuals/shogun',
+        key: "/manuals/shogun",
         icon: <BookOutlined />,
         label: <Link to="/manuals/shogun">将軍マニュアル一覧</Link>,
       },
@@ -148,9 +163,9 @@ export const SIDEBAR_MENU = [
   },
   // データベース
   {
-    key: 'database',
+    key: "database",
     icon: <DatabaseOutlined />,
-    label: 'データベース',
+    label: "データベース",
     children: [
       {
         key: ROUTER_PATHS.DATASET_IMPORT,
@@ -167,15 +182,17 @@ export const SIDEBAR_MENU = [
         key: ROUTER_PATHS.RESERVATION_DAILY,
         icon: <FileTextOutlined />,
         label: <Link to={ROUTER_PATHS.RESERVATION_DAILY}>予約表</Link>,
+        // Feature Flag: OFF の場合は非表示
+        hidden: !isFeatureEnabled("RESERVATION_DAILY"),
       },
     ],
   },
 
   // 管理機能
   {
-    key: 'management',
+    key: "management",
     icon: <ControlOutlined />,
-    label: '管理機能',
+    label: "管理機能",
     children: [
       {
         key: ROUTER_PATHS.SETTINGS,
@@ -190,4 +207,29 @@ export const SIDEBAR_MENU = [
       },
     ],
   },
+
+  // ===========================================================
+  // 実験的機能 (Feature Flag で制御)
+  // VITE_FF_NEW_REPORT=true の場合のみ表示
+  // ===========================================================
+  {
+    key: "experimental",
+    icon: <ExperimentOutlined />,
+    label: "実験的機能",
+    // Feature Flag が OFF の場合は非表示
+    hidden: !isFeatureEnabled("NEW_REPORT"),
+    children: [
+      {
+        key: ROUTER_PATHS.EXPERIMENTAL_NEW_REPORT,
+        icon: <ExperimentOutlined />,
+        label: (
+          <Link to={ROUTER_PATHS.EXPERIMENTAL_NEW_REPORT}>新レポート</Link>
+        ),
+      },
+    ],
+  },
 ];
+
+// 後方互換性のため、静的な SIDEBAR_MENU もエクスポート
+// 新規実装では getSidebarMenu() を使用することを推奨
+export const SIDEBAR_MENU = getSidebarMenu();

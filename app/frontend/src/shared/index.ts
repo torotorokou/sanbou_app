@@ -76,6 +76,12 @@ export {
   useSidebar,
 } from "./hooks/ui";
 
+// Feature Flags ViewModel Hook
+export {
+  useFeatureFlags,
+  type FeatureFlagsViewModel,
+} from "./hooks/useFeatureFlags";
+
 // ===================================================
 // UI Components - 再利用可能なコンポーネント
 // ===================================================
